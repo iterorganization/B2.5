@@ -1974,12 +1974,7 @@ c
         case('hy1')
           description='hy1 (m) (hy corrected)'
           nz=1
-          do iy = -1, ny
-            do ix = -1, nx
-              mach(ix,iy,0)=hy1(ix,iy)
-            end do
-          end do
-          call copy(mach,1.0_R8,nz,textbl)
+          call copy(hy1,1.0_R8,nz,textbl)
         case('sx')
           description='sx (m^{2})'
           nz=1

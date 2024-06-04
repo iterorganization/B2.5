@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tqna (nx, ny, ns, nscx, iscx, bb, na,
-     &   te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn,        !srv 15.12.05
+     &   te, ti, ni, ne, ne2, hx, hy, hy1, vol, crx, cry, conn,        !srv 15.12.05
      &   dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0, alf0,
      &   hvi0, hve0, wrk0)
       use b2mod_types
@@ -19,8 +19,6 @@
       use b2mod_ranges
       use b2mod_external
       use b2mod_neoclassical
-      use b2mod_geo
-     &                    , only : hy1
       use b2mod_geo_corner
      &                    , only : lengthy, nmdpl                 !srv 26.11.04
 #ifdef PAR_OPT
@@ -34,7 +32,8 @@
      *  bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
+     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
+     &  vol(-1:nx,-1:ny),
      &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3), conn(-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -450,7 +449,7 @@ cxpb Corrected for dimensionality
       if(user_transport.eq.0) then
 c do nothing
       elseif(user_transport.eq.1) then
-        call set_transport(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
+        call set_transport(nx, ny, ns, hy1, bb, na, te, ti, ni, ne, ne2,
      &  dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0, wrk0)
       elseif(user_transport.eq.2) then
         call set_transport_swy(nx, ny, ns,
@@ -460,7 +459,7 @@ c do nothing
      &   dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0)
       elseif(user_transport.eq.4) then
         call set_transport_xpb(nx, ny, ns, bb, na, ne, te, ti, ni,
-     &   hx, dna0, vla0)
+     &   hx, hy1, dna0, vla0)
 c mw added transport
       elseif(user_transport.eq.5) then
         call set_transport_mw(nx, ny, ns, ne, jsep, jxa,
@@ -469,7 +468,7 @@ c mw end
       elseif(user_transport.eq.6) then                                    !srv 13.06.08
 !! FIXME: Need to fix clash with ank blobby transport model
         call set_transport_srv(nx, ny, ns, jsep, jxa, bb, na, te, ti,
-     &  ni, ne, ne2, hy, dna0, dpa0, vla0, vma0, vsa0, hci0,
+     &  ni, ne, ne2, hy, hy1, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &  hcib, hce0, sig0, alf0, wrk0)
 !! FIXME: in routines below, remove hvi0, hve0 ???
       elseif(user_transport.eq.7) then
@@ -480,7 +479,7 @@ c mw end
         if(ncall.eq.0) then
           call alloc_b2mod_neoclassical(nx,ny,nsdecl,mmx)
         endif
-        call set_transport_neo(nx, ny, ns, hx, vol, crx, cry,
+        call set_transport_neo(nx, ny, ns, hx, hy1, vol, crx, cry,
      &   conn, bb, na, te, ti, ni, ne, dna0, dpa0, vla0, vsa0,
      &   hci0, hcib, hce0, sig0, alf0, hvi0, hve0)
 c ank added blobby transport
@@ -608,20 +607,20 @@ cdpc
 
       end subroutine b2tqna
 
-      subroutine set_transport(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
+      subroutine set_transport(nx, ny, ns, hy1, bb,
+     &  na, te, ti, ni, ne, ne2,
      &  dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0, wrk0)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
+     *  hy1(-1:nx,-1:ny),
      *  bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny)
@@ -737,7 +736,7 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
       end subroutine set_transport
 
       subroutine set_transport_srv(nx, ny, ns, jsep, jxa, bb, na, te,     !SOM 17.07.19 !srv 12.06.08 {
-     &  ti, ni, ne, ne2, hy, dna0, dpa0, vla0, vma0, vsa0, hci0,
+     &  ti, ni, ne, ne2, hy, hy1, dna0, dpa0, vla0, vma0, vsa0, hci0,
      &  hcib, hce0, sig0, alf0, wrk0)
       use b2mod_types
       use b2mod_indirect
@@ -759,7 +758,8 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), hy(-1:nx,-1:ny)
+     &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &  hy1(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  dna0(-1:nx,-1:ny,0:ns-1), dpa0(-1:nx,-1:ny,0:ns-1),
@@ -1093,8 +1093,6 @@ c
        end function barrier2
 
        subroutine defdc(nx, ny, itype, ns, fdnc, fvlc, fvsc, ftec, ftic) !srv 13.11.02 01.03.07 09.03.17
-        use b2mod_geo
-     ,  , only : hy1
         implicit none
         integer :: nx, ny, itype, ns
         real(kind=R8) :: fdnc(-1:nx,-1:ny,0:ns-1)                     !srv 17.04.06 {
@@ -1941,13 +1939,13 @@ c
       end subroutine set_transport_eta
 
       subroutine set_transport_xpb(nx, ny, ns,
-     & bb, na, ne, te, ti, ni, hx, dna0, vla0)
+     & bb, na, ne, te, ti, ni, hx, hy1, dna0, vla0)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo
-     & , only : crx, hy1
+     & , only : crx
       use b2mod_b2cmpa
       use b2mod_subsys
       implicit none
@@ -1956,7 +1954,7 @@ c
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  hx(-1:nx,-1:ny)
+     &  hx(-1:nx,-1:ny), hy1(-1:nx,-1:ny)
 *   ..input/output arguments (changed on exit)
       real (kind=R8) ::
      *  dna0(-1:nx,-1:ny,0:ns-1),
@@ -2001,6 +1999,7 @@ cxpb
        call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
 *    ..test state
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
+       call b2xvsg (n2, hy1, 1, 'hy1', '.gt.')
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
@@ -2705,7 +2704,7 @@ c*** We only apply this in the outer SOL region
 
       end subroutine set_transport_disruption
 
-      subroutine set_transport_neo(nx, ny, ns, hx, vol,
+      subroutine set_transport_neo(nx, ny, ns, hx, hy1, vol,
      &  crx, cry, conn, bb, na, te, ti, ni, ne,
      &  dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
      &  hvi0, hve0)
@@ -2719,8 +2718,6 @@ c*** We only apply this in the outer SOL region
       use b2mod_time
       use b2mod_transpbgr_namelist
       use b2mod_external
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -2728,7 +2725,7 @@ c*** We only apply this in the outer SOL region
       real (kind=R8) ::
      *   bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &   te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &   ne(-1:nx,-1:ny), hx(-1:nx,-1:ny),
+     &   ne(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
      &   vol(-1:nx,-1:ny), conn(-1:ny),
      &   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)

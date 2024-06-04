@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2rugm (nget, nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
+     &  bb, vol, hx, hy, hy1, hz, qz, qc, qs, gs, pbs,
      &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
       use b2mod_types
       use b2mod_math
@@ -21,7 +21,8 @@
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),
+     &  hy(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),
      &  hz(-1:nx,-1:ny), hyl(-1:nx,-1:ny), hxb(-1:nx,-1:ny),
      &  hzl(-1:nx,-1:ny), hzb(-1:nx,-1:ny),
      &  qs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2),
@@ -261,6 +262,7 @@
       call cfrure (nget, n2, hy, 'hy')
 *   ..read qz, qc, gs
       call cfrure (nget, n2*2, qz, 'qz')
+      hy1(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
 cxpb
       qc_to_do = .false.
       if(b2fgmtry_version.ge.'03.001.000') then

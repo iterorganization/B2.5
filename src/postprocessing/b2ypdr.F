@@ -654,7 +654,7 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
+     &  bb, vol, hx, hy, hy1, hz, qz, qc, qs, gs, pbs,
      &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')

@@ -107,7 +107,7 @@
         if (addvis.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8) then    !srv 19.01.05 28.03.06 { 22.05.18
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
 *   ..compute radial gradients of ti
-          call gradc_r(nx, ny, hx, qz, ti, dtir)
+          call gradc_r(nx, ny, hx, hy1, qz, ti, dtir)
 
 * ..calculate the parallel heat flux of ions in the center of the cell
 

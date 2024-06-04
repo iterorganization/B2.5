@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     *  hx, hy, qc, qs, vol, gs, bb, pbs, lnlam, na, ua, ue,          !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     *  hx, hy, hy1, qc, qs, vol, gs, bb, pbs, lnlam, na, ua, ue,     !srv 07.06.00 02.06.99 07.05.08 05.07.17
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,        !som 16.08.21 !srv 24.08.21
      *  cvsa_drho,                                                    !som 16.08.21
      *  cvsa_uAdp_albe, cvsa_uBdp_al,                                 !som 08.05.24
@@ -24,8 +24,6 @@
      &         b2mod_zhfrtf_avm_u, b2mod_zhfrtf_prep                  !som 18.08.21
       use b2mod_b2mrel
      & , only : s2nucl, nucl2s, znnucl_int
-      use b2mod_geo
-     & , only : hy1
       use b2mod_balance !djm Jan2017
      & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
      &          b2sihs_joule0to3, b2sihs_divua0to3,
@@ -39,7 +37,7 @@
       integer nx, ny, ns, ismain                                      !srv 05.07.17
       real (kind=R8) :: BoRiS,
      *  fac_ExB(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),       !srv 07.06.00 02.06.99
-     *  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     *  hy1(-1:nx,-1:ny), vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      &  na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), ue(-1:nx,-1:ny),                      !srv 05.03.11
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
@@ -393,11 +391,11 @@
       call b2saxpy (n2*4, 1.0e0_R8, shidu, 1, shi0, 1)                !srv 11.09.09
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
       wght = 1.0_R8
-      call grad(nx, ny, hx, hy, wght, qs, po, dpo)
-      call grad(nx, ny, hx, hy, wght, qs, OnedBsq, dOnedBsq)
+      call grad(nx, ny, hx, hy, hy1, wght, qs, po, dpo)
+      call grad(nx, ny, hx, hy, hy1, wght, qs, OnedBsq, dOnedBsq)
 !      call grad_p(nx, ny, 1, hx, wght, OnedBsq, OnedBsqc,
 !     .  dOnedBsq(-1,-1,0,0))
-!      call grad_r(nx, ny, 1, hx, hy, wght, qs, OnedBsq, OnedBsqc,
+!      call grad_r(nx, ny, 1, hx, hy, hy1, wght, qs, OnedBsq, OnedBsqc,
 !     .  dOnedBsq(-1,-1,0,1))
 
       b2exbe=0.0_R8

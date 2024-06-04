@@ -513,7 +513,7 @@ c Drift terms
 
           wrk0=1.0_R8  ! compute ... on the cell faces
           nete = ne*te                                                   !lk
-          call grad(nx, ny, hx, hy, wrk0, qs, nete, dnete)
+          call grad(nx, ny, hx, hy, hy1, wrk0, qs, nete, dnete)
           do iy=-1,ny  ! compute ... on the cell centers
            do ix=-1,nx
              if(bottomiy(ix,iy).eq.-2) then

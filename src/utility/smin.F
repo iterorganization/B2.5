@@ -23,9 +23,11 @@
        call xerrab ('smin--error, n.lt.1.or.incx.eq.0')
       else if (incx.eq.1) then
        t = sx(0)
+!$OMP SIMD REDUCTION(min:t)
        do i = 1, n-1
         t = min(t,sx(i))
        enddo
+!$OMP END SIMD
        smin = t
       else
        ix = ibase(n,incx)

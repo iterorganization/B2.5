@@ -1,4 +1,4 @@
-      subroutine b2tdia(nx, ny, ns, vol, gs, hx, hy, qz, qs, bb,
+      subroutine b2tdia(nx, ny, ns, vol, gs, hx, hy, hy1, qz, qs, bb,
      &   pz, fna, uadia, facdrift, fchdia)                               !srv 16.19.17 {
       use b2mod_types
       use b2mod_b2cmpa
@@ -7,17 +7,14 @@
       use b2mod_geo_corner
       use b2mod_geo
      &   , only : hyl, hxb, hzl                                          !IYS 04.03.2019
-#ifdef CLASSICAL_CURRENT
-      use b2mod_geo
-     &   , only : hy1
-#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
      &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
+     &  hy(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
+     &  qz(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &  bb(-1:nx,-1:ny,0:3),
      &  pz(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
@@ -83,9 +80,10 @@
 *   ..test nx, ny, ns
        call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
        call xertst (1.le.ns, 'faulty argument ns')
-*    ..test vol, hy, qz
+*    ..test vol, hy, hy1, qz
        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
+       call b2xvsg (n2, hy1, 1, 'hy1', '.gt.')
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
      &              smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
      .              'faulty argument range qz(,,0)')

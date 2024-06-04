@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2tfhe_ (nx, ny, ns, facdrift, vol,                     !srv 23.11.10 19.02.21
-     1 hx, hy, qc, qs, te, po, ne, na, vedia, fne, chce, chve, calf,     !srv 17.05.99
-     & chvemx, cdde, fch_p, fchstoch,                                    !srv 17.05.99 11.07.99 !som 03.11.21
+     1 hx, hy, hy1, qc, qs, te, po, ne, na, vedia, fne,                  !srv 17.05.99
+     & chce, chve, calf, chvemx, cdde, fch_p, fchstoch,                  !srv 17.05.99 11.07.99 !som 03.11.21
      & floe, cone, fhe, fhe_mdf, fhePSch, balance)                       !djm Jan2017
       use b2mod_types
       use b2mod_math
@@ -15,8 +15,6 @@
       use b2mod_rates
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_geo
-     & , only : hy1
       use b2mod_balance                                                  !djm Jan2017
      & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
      &          fhe_strange, fhe_pschused, balance_netcdf
@@ -28,7 +26,7 @@
       real (kind=R8) ::
      &   facdrift(-1:nx,-1:ny),
      &   vol(-1:nx,-1:ny),                                               !srv 11.07.99 18.01.02
-     1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
      2   qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      &   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      &   na(-1:nx,-1:ny,0:ns-1),                                         !srv 16.10.17

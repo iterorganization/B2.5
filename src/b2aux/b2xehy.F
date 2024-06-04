@@ -36,7 +36,6 @@
       integer, save :: mode_ehy = 0                                      !srv 06.04.15
       integer, save :: pot_eq = 1, no_current= 0                         !srv 29.01.20
       real (kind=R8) ::
-     *   hy1_(-1:nx,-1:ny),
      *   dpor(-1:nx,-1:ny,0:1), wrk0(-1:nx,-1:ny,0:1), 
      *   wrk1(-1:nx,-1:ny,0:1), wrk2(-1:nx,-1:ny,0:1), wrk(-1:nx,-1:ny),
      *   dum(-1:nx,-1:ny), work(-1:nx,-1:ny)
@@ -74,11 +73,6 @@
       if(pot_eq.ne.1 .and. no_current.ne.0) then                         !srv 29.01.20 {
         ehy = 0.0_R8
       else
-        do iy=-1,ny
-          do ix=-1,nx
-            hy1_(ix,iy)=hy1(ix,iy)
-          enddo
-        enddo
 
 cwdk  wrk will be used for interpolation to vertices; now: just 1.0_R8
 c     to be considered: volume-weighted interpolation
@@ -110,7 +104,7 @@ c     to be considered: volume-weighted interpolation
           call diff_r(nx, ny, 0, hx, hy, wrk, qs, work, dum, wrk0)
 *       ..interpolate ne to faces
           call intfaceh(nx,ny,leftix,leftiy,hx,ne,wrk1(-1,-1,0))
-          call intfacev(nx,ny,bottomix,bottomiy,hy1_,ne,wrk1(-1,-1,1))
+          call intfacev(nx,ny,bottomix,bottomiy,hy1,ne,wrk1(-1,-1,1))
 *       ..compute ehy
           ehy = -dpor
           do iy = -1, ny

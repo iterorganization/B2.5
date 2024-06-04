@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,
-     1  vol, hx, ti, ni, na,
+     1  vol, hx, hy1, ti, ni, na,
      2  fna, fni_32, fni_52, kinrgy,
      3  chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
      &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,                !lk 30.05.11
@@ -14,8 +14,6 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_geo
-     & , only : hy1
       use b2mod_balance                                                  !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_kevis, balance_netcdf,
@@ -35,7 +33,7 @@
      &  vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1,0:1),
      &  chvi(-1:nx,-1:ny,0:1,0:1),
      &  chvimx(-1:nx,-1:ny), cvsa(-1:nx,-1:ny,0:1,0:1,0:nx-1),
-     &  hx(-1:nx,-1:ny),
+     &  hx(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
      .  na(-1:nx,-1:ny,0:ns-1), 
      2  vadia(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  vaecrb(-1:nx,-1:ny,0:1,0:1,0:ns-1),

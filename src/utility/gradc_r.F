@@ -1,16 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine gradc_r(nx, ny, hx, qz, fun, dfunr)
+      subroutine gradc_r(nx, ny, hx, hy1, qz, fun, dfunr)
       use b2mod_types
       use b2mod_indirect
-      use b2mod_geo
-     , , only : hy1
       implicit none
 *   ..input arguments
       integer nx,ny
       real (kind=R8) ::
-     *   hx(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny)
+     *   hx(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
+     *   qz(-1:nx,-1:ny,0:1), fun(-1:nx,-1:ny)
 *   ..output arguments
       real (kind=R8) ::
      *   dfunr(-1:nx,-1:ny)

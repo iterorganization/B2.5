@@ -1,8 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy,     !xpb !srv 05.07.17
-     1  vol, bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni,             !xpb !srv 01.07.09
+      subroutine b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB,             !xpb !srv 05.07.17
+     1  hx, hy, hy1, vol, bb, pbs,
+     1  lnlam, na, ua, ue, te, ti, po, ne, ni,                           !xpb !srv 01.07.09
      2  fch, fchstoch, cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0)   !srv 24.08.21
       use b2mod_types
       use b2mod_rates
@@ -19,8 +20,6 @@
      &          balance_netcdf
       use b2mod_transport_fun                                            !srv 05.07.17
       use b2mod_external                                                 !srv 05.07.17
-      use b2mod_geo
-     , , only : hy1
       use b2mod_plasma
      , , only : uasx, uasy, uesx
       use b2mod_subsys
@@ -29,7 +28,8 @@
       integer nx, ny, ns, ismain                                         !xpb !srv 05.07.15
       real (kind=R8) ::
      *  BoRiS, fac_ExB(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
-     &  vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), na(-1:nx,-1:ny,0:ns-1),
+     &  hy1(-1:nx,-1:ny), vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
+     &  na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      1  ue(-1:nx,-1:ny), lnlam(-1:nx,-1:ny)                              !srv 01.07.09
@@ -164,9 +164,10 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of hx, hy, vol
+*    ..test sign of hx, hy, hy1, vol
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
+       call b2xvsg (n2, hy1, 1, 'hy1', '.gt.')
        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
 *    ..test sign of na, te, ti, ne, ni
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
@@ -734,7 +735,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
 
       end subroutine b2sihs
 c
-      subroutine b2sdia (nx, ny, ns, na, ne, ti, te, bb, vol, hx,
+      subroutine b2sdia (nx, ny, ns, na, ne, ti, te, bb, vol, hx, hy1,
      1 she, shi, facdrift)                                               !xpb
       use b2mod_types
       use b2mod_rates
@@ -745,8 +746,6 @@ c
       use b2mod_b2cmpa
       use b2mod_balance                                                  !djm Jan2017
      & , only : b2sihs_diaa0to3, b2sihs_diae0to3, balance_netcdf
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -756,7 +755,7 @@ c
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny)
       real (kind=R8) ::
-     *  bb(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny)
+     *  bb(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny), hy1(-1:nx,-1:ny)
       real (kind=R8) ::                                                  !xpb
      *  facdrift(-1:nx,-1:ny)                                            !xpb
 *   ..output arguments (unspecified on entry)
@@ -931,5 +930,7 @@ c
 * ..return
       ncall = ncall+1
       call subend ()
+      return
+
       end subroutine b2sdia
 

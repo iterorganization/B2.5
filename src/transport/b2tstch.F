@@ -1,22 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tstch (nx, ny, vol, hx, hy, qc, qs, po, te, ne,      !srv 07.07.14
+      subroutine b2tstch (nx, ny, vol, hx, hy, hy1, qc, qs, po, te, ne, !srv 07.07.14
      *           csig_stoch, fchstoch)                                  !lk 31.01.08 {
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
      & vol(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     & hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     & hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
      & qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      1 te(-1:nx,-1:ny), ne(-1:nx,-1:ny), csig_stoch(-1:nx,-1:ny,0:1,0:1)!srv 24.08.21
 *   ..output arguments (unspecified on entry)
@@ -87,7 +85,7 @@
 
       fchstoch   = 0.0e0_R8
       if (fch_stochastic .ne. 0.0e0_R8 ) then                           !lk 31.01.08 {
-        call b2trsc (nx, ny, vol, hx, hy, qc, qs, po, te, ne,
+        call b2trsc (nx, ny, vol, hx, hy, hy1, qc, qs, po, te, ne,
      &   csig_stoch)                                                    !srv 24.08.21
         call b2xehy (nx, ny, te, po, ne, ehy)
         do iy = bottomdelta1, jsep+1

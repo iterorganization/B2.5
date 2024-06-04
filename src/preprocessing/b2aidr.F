@@ -534,7 +534,7 @@
 *     (isymm is now stored in the b2cmfs common)                     !xpb 10.08.00
 *   ..read geometry
       call b2rugm (ninp(2), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
+     &  bb, vol, hx, hy, hy1, hz, qz, qc, qs, gs, pbs,
      &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
 
       if(read_b2fstate.ne.0) then

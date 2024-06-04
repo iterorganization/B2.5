@@ -3,8 +3,8 @@
 
       subroutine b2tfch (nx, ny, ns, nscx, ismain, ismain0, iscx,
      1  guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,
-     1  vol, gs, hx, hy, hz, qz, qc, qs, bb, te, po, ne, ne2, lnlam, pz, !xpb
-     1  ti, ni, na, fna, uadia,
+     1  vol, gs, hx, hy, hy1, hz, qz, qc, qs, bb,
+     1  te, po, ne, ne2, lnlam, pz, ti, ni, na, fna, uadia,              !xpb
      2  ua, fne_32, fne_52, csig, csigin, csig_stoch,                    !xpb !srv 24.08.21
      &  chce, chve, chci, calf, chvemx, cvsa_cl, cvsa_drho,
      &  chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,               !som 20.10.21
@@ -50,8 +50,8 @@
      & cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                   !som 20.10.21
      & cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:1,0:nspecies-1,0:nspecies-1),    !som 26.04.24
      & cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:1,0:nspecies-1),                   !som 26.04.24
-     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
-     1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
+     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
+     1 hz(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny),
      2 facdrift(-1:nx,-1:ny), BoRiS,
      3 fac_ExB(-1:nx,-1:ny), fac_vis(-1:nx,-1:ny),
      4 csig_cl(-1:nx,-1:ny,0:1,0:1)
@@ -221,19 +221,19 @@ c Drift terms
 *   ..calculate the contribution of ion-neutral current                  !srv 11.02.04 {
       call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
-     &              vol, gs, hx, hy, hz, qz, qc, qs, bb,
+     &              vol, gs, hx, hy, hy1, hz, qz, qc, qs, bb,
      &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !srv 11.05.09, IYS 17.10.2023
 *   .. compute x,y-components of divergent part of diamagnetic current
-      call b2tdia(nx, ny, ns, vol, gs, hx, hy, qz, qs, bb,
+      call b2tdia(nx, ny, ns, vol, gs, hx, hy, hy1, qz, qs, bb,
      &            pz, fna, uadia, facdrift, fchdia)
 *   .. calculate x,y-components of viscosity parallel current
-      call b2tvspa(nx, ny, ns, ismain, vol, hx, hy, qs, bb,              !srv 19.02.21
+      call b2tvspa(nx, ny, ns, ismain, vol, hx, hy, hy1, qs, bb,         !srv 19.02.21
      &             na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,              !srv 20.09.06 16.10.17 !som 18.08.21
      &             cvsa_uAdp_albe, cvsa_uBdp_al,                         !som 26.04.24
      &             fchvispar_a, fchvispar)
 *   .. calculate the contribution of viscosity perpendicular current     !srv 22.11.99
       call b2tvspr(nx, ny, ns, ismain, fac_vis,                          !srv 10.10.17 19.02.21
-     &             vol, po, ti, na,
+     &             vol, hy1, po, ti, na,
      &             avisper_a, bvisper_a, cvisper_a,
      &             fchvisper_a, fchvisper)
 *   .. calculate the parallel viscosity current connected with the heat flux
@@ -246,7 +246,7 @@ c Drift terms
      &              na, ua, facdrift, fchinert_a, fchinert)
 *  .. calculate the y-component of electron current associated with
 *     stochastization of magnetic field
-      call b2tstch (nx, ny, vol, hx, hy, qc, qs, po, te, ne,
+      call b2tstch (nx, ny, vol, hx, hy, hy1, qc, qs, po, te, ne,
      &              csig_stoch, fchstoch)                                !srv 07.07.14
 *   ..compute parallel current
       call b2tcpa (nx, ny, ns, te, po, ne, na, ua, csig, calf,           !srv 29.01.20

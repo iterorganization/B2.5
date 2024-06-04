@@ -1,22 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trsc (nx, ny, vol, hx, hy, qc, qs, po, te, ne,
+      subroutine b2trsc (nx, ny, vol, hx, hy, hy1, qc, qs, po, te, ne,
      &  csig_stoch)                                                     !srv 24.08.21
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     & hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
-     & qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
+     & hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
+     & vol(-1:nx,-1:ny), qc(-1:nx,-1:ny,0:1), qs(-1:nx,-1:ny,0:1),
      1 po(-1:nx,-1:ny), te(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::

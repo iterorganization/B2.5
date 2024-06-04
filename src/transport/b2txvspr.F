@@ -1,4 +1,4 @@
-      subroutine b2txvspr(nx, ny, ns, ismain, fac_vis, vol,             !srv 10.10.17 19.02.21
+      subroutine b2txvspr(nx, ny, ns, ismain, fac_vis, vol, hy1,        !srv 10.10.17 19.02.21
      &   avisper_a, bvisper_a, cvisper_a)
       use b2mod_types
       use b2mod_indirect
@@ -7,15 +7,13 @@
       use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_geo_corner
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                        !srv 19.02.21
       real (kind=R8) ::
      1   fac_vis(-1:nx,-1:ny),
-     1   vol(-1:nx,-1:ny)
+     1   vol(-1:nx,-1:ny), hy1(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &   avisper_a(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 27.01.00
@@ -30,7 +28,7 @@
       real (kind=R8), save :: vis_per = 0.0e0_R8                        !srv 22.11.99
       integer, save :: visper_all_ions = 1
       real (kind=R8) ::
-     &  fac_vism, t0, wrk0(-1:nx,-1:ny)
+     &  fac_vism, t0
       character(3) :: chns
 *   ..procedures
       external xertst
@@ -88,12 +86,7 @@
       endif                                                             !srv 22.11.99
       
       if(iout.eq.1) then
-       do iy=-1,ny
-        do ix=-1,nx
-         wrk0(ix,iy) = hy1(ix,iy)
-        enddo
-       enddo
-       call my_out(70,nx,ny,wrk0,'hy1')
+       call my_out(70,nx,ny,hy1,'hy1')
        call my_out(70,nx,ny,wbbv(-1,-1,3),'b2tvspr_bbv')
        call my_out(70,nx,ny,vol,'b2tvspr_vol')
        do is = 0,ns-1

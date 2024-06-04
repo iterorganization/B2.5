@@ -265,7 +265,7 @@
       isymm = idum(0)
 *   ..read geometry and metric
       call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
+     &  bb, vol, hx, hy, hy1, hz, qz, qc, qs, gs, pbs,
      &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
 *   ..read species data
       call b2ruzd (ninp(1), b2fstate_version,

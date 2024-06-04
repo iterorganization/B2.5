@@ -965,7 +965,7 @@ c 2002-09-11: logic revised
 *   ..read old geometry and metric (do not overwrite redef_gmtry)
         redef_gmtry_save = redef_gmtry
         call b2rugm (70, nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
+     &   bb, vol, hx, hy, hy1, hz, qz, qc, qs, gs, pbs,
      &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
         redef_gmtry = redef_gmtry_save
         call get_jsep(nx,ny,jxi,jxa,jsep)
@@ -1002,7 +1002,7 @@ c 2002-09-11: logic revised
         call cfruch (ninp(3), 120, lblgm, 'label')
         call cfruin (ninp(3), 1, idum, 'isymm')
         call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
-     &   bb, vol, hx, hy, hz, qz, qc, qs, gs, pbs,
+     &   bb, vol, hx, hy, hy1, hz, qz, qc, qs, gs, pbs,
      &   hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc, gmap)
         call get_jsep(nx,ny,jxi,jxa,jsep)
       endif

@@ -1,8 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 csw 2013 added fna_he, cvsa, vadia into argument list
-      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qc, qs,    !som 13.07.21
-     1  bb, ti, ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa,  !srv 17.05.99 27.12.01
+      subroutine b2tfhi_ (nx, ny, ns, facdrift,
+     1  vol, hx, hy, hy1, qc, qs, bb,                                   !som 13.07.21
+     1  ti, ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa,    !srv 17.05.99 27.12.01
      &  vadia, fchvispar, fchvisper, fchvisq, fchinert, fchanml,        !lk 30.05.11
      &  fhi, fhi_mdf, fhiPSch, floi, coni,                              !srv 13.10.06
      &  balance)                                                        !djm Jan2017
@@ -14,8 +15,6 @@ csw 2013 added fna_he, cvsa, vadia into argument list
       use b2mod_rates
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_geo
-     & , only : hy1
       use b2mod_balance                                                 !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
@@ -26,7 +25,7 @@ csw 2013 added fna_he, cvsa, vadia into argument list
       integer nx, ny, ns
       real (kind=R8) ::
      * ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1,0:1),
-     & vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1,0:1),
+     & vol(-1:nx,-1:ny), hy1(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1,0:1),
      & chvi(-1:nx,-1:ny,0:1,0:1),
      & bb(-1:nx,-1:ny,0:3),                                             !som 13.07.21
      & cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
