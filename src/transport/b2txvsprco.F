@@ -1,4 +1,4 @@
-      subroutine b2txvsprco(nx, ny, isb, fac_vis, vol,                  !srv 02.04.18
+      subroutine b2txvsprco(nx, ny, isb, fac_vis, vol, hy1,             !srv 02.04.18
      &    zb, ti, kmpr, nb, avisper_b, bvisper_b, cvisper_b, dvisper_b)
       use b2mod_types
       use b2mod_indirect
@@ -8,15 +8,13 @@
       use b2mod_b2cmpa
       use b2mod_geo_corner
       use b2mod_openmp
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
       real (kind=R8) ::
      1   fac_vis(-1:nx,-1:ny),
-     1   vol(-1:nx,-1:ny),
+     1   vol(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
      &   ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
      &   kmpr(-1:nx,-1:ny), zb(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
@@ -29,7 +27,7 @@
 *   ..local variables
       integer ix, iy
       integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
-      real (kind=R8), save :: vis_per = 1.0e0_R8                        !srv 22.11.99
+      real (kind=R8), save :: vis_per = 1.0_R8                          !srv 22.11.99
       real (kind=R8) ::
      &  fac_vism, t0, wrk0(-1:nx,-1:ny)
       character(3) :: chns
@@ -57,11 +55,11 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99
-      avisper_b  = 0.0e0_R8; bvisper_b = 0.0e0_R8; cvisper_b = 0.0e0_R8; !srv 27.01.00 22.03.02
-      dvisper_b = 0.0e0_R8
+      avisper_b  = 0.0_R8; bvisper_b = 0.0_R8; cvisper_b = 0.0_R8;      !srv 27.01.00 22.03.02
+      dvisper_b = 0.0_R8
 
       fac_vism = maxval(fac_vis)
-      if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8) then             !srv 22.11.99
+      if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0_R8) then               !srv 22.11.99
 
           do iy=-1,ny
             do ix=-1,nx
@@ -104,16 +102,11 @@
        call my_out(70,nx,ny,bvisper_b(-1,-1,1),'b2txvsprco_bvisper_by')
        call my_out(70,nx,ny,cvisper_b(-1,-1,1),'b2txvsprco_cvisper_by')
        call my_out(70,nx,ny,dvisper_b(-1,-1,1),'b2txvsprco_dvisper_by')
-       do iy=-1,ny
-         do ix=-1,nx
-           wrk0(ix,iy) = hy1(ix,iy)
-         enddo
-       enddo
-       call my_out(70,nx,ny,wrk0,'b2tvsprco_hy1')
-       call my_out(70,nx,ny,wbbv(-1,-1,3),'b2tvsprco_bbv')
-       call my_out(70,nx,ny,vol,'b2tvspcor_vol')
+       call my_out(70,nx,ny,hy1,'b2txvsprco_hy1')
+       call my_out(70,nx,ny,wbbv(-1,-1,3),'b2txvsprco_bbv')
+       call my_out(70,nx,ny,vol,'b2txvspcor_vol')
        write (chns,'(i3.3)') isb
-       call my_out(70,nx,ny,vsa0(-1,-1,isb),'b2tvsprco_vsa0_'//chns)
+       call my_out(70,nx,ny,vsa0(-1,-1,isb),'b2txvsprco_vsa0_'//chns)
       endif
 
 * ..return

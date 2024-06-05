@@ -1691,7 +1691,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
 
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  bb, vol, hx, hy, hy1, hz, qz, qc, qcb, gs, pbs,
      &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
       call alloc_b2mod_tallies(nnreg,ns)
@@ -2169,8 +2169,8 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
      *    cvsahz_drho, cvsa_drho,
      *    chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,
      *    cvsa_hAdp_albe, cvsa_hBdp_al,
-     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,                           
-     *    cvsa_uAdp_albe, cvsa_uBdp_al,                               
+     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,
+     *    cvsa_uAdp_albe, cvsa_uBdp_al,
      5    fllim0fhi, fllimvisc, csig_cl, calf_cl,
      &    csig_stoch, chce_stoch)
         call b2xpen (nx, ny, ns,
@@ -2568,7 +2568,7 @@ csw 09oct2012 set default potential already at this point (BCs)
      *    cvsahz_drho, cvsa_drho,
      *    chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,
      *    cvsa_hAdp_albe, cvsa_hBdp_al,
-     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,                           
+     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,
      *    cvsa_uAdp_albe, cvsa_uBdp_al,
      5    fllim0fhi, fllimvisc, csig_cl, calf_cl,
      &    csig_stoch, chce_stoch)
