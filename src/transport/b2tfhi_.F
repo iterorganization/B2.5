@@ -176,20 +176,20 @@ cpax
 !     &       /bb(leftix(ix,iy),leftiy(ix,iy),3)                        !srv 17.05.99 11.03.00 05.02.05
      &        +na(ix,iy,is)
 !     &        *bb(ix,iy,2)/bb(ix,iy,3)                                 !srv 05.02.05
-     &                    )*0.5e0_R8                                    !srv 17.05.99 11.03.00
-     &       *vadia(ix,iy,0,0,is)*2.5e0_R8*vdia_par                     !srv 17.05.99 11.03.00 21.04.00 13.09.02 18.01.07
+     &                    )*0.5_R8                                      !srv 17.05.99 11.03.00
+     &       *vadia(ix,iy,0,0,is)*2.5_R8*vdia_par                       !srv 17.05.99 11.03.00 21.04.00 13.09.02 18.01.07
 !     &          +(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))         !srv 25.01.02 was 5/2
 !     &           /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
 !     &           *(bb(leftix(ix,iy),leftiy(ix,iy),2)
 !     &            /bb(leftix(ix,iy),leftiy(ix,iy),3)
-!     &             +bb(ix,iy,2)/bb(ix,iy,3))*0.5e0_R8
-!     &     *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8
+!     &             +bb(ix,iy,2)/bb(ix,iy,3))*0.5_R8
+!     &     *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8
 !     &     *vadia(ix,iy,0,0,is)
            if (use_9pt_stencil.ne.0) flidia(ix,iy,0,1) =
      &       -(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
      &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-     &       *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))*0.5e0_R8
-     &       *vadia(ix,iy,0,1,is)*2.5e0_R8*vdia_par
+     &       *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))*0.5_R8
+     &       *vadia(ix,iy,0,1,is)*2.5_R8*vdia_par
      &       *qs(ix,iy,0)/qc(ix,iy,0)
           endif                                                         !srv 26.11.02
          enddo
@@ -200,8 +200,8 @@ cpax
           flidia(ix,iy,1,1) = flidia(ix,iy,1,1)
      &        +(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))        !srv 25.01.02 was 5/2
      &        /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-     &   *(na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8
-     &   *vadia(ix,iy,1,1,is)*2.5e0_R8*vdia_par                         !srv 13.09.02 18.01.07
+     &   *(na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/2.0_R8
+     &   *vadia(ix,iy,1,1,is)*2.5_R8*vdia_par                           !srv 13.09.02 18.01.07
          enddo
          enddo
         endif
@@ -236,10 +236,10 @@ cpax
       do iy = -1, ny
        do ix = -1, nx                                                   !srv 26.11.02
         if(leftix(ix,iy).eq.-2)then                                     !srv 26.11.02
-         floi(ix,iy,0,0:1)     = 0.0e0_R8
-         coni(ix,iy,0,0:1,0)   = 0.0e0_R8                               !srv 02.01.07
-         fhi(ix,iy,0:1,0)      = 0.0e0_R8
-         fhi_mdf(ix,iy,0:1,0)  = 0.0e0_R8                               !srv 13.10.06
+         floi(ix,iy,0,0:1)     = 0.0_R8
+         coni(ix,iy,0,0:1,0)   = 0.0_R8                                 !srv 02.01.07
+         fhi(ix,iy,0:1,0)      = 0.0_R8
+         fhi_mdf(ix,iy,0:1,0)  = 0.0_R8                                 !srv 13.10.06
          if (balance.and.(balance_netcdf.ne.0)) then
            fhi_32(ix,iy,0,0:1) = 0.0_R8                                 !djm Jan2017
            fhi_52(ix,iy,0,0:1) = 0.0_R8
@@ -267,17 +267,17 @@ cpax
      &           +flidia(ix,iy,0,0) ! *signmf                           !srv 25.01.02 18.01.07 11.01.13
      &           +scur
          floi0 = floi0 + floi_vhx(ix,iy)                                !som 13.07.21
-         floi0_mdf = 1.5e0_R8*fni(ix,iy,0,0)+chvi(ix,iy,0,0)*
+         floi0_mdf = 1.5_R8*fni(ix,iy,0,0)+chvi(ix,iy,0,0)*
      &    (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8
      &    +scur
          floi0_mdf = floi0_mdf + floi_vhx(ix,iy)                        !som 13.07.21
          if (use_9pt_stencil.ne.0) then
 cwdk add computation of 9-point terms
-          floi9 = 1.5e0_R8*fni(ix,iy,0,1)+chvi(ix,iy,0,1)*              !srv 11.05.99
+          floi9 = 1.5_R8*fni(ix,iy,0,1)+chvi(ix,iy,0,1)*              !srv 11.05.99
      &       (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8
      &           +flidia(ix,iy,0,1)                                     !srv 25.01.02 18.01.07
      &           +scur9
-          floi9_mdf = 1.5e0_R8*fni(ix,iy,0,1)+chvi(ix,iy,0,1)*          !srv 11.05.99
+          floi9_mdf = 1.5_R8*fni(ix,iy,0,1)+chvi(ix,iy,0,1)*          !srv 11.05.99
      &     (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8
      &     +scur9
 cwdk

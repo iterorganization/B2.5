@@ -135,7 +135,7 @@ c Drift terms
      &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
      &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
      &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
-     &         bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8
+     &         bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5_R8
      &         *cvsa_cl(ix,iy,0,0,is)*
      &         (ua(ix,iy,is)*sqrt(bb(ix,iy,3))                          !srv 16.10.17
      &         -ua(leftix(ix,iy),leftiy(ix,iy),is)*
@@ -145,9 +145,9 @@ c Drift terms
 !     &            *cvsa_cl(ix,iy,0,0,is)*                              !srv 18.02.00
 !     &        (ua(rightix(ix,iy),rightiy(ix,iy),is)                    !srv
 !     &         *sqrt((bb(rightix(ix,iy),rightiy(ix,iy),3)              !srv 18.02.00
-!     &             +bb(ix,iy,3))*0.5e0_R8)                             !srv 18.02.00
+!     &             +bb(ix,iy,3))*0.5_R8)                               !srv 18.02.00
 !     &         -ua(ix,iy,is)*sqrt((bb(leftix(ix,iy),leftiy(ix,iy),3)
-!     &             +bb(ix,iy,3))*0.5e0_R8))                            !srv 18.02.00
+!     &             +bb(ix,iy,3))*0.5_R8))                              !srv 18.02.00
             endif                                                       !srv 26.11.02
            enddo                                                        !srv
           enddo                                                         !srv
@@ -165,7 +165,7 @@ c Drift terms
      &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
      &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
      &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
-     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5_R8*
      &         cvsa_drho(ix,iy,0,0,is)*
      &        (ua(ix,iy,is)*sqrt(bb(ix,iy,3))
      &        -ua(leftix(ix,iy),leftiy(ix,iy),is)*
@@ -199,7 +199,7 @@ c Drift terms
      &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
      &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
      &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
-     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5_R8*
      &         cvsa_cl(ix,iy,0,0,is)*
      &        (ua(ix,iy,is)*sqrt(bb(ix,iy,3))
      &        -ua(leftix(ix,iy),leftiy(ix,iy),is)*
@@ -207,9 +207,9 @@ c Drift terms
 
               do inucl=0,nspecies-1                                     !som 30.04.24
                if(inucl.ne.s2nucl(is)-1) then
-                t0=0.0e0_R8
+                t0=0.0_R8
                 do iz= 1, znnucl_int(inucl)
-                 t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(inucl,iz))*
+                 t0 = t0 + 0.5_R8*(na(ix,iy,nucl2s(inucl,iz))*
      &           ti(ix,iy)+
      &           na(leftix(ix,iy),leftiy(ix,iy),nucl2s(inucl,iz))*
      &           ti(leftix(ix,iy),leftiy(ix,iy)))*
@@ -222,19 +222,19 @@ c Drift terms
      &          (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
      &           bb(leftix(ix,iy),leftiy(ix,iy),2)*
      &           sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
-     &                bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &                bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5_R8*
      &           (na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
      &           na(leftix(ix,iy),leftiy(ix,iy),is)/
      &           nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
-     &           0.5e0_R8*cvsa_uAdp_albe(ix,iy,0,0,s2nucl(is)-1,inucl)*
+     &           0.5_R8*cvsa_uAdp_albe(ix,iy,0,0,s2nucl(is)-1,inucl)*
      &           t0
                endif
               enddo
 
-              t0=0.0e0_R8                                               !som 07.05.24
+              t0=0.0_R8                                                 !som 07.05.24
               do iz= 1, znnucl_int(s2nucl(is)-1)
                if(iz.ne.nint(rza(ix,iy,is))) then
-                t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(s2nucl(is)-1,iz))*
+                t0 = t0 + 0.5_R8*(na(ix,iy,nucl2s(s2nucl(is)-1,iz))*
      &          ti(ix,iy)+
      &          na(leftix(ix,iy),leftiy(ix,iy),
      &          nucl2s(s2nucl(is)-1,iz))*
@@ -250,7 +250,7 @@ c Drift terms
      &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
      &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
      &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
-     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5_R8*
      &         (na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
      &         na(leftix(ix,iy),leftiy(ix,iy),is)/
      &         nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
@@ -276,11 +276,11 @@ c Drift terms
      &        -vis_par*fac_vis(ix,iy)*                        !signmf*  !srv 25.04.00 05.02.05 22.06.08 11.01.13
      &         dvpar(ix,iy)                                             !srv 23.07.05
      &        *gOnedBsq(ix,iy,0,1)                                      !srv
-     &        /3.0e0_R8                                                 !srv 18.02.00
+     &        /3.0_R8                                                   !srv 18.02.00
 !     &        (dvpar(ix,iy)+dvpar(leftix(ix,iy),leftiy(ix,iy)))        !srv
 !     &        /(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))             !srv 18.02.00
 !     &        *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))   !srv
-!     &        /3.0e0_R8                                                !srv 18.02.00
+!     &        /3.0_R8                                                  !srv 18.02.00
 cwdk computation of radial current on 'poloidal' faces
 cwdk somewhat messy interpolation of geometric factors, for exact
 cwdk cancellation of some terms in poloidal and radial current components
@@ -294,7 +294,7 @@ cwdk cancellation of some terms in poloidal and radial current components
           enddo
          enddo
 *        Y-COMPONENT OF VISCOSITY PARALLEL CURRENT                      !srv
-         wrk0 = 0.0e0_R8                                                !srv 23.07.05 {
+         wrk0 = 0.0_R8                                                  !srv 23.07.05 {
          do iy = -1, ny
           do ix = 0, nx-1
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then
@@ -307,11 +307,11 @@ cwdk cancellation of some terms in poloidal and radial current components
           do ix = 0, nx-1
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
             fchvispar_a(ix,iy,1,1,is)=                                  !srv 16.10.17
-     &        vis_par*fac_vis(ix,iy)*0.5e0_R8*              ! signmf*   !srv 25.04.00 21.04.00 22.06.08 11.01.13
+     &        vis_par*fac_vis(ix,iy)*0.5_R8*                ! signmf*   !srv 25.04.00 21.04.00 22.06.08 11.01.13
      &       (wrk0(ix,iy)+wrk0(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 23.07.05
-     &       *(hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))
-     &       /(hy1(ix,iy) + hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-     &       *gOnedBsq(ix,iy,1,0)/3.0e0_R8                              !srv
+     &       *(hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))
+     &       /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &       *gOnedBsq(ix,iy,1,0)/3.0_R8                                !srv
            endif                                                        !srv 26.11.02
           enddo
          enddo
@@ -324,14 +324,14 @@ cwdk cancellation of some terms in poloidal and radial current components
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fchvispar_a(ix,iy,0,:,:)=0.0e0_R8
-            fchvispar(ix,iy,0,0:1)=0.0e0_R8
+            fchvispar_a(ix,iy,0,:,:)=0.0_R8
+            fchvispar(ix,iy,0,0:1)=0.0_R8
           end do
         end do
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fchvispar_a(ix,iy,1,:,:)=0.0e0_R8
-            fchvispar(ix,iy,1,0:1)=0.0e0_R8
+            fchvispar_a(ix,iy,1,:,:)=0.0_R8
+            fchvispar(ix,iy,1,0:1)=0.0_R8
           end do
         end do
       end do

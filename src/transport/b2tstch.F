@@ -70,7 +70,7 @@
      1   'faulty argument b2tqna_ixref')
 
         bottomdelta1 = jsep+1
-        width = 0.0e0_R8
+        width = 0.0_R8
         do iy = jsep,0,-1
           width = width + hy1(ixref,iy)
           if(width.gt.delta_stoch) then
@@ -83,8 +83,8 @@
 !     &                               ixref, bottomdelta1, topcut(1)
       endif
 
-      fchstoch   = 0.0e0_R8
-      if (fch_stochastic .ne. 0.0e0_R8 ) then                           !lk 31.01.08 {
+      fchstoch   = 0.0_R8
+      if (fch_stochastic .ne. 0.0_R8 ) then                             !lk 31.01.08 {
         call b2trsc (nx, ny, vol, hx, hy, hy1, qc, qs, po, te, ne,
      &   csig_stoch)                                                    !srv 24.08.21
         call b2xehy (nx, ny, te, po, ne, ehy)

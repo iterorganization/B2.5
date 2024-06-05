@@ -212,6 +212,7 @@ csw 24sep2013
               coef = phm0*lnlam(ix,iy)*inv_ctaup*rz2(ix,iy,isb)*         !srv 01.07.09
      &            rz2(ix,iy,is)*mp*am_sqrt
               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then  !srv 26.11.02
+                t0 = na(ix,iy,isb)*na(ix,iy,is)*vti32(ix,iy)
                 smbch(ix,iy,0) = smbch(ix,iy,0)+coef*t0*ua(ix,iy,is)
                 smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/roxa(ix,iy,isb)
                 smfrb(ix,iy) = smfrb(ix,iy) +
@@ -226,6 +227,7 @@ csw 24sep2013
               coef = phm0*lnlam(ix,iy)*inv_ctaup*rz2(ix,iy,isb)*         !srv 01.07.09
      &            rz2(ix,iy,is)*mp*am_sqrt
               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then  !srv 26.11.02
+                t0 = na(ix,iy,isb)*na(ix,iy,is)*vti32(ix,iy)
                 smbch(ix,iy,2) = smbch(ix,iy,2)+coef*t0*ua(ix,iy,is)/
      &                       roxa(ix,iy,isb)
                 smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/

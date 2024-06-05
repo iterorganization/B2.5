@@ -80,7 +80,7 @@
      1   'faulty argument b2tqna_ixref')
 
         bottomdelta1 = jsep+1
-        width = 0.0e0_R8
+        width = 0.0_R8
         do iy = jsep,0,-1
           width = width + hy1(ixref,iy)
           if(width.gt.delta_stoch) then
@@ -93,7 +93,7 @@
 !     &                               ixref, bottomdelta1, topcut(1)
       endif
 
-      csig_stoch = 0.0e0_R8
+      csig_stoch = 0.0_R8
       do iy = bottomdelta1, jsep+1
         do ix = -1, nx
          if(on_closed_surface(ix,iy).and.use_9pt_stencil.ne.0) then

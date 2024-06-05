@@ -388,7 +388,7 @@
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divua0to3 = shidu
       endif
-      call b2saxpy (n2*4, 1.0e0_R8, shidu, 1, shi0, 1)                !srv 11.09.09
+      call b2saxpy (n2*4, 1.0_R8, shidu, 1, shi0, 1)                  !srv 11.09.09
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
       wght = 1.0_R8
       call grad(nx, ny, hx, hy, hy1, wght, qs, po, dpo)
@@ -433,9 +433,9 @@
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exbe0to3 = shedd
       endif
-      call b2saxpy (n2*4, 1.0e0_R8, shedd, 1, she0, 1)                !srv 11.09.09
+      call b2saxpy (n2*4, 1.0_R8, shedd, 1, she0, 1)                  !srv 11.09.09
 
-*   ..contribution from divergence of the electrical drift            !srv 02.06.99                                               !srv 02.06.99
+*   ..contribution from divergence of the electrical drift            !srv 02.06.99
       b2exba=0.0_R8
       b2sihs_exba=0.0_R8
       do is = 0, ns-1
@@ -463,7 +463,7 @@
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exba0to3 = shidd
       endif
-      call b2saxpy (n2*4, 1.0e0_R8, shidd, 1, shi0, 1)                !srv 11.09.09
+      call b2saxpy (n2*4, 1.0_R8, shidd, 1, shi0, 1)                  !srv 11.09.09
 *   ..contribution from viscous heating
       if ((Zhdanov_closure.eq.1) .and. (Zhdanov_test.eq.0).and.
      &  Zhdanov_visu.eq.1) then                                       !som 18.08.21
@@ -474,18 +474,18 @@
       endif
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
-      ft = 4.0e0_R8/3.0e0_R8                                          !srv 16.10.17
+      ft = 4.0_R8/3.0_R8                                              !srv 16.10.17
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
 cwdk compute radial differences of ua at cell faces
         call diff_r(nx,ny,0,hx,hy,vol,qs,ua(-1,-1,is),wrk0,duar)
-        wrk0 = 0.0e0_R8
+        wrk0 = 0.0_R8
         if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
      &  Zhdanov_visu.eq.0 .or. is_neutral(is)) then                   !som 16.08.21
          do iy = -1, ny                                               !srv 28.08.02 21.07.05 16.10.17 {
           do ix = -1, nx
            if(leftix(ix,iy).eq.-2) then
-             wrk0(ix,iy)=0.0e0_R8
+             wrk0(ix,iy)=0.0_R8
            else
              wrk0(ix,iy) = cvsa(ix,iy,0,0,is)*                        !srv 16.10.17
      &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
@@ -497,7 +497,7 @@ cwdk compute radial differences of ua at cell faces
           do iy = -1, ny                                              !srv 28.08.02 21.07.05 16.10.17 {
            do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
-             wrk0(ix,iy)=0.0e0_R8
+             wrk0(ix,iy)=0.0_R8
             else
              wrk0(ix,iy) = cvsa(ix,iy,0,0,is)*                        !srv 16.10.17
      &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
@@ -508,7 +508,7 @@ cwdk compute radial differences of ua at cell faces
           do iy = -1, ny
            do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
-             wrk0(ix,iy)=0.0e0_R8
+             wrk0(ix,iy)=0.0_R8
             else
              wrk0(ix,iy) = (cvsa(ix,iy,0,0,is)-
      &                ft*cvsa_cl(ix,iy,0,0,is))*
@@ -522,7 +522,7 @@ cwdk compute radial differences of ua at cell faces
           do iy = -1, ny
            do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
-             wrk0(ix,iy)=0.0e0_R8
+             wrk0(ix,iy)=0.0_R8
             else
              wrk0(ix,iy) = cvsa(ix,iy,0,0,is)*
      &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
@@ -531,7 +531,7 @@ cwdk compute radial differences of ua at cell faces
               if(inucl.ne.s2nucl(is)-1) then
                t0=0.0e0_R8
                do iz= 1, znnucl_int(inucl)
-                t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(inucl,iz))*
+                t0 = t0 + 0.5_R8*(na(ix,iy,nucl2s(inucl,iz))*
      &          ti(ix,iy)+
      &          na(leftix(ix,iy),leftiy(ix,iy),nucl2s(inucl,iz))*
      &          ti(leftix(ix,iy),leftiy(ix,iy)))*
@@ -543,16 +543,16 @@ cwdk compute radial differences of ua at cell faces
      &         (na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
      &         na(leftix(ix,iy),leftiy(ix,iy),is)/
      &         nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
-     &         0.5e0_R8*cvsa_uAdp_albe(ix,iy,0,0,s2nucl(is)-1,inucl)*
+     &         0.5_R8*cvsa_uAdp_albe(ix,iy,0,0,s2nucl(is)-1,inucl)*
      &         t0*
      &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))
               endif
              enddo
 
-             t0=0.0e0_R8                                               !som 09.05.24
+             t0=0.0_R8                                                 !som 09.05.24
              do iz= 1, znnucl_int(s2nucl(is)-1)
               if(iz.ne.nint(rza(ix,iy,is))) then
-               t0 = t0 + 0.5e0_R8*(na(ix,iy,nucl2s(s2nucl(is)-1,iz))*
+               t0 = t0 + 0.5_R8*(na(ix,iy,nucl2s(s2nucl(is)-1,iz))*
      &         ti(ix,iy)+
      &         na(leftix(ix,iy),leftiy(ix,iy),
      &         nucl2s(s2nucl(is)-1,iz))*
@@ -567,7 +567,7 @@ cwdk compute radial differences of ua at cell faces
      &        (na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
      &        na(leftix(ix,iy),leftiy(ix,iy),is)/
      &        nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
-     &        0.5e0_R8*
+     &        0.5_R8*
      &        (cvsa_uAdp_albe(ix,iy,0,0,s2nucl(is)-1,s2nucl(is)-1)
      &        -zhcscorr*cvsa_uBdp_al(ix,iy,0,0,s2nucl(is)-1))*
      &        t0*
@@ -833,7 +833,7 @@ cwdk compute radial differences of ua at cell faces
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_joule0to3 = shefr
       endif
-      call b2saxpy (n2*4, 1.0e0_R8, shefr, 1, she0, 1)                !srv 11.09.09
+      call b2saxpy (n2*4, 1.0_R8, shefr, 1, she0, 1)                  !srv 11.09.09
 *   ..contribution from atom-atom friction
       if(b2sigp_style.ne.2) then                                      !srv 05.07.17
        b2fraa=0.0_R8

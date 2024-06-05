@@ -859,12 +859,12 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &    fchvispar, fchvisper, fchvisq, fchinert, fchanml, fchstoch)
         if (solving(3)) then
 *   ..solve the potential equation
-          if (use_9pt_stencil.ne.0) then                                !srv 22.12.19 06.07.00
+          if (use_9pt_stencil.ne.0) then                                 !srv 22.12.19 06.07.00
             call restart_ma28_for_9
             call b2nppo (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 22.05.18
      &        rxf2, vol, ne, te, conc, sch, po, fch, respo, corpo, ier0)
             last_solve_9(0:nnreg(0))=solvepo(0:nnreg(0))
-          elseif (vis_per.eq.0.0e0_R8) then                              !srv 22.12.19 06.07.00
+          elseif (vis_per.eq.0.0_R8) then                                !srv 22.12.19 06.07.00
             new_matrix = .false.
             do ireg = 0, nnreg(0)
               new_matrix = new_matrix.or.

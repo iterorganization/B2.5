@@ -27,7 +27,7 @@
 *   ..local variables
       integer ix, iy
       integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
-      real (kind=R8), save :: vis_per = 0.0e0_R8                        !srv 22.11.99
+      real (kind=R8), save :: vis_per = 0.0_R8                          !srv 22.11.99
       real (kind=R8) ::
      &  fac_vism, t0
       character(3) :: chns
@@ -55,11 +55,11 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99
-      avisper_b  = 0.0e0_R8; bvisper_b = 0.0e0_R8; cvisper_b = 0.0e0_R8; !srv 27.01.00 22.03.02
-      dvisper_b = 0.0e0_R8
+      avisper_b  = 0.0_R8; bvisper_b = 0.0_R8; cvisper_b = 0.0_R8;      !srv 27.01.00 22.03.02
+      dvisper_b = 0.0_R8
 
       fac_vism = maxval(fac_vis)
-      if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8) then             !srv 22.11.99
+      if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0_R8) then               !srv 22.11.99
 
           do iy=-1,ny
             do ix=-1,nx
@@ -102,11 +102,11 @@
        call my_out(70,nx,ny,bvisper_b(-1,-1,1),'b2txvsprco_bvisper_by')
        call my_out(70,nx,ny,cvisper_b(-1,-1,1),'b2txvsprco_cvisper_by')
        call my_out(70,nx,ny,dvisper_b(-1,-1,1),'b2txvsprco_dvisper_by')
-       call my_out(70,nx,ny,hy1,'b2tvsprco_hy1')
-       call my_out(70,nx,ny,wbbv(-1,-1,3),'b2tvsprco_bbv')
-       call my_out(70,nx,ny,vol,'b2tvspcor_vol')
+       call my_out(70,nx,ny,hy1,'b2txvsprco_hy1')
+       call my_out(70,nx,ny,wbbv(-1,-1,3),'b2txvsprco_bbv')
+       call my_out(70,nx,ny,vol,'b2txvspcor_vol')
        write (chns,'(i3.3)') isb
-       call my_out(70,nx,ny,vsa0(-1,-1,isb),'b2tvsprco_vsa0_'//chns)
+       call my_out(70,nx,ny,vsa0(-1,-1,isb),'b2txvsprco_vsa0_'//chns)
       endif
 
 * ..return

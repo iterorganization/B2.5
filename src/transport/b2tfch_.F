@@ -241,7 +241,7 @@
             endif
           enddo                                                          !srv 24.06.08 }
          endif                                                           !srv
-         if(fch_stochastic.ne.0.0e0_R8 ) then                            !lk 31.01.08 {
+         if(fch_stochastic.ne.0.0_R8 ) then                              !lk 31.01.08 {
           conc(ix,iy,0,1) = conc(ix,iy,0,1) + csig_stoch(ix,iy,0,1)
           fch(ix,iy,0,1) = fch(ix,iy,0,1) + fchstoch(ix,iy,0,1)
          endif                                                           !lk 31.01.08 }
@@ -266,7 +266,7 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
      &           qs(ix,iy,1)
            conc(ix,iy,1,0) = csig(ix,iy,1,1)*t0
          endif
-         if(fch_ion_neutral.ne.0.0e0_R8 .and.
+         if(fch_ion_neutral.ne.0.0_R8 .and.
      &     (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then           !srv 23.12.19
          do is = 0, ns-1                                                 !srv 24.06.08 {
 !          if (.not.is_neutral(is)) then
@@ -281,7 +281,7 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
           endif
          enddo                                                           !srv 24.06.08 }
         endif                                                            !srv
-        if(fch_stochastic.ne.0.0e0_R8 ) then                             !lk 31.01.08 {
+        if(fch_stochastic.ne.0.0_R8 ) then                               !lk 31.01.08 {
           conc(ix,iy,1,1) = conc(ix,iy,1,1) + csig_stoch(ix,iy,1,1)
           if (use_9pt_stencil.ne.0)
      >     conc(ix,iy,1,0) = conc(ix,iy,1,0) + csig_stoch(ix,iy,1,1)*t0

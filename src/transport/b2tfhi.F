@@ -298,21 +298,21 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &         hybfac*2.5_R8*cum_flo_vadia/2.0_R8*dti
              fhi_cond(ix,iy,0,0) = -coni0*dti0
              fhi_pschused(ix,iy,0,0) = 0.0_R8
-             fhi_inert(ix,iy,0,0) = 1.5e0_R8/qe*fchinert(ix,iy,0,0)*
+             fhi_inert(ix,iy,0,0) = 1.5_R8/qe*fchinert(ix,iy,0,0)*
      &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &         hybfac*1.5e0_R8/qe*fchinert(ix,iy,0,0)*xcur/2.0_R8*dti
-             fhi_vispar(ix,iy,0,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0,0)*
+     &         hybfac*1.5_R8/qe*fchinert(ix,iy,0,0)*xcur/2.0_R8*dti
+             fhi_vispar(ix,iy,0,0) = 1.5_R8/qe*fchvispar(ix,iy,0,0)*
      &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &         hybfac*1.5e0_R8/qe*fchvispar(ix,iy,0,0)*xcur/2.0_R8*dti
-             fhi_visper(ix,iy,0,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0,0)*
+     &         hybfac*1.5_R8/qe*fchvispar(ix,iy,0,0)*xcur/2.0_R8*dti
+             fhi_visper(ix,iy,0,0) = 1.5_R8/qe*fchvisper(ix,iy,0,0)*
      &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &         hybfac*1.5e0_R8/qe*fchvisper(ix,iy,0,0)*xcur/2.0_R8*dti
-             fhi_visq(ix,iy,0,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0,0)*xcur*
+     &         hybfac*1.5_R8/qe*fchvisper(ix,iy,0,0)*xcur/2.0_R8*dti
+             fhi_visq(ix,iy,0,0) = 1.5_R8/qe*fchvisq(ix,iy,0,0)*xcur*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &         hybfac*1.5e0_R8/qe*fchvisq(ix,iy,0,0)*xcur/2.0_R8*dti
-             fhi_anml(ix,iy,0,0) = 1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur*
+     &         hybfac*1.5_R8/qe*fchvisq(ix,iy,0,0)*xcur/2.0_R8*dti
+             fhi_anml(ix,iy,0,0) = 1.5_R8/qe*fchanml(ix,iy,0,0)*xcur*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &         hybfac*1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur/2.0_R8*dti
+     &         hybfac*1.5_R8/qe*fchanml(ix,iy,0,0)*xcur/2.0_R8*dti
            endif
            if (balance.and.
      &         (balance_netcdf.ne.0).and.
@@ -340,21 +340,21 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
              fhi_dia(ix,iy,0,0) = 0.0_R8
              fhi_cond(ix,iy,0,0) = -coni0_mdf*dti0_mdf
              fhi_pschused(ix,iy,0,0) = -fhiPSch(ix,iy,0,0)
-             fhi_inert(ix,iy,0,0) = 1.5e0_R8/qe*fchinert(ix,iy,0,0)*
+             fhi_inert(ix,iy,0,0) = 1.5_R8/qe*fchinert(ix,iy,0,0)*
      &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &         hybfac*1.5e0_R8/qe*fchinert(ix,iy,0,0)*xcur/2.0_R8*dti
-             fhi_vispar(ix,iy,0,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0,0)*
+     &         hybfac*1.5_R8/qe*fchinert(ix,iy,0,0)*xcur/2.0_R8*dti
+             fhi_vispar(ix,iy,0,0) = 1.5_R8/qe*fchvispar(ix,iy,0,0)*
      &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &         hybfac*1.5e0_R8/qe*fchvispar(ix,iy,0,0)*xcur/2.0_R8*dti
-             fhi_visper(ix,iy,0,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0,0)*
+     &         hybfac*1.5_R8/qe*fchvispar(ix,iy,0,0)*xcur/2.0_R8*dti
+             fhi_visper(ix,iy,0,0) = 1.5_R8/qe*fchvisper(ix,iy,0,0)*
      &         xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &         hybfac*1.5e0_R8/qe*fchvisper(ix,iy,0,0)*xcur/2.0_R8*dti
-             fhi_visq(ix,iy,0,0) = 1.5e0_R8/qe*fchvisq(ix,iy,0,0)*xcur*
+     &         hybfac*1.5_R8/qe*fchvisper(ix,iy,0,0)*xcur/2.0_R8*dti
+             fhi_visq(ix,iy,0,0) = 1.5_R8/qe*fchvisq(ix,iy,0,0)*xcur*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &         hybfac*1.5e0_R8/qe*fchvisq(ix,iy,0,0)*xcur/2.0_R8*dti
-             fhi_anml(ix,iy,0,0) = 1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur*
+     &         hybfac*1.5_R8/qe*fchvisq(ix,iy,0,0)*xcur/2.0_R8*dti
+             fhi_anml(ix,iy,0,0) = 1.5_R8/qe*fchanml(ix,iy,0,0)*xcur*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &         hybfac*1.5e0_R8/qe*fchanml(ix,iy,0,0)*xcur/2.0_R8*dti
+     &         hybfac*1.5_R8/qe*fchanml(ix,iy,0,0)*xcur/2.0_R8*dti
            endif
          else
            t1 = dim ( coni0/fllimi(ix,iy),

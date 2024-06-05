@@ -304,14 +304,14 @@ csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
 
 *   ..set csigx = 0 and calfx = 0
       if (csig_an_style.eq.1) then
-        call sfill (n2*2, 0.0e0_R8, csig(-1,-1,0,0), 1)
-        call sfill (n2*2, 0.0e0_R8, calf(-1,-1,0,0), 1)
+        call sfill (n2*2, 0.0_R8, csig(-1,-1,0,0), 1)
+        call sfill (n2*2, 0.0_R8, calf(-1,-1,0,0), 1)
       end if
 *   ..set strange velocities chve, chvi
 c      call sfill (n2*2, 0.0_R8, chve, 1)
 c      call sfill (n2*2, 0.0_R8, chvi, 1)
 *   ..add stochastic part of the electron heat conductivity
-      if(fch_stochastic.ne.0.0e0_R8)then                                  !lk 31.01.08 { !srv 17.12.13
+      if(fch_stochastic.ne.0.0_R8) then                                   !lk 31.01.08 { !srv 17.12.13
        call b2trsc (nx, ny, vol, hx, hy, hy1, qc, qs, po, te, ne,
      &  csig_stoch)                                                       !srv 24.08.21
        call b2trsh (nx, ny, vol, hy1, po, te, ne,

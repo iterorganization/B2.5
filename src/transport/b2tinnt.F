@@ -3,7 +3,7 @@
 
       subroutine b2tinnt (nx, ny, ns, nscx, iscx,
      &       facdrift, fac_ExB,
-     &       vol, gs, hx, hy, hy1, hz, qz, qc, qs, bb,                  !srv 08.07.09 { !srv 20.10.177 !som 04.11.21
+     &       vol, gs, hx, hy, hy1, hz, qz, qc, qs, bb,                  !srv 08.07.09 { !srv 20.10.17 !som 04.11.21
      &       te, po, ti, na, fna, csigin, fchin_a, fchin)               !srv 08.03.99 16.06.09
       use b2mod_types
       use b2mod_indirect
@@ -93,6 +93,10 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tinnt')
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call ipgeti ('b2tinnt_iout', iout)
@@ -127,10 +131,6 @@
      &      'and not compatible with b2tinnt_kinetic = 1')
         endif
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of hz

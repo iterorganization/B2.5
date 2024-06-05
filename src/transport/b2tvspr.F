@@ -44,7 +44,7 @@
       integer, save :: dia_lim_all_ions = 1                             !som 11.11.21
       real (kind=R8) ::
      *    vbar, t0                                                      !som 11.11.21
-      real (kind=R8), save :: vis_per = 0.0e0_R8                        !srv 22.11.99
+      real (kind=R8), save :: vis_per = 0.0_R8                          !srv 22.11.99
       real (kind=R8) :: va(-1:nx,-1:ny,0:1), dva(-1:nx,-1:ny)           !srv 22.11.99
       real (kind=R8) :: fac_vism
 *   ..procedures
@@ -150,7 +150,7 @@
           enddo
 
 *          X-COMPONENT OF VISCOSITY PERPENDICULAR CURRENT               !srv 22.11.99
-          fchvisper_a(:,:,0,0,is)= 0.0e0_R8
+          fchvisper_a(:,:,0,0,is)= 0.0_R8
         else
           fchvisper_a(:,:,:,:,is)=0.0_R8
         endif                                                           !srv 16.10.17
