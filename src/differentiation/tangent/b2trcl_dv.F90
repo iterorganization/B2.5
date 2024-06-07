@@ -1554,19 +1554,22 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       result13d(nd, :) = arg15d(nd, :)/(2.0*temp12)
     END WHERE
     wrkcd(nd, :) = (result13d(nd, :)-result13*abs5d(nd, :)/abs5)/abs5
-    wrkcd(nd, :) = geo%cvbb(:, 3)**2*(wrkc**2*(switch%b2tfhi_fsigkt*cod%&
-&     sigx_c(nd, :)+co%sigx_c*switchd%b2tfhi_fsigkt(nd))+co%sigx_c*&
-&     switch%b2tfhi_fsigkt*2*wrkc*wrkcd(nd, :))/(am(ismain)*mp)
+    wrkcd(nd, :) = geo%cvbb(:, 3)**2*(wrkc**2*cod%sigx_c(nd, :)+co%&
+&     sigx_c*2*wrkc*wrkcd(nd, :))/(am(ismain)*mp)
     cdktd(nd, :, 1) = 0.D0
     cod%sigx_kt(nd, :) = wrkcd(nd, :)
     cvsa_cld(nd, :, :, :) = cvsad(nd, :, :, :)
 !srv 09.01.01
     cvsahz_cld(nd, :, :, :) = cvsahzd(nd, :, :, :)
   END DO
-  wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)*switch%&
-&   b2tfhi_fsigkt
+  wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)
   CALL B2TXCX_DV(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc, &
 &          wrkcd, cdkt(:, 0), cdktd(:, :, 0), nbdirs)
+  DO nd=1,nbdirs
+    cdktd(nd, :, 0) = switch%b2tfhi_fsigkt*cdktd(nd, :, 0) + cdkt(:, 0)*&
+&     switchd%b2tfhi_fsigkt(nd)
+  END DO
+  cdkt(:, 0) = cdkt(:, 0)*switch%b2tfhi_fsigkt
   cdkt(:, 1) = 0.0_R8
   co%sigx_kt = wrkc
 !   ..save the classical transport coefficients
@@ -2467,10 +2470,10 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   arg15(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
   result13 = SQRT(arg15(:))
   wrkc = result13/abs5
-  wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)*switch%&
-&   b2tfhi_fsigkt
+  wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)
   CALL B2TXCX_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc&
 &              , cdkt(:, 0))
+  cdkt(:, 0) = cdkt(:, 0)*switch%b2tfhi_fsigkt
   cdkt(:, 1) = 0.0_R8
   co%sigx_kt = wrkc
 !   ..save the classical transport coefficients
