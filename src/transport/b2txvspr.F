@@ -28,7 +28,7 @@
       real (kind=R8), save :: vis_per = 1.0_R8                          !srv 22.11.99
       integer, save :: visper_all_ions = 1
       real (kind=R8) ::
-     &  fac_vism, t0, wrk0(-1:nx,-1:ny)
+     &  fac_vism, t0
       character(3) :: chns
 *   ..procedures
       external xertst
