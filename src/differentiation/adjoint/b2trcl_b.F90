@@ -1021,8 +1021,7 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
   wrkc = SQRT(2.0_R8*pl%ti*(am(ismain)*mp))/abs7
   CALL PUSHREAL8ARRAY(wrkc, r8*ncv/8)
-  wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)*switch%&
-&   b2tfhi_fsigkt
+  wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)
   CALL B2TXCX_FWD(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc, &
 &           cdkt(:, 0))
 !   ..save the classical transport coefficients
@@ -1118,14 +1117,15 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   wrkcb = cob%sigx_kt
   cob%sigx_kt = 0.D0
   cdktb(:, 1) = 0.D0
+  switchb%b2tfhi_fsigkt = switchb%b2tfhi_fsigkt + SUM(cdkt(:, 0)*cdktb(:&
+&   , 0))
+  cdktb(:, 0) = switch%b2tfhi_fsigkt*cdktb(:, 0)
   CALL B2TXCX_BWD(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc, &
 &           wrkcb, cdkt(:, 0), cdktb(:, 0))
   CALL POPREAL8ARRAY(wrkc, r8*ncv/8)
   tempb8 = geo%cvbb(:, 3)**2*wrkcb/(am(ismain)*mp)
-  wrkcb = 2*wrkc*co%sigx_c*switch%b2tfhi_fsigkt*tempb8
-  cob%sigx_c = cob%sigx_c + switch%b2tfhi_fsigkt*wrkc**2*tempb8
-  switchb%b2tfhi_fsigkt = switchb%b2tfhi_fsigkt + SUM(co%sigx_c*wrkc**2*&
-&   tempb8)
+  wrkcb = 2*wrkc*co%sigx_c*tempb8
+  cob%sigx_c = cob%sigx_c + wrkc**2*tempb8
   abs7b = 0.D0
   temp12 = 2.0_R8*am(ismain)*pl%ti*mp
   temp13 = SQRT(temp12)
@@ -2686,10 +2686,10 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
   wrkc = SQRT(2.0_R8*pl%ti*(am(ismain)*mp))/abs7
-  wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)*switch%&
-&   b2tfhi_fsigkt
+  wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)
   CALL B2TXCX_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc&
 &              , cdkt(:, 0))
+  cdkt(:, 0) = cdkt(:, 0)*switch%b2tfhi_fsigkt
   cdkt(:, 1) = 0.0_R8
   co%sigx_kt = wrkc
 !   ..save the classical transport coefficients

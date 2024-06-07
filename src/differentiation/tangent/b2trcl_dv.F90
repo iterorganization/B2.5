@@ -1431,19 +1431,22 @@ SUBROUTINE B2TRCL_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       result12d(nd, :) = arg14d(nd, :)/(2.0*temp9)
     END WHERE
     wrkcd(nd, :) = (result12d(nd, :)-result12*abs7d(nd, :)/abs7)/abs7
-    wrkcd(nd, :) = geo%cvbb(:, 3)**2*(wrkc**2*(switch%b2tfhi_fsigkt*cod%&
-&     sigx_c(nd, :)+co%sigx_c*switchd%b2tfhi_fsigkt(nd))+co%sigx_c*&
-&     switch%b2tfhi_fsigkt*2*wrkc*wrkcd(nd, :))/(am(ismain)*mp)
+    wrkcd(nd, :) = geo%cvbb(:, 3)**2*(wrkc**2*cod%sigx_c(nd, :)+co%&
+&     sigx_c*2*wrkc*wrkcd(nd, :))/(am(ismain)*mp)
     cdktd(nd, :, 1) = 0.D0
     cod%sigx_kt(nd, :) = wrkcd(nd, :)
     cvsa_cld(nd, :, :, :) = cvsad(nd, :, :, :)
 !srv 09.01.01
     cvsahz_cld(nd, :, :, :) = cvsahzd(nd, :, :, :)
   END DO
-  wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)*switch%&
-&   b2tfhi_fsigkt
+  wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)
   CALL B2TXCX_DV(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc, &
 &          wrkcd, cdkt(:, 0), cdktd(:, :, 0), nbdirs)
+  DO nd=1,nbdirs
+    cdktd(nd, :, 0) = switch%b2tfhi_fsigkt*cdktd(nd, :, 0) + cdkt(:, 0)*&
+&     switchd%b2tfhi_fsigkt(nd)
+  END DO
+  cdkt(:, 0) = cdkt(:, 0)*switch%b2tfhi_fsigkt
   cdkt(:, 1) = 0.0_R8
   co%sigx_kt = wrkc
 !   ..save the classical transport coefficients
@@ -2288,12 +2291,12 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
   arg14(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
-  result12 = SQRT(arg14(:))
+  result13 = SQRT(arg14(:))
   wrkc = result12/abs7
-  wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)*switch%&
-&   b2tfhi_fsigkt
+  wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)
   CALL B2TXCX_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc&
 &              , cdkt(:, 0))
+  cdkt(:, 0) = cdkt(:, 0)*switch%b2tfhi_fsigkt
   cdkt(:, 1) = 0.0_R8
   co%sigx_kt = wrkc
 !   ..save the classical transport coefficients
