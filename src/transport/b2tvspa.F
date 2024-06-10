@@ -53,9 +53,9 @@
      *   dvpar(-1:nx,-1:ny),
      *   wrk0(-1:nx,-1:ny)
       save ncall, vis_par
-      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0             !som 16.08.21
-      integer, save :: Zhdanov_visu = 1                                  !som 16.08.21
-      integer, save :: zh_vis_type = 0                                   !som 13.01.22
+      integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0            !som 16.08.21
+      integer, save :: Zhdanov_visu = 1                                 !som 16.08.21
+      integer, save :: zh_vis_type = 0                                  !som 13.01.22
 *   ..procedures
       external xertst
       external b2xvsg, b2xvff, b2xvfx
@@ -112,7 +112,7 @@ c Drift terms
      &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
      &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
      &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
-     &         bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8
+     &         bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5_R8
      &         *cvsa_cl(ix,iy,0,is)*
      &         (ua(ix,iy,is)*sqrt(bb(ix,iy,3))                          !srv 16.10.17
      &         -ua(leftix(ix,iy),leftiy(ix,iy),is)*
@@ -122,9 +122,9 @@ c Drift terms
 !     &            *cvsa_cl(ix,iy,0,is)*                                !srv 18.02.00
 !     &        (ua(rightix(ix,iy),rightiy(ix,iy),is)                    !srv
 !     &         *sqrt((bb(rightix(ix,iy),rightiy(ix,iy),3)              !srv 18.02.00
-!     &             +bb(ix,iy,3))*0.5e0_R8)                             !srv 18.02.00
+!     &             +bb(ix,iy,3))*0.5_R8)                               !srv 18.02.00
 !     &         -ua(ix,iy,is)*sqrt((bb(leftix(ix,iy),leftiy(ix,iy),3)
-!     &             +bb(ix,iy,3))*0.5e0_R8))                            !srv 18.02.00
+!     &             +bb(ix,iy,3))*0.5_R8))                              !srv 18.02.00
             endif                                                       !srv 26.11.02
            enddo                                                        !srv
           enddo                                                         !srv
@@ -142,7 +142,7 @@ c Drift terms
      &        (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
      &         bb(leftix(ix,iy),leftiy(ix,iy),2)*
      &         sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
-     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5_R8*
      &         cvsa_drho(ix,iy,0,is)*
      &        (ua(ix,iy,is)*sqrt(bb(ix,iy,3))
      &        -ua(leftix(ix,iy),leftiy(ix,iy),is)*
@@ -179,19 +179,19 @@ c Drift terms
            if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02
             fchvispar_a(ix,iy,0,is) =                                   !srv 16.10.17
      &        -vis_par*fac_vis(ix,iy)*                        !signmf*  !srv 25.04.00 05.02.05 22.06.08 11.01.13
-     &         2.0e0_R8*dvpar(ix,iy)                                    !srv 23.07.05
+     &         2.0_R8*dvpar(ix,iy)                                      !srv 23.07.05
      &        /(hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy))            !srv 18.02.00
      &        *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))    !srv
-     &        /3.0e0_R8                                                 !srv 18.02.00
+     &        /3.0_R8                                                   !srv 18.02.00
 !     &        (dvpar(ix,iy)+dvpar(leftix(ix,iy),leftiy(ix,iy)))        !srv
 !     &        /(hy(leftix(ix,iy),leftiy(ix,iy))+hy(ix,iy))             !srv 18.02.00
 !     &        *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))   !srv
-!     &        /3.0e0_R8                                                !srv 18.02.00
+!     &        /3.0_R8                                                  !srv 18.02.00
            endif                                                        !srv 26.11.02
           enddo
          enddo
 *        Y-COMPONENT OF VISCOSITY PARALLEL CURRENT                      !srv
-         wrk0 = 0.0e0_R8                                                !srv 23.07.05 {
+         wrk0 = 0.0_R8                                                  !srv 23.07.05 {
          do iy = -1, ny
           do ix = 0, nx-1
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then
@@ -208,7 +208,7 @@ c Drift terms
      &       (wrk0(ix,iy)+wrk0(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 23.07.05
      &       /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))         !srv 18.02.00
      &       *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !srv
-     &       /3.0e0_R8                                                  !srv 18.02.00
+     &       /3.0_R8                                                    !srv 18.02.00
            endif                                                        !srv 26.11.02
           enddo
          enddo
@@ -221,14 +221,14 @@ c Drift terms
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fchvispar_a(ix,iy,0,:)=0.0e0_R8
-            fchvispar(ix,iy,0)=0.0e0_R8
+            fchvispar_a(ix,iy,0,:)=0.0_R8
+            fchvispar(ix,iy,0)=0.0_R8
           end do
         end do
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            fchvispar_a(ix,iy,1,:)=0.0e0_R8
-            fchvispar(ix,iy,1)=0.0e0_R8
+            fchvispar_a(ix,iy,1,:)=0.0_R8
+            fchvispar(ix,iy,1)=0.0_R8
           end do
         end do
       end do

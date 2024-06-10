@@ -376,7 +376,7 @@ csw 13mar2012
           else
             mintopcut=minval(topcut(1:nncut))
           endif
-        endif 
+        endif
 
         do iy = -1,mintopcut-1    ! for inner surfaces                   !srv 22.04.16
          do ix = -1,nx

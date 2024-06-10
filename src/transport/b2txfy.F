@@ -45,7 +45,7 @@
          if (mode.eq.-1) then
 *    ..use harmonic averaging
            t0 = vol(bottomix(ix,iy),bottomiy(ix,iy))*kapsn/
-     &        hy1(bottomix(ix,iy),bottomiy(ix,iy))**2
+     &          hy1(bottomix(ix,iy),bottomiy(ix,iy))**2
            t1 = vol(ix,iy)*kaps/hy1(ix,iy)**2
            if (t0*t1.le.0.0_R8) then
             cony(ix,iy) = 0.0_R8

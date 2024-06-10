@@ -1146,16 +1146,23 @@ c            eb2atm will be [1 4 2 3]
         TEXTA(ia)=species_list(ia)
       end do
 #else
-      do ia=1,nspecies !initialize
-        eb2atm(ia)=ia
-      end do
-      do is=1,nspecies !species over B2
-        do ia=1,natm !species over Eirene
-          if (streql(TEXTA(ia),species_list(is))) then
-           eb2atm(is)=ia
-          end if
+      if (.not.allocated(texta)) allocate(texta(natm))
+      if (use_eirene.ne.0) then
+        do ia=1,nspecies !initialize
+          eb2atm(ia)=ia
         end do
-      end do
+        do is=1,nspecies !species over B2
+          do ia=1,natm !species over Eirene
+            if (streql(TEXTA(ia),species_list(is))) then
+             eb2atm(is)=ia
+            end if
+          end do
+        end do
+      else
+        do ia=1,nspecies
+          TEXTA(ia)=species_list(ia)
+        end do
+      end if
 #endif
       write(hlp_frm,'(a,i2,a)') '(a,',nspecies,'(1x,i3))'
       write(6,hlp_frm) 'eb2spcr',(eb2spcr(is),is=1,nspecies)
@@ -1163,12 +1170,14 @@ c            eb2atm will be [1 4 2 3]
       write(6,hlp_frm) 'b2ptrgl: list of species according to B2: ',
      ,                 (species_list(is),is=1,nspecies)
 #ifdef B25_EIRENE
-      write(hlp_frm,'(a,i2,a)') '(a,',natmi,'(1x,a8))'
-      write(6,hlp_frm) 'List of atoms according to Eirene: ',
-     .                 (TEXTA(is),is=1,natmi)
-      write(hlp_frm,'(a,i2,a)') '(a,',nspecies,'(1x,a2))'
-      write(6,hlp_frm) 'Ordering of B2 atoms according to Eirene: ',
-     ,                 (atoms_list(eb2atm(i)),i=1,nspecies)
+      if (use_eirene.ne.0) then
+        write(hlp_frm,'(a,i2,a)') '(a,',natmi,'(1x,a8))'
+        write(6,hlp_frm) 'List of atoms according to Eirene: ',
+     .                   (TEXTA(is),is=1,natmi)
+        write(hlp_frm,'(a,i2,a)') '(a,',nspecies,'(1x,a2))'
+        write(6,hlp_frm) 'Ordering of B2 atoms according to Eirene: ',
+     ,                   (atoms_list(eb2atm(i)),i=1,nspecies)
+      end if
 #endif
 c*** Calculate the particle fluxes
 
@@ -1520,12 +1529,12 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
      .     'temperature of neutral atoms of species XX [eV]'
           write(lun,740) 'XX_pres_atm',tab,
      .     'pressure of neutral atoms of species XX [Pa]'
-#ifdef B25_EIRENE
-          write(lun,740) 'XX_flux_mol',tab,
-     .     'incident flux of molecules XX [1/m^2/s]'
-          write(lun,740) 'XX_pres_mol',tab,
-     .     'pressure of molecules XX [Pa]'
-#endif
+          if (nclm_nm.gt.0) then
+            write(lun,740) 'XX_flux_mol',tab,
+     .       'incident flux of molecules XX [1/m^2/s]'
+            write(lun,740) 'XX_pres_mol',tab,
+     .       'pressure of molecules XX [Pa]'
+          end if
           write(lun,740) 'XX_sput',tab,
      .     'gross sputtering of material XX [g/y]'
           write(lun,740) 'XX_ersn',tab,

@@ -351,15 +351,15 @@ ctmp.dpc
      &        na, ua, cvsa_cl, cvsa_drho, fac_vis,
      &        fchvispar_a, fchvispar)                                    !som 18.08.21
           call b2tiner (nx, ny, ns, ismain, vol, gs, bb,
-     &                    na, ua, facdrift, fchinert_a, fchinert)        !srv 08.09.21
+     &                  na, ua, facdrift, fchinert_a, fchinert)          !srv 08.09.21
           call b2tvspr (nx, ny, ns, ismain, fac_vis,                     !srv 10.10.17 19.02.21
      &                    vol, po, ti, na,
      &                    avisper_a, bvisper_a, cvisper_a,
      &                    fchvisper_a, fchvisper)
           call b2tvsq (nx, ny, ns, ismain, fac_vis,                      !srv 10.10.17 19.02.21
-     &             ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,            !som 21.10.21
-     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
-     &             fchvisq_a, fchvisq)
+     &                 ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,        !som 21.10.21
+     &                 chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,    !som 20.10.21
+     &                 fchvisq_a, fchvisq)
           call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
      &              vol, gs, hx, hy, hz, qz, qc, bb,
@@ -416,11 +416,11 @@ ctmp.dpc
      &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,     !srv 13.10.06 25.12.06 23.10.09
      &     fhe, fhi, fhm, fht, fnaPSch, fhePSch, fhiPSch, fch,
      &     fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,   !srv 08.09.21
-     &     fchin_a, fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, !srv 21.10.02, IYS 17.20.2023
+     &     fchin_a, fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, !srv 21.10.02
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &     cdna, cdpa, cvsa_cl, cvsa_drho,                               !som 18.08.21
      &     chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                !som 20.10.21
-     &     cvla, chce, chve, chci, chvi, calf, csigin,                   !xpb, IYS 17.20.2023
+     &     cvla, chce, chve, chci, chvi, calf, csigin,                   !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &     wrong_flow, main_call)

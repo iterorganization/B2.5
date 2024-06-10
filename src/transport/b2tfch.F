@@ -122,6 +122,12 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tfch')
+*   ..test input
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     . 'invalid main plasma species index ismain')
+*   ..set internal parameters on first call
       if (ncall.eq.0) then                                              !xpb
        call ipgetr ('b2tfhe_neutral', fch_ion_neutral)                  !xpb
        call ipgetr ('b2tfhe_anomalous', fch_anomalous)                  !xpb

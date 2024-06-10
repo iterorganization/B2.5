@@ -44,7 +44,7 @@
       integer, save :: dia_lim_all_ions = 1                             !som 11.11.21
       real (kind=R8) ::
      *    vbar, t0                                                      !som 11.11.21
-      real (kind=R8), save :: vis_per = 1.0e0_R8                        !srv 22.11.99
+      real (kind=R8), save :: vis_per = 1.0_R8                          !srv 22.11.99
       real (kind=R8) :: va(-1:nx,-1:ny,0:1), dva(-1:nx,-1:ny)           !srv 22.11.99
       real (kind=R8) :: fac_vism
 *   ..procedures
@@ -71,13 +71,13 @@
       call b2txvspr(nx, ny, ns, ismain, fac_vis, vol,                   !srv 10.10.17 19.02.21
      &              avisper_a, bvisper_a, cvisper_a)
 * ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99
-      va=0.0e0_R8
-      dva=0.0e0_R8
-      fchvisper =0.0e0_R8                                               !srv 22.11.99
-      fchvisper_a=0.0e0_R8
+      va=0.0_R8
+      dva=0.0_R8
+      fchvisper = 0.0_R8                                                !srv 22.11.99
+      fchvisper_a = 0.0_R8
 
       fac_vism = maxval(fac_vis)
-      if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8 .and.
+      if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0_R8 .and.
      &   no_current.eq.0) then
        do is = 0,ns-1                                                   !srv 16.10.17
 !        if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then            !srv 16.10.17
@@ -150,7 +150,7 @@
           enddo
 
 *          X-COMPONENT OF VISCOSITY PERPENDICULAR CURRENT               !srv 22.11.99
-          fchvisper_a(:,:,0,is)= 0.0e0_R8
+          fchvisper_a(:,:,0,is)= 0.0_R8
         else
           fchvisper_a(:,:,:,is)=0.0_R8
         endif                                                           !srv 16.10.17

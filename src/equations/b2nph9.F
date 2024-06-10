@@ -140,6 +140,12 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2nph9')
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test rxf
+      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2mndt_style', style_b2mndt)                       !srv 07.07.21 {
@@ -181,12 +187,6 @@
        call ipgeti ('b2nph9_style', style)                              !srv 09.07.08
        call ipgeti ('get_residuals', get_residuals)                     !srv 22.05.18
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-*   ..test rxf
-      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
@@ -255,8 +255,8 @@
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,          !som 16.08.21 !srv 24.08.21
      *  cvsa_drho, she0, shi0)                                          !som 16.08.21 !srv 07.06.00 02.06.99 07.07.09
       endif
-      call b2saxpy (n2*4, 1.0e0_R8, she, 1, she0, 1)
-      call b2saxpy (n2*4, 1.0e0_R8, shi, 1, shi0, 1)
+      call b2saxpy (n2*4, 1.0_R8, she, 1, she0, 1)
+      call b2saxpy (n2*4, 1.0_R8, shi, 1, shi0, 1)
 
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
@@ -327,10 +327,10 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,reshe,'b2nph9_reshe')
         call my_out(70,nx,ny,fhe(-1,-1,0),'b2nph9_fhex')
         call my_out(70,nx,ny,fhe(-1,-1,1),'b2nph9_fhey')
-!        call my_out(70,nx,ny,she0(-1,-1,0),'b2nph9_she0')
-!        call my_out(70,nx,ny,she0(-1,-1,1),'b2nph9_she1')
-!        call my_out(70,nx,ny,she0(-1,-1,2),'b2nph9_she2')
-!        call my_out(70,nx,ny,she0(-1,-1,3),'b2nph9_she3')
+        call my_out(70,nx,ny,she0(-1,-1,0),'b2nph9_she0')
+        call my_out(70,nx,ny,she0(-1,-1,1),'b2nph9_she1')
+        call my_out(70,nx,ny,she0(-1,-1,2),'b2nph9_she2')
+        call my_out(70,nx,ny,she0(-1,-1,3),'b2nph9_she3')
         wrk0=she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
      &                   she0(:,:,3)*te*ne
         call my_out(70,nx,ny,wrk0,'b2nph9_she')
@@ -338,10 +338,10 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,resht,'b2nph9_resht')
         call my_out(70,nx,ny,fhi(-1,-1,0),'b2nph9_fhix')
         call my_out(70,nx,ny,fhi(-1,-1,1),'b2nph9_fhiy')
-!        call my_out(70,nx,ny,shi0(-1,-1,0),'b2nph9_shi0')
-!        call my_out(70,nx,ny,shi0(-1,-1,1),'b2nph9_shi1')
-!        call my_out(70,nx,ny,shi0(-1,-1,2),'b2nph9_shi2')
-!        call my_out(70,nx,ny,shi0(-1,-1,3),'b2nph9_shi3')
+        call my_out(70,nx,ny,shi0(-1,-1,0),'b2nph9_shi0')
+        call my_out(70,nx,ny,shi0(-1,-1,1),'b2nph9_shi1')
+        call my_out(70,nx,ny,shi0(-1,-1,2),'b2nph9_shi2')
+        call my_out(70,nx,ny,shi0(-1,-1,3),'b2nph9_shi3')
         wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
      &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2nph9_shi')

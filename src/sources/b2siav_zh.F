@@ -122,7 +122,7 @@
 
       ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
       ft_h =  8.0_R8/15.0_R8                                        !som 11.10.21
-      smbvh  = 0.0_R8
+      smbvh = 0.0_R8
       smbvv = 0.0_R8
       smbvi = 0.0_R8                                                !som 13.08.21
 

@@ -57,6 +57,7 @@ c     avoids double module definition in case code is compiled with Eirene
         allocate(wldspt(nlimps,0:nstra+1))
         allocate(wldspta(nlimps,natm,0:nstra+1))
         allocate(wldsptm(nlimps,nmol,0:nstra+1))
+        allocate(wlabsrp(natm+nmol+nion+npls,nlimps))
         allocate(eneutrad(0:nxdd,0:nydd,natm,0:nstra+1))
         allocate(emolrad(0:nxdd,0:nydd,nmol,0:nstra+1))
         allocate(eionrad(0:nxdd,0:nydd,nion,0:nstra+1))
@@ -104,6 +105,7 @@ c     avoids double module definition in case code is compiled with Eirene
         wldspt=0.0_R8
         wldspta=0.0_R8
         wldsptm=0.0_R8
+        wlabsrp=0.0_R8
         isrftype=0
       endif
 

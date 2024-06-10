@@ -69,7 +69,7 @@
      1   'faulty argument b2tqna_ixref')
 
         bottomdelta1 = jsep+1
-        width = 0.0e0_R8
+        width = 0.0_R8
         do iy = jsep,0,-1
           width = width + hy1(ixref,iy)
           if(width.gt.delta_stoch) then
@@ -82,16 +82,16 @@
 !     &                               ixref, bottomdelta1, topcut(1)
       endif
 
-      fchstoch   = 0.0e0_R8
-      if (fch_stochastic .ne. 0.0e0_R8 ) then                           !lk 31.01.08 {
-        call b2trsc (nx, ny, vol, po, te, ne,
+      fchstoch   = 0.0_R8
+      if (fch_stochastic .ne. 0.0_R8 ) then                             !lk 31.01.08 {
+        call b2trsc (nx, ny, vol, hy1, po, te, ne,
      &   csig_stoch)                                                    !srv 24.08.21
         do iy = bottomdelta1, jsep+1
           do ix = -1, nx
            if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
             fchstoch(ix,iy,1) = -csig_stoch(ix,iy,1)*                   !srv 24.08.21
      &       ((po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))-
-     &       0.5e0_R8/qe*
+     &       0.5_R8/qe*
      &       (te(ix,iy) - te(bottomix(ix,iy),bottomiy(ix,iy)))
      &      -(te(ix,iy) + te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8/
      &        qe

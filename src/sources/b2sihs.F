@@ -37,7 +37,8 @@
      *  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      2  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      3  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
-     4  vaecrb(-1:nx,-1:ny,0:1,0:ns-1), fchstoch(-1:nx,-1:ny,0:1)        !srv 24.08.21
+     4  vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
+     5  fchstoch(-1:nx,-1:ny,0:1)                                        !srv 24.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3)
@@ -930,5 +931,7 @@ c
 * ..return
       ncall = ncall+1
       call subend ()
+      return
+
       end subroutine b2sdia
 

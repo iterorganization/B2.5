@@ -109,6 +109,11 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tfch_')
+*   ..test input
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     . 'invalid main plasma species index ismain')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
@@ -233,7 +238,7 @@
       do iy = 0, ny
        do ix = -1, nx
          conc(ix,iy,1) = csig(ix,iy,1)                                   !srv
-         if(fch_ion_neutral.ne.0.0e0_R8 .and.
+         if(fch_ion_neutral.ne.0.0_R8 .and.
      &     (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then           !srv 23.12.19
          do is = 0, ns-1                                                 !srv 24.06.08 {
 !          if (.not.is_neutral(is)) then
@@ -246,7 +251,7 @@
           endif
          enddo                                                           !srv 24.06.08 }
         endif                                                            !srv
-        if(fch_stochastic.ne.0.0e0_R8 ) then                             !lk 31.01.08 {
+        if(fch_stochastic.ne.0.0_R8 ) then                               !lk 31.01.08 {
           conc(ix,iy,1) = conc(ix,iy,1) + csig_stoch(ix,iy,1)            !srv 24.08.21
           fch(ix,iy,1) = fch(ix,iy,1) + fchstoch(ix,iy,1)                !srv 24.08.21
         endif                                                            !lk 31.01.08 }

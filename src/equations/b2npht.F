@@ -137,6 +137,13 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2npht')
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test rxf
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
+     & 'faulty argument rxf')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21 {
@@ -174,13 +181,6 @@
        call ipgeti ('b2npht_style', style)                            !srv 09.07.08
        call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-*   ..test rxf
-      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
-     & 'faulty argument rxf')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of transport coefficients
@@ -364,20 +364,20 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        call my_out(70,nx,ny,reshe,'b2npht_reshe')
        call my_out(70,nx,ny,fhe(-1,-1,0),'b2npht_fhex')               !srv 10.03.10
        call my_out(70,nx,ny,fhe(-1,-1,1),'b2npht_fhey')               !srv 10.03.10
-!       call my_out(70,nx,ny,she0(-1,-1,0),'b2npht_she0')
-!       call my_out(70,nx,ny,she0(-1,-1,1),'b2npht_she1')
-!       call my_out(70,nx,ny,she0(-1,-1,2),'b2npht_she2')
-!       call my_out(70,nx,ny,she0(-1,-1,3),'b2npht_she3')
+       call my_out(70,nx,ny,she0(-1,-1,0),'b2npht_she0')
+       call my_out(70,nx,ny,she0(-1,-1,1),'b2npht_she1')
+       call my_out(70,nx,ny,she0(-1,-1,2),'b2npht_she2')
+       call my_out(70,nx,ny,she0(-1,-1,3),'b2npht_she3')
        wrk0=she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
      &                  she0(:,:,3)*te*ne
        call my_out(70,nx,ny,wrk0,'b2npht_she')
        call my_out(70,nx,ny,reshi,'b2npht_reshi')
        call my_out(70,nx,ny,fhi(-1,-1,0),'b2npht_fhix')               !srv 10.03.10
        call my_out(70,nx,ny,fhi(-1,-1,1),'b2npht_fhiy')               !srv 10.03.10
-!       call my_out(70,nx,ny,shi0(-1,-1,0),'b2npht_shi0')
-!       call my_out(70,nx,ny,shi0(-1,-1,1),'b2npht_shi1')
-!       call my_out(70,nx,ny,shi0(-1,-1,2),'b2npht_shi2')
-!       call my_out(70,nx,ny,shi0(-1,-1,3),'b2npht_shi3')
+       call my_out(70,nx,ny,shi0(-1,-1,0),'b2npht_shi0')
+       call my_out(70,nx,ny,shi0(-1,-1,1),'b2npht_shi1')
+       call my_out(70,nx,ny,shi0(-1,-1,2),'b2npht_shi2')
+       call my_out(70,nx,ny,shi0(-1,-1,3),'b2npht_shi3')
        wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+shi0(:,:,2)*ni(:,:,0)+
      &                  shi0(:,:,3)*ti*ni(:,:,0)
        call my_out(70,nx,ny,wrk0,'b2npht_shi')

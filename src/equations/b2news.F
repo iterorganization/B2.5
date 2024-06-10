@@ -283,7 +283,7 @@
       if (ncall.lt.3) then
 *    ..test sign of bb
        call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
-*    ..test vol, hx, hy, qz
+*    ..test vol, hx, hy, qz, qc
        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
@@ -402,9 +402,9 @@
      &                avisper_a, bvisper_a, cvisper_a,
      &                fchvisper_a, fchvisper)
         call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
-     &                ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,         !som 21.10.21
-     &                chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
-     &                fchvisq_a, fchvisq)
+     &               ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,          !som 21.10.21
+     &               chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,      !som 20.10.21
+     &               fchvisq_a, fchvisq)
         call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
      &              vol, gs, hx, hy, hz, qz, qc, bb,
@@ -574,9 +574,9 @@ cxpb
      &                avisper_a, bvisper_a, cvisper_a,
      &                fchvisper_a, fchvisper)
         call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
-     &                ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,         !som 21.10.21
-     &                chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
-     &                fchvisq_a, fchvisq)
+     &               ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,          !som 21.10.21
+     &               chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,      !som 20.10.21
+     &               fchvisq_a, fchvisq)
         call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
      &              vol, gs, hx, hy, hz, qz, qc, bb,
@@ -589,7 +589,7 @@ cxpb
 #endif
 !!FR Possible loop (2) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none)
-!$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, ix, iy, new_matrix)
+!$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, i, ix, iy, new_matrix)
 !$OMP& PRIVATE(ireg)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
 #if ( !defined(GFORTRAN) && !defined(PGF90) && !defined(NAGFOR) && !defined(CRAY) )

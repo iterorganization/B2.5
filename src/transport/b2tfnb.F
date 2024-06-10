@@ -2198,10 +2198,8 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fnb_53(-1,-1,1),'b2tfnb_fnb_53y'//chns)
        call my_out(70,nx,ny,fnbPSch(-1,-1,0),'b2tfnb_fnbPSchx'//chns)
        call my_out(70,nx,ny,fnbPSch(-1,-1,1),'b2tfnb_fnbPSchy'//chns)
-       if (isb .eq. ismain) then
-          call my_out(70,nx,ny,vbecrb(-1,-1,0),'b2tfnb_vbecrbx'//chns)
-          call my_out(70,nx,ny,vbecrb(-1,-1,1),'b2tfnb_vbecrby'//chns)
-       endif
+       call my_out(70,nx,ny,vbecrb(-1,-1,0),'b2tfnb_vbecrbx'//chns)
+       call my_out(70,nx,ny,vbecrb(-1,-1,1),'b2tfnb_vbecrby'//chns)
 !       call my_out(70,nx,ny,ubdia(-1,-1,0),'b2tfnb_ubdiax'//chns)
 !       call my_out(70,nx,ny,ubdia(-1,-1,1),'b2tfnb_ubdiay'//chns)
        call my_out(70,nx,ny,vbdia(-1,-1,0),'b2tfnb_vbdiax'//chns)

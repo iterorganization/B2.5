@@ -583,4 +583,3 @@ cdpc        endif
 *.end b2mddr
 
       end subroutine b2mddr
-

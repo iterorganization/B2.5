@@ -81,16 +81,16 @@ csw 09jan2014 declare fun to be private
         deallocate(se)
         deallocate(seh)
         deallocate(sih)
-        deallocate (svol)
-        deallocate (R_midpl)
-        deallocate (Z_midpl)
-        deallocate (Rc_midpl)
-        deallocate (chci_koeff)
-        deallocate (sfna)
-        deallocate (sfna_mdf)
-        deallocate (sfne)
-        deallocate (sfhe_mdf)
-        deallocate (sfhi_mdf)
+        deallocate(svol)
+        deallocate(R_midpl)
+        deallocate(Z_midpl)
+        deallocate(Rc_midpl)
+        deallocate(chci_koeff)
+        deallocate(sfna)
+        deallocate(sfna_mdf)
+        deallocate(sfne)
+        deallocate(sfhe_mdf)
+        deallocate(sfhi_mdf)
        end subroutine dealloc_b2mod_b2_to_astra
 
        subroutine write_b2_to_astra(nxd, nyd, nsd, ismain, ismain0,
@@ -452,7 +452,6 @@ csw 09jan2014 add extra allocates
         teb = (te(nmdpl,iy)+(crb_astra-Rc_midpl(iy))*
      &        (te(nmdpl,iy+1)-te(nmdpl,iy))/
      &        (Rc_midpl(iy+1)-Rc_midpl(iy)))/qe/1.0e3_R8
-
         tib = (ti(nmdpl,iy)+(crb_astra-Rc_midpl(iy))*
      &        (ti(nmdpl,iy+1)-ti(nmdpl,iy))/
      &        (Rc_midpl(iy+1)-Rc_midpl(iy)))/qe/1.0e3_R8
@@ -485,8 +484,8 @@ csw 09jan2014 add extra allocates
         open(70,file='table_01.dat')                                     !srv 19.09.11 {
         write(70,10)
    10   format(4x,'Rc(m)',5x,2x,'ne(1/m^3)',3x,3x,'Te(keV)',4x,
-     &         3x,'Ti(keV)',4x,3x,'D(m^2/s)',3x,3x,'xe(m^2/s)',2x,
-     &         3x,'xi(m^2/s)',2x,3x,'Vy_AN(m/s)',1x,3x,'Se(1/m^3/s)',
+     &         3x,'Ti(keV)',4x,3x,'D(m^2/s)',3x,3x,'Xe(m^2/s)',2x,
+     &         3x,'Xi(m^2/s)',2x,3x,'Vy_AN(m/s)',1x,3x,'Se(1/m^3/s)',
      &         3x,'Seh(      )',3x,'Sih(      )')                        !srv 11.06.13
         ix=nmdpl
         do iy= -1,nyd-1
@@ -496,7 +495,6 @@ csw 09jan2014 add extra allocates
      &    hce0(ix,iy)/ne(ix,iy), hcib(ix,iy,ismain)/na(ix,iy,ismain),
      &    vla0(ix,iy,1,ismain), se(iy)/svol(iy),
      &    seh(iy)/svol(iy), sih(iy)/svol(iy)                             !srv 11.06.13
-
         enddo
 
         close(70)                                                        !srv 19.09.11 }
@@ -633,7 +631,6 @@ csw 09jan2014 add 'fun' function
      &                   svol(-1:nyd), vol(-1:nxd,-1:nyd)
        integer :: ix, iy
        integer, save :: ncall = 0, mintopcut
-
 
        if(ncall.eq.0) then
          mintopcut = nyd                                    !srv 25.02.16

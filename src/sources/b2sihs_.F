@@ -260,24 +260,24 @@
      &    -ne(bottomix(ix,iy),bottomiy(ix,iy))
      &    *te(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /hy(ix,iy)/qe/ne(ix,iy)*vol(ix,iy)
-     &    *(fchstoch(ix,iy,1)*(hy1(ix,iy)                             !srv 24.08.21
+     &    *(fchstoch(ix,iy,1)*(hy1(ix,iy)                           !srv 24.08.21
      &    +hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
-     &    +fchstoch(topix(ix,iy),topiy(ix,iy),1)*(hy1(ix,iy)          !srv 24.08.21
+     &    +fchstoch(topix(ix,iy),topiy(ix,iy),1)*(hy1(ix,iy)        !srv 24.08.21
      &    +hy1(topix(ix,iy),topiy(ix,iy)))
      &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
          endif
         enddo
        enddo
-       call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)               !srv 17.12.13 24.08.21
-      endif                                                           !lk 31.01.08 }
+       call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)             !srv 17.12.13 24.08.21
+      endif                                                         !lk 31.01.08 }
 *   ..contribution from divergence ue
-      do iy = 0, ny-1                                                 !srv 05.03.11 {
+      do iy = 0, ny-1                                               !srv 05.03.11 {
         do ix = 0, nx
           if(leftix(ix,iy).eq.-2) then
             wrk0(ix,iy) = 0.0e0_R8
           else
-            if(style_int_vel.eq.0) then                               !srv 01.04.19 {
+            if(style_int_vel.eq.0) then                             !srv 01.04.19 {
               wrk0(ix,iy)=(hx(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
      1                   hx(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
      2        (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
@@ -368,9 +368,9 @@
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divua0to3 = shidu
       endif
-      call b2saxpy (n2*4, 1.0e0_R8, shidu, 1, shi0, 1)                !srv 11.09.09
+      call b2saxpy (n2*4, 1.0_R8, shidu, 1, shi0, 1)                  !srv 11.09.09
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
-      dpo = 0.0e0_R8;   dOnedBsq = 0.0e0_R8                           !srv 03.04.07 {
+      dpo = 0.0_R8;   dOnedBsq = 0.0_R8                               !srv 03.04.07 {
       do iy = 0, ny-1
         do ix = 0, nx
           if(leftix(ix,iy).ne.-2) then
@@ -432,7 +432,7 @@
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exbe0to3 = shedd
       endif
-      call b2saxpy (n2*4, 1.0e0_R8, shedd, 1, she0, 1)                !srv 11.09.09
+      call b2saxpy (n2*4, 1.0_R8, shedd, 1, she0, 1)                  !srv 11.09.09
 
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99                                               !srv 02.06.99
       b2exba=0.0_R8
@@ -462,7 +462,7 @@
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exba0to3 = shidd
       endif
-      call b2saxpy (n2*4, 1.0e0_R8, shidd, 1, shi0, 1)                !srv 11.09.09
+      call b2saxpy (n2*4, 1.0_R8, shidd, 1, shi0, 1)                  !srv 11.09.09
 *   ..contribution from viscous heating
       if ((Zhdanov_closure.eq.1) .and. (Zhdanov_test.eq.0).and.
      &  Zhdanov_visu.eq.1) then                                       !som 18.08.21
@@ -471,7 +471,7 @@
       endif
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
-      ft = 4.0e0_R8/3.0e0_R8                                          !srv 16.10.17
+      ft = 4.0_R8/3.0_R8                                              !srv 16.10.17
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
         if ((Zhdanov_closure.eq.0) .or. (Zhdanov_test.eq.1).or.
@@ -479,7 +479,7 @@
          do iy = -1, ny                                               !srv 28.08.02 21.07.05 16.10.17 {
           do ix = -1, nx
            if(leftix(ix,iy).eq.-2) then
-             wrk0(ix,iy)=0.0e0_R8
+             wrk0(ix,iy)=0.0_R8
            else
              wrk0(ix,iy) = cvsa(ix,iy,0,is)*                          !srv 16.10.17
      &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
@@ -491,7 +491,7 @@
           do iy = -1, ny                                              !srv 28.08.02 21.07.05 16.10.17 {
            do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
-             wrk0(ix,iy)=0.0e0_R8
+             wrk0(ix,iy)=0.0_R8
             else
              wrk0(ix,iy) = cvsa(ix,iy,0,is)*                          !srv 16.10.17
      &         (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
@@ -502,7 +502,7 @@
           do iy = -1, ny
            do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
-             wrk0(ix,iy)=0.0e0_R8
+             wrk0(ix,iy)=0.0_R8
             else
              wrk0(ix,iy) = (cvsa(ix,iy,0,is)-ft*cvsa_cl(ix,iy,0,is))*
      &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2+
@@ -769,7 +769,7 @@
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_joule0to3 = shefr
       endif
-      call b2saxpy (n2*4, 1.0e0_R8, shefr, 1, she0, 1)                !srv 11.09.09
+      call b2saxpy (n2*4, 1.0_R8, shefr, 1, she0, 1)                  !srv 11.09.09
 *   ..contribution from atom-atom friction
       if(b2sigp_style.ne.2) then                                      !srv 05.07.17
        b2fraa=0.0_R8

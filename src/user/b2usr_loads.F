@@ -15,22 +15,22 @@ C
       IMPLICIT NONE
 
       integer nx, ny, nxtl, nxtr
-      real (kind=R8) :: BoRiS
+      real(kind=R8) :: BoRiS
 
-      INTEGER,PARAMETER :: NTRGM=DEF_NCUT
+      INTEGER, PARAMETER :: NTRGM=max(4,DEF_NCUT)
 
-      REAL (KIND=R8),INTENT(OUT) :: wtarg_max(NTRGM)
+      REAL(KIND=R8), INTENT(OUT) :: wtarg_max(NTRGM)
 
-      REAL (KIND=R8),SAVE :: STRG(0:DEF_NYD-1,NTRGM) !AREAS OF SURFACE ELEMENTS
-      INTEGER,SAVE :: LTRGPOS(NTRGM) !POLOIDAL INDEX FOR EACH TARGET
-      INTEGER,SAVE :: ITRG(NTRGM)    !TARGET INDEX ARRAY
-      INTEGER,SAVE :: NTRGS,         !NUMBER OF TARGETS
-     i                SHIFT(NTRGM)
-      REAL (KIND=R8) :: WTARG(0:ny-1,NTRGM),wnutrg(0:ny-1,NTRGM),
-     r                  wnutpr(0:ny-1,NTRGM)
+      REAL(KIND=R8), SAVE :: STRG(0:DEF_NYD-1,NTRGM) !AREAS OF SURFACE ELEMENTS
+      INTEGER, SAVE :: LTRGPOS(NTRGM) !POLOIDAL INDEX FOR EACH TARGET
+      INTEGER, SAVE :: ITRG(NTRGM)    !TARGET INDEX ARRAY
+      INTEGER, SAVE :: NTRGS,         !NUMBER OF TARGETS
+     i                 SHIFT(NTRGM)
+      REAL(KIND=R8) :: WTARG(0:ny-1,NTRGM),wnutrg(0:ny-1,NTRGM),
+     r                 wnutpr(0:ny-1,NTRGM)
       INTEGER :: K,J,L,IY,IS
       INTEGER :: geometryType
-      REAL (KIND=R8) :: HLP
+      REAL(KIND=R8) :: HLP
       CHARACTER*32 :: FRM
       LOGICAL :: target_east,target_west
 

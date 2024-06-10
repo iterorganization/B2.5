@@ -115,9 +115,9 @@
      &  b2xpnm, b2tral, b2treq, b2tfnb,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2npp7, b2xppz  !srv 06.07.00 18.01.02
 *   ..initialization
-      data ncall/0/, xfm0/1.0e0_R8/, xfm1/1.0e0_R8/, xfm2/1.0e0_R8/,
-     1   xfm3/1.0e0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,        !srv 09.07.99 09.03.09
-     2   vis_per/1.0e0_R8/, no_current/0/                               !srv 06.07.00
+      data ncall/0/, xfm0/1.0_R8/, xfm1/1.0_R8/, xfm2/1.0_R8/,
+     1   xfm3/1.0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,          !srv 09.07.99 09.03.09
+     2   vis_per/1.0_R8/, no_current/0/                                 !srv 06.07.00
       integer, save :: no_neutr_scl = 0, no_b2sral_call = 1
       integer, save :: do_2nd_b2npco_call = 0
       integer, save :: re_eval_prtls_fluxes = 0                         !srv 28.06.13
@@ -307,7 +307,7 @@ csw 26feb2014 some extra variables
       if (ncall.lt.3) then
 *    ..test sign of bb
        call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
-*    ..test vol, hx, hy, qz
+*    ..test vol, hx, hy, qz, qc
        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
@@ -330,8 +330,8 @@ csw 26feb2014 some extra variables
 *     iteration; hence the different setting of rxf2.
       rxf0 = rxf*xfm0
       rxf1 = rxf*xfm1
-      rxf2 = 1.0e0_R8 ! (rxf*xfm2)**0.2e0_R8                             !srv 15.01.03
-      if (rxf .eq. 0.0e0_R8) rxf2 = 0.0e0_R8
+      rxf2 = 1.0_R8 ! (rxf*xfm2)**0.2_R8                                 !srv 15.01.03
+      if (rxf .eq. 0.0_R8) rxf2 = 0.0_R8
       rxf3 = rxf*xfm3
 
 csw 01oct2012 initialize potential if necessary
@@ -344,11 +344,11 @@ csw 01oct2012 initialize potential if necessary
       if (ramp_call .or. ncall.eq.0) call set_facdrift_fac_ExB_inc
 *   ..test facdrift, fac_ExB, fac_vis
       call xertst (0.0_R8.le.minval(facdrift) .and.
-     &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
+     &    1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
       call xertst (0.0_R8.le.minval(fac_ExB) .and.
-     &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
+     &    1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
       call xertst (0.0_R8.le.minval(fac_vis) .and.
-     &     1.0_R8.ge.maxval(fac_vis), 'faulty argument fac_vis')
+     &    1.0_R8.ge.maxval(fac_vis), 'faulty argument fac_vis')
 * ..main computation
 *   ..compute ni, ne, ne2
       call b2xpni (nx, ny, ns, na, ni)

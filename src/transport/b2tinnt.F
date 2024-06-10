@@ -123,13 +123,13 @@
         endif
       endif
 
-      fchin     = 0.0e0_R8                                              !srv 09.07.99
+      fchin     = 0.0_R8                                                !srv 09.07.99
       fchin_a   = 0.0_R8                                                !IYS 17.10.2023
       facdriftm = maxval(facdrift)                                      !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
       if(pot_eq.ne.0 .and.(facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)
      &               .and. no_current.eq.0
-     .               .and. fch_ion_neutral .ne. 0.0e0_R8) then          !srv 26.07.06 01.07.99
+     .               .and. fch_ion_neutral .ne. 0.0_R8) then            !srv 26.07.06 01.07.99
        if(style.eq.0) then
 *   ..interpolate ti in the left and bottom cell face
          call intfaceh(nx, ny, leftix, leftiy, vol, ti, til)
@@ -144,7 +144,7 @@
          enddo
        endif
        if (use_eirene.ne.0) then
-!        fchin = 0.0e0_R8
+!        fchin = 0.0_R8
 
         if (use_kinetic.eq.0) then                                      !srv 15.02.11 {
 *   ..calculate section

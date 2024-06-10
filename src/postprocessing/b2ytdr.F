@@ -1750,23 +1750,25 @@ c 2002-09-11: logic revised
       mw_ix2 = conformal_convert
      .   (non_commensurate,1,mw_ix2,mw_jsep,nx,ny,nx1,ny1,3)
       if (mw_jxa.ge.0) then
-        mw_jxa1= conformal_convert(non_commensurate,1,mw_jxa,mw_jsep,
-     .   nx,ny,nx1,ny1,4)
+        mw_jxa1 =
+     .   conformal_convert(non_commensurate,1,mw_jxa,mw_jsep,
+     .    nx,ny,nx1,ny1,4)
       else
-        mw_jxa1=jxa1
+        mw_jxa1 = jxa1
       endif
       if (mw_jsep.ge.0) then
-        mw_jsep1= conformal_convert(non_commensurate,2,mw_jxa,mw_jsep,
-     .   nx,ny,nx1,ny1,2)
+        mw_jsep1 =
+     .   conformal_convert(non_commensurate,2,mw_jxa,mw_jsep,
+     .    nx,ny,nx1,ny1,2)
       else
-        mw_jsep1=jsep1
+        mw_jsep1 = jsep1
       endif
       if (jxa.ne.-2) then
-        jxa1=conformal_convert(non_commensurate,1,jxa,jsep,
+        jxa1 = conformal_convert(non_commensurate,1,jxa,jsep,
      .   nx,ny,nx1,ny1,4)
       endif
       if (jxi.ne.-2) then
-        jxi1=conformal_convert(non_commensurate,1,jxi,jsep,
+        jxi1 = conformal_convert(non_commensurate,1,jxi,jsep,
      .   nx,ny,nx1,ny1,4)
       endif
       tab = char(9)

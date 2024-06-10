@@ -222,7 +222,7 @@ c*** PFR flow values
       real (kind=R8) ::
      *     hlp_pfrf(0:npfrgrpd,DEF_NATM,npff_tmp)
       real (kind=R8) ::
-     *     wtarg_max(DEF_NCUT) !vk, max target heat flux density
+     *     wtarg_max(max(4,DEF_NCUT)) !vk, max target heat flux density
       equivalence (equp_tmp(0,1,1), hlp_pfrf)
       character hlp_hb*8
 
@@ -402,8 +402,8 @@ c*** Calculate the basic quantities for each surface/species
               hlp_ardts(k)=hlp_ardts(k)+wlarea(l)
               do j=1,ndts_tmp !{
                 m=ndtx_tmp(j)
+                x=wlabsrp(m,lntrgrp(intrgrp(k)))
                 if(i.eq.intrgrp(k)) then !{
-                  x=wlabsrp(m,l)
                   if(x.gt.0.0_R8) ndta_tmp(k,j)=ndtk_tmp
                   hlp_ksdts(k,j)=x
                 else !}{
@@ -1755,8 +1755,8 @@ c*** Limiter case
           l=lntrgrp(i)
           do j=1,ndts_tmp !{
             m=ndtx_tmp(j)
+            x=wlabsrp(m,lntrgrp(intrgrp(k)))
             if(i.eq.intrgrp(k)) then !{
-              x=wlabsrp(m,l)
               if(x.gt.0.0_R8) ndta_tmp(k,j)=ndtk_tmp
               hlp_ksdts(k,j)=x
             else !}{

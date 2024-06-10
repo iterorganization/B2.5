@@ -26,7 +26,7 @@
 *
 *  1. purpose
 *
-*     B2TRSH computes the X and Y components of electron thermal conductivity 
+*     B2TRSH computes the X and Y components of electron thermal conductivity
 *     associated with stochastization of the magnetic field.
 *
 *
@@ -34,12 +34,12 @@
 *.declarations
 
 *   ..global named constants
-      
+
 *   ..local variables
       integer n2, ncall, ix, iy, bottomdelta1, ixref
       integer jxi, jxa, jsep
-      real (kind=R8), save :: fch_stochastic = 0.0e0_R8,                 !lk 31.01.08 }
-     &                        alpha_stoch = 1.0e0_R8                     !srv 17.12.13
+      real (kind=R8), save :: fch_stochastic = 0.0_R8,                   !lk 31.01.08 }
+     &                        alpha_stoch = 1.0_R8                       !srv 17.12.13
       real (kind=R8) :: sig_stoch, delta_stoch, width
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures
@@ -47,7 +47,7 @@
       external b2xvsg, b2xvff, b2xvfx
       external get_jsep
 *   ..initialization
-      data ncall/0/, delta_stoch/0.0e0_R8/, sig_stoch/1.0e0_R8/
+      data ncall/0/, delta_stoch/0.0_R8/, sig_stoch/1.0_R8/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -81,7 +81,7 @@
      1   'faulty argument b2tqna_ixref')
 
         bottomdelta1 = jsep+1
-        width = 0.0e0_R8
+        width = 0.0_R8
         do iy = jsep,0,-1
           width = width + hy1(ixref,iy)
           if(width.gt.delta_stoch) then
@@ -94,11 +94,11 @@
 !     &                               ixref, bottomdelta1, topcut(1)
       endif
 
-      chce_stoch = 0.0e0_R8
+      chce_stoch = 0.0_R8
       do iy = bottomdelta1, jsep+1
         do ix = -1, nx
          if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
-          chce_stoch(ix,iy,1)=alpha_stoch*1.6e0_R8*
+          chce_stoch(ix,iy,1)=alpha_stoch*1.6_R8*
      &      csig_stoch(ix,iy,1)/qe/qe*
      &     (te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
          endif
