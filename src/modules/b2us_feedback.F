@@ -20,7 +20,9 @@
      &  spfr_cv,epfr_cv,npfr_cvs,pfr_cvs
 #ifdef B25_EIRENE
       use eirmod_wneutrals
-     & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm
+     & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm,
+     & ewldrp_res
+      use eirmod_eirbra,  only : fnmti_B2
 #endif
       use b2mod_dimensions
       implicit none
@@ -942,7 +944,7 @@ cxpb size is changed in DIMENSIONS.F
       logical main_call
 *   ..local variables
       integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
-     & is_end, iss, iCv1, ibc, ib
+     & is_end, iss, iCv1, iCv2, ibc, ib, indx
 #ifdef B25_EIRENE
       integer :: i, j, l
 #endif
@@ -1669,6 +1671,51 @@ cxpb size is changed in DIMENSIONS.F
      &              fb_type(ifb)
                call xerrab('fb_type not coded')
 
+            case (23) !  Total plasma heat flux at outer target
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'total plasma heat flux at outer target by fht ',
+     &           b2espcr(fb_species(ifb))
+
+                fb_target(ifb) = 1/fb_target(ifb)
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  is_end=is
+                endif
+              enddo
+              fb_current(ifb) = 0.0_R8
+
+              do iCv=mpg%nCi+1,nCv
+                iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+                iCv1 = mpg%fcCv(iFc,1)
+                iCv2 = mpg%fcCv(iFc,2)
+                t1 = -1.0_R8
+                if (iCv2.gt.iCv1) t1 = 1.0_R8
+                if (mpg%fcLbl(iFc).eq.2) then
+                  t0 = dv%fht(iFc,0)+dv%fht(iFc,1)
+                  t0 = t1*t0/geo%fcS(iFc)
+                  if (allocated(fnmti_b2) .and. 
+     &                allocated(ewldrp_res)) then
+                    indx = findloc(fnmti_b2,iFc,1)
+                    if (indx .gt. 0) then
+                      t0 = t0-ewldrp_res(indx)
+                    endif
+                  endif
+                  fb_current(ifb) = max(fb_current(ifb),t0)
+                endif
+              enddo
+              if (fb_current(ifb) .ne. 0.0_R8) then
+                fb_current(ifb) = 1.0_R8/abs(fb_current(ifb))
+              endif
             end select
 
 ! phase 2:
