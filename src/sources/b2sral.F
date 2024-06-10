@@ -4,7 +4,7 @@
       subroutine b2sral (nx, ny, ns,
      &  nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &  dtim, BoRiS, facdrift, fac_ExB, fac_vis,                         !xpb
-     &  vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,                     !srv 09.01.01 02.04.18
+     &  vol, hx, hy, hy1, hz, qz, qc, gs, pbs, bb, lnlam,                !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
      &  fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -50,7 +50,7 @@
 *     (geometry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
+     &  hy(-1:nx,-1:ny), hy1(-1:nx,-1:ny), hz(-1:nx,-1:ny),
      &  pbs(-1:nx,-1:ny,0:1),
      &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),
      &  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2)
@@ -230,10 +230,11 @@
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
-*    ..test sign of vol, hx, hy
+*    ..test sign of vol, hx, hy, hy1
        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
+       call b2xvsg (n2, hy1, 1, 'hy1', '.gt.')
 *    ..test range of qz
        call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
      &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
@@ -314,15 +315,15 @@
 
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                        !srv 14.07.10 {
 *   ..recompute currents
-       call b2tanml (nx, ny, ns, ismain,                                !srv 20.09.06 }!som 02.11.21
-     &               csig_an, po, ne, na, fchanml_a, fchanml)           !srv 08.09.21
-       call b2tvspa (nx, ny, ns, ismain, bb,                            !srv 19.02.21
-     &               na, ua, cvsa_cl, cvsa_drho, fac_vis,               !som 18.08.21
+       call b2tanml (nx, ny, ns, ismain,                                 !srv 20.09.06 }!som 02.11.21
+     &               csig_an, po, ne, na, fchanml_a, fchanml)            !srv 08.09.21
+       call b2tvspa (nx, ny, ns, ismain, hy1, bb,                        !srv 19.02.21
+     &               na, ua, cvsa_cl, cvsa_drho, fac_vis,                !som 18.08.21
      &               fchvispar_a, fchvispar)
        call b2tiner (nx, ny, ns, ismain, vol, gs, bb,
      &               na, ua, facdrift, fchinert_a, fchinert)
-       call b2tvspr (nx, ny, ns, ismain, fac_vis,                       !srv 10.10.17 19.02.21
-     &               vol, po, ti, na,
+       call b2tvspr (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
+     &               vol, hy1, po, ti, na,
      &               avisper_a, bvisper_a, cvisper_a,
      &               fchvisper_a, fchvisper)
        call b2tvsq  (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
@@ -331,8 +332,8 @@
      &               fchvisq_a, fchvisq)
       call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,
-     &              vol, gs, hx, hy, hz, qz, qc, bb,
-     &              te, po, ti, na, fna, csigin, fchin_a, fchin)        !IYS 17.10.2023
+     &              vol, gs, hx, hy1, hz, qz, qc, bb,
+     &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, ismain, guard_flows,                     !srv 19.02.21
      &  facdrift, fac_ExB, rza, rz2,                                     !srv 13.01.17
@@ -403,7 +404,7 @@ csw 30sep2013, added cdpa in call, uadia
 *   ..compute special contributions (boundaries and recycling)
       call b2stbr (nx, ny, ns,
      &  nscx, nscxmax, iscx, ismain, dtim, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs,
+     &  vol, hx, hy, hy1, hz, gs, qz, pbs,
      &  na, ua, te, ti, po, ne, ni,
      &  fna, fna_mdf, fhe, fhi, fht, fch, fne, fni, rsa, bb,             !iyv 07.03.18
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)

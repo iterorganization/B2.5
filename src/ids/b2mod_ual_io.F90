@@ -928,7 +928,7 @@ contains
         call b2sral (nx, ny, ns,                                                 &
             &        nscx, nscxmax, 0, ns, iscx, ismain, ismain0,                &
             &        dtim, BoRiS, facdrift, fac_ExB, fac_vis,                    &
-            &        vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,                &
+            &        vol, hx, hy, hy1, hz, qz, qc, gs, pbs, bb, lnlam,           &
             &        na, ua,                                                     &
             &        uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,      &
             &        te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,             &

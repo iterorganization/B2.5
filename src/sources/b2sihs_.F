@@ -2,9 +2,9 @@
 *.specification
 
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
-     *  hx, hy, gs, qc, vol, bb, pbs, lnlam, na, ua, ue,               !srv 07.06.00 02.06.99 07.05.08 05.07.17
-     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,         !som 16.08.21 !srv 24.08.21
-     *  cvsa_drho, she0, shi0)                                         !som 16.08.21 !srv 28.06.03 07.07.09
+     *  hx, hy, hy1, gs, qc, vol, bb, pbs, lnlam, na, ua, ue,         !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,        !som 16.08.21 !srv 24.08.21
+     *  cvsa_drho, she0, shi0)                                        !som 16.08.21 !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
       use b2mod_sources
@@ -20,8 +20,6 @@
       use b2mod_zhfrtf
      & , only: avm_u,                                                 !som 21.03.21 16.08.21
      &         b2mod_zhfrtf_avm_u                                     !som 18.08.21
-      use b2mod_geo
-     & , only : hy1
       use b2mod_balance !djm Jan2017
      & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
      &          b2sihs_joule0to3, b2sihs_divua0to3,
@@ -35,7 +33,7 @@
       integer nx, ny, ns, ismain                                      !srv 05.07.17
       real (kind=R8) :: BoRiS,
      *  fac_ExB(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),       !srv 07.06.00 02.06.99
-     *  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     *  hy1(-1:nx,-1:ny), vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      &  na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), ue(-1:nx,-1:ny),                      !srv 05.03.11
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),

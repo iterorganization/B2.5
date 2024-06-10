@@ -66,7 +66,7 @@
       integer, save :: icase = 0
       character chns*3, chk*1                                         !srv 17.06.02
       real (kind=R8) ::
-     *   phm0, phm1, phm2, phm3, ctaup, coef, t0, t1
+     * phm0, phm1, phm2, phm3, ctaup, coef, t0, t1, am_sqrt, inv_ctaup
       real (kind=R8) ::
      1 delti, delte, zlamii, zlamee, dtiapr, dteapr, limthii, limthee
       integer :: zlitest
@@ -147,6 +147,7 @@ csw 24sep2013
       t1 = (4*pi*eps0/qe)/qe
       t0 = (3/(4*sqrt(2*pi)))*t1*(t1*ev*sqrt(ev))
       ctaup = t0*sqrt(mp) ! /lnlam                !srv 01.07.09 it is taken below
+      inv_ctaup = 1.0_R8/ctaup
 *   ..compute the Coulomb logarithm
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
 *   ..compute vti32
@@ -188,29 +189,55 @@ csw 24sep2013
        if (is.ne.isb.and.
      &    (.not.is_neutral(is)).and.(.not.is_neutral(isb))) then
 *     ..contribution from friction between charged species
-        do iy = 0, ny-1
-          do ix = 0, nx-1
-           coef = phm0*(lnlam(ix,iy)/ctaup)*rz2(ix,iy,isb)*            !srv 01.07.09
-     &            rz2(ix,iy,is)*mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 26.11.02
-            t0 = na(ix,iy,isb)*na(ix,iy,is)*vti32(ix,iy)
-            if (styl0.eq.0) then
-             smbch(ix,iy,0) = smbch(ix,iy,0)+coef*t0*ua(ix,iy,is)
-             smbch(ix,iy,1) = smbch(ix,iy,1)-coef*t0
-            else if (styl0.eq.1) then
-             smbch(ix,iy,0) = smbch(ix,iy,0)+coef*t0*ua(ix,iy,is)
-             smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/roxa(ix,iy,isb)
-            else if (styl0.eq.2) then
-             smbch(ix,iy,2) = smbch(ix,iy,2)+coef*t0*ua(ix,iy,is)/
-     &                       roxa(ix,iy,isb)
-             smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/
-     &                       roxa(ix,iy,isb)
-            endif
-            smfrb(ix,iy) = smfrb(ix,iy) +
-     &       coef*t0*(ua(ix,iy,is)-ua(ix,iy,isb))
-           endif
+        am_sqrt = sqrt(am(isb)*am(is)/(am(isb)+am(is)))
+        if (styl0.eq.0) then
+          do iy = 0, ny-1
+          !$OMP SIMD
+            do ix = 0, nx-1
+              coef = phm0*lnlam(ix,iy)*inv_ctaup*rz2(ix,iy,isb)*         !srv 01.07.09
+     &            rz2(ix,iy,is)*mp*am_sqrt
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then  !srv 26.11.02
+                t0 = na(ix,iy,isb)*na(ix,iy,is)*vti32(ix,iy)
+                smbch(ix,iy,0) = smbch(ix,iy,0)+coef*t0*ua(ix,iy,is)
+                smbch(ix,iy,1) = smbch(ix,iy,1)-coef*t0
+                smfrb(ix,iy) = smfrb(ix,iy) +
+     &           coef*t0*(ua(ix,iy,is)-ua(ix,iy,isb))
+              endif
+            enddo
           enddo
-        enddo
+        else if (styl0.eq.1) then
+          do iy = 0, ny-1
+          !$OMP SIMD
+            do ix = 0, nx-1
+              coef = phm0*lnlam(ix,iy)*inv_ctaup*rz2(ix,iy,isb)*         !srv 01.07.09
+     &            rz2(ix,iy,is)*mp*am_sqrt
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then  !srv 26.11.02
+                t0 = na(ix,iy,isb)*na(ix,iy,is)*vti32(ix,iy)
+                smbch(ix,iy,0) = smbch(ix,iy,0)+coef*t0*ua(ix,iy,is)
+                smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/roxa(ix,iy,isb)
+                smfrb(ix,iy) = smfrb(ix,iy) +
+     &           coef*t0*(ua(ix,iy,is)-ua(ix,iy,isb))
+              endif
+            enddo
+          enddo
+        else if (styl0.eq.2) then
+          do iy = 0, ny-1
+          !$OMP SIMD
+            do ix = 0, nx-1
+              coef = phm0*lnlam(ix,iy)*inv_ctaup*rz2(ix,iy,isb)*         !srv 01.07.09
+     &            rz2(ix,iy,is)*mp*am_sqrt
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then  !srv 26.11.02
+                t0 = na(ix,iy,isb)*na(ix,iy,is)*vti32(ix,iy)
+                smbch(ix,iy,2) = smbch(ix,iy,2)+coef*t0*ua(ix,iy,is)/
+     &                       roxa(ix,iy,isb)
+                smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/
+     &                       roxa(ix,iy,isb)
+                smfrb(ix,iy) = smfrb(ix,iy) +
+     &           coef*t0*(ua(ix,iy,is)-ua(ix,iy,isb))
+              endif
+            enddo
+          enddo
+        endif
        else
 *     ..contribution from friction involving neutral species
 *       (We ignore such a term, except for charge exchange friction

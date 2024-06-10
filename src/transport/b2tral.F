@@ -299,16 +299,16 @@
      &  na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)
 *   ..compute anomalous terms
       call b2trno (nx, ny, ns, nscx, nscxmax, iscx,
-     &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,             !srv 09.01.01
+     &  bb, vol, gs, hx, hy, hy1, hz, qz, pbs, crx, cry, conn,         !srv 09.01.01
      &  na, ua, te, ti, po, ne, ni, ne2, cdna, cdpa, cvla, cvsa,
      &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                        !srv 09.01.01 15.12.05
      &  chce, chve, chci, chvi, csig, calf, csig_stoch, chce_stoch,    !srv 24.08.21
      &  fllim0fhi)
 *   ..compute classical terms
       call b2trcl (nx, ny, ns, nscx, iscx, ismain,
-     &  bb, conn, vol, gs, hx, hy, hz,                                !srv 23.11.10
-     1  qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,   !srv 01.07.09
-     2  chvemx, chvimx, cvsahz0,                                      !srv 09.01.01 03.06.03
+     &  bb, conn, vol, gs, hx, hy, hy1, hz, qz, qc, pbs,               !srv 23.11.10
+     1  fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,                 !srv 01.07.09
+     2  chvemx, chvimx, cvsahz0,                                       !srv 09.01.01 03.06.03
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, csigin,
      4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                     !srv 09.01.01
      5  csig_cl, calf_cl)

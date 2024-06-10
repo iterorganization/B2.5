@@ -1,5 +1,5 @@
       subroutine b2tvspr(nx, ny, ns, ismain, fac_vis,                   !srv 10.10.17 19.02.21
-     &   vol, po, ti, na,
+     &   vol, hy1, po, ti, na,
      &   avisper_a, bvisper_a, cvisper_a, fchvisper_a, fchvisper)
       use b2mod_types
       use b2mod_indirect
@@ -14,7 +14,7 @@
       integer nx, ny, ns, ismain                                        !srv 19.02.21
       real (kind=R8) ::
      1   fac_vis(-1:nx,-1:ny),
-     1   vol(-1:nx,-1:ny),
+     1   vol(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
      1   po(-1:nx,-1:ny), ti(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -68,7 +68,7 @@
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current
-      call b2txvspr(nx, ny, ns, ismain, fac_vis, vol,                   !srv 10.10.17 19.02.21
+      call b2txvspr(nx, ny, ns, ismain, fac_vis, vol, hy1,              !srv 10.10.17 19.02.21
      &              avisper_a, bvisper_a, cvisper_a)
 * ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99
       va=0.0_R8
