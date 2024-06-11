@@ -288,25 +288,26 @@
                do ix = 0,nx
                  if(on_closed_surface(bottomix(ix,iy),
      .                                bottomiy(ix,iy))) then
-                   fchvisq_a(ix,iy,0,is) =                              !srv 16.10.17
-     &         -fac_vis(ix,iy)*0.24_R8*vis_q*(               ! signmf*  !srv 11.01.13 16.10.17
-     &         vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
-     &         *tauia1(ix,iy)
-     &         *alpha1(ix,iy)
-     &         *bb(ix,iy,2)/bb(ix,iy,3)
-     &         *bb(ix,iy,0)/sqrt(bb(ix,iy,3))
-     &         +vol(leftix(ix,iy),leftiy(ix,iy))
-     &         /hx(leftix(ix,iy),leftiy(ix,iy))**2
-     &         /hy1(leftix(ix,iy),leftiy(ix,iy))
-     &         *tauia1(leftix(ix,iy),leftiy(ix,iy))
-     &         *alpha1(leftix(ix,iy),leftiy(ix,iy))
-     &         *bb(leftix(ix,iy),leftiy(ix,iy),2)
-     &         /bb(leftix(ix,iy),leftiy(ix,iy),3)
-     &         *bb(leftix(ix,iy),leftiy(ix,iy),0)
-     &         /sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))
-     &         )*0.5_R8
-     &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
-     &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))
+                  fchvisq_a(ix,iy,0,is) =                               !srv 16.10.17
+     &             -fac_vis(ix,iy)*0.24_R8*vis_q*(           ! signmf*  !srv 11.01.13 16.10.17
+     &              vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
+     &             *tauia1(ix,iy)
+     &             *alpha1(ix,iy)
+     &             *bb(ix,iy,2)/bb(ix,iy,3)
+     &             *bb(ix,iy,0)/sqrt(bb(ix,iy,3))
+     &             +vol(leftix(ix,iy),leftiy(ix,iy))
+     &             /hx(leftix(ix,iy),leftiy(ix,iy))**2
+     &             /hy1(leftix(ix,iy),leftiy(ix,iy))
+     &             *tauia1(leftix(ix,iy),leftiy(ix,iy))
+     &             *alpha1(leftix(ix,iy),leftiy(ix,iy))
+     &             *bb(leftix(ix,iy),leftiy(ix,iy),2)
+     &             /bb(leftix(ix,iy),leftiy(ix,iy),3)
+     &             *bb(leftix(ix,iy),leftiy(ix,iy),0)
+     &             /sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))
+     &             )*0.5_R8
+     &             *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
+     &             *(OnedBsqc(topix(ix,iy),topiy(ix,iy))
+     &              -OnedBsqc(ix,iy))
                  endif                                                   !lk 23.05.06 05.07.07 }
                enddo
              enddo
@@ -318,16 +319,17 @@
                  if(on_closed_surface(bottomix(ix,iy),
      .                                bottomiy(ix,iy))) then
                    fchvisq_a(ix,iy,0,is) =
-     &         -fac_vis(ix,iy)*0.24_R8*vis_q*(              ! signmf*    !srv 11.01.13 16.10.17
-     &         tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)/hy(ix,iy)
-     &         +tauia1(leftix(ix,iy),leftiy(ix,iy))
-     &         *alpha1(leftix(ix,iy),leftiy(ix,iy))
-     &         /hx(leftix(ix,iy),leftiy(ix,iy))
-     &         /hy(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
-     &         *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
-     &         *wbbl(ix,iy,2)/wbbl(ix,iy,3)*wbbl(ix,iy,0)
-     &         /sqrt(wbbl(ix,iy,3))*gs(ix,iy,0)*qc(ix,iy)
-     &         *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))
+     &              -fac_vis(ix,iy)*0.24_R8*vis_q*(         ! signmf*    !srv 11.01.13 16.10.17
+     &               tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)/hy(ix,iy)
+     &              +tauia1(leftix(ix,iy),leftiy(ix,iy))
+     &              *alpha1(leftix(ix,iy),leftiy(ix,iy))
+     &              /hx(leftix(ix,iy),leftiy(ix,iy))
+     &              /hy(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
+     &              *(wrk0(ix,iy)-wrk0(leftix(ix,iy),leftiy(ix,iy)))
+     &              *wbbl(ix,iy,2)/wbbl(ix,iy,3)*wbbl(ix,iy,0)
+     &              /sqrt(wbbl(ix,iy,3))*gs(ix,iy,0)*qc(ix,iy)
+     &              *(OnedBsqc(topix(ix,iy),topiy(ix,iy))
+     &               -OnedBsqc(ix,iy))
                  endif                                                   !lk 23.05.06 05.07.07 }
                enddo
              enddo
@@ -343,29 +345,30 @@
      .                               bottomiy(ix,iy))) then
                   if(rightix(ix,iy).ne.nx+1) then
                     fchvisq_a(ix,iy,1,is) =
-     &          fac_vis(ix,iy)*0.24_R8*vis_q*(               ! signmf*   !srv 11.01.13 16.10.17
-     &          vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
-     &          *tauia1(ix,iy)
-     &          *alpha1(ix,iy)
-     &          *bb(ix,iy,2)/bb(ix,iy,3)
-     &          *bb(ix,iy,0)/sqrt(bb(ix,iy,3))
-     &          +vol(bottomix(ix,iy),bottomiy(ix,iy))
-     &          /hx(bottomix(ix,iy),bottomiy(ix,iy))**2
-     &          /hy1(bottomix(ix,iy),bottomiy(ix,iy))
-     &          *tauia1(bottomix(ix,iy),bottomiy(ix,iy))
-     &          *alpha1(bottomix(ix,iy),bottomiy(ix,iy))
-     &          *bb(bottomix(ix,iy),bottomiy(ix,iy),2)
-     &          /bb(bottomix(ix,iy),bottomiy(ix,iy),3)
-     &          *bb(bottomix(ix,iy),bottomiy(ix,iy),0)
-     &          /sqrt(bb(bottomix(ix,iy),bottomiy(ix,iy),3))
+     &                fac_vis(ix,iy)*0.24_R8*vis_q*(        ! signmf*   !srv 11.01.13 16.10.17
+     &                vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
+     &               *tauia1(ix,iy)
+     &               *alpha1(ix,iy)
+     &               *bb(ix,iy,2)/bb(ix,iy,3)
+     &               *bb(ix,iy,0)/sqrt(bb(ix,iy,3))
+     &               +vol(bottomix(ix,iy),bottomiy(ix,iy))
+     &               /hx(bottomix(ix,iy),bottomiy(ix,iy))**2
+     &               /hy1(bottomix(ix,iy),bottomiy(ix,iy))
+     &               *tauia1(bottomix(ix,iy),bottomiy(ix,iy))
+     &               *alpha1(bottomix(ix,iy),bottomiy(ix,iy))
+     &               *bb(bottomix(ix,iy),bottomiy(ix,iy),2)
+     &               /bb(bottomix(ix,iy),bottomiy(ix,iy),3)
+     &               *bb(bottomix(ix,iy),bottomiy(ix,iy),0)
+     &               /sqrt(bb(bottomix(ix,iy),bottomiy(ix,iy),3))
      &                      )*0.5_R8
-     &          *(hipgen(rightix(ix,iy),rightiy(ix,iy))
-     &          +hipgen(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
-     &             rightiy(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          -hipgen(ix,iy)-hipgen(bottomix(ix,iy),bottomiy(ix,iy))
-     &            )*0.5_R8
-     &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))
-     &          -OnedBsqc(ix,iy))
+     &               *(hipgen(rightix(ix,iy),rightiy(ix,iy))
+     &                +hipgen(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
+     &                        rightiy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &                -hipgen(ix,iy)
+     &                -hipgen(bottomix(ix,iy),bottomiy(ix,iy))
+     &               )*0.5_R8
+     &               *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))
+     &                -OnedBsqc(ix,iy))
                   endif
                 endif                                                    !lk 23.05.06 05.07.07 }
               enddo
@@ -379,21 +382,21 @@
      .                               bottomiy(ix,iy))) then
                if(rightix(ix,iy).ne.nx+1) then
                 fchvisq_a(ix,iy,1,is) =
-     &          fac_vis(ix,iy)*0.24_R8*vis_q*(              ! signmf*    !srv 11.01.13 16.10.17
-     &          tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)**2
-     &          +tauia1(bottomix(ix,iy),bottomiy(ix,iy))
-     &          *alpha1(bottomix(ix,iy),bottomiy(ix,iy))
-     &          /hx(bottomix(ix,iy),bottomiy(ix,iy))**2
+     &            fac_vis(ix,iy)*0.24_R8*vis_q*(            ! signmf*    !srv 11.01.13 16.10.17
+     &            tauia1(ix,iy)*alpha1(ix,iy)/hx(ix,iy)**2
+     &           +tauia1(bottomix(ix,iy),bottomiy(ix,iy))
+     &           *alpha1(bottomix(ix,iy),bottomiy(ix,iy))
+     &           /hx(bottomix(ix,iy),bottomiy(ix,iy))**2
      &                      )*0.5_R8
-     &          *(hipgen(rightix(ix,iy),rightiy(ix,iy))
-     &          +hipgen(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
-     &             rightiy(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          -hipgen(ix,iy)-hipgen(bottomix(ix,iy),bottomiy(ix,iy))
+     &           *(hipgen(rightix(ix,iy),rightiy(ix,iy))
+     &           +hipgen(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
+     &                   rightiy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &           -hipgen(ix,iy)-hipgen(bottomix(ix,iy),bottomiy(ix,iy))
      &            )*0.5_R8
-     &          *wbbv(ix,iy,2)/wbbv(ix,iy,3)
-     &          *wbbv(ix,iy,0)/sqrt(wbbv(ix,iy,3))*gs(ix,iy,1)
-     &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))
-     &          -OnedBsqc(ix,iy))
+     &           *wbbv(ix,iy,2)/wbbv(ix,iy,3)
+     &           *wbbv(ix,iy,0)/sqrt(wbbv(ix,iy,3))*gs(ix,iy,1)
+     &           *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))
+     &            -OnedBsqc(ix,iy))
                endif
               endif                                                      !lk 23.05.06 05.07.07 }
              enddo
@@ -559,12 +562,13 @@
                   if(on_closed_surface(bottomix(ix,iy),
      .                             bottomiy(ix,iy))) then
                     hip0a(ix,iy) = (-2.5_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
-     & /bb(ix,iy,0)/bbaverage2(iy))
-     & *(nal(ix,iy,inucl)*ti(ix,iy)/qe*Z_to_m1_ast(ix,iy,inucl))*
-     &  (ti(topix(ix,iy),topiy(ix,iy))
-     &  -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &  (hy1(ix,iy)+0.5_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &   0.5_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &               /bb(ix,iy,0)/bbaverage2(iy))
+     &               *(nal(ix,iy,inucl)*ti(ix,iy)/qe*
+     &                 Z_to_m1_ast(ix,iy,inucl))*
+     &                (ti(topix(ix,iy),topiy(ix,iy))
+     &                -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &                (hy1(ix,iy)+0.5_R8*hy1(topix(ix,iy),topiy(ix,iy))+
+     &                 0.5_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
                   endif
                 enddo
               enddo
@@ -595,7 +599,7 @@
 
             else if (hstyle .eq. 1) then
 
-              hip0a = 0.0e0_R8
+              hip0a = 0.0_R8
               do iy = 0, ny-1
                do ix = -1, nx
                 if(leftix(ix,iy).ne.-2) then
@@ -637,17 +641,18 @@
             enddo
 
             hipgen_al(-1:nx,-1:ny,inucl) = 0.0_R8
-            do iy=0,ny-1
-              do ix=0,nx-1
+            do iy = 0, ny-1
+              do ix = 0, nx-1
                 hipgen_al(ix,iy,inucl)=hip1(ix,iy)*
-     &        atan(hip0(ix,iy)/hip1(ix,iy))
-     &        *sqrt(bb(ix,iy,3))
+     &            atan(hip0(ix,iy)/hip1(ix,iy))
+     &           *sqrt(bb(ix,iy,3))
               enddo
             enddo
 
            enddo
 
            wrk0 = 0.0_R8
+           dvq = 0.0_R8
            do iy = 0, ny
             do ix = -1, nx
              if(on_closed_surface(bottomix(ix,iy),
@@ -656,32 +661,33 @@
 !             it has been considered that viscosity coefficients were multiplied by bx**2
                   do inucl = 0,nspecies-1
                     wrk0(ix,iy) = wrk0(ix,iy) +
-     &           0.5e0_R8*(na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
-     &           na(leftix(ix,iy),leftiy(ix,iy),is)/
-     &           nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
-     &           cvsa_hAdp_albe(ix,iy,0,s2nucl(is)-1,inucl)*
-     &           (hipgen_al(ix,iy,inucl) -
-     &           hipgen_al(leftix(ix,iy),leftiy(ix,iy),inucl))
+     &               0.5_R8*(na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
+     &               na(leftix(ix,iy),leftiy(ix,iy),is)/
+     &               nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
+     &               cvsa_hAdp_albe(ix,iy,0,s2nucl(is)-1,inucl)*
+     &              (hipgen_al(ix,iy,inucl) -
+     &               hipgen_al(leftix(ix,iy),leftiy(ix,iy),inucl))
                   enddo
 * ..charge state correction
                   if (zhcscorr.gt.0 .and. zhcscorr_vq.gt.0) then
                     wrk0(ix,iy) = wrk0(ix,iy) +
-     &           0.5e0_R8*(na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
-     &           na(leftix(ix,iy),leftiy(ix,iy),is)/
-     &           nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
-     &           cvsa_hBdp_al(ix,iy,0,s2nucl(is)-1)*
-     &           ((hipgen(ix,iy) -
-     &           hipgen(leftix(ix,iy),leftiy(ix,iy)))/
-     &           Ia(ix,iy,is)-
-     &           (hipgen_al(ix,iy,s2nucl(is)-1) -
-     &           hipgen_al(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1)))
+     &               0.5_R8*(na(ix,iy,is)/nal(ix,iy,s2nucl(is)-1)+
+     &               na(leftix(ix,iy),leftiy(ix,iy),is)/
+     &               nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(is)-1))*
+     &               cvsa_hBdp_al(ix,iy,0,s2nucl(is)-1)*
+     &             ((hipgen(ix,iy) -
+     &               hipgen(leftix(ix,iy),leftiy(ix,iy)))/
+     &               Ia(ix,iy,is)-
+     &              (hipgen_al(ix,iy,s2nucl(is)-1) -
+     &               hipgen_al(leftix(ix,iy),
+     &                         leftiy(ix,iy),s2nucl(is)-1)))
                   endif
 
                   dvq(ix,iy) =
      &            (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+
      &             bb(leftix(ix,iy),leftiy(ix,iy),2)*
      &             sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
-     &                  bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8*
+     &                  bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5_R8*
      &             wrk0(ix,iy)
                endif
              endif
@@ -691,43 +697,44 @@
 * ..calculate the X-component of the parallel viscosity current
 *                                  connected with the heat flux
 
-             do iy = 0, mintopcut-1
-               do ix = 0, nx
-                 if(on_closed_surface(bottomix(ix,iy),
-     .                                bottomiy(ix,iy))) then
-                   fchvisq_a(ix,iy,0,is) =-
-     &              2.0e0_R8*dvq(ix,iy)
+           do iy = 0, mintopcut-1
+             do ix = 0, nx
+               if(on_closed_surface(bottomix(ix,iy),
+     .                              bottomiy(ix,iy))) then
+                 fchvisq_a(ix,iy,0,is) =-
+     &             2.0_R8*dvq(ix,iy)
      &            /(hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy))
      &            *(OnedBsqc(topix(ix,iy),topiy(ix,iy))-OnedBsqc(ix,iy))
-     &            /3.0e0_R8*0.4e0_R8
-                 endif
-               enddo
+     &            /3.0_R8*0.4_R8
+               endif
              enddo
+           enddo
 
 * ..calculate the Y-component of the parallel viscosity current
 *                                  connected with the heat flux
-            wrk0 = 0.0e0_R8
-            do iy = 0, mintopcut
-              do ix = -1, nx
-                if(on_closed_surface(bottomix(ix,iy),
-     .                               bottomiy(ix,iy))) then
+           wrk0 = 0.0_R8
+           do iy = 0, mintopcut
+             do ix = -1, nx
+               if(on_closed_surface(bottomix(ix,iy),
+     .                              bottomiy(ix,iy))) then
                  if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1)then
                    wrk0(ix,iy) = (dvq(ix,iy)+
-     &              dvq(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+     &              dvq(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
                  endif
-                endif
-              enddo
-            enddo
-            do iy = 0, mintopcut
-              do ix = 0, nx
-                if(on_closed_surface(bottomix(ix,iy),
-     .                               bottomiy(ix,iy))) then
+               endif
+             enddo
+           enddo
+           do iy = 0, mintopcut
+             do ix = 0, nx
+               if(on_closed_surface(bottomix(ix,iy),
+     .                              bottomiy(ix,iy))) then
                  if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1)then
                    fchvisq_a(ix,iy,1,is) =
-     &        (wrk0(ix,iy)+wrk0(bottomix(ix,iy),bottomiy(ix,iy)))
-     &       /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-     &       *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))
-     &        /3.0e0_R8*0.4e0_R8
+     &              (wrk0(ix,iy)+wrk0(bottomix(ix,iy),bottomiy(ix,iy)))
+     &             /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &             *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))
+     &              -OnedBsqc(ix,iy))
+     &              /3.0_R8*0.4_R8
                  endif
                 endif
               enddo
