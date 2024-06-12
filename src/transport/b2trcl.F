@@ -245,7 +245,7 @@ csw 13mar2012
      &       sigin(-1,-1,0,is,k), csigin(-1,-1,0,is,is0))                !srv 01.07.99
            call b2txcy (nx, ny, mode, vol, gs, hy1,                      !srv
      &       sigin(-1,-1,1,is,k), csigin(-1,-1,1,is,is0))                !srv
-        endif
+         endif
        enddo
       enddo
 
@@ -751,7 +751,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                        !lk 06.
      &              'cl_cvsahz_cly'//chns)
         call my_out(70,nx,ny,cthe(-1,-1,is),'cl_cthe'//chns)
         call my_out(70,nx,ny,cthi(-1,-1,is),'cl_cthi'//chns)
-        do is0=0,ns-1
+        do is0 = 0, ns-1
          write (chns0,'(i3.3)') is0
          call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'cl_csiginx'//
      &        chns//'_'//chns0)

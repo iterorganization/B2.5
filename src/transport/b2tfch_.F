@@ -242,15 +242,15 @@
       enddo
       do iy = 0, ny
        do ix = -1, nx
-         conc(ix,iy,1) = csig(ix,iy,1)                                   !srv
-         if(fch_ion_neutral.ne.0.0_R8 .and.
+        conc(ix,iy,1) = csig(ix,iy,1)                                    !srv
+        if(fch_ion_neutral.ne.0.0_R8 .and.
      &     (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then           !srv 23.12.19
          do is = 0, ns-1                                                 !srv 24.06.08 {
 !          if (.not.is_neutral(is)) then
           if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then            !srv 20.10.17
            do is0 = 0, ns-1
             if (is_neutral(is0).and.nint(zn(is0)).eq.1) then             !srv 20.10.17
-            conc(ix,iy,1) = conc(ix,iy,1) + csigin(ix,iy,1,is,is0) !*facdrift !srv 27.03.99 07.02.03 31.01.08
+             conc(ix,iy,1) = conc(ix,iy,1) + csigin(ix,iy,1,is,is0) !*facdrift !srv 27.03.99 07.02.03 31.01.08
             endif                                                        !srv 20.10.17
            enddo
           endif
@@ -325,7 +325,7 @@
         call my_out(70,nx,ny,cvisper_a(-1,-1,1,is),
      &  'b2tfch__cvisper_ay'//chns)
         call my_out(70,nx,ny,na(-1,-1,is),'b2tfch__na'//chns)
-        do is0=0,ns-1
+        do is0 = 0, ns-1
          write (chns0,'(i3.3)') is0
          call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'b2tfch__csiginx'
      &        //chns//'_'//chns0)
