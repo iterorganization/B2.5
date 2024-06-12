@@ -49,6 +49,7 @@
 *   ..local variables
       integer ix, iy, is, ib, inucl
       integer mintopcut                                                  !lk
+      integer, save :: iout = 0                                          !srv 11.06.24
       integer, save :: ncall = 0
       integer, save :: hstyle = 0                                        !lk 23.05.06 05.07.07 {
       integer, save :: no_current = 0
@@ -70,6 +71,7 @@
      *    dvq(-1:nx,-1:ny)                                               !som 21.10.21
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0             !som 20.10.21
       integer, save :: Zhdanov_vish = 1                                  !som 20.10.21
+      character chns*3                                                   !srv 11.06.24
 *   ..procedures
       intrinsic abs
       external xertst
@@ -82,6 +84,7 @@
       call subini ('b2tvsq')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+       call ipgeti ('b2tvsq_iout', iout)                                 !srv 11.06.24
        call ipgetr ('b2tfhe_vis_q', vis_q)                               !srv 11.07.99
        call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)           !som 20.10.21
        call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                 !som 20.10.21
@@ -764,6 +767,19 @@
           end do
         end do
       end do
+
+      if (iout.ne.0) then                                              !srv 11.06.24 {
+        do is = 0, ns-1
+          write (chns,'(i3.3)') is
+          call my_out(70,nx,ny,fchvisq_a(-1,-1,0,is),'b2tvsq_fchvisqx_a'
+     &                                       //chns)
+          call my_out(70,nx,ny,fchvisq_a(-1,-1,1,is),'b2tvsq_fchvisqy_a'
+     &                                       //chns)
+        enddo
+        call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tvsq_fchvisqx')
+        call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tvsq_fchvisqy')
+      endif                                                            !srv 11.06.24 }
+
 * ..return
       ncall = ncall+1
       call subend ()

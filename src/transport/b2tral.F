@@ -618,9 +618,9 @@
         call my_out(70,nx,ny,cvsahz_cl(-1,-1,1,is),'cvsahz_cly'//chns)
         call my_out(70,nx,ny,cthe(-1,-1,is),'cthe'//chns)
         call my_out(70,nx,ny,cthi(-1,-1,is),'cthi'//chns)
-        do is0=0,ns-1
+        do is0 = 0, ns-1
          write (chns0,'(i3.3)') is0
-         if(is0.ne.is .and. .not.is_neutral(is)) then
+         if(.not.is_neutral(is) .and. is_neutral(is0)) then
           call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'csiginx'//
      &        chns//'_'//chns0)
           call my_out(70,nx,ny,csigin(-1,-1,1,is,is0),'csiginy'//
@@ -695,9 +695,9 @@
       if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-        do is0=0,ns-1
+        do is0 = 0, ns-1
          write (chns0,'(i3.3)') is0
-         if(is0.ne.is .and. .not.is_neutral(is)) then
+         if(is_neutral(is0) .and. .not.is_neutral(is)) then
           call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'b2tral_csiginx'
      &        //chns//'_'//chns0)
           call my_out(70,nx,ny,csigin(-1,-1,1,is,is0),'b2tral_csiginy'
