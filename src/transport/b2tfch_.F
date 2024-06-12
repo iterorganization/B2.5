@@ -103,10 +103,10 @@
       external xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
 *   ..initialization
-      data ncall/0/, fch_ion_neutral/0.0e0_R8/, fch_inert/1.0e0_R8/      !srv 07.07.99 22.03.02
-     *        , fch_anomalous/1.0e0_R8/                                  !srv 22.03.02
-     *        , dia_cur/1.0e0_R8/, vis_par/1.0e0_R8/,                    !srv 17.05.99 22.03.02
-     *          vis_q/1.0e0_R8/, vis_per/0.0e0_R8/, sig_stoch/1.0_R8/    !srv 11.07.99 22.11.99 22.03.02
+      data ncall/0/, fch_ion_neutral/0.0_R8/, fch_inert/1.0_R8/          !srv 07.07.99 22.03.02
+     *        , fch_anomalous/1.0_R8/                                    !srv 22.03.02
+     *        , dia_cur/1.0_R8/, vis_par/1.0_R8/,                        !srv 17.05.99 22.03.02
+     *          vis_q/1.0_R8/, vis_per/0.0_R8/, sig_stoch/1.0_R8/        !srv 11.07.99 22.11.99 22.03.02
 
 *-----------------------------------------------------------------------
 *.computation
@@ -352,7 +352,7 @@ c    implementation ensures backwards compatibility for perfectly orthogonal gri
         call my_out(70,nx,ny,cvisper_a(-1,-1,1,is),
      &  'b2tfch__cvisper_ay'//chns)
         call my_out(70,nx,ny,na(-1,-1,is),'b2tfch__na'//chns)
-        do is0=0,ns-1
+        do is0 = 0, ns-1
          write (chns0,'(i3.3)') is0
          call my_out(70,nx,ny,csigin(-1,-1,0,0,is,is0),'b2tfch__csiginx'
      &        //chns//'_'//chns0)
