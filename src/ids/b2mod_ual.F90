@@ -755,7 +755,7 @@ contains
         &   doCreate, useHdf5, nmlFile )
         integer, intent(out) :: idx !< The returned identifier to be used in the
                                     !< subsequent data access operation
-        integer, intent(in), optional :: shot   !< The shot number of the
+        integer, intent(in), optional :: shot   !< The pulse (previously shot) number of the
                                                 !< database being created
         integer, intent(in), optional :: run    !< The run number of the
                                                 !< database being created
@@ -800,7 +800,7 @@ contains
 
         integer :: lShot = 1, lRun = 0
         real(R8) :: lTime = 0.0_R8
-        character(32) :: luser="unspecified", lTokamak="unspecified",   &
+        character(32) :: lUser="unspecified", lTokamak="unspecified",   &
             &   lDataversion="unspecified"
         logical :: lDoCreate = .false., lUseHdf5 = .false.
 
