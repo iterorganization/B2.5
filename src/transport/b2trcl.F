@@ -229,7 +229,7 @@ csw 13mar2012
       do is = 0, ns-1
         do is0 = 0, ns-1
           if(.not.is_neutral(is).and.is_neutral(is0)) then
-            call sfill (n2*4, 0.0_R8, csigin(-1,-1,0,is,is0), 1)
+            call sfill (n2*2, 0.0_R8, csigin(-1,-1,0,is,is0), 1)
           endif
         enddo
       enddo
