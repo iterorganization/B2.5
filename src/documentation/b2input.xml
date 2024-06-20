@@ -2631,6 +2631,22 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tqna_afn_vnn</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1, a collision frequency related to neutral-neutral collisions is added to the AFN transport coefficients. This is an ad-hoce model for fluid neutral transport in regions where plasma density is extremely low and CX effectively absent (e.g. below dome, far-SOL,...). When set to 0, the correction is not added.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_afn_vnn_ndiff</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When set to 1, perpendicular transport in the AFN model due to neutral-neutral collisions is modelled as density diffusion rather than pressure diffusion. When set to 0, it is modelled as pressure diffusion.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mn_tn_style</name>
 				<default>0</default>
 				<type>integer</type>

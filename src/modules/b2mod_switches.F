@@ -66,6 +66,8 @@ c Advanced fluid neutral models
       integer :: do_volrec
       integer :: transport_afn !! use advanced fluid neutral (afn) transport coefficients
       integer :: afn_bcs_use_coarse
+      integer :: afn_vnn
+      integer :: afn_vnn_ndiff
 
       real (kind=R8) :: fhe_vis_per  !srv 06.07.00
       real (kind=R8) :: fhe_vis_par  !srv 22.03.02
@@ -618,6 +620,8 @@ c Advanced fluid neutral models
       s % diffusion_bc_safeguard = 1
       s % do_volrec = 1
       s % afn_bcs_use_coarse = 1
+      s % afn_vnn = 1
+      s % afn_vnn_ndiff = 0
 
       s % fhe_vis_per = 0.0e0_R8
       s % fhe_vis_par = 0.0e0_R8
@@ -1185,6 +1189,8 @@ c Advanced fluid neutral models
       call ipgeti ('b2tqna_transport_afn', s % transport_afn)
       call ipgeti ('diffusion_bc_safeguard', s % diffusion_bc_safeguard)
       call ipgeti ('b2stbr_afn_bcs_use_coarse', s % afn_bcs_use_coarse)
+      call ipgeti ('b2tqna_afn_vnn', s % afn_vnn)
+      call ipgeti ('b2tqna_afn_vnn_ndiff', s % afn_vnn_ndiff)
 
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)
