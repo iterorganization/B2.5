@@ -1042,12 +1042,12 @@ c.. Test consistency with region boundaries
               call find_faces (indss, inbc, nbcfc,
      >             m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
             end do              ! iss
-            write(ss,"(I0)") ib
+            write(ss,'(i3)') ib
             call xertst(nbcfc.gt.0, 
      &        'No faces found for boundary condition = '//ss)
             m%bcFcP(ib,2) = nbcfc
           else
-            call xerrab ('BCCHAR /= A ')
+            call xerrab ('BCCHAR /= A')
           endif
         end do
         close(idb)
@@ -1776,9 +1776,9 @@ cwdk also need to correct for degenerate faces?
             write (*,*) ' surface index ',indss
 !  find all faces belonging to surface structure INDSS
             call find_faces (indss, inbc, bcl(ib),
-     >                       m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
+     >                       m%mxnbc, m%bcFc, m%bcFcOr, m, idb)
           end do  ! iss
-          write(ss,"(I0)") ib
+          write(ss,'(i3)') ib
           call xertst(bcl(ib).gt.0, 
      &      'No faces found for boundary condition = '//ss)
           m%bcFcP(ib,2) = bcl(ib)
@@ -1864,7 +1864,7 @@ cwdk also need to correct for degenerate faces?
       call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&boundary'
-      write (iout,'(1x,a,i0)') 'NBC     = ',m%nBc
+      write (iout,'(1x,a,i3,a)') 'NBC     = ',m%nBc,','
       write (iout,'(1x,a,(1x,T14,10(2x,4a1)))')
      .       'BCCHAR  =  ',(ap,acchar(ib),ap,',',ib=1,m%nBc)
 
@@ -1931,7 +1931,7 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,l1,a1)') 'LBNDUSR=',lbndusr,','
       write (iout,'(1x,a,l1,a1)') 'LFEEDBACK=',lfeedback,','
 
-      write (iout,'(1x,a,i0,a1)') 'NNISO = ',nniso,','
+      write (iout,'(1x,a,i2,a1)') 'NNISO = ',nniso,','
 
       if (nniso > 0)
      .   call xerrab ('write_bcparms -- nniso > 0')
@@ -1957,6 +1957,7 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a)') '/'
       close (iout)
 
+      return
       end subroutine write_bcparms
 
 
@@ -1973,14 +1974,13 @@ cc BCMOM = 13, because it is drift-compatible but gives the same result as the o
 
       changed = .false.
       do ib=1,m%nBc
-        do is=0,ns-1
 cc BCMOM
+        do is=0,ns-1
           if (bcmom(is,ib).eq.3) then
             bcmom(is,ib) = 13
             write(*,*) 'Automatically changing BCMOM from 3 to 13'
             changed = .true.
           endif 
-
         enddo
 cc BCENE
         if (bcene(ib).eq.3) then 
@@ -2004,23 +2004,21 @@ cc BCENI
           write(*,*) 'Automatically changing BCENI from 12 to 15'
           changed = .true.
         endif 
-
 cc BCPOT
-
         if (bcpot(ib).eq.3) then 
           bcpot(ib) = 11
           write(*,*) 'Automatically changing BCPOT from 3 to 11'
           changed = .true.
         endif 
-
       enddo
 
       if (changed) then
-          write(*,*) 'Some outdated BCs' //
-     .    ' in WG have been replaced automatically.'
-          write(*,*) 'See lines above.'
+        write(*,*) 'Some outdated BCs' //
+     .   ' in WG have been replaced automatically.'
+        write(*,*) 'See lines above.'
       endif
 
+      return
       end subroutine replace_outdated_bcparms
 
 ***********************************************************************
@@ -2096,6 +2094,7 @@ cc BCPOT
       end do
       close (iout)
 #endif
+      return
       end subroutine bc_to_struct
 
       end module b2mod_boundary_namelist

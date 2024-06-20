@@ -20,9 +20,9 @@
 *   ..input arguments (unchanged on exit)
       integer ninp(0:2), nout(0:1), nCv, nFc, ns                  !srv 22.12.09
 *   ..input/output arguments
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: st
+      type(mapping), intent (inout)  :: mpg
+      type(geometry), intent (inout) :: geo
+      type(B2State), intent (inout)  :: st
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -59,7 +59,7 @@
 *     nCv, nFc - integer.
 *     nCv and nFc specify the number of control volumes and cell faces
 *     in the unstructured mesh.
-*     It will hold that 0.le.nCv and 0.le.nFc.
+*     It will hold that 0.lt.nCv and 0.lt.nFc.
 *
 *     ns - integer, input.
 *     ns specifies the number of atomic species in the calculation.
@@ -73,7 +73,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer is, i, is0, ns0, idum(0:9), io
+      integer is, i, is0, ns0, idum(0:9)
       integer, save :: read_b2fstate_file = 0                       !srv 22.12.09
       type(B2State) :: st1
       real (kind=R8), allocatable :: zcdum(:,:)
@@ -338,7 +338,7 @@
      &             1.le.nout(0).and.1.le.nout(1),
      &  'faulty argument ninp, nout')
 *   ..test dimensions
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 
 *   ..read the header of geometry file

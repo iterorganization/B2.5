@@ -67,7 +67,7 @@
 *   ..subprogram start-up calls
       call subini ('b2usmo')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test itcnt
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..extensive tests on first few calls
@@ -216,7 +216,7 @@
 ! $AD II-LOOP
       do iCv = 1, nCv
         aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1)) -
-     &    min(0.0e0_R8,ctcfb(iCv))
+     &    min(0.0_R8,ctcfb(iCv))
       enddo
 ! $AD II-LOOP
       do iCv = 1, nCv

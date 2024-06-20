@@ -37,6 +37,7 @@
       contains
 
 *----------------------------------------------------------------------
+
       subroutine alloc_b2mod_indirect(nxd,nyd,nncutmax)
       implicit none
       integer nxd,nyd,nncutmax
@@ -71,7 +72,6 @@
 
       return
       end subroutine alloc_b2mod_indirect
-
 
       subroutine dealloc_b2mod_indirect
       implicit none

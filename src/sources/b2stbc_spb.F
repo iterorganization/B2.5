@@ -91,22 +91,22 @@
       real (kind=R8) :: fchy_inertia                                  !sv 07.04.00
       real (kind=R8) :: fchy_biasing_cur                              !sv 31.08.00
       real (kind=R8) :: fchy_dia                                      !sv
-      real (kind=R8) , save :: y_dia = 1.0e0_R8, y_inertia = 1.0e0_R8 !sv 25.04.00
-      real (kind=R8) , save :: biasing_cur = 0.0e0_R8                 !sv 31.08.00
-      real (kind=R8) , save :: fchy_dia_at_PR = 0.0e0_R8,             !sv 09.07.99
-     &    fchy_in_at_PR = 0.0e0_R8, fchy_vispar_at_PR = 0.0e0_R8,     !sv 21.10.02
-     &    fchy_visq_at_PR = 0.0e0_R8, fchy_visper_at_PR = 0.0e0_R8,   !sv 21.10.02
-     &    fchy_inert_at_PR = 0.0e0_R8                                 !sv 21.10.02
-      real (kind=R8) , save :: fchy_dia_at_north = 0.0e0_R8,          !sv 09.07.99
-     &                         fchy_in_at_north = 0.0e0_R8,           !sv 21.10.02
-     &                         fchy_vispar_at_north = 0.0e0_R8,       !sv 21.10.02
-     &                         fchy_visq_at_north = 0.0e0_R8,         !sv 21.10.02
-     &                         fchy_visper_at_north = 0.0e0_R8,       !sv 21.10.02
-     &                         fchy_inert_at_north = 0.0e0_R8         !sv 21.10.02
-      real (kind=R8) , save :: po_in_lower = 0.0e0_R8,
-     &                         po_in_upper = 0.0e0_R8                 !sv 16.11.04
-      real (kind=R8) , save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
-     &                         phm2 = 1.0e0_R8, ubig0 = 0.0e0_R8      !iyv 22.04.08
+      real (kind=R8) , save :: y_dia = 1.0_R8, y_inertia = 1.0_R8     !sv 25.04.00
+      real (kind=R8) , save :: biasing_cur = 0.0_R8                   !sv 31.08.00
+      real (kind=R8) , save :: fchy_dia_at_PR = 0.0_R8,               !sv 09.07.99
+     &    fchy_in_at_PR = 0.0_R8, fchy_vispar_at_PR = 0.0_R8,         !sv 21.10.02
+     &    fchy_visq_at_PR = 0.0_R8, fchy_visper_at_PR = 0.0_R8,       !sv 21.10.02
+     &    fchy_inert_at_PR = 0.0_R8                                   !sv 21.10.02
+      real (kind=R8) , save :: fchy_dia_at_north = 0.0_R8,            !sv 09.07.99
+     &                         fchy_in_at_north = 0.0_R8,             !sv 21.10.02
+     &                         fchy_vispar_at_north = 0.0_R8,         !sv 21.10.02
+     &                         fchy_visq_at_north = 0.0_R8,           !sv 21.10.02
+     &                         fchy_visper_at_north = 0.0_R8,         !sv 21.10.02
+     &                         fchy_inert_at_north = 0.0_R8           !sv 21.10.02
+      real (kind=R8) , save :: po_in_lower = 0.0_R8,
+     &                         po_in_upper = 0.0_R8                   !sv 16.11.04
+      real (kind=R8) , save :: phm0 = 1.0_R8, phm1 = 1.0_R8,
+     &                         phm2 = 1.0_R8, ubig0 = 0.0_R8          !iyv 22.04.08
       character chns*3, chk*1                                         !sv 11.07.05
       integer, save :: iout = 0, k                                    !sv 11.07.05
       save ncall, sna0ep, she0ep, shi0ep
@@ -165,7 +165,7 @@
        call ipgetr ('b2stbc_po_in_lower', po_in_lower)                   !sv 16.11.04
        call ipgetr ('b2stbc_po_in_upper', po_in_upper)                   !sv 16.11.04
        call ipgeti ('b2stbc_iout', iout)                                 !sv 11.07.05
-       call ipgetr ('b2stbc_ubig0', ubig0)                               !iyv 22.04.08 
+       call ipgetr ('b2stbc_ubig0', ubig0)                               !iyv 22.04.08
        call ipgeti ('b2stbc_istyle_cs', istyle_cs)                       !sv 25.04.08
       endif
 *   ..set n2
@@ -184,7 +184,7 @@
        call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test state
 #ifdef WG_TODO
-       call b2xvps (nx, ny, ns, ne, na, ua, te, ti, po, 
+       call b2xvps (nx, ny, ns, ne, na, ua, te, ti, po,
      &              fna, fhe, fhi, fch)
 #endif
 *    ..test edge values of fne, fni
@@ -192,11 +192,11 @@
        call b2xvff (nx, ny, fni, 'fni')
       endif
 *   ..initialize sources to 0
-      call sfill (n2*2*ns, 0.0e0_R8, sna0, 1)
-      call sfill (n2*4*ns, 0.0e0_R8, smo0, 1)
-      call sfill (n2*4, 0.0e0_R8, she0, 1)
-      call sfill (n2*4, 0.0e0_R8, shi0, 1)
-      call sfill (n2*4, 0.0e0_R8, sch0, 1)
+      call sfill (n2*2*ns, 0.0_R8, sna0, 1)
+      call sfill (n2*4*ns, 0.0_R8, smo0, 1)
+      call sfill (n2*4, 0.0_R8, she0, 1)
+      call sfill (n2*4, 0.0_R8, shi0, 1)
+      call sfill (n2*4, 0.0_R8, sch0, 1)
       facdriftm=maxval(facdrift)                                      !srv 29.07.08
 
 * ..compute standard form volume sources
@@ -218,8 +218,8 @@
 *   ..find the average pressure for inner flux surface            !sv 24.03.99
        if (istyle_average_pr.eq.0) then                           !sv 08.08.02
         iy = -1                                                   !sv 24.03.99
-        pzsum =0.0e0_R8                                           !sv 24.03.99 18.01.02
-        volsum=0.0e0_R8                                           !sv 24.03.99
+        pzsum = 0.0_R8                                            !sv 24.03.99 18.01.02
+        volsum = 0.0_R8                                           !sv 24.03.99
         do ix = -1, nx                                            !sv 26.11.02
          if (on_closed_surface(ix,iy)) then                       !sv 26.11.02
           pzsum=pzsum + pz(ix,iy)*vol(ix,iy)                      !sv 24.03.99 18.01.02
@@ -229,8 +229,8 @@
         pzaverage=pzsum/volsum                                    !sv 24.03.99 18.01.02
        else                                                       !sv 08.08.02
         iy = 0                                                    !sv 24.03.99  07.06.02 {
-        pzsum =0.0e0_R8                                           !sv 24.03.99 18.01.02
-        volsum=0.0e0_R8                                           !sv 24.03.99
+        pzsum = 0.0_R8                                            !sv 24.03.99 18.01.02
+        volsum = 0.0_R8                                           !sv 24.03.99
         num_inner=0                                               !sv 26.11.02
         do ix = -1, nx                                            !sv 26.11.02
          if (on_closed_surface(ix,iy)) then                       !sv 26.11.02
@@ -240,15 +240,15 @@
           num_inner=num_inner+1                                   !sv 26.11.02
          endif                                                    !sv 26.11.02
         enddo                                                     !sv 24.03.99
-        pzaverage=pzsum*0.5e0_R8/num_inner                        !sv 24.03.99 18.01.02 07.06.02 } 26.11.02
+        pzaverage=pzsum*0.5_R8/real(num_inner,R8)                 !sv 24.03.99 18.01.02 07.06.02 } 26.11.02
        endif                                                      !sv 08.08.02
 *   ..find the average ne, te, ti, bb for inner flux surface      !sv 15.12.00 18.10.04
-       bbsum = 0.0e0_R8                                           !sv 18.10.04
-       nesum = 0.0e0_R8                                           !sv 15.12.00 25.01.02
-       tesum = 0.0e0_R8                                           !sv 15.12.00
-       tisum = 0.0e0_R8                                           !sv 15.12.00
-       bzhzsum  = 0.0e0_R8                                        !lk 20.11.07
-       bbaverage  = 0.0e0_R8                                      !lk 20.11.07
+       bbsum = 0.0_R8                                             !sv 18.10.04
+       nesum = 0.0_R8                                             !sv 15.12.00 25.01.02
+       tesum = 0.0_R8                                             !sv 15.12.00
+       tisum = 0.0_R8                                             !sv 15.12.00
+       bzhzsum = 0.0_R8                                           !lk 20.11.07
+       bbaverage = 0.0_R8                                         !lk 20.11.07
        do ix = -1, nx                                             !sv 26.11.02
         if (on_closed_surface(ix,iy)) then                        !sv 26.11.02
          bbsum = bbsum + bb(ix,iy,3)*vol(ix,iy)                   !sv 18.10.04
@@ -263,9 +263,9 @@
        bzhzaverage=bzhzsum/volsum                                 !lk 20.11.07
 *   ..find the average ua**2, na for inner flux surface           !sv 22.01.02 {
        do is = 0, ns-1
-        uasum  = 0.0e0_R8                                         !sv 15.02.02
-        ua2sum = 0.0e0_R8                                         !sv 07.04.00 15.02.02
-        nasum  = 0.0e0_R8
+        uasum  = 0.0_R8                                           !sv 15.02.02
+        ua2sum = 0.0_R8                                           !sv 07.04.00 15.02.02
+        nasum  = 0.0_R8
         do ix = -1, nx                                            !sv 26.11.02
          if (on_closed_surface(ix,iy)) then                       !sv 26.11.02
           ua2sum = ua2sum + ua(ix,iy,is)**2*vol(ix,iy)            !sv 07.04.00 15.02.02
@@ -280,7 +280,7 @@
 *   ..loop over boundary cells
        do ix = -1, nx
 *    ..update ireg
-    1   if (cbrbrk(ireg)*nx.lt.ix+0.5e0_R8) then
+    1   if (cbrbrk(ireg)*nx.lt.ix+0.5_R8) then
          call xertst (ireg.lt.cbirso+cbnrso-1,
      &    'error in computing region on south boundary')
          ireg = ireg+1
@@ -310,17 +310,17 @@
         fchi = qe*t0
         fche = sqrt(1/(2*pi))*qe*ne(ix,-1)*vte*s1*
      &   expu2(-qe*po(ix,-1)/te(ix,-1))
-        fchy_dia = 0.0e0_R8                                       !sv 01.07.99
-        fchy_inertia = 0.0e0_R8                                   !sv 07.04.00
-        fchy_biasing_cur = 0.0e0_R8                               !sv 31.08.00
-        if(facdriftm.ne.0.0e0_R8) then                            !sv 09.07.99
+        fchy_dia = 0.0_R8                                         !sv 01.07.99
+        fchy_inertia = 0.0_R8                                     !sv 07.04.00
+        fchy_biasing_cur = 0.0_R8                                 !sv 31.08.00
+        if(facdriftm.ne.0.0_R8) then                              !sv 09.07.99
          if (.not.on_closed_surface(ix,-1)) then                  !sv 26.11.02
 *           for PR
-           if(fchy_dia_at_PR .ne. 0.0e0_R8) then                  !sv 09.07.99
+           if(fchy_dia_at_PR .ne. 0.0_R8) then                    !sv 09.07.99
              iy = 0                                               !sv 21.10.02
              fchy_dia = fchdia(ix,iy,1,1)                         !sv 21.10.02
            else
-             fchy_dia = 0.0e0_R8                                  !sv 09.07.99
+             fchy_dia = 0.0_R8                                    !sv 09.07.99
            endif
          else                                                     !sv
 *        for inner surfaces
@@ -328,23 +328,23 @@
            fchy_dia =                                             !sv 01.07.99
      &        -pzaverage*facdrift(ix,iy)*phm0      ! *signmf    !sv 24.03.99 01.07.99 21.04.00 18.01.02 2 11.01.13
 !     &      *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2)) !sv 01.07.99 20.11.07 {
-!     ^       /2.0e0_R8                                           !sv 01.07.99
+!     ^       /2.0_R8                                             !sv 01.07.99
 !     &      *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))   !sv 01.07.99
 !     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2)) !sv 01.07.99
      &      *bzhzaverage                                          !lk 20.11.07 }
      &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !sv 01.07.99
-           fchy_inertia = 0.0e0_R8                                !sv 25.06.03
+           fchy_inertia = 0.0_R8                                  !sv 25.06.03
            do is = 0, ns-1                                        !sv 25.06.03
              if (.not.is_neutral(is)) then                        !sv 25.06.03
                fchy_inertia = fchy_inertia                        !sv 07.04.00 25.06.03
-     &        -0.5e0_R8*am(is)*mp*facdrift(ix,iy)*phm1  ! *signmf !sv 07.04.00 21.04.00 21.10.02 11.01.13
+     &        -0.5_R8*am(is)*mp*facdrift(ix,iy)*phm1    ! *signmf !sv 07.04.00 21.04.00 21.10.02 11.01.13
 !     &        *(                                                 !sv 07.04.00
 !     &          na(ix,iy,is)+na(bottomix(ix,iy),bottomiy(ix,iy),is)   !sv 07.04.00
-!     &         )/2.0e0_R8                                        !sv 07.04.00
-     &        *naaverage(is)                                      !lk 20.11.07                       !sv 07.04.00
+!     &         )/2.0_R8                                          !sv 07.04.00
+     &        *naaverage(is)                                      !lk 20.11.07  !sv 07.04.00
      &        *ua2average(is)                                     !sv 07.04.00 15.02.02
 !     &        *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2)) !sv 07.04.00
-!     &         /2.0e0_R8                                         !sv 07.04.00
+!     &         /2.0_R8                                           !sv 07.04.00
 !     &        *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy))) !sv 07.04.00
 !     &        /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2)) !sv 07.04.00
      &        *bzhzaverage                                        !lk 20.11.07
@@ -388,13 +388,13 @@
 *    ..drifts to the wall                                         !sv 02.03.05 {
          if(idrifts_to_the_wall .ne. 0) then
            if(.not.is_neutral(is) .and.
-     &        cbsna(2,is,ireg).ne.0.0e0_R8) then
+     &        cbsna(2,is,ireg).ne.0.0_R8) then
              if(mdf_fnb.eq.0) then
                sna0(ix,-1,1,is) = sna0(ix,-1,1,is)+
-     *         min(0.0e0_R8,s0*(vadia(ix,0,1,1,is)+vaecrb(ix,0,1,1,is)))
+     *         min(0.0_R8,s0*(vadia(ix,0,1,1,is)+vaecrb(ix,0,1,1,is)))
              else
                sna0(ix,-1,1,is) = sna0(ix,-1,1,is)+
-     *         min(0.0e0_R8,s0*vaecrb(ix,0,1,1,is))
+     *         min(0.0_R8,s0*vaecrb(ix,0,1,1,is))
              endif
            endif
          endif                                                    !sv 02.03.05 }
@@ -406,8 +406,8 @@
              iy = -1                                              !sv 15.02.02
              smo0(ix,-1,0,is) = smo0(ix,-1,0,is)+                 !sv 09.01.01 01.07.05
      &       s0hz*(am(is)*mp)*naaverage(is)                       !sv 15.02.02
-!     &     *(2.0e0_R8*vadia(ix,iy,1,is))
-     &        *(-2.0e0_R8*facdrift(ix,iy)*phm2*       ! *signmf   !sv 07.06.00 17.05.99 25.04.00 15.02.02 11.01.13
+!     &     *(2.0_R8*vadia(ix,iy,1,is))
+     &        *(-2.0_R8*facdrift(ix,iy)*phm2*         ! *signmf   !sv 07.06.00 17.05.99 25.04.00 15.02.02 11.01.13
      &           tiaverage*bb(ix,iy,2)/(qe*rza(ix,iy,is)*hx(ix,iy)) !sv 15.02.02
      &        *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !sv 05.03.99 15.02.02
      &        )*uaaverage(is)                                     !sv 15.02.02
@@ -416,8 +416,8 @@
              iy = -1                                              !sv 15.02.02
              smo0(ix,-1,0,is) = smo0(ix,-1,0,is)+                 !sv 09.01.01 01.07.05
      &       s0hz*(am(is)*mp)*naaverage(is)                       !sv 15.02.02
-!     &     *(2.0e0_R8*vadia(ix,iy,1,1,is))
-     &       *(-2.0e0_R8*facdrift(ix,iy)*phm2*        ! *signmf   !sv 07.06.00 17.05.99 25.04.00 15.02.02 11.01.13
+!     &     *(2.0_R8*vadia(ix,iy,1,1,is))
+     &       *(-2.0_R8*facdrift(ix,iy)*phm2*          ! *signmf   !sv 07.06.00 17.05.99 25.04.00 15.02.02 11.01.13
      &          tiaverage*bb(ix,iy,2)/(qe*rza(ix,iy,is)*hx(ix,iy))  !sv 15.02.02
      &        *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !sv 05.03.99 15.02.02
      &       )*ua(ix,iy,is)                                       !sv 25.07.05
@@ -430,7 +430,7 @@
          smo0(ix,-1,2,is) = smo0(ix,-1,2,is)+                     !sv 01.07.05
      &    cbsmo(1,is,ireg)*(-csb)*pbshz(ix,0,1)+                  !sv 09.01.01
      &    cbsmo(2,is,ireg)*(-cst)*pbshz(ix,0,1)+                  !sv 09.01.01
-     &    cbsmo(5,is,ireg)*max(0.0e0_R8,fna_fcor(ix,0,1,1,is))
+     &    cbsmo(5,is,ireg)*max(0.0_R8,fna_fcor(ix,0,1,1,is))
      &    /na(ix,-1,is)                                           !sv 25.02.00
          smo0(ix,-1,2,is) = smo0(ix,-1,2,is)                      !sv 18.10.04 { 01.07.05
      &    +cbsmo(7,is,ireg)*s0hz
@@ -439,12 +439,12 @@
      &    cbsmo(3,is,ireg)*s0hz+                                  !sv 09.01.01
      &    cbsmo(4,is,ireg)*s1hz+                                  !sv 09.01.01
      &    cbsmo(6,is,ireg)                                        !sv 14.10.02
-     &             *max(0.0e0_R8,-fna_fcor(ix,0,1,1,is))/na(ix,-1,is) !sv 25.02.00
+     &             *max(0.0_R8,-fna_fcor(ix,0,1,1,is))/na(ix,-1,is) !sv 25.02.00
 *     ..compute atom heat source
          t0 = na(ix,-1,is)/ni(ix,-1,0)
          shi0(ix,-1,0) = shi0(ix,-1,0)+
      &    cbshi(0,is,ireg)*t0*s0+
-     &    cbshi(6,is,ireg)*max(0.0e0_R8,fna(ix,0,1,1,is))
+     &    cbshi(6,is,ireg)*max(0.0_R8,fna(ix,0,1,1,is))
          shi0(ix,-1,1) = shi0(ix,-1,1)+
      &    cbshi(1,is,ireg)*t0*s0
          shi0(ix,-1,3) = shi0(ix,-1,3)+
@@ -452,23 +452,23 @@
      &    cbshi(3,is,ireg)*t0*csb*s1+
      &    cbshi(4,is,ireg)*t0*cst*s0+
      &    cbshi(5,is,ireg)*t0*cst*s1
-!     &   +cbshi(7,is,ireg)*max(0.0e0_R8,-fna(ix,0,1,1,is))/ni(ix,-1,0) !sv 28.10.02
+!     &   +cbshi(7,is,ireg)*max(0.0_R8,-fna(ix,0,1,1,is))/ni(ix,-1,0) !sv 28.10.02
         enddo
         shi0(ix,-1,1) = shi0(ix,-1,1)+                            !sv 28.10.02
-     &    cbshi(7,0,ireg)*max(0.0e0_R8,-floi_noc(ix,0,1,1))       !sv 28.10.02
+     &    cbshi(7,0,ireg)*max(0.0_R8,-floi_noc(ix,0,1,1))         !sv 28.10.02
 *    ..compute electron heat source
         she0(ix,-1,0) = she0(ix,-1,0)+
      &    cbshe(0,ireg)*s0+
-     &    cbshe(6,ireg)*max(0.0e0_R8,fne(ix,0,1,1))
+     &    cbshe(6,ireg)*max(0.0_R8,fne(ix,0,1,1))
         she0(ix,-1,1) = she0(ix,-1,1)+
      &    cbshe(1,ireg)*s0
-     &   +cbshe(7,ireg)*max(0.0e0_R8,-floe_noc(ix,0,1,1))         !sv 28.10.02
+     &   +cbshe(7,ireg)*max(0.0_R8,-floe_noc(ix,0,1,1))           !sv 28.10.02
         she0(ix,-1,3) = she0(ix,-1,3)+
      &    cbshe(2,ireg)*vte*s0+
      &    cbshe(3,ireg)*vte*s1+
      &    cbshe(4,ireg)*cst*s0+
      &    cbshe(5,ireg)*cst*s1
-!     &  +cbshe(7,ireg)*max(0.0e0_R8,-fne(ix,0,1,1))/ne(ix,-1)    !sv 28.10.02
+!     &  +cbshe(7,ireg)*max(0.0_R8,-fne(ix,0,1,1))/ne(ix,-1)      !sv 28.10.02
 *    ..compute charge source
         sch0(ix,-1,2) = sch0(ix,-1,2)+
 !     &   cbsch(0,ireg)*qe*vte*s0+                                !sv 11.03.01
@@ -486,19 +486,19 @@
 !       if (ix.lt.leftcut(1) .or. ix.ge.rightcut(1)) then         !sv 21.10.02
         if (.not.on_closed_surface(ix,-1)) then                   !sv 26.11.02
           ! for PR
-          if(fchy_in_at_PR .ne. 0.0e0_R8) then                    !sv 21.10.02
+          if(fchy_in_at_PR .ne. 0.0_R8) then                      !sv 21.10.02
            sch0(ix,-1,0) = sch0(ix,-1,0) +fchin(ix,0,1,1)
           endif                                                   !sv 21.10.02
-          if(fchy_vispar_at_PR .ne. 0.0e0_R8) then                !sv 21.10.02
+          if(fchy_vispar_at_PR .ne. 0.0_R8) then                  !sv 21.10.02
            sch0(ix,-1,0) = sch0(ix,-1,0) +fchvispar(ix,0,1,1)
           endif                                                   !sv 21.10.02
-          if(fchy_visq_at_PR .ne. 0.0e0_R8) then                  !sv 21.10.02
+          if(fchy_visq_at_PR .ne. 0.0_R8) then                    !sv 21.10.02
            sch0(ix,-1,0) = sch0(ix,-1,0) +fchvisq(ix,0,1,1)
           endif                                                   !sv 21.10.02
-          if(fchy_visper_at_PR .ne. 0.0e0_R8) then                !sv 21.10.02
+          if(fchy_visper_at_PR .ne. 0.0_R8) then                  !sv 21.10.02
            sch0(ix,-1,0) = sch0(ix,-1,0) +fchvisper(ix,0,1,1)
           endif                                                   !sv 21.10.02
-          if(fchy_inert_at_PR .ne. 0.0e0_R8) then                 !sv 21.10.02
+          if(fchy_inert_at_PR .ne. 0.0_R8) then                   !sv 21.10.02
            sch0(ix,-1,0) = sch0(ix,-1,0) +fchinert(ix,0,1,1)
           endif                                                   !sv 21.10.02
         endif
@@ -514,7 +514,7 @@
 *   ..loop over boundary cells
        do ix = -1, nx
 *    ..update ireg
-    2   if (cbrbrk(ireg)*nx.lt.ix+0.5e0_R8) then
+    2   if (cbrbrk(ireg)*nx.lt.ix+0.5_R8) then
          call xertst (ireg.lt.cbirno+cbnrno-1,
      &    'error in computing region on north boundary')
          ireg = ireg+1
@@ -544,9 +544,9 @@
         fchi = qe*t0
         fche = sqrt(1/(2*pi))*qe*ne(ix,ny)*vte*s1*
      &   expu2(-qe*po(ix,ny)/te(ix,ny))
-!        fchy_dia = 0.0e0_R8                                           !sv 01.07.99
-!        if(facdriftm.ne.0.0e0_R8) then                                !sv 09.07.99
-        if(fchy_dia_at_north .ne. 0.0e0_R8) then                       !sv 09.07.99
+!        fchy_dia = 0.0_R8                                             !sv 01.07.99
+!        if(facdriftm.ne.0.0_R8) then                                  !sv 09.07.99
+        if(fchy_dia_at_north .ne. 0.0_R8) then                         !sv 09.07.99
 !         iy=ny                                                        !sv 01.07.99 { 18.05.02
 !         fchy_dia =-signmf*pz(ix,iy)*bb(ix,iy,2)                      !sv 31.03.00 18.01.02
 !     &      *vol(ix,iy)/gs(ix,iy,2)                                   !sv 01.07.99
@@ -557,12 +557,12 @@
 !         fchy_dia =-signmf*                                           !sv 09.07.99 21.04.00
 !     &       (pz(ix,iy)*bb(ix,iy,2)+                                  !sv 31.03.00 18.01.02 08.06.02
 !     &        pz(bottomix(ix,iy),bottomiy(ix,iy))                     !sv 31.03.00 18.01.02 08.06.02
-!     &       *bb(bottomix(ix,iy),bottomiy(ix,iy),2))*0.5e0_R8         !sv 31.03.00
+!     &       *bb(bottomix(ix,iy),bottomiy(ix,iy),2))*0.5_R8           !sv 31.03.00
 !     &      *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))        !sv 01.07.99
 !     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))      !sv 01.07.99
 !     &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))!sv 01.07.99
          else                                                          !sv
-          fchy_dia=0.0e0_R8                                            !sv
+          fchy_dia=0.0_R8                                              !sv
          endif                                                         !sv
 !        fchy_dia = fchy_dia*facdrift(ix,iy)                           !sv 09.07.99
 !       endif                                                          !sv 09.07.99
@@ -586,13 +586,13 @@
 *    ..drifts to the wall                                              !sv 02.03.05 {
          if(idrifts_to_the_wall .ne. 0) then
           if(.not.is_neutral(is) .and.
-     &        cbsna(2,is,ireg).ne.0.0e0_R8) then
+     &        cbsna(2,is,ireg).ne.0.0_R8) then
            if(mdf_fnb.eq.0) then                                       !sv 09.11.06 {
             sna0(ix,ny,1,is) = sna0(ix,ny,1,is)-
-     *       max(0.0e0_R8,s0*(vadia(ix,ny,1,1,is)+vaecrb(ix,ny,1,1,is)))
+     *       max(0.0_R8,s0*(vadia(ix,ny,1,1,is)+vaecrb(ix,ny,1,1,is)))
            else
             sna0(ix,ny,1,is) = sna0(ix,ny,1,is)-                       !lk 12.12.07 {
-     *      max(0.0e0_R8,
+     *      max(0.0_R8,
      8         (vol(ix,ny)+vol(bottomix(ix,ny),bottomiy(ix,ny)))/
      9         (hy1(ix,ny)+hy1(bottomix(ix,ny),bottomiy(ix,ny)))       !sv 07.05.08
      &         *vaecrb(ix,ny,1,1,is))                                  !lk 12.12.07 }
@@ -606,18 +606,18 @@
          smo0(ix,ny,2,is) = smo0(ix,ny,2,is)+                          !sv 01.07.05
      &    cbsmo(1,is,ireg)*csb*pbshz(ix,ny,1)+                         !sv 09.01.01
      &    cbsmo(2,is,ireg)*cst*pbshz(ix,ny,1)+                         !sv 09.01.01
-     &    cbsmo(5,is,ireg)*max(0.0e0_R8,-fna_fcor(ix,ny,1,1,is))/
+     &    cbsmo(5,is,ireg)*max(0.0_R8,-fna_fcor(ix,ny,1,1,is))/
      &                                       na(ix,ny,is)              !sv 25.02.00
          smo0(ix,ny,3,is) = smo0(ix,ny,3,is)+                          !sv 01.07.05
      &    cbsmo(3,is,ireg)*s0hz+                                       !sv 09.01.01
      &    cbsmo(4,is,ireg)*s1hz+                                       !sv 09.01.01
      &    cbsmo(6,is,ireg)                                             !sv 14.10.02
-     &               *max(0.0e0_R8,fna_fcor(ix,ny,1,1,is))/na(ix,ny,is) !sv 25.02.00
+     &               *max(0.0_R8,fna_fcor(ix,ny,1,1,is))/na(ix,ny,is)  !sv 25.02.00
 *     ..compute atom heat source
          t0 = na(ix,ny,is)/ni(ix,ny,0)
          shi0(ix,ny,0) = shi0(ix,ny,0)+
      &     cbshi(0,is,ireg)*t0*s0
-     &    +cbshi(6,is,ireg)*max(0.0e0_R8,-fna(ix,ny,1,1,is))
+     &    +cbshi(6,is,ireg)*max(0.0_R8,-fna(ix,ny,1,1,is))
          shi0(ix,ny,1) = shi0(ix,ny,1)+
      &     cbshi(1,is,ireg)*t0*s0
          shi0(ix,ny,3) = shi0(ix,ny,3)+
@@ -625,14 +625,14 @@
      &     cbshi(3,is,ireg)*t0*csb*s1+
      &     cbshi(4,is,ireg)*t0*cst*s0+
      &     cbshi(5,is,ireg)*t0*cst*s1
-!     &   +cbshi(7,is,ireg)*max(0.0e0_R8,fna(ix,ny,1,1,is))/ni(ix,ny,0) !sv 28.10.02
+!     &   +cbshi(7,is,ireg)*max(0.0_R8,fna(ix,ny,1,1,is))/ni(ix,ny,0)  !sv 28.10.02
         enddo
         shi0(ix,ny,1) = shi0(ix,ny,1)+                                 !sv 28.10.02 {
-     &    cbshi(7,0,ireg)*max(0.0e0_R8,floi_noc(ix,ny,1,1))            !sv 28.10.02 }
+     &    cbshi(7,0,ireg)*max(0.0_R8,floi_noc(ix,ny,1,1))              !sv 28.10.02 }
 *    ..compute electron heat source
         she0(ix,ny,0) = she0(ix,ny,0)+
      &    cbshe(0,ireg)*s0+
-     &    cbshe(6,ireg)*max(0.0e0_R8,-fne(ix,ny,1,1))
+     &    cbshe(6,ireg)*max(0.0_R8,-fne(ix,ny,1,1))
         she0(ix,ny,1) = she0(ix,ny,1)+
      &    cbshe(1,ireg)*s0
         she0(ix,ny,3) = she0(ix,ny,3)+
@@ -640,9 +640,9 @@
      &    cbshe(3,ireg)*vte*s1+
      &    cbshe(4,ireg)*cst*s0+
      &    cbshe(5,ireg)*cst*s1
-!     &  +cbshe(7,ireg)*max(0.0e0_R8,fne(ix,ny,1,1))/ne(ix,ny)         !sv 28.10.02
+!     &  +cbshe(7,ireg)*max(0.0_R8,fne(ix,ny,1,1))/ne(ix,ny)           !sv 28.10.02
         she0(ix,ny,1) = she0(ix,ny,1)+                                 !sv 28.10.02 {
-     &    cbshe(7,ireg)*max(0.0e0_R8,floe_noc(ix,ny,1,1))              !sv 28.10.02 }
+     &    cbshe(7,ireg)*max(0.0_R8,floe_noc(ix,ny,1,1))                !sv 28.10.02 }
 *    ..compute charge source
         sch0(ix,ny,2) = sch0(ix,ny,2)+
      &    cbsch(0,ireg)*qe*vte*s0+
@@ -654,22 +654,22 @@
      &    cbsch(5,ireg)*qe**2*cst*s1/te(ix,ny)
         t0 = max(cbsch(6,ireg)*fchi,cbsch(7,ireg)*fche)*qe/te(ix,ny)
 !       sch0(ix,ny,0) = sch0(ix,ny,0)-fchy_dia*y_dia                   !sv  minus 01.07.99 25.04.00
-        if(fchy_dia_at_north .ne. 0.0e0_R8) then                       !sv 21.10.02
+        if(fchy_dia_at_north .ne. 0.0_R8) then                         !sv 21.10.02
             sch0(ix,ny,0) = sch0(ix,ny,0) - fchdia(ix,ny,1,1)*y_dia    !sv 21.10.02
         endif                                                          !sv 21.10.02
-        if(fchy_in_at_north .ne. 0.0e0_R8) then                        !sv 21.10.02
+        if(fchy_in_at_north .ne. 0.0_R8) then                          !sv 21.10.02
             sch0(ix,ny,0) = sch0(ix,ny,0) - fchin(ix,ny,1,1)           !sv 21.10.02
         endif                                                          !sv 21.10.02
-        if(fchy_vispar_at_north .ne. 0.0e0_R8) then                    !sv 21.10.02
+        if(fchy_vispar_at_north .ne. 0.0_R8) then                      !sv 21.10.02
           sch0(ix,ny,0) = sch0(ix,ny,0) - fchvispar(ix,ny,1,1)         !sv 21.10.02
         endif                                                          !sv 21.10.02
-        if(fchy_visq_at_north .ne. 0.0e0_R8) then                      !sv 21.10.02
+        if(fchy_visq_at_north .ne. 0.0_R8) then                        !sv 21.10.02
           sch0(ix,ny,0) = sch0(ix,ny,0) - fchvisq(ix,ny,1,1)           !sv 21.10.02
         endif                                                          !sv 21.10.02
-        if(fchy_visper_at_north .ne. 0.0e0_R8) then                    !sv 21.10.02
+        if(fchy_visper_at_north .ne. 0.0_R8) then                      !sv 21.10.02
           sch0(ix,ny,0) = sch0(ix,ny,0) - fchvisper(ix,ny,1,1)         !sv 21.10.02
         endif                                                          !sv 21.10.02
-        if(fchy_inert_at_north .ne. 0.0e0_R8) then                     !sv 21.10.02
+        if(fchy_inert_at_north .ne. 0.0_R8) then                       !sv 21.10.02
           sch0(ix,ny,0) = sch0(ix,ny,0) - fchinert(ix,ny,1,1)          !sv 21.10.02
         endif                                                          !sv 21.10.02
         sch0(ix,ny,0) = sch0(ix,ny,0)+
@@ -686,7 +686,7 @@
 *   ..loop over boundary cells
          do iy = -1, ny
 *    ..update ireg
-    3     if (cbrbrk(ireg)*ny.lt.iy+0.5e0_R8) then
+    3     if (cbrbrk(ireg)*ny.lt.iy+0.5_R8) then
            call xertst (ireg.lt.cbirwe+cbnrwe-1,
      &     'error in computing region on west boundary')
            ireg = ireg+1
@@ -711,14 +711,14 @@
 *    ..compute Bohm fchi, fche
           wrong_flow=.false.
           if(istyle_fchi.eq.0) then                                      !sv 14.02.05
-           t0 = 0.0e0_R8
+           t0 = 0.0_R8
            do is = 0, ns-1
             t0=t0-rza(rightix(ix,iy),rightiy(ix,iy),is)*
      .            fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)              !sv 26.11.02
            enddo
           else                                                           !sv 14.02.05 {
 *    ..set boundary condition in explicit form (the same form as fna)
-           t0 = 0.0e0_R8
+           t0 = 0.0_R8
            do is = 0, ns-1
             t0 = t0-rza(ix,iy,is)*cbsna(7,is,ireg)*cst*s1*na(ix,iy,is)
            enddo
@@ -734,7 +734,7 @@ crfs  (b_phi/b^2 dpi/dr)
 !         write(*,"(4x,' is=',i2,' fnax(ix,iy,is)=',es9.2)")
 !     &      is, fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)               !sv 26.11.02
 !        enddo                                                           !sv 20.02.03 }
-c         fchi=0.0e0_R8                            ! was commented
+c         fchi=0.0_R8                            ! was commented
 !       endif
           if(ix.eq.-1) then                                              !sv 16.11.04 {
 *  .. set the potential at inner lower plate for DND case with respect to outer plate
@@ -749,9 +749,9 @@ c         fchi=0.0e0_R8                            ! was commented
 *     ..compute csb
            csb = sqrt((rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))/(am(is)*mp))   !sv 26.11.02
 *     .. account for diamagnetic drifts
-           csbm = max(csb,0.1e0_R8*csb+uadia(0,iy,0,0,is)*    !signmf*   !sv 17.02.04 {  11.01.13
+           csbm = max(csb,0.1_R8*csb+uadia(0,iy,0,0,is)*      !signmf*   !sv 17.02.04 {  11.01.13
      &                  bb(ix,iy,2)/bb(ix,iy,0))
-           cstm = max(cst,0.1e0_R8*cst+uadia(0,iy,0,0,is)*    !signmf*                 11.01.13
+           cstm = max(cst,0.1_R8*cst+uadia(0,iy,0,0,is)*      !signmf*       11.01.13
      &                 bb(ix,iy,2)/bb(ix,iy,0))                          !sv 17.02.04 }
            if(istyle_cs.eq.0) then                                       !sv 25.04.08 {
             vwest=(-cst)*pbshz(rightix(ix,iy),rightiy(ix,iy),0)+         !sv 17.02.04 19.02.08
@@ -772,18 +772,18 @@ c         fchi=0.0e0_R8                            ! was commented
            if(ivminus.eq.0) then                                         !sv 24.03.05
              vminus= vwest                                               !sv 28.01.05
            else
-             vminus=(vwest-abs(vwest))*0.5e0_R8                          !sv 28.01.05
+             vminus=(vwest-abs(vwest))*0.5_R8                            !sv 28.01.05
            endif                                                         !sv 24.03.05
 *     ..compute particle source
            sna0(ix,iy,0,is) = sna0(ix,iy,0,is)+                          !sv 26.11.02
      &      cbsna(0,is,ireg)*s0+
-     &      cbsna(6,is,ireg)*max(0.0e0_R8,ua(ix,iy,is)                   !sv 26.11.02 01.07.05
+     &      cbsna(6,is,ireg)*max(0.0_R8,ua(ix,iy,is)                     !sv 26.11.02 01.07.05
      &          *pbs(rightix(ix,iy),rightiy(ix,iy),0))                   !sv 26.11.02
            if(mdf_fnb .ne. 0) then                                       !sv 13.10.06 {
               sna0(ix,iy,0,is) = sna0(ix,iy,0,is)-
      &                     fnaPSch(rightix(ix,iy),rightiy(ix,iy),0,0,is)
            endif                                                         !sv 13.10.06 }
-           if(ubig0 .gt. 0.0e0_R8)                                       !iyv 22.04.08 {
+           if(ubig0 .gt. 0.0_R8)                                         !iyv 22.04.08 {
      &       sna0(ix,iy,0,is) = sna0(ix,iy,0,is) - cbsna(7,is,ireg)*
      &       ubig0*s0*na(rightix(ix,iy),rightiy(ix,iy),is)
            sna0(ix,iy,1,is) = sna0(ix,iy,1,is)+                          !sv 26.11.02
@@ -792,8 +792,8 @@ c         fchi=0.0e0_R8                            ! was commented
      &      cbsna(3,is,ireg)*csbm*s1+
      &      cbsna(4,is,ireg)*cstm*s0+
      &      cbsna(5,is,ireg)*cstm*s1
-!    &      cbsna(7,is,ireg)*max(0.0e0_R8,-ua(0,iy,is)*pbs(0,iy,0))
-           if( ubig0 .gt. 0.0e0_R8) then                                 !iyv 22.04.08 {
+!    &      cbsna(7,is,ireg)*max(0.0_R8,-ua(0,iy,is)*pbs(0,iy,0))
+           if( ubig0 .gt. 0.0_R8) then                                   !iyv 22.04.08 {
              sna0(ix,iy,1,is) = sna0(ix,iy,1,is) +
      &           cbsna(7,is,ireg) * ubig0 * s0
            else
@@ -807,12 +807,12 @@ c         fchi=0.0e0_R8                            ! was commented
            endif                                                         !iyv 22.04.08 }
 !       if(wrong_flow.gt.0) then
 !         write(*,*) 'b2stbc_west density set to zero:iy,fchi',iy,fchi
-crfs force density to 0.0e0_R8 if flux has wrong direction
-c         sna0(-1,iy,0,1) = 0.0e0_R8
-c         sna0(-1,iy,1,1) = -1.0d60
+crfs force density to 0.0_R8 if flux has wrong direction
+c         sna0(-1,iy,0,1) = 0.0_R8
+c         sna0(-1,iy,1,1) = -1.0e60_R8
 !       endif
 *     ..compute momentum source
-!       if (0.0e0_R8 .le. vwest) then                                    !sv 02.11.99
+!       if (0.0_R8 .le. vwest) then                                      !sv 02.11.99
 !         write(*,'(a,i3,a,i3,a,i3)') ' west: ix =', rightix(ix,iy),     !sv 25.11.04
 !     *       '  iy =',rightiy(ix,iy), '  Switch in bc for Upar, is =',is!sv 02.11.99 20.02.03
 !         write(*,*) '     cst*pbshz(ix,iy,0) = ',
@@ -820,25 +820,25 @@ c         sna0(-1,iy,1,1) = -1.0d60
 !          write(*,*) '       hz*vol/hx*Bz/B*(-VaExBx) = ',
 !     &           hz(ix,iy)*vol(ix,iy)/hx(ix,iy) ! *signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
 !     &           *(-vaecrb(rightix(ix,iy),rightiy(ix,iy),0,0,is))*switch%b2stbc_cbc
-!!         vwest = 0.0e0_R8                                              !sv 02.11.99
+!!         vwest = 0.0_R8                                                !sv 02.11.99
 !        endif
            smo0(ix,iy,0,is) = smo0(ix,iy,0,is)+  !sv 26.11.02
      &      cbsmo(0,is,ireg)*s0hz                                        !sv 09.01.01
            smo0(ix,iy,2,is) = smo0(ix,iy,2,is)+ cbsmo(1,is,ireg)*        !sv 26.11.02
      &      (-csbm)*pbshz(rightix(ix,iy),rightiy(ix,iy),0)+              !sv 09.01.01 26.11.02
      &      cbsmo(2,is,ireg)*vminus+                                     !sv 02.11.99 28.01.05
-     &      cbsmo(5,is,ireg)* max(0.0e0_R8,
+     &      cbsmo(5,is,ireg)* max(0.0_R8,
      &      fna_fcor(rightix(ix,iy),rightiy(ix,iy),0,0,is))/na(ix,iy,is) !sv 25.02.00 26.11.02 01.07.05
            smo0(ix,iy,3,is) = smo0(ix,iy,3,is)+                          !sv 26.11.02
      &      cbsmo(3,is,ireg)*s0hz+                                       !sv 09.01.01
      &      cbsmo(4,is,ireg)*s1hz+                                       !sv 09.01.01
-     &      cbsmo(6,is,ireg)*max(0.0e0_R8,
+     &      cbsmo(6,is,ireg)*max(0.0_R8,
      &     -fna_fcor(rightix(ix,iy),rightiy(ix,iy),0,0,is))/na(ix,iy,is) !sv 25.02.00 26.11.02 01.07.05
 *     ..compute atom heat source
            t0 = na(ix,iy,is)/ni(ix,iy,0)                                 !sv 26.11.02
            shi0(ix,iy,0) = shi0(ix,iy,0)+
      &      cbshi(0,is,ireg)*t0*s0+cbshi(6,is,ireg)*
-     &      max(0.0e0_R8,fna(rightix(ix,iy),rightiy(ix,iy),0,0,is))      !sv 26.11.02
+     &      max(0.0_R8,fna(rightix(ix,iy),rightiy(ix,iy),0,0,is))        !sv 26.11.02
            shi0(ix,iy,1) = shi0(ix,iy,1)+                                !sv 26.11.02
      &      cbshi(1,is,ireg)*t0*s0
            shi0(ix,iy,3) = shi0(ix,iy,3)+                                !sv 26.11.02
@@ -847,7 +847,7 @@ c         sna0(-1,iy,1,1) = -1.0d60
      &      cbshi(4,is,ireg)*t0*cstm*s0+
      &      cbshi(5,is,ireg)*t0*cstm*s1+
      &      cbshi(7,is,ireg)*t0*cst*pbs(rightix(ix,iy),rightiy(ix,iy),0) !sv 26.11.02 28.01.03
-!     &    cbshi(7,is,ireg)*max(0.0e0_R8,-fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)) !sv 26.11.02 28.01.03
+!     &    cbshi(7,is,ireg)*max(0.0_R8,-fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)) !sv 26.11.02 28.01.03
 !     &                                  /ni(ix,iy,0)                    !sv 26.11.02 28.01.03
           enddo
           if(mdf_fhi.ne.0) then                                          !sv 13.10.06 {
@@ -857,7 +857,7 @@ c         sna0(-1,iy,1,1) = -1.0d60
 *    ..compute electron heat source
           she0(ix,iy,0) = she0(ix,iy,0)+                                 !sv 26.11.02
      &     cbshe(0,ireg)*s0+cbshe(6,ireg)*
-     &     max(0.0e0_R8,fne(rightix(ix,iy),rightiy(ix,iy),0,0))          !sv 26.11.02
+     &     max(0.0_R8,fne(rightix(ix,iy),rightiy(ix,iy),0,0))            !sv 26.11.02
           she0(ix,iy,1) = she0(ix,iy,1)+                                 !sv 26.11.02
      &     cbshe(1,ireg)*s0
           she0(ix,iy,3) = she0(ix,iy,3)+                                 !sv 26.11.02
@@ -865,10 +865,10 @@ c         sna0(-1,iy,1,1) = -1.0d60
      &     cbshe(3,ireg)*vte*s1+
      &     cbshe(4,ireg)*cstm*s0+
      &     cbshe(5,ireg)*cstm*s1+                                        !sv 11.02.00
-!     &   cbshe(7,ireg)*((2.0e0_R8-cbsch(7,ireg))/cbsch(7,ireg)+3.0e0_R8)!sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
-     &     cbshe(7,ireg)*((2.0e0_R8-1.0e0_R8)/1.0e0_R8+3.0e0_R8)         !sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
-!     &    *max(0.0e0_R8,-fne(rightix(ix,iy),rightiy(ix,iy),0,0))/ne(ix,iy)          !sv 11.02.00 26.11.02 25.12.06
-     &    *max(0.0e0_R8, (pbs(rightix(ix,iy),rightiy(ix,iy),0)*cst       !sv 25.12.06
+!     &   cbshe(7,ireg)*((2.0_R8-cbsch(7,ireg))/cbsch(7,ireg)+3.0_R8)    !sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
+     &     cbshe(7,ireg)*((2.0_R8-1.0_R8)/1.0_R8+3.0_R8)                 !sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
+!     &    *max(0.0_R8,-fne(rightix(ix,iy),rightiy(ix,iy),0,0))/ne(ix,iy) !sv 11.02.00 26.11.02 25.12.06
+     &    *max(0.0_R8, (pbs(rightix(ix,iy),rightiy(ix,iy),0)*cst         !sv 25.12.06
      &     +fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/qe/ne(ix,iy)))      !sv 25.12.06
 !         write(*,"('pbs*cst=',es10.3,' fch_p/qe/ne=',es10.3)")
 !     &             pbs(rightix(ix,iy),rightiy(ix,iy),0)*cst,
@@ -902,7 +902,7 @@ c         sna0(-1,iy,1,1) = -1.0d60
 *   ..loop over boundary cells
          do iy = -1, ny
 *    ..update ireg
-    4     if (cbrbrk(ireg)*ny.lt.iy+0.5e0_R8) then
+    4     if (cbrbrk(ireg)*ny.lt.iy+0.5_R8) then
            call xertst (ireg.lt.cbirea+cbnrea-1,
      &      'error in computing region on east boundary')
            ireg = ireg+1
@@ -933,7 +933,7 @@ c         sna0(-1,iy,1,1) = -1.0d60
            enddo
           else                                                           !sv 14.02.05 {
 *    ..set boundary condition in explicit form (the same form as fna)
-           t0 = 0.0e0_R8
+           t0 = 0.0_R8
            do is = 0, ns-1
             t0 = t0-rza(ix,iy,is)*cbsna(7,is,ireg)*cst*s1*na(ix,iy,is)
            enddo
@@ -949,7 +949,7 @@ crfs  (b_phi/b^2 dpi/dr)
 !           write(*,"(4x,' is=',i2,' fnax(ix,iy,is)=',es9.2)")
 !     &           is, fna(ix,iy,0,0,is)                                  !sv 26.11.02
 !         enddo                                                          !sv 20.02.03 }
-c         fchi=0.0e0_R8                      !sv was commented
+c         fchi=0.0_R8                      !sv was commented
 !       endif
          if(ix.ne.nx) then                                              !sv 16.11.04 {
 *  .. set the potential at inner upper plate for DND case with respect to outer plate
@@ -964,9 +964,9 @@ c         fchi=0.0e0_R8                      !sv was commented
 *     ..compute csb
            csb = sqrt((rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))/(am(is)*mp))   !sv 26.11.02
 *     .. account for diamagnetic drifts
-             csbm = max(csb,0.1e0_R8*csb-uadia(ix,iy,0,0,is)*            !sv 17.02.04 {
+             csbm = max(csb,0.1_R8*csb-uadia(ix,iy,0,0,is)*              !sv 17.02.04 {
      1             bb(ix,iy,2)/bb(ix,iy,0))
-             cstm = max(cst,0.1e0_R8*cst-uadia(ix,iy,0,0,is)*
+             cstm = max(cst,0.1_R8*cst-uadia(ix,iy,0,0,is)*
      1             bb(ix,iy,2)/bb(ix,iy,0))                              !sv 17.02.04 }
              if(istyle_cs.eq.0) then                                     !sv 25.04.08 {
             veast = cst*pbshz(ix,iy,0)+                                  !sv 17.02.04 19.02.08 25.04.08 {
@@ -983,18 +983,18 @@ c         fchi=0.0e0_R8                      !sv was commented
            if(ivplus.eq.0) then                                          !sv 24.03.05
              vplus=veast                                                 !sv 28.01.05
            else
-             vplus=(veast+abs(veast))*0.5e0_R8                           !sv 28.01.05
+             vplus=(veast+abs(veast))*0.5_R8                             !sv 28.01.05
            endif                                                         !sv 24.03.05
 !        v0 =vol(ix,iy)/hx(ix,iy)*bb(ix,iy,2)/bb(ix,iy,3)                !sv 18.07.03 {
 !     &      *vaecrb(ix,iy,0,0,is)*switch%b2stbc_cbc*signmf
 *     ..compute particle source
            sna0(ix,iy,0,is) = sna0(ix,iy,0,is)+                          !sv 26.11.02
      &      cbsna(0,is,ireg)*s0+
-     &      cbsna(6,is,ireg)*max(0.0e0_R8,-ua(ix,iy,is)*pbs(ix,iy,0))    !sv 26.11.02
+     &      cbsna(6,is,ireg)*max(0.0_R8,-ua(ix,iy,is)*pbs(ix,iy,0))      !sv 26.11.02
            if(mdf_fnb .ne. 0) then                                       !sv 13.10.06 {
             sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + fnaPSch(ix,iy,0,0,is)
            endif                                                         !sv 13.10.06 }
-           if(ubig0 .gt. 0.0e0_R8)                                       !iyv 22.04.08
+           if(ubig0 .gt. 0.0_R8)                                         !iyv 22.04.08
      &      sna0(ix,iy,0,is) = sna0(ix,iy,0,is) -
      &       cbsna(7,is,ireg)*ubig0*s0*na(leftix(ix,iy),iy,is)
            sna0(ix,iy,1,is) = sna0(ix,iy,1,is)+                          !sv 26.11.02
@@ -1003,8 +1003,8 @@ c         fchi=0.0e0_R8                      !sv was commented
      &      cbsna(3,is,ireg)*csbm*s1+
      &      cbsna(4,is,ireg)*cstm*s0+
      &      cbsna(5,is,ireg)*cstm*s1
-!     &   +cbsna(7,is,ireg)*max(0.0e0_R8,ua(nx,iy,is)*pbs(nx,iy,0))
-           if(ubig0 .gt. 0.0e0_R8) then                                  !iyv 22.04.08 {
+!     &   +cbsna(7,is,ireg)*max(0.0_R8,ua(nx,iy,is)*pbs(nx,iy,0))
+           if(ubig0 .gt. 0.0_R8) then                                    !iyv 22.04.08 {
              sna0(ix,iy,1,is) = sna0(ix,iy,1,is) +
      &               cbsna(7,is,ireg)*ubig0*s0
            else
@@ -1018,37 +1018,37 @@ c         fchi=0.0e0_R8                      !sv was commented
           endif                                                          !iyv 22.04.08 }
 !       if(wrong_flow) then
 !         write(*,*) 'b2stbc_east density set to zero:iy,fchi',iy,fchi
-crfs force density to 0.0e0_R8 if flux has wrong direction
-c         sna0(nx,iy,0,1) = 0.0e0_R8
-c         sna0(nx,iy,1,1) = -1.0d160
+crfs force density to 0.0_R8 if flux has wrong direction
+c         sna0(nx,iy,0,1) = 0.0_R8
+c         sna0(nx,iy,1,1) = -1.0e60_R8
 !       endif
 *     ..compute momentum source
-!       if (0.0e0_R8 .ge. veast) then                                    !sv 02.11.99
+!       if (0.0_R8 .ge. veast) then                                      !sv 02.11.99
 !         write(*,'(a,i3,a,i3,a,i3)') ' east: ix =', ix,'  iy =',iy,     !sv 25.11.04
 !     *    '  Switch in bc for Upar, is =',is                            !sv 02.11.99 20.02.03
 !         write(*,*) '     cst*pbshz(ix,iy,0) = ',cst*pbshz(ix,iy,0)
 !         write(*,*) '       hz*vol/hx*Bz/B*(-VaExBx) = ',
 !     &           hz(ix,iy)*vol(ix,iy)/hx(ix,iy) ! *signmf*bb(ix,iy,2)/bb(ix,iy,3) !sv 05.02.05
 !     &           *(-vaecrb(ix,iy,0,0,is))*switch%b2stbc_cbc
-!!        veast = 0.0e0_R8                                               !sv 02.11.99
+!!        veast = 0.0_R8                                                 !sv 02.11.99
 !        endif
            smo0(ix,iy,0,is) = smo0(ix,iy,0,is)+                          !sv 26.11.02
      &      cbsmo(0,is,ireg)*s0hz                                        !sv 09.01.01
            smo0(ix,iy,2,is) = smo0(ix,iy,2,is)+                          !sv 26.11.02
      &      cbsmo(1,is,ireg)*csbm*pbshz(ix,iy,0)+                        !sv 09.01.01 26.11.02
      &      cbsmo(2,is,ireg)*vplus+                                      !sv 02.11.99 28.01.05
-     &      cbsmo(5,is,ireg)*max(0.0e0_R8,-fna_fcor(ix,iy,0,0,is))*      !sv 25.02.00 26.11.02
+     &      cbsmo(5,is,ireg)*max(0.0_R8,-fna_fcor(ix,iy,0,0,is))*        !sv 25.02.00 26.11.02
      &       2/(na(leftix(ix,iy),iy,is)+na(ix,iy,is))                    !sv 26.11.02
            smo0(ix,iy,3,is) = smo0(ix,iy,3,is)+                          !sv 26.11.02
      &      cbsmo(3,is,ireg)*s0hz+                                       !sv 09.01.01
      &      cbsmo(4,is,ireg)*s1hz+                                       !sv 09.01.01
-     &      cbsmo(6,is,ireg)*max(0.0e0_R8,fna_fcor(ix,iy,0,0,is))*       !sv 25.02.00 26.11.02
+     &      cbsmo(6,is,ireg)*max(0.0_R8,fna_fcor(ix,iy,0,0,is))*         !sv 25.02.00 26.11.02
      &       2/(na(leftix(ix,iy),iy,is)+na(ix,iy,is))                    !sv 14.10.02 26.11.02
 *     ..compute atom heat source
            t0 = na(ix,iy,is)/ni(ix,iy,0)                                 !sv 26.11.02
            shi0(ix,iy,0) = shi0(ix,iy,0)+                                !sv 26.11.02
      &      cbshi(0,is,ireg)*t0*s0+
-     &      cbshi(6,is,ireg)*max(0.0e0_R8,-fna(ix,iy,0,0,is))            !sv 26.11.02
+     &      cbshi(6,is,ireg)*max(0.0_R8,-fna(ix,iy,0,0,is))              !sv 26.11.02
            shi0(ix,iy,1) = shi0(ix,iy,1)+                                !sv 26.11.02
      &      cbshi(1,is,ireg)*t0*s0
            shi0(ix,iy,3) = shi0(ix,iy,3)+                                !sv 26.11.02
@@ -1057,7 +1057,7 @@ c         sna0(nx,iy,1,1) = -1.0d160
      &      cbshi(4,is,ireg)*t0*cstm*s0+
      &      cbshi(5,is,ireg)*t0*cstm*s1+
      &      cbshi(7,is,ireg)*t0*cst*pbs(ix,iy,0)                         !sv 26.11.02 28.01.03
-!     &    cbshi(7,is,ireg)*max(0.0e0_R8,fna(ix,iy,0,0,is))/ni(ix,iy,0)  !sv 26.11.02
+!     &    cbshi(7,is,ireg)*max(0.0_R8,fna(ix,iy,0,0,is))/ni(ix,iy,0)    !sv 26.11.02
           enddo
           if(mdf_fhi.ne.0) then                                          !sv 13.10.06 {
             shi0(ix,iy,0) = shi0(ix,iy,0)+fhiPSch(ix,iy,0,0)
@@ -1065,7 +1065,7 @@ c         sna0(nx,iy,1,1) = -1.0d160
 *    ..compute electron heat source
           she0(ix,iy,0) = she0(ix,iy,0)+                                 !sv 26.11.02
      &     cbshe(0,ireg)*s0+
-     &     cbshe(6,ireg)*max(0.0e0_R8,-fne(ix,iy,0,0))                   !sv 26.11.02
+     &     cbshe(6,ireg)*max(0.0_R8,-fne(ix,iy,0,0))                     !sv 26.11.02
           she0(ix,iy,1) = she0(ix,iy,1)+                                 !sv 26.11.02
      &     cbshe(1,ireg)*s0
           she0(ix,iy,3) = she0(ix,iy,3)+                                 !sv 26.11.02
@@ -1073,10 +1073,10 @@ c         sna0(nx,iy,1,1) = -1.0d160
      &     cbshe(3,ireg)*vte*s1+
      &     cbshe(4,ireg)*cstm*s0+
      &     cbshe(5,ireg)*cstm*s1+                                        !sv 11.02.00
-!     &   cbshe(7,ireg)*((2.0e0_R8-cbsch(7,ireg))/cbsch(7,ireg)+3.0e0_R8)!sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
-     &     cbshe(7,ireg)*((2.0e0_R8-1.0e0_R8)/1.0e0_R8+3.0e0_R8)         !sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
-!     &                *max(0.0e0_R8,fne(ix,iy,0,0))/ne(ix,iy)           !sv 11.02.00 26.11.02 25.12.06
-     &    *max(0.0e0_R8,
+!     &   cbshe(7,ireg)*((2.0_R8-cbsch(7,ireg))/cbsch(7,ireg)+3.0_R8)    !sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
+     &     cbshe(7,ireg)*((2.0_R8-1.0_R8)/1.0_R8+3.0_R8)                 !sv 11.02.00 !iyv 19.05.08 !sv 03.10.08
+!     &                *max(0.0_R8,fne(ix,iy,0,0))/ne(ix,iy)             !sv 11.02.00 26.11.02 25.12.06
+     &    *max(0.0_R8,
      &                (pbs(ix,iy,0)*cst-fch_p(ix,iy,0,0)/qe/ne(ix,iy)))  !sv 25.12.06
           if(mdf_fhe.ne.0) then                                          !sv 13.10.06 {
            she0(ix,iy,0) = she0(ix,iy,0)+fhePSch(ix,iy,0,0)              !sv 09.11.08
@@ -1090,10 +1090,10 @@ c         sna0(nx,iy,1,1) = -1.0d160
      &     cbsch(1,ireg)*qe**2*vte*s0/te(ix,iy)+
      &     cbsch(3,ireg)*qe**2*vte*s1/te(ix,iy)+
      &     cbsch(5,ireg)*qe**2*cstm*s1/te(ix,iy)                         !sv 26.11.02 }
-!         if (po(ix,iy).ge.0.0e0_R8) then                                !sv 15.09.98 26.11.02
+!         if (po(ix,iy).ge.0.0_R8) then                                  !sv 15.09.98 26.11.02
           t0 = max(cbsch(6,ireg)*fchi,cbsch(7,ireg)*fche)*qe/te(ix,iy)   !sv 26.11.02
 !         else                                                           !sv 15.09.98
-!           t0 = 0.0e0_R8                                                !sv 15.09.98
+!           t0 = 0.0_R8                                                  !sv 15.09.98
 !         endif                                                          !sv 15.09.98
           sch0(ix,iy,0) = sch0(ix,iy,0)+                                 !sv 26.11.02
      &     cbsch(7,ireg)*fche-cbsch(6,ireg)*fchi+t0*po(ix,iy)            !sv 26.11.02
@@ -1110,9 +1110,9 @@ c         sna0(nx,iy,1,1) = -1.0d160
 *   ..loop over species
       do is = 0, ns-1
 *    ..set momentum source
-       call b2xxgs (nx, ny, 0.0e0_R8, smo0(-1,-1,0,is), 1)
-       call b2xxgs (nx, ny, 0.0e0_R8, smo0(-1,-1,1,is), 1)
-       call b2xxgs (nx, ny, 0.0e0_R8, smo0(-1,-1,2,is), 1)
+       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,0,is), 1)
+       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,1,is), 1)
+       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,2,is), 1)
        call b2xxgs (nx, ny, -t0, smo0(-1,-1,3,is), 1)
       enddo
 

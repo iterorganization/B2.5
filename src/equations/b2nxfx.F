@@ -65,7 +65,7 @@
 *   ..subprogram start-up calls
       call subini ('b2nxfx')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       if(switch%pot_eq.eq.0 .or. switch%pot_eq.eq.2) then               !srv 16.07.12 27.02.13
        ehxp = 0.0_R8
       elseif(switch%pot_eq.eq.1) then

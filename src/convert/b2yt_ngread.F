@@ -125,6 +125,16 @@ c
 #endif
       EXTERNAL GFSUB2
       external ipgeti
+
+      interface
+        subroutine rdneutrs(kard,dummy,ldmf,extra_time)
+        use b2mod_types
+        use eirmod_parmmod
+        integer, intent(in) :: kard, ldmf
+        real(kind=R8) :: dummy(nlimps,*)
+        logical, intent(in), optional :: extra_time
+        end subroutine rdneutrs
+      end interface
 #endif
 
 *=======================================================================
@@ -166,11 +176,11 @@ C
       WRITE(45,'(I4,2X,I4,2X,I8,2X,a32)') nx1,ny1,jvftnew,get_Eir_hash()
       READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(45,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
-      write(*,'(3a,5i4)')
-     . ' Dimensions in ',fort_lc,'44 =   ',nnx,nny,natmi,nmoli,nioni
-      write(*,'(3a,5i4)')
-     . ' Dimensions in ',fort_lc,'44.2 = ',nx1,ny1,natm1,nmol1,nion1
-      write(*,'(a,2i4)') ' Array inner dimensions = ', ndx , ndy
+      write(*,'(3a,5i5)') ' Dimensions in ',fort_lc,'44 =   ',
+     . nnx,nny,natmi,nmoli,nioni
+      write(*,'(3a,5i5)') ' Dimensions in ',fort_lc,'44.2 = ',
+     . nx1,ny1,natm1,nmol1,nion1
+      write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
@@ -978,12 +988,13 @@ cank
             read (44,'(6a13)') (eirtxt(j+k),j=1,nfla)
             read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nfla),i=1,nlimi)
             read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nfla),
-     ,                          i=1,nstsi)
+     ,                                                      i=1,nstsi)
           else
             read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-            read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
+            read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),
+     ,                                                      i=1,nlimi)
             read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
-     ,                          i=1,nstsi)
+     ,                                                      i=1,nstsi)
           endif
 
           allocate (eirtxt1(natm1+nmol1+nion1+npls1))
@@ -1084,7 +1095,7 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
           read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
-     ,                          i=1,nstsi)
+     ,                                                       i=1,nstsi)
 
           allocate (wlpump1(natm1+nmol1+nion1+npls1,nlim+nstsi))
           do k = 1, natmi
@@ -1233,10 +1244,10 @@ cank
         if(jvft44 .ge. 20080706) then
           call read_title(44)
           READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
-          call write_title(45,'eirdiag', nstsi+1)
+          call write_title(45,'eirdiag',nstsi+1)
           WRITE(45,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
 
-          NCL=eirdiag_nds_ind(nstsi+1)
+          NCL=eirdiag_nds_ind(nstsi+1)-1
           IF(NCL.GT.0) THEN
             IF(.NOT.ALLOCATED(fnmti_b2)) ALLOCATE(fnmti_b2(NCL))
             call read_title(44)
@@ -1306,10 +1317,10 @@ cank
               READ (44,'(6e15.7)') (ewldt_res(i),i=1,NCL)
             end if
             allocate(wldna1res(natm1,NCL), ewlda1res(natm1,NCL),
-     .               ewldea1res(natm1,NCL), wldspta1res(natm1,NCL))
+     .               ewldea1res(natm1,NCL))
             allocate(wldnm1res(nmol1,NCL), ewldm1res(nmol1,NCL),
-     .               ewldem1res(nmol1,NCL), wldsptm1res(nmol1,NCL),
-     .               ewldmr1res(nmol1,NCL))
+     .               ewldem1res(nmol1,NCL), ewldmr1res(nmol1,NCL))
+            allocate(wldspta1res(natm1,NCL),wldsptm1res(nmol1,NCL))
             do is = 1, natmi
               if (iatm1(is).ne.0) then
                 wldna1res(iatm1(is),1:NCL) = wldna_res(is,1:NCL)
@@ -1351,7 +1362,7 @@ cank
             WRITE(45,'(6e15.7)') ((ewldem1res(j,i),j=1,nmol1),i=1,NCL)
             call write_title(45,'ewldrp_res',ncl)
             WRITE(45,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
-            call write_title(45,'ewldmr1res',ncl*nmol1)
+            call write_title(45,'ewldmr_res',ncl*nmol1)
             WRITE(45,'(6e15.7)') ((ewldmr1res(j,i),j=1,nmol1),i=1,NCL)
             if (jvftnew.ge.20170228) then
               call write_title(45,'wldspt_res',ncl)
@@ -1364,7 +1375,7 @@ cank
               call write_title(45,'wldsptm_res',ncl*nmol1)
               WRITE(45,'(6e15.7)')
      .              ((wldsptm1res(j,i),j=1,nmol1),i=1,NCL)
-              allocate (wlpump1res(NCL,natm1+nmol1+nioni+npls1))
+              allocate (wlpump1res(natm1+nmol1+nioni+npls1,NCL))
               do k = 1, natmi
                 if (iatm1(k).ne.0)
      >           wlpump1res(iatm1(k),:) = wlpump_res(k,:)

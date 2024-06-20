@@ -23,6 +23,15 @@ c
      &                   geo%vxX(iVx2), geo%vxY(iVx2))
           end do
         end do
+        if (mpg%nXpt.ge.2.and.mpg%iFssep2.gt.0) then
+          do i = 1, mpg%fsFcP(mpg%iFssep2,2)
+            iFc = mpg%fsFc(mpg%fsFcP(mpg%iFssep2,1)+i-1)
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            call lined_d(geo%vxX(iVx1), geo%vxY(iVx1),
+     &                   geo%vxX(iVx2), geo%vxY(iVx2))
+          end do
+        end if
         if (mpg%nXpt.eq.0.and.mpg%iFssep.gt.0) then
           do i = 1, mpg%fsFcP(mpg%iFssep,2)
             iFc = mpg%fsFc(mpg%fsFcP(mpg%iFssep,1)+i-1)
@@ -45,6 +54,17 @@ c
      &                   real(vxIy(iVx2),R8)-0.5_R8)
           end do
         end do
+        if (mpg%nXpt.ge.2.and.mpg%iFssep2.gt.0) then
+          do i = 1, mpg%fsFcP(mpg%iFssep2,2)
+            iFc = mpg%fsFc(mpg%fsFcP(mpg%iFssep2,1)+i-1)
+            iVx1 = mpg%fcVx(iFc,1)
+            iVx2 = mpg%fcVx(iFc,2)
+            call lined_d(real(vxIx(iVx1),R8)-0.5_R8,
+     &                   real(vxIy(iVx1),R8)-0.5_R8,
+     &                   real(vxIx(iVx2),R8)-0.5_R8,
+     &                   real(vxIy(iVx2),R8)-0.5_R8)
+          end do
+        end if
         if (mpg%nXpt.eq.0.and.mpg%iFssep.gt.0) then
           do i = 1, mpg%fsFcP(mpg%iFssep,2)
             iFc = mpg%fsFc(mpg%fsFcP(mpg%iFssep,1)+i-1)

@@ -131,7 +131,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 *   ..subprogram start-up calls
       call subini ('b2trcl')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..set internal parameters on first call
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -390,10 +390,10 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 *   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
        call b2ttia (nCv, ns, pl%ti, rt%rz2, dv%ne2, dv%lnlam, tauia)
 *   .. calculate collisionality parameter nu_star   
-       nu1 = 0.0e0_R8                                                    !lk 12.05.11{
-       k1 = 0.58e0_R8
-       nu2 = 0.0e0_R8
-       k2 = 1.6e0_R8
+       nu1 = 0.0_R8                                                       !lk 12.05.11{
+       k1 = 0.58_R8
+       nu2 = 0.0_R8
+       k2 = 1.6_R8
        t1 = (4.0_R8*pi*eps0/qe)/qe
        t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
        tau = t2/dv%lnlam*pl%te/ev*sqrt(pl%te/ev)/dv%ne2
@@ -402,19 +402,19 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
            iFt = mpg%cvFt(iCv)
            if (iFt.gt.0.and.iFt.le.mpg%nFt) then
              nu1(iCv) = geo%ftConn(iFt)/(tau(iCv)*
-     &        sqrt(pl%te(iCv)/me)*2.0e0_R8*pi*geo%ftEps(iFt)**1.5e0_R8)
-             k1(iCv) = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1(iCv))
-     &        +1.53e0_R8*nu1(iCv))
-     &        +0.52e0_R8*(geo%ftEps(iFt)**3)*nu1(iCv)
-     &        /(1.0e0_R8+0.89e0_R8*sqrt(geo%ftEps(iFt)**3)*nu1(iCv))
+     &        sqrt(pl%te(iCv)/me)*2.0_R8*pi*geo%ftEps(iFt)**1.5_R8)
+             k1(iCv) = 1.0_R8/(1.0_R8+2.01_R8*sqrt(nu1(iCv))
+     &        +1.53_R8*nu1(iCv))
+     &        +0.52_R8*(geo%ftEps(iFt)**3)*nu1(iCv)
+     &        /(1.0_R8+0.89_R8*sqrt(geo%ftEps(iFt)**3)*nu1(iCv))
              nu2(iCv) = geo%ftConn(iFt)/(tauia(iCv,ismain)
      &        *sqrt(pl%ti(iCv)/(mp*am(ismain)))
-     &        *2.0e0_R8*pi*geo%ftEps(iFt)**1.5e0_R8)
-             k2(iCv) = (0.66e0_R8+1.88e0_R8*sqrt(geo%ftEps(iFt))
-     &        -1.54e0_R8*geo%ftEps(iFt))
-     &        /(1.0e0_R8+1.03e0_R8*sqrt(nu2(iCv))+0.31e0_R8*nu2(iCv))
-     &        +1.17e0_R8*(geo%ftEps(iFt)**3)*nu2(iCv)
-     &        /(1.0e0_R8+0.74e0_R8*sqrt(geo%ftEps(iFt)**3)*nu2(iCv))
+     &        *2.0_R8*pi*geo%ftEps(iFt)**1.5_R8)
+             k2(iCv) = (0.66_R8+1.88_R8*sqrt(geo%ftEps(iFt))
+     &        -1.54_R8*geo%ftEps(iFt))
+     &        /(1.0_R8+1.03_R8*sqrt(nu2(iCv))+0.31_R8*nu2(iCv))
+     &        +1.17_R8*(geo%ftEps(iFt)**3)*nu2(iCv)
+     &        /(1.0_R8+0.74_R8*sqrt(geo%ftEps(iFt)**3)*nu2(iCv))
            endif
          endif
        enddo                                                             !lk 19.09.07 }
@@ -457,27 +457,27 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           end if
           ! parameters at faces
           nu1f = connf/(tauf(iFc)*
-     &     sqrt(tef(iFc)/me)*2.0e0_R8*pi*epsf**1.5e0_R8)
-          k1f = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1f)
-     &     +1.53e0_R8*nu1f)
-     &     +0.52e0_R8*(epsf**3)*nu1f
-     &     /(1.0e0_R8+0.89e0_R8*sqrt(epsf**3)*nu1f)
+     &     sqrt(tef(iFc)/me)*2.0_R8*pi*epsf**1.5_R8)
+          k1f = 1.0_R8/(1.0_R8+2.01_R8*sqrt(nu1f)
+     &     +1.53_R8*nu1f)
+     &     +0.52_R8*(epsf**3)*nu1f
+     &     /(1.0_R8+0.89_R8*sqrt(epsf**3)*nu1f)
           nu2f = connf/(tauiaf(iFc)
      &     *sqrt(tif(iFc)/(mp*am(ismain)))
-     &     *2.0e0_R8*pi*epsf**1.5e0_R8)
-          k2f = (0.66e0_R8+1.88e0_R8*sqrt(epsf)
-     &     -1.54e0_R8*epsf)
-     &     /(1.0e0_R8+1.03e0_R8*sqrt(nu2f)+0.31e0_R8*nu2f)
-     &     +1.17e0_R8*(epsf**3)*nu2f
-     &     /(1.0e0_R8+0.74e0_R8*sqrt(epsf**3)*nu2f)
+     &     *2.0_R8*pi*epsf**1.5_R8)
+          k2f = (0.66_R8+1.88_R8*sqrt(epsf)
+     &     -1.54_R8*epsf)
+     &     /(1.0_R8+1.03_R8*sqrt(nu2f)+0.31_R8*nu2f)
+     &     +1.17_R8*(epsf**3)*nu2f
+     &     /(1.0_R8+0.74_R8*sqrt(epsf**3)*nu2f)
           ! compute flux limits
-          co%f_luc_ke(iFc) = 1.0_R8/k1f*0.58e0_R8*sqrt(epsf**3)
-          co%f_luc_ki(iFc) = 1.0_R8/k2f*1.60e0_R8*sqrt(epsf**3)
+          co%f_luc_ke(iFc) = 1.0_R8/k1f*0.58_R8*sqrt(epsf**3)
+          co%f_luc_ki(iFc) = 1.0_R8/k2f*1.60_R8*sqrt(epsf**3)
           if (connf.gt.0.0_R8) then
             co%f_luc_et(iFc)=switch%cvsa_mltpl/
-     1       (1.0e0_R8+15.12e16_R8/connf*
+     1       (1.0_R8+15.12e16_R8/connf*
      2       (tif(iFc)/ev)**2/ne2f(iFc))/
-     4       (1.0e0_R8+15.12e16_R8*epsf**1.5e0_R8/
+     4       (1.0_R8+15.12e16_R8*epsf**1.5_R8/
      6        connf*(tif(iFc)/ev)**2/ne2f(iFc))
           else
             co%f_luc_et(iFc)=switch%cvsa_mltpl
@@ -501,10 +501,10 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         if (mpg%cvOnClosedSurface(iCv)) then
           iFt = mpg%cvFt(iCv)
           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-            t0 = 1.0_R8/k1(iCv)*0.58e0_R8*sqrt(geo%ftEps(iFt)**3)
+            t0 = 1.0_R8/k1(iCv)*0.58_R8*sqrt(geo%ftEps(iFt)**3)
             co%sigx_c(iCv) = co%sigx_c(iCv)*t0
             co%alfx_c(iCv) = co%alfx_c(iCv)*t0
-            t0 = 1.0_R8/k2(iCv)*1.60e0_R8*sqrt(geo%ftEps(iFt)**3)
+            t0 = 1.0_R8/k2(iCv)*1.60_R8*sqrt(geo%ftEps(iFt)**3)
             co%hcix_c(iCv) = co%hcix_c(iCv)*t0
           endif
         endif
@@ -512,10 +512,10 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       endif
 #ifdef WG_TODO
 #ifdef ASTRA
-      bbaverage2 = 0.0e0_R8                                              !srv 28.07.11 {
-      chci_koeff = 0.0e0_R8
-      tt0 = 0.0e0_R8
-      tt1 = 0.0e0_R8
+      bbaverage2 = 0.0_R8                                               !srv 28.07.11 {
+      chci_koeff = 0.0_R8
+      tt0 = 0.0_R8
+      tt1 = 0.0_R8
       if(integral_modeling.ne.0) then
        do iy = 0,mintopcut-1    ! for inner surfaces
         inv_hi_astra(iy) =  -(Ti_astra(iy)-Ti_astra(iy-1))*1.0e3_R8/
@@ -527,7 +527,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
          endif
         enddo
         bbaverage2(iy) = tt0(iy)/tt1(iy)
-        tt0(iy) = 0.0e0_R8
+        tt0(iy) = 0.0_R8
         do ix=0,nx
          if(on_closed_surface(ix,iy)) then
           tt0(iy) = tt0(iy) +vol(ix,iy)/bb(ix,iy,3)/bb(ix,iy,3)*
@@ -597,7 +597,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dte)
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, dti)
 *   .. apply the conductive limit of parallel electron heat flux         !srv 03.06.03 {
-       if(cflim(0).ne.0.0e0_R8) then
+       if(cflim(0).ne.0.0_R8) then
         do iFc = 1, nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.05.07
@@ -609,13 +609,13 @@ c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.
           t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
      &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + 
      &      b2trcl_cutlo)
-          co%fllim_ke(iFc)=1.0_R8/(1.0e0_R8+t0)
+          co%fllim_ke(iFc)=1.0_R8/(1.0_R8+t0)
           chce(iFc,0)=chce(iFc,0)*co%fllim_ke(iFc)
          endif
         enddo
        endif
 *   .. apply the conductive limit of parallel ion heat flux
-       if(cflim(1).ne.0.0e0_R8) then
+       if(cflim(1).ne.0.0_R8) then
         do iFc = 1,nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c          if(.not.on_closed_surface(ix,iy)) then                           !lk 06.05.07
@@ -627,7 +627,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
           t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
      &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + 
      &      b2trcl_cutlo)
-          co%fllim_ki(iFc) = 1.0_R8/(1.0e0_R8+t0)
+          co%fllim_ki(iFc) = 1.0_R8/(1.0_R8+t0)
           chci(iFc,0)=chci(iFc,0)*co%fllim_ki(iFc)
          endif
         enddo
@@ -644,7 +644,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       endif                                                              !srv 16.06.08 }
 *   ..apply flux limit to calf                                           !srv 13.01.17 {
       if(switch%b2sigp_style.ne.2) then
-       if(cflim(0).ne.0.0e0_R8) then
+       if(cflim(0).ne.0.0_R8) then
         do iFc = 1, nFc
          if(.not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
@@ -653,7 +653,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             t0 = abs(wrk(iFc)*dte(iFc))/(flomx*max(
      &        pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
      &        b2trcl_cutlo)
-            co%fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
+            co%fllim_al(iFc)=1.0_R8/(1.0_R8+t0)
             calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                    !srv 13.01.17
          endif
         enddo
@@ -667,7 +667,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
         enddo
        endif
       else
-       if(cflim(3).ne.0.0e0_R8) then
+       if(cflim(3).ne.0.0_R8) then
 *   ..apply flux limit to calf at cell faces
         do iFc = 1, nFc
          if(.not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
@@ -678,7 +678,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &        abs(geo%fcPbs(iFc))
             t0 = abs(calf(iFc,0)*dte(iFc))/(cflim(3)*jemax + 
      &        b2trcl_cutlo)
-            co%fllim_al(iFc)=1.0_R8/(1.0e0_R8+t0)
+            co%fllim_al(iFc)=1.0_R8/(1.0_R8+t0)
             calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                         !srv 13.01.17
          endif
         enddo
@@ -690,7 +690,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &         qe*dv%ne(iCv)*geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
             t0 = abs(co%alfx_c(iCv)*gtec(iCv)/
      &         (cflim(3)*jemax + b2trcl_cutlo))
-            co%fllim_al_c(iCv)=1.0_R8/(1.0e0_R8+t0)
+            co%fllim_al_c(iCv)=1.0_R8/(1.0_R8+t0)
             co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)                 !iyv 19.11.13 !srv 08.10.14
           endif
         enddo

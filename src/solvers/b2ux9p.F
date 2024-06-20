@@ -93,7 +93,7 @@
 *   ..initialization
       save ncall, style, acpar, cpu
       !$OMP THREADPRIVATE(ncall, style, acpar, cpu)
-      data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
+      data ncall/0/, style/2/, acpar/8.0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -290,7 +290,7 @@
             i=i+1
 *   ..Case of left neighbor
             jak = 2+leftix(ix,iy)+(2+leftiy(ix,iy)-1)*nxp2
-            if( aa9(ix,iy,-1) .ne. 0.0e0_R8 ) then
+            if( aa9(ix,iy,-1) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,-1)
               indexes(1,k)=ix
@@ -301,7 +301,7 @@
               ner = ner+1
             endif
 *   ..Case (ix,iy)
-            if( aa9(ix,iy,0) .ne. 0.0e0_R8 ) then
+            if( aa9(ix,iy,0) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,0)
               indexes(1,k)=ix
@@ -313,7 +313,7 @@
             endif
 *   ..Case of right neighbor
             jak = 2+rightix(ix,iy)+(2+rightiy(ix,iy)-1)*nxp2
-          if( aa9(ix,iy,1) .ne. 0.0e0_R8 ) then
+          if( aa9(ix,iy,1) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,1)
               indexes(1,k)=ix
@@ -324,7 +324,7 @@
               ner = ner+1
             endif
 *   ..Case of top neighbor
-            if( aa9(ix,iy,3) .ne. 0.0e0_R8 ) then
+            if( aa9(ix,iy,3) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,3)
               indexes(1,k)=ix
@@ -335,7 +335,7 @@
               ner = ner+1
             endif
 *   ..Case of bottom neighbor
-            if( aa9(ix,iy,-3) .ne. 0.0e0_R8 ) then
+            if( aa9(ix,iy,-3) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,-3)
               indexes(1,k)=ix
@@ -350,7 +350,7 @@
             iyl = leftiy(ix,iy)
             ixb = bottomix(ix,iy)
             iyb = bottomiy(ix,iy)
-            if( aa9(ix,iy,-4) .ne. 0.0e0_R8 ) then
+            if( aa9(ix,iy,-4) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,-4)
               indexes(1,k)=ix
@@ -360,7 +360,7 @@
               ja(k) = 2+bottomix(ixl,iyl)+(2+bottomiy(ixl,iyl)-1)*nxp2
               ner = ner+1
             endif
-            if( aa9(ix,iy,-6) .ne. 0.0e0_R8 ) then
+            if( aa9(ix,iy,-6) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,-6)
               indexes(1,k)=ix
@@ -375,7 +375,7 @@
             iyl = leftiy(ix,iy)
             ixt = topix(ix,iy)
             iyt = topiy(ix,iy)
-            if( aa9(ix,iy,2) .ne. 0.0e0_R8 ) then
+            if( aa9(ix,iy,2) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,2)
               indexes(1,k)=ix
@@ -385,7 +385,7 @@
               ja(k) =2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
               ner = ner+1
             endif
-            if( aa9(ix,iy,5) .ne. 0.0e0_R8 ) then
+            if( aa9(ix,iy,5) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,5)
               indexes(1,k)=ix
@@ -400,7 +400,7 @@
             iyr = rightiy(ix,iy)
             ixb = bottomix(ix,iy)
             iyb = bottomiy(ix,iy)
-            if( aa9(ix,iy,-2) .ne. 0.0e0_R8 ) then
+            if( aa9(ix,iy,-2) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,-2)
               indexes(1,k)=ix
@@ -410,7 +410,7 @@
               ja(k) =2+bottomix(ixr,iyr)+(2+bottomiy(ixr,iyr)-1)*nxp2
               ner = ner+1
             endif
-            if( aa9(ix,iy,-5) .ne. 0.0e0_R8 ) then
+            if( aa9(ix,iy,-5) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,-5)
               indexes(1,k)=ix
@@ -425,7 +425,7 @@
             iyr = rightiy(ix,iy)
             ixt = topix(ix,iy)
             iyt = topiy(ix,iy)
-            if( aa9(ix,iy,4) .ne. 0.0e0_R8 ) then
+            if( aa9(ix,iy,4) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,4)
               indexes(1,k)=ix
@@ -435,7 +435,7 @@
               ja(k) =2+topix(ixr,iyr)+(2+topiy(ixr,iyr)-1)*nxp2
               ner = ner+1
             endif
-            if( aa9(ix,iy,6) .ne. 0.0e0_R8 ) then
+            if( aa9(ix,iy,6) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,6)
               indexes(1,k)=ix

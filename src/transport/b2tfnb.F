@@ -72,7 +72,7 @@
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc),
      *   wrk6(nFc), wrk8(nFc),
 !    *   wrk5(nFc), wrk7(nFc,0:1),
-     *   wrk(nCv), wrkVx(nVx),
+     *   wrk(nCv), wrkf(nFc,0:1), wrkVx(nVx),
      *   zeros(nFc,0:1), dumm1(nFc,0:1), dumm2(nFc,0:1), dumm3(nFc,0:1),
      *   dumm4(nFc,0:1), zeros1(nFc,0:1)
       real (kind=R8) ::
@@ -103,7 +103,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
 *   ..subprogram start-up calls
       call subini ('b2tfnb')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..set internal parameters on first call
       drift_hyb = switch%fnb_drift_hyb
 *   ..extensive tests on first few calls
@@ -779,21 +779,23 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         dumm2 = 0.0_R8
         dumm3 = 0.0_R8
         dumm4 = 0.0_R8
+        wrkf = sign(co%cvla(:,:,isb),flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
-     &    sign(co%cvla(:,:,isb),flo_mdf), dumm1, dumm2,
-     &    fna_pinch(:,:,isb), dumm3)
+     &    wrkf, dumm1, dumm2, fna_pinch(:,:,isb), dumm3)
         fna_pinch(:,:,isb) = sign(fna_pinch(:,:,isb),co%cvla(:,:,isb))
         dumm4(:,0) = geo%fcPbs*wrk0
+        wrkf = sign(dumm4,flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
-     &    sign(dumm4,flo_mdf), dumm1, dumm2, fna_pll(:,:,isb), dumm3)
+     &    wrkf, dumm1, dumm2, fna_pll(:,:,isb), dumm3)
         fna_pll(:,:,isb) = sign(fna_pll(:,:,isb),dumm4)
         fna_pll(:,0,isb) = fna_pll(:,0,isb) + term
         dumm4(:,0) = drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*
      &    geo%fcQalf(:,0)
         dumm4(:,1) = drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*
      &    geo%fcQalf(:,1)
+        wrkf = sign(dumm4,flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
-     &     sign(dumm4,flo_mdf), dumm1, dumm2, fna_drift(:,:,isb), dumm3)
+     &    wrkf, dumm1, dumm2, fna_drift(:,:,isb), dumm3)
         fna_drift(:,:,isb) = sign(fna_drift(:,:,isb),dumm4)
         fna_drift(:,0,isb) = fna_drift(:,0,isb) + (1.0_R8-drift_hyb)*
      &    dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf
@@ -808,9 +810,9 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         else
           fna_pschused(:,:,isb) = -dv%fnaPSch(:,:,isb)
         endif
+        wrkf = sign(drift_hyb*scur,flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
-     &    sign(drift_hyb*scur,flo_mdf), dumm1, dumm2, fna_ch(:,:,isb),
-     &    dumm3)
+     &    wrkf, dumm1, dumm2, fna_ch(:,:,isb), dumm3)
         fna_ch(:,:,isb) = sign(fna_ch(:,:,isb),drift_hyb*scur)
         fna_ch(:,0,isb) = fna_ch(:,0,isb) + (1.0_R8-drift_hyb)*
      &    scur(:,0)*nbf

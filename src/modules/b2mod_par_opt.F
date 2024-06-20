@@ -107,8 +107,7 @@
       integer, intent (in) :: ns
       ! csc local variables
       integer :: ii, isigma, ipp, i, ndata, iss, indss, icf, icff,
-     &           noss, ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc,
-     &           nfaces
+     &           noss, ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc
       integer, allocatable :: cfReg(:)
       logical done
       character*1 str
@@ -301,7 +300,7 @@
               call find_faces (indss, incf, ncffc,
      >           m%mxncf,m%cfReg, m%cfFcOr, m, idb)
             end do              ! iss
-            write(ss,"(I0)") icf
+            write(ss,'(i3)') icf
             call xertst(ncffc.gt.0, 
      &        'No faces found for cost function  = '//ss)
             m%cfRegP(icf,2) = ncffc

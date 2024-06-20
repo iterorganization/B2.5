@@ -112,7 +112,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tral')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall_b2tral.eq.0) then
@@ -136,7 +136,7 @@
      4  co%csigin, co%cthe, co%cthi, co%vsaf_cl, co%cvsa_cl, 
      5  co%cvsahz_cl, co%fllimvisc, co%csig_cl, co%calf_cl)
 *   ..add to previous contributions=
-      ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17 {
+      ft = 4.0_R8/3.0_R8                                          !srv 16.10.17 {
       do is = 0, ns-1
        if (.not.is_neutral(is)) then
         co%cvsa(:,0,is)   = ft*co%cvsa_cl(:,0,is)   + co%cvsa(:,0,is)

@@ -120,9 +120,9 @@ c  z2 = 81 - 90
 c  z2 = 91 - 92
      . 231.0_R8,238.0289_R8 /
 c
-c  data table dd : * * * * * * * * * * * * * * * * * * * * * * * * * * 
+c  data table dd : * * * * * * * * * * * * * * * * * * * * * * * * * *
 c
-      data dd / 
+      data dd /
 c  z2 = 1 - 10
      . 0.9341_R8,0.6693_R8,0.6654_R8,0.9712_R8,1.007_R8,
      . 1.024_R8,1.111_R8,0.9699_R8,0.7357_R8,0.6842_R8,
@@ -1021,7 +1021,7 @@ c  Initialising
       yieldpar = ypar1 * ypar2 * ypar3
 
       eth = (7.0_R8/am2byam1**0.54_R8+
-     @  0.15_R8*am2byam1**1.12_R8)*es(itargsp)
+     @      0.15_R8*am2byam1**1.12_R8)*es(itargsp)
       ethbyeo = eth / eo
 
 c  The Thomas Fermi energy etf used below is valid only for singly
@@ -1033,9 +1033,9 @@ c  charge of the ion to get the etf for multiply charged ions.
 c       print*,z1,' ',am1,' ',z2,' ',am2,' ',etf
 
       eobyetf = eo / etf
-      stoppwr1=(0.5_R8*log(1.0_R8+1.2288_R8*eobyetf))
-      stoppwr2=(eobyetf + 0.1728_R8*eobyetf**0.5_R8 +
-     @  0.008_R8*eobyetf**0.1504_R8)
+      stoppwr1= 0.5_R8*log(1.0_R8+1.2288_R8*eobyetf)
+      stoppwr2= eobyetf + 0.1728_R8*eobyetf**0.5_R8
+     @                  + 0.008_R8 *eobyetf**0.1504_R8
       stoppwr = stoppwr1 / stoppwr2
 
 c  The angular dependence of the sputtering yield is included for light ion
@@ -1095,9 +1095,9 @@ c  Calculation of the physical sputtering yield
      @  (1.0_R8-ethbyeo**pwr2by3)
      @  * ( 1.0_R8 - ethbyeo ) ** 2 *
      @  angcntrb
-      if (yldphy.lt.0.0e0_R8) then
+      if (yldphy.lt.0.0_R8) then
 c       write(*,*) 'Physical sputtering yield < 0 , Ei = ',eo
-        yldphy = 0.0e0_R8
+        yldphy = 0.0_R8
       endif
 
 c     print*,yldphy,' ',angcntrb,' ',etf,' ',stoppwr,' ',eo
@@ -1150,69 +1150,69 @@ c  Subroutine to evaluate sputtering yields.
       endif
 
 c  Initialising
-      pwr2by3 = 2.0e0_R8 / 3.0e0_R8
+      pwr2by3 = 2.0_R8 / 3.0_R8
 
       z123z223sum = z1**pwr2by3 + z2**pwr2by3
 
 c  The Thomas Fermi energy etf used below is valid only for singly
 c  charged ions. If it is multiply charged just multiply etf by the
 c  charge of the ion to get the etf for multiply charged ions.
-      etf = 30.74e0_R8 * (am1+am2)/am2  * z1*z2*z123z223sum**0.5e0_R8
+      etf = 30.74_R8 * (am1+am2)/am2  * z1*z2*z123z223sum**0.5_R8
      @  *max(1.0_R8,zb)
       tpev = tp / (ev/KBolt)
 
       eobyetf = eo / etf
-      stoppwr1 = (0.5e0_R8*log(1.0e0_R8+1.2288e0_R8*eobyetf))
-      stoppwr2 = (eobyetf + 0.1728e0_R8*eobyetf**0.5e0_R8 +
-     @  0.008e0_R8*eobyetf**0.1504e0_R8)
+      stoppwr1 = 0.5_R8*log(1.0_R8+1.2288_R8*eobyetf)
+      stoppwr2 = eobyetf + 0.1728_R8*eobyetf**0.5_R8
+     @                   + 0.008_R8 *eobyetf**0.1504_R8
       stoppwr = stoppwr1 / stoppwr2
 
       flxm2 = gamma
 cxpb Modified to follow new formula from Roth et al., PSI16
 c      flxlmt = 1.0e30_R8*exp(-1.4/tpev)
 c      if (flxm2.gt.flxlmt) then  ! Assuming high flux
-c        Cmy = 1.0e0_R8/(1.0e0_R8+3.0e-23_R8*flxm2)
+c        Cmy = 1.0_R8/(1.0_R8+3.0e-23_R8*flxm2)
 c      else
-c        Cmy = 1.0e0_R8/(1+3.0e7_R8*exp(-1.4/tpev))
+c        Cmy = 1.0_R8/(1.0_R8+3.0e7_R8*exp(-1.4/tpev))
 c      endif
 
 cxpb - 16.06.05 Corrected unphysical flux dependence behaviour pointed
 cxpb - out by Detlev Reiter.
       if (formula.eq.1) then
 C  Haasz-Davis formula, 1998, with flx. dep from Roth, Nucl.Fus 2004
-        Chd=1.0e0_R8/(1.0e0_R8+(1.67e-22_R8*flxm2)**0.54_R8)
+        Chd=1.0_R8/(1.0_R8+(1.67e-22_R8*flxm2)**0.54_R8)
         yldchm=Chd * yhaasz97m(eo,tp)
       else
 
-        Cmy = 1.0e0_R8/((1.0e0_R8+(flxm2/6.0e21_R8)**0.54_R8)
-     .                 *(1.0e0_R8+3.0e7_R8*exp(-1.6_R8/tpev)))
-        etherm = 1.7e0_R8
+        Cmy = 1.0_R8/((1.0_R8+(flxm2/6.0e21_R8)**0.54_R8)
+     .               *(1.0_R8+3.0e7_R8*exp(-1.6_R8/tpev)))
+        etherm = 1.7_R8
         erel = matsurf_chemsput_erel(ibnd)    ! erel =1.8 (for pure Graphite);
                                               !      =1.5 (for Si,Ti,W doped graphite)
                                               !      =1.2 (for B doped graphite)
-        edam = 15.0e0_R8
-        edes = 2.0e0_R8
+        edam = 15.0_R8
+        edes = 2.0_R8
         Csp3num = Cmy*(2.0e-32_R8*flxm2+exp(-etherm/tpev))
         Csp3denom = 2.0e-32_R8*flxm2+
-     @    (1.0e0_R8+2.0e29_R8/flxm2*exp(-erel/tpev))*
+     @    (1.0_R8+2.0e29_R8/flxm2*exp(-erel/tpev))*
      @    exp(-etherm/tpev)
         Csp3 = Csp3num/Csp3denom
-        ytherm = Csp3*0.033*exp(-etherm/tpev) /
+        ytherm = Csp3*0.033_R8*exp(-etherm/tpev) /
      @    (2.0e-32_R8*flxm2+exp(-etherm/tpev))
         if (nint(am1).eq.1) then
-          yieldpar = 0.035
+          yieldpar = 0.035_R8
         elseif (nint(am1).eq.2) then
-          yieldpar = 0.1
+          yieldpar = 0.1_R8
         elseif (nint(am1).eq.3) then
-          yieldpar = 0.12
+          yieldpar = 0.12_R8
         endif
-        D = 250.0e0_R8/am1
-        ydam = yieldpar*stoppwr*(1.0e0_R8-(edam/eo)**pwr2by3)*
-     @    (1.0e0_R8-edam/eo)**2.0e0_R8
-        ydes = yieldpar*stoppwr*(1.0e0_R8-(edes/eo)**pwr2by3)*
-     @    (1.0e0_R8-edes/eo)**2.0e0_R8
-        ysurf = csp3*ydes/(1.0e0_R8+exp((eo-65.0e0_R8)/40.0e0_R8))
-        yldthmprt = ytherm*(1.0e0_R8+D*ydam)
+        D = 250.0_R8/am1
+        ydam = yieldpar*stoppwr*(1.0_R8-(edam/eo)**pwr2by3)*
+     @    (1.0_R8-edam/eo)**2.0_R8
+        ydes = yieldpar*stoppwr*(1.0_R8-(edes/eo)**pwr2by3)*
+     @    (1.0_R8-edes/eo)**2.0_R8
+        ysurf = csp3*ydes/(1.0_R8+exp((eo-65.0_R8)/40.0_R8))
+        yldthmprt = ytherm*(1.0_R8+D*ydam)
         yldchm = yldthmprt+ysurf
       endif ! Haasz-Davis or Roth formula
       if (yldchm.le.0.0_R8) then
@@ -1269,33 +1269,32 @@ c  es   -> surface binding energy (heat of sublimation) of target (eV).
         return
       endif
 
-      pwr2by3 = 2.0e0_R8 / 3.0e0_R8
+      pwr2by3 = 2.0_R8 / 3.0_R8
       gamma = gamma / 1.0e4_R8
 
       z123z223sum = z1**pwr2by3 + z2**pwr2by3
       am2byam1 = am2 / am1
 
-      eth = ( 7.0e0_R8/am2byam1**0.54e0_R8 +
-     @  0.15e0_R8*am2byam1**1.12e0_R8) * es(itargsp)
+      eth = ( 7.0_R8/am2byam1**0.54_R8 +
+     @  0.15_R8*am2byam1**1.12_R8) * es(itargsp)
 
 c  The Thomas Fermi energy etf used below is valid only for singly
 c  charged ions. If it is multiply charged just multiply etf by the
 c  charge of the ion to get the etf for multiply charged ions.
 
-      etf = 30.74e0_R8 * (am1+am2)/am2  * z1*z2*
-     @  z123z223sum**0.5e0_R8 *max(1.0_R8,zb)
+      etf = 30.74_R8 * (am1+am2)/am2  * z1*z2*
+     @  z123z223sum**0.5_R8 *max(1.0_R8,zb)
 
       tpev = tp / (ev/KBolt)
 
-      yldparres = 54.0e0_R8 * am1**1.18e0_R8 *
-     @  exp((-0.78e0_R8)/tpev)*(gamma/1.0e16_R8)**(-0.1)
+      yldparres = 54.0_R8 * am1**1.18_R8 *
+     @  exp((-0.78_R8)/tpev)*(gamma/1.0e16_R8)**(-0.1_R8)
 
       ethbyeo = eth / eo
       eobyetf = eo / etf
-      stoppwr1 = (0.5e0_R8*
-     @  log(1.0e0_R8+1.2288e0_R8*eobyetf))
-      stoppwr2 = (eobyetf+0.1728e0_R8*eobyetf**0.5e0_R8+
-     @  0.008e0_R8*eobyetf**0.1504e0_R8)
+      stoppwr1 = 0.5_R8*log(1.0_R8+1.2288_R8*eobyetf)
+      stoppwr2 = eobyetf+0.1728_R8*eobyetf**0.5_R8
+     @                  +0.008_R8*eobyetf**0.1504_R8
       stoppwr = stoppwr1 / stoppwr2
 
 c  Calculation of the physical sputtering yield
@@ -1304,8 +1303,8 @@ c  Calculation of the RES sputtering yield
 c  assuming that the flux factor is unity.
 
       yldres = yldparres * stoppwr *
-     @  (1.0e0_R8-ethbyeo**pwr2by3)
-     @  * ( 1.0e0_R8 - ethbyeo ) ** 2
+     @    ( 1.0_R8 - ethbyeo**pwr2by3 )
+     @  * ( 1.0_R8 - ethbyeo ) ** 2
 
       gamma = gamma * 1.0e4_R8
       if (yldres.le.0.0_R8) then
@@ -1389,7 +1388,7 @@ cxpb Contribution from bulk if species is part of bulk
       end do
 
       if (bulk) then
-        vappres = 10.0e0_R8**(A/tp + B)
+        vappres = 10.0_R8**(A/tp + B)
         flxthev = alpha*vappres/sqrt(2.0_R8*pi*am2*mp*tp*KBolt)*
      .     (layer_nrelconstituents(ibnd,1)/
      .    matsurf_relconstituents(ibnd,1))
@@ -1410,7 +1409,7 @@ cxpb Also need to consider alloy contributions
       B = species_vapprs_B(itrack)
       alpha = species_stick_coef(itrack)
       am2 = atomic_mass(layer_nzconstituents(ibnd,nz+itrack))
-      vappres = 10.0e0_R8**(A/tp + B)
+      vappres = 10.0_R8**(A/tp + B)
       flxthev = flxthev+alpha*vappres/sqrt(2.0_R8*pi*am2*mp*tp*KBolt)*
      .  layer_nrelconstituents(ibnd,nz+itrack)
       qthev = qthev + flxthev * am(is) * mp * matsurf_heat_sublim(ibnd)

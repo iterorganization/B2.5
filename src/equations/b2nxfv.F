@@ -52,7 +52,7 @@
 *   ..subprogram start-up calls
       call subini ('b2nxfv')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 
 * ..compute convection term
       ft = 4.0_R8/3.0_R8
