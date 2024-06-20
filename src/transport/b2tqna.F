@@ -3704,7 +3704,7 @@ c*******************************************************************************
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
-      real (kind=R8) :: t_av, df0
+      real (kind=R8) :: t_av, df0, df00
 *   ..input/output arguments
       real (kind=R8), intent(inout) ::
      &  hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1)
@@ -3741,24 +3741,38 @@ c*******************************************************************************
             dion=expu(
      2        rt%rlsa(iCv,0,is)+
      3        rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
+            if (switch%afn_vnn.eq.1) then
 *         ..Collision time for n-n collisions (D-D), based on Kotov 2007
-            vnn = 5.2958e-11_R8*(KBolt*pl%tn(iCv))**0.25_R8*
-     &           pl%na(iCv,is)
+              vnn = 1.0e-6_R8*5.2958e-11_R8*(pl%tn(iCv)/KBolt)**0.25_R8*
+     &          pl%na(iCv,is)
+            else
+              vnn = 0.0_R8
+            endif
 *         ..Total coefficients
             df0=(wrk0(iCv)/sqrt(am(is)))**2/
-     1           (vcx+dion*dv%ne(iCv)+vnn)
+     1          (vcx+dion*dv%ne(iCv)+vnn)
             ! limit df0
             df0=max(switch%b2tqna_min_df0,
      &          min(switch%b2tqna_max_df0,df0))
-
-            dpa0(iCv,is) = (1.0_R8/pl%tn(iCv))*df0
+            if (switch%afn_vnn_ndiff.eq.1) then
+              ! assign fraction to density diffusion (nn-collisions)
+              ! based on ratio of ion/neutral collision frequency
+              dna0(iCv,is) = df0*
+!     &          pl%na(iCv,is)/(pl%na(iCv,is)+dv%ne(iCv))
+     &          vnn/(vcx+dion*dv%ne(iCv)+vnn)
+              dpa0(iCv,is) = (1.0_R8/pl%tn(iCv))*df0*
+!     &          pl%ne(iCv)/(pl%na(iCv,is)+dv%ne(iCv))
+     &          (vcx+dion*dv%ne(iCv))/(vcx+dion*dv%ne(iCv)+vnn)
+            else
+              dpa0(iCv,is) = (1.0_R8/pl%tn(iCv))*df0
+            endif
             vsa0(iCv,is) = mp*am(is)*pl%na(iCv,is)*df0
             hcib(iCv,is) = 2.5_R8*pl%na(iCv,is)*df0
 
           enddo !! end loop over cells
 
 *   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
-          if (ANY( dna0(:,is)/=0 )) then
+          if (ANY( dna0(:,is)/=0 ).and.switch%afn_vnn_ndiff.ne.1) then
             write(*,*) 'Warning: '//
      .       'dna0 is not zero for neutrals'//
      .       'Recommended choice is zero!'
