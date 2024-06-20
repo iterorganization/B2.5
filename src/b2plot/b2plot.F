@@ -817,7 +817,7 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
        enddo
       else if (switch%lluciani.eq.3) then  ! new formulation
        nu1 = 0.0_R8
-       k1 = 0.58e0_R8
+       k1 = 0.58_R8
        t1 = (4.0_R8*pi*eps0/qe)/qe
        t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
        tau = t2/state%dv%lnlam*state%pl%te/ev*
@@ -827,13 +827,13 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
           iFt = mpg%cvFt(iCv)
           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
             nu1(iCv) = geo%ftConn(iFt)/(tau(iCv)*
-     &        sqrt(state%pl%te(iCv)/me)*2.0e0_R8*pi*
-     &        geo%ftEps(iFt)**1.5e0_R8)
-            k1(iCv) = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1(iCv))
-     &        +1.53e0_R8*nu1(iCv))
-     &        +0.52e0_R8*(geo%ftEps(iFt)**3)*nu1(iCv)
-     &        /(1.0e0_R8+0.89e0_R8*sqrt(geo%ftEps(iFt)**3)*nu1(iCv))
-            t0 = 1.0_R8/k1(iCv)*0.58e0_R8*sqrt(geo%ftEps(iFt)**3)
+     &        sqrt(state%pl%te(iCv)/me)*2.0_R8*pi*
+     &        geo%ftEps(iFt)**1.5_R8)
+            k1(iCv) = 1.0_R8/(1.0_R8+2.01_R8*sqrt(nu1(iCv))
+     &        +1.53_R8*nu1(iCv))
+     &        +0.52_R8*(geo%ftEps(iFt)**3)*nu1(iCv)
+     &        /(1.0_R8+0.89_R8*sqrt(geo%ftEps(iFt)**3)*nu1(iCv))
+            t0 = 1.0_R8/k1(iCv)*0.58_R8*sqrt(geo%ftEps(iFt)**3)
             state%co%sigx_c(iCv) = state%co%sigx_c(iCv)*t0
             state%co%alfx_c(iCv) = state%co%alfx_c(iCv)*t0
           endif
@@ -1213,7 +1213,6 @@ c
       z0=0.0_R8
       t0=0.0_R8
       iFt=0
-      signmf=0.0_R8
       do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
         iFt=iFt+1
         iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
@@ -1231,26 +1230,9 @@ c
       if (t0.gt.0.0_R8) then
         r0=r0/t0
         z0=z0/t0
-        iFt=0
-        do while (signmf.eq.0.0_R8.or.iFt.lt.mpg%nFt)
-          iFt=iFt+1
-          iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
-          if (mpg%cvOnClosedSurface(iCv)) then
-            do i=1,mpg%ftCvP(iFt,2)
-              signmf=signmf
-     .         -((geo%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))-r0)*
-     .            geo%cvEb(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),1))
-     .         +((geo%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))-z0)*
-     .            geo%cvEb(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),0))
-            end do
-          end if
-        end do
-! signmf is positive if the poloidal field travels clockwise around the O-point
-        signmf=sign(1.0_R8,signmf)
       else
         r0=geo%cvX(1)
         z0=geo%cvY(1)
-        signmf=sign(1.0_R8,geo%cvEb(1,0))
       end if
       if (mpg%isClassicalGrid.eq.1) then
         values(1)=minval(xx)                             !xmin
@@ -1768,7 +1750,7 @@ c
         case('bx','bpol')
           description='b_{x} (T) (poloidal)'
           nz=1
-          call copy(geo%cvBb(:,0),signmf,nz,textbl)
+          call copy(geo%cvBb(:,0),geo%signmf,nz,textbl)
         case('by','brad')
           description='b_{y} (T)'
           nz=1
@@ -9094,7 +9076,7 @@ c
           description='Vapor pressure (Pa)'
           nz=1
           do ibnd = 1, nbnd
-            data(ibnd)=10.0e0_R8**
+            data(ibnd)=10.0_R8**
      .       (matsurf_vapprs_A(ibnd)/target_temp(ibnd,1) +
      .        matsurf_vapprs_B(ibnd))
           enddo
@@ -11289,6 +11271,9 @@ c
         case('ifsep')    ! ifsep
           stack_name='integer'
           call ipush(istack,iistack,mpg%iFssep)
+        case('ifsep2')   ! ifsep2
+          stack_name='integer'
+          call ipush(istack,iistack,mpg%iFssep2)
         case('ixref')    ! ixref
           if(.not.check_classical_grid(mpg)) return
           stack_name='integer'

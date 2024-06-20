@@ -60,7 +60,7 @@
       call subini ('b2srst')
 *   ..set internal parameters on first call
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test sign of na, ni, ne, te, ti
       if(ncall_b2srst.lt.3) then

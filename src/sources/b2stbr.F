@@ -109,6 +109,9 @@
       integer, save :: ncall_iout = -1
 #ifdef B25_EIRENE
       integer ia, im
+#ifdef ASTRA
+      integer, save :: use_astra = 0
+#endif
       character ch3*3
 #endif
       character chns*3, chk*1                                        !srv 11.09.09 } 23.03.12
@@ -201,6 +204,9 @@
       if (ncall_b2stbr.eq.0) then
 !WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
         if (switch%use_eirene.ne.0) out_tfiles=0
+#if ( defined(B25_EIRENE) && defined(ASTRA) )
+        call ipgeti ('b2mndr_astra', use_astra)
+#endif
         call ipgeti ('b2stbr_out_tfiles', out_tfiles)                !srv 07.04.09
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
         if(switch%b2stbr_first_flight.ne.0) then
@@ -288,7 +294,7 @@
         endif
       endif
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      & 'faulty argument ismain')
@@ -1072,8 +1078,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 
       call subini ('b2stbr_neutr_scl')
       if (ncall_b2stbr_neutr_scl.eq.0) then
-        call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-        call xertst(1.le.ns, 'faulty argument ns')
+        call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+        call xertst (1.le.ns, 'faulty argument ns')
       endif
       if(use_eirene.ne.0.and.ank_mods.ne.0) then
 #ifdef B25_EIRENE

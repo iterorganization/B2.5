@@ -119,7 +119,7 @@
 *   ..subprogram start-up calls
       call subini ('b2trno')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall_b2trno.eq.0) then
@@ -281,22 +281,22 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
 
 *   ..set csigx = 0 and calfx = 0
       if (switch%csig_an_style.eq.1) then
-        call sfill (nFc, 0.0e0_R8, co%csig(1,0), 1)
-        call sfill (nFc, 0.0e0_R8, co%calf(1,0), 1)
+        call sfill (nFc, 0.0_R8, co%csig(1,0), 1)
+        call sfill (nFc, 0.0_R8, co%calf(1,0), 1)
       end if
 *   ..set strange velocities chve, chvi
 c      call sfill (nFc*2, 0.0_R8, co%chve, 1)
 c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
 *   ..add stochastic part of the electron heat conductivity
       chce_stoch = 0.0_R8                                                 !srv 20.09.17
-      if(switch%fch_stochastic.ne.0.0e0_R8)then                            !lk 31.01.08 { !srv 17.12.13
+      if(switch%fch_stochastic.ne.0.0_R8) then                            !lk 31.01.08 { !srv 17.12.13
       call xerrab('b2trno -- option to be adapted for WG')
 #ifdef WG_TODO
         call b2tstch (nx, ny, po, te, ne, csig_stoch, fchstoch)
         do iy = -1, ny                                                    !srv 20.09.17
           do ix = -1, nx
            if(bottomiy(ix,iy).ne.-2) then
-            chce_stoch(ix,iy)=switch%b2trno_alpha_stoch*1.6e0_R8*
+            chce_stoch(ix,iy)=switch%b2trno_alpha_stoch*1.6_R8*
      &      csig_stoch(ix,iy)/
      &      qe/qe*(te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
            endif                                                          !srv 20.09.17

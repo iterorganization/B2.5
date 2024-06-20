@@ -37,7 +37,7 @@ C
 
       real (kind=R8) ::
      *   u
-      parameter (u=1.0e0_R8)
+      parameter (u=1.0_R8)
       real (kind=R8), save :: prec = 1.0e-10_R8                    !srv 16.01.18
 
 c ma28 common blocks
@@ -143,8 +143,8 @@ C    ZUWEISUNG
          IF (IJSH(K).EQ.3) A1HN=AEA(ISH(K),JSH(K))
          IF (IJSH(K).EQ.4) A1HN=ANO(ISH(K),JSH(K))
          IF (IJSH(K).EQ.5) A1HN=ANO1(ISH(K),JSH(K))                !srv 26.01.00
-c       IF (A1HN.EQ.0.0e0_R8) THEN
-         if(A1HN.EQ.0.0e0_R8.or.                                   !srv 29.01.20
+c       IF (A1HN.EQ.0.0_R8) THEN
+         if(A1HN.EQ.0.0_R8.or.                                     !srv 29.01.20
      1   (IJSH(K).EQ.-1.and.jsh(k).eq.1).or.                       !srv 26.01.00
      1   (IJSH(K).EQ.-1.and.jsh(k).eq.2).or.                       !srv 26.01.00
      1   (IJSH(K).EQ.0.and.jsh(k).eq.1).or.
@@ -164,7 +164,7 @@ c       IF (A1HN.EQ.0.0e0_R8) THEN
       DO I=1,N1
          DO J=1,N2
           R1(I+(J-1)*N1)=RHS(I,J)
-          S1(I+(J-1)*N1)=0.0e0_R8
+          S1(I+(J-1)*N1)=0.0_R8
          enddo
       enddo
       if(kwrite_bnr.eq.ncall) then                                !srv 18.05.02 {

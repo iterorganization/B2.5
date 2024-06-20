@@ -143,7 +143,7 @@ c     output for analysis/debugging
        write(*,*) 'First call of b2stbr_phys'
       endif                                                         !srv 22.08.08 }
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..automatic spatial hybrid not allowed for multispecies
       if(switch%use_auto_spatial_hyb.ne.0.and.ns.gt.1) then

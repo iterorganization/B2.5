@@ -90,20 +90,20 @@ c        call ipgeti ('b2tral_mode', mode)
 c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16.11.17
       endif
 *   ..test input
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      & 'faulty argument ismain')
       call xertst (0.le.ismain0.and.ismain0.lt.ns.and.
      & (is_neutral(ismain0).or.ismain0.eq.ismain),
      & 'faulty argument ismain0')
-      fchin     = 0.0e0_R8                                               !srv 09.07.99
+      fchin     = 0.0_R8                                                 !srv 09.07.99
       facdriftm = maxval(facdrift)                                       !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
 
       if(switch%pot_eq.eq.1 .and.(facdriftm.gt.0.0_R8 .or.
      . fac_ExBm.gt.0.0_R8).and.switch%no_current.eq.0
-     .            .and. switch%fch_ion_neutral .ne. 0.0e0_R8) then       !srv 26.07.06 01.07.99
+     .            .and. switch%fch_ion_neutral .ne. 0.0_R8) then         !srv 26.07.06 01.07.99
 
 *   ..extensive tests on first few calls
           if (ncall.lt.3) then

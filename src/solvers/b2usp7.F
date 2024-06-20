@@ -52,7 +52,7 @@ C     real (kind=R8) :: aa11p2, aa11m2                             !srv 27.01.00
       external xertst, sfill
       external b2xvsg, b2xvff, b2ux7p, b2ux9p                      !srv 11.01.00
 *   ..initialisation
-      data ncall/0/, vis_per/0.0e0_R8/                             !srv 27.01.00
+      data ncall/0/, vis_per/0.0_R8/                               !srv 27.01.00
 
 *-----------------------------------------------------------------------
 *.computation
@@ -187,8 +187,8 @@ cwdk add 9-point contributions
 CWDK tmp: ignore this      
 CWDK will require complex stencil!
 C*   ..compute the seven-point matrix                               !srv 26.01.00
-C      aa11(:,:,-3) = 0.0e0_R8
-C      aa11(:,:, 3) = 0.0e0_R8
+C      aa11(:,:,-3) = 0.0_R8
+C      aa11(:,:, 3) = 0.0_R8
 C
 C      do iy = -1, ny
 C       do ix = -1, nx                                              !srv 26.11.02

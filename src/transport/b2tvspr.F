@@ -48,7 +48,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tvspr')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current
 !      call b2txvspr(nx, ny, ns, fac_vis,                               !srv 10.10.17
@@ -56,7 +56,7 @@
 
 *   ..calculate the contribution of viscosity perpendicular current    !srv 22.11.99
       fac_vism = maxval(fac_vis)
-      if(fac_vism.ne.0.0_R8 .and. switch%fhe_vis_per.ne.0.0e0_R8.and.
+      if(fac_vism.ne.0.0_R8 .and. switch%fhe_vis_per.ne.0.0_R8.and.
      &   switch%no_current.eq.0) then
        do is = 0,ns-1                                                   !srv 16.10.17
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
@@ -96,7 +96,7 @@
         endif                                                           !srv 16.10.17
        enddo                                                            !srv 16.10.17
       else
-        fchvisper = 0.0e0_R8
+        fchvisper = 0.0_R8
       endif                                                             !srv 22.11.99
 
       if(switch%b2tvspr_iout.eq.1) then

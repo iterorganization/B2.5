@@ -1,6 +1,6 @@
       subroutine conv_triangles (mpg, gm,
      .    nmxnodes, nmxelem, nnodes, nelem, npnodes, npelem,
-     .    xco, yco, node_vert, elem, elem_cv, trifc, neigh, 
+     .    xco, yco, node_vert, elem, elem_cv, trifc, neigh,
      .    cntr, tria_mode)
 
       use b2mod_types
@@ -14,12 +14,11 @@
 #endif
       implicit none
 
-      integer, intent(in) ::nmxnodes, nmxelem, npnodes, npelem,
+      integer, intent(in) :: nmxnodes, nmxelem, npnodes, npelem,
      .  tria_mode
       integer ::  nnodes, nelem
       type(mapping), intent(in) :: mpg
       type(geometry), intent(in) :: gm
-      integer :: nx, ny
       integer :: node_vert(nmxnodes), elem(3,nmxelem), elem_cv(nmxelem),
      .  trifc(3,nmxelem), neigh(3,2,nmxelem), cntr(3,nmxelem)
       real(R8) :: xco(nmxnodes), yco(nmxnodes)
@@ -27,8 +26,9 @@
 #ifdef B25_EIRENE
       type(TAVLTree), pointer :: baum
       logical :: inserted
+      integer :: nx, ny
       integer :: nco_old, nelem_conv, ic, ico, ivx, iel, iel2,
-     .           i1, i2, i3, idum, i, nel2, 
+     .           i1, i2, i3, idum, i, nel2,
      .           is, is1, is2, ifc, icv, icut, ixt, iyt,
      .           ix, iy, isig, iused, ineir,
      .           ntrfrm, ismin, ismax, icmin, icmax, cfce(4,3),
@@ -38,19 +38,22 @@
       integer, allocatable :: im_old_new(:), im_new_old(:)
       integer, allocatable :: ixtri(:), iytri(:),
      .     ix_b2_eir(:), ix_eir_b25(:), iy_eir(:)
-      integer :: artificial_slab=0, overwrite_ntrfrm = 0,
-     .            is_narrow_grid = 0, use_old_co = 0
+      integer :: artificial_slab = 0, overwrite_ntrfrm = 0,
+     .           is_narrow_grid = 0, use_old_co = 0
       real(R8) :: xc, yc, dist = 1.0_R8
       real(R8) :: tol_align = 1.0e-4_R8
       logical :: ffound
       character(500) :: line
+
       type :: tri_elem
         integer :: itri
         type(tri_elem), pointer :: next_tri => null()
       end type tri_elem
+
       type :: tri_list
         type(tri_elem), pointer :: ptri => null()
       end type tri_list
+
       type(tri_list), allocatable :: trias(:,:)
       type(tri_elem), pointer :: tel
 #ifndef F2003
@@ -121,7 +124,7 @@
         xc = xco(i)
         yc = yco(i)
         call EIRENE_insert (baum, xc, yc,
-     .                    0._R8, dist, ic, inserted)
+     .                      0.0_R8, dist, ic, inserted)
         if (.not.inserted) then
             write(*,*) '------------'
             write(*,*) 'problem with plasma node ', i
@@ -199,7 +202,7 @@
       !! 2) check whether each new node corresponds to an old node
       do i = 1, nnodes
         iused = count(im_old_new == i)
-        if (iused <= 0 .and. 
+        if (iused <= 0 .and.
      .      .not.(i.le.npnodes.and.tria_mode.eq.1)) then ! for tria_mode 1, only chech the nodes that are not plasma vertices
           ico = ico + 1
           write (*,*) 'Node ', i, ' in new fort.33 not present in '//
@@ -272,8 +275,6 @@
         end do
         close(35)
 
-
-
         ! consistency check
         ico = 0
         do iel = npelem + 1, nelem
@@ -282,10 +283,10 @@
             ico = ico + 1
             write (*,*) 'Problem with void triangle ',iel
             write (*,*) 'iCv, iFc1, iFc2, iFc3 = ', elem_cv(iel),
-     .      trifc(1:3,iel)
+     .       trifc(1:3,iel)
           endif
         enddo
-        call xertst(ico.eq.0,'Problem with void triangles')
+        call xertst(ico.eq.0, 'Problem with void triangles')
 
       elseif (tria_mode.eq.0) then ! assume structured format fort.35; conversion of ix,iy indexing needed
 
@@ -295,7 +296,7 @@
           ny = mpg%ny
         else
           call xerrab 
-     .      ('Need structured grid info to convert plasma triangles.')
+     .     ('Need structured grid info to convert plasma triangles.')
         endif
 
         allocate (ixtri(nelem_conv))
@@ -309,7 +310,7 @@
 
 !  setup conversion arrays
 
-        allocate (ix_b2_eir(0:nx+1))
+        allocate (ix_b2_eir(1:nx))
         allocate (ix_eir_b25(1:nx+3*nncut))
         ix_eir_b25 = -2
 
@@ -370,7 +371,7 @@
       ! shift neighbor info for presence of (plasma) triangles
       do iel = npelem + 1, nelem
         do is = 1,3
-          if (neigh(is,1,iel).ne.0) 
+          if (neigh(is,1,iel).ne.0)
      .      neigh(is,1,iel) = neigh(is,1,iel) + npelem
         enddo
       enddo
@@ -379,62 +380,62 @@
       do iel = npelem + 1, nelem
         if (elem_cv(iel) < 0) then
 !  triangle belongs to void region
-!  check if it is neighbored to a plasma cell
+!  check if it is neighboring a plasma cell
           do is = 1, 3
-            if (trifc(is,iel) == 0) then
+            if (triFc(is,iel) == 0) then
               is1 = is + 1
               if (is1 > 3) is1 = 1
               if (neigh(is,1,iel) == 0) then
                 ! Triangle w/o neighbor => edge of triangle grid.
                 ! For stitching void grid to plasma grid: check if there is a plasma triangle on other side
-                call find_plasma_neighbor (icv, ifc, iel2, is2, 
+                call find_plasma_neighbor (iCv, iFc, iel2, is2,
      .            elem(is, iel), elem(is1, iel), nnodes, node_vert,
      .            npelem, nelem, elem, mpg)
                 ! If yes, adapt neighbor information
-                if (icv > 0) then
+                if (iCv > 0) then
                   neigh(is,1,iel) = iel2
                   neigh(is,2,iel) = is2
                   neigh(is2,1,iel2) = iel
                   neigh(is2,2,iel2) = is
                   isig = 1
-                  if (icv == mpg%fcCv(ifc,2)) isig = -1
-                  trifc(is,iel) = -isig * ifc
-                  trifc(is2,iel2) = isig * ifc
+                  if (iCv == mpg%fcCv(iFc,2)) isig = -1
+                  triFc(is,iel) = -isig * iFc
+                  triFc(is2,iel2) = isig * iFc
                 endif
               else
                 ! Triangle with neighbor => check cell of neighbor
-                icv = elem_cv(neigh(is,1,iel))
-                if (icv > 0) then
-                  call find_face_number (icv,elem(is, iel),
+                iCv = elem_cv(neigh(is,1,iel))
+                if (iCv > 0) then
+                  call find_face_number (iCv, elem(is,iel),
      .              elem(is1,iel), nnodes, npnodes, node_vert,
      .              xco, yco, ifc, mpg, gm, tol_align)
                   isig = 1
-                  if (ifc > 0) then
-                    if (icv == mpg%fcCv(ifc,2)) isig = -1
+                  if (iFc > 0) then
+                    if (iCv == mpg%fcCv(iFc,2)) isig = -1
                   end if
-                  trifc(is,iel) = -isig * ifc
-                  trifc(neigh(is,2,iel),neigh(is,1,iel)) = isig * ifc
+                  trifc(is,iel) = -isig * iFc
+                  trifc(neigh(is,2,iel),neigh(is,1,iel)) = isig * iFc
                 end if
               endif
             end if
           end do
         else
 !  triangle is in plasma region
-          icv = elem_cv(iel)
+          iCv = elem_cv(iel)
           do is = 1, 3
-            if (trifc(is,iel) == 0) then
+            if (triFc(is,iel) == 0) then
               is1 = is + 1
               if (is1 > 3) is1 = 1
-              call find_face_number (icv, elem(is, iel),
+              call find_face_number (iCv, elem(is,iel),
      .          elem(is1,iel), nnodes, npnodes, node_vert,
      .          xco, yco, ifc, mpg, gm, tol_align)
               isig = 1
-              if (ifc > 0) then
-                if (icv == mpg%fcCv(ifc,2)) isig = -1
+              if (iFc > 0) then
+                if (iCv == mpg%fcCv(iFc,2)) isig = -1
               end if
-              trifc(is,iel) = isig * ifc
+              triFc(is,iel) = isig * iFc
               if (neigh(is,1,iel) /= 0)
-     .          trifc(neigh(is,2,iel),neigh(is,1,iel)) = -isig * ifc
+     .          triFc(neigh(is,2,iel),neigh(is,1,iel)) = -isig * iFc
             end if
           end do
           if (count(trifc(1:3,iel) /= 0) == 0) then
@@ -533,7 +534,7 @@
       return
       end subroutine conv_triangles
 
-      subroutine find_face_number (icv, in1, in2,
+      subroutine find_face_number (iCv, in1, in2,
      .                             nnodes, npnodes, node_vert,
      .                             xco, yco, ifc, mpg, gm,
      .                             tol_align)
@@ -543,7 +544,7 @@
       use b2us_geo
 
       implicit none
-      integer, intent(in) :: icv, in1, in2, nnodes, npnodes,
+      integer, intent(in) :: iCv, in1, in2, nnodes, npnodes,
      .                       node_vert(nnodes)
       real(R8), intent(in) :: xco(nnodes), yco(nnodes)
       type(mapping), intent(in) :: mpg
@@ -551,31 +552,31 @@
       integer, intent(out) :: ifc
 
       integer, allocatable :: jvx(:)
-      integer :: nv, nf, j, jfc, jv1, jv2
+      integer :: nv, nf, j, jFc, jv1, jv2
       real(R8) :: px1, py1, px2, py2, vpx, vpy,
      .            fx1, fy1, fx2, fy2, vfx, vfy, d, det, dq, lq, vvp, vvf
       real(R8) :: tol_align
       logical :: found
 
-      nv = mpg%cvVxP(icv,2)
+      nv = mpg%cvVxP(iCv,2)
       allocate (jvx(nv))
-      jvx = mpg%cvVx(mpg%cvVxp(icv,1) : mpg%cvVxp(icv,1)+nv-1)
+      jvx = mpg%cvVx(mpg%cvVxp(iCv,1) : mpg%cvVxp(iCv,1)+nv-1)
 
-      nf = mpg%cvFcP(icv,2)
-      ifc = 0
+      nf = mpg%cvFcP(iCv,2)
+      iFc = 0
       found=.false.
 
       if ((in1 <= npnodes) .and. (in2 <= npnodes)) then
 !  both in1 and in2 are nodes in the unstructured plasma mesh
 !  check faces of cell icv
         do j = 1, nf
-          jfc = mpg%cvFc(mpg%cvFcP(icv,1)+j-1)
-          jv1 = mpg%fcVx(jfc,1)
-          jv2 = mpg%fcVx(jfc,2)
+          jFc = mpg%cvFc(mpg%cvFcP(iCv,1)+j-1)
+          jv1 = mpg%fcVx(jFc,1)
+          jv2 = mpg%fcVx(jFc,2)
           if ((min(node_vert(in1),node_vert(in2)) == min(jv1,jv2)) .and.
      .        (max(node_vert(in1),node_vert(in2)) == max(jv1,jv2))) then
 !  face identified
-            ifc = jfc
+            iFc = jFc
             found=.true.
             return
           end if
@@ -631,13 +632,13 @@
       return
       end subroutine find_face_number
 
-      subroutine find_plasma_neighbor (icv, ifc, iel2, is2, in1, in2,
+      subroutine find_plasma_neighbor (iCv, iFc, iel2, is2, in1, in2,
      .  nnodes, node_vert, npelem, nelem, elem, mpg)
 
       use b2mod_types
       use b2us_map
       use b2us_geo
-      implicit none 
+      implicit none
 
       type(mapping), intent(in) :: mpg
 
@@ -646,8 +647,8 @@
       integer :: node_vert(nnodes), elem(3,nelem)
       logical :: found
 
-      icv = -1 ! default: assume void neighbor
-      ifc = -1
+      iCv = -1 ! default: assume void neighbor
+      iFc = -1
       iel2 = -1
       is2  = -1
 
@@ -655,15 +656,15 @@
       ! will not have been split for triangulation
       ! => we simply need to detect whether nodes of the triangle face correspond to
       !    those of a plasma boundary face
-      do icv1 = mpg%nCi+1,mpg%nCv  ! loop over guard cells
-        ifc1 = mpg%cvFc(mpg%cvFcP(icv1,1)) ! number of the guard cell face
-        iv1 = mpg%fcVx(ifc1,1)
-        iv2 = mpg%fcVx(ifc1,2)
+      do iCv1 = mpg%nCi+1,mpg%nCv  ! loop over guard cells
+        iFc1 = mpg%cvFc(mpg%cvFcP(iCv1,1)) ! number of the guard cell face
+        iv1 = mpg%fcVx(iFc1,1)
+        iv2 = mpg%fcVx(iFc1,2)
         if ((min(node_vert(in1),node_vert(in2)) == min(iv1,iv2)) .and.
      .      (max(node_vert(in1),node_vert(in2)) == max(iv1,iv2))) then
           ! Cell and face number identified
-          icv = min(mpg%fcCv(ifc1,1),mpg%fcCv(ifc1,2))
-          ifc = ifc1
+          iCv = min(mpg%fcCv(iFc1,1),mpg%fcCv(iFc1,2))
+          iFc = iFc1
           ! Now, find the plasma triangle that has this face in common
           found = .false.
           do iel = 1, npelem
@@ -682,10 +683,11 @@
             enddo
           enddo
           if (.not.found) then
-            write (*,*) 'Did not find triangle for icv, ifc =  ',icv,ifc
-            call xerrab ('Problem stiching plasma & void grids.')
+            write (*,*) 'Did not find triangle for iCv, iFc =  ',iCv,iFc
+            call xerrab ('Problem stitching plasma & void grids.')
           endif
         endif
       enddo
 
+      return
       end subroutine find_plasma_neighbor

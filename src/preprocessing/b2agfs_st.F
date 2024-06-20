@@ -694,8 +694,8 @@ c
 
              if(nnx.ne.nx.or.nny.ne.ny) then
                write(*,'(a,4i5)')
-     1       'b2gxdr_dummy_st: nx,ny code and data disagree',
-     2       nx,ny,nnx,nny
+     1          'b2gxdr_dummy_st: nx,ny code and data disagree',
+     2           nx,ny,nnx,nny
                call xerrab ('Mismatch nx/ny and nnx/nny')
              endif
              do iy=0,ny+1
