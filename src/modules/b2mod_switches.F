@@ -885,13 +885,13 @@ c far-sol flux limiting options
 
       s % b2tlhe_ne_min = 1.0e17_R8
       s % b2tlhe_ne_max = 1.0e18_R8
-      s % b2tlhe_cflme_min = 1.0e-3_R8
+      s % b2tlhe_cflme_min = 0.2e0_R8
       s % b2tlhi_ni_min = 1.0e17_R8
       s % b2tlhi_ni_max = 1.0e18_R8
-      s % b2tlhi_cflmi_min = 1.0e-3_R8
+      s % b2tlhi_cflmi_min = 1.0e1_R8
       s % b2tlmv_ni_min = 1.0e17_R8
       s % b2tlmv_ni_max = 1.0e18_R8
-      s % b2tlmv_cflmv_min = 1.0e-3_R8
+      s % b2tlmv_cflmv_min = 0.5e0_R8
 
 c geometry
       s % fcHz_style = 1

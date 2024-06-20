@@ -52,7 +52,7 @@
         do iFc = 1, nFc
           if (nbf(iFc) .le. switch%b2tlmv_ni_min) then
            ! Set at min value
-           cflmv_loc(iFc) = switch%b2tlmv_ni_min
+           cflmv_loc(iFc) = switch%b2tlmv_cflmv_min
           elseif (nbf(iFc) .lt. switch%b2tlmv_ni_max ) then
            ! Interpolate for smooth transition
            cflmv_loc(iFc) = 
