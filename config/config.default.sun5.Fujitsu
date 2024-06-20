@@ -34,7 +34,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /usr/ccs/lib/cpp
@@ -44,10 +44,10 @@ SED =
 
 FC = /afs/ipp/@sys/soft/fuji_f90/FSUNf90/bin/f90
 ifdef SOLPS_DEBUG
-FCOPTS = -g -Am -X9 -Hasu
+  FCOPTS = -g -Am -X9 -Hasu
 else
-FCOPTS = -O3 -Am -X9 -Kfast,gs,V8PLUS,GREG,eval -x-
-FCOPTS = -O3 -Am -X9 -Kfast,gs,V8PLUS,GREG,eval
+  FCOPTS = -O3 -Am -X9 -Kfast,gs,V8PLUS,GREG,eval -x-
+  FCOPTS = -O3 -Am -X9 -Kfast,gs,V8PLUS,GREG,eval
 endif
 DBLFC = ${FC}
 DBLOPTION = -Ad # ???
@@ -63,11 +63,11 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = /afs/ipp/@sys/soft/fuji_f90/FSUNf90/bin/f90

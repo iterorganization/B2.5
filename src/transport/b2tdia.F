@@ -48,7 +48,7 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *   ..test nCv, nFc, ns
-       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
        call xertst (1.le.ns, 'faulty argument ns')
 *   ..test velocities
        call xertst (maxval(abs(uadia)).lt.c,
@@ -56,7 +56,7 @@
       endif
       
       facdriftm = maxval(facdrift)
-      if (facdriftm.ne.0.0_R8 .and. switch%dia_cur.ne.0.0e0_R8           !srv 16.10.17
+      if (facdriftm.ne.0.0_R8 .and. switch%dia_cur.ne.0.0_R8             !srv 16.10.17
      &                        .and. switch%no_current.eq.0) then
 
 *     ..interpolate to faces

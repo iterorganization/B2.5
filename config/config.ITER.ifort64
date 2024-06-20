@@ -57,9 +57,12 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 
 FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
-FCOPTS    += -g -C -debug all -traceback -check all
+FCOPTS    += -g -C -debug all -traceback -check all -fpe0
 else
-FCOPTS    += -O2 -march=sandybridge -fp-model=precise
+FCOPTS    += -O2 -march=sandybridge
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS    += -fp-model=precise
+endif
 endif
 ifdef USE_MPI
 FCOPTS    += ${MPI_CPP}

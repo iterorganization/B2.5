@@ -79,7 +79,7 @@
       real (kind=R8) ::
      *  ctaue, ce, t0, t1, z, tau(nCv), tnp                             !srv 11.09.09
 !xpb      parameter (lnlam=12.0_R8)
-      parameter (ce = 3.16e0_R8)
+      parameter (ce = 3.16_R8)
 *   ..procedures
       intrinsic sqrt
       external xertst, sfill
@@ -118,7 +118,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tqce')
 *   ..test nCv
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
 *   ..extensive tests on first few calls
       if (ncall_b2tqce.lt.3) then
 *    ..test bb

@@ -1,10 +1,10 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agbf (nx, ny, isymm, periodic_bc, nncut,
+      subroutine b2agbf (nx, ny, isymm,
      & crx, cry, fpsi, ffbz, vol,
-     & bb, wbbl, wbbr, wbbv, region, leftix, leftiy,
-     & bottomix, bottomiy, rightix, rightiy, topix, topiy, cflag)
+     & bb, wbbl, wbbr, wbbv, leftix, leftiy,
+     & bottomix, bottomiy, rightix, rightiy, cflag)
       use b2mod_types
       use b2mod_constants
       use tradui_constants
@@ -13,20 +13,19 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, isymm, periodic_bc, nncut
-      integer region(-1:nx,-1:ny,0:2), 
-     &  leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny), 
+      integer nx, ny, isymm
+      integer
+     &  leftix(-1:nx,-1:ny), leftiy(-1:nx,-1:ny),
      &  bottomix(-1:nx,-1:ny), bottomiy(-1:nx,-1:ny),
      &  rightix(-1:nx,-1:ny), rightiy(-1:nx,-1:ny),
-     &  topix(-1:nx,-1:ny), topiy(-1:nx,-1:ny),
-     $  cflag(-1:nx,-1:ny,GRID_N_CELLFLAGS) 
+     &  cflag(-1:nx,-1:ny,GRID_N_CELLFLAGS)
       real (kind=R8) ::
      &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  fpsi(-1:nx,-1:ny,0:3,0:2), ffbz(-1:nx,-1:ny,0:3),
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3), 
+     &  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3),
      &  wbbv(-1:nx,-1:ny,0:3)
 
 *-----------------------------------------------------------------------
@@ -125,7 +124,7 @@
         call intfacev1(nx,ny,2,bottomix,bottomiy,vol,bb,wbbv)
       else
         !wdk try to be more precise in case we know full fpsi/ffbz:
-        !wdk direct computation by averaging from vertext values 
+        !wdk direct computation by averaging from vertex values
 *     ..preparatory quantities
         hzl = INVALID_DOUBLE
         hzr = INVALID_DOUBLE
@@ -166,11 +165,11 @@
         do iy = -1, ny
          do ix = -1, nx
           if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
-          bb0 = (fpsi(ix,iy,2,0) - fpsi(ix,iy,0,0) + 
+          bb0 = (fpsi(ix,iy,2,0) - fpsi(ix,iy,0,0) +
      .     fpsi(ix,iy,3,0)-fpsi(ix,iy,1,0))
           if(isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
            babs = 0.5_R8*(
-     .       sqrt(fpsi(ix,iy,0,1)**2+fpsi(ix,iy,0,2)**2) + 
+     .       sqrt(fpsi(ix,iy,0,1)**2+fpsi(ix,iy,0,2)**2) +
      .       sqrt(fpsi(ix,iy,2,1)**2+fpsi(ix,iy,2,2)**2) )/hzl(ix,iy)
            wbbl(ix,iy,0) = sign(babs,bb0)
            wbbl(ix,iy,1) = 0.0_R8
@@ -179,7 +178,7 @@
           endif
           if(isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
            babs = 0.5_R8*(
-     .       sqrt(fpsi(ix,iy,1,1)**2+fpsi(ix,iy,1,2)**2) + 
+     .       sqrt(fpsi(ix,iy,1,1)**2+fpsi(ix,iy,1,2)**2) +
      .       sqrt(fpsi(ix,iy,3,1)**2+fpsi(ix,iy,3,2)**2) )/hzr(ix,iy)
            wbbr(ix,iy,0) = sign(babs,bb0)
            wbbr(ix,iy,1) = 0.0_R8
@@ -188,7 +187,7 @@
           endif
           if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
            babs = 0.5_R8*(
-     .       sqrt(fpsi(ix,iy,0,1)**2+fpsi(ix,iy,0,2)**2) + 
+     .       sqrt(fpsi(ix,iy,0,1)**2+fpsi(ix,iy,0,2)**2) +
      .       sqrt(fpsi(ix,iy,1,1)**2+fpsi(ix,iy,1,2)**2) )/hzb(ix,iy)
            wbbv(ix,iy,0) = sign(babs,bb0)
            wbbv(ix,iy,1) = 0.0_R8
@@ -199,50 +198,6 @@
         enddo
       endif
 
-*    ..extrapolate magnetic field to edges
-      write (*,*) 'b2agfs -- not computing edges; not needed for US?'
-#ifdef WG_TODO
-      do iy = -1, ny
-        do ix = -1, nx
-          if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
-          write(*,*) 'b2agbf ix, iy', ix, iy
-          if (leftix(ix,iy).eq.-2) wbbl(ix,iy,0:2) = bb(ix,iy,0:2) -
-     &      (wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
-          if (rightix(ix,iy).eq.nx+1) wbbr(ix,iy,0:2) = 
-     &     bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
-          if (bottomiy(ix,iy).eq.-2) wbbv(ix,iy,0:2) = bb(ix,iy,0:2)
-     &     - (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
-        enddo
-      enddo
-*   .. correct interpolation of magnetic field for diverted island case
-*      as B is not a periodic quantity
-      if(periodic_bc.eq.1 .and. nncut.ge.1) then
-         do iy = -1, ny
-           do ix = -1, nx
-             if (isUnusedCell(cflag(ix, iy, CELLFLAG_TYPE))) cycle
-             if(leftix(ix,iy).ne.ix-1) then
-               if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.4) then
-                 wbbl(ix,iy,0)=bb(ix,iy,0)-
-     .            (wbbr(ix,iy,0)-bb(ix,iy,0))
-                 wbbl(ix,iy,1)=bb(ix,iy,1)-
-     .            (wbbr(ix,iy,1)-bb(ix,iy,1))
-                 wbbl(ix,iy,2)=bb(ix,iy,2)-
-     .            (wbbr(ix,iy,2)-bb(ix,iy,2))
-               endif
-             else if(rightix(ix,iy).ne.ix+1) then
-               if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.3) then
-                 wbbr(ix,iy,0)=bb(ix,iy,0)-
-     .            (wbbl(ix,iy,0)-bb(ix,iy,0))
-                 wbbr(ix,iy,1)=bb(ix,iy,1)-
-     .            (wbbl(ix,iy,1)-bb(ix,iy,1))
-                 wbbr(ix,iy,2)=bb(ix,iy,2)-
-     .            (wbbl(ix,iy,2)-bb(ix,iy,2))
-               endif
-             endif
-           enddo
-         enddo
-      endif
-#endif
 *    ..compute extrapolated wbb.(:,:,3) components
       wbbl(:,:,3)=sqrt(wbbl(:,:,0)**2+wbbl(:,:,1)**2+wbbl(:,:,2)**2)
       wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)

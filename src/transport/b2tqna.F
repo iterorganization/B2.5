@@ -208,7 +208,7 @@
         endif
       endif
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall_b2tqna.lt.3) then
@@ -879,28 +879,28 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
       real (kind=R8) :: fvsc(-1:nx,-1:ny,0:ns-1),
      &                  ftec(-1:nx,-1:ny), ftic(-1:nx,-1:ny,0:ns-1),  !srv 17.04.06 01.03.07
      &                  fvlc(-1:nx,-1:ny,0:1,0:ns-1)                  !srv 19.04.10
-      real (kind=R8), save :: cdf = 0.0e0_R8, alf = 0.0e0_R8,         !srv 24.04.02 05.11.03
-     &      alfa1 = 0.0e0_R8, alfa2 = 0.0e0_R8,
-     &      delta1 = 0.0e0_R8, delta2 = 0.0e0_R8                      !srv 13.11.02 24.06.03
-      real (kind=R8), save :: vs_alfa1 = 1.0e0_R8, vs_alfa2 = 1.0e0_R8,
-     &                       vs_delta1 = 1.0e0_R8, vs_delta2= 1.0e0_R8 !srv 17.04.06 {
-      real (kind=R8), save :: te_alfa1 = 1.0e0_R8, te_alfa2 = 1.0e0_R8,
-     &                       te_delta1 = 1.0e0_R8, te_delta2= 1.0e0_R8
-      real (kind=R8), save :: ti_alfa1 = 1.0e0_R8, ti_alfa2 = 1.0e0_R8,
-     &                       ti_delta1 = 1.0e0_R8, ti_delta2= 1.0e0_R8 !srv 17.04.06 }
-      real (kind=R8), save :: vl_alfa1 = 1.0e0_R8, vl_alfa2 = 1.0e0_R8,
-     &                       vl_delta1 = 1.0e0_R8, vl_delta2= 1.0e0_R8 !srv 19.04.10
-      real (kind=R8), save ::    alfa3 = 1.0e0_R8                      !srv 13.03.07 {
-      real (kind=R8), save :: vs_alfa3 = 1.0e0_R8
-      real (kind=R8), save :: te_alfa3 = 1.0e0_R8
-      real (kind=R8), save :: ti_alfa3 = 1.0e0_R8                      !srv 13.03.07 }
-      real (kind=R8), save :: vl_alfa3 = 1.0e0_R8                      !srv 19.04.10
+      real (kind=R8), save :: cdf = 0.0_R8, alf = 0.0_R8,             !srv 24.04.02 05.11.03
+     &      alfa1 = 0.0_R8, alfa2 = 0.0_R8,
+     &      delta1 = 0.0_R8, delta2 = 0.0_R8                          !srv 13.11.02 24.06.03
+      real (kind=R8), save :: vs_alfa1 = 1.0_R8, vs_alfa2 = 1.0_R8,
+     &                       vs_delta1 = 1.0_R8, vs_delta2= 1.0_R8    !srv 17.04.06 {
+      real (kind=R8), save :: te_alfa1 = 1.0_R8, te_alfa2 = 1.0_R8,
+     &                       te_delta1 = 1.0_R8, te_delta2= 1.0_R8
+      real (kind=R8), save :: ti_alfa1 = 1.0_R8, ti_alfa2 = 1.0_R8,
+     &                       ti_delta1 = 1.0_R8, ti_delta2= 1.0_R8    !srv 17.04.06 }
+      real (kind=R8), save :: vl_alfa1 = 1.0_R8, vl_alfa2 = 1.0_R8,
+     &                       vl_delta1 = 1.0_R8, vl_delta2= 1.0_R8    !srv 19.04.10
+      real (kind=R8), save ::    alfa3 = 1.0_R8                       !srv 13.03.07 {
+      real (kind=R8), save :: vs_alfa3 = 1.0_R8
+      real (kind=R8), save :: te_alfa3 = 1.0_R8
+      real (kind=R8), save :: ti_alfa3 = 1.0_R8                       !srv 13.03.07 }
+      real (kind=R8), save :: vl_alfa3 = 1.0_R8                       !srv 19.04.10
 ! { IYS 29.11.2012
-      real (kind=R8), save ::    alfa4 = 1.0e0_R8                      !srv 19.04.13
-      real (kind=R8), save :: vs_alfa4 = 1.0e0_R8
-      real (kind=R8), save :: te_alfa4 = 1.0e0_R8
-      real (kind=R8), save :: ti_alfa4 = 1.0e0_R8
-      real (kind=R8), save :: vl_alfa4 = 1.0e0_R8
+      real (kind=R8), save ::    alfa4 = 1.0_R8                       !srv 19.04.13
+      real (kind=R8), save :: vs_alfa4 = 1.0_R8
+      real (kind=R8), save :: te_alfa4 = 1.0_R8
+      real (kind=R8), save :: ti_alfa4 = 1.0_R8
+      real (kind=R8), save :: vl_alfa4 = 1.0_R8
 ! IYS 29.12.2012}
       character chns*3                                                !srv 05.11.03
       save ncall
@@ -1177,15 +1177,15 @@ c
         real (kind=R8) :: width, bbaverage, t0, t1, step
         real (kind=R8), allocatable, save :: coord(:), fun(:,:)
 
-        fdnc = 1.0e0_R8
-        fvsc = 1.0e0_R8                                           !srv 17.04.06 {
-        ftec = 1.0e0_R8
-        ftic = 1.0e0_R8                                           !srv 17.04.06 }
-        fvlc = 1.0e0_R8                                           !srv 19.04.10 }
+        fdnc = 1.0_R8
+        fvsc = 1.0_R8                                             !srv 17.04.06 {
+        ftec = 1.0_R8
+        ftic = 1.0_R8                                             !srv 17.04.06 }
+        fvlc = 1.0_R8                                             !srv 19.04.10 }
 
        if(nncut > 0) then                                         !srv 25.02.16
         select case (itype)
-         case(9)                                                !srv 22.05.09 {
+         case(9)                                                  !srv 22.05.09 {
           mintopcut=minval(topcut(1:nncut))
 *   ..modification of case (5). It is used barrier function
           do iy = -1, ny                  ! for SOL and PR region
@@ -1277,9 +1277,9 @@ c
            endif
            write(*,"(/' Parameters of H-regime')")
            write(*,"(' Number of midplane cell =',i4)") nmdpl
-           call xertst(0.0e0_R8.le.delta1,
+           call xertst(0.0_R8.le.delta1,
      &                 'faulty argument b2tqna_delta1') !srv 15.05.09
-           call xertst(0.0e0_R8.le.delta2,
+           call xertst(0.0_R8.le.delta2,
      &                 'faulty argument b2tqna_delta2') !srv 15.05.09
 
            allocate(coord(-1:ny), fun(-1:ny,0:2))
@@ -1298,21 +1298,21 @@ c
 
            call set_profile(filename(0), ny, coord, fun(-1,0))
            do iy = -1, ny
-             call xertst (fun(iy,0).gt. 0.0e0_R8,
+             call xertst (fun(iy,0).gt. 0.0_R8,
      1        'Approximation of data from file '//trim(filename(0))//
      2        ' has given '//'negative coefficient')
            enddo
 
            call set_profile(filename(1), ny, coord, fun(-1,1))
            do iy = -1, ny
-             call xertst (fun(iy,1).gt. 0.0e0_R8,
+             call xertst (fun(iy,1).gt. 0.0_R8,
      1        'Approximation of data from file '//trim(filename(1))//
      2        ' has given '//'negative coefficient')
            enddo
 
            call set_profile(filename(2), ny, coord, fun(-1,2))
            do iy = -1, ny-1
-             call xertst (fun(iy,2).gt. 0.0e0_R8,
+             call xertst (fun(iy,2).gt. 0.0_R8,
      1        'Approximation of data from file '//trim(filename(2))//
      2        ' has given '//'negative coefficient')
            enddo
@@ -1321,8 +1321,8 @@ c
      &      ' Exchanges of transport coefficients have been done'
            do is = 0, ns-1
              if(.not.is_neutral(is)) then
-               cfdna(2,is)   = 1.0e0_R8
-               cfhci(2,is)   = 1.0e0_R8
+               cfdna(2,is)   = 1.0_R8
+               cfhci(2,is)   = 1.0_R8
                write(*,"(' Now cfdna(2,',i3,') =',es10.2)")
      &          is, cfdna(2,is)
                write(*,"(' Now cfhci(2,',i3,') =',es10.2)")
@@ -1330,7 +1330,7 @@ c
              endif
            enddo
 
-           cfhce(0) = 1.0e0_R8
+           cfhce(0) = 1.0_R8
            write(*,"( ' Now cfhce(0)    =',es10.2/)") cfhce(0)
 
           endif
@@ -1368,8 +1368,8 @@ c
 *   ..calculate
           do is = 0, ns-1
            if(.not.is_neutral(is)) then
-            t0 = 0.0e0_R8
-            t1 = 0.0e0_R8
+            t0 = 0.0_R8
+            t1 = 0.0_R8
             mintopcut=min(topcut(1)-1,topcut(2)-1)
             do iy = 0, mintopcut    ! for inner surfaces
              do ix = 0, nx
@@ -1383,9 +1383,9 @@ c
             do iy = -1, ny                   ! for all surfaces
              do ix = -1, nx
               if(on_closed_surface(ix,iy) .and. iy.le.mintopcut) then
-               fdnc(ix,iy,is)=1.0e0_R8
+               fdnc(ix,iy,is)=1.0_R8
               else
-               fdnc(ix,iy,is)=1.0e0_R8+cdf*(bbaverage/bb(ix,iy,3))**alf
+               fdnc(ix,iy,is)=1.0_R8+cdf*(bbaverage/bb(ix,iy,3))**alf
               endif
              enddo
             enddo
@@ -1396,9 +1396,9 @@ c
 *   ..calculate poloidal variation of transport coefficients
           do is = 0, ns-1
            if(.not.is_neutral(is)) then
-            if(alf .ne. 0.0e0_R8) then
-             t0 = 0.0e0_R8
-             t1 = 0.0e0_R8
+            if(alf .ne. 0.0_R8) then
+             t0 = 0.0_R8
+             t1 = 0.0_R8
              do iy = 0, topcut(1)-1   ! for inner surfaces
 !           do ix = leftcut(1), rightcut(1)-1
               do ix = 0, nx
@@ -1408,30 +1408,30 @@ c
                endif
               enddo
              enddo
-             bbaverage = (t0/t1)**(-1.0e0_R8/alf)
+             bbaverage = (t0/t1)**(-1.0_R8/alf)
              do iy = -1, ny                   ! for all surfaces
               do ix = -1, nx
                fdnc(ix,iy,is) = (bbaverage/bb(ix,iy,3))**alf
               enddo
              enddo
             else
-             fdnc(:,:,is) = 1.0e0_R8
+             fdnc(:,:,is) = 1.0_R8
             endif
-           endif                                     !srv 05.11.03 }
+           endif                                                !srv 05.11.03 }
           enddo
          case (5)                                               !srv 13.11.02 12.07.10 {
 
           if(ncall.eq.0) then
            mintopcut=minval(topcut(1:nncut))
-           call xertst(0.0e0_R8.le.delta1,
+           call xertst(0.0_R8.le.delta1,
      *         'faulty argument b2tqna_delta1') !srv 15.05.09
-           call xertst(0.0e0_R8.le.delta2,
+           call xertst(0.0_R8.le.delta2,
      *         'faulty argument b2tqna_delta2') !srv 15.05.09
            if(delta1.eq.0) then
             bottomdelta1 = mintopcut
            elseif(delta1.lt.lengthy(nmdpl,mintopcut)) then              !srv 15.05.09 {
             bottomdelta1 = mintopcut
-            width = 0.0e0_R8
+            width = 0.0_R8
             do iy =mintopcut-1,-1,-1               ! srv 15.05.09 was topcut(1)-1,0,-1
              width = width + hy(nmdpl,iy)
              if(width.ge.delta1) then
@@ -1448,8 +1448,8 @@ c
            elseif(delta2.lt.
      &           lengthy(nmdpl,ny)-lengthy(nmdpl,mintopcut)) then
             topdelta2 = mintopcut                 !srv 24.06.03 {
-            width = 0.0e0_R8
-            do iy = mintopcut,ny                                       !srv 23.01.18
+            width = 0.0_R8
+            do iy = mintopcut,ny                  !srv 23.01.18
              width = width + hy(nmdpl,iy)
              if(width.ge.delta2) then
               topdelta2 = iy
@@ -1458,7 +1458,7 @@ c
             enddo                                !srv 24.06.03 {
            else
             topdelta2 = ny
-           endif                                                       !srv 15.05.09 }
+           endif                                 !srv 15.05.09 }
            if(iout.ne.0) then
             open(70,file= 'output/Parameters_of_H-regime.dat')         !srv 23.01.18
             write(70,"(/' Parameters of H-regime')")
@@ -1539,10 +1539,10 @@ c
           enddo
 
 *   ..take into account poloidal variation of transport coefficients
-          if(alf .ne. 0.0e0_R8) then                                     !srv 04.07.06 {
-           t0 = 0.0e0_R8
-           t1 = 0.0e0_R8
-           do iy = 0, mintopcut-1   ! for inner surfaces
+          if(alf .ne. 0.0_R8) then                    !srv 04.07.06 {
+           t0 = 0.0_R8
+           t1 = 0.0_R8
+           do iy = 0, mintopcut-1                     ! for inner surfaces
             do ix = 0, nx
              if(on_closed_surface(ix,iy)) then
               t0 = t0 + bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
@@ -1550,7 +1550,7 @@ c
              endif
             enddo
            enddo
-           bbaverage = (t0/t1)**(-1.0e0_R8/alf)
+           bbaverage = (t0/t1)**(-1.0_R8/alf)
 
            do iy = topdelta2+1, ny                    ! for SOL region
             do ix = -1, nx
@@ -1624,7 +1624,7 @@ c
 
          case (1)
 
-          do iy = topcut(1),ny              ! for SOL region
+          do iy = topcut(1),ny                            ! for SOL region
            do ix = -1,nx
             fdnc(ix,iy,:) = fdnc(ix,iy,:) +               !srv 01.03.07 ???
      *                  cdf*((lengthy(nx/2,iy)-lengthy(nx/2,topcut(1)))
@@ -1633,15 +1633,14 @@ c
           enddo
          case default
 
-          fdnc = 1.0e0_R8
+          fdnc = 1.0_R8
         end select
        endif                                                !srv 25.02.16
 
         ncall = ncall + 1
 
-      end subroutine defdc                  !srv 24.02.04 13.11.02}
-
-      end subroutine set_transport_srv                            !srv 12.06.08 }
+      end subroutine defdc                                  !srv 24.02.04 13.11.02}
+      end subroutine set_transport_srv                      !srv 12.06.08 }
 
       subroutine set_transport_swy(nx, ny, ns,
      & dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0)
@@ -3666,8 +3665,8 @@ c      close(14)
         b(i) = (f(i+1)-f(i))/(r(i+1)-r(i))
       enddo
       b(ndat) = b(ndat-1)
-      c = 0.0e0_R8
-      d = 0.0e0_R8
+      c = 0.0_R8
+      d = 0.0_R8
       do i = -1, n
         fun(i) = dseval(ndat, coord(i), r, f, b, c, d)
         write(*,*) coord(i), fun(i)

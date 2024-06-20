@@ -30,7 +30,7 @@ c*** scale. enrctff and pwrctff do the same for the particle energy
 c*** and for the power flux.
       real (kind=R8) ::
      *   flxctff,enrctff,pwrctff
-      parameter (flxctff=0.1e0_R8, enrctff=1.e-8_R8, pwrctff=1.e-8_R8)
+      parameter (flxctff=0.1_R8, enrctff=1.0e-8_R8, pwrctff=1.0e-8_R8)
       integer il,is,i,ii,ia,ib,idir,j,js,k,ic,ias,iss
       character*74 hlp_frm
       real (kind=R8) ::
@@ -152,8 +152,8 @@ c
             else if (isymm.eq.3 .or. isymm.eq.4) then
               a=pi*(pp1(2,ib)+pp2(2,ib))*distance
             end if
-            aa=1.e-6_R8/a
-            distance=0.5e0_R8*distance
+            aa=1.0e-6_R8/a
+            distance=0.5_R8*distance
             x=x+h+distance
             if(is.gt.0 .and. is.le.nlimi) then
               hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
@@ -249,7 +249,7 @@ c*** Calculate the net and gross erosion
               wwt=pwrctff
               k=natmi+nmoli
               do ii=1,k
-                wwj(ii)=0.1e0_R8*flxctff
+                wwj(ii)=0.1_R8*flxctff
                 wwe(ii)=enrctff
               end do
             end if
@@ -273,8 +273,8 @@ c*** Calculate the net and gross erosion
 c
 c      if(natmi .gt. 1  .and.  npumplis .gt. 0) then
 cc*** calculate the helium concentration at the pump
-c        a=0.e0_R8
-c        aa=0.e0_R8
+c        a=0.0_R8
+c        aa=0.0_R8
 c        do il=1,npumplis
 c          is=lpumplis(il)
 c          if(is .le. 0  .or.  is .gt. nlimi) then

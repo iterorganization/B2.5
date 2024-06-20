@@ -9,9 +9,18 @@ DBLFC    = ${FC}
 DBLSED   = sed -e s:\#PREC\#:d:g
 DBLSED   = 
 
+ifndef COMPILER_REDEF
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 13; echo $$?),0)
 FCOPTS  += -align array64byte
+endif
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -gt 17; echo $$?),0)
 FCOPTS  += -qopt-zmm-usage=high
+endif
+else
+FCOPTS += -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -frecursive
+ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
+FCOPTS += -mprefer-vector-width=512
+endif
 endif
 
 ifndef SOLPS_CPP

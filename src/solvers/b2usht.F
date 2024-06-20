@@ -99,7 +99,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..subprogram start-up calls
       call subini ('b2usht')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test itcnt, rxg
       call xertst (0.le.itcnt, 'faulty argument itcnt')
@@ -167,12 +167,12 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       endif
 
 *   ..initialize matrix to zero
-      aa = 0.0e0_R8
+      aa = 0.0_R8
 *   ..compute the nine-point matrix
 ! $AD II-LOOP
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
-        t0 = 1e60_R8
+        t0 = 1.0e60_R8
         if (solveee(ireg)) then
           aa(mpg%cvNvP(iCv,1)) = aa(mpg%cvNvP(iCv,1))
      &    -she(iCv,1)-she(iCv,3)*ne(iCv)
@@ -343,7 +343,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       flo0        = floe
       con0(:,:,0) = cone(:,:,0)
 *   ..initialize matrix to zero
-      aa = 0.0e0_R8
+      aa = 0.0_R8
 *   ..compute the nine-point matrix
 ! $AD II-LOOP
       do iCv = 1, nCv
@@ -369,7 +369,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call my_out_us(70,nCv,0,ne,'b2usht_ne_te')
        call my_out_us(70,nCv,0,ni,'b2usht_ni_te')
        call my_out_us(70,nCv,0,reshe,'b2usht_reshe_te')
-       dumm = real(mpg%nCmxNv)
+       dumm = real(mpg%nCmxNv,R8)
        call my_out_us(70,1,0,dumm,'b2usht_nCmxNv')
 
        call my_out_us(70,nFc,1,flo0(1,0),'b2usht_floex') 
@@ -505,7 +505,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       flo0        = floi
       con0(:,:,0) = coni(:,:,0)
 *   ..initialize matrix to zero
-      aa = 0.0e0_R8
+      aa = 0.0_R8
 *   ..compute the nine-point matrix
 ! $AD II-LOOP
       do iCv = 1, nCv
@@ -671,7 +671,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       flo0        = flon
       con0(:,:,0) = conn
 *   ..initialize matrix to zero
-      aa = 0.0e0_R8
+      aa = 0.0_R8
 *   ..compute the nine-point matrix
 ! $AD II-LOOP
       do iCv = 1, nCv
@@ -812,7 +812,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        flo0        = flokt
        con0(:,:,0) = conkt
 *   ..initialize matrix to zero
-       aa = 0.0e0_R8
+       aa = 0.0_R8
 *   ..compute the nine-point matrix
 ! $AD II-LOOP
        do iCv = 1, nCv
@@ -950,7 +950,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        flo0        = flozt
        con0(:,:,0) = conzt
 *   ..initialize matrix to zero
-       aa = 0.0e0_R8
+       aa = 0.0_R8
 *   ..compute the nine-point matrix
 ! $AD II-LOOP
        do iCv = 1, nCv

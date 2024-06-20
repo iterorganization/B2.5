@@ -1337,7 +1337,7 @@ cwdk for now, dummy external state is created in b2mod_main
      .      (nint(zamin(is)).eq.1.and.nint(zamax(is)).eq.1)) k = k + 1
        end do
        call xertst (k.eq.1.or.(switch%b2tfnb_xcur.eq.0.0_R8 .and.
-     &                                switch%b2tfnb_ycur.eq.0.0_R8),
+     &                         switch%b2tfnb_ycur.eq.0.0_R8),
      .  'Currents assignment to ions only supported for single '//
      .  'hydrogenic species!')
 *
@@ -1546,21 +1546,21 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       endif
       write(*,"(' Number of midplane cell =',i4)") nmdpl             !srv 22.05.09 }
 *   ..compute length along x-direction                               !srv 13.02.17 {
-      lengthx(:,:) = 0.0e0_R8
-      lengthx(-1,:) = hx(-1,:)*0.5e0_R8
+      lengthx(:,:) = 0.0_R8
+      lengthx(-1,:) = hx(-1,:)*0.5_R8
       do iy = -1, ny
        do ix = 0, nx
         if(on_closed_surface(ix,iy)) then
          if(rightix(ix,iy).ne.nx+1) then
           lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
-     *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+     *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
          else
           lengthx(ix,iy) = hx(ix,iy)*0.5_R8
          endif
         else
          if(leftix(ix,iy).ne.-2) then
           lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
-     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
+     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
          else
           lengthx(ix,iy) = hx(ix,iy)*0.5_R8
          endif
@@ -1568,11 +1568,11 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
        enddo
       enddo                                                          !srv 13.02.17 }
 *   ..compute length along y-direction                               !srv 24.04.02 {
-      lengthy(:,-1) = hy(:,-1)*0.5e0_R8
+      lengthy(:,-1) = hy(:,-1)*0.5_R8
       do iy = 0, ny
        do ix = -1, nx
         lengthy(ix,iy) = lengthy(ix,iy-1) +
-     *      (hy(ix,iy)+hy(ix,iy-1))*0.5e0_R8
+     *      (hy(ix,iy)+hy(ix,iy-1))*0.5_R8
        enddo
       enddo                                                          !srv 24.04.02 }
 *
@@ -2204,7 +2204,7 @@ c      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc
         call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
         if (switch%pot_eq.eq.0) then                           !srv 13.07.05 {
-          state%pl%po   =0.0e0_R8
+          state%pl%po=0.0_R8
         else if (switch%pot_eq.eq.2) then
           state%pl%po=3.1_R8*state%pl%te/qe
         endif

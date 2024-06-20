@@ -63,7 +63,8 @@ c     the line format common
      &           mpg%fcCv(iFc,2).eq.cvlist(iy-iystart+1)).or.
      &          (mpg%fcCv(iFc,2).eq.cvlist(iy-iystart).and.
      &           mpg%fcCv(iFc,1).eq.cvlist(iy-iystart+1))) then
-              if (mpg%fcFs(iFc).eq.mpg%iFssep) isep = iy-iystart
+              if (mpg%fcFs(iFc).eq.mpg%iFssep.or.
+     &            mpg%fcFs(iFc).eq.mpg%iFssep2) isep = iy-iystart
               if (isep.eq.0 .and. mpg%nXpt.gt.1) then
                 do j = 1, mpg%nXpt
                   if (mpg%vxFs(mpg%Xpt(j)).eq.mpg%fcFs(iFc)) then

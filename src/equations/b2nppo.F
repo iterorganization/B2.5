@@ -16,7 +16,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2uppo, ncall_b2uspo,
+     & , only : ncall_b2uspo,
      &          my_out_folder,
 #ifdef WG_DEBUG
      &          my_out_sf,                                               !srv 27.06.21
@@ -80,7 +80,7 @@
 *   ..subprogram start-up calls
       call subini ('b2nppo')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test rxf
       call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      . 'faulty argument rxf')

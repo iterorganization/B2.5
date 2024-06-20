@@ -1,4 +1,4 @@
-      subroutine b2tepsch(nCv, nFc, nVx, ns, switch, geo, mpg, 
+      subroutine b2tepsch(nCv, nFc, nVx, ns, switch, geo, mpg,
      &    facdrift, cddi, te, ne, floe, cone, fhePSch)
       use b2mod_types
       use b2mod_b2cmpa
@@ -45,16 +45,16 @@
 *   ..subprogram start-up calls
       call subini ('b2tepsch')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')   
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 
 *   ..set dummy arrays
       dumm0 = 0.0_R8
 
-      fhePSch = 0.0e0_R8                                                 !srv 13.10.06
-      cone    = 0.0e0_R8                                                 !srv 02.01.07
-      floe    = 0.0e0_R8
+      fhePSch = 0.0_R8                                                   !srv 13.10.06
+      cone    = 0.0_R8                                                   !srv 02.01.07
+      floe    = 0.0_R8
       facdriftm = maxval(facdrift)
-      if(facdriftm.ne.0.0e0_R8) then
+      if(facdriftm.ne.0.0_R8) then
        do is = 0,ns-1                                                    !srv 12.05.11
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
 
