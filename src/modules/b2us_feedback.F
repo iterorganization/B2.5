@@ -764,7 +764,10 @@ cxpb size is changed in DIMENSIONS.F
 
       consistent = .true.
       do ifb = 1, nFb
-        if (fb_ib(ifb).le.0 .and. .not.fb_actuator(ifb).eq.2)
+        if (((fb_ib(ifb).le.0.and.switch%use_eirene.eq.0) .and.   ! not using EIRENE, but no fb_ib
+     &       (fb_istra(ifb).le.0 .and. switch%use_eirene.ne.0     ! using EIRENE, but no puff stratum
+     &        .and.fb_actuator(ifb).eq.1)) .and.
+     &      .not.fb_actuator(ifb).eq.2)                           ! feedback not 2 => either puff stratum or fb_ib needed
      &    call xerrab('Init_feedback: fb_ib<=0 and actuator=/2')
         call xertst(0.le.fb_species(ifb).and.fb_species(ifb).le.ns-1,
      &    'Init_feedback: fb_species>ns!')
@@ -1623,22 +1626,29 @@ cxpb size is changed in DIMENSIONS.F
               endif
 
               if(ncall.eq.0 .and. saved_fb_actuator(ifb).eq.0.0_R8) then
-                if (conpar(is_start, fb_ib(ifb), 1).gt.0.0_R8) then
-                  saved_fb_actuator(ifb) =
-     &              conpar(is_start, fb_ib(ifb), 1)
-                  write(message,'(a,i3,a,i2,a)')
-     .             'Initial gas puff strength set by CONPAR(',
-     .             is_start,',',fb_ib(ifb),',1) !'
-                elseif (userfluxparm(fb_istra(ifb),1).gt.0.0_R8) then
-                  saved_fb_actuator(ifb) =
-     &              userfluxparm(fb_istra(ifb),1)
-                  write(message,'(a,i3,a,i2,a)')
-     .             'Initial gas puff strength set by USERFLUXPARM(',
-     .             fb_istra(ifb),',1)  !'
+                if (switch%use_eirene.eq.0) then
+                  if (conpar(is_start, fb_ib(ifb), 1).gt.0.0_R8) then
+                    saved_fb_actuator(ifb) =
+     &                conpar(is_start, fb_ib(ifb), 1)
+                    write(message,'(a,i3,a,i2,a)')
+     .               'Initial gas puff strength set by CONPAR(',
+     .               is_start,',',fb_ib(ifb),',1) !'
+                  else
+                    saved_fb_actuator(ifb) = 1.0e18_R8
+                      write(*,*) 'Warning!  ','The gas puff was ',
+     .                 'started with an initial rate of 1e18!'
+                  endif
                 else
-                  saved_fb_actuator(ifb) = 1.0e18_R8
-                    write(*,*) 'Warning!  ','The gas puff was ',
-     .               'started with an initial rate of 1e18!'
+     .            if (userfluxparm(fb_istra(ifb),1).gt.0.0_R8) then
+                    saved_fb_actuator(ifb) =
+     &                userfluxparm(fb_istra(ifb),1)
+                    write(message,'(a,i3,a,i2,a)')
+     .               'Initial gas puff strength set by USERFLUXPARM(',
+     .               fb_istra(ifb),',1)  !'
+                  else
+                    saved_fb_actuator(ifb) = 1.0e18_R8
+                      write(*,*) 'Warning!  ','The gas puff was ',
+     .                 'started with an initial rate of 1e18!'
                 endif
               endif
 
