@@ -2204,6 +2204,34 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tlhe_far_sol</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
+                                        If set to 1, enables gradual modification of the electron heat flux limiter towards low density regions. Above b2tlhe_ne_max  (default 1.0e18 m^{-3}), the standard value cflme is used. Below b2tlhe_ne_min (default 1.0e17 m^{-3}), the value b2tlhe_cflme_min is used (default 0.2). For densities in between b2tlhe_ne_min and b2tlhe_ne_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tlhi_far_sol</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
+                                        If set to 1, enables gradual modification of the ion heat flux limiter towards low density regions. Above b2tlhi_ni_max  (default 1.0e18 m^{-3}), the standard value cflmi is used. Below b2tlhi_ni_min (default 1.0e17 m^{-3}), the value b2tlhi_cflmi_min is used (default 1.0e1). For densities in between b2tlhi_ni_min and b2tlhi_ni_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tlmv_far_sol</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
+                                        If set to 1, enables gradual modification of the parallel viscosity flux limiter towards low density regions. Above b2tlmv_ni_max  (default 1.0e18 m^{-3}), the standard value cflmv is used. Below b2tlmv_ni_min (default 1.0e17 m^{-3}), the value b2tlmv_cflmv_min is used (default 0.5). For densities in between b2tlmv_ni_min and b2tlmv_ni_max, the flux limiter is computed based on linear interpolation between the limiting values.
+				</description>
+			</switch>
+
+			<switch>
 				<name>b2sihs_phm0</name>
 				<default>1.0</default>
 				<type>real</type>
