@@ -10,8 +10,6 @@
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmpa
-      use b2mod_plasma
-     &     , only : roxa
       use b2mod_balance                                               !djm Jan2017
      &     , only : b2sifr_smotf_ehxp0to3, b2sifr_smotf_cthe0to3,
      &              b2sifr_smotf_cthi0to3, b2sifr_smoch0to3,
@@ -68,7 +66,8 @@
       real (kind=R8) ::
      * phm0, phm1, phm2, phm3, ctaup, coef, t0, t1, am_sqrt, inv_ctaup
       real (kind=R8) ::
-     1 delti, delte, zlamii, zlamee, dtiapr, dteapr, limthii, limthee
+     1 delti, delte, zlamii, zlamee, dtiapr, dteapr, limthii, limthee,
+     * roxa(-1:nx,-1:ny,0:ns-1)
       integer :: zlitest
 *   ..procedures
       intrinsic sqrt
@@ -146,15 +145,15 @@ csw 24sep2013
 *     even for IEEE single precision arithmetic.
       t1 = (4*pi*eps0/qe)/qe
       t0 = (3/(4*sqrt(2*pi)))*t1*(t1*ev*sqrt(ev))
-      ctaup = t0*sqrt(mp) ! /lnlam                !srv 01.07.09 it is taken below
+      ctaup = t0*sqrt(mp) ! /lnlam                                       !srv 01.07.09 it is taken below
       inv_ctaup = 1.0_R8/ctaup
 *   ..compute the Coulomb logarithm
-      call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
+      call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)                     !srv 01.07.09  20.09.11
 *   ..compute vti32
       do iy = -1, ny
        do ix = -1, nx
         vti32(ix,iy) = vol(ix,iy)/((ti(ix,iy)/ev)*sqrt(ti(ix,iy)/ev))
-     &                 *hz(ix,iy)                                     !srv 01.07.05
+     &                 *hz(ix,iy)                                        !srv 01.07.05
        enddo
       enddo
 *   ..compute gti,gte
@@ -173,6 +172,10 @@ csw 24sep2013
       enddo
       call b2xxgs (nx, ny, 0.0_R8, gti, 1)
       call b2xxgs (nx, ny, 0.0_R8, gte, 1)
+*   ..compute roxa
+      do is = 0, ns-1
+        roxa(:,:,is) = am(is)*mp*na(:,:,is)
+      end do
 
 * ..compute friction
 *   ..initialise to 0
