@@ -11,6 +11,7 @@ c======================================================================
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2plot
+      use b2mod_rdload
       use b2mod_sources
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
@@ -19,7 +20,6 @@ c======================================================================
       use eirmod_wneutrals
 #endif
       implicit none
-#     include "rdload.inc"
       integer iatm,imol,iion
       integer i,j,k,l,m,is,ix,iy,n_hlperr,
      ,        l_errt(nsgmx),l_errs(nsgmx)
@@ -179,7 +179,7 @@ c      write(*,*) 'b2pwrdld: after rlcomp'
       end if !}
 c----------------------------------------------------------------------
 c*** Extract the data and put them in the output module.
-c*** After rlcomp, the radiation loads are stored in radld (rdload.inc)
+c*** After rlcomp, the radiation loads are stored in radld (b2mod_rdload)
 c*** in the first ntrg elements, in the order given by the ltrg array.
 c*** We need them put in wldrdld (b2mod_b2plot_wall_loading.F) in the
 c*** positions just after lppp, in the following order:

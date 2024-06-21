@@ -3,6 +3,7 @@
       use b2mod_constants
       use b2mod_diag
       use b2mod_subsys
+      use b2mod_rdload
       use b2mod_dimensions
       use b2mod_b2plot_wall_loading
      ,  , only : from_b2plot
@@ -30,7 +31,6 @@ c***  radld   radiation power coming to the segments of T
 c***  ttsrc   the total power radiated from the sources
 c***  tttrg   the total power coming to T
 c======================================================================
-#include "rdload.inc"
       real (kind=R8) :: upi, udpi, ueps
       parameter (upi=pi)
       parameter (udpi=2.0e0_R8*upi, ueps=1.0e-20_R8)
