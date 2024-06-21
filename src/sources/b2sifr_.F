@@ -192,7 +192,9 @@ csw 24sep2013
         am_sqrt = sqrt(am(isb)*am(is)/(am(isb)+am(is)))
         if (styl0.eq.0) then
           do iy = 0, ny-1
+#ifndef LEGACYCOMP
           !$OMP SIMD
+#endif
             do ix = 0, nx-1
               coef = phm0*lnlam(ix,iy)*inv_ctaup*rz2(ix,iy,isb)*         !srv 01.07.09
      &            rz2(ix,iy,is)*mp*am_sqrt
@@ -207,7 +209,9 @@ csw 24sep2013
           enddo
         else if (styl0.eq.1) then
           do iy = 0, ny-1
+#ifndef LEGACYCOMP
           !$OMP SIMD
+#endif
             do ix = 0, nx-1
               coef = phm0*lnlam(ix,iy)*inv_ctaup*rz2(ix,iy,isb)*         !srv 01.07.09
      &            rz2(ix,iy,is)*mp*am_sqrt
@@ -222,7 +226,9 @@ csw 24sep2013
           enddo
         else if (styl0.eq.2) then
           do iy = 0, ny-1
+#ifndef LEGACYCOMP
           !$OMP SIMD
+#endif
             do ix = 0, nx-1
               coef = phm0*lnlam(ix,iy)*inv_ctaup*rz2(ix,iy,isb)*         !srv 01.07.09
      &            rz2(ix,iy,is)*mp*am_sqrt

@@ -305,7 +305,7 @@
 !$OMP& REDUCTION(+:b2stbr_phys_sna)
         do is=0,ns-1
           do iy=-1,ny
-#if ( ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 8 ) || !defined(GFORTRAN) )
+#if ( ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 8 ) || ( !defined(GFORTRAN) && !defined(LEGACYCOMP) ) )
 !$OMP SIMD REDUCTION(+:b2stbr_phys_sna)
 #endif
             do ix=-1,nx
@@ -499,7 +499,7 @@
 !$OMP& REDUCTION(+:b2stbr_phys_sna)
         do is=0,ns-1
           do iy=-1,ny
-#if ( ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 8 ) || !defined(GFORTRAN) )
+#if ( ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 8 ) || ( !defined(GFORTRAN) && !defined(LEGACYCOMP) ) )
 !$OMP SIMD REDUCTION(+:b2stbr_phys_sna)
 #endif
             do ix=-1,nx

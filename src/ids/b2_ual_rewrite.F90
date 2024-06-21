@@ -621,13 +621,8 @@ program b2_ual_rewrite
         &   uri, &
 #endif
         &   idx, new_eq_ggd )
-#if AL_MAJOR_VERSION > 4
-    systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
-        &  //' -p '//trim(shot_string)//' -r '//trim(new_run_string)
-#else
     systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
         &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string)
-#endif
     write(0,*) trim(systemarg)
 #ifdef NAGFOR
     call system(systemarg, status, ierror)
