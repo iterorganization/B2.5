@@ -1,7 +1,10 @@
 C***  EIRENE control from B2
 
-c  version : 28.06.2000 18:01
+      module b2mod_eirsrt
+      use b2mod_types
+      use b2mod_dimensions
 
-      real (kind=R8) :: 
+      real (kind=R8), save ::
 #     include <EIRSRT.H>
-      save /spcsrfcom/,/spcsrfcch/
+
+      end module b2mod_eirsrt
