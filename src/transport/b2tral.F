@@ -323,21 +323,21 @@
      &  na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)
 *   ..compute anomalous terms
       call b2trno (nx, ny, ns, nscx, nscxmax, iscx,
-     &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,             !srv 09.01.01
+     &  bb, vol, gs, hx, hy, hy1, hz, qz, pbs, crx, cry, conn,         !srv 09.01.01
      &  na, ua, te, ti, po, ne, ni, ne2, cdna, cdpa, cvla, cvsa,
-     &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                       !srv 09.01.01 15.12.05
-     &  chce, chve, chci, chvi, csig, calf, csig_stoch, chce_stoch,   !srv 24.08.21
+     &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                        !srv 09.01.01 15.12.05
+     &  chce, chve, chci, chvi, csig, calf, csig_stoch, chce_stoch,    !srv 24.08.21
      &  fllim0fhi)
 *   ..compute classical terms
       call b2trcl (nx, ny, ns, nscx, iscx, ismain,
-     &  bb, conn, vol, gs, hx, hy, hz,                                !srv 23.11.10
-     1  qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,   !srv 01.07.09
-     2  chvemx, chvimx, cvsahz0,                                      !srv 09.01.01 03.06.03
+     &  bb, conn, vol, gs, hx, hy, hy1, hz, qz, qc, pbs,               !srv 23.11.10
+     1  fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,                 !srv 01.07.09
+     2  chvemx, chvimx, cvsahz0,                                       !srv 09.01.01 03.06.03
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, csigin,
-     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                    !srv 09.01.01
+     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                     !srv 09.01.01
      5  csig_cl, calf_cl)
 *   ..compute Zhdanov closure coefficients
-      if (Zhdanov_closure.eq.1) then                                  !som 09.02.21
+      if (Zhdanov_closure.eq.1) then                                   !som 09.02.21
         if (ncall.eq.0) then
           call b2trnu (ns, nnucl, zmaxmax)
           call xertst (nnucl.eq.nspecies,
@@ -667,9 +667,9 @@
         call my_out(70,nx,ny,cvsahz_cl(-1,-1,1,is),'cvsahz_cly'//chns)
         call my_out(70,nx,ny,cthe(-1,-1,is),'cthe'//chns)
         call my_out(70,nx,ny,cthi(-1,-1,is),'cthi'//chns)
-        do is0=0,ns-1
+        do is0 = 0, ns-1
          write (chns0,'(i3.3)') is0
-         if(is0.ne.is .and. .not.is_neutral(is)) then
+         if(.not.is_neutral(is) .and. is_neutral(is0)) then
           call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'csiginx'//
      &        chns//'_'//chns0)
           call my_out(70,nx,ny,csigin(-1,-1,1,is,is0),'csiginy'//
@@ -744,9 +744,9 @@
       if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-        do is0=0,ns-1
+        do is0 = 0, ns-1
          write (chns0,'(i3.3)') is0
-         if(is0.ne.is .and. .not.is_neutral(is)) then
+         if(is_neutral(is0) .and. .not.is_neutral(is)) then
           call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'b2tral_csiginx'
      &        //chns//'_'//chns0)
           call my_out(70,nx,ny,csigin(-1,-1,1,is,is0),'b2tral_csiginy'

@@ -1737,9 +1737,9 @@
 *
 *   ..workspace
 *
-*     /stackw/ - common block.
-*     /stackw/ contains two stacks, one for real*8 and one for integer
-*     workspace.  They are used to provide local dynamic arrays within
+*     The b2mod_stack module contains two stacks, one for real*8 and
+*     one for integer workspace.
+*     They are used to provide local dynamic arrays within
 *     the rules of Fortran 77.
 *      nstckw - integer constant.
 *     nstckw specifies the size of the real*8 workspace array w. If

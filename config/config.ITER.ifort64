@@ -54,12 +54,18 @@ endif
 endif
 
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
+OS = $(shell grep -m1 NAME /etc/os-release | cut -d '"' -f 2 | cut -d ' ' -f 1 )
 
 FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
 FCOPTS    += -g -C -debug all -traceback -check all -fpe0
 else
-FCOPTS    += -O2 -march=sandybridge
+FCOPTS    += -O2
+ifeq (,$(findstring CentOS,$(OS)))
+FCOPTS    += -xHost
+else
+FCOPTS    += -march=sandybridge
+endif
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
 FCOPTS    += -fp-model=precise
 endif

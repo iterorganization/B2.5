@@ -120,14 +120,14 @@
 !!
 !!      @verbatim
 !!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
-!!          --shot <shot> --run <run> --username <username> --database <database>
+!!          --pulse <pulse> --run <run> --username <username> --database <database>
 !!          --version <version> --step
 !!      @endverbatim
 !!
 !!      The arguments marked with < ... > are the parameters of the IDS database
 !!      where the data is to be stored:
 !!          - \b path:     The path to the IMAS data entry being created
-!!          - \b shot:     The shot number of the database being created
+!!          - \b pulse:    The pulse (previously shot) number of the database being created
 !!          - \b run:      The run number of the database being created
 !!          - \b username: Creator/owner of the IMAS IDS database
 !!          - \b database: IMAS IDS database name (i. e. solps-iter, ITER, aug)
@@ -136,7 +136,7 @@
 !!      Example of the command:
 !!      @verbatim
 !!          $SOLPSTOP/modules/B2.5/builds/standalone.$HOST_NAME.$COMPILER/b2_ual_write_b2mod.exe
-!!          --shot 1512 --run 6 --username penkod --database solps-iter --version 3 --step
+!!          --pulse 1512 --run 6 --username penkod --database solps-iter --version 3 --step
 !!      @endverbatim
 !!
 !!      \b References:
@@ -189,10 +189,11 @@
 !!              equation (i.e. the energy flux takes into account the energy
 !!              transported by the particle flux)
 !!      @param  idx - The returned identifier to be used in the subsequent
-!!                    data access operation
+!!              data access operation
 !!      @param  run - The run number of the database being created
-!!      @param  shot - The shot number of the database being created
-!!      @param  treename - the name of the IMAS IDS database
+!!      @param  shot - The pulse (previously shot) number of the database
+!!              being created
+!!      @param  treename - The name of the IMAS IDS database
 !!              (local $DEVICE environment variable by default if defined,
 !!               otherwise "solps-iter" if argument is not provided)
 !!      @param  username - Creator/owner of the IMAS IDS database
@@ -219,7 +220,8 @@
 !!      integer :: idx    !< The returned identifier to be used in the subsequent
 !!        !< data access operation
 !!      character(len=256) :: path      !< Directory path of the IMAS data entry
-!!      integer :: shot   !< The shot number of the database being created
+!!      integer :: shot   !< The pulse (previsouly shot) number of the database
+!!        !< being created
 !!      integer :: run    !< The run number of the database being created
 !!      integer :: status !< Returned status for UAL commands
 !!      type(ids_edge_profiles) :: edge_profiles !< IDS designed to store data on
@@ -301,7 +303,8 @@ program b2_ual_write_b2mod
 #endif
 #if AL_MAJOR_VERSION > 4
     use ids_routines &  ! IGNORE
-     & , only : imas_open, OPEN_PULSE, STRMAXLEN
+     & , only : imas_open, al_build_uri_from_legacy_parameters, &
+     &          OPEN_PULSE, STRMAXLEN, MDSPLUS_BACKEND
 #else
     use ids_routines &  ! IGNORE
      & , only : imas_open_env
@@ -335,7 +338,7 @@ program b2_ual_write_b2mod
     logical :: new_run, absolute_path
 #if AL_MAJOR_VERSION > 4
     character*256 olddir
-    character(len=STRMAXLEN) :: uri
+    character(len=STRMAXLEN) :: uri, uri_source, uri_dest
     character(len=:), allocatable :: message
 #endif
 
@@ -414,7 +417,7 @@ program b2_ual_write_b2mod
                 case("--path","-p")
                     call get_command_argument( cptArg + 1, path )
 #endif
-                case("--shot","-s")
+                case("--pulse","--shot","-s")
                     call get_command_argument( cptArg + 1, shot_string )
                     !! Transform dummy string variable to integer
                     read( shot_string, *) shot
@@ -434,23 +437,27 @@ program b2_ual_write_b2mod
         end do
     end if
     if (narg.lt.2) then
-        write(0,*) "ERROR! In order to run b2_ual_write_b2mod&
-            & input IMAS data entry&
+        write(0,*) "ERROR! In order to run b2_ual_write_b2mod "// &
+            & "input IMAS data entry "// &
 #if AL_MAJOR_VERSION > 4
-            & user, database and version and either&
-            & shot and run or path variables must&
+            & "user, database and version and either "// &
+            & "pulse and run or path variables must "// &
+            & "be defined. Example (terminal): "
+        write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/"// &
+            & "b2_ual_write_b2mod.exe --pulse 1512 --run 6 "// &
+            & "--username penkod --database solps-iter --version 3 --step"
 #else
-            & user, database, version, shot and run variables must&
+            & "user, database, version, shot and run variables must "// &
+            & "be defined. Example (terminal): "
+        write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/"// &
+            & "b2_ual_write_b2mod.exe --shot 1512 --run 6 "// &
+            & "--username penkod --database solps-iter --version 3 --step"
 #endif
-            & be defined. Example (terminal): "
-        write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/&
-            &b2_ual_write_b2mod.exe --shot 1512 --run 6 --username penkod&
-            &  --database solps-iter --version 3 --step"
         call exit(0)
     end if
 
 #if AL_MAJOR_VERSION > 4
-    call xertst( 0.lt.shot.or..not.streql(path,' '), 'Invalid shot number')
+    call xertst( 0.lt.shot.or..not.streql(path,' '), 'Invalid pulse number')
     call xertst( 0.le.run, 'Invalid run number')
 #else
     call xertst( 0.lt.shot.and.shot.le.214748, 'Invalid shot number')
@@ -634,17 +641,32 @@ program b2_ual_write_b2mod
             tmp_run = run
             if (database.ne.'iter'.and.index(ids_path,'imasdb/iter').eq.0) then
               tmp_run = run + 1000
+#if AL_MAJOR_VERSION > 4
+              call al_build_uri_from_legacy_parameters               &
+                & ( MDSPLUS_BACKEND, shot, run, trim(username),      &
+                &   trim(database), int2str(IMAS_MAJOR_VERSION), '', &
+                &   uri_source, status )
+              call al_build_uri_from_legacy_parameters               &
+                & ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),  &
+                &   trim(database), int2str(IMAS_MAJOR_VERSION), '', &
+                &   uri_source, status )
+              write(systemarg,'(a,a,a,a)')                     &
+                & 'idscp --setDatasetVersion'//                &
+                &      ' -s ',trim(uri_source),                &
+                &      ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
               write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
                 & 'idscp --setDatasetVersion'//                &
-                &       ' -si ',shot,' -ri ',run,              &
-                &       ' -so ',shot,' -ro ',tmp_run,          &
-                &       ' -d ',trim(database),' -u ',trim(username)
+                &      ' -si ',shot,' -ri ',run,               &
+                &      ' -so ',shot,' -ro ',tmp_run,           &
+                &      ' -d ',trim(database),' -u ',trim(username)
 #else
               write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
                 & 'idscp -si ',shot,' -ri ',run,               &
                 &      ' -so ',shot,' -ro ',tmp_run,           &
                 &      ' -d ',trim(database),' -u ',trim(username)
+#endif
 #endif
 #ifdef NAGFOR
               call system(systemarg, status, ierror)
@@ -652,6 +674,27 @@ program b2_ual_write_b2mod
               call system(systemarg)
 #endif
             end if
+#if AL_MAJOR_VERSION > 4
+            call al_build_uri_from_legacy_parameters                 &
+              & ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),    &
+              &   trim(database), int2str(IMAS_MAJOR_VERSION), '',   &
+              &   uri_source, status )
+            if (database.eq.'iter'.or.index(ids_path,'imasdb/iter').gt.0) then
+              call al_build_uri_from_legacy_parameters               &
+                & ( MDSPLUS_BACKEND, shot, run, trim(username),      &
+                &   'ITER', int2str(IMAS_MAJOR_VERSION), '',         &
+                &   uri_source, status )
+            else
+              call al_build_uri_from_legacy_parameters               &
+                & ( MDSPLUS_BACKEND, shot, run, trim(username),      &
+                &   trim(database), int2str(IMAS_MAJOR_VERSION), '', &
+                &   uri_source, status )
+            end if
+            write(systemarg,'(a,a,a,a)')                     &
+              & 'idscp --setDatasetVersion'//                &
+              &      ' -s ',trim(uri_source),                &
+              &      ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
              & 'idscp --setDatasetVersion'//                 &
@@ -666,6 +709,7 @@ program b2_ual_write_b2mod
 #endif
             if (database.eq.'iter'.or.index(ids_path,'imasdb/iter').gt.0) &
              & systemarg = trim(systemarg)//' -do ITER'
+#endif
 #ifdef NAGFOR
             call system(systemarg, status, ierror)
 #else

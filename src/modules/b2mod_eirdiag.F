@@ -73,7 +73,7 @@ C
       integer, allocatable :: lkindp(:), lkindm(:), lkindi(:)
 c
 c*** Volume data:
-c***	srcml	:   power loss due to molecules, including
+c***	srcml	:   molecule dissociation rate
 c***	edissml :   power loss due to molecule dissociation
 c*** Surface data:
 c***	wldnek	:   net kinetic energy deposited by neutrals

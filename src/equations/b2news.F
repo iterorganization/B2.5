@@ -283,7 +283,7 @@
       if (ncall.lt.3) then
 *    ..test sign of bb
        call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
-*    ..test vol, hx, hy, qz
+*    ..test vol, hx, hy, qz, qc
        call b2xvsg (n2, vol, 1, 'vol', '.gt.')
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
        call b2xvsg (n2, hy, 1, 'hy', '.gt.')
@@ -355,7 +355,7 @@
           call b2sral (nx, ny, ns,
      &     nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB, fac_vis,                      !xpb
-     &     vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam, na,              !srv 09.01.01 02.04.18
+     &     vol, hx, hy, hy1, hz, qz, qc, gs, pbs, bb, lnlam, na,         !srv 09.01.01
      &     ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
      &     fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -395,24 +395,24 @@
         endif                                                            !xpb
         call b2tanml (nx, ny, ns, ismain,                                !srv 20.09.06 }!som 02.11.21
      &                csig_an, po, ne, na, fchanml_a, fchanml)           !srv 08.09.21
-        call b2tvspa (nx, ny, ns, ismain, bb,                            !srv 19.02.21
+        call b2tvspa (nx, ny, ns, ismain, hy1, bb,                       !srv 19.02.21
      &                na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,           !som 18.08.21
      &                cvsa_uAdp_albe, cvsa_uBdp_al,                      !som 26.04.24
      &                fchvispar_a, fchvispar)
         call b2tiner (nx, ny, ns, ismain, vol, gs, bb,                   !srv 08.09.21
      &                na, ua, facdrift, fchinert_a, fchinert)
         call b2tvspr (nx, ny, ns, ismain, fac_vis,                       !srv 10.10.17 19.02.21
-     &                vol, po, ti, na,
+     &                vol, hy1, po, ti, na,
      &                avisper_a, bvisper_a, cvisper_a,
      &                fchvisper_a, fchvisper)
         call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
-     &                ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,         !som 21.10.21
-     &                chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al, !som 20.10.21
-     &                fchvisq_a, fchvisq)
+     &               ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,          !som 21.10.21
+     &               chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,  !som 20.10.21
+     &               fchvisq_a, fchvisq)
         call b2tinnt (nx, ny, ns, nscx, iscx,
-     &              facdrift, fac_ExB,
-     &              vol, gs, hx, hz, qz, qc, bb,
-     &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
+     &                facdrift, fac_ExB,
+     &                vol, gs, hx, hy1, hz, qz, qc, bb,
+     &                te, po, ti, na, fna, csigin, fchin_a, fchin)       !IYS 17.10.2023
 
         if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
           call b2xprz (nx, ny, ns, mp, am, na, rz)
@@ -479,7 +479,7 @@
         call b2sral (nx, ny, ns,
      &    nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &    dtim, BoRiS, facdrift, fac_ExB, fac_vis,                       !xpb
-     &    vol, hx, hy, hz, qz, qc, gs, pbs, bb, lnlam,                   !srv 09.01.01 02.04.18
+     &    vol, hx, hy, hy1, hz, qz, qc, gs, pbs, bb, lnlam,              !srv 09.01.01
      &    na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                !srv 28.10.02
      &    fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
@@ -570,24 +570,24 @@ cxpb
 *   ..recompute currents
         call b2tanml (nx, ny, ns, ismain,                                !srv 20.09.06 }!som 02.11.21
      &                csig_an, po, ne, na, fchanml_a, fchanml)           !srv 08.09.21
-        call b2tvspa (nx, ny, ns, ismain, bb,                            !srv 19.02.21
+        call b2tvspa (nx, ny, ns, ismain, hy1, bb,                       !srv 19.02.21
      &                na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,           !som 18.08.21
      &                cvsa_uAdp_albe, cvsa_uBdp_al,                      !som 26.04.24
      &                fchvispar_a, fchvispar)
         call b2tiner (nx, ny, ns, ismain, vol, gs, bb,
      &                na, ua, facdrift, fchinert_a, fchinert)
         call b2tvspr (nx, ny, ns, ismain, fac_vis,                       !srv 10.10.17 19.02.21
-     &                vol, po, ti, na,
+     &                vol, hy1, po, ti, na,
      &                avisper_a, bvisper_a, cvisper_a,
      &                fchvisper_a, fchvisper)
         call b2tvsq (nx, ny, ns, ismain, fac_vis,                        !srv 10.10.17 19.02.21
-     &                ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,         !som 21.10.21
-     &                chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al, !som 20.10.21
-     &                fchvisq_a, fchvisq)
+     &               ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,          !som 21.10.21
+     &               chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,  !som 20.10.21
+     &               fchvisq_a, fchvisq)
         call b2tinnt (nx, ny, ns, nscx, iscx,
-     &              facdrift, fac_ExB,
-     &              vol, gs, hx, hz, qz, qc, bb,
-     &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
+     &                facdrift, fac_ExB,
+     &                vol, gs, hx, hy1, hz, qz, qc, bb,
+     &                te, po, ti, na, fna, csigin, fchin_a, fchin)       !IYS 17.10.2023
 
 *     ..iterate on particle balance
 #ifndef NO_OPENMP_B2NEWS_LOOP2
@@ -596,7 +596,7 @@ cxpb
 #endif
 !!FR Possible loop (2) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none)
-!$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, ix, iy, new_matrix)
+!$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, i, ix, iy, new_matrix)
 !$OMP& PRIVATE(ireg)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
 #if ( !defined(GFORTRAN) && !defined(PGF90) && !defined(NAGFOR) && !defined(CRAY) )
@@ -879,10 +879,11 @@ cxpb
      &         te, po, vedia, veecrb)
               call b2tfch (nx, ny, ns, nscx, ismain, iscx,
      1         guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,           !xpb
-     1         vol, gs, hx, hz, qz, qc, bb, te, po, ne, ne2, lnlam,      !xpb
-     1         pz, ti, ni(-1,-1,1), na, fna, uadia, ua, fne_32, fne_52,  !xpb
-     &         csig, csigin, csig_stoch, chce, chve, chci,               !srv 24.08.21
-     &         calf, chvemx, cvsa_cl, cvsa_drho,                         !som 18.08.21
+     1         vol, gs, hx, hy1, hz, qz, qc, bb,
+     1         te, po, ne, ne2, lnlam, pz, ti, ni(-1,-1,1), na,
+     1         fna, uadia, ua,                                           !xpb
+     &         fne_32, fne_52, csig, csigin, csig_stoch, chce, chve,     !srv 24.08.21
+     &         chci, calf, chvemx, cvsa_cl, cvsa_drho,                   !som 18.08.21
      &         chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
      &         cvsa_uAdp_albe, cvsa_uBdp_al,                             !som 26.04.24
      &         fch, conc, fchstoch, fchdia,                              !srv 17.12.13 16.10.17
@@ -892,12 +893,12 @@ cxpb
      1         fchanml_a, fchinert_a, fchvispar_a,
      &         fchvisper_a, fchvisq_a, fchin_a)                          !srv 08.09.21, IYS 17.10.2023
               call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift,    !srv 19.02.21
-     1         BoRiS, vol, hx, te, po, ne, na, vedia,                    !xpb  !srv 13.01.17
+     1         BoRiS, vol, hx, hy1, te, po, ne, na, vedia,               !xpb  !srv 13.01.17
      &         veecrb, fne_32, fne_52, fch_p, csig, chce, chve, calf,    !xpb
      &         chvemx, cdde, fhe, fhe_mdf, fhePSch, fhet, floe, cone,    !xpb  !srv 13.10.06 !som 03.11.21
      &         fllime, fchstoch, .false.)                                !djm Jan2017 !srv 17.12.13
               call b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,     !xpb
-     1         vol, hx, ti, ni, na,
+     1         vol, hx, hy1, ti, ni, na,
      2         fna, fni_32, fni_52, kinrgy,
      &         chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
      &         fchvispar, fchvisper, fchvisq, fchinert, fchanml,         !lk 30.05.11
@@ -911,7 +912,7 @@ cxpb
                 call b2sral (nx, ny, ns,
      &           nscx, nscxmax, nsmin, nsmax, iscx, ismain, ismain0,
      &           dtim, BoRiS, facdrift, fac_ExB, fac_vis,                !xpb
-     &           vol, hx, hy, hz, qz, qc, gs, pbs, bb,
+     &           vol, hx, hy, hy1, hz, qz, qc, gs, pbs, bb,
      &           lnlam, na, ua,                                          !srv 09.01.01
      &           uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &           te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,         !srv 28.10.02
@@ -1139,8 +1140,8 @@ c     with diamagnetic drift part                                        !xpb
         call b2tfed (nx, ny, facdrift, fac_ExB, te, po, vedia, veecrb)
         call b2tfch (nx, ny, ns, nscx, ismain, iscx,
      1   guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,                 !xpb
-     1   vol, gs, hx, hz, qz, qc, bb, te, po, ne, ne2, lnlam, pz,        !xpb
-     1   ti, ni(-1,-1,1), na, fna, uadia,                                !xpb
+     1   vol, gs, hx, hy1, hz, qz, qc, bb,                               !xpb
+     1   te, po, ne, ne2, lnlam, pz, ti, ni(-1,-1,1), na, fna, uadia,    !xpb
      &   ua, fne_32, fne_52, csig, csigin, csig_stoch,
      &   chce, chve, chci, calf, chvemx, cvsa_cl, cvsa_drho,             !srv 24.08.21 !som 18.08.21
      &   chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,              !som 20.10.21
@@ -1151,13 +1152,13 @@ c     with diamagnetic drift part                                        !xpb
      &   fchanml_a, fchinert_a, fchvispar_a, fchvisper_a, fchvisq_a,     !srv 08.09.21
      &   fchin_a)                                                        !IYS 17.10.2023
         call b2tfhe (nx, ny, ns, ismain, guard_flows, facdrift, BoRiS,   !xpb 19.02.21
-     1   vol, hx, te, po, ne, na, vedia, veecrb,                         !srv 13.01.17
+     1   vol, hx, hy1, te, po, ne, na, vedia, veecrb,                    !srv 13.01.17
      1   fne_32, fne_52, fch_p,
      1   csig, chce, chve, calf, chvemx, cdde, fhe, fhe_mdf, fhePSch,    !srv 13.10.06 !som 03.11.21
      &   fhet, floe, cone, fllime, fchstoch,                             !xpb !srv 17.12.13
      &   .true.)                                                         !djm Jan2017
         call b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,           !xpb
-     1   vol, hx, ti, ni, na,
+     1   vol, hx, hy1, ti, ni, na,
      2   fna, fni_32, fni_52, kinrgy,
      &   chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
      &   fchvispar, fchvisper, fchvisq, fchinert, fchanml,               !lk 30.05.11
@@ -1171,7 +1172,7 @@ c     with diamagnetic drift part                                        !xpb
         call b2tfcc (nx, ny, ns, vol, na, te, ti, cdpa,
      &    floe, cone, floi, coni)
 *    ..add contributions from the divergent total diamagnetic flux
-        call b2sdia (nx, ny, ns, na, ne, ti, te, bb, vol, hx,
+        call b2sdia (nx, ny, ns, na, ne, ti, te, bb, vol, hx, hy1,
      1   she, shi, facdrift)                                             !xpb
 *   ..compute ue, electron parallel velocity
         ue=0.0_R8
@@ -1217,7 +1218,7 @@ c     with diamagnetic drift part                                        !xpb
         if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                         !srv 13.10.06
          call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,      !srv 05.07.17
      &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
-     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, gs, qc, vol, bb,           !srv 07.07.21
+     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, hy1, gs, qc, vol, bb,      !srv 07.07.21
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 01.07.09
      &    fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                  !som 16.08.21 !srv 24.08.21
      &    cvsa_uAdp_albe, cvsa_uBdp_al,                                  !som 08.05.24
@@ -1228,7 +1229,7 @@ c     with diamagnetic drift part                                        !xpb
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.1) then !srv 13.10.06
          call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,      !srv 05.07.17
      &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
-     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, gs, qc, vol, bb,           !srv 07.06.00 02.06.99 07.07.21
+     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, hy1, gs, qc, vol, bb,      !srv 07.06.00 02.06.99 07.07.21
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 07.06.00 01.07.09
      &    fne, fch, fchstoch, cvsa,                                      !srv 24.08.21
      &    cvsa_cl, cvsa_drho,                                            !som 16.08.21
@@ -1240,7 +1241,7 @@ c     with diamagnetic drift part                                        !xpb
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.0) then !srv 13.10.06
          call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,      !srv 05.07.17
      &    solveee, solveei, solveet, solvepo, solvemo,                   !srv 22.05.18
-     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, gs, qc, vol, bb,           !srv 07.06.00 02.06.99 07.07.21
+     &    rxf3, dtim, BoRiS, fac_ExB, hx, hy, hy1, gs, qc, vol, bb,      !srv 07.06.00 02.06.99 07.07.21
      &    pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,      !srv 07.06.00 01.07.09
      &    fne, fch, fchstoch, cvsa, cvsa_cl, cvsa_drho,                  !som 16.08.21 !srv 24.08.21
      &    cvsa_uAdp_albe, cvsa_uBdp_al,                                  !som 08.05.24

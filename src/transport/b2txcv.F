@@ -1,14 +1,12 @@
-      subroutine b2txcv (nx, ny, mode, vol, hx, vsb, cvsb)
+      subroutine b2txcv (nx, ny, mode, vol, hx, hy1, vsb, cvsb)
       use b2mod_types
       use b2mod_math
       use b2mod_indirect
-      use b2mod_geo
-     , , only : hy1
       use b2mod_subsys
       implicit none
       integer nx, ny, mode
       real (kind=R8) ::
-     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
+     &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
      &  vsb(-1:nx,-1:ny,0:1),
      &  cvsb(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------

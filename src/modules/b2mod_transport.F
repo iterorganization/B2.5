@@ -80,6 +80,7 @@
       allocate(cthe(-1:nxd,-1:nyd,0:nsd-1))
       allocate(cthi(-1:nxd,-1:nyd,0:nsd-1))
       allocate(csigin(-1:nxd,-1:nyd,0:1,0:nsd-1,0:nsd-1))               !xpb
+      csigin=0.0_R8
       allocate(cvlahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
       allocate(cvmahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 15.12.05
       allocate(cvsahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01

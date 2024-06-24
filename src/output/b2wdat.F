@@ -310,12 +310,7 @@
         call my_out(70,nx,ny,hy,'hy')
         call my_out(70,nx,ny,hz,'hz')
         call my_out(70,nx,ny,qc,'qc')
-        do iy=-1,ny
-          do ix=-1,nx
-            wrk0(ix,iy)=hy1(ix,iy)
-          enddo
-        enddo
-        call my_out(70,nx,ny,wrk0,'hy1')                          !srv 07.11.12
+        call my_out(70,nx,ny,hy1,'hy1')                          !srv 07.11.12
         call my_out(70,nx,ny,vol,'vol')
         call my_out(70,nx,ny,pbs(-1,-1,0),'pbsx')
 

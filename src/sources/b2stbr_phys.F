@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbr_phys (nx, ny, ns, nscx, iscx, BoRiS,
-     &  vol, hx, hy, hz, gs, qz, pbs, bb, na, ua,
+     &  hx, hy1, hz, gs, bb, na, ua,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle,
@@ -29,8 +29,6 @@
       use b2mod_b2cmfs
       use b2mod_external
       use b2mod_diag
-      use b2mod_geo
-     , , only: hy1
       use b2mod_math
       use b2mod_subsys
       implicit none
@@ -41,9 +39,8 @@
      *     sput_frac_flag, potential_at_guard_cell
       logical main_call, new_sputter_namelist
       real (kind=R8) :: BoRiS,
-     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     *  hx(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
      &  hz(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
      &  gs(-1:nx,-1:ny,0:2), bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -108,9 +105,7 @@
 *   ..procedures
       intrinsic abs, exp
       external xertst
-      external b2xvsg, b2xvff, smin, smax
-      real (kind=R8) ::
-     *   smax, smin
+      external b2xvsg, b2xvff
 *   ..initialisation
       save ncall
       data ncall/0/
@@ -164,22 +159,9 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
-*    ..test sign of vol, hx, hy
-       call b2xvsg (n2, vol, 1, 'vol', '.gt.')
+*    ..test sign of hx, hy1
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
-       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
-*    ..test range of qz
-       call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &   smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
-     &   'faulty argument range qz(,,0)')
-       call xertst ( 0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &   smax(n2,qz(-1,-1,1),1).le.1.0_R8,
-     &   'faulty argument range qz(,,1)')
-*    ..test sign of pbs
-!       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                  !srv 11.01.13
-*    ..test edge values of pbs
-       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbsx')
-       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbsy')
+       call b2xvsg (n2, hy1, 1, 'hy1', '.gt.')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
@@ -316,14 +298,23 @@
         endif
 
         b2stbr_phys_sna=0.0_R8
+!$OMP PARALLEL DO COLLAPSE(2)
+!$OMP& DEFAULT(NONE)
+!$OMP& SHARED(ns,ny,nx,sna0,na)
+!$OMP& PRIVATE(ix,iy,is)
+!$OMP& REDUCTION(+:b2stbr_phys_sna)
         do is=0,ns-1
           do iy=-1,ny
+#if ( ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 8 ) || ( !defined(GFORTRAN) && !defined(LEGACYCOMP) ) )
+!$OMP SIMD REDUCTION(+:b2stbr_phys_sna)
+#endif
             do ix=-1,nx
               b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
      1         sna0(ix,iy,0,is)+sna0(ix,iy,1,is)*na(ix,iy,is)
             enddo
           enddo
         enddo
+!$OMP END PARALLEL DO
         if((main_call.and.output.ge.1).or.output.gt.1)
      *     write(*,*) 'stratum,b2stbr_phys_sna(start): ',
      1   istra, b2stbr_phys_sna
@@ -501,14 +492,23 @@
         endif       ! crcstra(istra)
 
         b2stbr_phys_sna=0.0_R8
+!$OMP PARALLEL DO COLLAPSE(2)
+!$OMP& DEFAULT(NONE)
+!$OMP& SHARED(ns,ny,nx,sna0,na)
+!$OMP& PRIVATE(ix,iy,is)
+!$OMP& REDUCTION(+:b2stbr_phys_sna)
         do is=0,ns-1
           do iy=-1,ny
+#if ( ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 8 ) || ( !defined(GFORTRAN) && !defined(LEGACYCOMP) ) )
+!$OMP SIMD REDUCTION(+:b2stbr_phys_sna)
+#endif
             do ix=-1,nx
               b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
      1         sna0(ix,iy,0,is)+sna0(ix,iy,1,is)*na(ix,iy,is)
             enddo
           enddo
         enddo
+!$OMP END PARALLEL DO
         if((main_call.and.output.ge.1).or.output.gt.1)
      *       write(*,*) 'stratum,b2stbr_phys_sna(end): ',
      1   istra, b2stbr_phys_sna

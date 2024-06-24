@@ -53,7 +53,7 @@
       allocate(ish(1:n_nonzeros))
       allocate(jsh(1:n_nonzeros))
       allocate(ijsh(1:n_nonzeros))
-      allocate(irnh(1:solvdim))
+      allocate(irnh(1:solvdim1))
       allocate(icnh(1:solvdim))
       allocate(icnhkeep(1:solvdim))
       allocate(ikeep(1:nnd,5))

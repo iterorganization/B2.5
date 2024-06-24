@@ -34,6 +34,9 @@ cank }
       use b2mod_wall
       use b2mod_b2cmfs
       use b2mod_version
+#ifndef SOLPS4_3
+      use b2mod_eirsrt
+#endif
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_extrab25
@@ -56,9 +59,6 @@ cank }
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#endif
-#ifndef SOLPS4_3
-#     include "COUPLE/EIRSRT.F"
 #endif
       integer nstraid, nsdmax, natmid, nmolid, nionid, nstsid, nlimpsd
       parameter (NSTRAID=DEF_NSTRA, NSDMAX=DEF_NSD)

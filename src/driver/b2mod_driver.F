@@ -111,7 +111,8 @@
 #ifdef IMAS
 #if AL_MAJOR_VERSION > 4
       use ids_routines  ! IGNORE
-     , , only : imas_open, OPEN_PULSE, STRMAXLEN
+     , , only : imas_open, al_build_uri_from_legacy_parameters,
+     ,          OPEN_PULSE, STRMAXLEN, MDSPLUS_BACKEND
 #else
       use ids_routines  ! IGNORE
      , , only : imas_open_env
@@ -1476,10 +1477,11 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          not_default = not_default.or.
      &                (.not.streql(database, device_env).and.
      &                 .not.streql(database,'solps-iter'))
-         call ipgeti('b2mndr_shot_number', shot )
+         call ipgeti('b2mndr_pulse_number', shot )
+         if (shot.eq.0) call ipgeti('b2mndr_shot_number', shot )
          call ipgeti('b2mndr_run_number', run )
 #if AL_MAJOR_VERSION > 4
-         call xertst( 0.le.shot, 'Invalid shot number')
+         call xertst( 0.le.shot, 'Invalid pulse number')
          call xertst( 0.le.run, 'Invalid run number')
 #else
          call xertst( 0.lt.shot.and.shot.le.214748,
@@ -1568,7 +1570,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          end if
          if (streql(path,' ').or.streql(path,imasdir)) then
 #if AL_MAJOR_VERSION > 4
-           call xertst( 0.lt.shot, 'Invalid shot number !')
+           call xertst( 0.lt.shot, 'Invalid pulse number !')
            ids_path = trim(imasdir)//'/'//int2str(shot)//
      &                               '/'//int2str(run)
 #else
@@ -1691,7 +1693,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
 
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, hz, qz, qc, qcb, gs, pbs,
+     &  bb, vol, hx, hy, hy1, hz, qz, qc, qcb, gs, pbs,
      &  hyl, hxb, hzl, hzb, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
       call alloc_b2mod_tallies(nnreg,ns)
@@ -2169,8 +2171,8 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
      *    cvsahz_drho, cvsa_drho,
      *    chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,
      *    cvsa_hAdp_albe, cvsa_hBdp_al,
-     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,                           
-     *    cvsa_uAdp_albe, cvsa_uBdp_al,                               
+     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,
+     *    cvsa_uAdp_albe, cvsa_uBdp_al,
      5    fllim0fhi, fllimvisc, csig_cl, calf_cl,
      &    csig_stoch, chce_stoch)
         call b2xpen (nx, ny, ns,
@@ -2337,7 +2339,7 @@ c new CDF movie option (1st frame at t=0)
 #endif
 #if AL_MAJOR_VERSION > 4
       character(len=:), allocatable :: message
-      character(len=STRMAXLEN) :: uri
+      character(len=STRMAXLEN) :: uri, uri_source, uri_dest
       character(len=256) :: olddir
 #endif
 #endif
@@ -2568,7 +2570,7 @@ csw 09oct2012 set default potential already at this point (BCs)
      *    cvsahz_drho, cvsa_drho,
      *    chci_al_ast, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,
      *    cvsa_hAdp_albe, cvsa_hBdp_al,
-     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,                           
+     *    cvsahz_uAdp_albe, cvsahz_uBdp_al,
      *    cvsa_uAdp_albe, cvsa_uBdp_al,
      5    fllim0fhi, fllimvisc, csig_cl, calf_cl,
      &    csig_stoch, chce_stoch)
@@ -2978,21 +2980,44 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     if (database.ne.'iter'.and.
      &                  index(ids_path,'imasdb/iter').eq.0)
      &               tmp_run = run + 1000
+#if AL_MAJOR_VERSION > 4
+                    call al_build_uri_from_legacy_parameters
+     &               ( MDSPLUS_BACKEND, shot, run, trim(username),
+     &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                 uri_source, status )
+                    if (database.eq.'iter'.or.
+     &                  index(ids_path,'imasdb/iter').gt.0) then
+                      call al_build_uri_from_legacy_parameters
+     &                 ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &                   'ITER', int2str(IMAS_MAJOR_VERSION), '',
+     &                   uri_dest, status )
+                    else
+                      call al_build_uri_from_legacy_parameters
+     &                 ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                   uri_dest, status )
+                    end if
+                    write(systemarg,'(a,a,a,a)')
+     &                'idscp --setDatasetVersion'//
+     &                     ' -s ',trim(uri_source),
+     &                     ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &                 'idscp --setDatasetVersion'//
-     &                      ' -si ',shot,' -ri ',run,
-     &                      ' -so ',shot,' -ro ',tmp_run,
-     &                      ' -d ',trim(database),' -u ',trim(username)
+     &                'idscp --setDatasetVersion'//
+     &                     ' -si ',shot,' -ri ',run,
+     &                     ' -so ',shot,' -ro ',tmp_run,
+     &                     ' -d ',trim(database),' -u ',trim(username)
 #else
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &                 'idscp -si ',shot,' -ri ',run,
-     &                      ' -so ',shot,' -ro ',tmp_run,
-     &                      ' -d ',trim(database),' -u ',trim(username)
+     &                'idscp -si ',shot,' -ri ',run,
+     &                     ' -so ',shot,' -ro ',tmp_run,
+     &                     ' -d ',trim(database),' -u ',trim(username)
 #endif
                     if (database.eq.'iter'.or.
      &                  index(ids_path,'imasdb/iter').gt.0)
      &               systemarg = trim(systemarg)//' -do ITER'
+#endif
 #ifdef NAGFOR
                     call system(systemarg, status, ierror)
 #else
@@ -3000,6 +3025,20 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
                     if (database.ne.'iter'.and.
      &                  index(ids_path,'imasdb/iter').eq.0) then
+#if AL_MAJOR_VERSION > 4
+                      call al_build_uri_from_legacy_parameters
+     &                 ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                   uri_source, status )
+                      call al_build_uri_from_legacy_parameters
+     &                 ( MDSPLUS_BACKEND, shot, run, trim(username),
+     &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                   uri_dest, status )
+                      write(systemarg,'(a,a,a,a)')
+     &                  'idscp --setDatasetVersion'//
+     &                     ' -s ',trim(uri_source),
+     &                     ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                       write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
      &                 'idscp --setDatasetVersion'//
@@ -3011,6 +3050,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                 'idscp -si ',shot,' -ri ',tmp_run,
      &                    ' -so ',shot,' -ro ',run,
      &                    ' -d ',trim(database),' -u ',trim(username)
+#endif
 #endif
 #ifdef NAGFOR
                       call system(systemarg, status, ierror)
@@ -3277,7 +3317,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       character*512 systemarg
 #if AL_MAJOR_VERSION > 4
       character(len=:), allocatable :: message
-      character(len=STRMAXLEN) :: uri
+      character(len=STRMAXLEN) :: uri, uri_source, uri_dest
       character(len=256) :: olddir
 #endif
       logical streql
@@ -3573,21 +3613,44 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   if (database.ne.'iter'.and.
      &                index(ids_path,'imasdb/iter').eq.0)
      &             tmp_run = run + 1000
+#if AL_MAJOR_VERSION > 4
+                  call al_build_uri_from_legacy_parameters
+     &             ( MDSPLUS_BACKEND, shot, run, trim(username),
+     &               trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &               uri_source, status )
+                  if (database.eq.'iter'.or.
+     &                index(ids_path,'imasdb/iter').gt.0) then
+                    call al_build_uri_from_legacy_parameters
+     &               ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &                 'ITER', int2str(IMAS_MAJOR_VERSION), '',
+     &                 uri_dest, status )
+                  else
+                    call al_build_uri_from_legacy_parameters
+     &               ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                 uri_dest, status )
+                  end if
+                  write(systemarg,'(a,a,a,a)')
+     &              'idscp --setDatasetVersion'//
+     &                   ' -s ',trim(uri_source),
+     &                   ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &               'idscp --setDatasetVersion'//
-     &                    ' -si ',shot,' -ri ',run,
-     &                    ' -so ',shot,' -ro ',tmp_run,
-     &                    ' -d ',trim(database),' -u ',trim(username)
+     &              'idscp --setDatasetVersion'//
+     &                   ' -si ',shot,' -ri ',run,
+     &                   ' -so ',shot,' -ro ',tmp_run,
+     &                   ' -d ',trim(database),' -u ',trim(username)
 #else
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &               'idscp -si ',shot,' -ri ',run,
-     &                    ' -so ',shot,' -ro ',tmp_run,
-     &                    ' -d ',trim(database),' -u ',trim(username)
+     &              'idscp -si ',shot,' -ri ',run,
+     &                   ' -so ',shot,' -ro ',tmp_run,
+     &                   ' -d ',trim(database),' -u ',trim(username)
 #endif
                   if (database.eq.'iter'.or.
      &                index(ids_path,'imasdb/iter').gt.0)
      &             systemarg = trim(systemarg)//' -do ITER'
+#endif
 #ifdef NAGFOR
                   call system(systemarg, status, ierror)
 #else
@@ -3595,6 +3658,20 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
                   if (database.ne.'iter'.and.
      &                index(ids_path,'imasdb/iter').eq.0) then
+#if AL_MAJOR_VERSION > 4
+                    call al_build_uri_from_legacy_parameters
+     &               ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                 uri_source, status )
+                    call al_build_uri_from_legacy_parameters
+     &               ( MDSPLUS_BACKEND, shot, run, trim(username),
+     &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                 uri_dest, status )
+                    write(systemarg,'(a,a,a,a)')
+     &               'idscp --setDatasetVersion'//
+     &                  ' -s ',trim(uri_source),
+     &                  ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
      &               'idscp --setDatasetVersion'//
@@ -3606,6 +3683,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &               'idscp -si ',shot,' -ri ',tmp_run,
      &                  ' -so ',shot,' -ro ',run,
      &                  ' -d ',trim(database),' -u ',trim(username)
+#endif
 #endif
 #ifdef NAGFOR
                     call system(systemarg, status, ierror)

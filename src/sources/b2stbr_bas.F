@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbr_bas (nx, ny, ns, nscx, iscx, BoRiS,
-     &  hx, gs,
+     &  hx, hy1, gs,
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fht, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle,
@@ -30,8 +30,6 @@
       use b2mod_b2cmpb
       use b2mod_b2cmfs
       use b2mod_external
-      use b2mod_geo
-     , , only : hy1
       use b2mod_math
       use b2mod_subsys
       implicit none
@@ -41,7 +39,7 @@
      *   sput_chem_model, reflection_on,
      *   sputter_energy_on, output, potential_at_guard_cell
       real (kind=R8) :: BoRiS,
-     *  hx(-1:nx,-1:ny),
+     *  hx(-1:nx,-1:ny), hy1(-1:nx,-1:ny),
      &  gs(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -140,8 +138,9 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if(ncall.lt.3) then
-*    ..test sign of hx
+*    ..test sign of hx, hy1
        call b2xvsg (n2, hx, 1, 'hx', '.gt.')
+       call b2xvsg (n2, hy1, 1, 'hy1', '.gt.')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')

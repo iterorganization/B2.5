@@ -97,7 +97,7 @@
        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
       endif
 
-      ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
+      ft = 4.0_R8/3.0_R8                                            !srv 16.10.17
       smbvh  = 0.0_R8
       smbvv = 0.0_R8
 
@@ -107,12 +107,12 @@
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
 * ..calculate the parallel heat flux of ions in the center of the cell
 
-          tt0 = 0.0e0_R8                                            !lk 23.05.06 05.07.07
-          tt1 = 0.0e0_R8
-          tt2 = 0.0e0_R8
-          tt3 = 0.0e0_R8
-          bbaverage2 = 0.0e0_R8
-          eps1 = 0.0e0_R8
+          tt0 = 0.0_R8                                              !lk 23.05.06 05.07.07
+          tt1 = 0.0_R8
+          tt2 = 0.0_R8
+          tt3 = 0.0_R8
+          bbaverage2 = 0.0_R8
+          eps1 = 0.0_R8
 !pbwdk          mintopcut = ny
           mintopcut = -2
           if (nncut > 0) then
@@ -141,19 +141,19 @@
           qip0 = 0.0e0_R8
 
           if (qstyle .eq. 0) then
-            qip0a = 0.0e0_R8
-            qip0b = 0.0e0_R8
+            qip0a = 0.0_R8
+            qip0b = 0.0_R8
 
             do iy = 0, mintopcut-1    ! for inner surfaces
               do ix = 0, nx
                 if(on_closed_surface(ix,iy)) then
-                  qip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
+                  qip0a(ix,iy) = (-2.5_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &             /bb(ix,iy,0)/bbaverage2(iy))
      &             *(ni(ix,iy)*ti(ix,iy)/qe)*
      &              (ti(topix(ix,iy),topiy(ix,iy))
      &              -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &              (hy1(ix,iy)+0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &               0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &              (hy1(ix,iy)+0.5_R8*hy1(topix(ix,iy),topiy(ix,iy))+
+     &               0.5_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
                 endif
               enddo
             enddo
@@ -162,7 +162,7 @@
               do ix = -1, nx
                 if(on_closed_surface(ix,iy)) then
                   if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >             qip0b(ix,iy) = 0.25e0_R8*(qip0a(ix,iy)*2.0e0_R8
+     >             qip0b(ix,iy) = 0.25_R8*(qip0a(ix,iy)*2.0_R8
      &              +qip0a(leftix(ix,iy),leftiy(ix,iy))
      &              +qip0a(rightix(ix,iy),rightiy(ix,iy)))
                 endif
@@ -173,7 +173,7 @@
               do ix = -1, nx
                 if(on_closed_surface(ix,iy)) then
                   if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >             qip0(ix,iy) = 0.25e0_R8*(qip0b(ix,iy)*2.0e0_R8
+     >             qip0(ix,iy) = 0.25_R8*(qip0b(ix,iy)*2.0_R8
      &              +qip0b(leftix(ix,iy),leftiy(ix,iy))
      &              +qip0b(rightix(ix,iy),rightiy(ix,iy)))
                 endif
@@ -184,7 +184,7 @@
 
           if (qstyle.eq.1) then
 
-            wrk0 = 0.0e0_R8
+            wrk0 = 0.0_R8
             do iy=0,ny-1
               do ix=-1,nx
                 if(leftix(ix,iy).ne.-2) then                        !srv 26.11.02
@@ -199,10 +199,10 @@
                 if(on_closed_surface(ix,iy)) then
                   if(rightix(ix,iy).ne.nx+1 .and.
      &               topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2)
-     >             qip0(ix,iy)=0.5e0_R8*(wrk0(ix,iy)+
+     >             qip0(ix,iy)=0.5_R8*(wrk0(ix,iy)+
      &               wrk0(rightix(ix,iy),rightiy(ix,iy)))
      &               *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
-     &               -2.5e0_R8*bb(ix,iy,2)
+     &               -2.5_R8*bb(ix,iy,2)
      &               /bb(ix,iy,0)/bb(ix,iy,3)
      &               *(ni(ix,iy)*ti(ix,iy)/qe)*
      &                (ti(topix(ix,iy),topiy(ix,iy))
@@ -216,18 +216,18 @@
 
           endif
 
-          tauia1 = 0.0e0_R8
-          nu1 = 0.0e0_R8
-          alpha1 = 0.0e0_R8
-          kt_neo = 0.0e0_R8                                         !iyv 02.12.13
+          tauia1 = 0.0_R8
+          nu1 = 0.0_R8
+          alpha1 = 0.0_R8
+          kt_neo = 0.0_R8                                           !iyv 02.12.13
           do iy = 0, mintopcut-1
             do ix = 0, nx
               if(on_closed_surface(ix,iy)) then
                 if (lluciani.eq.3) then
                   tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,isb)/      !lk 20.11.07 { iyv 06.12.13
-     &             (1.0e0_R8+15.12e16_R8/conn(iy)*
+     &             (1.0_R8+15.12e16_R8/conn(iy)*
      &             (ti(ix,iy)/ev)**2/ne2(ix,iy))
-     &             /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
+     &             /(1.0_R8+15.12e16_R8*eps1(iy)**1.5_R8
      &             /conn(iy)*(ti(ix,iy)/ev)**2/ne2(ix,iy))
                 elseif (lluciani.eq.1) then
                   tauia1(ix,iy) = tauia(ix,iy,isb)/
@@ -238,21 +238,21 @@
                 endif
                 nu1(ix,iy) = conn(iy)/(tauia(ix,iy,isb)
      &           *sqrt(ti(ix,iy)/(mp*am(isb)))
-     &           *2.0e0_R8*pi*sqrt(eps1(iy)**3))
-                alpha1(ix,iy) = ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy))+
-     &           2.7e0_R8*nu1(ix,iy)**2*eps1(iy)**3)/(1.0e0_R8+
-     &           0.7e0_R8*sqrt(nu1(ix,iy))+
-     &           nu1(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)*0.533e0_R8    !lk 20.11.07 }
+     &           *2.0_R8*pi*sqrt(eps1(iy)**3))
+                alpha1(ix,iy) = ((-0.17_R8+1.05_R8*sqrt(nu1(ix,iy))+
+     &           2.7_R8*nu1(ix,iy)**2*eps1(iy)**3)/(1.0_R8+
+     &           0.7_R8*sqrt(nu1(ix,iy))+
+     &           nu1(ix,iy)**2*eps1(iy)**3)-1.0_R8)*0.533_R8        !lk 20.11.07 }
                 kt_neo(ix,iy) =
-     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy))            !som 07.12.21 !iyv 02.12.13
-     &           +2.7e0_R8*nu1(ix,iy)**2*eps1(iy)**3)/(1.0e0_R8+
-     &           0.7e0_R8*sqrt(nu1(ix,iy))+
+     &           ((-0.17_R8+1.05_R8*sqrt(nu1(ix,iy))                !som 07.12.21 !iyv 02.12.13
+     &           +2.7_R8*nu1(ix,iy)**2*eps1(iy)**3)/(1.0_R8+
+     &           0.7_R8*sqrt(nu1(ix,iy))+
      &           (nu1(ix,iy))**2*eps1(iy)**3))
               endif
             enddo
           enddo
 
-          qip1 = 0.0e0_R8
+          qip1 = 0.0_R8
           do iy=0,ny-1
             do ix=0,nx-1
               qip1(ix,iy)=cqip1*
@@ -261,7 +261,7 @@
             enddo
           enddo
 
-          qipgen = 0.0e0_R8
+          qipgen = 0.0_R8
           do iy=0,ny-1
             do ix=0,nx-1
               qipgen(ix,iy)=qip1(ix,iy)*atan(qip0(ix,iy)/qip1(ix,iy))
@@ -272,12 +272,12 @@
 * ..calculate the difference from parallel heat flux of ion
 *   at the face of cell
 
-          wrk1=0.0e0_R8
+          wrk1=0.0_R8
           do iy=0,ny-1
             do ix=-1,nx
               if(on_closed_surface(ix,iy)) then
                 if(leftix(ix,iy).ne.-2) then
-                  wrk1(ix,iy) = 2.0e0_R8*(qipgen(ix,iy) -
+                  wrk1(ix,iy) = 2.0_R8*(qipgen(ix,iy) -
      &             qipgen(leftix(ix,iy),leftiy(ix,iy)))*
      &             (bb(ix,iy,0)/bb(ix,iy,3)**3
      &             *tauia1(ix,iy)*alpha1(ix,iy)
@@ -316,9 +316,9 @@
           do iy = 0,ny-1                                            !srv 01.07.05 {
             do ix = 0,nx
               if(leftix(ix,iy).eq.-2) then
-                wrk0(ix,iy)=0.0e0_R8
+                wrk0(ix,iy)=0.0_R8
               else
-                wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_cl(ix,iy,0)/         !srv 16.10.17
+                wrk0(ix,iy)=2.0_R8*ft*cvsbhz_cl(ix,iy,0)/           !srv 16.10.17
      &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*
      &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
               endif
@@ -331,14 +331,14 @@
      >         then
                 t0=(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
      *             *wrk2(ix,iy)                                     !srv 01.07.05 }
-                if (t0.gt.0.0e0) then
+                if (t0.gt.0.0) then
                   smbvv(ix,iy,0)=t0*ub(ix,iy)
                 else
                   smbvv(ix,iy,1)=t0
                 endif
               else
-                smbvv(ix,iy,0) = 0.0e0_R8
-                smbvv(ix,iy,1) = 0.0e0_R8
+                smbvv(ix,iy,0) = 0.0_R8
+                smbvv(ix,iy,1) = 0.0_R8
               endif
             enddo
           enddo                                                     !srv 19.01.05 }

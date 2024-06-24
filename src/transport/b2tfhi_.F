@@ -1,8 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 csw 2013 added fna_he, cvsa, vadia into argument list
-      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx,                !som 13.07.21
-     1  bb, ti, ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa,  !srv 17.05.99 27.12.01
+      subroutine b2tfhi_ (nx, ny, ns, facdrift,
+     1  vol, hx, hy1, bb,                                               !som 13.07.21
+     1  ti, ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa,    !srv 17.05.99 27.12.01
      &  vadia, fchvispar, fchvisper, fchvisq, fchinert, fchanml,        !lk 30.05.11
      &  fhi, fhi_mdf, fhiPSch, floi, coni,                              !srv 13.10.06
      &  balance)                                                        !djm Jan2017
@@ -14,8 +15,6 @@ csw 2013 added fna_he, cvsa, vadia into argument list
       use b2mod_rates
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_geo
-     & , only : hy1
       use b2mod_balance                                                 !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
@@ -26,7 +25,7 @@ csw 2013 added fna_he, cvsa, vadia into argument list
       integer nx, ny, ns
       real (kind=R8) ::
      * ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
-     & vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1),
+     & vol(-1:nx,-1:ny), hy1(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1),
      & chvi(-1:nx,-1:ny,0:1),
      & bb(-1:nx,-1:ny,0:3),                                             !som 13.07.21
      & cvsa(-1:nx,-1:ny,0:1,0:ns-1),
@@ -168,14 +167,14 @@ cpax
 !     &       /bb(leftix(ix,iy),leftiy(ix,iy),3)                        !srv 17.05.99 11.03.00 05.02.05
      &        +na(ix,iy,is)
 !     &        *bb(ix,iy,2)/bb(ix,iy,3)                                 !srv 05.02.05
-     &                    )*0.5e0_R8                                    !srv 17.05.99 11.03.00
-     &       *vadia(ix,iy,0,is)*2.5e0_R8*vdia_par                       !srv 17.05.99 11.03.00 21.04.00 13.09.02 18.01.07
+     &                    )*0.5_R8                                      !srv 17.05.99 11.03.00
+     &       *vadia(ix,iy,0,is)*2.5_R8*vdia_par                         !srv 17.05.99 11.03.00 21.04.00 13.09.02 18.01.07
 !     &          +(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))         !srv 25.01.02 was 5/2
 !     &           /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
 !     &           *(bb(leftix(ix,iy),leftiy(ix,iy),2)
 !     &            /bb(leftix(ix,iy),leftiy(ix,iy),3)
-!     &             +bb(ix,iy,2)/bb(ix,iy,3))*0.5e0_R8
-!     &     *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8
+!     &             +bb(ix,iy,2)/bb(ix,iy,3))*0.5_R8
+!     &     *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8
 !     &     *vadia(ix,iy,0,is)
           endif                                                         !srv 26.11.02
          enddo
@@ -186,8 +185,8 @@ cpax
           flidia(ix,iy,1) = flidia(ix,iy,1)
      &        +(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))        !srv 25.01.02 was 5/2
      &        /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-     &   *(na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8
-     &   *vadia(ix,iy,1,is)*2.5e0_R8*vdia_par                           !srv 13.09.02 18.01.07
+     &   *(na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/2.0_R8
+     &   *vadia(ix,iy,1,is)*2.5_R8*vdia_par                             !srv 13.09.02 18.01.07
          enddo
          enddo
         endif
@@ -217,10 +216,10 @@ cpax
       do iy = -1, ny
        do ix = -1, nx                                                   !srv 26.11.02
         if(leftix(ix,iy).eq.-2)then                                     !srv 26.11.02
-         floi(ix,iy,0)     = 0.0e0_R8
-         coni(ix,iy,0,0)   = 0.0e0_R8                                   !srv 02.01.07
-         fhi(ix,iy,0)      = 0.0e0_R8
-         fhi_mdf(ix,iy,0)  = 0.0e0_R8                                   !srv 13.10.06
+         floi(ix,iy,0)     = 0.0_R8
+         coni(ix,iy,0,0)   = 0.0_R8                                     !srv 02.01.07
+         fhi(ix,iy,0)      = 0.0_R8
+         fhi_mdf(ix,iy,0)  = 0.0_R8                                     !srv 13.10.06
          if (balance.and.(balance_netcdf.ne.0)) then
            fhi_32(ix,iy,0) = 0.0_R8                                     !djm Jan2017
            fhi_52(ix,iy,0) = 0.0_R8
@@ -245,7 +244,7 @@ cpax
      &           +flidia(ix,iy,0) ! *signmf                             !srv 25.01.02 18.01.07 11.01.13
      &           +scur
          floi0 = floi0 + floi_vhx(ix,iy)                                !som 13.07.21
-         floi0_mdf = 1.5e0_R8*fni(ix,iy,0)+chvi(ix,iy,0)*
+         floi0_mdf = 1.5_R8*fni(ix,iy,0)+chvi(ix,iy,0)*
      &    (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8
      &    +scur
          floi0_mdf = floi0_mdf + floi_vhx(ix,iy)                        !som 13.07.21

@@ -3,7 +3,7 @@
 
       subroutine b2tinnt (nx, ny, ns, nscx, iscx,
      &       facdrift, fac_ExB,
-     &       vol, gs, hx, hz, qz, qc, bb,                               !srv 08.07.09 { !srv 20.10.17 !som 04.11.21
+     &       vol, gs, hx, hy1, hz, qz, qc, bb,                          !srv 08.07.09 { !srv 20.10.17 !som 04.11.21
      &       te, po, ti, na, fna, csigin, fchin_a, fchin)               !srv 08.03.99 16.06.09, IYS 17.10.2023
       use b2mod_types
       use b2mod_indirect
@@ -18,8 +18,6 @@
       use b2mod_sources
      ,   , only: smo0_eir_tot, smr0_eir_tot, smd0_eir_tot
 #endif
-      use b2mod_geo
-     , , only : hy1
       use b2mod_math
       use b2mod_subsys
       implicit none
@@ -27,12 +25,12 @@
       integer nx, ny, ns, nscx, iscx(0:nscxmax-1)                       !som 04.11.21
       real (kind=R8) ::
      & facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny),                     !srv 20.10.17
-     * vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),
+     * vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     1 hx(-1:nx,-1:ny), hy1(-1:nx,-1:ny), hz(-1:nx,-1:ny),
      1 qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      1 te(-1:nx,-1:ny), po(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:ns-1),
-     & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny),
-     & hz(-1:nx,-1:ny)
+     & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      & fchin(-1:nx,-1:ny,0:1), fchin_a(-1:nx,-1:ny,0:1,0:ns-1)
@@ -123,13 +121,13 @@
         endif
       endif
 
-      fchin     = 0.0e0_R8                                              !srv 09.07.99
+      fchin     = 0.0_R8                                                !srv 09.07.99
       fchin_a   = 0.0_R8                                                !IYS 17.10.2023
       facdriftm = maxval(facdrift)                                      !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
       if(pot_eq.ne.0 .and.(facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)
      &               .and. no_current.eq.0
-     .               .and. fch_ion_neutral .ne. 0.0e0_R8) then          !srv 26.07.06 01.07.99
+     .               .and. fch_ion_neutral .ne. 0.0_R8) then            !srv 26.07.06 01.07.99
        if(style.eq.0) then
 *   ..interpolate ti in the left and bottom cell face
          call intfaceh(nx, ny, leftix, leftiy, vol, ti, til)
@@ -144,7 +142,7 @@
          enddo
        endif
        if (use_eirene.ne.0) then
-!        fchin = 0.0e0_R8
+!        fchin = 0.0_R8
 
         if (use_kinetic.eq.0) then                                      !srv 15.02.11 {
 *   ..calculate section
@@ -204,12 +202,12 @@
              enddo
              call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigi,
      &                                             csigia(-1,-1,0))
-             call b2txcy (nx, ny, mode, vol, gs, sigi,
-     &                                             csigia(-1,-1,1))
+             call b2txcy (nx, ny, mode, vol, gs, hy1,
+     &                                       sigi, csigia(-1,-1,1))
              call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigia,
      &                                 csigin(-1,-1,0,is,is0))          !som 04.11.21
-             call b2txcy (nx, ny, mode, vol, gs, sigia,
-     &                                 csigin(-1,-1,1,is,is0))          !som 04.11.21
+             call b2txcy (nx, ny, mode, vol, gs, hy1,
+     &                          sigia, csigin(-1,-1,1,is,is0))          !som 04.11.21
              if (iout.ne.0) then
                write (chns,'(i3.3)') is
                write (chns0,'(i3.3)') is0
