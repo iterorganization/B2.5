@@ -201,10 +201,11 @@ c        print *,'hlp_frh: ',hlp_frh
 
 c*** Extract the case number
 
-      call ipgeti('b2mndr_shot_number', shot )
+      call ipgeti('b2mndr_pulse_number', shot )
+      if(shot.eq.0) call ipgeti('b2mndr_shot_number', shot )
       call ipgeti('b2mndr_run_number', run )
 #if AL_MAJOR_VERSION > 4
-      call xertst( 0.le.shot, 'Invalid shot number')
+      call xertst( 0.le.shot, 'Invalid pulse number')
       call xertst( 0.le.run, 'Invalid run number')
 #else
       call xertst( 0.le.shot.and.shot.le.214748, 'Invalid shot number')

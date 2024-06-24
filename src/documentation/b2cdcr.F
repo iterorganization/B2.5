@@ -892,14 +892,14 @@
 *
 *     LWIMAI is a group of routines (entry points in lwimai) that
 *     maintain a base address for free space in the workspace area
-*     stackw%wi. The entry points are lwiset, lwiget, and lwimax.
+*     b2mod_stack%wi. The entry points are lwiset, lwiget, and lwimax.
 *     LWISET frees workspace by resetting the base address.
 *     LWIGET reserves workspace by incrementing the base address.
 *     LWIMAX returns the maximum workspace use.
 *
 *     LWMAIN is a group of routines (entry points in lwmain) that
 *     maintain a base address for free space in the workspace area
-*     stackw%w. The entry points are lwset, lwget, and lwmax.
+*     b2mod_stack%w. The entry points are lwset, lwget, and lwmax.
 *     LWSET frees workspace by resetting the base address.
 *     LWGET reserves workspace by incrementing the base address.
 *     LWMAX returns the maximum workspace use.

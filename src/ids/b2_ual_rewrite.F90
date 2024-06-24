@@ -31,7 +31,8 @@
 !!      integer :: idx    !< The returned identifier to be used in the subsequent
 !!        !< data access operation
 !!      character(len=256) :: path      !< Directory path of the IMAS data entry
-!!      integer :: shot   !< The shot number of the database being created
+!!      integer :: shot   !< The pulse (previously shot) number of the database
+!!        !< being created
 !!      integer :: run    !< The run number of the database being created
 !!      integer :: status !< Returned status for UAL commands
 !!      type(ids_edge_profiles) :: edge_profiles !< IDS designed to store data on
@@ -115,7 +116,8 @@ program b2_ual_rewrite
      & , only : ids_get, ids_deallocate
 #if AL_MAJOR_VERSION > 4
     use ids_routines &  ! IGNORE
-     & , only : imas_open, OPEN_PULSE, FORCE_CREATE_PULSE, STRMAXLEN
+     & , only : imas_open, al_build_uri_from_legacy_parameters, &
+     &          OPEN_PULSE, FORCE_CREATE_PULSE, STRMAXLEN, MDSPLUS_BACKEND
 #else
     use ids_routines &  ! IGNORE
      & , only : imas_open_env
@@ -150,7 +152,7 @@ program b2_ual_rewrite
     character*256 path, new_path, imasdir, home_dir, systemarg
     logical same_run_number, absolute_path, not_default
 #if AL_MAJOR_VERSION > 4
-    character(len=STRMAXLEN) :: uri
+    character(len=STRMAXLEN) :: uri, uri_source, uri_dest
     character(len=:), allocatable :: message
 #endif
     data new_run / 0 /
@@ -218,7 +220,8 @@ program b2_ual_rewrite
     call read_b2mod_sources(56)
     call read_b2mod_transport(nx, ny, ns, 56)
 
-    call ipgeti('b2mndr_shot_number', shot )
+    call ipgeti('b2mndr_pulse_number', shot )
+    if (shot.eq.0) call ipgeti('b2mndr_shot_number', shot )
     if (shot.gt.0) then
       write(shot_string,'(i8)') shot
       call strip_spaces(shot_string)
@@ -289,7 +292,7 @@ program b2_ual_rewrite
             ids_path = trim(imasdir)//'/'//trim(path)
           end if
 #endif
-        case("--shot","-s")
+        case("--pulse","--shot","-s")
           call get_command_argument( cptArg + 1, shot_string )
           !! Transform dummy string variable to integer
           read( shot_string, *) shot
@@ -316,7 +319,7 @@ program b2_ual_rewrite
     end do
 
 #if AL_MAJOR_VERSION > 4
-    call xertst( 0.le.shot, 'Invalid shot number')
+    call xertst( 0.le.shot, 'Invalid pulse number')
     call xertst( 0.le.run, 'Invalid run number')
     call xertst( 0.le.new_run, 'Invalid new run number')
 #else
@@ -353,7 +356,7 @@ program b2_ual_rewrite
     end if
     if (streql(path,' ')) then
 #if AL_MAJOR_VERSION > 4
-      call xertst( 0.lt.shot, 'Invalid shot number !')
+      call xertst( 0.lt.shot, 'Invalid pulse number !')
       ids_path = trim(imasdir)//'/'//int2str(shot)//'/'//int2str(run)
       new_path = trim(imasdir)//'/'//int2str(shot)//'/'//int2str(new_run)
 #else
@@ -437,6 +440,27 @@ program b2_ual_rewrite
         if (new_run.eq.run .and. database.ne.'iter' .and. &
      &      index(new_path,'imasdb/iter').eq.0) then
           tmp_run = run + 1000
+#if AL_MAJOR_VERSION > 4
+          call al_build_uri_from_legacy_parameters              &
+     &     ( MDSPLUS_BACKEND, shot, run, trim(username),        &
+     &       trim(database), int2str(IMAS_MAJOR_VERSION), '',   &
+     &       uri_source, status )
+          if (database.eq.'iter'.or.index(ids_path,'imasdb/iter').gt.0) then
+            call al_build_uri_from_legacy_parameters            &
+     &       ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),  &
+     &         'ITER', int2str(IMAS_MAJOR_VERSION), '',         &
+     &         uri_dest, status )
+          else
+            call al_build_uri_from_legacy_parameters            &
+     &       ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),  &
+     &         trim(database), int2str(IMAS_MAJOR_VERSION), '', &
+     &         uri_dest, status )
+          end if
+          write(systemarg,'(a,a,a,a)')                     &
+     &      'idscp --setDatasetVersion'//                  &
+     &         ' -s ',trim(uri_source),                    &
+     &         ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
           write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
      &     'idscp --setDatasetVersion'//                   &
@@ -451,6 +475,7 @@ program b2_ual_rewrite
 #endif
           if (database.eq.'iter'.or.index(new_path,'imasdb/iter').gt.0) &
      &     systemarg = trim(systemarg)//' -do ITER'
+#endif
 #ifdef NAGFOR
           call system(systemarg, status, ierror)
 #else
@@ -462,6 +487,27 @@ program b2_ual_rewrite
             write(new_path(l+7:l+10),'(a4)') 'ITER'
           end if
         end if
+#if AL_MAJOR_VERSION > 4
+        call al_build_uri_from_legacy_parameters              &
+     &   ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),    &
+     &     trim(database), int2str(IMAS_MAJOR_VERSION), '',   &
+     &     uri_source, status )
+        if (database.eq.'iter'.or.index(new_path,'imasdb/iter').gt.0) then
+          call al_build_uri_from_legacy_parameters            &
+     &     ( MDSPLUS_BACKEND, shot, new_run, trim(username),  &
+     &       'ITER', int2str(IMAS_MAJOR_VERSION), '',         &
+     &       uri_dest, status )
+        else
+          call al_build_uri_from_legacy_parameters            &
+     &     ( MDSPLUS_BACKEND, shot, new_run, trim(username),  &
+     &       trim(database), int2str(IMAS_MAJOR_VERSION), '', &
+     &       uri_dest, status )
+        end if
+        write(systemarg,'(a,a,a,a)')                     &
+     &    'idscp --setDatasetVersion'//                  &
+     &       ' -s ',trim(uri_source),                    &
+     &       ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
         write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
      &   'idscp --setDatasetVersion'//                   &
@@ -476,6 +522,7 @@ program b2_ual_rewrite
 #endif
         if (database.eq.'iter'.or.index(new_path,'imasdb/iter').gt.0) &
      &   systemarg = trim(systemarg)//' -do ITER'
+#endif
 #ifdef NAGFOR
         call system(systemarg, status, ierror)
 #else

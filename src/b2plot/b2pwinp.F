@@ -7,10 +7,10 @@ c*** Data input from dg files.
 c*** MUST be compiled in single precision!!!
 c======================================================================
       use b2mod_types
+      use b2mod_impcon
       use b2mod_b2plot_wall_loading
       use b2mod_subsys
       implicit none
-#     include "impcon.inc"
       integer lun
       parameter (lun=96)
       integer i

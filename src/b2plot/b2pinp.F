@@ -1,5 +1,6 @@
       subroutine b2pinp(iret)
       use b2mod_types
+      use b2mod_impcon
       use b2mod_dimensions
       implicit none
       integer iret
@@ -10,7 +11,6 @@ c----------------------------------------------------------------------
 c*** Data input from dg files.
 c*** MUST be compiled in single precision!!!
 c----------------------------------------------------------------------
-#include "impcon.inc"
       integer lun
       parameter (lun=96)
       logical open_file, file_ok
@@ -57,6 +57,7 @@ c======================================================================
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
+      use b2mod_impcon
       use b2mod_dimensions
       implicit none
 c
@@ -65,7 +66,6 @@ c----------------------------------------------------------------------
 #ifndef B25_EIRENE
 #include "COUPLE/KOPPLDIM.F"
 #endif
-#include "impcon.inc"
       integer nnns
       real (kind=R4) :: add_rdi, add_srci(2, nadsrcm)
       parameter (nnns=23)
