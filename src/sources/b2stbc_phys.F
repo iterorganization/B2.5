@@ -9767,7 +9767,7 @@ cwdk    Todo: corrections for BCCON.ne.14
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
-            srw%skt0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*t2
+            srw%skt0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*t4
             srw%skt0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
           enddo
         endif
