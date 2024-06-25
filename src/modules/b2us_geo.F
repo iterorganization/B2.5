@@ -728,14 +728,14 @@
           dpsi_max_up   = 0.0_R8
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-            if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
+            if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx) ) then
               count_up = count_up + 1
-              if ( dpsi(iCv) .gt. dpsi_max_up) then
+              if ( dpsi(iCv) .gt. dpsi_max_up ) then
                 dpsi_max_up = dpsi(iCv)
               endif
-            elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
+            elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx) ) then
               count_down = count_down + 1
-              if ( dpsi(iCv) .gt. dpsi_max_down) then
+              if ( dpsi(iCv) .gt. dpsi_max_down ) then
                 dpsi_max_down = dpsi(iCv)
               endif
             endif
@@ -743,7 +743,7 @@
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
             if (iCv.le.mpg%nCi) then
-              if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
+              if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx) ) then
                 if (mpg%cvVxP(iCv,2) .eq. 3) then
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
      &               real(count_up,R8) / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
@@ -752,7 +752,7 @@
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
      &               real(count_up,R8) / mpg%vxCvP(iVx,2)
                 endif
-              elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
+              elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx) ) then
                 if (mpg%cvVxP(iCv,2) .eq. 3) then
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
      &             real(count_down,R8) / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
@@ -1037,20 +1037,22 @@
       t0=0.0_R8
       iFt=0
       gm%signmf=0.0_R8
-      do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
-        iFt=iFt+1
-        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
-        if (mpg%cvOnClosedSurface(iCv)) then
-          do i=1,mpg%ftCvP(iFt,2)
-            r0=r0+gm%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
-     .           gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-            z0=z0+gm%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
-     .           gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-            t0=t0+
-     .           gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-          end do
-        end if
-      end do
+      if (any(mpg%cvOnClosedSurface(1:mpg%nCi))) then
+        do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
+          iFt=iFt+1
+          iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+          if (mpg%cvOnClosedSurface(iCv)) then
+            do i=1,mpg%ftCvP(iFt,2)
+              r0=r0+gm%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+              z0=z0+gm%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+              t0=t0+
+     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+            end do
+          end if
+        end do
+      end if
       if (t0.gt.0.0_R8) then
         r0=r0/t0
         z0=z0/t0
