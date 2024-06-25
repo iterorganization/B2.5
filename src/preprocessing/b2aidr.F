@@ -341,14 +341,6 @@
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 
-*   ..read the header of geometry file
-      call cfruch (ninp(1), 120, lblgm, 'label')
-      call cfruin (ninp(1), 1, idum, 'isymm')
-      isymm = idum(0)
-*     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
-*   ..read the mapping and geometry
-      call read_b2fgmtry (ninp(1), mpg, geo)
-
 * ..obtain initial plasma state
 *   ..obtain lblps
       call b2xxid ('b2ai', lblps(1:60))
@@ -452,6 +444,14 @@
         call xertst (naini(is).ge.na_min,
      &   'Initial densities must be larger than na_min!')
       end do
+
+*   ..read the header of geometry file
+      call cfruch (ninp(1), 120, lblgm, 'label')
+      call cfruin (ninp(1), 1, idum, 'isymm')
+      isymm = idum(0)
+*     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
+*   ..read the mapping and geometry
+      call read_b2fgmtry (ninp(1), mpg, geo)
 
 *   ..initialise time
       tim = 0.0_R8
