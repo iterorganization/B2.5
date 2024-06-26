@@ -1964,10 +1964,11 @@ c 2002-09-11: logic revised
               read (ninp(2),'(a)') add_comment(i)
             end do
           end if
-        case('b2mndr_shot_number')  ! Replacing with superceding switch b2mndr_pulse_number
+        case('b2mndr_shot_number')  ! Replacing with superseding switch b2mndr_pulse_number
           todo = pulse.eq.0.and.shot.ne.0
           wait = .true.
           cnamip = 'b2mndr_pulse_number'
+          if (todo) iswitch = shot
         case default ISWITCHES
           todo = .false.
       end select ISWITCHES
