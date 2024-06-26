@@ -348,6 +348,7 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL PUSHREAL8ARRAY(co%cthe, r8*SIZE(co%cthe, 1)*SIZE(co%cthe, 2)/8)
   CALL PUSHREAL8ARRAY(co%csigin, r8*SIZE(co%csigin, 1)*SIZE(co%csigin, 2&
 &               )*SIZE(co%csigin, 3)*SIZE(co%csigin, 4)/8)
+  CALL PUSHREAL8ARRAY(cdkt0, r8*nfc*2/8)
   CALL PUSHREAL8ARRAY(calf0, r8*nfc*2/8)
   CALL PUSHREAL8ARRAY(csig0, r8*nfc*2/8)
   CALL PUSHREAL8ARRAY(chvi0, r8*nfc*2/8)
@@ -759,6 +760,7 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPREAL8ARRAY(chvi0, r8*nfc*2/8)
   CALL POPREAL8ARRAY(csig0, r8*nfc*2/8)
   CALL POPREAL8ARRAY(calf0, r8*nfc*2/8)
+  CALL POPREAL8ARRAY(cdkt0, r8*nfc*2/8)
   CALL POPREAL8ARRAY(co%csigin, r8*SIZE(co%csigin, 1)*SIZE(co%csigin, 2)&
 &              *SIZE(co%csigin, 3)*SIZE(co%csigin, 4)/8)
   CALL POPREAL8ARRAY(co%cthe, r8*SIZE(co%cthe, 1)*SIZE(co%cthe, 2)/8)
