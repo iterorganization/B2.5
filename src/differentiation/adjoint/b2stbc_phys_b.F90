@@ -4260,7 +4260,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
           ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-          srw%skt0(icv1, 0) = vbig*ne00*geo%fcs(ifc)*t2
+          srw%skt0(icv1, 0) = vbig*ne00*geo%fcs(ifc)*t4
           srw%skt0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
         END DO
       END IF
@@ -9133,20 +9133,20 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         END DO
         CALL POPINTEGER4(ibc)
       ELSE IF (branch .EQ. 9) THEN
-        t2b = 0.D0
+        t4b = 0.D0
         CALL POPINTEGER4(ad_to99)
         DO ibc=ad_to99,1,-1
           icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
           srwb%skt0(icv1, 1) = 0.D0
           ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-          t2b = t2b + geo%fcs(ifc)*vbig*ne00*srwb%skt0(icv1, 0)
+          t4b = t4b + geo%fcs(ifc)*vbig*ne00*srwb%skt0(icv1, 0)
           srwb%skt0(icv1, 0) = 0.D0
           CALL POPINTEGER4(ifc)
           CALL POPINTEGER4(icv2)
           CALL POPINTEGER4(icv1)
         END DO
         CALL POPINTEGER4(ibc)
-        t4b = 0.D0
+        t2b = 0.D0
       ELSE
         GOTO 100
       END IF

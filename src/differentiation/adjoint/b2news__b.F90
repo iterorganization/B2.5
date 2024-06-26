@@ -3664,7 +3664,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
   USE B2MOD_NEUTRALS_NAMELIST_DIFF, ONLY : maxw_eff, nstraid, &
 & userfluxparm, b2recyc, arcend, targsp, b2species_start, b2species_end,&
 & lstrascl, lsns, msns, gpfc, nstrai, nstrat, debug_flags, &
-& neutrals_count, neutrals_time_mod, neutrals_time_switch, neut_scl_lim
+& neutrals_count, neutrals_time_mod, neutrals_time_switch, neut_scl_lim,&
+& natmid, ntrack
   USE B2MOD_B2CMPT_DIFF, ONLY : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig&
 & , cfdna, cfhce, cfhci
   USE B2MOD_INPUT_PROFILE_DIFF, ONLY : ndata, no_pflux, tr_ip_new_files,&

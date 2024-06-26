@@ -4286,7 +4286,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
           ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-          srw%skt0(icv1, 0) = vbig*ne00*geo%fcs(ifc)*t2
+          srw%skt0(icv1, 0) = vbig*ne00*geo%fcs(ifc)*t4
           srw%skt0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
         END DO
       END IF
@@ -11356,10 +11356,10 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 ! number of the guard cell face
           ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
           DO nd=1,nbdirs
-            srwd%skt0(nd, icv1, 0) = vbig*ne00*geo%fcs(ifc)*t2d(nd)
+            srwd%skt0(nd, icv1, 0) = vbig*ne00*geo%fcs(ifc)*t4d(nd)
             srwd%skt0(nd, icv1, 1) = 0.D0
           END DO
-          srw%skt0(icv1, 0) = vbig*ne00*geo%fcs(ifc)*t2
+          srw%skt0(icv1, 0) = vbig*ne00*geo%fcs(ifc)*t4
           srw%skt0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
         END DO
       END IF
