@@ -3703,7 +3703,7 @@ c*******************************************************************************
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
-      real (kind=R8) :: t_av, df0, df00
+      real (kind=R8) :: t_av, df0
 *   ..input/output arguments
       real (kind=R8), intent(inout) ::
      &  hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1)
@@ -3730,7 +3730,7 @@ c*******************************************************************************
 
           wrk0 = sqrt(pl%tn/mp)
           do iCv = 1, nCv
-            vcx=0.0_R8
+            vcx = 0.0_R8
             do ic = 0, ns-1
               t_av = 0.5_R8*(pl%ti(iCv)+pl%tn(iCv))
               vcx = vcx + pl%na(iCv,ic) *
@@ -3771,17 +3771,18 @@ c*******************************************************************************
           enddo !! end loop over cells
 
 *   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
-          if (ANY( dna0(:,is)/=0 ).and.switch%afn_vnn_ndiff.ne.1) then
+          if (ANY( dna0(:,is) /= 0.0_R8 ).and.switch%afn_vnn_ndiff.ne.1)
+     >     then
             write(*,*) 'Warning: '//
      .       'dna0 is not zero for neutrals'//
      .       'Recommended choice is zero!'
           endif
-          if (ANY( vla0(:,:,is)/=0 )) then
+          if (ANY( vla0(:,:,is) /= 0.0_R8 )) then
             write(*,*) 'Warning: '//
      .       'vla0 is not zero for neutrals'//
      .       'Recommended choice is zero!'
           endif
-          if (ANY( vma0(:,:,is)/=0 )) then
+          if (ANY( vma0(:,:,is) /= 0.0_R8 )) then
             write(*,*) 'Warning: '//
      .       'vma0 is not zero for neutrals'//
      .       'Recommended choice is zero!'
