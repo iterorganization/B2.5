@@ -148,7 +148,7 @@
       real (kind=R8) ::
      *  sy, intvertex_s                                                 !srv 24.08.08
       external xertst, ipgeti, eseec0
-      external ipgetr, b2xvsg, b2xvff, b2xvps
+      external ipgetr, b2xvsg, b2xvps
 *   ..initialisation
 #ifdef WG_TODO
       integer ibnd

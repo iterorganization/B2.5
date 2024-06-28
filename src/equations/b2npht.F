@@ -100,7 +100,7 @@
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgetr, b2saxpy
-      external b2xvsg, b2xvff, b2xvfx, b2ursd, b2usht, b2upht           !srv 02.01.07
+      external b2xvsg, b2ursd, b2usht, b2upht                           !srv 02.01.07
 *   ..initialisation
 
 *-----------------------------------------------------------------------

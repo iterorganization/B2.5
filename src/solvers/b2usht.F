@@ -87,7 +87,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..procedures
       intrinsic abs, sqrt, dim
       external xertst, sfill
-      external b2xvsg, b2xvff, b2xvfx, b2uxus                           !srv 02.01.07
+      external b2xvsg, b2uxus                                           !srv 02.01.07
 *   ..initialization
 
 *-----------------------------------------------------------------------

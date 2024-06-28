@@ -82,7 +82,7 @@
 *   ..procedures
       intrinsic sqrt
       external xertst, xerrab, ipgeti, ipgetr, sfill
-      external b2xvff, b2xvfx, b2xvsg
+      external b2xvsg
 
 *-----------------------------------------------------------------------
 *.computation

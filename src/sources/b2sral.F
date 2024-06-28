@@ -102,7 +102,7 @@
       real (kind=R8) ::
      *  smin, smax
       external xertst, sfill, b2saxpy, smin, smax
-      external b2xvsg, b2xvff, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
+      external b2xvsg, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
      &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
 *   ..initialisation
       data sources_inputfile/0/

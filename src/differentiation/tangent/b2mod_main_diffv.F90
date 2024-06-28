@@ -150,7 +150,6 @@ MODULE B2MOD_MAIN_DIFFV
 !   ..procedures
   CHARACTER(len=32) :: GET_B25_HASH
   EXTERNAL PRGINI, PRGEND, CFOPEN, CFRUIN
-  EXTERNAL PRGINI_DV, CFRUIN_DV0
 !   ..initialise input/output unit numbers
   DATA ninp /50, 51, 52, 53, 54, 55, 56/
   DATA nout /60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70/

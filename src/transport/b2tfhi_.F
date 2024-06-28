@@ -89,7 +89,7 @@ c      integer, save :: conductive_limit = 1                             !srv 16
 c      integer, save :: lim_flux = 0                                    !srv 04.02.03
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff
+      external b2xvsg
 *   ..initialization
 
 *-----------------------------------------------------------------------

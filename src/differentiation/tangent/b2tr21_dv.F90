@@ -69,7 +69,7 @@ SUBROUTINE B2T21T_NODIFF(nx, ny, ns, lnlam, bb, vol, hx, pbs, ne, na, &
   INTEGER :: nz(ns+1)
   INTEGER :: i, ix, iy, ifail, nspec, ncharged
 !
-  EXTERNAL B2XVFF_NODIFF, B2XVSG, IPGETI
+  EXTERNAL B2XVFF, B2XVSG, IPGETI
 !
   INTEGER, SAVE :: icase=0
   INTEGER :: ncall, n2, failcount, failcount0
@@ -116,7 +116,7 @@ SUBROUTINE B2T21T_NODIFF(nx, ny, ns, lnlam, bb, vol, hx, pbs, ne, na, &
     CALL B2XVSG(n2, ti, 1, 'ti', '.gt.')
     CALL B2XVSG(n2, ne2, 1, 'ne2', '.gt.')
 !    ..test edge values of fch_p
-    CALL B2XVFF_NODIFF(nx, ny, fch_p, 'fch_p')
+    CALL B2XVFF(nx, ny, fch_p, 'fch_p')
   END IF
 !
 !   ..compute the Coulomb logarithm

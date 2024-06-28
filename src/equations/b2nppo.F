@@ -70,7 +70,7 @@
      *  aa(mpg%nCmxNv), wrk0(nCv)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2ursd, b2uspo, b2uppo
+      external b2xvsg, b2ursd, b2uspo, b2uppo
 *   ..initialisation
 
 *-----------------------------------------------------------------------

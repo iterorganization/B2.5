@@ -73,7 +73,7 @@ SUBROUTINE B2USP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, te, conc&
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
 !srv 11.01.00
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2UX7P, B2UX9P
+  EXTERNAL B2XVSG, B2XVFF, B2UX7P, B2UX9P
   CHARACTER(len=10) :: arg1
 !   ..initialisation
 !srv 27.01.00
@@ -112,7 +112,7 @@ SUBROUTINE B2USP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, te, conc&
     CALL B2XVSG(n2, sch(-1, -1, 1), 1, 'sch1', '.le.')
     CALL B2XVSG(n2, sch(-1, -1, 3), 1, 'sch3', '.le.')
 !    ..test edge values of conc
-    CALL B2XVFF_NODIFF(nx, ny, conc, 'conc')
+    CALL B2XVFF(nx, ny, conc, 'conc')
   END IF
 !
 ! ..compute the correction

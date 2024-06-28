@@ -95,7 +95,7 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
 !srv 13.01.17
   REAL(kind=r8) :: uasx, uesx, uasy
   EXTERNAL XERTST, IPGETI, IPGETR, SFILL_NODIFF
-  EXTERNAL B2XVFF_NODIFF, B2XVSG, INTFACEV, INTFACEH
+  EXTERNAL B2XVFF, B2XVSG, INTFACEV, INTFACEH
   INTRINSIC ABS
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -256,10 +256,10 @@ SUBROUTINE B2SIHS_NODIFF(nx, ny, ns, boris, ismain, fac_exb, lnlam, na, &
     arg1 = n2*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
 !    ..test edge values of fch
-    CALL B2XVFF_NODIFF(nx, ny, fch, 'fch')
+    CALL B2XVFF(nx, ny, fch, 'fch')
 !    ..test edge values of cvsa
     DO is=0,ns-1
-      CALL B2XVFF_NODIFF(nx, ny, cvsa(-1, -1, 0, 0, is), 'cvsa')
+      CALL B2XVFF(nx, ny, cvsa(-1, -1, 0, 0, is), 'cvsa')
     END DO
 !    ..test fac_ExB
     result1 = MINVAL(fac_exb)

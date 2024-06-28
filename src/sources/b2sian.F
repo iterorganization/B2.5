@@ -47,7 +47,7 @@
      *    wrk(nCv), wrkf(nFc)
 *   ..procedures
       external xertst
-      external b2xvff, b2xvsg
+      external b2xvsg
 *   ..initialization
 
 *-----------------------------------------------------------------------

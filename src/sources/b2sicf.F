@@ -46,7 +46,7 @@
       real (kind=R8) :: wrks(nCv)
 *   ..procedures
       external xertst
-      external b2xvff, b2xvsg
+      external b2xvsg
 
 *-----------------------------------------------------------------------
 *.computation

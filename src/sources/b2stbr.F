@@ -165,7 +165,7 @@
 #endif
 *   ..procedures
       external xertst, xerrab, sfill, ipgetr, ipgeti
-      external b2xvsg, b2xvff, smax, smin, get_jsep
+      external b2xvsg, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
       intrinsic mod
 #if ( defined(_OPENMP) && defined(CRAY) )

@@ -105,7 +105,7 @@ c     output for analysis/debugging
 *   ..procedures
       intrinsic abs
       external xertst
-      external b2xvsg, b2xvff, smin, smax
+      external b2xvsg, smin, smax
       real (kind=R8) ::
      *   smax, smin
 *   ..initialisation
