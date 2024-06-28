@@ -238,7 +238,7 @@
       logical :: write_state
       PetscErrorCode ierr
       PetscInt dummy
-      Vec XX,grad
+      Vec XX, grad
       Tao tao
       PetscScalar F
       PetscReal, pointer :: x_v(:), g_v(:)
@@ -309,16 +309,17 @@
 #ifdef TGT
       do ipar = 1, npar_opt
         g_v(ipar) = jdiff(1)*par_rescale(ipar) ! rescale par to get order unity
-        write (*,*) 'TAO GRAD:', g_v(ipar)
-      end do
 #endif
 #ifdef ADJ
       call set_adj_gradient(npar_opt,gradd,switchb)
       do ipar = 1, npar_opt
         g_v(ipar) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
-        write (*,*) 'TAO GRAD:', g_v(ipar)
-      end do
 #endif
+        write(str,"(I1)") ipar
+        if (ipar.ge.10) write(str,"(I2)") ipar
+        write (*,*) 'TAO GRAD of x',trim(str),':', g_v(ipar)
+      end do
+
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
       write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
@@ -524,16 +525,17 @@
 #ifdef TGT
       do ipar = 1, npar_opt
         g_v(ipar) = jdiff(1)*par_rescale(ipar) ! rescale par to get order unity
-        write (*,*) 'TAO GRAD:', g_v(ipar)
-      end do
 #endif
 #ifdef ADJ
       call set_adj_gradient(npar_opt,gradd,switchb)
       do ipar = 1, npar_opt
         g_v(ipar) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
-        write (*,*) 'TAO GRAD:', g_v(ipar)
-      end do
 #endif
+        write(str,"(I1)") ipar
+        if (ipar.ge.10) write(str,"(I2)") ipar
+        write (*,*) 'TAO GRAD of x',trim(str),':', g_v(ipar)
+      end do
+
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
       write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
