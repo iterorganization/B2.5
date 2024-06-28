@@ -66,7 +66,7 @@ SUBROUTINE B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pz&
   REAL(kind=r8) :: pzfd(nbdirsmax, nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC ABS
   INTRINSIC MAXVAL
   REAL(kind=r8), DIMENSION(nfc, 0:1, 0:ns-1) :: abs0
@@ -192,7 +192,7 @@ SUBROUTINE B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pz, fna, &
   REAL(kind=r8) :: facdriftm, wght(nfc, 2), gonedbsq(nfc, 0:1), pzf(nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC ABS
   INTRINSIC MAXVAL
   REAL(kind=r8), DIMENSION(nfc, 0:1, 0:ns-1) :: abs0

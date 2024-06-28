@@ -68,7 +68,7 @@ SUBROUTINE B2TVSKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   REAL(kind=r8) :: weight(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: nd
   REAL(kind=r8), DIMENSION(nFc) :: temp
   INTEGER :: nbdirs
@@ -245,7 +245,7 @@ SUBROUTINE B2TVSKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   REAL(kind=r8) :: weight(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
 !-----------------------------------------------------------------------
 !.computation
 !

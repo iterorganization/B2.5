@@ -118,7 +118,7 @@ SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 !   ..procedures
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, INTFACE
+  EXTERNAL B2XVSG, INTFACE
   EXTERNAL INTFACE_DV
   INTRINSIC NINT
   INTRINSIC MAXVAL
@@ -568,7 +568,7 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 !   ..procedures
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, INTFACE
+  EXTERNAL B2XVSG, INTFACE
   INTRINSIC NINT
   INTRINSIC MAXVAL
   REAL(r8) :: result1

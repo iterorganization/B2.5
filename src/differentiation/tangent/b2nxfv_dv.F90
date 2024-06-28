@@ -67,7 +67,7 @@ SUBROUTINE B2NXFV_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 !srv 16.10.17
   REAL(kind=r8) :: ft, dloghz(nfc, 0:1), logcvhz(ncv), logvxhz(nvx)
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVFX_NODIFF, B2XVFV, B2XVSG
+  EXTERNAL B2XVFV, B2XVSG
   INTRINSIC NINT
   INTRINSIC LOG
   INTEGER :: nd
@@ -200,7 +200,7 @@ SUBROUTINE B2NXFV_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, cvsbhz_cl&
 !srv 16.10.17
   REAL(kind=r8) :: ft, dloghz(nfc, 0:1), logcvhz(ncv), logvxhz(nvx)
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVFX_NODIFF, B2XVFV, B2XVSG
+  EXTERNAL B2XVFV, B2XVSG
   INTRINSIC NINT
   INTRINSIC LOG
 !   ..initialization

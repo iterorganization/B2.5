@@ -79,7 +79,7 @@ SUBROUTINE B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
   LOGICAL :: lnonzero
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2UX5P
+  EXTERNAL B2XVSG, B2UX5P
   INTRINSIC TRIM
   CHARACTER(len=10) :: arg1
   INTEGER :: nd
@@ -372,7 +372,7 @@ SUBROUTINE B2USPO_NODIFF(ncv, nfc, nvx, nregionv, solvereg, itcnt, &
   LOGICAL :: lnonzero
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2UX5P
+  EXTERNAL B2XVSG, B2UX5P
   INTRINSIC TRIM
   CHARACTER(len=10) :: arg1
 !

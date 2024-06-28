@@ -63,7 +63,7 @@ SUBROUTINE B2NXDU_DV(ncv, ns, na, nad, ua, uad, smq, smqd, smqdu, smqdud&
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL SFILL_DV
-  EXTERNAL B2XVSG, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: nd
   REAL(kind=r8), DIMENSION(ncv) :: temp
   REAL(kind=r8) :: temp0
@@ -190,7 +190,7 @@ SUBROUTINE B2NXDU_NODIFF(ncv, ns, na, ua, smq, smqdu, wrk0, wrk1)
   INTEGER :: icv, is
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
 !   ..initialisation
 !
 !-----------------------------------------------------------------------

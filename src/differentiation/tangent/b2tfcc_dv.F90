@@ -80,7 +80,7 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
 & , 0:1), con0d(nbdirsmax, nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, DIFF_NODIFF, INTFACE
+  EXTERNAL B2XVSG, DIFF_NODIFF, INTFACE
   EXTERNAL DIFF_DV, INTFACE_DV
   INTRINSIC NINT
   INTEGER :: nd
@@ -558,7 +558,7 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 & nfc, 0:1), flo0(nfc, 0:1), con0(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, DIFF_NODIFF, INTFACE
+  EXTERNAL B2XVSG, DIFF_NODIFF, INTFACE
   INTRINSIC NINT
 !   ..initialisation
 !
