@@ -53,7 +53,6 @@ c
       integer iatm1(natm), imol1(nmol), iion1(nion)
 
 *  -- LOCAL SCALARS --
-      integer jvft46
       integer is, i, j, n, jvftnew, io, idummy
       real (kind=R8) :: width
       real (kind=R8), allocatable :: field1(:,:)
