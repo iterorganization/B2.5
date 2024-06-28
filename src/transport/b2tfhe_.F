@@ -104,7 +104,7 @@ c      real (kind=R8), save :: drift_hyb = 1.0_R8
 c      integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
+      external b2xvsg, b2ttia                                             !srv 11.07.99
 *   ..initialization
 
 *-----------------------------------------------------------------------

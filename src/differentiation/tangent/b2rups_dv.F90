@@ -388,7 +388,7 @@ SUBROUTINE B2RUPS_NODIFF(nget, nx, ny, ns, ne, na, ua, uadia, te, ti, tn&
       rza(-1:nx, -1:ny, is) = (zamin(is)+zamax(is))/2.0_R8
       rz2(-1:nx, -1:ny, is) = ((zamin(is)+zamax(is))/2.0_R8)**2
     END DO
-    CALL B2XPNE_ST_NODIFF(nx, ny, ns, rza, na, zero, ne)
+    CALL B2XPNE_ST(nx, ny, ns, rza, na, zero, ne)
   END IF
   arg1 = n2*ns
   CALL CFRURE(nget, arg1, ua, 'ua')

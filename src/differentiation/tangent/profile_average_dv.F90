@@ -48,7 +48,7 @@ SUBROUTINE PROFILE_AVERAGE_NODIFF(laststep, itim, ntim_batch, nx, ny, ns&
 & , -1:ny, 0:1), swrk2s(-1:nx, -1:ny, 0:1, 0:ns-1), swrk4(-1:nx, -1:ny, &
 & 0:3), swrk4s(-1:nx, -1:ny, 0:3, 0:ns-1), ne_mean(-1:nx, -1:ny), &
 & ni_mean(-1:nx, -1:ny, 0:1)
-  EXTERNAL B2XPNE_ST_NODIFF, B2XPNI_NODIFF
+  EXTERNAL B2XPNE_ST, B2XPNI_NODIFF
   INTEGER :: arg1
 !
   n2 = (nx+2)*(ny+2)
@@ -153,7 +153,7 @@ SUBROUTINE PROFILE_AVERAGE_NODIFF(laststep, itim, ntim_batch, nx, ny, ns&
           CALL CFRURE(iun, arg1, smo_mean, 'smo_mean')
         ELSE
           zero = 0.0_R8
-          CALL B2XPNE_ST_NODIFF(nx, ny, ns, rza, na_mean, zero, ne_mean)
+          CALL B2XPNE_ST(nx, ny, ns, rza, na_mean, zero, ne_mean)
           CALL B2XPNI_NODIFF(n2, ns, na_mean, ni_mean)
           arg1 = n2*2*ns
           CALL CFRURE(iun, arg1, swrk2s, 'sna_mean')

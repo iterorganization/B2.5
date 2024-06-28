@@ -88,7 +88,7 @@ SUBROUTINE B2STBC_BAS_NODIFF(nx, ny, ns, ismain, facdrift, na, ua, uadia&
 !   ..procedures
   INTRINSIC MAX, ABS, SQRT
   EXTERNAL XERTST, ESEEC0_NODIFF
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVPS_NODIFF
+  EXTERNAL B2XVSG, B2XVFF, B2XVPS_NODIFF
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
   REAL(r8) :: y1
@@ -169,13 +169,13 @@ SUBROUTINE B2STBC_BAS_NODIFF(nx, ny, ns, ismain, facdrift, na, ua, uadia&
     CALL B2XVSG(n2, hy, 1, 'hy', '.gt.')
 !    ..test state
 !    ..test edge values of fne, fni, chce, chve, chci, chvi, calf
-    CALL B2XVFF_NODIFF(nx, ny, fne, 'fne')
-    CALL B2XVFF_NODIFF(nx, ny, fni, 'fni')
-    CALL B2XVFF_NODIFF(nx, ny, chce, 'chce')
-    CALL B2XVFF_NODIFF(nx, ny, chve, 'chve')
-    CALL B2XVFF_NODIFF(nx, ny, chci, 'chci')
-    CALL B2XVFF_NODIFF(nx, ny, chvi, 'chvi')
-    CALL B2XVFF_NODIFF(nx, ny, calf, 'calf')
+    CALL B2XVFF(nx, ny, fne, 'fne')
+    CALL B2XVFF(nx, ny, fni, 'fni')
+    CALL B2XVFF(nx, ny, chce, 'chce')
+    CALL B2XVFF(nx, ny, chve, 'chve')
+    CALL B2XVFF(nx, ny, chci, 'chci')
+    CALL B2XVFF(nx, ny, chvi, 'chvi')
+    CALL B2XVFF(nx, ny, calf, 'calf')
 !    ..test sign of chce, chci
     CALL B2XVSG(n2, chce(-1, -1, 0, 0), 1, 'chce00', '.ge.')
     CALL B2XVSG(n2, chce(-1, -1, 1, 1), 1, 'chce11', '.ge.')

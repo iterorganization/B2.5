@@ -54,7 +54,7 @@
      *   tev(nVx), dtep(nFc), wrk(nFc,0:1)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff
+      external b2xvsg
 *   ..initialization
 *-----------------------------------------------------------------------
 *.computation

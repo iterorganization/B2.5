@@ -87,7 +87,7 @@
 *   ..procedures
       intrinsic nint
       external xertst, sfill, b2saxpy, ipgetr, ipgeti
-      external b2xvsg, b2xvff, b2xvps, b2stbc_phys
+      external b2xvsg, b2xvps, b2stbc_phys
 #ifdef WG_TODO
      & , b2stbc_bas, b2ssum                                            !srv 27.06.21
 #endif

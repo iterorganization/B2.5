@@ -81,7 +81,7 @@
       integer :: iCv
 *   ..procedures
       external xertst, ipgetr
-      external b2xvsg, b2xvff, b2ursc, b2usco, b2upco
+      external b2xvsg, b2ursc, b2usco, b2upco
 *   ..initialisation
 
 *-----------------------------------------------------------------------

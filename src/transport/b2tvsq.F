@@ -40,7 +40,7 @@
      *    gti(nCv,0:1), gOnedBsq(nFc,0:1)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx
+      external b2xvsg
 *-----------------------------------------------------------------------
 *.computation
 

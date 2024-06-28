@@ -107,7 +107,7 @@
 *   ..procedures
       intrinsic min, max, sqrt
       external xertst, ipgeti, ipgetr, sfill
-      external b2xvff, b2xvfx, b2xvfv, b2xvsg
+      external b2xvfv, b2xvsg
 *   ..initialization
 *     Note 0: style determines the form of the strange electron-atom
 *     energy transfer term.

@@ -94,7 +94,7 @@ c The following switches are only used in 'WG_TODO' blocks, i.e. not yet convert
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 *   ..procedures
       external xertst, ipgeti, ipgetr                                    !xpb
-      external b2xvsg, b2xvff, intface, diff
+      external b2xvsg, intface, diff
       intrinsic abs, max, sqrt, sign
 *   ..initialisation
 
