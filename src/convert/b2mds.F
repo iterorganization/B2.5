@@ -700,9 +700,11 @@ c 26: using total field for computing dspar
 c 27: Added EMOLRAD and EIONRAD arrays
 c 28: Corrected calculation of fht, now using fn[ae]_53
 c 29: Same indexing error was also present in emolrad and eionrad
-c 30: Corrected units for srcml and edissml
+c 30: Reserved for 3.2.0 WG code version
+c 31: Corrected units for srcml and edissml
+c 32: Reserved for 3.2.0 WG code version
 
-      dbversion=30
+      dbversion=31
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
