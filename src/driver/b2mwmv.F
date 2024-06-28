@@ -83,7 +83,7 @@
      *   rdum(0:9)
 *   ..procedures
       external xertst, b2scopy, b2saxpy, cfwuin, cfwure
-      external b2xvsg, b2xvfx
+      external b2xvsg
 *   ..initialisation
       data ncall/0/
 

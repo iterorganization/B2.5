@@ -98,7 +98,7 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
 !   ..procedures
   INTRINSIC ABS, MAX, EXP
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, smin, smax
+  EXTERNAL B2XVSG, B2XVFF, smin, smax
   REAL(kind=r8) :: smax, smin
 !   ..initialisation
   SAVE ncall
@@ -182,7 +182,7 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
 !    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')         !srv 11.01.13
 !    ..test edge values of pbs
-    CALL B2XVFX_NODIFF(nx, ny, pbs(-1, -1, 0), 'pbs')
+    CALL B2XVFX(nx, ny, pbs(-1, -1, 0), 'pbs')
     CALL B2XVFY_NODIFF(nx, ny, pbs(-1, -1, 1), 'pbs')
 !    ..test sign of na, ni, ne, te, ti
     arg1 = n2*ns
@@ -203,13 +203,13 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
   END IF
 !   ..test edge values of fluxes
   DO is=0,ns-1
-    CALL B2XVFF_NODIFF(nx, ny, fna(-1, -1, 0, 0, is), 'fna')
+    CALL B2XVFF(nx, ny, fna(-1, -1, 0, 0, is), 'fna')
   END DO
-  CALL B2XVFF_NODIFF(nx, ny, fhe, 'fhe')
-  CALL B2XVFF_NODIFF(nx, ny, fhi, 'fhi')
-  CALL B2XVFF_NODIFF(nx, ny, fch, 'fch')
-  CALL B2XVFF_NODIFF(nx, ny, fne, 'fne')
-  CALL B2XVFF_NODIFF(nx, ny, fni, 'fni')
+  CALL B2XVFF(nx, ny, fhe, 'fhe')
+  CALL B2XVFF(nx, ny, fhi, 'fhi')
+  CALL B2XVFF(nx, ny, fch, 'fch')
+  CALL B2XVFF(nx, ny, fne, 'fne')
+  CALL B2XVFF(nx, ny, fni, 'fni')
 !
   redep_max = 0.0_R8
   yself_max = 0.0_R8

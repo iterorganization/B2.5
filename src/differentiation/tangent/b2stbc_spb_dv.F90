@@ -178,7 +178,7 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
   EXTERNAL XERTST, SFILL_NODIFF, B2SSUM_NODIFF, B2SAXPY_NODIFF
   REAL(kind=r8) :: B2SSUM_NODIFF
 !sv 18.01.02
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVPS_NODIFF, B2XXGS, B2XPPZ_NODIFF
+  EXTERNAL B2XVSG, B2XVFF, B2XVPS_NODIFF, B2XXGS, B2XPPZ_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC REAL
   REAL(r8) :: y1
@@ -325,12 +325,12 @@ SUBROUTINE B2STBC_SPB_NODIFF(nx, ny, ns, facdrift, na, ua, uadia, vaecrb&
     CALL B2XVSG(n2, hx, 1, 'hx', '.gt.')
     CALL B2XVSG(n2, hy, 1, 'hy', '.gt.')
 !    ..test edge values of pbs
-    CALL B2XVFX_NODIFF(nx, ny, pbs(-1, -1, 0), 'pbs')
+    CALL B2XVFX(nx, ny, pbs(-1, -1, 0), 'pbs')
     CALL B2XVFY_NODIFF(nx, ny, pbs(-1, -1, 1), 'pbs')
 !    ..test state
 !    ..test edge values of fne, fni
-    CALL B2XVFF_NODIFF(nx, ny, fne, 'fne')
-    CALL B2XVFF_NODIFF(nx, ny, fni, 'fni')
+    CALL B2XVFF(nx, ny, fne, 'fne')
+    CALL B2XVFF(nx, ny, fni, 'fni')
   END IF
 !   ..initialize sources to 0
   arg1 = n2*2*ns

@@ -78,7 +78,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
       real (kind=R8) :: ubv(nVx), dub(nFc,0:1)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, calcflow, calccoef
+      external b2xvsg, calcflow, calccoef
 *   ..initialisation
 
 *-----------------------------------------------------------------------
