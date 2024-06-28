@@ -10795,8 +10795,14 @@ C  HERE: EIRENE SURFACE TALLIES
 cxpb  Convert fort.44 file if needed
         filename=fort_lc//'44'
         inquire(file=filename,exist=todo)
+        if (todo) then
+          rewind(44)
+          read (44,'(I4,2X,I4,2X,I8)',END=4499,ERR=4499) idum(0:2)
+          rewind(44)
+        end if
         if (todo.and.(.not.streql(solps_version,'iter').or.
-     &     .not.same_bundling.or..not.same_grid)) then
+     &     .not.same_bundling.or..not.same_grid.or.
+     &     idum(2).lt.jvft44)) then
           allocate(epls_map(ns1-nspecies1,ns-nspecies))
           epls_map(1:ns1-nspecies1,1:ns-nspecies)=
      &     e_bundle_contr(1:ns1-nspecies1,1:ns-nspecies)
@@ -10806,13 +10812,14 @@ cxpb  Convert fort.44 file if needed
      &     no_sputtering, savestratum, non_commensurate, flip,
      &     epls_map, jsep1, region1,
      &     leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
-     &     hx, hy, qc, hxx, hyy, qc1, gs1)
+     &     hx, hy, qc, vol, hxx, hyy, qc1, gs1)
           write(nout(5),'(a)') fort_lc//'44.2'
           deallocate(epls_map)
         else if (todo) then
           write(nout(5),'(a)') 'fort.44'
           write(*,*) 'No changes needed in '//fort_lc//'44'
         endif
+ 4499   continue
 cxpb  Convert fort.46 file if needed
         filename=fort_lc//'46'
         inquire(file=filename,exist=todo)

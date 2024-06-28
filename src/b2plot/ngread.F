@@ -42,7 +42,7 @@ c
 *  -- LOCAL SCALARS --
       integer is, nplsi
 #ifdef B25_EIRENE
-      integer NNX, NNY, ix, iy, jvft44, istra
+      integer NNX, NNY, ix, iy, istra
       integer nstsi_in, nstrai_in, nplsi_in
       integer, allocatable :: idum(:)
       integer i, j, k, ncl

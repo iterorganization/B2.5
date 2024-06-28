@@ -40,7 +40,7 @@ c
 
 *  -- LOCAL SCALARS --
 #ifdef B25_EIRENE
-      INTEGER is, i, j, n, io, idummy, jvft46
+      INTEGER is, i, j, n, io, idummy
       character*256 filename
       logical ex
 #endif

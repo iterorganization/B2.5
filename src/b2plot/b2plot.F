@@ -2108,8 +2108,15 @@ c
           description='Molecule dissociation rate (#.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
-            mach(:,:,0:nz-1)=srcml(0:nx+1,0:ny+1,1:nz,1)
-            call copy(mach,-1.0_R8/qe,nz,textmn)
+            if (jvft44.lt.20240627) then
+              do is = 0, nz-1
+                mach(:,:,is)=srcml(0:nx+1,0:ny+1,is+1,1)*vol(:,:)
+              end do
+              call copy(mach,-1.0e6_R8/qe,nz,textmn)
+            else
+              mach(:,:,0:nz-1)=srcml(0:nx+1,0:ny+1,1:nz,1)
+              call copy(mach,-1.0_R8,nz,textmn)
+            end if
           else
             nz=1
             mach(:,:,0:nz-1)=0.0_R8
@@ -2119,8 +2126,15 @@ c
           description='Power to atoms due to molecule dissociation (W)'
           if (nmoli.gt.0) then
             nz=nmoli
-            mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,0)
-            call copy(mach,-1.0_R8,nz,textmn)
+            if (jvft44.lt.20240627) then
+              do is = 0, nz-1
+                mach(:,:,is)=edissml(0:nx+1,0:ny+1,is+1,0)*vol(:,:)
+              end do
+              call copy(mach,-1.0e6_R8,nz,textmn)
+            else
+              mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,0)
+              call copy(mach,-1.0_R8,nz,textmn)
+            end if
           else
             nz=1
             mach(:,:,0:nz-1)=0.0_R8
