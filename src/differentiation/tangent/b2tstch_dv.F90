@@ -59,7 +59,7 @@ SUBROUTINE B2TSTCH_NODIFF(nx, ny, po, te, ne, csig_stoch, fchstoch)
   SAVE ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 !   ..procedures
   EXTERNAL IPGETR, IPGETI, XERTST, XERRAB
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   EXTERNAL GET_JSEP
   INTRINSIC LOG
   REAL(kind=r8) :: result1

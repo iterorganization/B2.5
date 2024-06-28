@@ -74,7 +74,7 @@ SUBROUTINE B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 & nbdirsmax, nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   REAL(kind=r8) :: result1
   INTEGER :: nd
@@ -213,7 +213,7 @@ SUBROUTINE B2TINER_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ua, &
 & , wrk1(nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   REAL(kind=r8) :: result1
 !   ..initialization

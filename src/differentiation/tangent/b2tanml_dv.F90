@@ -70,7 +70,7 @@ SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, &
   REAL(kind=r8) :: dpod(nbdirsmax, nfc, 0:1), povd(nbdirsmax, mpg%nvx)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF, DIFF_R_NODIFF
+  EXTERNAL B2XVSG, DIFF_R_NODIFF
   INTEGER :: nd
   INTEGER :: nbdirs
 !-----------------------------------------------------------------------
@@ -177,7 +177,7 @@ SUBROUTINE B2TANML_NODIFF(ncv, nfc, ns, switch, geo, mpg, csig_an, po, &
   REAL(kind=r8) :: dpo(nfc, 0:1), pov(mpg%nvx)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF, DIFF_R_NODIFF
+  EXTERNAL B2XVSG, DIFF_R_NODIFF
 !-----------------------------------------------------------------------
 !.computation
 !
