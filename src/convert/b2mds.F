@@ -1266,7 +1266,7 @@ c
      1       nCv,temp,'')
         if (jvft44.lt.20240627) then
           forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=srcml(iCv,is+1,1)
-     1     *1.0e6_R8*geo%cvVol(iCv)/qe
+     1     *1.0e6_R8*gm%cvVol(iCv)/qe
         else
           forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=srcml(iCv,is+1,1)
         endif
@@ -1274,7 +1274,7 @@ c
      1       nCv,nmoli,tmp,'TEXTMN','')
         if (jvft44.lt.20240627) then
           forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=edissml(iCv,is+1,1)
-     1     *1.0e6_R8*geo%cvVol(iCv)
+     1     *1.0e6_R8*gm%cvVol(iCv)
         else
           forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=edissml(iCv,is+1,1)
         endif
