@@ -1273,10 +1273,11 @@ c
         call mds_put_double_usns('\TOP.SNAPSHOT:SRCML','s^-1',
      1       nCv,nmoli,tmp,'TEXTMN','')
         if (jvft44.lt.20240627) then
-          forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=edissml(iCv,is+1,1)
-     1     *1.0e6_R8*gm%cvVol(iCv)
+          forall (iCv=1:nCv,is=0:nmoli-1)
+     1       tmp(iCv,is)=edissml(iCv,is+1,1)*1.0e6_R8*gm%cvVol(iCv)
         else
-          forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=edissml(iCv,is+1,1)
+          forall (iCv=1:nCv,is=0:nmoli-1)
+     1       tmp(iCv,is)=edissml(iCv,is+1,1)
         endif
         call mds_put_double_usns('\TOP.SNAPSHOT:EDISSML','W',
      1       nCv,nmoli,tmp,'TEXTMN','')
