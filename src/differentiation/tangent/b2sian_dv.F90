@@ -69,7 +69,7 @@ SUBROUTINE B2SIAN_DV(ncv, nfc, isb, switch, geo, mpg, mpgd, fchanml, &
   REAL(kind=r8) :: wrkd(nbdirsmax, ncv), wrkfd(nbdirsmax, nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVSG
+  EXTERNAL B2XVSG
   INTRINSIC NINT
   CHARACTER(len=12) :: arg1
   INTEGER :: nd
@@ -188,7 +188,7 @@ SUBROUTINE B2SIAN_NODIFF(ncv, nfc, isb, switch, geo, mpg, fchanml, smban&
   REAL(kind=r8) :: wrk(ncv), wrkf(nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVSG
+  EXTERNAL B2XVSG
   INTRINSIC NINT
   CHARACTER(len=12) :: arg1
 !   ..initialization

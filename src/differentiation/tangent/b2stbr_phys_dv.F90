@@ -98,7 +98,7 @@ SUBROUTINE B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 !   ..procedures
   INTRINSIC ABS
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, smin, smax
+  EXTERNAL B2XVSG, smin, smax
   REAL(kind=r8) :: smax, smin
   EXTERNAL XERRAB
   INTRINSIC NINT
@@ -1025,7 +1025,7 @@ SUBROUTINE B2STBR_PHYS_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
 !   ..procedures
   INTRINSIC ABS
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, smin, smax
+  EXTERNAL B2XVSG, smin, smax
   REAL(kind=r8) :: smax, smin
   EXTERNAL XERRAB
   INTRINSIC NINT

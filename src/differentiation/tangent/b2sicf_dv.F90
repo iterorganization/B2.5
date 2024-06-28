@@ -74,7 +74,7 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
   REAL(kind=r8) :: wrks(ncv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVSG
+  EXTERNAL B2XVSG
   EXTERNAL XERRAB
   CHARACTER(len=12) :: arg1
   CHARACTER(len=11) :: arg10
@@ -241,7 +241,7 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
   REAL(kind=r8) :: wrks(ncv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVSG
+  EXTERNAL B2XVSG
   EXTERNAL XERRAB
   CHARACTER(len=12) :: arg1
   CHARACTER(len=11) :: arg10

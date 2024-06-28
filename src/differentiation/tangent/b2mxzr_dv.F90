@@ -69,7 +69,6 @@ SUBROUTINE B2MXZR_DV(ncv, ns, mpg, resco, rescod, resmo, resmod, resmt, &
   INTEGER :: is, icv
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVFX_NODIFF
   INTEGER :: nd
   INTEGER :: nbdirs
 !
@@ -213,7 +212,6 @@ SUBROUTINE B2MXZR_NODIFF(ncv, ns, mpg, resco, resmo, resmt, reshe, reshi&
   INTEGER :: is, icv
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVFX_NODIFF
 !
 !-----------------------------------------------------------------------
 !.computation

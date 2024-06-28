@@ -96,7 +96,7 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   REAL(kind=r8) :: aad(nbdirsmax, mpg%ncmxnv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
+  EXTERNAL B2XVSG, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
   EXTERNAL B2URSD_DV, B2USPO_DV, B2UPPO_DV
   INTRINSIC ANY
   REAL(r8), DIMENSION(nbdirsmax, SIZE(pl%te, 1)) :: dummyzerodiffd
@@ -265,7 +265,7 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
+  EXTERNAL B2XVSG, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
   INTRINSIC ANY
 !   ..initialisation
 !

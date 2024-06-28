@@ -51,7 +51,7 @@ SUBROUTINE B2TXVSPR_NODIFF(nx, ny, ns, fac_vis, avisper, bvisper, &
   CHARACTER(len=3) :: chns
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   INTRINSIC NINT
   REAL(kind=r8) :: result1

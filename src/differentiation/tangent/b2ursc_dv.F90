@@ -77,7 +77,7 @@ SUBROUTINE B2URSC_DV(ncv, nfc, mpg, fun, fund, sfn, sfnd, ffn, ffnd, &
   INTEGER :: ifc
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: nd
   INTEGER :: nbdirs
 !   ..initialisation
@@ -192,7 +192,7 @@ SUBROUTINE B2URSC_NODIFF(ncv, nfc, mpg, fun, sfn, ffn, resfn)
   INTEGER :: ifc
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF
+  EXTERNAL B2XVSG
 !   ..initialisation
 !
 !-----------------------------------------------------------------------

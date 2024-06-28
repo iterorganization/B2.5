@@ -55,7 +55,6 @@ SUBROUTINE B2MXAC_NODIFF(ncv, ns, dv, diag)
   EXTERNAL XERTST, damax
 !   ..procedures
   REAL(kind=r8) :: damax
-  EXTERNAL B2XVFX_NODIFF
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
