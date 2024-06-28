@@ -23,7 +23,7 @@ C
      . nfla, no_sputtering, savestratum, non_commensurate, flip,
      . e_bundle_contr, jsep1, region1,
      . leftcut1, rightcut1, bottomcut1, topcut1, bottomiy1,
-     . hx, hy, qc, hxx, hyy, qc1, gs1)
+     . hx, hy, qc, vol, hxx, hyy, qc1, gs1)
 #endif
 c
 c  version : 06.11.97 22:11
@@ -44,7 +44,8 @@ c
 
 #ifdef B25_EIRENE
 *  -- INPUT ARGUMENTS --
-      integer nx1,ny1,natm1,nmol1,nion1,npls1,nfla,non_commensurate
+      integer nx1,ny1
+      integer natm1,nmol1,nion1,npls1,nfla,non_commensurate
       integer iatm1(natm), imol1(nmol), iion1(nion), ipls1(npls)
       integer jsep1, nwrite
       integer region1(-1:nx1,-1:ny1,0:2)
@@ -54,6 +55,7 @@ c
       real (kind=R8) :: e_bundle_contr(npls1,nfla)
       real (kind=R8) ::
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qc(-1:nx,-1:ny),
+     *  vol(-1:nx,-1:ny),
      *  hxx(-1:nx1,-1:ny1), hyy(-1:nx1,-1:ny1), qc1(-1:nx1,-1:ny1),
      *  gs1(-1:nx1,-1:ny1,0:2)
       character*4 solps_version
@@ -64,7 +66,7 @@ c
 *  -- LOCAL SCALARS --
       integer is, nplsi
 #ifdef B25_EIRENE
-      INTEGER NNX, NNY, IX, IY, jvft44, istra, istra1, nplsi_in, idum
+      INTEGER NNX, NNY, IX, IY, istra, istra1, nplsi_in, idum
       integer i, j, k, ncl, ncl1, nclm, jvftnew, nstra1, nfla1, n2
       real (kind=R8) :: wrk0(-1:nx,-1:ny1), field(0:nx+1,0:ny+1)
       real (kind=R8), allocatable :: dab1(:,:,:), tab1(:,:,:)
@@ -151,7 +153,7 @@ C
       open(unit=45,file=filename,status='unknown')
       write(*,*) 'Writing '//trim(filename)
 C
-      READ (44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
+      READ (44,'(I4,2X,I4,2X,I8)',END=99,ERR=99) nnx,nny,jvft44
       if((streql(solps_version,'5.0').or.streql(solps_version,'5.2'))
      &   .and.
      &   (streql(eirene_format,'old').or.streql(eirene_format,'new')))
@@ -162,9 +164,9 @@ C
       else if (streql(solps_version,'5.1')) then
         jvftnew = min(jvft44,20130210)
       else
-        jvftnew = max(jvft44,20160829)
+        jvftnew = max(jvft44,20240627)
       endif
-      WRITE(45,'(I4,2X,I4,2x,i8,2x,a32)') nx1,ny1,jvftnew,get_Eir_hash()
+      WRITE(45,'(I4,2X,I4,2X,I8,2X,a32)') nx1,ny1,jvftnew,get_Eir_hash()
       if(jvftnew.lt.2040311) then
         READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
         nplsi_in = nplsi
@@ -625,7 +627,12 @@ C
         end do
         do is = 1, nmoli
           if (imol1(is).ne.0) then
-            field(0:nx+1,0:ny+1) = srcml(0:nx+1,0:ny+1,is,1)
+            if (jvft44.lt.20240627) then
+              field(0:nx+1,0:ny+1) = srcml(0:nx+1,0:ny+1,is,1)
+     .         *1.0e6_R8*vol(0:nx+1,0:ny+1)/qe
+            else
+              field(0:nx+1,0:ny+1) = srcml(0:nx+1,0:ny+1,is,1)
+            end if
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, srcml1(0,0,imol1(is)),
      &        nncutmax, non_commensurate, flip,
@@ -641,7 +648,12 @@ C
         end do
         do is = 1, nmoli
           if (imol1(is).ne.0) then
-            field(0:nx+1,0:ny+1) = edissml(0:nx+1,0:ny+1,is,1)
+            if (jvft44.lt.20240627) then
+              field(0:nx+1,0:ny+1) = edissml(0:nx+1,0:ny+1,is,1)
+     .         *1.0e6_R8*vol(0:nx+1,0:ny+1)
+            else
+              field(0:nx+1,0:ny+1) = edissml(0:nx+1,0:ny+1,is,1)
+            endif
             call b2xtvc(nx, ny, nx1, ny1,
      &        field, edissml1(0,0,imol1(is),0),
      &        nncutmax, non_commensurate, flip,
@@ -1292,7 +1304,7 @@ cank
               eirdiag_nds_end1(i) = 0
             end if
           end do
-          call write_title(45,'eirdiag', 5*nstsi+1)
+          call write_title(45,'eirdiag',5*nstsi+1)
           WRITE(45,'(12i6)') (eirdiag_nds_ind1(i),i=1,nstsi+1)
           WRITE(45,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)
           WRITE(45,'(12i6)') (eirdiag_nds_srf1(i),i=1,nstsi)

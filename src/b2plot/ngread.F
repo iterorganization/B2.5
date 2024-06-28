@@ -34,15 +34,15 @@ c
       implicit none
 
 *  -- INPUT ARGUMENTS --
-      INTEGER ismain
+      integer, intent(in) :: ismain
 
 *  -- OUTPUT ARGUMENTS --
       INTEGER NFEND
 
 *  -- LOCAL SCALARS --
-      INTEGER IS, nplsi
+      integer is, nplsi
 #ifdef B25_EIRENE
-      INTEGER NNX, NNY, IX, IY, jvft44, istra
+      integer NNX, NNY, ix, iy, istra
       integer nstsi_in, nstrai_in, nplsi_in
       integer, allocatable :: idum(:)
       integer i, j, k, ncl
@@ -609,11 +609,11 @@ cank
             do i = 1, nbc
               if(bcchar(i).eq.'E'.and.bcpos(i).eq.-1) then
                 target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
-     &                        bcene(i).eq.15 .or. target_east
+     &                        bcene(i).eq.15.or. target_east
               end if
               if(bcchar(i).eq.'W'.and.bcpos(i).eq.nx) then
                 target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
-     &                        bcene(i).eq.15 .or. target_west
+     &                        bcene(i).eq.15.or. target_west
               end if
             end do
           else if (geometryType.eq.GEOMETRY_ANNULUS) then
