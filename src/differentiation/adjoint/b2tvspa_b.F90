@@ -72,7 +72,7 @@ SUBROUTINE B2TVSPA_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, ua&
   REAL(kind=r8) :: dvparb(nfc), wrkb(ncv), wrk1b(nfc), wrkvxb(nvx)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   INTRINSIC SQRT
   INTRINSIC NINT
@@ -223,7 +223,7 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
 & ), gonedbsq(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   INTRINSIC SQRT
   INTRINSIC NINT

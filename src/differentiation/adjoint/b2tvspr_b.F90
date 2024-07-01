@@ -61,7 +61,7 @@ SUBROUTINE B2TVSPR_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, po&
   REAL(kind=r8) :: weight(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   INTRINSIC NINT
   REAL(kind=r8), DIMENSION(ncv) :: arg1
@@ -237,7 +237,7 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po, ti, &
   REAL(kind=r8) :: weight(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   INTRINSIC NINT
   REAL(kind=r8), DIMENSION(ncv) :: arg1

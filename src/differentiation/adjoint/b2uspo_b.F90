@@ -74,7 +74,7 @@ SUBROUTINE B2USPO_B(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
   LOGICAL :: lnonzero
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2UX5P
+  EXTERNAL B2XVSG, B2UX5P
   INTRINSIC TRIM
   LOGICAL, DIMENSION(mpg%mxStencil) :: mask
   LOGICAL, DIMENSION(mpg%mxStencil) :: mask0
@@ -435,7 +435,7 @@ SUBROUTINE B2USPO_NODIFF(ncv, nfc, nvx, nregionv, solvereg, itcnt, &
   LOGICAL :: lnonzero
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2UX5P
+  EXTERNAL B2XVSG, B2UX5P
   INTRINSIC TRIM
   LOGICAL, DIMENSION(mpg%mxStencil) :: mask
   LOGICAL, DIMENSION(mpg%mxStencil) :: mask0

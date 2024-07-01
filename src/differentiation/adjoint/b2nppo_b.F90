@@ -91,7 +91,7 @@ SUBROUTINE B2NPPO_B(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   REAL(kind=r8) :: aab(mpg%ncmxnv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
+  EXTERNAL B2XVSG, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
   EXTERNAL B2URSD_B, B2USPO_B, B2UPPO_B
   INTRINSIC ANY
 !   ..initialisation
@@ -219,7 +219,7 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
+  EXTERNAL B2XVSG, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
   INTRINSIC ANY
 !   ..initialisation
 !

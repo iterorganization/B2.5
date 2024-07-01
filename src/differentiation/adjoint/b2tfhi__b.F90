@@ -142,7 +142,7 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 !      integer, save :: lim_flux = 0                                    !srv 04.02.03
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   REAL(r8), DIMENSION(nCv) :: arg1
   REAL(r8), DIMENSION(nCv) :: arg1b
@@ -723,7 +723,7 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !      integer, save :: lim_flux = 0                                    !srv 04.02.03
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   REAL(r8), DIMENSION(nCv) :: arg1
 !   ..initialization

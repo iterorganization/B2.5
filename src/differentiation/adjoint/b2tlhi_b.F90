@@ -34,7 +34,7 @@ SUBROUTINE B2TLHI_NODIFF(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nirm&
   REAL(kind=r8) :: t0, t1, cflmi_loc(nfc), nif(nfc)
 !   ..procedures
   INTRINSIC MAX, SQRT
-  EXTERNAL XERTST, B2XVFX_NODIFF
+  EXTERNAL XERTST
   INTRINSIC ABS
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
@@ -181,7 +181,7 @@ SUBROUTINE B2TLHI_B(ncv, nfc, mp, cflmi, switch, switchb, geo, geob, mpg&
   REAL(kind=r8) :: t0b, t1b, cflmi_locb(nfc), nifb(nfc)
 !   ..procedures
   INTRINSIC MAX, SQRT
-  EXTERNAL XERTST, B2XVFX_NODIFF
+  EXTERNAL XERTST
   INTRINSIC ABS
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1

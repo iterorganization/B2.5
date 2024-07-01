@@ -100,7 +100,7 @@ SUBROUTINE B2URMO_B(ncv, nfc, nvx, switch, geo, geob, mpg, mpgb, isb, ub&
   REAL(kind=r8) :: ubv(nvx), dub(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, CALCFLOW_NODIFF, CALCCOEF_NODIFF
+  EXTERNAL B2XVSG, CALCFLOW_NODIFF, CALCCOEF_NODIFF
   EXTERNAL CALCFLOW_FWD, CALCFLOW_BWD
   CHARACTER(len=23) :: arg1
   CHARACTER(len=22) :: arg10
@@ -285,7 +285,7 @@ SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
   REAL(kind=r8) :: ubv(nvx), dub(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, CALCFLOW_NODIFF, CALCCOEF_NODIFF
+  EXTERNAL B2XVSG, CALCFLOW_NODIFF, CALCCOEF_NODIFF
   CHARACTER(len=23) :: arg1
   CHARACTER(len=22) :: arg10
 !   ..initialisation

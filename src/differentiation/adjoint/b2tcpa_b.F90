@@ -84,7 +84,7 @@ SUBROUTINE B2TCPA_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   REAL(kind=r8) :: tevb(nvx), dtepb(nfc), wrkb(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: arg1
 !   ..initialization
 !-----------------------------------------------------------------------
@@ -207,7 +207,7 @@ SUBROUTINE B2TCPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, te, po, ne&
   REAL(kind=r8) :: tev(nvx), dtep(nfc), wrk(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: arg1
 !   ..initialization
 !-----------------------------------------------------------------------

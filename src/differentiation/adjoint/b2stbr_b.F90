@@ -1957,8 +1957,7 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
 !   ..procedures
   EXTERNAL XERTST, XERRAB, SFILL_NODIFF, IPGETR, IPGETI
   EXTERNAL SFILL_FWD, SFILL_BWD
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, smax, smin, &
-&     GET_JSEP
+  EXTERNAL B2XVSG, smax, smin, GET_JSEP
   REAL(kind=r8) :: smax, smin
   INTRINSIC MOD
 !   ..initialisation
@@ -4011,8 +4010,7 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   INTRINSIC CPU_TIME
 !   ..procedures
   EXTERNAL XERTST, XERRAB, SFILL_NODIFF, IPGETR, IPGETI
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, smax, smin, &
-&     GET_JSEP
+  EXTERNAL B2XVSG, smax, smin, GET_JSEP
   REAL(kind=r8) :: smax, smin
   INTRINSIC MOD
 !   ..initialisation

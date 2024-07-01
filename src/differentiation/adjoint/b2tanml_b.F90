@@ -64,7 +64,7 @@ SUBROUTINE B2TANML_B(ncv, nfc, ns, switch, geo, geob, mpg, mpgb, csig_an&
   REAL(kind=r8) :: dpob(nfc, 0:1), povb(mpg%nvx)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF, DIFF_R_NODIFF
+  EXTERNAL B2XVSG, DIFF_R_NODIFF
 !-----------------------------------------------------------------------
 !.computation
 !
@@ -146,7 +146,7 @@ SUBROUTINE B2TANML_NODIFF(ncv, nfc, ns, switch, geo, mpg, csig_an, po, &
   REAL(kind=r8) :: dpo(nfc, 0:1), pov(mpg%nvx)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF, DIFF_R_NODIFF
+  EXTERNAL B2XVSG, DIFF_R_NODIFF
 !-----------------------------------------------------------------------
 !.computation
 !

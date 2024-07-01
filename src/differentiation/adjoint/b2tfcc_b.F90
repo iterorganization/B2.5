@@ -74,7 +74,7 @@ SUBROUTINE B2TFCC_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pl&
 & 1), flo0b(nfc, 0:1), con0b(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, DIFF_NODIFF, INTFACE
+  EXTERNAL B2XVSG, DIFF_NODIFF, INTFACE
   EXTERNAL DIFF_FWD, DIFF_BWD, INTFACE_FWD, INTFACE_BWD
   INTRINSIC NINT
   REAL(r8), DIMENSION(nfc) :: tempb
@@ -620,7 +620,7 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 & nfc, 0:1), flo0(nfc, 0:1), con0(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, DIFF_NODIFF, INTFACE
+  EXTERNAL B2XVSG, DIFF_NODIFF, INTFACE
   INTRINSIC NINT
 !   ..initialisation
 !
