@@ -2700,8 +2700,11 @@ cdjm Update ion heat sources
 
       end subroutine update_average_balance
 
-      subroutine write_balance(nCv,nFc,nsd,geo)
+      subroutine write_balance(nCv,nFc,nsd,geo,mpg)
       use b2us_geo
+      use b2us_map
+      use b2mod_user_namelist
+     & , only : nimp,imp,nomp,omp
 #ifndef NO_CDF
       use b2mod_b2cmpa
      & , only : zamin,zamax
@@ -2715,13 +2718,15 @@ cdjm Update ion heat sources
 *   ..input arguments (unchanged on exit)
       integer nCv,nFc,nsd
       type(geometry), intent (in) :: geo
+      type(mapping), intent (in) :: mpg
 #ifndef NO_CDF
 #include <netcdf.inc>
 *   ..local variables
       integer nstrad
       integer status
-      integer ncid,nCvpid,nFcid,n1id,n2id,n3id,n4id,nsid,nstraid,specid,
-     .        eirnCvid,eirnatmid,eirnmolid,eirnionid
+      integer ncid,nCvpid,nCviid,nFcid,n1id,n2id,n3id,n4id,nsid,nstraid,
+     .        specid,eirnCvid,eirnatmid,eirnmolid,eirnionid,
+     .        nXptid,nimpid,nompid,nFtid
       integer vdims(4),idum(1)
       integer is
       character*13, allocatable :: species_name(:)
@@ -2742,7 +2747,11 @@ cdjm Update ion heat sources
 *   ..define all of the dimensions that will be used
       status=nf_def_dim(ncid,'nCv',nCv,nCvpid)
       call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nCi',mpg%nCi,nCviid)
+      call check_cdf_status(status)
       status=nf_def_dim(ncid,'nFc',nFc,nFcid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nFt',mpg%nFt,nFtid)
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'1',1,n1id)
       call check_cdf_status(status)
@@ -2753,6 +2762,12 @@ cdjm Update ion heat sources
       status=nf_def_dim(ncid,'4',4,n4id)
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'ns',nsd,nsid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nXpt',mpg%nXpt,nXptid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nimp',nimp,nimpid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nomp',nomp,nompid)
       call check_cdf_status(status)
       if (allocated(eirene_mc_papl_sna_bal)) then
         nstrad=size(eirene_mc_papl_sna_bal,3)
@@ -2798,6 +2813,16 @@ cdjm Update ion heat sources
       call write_cdf_double_single(ncid,'mp',rdum,vdims(1))
       rdum(1)=ev
       call write_cdf_double_single(ncid,'ev',rdum,vdims(1))
+*   ..cvReg, cvFt, ftCv, imp, omp:
+      vdims(1)=nCvpid
+      call write_cdf_int(ncid,'cvReg',mpg%cvReg,vdims,1)
+      call write_cdf_int(ncid,'cvFt',mpg%cvFt,vdims,1)
+      vdims(1)=nFtid
+      call write_cdf_int(ncid,'ftCv',mpg%ftCv,vdims,1)
+      vdims(1)=nimpid
+      call write_cdf_int(ncid,'imp',imp(1:nimp),vdims,1)
+      vdims(1)=nompid
+      call write_cdf_int(ncid,'omp',omp(1:nomp),vdims,1)
 *   ..species string:
       vdims(1)=specid
       vdims(2)=nsid

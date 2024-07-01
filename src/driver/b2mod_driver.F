@@ -3127,7 +3127,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if (balance_average .ne. 0) then
           call update_average_balance(state,itim,-1) ! scale quantities by 1/itim if averaged
         endif
-        call write_balance(nCv,nFc,ns,geo)
+        call write_balance(nCv,nFc,ns,geo,mpg)
 #else
         write(*,*)
      >   'NO_CDF is set at compilation, cannot write balance.nc'
