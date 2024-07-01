@@ -653,12 +653,13 @@ c b2txcx
 c Feedback
       integer :: b2stbc_feedback, use_pump
 
-c Optimization
-      integer :: b2optim_save_states
-      integer :: b2optim_reset_drift_iter
-      real (kind=R8) :: b2optim_reset_drift
-      integer :: b2optim_reset_param_iter
-
+c Med
+      integer :: med_style
+c b2nppo
+      integer :: b2nppo_restrict_po
+c b2txcx
+      real (kind=R8) :: b2txcx_increase_transp_coefs
+      
 c Matrix solver
       integer :: b2uxus_style
 
@@ -1342,6 +1343,10 @@ c Optimization
 
 c Matrix solver
       s % b2uxus_style = 2
+
+C b2nppo
+      s % b2nppo_restrict_po = 0
+      s % b2txcx_increase_transp_coefs = 0.0_R8
 
       return
       end subroutine set_defaults_switches
@@ -2044,18 +2049,13 @@ c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
       call ipgeti ('b2stbc_use_pump', s%use_pump)
 
+c Med
+      call ipgeti ('b2mndr_med_style', s%med_style)
 c b2nppo
-      call ipgetr ('b2nppo_restr_po', s % b2nppo_restr_po)
-      call ipgetr ('b2txcx_increase_transp_coefs',
-     &      s % b2txcx_increase_transp_coefs)
+      call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
+      call ipgetr ('b2txcx_increase_transp_coefs', 
+     &      s%b2txcx_increase_transp_coefs)
 
-c Optimization
-      call ipgeti ('b2optim_save_states', s % b2optim_save_states)
-      call ipgeti ('b2optim_reset_drift_iter',
-     & s % b2optim_reset_drift_iter)
-      call ipgetr ('b2optim_reset_drift', s % b2optim_reset_drift)
-      call ipgeti ('b2optim_reset_param_iter',
-     & s % b2optim_reset_param_iter)
 
 c Matrix solver
       call ipgeti ('b2uxus_style', s % b2uxus_style) 

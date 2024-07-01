@@ -103,22 +103,7 @@
         integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
         integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
 
-!        integer, allocatable :: cvOMP(:)               ! grid cells that belong to the outer mid plane (OMP)
-!        integer, allocatable :: cvIMP(:)               ! grid cells that belong to the inner mid plane (IMP)
-!        integer, allocatable :: fcOMP(:)               ! grid faces that belong to the outer mid plane (OMP)
-!        integer, allocatable :: fcIMP(:)               ! grid faces that belong to the inner mid plane (IMP)
-  
-!        integer, allocatable :: Xpoint(:)              ! vertex number(s) of Xpoint(s)
-        
-        real (kind=R8) :: OMPr(1:2)
-        real (kind=R8) :: OMPz(1:2)
-        real (kind=R8) :: IMPr(1:2)
-        real (kind=R8) :: IMPz(1:2)
-
-        logical, allocatable :: cvAlongBoundary(:)     ! (nCv) indicates whether the control volume is connected to a boundary cell
-        integer, allocatable :: fcs_wall(:)            ! (nCg) ordered list of faces along the boundary
-        integer, allocatable :: fcs_wall_ind(:,:)      ! (nFci,2) indicates range in fcs_wall, where neighbouring faces connected to the one flux tube are placed.
-
+        logical, allocatable :: islongbound(:)         ! (nCv) indicates whether the contol volume is connected to boundary cell
         end type mapping
 
       contains
@@ -385,17 +370,7 @@
       deallocate (m%ftLbl)
       deallocate (m%cvLbl)
 
-!      deallocate (m%cvOMP)
-!      deallocate (m%cvIMP)
-!      deallocate (m%fcOMP)
-!      deallocate (m%fcIMP)
-
-!      deallocate (m%Xpoint)
-      
-      if (allocated(m%cvAlongBoundary)) deallocate(m%cvAlongBoundary)
-      if (allocated(m%fcs_wall)) deallocate(m%fcs_wall)
-      if (allocated(m%fcs_wall_ind)) deallocate(m%fcs_wall_ind)
-
+      if (allocated(m%islongbound)) deallocate(m%islongbound)
       return
       end subroutine dealloc_mapping
 
@@ -662,8 +637,9 @@
      *           artificial_slab = 0, found = 0
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:),
      *                        indFc(:), cvNvLoc(:), freg(:),
-     *                        old_face_list(:), new_face_list(:),
-     *                        regcount(:)
+     *                        old_face_list(:), new_face_list(:)
+      integer :: fcsb(maxval(m%fcLbl),m%nCi), 
+     *  fcsbcounter(maxval(m%fcLbl)),cvsb(maxval(m%fcLbl),m%nCi)
       logical :: duplicate, left_match_found, right_match_found
       external ipgeti, xerrab
 cwdk  This initialization routine precomputes a number of arrays
@@ -1106,6 +1082,47 @@ cwdk  can be derived directly from data in that file
       if (allocated(freg)) then 
         deallocate(freg)
       endif
+
+      allocate(m%islongbound(m%nCv))
+      m%islongbound = .false.
+      fcsbcounter = 0
+      do iCv=m%nCi+1,m%nCv
+        iFc = m%cvFc(m%cvFcP(iCv,1))
+        if (m%fcLbl(iFc) .le. 0) cycle
+        fcsbcounter(m%fcLbl(iFc)) = fcsbcounter(m%fcLbl(iFc))+1
+        fcsb(m%fcLbl(iFc),fcsbcounter(m%fcLbl(iFc))) = iFc
+        iCv1 = m%fcCv(iFc,1)
+        iCv2 = m%fcCv(iFc,2)
+        cvsb(m%fcLbl(iFc),fcsbcounter(m%fcLbl(iFc))) = min(iCv1,iCv2)
+      enddo
+      do k=1,maxval(m%fcLbl)
+        print *, "fcLbl=",k
+        do j=1,fcsbcounter(k)
+          iCv2 = cvsb(k,j)
+          iFc = fcsb(k,j)
+          ! if (findloc(m%divFc,iFc,1).eq.0) cycle
+          iCv1 = maxval(m%fcCv(iFc,1:2))
+          print *,iCv1,iCv2,iFc
+          if (j.lt.fcsbcounter(k)) then
+            if (m%cvFt(iCv2).eq.m%cvFt(cvsb(k,j+1))) then
+              m%islongbound(iCv2) = .true.
+              ! m%islongbound(iCv1) = .true.
+            endif
+          endif
+          if (j.gt.1) then
+            if (m%cvFt(iCv2).eq.m%cvFt(cvsb(k,j-1))) then
+              m%islongbound(iCv2) = .true.
+              ! m%islongbound(iCv1) = .true.
+            endif
+          endif
+        enddo
+      enddo
+
+      write (*,*) 'islongbound'
+      do iCv=1,m%nCv
+        if (m%islongbound(iCv))
+     &    write (*,*) iCv
+      enddo
 
       write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc
       write (*,*) 'nFsVxmx          ', m%nFsVxmx

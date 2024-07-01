@@ -1,6 +1,6 @@
 ! $AD NOCHECKPOINT
-      subroutine b2txcx (nCv, nFc, increase_transp_coefs, mode,
-     .  geo, mpg, fcVol, fcS, kapx, conx)
+      subroutine b2txcx (nCv, nFc, increase_transp_coefs, mode, geo, mpg
+     .   ,fcVol, fcS, kapx, conx)
       use b2mod_types
       use b2us_geo
       use b2us_map
@@ -9,9 +9,10 @@
       integer, intent (in) :: nCv, nFc, mode
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
+      integer cvs(2)
       real (kind=R8) ::
-     &   fcVol(nFc,2), fcS(nFc), kapx(nCv), conx(nFc),
-     &   increase_transp_coefs
+     &   fcVol(nFc,2), fcS(nFc), kapx(nCv), conx(nFc)
+     &   ,increase_transp_coefs
 *     ------------------------------------------------------------------
 *     B2TXCX computes poloidal conductances between neighbouring cells,
 *     given the conductivities.
@@ -51,13 +52,14 @@
      &   (fcVol(iFc,1)*kapx(mpg%fcCv(iFc,1))/geo%fcHc(iFc,1))*
      &   (fcVol(iFc,2)*kapx(mpg%fcCv(iFc,2))/geo%fcHc(iFc,2))))/
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
-        if (increase_transp_coefs.gt.1.0_R8) then
-         cvs = mpg%fcCv(iFc,1:2)
-         if (mpg%cvAlongBoundary(cvs(1)).and.
-     &       mpg%cvAlongBoundary(cvs(2))) then
-           conx(iFc) = conx(iFc)*increase_transp_coefs
+         if (increase_transp_coefs .gt. 1.0_R8) then
+            cvs = mpg%fcCv(iFc,1:2)
+            if (mpg%islongbound(cvs(1)).and.
+     &           mpg%islongbound(cvs(2))) then
+                 conx(iFc) = conx(iFc)*
+     &            increase_transp_coefs
+            endif
          endif
-        endif
        enddo
       else if (mode.eq.1) then
 *    ..use arithmetic averaging (SOLPS5.0 formulation)
@@ -66,12 +68,13 @@
      &   (fcVol(iFc,1)*kapx(mpg%fcCv(iFc,1)) + 
      &    fcVol(iFc,2)*kapx(mpg%fcCv(iFc,2)))/
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
-        if (increase_transp_coefs.gt.1.0_R8) then
-         cvs = mpg%fcCv(iFc,1:2)
-         if (mpg%cvAlongBoundary(cvs(1)).and.
-     &       mpg%cvAlongBoundary(cvs(2))) then
-          conx(iFc) = conx(iFc)*increase_transp_coefs
-         endif
+        if (increase_transp_coefs .gt. 1.0_R8) then
+            cvs = mpg%fcCv(iFc,1:2)
+            if (mpg%islongbound(cvs(1)).and.
+     &           mpg%islongbound(cvs(2))) then
+                 conx(iFc) = conx(iFc)*
+     &            increase_transp_coefs
+            endif
         endif
        enddo
       else if (mode.eq.2) then
@@ -82,13 +85,14 @@
      &   (geo%fcHc(iFc,1)*kapx(mpg%fcCv(iFc,1)) + 
      &    geo%fcHc(iFc,2)*kapx(mpg%fcCv(iFc,2)))/
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
-        if (increase_transp_coefs.gt.1.0_R8) then
-         cvs = mpg%fcCv(iFc,1:2)
-         if (mpg%cvAlongBoundary(cvs(1)).and.
-     &       mpg%cvAlongBoundary(cvs(2))) then
-          conx(iFc) = conx(iFc)*increase_transp_coefs
+         if (increase_transp_coefs .gt. 1.0_R8) then
+           cvs = mpg%fcCv(iFc,1:2)
+            if (mpg%islongbound(cvs(1)).and.
+     &           mpg%islongbound(cvs(2))) then
+                 conx(iFc) = conx(iFc)*
+     &            increase_transp_coefs
+            endif
          endif
-        endif
        enddo
       else if (mode.eq.3) then
 *    ..use arithmetic averaging (drift formulation)
@@ -99,13 +103,14 @@
      &   (geo%fcVol(iFc,1)*kapx(mpg%fcCv(iFc,1)) + 
      &    geo%fcVol(iFc,2)*kapx(mpg%fcCv(iFc,2)))/
      &   (geo%fcVol(iFc,1) + geo%fcVol(iFc,2))
-        if (increase_transp_coefs.gt.1.0_R8) then
-         cvs = mpg%fcCv(iFc,1:2)
-         if (mpg%cvAlongBoundary(cvs(1)).and.
-     &       mpg%cvAlongBoundary(cvs(2))) then
-          conx(iFc) = conx(iFc)*increase_transp_coefs
+         if (increase_transp_coefs .gt. 1.0_R8) then
+            cvs = mpg%fcCv(iFc,1:2)
+            if (mpg%islongbound(cvs(1)).and.
+     &           mpg%islongbound(cvs(2))) then
+                 conx(iFc) = conx(iFc)*
+     &            increase_transp_coefs
+            endif
          endif
-        endif
        enddo
       endif
 *   ..return
