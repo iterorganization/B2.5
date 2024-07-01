@@ -993,7 +993,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   IF (branch .EQ. 0) THEN
     CALL POPREAL8ARRAY(hce0, r8*ncv/8)
     CALL POPREAL8ARRAY(hce0, r8*ncv/8)
-    WHERE (mask3) 
+    WHERE (mask3)
       dvb%ne = dvb%ne + switch%hce_min*hce0b
       hce0b = 0.D0
     END WHERE
@@ -1001,7 +1001,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     DO is=ns-1,0,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
-        WHERE (mask2) 
+        WHERE (mask2)
           plb%na(:, is) = plb%na(:, is) + switch%hci_min*hcibb(:, is)
           hcibb(:, is) = 0.D0
         END WHERE
@@ -1018,14 +1018,14 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
         CALL POPREAL8ARRAY(dna0(:, is), r8*ncv/8)
         CALL POPREAL8ARRAY(dna0(:, is), r8*ncv/8)
         CALL POPBOOLEANARRAY(mask, ncv)
-        WHERE (.NOT.mask1) 
+        WHERE (.NOT.mask1)
           hcibb(:, is) = hcibb(:, is) + max6b
           max6b = 0.D0
         ELSEWHERE
           plb%na(:, is) = plb%na(:, is) + switch%hci_min*max6b
           max6b = 0.D0
         END WHERE
-        WHERE (mask0) 
+        WHERE (mask0)
           y2b = vsa0b(:, is)
           vsa0b(:, is) = 0.D0
         END WHERE
@@ -2201,27 +2201,27 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) THEN
         mask = dna0(:, is) .LT. switch%dna_min
-        WHERE (mask) 
+        WHERE (mask)
           dna0(:, is) = switch%dna_min
         ELSEWHERE
           dna0(:, is) = dna0(:, is)
         END WHERE
         y2 = switch%vsa_min*am(is)*mp*pl%na(:, is)
         mask0 = vsa0(:, is) .LT. y2
-        WHERE (mask0) 
+        WHERE (mask0)
           vsa0(:, is) = y2
         ELSEWHERE
           vsa0(:, is) = vsa0(:, is)
         END WHERE
         mask1 = hcib(:, is) .LT. switch%hci_min*pl%na(:, is)
-        WHERE (mask1) 
+        WHERE (mask1)
           max6 = switch%hci_min*pl%na(:, is)
         ELSEWHERE
           max6 = hcib(:, is)
         END WHERE
         hci0 = hci0 - hcib(:, is) + max6
         mask2 = hcib(:, is) .LT. switch%hci_min*pl%na(:, is)
-        WHERE (mask2) 
+        WHERE (mask2)
           hcib(:, is) = switch%hci_min*pl%na(:, is)
         ELSEWHERE
           hcib(:, is) = hcib(:, is)
@@ -2229,7 +2229,7 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       END IF
     END DO
     mask3 = hce0 .LT. switch%hce_min*dv%ne
-    WHERE (mask3) 
+    WHERE (mask3)
       hce0 = switch%hce_min*dv%ne
     ELSEWHERE
       hce0 = hce0
@@ -2776,12 +2776,12 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
       ELSE
         IF (rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) &
 &           .GE. 0.) THEN
-          CALL PUSHREAL8(dabs1)
+          CALL PUSHREAL8(dabs1, r8/8)
           dabs1 = rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp&
 &           ), 3)
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8(dabs1)
+          CALL PUSHREAL8(dabs1, r8/8)
           dabs1 = -(rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(&
 &           icsepomp), 3))
           CALL PUSHCONTROL1B(1)
@@ -3002,7 +3002,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
         tempb1 = dna_exbb/temp5
         switchb%keps_cd = switchb%keps_cd + SUM(pl%kt*tempb1)
         tempb2 = -(am(ismain)*mp*switch%keps_cd*pl%kt*tempb1/temp5)
-        WHERE (pl%kt/temp3 .EQ. 0.D0) 
+        WHERE (pl%kt/temp3 .EQ. 0.D0)
           plb%kt = plb%kt + switch%keps_cd*tempb1
         ELSEWHERE
           plb%kt = plb%kt + switch%keps_cd*tempb1 + tempb2/(temp3*2.0*&
@@ -3015,7 +3015,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
         CALL POPREAL8ARRAY(dabs2, ncv)
         CALL POPREAL8ARRAY(dabs2, ncv)
         CALL POPBOOLEANARRAY(mask0, ncv)
-        WHERE (.NOT.mask0) 
+        WHERE (.NOT.mask0)
           shearb = -dabs2b
           dabs2b = 0.D0
         ELSEWHERE
@@ -3045,7 +3045,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
           CALL POPREAL8ARRAY(dabs3, ncv)
           CALL POPREAL8ARRAY(dabs3, ncv)
           CALL POPBOOLEANARRAY(mask1, ncv)
-          WHERE (.NOT.mask1) 
+          WHERE (.NOT.mask1)
             shearb = -dabs3b
             dabs3b = 0.D0
           ELSEWHERE
@@ -3079,7 +3079,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
         mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.
         CALL POPREAL8ARRAY(dabs0, SIZE(dabs0, 1))
         CALL POPREAL8ARRAY(dabs0, SIZE(dabs0, 1))
-        WHERE (.NOT.mask) 
+        WHERE (.NOT.mask)
           rtb%rza(:, ismain) = rtb%rza(:, ismain) - qe*geo%cvbb(:, 3)*&
 &           dabs0b
           dabs0b = 0.D0
@@ -3098,11 +3098,11 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
         dabs1b = -(temp2*tempb0/dabs1)
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8(dabs1)
+          CALL POPREAL8(dabs1, r8/8)
           rtb%rza(omp(icsepomp), ismain) = rtb%rza(omp(icsepomp), ismain&
 &           ) + qe*geo%cvbb(omp(icsepomp), 3)*dabs1b
         ELSE
-          CALL POPREAL8(dabs1)
+          CALL POPREAL8(dabs1, r8/8)
           rtb%rza(omp(icsepomp), ismain) = rtb%rza(omp(icsepomp), ismain&
 &           ) - qe*geo%cvbb(omp(icsepomp), 3)*dabs1b
         END IF
@@ -3175,7 +3175,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
     IF (.NOT.is_neutral(is)) THEN
       IF (switch%keps_local .EQ. 1) THEN
         mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.
-        WHERE (mask) 
+        WHERE (mask)
           dabs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
         ELSEWHERE
           dabs0 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
@@ -3201,7 +3201,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
 &                       shear)
       IF (switch%transport_keps .EQ. 1) THEN
         mask0 = shear .GE. 0.
-        WHERE (mask0) 
+        WHERE (mask0)
           dabs2 = shear
         ELSEWHERE
           dabs2 = -shear
@@ -3215,7 +3215,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
 &         -switch%keps_fac)*dna0(:, is)
       ELSE IF (switch%transport_keps .EQ. 2) THEN
         mask1 = shear .GE. 0.
-        WHERE (mask1) 
+        WHERE (mask1)
           dabs3 = shear
         ELSEWHERE
           dabs3 = -shear
@@ -3281,4 +3281,3 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
   RETURN
 !
 END SUBROUTINE SET_TRANSPORT_KEPS_NODIFF
-
