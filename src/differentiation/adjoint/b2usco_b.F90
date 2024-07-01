@@ -87,7 +87,7 @@ SUBROUTINE B2USCO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
   INTRINSIC ABS
   EXTERNAL XERTST, IPGETR, SFILL_NODIFF
 !srv 02.01.07
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: result1
   LOGICAL, DIMENSION(mpg%mxStencil) :: mask
@@ -413,7 +413,7 @@ SUBROUTINE B2USCO_B(ncv, nfc, nvx, isb, switch, geo, mpg, mpgb, nregionv&
   INTRINSIC ABS
   EXTERNAL XERTST, IPGETR, SFILL_NODIFF
 !srv 02.01.07
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs0b
   REAL(kind=r8) :: result1

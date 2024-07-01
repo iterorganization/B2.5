@@ -70,7 +70,7 @@ SUBROUTINE B2TVSQ_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, &
 & ncv), tauiab(ncv, 0:ns-1), gtib(ncv, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   INTRINSIC NINT
   INTRINSIC SQRT
@@ -687,7 +687,7 @@ SUBROUTINE B2TVSQ_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, fac_vis, &
 & , 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   INTRINSIC NINT
   INTRINSIC SQRT

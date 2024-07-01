@@ -65,7 +65,7 @@ SUBROUTINE B2NXFC_B(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robb, ub&
   CHARACTER :: charns*3
 !   ..procedures
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVFF_NODIFF, B2XVSG, HBOUT, INTFACEH
+  EXTERNAL B2XVSG, HBOUT, INTFACEH
   REAL(kind=r8), DIMENSION(ncv) :: arg1
   REAL(kind=r8), DIMENSION(ncv) :: arg1b
   CHARACTER(len=14) :: arg10
@@ -195,7 +195,7 @@ SUBROUTINE B2NXFC_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, ub, &
   CHARACTER :: charns*3
 !   ..procedures
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVFF_NODIFF, B2XVSG, HBOUT, INTFACEH
+  EXTERNAL B2XVSG, HBOUT, INTFACEH
   REAL(kind=r8), DIMENSION(ncv) :: arg1
   CHARACTER(len=14) :: arg10
   CHARACTER(len=13) :: arg11
