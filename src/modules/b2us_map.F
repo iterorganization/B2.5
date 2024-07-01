@@ -98,6 +98,8 @@
         integer, allocatable :: fcLbl(:)               ! (nFc) indicates for each face the corresponding face label
         integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
         integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
+
+        logical, allocatable :: islongbound(:)         ! (nCv) indicates whether the contol volume is connected to boundary cell
         end type mapping
 
       contains
@@ -345,6 +347,7 @@
       deallocate (m%ftLbl)
       deallocate (m%cvLbl)
 
+      if (allocated(m%islongbound)) deallocate(m%islongbound)
       return
       end subroutine dealloc_mapping
 
@@ -608,6 +611,8 @@
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:),
      *                        indFc(:), cvNvLoc(:), freg(:),
      *                        old_face_list(:), new_face_list(:)
+      integer :: fcsb(maxval(m%fcLbl),m%nCi), 
+     *  fcsbcounter(maxval(m%fcLbl)),cvsb(maxval(m%fcLbl),m%nCi)
       logical :: duplicate, left_match_found, right_match_found
       external ipgeti, xerrab
 cwdk  This initialization routine precomputes a number of arrays
@@ -1013,6 +1018,47 @@ cwdk  can be derived directly from data in that file
        end if
       end if
       deallocate(freg)
+
+      allocate(m%islongbound(m%nCv))
+      m%islongbound = .false.
+      fcsbcounter = 0
+      do iCv=m%nCi+1,m%nCv
+        iFc = m%cvFc(m%cvFcP(iCv,1))
+        if (m%fcLbl(iFc) .le. 0) cycle
+        fcsbcounter(m%fcLbl(iFc)) = fcsbcounter(m%fcLbl(iFc))+1
+        fcsb(m%fcLbl(iFc),fcsbcounter(m%fcLbl(iFc))) = iFc
+        iCv1 = m%fcCv(iFc,1)
+        iCv2 = m%fcCv(iFc,2)
+        cvsb(m%fcLbl(iFc),fcsbcounter(m%fcLbl(iFc))) = min(iCv1,iCv2)
+      enddo
+      do k=1,maxval(m%fcLbl)
+        print *, "fcLbl=",k
+        do j=1,fcsbcounter(k)
+          iCv2 = cvsb(k,j)
+          iFc = fcsb(k,j)
+          ! if (findloc(m%divFc,iFc,1).eq.0) cycle
+          iCv1 = maxval(m%fcCv(iFc,1:2))
+          print *,iCv1,iCv2,iFc
+          if (j.lt.fcsbcounter(k)) then
+            if (m%cvFt(iCv2).eq.m%cvFt(cvsb(k,j+1))) then
+              m%islongbound(iCv2) = .true.
+              ! m%islongbound(iCv1) = .true.
+            endif
+          endif
+          if (j.gt.1) then
+            if (m%cvFt(iCv2).eq.m%cvFt(cvsb(k,j-1))) then
+              m%islongbound(iCv2) = .true.
+              ! m%islongbound(iCv1) = .true.
+            endif
+          endif
+        enddo
+      enddo
+
+      write (*,*) 'islongbound'
+      do iCv=1,m%nCv
+        if (m%islongbound(iCv))
+     &    write (*,*) iCv
+      enddo
 
       write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc
       write (*,*) 'nFsVxmx          ', m%nFsVxmx

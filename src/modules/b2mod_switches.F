@@ -545,6 +545,12 @@ c Feedback
 
 c Med
       integer :: med_style
+c b2nppo
+      integer :: b2nppo_restrict_po
+c b2txcx
+      real (kind=R8) :: b2txcx_increase_transp_coefs
+      
+
 
       end type switches
 
@@ -1114,6 +1120,10 @@ c b2trno
 
 c med
       s % med_style = 0
+
+C b2nppo
+      s % b2nppo_restrict_po = 0
+      s % b2txcx_increase_transp_coefs = 0.0_R8
 
       return
       end subroutine set_defaults_switches
@@ -1705,6 +1715,12 @@ c Feedback
 
 c Med
       call ipgeti ('b2mndr_med_style', s%med_style)
+c b2nppo
+      call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
+      call ipgetr ('b2txcx_increase_transp_coefs', 
+     &      s%b2txcx_increase_transp_coefs)
+
+
 
       return
       end subroutine read_switches
