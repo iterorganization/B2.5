@@ -61,7 +61,11 @@
         real (kind=R8), allocatable  :: ftEps(:)       ! (nFt) Inverse aspect ratio
         real (kind=R8), allocatable  :: ftBbav2(:)     ! (nFt) Average B**2 on the flux tube
 
-        real (kind=R8), allocatable  :: fsPsi(:)       ! (nFs) Psi on each flux surface
+        real (kind=R8), allocatable  :: ftFpsi(:)      ! (nFt) Psi of a flux tube; for a cell with cvFt(iCv)=iFt, we should have ftFpsi(iFt) = cvFpsi(cvFt(iCv))
+        real (kind=R8), allocatable  :: fsPsi(:)       ! (nFs) Psi on each flux surface; for  face with fcFs(iFc)=iFs, we should have fsPsi(iFs) = fcFpsi(fcFs(iFc))
+
+        real (kind=R8), allocatable  :: ftDs(:)        ! (nFt) A flux tube coordinate based on the radial distance at the OMP
+        real (kind=R8), allocatable  :: fsDs(:)        ! (nFs) A flux surface coordinate based on the radial distance at the OMP
 
         logical :: LSN ! Identifies topologies where the western target is
                        ! the inner one
@@ -132,6 +136,9 @@
       allocate (g%vxConn(nVx))
       allocate (g%fsConn(nFs))
       allocate (g%fsPsi(nFs))
+      allocate (g%ftFpsi(nFt))
+      allocate (g%fsDs(nFs))
+      allocate (g%ftDs(nFt))
 
       call initialize_geometry(g)
 
@@ -197,6 +204,10 @@
       g%vxConn = 0._R8
       g%fsConn = 0._R8
       g%fsPsi = 0._R8
+      g%ftFpsi = 0._R8
+
+      g%fsDs = 0._R8
+      g%ftDs = 0._R8
 
       g%LSN = .true.
       g%psi_increasing = .true.
@@ -265,6 +276,9 @@
       deallocate (g%vxConn)
       deallocate (g%fsConn)
       deallocate (g%fsPsi)
+      deallocate (g%ftFpsi)
+      deallocate (g%fsDs)
+      deallocate (g%ftDs)
 
       return
       end subroutine dealloc_geometry
@@ -478,6 +492,16 @@
       do iFc = 1, nFc
         gm%fcFpsi(iFc) = 0.5_R8*(gm%vxFpsi(mpg%fcVx(iFc,1)) +
      &    gm%vxFpsi(mpg%fcVx(iFc,2)) )
+      enddo
+
+*   ..precompute psi for flux tube
+      do iFt = 1, nFt
+        gm%ftFpsi(iFt) = gm%cvFpsi(mpg%ftCv(mpg%ftCvP(iFt,1)))
+        do i = 1, mpg%ftCvP(iFt,2)
+          iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+          if (gm%cvFpsi(iCv).ne.gm%ftFpsi(iFt))
+     &      call xerrab('Inconsistent definition of cvFpsi')
+        enddo
       enddo
 
 *   ..set weights for interpolation to vertices
