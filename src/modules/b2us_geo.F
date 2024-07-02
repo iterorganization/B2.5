@@ -425,7 +425,7 @@
       type (mapping), intent (inout) :: mpg
       type (geometry), intent (inout) :: gm
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
-     &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2,
+     &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2, iFt,
      &           i1, i2, inv_dist(mpg%nVx) , vv(2)
       integer, allocatable :: old_face_list(:), verts(:)
       real (kind=R8) :: hzconst, dux, duy, du, sbf, Psi1, Psi2,
@@ -495,7 +495,7 @@
       enddo
 
 *   ..precompute psi for flux tube
-      do iFt = 1, nFt
+      do iFt = 1, mpg%nFt
         gm%ftFpsi(iFt) = gm%cvFpsi(mpg%ftCv(mpg%ftCvP(iFt,1)))
         do i = 1, mpg%ftCvP(iFt,2)
           iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
