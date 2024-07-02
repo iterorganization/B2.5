@@ -745,9 +745,9 @@ c       Shpottau value: sheath_potential devided by tau (Ti/Te)
       re1i = max(re1i,0.0_R8)
 
 c     Calculate fast and thermal recycled parts
-      pf = min(rc1i*cs/(-i1l),recyc0)+1.0E-30_R8
+      pf = max(rc1i*cs/(-i1l),1.0E-30_R8)
       pcorf = min(pf,recyc0)/pf
-      pt = recyc0-pf+1.0E-30_R8
+      pt = max(recyc0-pf,1.0E-30_R8)
 
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
@@ -972,10 +972,10 @@ c       Interpolate
 c     Calculate incident particle flux density
       fnni_nodrifts = vcx/vtot*(-i1l*nnf+dnndz*i2l/vtot)
 c     Calculate fast and thermal reflected parts
-      pf = min(vcx/vtot*(nnf*rc1i*cs+dnndz*rc2i*cs**2/vtot)
-     &   /fnni_nodrifts,recyc0)+1.0E-30_R8
+      pf = max(vcx/vtot*(nnf*rc1i*cs+dnndz*rc2i*cs**2/vtot)
+     &   /fnni_nodrifts,1.0E-30_R8)
       pcorf = min(pf,recyc0)/pf
-      pt = recyc0-pf+1.0E-30_R8
+      pt = max(recyc0-pf,1.0E-30_R8)
 
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
@@ -1334,9 +1334,9 @@ c       Interpolate
       re2i = max(re2i,0.0_R8)
 
 c     Calculate fast and thermal reflected parts
-      pf = min(nnf*rc1i*cs/fnni,recyc0)+1.0E-30_R8
+      pf = max(nnf*rc1i*cs/fnni,1.0E-30_R8)
       pcorf = min(pf,recyc0)/pf
-      pt = recyc0-pf+1.0E-30_R8
+      pt = max(recyc0-pf,1.0E-30_R8)
       vt = sqrt(2.0_R8*E_fc*eV/mn)
 c     The reflection coefficients below already account for the probability of
 c     fast particle reflection. Like in Eirene, we will only pump fast particles
