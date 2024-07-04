@@ -46,12 +46,12 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef USE_MPI
-SOLPSINCLUDE += -I${EBROOTOPENMPI}/include
-INCMODS += -I${EBROOTOPENMPI}/include
+  SOLPSINCLUDE += -I${EBROOTOPENMPI}/include
+  INCMODS += -I${EBROOTOPENMPI}/include
 endif
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 ifdef IMAS_PKG_LIST
