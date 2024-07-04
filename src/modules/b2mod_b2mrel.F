@@ -1,9 +1,9 @@
       module b2mod_b2mrel
       use b2mod_types
       implicit none
-      integer, allocatable ::
+      integer, allocatable, save ::
      &  nucl2s(:,:), znnucl_int(:), s2nucl(:)
-      real (kind=R8), allocatable ::
+      real (kind=R8), allocatable, save ::
      &  amnucl(:), znnucl(:),
      &  N2(:,:), N3(:,:),
      &  N4(:,:), N5(:,:),
