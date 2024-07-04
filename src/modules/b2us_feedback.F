@@ -785,37 +785,38 @@ cxpb size is changed in DIMENSIONS.F
         enddo
         is_start = is0+1
         is_end = is0+nfluids(iatm)
-        consistent = consistent .and.
-     &   ((fb_target(ifb) .eq. 0.0_R8 .or.
-     &     fb_type(ifb) .eq. 0 .or.
-     &     fb_rescale_option(ifb) .eq. 0 .or.
-     &     fb_actuator(ifb) .eq. 0) .or.
+        if (fb_actuator(ifb).ne.2) then
+          consistent = consistent .and.
+     &     ((fb_target(ifb) .eq. 0.0_R8 .or.
+     &       fb_type(ifb) .eq. 0 .or.
+     &       fb_rescale_option(ifb) .eq. 0 .or.
+     &       fb_actuator(ifb) .eq. 0) .or.
 ! csc For fluid neutrals (or fluid neutral strata, TBD) change directly the BC
 !     For kinetic neutrals (or kinetic strata, TBD), change directly userfluxparm, no issue with fluid BC
 !     Can be arbitrarily expanded to allow applying feedback to any already existent BC
-     &    (fb_actuator(ifb) .eq. 1 .and. !neutral flux (or gas puff)
-     &     ( bccon(is0,fb_ib(ifb)) .eq. 8 .or.
-     &      switch%use_eirene.ne.0) ) .or.
-     &    fb_actuator(ifb) .eq. 2 .or.
-     &    (fb_actuator(ifb) .eq. 3 .and. !charged particle flux ONLY for fb_type 6, to be improved?
-     &     maxval(bccon(is_start:is_end,
-     .                  fb_ib(ifb))).eq.8 .and.
-     &     minval(bccon(is_start:is_end,
-     .                  fb_ib(ifb))).eq.8 .and.
-     &     fb_type(ifb).eq.6) .or.
-     &    (fb_actuator(ifb) .eq. 3 .and. !charged particle flux, more general
-     &     (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 8 .or.
-     &      bccon(fb_species(ifb),fb_ib(ifb)) .eq. 13 ) .and.
-     &     .not.fb_type(ifb).eq.6) .or.
-     &    (fb_actuator(ifb) .eq. 4 .and. !electron heat flux
-     &     bcene(fb_ib(ifb)) .eq. 8) .or.
-     &    (fb_actuator(ifb) .eq. 5 .and. !ion heat flux
-     &     bceni(fb_ib(ifb)) .eq. 8) .or.
-     &    (fb_actuator(ifb) .eq. 6 .and. !current
-     &     bcpot(fb_ib(ifb)) .eq. 8) .or.
-     &    (fb_actuator(ifb) .eq. 7 .and. !density
-     &     (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1 .or.
-     &      bccon(fb_species(ifb),fb_ib(ifb)) .eq. 28)))
+     &      (fb_actuator(ifb) .eq. 1 .and. !neutral flux (or gas puff)
+     &       ( bccon(is0,fb_ib(ifb)) .eq. 8 .or.
+     &        switch%use_eirene.ne.0) ) .or.
+     &      (fb_actuator(ifb) .eq. 3 .and. !charged particle flux ONLY for fb_type 6, to be improved?
+     &       maxval(bccon(is_start:is_end,
+     .                    fb_ib(ifb))).eq.8 .and.
+     &       minval(bccon(is_start:is_end,
+     .                    fb_ib(ifb))).eq.8 .and.
+     &       fb_type(ifb).eq.6) .or.
+     &      (fb_actuator(ifb) .eq. 3 .and. !charged particle flux, more general
+     &       (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 8 .or.
+     &        bccon(fb_species(ifb),fb_ib(ifb)) .eq. 13 ) .and.
+     &       .not.fb_type(ifb).eq.6) .or.
+     &      (fb_actuator(ifb) .eq. 4 .and. !electron heat flux
+     &       bcene(fb_ib(ifb)) .eq. 8) .or.
+     &      (fb_actuator(ifb) .eq. 5 .and. !ion heat flux
+     &       bceni(fb_ib(ifb)) .eq. 8) .or.
+     &      (fb_actuator(ifb) .eq. 6 .and. !current
+     &       bcpot(fb_ib(ifb)) .eq. 8) .or.
+     &      (fb_actuator(ifb) .eq. 7 .and. !density
+     &       (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1 .or.
+     &        bccon(fb_species(ifb),fb_ib(ifb)) .eq. 28)))
+        end if
       end do
       consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
      & switch%b2stbc_boundary_namelist.lt.1
