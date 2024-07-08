@@ -269,8 +269,9 @@ cc while the second contribution corresponds to T dn/dt
        call b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg, ismain,
      &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%tn,
      &  pl%po, dv%ne, dv%ni, dv%nn, dv%fna_fcor, dv%fne, dv%fch,
-     &  co%cvsa, co%cvsahz_eff, co%f_luc_sg, co%alfx_c, co%sigx_c,
-     &  rt%rza, rt%rz2, st_ext, she0, shi0, shn0, srw)
+     &  co%cvsa, co%cvsa_cl, co%cvsa_drho, co%cvsahz_eff,
+     &  co%f_luc_sg, co%alfx_c, co%sigx_c, rt%rza, rt%rz2, st_ext,
+     &  she0, shi0, shn0, srw)
       endif
       call b2saxpy (nCv*4, 1.0e0_R8, sr%she, 1, she0, 1)
       call b2saxpy (nCv*4, 1.0e0_R8, sr%shi, 1, shi0, 1)

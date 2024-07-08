@@ -122,7 +122,7 @@
       external xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpnn, b2xpfe, b2xpfi,
-     &  b2xppb, b2xpnm, b2tral, b2trql, b2treq, b2tfnb,
+     &  b2xppb, b2xpnm, b2tral, b2treq, b2tfnb,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2xppz  !srv 06.07.00 18.01.02
 *   ..initialization
       integer, save :: no_neutr_scl = 0
@@ -285,12 +285,9 @@ csw 01oct2012 initialize potential if necessary
       call b2xpnn (nCv, ns, st%pl%na, st%dv%nn)
       call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne, st%dv%ne )
       call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, st%dv%ne2)
-*   ..compute flux limit coefficients
-      call b2trql (nCv, nFc, ns, switch, geo, mpg, st%pl, st%dv, st_ext,
-     &  st%co%chvemx, st%co%chvimx)
 *   ..compute transport coefficients
       call b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
-     &  switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
+     &  switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co, st%co_ns)
 *   ..compute currents
       call b2tanml (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &  st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
@@ -318,7 +315,7 @@ c b2npmo with rxf = 0 and recompute fluxes.
       call b2npmo (nCv, nFc, nVx, ns, ismain,
      &    switch, geo, mpg,
      &    ncall_b2news_, b2news_solving(1), 0.0_R8, dtim,
-     &    st%pl, st%dv, st%rt, st%co, st%sr, st%srw,
+     &    st%pl, st%dv, st%rt, st%co, st%co_ns, st%sr, st%srw,
      &    st%psnc, st%psnl, st_ext, ier0)
       do is = switch%nsmin, switch%nsmax-1
 *    ..DPC
@@ -495,7 +492,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       call b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
      &  ncall_b2news_, b2news_solving(1), rxf1, dtim,
-     &  st%pl, st%dv, st%rt, st%co, st%sr, st%srw,
+     &  st%pl, st%dv, st%rt, st%co, st%co_ns, st%sr, st%srw,
      &  st%psnc, st%psnl, st_ext, ier0)
       call xertst (ier0.eq.0, 'error return from b2npmo')
       if (switch%pot_eq.eq.0) then                                       !srv 13.07.05 {

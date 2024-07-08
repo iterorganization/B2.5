@@ -288,6 +288,9 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       co%f_luc_et = 1.0_R8
       co%f_luc_sg = 1.0_R8
       co%f_luc_al = 1.0_R8                                              !srv 13.01.17 }
+      co%alpha1f = 1.0_R8
+      co%f_luc_ke_c = 1.0_R8
+      co%f_luc_ki_c = 1.0_R8
       if(switch%lluciani.eq.1) then   ! connection length formulation
        !wdk There is implicit assumption here that flux tubes exist in the grid.
        !wdk Need to generalize to truly unstructured grids; using fcConn at each
@@ -333,13 +336,13 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         if (mpg%cvOnClosedSurface(iCv)) then
           iFt = mpg%cvFt(iCv)
           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-            t0 = 1.0_R8/(1.0_R8 +
+            co%f_luc_ke_c(iCv) = 1.0_R8/(1.0_R8 +
      1       7.5e16_R8*(pl%te(iCv)/ev)**2/(geo%ftConn(iFt)*dv%ne2(iCv)))
-            co%sigx_c(iCv) = co%sigx_c(iCv)*t0
-            co%alfx_c(iCv) = co%alfx_c(iCv)*t0
-            t0 = 1.0_R8/(1.0_R8 +
+            co%sigx_c(iCv) = co%sigx_c(iCv)*co%f_luc_ke_c(iCv)
+            co%alfx_c(iCv) = co%alfx_c(iCv)*co%f_luc_ke_c(iCv)
+            co%f_luc_ki_c(iCv) = 1.0_R8/(1.0_R8 +
      1       7.5e16_R8*(pl%ti(iCv)/ev)**2/(geo%ftConn(iFt)*dv%ne2(iCv)))
-            co%hcix_c(iCv) = co%hcix_c(iCv)*t0
+            co%hcix_c(iCv) = co%hcix_c(iCv)*co%f_luc_ki_c(iCv)
           endif
         endif
        enddo
@@ -376,13 +379,13 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         if (mpg%cvOnClosedSurface(iCv)) then
           iFt = mpg%cvFt(iCv)
           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-            t0 = 1.0_R8/(1.0_R8 +
+            co%f_luc_ke_c(iCv) = 1.0_R8/(1.0_R8 +
      1       0.3e16_R8*(pl%te(iCv)/ev)**2/dv%ne2(iCv))
-            co%sigx_c(iCv) = co%sigx_c(iCv)*t0
-            co%alfx_c(iCv) = co%alfx_c(iCv)*t0
-            t0 = 1.0_R8/(1.0_R8 +
+            co%sigx_c(iCv) = co%sigx_c(iCv)*co%f_luc_ke_c(iCv)
+            co%alfx_c(iCv) = co%alfx_c(iCv)*co%f_luc_ke_c(iCv)
+            co%f_luc_ki_c(iCv) = 1.0_R8/(1.0_R8 +
      1       0.3e16_R8*(pl%ti(iCv)/ev)**2/dv%ne2(iCv))
-            co%hcix_c(iCv) = co%hcix_c(iCv)*t0
+            co%hcix_c(iCv) = co%hcix_c(iCv)*co%f_luc_ki_c(iCv)
           endif
         endif
        enddo
@@ -501,11 +504,13 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         if (mpg%cvOnClosedSurface(iCv)) then
           iFt = mpg%cvFt(iCv)
           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
-            t0 = 1.0_R8/k1(iCv)*0.58e0_R8*sqrt(geo%ftEps(iFt)**3)
-            co%sigx_c(iCv) = co%sigx_c(iCv)*t0
-            co%alfx_c(iCv) = co%alfx_c(iCv)*t0
-            t0 = 1.0_R8/k2(iCv)*1.60e0_R8*sqrt(geo%ftEps(iFt)**3)
-            co%hcix_c(iCv) = co%hcix_c(iCv)*t0
+            co%f_luc_ke_c(iCv) = 1.0_R8/k1(iCv)*0.58e0_R8*
+     &        sqrt(geo%ftEps(iFt)**3)
+            co%sigx_c(iCv) = co%sigx_c(iCv)*co%f_luc_ke_c(iCv)
+            co%alfx_c(iCv) = co%alfx_c(iCv)*co%f_luc_ke_c(iCv)
+            co%f_luc_ki_c(iCv) = 1.0_R8/k2(iCv)*1.60e0_R8*
+     &        sqrt(geo%ftEps(iFt)**3)
+            co%hcix_c(iCv) = co%hcix_c(iCv)*co%f_luc_ki_c(iCv)
           endif
         endif
        enddo

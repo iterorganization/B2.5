@@ -3,14 +3,20 @@
 
       subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ni, nn,
-     &  fna_fcor, fne, fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c,
-     &  rza, rz2, st_ext, she0, shi0, shn0, srw)
+     &  fna_fcor, fne, fch, cvsa, cvsa_cl, cvsa_drho, cvsahz_eff,
+     &  f_luc_sg, alfx_c, sigx_c, rza, rz2, st_ext,
+     &  she0, shi0, shn0, srw)
       use b2mod_types
       use b2mod_tallies
 !      use b2mod_anomalous_transport
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_b2zhco
+     & , only: zhd_corr                                               !som 21.03.21
+      use b2mod_zhfrtf
+     & , only: avm_u,                                                 !som 21.03.21 16.08.21
+     &         b2mod_zhfrtf_avm_u                                     !som 18.08.21
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -49,6 +55,7 @@
       real (kind=R8) ::
      *  fna_fcor(nFc,0:1,0:ns-1), fne(nFc,0:1), fch(nFc,0:1),
      *  cvsa(nFc,0:1,0:ns-1), cvsahz_eff(nFc,0:1,0:ns-1),
+     *  cvsa_cl(nFc,0:1,0:ns-1), cvsa_drho(nFc,0:1,0:ns-1),
      *  rza(nCv,0:ns-1), rz2(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -70,36 +77,40 @@
 
 *   ..local variables
       integer iCv, iFc, is, isb, k
+      real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                         !som 13.11.20
       real (kind=R8), parameter :: eps = 1.0e-60_R8
       real (kind=R8) ::
      *  vti32(nCv),
-     &  wrkc(nCv), wrkf(nFc,0:1),
-     &  wrkv(nVx),                                          !srv 02.06.99
-     &  wrkc1(nCv),                                         !srv 28.08.02
+     &  wrkc(nCv), wrkf(nFc,0:1), wrkf1(nFc,0:1),
+     &  wrkv(nVx),                                                      !srv 02.06.99
+     &  wrkc1(nCv),                                                     !srv 28.08.02
      &  dpoc(nCv,0:1), dOnedBsqc(nCv,0:1), visc(nCv,0:1)
 #ifdef WG_TODO
-      real (kind=R8) :: csig_stoch(nFc), fchstoch(nCv)      !lk 31.01.08 }
+      real (kind=R8) :: csig_stoch(nFc), fchstoch(nCv)                  !lk 31.01.08 }
 #endif
       real (kind=R8) :: 
-     *  shidu(nCv,0:3), shidd(nCv,0:3),                     !srv 11.09.09 {
+     *  shidu(nCv,0:3), shidd(nCv,0:3),                                 !srv 11.09.09 {
      *  shiva(nCv,0:3), shivc(nCv,0:3),
      *  shivan(nCv,0:3), shivcn(nCv,0:3),
      *  shifr(nCv,0:3), shedu(nCv,0:3),
      *  shedd(nCv,0:3), shefr(nCv,0:3),
-     *  shest(nCv,0:3),                                     !srv 17.12.13
+     *  shest(nCv,0:3),                                                 !srv 17.12.13
      *  shidun(nCv,0:3),
-     *  wrks(nCv), ehx(nFc), ehy(nFc)                       !srv 13.01.17i
+     *  wrks(nCv), ehx(nFc), ehy(nFc)                                   !srv 13.01.17i
       real (kind=R8) ::
-     3  zeff(nCv), zmff(nCv), ce1(nCv),                     !srv 13.01.17 05.07.17 {
-     4  ce2(nCv), cimp1(nCv), cimp2(nCv),
+     3  zeff(nCv), zmff(nCv), ce1(nCv),                                 !srv 13.01.17 05.07.17 {
+     4  ce2(nCv), cimp1(nCv,0:ns-1), cimp2(nCv,0:ns-1),
      5  zetap(nCv), zetae(nCv),
      6  gti(nCv), gte(nCv), ne2(nCv),
-     7  smbch(nCv,0:3), smbtf(nCv,0:3),
+     7  zmc(nCv), z11(nCv),                                             !som 13.11.20
+     8  z12(nCv), z22(nCv),
+     9  zf1(nCv), zf2(nCv),
+     1  smbch(nCv,0:3), smbtf(nCv,0:3),
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)                              !srv 13.01.17 05.07.17 }
       character chk*1                                                   !srv 11.09.09 } !srv 05.07.17
       real (kind=R8) ::
-     *   t0, t1, ctaup, coef, czetap, czetae                            !srv 05.07.17
+     *   t0, t1, ctaup, coef, czetap, czetae, ft                        !srv 05.07.17
       real (kind=R8) ::
      *   fac_ExB_c
 *   ..procedures
@@ -149,9 +160,7 @@
       t0 = (3/(4*sqrt(2*pi)))*t1*(t1*ev*sqrt(ev))
       ctaup = t0*sqrt(mp) ! /lnlam it is taken below     !srv 01.07.09
 *   ..compute vti32
-      do iCv = 1, nCv
-        vti32(iCv) = geo%cvVol(iCv)/((ti(iCv)/ev)*sqrt(ti(iCv)/ev))
-      enddo
+      vti32 = geo%cvVol/((ti/ev)*sqrt(ti/ev))
 
 * ..compute heat source terms
 *   ..initialize sources to zero
@@ -287,7 +296,7 @@
         call b2saxpy (nCv*4, 1.0e0_R8, shidun, 1, shn0, 1) 
       endif
 
-*   ..contribution from divergence of the electrical drift            !srv 02.06.99
+*   ..contribution from divergence of the electrical drift             !srv 02.06.99
       call gradc(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpoc)
       call gradc(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
      &  geo%vxOnedBsq, dOnedBsqc)
@@ -311,7 +320,7 @@
         b2sihs_exbe0to3 = shedd
       endif
       call b2saxpy (nCv*4, 1.0e0_R8, shedd, 1, she0, 1)                !srv 11.09.09
-*   ..contribution from divergence of the electrical drift            !srv 02.06.99                                               !srv 02.06.99
+*   ..contribution from divergence of the electrical drift             !srv 02.06.99                                               !srv 02.06.99
       b2exba=0.0_R8
       srw%b2sihs_exba=0.0_R8
       do is = 0, ns-1
@@ -320,7 +329,7 @@
 !WG_TODO need better solution here...
            fac_ExB_c = fac_ExB(mpg%cvFc(mpg%cvFcP(iCv,1)))
            t0=switch%b2sihs_phm6*fac_ExB_c*
-     &      (na(iCv,is)/ni(iCv,0))*wrkc(iCv)                    !srv 07.06.00 02.06.99
+     &      (na(iCv,is)/ni(iCv,0))*wrkc(iCv)                           !srv 07.06.00 02.06.99
            shidd(iCv,0) = shidd(iCv,0)+
      &      (max(0.0e0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
      &       ti(iCv)
@@ -341,26 +350,52 @@
       endif
       call b2saxpy (nCv*4, 1.0e0_R8, shidd, 1, shi0, 1)                !srv 11.09.09
 *   ..contribution from viscous heating
+      if ((switch%Zhdanov_closure.eq.1) .and. 
+     &    (switch%Zhdanov_test.eq.0) .and.
+     &    switch%Zhdanov_visu.eq.1) then                               !som 18.08.21
+*   ..re-calculate mass-average velocity
+        call b2mod_zhfrtf_avm_u(nCv, ns, na, ua)
+      endif
       b2visa=0.0_R8
       srw%b2sihs_visa=0.0_R8
       do is = 0, ns-1
        if(.not.is_neutral(is).or.switch%use_eirene.eq.0.or.            !srv 29.08.02
-     &                           switch%spatial_hybrid.eq.1) then               
+     &                           switch%spatial_hybrid.eq.1) then
         if (switch%style_visc.eq.0) then
-         call diff(nCv, nFc, nVx, 0, geo, mpg, ua(:,is), wrkv, wrkf)
-         wrkf = cvsa(:,:,is)/(geo%fcQalf+eps)*wrkf**2
-         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(:,0),visc(:,0))
-         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(:,1),visc(:,1))
+          wrkf1 = 1.0_R8
         else
-         !wdk use effective viscous momentum terms from the hybrid scheme
-         !wdk avoids excessive heating in convection-dominated regions
-         !wdk (improved total energy conservation at discretized level)
+          !wdk use effective viscous momentum terms from the hybrid scheme
+          !wdk avoids excessive heating in convection-dominated regions
+          !wdk (improved total energy conservation at discretized level)
+          wrkf1(:,0) = cvsahz_eff(:,0,is)/((cvsa(:,0,is)+eps)*geo%fcHz)
+          wrkf1(:,1) = cvsahz_eff(:,1,is)/((cvsa(:,1,is)+eps)*geo%fcHz)
+        endif
+        if ((switch%Zhdanov_closure.eq.0) .or.
+     &      (switch%Zhdanov_test.eq.1) .or.
+     &      (switch%Zhdanov_visu.eq.0) .or.                            !som 16.08.21
+     &      (switch%zh_vis_type.eq.0) .or.
+     &      is_neutral(is) ) then
+          call diff(nCv, nFc, nVx, 0, geo, mpg, ua(:,is), wrkv, wrkf)
+          wrkf = cvsa(:,:,is)*wrkf1*wrkf**2/(geo%fcQalf+eps)
+          call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(:,0),visc(:,0))
+          call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(:,1),visc(:,1))
+        else
+         !wdk Case zh_vis_type .eq. 0 is now treated above.
+         !wdk Should only get here if zh_vis_type .eq. 1
+         ft = 4.0e0_R8/3.0e0_R8
          call diff(nCv, nFc, nVx, 0, geo, mpg, ua(:,is), wrkv, wrkf)
-         wrkf = cvsahz_eff(:,:,is)/(geo%fcQalf+eps)*wrkf**2
-         wrkf(:,0) = wrkf(:,0)/geo%fcHz
-         wrkf(:,1) = wrkf(:,1)/geo%fcHz
+         wrkf(:,0) = 
+     &     (cvsa(:,0,is) - ft*cvsa_cl(:,0,is))*wrkf1(:,0)*wrkf(:,0)**2/
+     &     (geo%fcQalf(:,0)+eps)
+         wrkf(:,1) = cvsa(:,1,is)*wrkf1(:,1)*wrkf(:,1)**2/
+     &     (geo%fcQalf(:,1)+eps)
          call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(:,0),visc(:,0))
          call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(:,1),visc(:,1))
+         call diff(nCv, nFc, nVx, 0, geo, mpg, avm_u, wrkv, wrkf)
+         wrkf(:,0) = ft*cvsa_drho(:,0,is)*wrkf1(:,0)*wrkf(:,0)**2/
+     &     (geo%fcQalf(:,0)+eps)
+         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(:,0),wrkc)
+         visc(:,0) = visc(:,0) + wrkc
         endif
         do iCv = 1, mpg%nCi
           t0 = switch%b2sihs_phm2*(1.0_R8-switch%BoRiS)*visc(iCv,0)
@@ -429,13 +464,47 @@
       if(switch%b2sigp_style.eq.2) then                                      !srv 05.07.17
        call b2xpne (nCv, ns, rz2, na, st_ext%ne2, ne2)
        call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)                    !srv 13.01.17 {
-       call b2xzmf (nCv, ns, ismain, rz2, na, zmff)
        do iCv = 1, nCv
          ce1(iCv)=fce1(zeff(iCv))
          ce2(iCv)=fce2(zeff(iCv))
-         cimp1(iCv)=fce1(zmff(iCv))
-         cimp2(iCv)=fce2(zmff(iCv))
-       enddo                                                          !srv 13.01.17 }
+       enddo 
+       if (switch%Zhdanov_closure.eq.0.or.switch%Zhdanov_test.eq.1 .or.
+     &     switch%Zhdanov_tf_fr.eq.0) then
+         mm(0:ns-1) = switch%mass_multiplicator
+         mm(ismain) = 1.0_R8
+         am1(0:ns-1)= mm(0:ns-1)*am(0:ns-1)
+         call b2xzmf (nCv, ns, ismain, rz2, na, zmff)
+         call b2xzmc (nCv, ns, ismain, rz2, na, am1, zmc)
+         call b2xzf1 (nCv, ns, ismain, rz2, na, am1, zf1)
+         call b2xzf2 (nCv, ns, ismain, rz2, na, am1, zf2)
+         call b2xz11 (nCv, ns, ismain, rz2, na, am1, z11)
+         call b2xz12 (nCv, ns, ismain, rz2, na, am1, z12)
+         call b2xz22 (nCv, ns, ismain, rz2, na, am1, z22)
+         if (switch%impr_form_fr.eq.0) then
+           do iCv = 1, nCv
+             cimp1(iCv,0:ns-1)=fce1(zmff(iCv))
+           enddo
+         else
+           do is = 0, ns-1
+             do iCv = 1, nCv
+               cimp1(iCv,is)=fcim1(ismain,is,ns,am1,z11(iCv),
+     &           z12(iCv),z22(iCv),zf1(iCv),zf2(iCv))
+             enddo
+           enddo
+         endif
+         if (switch%impr_form_tf.eq.0) then
+           do iCv = 1, nCv
+             cimp2(iCv,0:ns-1)=fce2(zmff(iCv))
+           enddo
+         else
+           do is = 0, ns-1
+             do iCv = 1, nCv
+               cimp2(iCv,is)=fcim2(ismain,is,ns,am1,zmc(iCv),
+     &           z11(iCv),z12(iCv),z22(iCv))
+             enddo
+           enddo
+         endif
+       endif
 *   ..compute the Coulomb logarithm
        call b2tlnl (nCv, switch, switch%icase_ii, te, ti, ne, lnlam)
 *   ..compute zetap and zetae
@@ -479,6 +548,12 @@
      &                                               )
          endif
        enddo
+*   ..add contribution due to Zhdanov multi-species approach
+       if(switch%Zhdanov_closure.eq.1.and.switch%Zhdanov_test.eq.0.and.
+     &    switch%Zhdanov_tf_fr.eq.1) then                              !som 01.07.21
+         shifr(:,0) = shifr(:,0)-zhd_corr*avm_u*shefr(:,0)
+         shefr(:,0) = shefr(:,0)-zhd_corr*(avm_u/ue)*shefr(:,0)
+       endif
        shefr(:,0) =  ue*shefr(:,0)
 
        b2joule=0.0_R8

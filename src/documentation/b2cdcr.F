@@ -234,6 +234,10 @@
 *     B2NXFM computes the flow terms in the parallel momentum equation
 *     (not used anymore).
 *
+*     B2NXFV_ZH calculates the convective term due to new form of ion
+*     viscosity term in the momentum correction equation if Zhdanov
+*     closure is applied.
+*
 *     B2NXFX computes an expression that occurs in the electron-atom
 *     thermal force.
 *
@@ -279,6 +283,9 @@
 *
 *     B2SIAV computes a linearised representation of the additional
 *     viscosity.
+*
+*     B2SIAV_ZH computes a linearised representation of the additional
+*     viscosity if the Zhdanov closure is applied.
 *
 *     B2SIFR computes a linearised representation of the friction
 *     force between one species and all others.
@@ -368,6 +375,8 @@
 *     B2TFRN computes the particle and energy fluxes between
 *     neighbouring cells which are to be provided to Eirene.
 *
+*     B2TFVH computes the ion velocity-dependent heat flux.
+*
 *     B2TLHE applies a flux limit to the electron heat and charge
 *     transport coefficients.
 *
@@ -390,14 +399,69 @@
 *     B2TRAL computes the transport coefficients, including geometric
 *     factors such as vol/hx**2 and vol/hy**2.
 *
+*     B2TRCA computes the inversed matrix for heat flux/R-moments.
+*
 *     B2TRCL computes the classical transport coefficients, including
 *     geometric factors such as vol/hx**2 and vol/hy**2.
+*
+*     B2TRCN computes the N-coefficients and all mass-related variables.
+*
+*     B2TRCV computes the inverted matrix for the viscous stress tensor.
+*
+*     B2TRCW calculates charge state corrections for the viscous
+*     stress tensor.
+*
+*     B2TRCZ calculates charge state corrections to the thermal and
+*     friction force terms.
 *
 *     B2TREQ computes the cell-integrated energy equipartition
 *     multiplier.
 *
+*     B2TRFL computes the flux-limiting coefficients.
+*
+*     B2TRFL_AN computes the flux-limiting coefficients using
+*     analytically calculated ion heat conductivity.
+*
+*     B2TRFL_VIS computes the flux-limiting coefficient for the stress
+*     viscosity.
+*
+*     B2TRFR computes the friction force transport coefficient.
+*
+*     B2TRHRTF_AN computes the heat flux, the R-moment and the thermal
+*     force transport coefficient analytically.
+*
+*     B2TRHT computes the ion heat conductivity coefficient.
+*
+*     B2TRHT_AN computes the ion heat conductivity coefficient using
+*     the analytic method.
+*
+*     B2TRHW computes the heat flux and R-moment velocity-dependent part
+*     of the transport coefficient.
+*
 *     B2TRNO computes the anomalous transport coefficients, including
 *     geometric factors such as vol/hx**2 and vol/hy**2.
+*
+*     B2TRNU computes the number of isonuclear sequences (ions with
+*     different nuclei) and the maximal atom number Z in the plasma
+*     composition.
+*
+*     B2TRSC computes the X and Y components of electrical conductivity
+*     associated with stochastization of the magnetic field.
+*
+*     B2TRSH computes the X and Y components of electron thermal conductivity
+*     associated with stochastization of the magnetic field.
+*
+*     B2TRTF computes the thermal force transport coefficient.
+*
+*     B2TRVIS_AN computes the viscous stress tensor transport coefficient
+*     analytically.
+*
+*     B2TRZH computes the transport coefficients using the 21N-moment
+*     approach, as detailed in [V. M. Zhdanov. Transport Processes in
+*     Multicomponent Plasma, vol. 44. 10 2002].
+*
+*     B2TSTCH computes the Y component of the electron current
+*     associated with stochastization of the magnetic field.
 *
 *     B2TVSPA computes the X and Y components of the parallel viscosity
 *     current.
@@ -651,12 +715,53 @@
 *     B2XXMM computes the locations of the minimum and maximum entries
 *     of a quantity defined on the B2 mesh.
 *
+*     B2XZ11 computes the z11 quantity needed for the Grad-Zhdanov
+*     closure scheme:
+*       z11() = (sum over j /= i ::
+*                (m(j)/m(i)*kappa(i,j))*sqrt(mu(i,j)/m(i))*
+*                Z_2_n_i(j)/Z_2_n_i(i)*(1+16/13*m(i)/m(j)+
+*                                         30/13*(m(i)/m(j))^2))
+*
+*     B2XZ12 computes the z12 quantity needed for the Grad-Zhdanov
+*     closure scheme:
+*       z12() = (sum over j /= i ::
+*                 mu(i,j)/m(i)*(m(j)/m(i)*kappa(i,j))*sqrt(mu(i,j)/m(i))*
+*                 Z_2_n_i(j)/Z_2_n_i(i)*(1+32/23*m(i)/m(j)+
+*                                          84/23*(m(i)/m(j))^2))
+*
+*     B2XZ22 computes the z22 quantity needed for the Grad-Zhdanov
+*     closure scheme:
+*       z22() = (sum over j /= i ::
+*                (m(j)/m(i)*kappa(i,j))^2*sqrt(mu(i,j)/m(i))*
+*                 Z_2_n_i(j)/Z_2_n_i(i)*(1+1088/433*m(i)/m(j)+
+*                 3672/433*(m(i)/m(j))^2+1792/433*(m(i)/m(j))^3+
+*                 1400/433*(m(i)/m(j))^4))
+*
 *     B2XZEF computes zeff:
-*       zeff(,) = (sum is :: rz2(,,is)*na(,,is))/ne .
+*       zeff() = (sum is :: rz2(,is)*na(,is))/ne .
+*
+*     B2XZF1 computes the zf1 quantity needed for the Grad-Zhdanov
+*     closure scheme:
+*       zf1() = (sum over j /= i :: mu(i,j)/m(i)*sqrt(mu(i,j)/m(i))*
+*                                    Z_2_n_i(j)/Z_2_n_i(i))
+*
+*     B2XZF2 computes the zf2 quantity needed for the Grad-Zhdanov
+*     closure scheme:
+*       zf2() = (sum over j /= i :: (mu(i,j)/m(i))^2*sqrt(mu(i,j)/m(i))*
+*                                     Z_2_n_i(j)/Z_2_n_i(i))
+*
+*     B2XZMC computes the zmc quantity needed for the Grad-Zhdanov
+*     closure scheme:
+*       zmc() = (sum over j /= i :: sqrt(mu(i,j)/m(i))*
+*                                    Z_2_n_i(j)/Z_2_n_i(i))
 *
 *     B2XZMF computes zmff:
-*       zmff(,) = (sum over is /= ismain :: rz2(,,is)*na(,,is))/
-*                  na(,,ismain)*rz2(,,ismain)
+*       zmff() = (sum over is /= ismain :: rz2(,is)*na(,is))/
+*                  na(,ismain)*rz2(,ismain)
+*
+*     B2XZMF computes zmff:
+*       zmff() = (sum over is /= ismain :: rz2(,is)*na(,is))/
+*                  na(,ismain)*rz2(,ismain)
 *
 *     B2YE (main program) is a postprocessor for B2. It calculates
 *     statistical errors based on averaged quantities collected during

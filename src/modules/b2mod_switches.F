@@ -67,6 +67,22 @@ c Advanced fluid neutral models
       integer :: transport_afn !! use advanced fluid neutral (afn) transport coefficients
       integer :: afn_bcs_use_coarse
 
+c Zhdanov closure switches
+      integer :: Zhdanov_closure
+      integer :: Zhdanov_test
+      integer :: Zhdanov_tf_fr
+      integer :: Zhdanov_cond
+      integer :: Zhdanov_visu
+      integer :: Zhdanov_vish
+      integer :: Zhdanov_vel_heat
+      integer :: zh_vis_type
+      integer :: impr_form_tf
+      integer :: impr_form_fr
+
+      real (kind=R8) :: mass_multiplicator
+      real (kind=R8) :: smbvi_factor
+
+
       integer :: inert_all_ions
       integer :: visper_all_ions
       integer :: dia_lim_all_ions
@@ -603,6 +619,20 @@ c Advanced fluid neutral models
       s % diffusion_bc_safeguard = 1
       s % do_volrec = 1
       s % afn_bcs_use_coarse = 1
+
+c Zhdanov closure switches
+      s % Zhdanov_closure = 0
+      s % Zhdanov_test = 0
+      s % Zhdanov_tf_fr = 1
+      s % Zhdanov_cond = 1
+      s % Zhdanov_visu = 1
+      s % Zhdanov_vish = 1
+      s % Zhdanov_vel_heat = 1
+      s % zh_vis_type = 0
+      s % impr_form_tf = 0
+      s % impr_form_fr = 0
+      s % mass_multiplicator = 1.0_R8
+      s % smbvi_factor = 1.0_R8
 
       s % inert_all_ions = 1
       s % visper_all_ions = 1
@@ -1155,6 +1185,19 @@ c Advanced fluid neutral models
       call ipgeti ('b2tqna_transport_afn', s % transport_afn)
       call ipgeti ('diffusion_bc_safeguard', s % diffusion_bc_safeguard)
       call ipgeti ('b2stbr_afn_bcs_use_coarse', s % afn_bcs_use_coarse)
+
+c Zhdanov closure
+      call ipgeti ('b2tral_Zhdanov_closure', s % Zhdanov_closure)
+      call ipgeti ('b2sifr_Zhdanov_test', s % Zhdanov_test)
+      call ipgeti ('b2sifr_Zhdanov_tf_fr', s % Zhdanov_tf_fr)
+      call ipgeti ('b2tral_Zhdanov_visu', s % Zhdanov_visu)
+      call ipgeti ('b2tral_Zhdanov_vish', s % Zhdanov_vish)
+      call ipgeti ('b2tral_Zhdanov_vel_heat', s % Zhdanov_vel_heat)
+      call ipgeti ('b2tral_zh_vis_type', s % zh_vis_type)
+      call ipgeti ('b2npmo_impr_form_tf', s % impr_form_tf)
+      call ipgeti ('b2npmo_impr_form_fr', s % impr_form_fr)
+      call ipgetr ('b2npmo_mass_multiplicator', s % mass_multiplicator)
+      call ipgetr ('b2npmo_smbvi_factor', s % smbvi_factor)
 
       call ipgeti ('b2tvspr_visper_all_ions', s % visper_all_ions)
       call ipgeti ('b2tiner_inert_all_ions', s % inert_all_ions)
@@ -2116,6 +2159,10 @@ c med
       call xertst (s%med_style.ge.0 .and. s%med_style.le.1,
      &  'faulty parameter b2mndr_med_style')
 
+c zhdanov
+      call xertst (s%zh_vis_type.ge.0 .and. s%zh_vis_type.le.1,
+     &  'faulty parameter b2tral_zh_vis_type')
+
       return
       end subroutine check_values_switches
 
@@ -2192,6 +2239,12 @@ c k-enstrophy model
         write(*,*) 'WARNING! b2mndr_solve_keps = ',
      &    s%solve_keps,' and b2tqna_transport_keps =',
      &    s%transport_keps,' should go together'
+      endif
+
+
+c Zhdanov closure
+      if (s%Zhdanov_closure.lt.0 .or. s%Zhdanov_closure.gt.2) then
+        call xerrab('wrong value of b2tral_Zhdanov_closure')
       endif
 
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint

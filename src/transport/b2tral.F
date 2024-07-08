@@ -2,10 +2,17 @@
 *.specification
 
       subroutine b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
-     1 switch, geo, mpg, pl, dv, rt, st_ext, co)
+     1 switch, geo, mpg, pl, dv, rt, st_ext, co, co_ns)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_b2zhco
+     & , only: zhflcorr, zhcscorr, zhcscorr_vq,                         !som 21.03.21
+     &         zh_imp_analyt, zh_analyt_mdf,
+     &         zhflcorrh, zh_dist_fun, zh_tf_toff
+      use b2mod_zhfrtf
+     & , only: avm_u, w_out, hTdp_out, hwdp_out,
+     &         rTdpgamma_out, rwdpgamma_out
 !WG_TBD      use b2mod_neoclassical
       use b2mod_switches
       use b2us_geo
@@ -57,6 +64,7 @@
       type (B2StateExt), intent (in) :: st_ext
 *   ..input/output arguments
       type (B2Coeff), intent (inout) :: co
+      type (B2Coeff_nspecies), intent (inout) :: co_ns
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -93,16 +101,31 @@
 *   ..local variables
       integer iFc, is, is0
       character(3) chns, chns0                                          !srv 17.06.08
+      integer, save :: nnucl, zmaxmax                                   !som 09.02.21
+      real (kind=R8), save :: gamma = 1.0_R8                            !som 20.03.21
       real (kind=R8) ::
      1  chvi0(nFc,0:1), csig0(nFc,0:1), calf0(nFc,0:1), chci0(nFc,0:1),
      3  cvsa0(nFc,0:1,0:ns-1), cvsahz0(nFc,0:1,0:ns-1),                 !srv 09.01.01
      4  chce0(nFc,0:1), chve0(nFc,0:1), cdkt0(nFc,0:1),
+     &  chci0_fl(nFc,0:1), chci0_nofl(nFc,0:1), chci0_luc(nFc,0:1),     !som 16.06.21
+     &  cvsahz0_fl(nFc,0:1,0:ns-1), cvsahz0_nofl(nFc,0:1,0:ns-1),       !som 16.06.21
+     &  cvsahz0_luc(nFc,0:1,0:ns-1),
+     &  cvsa0_luc(nFc,0:1,0:ns-1),
+     &  chci0_al(nFc,0:1,0:nspecies-1),                                 !som 08.10.21
+     &  chci0_a(nFc,0:1,0:ns-1),                                        !som 08.10.21
+     &  cvsa0_hAdp(nFc,0:1,0:nspecies-1,0:nspecies-1),                  !som 20.10.21
+     &  cvsa0_hBdp(nFc,0:1,0:nspecies-1),                               !som 20.10.21
+     &  cvsahz0_hAdp(nFc,0:1,0:nspecies-1,0:nspecies-1),                !som 08.10.21
+     &  cvsahz0_hBdp(nFc,0:1,0:nspecies-1),                             !som 08.10.21
+     &  vsaf0(nFc,0:1,0:ns-1),
+     &  vsaf0_luc(nFc,0:1,0:ns-1),
      1  ft,                                                             !srv 16.10.17
      *  wrkc(nCv), wrkf(nFc), wrkmin, wght(nFc,2)
+        
       character*72 message
 *   ..procedures
       external xertst, ipgetr, b2saxpy
-      external b2trcl, b2trno
+      external b2trcl, b2trno, b2trql
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -126,15 +149,139 @@
       end if
 
 * ..compute transport coefficients
+*   ..compute flux limit coefficients
+      call b2trql (nCv, nFc, ns, switch, geo, mpg, pl, dv,
+     .  st_ext, co%chvemx, co%chvimx)
 *   ..compute anomalous terms
       call b2trno (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
      &  switch, geo, mpg, pl, dv, rt, st_ext, co)
 *   ..compute classical terms
-      call b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,         !srv 23.11.10
-     1  switch, geo, mpg, pl, dv, rt, co, st_ext, cvsahz0,        !srv 09.01.01 03.06.03
-     3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, cdkt0,   !xpb
+      call b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,               !srv 23.11.10
+     1  switch, geo, mpg, pl, dv, rt, co, st_ext, cvsahz0,              !srv 09.01.01 03.06.03
+     3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, cdkt0,         !xpb
      4  co%csigin, co%cthe, co%cthi, co%vsaf_cl, co%cvsa_cl, 
      5  co%cvsahz_cl, co%fllimvisc, co%csig_cl, co%calf_cl)
+*   ..compute Zhdanov closure coefficients
+      if (switch%Zhdanov_closure.eq.1) then                             !som 09.02.21
+        if (ncall_b2tral.eq.0) then
+          call b2trnu (ns, nnucl, zmaxmax)
+          call xertst (nnucl.eq.nspecies,
+     &     'Error while building isonuclear sequences!')
+        endif
+        call b2tlnl (nCv, switch, switch%icase_ii, pl%te, pl%ti, dv%ne,
+     &    dv%lnlam)                                                     !srv 01.07.09  20.09.11
+        call b2trzh (nCv, nFc, nVx, ns, zmaxmax, switch,
+     &    geo, mpg, pl, dv, rt, co, co_ns,
+     &    co_ns%hci_al, co%hci_a,
+     &    chci0_nofl, chci0_fl, chci0_luc,
+     &    chci0_al, co_ns%chci_al, chci0_a, co%chci_a,
+     &    vsaf0_luc, co%vsaf_drho,
+     &    cvsahz0_nofl, cvsahz0_fl,cvsahz0_luc, co%cvsahz_drho,
+     &    cvsa0_luc, co%cvsa_drho,
+     &    cvsa0_hAdp, cvsa0_hBdp,
+     &    co_ns%cvsa_hAdp_albe, co_ns%cvsa_hBdp_al,
+     &    cvsahz0_hAdp, cvsahz0_hBdp,
+     &    co_ns%cvsahz_hAdp_albe, co_ns%cvsahz_hBdp_al)                 !som 08.10.21
+
+        if (switch%Zhdanov_test.eq.0 .and.
+     &      switch%Zhdanov_cond.eq.1) then                              !som 10.08.21
+          chci0(:,0:1)=chci0_luc(:,0:1)
+        endif
+
+        if (switch%Zhdanov_test.eq.0 .and.
+     &      switch%Zhdanov_visu.eq.1) then                              !som 10.08.21
+          if (switch%zh_vis_type.eq.0) then                             !som 13.01.22
+            vsaf0(:,0:1,0:ns-1) = co%vsaf_drho(:,0:1,0:ns-1)
+            cvsahz0(:,0:1,0:ns-1) = co%cvsahz_drho(:,0:1,0:ns-1)
+            cvsa0(:,0:1,0:ns-1) = co%cvsa_drho(:,0:1,0:ns-1)
+            co%vsaf_cl(:,0:1,0:ns-1) = co%vsaf_drho(:,0:1,0:ns-1)
+            co%cvsahz_cl(:,0:1,0:ns-1) = co%cvsahz_drho(:,0:1,0:ns-1)
+            co%cvsa_cl(:,0:1,0:ns-1) = co%cvsa_drho(:,0:1,0:ns-1)
+          else if (switch%zh_vis_type.eq.1) then
+            vsaf0(:,0:1,0:ns-1) = vsaf0_luc(:,0:1,0:ns-1)
+            cvsahz0(:,0:1,0:ns-1) = cvsahz0_luc(:,0:1,0:ns-1)
+            cvsa0(:,0:1,0:ns-1)= cvsa0_luc(:,0:1,0:ns-1)
+            co%vsaf_cl(:,0:1,0:ns-1) = vsaf0_luc(:,0:1,0:ns-1)
+            co%cvsahz_cl(:,0:1,0:ns-1) = cvsahz0_luc(:,0:1,0:ns-1)
+            co%cvsa_cl(:,0:1,0:ns-1) = cvsa0_luc(:,0:1,0:ns-1)
+          endif
+        endif
+
+        if(switch%b2npht_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
+          call my_out_us(70,nFc,1,chci0_nofl(1,0),'b2trzh_chci_th')
+          call my_out_us(70,nFc,1,chci0_fl(1,0),'b2trzh_fllim_chci_th')
+          call my_out_us(70,nFc,1,chci0_luc(1,0),
+     &     'b2trzh_luciani_fllim_chci_th')
+          call my_out_us(70,nFc,1,chci0(1,0),
+     &     'b2trzh_applied_chci_th')
+          do is = 0, ns-1
+            write (chns,'(i3.3)') is
+            call my_out_us(70,nFc,1,chci0_a(1,0,is),
+     &       'b2trzh_fllim_chci_a_th'//chns)
+            call my_out_us(70,nFc,1,co_ns%chci_al(1,0,is),
+     &       'b2trzh_luciani_fllim_chci_a_th'//chns)
+            call my_out_us(70,nFc,1,cvsahz0_nofl(1,0,is),
+     &       'b2trzh_cvsahz_th'//chns)
+            call my_out_us(70,nFc,1,cvsahz0_fl(1,0,is),
+     &       'b2trzh_fllim_cvsahz_th'//chns)
+            call my_out_us(70,nFc,1,cvsahz0_luc(1,0,is),
+     &       'b2trzh_luciani_fllim_cvsahz_th'//chns)
+            call my_out_us(70,nFc,1,co%cvsahz_drho(1,0,is),
+     &       'b2trzh_luciani_fllim_cvsahz_drho_th'//chns)
+            call my_out_us(70,nFc,1,co%cvsahz_cl(1,0,is),
+     &       'b2trzh_applied_cvsahz_th'//chns)
+          enddo
+          do is = 0, nspecies-1
+            write (chns,'(i3.3)') is
+            call my_out_us(70,nFc,1,chci0_al(1,0,is),
+     &       'b2trzh_fllim_chci_al_th'//chns)
+            call my_out_us(70,nFc,1,co_ns%chci_al(1,0,is),
+     &       'b2trzh_luciani_fllim_chci_al_th'//chns)
+            do is0 = 0, nspecies-1
+             write (chns0,'(i3.3)') is0
+              call my_out_us(70,nFc,1,cvsa0_hAdp(1,0,is,is0),
+     &         'b2trzh_cvsa_hAdp_th'//chns//'_'//chns0)
+              call my_out_us(70,nFc,1,co_ns%cvsa_hAdp_albe(1,0,is,is0),
+     &         'b2trzh_luciani_cvsa_hAdp_th'//chns//'_'//chns0)
+              call my_out_us(70,nFc,1,cvsahz0_hAdp(1,0,is,is0),
+     &         'b2trzh_cvsahz_hAdp_th'//chns//'_'//chns0)
+              call 
+     &          my_out_us(70,nFc,1,co_ns%cvsahz_hAdp_albe(1,0,is,is0),
+     &         'b2trzh_luciani_cvsahz_hAdp_th'//chns//'_'//chns0)
+            enddo
+            call my_out_us(70,nFc,1,cvsa0_hBdp(1,0,is),
+     &       'b2trzh_cvsa_hBdp_th'//chns)
+            call my_out_us(70,nFc,1,co_ns%cvsa_hBdp_al(1,0,is),
+     &       'b2trzh_luciani_cvsa_hBdp_th'//chns)
+            call my_out_us(70,nFc,1,cvsahz0_hBdp(1,0,is),
+     &       'b2trzh_cvsahz_hBdp_th'//chns)
+            call my_out_us(70,nFc,1,co_ns%cvsahz_hBdp_al(1,0,is),
+     &       'b2trzh_luciani_cvsahz_hBdp_th'//chns)
+          enddo
+        endif
+
+        if((switch%b2npht_iout.ne.0 .or.
+     &      switch%iout_b2wdat.eq.4) .and. zh_dist_fun.eq.1) then
+          call my_out_us(70,nCv,0,avm_u(1), 'b2trzh_avm_u')
+          do is = 0, ns-1
+            write (chns,'(i3.3)') is
+            call my_out_us(70,nCv,0,w_out(1,is),
+     &       'b2trzh_w'//chns)
+            call my_out_us(70,nCv,0,hTdp_out(1,is),
+     &       'b2trzh_hTdp'//chns)
+            call my_out_us(70,nCv,0,hwdp_out(1,is),
+     &       'b2trzh_hwdp'//chns)
+            call my_out_us(70,nCv,0,rTdpgamma_out(1,is),
+     &       'b2trzh_rTdpgamma'//chns)
+            call my_out_us(70,nCv,0,rwdpgamma_out(1,is),
+     &       'b2trzh_rwdpgamma'//chns)
+          enddo
+        endif
+      else
+        co%cvsahz_drho=0.0e0_R8
+        co%cvsa_drho=0.0e0_R8
+      endif
+
 *   ..add to previous contributions=
       ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17 {
       do is = 0, ns-1

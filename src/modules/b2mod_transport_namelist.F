@@ -38,6 +38,12 @@
       real (kind=R8), save :: transport_time_mod
       real (kind=R8), save :: transport_time_switch
       real (kind=R8), save :: cflme, cflmi, cflmv, cflal, cflab
+      real (kind=R8), save :: cflme_core, cflme_sol,
+     .                        cflme_tanh_a, cflme_tanh_b
+      real (kind=R8), save :: cflmi_core, cflmi_sol,
+     .                        cflmi_tanh_a, cflmi_tanh_b
+      real (kind=R8), save :: cflmv_core, cflmv_sol,
+     .                        cflmv_tanh_a, cflmv_tanh_b
       real (kind=R8), save :: vout_cnv(0:NSDMAX-1), 
      .  pw0_cnv(0:NSDMAX-1), pw1_cnv(0:NSDMAX-1), pw2_cnv(0:NSDMAX-1)
 
@@ -195,5 +201,73 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
 
       return
       end subroutine transform_transport
+
+      subroutine cfl_tanh_profile(nCv, geo, mpg, cflm, core, sol, a, b,
+     &  cfl)
+      use b2us_geo
+      use b2us_map
+      integer, intent(in) :: nCv
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      real (kind=R8), intent(in) :: cflm, core, sol, a, b
+      real (kind=R8), intent(inout) :: cfl(nCv)
+cxpb  This routine applies a tanh profile, centered at 'a' and of width 'b'
+cxpb  along the OMP, to the flux limit multipliers, if the limit values in
+cxpb  the deep core ('core') and far-SOL ('sol') are provided
+cxpb  The tanh profile applies to the core and CFR.
+cpxb  In the PFR, we apply the value at the relevant separatrix.
+      integer :: iCv
+
+      cfl(nCv) = cflm
+      if (core.gt.0.0_R8.and.sol.gt.0.0_R8) then
+        if (core.eq.sol) then
+          cfl(nCv) = core
+        else
+          call xerrab('cfl_tanh_profile not coded yet')
+#ifdef WG_TODO
+          do iCv=1,nCv
+            iFt = mpg%cvFt(iCv)
+            if (mpg%cvOnClosedSurface(iCv).or.
+     &          mod(mpg%cvReg(iCv,0),4).eq.2) then
+              cfl(iCv)=core+(sol-core)*0.5_R8*
+     &         (1.0_R8+tanh((geo%ds(iFt)-a)/b))
+            else if (nncut.eq.1) then
+              if (iy.gt.topcut(1)) then
+                cfl(iCv)=core+(sol-core)*0.5_R8*
+     &           (1.0_R8+tanh((geo%ds(iFt)-a)/b))
+              else
+                cfl(iCv)=core+(sol-core)*0.5_R8*
+     &           (1.0_R8+tanh((-a)/b))
+              end if
+            else if (nncut.eq.2) then
+              if (mpg%cvReg(iCv,0).eq.3.or.
+     &            mpg%cvReg(iCv,0).eq.8) then
+                if (iy.gt.topcut(1)) then
+                  cfl(iCv)=core+(sol-core)*0.5_R8*
+     &             (1.0_R8+tanh((geo%ds(iFt)-a)/b))
+                else
+                  cfl(iCv)=core+(sol-core)*0.5_R8*
+     &             (1.0_R8+tanh((0.5_R8*(geo%ds(topcut(1))+
+     &                                   geo%ds(topcut(1)+1))-a)/b))
+                end if
+              else if (mpg%cvReg(iCv,0).eq.4.or.
+     &                 mpg%cvReg(iCv,0).eq.7) then
+                if (iy.gt.topcut(2)) then
+                  cfl(iCv)=core+(sol-core)*0.5_R8*
+     &             (1.0_R8+tanh((geo%ds(iFt)-a)/b))
+                else
+                  cfl(iCv)=core+(sol-core)*0.5_R8*
+     &             (1.0_R8+tanh((0.5_R8*(geo%ds(topcut(2))+
+     &                                   geo%ds(topcut(2)+1))-a)/b))
+                end if
+              end if
+            end if
+          end do
+#endif
+        end if
+      end if
+
+      return
+      end subroutine cfl_tanh_profile
 
       end module b2mod_transport_namelist

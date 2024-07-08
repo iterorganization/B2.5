@@ -300,11 +300,10 @@ ctmp.dpc
      .      st%dv%ne)
           call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2,
      .      st%dv%ne2)
-*   ..compute flux limit coefficients                                    !srv 11.10.02 03.06.03 {
-          call b2trql (nCv, nFc, ns, switch, geo, mpg, st%pl, st%dv,
-     .      st_ext, st%co%chvemx, st%co%chvimx)
+*   ..compute transport coefficients                                     !srv 11.10.02 03.06.03 {
           call b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,   !srv 23.11.10
-     1      switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
+     &      switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co,
+     &      st%co_ns)
 !WG_TODO         newneo=.true.
           call b2tanml (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &      st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
