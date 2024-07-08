@@ -65,7 +65,7 @@
      &   dumm1(nFc,0:1), dumm2(nFc,0:1), dumm3(nFc,0:1),
      &   dumm4(nFc,0:1), fhi0_mdf(nFc,0:1),
      *   flon0(nFc,0:1), flokt0(nFc,0:1), flozt0(nFc,0:1),
-     *   flo0_ExB(nFc,0:1)
+     *   flo0_ExB(nFc,0:1), floi_vhx(nFc)
 cpax
       real (kind=R8) ::
      *   flidia(nFc,0:1), facdriftm, nif(nFc), nnf(nFc),               !srv 25.01.02
@@ -172,15 +172,23 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..interpolate ni and ti to cell faces
 
       call intface(nCv,nFc,mpg%fcCv,wght,pl%ti,tif)
-      call intface(nCv,nFc,mpg%fcCv,wght,pl%tn,tnf)        !! in case of default energy equation, tn will be equal to ti
+      call intface(nCv,nFc,mpg%fcCv,wght,pl%tn,tnf)                     !! in case of default energy equation, tn will be equal to ti
 
-      if (switch%tn_style.eq.0) then                       !! default combined ion-neutral energy equation
+      if (switch%tn_style.eq.0) then                                    !! default combined ion-neutral energy equation
         call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0),nif)
-      elseif (switch%tn_style.eq.1) then                   !! pure ion equation
+      elseif (switch%tn_style.eq.1) then                                !! pure ion equation
         call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,1),nif)
-      else                                                 !! separate tn equation for hydrogenic atoms, all other species in ti-equation
+      else                                                              !! separate tn equation for hydrogenic atoms, all other species in ti-equation
         call intface(nCv,nFc,mpg%fcCv,wght,dv%ni(:,0)-dv%nn,nif)
         call intface(nCv,nFc,mpg%fcCv,wght,dv%nn,nnf)
+      endif
+
+*   ..velocity-dependent part of the heat flux
+      floi_vhx = 0.0_R8                                                 !som 13.07.21
+      if (switch%Zhdanov_closure.eq.1 .and.
+     &    switch%Zhdanov_test.eq.0 .and.
+     &    switch%Zhdanov_vel_heat.eq.1) then                            !som 13.07.21
+        call b2tfvh (nCv, nFc, ns, geo, mpg, pl%na, pl%ua, floi_vhx)
       endif
 
 *   ..contributions from currents
@@ -204,13 +212,13 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..convective coefficients
       !floi0
       floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
-     &  flidia(:,0) + scur(:,0)
+     &  flidia(:,0) + scur(:,0) + floi_vhx
       floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
      &  flidia(:,1) + scur(:,1)
 
       !floi0_mdf
       floi0_mdf(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
-     &  scur(:,0)
+     &  scur(:,0) + floi_vhx
       floi0_mdf(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
      &  scur(:,1)
 

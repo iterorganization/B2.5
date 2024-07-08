@@ -559,7 +559,7 @@ contains
 #endif
         real (kind=R8) :: intvertex_s
         external b2xpne, b2xpni, b2xppb, b2xppe, b2xppz, b2xzef
-        external b2sral, b2tral, b2trql, b2tanml
+        external b2sral, b2tral, b2tanml
         external b2xpnn, b2tiner, b2tvspa
         external ipgetr, ipgeti, species, streql, xerrab, xertst
         external find_file, intvertex_s
@@ -651,15 +651,13 @@ contains
         call b2xpnn (mpg%nCv, ns, state%pl%na, state%dv%nn)
         call b2xpne (mpg%nCv, ns, state%rt%rz2, state%pl%na, &
             &        state_ext%ne2, state%dv%ne2)
-!   ..compute flux limit coefficients
-        call b2trql (mpg%nCv, mpg%nFc, ns, switch, geo, mpg, &
-            &        state%pl, state%dv, state_ext,          &
-            &        state%co%chvemx, state%co%chvimx)
+!   ..compute transport coefficients
         call b2tral (mpg%nCv, mpg%nFc, mpg%nVx, ns,          &
             &        state%rt%nscx, state%rt%nscxmax,        &
             &        state%rt%iscx, ismain,                  &
             &        switch, geo, mpg, state%pl, state%dv,   &
-            &        state%rt, state_ext, state%co)
+            &        state%rt, state_ext, state%co,          &
+            &        state%co_ns)
 !   ..compute sources
         call b2sral ( mpg%nCv, mpg%nFc, mpg%nVx, ns,         &
      &   state%rt%nscx, state%rt%nscxmax, state%rt%iscx,     &

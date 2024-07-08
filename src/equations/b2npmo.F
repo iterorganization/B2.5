@@ -1,9 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npmo (nCv, nFc, nVx, ns, ismain,
-     &  switch, geo, mpg,
-     &  itcnt, solving, rxf, dtim, pl, dv, rt, co, sr, srw,
+      subroutine b2npmo (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  itcnt, solving, rxf, dtim, pl, dv, rt, co, co_ns, sr, srw,
      &  psnc, psnl, st_ext, ierr)
       use b2mod_types
       use b2mod_math
@@ -34,6 +33,8 @@
 #endif
      &          my_out_folder, ncall_b2tlnl, ncall_b2sifrtf
 #endif
+      use b2mod_zhfrtf                                                 !som 13.08.21
+     & , only : rho_A_rel, avm_u
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -42,6 +43,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Coeff), intent (in) :: co
+      type (B2Coeff_nspecies), intent (in) :: co_ns
       type (B2Rates), intent (in) :: rt
       type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
@@ -91,12 +93,14 @@
       integer iCv, is, ireg, k
       integer :: vcount(0:ns-1)
       character chns*3                                                 !srv 04.07.08
+      real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                        !som 13.11.20
       real (kind=R8) ::
      *  t0, t1, czetap, czetae                                         !srv 13.01.17
       real (kind=R8) ::
      *  smbch(nCv,0:3), smbtf(nCv,0:3),                                !srv 11.09.09
      *  smbgp(nCv,0:3),
-     *  smbvh(nCv,0:3), smbvv(nCv,0:3),                                !srv 23.07.99 04.10.99
+     *  smbvh(nCv,0:3), smbvv(nCv,0:3), smbvi(nCv,0:3),                !srv 23.07.99 04.10.99
+     *  smbvtmp(nCv,0:3),
      *  smbcf(nCv,0:3), smban(nCv,0:3),                                !srv 09.07.01 25.09.17
      1  pb(nCv), cvct(nFc,0:1),
      2  rob(nCv), flub(nFc,0:1),
@@ -112,10 +116,14 @@
      2  ctcfb(nCv), ctcft(nCv),                                        !srv 06.04.07
      3  zeff(nCv), zmff(nCv),                                          !srv 13.01.17 {
      4  ce1(nCv), ce2(nCv),
-     5  cimp1(nCv), cimp2(nCv),
+     5  cimp1(nCv,0:ns-1), cimp2(nCv,0:ns-1),
      6  zetap(nCv), zetae(nCv),
      7  gti(nCv), gte(nCv), gtn(nCv),                                  !srv 13.01.17 }
-     8  wrkf0(nFc), wrkf1(nFc)
+     8  wrkf0(nFc), wrkf1(nFc),
+     9  zmc(nCv), z11(nCv),                                            !som 13.11.20
+     1  z12(nCv), z22(nCv),
+     2  zf1(nCv), zf2(nCv)
+
       real (kind=R8) ::
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)                             !srv 13.01.17 05.07.17
@@ -151,8 +159,11 @@
           main_lightest = main_lightest .and.
      .     nint(am(is)).ge.nint(am(ismain))
         end do
-        if (.not.main_lightest .and. switch%b2sigp_style.eq.2) then
+        if (.not.main_lightest .and. switch%b2sigp_style.eq.2 .and.
+     .      switch%Zhdanov_closure.eq.0) then
          write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas where the main species is not the lightest one!'
+         write(6,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
      .    'for plasmas where the main species is not the lightest one!'
         endif
 c time-dependent treatment
@@ -224,13 +235,47 @@ c time-dependent treatment                                            !srv 07.07
      &             st_ext)
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
       call b2xzef (nCv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext)        !srv 13.01.17 {
-      call b2xzmf (nCv, ns, ismain, rt%rz2, pl%na, zmff)
       do iCv = 1, nCv
         ce1(iCv)=fce1(zeff(iCv))
         ce2(iCv)=fce2(zeff(iCv))
-        cimp1(iCv)=fce1(zmff(iCv))
-        cimp2(iCv)=fce2(zmff(iCv))
       enddo                                                            !srv 13.01.17 }
+      if (switch%Zhdanov_closure.eq.0.or.switch%Zhdanov_test.eq.1 .or.
+     &    switch%Zhdanov_tf_fr.eq.0) then
+        mm(0:ns-1) = switch%mass_multiplicator
+        mm(ismain) = 1.0_R8
+        am1(0:ns-1)= mm(0:ns-1)*am(0:ns-1)
+        call b2xzmf (nCv, ns, ismain, rt%rz2, pl%na, zmff)
+        call b2xzmc (nCv, ns, ismain, rt%rz2, pl%na, am1, zmc)
+        call b2xzf1 (nCv, ns, ismain, rt%rz2, pl%na, am1, zf1)
+        call b2xzf2 (nCv, ns, ismain, rt%rz2, pl%na, am1, zf2)
+        call b2xz11 (nCv, ns, ismain, rt%rz2, pl%na, am1, z11)
+        call b2xz12 (nCv, ns, ismain, rt%rz2, pl%na, am1, z12)
+        call b2xz22 (nCv, ns, ismain, rt%rz2, pl%na, am1, z22)
+        if (switch%impr_form_fr.eq.0) then
+          do iCv = 1, nCv
+            cimp1(iCv,0:ns-1)=fce1(zmff(iCv))
+          enddo
+        else
+          do is = 0, ns-1
+            do iCv = 1, nCv
+              cimp1(iCv,is)=fcim1(ismain,is,ns,am1,z11(iCv),
+     &          z12(iCv),z22(iCv),zf1(iCv),zf2(iCv))
+            enddo
+          enddo
+        endif
+        if (switch%impr_form_tf.eq.0) then
+          do iCv = 1, nCv
+            cimp2(iCv,0:ns-1)=fce2(zmff(iCv))
+          enddo
+        else
+          do is = 0, ns-1
+            do iCv = 1, nCv
+              cimp2(iCv,is)=fcim2(ismain,is,ns,am1,zmc(iCv),
+     &          z11(iCv),z12(iCv),z22(iCv))
+            enddo
+          enddo
+        endif
+      endif
 *   ..compute the Coulomb logarithm
       call b2tlnl (nCv, switch, switch%icase_ii, pl%te, pl%ti,
      &             dv%ne, dv%lnlam)
@@ -285,6 +330,12 @@ c time-dependent treatment                                            !srv 07.07
          smbch(:,k) = geo%cvVol*geo%cvHz*smbch(:,k)
          smbtf(:,k) = geo%cvVol*geo%cvHz*smbtf(:,k)
         enddo
+        srw%smfr(:,is) = geo%cvVol*geo%cvHz*(
+     &   (smbfrea(:,0) + smbfria(:,0)) +
+     &   (smbfrea(:,1) + smbfria(:,1))*pl%ua(:,is) +
+     &   (smbfrea(:,2) + smbfria(:,2))*am(is)*mp*pl%na(:,is) +
+     &   (smbfrea(:,3) + smbfria(:,3))*am(is)*mp*pl%na(:,is)*pl%ua(:,is)
+     &   )
        else
         smbfria = 0.0_R8
         smbfrea = 0.0_R8
@@ -296,7 +347,6 @@ c time-dependent treatment                                            !srv 07.07
      &   smbch, smbtf, srw%smpr(:,is), srw%smpt(:,is), srw%smfr(:,is),
      &   wrk0, gti, gte)
        endif
-
 *    ..compute pressure gradient term
        call b2sigp (nCv, nFc, nVx, is, switch, geo, mpg, rt%rza(:,is),
      &   pl%na(:,is), pl%ti, pl%tn, dv%ne, pl%te, pl%po, smbgp, wrk0,
@@ -305,8 +355,8 @@ c time-dependent treatment                                            !srv 07.07
        call b2scopy (nFc*2, dv%fna_fcor(:,:,is), 1, flub, 1)
        call b2sscal (nFc*2, am(is)*mp, flub, 1)
 *    ..add convective term due to new form of ion viscosity term only
-       call b2nxfv (nCv, nFc, nVx, is, switch, geo, mpg,
-     &   co%cvsahz_cl(:,:,is), co%cvsahz(:,:,is), flubv)
+       call b2nxfv (nCv, nFc, nVx, is, ismain, switch, geo, mpg,
+     &    rho_A_rel, co%cvsahz_cl(:,:,is), co%cvsahz(:,:,is), flubv)
        if (balance_netcdf.ne.0) then
          fmo_b2nxfv(:,:,is)=flubv                                       !djm Jan2017
        endif
@@ -316,15 +366,53 @@ c time-dependent treatment                                            !srv 07.07
      &  pl%ua(:,is), flub, co%cvsahz(:,:,is), flcb, cvcb, wrkf0)
 
 *    ..compute additional viscosity term
-       call b2siav (nCv, nFc, nVx, ns, is, switch, geo, mpg, am(is)*mp,
-     &   pl%ua(:,is), pl%te, pl%ti, pl%na(:,is), dv%ni(:,1), dv%ne2,
-     &   rt%rz2, dv%lnlam, co%hcix_c, co%cvsahz_cl(:,:,is), smbvh,
-     &   smbvv, co%kt_neo, wrk0, wrk1, wrk2)
+       if (switch%Zhdanov_closure.eq.0.or.switch%Zhdanov_test.eq.1 .or.
+     &    (switch%Zhdanov_visu.eq.0.and.switch%Zhdanov_vish.eq.0)) then !som 13.08.21
+         call b2siav (nCv, nFc, nVx, ns, is, ismain, switch, geo, mpg,
+     &    am(is)*mp, pl%ua(:,is), pl%te, pl%ti, pl%na(:,is), dv%ni(:,1),
+     &    dv%ne2, rt%rz2, dv%lnlam, co%hcix_c, co%cvsahz_cl(:,:,is),
+     &    smbvh, smbvv, co%kt_neo, wrk0, wrk1, wrk2)
+         smbvi = 0.0_R8
+       elseif (switch%Zhdanov_visu.eq.1 .and.
+     &         switch%Zhdanov_vish.eq.1) then
+         call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
+     &    am(is)*mp, rt%rza(:,is), pl%ua(:,is), pl%te, pl%ti,
+     &    pl%na(:,is), dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
+     &    co_ns%hci_al, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
+     &    smbvh, smbvv, smbvi, rho_A_rel(:,is), avm_u, wrk0, wrk1, wrk2)
+       elseif (switch%Zhdanov_visu.eq.1 .and.
+     &         switch%Zhdanov_vish.eq.0) then
+         call b2siav (nCv, nFc, nVx, ns, is, ismain, switch, geo, mpg,
+     &    am(is)*mp, pl%ua(:,is), pl%te, pl%ti, pl%na(:,is), dv%ni(:,1),
+     &    dv%ne2, rt%rz2, dv%lnlam, co%hcix_c, co%cvsahz_cl(:,:,is),
+     &    smbvh, smbvtmp, co%kt_neo, wrk0, wrk1, wrk2)
+         call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
+     &    am(is)*mp, rt%rza(:,is), pl%ua(:,is), pl%te, pl%ti,
+     &    pl%na(:,is), dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
+     &    co_ns%hci_al, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
+     &    smbvtmp, smbvv, smbvi, rho_A_rel(:,is), avm_u,
+     &    wrk0, wrk1, wrk2)
+       elseif (switch%Zhdanov_visu.eq.0 .and.
+     &         switch%Zhdanov_vish.eq.1) then
+         call b2siav (nCv, nFc, nVx, ns, is, ismain, switch, geo, mpg,
+     &    am(is)*mp, pl%ua(:,is), pl%te, pl%ti, pl%na(:,is), dv%ni(:,1),
+     &    dv%ne2, rt%rz2, dv%lnlam, co%hcix_c, co%cvsahz_cl(:,:,is),
+     &    smbvtmp, smbvv, co%kt_neo, wrk0, wrk1, wrk2)
+         call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
+     &    am(is)*mp, rt%rza(:,is), pl%ua(:,is), pl%te, pl%ti,
+     &    pl%na(:,is), dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
+     &    co_ns%hci_al, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
+     &    smbvh, smbvtmp, smbvi, rho_A_rel(:,is), avm_u,
+     &    wrk0, wrk1, wrk2)
+         smbvi = 0.0_R8
+       endif
+       smbvi = smbvi*switch%smbvi_factor
 *    ..compute centrifugal force term                                   !srv 09.07.01
        call b2sicf (nCv, nFc, nVx, is, am(is)*mp, switch,  geo, mpg,    !srv 09.07.01 28.01.02 22.07.05
      *   pl%na(:,is), pl%ua(:,is), smbcf, srw%smcf(:,is), ctcfb, wrk0)
 *    ..compute correcting source due to artificial anomalous electric conductivity
-       call b2sian (nCv, nFc, is, switch, geo, mpg, dv%fchanml, smban)
+       call b2sian (nCv, nFc, is, switch, geo, mpg,
+     &   dv%fchanml_a(:,:,is), smban)
 *    ..compute total parallel momentum source
        call b2scopy (nCv*4, sr%smo(:,:,is), 1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, sr%smq(:,:,is), 1, smb, 1)
@@ -333,9 +421,10 @@ c time-dependent treatment                                            !srv 07.07
        call b2saxpy (nCv*4, 1.0_R8, smbtf, 1, smb, 1)                   !srv 11.09.09 }
        srw%b2npmo_smag(:,:,is)=smbgp(:,:)
        call b2saxpy (nCv*4, 1.0_R8, smbgp, 1, smb, 1)
-       srw%b2npmo_smav(:,:,is)=smbvh(:,:)+smbvv(:,:)                    !srv 03.07.08 {
+       srw%b2npmo_smav(:,:,is)=smbvh(:,:)+smbvv(:,:) +smbvi(:,:)        !srv 03.07.08 {
        call b2saxpy (nCv*4, 1.0_R8, smbvh,  1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbvv,  1, smb, 1)
+       call b2saxpy (nCv*4, 1.0_R8, smbvi,  1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
        call b2saxpy (nCv*4, 1.0_R8, smban,  1, smb, 1)                  !srv 25.09.17
        call b2nxdv (nCv,is,switch,mpg,rob,sr%smq(:,:,is),smqdu,smb)     !srv ???
@@ -357,12 +446,13 @@ cdjm Jan2017 update momentum source components for balance
         call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is, pl%ua(:,is),
      .    rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
      .    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))        !srv 04.07.08
-      endif                                                             !srv 22.05.18
 
 cdjm Mar2019 output the total momentum flux and source for balance
-      if (balance_netcdf.ne.0) then
-        fmo_tot(:,:,is)=dv%fmo(:,:,is)
-      endif
+        if (balance_netcdf.ne.0) then
+          fmo_tot(:,:,is)=dv%fmo(:,:,is)
+        endif
+
+      endif                                                             !srv 22.05.18
 
       write (chns,'(i3.3)') is                                          !srv 18.03.10
 
@@ -376,6 +466,10 @@ cdjm Mar2019 output the total momentum flux and source for balance
      &         smbvv(:,2)*pl%na(:,is)*mp*am(is)+
      &         smbvv(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
           call my_out_us(70,nCv,0,wrks,'b2npmo_smovv'//chns)
+          wrks=smbvi(:,0)+smbvi(:,1)*pl%ua(:,is)+
+     &         smbvi(:,2)*pl%na(:,is)*mp*am(is)+
+     &         smbvi(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
+          call my_out_us(70,nCv,0,wrks,'b2npmo_smovi'//chns)
           wrks=smbvh(:,0)+smbvh(:,1)*pl%ua(:,is)+
      &         smbvh(:,2)*pl%na(:,is)*mp*am(is)+
      &         smbvh(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
@@ -468,6 +562,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (nCv*4, 1.0_R8, smbgp, 1, smb, 1)
         call b2saxpy (nCv*4, 1.0_R8, smbvh, 1, smb, 1)
         call b2saxpy (nCv*4, 1.0_R8, smbvv, 1, smb, 1)                  !srv 03.07.08
+        call b2saxpy (nCv*4, 1.0_R8, smbvi, 1, smb, 1)
         call b2saxpy (nCv*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
         call b2saxpy (nCv*4, 1.0_R8, smban, 1, smb, 1)                  !srv 25.09.17
         call b2urmo (nCv, nFc, nVx, switch, geo, mpg,  is, pl%ua(:,is),
