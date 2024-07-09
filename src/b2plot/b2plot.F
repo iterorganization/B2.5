@@ -875,7 +875,7 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
      &   state%dv%ne, state%pl%te, state%pl%po,
      &   state%srw%b2npmo_smag(1,0,is),
      &   wrkcs(1,0), wrkcs(1,1), wrkcs(1,2))
-        call b2siav (mpg%nCv, mpg%nFc, mpg%nVx, ns, is,
+        call b2siav (mpg%nCv, mpg%nFc, mpg%nVx, ns, is, ismain,
      &   switch, geo, mpg, am(is)*mp,
      &   state%pl%ua(:,is), state%pl%te, state%pl%ti,
      &   state%pl%na(:,is), state%dv%ni(:,1), state%dv%ne2,

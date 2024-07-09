@@ -499,8 +499,11 @@
         gm%ftFpsi(iFt) = gm%cvFpsi(mpg%ftCv(mpg%ftCvP(iFt,1)))
         do i = 1, mpg%ftCvP(iFt,2)
           iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
-          if (gm%cvFpsi(iCv).ne.gm%ftFpsi(iFt))
-     &      call xerrab('Inconsistent definition of cvFpsi')
+          if (gm%cvFpsi(iCv).ne.gm%ftFpsi(iFt)) then
+            write (*,*) 'Warning: cvFpsi value in cell ', iCv,
+     &                  'not equal to value in its flux tube ', iFt
+            write (*,*) gm%cvFpsi(iCv), gm%ftFpsi(iFt)
+          endif
         enddo
       enddo
 
