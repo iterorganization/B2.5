@@ -263,7 +263,7 @@
           enddo
 
 *    ..flux-limiting coefficient
-          call b2trfl(iCv, Ainv, zeffne, amti, zetap(iCv), gamma,
+          call b2trfl(iCv, mpg, Ainv, zeffne, amti, zetap(iCv), gamma,
      &      cF_lim, cF_limh, cF_limB, cF_limBh)
           do i = 0, nspecies-1
             Ainv_fl(i,0:nspecies-1) =
@@ -358,7 +358,7 @@
           enddo
 
 *    ..flux-limiting coefficient (analytical)
-          call b2trfl_an(iCv, c_hTA_an,
+          call b2trfl_an(iCv, mpg, c_hTA_an,
      &      amnucl, amti, zetap(iCv), gamma,
      &      cF_lim, cF_limh, cF_limB, cF_limBh)
           do i = 0, nspecies-1
@@ -461,7 +461,7 @@
 *    ..calculate flux limiting for the viscous stress
         nati(0:ns-1) = pl%na(iCv,0:ns-1)*pl%ti(iCv)
         eta_cl_xy(0:ns-1) = eta_cl(iCv,0:ns-1)
-        call b2trfl_vis (iCv, ns,
+        call b2trfl_vis (iCv, mpg, ns,
      &    eta_cl_xy, nati, gamma, cfl(iCv), cF_limv)
 
 *    ..the velocity-dependent part
