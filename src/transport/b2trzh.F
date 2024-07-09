@@ -241,6 +241,10 @@
       endif
 
 *   ..main part
+
+      eta_cl_a_only    = 0.0_R8     !srv 05.07.24 {
+      eta_cl_a_only_fl = 0.0_R8     !srv 05.07.24 }
+
 *   ..calculate the average Z**2*n and density of each isonuclear sequence
       call b2mod_zhfrtf_prep(nx,ny,ns,na,ua)
 
@@ -865,7 +869,7 @@
           enddo
         enddo
       enddo
-
+      
 *    ..apply Luciani correction for the addtional part of the
 *      velocity-dependent viscosity
       do i = 0, nspecies-1
@@ -938,7 +942,7 @@
           enddo
         enddo
       enddo
-
+      
       ncall = ncall+1
       call subend ()
       return
