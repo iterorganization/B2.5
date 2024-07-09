@@ -86,13 +86,18 @@
       allocate(cvsahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 09.01.01
       allocate(cvsa_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                      !srv 04.10.99
       allocate(cvsa_drho(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !som 16.08.21
+      cvsa_drho = 0.0_R8
       allocate(cvsahz_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !srv 09.01.01
       allocate(cvsahz_drho(-1:nxd,-1:nyd,0:1,0:nsd-1))                  !som 18.08.21
+      cvsahz_drho = 0.0_R8      
       allocate(chci_a(-1:nxd,-1:nyd,0:1,0:nsd-1)) 
+      chci_a = 0.0_R8
       allocate(csig_cl(-1:nxd,-1:nyd,0:1))
       allocate(calf_cl(-1:nxd,-1:nyd,0:1))
       allocate(csig_stoch(-1:nxd,-1:nyd,0:1))                           !srv 24.08.21
       allocate(chce_stoch(-1:nxd,-1:nyd,0:1))                           !srv 24.08.21
+      csig_stoch = 0.0_R8
+      chce_stoch = 0.0_R8
       allocate(fllime(-1:nxd,-1:nyd))
       fllime=1.0_R8
       allocate(fllimi(-1:nxd,-1:nyd))

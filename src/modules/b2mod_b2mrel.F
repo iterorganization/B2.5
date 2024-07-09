@@ -100,6 +100,7 @@
       allocate(nucl2s(0:nnucl-1,0:znmax))
       allocate(znnucl_int(0:nnucl-1))
       allocate(s2nucl(0:ns-1))
+      nucl2s = -1
       end subroutine alloc_b2mod_mrel
 
       subroutine dealloc_b2mod_mrel
