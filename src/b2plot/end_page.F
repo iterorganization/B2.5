@@ -8,7 +8,9 @@ c     the zoom common
       integer wsnshwin,wsnX11
       common /zoom_com/ winid,wsnshwin,wsnX11
 
+#ifdef NCAR4
       integer wkid
+#endif
 
       if(same_page.ne.0) then
         same_page=1
