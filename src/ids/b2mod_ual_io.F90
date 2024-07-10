@@ -107,6 +107,7 @@ module b2mod_ual_io
      &          VEC_ALIGN_PARALLEL_ID, &
      &          VEC_ALIGN_TOROIDAL_ID
 #endif
+#if GGD_MAJOR_VERSION > 0
 #if ( GGD_MINOR_VERSION < 9 && GGD_MAJOR_VERSION < 2 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_BETWEEN_SEPARATRICES, &
@@ -119,7 +120,6 @@ module b2mod_ual_io
      &          GRID_SUBSET_OUTER_THROAT_INACTIVE, GRID_SUBSET_INNER_THROAT_INACTIVE, &
      &          GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE
 #endif
-#if GGD_MAJOR_VERSION > 0
 #if ( GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -221,6 +221,7 @@ module b2mod_ual_io
                                     !< 3: Z at dR/dZ = 0 maximum R location
                                     !< 4: GGD grid subset defined by jxa value
   integer, save :: GeometryType !< Geometry identifier number
+#if GGD_MAJOR_VERSION > 0
   integer, save :: iGsCoreBoundary  !< Variable to hold Core grid subset base
             !< index, later found by findGridSubsetByName() routine.
   integer, save :: iGsInnerMidplane !< Variable to hold Inner Midplane grid
@@ -235,6 +236,7 @@ module b2mod_ual_io
             !< subset base index, later found by findGridSubsetByName() routine
   integer, save :: iGsODivertor     !< Variable to hold Outer Divertor grid
             !< subset base index, later found by findGridSubsetByName() routine
+#endif
   logical, parameter :: B2_WRITE_DATA = .true.
   real(IDS_real) :: time  !< Generic time
   real(IDS_real), save :: b0, r0, b0r0
@@ -468,7 +470,6 @@ contains
         integer :: iCv1, iCv2 !< Indices of the two CVs of both sides
                               !< of the OMP separatrix
         integer :: iVx    !< Iterator on vertices
-        integer :: istrai !< Stratum iterator
         integer :: is1    !< First ion of an isonuclear sequence
         integer :: is2    !< Last ion of an isonuclear sequence
         integer :: icnt   !< Boundary cell counter
@@ -525,6 +526,7 @@ contains
 #endif
 #endif
  !< Type of IDS data structure, designed for handling grid geometry data
+#if GGD_MAJOR_VERSION > 0
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
         type(ids_generic_grid_dynamic) :: edge_grid, transport_grid, &
             &  sources_grid
@@ -534,6 +536,8 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type(ids_generic_grid_aos3_root) :: radiation_grid
 #endif
+#endif
+        integer :: istrai !< Stratum iterator
 #endif
 
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
@@ -3117,9 +3121,9 @@ contains
                   do js = 1, istion(is)
                     tmpCv = 0.0_IDS_real
                     do istrai = 1, size(eirene_mc_paio_sna_bal,3)
-                      tmpCv(:) = tmpCv(:)                                   &
-                         &       + eirene_mc_paio_sna_bal(:,ispion(is,js),istrai)      &
-                         &       + eirene_mc_pmio_sna_bal(:,ispion(is,js),istrai)      &
+                      tmpCv(:) = tmpCv(:)                                         &
+                         &       + eirene_mc_paio_sna_bal(:,ispion(is,js),istrai) &
+                         &       + eirene_mc_pmio_sna_bal(:,ispion(is,js),istrai) &
                          &       + eirene_mc_piio_sna_bal(:,ispion(is,js),istrai)
                     end do
                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
@@ -5572,6 +5576,7 @@ contains
     real(IDS_real), intent(in) :: time_slice_value   !< Time slice value
     logical, intent(in) :: do_summary_data
     logical, intent(out) :: new_eq_ggd
+#if GGD_MAJOR_VERSION > 0
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     type(ids_generic_grid_dynamic) :: eq_grid !< Type of IDS
         !< data structure, designed for handling equilibrium grid geometry data
@@ -5579,15 +5584,16 @@ contains
     type(ids_generic_grid_aos3_root) :: eq_grid !< Type of IDS
         !< data structure, designed for handling equilibrium grid geometry data
 #endif
+    real(IDS_real) :: tmpVx( mpg%nVx )
+    real(IDS_real) :: tmpFace( mpg%nFc )
+    real(IDS_real) :: tmpCv( mpg%nCv )
+#endif
     integer :: i, ic, iCv, iCv1, iCv2, iFc, iFt, iVx, inode, icrmax
     integer :: idum(0:3)
     integer, save :: ncall = 0
     real(IDS_real) :: parg(0:99)
     real(IDS_real), save :: pit_rescale = 1.0_IDS_real
     real(IDS_real) :: b0r0_ref, z_eq, z_min, z_max, r_max, rFc
-    real(IDS_real) :: tmpVx( mpg%nVx )
-    real(IDS_real) :: tmpFace( mpg%nFc )
-    real(IDS_real) :: tmpCv( mpg%nCv )
     character*8 id
     character*80 cnamip, cvalip
     character*132 eq_source
