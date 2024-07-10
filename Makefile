@@ -235,6 +235,7 @@ ifdef USE_OPENMP
 #DEFINES += -DNO_OPENMP_B2SQEL
 #DEFINES += -DNO_OPENMP_B2SRDT
 #DEFINES += -DNO_OPENMP_B2SRST
+#DEFINES += -DNO_OPENMP_B2STBR
 #DEFINES += -DNO_OPENMP_B2STCX
 #DEFINES += -DNO_OPENMP_B2STEL
 #DEFINES += -DNO_OPENMP_MYBLAS
@@ -341,7 +342,7 @@ NREXE = ${patsubst %.exe, ${NCODIR}/%.exe, ${PROG_NR}}
 
 DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
 ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE} ${XDEXE}
-NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
+NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
 ifdef NCARG_ROOT
 ifeq ($(strip ${GLI_HOME}),)
 $(warning B2.5 graphical post-processing programs may not work because GLI_HOME is not defined.)
@@ -1149,8 +1150,8 @@ ${OBJDIR}/mpiversion.mk: ${MAKES}
 ifdef NO_MPI
 	echo 'MPI_VERSION=0' > ${OBJDIR}/mpiversion.mk
 else
-	printf "use mpi\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nWRITE(*,fmt='(A9)') 'MPI_MOD=1'\nEND" > ${OBJDIR}/mpi_version.f90
+	printf "use mpi\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nWRITE(*,fmt='(A9)') 'MPI_MOD=1'\nEND\n" > ${OBJDIR}/mpi_version.f90
 	( ${FC} ${FCOPTS} ${SOLPSINCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n2 ) || \
-	( printf "include 'mpif.h'\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nWRITE(*,fmt='(A9)') 'MPI_MOD=0'\nEND" > ${OBJDIR}/mpi_version.f90 ; \
+	( printf "include 'mpif.h'\nWRITE(*,fmt='(A12,I1)') 'MPI_VERSION=', MPI_VERSION\nWRITE(*,fmt='(A9)') 'MPI_MOD=0'\nEND\n" > ${OBJDIR}/mpi_version.f90 ; \
 	${FC} ${FCOPTS} ${SOLPSINCLUDE} -o ${OBJDIR}/mpi_version ${OBJDIR}/mpi_version.f90 ${LD_MPI} && ( ${OBJDIR}/mpi_version | tail -n2 ) || ( echo MPI_VERSION=0 ; echo MPI_MOD=0 ) ) ) > ${OBJDIR}/mpiversion.mk
 endif

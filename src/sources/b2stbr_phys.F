@@ -298,14 +298,16 @@
         endif
 
         b2stbr_phys_sna=0.0_R8
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) )
 !$OMP PARALLEL DO COLLAPSE(2)
 !$OMP& DEFAULT(NONE)
 !$OMP& SHARED(ns,ny,nx,sna0,na)
 !$OMP& PRIVATE(ix,iy,is)
 !$OMP& REDUCTION(+:b2stbr_phys_sna)
+#endif /* NO_OPENMP_B2STBR */
         do is=0,ns-1
           do iy=-1,ny
-#if ( ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 8 ) || ( !defined(GFORTRAN) && !defined(LEGACYCOMP) ) )
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) && ( ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 8 ) || ( !defined(GFORTRAN) && !defined(LEGACYCOMP) ) ) )
 !$OMP SIMD REDUCTION(+:b2stbr_phys_sna)
 #endif
             do ix=-1,nx
@@ -314,7 +316,9 @@
             enddo
           enddo
         enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) )
 !$OMP END PARALLEL DO
+#endif
         if((main_call.and.output.ge.1).or.output.gt.1)
      *     write(*,*) 'stratum,b2stbr_phys_sna(start): ',
      1   istra, b2stbr_phys_sna
@@ -492,14 +496,16 @@
         endif       ! crcstra(istra)
 
         b2stbr_phys_sna=0.0_R8
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) )
 !$OMP PARALLEL DO COLLAPSE(2)
 !$OMP& DEFAULT(NONE)
 !$OMP& SHARED(ns,ny,nx,sna0,na)
 !$OMP& PRIVATE(ix,iy,is)
 !$OMP& REDUCTION(+:b2stbr_phys_sna)
+#endif /* NO_OPENMP_B2STBR */
         do is=0,ns-1
           do iy=-1,ny
-#if ( ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 8 ) || ( !defined(GFORTRAN) && !defined(LEGACYCOMP) ) )
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) && ( ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 8 ) || ( !defined(GFORTRAN) && !defined(LEGACYCOMP) ) ) )
 !$OMP SIMD REDUCTION(+:b2stbr_phys_sna)
 #endif
             do ix=-1,nx
@@ -508,7 +514,9 @@
             enddo
           enddo
         enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) )
 !$OMP END PARALLEL DO
+#endif
         if((main_call.and.output.ge.1).or.output.gt.1)
      *       write(*,*) 'stratum,b2stbr_phys_sna(end): ',
      1   istra, b2stbr_phys_sna

@@ -139,7 +139,7 @@ ctmp.dpc
       call sfill (n2*4*ns, 0.0_R8, smq0, 1)
       call sfill (n2*4, 0.0_R8, shi0, 1)
 *   ..compute sources due to charge exchange
-#ifndef NO_OPENMP_B2STCX
+#if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -298,7 +298,7 @@ ctmp.dpc
         endif
        enddo
       enddo
-#ifndef NO_OPENMP_B2STCX
+#if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
 !$OMP END PARALLEL DO
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")

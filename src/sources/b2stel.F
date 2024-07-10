@@ -236,7 +236,7 @@
       call sfill (n2*ns, 0.0_R8, rqrad, 1)
       b2brem=0.0_R8
       rad_imp=0.0_R8
-#ifndef NO_OPENMP_B2STEL
+#if ( !defined(NO_OPENMP_B2STEL) && defined(_OPENMP) )
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -459,7 +459,7 @@ c accounted for)
         enddo
        enddo
       enddo
-#ifndef NO_OPENMP_B2STEL
+#if ( !defined(NO_OPENMP_B2STEL) && defined(_OPENMP) )
 !$OMP END PARALLEL DO
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")
@@ -475,7 +475,7 @@ c accounted for)
       call b2xzdd (nx, ny, 3, she0)
       call b2xzdd (nx, ny, 3, shi0_ion)
       call b2xzdd (nx, ny, 3, shi0_rec)
-#ifndef NO_OPENMP_B2STEL
+#if ( !defined(NO_OPENMP_B2STEL) && defined(_OPENMP) )
 !$OMP SINGLE
 #endif
       do iy = -1, ny
@@ -513,7 +513,7 @@ c accounted for)
           end if
         end do
       end do
-#ifndef NO_OPENMP_B2STEL
+#if ( !defined(NO_OPENMP_B2STEL) && defined(_OPENMP) )
 !$OMP END SINGLE
 #endif
 #ifdef ASTRA
