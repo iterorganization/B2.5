@@ -151,6 +151,7 @@ c
       allocate(lkindp(nplsd))
       allocate(lkindm(max(1,nmold)))
       allocate(lkindi(max(1,niond)))
+      allocate(eirtxt(natmd+nmold+niond+nplsd))
 
       return
       end subroutine alloc_b2mod_eirdiag

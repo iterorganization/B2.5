@@ -913,9 +913,9 @@ cwdk  can be derived directly from data in that file
 
       indd = maxval(m%strDiv)
       if (indd.gt.0) then
-        allocate(m%ifdiv(maxval(m%strDiv)))
-        allocate(m%ivdiv(maxval(m%strDiv)))
-        allocate(m%divFcP(maxval(m%strDiv),2))
+        allocate(m%ifdiv(indd))
+        allocate(m%ivdiv(indd))
+        allocate(m%divFcP(indd,2))
         allocate(indFc(m%nFc))
         icount = 0
         m%ifdiv = 0
@@ -936,7 +936,7 @@ cwdk  can be derived directly from data in that file
         allocate(m%divFcOr(icount))
         m%divFcOr = 0.0_R8
         m%divFc(1:icount) = indFc(1:icount)
-        do i = 1, maxval(m%strDiv) ! now re-order them
+        do i = 1, indd ! now re-order them
           allocate(old_face_list(m%divFcP(i,2)))
           allocate(new_face_list(m%divFcP(i,2)))
           old_face_list(1:m%divFcP(i,2))=

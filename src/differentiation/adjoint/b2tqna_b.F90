@@ -344,20 +344,20 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) THEN
 ! dna
-        CALL PUSHREAL8(cfdna(0, is), r8)
-        CALL TRANSFORM_TRANSPORT(flag_dna, parm_dna(is), cfdna(0, is))
+        CALL PUSHREAL8ARRAY(cfdna(:, is), r8)
+        CALL TRANSFORM_TRANSPORT(flag_dna, parm_dna(is), cfdna(:, is))
 ! dpa
-        CALL PUSHREAL8(cfdpa(0, is), r8)
-        CALL TRANSFORM_TRANSPORT(flag_dpa, parm_dpa(is), cfdpa(0, is))
+        CALL PUSHREAL8ARRAY(cfdpa(:, is), r8)
+        CALL TRANSFORM_TRANSPORT(flag_dpa, parm_dpa(is), cfdpa(:, is))
 ! vla
-        CALL PUSHREAL8(cfvla(0, is), r8)
-        CALL TRANSFORM_TRANSPORT(flag_vla, parm_vla(is), cfvla(0, is))
+        CALL PUSHREAL8ARRAY(cfvla(:, is), r8)
+        CALL TRANSFORM_TRANSPORT(flag_vla, parm_vla(is), cfvla(:, is))
 ! vsa
-        CALL PUSHREAL8(cfvsa(0, is), r8)
-        CALL TRANSFORM_TRANSPORT(flag_vsa, parm_vsa(is), cfvsa(0, is))
+        CALL PUSHREAL8ARRAY(cfvsa(:, is), r8)
+        CALL TRANSFORM_TRANSPORT(flag_vsa, parm_vsa(is), cfvsa(:, is))
 ! hci
-        CALL PUSHREAL8(cfhci(0, is), r8)
-        CALL TRANSFORM_TRANSPORT(flag_hci, parm_hci(is), cfhci(0, is))
+        CALL PUSHREAL8ARRAY(cfhci(:, is), r8)
+        CALL TRANSFORM_TRANSPORT(flag_hci, parm_hci(is), cfhci(:, is))
         CALL PUSHCONTROL1B(1)
       ELSE
         CALL PUSHCONTROL1B(0)
@@ -1514,21 +1514,21 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     DO is=ns-1,0,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
-        CALL POPREAL8(cfhci(0, is), r8)
+        CALL POPREAL8ARRAY(cfhci(:, is), r8)
         CALL TRANSFORM_TRANSPORT_B(flag_hci, parm_hci(is), parm_hcib(is)&
-&                            , cfhci(0, is), cfhcib(0, is))
-        CALL POPREAL8(cfvsa(0, is), r8)
+&                            , cfhci(:, is), cfhcib(:, is))
+        CALL POPREAL8ARRAY(cfvsa(:, is), r8)
         CALL TRANSFORM_TRANSPORT_B(flag_vsa, parm_vsa(is), parm_vsab(is)&
-&                            , cfvsa(0, is), cfvsab(0, is))
-        CALL POPREAL8(cfvla(0, is), r8)
+&                            , cfvsa(:, is), cfvsab(:, is))
+        CALL POPREAL8ARRAY(cfvla(:, is), r8)
         CALL TRANSFORM_TRANSPORT_B(flag_vla, parm_vla(is), parm_vlab(is)&
-&                            , cfvla(0, is), cfvlab(0, is))
-        CALL POPREAL8(cfdpa(0, is), r8)
+&                            , cfvla(:, is), cfvlab(:, is))
+        CALL POPREAL8ARRAY(cfdpa(:, is), r8)
         CALL TRANSFORM_TRANSPORT_B(flag_dpa, parm_dpa(is), parm_dpab(is)&
-&                            , cfdpa(0, is), cfdpab(0, is))
-        CALL POPREAL8(cfdna(0, is), r8)
+&                            , cfdpa(:, is), cfdpab(:, is))
+        CALL POPREAL8ARRAY(cfdna(:, is), r8)
         CALL TRANSFORM_TRANSPORT_B(flag_dna, parm_dna(is), parm_dnab(is)&
-&                            , cfdna(0, is), cfdnab(0, is))
+&                            , cfdna(:, is), cfdnab(:, is))
       END IF
     END DO
   END IF
@@ -1809,15 +1809,15 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) THEN
 ! dna
-        CALL TRANSFORM_TRANSPORT(flag_dna, parm_dna(is), cfdna(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_dna, parm_dna(is), cfdna(:, is))
 ! dpa
-        CALL TRANSFORM_TRANSPORT(flag_dpa, parm_dpa(is), cfdpa(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_dpa, parm_dpa(is), cfdpa(:, is))
 ! vla
-        CALL TRANSFORM_TRANSPORT(flag_vla, parm_vla(is), cfvla(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_vla, parm_vla(is), cfvla(:, is))
 ! vsa
-        CALL TRANSFORM_TRANSPORT(flag_vsa, parm_vsa(is), cfvsa(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_vsa, parm_vsa(is), cfvsa(:, is))
 ! hci
-        CALL TRANSFORM_TRANSPORT(flag_hci, parm_hci(is), cfhci(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_hci, parm_hci(is), cfhci(:, is))
       END IF
     END DO
 ! hce

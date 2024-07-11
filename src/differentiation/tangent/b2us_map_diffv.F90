@@ -1696,7 +1696,6 @@ CONTAINS
     EXTERNAL IPGETI, XERRAB
     INTRINSIC MAXVAL
     EXTERNAL MAXVAL_DV
-    REAL(kind=r8) :: result1
     INTEGER :: nd
     INTEGER :: nbdirs
     REAL(kind=r8) :: MAXVAL_DV
@@ -2055,21 +2054,21 @@ CONTAINS
 !
     indd = MAXVAL(m%strdiv)
     IF (indd .GT. 0) THEN
-      ALLOCATE(md0%ifdiv(nbdirsmax, MAXVAL(m%strdiv)))
+      ALLOCATE(md0%ifdiv(nbdirsmax, indd))
       DO nd=1,nbdirsmax
-        md0%ifdiv(nd, 1:MAXVAL(m%strdiv)) = 0
+        md0%ifdiv(nd, 1:indd) = 0
       END DO
-      ALLOCATE(m%ifdiv(MAXVAL(m%strdiv)))
-      ALLOCATE(md0%ivdiv(nbdirsmax, MAXVAL(m%strdiv)))
+      ALLOCATE(m%ifdiv(indd))
+      ALLOCATE(md0%ivdiv(nbdirsmax, indd))
       DO nd=1,nbdirsmax
-        md0%ivdiv(nd, 1:MAXVAL(m%strdiv)) = 0
+        md0%ivdiv(nd, 1:indd) = 0
       END DO
-      ALLOCATE(m%ivdiv(MAXVAL(m%strdiv)))
-      ALLOCATE(md0%divfcp(nbdirsmax, MAXVAL(m%strdiv), 2))
+      ALLOCATE(m%ivdiv(indd))
+      ALLOCATE(md0%divfcp(nbdirsmax, indd, 2))
       DO nd=1,nbdirsmax
-        md0%divfcp(nd, 1:MAXVAL(m%strdiv), 1:2) = 0
+        md0%divfcp(nd, 1:indd, 1:2) = 0
       END DO
-      ALLOCATE(m%divfcp(MAXVAL(m%strdiv), 2))
+      ALLOCATE(m%divfcp(indd, 2))
       ALLOCATE(indfc(m%nfc))
       icount = 0
       m%ifdiv = 0
@@ -2101,8 +2100,7 @@ CONTAINS
       m%divfcor = 0.0_R8
       m%divfc(1:icount) = indfc(1:icount)
 ! now re-order them
-      result1 = MAXVAL(m%strdiv)
-      DO i=1,result1
+      DO i=1,indd
         ALLOCATE(old_face_list(m%divfcp(i, 2)))
         ALLOCATE(new_face_list(m%divfcp(i, 2)))
         old_face_list(1:m%divfcp(i, 2)) = m%divfc(m%divfcp(i, 1):m%&
@@ -2113,7 +2111,6 @@ CONTAINS
         iva = m%fcvx(m%divfc(m%divfcp(i, 1)), 1)
         ivb = m%fcvx(m%divfc(m%divfcp(i, 1)), 2)
         inew = 1
-        result1 = MAXVAL(m%strdiv)
         DO WHILE (inew .LT. m%divfcp(i, 2))
           left_match_found = .false.
           DO j=1,m%divfcp(i, 2)
@@ -2209,7 +2206,6 @@ CONTAINS
     LOGICAL :: duplicate, left_match_found, right_match_found
     EXTERNAL IPGETI, XERRAB
     INTRINSIC MAXVAL
-    REAL(kind=r8) :: result1
 !wdk  This initialization routine precomputes a number of arrays
 !wdk  in the mapping that are not stored in the b2fgmtry file, but
 !wdk  can be derived directly from data in that file
@@ -2517,9 +2513,9 @@ CONTAINS
 !
     indd = MAXVAL(m%strdiv)
     IF (indd .GT. 0) THEN
-      ALLOCATE(m%ifdiv(MAXVAL(m%strdiv)))
-      ALLOCATE(m%ivdiv(MAXVAL(m%strdiv)))
-      ALLOCATE(m%divfcp(MAXVAL(m%strdiv), 2))
+      ALLOCATE(m%ifdiv(indd))
+      ALLOCATE(m%ivdiv(indd))
+      ALLOCATE(m%divfcp(indd, 2))
       ALLOCATE(indfc(m%nfc))
       icount = 0
       m%ifdiv = 0
@@ -2543,8 +2539,7 @@ CONTAINS
       m%divfcor = 0.0_R8
       m%divfc(1:icount) = indfc(1:icount)
 ! now re-order them
-      result1 = MAXVAL(m%strdiv)
-      DO i=1,result1
+      DO i=1,indd
         ALLOCATE(old_face_list(m%divfcp(i, 2)))
         ALLOCATE(new_face_list(m%divfcp(i, 2)))
         old_face_list(1:m%divfcp(i, 2)) = m%divfc(m%divfcp(i, 1):m%&
@@ -2555,7 +2550,6 @@ CONTAINS
         iva = m%fcvx(m%divfc(m%divfcp(i, 1)), 1)
         ivb = m%fcvx(m%divfc(m%divfcp(i, 1)), 2)
         inew = 1
-        result1 = MAXVAL(m%strdiv)
         DO WHILE (inew .LT. m%divfcp(i, 2))
           left_match_found = .false.
           DO j=1,m%divfcp(i, 2)
