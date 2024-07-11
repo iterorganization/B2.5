@@ -361,23 +361,23 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       IF (.NOT.is_neutral(is)) THEN
 ! dna
         CALL TRANSFORM_TRANSPORT_DV(flag_dna, parm_dna(is), parm_dnad(:&
-&                             , is), cfdna(0, is), cfdnad(1:nbdirs, 0, is), &
+&                             , is), cfdna(:, is), cfdnad(1:nbdirs, :, is), &
 &                             nbdirs)
 ! dpa
         CALL TRANSFORM_TRANSPORT_DV(flag_dpa, parm_dpa(is), parm_dpad(:&
-&                             , is), cfdpa(0, is), cfdpad(1:nbdirs, 0, is), &
+&                             , is), cfdpa(:, is), cfdpad(1:nbdirs, :, is), &
 &                             nbdirs)
 ! vla
         CALL TRANSFORM_TRANSPORT_DV(flag_vla, parm_vla(is), parm_vlad(:&
-&                             , is), cfvla(0, is), cfvlad(1:nbdirs, 0, is), &
+&                             , is), cfvla(:, is), cfvlad(1:nbdirs, :, is), &
 &                             nbdirs)
 ! vsa
         CALL TRANSFORM_TRANSPORT_DV(flag_vsa, parm_vsa(is), parm_vsad(:&
-&                             , is), cfvsa(0, is), cfvsad(1:nbdirs, 0, is), &
+&                             , is), cfvsa(:, is), cfvsad(1:nbdirs, :, is), &
 &                             nbdirs)
 ! hci
         CALL TRANSFORM_TRANSPORT_DV(flag_hci, parm_hci(is), parm_hcid(:&
-&                             , is), cfhci(0, is), cfhcid(1:nbdirs, 0, is), &
+&                             , is), cfhci(:, is), cfhcid(1:nbdirs, :, is), &
 &                             nbdirs)
       END IF
     END DO
@@ -1450,15 +1450,15 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) THEN
 ! dna
-        CALL TRANSFORM_TRANSPORT(flag_dna, parm_dna(is), cfdna(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_dna, parm_dna(is), cfdna(:, is))
 ! dpa
-        CALL TRANSFORM_TRANSPORT(flag_dpa, parm_dpa(is), cfdpa(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_dpa, parm_dpa(is), cfdpa(:, is))
 ! vla
-        CALL TRANSFORM_TRANSPORT(flag_vla, parm_vla(is), cfvla(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_vla, parm_vla(is), cfvla(:, is))
 ! vsa
-        CALL TRANSFORM_TRANSPORT(flag_vsa, parm_vsa(is), cfvsa(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_vsa, parm_vsa(is), cfvsa(:, is))
 ! hci
-        CALL TRANSFORM_TRANSPORT(flag_hci, parm_hci(is), cfhci(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_hci, parm_hci(is), cfhci(:, is))
       END IF
     END DO
 ! hce
