@@ -430,7 +430,7 @@
             do is0 = 0, nspecies-1
              write (chns0,'(i3.3)') is0
               call my_out(70,nx,ny,cvsa0_hAdp(-1,-1,0,is,is0),
-     &         'b2tral_cvsa0_hAdp'//chns//'_'//chns0)
+     &         'b2tral_cvsa0_hAdpx'//chns//'_'//chns0)
               call my_out(70,nx,ny,cvsa_hAdp_luc(-1,-1,0,is,is0),
      &         'b2tral_cvsa_hAdp_lucx'//chns//'_'//chns0)
               call my_out(70,nx,ny,cvsahz0_hAdp(-1,-1,0,is,is0),
@@ -451,7 +451,7 @@
             call my_out(70,nx,ny,cvsahz_hBdp_luc(-1,-1,0,is),
      &       'b2tral_cvsahz_hBdp_lucx'//chns)
             call my_out(70,nx,ny,cvsahz_uBdp_fl(-1,-1,0,is),
-     &       'b2tral_cvsahz_uBdp_fl'//chns)
+     &       'b2tral_cvsahz_uBdp_flx'//chns)
             call my_out(70,nx,ny,cvsahz_uBdp_luc(-1,-1,0,is),
      &       'b2tral_cvsahz_uBdp_lucx'//chns)
           enddo
@@ -651,50 +651,60 @@
         call my_out(70,nx,ny,cvla(-1,-1,1,is),'b2tral_cvlay'//chns)
         call my_out(70,nx,ny,cvsa(-1,-1,0,is),'b2tral_cvsax'//chns)
         call my_out(70,nx,ny,cvsa(-1,-1,1,is),'b2tral_cvsay'//chns)
-        call my_out(70,nx,ny,cdnahz(-1,-1,0,is),'b2tral_cdnahzx'//chns)
-        call my_out(70,nx,ny,cdnahz(-1,-1,1,is),'b2tral_cdnahzy'//chns)
-        call my_out(70,nx,ny,cdpahz(-1,-1,0,is),'b2tral_cdpahzx'//chns)
-        call my_out(70,nx,ny,cdpahz(-1,-1,1,is),'b2tral_cdpahzy'//chns)
-        call my_out(70,nx,ny,cvlahz(-1,-1,0,is),'b2tral_cvlahzx'//chns)
-        call my_out(70,nx,ny,cvlahz(-1,-1,1,is),'b2tral_cvlahzy'//chns)
-        call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2tral_cvsahzx'//chns)
-        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2tral_cvsahzy'//chns)
-        call my_out(70,nx,ny,cvmahz(-1,-1,0,is),'b2tral_cvmahzx'//chns)
-        call my_out(70,nx,ny,cvmahz(-1,-1,1,is),'b2tral_cvmahzy'//chns)
+        call my_out(70,nx,ny,cdnahz(-1,-1,0,is),
+     &                                         'b2tral_cdnahzx'//chns)
+        call my_out(70,nx,ny,cdnahz(-1,-1,1,is),
+     &                                         'b2tral_cdnahzy'//chns)
+        call my_out(70,nx,ny,cdpahz(-1,-1,0,is),
+     &                                         'b2tral_cdpahzx'//chns)
+        call my_out(70,nx,ny,cdpahz(-1,-1,1,is),
+     &                                         'b2tral_cdpahzy'//chns)
+        call my_out(70,nx,ny,cvlahz(-1,-1,0,is),
+     &                                         'b2tral_cvlahzx'//chns)
+        call my_out(70,nx,ny,cvlahz(-1,-1,1,is),
+     &                                         'b2tral_cvlahzy'//chns)
+        call my_out(70,nx,ny,cvsahz(-1,-1,0,is),
+     &                                         'b2tral_cvsahzx'//chns)
+        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),
+     &                                         'b2tral_cvsahzy'//chns)
+        call my_out(70,nx,ny,cvmahz(-1,-1,0,is),
+     &                                         'b2tral_cvmahzx'//chns)
+        call my_out(70,nx,ny,cvmahz(-1,-1,1,is),
+     &                                         'b2tral_cvmahzy'//chns)
         call my_out(70,nx,ny,cvsa_cl(-1,-1,0,is),
      &                                         'b2tral_cvsa_clx'//chns)
         call my_out(70,nx,ny,cvsa_cl(-1,-1,1,is),
      &                                         'b2tral_cvsa_cly'//chns)
         call my_out(70,nx,ny,cvsahz_cl(-1,-1,0,is),
-     &                                  'b2tral_cvsahz_clx'//chns)
+     &                                       'b2tral_cvsahz_clx'//chns)
         call my_out(70,nx,ny,cvsahz_cl(-1,-1,1,is),
      &                                       'b2tral_cvsahz_cly'//chns)
         call my_out(70,nx,ny,cvsa0_luc(-1,-1,0,is),
-     &       'b2tral_cvsa0_lucx'//chns)
+     &                                       'b2tral_cvsa0_lucx'//chns)
         call my_out(70,nx,ny,cvsa0_luc(-1,-1,1,is),
-     &       'b2tral_cvsa0_lucy'//chns)
+     &                                       'b2tral_cvsa0_lucy'//chns)
         call my_out(70,nx,ny,cvsahz0_luc(-1,-1,0,is),
-     &       'b2tral_cvsahz0_lucx'//chns)
+     &                                     'b2tral_cvsahz0_lucx'//chns)
         call my_out(70,nx,ny,cvsahz0_luc(-1,-1,1,is),
-     &       'b2tral_cvsahz0_lucy'//chns)
+     &                                     'b2tral_cvsahz0_lucy'//chns)
         call my_out(70,nx,ny,cvsahz0(-1,-1,0,is),
-     &       'b2tral_cvsahz0x'//chns)
+     &                                         'b2tral_cvsahz0x'//chns)
         call my_out(70,nx,ny,cvsahz0(-1,-1,1,is),
-     &       'b2tral_cvsahz0y'//chns)
+     &                                         'b2tral_cvsahz0y'//chns)
         call my_out(70,nx,ny,cthe(-1,-1,is),'b2tral_cthe'//chns)
         call my_out(70,nx,ny,cthi(-1,-1,is),'b2tral_cthi'//chns)
         call my_out(70,nx,ny,cvsa_drho(-1,-1,0,is),
-     &       'b2tral_cvsa_drhox'//chns)
+     &                                       'b2tral_cvsa_drhox'//chns)
 !        call my_out(70,nx,ny,cvsa_drho(-1,-1,1,is),
-!     &       'b2tral_cvsa_drhoy'//chns)
+!     &                                      'b2tral_cvsa_drhoy'//chns)
         call my_out(70,nx,ny,cvsahz_drho(-1,-1,0,is),
-     &       'b2tral_cvsahz_drhox'//chns)
+     &                                     'b2tral_cvsahz_drhox'//chns)
 !        call my_out(70,nx,ny,cvsahz_drho(-1,-1,1,is),
-!     &       'b2tral_cvsahz_drhoy'//chns)
+!     &                                    'b2tral_cvsahz_drhoy'//chns)
         call my_out(70,nx,ny,chci_a_luc(-1,-1,0,is),
-     &       'b2tral_chci_a_lucx'//chns)
+     &                                      'b2tral_chci_a_lucx'//chns)
 !        call my_out(70,nx,ny,chci_a_luc(-1,-1,1,is),
-!     &       'b2tral_chci_a_lucy'//chns)
+!     &                                     'b2tral_chci_a_lucy'//chns)
 
         do is0 = 0, ns-1
          write (chns0,'(i3.3)') is0

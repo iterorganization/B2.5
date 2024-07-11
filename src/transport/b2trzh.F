@@ -56,7 +56,7 @@
      &  cvsahz_hBdp(-1:nx,-1:ny,0:1,0:nspecies-1),
      &  cvsahz_hAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
      &  cvsahz_hBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
-     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),             !som 22.12.23
+     &  cvsa_uAdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),         !som 22.12.23
      &  cvsa_uBdp_fl(-1:nx,-1:ny,0:1,0:nspecies-1),
      &  cvsa_uAdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
      &  cvsa_uBdp_luc(-1:nx,-1:ny,0:1,0:nspecies-1),
@@ -869,7 +869,7 @@
           enddo
         enddo
       enddo
-      
+
 *    ..apply Luciani correction for the addtional part of the
 *      velocity-dependent viscosity
       do i = 0, nspecies-1
@@ -895,10 +895,10 @@
         do iy = -1, ny
           do ix = -1, nx                                                 !srv 30.01.23
             if (on_closed_surface(ix,iy)) then
-              cvsahz_uBdp_luc(ix,iy,0,i) = cvsahz_uBdp_fl(ix,iy,0,i)*
-     &         f_luc_et(ix,iy)
-              cvsa_uBdp_luc(ix,iy,0,i) = cvsa_uBdp_fl(ix,iy,0,i)*
-     &         f_luc_et(ix,iy)
+              cvsahz_uBdp_luc(ix,iy,0,i) =
+     &         cvsahz_uBdp_fl(ix,iy,0,i)*f_luc_et(ix,iy)
+              cvsa_uBdp_luc(ix,iy,0,i) =
+     &         cvsa_uBdp_fl(ix,iy,0,i)*f_luc_et(ix,iy)
             else
               cvsahz_uBdp_luc(ix,iy,0,i) = cvsahz_uBdp_fl(ix,iy,0,i)
               cvsa_uBdp_luc(ix,iy,0,i) = cvsa_uBdp_fl(ix,iy,0,i)
@@ -942,7 +942,7 @@
           enddo
         enddo
       enddo
-      
+
       ncall = ncall+1
       call subend ()
       return

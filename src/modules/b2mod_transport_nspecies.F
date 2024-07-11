@@ -7,7 +7,7 @@
      *  cvsa_hAdp_albe(:,:,:,:,:),
      *  cvsa_hBdp_al(:,:,:,:),                                        !som 20.10.21
      *  cvsa_uAdp_albe(:,:,:,:,:),
-     *  cvsa_uBdp_al(:,:,:,:),                                        !som 26.04.24     
+     *  cvsa_uBdp_al(:,:,:,:),                                        !som 26.04.24
      *  cvsahz_hAdp_albe(:,:,:,:,:),
      *  cvsahz_hBdp_al(:,:,:,:),                                      !som 08.10.21
      *  cvsahz_uAdp_albe(:,:,:,:,:),
@@ -42,6 +42,7 @@
       cvsahz_hBdp_al   = 0.0_R8
       cvsahz_uAdp_albe = 0.0_R8
       cvsahz_uBdp_al   = 0.0_R8
+
       return
       end subroutine alloc_b2mod_transport_nspecies
 
@@ -55,7 +56,7 @@
       deallocate(cvsahz_hAdp_albe)
       deallocate(cvsahz_hBdp_al)                                      !som 08.10.21
       deallocate(cvsahz_uAdp_albe)
-      deallocate(cvsahz_uBdp_al)                                      !som 22.12.23      
+      deallocate(cvsahz_uBdp_al)                                      !som 22.12.23
 
       return
       end subroutine dealloc_b2mod_transport_nspecies
