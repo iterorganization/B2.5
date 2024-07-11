@@ -1531,7 +1531,6 @@ CONTAINS
     LOGICAL :: duplicate, left_match_found, right_match_found
     EXTERNAL IPGETI, XERRAB
     INTRINSIC MAXVAL
-    REAL(kind=r8) :: result1
 !wdk  This initialization routine precomputes a number of arrays
 !wdk  in the mapping that are not stored in the b2fgmtry file, but
 !wdk  can be derived directly from data in that file
@@ -1861,15 +1860,15 @@ CONTAINS
 !
     indd = MAXVAL(m%strdiv)
     IF (indd .GT. 0) THEN
-      ALLOCATE(mb%ifdiv(MAXVAL(m%strdiv)))
+      ALLOCATE(mb%ifdiv(indd))
       mb%ifdiv = 0
-      ALLOCATE(m%ifdiv(MAXVAL(m%strdiv)))
-      ALLOCATE(mb%ivdiv(MAXVAL(m%strdiv)))
+      ALLOCATE(m%ifdiv(indd))
+      ALLOCATE(mb%ivdiv(indd))
       mb%ivdiv = 0
-      ALLOCATE(m%ivdiv(MAXVAL(m%strdiv)))
-      ALLOCATE(mb%divfcp(MAXVAL(m%strdiv), 2))
+      ALLOCATE(m%ivdiv(indd))
+      ALLOCATE(mb%divfcp(indd, 2))
       mb%divfcp = 0
-      ALLOCATE(m%divfcp(MAXVAL(m%strdiv), 2))
+      ALLOCATE(m%divfcp(indd, 2))
       ALLOCATE(indfc(m%nfc))
       icount = 0
       m%ifdiv = 0
@@ -1897,8 +1896,7 @@ CONTAINS
       m%divfcor = 0.0_R8
       m%divfc(1:icount) = indfc(1:icount)
 ! now re-order them
-      result1 = MAXVAL(m%strdiv)
-      DO i=1,result1
+      DO i=1,indd
         ALLOCATE(old_face_list(m%divfcp(i, 2)))
         ALLOCATE(new_face_list(m%divfcp(i, 2)))
         old_face_list(1:m%divfcp(i, 2)) = m%divfc(m%divfcp(i, 1):m%&
@@ -2003,7 +2001,6 @@ CONTAINS
     LOGICAL :: duplicate, left_match_found, right_match_found
     EXTERNAL IPGETI, XERRAB
     INTRINSIC MAXVAL
-    REAL(kind=r8) :: result1
 !wdk  This initialization routine precomputes a number of arrays
 !wdk  in the mapping that are not stored in the b2fgmtry file, but
 !wdk  can be derived directly from data in that file
@@ -2309,9 +2306,9 @@ CONTAINS
 !
     indd = MAXVAL(m%strdiv)
     IF (indd .GT. 0) THEN
-      ALLOCATE(m%ifdiv(MAXVAL(m%strdiv)))
-      ALLOCATE(m%ivdiv(MAXVAL(m%strdiv)))
-      ALLOCATE(m%divfcp(MAXVAL(m%strdiv), 2))
+      ALLOCATE(m%ifdiv(indd))
+      ALLOCATE(m%ivdiv(indd))
+      ALLOCATE(m%divfcp(indd, 2))
       ALLOCATE(indfc(m%nfc))
       icount = 0
       m%ifdiv = 0
@@ -2335,8 +2332,7 @@ CONTAINS
       m%divfcor = 0.0_R8
       m%divfc(1:icount) = indfc(1:icount)
 ! now re-order them
-      result1 = MAXVAL(m%strdiv)
-      DO i=1,result1
+      DO i=1,indd
         ALLOCATE(old_face_list(m%divfcp(i, 2)))
         ALLOCATE(new_face_list(m%divfcp(i, 2)))
         old_face_list(1:m%divfcp(i, 2)) = m%divfc(m%divfcp(i, 1):m%&
