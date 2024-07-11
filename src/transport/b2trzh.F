@@ -241,6 +241,10 @@
       endif
 
 *   ..main part
+
+      eta_cl_a_only    = 0.0_R8     !srv 05.07.24 {
+      eta_cl_a_only_fl = 0.0_R8     !srv 05.07.24 }
+
 *   ..calculate the average Z**2*n and density of each isonuclear sequence
       call b2mod_zhfrtf_prep(nx,ny,ns,na,ua)
 
