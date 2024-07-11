@@ -229,15 +229,15 @@
         do is=0,ns-1
           if(.not.is_neutral(is)) then
 * dna
-            call transform_transport(flag_dna,parm_dna(is),cfdna(0,is))
+            call transform_transport(flag_dna,parm_dna(is),cfdna(:,is))
 * dpa
-            call transform_transport(flag_dpa,parm_dpa(is),cfdpa(0,is))
+            call transform_transport(flag_dpa,parm_dpa(is),cfdpa(:,is))
 * vla
-            call transform_transport(flag_vla,parm_vla(is),cfvla(0,is))
+            call transform_transport(flag_vla,parm_vla(is),cfvla(:,is))
 * vsa
-            call transform_transport(flag_vsa,parm_vsa(is),cfvsa(0,is))
+            call transform_transport(flag_vsa,parm_vsa(is),cfvsa(:,is))
 * hci
-            call transform_transport(flag_hci,parm_hci(is),cfhci(0,is))
+            call transform_transport(flag_hci,parm_hci(is),cfhci(:,is))
           endif
         enddo
 * hce
