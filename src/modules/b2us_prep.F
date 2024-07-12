@@ -2424,7 +2424,8 @@
 
       implicit none
       integer, intent(in) :: nx, ny
-      integer :: ix, iy, ic, iFc, iVx, iFs
+      integer :: ix, iy, ic, iFc, iVx, iFs, iCv, Cvs(2)
+      real :: wrk
 #ifdef WG_TODO
       integer :: i, j, idb, iVx1, iVx2
 #endif
@@ -2434,6 +2435,15 @@
       integer newunit
       external newunit
 #endif
+      integer :: fcsb(mpg%nCi,40),fcsb_col,fcsb_row,k,iCv2_prev,iCv2,
+     &  fcsb_len(mpg%nCi)
+      real (kind=R8), save :: Qalfmin = 0.0_R8,Qalfmax=1e-2_R8
+      integer, save :: mod_hc = 0, mean_boundary_hc = 0
+
+      call ipgetr('b2us_prep_Qalfmin',Qalfmin)
+      call ipgetr('b2us_prep_Qalfmax',Qalfmax)
+      call ipgeti('b2us_prep_mod_hc',mod_hc)
+      call ipgeti('b2us_prep_mean_boundary_hc',mean_boundary_hc)
 
       call alloc_geometry (gm,
      &  mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt, mpg%nVmxCv)
@@ -2470,8 +2480,21 @@
             ! wdk sign of field now included in angles
             gm%fcBb(iFc,0:3) = abs(wbbl(ix,iy,0:3))
             gm%fcS(iFc) = gs(ix,iy,0)
-            gm%fcHc(iFc,1) = hc(leftix(ix,iy),leftiy(ix,iy),2)
-            gm%fcHc(iFc,2) = hc(ix,iy,0)
+            if (iCv.le.mpg%nCi .or. mod_hc.eq.0) then
+              gm%fcHc(iFc,1) = hc(leftix(ix,iy),leftiy(ix,iy),2)
+              gm%fcHc(iFc,2) = hc(ix,iy,0)
+            else
+              Cvs = mpg%fcCv(iFc,1:2)
+              wrk = sqrt((gm%cvX(Cvs(1))-gm%cvX(Cvs(2)))**2+
+     &          (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
+              if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
+                gm%fcHc(iFc,1) = 0.01*wrk
+                gm%fcHc(iFc,2) = 0.99*wrk
+              elseif (mpg%fcCv(iFc,2).gt.mpg%nCi) then
+                gm%fcHc(iFc,2) = 0.01*wrk
+                gm%fcHc(iFc,1) = 0.99*wrk
+              endif
+            endif
             gm%fcHt(iFc)   = ht(ix,iy,0)
             gm%fcVol(iFc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
             gm%fcVol(iFc,2) = 0.5_R8*vol(ix,iy)
@@ -2490,6 +2513,16 @@
      .        sign(1.0_R8,wbbl(ix,iy,2))
             gm%fcPbs(iFc) = pbs(ix,iy,0)
             gm%fcPbshz(iFc) = pbshz(ix,iy,0)
+            if (abs(gm%fcPbs(iFc)/gm%fcS(iFc))<Qalfmin .and. 
+     .        (maxval(mpg%fcCv(iFc,1:2)) > mpg%nCi) .and.
+     .        mpg%fcLbl(iFc) > 0 .and. 
+     .        abs(gm%fcQalf(iFc,0)) > Qalfmax) then
+              gm%fcPbs(iFc) = Qalfmin*gm%fcS(iFc)*
+     .        sign(1.0,gm%fcPbs(iFc))
+              gm%fcPbshz(iFc) = Qalfmin*gm%fcS(iFc)*gm%fcHz(iFc)*
+     .          sign(1.0,gm%fcPbshz(iFc))
+              write (*,*)'pbs and pbshz was modified for iFc=',iFc
+            endif
           end if
         end do
       end do
@@ -2499,11 +2532,26 @@
         do iy = 0, ny
           if(mpg%imapFcy(ix,iy)/=0) then
             iFc = mpg%imapFcy(ix,iy)
+            iCv = mpg%imapCv(ix,iy)
             ! wdk sign of field now included in angles
             gm%fcBb(iFc,0:3) = abs(wbbv(ix,iy,0:3))
             gm%fcS(iFc) = gs(ix,iy,1)
-            gm%fcHc(iFc,1) = hc(bottomix(ix,iy),bottomiy(ix,iy),3)
-            gm%fcHc(iFc,2) = hc(ix,iy,1)
+
+            if (iCv.le.mpg%nCi .or. mod_hc.eq.0) then
+              gm%fcHc(iFc,2) = hc(ix,iy,1)
+              gm%fcHc(iFc,1) = hc(bottomix(ix,iy),bottomiy(ix,iy),3)
+            else
+              Cvs = mpg%fcCv(iFc,1:2)
+              wrk = sqrt((gm%cvX(Cvs(1))-gm%cvX(Cvs(2)))**2+
+     &          (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
+              if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
+                gm%fcHc(iFc,1) = 0.01*wrk
+                gm%fcHc(iFc,2) = 0.99*wrk
+              elseif (mpg%fcCv(iFc,2).gt.mpg%nCi) then
+                gm%fcHc(iFc,2) = 0.01*wrk
+                gm%fcHc(iFc,1) = 0.99*wrk
+              endif
+            endif
             gm%fcHt(iFc)   = ht(ix,iy,1)
             gm%fcVol(iFc,1) = 0.5_R8*vol(bottomix(ix,iy),
      .                                    bottomiy(ix,iy))
@@ -2523,10 +2571,49 @@
      .        sign(1.0_R8,wbbv(ix,iy,2))
             gm%fcPbs(iFc) = pbs(ix,iy,1)
             gm%fcPbshz(iFc) = pbshz(ix,iy,1)
+            if (abs(gm%fcPbs(iFc)/gm%fcS(iFc))<Qalfmin .and. 
+     .        (maxval(mpg%fcCv(iFc,1:2)) > mpg%nCi) .and.
+     .        mpg%fcLbl(iFc) > 0 .and. 
+     .        abs(gm%fcQalf(iFc,0)) > Qalfmax) then
+              gm%fcPbs(iFc) = Qalfmin*gm%fcS(iFc)*
+     .        sign(1.0,gm%fcPbs(iFc))
+              gm%fcPbshz(iFc) = Qalfmin*gm%fcS(iFc)*gm%fcHz(iFc)*
+     .          sign(1.0,gm%fcPbshz(iFc))
+              write (*,*)'pbs and pbshz was modified for iFc=',iFc
+            endif
           end if
         end do
       end do
 
+      if (mean_boundary_hc.eq.1) then
+       fcsb = 0
+       fcsb_len = 0
+       fcsb_col = 1
+       fcsb_row = 1
+       do iCv=mpg%nCi+1,mpg%nCv
+         if (mpg%cvOnClosedSurface(iCv)) cycle
+         iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+         iCv2 = minval(mpg%fcCv(iFc,1:2))
+         iCv2_prev = minval(mpg%fcCv
+     &     (mpg%cvFc(mpg%cvFcP(iCv-1,1)),1:2))
+         write (*,*)'iCv,iFc',iCv,iFc,fcsb_col,fcsb_row
+         if (fcsb_col .gt. 1 .and. 
+     &     (mpg%cvReg(iCv2) .ne. mpg%cvReg(iCv2_prev))) then
+          fcsb_len(fcsb_row) = fcsb_col-1
+          fcsb_row = fcsb_row+1
+          fcsb_col = 1
+         endif
+         if (mpg%cvFt(minval(mpg%fcCv(iFc,1:2))).ne.0) then
+           fcsb(fcsb_row,fcsb_col) = iFc
+           fcsb_col = fcsb_col+1
+         endif
+       enddo
+       do k=1,fcsb_row
+         gm%fcHc(fcsb(k,1:fcsb_len(k)),2)=
+     &     sum(gm%fcHc(fcsb(k,1:fcsb_len(k)),2))/fcsb_len(k)
+         write (*,*) fcsb(k,1:fcsb_len(k)) 
+       enddo
+      endif
 ! vertices
       gm%vxX = 0._R8
       gm%vxY = 0._R8
