@@ -2454,9 +2454,10 @@
 
       implicit none
       integer, intent(in) :: nx, ny
-      integer :: ix, iy, ic, iFc, iVx, iFs, iCv, iVx1, iVx2
-#ifdef WG_DEBUG
-      integer :: i, j, idb
+      integer :: ix, iy, ic, iFc, iVx, iFs, iCv, Cvs(2)
+      real :: wrk
+#ifdef WG_TODO
+      integer :: i, j, idb, iVx1, iVx2
 #endif
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
@@ -2476,6 +2477,15 @@
       integer newunit
       external newunit
 #endif
+      integer :: fcsb(mpg%nCi,40),fcsb_col,fcsb_row,k,iCv2_prev,iCv2,
+     &  fcsb_len(mpg%nCi)
+      real (kind=R8), save :: Qalfmin = 0.0_R8,Qalfmax=1e-2_R8
+      integer, save :: mod_hc = 0, mean_boundary_hc = 0
+
+      call ipgetr('b2us_prep_Qalfmin',Qalfmin)
+      call ipgetr('b2us_prep_Qalfmax',Qalfmax)
+      call ipgeti('b2us_prep_mod_hc',mod_hc)
+      call ipgeti('b2us_prep_mean_boundary_hc',mean_boundary_hc)
 
       call alloc_geometry (gm,
      &  mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt, mpg%nVmxCv)
@@ -2523,8 +2533,21 @@
             ! wdk sign of field now included in angles
             gm%fcBb(iFc,0:3) = abs(wbbl(ix,iy,0:3))
             gm%fcS(iFc) = gs(ix,iy,0)
-            gm%fcHc(iFc,1) = hc(leftix(ix,iy),leftiy(ix,iy),2)
-            gm%fcHc(iFc,2) = hc(ix,iy,0)
+            if (iCv.le.mpg%nCi .or. mod_hc.eq.0) then
+              gm%fcHc(iFc,1) = hc(leftix(ix,iy),leftiy(ix,iy),2)
+              gm%fcHc(iFc,2) = hc(ix,iy,0)
+            else
+              Cvs = mpg%fcCv(iFc,1:2)
+              wrk = sqrt((gm%cvX(Cvs(1))-gm%cvX(Cvs(2)))**2+
+     &          (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
+              if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
+                gm%fcHc(iFc,1) = 0.01*wrk
+                gm%fcHc(iFc,2) = 0.99*wrk
+              elseif (mpg%fcCv(iFc,2).gt.mpg%nCi) then
+                gm%fcHc(iFc,2) = 0.01*wrk
+                gm%fcHc(iFc,1) = 0.99*wrk
+              endif
+            endif
             gm%fcHt(iFc)   = ht(ix,iy,0)
             gm%fcVol(iFc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
             gm%fcVol(iFc,2) = 0.5_R8*vol(ix,iy)
@@ -2543,6 +2566,16 @@
      .        sign(1.0_R8,wbbl(ix,iy,2))
             gm%fcPbs(iFc) = pbs(ix,iy,0)
             gm%fcPbshz(iFc) = pbshz(ix,iy,0)
+            if (abs(gm%fcPbs(iFc)/gm%fcS(iFc))<Qalfmin .and. 
+     .        (maxval(mpg%fcCv(iFc,1:2)) > mpg%nCi) .and.
+     .        mpg%fcLbl(iFc) > 0 .and. 
+     .        abs(gm%fcQalf(iFc,0)) > Qalfmax) then
+              gm%fcPbs(iFc) = Qalfmin*gm%fcS(iFc)*
+     .        sign(1.0,gm%fcPbs(iFc))
+              gm%fcPbshz(iFc) = Qalfmin*gm%fcS(iFc)*gm%fcHz(iFc)*
+     .          sign(1.0,gm%fcPbshz(iFc))
+              write (*,*)'pbs and pbshz was modified for iFc=',iFc
+            endif
           end if
         end do
       end do
@@ -2552,11 +2585,26 @@
         do iy = 0, ny
           if(mpg%imapFcy(ix,iy)/=0) then
             iFc = mpg%imapFcy(ix,iy)
+            iCv = mpg%imapCv(ix,iy)
             ! wdk sign of field now included in angles
             gm%fcBb(iFc,0:3) = abs(wbbv(ix,iy,0:3))
             gm%fcS(iFc) = gs(ix,iy,1)
-            gm%fcHc(iFc,1) = hc(bottomix(ix,iy),bottomiy(ix,iy),3)
-            gm%fcHc(iFc,2) = hc(ix,iy,1)
+
+            if (iCv.le.mpg%nCi .or. mod_hc.eq.0) then
+              gm%fcHc(iFc,2) = hc(ix,iy,1)
+              gm%fcHc(iFc,1) = hc(bottomix(ix,iy),bottomiy(ix,iy),3)
+            else
+              Cvs = mpg%fcCv(iFc,1:2)
+              wrk = sqrt((gm%cvX(Cvs(1))-gm%cvX(Cvs(2)))**2+
+     &          (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
+              if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
+                gm%fcHc(iFc,1) = 0.01*wrk
+                gm%fcHc(iFc,2) = 0.99*wrk
+              elseif (mpg%fcCv(iFc,2).gt.mpg%nCi) then
+                gm%fcHc(iFc,2) = 0.01*wrk
+                gm%fcHc(iFc,1) = 0.99*wrk
+              endif
+            endif
             gm%fcHt(iFc)   = ht(ix,iy,1)
             gm%fcVol(iFc,1) = 0.5_R8*vol(bottomix(ix,iy),
      .                                    bottomiy(ix,iy))
@@ -2576,217 +2624,49 @@
      .        sign(1.0_R8,wbbv(ix,iy,2))
             gm%fcPbs(iFc) = pbs(ix,iy,1)
             gm%fcPbshz(iFc) = pbshz(ix,iy,1)
+            if (abs(gm%fcPbs(iFc)/gm%fcS(iFc))<Qalfmin .and. 
+     .        (maxval(mpg%fcCv(iFc,1:2)) > mpg%nCi) .and.
+     .        mpg%fcLbl(iFc) > 0 .and. 
+     .        abs(gm%fcQalf(iFc,0)) > Qalfmax) then
+              gm%fcPbs(iFc) = Qalfmin*gm%fcS(iFc)*
+     .        sign(1.0,gm%fcPbs(iFc))
+              gm%fcPbshz(iFc) = Qalfmin*gm%fcS(iFc)*gm%fcHz(iFc)*
+     .          sign(1.0,gm%fcPbshz(iFc))
+              write (*,*)'pbs and pbshz was modified for iFc=',iFc
+            endif
           end if
         end do
       end do
 
-      ! Determine which boundary faces should be treated as wall faces
-      is_mod_fc = .false.
-      if (Qalf_mod_style.eq.0) then
-        ! Wall faces must have an angle larger than Qalfmin
-        do iCv=mpg%nCi+1,mpg%nCv
-          iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
-          wrk = abs(gm%fcQalf(iFc,0) * gm%fcBb(iFc,0)
-     &                  / gm%fcBb(iFc,3))
-          if (wrk >= gm%Qalfmin)
-     &      is_mod_fc(iFc) = .true.
-        enddo
-      else
-        ! Wall faces must be located at either end of a flux tube
-        ! or satisfy both conditions:
-        ! 1. Have a magnetic field angle larger than Qalfmin AND
-        ! 2. Have at least one neighboring wall face
-        do iFt = 1, mpg%nFt
-          mod_cell_c = 0
-          ! Identify the first cells in the flux tube and their wall faces
-          do l = 1, mpg%ftCvP(iFt,2)
-            iCv = mpg%ftCv(mpg%ftCvP(iFt,1) + l - 1)
-            wrk = 0.0_R8
-            do k = 1, mpg%cvFcP(iCv,2)
-              iFc = mpg%cvFc(mpg%cvFcP(iCv,1) + k - 1)
-              if (mpg%fcLbl(iFc) > 0) then
-                wrk = abs(gm%fcQalf(iFc,0) * gm%fcBb(iFc,0)
-     &                  / gm%fcBb(iFc,3))
-                if (wrk >= gm%Qalfmin .or. l == 1) then
-                  is_mod_fc(iFc) = .true.
-                  mod_cell_c = mod_cell_c + 1
-                else
-                  exit
-                endif
-              endif
-            enddo
-            if (wrk < gm%Qalfmin) then
-              exit
-            endif
-          enddo
-          ! Identify the last cells in the flux tube and their wall faces
-          do l = mpg%ftCvP(iFt,2), 1, -1
-            iCv = mpg%ftCv(mpg%ftCvP(iFt,1) + l - 1)
-            wrk = 0.0_R8
-            do k = 1, mpg%cvFcP(iCv,2)
-              iFc = mpg%cvFc(mpg%cvFcP(iCv,1) + k - 1)
-              if (mpg%fcLbl(iFc) > 0) then
-                wrk = abs(gm%fcQalf(iFc,0) * gm%fcBb(iFc,0)
-     &                  / gm%fcBb(iFc,3))
-                if (wrk >= gm%Qalfmin .or. l == mpg%ftCvP(iFt,2)) then
-                  is_mod_fc(iFc) = .true.
-                  mod_cell_c = mod_cell_c + 1
-                else
-                  exit
-                endif
-              endif
-            enddo
-            if (wrk < gm%Qalfmin) then
-              exit
-            endif
-          enddo
-          ! Special case: If every face in the flux tube qualifies as a wall,
-          ! one face must be marked as field-aligned.
-          ! For that purpose, we chose the face where the magnetic field angle
-          ! changes sign and designate it as the field-aligned (non-wall) face.
-          if (mod_cell_c >= mpg%ftCvP(iFt,2)) then
-            if (mpg%ftCvP(iFt,2) > 2) then
-              iFc1 = 0
-              do l = 1, mpg%ftCvP(iFt,2)
-                iCv = mpg%ftCv(mpg%ftCvP(iFt,1) + l - 1)
-                do k = 1, mpg%cvFcP(iCv,2)
-                  iFc = mpg%cvFc(mpg%cvFcP(iCv,1) + k - 1)
-                  if (mpg%fcLbl(iFc) > 0) then
-                    if (l > 1) then
-                      a = 1.0_R8
-                      if (mpg%fcCv(iFc,2) .lt. mpg%fcCv(iFc,1))
-     &                  a(1) = -1.0_R8
-                      if (mpg%fcCv(iFc1,2) .lt. mpg%fcCv(iFc1,1))
-     &                  a(2) = -1.0_R8
-                      if (sign(1.0_R8, gm%fcQalf(iFc,0)*a(1))
-     &                 /= sign(1.0_R8, gm%fcQalf(iFc1,0)*a(2))) then
-                        if (l < mpg%ftCvP(iFt,2)) then
-                          is_mod_fc(iFc) = .false.
-                        else
-                          is_mod_fc(iFc1) = .false.
-                        endif
-                      endif
-                    endif
-                    iFc1 = iFc
-                    exit
-                  endif
-                enddo
-              enddo
-            endif
-          endif
-        enddo
+      if (mean_boundary_hc.eq.1) then
+       fcsb = 0
+       fcsb_len = 0
+       fcsb_col = 1
+       fcsb_row = 1
+       do iCv=mpg%nCi+1,mpg%nCv
+         if (mpg%cvOnClosedSurface(iCv)) cycle
+         iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+         iCv2 = minval(mpg%fcCv(iFc,1:2))
+         iCv2_prev = minval(mpg%fcCv
+     &     (mpg%cvFc(mpg%cvFcP(iCv-1,1)),1:2))
+         write (*,*)'iCv,iFc',iCv,iFc,fcsb_col,fcsb_row
+         if (fcsb_col .gt. 1 .and. 
+     &     (mpg%cvReg(iCv2) .ne. mpg%cvReg(iCv2_prev))) then
+          fcsb_len(fcsb_row) = fcsb_col-1
+          fcsb_row = fcsb_row+1
+          fcsb_col = 1
+         endif
+         if (mpg%cvFt(minval(mpg%fcCv(iFc,1:2))).ne.0) then
+           fcsb(fcsb_row,fcsb_col) = iFc
+           fcsb_col = fcsb_col+1
+         endif
+       enddo
+       do k=1,fcsb_row
+         gm%fcHc(fcsb(k,1:fcsb_len(k)),2)=
+     &     sum(gm%fcHc(fcsb(k,1:fcsb_len(k)),2))/fcsb_len(k)
+         write (*,*) fcsb(k,1:fcsb_len(k)) 
+       enddo
       endif
-      ! modify angles for these faces
-      do ic=mpg%nCi+1,mpg%nCv
-        iFc = mpg%cvFc(mpg%cvFcP(ic,1))
-        if (mpg%fcLbl(iFc) .le. 0) cycle
-        bz_sign = sign(1.0_R8,gm%cvEb(ic,2))
-        wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
-        if (is_mod_fc(iFc)) then
-          if (wrk < gm%Qalfmax) then
-            gm%fcPbs(iFc) = gm%Qalfmax*gm%fcS(iFc)*
-     .         sign(1.0_R8,gm%fcPbs(iFc))
-            gm%fcPbshz(iFc) = gm%Qalfmax*gm%fcS(iFc)*gm%fcHz(iFc)*
-     .         sign(1.0_R8,gm%fcPbshz(iFc))
-            gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)
-     .         /gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
-            gm%fcQalf(iFc,1) = sign(sqrt(1.0_R8-
-     .         gm%fcQalf(iFc,0)**2),gm%fcQalf(iFc,1))
-            write(*,*) 'pbs and pbshz were modified for iFc=',iFc
-          endif
-          if (gm%fcQalf(iFc,0) < 0.0_R8) then
-            gm%fcQbet(iFc,0) = -1.0_R8*bz_sign
-            gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
-            gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)*bz_sign
-          elseif (gm%fcQalf(iFc,0) >= 0.0_R8) then
-            gm%fcQbet(iFc,0) = 1.0_R8*bz_sign
-            gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
-            gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)*bz_sign
-          endif
-          gm%fcQbet(iFc,1) = 0.0_R8
-        else
-          gm%fcPbs(iFc) = pbs_red_fac*gm%fcPbs(iFc)
-          gm%fcPbshz(iFc) = pbs_red_fac*gm%fcPbshz(iFc)
-          gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)/
-     .       gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
-          gm%fcQalf(iFc,1) = sign(sqrt(1.0_R8-
-     .        gm%fcQalf(iFc,0)**2),gm%fcQalf(iFc,1))
-          gm%fcQbet(iFc,0) = gm%fcQgam(iFc,0)*gm%fcQalf(iFc,0) +
-     .       gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)*bz_sign
-          gm%fcQbet(iFc,0) = gm%fcQbet(iFc,0)*bz_sign
-          gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
-     .       gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)*bz_sign
-          write(*,*) 'pbs and pbshz were reduced for iFc=',iFc
-        endif
-        if (mod_hc.eq.1) then
-          if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
-            gm%fcHc(iFc,1) = 0.01_R8*gm%fcHc(iFc,2)
-          elseif (mpg%fcCv(iFc,2).gt.mpg%nCi) then
-            gm%fcHc(iFc,2) = 0.01_R8*gm%fcHc(iFc,1)
-          endif
-        endif
-      enddo
-
-      k = 1
-      do ic=mpg%nCi+1,mpg%nCv
-        fcsb(k) = mpg%cvFc(mpg%cvFcP(ic,1))
-        k = k+1
-      enddo
-
-      cvsb = 0
-      iscvsb = .false.
-      print *, "fcs:"
-      do ind=1,mpg%nCg-1
-        do ind1=ind+1,mpg%nCg
-          if (mpg%fcVx(fcsb(ind),1) == mpg%fcVx(fcsb(ind1),1) .or.
-     &        mpg%fcVx(fcsb(ind),1) == mpg%fcVx(fcsb(ind1),2) .or.
-     &        mpg%fcVx(fcsb(ind),2) == mpg%fcVx(fcsb(ind1),1) .or.
-     &        mpg%fcVx(fcsb(ind),2) == mpg%fcVx(fcsb(ind1),2)) then
-            tmp = fcsb(ind+1)
-            fcsb(ind+1) = fcsb(ind1)
-            fcsb(ind1) = tmp
-          endif
-        enddo
-        cvsb(ind,1) = maxval(mpg%fcCv(fcsb(ind),1:2))
-        cvsb(ind,2) = minval(mpg%fcCv(fcsb(ind),1:2))
-        iscvsb(cvsb(ind,2)) = .true.
-        print *, fcsb(ind)
-      enddo
-
-      cvsb(ind,1) = maxval(mpg%fcCv(fcsb(mpg%nCg),1:2))
-      cvsb(ind,2) = minval(mpg%fcCv(fcsb(mpg%nCg),1:2))
-      print *, fcsb(mpg%nCg)
-
-      if (set_beta.eq.1) then
-        do iFt=1,mpg%nFt
-          do k=mpg%ftFcP(iFt,1),mpg%ftFcP(iFt,1)+mpg%ftFcP(iFt,2)-1
-            iFc = mpg%ftFc(k)
-            if (mpg%fcLbl(iFc).gt.0) cycle
-            if (.not.iscvsb(mpg%fcCv(iFc,1)) .and.
-     &          .not.iscvsb(mpg%fcCv(iFc,2))) cycle
-            bz_sign = sign(1.0_R8,gm%cvEb(mpg%fcCv(iFc,1),2))
-            if (gm%fcQbet(iFc,0)*bz_sign < 0.0_R8) then
-              gm%fcQbet(iFc,0) = -1.0_R8*bz_sign
-              gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
-              gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)*bz_sign
-            elseif (gm%fcQbet(iFc,0)*bz_sign >= 0.0_R8) then
-              gm%fcQbet(iFc,0) = 1.0_R8*bz_sign
-              gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
-              gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)*bz_sign
-            endif
-            gm%fcQbet(iFc,1) = 0.0_R8
-          enddo
-        enddo
-      endif
-
-! check gamma after modifications
-      call xertst (-1.0_R8.lt.smin(mpg%nFc,gm%fcQgam(1,1),1).and.
-     &   smax(mpg%nFc,gm%fcQgam(1,1),1).lt.1.0_R8,
-     &   'faulty argument range fcQgam(,1)')
-       call xertst (0.0_R8.lt.smin(mpg%nFc,gm%fcQgam(1,0),1).and.
-     &   smax(mpg%nFc,gm%fcQgam(1,0),1).le.1.0_R8,
-     &   'faulty argument range fcQgam(,0)')
-
 ! vertices
       gm%vxX = 0._R8
       gm%vxY = 0._R8
