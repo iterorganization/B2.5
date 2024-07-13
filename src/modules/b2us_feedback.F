@@ -834,30 +834,30 @@ cxpb size is changed in b2mod_dimensions
 ! csc For fluid neutrals (or fluid neutral strata, TBD) change directly the BC
 !     For kinetic neutrals (or kinetic strata, TBD), change directly userfluxparm, no issue with fluid BC
 !     Can be arbitrarily expanded to allow applying feedback to any already existent BC
-     &      (fb_actuator(ifb) .eq. 1 .and. !neutral flux (or gas puff)
-     &       ( bccon(is0,fb_ib(ifb)) .eq. 8 .or.
-     &        switch%use_eirene.ne.0) ) .or.
-     &      (fb_actuator(ifb) .eq. 3 .and. !charged particle flux ONLY for fb_type 6, to be improved?
-     &       maxval(bccon(is_start:is_end,
-     .                    fb_ib(ifb))).eq.8 .and.
-     &       minval(bccon(is_start:is_end,
-     .                    fb_ib(ifb))).eq.8 .and.
-     &       fb_type(ifb).eq.6) .or.
-     &      (fb_actuator(ifb) .eq. 3 .and. !charged particle flux, more general
-     &       (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 8 .or.
-     &        bccon(fb_species(ifb),fb_ib(ifb)) .eq. 13 ) .and.
-     &       .not.fb_type(ifb).eq.6) .or.
-     &      (fb_actuator(ifb) .eq. 4 .and. !electron heat flux
-     &       bcene(fb_ib(ifb)) .eq. 8) .or.
-     &      (fb_actuator(ifb) .eq. 5 .and. !ion heat flux
-     &       bceni(fb_ib(ifb)) .eq. 8) .or.
-     &      (fb_actuator(ifb) .eq. 6 .and. !current
-     &       bcpot(fb_ib(ifb)) .eq. 8) .or.
-     &      (fb_actuator(ifb) .eq. 7 .and. !density
-     &       (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1 .or.
-     &        bccon(fb_species(ifb),fb_ib(ifb)) .eq. 28)) .or.
-     &    (fb_actuator(ifb) .eq. 8.and. bccon(is0,fb_ib(ifb)) .eq. 10))
-        end if
+     &    (fb_actuator(ifb) .eq. 1 .and. !neutral flux (or gas puff)
+     &     ( bccon(is0,fb_ib(ifb)) .eq. 8 .or.
+     &      switch%use_eirene.ne.0) ) .or.
+     &    fb_actuator(ifb) .eq. 2 .or.
+     &    (fb_actuator(ifb) .eq. 3 .and. !charged particle flux ONLY for fb_type 6, to be improved?
+     &     maxval(bccon(is_start:is_end,
+     .                  fb_ib(ifb))).eq.8 .and.
+     &     minval(bccon(is_start:is_end,
+     .                  fb_ib(ifb))).eq.8 .and.
+     &     fb_type(ifb).eq.6) .or.
+     &    (fb_actuator(ifb) .eq. 3 .and. !charged particle flux, more general
+     &     (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 8 .or.
+     &      bccon(fb_species(ifb),fb_ib(ifb)) .eq. 13 ) .and.
+     &     .not.fb_type(ifb).eq.6) .or.
+     &    (fb_actuator(ifb) .eq. 4 .and. !electron heat flux
+     &     bcene(fb_ib(ifb)) .eq. 8) .or.
+     &    (fb_actuator(ifb) .eq. 5 .and. !ion heat flux
+     &     bceni(fb_ib(ifb)) .eq. 8) .or.
+     &    (fb_actuator(ifb) .eq. 6 .and. !current
+     &     bcpot(fb_ib(ifb)) .eq. 8) .or.
+     &    (fb_actuator(ifb) .eq. 7 .and. !density
+     &     (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1 .or.
+     &      bccon(fb_species(ifb),fb_ib(ifb)) .eq. 28)) .or.
+     &     ((fb_actuator(ifb) .eq. 8)))
       end do
       consistent = consistent .or. b2sral_style.eq.1 .or.
      & switch%b2stbc_boundary_namelist.lt.1
@@ -882,8 +882,8 @@ cxpb size is changed in b2mod_dimensions
           end do
         end do
       end do
-    !   call xertst (consistent,
-    !  . 'feedback scheme not consistent with B.C.''s!')
+      call xertst (consistent,
+     . 'feedback scheme not consistent with B.C.''s!')
 
       if (.not.feedback_allocated) then
         allocate(fbRegP(nFb,2),fbReg(nMxFbReg))
@@ -1502,7 +1502,7 @@ cxpb size is changed in b2mod_dimensions
                 endif
               enddo
 
-            case (18) !  density of ions at outer midplane
+            case (18) !  total electron radiation losses
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
@@ -1525,7 +1525,7 @@ cxpb size is changed in b2mod_dimensions
               if (fb_current(ifb).eq.0.0_R8)
      &          fb_current(ifb) = fb_target(ifb)
             
-            case (19) !  density of ions at outer midplane
+            case (19) !  total particle content
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
@@ -2648,7 +2648,6 @@ cxpb size is changed in b2mod_dimensions
         if (switch%recycle_afn.eq.0.or.
      &          is_start.gt.1) then
           do istra = 1, nbc
-            print *,"bc:", istra, bccon(is_start,istra)
             if (bccon(is_start,istra).eq.10) then
               do ib = 1, mpg%bcCvP(istra,2)
                 do is=is_start,is_end
@@ -2663,7 +2662,6 @@ cxpb size is changed in b2mod_dimensions
 
         else
           do istra = 1, nstrai
-            print *,"istra:", istra, recyc(is_start,istra)
             if (((1-recyc(is_start,istra)).ge.1e-7_R8) 
      &        .and. (species_start(istra) .eq. is_start)) then
               do is=is_start,is_end
@@ -2678,8 +2676,6 @@ cxpb size is changed in b2mod_dimensions
             endif
           enddo
         endif
-
-        print *,"pump,puff,core", sna_pump,sna_puff,sna_core
           
         end subroutine calc_puff_pump_b25
 
@@ -2729,7 +2725,6 @@ cxpb size is changed in b2mod_dimensions
             endif
           enddo
         enddo
-        print *, "sourses pp", sna_pump, sna_puff, sna_core
       end subroutine calc_puff_pump
       subroutine eirene_recyct_update(ispecies, factor, 
      &      set_for_all_sorts)
