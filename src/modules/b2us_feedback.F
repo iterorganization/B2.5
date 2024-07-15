@@ -420,10 +420,10 @@ cxpb size is changed in DIMENSIONS.F
             nesepm_istra=istrai
           endif
         enddo
-        if (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
+        if ((ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
      &   private_flux_puff.gt.0.0_R8.or.nesepm_sol.gt.0.0_R8.or.
      *   volrec_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8.or.
-     &   nepedm_sol.gt.0.0_R8) then
+     &   nepedm_sol.gt.0.0_R8).and.switch%use_eirene.eq.1) then
           icount = 0
           do istrai = 1, nstrat
             if (crcstra(istrai).eq.'C' .and.
@@ -730,7 +730,7 @@ cxpb size is changed in DIMENSIONS.F
      & 'b2mod_feedback: increase size of DEF_NATM')
 
       do ifb = 1, nFb
-        if (fb_actuator(ifb).ne.1) cycle
+        if (fb_actuator(ifb).ne.1.or.switch%use_eirene.eq.0) cycle
         if(fb_istra(ifb).gt.0) then
           call xertst (fb_istra(ifb).le.nstrat,
      1      'faulty internal parameter fb_istra')
@@ -815,7 +815,8 @@ cxpb size is changed in DIMENSIONS.F
      &       bcpot(fb_ib(ifb)) .eq. 8) .or.
      &      (fb_actuator(ifb) .eq. 7 .and. !density
      &       (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1 .or.
-     &        bccon(fb_species(ifb),fb_ib(ifb)) .eq. 28)))
+     &        bccon(fb_species(ifb),fb_ib(ifb)) .eq. 28)) .or.
+     &    (fb_actuator(ifb) .eq. 8.and. bccon(is0,fb_ib(ifb)) .eq. 10))
         end if
       end do
       consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
@@ -1916,7 +1917,74 @@ cxpb size is changed in DIMENSIONS.F
 
               conpar(fb_species(ifb),fb_ib(ifb), 1) =
      &          saved_fb_actuator(ifb)
+  
+            case (8) ! pump
 
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_actuator: using ',
+     &           'gas_puff for sequence ',
+     &           b2espcr(fb_species(ifb))
+              endif
+
+              if (switch%use_eirene.eq.1)
+     &            call xerrab('can`t control pump in Eirene!')          
+
+              if(ncall.eq.0 .and. saved_fb_actuator(ifb).eq.0.0_R8) then
+                if (conpar(is_start, fb_ib(ifb), 1).lt.0.0_R8) then
+                  saved_fb_actuator(ifb) =
+     &              conpar(is_start, fb_ib(ifb), 1)
+                  write(message,'(a,i3,a,i2,a)')
+     .             'Initial pump coef set by CONPAR(',
+     .             is_start,',',fb_ib(ifb),',1) !'
+    !             elseif (userfluxparm(fb_istra(ifb),1).gt.0.0_R8) then
+    !               saved_fb_actuator(ifb) =
+    !  &              userfluxparm(fb_istra(ifb),1)
+    !               write(message,'(a,i3,a,i2,a)')
+    !  .             'Initial gas puff strength set by USERFLUXPARM(',
+    !  .             fb_istra(ifb),',1)  !'
+                else
+                  saved_fb_actuator(ifb) = -1.0e-2_R8
+                    write(*,*) 'Warning!  ','The pump was ',
+     .               'started with an initial rate of 1e-2!'
+                endif
+              endif
+
+              if (fb_rescale_option(ifb).lt.4) then
+                saved_fb_actuator(ifb) =
+     &            saved_fb_actuator(ifb)/fb_rescale(ifb)
+              else
+                saved_fb_actuator(ifb) =
+     &            fb_rescale(ifb)
+              end if
+              if(fb_puff_min(ifb) .le. 0.0_R8)
+     &          saved_fb_actuator(ifb) =
+     &            max(fb_puff_min(ifb),
+     &            saved_fb_actuator(ifb))
+              if(fb_puff_max(ifb) .le. 0.0_R8)
+     &          saved_fb_actuator(ifb) =
+     &            min(fb_puff_max(ifb),
+     &            saved_fb_actuator(ifb))
+
+              if(fb_overshoot(ifb) .gt. 1.0_R8 .and.
+     &           fb_current(ifb) .gt.
+     &           fb_target(ifb) *
+     &           fb_overshoot(ifb)) then
+! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
+!     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
+                if (switch%use_eirene.eq.0) then
+                  conpar(is_start, fb_ib(ifb), 1) = 0.0_R8
+                else
+                  userfluxparm(fb_istra(ifb),1) = 0.0_R8
+                endif
+              else
+                if (switch%use_eirene.eq.0) then
+                  conpar(is_start, fb_ib(ifb), 1) = 
+     &              saved_fb_actuator(ifb)
+                else
+                  userfluxparm(fb_istra(ifb),1) = saved_fb_actuator(ifb)
+                endif
+              endif
             case default
               write(*,*) 'fb_actuator not coded ',
      &          fb_type(ifb)
@@ -1924,7 +1992,7 @@ cxpb size is changed in DIMENSIONS.F
             end select
 
             if (fb_actuator(ifb).eq.1 .or.
-     &          fb_actuator(ifb).eq.3)
+     &          fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.8)
      >        write(*,'(a,1p,i3,g15.6)') 'feedback_actuator ',
      &         b2espcr(fb_species(ifb)), saved_fb_actuator(ifb)
 
