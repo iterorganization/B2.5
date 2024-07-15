@@ -71,10 +71,7 @@
 
 *   ..local variables
       integer iCv, iCv1, iCv2, iFc, iVx1, iVx2, is, ib, ibc, ib0,
-     &  ism, ibc0, k, isb, ibw
-#ifdef B25_EIRENE
-      integer isa, ix
-#endif
+     &  ism, ibc0, k,j
 #ifdef WG_TODO
      & ,coreregno, coreregn2, ireg,
      1  bc_type16_ref, bc_type16_ix, bc_type16_iy, bc_type16_i,
@@ -105,8 +102,7 @@
      1  t3, t4, totflux, dsh, vt,
      2  vbnd, totpar, teave, tiave, neave, niave, poave, weight,
      &  naua2sum(0:ns-1), naua2average(0:ns-1),
-     &  pzaverage, pzsum, volsum, totfluxi, totfluxn,
-     &  vbc(nCv,0:ns-1), csbc(nCv,0:ns-1)
+     &  pzaverage, pzsum, volsum
 #ifdef WG_TODO
      1  ,volave
      &  ,s0, s0hz, ua2sum, ua2average(0:ns-1)                           !srv 07.04.00 15.02.02
@@ -125,8 +121,8 @@
      *  pz(nCv), !sxhz(-1:nx,-1:ny),                                    !srv 24.08.08
      *  gOnedBsq(nFc,0:1),
      &  sna0_no_mdf(nCv,0:1,0:ns-1)
-      real (kind=R8), save :: cor9 = 0.0_R8                             !srv 23.09.08
-      real (kind=R8) :: fac_he_anom, fac_he_anom_bc
+      real (kind=R8), save :: cor9 = 0.0_R8, min_ftConn = 0.0_R8        !srv 23.09.08
+      integer, save :: str_for_Qalfmin = 3
       character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, ishigh
 #ifdef WG_TODO
@@ -135,6 +131,7 @@
       real (kind=R8) ::
      *  upout, uuout, uutest, zbar
 #endif
+      integer :: iFt
       real (kind=R8) ::
      *  rz(nCv), cs, csb, a,                                            !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
@@ -184,6 +181,7 @@
        call ipgeti ('b2stbc_bceni_15_style', bceni_15_style)
        call ipgeti ('b2stbc_bcpot_12_style', bcpot_12_style)
        call ipgeti ('b2stbc_bcenk_17_style', bcenk_17_style)
+       
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c       call ipgeti ('b2tfhe_conduction_only', conduction_only)
 c       call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)        !srv 25.07.05
@@ -211,6 +209,9 @@ c       call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 2
 c       call ipgeti ('b2stbc_type16_kinetic_energy',
 c     1  bc_type16_kinetic_energy)
 c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.02
+        call ipgetr ('b2stbc_BC2_cor9', cor9)
+        call ipgetr ('b2stbc_min_ftConn', min_ftConn)
+        call ipgeti ('b2stbc_str_for_Qalfmin', str_for_Qalfmin)
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
@@ -1202,29 +1203,21 @@ c   (ionising_core option)
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+            iFt = mpg%cvFt(iCv2)
             s1 = abs(geo%fcPbs(iFc))
-            wrk = geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*
-     &            mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
-            vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &              dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
-     &              mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
-            if (mompar(is,ib,2).lt.0.5_R8) then
-              cs = sqrt(pz(iCv1)/rz(iCv1))
-              t0 = 2.0_R8*cs*abs(wrk)
-              vbnd = min(t0,abs(vbnd))*sign(1.0_R8,vbnd)
-              vbc(iCv1,is) = mompar(is,ib,1)*cs*wrk-
-     &                                       vbnd*sign(1.0_R8,wrk)
-              csbc(iCv1,is) = cs
+            cs = sqrt(pz(iCv1)/rz(iCv1))
+            if (((abs(geo%fcPbs(iFc)/geo%fcS(iFc)) <switch%Qalfmin)
+     &      .or.((geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0)))
+     &      .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
+              s1 = abs(geo%fcS(iFc))*switch%Qalfmin
             else
-              cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
-     &          (am(is)*mp))
-              t0 = 2.0_R8*cs*abs(wrk)
-              vbnd = min(t0,abs(vbnd))*sign(1.0_R8,vbnd)
-              vbc(iCv1,is) = mompar(is,ib,1)*cs*wrk-
-     &                                       vbnd*sign(1.0_R8,wrk)
-              vbc(iCv1,is) = max(vbc(iCv1,is)*sign(1.0_R8,wrk),
-     &                           wrk*pl%ua(iCv2,is))*sign(1.0_R8,wrk)
-              csbc(iCv1,is) = cs
+              s1 = abs(geo%fcPbs(iFc))
+            endif
+            srw%sna0(iCv1,0,is) = 0.0_R8
+            srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs
+            if (conpar(is,ib,2).gt.0.0_R8) then
+              srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) -
+     .          co%dna0(iCv1,is)/conpar(is,ib,2)*geo%fcS(iFc)
             endif
             if (abs(wrk) < geo%Qalfmin) then
               srw%sna0(iCv1,0,is) = 0.0_R8
@@ -3287,53 +3280,30 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
-            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the internal cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
-            iVx1 = mpg%fcVx(iFc,1)
-            iVx2 = mpg%fcVx(iFc,2)
-            t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
-            t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
-            wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-            if (wrk < geo%Qalfmin) then
-              srw%smo0(iCv1,0,is)=
-     .          VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)*
-     .         (-cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
-     .         (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%ua(iCv2,is))
-              srw%smo0(iCv1,1,is)=
-     .         -VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)
+            iFt = mpg%cvFt(iCv2)
+            s1hz = geo%fcPbshz(iFc)
+            cs = sqrt(pz(iCv1)/rz(iCv1))
+             if (((abs(geo%fcPbs(iFc)/geo%fcS(iFc)) <switch%Qalfmin)
+     &      .or.((geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0)))
+     &      .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
+              s1hz = sign(1.0_R8, geo%fcPbshz(iFc))*switch%Qalfmin*
+     &          *abs(geo%fcPbshz(iFc)/geo%fcPbs(iFc)*geo%fcS(iFc))
             else
               s1hz = geo%fcPbshz(iFc)
-              vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))
-              if (mompar(is,ib,2).lt.0.5_R8) then
-                cs = sqrt(pz(iCv1)/rz(iCv1))
-                wrk = abs(2.0_R8*cs*wrk)
-                vbnd = min(wrk,abs(vbnd))*sign(1.0_R8,vbnd)
-                vbnd = mompar(is,ib,1)*cs*s1hz*
-     &           mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
-     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
-     &           geo%fcS(iFc)
-              else
-                cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
-     &                    (am(is)*mp))
-                wrk = abs(2.0_R8*cs*wrk)
-                vbnd = min(wrk,abs(vbnd))*sign(1.0_R8,vbnd)
-                vbnd = mompar(is,ib,1)*cs*s1hz*
-     &           mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
-     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
-     &           geo%fcS(iFc)
-                vbnd = sign(max(abs(vbnd),abs(s1hz*pl%ua(iCv2,is))),
-     &           vbnd)
-              endif
-              srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +               !srv 07.05.09 {
+            endif
+            vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
+     &        (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
+     &         dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
+     &        sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*geo%fcS(iFc)
+            srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +                        !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
      &         mompar(is,ib,1)*vbnd
-              srw%smo0(iCv1,1,is) = srw%smo0(iCv1,1,is) -
-     &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
-     &          abs(geo%fcPbshz(iFc))                                   !srv 07.05.09 }
-            endif
-          enddo                                                         !srv 01.02.09 }
+            srw%smo0(iCv1,1,IS) = srw%smo0(iCv1,1,IS) -
+     &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)       !srv 07.05.09 }
+          ! endif
+        enddo                                                        !srv 01.02.09 }
 
 * -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM    !srv 01.02.09 {
 !srv added accumulation in order to account twice b.c. for corner cells
@@ -4448,20 +4418,36 @@ c test
 * -- BCENE=15 -- DRIFT-COMPATIBLE SHEATH CONDITION                      !srv 01.02.09 {
       case (15)
         if(ncall_b2stbc_phys.eq.0) then                                 !srv 20.09.17 {
-          write(*,'(a,1p,g14.7,a,a,a)')
-     .     'BCENE = 15 (style = 0) : with GAMMAE =',GAMMAE,
-     1     ' on ',BCCHAR(IB),boundary_location(ib)
-          write(*,*) 'BCENE=15 - should have BCCON=14 for all ions'
-          BCCON14_IS(IB) = .TRUE.
-          DO IS = 0, NS-1
-            IF(.NOT.IS_NEUTRAL(IS)) THEN
-              BCCON14_IS(IB) = BCCON14_IS(IB).AND.BCCON(IS,IB).EQ.14
-            ENDIF
-          ENDDO
-          if (BCCON14_IS(IB)) write(*,'(a,a,i3,a)') 'BCCON=14 HAS ',
-     &      'BEEN IMPOSED AT BOUNDARY ',IB,' FOR ALL IONS'
-          if(.not.BCCON14_IS(IB)) write(*,'(a,a,i3,a)') 'BCCON=14 ',
-     &      'HAS NOT BEEN IMPOSED AT BOUNDARY ',IB,' FOR ALL IONS'
+#ifdef WG_TODO
+          IF(BCCHAR(IB).EQ.'W') THEN
+            BCCON14_W(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
+            DO IS = 0, NS-1
+              IF(.NOT.IS_NEUTRAL(IS)) THEN
+                IF(BCCON(IS,IB).NE.14) THEN
+                  BCCON14_W(IB) = .FALSE.
+                ENDIF
+              ENDIF
+            ENDDO
+            if(BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
+     &      'BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
+            if(.not.BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
+     &      'HAS NOT BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
+          ENDIF
+          IF(BCCHAR(IB).EQ.'E') THEN
+            BCCON14_E(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
+            DO IS = 0, NS-1
+              IF(.NOT.IS_NEUTRAL(IS)) THEN
+                IF(BCCON(IS,IB).NE.14) THEN
+                  BCCON14_E(IB) = .FALSE.
+                ENDIF
+              ENDIF
+            ENDDO
+            if(BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
+     &       'BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
+            if(.not.BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
+     &       'HAS NOT BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
+          ENDIF
+#endif
         endif                                                           !srv 20.09.17 }
 !srv added accumulation in order to account twice b.c. for corner cells
         if(bcene_15_style.eq.0) then
@@ -4524,16 +4510,21 @@ cwdk    Todo: corrections for BCCON.ne.14
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+            cs   = sqrt(pz(iCv1)/rz(iCv1))
+            iFt = mpg%cvFt(iCv2)
+            s1   = abs(geo%fcPbs(iFc))
             vte  = sqrt(pl%te(iCv1)/me)
-            wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-            if (wrk < geo%Qalfmin) then
-              s1 = abs(geo%fcS(iFc))*geo%Qalfmax
+            if (((abs(geo%fcPbs(iFc)/geo%fcS(iFc)) <switch%Qalfmin)
+     &      .or.(geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0))
+     &      .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
+              s1 = abs(geo%fcS(iFc))*switch%Qalfmin
             else
               s1 = abs(geo%fcPbs(iFc))
             endif
-            t0 = dv%ne(iCv1)
+            t0 = 0.0_R8
             t1 = 0.0_R8
             do is = 0, ns-1
+              t0 = t0 + rt%rza(iCv1,is)*pl%na(iCv1,is)  !conpar(is,ib,1)*
               if (.not.is_neutral(is) .and. conpar(is,ib,2).gt.0.0_R8)
      &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
      &            rt%rza(iCv1,is)*pl%na(iCv1,is)
@@ -4560,6 +4551,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      &           (1.0_R8-GAMMAE)*switch%delpo) -
      &          (fac_he_anom_bc*enepar(ib,2) + switch%delpo)*t1         !wdk to check: correct for gammae?
             endif
+
             if(switch%mdf_fhe.ne.0) then
               srw%she0(iCv1,0) = srw%she0(iCv1,0) +
      &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
@@ -4574,6 +4566,7 @@ cwdk    Todo: corrections for BCCON.ne.14
               srw%she0(iCv1,1) = srw%she0(iCv1,1) +
      &          min(0.0_R8,t0)/pl%te(iCv1)
             endif
+          ! endif
           enddo
         else
           call xerrab
@@ -6096,7 +6089,7 @@ c test
           t0 = 0.0_R8
           t1 = 0.0_R8
           t2 = 0.0_R8
-          wrk = geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3)
+          iFt = mpg%cvFt(iCv2)
           if (bceni_15_style == 0) then
             if (abs(wrk) < geo%Qalfmin) then
               srw%shi0(iCv1,0) = 0.0_R8
@@ -6140,31 +6133,49 @@ c test
      &         switch%stab_coeff_sheath_ti*dv%ne(iCv1)*
      &         cs*geo%fcS(iFc)*pl%ti(iCv1)
             endif
-          else
-          !wdk sheath transmission factor consistent with truncated
-          !    Maxwellian distribution on Eirene side (NEMODS=7)
-          !    See Eirene manual for details.
-            do is = 0, ns-1
-              if(.not.is_neutral(is)) then
-                vt = sqrt(2.0_R8*pl%ti(iCv1)/(am(is)*mp))
-                t3 = pit(iCv1)*abs(geo%fcQalf(iFc,0))*cs/vt
-                t4 = sqrt((pit(iCv1)*abs(geo%fcQalf(iFc,1))*cs/vt)**2 +
-     &                    (geo%cvBb(iCv1,2)/geo%cvBb(iCv1,3)*cs/vt)**2)    !WG_TODO correct for drift contributions!
-                dsh = 1.0_R8 + t3**2 + t4**2 +                             !corrected for factor 3/2 in parallel convection
-     &           0.5_R8*(sheath_g(t3) - 1.0_R8)/sheath_g(t3)
-                t0 = t0 + dsh*conpar(is,ib,1)*pl%na(iCv1,is)
-                if (conpar(is,ib,2).gt.0.0_R8)
-     &           t1 = t1 + fac_he_anom_bc*
-     &            enipar(ib,2)*co%dna0(iCv1,is)/conpar(is,ib,2)*
-     &            pl%na(iCv1,is)
-                t2 = t2 + dv%fhm(iFc,0,is) + dv%fhm(iFc,1,is)
-              endif
-            enddo
-            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
-     &       (1.0_R8+switch%stab_coeff_sheath_ti)*t0*cs*
-     &       abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
-     &       t2*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
-            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+           enddo
+           if (((abs(geo%fcPbs(iFc)/geo%fcS(iFc)) < switch%Qalfmin)
+     &      .or.((geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0)))
+     &      .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
+              s1 = abs(geo%fcS(iFc))*switch%Qalfmin
+           else
+              s1 = abs(geo%fcPbs(iFc))
+           endif
+           srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
+     &     enipar(ib,1)*t0*cs*s1 -
+     &     switch%stab_coeff_sheath_ti*dv%ne(iCv1)*cs*geo%fcS(iFc) -
+     &     enipar(ib,2)*t1*geo%fcS(iFc)
+           srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+     &     switch%stab_coeff_sheath_ti*dv%ne(iCv1)
+     &     *cs*geo%fcS(iFc)*pl%ti(iCv1)
+        else
+          if(ncall_b2stbc_phys.eq.0) print *, "bceni_15_style_1"
+           !wdk sheath transmission factor consistent with truncated
+           !    Maxwellian distribution on Eirene side (NEMODS=7)
+           !    See eirene manual for details.
+            t0 = 0.0_R8
+            t1 = 0.0_R8
+            t2 = 0.0_R8
+           do is = 0, ns-1
+            if(.not.is_neutral(is)) then
+             vt = sqrt(2.0_R8*pl%ti(iCv1)/(am(is)*mp))
+             t3 = pit(iCv1)*abs(geo%fcQalf(iFc,0))*cs/vt
+             t4 = sqrt((pit(iCv1)*abs(geo%fcQalf(iFc,1))*cs/vt)**2 +
+     &                 (geo%cvBb(iCv1,2)/geo%cvBb(iCv1,3)*cs/vt)**2)    !WG_TODO correct for drift contributions!
+             dsh = 1.0_R8 + t3**2 + t4**2 +                             !corrected for factor 3/2 in parallel convection
+     &         0.5_R8*(sheath_g(t3) - 1.0_R8)/sheath_g(t3)
+             t0 = t0 + dsh*conpar(is,ib,1)*pl%na(iCv1,is)
+             if (conpar(is,ib,2).gt.0.0_R8)
+     &        t1 = t1 + enipar(ib,2)*co%dna0(iCv1,is)/conpar(is,ib,2)*
+     &          pl%na(iCv1,is)
+             t2 = t2 + dv%fhm(iFc,0,is) + dv%fhm(iFc,1,is)
+            endif
+           enddo
+           srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
+     &      (1.0_R8+switch%stab_coeff_sheath_ti)*t0*cs*
+     &      abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
+     &      t2*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+           srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &      switch%stab_coeff_sheath_ti*t0*cs*abs(geo%fcPbs(iFc))
           endif
           if(switch%mdf_fhi.ne.0) then
@@ -6183,7 +6194,7 @@ c test
      &        max(0.0_R8,t0)
             srw%shi0(iCv1,1) = srw%shi0(iCv1,1) +
      &        min(0.0_R8,t0)/pl%ti(iCv1)
-          endif
+        endif
 cwdk    Todo: corrections for BCCON.ne.14
         enddo                                                           !srv 01.02.09 }
 
@@ -7646,7 +7657,7 @@ c              fchi=0.0_R8
 #endif
 cwdk Todo: seecmodel
           wrong_flow = .false.
-        enddo
+        enddo     
 
 * -- BCPOT=12 -- Test condition for south core region ! Solovyev 07.04.14   !srv 03.03.15 {
 c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
