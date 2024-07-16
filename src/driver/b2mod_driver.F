@@ -2946,7 +2946,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
       type(B2Average), intent (inout)  :: state_avg
-      integer nCv, nFc, is                                               !srv 29.11.18
+      integer nCv, nFc, nVx, is                                          !srv 29.11.18
 #ifdef WG_TODO
       character*256 filename
       logical found
@@ -2989,6 +2989,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 
       nCv = mpg%nCv
       nFc = mpg%nFc
+      nVx = mpg%nVx
 
 #ifdef USE_IMPGYRO
 * finalise impgyro !yamoto
@@ -3127,7 +3128,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if (balance_average .ne. 0) then
           call update_average_balance(state,itim,-1) ! scale quantities by 1/itim if averaged
         endif
-        call write_balance(nCv,nFc,ns,geo,mpg)
+        call write_balance(nCv,nFc,nVx,ns,geo,mpg)
 #else
         write(*,*)
      >   'NO_CDF is set at compilation, cannot write balance.nc'
