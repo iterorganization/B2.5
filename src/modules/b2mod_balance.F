@@ -2808,7 +2808,7 @@ cdjm Update ion heat sources
       vdims(1)=nVxid
       call write_cdf_double(ncid,'vxX',geo%vxX,vdims,1)
       call write_cdf_double(ncid,'vxY',geo%vxY,vdims,1)
-*   ..cvFc,cvFcP,cvVx,cvVxP,fcVx 
+*   ..cvFc,cvFcP,cvVx,cvVxP,fcVx,fcCv
       vdims(1)=nCvpid
       vdims(2)=n2id
       call write_cdf_int(ncid,'cvFcP',mpg%cvFcP,vdims,2)
@@ -2817,9 +2817,9 @@ cdjm Update ion heat sources
       call write_cdf_int(ncid,'cvFc',mpg%cvFc,vdims,1)
       vdims(1)=nCmxVxid
       call write_cdf_int(ncid,'cvVx',mpg%cvVx,vdims,1)
-
       vdims(1)=nFcid
       call write_cdf_int(ncid,'fcVx',mpg%fcVx,vdims,2)
+      call write_cdf_int(ncid,'fcCv',mpg%fcCv,vdims,2)
 *   ..cvBb, cvHz, cvVol, fcS, am:
       vdims(1)=nCvpid
       vdims(2)=n4id
