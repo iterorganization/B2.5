@@ -55,7 +55,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv1, iCv2, iFc, meth                                      !srv 13.10.06
+      integer iCv1, iCv2, iFc, meth, iFt1, iFt2                                     !srv 13.10.06
       character chns*3                                                   !srv 16.09.02
       real (kind=R8) :: drift_hyb
       real (kind=R8) ::
@@ -85,8 +85,8 @@
      *   nbf(nFc),
      *   dOnedBsq(nFc,0:1),
      *   fna_mdf0(nFc,0:1), flo_factor(nFc,0:1),
-     *   cddb(nFc,0:1), cdpb(nFc,0:1)
-      real (kind=R8) :: weight(nFc,2)                                    !lk
+     *   cddb(nFc,0:1), cdpb(nFc,0:1),ni_ft(mpg%nFt), vol_ft(mpg%nFt)
+      real (kind=R8) :: weight(nFc,2), coef(nFc)                                    !lk
       integer :: xcount
 c The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
@@ -353,6 +353,30 @@ cwdk                   (original code: simple averaging)
         call intface(nCv,nFc,mpg%fcCv,geo%fcHc,pl%ua(:,isb),wrk0)
       endif
 
+      ni_ft = 0.0_R8
+      vol_ft = 0.0_R8
+      do iCv1=1,nCv
+        iFt1 = mpg%cvFt(iCv1)
+        if (iFt1.eq.0) cycle
+        ni_ft(iFt1) = ni_ft(iFt1)+dv%ni(iCv1,0)*geo%cvVol(iCv1)
+        vol_ft(iFt1) = vol_ft(iFt1)+geo%cvVol(iCv1)
+      enddo
+      do iFt1=1,mpg%nFt
+        ni_ft(iFt1) = ni_ft(iFt1)/vol_ft(iFt1)
+      enddo
+      do iFc=1,nFc
+        iFt1 = mpg%cvFt(mpg%fcCv(iFc,1)) 
+        iFt2 = mpg%cvFt(mpg%fcCv(iFc,2))
+        t0 = 0.0_R8
+        if (iFt1.ne.0) t0 = t0 + ni_ft(iFt1)
+        if (iFt2.ne.0) t0 = t0 + ni_ft(iFt2)
+        if (t0 <
+     & switch%b2tfnb_flux_limit_min_ni) then
+          coef(iFc) = 1.0_R8
+        else
+          coef(iFc) = 5.0_R8/3.0_R8
+        endif
+      enddo
 *   ..compute convective coefficients (poloidal and radial)
       flo(:,0) = geo%fcPbs*wrk0 + co%cvla(:,0,isb) +
      &  (drift_hyb*dv%vaecrb(:,0,isb) + dv%vadia(:,0,isb))*
@@ -367,7 +391,7 @@ cwdk                   (original code: simple averaging)
       flo_he(:,0) = geo%fcPbs*wrk0 +
      &  5.0_R8/3.0_R8*co%cvla(:,0,isb) +
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
-      flo_he(:,1)  = 5.0_R8/3.0_R8*co%cvla(:,1,isb) +
+      flo_he(:,1)  = coef*co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       flo_53(:,0) = geo%fcPbs*wrk0 +
      &  dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
@@ -496,11 +520,11 @@ cwdk                   (original code: simple averaging)
      &   dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf +
      &  (flo_he(:,0) - (5.0_R8/3.0_R8)*flo_mdf(:,0))*nbf -
      &  (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
-      dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*(5.0_R8/3.0_R8) +
+      dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*(coef) +
      &  (1.0_R8-drift_hyb)*
      &   dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf +
-     &  (flo_he(:,1) - (5.0_R8/3.0_R8)*flo_mdf(:,1))*nbf -
-     &  (5.0_R8/3.0_R8)*co%cdpa(:,1,isb)*dpb(:,1)
+     &  (flo_he(:,1) - (coef)*flo_mdf(:,1))*nbf -
+     &  (coef)*co%cdpa(:,1,isb)*dpb(:,1)
 
       dv%fna_53(:,0,isb)   = flo_53(:,0)*nbf
       dv%fna_53(:,1,isb)   = flo_53(:,1)*nbf

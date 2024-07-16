@@ -490,6 +490,7 @@ c b2srst
 c b2tfnb
       integer :: b2tfnb_no_hybr
       real (kind=R8) :: b2tfnb_flux_limit_min_ti
+      real (kind=R8) :: b2tfnb_flux_limit_min_ni
 
 c b2srsm
       integer :: b2srsm_enable
@@ -1063,6 +1064,7 @@ c b2sihs_
 c b2tfnb
       s % b2tfnb_no_hybr = 0
       s % b2tfnb_flux_limit_min_ti = 0.0_R8
+      s % b2tfnb_flux_limit_min_ni = 1.0e17_R8
 
 c b2srsm
       s % b2srsm_enable = 0
@@ -1660,6 +1662,8 @@ c b2tfnb
       call ipgetr ('b2tfnb_flux_limit_min_ti',
      &  s%b2tfnb_flux_limit_min_ti)
       s%b2tfnb_flux_limit_min_ti=s%b2tfnb_flux_limit_min_ti*ev
+      call ipgetr ('b2tfnb_flux_limit_min_ni',
+     &  s%b2tfnb_flux_limit_min_ni)
       call ipgeti ('b2tfnb_no_hybr', s%b2tfnb_no_hybr)
 
 c b2srsm
