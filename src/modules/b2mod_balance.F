@@ -2700,7 +2700,7 @@ cdjm Update ion heat sources
 
       end subroutine update_average_balance
 
-      subroutine write_balance(nCv,nFc,nsd,geo,mpg)
+      subroutine write_balance(nCv,nFc,nVx,nsd,geo,mpg)
       use b2us_geo
       use b2us_map
       use b2mod_user_namelist
@@ -2716,7 +2716,7 @@ cdjm Update ion heat sources
       use b2mod_dimensions
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv,nFc,nsd
+      integer nCv,nFc,nVx,nsd
       type(geometry), intent (in) :: geo
       type(mapping), intent (in) :: mpg
 #ifndef NO_CDF
@@ -2724,8 +2724,9 @@ cdjm Update ion heat sources
 *   ..local variables
       integer nstrad
       integer status
-      integer ncid,nCvpid,nCviid,nFcid,n1id,n2id,n3id,n4id,nsid,nstraid,
-     .        specid,eirnCvid,eirnatmid,eirnmolid,eirnionid,
+      integer ncid,nCvpid,nCviid,nFcid,nVxid,nCmxFcid,nCmxVxid,
+     .        n1id,n2id,n3id,n4id,nsid,
+     .        nstraid,specid,eirnCvid,eirnatmid,eirnmolid,eirnionid,
      .        nXptid,nimpid,nompid,nFtid
       integer vdims(4),idum(1)
       integer is
@@ -2750,6 +2751,12 @@ cdjm Update ion heat sources
       status=nf_def_dim(ncid,'nCi',mpg%nCi,nCviid)
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'nFc',nFc,nFcid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nVx',nVx,nVxid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nCmxFc',mpg%nCmxFc,nCmxFcid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nCmxVx',mpg%nCmxVx,nCmxVxid)
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'nFt',mpg%nFt,nFtid)
       call check_cdf_status(status)
@@ -2794,12 +2801,28 @@ cdjm Update ion heat sources
       status=nf_enddef(ncid)
       call check_cdf_status(status)
 
-*   ..cvX, cvY:
+*   ..cvX, cvY, vxX, vxY:
       vdims(1)=nCvpid
-      vdims(2)=n4id
       call write_cdf_double(ncid,'cvX',geo%cvX,vdims,1)
       call write_cdf_double(ncid,'cvY',geo%cvY,vdims,1)
+      vdims(1)=nVxid
+      call write_cdf_double(ncid,'vxX',geo%vxX,vdims,1)
+      call write_cdf_double(ncid,'vxY',geo%vxY,vdims,1)
+*   ..cvFc,cvFcP,cvVx,cvVxP,fcVx 
+      vdims(1)=nCvpid
+      vdims(2)=n2id
+      call write_cdf_int(ncid,'cvFcP',mpg%cvFcP,vdims,2)
+      call write_cdf_int(ncid,'cvVxP',mpg%cvVxP,vdims,2)
+      vdims(1)=nCmxFcid
+      call write_cdf_int(ncid,'cvFc',mpg%cvFc,vdims,1)
+      vdims(1)=nCmxVxid
+      call write_cdf_int(ncid,'cvVx',mpg%cvVx,vdims,1)
+
+      vdims(1)=nFcid
+      call write_cdf_int(ncid,'fcVx',mpg%fcVx,vdims,2)
 *   ..cvBb, cvHz, cvVol, fcS, am:
+      vdims(1)=nCvpid
+      vdims(2)=n4id
       call write_cdf_double(ncid,'cvBb',geo%cvBb,vdims,2)
       call write_cdf_double(ncid,'cvHz',geo%cvHz,vdims,1)
       call write_cdf_double(ncid,'cvVol',geo%cvVol,vdims,1)
@@ -2813,11 +2836,14 @@ cdjm Update ion heat sources
       call write_cdf_double_single(ncid,'mp',rdum,vdims(1))
       rdum(1)=ev
       call write_cdf_double_single(ncid,'ev',rdum,vdims(1))
-*   ..cvReg, cvFt, ftCv, imp, omp:
+*   ..cvReg, cvFt, ftCv, ftCvP, imp, omp:
       vdims(1)=nCvpid
       call write_cdf_int(ncid,'cvReg',mpg%cvReg,vdims,1)
       call write_cdf_int(ncid,'cvFt',mpg%cvFt,vdims,1)
       vdims(1)=nFtid
+      vdims(2)=n2id
+      call write_cdf_int(ncid,'ftCvP',mpg%ftCvP,vdims,2)
+      vdims(1)=nCvpid
       call write_cdf_int(ncid,'ftCv',mpg%ftCv,vdims,1)
       vdims(1)=nimpid
       call write_cdf_int(ncid,'imp',imp(1:nimp),vdims,1)
