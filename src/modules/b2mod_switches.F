@@ -530,6 +530,7 @@ c b2srst
 
 c b2tfnb
       integer :: b2tfnb_no_hybr
+      integer :: b2tfnb_avg_vExB
       real (kind=R8) :: b2tfnb_flux_limit_min_ti
 
 c b2srsm
@@ -1169,6 +1170,7 @@ c b2sihs_
 
 c b2tfnb
       s % b2tfnb_no_hybr = 0
+      s % b2tfnb_avg_vExB = 0
       s % b2tfnb_flux_limit_min_ti = 0.0_R8
 
 c b2srsm
@@ -2253,8 +2255,12 @@ c Feedback
 
 c b2nppo
       call ipgetr ('b2nppo_restr_po', s % b2nppo_restr_po)
+
       call ipgetr ('b2txcx_increase_transp_coefs',
      &      s % b2txcx_increase_transp_coefs)
+      if (s % b2txcx_increase_transp_coefs.gt.1.0_R8)
+     &      s % b2tfnb_avg_vExB = 1
+      call ipgeti ('b2tfnb_avg_vExB', s % b2tfnb_avg_vExB)
 
 c Optimization
       call ipgeti ('b2optim_save_states', s % b2optim_save_states)
