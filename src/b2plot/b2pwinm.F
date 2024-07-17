@@ -13,12 +13,12 @@ c======================================================================
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
-      use b2mod_impcon
       use b2mod_dimensions
       implicit none
 #ifndef B25_EIRENE
 #include "COUPLE/KOPPLDIM.F"
 #endif
+#include "impcon.inc"
       integer nnns
       real (kind=R4) :: add_rdi, add_srci(2, nadsrcm)
       parameter (nnns=31)
