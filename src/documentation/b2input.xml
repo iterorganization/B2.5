@@ -5847,6 +5847,14 @@
 					Only the combination b2tfnb_style_int_vel=0 and b2sihs_style_int_vel=0 works robustly for now. Other combinations gave rise to oscillations. More research needed.
 				</description>
 			</switch>
+			<name>b2tfnb_avg_vExB</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tfnb_avg_vExB.eq.1 then ExB drift velocity will be averaged in cells of shaved flux tube.
+					If b2tfnb_avg_vExB.eq.2 then additional output will be printed during averaging.
+					If b2txcx_increase_transp_coefs.gt.1 b2tfnb_avg_vExB.eq.1 automatically.
+				</description>
 		</category>
 		<category name="Atomic Physics">
 			<switch>

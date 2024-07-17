@@ -118,6 +118,7 @@
         logical, allocatable :: cvAlongBoundary(:)     ! (nCv) indicates whether the control volume is connected to a boundary cell
         integer, allocatable :: fcs_wall(:)            ! (nCg) ordered list of faces along the boundary
         integer, allocatable :: fcs_wall_ind(:,:)      ! (nFci,2) indicates range in fcs_wall, where neighbouring faces connected to the one flux tube are placed.
+        integer, allocatable :: fcs_wall_type(:)       ! (nFci) inticates type of boundary: 1 - field aligned, 2 - non field aligned, 3 - boudary faces inside the separatirx
 
         end type mapping
 
@@ -395,6 +396,7 @@
       if (allocated(m%cvAlongBoundary)) deallocate(m%cvAlongBoundary)
       if (allocated(m%fcs_wall)) deallocate(m%fcs_wall)
       if (allocated(m%fcs_wall_ind)) deallocate(m%fcs_wall_ind)
+      if (allocated(m%fcs_wall_type)) deallocate(m%fcs_wall_type)
 
       return
       end subroutine dealloc_mapping
@@ -1115,58 +1117,18 @@ cwdk  can be derived directly from data in that file
         k = k+1
       enddo
 
-      m%nFci = 0
       do k=1,m%nCg
-        is_found = .false.
         do l=k+1,m%nCg
           if (m%fcVx(m%fcs_wall(k),1) == m%fcVx(m%fcs_wall(l),1) .or.
      &        m%fcVx(m%fcs_wall(k),1) == m%fcVx(m%fcs_wall(l),2) .or.
      &        m%fcVx(m%fcs_wall(k),2) == m%fcVx(m%fcs_wall(l),1) .or.
      &        m%fcVx(m%fcs_wall(k),2) == m%fcVx(m%fcs_wall(l),2)) then
-            is_found = .true.
             inew = m%fcs_wall(k+1)
             m%fcs_wall(k+1) = m%fcs_wall(l)
             m%fcs_wall(l) = inew
-            if (maxval(m%cvFt(m%fcCv(m%fcs_wall(k+1),1:2))) .ne.
-     &          maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
-              m%nFci = m%nFci+1
-            endif
             exit
           endif
         enddo
-        if (.not.is_found) then
-          if (k.lt.m%nCg.or.(k.eq.m%nCg.and.
-     &     maxval(m%cvFt(m%fcCv(m%fcs_wall(k-1),1:2))) .ne.
-     &     maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2))))) then
-            m%nFci = m%nFci+1
-          endif
-        endif
-      enddo
-      allocate(m%fcs_wall_ind(m%nFci,2))
-      j = 1
-      l = 1
-      do k=1,m%nCg-1
-        if (maxval(m%cvFt(m%fcCv(m%fcs_wall(k+1),1:2))) .ne.
-     &      maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
-          m%fcs_wall_ind(l,1) = j
-          m%fcs_wall_ind(l,2) = k-j+1
-          j = k+1
-          l = l+1
-        endif
-      enddo
-      ! Doing the last cell by hand if it is on its own flux tube
-      if (maxval(m%cvFt(m%fcCv(m%fcs_wall(m%nCg-1),1:2))) .ne.
-     &    maxval(m%cvFt(m%fcCv(m%fcs_wall(m%nCg),1:2)))) then
-        m%fcs_wall_ind(l,1) = m%nCg
-        m%fcs_wall_ind(l,2) = 1
-      end if
-
-      write(*,*) "list of boundary faces in one flux tube:"
-      do j=1,m%nFci
-        if (m%fcs_wall_ind(j,1) .eq. m%fcs_wall_ind(j,2)) cycle
-        write(*,'(3i4)') j, m%fcs_wall_ind(j,1), m%fcs_wall_ind(j,2)
-        write(*,*) m%fcs_wall(m%fcs_wall_ind(j,1):
-     &                        m%fcs_wall_ind(j,1)+m%fcs_wall_ind(j,2)-1)
       enddo
 
       write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc
