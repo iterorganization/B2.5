@@ -52,13 +52,22 @@
        type (switches), intent (in) :: switch
        type (mapping), intent (in) :: mpg
        integer nCv, ns
-       integer is, iCv, i, itim
+       integer is, iCv, i, itim, tt
        logical b2news_solving(4)
        character*27 filename
        logical art_exists
        character*4 chitim
 
-!      Check equations to be solved first
+!      For time-dependent: tt is the time instant at which the sources are to be read
+       if (switch%use_mms.eq.2) then
+         if (switch%b2mndt_dummy.eq.0) then 
+           tt = itim + 1 
+         else
+           tt = 0 !initial dummy call for Crank Nicolson reads sources at t = 0 s
+         endif
+       endif
+
+!      Check equations to be solved
        b2news_solving(1:4)=switch%no_solve.eq.0
        do i=1,4
          b2news_solving(i)=b2news_solving(i).or.
@@ -82,7 +91,7 @@
      &        ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
            close(70)
          elseif (switch%use_mms.eq.2) then
-           write (chitim,'(i4.4)') itim
+           write (chitim,'(i4.4)') tt
            filename = 'art_sna_us'//chitim//'.dat'
            call find_file(filename,art_exists)
            call xertst(art_exists,'File '//trim(filename)//' not found')
@@ -104,7 +113,7 @@
      &        ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
            close(70)
          elseif (switch%use_mms.eq.2) then
-           write (chitim,'(i4.4)') itim
+           write (chitim,'(i4.4)') tt
            filename = 'art_smo_us'//chitim//'.dat'
            call find_file(filename,art_exists)
            call xertst(art_exists,'File '//trim(filename)//' not found')
@@ -127,7 +136,7 @@
      &          (art_she(iCv,0),iCv=1,nCv)
              close(70)
            elseif (switch%use_mms.eq.2) then
-             write (chitim,'(i4.4)') itim
+             write (chitim,'(i4.4)') tt
              filename = 'art_she_us'//chitim//'.dat'
              call find_file(filename,art_exists)
              call xertst(art_exists,
@@ -149,7 +158,7 @@
      &          (art_shi(iCv,0),iCv=1,nCv)
              close(70)
            elseif (switch%use_mms.eq.2) then
-             write (chitim,'(i4.4)') itim
+             write (chitim,'(i4.4)') tt
              filename = 'art_shi_us'//chitim//'.dat'
              call find_file(filename,art_exists)
              call xertst(art_exists,

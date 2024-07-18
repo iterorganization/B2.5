@@ -59,7 +59,7 @@
       logical lexist
       character*4 chitim
 
-!      Check which equations are to be solved
+!      Check equations to be solved
        b2news_solving(1:4)=switch%no_solve.eq.0
        do i=1,4
          b2news_solving(i)=b2news_solving(i).or.

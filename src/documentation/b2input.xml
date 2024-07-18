@@ -1505,7 +1505,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If boundary_sources.ne.0, allow for the specification of boundary values for all equations, using BC type 7, provided in the bv_na.dat, bv_ua.dat, bv_te.dat, bv_ti.dat, and bv_po.dat files. Only the files corresponding to the solved equations (according to the switch b2news_no_solve) must be provided. For time-dependent MMS (use_mms.eq.2), boundary values must be provided for each time-step: bv_XX0001.dat, bv_XX0002.dat, bv_XX0003.dat, and so on.
+					If boundary_sources.ne.0, allow for the specification of boundary values for all equations, using BC type 7, provided in the bv_na.dat, bv_ua.dat, bv_te.dat, bv_ti.dat, and bv_po.dat files. Only the files corresponding to the solved equations  must be provided. For time-dependent MMS (use_mms.eq.2), boundary values must be provided for each time-step: bv_XX0001.dat, bv_XX0002.dat, bv_XX0003.dat, and so on.
 				</description>
 			</switch>
 			<switch>
@@ -1513,7 +1513,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If equation_sources.ne.0, allow for the specification of source term values for all equations, per unit volume, provided in the art_sna.dat, art_smo.dat, art_she.dat, art_shi.dat, and art_sch.dat files. Only the files corresponding to the solved equations (according to the switch b2news_no_solve) must be provided. For time-dependent MMS (use_mms.eq.2), artifical sources must be provided for each time-step: art_sXX0001.dat, art_sXX0002.dat, art_sXX0003.dat, and so on.
+					If equation_sources.ne.0, allow for the specification of source term values for all equations, per unit volume, provided in the art_sna.dat, art_smo.dat, art_she.dat, art_shi.dat, and art_sch.dat files. Only the files corresponding to the solved equations must be provided. For time-dependent MMS (use_mms.eq.2), artifical sources must be provided for each time-step: art_sXX0001.dat, art_sXX0002.dat, art_sXX0003.dat, and so on.
 				</description>
 			</switch>
 			<switchgroup>
