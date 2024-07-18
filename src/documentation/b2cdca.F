@@ -9,7 +9,7 @@
 *
 *  1. purpose
 *
-*     B2CDCA provides some general documentation of the B2 code.
+*     B2CDCA provides some general documentation of the B2.5 code.
 *     No computation is performed in this routine.
 *
 *-----------------------------------------------------------------------
@@ -17,11 +17,12 @@
 *
 *  0. Introduction
 *
-*     The B2 code /1,2/ solves a system of fluid equations that models
-*     a multi-species plasma in a two-dimensional geometry. Its main
-*     application is simulation of the edge plasma in tokamaks.
+*     The B2.5 code solves a system of fluid equations that models
+*     a multi-species plasma and optionally fluid neutrals in a two-dimensional
+*     geometry. Its main application is simulation of the edge plasma in
+*     tokamaks.
 *
-*     B2 is composed of several independent programs that communicate
+*     B2.5 is composed of several independent programs that communicate
 *     through external files. The main sequence involves the programs
 *     b2ag (prepares a geometry and magnetic field), b2ah (prepares
 *     a table of default physics parameters), b2ai (prepares an
@@ -40,22 +41,19 @@
 *
 *  2. Geometry
 *
-*     B2 employs a two-dimensional, curvilinear, topologically
-*     rectangular mesh. The coordinates of the mesh are labelled 'x'
-*     and 'y'. There are nx+2 cells along the x-coordinate and ny+2
-*     cells along the y-coordinate. The cells of the mesh are indexed
-*     by (ix,iy) in (-1:nx,-1:ny); the interior cells have index in
-*     (0:nx-1,0:ny-1). The mesh may contain cuts, which typically
-*     originate from an x-point in the real*8 geometry.
+*     B2.5 employs a two-dimensional, curvilinear mesh. Through much of its
+*     history, the mesh was structured and topologically rectangular. The
+*     current version uses an unstructured mesh such that it becomes possible to
+*     mesh up to the real vessel walls and to have better control over local
+*     refinement.There are nCv (1:nCv) cells, comprised of nCi internal cells
+*     and nCg guard cells.
 *
 *     The primary data describing the mesh are the coordinates of the
-*     four vertices of all the cells of the mesh. These data are stored
-*     in the arrays crx and cry. The metric parameters (vol, hx, hy, qz,
-*     qc and gs; described elsewhere) are derived from crx and cry.
+*     vertices and cell centers of all the cells of the mesh.
 *
 *     The primary data describing the magnetic field are the flux
-*     functions fpsi and ffbz at the cell vertices. The magnetic field
-*     components at cell centers are derived from fpsi and ffbz.
+*     functions vxFpsi and vxFfbz at the cell vertices. The magnetic field
+*     components at cell centers are derived from vxFpsi and vxFfbz.
 *
 *     Singular regions in the geometry are specified by the data in the
 *     commmon block /b2cmgs/.
@@ -84,6 +82,9 @@
 *     /8/ R. K. Janev, D. E. Post, W. D. Langer, K. Evans, D. B.
 *     Heifetz and J. C. Weisheit, Survey of Atomic Processes in Edge
 *     Plasmas, J. Nuclear Mater. 121 (1984) 10-16.
+*     /9/ W. Dekeyser, W., et al. "Plasma edge simulations including realistic
+*     wall geometry with SOLPS-ITER."
+*     Nuclear Materials and Energy 27 (2021): 100999.
 *
 *-A1. Notes
 *
@@ -145,14 +146,11 @@
 *     used for code that is commented out with the text retained as a
 *     reminder.
 *
-*   ..Contacting the author.
-*     Use e-mail to braams@cims.nyu.edu, phone to 212-998-3276,
-*     FAX to 212-995-4121, or regular mail to
-*       B. J. Braams
-*       Courant Institute of Mathematical Sciences
-*       New York University
-*       251 Mercer Street
-*       New York, NY 10012
+*   ..Code authors
+*     The original author of the code is Dr. Bastiaan J. Braams.
+*     Dozens of other authors have contributed since then. See references in
+*     the SOLPS-ITER manual.
+*
 *
 *-----------------------------------------------------------------------
 *.end b2cdca
