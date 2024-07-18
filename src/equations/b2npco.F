@@ -153,6 +153,12 @@ cdjm Jan2017 update particle source components for balance
       endif
 #endif
 
+      !Compute residual without time-stepping sources (needed at next time-step for ckn scheme)
+      if (switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.2) then
+        call b2ursc (nCv, nFc, mpg, pl%na(:,isb), sr%sna(:,:,isb),
+     &    dv%fna(:,:,isb), dv%resco0(:,isb))
+      endif
+
       if(switch%b2mndt_style.eq.2) then                                 !srv 07.07.21 {
 *  .. calculate time-dependent source
         call b2scdt (nCv, mpg%nCi, isb, dtim,
@@ -160,7 +166,6 @@ cdjm Jan2017 update particle source components for balance
 *  .. add contribution from time-dependent source
         sr%sna(:,:,isb) = sr%sna(:,:,isb) + sr%snadt(:,:,isb)
       endif                                                             !srv 07.07.21 }
-
 
 * ..particle balance
 *   ..compute residual
@@ -174,6 +179,13 @@ cdjm Jan2017 update particle source components for balance
      &    dv%fna_mdf(:,:,isb), dv%resco(:,isb))
        endif
       endif                                                             !srv 22.05.18
+
+      !Modify residual for ckn scheme
+      if (switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.2) then
+        dv%resco(1:mpg%nCi,isb) = dv%resco(1:mpg%nCi,isb) +
+     &    psnl%resco0(1:mpg%nCi,isb)
+      endif
+
 *   ..compute correction
       write (chns,'(i3.3)') isb
       if(solving.and.any(solvcreg(0:mpg%nnreg(0)))) then                !srv 22.05.18

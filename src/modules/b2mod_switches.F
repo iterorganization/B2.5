@@ -462,6 +462,8 @@ c b2mndt
       real (kind=R8) :: facExB_start
       integer :: b2mndt_style
       integer :: b2mndt_temp0
+      integer :: b2mndt_ckn
+      integer :: b2mndt_dummy
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -980,6 +982,8 @@ c b2mndt
       s % facExB_start = 0.0_R8
       s % b2mndt_style = 1
       s % b2mndt_temp0 = 1
+      s % b2mndt_ckn = 1
+      s % b2mndt_dummy = 0
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1528,6 +1532,8 @@ c b2mndt
       call ipgetr ('b2news_facvis_start',   s%facvis_start)
       call ipgeti ('b2mndt_style',s%b2mndt_style)
       call ipgeti ('b2mndt_temp0',s%b2mndt_temp0)
+      call ipgeti ('b2mndt_ckn',s%b2mndt_ckn)
+      call ipgeti ('b2mndt_dummy',s%b2mndt_dummy)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
@@ -2010,6 +2016,8 @@ c b2mndt
      &  'faulty internal parameter rxf')
       call xertst (1.eq.s%b2mndt_style.or.s%b2mndt_style.eq.2,
      &  'b2mndt_style should be 1 or 2')
+      call xertst (s%b2mndt_ckn.eq.1.or.s%b2mndt_ckn.eq.2,
+     &  'b2mndt_ckn should be 1 or 2')     
 
 c b2mndr
        call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,

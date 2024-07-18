@@ -54,7 +54,6 @@
       integer use_astra
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
-c      integer, save :: use_mms = 0                                 !srv 26.02.18
       real (kind=R8) ::                                            !srv
      *  Total_current(-1:ny), B0out, Total_flux(-1:ny),            !srv 31.08.00 19.02.02
      *  Total_abscurrent(-1:ny), Total_absflux(-1:ny),
@@ -122,7 +121,6 @@ c      integer, save :: use_mms = 0                                 !srv 26.02.1
       if (ncall.eq.0) then
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
-c       call ipgeti('b2mndr_use_mms', use_mms)                     !srv 26.02.18
        call ipgeti('b2mndr_astra', use_astra)
        call ipgeti('b2stbc_boundary_namelist',boundary_namelist)
        call get_jsep(nx,ny,jxi,jxa,jsep)
@@ -1659,10 +1657,7 @@ c     calculate coordinates of cell centre
        close(70)
 
       endif              !srv   endif for iout=1 .or. iout=3
-      
-!      if(use_mms.eq.1 .and. iout.eq.10) then                            !srv 26.02.18 {
-!        call calc_err(nx, ny, ns)
-!      endif                                                             !srv 26.02.18 }
+
 #endif
 * ..return
       ncall = ncall+1

@@ -69,7 +69,7 @@
 *   ..modify snadt
       do iCv = 1, nCi !only internal cells
         ttim=dtim*dtco(isb,mpg%cvReg(iCv))*time_factor(iCv)
-        t0=(switch%b2srdt_phm0/ttim)*cvVol(iCv)                                     !srv 06.01.21
+        t0=(switch%b2srdt_phm0/ttim)*cvVol(iCv)*switch%b2mndt_ckn   !srv 06.01.21
         snadt(iCv,0) = t0*nap(iCv)                                  !srv 06.01.21
         snadt(iCv,1) =-t0                                           !srv 06.01.21
       enddo

@@ -66,8 +66,8 @@
         real(R8), dimension(:), allocatable :: fllime, fllimi
 
         ! residuals
-        real(R8), dimension(:,:), allocatable :: resmo
-        real(R8), dimension(:,:), allocatable :: resco
+        real(R8), dimension(:,:), allocatable :: resmo, resmo0
+        real(R8), dimension(:,:), allocatable :: resco, resco0
         real(R8), dimension(:), allocatable :: respo, reshe, reshi,
      .                                         resht, resmt, reshn,
      .                                         reskt, reszt
@@ -231,10 +231,11 @@ cwdk move to dv
         real(R8), dimension(:,:), allocatable :: na, ua  ! second index is species
         real(R8), dimension(:), allocatable :: po, te, ti, tn, kt, zt
         real(R8), allocatable :: ne(:), ni(:,:), nn(:)
-        real(R8), allocatable :: fch(:,:), fna(:,:,:),
+        real(R8), allocatable :: fch(:,:), fna(:,:,:), fmo(:,:,:),
      .                           fhi(:,:), fhe(:,:), fhn(:,:), fkt(:,:),
      .                           fzt(:,:)
         real(R8), allocatable :: kinrgy(:,:)
+        real(R8), allocatable :: resco0(:,:), resmo0(:,:)
       end type B2PlasmaSnapshot
 
       type B2Diagnostic
@@ -1159,6 +1160,8 @@ cwdk move to dv
       allocate( dv % resmt( nCv ) )
       allocate( dv % reskt( nCv ) )
       allocate( dv % reszt( nCv ) )
+      allocate( dv % resco0( nCv, 0:ns-1 ) )
+      allocate( dv % resmo0( nCv, 0:ns-1 ) )
       dv % resmo = 0.0_R8                             !srv 22.05.18 {
       dv % resco = 0.0_R8
       dv % respo = 0.0_R8
@@ -1169,6 +1172,8 @@ cwdk move to dv
       dv % reskt = 0.0_R8
       dv % reszt = 0.0_R8
       dv % resmt = 0.0_R8                             !srv 22.05.18 }
+      dv % resco0 = 0.0_R8
+      dv % resmo0 = 0.0_R8
 
 ! corrections
       allocate( dv % corua( nCv, 0:ns-1 ) )
@@ -1332,6 +1337,8 @@ cwdk move to dv
       deallocate( dv % resmt )
       deallocate( dv % reskt )
       deallocate( dv % reszt )
+      deallocate( dv % resco0 )
+      deallocate( dv % resmo0 )
 
       deallocate( dv % corua )
       deallocate( dv % corpa )
@@ -1942,6 +1949,7 @@ cwdk move to dv
 
       allocate( snap % fch( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( snap % fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( snap % fmo( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( snap % fhe( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( snap % fhi( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( snap % fhn( nFc, 0:1 ), SOURCE=0._R8 )
@@ -1949,6 +1957,9 @@ cwdk move to dv
       allocate( snap % fzt( nFc, 0:1 ), SOURCE=0._R8 )
 
       allocate( snap % kinrgy( nCv, 0:ns-1 ), SOURCE=0._R8 )
+
+      allocate( snap % resco0( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( snap % resmo0( nCv, 0:ns-1 ), SOURCE=0._R8 )
 #else
       allocate( snap % na( nCv, 0:ns-1 ) )
       allocate( snap % ua( nCv, 0:ns-1 ) )
@@ -1965,6 +1976,7 @@ cwdk move to dv
 
       allocate( snap % fch( nFc, 0:1 ) )
       allocate( snap % fna( nFc, 0:1, 0:ns-1 ) )
+      allocate( snap % fmo( nFc, 0:1, 0:ns-1 ) )
       allocate( snap % fhe( nFc, 0:1 ) )
       allocate( snap % fhi( nFc, 0:1 ) )
       allocate( snap % fhn( nFc, 0:1 ) )
@@ -1972,6 +1984,9 @@ cwdk move to dv
       allocate( snap % fzt( nFc, 0:1 ) )
 
       allocate( snap % kinrgy( nCv, 0:ns-1 ) )
+
+      allocate( snap % resco0( nCv, 0:ns-1 ) )
+      allocate( snap % resmo0( nCv, 0:ns-1 ) )
 
       snap % na = 0._R8
       snap % ua = 0._R8
@@ -1988,6 +2003,7 @@ cwdk move to dv
 
       snap % fch = 0._R8
       snap % fna = 0._R8
+      snap % fmo = 0._R8
       snap % fhe = 0._R8
       snap % fhi = 0._R8
       snap % fhn = 0._R8
@@ -1995,6 +2011,9 @@ cwdk move to dv
       snap % fzt = 0._R8
 
       snap % kinrgy = 0._R8
+
+      snap % resco0 = 0._R8
+      snap % resmo0 = 0._R8
 #endif
       return
       end subroutine createB2PlasmaSnapshot
@@ -2016,6 +2035,7 @@ cwdk move to dv
       deallocate( snap % nn )
       deallocate( snap % fch )
       deallocate( snap % fna )
+      deallocate( snap % fmo )
       deallocate( snap % fhe )
       deallocate( snap % fhi )
       deallocate( snap % fhn )
@@ -2024,6 +2044,8 @@ cwdk move to dv
       deallocate( snap % zt )
       deallocate( snap % fkt )
       deallocate( snap % fzt )
+      deallocate( snap % resco0 )
+      deallocate( snap % resmo0 )
 
       return
       end subroutine destroyB2PlasmaSnapshot
@@ -2281,6 +2303,7 @@ cwdk move to dv
         snap % ni = dv % ni
         snap % nn = dv % nn
         snap % fna = dv % fna
+        snap % fmo = dv % fmo
         snap % fch = dv % fch
         snap % fhe = dv % fhe
         snap % fhi = dv % fhi
@@ -2289,6 +2312,8 @@ cwdk move to dv
         snap % zt = pl % zt
         snap % fkt = dv % fkt
         snap % fzt = dv % fzt
+        snap % resco0 = dv % resco0
+        snap % resmo0 = dv % resmo0
 
       return
       end subroutine getB2PlasmaSnapshot
@@ -2308,6 +2333,7 @@ cwdk move to dv
         dv % ni = snap % ni
         dv % nn = snap % nn
         dv % fna = snap % fna
+        dv % fmo = snap % fmo
         dv % fch = snap % fch
         dv % fhe = snap % fhe
         dv % fhi = snap % fhi
@@ -2316,6 +2342,8 @@ cwdk move to dv
         pl % zt = snap % zt
         dv % fkt = snap % fkt
         dv % fzt = snap % fzt
+        dv % resco0 = snap % resco0
+        dv % resmo0 = snap % resmo0
 
       return
       end subroutine putB2PlasmaSnapshot
