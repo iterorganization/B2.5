@@ -95,20 +95,33 @@
 *
 *  1. Purpose of individual B2.5 routines.
 *
+*     B2AB (main program) prepares databases for the advanced fluid neutral
+*     (AFN) boundary conditions.  This program calls the driver routine
+*     b2abdr for the actual computation.
+*
+*     B2ABDR computes and writes to an external file the databases for the
+*     advanced fluid neutral (AFN) boundary conditions.
+*
 *     B2AG (main program) prepares a geometry and magnetic field for
-*     B2. This program calls the driver routine b2agdr for the actual
+*     B2.5. This program calls the driver routine b2agdr for the actual
 *     computation.
 *
 *     B2AGDR computes and writes to an external file the specification
-*     of a B2 geometry and magnetic field.
+*     of a B2.5 geometry and magnetic field.
 *
 *     B2AGBB computes the magnetic field from the flux functions.
 *
+*     B2AGBF computes computes the three components of the magnetic field
+*     and the total magnetic field strength, all at cell faces.
+*     Not converted for WG.
+*
 *     B2AGBS computes a correction to the pbsx array to ensure the
 *     constancy of magnetic flux along flux tubes.
+*     Not converted for WG.
 *
 *     B2AGCF computes the locations of the cell vertices, and computes
 *     the flux functions at those locations.
+*     Not converted for WG.
 *
 *     B2AGFS obtains a description of the flux surface structure.
 *
@@ -116,6 +129,7 @@
 *
 *     B2AGMT computes the metric coefficients given the locations of
 *     cell vertices.
+*     Not converted for WG.
 *
 *     B2AGMX projects the metric coefficients from a fine mesh to a
 *     coarsening of that mesh.
@@ -124,6 +138,7 @@
 *     single point on the mesh. This routine is application dependent,
 *     and defines the specific geometry and magnetic field for a B2.5
 *     calculation.
+*     Not converted for WG.
 *
 *     B2AGX0 reads the mesh dimensions from a formatted file.
 *
@@ -182,9 +197,11 @@
 *
 *     B2MWMV writes to an un*formatted file a selection of data
 *     describing the state of the plasma.
+*     Not converted for WG.
 *
 *     B2MWIT writes to an un*formatted file detailed monitoring output
 *     for the inner iterations of the B2.5 solution process.
+*     Not converted for WG.
 *
 *     B2MWQ0 writes a header for the output from b2mwqt.
 *
@@ -201,7 +218,12 @@
 *     B2MXZR sets the residuals to zero along the boundaries of the
 *     mesh and on the special regions.
 *
-*     B2NEWS performs one inner iteration for the B2.5 equations.
+*     B2NEWS_ performs one inner iteration for the B2.5 equations.
+*     This routine defines the core structure of the solution
+*     algorithm.
+*
+*     B2NEWS_m performs one inner iteration for the B2.5 equations,
+*     aiming at a correct time-dependent behavior.
 *     This routine defines the core structure of the solution
 *     algorithm.
 *
@@ -233,22 +255,14 @@
 *     B2NXFC computes the transport terms in the parallel momentum
 *     correction equation.
 *
-*     B2NXFM computes the flow terms in the parallel momentum equation
-*     (not used anymore).
-*
 *     B2NXFX computes an expression that occurs in the electron-atom
 *     thermal force.
-*
-*     B2NXSM corrects the particle transport coefficients as required
-*     for the Spalding-Patankar pressure correction procedure.
 *
 *     B2NXST accumulates the parallel momentum source linearisation
 *     over the distinct atomic species.
 *
 *     B2PRNTI prints out the residuals in integer format.
-*
-*     B2RFCN reads from a formatted file some parameters in the
-*     numerics common block.
+*     Not converted for WG.
 *
 *     B2RFCP reads from a formatted file some parameters in the
 *     physics common blocks.
@@ -291,7 +305,7 @@
 *     B2SIGP computes the pressure gradient term on the right hand
 *     of the parallel momentum balance equation for one species.
 *
-*     B2SIHS computes the source coefficients for a set of terms in the
+*     B2SIHS_ computes the source coefficients for a set of terms in the
 *     heat equations. These terms specify the contributions of the
 *     divergence of the flow field, of viscous heating, and of the
 *     electron-atom and atom-atom friction.
@@ -357,10 +371,10 @@
 *
 *     B2TFED computes the electron drift velocities.
 *
-*     B2TFHE computes the electron heat flux between neighboring cells,
+*     B2TFHE_ computes the electron heat flux between neighboring cells,
 *     and the coefficients that specify its linearisation.
 *
-*     B2TFHI computes the all atom heat flux between neighboring cells,
+*     B2TFHI_ computes the all atom heat flux between neighboring cells,
 *     and the coefficients that specify its linearisation.
 *
 *     B2TFNB computes the particle flux of one atomic species between
@@ -390,16 +404,16 @@
 *     coefficients.
 *
 *     B2TRAL computes the transport coefficients, including geometric
-*     factors such as vol/hx**2 and vol/hy**2.
+*     factors.
 *
 *     B2TRCL computes the classical transport coefficients, including
-*     geometric factors such as vol/hx**2 and vol/hy**2.
+*     geometric factors.
 *
 *     B2TREQ computes the cell-integrated energy equipartition
 *     multiplier.
 *
 *     B2TRNO computes the anomalous transport coefficients, including
-*     geometric factors such as vol/hx**2 and vol/hy**2.
+*     geometric factors.
 *
 *     B2TVSPA computes the X and Y components of the parallel viscosity
 *     current.
@@ -414,16 +428,16 @@
 *     staggered cells, given the viscosities (not used anymore).
 *
 *     B2TXCX computes conductances between neighbouring cells in the
-*     x-direction, given the conductivities.
+*     poloidal direction, given the conductivities.
 *
 *     B2TXCY computes conductances between neighbouring cells in the
-*     y-direction, given the conductivities.
+*     radial direction, given the conductivities.
 *
 *     B2TXFX computes conductances between neighbouring cells in the
-*     x-direction, given the flux-limited conductivities.
+*     poloidal direction, given the flux-limited conductivities.
 *
 *     B2TXFY computes conductances between neighbouring cells in the
-*     y-direction, given the flux-limited conductivities.
+*     radial direction, given the flux-limited conductivities.
 *
 *     B2TXSX computes the integrals over cell x-faces of a function
 *     that is provided on the cells.
@@ -457,12 +471,13 @@
 *     B2USPO computes a correction towards the solution of the
 *     potential equation.
 *
-*     B2UX5P solves a five-point system of equations. This routine is
-*     an interface to an iterative or a direct solver; the choice
+*     B2UXUS solves a system of equations on an unstructured mesh. This routine
+*     is an interface to an iterative or a direct solver; the choice
 *     depends upon an internal parameter.
 *
 *     B2WAOS prints out the results of a B2.5 calculation in old-fashioned
-*     style
+*     style.
+*     Not converted for WG.
 *
 *     B2WDAT is an output routine that writes out B2.5 arrays into ASCII
 *     data files.
@@ -571,6 +586,7 @@
 *
 *     B2XGBS computes the product (magnetic field pitch)*(surface area)
 *     at cell faces.
+*     Obsolete for WG.
 *
 *     B2XGXY computes cartesian coordinates suitable for graphical and
 *     printed output.
@@ -621,6 +637,7 @@
 *     B2XPVE computes the parallel electron velocity on cell centers.
 *
 *     B2XPXC interpolates a function from x-faces to cell centers.
+*     Obsolete for WG.
 *
 *     B2XVCP tests the validity of parameters in the physics common
 *     blocks.
@@ -628,18 +645,23 @@
 *     B2XVFF verifies the zero entries in the edge locations of some
 *     quantity defined on faces of the B2.5 mesh. This routine is an
 *     interface to b2xvfx and b2xvfy.
+*     Obsolete for WG.
 *
 *     B2XVFV verifies the zero entries in the edge locations of some
 *     quantity that is defined in the manner of a viscosity on the
 *     cells and corners of the B2.5 mesh (not used anymore).
+*     Obsolete for WG.
 *
 *     B2XVFX verifies the zero entries in the edge locations of some
 *     quantity defined on x-faces of the B2.5 mesh.
+*     Obsolete for WG.
 *
 *     B2XVFY verifies the zero entries in the edge locations of some
 *     quantity defined on y-faces of the B2.5 mesh.
+*     Obsolete for WG.
 *
 *     B2XVGM tests the validity of the geometric parameters.
+*     Not converted for WG.
 *
 *     B2XVPS tests the validity of the state of the plasma.
 *
@@ -647,11 +669,13 @@
 *
 *     B2XXGS sets a mesh function to a constant value on the singular
 *     regions of the B2.5 geometry.
+*     Not converted for WG.
 *
 *     B2XXID returns an identification of the current version of B2.5.
 *
 *     B2XXMM computes the locations of the minimum and maximum entries
 *     of a quantity defined on the B2.5 mesh.
+*     Not converted for WG.
 *
 *     B2XZEF computes zeff:
 *       zeff(,) = (sum is :: rz2(,,is)*na(,,is))/ne .
