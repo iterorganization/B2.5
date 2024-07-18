@@ -135,8 +135,6 @@
 *   ..local variables
       integer :: iCv
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
-c      integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
-c      integer, save :: use_mms = 0
       save ramp_slow                                                     !xpb
       logical domoqt, wrong_flow                                         !xpb
       logical quit_residual, main_call
@@ -154,7 +152,7 @@ c      integer, save :: use_mms = 0
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
 *
-      character chns*3 !temp                                            !fc 22.04.24
+
 *-----------------------------------------------------------------------
 *.computation
 
@@ -174,13 +172,10 @@ c      integer, save :: use_mms = 0
      &                         switch)
        endif
        call ipgeti ('b2mndt_use_b2srst', use_b2srst)                    !srv 13.07.12
-c       call ipgeti ('b2mndr_equation_sources', equation_sources)        !srv 26.02.18 {
        if(switch%equation_sources.ne.0)
      &   call read_equation_sources(nCv, ns, switch, itim, mpg)
-c       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
        if(switch%boundary_sources.ne.0)
      &   call read_boundary_sources(nCv, ns, switch, itim, mpg)    !srv 26.02.18 }
-c       call ipgeti ('b2mndr_use_mms', use_mms)
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
        if (switch%b2mndt_style.eq.2) then
@@ -388,12 +383,6 @@ ctmp.dpc
      &       st%psnc%kt, st%psnc%zt, st%pl%na, st%pl%ua, st%pl%te,
      &       st%pl%ti, st%pl%tn, st%dv%ne, st%dv%ni, st%dv%nn,
      &       st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
-c*   ..add to previous contributions                                     !fc 11.03.24 already added inside b2srdt
-c            call b2saxpy (nCv*2*ns, 1.0_R8, st%sr%snadt,1, st%sr%sna,1)
-c            call b2saxpy (nCv*4*ns, 1.0_R8, st%sr%smodt,1, st%sr%smo,1)
-c            call b2saxpy (nCv*4, 1.0_R8, st%sr%shedt,1, st%sr%she,1)
-c            call b2saxpy (nCv*4, 1.0_R8, st%sr%shidt,1, st%sr%shi,1)
-c            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
           endif
 
           if(switch%equation_sources.ne.0) then                                 !srv 26.02.18 {
@@ -595,20 +584,10 @@ c            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
 
 *   ..mms time-dependent error analysis
       if(switch%use_mms.eq.2.and.
-     &  mod(ncall_b2mndt+1,ntim_step_out).eq.0) then
+     &  mod(ncall_b2mndt+1,ntim_step_out).eq.0
+     &  .and.switch%b2mndt_dummy.eq.0) then
         call calc_err(nCv, ns, st%pl, switch, itim, mpg)
       endif
-
-!     Temporary way to have fluxes output at each outer iteration only    !fc.22.04.24
-!      if (switch%b2mndt_temp0.ne.1) then
-!       do is=0,ns-1
-!        write (chns,'(i3.3)') is
-!        call my_out_us(70,nFc,1,st%dv%fna(1,0,is),'b2npco_fna_th'//chns)
-!        call my_out_us(70,nFc,1,st%dv%fna(1,1,is),'b2npco_fna_r'//chns)
-!        call my_out_us(70,nFc,1,st%dv%fmo(1,0,is),'b2npmo_fmo_th'//chns)
-!        call my_out_us(70,nFc,1,st%dv%fmo(1,1,is),'b2npmo_fmo_r'//chns)
-!       enddo
-!      endif
 
       if (switch%iav_run > 0)
      . call running_average(nCv,ns,st%pl,st%srw,st_avg)
@@ -618,9 +597,7 @@ c            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
 * ..return
       ncall_b2mndt = ncall_b2mndt+1
 
-      !Reset ncall_b2mndt to 0 in case of initial dummy call for Crank Nicolson
-      !This is currently necessary to make Crank Nicolson work
-      !To be assessed whether other counters ncall_* should be reset, too
+      !reset ncall_b2mndt to 0 in case of initial dummy call for Crank Nicolson
       if (switch%b2mndt_dummy.eq.1) ncall_b2mndt = 0
 
       call subend ()

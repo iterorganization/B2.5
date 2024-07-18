@@ -276,15 +276,7 @@
      .                           fhi(:,:), fhe(:,:), fhn(:,:), fkt(:,:),
      .                           fzt(:,:)
         real(R8), allocatable :: kinrgy(:,:)
-        ! steady-state residuals (without time-derivative, just sources - fluxes)
-        real(R8), allocatable :: resco0(:,:), resmo0(:,:),
-     .                           reshi0(:), reshe0(:), reshn0(:),
-     .                           reskt0(:), reszt0(:)
-        ! time derivatives
-        real(R8), allocatable :: dnadt(:,:), dmodt(:,:)
-        real(R8), allocatable :: dhedt(:), dhidt(:), dhndt(:),
-     .                           dktdt(:), dztdt(:)
-
+        real(R8), allocatable :: resco0(:,:), resmo0(:,:)
       end type B2PlasmaSnapshot
 
       type B2Diagnostic
@@ -1392,11 +1384,6 @@
       allocate( dv % reszt( nCv ) )
       allocate( dv % resco0( nCv, 0:ns-1 ) )
       allocate( dv % resmo0( nCv, 0:ns-1 ) )
-      allocate( dv % reshe0( nCv ) )
-      allocate( dv % reshi0( nCv ) )
-      allocate( dv % reshn0( nCv ) )
-      allocate( dv % reskt0( nCv ) )
-      allocate( dv % reszt0( nCv ) )
       dv % resmo = 0.0_R8                             !srv 22.05.18 {
       dv % resco = 0.0_R8
       dv % respo = 0.0_R8
@@ -1409,11 +1396,6 @@
       dv % resmt = 0.0_R8                             !srv 22.05.18 }
       dv % resco0 = 0.0_R8
       dv % resmo0 = 0.0_R8
-      dv % reshe0 = 0.0_R8
-      dv % reshi0 = 0.0_R8
-      dv % reshn0 = 0.0_R8
-      dv % reskt0 = 0.0_R8
-      dv % reszt0 = 0.0_R8
 
 ! corrections
       allocate( dv % corua( nCv, 0:ns-1 ) )
@@ -1601,11 +1583,6 @@
       deallocate( dv % reszt )
       deallocate( dv % resco0 )
       deallocate( dv % resmo0 )
-      deallocate( dv % reshe0 )
-      deallocate( dv % reshi0 )
-      deallocate( dv % reshn0 )
-      deallocate( dv % reskt0 )
-      deallocate( dv % reszt0 )
 
       deallocate( dv % corua )
       deallocate( dv % corpa )
@@ -2247,20 +2224,6 @@
 
       allocate( snap % resco0( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( snap % resmo0( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( snap % reshe0( nCv ), SOURCE=0._R8 )
-      allocate( snap % reshi0( nCv ), SOURCE=0._R8 )
-      allocate( snap % reshn0( nCv ), SOURCE=0._R8 )
-      allocate( snap % reskt0( nCv ), SOURCE=0._R8 )
-      allocate( snap % reszt0( nCv ), SOURCE=0._R8 )
-
-      allocate( snap % dnadt( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( snap % dmodt( nCv, 0:ns-1 ), SOURCE=0._R8 )
-      allocate( snap % dhedt( nCv ), SOURCE=0._R8 )
-      allocate( snap % dhidt( nCv ), SOURCE=0._R8 )
-      allocate( snap % dhndt( nCv ), SOURCE=0._R8 )
-      allocate( snap % dztdt( nCv ), SOURCE=0._R8 )
-      allocate( snap % dktdt( nCv ), SOURCE=0._R8 )
-
 #else
       allocate( snap % na( nCv, 0:ns-1 ) )
       allocate( snap % ua( nCv, 0:ns-1 ) )
@@ -2288,19 +2251,6 @@
 
       allocate( snap % resco0( nCv, 0:ns-1 ) )
       allocate( snap % resmo0( nCv, 0:ns-1 ) )
-      allocate( snap % reshe0( nCv ) )
-      allocate( snap % reshi0( nCv ) )
-      allocate( snap % reshn0( nCv ) )
-      allocate( snap % reskt0( nCv ) )
-      allocate( snap % reszt0( nCv ) )
-
-      allocate( snap % dnadt( nCv, 0:ns-1 ) )
-      allocate( snap % dmodt( nCv, 0:ns-1 ) )
-      allocate( snap % dhedt( nCv ) )
-      allocate( snap % dhidt( nCv ) )
-      allocate( snap % dhndt( nCv ) )
-      allocate( snap % dktdt( nCv ) )
-      allocate( snap % dztdt( nCv ) )
 
       snap % na = 0._R8
       snap % ua = 0._R8
@@ -2328,20 +2278,6 @@
 
       snap % resco0 = 0._R8
       snap % resmo0 = 0._R8
-      snap % reshe0 = 0._R8
-      snap % reshi0 = 0._R8
-      snap % reshn0 = 0._R8
-      snap % reskt0 = 0._R8
-      snap % reszt0 = 0._R8
-
-      snap % dnadt = 0._R8
-      snap % dmodt = 0._R8
-      snap % dhedt = 0._R8
-      snap % dhidt = 0._R8
-      snap % dhndt = 0._R8
-      snap % dktdt = 0._R8
-      snap % dztdt = 0._R8
-
 #endif
       return
       end subroutine createB2PlasmaSnapshot
@@ -2374,18 +2310,6 @@
       deallocate( snap % fzt )
       deallocate( snap % resco0 )
       deallocate( snap % resmo0 )
-      deallocate( snap % reshe0 )
-      deallocate( snap % reshi0 )
-      deallocate( snap % reshn0 )
-      deallocate( snap % reskt0 )
-      deallocate( snap % reszt0 )
-      deallocate( snap % dnadt )
-      deallocate( snap % dmodt )
-      deallocate( snap % dhedt )
-      deallocate( snap % dhidt )
-      deallocate( snap % dhndt )
-      deallocate( snap % dktdt )
-      deallocate( snap % dztdt )
 
       return
       end subroutine destroyB2PlasmaSnapshot
@@ -2655,18 +2579,6 @@
         snap % fzt = dv % fzt
         snap % resco0 = dv % resco0
         snap % resmo0 = dv % resmo0
-        snap % reshe0 = dv % reshe0
-        snap % reshi0 = dv % reshi0
-        snap % reshn0 = dv % reshn0
-        snap % reskt0 = dv % reskt0
-        snap % reszt0 = dv % reszt0
-        snap % dnadt = dv % dnadt
-        snap % dmodt = dv % dmodt
-        snap % dhedt = dv % dhedt
-        snap % dhidt = dv % dhidt
-        snap % dhndt = dv % dhndt
-        snap % dktdt = dv % dktdt
-        snap % dztdt = dv % dztdt
 
       return
       end subroutine getB2PlasmaSnapshot
@@ -2697,18 +2609,6 @@
         dv % fzt = snap % fzt
         dv % resco0 = snap % resco0
         dv % resmo0 = snap % resmo0
-        dv % reshe0 = snap % reshe0
-        dv % reshi0 = snap % reshi0
-        dv % reshn0 = snap % reshn0
-        dv % reskt0 = snap % reskt0
-        dv % reszt0 = snap % reszt0
-        dv % dnadt = snap % dnadt
-        dv % dmodt = snap % dmodt
-        dv % dhedt = snap % dhedt
-        dv % dhidt = snap % dhidt
-        dv % dhndt = snap % dhndt
-        dv % dktdt = snap % dktdt
-        dv % dztdt = snap % dztdt
 
       return
       end subroutine putB2PlasmaSnapshot

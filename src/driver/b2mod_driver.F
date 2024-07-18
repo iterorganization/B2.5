@@ -180,8 +180,6 @@ c Artificial losses module
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
       integer, save :: shot = 0, run = 0, ids_save = 0
-c      integer, save :: use_mms = 0                                   !srv 26.02.18
-c      integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
 #ifdef _OPENMP
       real (kind=R8) :: cpuval, cpustart, cpuinit
 #else
@@ -993,11 +991,8 @@ c      integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02
        call ipgeti ('balance_netcdf', balance_netcdf)                   !djm Jan2017
        call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
-c       call ipgeti ('b2mndr_use_mms', use_mms)                          !srv 26.02.18 {
-c       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
        if(switch%boundary_sources.ne.0)
      &    call alloc_b2mod_boundary_sources(nCv,ns)
-c       call ipgeti ('b2mndr_equation_sources', equation_sources)
        if(switch%equation_sources.ne.0)
      &    call alloc_b2mod_equation_sources(nCv,ns)                   !srv 26.02.18 }
        call ipgeti ('b2mndr_ntim', ntim)
@@ -2246,18 +2241,7 @@ c new CDF movie option (1st frame at t=0)
 #endif
       real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
-      integer i, is, icf
-#ifdef IMAS
-      integer l, tmp_run, time_slice_index, num_batch_slices
-#ifndef NAGFOR
-      integer status
-#endif
-#if AL_MAJOR_VERSION > 4
-      character(len=:), allocatable :: message
-      character(len=STRMAXLEN) :: uri, uri_source, uri_dest
-      character(len=256) :: olddir
-#endif
-#endif
+      integer i, is, icf, iCv
       character*256 filename, fort31name
 #if ( defined(B25_EIRENE) || defined(IMAS) )
       character*512 systemarg
@@ -2371,8 +2355,38 @@ cwdk  set some integers
 c      nap, uap, etc from 3.0.9 -> psnl = Plasma SNapshot Last
 c      na0, ua0, etc from 3.0.9 -> psnc = Plasma SNapshot Current
 c      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc, which is what currently happens in the b2mxnp and b2mxnu routines in 3.0.9
-        call getB2PlasmaSnapshot(state%pl, state%dv, state%psnl)
-        call getB2PlasmaSnapshot(state%pl, state%dv, state%psnc)
+        call getB2PlasmaSnapshot(state%pl,state%dv,state%psnl)
+        call getB2PlasmaSnapshot(state%pl,state%dv,state%psnc)
+
+        !Initialize residual if using Crank-Nicolson scheme
+        if (switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.2
+     &       .and.itim.eq.0) then
+          !Dummy call to b2mndt
+          !Temporarily set dummy switch to 1
+          switch%b2mndt_dummy = 1
+          !Temporarily set rxf to 0 to not update any physical quantities
+          switch%b2mndt_rxf = 0.0_R8
+          !Temporarily set inner iterations to 1
+          switch%nstg(0) = 1
+          switch%nstg(1) = 1
+          switch%nstg(2) = 1
+          call b2mndt (nout, nCv, nFc, nVx, ns,
+     &       ismain, ismain0, state%rt%nscx, state%rt%nscxmax,
+     &       state%rt%iscx, itim, dtim, ntim,
+     &       switch, geo, mpg, state, state_ext, state_avg, ierr)
+          !Read again rxf switch and inner iterations switches
+          call ipgetr ('b2mndt_rxf', switch%b2mndt_rxf)
+          call ipgeti ('b2mndt_nstg0', switch%nstg(0))
+          call ipgeti ('b2mndt_nstg1', switch%nstg(1))
+          call ipgeti ('b2mndt_nstg2', switch%nstg(2))
+          !Set back dummy switch to default value of 0
+          switch%b2mndt_dummy = 0
+          !Update plasma snapshots with initialized residuals (without time-stepping sources)
+          state%psnl%resco0 = state%dv%resco0
+          state%psnc%resco0 = state%dv%resco0
+          state%psnl%resmo0 = state%dv%resmo0
+          state%psnc%resmo0 = state%dv%resmo0
+        endif
 
         call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
