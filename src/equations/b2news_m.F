@@ -406,7 +406,7 @@ csw 01oct2012 initialize potential if necessary
         cssb = 0.0_R8
       endif                                                              !iyv 06.02.14
 
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
+#if( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -595,7 +595,7 @@ csw 16oct2012 init ier0
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .false.)                                                        !djm Jan2017
       enddo
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
 !$OMP END PARALLEL DO
 !! FR End of loop (2)
 #ifdef WITH_FTIMINGS
@@ -650,7 +650,7 @@ csw 16oct2012 init ier0
 
 *   ..iterate on momentum balance
 !      if (ncall.eq.0) then                                              !srv 01.10.99
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1) )
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -694,7 +694,7 @@ csw 16oct2012 init ier0
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &   .false.)                                                         !djm Jan2017
         enddo                                                             !srv 01.10.99
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1) )
 !$OMP END PARALLEL DO
 !! FR end of loop (1)
 #ifdef WITH_FTIMINGS
@@ -919,7 +919,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         cssb = 0.0_R8
       endif                                                              !iyv 06.02.14
 
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3) )
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -967,7 +967,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
      &     .false.)                                                      !djm Jan2017
       enddo
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3) )
 !$OMP END PARALLEL DO
 !!FR End of loop (3)
 #ifdef WITH_FTIMINGS
@@ -1031,7 +1031,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
            endif
          enddo
        enddo
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4) )
 #ifdef WITH_FTIMINGS
        call timer%start("parallel")
 #endif
@@ -1041,7 +1041,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        do is=0,ns-1
         ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
        enddo
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4) )
 !$OMP END PARALLEL DO
 !!FR end of loop (4)
 #ifdef WITH_FTIMINGS
