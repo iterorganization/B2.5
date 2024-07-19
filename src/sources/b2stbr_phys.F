@@ -301,15 +301,11 @@
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) )
 !$OMP PARALLEL DO COLLAPSE(2)
 !$OMP& DEFAULT(NONE)
-!$OMP& SHARED(ns,ny,nx,sna0,na)
+!$OMP& SHARED(ns,ny,nx,sna0,na,b2stbr_phys_sna)
 !$OMP& PRIVATE(ix,iy,is)
-!$OMP& REDUCTION(+:b2stbr_phys_sna)
 #endif /* NO_OPENMP_B2STBR */
         do is=0,ns-1
           do iy=-1,ny
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) && ( ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 8 ) || ( !defined(GFORTRAN) && !defined(LEGACYCOMP) ) ) )
-!$OMP SIMD REDUCTION(+:b2stbr_phys_sna)
-#endif
             do ix=-1,nx
               b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
      1         sna0(ix,iy,0,is)+sna0(ix,iy,1,is)*na(ix,iy,is)
@@ -499,15 +495,11 @@
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) )
 !$OMP PARALLEL DO COLLAPSE(2)
 !$OMP& DEFAULT(NONE)
-!$OMP& SHARED(ns,ny,nx,sna0,na)
+!$OMP& SHARED(ns,ny,nx,sna0,na,b2stbr_phys_sna)
 !$OMP& PRIVATE(ix,iy,is)
-!$OMP& REDUCTION(+:b2stbr_phys_sna)
 #endif /* NO_OPENMP_B2STBR */
         do is=0,ns-1
           do iy=-1,ny
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2STBR) && ( ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 8 ) || ( !defined(GFORTRAN) && !defined(LEGACYCOMP) ) ) )
-!$OMP SIMD REDUCTION(+:b2stbr_phys_sna)
-#endif
             do ix=-1,nx
               b2stbr_phys_sna(is)=b2stbr_phys_sna(is)+
      1         sna0(ix,iy,0,is)+sna0(ix,iy,1,is)*na(ix,iy,is)
