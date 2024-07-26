@@ -24,10 +24,10 @@
      *   solveee(:),
      *   solveei(:),
      *   solveet(:),
-     *   last_solve_5(:),
-     *   last_solve_7(:),                                  !srv 02.04.18
-     *   last_solve_9(:),
-     *   last_solve_11(:),                                 !srv 02.04.18
+     *   last_solve_5(:,:),
+     *   last_solve_7(:,:),                                !srv 02.04.18
+     *   last_solve_9(:,:),
+     *   last_solve_11(:,:),                               !srv 02.04.18
      *   add_te_corr_to_po(:),                             ! IYS 21.09.2018
      *   do_sna_corr_core(:)                               !iyv 20.09.22
 #else
