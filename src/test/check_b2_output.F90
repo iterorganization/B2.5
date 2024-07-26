@@ -216,7 +216,7 @@ module b2_file_io
       !> Buffers to store real, integer or character data
       real(kind=R8), dimension(:), allocatable, intent(out) :: refun
       integer, dimension(:), allocatable, intent(out) :: infun
-#ifdef F2003
+#ifndef LEGACYCOMP
       character(len=:), allocatable, intent(out) :: chfun
 #else
       integer, parameter :: strmax = 512
@@ -255,7 +255,7 @@ module b2_file_io
           endif
         case ('char')
           n = n1
-#ifdef F2003
+#ifndef LEGACYCOMP
           allocate(character(len=n) :: chfun)
 #else
           call xertst(n.le.strmax, 'increase size of strmax in check_b2_output')
@@ -285,7 +285,7 @@ program test_b2output
   integer :: u1, u2, idx
   real (kind=R8), dimension(:), allocatable :: r1, r2
   integer, dimension(:), allocatable :: i1, i2
-#ifdef F2003
+#ifndef LEGACYCOMP
   character(len=:), allocatable :: ch1, ch2
 #else
   integer, parameter :: strmax = 512
@@ -388,12 +388,12 @@ program test_b2output
    character(len=10) :: version_in
    character(len=7) :: label
    integer :: ierr
-#ifndef F2003
+#ifdef LEGACYCOMP
    integer newunit
    external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
    open(newunit=my_unit,file=trim(filename), status='old', action='read', form='FORMATTED', iostat=ierr)
 #else
    my_unit=newunit()
@@ -411,7 +411,7 @@ program test_b2output
        ! If it does not match, then it should be a binary file
        close(my_unit)
        ! reopen in UNFORMATTED mode
-#ifdef F2003
+#ifndef LEGACYCOMP
        open(newunit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
 #else
        open(unit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)

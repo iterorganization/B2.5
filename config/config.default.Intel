@@ -62,6 +62,7 @@ DBLSED =
 INCMOD = -I
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -77,7 +78,7 @@ ifdef USE_EIRENE
   LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o -lnag
 endif
 
-LD = f95i
+LD = ${FC}
 # LDOPTS = -Bstatic
 
 LCPP = ${LD_SONNET}

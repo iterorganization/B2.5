@@ -165,10 +165,6 @@ c***  Standard set-up:
       logical old_style
       logical, save :: hydrogen, helium, neon
       external ipgeti, find_file, xertst
-#ifndef F2003
-      integer newunit
-      external newunit
-#endif
 
       call subini ('readuser')
       call ipgeti ('b2mndr_eirene', use_eirene)
