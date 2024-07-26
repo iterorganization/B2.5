@@ -1,4 +1,5 @@
 # Test whether necessary variables are set
+OS        ?= $(shell grep -m1 NAME /etc/os-release | cut -d '"' -f 2 | cut -d ' ' -f 1 )
 NODENAME  ?= $(shell echo `hostname`)
 LD_MSCL   ?= `pkg-config mscl --libs`
 ifdef NCARG_ROOT
@@ -54,7 +55,6 @@ endif
 endif
 
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
-OS = $(shell grep -m1 NAME /etc/os-release | cut -d '"' -f 2 | cut -d ' ' -f 1 )
 
 FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
@@ -95,6 +95,7 @@ endif
 
 INCMOD     = -I
 OBJDEST    = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST    = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 
 LDLIBES    = -lz
 

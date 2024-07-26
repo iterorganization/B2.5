@@ -24,6 +24,7 @@ endif
 endif
 
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 INCMOD   = -I
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 ifdef SOLPS_DEBUG

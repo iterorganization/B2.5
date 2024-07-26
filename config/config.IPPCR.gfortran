@@ -22,6 +22,7 @@ CPP = /lib/cpp -traditional
 #
 # Re-define FC for mpi compilation
 #
+
 ifdef SOLPS_MPI
 FC         = mpif90
 else

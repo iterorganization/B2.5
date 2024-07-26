@@ -59,7 +59,8 @@ ifdef SOLPS_OPENMP
   FCOPTS += -mp=nonuma
   LDOPTS += -mp=nonuma
 endif
-
+N = -Ad # ???
+DBLSED =
 DBLFC=${FC}
 DDBLOPTION=
 DBLSED = sed -e s:\#PREC\#:d:g
@@ -69,6 +70,7 @@ DBLSED =
 INCMOD = -I
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 

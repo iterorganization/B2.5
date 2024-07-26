@@ -38,6 +38,7 @@ DBLSED =
 
 MOD = mod
 OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST = -J${OBNDIR} -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
