@@ -2058,12 +2058,12 @@ cxpb size is changed in DIMENSIONS.F
       use b2mod_version
       implicit none
       integer :: ifb, iout
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open(newunit=iout,file='b2us.feedback_control.parameters')
 #else
       iout = newunit()

@@ -37,13 +37,14 @@ ifndef SOLPS_CPP
 endif
 
 ifdef IMAS_PKG_LIST
-  INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
+  INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`N = -Ad # ???
+DBLSED =
 endif
 
 CPP = /lib/cpp -C -traditional
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED =
-LINK_MOD = 
+LINK_MOD =
 
 FC = f95
 
@@ -55,11 +56,12 @@ endif
 
 DBLFC = ${FC}
 DDBLOPTION = -Ad # ???
-DBLSED = 
+DBLSED =
 
 INCMOD = -p
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -75,7 +77,7 @@ ifdef USE_EIRENE
 LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
-LD = f95
+LD = ${FC}
 LDOPTS = -lU77
 LDOPTSend = -lU77
 
