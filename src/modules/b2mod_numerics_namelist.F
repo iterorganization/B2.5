@@ -40,7 +40,8 @@
       real (kind=R8), save :: dtee(0:NNREGMAX), dtee_SOL
       real (kind=R8), save :: dtei(0:NNREGMAX), dtei_SOL
       real (kind=R8), save :: corr_core_dn(0:nsdmax-1)     ! IYS 19.12.2017
-      real (kind=R8), save :: sna_corr(NATMMAX), taumax(NATMMAX)       ! IYS 10.03.2023
+      real (kind=R8), save :: sna_corr(NATMMAX)
+      real (kind=R8), save :: taumax(NATMMAX)              ! IYS 10.03.2023
       logical, save :: solveco(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemt(0:NNREGMAX)
@@ -48,15 +49,13 @@
       logical, save :: solveee(0:NNREGMAX)
       logical, save :: solveei(0:NNREGMAX)
       logical, save :: solveet(0:NNREGMAX)
-      logical, save :: last_solve_5(0:NNREGMAX)
-      logical, save :: last_solve_7(0:NNREGMAX)            !srv 02.04.18
-      logical, save :: last_solve_9(0:NNREGMAX)
-      logical, save :: last_solve_11(0:NNREGMAX)           !srv 02.04.18
+      logical, save :: last_solve_5(0:nsdmax,0:NNREGMAX)
+      logical, save :: last_solve_7(0:nsdmax,0:NNREGMAX)   !srv 02.04.18
+      logical, save :: last_solve_9(0:nsdmax,0:NNREGMAX)
+      logical, save :: last_solve_11(0:nsdmax,0:NNREGMAX)  !srv 02.04.18
       logical, save :: add_te_corr_to_po(0:NNREGMAX)       ! IYS 21.09.2018
-      logical, save :: do_sna_corr_core(NATMMAX)          ! IYS 10.03.2023
+      logical, save :: do_sna_corr_core(NATMMAX)           ! IYS 10.03.2023
 #endif
-      !$OMP THREADPRIVATE(last_solve_5, last_solve_7)
-      !$OMP THREADPRIVATE(last_solve_9, last_solve_11)
       real (kind=R8), save :: corr_core_dt                 ! IYS 19.12.2017
       real (kind=R8), save :: dteff
       real (kind=R8), save :: time_factor_required,
@@ -109,10 +108,10 @@
       allocate(solveee(0:nnreg(0)))
       allocate(solveei(0:nnreg(0)))
       allocate(solveet(0:nnreg(0)))
-      allocate(last_solve_5(0:nnreg(0)))
-      allocate(last_solve_7(0:nnreg(0)))                           !srv 02.04.18
-      allocate(last_solve_9(0:nnreg(0)))
-      allocate(last_solve_11(0:nnreg(0)))                          !srv 02.04.18
+      allocate(last_solve_5(0:nsd,0:nnreg(0)))
+      allocate(last_solve_7(0:nsd,0:nnreg(0)))                     !srv 02.04.18
+      allocate(last_solve_9(0:nsd,0:nnreg(0)))
+      allocate(last_solve_11(0:nsd,0:nnreg(0)))                    !srv 02.04.18
       allocate(add_te_corr_to_po(0:nnreg(0)))                      ! IYS 21.09.2018, 21.09.2018
       allocate(do_sna_corr_core(nspecies))                         !iyv 20.09.22
 #else

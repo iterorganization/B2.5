@@ -71,9 +71,9 @@
 #endif
       real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8), allocatable, save ::
-     1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
+     1 aaf(:), wrk0(:), wrk1(:), wrk2(:)
       integer, allocatable, save :: iwrk(:)
-      integer mult_nonzero, mult_solvdim, mult_solvdim1
+      integer, save :: mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
       external xertst, ipgeti, ipgetr, slv5pt, iluter

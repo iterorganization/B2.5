@@ -52,6 +52,7 @@ endif
 
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 
 ifndef SOLPS_CPP
 DEFINES += -DITM

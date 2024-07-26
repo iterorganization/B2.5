@@ -1,5 +1,6 @@
       module b2mod_ma28
       use b2mod_types
+      implicit none
 
       real (kind=R8), allocatable, save ::
      * r1(:),
@@ -23,7 +24,7 @@
      * irnh_save(:),
      * icnh_save(:)
 
-      integer nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
+      integer, save :: nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
       logical, save :: lfirst_ilu = .true.
 
 !!FR All the allocatable arrays need to be declared as THREADPRIVATE

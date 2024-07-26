@@ -120,7 +120,7 @@
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
-     &   solveet(ireg).neqv.last_solve_5(ireg)
+     &   solveet(ireg).neqv.last_solve_5(ns,ireg)
       end do
       if (new_matrix) call restart_ma28
 * ..total heat correction equation
@@ -584,7 +584,7 @@ cxpb
 *   ..solve the correction equation
       write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'ti'
       call b2ux5p (nx, ny, aa5, itcnt, reshi, corti, name//'ti')        !srv 18.03.10
-      last_solve_5(0:nnreg(0)) = solveei(0:nnreg(0))
+      last_solve_5(ns,0:nnreg(0)) = solveei(0:nnreg(0))
       do iy = -1, ny
         do ix = -1, nx
           corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))
