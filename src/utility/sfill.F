@@ -17,12 +17,12 @@
 *     Undefined if incx.eq.0.
 *     ------------------------------------------------------------------
       integer i, ix
-#if ( !defined(NO_OPENMP_SFILL) || defined(WITH_FTIMINGS) )
+#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_SFILL) ) || defined(WITH_FTIMINGS) )
       logical make_parallel
 #endif
       external xerrab
 *     ------------------------------------------------------------------
-#if ( !defined(NO_OPENMP_SFILL) || defined(WITH_FTIMINGS) )
+#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_SFILL) ) || defined(WITH_FTIMINGS) )
       make_parallel = (.not. in_parallel())
 #endif
 #ifdef WITH_FTIMINGS

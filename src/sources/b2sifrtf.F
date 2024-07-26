@@ -80,7 +80,9 @@
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,           !som 23.02.21
      &  Zhdanov_tf_fr = 1                                               !som 01.07.21
       integer, save :: icase = 0                                        !som 05.03.21
+#ifdef _OPENMP
       !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
+#endif
       character chns*3, chis*3
       real (kind=R8) ::
      *  phm0, phm1, phm2, phm3, coef, t0, calfab, fllim_al_ab, jabmax
@@ -103,7 +105,7 @@
      &                  na_temp(1:ns*(nx+2)*(ny+2)),
      &                  am_sqrt(0:ns-1, 0:ns-1)
       integer :: ctr, i, j
-#if ( defined(WITH_FTIMINGS) || !defined(NO_OPENMP_B2SIFRTF) )
+#if ( defined(WITH_FTIMINGS) || ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) ) )
       logical :: make_parallel
 #endif
 *   ..procedures
@@ -112,7 +114,9 @@
       external b2xvff, b2xvfx, b2xvsg
 *   ..initialization
       save ncall, styl0, phm0, phm1, phm2, phm3
+#ifdef _OPENMP
       !$OMP THREADPRIVATE(ncall, phm1, phm2)
+#endif
       data ncall/0/, styl0/0/, phm0/1.0e0_R8/,
      &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/
 
@@ -136,18 +140,26 @@
      &  'faulty internal parameter phm0, phm1, phm2, phm3')
        call ipgeti ('b2sifrtf_iout', iout)
        if ((iout.ne.0) .and. in_parallel()) then
+#ifdef _OPENMP
           !$OMP MASTER
+#endif
           write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
      &               'parallel mode'
+#ifdef _OPENMP
           !$OMP END MASTER
+#endif
           iout = 0
         end if
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        if ((iout_b2wdat==4) .and. in_parallel()) then
+#ifdef _OPENMP
           !$OMP MASTER
+#endif
           write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
      &               'parallel mode (b2wdat)'
+#ifdef _OPENMP
           !$OMP END MASTER
+#endif
           iout_b2wdat = 0
         end if
        call ipgeti ('b2npmo_iout', iout_b2npmo)
@@ -160,7 +172,7 @@
        call xertst (0.eq.icase .or. 1.eq.icase,
      &              'faulty input b2tlnl_ii')
       endif
-#if ( defined(WITH_FTIMINGS) || !defined(NO_OPENMP_B2SIFRTF) )
+#if ( defined(WITH_FTIMINGS) || ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) ) )
       make_parallel = .not. in_parallel()
 #endif
 *   ..set n2
@@ -193,7 +205,7 @@
       ctr = 1
       do iy = -1, ny
         do ix = -1, nx
-#ifndef LEGACYCOMP
+#if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
 !$OMP SIMD
 #endif
           do is = 0, ns-1
@@ -240,7 +252,7 @@
            endif
           enddo
         enddo
-#ifndef NO_OPENMP_B2SIFRTF_LOOP1
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP1) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
@@ -281,12 +293,12 @@
           enddo
          endif
         enddo
-#ifndef NO_OPENMP_B2SIFRTF_LOOP1
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP1) )
 !$OMP END PARALLEL DO
 #endif
       else
 *     ..standard friction force calculation
-#ifndef NO_OPENMP_B2SIFRTF_LOOP1
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP1) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, is, ix, iy, coef, t0)
@@ -405,7 +417,7 @@
            ka(ix,iy) = fka(ix,iy,isb)
          enddo
         enddo
-#ifndef NO_OPENMP_B2SIFRTF_LOOP2
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, ix, iy, coef, t0)
@@ -462,7 +474,7 @@ c   .... apply flux limit
           enddo
          endif
         enddo
-#ifndef NO_OPENMP_B2SIFRTF_LOOP2
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
 !$OMP END PARALLEL DO
 #endif
       else
@@ -472,7 +484,7 @@ c   .... apply flux limit
            ka(ix,iy) = fka(ix,iy,isb)
          enddo
         enddo
-#ifndef NO_OPENMP_B2SIFRTF_LOOP2
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& DEFAULT(NONE)
 !$OMP& PRIVATE(KabVp, Kbatf, Kabtf, kb, is, ix, iy, coef, t0)
@@ -690,7 +702,7 @@ c   .... apply flux limit
       real (kind=R8) :: fka
       integer r
       fka = 0.0_R8
-#ifndef LEGACYCOMP
+#if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
 !$OMP SIMD REDUCTION(+:fka)
 #endif
       do r = 0, ns-1
@@ -710,7 +722,7 @@ c   .... apply flux limit
       integer r, ind
       fka_new = 0.0_R8
       ind = (ix+1)*ns+(iy+1)*ns*(nx+2)
-#ifndef LEGACYCOMP
+#if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
 !$OMP SIMD REDUCTION(+:fka_new)
 #endif
       do r = 0, ns-1
@@ -731,7 +743,7 @@ c   .... apply flux limit
       integer r, ind
       fka_new_opt = 0.0_R8
       ind = (ix+1)*ns+(iy+1)*ns*(nx+2)
-#ifndef LEGACYCOMP
+#if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
 !$OMP SIMD REDUCTION(+:fka_new_opt)
 #endif
       do r = 0, ns-1

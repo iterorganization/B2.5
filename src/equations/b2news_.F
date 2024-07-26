@@ -408,7 +408,7 @@ csw 01oct2012 initialize potential if necessary
       else
         cssb = 0.0_R8
       endif                                                              !iyv 06.02.14
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1) )
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -452,7 +452,7 @@ csw 01oct2012 initialize potential if necessary
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &   .true.)                                                         !djm Jan2017
         enddo                                                            !srv 01.10.99
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1) )
 !$OMP END PARALLEL DO
 !! FR end of loop (1)
 #ifdef WITH_FTIMINGS
@@ -616,7 +616,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &              te, po, ti, na, fna, csigin, fchin_a, fchin)         !IYS 17.10.2023
 
 *     ..iterate on particle balance
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -626,13 +626,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 !$OMP& PRIVATE(new_matrix)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
 !$OMP& LASTPRIVATE(pb, flob, conb)
-#if ( !defined(GFORTRAN) && !defined(PGF90) && !defined(NAGFOR) && !defined(CRAY) )
-!$OMP& COPYIN(last_solve_5, last_solve_7)
-!$OMP& COPYIN(last_solve_9, last_solve_11)
-#else
-!$OMP& PRIVATE(last_solve_5, last_solve_7)
-!$OMP& PRIVATE(last_solve_9, last_solve_11)
-#endif
+!$OMP& SHARED(last_solve_5, last_solve_7)
+!$OMP& SHARED(last_solve_9, last_solve_11)
 !$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb, visper_all_ions)
 !$OMP& SHARED(ns, nx, ny, region, leftix, rightix, bottomiy)
 !$OMP& SHARED(topiy, na, rza, te, ti, am, ua, ne)
@@ -697,7 +692,7 @@ csw 16oct2012 init ier0
      &         (visper_all_ions.eq.0 .and. is.eq.ismain)) then
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
-     &           solveco(is,ireg).neqv.last_solve_7(ireg)
+     &           solveco(is,ireg).neqv.last_solve_7(is,ireg)
               end do
               if(new_matrix) call restart_ma28_for_7
               call b2npc7 (nx, ny, fac_vis, guard_flows, rza(-1,-1,is),
@@ -707,11 +702,11 @@ csw 16oct2012 init ier0
      &         ti, pb, na(-1,-1,is), ua(-1,-1,is), fna(-1,-1,0,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npc7')
-              last_solve_7(0:nnreg(0))=solveco(is,0:nnreg(0))
+              last_solve_7(is,0:nnreg(0))=solveco(is,0:nnreg(0))
             else                                                         !srv 02.04.18
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
-     &           solveco(is,ireg).neqv.last_solve_5(ireg)
+     &           solveco(is,ireg).neqv.last_solve_5(is,ireg)
               end do
               if(new_matrix) call restart_ma28
               call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),    !srv 22.05.18
@@ -721,14 +716,14 @@ csw 16oct2012 init ier0
      &         ua(-1,-1,is), fna(-1,-1,0,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npco')
-              last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
+              last_solve_5(is,0:nnreg(0))=solveco(is,0:nnreg(0))
             endif                                                        !srv 02.04.18
           else                                                           !srv 13.10.06 {
             if(.not.is_neutral(is) .or. use_9pt_stencil.ne.0) then
               if(visper_all_ions.ne.0 .or. is.eq.ismain) then
                  do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
-     &             solveco(is,ireg).neqv.last_solve_11(ireg)
+     &             solveco(is,ireg).neqv.last_solve_11(is,ireg)
                 end do
                 if(new_matrix) call restart_ma28_for_11
                 call b2npc11 (nx, ny, fac_vis, guard_flows,
@@ -739,11 +734,11 @@ csw 16oct2012 init ier0
      &           ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npc11')
-                last_solve_11(0:nnreg(0))=solveco(is,0:nnreg(0))
+                last_solve_11(is,0:nnreg(0))=solveco(is,0:nnreg(0))
               else                                                       !srv 02.04.18
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
-     &             solveco(is,ireg).neqv.last_solve_9(ireg)
+     &             solveco(is,ireg).neqv.last_solve_9(is,ireg)
                 end do
                 if(new_matrix.or.use_9pt_stencil.ne.0)
      &           call restart_ma28_for_9
@@ -754,12 +749,12 @@ csw 16oct2012 init ier0
      &           ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npc9')
-                last_solve_9(0:nnreg(0))=solveco(is,0:nnreg(0))
+                last_solve_9(is,0:nnreg(0))=solveco(is,0:nnreg(0))
               endif
             else
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
-     &           solveco(is,ireg).neqv.last_solve_5(ireg)
+     &           solveco(is,ireg).neqv.last_solve_5(is,ireg)
               end do
               if(new_matrix) call restart_ma28
               call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),    !srv 22.05.18
@@ -769,7 +764,7 @@ csw 16oct2012 init ier0
      &         ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npco')
-              last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
+              last_solve_5(is,0:nnreg(0))=solveco(is,0:nnreg(0))
             endif
           endif
 !       endif                                                            !srv 13.10.06 }  22.05.18
@@ -806,7 +801,7 @@ csw 16oct2012 init ier0
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &   .false.)                                                        !djm Jan2017
       enddo
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
 !$OMP END PARALLEL DO
 !! FR End of loop (2)
 #ifdef WITH_FTIMINGS
@@ -880,17 +875,17 @@ csw 16oct2012 init ier0
             call restart_ma28_for_9
             call b2nppo (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 22.05.18
      &        rxf2, vol, ne, te, conc, sch, po, fch, respo, corpo, ier0)
-            last_solve_9(0:nnreg(0))=solvepo(0:nnreg(0))
+            last_solve_9(ns,0:nnreg(0))=solvepo(0:nnreg(0))
           else if (vis_per.eq.0.0e0_R8) then                             !srv 22.12.19 06.07.00
             new_matrix = .false.
             do ireg = 0, nnreg(0)
               new_matrix = new_matrix.or.
-     &         solvepo(ireg).neqv.last_solve_5(ireg)
+     &         solvepo(ireg).neqv.last_solve_5(ns,ireg)
             end do
             if (new_matrix) call restart_ma28
             call b2npp5 (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 22.05.18
      &        rxf2, ne, te, conc, sch, po, fch, respo, corpo, ier0)
-            last_solve_5(0:nnreg(0))=solvepo(0:nnreg(0))
+            last_solve_5(ns,0:nnreg(0))=solvepo(0:nnreg(0))
           else
             call restart_ma28_for_11
             call b2npp7 (nx, ny, ns, ismain, nnreg(0), solving(3),       !srv 27.01.00 22.05.18
@@ -948,7 +943,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
         cssb = 0.0_R8
       endif                                                              !iyv 06.02.14
 
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3) )
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -996,7 +991,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &     .false.)                                                      !djm Jan2017
       enddo
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3) )
 !$OMP END PARALLEL DO
 !!FR End of loop (3)
 #ifdef WITH_FTIMINGS
@@ -1060,7 +1055,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
            endif
          enddo
        enddo
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4) )
 #ifdef WITH_FTIMINGS
        call timer%start("parallel")
 #endif
@@ -1070,7 +1065,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        do is=0,ns-1
         ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
        enddo
-#ifndef NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP4) )
 !$OMP END PARALLEL DO
 !!FR end of loop (4)
 #ifdef WITH_FTIMINGS
@@ -1182,7 +1177,7 @@ c   recompute particle fluxes
      &        (visper_all_ions.eq.0 .and. is.eq.ismain)) then
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
-     &           solveco(is,ireg).neqv.last_solve_7(ireg)
+     &           solveco(is,ireg).neqv.last_solve_7(is,ireg)
               end do
               if(new_matrix) call restart_ma28_for_7
               call b2npc7 (nx, ny, fac_vis, guard_flows, rza(-1,-1,is),
@@ -1192,11 +1187,11 @@ c   recompute particle fluxes
      &         ti, pb, na(-1,-1,is), ua(-1,-1,is), fna(-1,-1,0,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npc7')
-              last_solve_7(0:nnreg(0))=solveco(is,0:nnreg(0))
+              last_solve_7(is,0:nnreg(0))=solveco(is,0:nnreg(0))
             else                                                         !srv 02.04.18
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
-     &           solveco(is,ireg).neqv.last_solve_5(ireg)
+     &           solveco(is,ireg).neqv.last_solve_5(is,ireg)
               end do
               if(new_matrix) call restart_ma28
               call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),    !srv 22.05.18
@@ -1206,7 +1201,7 @@ c   recompute particle fluxes
      &         pb, na(-1,-1,is), ua(-1,-1,is), fna(-1,-1,0,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npco')
-              last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
+              last_solve_5(is,0:nnreg(0))=solveco(is,0:nnreg(0))
             endif
 !         endif                                                          !srv 22.05.18
         else                                                             !srv 13.10.06 {
@@ -1217,7 +1212,7 @@ c   recompute particle fluxes
               if(visper_all_ions.ne.0 .or. is.eq.ismain) then
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
-     &             solveco(is,ireg).neqv.last_solve_11(ireg)
+     &             solveco(is,ireg).neqv.last_solve_11(is,ireg)
                 end do
                 if(new_matrix) call restart_ma28_for_11
                 call b2npc11 (nx, ny, fac_vis, guard_flows,
@@ -1228,11 +1223,11 @@ c   recompute particle fluxes
      &           ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npc11')
-                last_solve_11(0:nnreg(0))=solveco(is,0:nnreg(0))
+                last_solve_11(is,0:nnreg(0))=solveco(is,0:nnreg(0))
               else                                                       !srv 02.04.18
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
-     &             solveco(is,ireg).neqv.last_solve_9(ireg)
+     &             solveco(is,ireg).neqv.last_solve_9(is,ireg)
                 end do
                 if(new_matrix.or.use_9pt_stencil.ne.0)
      .           call restart_ma28_for_9
@@ -1243,12 +1238,12 @@ c   recompute particle fluxes
      &           ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npc9')
-                last_solve_9(0:nnreg(0))=solveco(is,0:nnreg(0))
+                last_solve_9(is,0:nnreg(0))=solveco(is,0:nnreg(0))
               endif
             else
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
-     &           solveco(is,ireg).neqv.last_solve_5(ireg)
+     &           solveco(is,ireg).neqv.last_solve_5(is,ireg)
               end do
               if(new_matrix) call restart_ma28
               call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),    !srv 22.05.18
@@ -1257,7 +1252,7 @@ c   recompute particle fluxes
      &         sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
      &         ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
-              last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
+              last_solve_5(is,0:nnreg(0))=solveco(is,0:nnreg(0))
               call xertst (ier0.eq.0, 'error return from b2npco')
             endif
 !         endif                                                          !srv 22.05.18

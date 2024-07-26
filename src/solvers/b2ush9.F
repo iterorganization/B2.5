@@ -165,7 +165,7 @@
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
-     &   solveet(ireg).neqv.last_solve_9(ireg)
+     &   solveet(ireg).neqv.last_solve_9(ns,ireg)
       end do
       if (new_matrix.or.use_9pt_stencil.ne.0) call restart_ma28_for_9
 * ..total heat correction equation
@@ -1117,7 +1117,7 @@ cwdk add 9-point contributions
 
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, reshi, corti, 'b2ush9_Ti')
-      last_solve_9(0:nnreg(0)) = solveei(0:nnreg(0))
+      last_solve_9(ns,0:nnreg(0)) = solveei(0:nnreg(0))
       do iy = -1, ny
        do ix = -1, nx
         corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))

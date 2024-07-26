@@ -459,7 +459,7 @@
 
 * ..main computation
 *   ..compute individual species corrections
-#ifndef NO_OPENMP_B2NPMO
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
@@ -480,18 +480,23 @@
 !$OMP& PRIVATE(chns, wrks, new_matrix)
 !$OMP& FIRSTPRIVATE(lnlam) LASTPRIVATE(lnlam)
 !$OMP& LASTPRIVATE(kt_neo)
+!$OMP& SHARED(solvemt, solvemo)
 !$OMP& REDUCTION(+: resmt, flct, cvct, smt, ctcft)
-!$OMP& SHARED(ns, n2, na, am, nx, ny, rza, ne, te, ti, vol, hx, hz, bb)
+!$OMP& SHARED(ns, n2, na, am, nx, ny, rza)
+!$OMP& SHARED(ne, te, ti, vol, hx, hz, bb)
 !$OMP& SHARED(hy, qs, qz)
-!$OMP& SHARED(ua, ue, ni, ne2, ehxp, cthe, cthi, po, cvsa, zn, uap)
+!$OMP& SHARED(ua, ni, ne2, ehxp, cthe, cthi, po, cvsa, zn, uap)
 !$OMP& SHARED(zamax, wadia, vaecrb, smo, smq, smqdu, smodt, resmo)
 !$OMP& SHARED(nnreg, itcnt, corua, pcca, b2npmo_smaf, b2npmo_smag)
-!$OMP& SHARED(b2npmo_smav, solving, get_residuals, solvemt, solvemo)
-!$OMP& SHARED(nsmin, nsmax, ismain, style, b2sifr_ver, style_b2mndt)
-!$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl, balance_netcdf, fmo_b2nxfv)
+!$OMP& SHARED(b2npmo_smav, solving, get_residuals)
+!$OMP& SHARED(nsmin, nsmax, ismain)
+!$OMP& SHARED(style, b2sifr_ver, style_b2mndt)
+!$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl)
+!$OMP& SHARED(balance_netcdf, fmo_b2nxfv)
 !$OMP& SHARED(pbshz, cvsahz, chci, smcf, fchanml, smof)
 !$OMP& SHARED(facdrift, fac_ExB)
-!$OMP& SHARED(is_neutral, use_9pt_stencil, zetap, zetae, gti, gte)
+!$OMP& SHARED(is_neutral, ue, use_9pt_stencil)
+!$OMP& SHARED(zetap, zetae, gti, gte)
 !$OMP& SHARED(ce1, ce2, cimp1, cimp2, zeff)
 !$OMP& SHARED(rz2, ne_ext, ro)
 !$OMP& SHARED(fmo, fna_fcor, iout, iout_b2wdat, rxg)
@@ -536,15 +541,12 @@
 !$OMP& SHARED(fmo_tot, fchanml_a)
 !$OMP& SHARED(nlreg, nlloc, nlxlo, nlxhi, nlylo, nlyhi)
 !$OMP& SHARED(alfx_c, sigx_c, f_luc_sg, cflim, smbvi_factor)
-!$OMP& SHARED(Zhdanov_closure, Zhdanov_test, Zhdanov_visu, Zhdanov_vish)
+!$OMP& SHARED(Zhdanov_closure, Zhdanov_test)
+!$OMP& SHARED(Zhdanov_visu, Zhdanov_vish)
 !$OMP& SHARED(rho_A_rel, avm_u, alpha1, chci_al_ast, chci_a)
 !$OMP& SHARED(cvsahz_drho, cvsahz_hAdp_albe, cvsahz_hBdp_al)
 !$OMP& SHARED(cvsahz_uAdp_albe, cvsahz_uBdp_al)
-#if ( !defined(GFORTRAN) && !defined(PGF90) && !defined(NAGFOR) && !defined(CRAY) )
-!$OMP& COPYIN(last_solve_5, last_solve_9)
-#else
-!$OMP& PRIVATE(last_solve_5, last_solve_9)
-#endif
+!$OMP& SHARED(last_solve_5, last_solve_9)
 #endif
 
 !      do is = 0, ns-1
@@ -827,13 +829,13 @@ cdjm Mar2019 output the total momentum flux and source for balance
      &    vol, hx, hy, hz, qz, qs, bb, rob, rob, pb, pb, ua(-1,-1,is),  !srv 09.01.01
      &    smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
      &    pcca(-1,-1,0,0,is), aa9, wrk1, 'b2usm9_'//chns)
-         last_solve_9(0:nnreg(0)) = solvemo(is,0:nnreg(0))
+         last_solve_9(is,0:nnreg(0)) = solvemo(is,0:nnreg(0))
         else
 c    ..compare 5-pt stencil matrices
          new_matrix = .false.
          do ireg = 0, nnreg(0)
           new_matrix = new_matrix.or.
-     &     solvemo(is,ireg).neqv.last_solve_5(ireg)
+     &     solvemo(is,ireg).neqv.last_solve_5(is,ireg)
          end do
          if (new_matrix) call restart_ma28
 *    ..compute correction
@@ -841,7 +843,7 @@ c    ..compare 5-pt stencil matrices
      &    vol, hx, hz, bb, rob, rob, pb, pb, ua(-1,-1,is),              !srv 09.01.01
      &    smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
      &    pcca(-1,-1,0,0,is), aa5, wrk1, 'b2usmo_'//chns)
-         last_solve_5(0:nnreg(0)) = solvemo(is,0:nnreg(0))
+         last_solve_5(is,0:nnreg(0)) = solvemo(is,0:nnreg(0))
         endif
 csw 21feb2014 added this else branch
        else
@@ -880,7 +882,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
        endif                                                           !srv 22.05.18
       enddo
-#ifndef NO_OPENMP_B2NPMO
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
       !$OMP END PARALLEL DO
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")
@@ -899,18 +901,18 @@ c     ..compare 9-pt stencil matrices
          call b2usm9 (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,
      &    vol, hx, hy, hz, qz, qs, bb, ro, rz, pr, pz, wrk0, smt, flct,
      &    cvct, resmt, ctcft, corut, pccm, aa9, wrk1, 'b2usm9_total')
-         last_solve_9(0:nnreg(0)) = solvemt(0:nnreg(0))
+         last_solve_9(ns,0:nnreg(0)) = solvemt(0:nnreg(0))
         else
          new_matrix = .false.
          do ireg = 0, nnreg(0)
            new_matrix = new_matrix.or.
-     &      solvemt(ireg).neqv.last_solve_5(ireg)
+     &      solvemt(ireg).neqv.last_solve_5(ns,ireg)
          end do
          if (new_matrix) call restart_ma28
          call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,         !srv 04.07.08
      &    vol, hx, hz, bb, ro, rz, pr, pz, wrk0, smt, flct, cvct,        !srv 09.01.01
      &    resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')          !srv 06.04.07
-         last_solve_5(0:nnreg(0)) = solvemt(0:nnreg(0))
+         last_solve_5(ns,0:nnreg(0)) = solvemt(0:nnreg(0))
         endif
       else
        pccm  = 0.0_R8

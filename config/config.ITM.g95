@@ -54,6 +54,7 @@ DBLSED =
 INCMOD = -I
 MOD = mod
 OBJDEST = -fmod=${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST = -fmod=${OBNDIR} -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 

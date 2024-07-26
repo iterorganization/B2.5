@@ -1,6 +1,7 @@
-      module b2mod_ma28_for_9diag                                     !sv 13.10.06 {
-
+      module b2mod_ma28_for_9diag                                !sv 13.10.06 {
       use b2mod_types
+      implicit none
+
       real (kind=R8), allocatable, save ::
      * r1(:),
      * s1(:),
@@ -28,7 +29,7 @@
       !$OMP THREADPRIVATE(irnh, icnh, icnhkeep)
       !$OMP THREADPRIVATE(ikeep, iw28, irnh_save, icnh_save)
 
-      integer nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
+      integer, save :: nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
       !$OMP THREADPRIVATE(nc0, nltrsol, nnd, n_nonzeros)
       !$OMP THREADPRIVATE(solvdim, solvdim1)
 
@@ -89,4 +90,4 @@
 
       end subroutine dealloc_b2mod_ma28_for_9diag
 
-      end module b2mod_ma28_for_9diag                                 !sv 13.10.06 }
+      end module b2mod_ma28_for_9diag                             !sv 13.10.06 }

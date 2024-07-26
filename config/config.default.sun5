@@ -59,7 +59,7 @@ ifdef LD_CATALYST
   CXXFLAGS = -std=c++11
 endif
 
-LD = f90
+LD = ${FC}
 LDOPTS = ${FCOPTS} -lf77compat
 
 LCPP = -z muldefs ${LD_SONNET} -lC -lw -lnsl

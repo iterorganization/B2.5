@@ -33,6 +33,7 @@ FCOPTS = -O -x77 -PIC -compatible # -mismatch
 INCMOD = -I
 MOD = mod
 OBJDEST = -mdir ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST = -mdir ${OBNDIR} -o ${OBNDIR}/$*.o
 
 ifdef USE_OPENMP
   FCOPTS += -openmp
@@ -59,7 +60,7 @@ ifdef IMAS_PKG_LIST
   IMASLIBS = ${LD_AL}
 endif
 
-LD = nagfor
+LD = ${FC}
 LDOPTS =
 DBLFC = ${FC}
 DBLOPTS = -r8
