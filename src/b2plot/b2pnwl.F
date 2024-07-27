@@ -40,17 +40,19 @@ c*** and for the power flux.
       real (kind=R8) :: hlp_w(4),hlp_p(4),hlp_s(4)
       real (kind=R8), allocatable :: hlp_a(:,:),hlp_e(:,:),
      ,                               hlp_m(:,:),hlp_f(:,:)
+      integer use_eirene
       real (kind=R8) :: width
-      data width /1.0_R8/
-      save width
+      data width /1.0_R8/, use_eirene/0/
+      save width, use_eirene
       character*8 text_an(natm),text_mn(nmol)
       logical streql
-      external streql, ipgetr
+      external streql, ipgetr, ipgeti
 c----------------------------------------------------------------------
       print *,'Starting b2pnwl...',nlim,DEF_NLIM
 c*** Input the DG data and prepare the geometry
 c
       call ipgetr ('b2agmt_1d_width', width)
+      call ipgeti ('b2mndr_eirene', use_eirene)
 c*** Set the default values
       npumplis=0
       nwldprt=0
@@ -192,20 +194,22 @@ c*** Calculate the net and gross erosion
               j=(ib-lppp-1)/nytg+1
               js=(ib-lppp)-(j-1)*nytg
               ias=0
-              do iss=1,nsts
-                if (eirdiag_nds_typ(iss).ne.2) cycle
-                if (eirdiag_nds_srf(iss).ne.ltrgpos(itrg(j))+1) cycle
-                if (mod(itrg(j),2).eq.1) then
-                  idir = -1
-                else
-                  idir = 1
-                end if
-                if (idir.eq.1) then
-                  ias=eirdiag_nds_ind(iss)+js
-                else
-                  ias=eirdiag_nds_ind(iss)+(nytg-js+1)
-                end if
-              end do
+              if (use_eirene.ne.0) then
+                do iss=1,nsts
+                  if (eirdiag_nds_typ(iss).ne.2) cycle
+                  if (eirdiag_nds_srf(iss).ne.ltrgpos(itrg(j))+1) cycle
+                  if (mod(itrg(j),2).eq.1) then
+                    idir = -1
+                  else
+                    idir = 1
+                  end if
+                  if (idir.eq.1) then
+                    ias=eirdiag_nds_ind(iss)+js
+                  else
+                    ias=eirdiag_nds_ind(iss)+(nytg-js+1)
+                  end if
+                end do
+              end if
               wwk=0.0_R8
               wwp=0.0_R8
               k=0
