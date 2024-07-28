@@ -3,6 +3,7 @@ ifeq ($(shell [ -e ${SRCB2}/config/config.common.${COMPILER} ] && echo yes || ec
   include ${SRCB2}/config/config.common.${COMPILER}
   MAKES += ${SRCB2}/config/config.common.${COMPILER}
 endif
+INCMODN := ${INCMODS} ${INCMOD}${OBNDIR}
 INCMODS += ${INCMOD}${OBJDIR}
 ifdef USE_EIRENE
 INCMODS += ${INCMOD}${EIRDIR}

@@ -63,6 +63,9 @@ endif
 
 LD = ${FC}
 LDOPTS = 
+ifdef USE_OPENMP
+  LDOPTS += -openmp
+endif
 
 # LDEXTRA  = env.o
 
