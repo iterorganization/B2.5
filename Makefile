@@ -1138,7 +1138,7 @@ ${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBNDIR}/b2mod_math.${MOD} ${OBN
 ifdef LD_NETCDF
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.F90
-	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o $*.o $*.F90
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODN} -o $*.o $*.F90
 else
 	$(warning NETCDF library not present!)
 endif
