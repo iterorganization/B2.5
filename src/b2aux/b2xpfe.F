@@ -26,22 +26,26 @@
       n2 = (nx+2)*(ny+2)
       do jdim = 0, 1
         do idim = 0, 1
+#ifdef _OPENMP
 !$OMP PARALLEL DO DEFAULT(none)
 !$OMP& PRIVATE(ix, iy)
 !$OMP& SHARED(idim, jdim, nx, ny, fne)
 !$OMP& SCHEDULE(static)
+#endif
           do iy = -1, ny
             do ix = -1, nx
               fne(ix,iy,idim,jdim) = 0.0_R8
             end do
           end do
+#ifdef _OPENMP
 !$OMP END PARALLEL DO
+#endif
         end do
       end do
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
-#ifndef NO_OPENMP_B2XPFE
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2XPFE) )
 !$OMP PARALLEL DO DEFAULT(none)
 !$OMP& PRIVATE(ix, iy, is)
 !$OMP& SHARED(fne, fna, fa_ext, rza, za_ext, ns, ns_ext, nx, ny)
@@ -98,8 +102,8 @@
           enddo
         enddo
       enddo
-#ifndef NO_OPENMP_B2XPFE
-      !$OMP END PARALLEL DO
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2XPFE) )
+!$OMP END PARALLEL DO
 #endif
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")

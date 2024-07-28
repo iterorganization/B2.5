@@ -91,7 +91,7 @@
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
-#ifndef NO_OPENMP_B2SQCX
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQCX) )
 !$OMP PARALLEL
 !$OMP& default(none)
 !$OMP& private(is,iy,ix)
@@ -99,7 +99,7 @@
 !$OMP& shared(th0, amh0, ev)
 #endif
 
-#ifndef NO_OPENMP_B2SQCX
+#if( defined(_OPENMP) && !defined(NO_OPENMP_B2SQCX) )
 !$OMP DO schedule(static)
 #endif
 *   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
@@ -108,13 +108,13 @@
         wrk0(ix,iy) = log(th0(ix,iy)/(amh0*ev))
        enddo
       enddo
-#ifndef NO_OPENMP_B2SQCX
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQCX) )
 !$OMP END DO
 #endif
 
 * ..main computation
 *   ..compute rate coefficients
-#ifndef NO_OPENMP_B2SQCX
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQCX) )
 !$OMP DO schedule(static)
 #endif
       do is = 0, ns-1
@@ -135,7 +135,7 @@
         enddo
        endif
       enddo
-#ifndef NO_OPENMP_B2SQCX
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQCX) )
 !$OMP END DO
 !$OMP END PARALLEL
 #endif
