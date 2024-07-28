@@ -27,16 +27,18 @@
       integer, save :: nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
       logical, save :: lfirst_ilu = .true.
 
+#ifdef _OPENMP
 !!FR All the allocatable arrays need to be declared as THREADPRIVATE
 !!FR as each thread needs its own copy of the arrays used in the solver.
 !!FR All the integers also need to be threadprivate as they are used
 !!FR in the ncall==0 block in b2ux5p that defines the array sizes.
-      !$OMP THREADPRIVATE (r1, s1, a1h, w, res, a1h_save)
-      !$OMP THREADPRIVATE (irn, icn, ish, jsh, ijsh, irnh, icnh)
-      !$OMP THREADPRIVATE (icnhkeep, ikeep, iw28, irnh_save, icnh_save)
-      !$OMP THREADPRIVATE (nc0, nltrsol, nnd, n_nonzeros)
-      !$OMP THREADPRIVATE (solvdim, solvdim1)
-      !$OMP THREADPRIVATE (lfirst_ilu)
+!$OMP THREADPRIVATE (r1, s1, a1h, w, res, a1h_save)
+!$OMP THREADPRIVATE (irn, icn, ish, jsh, ijsh, irnh, icnh)
+!$OMP THREADPRIVATE (icnhkeep, ikeep, iw28, irnh_save, icnh_save)
+!$OMP THREADPRIVATE (nc0, nltrsol, nnd, n_nonzeros)
+!$OMP THREADPRIVATE (solvdim, solvdim1)
+!$OMP THREADPRIVATE (lfirst_ilu)
+#endif
 
       contains
 

@@ -34,13 +34,17 @@
 *   ..local variables
       integer ncall, ix, iy, ireg
       save ncall
-      !$OMP THREADPRIVATE (ncall)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE (ncall)
+#endif
 *     ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(-1:nx,-1:ny)
       integer, save :: nrings, jxi, jxa, jsep
       real (kind=R8), save :: na_min = 1.0e4_R8
-      !$OMP THREADPRIVATE(na_min, nrings, jxi, jxa, jsep)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(na_min, nrings, jxi, jxa, jsep)
+#endif
       real (kind=R8) :: t0,
      *  pb_(-1:nx,-1:ny), nb_(-1:nx,-1:ny),                               !lk 30.06.17
      *  tt0(-1:ny), tt1(-1:ny), tt2(-1:ny)                                !lk 30.06.17

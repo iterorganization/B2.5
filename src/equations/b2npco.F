@@ -79,14 +79,18 @@
       integer, save :: use_9pt_stencil = 1
       character chns*3                                             !srv 04.07.08
       logical warning
-      !$OMP THREADPRIVATE(iout, iout_b2wdat)
-      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(iout, iout_b2wdat)
+!$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+#endif
       real (kind=R8) ::
      *  rxg, pcm0, pcm1, ttim, t0                                  !srv 07.07.21
       real (kind=R8) ::
      *  aa5(-1:nx,-1:ny,-2:2), wrk0(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1, use_eirene
-      !$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
+#endif
 *   ..procedures
       external xertst, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2ursc, b2usco, b2upco
@@ -291,9 +295,13 @@ csw 11dec2012, check for solv flags
 
       if (iout.ne.0) then                                               !srv 12.07.02 {
        if (in_parallel()) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'B2NPCO will not write to file in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
        else
         call my_out(70,nx,ny,pb,'b2npco_pa'//chns)
         call my_out(70,nx,ny,nb,'b2npco_na'//chns)
@@ -312,9 +320,13 @@ csw 11dec2012, check for solv flags
 
       if (iout_b2wdat.eq.4) then
        if (in_parallel()) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'B2NPCO will not write to file in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
        else
         call my_out(70,nx,ny,nb,'b2npco_na'//chns)
         call my_out(70,nx,ny,rescb,'b2npco_resco'//chns)

@@ -81,9 +81,11 @@
      *   t0, t1
       character chns*3
       save ncall
-      !$OMP THREADPRIVATE(ncall, iout, iadd_11)
-      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
-      !$OMP THREADPRIVATE(use_9pt_stencil)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, iout, iadd_11)
+!$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+!$OMP THREADPRIVATE(use_9pt_stencil)
+#endif
 *   ..procedures
       intrinsic abs
       external xertst, ipgetr, sfill
@@ -106,10 +108,14 @@
        call ipgeti ('b2usc11_add_11', iadd_11)
        call ipgeti ('b2usc11_iout', iout)
        if (in_parallel() .and. iout.ne.0) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*)
      .    'b2usc11 OpenMP warning: no file IO in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        endif
       endif

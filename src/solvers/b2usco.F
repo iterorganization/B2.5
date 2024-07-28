@@ -47,7 +47,9 @@
       real (kind=R8) ::
      *  t0, t1
       save ncall
-      !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co, iout)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co, iout)
+#endif
 *   ..procedures
       intrinsic abs
       external xertst, ipgetr, sfill
@@ -68,9 +70,13 @@
        call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21
        call ipgeti ('b2usco_iout', iout)                              !srv 17.06.02
        if (in_parallel() .and. iout.ne.0) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'b2usco OpenMP warning: no file IO in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        endif
       endif                                                           !srv 06.07.08 }
@@ -254,10 +260,14 @@ cxpb
       if (iout.ne.0) then                                              !srv 17.06.02 {
        if (in_parallel()) then
         if (ncall==0) then
-        !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*)'OpenMP warning from b2usco: not writing files ',
      &        'in parallel mode'
-        !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
         end if
        else
         write (chns,'(i3.3)') isb

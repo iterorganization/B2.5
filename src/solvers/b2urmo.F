@@ -75,8 +75,10 @@
       integer, save :: iout_b2npmo = 0, iout_b2wdat = 0                 !srv 11.09.09
       character chns*3                                                  !srv 02.06.11
       save ncall
-      !$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co)
-      !$OMP THREADPRIVATE(iout_b2wdat, iout_b2npmo)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, no_Ptncr_x_co, no_Ptncr_y_co)
+!$OMP THREADPRIVATE(iout_b2wdat, iout_b2npmo)
+#endif
       real (kind=R8) ::
      *   con(-1:nx,-1:ny,0:1,0:1), flv(-1:nx,-1:ny,0:1,0:1), flo,       !srv 11.09.09
      *   flo9, con9, dubr(-1:nx,-1:ny,0:1),
@@ -231,12 +233,16 @@ cwdk     add computation of 9-point quantities
       enddo
       if(iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then
        if (in_parallel()) then
-        !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
         if (ncall==0) then
           write(*,*) 'b2urmo OpenMP warning: no file output ',
      &               'in parallel mode'
         end if
-        !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
        else
         write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,flv(-1,-1,0,0),

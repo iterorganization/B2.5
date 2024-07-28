@@ -40,7 +40,9 @@
       real (kind=R8) ::
      *    phm0, t0                                                       !srv 15.04.19
       save ncall, phm0
-      !$OMP THREADPRIVATE(ncall, phm0, iout)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, phm0, iout)
+#endif
 *   ..procedures
       external xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvsg
@@ -62,10 +64,14 @@
        call ipgetr ('b2sian_phm0', phm0)
        call ipgeti ('b2sian_iout', iout)
         if ((iout.ne.0) .and. in_parallel()) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'B2SIAN OpenMP warning: no file output in ',
      &              'parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        end if
       endif

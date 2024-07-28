@@ -42,7 +42,9 @@
       integer, save :: iout = 0
       integer, save :: use_9pt_stencil = 1
       character chark*1
-      !$OMP THREADPRIVATE(ncall, iout, use_9pt_stencil)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, iout, use_9pt_stencil)
+#endif
       real (kind=R8) :: t0, t1
       save ncall
 *   ..procedures
@@ -63,9 +65,13 @@
        call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
        call ipgeti ('b2uspo_iout', iout)
        if (in_parallel() .and. iout.ne.0) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'b2uspo OpenMP warning: no file IO in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        endif
       endif

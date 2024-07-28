@@ -36,7 +36,9 @@
      &   kmpr(-1:nx,-1:ny)
       real (kind=R8) ::
      &   aa7p2, aa7m2, coef
-      !$OMP THREADPRIVATE(ncall, iout, vis_per)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, iout, vis_per)
+#endif
 *-----------------------------------------------------------------------
 *.computation
 
@@ -48,10 +50,14 @@
        call ipgeti ('b2unavspr7a_iout', iout)
        call ipgetr ('b2tfnb_vis_per', vis_per)
        if (in_parallel() .and. iout.ne.0) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*)
      .    'b2unavspr7a OpenMP warning: no file IO in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        endif
       endif

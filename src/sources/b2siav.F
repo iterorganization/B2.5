@@ -52,14 +52,18 @@
       integer ncall, ix, iy, k
       integer, save :: qstyle = 0, lluciani = 3                     !lk 03.12.09
       integer, save :: iout = 0                                     !srv 17.06.02
-      !$OMP THREADPRIVATE(ncall, qstyle, lluciani, iout)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, qstyle, lluciani, iout)
+#endif
       character chns*3, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *     t0, ft                                                   !srv 16.10.17
       real (kind=R8), save ::
      &     addvis=1.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
      &     cvsa_mltpl = 1.0e0_R8                                    !iyv 06.12.13
-      !$OMP THREADPRIVATE(addvis, addvis1, cqip1, cvsa_mltpl)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(addvis, addvis1, cqip1, cvsa_mltpl)
+#endif
       real (kind=R8) ::
      *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
      *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                    !srv 23.07.99 19.01.05
@@ -87,10 +91,14 @@
        call ipgetr ('b2siav_cqip1', cqip1)                          !srv 28.03.06
        call ipgeti ('b2siav_iout', iout)                            !lk 23.05.06 05.07.07
        if ((iout.ne.0) .and. in_parallel()) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'B2SIAV OpenMP warning: no file output in ',
      &              'parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        end if
        call ipgeti ('b2siav_style_qip', qstyle)                     !lk 23.05.06 05.07.07

@@ -39,7 +39,9 @@
       integer ncall, style, n2, ix, iy, ncallout, ib
       integer, save :: iout = 0                                     !srv 17.06.02
       character charns*3                                            !srv 17.06.02
-      !$OMP THREADPRIVATE(ncall, style, ncallout, iout)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, style, ncallout, iout)
+#endif
       save ncall, style, ncallout
 *   ..procedures
       external xertst, ipgeti, ipgetr, b2scopy
@@ -71,10 +73,14 @@
        call ipgeti ('b2news_ncallout', ncallout)
        call ipgeti ('b2nxfc_iout', iout)                             !srv 17.06.02
        if ((iout.ne.0) .and. in_parallel()) then
-        !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
         write(*,*) 'B2NXFC OpenMP warning: no file output in ',
      &   'parallel mode'
-        !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
         iout = 0
        end if
       endif

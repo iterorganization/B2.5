@@ -10,7 +10,9 @@
      * res(:),
      * a1h_save(:)
 
-      !$OMP THREADPRIVATE(r1, s1, a1h, w, res, a1h_save)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(r1, s1, a1h, w, res, a1h_save)
+#endif
 
       integer, allocatable, save ::
      * irn(:),
@@ -25,13 +27,17 @@
      * iw28(:,:),
      * irnh_save(:),
      * icnh_save(:)
-      !$OMP THREADPRIVATE(irn, icn, ish, jsh, ijsh)
-      !$OMP THREADPRIVATE(irnh, icnh, icnhkeep)
-      !$OMP THREADPRIVATE(ikeep, iw28, irnh_save, icnh_save)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(irn, icn, ish, jsh, ijsh)
+!$OMP THREADPRIVATE(irnh, icnh, icnhkeep)
+!$OMP THREADPRIVATE(ikeep, iw28, irnh_save, icnh_save)
+#endif
 
       integer, save :: nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
-      !$OMP THREADPRIVATE(nc0, nltrsol, nnd, n_nonzeros)
-      !$OMP THREADPRIVATE(solvdim, solvdim1)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(nc0, nltrsol, nnd, n_nonzeros)
+!$OMP THREADPRIVATE(solvdim, solvdim1)
+#endif
 
       contains
 
