@@ -67,7 +67,6 @@ ifdef IMAS_PKG_LIST
 endif
 
 LD = ${FC}
-LDOPTS =
 DBLFC = ${FC}
 DBLOPTS = -r8
 DBLSED = sed -e s:\#PREC\#:d:g
