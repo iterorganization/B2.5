@@ -133,8 +133,10 @@ function run_test {
   if [ -z "$KMP_STACKSIZE" ]; then
     export KMP_STACKSIZE=128MB
   fi
-  if [ [ -z "$OMP_STACKSIZE" ] && [ "$COMPILER" != "ifort64" ] ]; then
-    export OMP_STACKSIZE=128MB
+  if [ -z "$OMP_STACKSIZE" ]; then
+    if [ "$COMPILER" != "ifort64" ]; then
+      export OMP_STACKSIZE=128MB
+    fi
   fi
 
   if [ $4 -eq 1 ]; then
