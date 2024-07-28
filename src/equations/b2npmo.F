@@ -864,7 +864,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
        endif                                                           !srv 22.05.18
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
-      !$OMP END PARALLEL DO
+!$OMP END PARALLEL DO
 #ifdef WITH_FTIMINGS
       call timer%stop("parallel")
 #endif

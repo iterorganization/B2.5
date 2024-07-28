@@ -126,22 +126,24 @@
       real (kind=R8) :: weight(-1:nx,-1:ny)                             !lk
       integer :: xcount, ycount
       save ncall, alpha, gamma, flux_limit_min_ti, area_fix, no_hybr
+#ifdef _OPENMP
 !!FR Local save variables that get updated need to be THREADPRIVATE
 !!FR Local save variables that are read only are okay - no change needed.
 !!FR Because alpha, gamma, flux_limit_min_ti, area_fix & others could
 !!FR potentially be written to by multiple threads on their ncall==0
 !!FR iteration we need to make them THREADPRIVATE too.
 !!TF Note that variables that appear in DATA statement have implied SAVE attribute.
-      !$OMP THREADPRIVATE(ncall)
-      !$OMP THREADPRIVATE(alpha, gamma)
-      !$OMP THREADPRIVATE(flux_limit_min_ti, area_fix, no_hybr)
-      !$OMP THREADPRIVATE(iout, iout_b2wdat, iout_b2npc9, iout_b2npco)
-      !$OMP THREADPRIVATE(iout_b2npmo, mdf_fnb)
-      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
-      !$OMP THREADPRIVATE(pflux_cor, ion_vlct_restrict)
-      !$OMP THREADPRIVATE(vlct_diagno, drift_style, alpha_, xcur, ycur)
-      !$OMP THREADPRIVATE(vis_per, vis_q, xvecrb, xwdia)
-      !$OMP THREADPRIVATE(poldidr, raddidr, poleldr, radeldr)
+!$OMP THREADPRIVATE(ncall)
+!$OMP THREADPRIVATE(alpha, gamma)
+!$OMP THREADPRIVATE(flux_limit_min_ti, area_fix, no_hybr)
+!$OMP THREADPRIVATE(iout, iout_b2wdat, iout_b2npc9, iout_b2npco)
+!$OMP THREADPRIVATE(iout_b2npmo, mdf_fnb)
+!$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+!$OMP THREADPRIVATE(pflux_cor, ion_vlct_restrict)
+!$OMP THREADPRIVATE(vlct_diagno, drift_style, alpha_, xcur, ycur)
+!$OMP THREADPRIVATE(vis_per, vis_q, xvecrb, xwdia)
+!$OMP THREADPRIVATE(poldidr, raddidr, poleldr, radeldr)
+#endif
 *   ..procedures
       real (kind=R8) ::
      *   cvmgp

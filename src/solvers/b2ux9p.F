@@ -79,7 +79,9 @@
       integer, save :: nz
 !      integer, allocatable :: ia(:), ja(:)
       integer, allocatable, save :: indexes(:,:), iasave(:), jasave(:)
-      !$OMP THREADPRIVATE(indexes, iasave, jasave, nz)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(indexes, iasave, jasave, nz)
+#endif
 
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
@@ -91,7 +93,9 @@
 #endif
 *   ..initialization
       save ncall, style, acpar, cpu
-      !$OMP THREADPRIVATE(ncall, style, acpar, cpu)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, style, acpar, cpu)
+#endif
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
@@ -269,17 +273,23 @@
       integer, save :: ncall = 0
       integer, save :: kwrite_fmt = -1
       integer, save :: kwrite_bnr = -1
-      !$OMP THREADPRIVATE(lfirst, ncall, kwrite_fmt, kwrite_bnr)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(lfirst, ncall, kwrite_fmt, kwrite_bnr)
+#endif
 
       if(ncall.eq.0) then
         call ipgeti ('storage_9_kwrite_fmt', kwrite_fmt)
         call ipgeti ('storage_9_kwrite_bnr', kwrite_bnr)
         if (in_parallel() .and.
      &     (kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'storage_9 OpenMP warning: no file IO ' ,
      &       'in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          kwrite_fmt = -1
          kwrite_bnr = -1
        endif

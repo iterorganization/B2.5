@@ -89,12 +89,16 @@
 *    ..extend the table
        call xertst (ipcnt.lt.xdmx*iptbmx,
      &   'ipsetc--error, internal parameter table overflow')
-       !$OMP CRITICAL(ipsetc_lock)
+#ifdef _OPENMP
+!$OMP CRITICAL(ipsetc_lock)
+#endif
        ipnam(ip) = cnam0
        ipval(ip) = cval
        ipstat(ip) = 0
        ipcnt = ipcnt+1
-       !$OMP END CRITICAL(ipsetc_lock)
+#ifdef _OPENMP
+!$OMP END CRITICAL(ipsetc_lock)
+#endif
       endif
       return
       end subroutine ipsetc
@@ -129,7 +133,9 @@
        call xertst (ipstat(ip).lt.ipgtmx,
      &   'ipgetc--error, entry is read too often: '//cnam0)
        cval = ipval(ip)
-       !$OMP ATOMIC
+#ifdef _OPENMP
+!$OMP ATOMIC
+#endif
        ipstat(ip) = ipstat(ip)+1
       else
 *      (no action, return cval unchanged)

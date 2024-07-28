@@ -87,8 +87,10 @@
 #endif
 *   ..initialisation
       save ncall, style, acpar, cpu
-      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
-      !$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
+!$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
+#endif
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/             !srv 26.12.17
 
 *-----------------------------------------------------------------------
@@ -262,7 +264,9 @@
       logical, save :: lfirst=.true.
       integer i, j, ix, iy, ner, iw, jw, jak, jtemp, ipt, nxp2
       real (kind=R8) :: temp
-      !$OMP THREADPRIVATE(lfirst)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(lfirst)
+#endif
       if (lfirst) then
        indexes=0
        nxp2=nx+2

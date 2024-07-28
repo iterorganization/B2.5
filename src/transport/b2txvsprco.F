@@ -31,7 +31,9 @@
       real (kind=R8) ::
      &  fac_vism, t0
       character(3) :: chns
-      !$OMP THREADPRIVATE(ncall, iout, vis_per)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, iout, vis_per)
+#endif
 *   ..procedures
       external b2xvsg, b2xvff, b2xvfx
 *-----------------------------------------------------------------------
@@ -45,10 +47,14 @@
        call ipgetr ('b2tfhe_vis_per', vis_per)                          !srv 22.11.99
        call ipgeti ('b2txvsprco_iout', iout)                            !srv 06.12.17
        if (in_parallel() .and. iout.ne.0) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*)
      .    'b2txvsprco OpenMP warning: no file IO in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        endif
       end if

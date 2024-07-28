@@ -16,7 +16,9 @@
 #endif
       character(7), save :: folder                        !srv 26.09.17
       logical file_opened
-      !$OMP CRITICAL(synch_my_out)
+#ifdef _OPENMP
+!$OMP CRITICAL(synch_my_out)
+#endif
       inquire(unit=nwrite,opened=file_opened)
       if (file_opened) then
          write(*,'(a22,i3,a20)')
@@ -60,6 +62,8 @@
         enddo
         close (nwrite)
       endif
-      !$OMP END CRITICAL(synch_my_out)
+#ifdef _OPENMP
+!$OMP END CRITICAL(synch_my_out)
+#endif
       return
       end subroutine my_out

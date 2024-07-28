@@ -83,14 +83,16 @@
 #endif
 *   ..initialisation
       save ncall, style, acpar, cpu
+#ifdef _OPENMP
 !!FR The save variables used by ilutern need to be declared threadprivate
 !!FR to ensure that each thread accesses its own copy of these and not a
 !!FR global version. The iluter and slv5pt specific arrays have also been
 !!FR declared threadprivate to ensure any attempts to allocate them on
 !!FR multiple threads will work. However, the code will be stopped if
 !!FR the iluter or slv5pt are used as these have not been parallelised.
-      !$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
-      !$OMP THREADPRIVATE (ncall, style, acpar, cpu)
+!$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
+!$OMP THREADPRIVATE (ncall, style, acpar, cpu)
+#endif
       data ncall/0/, style/2/, acpar/8.0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------

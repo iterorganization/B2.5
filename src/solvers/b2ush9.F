@@ -67,12 +67,16 @@
       integer, save :: style_b2mndt = 1                               !srv 07.07.21
       integer, save :: iout = 0
       real (kind=R8), save :: cor_diag = 1.0_R8                       !srv 07.07.21
-      !$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9, iout)
-      !$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi, style_b2mndt)
-      !$OMP THREADPRIVATE(cor_diag)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(no_Ptncr_x_he, no_Ptncr_y_he, iadd_9, iout)
+!$OMP THREADPRIVATE(no_Ptncr_x_hi, no_Ptncr_y_hi, style_b2mndt)
+!$OMP THREADPRIVATE(cor_diag)
+#endif
       integer ireg, ileft, ibot
       save ncall
-      !$OMP THREADPRIVATE(ncall)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall)
+#endif
       real (kind=R8) ::
      *   t0, t1
       logical new_matrix
@@ -99,9 +103,13 @@
        call ipgeti ('b2mndt_style', style_b2mndt)                     !srv 07.07.21
        call ipgeti ('b2ush9_iout', iout)
        if (in_parallel() .and. iout.ne.0) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'b2ush9 OpenMP warning: no file IO in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        endif
       endif

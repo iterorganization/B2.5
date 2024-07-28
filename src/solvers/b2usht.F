@@ -53,7 +53,9 @@
       real (kind=R8) ::
      *   t0, t1
       real (kind=R8), save :: cor_diag = 1.0_R8                         !srv 07.07.21
-      !$OMP THREADPRIVATE(ncall)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall)
+#endif
 *   ..procedures
       intrinsic abs, sqrt, dim
       external xertst, sfill

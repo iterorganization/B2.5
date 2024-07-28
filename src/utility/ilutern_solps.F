@@ -58,10 +58,12 @@ c
       integer, save :: kwrite_bnr = -1                                !srv 18.03.10
       integer, save :: b2swtest=0
       save ncall, nwrite
+#ifdef _OPENMP
 !!FR Make all the save and common block variables threadprivate
-      !$OMP THREADPRIVATE (ncall, nwrite)
-      !$OMP THREADPRIVATE (/ma28fd/,/ma28hd/)
-      !$OMP THREADPRIVATE (kwrite_fmt, kwrite_bnr, b2swtest)
+!$OMP THREADPRIVATE (ncall, nwrite)
+!$OMP THREADPRIVATE (/ma28fd/,/ma28hd/)
+!$OMP THREADPRIVATE (kwrite_fmt, kwrite_bnr, b2swtest)
+#endif
       data ncall /0/, nwrite /0/
 
 *=======================================================================
@@ -155,11 +157,15 @@ c             (maybe necessary in case of multi-fluid?)
 !!FR thus ensure that the code will not be executed if accessed in parallel region.
       if(kwrite_bnr.eq.ncall) then                                   !srv 18.03.10 {
        if (in_parallel()) then !!FR in parallel do not write this file
-        !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*)'OpenMP: warning: running in parallel the ',
      1    'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ',
      2    'will not be written out'
-        !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
        else
          write(*,*) 'Opening 76'
          open(76,file='b2_5_rhs_binary_'//trim(name)//'.dat',
@@ -182,10 +188,14 @@ c             (maybe necessary in case of multi-fluid?)
 
       if(kwrite_fmt.eq.ncall) then
        if (in_parallel()) then !!FR in parallel do not write this file
-        !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*)'OpenMP: warning: running in parallel the ',
      1    'b2_5_rhs_ and b2_5_matrix_ files will not be written out'
-        !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
        else
         write(*,*) 'Opening 76'
         open(76,file='b2_5_rhs_'//trim(name)//'.dat')
@@ -207,10 +217,14 @@ cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
          if (in_parallel()) then !!FR in parallel do not write this file
-          !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
            write(*,*)'OpenMP: warning: running in parallel the ',
      1      'b2_matrix_ files will not be written out'
-          !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          else
           if (ncall.eq.0) then
             write(*,*) 'Opening 84'

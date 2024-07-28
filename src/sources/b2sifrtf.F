@@ -81,7 +81,7 @@
      &  Zhdanov_tf_fr = 1                                               !som 01.07.21
       integer, save :: icase = 0                                        !som 05.03.21
 #ifdef _OPENMP
-      !$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
+!$OMP THREADPRIVATE(iout, iout_b2npmo, iout_b2wdat)
 #endif
       character chns*3, chis*3
       real (kind=R8) ::
@@ -115,7 +115,7 @@
 *   ..initialization
       save ncall, styl0, phm0, phm1, phm2, phm3
 #ifdef _OPENMP
-      !$OMP THREADPRIVATE(ncall, phm1, phm2)
+!$OMP THREADPRIVATE(ncall, phm1, phm2)
 #endif
       data ncall/0/, styl0/0/, phm0/1.0e0_R8/,
      &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/
@@ -141,24 +141,24 @@
        call ipgeti ('b2sifrtf_iout', iout)
        if ((iout.ne.0) .and. in_parallel()) then
 #ifdef _OPENMP
-          !$OMP MASTER
+!$OMP MASTER
 #endif
           write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
      &               'parallel mode'
 #ifdef _OPENMP
-          !$OMP END MASTER
+!$OMP END MASTER
 #endif
           iout = 0
         end if
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        if ((iout_b2wdat==4) .and. in_parallel()) then
 #ifdef _OPENMP
-          !$OMP MASTER
+!$OMP MASTER
 #endif
           write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
      &               'parallel mode (b2wdat)'
 #ifdef _OPENMP
-          !$OMP END MASTER
+!$OMP END MASTER
 #endif
           iout_b2wdat = 0
         end if
