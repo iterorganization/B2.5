@@ -2848,6 +2848,15 @@
 					Constant c_q1 in calculation of additional viscosity terms calculated in b2siav.
 				</description>
 			</switch>
+			<switch>
+				<name>b2sigp_phm0</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					b2sigp_phm0.ne.0.0: pressure gradient terms are calculated.
+					b2sigp_phm0.eq.0.0: pressure gradient terms are zero.
+				</description>
+			</switch>
 		</category>
 		<category name="Output">
 			<switch>
