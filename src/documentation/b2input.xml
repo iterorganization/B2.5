@@ -2805,6 +2805,41 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
+		  <switchgroup>
+			<name>b2tqna_keps_dna_min*</name>
+			<description>
+			 Minimum transport coefficients for use in k-epsilon model. It is also possible to use these minima for other transport models by setting b2tqna_limit_coeff.eq.1.
+			</description>
+			<switch>
+				<name>b2tqna_keps_dna_min</name>
+				<default>1.0e-2</default>
+				<type>real</type>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_vsa_min</name>
+				<default>1.0e-2</default>
+				<type>real</type>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_hci_min</name>
+				<default>1.0e-2</default>
+				<type>real</type>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_hce_min</name>
+				<default>1.0e-2</default>
+				<type>real</type>
+			</switch>
+			</switchgroup>
+			<switch>
+			<name>b2tqna_limit_coeff</name>
+			<default>0</default>
+			<type>integer</type>
+			<description>
+			b2tqna_limit_coeff.ne.0: the minimum transport coefficients dna_min, vsa_min, hci_min and hce_min are for whatever transport model is selected.
+			b2tqna_limit_coeff.eq.0: the minimum transport coefficients dna_min, vsa_min, hci_min and hce_min are only used for the k-epsilon model.
+			</description>
+			</switch>
 		</category>
 		<category name="Output">
 			<switch>
