@@ -2840,6 +2840,14 @@
 			b2tqna_limit_coeff.eq.0: the minimum transport coefficients dna_min, vsa_min, hci_min and hce_min are only used for the k-epsilon model.
 			</description>
 			</switch>
+			<switch>
+				<name>b2siav_cqip1</name>
+				<default>0.5</default>
+				<type>real</type>
+				<description>
+					Constant c_q1 in calculation of additional viscosity terms calculated in b2siav.
+				</description>
+			</switch>
 		</category>
 		<category name="Output">
 			<switch>
