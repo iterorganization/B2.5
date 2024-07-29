@@ -2774,6 +2774,14 @@
 			    When the magnetic field lines are almost tangential to a wall structure, the sheath conditions from BCMOM = 13 are replaced by leakage conditions. This happens when abs(fcQalf(iFc,0)*cvBb(iCv1,0)/cvBb(iCv1,3)).lt.Qalfmin.
 				</description>
 			</switch>
+			<switch>
+				<name>b2stbc_delpo</name>
+				<default>3.1</default>
+				<type>real</type>
+				<description>
+			    Potential drop used for BCENI/E = 15 when the potential equation is not solved (pot_eq.ne.1).
+				</description>
+			</switch>
 		</category>
 		<category name="Output">
 			<switch>
