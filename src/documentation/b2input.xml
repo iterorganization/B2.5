@@ -3629,6 +3629,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mndr_ua_max</name>
+				<default>1.0e6</default>
+				<type>real</type>
+				<description>
+				  Puts a hard limit on the absolute value of the parallel velocity, but applies only to fluid neutrals and in case the spatially hybrid fluid-kinetic model is active (spatial_hybrid.ne.0).
+					This switch was introduced when b2npmo_ion_vlct_restrict only applied to ions. Now that b2npmo_ion_vlct_restrict also applies to fluid neutrals, the removal of b2mndr_ua_max can be considered.
+					For now it is kept for backward compatibility with published results.
+				</description>
+			</switch>
+			<switch>
 				<name>b2tfhe_vis_per</name>
 				<default>0.0</default>
 				<type>real</type>
