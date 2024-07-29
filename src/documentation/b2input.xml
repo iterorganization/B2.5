@@ -4866,6 +4866,36 @@
 					lin_shi0.eq.1: put source/ti in shi0(iCv,1).
 				</description>
 			</switch>
+			<switchgroup>
+				<name>b2npmo_discr_meth*</name>
+				<description>
+					Determines the discretization method for the calculation of the fluxes.
+					discr_meth.eq.0: central scheme
+					discr_meth.eq.1: upwind scheme
+					discr_meth.eq.2: SOLPS5 hybrid scheme
+					discr_meth.eq.3: SOLPS4 continuity scheme. Not yet available for WG.
+				</description>
+				<switch>
+					<name>b2npmo_discr_meth</name>
+					<default>2</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2tfhe_discr_meth</name>
+					<default>2</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2tfhi_discr_meth</name>
+					<default>2</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2tfnb_discr_meth</name>
+					<default>2</default>
+					<type>integer</type>
+				</switch>
+			</switchgroup>
 		</category>
 		<category name="Atomic Physics">
 			<switch>
