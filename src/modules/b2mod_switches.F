@@ -63,7 +63,6 @@ c Advanced fluid neutral models
       integer :: spatial_hybrid
       integer :: use_auto_spatial_hyb
       integer :: diffusion_bc_safeguard
-      integer :: do_volrec
       integer :: transport_afn !! use advanced fluid neutral (afn) transport coefficients
       integer :: afn_bcs_use_coarse
       integer :: afn_vnn
@@ -173,7 +172,6 @@ c iout switches
       integer :: b2npco_iout
       integer :: b2npp7_iout
       integer :: b2nppo_iout
-!      integer :: b2nph9_iout       ! No longer needed for unstructured grids
       integer :: b2news_iout
       integer :: b2nxfx_iout
       integer :: b2nxfc_iout        !srv 17.06.02
@@ -320,10 +318,11 @@ c namelist switches
 c diagnostics switches
       integer :: b2stbc_diagno
       integer :: b2npmo_diagno
-      integer :: ion_vlct_restrict
       integer :: vlct_diagno
       integer :: b2tqna_diagno
 
+c hard limit velocities
+      integer :: ion_vlct_restrict
       real(kind=R8) :: ion_vlct_restrict_M
 
 c MMS
@@ -541,8 +540,6 @@ c b2trno
 c Feedback
       integer :: b2stbc_feedback
 
-c Med
-      integer :: med_style
 
       end type switches
 
@@ -616,7 +613,6 @@ c Advanced fluid neutral models
       s % spatial_hybrid = 0
       s % use_auto_spatial_hyb = 0
       s % diffusion_bc_safeguard = 1
-      s % do_volrec = 1
       s % afn_bcs_use_coarse = 1
       s % afn_vnn = 1
       s % afn_vnn_ndiff = 0
@@ -714,7 +710,6 @@ c Advanced fluid neutral models
       s % b2npco_iout = 0
       s % b2npp7_iout = 0
       s % b2nppo_iout = 0
-!      s % b2nph9_iout = 0
       s % b2news_iout = 0
       s % b2nxfx_iout = 0
       s % b2nxfc_iout = 0
@@ -864,10 +859,11 @@ c Advanced fluid neutral models
 
       s % b2stbc_diagno = 0
       s % b2npmo_diagno = 0
-      s % ion_vlct_restrict = 0
-      s % ion_vlct_restrict_M = 3.0_R8
       s % vlct_diagno = 0
       s % b2tqna_diagno = 0
+
+      s % ion_vlct_restrict = 0
+      s % ion_vlct_restrict_M = 3.0_R8
 
       s % set_na_numerical = 0
       s % set_ua_numerical = 0
@@ -1107,9 +1103,6 @@ c b2stbc_phys
 c b2trno
       s % b2trno_alpha_stoch =  1.0_R8       !srv 17.12.13
 
-c med
-      s % med_style = 0
-
       return
       end subroutine set_defaults_switches
 
@@ -1181,7 +1174,6 @@ c Advanced fluid neutral models
       call ipgeti ('b2stbr_remove_FC_el', s % remove_FC_el)
       call ipgeti ('b2mn_spatial_hybrid', s % spatial_hybrid)
       call ipgeti ('use_auto_spatial_hyb', s % use_auto_spatial_hyb)
-      call ipgeti ('b2mn_do_volrec', s % do_volrec)
       call ipgeti ('b2tqna_transport_afn', s % transport_afn)
       call ipgeti ('diffusion_bc_safeguard', s % diffusion_bc_safeguard)
       call ipgeti ('b2stbr_afn_bcs_use_coarse', s % afn_bcs_use_coarse)
@@ -1291,7 +1283,6 @@ c iout switches
       call ipgeti ('b2npco_iout', s % b2npco_iout)
       call ipgeti ('b2npp7_iout', s % b2npp7_iout)
       call ipgeti ('b2nppo_iout', s % b2nppo_iout)
-!      call ipgeti ('b2nph9_iout', s % b2nph9_iout)
       call ipgeti ('b2news_iout', s % b2news_iout)
       call ipgeti ('b2nxfx_iout', s % b2nxfx_iout)
       call ipgeti ('b2nxfc_iout', s % b2nxfc_iout)
@@ -1442,10 +1433,12 @@ c namelist switches
 c diagnostic switches
       call ipgeti ('b2stbc_diagno', s % b2stbc_diagno)
       call ipgeti ('b2npmo_diagno', s % b2npmo_diagno)
-      call ipgeti ('b2npmo_ion_vlct_restrict', s % ion_vlct_restrict)
-      call ipgetr ('b2npmo_ion_vlct_restrict_M', s%ion_vlct_restrict_M)
       call ipgeti ('b2npmo_vlct_diagno', s % vlct_diagno)
       call ipgeti ('b2tqna_diagno', s % b2tqna_diagno)
+
+c hard limit velocities
+      call ipgeti ('b2npmo_ion_vlct_restrict', s % ion_vlct_restrict)
+      call ipgetr ('b2npmo_ion_vlct_restrict_M', s%ion_vlct_restrict_M)
 
 c MMS
       call ipgeti ('b2mndr_set_na_numerical', s % set_na_numerical)
@@ -1694,9 +1687,6 @@ c b2trno
 
 c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
-
-c Med
-      call ipgeti ('b2mndr_med_style', s%med_style)
 
       return
       end subroutine read_switches
@@ -2217,10 +2207,6 @@ c b2mndr
 c b2ag
       call xertst (s%geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
-
-c med
-      call xertst (s%med_style.ge.0 .and. s%med_style.le.1,
-     &  'faulty parameter b2mndr_med_style')
 
       return
       end subroutine check_values_switches
