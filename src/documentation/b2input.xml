@@ -3525,16 +3525,16 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-                   If ion_vlct_restrict.ne.0, the parallel speed of ions is limited to be no more than M times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than M the local ion sound speed.
-									 M is given by b2npmo_ion_vlct_restrict_M.
+          If ion_vlct_restrict.ne.0, the parallel speed of ions and fluid neutrals is limited to be no more than M times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than M the local ion sound speed.
+					M is given by b2npmo_ion_vlct_restrict_M.
 				</description>
 			</switch>
 			<switch>
 				<name>b2npmo_ion_vlct_restrict_M</name>
 				<default>3.0</default>
-				<type>integer</type>
+				<type>real</type>
 				<description>
-									 Determines M for ion_vlct_restrict.ne.0.
+				  Determines M for ion_vlct_restrict.ne.0.
 				</description>
 			</switch>
 			<switch>
@@ -4746,6 +4746,7 @@
 					If b2tinnt_style.eq.1 (default), then the gradient of the product of density and temperature is calculated directly.
 				</description>
 			</switch>
+
 		</category>
 		<category name="Atomic Physics">
 			<switch>
@@ -4910,7 +4911,7 @@
 			<introduction>
 				<namelist>NEUTRALS</namelist>
 				<description>
-					This namelist is used to either set parameters for the B2.5 neutral fluid model or for the Eirene Monte Carlo neutrals run.
+					This namelist is used to set parameters for the B2.5 neutral fluid model, for the Eirene Monte Carlo neutrals, andor hybrid fluid-kinetic runs.
 					When coupling to Eirene, it is essential that the neutral boundaries conditions declared here be in the same exact order than they are in the Eirene input file.
 					For coupled cases, some of the parameters will become active only on the second call to Eirene, while values inherited from the Eirene input file will be used for the first call. In such cases, use of the switch 'eirene_repeat_first_call' is recommended.
 					This namelist is read if either 'b2stbr_neutrals_namelist' or 'b2mndr_eirene' are set to 1.
