@@ -4515,6 +4515,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tfhe_mode_ehy</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Switch to choose between various discretization schemes when computing the radial electric field.
+					See code for details.
+				</description>
+			</switch>
+			<switch>
 				<name>b2sigp_style</name>
 				<default>2</default>
 				<type>integer</type>
