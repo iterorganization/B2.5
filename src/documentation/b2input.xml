@@ -2782,6 +2782,29 @@
 			    Potential drop used for BCENI/E = 15 when the potential equation is not solved (pot_eq.ne.1).
 				</description>
 			</switch>
+			<switchgroup>
+				<name>b2tlc0_style_*</name>
+				<description>
+				 Determines the method for applying flux limiters to fluid neutrals.
+				 style.eq.0: old treatment where the radial and poloidal conductive fluxes are limited separately.
+				 style.eq.1: improved treatment (isotrpic flux limiters) where the total conductive flux is limited, preventing artificial rotation of the flow.
+				</description>
+				<switch>
+					<name>b2tlv0_style</name>
+					<default>1</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2tlc0_style</name>
+					<default>1</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2tlh0_style</name>
+					<default>1</default>
+					<type>integer</type>
+				</switch>
+			</switchgroup>
 		</category>
 		<category name="Output">
 			<switch>
