@@ -4896,6 +4896,24 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>b2sihs_style_visc</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+			          style_visc.eq.0 : standard approach to calculate viscous heating terms.
+					style_visc.eq.1 : use effective viscous momentum terms from the hybrid scheme to avoid excessive heating in convection-dominated regions for improved total energy conservation at discretized level.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sicf_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					b2sicf_style.eq.0: standard approach to calculate centrifugal force contributions.
+					b2sicf_style.eq.1: alternative approach to calculate centrifugal force contributions, see code for details. Not available for WG.
+				</description>
+			</switch>
 		</category>
 		<category name="Atomic Physics">
 			<switch>
