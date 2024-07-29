@@ -2766,6 +2766,14 @@
 					When set to 1, the energy required for the Franck-Condon dissociation of the thermally released particles at the surfaces in the AFN boundary conditions is subtracted from the electron energy equation. It is not recommended to turn this switch on, because it seems to lower the electron temperature to unrealistic values.
 				</description>
 			</switch>
+			<switch>
+				<name>b2stbc_Qalfmin</name>
+				<default>1.0e-3</default>
+				<type>real</type>
+				<description>
+			    When the magnetic field lines are almost tangential to a wall structure, the sheath conditions from BCMOM = 13 are replaced by leakage conditions. This happens when abs(fcQalf(iFc,0)*cvBb(iCv1,0)/cvBb(iCv1,3)).lt.Qalfmin.
+				</description>
+			</switch>
 		</category>
 		<category name="Output">
 			<switch>
