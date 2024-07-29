@@ -4837,7 +4837,16 @@
 					If b2tinnt_style.eq.1 (default), then the gradient of the product of density and temperature is calculated directly.
 				</description>
 			</switch>
-
+			<switch>
+				<name>b2stbr_phys_lin_shi0</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Determines the linearisation of the boundary condition heat source due to neutral recycling/reflection when erecyc in used. Not used for advanced fluid neutral (AFN) model.
+					lin_shi0.eq.0: put source in shi0(iCv,0).
+					lin_shi0.eq.1: put source/ti in shi0(iCv,1).
+				</description>
+			</switch>
 		</category>
 		<category name="Atomic Physics">
 			<switch>
