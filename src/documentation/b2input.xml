@@ -4906,6 +4906,16 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
+			<switch>
+				<name>b2sihs_style_int_vel</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Determines the interpolation weights to get the parallel velocities at the cell faces for the calculation of divergence ua.
+					style_int_vel.eq.0: interpolation based on cell connector lengths.
+					style_int_vel.eq.1: interpolation based on cell volumes.
+				</description>
+			</switch>
 		</category>
 		<category name="Atomic Physics">
 			<switch>
