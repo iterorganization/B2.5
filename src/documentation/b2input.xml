@@ -3431,6 +3431,14 @@
 					If set to 1, the IDS will indicate that the results come from a converted SOLPS4.3 run with no additional calculation. By default, the IDS will indicate a SOLPS-ITER run.
 				</description>
 			</switch>
+			<switch>
+				<name>AFN_out</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If AFN_out.ne.0, boundary flux components of the advanced fluid neutral models are written out. See code for details.
+				</description>
+			</switch>
 		</category>
 		<category name="Numerics">
 			<switchgroup>
