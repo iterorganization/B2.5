@@ -3729,6 +3729,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2stbr_temperature_at_guard_cell</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If temperature_at_guard_cell.eq.1, the temperatures used for recycling and reflection are taken as the value in the guard cell.
+					If temperature_at_guard_cell.eq.0, the temperatures are interpolated between the guard cell and the neighbouring real cell.
+				</description>
+			</switch>
+			<switch>
 				<name>b2trcl_conductive_limit</name>
 				<default>1</default>
 				<type>integer</type>
