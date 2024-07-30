@@ -214,7 +214,6 @@ c style switches
       integer :: b2sigp_pressure_restriction
       integer :: b2sral_style
       integer :: style_visc
-      integer :: b2tfnb_style_int_vel
       integer :: b2sihs_style_int_vel
       integer :: istyle_Joule_heating
       integer :: b2sqcx_styl0
@@ -751,7 +750,6 @@ c Advanced fluid neutral models
       s % b2sigp_pressure_restriction = 1
       s % b2sral_style = 2
       s % style_visc = 0
-      s % b2tfnb_style_int_vel = 0
       s % b2sihs_style_int_vel = 0
       s % istyle_Joule_heating = 1
       s % b2sqcx_styl0 = 0
@@ -1325,7 +1323,6 @@ c style/mode switches
      &  s % b2sigp_pressure_restriction)
       call ipgeti ('b2sral_style', s % b2sral_style)
       call ipgeti ('b2sihs_style_visc', s % style_visc)
-      call ipgeti ('b2tfnb_style_int_vel', s % b2tfnb_style_int_vel)
       call ipgeti ('b2sihs_style_int_vel', s % b2sihs_style_int_vel)
       call ipgeti ('b2sihs_istyle_Joule_heating',
      &                      s % istyle_Joule_heating)
