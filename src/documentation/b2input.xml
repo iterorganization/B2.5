@@ -2857,6 +2857,40 @@
 					b2sigp_phm0.eq.0.0: pressure gradient terms are zero.
 				</description>
 			</switch>
+			<switch>
+				<name>b2nxfv_phm0</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+				 Multiplier for the convective term due to new form of ion
+				  viscosity term in the momentum correction equation. Applies to hydrogenic ions and fluid neutrals.
+				</description>
+			</switch>
+			<switch>
+				<name>b2nxfv_phm1</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for the convective term due to new form of ion
+					viscosity term in the momentum correction equation. Applies only to hydrogenic fluid neutrals.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_phm0</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for radial diamagnetic current in BCPOT=12.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_phm1</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for radial inertial current in BCPOT=12.
+				</description>
+			</switch>
 		</category>
 		<category name="Output">
 			<switch>
