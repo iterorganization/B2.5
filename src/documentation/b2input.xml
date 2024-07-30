@@ -3499,6 +3499,16 @@
 					<type>real</type>
 				</switch>
 				<switch>
+					<name>eirene_ne_max</name>
+					<default>1e30</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>eirene_ne_min</name>
+					<default>0.0</default>
+					<type>real</type>
+				</switch>
+				<switch>
 					<name>eirene_te_max</name>
 					<default>1e30</default>
 					<type>real</type>
