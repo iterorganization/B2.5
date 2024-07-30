@@ -2900,6 +2900,23 @@
 					internal_energy_sources.eq.1: the externally provided energy sources are already internal energy sources.
 				</description>
 			</switch>
+			<switch>
+				<name>b2tfhe_anomalous</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the anomalous current.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tanml_anomalous</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					The correct switch is now b2tfhe_anomalous. b2tanml_anomalous is kept for backward compatibility. b2tanml_anomalous will only be read if
+					b2tfhe_anomalous.eq.1.0.
+				</description>
+			</switch>
 		</category>
 		<category name="Output">
 			<switch>
