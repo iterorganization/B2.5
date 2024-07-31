@@ -7,7 +7,6 @@
       use b2mod_ilutern_7
       use b2mod_ma28_for_7diag
       use b2mod_ysmp_sdrv
-!      use b2mod_ma28
       use b2mod_indirect
       use b2mod_openmp
       use b2mod_subsys

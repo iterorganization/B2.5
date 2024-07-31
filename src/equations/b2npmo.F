@@ -890,8 +890,8 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
 #endif
 csw 21feb2014, execute simultaneous corrections always
       if (solving.and.any(solvemo(0:ns-1,0:nnreg(0)))
-     &                  .and.any(solvemt(0:nnreg(0)))) then           !srv 06.07.10 22.05.18
-!      if (solving) then                                              !srv 22.05.18
+     &                  .and.any(solvemt(0:nnreg(0)))) then            !srv 06.07.10 22.05.18
+!      if (solving) then                                               !srv 22.05.18
 *   ..compute simultaneous correction
         call sfill (n2, 0.0_R8, wrk0, 1)
         if (use_9pt_stencil.ne.0) then
@@ -909,9 +909,9 @@ c     ..compare 9-pt stencil matrices
      &      solvemt(ireg).neqv.last_solve_5(ns,ireg)
          end do
          if (new_matrix) call restart_ma28
-         call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,         !srv 04.07.08
-     &    vol, hx, hz, bb, ro, rz, pr, pz, wrk0, smt, flct, cvct,        !srv 09.01.01
-     &    resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')          !srv 06.04.07
+         call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,       !srv 04.07.08
+     &    vol, hx, hz, bb, ro, rz, pr, pz, wrk0, smt, flct, cvct,      !srv 09.01.01
+     &    resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')        !srv 06.04.07
          last_solve_5(ns,0:nnreg(0)) = solvemt(0:nnreg(0))
         endif
       else
@@ -993,7 +993,7 @@ c     ..compare 9-pt stencil matrices
         call my_out(70,nx,ny,uap(-1,-1,is),'b2npmo_uap'//chns)
         call my_out(70,nx,ny,na(-1,-1,is),'b2npmo_na'//chns)
         call my_out(70,nx,ny,nap(-1,-1,is),'b2npmo_nap'//chns)
-        if(style_b2mndt.eq.2) then                                      !srv 07.07.21 {
+        if(style_b2mndt.eq.2) then                                     !srv 07.07.21 {
          wrks=mp*am(is)*na(:,:,is)*(ua(:,:,is)-uap(:,:,is))*
      &         vol*hz/dtim
          call my_out(70,nx,ny,wrks,'b2npmo_manadvadt'//chns)
@@ -1010,7 +1010,7 @@ c     ..compare 9-pt stencil matrices
           enddo
          enddo
          call my_out(70,nx,ny,wrks,'b2npmo_madnavadt'//chns)
-        endif                                                           !srv 07.07.21 }
+        endif                                                          !srv 07.07.21 }
        enddo
       endif                                                            !srv 12.07.02 }
       if (iout.ne.0) then

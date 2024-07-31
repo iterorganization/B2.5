@@ -13,7 +13,7 @@ module b2mod_ual
     use b2mod_types
 #ifdef IMAS
     use ids_routines &  ! IGNORE
-     & , only : ids_deallocate, ids_put, ids_delete, ids_put_slice, &
+     & , only : ids_deallocate, ids_put, ids_get, ids_delete, ids_put_slice, &
      &          CLOSE_PULSE
 #if AL_MAJOR_VERSION > 4
     use ids_routines &  ! IGNORE
@@ -66,7 +66,7 @@ module b2mod_ual
   public put_ids_edge, new_ids_edge, delete_ids_edge
   public dealloc_ids_edge, dealloc_batch_edge
   public put_batch_edge, new_batch_edge
-  public b25_process_ids
+  public b25_process_ids, read_ids
   public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
     &    ids_radiation, ids_dataset_description, ids_equilibrium
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -79,7 +79,6 @@ module b2mod_ual
   public ids_divertors
 #endif
 #endif
-
 
 contains
 
@@ -745,6 +744,78 @@ contains
         return
 
     end subroutine new_batch_edge
+
+    !> Example subroutine for reading edge_profiles IDS
+    !! with Fortran90
+    subroutine read_ids( idx, &
+#if AL_MAJOR_VERSION > 4
+         & ids_path )
+#else
+         & treename, shot, run, username, database, version )
+#endif
+        use ids_routines &  ! IGNORE
+         & , only : imas_close
+        implicit none
+        integer, intent(out) :: idx !< The returned identifier to be used in the subsequent
+#if AL_MAJOR_VERSION > 4
+        character(len=256), intent(in) :: ids_path  !< The path to the IMAS data entry
+#else
+        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
+        integer, intent(in) :: shot !< The shot number of the database being created
+        integer, intent(in) :: run  !< The run number of the database being created
+        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS database
+        character(len=24), intent(in) :: database   !< IMAS IDS database name
+            !< (i. e. solps-iter, ITER, aug)
+        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS database
+#endif
+        !! Internal variables
+#if AL_MAJOR_VERSION > 4
+        character(len=:), allocatable :: message
+        character(len=STRMAXLEN) :: uri
+#endif
+        integer :: gridSubset_index !< >Grid subset base index
+        type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
+            !< data in edge plasma profiles (includes the scrape-off layer and
+            !<  possibly part of the confined plasma)
+        integer :: status
+
+        gridSubset_index = 3
+
+        !! Open input datafile from local database
+#if AL_MAJOR_VERSION > 4
+        uri = 'imas:mdsplus?path='//trim(ids_path)
+        write(0,*) "Started reading input IMAS data entry", trim(uri)
+        call imas_open( uri, OPEN_PULSE, idx, status, message )
+        call xertst ( status.eq.0, trim(message) )
+#else
+        write(0,*) "Started reading input IMAS data entry", idx, shot, run
+        call imas_open_env(treename, shot, run, idx, username, &
+            &   database, version, status )
+        call xertst ( status.eq.0, 'Error opening IMAS database !')
+#endif
+        call ids_get(idx, "edge_profiles", edge_profiles, status)
+        call xertst ( status.eq.0, 'Error opening edge_profiles IDS !')
+
+        write(0,*) "homogeneous_time = ",   &
+            &   edge_profiles%ids_properties%homogeneous_time
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+        write(0,*) "Grid subset 3 name = ", edge_profiles%ggd(1)%grid%  &
+            &   grid_subset(gridSubset_index)%identifier%name
+        write(0,*) "Grid subset 3 index = ", edge_profiles%ggd(1)%grid% &
+            &   grid_subset(gridSubset_index)%identifier%index
+#else
+        write(0,*) "Grid subset 3 name = ", edge_profiles%grid_ggd(1)%  &
+            &   grid_subset(gridSubset_index)%identifier%name
+        write(0,*) "Grid subset 3 index = ", edge_profiles%grid_ggd(1)% &
+            &   grid_subset(gridSubset_index)%identifier%index
+#endif
+        ! write(0,*) "Time = ", edge_profiles%time(1)
+        call ids_deallocate( edge_profiles )
+        call imas_close( idx, status )
+        call xertst ( status.eq.0, 'Error closing IMAS database !')
+        write(0,*) "Finished reading input IMAS data entry"
+
+    end subroutine read_ids
 
 #endif
 

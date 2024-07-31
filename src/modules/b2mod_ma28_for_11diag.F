@@ -42,6 +42,7 @@
       contains
 
       subroutine alloc_b2mod_ma28_for_11diag
+      implicit none
 
       write(*,*) 'Allocating space for b2mod_ma28_for_11diag'
       write(*,*) 'nnd        = ',nnd

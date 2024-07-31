@@ -104,7 +104,7 @@ c
          nwrite = 0
          kwrite_fmt = -1
          kwrite_bnr = -1
-        endif 
+        endif
 #ifdef GFORTRAN
         call set_data_bd1copy4
         call set_data_bd2copy4
