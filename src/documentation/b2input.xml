@@ -1962,7 +1962,8 @@
 				<name>b2tqna_ballooning</name>
 				<description>
 					Ballooning model switches. If ballooning.ne.0, then all transport coefficients in cell (i) are rescaled by a factor of ballooning_rescale*abs(bb_ref/bb(i))**ballooning .
-					The default value for bb_ref is the arithmetic average of the total magnetic field strength over the entire computational domain.
+					The default value for bb_ref is the arithmetic average of the total magnetic field strength over the entire computational domain. If b2tqna_ballooning_sig.ne.0 (default),
+					the ballooning factor is also applied to the anomalous radial electrical conductivity and the anomalous radial thermo-electric coefficient.
 				</description>
 				<switch>
 					<name>b2tqna_ballooning</name>
@@ -1978,6 +1979,11 @@
 					<name>b2tqna_bb_ref</name>
 					<default>See description (real)</default>
 					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2tqna_ballooning_sig</name>
+					<default>1</default>
+					<type>integer</type>
 				</switch>
 			</switchgroup>
 			<switch>
