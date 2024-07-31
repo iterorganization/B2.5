@@ -59,8 +59,7 @@ ifdef SOLPS_OPENMP
   FCOPTS += -mp=nonuma
   LDOPTS += -mp=nonuma
 endif
-N = -Ad # ???
-DBLSED =
+
 DBLFC=${FC}
 DDBLOPTION=
 DBLSED = sed -e s:\#PREC\#:d:g
@@ -87,8 +86,6 @@ ifdef USE_EIRENE
 endif
 
 LD = $(FC)
-
-LCPP= ${LD_SONNET}
 
 
 #!!!Local Variables:

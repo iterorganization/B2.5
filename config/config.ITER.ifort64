@@ -30,7 +30,6 @@ ifndef SOLPS_CPP
 DEFINES   += -DNO_NAG
 endif
 endif
-LD_SONNET ?= -L${SOLPSLIB} -lsonnet -lstdc++
 
 DEFINES   += -DNO_OPT
 

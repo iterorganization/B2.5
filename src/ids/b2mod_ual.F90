@@ -13,44 +13,44 @@ module b2mod_ual
     use b2mod_types
 #ifdef IMAS
     use ids_routines &  ! IGNORE
-     & ,only: ids_deallocate, ids_put, ids_delete, ids_put_slice, &
-     &        CLOSE_PULSE
+     & , only : ids_deallocate, ids_put, ids_get, ids_delete, ids_put_slice, &
+     &          CLOSE_PULSE
 #if AL_MAJOR_VERSION > 4
     use ids_routines &  ! IGNORE
-     & ,only: imas_open, imas_close, al_build_uri_from_legacy_parameters, &
-     &        HDF5_BACKEND, MDSPLUS_BACKEND, &
-     &        FORCE_CREATE_PULSE, OPEN_PULSE, STRMAXLEN
+     & , only : imas_open, imas_close, al_build_uri_from_legacy_parameters, &
+     &          HDF5_BACKEND, MDSPLUS_BACKEND, &
+     &          FORCE_CREATE_PULSE, OPEN_PULSE, STRMAXLEN
     use ids_schemas &     ! IGNORE
      & , only : ids_string_length
 #elif AL_MAJOR_VERSION == 4
     use ids_routines &  ! IGNORE
-     & ,only: imas_open_env, imas_create_env, &
-     &        ual_begin_pulse_action, ual_open_pulse, ual_close_pulse
+     & , only : imas_open_env, imas_create_env, &
+     &          ual_begin_pulse_action, ual_open_pulse, ual_close_pulse
 # if AL_MINOR_VERSION > 8
     use ids_routines &  ! IGNORE
-     & ,only: HDF5_BACKEND, FORCE_CREATE_PULSE, OPEN_PULSE
+     & , only : HDF5_BACKEND, FORCE_CREATE_PULSE, OPEN_PULSE
 # endif
 #else
     use ids_routines &  ! IGNORE
-     & ,only: imas_open_env, imas_create_env, &
-     &        imas_open
+     & , only : imas_open_env, imas_create_env, &
+     &          imas_open
 #endif
     use ids_schemas &   ! IGNORE
-     & ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &        ids_radiation, ids_dataset_description, ids_equilibrium
+     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &          ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual_io &
-     & ,only: b25_process_ids
+     & , only : b25_process_ids
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
-     & ,only: ids_summary
+     & , only : ids_summary
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
     use ids_schemas &   ! IGNORE
-     & ,only: ids_numerics
+     & , only : ids_numerics
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
-     & ,only: ids_divertors
+     & , only : ids_divertors
 #endif
 #elif defined(ITM_ENVIRONMENT_LOADED)
     use euITM_schemas   ! IGNORE
@@ -66,7 +66,7 @@ module b2mod_ual
   public put_ids_edge, new_ids_edge, delete_ids_edge
   public dealloc_ids_edge, dealloc_batch_edge
   public put_batch_edge, new_batch_edge
-  public b25_process_ids
+  public b25_process_ids, read_ids
   public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
     &    ids_radiation, ids_dataset_description, ids_equilibrium
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -79,7 +79,6 @@ module b2mod_ual
   public ids_divertors
 #endif
 #endif
-
 
 contains
 
@@ -670,6 +669,58 @@ contains
 
     end subroutine new_batch_edge
 
+    !> Example subroutine for reading edge_profiles IDS
+    !! with Fortran90
+    subroutine read_ids( treename, shot, run, idx, username, database, version )
+        use ids_routines &  ! IGNORE
+         & , only : imas_close
+        implicit none
+        integer, intent(out) :: idx !< The returned identifier to be used in the subsequent
+        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
+        integer, intent(in) :: shot !< The shot number of the database being created
+        integer, intent(in) :: run  !< The run number of the database being created
+        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS database
+        character(len=24), intent(in) :: database   !< IMAS IDS database name
+            !< (i. e. solps-iter, ITER, aug)
+        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS database
+        !! Internal variables
+        integer :: gridSubset_index !< >Grid subset base index
+        type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
+            !< data in edge plasma profiles (includes the scrape-off layer and
+            !<  possibly part of the confined plasma)
+        integer :: status
+
+        gridSubset_index = 3
+
+        !! Open input datafile from local database
+        write(0,*) "Started reading input IMAS data entry", idx, shot, run
+        call imas_open_env(treename, shot, run, idx, username, &
+            &   database, version, status )
+        call xertst ( status.eq.0, 'Error opening IMAS database !')
+        call ids_get(idx, "edge_profiles", edge_profiles, status)
+        call xertst ( status.eq.0, 'Error opening edge_profiles IDS !')
+
+        write(0,*) "homogeneous_time = ",   &
+            &   edge_profiles%ids_properties%homogeneous_time
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+        write(0,*) "Grid subset 3 name = ", edge_profiles%ggd(1)%grid%  &
+            &   grid_subset(gridSubset_index)%identifier%name
+        write(0,*) "Grid subset 3 index = ", edge_profiles%ggd(1)%grid% &
+            &   grid_subset(gridSubset_index)%identifier%index
+#else
+        write(0,*) "Grid subset 3 name = ", edge_profiles%grid_ggd(1)%  &
+            &   grid_subset(gridSubset_index)%identifier%name
+        write(0,*) "Grid subset 3 index = ", edge_profiles%grid_ggd(1)% &
+            &   grid_subset(gridSubset_index)%identifier%index
+#endif
+        ! write(0,*) "Time = ", edge_profiles%time(1)
+        call ids_deallocate( edge_profiles )
+        call imas_close( idx, status )
+        call xertst ( status.eq.0, 'Error closing IMAS database !')
+        write(0,*) "Finished reading input IMAS data entry"
+
+    end subroutine read_ids
+
 #endif
 
     !> Routine to open UAL database.
@@ -721,7 +772,7 @@ contains
 
         integer :: lShot = 1, lRun = 0
         real(R8) :: lTime = 0.0_R8
-        character(32) :: luser="unspecified", lTokamak="unspecified",   &
+        character(32) :: lUser="unspecified", lTokamak="unspecified",   &
             &   lDataversion="unspecified"
         logical :: lDoCreate = .false., lUseHdf5 = .false.
 
