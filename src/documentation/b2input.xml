@@ -2931,6 +2931,27 @@
 					Anomalous velocity in parallel momentum balance equation.
 				</description>
 			</switch>
+			<switchgroup>
+			<name>b2tstbc_bc_ref*</name>
+			<description>
+			 Under-relaxation factors related to feedback schemes for boundary conditions. Not yet available for WG.
+			</description>
+			<switch>
+				<name>b2tstbc_bc_ref</name>
+				<default>0.01</default>
+				<type>real</type>
+			</switch>
+			<switch>
+				<name>2tstbc_bc_ref_ti</name>
+				<default>0.01</default>
+				<type>real</type>
+			</switch>
+			<switch>
+				<name>2tstbc_bc_ref_te</name>
+				<default>0.01</default>
+				<type>real</type>
+			</switch>
+			</switchgroup>
 		</category>
 		<category name="Output">
 			<switch>
