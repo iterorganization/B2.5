@@ -23,10 +23,9 @@
 #ifdef WITH_FTIMINGS
       use timings
 #endif
-      use b2mod_illtern_7
-      use b2mod_ilutern_7
-      use b2mod_ilutern_9
-      use b2mod_ilutern_11
+      use b2mod_ma28_for_7diag
+      use b2mod_ma28_for_9diag
+      use b2mod_ma28_for_11diag
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -644,6 +643,36 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 !$OMP& SHARED(kinrgy, fllim0fna, solving, nnreg, solveco, solvemo)
 !$OMP& SHARED(rxf0, dtim, sna, pcca, resco, corpa)
 !$OMP& SHARED(b2stbr_sna, b2stbm_sna, ext_sna)
+!$OMP& COPYIN(iwrk_5p, aaf_5p, wrk0_5p, wrk1_5p, wrk2_5p)
+!$OMP& COPYIN(iwrk_7p, aaf_7p, wrk0_7p, wrk1_7p, wrk2_7p)
+!$OMP& COPYIN(iwrk_9p, aaf_9p, wrk0_9p, wrk1_9p, wrk2_9p)
+!$OMP& COPYIN(iwrk_11p, aaf_11p, wrk0_11p, wrk1_11p, wrk2_11p)
+!$OMP& COPYIN(nc0_5p, nc0_7p, nc0_9p, nc0_11p)
+!$OMP& COPYIN(nltrsol_5p, solvdim1_5p, solvdim_5p, n_nonzeros_5p)
+!$OMP& COPYIN(nltrsol_7p, solvdim1_7p, solvdim_7p, n_nonzeros_7p)
+!$OMP& COPYIN(nltrsol_9p, solvdim1_9p, solvdim_9p, n_nonzeros_9p)
+!$OMP& COPYIN(nltrsol_11p, solvdim1_11p, solvdim_11p, n_nonzeros_11p)
+!$OMP& COPYIN(r1_5p, s1_5p, a1h_5p, w_5p, res_5p, a1h_save_5p)
+!$OMP& COPYIN(irn_5p, icn_5p, irnh_5p, icnh_5p)
+!$OMP& COPYIN(ish_5p, jsh_5p, ijsh_5p, iw28_5p)
+!$OMP& COPYIN(icnhkeep_5p, ikeep_5p, irnh_save_5p, icnh_save_5p)
+!$OMP& COPYIN(r1_7p, s1_7p, a1h_7p, w_7p, res_7p, a1h_save_7p)
+!$OMP& COPYIN(irn_7p, icn_7p, irnh_7p, icnh_7p)
+!$OMP& COPYIN(ish_7p, jsh_7p, ijsh_7p, iw28_7p)
+!$OMP& COPYIN(icnhkeep_7p, ikeep_7p, irnh_save_7p, icnh_save_7p)
+!$OMP& COPYIN(r1_9p, s1_9p, a1h_9p, w_9p, res_9p, a1h_save_9p)
+!$OMP& COPYIN(irn_9p, icn_9p, irnh_9p, icnh_9p)
+!$OMP& COPYIN(ish_9p, jsh_9p, ijsh_9p, iw28_9p)
+!$OMP& COPYIN(icnhkeep_9p, ikeep_9p, irnh_save_9p, icnh_save_9p)
+!$OMP& COPYIN(r1_11p, s1_11p, a1h_11p, w_11p, res_11p, a1h_save_11p)
+!$OMP& COPYIN(irn_11p, icn_11p, irnh_11p, icnh_11p)
+!$OMP& COPYIN(ish_11p, jsh_11p, ijsh_11p, iw28_11p)
+!$OMP& COPYIN(icnhkeep_11p, ikeep_11p, irnh_save_11p, icnh_save_11p)
+!$OMP& COPYIN(r1_ysmp, s1_ysmp, a, rsp, lfirst_sdrv)
+!$OMP& COPYIN(ia, ja, p, ip, isp, indexes, iasave, jasave)
+!$OMP& COPYIN(indexes_9p, iasave_9p, jasave_9p)
+!$OMP& COPYIN(indexes_11p, iasave_11p, jasave_11p)
+!$OMP& COPYIN(lfirst_ilu, lfirst_ilu7, lfirst_ilu9, lfirst_ilu11)
 #endif
 !      do is = 0, ns-1
       do is = nsmin, nsmax-1
@@ -694,7 +723,7 @@ csw 16oct2012 init ier0
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(is,ireg)
               end do
-              if(new_matrix) call restart_ma28_for_7
+              if(new_matrix.or.in_parallel()) call restart_ma28_for_7
               call b2npc7 (nx, ny, fac_vis, guard_flows, rza(-1,-1,is),
      &         nnreg(0), solving(2), solvedum, solving(1),               !srv 22.05.18
      &         solvedm2, ncall, is, rxf0, dtim, vol, pbs, flob, conb,    !srv 22.01.02 01.07.05 07.07.21
@@ -708,7 +737,7 @@ csw 16oct2012 init ier0
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_5(is,ireg)
               end do
-              if(new_matrix) call restart_ma28
+              if(new_matrix.or.in_parallel()) call restart_ma28
               call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),    !srv 22.05.18
      &         solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,
      &         vol, pbs, flob, conb,                                     !srv 22.01.02 01.07.05
@@ -725,7 +754,7 @@ csw 16oct2012 init ier0
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(is,ireg)
                 end do
-                if(new_matrix) call restart_ma28_for_11
+                if(new_matrix.or.in_parallel()) call restart_ma28_for_11
                 call b2npc11 (nx, ny, fac_vis, guard_flows,
      &           rza(-1,-1,is), nnreg(0), solving(2), solvedum,          !srv 22.05.18
      &           solving(1), solvedm2, ncall, is, rxf0, dtim,            !srv 07.07.21
@@ -740,7 +769,7 @@ csw 16oct2012 init ier0
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_9(is,ireg)
                 end do
-                if(new_matrix.or.use_9pt_stencil.ne.0)
+                if(new_matrix.or.use_9pt_stencil.ne.0.or.in_parallel())
      &           call restart_ma28_for_9
                 call b2npc9 (nx, ny, guard_flows, nnreg(0), solving(2),  !srv 22.05.18
      &           solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,  !srv 07.07.21
@@ -756,7 +785,7 @@ csw 16oct2012 init ier0
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_5(is,ireg)
               end do
-              if(new_matrix) call restart_ma28
+              if(new_matrix.or.in_parallel()) call restart_ma28
               call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),    !srv 22.05.18
      &         solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,    !srv 07.07.21
      &         vol, pbs, flob, conb,
@@ -882,7 +911,7 @@ csw 16oct2012 init ier0
               new_matrix = new_matrix.or.
      &         solvepo(ireg).neqv.last_solve_5(ns,ireg)
             end do
-            if (new_matrix) call restart_ma28
+            if (new_matrix.or.in_parallel()) call restart_ma28
             call b2npp5 (nx, ny, nnreg(0), solving(3), solvepo, ncall,   !srv 22.05.18
      &        rxf2, ne, te, conc, sch, po, fch, respo, corpo, ier0)
             last_solve_5(ns,0:nnreg(0))=solvepo(0:nnreg(0))
@@ -1179,7 +1208,7 @@ c   recompute particle fluxes
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(is,ireg)
               end do
-              if(new_matrix) call restart_ma28_for_7
+              if(new_matrix.or.in_parallel()) call restart_ma28_for_7
               call b2npc7 (nx, ny, fac_vis, guard_flows, rza(-1,-1,is),
      &         nnreg(0), solving(2), solvedum, solving(1),               !srv 22.05.18
      &         solvedm2, ncall, is, rxf0, dtim, vol, pbs, flob, conb,    !srv 22.01.02 01.07.05 07.07.21
@@ -1193,7 +1222,7 @@ c   recompute particle fluxes
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_5(is,ireg)
               end do
-              if(new_matrix) call restart_ma28
+              if(new_matrix.or.in_parallel()) call restart_ma28
               call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),    !srv 22.05.18
      &         solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,    !srv 22.01.02 01.07.05 07.07.21
      &         vol, pbs, flob, conb, sna(-1,-1,0,is),
@@ -1214,7 +1243,7 @@ c   recompute particle fluxes
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(is,ireg)
                 end do
-                if(new_matrix) call restart_ma28_for_11
+                if(new_matrix.or.in_parallel()) call restart_ma28_for_11
                 call b2npc11 (nx, ny, fac_vis, guard_flows,
      &           rza(-1,-1,is), nnreg(0), solving(2), solvedum,          !srv 22.05.18
      &           solving(1), solvedm2, ncall, is, rxf0, dtim,            !srv 07.07.21
@@ -1229,7 +1258,7 @@ c   recompute particle fluxes
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_9(is,ireg)
                 end do
-                if(new_matrix.or.use_9pt_stencil.ne.0)
+                if(new_matrix.or.use_9pt_stencil.ne.0.or.in_parallel())
      .           call restart_ma28_for_9
                 call b2npc9 (nx, ny, guard_flows, nnreg(0), solving(2),  !srv 22.05.18
      &           solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,  !srv 07.07.21
@@ -1245,7 +1274,7 @@ c   recompute particle fluxes
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_5(is,ireg)
               end do
-              if(new_matrix) call restart_ma28
+              if(new_matrix.or.in_parallel()) call restart_ma28
               call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),    !srv 22.05.18
      &         solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,    !srv 07.07.21
      &         vol, pbs, flob, conb,

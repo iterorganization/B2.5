@@ -21,13 +21,13 @@
       use b2mod_balance !djm Jan2017
      1 , only : update_balance_sources_momentum, fmo_b2nxfv,
      2          balance_netcdf, tot_smo0to3, fmo_tot
+      use b2mod_ma28_for_9diag
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_openmp
       use b2mod_subsys
-      use b2mod_ilutern_9
       use b2mod_zhfrtf                                                 !som 13.08.21
      1 , only : rho_A_rel, avm_u
 #ifdef _OPENMP
@@ -547,6 +547,21 @@
 !$OMP& SHARED(cvsahz_drho, cvsahz_hAdp_albe, cvsahz_hBdp_al)
 !$OMP& SHARED(cvsahz_uAdp_albe, cvsahz_uBdp_al)
 !$OMP& SHARED(last_solve_5, last_solve_9)
+!$OMP& COPYIN(iwrk_5p, aaf_5p, wrk0_5p, wrk1_5p, wrk2_5p)
+!$OMP& COPYIN(r1_5p, s1_5p, a1h_5p, w_5p, res_5p, a1h_save_5p)
+!$OMP& COPYIN(irn_5p, icn_5p, irnh_5p, icnh_5p)
+!$OMP& COPYIN(ish_5p, jsh_5p, ijsh_5p, iw28_5p)
+!$OMP& COPYIN(icnhkeep_5p, ikeep_5p, irnh_save_5p, icnh_save_5p)
+!$OMP& COPYIN(nc0_5p)
+!$OMP& COPYIN(nltrsol_5p, solvdim1_5p, solvdim_5p, n_nonzeros_5p)
+!$OMP& COPYIN(iwrk_9p, aaf_9p, wrk0_9p, wrk1_9p, wrk2_9p)
+!$OMP& COPYIN(r1_9p, s1_9p, a1h_9p, w_9p, res_9p, a1h_save_9p)
+!$OMP& COPYIN(irn_9p, icn_9p, irnh_9p, icnh_9p)
+!$OMP& COPYIN(ish_9p, jsh_9p, ijsh_9p, iw28_9p)
+!$OMP& COPYIN(icnhkeep_9p, ikeep_9p, irnh_save_9p, icnh_save_9p)
+!$OMP& COPYIN(nc0_9p)
+!$OMP& COPYIN(nltrsol_9p, solvdim1_9p, solvdim_9p, n_nonzeros_9p)
+!$OMP& COPYIN(lfirst_ilu,lfirst_ilu9)
 #endif
 
 !      do is = 0, ns-1
@@ -822,7 +837,7 @@ cdjm Mar2019 output the total momentum flux and source for balance
 
        if (solving.and.any(solvemo(is,0:nnreg(0)))) then               !srv 06.07.10 22.05.18
         solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
-        if (use_9pt_stencil.ne.0) then
+        if (use_9pt_stencil.ne.0.or.in_parallel()) then
          call restart_ma28_for_9
 *     ..compute correction
          call b2usm9 (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
@@ -837,7 +852,7 @@ c    ..compare 5-pt stencil matrices
           new_matrix = new_matrix.or.
      &     solvemo(is,ireg).neqv.last_solve_5(is,ireg)
          end do
-         if (new_matrix) call restart_ma28
+         if (new_matrix.or.in_parallel()) call restart_ma28
 *    ..compute correction
          call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
      &    vol, hx, hz, bb, rob, rob, pb, pb, ua(-1,-1,is),              !srv 09.01.01
@@ -894,7 +909,7 @@ csw 21feb2014, execute simultaneous corrections always
 !      if (solving) then                                               !srv 22.05.18
 *   ..compute simultaneous correction
         call sfill (n2, 0.0_R8, wrk0, 1)
-        if (use_9pt_stencil.ne.0) then
+        if (use_9pt_stencil.ne.0.or.in_parallel()) then
 c     ..compare 9-pt stencil matrices
          call restart_ma28_for_9
 *     ..compute correction
@@ -908,7 +923,7 @@ c     ..compare 9-pt stencil matrices
            new_matrix = new_matrix.or.
      &      solvemt(ireg).neqv.last_solve_5(ns,ireg)
          end do
-         if (new_matrix) call restart_ma28
+         if (new_matrix.or.in_parallel()) call restart_ma28
          call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,       !srv 04.07.08
      &    vol, hx, hz, bb, ro, rz, pr, pz, wrk0, smt, flct, cvct,      !srv 09.01.01
      &    resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')        !srv 06.04.07

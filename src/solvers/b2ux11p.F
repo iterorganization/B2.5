@@ -15,7 +15,7 @@
       integer nx, ny, itcnt
       real (kind=R8) ::
      *   aa11(-1:nx,-1:ny,-7:7), resfun(-1:nx,-1:ny)
-      character*(*) name                                              !srv 18.05.02
+      character*(*) name                                                !srv 18.05.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(-1:nx,-1:ny)
@@ -64,7 +64,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, n2, itmax, iters, itpar, cpu
+      integer ncall, style, itmax, iters, itpar, cpu
       integer, save :: nz
       parameter (itmax=100)
 #ifdef _OPENMP
@@ -73,11 +73,6 @@
       real (kind=R4) :: cpu_start, cpu_end, c_end, c_start
 #endif
       real (kind=R8) :: acpar, nrmc(0:itmax-1)
-      real (kind=R8), allocatable, save ::
-     1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
-      integer, allocatable, save :: iwrk(:)
-      integer, allocatable, save :: indices(:,:), ipsave(:), jpsave(:)
-      integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
       external xertst, ipgeti, ipgetr, slv5pt, iluter, xerrab
@@ -88,11 +83,9 @@
 *   ..initialisation
       save ncall, style, acpar, cpu
 #ifdef _OPENMP
-!$OMP THREADPRIVATE (iwrk, aaf, wrk0, wrk1, wrk2)
 !$OMP THREADPRIVATE (ncall, style, acpar, cpu, nz)
-!$OMP THREADPRIVATE (indexes, ipsave, jpsave)
 #endif
-      data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
+      data ncall/0/, style/2/, acpar/8.0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -100,6 +93,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2ux11p')
+*   ..test nx, ny, itcnt
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2ux11p_style', style)
@@ -108,68 +104,6 @@
        call ipgetr ('b2ux11p_acpar', acpar)
        call xertst (0.lt.acpar, 'faulty internal parameter acpar')
        call ipgeti ('b2ux11p_cpu', cpu)
-       if(style.eq.2) then
-         mult_nonzero=12
-         mult_solvdim=15
-         mult_solvdim1=10
-         call ipgeti ('b2ux11p_mult_nonzero', mult_nonzero)
-         call ipgeti ('b2ux11p_mult_solvdim', mult_solvdim)
-         call ipgeti ('b2ux11p_mult_solvdim1', mult_solvdim1)
-         nnd=(nx+2)*(ny+2)
-         n_nonzeros=mult_nonzero*nnd
-         solvdim=mult_solvdim*n_nonzeros
-         solvdim1=mult_solvdim1*n_nonzeros
-         call alloc_b2mod_ma28_for_11diag                          !srv 02.04.18
-!         call iniilu_9(nx+2,ny+2)                                 !srv 13.10.06
-         irnh = 0                                                  !srv 15.05.07
-         icnh = 0                                                  !srv 15.05.07
-         nltrsol=2
-         call ipgeti ('b2ux11p_nltrsol', nltrsol)
-       endif
-       if(style.eq.3) then                                         !srv 29.05.02 {
-         nnd=(nx+2)*(ny+2)
-         nnd_sdrv  = (nx+2)*(ny+2)
-         n_nz_sdrv = 4*nnd_sdrv
-!         nsp = 3*nnd + 12*n_nz_sdrv  ! was 7*n_nz_sdrv without vis per !srv 13.02.03
-         nsp = 3*nnd + 13*n_nz_sdrv                                !srv 20.02.06
-         call alloc_b2mod_ysmp_sdrv
-         ia = 0                                                    !srv 15.05.07
-         ja = 0                                                    !srv 15.05.07
-       endif                                                       !srv 29.05.02 }
-      endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, itcnt
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-      call xertst (0.le.itcnt, 'faulty argument itcnt')
-*   ..obtain work space
-      if (ncall.eq.0) then
-        write(*,*)
-     .   'Allocating space for solver for 11-point-stencil matrix'  !srv 11.01.00
-        if (style.eq.0) then
-          call xerrab ('Style not applicable to 11-point-stencil!')
-*    ..obtain workspace for iluter
-          allocate(aaf(1:n2*5))
-          allocate(wrk0(1:n2))
-          allocate(wrk1(1:n2))
-          allocate(wrk2(1:n2))
-          allocate(iwrk(1:1))
-        else if (style.eq.1) then
-          call xerrab ('Style not applicable to 11-point-stencil!')
-*    ..obtain workspace for slv5pt
-          allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
-          allocate(wrk0(1:n2))
-          allocate(wrk1(1:1))
-          allocate(wrk2(1:1))
-          allocate(iwrk(1:n2))
-        else if (style.eq.2) then
-          allocate(indices(1:3,1:solvdim))
-          allocate(ipsave(1:solvdim),jpsave(1:solvdim))
-        else if (style.eq.3) then
-          allocate(ipsave(1:n_nz_sdrv))
-        endif
-        write(*,*)
-     .   'Allocated space for solver for 11-point-stencil matrix'   !srv 11.01.00
       endif
 
 *   ..solve the correction equation
@@ -187,7 +121,7 @@
         stop 'STOP: iluter not parallelised, re-run in serial'
        else
         call iluter (nx+2, ny+2, aa11, resfun, iters, acpar, itpar,
-     &   corfun, nrmc, aaf, wrk0, wrk1, wrk2)
+     &   corfun, nrmc, aaf_11p, wrk0_11p, wrk1_11p, wrk2_11p)
        endif
       else if (style.eq.1) then
 *    ..use slv5pt
@@ -197,7 +131,7 @@
         stop 'STOP: slv5pt not parallelised, re-run in serial'
        else
         call slv5pt (nx+2, ny+2, aa11, resfun, iters, corfun, nrmc,
-     &   min(nx+2,ny+2), aaf, wrk0, iwrk)
+     &   min(nx+2,ny+2), aaf_11p, wrk0_11p, iwrk_11p)
        endif
       else if (style.eq.2) then
 #ifdef _OPENMP
@@ -205,8 +139,9 @@
 #else
        call cpu_time(c_start)
 #endif
-       call storage_11 (nx, ny, aa11, n_nonzeros, irnh, icnh, a1h, nz,
-     *                  indices, ipsave, jpsave, name)
+       call storage_11 (nx, ny, aa11,
+     *  n_nonzeros_11p, irnh_11p, icnh_11p, a1h_11p, nz,
+     *  indexes_11p, iasave_11p, jasave_11p, name)
 #ifdef _OPENMP
        c_end = omp_get_wtime()
 #else
@@ -229,7 +164,7 @@
       else if (style.eq.3) then                                     !srv 29.05.02 {
 !        call cpu_time(cpu_start)
         call storage_11 (nx, ny, aa11, n_nz_sdrv, ia, ja, a, nz,
-     *                   indexes, ipsave, jasave, name)
+     *                   indexes, iasave, jasave, name)
 !        call cpu_time(cpu_end)
 !        write (*,"(' Time of transform is',1pd9.2)") cpu_end-cpu_start
 !        write(*,*) 'STORAGE_11: nz = ',nz
@@ -350,7 +285,7 @@
             i=i+1
 *   ..Case of left neighbor
             jak = 2+leftix(ix,iy)+(2+leftiy(ix,iy)-1)*nxp2
-            if( aa11(ix,iy,-1) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,-1) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,-1)
               indexes(1,k)=ix
@@ -361,7 +296,7 @@
               ner = ner+1
             endif
 *   ..Case (ix,iy)
-            if( aa11(ix,iy,0) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,0) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,0)
               indexes(1,k)=ix
@@ -373,7 +308,7 @@
             endif
 *   ..Case of right neighbor
             jak = 2+rightix(ix,iy)+(2+rightiy(ix,iy)-1)*nxp2
-            if( aa11(ix,iy,1) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,1) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,1)
               indexes(1,k)=ix
@@ -384,7 +319,7 @@
               ner = ner+1
             endif
 *   ..Case of top neighbor
-            if( aa11(ix,iy,3) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,3) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,3)
               indexes(1,k)=ix
@@ -395,7 +330,7 @@
               ner = ner+1
             endif
 *   ..Case of bottom neighbor
-            if( aa11(ix,iy,-3) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,-3) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,-3)
               indexes(1,k)=ix
@@ -410,7 +345,7 @@
             iyl = leftiy(ix,iy)
             ixb = bottomix(ix,iy)
             iyb = bottomiy(ix,iy)
-            if( aa11(ix,iy,-4) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,-4) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,-4)
               indexes(1,k)=ix
@@ -420,7 +355,7 @@
               ja(k) = 2+bottomix(ixl,iyl)+(2+bottomiy(ixl,iyl)-1)*nxp2
               ner = ner+1
             endif
-            if( aa11(ix,iy,-6) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,-6) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,-6)
               indexes(1,k)=ix
@@ -435,7 +370,7 @@
             iyl = leftiy(ix,iy)
             ixt = topix(ix,iy)
             iyt = topiy(ix,iy)
-            if( aa11(ix,iy,2) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,2) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,2)
               indexes(1,k)=ix
@@ -445,7 +380,7 @@
               ja(k) = 2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
               ner = ner+1
             endif
-            if( aa11(ix,iy,5) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,5) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,5)
               indexes(1,k)=ix
@@ -460,24 +395,24 @@
             iyr = rightiy(ix,iy)
             ixb = bottomix(ix,iy)
             iyb = bottomiy(ix,iy)
-            if( aa11(ix,iy,-2) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,-2) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,-2)
               indexes(1,k)=ix
               indexes(2,k)=iy
               indexes(3,k)=-2
               ia(k) = i
-              ja(k) =2+bottomix(ixr,iyr)+(2+bottomiy(ixr,iyr)-1)*nxp2
+              ja(k) = 2+bottomix(ixr,iyr)+(2+bottomiy(ixr,iyr)-1)*nxp2
               ner = ner+1
             endif
-            if( aa11(ix,iy,-5) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,-5) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,-5)
               indexes(1,k)=ix
               indexes(2,k)=iy
               indexes(3,k)=-5
               ia(k) = i
-              ja(k) =2+rightix(ixb,iyb)+(2+rightiy(ixb,iyb)-1)*nxp2
+              ja(k) = 2+rightix(ixb,iyb)+(2+rightiy(ixb,iyb)-1)*nxp2
               ner = ner+1
             endif
 *       Case (ix+1,iy+1)
@@ -485,43 +420,43 @@
             iyr = rightiy(ix,iy)
             ixt = topix(ix,iy)
             iyt = topiy(ix,iy)
-            if( aa11(ix,iy,4) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,4) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,4)
               indexes(1,k)=ix
               indexes(2,k)=iy
               indexes(3,k)=4
               ia(k) = i
-              ja(k) =2+topix(ixr,iyr)+(2+topiy(ixr,iyr)-1)*nxp2
+              ja(k) = 2+topix(ixr,iyr)+(2+topiy(ixr,iyr)-1)*nxp2
               ner = ner+1
             endif
-            if( aa11(ix,iy,6) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,6) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,6)
               indexes(1,k)=ix
               indexes(2,k)=iy
               indexes(3,k)=6
               ia(k) = i
-              ja(k) =2+rightix(ixt,iyt)+(2+rightiy(ixt,iyt)-1)*nxp2
+              ja(k) = 2+rightix(ixt,iyt)+(2+rightiy(ixt,iyt)-1)*nxp2
               ner = ner+1
             endif
 *   ..Case of top top neighbor
              ixt = topix(ix,iy)
              iyt = topiy(ix,iy)
-            if( aa11(ix,iy,7) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,7) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,7)
               indexes(1,k)=ix
               indexes(2,k)=iy
               indexes(3,k)=7
               ia(k) = i
-              ja(k) =2+topix(ixt,iyt)+(2+topiy(ixt,iyt)-1)*nxp2
+              ja(k) = 2+topix(ixt,iyt)+(2+topiy(ixt,iyt)-1)*nxp2
               ner = ner+1
             endif
 *   ..Case of bottom bottom neighbor
              ixb = bottomix(ix,iy)
              iyb = bottomiy(ix,iy)
-            if( aa11(ix,iy,-7) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,-7) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,-7)
               indexes(1,k)=ix
@@ -613,4 +548,3 @@
 
       return
       end subroutine storage_11                                       !srv 02.04.18 }
-

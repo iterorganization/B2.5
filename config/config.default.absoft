@@ -34,7 +34,7 @@ endif
 CPP = /lib/cpp -C -traditional
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED =
-LINK_MOD = 
+LINK_MOD =
 
 FC = f95
 
@@ -46,7 +46,7 @@ endif
 
 DBLFC = ${FC}
 DDBLOPTION = -Ad # ???
-DBLSED = 
+DBLSED =
 
 INCMOD = -p
 MOD = mod

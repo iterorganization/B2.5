@@ -49,7 +49,7 @@ FCOPTS  = -fPIC
 LDOPTS  = -fPIC
 endif
 ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
-FCOPTS += -march=sandybridge
+FCOPTS += -march=native
 endif
 
 ifdef SOLPS_DEBUG
