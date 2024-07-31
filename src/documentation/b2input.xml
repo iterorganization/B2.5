@@ -2917,6 +2917,14 @@
 					b2tfhe_anomalous.eq.1.0.
 				</description>
 			</switch>
+			<switch>
+				<name>b2tqna_cfvma</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Anomalous velocity in parallel momentum balance equation.
+				</description>
+			</switch>
 		</category>
 		<category name="Output">
 			<switch>
