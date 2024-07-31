@@ -77,8 +77,6 @@ else
   LDOPTS = -mp=nonuma -O3
 endif
 
-LCPP= ${LD_SONNET}
-
 
 #!!!Local Variables:
 #!!! mode: Makefile

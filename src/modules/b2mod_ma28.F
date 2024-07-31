@@ -43,6 +43,7 @@
       contains
 
       subroutine alloc_b2mod_ma28
+      implicit none
 
       if (allocated(r1)) return
 

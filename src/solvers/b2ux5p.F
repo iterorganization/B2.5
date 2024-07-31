@@ -16,7 +16,6 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(-1:nx,-1:ny)
-*   ..common blocks
 
 *-----------------------------------------------------------------------
 *.documentation

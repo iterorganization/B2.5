@@ -81,8 +81,6 @@ endif
 
 LD = $(FC)
 
-LCPP= ${LD_SONNET}
-
 
 #!!!Local Variables:
 #!!! mode: Makefile
