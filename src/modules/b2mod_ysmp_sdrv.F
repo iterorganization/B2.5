@@ -24,6 +24,7 @@
       contains
 
       subroutine alloc_b2mod_ysmp_sdrv
+      implicit none
 
       write(*,*) 'Allocating space for b2mod_ysmp_sdrv'
       write(*,*) 'nnd_sdrv   = ', nnd_sdrv
