@@ -11,9 +11,6 @@ endif
 ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
-ifndef LD_SONNET
-  $(error LD_SONNET not defined)
-endif
 
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 DEFINES += -DNO_CDF
@@ -37,8 +34,7 @@ ifndef SOLPS_CPP
 endif
 
 ifdef IMAS_PKG_LIST
-  INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`N = -Ad # ???
-DBLSED =
+  INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
 CPP = /lib/cpp -C -traditional
