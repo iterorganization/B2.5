@@ -540,6 +540,14 @@
 !$OMP& SHARED(cvsahz_drho, cvsahz_hAdp_albe, cvsahz_hBdp_al)
 !$OMP& SHARED(cvsahz_uAdp_albe, cvsahz_uBdp_al)
 !$OMP& SHARED(last_solve_5)
+!$OMP& COPYIN(iwrk_5p, aaf_5p, wrk0_5p, wrk1_5p, wrk2_5p)
+!$OMP& COPYIN(r1_5p, s1_5p, a1h_5p, w_5p, res_5p, a1h_save_5p)
+!$OMP& COPYIN(irn_5p, icn_5p, irnh_5p, icnh_5p)
+!$OMP& COPYIN(ish_5p, jsh_5p, ijsh_5p, iw28_5p)
+!$OMP& COPYIN(icnhkeep_5p, ikeep_5p, irnh_save_5p, icnh_save_5p)
+!$OMP& COPYIN(nc0_5p)
+!$OMP& COPYIN(nltrsol_5p, solvdim1_5p, solvdim_5p, n_nonzeros_5p)
+!$OMP& COPYIN(lfirst_ilu)
 #endif
 
 !      do is = 0, ns-1
@@ -819,7 +827,7 @@ c    ..compare 5-pt stencil matrices
           new_matrix = new_matrix.or.
      &     solvemo(is,ireg).neqv.last_solve_5(is,ireg)
          end do
-         if (new_matrix) call restart_ma28
+         if (new_matrix.or.in_parallel()) call restart_ma28
 *    ..compute correction
          call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
      &    vol, hx, hz, bb, rob, rob, pb, pb, ua(-1,-1,is),              !srv 09.01.01
@@ -880,7 +888,7 @@ csw 21feb2014, execute simultaneous corrections always
            new_matrix = new_matrix.or.
      &      solvemt(ireg).neqv.last_solve_5(ns,ireg)
          end do
-         if (new_matrix) call restart_ma28
+         if (new_matrix.or.in_parallel()) call restart_ma28
          call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,       !srv 04.07.08
      &    vol, hx, hz, bb, ro, rz, pr, pz, wrk0, smt, flct, cvct,      !srv 09.01.01
      &    resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')        !srv 06.04.07

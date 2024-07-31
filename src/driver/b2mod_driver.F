@@ -2089,6 +2089,11 @@ csw 03oct2013 rescaling impurity species specified by zn_rescale
           write (*,*) 'Convergence of bundled rates = ',is,max_delta
         enddo
       endif
+*   ..initialise solver arrays
+      call solver_init_5p(nx, ny)
+      call solver_init_7p(nx, ny)
+      call solver_init_9p(nx, ny)
+      call solver_init_11p(nx, ny)
 *   ..initialise tracing routines
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)

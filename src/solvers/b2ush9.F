@@ -7,7 +7,7 @@
      &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa9)
       use b2mod_types
       use b2mod_indirect
-      use b2mod_ilutern_9
+      use b2mod_ma28_for_9diag
       use b2mod_numerics_namelist
       use b2mod_subsys
       implicit none
@@ -171,7 +171,8 @@
         new_matrix = new_matrix.or.
      &   solveet(ireg).neqv.last_solve_9(ns,ireg)
       end do
-      if (new_matrix.or.ncall.eq.0) call restart_ma28_for_9
+      if (in_parallel().or.(new_matrix.or.ncall.eq.0))
+     > call restart_ma28_for_9
 * ..total heat correction equation
 *   ..compute flo0x, con0x
       do iy = -1, ny
@@ -364,7 +365,7 @@
         new_matrix = new_matrix.or.
      &   solveee(ireg).neqv.solveet(ireg)
       end do
-      if (new_matrix) call restart_ma28_for_9
+      if (new_matrix.or.in_parallel()) call restart_ma28_for_9
 *   ..compute flo0x, con0x
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {
@@ -501,7 +502,7 @@
         new_matrix = new_matrix.or.
      &   solveei(ireg).neqv.solveee(ireg)
       end do
-      if (new_matrix) call restart_ma28_for_9
+      if (new_matrix.or.in_parallel()) call restart_ma28_for_9
 *   ..compute flo0x, con0x
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {

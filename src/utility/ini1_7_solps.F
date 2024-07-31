@@ -8,7 +8,8 @@
 
       write(*,*) 
      . 'INIILU_7: Initialising arrays for 7-point stencil matrix'  !sv 11.01.00
-      call iniilu_7_w(n_nonzeros,n1,n2,irn,ish,jsh,ijsh,icn,nc0)   !sv 11.01.00
+      call iniilu_7_w(n_nonzeros_7p,n1,n2,
+     .  irn_7p,ish_7p,jsh_7p,ijsh_7p,icn_7p,nc0_7p)                !sv 11.01.00
       write(*,*) 
      . 'INIILU_7: Initialised arrays for 7-point stencil matrix'   !sv 11.01.00
       return

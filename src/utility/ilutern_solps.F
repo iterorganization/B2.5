@@ -117,35 +117,35 @@ c
 C    ZUWEISUNG
       NZ=0
       IK=0
-      ICNH=0
-      IRNH=0
-      A1H=0.0_R8
-      DO K=1,NC0
-        IF (IJSH(K).EQ.0) A1HN=ASO(ISH(K),JSH(K))
-        IF (IJSH(K).EQ.1) A1HN=AWE(ISH(K),JSH(K))
-        IF (IJSH(K).EQ.2) A1HN=ACP(ISH(K),JSH(K))
-        IF (IJSH(K).EQ.3) A1HN=AEA(ISH(K),JSH(K))
-        IF (IJSH(K).EQ.4) A1HN=ANO(ISH(K),JSH(K))
+      ICNH_5p=0
+      IRNH_5p=0
+      A1H_5p=0.0_R8
+      DO K=1,NC0_5p
+        IF (IJSH_5p(K).EQ.0) A1HN=ASO(ISH_5p(K),JSH_5p(K))
+        IF (IJSH_5p(K).EQ.1) A1HN=AWE(ISH_5p(K),JSH_5p(K))
+        IF (IJSH_5p(K).EQ.2) A1HN=ACP(ISH_5p(K),JSH_5p(K))
+        IF (IJSH_5p(K).EQ.3) A1HN=AEA(ISH_5p(K),JSH_5p(K))
+        IF (IJSH_5p(K).EQ.4) A1HN=ANO(ISH_5p(K),JSH_5p(K))
 c        IF (A1HN.EQ.0.0_R8) THEN
         if(
-     1   (IJSH(K).EQ.0.and.jsh(k).eq.1).or.
-     1   (IJSH(K).EQ.1.and.ish(k).eq.1).or.
-     1   (IJSH(K).EQ.3.and.ish(k).eq.n1).or.
-     1   (IJSH(K).EQ.4.and.jsh(k).eq.n2)) then
+     1   (IJSH_5p(K).EQ.0.and.jsh_5p(k).eq.1).or.
+     1   (IJSH_5p(K).EQ.1.and.ish_5p(k).eq.1).or.
+     1   (IJSH_5p(K).EQ.3.and.ish_5p(k).eq.n1).or.
+     1   (IJSH_5p(K).EQ.4.and.jsh_5p(k).eq.n2)) then
         ELSE
          IF(A1HN.NE.0.0_R8) THEN                                !srv 06.07.10
           NZ=NZ+1
-          A1H(NZ)=A1HN
-          IRNH(NZ)=IRN(K)
+          A1H_5p(NZ)=A1HN
+          IRNH_5p(NZ)=IRN_5p(K)
           IK=IK+1
-          ICNH(NZ)=ICN(K)
+          ICNH_5p(NZ)=ICN_5p(K)
          ENDIF                                                  !srv 06.07.10
         ENDIF
       enddo
       DO I=1,N1
         DO J=1,N2
-          R1(I+(J-1)*N1)=RHS(I,J)
-          S1(I+(J-1)*N1)=0.0_R8
+          R1_5p(I+(J-1)*N1)=RHS(I,J)
+          S1_5p(I+(J-1)*N1)=0.0_R8
         enddo
       enddo
 
@@ -172,7 +172,7 @@ c             (maybe necessary in case of multi-fluid?)
      .         form='unformatted')                                   !srv 11.03.13
          write(76) n
          do i=1,n
-           write(76) r1(i)
+           write(76) r1_5p(i)
          enddo
          close(76)
          write(*,*) 'Opening 77'
@@ -180,7 +180,8 @@ c             (maybe necessary in case of multi-fluid?)
      .         form='unformatted')                                   !srv 11.03.13
          write(77) n, nz
          do i=1,nz
-           write(77) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
+           write(77)
+     .      IRNH_5p(i),ICNH_5p(i),ISH_5p(i),JSH_5p(i),A1H_5p(i)
          enddo
          close(77)
        end if
@@ -201,13 +202,14 @@ c             (maybe necessary in case of multi-fluid?)
         open(76,file='b2_5_rhs_'//trim(name)//'.dat')
         write(76,*) n
         do i=1,n
-          write(76,*) r1(i)
+          write(76,*) r1_5p(i)
         enddo
         close(76)
         open(77,file='b2_5_matrix_'//trim(name)//'.dat')
         write(77,*) n, nz
         do i=1,nz
-          write(77,*) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
+          write(77,*)
+     .     IRNH_5p(i),ICNH_5p(i),ISH_5p(i),JSH_5p(i),A1H_5p(i)
         enddo
         close(77)
        end if
@@ -244,7 +246,7 @@ cdpc
           write(84,*) nz,' nz'
           do i=1,nz
             write(84,'(4(i6,1x),1p,1e15.8)')
-     .       IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
+     .       IRNH_5p(i),ICNH_5p(i),ISH_5p(i),JSH_5p(i),A1H_5p(i)
           enddo
           if(ncall+1.eq.nwrite) then
             write(*,*) 'Closing 84'
@@ -254,83 +256,89 @@ cdpc
         end if
       end if
 cdpc
-      if(nltrsol.eq.0) then
-      elseif(nltrsol.eq.1) then
+      if(nltrsol_5p.eq.0) then
+      elseif(nltrsol_5p.eq.1) then
         WRITE(6,*) 'ILUTERN'
       else
         WRITE(6,*) 'ILUTERN'
       endif
       if(lfirst_ilu) then
         write(*,*) 'ilutern: nz = ',nz
-        call xertst (nz.le.N_NONZEROS, 'Increase N_NONZEROS')
+        call xertst (nz.le.N_NONZEROS_5p, 'Increase N_NONZEROS')
         iflag=0
       endif
       do i=1,nz
-        irnh_save(i)=irnh(i)
-        icnh_save(i)=icnh(i)
-        a1h_save(i)=a1h(i)
+        irnh_save_5p(i)=irnh_5p(i)
+        icnh_save_5p(i)=icnh_5p(i)
+        a1h_save_5p(i)=a1h_5p(i)
       enddo
       if(.not.lfirst_ilu) then
         call ma28bd
-     1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
-        if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 28.06.16
+     1   (n,nz,a1h_5p,solvdim_5p,
+     1    irnh_5p,icnh_5p,icnhkeep_5p,ikeep_5p,iw28_5p,w_5p,iflag)
+        if(nltrsol_5p.gt.0 .or. iflag.lt.0)                          !srv 28.06.16
      1   write(*,'(a,i6,i8,a,i8,i8,a,i8)')
      .    'iflag,minirn/dim,minicn/dim ',
-     2     iflag,minirn,' /',solvdim1,minicn,' /',solvdim
+     2     iflag,minirn,' /',solvdim1_5p,minicn,' /',solvdim_5p
         if(iflag.lt.0.and.iflag.ne.-14) then   ! do not do this for duplicate elements
           do i=1,nz
-            irnh(i)=irnh_save(i)
-            icnh(i)=icnh_save(i)
-            a1h(i)=a1h_save(i)
+            irnh_5p(i)=irnh_save_5p(i)
+            icnh_5p(i)=icnh_save_5p(i)
+            a1h_5p(i)=a1h_save_5p(i)
           enddo
         endif
       endif
       if(lfirst_ilu.or.(iflag.lt.0.and.iflag.ne.-14)) then   ! do not do this for duplicate elements
         call ma28ad
-     1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
-        if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 28.06.16
+     1   (n,nz,a1h_5p,solvdim_5p,
+     2    irnh_5p,solvdim1_5p,icnh_5p,u,ikeep_5p,iw28_5p,w_5p,iflag)
+        if(nltrsol_5p.gt.0 .or. iflag.lt.0)                          !srv 28.06.16
      1   write(*,'(a,i6,i8,a,i8,i8,a,i8)')
      .    'iflag,minirn/dim,minicn/dim ',
-     2     iflag,minirn,' /',solvdim1,minicn,' /',solvdim
-        do i=1,solvdim
-          icnhkeep(i)=icnh(i)
+     2     iflag,minirn,' /',solvdim1_5p,minicn,' /',solvdim_5p
+        do i=1,solvdim_5p
+          icnhkeep_5p(i)=icnh_5p(i)
         enddo
         lfirst_ilu=.false.
       endif
       call ma28id
-     1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
-     1 r1,s1,res,w,1,1e-10_R8,iflag)
-      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(1x,a,i3,1p,2g15.8,i6)') !srv 28.06.16
-     1 'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
+     1 (n,nz,a1h_save_5p,irnh_save_5p,icnh_save_5p,
+     1  solvdim_5p,a1h_5p,icnhkeep_5p,ikeep_5p,
+     1  r1_5p,s1_5p,res_5p,w_5p,1,1e-10_R8,iflag)
+      if(nltrsol_5p.gt.0 .or. iflag.lt.0)
+     1 write(*,'(1x,a,i3,1p,2g15.8,i6)')                             !srv 28.06.16
+     1  'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
 
       if(iflag.lt.0) then                                            !srv 28.06.16 {
 
         do i=1,nz
-          irnh(i) = irnh_save(i)
-          icnh(i) = icnh_save(i)
-          a1h(i)  = a1h_save(i)
+          irnh_5p(i) = irnh_save_5p(i)
+          icnh_5p(i) = icnh_save_5p(i)
+          a1h_5p(i)  = a1h_save_5p(i)
         enddo
 
         call ma28ad
-     1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
-        if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)
-     1     trim(name), iflag, minirn, solvdim1, minicn, solvdim
+     1   (n,nz,a1h_5p,solvdim_5p,
+     2    irnh_5p,solvdim1_5p,icnh_5p,u,ikeep_5p,iw28_5p,w_5p,iflag)
+        if(nltrsol_5p.gt.0 .or. iflag.lt.0) write(*,2)
+     1     trim(name), iflag, minirn, solvdim1_5p, minicn, solvdim_5p
     2   format(' ma28ad for ',a13,': iflag =',i9/,
      1   ' minirn =',i9,' solvdim1 =',i9,' minicn =',i9,' solvdim =',i9)
-        do i=1,solvdim
-          icnhkeep(i)=icnh(i)
+        do i=1,solvdim_5p
+          icnhkeep_5p(i)=icnh_5p(i)
         enddo
 
         call ma28id
-     1   (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
-     1    r1,s1,res,w,1,1e-10_R8,iflag)
+     1   (n,nz,a1h_save_5p,irnh_save_5p,icnh_save_5p,
+     1    solvdim_5p,a1h_5p,icnhkeep_5p,ikeep_5p,
+     1    r1_5p,s1_5p,res_5p,w_5p,1,1e-10_R8,iflag)
 
         if(iflag.lt.0) then
           write(*,"(a)") 'Problem with solving '//trim(name)
         else
           write(*,"(3a)") ' Problem of ', trim(name), ' has been solved'
         endif
-        if(nltrsol.gt.0 .or. iflag.lt.0)
+        if(nltrsol_5p.gt.0 .or. iflag.lt.0)
      &   write(*,3)  trim(name), iflag, errmax, dres, noiter
     3    format(' ma28id for ',a13,': iflag =',i9,
      2         ' errmax =',es9.1,' dres =',es9.1,' noiter =',i2)
@@ -340,7 +348,7 @@ cdpc
       DO K=1,N
         J=(K-1)/N1+1
         I=K-(J-1)*N1
-        SOL(I,J)=S1(K)
+        SOL(I,J)=S1_5p(K)
       ENDDO
 
 *  ---------------------------------------------------------------------
