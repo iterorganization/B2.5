@@ -207,10 +207,9 @@
       enddo
       call b2saxpy (n2, she0ep, vol, 1, she0(-1,-1,0), 1)
       call b2saxpy (n2, shi0ep, vol, 1, shi0(-1,-1,0), 1)
-
+#ifdef WG_TODO
       if(boundary_namelist.eq.0) then
        write(*,*) 'Doing spb B2.5-style bc'
-
 * ..compute conditions at south boundary
 *   ..initialize ireg
        ireg = cbirso
@@ -1138,6 +1137,7 @@ c         sna0(nx,iy,1,1) = -1.0e60_R8
        enddo
       endif                                                           !sv 11.07.05 }
 
+#endif
 * ..return
       ncall = ncall+1
       call subend ()
