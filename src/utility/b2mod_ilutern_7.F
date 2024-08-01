@@ -268,12 +268,6 @@ cdpc
          a1h_save_7p(i)=a1h_7p(i)
       enddo
       if(.not.lfirst_ilu7) then
-#ifdef _OPENMP
-          write(*,'(a,i2,a,i6,a,i6)')
-     .     'From thread ',OMP_GET_THREAD_NUM(),
-     1    ' for ma28bdcopy3: icn min/max',minval(icnhkeep_7p),',',
-     2                                    maxval(icnhkeep_7p)
-#endif
          call ma28bdcopy3                                          !srv 26.12.17
      1   (n,nz,a1h_7p,solvdim_7p,
      1    irnh_7p,icnh_7p,icnhkeep_7p,ikeep_7p,iw28_7p,w_7p,iflag)
@@ -288,12 +282,6 @@ cdpc
          endif
       endif
       if(lfirst_ilu7.or.iflag.lt.0) then
-#ifdef _OPENMP
-          write(*,'(a,i2,a,i6,a,i6)')
-     .     'From thread ',OMP_GET_THREAD_NUM(),
-     1    ' for ma28adcopy3(1): icn min/max',minval(icnh_7p),',',
-     2                                       maxval(icnh_7p)
-#endif
          call ma28adcopy3                                          !srv 26.12.17
      1   (n,nz,a1h_7p,solvdim_7p,
      1    irnh_7p,solvdim1_7p,icnh_7p,u,ikeep_7p,iw28_7p,w_7p,iflag)
@@ -306,12 +294,6 @@ cdpc
          enddo
          lfirst_ilu7=.false.
       endif
-#ifdef _OPENMP
-      write(*,'(a,i2,a,i6,a,i6)')
-     .  'From thread ',OMP_GET_THREAD_NUM(),
-     1 ' for ma28idcopy3(1): icn min/max',minval(icnhkeep_7p),',',
-     2                                    maxval(icnhkeep_7p)
-#endif
       call ma28idcopy3                                             !srv 26.12.17
      1 (n,nz,a1h_save_7p,irnh_save_7p,icnh_save_7p,
      1  solvdim_7p,a1h_7p,icnhkeep_7p,ikeep_7p,
@@ -328,12 +310,6 @@ cdpc
           a1h_7p(i)  = a1h_save_7p(i)
         enddo
 
-#ifdef _OPENMP
-        write(*,'(a,i2,a,i6,a,i6)')
-     .   'From thread ',OMP_GET_THREAD_NUM(),
-     1  ' for ma28adcopy3(2): icn min/max',minval(icnh_7p),',',
-     2                                     maxval(icnh_7p)
-#endif
         call ma28adcopy3                                           !srv 26.12.17
      1   (n,nz,a1h_7p,
      1    solvdim_7p,irnh_7p,solvdim1_7p,icnh_7p,u,
@@ -347,12 +323,6 @@ cdpc
           icnhkeep_7p(i)=icnh_7p(i)
         enddo
 
-#ifdef _OPENMP
-      write(*,'(a,i2,a,i6,a,i6)')
-     .  'From thread ',OMP_GET_THREAD_NUM(),
-     1 ' for ma28idcopy3(2): icn min/max',minval(icnhkeep_7p),',',
-     2                                    maxval(icnhkeep_7p)
-#endif
         call ma28idcopy3                                           !srv 26.12.17
      1   (n,nz,a1h_save_7p,irnh_save_7p,icnh_save_7p,
      1    solvdim_7p,a1h_7p,icnhkeep_7p,ikeep_7p,
