@@ -1,9 +1,9 @@
       module b2mod_b2mrel
       use b2mod_types
       implicit none
-      integer, allocatable ::
+      integer, allocatable, save ::
      &  nucl2s(:,:), znnucl_int(:), s2nucl(:)
-      real (kind=R8), allocatable ::
+      real (kind=R8), allocatable, save ::
      &  amnucl(:), znnucl(:),
      &  N2(:,:), N3(:,:),
      &  N4(:,:), N5(:,:),
@@ -68,6 +68,7 @@
       allocate(nucl2s(0:nnucl-1,0:znmax))
       allocate(znnucl_int(0:nnucl-1))
       allocate(s2nucl(0:ns-1))
+      nucl2s = -1
       end subroutine alloc_b2mod_mrel
 
       subroutine dealloc_b2mod_mrel

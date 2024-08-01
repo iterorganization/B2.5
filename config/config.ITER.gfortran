@@ -44,14 +44,12 @@ GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.
 GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
 GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
 
-ifdef USE_OPENMP
-ifndef USE_EIRENE
+ifndef USE_OPENMP
 FCOPTS  = -fPIC
 LDOPTS  = -fPIC
 endif
-endif
 ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
-FCOPTS += -march=sandybridge
+FCOPTS += -march=native
 endif
 
 ifdef SOLPS_DEBUG

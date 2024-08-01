@@ -23,11 +23,15 @@
        call xerrab ('smax--error, n.lt.1.or.incx.eq.0')
       else if (incx.eq.1) then
        t = sx(0)
+#if ( !defined(NAGFOR) && !defined(LEGACYCOMP) )
 !$OMP SIMD REDUCTION(max:t)
+#endif
        do i = 1, n-1
         t = max(t,sx(i))
        enddo
+#if( !defined(NAGFOR) && !defined(LEGACYCOMP) )
 !$OMP END SIMD
+#endif
        smax = t
       else
        ix = ibase(n,incx)

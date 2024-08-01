@@ -27,7 +27,9 @@
 
 *   ..local variables
       integer ncall, ix, iy
-      !$OMP THREADPRIVATE(ncall)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall)
+#endif
       save ncall
 *   ..procedures
       external xertst

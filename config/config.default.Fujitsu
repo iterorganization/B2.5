@@ -11,9 +11,6 @@ endif
 ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
-#ifndef LD_SONNET
-#  $(error LD_SONNET not defined)
-#endif
 
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 # DEFINES += -DNO_CDF
@@ -57,6 +54,7 @@ DBLSED =
 INCMOD = -I
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -75,11 +73,9 @@ ifdef LD_CATALYST
   CXXFLAGS = -std=c++11
 endif
 
-LD = /opt/Fujitsu/bin/f90
-LD = f95f
+LD = ${FC}
 # LDOPTS = -Bstatic
 
-LCPP = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

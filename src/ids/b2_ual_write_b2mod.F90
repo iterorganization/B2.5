@@ -189,10 +189,10 @@
 !!              equation (i.e. the energy flux takes into account the energy
 !!              transported by the particle flux)
 !!      @param  idx - The returned identifier to be used in the subsequent
-!!                    data access operation
+!!              data access operation
 !!      @param  run - The run number of the database being created
 !!      @param  shot - The shot number of the database being created
-!!      @param  treename - the name of the IMAS IDS database
+!!      @param  treename - The name of the IMAS IDS database
 !!              (local $DEVICE environment variable by default if defined,
 !!               otherwise "solps-iter" if argument is not provided)
 !!      @param  username - Creator/owner of the IMAS IDS database
@@ -434,18 +434,18 @@ program b2_ual_write_b2mod
         end do
     end if
     if (narg.lt.2) then
-        write(0,*) "ERROR! In order to run b2_ual_write_b2mod&
-            & input IMAS data entry&
+        write(0,*) "ERROR! In order to run b2_ual_write_b2mod "// &
+            & "input IMAS data entry "// &
 #if AL_MAJOR_VERSION > 4
-            & user, database and version and either&
-            & shot and run or path variables must&
+            & "user, database and version and either "// &
+            & "shot and run or path variables must "// &
 #else
-            & user, database, version, shot and run variables must&
+            & "user, database, version, shot and run variables must "// &
 #endif
-            & be defined. Example (terminal): "
-        write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/&
-            &b2_ual_write_b2mod.exe --shot 1512 --run 6 --username penkod&
-            &  --database solps-iter --version 3 --step"
+            & "be defined. Example (terminal): "
+        write(0,*) "$SOLPSTOP/modules/B2.5/builds/standalone.ITER.ifort64/"// &
+            & "b2_ual_write_b2mod.exe --shot 1512 --run 6 "// &
+            & "--username penkod --database solps-iter --version 3 --step"
         call exit(0)
     end if
 
@@ -637,9 +637,9 @@ program b2_ual_write_b2mod
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
               write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
                 & 'idscp --setDatasetVersion'//                &
-                &       ' -si ',shot,' -ri ',run,              &
-                &       ' -so ',shot,' -ro ',tmp_run,          &
-                &       ' -d ',trim(database),' -u ',trim(username)
+                &      ' -si ',shot,' -ri ',run,               &
+                &      ' -so ',shot,' -ro ',tmp_run,           &
+                &      ' -d ',trim(database),' -u ',trim(username)
 #else
               write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
                 & 'idscp -si ',shot,' -ri ',run,               &
@@ -794,74 +794,6 @@ contains
         endif
 
     end subroutine
-
-    !> Example subroutine for reading edge_profiles IDS
-    !! with Fortran90
-    subroutine read_ids( idx, &
-#if AL_MAJOR_VERSION > 4
-         & ids_path )
-#else
-         & treename, shot, run, username, database, version )
-#endif
-        use ids_routines &  ! IGNORE
-         & , only : imas_close
-        implicit none
-        integer, intent(out) :: idx !< The returned identifier to be used in the subsequent
-#if AL_MAJOR_VERSION > 4
-        character(len=256), intent(in) :: ids_path  !< The path to the IMAS data entry
-#else
-        character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
-        integer, intent(in) :: shot !< The shot number of the database being created
-        integer, intent(in) :: run  !< The run number of the database being created
-        character(len=24), intent(in) :: username   !< Creator/owner of the IMAS IDS database
-        character(len=24), intent(in) :: database   !< IMAS IDS database name
-            !< (i. e. solps-iter, ITER, aug)
-        character(len=24), intent(in) :: version    !< Major version of the IMAS IDS database
-#endif
-        !! Internal variables
-        integer :: gridSubset_index !< >Grid subset base index
-        type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
-            !< data in edge plasma profiles (includes the scrape-off layer and
-            !<  possibly part of the confined plasma)
-        integer :: status
-
-        gridSubset_index = 3
-
-        !! Open input datafile from local database
-        write(0,*) "Started reading input IMAS data entry", idx, shot, run
-
-#if AL_MAJOR_VERSION > 4
-        uri = 'imas:mdsplus?path='//trim(ids_path)
-        call imas_open( uri, OPEN_PULSE, idx, status, message )
-        call xertst ( status.eq.0, trim(message) )
-#else
-        call imas_open_env(treename, shot, run, idx, username, &
-            &   database, version, status )
-        call xertst ( status.eq.0, 'Error opening IMAS database !')
-#endif
-        call ids_get(idx, "edge_profiles", edge_profiles, status)
-        call xertst ( status.eq.0, 'Error opening edge_profiles IDS !')
-
-        write(0,*) "homogeneous_time = ",   &
-            &   edge_profiles%ids_properties%homogeneous_time
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-        write(0,*) "Grid subset 3 name = ", edge_profiles%ggd(1)%grid%  &
-            &   grid_subset(gridSubset_index)%identifier%name
-        write(0,*) "Grid subset 3 index = ", edge_profiles%ggd(1)%grid% &
-            &   grid_subset(gridSubset_index)%identifier%index
-#else
-        write(0,*) "Grid subset 3 name = ", edge_profiles%grid_ggd(1)%  &
-            &   grid_subset(gridSubset_index)%identifier%name
-        write(0,*) "Grid subset 3 index = ", edge_profiles%grid_ggd(1)% &
-            &   grid_subset(gridSubset_index)%identifier%index
-#endif
-        ! write(0,*) "Time = ", edge_profiles%time(1)
-        call ids_deallocate( edge_profiles )
-        call imas_close( idx, status )
-        call xertst ( status.eq.0, 'Error closing IMAS database !')
-        write(0,*) "Finished reading input IMAS data entry"
-
-    end subroutine read_ids
 
 end program b2_ual_write_b2mod
 

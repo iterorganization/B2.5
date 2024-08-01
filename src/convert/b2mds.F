@@ -700,8 +700,11 @@ c 26: using total field for computing dspar
 c 27: Added EMOLRAD and EIONRAD arrays
 c 28: Corrected calculation of fht, now using fn[ae]_53
 c 29: Same indexing error was also present in emolrad and eionrad
+c 30: Reserved for 3.2.0 WG code version
+c 31: Corrected units for srcml and edissml
+c 32: Reserved for 3.2.0 WG code version
 
-      dbversion=29
+      dbversion=31
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -1322,12 +1325,22 @@ c
      1   temp(ix,iy)=emissmol(ix+1,iy+1,1,1)
         call mds_put_double_rz('\TOP.SNAPSHOT:EMISSMOL','ph.m^-3.s^-1',
      1   nx+2,ny+2,temp,'')
-        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=srcml(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:SRCML','A',nx+2,
+        if (jvft44.lt.20240627) then
+          forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
+     1     tmp(ix,iy,is)=srcml(ix+1,iy+1,is+1,1)*1.0e6_R8*vol(ix,iy)/qe
+        else
+          forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
+     1     tmp(ix,iy,is)=srcml(ix+1,iy+1,is+1,1)
+        endif
+        call mds_put_double_rzns('\TOP.SNAPSHOT:SRCML','s^-1',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=edissml(ix+1,iy+1,is+1,1)
+        if (jvft44.lt.20240627) then
+          forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
+     1     tmp(ix,iy,is)=edissml(ix+1,iy+1,is+1,1)*1.0e6_R8*vol(ix,iy)
+        else
+          forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
+     1     tmp(ix,iy,is)=edissml(ix+1,iy+1,is+1,1)
+        endif
         call mds_put_double_rzns('\TOP.SNAPSHOT:EDISSML','W',nx+2,
      1   ny+2,nmoli,tmp,'TEXTMN','')
         forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)

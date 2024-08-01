@@ -40,7 +40,9 @@
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, k
       integer, save :: iout = 0
       character chark*1
-      !$OMP THREADPRIVATE(ncall, iout)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, iout)
+#endif
       save ncall
 *   ..procedures
       intrinsic min
@@ -59,9 +61,13 @@
       if (ncall.eq.0) then
        call ipgeti ('b2uspo_iout', iout)
        if (in_parallel() .and. iout.ne.0) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'b2uspo OpenMP warning: no file IO in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        endif
       endif

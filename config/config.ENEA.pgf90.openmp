@@ -57,6 +57,7 @@ ifeq (${FC},mpif90)
     DEFINES += ${B25_DEFINES}
   endif
   OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
+  OBNDEST  = -J${OBNDIR} -o ${OBNDIR}/$*.o
   INCMOD   = -B
   GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
   GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )

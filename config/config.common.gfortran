@@ -44,6 +44,7 @@ DBLSED =
 
 MOD = mod
 OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST = -J${OBNDIR} -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -118,7 +119,6 @@ endif
 LD = $(FC)
 # LDOPTS = -Bstatic
 
-LCPP = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

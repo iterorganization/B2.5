@@ -224,7 +224,7 @@ csw 13mar2012
       do is = 0, ns-1
         do is0 = 0, ns-1
           if(.not.is_neutral(is).and.is_neutral(is0)) then
-            call sfill (n2*4, 0.0_R8, csigin(-1,-1,0,is,is0), 1)
+            call sfill (n2*2, 0.0_R8, csigin(-1,-1,0,is,is0), 1)
           endif
         enddo
       enddo
@@ -499,7 +499,7 @@ csw 13mar2012
       chci_koeff = 0.0e0_R8
       tt0 = 0.0e0_R8
       tt1 = 0.0e0_R8
-      if(integral_modeling.ne.0) then
+      if(integral_modeling.ne.0.and.ny_astra.gt.1) then
        do iy = 0,mintopcut-1    ! for inner surfaces
         inv_hi_astra(iy) =  -(Ti_astra(iy)-Ti_astra(iy-1))*1.0e3_R8/
      &   (qi_neo_astra(iy)*1.0e6_R8)/(Rmajc_astra(iy)-Rmajc_astra(iy-1))

@@ -435,9 +435,9 @@ program b2_ual_write
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')  &
               & 'idscp --setDatasetVersion'//                 &
-              &       ' -si ',shot,' -ri ',run,               &
-              &       ' -so ',shot,' -ro ',tmp_run,           &
-              &       ' -d ',trim(database),' -u ',trim(username)
+              &      ' -si ',shot,' -ri ',run,                &
+              &      ' -so ',shot,' -ro ',tmp_run,            &
+              &      ' -d ',trim(database),' -u ',trim(username)
 #else
             write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')  &
               & 'idscp -si ',shot,' -ri ',run,                &
@@ -454,15 +454,15 @@ program b2_ual_write
             if (database.ne.'iter'.and.index(ids_path,'imasdb/iter').eq.0) then
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
               write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-               & 'idscp --setDatasetVersion'//                 &
-               &       ' -si ',shot,' -ri ',tmp_run,           &
-               &       ' -so ',shot,' -ro ',run,               &
-               &       ' -d ',trim(database),' -u ',trim(username)
+                & 'idscp --setDatasetVersion'//                &
+                &      ' -si ',shot,' -ri ',tmp_run,           &
+                &      ' -so ',shot,' -ro ',run,               &
+                &      ' -d ',trim(database),' -u ',trim(username)
 #else
               write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
-               & 'idscp -si ',shot,' -ri ',tmp_run,            &
-               &      ' -so ',shot,' -ro ',run,                &
-               &      ' -d ',trim(database),' -u ',trim(username)
+                & 'idscp -si ',shot,' -ri ',tmp_run,           &
+                &      ' -so ',shot,' -ro ',run,               &
+                &      ' -d ',trim(database),' -u ',trim(username)
 #endif
 #ifdef NAGFOR
               call system(systemarg, status, ierror)

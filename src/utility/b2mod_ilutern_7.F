@@ -1,10 +1,6 @@
       module b2mod_ilutern_7
       implicit none
 
-      logical, save :: lfirst
-      !$OMP THREADPRIVATE(lfirst)
-      data lfirst /.true./
-
       contains
 
       SUBROUTINE ILUTERN_7(N1, N2, N1D,                            !srv 11.01.00 26.12.17
@@ -62,7 +58,9 @@ c ma28 common blocks
       logical lbig
       common /ma28hdc3/ tol,themax,big,dxmax,errmax,dres,cgce,     !srv 26.12.17
      1 ndrop,maxit,noiter,nsrch,istart,lbig
-      !$OMP THREADPRIVATE(/ma28fdc3/,/ma28hdc3/)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28fdc3/,/ma28hdc3/)
+#endif
 c
 
 *  -- PROCEDURES --
@@ -76,8 +74,10 @@ c
       integer, save :: kwrite_fmt = -1                             !srv 18.05.02
       integer, save :: kwrite_bnr = -1                             !srv 18.05.02
       save ncall, nwrite
-      !$OMP THREADPRIVATE(ncall, nwrite)
-      !$OMP THREADPRIVATE(kwrite_fmt, kwrite_bnr)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, nwrite)
+!$OMP THREADPRIVATE(kwrite_fmt, kwrite_bnr)
+#endif
       data ncall /0/, nwrite /0/
 
 *=======================================================================
@@ -96,10 +96,14 @@ c
         call ipgetr ('ma28_for_7d_prec', prec)                      !srv 16.01.18
         if (in_parallel() .and. ( nwrite.ne.0 .or.
      &     kwrite_bnr.ne.-1 .or. kwrite_fmt.ne.-1)) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'ilutern_7 OpenMP warning: no file IO ' ,
      &       'in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          nwrite = 0
          kwrite_fmt = -1
          kwrite_bnr = -1
@@ -159,46 +163,46 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
 C    ZUWEISUNG
       NZ=0
       IK=0
-      ICNH=0
-      IRNH=0
-      DO K=1,NC0
-         IF (IJSH(K).EQ.-1) A1HN=ASO1(ISH(K),JSH(K))               !srv 26.01.00
-         IF (IJSH(K).EQ.0) A1HN=ASO(ISH(K),JSH(K))
-         IF (IJSH(K).EQ.1) A1HN=AWE(ISH(K),JSH(K))
-         IF (IJSH(K).EQ.2) A1HN=ACP(ISH(K),JSH(K))
-         IF (IJSH(K).EQ.3) A1HN=AEA(ISH(K),JSH(K))
-         IF (IJSH(K).EQ.4) A1HN=ANO(ISH(K),JSH(K))
-         IF (IJSH(K).EQ.5) A1HN=ANO1(ISH(K),JSH(K))                !srv 26.01.00
+      ICNH_7p=0
+      IRNH_7p=0
+      DO K=1,NC0_7p
+        IF (IJSH_7p(K).EQ.-1) A1HN=ASO1(ISH_7p(K),JSH_7p(K))       !srv 26.01.00
+        IF (IJSH_7p(K).EQ. 0) A1HN= ASO(ISH_7p(K),JSH_7p(K))
+        IF (IJSH_7p(K).EQ. 1) A1HN= AWE(ISH_7p(K),JSH_7p(K))
+        IF (IJSH_7p(K).EQ. 2) A1HN= ACP(ISH_7p(K),JSH_7p(K))
+        IF (IJSH_7p(K).EQ. 3) A1HN= AEA(ISH_7p(K),JSH_7p(K))
+        IF (IJSH_7p(K).EQ. 4) A1HN= ANO(ISH_7p(K),JSH_7p(K))
+        IF (IJSH_7p(K).EQ. 5) A1HN=ANO1(ISH_7p(K),JSH_7p(K))       !srv 26.01.00
 c       IF (A1HN.EQ.0.0e0_R8) THEN
-         if(A1HN.EQ.0.0e0_R8.or.                                   !srv 22.12.19
-     1   (IJSH(K).EQ.-1.and.jsh(k).eq.1).or.                       !srv 26.01.00
-     1   (IJSH(K).EQ.-1.and.jsh(k).eq.2).or.                       !srv 26.01.00
-     1   (IJSH(K).EQ.0.and.jsh(k).eq.1).or.
-     1   (IJSH(K).EQ.1.and.ish(k).eq.1).or.
-     1   (IJSH(K).EQ.3.and.ish(k).eq.n1).or.
-     1   (IJSH(K).EQ.5.and.jsh(k).eq.n2-1).or.                     !srv 26.01.00
-     1   (IJSH(K).EQ.5.and.jsh(k).eq.n2).or.                       !srv 26.01.00
-     1   (IJSH(K).EQ.4.and.jsh(k).eq.n2)) then
-         ELSE
+        if(A1HN.EQ.0.0e0_R8.or.                                    !srv 22.12.19
+     1   (IJSH_7p(K).EQ.-1.and.jsh_7p(k).eq.1).or.                 !srv 26.01.00
+     1   (IJSH_7p(K).EQ.-1.and.jsh_7p(k).eq.2).or.                 !srv 26.01.00
+     1   (IJSH_7p(K).EQ.0.and.jsh_7p(k).eq.1).or.
+     1   (IJSH_7p(K).EQ.1.and.ish_7p(k).eq.1).or.
+     1   (IJSH_7p(K).EQ.3.and.ish_7p(k).eq.n1).or.
+     1   (IJSH_7p(K).EQ.5.and.jsh_7p(k).eq.n2-1).or.               !srv 26.01.00
+     1   (IJSH_7p(K).EQ.5.and.jsh_7p(k).eq.n2).or.                 !srv 26.01.00
+     1   (IJSH_7p(K).EQ.4.and.jsh_7p(k).eq.n2)) then
+        ELSE
           NZ=NZ+1
-          A1H(NZ)=A1HN
-          IRNH(NZ)=IRN(K)
+          A1H_7p(NZ)=A1HN
+          IRNH_7p(NZ)=IRN_7p(K)
           IK=IK+1
-          ICNH(NZ)=ICN(K)
-         ENDIF
+          ICNH_7p(NZ)=ICN_7p(K)
+        ENDIF
       enddo
       DO I=1,N1
-         DO J=1,N2
-          R1(I+(J-1)*N1)=RHS(I,J)
-          S1(I+(J-1)*N1)=0.0e0_R8
-         enddo
+        DO J=1,N2
+          R1_7p(I+(J-1)*N1)=RHS(I,J)
+          S1_7p(I+(J-1)*N1)=0.0e0_R8
+        enddo
       enddo
-      if(kwrite_bnr.eq.ncall) then                                !srv 18.05.02 {
+      if(kwrite_bnr.eq.ncall) then                                 !srv 18.05.02 {
         write(*,*) 'Opening 83'
         open(83,file='b2_7_rhs_binary_'//trim(name),form='unformatted') !srv 11.03.13
         write(83) n
         do i=1,n
-          write(83) r1(i)
+          write(83) r1_7p(i)
         enddo
         close(83)
         write(*,*) 'Opening 82'
@@ -206,7 +210,7 @@ c       IF (A1HN.EQ.0.0e0_R8) THEN
      .       form='unformatted')                                  !srv 11.03.13
         write(82) n, nz
         do i=1,nz
-          write(82) IRNH(i),ICNH(i),A1H(i)
+          write(82) IRNH_7p(i),ICNH_7p(i),A1H_7p(i)
         enddo
         close(82)
       endif                                                       !srv 18.05.02 }
@@ -215,13 +219,13 @@ c       IF (A1HN.EQ.0.0e0_R8) THEN
         open(83,file='b2_7_rhs_'//trim(name))
         write(83,*) n
         do i=1,n
-          write(83,*) r1(i)
+          write(83,*) r1_7p(i)
         enddo
         close(83)
         open(82,file='b2_7_matrix_'//trim(name))
         write(82,*) n, nz
         do i=1,nz
-          write(82,*) IRNH(i),ICNH(i),A1H(i)
+          write(82,*) IRNH_7p(i),ICNH_7p(i),A1H_7p(i)
         enddo
         close(82)
       endif                                                    !srv 18.05.02 }
@@ -235,11 +239,11 @@ cdpc
           write(*,*) 'Writing 81'                              !srv 11.01.00
           write(81,*) n,' n'
           do i=1,n
-            write(81,*) r1(i)                                  !srv 11.01.00
+            write(81,*) r1_7p(i)                               !srv 11.01.00
           enddo
           write(81,*) nz,' nz'                                 !srv 11.01.00
           do i=1,nz
-            write(81,*) IRNH(i),ICNH(i),A1H(i)                 !srv 11.01.00
+            write(81,*) IRNH_7p(i),ICNH_7p(i),A1H_7p(i)        !srv 11.01.00
           enddo
         elseif(nwrite.eq.ncall) then
           write(*,*) 'Closing 81'                              !srv 11.01.00
@@ -247,81 +251,89 @@ cdpc
         endif
       endif
 cdpc
-      if(nltrsol.eq.0) then
-      elseif(nltrsol.eq.1) then
+      if(nltrsol_7p.eq.0) then
+      elseif(nltrsol_7p.eq.1) then
          WRITE(6,*) 'ILUTERN'
       else
          WRITE(6,*) 'ILUTERN'
       endif
-      if(lfirst) then
+      if(lfirst_ilu7) then
          write(*,*) 'ilutern_7: nz = ',nz                      !srv 11.01.00
-         call xertst(nz.le.N_NONZEROS, 'Increase N_NONZEROS')
+         call xertst(nz.le.N_NONZEROS_7p, 'Increase N_NONZEROS')
          iflag=0
       endif
       do i=1,nz
-         irnh_save(i)=irnh(i)
-         icnh_save(i)=icnh(i)
-         a1h_save(i)=a1h(i)
+         irnh_save_7p(i)=irnh_7p(i)
+         icnh_save_7p(i)=icnh_7p(i)
+         a1h_save_7p(i)=a1h_7p(i)
       enddo
-      if(.not.lfirst) then
+      if(.not.lfirst_ilu7) then
          call ma28bdcopy3                                          !srv 26.12.17
-     1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
-         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,*) 'iflag ',iflag
+     1   (n,nz,a1h_7p,solvdim_7p,
+     1    irnh_7p,icnh_7p,icnhkeep_7p,ikeep_7p,iw28_7p,w_7p,iflag)
+         if(nltrsol_7p.gt.0 .or. iflag.lt.0)
+     .    write(*,*) 'iflag ',iflag
          if(iflag.lt.0) then
           do i=1,nz
-            irnh(i)=irnh_save(i)
-            icnh(i)=icnh_save(i)
-            a1h(i)=a1h_save(i)
+            irnh_7p(i)=irnh_save_7p(i)
+            icnh_7p(i)=icnh_save_7p(i)
+            a1h_7p(i)=a1h_save_7p(i)
           enddo
          endif
       endif
-      if(lfirst.or.iflag.lt.0) then
+      if(lfirst_ilu7.or.iflag.lt.0) then
          call ma28adcopy3                                          !srv 26.12.17
-     1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
-         if(nltrsol.gt.0 .or. iflag.lt.0)
+     1   (n,nz,a1h_7p,solvdim_7p,
+     1    irnh_7p,solvdim1_7p,icnh_7p,u,ikeep_7p,iw28_7p,w_7p,iflag)
+         if(nltrsol_7p.gt.0 .or. iflag.lt.0)
      1   write(*,'(a,i6,i8,a,i8,i8,a,i8)')
      .    'iflag,minirn/dim,minicn/dim ',
-     2     iflag,minirn,' /',solvdim1,minicn,' /',solvdim
-         do i=1,solvdim
-          icnhkeep(i)=icnh(i)
+     2     iflag,minirn,' /',solvdim1_7p,minicn,' /',solvdim_7p
+         do i=1,solvdim_7p
+          icnhkeep_7p(i)=icnh_7p(i)
          enddo
-         lfirst=.false.
+         lfirst_ilu7=.false.
       endif
       call ma28idcopy3                                             !srv 26.12.17
-     1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
-     1 r1,s1,res,w,1,prec,iflag)                                   !srv 16.01.18
-      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(1x,a,i3,1p,2g15.8,i6)')
-     1 'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
+     1 (n,nz,a1h_save_7p,irnh_save_7p,icnh_save_7p,
+     1  solvdim_7p,a1h_7p,icnhkeep_7p,ikeep_7p,
+     1  r1_7p,s1_7p,res_7p,w_7p,1,prec,iflag)                         !srv 16.01.18
+      if(nltrsol_7p.gt.0 .or. iflag.lt.0)
+     1 write(*,'(1x,a,i3,1p,2g15.8,i6)')
+     1  'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
 
       if(iflag.lt.0) then                                          !srv 28.06.16 {
 
         do i=1,nz
-          irnh(i) = irnh_save(i)
-          icnh(i) = icnh_save(i)
-          a1h(i)  = a1h_save(i)
+          irnh_7p(i) = irnh_save_7p(i)
+          icnh_7p(i) = icnh_save_7p(i)
+          a1h_7p(i)  = a1h_save_7p(i)
         enddo
 
         call ma28adcopy3                                           !srv 26.12.17
-     1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
-        if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)
-     1     trim(name), iflag, minirn, solvdim1, minicn, solvdim
+     1   (n,nz,a1h_7p,
+     1    solvdim_7p,irnh_7p,solvdim1_7p,icnh_7p,u,
+     1    ikeep_7p,iw28_7p,w_7p,iflag)
+        if(nltrsol_7p.gt.0 .or. iflag.lt.0) write(*,2)
+     1     trim(name), iflag, minirn, solvdim1_7p, minicn, solvdim_7p
     2     format(' ma28ad for ',a13,': iflag =',i9/,
      1     ' minirn =',i9,' solvdim1 =',i9,
      2     ' minicn =',i9,' solvdim =',i9)                         !srv 09.07.02
-        do i=1,solvdim
-          icnhkeep(i)=icnh(i)
+        do i=1,solvdim_7p
+          icnhkeep_7p(i)=icnh_7p(i)
         enddo
 
         call ma28idcopy3                                           !srv 26.12.17
-     1   (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
-     1    r1,s1,res,w,1,prec,iflag)                                !srv 16.01.18
+     1   (n,nz,a1h_save_7p,irnh_save_7p,icnh_save_7p,
+     1    solvdim_7p,a1h_7p,icnhkeep_7p,ikeep_7p,
+     1    r1_7p,s1_7p,res_7p,w_7p,1,prec,iflag)                    !srv 16.01.18
 
         if(iflag.lt.0) then
          write(*,"(a)") 'Problem with solving of '//trim(name)
         else
          write(*,"(3a)") ' Problem of ', trim(name), ' has been solved'
         endif
-        if(nltrsol.gt.0 .or. iflag.lt.0)
+        if(nltrsol_7p.gt.0 .or. iflag.lt.0)
      &   write(*,3)  trim(name), iflag, errmax, dres, noiter
     3    format(' ma28id for ',a13,': iflag =',i9,
      2          ' errmax =',es9.1,' dres =',es9.1,' noiter =',i2)  !srv 09.07.02 28.06.16 }
@@ -331,7 +343,7 @@ cdpc
       DO K=1,N
         J=(K-1)/N1+1
         I=K-(J-1)*N1
-        SOL(I,J)=S1(K)
+        SOL(I,J)=S1_7p(K)
       ENDDO
 
 *  ---------------------------------------------------------------------
@@ -344,12 +356,6 @@ cdpc
       call subend ()
       RETURN
       END SUBROUTINE ILUTERN_7
-
-      subroutine restart_ma28_for_7                                !srv 11.01.00
-      lfirst=.true.
-      write(*,*) 'Restarting ma28_for_7'                           !srv 02.04.18
-      return
-      end subroutine restart_ma28_for_7
 
 *=======================================================================
 *//END ILUTERN_7//

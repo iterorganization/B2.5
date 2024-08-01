@@ -72,14 +72,18 @@
       integer, save :: style_b2mndt = 1                              !srv 07.07.21
       character chns*3                                               !srv 04.07.08
       logical warning
-      !$OMP THREADPRIVATE(iout, iout_b2wdat)
-      !$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(iout, iout_b2wdat)
+!$OMP THREADPRIVATE(no_Ptncr_x_co, no_Ptncr_y_co)
+#endif
       real (kind=R8) ::
      *   rxg, pcm0, pcm1, ttim, t0                                   !srv 07.07.21
       real (kind=R8) ::
      *   aa11(-1:nx,-1:ny,-7:7), wrk0(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1, use_eirene
-      !$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, rxg, pcm0, pcm1, use_eirene)
+#endif
 *   ..procedures
       external xertst, ipgetr
       external b2xvsg, b2xvff, b2ursc, b2usc9, b2upco
@@ -261,9 +265,13 @@ cdjm Jan2017 update particle source components for balance
       endif                                                           !srv 22.05.18
       if (iout.ne.0) then                                             !srv 12.07.02 {
        if (in_parallel()) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'B2NPC11 will not write to file in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
        else
         write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,pb,'b2npc11_pa'//chns)
@@ -279,9 +287,13 @@ cdjm Jan2017 update particle source components for balance
        endif
       elseif (iout_b2wdat.eq.4) then                                  !iys 17.04.17
        if (in_parallel()) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'B2NPC11 will not write to file in parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
        else
         write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,nb,'b2npc11_na'//chns)

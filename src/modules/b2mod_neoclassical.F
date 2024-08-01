@@ -2,6 +2,7 @@
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_version
+      implicit none
 
 c     max. number of ionisation stages
       integer, save :: nzdecl
@@ -24,6 +25,7 @@ c     max. number of ionisation stages
       contains
 
       subroutine alloc_b2mod_neoclassical(nxd,nyd,nsd,mmxd)
+      implicit none
       integer nxd,nyd,nsd,nzd,mmxd
 
       nzdecl=nint(maxval(zn(0:nsd-1)))+1

@@ -33,6 +33,7 @@ FCOPTS = -O -x77 -PIC -compatible # -mismatch
 INCMOD = -I
 MOD = mod
 OBJDEST = -mdir ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST = -mdir ${OBNDIR} -o ${OBNDIR}/$*.o
 
 ifdef USE_OPENMP
   FCOPTS += -openmp
@@ -46,12 +47,12 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef USE_MPI
-SOLPSINCLUDE += -I${EBROOTOPENMPI}/include
-INCMODS += -I${EBROOTOPENMPI}/include
+  SOLPSINCLUDE += -I${EBROOTOPENMPI}/include
+  INCMODS += -I${EBROOTOPENMPI}/include
 endif
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 ifdef IMAS_PKG_LIST
@@ -59,8 +60,7 @@ ifdef IMAS_PKG_LIST
   IMASLIBS = ${LD_AL}
 endif
 
-LD = nagfor
-LDOPTS =
+LD = ${FC}
 DBLFC = ${FC}
 DBLOPTS = -r8
 DBLSED = sed -e s:\#PREC\#:d:g

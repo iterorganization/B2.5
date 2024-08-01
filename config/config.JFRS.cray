@@ -59,6 +59,7 @@ else
   FCOPTS += -O2 -hfp2
 endif
 OBJDEST = -ef -em -J${OBJDIR}
+OBNDEST = -ef -em -J${OBNDIR}
 INCMOD = -p
 MOD = mod
 
@@ -68,7 +69,7 @@ GRLIBES = ${LD_NCARG}
 PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NETCDF}
 
-LD = ftn
+LD = ${FC}
 LDOPTS = -dynamic -hpic
 # JFRS OPENMP
 ifdef USE_OPENMP

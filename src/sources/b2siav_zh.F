@@ -65,15 +65,19 @@
       integer, save :: hstyle = 0, lluciani = 3                     !lk 03.12.09
       integer, save :: iout = 0                                     !srv 17.06.02
       integer, save :: zh_vis_type = 0                              !som 13.01.22
-      !$OMP THREADPRIVATE(ncall, hstyle, lluciani, iout)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, hstyle, lluciani, iout)
+#endif
       character chns*3, chns0*3, chk*1                              !srv 17.06.02
       real (kind=R8) ::
      *  t0, ft,                                                     !srv 16.10.17
      &  ft_h                                                        !som 11.10.21
       real (kind=R8), save ::
-     &  addvis=1.0_R8, addvis1=1.0_R8, chip1 = 0.5e0_R8,            !srv 28.03.06 !srv 19.10.08
-     &  cvsa_mltpl = 1.0e0_R8                                       !iyv 06.12.13
-      !$OMP THREADPRIVATE(addvis, addvis1, chip1, cvsa_mltpl)
+     &  addvis=1.0_R8, addvis1=1.0_R8, chip1 = 0.5_R8,              !srv 28.03.06 !srv 19.10.08
+     &  cvsa_mltpl = 1.0_R8                                         !iyv 06.12.13
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(addvis, addvis1, chip1, cvsa_mltpl)
+#endif
       real (kind=R8) ::
      *  tauia(-1:nx,-1:ny,0:ns-1), hip0(-1:nx,-1:ny),               !srv 23.07.99
      *  hip1(-1:nx,-1:ny), hipgen(-1:nx,-1:ny),                     !srv 23.07.99 19.01.05
@@ -108,10 +112,14 @@
        call ipgetr ('b2siav_cqip1', chip1)                          !srv 28.03.06
        call ipgeti ('b2siav_iout', iout)                            !lk 23.05.06 05.07.07
        if ((iout.ne.0) .and. in_parallel()) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'b2siav_zh OpenMP warning: no file output in ',
      &              'parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        end if
        call ipgeti ('b2siav_style_qip', hstyle)                     !lk 23.05.06 05.07.07
@@ -120,7 +128,7 @@
        call ipgeti ('b2tral_zh_vis_type', zh_vis_type)              !som 13.01.22
       endif
 
-      ft = 4.0e0_R8/3.0e0_R8                                        !srv 16.10.17
+      ft = 4.0_R8/3.0_R8                                            !srv 16.10.17
       ft_h =  8.0_R8/15.0_R8                                        !som 11.10.21
       smbvh = 0.0_R8
       smbvv = 0.0_R8
@@ -130,21 +138,21 @@
 !     if(isb.eq.ismain) then                                        !srv 19.02.21
       if (.not.is_neutral(isb)) then                                !som 11.10.21
         if (addvis.ne.0.0_R8.and.maxval(fac_vis).ne.0.0_R8) then    !srv 19.01.05 28.03.06 { 22.05.18
-          hip0  = 0.0e0_R8
-          hip1  = 0.0e0_R8
-          hipgen= 0.0e0_R8
-          hip0a = 0.0e0_R8
-          hip0b = 0.0e0_R8
-          wrk0 = 0.0e0_R8
+          hip0  = 0.0_R8
+          hip1  = 0.0_R8
+          hipgen= 0.0_R8
+          hip0a = 0.0_R8
+          hip0b = 0.0_R8
+          wrk0 = 0.0_R8
 
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
 * ..calculate the parallel heat flux of ions in the center of the cell
 
-          tt0 = 0.0e0_R8                                            !lk 23.05.06 05.07.07
-          tt1 = 0.0e0_R8
-          tt2 = 0.0e0_R8
-          tt3 = 0.0e0_R8
-          bbaverage2 = 0.0e0_R8
+          tt0 = 0.0_R8                                              !lk 23.05.06 05.07.07
+          tt1 = 0.0_R8
+          tt2 = 0.0_R8
+          tt3 = 0.0_R8
+          bbaverage2 = 0.0_R8
 !pbwdk          mintopcut = ny
           mintopcut = -2
           if (nncut > 0) then
@@ -170,22 +178,22 @@
           enddo
 
 * ..calculate the parallel heat flux of the isb species
-          hip0 = 0.0e0_R8
+          hip0 = 0.0_R8
 
           if (hstyle .eq. 0 .and. minval(zb).gt.0.0_R8) then
-            hip0a = 0.0e0_R8
-            hip0b = 0.0e0_R8
+            hip0a = 0.0_R8
+            hip0b = 0.0_R8
 
             do iy = 0, mintopcut-1    ! for inner surfaces
               do ix = 0, nx
                 if(on_closed_surface(ix,iy)) then
-                  hip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
+                  hip0a(ix,iy) = (-2.5_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &             /bb(ix,iy,0)/bbaverage2(iy))
      &             *(nb(ix,iy)*ti(ix,iy)/qe/zb(ix,iy))*
      &              (ti(topix(ix,iy),topiy(ix,iy))
      &              -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &              (hy1(ix,iy)+0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &               0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &              (hy1(ix,iy)+0.5_R8*hy1(topix(ix,iy),topiy(ix,iy))+
+     &               0.5_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
                 endif
               enddo
             enddo
@@ -194,7 +202,7 @@
               do ix = -1, nx
                 if(on_closed_surface(ix,iy)) then
                   if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >             hip0b(ix,iy) = 0.25e0_R8*(hip0a(ix,iy)*2.0e0_R8
+     >             hip0b(ix,iy) = 0.25_R8*(hip0a(ix,iy)*2.0_R8
      &              +hip0a(leftix(ix,iy),leftiy(ix,iy))
      &              +hip0a(rightix(ix,iy),rightiy(ix,iy)))
                 endif
@@ -205,7 +213,7 @@
               do ix = -1, nx
                 if(on_closed_surface(ix,iy)) then
                   if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >             hip0(ix,iy) = 0.25e0_R8*(hip0b(ix,iy)*2.0e0_R8
+     >             hip0(ix,iy) = 0.25_R8*(hip0b(ix,iy)*2.0_R8
      &              +hip0b(leftix(ix,iy),leftiy(ix,iy))
      &              +hip0b(rightix(ix,iy),rightiy(ix,iy)))
                 endif
@@ -216,7 +224,7 @@
 
           if (hstyle.eq.1 .and. minval(zb).gt.0.0_R8) then
 
-            wrk0 = 0.0e0_R8
+            wrk0 = 0.0_R8
             do iy=0,ny-1
               do ix=-1,nx
                 if(leftix(ix,iy).ne.-2) then                        !srv 26.11.02
@@ -231,24 +239,24 @@
                 if(on_closed_surface(ix,iy)) then
                   if(rightix(ix,iy).ne.nx+1 .and.
      &               topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2)
-     >             hip0(ix,iy)=0.5e0_R8*(wrk0(ix,iy)+
+     >             hip0(ix,iy)=0.5_R8*(wrk0(ix,iy)+
      &               wrk0(rightix(ix,iy),rightiy(ix,iy)))
      &               *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
-     &               -2.5e0_R8*bb(ix,iy,2)
+     &               -2.5_R8*bb(ix,iy,2)
      &               /bb(ix,iy,0)/bb(ix,iy,3)
      &               *(nb(ix,iy)*ti(ix,iy)/qe/zb(ix,iy))*
      &                (ti(topix(ix,iy),topiy(ix,iy))
      &                -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &                (hy1(ix,iy)+
-     &                 0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &                 0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &                 0.5_R8*hy1(topix(ix,iy),topiy(ix,iy))+
+     &                 0.5_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
                 endif
               enddo
             enddo
 
           endif
 
-          hip1 = 0.0e0_R8
+          hip1 = 0.0_R8
           do iy=0,ny-1
             do ix=0,nx-1
               hip1(ix,iy)=chip1*
@@ -257,7 +265,7 @@
             enddo
           enddo
 
-          hipgen = 0.0e0_R8
+          hipgen = 0.0_R8
           do iy=0,ny-1
             do ix=0,nx-1
               hipgen(ix,iy)=hip1(ix,iy)*atan(hip0(ix,iy)/hip1(ix,iy))
@@ -267,24 +275,24 @@
 
 * ..calculate the parallel charge state averaged heat flux of all species
           do inucl= 0, nspecies-1
-            hip0 = 0.0e0_R8
+            hip0 = 0.0_R8
 
             if (hstyle .eq. 0 .and. minval(zb).gt.0.0_R8) then
-              hip0a = 0.0e0_R8
-              hip0b = 0.0e0_R8
+              hip0a = 0.0_R8
+              hip0b = 0.0_R8
 
               do iy = 0, mintopcut-1    ! for inner surfaces
                 do ix = 0, nx
                   if(on_closed_surface(ix,iy)) then
-                    hip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
+                    hip0a(ix,iy) = (-2.5_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &               /bb(ix,iy,0)/bbaverage2(iy))
      &               *(nal(ix,iy,inucl)*ti(ix,iy)/
      &                 qe*Z_to_m1(ix,iy,inucl))
      &               *(ti(topix(ix,iy),topiy(ix,iy))
      &                -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &                (hy1(ix,iy)+
-     &                 0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &                 0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &                 0.5_R8*hy1(topix(ix,iy),topiy(ix,iy))+
+     &                 0.5_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
                   endif
                 enddo
               enddo
@@ -293,7 +301,7 @@
                 do ix = -1, nx
                   if(on_closed_surface(ix,iy)) then
                     if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >               hip0b(ix,iy) = 0.25e0_R8*(hip0a(ix,iy)*2.0e0_R8
+     >               hip0b(ix,iy) = 0.25_R8*(hip0a(ix,iy)*2.0_R8
      &                +hip0a(leftix(ix,iy),leftiy(ix,iy))
      &                +hip0a(rightix(ix,iy),rightiy(ix,iy)))
                   endif
@@ -304,7 +312,7 @@
                 do ix = -1, nx
                   if(on_closed_surface(ix,iy)) then
                     if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >               hip0(ix,iy) = 0.25e0_R8*(hip0b(ix,iy)*2.0e0_R8
+     >               hip0(ix,iy) = 0.25_R8*(hip0b(ix,iy)*2.0_R8
      &                +hip0b(leftix(ix,iy),leftiy(ix,iy))
      &                +hip0b(rightix(ix,iy),rightiy(ix,iy)))
                   endif
@@ -315,7 +323,7 @@
 
             if (hstyle.eq.1 .and. minval(zb).gt.0.0_R8) then
 
-              wrk0 = 0.0e0_R8
+              wrk0 = 0.0_R8
               do iy=0,ny-1
                 do ix=-1,nx
                   if(leftix(ix,iy).ne.-2) then                        !srv 26.11.02
@@ -330,25 +338,25 @@
                   if(on_closed_surface(ix,iy)) then
                     if(rightix(ix,iy).ne.nx+1 .and.
      &                 topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2)
-     >               hip0(ix,iy)=0.5e0_R8*(wrk0(ix,iy)
+     >               hip0(ix,iy)=0.5_R8*(wrk0(ix,iy)
      &                +wrk0(rightix(ix,iy),rightiy(ix,iy)))
      &                *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
-     &                -2.5e0_R8*bb(ix,iy,2)
+     &                -2.5_R8*bb(ix,iy,2)
      &                /bb(ix,iy,0)/bb(ix,iy,3)
      &                *(nal(ix,iy,inucl)*ti(ix,iy)
      &                 /qe*Z_to_m1(ix,iy,inucl))
      &                *(ti(topix(ix,iy),topiy(ix,iy))
      &                 -ti(bottomix(ix,iy),bottomiy(ix,iy)))
      &                /(hy1(ix,iy)+
-     &                  0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &                  0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &                  0.5_R8*hy1(topix(ix,iy),topiy(ix,iy))+
+     &                  0.5_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
                   endif
                 enddo
               enddo
 
             endif
 
-            hip1 = 0.0e0_R8
+            hip1 = 0.0_R8
             do iy=0,ny-1
               do ix=0,nx-1
                 hip1(ix,iy)=chip1*
@@ -357,7 +365,7 @@
               enddo
             enddo
 
-            hipgen_al(-1:nx,-1:ny,inucl) = 0.0e0_R8
+            hipgen_al(-1:nx,-1:ny,inucl) = 0.0_R8
             do iy=0,ny-1
               do ix=0,nx-1
                 hipgen_al(ix,iy,inucl)=hip1(ix,iy)*
@@ -471,9 +479,9 @@
           do iy = 0,ny-1                                            !srv 01.07.05 {
             do ix = 0,nx
               if(leftix(ix,iy).eq.-2) then
-                wrk0(ix,iy)=0.0e0_R8
+                wrk0(ix,iy)=0.0_R8
               else
-                wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_drho(ix,iy,0)/       !som 18.08.21
+                wrk0(ix,iy)=2.0_R8*ft*cvsbhz_drho(ix,iy,0)/       !som 18.08.21
      &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*  !som 18.08.21
      &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
               endif
@@ -491,14 +499,14 @@
                  t0=(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
      *             *wrk2(ix,iy)*rho_rel(ix,iy)                      !srv 01.07.05 } !som 13.08.21
                 endif
-                if (t0.gt.0.0e0) then
+                if (t0.gt.0.0) then
                   smbvv(ix,iy,0)=t0*ub(ix,iy)
                 else
                   smbvv(ix,iy,1)=t0
                 endif
               else
-                smbvv(ix,iy,0) = 0.0e0_R8
-                smbvv(ix,iy,1) = 0.0e0_R8
+                smbvv(ix,iy,0) = 0.0_R8
+                smbvv(ix,iy,1) = 0.0_R8
               endif
             enddo
           enddo                                                     !srv 19.01.05 }
@@ -513,9 +521,9 @@
            do iy=0,ny-1
             do ix=0,nx
               if(leftix(ix,iy).eq.-2) then
-                wrk0(ix,iy)=0.0e0_R8
+                wrk0(ix,iy)=0.0_R8
               else
-                wrk0(ix,iy) = 2.0e0_R8*ft*cvsbhz_drho(ix,iy,0)/     !som 21.10.21
+                wrk0(ix,iy) = 2.0_R8*ft*cvsbhz_drho(ix,iy,0)/       !som 21.10.21
      &           (bb(ix,iy,0)*bb(ix,iy,3)*
      &           vol(ix,iy)/hx(ix,iy)*hz(ix,iy)+
      &           bb(leftix(ix,iy),leftiy(ix,iy),0)*
@@ -537,7 +545,7 @@
      &            bb(ix,iy,0)*wrk2(ix,iy)*
      &            (wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
               else
-                smbvi(ix,iy,0) = 0.0e0_R8
+                smbvi(ix,iy,0) = 0.0_R8
               endif
             enddo
            enddo

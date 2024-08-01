@@ -26,6 +26,7 @@ for f in $files; do
      echo "ERROR, file not found $2/$f";
      missing=$((missing+1))
    else
+     echo "Checking file $f"
      check_b2_output $1/$f $2/$f
    fi
 done > compare_results.log

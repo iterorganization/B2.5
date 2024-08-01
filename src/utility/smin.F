@@ -23,11 +23,15 @@
        call xerrab ('smin--error, n.lt.1.or.incx.eq.0')
       else if (incx.eq.1) then
        t = sx(0)
+#if ( !defined(NAGFOR) && !defined(LEGACYCOMP) )
 !$OMP SIMD REDUCTION(min:t)
+#endif
        do i = 1, n-1
         t = min(t,sx(i))
        enddo
+#if ( !defined(NAGFOR) && !defined(LEGACYCOMP) )
 !$OMP END SIMD
+#endif
        smin = t
       else
        ix = ibase(n,incx)

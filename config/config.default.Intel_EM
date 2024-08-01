@@ -68,14 +68,15 @@ ifdef USE_EIRENE
 endif
 
 LD       = ${FC}
-#LDFLAGS = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lsonnet -lnetcdf -lnag /usr/lib/libstdc++.so.2.9 # -lw -lnsl /usr/lib/libC.so.5 ${SOLPS_LIBS}
-LDFLAGS  = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lsonnet -lnetcdf -lnag -lstdc++
+#LDFLAGS = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lnetcdf -lnag /usr/lib/libstdc++.so.2.9 # -lw -lnsl /usr/lib/libC.so.5 ${SOLPS_LIBS}
+LDFLAGS  = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lnetcdf -lnag -lstdc++
 LDOPTSend= -Wl,-Map,${OBJDIR}/loadmap
-LDEXTRA  = -lblas -lsonnet -lstdc++
+LDEXTRA  = -lblas -lstdc++
 
 INCMOD   = -I
 MOD      = mod
 OBJDEST  = -o ${OBJDIR}/$*.o
+OBNDEST  = -o ${OBNDIR}/$*.o
 
 #!!!Local Variables:
 #!!! mode: Makefile

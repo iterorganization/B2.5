@@ -2087,6 +2087,11 @@ csw 03oct2013 rescaling impurity species specified by zn_rescale
           write (*,*) 'Convergence of bundled rates = ',is,max_delta
         enddo
       endif
+*   ..initialise solver arrays
+      call solver_init_5p(nx, ny)
+      call solver_init_7p(nx, ny)
+      call solver_init_9p(nx, ny)
+      call solver_init_11p(nx, ny)
 *   ..initialise tracing routines
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
@@ -2976,15 +2981,15 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &               tmp_run = run + 1000
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &                 'idscp --setDatasetVersion'//
-     &                      ' -si ',shot,' -ri ',run,
-     &                      ' -so ',shot,' -ro ',tmp_run,
-     &                      ' -d ',trim(database),' -u ',trim(username)
+     &                'idscp --setDatasetVersion'//
+     &                     ' -si ',shot,' -ri ',run,
+     &                     ' -so ',shot,' -ro ',tmp_run,
+     &                     ' -d ',trim(database),' -u ',trim(username)
 #else
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &                 'idscp -si ',shot,' -ri ',run,
-     &                      ' -so ',shot,' -ro ',tmp_run,
-     &                      ' -d ',trim(database),' -u ',trim(username)
+     &                'idscp -si ',shot,' -ri ',run,
+     &                     ' -so ',shot,' -ro ',tmp_run,
+     &                     ' -d ',trim(database),' -u ',trim(username)
 #endif
                     if (database.eq.'iter'.or.
      &                  index(ids_path,'imasdb/iter').gt.0)
@@ -3571,15 +3576,15 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &             tmp_run = run + 1000
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &               'idscp --setDatasetVersion'//
-     &                    ' -si ',shot,' -ri ',run,
-     &                    ' -so ',shot,' -ro ',tmp_run,
-     &                    ' -d ',trim(database),' -u ',trim(username)
+     &              'idscp --setDatasetVersion'//
+     &                   ' -si ',shot,' -ri ',run,
+     &                   ' -so ',shot,' -ro ',tmp_run,
+     &                   ' -d ',trim(database),' -u ',trim(username)
 #else
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &               'idscp -si ',shot,' -ri ',run,
-     &                    ' -so ',shot,' -ro ',tmp_run,
-     &                    ' -d ',trim(database),' -u ',trim(username)
+     &              'idscp -si ',shot,' -ri ',run,
+     &                   ' -so ',shot,' -ro ',tmp_run,
+     &                   ' -d ',trim(database),' -u ',trim(username)
 #endif
                   if (database.eq.'iter'.or.
      &                index(ids_path,'imasdb/iter').gt.0)

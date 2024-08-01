@@ -27,6 +27,9 @@ ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
 else
 FCOPTS   = -O2 -xHost
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -fp-model=precise
+endif
 endif
 
 ifdef USE_OPENMP
@@ -46,6 +49,7 @@ endif
 
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 
 
 #!!!Local Variables:

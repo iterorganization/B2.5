@@ -5,13 +5,13 @@
       use b2mod_b2mrel
       use b2mod_subsys
       implicit none
-      integer, allocatable ::
+      integer, allocatable, save ::
      &  is_i(:)
-      real (kind=R8), allocatable ::
+      real (kind=R8), allocatable, save ::
      &  z2n_xy(:,:,:), nal(:,:,:), Ia(:,:,:), av_ualpha(:,:,:),
      &  gt_Ac(:,:,:), gtalc(:,:,:), avm_u(:,:), rho_A_rel(:,:,:),
      &  gavm_uc(:,:), Z_to_m1(:,:,:)
-      real (kind=R8), allocatable ::
+      real (kind=R8), allocatable, save ::
      &  w_out(:,:,:), hTdp_out(:,:,:), hwdp_out(:,:,:),
      &  rTdpgamma_out(:,:,:), rwdpgamma_out(:,:,:)
 *-----------------------------------------------------------------------

@@ -1096,7 +1096,7 @@ c
             mintopcut=minval(topcut(1:nncut))
           endif
 *   ..modification of case (9)
-          do iy = -1, ny                  ! for SOL and PR region
+          do iy = -1, ny                  ! for SOL and PFR region
            do ix = -1, nx
             if(.not.on_closed_surface(ix,iy)) then
              do is = 0, ns-1
@@ -1176,8 +1176,8 @@ c
           enddo
          case(9)                                                      !srv 22.05.09 {
           mintopcut=minval(topcut(1:nncut))
-*   ..modification of case (5). It is used barrier function
-          do iy = -1, ny                  ! for SOL and PR region
+*   ..modification of case (5). The barrier function is used
+          do iy = -1, ny                  ! for SOL and PFR region
            do ix = -1, nx
             if(.not.on_closed_surface(ix,iy)) then
              do is = 0, ns-1
@@ -1273,7 +1273,7 @@ c
 
            allocate(coord(-1:ny), fun(-1:ny,0:2))
 
-*          shift coordinates in order to separatrix is located in zero
+*          shift coordinates in order to locate separatrix at zero
            coord(-1:ny) = lengthy(nmdpl,-1:ny)-lengthy(nmdpl,topcut(1))
 
            filename(0) = 'b2tdnc.dat'
@@ -1462,7 +1462,7 @@ c
            endif
           endif
 
-          do iy = -1, ny                  ! for SOL and PR region     !srv 13.03.07
+          do iy = -1, ny                  ! for SOL and PFR region    !srv 13.03.07
            do ix = -1, nx
             if(.not.on_closed_surface(ix,iy)) then
              do is = 0, ns-1
@@ -1797,28 +1797,28 @@ c
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *   bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
+     *  bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   dna0(-1:nx,-1:ny,0:ns-1), dpa0(-1:nx,-1:ny,0:ns-1),
+     *  dna0(-1:nx,-1:ny,0:ns-1), dpa0(-1:nx,-1:ny,0:ns-1),
      &  vla0(-1:nx,-1:ny,0:1,0:ns-1), vsa0(-1:nx,-1:ny,0:ns-1),
      &  hci0(-1:nx,-1:ny), hcib(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
-     *   hce0(-1:nx,-1:ny), sig0(-1:nx,-1:ny), alf0(-1:nx,-1:ny)
+     *  hce0(-1:nx,-1:ny), sig0(-1:nx,-1:ny), alf0(-1:nx,-1:ny)
 *   ..common blocks
 *   ..local variables
       integer ncall, n2, ix, iy, ixref, iyref
       real (kind=R8) ::
-     *   eta, current_eta, eta_floor, eta_ceiling, eta_alpha
+     *  eta, current_eta, eta_floor, eta_ceiling, eta_alpha
       logical models_found
       save ncall, ixref, iyref, eta, eta_floor, eta_ceiling, eta_alpha
 *   ..procedures
       external ipgeti, ipgetr, b2xvsg
 *   ..initialisation
       data ncall/0/, eta /2.0_R8/,
-     1 eta_floor/0.1_R8/, eta_ceiling/10.0_R8/, eta_alpha/0.5_R8/
+     1  eta_floor/0.1_R8/, eta_ceiling/10.0_R8/, eta_alpha/0.5_R8/
 
 *   ..subprogram start-up calls
       call subini ('set_transport_eta')
