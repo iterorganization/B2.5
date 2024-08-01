@@ -2585,11 +2585,36 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tqna_keps_local</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If '0': use Larmor radius at OMP in k(-eps)-model.
+					If '1': use local Larmor radius for each cell in k(-eps)-model.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_local</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If '1': print output for k(-eps)-model.
+				</description>
+			</switch>
+			<switch>
 				<name>b2tqna_keps_cd</name>
 				<default>0.1</default>
 				<type>real</type>
 				<description>
 					Multiplier for the diffusion coefficient in the k(-eps) model. Recommended range: 0.1 ... 1.0
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_shear</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for the shear contribution to the diffusion coefficient in the k(-eps) model.
 				</description>
 			</switch>
 			<switch>
@@ -2617,6 +2642,22 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tqna_keps_sig</name>
+				<default>1e-4</default>
+				<type>real</type>
+				<description>
+					Multiplier for the anomalous electrical condicutivity (w.r.t. diffusion coefficient x qe x ne(omp)).
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_keps_alf</name>
+				<default>1e-4</default>
+				<type>real</type>
+				<description>
+					Multiplier for the anomalous thermo-electric coefficient (w.r.t. diffusion coefficient x sqrt(qe/te) x ne(omp)).
+				</description>
+			</switch>
+			<switch>
 				<name>b2tqna_keps_dkt</name>
 				<default>0.1</default>
 				<type>real</type>
@@ -2624,6 +2665,73 @@
 					Multiplier for the diffusivity in kt-equation (w.r.t. diffusion coefficient).
 				</description>
 			</switch>
+			<switch>
+				<name>b2tqna_keps_dzt</name>
+				<default>0.1</default>
+				<type>real</type>
+				<description>
+					Multiplier for the diffusivity in zt-equation (w.r.t. diffusion coefficient).
+				</description>
+			</switch>
+			<switchgroup>
+				<name>b2tfhi_fflokt*</name>
+				<description>
+					fflokt and fconkt are fudge factors to approximate enhanced parallel transport of k due to term related to (fluctuations in parallel current) * (fluctuations in potential)
+          In principle this models the same effect as skt_diss (thus: needs b2sikt_fac_sheath_* = 0.0).
+				</description>
+				<switch>
+					<name>b2tfhi_fflokt</name>
+					<default>0.0</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2tfhi_fconkt</name>
+					<default>0.0</default>
+					<type>real</type>
+				</switch>
+			</switchgroup>
+			<switchgroup>
+				<name>b2tfhi_fflozt*</name>
+				<description>
+					fflozt and fconzt are fudge factors to the transport of zt. See code for details.
+				</description>
+				<switch>
+					<name>b2tfhi_fflozt</name>
+					<default>0.0</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2tfhi_fconzt</name>
+					<default>0.0</default>
+					<type>real</type>
+				</switch>
+			</switchgroup>
+			<switch>
+				<name>b2tfhe_vis_kt</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the perpendicular current due to Reynolds-stress in kt-model
+				</description>
+			</switch>
+			<switchgroup>
+				<name>b2tqna_keps_init*</name>
+				<description>
+					Mechanism to enable a smooth transition between standard anomalous transport coefficients and k(-epsilon)-model coefficients.
+					The final coefficients (dna0, vsa0, hcib, hce0, sig0, alf0) are linearly interpolated between the standad an k(-epsilon) values based on keps_fac.
+					keps_fac starts out as b2tqna_keps_init and the value is multiplied by b2tqna_keps_inc at each iteration.
+				</description>
+				<switch>
+					<name>b2tqna_keps_init</name>
+					<default>1.0</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2tqna_keps_inc</name>
+					<default>1.0</default>
+					<type>real</type>
+				</switch>
+			</switchgroup>
 			<switch>
 				<name>b2tfhi_fsigkt</name>
 				<default>0.1</default>
@@ -2633,7 +2741,40 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2sikt_fac_diss_sol</name>
+				<name>b2sikt_model</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Model to compute the sources in the energy equations due to the k-eps model. Currently only a single model is available.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Currently only a single computation style for the sources in the energy equations due to the k-eps model is available.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_sheath_local</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If '0': use sound speed, connection length and Larmor radius at OMP in k(-eps)-model.
+					If '1': use local sound speed, connection length and Larmor radius.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_kt_source_stab</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Numerical stabilization of sources. See code for details.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_fac_diss</name>
 				<default>10.0</default>
 				<type>real</type>
 				<description>
@@ -2646,6 +2787,63 @@
 				<type>real</type>
 				<description>
 					Multiplier for the dissipation term of kt in the core region.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_fac_sheath</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for the sheath loss term of kt in the SOL region.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_fac_sheath_core</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for the sheath loss term of kt in the core region.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_fac_diss_core_mode</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If '0': use connection length in expression for dissipation term of kt.
+					If '1': use b2sikt_fac_diss_lpar in expression for dissipation term of kt.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_min_source</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If '1': make sure that production terms of kt minus the dissipative losses and sheath losses do not become negative.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_fac_aniso</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If '1': add anisothermal contribution to transport coefficients from k-(epsilon)-model.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sikt_fac_vis_RS</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for Reynolds-stress term in k-epsilon equations.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfhi_fkt_hie</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Multiplier for transport of kt associated with ExB heat fluxes.
 				</description>
 			</switch>
 			<switch>
