@@ -89,8 +89,8 @@
       cvsa_drho = 0.0_R8
       allocate(cvsahz_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !srv 09.01.01
       allocate(cvsahz_drho(-1:nxd,-1:nyd,0:1,0:nsd-1))                  !som 18.08.21
-      cvsahz_drho = 0.0_R8      
-      allocate(chci_a(-1:nxd,-1:nyd,0:1,0:nsd-1)) 
+      cvsahz_drho = 0.0_R8
+      allocate(chci_a(-1:nxd,-1:nyd,0:1,0:nsd-1))
       chci_a = 0.0_R8
       allocate(csig_cl(-1:nxd,-1:nyd,0:1))
       allocate(calf_cl(-1:nxd,-1:nyd,0:1))
