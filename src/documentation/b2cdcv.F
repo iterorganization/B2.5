@@ -184,6 +184,37 @@
 *     For iVx in (1:nVx), vxBzb(iFc) specifies the quantity Bz/B**2 - Bz/<B**2>
 *     at vertex iVx.
 *
+*   ....Flux-tube quantities
+*
+*     cvConn - (1:nCv) real*8 array.
+*     For iCv in (1:nCv), cvConn(iCv) specifies the connection length for cell
+*     iCv.
+*
+*     vxConn - (1:nVx) real*8 array.
+*     For iVx in (1:nVx), vxConn(iVx) specifies the connection length for vertex
+*     iVx.
+*
+*     ftConn - (1:nFt) real*8 array.
+*     For iFt in (1:nFt), ftConn(iFt) specifies the connection length for
+*     flux tube iFt.
+*
+*     fsConn - (1:nFs) real*8 array.
+*     For iFs in (1:nFs), fsConn(iFs) specifies the connection length for
+*     flux surface iFs.
+*
+*     ftEps - (1:nFt) real*8 array.
+*     For iFt in (1:nFt), ftEps(iFt) specifies the inverse aspect ratio for
+*     flux tube iFt.
+*
+*     ftBbav2 - (1:nFt) real*8 array.
+*     For iFt in (1:nFt), ftBbav2(iFt) specifies the average |B|**2 on the flux
+*     tube.
+*
+*     fsPsi - (1:nFs) real*8 array.
+*     For iFs in (1:nFs), fsPsi(iFs) specifies Psi on each flux surface.
+*
+*     psi_increasing - logical
+*     .true. if the Psi value increases from the O-point to the active X-point.
 *
 *     periodic_bc - integer
 *     periodic_bc tells whether the cuts correspond to periodic boundary
