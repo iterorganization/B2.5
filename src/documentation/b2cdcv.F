@@ -184,6 +184,7 @@
 *     For iVx in (1:nVx), vxBzb(iFc) specifies the quantity Bz/B**2 - Bz/<B**2>
 *     at vertex iVx.
 *
+*
 *     periodic_bc - integer
 *     periodic_bc tells whether the cuts correspond to periodic boundary
 *     conditions (for example in the case of limited plasmas or
@@ -254,34 +255,32 @@
 *     The species are indexed by (0:ns-1).
 *     It will hold that 1.le.ns.
 *
-*     na - (-1:nx,-1:ny,0:ns-1) real*8 array.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), na(ix,iy,is) specifies
-*     the density of atomic species (is) on the (ix,iy) cell.
-*     It will hold that 0.lt.na(,,).
+*     na - (1:nCv,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:ns-1), na(iCv,is) specifies
+*     the density of atomic species (is) on the (iCv) cell.
+*     It will hold that 0.lt.na(,).
 *
-*     ua - (-1:nx,-1:ny,0:ns-1) real*8 array.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), ua(ix,iy,is) specifies
-*     the parallel velocity of atomic species (is) on the (ix,iy) cell.
+*     ua - (1:nCv,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:ns-1), ua(iCv,is) specifies
+*     the parallel velocity of atomic species (is) on the (iCv) cell.
 *     The sign of the parallel velocity indicates whether it is flowing
 *     in the same direction as the local poloidal magnetic field.
 *
-*     te - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
-*     temperature on the (ix,iy) cell. It will hold that 0.lt.te(,).
+*     te - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), te(iCv) specifies the electron
+*     temperature on the (iCv) cell. It will hold that 0.lt.te(,).
 *
-*     ti - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), ti(ix,iy) specifies the all atom
-*     temperature on the (ix,iy) cell. It will hold that 0.lt.ti(,).
+*     ti - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), ti(iCv) specifies the all atom
+*     temperature on the (iCv) cell. It will hold that 0.lt.ti(,).
 *
-*     po - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), po(ix,iy) specifies the electric
-*     potential on the (ix,iy) cell.
+*     po - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), po(iCv) specifies the electric
+*     potential on the (iCv) cell.
 *
 *     For all the fluxes below, the sign convention is as follows.
-*     Fluxes between poloidal neighbors are positive if directed in the
-*     direction of increasing poloidal (ix) index.
-*     Fluxes between radial neighbors are positive if directed in the
-*     direction of increasing radial (iy) index.
+*     Fluxes are positive when they flow in the local x-direction,
+*     i.e. from C1 to C2.
 *
 *     fna - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
