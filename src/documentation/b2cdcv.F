@@ -28,6 +28,8 @@
 *     nCv = nCi + nCg specifies the number of finite volume cells in the grid.
 *     nCi is the number of internal cells. nCg is the number of guard cells.
 *
+*   ....cell-centered variables
+*
 *     cvX, cvY - (1:nCv) real*8 array.
 *     For (iCv) in (1:nCv), cvX(iCv) specifies the
 *     Cartesian X-coordinate of the center of the cell and cvX(iCv) specifies
@@ -39,7 +41,8 @@
 *     cvBb(iCv,0:2) are the (x,y,z)-components and cvBb(iCv,3) is
 *     the absolute magnetic field strength.
 *     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,,2)**2.)
-*     It will hold that 0.lt.cvBb(,,3).
+*     It will hold that 0.le.cvBb(,0:3), because the direction of the
+*     magnetic field follows from cvEb (see below).
 *
 *     cvVol - (1:nCv) real*8 array.
 *     For (iCv) in (1:nCv), cvVol(iCv) specifies the volume of
@@ -66,13 +69,67 @@
 *     Here, <B**2> is the magnetic field averaged over the core region.
 *
 *     cvEb - (1:nCv,0:2) real*8 array.
-*     For (iCv) in (1:nCv), cvEb(iCv,0:2) specifies the unit vector pointing
-*     along the magnetic field in Cartesian X,Y,Z coordinates.
+*     cvEb(iCv,0:2) specifies the direction of the magnetic field at
+*     the center of the cell iCv in the (R,Z,toroidal) axis system.
+*     (sqrt(cvEb(iCv,0)**2+cvEb(iCv,1)**2+cvEb(iCv,2)**2)=1)
 *
 *     signmf - real*8.
 *     signfm specifies the direction of the poloidal field.
 *     signmf = +1.0: the poloidal field goes clockwise around the plasma
-*     signmf = -1.0: the poloidal field goes counerclockwise around the plasma 
+*     signmf = -1.0: the poloidal field goes counterclockwise around the plasma
+*
+*   ....face-based variables
+*
+*     nFc - integer.
+*     nFc is the number of cell faces in the grid. A face connects two internal
+*     cells or an internal cell and a guard cell. There are no faces
+*     between guard cells in the unstructured version.
+*
+*     fcS - (1:nFc,1:2) real*8 array.
+*     For iFc in (1:nFc), fcHc(iFc,:) specifies the total area of face iFc.
+*
+*     fcQgam - (1:nFc,0:1) real*8 array.
+*     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and
+*     fcQgam(iFc,1) specifies sin(t), where t is the included angle
+*     between the cell-connector vector and the normal vector
+*     of face iFc. It will hold that 0.lt.fcQgam(,).le.1.
+*
+*     fcQalf - (1:nFc,0:1) real*8 array.
+*     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
+*     fcQalf(iFc,1) specifies sin(t), where t is the included angle
+*     between the magnetic field vector and the face normal.
+*
+*     fcQbet - (1:nFc,0:1) real*8 array.
+*     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
+*     fcQbet(iFc,1) specifies sin(t), where t is the included angle
+*     between the cell-connector and the magnetic field vector.
+*
+*     fcPbs - (1:nFc) real*8 array.
+*     For iFc in (1:nFc), fcPbs(iFc) specifies the product
+*     (fcBx/fcBb)*sx or (magnetic field pitch)*(surface area),
+*     namely the parallel contact area.
+*
+*     fcPbshz - (1:nFc) real*8 array.
+*     For iFc in (1:nFc), fcPbshz(iFc) specifies the product
+*     (fcBx/fcBb)*sx*hz or (magnetic field pitch)*(surface area)*(hz).
+*
+*     fcHc - (1:nFc,1:2) real*8 array.
+*     For iFc in (1:nFc), fcHc(iFc,:) are the distances from
+*     the cell centers fcCv(iFc,:) to the face center of face iFc.
+*
+*     fcHt - (1:nFc) real*8 array.
+*     For iFc in (1:nFc), fcHt is the face length of face iFc.
+*
+*     fcHz - (1:nFc) real*8 array.
+*     For iFc in (1:nFc), fcHz is the length of the face in the z-direction.
+*
+*     fcBb - (1:nFc,0:3) real*8 array.
+*     For iFc in (1:nFc), fcBb(iFc,0:3) specifies the magnetic field
+*     at the cell faces, analogously to cvBb.
+*
+*     fcEb - (1:nFc,0:3) real*8 array.
+*     For iFc in (1:nFc), fcEb(iFc,0:3) specifies the unit vector point along
+*     the magnetic field at face center iFc.
 *
 *     qz - (-1:nx,-1:ny,0:1) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
@@ -83,35 +140,38 @@
 *     vectors.)
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
-*     qc - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
-*     t is the complementary angle between the x-direction of the
-*     (ix,iy) cell and its left face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry.
-*     It will hold that 0.lt.qc(,).le.1.
-*
-*     gs - (-1:nx,-1:ny,0:2) real*8 array.
-*     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
-*     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
-*     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
-*     gsx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), gsy(ix,iy) specifies the area of the
-*     face between the (ix,iy) cell and its bottom neighbor. For iy.eq.-1,
-*     gsy(-1:nx,iy) will hold 0.
-*     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
-*     (ix,iy) cell normal to the third (ignorable) coordinate.
-*
 *     isymm - integer.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0
 *     implies a slab geometry, isymm.eq.1.or.isymm.eq.2 imply rotational
-*     symmetry about the r=0 axis, and isymm.eq.3.or.isymm.eq.4
-*     indicate rotational symmetry about the z=0 axis.
+*     symmetry about the crx=0 axis, and isymm.eq.3.or.isymm.eq.4
+*     indicate rotational symmetry about the cry=0 axis.
 *     Other values are not allowed.
 *     isymm.eq.1.or.isymm.eq.3 mean a toroidal geometry case, i.e.
 *     with a toroidal (out-of-plane) magnetic field component.
 *     isymm.eq.2.or.isymm.eq.4 mean a cylindrical geometry case, i.e.
 *     no toroidal magnetic field component.
+*
+*   ....vertex-based variables
+*
+*     vxX, vxY - (1:nVx) real*8 array.
+*     vxX(iVx) specify the horizontal coordinate and vxY(iVx)
+*     specify the vertical coordinates (in the physical plane) of
+*     the vertex with number iVx.
+*
+*     vxFpsi - (1:nVx) real*8 array.
+*     vxFpsi(iVx) specifies the potential for the magnetic field
+*     components (bx,by) of the vertex with number iVx.
+*     In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
+*     In the case of toroidal or cylindrical symmetry,
+*     bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
+*     where R is the distance to the axis of symmetry.
+*
+*     vxFfbz - (1:nVx) real*8 array.
+*     vxFfbz(iVx) specifies the field function for the magnetic
+*     field component bz of the vertex with number iVx.
+*     In the case of straight symmetry, bz=ffbz. In the case of
+*     toroidal or cylindrical symmetry, bz=ffbz/(2*pi*R), where R is
+*     the distance to the axis of symmetry.
 *
 *     periodic_bc - integer.
 *     periodic_bc indicates whether the geometry closes upon itself (i.e.
@@ -119,25 +179,6 @@
 *     is 0. periodic_bc.eq.1 implies that periodic BC are being used. This
 *     case is used for the simulation of diverted stellarator islands or
 *     limiters.
-*
-*     fpsi - (-1:nx,-1:ny,0:3,0:2) real*8 array.
-*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i,0) specifies the
-*     potential for the magnetic field components (bx,by) at the
-*     (ix,iy,i) position.
-*     fpsi(ix,iy,i,1) specifies the (dpsi/dx) derivative.
-*     fpsi(ix,iy,i,2) specifies the (dpsi/dy) derivative.
-*     (In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
-*     In the case of toroidal or cylindrical symmetry,
-*       bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
-*     where R is the distance to the axis of symmetry.)
-*
-*     ffbz - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), ffbz(ix,iy,i) specifies the
-*     field function for the magnetic field component bz at the
-*     (ix,iy,i) position.
-*     (In the case of straight symmetry, bz=ffbz. In the case of
-*     toroidal or cylindrical symmetry, bz=ffbz/(2*pi*R), where R is
-*     the distance to the axis of symmetry.)
 *
 *     /b2cmfs/ - common block.
 *     /b2cmfs/ is reserved for numerical mhd equilibrium data.
@@ -187,12 +228,6 @@
 *     hz*(bx/bb)*sx and pbshzy(ix,iy) specifies hz*(by/bb)*sy, or (magnetic
 *     field pitch)*(surface area)*hz
 *
-*     bzb - (-1:nx,-1:ny) real*8 array contains Bz/B**2 - Bz/<B**2> !srv 09.06.08
-*     on the cell centre.
-*
-*     OnedBsq - (-1:nx,-1:ny) real*8 array.                         !srv
-*     For (ix,iy) in (-1:nx,-1:ny), OnedBsq(ix,iy) specifies the
-*     1/bb(,,3)**2 on the cell centre
 *
 *   ..basic physical parameters
 *
