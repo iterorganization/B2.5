@@ -127,18 +127,9 @@
 *     For iFc in (1:nFc), fcBb(iFc,0:3) specifies the magnetic field
 *     at the cell faces, analogously to cvBb.
 *
-*     fcEb - (1:nFc,0:3) real*8 array.
-*     For iFc in (1:nFc), fcEb(iFc,0:3) specifies the unit vector point along
-*     the magnetic field at face center iFc.
-*
-*     qz - (-1:nx,-1:ny,0:1) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
-*     qz(ix,iy,1) specifies cos(t), where t is the complementary angle
-*     between the x-direction and the y-direction on the (ix,iy) cell.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. (qz(ix,iy,0) is the inner product of the x and y unit
-*     vectors.)
-*     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
+*     fcEb - (1:nFc,0:2) real*8 array.
+*     For iFc in (1:nFc), fcEb(iFc,0:2) specifies the unit vector point along
+*     the magnetic field at face center iFc. Analogous to cvEb.
 *
 *     isymm - integer.
 *     isymm specifies the type of symmetry of the geometry: isymm.eq.0
@@ -173,12 +164,33 @@
 *     toroidal or cylindrical symmetry, bz=ffbz/(2*pi*R), where R is
 *     the distance to the axis of symmetry.
 *
-*     periodic_bc - integer.
-*     periodic_bc indicates whether the geometry closes upon itself (i.e.
-*     whether periodic boundary conditions are necessary). The default value
-*     is 0. periodic_bc.eq.1 implies that periodic BC are being used. This
-*     case is used for the simulation of diverted stellarator islands or
-*     limiters.
+*     vxEb - (1:nVx,0:2) real*8 array.
+*     For iVx in (1:nVx), vxEb(iFc,0:2) specifies the unit vector point along
+*     the magnetic field at the vertex iVx. Analogous to cvEb.
+*
+*     vxBb - (1:nVx,0:3) real*8 array.
+*     For iVx in (1:nVx), vxBb(iFc,0:3) specifies the magnetic field at
+*     the vertex iVx. Analogous to cvBb.
+*
+*     vxHz - (1:nVx) real*8 array.
+*     For iVx in (1:nVx), vxHz(iFc) specifies the toroidal length of the vertex
+*     iVx.
+*
+*     vxOnedBsq - (1:nVx) real*8 array.
+*     For iVx in (1:nVx), vxOnedBsq(iFc) specifies the quantity 1/B**2 at the
+*     vertex iVx.
+*
+*     vxBzb - (1:nVx) real*8 array.
+*     For iVx in (1:nVx), vxBzb(iFc) specifies the quantity Bz/B**2 - Bz/<B**2>
+*     at vertex iVx.
+*
+*     periodic_bc - integer
+*     periodic_bc tells whether the cuts correspond to periodic boundary
+*     conditions (for example in the case of limited plasmas or
+*     a diverted stellarator island in a toroidally averaged geometry).
+*     periodic_bc.eq.0 is the default.
+*     periodic_bc.eq.1 indicates that periodic boundary conditions are
+*     being used.
 *
 *     /b2cmfs/ - common block.
 *     /b2cmfs/ is reserved for numerical mhd equilibrium data.
@@ -208,25 +220,6 @@
 *       nlloc(i) = 2: cell y-faces, indices (-1:nx,0:ny).
 *       nlloc(i) = 3: cell corners, indices (0:nx,0:ny).
 *     For nlreg.le.i.lt.nlrmx, nlloc(i) is unspecified.
-*
-*   ..auxiliary variables describing the geometry
-*
-*     pbs - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
-*     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic
-*     field pitch)*(surface area), namely the parallel contact area,
-*     on the (ix,iy) cell left and bottom faces respectively.
-*     In the case where the grid covers the full vacuum vessel,
-*     pbsy also contains a contribution from the narrowing of the
-*     flux tube when impacting the wall structures.
-*     See routine b2xgbs for the form of interpolation employed.
-*
-*     pbshz - (-1:nx,-1:ny,0:1) real*8 array.                       !srv 09.06.08
-*     (Let pbshzx(,)=pbshz(,,0) and pbshzy(,)=pbshz(,,1).)
-*     For (ix,iy) in (-1:nx,-1:ny), pbshzx(ix,iy) specifies the product
-*     hz*(bx/bb)*sx and pbshzy(ix,iy) specifies hz*(by/bb)*sy, or (magnetic
-*     field pitch)*(surface area)*hz
 *
 *
 *   ..basic physical parameters
