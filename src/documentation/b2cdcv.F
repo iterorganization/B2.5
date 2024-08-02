@@ -10,7 +10,7 @@
 *  1. purpose
 *
 *     B2CDCV contains a description of some of the variables used in
-*     the B2 code. No computation is performed in this routine.
+*     the B2.5 code. No computation is performed in this routine.
 *
 *-----------------------------------------------------------------------
 *.text
@@ -24,65 +24,55 @@
 *
 *   ..variables describing the geometry
 *
-*     nx, ny - integer.
-*     nx and ny specify the number of interior cells along the first
-*     and the second coordinate, respectively. The total number of
-*     cells is (nx+2)*(ny+2); they are indexed by (-1:nx,-1:ny).
-*     It will hold that 0.le.nx and 0.le.ny.
+*     nCv, nCi, nCg - integer.
+*     nCv = nCi + nCg specifies the number of finite volume cells in the grid.
+*     nCi is the number of internal cells. nCg is the number of guard cells.
 *
-*     crx, cry - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), crx(ix,iy,0:3) specify the
-*     horizontal coordinates and cry(ix,iy,0:3) specify the vertical
-*     coordinates (in the physical plane) of the four corners of the
-*     (ix,iy) cell, mapped as follows:
-*     (,,0): lower left corner,  (,,1): lower right corner,
-*     (,,2): upper left corner,  (,,3): upper right corner.
-*     One expects the following identities to hold away from the
-*     boundaries:
-*     crx(ix,iy,0)=crx(ix-1,iy,1)=crx(ix,iy-1,2)=crx(ix-1,iy-1,3),
-*     cry(ix,iy,0)=cry(ix-1,iy,1)=cry(ix,iy-1,2)=cry(ix-1,iy-1,3),
-*     However, there may be cuts in the geometry, in which case these
-*     identities need not hold.
+*     cvX, cvY - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvX(iCv) specifies the
+*     Cartesian X-coordinate of the center of the cell and cvX(iCv) specifies
+*     the Cartesian Y-coordinate of the center of the cell.
 *
-*     fpsi - (-1:nx,-1:ny,0:3,0:2) real*8 array.
-*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i,0) specifies the
-*     potential for the magnetic field components (bx,by) at the
-*     (ix,iy,i) position.
-*     fpsi(ix,iy,i,1) specifies the (dpsi/dx) derivative.
-*     fpsi(ix,iy,i,2) specifies the (dpsi/dy) derivative.
-*     (In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
-*     In the case of toroidal or cylindrical symmetry,
-*       bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
-*     where R is the distance to the axis of symmetry.)
-*
-*     ffbz - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), ffbz(ix,iy,i) specifies the
-*     field function for the magnetic field component bz at the
-*     (ix,iy,i) position.
-*     (In the case of straight symmetry, bz=ffbz. In the case of
-*     toroidal or cylindrical symmetry, bz=ffbz/(2*pi*R), where R is
-*     the distance to the axis of symmetry.)
-*
-*     bb - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), bb(ix,iy,0:3) specifies the
-*     magnetic field at the center of the (ix,iy) cell.
-*     bb(ix,iy,0:2) are the (x,y,z)-components and bb(ix,iy,3) is
+*     cvBb - (1:nCv,0:3) real*8 array.
+*     For (iCv) in (1:nCv), cvBb(iCv,0:3) specifies the
+*     magnetic field at the center of the (iCv) cell.
+*     cvBb(iCv,0:2) are the (x,y,z)-components and cvBb(iCv,3) is
 *     the absolute magnetic field strength.
-*     (bb(,,3)=sqrt(bb(,,0)**2+bb(,,1)**2+bb(,,2)**2.)
-*     It will hold that 0.lt.bb(,,3).
+*     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,,2)**2.)
+*     It will hold that 0.lt.cvBb(,,3).
 *
-*     vol - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
-*     the (ix,iy) cell. (In the case of toroidal symmetry this volume
+*     cvVol - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvVol(iCv) specifies the volume of
+*     the (iCv) cell. (In the case of toroidal symmetry this volume
 *     includes a factor 2*pi*R, while in the case of cylindrical
 *     symmetry it includes a factor 2*pi*Z.)
-*     It will hold that 0.lt.vol(,).
+*     It will hold that 0.lt.cvVol().
 *
-*     hx, hy, hz - (-1:nx,-1:ny) real*8 array.                          !srv 09.06.08
-*     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
-*     x-diameter, the y-diameter and z-diameter respectively, of the 
-*     (ix,iy) cell.
-*     It will hold that 0.lt.hx(,) and 0.lt.hy(,) and 0.lt.hz(,).
+*     cvSz - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvSz(iCv) specifies the area of
+*     the (iCv) cell perpendicular to the z-direction.
+*
+*     cvHz - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvHz(iCv) specifies the length of
+*     the (iCv) cell in the z-direction, measured at the cell center.
+*
+*     cvOnedBsq - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvOnedBsq(iCv) specifies the quantity
+*     1/B**2 in the iCv cell center.
+*
+*     cvBzb - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvBzb(iCv) specifies the quantity
+*     Bz/B**2 - Bz/<B**2> in the iCv cell center, used for P-S/mdf flows.
+*     Here, <B**2> is the magnetic field averaged over the core region.
+*
+*     cvEb - (1:nCv,0:2) real*8 array.
+*     For (iCv) in (1:nCv), cvEb(iCv,0:2) specifies the unit vector pointing
+*     along the magnetic field in Cartesian X,Y,Z coordinates.
+*
+*     signmf - real*8.
+*     signfm specifies the direction of the poloidal field.
+*     signmf = +1.0: the poloidal field goes clockwise around the plasma
+*     signmf = -1.0: the poloidal field goes counerclockwise around the plasma 
 *
 *     qz - (-1:nx,-1:ny,0:1) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
@@ -129,6 +119,25 @@
 *     is 0. periodic_bc.eq.1 implies that periodic BC are being used. This
 *     case is used for the simulation of diverted stellarator islands or
 *     limiters.
+*
+*     fpsi - (-1:nx,-1:ny,0:3,0:2) real*8 array.
+*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), fpsi(ix,iy,i,0) specifies the
+*     potential for the magnetic field components (bx,by) at the
+*     (ix,iy,i) position.
+*     fpsi(ix,iy,i,1) specifies the (dpsi/dx) derivative.
+*     fpsi(ix,iy,i,2) specifies the (dpsi/dy) derivative.
+*     (In the case of straight symmetry, bx=dpsi/dy and by=-dpsi/dx.
+*     In the case of toroidal or cylindrical symmetry,
+*       bx=(dpsi/dy)/(2*pi*R) and by=-(dpsi/dx)/(2*pi*R),
+*     where R is the distance to the axis of symmetry.)
+*
+*     ffbz - (-1:nx,-1:ny,0:3) real*8 array.
+*     For (ix,iy,i) in (-1:nx,-1:ny,0:3), ffbz(ix,iy,i) specifies the
+*     field function for the magnetic field component bz at the
+*     (ix,iy,i) position.
+*     (In the case of straight symmetry, bz=ffbz. In the case of
+*     toroidal or cylindrical symmetry, bz=ffbz/(2*pi*R), where R is
+*     the distance to the axis of symmetry.)
 *
 *     /b2cmfs/ - common block.
 *     /b2cmfs/ is reserved for numerical mhd equilibrium data.
