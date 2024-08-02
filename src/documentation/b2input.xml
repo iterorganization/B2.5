@@ -1281,7 +1281,7 @@
 				<description>
 					Real parameter which turns on stochastic current.
 					If b2tfhe_stochastic is 0 then stochastic current is switched off otherwise stochastic current is switched on.
-				  Not yet available for WG.
+					Not yet available for WG.
 				</description>
 			</switch>
 			<switch>
