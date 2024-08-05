@@ -9,7 +9,11 @@ GLI_HOME  ?= ${EBROOTGLI}
 endif
 ifeq ($(shell `pkg-config --exists netcdf-fortran`; echo $$?),0)
 NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
+ifeq (,$(findstring CentOS,$(OS)))
+LD_NETCDF  = `pkg-config netcdf-fortran --libs`
+else
 LD_NETCDF ?= `nf-config --flibs`
+endif
 ifndef SOLPS_CPP
 DEFINES   += -DCDF_MOVIE
 INCMODS   += `pkg-config netcdf-fortran --cflags`
@@ -35,21 +39,30 @@ DEFINES   += -DNO_OPT
 
 CPP        = /lib/cpp -traditional
 
+ifeq (,$(findstring CentOS,$(OS)))
+MPI_FC    ?= mpiifort
+else
+MPI_FC    ?= mpiifort -fc=mpiifx
+endif
 ifdef USE_MPI
-FC         = mpiifort
+FC         = ${MPI_FC}
 ifndef MPDIR
 MPDIR      = ${EBROOTIMPI}
 LD_MPI    += -Wl,-rpath,${MPDIR}/lib64
 endif
 else
 ifdef USE_IMPGYRO
-FC         = mpiifort
+FC         = ${MPI_FC}
 ifndef MPDIR
 MPDIR      = ${EBROOTIMPI}
 LD_MPI    += -Wl,-rpath,${MPDIR}/lib64
 endif
 else
-FC         = ifort
+ifeq (,$(findstring CentOS,$(OS)))
+FC        ?= ifort
+else
+FC        ?= ifx
+endif
 endif
 endif
 
@@ -58,6 +71,7 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
 FCOPTS    += -g -C -debug all -traceback -check all -fpe0
+LDOPTS    += -check all
 else
 FCOPTS    += -O2
 ifeq (,$(findstring CentOS,$(OS)))

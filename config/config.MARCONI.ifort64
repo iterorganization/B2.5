@@ -11,13 +11,14 @@ LD_NAG      ?= -L${NAGDIR} -lnag
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 
+MPI_FC  ?= mpiifort
 ifdef USE_MPI
-FC       = mpiifort
+FC       = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC       = mpiifort
+FC       = ${MPI_FC}
 else
-FC       = ifort
+FC      ?= ifort
 endif
 endif
 
