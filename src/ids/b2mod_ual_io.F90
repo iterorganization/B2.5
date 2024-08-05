@@ -6991,32 +6991,6 @@ contains
 
         contains
 
-        function separatrix_average( field, weight )
-        ! This function is devoted to obtain the weighted average along the active separatrix
-        ! of a plasma field quantity
-        ! The average is made using face-centered quantities on the cell faces forming the separatrix
-        ! The weighting automatically includes the areas of the cell faces
-        implicit none
-        real(kind=IDS_real) :: separatrix_average
-        real(kind=IDS_real), intent(in) :: field(-1:nx,-1:ny), weight(-1:nx,-1:ny)
-        real(kind=IDS_real) :: sum, area_sum
-
-        separatrix_average = IDS_REAL_INVALID
-        sum = 0.0_IDS_real
-        area_sum = 0.0_IDS_real
-        do ix = -1, nx
-          if (mod(region(ix,jsep,0),4).eq.1) then
-            sum = sum + gs(topix(ix,jsep),topiy(ix,jsep),1) * &
-                & ( field(ix,jsep)*weight(ix,jsep) +          &
-                &   field(topix(ix,jsep),topiy(ix,jsep))*     &
-                &  weight(topix(ix,jsep),topiy(ix,jsep)) )/2.0_IDS_real
-            area_sum = area_sum + gs(topix(ix,jsep),topiy(ix,jsep),1)
-          end if
-        end do
-        if (area_sum.ne.0.0_IDS_real) separatrix_average = sum / area_sum
-
-        return
-        end function separatrix_average
 
 #if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
         subroutine write_timed_integer( ival, ivalue )
@@ -7758,6 +7732,34 @@ contains
 
         return
     end subroutine B25_av_ids
+
+    function separatrix_average( field, weight )
+    ! This function is devoted to obtain the weighted average along the active separatrix
+    ! of a plasma field quantity
+    ! The average is made using face-centered quantities on the cell faces forming the separatrix
+    ! The weighting automatically includes the areas of the cell faces
+    implicit none
+    real(kind=IDS_real) :: separatrix_average
+    real(kind=IDS_real), intent(in) :: field(-1:nx,-1:ny), weight(-1:nx,-1:ny)
+    real(kind=IDS_real) :: sum, area_sum
+    integer ix
+
+    separatrix_average = IDS_REAL_INVALID
+    sum = 0.0_IDS_real
+    area_sum = 0.0_IDS_real
+    do ix = -1, nx
+      if (mod(region(ix,jsep,0),4).eq.1) then
+        sum = sum + gs(topix(ix,jsep),topiy(ix,jsep),1) * &
+            & ( field(ix,jsep)*weight(ix,jsep) +          &
+            &   field(topix(ix,jsep),topiy(ix,jsep))*     &
+            &  weight(topix(ix,jsep),topiy(ix,jsep)) )/2.0_IDS_real
+        area_sum = area_sum + gs(topix(ix,jsep),topiy(ix,jsep),1)
+      end if
+    end do
+    if (area_sum.ne.0.0_IDS_real) separatrix_average = sum / area_sum
+
+    return
+    end function separatrix_average
 
     subroutine write_ids_properties( properties, homo )
     implicit none

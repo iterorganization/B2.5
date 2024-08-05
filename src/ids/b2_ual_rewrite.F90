@@ -542,7 +542,8 @@ program b2_ual_rewrite
 #endif
     end if
     !! Create/Write the set data to IDSs
-    call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+    call B25_process_ids( &
+      &  edge_profiles, edge_sources, edge_transport, &
       &  radiation, description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
       &  summary, &
