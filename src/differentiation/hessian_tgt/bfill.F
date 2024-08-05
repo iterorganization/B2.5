@@ -1,0 +1,15 @@
+      subroutine bfill(a,n,f)
+      implicit none
+c
+c  version : 15.01.87
+c
+c=====================================================
+      character a(*),f
+      integer :: i,n
+c=====================================================
+c
+      do 100 i=1,n
+        a(i)=f
+  100 continue
+c=====================================================
+      end subroutine bfill

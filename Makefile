@@ -96,6 +96,11 @@ EXT_DIFF = .diff_b
 DIFF = yes
 DIFFDIR = builds/differentiated_files${EXT_DIFF}
 endif
+ifdef DIFF_DD
+EXT_DIFF = .diff_dd
+DIFF = yes
+DIFFDIR = builds/differentiated_files${EXT_DIFF}
+endif
 ifdef TGT
 EXT_DIFF = .tgt
 DIFF = yes
@@ -105,6 +110,11 @@ ifdef ADJ
 EXT_DIFF = .adj
 DIFF = yes
 DIFFDIR = src/differentiation/adjoint
+endif
+ifdef HESS_TGT
+EXT_DIFF = .hess_tgt
+DIFF = yes
+DIFFDIR = src/differentiation/hessian_tgt
 endif
 # Directory where objectcode/binaries will be created
 OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_OPENMP}${EXT_MPI}${EXT_IMPGYRO}${EXT_DIFF}${EXT_DEBUG}
@@ -262,9 +272,15 @@ endif
 ifdef DIFF_B
 DEFINES += -DADJ
 endif
+ifdef DIFF_DD
+DEFINES += -DHESS
+endif
 ifdef TGT
 DEFINES += -DTGT
 endif
+#ifdef HESS_TGT
+#DEFINES += -DHESS_TGT
+#endif
 ifdef ADJ
 DEFINES += -DADJ
 endif
@@ -386,6 +402,7 @@ PROG_NC = nc2text_simple.exe
 PROG_NR = nc_reduce.exe
 PROG_MND = b2mn_d.exe
 PROG_MNB = b2mn_b.exe
+PROG_MNH = b2mn_hess.exe
 ifdef OPT
 PROG_OPT = b2optim_${OPT}.exe
 endif
@@ -427,19 +444,22 @@ NREXE = ${patsubst %.exe, ${NCODIR}/%.exe, ${PROG_NR}}
 MNDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MND}}
 MNBEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MNB}}
 OPTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OPT}}
+MNHEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MNH}}
 CONTEXTAD = ${OBJDIR}/adContext.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
 
-.PHONY: DEFAULT NOPLOT ALL VERSION TANGENT ADJOINT DIFF_D DIFF_B mods clean depend listobj tags echo local force test nc2text_simple nc2text
+.PHONY: DEFAULT NOPLOT ALL VERSION TANGENT HESS_TGT ADJOINT DIFF_D DIFF_B DIFF_DD mods clean depend listobj tags echo local force test nc2text_simple nc2text
 
 DEFAULT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE}
 ALL: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${COEXE} ${OTEXE} ${O9EXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${AMEXE} ${OEEXE} ${OTEXE} ${O9EXE}
 DIFF_D: VERSION ${MNDEXE} ${OPTEXE}
 DIFF_B: VERSION ${MNBEXE} ${OPTEXE}
+DIFF_DD: VERSION ${MNHEXE}
 TANGENT: VERSION ${MNDEXE} ${OPTEXE}
 ADJOINT: VERSION ${MNBEXE} ${OPTEXE}
+HESS_TGT: VERSION ${MNHEXE}
 ifdef NCARG_ROOT
 ifeq ($(strip ${GLI_HOME}),)
 $(warning B2.5 graphical post-processing programs may not work because GLI_HOME is not defined.)
@@ -1112,6 +1132,9 @@ ifdef OPT
 ${OPTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend} ${LIBOPT}
 endif
+
+${MNHEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h
 	cc -c $< -o $@
