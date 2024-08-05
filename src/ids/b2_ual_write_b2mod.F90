@@ -733,7 +733,8 @@ program b2_ual_write_b2mod
             num_time_slices = num_time_slices + 1
           end if
           time_slice_index = num_time_slices
-          call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+          call B25_process_ids( &
+             &  edge_profiles, edge_sources, edge_transport, &
              &  radiation, description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
              &  summary, &
@@ -764,7 +765,8 @@ program b2_ual_write_b2mod
       end if
     end if
     if ( status.ne.0 .or. idx.eq.0 ) then
-      call B25_process_ids( edge_profiles, edge_sources, edge_transport, &
+      call B25_process_ids( &
+         &  edge_profiles, edge_sources, edge_transport, &
          &  radiation, description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
          &  summary, &
