@@ -81,9 +81,10 @@
 *   ....face-based variables
 *
 *     nFc - integer.
-*     nFc is the number of cell faces in the grid. A face connects two internal
+*     nFc is the number of cell faces in the grid. Each 2D cell is a polygon
+*     bounded by N faces with N > 2. A face connects two internal
 *     cells or an internal cell and a guard cell. There are no faces
-*     between guard cells in the unstructured version.
+*     between guard cells.
 *
 *     fcS - (1:nFc,1:2) real*8 array.
 *     For iFc in (1:nFc), fcHc(iFc,:) specifies the total area of face iFc.
@@ -289,7 +290,7 @@
 *     na - (1:nCv,0:ns-1) real*8 array.
 *     For (iCv,is) in (1:nCv,0:ns-1), na(iCv,is) specifies
 *     the density of atomic species (is) on the (iCv) cell.
-*     It will hold that 0.lt.na(,).
+*     It will hold that 0.lt.na(:).
 *
 *     ua - (1:nCv,0:ns-1) real*8 array.
 *     For (iCv,is) in (1:nCv,0:ns-1), ua(iCv,is) specifies
@@ -299,356 +300,283 @@
 *
 *     te - (1:nCv) real*8 array.
 *     For (iCv) in (1:nCv), te(iCv) specifies the electron
-*     temperature on the (iCv) cell. It will hold that 0.lt.te(,).
+*     temperature on the (iCv) cell. It will hold that 0.lt.te(:).
 *
 *     ti - (1:nCv) real*8 array.
 *     For (iCv) in (1:nCv), ti(iCv) specifies the all atom
-*     temperature on the (iCv) cell. It will hold that 0.lt.ti(,).
+*     temperature on the (iCv) cell. It will hold that 0.lt.ti(:).
+*
+*     tn - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), tn(iCv) specifies temperature of the
+*     hydrogenic neutrals on the (iCv) cell. It will hold that 0.lt.tn(:).
+*     When no separate fluid neutral energy equation is solved, tn = ti.
 *
 *     po - (1:nCv) real*8 array.
 *     For (iCv) in (1:nCv), po(iCv) specifies the electric
 *     potential on the (iCv) cell.
 *
+*     kt - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), kt(iCv) specifies the turbulent kinetic
+*     energy on the (iCv) cell.
+*
+*     zt - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), kt(iCv) specifies the enstrophy
+*     on the (iCv) cell.
+*
 *     For all the fluxes below, the sign convention is as follows.
 *     Fluxes are positive when they flow in the local x-direction,
-*     i.e. from C1 to C2.
+*     where x is the connector line from C1 to C2.
 *
-*     fna - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-*     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
-*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax(ix,iy,is) specifies
-*     the flux of atoms of species (is) through the face between the
-*     (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fnax(ix,-1:ny,0:ns-1) will hold 0.
-*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay(ix,iy,is) specifies
-*     the flux of atoms of species (is) through the face between the
-*     (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fnay(-1:nx,iy,0:ns-1) will hold 0.
+*     fna - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), fna(iFc,0,is) specifies
+*     the poloidal component and fna(iFc,1,is) specifies
+*     the radial component of the flux of atoms of species (is) through the
+*     face iFc.
 *
-*     fna_mdf - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-*     (Let fnax_mdf(,,)=fna_mdf(,,0,) and fnay_mdf(,,)=fna_mdf(,,1,).)
-*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax_mdf(ix,iy,is) specifies
-*     the modified flux of atoms of species (is) through the face between
-*     the (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fnax_mdf(ix,-1:ny,0:ns-1) will hold 0.
-*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay_mdf(ix,iy,is) specifies
-*     the modified flux of atoms of species (is) through the face between
-*     the (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fnay_mdf(-1:nx,iy,0:ns-1) will hold 0.
+*     fna_mdf - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), fna_mdf(iFc,0,is) specifies
+*     the poloidal component and fna_mdf(iFc,1,is) specifies
+*     the radial component of the modified flux of atoms of species (is)
+*     through the face iFc.
 *     fna_mdf is equal to fna in runs without drifts.
 *
-*     fna_fcor - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-*     (Let fna_fcorx(,,)=fna_fcor(,,0,) and fna_fcory(,,)=fna_fcor(,,1,).)
-*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fna_fcorx(ix,iy,is) specifies
-*     the flux of atoms of species (is) for calculating momentum transport
-*     through the face between the (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fna_fcorx(ix,-1:ny,0:ns-1) will hold 0.
-*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fna_fcory(ix,iy,is) specifies
-*     the flux of atoms of species (is) for calculating momentum transport
-*     through the face between the (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fna_fcory(-1:nx,iy,0:ns-1) will hold 0.
+*     fna_fcor - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), fna_fcor(iFc,0,is) specifies
+*     the poloidal component and fna_fcor(iFc,1,is) specifies
+*     the radial component of the flux of atoms of species (is) for calculating
+*     momentum transport through the face between the iFc.
 *     fna_fcor takes into account the hz toroidal length derivative and
 *     the Coriolis force.
 *
-*     fhe - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fhex(ix,iy) specifies the electron
-*     heat flux through the face between the (ix,iy) cell and
-*     its left neighbor. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fhey(ix,iy) specifies the electron
-*     heat flux through the face between the (ix,iy) cell and
-*     its bottom neighbor. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
+*     fhe - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fhe(iFc,0) specifies the poloidal component and
+*     fhe(iFc,1) specifies the radial component of the electron heat flux
+*     through the face iFc.
 *
-*     fhe_mdf - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fhex_mdf(,)=fhe_mdf(,,0) and fhey_mdf(,)=fhe_mdf(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fhex_mdf(ix,iy) specifies the modified
-*     electron heat flux through the face between the (ix,iy) cell
-*     and its left neighbor. For ix.eq.-1, fhex_mdf(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fhey_mdf(ix,iy) specifies the modified
-*     electron heat flux through the face between the (ix,iy) cell and
-*     its bottom neighbor. For iy.eq.-1, fhey_mdf(-1:nx,iy) will hold 0.
+*     fhe_mdf - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fhe_mdf(iFc,0) specifies the poloidal component and
+*     fhe_mdf(iFc,1) specifies the radial component of the modified electron heat
+*     flux through the face iFc.
 *     fhe_mdf is equal to fhe in runs without drifts.
 *
-*     fhi - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fhix(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix,iy) cell
-*     and its left neighbor. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix,iy) cell and its
-*     bottom neighbor. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
+*     fhi - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fhi(iFc,0) specifies the poloidal component and
+*     fhi(iFc,1) specifies the radial component of the all atom heat flux
+*     through the face iFc.
 *
-*     fhi_mdf - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fhix_mdf(,)=fhi_mdf(,,0) and fhiy_mdf(,)=fhi_mdf(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fhix_mdf(ix,iy) specifies the
-*     modified all atom heat flux through the face between the (ix,iy) cell
-*     and its left neighbor. For ix.eq.-1, fhix_mdf(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fhiy_mdf(ix,iy) specifies the modified
-*     all atom heat flux through the face between the (ix,iy) cell and
-*     its bottom neighbor. For iy.eq.-1, fhiy_mdf(-1:nx,iy) will hold 0.
+*     fhi_mdf - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fhi_mdf(iFc,0) specifies the poloidal component and
+*     fhi_mdf(iFc,1) specifies the radial component of the modified all atom
+*     heat flux through the face iFc.
+*     fhi_mdf is equal to fhi in runs without drifts.
 *
-*     fch - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchx(,)=fch(,,0) and fchy(,)=fch(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fchx(ix,iy) specifies the electric
-*     current through the face between the (ix,iy) cell and its left
-*     neighbor. For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fchy(ix,iy) specifies the electric
-*     current through the face between the (ix,iy) cell and its bottom
-*     neighbor. For iy.eq.-1, fchy(-1:nx,iy) will hold 0.
+*     fch - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fch(iFc,0) specifies the poloidal component and
+*     fch(iFc,1) specifies the radial component of the electric
+*     current through the face iFc.
 *
 *   ..auxiliary variables describing the plasma state
 *
-*     nb - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), nb(ix,iy) specifies the density of
-*     one selected atomic species on the (ix,iy) cell. If that species
-*     has index (is) then nb(,).eq.na(,,is).
+*     nb - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), nb(iCv) specifies the density of
+*     one selected atomic species on the (iCv) cell. If that species
+*     has index (is) then nb(:).eq.na(:,is).
 *
-*     ub - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), ub(ix,iy) specifies the parallel
-*     velocity of one selected atomic species on the (ix,iy) cell.
+*     ub - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), ub(iCv) specifies the parallel
+*     velocity of one selected atomic species on the (iCv) cell.
 *     The sign of the parallel velocity indicates whether it is flowing
 *     in the same direction as the local poloidal magnetic field.
 *
-*     ni - (-1:nx,-1:ny,0:1) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), ni(ix,iy,0) specifies the total atom
-*     density on the (ix,iy) cell. It will hold that 0.lt.ni(,0).
+*     ni - (1:nCv,0:1) real*8 array.
+*     For (iCv) in (1:nCv), ni(iCv,0) specifies the total atom
+*     density on the (iCv) cell. It will hold that 0.lt.ni(:,0).
 *     The defining expression for ni is
-*       ni(,0) = (sum is : 0.le.is.lt.ns : na(,,is)).
-*     For (ix,iy) in (-1:nx,-1:ny), ni(ix,iy,1) specifies the total ion
-*     density on the (ix,iy) cell. It will hold that 0.lt.ni(,1).
+*       ni(:,0) = (sum is : 0.le.is.lt.ns : na(:,is)).
+*     For (iCv) in (1:nCv), ni(iCv,1) specifies the total ion
+*     density on the (iCv) cell. It will hold that 0.lt.ni(:,1).
 *     The defining expression for ni is
-*       ni(,1) = (sum is : 0.le.is.lt.ns : na(,,is)) when rza(,,is)>0.
+*       ni(:,1) = (sum is : 0.le.is.lt.ns : na(:,is)) when rza(:,is)>0.
 *
-*     ne - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), ne(ix,iy) specifies the electron
-*     density on the (ix,iy) cell. It will hold that 0.lt.ne(,).
+*     ne - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), ne(iCv) specifies the electron
+*     density on the (iCv) cell. It will hold that 0.lt.ne(:).
 *     The defining expression for ne is
-*       ne(,) = (sum is : 0.le.is.lt.ns : rza(,,is)*na(,,is)).
+*       ne(:) = (sum is : 0.le.is.lt.ns : rza(:,is)*na(:,is)).
 *
-*     ne2 - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), ne2(ix,iy) specifies the atom
-*     density weighted by rz2 on the (ix,iy) cell. It will hold that
-*     0.lt.ne2(,).
+*     ne2 - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), ne2(iCv) specifies the atom
+*     density weighted by rz2 on the (iCv) cell. It will hold that
+*     0.lt.ne2(:).
 *     The defining expression for ne2 is
-*       ne2(,) = (sum is : 0.le.is.lt.ns : rz2(,,is)*na(,,is)).
+*       ne2(,) = (sum is : 0.le.is.lt.ns : rz2(:,is)*na(:,is)).
 *
-*     pr - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), pr(ix,iy) specifies the total
-*     pressure on the (ix,iy) cell. The defining expression for pr is
-*       pr(,) = ne(,)*te(,) + (sum is :: na(,,is)*ti(,)).
+*     pr - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), pr(iCv) specifies the total
+*     pressure on the (iCv) cell. The defining expression for pr is
+*       pr(:) = ne(:)*te(:) + (sum is :: na(:,is)*ta(:)), where
+*       ta = ti for ions and non-hydrogenic neutrals, and ta = tn for hydrogenic
+*       neutrals.
 *
-*     pz - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), pz(ix,iy) specifies the plasma
-*     pressure on the (ix,iy) cell. The defining expression for pr is
-*       pr(,) = ne(,)*te(,) + (sum is :: na(,,is)*ti(,), not including neutrals).
+*     pz - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), pz(iCv) specifies the plasma
+*     pressure on the (iCv) cell. The defining expression for pr is
+*       pr(:) = ne(:)*te(:) + (sum is :: na(:,is)*ti(:), not including neutrals).
 *
-*     pe - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), pe(ix,iy) specifies the electron
-*     pressure on the (ix,iy) cell.
-*     The defining expression for pe is pe(,) = ne(,)*te(,).
+*     pe - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), pe(iCv) specifies the electron
+*     pressure on the (iCv) cell.
+*     The defining expression for pe is pe(:) = ne(:)*te(:).
 *
-*     ro - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), ro(ix,iy) specifies the mass
-*     density on the (ix,iy) cell. The defining expression for ro is
-*       ro(,) = (sum is : 0.le.is.lt.ns : am(is)*mp**na(,,is)).
+*     ro - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), ro(iCv) specifies the mass
+*     density on the (iCv) cell. The defining expression for ro is
+*       ro(:) = (sum is : 0.le.is.lt.ns : am(is)*mp**na(:,is)).
 *
-*     rz - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), rz(ix,iy) specifies the ion mass
-*     density on the (ix,iy) cell. The defining expression for rz is
-*       rz(,) = (sum is : 0.le.is.lt.ns .and. .not.is_neutral(is) :
-*                         am(is)*mp**na(,,is)).
+*     rz - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), rz(iCv) specifies the ion mass
+*     density on the (iCv) cell. The defining expression for rz is
+*       rz(:) = (sum is : 0.le.is.lt.ns .and. .not.is_neutral(is) :
+*                         am(is)*mp**na(:,is)).
 *
-*     ne2m - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), ne2m(ix,iy) specifies the atom
-*     density weighted by rz2/am on the (ix,iy) cell. It will hold
+*     ne2m - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), ne2m(iCv) specifies the atom
+*     density weighted by rz2/am on the (iCv) cell. It will hold
 *     that 0.lt.ne2m(,).
 *     The defining expression for ne2m is
-*       ne2m(,) = (sum is :: (rz2(,,is)/am(is))*na(,,is)).
+*       ne2m(:) = (sum is :: (rz2(:,is)/am(is))*na(:,is)).
 *
-*     fne - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fnex(,)=fne(,,0) and fney(,)=fne(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fnex(ix,iy) specifies the flux of
-*     electrons through the face between the (ix,iy) cell and its
-*     left neighbor. For ix.eq.-1, fnex(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fney(ix,iy) specifies the flux of
-*     electrons through the face between the (ix,iy) cell and its
-*     bottom neighbor. For iy.eq.-1, fney(-1:nx,iy) will hold 0.
+*     fne - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fne(iFc,0) specifies the poloidal component and
+*     fne(iFc,1) specifies the radial component of the flux of
+*     electrons through the face iFc.
 *     The defining expression for fne is
-*       fne(,,) = (sum is :: rza(,,is)*fna(,,,is))-(1/qe)*fch(,,)
+*       fne(:,0) = (sum is :: rza(:,is)*fna(:,0,is))-(1/qe)*fch(:,0)
+*       fne(:,1) = (sum is :: rza(:,is)*fna(:,1,is))-(1/qe)*fch(:,1)
 *
-*     fni - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fnix(,)=fni(,,0) and fniy(,)=fni(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fnix(ix,iy) specifies the flux of
-*     atoms (all species) through the face between the (ix,iy) cell
-*     and its left neighbor. For ix.eq.-1, fnix(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fniy(ix,iy) specifies the flux of
-*     atoms (all species) through the face between the (ix,iy) cell
-*     and its bottom neighbor. For iy.eq.-1, fniy(-1:nx,iy) will hold 0.
-*     The defining expression for fni is
-*       fni(,,) = (sum is :: fna(,,,is))
+*     fni - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fni(iFc,0) specifies the poloidal component
+*     and fni(iFc,1) specifies the radial component of the flux of
+*     atoms through the face iFc. If tn_style.eq.0 (default), fhi contains
+*     all ions and fluid neutrals. If tn_style.eq.1, fhi contains only ions.
+*     If tn_style.eq.2, fhi contains the ions and non-hydrogenic neutrals.
 *
-*     fchvispar - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchvisparx(,)=fchvispar(,,0) and fchvispary(,)=fchvispar(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fchvisparx(ix,iy) specifies the
-*     electric current driven by parallel viscosity through the face
-*     between the (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fchvisparx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fchvispary(ix,iy) specifies the
-*     electric current driven by parallel viscosity through the face
-*     between the (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fchvispary(-1:nx,iy) will hold 0.
+*     fnn - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fnn(iFc,0) specifies the poloidal component
+*     and fnn(iFc,1) specifies the radial component of the flux of
+*     hydrogenic neutral atoms through the face iFc if a separate neutral energy
+*     equation is solved. If tn_style.eq.0 (default), or tn_style.eq.1, fhn = 0.
 *
-*     fchvisq - (-1:nx,-1:ny,0:1) real*8 array.
-*     fchvisq specifies the electric current produced by the components
-*     of the viscosity tensor which is connected with the heat fluxes.
-*     (Let fchvisqx(,)=fchvisq(,,0) and fchvisqy(,)=fchvisq(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fchvisqx(ix,iy) specifies the current
-*     through the face between the (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fchvisqx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fchvisqy(ix,iy) specifies the current
-*     through the face between the (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fchvisqy(-1:nx,iy) will hold 0.
+*     fchvispar - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fchvispar(iFc,0) specifies the poloidal component
+*     and fchvispar(iFc,1) specifies the radial component of the
+*     electric current driven by parallel viscosity through the face iFc.
 *
-*     fchinert - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchinertx(,)=fchinert(,,0) and fchinerty(,)=fchinert(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fchinertx(ix,iy) specifies the
-*     contributions from inertia and gyroviscosity current through
-*     the face between the (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fchinertx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fchinerty(ix,iy) specifies the
-*     contributions from inertia and gyroviscosity current through
-*     the face between the (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fchinerty(-1:nx,iy) will hold 0.
+*     fchvisq - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fchvisq(iFc,0) specifies the poloidal component
+*     and fchvisq(iFc,1) specifies the radial component of the
+*     electric current produced by the components
+*     of the viscosity tensor which is connected with the heat fluxes through
+*     face iFc.
 *
-*     fchanml - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchanmlx(,)=fchanml(,,0) and fchanmly(,)=fchanml(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fchanmlx(ix,iy) specifies the
-*     anomalous current through the face between the (ix,iy) cell
-*     and its left neighbor.
-*     For ix.eq.-1, fchanmlx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fchanmly(ix,iy) specifies the
-*     amomalous current through the face between the (ix,iy) cell
-*     and its bottom neighbor.
-*     For iy.eq.-1, fchanmly(-1:nx,iy) will hold 0.
+*     fchinert - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fchinert(iFc,0) specifies the poloidal component
+*     and fchinert(iFc,1) specifies the radial component of the
+*     contributions from inertia and gyroviscosity current through face iFc.
 *
-*     fchdia - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchdiax(,)=fchdia(,,0) and fchdiay(,)=fchdia(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fchdiax(ix,iy) specifies the
-*     modified diamagnetic current through the face between
-*     the (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fchdiax(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fchdiay(ix,iy) specifies the
-*     modified diamagnetic current through the face between
-*     the (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fchdiay(-1:nx,iy) will hold 0.
+*     fchanml - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fchanml(iFc,0) specifies the poloidal component
+*     and fchanml(iFc,1) specifies the radial component of the
+*     anomalous current through face iFc.
 *
-*     fchin - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchinx(,)=fchin(,,0) and fchiny(,)=fchin(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fchinx(ix,iy) specifies the
-*     contribution from ion-neutral friction through the face between
-*     the (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fchinx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fchiny(ix,iy) specifies the
-*     contribution from ion-neutral friction through the face between
-*     the (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fchiny(-1:nx,iy) will hold 0.
+*     fchdia - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fchsia(iFc,0) specifies the poloidal component
+*     and fchsia(iFc,1) specifies the radial component of the
+*     modified diamagnetic current through face iFc.
 *
-*     fch_p - (-1:nx,-1:ny,0:1) real*8 array.
-*     For (ix,iy) in (0:nx,-1:ny), fch_p(ix,iy,0) specifies the product of
+*     fchin - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fchin(iFc,0) specifies the poloidal component
+*     and fchin(iFc,1) specifies the radial component of the
+*     current contribution from ion-neutral friction through face iFc.
+*
+*     fch_p - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fch_p(iFc,0) specifies the poloidal component
+*     and fch_p(iFc,1) specifies the radial component of the product of
 *     the parallel electric current and the poloidal magnetic field component
-*     sign through the face between the (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fch_p(ix,-1:ny,0) will hold 0.
-*     fch_p(-1:nx,-1:ny,1) = 0
+*     sign through the face iFc.
 *
-*     fchvisper - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchvisperx(,)=fchvisper(,,0) and fchvispery(,)=fchvisper(,,1).)
-*     For (ix,iy) in (-1:nx,-1:ny), fchvisperx(ix,iy) = 0.
-*     For (ix,iy) in (-1:nx, 0:ny), fchvispery(ix,iy) specifies the
-*     electric current connected with contribution from
-*     the perpendicular viscosity through the face between the (ix,iy) cell
-*     and its bottom neighbor.
-*     For iy.eq.-1, fchvispery(-1:nx,iy) will hold 0.
+*     fchvisper - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fchvisper(iFc,0) specifies the poloidal component
+*     and fchvisper(iFc,1) specifies the radial component of the electric
+*     current connected with contribution from the perpendicular viscosity
+*     through the face iFc.
 *
-*     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-*     (Let uadiax(,,)=uadia(,,0,) and uadiay(,)=uadia(,,1,).)
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadiax(ix,iy,is) specifies
-*     the total effective drift velocity of species (is) in cell (ix,iy)
+*     fchvisper - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fchvisper(iFc,0) specifies the poloidal component
+*     and fchvisper(iFc,1) specifies the radial component of the electric
+*     current connected with contribution from the perpendicular viscosity
+*     through the face iFc.
+*
+*     uadia - (1:nCv,0:1,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:1,0:ns-1), uadia(iCv,0,is) specifies
+*     the total effective drift velocity of species (is) on the (iCv) cell
 *     in the diamagnetic direction (i.e. within the flux surface but
 *     perpendicular to the magnetic field), but projected onto the
 *     poloidal direction.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadiay(ix,iy,is) specifies
-*     the total effective drift velocity of species (is) in cell (ix,iy)
+*     For (iCv,is) in (1:nCv,0:1,0:ns-1), uadia(iCv,1,is) specifies
+*     the total effective drift velocity of species (is) on the (iCv) cell
 *     in the radial direction.
-*     uadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
-*     uadia is computed at cell faces otherwise (default)
 *
-*     vadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-*     (Let vadiax(,,)=vadia(,,0,) and vadiay(,)=vadia(,,1,).)
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiax(ix,iy,is) specifies
-*     the effective diamagnetic drift velocity of species (is) in cell (ix,iy)
+*     vadia - (1:nCv,0:1,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:1,0:ns-1), vadia(iCv,0,is) specifies
+*     the effective diamagnetic drift velocity of species (is) on the (iCv) cell
 *     in the diamagnetic direction (i.e. within the flux surface but
 *     perpendicular to the magnetic field), but projected onto the
 *     poloidal direction.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiay(ix,iy,is) specifies
-*     the effective diamagnetic drift velocity of species (is) in cell (ix,iy)
+*     For (iCv,is) in (1:nCv,0:1,0:ns-1), vadia(iCv,1,is) specifies
+*     the effective diamagnetic drift velocity of species (is) on the (iCv) cell
 *     in the radial direction.
-*     vadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
-*     vadia is computed at cell faces otherwise (default)
 *
-*     vedia - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let vediax(,)=vedia(,,0) and vediay(,)=vedia(,,1).)
-*     For (ix,iy) in (-1:nx,-1:ny), vediax(ix,iy) specifies
-*     the effective diamagnetic drift velocity of electrons in cell (ix,iy)
+*     vedia - (1:nCv,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:ns-1), vedia(iCv,is) specifies
+*     the effective diamagnetic drift velocity of electrons on the (iCv) cell
 *     in the diamagnetic direction (i.e. within the flux surface but
 *     perpendicular to the magnetic field), but projected onto the
 *     poloidal direction.
-*     For (ix,iy) in (-1:nx,-1:ny), vediay(ix,iy) specifies
-*     the effective diamagnetic drift velocity of electrons in cell (ix,iy)
-*     in the radial direction.
-*     vedia is computed at cell centers if 'b2tfnb_drift_style' is '0'
-*     vedia is computed at cell faces otherwise (default)
 *
-*     wadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-*     (Let wadiax(,,)=wadia(,,0,) and wadiay(,)=wadia(,,1,).)
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), wadiax(ix,iy,is) specifies
-*     the total diamagnetic drift velocity of species (is) in cell (ix,iy)
+*     wadia - (1:nCv,0:1,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:1,0:ns-1), wadia(iCv,0,is) specifies
+*     the total diamagnetic drift velocity of species (is) in the (iCv) cell
 *     in the diamagnetic direction (i.e. within the flux surface but
 *     perpendicular to the magnetic field), but projected onto the
 *     poloidal direction.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), wadiay(ix,iy,is) specifies
-*     the total diamagnetic drift velocity of species (is) in cell (ix,iy)
+*     For (iCv,is) in (1:nCv,0:1,0:ns-1), wadia(iCv,1,is) specifies
+*     the total diamagnetic drift velocity of species (is) in the (iCv) cell
 *     in the radial direction.
-*     wadia is computed at cell centers if 'b2tfnb_drift_style' is '0'
-*     wadia is computed at cell faces otherwise (default)
 *
-*     vaecrb - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-*     (Let vaecrbx(,,)=vaecrb(,,0,) and vaecrby(,)=vaecrb(,,1,).)
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrbx(ix,iy,is) specifies
-*     the ExB drift velocity of species (is) in cell (ix,iy)
+*     vaecrb - (1:nCv,0:1,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:1,0:ns-1), vaecrb(iCv,0,is) specifies
+*     the ExB drift velocity of species (is) in the (iCv) cell
 *     in the diamagnetic direction (i.e. within the flux surface but
 *     perpendicular to the magnetic field), but projected onto the
 *     poloidal direction.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrby(ix,iy,is) specifies
-*     the ExB drift velocity of species (is) in cell (ix,iy)
+*     For (iCv,is) in (1:nCv,0:1,0:ns-1), vaecrb(iCv,1,is) specifies
+*     the ExB drift velocity of species (is) in the (iCv) cell
 *     in the radial direction.
-*     vaecrb is computed at cell centers if 'b2tfnb_drift_style' is '0'
-*     vaecrb is computed at cell faces otherwise (default)
 *
-*     veecrb - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let veecrbx(,)=veecrb(,,0) and veecrby(,)=veecrb(,,1).)
-*     For (ix,iy) in (-1:nx,-1:ny), veecrbx(ix,iy) specifies
-*     the ExB drift velocity of electrons in cell (ix,iy)
+*     veecrb - (1:nCv,0:1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:1), veecrb(iCv,0) specifies
+*     the ExB drift velocity of electrons in the (iCv) cell
 *     in the diamagnetic direction (i.e. within the flux surface but
 *     perpendicular to the magnetic field), but projected onto the
 *     poloidal direction.
-*     For (ix,iy) in (-1:nx,-1:ny), veecrby(ix,iy) specifies
-*     the ExB drift velocity of electrons in cell (ix,iy)
+*     For (iCv,is) in (1:nCv,0:1,0:ns-1), veecrb(iCv,1,is) specifies
+*     the ExB drift velocity of electrons in the (iCv) cell
 *     in the radial direction.
-*     veecrb is computed at cell centers if 'b2tfnb_drift_style' is '0'
-*     veecrb is computed at cell faces otherwise (default)
 *
-*     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
-*     the kinetic energy of a particle of species (is) in cell (ix,iy).
+*     kinrgy - (1:nCv,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:ns-1), kinrgy(iCv,is) specifies
+*     the kinetic energy of a particle of species (is) in cell (iCv).
 *     The velocity used includes the parallel velocity as well
 *     as the total diamagnetic and ExB drift velocities in both the radial
 *     and diamagnetic directions.
