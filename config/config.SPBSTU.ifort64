@@ -11,15 +11,15 @@
 
 CPP      = /lib/cpp -traditional
 
+#MPI_FC  ?= mpif90
+MPI_FC  ?= mpiifort
 ifdef USE_MPI
-FC       = mpif90
-FC       = mpiifort
+FC       = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC       = mpif90
-FC       = mpiifort
+FC       = ${MPI_FC}
 else
-FC       = ifort
+FC      ?= ifort
 endif
 endif
 
