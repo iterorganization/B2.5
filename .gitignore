@@ -12,6 +12,7 @@ mpif.h
 src/catalyst/*.#*
 src/differentiation/tangent/b2mod_dimensions.F
 src/differentiation/adjoint/b2mod_dimensions.F
+src/differentiation/hessian_tgt/b2mod_dimensions.F
 
 # ignore anything in directories with executables
 Release/
