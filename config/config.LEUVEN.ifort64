@@ -17,13 +17,14 @@ endif
 
 CPP      = /lib/cpp -traditional
 
+MPI_FC  ?= mpiifort
 ifdef USE_MPI
-FC       = mpiifort
+FC       = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC       = mpiifort
+FC       = ${MPI_FC}
 else
-FC       = ifort
+FC      ?= ifort
 endif
 endif
 

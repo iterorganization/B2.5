@@ -3,7 +3,7 @@ EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 LINK_MOD = 
 
-FC = pgf90
+FC ?= pgf90
 
 ifndef SOLPS_CPP
 DEFINES += -DPGF90 -DNOQUAD
