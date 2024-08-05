@@ -18,10 +18,11 @@ DEFINES += -DNO_OPT
 
 CPP = /lib/cpp -traditional
 
+MPI_FC ?= mpifort
 ifdef USE_MPI
-FC = mpifort
+FC      = ${MPI_FC}
 else
-FC = gfortran
+FC     ?= gfortran
 endif
 
 GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')
