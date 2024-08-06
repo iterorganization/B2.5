@@ -197,7 +197,7 @@
      *  use_eirene, neutrals_namelist, numerics_namelist, nsmin, nsmax,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current, idx
-      integer, save :: edition_p=0, plasinc = 1, plasnum = 0
+      integer, save :: edition_p = 0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
      *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000

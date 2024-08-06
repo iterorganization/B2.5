@@ -7553,7 +7553,7 @@ contains
               call write_cell_vector_component( batch_grid,               &
                   &   vectorComponent = batch_profiles%                   &
                   &   ggd( batch_index )%ion( is )%state( js )%velocity,  &
-                  &   b2CellData = ua(:,:,ks),                            &
+                  &   b2CellData = ua_mean(:,:,ks),                       &
                   &   vectorID = VEC_ALIGN_PARALLEL_ID )
               ks = ks + 1
             end do
