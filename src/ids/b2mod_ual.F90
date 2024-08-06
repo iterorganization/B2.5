@@ -96,8 +96,12 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
 #endif
-            &   treename, shot, run, idx, username, database, version, &
-            &   new_eq_ggd )
+#if AL_MAJOR_VERSION > 4
+            &   ids_path, &
+#else
+            &   treename, shot, run, username, database, version, &
+#endif
+            &   idx, new_eq_ggd )
         type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
@@ -129,6 +133,9 @@ contains
         type (ids_divertors), intent(inout) :: divertors !< IDS
             !< designed to store run data related to the divertor plates
 #endif
+#if AL_MAJOR_VERSION > 4
+        character(len=256), intent(in) :: ids_path  !< The path to the IMAS data entry
+#else
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
         integer, intent(in) :: shot   !< The shot number of the database being created
         integer, intent(in) :: run    !< The run number of the database being created
@@ -137,11 +144,16 @@ contains
         character(len=24), intent(in) :: database   !< IMAS database name
             !< (i. e. solps-iter, ITER, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+#endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
         logical, intent(in) :: new_eq_ggd
             !< database
         integer :: status
+#if AL_MAJOR_VERSION > 4
+        character(len=:), allocatable :: message
+        character(len=STRMAXLEN) :: uri
+#endif
 
             !< procedures
         external xertst, xerrab
@@ -161,13 +173,28 @@ contains
 
         !! Create and modify new shot/run
         if ( idx.eq.0 ) then
+#if AL_MAJOR_VERSION > 4
+          uri = 'imas:mdsplus?path='//trim(ids_path)
+#if IMAS_MAJOR_VERSION > 3
+          allocate( description%uri(1) )
+          description%uri = trim(uri)
+#endif
+          call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
+#else
           call imas_create_env( treename, shot, run, 0, 0, idx, username, &
              & database, version, status )
+#endif
           if (status.ne.0) then
             write(0,*) 'Opening IMAS database failed !'
+#if AL_MAJOR_VERSION > 4
+            write(0,*) 'Make sure the IDS path directory exists.'
+            write(0,*) 'IDS path requested is : '//trim(ids_path)
+            call xerrab( trim(message) )
+#else
             write(0,*) 'Make sure it exists or create it with the command:'
             write(0,*) 'imasdb '//trim(database)
             call xerrab( 'Error opening IMAS database !')
+#endif
           endif
 
         !! Put data to IDS
@@ -296,8 +323,12 @@ contains
     end subroutine dealloc_ids_edge
 
     subroutine put_batch_edge( &
-            &   treename, shot, run, idx, username, database, version, &
-            &   batch_profiles, batch_sources, equilibrium, &
+#if AL_MAJOR_VERSION > 4
+            &   ids_path, &
+#else
+            &   treename, shot, run, username, database, version, &
+#endif
+            &   idx, batch_profiles, batch_sources, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
@@ -318,6 +349,9 @@ contains
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
 #endif
+#if AL_MAJOR_VERSION > 4
+        character(len=256), intent(in) :: ids_path  !< The path to the IMAS data entry
+#else
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
         integer, intent(in) :: shot   !< The shot number of the database being created
         integer, intent(in) :: run    !< The run number of the database being created
@@ -326,11 +360,16 @@ contains
         character(len=24), intent(in) :: database   !< IMAS database name
             !< (i. e. solps-iter, ITER, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS
+#endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
         logical, intent(in) :: do_summary, new_eq_ggd
             !< database
         integer :: status
+#if AL_MAJOR_VERSION > 4
+        character(len=:), allocatable :: message
+        character(len=STRMAXLEN) :: uri
+#endif
 
             !< procedures
         external xertst, xerrab
@@ -348,13 +387,30 @@ contains
 
         !! Create and modify new shot/run
         if ( idx.eq.0 ) then
+#if AL_MAJOR_VERSION > 4
+          uri = 'imas:mdsplus?path='//trim(ids_path)
+#if IMAS_MAJOR_VERSION > 3
+          if (do_summary) then
+            allocate( description%uri(1) )
+            description%uri = trim(uri)
+          end if
+#endif
+          call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
+#else
           call imas_create_env( treename, shot, run, 0, 0, idx, username, &
              & database, version, status )
+#endif
           if (status.ne.0) then
             write(0,*) 'Opening IMAS database failed !'
+#if AL_MAJOR_VERSION > 4
+            write(0,*) 'Make sure the IDS path directory exists.'
+            write(0,*) 'IDS path requested is : '//trim(ids_path)
+            call xerrab( trim(message) )
+#else
             write(0,*) 'Make sure it exists or create it with the command:'
             write(0,*) 'imasdb '//trim(database)
             call xerrab( 'Error opening IMAS database !')
+#endif
           endif
 
         !! Put data to IDS
@@ -515,6 +571,9 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
 #endif
+#if IMAS_MAJOR_VERSION > 3
+            &   uri, &
+#endif
             &   idx, new_eq_ggd )
         type (ids_edge_profiles), intent(inout) :: edge_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
@@ -547,6 +606,9 @@ contains
         type (ids_divertors), intent(inout) :: divertors !< IDS
             !< designed to store data related to the divertor plates
 #endif
+#if IMAS_MAJOR_VERSION > 3
+        character(len=STRMAXLEN), intent(in) :: uri
+#endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
             !< subsequent data access operation
         logical, intent(in) :: new_eq_ggd
@@ -568,6 +630,10 @@ contains
 #endif
           &  "dataset_description, and radiation IDS"
 
+#if IMAS_MAJOR_VERSION > 3
+        allocate( description%uri(1) )
+        description%uri = trim(uri)
+#endif
         if (new_eq_ggd) then
           write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
           call ids_put( idx, "equilibrium", equilibrium, status )
@@ -603,8 +669,11 @@ contains
 
     end subroutine new_ids_edge
 
-    subroutine new_batch_edge( idx, batch_profiles, batch_sources, &
-            &   equilibrium, &
+    subroutine new_batch_edge( idx, &
+#if IMAS_MAJOR_VERSION > 3
+            &   uri, &
+#endif
+            &   batch_profiles, batch_sources, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
@@ -626,6 +695,9 @@ contains
             !< designed to store run summary data
 #endif
         integer, intent(inout) :: idx !< The returned identifier to be used in the
+#if IMAS_MAJOR_VERSION > 3
+        character(len=STRMAXLEN), intent(in) :: uri
+#endif
         logical, intent(in) :: do_summary, new_eq_ggd
             !< subsequent data access operation
         integer :: status
@@ -656,6 +728,10 @@ contains
         call ids_put( idx, "edge_sources/1", batch_sources, status )
         call xertst( status.eq.0, 'Error putting batch_sources IDS !')
         if (do_summary) then
+#if IMAS_MAJOR_VERSION > 3
+          allocate( description%uri(1) )
+          description%uri = trim(uri)
+#endif
           call ids_put( idx, "dataset_description", description, status )
           call xertst( status.eq.0, 'Error putting dataset_description IDS !')
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -671,11 +747,19 @@ contains
 
     !> Example subroutine for reading edge_profiles IDS
     !! with Fortran90
-    subroutine read_ids( treename, shot, run, idx, username, database, version )
+    subroutine read_ids( idx, &
+#if AL_MAJOR_VERSION > 4
+         & ids_path )
+#else
+         & treename, shot, run, username, database, version )
+#endif
         use ids_routines &  ! IGNORE
          & , only : imas_close
         implicit none
         integer, intent(out) :: idx !< The returned identifier to be used in the subsequent
+#if AL_MAJOR_VERSION > 4
+        character(len=256), intent(in) :: ids_path  !< The path to the IMAS data entry
+#else
         character(len=24), intent(in) :: treename   !< The name of the IMAS IDS database
         integer, intent(in) :: shot !< The shot number of the database being created
         integer, intent(in) :: run  !< The run number of the database being created
@@ -683,7 +767,12 @@ contains
         character(len=24), intent(in) :: database   !< IMAS IDS database name
             !< (i. e. solps-iter, ITER, aug)
         character(len=24), intent(in) :: version    !< Major version of the IMAS IDS database
+#endif
         !! Internal variables
+#if AL_MAJOR_VERSION > 4
+        character(len=:), allocatable :: message
+        character(len=STRMAXLEN) :: uri
+#endif
         integer :: gridSubset_index !< >Grid subset base index
         type(ids_edge_profiles) :: edge_profiles    !< IDS designed to store
             !< data in edge plasma profiles (includes the scrape-off layer and
@@ -693,10 +782,17 @@ contains
         gridSubset_index = 3
 
         !! Open input datafile from local database
+#if AL_MAJOR_VERSION > 4
+        uri = 'imas:mdsplus?path='//trim(ids_path)
+        write(0,*) "Started reading input IMAS data entry", trim(uri)
+        call imas_open( uri, OPEN_PULSE, idx, status, message )
+        call xertst ( status.eq.0, trim(message) )
+#else
         write(0,*) "Started reading input IMAS data entry", idx, shot, run
         call imas_open_env(treename, shot, run, idx, username, &
             &   database, version, status )
         call xertst ( status.eq.0, 'Error opening IMAS database !')
+#endif
         call ids_get(idx, "edge_profiles", edge_profiles, status)
         call xertst ( status.eq.0, 'Error opening edge_profiles IDS !')
 
@@ -730,7 +826,7 @@ contains
         &   doCreate, useHdf5, nmlFile )
         integer, intent(out) :: idx !< The returned identifier to be used in the
                                     !< subsequent data access operation
-        integer, intent(in), optional :: shot   !< The shot number of the
+        integer, intent(in), optional :: shot   !< The pulse (previously shot) number of the
                                                 !< database being created
         integer, intent(in), optional :: run    !< The run number of the
                                                 !< database being created
@@ -763,6 +859,9 @@ contains
         character(80) :: message
         integer len_of_digits
         external len_of_digits
+# elif AL_MAJOR_VERSION > 4
+        character(len=:), allocatable :: message
+        character(len=STRMAXLEN) :: uri
 # endif
 #elif defined(ITM_ENVIRONMENT_LOADED)
         character(32) :: lTreename = "euitm"
@@ -878,7 +977,7 @@ contains
                 call imas_open ( uri, OPEN_PULSE, idx, lStatus, message )
                 call xertst ( lStatus.eq.0, trim(message) )
 # else
-#  if ( AL_MAJOR_VERSION > 4 || ( AL_MAJOR_VERSION == 4 && AL_MINOR_VERSION > 8 ) )
+#  if ( AL_MAJOR_VERSION == 4 && AL_MINOR_VERSION > 8 )
                 call ual_begin_pulse_action( HDF5_BACKEND, lShot, lRun, lUser, &
                         &    lTokamak, lDataversion, idx )
                 call ual_open_pulse( idx, OPEN_PULSE, '', lStatus )
