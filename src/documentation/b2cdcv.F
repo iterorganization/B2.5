@@ -1041,51 +1041,55 @@
 *     that specifies a linear approximation to the assumed particle
 *     source of species (is) integrated over the (iCv) cell.
 *
-*     sne - (-1:nx,-1:ny,0:1) real*8 array.
-*     For (iCv) in (1:nCv), sne(ix,iy,0) and
-*     sne(ix,iy,1) are the coefficients in the expression
-*       sne(ix,iy,0)+sne(ix,iy,1)*ne(iCv)
+*     sne - (1:nCv,0:1) real*8 array.
+*     For (iCv) in (1:nCv), sne(iCv,0) and
+*     sne(iCv,1) are the coefficients in the expression
+*       sne(iCv,0)+sne(iCv,1)*ne(iCv)
 *     that specifies a linear approximation to the assumed non-ambipolar
 *     electron source of integrated over the (iCv) cell.
 *
-*     smo - (-1:nx,-1:ny,0:3,0:ns-1) real*8 array.
-*     For (iCv,is) in (1:nCv,0:ns-1), smo(ix,iy,0:3,is) are the
+*     smo - (1:nCv,0:3,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:ns-1), smo(iCv,0:3,is) are the
 *     coefficients in the expression
 *       smo(iCv,0,is)+
 *         smo(iCv,1,is)*ua(iCv,is)+
-*         smo(ix,iy,2,is)*roxa(iCv,is)+
-*         smo(ix,iy,3,is)*roxa(iCv,is)*ua(iCv,is)
+*         smo(iCv,2,is)*roxa(iCv,is)+
+*         smo(iCv,3,is)*roxa(iCv,is)*ua(iCv,is)
 *     that specifies a linear approximation to the parallel momentum
 *     source for species (is) integrated over the (iCv) cell; here
 *       roxa(iCv,is) = am(is)*mp*na(iCv,is) .
 *
-*     she - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (iCv) in (1:nCv), she(ix,iy,0:3) are the coefficients
+*     she - (1:nCv,0:3) real*8 array.
+*     For (iCv) in (1:nCv), she(iCv,0:3) are the coefficients
 *     in the expression
-*       she(ix,iy,0)+
-*         she(ix,iy,1)*te(iCv)+
-*         she(ix,iy,2)*ne(iCv)+
-*         she(ix,iy,3)*ne(iCv)*te(iCv)
+*       she(iCv,0)+
+*         she(iCv,1)*te(iCv)+
+*         she(iCv,2)*ne(iCv)+
+*         she(iCv,3)*ne(iCv)*te(iCv)
 *     that specifies a linear approximation to the assumed electron heat
 *     source integrated over the (iCv) cell.
 *
-*     shi - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (iCv) in (1:nCv), shi(ix,iy,0:3) are the coefficients
+*     shi - (1:nCv,0:3) real*8 array.
+*     For (iCv) in (1:nCv), shi(iCv,0:3) are the coefficients
 *     in the expression
-*       shi(ix,iy,0)+
-*         shi(ix,iy,1)*ti(iCv)+
-*         shi(ix,iy,2)*ni(iCv)+
-*         shi(ix,iy,3)*ni(iCv)*ti(iCv)
+*       shi(iCv,0)+
+*         shi(iCv,1)*ti(iCv)+
+*         shi(iCv,2)*ni(iCv,0)+
+*         shi(iCv,3)*ni(iCv,0)*ti(iCv)
 *     that specifies a linear approximation to the assumed all atom heat
 *     source integrated over the (iCv) cell.
+*     Note: for now, shi(:,2) and shi(:,3) always scale with ni(:,0)
+*     (all ions + fluid neutrals), even when tn_style.eq.2. It can be considered
+*     for the future to let shi scale with ni(:,1) when tn_style.ne.0, but this
+*     requires many code changes.
 *
-*     sch - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (iCv) in (1:nCv), sch(ix,iy,0:3) are the coefficients
+*     sch - (1:nCv,0:3) real*8 array.
+*     For (iCv) in (1:nCv), sch(iCv,0:3) are the coefficients
 *     in the expression
-*       sch(ix,iy,0)+
-*         sch(ix,iy,1)*po(iCv)+
-*         sch(ix,iy,2)*ne(iCv)+
-*         sch(ix,iy,3)*ne(iCv)*po(iCv)
+*       sch(iCv,0)+
+*         sch(iCv,1)*po(iCv)+
+*         sch(iCv,2)*ne(iCv)+
+*         sch(iCv,3)*ne(iCv)*po(iCv)
 *     that specifies a linear approximation to the assumed electric
 *     charge source integrated over the (iCv) cell.
 *
@@ -1099,55 +1103,55 @@
 *     contribution to the particle source of species (is) integrated
 *     over the (iCv) cell.
 *
-*     sne0 - (-1:nx,-1:ny,0:1) real*8 array.
-*     For (iCv) in (1:nCv), sne0(ix,iy,0) and
-*     sne0(ix,iy,1) are the coefficients in the expression
-*       sne0(ix,iy,0)+sne0(ix,iy,1)*ne(iCv)
+*     sne0 - (1:nCv,0:1) real*8 array.
+*     For (iCv) in (1:nCv), sne0(iCv,0) and
+*     sne0(iCv,1) are the coefficients in the expression
+*       sne0(iCv,0)+sne0(iCv,1)*ne(iCv)
 *     that specifies a linear approximation to some specific
 *     contribution to the particle non-ambipolar electron source
 *     integrated over the (iCv) cell.
 *
-*     smo0 - (-1:nx,-1:ny,0:3,0:ns-1) real*8 array.
-*     For (iCv,is) in (1:nCv,0:ns-1), smo0(ix,iy,0:3,is) are the
+*     smo0 - (1:nCv,0:3,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:ns-1), smo0(iCv,0:3,is) are the
 *     coefficients in the expression
 *       smo0(iCv,0,is)+
 *         smo0(iCv,1,is)*ua(iCv,is)+
-*         smo0(ix,iy,2,is)*roxa(iCv,is)+
-*         smo0(ix,iy,3,is)*roxa(iCv,is)*ua(iCv,is)
+*         smo0(iCv,2,is)*roxa(iCv,is)+
+*         smo0(iCv,3,is)*roxa(iCv,is)*ua(iCv,is)
 *     that specifies a linear approximation to some specific
 *     contribution to the non-frictional parallel momentum source for
 *     species (is) integrated over the (iCv) cell. Here,
 *       roxa(iCv,is) = am(is)*mp*na(iCv,is) .
 *
-*     she0 - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (iCv) in (1:nCv), she0(ix,iy,0:3) are the coefficients
+*     she0 - (1:nCv,0:3) real*8 array.
+*     For (iCv) in (1:nCv), she0(iCv,0:3) are the coefficients
 *     in the expression
-*       she0(ix,iy,0)+
-*         she0(ix,iy,1)*te(iCv)+
-*         she0(ix,iy,2)*ne(iCv)+
-*         she0(ix,iy,3)*ne(iCv)*te(iCv)
+*       she0(iCv,0)+
+*         she0(iCv,1)*te(iCv)+
+*         she0(iCv,2)*ne(iCv)+
+*         she0(iCv,3)*ne(iCv)*te(iCv)
 *     that specifies a linear approximation to some specific
 *     contribution to the electron heat source integrated over the
 *     (iCv) cell.
 *
-*     shi0 - (-1:nx,-1:ny,0:3) real*8 array.
+*     shi0 - (1:nCv,0:3) real*8 array.
 *     For (iCv) in (1:nCv), shi0(ix,iy,0:3) are the coefficients
 *     in the expression
 *       shi0(ix,iy,0)+
-*         shi0(ix,iy,1)*ti(iCv)+
-*         shi0(ix,iy,2)*ni(iCv)+
-*         shi0(ix,iy,3)*ni(iCv)*ti(iCv)
+*         shi0(iCv,1)*ti(iCv)+
+*         shi0(iCv,2)*ni(iCv)+
+*         shi0(iCv,3)*ni(iCv)*ti(iCv)
 *     that specifies a linear approximation to some specific
 *     contribution to the all atom heat source integrated over the
 *     (iCv) cell.
 *
-*     sch0 - (-1:nx,-1:ny,0:3) real*8 array.
+*     sch0 - (1:nCv,0:3) real*8 array.
 *     For (iCv) in (1:nCv), sch0(ix,iy,0:3) are the coefficients
 *     in the expression
-*       sch0(ix,iy,0)+
-*         sch0(ix,iy,1)*po(iCv)+
-*         sch0(ix,iy,2)*ne(iCv)+
-*         sch0(ix,iy,3)*ne(iCv)*po(iCv)
+*       sch0(iCv,0)+
+*         sch0(iCv,1)*po(iCv)+
+*         sch0(iCv,2)*ne(iCv)+
+*         sch0(iCv,3)*ne(iCv)*po(iCv)
 *     that specifies a linear approximation to some specific
 *     contribution to the electric charge source integrated over the
 *     (iCv) cell.
