@@ -1360,9 +1360,9 @@
 *     (is) on the (iCv) cell.
 *
 *     vla0 - (1:nCv,0:1,0:ns-1) real*8 array.
-*     (Let vla0x(,,)=vla0(,,0,) and vla0y(,,)=vla0(,,1,).)
-*     For (iCv,is) in (1:nCv,0:ns-1), vla0x(iCv,is) specifies
-*     the x-component and vla0y(iCv,is) the y-component of the
+*     For (iCv,is) in (1:nCv,0:10:ns-1), vla0(iCv,0,is) specifies
+*     the poloidal component and  vla0(iCv,1,is) specifies
+*     the radial component of the
 *     anomalous velocity of species (is) on the (iCv) cell.
 *
 *     vsa0 - (1:nCv,0:ns-1) real*8 array.
@@ -1377,6 +1377,10 @@
 *     For (iCv) in (1:nCv), hci0(iCv) specifies the anomalous
 *     atom thermal conductivity on the (iCv) cell.
 *
+*     hcn0 - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), hcn0(iCv) specifies the fluid neutral
+*     thermal conductivity on the (iCv) cell.
+*
 *     sig0 - (1:nCv) real*8 array.
 *     For (iCv) in (1:nCv), sig0(iCv) specifies the anomalous
 *     electrical conductivity on the (iCv) cell.
@@ -1384,6 +1388,9 @@
 *     alf0 - (1:nCv) real*8 array.
 *     For (iCv) in (1:nCv), alf0(iCv) specifies the anomalous
 *     thermo-electric coefficient on the (iCv) cell.
+*
+*     Remark: the diffusive fluid neutral transport is included in dna0 etc,
+*     even though it is physics-based and not 'anomalous'.
 *
 *   ..transport coefficients, discrete
 *
@@ -1393,195 +1400,128 @@
 *     (The cell-integrated energy equipartition coefficient is
 *     ceqp*ne*ni/te**1.5.)
 *
-*     cdna - (1:nCv,0:1,0:ns-1) real*8 array.
-*     (Let cdnax=cdna(,,0,) and cdnay=cdna(,,1,).)
-*     For (iCv,is) in (1:nCv,0:ns-1), cdnax(iCv,is) specifies
-*     the particle diffusivity w.r.t. grad(na) of species (is) between
-*     the (iCv) cell and its left neighbor. This coefficient enters into
-*     the expression for the particle flux in the form
-*       -cdnax(iCv,is)*(na(iCv,is)-na(ix-1,iy,is))
-*     For ix.eq.-1, cdnax(ix,-1:ny,0:ns-1) will hold 0.
-*     For (iCv,is) in (-1:nx,0:ny,0:ns-1), cdnay(iCv,is) specifies
-*     the particle diffusivity w.r.t. grad(na) of species (is) between
-*     the (iCv) cell and its bottom neighbor. This coefficient enters into
-*     the expression for the particle flux in the form
-*       -cdnay(iCv,is)*(na(iCv,is)-na(bottom(iCv),is))
-*     For iy.eq.-1, cdnay(-1:nx,iy,0:ns-1) will hold 0.
+*     cdna - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:ns-1), cdna(iFc,0,is) specifies
+*     the particle diffusivity w.r.t. the poloidal gradient of na of species
+*     (is) on face iFc.
+*     For (iFc,is) in (1:nFc,0:ns-1), cdna(iFc,1,is) specifies
+*     the particle diffusivity w.r.t. the radial gradient of na of species (is)
+*     on face iFc.
 *
-*     cdpa - (1:nCv,0:1,0:ns-1) real*8 array.
-*     (Let cdpax=cdpa(,,0,) and cdpay=cdpa(,,1,).)
-*     For (iCv,is) in (1:nCv,0:ns-1), cdpax(iCv,is) specifies
-*     the particle diffusivity w.r.t. grad(pa) of species (is) between
-*     the (iCv) cell and its left neighbor. This coefficient enters into
-*     the expression for the particle flux in the form
-*       -cdpax(iCv,is)*(pa(iCv,is)-pa(ix-1,iy,is))
-*     For ix.eq.-1, cdpax(ix,-1:ny,0:ns-1) will hold 0.
-*     For (iCv,is) in (-1:nx,0:ny,0:ns-1), cdpay(iCv,is) specifies
-*     the particle diffusivity w.r.t. grad(pa) of species (is) between
-*     the (iCv) cell and its bottom neighbor. This coefficient enters into
-*     the expression for the particle flux in the form
-*       -cdpay(iCv,is)*(pa(iCv,is)-pa(bottom(iCv),is))
-*     For iy.eq.-1, cdpay(-1:nx,iy,0:ns-1) will hold 0.
+*     cdpa - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:ns-1), cdpa(iFc,0,is) specifies
+*     the particle diffusivity w.r.t. the poloidal gradient of pa of
+*     species (is) between on face iFc.
+*     For (iFc,is) in (1:nFc,0:ns-1), cdpa(iCv,1,is) specifies
+*     the particle diffusivity w.r.t. the radial gradient of pa of species (is)
+*     on face iFc.
 *
-*     cvla - (1:nCv,0:1,0:ns-1) real*8 array.
-*     (Let cvlax=cvla(,,0,) and cvlay=cvla(,,1,).)
-*     For (iCv,is) in (1:nCv,0:ns-1), cvlax(iCv,is) specifies
-*     the surface-integrated anomalous velocity of species (is) between
-*     the (iCv) cell and its left neighbor. This coefficient enters into
+*     cvla - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:ns-1), cvla(iFc,0,is) specifies
+*     the surface-integrated anomalous poloidal velocity of species (is) on
+*     the (iFc) face. This coefficient enters into
 *     the expression for the particle flux in the form
-*       cvlax(iCv,is)*(na)
+*       cvla(iFc,0,is)*(na)
 *     in which (na) involves some interpolation to cell faces.
-*     For ix.eq.-1, cvlax(ix,-1:ny,0:ns-1) will hold 0.
-*     For (iCv,is) in (-1:nx,0:ny,0:ns-1), cvlay(iCv,is) specifies
-*     the surface-integrated anomalous velocity of species (is) between
-*     the (iCv) cell and its bottom neighbor. This coefficient enters into
+*     For (iFc,is) in (iFc,0:ns-1), cvla(iFc,1,is) specifies
+*     the surface-integrated anomalous radial velocity of species (is) on
+*     the (iFc). This coefficient enters into
 *     the expression for the particle flux in the form
-*       cvlay(iCv,is)*(na)
+*       cvla(iFc,1,is)*(na)
 *     in which (na) involves some interpolation to cell faces.
-*     For iy.eq.-1, cvlay(-1:nx,iy,0:ns-1) will hold 0.
 *
-*     cvsa - (1:nCv,0:1,0:ns-1) real*8 array.
-*     (Let cvsax=cvsa(,,0,) and cvsay=cvsa(,,1,).)
-*     For (iCv,is) in (1:nCv,0:ns-1), cvsax(iCv,is) specifies
-*     the viscous conductance of species (is) between the (iCv) cell
-*     and its left neighbor.
-*     For ix.eq.-1, cvsax(ix,-1:ny,0:ns-1) will hold 0.
-*     For (iCv,is) in (-1:nx,0:ny,0:ns-1), cvsay(iCv,is) specifies
-*     the viscous conductance of species (is) between the (iCv) cell
-*     and its bottom neighbor.
-*     For iy.eq.-1, cvsay(-1:nx,iy,0:ns-1) will hold 0.
+*     cvsa - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:ns-1), cvsa(iFc,0,is) specifies
+*     the poloidal viscous conductance of species (is) on the (iFc) face.
+*     For (iFc,is) in (1:nFc,0:ns-1), cvsa(iFc,1,is) specifies
+*     the radial viscous conductance of species (is) on the (iFc) face.
 *
-*     chce - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let chcex=chce(,,0) and chcey=chce(,,1).)
-*     For (iCv) in (0:nx,-1:ny), chcex(iCv) specifies the electron
-*     thermal conductance between the (iCv) cell and its left neighbor.
+*     chce - (1:nFc),0:1) real*8 array.
+*     For (iFc) in (1:nFc), chce(iFc,0) specifies the electron
+*     thermal conductance on the (iFc) face.
+*     This coefficient enters into the expression for the electron
+*     heat flux in the form -chce(iFc,0)*grad_p(te).
+*     For (iFc) in (1:nFc), chce(iFc,1) specifies the electron
+*     thermal conductance on the (iFc) face.
 *     This coefficient enters into the expression for the electron
 *     heat flux in the form
-*       -chcex(iCv)*(te(iCv)-te(left(iCv))) .
-*     For ix.eq.-1, chcex(ix,-1:ny) will hold 0.
-*     For (iCv) in (-1:nx,0:ny), chcey(iCv) specifies the electron
-*     thermal conductance between the (iCv) cell and its bottom neighbor.
-*     This coefficient enters into the expression for the electron
-*     heat flux in the form
-*       -chcey(iCv)*(te(iCv)-te(bottom(iCv))) .
-*     For iy.eq.-1, chcey(-1:nx,iy) will hold 0.
+*       -chce(iFc,1)*grad_r(te).
 *
-*     chve - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let chvex=chve(,,0) and chvey=chve(,,1).)
-*     For (iCv) in (0:nx,-1:ny), chvex(iCv) specifies the electron
-*     thermal strange velocity between the (iCv) cell and its left
-*     neighbor. This coefficient enters into the expression for the
-*     electron heat flux in the form  chvex*ne*te , interpolated to
-*     cell faces in a suitable manner.
-*     For ix.eq.-1, chvex(ix,-1:ny) will hold 0.
-*     For (iCv) in (-1:nx,0:ny), chvey(iCv) specifies the electron
-*     thermal strange velocity between the (iCv) cell and its bottom
-*     neighbor. This coefficient enters into the expression for the
-*     electron heat flux in the form  chvey*ne*te , interpolated to
-*     cell faces in a suitable manner.
-*     For iy.eq.-1, chvey(-1:nx,iy) will hold 0.
+*     chve - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), chve(iFc,0) specifies the poloidal electron
+*     thermal strange velocity on the (iFc) face.
+*     For (iFc) in (1:nFc), chve(iFc,1) specifies the radial electron
+*     thermal strange velocity on the (iFc) face.
+*     This coefficient enters into the expression for the
+*     electron heat flux in the form  chve*ne*te.
 *
-*     chci - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let chcix=chci(,,0) and chciy=chci(,,1).)
-*     For (iCv) in (0:nx,-1:ny), chcix(iCv) specifies the all atom
-*     thermal conductance between the (iCv) cell and its left neighbor.
+*     chci - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), chci(iFc,0) specifies the all atom
+*     poloidal thermal conductance on the (iFc) face.
 *     This coefficient enters into the expression for the atom heat
 *     flux in the form
-*       -chcix(iCv)*(ti(iCv)-ti(left(iCv))) .
-*     For ix.eq.-1, chcix(ix,-1:ny) will hold 0.
-*     For (iCv) in (-1:nx,0:ny), chciy(iCv) specifies the all atom
-*     thermal conductance between the (iCv) cell and its bottom neighbor.
+*       -chci(iFc,0)*grad_p(ti).
+*     For (iFc) in (1:nFc), chci(iFc,1) specifies the all atom
+*     radial thermal conductance on the (iFc) face.
 *     This coefficient enters into the expression for the atom heat
 *     flux in the form
-*       -chciy(iCv)*(ti(iCv)-ti(bottom(iCv))) .
-*     For iy.eq.-1, chciy(-1:nx,iy) will hold 0.
+*       -chci(iFc,1)*grad_r(ti).
 *
-*     chvi - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let chvix=chvi(,,0) and chviy=chvi(,,1).)
-*     For (iCv) in (0:nx,-1:ny), chvix(iCv) specifies the all atom
-*     thermal strange velocity between the (iCv) cell and its left
-*     neighbor. This coefficient enters into the expression for the
-*     atom heat flux in the form  chvix*ni*ti , interpolated to cell
-*     faces in a suitable manner.
-*     For ix.eq.-1, chvix(ix,-1:ny) will hold 0.
-*     For (iCv) in (-1:nx,0:ny), chviy(iCv) specifies the all atom
-*     thermal strange velocity between the (iCv) cell and its bottom
-*     neighbor. This coefficient enters into the expression for the
-*     atom heat flux in the form  chviy*ni*ti , interpolated to
-*     cell faces in a suitable manner.
-*     For iy.eq.-1, chviy(-1:nx,iy) will hold 0.
+*     chvi - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), chvi(iFc,0) specifies the poloidal all atom
+*     thermal strange velocity on the (iFc) face..
+*     For (iFc) in (1:nFc), chvi(iFc,1) specifies the radial all atom
+*     thermal strange velocity on the (iFc) face.
+*     This coefficient enters into the expression for the
+*     atom heat flux in the form chvi*ni*ti.
 *
-*     csig - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let csigx=csig(,,0) and csigy=csig(,,1).)
-*     For (iCv) in (0:nx,-1:ny), csigx(iCv) specifies the electrical
-*     conductance between the (iCv) cell and its left neighbor.
-*     For ix.eq.-1, csigx(ix,-1:ny) will hold 0.
-*     For (iCv) in (-1:nx,0:ny), csigy(iCv) specifies the electrical
-*     conductance between the (iCv) cell and its bottom neighbor.
-*     For iy.eq.-1, csigx(-1:nx,iy) will hold 0.
+*     csig - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), csig(iFc,0) specifies the poloidal electrical
+*     conductance on the (iFc) face.
+*     For (iFc) in (1:nFc), csig(iFc,1) specifies the radial electrical
+*     conductance on the (iFc) face.
 *
-*     calf - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let calfx=calf(,,0) and calfy=calf(,,1).)
-*     For (iCv) in (0:nx,-1:ny), calfx(iCv) specifies the thermo-
-*     electric coefficient between the (iCv) cell and its left neighbor.
-*     For ix.eq.-1, calfx(ix,-1:ny) will hold 0.
-*     For (iCv) in (-1:nx,0:ny), calfy(iCv) specifies the thermo-
-*     electric coefficient between the (iCv) cell and its bottom neighbor.
-*     For iy.eq.-1, calfy(-1:nx,iy) will hold 0.
+*     calf - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), calf(iFc,0) specifies the poloidal thermo-
+*     electric coefficient on the (iFc) face.
+*     For (iFc) in (1:nFc), calf(iFc,1) specifies the radial thermo-
+*     electric coefficient on the (iFc) face.
 *
-*     csigin - (-1:nx,-1:ny,0:1,0:ns-1,0:ns-1) real*8 array.		 !xpb
-*     (Let csiginx=csigin(,,0,,) and csiginy=csigin(,,1,,).)
-*     For (ix,iy,is,is0) in (0:nx,-1:ny,0:ns-1,0:ns-1),
-*     csiginx(ix,iy,is,is0) specifies the ion-neutral
-*     conductivity between the (iCv) cell and its left neighbor, where
+*     csigin - (1:nFc,0:1,0:ns-1,0:ns-1) real*8 array.		 !xpb
+*     For (iFc,is,is0) in (1:nFc,0:ns-1,0:ns-1),
+*     csigin(iFc,0,is,is0) specifies the poloidal ion-neutral
+*     conductivity on the (iFc) face, where
 *     the ion species is species is and the neutral species is is0.
-*     For ix.eq.-1, csiginx(ix,-1:ny) will hold 0.
-*     For (iCv) in (-1:nx,0:ny), csiginy(iCv) specifies the ion-neutral
-*     conductivity between the (iCv) cell and its bottom neighbor, where
+*     For (iFc,is,is0) in (1:nFc,0:ns-1,0:ns-1),
+*     csigin(iFc,1,is,is0) specifies the radial ion-neutral
+*     conductivity on the (iFc) face, where
 *     the ion species is species is and the neutral species is is0.
-*     For iy.eq.-1, csiginx(-1:nx,iy) will hold 0.
 *     When is is a neutral species or is0 is an ionised species,
-*     csigin(,,,is,is0) will be zero.
+*     csigin(,,is,is0) will be zero.
 *
-*     csig_cl - (-1:nx,-1:ny,0:1) real*8 array.				 !xpb
-*     (Let csig_clx=csig_cl(,,0) and csig_cly=csig_cl(,,1).)
-*     For (iCv) in (0:nx,-1:ny), csig_clx(iCv) specifies the classical
-*     conductivity between the (iCv) cell and its left neighbor.
-*     For ix.eq.-1, csig_clx(ix,-1:ny) will hold 0.
-*     For (iCv) in (-1:nx,0:ny), csig_cly(iCv) specifies the classical
-*     conductivity between the (iCv) cell and its bottom neighbor.
-*     For iy.eq.-1, csig_clx(-1:nx,iy) will hold 0.
+*     csig_cl - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), csig(iFc,0) specifies the classical part of the
+*     poloidal electrical conductance on the (iFc) face.
+*     For (iFc) in (1:nFc), csig(iFc,1) specifies the classical part of the
+*     radial electrical conductance on the (iFc) face.
 *
-*     calf_cl - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let calf_clx=calf_cl(,,0) and calf_cly=calf_cl(,,1).)
-*     For (iCv) in (0:nx,-1:ny), calf_clx(iCv) specifies the
-*     classical part of the thermo-electric coefficient
-*     between the (iCv) cell and its left neighbor.
-*     For ix.eq.-1, calf_clx(ix,-1:ny) will hold 0.
-*     For (iCv) in (-1:nx,0:ny), calf_cly(iCv) specifies the
-*     classical part of the thermo-electric coefficient
-*     between the (iCv) cell and its bottom neighbor.
-*     For iy.eq.-1, calf_cly(-1:nx,iy) will hold 0.
+*     calf_cl - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), calf(iFc,0) specifies the classical part of the
+*     poloidal thermo-electric coefficient on the (iFc) face.
+*     For (iFc) in (1:nFc), calf(iFc,1) specifies the classical part of the
+*     radial thermo-electric coefficient on the (iFc) face.
 *
-*     csig_an - (-1:nx,-1:ny,0:1) real*8 array.				 !xpb
-*     (Let csig_anx=csig_an(,,0) and csig_any=csig_an(,,1).)
-*     For (iCv) in (0:nx,-1:ny), csig_anx(iCv) specifies the anomalous
-*     conductivity between the (iCv) cell and its left neighbor.
-*     For ix.eq.-1, csig_anx(ix,-1:ny) will hold 0.
-*     For (iCv) in (-1:nx,0:ny), csig_any(iCv) specifies the anomalous
-*     conductivity between the (iCv) cell and its bottom neighbor.
-*     For iy.eq.-1, csig_anx(-1:nx,iy) will hold 0.
+*     csig_an - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), csig(iFc,0) specifies the poloidal anomalous
+*     electrical conductance on the (iFc) face.
+*     For (iFc) in (1:nFc), csig(iFc,1) specifies the radial anomalous
+*     electrical conductance on the (iFc) face.
 *
-*     calf_an - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let calf_anx=calf_an(,,0) and calf_any=calf_an(,,1).)
-*     For (iCv) in (0:nx,-1:ny), calf_anx(iCv) specifies the
-*     anomalous part of the thermo-electric coefficient
-*     between the (iCv) cell and its left neighbor.
-*     For ix.eq.-1, calf_anx(ix,-1:ny) will hold 0.
-*     For (iCv) in (-1:nx,0:ny), calf_any(iCv) specifies the
-*     anomalous part of the thermo-electric coefficient
-*     between the (iCv) cell and its bottom neighbor.
-*     For iy.eq.-1, calf_any(-1:nx,iy) will hold 0.
+*     calf_an - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), calf(iFc,0) specifies the anomalous part of the
+*     poloidal thermo-electric coefficient on the (iFc) face.
+*     For (iFc) in (1:nFc), calf(iFc,1) specifies the anomalous part of the
+*     radial thermo-electric coefficient on the (iFc) face.
 *
 *   ..parameters for core numerical iteration
 *
