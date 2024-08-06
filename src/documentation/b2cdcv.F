@@ -517,61 +517,64 @@
 *     current connected with contribution from the perpendicular viscosity
 *     through the face iFc.
 *
-*     uadia - (1:nCv,0:1,0:ns-1) real*8 array.
-*     For (iCv,is) in (1:nCv,0:1,0:ns-1), uadia(iCv,0,is) specifies
-*     the total effective drift velocity of species (is) on the (iCv) cell
+*     uadia - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,0,is) specifies
+*     the total effective drift velocity of species (is) on the (iFc) face
 *     in the diamagnetic direction (i.e. within the flux surface but
 *     perpendicular to the magnetic field), but projected onto the
 *     poloidal direction.
-*     For (iCv,is) in (1:nCv,0:1,0:ns-1), uadia(iCv,1,is) specifies
-*     the total effective drift velocity of species (is) on the (iCv) cell
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,1,is) specifies
+*     the total effective drift velocity of species (is) on the (iFc) face
 *     in the radial direction.
 *
-*     vadia - (1:nCv,0:1,0:ns-1) real*8 array.
-*     For (iCv,is) in (1:nCv,0:1,0:ns-1), vadia(iCv,0,is) specifies
-*     the effective diamagnetic drift velocity of species (is) on the (iCv) cell
+*     vadia - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), vadia(iFc,0,is) specifies
+*     the effective diamagnetic drift velocity of species (is) on the (iFc) face
 *     in the diamagnetic direction (i.e. within the flux surface but
 *     perpendicular to the magnetic field), but projected onto the
 *     poloidal direction.
-*     For (iCv,is) in (1:nCv,0:1,0:ns-1), vadia(iCv,1,is) specifies
-*     the effective diamagnetic drift velocity of species (is) on the (iCv) cell
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), vadia(iFc,1,is) specifies
+*     the effective diamagnetic drift velocity of species (is) on the (iFc) face
 *     in the radial direction.
 *
-*     vedia - (1:nCv,0:ns-1) real*8 array.
-*     For (iCv,is) in (1:nCv,0:ns-1), vedia(iCv,is) specifies
-*     the effective diamagnetic drift velocity of electrons on the (iCv) cell
+*     vedia - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), vedia(iFc,0) specifies
+*     the effective diamagnetic drift velocity of electrons on the (iFc) face
 *     in the diamagnetic direction (i.e. within the flux surface but
 *     perpendicular to the magnetic field), but projected onto the
 *     poloidal direction.
-*
-*     wadia - (1:nCv,0:1,0:ns-1) real*8 array.
-*     For (iCv,is) in (1:nCv,0:1,0:ns-1), wadia(iCv,0,is) specifies
-*     the total diamagnetic drift velocity of species (is) in the (iCv) cell
-*     in the diamagnetic direction (i.e. within the flux surface but
-*     perpendicular to the magnetic field), but projected onto the
-*     poloidal direction.
-*     For (iCv,is) in (1:nCv,0:1,0:ns-1), wadia(iCv,1,is) specifies
-*     the total diamagnetic drift velocity of species (is) in the (iCv) cell
+*     For (iFc) in (1:nFc), vedia(iFc,1) specifies
+*     the effective diamagnetic drift velocity of electrons on the (iFc) face
 *     in the radial direction.
 *
-*     vaecrb - (1:nCv,0:1,0:ns-1) real*8 array.
-*     For (iCv,is) in (1:nCv,0:1,0:ns-1), vaecrb(iCv,0,is) specifies
-*     the ExB drift velocity of species (is) in the (iCv) cell
+*     wadia - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), wadia(iFc,0,is) specifies
+*     the total diamagnetic drift velocity of species (is) on the (iFc) face
 *     in the diamagnetic direction (i.e. within the flux surface but
 *     perpendicular to the magnetic field), but projected onto the
 *     poloidal direction.
-*     For (iCv,is) in (1:nCv,0:1,0:ns-1), vaecrb(iCv,1,is) specifies
-*     the ExB drift velocity of species (is) in the (iCv) cell
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), wadia(iFc,1,is) specifies
+*     the total diamagnetic drift velocity of species (is) on the (iFc) face
 *     in the radial direction.
 *
-*     veecrb - (1:nCv,0:1) real*8 array.
-*     For (iCv,is) in (1:nCv,0:1), veecrb(iCv,0) specifies
-*     the ExB drift velocity of electrons in the (iCv) cell
+*     vaecrb - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), vaecrb(iFc,0,is) specifies
+*     the ExB drift velocity of species (is) on the (iFc) face
 *     in the diamagnetic direction (i.e. within the flux surface but
 *     perpendicular to the magnetic field), but projected onto the
 *     poloidal direction.
-*     For (iCv,is) in (1:nCv,0:1,0:ns-1), veecrb(iCv,1,is) specifies
-*     the ExB drift velocity of electrons in the (iCv) cell
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), vaecrb(iFc,1,is) specifies
+*     the ExB drift velocity of species (is) on the (iFc) face
+*     in the radial direction.
+*
+*     veecrb - (1:nFc,0:1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:1), veecrb(iFc,0) specifies
+*     the ExB drift velocity of electrons in the (iFc) cell
+*     in the diamagnetic direction (i.e. within the flux surface but
+*     perpendicular to the magnetic field), but projected onto the
+*     poloidal direction.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), veecrb(iFc,1,is) specifies
+*     the ExB drift velocity of electrons in the (iFc) cell
 *     in the radial direction.
 *
 *     kinrgy - (1:nCv,0:ns-1) real*8 array.
