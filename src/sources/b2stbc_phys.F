@@ -68,10 +68,10 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iCv1, iCv2, iFc, iVx1, iVx2, iFt, is, ib, ibc, ib0,
-     &  ism, ibc0, k, j
+      integer iCv, iCv1, iCv2, iFc, iVx1, iVx2, is, ib, ibc, ib0,
+     &  ism, ibc0, k,j, isb, ibw, isa, ix, iFt
 #ifdef WG_TODO
-     & ,coreregno, coreregn2, ibw, ireg, isb, isa,
+     & ,coreregno, coreregn2, ireg, 
      1  bc_type13_ref, bc_type13_ix, bc_type13_iy, bc_type13_i,
      2  bc_type13_ixx,
      1  bc_type16_ref, bc_type16_ix, bc_type16_iy, bc_type16_i,
@@ -98,11 +98,12 @@
      1  t3, t4, totflux, dsh, vt,
      2  vbnd, totpar,
      &  naua2sum(0:ns-1), naua2average(0:ns-1),
-     &  pzaverage, pzsum, volsum                                        !srv 24.03.99 18.01.02
+     &  pzaverage, pzsum, volsum,
+     &  totfluxi, totfluxn
 #ifdef WG_TODO
      1  ,weight, volave
      &  ,s0, s0hz, ua2sum, ua2average(0:ns-1)                           !srv 07.04.00 15.02.02
-     &  ,uasum, uaaverage(0:ns-1), totfluxn, totfluxi                   !srv 15.02.02
+     &  ,uasum, uaaverage(0:ns-1)                                       !srv 15.02.02
      &  ,nesum, neave, niave, tisum, tiave, tiaverage, tesum, teave     !srv 15.12.00 25.01.02
      &  ,nasum, naave, naaverage(0:ns-1), poave, bbsum, bbaverage       !srv 22.01.02 18.10.04
       real (kind=R8) :: bzhzsum, bzhzaverage
@@ -2456,7 +2457,47 @@ cxpb  Add contribution from Eirene core boundary fluxes
 *              A CORRESPONDING CONDITION ON THE ION TEMPERATURE (BCENI=26,27)
 
         case (26)
-          call xerrab ('b2stbc_phys -- BCCON = 26 not adapted for WG')
+          totfluxi = 0.0_R8
+          t0 = 0.0_R8
+          t1 = 0.0_R8
+          nas = 0.0_R8
+          sconpar = 0.0_R8
+          do iCv1 = mpg%nCi+1, mpg%nCv
+            iFc = mpg%cvFc(mpg%cvFcP(iCv1,1))
+            iCv2 = mpg%fcCv(iFc,2)
+            if (.not.mpg%cvOnClosedSurface(iCv1)) cycle
+            t0 = t0 + geo%cvVol(iCv2)
+            totfluxi = totfluxi+dv%fna_mdf(iFc,1,is)
+            t1 = t1 + geo%cvVol(iCv2)*pl%na(iCv2,is)
+            nas = nas + geo%cvVol(iCv2)*pl%na(iCv1,is)
+          enddo
+          t1 = t1/t0
+          nas = nas/t0
+          do ibw=1,nbc
+            if(BCCON(is,ibw).EQ.BCCON(is,ib)) then
+              sconpar(is) = sconpar(is) + CONPAR(IS,IBW,1)
+            endif
+          enddo
+          if (conpar(is,ib,2).gt.0.0_R8) t3 = conpar(is,ib,2)
+          if (conpar(is,ib,2).le.0.0_R8) t3 = 1.0e-2_R8
+          write(*,'(3(a,es14.7))')
+     *         ' NAS=',NAS,
+     &         ' totfluxi=',totfluxi,' SCONPAR=',SCONPAR(IS)
+          nas = nas*(1-t3*(totfluxi-
+     &      sconpar(is))/(abs(totfluxi)+abs(sconpar(is))))
+
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1)) 
+            if (.not.mpg%cvOnClosedSurface(iCv1)) then
+              call xerrab
+     1          ('B2STBC -- BCCON=26 IS AVAILABLE FOR CORE ONLY')
+            endif
+            srw%sna0(iCv1,0,is) = 
+     &        VBIG*(nas+pl%na(iCv2,is)-t1)*geo%fcS(iFc)
+            srw%sna0(iCv1,1,is) = -VBIG*geo%fcS(iFc)
+          enddo
 #ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,a,i3)')                                     !IYS 21.01.2016
@@ -2588,7 +2629,78 @@ cxpb  Add contribution from Eirene core boundary fluxes
 *              A CORRESPONDING CONDITION ON THE ION TEMPERATURE (BCENI=26,27)
 
         case (27)
-          call xerrab ('b2stbc_phys -- BCCON = 27 not adapted for WG')
+          totfluxi = 0.0_R8
+          totfluxn = 0.0_R8
+          t0 = 0.0_R8
+          t1 = 0.0_R8
+          nas = 0.0_R8
+          sconpar = 0.0_R8
+          do iCv1 = mpg%nCi+1, mpg%nCv
+            iFc = mpg%cvFc(mpg%cvFcP(iCv1,1))
+            iCv2 = mpg%fcCv(iFc,2)
+            if (.not.mpg%cvOnClosedSurface(iCv1)) cycle
+            t0 = t0 + geo%cvVol(iCv2)
+            do isb = 0, ns-1
+              if(b2espcr(is).eq.b2espcr(isb).and.is.ne.isb) then
+                if(.not.is_neutral(isb).or.
+     &            switch%use_eirene.eq.0) then
+                    totfluxn = totfluxn+dv%fna_mdf(iFc,1,isb)
+                endif
+              endif
+            enddo
+            totfluxi = totfluxi+dv%fna_mdf(iFc,1,is)
+            t1 = t1 + geo%cvVol(iCv2)*pl%na(iCv2,is)
+            nas = nas + geo%cvVol(iCv2)*pl%na(iCv1,is)
+          enddo
+          t1 = t1/t0
+          nas = nas/t0
+#ifdef B25_EIRENE
+cxpb  Add contribution from Eirene core boundary fluxes
+              do isa = 1, nnatmi
+                if (latmscl(isa).eq.b2espcr(is)) then
+                  do k = 1, ncns
+                    ix = nlim + lcns(k)
+                    totfluxn = totfluxn -
+     &                 (wldna(ix,isa,0) - wldra(ix,isa,0)
+     &                                  - wldpa(ix,isa,0))
+                    do ism = 1, nnmoli
+                      if (mlcmp(isa,ism).gt.0) then
+                        totfluxn = totfluxn - mlcmp(isa,ism) *
+     &                   (wldnm(ix,ism,0) - wldrm(ix,ism,0)
+     &                                    - wldpm(ix,ism,0))
+                      end if
+                    end do
+                  end do
+                end if
+              end do
+#endif
+          do ibw=1,nbc
+            if(BCCON(is,ibw).EQ.BCCON(is,ib)) then
+              sconpar(is) = sconpar(is) + CONPAR(IS,IBW,1)
+            endif
+          enddo
+          write(*,'(5(a,es14.7))')
+     *         ' NAS=',NAS,' totfluxn=',totfluxn,
+     &         ' totfluxi=',totfluxi,' SCONPAR=',SCONPAR(IS),
+     &         ' totfluxn+totfluxi=',totfluxn+totfluxi
+          if (conpar(is,ib,2).gt.0.0_R8) t3 = conpar(is,ib,2)
+          if (conpar(is,ib,2).le.0.0_R8) t3 = 1.0e-2_R8
+          nas = nas*(1-t3*(totfluxn+totfluxi-
+     &      sconpar(is))/(abs(totfluxn)+abs(totfluxi)+abs(sconpar(is))))
+
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1)) 
+            if (.not.mpg%cvOnClosedSurface(iCv1)) then
+              call xerrab
+     1          ('B2STBC -- BCCON=27 IS AVAILABLE FOR CORE ONLY')
+            endif
+            srw%sna0(iCv1,0,is) = 
+     &        VBIG*(nas+pl%na(iCv2,is)-t1)*geo%fcS(iFc)
+            srw%sna0(iCv1,1,is) = -VBIG*geo%fcS(iFc)
+          enddo
+          
 #ifdef WG_TODO
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,a,i3)')
