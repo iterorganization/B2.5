@@ -2496,7 +2496,6 @@ CONTAINS
     INTRINSIC MAX
     EXTERNAL FIND_FACES_NODIFF
     REAL(kind=r8) :: result1
-    INTRINSIC HUGE
 !      intrinsic huge
 !
 ! number of recycling boundaries

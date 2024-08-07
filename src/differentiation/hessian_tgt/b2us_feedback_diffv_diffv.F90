@@ -2101,9 +2101,6 @@ CONTAINS
           SELECT CASE  (fb_rescale_option(ifb)) 
           CASE (0) 
 !
- 100        WRITE(*, '(a,1x,1p,i3,6g15.6)') 'feedback_rescale ', b2espcr&
-&           (fb_species(ifb)), fb_current(ifb), fb_target(ifb), &
-&           fb_rescale(ifb), fb_prev(ifb), ddtim, dt_prev
 !
 !
 ! phase 3:
@@ -3027,7 +3024,6 @@ CONTAINS
             END DO
             fb_rescale(ifb) = (fb_alpha(ifb)*temp+1.0_R8)/(fb_alpha(ifb)&
 &             +1.0_R8)
-            GOTO 100
           CASE (2) 
 !
 ! pure rescale
@@ -3058,7 +3054,6 @@ CONTAINS
               fb_rescaled0(nd0, ifb) = tempd(nd0)
             END DO
             fb_rescale(ifb) = temp
-            GOTO 100
           CASE (3) 
 !
 ! rescale slowed by tanh_log
@@ -3127,7 +3122,6 @@ CONTAINS
               fb_rescaled0(nd0, ifb) = temp0d(nd0)
             END DO
             fb_rescale(ifb) = temp0
-            GOTO 100
           CASE (4) 
 !
 ! rescale done according to SOLPS4 formula:
@@ -3220,7 +3214,6 @@ CONTAINS
             fb_rescale = fb_alpha(ifb)*((fb_target(ifb)-fb_current(ifb))&
 &             /ddtim+(fb_prev(ifb)-fb_current(ifb))/dt_prev)
             saved_fb_actuator(ifb) = fb_current(ifb)
-            GOTO 100
           CASE (5) 
 !
 ! rescale done according to SOLPS4 formula:
@@ -3311,7 +3304,6 @@ CONTAINS
             fb_rescale(ifb) = fb_alpha(ifb)*((fb_target(ifb)-fb_current(&
 &             ifb))/ddtim+(fb_prev(ifb)-fb_current(ifb))/dt_prev)
             saved_fb_actuator(ifb) = fb_current(ifb)
-            GOTO 100
           CASE (6) 
 !
 ! rescale slowed by fb_alpha (SOLPS4 style)
@@ -3328,13 +3320,15 @@ CONTAINS
 &               ifb)
             END DO
             fb_rescale(ifb) = fb_alpha(ifb)*fb_current(ifb)
-            GOTO 100
           CASE DEFAULT
 !
             WRITE(*, *) 'fb_rescale_option not coded ', &
 &           fb_rescale_option(ifb)
-            GOTO 100
           END SELECT
+          WRITE(*, '(a,1x,1p,i3,6g15.6)') 'feedback_rescale ', b2espcr&
+&           (fb_species(ifb)), fb_current(ifb), fb_target(ifb), &
+&           fb_rescale(ifb), fb_prev(ifb), ddtim, dt_prev
+
         END IF
 !
 !

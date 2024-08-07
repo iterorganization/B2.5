@@ -1148,7 +1148,7 @@ CONTAINS
     INTEGER :: result12
     INTEGER :: result13
     REAL(r8) :: result14
-    REAL(kind=r8) :: result15
+    INTEGER :: result15
 !
     ncv = mpg%ncv
     nfc = mpg%nfc
