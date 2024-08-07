@@ -1134,7 +1134,7 @@ else
 	$(warning NETCDF library not present!)
 endif
 
-${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBNDIR}/b2mod_math.${MOD} ${OBNDIR}/b2mod_openmp.${MOD} ${OBNDIR}/b2mod_subsys.${MOD} ${OBNDIR}/b2mod_types.${MOD}
+${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBNDIR}/b2mod_ipmain.${MOD} ${OBNDIR}/b2mod_lwimai.${MOD} ${OBNDIR}/b2mod_lwmain.${MOD} ${OBNDIR}/b2mod_math.${MOD} ${OBNDIR}/b2mod_openmp.${MOD} ${OBNDIR}/b2mod_subsys.${MOD} ${OBNDIR}/b2mod_types.${MOD} ${OBNDIR}/b2mod_xerset.${MOD}
 ifdef LD_NETCDF
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.F90
