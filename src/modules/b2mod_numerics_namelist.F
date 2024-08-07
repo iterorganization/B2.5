@@ -44,7 +44,7 @@
       real (kind=R8), save :: dtei(0:CVREGMAX),
      &  dtei_ft(1:DEF_NYD)
       real (kind=R8), save :: dten(0:CVREGMAX)
-      real (kind=R8), save :: corr_core_dn(0:nsdmax-1)     ! IYS 19.12.2017
+      real (kind=R8), save :: corr_core_dn(0:nsdmax-1)                  ! IYS 19.12.2017
       real (kind=R8), save :: sna_corr(DEF_NATM), taumax(DEF_NATM)      ! IYS 10.03.2023
       logical, save :: solveco(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:CVREGMAX)
