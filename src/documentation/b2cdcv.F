@@ -1294,59 +1294,29 @@
 *
 *   ..transport coefficients, differential
 *
-*     dna - (1:nCv,0:1,0:ns-1) real*8 array.
-*     (Let dnax(,,)=dna(,,0,) and dnay(,,)=dna(,,1,).)
-*     For (iCv,is) in (1:nCv,0:ns-1), dnax(iCv,is) and
-*     dnay(iCv,is) specify the x-component and the y-component of
-*     the diffusivity of species (is) on the (iCv) cell. The
-*     corresponding term in the particle flux density is
-*     -dna*grad.na .
-*
-*     dpa - (1:nCv,0:1,0:ns-1) real*8 array.
-*     (Let dpax(,,)=dpa(,,0,) and dpay(,,)=dpa(,,1,).)
-*     For (iCv,is) in (1:nCv,0:ns-1), dpax(iCv,is) and
-*     dpay(iCv,is) specify the x-component and the y-component of
-*     the diffusion coefficient (w.r.t. grad.pa) of species (is) on
-*     the (iCv) cell. The corresponding term in the particle flux
-*     density is  -dpa*grad.pa .
-*
-*     vla - (1:nCv,0:1,0:ns-1) real*8 array.
-*     (Let vlax(,,)=vla(,,0,) and vlay(,,)=vla(,,1,).)
-*     For (iCv,is) in (1:nCv,0:ns-1), vlax(iCv,is) specifies
-*     the x-component of the anomalous velocity of species (is) on the
-*     (iCv) cell.
-*     For (iCv,is) in (1:nCv,0:ns-1), vlay(iCv,is) specifies
-*     the y-component of the anomalous velocity of species (is) on the
-*     (iCv) cell.
-*
 *     vsa - (1:nCv,0:1,0:ns-1) real*8 array.
-*     (Let vsax(,,)=vsa(,,0,) and vsay(,,)=vsa(,,1,).)
-*     For (iCv,is) in (1:nCv,0:ns-1), vsax(iCv,is) specifies
-*     the x-component and vsay(iCv,is) the y-component of the
-*     viscosity of species (is) on the (iCv) cell.
+*     For (iCv,is) in (1:nCv,0:ns-1), vsa(iCv,0,is) specifies
+*     the poloidal component and vsa(iCv,1,is) the radial component of the
+*     classical viscosity of species (is) on the (iCv) cell.
 *
-*     hce - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let hcex(,)=hce(,,0) and hcey(,)=hce(,,1).)
-*     For (iCv) in (1:nCv), hcex(iCv) specifies the
-*     x-component and hcey(iCv) the y-component of the electron
+*     hce - (1:nCv,0:1) real*8 array.
+*     For (iCv) in (1:nCv), hce(iCv,0) specifies the poloidal
+*     component and hce(iCv,1) the radial component of the classical electron
 *     thermal conductivity on the (iCv) cell.
 *
-*     hci - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let hcix(,)=hci(,,0) and hciy(,)=hci(,,1).)
-*     For (iCv) in (1:nCv), hcix(iCv) specifies the
-*     x-component and hciy(iCv) the y-component of the all atom
+*     hci - (1:nCv,0:1) real*8 array.
+*     For (iCv) in (1:nCv), hci(iCv,0) specifies the poloidal
+*     component and hci(iCv,1) the radial component of the classical all atom
 *     thermal conductivity on the (iCv) cell.
 *
-*     sig - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let sigx(,)=sig(,,0) and sigy(,)=sig(,,1).)
-*     For (iCv) in (1:nCv), sigx(iCv) specifies the
-*     x-component and sigy(iCv) the y-component of the electrical
-*     conductivity on the (iCv) cell.
+*     sig - (1:nCv,0:1) real*8 array.
+*     For (iCv) in (1:nCv), sig(iCv,0) specifies the
+*     poloidal component and sig(iCv,1) the radial component of the classical
+*     electrical conductivity on the (iCv) cell.
 *
-*     alf - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let alfx(,)=alf(,,0) and alfy(,)=alf(,,1).)
-*     For (iCv) in (1:nCv), alfx(iCv) specifies the
-*     x-component and alfy(iCv) the y-component of the thermo-
+*     alf - (1:nCv,0:1) real*8 array.
+*     For (iCv) in (1:nCv), alf(iCv,0) specifies the poloidal
+*     component and alf(iCv,1) the radial component of the classical thermo-
 *     electric coefficient on the (iCv) cell.
 *
 *     dna0 - (1:nCv,0:ns-1) real*8 array.
@@ -1469,7 +1439,7 @@
 *
 *     chvi - (1:nFc,0:1) real*8 array.
 *     For (iFc) in (1:nFc), chvi(iFc,0) specifies the poloidal all atom
-*     thermal strange velocity on the (iFc) face..
+*     thermal strange velocity on the (iFc) face.
 *     For (iFc) in (1:nFc), chvi(iFc,1) specifies the radial all atom
 *     thermal strange velocity on the (iFc) face.
 *     This coefficient enters into the expression for the
