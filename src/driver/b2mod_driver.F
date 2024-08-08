@@ -1408,9 +1408,9 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          call xerrab('b2mndr_cdf_default not in range 1::5')
        endif
 #endif
-       call ipgeti('b2mndr_ids_save', ids_save )
-       call ipgeti('b2mndr_ids_av', ids_av )
-       call xertst( 0.le.ids_av, 'Invalid ids_av value')
+       call ipgeti ('b2mndr_ids_save', ids_save )
+       call ipgeti ('b2mndr_ids_av', ids_av )
+       call xertst ( 0.le.ids_av, 'Invalid ids_av value')
        summary_av =
      &  ids_av.gt.0 .and. ids_save.eq.0 .and. delta_ids_time.eq.0.0_R8
 #ifdef IMAS
