@@ -98,6 +98,7 @@
      &  fna_53(-1:nx,-1:ny,0:1,0:1,0:ns-1)
       character charnc*6, hlp_frm*4
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
+      logical first_pass_5, first_pass_7, first_pass_9, first_pass_11
       logical new_matrix
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok, pot_eq,
      1  recalculate_contributions, ramp_slow, guard_flows,
@@ -307,6 +308,11 @@
       rxf1 = rxf*xfm1
       rxf2 =(rxf*xfm2)**0.2_R8
       rxf3 = rxf*xfm3
+cxpb  Force a restart of the matrix builds on the first instance of every call
+      first_pass_5 = .true.
+      first_pass_7 = .true.
+      first_pass_9 = .true.
+      first_pass_11 = .true.
 
       if (ramp_call .or. ncall.eq.0) call set_facdrift_fac_ExB_inc
 *   ..test facdrift, fac_ExB, fac_vis
@@ -598,6 +604,8 @@ cxpb
 !$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, i, ix, iy, new_matrix)
 !$OMP& PRIVATE(ireg)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
+!$OMP& FIRSTPRIVATE(first_pass_5, first_pass_7)
+!$OMP& FIRSTPRIVATE(first_pass_9, first_pass_11)
 !$OMP& SHARED(last_solve_5, last_solve_9)
 !$OMP& SHARED(last_solve_7, last_solve_11)
 !$OMP& SHARED(nsmin, nsmax, na_min, ismain, mdf_fnb, visper_all_ions)
@@ -739,6 +747,7 @@ cxpb
             if(mdf_fnb.eq.0) then                                        !srv 13.10.06
               if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
      &          (visper_all_ions.eq.0 .and. is.eq.ismain)) then
+                new_matrix = first_pass_7
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_7(is,ireg)
@@ -752,7 +761,9 @@ cxpb
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npc7')
                 last_solve_7(is,0:nnreg(0)) = solveco(is,0:nnreg(0))
+                first_pass_7 = .false.
               else                                                       !srv 02.04.18
+                new_matrix = first_pass_5
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_5(is,ireg)
@@ -766,10 +777,12 @@ cxpb
      &           corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npco')
                 last_solve_5(is,0:nnreg(0)) = solveco(is,0:nnreg(0))
+                first_pass_5 = .false.
               endif                                                      !srv 02.04.18
             else                                                         !srv 13.10.06 {
               if(.not.is_neutral(is) .and. use_b2npc9.eq.1) then         !srv 06.11.08
                 if(visper_all_ions.ne.0 .or. is.eq.ismain) then
+                  new_matrix = first_pass_11
                   do ireg = 0, nnreg(0)
                     new_matrix = new_matrix.or.
      &               solveco(is,ireg).neqv.last_solve_11(is,ireg)
@@ -785,7 +798,9 @@ cxpb
      &             corpa(-1,-1,is), ier0)
                   call xertst (ier0.eq.0, 'error return from b2npc11')
                   last_solve_11(is,0:nnreg(0)) = solveco(is,0:nnreg(0))
+                  first_pass_11 = .false.
                 else                                                     !srv 02.04.18
+                  new_matrix = first_pass_9
                   do ireg = 0, nnreg(0)
                     new_matrix = new_matrix.or.
      &               solveco(is,ireg).neqv.last_solve_9(is,ireg)
@@ -801,8 +816,10 @@ cxpb
      &             resco(-1,-1,is), corpa(-1,-1,is), ier0)
                   call xertst (ier0.eq.0, 'error return from b2npc9')
                   last_solve_9(is,0:nnreg(0)) = solveco(is,0:nnreg(0))
+                  first_pass_9 = .false.
                 endif
               else
+                new_matrix = first_pass_5
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_5(is,ireg)
@@ -816,6 +833,7 @@ cxpb
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npco')
                 last_solve_5(is,0:nnreg(0)) = solveco(is,0:nnreg(0))
+                first_pass_5 = .false.
               endif
             endif                                                        !srv 13.10.06 }
 !*    ..re-compute partial pressure                                      !srv 01.10.99

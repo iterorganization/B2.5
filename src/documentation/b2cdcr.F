@@ -240,9 +240,6 @@
 *     B2NXFX computes an expression that occurs in the electron-atom
 *     thermal force.
 *
-*     B2NXSM corrects the particle transport coefficients as required
-*     for the Spalding-Patankar pressure correction procedure.
-*
 *     B2NXST accumulates the parallel momentum source linearisation
 *     over the distinct atomic species.
 *
