@@ -2589,12 +2589,12 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If '0': use Larmor radius at OMP in k(-eps)-model.
+					If '0': use Larmor radius at OMP separatrix in k(-eps)-model.
 					If '1': use local Larmor radius for each cell in k(-eps)-model.
 				</description>
 			</switch>
 			<switch>
-				<name>b2tqna_keps_local</name>
+				<name>b2tqna_keps_iout</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
@@ -2615,6 +2615,7 @@
 				<type>real</type>
 				<description>
 					Multiplier for the shear contribution to the diffusion coefficient in the k(-eps) model.
+					Only affects results if ExB drifts are present.
 				</description>
 			</switch>
 			<switch>
@@ -2662,7 +2663,7 @@
 				<default>0.1</default>
 				<type>real</type>
 				<description>
-					Multiplier for the diffusivity in kt-equation (w.r.t. diffusion coefficient).
+					Multiplier for the k-conductivity (w.r.t. diffusion coefficient).
 				</description>
 			</switch>
 			<switch>
@@ -2670,7 +2671,7 @@
 				<default>0.1</default>
 				<type>real</type>
 				<description>
-					Multiplier for the diffusivity in zt-equation (w.r.t. diffusion coefficient).
+					Multiplier for the diffusivity in z-equation (w.r.t. diffusion coefficient).
 				</description>
 			</switch>
 			<switchgroup>
@@ -2711,14 +2712,14 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Multiplier to the perpendicular current due to Reynolds-stress in kt-model
+					Multiplier to the perpendicular current due to Reynolds-stress in k-model
 				</description>
 			</switch>
 			<switchgroup>
 				<name>b2tqna_keps_init*</name>
 				<description>
 					Mechanism to enable a smooth transition between standard anomalous transport coefficients and k(-epsilon)-model coefficients.
-					The final coefficients (dna0, vsa0, hcib, hce0, sig0, alf0) are linearly interpolated between the standad an k(-epsilon) values based on keps_fac.
+					The final coefficients (dna0, vsa0, hcib, hce0, sig0, alf0) are linearly interpolated between the standad and the k(-epsilon) values based on keps_fac.
 					keps_fac starts out as b2tqna_keps_init and the value is multiplied by b2tqna_keps_inc at each iteration.
 				</description>
 				<switch>
@@ -2819,7 +2820,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1': make sure that production terms of kt minus the dissipative losses and sheath losses do not become negative.
+					If '1': sets minimum source for k to zero.
 				</description>
 			</switch>
 			<switch>
@@ -2835,7 +2836,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Multiplier for Reynolds-stress term in k-epsilon equations.
+					Multiplier for Reynolds-stress turbulent viscosity in k-model equations. Only active if ExB drifts are present.
 				</description>
 			</switch>
 			<switch>
@@ -2843,7 +2844,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Multiplier for transport of kt associated with ExB heat fluxes.
+					Multiplier for transport of k associated with turbulent ExB heat fluxes.
 				</description>
 			</switch>
 			<switch>
