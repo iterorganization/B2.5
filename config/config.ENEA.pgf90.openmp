@@ -42,51 +42,52 @@ SED = sed s:\#PREC\#:d:g
 LINK_MOD = 
 
 ifdef USE_MPI
-FC = mpif90
+  FC = mpif90
 else
-ifdef USE_IMPGYRO
-FC = mpif90
-else
-FC = pgf90
-endif
+  ifdef USE_IMPGYRO
+    FC = mpif90
+  else
+    FC = pgf90
+  endif
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 ifeq (${FC},mpif90)
-ifndef SOLPS_CPP
-DEFINES += -DGFORTRAN
+  ifndef SOLPS_CPP
+    DEFINES += -DGFORTRAN
+  else
+    DEFINES := $(shell echo ${SOLPS_CPP} | sed -e 's:PGF90:GFORTRAN:' -e 's: -DNOQUAD::')
+    DEFINES += ${B25_DEFINES}
+  endif
+  OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
+  OBNDEST  = -J${OBNDIR} -o ${OBNDIR}/$*.o
+  INCMOD   = -B
+  GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
+  GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
+  DEFINES += -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
+  FCOPTS += -fopenmp
+  LDOPTS += -fopenmp
 else
-DEFINES := $(shell echo ${SOLPS_CPP} | sed -e 's:PGF90:GFORTRAN:' -e 's: -DNOQUAD::')
-DEFINES += ${B25_DEFINES}
-endif
-OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
-INCMOD   = -B
-GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
-GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
-DEFINES += -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
-FCOPTS += -fopenmp
-LDOPTS += -fopenmp
-else
-ifndef SOLPS_CPP
-DEFINES += -DPGF90
-endif
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "pgf90 [0-9]*" | cut -d ' ' -f 2 )
-DEFINES += -DCOMPILER_MAJOR_VERSION=${COMPILER_MAJOR_VERSION}
-OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-INCMOD = -I
-FCOPTS = -Mbackslash
-ifdef SOLPS_DEBUG
-FCOPTS += -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
-LDOPTS = -g -C
-else
-#FCOPTS += -O2
-#FCOPTS += -fast
-FCOPTS += -fast -mp=nonuma
-LDOPTS = -mp=nonuma
-endif
+  ifndef SOLPS_CPP
+    DEFINES += -DPGF90
+  endif
+  COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "pgf90 [0-9]*" | cut -d ' ' -f 2 )
+  DEFINES += -DCOMPILER_MAJOR_VERSION=${COMPILER_MAJOR_VERSION}
+  OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+  INCMOD = -I
+  FCOPTS = -Mbackslash
+  ifdef SOLPS_DEBUG
+    FCOPTS += -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
+    LDOPTS = -g -C
+  else
+#   FCOPTS += -O2
+#   FCOPTS += -fast
+    FCOPTS += -fast -mp=nonuma
+    LDOPTS = -mp=nonuma
+  endif
 endif
 
 DBLFC=${FC}
@@ -102,7 +103,7 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 LD = ${FC}

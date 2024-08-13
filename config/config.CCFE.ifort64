@@ -33,13 +33,14 @@ DEFINES += -DNO_OPT # -DNO_CDF
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 
+MPI_FC  ?= mpifort
 ifdef USE_MPI
-FC       = mpifort
+FC       = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC       = mpifort
+FC       = ${MPI_FC}
 else
-FC       = ifort
+FC      ?= ifort
 endif
 endif
 
@@ -48,7 +49,10 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all -fPIC -assume no2underscore
 else
-FCOPTS   = -O2 -xHost -fPIC -assume no2underscore -fp-model=precise
+FCOPTS   = -O2 -xHost -fPIC -assume no2underscore
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -fp-model=precise
+endif
 endif
 
 ifdef USE_OPENMP
@@ -67,6 +71,7 @@ endif
 
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 
 ifndef SOLPS_CPP
 DEFINES += -DITM

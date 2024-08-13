@@ -11,9 +11,6 @@ endif
 ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
-ifndef LD_SONNET
-  $(error LD_SONNET not defined)
-endif
 
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 # DEFINES += -DNO_CDF
@@ -37,7 +34,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional
@@ -49,14 +46,14 @@ LINK_MOD =
 FC = ifort
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -C -traceback -debug all -fstack-protector
+  FCOPTS = -g -C -traceback -debug all -fstack-protector
 else
-FCOPTS = -O3
+  FCOPTS = -O3
 endif
 
 ifdef USE_OPENMP
-FCOPTS += -openmp
-LDOPTS += -openmp
+  FCOPTS += -openmp
+  LDOPTS += -openmp
 endif
 
 DBLFC=${FC}
@@ -67,6 +64,7 @@ DBLSED =
 INCMOD = -I
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -75,20 +73,19 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 #ifdef USE_EIRENE
-#LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o -lnag
+#  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o -lnag
 #endif
 ifdef PERFMON
-LDLIBES += -L${SOLPSLIB} -lperf
+  LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 LD = ${FC}
 # LDOPTS = -Bstatic
 
-LCPP= ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile
