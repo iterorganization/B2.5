@@ -987,7 +987,7 @@ c.. Test consistency with region boundaries
       logical file_ok, todo, assigned
       logical, allocatable :: done(:)
       character*260 filename
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -1023,7 +1023,7 @@ c.. Test consistency with region boundaries
         call alloc_mapping_bc (m)
         m%bcFcP = 0
 
-#ifdef F2003
+#ifndef LEGACYCOMP
         open (newunit=idb,file='debug_bound.out')
 #else
         idb=newunit()
@@ -1650,7 +1650,7 @@ c.. Test consistency with region boundaries
       integer, allocatable :: ifchit(:)
       character(1) :: lchar(nbc)
       character*3 ss
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -1709,7 +1709,7 @@ cwdk also need to correct for degenerate faces?
      >  call xerrab ('conv_bcparms -- wrong mxnBc')
 
       call alloc_mapping_bc (m)
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=idb,file='bound.out')
 #else
       idb = newunit()
@@ -1850,12 +1850,12 @@ cwdk also need to correct for degenerate faces?
       type (mapping), intent (inout) :: m
       integer :: ib, iout, is
       character(1) :: ap =''''
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open(newunit=iout,file='b2us.boundary.parameters')
 #else
       iout = newunit()
@@ -2030,7 +2030,7 @@ cc BCPOT
 #ifdef WG_DEBUG
       integer :: iout, ian, ien
 #endif
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -2076,7 +2076,7 @@ cc BCPOT
         end do
       end if
 #ifdef WG_DEBUG
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iout,file='bc.testout')
 #else
       iout = newunit()

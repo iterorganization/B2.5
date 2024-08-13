@@ -911,11 +911,12 @@ cwdk  can be derived directly from data in that file
       end if
       deallocate(indXpt)
 
-      indd = maxval(m%strDiv)
-      if (indd.gt.0) then
-        allocate(m%ifdiv(indd))
-        allocate(m%ivdiv(indd))
-        allocate(m%divFcP(indd,2))
+      if (allocated(m%strDiv)) then
+       indd = maxval(m%strDiv)
+       if (indd.gt.0) then
+        allocate(m%ifdiv(maxval(m%strDiv)))
+        allocate(m%ivdiv(maxval(m%strDiv)))
+        allocate(m%divFcP(maxval(m%strDiv),2))
         allocate(indFc(m%nFc))
         icount = 0
         m%ifdiv = 0
@@ -1010,6 +1011,7 @@ cwdk  can be derived directly from data in that file
           deallocate(new_face_list)
         end do
         deallocate(indFc)
+       end if
       end if
       deallocate(freg)
 

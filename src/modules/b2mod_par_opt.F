@@ -168,7 +168,7 @@
       character*3 ss
       character*256 cffile, filename
       real(kind=r8) :: dummy
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -251,7 +251,7 @@
         m%cfRegP = 0
         allocate(cfReg(mxnCf))
         cfReg = 0
-#ifdef F2003
+#ifndef LEGACYCOMP
         open (newunit=idb,file='debug_optimization.out')
 #else
         idb = newunit()
@@ -413,7 +413,7 @@
               call find_faces (indss, incf, ncffc,
      >           m%mxncf,m%cfReg, m%cfFcOr, m, idb)
             end do              ! iss
-            write(ss,"(I0)") icf
+            write(ss,"(I3)") icf
             call xertst(ncffc.gt.0, 
      &        'No faces found for cost function  = '//ss)
             m%cfRegP(icf,2) = ncffc

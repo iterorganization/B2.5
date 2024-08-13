@@ -13,13 +13,14 @@ LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdff
 
 CPP = /lib/cpp -traditional
 
+MPI_FC ?= mpif90
 ifdef USE_MPI
-FC = mpif90
+FC      = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC = mpif90
+FC      = ${MPI_FC}
 else
-FC = gfortran
+FC     ?= gfortran
 endif
 endif
 

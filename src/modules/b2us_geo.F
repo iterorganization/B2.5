@@ -742,12 +742,12 @@
           dpsi_max_up   = 0.0_R8
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-            if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
+            if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx) ) then
               count_up = count_up + 1
               if ( dpsi(iCv) .gt. dpsi_max_up) then
                 dpsi_max_up = dpsi(iCv)
               endif
-            elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
+            elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx) ) then
               count_down = count_down + 1
               if ( dpsi(iCv) .gt. dpsi_max_down) then
                 dpsi_max_down = dpsi(iCv)
@@ -757,7 +757,7 @@
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
             if (iCv.le.mpg%nCi) then
-              if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
+              if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx) ) then
                 if (mpg%cvVxP(iCv,2) .eq. 3) then
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
      &               real(count_up,R8) / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
@@ -766,7 +766,7 @@
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
      &               real(count_up,R8) / mpg%vxCvP(iVx,2)
                 endif
-              elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
+              elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx) ) then
                 if (mpg%cvVxP(iCv,2) .eq. 3) then
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
      &             real(count_down,R8) / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
@@ -1051,20 +1051,22 @@
       t0=0.0_R8
       iFt=0
       gm%signmf=0.0_R8
-      do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
-        iFt=iFt+1
-        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
-        if (mpg%cvOnClosedSurface(iCv)) then
-          do i=1,mpg%ftCvP(iFt,2)
-            r0=r0+gm%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
-     .           gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-            z0=z0+gm%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
-     .           gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-            t0=t0+
-     .           gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-          end do
-        end if
-      end do
+      if (any(mpg%cvOnClosedSurface(1:mpg%nCi))) then
+        do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
+          iFt=iFt+1
+          iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+          if (mpg%cvOnClosedSurface(iCv)) then
+            do i=1,mpg%ftCvP(iFt,2)
+              r0=r0+gm%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+              z0=z0+gm%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+              t0=t0+
+     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+            end do
+          end if
+        end do
+      end if
       if (t0.gt.0.0_R8) then
         r0=r0/t0
         z0=z0/t0
@@ -1090,7 +1092,8 @@
 
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
-      do i = 1, maxval(mpg%strDiv)
+      if (allocated(mpg%strDiv)) then
+       do i = 1, maxval(mpg%strDiv)
         match_found = .false.
         k = 1
         do while (.not.match_found)
@@ -1206,7 +1209,8 @@
         end do
         call xertst (match_found .or. mpg%nXpt.eq.0,
      &   'No matching face found for strike point !')
-      end do
+       end do
+      end if
 
       return
       end subroutine init_geometry

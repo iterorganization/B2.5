@@ -764,7 +764,10 @@ cxpb size is changed in b2mod_dimensions
 
       consistent = .true.
       do ifb = 1, nFb
-        if (fb_ib(ifb).le.0 .and. .not.fb_actuator(ifb).eq.2)
+        if (((fb_ib(ifb).le.0.and.switch%use_eirene.eq.0) .and.   ! not using EIRENE, but no fb_ib
+     &       (fb_istra(ifb).le.0 .and. switch%use_eirene.ne.0     ! using EIRENE, but no puff stratum
+     &        .and.fb_actuator(ifb).eq.1)) .and.
+     &      .not.fb_actuator(ifb).eq.2)                           ! feedback not 2 => either puff stratum or fb_ib needed
      &    call xerrab('Init_feedback: fb_ib<=0 and actuator=/2')
         call xertst(0.le.fb_species(ifb).and.fb_species(ifb).le.ns-1,
      &    'Init_feedback: fb_species>ns!')
@@ -782,37 +785,38 @@ cxpb size is changed in b2mod_dimensions
         enddo
         is_start = is0+1
         is_end = is0+nfluids(iatm)
-        consistent = consistent .and.
-     &   ((fb_target(ifb) .eq. 0.0_R8 .or.
-     &     fb_type(ifb) .eq. 0 .or.
-     &     fb_rescale_option(ifb) .eq. 0 .or.
-     &     fb_actuator(ifb) .eq. 0) .or.
+        if (fb_actuator(ifb).ne.2) then
+          consistent = consistent .and.
+     &     ((fb_target(ifb) .eq. 0.0_R8 .or.
+     &       fb_type(ifb) .eq. 0 .or.
+     &       fb_rescale_option(ifb) .eq. 0 .or.
+     &       fb_actuator(ifb) .eq. 0) .or.
 ! csc For fluid neutrals (or fluid neutral strata, TBD) change directly the BC
 !     For kinetic neutrals (or kinetic strata, TBD), change directly userfluxparm, no issue with fluid BC
 !     Can be arbitrarily expanded to allow applying feedback to any already existent BC
-     &    (fb_actuator(ifb) .eq. 1 .and. !neutral flux (or gas puff)
-     &     ( bccon(is0,fb_ib(ifb)) .eq. 8 .or.
-     &      switch%use_eirene.ne.0) ) .or.
-     &    fb_actuator(ifb) .eq. 2 .or.
-     &    (fb_actuator(ifb) .eq. 3 .and. !charged particle flux ONLY for fb_type 6, to be improved?
-     &     maxval(bccon(is_start:is_end,
-     .                  fb_ib(ifb))).eq.8 .and.
-     &     minval(bccon(is_start:is_end,
-     .                  fb_ib(ifb))).eq.8 .and.
-     &     fb_type(ifb).eq.6) .or.
-     &    (fb_actuator(ifb) .eq. 3 .and. !charged particle flux, more general
-     &     (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 8 .or.
-     &      bccon(fb_species(ifb),fb_ib(ifb)) .eq. 13 ) .and.
-     &     .not.fb_type(ifb).eq.6) .or.
-     &    (fb_actuator(ifb) .eq. 4 .and. !electron heat flux
-     &     bcene(fb_ib(ifb)) .eq. 8) .or.
-     &    (fb_actuator(ifb) .eq. 5 .and. !ion heat flux
-     &     bceni(fb_ib(ifb)) .eq. 8) .or.
-     &    (fb_actuator(ifb) .eq. 6 .and. !current
-     &     bcpot(fb_ib(ifb)) .eq. 8) .or.
-     &    (fb_actuator(ifb) .eq. 7 .and. !density
-     &     (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1 .or.
-     &      bccon(fb_species(ifb),fb_ib(ifb)) .eq. 28)))
+     &      (fb_actuator(ifb) .eq. 1 .and. !neutral flux (or gas puff)
+     &       ( bccon(is0,fb_ib(ifb)) .eq. 8 .or.
+     &        switch%use_eirene.ne.0) ) .or.
+     &      (fb_actuator(ifb) .eq. 3 .and. !charged particle flux ONLY for fb_type 6, to be improved?
+     &       maxval(bccon(is_start:is_end,
+     .                    fb_ib(ifb))).eq.8 .and.
+     &       minval(bccon(is_start:is_end,
+     .                    fb_ib(ifb))).eq.8 .and.
+     &       fb_type(ifb).eq.6) .or.
+     &      (fb_actuator(ifb) .eq. 3 .and. !charged particle flux, more general
+     &       (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 8 .or.
+     &        bccon(fb_species(ifb),fb_ib(ifb)) .eq. 13 ) .and.
+     &       .not.fb_type(ifb).eq.6) .or.
+     &      (fb_actuator(ifb) .eq. 4 .and. !electron heat flux
+     &       bcene(fb_ib(ifb)) .eq. 8) .or.
+     &      (fb_actuator(ifb) .eq. 5 .and. !ion heat flux
+     &       bceni(fb_ib(ifb)) .eq. 8) .or.
+     &      (fb_actuator(ifb) .eq. 6 .and. !current
+     &       bcpot(fb_ib(ifb)) .eq. 8) .or.
+     &      (fb_actuator(ifb) .eq. 7 .and. !density
+     &       (bccon(fb_species(ifb),fb_ib(ifb)) .eq. 1 .or.
+     &        bccon(fb_species(ifb),fb_ib(ifb)) .eq. 28)))
+        end if
       end do
       consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
      & switch%b2stbc_boundary_namelist.lt.1
@@ -1641,22 +1645,29 @@ cxpb size is changed in b2mod_dimensions
               endif
 
               if(ncall.eq.0 .and. saved_fb_actuator(ifb).eq.0.0_R8) then
-                if (conpar(is_start, fb_ib(ifb), 1).gt.0.0_R8) then
-                  saved_fb_actuator(ifb) =
-     &              conpar(is_start, fb_ib(ifb), 1)
-                  write(message,'(a,i3,a,i2,a)')
-     .             'Initial gas puff strength set by CONPAR(',
-     .             is_start,',',fb_ib(ifb),',1) !'
-                elseif (userfluxparm(fb_istra(ifb),1).gt.0.0_R8) then
-                  saved_fb_actuator(ifb) =
-     &              userfluxparm(fb_istra(ifb),1)
-                  write(message,'(a,i3,a,i2,a)')
-     .             'Initial gas puff strength set by USERFLUXPARM(',
-     .             fb_istra(ifb),',1)  !'
+                if (switch%use_eirene.eq.0) then
+                  if (conpar(is_start, fb_ib(ifb), 1).gt.0.0_R8) then
+                    saved_fb_actuator(ifb) =
+     &                conpar(is_start, fb_ib(ifb), 1)
+                    write(message,'(a,i3,a,i2,a)')
+     .               'Initial gas puff strength set by CONPAR(',
+     .               is_start,',',fb_ib(ifb),',1) !'
+                  else
+                    saved_fb_actuator(ifb) = 1.0e18_R8
+                      write(*,*) 'Warning!  ','The gas puff was ',
+     .                 'started with an initial rate of 1e18!'
+                  endif
                 else
-                  saved_fb_actuator(ifb) = 1.0e18_R8
-                    write(*,*) 'Warning!  ','The gas puff was ',
-     .               'started with an initial rate of 1e18!'
+     .            if (userfluxparm(fb_istra(ifb),1).gt.0.0_R8) then
+                    saved_fb_actuator(ifb) =
+     &                userfluxparm(fb_istra(ifb),1)
+                    write(message,'(a,i3,a,i2,a)')
+     .               'Initial gas puff strength set by USERFLUXPARM(',
+     .               fb_istra(ifb),',1)  !'
+                  else
+                    saved_fb_actuator(ifb) = 1.0e18_R8
+                      write(*,*) 'Warning!  ','The gas puff was ',
+     .                 'started with an initial rate of 1e18!'
                 endif
               endif
 
@@ -2047,12 +2058,12 @@ cxpb size is changed in b2mod_dimensions
       use b2mod_version
       implicit none
       integer :: ifb, iout
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open(newunit=iout,file='b2us.feedback_control.parameters')
 #else
       iout = newunit()

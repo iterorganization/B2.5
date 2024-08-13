@@ -9,9 +9,32 @@ DBLFC    = ${FC}
 DBLSED   = sed -e s:\#PREC\#:d:g
 DBLSED   = 
 
+ifndef COMPILER_REDEF
+ifdef SOLPS_DEBUG
+FCOPTS  += -diag-disable:10182 -diag-disable:10440
+LDOPTS  += -diag-disable:10182
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
+FCOPTS   += -check nouninit
+endif
+endif
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 13; echo $$?),0)
 FCOPTS  += -align array64byte
+endif
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -gt 17; echo $$?),0)
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
+FCOPTS  += -mprefer-vector-width=512
+else
 FCOPTS  += -qopt-zmm-usage=high
+endif
+endif
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
+FCOPTS  += -check nouninit
+endif
+else
+FCOPTS += -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -frecursive
+ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
+FCOPTS += -mprefer-vector-width=512
+endif
 endif
 
 ifndef SOLPS_CPP
@@ -43,8 +66,17 @@ ifndef SOLPS_CPP
       GGD_MAJOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f1 )
       GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
       GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-      ifeq ($(shell test ${AL_MAJOR_VERSION} -lt 5; echo $$?),0)
+      ifeq ($(shell test ${AL_MAJOR_VERSION} -ge 5; echo $$?),0)
+        IMAS_PKG_LIST += al-fortran al-identifiers-fortran
+      else
         IMAS_PKG_LIST += imas-ifort
+        ifeq ($(shell test ${IMAS_MAJOR_VERSION} -ge 4; echo $$?),0)
+          IMAS_PKG_LIST += imas-identifiers-ifort
+        else
+          ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 31; echo $$?),0)
+            IMAS_PKG_LIST += imas-identifiers-ifort
+          endif
+        endif
       endif
     endif
     ifdef AMNS_PREFIX
@@ -69,7 +101,7 @@ ifndef SOLPS_CPP
       endif
     endif
     LD_AL := `pkg-config ${IMAS_PKG_LIST} --libs`
-    ifdef LD_GDD
+    ifdef LD_GGD
       LD_AL += ${LD_GGD}
     endif
     DEFINES += -DIMAS -DAL_MAJOR_VERSION=${AL_MAJOR_VERSION} -DAL_MINOR_VERSION=${AL_MINOR_VERSION} -DAL_MICRO_VERSION=${AL_MICRO_VERSION} -DIMAS_MAJOR_VERSION=${IMAS_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DIMAS_MICRO_VERSION=${IMAS_MICRO_VERSION} -DGGD_MAJOR_VERSION=${GGD_MAJOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION} -DGGD_MICRO_VERSION=${GGD_MICRO_VERSION}
@@ -79,6 +111,9 @@ endif
 ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
   IMASLIBS = ${LD_AL}
+  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2021; echo $$?),0)
+    FCOPTS += -diag-disable:5462
+  endif
 endif
 
 ifdef USE_MPI
@@ -104,7 +139,6 @@ endif
 
 LD       = ${FC}
 
-LCPP     = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

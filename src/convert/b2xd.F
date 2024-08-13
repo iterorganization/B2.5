@@ -17,7 +17,8 @@
 *  1. purpose
 *
 *     B2XD (main program) is a postprocessor for B2. It reads and
-*     displays the plasma state. This program calls the driver routine
+*     converts the plasma state back to the B2SXDR format used in
+*     SOLPS4.x versions. This program calls the driver routine
 *     b2xddr for the actual computation.
 *
 *

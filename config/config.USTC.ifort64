@@ -9,23 +9,25 @@ LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
 LD_NCARG    ?= -L${NCARG_ROOT} -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 LD_NAG      ?= -L${NAGDIR} -lnag
 ifndef SOLPS_CPP
-DEFINES     += -DNCAR4 -DF2003
+DEFINES     += -DNCAR4
 endif
 
 CPP      = /lib/cpp -traditional -ffreestanding
 
+MPI_FC  ?= mpif90
 ifdef USE_MPI
-FC       = mpif90
+FC       = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC       = mpif90
+FC       = ${MPI_FC}
 else
-FC       = ifort
+FC      ?= ifort
 endif
 endif
 
 ifeq (${FC},mpif90)
 OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST  = -J${OBNDIR} -o ${OBNDIR}/$*.o
 INCMOD   = -B
 GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
 GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
@@ -39,6 +41,7 @@ endif
 else
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives

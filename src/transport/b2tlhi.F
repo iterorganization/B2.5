@@ -41,7 +41,7 @@
         do iFc = 1, nFc
           if (nif(iFc) .le. switch%b2tlhi_ni_min) then
            ! Set at min value
-           cflmi_loc(iFc) = switch%b2tlhi_ni_min
+           cflmi_loc(iFc) = switch%b2tlhi_cflmi_min
           elseif (nif(iFc) .lt. switch%b2tlhi_ni_max ) then
            ! Interpolate for smooth transition
            cflmi_loc(iFc) = 

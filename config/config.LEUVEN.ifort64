@@ -14,13 +14,14 @@ endif
 
 CPP      = /lib/cpp -traditional
 
+MPI_FC  ?= mpiifort
 ifdef USE_MPI
-FC       = mpiifort
+FC       = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC       = mpiifort
+FC       = ${MPI_FC}
 else
-FC       = ifort
+FC      ?= ifort
 endif
 endif
 
@@ -29,7 +30,10 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -warn interfaces -traceback -check all
 else
-FCOPTS   = -O2 -xHost -fp-model=precise
+FCOPTS   = -O2 -xHost
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -fp-model=precise
+endif
 endif
 
 ifdef USE_OPENMP
@@ -49,6 +53,7 @@ endif
 
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 
 ifdef TAO
 include ${PETSC_DIR}/lib/petsc/conf/variables

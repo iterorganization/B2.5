@@ -43,8 +43,10 @@ c<<<
      ,      pp2(1,lppp+j*nytg),pp2(2,lppp+j*nytg)
           end do !}
         else !}{
-          print *,' No shadowing structure found !'
+          print *,' No shadowing structure found!'
         end if !}
+#else
+        if (nwldlis(1).eq.0) write(*,*) 'No shadowing structure found!'
 #endif
 c>>>
         if(.not.l2pwinp) then !{

@@ -5,16 +5,17 @@ NCARG_ROOT  ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/NCARG
 GLI_HOME    ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/gks
 NAGDIR      ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/nag
 LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
-LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
+LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 LD_NAG      ?= -L${NAGDIR} -lnag
 NCDIR       ?= /pfs/work/g2dpc/SOLPS-ITER/${COMPILER}/NETCDF
 LD_NETCDF   ?=
-LD_SONNET   ?= -L${SOLPSLIB} -lsonnet
 
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 # DEFINES += -DNO_CDF
 
 ifndef SOLPS_CPP
+  NO_MPI ?= true
+  DEFINES += -DLEGACYCOMP
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
@@ -58,6 +59,7 @@ DBLSED =
 INCMOD = -I
 MOD = mod
 OBJDEST = -fmod=${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST = -fmod=${OBNDIR} -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -99,8 +101,17 @@ ifndef SOLPS_CPP
     GGD_MAJOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f1 )
     GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
     GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-    ifeq ($(shell test ${AL_MAJOR_VERSION} -lt 5; echo $$?),0)
+    ifeq ($(shell test ${AL_MAJOR_VERSION} -ge 5; echo $$?),0)
+      IMAS_PKG_LIST += al-fortran al-identifiers-fortran
+    else
       IMAS_PKG_LIST += imas-g95
+      ifeq ($(shell test ${IMAS_MAJOR_VERSION} -ge 4; echo $$?),0)
+        IMAS_PKG_LIST += imas-identifiers-gfortran
+      else
+        ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 31; echo $$?),0)
+          IMAS_PKG_LIST += imas-identifiers-gfortran
+        endif
+      endif
     endif
     ifdef AMNS_PREFIX
       DEFINE += -DAMNS
@@ -134,7 +145,6 @@ endif
 LD = $(FC)
 # LDOPTS = -Bstatic
 
-LCPP = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

@@ -1,4 +1,5 @@
 # Test whether necessary variables are set
+OS        ?= $(shell grep -m1 NAME /etc/os-release | cut -d '"' -f 2 | cut -d ' ' -f 1 )
 NODENAME  ?= $(shell echo `hostname`)
 LD_MSCL   ?= `pkg-config mscl --libs`
 ifdef NCARG_ROOT
@@ -8,7 +9,11 @@ GLI_HOME  ?= ${EBROOTGLI}
 endif
 ifeq ($(shell `pkg-config --exists netcdf-fortran`; echo $$?),0)
 NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
+ifeq (,$(findstring CentOS,$(OS)))
+LD_NETCDF  = `pkg-config netcdf-fortran --libs`
+else
 LD_NETCDF ?= `nf-config --flibs`
+endif
 ifndef SOLPS_CPP
 DEFINES   += -DCDF_MOVIE
 INCMODS   += `pkg-config netcdf-fortran --cflags`
@@ -29,27 +34,35 @@ ifndef SOLPS_CPP
 DEFINES   += -DNO_NAG
 endif
 endif
-LD_SONNET ?= -L${SOLPSLIB} -lsonnet -lstdc++
 
 DEFINES   += -DNO_OPT
 
 CPP        = /lib/cpp -traditional
 
+ifeq (,$(findstring CentOS,$(OS)))
+MPI_FC    ?= mpiifort
+else
+MPI_FC    ?= mpiifort -fc=mpiifx
+endif
 ifdef USE_MPI
-FC         = mpiifort
+FC         = ${MPI_FC}
 ifndef MPDIR
 MPDIR      = ${EBROOTIMPI}
 LD_MPI    += -Wl,-rpath,${MPDIR}/lib64
 endif
 else
 ifdef USE_IMPGYRO
-FC         = mpiifort
+FC         = ${MPI_FC}
 ifndef MPDIR
 MPDIR      = ${EBROOTIMPI}
 LD_MPI    += -Wl,-rpath,${MPDIR}/lib64
 endif
 else
-FC         = ifort
+ifeq (,$(findstring CentOS,$(OS)))
+FC        ?= ifort
+else
+FC        ?= ifx
+endif
 endif
 endif
 
@@ -57,9 +70,18 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 
 FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
-FCOPTS    += -g -C -debug all -traceback -check all
+FCOPTS    += -g -C -debug all -traceback -check all -fpe0
+LDOPTS    += -check all
 else
-FCOPTS    += -O2 -march=sandybridge -fp-model=precise
+FCOPTS    += -O2
+ifeq (,$(findstring CentOS,$(OS)))
+FCOPTS    += -xHost
+else
+FCOPTS    += -march=sandybridge
+endif
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS    += -fp-model=precise
+endif
 endif
 ifdef USE_MPI
 FCOPTS    += ${MPI_CPP}
@@ -86,6 +108,7 @@ endif
 
 INCMOD     = -I
 OBJDEST    = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST    = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 
 LDLIBES    = -lz
 

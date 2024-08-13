@@ -426,7 +426,7 @@ cwdk move to dv
 
       if (allocated(coeff % calf)) return
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( coeff % calf( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % calf_cl( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % calf_an( nFc, 0:1 ), SOURCE=0._R8 )
@@ -803,7 +803,7 @@ cwdk move to dv
       type(B2Derivatives), intent(inout) :: dv
 
       if (allocated(dv % fch)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
 ! fluxes
       allocate( dv % fch( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fch_32( nFc, 0:1 ), SOURCE=0._R8 )
@@ -1197,7 +1197,7 @@ cwdk move to dv
       dv % corkt = 0.0_R8
       dv % corzt = 0.0_R8
 ! coupling coefficients
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( dv % pcca( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % pccm( nCv, 0:1 ), SOURCE=0._R8 )
 #else
@@ -1360,7 +1360,7 @@ cwdk move to dv
       type(B2Source), intent(inout) :: sr
 
       if (allocated(sr % sch)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( sr % sch( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( sr % she( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( sr % shi( nCv, 0:3 ), SOURCE=0._R8 )
@@ -1466,7 +1466,7 @@ cwdk move to dv
       type(B2SourceEir), intent(inout) :: sr_eir
 
       if (allocated(sr_eir % sch)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( sr_eir % sch( nCv, nstra), SOURCE=0._R8 )
       allocate( sr_eir % she( nCv, nstra), SOURCE=0._R8 )
       allocate( sr_eir % shi( nCv, nstra), SOURCE=0._R8 )
@@ -1517,7 +1517,7 @@ cwdk move to dv
       type(B2SourceWork), intent(inout) :: srw
 
       if (allocated(srw % sch0)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( srw % sch0( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( srw % she0( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( srw % shi0( nCv, 0:3 ), SOURCE=0._R8 )
@@ -1850,7 +1850,7 @@ cwdk move to dv
       type(B2Rates), intent(inout) :: rt
 
       if (allocated(rt % iscx)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate (rt % iscx( 0:rt%nscxmax-1 ), SOURCE=0 )
 
       allocate( rt % rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1),
@@ -1947,7 +1947,7 @@ cwdk move to dv
       type(B2RatesWork), intent(inout) :: rtw
 
       if (allocated(rtw % rsa)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( rtw % rsa( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( rtw % rra( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( rtw % rqa( nCv, 0:ns-1 ), SOURCE=0._R8 )
@@ -1995,7 +1995,7 @@ cwdk move to dv
       type(B2PlasmaSnapshot), intent(inout) :: snap
 
       if (allocated(snap % na)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( snap % na( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( snap % ua( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( snap % po( nCv ), SOURCE=0._R8 )
@@ -2103,7 +2103,7 @@ cwdk move to dv
       type(B2Diagnostic), intent(inout) :: diag
 
       if (allocated(diag % srcna)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( diag % srcna( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( diag % srcmo( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( diag % srcpo( nCv ), SOURCE=0._R8 )
@@ -2194,7 +2194,7 @@ cwdk move to dv
       if (allocated(update % pa)) return
 
 ! corrections
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( update % pa( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( update % ua( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( update % na( nCv, 0:ns-1 ), SOURCE=0._R8 )

@@ -38,7 +38,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 FC       = ifort
@@ -49,9 +49,9 @@ CPPOPTS  = -P -I${srcdir} ${EQUIVS}
 #FCOPTS   = -r8 -O0 -check -g -traceback -save -fpconstant -ftz
 #FCOPTS   = -r8 -O -g -traceback -save -fpconstant -ftz
 ifdef SOLPS_DEBUG
-FCOPTS   = -C -g -check -traceback -fpconstant -save -ftz -vec-report0
+  FCOPTS   = -C -g -check -traceback -fpconstant -save -ftz -vec-report0
 else
-FCOPTS   = -O -xavx -traceback -fpconstant -save -ftz -vec-report0
+  FCOPTS   = -O -xavx -traceback -fpconstant -save -ftz -vec-report0
 endif
 
 DBLFC    = ${FC}
@@ -66,22 +66,23 @@ PLLIBES  = ${LD_MSCL}
 LDLIBES  = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD       = ${FC}
-#LDFLAGS = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lsonnet -lnetcdf -lnag /usr/lib/libstdc++.so.2.9 # -lw -lnsl /usr/lib/libC.so.5 ${SOLPS_LIBS}
-LDFLAGS  = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lsonnet -lnetcdf -lnag -lstdc++
+#LDFLAGS = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lnetcdf -lnag /usr/lib/libstdc++.so.2.9 # -lw -lnsl /usr/lib/libC.so.5 ${SOLPS_LIBS}
+LDFLAGS  = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lnetcdf -lnag -lstdc++
 LDOPTSend= -Wl,-Map,${OBJDIR}/loadmap
-LDEXTRA  = -lblas -lsonnet -lstdc++
+LDEXTRA  = -lblas -lstdc++
 
 INCMOD   = -I
 MOD      = mod
 OBJDEST  = -o ${OBJDIR}/$*.o
+OBNDEST  = -o ${OBNDIR}/$*.o
 
 #!!!Local Variables:
 #!!! mode: Makefile

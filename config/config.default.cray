@@ -15,7 +15,7 @@ endif
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
 ifndef SOLPS_CPP
-  DEFINES += -DCRAY -DF2003
+  DEFINES += -DCRAY
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
@@ -34,7 +34,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -traditional
@@ -43,15 +43,16 @@ CPPOPTS = -P -I${srcdir} ${EQUIVS}
 FC = ftn
 FCOPTS = -e0 -ez
 ifdef USE_OPENMP
-FCOPTS += -homp
+  FCOPTS += -homp
 endif
 ifdef SOLPS_DEBUG
-FCOPTS += -O0 -hfp0 -g -G0 -K trap=divz -K trap=fp -Rb
+  FCOPTS += -O0 -hfp0 -g -G0 -K trap=divz -K trap=fp -Rb
 else
-FCOPTS += -O2 -hfp2
+  FCOPTS += -O2 -hfp2
 endif
 
 OBJDEST = -ef -em -J${OBJDIR}
+OBNDEST = -ef -em -J${OBNDIR}
 INCMOD = -p
 MOD = mod
 
@@ -61,7 +62,7 @@ GRLIBES =     # graphics libraries
 PLLIBES =     # support libraries for plotting programs
 LDLIBES =     # other libraries
 
-LD = ftn
+LD = ${FC}
 LDOPTS = -dynamic -hpic
 
 #!!!Local Variables:
