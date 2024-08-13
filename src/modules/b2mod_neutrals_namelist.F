@@ -1294,7 +1294,7 @@ c.. Test consistency with physical edges within the computational domain
       character*3 ss
       character*16 hlp_frm
       character*260 filename
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -1360,7 +1360,7 @@ cwvu    for (advanced) spatially hybrid, might need even more.
         call alloc_mapping_rc (m)
         m%rcFcP = 0
 
-#ifdef F2003
+#ifndef LEGACYCOMP
         open (newunit=idb,file='debug_neutrals.out')
 #else
         idb = newunit()
@@ -2174,7 +2174,7 @@ c.. Test consistency with physical edges within the computational domain
       character(1) :: lchar(nstrat)
       character*3 ss
       type (mapping), intent (inout) :: m
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -2241,7 +2241,7 @@ cwdk also need to correct for degenerate faces?
       enddo
 
       call alloc_mapping_rc (m)
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=idb,file='recyc.out')
 #else
       idb = newunit()
@@ -2364,7 +2364,7 @@ cwdk also need to correct for degenerate faces?
 #ifdef WG_DEBUG
       integer :: iout, ian, ien, i
 #endif
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -2400,7 +2400,7 @@ cwdk also need to correct for degenerate faces?
         end do
       end do
 #ifdef WG_DEBUG
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iout,file='rc.testout')
 #else
       iout = newunit()
@@ -2435,12 +2435,12 @@ cwdk also need to correct for degenerate faces?
       integer :: istra, iout, is, i
       integer :: ii(1)
       character(1) :: ap =''''
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open(newunit=iout,file='b2us.neutrals.parameters')
 #else
       iout = newunit()

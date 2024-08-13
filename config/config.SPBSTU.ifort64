@@ -11,15 +11,15 @@
 
 CPP      = /lib/cpp -traditional
 
+#MPI_FC  ?= mpif90
+MPI_FC  ?= mpiifort
 ifdef USE_MPI
-FC       = mpif90
-FC       = mpiifort
+FC       = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC       = mpif90
-FC       = mpiifort
+FC       = ${MPI_FC}
 else
-FC       = ifort
+FC      ?= ifort
 endif
 endif
 
@@ -38,7 +38,10 @@ FCOPTS  += -check all -fpe0
 endif
 endif
 else
-FCOPTS   = -O2 -xHost -fPIC -fp-model=precise -assume no2underscore
+FCOPTS   = -O2 -xHost -fPIC -assume no2underscore
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -fp-model=precise
+endif
 ifdef USE_MPI
 FCOPTS  += ${MPI_CPP}
 else
@@ -69,6 +72,7 @@ endif
 
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 
 
 #!!!Local Variables:

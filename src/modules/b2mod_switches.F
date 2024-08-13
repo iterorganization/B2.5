@@ -66,6 +66,8 @@ c Advanced fluid neutral models
       integer :: do_volrec
       integer :: transport_afn !! use advanced fluid neutral (afn) transport coefficients
       integer :: afn_bcs_use_coarse
+      integer :: afn_vnn
+      integer :: afn_vnn_ndiff
 
       real (kind=R8) :: fhe_vis_per  !srv 06.07.00
       real (kind=R8) :: fhe_vis_par  !srv 22.03.02
@@ -624,6 +626,8 @@ c Advanced fluid neutral models
       s % diffusion_bc_safeguard = 1
       s % do_volrec = 1
       s % afn_bcs_use_coarse = 1
+      s % afn_vnn = 1
+      s % afn_vnn_ndiff = 0
 
       s % fhe_vis_per = 0.0_R8
       s % fhe_vis_par = 0.0_R8
@@ -888,13 +892,13 @@ c far-sol flux limiting options
 
       s % b2tlhe_ne_min = 1.0e17_R8
       s % b2tlhe_ne_max = 1.0e18_R8
-      s % b2tlhe_cflme_min = 1.0e-3_R8
+      s % b2tlhe_cflme_min = 0.2e0_R8
       s % b2tlhi_ni_min = 1.0e17_R8
       s % b2tlhi_ni_max = 1.0e18_R8
-      s % b2tlhi_cflmi_min = 1.0e-3_R8
+      s % b2tlhi_cflmi_min = 1.0e1_R8
       s % b2tlmv_ni_min = 1.0e17_R8
       s % b2tlmv_ni_max = 1.0e18_R8
-      s % b2tlmv_cflmv_min = 1.0e-3_R8
+      s % b2tlmv_cflmv_min = 0.5e0_R8
 
 c geometry
       s % fcHz_style = 1
@@ -1197,6 +1201,8 @@ c Advanced fluid neutral models
       call ipgeti ('b2tqna_transport_afn', s % transport_afn)
       call ipgeti ('diffusion_bc_safeguard', s % diffusion_bc_safeguard)
       call ipgeti ('b2stbr_afn_bcs_use_coarse', s % afn_bcs_use_coarse)
+      call ipgeti ('b2tqna_afn_vnn', s % afn_vnn)
+      call ipgeti ('b2tqna_afn_vnn_ndiff', s % afn_vnn_ndiff)
 
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)
@@ -1355,14 +1361,14 @@ c style/mode switches
       call ipgeti ('b2nxdv_style', s % b2nxdv_style)
       call ipgeti ('b2nxfx_style', s % b2nxfx_style)
       call ipgeti ('b2nxfc_style', s % b2nxfc_style)
-      call ipgeti ('b2tfhe_mode_ehy',s% mode_ehy)
-      call ipgeti ('b2tfhe_mode_ehx',s% mode_ehx)
-      call ipgeti ('b2tlmv_style', s% b2tlmv_style)
-      call ipgeti ('b2tqca_model', s% b2tqca_model)
-      call ipgeti ('b2tqce_model', s% b2tqce_model)
+      call ipgeti ('b2tfhe_mode_ehy', s % mode_ehy)
+      call ipgeti ('b2tfhe_mode_ehx', s % mode_ehx)
+      call ipgeti ('b2tlmv_style', s % b2tlmv_style)
+      call ipgeti ('b2tqca_model', s % b2tqca_model)
+      call ipgeti ('b2tqce_model', s % b2tqce_model)
       call ipgeti ('b2tqce_style_guard_cells',
-     &                                    s%b2tqce_style_guard_cells)
-      call ipgeti ('b2tral_mode',s% b2tral_mode)
+     &                                  s % b2tqce_style_guard_cells)
+      call ipgeti ('b2tral_mode', s % b2tral_mode)
       call ipgeti ('b2tlv0_style', s % b2tlv0_style)
       call ipgeti ('b2tlh0_style', s % b2tlh0_style)
       call ipgeti ('b2tlc0_style', s % b2tlc0_style)

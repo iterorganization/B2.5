@@ -53,7 +53,7 @@
         do iFc = 1, nFc
           if (nef(iFc) .le. switch%b2tlhe_ne_min) then
            ! Set at min value
-           cflme_loc(iFc) = switch%b2tlhe_ne_min
+           cflme_loc(iFc) = switch%b2tlhe_cflme_min
           elseif (nef(iFc) .lt. switch%b2tlhe_ne_max ) then
            ! Interpolate for smooth transition
            cflme_loc(iFc) = 
