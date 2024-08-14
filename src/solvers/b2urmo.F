@@ -109,7 +109,7 @@ cwdk store effective viscosity, for use in viscous heating
         fmo_flua(:,:,isb)=flf
         call diff(nCv,nFc,nVx,0,geo,mpg,ub,ubv,dub)
         fmo_cvsa(:,:,isb)=-cvsb*dub
-        fmo_hybr(:,:,isb)=fmb-fmo_cvsa(:,:,isb)
+        fmo_hybr(:,:,isb)=fmb-fmo_cvsa(:,:,isb)-fmo_flua(:,:,isb)
       endif
 
       if(switch%b2npmo_iout.eq.1 .or. switch%iout_b2wdat.eq.4) then
