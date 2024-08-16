@@ -124,6 +124,8 @@ cwdk store effective viscosity, for use in viscous heating
        write (chns,'(i3.3)') isb
        call my_out_us(70,nFc,1,flv(1,0),'b2urmo_etaPat_gradua_th'//chns)
        call my_out_us(70,nFc,1,flv(1,1),'b2urmo_etaPat_gradua_r'//chns)
+       call my_out_us(70,nFc,1,flf(1,0),'b2urmo_etaPat_ua_th'//chns)
+       call my_out_us(70,nFc,1,flf(1,1),'b2urmo_etaPat_ua_r'//chns)
       endif  
 
 * ..compute kinetic energy flux
