@@ -1,18 +1,25 @@
+/*
+ * TAPENADE Automatic Differentiation Engine
+ * Copyright (C) 1999-2024 Inria
+ * See the LICENSE.md file in the project root for more information.
+ */
+
 /**** TAPENADE's ADJOINT AD STACK ****/
 
 // TODO:
 // A few storage files (tapStackNNNNN) sometimes are not erased in the end
+
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 #include "adStack.h"
 #include "adComplex.h"
-
-// Compile with -D_ADSTACKTRACE to see a trace
 
 // This code limits the number of stack Block's kept in-core to MAX_SPACES.
 // When more Block's must be kept, some Block's will be kept as files.
@@ -21,6 +28,12 @@
 
 // Compile with -D_ADSTACKPREFETCH to use a 2nd thread for asynchronous file operations.
 // In that case, code must be linked with -lpthread
+
+// Compile with -D_ADSTACKTRACE to see a trace of the "file storage"
+// and (optionaly) "prefetching" mechanism
+
+// Compile with -D_ADSTACKPROFILE to enable summary of stack usage
+// through adStack_showPeakSize() and adStack_showTotalTraffic()
 
 /******* Size and max number of blocks ********/
 
@@ -1901,10 +1914,14 @@ void popControl8b(int *cc) {
   if (topRepetitionPoint) checkPopToReadOnly() ;
 }
 
+uint64_t adStack_getCurrentStackSize() {
+ return curStack ? (curStack->rank-1)*BLOCK_SIZE + tappos : 0;
+}
+
 /******** Various dump routines for profiling and debugging *********/
 
 void showLocation(DoubleChainedBlock *locBlock, int loc) {
-  printf("%1i.%05i", (locBlock ? locBlock->rank : 0), loc) ;
+  printf("%1i.%05i", (locBlock ? locBlock->rank-1 : 0), loc) ;
 }
 
 #ifdef _ADSTACKTRACE
@@ -2036,7 +2053,8 @@ void adStack_showTotalTraffic() {
 
 void adStack_showStackSize(int label) {
   printf(" %i--> <",label) ;
-  showLocation(curStack, tappos) ;
+  printf("%"PRId64"", adStack_getCurrentStackSize());
+/*   showLocation(curStack, tappos) ; */
   printf(">") ;
 }
 

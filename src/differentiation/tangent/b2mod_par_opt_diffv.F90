@@ -472,7 +472,7 @@ CONTAINS
 &                         cffcor, m, idb)
               END DO
 ! iss
-              WRITE(ss, '(I0)') icf
+              WRITE(ss, '(I3)') icf
               CALL XERTST(ncffc .GT. 0, &
 &                   'No faces found for cost function  = '//ss)
               m%cfregp(icf, 2) = ncffc
@@ -1345,7 +1345,7 @@ CONTAINS
 &                         cffcor, m, idb)
               END DO
 ! iss
-              WRITE(ss, '(I0)') icf
+              WRITE(ss, '(I3)') icf
               CALL XERTST(ncffc .GT. 0, &
 &                   'No faces found for cost function  = '//ss)
               m%cfregp(icf, 2) = ncffc

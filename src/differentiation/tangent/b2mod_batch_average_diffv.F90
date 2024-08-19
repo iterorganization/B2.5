@@ -201,7 +201,7 @@ CONTAINS
     CALL CFVERW(iun, newversion)
     CALL CFWUIN(iun, 2, idum, 'nCv,ns')
     CALL CFWUCH(iun, 120, lble, 'label')
-    CALL B2WUZD_NODIFF(iun, newversion, ns, zamin, zamax, zn, am)
+    CALL B2WUZD(iun, newversion, ns, zamin, zamax, zn, am)
 !
     idum(0) = naver
     CALL CFWUIN(iun, 1, idum, 'naver')

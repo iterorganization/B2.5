@@ -59,8 +59,8 @@
 
 !     Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
-      call b2mn_init_b(switch, geo, geob, mpg, mpgb, state, stateb,
-     &  state_ext, state_extb)
+      call b2mn_init_b(switch, switchb, geo, geob, mpg, mpgb, state, stateb,
+     &  state_ext, state_extb, state_avg, state_avgb)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
 #ifdef TGT
@@ -248,7 +248,7 @@
 
 !     Clean up
       call b2mn_fin_b(switch, geo, geob, mpg, mpgb, state, stateb,
-     & state_ext, state_extb)
+     & state_ext, state_extb, state_avg, state_avgb)
       call IPFREE(IPROBLEM)
       deallocate(X,X_L,X_U,Z_L,Z_U)
       deallocate(G,G_L,G_U,LAM)
@@ -329,7 +329,7 @@
             endif
           end do
         endif
-        call b2mn_step(switch, geo, mpg, state, state_ext, j)
+        call b2mn_step(switch, geo, mpg, state, state_ext, state_avg, j)
       endif
       F = DBLE(j(1))
       IER = 0
@@ -409,7 +409,7 @@
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
         call b2mn_step_b(switch, switchb, geo, geob, mpg, mpgb, state,
-     &   stateb, state_ext, state_extb, j)
+     &   stateb, state_ext, state_extb, state_avg, state_avgb, j, jdiff)
       endif
 #ifdef TGT
       do ipar = 1, npar

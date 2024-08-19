@@ -38,7 +38,7 @@
 
       ! Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
-      call b2mn_init_diff(switch, geo, geodiff, mpg, mpgdiff, state, statediff,&
+      call b2mn_init_diff(switch, switchdiff, geo, geodiff, mpg, mpgdiff, state, statediff,&
 &      state_ext, state_extdiff, state_avg, state_avgdiff)
       call ipgeti('b2mndr_ntim', ntim)
       par_opt_phys = 0.0_R8
@@ -345,7 +345,7 @@
         call cfwuin (99, 3, idum, 'nCv,nFc,ns')
         write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',filen
         call cfwuch (99, 120, label, 'label')
-        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn, am)
+        call b2wuzd (99, newversion, state%ns, zamin, zamax, zn, am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
         filen = filen + 1
@@ -557,7 +557,7 @@
         call cfwuin (99, 3, idum, 'nCv,nFc,ns')
         write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',filen
         call cfwuch (99, 120, label, 'label')
-        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn, am)
+        call b2wuzd (99, newversion, state%ns, zamin, zamax, zn, am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
         filen = filen + 1

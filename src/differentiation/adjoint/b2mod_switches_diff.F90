@@ -168,6 +168,8 @@ MODULE B2MOD_SWITCHES_DIFF
       INTEGER :: do_volrec
       INTEGER :: transport_afn
       INTEGER :: afn_bcs_use_coarse
+      INTEGER :: afn_vnn
+      INTEGER :: afn_vnn_ndiff
       REAL(kind=r8) :: fhe_vis_per
       REAL(kind=r8) :: fhe_vis_par
       REAL(kind=r8) :: fnb_vis_per
@@ -911,6 +913,8 @@ CONTAINS
     s%diffusion_bc_safeguard = 1
     s%do_volrec = 1
     s%afn_bcs_use_coarse = 1
+    s%afn_vnn = 1
+    s%afn_vnn_ndiff = 0
 !
     s%fhe_vis_per = 0.0_R8
     s%fhe_vis_par = 0.0_R8
@@ -1177,13 +1181,13 @@ CONTAINS
 !
     s%b2tlhe_ne_min = 1.0e17_R8
     s%b2tlhe_ne_max = 1.0e18_R8
-    s%b2tlhe_cflme_min = 1.0e-3_R8
+    s%b2tlhe_cflme_min = 0.2e0_R8
     s%b2tlhi_ni_min = 1.0e17_R8
     s%b2tlhi_ni_max = 1.0e18_R8
-    s%b2tlhi_cflmi_min = 1.0e-3_R8
+    s%b2tlhi_cflmi_min = 1.0e1_R8
     s%b2tlmv_ni_min = 1.0e17_R8
     s%b2tlmv_ni_max = 1.0e18_R8
-    s%b2tlmv_cflmv_min = 1.0e-3_R8
+    s%b2tlmv_cflmv_min = 0.5e0_R8
 !
 ! geometry
     s%fchz_style = 1
@@ -1491,6 +1495,8 @@ CONTAINS
     CALL IPGETI('b2tqna_transport_afn', s%transport_afn)
     CALL IPGETI('diffusion_bc_safeguard', s%diffusion_bc_safeguard)
     CALL IPGETI('b2stbr_afn_bcs_use_coarse', s%afn_bcs_use_coarse)
+    CALL IPGETI('b2tqna_afn_vnn', s%afn_vnn)
+    CALL IPGETI('b2tqna_afn_vnn_ndiff', s%afn_vnn_ndiff)
 !
     CALL IPGETR('b2tfhe_vis_per', s%fhe_vis_per)
     CALL IPGETR('b2tfhe_vis_par', s%fhe_vis_par)

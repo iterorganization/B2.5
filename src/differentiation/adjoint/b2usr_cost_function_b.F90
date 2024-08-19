@@ -37,7 +37,6 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, mpg, st, stb, &
 & b2voloncf, b2voloncfb, b2data, b2datab, b2dataoncf, b2dataoncfb, b2psi&
 & , ompind
   USE B2MOD_SUBSYS
-!  Hint: ISIZE1OFDrfb2rrINb2usr_cost_function should be the value of ic2-ic1+1, overestimate:_
   IMPLICIT NONE
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -389,15 +388,9 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, mpg, st, stb, &
 &           mpg%cfreg(ifc+ic1-1), 1))*mpg%cffcor(ifc+ic1-1)/1.0e6
           IF (parallel_hf) THEN
             b2data(ifc) = b2data(ifc)/geo%fcpbs(mpg%cfreg(ifc+ic1-1))
-            CALL PUSHCONTROL1B(0)
+            CALL PUSHCONTROL1B(1)
           ELSE
             b2data(ifc) = b2data(ifc)/geo%fcs(mpg%cfreg(ifc+ic1-1))
-            CALL PUSHCONTROL1B(1)
-          END IF
-          IF (invert_hf) THEN
-            b2data(ifc) = -(1.0_R8*b2data(ifc))
-            CALL PUSHCONTROL1B(1)
-          ELSE
             CALL PUSHCONTROL1B(0)
           END IF
         END DO
@@ -694,12 +687,10 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, mpg, st, stb, &
         CALL POPINTEGER4(ad_to4)
         DO ifc=ad_to4,1,-1
           CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) b2datab(ifc) = -b2datab(ifc)
-          CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            b2datab(ifc) = b2datab(ifc)/geo%fcpbs(mpg%cfreg(ifc+ic1-1))
-          ELSE
             b2datab(ifc) = b2datab(ifc)/geo%fcs(mpg%cfreg(ifc+ic1-1))
+          ELSE
+            b2datab(ifc) = b2datab(ifc)/geo%fcpbs(mpg%cfreg(ifc+ic1-1))
           END IF
           tempb = mpg%cffcor(ifc+ic1-1)*b2datab(ifc)/1.0e6
           b2datab(ifc) = 0.D0
@@ -1065,7 +1056,6 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
           ELSE
             b2data(ifc) = b2data(ifc)/geo%fcs(mpg%cfreg(ifc+ic1-1))
           END IF
-          IF (invert_hf) b2data(ifc) = -(1.0_R8*b2data(ifc))
         END DO
       CASE DEFAULT
         WRITE(*, *) cftype(icf)

@@ -361,23 +361,23 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       IF (.NOT.is_neutral(is)) THEN
 ! dna
         CALL TRANSFORM_TRANSPORT_DV(flag_dna, parm_dna(is), parm_dnad(:&
-&                             , is), cfdna(:, is), cfdnad(1:nbdirs, :, is), &
+&                             , is), cfdna(:, is), cfdnad(:, :, is), &
 &                             nbdirs)
 ! dpa
         CALL TRANSFORM_TRANSPORT_DV(flag_dpa, parm_dpa(is), parm_dpad(:&
-&                             , is), cfdpa(:, is), cfdpad(1:nbdirs, :, is), &
+&                             , is), cfdpa(:, is), cfdpad(:, :, is), &
 &                             nbdirs)
 ! vla
         CALL TRANSFORM_TRANSPORT_DV(flag_vla, parm_vla(is), parm_vlad(:&
-&                             , is), cfvla(:, is), cfvlad(1:nbdirs, :, is), &
+&                             , is), cfvla(:, is), cfvlad(:, :, is), &
 &                             nbdirs)
 ! vsa
         CALL TRANSFORM_TRANSPORT_DV(flag_vsa, parm_vsa(is), parm_vsad(:&
-&                             , is), cfvsa(:, is), cfvsad(1:nbdirs, :, is), &
+&                             , is), cfvsa(:, is), cfvsad(:, :, is), &
 &                             nbdirs)
 ! hci
         CALL TRANSFORM_TRANSPORT_DV(flag_hci, parm_hci(is), parm_hcid(:&
-&                             , is), cfhci(:, is), cfhcid(1:nbdirs, :, is), &
+&                             , is), cfhci(:, is), cfhcid(:, :, is), &
 &                             nbdirs)
       END IF
     END DO
@@ -1023,11 +1023,11 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                                                      switch, switchd, &
 &                                                      pl, pld, dv, dvd&
 &                                                      , rt, rtd, dna0, &
-&                                                      dpa0, dpa0d, vla0&
-&                                                      , vma0, vsa0, &
-&                                                      vsa0d, hci0, &
-&                                                      hci0d, hcn0, &
-&                                                      hcn0d, hcib, &
+&                                                      dna0d, dpa0, &
+&                                                      dpa0d, vla0, vma0&
+&                                                      , vsa0, vsa0d, &
+&                                                      hci0, hci0d, hcn0&
+&                                                      , hcn0d, hcib, &
 &                                                      hcibd, nbdirs)
 !
 !dpc
@@ -1912,9 +1912,10 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 END SUBROUTINE B2TQNA_NODIFF
 
 !  Differentiation of set_transport_afn in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: hci0 vsa0 hcib hcn0 dpa0
+!   variations   of useful results: hci0 vsa0 hcib hcn0 dna0 dpa0
 !   with respect to varying inputs: vsa0 *(dv.ne) *(rt.rlcx) *(rt.rlsa)
-!                hcib *(pl.na) *(pl.te) *(pl.ti) *(pl.tn) dpa0
+!                hcib dna0 *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
+!                dpa0
 !   Plus diff mem management of: dv.ne:in rt.rlcx:in rt.rlsa:in
 !                pl.na:in pl.te:in pl.ti:in pl.tn:in
 !
@@ -1923,8 +1924,8 @@ END SUBROUTINE B2TQNA_NODIFF
 !*****************     New KU Leuven transport model for neutrals *********************
 !**************************************************************************************
 SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, ns, nscx, iscx, switch, switchd, pl&
-& , pld, dv, dvd, rt, rtd, dna0, dpa0, dpa0d, vla0, vma0, vsa0, vsa0d, &
-& hci0, hci0d, hcn0, hcn0d, hcib, hcibd, nbdirs)
+& , pld, dv, dvd, rt, rtd, dna0, dna0d, dpa0, dpa0d, vla0, vma0, vsa0, &
+& vsa0d, hci0, hci0d, hcn0, hcn0d, hcib, hcibd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_INDIRECT_DIFFV
@@ -1963,8 +1964,8 @@ SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, ns, nscx, iscx, switch, switchd, pl&
 !srv 15.12.05
   REAL(kind=r8) :: dna0(ncv, 0:ns-1), dpa0(ncv, 0:ns-1), vla0(ncv, 0:1, &
 & 0:ns-1), vsa0(ncv, 0:ns-1), vma0(ncv, 0:1, 0:ns-1)
-  REAL(kind=r8) :: dpa0d(nbdirsmax, ncv, 0:ns-1), vsa0d(nbdirsmax, ncv, &
-& 0:ns-1)
+  REAL(kind=r8) :: dna0d(nbdirsmax, ncv, 0:ns-1), dpa0d(nbdirsmax, ncv, &
+& 0:ns-1), vsa0d(nbdirsmax, ncv, 0:ns-1)
 !   ..workspace arguments (unspecified on entry and on exit)
   REAL(kind=r8) :: wrk0(ncv), vcx, dion, vnn
   REAL(kind=r8) :: wrk0d(nbdirsmax, ncv), vcxd(nbdirsmax), diond(&
@@ -1993,6 +1994,7 @@ SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, ns, nscx, iscx, switch, switchd, pl&
   REAL(kind=r8) :: temp0
   REAL(r8) :: temp1
   REAL(kind=r8) :: temp2
+  REAL(kind=r8) :: temp3
   INTEGER :: nbdirs
 !
 !   ..subprogram start-up calls
@@ -2044,19 +2046,28 @@ SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, ns, nscx, iscx, switch, switchd, pl&
         END DO
         arg11 = pl%te(icv)/ev
         temp1 = LOG(arg11)
-!         ..Collision time for n-n collisions (D-D), based on Kotov 2007
-        temp0 = (kbolt*pl%tn(icv))**0.25_R8
         DO nd=1,nbdirs
           arg11d(nd) = pld%te(nd, icv)/ev
           arg2d(nd) = rtd%rlsa(nd, icv, 0, is) + temp1*rtd%rlsa(nd, icv&
 &           , 1, is) + rt%rlsa(icv, 1, is)*arg11d(nd)/arg11
-          vnnd(nd) = 5.2958e-11_R8*(pl%na(icv, is)*0.25_R8*(kbolt*pl%tn(&
-&           icv))**(-0.75)*kbolt*pld%tn(nd, icv)+temp0*pld%na(nd, icv, &
-&           is))
         END DO
         arg2 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*temp1
         CALL EXPU_DV(arg2, arg2d, dion, diond, nbdirs)
-        vnn = 5.2958e-11_R8*(temp0*pl%na(icv, is))
+        IF (switch%afn_vnn .EQ. 1) THEN
+!         ..Collision time for n-n collisions (D-D), based on Kotov 2007
+          temp1 = (pl%tn(icv)/kbolt)**0.25_R8
+          DO nd=1,nbdirs
+            vnnd(nd) = 5.2958e-11_R8*1.0e-6_R8*(pl%na(icv, is)*0.25_R8*(&
+&             pl%tn(icv)/kbolt)**(-0.75)*pld%tn(nd, icv)/kbolt+temp1*pld&
+&             %na(nd, icv, is))
+          END DO
+          vnn = 5.2958e-11_R8*1.0e-6_R8*(temp1*pl%na(icv, is))
+        ELSE
+          vnn = 0.0_R8
+          DO nd=1,nbdirsmax
+            vnnd(nd) = 0.D0
+          END DO
+        END IF
 !         ..Total coefficients
 ! limit df0
         result1 = SQRT(am(is))
@@ -2090,17 +2101,44 @@ SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, ns, nscx, iscx, switch, switchd, pl&
             df0d(nd) = 0.D0
           END DO
         END IF
-!
-        temp2 = df0/pl%tn(icv)
+        IF (switch%afn_vnn_ndiff .EQ. 1) THEN
+! assign fraction to density diffusion (nn-collisions)
+! based on ratio of ion/neutral collision frequency
+          temp2 = vcx + dion*dv%ne(icv) + vnn
+          temp0 = df0*vnn/temp2
+          DO nd=1,nbdirs
+            dna0d(nd, icv, is) = (vnn*df0d(nd)+df0*vnnd(nd)-temp0*(vcxd(&
+&             nd)+dv%ne(icv)*diond(nd)+dion*dvd%ne(nd, icv)+vnnd(nd)))/&
+&             temp2
+          END DO
+          dna0(icv, is) = temp0
+!     &          pl%na(iCv,is)/(pl%na(iCv,is)+dv%ne(iCv))
+          temp2 = vcx + dion*dv%ne(icv) + vnn
+          temp1 = pl%tn(icv)*temp2
+          temp0 = vcx + dion*dv%ne(icv)
+          temp3 = df0*temp0/temp1
+          DO nd=1,nbdirs
+            dpa0d(nd, icv, is) = (temp0*df0d(nd)+df0*(vcxd(nd)+dv%ne(icv&
+&             )*diond(nd)+dion*dvd%ne(nd, icv))-temp3*(temp2*pld%tn(nd, &
+&             icv)+pl%tn(icv)*(vcxd(nd)+dv%ne(icv)*diond(nd)+dion*dvd%ne&
+&             (nd, icv)+vnnd(nd))))/temp1
+          END DO
+          dpa0(icv, is) = temp3
+!     &          pl%ne(iCv)/(pl%na(iCv,is)+dv%ne(iCv))
+        ELSE
+          temp3 = df0/pl%tn(icv)
+          DO nd=1,nbdirs
+            dpa0d(nd, icv, is) = (df0d(nd)-temp3*pld%tn(nd, icv))/pl%tn(&
+&             icv)
+          END DO
+          dpa0(icv, is) = temp3
+        END IF
         DO nd=1,nbdirs
-          dpa0d(nd, icv, is) = (df0d(nd)-temp2*pld%tn(nd, icv))/pl%tn(&
-&           icv)
           vsa0d(nd, icv, is) = mp*am(is)*(df0*pld%na(nd, icv, is)+pl%na(&
 &           icv, is)*df0d(nd))
           hcibd(nd, icv, is) = 2.5_R8*(df0*pld%na(nd, icv, is)+pl%na(icv&
 &           , is)*df0d(nd))
         END DO
-        dpa0(icv, is) = temp2
         vsa0(icv, is) = mp*am(is)*pl%na(icv, is)*df0
         hcib(icv, is) = 2.5_R8*pl%na(icv, is)*df0
       END DO
@@ -2108,15 +2146,17 @@ SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, ns, nscx, iscx, switch, switchd, pl&
 !! end loop over cells
 !
 !   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
-      IF (ANY(dna0(:, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                  'dna0 is not zero for neutrals'//&
-&                                  'Recommended choice is zero!'
-      IF (ANY(vla0(:, :, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                     'vla0 is not zero for neutrals'//&
-&                                     'Recommended choice is zero!'
-      IF (ANY(vma0(:, :, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                     'vma0 is not zero for neutrals'//&
-&                                     'Recommended choice is zero!'
+      IF (ANY(dna0(:, is) .NE. 0.0_R8) .AND. switch%afn_vnn_ndiff .NE. 1&
+&     ) WRITE(*, *) 'Warning: '//'dna0 is not zero for neutrals'//&
+&       'Recommended choice is zero!'
+      IF (ANY(vla0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vla0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
+      IF (ANY(vma0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vma0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
     END IF
   END DO
 !! end loop over species
@@ -2243,8 +2283,13 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, ns, nscx, iscx, switch, pl, dv&
         arg11 = pl%te(icv)/ev
         arg2 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*LOG(arg11)
         dion = EXPU(arg2)
+        IF (switch%afn_vnn .EQ. 1) THEN
 !         ..Collision time for n-n collisions (D-D), based on Kotov 2007
-        vnn = 5.2958e-11_R8*(kbolt*pl%tn(icv))**0.25_R8*pl%na(icv, is)
+          vnn = 1.0e-6_R8*5.2958e-11_R8*(pl%tn(icv)/kbolt)**0.25_R8*pl%&
+&           na(icv, is)
+        ELSE
+          vnn = 0.0_R8
+        END IF
 !         ..Total coefficients
 ! limit df0
         result1 = SQRT(am(is))
@@ -2259,8 +2304,17 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, ns, nscx, iscx, switch, pl, dv&
         ELSE
           df0 = switch%b2tqna_min_df0
         END IF
-!
-        dpa0(icv, is) = 1.0_R8/pl%tn(icv)*df0
+        IF (switch%afn_vnn_ndiff .EQ. 1) THEN
+! assign fraction to density diffusion (nn-collisions)
+! based on ratio of ion/neutral collision frequency
+          dna0(icv, is) = df0*vnn/(vcx+dion*dv%ne(icv)+vnn)
+!     &          pl%na(iCv,is)/(pl%na(iCv,is)+dv%ne(iCv))
+          dpa0(icv, is) = 1.0_R8/pl%tn(icv)*df0*(vcx+dion*dv%ne(icv))/(&
+&           vcx+dion*dv%ne(icv)+vnn)
+!     &          pl%ne(iCv)/(pl%na(iCv,is)+dv%ne(iCv))
+        ELSE
+          dpa0(icv, is) = 1.0_R8/pl%tn(icv)*df0
+        END IF
         vsa0(icv, is) = mp*am(is)*pl%na(icv, is)*df0
         hcib(icv, is) = 2.5_R8*pl%na(icv, is)*df0
       END DO
@@ -2268,15 +2322,17 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, ns, nscx, iscx, switch, pl, dv&
 !! end loop over cells
 !
 !   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
-      IF (ANY(dna0(:, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                  'dna0 is not zero for neutrals'//&
-&                                  'Recommended choice is zero!'
-      IF (ANY(vla0(:, :, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                     'vla0 is not zero for neutrals'//&
-&                                     'Recommended choice is zero!'
-      IF (ANY(vma0(:, :, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                     'vma0 is not zero for neutrals'//&
-&                                     'Recommended choice is zero!'
+      IF (ANY(dna0(:, is) .NE. 0.0_R8) .AND. switch%afn_vnn_ndiff .NE. 1&
+&     ) WRITE(*, *) 'Warning: '//'dna0 is not zero for neutrals'//&
+&       'Recommended choice is zero!'
+      IF (ANY(vla0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vla0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
+      IF (ANY(vma0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vma0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
     END IF
   END DO
 !! end loop over species
@@ -2467,8 +2523,8 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
           ELSEWHERE
             result1d(nd, :) = arg1d(nd, :)/(2.0*temp)
           END WHERE
-          rhold(nd, :) = am(ismain)*mp*(result1d(nd, :)-result1*abs0d(nd&
-&           , :)/abs0)/abs0
+          rhold(nd, :) = am(ismain)*mp*(result1d(nd, :)-result1*abs0d(&
+&           nd, :)/abs0)/abs0
         END DO
         rhol = am(ismain)*mp*result1/abs0
       ELSE
@@ -2496,8 +2552,8 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
           ELSE
             result10d(nd) = arg10d(nd)/(2.0*temp1)
           END IF
-          rhold(nd, :) = am(ismain)*mp*(result10d(nd)-result10*abs1d(nd)&
-&           /abs1)/abs1
+          rhold(nd, :) = am(ismain)*mp*(result10d(nd)-result10*abs1d(nd&
+&           )/abs1)/abs1
         END DO
         rhol = am(ismain)*mp*result10/abs1
       END IF
@@ -2538,8 +2594,8 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
           END WHERE
           dna_exbd(nd, :) = (pl%kt*switchd%keps_cd(nd)+switch%keps_cd*&
 &           pld%kt(nd, :)-temp4*am(ismain)*mp*((result11d(nd, :)-&
-&           result11*rhold(nd, :)/rhol)/rhol+abs2*switchd%keps_shear(nd)&
-&           +switch%keps_shear*abs2d(nd, :)))/temp3
+&           result11*rhold(nd, :)/rhol)/rhol+abs2*switchd%keps_shear(nd&
+&           )+switch%keps_shear*abs2d(nd, :)))/temp3
           dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
 &           switch%keps_fac)*dna0d(nd, :, is)
         END DO

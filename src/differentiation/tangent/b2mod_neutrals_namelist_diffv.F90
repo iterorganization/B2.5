@@ -2456,11 +2456,11 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC MAX
     INTRINSIC TRIM
+    INTRINSIC IABS
     INTRINSIC MINLOC
     INTRINSIC SIZE
     INTEGER :: y1
     INTEGER :: abs0
-    INTEGER, DIMENSION(nn_spcsrf) :: abs1
     INTEGER :: max1
 !
     OPEN(newunit=iout, file='b2us.neutrals.parameters') 
@@ -2668,12 +2668,7 @@ CONTAINS
 !
     WRITE(iout, '(1x,a,i5,a1)') 'n_spcsrf= ', n_spcsrf, ','
     IF (n_spcsrf .GT. 0) THEN
-      WHERE (l_spcsrf .GE. 0.0) 
-        abs1 = l_spcsrf
-      ELSEWHERE
-        abs1 = -l_spcsrf
-      END WHERE
-      ii = MINLOC(abs1)
+      ii = MINLOC(IABS(l_spcsrf))
       IF (ii(1) .EQ. 1) THEN
         is = 0
       ELSE IF (l_spcsrf(ii(1)) .EQ. 0) THEN

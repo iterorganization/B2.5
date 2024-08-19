@@ -708,7 +708,7 @@ CONTAINS
 ! local variables
     INTEGER :: idum(0:1), iun
     EXTERNAL CFWUCH, CFWUIN, CFWURE
-    EXTERNAL B2XXID, B2WUZD_NODIFF
+    EXTERNAL B2XXID, B2WUZD
     INTEGER :: arg1
 !
     CALL SUBINI('run_av_save')
@@ -733,7 +733,7 @@ CONTAINS
       CALL CFVERW(iun, newversion)
       CALL CFWUIN(iun, 2, idum, 'nCv,ns')
       CALL CFWUCH(iun, 120, lble, 'label')
-      CALL B2WUZD_NODIFF(iun, newversion, ns, zamin, zamax, zn, am)
+      CALL B2WUZD(iun, newversion, ns, zamin, zamax, zn, am)
 !
 !   ..write average state and sources
       idum(0) = naver

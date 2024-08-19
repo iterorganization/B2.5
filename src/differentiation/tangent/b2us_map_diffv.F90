@@ -1696,6 +1696,7 @@ CONTAINS
     EXTERNAL IPGETI, XERRAB
     INTRINSIC MAXVAL
     EXTERNAL MAXVAL_DV
+    INTRINSIC ALLOCATED
     INTEGER :: nd
     INTEGER :: nbdirs
     REAL(kind=r8) :: MAXVAL_DV
@@ -2052,135 +2053,137 @@ CONTAINS
     END IF
     DEALLOCATE(indxpt)
 !
-    indd = MAXVAL(m%strdiv)
-    IF (indd .GT. 0) THEN
-      ALLOCATE(md0%ifdiv(nbdirsmax, indd))
-      DO nd=1,nbdirsmax
-        md0%ifdiv(nd, 1:indd) = 0
-      END DO
-      ALLOCATE(m%ifdiv(indd))
-      ALLOCATE(md0%ivdiv(nbdirsmax, indd))
-      DO nd=1,nbdirsmax
-        md0%ivdiv(nd, 1:indd) = 0
-      END DO
-      ALLOCATE(m%ivdiv(indd))
-      ALLOCATE(md0%divfcp(nbdirsmax, indd, 2))
-      DO nd=1,nbdirsmax
-        md0%divfcp(nd, 1:indd, 1:2) = 0
-      END DO
-      ALLOCATE(m%divfcp(indd, 2))
-      ALLOCATE(indfc(m%nfc))
-      icount = 0
-      m%ifdiv = 0
-      m%ivdiv = 0
-      m%divfcp(1, 1) = 1
-      m%divfcp(:, 2) = 0
-! first assemble all the faces
-      DO i=1,indd
-        IF (i .GT. 1) m%divfcp(i, 1) = m%divfcp(i-1, 1) + m%divfcp(i-1, &
-&           2)
-        DO ifc=1,m%nfc
-          IF (m%fcreg(ifc) .EQ. freg(i)) THEN
-            icount = icount + 1
-            m%divfcp(i, 2) = m%divfcp(i, 2) + 1
-            indfc(icount) = ifc
-          END IF
+    IF (ALLOCATED(m%strdiv)) THEN
+      indd = MAXVAL(m%strdiv)
+      IF (indd .GT. 0) THEN
+        ALLOCATE(md0%ifdiv(nbdirsmax, MAXVAL(m%strdiv)))
+        DO nd=1,nbdirsmax
+          md0%ifdiv(nd, 1:MAXVAL(m%strdiv)) = 0
         END DO
-      END DO
-      ALLOCATE(md0%divfc(nbdirsmax, icount))
-      DO nd=1,nbdirsmax
-        md0%divfc(nd, 1:icount) = 0
-      END DO
-      ALLOCATE(m%divfc(icount))
-      ALLOCATE(md0%divfcor(nbdirsmax, icount))
-      DO nd=1,nbdirsmax
-        md0%divfcor(nd, 1:icount) = 0.D0
-      END DO
-      ALLOCATE(m%divfcor(icount))
-      m%divfcor = 0.0_R8
-      m%divfc(1:icount) = indfc(1:icount)
+        ALLOCATE(m%ifdiv(MAXVAL(m%strdiv)))
+        ALLOCATE(md0%ivdiv(nbdirsmax, MAXVAL(m%strdiv)))
+        DO nd=1,nbdirsmax
+          md0%ivdiv(nd, 1:MAXVAL(m%strdiv)) = 0
+        END DO
+        ALLOCATE(m%ivdiv(MAXVAL(m%strdiv)))
+        ALLOCATE(md0%divfcp(nbdirsmax, MAXVAL(m%strdiv), 2))
+        DO nd=1,nbdirsmax
+          md0%divfcp(nd, 1:MAXVAL(m%strdiv), 1:2) = 0
+        END DO
+        ALLOCATE(m%divfcp(MAXVAL(m%strdiv), 2))
+        ALLOCATE(indfc(m%nfc))
+        icount = 0
+        m%ifdiv = 0
+        m%ivdiv = 0
+        m%divfcp(1, 1) = 1
+        m%divfcp(:, 2) = 0
+! first assemble all the faces
+        DO i=1,indd
+          IF (i .GT. 1) m%divfcp(i, 1) = m%divfcp(i-1, 1) + m%divfcp(i-1&
+&             , 2)
+          DO ifc=1,m%nfc
+            IF (m%fcreg(ifc) .EQ. freg(i)) THEN
+              icount = icount + 1
+              m%divfcp(i, 2) = m%divfcp(i, 2) + 1
+              indfc(icount) = ifc
+            END IF
+          END DO
+        END DO
+        ALLOCATE(md0%divfc(nbdirsmax, icount))
+        DO nd=1,nbdirsmax
+          md0%divfc(nd, 1:icount) = 0
+        END DO
+        ALLOCATE(m%divfc(icount))
+        ALLOCATE(md0%divfcor(nbdirsmax, icount))
+        DO nd=1,nbdirsmax
+          md0%divfcor(nd, 1:icount) = 0.D0
+        END DO
+        ALLOCATE(m%divfcor(icount))
+        m%divfcor = 0.0_R8
+        m%divfc(1:icount) = indfc(1:icount)
 ! now re-order them
-      DO i=1,indd
-        ALLOCATE(old_face_list(m%divfcp(i, 2)))
-        ALLOCATE(new_face_list(m%divfcp(i, 2)))
-        old_face_list(1:m%divfcp(i, 2)) = m%divfc(m%divfcp(i, 1):m%&
-&         divfcp(i, 1)+m%divfcp(i, 2)-1)
-        new_face_list(:) = 0
-        new_face_list(1) = m%divfc(m%divfcp(i, 1))
-        old_face_list(1) = 0
-        iva = m%fcvx(m%divfc(m%divfcp(i, 1)), 1)
-        ivb = m%fcvx(m%divfc(m%divfcp(i, 1)), 2)
-        inew = 1
-        DO WHILE (inew .LT. m%divfcp(i, 2))
-          left_match_found = .false.
-          DO j=1,m%divfcp(i, 2)
-            IF (.NOT.left_match_found) THEN
-              IF (old_face_list(j) .NE. 0) THEN
-                IF (iva .EQ. m%fcvx(old_face_list(j), 1)) THEN
-                  left_match_found = .true.
-                  iva = m%fcvx(old_face_list(j), 2)
-                ELSE IF (iva .EQ. m%fcvx(old_face_list(j), 2)) THEN
-                  left_match_found = .true.
-                  iva = m%fcvx(old_face_list(j), 1)
-                END IF
-                IF (left_match_found) THEN
-                  indfc(1:inew) = new_face_list(1:inew)
-                  new_face_list(1) = old_face_list(j)
-                  new_face_list(2:inew+1) = indfc(1:inew)
-                  old_face_list(j) = 0
-                  inew = inew + 1
-                END IF
-              END IF
-            END IF
-          END DO
-          right_match_found = .false.
-          DO j=1,m%divfcp(i, 2)
-            IF (.NOT.right_match_found) THEN
-              IF (old_face_list(j) .NE. 0) THEN
-                IF (ivb .EQ. m%fcvx(old_face_list(j), 1)) THEN
-                  right_match_found = .true.
-                  ivb = m%fcvx(old_face_list(j), 2)
-                ELSE IF (ivb .EQ. m%fcvx(old_face_list(j), 2)) THEN
-                  right_match_found = .true.
-                  ivb = m%fcvx(old_face_list(j), 1)
-                END IF
-                IF (right_match_found) THEN
-                  new_face_list(inew+1) = old_face_list(j)
-                  old_face_list(j) = 0
-                  inew = inew + 1
-                END IF
-              END IF
-            END IF
-          END DO
-          IF (.NOT.(left_match_found .OR. right_match_found) .AND. inew &
-&             .LT. m%divfcp(i, 2)) THEN
-            DO j=1,inew
-              ifc = new_face_list(j)
-              iva = m%fcvx(ifc, 1)
-              ivb = m%fcvx(ifc, 2)
-              WRITE(6, '(a,4i6)') &
-&             'Chain of faces and vertices in new list ', j, ifc, iva, &
-&             ivb
-            END DO
+        DO i=1,indd
+          ALLOCATE(old_face_list(m%divfcp(i, 2)))
+          ALLOCATE(new_face_list(m%divfcp(i, 2)))
+          old_face_list(1:m%divfcp(i, 2)) = m%divfc(m%divfcp(i, 1):m%&
+&           divfcp(i, 1)+m%divfcp(i, 2)-1)
+          new_face_list(:) = 0
+          new_face_list(1) = m%divfc(m%divfcp(i, 1))
+          old_face_list(1) = 0
+          iva = m%fcvx(m%divfc(m%divfcp(i, 1)), 1)
+          ivb = m%fcvx(m%divfc(m%divfcp(i, 1)), 2)
+          inew = 1
+          DO WHILE (inew .LT. m%divfcp(i, 2))
+            left_match_found = .false.
             DO j=1,m%divfcp(i, 2)
-              IF (old_face_list(j) .NE. 0) THEN
-                ifc = m%divfc(m%divfcp(i, 1)+j-1)
+              IF (.NOT.left_match_found) THEN
+                IF (old_face_list(j) .NE. 0) THEN
+                  IF (iva .EQ. m%fcvx(old_face_list(j), 1)) THEN
+                    left_match_found = .true.
+                    iva = m%fcvx(old_face_list(j), 2)
+                  ELSE IF (iva .EQ. m%fcvx(old_face_list(j), 2)) THEN
+                    left_match_found = .true.
+                    iva = m%fcvx(old_face_list(j), 1)
+                  END IF
+                  IF (left_match_found) THEN
+                    indfc(1:inew) = new_face_list(1:inew)
+                    new_face_list(1) = old_face_list(j)
+                    new_face_list(2:inew+1) = indfc(1:inew)
+                    old_face_list(j) = 0
+                    inew = inew + 1
+                  END IF
+                END IF
+              END IF
+            END DO
+            right_match_found = .false.
+            DO j=1,m%divfcp(i, 2)
+              IF (.NOT.right_match_found) THEN
+                IF (old_face_list(j) .NE. 0) THEN
+                  IF (ivb .EQ. m%fcvx(old_face_list(j), 1)) THEN
+                    right_match_found = .true.
+                    ivb = m%fcvx(old_face_list(j), 2)
+                  ELSE IF (ivb .EQ. m%fcvx(old_face_list(j), 2)) THEN
+                    right_match_found = .true.
+                    ivb = m%fcvx(old_face_list(j), 1)
+                  END IF
+                  IF (right_match_found) THEN
+                    new_face_list(inew+1) = old_face_list(j)
+                    old_face_list(j) = 0
+                    inew = inew + 1
+                  END IF
+                END IF
+              END IF
+            END DO
+            IF (.NOT.(left_match_found .OR. right_match_found) .AND. &
+&               inew .LT. m%divfcp(i, 2)) THEN
+              DO j=1,inew
+                ifc = new_face_list(j)
                 iva = m%fcvx(ifc, 1)
                 ivb = m%fcvx(ifc, 2)
                 WRITE(6, '(a,4i6)') &
-&               'Left over faces and vertices in old list', j, ifc, iva&
+&               'Chain of faces and vertices in new list ', j, ifc, iva&
 &               , ivb
-              END IF
-            END DO
-            CALL XERRAB('Broken face chain along target')
-          END IF
+              END DO
+              DO j=1,m%divfcp(i, 2)
+                IF (old_face_list(j) .NE. 0) THEN
+                  ifc = m%divfc(m%divfcp(i, 1)+j-1)
+                  iva = m%fcvx(ifc, 1)
+                  ivb = m%fcvx(ifc, 2)
+                  WRITE(6, '(a,4i6)') &
+&                 'Left over faces and vertices in old list', j, ifc, &
+&                 iva, ivb
+                END IF
+              END DO
+              CALL XERRAB('Broken face chain along target')
+            END IF
+          END DO
+          m%divfc(m%divfcp(i, 1):m%divfcp(i, 1)+m%divfcp(i, 2)-1) = &
+&           new_face_list(1:m%divfcp(i, 2))
+          DEALLOCATE(old_face_list)
+          DEALLOCATE(new_face_list)
         END DO
-        m%divfc(m%divfcp(i, 1):m%divfcp(i, 1)+m%divfcp(i, 2)-1) = &
-&         new_face_list(1:m%divfcp(i, 2))
-        DEALLOCATE(old_face_list)
-        DEALLOCATE(new_face_list)
-      END DO
-      DEALLOCATE(indfc)
+        DEALLOCATE(indfc)
+      END IF
     END IF
     DEALLOCATE(freg)
 !
@@ -2206,6 +2209,7 @@ CONTAINS
     LOGICAL :: duplicate, left_match_found, right_match_found
     EXTERNAL IPGETI, XERRAB
     INTRINSIC MAXVAL
+    INTRINSIC ALLOCATED
 !wdk  This initialization routine precomputes a number of arrays
 !wdk  in the mapping that are not stored in the b2fgmtry file, but
 !wdk  can be derived directly from data in that file
@@ -2511,115 +2515,117 @@ CONTAINS
     END IF
     DEALLOCATE(indxpt)
 !
-    indd = MAXVAL(m%strdiv)
-    IF (indd .GT. 0) THEN
-      ALLOCATE(m%ifdiv(indd))
-      ALLOCATE(m%ivdiv(indd))
-      ALLOCATE(m%divfcp(indd, 2))
-      ALLOCATE(indfc(m%nfc))
-      icount = 0
-      m%ifdiv = 0
-      m%ivdiv = 0
-      m%divfcp(1, 1) = 1
-      m%divfcp(:, 2) = 0
+    IF (ALLOCATED(m%strdiv)) THEN
+      indd = MAXVAL(m%strdiv)
+      IF (indd .GT. 0) THEN
+        ALLOCATE(m%ifdiv(MAXVAL(m%strdiv)))
+        ALLOCATE(m%ivdiv(MAXVAL(m%strdiv)))
+        ALLOCATE(m%divfcp(MAXVAL(m%strdiv), 2))
+        ALLOCATE(indfc(m%nfc))
+        icount = 0
+        m%ifdiv = 0
+        m%ivdiv = 0
+        m%divfcp(1, 1) = 1
+        m%divfcp(:, 2) = 0
 ! first assemble all the faces
-      DO i=1,indd
-        IF (i .GT. 1) m%divfcp(i, 1) = m%divfcp(i-1, 1) + m%divfcp(i-1, &
-&           2)
-        DO ifc=1,m%nfc
-          IF (m%fcreg(ifc) .EQ. freg(i)) THEN
-            icount = icount + 1
-            m%divfcp(i, 2) = m%divfcp(i, 2) + 1
-            indfc(icount) = ifc
-          END IF
+        DO i=1,indd
+          IF (i .GT. 1) m%divfcp(i, 1) = m%divfcp(i-1, 1) + m%divfcp(i-1&
+&             , 2)
+          DO ifc=1,m%nfc
+            IF (m%fcreg(ifc) .EQ. freg(i)) THEN
+              icount = icount + 1
+              m%divfcp(i, 2) = m%divfcp(i, 2) + 1
+              indfc(icount) = ifc
+            END IF
+          END DO
         END DO
-      END DO
-      ALLOCATE(m%divfc(icount))
-      ALLOCATE(m%divfcor(icount))
-      m%divfcor = 0.0_R8
-      m%divfc(1:icount) = indfc(1:icount)
+        ALLOCATE(m%divfc(icount))
+        ALLOCATE(m%divfcor(icount))
+        m%divfcor = 0.0_R8
+        m%divfc(1:icount) = indfc(1:icount)
 ! now re-order them
-      DO i=1,indd
-        ALLOCATE(old_face_list(m%divfcp(i, 2)))
-        ALLOCATE(new_face_list(m%divfcp(i, 2)))
-        old_face_list(1:m%divfcp(i, 2)) = m%divfc(m%divfcp(i, 1):m%&
-&         divfcp(i, 1)+m%divfcp(i, 2)-1)
-        new_face_list(:) = 0
-        new_face_list(1) = m%divfc(m%divfcp(i, 1))
-        old_face_list(1) = 0
-        iva = m%fcvx(m%divfc(m%divfcp(i, 1)), 1)
-        ivb = m%fcvx(m%divfc(m%divfcp(i, 1)), 2)
-        inew = 1
-        DO WHILE (inew .LT. m%divfcp(i, 2))
-          left_match_found = .false.
-          DO j=1,m%divfcp(i, 2)
-            IF (.NOT.left_match_found) THEN
-              IF (old_face_list(j) .NE. 0) THEN
-                IF (iva .EQ. m%fcvx(old_face_list(j), 1)) THEN
-                  left_match_found = .true.
-                  iva = m%fcvx(old_face_list(j), 2)
-                ELSE IF (iva .EQ. m%fcvx(old_face_list(j), 2)) THEN
-                  left_match_found = .true.
-                  iva = m%fcvx(old_face_list(j), 1)
-                END IF
-                IF (left_match_found) THEN
-                  indfc(1:inew) = new_face_list(1:inew)
-                  new_face_list(1) = old_face_list(j)
-                  new_face_list(2:inew+1) = indfc(1:inew)
-                  old_face_list(j) = 0
-                  inew = inew + 1
-                END IF
-              END IF
-            END IF
-          END DO
-          right_match_found = .false.
-          DO j=1,m%divfcp(i, 2)
-            IF (.NOT.right_match_found) THEN
-              IF (old_face_list(j) .NE. 0) THEN
-                IF (ivb .EQ. m%fcvx(old_face_list(j), 1)) THEN
-                  right_match_found = .true.
-                  ivb = m%fcvx(old_face_list(j), 2)
-                ELSE IF (ivb .EQ. m%fcvx(old_face_list(j), 2)) THEN
-                  right_match_found = .true.
-                  ivb = m%fcvx(old_face_list(j), 1)
-                END IF
-                IF (right_match_found) THEN
-                  new_face_list(inew+1) = old_face_list(j)
-                  old_face_list(j) = 0
-                  inew = inew + 1
-                END IF
-              END IF
-            END IF
-          END DO
-          IF (.NOT.(left_match_found .OR. right_match_found) .AND. inew &
-&             .LT. m%divfcp(i, 2)) THEN
-            DO j=1,inew
-              ifc = new_face_list(j)
-              iva = m%fcvx(ifc, 1)
-              ivb = m%fcvx(ifc, 2)
-              WRITE(6, '(a,4i6)') &
-&             'Chain of faces and vertices in new list ', j, ifc, iva, &
-&             ivb
-            END DO
+        DO i=1,indd
+          ALLOCATE(old_face_list(m%divfcp(i, 2)))
+          ALLOCATE(new_face_list(m%divfcp(i, 2)))
+          old_face_list(1:m%divfcp(i, 2)) = m%divfc(m%divfcp(i, 1):m%&
+&           divfcp(i, 1)+m%divfcp(i, 2)-1)
+          new_face_list(:) = 0
+          new_face_list(1) = m%divfc(m%divfcp(i, 1))
+          old_face_list(1) = 0
+          iva = m%fcvx(m%divfc(m%divfcp(i, 1)), 1)
+          ivb = m%fcvx(m%divfc(m%divfcp(i, 1)), 2)
+          inew = 1
+          DO WHILE (inew .LT. m%divfcp(i, 2))
+            left_match_found = .false.
             DO j=1,m%divfcp(i, 2)
-              IF (old_face_list(j) .NE. 0) THEN
-                ifc = m%divfc(m%divfcp(i, 1)+j-1)
+              IF (.NOT.left_match_found) THEN
+                IF (old_face_list(j) .NE. 0) THEN
+                  IF (iva .EQ. m%fcvx(old_face_list(j), 1)) THEN
+                    left_match_found = .true.
+                    iva = m%fcvx(old_face_list(j), 2)
+                  ELSE IF (iva .EQ. m%fcvx(old_face_list(j), 2)) THEN
+                    left_match_found = .true.
+                    iva = m%fcvx(old_face_list(j), 1)
+                  END IF
+                  IF (left_match_found) THEN
+                    indfc(1:inew) = new_face_list(1:inew)
+                    new_face_list(1) = old_face_list(j)
+                    new_face_list(2:inew+1) = indfc(1:inew)
+                    old_face_list(j) = 0
+                    inew = inew + 1
+                  END IF
+                END IF
+              END IF
+            END DO
+            right_match_found = .false.
+            DO j=1,m%divfcp(i, 2)
+              IF (.NOT.right_match_found) THEN
+                IF (old_face_list(j) .NE. 0) THEN
+                  IF (ivb .EQ. m%fcvx(old_face_list(j), 1)) THEN
+                    right_match_found = .true.
+                    ivb = m%fcvx(old_face_list(j), 2)
+                  ELSE IF (ivb .EQ. m%fcvx(old_face_list(j), 2)) THEN
+                    right_match_found = .true.
+                    ivb = m%fcvx(old_face_list(j), 1)
+                  END IF
+                  IF (right_match_found) THEN
+                    new_face_list(inew+1) = old_face_list(j)
+                    old_face_list(j) = 0
+                    inew = inew + 1
+                  END IF
+                END IF
+              END IF
+            END DO
+            IF (.NOT.(left_match_found .OR. right_match_found) .AND. &
+&               inew .LT. m%divfcp(i, 2)) THEN
+              DO j=1,inew
+                ifc = new_face_list(j)
                 iva = m%fcvx(ifc, 1)
                 ivb = m%fcvx(ifc, 2)
                 WRITE(6, '(a,4i6)') &
-&               'Left over faces and vertices in old list', j, ifc, iva&
+&               'Chain of faces and vertices in new list ', j, ifc, iva&
 &               , ivb
-              END IF
-            END DO
-            CALL XERRAB('Broken face chain along target')
-          END IF
+              END DO
+              DO j=1,m%divfcp(i, 2)
+                IF (old_face_list(j) .NE. 0) THEN
+                  ifc = m%divfc(m%divfcp(i, 1)+j-1)
+                  iva = m%fcvx(ifc, 1)
+                  ivb = m%fcvx(ifc, 2)
+                  WRITE(6, '(a,4i6)') &
+&                 'Left over faces and vertices in old list', j, ifc, &
+&                 iva, ivb
+                END IF
+              END DO
+              CALL XERRAB('Broken face chain along target')
+            END IF
+          END DO
+          m%divfc(m%divfcp(i, 1):m%divfcp(i, 1)+m%divfcp(i, 2)-1) = &
+&           new_face_list(1:m%divfcp(i, 2))
+          DEALLOCATE(old_face_list)
+          DEALLOCATE(new_face_list)
         END DO
-        m%divfc(m%divfcp(i, 1):m%divfcp(i, 1)+m%divfcp(i, 2)-1) = &
-&         new_face_list(1:m%divfcp(i, 2))
-        DEALLOCATE(old_face_list)
-        DEALLOCATE(new_face_list)
-      END DO
-      DEALLOCATE(indfc)
+        DEALLOCATE(indfc)
+      END IF
     END IF
     DEALLOCATE(freg)
 !
