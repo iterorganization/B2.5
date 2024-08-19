@@ -870,6 +870,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL PUSHREAL8ARRAY(hci0, r8*ncv/8)
     CALL PUSHREAL8ARRAY(vsa0, r8*ncv*ns/8)
     CALL PUSHREAL8ARRAY(dpa0, r8*ncv*ns/8)
+    CALL PUSHREAL8ARRAY(dna0, r8*ncv*ns/8)
     CALL SET_TRANSPORT_AFN_NODIFF(ncv, ns, nscx, iscx, switch, pl, dv, &
 &                           rt, dna0, dpa0, vla0, vma0, vsa0, hci0, hcn0&
 &                           , hcib)
@@ -993,7 +994,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   IF (branch .EQ. 0) THEN
     CALL POPREAL8ARRAY(hce0, r8*ncv/8)
     CALL POPREAL8ARRAY(hce0, r8*ncv/8)
-    WHERE (mask3)
+    WHERE (mask3) 
       dvb%ne = dvb%ne + switch%hce_min*hce0b
       hce0b = 0.D0
     END WHERE
@@ -1001,7 +1002,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     DO is=ns-1,0,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
-        WHERE (mask2)
+        WHERE (mask2) 
           plb%na(:, is) = plb%na(:, is) + switch%hci_min*hcibb(:, is)
           hcibb(:, is) = 0.D0
         END WHERE
@@ -1018,14 +1019,14 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
         CALL POPREAL8ARRAY(dna0(:, is), r8*ncv/8)
         CALL POPREAL8ARRAY(dna0(:, is), r8*ncv/8)
         CALL POPBOOLEANARRAY(mask, ncv)
-        WHERE (.NOT.mask1)
+        WHERE (.NOT.mask1) 
           hcibb(:, is) = hcibb(:, is) + max6b
           max6b = 0.D0
         ELSEWHERE
           plb%na(:, is) = plb%na(:, is) + switch%hci_min*max6b
           max6b = 0.D0
         END WHERE
-        WHERE (mask0)
+        WHERE (mask0) 
           y2b = vsa0b(:, is)
           vsa0b(:, is) = 0.D0
         END WHERE
@@ -1086,6 +1087,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   END IF
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
+    CALL POPREAL8ARRAY(dna0, r8*ncv*ns/8)
     CALL POPREAL8ARRAY(dpa0, r8*ncv*ns/8)
     CALL POPREAL8ARRAY(vsa0, r8*ncv*ns/8)
     CALL POPREAL8ARRAY(hci0, r8*ncv/8)
@@ -1096,9 +1098,9 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
     CALL SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl, &
-&                      plb, dv, dvb, rt, rtb, dna0, dpa0, dpa0b, vla0, &
-&                      vma0, vsa0, vsa0b, hci0, hci0b, hcn0, hcn0b, hcib&
-&                      , hcibb)
+&                      plb, dv, dvb, rt, rtb, dna0, dna0b, dpa0, dpa0b, &
+&                      vla0, vma0, vsa0, vsa0b, hci0, hci0b, hcn0, hcn0b&
+&                      , hcib, hcibb)
     hci0b = 0.D0
     hcn0b = 0.D0
   END IF
@@ -2201,27 +2203,27 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) THEN
         mask = dna0(:, is) .LT. switch%dna_min
-        WHERE (mask)
+        WHERE (mask) 
           dna0(:, is) = switch%dna_min
         ELSEWHERE
           dna0(:, is) = dna0(:, is)
         END WHERE
         y2 = switch%vsa_min*am(is)*mp*pl%na(:, is)
         mask0 = vsa0(:, is) .LT. y2
-        WHERE (mask0)
+        WHERE (mask0) 
           vsa0(:, is) = y2
         ELSEWHERE
           vsa0(:, is) = vsa0(:, is)
         END WHERE
         mask1 = hcib(:, is) .LT. switch%hci_min*pl%na(:, is)
-        WHERE (mask1)
+        WHERE (mask1) 
           max6 = switch%hci_min*pl%na(:, is)
         ELSEWHERE
           max6 = hcib(:, is)
         END WHERE
         hci0 = hci0 - hcib(:, is) + max6
         mask2 = hcib(:, is) .LT. switch%hci_min*pl%na(:, is)
-        WHERE (mask2)
+        WHERE (mask2) 
           hcib(:, is) = switch%hci_min*pl%na(:, is)
         ELSEWHERE
           hcib(:, is) = hcib(:, is)
@@ -2229,7 +2231,7 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       END IF
     END DO
     mask3 = hce0 .LT. switch%hce_min*dv%ne
-    WHERE (mask3)
+    WHERE (mask3) 
       hce0 = switch%hce_min*dv%ne
     ELSEWHERE
       hce0 = hce0
@@ -2273,10 +2275,11 @@ END SUBROUTINE B2TQNA_NODIFF
 
 !  Differentiation of set_transport_afn in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: hci0 vsa0 *(dv.ne) *(rt.rlcx)
-!                *(rt.rlsa) hcib hcn0 *(pl.na) *(pl.te) *(pl.ti)
+!                *(rt.rlsa) hcib hcn0 dna0 *(pl.na) *(pl.te) *(pl.ti)
 !                *(pl.tn) dpa0
 !   with respect to varying inputs: vsa0 *(dv.ne) *(rt.rlcx) *(rt.rlsa)
-!                hcib *(pl.na) *(pl.te) *(pl.ti) *(pl.tn) dpa0
+!                hcib dna0 *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
+!                dpa0
 !   Plus diff mem management of: dv.ne:in rt.rlcx:in rt.rlsa:in
 !                pl.na:in pl.te:in pl.ti:in pl.tn:in
 !
@@ -2285,8 +2288,8 @@ END SUBROUTINE B2TQNA_NODIFF
 !*****************     New KU Leuven transport model for neutrals *********************
 !**************************************************************************************
 SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
-& , plb, dv, dvb, rt, rtb, dna0, dpa0, dpa0b, vla0, vma0, vsa0, vsa0b, &
-& hci0, hci0b, hcn0, hcn0b, hcib, hcibb)
+& , plb, dv, dvb, rt, rtb, dna0, dna0b, dpa0, dpa0b, vla0, vma0, vsa0, &
+& vsa0b, hci0, hci0b, hcn0, hcn0b, hcib, hcibb)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFF
   USE B2MOD_INDIRECT_DIFF
@@ -2321,7 +2324,8 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
 !srv 15.12.05
   REAL(kind=r8) :: dna0(ncv, 0:ns-1), dpa0(ncv, 0:ns-1), vla0(ncv, 0:1, &
 & 0:ns-1), vsa0(ncv, 0:ns-1), vma0(ncv, 0:1, 0:ns-1)
-  REAL(kind=r8) :: dpa0b(ncv, 0:ns-1), vsa0b(ncv, 0:ns-1)
+  REAL(kind=r8) :: dna0b(ncv, 0:ns-1), dpa0b(ncv, 0:ns-1), vsa0b(ncv, 0:&
+& ns-1)
 !   ..workspace arguments (unspecified on entry and on exit)
   REAL(kind=r8) :: wrk0(ncv), vcx, dion, vnn
   REAL(kind=r8) :: wrk0b(ncv), vcxb, dionb, vnnb
@@ -2343,8 +2347,11 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
   REAL(kind=r8) :: temp
   REAL(r8) :: temp0
   REAL(kind=r8) :: temp1
+  REAL(kind=r8) :: temp2
   REAL(kind=r8) :: tempb
-  REAL(r8) :: tempb0
+  REAL(kind=r8) :: tempb0
+  REAL(kind=r8) :: tempb1
+  REAL(r8) :: tempb2
   INTEGER*4 :: branch
   DO is=0,ns-1
     IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
@@ -2383,8 +2390,17 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
         CALL PUSHREAL8(cutll, r8/8)
         CALL PUSHREAL8(dion, r8/8)
         dion = EXPU(arg1)
+        IF (switch%afn_vnn .EQ. 1) THEN
 !         ..Collision time for n-n collisions (D-D), based on Kotov 2007
-        vnn = 5.2958e-11_R8*(kbolt*pl%tn(icv))**0.25_R8*pl%na(icv, is)
+          CALL PUSHREAL8(vnn, r8/8)
+          vnn = 1.0e-6_R8*5.2958e-11_R8*(pl%tn(icv)/kbolt)**0.25_R8*pl%&
+&           na(icv, is)
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHREAL8(vnn, r8/8)
+          vnn = 0.0_R8
+          CALL PUSHCONTROL1B(0)
+        END IF
 !         ..Total coefficients
 ! limit df0
         CALL PUSHREAL8(df0, r8/8)
@@ -2401,6 +2417,11 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
           CALL PUSHCONTROL1B(0)
         ELSE
           df0 = switch%b2tqna_min_df0
+          CALL PUSHCONTROL1B(1)
+        END IF
+        IF (switch%afn_vnn_ndiff .EQ. 1) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
@@ -2450,16 +2471,47 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
     IF (branch .EQ. 0) THEN
       wrk0b = 0.D0
       DO icv=ncv,1,-1
-        tempb = dpa0b(icv, is)/pl%tn(icv)
-        tempb0 = mp*am(is)*vsa0b(icv, is)
+        tempb2 = mp*am(is)*vsa0b(icv, is)
         plb%na(icv, is) = plb%na(icv, is) + df0*2.5_R8*hcibb(icv, is) + &
-&         df0*tempb0
+&         df0*tempb2
         df0b = pl%na(icv, is)*2.5_R8*hcibb(icv, is) + pl%na(icv, is)*&
-&         tempb0 + tempb
+&         tempb2
         hcibb(icv, is) = 0.D0
         vsa0b(icv, is) = 0.D0
-        dpa0b(icv, is) = 0.D0
-        plb%tn(icv) = plb%tn(icv) - df0*tempb/pl%tn(icv)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          temp2 = vcx + dion*dv%ne(icv) + vnn
+          temp0 = pl%tn(icv)*temp2
+          temp = vcx + dion*dv%ne(icv)
+          tempb0 = dpa0b(icv, is)/temp0
+          dpa0b(icv, is) = 0.D0
+          df0b = df0b + temp*tempb0
+          tempb1 = df0*tempb0
+          tempb2 = -(df0*temp*tempb0/temp0)
+          plb%tn(icv) = plb%tn(icv) + temp2*tempb2
+          tempb = pl%tn(icv)*tempb2
+          vcxb = tempb
+          dionb = dv%ne(icv)*tempb
+          dvb%ne(icv) = dvb%ne(icv) + dion*tempb
+          vnnb = tempb
+          temp2 = vcx + dion*dv%ne(icv) + vnn
+          tempb0 = dna0b(icv, is)/temp2
+          dna0b(icv, is) = 0.D0
+          df0b = df0b + vnn*tempb0
+          tempb = -(df0*vnn*tempb0/temp2)
+          vcxb = vcxb + tempb1 + tempb
+          dionb = dionb + dv%ne(icv)*tempb1 + dv%ne(icv)*tempb
+          dvb%ne(icv) = dvb%ne(icv) + dion*tempb1 + dion*tempb
+          vnnb = vnnb + df0*tempb0 + tempb
+        ELSE
+          tempb = dpa0b(icv, is)/pl%tn(icv)
+          dpa0b(icv, is) = 0.D0
+          df0b = df0b + tempb
+          plb%tn(icv) = plb%tn(icv) - df0*tempb/pl%tn(icv)
+          vnnb = 0.D0
+          dionb = 0.D0
+          vcxb = 0.D0
+        END IF
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
           y1b = df0b
@@ -2472,21 +2524,26 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
         ELSE
           df0b = 0.D0
         END IF
-        vnn = 5.2958e-11_R8*(kbolt*pl%tn(icv))**0.25_R8*pl%na(icv, is)
         CALL POPREAL8(df0, r8/8)
         temp = SQRT(am(is))*SQRT(am(is))
         temp1 = temp*(vcx+dion*dv%ne(icv)+vnn)
         wrk0b(icv) = wrk0b(icv) + 2*wrk0(icv)*df0b/temp1
         tempb = -(temp*wrk0(icv)**2*df0b/temp1**2)
-        vcxb = tempb
-        dionb = dv%ne(icv)*tempb
+        vcxb = vcxb + tempb
+        dionb = dionb + dv%ne(icv)*tempb
         dvb%ne(icv) = dvb%ne(icv) + dion*tempb
-        vnnb = tempb
-        temp = kbolt*pl%tn(icv)
-        plb%tn(icv) = plb%tn(icv) + kbolt*0.25_R8*temp**(-0.75)*pl%na(&
-&         icv, is)*5.2958e-11_R8*vnnb
-        plb%na(icv, is) = plb%na(icv, is) + temp**0.25_R8*5.2958e-11_R8*&
-&         vnnb
+        vnnb = vnnb + tempb
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPREAL8(vnn, r8/8)
+        ELSE
+          CALL POPREAL8(vnn, r8/8)
+          temp0 = pl%tn(icv)/kbolt
+          plb%tn(icv) = plb%tn(icv) + 0.25_R8*temp0**(-0.75)*pl%na(icv, &
+&           is)*5.2958e-11_R8*1.0e-6_R8*vnnb/kbolt
+          plb%na(icv, is) = plb%na(icv, is) + temp0**0.25_R8*&
+&           5.2958e-11_R8*1.0e-6_R8*vnnb
+        END IF
         CALL POPREAL8(dion, r8/8)
         CALL POPREAL8(cutll, r8/8)
         CALL POPREAL8(cutlo, r8/8)
@@ -2599,8 +2656,13 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, ns, nscx, iscx, switch, pl, dv&
         arg1 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*LOG(pl%te(icv)/&
 &         ev)
         dion = EXPU(arg1)
+        IF (switch%afn_vnn .EQ. 1) THEN
 !         ..Collision time for n-n collisions (D-D), based on Kotov 2007
-        vnn = 5.2958e-11_R8*(kbolt*pl%tn(icv))**0.25_R8*pl%na(icv, is)
+          vnn = 1.0e-6_R8*5.2958e-11_R8*(pl%tn(icv)/kbolt)**0.25_R8*pl%&
+&           na(icv, is)
+        ELSE
+          vnn = 0.0_R8
+        END IF
 !         ..Total coefficients
 ! limit df0
         df0 = (wrk0(icv)/SQRT(am(is)))**2/(vcx+dion*dv%ne(icv)+vnn)
@@ -2614,8 +2676,17 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, ns, nscx, iscx, switch, pl, dv&
         ELSE
           df0 = switch%b2tqna_min_df0
         END IF
-!
-        dpa0(icv, is) = 1.0_R8/pl%tn(icv)*df0
+        IF (switch%afn_vnn_ndiff .EQ. 1) THEN
+! assign fraction to density diffusion (nn-collisions)
+! based on ratio of ion/neutral collision frequency
+          dna0(icv, is) = df0*vnn/(vcx+dion*dv%ne(icv)+vnn)
+!     &          pl%na(iCv,is)/(pl%na(iCv,is)+dv%ne(iCv))
+          dpa0(icv, is) = 1.0_R8/pl%tn(icv)*df0*(vcx+dion*dv%ne(icv))/(&
+&           vcx+dion*dv%ne(icv)+vnn)
+!     &          pl%ne(iCv)/(pl%na(iCv,is)+dv%ne(iCv))
+        ELSE
+          dpa0(icv, is) = 1.0_R8/pl%tn(icv)*df0
+        END IF
         vsa0(icv, is) = mp*am(is)*pl%na(icv, is)*df0
         hcib(icv, is) = 2.5_R8*pl%na(icv, is)*df0
 !
@@ -2623,15 +2694,17 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, ns, nscx, iscx, switch, pl, dv&
       END DO
 !
 !   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
-      IF (ANY(dna0(:, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                  'dna0 is not zero for neutrals'//&
-&                                  'Recommended choice is zero!'
-      IF (ANY(vla0(:, :, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                     'vla0 is not zero for neutrals'//&
-&                                     'Recommended choice is zero!'
-      IF (ANY(vma0(:, :, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                     'vma0 is not zero for neutrals'//&
-&                                     'Recommended choice is zero!'
+      IF (ANY(dna0(:, is) .NE. 0.0_R8) .AND. switch%afn_vnn_ndiff .NE. 1&
+&     ) WRITE(*, *) 'Warning: '//'dna0 is not zero for neutrals'//&
+&       'Recommended choice is zero!'
+      IF (ANY(vla0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vla0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
+      IF (ANY(vma0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vma0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
     END IF
 !! end loop over species
 
@@ -3002,7 +3075,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
         tempb1 = dna_exbb/temp5
         switchb%keps_cd = switchb%keps_cd + SUM(pl%kt*tempb1)
         tempb2 = -(am(ismain)*mp*switch%keps_cd*pl%kt*tempb1/temp5)
-        WHERE (pl%kt/temp3 .EQ. 0.D0)
+        WHERE (pl%kt/temp3 .EQ. 0.D0) 
           plb%kt = plb%kt + switch%keps_cd*tempb1
         ELSEWHERE
           plb%kt = plb%kt + switch%keps_cd*tempb1 + tempb2/(temp3*2.0*&
@@ -3015,7 +3088,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
         CALL POPREAL8ARRAY(dabs2, ncv)
         CALL POPREAL8ARRAY(dabs2, ncv)
         CALL POPBOOLEANARRAY(mask0, ncv)
-        WHERE (.NOT.mask0)
+        WHERE (.NOT.mask0) 
           shearb = -dabs2b
           dabs2b = 0.D0
         ELSEWHERE
@@ -3045,7 +3118,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
           CALL POPREAL8ARRAY(dabs3, ncv)
           CALL POPREAL8ARRAY(dabs3, ncv)
           CALL POPBOOLEANARRAY(mask1, ncv)
-          WHERE (.NOT.mask1)
+          WHERE (.NOT.mask1) 
             shearb = -dabs3b
             dabs3b = 0.D0
           ELSEWHERE
@@ -3079,7 +3152,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
         mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.
         CALL POPREAL8ARRAY(dabs0, SIZE(dabs0, 1))
         CALL POPREAL8ARRAY(dabs0, SIZE(dabs0, 1))
-        WHERE (.NOT.mask)
+        WHERE (.NOT.mask) 
           rtb%rza(:, ismain) = rtb%rza(:, ismain) - qe*geo%cvbb(:, 3)*&
 &           dabs0b
           dabs0b = 0.D0
@@ -3175,7 +3248,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
     IF (.NOT.is_neutral(is)) THEN
       IF (switch%keps_local .EQ. 1) THEN
         mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.
-        WHERE (mask)
+        WHERE (mask) 
           dabs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
         ELSEWHERE
           dabs0 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
@@ -3201,7 +3274,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
 &                       shear)
       IF (switch%transport_keps .EQ. 1) THEN
         mask0 = shear .GE. 0.
-        WHERE (mask0)
+        WHERE (mask0) 
           dabs2 = shear
         ELSEWHERE
           dabs2 = -shear
@@ -3215,7 +3288,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
 &         -switch%keps_fac)*dna0(:, is)
       ELSE IF (switch%transport_keps .EQ. 2) THEN
         mask1 = shear .GE. 0.
-        WHERE (mask1)
+        WHERE (mask1) 
           dabs3 = shear
         ELSEWHERE
           dabs3 = -shear
@@ -3281,3 +3354,4 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
   RETURN
 !
 END SUBROUTINE SET_TRANSPORT_KEPS_NODIFF
+

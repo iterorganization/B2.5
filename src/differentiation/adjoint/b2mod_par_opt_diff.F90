@@ -143,7 +143,7 @@ MODULE B2MOD_PAR_OPT_DIFF
   INTEGER, SAVE :: ncorr_opt=0
   INTEGER, SAVE :: paris(nvmx), parib(nvmx)
   LOGICAL, SAVE :: sigma_opt(nsigmx), mean_opt(nsigmx), shift_opt(nsigmx&
-& ), shiftopt(nsigmx), corr_opt(nncf), parallel_hf, invert_hf
+& ), shiftopt(nsigmx), corr_opt(nncf), parallel_hf
   LOGICAL, SAVE :: spatial_dep(nvmx)
   INTEGER, SAVE :: spatial_points(nvmx)=0
 ![envisaged default max 1m shift]
@@ -167,7 +167,7 @@ MODULE B2MOD_PAR_OPT_DIFF
 &     shift_l, shift_u, shift_prior_type, shift_prior_par, &
 &     shift_prior_range, corr_model, corr_length, corr_prior_type, &
 &     corr_prior_range, corr_prior_par, corr_opt, corr_l, corr_u, &
-&     corr_cutoff, corr_rescale, parallel_hf, invert_hf
+&     corr_cutoff, corr_rescale, parallel_hf
 !
 
 CONTAINS
@@ -258,7 +258,6 @@ CONTAINS
     spatial_dep = .false.
     spatial_points = 0
     parallel_hf = .true.
-    invert_hf = .false.
     hessian_approximation = 'limited-memory'
     limited_memory_update_type = 'b2fgs'
     CALL FIND_FILE(filename, file_ok)
@@ -458,7 +457,7 @@ CONTAINS
 &                         cffcor, m, idb)
 ! iss
               END DO
-              WRITE(ss, '(I0)') icf
+              WRITE(ss, '(I3)') icf
               CALL XERTST(ncffc .GT. 0, &
 &                   'No faces found for cost function  = '//ss)
               m%cfregp(icf, 2) = ncffc
@@ -1126,7 +1125,6 @@ CONTAINS
     spatial_dep = .false.
     spatial_points = 0
     parallel_hf = .true.
-    invert_hf = .false.
     hessian_approximation = 'limited-memory'
     limited_memory_update_type = 'b2fgs'
     CALL FIND_FILE(filename, file_ok)
@@ -1326,7 +1324,7 @@ CONTAINS
 &                         cffcor, m, idb)
 ! iss
               END DO
-              WRITE(ss, '(I0)') icf
+              WRITE(ss, '(I3)') icf
               CALL XERTST(ncffc .GT. 0, &
 &                   'No faces found for cost function  = '//ss)
               m%cfregp(icf, 2) = ncffc

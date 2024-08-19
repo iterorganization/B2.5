@@ -59,8 +59,8 @@
 
 !     Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
-      call b2mn_init_dv(switch, switchd, geo, geod, mpg, mpgd, state, 
-     &  stated, state_ext, state_extd, state_avg, state_avgd, npar_opt)
+      call b2mn_init_dv(switch, switchd, geo, geod, mpg, mpgd, state, stated,
+     &  state_ext, state_extd, state_avg, state_avgd, npar_opt)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
 #ifdef TGT
@@ -271,7 +271,7 @@
       integer IER, ipar, isigma, imean, ishift, icorr
       character*3 str
       save j
-!csc important here to check for NEW_X! so that it doesn't recalculate with same X
+!csc important here to check for NEW_X! so that it does not recalculate with same X
       if (new_x.eq.0) then
         do ipar = 1, npar - nsigma_opt - nmean_opt - nshift_opt
           par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
@@ -347,7 +347,7 @@
       integer IER, ipar, isigma, imean, ishift, icorr
       character*3 str
       save jdiff
-!csc important here to check for NEW_X! so that it doesn't recalculate with same X
+!csc important here to check for NEW_X! so that it does not recalculate with same X
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
         do ipar = 1, npar - nsigma_opt - nmean_opt - nshift_opt
@@ -409,7 +409,7 @@
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-        call b2mn_step_dv(switch, switchd, geo, geod, mpg, state,
+        call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,
      &   stated, state_ext, state_extd, state_avg, state_avgd, j, jdiff,
      &   npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
       endif
@@ -559,7 +559,7 @@ C   4          *
         write (label,'(a46,i4)')
      &    'b2optim_ipopt intermediate optimization state ',filen
         call cfwuch (99, 120, label, 'label')
-        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn,
+        call b2wuzd (99, newversion, state%ns, zamin, zamax, zn,
      &   am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)

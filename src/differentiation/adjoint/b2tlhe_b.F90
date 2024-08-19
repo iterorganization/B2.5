@@ -70,7 +70,7 @@ SUBROUTINE B2TLHE_NODIFF(ncv, nfc, me, cflme, switch, geo, mpg, ne, te, &
     DO ifc=1,nfc
       IF (nef(ifc) .LE. switch%b2tlhe_ne_min) THEN
 ! Set at min value
-        cflme_loc(ifc) = switch%b2tlhe_ne_min
+        cflme_loc(ifc) = switch%b2tlhe_cflme_min
       ELSE IF (nef(ifc) .LT. switch%b2tlhe_ne_max) THEN
 ! Interpolate for smooth transition
         cflme_loc(ifc) = (cflme*(nef(ifc)-switch%b2tlhe_ne_min)+switch%&
@@ -233,7 +233,7 @@ SUBROUTINE B2TLHE_B(ncv, nfc, me, cflme, switch, switchb, geo, geob, mpg&
     DO ifc=1,nfc
       IF (nef(ifc) .LE. switch%b2tlhe_ne_min) THEN
 ! Set at min value
-        cflme_loc(ifc) = switch%b2tlhe_ne_min
+        cflme_loc(ifc) = switch%b2tlhe_cflme_min
         CALL PUSHCONTROL2B(2)
       ELSE IF (nef(ifc) .LT. switch%b2tlhe_ne_max) THEN
 ! Interpolate for smooth transition

@@ -406,10 +406,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &               'BCCON = 1, CONPAR(,,1) !> 0')
           icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
           IF (mpg%cvonclosedsurface(icv)) THEN
-            IF (is .EQ. ismain .AND. switch%use_astra .NE. 0) THEN
-!srv 28.07.11
-              conpar(is, ib, 1) = neb_astra
-            END IF
+            IF (is .EQ. ismain .AND. switch%use_astra .NE. 0) CALL &
+&             XERRAB('Compile with -DASTRA option to couple to ASTRA!')
             IF (ishigh) CALL XERTST(switch%ionising_core .EQ. 0, &
 &               'ionising_core switch usage inconsistent with BCCON = 1'&
 &                            )
@@ -607,9 +605,12 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !                 CONSTANT FLUX DENSITY
 !
         IF (ncall_b2stbc_phys .EQ. 0) THEN
-!srv 04.10.11
           IF (is .EQ. ismain .AND. bcchar(ib) .EQ. 'S' .AND. switch%&
-&             use_astra .NE. 0) conpar(is, ib, 1) = fneb_astra
+&             use_astra .NE. 0) THEN
+            CALL XERRAB(&
+&                 'Compile with -DASTRA option to couple to ASTRA!')
+!
+          END IF
           WRITE(*, '(a,1p,g14.7,a4,a1,a,a13,i3)') &
 &         'BCCON =  8 : total particle flux ', conpar(is, ib, 1), ' on '&
 &         , bcchar(ib), boundary_location(ib), ' for species ', is
@@ -5190,22 +5191,9 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           IF (conpar(is, ib, 1) .EQ. 0.0_R8) THEN
             CALL PUSHREAL8(conpar(is, ib, 1), r8/8)
             conpar(is, ib, 1) = switch%b2mndr_na_min
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHCONTROL1B(1)
-          END IF
-          icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
-          IF (mpg%cvonclosedsurface(icv)) THEN
-            IF (is .EQ. ismain .AND. switch%use_astra .NE. 0) THEN
-!srv 28.07.11
-              CALL PUSHREAL8(conpar(is, ib, 1), r8/8)
-              conpar(is, ib, 1) = neb_astra
-              CALL PUSHCONTROL2B(2)
-            ELSE
-              CALL PUSHCONTROL2B(3)
-            END IF
-          ELSE
             CALL PUSHCONTROL2B(1)
+          ELSE
+            CALL PUSHCONTROL2B(2)
           END IF
         ELSE
           CALL PUSHCONTROL2B(0)
@@ -5384,23 +5372,6 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         CALL PUSHINTEGER4(ibc - 1)
         CALL PUSHCONTROL4B(5)
       CASE (8) 
-!
-! -- BCCON=8 -- PRESCRIBE THE TOTAL PARTICLE FLUX WITH
-!                 CONSTANT FLUX DENSITY
-!
-        IF (ncall_b2stbc_phys .EQ. 0) THEN
-!srv 04.10.11
-          IF (is .EQ. ismain .AND. bcchar(ib) .EQ. 'S' .AND. switch%&
-&             use_astra .NE. 0) THEN
-            CALL PUSHREAL8(conpar(is, ib, 1), r8/8)
-            conpar(is, ib, 1) = fneb_astra
-            CALL PUSHCONTROL2B(0)
-          ELSE
-            CALL PUSHCONTROL2B(1)
-          END IF
-        ELSE
-          CALL PUSHCONTROL2B(2)
-        END IF
 !wdk      Note: take full area for face, whether "poloidal" or "radial" or mixed
 !wdk      Backwards compatibility issue for E/W and 5-pt stencil?
 !wdk      Total flux will be fine, possibly distributed somewhat differently...
@@ -11635,16 +11606,11 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
                 CALL POPINTEGER4(icv1)
               END DO
               CALL POPCONTROL2B(branch)
-              IF (branch .LT. 2) THEN
-                IF (branch .EQ. 0) GOTO 130
-              ELSE IF (branch .EQ. 2) THEN
-                CALL POPREAL8(conpar(is, ib, 1), r8/8)
-                conparb(is, ib, 1) = 0.D0
-              END IF
-              CALL POPCONTROL1B(branch)
-              IF (branch .EQ. 0) THEN
-                CALL POPREAL8(conpar(is, ib, 1), r8/8)
-                conparb(is, ib, 1) = 0.D0
+              IF (branch .NE. 0) THEN
+                IF (branch .EQ. 1) THEN
+                  CALL POPREAL8(conpar(is, ib, 1), r8/8)
+                  conparb(is, ib, 1) = 0.D0
+                END IF
               END IF
             ELSE
               CALL POPINTEGER4(ad_to1)
@@ -11838,11 +11804,6 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             CALL POPINTEGER4(icv1)
           END DO
           CALL POPREAL8(us, r8/8)
-          CALL POPCONTROL2B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL8(conpar(is, ib, 1), r8/8)
-            conparb(is, ib, 1) = 0.D0
-          END IF
         ELSE
           CALL POPINTEGER4(ad_to8)
           DO ibc=ad_to8,1,-1

@@ -106,7 +106,7 @@ SUBROUTINE B2TLMV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo, &
         DO nd=1,nbdirs
           cflmv_locd(nd, ifc) = 0.D0
         END DO
-        cflmv_loc(ifc) = switch%b2tlmv_ni_min
+        cflmv_loc(ifc) = switch%b2tlmv_cflmv_min
       ELSE IF (nbf(ifc) .LT. switch%b2tlmv_ni_max) THEN
 ! Interpolate for smooth transition
         DO nd=1,nbdirs
@@ -362,7 +362,7 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
     DO ifc=1,nfc
       IF (nbf(ifc) .LE. switch%b2tlmv_ni_min) THEN
 ! Set at min value
-        cflmv_loc(ifc) = switch%b2tlmv_ni_min
+        cflmv_loc(ifc) = switch%b2tlmv_cflmv_min
       ELSE IF (nbf(ifc) .LT. switch%b2tlmv_ni_max) THEN
 ! Interpolate for smooth transition
         cflmv_loc(ifc) = (cflmv*(nbf(ifc)-switch%b2tlmv_ni_min)+switch%&

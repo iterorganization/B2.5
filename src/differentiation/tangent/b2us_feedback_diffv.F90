@@ -834,8 +834,13 @@ CONTAINS
 !
     consistent = .true.
     DO ifb=1,nfb
-      IF (fb_ib(ifb) .LE. 0 .AND. (.NOT.fb_actuator(ifb) .EQ. 2)) CALL &
-&       XERRAB('Init_feedback: fb_ib<=0 and actuator=/2')
+! not using EIRENE, but no fb_ib
+! using EIRENE, but no puff stratum
+! feedback not 2 => either puff stratum or fb_ib needed
+      IF (fb_ib(ifb) .LE. 0 .AND. switch%use_eirene .EQ. 0 .AND. (&
+&         fb_istra(ifb) .LE. 0 .AND. switch%use_eirene .NE. 0 .AND. &
+&         fb_actuator(ifb) .EQ. 1) .AND. (.NOT.fb_actuator(ifb) .EQ. 2)&
+&     ) CALL XERRAB('Init_feedback: fb_ib<=0 and actuator=/2')
       CALL XERTST(0 .LE. fb_species(ifb) .AND. fb_species(ifb) .LE. ns -&
 &           1, 'Init_feedback: fb_species>ns!')
       iatm = b2espcr(fb_species(ifb))
@@ -852,6 +857,7 @@ CONTAINS
       END DO
       is_start = is0 + 1
       is_end = is0 + nfluids(iatm)
+      IF (fb_actuator(ifb) .NE. 2) THEN
 !neutral flux (or gas puff)
 !charged particle flux ONLY for fb_type 6, to be improved?
 !charged particle flux, more general
@@ -859,27 +865,28 @@ CONTAINS
 !ion heat flux
 !current
 !density
-      result1 = MAXVAL(bccon(is_start:is_end, fb_ib(ifb)))
-      result2 = MINVAL(bccon(is_start:is_end, fb_ib(ifb)))
-      consistent = consistent .AND. (((((((((((fb_target(ifb) .EQ. &
-&       0.0_R8 .OR. fb_type(ifb) .EQ. 0) .OR. fb_rescale_option(ifb) &
-&       .EQ. 0) .OR. fb_actuator(ifb) .EQ. 0) .OR. (fb_actuator(ifb) &
-&       .EQ. 1 .AND. (bccon(is0, fb_ib(ifb)) .EQ. 8 .OR. switch%&
-&       use_eirene .NE. 0))) .OR. fb_actuator(ifb) .EQ. 2) .OR. (&
-&       fb_actuator(ifb) .EQ. 3 .AND. result1 .EQ. 8 .AND. result2 .EQ. &
-&       8 .AND. fb_type(ifb) .EQ. 6)) .OR. (fb_actuator(ifb) .EQ. 3 &
-&       .AND. (bccon(fb_species(ifb), fb_ib(ifb)) .EQ. 8 .OR. bccon(&
-&       fb_species(ifb), fb_ib(ifb)) .EQ. 13) .AND. (.NOT.fb_type(ifb) &
-&       .EQ. 6))) .OR. (fb_actuator(ifb) .EQ. 4 .AND. bcene(fb_ib(ifb)) &
-&       .EQ. 8)) .OR. (fb_actuator(ifb) .EQ. 5 .AND. bceni(fb_ib(ifb)) &
-&       .EQ. 8)) .OR. (fb_actuator(ifb) .EQ. 6 .AND. bcpot(fb_ib(ifb)) &
-&       .EQ. 8)) .OR. (fb_actuator(ifb) .EQ. 7 .AND. (bccon(fb_species(&
-&       ifb), fb_ib(ifb)) .EQ. 1 .OR. bccon(fb_species(ifb), fb_ib(ifb))&
-&       .EQ. 28)))
-    END DO
+        result1 = MAXVAL(bccon(is_start:is_end, fb_ib(ifb)))
+        result2 = MINVAL(bccon(is_start:is_end, fb_ib(ifb)))
+        consistent = consistent .AND. ((((((((((fb_target(ifb) .EQ. &
+&         0.0_R8 .OR. fb_type(ifb) .EQ. 0) .OR. fb_rescale_option(ifb) &
+&         .EQ. 0) .OR. fb_actuator(ifb) .EQ. 0) .OR. (fb_actuator(ifb) &
+&         .EQ. 1 .AND. (bccon(is0, fb_ib(ifb)) .EQ. 8 .OR. switch%&
+&         use_eirene .NE. 0))) .OR. (fb_actuator(ifb) .EQ. 3 .AND. &
+&         result1 .EQ. 8 .AND. result2 .EQ. 8 .AND. fb_type(ifb) .EQ. 6)&
+&         ) .OR. (fb_actuator(ifb) .EQ. 3 .AND. (bccon(fb_species(ifb), &
+&         fb_ib(ifb)) .EQ. 8 .OR. bccon(fb_species(ifb), fb_ib(ifb)) &
+&         .EQ. 13) .AND. (.NOT.fb_type(ifb) .EQ. 6))) .OR. (fb_actuator(&
+&         ifb) .EQ. 4 .AND. bcene(fb_ib(ifb)) .EQ. 8)) .OR. (fb_actuator&
+&         (ifb) .EQ. 5 .AND. bceni(fb_ib(ifb)) .EQ. 8)) .OR. (&
+&         fb_actuator(ifb) .EQ. 6 .AND. bcpot(fb_ib(ifb)) .EQ. 8)) .OR. &
+&         (fb_actuator(ifb) .EQ. 7 .AND. (bccon(fb_species(ifb), fb_ib(&
+&         ifb)) .EQ. 1 .OR. bccon(fb_species(ifb), fb_ib(ifb)) .EQ. 28))&
+&         )
 ! csc For fluid neutrals (or fluid neutral strata, TBD) change directly the BC
 !     For kinetic neutrals (or kinetic strata, TBD), change directly userfluxparm, no issue with fluid BC
 !     Can be arbitrarily expanded to allow applying feedback to any already existent BC
+      END IF
+    END DO
     consistent = ((consistent .OR. lbndusr) .OR. b2sral_style .EQ. 1) &
 &     .OR. switch%b2stbc_boundary_namelist .LT. 1
     DO ifb=1,nfb
@@ -1854,7 +1861,6 @@ CONTAINS
 !
             WRITE(*, *) 'fb_rescale_option not coded ', &
 &           fb_rescale_option(ifb)
-
           END SELECT
 !
           WRITE(*, '(a,1x,1p,i3,6g15.6)') 'feedback_rescale ', b2espcr&
@@ -1880,16 +1886,27 @@ CONTAINS
 !
             IF (ncall .EQ. 0 .AND. saved_fb_actuator(ifb) .EQ. 0.0_R8) &
 &           THEN
-              IF (conpar(is_start, fb_ib(ifb), 1) .GT. 0.0_R8) THEN
-                DO nd=1,nbdirs
-                  saved_fb_actuatord(nd, ifb) = conpard(nd, is_start, &
-&                   fb_ib(ifb), 1)
-                END DO
-                saved_fb_actuator(ifb) = conpar(is_start, fb_ib(ifb), 1)
-                WRITE(message, '(a,i3,a,i2,a)') &
-&               'Initial gas puff strength set by CONPAR(', is_start, &
-&               ',', fb_ib(ifb), ',1) !'
-              ELSE IF (userfluxparm(fb_istra(ifb), 1) .GT. 0.0_R8) THEN
+              IF (switch%use_eirene .EQ. 0) THEN
+                IF (conpar(is_start, fb_ib(ifb), 1) .GT. 0.0_R8) THEN
+                  DO nd=1,nbdirs
+                    saved_fb_actuatord(nd, ifb) = conpard(nd, is_start&
+&                     , fb_ib(ifb), 1)
+                  END DO
+                  saved_fb_actuator(ifb) = conpar(is_start, fb_ib(ifb)&
+&                   , 1)
+                  WRITE(message, '(a,i3,a,i2,a)') &
+&                 'Initial gas puff strength set by CONPAR(', is_start&
+&                 , ',', fb_ib(ifb), ',1) !'
+                ELSE
+                  DO nd=1,nbdirs
+                    saved_fb_actuatord(nd, ifb) = 0.D0
+                  END DO
+                  saved_fb_actuator(ifb) = 1.0e18_R8
+                  WRITE(*, *) 'Warning!  ', 'The gas puff was ', &
+&                 'started with an initial rate of 1e18!'
+                END IF
+              ELSE IF (userfluxparm(fb_istra(ifb), 1) .GT. 0.0_R8) &
+&             THEN
                 DO nd=1,nbdirs
                   saved_fb_actuatord(nd, ifb) = userfluxparmd(nd, &
 &                   fb_istra(ifb), 1)
@@ -1914,8 +1931,8 @@ CONTAINS
 &                 saved_fb_actuatord(nd, ifb) + saved_fb_actuator(ifb)&
 &                 *fb_rescaled(nd, ifb)
               END DO
-              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*fb_rescale&
-&               (ifb)
+              saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*&
+&               fb_rescale(ifb)
             ELSE
               DO nd=1,nbdirs
                 saved_fb_actuatord(nd, ifb) = fb_rescaled(nd, ifb)
@@ -1943,8 +1960,8 @@ CONTAINS
               END IF
             END IF
 !
-            IF (fb_overshoot(ifb) .GT. 1.0_R8 .AND. fb_current(ifb) .GT.&
-&               fb_target(ifb)*fb_overshoot(ifb)) THEN
+            IF (fb_overshoot(ifb) .GT. 1.0_R8 .AND. fb_current(ifb) &
+&               .GT. fb_target(ifb)*fb_overshoot(ifb)) THEN
 ! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
 !     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
               IF (switch%use_eirene .EQ. 0) THEN
@@ -1977,8 +1994,8 @@ CONTAINS
 !
             IF (ncall .EQ. 0) WRITE(*, '(a,a,i3)') &
 &                             'compute_feedback_actuator: using ', &
-&                             'density rescale for sequence ', b2espcr(&
-&                             fb_species(ifb))
+&                             'density rescale for sequence ', b2espcr&
+&                             (fb_species(ifb))
 !
             DO is=is_start,is_end
               DO nd=1,nbdirs
@@ -2959,11 +2976,18 @@ CONTAINS
 !
             IF (ncall .EQ. 0 .AND. saved_fb_actuator(ifb) .EQ. 0.0_R8) &
 &           THEN
-              IF (conpar(is_start, fb_ib(ifb), 1) .GT. 0.0_R8) THEN
-                saved_fb_actuator(ifb) = conpar(is_start, fb_ib(ifb), 1)
-                WRITE(message, '(a,i3,a,i2,a)') &
-&               'Initial gas puff strength set by CONPAR(', is_start, &
-&               ',', fb_ib(ifb), ',1) !'
+              IF (switch%use_eirene .EQ. 0) THEN
+                IF (conpar(is_start, fb_ib(ifb), 1) .GT. 0.0_R8) THEN
+                  saved_fb_actuator(ifb) = conpar(is_start, fb_ib(ifb), &
+&                   1)
+                  WRITE(message, '(a,i3,a,i2,a)') &
+&                 'Initial gas puff strength set by CONPAR(', is_start, &
+&                 ',', fb_ib(ifb), ',1) !'
+                ELSE
+                  saved_fb_actuator(ifb) = 1.0e18_R8
+                  WRITE(*, *) 'Warning!  ', 'The gas puff was ', &
+&                 'started with an initial rate of 1e18!'
+                END IF
               ELSE IF (userfluxparm(fb_istra(ifb), 1) .GT. 0.0_R8) THEN
                 saved_fb_actuator(ifb) = userfluxparm(fb_istra(ifb), 1)
                 WRITE(message, '(a,i3,a,i2,a)') &

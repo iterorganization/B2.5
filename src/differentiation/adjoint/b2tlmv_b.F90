@@ -81,7 +81,7 @@ SUBROUTINE B2TLMV_B(ncv, nfc, nvx, isb, cflmv, switch, switchb, geo, &
     DO ifc=1,nfc
       IF (nbf(ifc) .LE. switch%b2tlmv_ni_min) THEN
 ! Set at min value
-        cflmv_loc(ifc) = switch%b2tlmv_ni_min
+        cflmv_loc(ifc) = switch%b2tlmv_cflmv_min
         CALL PUSHCONTROL2B(2)
       ELSE IF (nbf(ifc) .LT. switch%b2tlmv_ni_max) THEN
 ! Interpolate for smooth transition
@@ -415,7 +415,7 @@ SUBROUTINE B2TLMV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, mpg, nb&
     DO ifc=1,nfc
       IF (nbf(ifc) .LE. switch%b2tlmv_ni_min) THEN
 ! Set at min value
-        cflmv_loc(ifc) = switch%b2tlmv_ni_min
+        cflmv_loc(ifc) = switch%b2tlmv_cflmv_min
       ELSE IF (nbf(ifc) .LT. switch%b2tlmv_ni_max) THEN
 ! Interpolate for smooth transition
         cflmv_loc(ifc) = (cflmv*(nbf(ifc)-switch%b2tlmv_ni_min)+switch%&

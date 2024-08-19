@@ -2,6 +2,7 @@
 #define ADSTACK_INCLUDED
 
 #include "complex.h"
+#include <stdint.h>
 
 void adStack_startRepeat() ;
 void adStack_resetRepeat() ;
@@ -78,6 +79,8 @@ void adStack_showPeakSize() ;
 void adStack_showTotalTraffic() ;
 void adStack_showStackSize(int label) ;
 void adStack_showStack(char *locationName) ;
+
+uint64_t adStack_getCurrentStackSize();
 
 int stackIsThreadSafe() ;
 #endif

@@ -116,8 +116,8 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg&
   REAL(kind=r8) :: facdriftm
   REAL(kind=r8) :: wrkv(nvx), tef(nfc), nef(nfc), tefh(nfc), wrkf(nfc, 0&
 & :1), dte(nfc, 0:1), dpo(nfc, 0:1), dpe(nfc, 0:1), wght(nfc, 2), &
-& fhe0_mdf(nfc, 0:1), pe(ncv), dumm1(nfc, 0:1), dumm2(nfc, 0:1), dumm3(&
-& nfc, 0:1), dumm4(nfc, 0:1)
+& fhe0_mdf(nfc, 0:1), pe(ncv), wrkc(ncv), dumm1(nfc, 0:1), dumm2(nfc, 0:&
+& 1), dumm3(nfc, 0:1), dumm4(nfc, 0:1)
   REAL(kind=r8) :: tefb(nfc), nefb(nfc), tefhb(nfc), wrkfb(nfc, 0:1), &
 & fhe0_mdfb(nfc, 0:1), dumm1b(nfc, 0:1), dumm2b(nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -455,8 +455,8 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
   REAL(kind=r8) :: facdriftm
   REAL(kind=r8) :: wrkv(nvx), tef(nfc), nef(nfc), tefh(nfc), wrkf(nfc, 0&
 & :1), dte(nfc, 0:1), dpo(nfc, 0:1), dpe(nfc, 0:1), wght(nfc, 2), &
-& fhe0_mdf(nfc, 0:1), pe(ncv), dumm1(nfc, 0:1), dumm2(nfc, 0:1), dumm3(&
-& nfc, 0:1), dumm4(nfc, 0:1)
+& fhe0_mdf(nfc, 0:1), pe(ncv), wrkc(ncv), dumm1(nfc, 0:1), dumm2(nfc, 0:&
+& 1), dumm3(nfc, 0:1), dumm4(nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: b2_upwind = 0
 !      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0

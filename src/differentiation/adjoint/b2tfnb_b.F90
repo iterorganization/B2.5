@@ -134,9 +134,9 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
 & div_fnb_mdfb, rdivb
 !    *   wrk5(nFc), wrk7(nFc,0:1),
   REAL(kind=r8) :: wrk0(nfc), wrk1(nfc), wrk2(nfc), wrk3(nfc), wrk4(nfc)&
-& , wrk6(nfc), wrk8(nfc), wrk(ncv), wrkvx(nvx), zeros(nfc, 0:1), dumm1(&
-& nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(nfc, 0:1), zeros1(&
-& nfc, 0:1)
+& , wrk6(nfc), wrk8(nfc), wrk(ncv), wrkf(nfc, 0:1), wrkvx(nvx), zeros(&
+& nfc, 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(&
+& nfc, 0:1), zeros1(nfc, 0:1)
   REAL(kind=r8) :: wrk0b(nfc), wrk1b(nfc), wrk4b(nfc), wrkb(ncv), wrkvxb&
 & (nvx), zerosb(nfc, 0:1), dumm1b(nfc, 0:1), zeros1b(nfc, 0:1)
 !srv 01.10.99 !lk 09.06.11
@@ -1914,9 +1914,9 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 & rdiv
 !    *   wrk5(nFc), wrk7(nFc,0:1),
   REAL(kind=r8) :: wrk0(nfc), wrk1(nfc), wrk2(nfc), wrk3(nfc), wrk4(nfc)&
-& , wrk6(nfc), wrk8(nfc), wrk(ncv), wrkvx(nvx), zeros(nfc, 0:1), dumm1(&
-& nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(nfc, 0:1), zeros1(&
-& nfc, 0:1)
+& , wrk6(nfc), wrk8(nfc), wrk(ncv), wrkf(nfc, 0:1), wrkvx(nvx), zeros(&
+& nfc, 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(&
+& nfc, 0:1), zeros1(nfc, 0:1)
 !srv 01.10.99 !lk 09.06.11
 !srv 13.05.16
   REAL(kind=r8) :: ub2dia(nfc, 0:1), nbcor(nvx), nbti(ncv), nbzb(ncv), &
