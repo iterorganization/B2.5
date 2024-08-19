@@ -38,8 +38,8 @@
 
       ! Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
-      call b2mn_init_dv(switch, switchd, geo, geod, mpg, mpgd, state, &
-&      stated, state_ext, state_extd, state_avg, state_avgd, npar_opt)
+      call b2mn_init_dv(switch, switchd, geo, geod, mpg, mpgd, state, stated,&
+&      state_ext, state_extd, state_avg, state_avgd, npar_opt)
       call ipgeti('b2mndr_ntim', ntim)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
@@ -123,7 +123,7 @@
       CHKERRA(ierr)
       call PetscFinalize(ierr)
 
-      call b2mn_fin_dv(switch, geo, geod, mpg, mpgd, state, stated, &
+      call b2mn_fin_dv(switch, geo, geod, mpg, mpgd, state, stated,&
 &      state_ext, state_extd, state_avg, state_avgd, npar_opt)
       deallocate(par_opt_phys)
       deallocate(xsave)
@@ -304,16 +304,16 @@
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-      call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state, &
-     &   stated, state_ext, state_extd, state_avg, state_avgd, j, &
-     &   jdiff, npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
+      call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,&
+     &   stated, state_ext, state_extd, state_avg, state_avgd, j, jdiff,&
+     &   npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
       F = j(1)
 #ifdef TGT
       do ipar = 1, npar_opt
         g_v(ipar) = jdiff(ipar,1)*par_rescale(ipar) ! rescale par to get order unity
 #endif
 #ifdef ADJ
-      call set_adj_gradient(npar_opt,gradd,switchb)
+      call set_adj_gradient(npar_opt,gradd,switchd)
       do ipar = 1, npar_opt
         g_v(ipar) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
 #endif
@@ -347,7 +347,7 @@
         call cfwuin (99, 3, idum, 'nCv,nFc,ns')
         write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',filen
         call cfwuch (99, 120, label, 'label')
-        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn, am)
+        call b2wuzd (99, newversion, state%ns, zamin, zamax, zn, am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
         filen = filen + 1
@@ -522,15 +522,15 @@
 ! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
 ! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
-      call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state, &
-     &   stated, state_ext, state_extd, state_avg, state_avgd, j, &
-     &   jdiff, npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
+      call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,&
+     &   stated, state_ext, state_extd, state_avg, state_avgd, j, jdiff,&
+     &   npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
 #ifdef TGT
       do ipar = 1, npar_opt
         g_v(ipar) = jdiff(ipar,1)*par_rescale(ipar) ! rescale par to get order unity
 #endif
 #ifdef ADJ
-      call set_adj_gradient(npar_opt,gradd,switchb)
+      call set_adj_gradient(npar_opt,gradd,switchd)
       do ipar = 1, npar_opt
         g_v(ipar) = gradd(ipar)*par_rescale(ipar) ! rescale par to get order unity
 #endif
@@ -560,7 +560,7 @@
         call cfwuin (99, 3, idum, 'nCv,nFc,ns')
         write (label,'(a46,i4)') 'b2optim_tao intermediate optimization state ',filen
         call cfwuch (99, 120, label, 'label')
-        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn, am)
+        call b2wuzd (99, newversion, state%ns, zamin, zamax, zn, am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
         filen = filen + 1

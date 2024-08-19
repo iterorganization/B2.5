@@ -65,7 +65,7 @@ SUBROUTINE B2TLHI_NODIFF(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nirm&
     DO ifc=1,nfc
       IF (nif(ifc) .LE. switch%b2tlhi_ni_min) THEN
 ! Set at min value
-        cflmi_loc(ifc) = switch%b2tlhi_ni_min
+        cflmi_loc(ifc) = switch%b2tlhi_cflmi_min
       ELSE IF (nif(ifc) .LT. switch%b2tlhi_ni_max) THEN
 ! Interpolate for smooth transition
         cflmi_loc(ifc) = (cflmi*(nif(ifc)-switch%b2tlhi_ni_min)+switch%&
@@ -250,7 +250,7 @@ SUBROUTINE B2TLHI_DV(ncv, nfc, mp, cflmi, switch, switchd, geo, geod, &
         DO nd=1,nbdirs
           cflmi_locd(nd, ifc) = 0.D0
         END DO
-        cflmi_loc(ifc) = switch%b2tlhi_ni_min
+        cflmi_loc(ifc) = switch%b2tlhi_cflmi_min
       ELSE IF (nif(ifc) .LT. switch%b2tlhi_ni_max) THEN
 ! Interpolate for smooth transition
         DO nd=1,nbdirs

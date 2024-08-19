@@ -317,7 +317,7 @@ SUBROUTINE PROFILE_AVERAGE_NODIFF(laststep, itim, ntim_batch, nx, ny, ns&
     CALL CFVERW(iun, newversion)
     CALL CFWUIN(iun, 3, idum, 'nx,ny,ns')
     CALL CFWUCH(iun, 120, lble, 'label')
-    CALL B2WUZD_NODIFF(iun, newversion, ns, zamin, zamax, zn, am)
+    CALL B2WUZD(iun, newversion, ns, zamin, zamax, zn, am)
 !
 !   ..write average state and sources
     idum(0) = naver

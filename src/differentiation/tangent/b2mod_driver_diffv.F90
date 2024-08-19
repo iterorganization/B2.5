@@ -28,6 +28,7 @@ MODULE B2MOD_DRIVER_DIFFV
 & fb_rescale, fb_rescaled, dt_prev, feedback_namelist_used
   USE B2MOD_SPUTTER_DIFFV, ONLY : sput_dst, dealloc_sputter_data, &
 & dealloc_b2mod_sputter
+  USE B2MOD_SOLPSTOP
   USE B2MOD_YSMP_SDRV_DIFFV, ONLY : dealloc_b2mod_ysmp_sdrv
   USE B2MOD_WALL_DIFFV, ONLY : dealloc_b2mod_wall
   USE B2MOD_NEOCLASSICAL_DIFFV, ONLY : dealloc_b2mod_neoclassical
@@ -94,6 +95,7 @@ MODULE B2MOD_DRIVER_DIFFV
   INTEGER, SAVE :: shot=0
   INTEGER, SAVE :: run=0
   INTEGER, SAVE :: ids_save=0
+  INTEGER, SAVE :: ids_av=0
 !srv 26.02.18
   INTEGER, SAVE :: use_mms=0
 !srv 26.02.18
@@ -1951,8 +1953,9 @@ MODULE B2MOD_DRIVER_DIFFV
   REAL(kind=r8) :: delta_ids_time, save_ids_time
   REAL(kind=r8) :: te_hot, ne_hot_frac
   LOGICAL :: quitexist, quit, quitexist_
-  LOGICAL :: write_save, write_ids
-  LOGICAL :: process_ids
+  LOGICAL :: write_save, write_ids, write_av
+  LOGICAL :: process_ids, process_av
+  LOGICAL, SAVE :: summary_av=.false.
   REAL(kind=r8) :: stack_dtim(20)
   INTEGER :: stack_ntim(20)
   INTEGER :: stack_ptr
@@ -2228,7 +2231,6 @@ CONTAINS
     INTEGER :: nsd(nbdirsmax)
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
-    INTEGER :: nndirs
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(MAPPING_DIFFV), INTENT(INOUT) :: mpgd
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
@@ -3320,7 +3322,12 @@ CONTAINS
       CALL IPGETI('b2mndr_av_read', ird_aver)
 !pb 29.09.16
       CALL IPGETI('b2mndr_ids_save', ids_save)
-      IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) WRITE(*, *) &
+      CALL IPGETI('b2mndr_ids_av', ids_av)
+      CALL XERTST(0 .LE. ids_av, 'Invalid ids_av value')
+      summary_av = ids_av .GT. 0 .AND. ids_save .EQ. 0 .AND. &
+&       delta_ids_time .EQ. 0.0_R8
+      IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&         0.0_R8) WRITE(*, *) &
 &              'Not compiled with IMAS option, IDS will not be written.'
     ELSE
 ! ..return
@@ -3756,7 +3763,7 @@ CONTAINS
       CALL CFWUIN(70, 3, idum, 'nCv,nFc,ns')
       label = TRIM(label)//' Inverted velocities'
       CALL CFWUCH(70, 120, label, 'label')
-      CALL B2WUZD_NODIFF(70, newversion, ns, zamin, zamax, zn, am)
+      CALL B2WUZD(70, newversion, ns, zamin, zamax, zn, am)
       state%pl%ua = -state%pl%ua
 !     ..write plasma state
       CALL WRITE_B2FSTATE(70, ncv, nfc, ns, state)
@@ -3847,9 +3854,9 @@ CONTAINS
 &                                                                 )
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
     nlimi = 0
-    IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) CALL &
-&     ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns, wklng, natm, &
-&                  nmol, nion, nlimps)
+    IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&       0.0_R8) CALL ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns&
+&                                 , wklng, natm, nmol, nion, nlimps)
 ! new CDF movie option (1st frame at t=0)
     IF (tim .GE. save_cdfmovie_time - dtim/2.0_R8 .AND. &
 &       delta_cdfmovie_time .GT. 0.0_R8) THEN
@@ -4937,7 +4944,12 @@ CONTAINS
       CALL IPGETI('b2mndr_av_read', ird_aver)
 !pb 29.09.16
       CALL IPGETI('b2mndr_ids_save', ids_save)
-      IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) WRITE(*, *) &
+      CALL IPGETI('b2mndr_ids_av', ids_av)
+      CALL XERTST(0 .LE. ids_av, 'Invalid ids_av value')
+      summary_av = ids_av .GT. 0 .AND. ids_save .EQ. 0 .AND. &
+&       delta_ids_time .EQ. 0.0_R8
+      IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&         0.0_R8) WRITE(*, *) &
 &              'Not compiled with IMAS option, IDS will not be written.'
     ELSE
 ! ..return
@@ -5335,7 +5347,7 @@ CONTAINS
       CALL CFWUIN(70, 3, idum, 'nCv,nFc,ns')
       label = TRIM(label)//' Inverted velocities'
       CALL CFWUCH(70, 120, label, 'label')
-      CALL B2WUZD_NODIFF(70, newversion, ns, zamin, zamax, zn, am)
+      CALL B2WUZD(70, newversion, ns, zamin, zamax, zn, am)
       state%pl%ua = -state%pl%ua
 !     ..write plasma state
       CALL WRITE_B2FSTATE(70, ncv, nfc, ns, state)
@@ -5419,9 +5431,9 @@ CONTAINS
 &                                                                 )
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
     nlimi = 0
-    IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) CALL &
-&     ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns, wklng, natm, &
-&                  nmol, nion, nlimps)
+    IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&       0.0_R8) CALL ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns&
+&                                 , wklng, natm, nmol, nion, nlimps)
 ! new CDF movie option (1st frame at t=0)
     IF (tim .GE. save_cdfmovie_time - dtim/2.0_R8 .AND. &
 &       delta_cdfmovie_time .GT. 0.0_R8) THEN
@@ -5623,7 +5635,6 @@ CONTAINS
     TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: state_avgd
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
-    INTEGER :: nndirs
     REAL(kind=r8) :: j(nncf)
     REAL(kind=r8) :: jd(nbdirsmax, nncf)
     INTEGER :: ncv, nfc, nvx
@@ -6504,10 +6515,10 @@ CONTAINS
 &              nbdirs)
 !     manually inserted call to cost function, for output purposes only
       CALL B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, state, &
-&                         stated, state_ext, switch%boris, j, jd,&
-&                         nbdirs+nsigma_opt+nmean_opt+nshift_opt+ncorr_opt)
-    if (first_time_step) write(*,*) 'nbdirs: ',nbdirs+nsigma_opt+nmean_opt+nshift_opt+ncorr_opt
-    call print_tgt_gradient(jd)
+&             stated, state_ext, switch%boris, j, jd,&
+&             nbdirs+nsigma_opt+nmean_opt+nshift_opt+ncorr_opt)
+      if (first_time_step) write(*,*) 'nbdirs: ',nbdirs+nsigma_opt+nmean_opt+nshift_opt+ncorr_opt
+      call print_tgt_gradient(jd)
       do icf=1,ncf
         write(ss, '(I1)') icf
         if (icf.gt.9) write (ss,'(I2)') icf
@@ -6682,8 +6693,8 @@ CONTAINS
 &       elapsedinit .GT. b2mndr_elapsed .AND. b2mndr_elapsed .GT. 0.0_R8&
 &       )
       WRITE(*, *) 'MAX RESIDUAL ', res_max
-      WRITE(*, *) 'MAX TGT RESIDUAL ', gradient_res
       primal_res = res_max
+      WRITE(*, *) 'MAX TGT RESIDUAL ', gradient_res
       res_max = max(res_max, gradient_res)
       primal_iterations = itim
       gradient_iterations = itim
@@ -6691,13 +6702,13 @@ CONTAINS
 !   ..end loop
 !   ..call cost function
     CALL B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, state, &
-&                         stated, state_ext, switch%boris, j, jd,&
+&                         stated, state_ext, switch%boris, j, jd, &
 &                         nbdirs+nsigma_opt+nmean_opt+nshift_opt+ncorr_opt)
     if (first_time_step) write(*,*) 'nbdirs: ',nbdirs+nsigma_opt+nmean_opt+nshift_opt+ncorr_opt
     call print_tgt_gradient(jd)
     DO icf=1,ncf
       WRITE(ss, '(I1)') icf
-      IF (icf .GT. 9) WRITE (ss, '(I2)') icf
+      IF (icf .GT. 9) WRITE(ss, '(I2)') icf
       WRITE(*, *) 'Cost function value '//ss//': ', j(icf)
     END DO
     CALL SUBEND()
@@ -7029,8 +7040,8 @@ CONTAINS
 &       elapsedinit .GT. b2mndr_elapsed .AND. b2mndr_elapsed .GT. 0.0_R8&
 &       )
       WRITE(*, *) 'MAX RESIDUAL ', res_max
-      primal_iterations = itim
       primal_res = res_max
+      primal_iterations = itim
     END DO
 !   ..end loop
 !   ..call cost function
@@ -7038,7 +7049,7 @@ CONTAINS
 &                             state_ext, switch%boris, j)
     DO icf=1,ncf
       WRITE(ss, '(I1)') icf
-      IF (icf .GT. 9) WRITE (ss, '(I2)') icf
+      IF (icf .GT. 9) WRITE(ss, '(I2)') icf
       WRITE(*, *) 'Cost function value '//ss//': ', j(icf)
     END DO
     CALL SUBEND()

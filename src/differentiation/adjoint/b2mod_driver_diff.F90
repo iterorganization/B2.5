@@ -27,6 +27,7 @@ MODULE B2MOD_DRIVER_DIFF
 & fb_rescaleb, dt_prev, feedback_namelist_used
   USE B2MOD_SPUTTER_DIFF, ONLY : sput_dst, dealloc_sputter_data, &
 & dealloc_b2mod_sputter
+  USE B2MOD_SOLPSTOP
   USE B2MOD_YSMP_SDRV, ONLY : dealloc_b2mod_ysmp_sdrv
   USE B2MOD_WALL, ONLY : dealloc_b2mod_wall
   USE B2MOD_NEOCLASSICAL_DIFF, ONLY : dealloc_b2mod_neoclassical
@@ -89,6 +90,7 @@ MODULE B2MOD_DRIVER_DIFF
   INTEGER, SAVE :: shot=0
   INTEGER, SAVE :: run=0
   INTEGER, SAVE :: ids_save=0
+  INTEGER, SAVE :: ids_av=0
 !srv 26.02.18
   INTEGER, SAVE :: use_mms=0
 !srv 26.02.18
@@ -1946,8 +1948,9 @@ MODULE B2MOD_DRIVER_DIFF
   REAL(kind=r8) :: delta_ids_time, save_ids_time
   REAL(kind=r8) :: te_hot, ne_hot_frac
   LOGICAL :: quitexist, quit, quitexist_
-  LOGICAL :: write_save, write_ids
-  LOGICAL :: process_ids
+  LOGICAL :: write_save, write_ids, write_av
+  LOGICAL :: process_ids, process_av
+  LOGICAL, SAVE :: summary_av=.false.
   REAL(kind=r8) :: stack_dtim(20)
   INTEGER :: stack_ntim(20)
   INTEGER :: stack_ptr
@@ -3298,7 +3301,12 @@ CONTAINS
 !pb 29.09.16
       CALL IPGETI('b2mndr_av_read', ird_aver)
       CALL IPGETI('b2mndr_ids_save', ids_save)
-      IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) WRITE(*, *) &
+      CALL IPGETI('b2mndr_ids_av', ids_av)
+      CALL XERTST(0 .LE. ids_av, 'Invalid ids_av value')
+      summary_av = ids_av .GT. 0 .AND. ids_save .EQ. 0 .AND. &
+&       delta_ids_time .EQ. 0.0_R8
+      IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&         0.0_R8) WRITE(*, *) &
 &              'Not compiled with IMAS option, IDS will not be written.'
     ELSE
 ! ..return
@@ -3759,9 +3767,9 @@ CONTAINS
 &                                                                 )
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
     nlimi = 0
-    IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) CALL &
-&     ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns, wklng, natm, &
-&                  nmol, nion, nlimps)
+    IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&       0.0_R8) CALL ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns&
+&                                 , wklng, natm, nmol, nion, nlimps)
 ! new CDF movie option (1st frame at t=0)
     IF (tim .GE. save_cdfmovie_time - dtim/2.0_R8 .AND. &
 &       delta_cdfmovie_time .GT. 0.0_R8) THEN
@@ -4843,7 +4851,12 @@ CONTAINS
 !pb 29.09.16
       CALL IPGETI('b2mndr_av_read', ird_aver)
       CALL IPGETI('b2mndr_ids_save', ids_save)
-      IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) WRITE(*, *) &
+      CALL IPGETI('b2mndr_ids_av', ids_av)
+      CALL XERTST(0 .LE. ids_av, 'Invalid ids_av value')
+      summary_av = ids_av .GT. 0 .AND. ids_save .EQ. 0 .AND. &
+&       delta_ids_time .EQ. 0.0_R8
+      IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&         0.0_R8) WRITE(*, *) &
 &              'Not compiled with IMAS option, IDS will not be written.'
     ELSE
 ! ..return
@@ -5298,9 +5311,9 @@ CONTAINS
 &                                                                 )
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
     nlimi = 0
-    IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) CALL &
-&     ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns, wklng, natm, &
-&                  nmol, nion, nlimps)
+    IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&       0.0_R8) CALL ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns&
+&                                 , wklng, natm, nmol, nion, nlimps)
 ! new CDF movie option (1st frame at t=0)
     IF (tim .GE. save_cdfmovie_time - dtim/2.0_R8 .AND. &
 &       delta_cdfmovie_time .GT. 0.0_R8) THEN
@@ -7202,6 +7215,7 @@ CONTAINS
       IF (icf .GT. 9) WRITE(ss, '(I2)') icf
       WRITE(*, *) 'Cost function value '//ss//': ', j(icf)
     END DO
+    icf = 0
     CALL POPREAL8ARRAY(cfdata, r8*nncf*4*DEF_NLIM/8)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2data, r8*SIZE(b2data, 1)/8)
@@ -8396,24 +8410,11 @@ CONTAINS
       enkparb = 0.D0
       momparb = 0.D0
       b2recycb = 0.D0
-      parm_dnab = 0.D0
-      parm_hceb = 0.D0
-      parm_hcib = 0.D0
-      parm_vsab = 0.D0
-      parm_sigb = 0.D0
-      parm_alfb = 0.D0
       conparb = 0.D0
-      momparb = 0.D0
       potparb = 0.D0
       eneparb = 0.D0
       eniparb = 0.D0
-      enkparb = 0.D0
       tdatab = 0.D0
-      switchb%b2sikt_fac_sheath = 0.D0
-      switchb%b2sikt_fac_sheath_core = 0.D0
-      switchb%keps_cd = 0.D0
-      switchb%keps_heat = 0.D0
-      switchb%keps_heat_i = 0.D0
       CALL B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, state%rt%&
 &             nscx, state%rt%nscxmax, state%rt%iscx, itim, dtim, ntim, &
 &             switch, switchb, geo, geob, mpg, mpgb, state, stateb1, &
@@ -9786,24 +9787,46 @@ CONTAINS
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2bremreg, r8*SIZE(b2bremreg, &
 &                                   1)/8)
     CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
-      parm_dnab = 0.D0
-      parm_hceb = 0.D0
-      parm_hcib = 0.D0
-      parm_vsab = 0.D0
-      parm_sigb = 0.D0
-      parm_alfb = 0.D0
-      conparb = 0.D0
-      momparb = 0.D0
-      potparb = 0.D0
-      eneparb = 0.D0
-      eniparb = 0.D0
-      enkparb = 0.D0
-      tdatab = 0.D0
-      switchb%b2sikt_fac_sheath = 0.D0
-      switchb%b2sikt_fac_sheath_core = 0.D0
-      switchb%keps_cd = 0.D0
-      switchb%keps_heat = 0.D0
-      switchb%keps_heat_i = 0.D0
+    parm_dnab = 0.D0
+    parm_hceb = 0.D0
+    parm_hcib = 0.D0
+    parm_vsab = 0.D0
+    parm_sigb = 0.D0
+    parm_alfb = 0.D0
+    conparb = 0.D0
+    momparb = 0.D0
+    potparb = 0.D0
+    eneparb = 0.D0
+    eniparb = 0.D0
+    enkparb = 0.D0
+    tdatab = 0.D0
+    switchb%keps_cd = 0.D0
+    switchb%keps_heat = 0.D0
+    switchb%keps_heat_i = 0.D0
+    switchb%keps_sig = 0.D0
+    switchb%keps_alf = 0.D0
+    switchb%keps_visc = 0.D0
+    switchb%keps_dkt = 0.D0
+    switchb%keps_dzt = 0.D0
+    switchb%keps_shear = 0.D0
+    switchb%b2sikt_fac_sheath = 0.D0
+    switchb%b2sikt_fac_sheath_core = 0.D0
+    switchb%b2sikt_fac_diss = 0.D0
+    switchb%b2sikt_fac_diss_core = 0.D0
+    switchb%b2sikt_fac_vis_rs = 0.D0
+    switchb%b2tfhi_fflokt = 0.D0
+    switchb%b2tfhi_fconkt = 0.D0
+    switchb%b2tfhi_fflozt = 0.D0
+    switchb%b2tfhi_fconzt = 0.D0
+    switchb%b2tfhi_fsigkt = 0.D0
+    switchb%b2tfhi_fkt_hie = 0.D0
+    switchb%b2tfhe_vis_kt = 0.D0
+    switchb%b2tqna_ballooning = 0.D0
+    switchb%b2tqna_ballooning_rescale = 0.D0
+    IF (ALLOCATED(rtlcxb)) rtlcxb = 0.D0
+    IF (ALLOCATED(rtlqab)) rtlqab = 0.D0
+    IF (ALLOCATED(rtlrab)) rtlrab = 0.D0
+    IF (ALLOCATED(rtlsab)) rtlsab = 0.D0
 !   csc the next enables to save the sensitivity of transport coefficients
 !   for each point of the domain but only for the call to b2tqna within
 !   the next call to b2mndt
@@ -9860,8 +9883,8 @@ CONTAINS
     stateb1%psnl%ua = 0.D0
     stateb1%pl%na = stateb1%pl%na + stateb1%psnc%na + stateb1%psnl%na
     stateb1%psnc%na = 0.D0
-    j = jsave
     jb = 0.D0
+    j = jsave
     call set_adj_gradient(npar_opt,dummygrad,switchb)
   END SUBROUTINE B2MNDR_1_B
 
@@ -10015,6 +10038,14 @@ CONTAINS
 &                  %rt%nscx, state%rt%nscxmax, state%rt%iscx, itim, dtim&
 &                  , ntim, switch, geo, mpg, state, state_ext, state_avg&
 &                  , ierr)
+!     manually inserted call to cost function, for output purposes only
+      call b2usr_cost_function_nodiff(ncv, nfc, nvx, ns, geo, mpg, state,&
+&                             state_ext, switch%boris, j)
+      do icf=1,ncf
+        write(ss, '(I1)') icf
+        if (icf.gt.9) write(ss,'(I2)') icf
+        write(*, *) 'Cost function value '//ss//': ', j(icf)
+      end do
 !    ..increment
       itim = itim + 1
       itim_plas = itim_plas + 1
