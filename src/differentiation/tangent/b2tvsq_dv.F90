@@ -105,7 +105,7 @@ SUBROUTINE B2TVSQ_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   REAL(kind=r8) :: temp0
   REAL(kind=r8) :: temp1
   REAL(kind=r8), DIMENSION(ncv) :: temp2
-  DOUBLE PRECISION, DIMENSION(ncv) :: temp3
+  REAL(kind=r8), DIMENSION(ncv) :: temp3
   REAL(kind=r8) :: temp4
   REAL(kind=r8) :: temp5
   REAL(r8) :: temp6

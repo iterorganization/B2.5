@@ -1695,11 +1695,9 @@ CONTAINS
     LOGICAL :: duplicate, left_match_found, right_match_found
     EXTERNAL IPGETI, XERRAB
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV
     INTRINSIC ALLOCATED
     INTEGER :: nd
     INTEGER :: nbdirs
-    REAL(kind=r8) :: MAXVAL_DV
 !wdk  This initialization routine precomputes a number of arrays
 !wdk  in the mapping that are not stored in the b2fgmtry file, but
 !wdk  can be derived directly from data in that file

@@ -905,20 +905,13 @@ CONTAINS
     LOGICAL, ALLOCATABLE :: done(:)
     CHARACTER(len=260) :: filename
     EXTERNAL FIND_FILE, XERRAB, CHECK_BOUNDARY_LABELS_NODIFF
-    EXTERNAL XERRAB_DV
     INTRINSIC TRIM
     INTRINSIC COUNT
-    EXTERNAL COUNT_DV
     EXTERNAL FIND_FACES
     INTRINSIC ANY
-    EXTERNAL ANY_DV
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV
     REAL(kind=r8) :: result1
     INTEGER :: nbdirs
-    LOGICAL :: ANY_DV
-    INTEGER :: COUNT_DV
-    REAL(kind=r8) :: MAXVAL_DV
 !
     filename = boundary_filename
     boundary_time_mod = 0.0_R8
@@ -1842,20 +1835,13 @@ CONTAINS
     INTEGER :: ib, inbc, ibc, ifc, ic1, ic2
     INTEGER :: i, j, k, indd
     INTRINSIC COUNT
-    EXTERNAL COUNT_DV
     INTRINSIC MIN
     INTRINSIC MAX
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTRINSIC ALLOCATED
-    EXTERNAL ALLOCATED_DV
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV
     INTRINSIC SIZE
     INTEGER :: nbdirs
-    LOGICAL :: ALLOCATED_DV
-    INTEGER :: COUNT_DV
-    REAL(kind=r8) :: MAXVAL_DV
 !
     m%nbc = nbc
 !pb   m%mxnBc = sum(nbcfaces(1:nbc))       ! number of cells with imposed BC
