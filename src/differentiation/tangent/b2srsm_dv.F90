@@ -75,8 +75,8 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
   INTRINSIC DABS
   INTRINSIC MAXVAL
   EXTERNAL XERRAB
-  DOUBLE PRECISION, DIMENSION(ncv, 0:ns-1) :: dabs0
-  DOUBLE PRECISION :: result1
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
+  REAL(kind=r8) :: result1
   CHARACTER(len=12) :: arg1
 !-----------------------------------------------------------------------
 !.computation

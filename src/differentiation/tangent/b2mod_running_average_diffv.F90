@@ -128,11 +128,9 @@ CONTAINS
     INTEGER :: io, iun, idum(0:1), iex
     REAL(kind=r8) :: zpdum(0:nsdecl-1, 4)
     INTRINSIC ALLOCATED
-    EXTERNAL ALLOCATED_DV
     INTEGER :: arg1
     INTEGER :: nd
     INTEGER :: nbdirs
-    LOGICAL :: ALLOCATED_DV
 !
     CALL SUBINI('run_av_init')
 !
@@ -548,9 +546,7 @@ CONTAINS
     TYPE(B2AVERAGE), INTENT(INOUT) :: avg
     TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: avgd
     INTRINSIC ALLOCATED
-    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
-    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(avg%na_mean)) THEN
       RETURN

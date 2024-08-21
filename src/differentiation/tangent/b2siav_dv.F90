@@ -139,7 +139,7 @@ SUBROUTINE B2SIAV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod, mpg, &
   REAL(kind=r8) :: temp5
   REAL(r8) :: temp6
   REAL(kind=r8), DIMENSION(ncv) :: temp7
-  DOUBLE PRECISION, DIMENSION(ncv) :: temp8
+  REAL(kind=r8), DIMENSION(ncv) :: temp8
   REAL(kind=r8), DIMENSION(nCv) :: temp9
   INTEGER :: nbdirs
 !-----------------------------------------------------------------------
