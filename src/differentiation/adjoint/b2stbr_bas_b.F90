@@ -118,7 +118,7 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
   REAL(kind=r8) :: result2
   INTEGER :: arg1
   LOGICAL, DIMENSION(-1:nx, -1:ny, 0:ns-1) :: mask
-  DOUBLE PRECISION :: result10
+  REAL(kind=r8) :: result10
   CHARACTER(len=10) :: arg10
   DATA ncall /0/
 !-----------------------------------------------------------------------

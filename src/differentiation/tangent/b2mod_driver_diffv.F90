@@ -2261,16 +2261,13 @@ CONTAINS
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     INTRINSIC MINVAL
-    EXTERNAL MINVAL_DV
     INTRINSIC MIN
     INTRINSIC LOG
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTRINSIC MAX
     EXTERNAL SET_EXACT_SOLUTION
     INTRINSIC ABS
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV
     REAL(r8) :: x1
     REAL(r8), DIMENSION(nbdirsmax) :: x1d
     REAL(r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: abs0
@@ -2300,8 +2297,6 @@ CONTAINS
     REAL(r8) :: result50
     INTEGER :: nd
     INTEGER :: nbdirs
-    REAL(kind=r8) :: MINVAL_DV
-    REAL(kind=r8) :: MAXVAL_DV
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
 !-----------------------------------------------------------------------
@@ -7099,7 +7094,6 @@ CONTAINS
     INTRINSIC MOD
     INTRINSIC MAX
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTEGER :: max1
     CHARACTER(len=9) :: arg1
     REAL(r8), DIMENSION(mpg%nCv) :: arg10

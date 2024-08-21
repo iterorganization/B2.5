@@ -114,7 +114,7 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
   INTEGER :: y6
   INTEGER :: y7
   INTEGER :: y8
-  DOUBLE PRECISION, DIMENSION(-1:nx, -1:ny, 0:ns-1) :: dabs0
+  REAL(kind=r8), DIMENSION(-1:nx, -1:ny, 0:ns-1) :: dabs0
   INTEGER :: min1
   INTEGER :: min2
   INTEGER :: min3
@@ -122,7 +122,7 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: arg1
-  DOUBLE PRECISION :: result10
+  REAL(kind=r8) :: result10
   REAL(kind=r8) :: arg10
   CHARACTER(len=10) :: arg11
   DATA ncall /0/
