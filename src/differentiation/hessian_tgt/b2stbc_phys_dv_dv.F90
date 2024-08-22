@@ -415,10 +415,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0&
 &               'BCCON = 1, CONPAR(,,1) !> 0')
           icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
           IF (mpg%cvonclosedsurface(icv)) THEN
-            IF (is .EQ. ismain .AND. switch%use_astra .NE. 0) THEN
-!srv 28.07.11
-              conpar(is, ib, 1) = neb_astra
-            END IF
+            IF (is .EQ. ismain .AND. switch%use_astra .NE. 0) CALL &
+&             XERRAB('Compile with -DASTRA option to couple to ASTRA!')
             IF (ishigh) CALL XERTST(switch%ionising_core .EQ. 0, &
 &               'ionising_core switch usage inconsistent with BCCON = 1'&
 &                            )
@@ -616,9 +614,12 @@ SUBROUTINE B2STBC_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0&
 !                 CONSTANT FLUX DENSITY
 !
         IF (ncall_b2stbc_phys .EQ. 0) THEN
-!srv 04.10.11
           IF (is .EQ. ismain .AND. bcchar(ib) .EQ. 'S' .AND. switch%&
-&             use_astra .NE. 0) conpar(is, ib, 1) = fneb_astra
+&             use_astra .NE. 0) THEN
+            CALL XERRAB(&
+&                 'Compile with -DASTRA option to couple to ASTRA!')
+!
+          END IF
           WRITE(*, '(a,1p,g14.7,a4,a1,a,a13,i3)') &
 &         'BCCON =  8 : total particle flux ', conpar(is, ib, 1), ' on '&
 &         , bcchar(ib), boundary_location(ib), ' for species ', is
@@ -5219,13 +5220,8 @@ SUBROUTINE B2STBC_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, &
 &               'BCCON = 1, CONPAR(,,1) !> 0')
           icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
           IF (mpg%cvonclosedsurface(icv)) THEN
-            IF (is .EQ. ismain .AND. switch%use_astra .NE. 0) THEN
-!srv 28.07.11
-              DO nd=1,nbdirs
-                conpard(nd, is, ib, 1) = 0.d0
-              END DO
-              conpar(is, ib, 1) = neb_astra
-            END IF
+            IF (is .EQ. ismain .AND. switch%use_astra .NE. 0) CALL &
+&             XERRAB('Compile with -DASTRA option to couple to ASTRA!')
             IF (ishigh) CALL XERTST(switch%ionising_core .EQ. 0, &
 &               'ionising_core switch usage inconsistent with BCCON = 1'&
 &                            )
@@ -5492,13 +5488,11 @@ SUBROUTINE B2STBC_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, &
 !                 CONSTANT FLUX DENSITY
 !
         IF (ncall_b2stbc_phys .EQ. 0) THEN
-!srv 04.10.11
           IF (is .EQ. ismain .AND. bcchar(ib) .EQ. 'S' .AND. switch%&
 &             use_astra .NE. 0) THEN
-            DO nd=1,nbdirs
-              conpard(nd, is, ib, 1) = 0.d0
-            END DO
-            conpar(is, ib, 1) = fneb_astra
+            CALL XERRAB(&
+&                 'Compile with -DASTRA option to couple to ASTRA!')
+!
           END IF
           WRITE(*, '(a,1p,g14.7,a4,a1,a,a13,i3)') &
 &         'BCCON =  8 : total particle flux ', conpar(is, ib, 1), ' on '&
@@ -12739,19 +12733,8 @@ SUBROUTINE B2STBC_PHYS_DV_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &               'BCCON = 1, CONPAR(,,1) !> 0')
           icv = mpg%bccv(mpg%bccvp(ib, 1), 1)
           IF (mpg%cvonclosedsurface(icv)) THEN
-            IF (is .EQ. ismain .AND. switch%use_astra .NE. 0) THEN
-!srv 28.07.11
-              DO nd=1,nbdirs
-                DO nd0=nd,nbdirs0
-                  conpardd(nd0, nd, is, ib, 1) = 0.0_8
-                END DO
-                conpard(nd, is, ib, 1) = 0.d0
-              END DO
-              DO nd0=1,nbdirs0
-                conpard0(nd0, is, ib, 1) = 0.0_8
-              END DO
-              conpar(is, ib, 1) = neb_astra
-            END IF
+            IF (is .EQ. ismain .AND. switch%use_astra .NE. 0) CALL &
+&             XERRAB('Compile with -DASTRA option to couple to ASTRA!')
             IF (ishigh) CALL XERTST(switch%ionising_core .EQ. 0, &
 &               'ionising_core switch usage inconsistent with BCCON = 1'&
 &                            )
@@ -13157,19 +13140,11 @@ SUBROUTINE B2STBC_PHYS_DV_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !                 CONSTANT FLUX DENSITY
 !
         IF (ncall_b2stbc_phys .EQ. 0) THEN
-!srv 04.10.11
           IF (is .EQ. ismain .AND. bcchar(ib) .EQ. 'S' .AND. switch%&
 &             use_astra .NE. 0) THEN
-            DO nd=1,nbdirs
-              DO nd0=nd,nbdirs0
-                conpardd(nd0, nd, is, ib, 1) = 0.0_8
-              END DO
-              conpard(nd, is, ib, 1) = 0.d0
-            END DO
-            DO nd0=1,nbdirs0
-              conpard0(nd0, is, ib, 1) = 0.0_8
-            END DO
-            conpar(is, ib, 1) = fneb_astra
+            CALL XERRAB(&
+&                 'Compile with -DASTRA option to couple to ASTRA!')
+!
           END IF
           WRITE(*, '(a,1p,g14.7,a4,a1,a,a13,i3)') &
 &         'BCCON =  8 : total particle flux ', conpar(is, ib, 1), ' on '&

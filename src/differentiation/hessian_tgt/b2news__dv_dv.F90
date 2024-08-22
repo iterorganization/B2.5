@@ -2,11 +2,11 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2news__dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: potpard enepar conpard enipard
+!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci potpard enepar conpard enipard
 !                enepard conpar potpar enipar b2recyc userfluxparm
 !                userfluxparmd int0ld int4l int1l int2ld int4ld
-!                int2l int1ld int3l int3ld int0l tdata cfvla cfvsa
-!                cfalf cfdpa cfsig cfdna cfhce cfhci saved_fb_actuatord
+!                int2l int1ld int3l int3ld int0l tdata saved_fb_actuatord
 !                fb_target fb_prev fb_current fb_prevd fb_currentd
 !                fb_constd fb_const charge_frac fb_targetd saved_fb_actuator
 !                fb_rescale charge_fracd fb_rescaled *(std.pl.na)
@@ -127,15 +127,15 @@
 !                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne)
 !                *(st.psnl.ni) *(st.psnl.kinrgy) *(st.psnc.na)
 !                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
-!   with respect to varying inputs: potpard enepar conpard enipard
+!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci potpard enepar conpard enipard
 !                enepard conpar enkpar potpar mompar enipar b2recyc
 !                userfluxparm userfluxparmd int0ld int4l int1l
 !                int2ld int4ld int2l int1ld int3l int3ld int0l
-!                tdata cfvla cfvsa cfalf cfdpa cfsig cfdna cfhce
-!                cfhci parm_hce parm_hci parm_vla parm_vsa parm_alf
-!                parm_dpa parm_sig parm_dna saved_fb_actuatord
-!                fb_target fb_prev fb_current fb_prevd fb_currentd
-!                fb_constd fb_const charge_frac fb_targetd saved_fb_actuator
+!                parm_hce parm_hci parm_vla parm_vsa parm_alf parm_dpa
+!                parm_sig parm_dna tdata saved_fb_actuatord fb_target
+!                fb_prev fb_current fb_prevd fb_currentd fb_constd
+!                fb_const charge_frac fb_targetd saved_fb_actuator
 !                fb_rescale charge_fracd fb_rescaled *(std.pl.na)
 !                *(std.pl.ua) *(std.pl.po) *(std.pl.te) *(std.pl.ti)
 !                *(std.pl.tn) *(std.pl.kt) *(std.pl.zt) *(std.co.csig)
@@ -1061,21 +1061,22 @@ SUBROUTINE B2NEWS__DV_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
 &                               'Not solving heat equations!'
   END IF
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-!       call ipgeti ('b2mndt_nstg2', nstg2)
-!       if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
-!         write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
-!       endif
-!       call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+!      call ipgeti ('b2mndt_nstg2', nstg2)
+!      if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
+!        write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
+!      endif
+!      call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+!
 !sw 26feb2014 some extra variables
-!       call ipgeti ('eirene_neutr_avg', neutr_avg)
-!       call ipgeti ('eirene_underrelax', nrelax)
-!       call ipgeti ('b2stbr_eir_src_nhist', nhist)
-!       call xertst (.not.(
+!      call ipgeti ('eirene_neutr_avg', neutr_avg)
+!      call ipgeti ('eirene_underrelax', nrelax)
+!      call ipgeti ('b2stbr_eir_src_nhist', nhist)
+!      call xertst (.not.(
 !     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
 !     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
 !     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
 !     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
-!       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
+!      call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
 !   ..test nCv, nFc, ns
   CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
@@ -3009,21 +3010,22 @@ SUBROUTINE B2NEWS__DV_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 &                               'Not solving heat equations!'
   END IF
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-!       call ipgeti ('b2mndt_nstg2', nstg2)
-!       if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
-!         write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
-!       endif
-!       call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+!      call ipgeti ('b2mndt_nstg2', nstg2)
+!      if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
+!        write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
+!      endif
+!      call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+!
 !sw 26feb2014 some extra variables
-!       call ipgeti ('eirene_neutr_avg', neutr_avg)
-!       call ipgeti ('eirene_underrelax', nrelax)
-!       call ipgeti ('b2stbr_eir_src_nhist', nhist)
-!       call xertst (.not.(
+!      call ipgeti ('eirene_neutr_avg', neutr_avg)
+!      call ipgeti ('eirene_underrelax', nrelax)
+!      call ipgeti ('b2stbr_eir_src_nhist', nhist)
+!      call xertst (.not.(
 !     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
 !     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
 !     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
 !     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
-!       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
+!      call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
 !   ..test nCv, nFc, ns
   CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
@@ -4180,21 +4182,22 @@ SUBROUTINE B2NEWS__NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax&
 &                               'Not solving heat equations!'
   END IF
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-!       call ipgeti ('b2mndt_nstg2', nstg2)
-!       if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
-!         write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
-!       endif
-!       call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+!      call ipgeti ('b2mndt_nstg2', nstg2)
+!      if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
+!        write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
+!      endif
+!      call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+!
 !sw 26feb2014 some extra variables
-!       call ipgeti ('eirene_neutr_avg', neutr_avg)
-!       call ipgeti ('eirene_underrelax', nrelax)
-!       call ipgeti ('b2stbr_eir_src_nhist', nhist)
-!       call xertst (.not.(
+!      call ipgeti ('eirene_neutr_avg', neutr_avg)
+!      call ipgeti ('eirene_underrelax', nrelax)
+!      call ipgeti ('b2stbr_eir_src_nhist', nhist)
+!      call xertst (.not.(
 !     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
 !     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
 !     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
 !     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
-!       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
+!      call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
 !   ..test nCv, nFc, ns
   CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')

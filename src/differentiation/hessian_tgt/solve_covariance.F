@@ -42,7 +42,7 @@
       end do
       ! log(detC) = log(PROD(U_ii**2))
       LdetC = sum(2.0_R8*log(dd))
-      
+
       call subend ()
       return
       end subroutine solve_covariance

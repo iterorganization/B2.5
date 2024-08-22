@@ -83,7 +83,7 @@
        logical l_exist
        character chns*3, chnCv*6
        character*27 filename
-#ifdef F2003
+#ifndef LEGACYCOMP
        intrinsic norm2
 #else
        real (kind=R8) :: norm2
@@ -122,7 +122,7 @@
      &      ' Max|eraNa',chns,'/Na',chns,'|   =',' Inf'                 !srv 09.07.18
          endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
          L2norm=norm2(exact_na(:,is))                                   !srv 09.07.18 {
 #else
          L2norm=norm2(nCv,exact_na(:,is))
@@ -130,7 +130,7 @@
          if(L2norm.ne.0.0_R8) then
            write(71,'(a,a3,a,a3,a,es10.3)')
      &      ' L2eraNa',chns,'/L2Na',chns,'    =',
-#ifdef F2003
+#ifndef LEGACYCOMP
      &        norm2(era)/L2norm
 #else
      &        norm2(nCv,era)/L2norm
@@ -182,7 +182,7 @@
      &      ' Max|eraUa',chns,'/Ua',chns,'|   =',' Inf'                 !srv 09.07.18
          endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
          L2norm=norm2(exact_ua(:,is))                                   !srv 09.07.18 {
 #else
          L2norm=norm2(nCv,exact_ua(:,is))
@@ -190,7 +190,7 @@
          if(L2norm.ne.0.0_R8) then
            write(71,'(a,a3,a,a3,a,es10.3)')
      &      ' L2eraUa',chns,'/L2Ua',chns,'    =',
-#ifdef F2003
+#ifndef LEGACYCOMP
      &        norm2(era)/L2norm
 #else
      &        norm2(nCv,era)/L2norm
@@ -250,7 +250,7 @@
        logical l_exist
        integer iCv, ind                                                 !srv 09.07.18
        character(32) :: pass
-#ifdef F2003
+#ifndef LEGACYCOMP
        intrinsic norm2
 #else
        real (kind=R8) :: norm2
@@ -287,7 +287,7 @@
      &   ' Max|era',trim(nmvar),'/',trim(nmvar),'|     =',' Inf'
        endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
        L2norm=norm2(exact_var)                                          !srv 09.07.18 {
 #else
        L2norm=norm2(nCv,exact_var)
@@ -295,7 +295,7 @@
        if(L2norm.ne.0.0_R8) then
         write(71,'(a,a,a,a,a,es10.3)')
      &   ' L2era',trim(nmvar),'/L2',trim(nmvar),'        =',
-#ifdef F2003
+#ifndef LEGACYCOMP
      &   norm2(era)/L2norm
 #else
      &   norm2(nCv,era)/L2norm
@@ -314,7 +314,7 @@
 
       end subroutine calc_err_cc                                        !srv 26.02.18 }
 
-#ifndef F2003
+#ifdef LEGACYCOMP
       function norm2(n,vector)
       use b2mod_types
       implicit none

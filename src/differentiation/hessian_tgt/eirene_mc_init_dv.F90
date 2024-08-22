@@ -54,19 +54,12 @@ SUBROUTINE EIRENE_MC_INIT_NODIFF(ncv, nfc)
   PARAMETER (nlmpgs=nlim+(ngtsft+1)*nsts)
   INTRINSIC ALLOCATED
 !
-!wdk
-!#ifndef B25_EIRENE                                                   !srv (mail 15.01.08)
-!      call eirene_extrab25_eirdiag_alloc(nxdd,nydd,
-!     .                     natm,nmol,nion,nlimps,nstra,npls)          !srv 14.10.13
-!      call eirene_extrab25_eirpbls_alloc(1,natm,nmol,nion,npls,       !srv 14.10.13
-!     &                                       nstra,nfl)               !srv 03.04.13
-!#endif
 !
+!   ..test nCv, nFc
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !wdk  copy-paste from eirene_extrab25_eirdiag_alloc (Eirene_dummy)
 !     avoids double module definition in case code is compiled with Eirene 
   IF (.NOT.ALLOCATED(dab2)) THEN
-!        call alloc_b2mod_eirdiag(nx,ny,
-!     .   natm,nmol,nion,npls,nlimps,nstra,nsts,nsgmx)
     CALL ALLOC_B2MOD_EIRDIAG(ncv, natm, nmol, nion, npls, nlimps, nstra&
 &                      , nsts, nsgmx)
 !       write(*,*) ' Allocated arrays in eirene_extrab25_eirdiag_alloc ',  &

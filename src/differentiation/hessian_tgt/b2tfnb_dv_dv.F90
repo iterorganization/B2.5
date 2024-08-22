@@ -235,9 +235,9 @@ SUBROUTINE B2TFNB_DV_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo&
 & nbdirsmax0, nbdirsmax), rdivdd(nbdirsmax0, nbdirsmax)
 !    *   wrk5(nFc), wrk7(nFc,0:1),
   REAL(kind=r8) :: wrk0(nfc), wrk1(nfc), wrk2(nfc), wrk3(nfc), wrk4(nfc)&
-& , wrk6(nfc), wrk8(nfc), wrk(ncv), wrkvx(nvx), zeros(nfc, 0:1), dumm1(&
-& nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(nfc, 0:1), zeros1(&
-& nfc, 0:1)
+& , wrk6(nfc), wrk8(nfc), wrk(ncv), wrkf(nfc, 0:1), wrkvx(nvx), zeros(&
+& nfc, 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(&
+& nfc, 0:1), zeros1(nfc, 0:1)
   REAL(kind=r8) :: wrk0d0(nbdirsmax0, nfc), wrk1d0(nbdirsmax0, nfc), &
 & wrk4d0(nbdirsmax0, nfc), wrkd0(nbdirsmax0, ncv), wrkvxd0(nbdirsmax0, &
 & nvx), zerosd0(nbdirsmax0, nfc, 0:1), dumm1d0(nbdirsmax0, nfc, 0:1), &
@@ -4293,9 +4293,9 @@ SUBROUTINE B2TFNB_DV_NODIFF(ncv, nfc, nvx, isb, ismain, switch, switchd&
 & nbdirsmax, nbc), div_fnb_mdfd(nbdirsmax), rdivd(nbdirsmax)
 !    *   wrk5(nFc), wrk7(nFc,0:1),
   REAL(kind=r8) :: wrk0(nfc), wrk1(nfc), wrk2(nfc), wrk3(nfc), wrk4(nfc)&
-& , wrk6(nfc), wrk8(nfc), wrk(ncv), wrkvx(nvx), zeros(nfc, 0:1), dumm1(&
-& nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(nfc, 0:1), zeros1(&
-& nfc, 0:1)
+& , wrk6(nfc), wrk8(nfc), wrk(ncv), wrkf(nfc, 0:1), wrkvx(nvx), zeros(&
+& nfc, 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(&
+& nfc, 0:1), zeros1(nfc, 0:1)
   REAL(kind=r8) :: wrk0d(nbdirsmax, nfc), wrk1d(nbdirsmax, nfc), wrk4d(&
 & nbdirsmax, nfc), wrkd(nbdirsmax, ncv), wrkvxd(nbdirsmax, nvx), zerosd(&
 & nbdirsmax, nfc, 0:1), dumm1d(nbdirsmax, nfc, 0:1), zeros1d(nbdirsmax, &
@@ -6311,9 +6311,9 @@ SUBROUTINE B2TFNB_NODIFF_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo&
 & rdiv
 !    *   wrk5(nFc), wrk7(nFc,0:1),
   REAL(kind=r8) :: wrk0(nfc), wrk1(nfc), wrk2(nfc), wrk3(nfc), wrk4(nfc)&
-& , wrk6(nfc), wrk8(nfc), wrk(ncv), wrkvx(nvx), zeros(nfc, 0:1), dumm1(&
-& nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(nfc, 0:1), zeros1(&
-& nfc, 0:1)
+& , wrk6(nfc), wrk8(nfc), wrk(ncv), wrkf(nfc, 0:1), wrkvx(nvx), zeros(&
+& nfc, 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(&
+& nfc, 0:1), zeros1(nfc, 0:1)
 !srv 01.10.99 !lk 09.06.11
 !srv 13.05.16
   REAL(kind=r8) :: ub2dia(nfc, 0:1), nbcor(nvx), nbti(ncv), nbzb(ncv), &
