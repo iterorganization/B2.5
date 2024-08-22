@@ -2,8 +2,8 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2tral_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: tdata cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci *(dv.lnlam) *(dvd.lnlam)
+!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata *(dv.lnlam) *(dvd.lnlam)
 !                *(cod.csig) *(cod.calf) *(cod.csig_an) *(cod.csigin)
 !                *(cod.chce) *(cod.chce_exb) *(cod.chci) *(cod.chci_exb)
 !                *(cod.chcn) *(cod.cdkt) *(cod.cdzt) *(cod.cvla)
@@ -31,9 +31,9 @@
 !                *(co.fllim_ki) *(co.fllim_ke) *(co.fllim_al) *(co.fllim_al_c)
 !                *(co.fllim_ki_c) *(co.f_luc_ke) *(co.f_luc_ki)
 !                *(co.f_luc_et) *(co.f_luc_sg) *(co.f_luc_al)
-!   with respect to varying inputs: tdata cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
+!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
+!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
 !                *(dv.ni) *(dv.ne2) *(dv.lnlam) *(dv.vaecrb) *(rtd.rlcx)
 !                *(rtd.rlsa) *(rtd.rza) *(rtd.rz2) *(rt.rlcx) *(rt.rlsa)
 !                *(rt.rza) *(rt.rz2) *(dvd.ne) *(dvd.ni) *(dvd.ne2)

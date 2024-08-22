@@ -35,6 +35,7 @@ MODULE B2MOD_DRIVER_DIFFV_DIFFV
 & feedback_namelist_used
   USE B2MOD_SPUTTER_DIFFV_DIFFV, ONLY : sput_dst, dealloc_sputter_data, &
 & dealloc_b2mod_sputter
+  USE B2MOD_SOLPSTOP
   USE B2MOD_YSMP_SDRV_DIFFV_DIFFV, ONLY : dealloc_b2mod_ysmp_sdrv
   USE B2MOD_WALL_DIFFV_DIFFV, ONLY : dealloc_b2mod_wall
   USE B2MOD_NEOCLASSICAL_DIFFV_DIFFV, ONLY : dealloc_b2mod_neoclassical
@@ -104,6 +105,7 @@ MODULE B2MOD_DRIVER_DIFFV_DIFFV
   INTEGER, SAVE :: shot=0
   INTEGER, SAVE :: run=0
   INTEGER, SAVE :: ids_save=0
+  INTEGER, SAVE :: ids_av=0
 !srv 26.02.18
   INTEGER, SAVE :: use_mms=0
 !srv 26.02.18
@@ -1961,8 +1963,9 @@ MODULE B2MOD_DRIVER_DIFFV_DIFFV
   REAL(kind=r8) :: delta_ids_time, save_ids_time
   REAL(kind=r8) :: te_hot, ne_hot_frac
   LOGICAL :: quitexist, quit, quitexist_
-  LOGICAL :: write_save, write_ids
-  LOGICAL :: process_ids
+  LOGICAL :: write_save, write_ids, write_av
+  LOGICAL :: process_ids, process_av
+  LOGICAL, SAVE :: summary_av=.false.
   REAL(kind=r8) :: stack_dtim(20)
   INTEGER :: stack_ntim(20)
   INTEGER :: stack_ptr
@@ -2038,33 +2041,34 @@ MODULE B2MOD_DRIVER_DIFFV_DIFFV
 
 CONTAINS
 !  Differentiation of b2mndr_0_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtlsa:out rtlcx:out rtlqa:out
-!                rtlra:out b2voloncfd:in-out b2voloncf:in-out b2data:in-out
-!                b2dataoncfd:in-out b2datad:in-out b2dataoncf:in-out
-!                par_opt_phys:in-out geo.cvbb:in-out geo.cvx:in-out
-!                geo.cvy:in-out geo.cvsz:in-out geo.cvhz:in-out
-!                geo.cvhx:in-out geo.cvqgam:in-out geo.cvvol:in-out
-!                geo.cvonedbsq:in-out geo.cvbzb:in-out geo.cveb:in-out
-!                geo.cvfpsi:in-out geo.fcbb:in-out geo.fcs:in-out
-!                geo.fchc:in-out geo.fcht:in-out geo.fchz:in-out
-!                geo.fcvol:in-out geo.fcqgam:in-out geo.fcqalf:in-out
-!                geo.fcqbet:in-out geo.fcpbs:in-out geo.fcpbshz:in-out
-!                geo.fcbzb:in-out geo.fceb:in-out geo.fcfpsi:in-out
-!                geo.vxbb:in-out geo.vxx:in-out geo.vxy:in-out
-!                geo.vxhz:in-out geo.vxvol:in-out geo.vxffbz:in-out
-!                geo.vxfpsi:in-out geo.vxonedbsq:in-out geo.vxbzb:in-out
-!                geo.vxeb:in-out geo.cvconn:in-out geo.vxconn:in-out
-!                geo.ftconn:in-out geo.fsconn:in-out geo.fteps:in-out
-!                geo.ftbbav2:in-out geo.fspsi:in-out stated.pl.na:in-out
-!                stated.pl.ua:in-out stated.pl.po:in-out stated.pl.te:in-out
-!                stated.pl.ti:in-out stated.pl.tn:in-out stated.pl.kt:in-out
-!                stated.pl.zt:in-out stated.co.csig:in-out stated.co.calf:in-out
-!                stated.co.csig_an:in-out stated.co.csigin:in-out
-!                stated.co.chce:in-out stated.co.chce_exb:in-out
-!                stated.co.chci:in-out stated.co.chci_exb:in-out
-!                stated.co.chcn:in-out stated.co.cdkt:in-out stated.co.cdzt:in-out
-!                stated.co.chvemx:in-out stated.co.chvimx:in-out
-!                stated.co.cvla:in-out stated.co.cdna:in-out stated.co.cdna_exb:in-out
+!   Plus diff mem management of: b2voloncfd:in-out b2voloncf:in-out
+!                b2data:in-out b2dataoncfd:in-out b2datad:in-out
+!                b2dataoncf:in-out par_opt_phys:in-out rtlsa:out
+!                rtlcx:out rtlqa:out rtlra:out geo.cvbb:in-out
+!                geo.cvx:in-out geo.cvy:in-out geo.cvsz:in-out
+!                geo.cvhz:in-out geo.cvhx:in-out geo.cvqgam:in-out
+!                geo.cvvol:in-out geo.cvonedbsq:in-out geo.cvbzb:in-out
+!                geo.cveb:in-out geo.cvfpsi:in-out geo.fcbb:in-out
+!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
+!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
+!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
+!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
+!                geo.fcfpsi:in-out geo.vxbb:in-out geo.vxx:in-out
+!                geo.vxy:in-out geo.vxhz:in-out geo.vxvol:in-out
+!                geo.vxffbz:in-out geo.vxfpsi:in-out geo.vxonedbsq:in-out
+!                geo.vxbzb:in-out geo.vxeb:in-out geo.cvconn:in-out
+!                geo.vxconn:in-out geo.ftconn:in-out geo.fsconn:in-out
+!                geo.fteps:in-out geo.ftbbav2:in-out geo.fspsi:in-out
+!                stated.pl.na:in-out stated.pl.ua:in-out stated.pl.po:in-out
+!                stated.pl.te:in-out stated.pl.ti:in-out stated.pl.tn:in-out
+!                stated.pl.kt:in-out stated.pl.zt:in-out stated.co.csig:in-out
+!                stated.co.calf:in-out stated.co.csig_an:in-out
+!                stated.co.csigin:in-out stated.co.chce:in-out
+!                stated.co.chce_exb:in-out stated.co.chci:in-out
+!                stated.co.chci_exb:in-out stated.co.chcn:in-out
+!                stated.co.cdkt:in-out stated.co.cdzt:in-out stated.co.chvemx:in-out
+!                stated.co.chvimx:in-out stated.co.cvla:in-out
+!                stated.co.cdna:in-out stated.co.cdna_exb:in-out
 !                stated.co.cdpa:in-out stated.co.cvsa:in-out stated.co.cvlahz:in-out
 !                stated.co.cdpahz:in-out stated.co.cvsahz:in-out
 !                stated.co.cddi:in-out stated.co.cvsahz_cl:in-out
@@ -2508,7 +2512,6 @@ CONTAINS
     INTEGER :: nsd(nbdirsmax)
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
-    INTEGER :: nndirs
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(MAPPING_DIFFV), INTENT(INOUT) :: mpgd
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
@@ -2543,18 +2546,13 @@ CONTAINS
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     INTRINSIC MINVAL
-    EXTERNAL MINVAL_DV0
-    EXTERNAL MINVAL_DV
     INTRINSIC MIN
     INTRINSIC LOG
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTRINSIC MAX
     EXTERNAL SET_EXACT_SOLUTION
     INTRINSIC ABS
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV1
-    EXTERNAL MAXVAL_DV
     REAL(r8) :: x1
     REAL(r8), DIMENSION(nbdirsmax) :: x1d
     INTRINSIC SIZE
@@ -2585,11 +2583,7 @@ CONTAINS
     REAL(r8) :: result50
     INTEGER :: nd
     INTEGER :: nbdirs
-    REAL(kind=r8) :: MINVAL_DV
-    REAL(kind=r8) :: MAXVAL_DV
     INTEGER :: nbdirs0
-    REAL :: MINVAL_DV0
-    REAL :: MAXVAL_DV1
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
 !-----------------------------------------------------------------------
@@ -3610,7 +3604,12 @@ CONTAINS
       CALL IPGETI('b2mndr_av_read', ird_aver)
 !pb 29.09.16
       CALL IPGETI('b2mndr_ids_save', ids_save)
-      IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) WRITE(*, *) &
+      CALL IPGETI('b2mndr_ids_av', ids_av)
+      CALL XERTST(0 .LE. ids_av, 'Invalid ids_av value')
+      summary_av = ids_av .GT. 0 .AND. ids_save .EQ. 0 .AND. &
+&       delta_ids_time .EQ. 0.0_R8
+      IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&         0.0_R8) WRITE(*, *) &
 &              'Not compiled with IMAS option, IDS will not be written.'
     ELSE
 ! ..return
@@ -4063,8 +4062,7 @@ CONTAINS
       CALL CFWUIN(70, 3, idum, 'nCv,nFc,ns')
       label = TRIM(label)//' Inverted velocities'
       CALL CFWUCH(70, 120, label, 'label')
-      CALL B2WUZD_NODIFF_NODIFF(70, newversion, ns, zamin, zamax, zn, am&
-&                        )
+      CALL B2WUZD_NODIFF0(70, newversion, ns, zamin, zamax, zn, am)
       state%pl%ua = -state%pl%ua
 !     ..write plasma state
       CALL WRITE_B2FSTATE(70, ncv, nfc, ns, state)
@@ -4157,9 +4155,9 @@ CONTAINS
 &                                                                 )
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
     nlimi = 0
-    IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) CALL &
-&     ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns, wklng, natm, &
-&                  nmol, nion, nlimps)
+    IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&       0.0_R8) CALL ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns&
+&                                 , wklng, natm, nmol, nion, nlimps)
 ! new CDF movie option (1st frame at t=0)
     IF (tim .GE. save_cdfmovie_time - dtim/2.0_R8 .AND. &
 &       delta_cdfmovie_time .GT. 0.0_R8) THEN
@@ -4370,12 +4368,11 @@ CONTAINS
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ninp(0:6), nout(0:10)
+    INTEGER :: ninp(0:6), nout(0:11)
     INTEGER :: ncv, nfc, nvx, ns, ns0
     INTEGER :: nsd(nbdirsmax)
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
-    INTEGER :: nndirs
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(MAPPING_DIFFV), INTENT(INOUT) :: mpgd
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
@@ -4406,16 +4403,13 @@ CONTAINS
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     INTRINSIC MINVAL
-    EXTERNAL MINVAL_DV
     INTRINSIC MIN
     INTRINSIC LOG
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTRINSIC MAX
     EXTERNAL SET_EXACT_SOLUTION
     INTRINSIC ABS
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV
     REAL(r8) :: x1
     REAL(r8), DIMENSION(nbdirsmax) :: x1d
     INTRINSIC SIZE
@@ -4446,8 +4440,6 @@ CONTAINS
     REAL(r8) :: result50
     INTEGER :: nd
     INTEGER :: nbdirs
-    REAL(kind=r8) :: MINVAL_DV
-    REAL(kind=r8) :: MAXVAL_DV
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
 !-----------------------------------------------------------------------
@@ -5468,7 +5460,12 @@ CONTAINS
       CALL IPGETI('b2mndr_av_read', ird_aver)
 !pb 29.09.16
       CALL IPGETI('b2mndr_ids_save', ids_save)
-      IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) WRITE(*, *) &
+      CALL IPGETI('b2mndr_ids_av', ids_av)
+      CALL XERTST(0 .LE. ids_av, 'Invalid ids_av value')
+      summary_av = ids_av .GT. 0 .AND. ids_save .EQ. 0 .AND. &
+&       delta_ids_time .EQ. 0.0_R8
+      IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&         0.0_R8) WRITE(*, *) &
 &              'Not compiled with IMAS option, IDS will not be written.'
     ELSE
 ! ..return
@@ -5919,8 +5916,7 @@ CONTAINS
       CALL CFWUIN(70, 3, idum, 'nCv,nFc,ns')
       label = TRIM(label)//' Inverted velocities'
       CALL CFWUCH(70, 120, label, 'label')
-      CALL B2WUZD_NODIFF_NODIFF(70, newversion, ns, zamin, zamax, zn, am&
-&                        )
+      CALL B2WUZD_NODIFF0(70, newversion, ns, zamin, zamax, zn, am)
       state%pl%ua = -state%pl%ua
 !     ..write plasma state
       CALL WRITE_B2FSTATE(70, ncv, nfc, ns, state)
@@ -6011,9 +6007,9 @@ CONTAINS
 &                                                                 )
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
     nlimi = 0
-    IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) CALL &
-&     ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns, wklng, natm, &
-&                  nmol, nion, nlimps)
+    IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&       0.0_R8) CALL ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns&
+&                                 , wklng, natm, nmol, nion, nlimps)
 ! new CDF movie option (1st frame at t=0)
     IF (tim .GE. save_cdfmovie_time - dtim/2.0_R8 .AND. &
 &       delta_cdfmovie_time .GT. 0.0_R8) THEN
@@ -6192,7 +6188,7 @@ CONTAINS
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ninp(0:6), nout(0:10)
+    INTEGER :: ninp(0:6), nout(0:11)
     INTEGER :: ncv, nfc, nvx, ns, ns0
     INTEGER :: nsd(nbdirsmax0)
     TYPE(SWITCHES), INTENT(INOUT) :: switch
@@ -6223,7 +6219,6 @@ CONTAINS
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     INTRINSIC MINVAL
-    EXTERNAL MINVAL_DV0
     INTRINSIC MIN
     INTRINSIC LOG
     EXTERNAL XERRAB
@@ -6231,7 +6226,6 @@ CONTAINS
     EXTERNAL SET_EXACT_SOLUTION
     INTRINSIC ABS
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV1
     REAL(r8) :: x1
     INTRINSIC SIZE
     REAL(r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: abs0
@@ -6260,8 +6254,6 @@ CONTAINS
     REAL(r8) :: result40
     REAL(r8) :: result50
     INTEGER :: nbdirs
-    REAL :: MINVAL_DV0
-    REAL :: MAXVAL_DV1
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
 !-----------------------------------------------------------------------
@@ -7265,7 +7257,12 @@ CONTAINS
       CALL IPGETI('b2mndr_av_read', ird_aver)
 !pb 29.09.16
       CALL IPGETI('b2mndr_ids_save', ids_save)
-      IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) WRITE(*, *) &
+      CALL IPGETI('b2mndr_ids_av', ids_av)
+      CALL XERTST(0 .LE. ids_av, 'Invalid ids_av value')
+      summary_av = ids_av .GT. 0 .AND. ids_save .EQ. 0 .AND. &
+&       delta_ids_time .EQ. 0.0_R8
+      IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&         0.0_R8) WRITE(*, *) &
 &              'Not compiled with IMAS option, IDS will not be written.'
     ELSE
 ! ..return
@@ -7681,8 +7678,7 @@ CONTAINS
       CALL CFWUIN(70, 3, idum, 'nCv,nFc,ns')
       label = TRIM(label)//' Inverted velocities'
       CALL CFWUCH(70, 120, label, 'label')
-      CALL B2WUZD_NODIFF_NODIFF(70, newversion, ns, zamin, zamax, zn, am&
-&                        )
+      CALL B2WUZD_NODIFF0(70, newversion, ns, zamin, zamax, zn, am)
       state%pl%ua = -state%pl%ua
 !     ..write plasma state
       CALL WRITE_B2FSTATE(70, ncv, nfc, ns, state)
@@ -7768,9 +7764,9 @@ CONTAINS
 &                                                                 )
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
     nlimi = 0
-    IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) CALL &
-&     ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns, wklng, natm, &
-&                  nmol, nion, nlimps)
+    IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&       0.0_R8) CALL ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns&
+&                                 , wklng, natm, nmol, nion, nlimps)
 ! new CDF movie option (1st frame at t=0)
     IF (tim .GE. save_cdfmovie_time - dtim/2.0_R8 .AND. &
 &       delta_cdfmovie_time .GT. 0.0_R8) THEN
@@ -7794,7 +7790,7 @@ CONTAINS
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ninp(0:6), nout(0:10)
+    INTEGER :: ninp(0:6), nout(0:11)
     INTEGER :: ncv, nfc, nvx, ns, ns0
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(MAPPING), INTENT(INOUT) :: mpg
@@ -8859,7 +8855,12 @@ CONTAINS
       CALL IPGETI('b2mndr_av_read', ird_aver)
 !pb 29.09.16
       CALL IPGETI('b2mndr_ids_save', ids_save)
-      IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) WRITE(*, *) &
+      CALL IPGETI('b2mndr_ids_av', ids_av)
+      CALL XERTST(0 .LE. ids_av, 'Invalid ids_av value')
+      summary_av = ids_av .GT. 0 .AND. ids_save .EQ. 0 .AND. &
+&       delta_ids_time .EQ. 0.0_R8
+      IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&         0.0_R8) WRITE(*, *) &
 &              'Not compiled with IMAS option, IDS will not be written.'
     ELSE
 ! ..return
@@ -9272,8 +9273,7 @@ CONTAINS
       CALL CFWUIN(70, 3, idum, 'nCv,nFc,ns')
       label = TRIM(label)//' Inverted velocities'
       CALL CFWUCH(70, 120, label, 'label')
-      CALL B2WUZD_NODIFF_NODIFF(70, newversion, ns, zamin, zamax, zn, am&
-&                        )
+      CALL B2WUZD_NODIFF0(70, newversion, ns, zamin, zamax, zn, am)
       state%pl%ua = -state%pl%ua
 !     ..write plasma state
       CALL WRITE_B2FSTATE(70, ncv, nfc, ns, state)
@@ -9357,9 +9357,9 @@ CONTAINS
 &                                                                 )
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
     nlimi = 0
-    IF (ids_save .NE. 0 .OR. delta_ids_time .GT. 0.0_R8) CALL &
-&     ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns, wklng, natm, &
-&                  nmol, nion, nlimps)
+    IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&       0.0_R8) CALL ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns&
+&                                 , wklng, natm, nmol, nion, nlimps)
 ! new CDF movie option (1st frame at t=0)
     IF (tim .GE. save_cdfmovie_time - dtim/2.0_R8 .AND. &
 &       delta_cdfmovie_time .GT. 0.0_R8) THEN
@@ -9377,11 +9377,11 @@ CONTAINS
 !  Differentiation of b2mndr_1_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar potpar enipar
 !                b2recyc tdata jd
-!   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
-!                enepar conpar enkpar potpar mompar enipar b2recyc
-!                tdata parm_hce parm_hci parm_vla parm_vsa parm_alf
-!                parm_dpa parm_sig parm_dna corr_length sigma shift
-!                *par_opt_phys mean switch.keps_cd switch.keps_heat
+!   with respect to varying inputs: enepar conpar enkpar potpar
+!                mompar enipar b2recyc parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
+!                corr_length sigma shift *par_opt_phys mean *rtlsa
+!                *rtlcx *rtlqa *rtlra switch.keps_cd switch.keps_heat
 !                switch.keps_heat_i switch.keps_sig switch.keps_alf
 !                switch.keps_visc switch.keps_dkt switch.keps_dzt
 !                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
@@ -9390,9 +9390,9 @@ CONTAINS
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
-!   Plus diff mem management of: rtlsa:in rtlcx:in rtlqa:in rtlra:in
-!                b2voloncfd:in b2voloncf:in b2data:in b2dataoncfd:in
-!                b2datad:in b2dataoncf:in par_opt_phys:in geo.cvbb:in
+!   Plus diff mem management of: b2voloncfd:in b2voloncf:in b2data:in
+!                b2dataoncfd:in b2datad:in b2dataoncf:in par_opt_phys:in
+!                rtlsa:in rtlcx:in rtlqa:in rtlra:in geo.cvbb:in
 !                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvhx:in
 !                geo.cvqgam:in geo.cvvol:in geo.cvonedbsq:in geo.cvfpsi:in
 !                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
@@ -9801,7 +9801,6 @@ CONTAINS
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(SWITCHES_DIFFV0), INTENT(INOUT) :: switchd0
     TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
-    INTEGER :: nndirs
     REAL(kind=r8) :: j(nncf)
     REAL(kind=r8) :: jd0(nbdirsmax0, nncf)
     REAL(kind=r8) :: jd(nbdirsmax, nncf)
@@ -11238,6 +11237,14 @@ CONTAINS
         stated%psnc%kinrgy(nd, :, :) = 0.d0
       END DO
       first_opt_call = .false.
+      cfvlad0(:, :, :) = 0.0_8
+      cfvsad0(:, :, :) = 0.0_8
+      cfalfd0(:, :) = 0.0_8
+      cfdpad0(:, :, :) = 0.0_8
+      cfsigd0(:, :) = 0.0_8
+      cfdnad0(:, :, :) = 0.0_8
+      cfhced0(:, :) = 0.0_8
+      cfhcid0(:, :, :) = 0.0_8
       IF (ALLOCATED(b2voloncfdd)) b2voloncfdd(:, :, :, :) = 0.0_8
       cfnormdd(:, :, :) = 0.0_8
       IF (ALLOCATED(b2voloncfd0)) b2voloncfd0(:, :, :) = 0.0_8
@@ -11246,10 +11253,10 @@ CONTAINS
       volddd(:, :, :) = 0.0_8
       IF (ALLOCATED(b2datadd)) b2datadd(:, :, :) = 0.0_8
       IF (ALLOCATED(b2dataoncfd0)) b2dataoncfd0(:, :) = 0.0_8
-!      potpardd(:, :, :, :) = 0.0_8
-!      conpardd(:, :, :, :, :) = 0.0_8
-!      enipardd(:, :, :, :) = 0.0_8
-!      enepardd(:, :, :, :) = 0.0_8
+      !potpardd(:, :, :, :) = 0.0_8
+      !conpardd(:, :, :, :, :) = 0.0_8
+      !enipardd(:, :, :, :) = 0.0_8
+      !enepardd(:, :, :, :) = 0.0_8
       userfluxparmd0(:, :, :) = 0.0_8
       userfluxparmdd(:, :, :, :) = 0.0_8
       int0ldd(:, :) = 0.0_8
@@ -11262,14 +11269,6 @@ CONTAINS
       int3ld0(:) = 0.0_8
       int3ldd(:, :) = 0.0_8
       int0ld0(:) = 0.0_8
-      cfvlad0(:, :, :) = 0.0_8
-      cfvsad0(:, :, :) = 0.0_8
-      cfalfd0(:, :) = 0.0_8
-      cfdpad0(:, :, :) = 0.0_8
-      cfsigd0(:, :) = 0.0_8
-      cfdnad0(:, :, :) = 0.0_8
-      cfhced0(:, :) = 0.0_8
-      cfhcid0(:, :, :) = 0.0_8
       saved_fb_actuatordd(:, :, :) = 0.0_8
       fb_targetd0(:, :) = 0.0_8
       fb_prevd0(:, :) = 0.0_8
@@ -11722,6 +11721,14 @@ CONTAINS
       stated0%psnc%kinrgy(:, :, :) = 0.0_8
       jdd(:, :, :) = 0.0_8
     ELSE
+      cfvlad0(:, :, :) = 0.0_8
+      cfvsad0(:, :, :) = 0.0_8
+      cfalfd0(:, :) = 0.0_8
+      cfdpad0(:, :, :) = 0.0_8
+      cfsigd0(:, :) = 0.0_8
+      cfdnad0(:, :, :) = 0.0_8
+      cfhced0(:, :) = 0.0_8
+      cfhcid0(:, :, :) = 0.0_8
       IF (ALLOCATED(b2voloncfdd)) b2voloncfdd(:, :, :, :) = 0.0_8
       cfnormdd(:, :, :) = 0.0_8
       IF (ALLOCATED(b2voloncfd0)) b2voloncfd0(:, :, :) = 0.0_8
@@ -11730,10 +11737,10 @@ CONTAINS
       volddd(:, :, :) = 0.0_8
       IF (ALLOCATED(b2datadd)) b2datadd(:, :, :) = 0.0_8
       IF (ALLOCATED(b2dataoncfd0)) b2dataoncfd0(:, :) = 0.0_8
-!      potpardd(:, :, :, :) = 0.0_8
-!      conpardd(:, :, :, :, :) = 0.0_8
-!      enipardd(:, :, :, :) = 0.0_8
-!      enepardd(:, :, :, :) = 0.0_8
+      !potpardd(:, :, :, :) = 0.0_8
+      !conpardd(:, :, :, :, :) = 0.0_8
+      !enipardd(:, :, :, :) = 0.0_8
+      !enepardd(:, :, :, :) = 0.0_8
       userfluxparmd0(:, :, :) = 0.0_8
       userfluxparmdd(:, :, :, :) = 0.0_8
       int0ldd(:, :) = 0.0_8
@@ -11746,14 +11753,6 @@ CONTAINS
       int3ld0(:) = 0.0_8
       int3ldd(:, :) = 0.0_8
       int0ld0(:) = 0.0_8
-      cfvlad0(:, :, :) = 0.0_8
-      cfvsad0(:, :, :) = 0.0_8
-      cfalfd0(:, :) = 0.0_8
-      cfdpad0(:, :, :) = 0.0_8
-      cfsigd0(:, :) = 0.0_8
-      cfdnad0(:, :, :) = 0.0_8
-      cfhced0(:, :) = 0.0_8
-      cfhcid0(:, :, :) = 0.0_8
       saved_fb_actuatordd(:, :, :) = 0.0_8
       fb_targetd0(:, :) = 0.0_8
       fb_prevd0(:, :) = 0.0_8
@@ -12546,8 +12545,8 @@ CONTAINS
 &       elapsedinit .GT. b2mndr_elapsed .AND. b2mndr_elapsed .GT. 0.0_R8&
 &       )
       WRITE(*, *) 'MAX RESIDUAL ', res_max
-      WRITE(*, *) 'MAX TGT RESIDUAL ', gradient_res
       primal_res = res_max
+      WRITE(*, *) 'MAX TGT RESIDUAL ', gradient_res
       IF (res_max .LT. gradient_res) THEN
         res_max = gradient_res
       ELSE
@@ -12751,7 +12750,7 @@ CONTAINS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: nout(0:10), ns, idum(0:9)
+    INTEGER :: nout(0:11), ns, idum(0:9)
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(MAPPING_DIFFV), INTENT(INOUT) :: mpgd
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
@@ -12764,7 +12763,6 @@ CONTAINS
     TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: state_avgd
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
-    INTEGER :: nndirs
     REAL(kind=r8) :: j(nncf)
     REAL(kind=r8) :: jd(nbdirsmax, nncf)
     INTEGER :: ncv, nfc, nvx
@@ -13826,8 +13824,8 @@ CONTAINS
 &       elapsedinit .GT. b2mndr_elapsed .AND. b2mndr_elapsed .GT. 0.0_R8&
 &       )
       WRITE(*, *) 'MAX RESIDUAL ', res_max
-      WRITE(*, *) 'MAX TGT RESIDUAL ', gradient_res
       primal_res = res_max
+      WRITE(*, *) 'MAX TGT RESIDUAL ', gradient_res
       IF (res_max .LT. gradient_res) THEN
         res_max = gradient_res
       ELSE
@@ -13872,7 +13870,7 @@ CONTAINS
     USE B2MOD_AD_DIFFV_DIFFV
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: nout(0:10), ns, idum(0:9)
+    INTEGER :: nout(0:11), ns, idum(0:9)
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
     TYPE(B2STATE), INTENT(INOUT) :: state
@@ -14179,8 +14177,8 @@ CONTAINS
 &       elapsedinit .GT. b2mndr_elapsed .AND. b2mndr_elapsed .GT. 0.0_R8&
 &       )
       WRITE(*, *) 'MAX RESIDUAL ', res_max
-      primal_iterations = itim
       primal_res = res_max
+      primal_iterations = itim
     END DO
 !   ..end loop
 !   ..call cost function
@@ -14196,12 +14194,11 @@ CONTAINS
   END SUBROUTINE B2MNDR_1
 
 !  Differentiation of b2mndr_2_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtlsa:out rtlcx:out rtlqa:out
-!                rtlra:out b2voloncfd:out b2voloncf:out b2data:out
+!   Plus diff mem management of: b2voloncfd:out b2voloncf:out b2data:out
 !                b2dataoncfd:out b2datad:out b2dataoncf:out par_opt_phys:out
-!                state.sr_eir.sch:out state.sr_eir.she:out state.sr_eir.shi:out
-!                state.sr_eir.sne:out state.sr_eir.smo:out state.sr_eir.smq:out
-!                state.sr_eir.sna:out
+!                rtlsa:out rtlcx:out rtlqa:out rtlra:out state.sr_eir.sch:out
+!                state.sr_eir.she:out state.sr_eir.shi:out state.sr_eir.sne:out
+!                state.sr_eir.smo:out state.sr_eir.smq:out state.sr_eir.sna:out
 !  Differentiation of b2mndr_2 as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: b2voloncf:out b2data:out b2dataoncf:out
 !                par_opt_phys:out rtlsa:out rtlcx:out rtzmax:out
@@ -14247,7 +14244,6 @@ CONTAINS
     INTRINSIC MOD
     INTRINSIC MAX
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTEGER :: max1
     CHARACTER(len=9) :: arg1
     REAL(r8), DIMENSION(mpg%ncv) :: arg10
@@ -14503,7 +14499,7 @@ CONTAINS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: nout(0:10), ns, idum(0:9)
+    INTEGER :: nout(0:11), ns, idum(0:9)
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
@@ -14521,7 +14517,6 @@ CONTAINS
     INTRINSIC MOD
     INTRINSIC MAX
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTEGER :: max1
     CHARACTER(len=9) :: arg1
     REAL(r8), DIMENSION(mpg%ncv) :: arg10
@@ -14760,7 +14755,7 @@ CONTAINS
     USE B2MOD_DIFFSIZES
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
     IMPLICIT NONE
-    INTEGER :: nout(0:10), ns, idum(0:9)
+    INTEGER :: nout(0:11), ns, idum(0:9)
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
@@ -14997,7 +14992,7 @@ CONTAINS
 !  Hint: mpg%nCv should be the size of dimension 1 of array arg1
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: nout(0:10), ns, idum(0:9)
+    INTEGER :: nout(0:11), ns, idum(0:9)
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(GEOMETRY), INTENT(INOUT) :: geo

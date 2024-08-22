@@ -613,8 +613,8 @@ PROGRAM B2MN_DV_DV
 &       'Increase size of nbdirsmax in diffsizes.F')
   CALL XERTST(switch%b2optim_namelist .EQ. 1, &
 &       'Sensitivity calculation needs b2optim_namelist=1!')
-  CALL SET_TGT_TGT_PERTURBATION(switchd,switchd0)
   arg1 = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
+  CALL SET_TGT_TGT_PERTURBATION(switchd,switchd0)
   CALL B2MN_STEP_DV_DV(switch, switchd0, switchd, geo, geod0, geod, mpg&
 &                , mpgd, state, stated0, stated, statedd, state_ext, &
 &                state_extd0, state_extd, state_avg, state_avgd, j, jd0&

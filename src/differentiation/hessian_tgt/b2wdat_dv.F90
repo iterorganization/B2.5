@@ -105,7 +105,6 @@ SUBROUTINE B2WDAT_NODIFF(ns, mpg, geo, state)
   EXTERNAL IPGETI
 !   ..initialisation
   SAVE ncall, iout, use_astra, boundary_namelist
-  INTRINSIC MAXVAL
   EXTERNAL XERRAB
   INTRINSIC COUNT
   EXTERNAL CALC_ERR

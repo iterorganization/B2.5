@@ -227,7 +227,7 @@ c*** PFR flow values
       real (kind=R8) ::
      *     hlp_pfrf(0:npfrgrpd,DEF_NATM,npff_tmp)
       real (kind=R8) ::
-     *     wtarg_max(DEF_NCUT) !vk, max target heat flux density
+     *     wtarg_max(max(4,DEF_NCUT)) !vk, max target heat flux density
       equivalence (equp_tmp(0,1,1), hlp_pfrf)
       character hlp_hb*8
 
@@ -275,7 +275,7 @@ c***    surface area,cell interface areas
       real (kind=R8) ::
      *  d, e, s, x
       real (kind=R8) :: pz(-1:nx,-1:ny)
-      integer i, j, k, l, m, n, i0, is, ix, iy, irt, js,
+      integer i, j, k, l, m, n, i0, is, ix, iy, js, irt,
      ,  j_he_i, l_pad_str
 #ifdef B25_EIRENE
       integer ia, im, iyp, ls
@@ -408,8 +408,8 @@ c*** Calculate the basic quantities for each surface/species
               hlp_ardts(k)=hlp_ardts(k)+wlarea(l)
               do j=1,ndts_tmp !{
                 m=ndtx_tmp(j)
+                x=wlabsrp(m,lntrgrp(intrgrp(k)))
                 if(i.eq.intrgrp(k)) then !{
-                  x=wlabsrp(m,l)
                   if(x.gt.0.0_R8) ndta_tmp(k,j)=ndtk_tmp
                   hlp_ksdts(k,j)=x
                 else !}{
@@ -1110,7 +1110,8 @@ c East target
 #ifdef DBG
         write(*,*) 'In b2mod_usrtrc: nxtl, nxtr = ', nxtl, nxtr
 #endif
-      call b2usr_loads_nodiff_nodiff(nx,ny,ns,nxtl,nxtr,BoRiS,wtarg_max)
+        call b2usr_loads_nodiff_nodiff(nx,ny,ns,nxtl,nxtr,BoRiS,
+     &    wtarg_max)
 #ifdef DBG
         write(*,*) 'b2usr_loads_nodiff_nodiff finished'
 #endif
@@ -1735,8 +1736,8 @@ c*** Limiter case
           l=lntrgrp(i)
           do j=1,ndts_tmp !{
             m=ndtx_tmp(j)
+            x=wlabsrp(m,lntrgrp(intrgrp(k)))
             if(i.eq.intrgrp(k)) then !{
-              x=wlabsrp(m,l)
               if(x.gt.0.0_R8) ndta_tmp(k,j)=ndtk_tmp
               hlp_ksdts(k,j)=x
             else !}{
