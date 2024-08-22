@@ -236,8 +236,8 @@ SUBROUTINE B2TFHI__DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
   REAL(kind=r8) :: scurdd(nbdirsmax0, nbdirsmax, nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
-!      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
-!      integer, save :: b2kin=0, b2vis=0
+!      integer, save :: b2tfhi_hybr2 = 0, b2_upwind = 0, flo53 = 0
+!      integer, save :: b2kin = 0, b2vis = 0
 !      real (kind=R8), save :: drift_hyb = 1.0_R8
 !      integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
 !      integer, save :: lim_flux = 0                                    !srv 04.02.03
@@ -767,7 +767,6 @@ SUBROUTINE B2TFHI__DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
     CALL MY_OUT_US(70, nfc, 1, co%chcn(:, 1), 'chcn1')
     CALL MY_OUT_US(70, nfc, 1, co%chci(:, 1), 'chci1')
   END IF
-!
 !
 !   ..convective coefficients
   DO nd=1,nbdirsmax
@@ -1375,8 +1374,8 @@ SUBROUTINE B2TFHI__DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd&
   REAL(kind=r8) :: scurd(nbdirsmax, nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
-!      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
-!      integer, save :: b2kin=0, b2vis=0
+!      integer, save :: b2tfhi_hybr2 = 0, b2_upwind = 0, flo53 = 0
+!      integer, save :: b2kin = 0, b2vis = 0
 !      real (kind=R8), save :: drift_hyb = 1.0_R8
 !      integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
 !      integer, save :: lim_flux = 0                                    !srv 04.02.03
@@ -1682,7 +1681,6 @@ SUBROUTINE B2TFHI__DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd&
     CALL MY_OUT_US(70, nfc, 1, co%chcn(:, 1), 'chcn1')
     CALL MY_OUT_US(70, nfc, 1, co%chci(:, 1), 'chci1')
   END IF
-!
 !
 !   ..convective coefficients
   DO nd=1,nbdirsmax
@@ -2062,8 +2060,8 @@ SUBROUTINE B2TFHI__NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo&
   REAL(kind=r8) :: scur(nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
-!      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
-!      integer, save :: b2kin=0, b2vis=0
+!      integer, save :: b2tfhi_hybr2 = 0, b2_upwind = 0, flo53 = 0
+!      integer, save :: b2kin = 0, b2vis = 0
 !      real (kind=R8), save :: drift_hyb = 1.0_R8
 !      integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
 !      integer, save :: lim_flux = 0                                    !srv 04.02.03
@@ -2230,7 +2228,6 @@ SUBROUTINE B2TFHI__NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo&
     CALL MY_OUT_US(70, nfc, 1, co%chcn(:, 1), 'chcn1')
     CALL MY_OUT_US(70, nfc, 1, co%chci(:, 1), 'chci1')
   END IF
-!
 !
 !   ..convective coefficients
   floi0(:, 0) = 1.5_R8*dv%fni_he(:, 0) + co%chvi(:, 0)*nif + flidia(:, 0&

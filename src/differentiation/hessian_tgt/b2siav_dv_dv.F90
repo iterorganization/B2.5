@@ -208,8 +208,8 @@ SUBROUTINE B2SIAV_DV_DV(ncv, nfc, nvx, ns, isb, switch, geo, geod0, geod&
   REAL(r8), DIMENSION(nbdirsmax0) :: temp6d
   REAL(kind=r8), DIMENSION(ncv) :: temp7
   REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: temp7d
-  DOUBLE PRECISION, DIMENSION(ncv) :: temp8
-  DOUBLE PRECISION, DIMENSION(nbdirsmax0, ncv) :: temp8d
+  REAL(kind=r8), DIMENSION(ncv) :: temp8
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: temp8d
   REAL(kind=r8), DIMENSION(ncv) :: temp9
   INTEGER :: nbdirs
   INTEGER :: nd0
@@ -1320,7 +1320,7 @@ SUBROUTINE B2SIAV_DV_NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, geod, &
   REAL(kind=r8) :: temp5
   REAL(r8) :: temp6
   REAL(kind=r8), DIMENSION(ncv) :: temp7
-  DOUBLE PRECISION, DIMENSION(ncv) :: temp8
+  REAL(kind=r8), DIMENSION(ncv) :: temp8
   REAL(kind=r8), DIMENSION(ncv) :: temp9
   INTEGER :: nbdirs
 !-----------------------------------------------------------------------

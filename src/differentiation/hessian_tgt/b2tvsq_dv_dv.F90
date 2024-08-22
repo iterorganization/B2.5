@@ -155,8 +155,8 @@ SUBROUTINE B2TVSQ_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, mpg&
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp1d
   REAL(kind=r8), DIMENSION(ncv) :: temp2
   REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: temp2d
-  DOUBLE PRECISION, DIMENSION(ncv) :: temp3
-  DOUBLE PRECISION, DIMENSION(nbdirsmax0, ncv) :: temp3d
+  REAL(kind=r8), DIMENSION(ncv) :: temp3
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: temp3d
   REAL(kind=r8) :: temp4
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp4d
   REAL(kind=r8) :: temp5
@@ -1113,7 +1113,7 @@ SUBROUTINE B2TVSQ_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
   REAL(kind=r8) :: temp0
   REAL(kind=r8) :: temp1
   REAL(kind=r8), DIMENSION(ncv) :: temp2
-  DOUBLE PRECISION, DIMENSION(ncv) :: temp3
+  REAL(kind=r8), DIMENSION(ncv) :: temp3
   REAL(kind=r8) :: temp4
   REAL(kind=r8) :: temp5
   REAL(r8) :: temp6

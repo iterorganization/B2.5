@@ -1145,28 +1145,17 @@ CONTAINS
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     INTRINSIC COUNT
-    EXTERNAL COUNT_DV
     EXTERNAL FIND_FACES_NODIFF
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTRINSIC ANY
-    EXTERNAL ANY_DV
     INTRINSIC MINVAL
-    EXTERNAL MINVAL_DV
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV
     INTRINSIC SUM
     INTRINSIC MINLOC
-    EXTERNAL MINLOC_DV
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     LOGICAL :: result10
     INTEGER :: nbdirs
-    REAL(kind=r8) :: MINVAL_DV
-    LOGICAL :: ANY_DV
-    INTEGER :: MINLOC_DV
-    INTEGER :: COUNT_DV
-    REAL(kind=r8) :: MAXVAL_DV
     INTEGER :: nd
     INTEGER :: nbdirs0
 !
@@ -1573,28 +1562,17 @@ CONTAINS
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     INTRINSIC COUNT
-    EXTERNAL COUNT_DV
     EXTERNAL FIND_FACES_NODIFF
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTRINSIC ANY
-    EXTERNAL ANY_DV
     INTRINSIC MINVAL
-    EXTERNAL MINVAL_DV
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV
     INTRINSIC SUM
     INTRINSIC MINLOC
-    EXTERNAL MINLOC_DV
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     LOGICAL :: result10
     INTEGER :: nbdirs
-    REAL(kind=r8) :: MINVAL_DV
-    LOGICAL :: ANY_DV
-    INTEGER :: MINLOC_DV
-    INTEGER :: COUNT_DV
-    REAL(kind=r8) :: MAXVAL_DV
 !
     filename = neutrals_filename
     neutrals_time_mod = 0.0_R8
@@ -2785,7 +2763,6 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC MAX
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTEGER :: nbdirs
 !
     m%nrc = nstrai
@@ -2904,11 +2881,11 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC MAX
     INTRINSIC TRIM
+    INTRINSIC IABS
     INTRINSIC MINLOC
     INTRINSIC SIZE
     INTEGER :: y1
     INTEGER :: abs0
-    INTEGER, DIMENSION(nn_spcsrf) :: abs1
     INTEGER :: max1
 !
     OPEN(newunit=iout, file='b2us.neutrals.parameters') 
@@ -3116,12 +3093,7 @@ CONTAINS
 !
     WRITE(iout, '(1x,a,i5,a1)') 'n_spcsrf= ', n_spcsrf, ','
     IF (n_spcsrf .GT. 0) THEN
-      WHERE (l_spcsrf .GE. 0.0) 
-        abs1 = l_spcsrf
-      ELSEWHERE
-        abs1 = -l_spcsrf
-      END WHERE
-      ii = MINLOC(abs1)
+      ii = MINLOC(IABS(l_spcsrf))
       IF (ii(1) .EQ. 1) THEN
         is = 0
       ELSE IF (l_spcsrf(ii(1)) .EQ. 0) THEN

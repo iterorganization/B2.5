@@ -3,8 +3,8 @@
 !
 !  Differentiation of set_parameters in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar enkpar potpar
-!                mompar enipar b2recyc tdata parm_hce parm_hci
-!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
+!                mompar enipar b2recyc parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
 !                switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
@@ -15,8 +15,8 @@
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
 !   with respect to varying inputs: enepar conpar enkpar potpar
-!                mompar enipar b2recyc tdata parm_hce parm_hci
-!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
+!                mompar enipar b2recyc parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
 !                *par_opt_phys switch.keps_cd switch.keps_heat
 !                switch.keps_heat_i switch.keps_sig switch.keps_alf
 !                switch.keps_visc switch.keps_dkt switch.keps_dzt

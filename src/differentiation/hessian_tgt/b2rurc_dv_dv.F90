@@ -195,20 +195,12 @@ SUBROUTINE B2RURC_DV_DV(nget, version, nbdirs, nbdirs0)
 !   ..procedures
   REAL(kind=r8) :: smax
   INTRINSIC MAXVAL
-  EXTERNAL MAXVAL_DV1
-  EXTERNAL MAXVAL_DV
   INTRINSIC MINVAL
-  EXTERNAL MINVAL_DV0
-  EXTERNAL MINVAL_DV
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: nbdirs
-  REAL(kind=r8) :: MINVAL_DV
-  REAL(kind=r8) :: MAXVAL_DV
   INTEGER :: nbdirs0
-  REAL :: MINVAL_DV0
-  REAL :: MAXVAL_DV1
 !
 !-----------------------------------------------------------------------
 !.computation
@@ -562,15 +554,11 @@ SUBROUTINE B2RURC_DV_NODIFF(nget, version, nbdirs)
 !   ..procedures
   REAL(kind=r8) :: smax
   INTRINSIC MAXVAL
-  EXTERNAL MAXVAL_DV
   INTRINSIC MINVAL
-  EXTERNAL MINVAL_DV
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: nbdirs
-  REAL(kind=r8) :: MINVAL_DV
-  REAL(kind=r8) :: MAXVAL_DV
 !
 !-----------------------------------------------------------------------
 !.computation
@@ -917,15 +905,11 @@ SUBROUTINE B2RURC_NODIFF_DV(nget, version, nbdirs)
 !   ..procedures
   REAL(kind=r8) :: smax
   INTRINSIC MAXVAL
-  EXTERNAL MAXVAL_DV1
   INTRINSIC MINVAL
-  EXTERNAL MINVAL_DV0
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: nbdirs
-  REAL :: MINVAL_DV0
-  REAL :: MAXVAL_DV1
 !
 !-----------------------------------------------------------------------
 !.computation

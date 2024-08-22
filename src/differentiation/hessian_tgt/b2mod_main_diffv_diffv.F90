@@ -151,7 +151,6 @@ MODULE B2MOD_MAIN_DIFFV_DIFFV
   CHARACTER(len=32) :: b25_git_version
   LOGICAL :: file_open
   EXTERNAL GET_B25_HASH
-  EXTERNAL GET_B25_HASH_DV
 !   ..procedures
   CHARACTER(len=32) :: GET_B25_HASH
   EXTERNAL PRGINI, PRGEND, CFOPEN, CFRUIN
@@ -161,40 +160,40 @@ MODULE B2MOD_MAIN_DIFFV_DIFFV
 
 CONTAINS
 !  Differentiation of b2mn_init_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtlsa:out rtlcx:out rtlqa:out
-!                rtlra:out b2voloncfd:in-out b2voloncf:in-out b2data:in-out
-!                b2dataoncfd:in-out b2datad:in-out b2dataoncf:in-out
-!                par_opt_phys:in-out geo.cvbb:in-out geo.cvx:in-out
-!                geo.cvy:in-out geo.cvsz:in-out geo.cvhz:in-out
-!                geo.cvhx:in-out geo.cvqgam:in-out geo.cvvol:in-out
-!                geo.cvonedbsq:in-out geo.cvbzb:in-out geo.cveb:in-out
-!                geo.cvfpsi:in-out geo.fcbb:in-out geo.fcs:in-out
-!                geo.fchc:in-out geo.fcht:in-out geo.fchz:in-out
-!                geo.fcvol:in-out geo.fcqgam:in-out geo.fcqalf:in-out
-!                geo.fcqbet:in-out geo.fcpbs:in-out geo.fcpbshz:in-out
-!                geo.fcbzb:in-out geo.fceb:in-out geo.fcfpsi:in-out
-!                geo.vxbb:in-out geo.vxx:in-out geo.vxy:in-out
-!                geo.vxhz:in-out geo.vxvol:in-out geo.vxffbz:in-out
-!                geo.vxfpsi:in-out geo.vxonedbsq:in-out geo.vxbzb:in-out
-!                geo.vxeb:in-out geo.cvconn:in-out geo.vxconn:in-out
-!                geo.ftconn:in-out geo.fsconn:in-out geo.fteps:in-out
-!                geo.ftbbav2:in-out geo.fspsi:in-out state_ext.zn:in-out
-!                state_ext.am:in-out state_ext.ne:in-out state_ext.ne2:in-out
-!                state_ext.ue:in-out state_ext.za:in-out state_ext.za2:in-out
-!                state_ext.pt:in-out state_ext.na:in-out state_ext.ni:in-out
-!                state_ext.ua:in-out state_ext.ta:in-out state_ext.fhi:in-out
-!                state_ext.fa:in-out state_ext.sne:in-out state_ext.she:in-out
-!                state_ext.shi:in-out state_ext.sch:in-out state_ext.sna:in-out
-!                state_ext.smo:in-out stated.pl.na:in-out stated.pl.ua:in-out
-!                stated.pl.po:in-out stated.pl.te:in-out stated.pl.ti:in-out
-!                stated.pl.tn:in-out stated.pl.kt:in-out stated.pl.zt:in-out
-!                stated.co.csig:in-out stated.co.calf:in-out stated.co.csig_an:in-out
-!                stated.co.csigin:in-out stated.co.chce:in-out
-!                stated.co.chce_exb:in-out stated.co.chci:in-out
-!                stated.co.chci_exb:in-out stated.co.chcn:in-out
-!                stated.co.cdkt:in-out stated.co.cdzt:in-out stated.co.chvemx:in-out
-!                stated.co.chvimx:in-out stated.co.cvla:in-out
-!                stated.co.cdna:in-out stated.co.cdna_exb:in-out
+!   Plus diff mem management of: b2voloncfd:in-out b2voloncf:in-out
+!                b2data:in-out b2dataoncfd:in-out b2datad:in-out
+!                b2dataoncf:in-out par_opt_phys:in-out rtlsa:out
+!                rtlcx:out rtlqa:out rtlra:out geo.cvbb:in-out
+!                geo.cvx:in-out geo.cvy:in-out geo.cvsz:in-out
+!                geo.cvhz:in-out geo.cvhx:in-out geo.cvqgam:in-out
+!                geo.cvvol:in-out geo.cvonedbsq:in-out geo.cvbzb:in-out
+!                geo.cveb:in-out geo.cvfpsi:in-out geo.fcbb:in-out
+!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
+!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
+!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
+!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
+!                geo.fcfpsi:in-out geo.vxbb:in-out geo.vxx:in-out
+!                geo.vxy:in-out geo.vxhz:in-out geo.vxvol:in-out
+!                geo.vxffbz:in-out geo.vxfpsi:in-out geo.vxonedbsq:in-out
+!                geo.vxbzb:in-out geo.vxeb:in-out geo.cvconn:in-out
+!                geo.vxconn:in-out geo.ftconn:in-out geo.fsconn:in-out
+!                geo.fteps:in-out geo.ftbbav2:in-out geo.fspsi:in-out
+!                state_ext.zn:in-out state_ext.am:in-out state_ext.ne:in-out
+!                state_ext.ne2:in-out state_ext.ue:in-out state_ext.za:in-out
+!                state_ext.za2:in-out state_ext.pt:in-out state_ext.na:in-out
+!                state_ext.ni:in-out state_ext.ua:in-out state_ext.ta:in-out
+!                state_ext.fhi:in-out state_ext.fa:in-out state_ext.sne:in-out
+!                state_ext.she:in-out state_ext.shi:in-out state_ext.sch:in-out
+!                state_ext.sna:in-out state_ext.smo:in-out stated.pl.na:in-out
+!                stated.pl.ua:in-out stated.pl.po:in-out stated.pl.te:in-out
+!                stated.pl.ti:in-out stated.pl.tn:in-out stated.pl.kt:in-out
+!                stated.pl.zt:in-out stated.co.csig:in-out stated.co.calf:in-out
+!                stated.co.csig_an:in-out stated.co.csigin:in-out
+!                stated.co.chce:in-out stated.co.chce_exb:in-out
+!                stated.co.chci:in-out stated.co.chci_exb:in-out
+!                stated.co.chcn:in-out stated.co.cdkt:in-out stated.co.cdzt:in-out
+!                stated.co.chvemx:in-out stated.co.chvimx:in-out
+!                stated.co.cvla:in-out stated.co.cdna:in-out stated.co.cdna_exb:in-out
 !                stated.co.cdpa:in-out stated.co.cvsa:in-out stated.co.cvlahz:in-out
 !                stated.co.cdpahz:in-out stated.co.cvsahz:in-out
 !                stated.co.cddi:in-out stated.co.cvsahz_cl:in-out
@@ -652,10 +651,8 @@ CONTAINS
     INTEGER :: idum(0:9)
     EXTERNAL PRGINI
     EXTERNAL GET_B25_HASH
-    EXTERNAL GET_B25_HASH_DV
     INTRINSIC TRIM
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTEGER :: nbdirs
     CHARACTER(len=32) :: GET_B25_HASH
     INTEGER :: nbdirs0
@@ -963,10 +960,8 @@ CONTAINS
     INTEGER :: idum(0:9)
     EXTERNAL PRGINI
     EXTERNAL GET_B25_HASH
-    EXTERNAL GET_B25_HASH_DV
     INTRINSIC TRIM
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTEGER :: nbdirs
     CHARACTER(len=32) :: GET_B25_HASH
 !
@@ -1424,8 +1419,8 @@ CONTAINS
 
 !  Differentiation of b2mn_step_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar enkpar potpar
-!                mompar enipar b2recyc tdata parm_hce parm_hci
-!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
+!                mompar enipar b2recyc parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
 !                switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
@@ -1436,11 +1431,11 @@ CONTAINS
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
 !                jd
-!   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
-!                enepar conpar enkpar potpar mompar enipar b2recyc
-!                tdata parm_hce parm_hci parm_vla parm_vsa parm_alf
-!                parm_dpa parm_sig parm_dna corr_length sigma shift
-!                *par_opt_phys mean switch.keps_cd switch.keps_heat
+!   with respect to varying inputs: enepar conpar enkpar potpar
+!                mompar enipar b2recyc parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
+!                corr_length sigma shift *par_opt_phys mean *rtlsa
+!                *rtlcx *rtlqa *rtlra switch.keps_cd switch.keps_heat
 !                switch.keps_heat_i switch.keps_sig switch.keps_alf
 !                switch.keps_visc switch.keps_dkt switch.keps_dzt
 !                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
@@ -1449,30 +1444,30 @@ CONTAINS
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
-!   RW status of diff variables: *rtlsa:in *rtlcx:in *rtlqa:in
-!                *rtlra:in *b2voloncfd:(loc) *b2voloncf:(loc) *b2data:(loc)
-!                *b2dataoncfd:(loc) *b2datad:(loc) *b2dataoncf:(loc)
-!                cutlo:(loc) cutlod:(loc) potpard:(loc) enepar:in-out
-!                conpard:(loc) enipard:(loc) enepard:(loc) conpar:in-out
-!                enkpar:in-out potpar:in-out mompar:in-out enipar:in-out
-!                b2recyc:in-out userfluxparm:(loc) userfluxparmd:(loc)
-!                int0ld:(loc) int4l:(loc) int1l:(loc) int2ld:(loc)
-!                int4ld:(loc) int2l:(loc) int1ld:(loc) int3l:(loc)
-!                int3ld:(loc) int0l:(loc) tdata:in-out cfvla:(loc)
-!                cfvsa:(loc) cfalf:(loc) cfdpa:(loc) cfsig:(loc)
-!                cfdna:(loc) cfhce:(loc) cfhci:(loc) parm_hce:in-out
+!   RW status of diff variables: cfvla:(loc) cfvsa:(loc) cfalf:(loc)
+!                cfdpa:(loc) cfsig:(loc) cfdna:(loc) cfhce:(loc)
+!                cfhci:(loc) cutlo:(loc) cutlod:(loc) *b2voloncfd:(loc)
+!                *b2voloncf:(loc) *b2data:(loc) *b2dataoncfd:(loc)
+!                *b2datad:(loc) *b2dataoncf:(loc) potpard:(loc)
+!                enepar:in-out conpard:(loc) enipard:(loc) enepard:(loc)
+!                conpar:in-out enkpar:in-out potpar:in-out mompar:in-out
+!                enipar:in-out b2recyc:in-out userfluxparm:(loc)
+!                userfluxparmd:(loc) int0ld:(loc) int4l:(loc) int1l:(loc)
+!                int2ld:(loc) int4ld:(loc) int2l:(loc) int1ld:(loc)
+!                int3l:(loc) int3ld:(loc) int0l:(loc) parm_hce:in-out
 !                parm_hci:in-out parm_vla:in-out parm_vsa:in-out
 !                parm_alf:in-out parm_dpa:in-out parm_sig:in-out
-!                parm_dna:in-out corr_length:in sigma:in shift:in
-!                *par_opt_phys:in mean:in saved_fb_actuatord:(loc)
-!                fb_target:(loc) fb_prev:(loc) fb_current:(loc)
-!                fb_prevd:(loc) fb_currentd:(loc) fb_constd:(loc)
-!                fb_const:(loc) charge_frac:(loc) fb_targetd:(loc)
-!                saved_fb_actuator:(loc) fb_rescale:(loc) charge_fracd:(loc)
-!                fb_rescaled:(loc) j:(loc) geo.vxhz:(loc) geo.vxonedbsq:(loc)
-!                *(stated.pl.na):(loc) *(stated.pl.ua):(loc) *(stated.pl.po):(loc)
-!                *(stated.pl.te):(loc) *(stated.pl.ti):(loc) *(stated.pl.tn):(loc)
-!                *(stated.pl.kt):(loc) *(stated.pl.zt):(loc) *(stated.co.csig):(loc)
+!                parm_dna:in-out tdata:in-out corr_length:in sigma:in
+!                shift:in *par_opt_phys:in mean:in *rtlsa:in *rtlcx:in
+!                *rtlqa:in *rtlra:in saved_fb_actuatord:(loc) fb_target:(loc)
+!                fb_prev:(loc) fb_current:(loc) fb_prevd:(loc)
+!                fb_currentd:(loc) fb_constd:(loc) fb_const:(loc)
+!                charge_frac:(loc) fb_targetd:(loc) saved_fb_actuator:(loc)
+!                fb_rescale:(loc) charge_fracd:(loc) fb_rescaled:(loc)
+!                j:(loc) geo.vxhz:(loc) geo.vxonedbsq:(loc) *(stated.pl.na):(loc)
+!                *(stated.pl.ua):(loc) *(stated.pl.po):(loc) *(stated.pl.te):(loc)
+!                *(stated.pl.ti):(loc) *(stated.pl.tn):(loc) *(stated.pl.kt):(loc)
+!                *(stated.pl.zt):(loc) *(stated.co.csig):(loc)
 !                *(stated.co.calf):(loc) *(stated.co.csig_an):(loc)
 !                *(stated.co.csigin):(loc) *(stated.co.chce):(loc)
 !                *(stated.co.chce_exb):(loc) *(stated.co.chci):(loc)
@@ -1812,9 +1807,9 @@ CONTAINS
 !                state.diag.reshireg:(loc) jd:out (global)cfnorm[1:nncf]:(loc)
 !                (global)cfnormd[1:nncf,1:nbdirsmax]:(loc) (global)vold[1:nncf]:(loc)
 !                (global)voldd[1:nncf,1:nbdirsmax]:(loc)
-!   Plus diff mem management of: rtlsa:in rtlcx:in rtlqa:in rtlra:in
-!                b2voloncfd:in b2voloncf:in b2data:in b2dataoncfd:in
-!                b2datad:in b2dataoncf:in par_opt_phys:in geo.cvbb:in
+!   Plus diff mem management of: b2voloncfd:in b2voloncf:in b2data:in
+!                b2dataoncfd:in b2datad:in b2dataoncf:in par_opt_phys:in
+!                rtlsa:in rtlcx:in rtlqa:in rtlra:in geo.cvbb:in
 !                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvhx:in
 !                geo.cvqgam:in geo.cvvol:in geo.cvonedbsq:in geo.cvfpsi:in
 !                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
@@ -2951,38 +2946,38 @@ CONTAINS
   END SUBROUTINE B2MN_STEP
 
 !  Differentiation of b2mn_fin_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtlsa:out rtlcx:out rtlqa:out
-!                rtlra:out b2voloncfd:out b2voloncf:out b2data:out
+!   Plus diff mem management of: b2voloncfd:out b2voloncf:out b2data:out
 !                b2dataoncfd:out b2datad:out b2dataoncf:out par_opt_phys:out
-!                geo.cvbb:out geo.cvx:out geo.cvy:out geo.cvsz:out
-!                geo.cvhz:out geo.cvhx:out geo.cvqgam:out geo.cvvol:out
-!                geo.cvonedbsq:out geo.cvbzb:out geo.cveb:out geo.cvfpsi:out
-!                geo.fcbb:out geo.fcs:out geo.fchc:out geo.fcht:out
-!                geo.fchz:out geo.fcvol:out geo.fcqgam:out geo.fcqalf:out
-!                geo.fcqbet:out geo.fcpbs:out geo.fcpbshz:out geo.fcbzb:out
-!                geo.fceb:out geo.fcfpsi:out geo.vxbb:out geo.vxx:out
-!                geo.vxy:out geo.vxhz:out geo.vxvol:out geo.vxffbz:out
-!                geo.vxfpsi:out geo.vxonedbsq:out geo.vxbzb:out
-!                geo.vxeb:out geo.cvconn:out geo.vxconn:out geo.ftconn:out
-!                geo.fsconn:out geo.fteps:out geo.ftbbav2:out geo.fspsi:out
-!                state_ext.zn:out state_ext.am:out state_ext.ne:out
-!                state_ext.ne2:out state_ext.ue:out state_ext.za:out
-!                state_ext.za2:out state_ext.pt:out state_ext.na:out
-!                state_ext.ni:out state_ext.ua:out state_ext.ta:out
-!                state_ext.fhi:out state_ext.fa:out state_ext.sne:out
-!                state_ext.she:out state_ext.shi:out state_ext.sch:out
-!                state_ext.sna:out state_ext.smo:out stated.pl.na:out
-!                stated.pl.ua:out stated.pl.po:out stated.pl.te:out
-!                stated.pl.ti:out stated.pl.tn:out stated.pl.kt:out
-!                stated.pl.zt:out stated.co.csig:out stated.co.calf:out
-!                stated.co.csig_an:out stated.co.csigin:out stated.co.chce:out
-!                stated.co.chce_exb:out stated.co.chci:out stated.co.chci_exb:out
-!                stated.co.chcn:out stated.co.cdkt:out stated.co.cdzt:out
-!                stated.co.chvemx:out stated.co.chvimx:out stated.co.cvla:out
-!                stated.co.cdna:out stated.co.cdna_exb:out stated.co.cdpa:out
-!                stated.co.cvsa:out stated.co.cvlahz:out stated.co.cdpahz:out
-!                stated.co.cvsahz:out stated.co.cddi:out stated.co.cvsahz_cl:out
-!                stated.co.chcb:out stated.co.cvsahz_eff:out stated.co.cvsa_cl:out
+!                rtlsa:out rtlcx:out rtlqa:out rtlra:out geo.cvbb:out
+!                geo.cvx:out geo.cvy:out geo.cvsz:out geo.cvhz:out
+!                geo.cvhx:out geo.cvqgam:out geo.cvvol:out geo.cvonedbsq:out
+!                geo.cvbzb:out geo.cveb:out geo.cvfpsi:out geo.fcbb:out
+!                geo.fcs:out geo.fchc:out geo.fcht:out geo.fchz:out
+!                geo.fcvol:out geo.fcqgam:out geo.fcqalf:out geo.fcqbet:out
+!                geo.fcpbs:out geo.fcpbshz:out geo.fcbzb:out geo.fceb:out
+!                geo.fcfpsi:out geo.vxbb:out geo.vxx:out geo.vxy:out
+!                geo.vxhz:out geo.vxvol:out geo.vxffbz:out geo.vxfpsi:out
+!                geo.vxonedbsq:out geo.vxbzb:out geo.vxeb:out geo.cvconn:out
+!                geo.vxconn:out geo.ftconn:out geo.fsconn:out geo.fteps:out
+!                geo.ftbbav2:out geo.fspsi:out state_ext.zn:out
+!                state_ext.am:out state_ext.ne:out state_ext.ne2:out
+!                state_ext.ue:out state_ext.za:out state_ext.za2:out
+!                state_ext.pt:out state_ext.na:out state_ext.ni:out
+!                state_ext.ua:out state_ext.ta:out state_ext.fhi:out
+!                state_ext.fa:out state_ext.sne:out state_ext.she:out
+!                state_ext.shi:out state_ext.sch:out state_ext.sna:out
+!                state_ext.smo:out stated.pl.na:out stated.pl.ua:out
+!                stated.pl.po:out stated.pl.te:out stated.pl.ti:out
+!                stated.pl.tn:out stated.pl.kt:out stated.pl.zt:out
+!                stated.co.csig:out stated.co.calf:out stated.co.csig_an:out
+!                stated.co.csigin:out stated.co.chce:out stated.co.chce_exb:out
+!                stated.co.chci:out stated.co.chci_exb:out stated.co.chcn:out
+!                stated.co.cdkt:out stated.co.cdzt:out stated.co.chvemx:out
+!                stated.co.chvimx:out stated.co.cvla:out stated.co.cdna:out
+!                stated.co.cdna_exb:out stated.co.cdpa:out stated.co.cvsa:out
+!                stated.co.cvlahz:out stated.co.cdpahz:out stated.co.cvsahz:out
+!                stated.co.cddi:out stated.co.cvsahz_cl:out stated.co.chcb:out
+!                stated.co.cvsahz_eff:out stated.co.cvsa_cl:out
 !                stated.co.ceqp:out stated.co.vsaf_cl:out stated.co.sig0:out
 !                stated.co.hce0:out stated.co.hci0:out stated.co.hcn0:out
 !                stated.co.alf0:out stated.co.dkt0:out stated.co.dzt0:out

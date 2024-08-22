@@ -217,17 +217,12 @@ CONTAINS
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTRINSIC ANY
-    EXTERNAL ANY_DV
     EXTERNAL FIND_FACES_NODIFF
     INTRINSIC MIN
     INTRINSIC MAX
     INTRINSIC ALLOCATED
-    EXTERNAL ALLOCATED_DV
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV1
-    EXTERNAL MAXVAL_DV0
     INTRINSIC ALL
     INTRINSIC SUM
     INTRINSIC ABS
@@ -235,10 +230,7 @@ CONTAINS
     REAL(kind=r8) :: result1
     INTEGER :: nd
     INTEGER :: nbdirs
-    LOGICAL :: ANY_DV
-    LOGICAL :: ALLOCATED_DV
     INTEGER :: nbdirs0
-    REAL :: MAXVAL_DV1
 !
     filename = 'b2.optimization.parameters'
     WRITE(*, *) 'OPTIM: max number of readable cost functions :', nncf
@@ -490,7 +482,7 @@ CONTAINS
 &                                cfreg, m%cffcor, m, idb)
               END DO
 ! iss
-              WRITE(ss, '(I0)') icf
+              WRITE(ss, '(I3)') icf
               CALL XERTST(ncffc .GT. 0, &
 &                   'No faces found for cost function  = '//ss)
               m%cfregp(icf, 2) = ncffc
@@ -1121,16 +1113,12 @@ CONTAINS
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTRINSIC ANY
-    EXTERNAL ANY_DV
     EXTERNAL FIND_FACES_NODIFF
     INTRINSIC MIN
     INTRINSIC MAX
     INTRINSIC ALLOCATED
-    EXTERNAL ALLOCATED_DV
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV0
     INTRINSIC ALL
     INTRINSIC SUM
     INTRINSIC ABS
@@ -1138,8 +1126,6 @@ CONTAINS
     REAL(kind=r8) :: result1
     INTEGER :: nd
     INTEGER :: nbdirs
-    LOGICAL :: ANY_DV
-    LOGICAL :: ALLOCATED_DV
 !
     filename = 'b2.optimization.parameters'
     WRITE(*, *) 'OPTIM: max number of readable cost functions :', nncf
@@ -1391,7 +1377,7 @@ CONTAINS
 &                                cfreg, m%cffcor, m, idb)
               END DO
 ! iss
-              WRITE(ss, '(I0)') icf
+              WRITE(ss, '(I3)') icf
               CALL XERTST(ncffc .GT. 0, &
 &                   'No faces found for cost function  = '//ss)
               m%cfregp(icf, 2) = ncffc
@@ -2265,7 +2251,7 @@ CONTAINS
 &                                cfreg, m%cffcor, m, idb)
               END DO
 ! iss
-              WRITE(ss, '(I0)') icf
+              WRITE(ss, '(I3)') icf
               CALL XERTST(ncffc .GT. 0, &
 &                   'No faces found for cost function  = '//ss)
               m%cfregp(icf, 2) = ncffc
@@ -2855,9 +2841,7 @@ CONTAINS
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
     IMPLICIT NONE
     INTRINSIC ALLOCATED
-    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
-    LOGICAL :: ALLOCATED_DV
     INTEGER :: nbdirs0
     IF (ALLOCATED(b2rr)) THEN
       DEALLOCATE(b2rr)
@@ -2914,9 +2898,7 @@ CONTAINS
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTRINSIC ALLOCATED
-    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
-    LOGICAL :: ALLOCATED_DV
     IF (ALLOCATED(b2rr)) THEN
       DEALLOCATE(b2rr)
     END IF

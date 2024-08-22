@@ -79,7 +79,7 @@
             dd(jj) = Cd(nd, ii + (jj-1)*jj/2)
           enddo
           ! these following coefficients are swapped, we store only upper triangle of Cd
-          do jj = 1, ii-1 
+          do jj = 1, ii-1
             dd(jj) = Cd(nd, jj + (ii-1)*ii/2)
           enddo
           yy(ii) = yy(ii) - sum(dd*res)
@@ -102,7 +102,7 @@
      &                                  Cd(nd, ii + (jj-1)*jj/2)
             enddo
             ! these following coefficients are swapped
-            do jj = 1, ii-1 
+            do jj = 1, ii-1
               LdetCd(nd) = LdetCd(nd) + invC(jj + (ii-1)*ii/2)*
      &                                  Cd(nd, jj + (ii-1)*ii/2)
             enddo

@@ -132,11 +132,9 @@ CONTAINS
     INTEGER :: io, iun, idum(0:1), iex
     REAL(kind=r8) :: zpdum(0:nsdecl-1, 4)
     INTRINSIC ALLOCATED
-    EXTERNAL ALLOCATED_DV
     INTEGER :: arg1
     INTEGER :: nd
     INTEGER :: nbdirs
-    LOGICAL :: ALLOCATED_DV
 !
     CALL SUBINI('run_av_init')
 !
@@ -554,9 +552,7 @@ CONTAINS
     TYPE(B2AVERAGE), INTENT(INOUT) :: avg
     TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: avgd
     INTRINSIC ALLOCATED
-    EXTERNAL ALLOCATED_DV
     INTEGER :: nbdirs
-    LOGICAL :: ALLOCATED_DV
 !
     IF (.NOT.ALLOCATED(avg%na_mean)) THEN
       RETURN
@@ -714,7 +710,7 @@ CONTAINS
 ! local variables
     INTEGER :: idum(0:1), iun
     EXTERNAL CFWUCH, CFWUIN, CFWURE_NODIFF
-    EXTERNAL B2XXID, B2WUZD_NODIFF_NODIFF
+    EXTERNAL B2XXID, B2WUZD_NODIFF0
     INTEGER :: arg1
 !
     CALL SUBINI('run_av_save')
@@ -739,8 +735,7 @@ CONTAINS
       CALL CFVERW(iun, newversion)
       CALL CFWUIN(iun, 2, idum, 'nCv,ns')
       CALL CFWUCH(iun, 120, lble, 'label')
-      CALL B2WUZD_NODIFF_NODIFF(iun, newversion, ns, zamin, zamax, zn, &
-&                         am)
+      CALL B2WUZD_NODIFF0(iun, newversion, ns, zamin, zamax, zn, am)
 !
 !   ..write average state and sources
       idum(0) = naver

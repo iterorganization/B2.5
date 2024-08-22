@@ -2,11 +2,11 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2mndt_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: potpard enepar conpard enipard
+!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci potpard enepar conpard enipard
 !                enepard conpar potpar enipar b2recyc userfluxparm
 !                userfluxparmd int0ld int4l int1l int2ld int4ld
-!                int2l int1ld int3l int3ld int0l tdata cfvla cfvsa
-!                cfalf cfdpa cfsig cfdna cfhce cfhci saved_fb_actuatord
+!                int2l int1ld int3l int3ld int0l tdata saved_fb_actuatord
 !                fb_target fb_prev fb_current fb_prevd fb_currentd
 !                fb_constd fb_const charge_frac fb_targetd saved_fb_actuator
 !                fb_rescale charge_fracd fb_rescaled *(std.pl.na)
@@ -132,15 +132,15 @@
 !                *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
 !                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.nn)
 !                *(st.psnc.kinrgy)
-!   with respect to varying inputs: potpard enepar conpard enipard
+!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci potpard enepar conpard enipard
 !                enepard conpar enkpar potpar mompar enipar b2recyc
 !                userfluxparm userfluxparmd int0ld int4l int1l
 !                int2ld int4ld int2l int1ld int3l int3ld int0l
-!                tdata cfvla cfvsa cfalf cfdpa cfsig cfdna cfhce
-!                cfhci parm_hce parm_hci parm_vla parm_vsa parm_alf
-!                parm_dpa parm_sig parm_dna saved_fb_actuatord
-!                fb_target fb_prev fb_current fb_prevd fb_currentd
-!                fb_constd fb_const charge_frac fb_targetd saved_fb_actuator
+!                parm_hce parm_hci parm_vla parm_vsa parm_alf parm_dpa
+!                parm_sig parm_dna tdata saved_fb_actuatord fb_target
+!                fb_prev fb_current fb_prevd fb_currentd fb_constd
+!                fb_const charge_frac fb_targetd saved_fb_actuator
 !                fb_rescale charge_fracd fb_rescaled *(std.pl.na)
 !                *(std.pl.ua) *(std.pl.po) *(std.pl.te) *(std.pl.ti)
 !                *(std.pl.tn) *(std.pl.kt) *(std.pl.zt) *(std.co.csig)
@@ -2085,7 +2085,7 @@ SUBROUTINE B2MNDT_DV_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, &
 !.end b2mndt
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: nout(0:10)
+  INTEGER :: nout(0:11)
   INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0, nscx, nscxmax, iscx(0:&
 & nscxmax-1), itim, ntim
   INTEGER, SAVE :: ntim_batch=500
@@ -2849,7 +2849,7 @@ SUBROUTINE B2MNDT_NODIFF_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0&
 !.end b2mndt
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: nout(0:10)
+  INTEGER :: nout(0:11)
   INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0, nscx, nscxmax, iscx(0:&
 & nscxmax-1), itim, ntim
   INTEGER, SAVE :: ntim_batch=500

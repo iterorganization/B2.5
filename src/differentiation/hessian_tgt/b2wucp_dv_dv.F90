@@ -89,7 +89,7 @@ SUBROUTINE B2WUCP_NODIFF_NODIFF(nput, version, ns)
   INTEGER :: ireg, idum(0:9)
 !   ..procedures
   EXTERNAL XERTST, CFWUIN, CFWURE_NODIFF
-  EXTERNAL B2XVCP_NODIFF_NODIFF, B2WUZD_NODIFF_NODIFF
+  EXTERNAL B2XVCP_NODIFF_NODIFF, B2WUZD_NODIFF0
   INTEGER :: arg1
 !
 !-----------------------------------------------------------------------
@@ -107,7 +107,7 @@ SUBROUTINE B2WUCP_NODIFF_NODIFF(nput, version, ns)
 !
 ! ..save common blocks
 !   ..save /b2cmpa/
-  CALL B2WUZD_NODIFF_NODIFF(nput, version, ns, zamin, zamax, zn, am)
+  CALL B2WUZD_NODIFF0(nput, version, ns, zamin, zamax, zn, am)
 !   ..save /b2cmpb/
   IF (cbnrso .GT. 0 .AND. cbnrno .GT. 0 .AND. cbnrwe .GT. 0 .AND. cbnrea&
 &     .GT. 0) THEN
