@@ -5032,7 +5032,45 @@ cwdk    Todo: corrections for BCCON.ne.14
             srw%she0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
           enddo
         elseif(switch%bcene_16_style.eq.1)then
-          call xerrab ('bcene_16_style.eq.1 not adapted for WG')
+          totflux = 0.0_R8
+          tes = 0.0_R8
+          t0 = 0.0_R8
+          SENEPAR = 0.0_R8
+          do iCv1 = mpg%nCi+1, mpg%nCv
+            iFc = mpg%cvFc(mpg%cvFcP(iCv1,1))
+            iCv2 = mpg%fcCv(iFc,2)
+            if (.not.mpg%cvOnClosedSurface(iCv1)) cycle
+            t0 = t0 + geo%cvVol(iCv1)
+            tes = tes + geo%cvVol(iCv1)*pl%te(iCv1)
+            totflux = totflux + dv%fhe_mdf(iFc,1)
+            totflux = totflux + dv%vaecrb(iFc,1,ns-1)*pl%te(iCv1)*
+     &        dv%ne(iCv1)*geo%fcS(iFc)*geo%fcQalf(iFc,1)
+          enddo
+          tes = tes/t0
+          do ibw=1,nbc
+            if(BCENE(IBW).EQ.BCENE(IB)) then
+              SENEPAR = SENEPAR + ENEPAR(IBW,1)
+            endif
+          enddo
+          write(*,'(3(a,es14.7))')
+     *         ' TES=',tes/qe,' totfluxe=',totflux
+     *             ,' SENEPAR=',SENEPAR
+          tes = tes*(1-switch%b2stbc_bc_ref_te*(totflux-SENEPAR)/
+     &      (abs(totflux)+abs(SENEPAR)))
+
+          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1)) 
+            if (.not.mpg%cvOnClosedSurface(iCv1)) then
+              call xerrab
+     1          ('B2STBC -- BCENE=16 IS AVAILABLE FOR CORE ONLY')
+            endif
+            srw%she0(iCv1,0) = 
+     &        VBIG*NE00*tes*geo%fcS(iFc)
+            srw%she0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+          enddo
+          ! call xerrab ('bcene_16_style.eq.1 not adapted for WG')
 #ifdef WG_TODO
 
           if(ncall_b2stbc_phys.eq.0) then
@@ -7957,7 +7995,48 @@ cwdk     * need to correct this BC for hybrid scheme
 * CONDITION ON ION DENSITY BCCON = 25,26,27
 
       case (27)
-        call xerrab ('b2stbc_phys -- BCENI = 27 not adapted for WG')
+        totflux = 0.0_R8
+        tis = 0.0_R8
+        nivs = 0.0_R8
+        t0 = 0.0_R8
+        t1 = 0.0_R8
+        SENIPAR = 0.0_R8
+        do iCv1 = mpg%nCi+1, mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(iCv1,1))
+          iCv2 = mpg%fcCv(iFc,2)
+          if (.not.mpg%cvOnClosedSurface(iCv1)) cycle
+          t0 = t0 + geo%cvVol(iCv1)
+          t1 = t1 + geo%cvVol(iCv1)*pl%ti(iCv2)
+          nivs = nivs + geo%cvVol(iCv1)*dv%ni(iCv1,0)
+          tis = tis + geo%cvVol(iCv1)*pl%ti(iCv1)*dv%ni(iCv1,0)
+          totflux = totflux + dv%fhi_mdf(iFc,1)
+          totflux = totflux + dv%vaecrb(iFc,1,ns-1)*pl%ti(iCv1)*
+     &       dv%ni(iCv1,0)*geo%fcS(iFc)*geo%fcQalf(iFc,1)
+        enddo
+        tis = tis/nivs
+        t1 = t1/t0
+        do ibw=1,nbc
+          if(BCENI(IBW).EQ.BCENI(IB)) then
+            SENIPAR = SENIPAR + ENIPAR(IBW,1)
+          endif
+        enddo
+        write(*,'(3(a,es14.7))')
+     *        ' TIS=',tis/qe,' totfluxi=',totflux,
+     &        ' SENIPAR=',SENIPAR
+        tis = tis*(1-switch%b2stbc_bc_ref_ti*(totflux-SENIPAR)/
+     &     (abs(totflux)+abs(SENIPAR)))
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1)) 
+          if (.not.mpg%cvOnClosedSurface(iCv1)) then
+            call xerrab
+     1         ('B2STBC -- BCENI=27 IS AVAILABLE FOR CORE ONLY')
+          endif
+          srw%shi0(iCv1,0) = 
+     &       VBIG*NE00*(tis+pl%ti(iCv2)-t1)*geo%fcS(iFc)
+          srw%shi0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
 #ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,*) 'BCENI = 27 : Given integrated ion heat flux',
