@@ -3752,12 +3752,12 @@
 				</switch>
 				<switch>
 					<name>b2ux9p_mult_nonzero</name>
-					<default>10</default>
+					<default>15</default>
 					<type>integer</type>
 				</switch>
 				<switch>
 					<name>b2ux11p_mult_nonzero</name>
-					<default>10</default>
+					<default>15</default>
 					<type>integer</type>
 				</switch>
 			</switchgroup>
