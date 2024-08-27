@@ -161,7 +161,7 @@ cxpb loop to avoid errors when using OpenMP parallelization.
       write(*,*)
      .  'Allocating space for solver for 11-point stencil matrix'  !srv 11.01.00
       if(style.eq.2) then
-        mult_nonzero=10
+        mult_nonzero=15
         mult_solvdim=15
         mult_solvdim1=10
         call ipgeti ('b2ux11p_mult_nonzero', mult_nonzero)
