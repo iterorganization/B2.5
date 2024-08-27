@@ -52,4 +52,4 @@ cxpb        write(*,*)'end_page: read values!'
       endif
       dirty_graph=.false.
       return
-      end
+      end subroutine end_page
