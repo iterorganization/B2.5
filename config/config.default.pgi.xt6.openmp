@@ -60,6 +60,7 @@ DBLSED =
 INCMOD = -I
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -81,8 +82,6 @@ ifdef SOLPS_DEBUG
 else
   LDOPTS = -mp=nonuma -O3
 endif
-
-LCPP= ${LD_SONNET}
 
 
 #!!!Local Variables:
