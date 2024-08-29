@@ -1078,7 +1078,8 @@
 
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
-      do i = 1, maxval(mpg%strDiv)
+      if (allocated(mpg%strDiv)) then
+       do i = 1, maxval(mpg%strDiv)
         match_found = .false.
         k = 1
         do while (.not.match_found)
@@ -1194,7 +1195,8 @@
         end do
         call xertst (match_found .or. mpg%nXpt.eq.0,
      &   'No matching face found for strike point !')
-      end do
+       end do
+      end if
 
       return
       end subroutine init_geometry

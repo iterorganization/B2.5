@@ -3,25 +3,25 @@ cwdk  This routine is intended to write cell-centered fields on an
 c     unstructured grid similar to the functionality of the my_out-routine
 c     for "original" B2.5 grids.
 c     File names will be appended with "*_st.dat".
-      
+
       use b2mod_types
       use b2mod_ad
 #ifdef WG_DEBUG
       use b2us_debug
-#endif     
+#endif
       implicit none
 #ifdef WG_DEBUG
       integer ix, iy
-      real (kind=R8) :: fun_st(-1:nx_st,-1:ny_st), 
+      real (kind=R8) :: fun_st(-1:nx_st,-1:ny_st),
      .  funf_st(-1:nx_st,-1:ny_st,0:1)
-#endif     
+#endif
       integer nwrite, nel, flag     ! flag = 0 for cell centers;
       real (kind=R8) :: fun_us(1:nel)
       character *(*) first_name
 
       character *64 filename, finame
 !      character(len=*), allocatable :: filename, finame
-      character(24) hlp_frm
+      character(26) hlp_frm
       integer ic
       integer, save :: ncall = 0
       integer, save :: iappend = 0, ndigits = 6
@@ -43,7 +43,7 @@ c     File names will be appended with "*_st.dat".
  10     my_out_folder=''
  20     continue
       end if
-      
+
 #ifdef WG_DEBUG
       if (isClassicalGrid.eq.0) then
 #endif
@@ -56,7 +56,7 @@ c     File names will be appended with "*_st.dat".
           open (nwrite,file=trim(filename),position='append')
         end if
         write(hlp_frm,"(a,i2,a,i2.2,a)")
-     .        '(1x,i9,1x,es',ndigits+8,'.',ndigits,')' 
+     .        '(1x,i9,1x,es',ndigits+9,'.',ndigits,'e3)'
         do ic = 1, nel
           write (nwrite,hlp_frm) ic, fun_us(ic)
         end do
@@ -70,8 +70,8 @@ c     File names will be appended with "*_st.dat".
         my_out_sf(1) ='_bottom_st.dat'
 
         call to_struct_face(nel,fun_us,funf_st)
-        
-        do ic = 0,1  
+
+        do ic = 0,1
 !          filename=trim(my_out_folder)//trim(first_name)//my_out_sf(ic)
            finame=first_name
            filename = trim(my_out_folder)//trim(finame)//
@@ -80,43 +80,45 @@ c     File names will be appended with "*_st.dat".
 !          write(*,*) 'trim(first_name) = ',trim(first_name))
 !          write(*,*) 'filename = ',filename
 !          write(*,*) 'trim(filename) = ',trim(filename)
-          
+
           if (iappend.eq.0) then
             open (nwrite,file=trim(filename))
           else
             open (nwrite,file=trim(filename),position='append')
           end if
-          write(hlp_frm,"(a4,i4,a1,i2,a9)") 
-     &         '(5x,',nx_st+2,'(',ndigits,'x,i3,5x))'
+          write(hlp_frm,"(a4,i4,a1,i2,a5,i2,a3)")
+     &         '(5x,',nx_st+2,
+     &         '(',6+ndigits-(ndigits+6)/2,'x,i3,',(ndigits+6)/2,'x))'
           write (nwrite,hlp_frm) (ix,ix=-1,nx_st)
-          write(hlp_frm,"(a10,i4,a3,i2.2,a1,i2.2,a2)")
-     &         '(1x,i3,1x,',nx_st+2,'(es',ndigits+8,'.',ndigits,'))'
+          write(hlp_frm,"(a10,i4,a3,i2.2,a1,i2.2,a4)")
+     &         '(1x,i3,1x,',nx_st+2,'(es',ndigits+9,'.',ndigits,'e3))'
           do iy=ny_st,-1,-1
            write(nwrite,hlp_frm) iy, (funf_st(ix,iy,ic), ix = -1, nx_st)
           enddo
           close (nwrite)
         enddo
-        
-!        filename = trim(my_out_folder)//trim(first_name)//'_sum_st.dat'                !srv 13.12.18 {
+
+!        filename = trim(my_out_folder)//trim(first_name)//'_sum_st.dat' !srv 13.12.18 {
 !        if (iappend.eq.0) then
 !          open (nwrite,file=trim(filename))
 !        else
 !            open (nwrite,file=trim(filename),position='append')
 !        end if
-!        write(hlp_frm,"(a4,i4,a1,i2,a9)") 
-!     &         '(5x,',nx_st+2,'(',ndigits,'x,i3,5x))'
+!        write(hlp_frm,"(a4,i4,a1,i2,a5,i2,a3)")
+!     &         '(5x,',nx_st+2,
+!     &         '(',6+ndigits-(ndigits+6)/2,'x,i3,',(ndigits+6)/2,'x))'
 !        write (nwrite,hlp_frm) (ix,ix=-1,nx_st)
-!        write(hlp_frm,"(a10,i4,a3,i2.2,a1,i2.2,a2)")
-!     &         '(1x,i3,1x,',nx_st+2,'(es',ndigits+8,'.',ndigits,'))'
+!        write(hlp_frm,"(a10,i4,a3,i2.2,a1,i2.2,a4)")
+!     &         '(1x,i3,1x,',nx_st+2,'(es',ndigits+9,'.',ndigits,'e3))'
 !        do iy=ny_st,-1,-1
 !         write(nwrite,hlp_frm)iy,(funf_st(ix,iy,0)+funf_st(ix,iy,1),
 !     &         ix=-1,nx_st)
-!        enddo       
+!        enddo
 !        close (nwrite)
       else
 
-        if(flag.eq.0) then  ! cell centers case    
-        
+        if(flag.eq.0) then  ! cell centers case
+
           call to_struct_cell(nel,fun_us,fun_st)
 
         finame=first_name
@@ -127,7 +129,7 @@ c     File names will be appended with "*_st.dat".
 
 !          filename = trim(my_out_folder)//trim(first_name)//'_st.dat'
           finame=first_name//'_vx'
-        
+
         endif
 
         filename = trim(my_out_folder)//trim(finame)//'_st.dat'
@@ -137,17 +139,18 @@ c     File names will be appended with "*_st.dat".
         else
           open (nwrite,file=trim(filename),position='append')     !srv 07.09.18
         end if
-        write(hlp_frm,"(a4,i4,a1,i2,a9)") 
-     &       '(5x,',nx_st+2,'(',ndigits,'x,i3,5x))'
+        write(hlp_frm,"(a4,i4,a1,i2,a5,i2,a3)")
+     &       '(5x,',nx_st+2,
+     &       '(',6+ndigits-(ndigits+6)/2,'x,i3,',(ndigits+6)/2,'x))'
         write (nwrite,hlp_frm) (ix,ix=-1,nx_st)
-        write(hlp_frm,"(a10,i4,a3,i2.2,a1,i2.2,a2)")
-     &       '(1x,i3,1x,',nx_st+2,'(es',ndigits+8,'.',ndigits,'))'
+        write(hlp_frm,"(a10,i4,a3,i2.2,a1,i2.2,a4)")
+     &       '(1x,i3,1x,',nx_st+2,'(es',ndigits+9,'.',ndigits,'e3))'
         do iy=ny_st,-1,-1
           write(nwrite,hlp_frm) iy, (fun_st(ix,iy), ix = -1, nx_st)
         enddo
         close (nwrite)
 
-      endif                                                                     !srv 13.12.18  }
+      endif                                                       !srv 13.12.18  }
 
       endif
 #endif
