@@ -5,10 +5,10 @@
       use b2mod_types
       use b2mod_ma28_for_9diag
       use b2mod_indirect
-      use b2mod_subsys
 #ifdef _OPENMP
       use b2mod_openmp
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -382,7 +382,7 @@
               indexes(2,k)=iy
               indexes(3,k)= 2
               ia(k) = i
-              ja(k) =2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
+              ja(k) = 2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
               ner = ner+1
             endif
             if( aa9(ix,iy,5) .ne. 0.0_R8 ) then
@@ -392,7 +392,7 @@
               indexes(2,k)=iy
               indexes(3,k)= 5
               ia(k) = i
-              ja(k) =2+leftix(ixt,iyt)+(2+leftiy(ixt,iyt)-1)*nxp2
+              ja(k) = 2+leftix(ixt,iyt)+(2+leftiy(ixt,iyt)-1)*nxp2
               ner = ner+1
             endif
 *       Case (ix+1,iy-1)
@@ -407,7 +407,7 @@
               indexes(2,k)=iy
               indexes(3,k)= -2
               ia(k) = i
-              ja(k) =2+bottomix(ixr,iyr)+(2+bottomiy(ixr,iyr)-1)*nxp2
+              ja(k) = 2+bottomix(ixr,iyr)+(2+bottomiy(ixr,iyr)-1)*nxp2
               ner = ner+1
             endif
             if( aa9(ix,iy,-5) .ne. 0.0_R8 ) then
@@ -417,7 +417,7 @@
               indexes(2,k)=iy
               indexes(3,k)= -5
               ia(k) = i
-              ja(k) =2+rightix(ixb,iyb)+(2+rightiy(ixb,iyb)-1)*nxp2
+              ja(k) = 2+rightix(ixb,iyb)+(2+rightiy(ixb,iyb)-1)*nxp2
               ner = ner+1
             endif
 *       Case (ix+1,iy+1)
@@ -432,7 +432,7 @@
               indexes(2,k)=iy
               indexes(3,k)= 4
               ia(k) = i
-              ja(k) =2+topix(ixr,iyr)+(2+topiy(ixr,iyr)-1)*nxp2
+              ja(k) = 2+topix(ixr,iyr)+(2+topiy(ixr,iyr)-1)*nxp2
               ner = ner+1
             endif
             if( aa9(ix,iy,6) .ne. 0.0_R8 ) then
@@ -442,7 +442,7 @@
               indexes(2,k)=iy
               indexes(3,k)= 6
               ia(k) = i
-              ja(k) =2+rightix(ixt,iyt)+(2+rightiy(ixt,iyt)-1)*nxp2
+              ja(k) = 2+rightix(ixt,iyt)+(2+rightiy(ixt,iyt)-1)*nxp2
               ner = ner+1
             endif
             ip(i+1)=ip(i) + ner

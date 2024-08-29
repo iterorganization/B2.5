@@ -151,6 +151,7 @@ c
       allocate(lkindp(max(1,nplsd)))
       allocate(lkindm(max(1,nmold)))
       allocate(lkindi(max(1,niond)))
+      allocate(eirtxt(max(1,natmd+nmold+niond+nplsd)))
 
       return
       end subroutine alloc_b2mod_eirdiag
@@ -221,6 +222,7 @@ c
       deallocate(lkindp)
       deallocate(lkindm)
       deallocate(lkindi)
+      deallocate(eirtxt)
 
       return
       end subroutine dealloc_b2mod_eirdiag

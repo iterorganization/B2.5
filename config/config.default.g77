@@ -62,7 +62,7 @@ ifdef LD_CATALYST
 CXXFLAGS = -std=c++11
 endif
 
-LD = f90
+LD = ${FC}
 LDOPTS = 
 
 #!!!Local Variables:
