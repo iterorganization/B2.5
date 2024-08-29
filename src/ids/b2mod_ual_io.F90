@@ -7772,8 +7772,14 @@ contains
     properties%comment = comment
 #if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
     allocate( properties%provenance%node(1) )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+    allocate( properties%provenance%node(1)%reference(1) )
+    allocate( properties%provenance%node(1)%reference(1)%name(1) )
+    properties%provenance%node(1)%reference(1)%name(1) = source
+#else
     allocate( properties%provenance%node(1)%sources(1) )
     properties%provenance%node(1)%sources(1) = source
+#endif
 #else
     allocate( properties%source(1) )
     properties%source = source
@@ -8283,12 +8289,21 @@ contains
             allocate( equilibrium%ids_properties%provenance%node(inode + 1) )
             allocate( &
                & equilibrium%ids_properties%provenance%node(inode+1)%path(1) )
-            allocate( &
-               & equilibrium%ids_properties%provenance%node(inode+1)%sources(1))
             equilibrium%ids_properties%provenance%node(inode+1)%path =        &
                & "grids_ggd"
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            allocate( &
+               & equilibrium%ids_properties%provenance%node(inode+1)%reference(1) )
+            allocate( &
+               & equilibrium%ids_properties%provenance%node(inode+1)%reference(1)%name(1) )
+            equilibrium%ids_properties%provenance%node(inode+1)%reference(1)%name(1) =  &
+               &  source
+#else
+            allocate( &
+               & equilibrium%ids_properties%provenance%node(inode+1)%sources(1) )
             equilibrium%ids_properties%provenance%node(inode+1)%sources(1) =  &
                &  source
+#endif
 #endif
           end if
           if (.not.associated( equilibrium%time_slice )) then
