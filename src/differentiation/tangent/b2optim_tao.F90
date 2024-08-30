@@ -322,6 +322,7 @@
         write (*,*) 'TAO GRAD of x',trim(str),':', g_v(ipar)
       end do
 
+      write (*,*) 'TAO COST FUNCTION:', F
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
       write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
@@ -429,6 +430,7 @@
       endif
       call b2mn_step(switch, geo, mpg, state, state_ext, state_avg, j)
       F = j(1)
+      write (*,*) 'TAO COST FUNCTION:', F
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
       write (*,*) 'TAO PRIMAL RESIDUAL:', primal_res
 
@@ -539,6 +541,7 @@
         write (*,*) 'TAO GRAD of x',trim(str),':', g_v(ipar)
       end do
 
+      write (*,*) 'TAO COST FUNCTION:', J(1)
       write (*,*) 'TAO GRADIENT NORM:', norm2(g_v(1:npar_opt))
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
       write (*,*) 'TAO GRADIENT ITERATIONS:', gradient_iterations
