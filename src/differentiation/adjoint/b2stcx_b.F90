@@ -64,9 +64,9 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 !srv 11.09.09
   CHARACTER :: chns*3, chcx*3, chk*1
   REAL(kind=r8) :: rg0, t0, t1, t2, du0, du1, tkin, t1n
-  EXTERNAL XERTST, samax, SFILL_NODIFF
+  EXTERNAL XERTST, damax, SFILL_NODIFF
 !   ..procedures
-  REAL(kind=r8) :: samax
+  REAL(kind=r8) :: damax
   EXTERNAL B2XVSG_NODIFF
   LOGICAL :: result1
   INTEGER :: arg1
@@ -100,7 +100,7 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 !    ..test rate coefficients
     DO is=1,ns-1
       IF (.NOT.LNEXT(is - 1, is)) THEN
-        result10 = samax(ncv, rcx(1, is), 1)
+        result10 = damax(ncv, rcx(1, is), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rcx: nonzero for unrelated species')
       END IF
@@ -110,8 +110,8 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 !tmp.dpc
 !       write(*,*) 'DPC: b2stcx: is0 ',is0
 !       do is = 1, ns-1
-!        write(*,*) 'is,lnext,samax(rcx) ',
-!     1   is,lnext(is-1,is),samax(n2,rcx(-1,-1,is),1)
+!        write(*,*) 'is,lnext,damax(rcx) ',
+!     1   is,lnext(is-1,is),damax(n2,rcx(-1,-1,is),1)
 !       enddo
 !tmp.dpc
 !
@@ -479,10 +479,10 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
   CHARACTER :: chns*3, chcx*3, chk*1
   REAL(kind=r8) :: rg0, t0, t1, t2, du0, du1, tkin, t1n
   REAL(kind=r8) :: t0b, t1b, t2b, du0b, du1b, tkinb, t1nb
-  EXTERNAL XERTST, samax, SFILL_NODIFF
+  EXTERNAL XERTST, damax, SFILL_NODIFF
   EXTERNAL SFILL_FWD, SFILL_BWD
 !   ..procedures
-  REAL(kind=r8) :: samax
+  REAL(kind=r8) :: damax
   EXTERNAL B2XVSG_NODIFF
   LOGICAL :: result1
   INTEGER :: arg1
@@ -516,8 +516,8 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, geo, geob, mpg, &
 !tmp.dpc
 !       write(*,*) 'DPC: b2stcx: is0 ',is0
 !       do is = 1, ns-1
-!        write(*,*) 'is,lnext,samax(rcx) ',
-!     1   is,lnext(is-1,is),samax(n2,rcx(-1,-1,is),1)
+!        write(*,*) 'is,lnext,damax(rcx) ',
+!     1   is,lnext(is-1,is),damax(n2,rcx(-1,-1,is),1)
 !       enddo
 !tmp.dpc
 !

@@ -109,9 +109,9 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
   REAL(kind=r8) :: sna0_ion(ncv, 0:1, 0:ns-1), sna0_rec(ncv, 0:1, 0:ns-1&
 & ), smq0_ion(ncv, 0:3, 0:ns-1), smq0_rec(ncv, 0:3, 0:ns-1), shi0_ion(&
 & ncv, 0:3), shi0_rec(ncv, 0:3), shn0_ion(ncv, 0:3), shn0_rec(ncv, 0:3)
-  EXTERNAL XERTST, IPGETI, IPGETR, samax, SFILL_NODIFF
+  EXTERNAL XERTST, IPGETI, IPGETR, damax, SFILL_NODIFF
 !   ..procedures
-  REAL(kind=r8) :: samax
+  REAL(kind=r8) :: damax
   EXTERNAL B2XVSG_NODIFF
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -178,10 +178,10 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 !    ..test rate coefficients
     DO is=0,ns-2
       IF (.NOT.LNEXT(is, is + 1)) THEN
-        result10 = samax(ncv, rtw%rsa(1, is), 1)
+        result10 = damax(ncv, rtw%rsa(1, is), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rsa: nonzero for unrelated species')
-        result10 = samax(ncv, rtw%rra(1, is+1), 1)
+        result10 = damax(ncv, rtw%rra(1, is+1), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rra: nonzero for unrelated species')
       END IF
@@ -787,10 +787,10 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
 & smq0_recd(nbdirsmax, ncv, 0:3, 0:ns-1), shi0_iond(nbdirsmax, ncv, 0:3)&
 & , shi0_recd(nbdirsmax, ncv, 0:3), shn0_iond(nbdirsmax, ncv, 0:3), &
 & shn0_recd(nbdirsmax, ncv, 0:3)
-  EXTERNAL XERTST, IPGETI, IPGETR, samax, SFILL_NODIFF
+  EXTERNAL XERTST, IPGETI, IPGETR, damax, SFILL_NODIFF
   EXTERNAL SFILL_DV
 !   ..procedures
-  REAL(kind=r8) :: samax
+  REAL(kind=r8) :: damax
   EXTERNAL B2XVSG_NODIFF
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -870,10 +870,10 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
 !    ..test rate coefficients
     DO is=0,ns-2
       IF (.NOT.LNEXT(is, is + 1)) THEN
-        result10 = samax(ncv, rtw%rsa(1, is), 1)
+        result10 = damax(ncv, rtw%rsa(1, is), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rsa: nonzero for unrelated species')
-        result10 = samax(ncv, rtw%rra(1, is+1), 1)
+        result10 = damax(ncv, rtw%rra(1, is+1), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rra: nonzero for unrelated species')
       END IF
