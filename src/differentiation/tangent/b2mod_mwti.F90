@@ -32,9 +32,7 @@ contains
 
 #ifndef SOLPS4_3
   subroutine b2mwti (itim, tim, &
-#ifndef NO_CDF
                      ntim, b2time, ntim_batch, &
-#endif
                      nCv, nFc, ns, nncutmax, geo, mpg, switch, &
                      pl, dv, co, rt, srw, ext, &
                      ismain, ismain0, lwti, lwav, luav)
@@ -90,8 +88,8 @@ contains
     !   ..output arguments (unspecified on entry)
     !     (none)
     !   ..common blocks
-#ifndef NO_CDF
     integer, intent(in) :: ntim, b2time, ntim_batch
+#ifndef NO_CDF
 #   include <netcdf.inc>
 #endif
     !-----------------------------------------------------------------------
