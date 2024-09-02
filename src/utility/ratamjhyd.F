@@ -246,8 +246,8 @@ c     Add Bremsstrahlung
           if (INDEX(row,'*reac')>0) then
             found = .true.
           endif
-        end do 
-      endif     
+        end do
+      endif
       do ireac = 1, nreac
         READ (nrid,'(A72)') row
         call read_token(row,' ',filnam,itok, ier,.false.)
@@ -263,7 +263,7 @@ c     Add Bremsstrahlung
           case ('H.1')
             if (streql(crc,'CX')) then
               rtcx(:,:,nz) = rates
-            else 
+            else
               call xerrab('Not possible yet to specify a non-CX ' //
      1          'reaction of H.1')
             endif
@@ -298,7 +298,7 @@ c     Add Bremsstrahlung
             call xerrab('H-number on reaction card not yet implemented')
         end select
       enddo
-      
+
 
 * ..return
       call subend ()
@@ -315,6 +315,7 @@ c     Add Bremsstrahlung
       subroutine get_amjhyd_rates(filnam,h123,reac,crc,am,
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
       use b2mod_types
+      use b2mod_math
       use b2mod_constants
 c      use b2mod_b2cmpa
       IMPLICIT NONE
@@ -326,6 +327,9 @@ c     Input/output variables
      2 rates(0:nt,0:nn),D11(0:8,0:8)
       real (kind = R8) :: tmin, tmax, nmin, nmax
       real(kind=R8), intent(in) :: am
+#ifdef DBG
+      real (kind=R8) :: product
+#endif
 
       CHARACTER :: FILNAM*8,H123*4,REAC*9,CRC*3
 
@@ -389,6 +393,8 @@ c     Local variables
 *     nn specifies the upper dimension bound for the array rtn.
 *     It will hold that 0.le.nn.
 
+*   ..set cutlo
+      if (.not.b2mod_math_initialised) call b2mod_math_init
 *     ..Read Amjuel data
       IR=1
       CREAC = 0.0_R8
@@ -477,15 +483,48 @@ c     Local variables
 c       write(*,*) 'Assemble Maxwellians for temperature index', it,
 c     1    'of', nt
           mdr = maxwell1d(t,mp*am,2*rttt(it)*ev,0.0_R8,nv)
+#ifndef DBG
           mdr = mdr/dot_product(mdr,dt)
+#else
+          do i = 1,2*nv
+            if (mdr(i).ge.tiny(1.0_R8)) then
+              mdr(i) = mdr(i)/dot_product(mdr,dt)
+            else
+              mdr(i) = 0.0_R8
+            end if
+          end do
+#endif
           mpol = maxwell1d(t,mp*am,2*rttt(it)*ev,du(iu),nv)
           mpol = mpol/dot_product(mpol,dt)
 c         write(*,*) 'Integrate momentum source'
           do i = 1,2*nv
            do j = 1,2*nv
             do k = 1,2*nv
-             smo(it,iu) = smo(it,iu)+sv(i,j,k)*mdr(j)*dt(j)*
-     1         mdr(k)*dt(k)*t(i)*mpol(i)*dt(i)
+             if (mdr(j).ne.0.0_R8.and.mdr(k).ne.0.0_R8.and.
+     &          mpol(i).ne.0.0_R8) then
+#ifndef DBG
+               smo(it,iu) = smo(it,iu)+sv(i,j,k)*mdr(j)*dt(j)*
+     1          mdr(k)*dt(k)*t(i)*mpol(i)*dt(i)
+#else
+               if (mdr(j).ge.tiny(1.0_R8).and.
+     &             mdr(k).ge.tiny(1.0_R8).and.
+     &            mpol(i).ge.tiny(1.0_R8)) then
+                 if (t(i).gt.tiny(1.0_R8)) then
+                   product = log(sv(i,j,k)) + log(mdr(j)) + log(dt(j))
+     &               + log(mdr(k)) + log(dt(k)) + log(t(i))
+     &               + log(mpol(i)) + log(dt(i))
+                   if (product.ge.cutll)
+     >              smo(it,iu) = smo(it,iu) + exp(product)
+                 else if (t(i).lt.-tiny(1.0_R8)) then
+                   product = log(sv(i,j,k)) + log(mdr(j)) + log(dt(j))
+     &               + log(mdr(k)) + log(dt(k)) + log(abs(t(i)))
+     &               + log(mpol(i)) + log(dt(i))
+                   if (product.ge.cutll)
+     >              smo(it,iu) = smo(it,iu) - exp(product)
+                 end if
+               endif
+#endif
+             endif
             enddo
            enddo
           enddo
@@ -579,6 +618,12 @@ c         --Convert from cm**3/s to m**3/s
 *     Output variables
       real (kind=R8) ::
      1  maxwell1d(1:2*nv)
+
+*     Local variables
+      integer i
+#ifdef DBG
+      real (kind=R8) :: product
+#endif
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -602,7 +647,20 @@ c         --Convert from cm**3/s to m**3/s
 *     drift velocity u is to be evaluated. v hereby contains both the
 *     positive and negative parts of the velocity distribution.
 *
-      maxwell1d = sqrt(m/(2.0_R8*pi*T))*exp(-m*(v-u)**2/(2.0_R8*T))
+      do i = 1, 2*nv
+#ifndef DBG
+        maxwell1d(i) =
+     .   sqrt(m/(2.0_R8*pi*T))*expu(-m*(v(i)-u)**2/(2.0_R8*T))
+#else
+        product = 0.5_R8*(log(m)-log(2.0_R8*pi*T))+
+     .   (-m*(v(i)-u)**2/(2.0_R8*T))
+        if (product.gt.cutll) then
+          maxwell1d(i) = exp(product)
+        else
+          maxwell1d(i) = 0.0_R8
+        end if
+#endif
+      end do
       return
       end function maxwell1d
 
