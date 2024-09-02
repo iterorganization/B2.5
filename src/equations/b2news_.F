@@ -727,12 +727,16 @@ csw 16oct2012 init ier0
           if(mdf_fnb.eq.0) then                                          !srv 13.10.06
             if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
      &         (visper_all_ions.eq.0 .and. is.eq.ismain)) then
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
+              call restart_ma28_for_7
+#else
               new_matrix = first_pass_7
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_7(is,ireg)
               end do
               if(new_matrix.or.in_parallel()) call restart_ma28_for_7
+#endif
               call b2npc7 (nx, ny, fac_vis, guard_flows, rza(-1,-1,is),
      &         nnreg(0), solving(2), solvedum, solving(1),               !srv 22.05.18
      &         solvedm2, ncall, is, rxf0, dtim, vol, pbs, flob, conb,    !srv 22.01.02 01.07.05 07.07.21
@@ -743,12 +747,16 @@ csw 16oct2012 init ier0
               last_solve_7(is,0:nnreg(0))=solveco(is,0:nnreg(0))
               first_pass_7 = .false.
             else                                                         !srv 02.04.18
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
+              call restart_ma28
+#else
               new_matrix = first_pass_5
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_5(is,ireg)
               end do
               if(new_matrix.or.in_parallel()) call restart_ma28
+#endif
               call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),    !srv 22.05.18
      &         solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,
      &         vol, pbs, flob, conb,                                     !srv 22.01.02 01.07.05
@@ -762,12 +770,16 @@ csw 16oct2012 init ier0
           else                                                           !srv 13.10.06 {
             if(.not.is_neutral(is) .or. use_9pt_stencil.ne.0) then
               if(visper_all_ions.ne.0 .or. is.eq.ismain) then
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
+              call restart_ma28_for_11
+#else
                 new_matrix = first_pass_11
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_11(is,ireg)
                 end do
                 if(new_matrix.or.in_parallel()) call restart_ma28_for_11
+#endif
                 call b2npc11 (nx, ny, fac_vis, guard_flows,
      &           rza(-1,-1,is), nnreg(0), solving(2), solvedum,          !srv 22.05.18
      &           solving(1), solvedm2, ncall, is, rxf0, dtim,            !srv 07.07.21
@@ -779,6 +791,9 @@ csw 16oct2012 init ier0
                 last_solve_11(is,0:nnreg(0))=solveco(is,0:nnreg(0))
                 first_pass_11 = .false.
               else                                                       !srv 02.04.18
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
+              call restart_ma28_for_9
+#else
                 new_matrix = first_pass_9
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
@@ -786,6 +801,7 @@ csw 16oct2012 init ier0
                 end do
                 if(new_matrix.or.use_9pt_stencil.ne.0.or.in_parallel())
      &           call restart_ma28_for_9
+#endif
                 call b2npc9 (nx, ny, guard_flows, nnreg(0), solving(2),  !srv 22.05.18
      &           solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,  !srv 07.07.21
      &           vol, pbs, flob, conb,
@@ -797,12 +813,16 @@ csw 16oct2012 init ier0
                 first_pass_9 = .false.
               endif
             else
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
+              call restart_ma28
+#else
               new_matrix = first_pass_5
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_5(is,ireg)
               end do
               if(new_matrix.or.in_parallel()) call restart_ma28
+#endif
               call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),    !srv 22.05.18
      &         solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,    !srv 07.07.21
      &         vol, pbs, flob, conb,
