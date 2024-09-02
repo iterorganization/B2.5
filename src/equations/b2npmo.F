@@ -827,7 +827,11 @@ c    ..compare 5-pt stencil matrices
           new_matrix = new_matrix.or.
      &     solvemo(is,ireg).neqv.last_solve_5(is,ireg)
          end do
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+         call restart_ma28
+#else
          if (new_matrix.or.in_parallel()) call restart_ma28
+#endif
 *    ..compute correction
          call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
      &    vol, hx, hz, bb, rob, rob, pb, pb, ua(-1,-1,is),              !srv 09.01.01
@@ -888,7 +892,11 @@ csw 21feb2014, execute simultaneous corrections always
            new_matrix = new_matrix.or.
      &      solvemt(ireg).neqv.last_solve_5(ns,ireg)
          end do
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+         call restart_ma28
+#else
          if (new_matrix.or.in_parallel()) call restart_ma28
+#endif
          call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,       !srv 04.07.08
      &    vol, hx, hz, bb, ro, rz, pr, pz, wrk0, smt, flct, cvct,      !srv 09.01.01
      &    resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')        !srv 06.04.07

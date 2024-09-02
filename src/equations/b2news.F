@@ -601,8 +601,8 @@ cxpb
 #endif
 !!FR Possible loop (2) for use with OpenMP
 !$OMP PARALLEL DO DEFAULT(none)
-!$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, i, ix, iy, new_matrix)
-!$OMP& PRIVATE(ireg)
+!$OMP& PRIVATE(ier0, solvedum, solvedm2, mach10, i, ix, iy)
+!$OMP& PRIVATE(ireg, new_matrix)
 !$OMP& FIRSTPRIVATE(pb, flob, conb)
 !$OMP& FIRSTPRIVATE(first_pass_5, first_pass_7)
 !$OMP& FIRSTPRIVATE(first_pass_9, first_pass_11)
@@ -747,12 +747,16 @@ cxpb
             if(mdf_fnb.eq.0) then                                        !srv 13.10.06
               if((visper_all_ions.ne.0 .and. .not.is_neutral(is)) .or.
      &          (visper_all_ions.eq.0 .and. is.eq.ismain)) then
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_LOOP2) )
+                call restart_ma28_for_7
+#else
                 new_matrix = first_pass_7
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_7(is,ireg)
                 end do
                 if(new_matrix.or.in_parallel()) call restart_ma28_for_7
+#endif
                 call b2npc7 (nx, ny, fac_vis, guard_flows,
      &           rza(-1,-1,is), nnreg(0), solving(2), solvedum,          !srv 22.05.18
      &           solving(1), solvedm2, ncall, is, rxf0, dtim, vol, pbs,  !srv 22.01.02 01.07.05 07.07.21
@@ -763,12 +767,16 @@ cxpb
                 last_solve_7(is,0:nnreg(0)) = solveco(is,0:nnreg(0))
                 first_pass_7 = .false.
               else                                                       !srv 02.04.18
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_LOOP2) )
+                call restart_ma28
+#else
                 new_matrix = first_pass_5
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_5(is,ireg)
                 end do
                 if(new_matrix.or.in_parallel()) call restart_ma28
+#endif
                 call b2npco (nx, ny, guard_flows,                        !srv 05.07.08
      &           nnreg(0), solving(2), solvedum, solving(1), solvedm2,   !srv 22.05.18
      &           ncall, is, rxf0, dtim, vol, pbs, flob, conb,            !srv 07.07.21
@@ -782,6 +790,9 @@ cxpb
             else                                                         !srv 13.10.06 {
               if(.not.is_neutral(is) .and. use_b2npc9.eq.1) then         !srv 06.11.08
                 if(visper_all_ions.ne.0 .or. is.eq.ismain) then
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_LOOP2) )
+                  call restart_ma28_for_11
+#else
                   new_matrix = first_pass_11
                   do ireg = 0, nnreg(0)
                     new_matrix = new_matrix.or.
@@ -789,6 +800,7 @@ cxpb
                   end do
                   if(new_matrix.or.in_parallel())
      >             call restart_ma28_for_11
+#endif
                   call b2npc11 (nx, ny, fac_vis, guard_flows,
      &             rza(-1,-1,is), nnreg(0), solving(2), solvedum,        !srv 22.05.18
      &             solving(1), solvedm2, ncall, is, rxf0, dtim, vol,     !srv 07.07.21
@@ -800,6 +812,9 @@ cxpb
                   last_solve_11(is,0:nnreg(0)) = solveco(is,0:nnreg(0))
                   first_pass_11 = .false.
                 else                                                     !srv 02.04.18
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_LOOP2) )
+                  call restart_ma28_for_9
+#else
                   new_matrix = first_pass_9
                   do ireg = 0, nnreg(0)
                     new_matrix = new_matrix.or.
@@ -807,6 +822,7 @@ cxpb
                   end do
                   if(new_matrix.or.in_parallel())
      >             call restart_ma28_for_9
+#endif
                   call b2npc9 (nx, ny, guard_flows, nnreg(0),
      &             solving(2), solvedum, solving(1), solvedm2, ncall,    !srv 22.05.18
      &             is, rxf0, dtim, vol, pbs,                             !srv 07.07.21
@@ -819,12 +835,16 @@ cxpb
                   first_pass_9 = .false.
                 endif
               else
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_LOOP2) )
+                call restart_ma28
+#else
                 new_matrix = first_pass_5
                 do ireg = 0, nnreg(0)
                   new_matrix = new_matrix.or.
      &             solveco(is,ireg).neqv.last_solve_5(is,ireg)
                 end do
                 if(new_matrix.or.in_parallel()) call restart_ma28
+#endif
                 call b2npco (nx, ny, guard_flows, nnreg(0), solving(2),  !srv 22.05.18
      &           solvedum, solving(1), solvedm2, ncall, is, rxf0, dtim,  !srv 07.07.21
      &           vol, pbs, flob, conb, sna(-1,-1,0,is),
