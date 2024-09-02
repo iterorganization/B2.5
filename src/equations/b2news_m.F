@@ -536,7 +536,7 @@ csw 16oct2012 init ier0
               first_pass_7 = .false.
             else                                                         !srv 02.04.18
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
-              call restart_ma28_for_7
+              call restart_ma28
 #else
               new_matrix = first_pass_5
               do ireg = 0, nnreg(0)
