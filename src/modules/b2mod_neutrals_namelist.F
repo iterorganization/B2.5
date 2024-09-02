@@ -57,13 +57,13 @@ cank }
 #else
       use b2mod_eirdiag
 #endif
+#ifndef SOLPS4_3
+      use b2mod_eirsrt
+#endif
       use b2mod_dimensions
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#endif
-#ifndef SOLPS4_3
-#     include "COUPLE/EIRSRT.F"
 #endif
       integer nstraid, natmid, nmolid, nionid, nstsid, nlimpsd
       parameter (NSTRAID=DEF_NSTRA)

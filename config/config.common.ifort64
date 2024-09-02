@@ -7,14 +7,15 @@ LINK_MOD =
 
 DBLFC    = ${FC}
 DBLSED   = sed -e s:\#PREC\#:d:g
-DBLSED   = 
+DBLSED   =
 
 ifndef COMPILER_REDEF
 ifdef SOLPS_DEBUG
 FCOPTS  += -diag-disable:10182 -diag-disable:10440
 LDOPTS  += -diag-disable:10182
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
-FCOPTS   += -check nouninit
+FCOPTS  += -check nouninit
+LDOPTS  += -check nouninit
 endif
 endif
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 13; echo $$?),0)
@@ -26,9 +27,6 @@ FCOPTS  += -mprefer-vector-width=512
 else
 FCOPTS  += -qopt-zmm-usage=high
 endif
-endif
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
-FCOPTS  += -check nouninit
 endif
 else
 FCOPTS += -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -frecursive
