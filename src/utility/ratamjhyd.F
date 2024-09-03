@@ -483,17 +483,12 @@ c     Local variables
 c       write(*,*) 'Assemble Maxwellians for temperature index', it,
 c     1    'of', nt
           mdr = maxwell1d(t,mp*am,2*rttt(it)*ev,0.0_R8,nv)
-#ifndef DBG
-          mdr = mdr/dot_product(mdr,dt)
-#else
+#ifdef DBG
           do i = 1,2*nv
-            if (mdr(i).ge.tiny(1.0_R8)) then
-              mdr(i) = mdr(i)/dot_product(mdr,dt)
-            else
-              mdr(i) = 0.0_R8
-            end if
-          end do
+            if (mdr(i).lt.tiny(1.0_R8)) mdr(i) = 0.0_R8
+          enddo
 #endif
+          mdr = mdr/dot_product(mdr,dt)
           mpol = maxwell1d(t,mp*am,2*rttt(it)*ev,du(iu),nv)
           mpol = mpol/dot_product(mpol,dt)
 c         write(*,*) 'Integrate momentum source'
