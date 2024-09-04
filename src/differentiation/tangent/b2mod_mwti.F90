@@ -615,7 +615,7 @@ contains
     enddo
 #endif
 
-    if(mpg%nXpt.ge.2) then
+    if(mpg%nXpt.ge.2.and.maxval(mpg%strDiv).gt.2) then
       do i = mpg%divFcP(2,1), mpg%divFcP(2,1) + mpg%divFcP(2,2) - 1
         iFc = mpg%divFc(i)
         if (mpg%fcCv(iFc,1).le.mpg%nCi) then
@@ -1406,30 +1406,32 @@ contains
         posepa(1) = pl%po(cvtrg)
         ktsepa(1) = pl%kt(cvtrg)
       else if (geometryType.eq.GEOMETRY_DDN_BOTTOM) then
-        iFc = mpg%divFc(mpg%divFcP(2,1)+mpg%ifdiv(2)-1)
-        if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &
-          & (mpg%fcCv(iFc,1).le.mpg%nCi.and.target_offset.eq.1)) then
-          cvtrg = mpg%fcCv(iFc,1)
-        else
-          cvtrg = mpg%fcCv(iFc,2)
+        if (maxval(mpg%strDiv).gt.2) then
+          iFc = mpg%divFc(mpg%divFcP(2,1)+mpg%ifdiv(2)-1)
+          if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &
+            & (mpg%fcCv(iFc,1).le.mpg%nCi.and.target_offset.eq.1)) then
+            cvtrg = mpg%fcCv(iFc,1)
+          else
+            cvtrg = mpg%fcCv(iFc,2)
+          end if
+          nesepi(2) = dv%ne(cvtrg)
+          tesepi(2) = pl%te(cvtrg)/ev
+          tisepi(2) = pl%ti(cvtrg)/ev
+          posepi(2) = pl%po(cvtrg)
+          ktsepi(2) = pl%kt(cvtrg)
+          iFc = mpg%divFc(mpg%divFcP(3,1)+mpg%ifdiv(3)-1)
+          if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &
+            & (mpg%fcCv(iFc,1).le.mpg%nCi.and.target_offset.eq.1)) then
+            cvtrg = mpg%fcCv(iFc,1)
+          else
+            cvtrg = mpg%fcCv(iFc,2)
+          end if
+          nesepa(2) = dv%ne(cvtrg)
+          tesepa(2) = pl%te(cvtrg)/ev
+          tisepa(2) = pl%ti(cvtrg)/ev
+          posepa(2) = pl%po(cvtrg)
+          ktsepa(2) = pl%kt(cvtrg)
         end if
-        nesepi(2) = dv%ne(cvtrg)
-        tesepi(2) = pl%te(cvtrg)/ev
-        tisepi(2) = pl%ti(cvtrg)/ev
-        posepi(2) = pl%po(cvtrg)
-        ktsepi(2) = pl%kt(cvtrg)
-        iFc = mpg%divFc(mpg%divFcP(3,1)+mpg%ifdiv(3)-1)
-        if ((mpg%fcCv(iFc,1).gt.mpg%nCi.and.target_offset.eq.0).or. &
-          & (mpg%fcCv(iFc,1).le.mpg%nCi.and.target_offset.eq.1)) then
-          cvtrg = mpg%fcCv(iFc,1)
-        else
-          cvtrg = mpg%fcCv(iFc,2)
-        end if
-        nesepa(2) = dv%ne(cvtrg)
-        tesepa(2) = pl%te(cvtrg)/ev
-        tisepa(2) = pl%ti(cvtrg)/ev
-        posepa(2) = pl%po(cvtrg)
-        ktsepa(2) = pl%kt(cvtrg)
       end if
     end if
 #endif
