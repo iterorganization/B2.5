@@ -1113,7 +1113,7 @@ c East target
         call b2usr_loads_nodiff_nodiff(nx,ny,ns,nxtl,nxtr,BoRiS,
      &    wtarg_max)
 #ifdef DBG
-        write(*,*) 'b2usr_loads_nodiff_nodiff finished'
+        write(*,*) 'b2usr_loads finished'
 #endif
         hlp_ppwi=wtarg_max(1)
 csw 02jan2017 corrected hlp_ppwo

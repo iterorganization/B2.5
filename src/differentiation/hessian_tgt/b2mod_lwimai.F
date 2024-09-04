@@ -49,7 +49,7 @@
       lwrki = lwrki+nwi
       lwrkimx = max(lwrki,lwrkimx)
       if (nstcwi.lt.lwrki) then
-        write (0,*) 'lwiget--insufficient workspace stackw%wi(0:*)'
+        write (0,*) 'lwiget--insufficient workspace b2mod_stack%wi(0:*)'
         call b25_mpi_stop
       end if
       return

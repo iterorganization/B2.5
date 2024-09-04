@@ -51,6 +51,7 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2US_GEO_DIFFV
   USE B2MOD_AD_DIFFV, ONLY : nsdmax
   USE B2MOD_EIRDIAG
+  USE B2MOD_EIRSRT
   USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -89,50 +90,6 @@ MODULE B2MOD_NEUTRALS_NAMELIST_DIFFV
   PARAMETER (ngtsft=def_ngstal*ngitt)
   PARAMETER (nlmpgs=nlim+(ngtsft+1)*nsts)
 !
-!***  EIRENE control from B2
-!
-!  version : 28.06.2000 18:01
-!
-  REAL(kind=r8) :: sps_absr(def_nspcsrfg), sps_trno(def_nspcsrfg), &
-& sps_trni(def_nspcsrfg), sps_mtri(def_nspcsrfg), sps_tmpr(def_nspcsrfg)&
-& , sps_spph(def_nspcsrfg), sps_spch(def_nspcsrfg)
-! VERSION: 01.07.2000 23:24
-!
-!*** Control parameters for transfer from B2 to Eirene
-!*** This allows to input some of more often varied Eirene parameters
-!*** to be specified in the B2 input file in a convenient way.
-!*** 
-!*** DELTAT and EIRENE_STEP_CPU are left in the dummy variable list in
-!*** the eirsrt routine just to minimize the number of possible errors.
-!***>>  Control parameters:
-!*** DEF_NSPCSRFG:  max. number of groups of surfaces for which the data
-!***                can be transferred (e. g., pump duct, e.t.c)
-!*** n_spcsrf:  actual number of such groups as input from B2
-!*** l_spcsrf:  list of surface segments (non-default standard surfaces
-!***            or additional surfaces in Eirene notation) included
-!***            in the groups. Negative numbers correspond to NDSS.
-!*** i_spcsrf:  starting position of each group in the list
-!*** j_spcsrf:  ending position of each group in the list
-!***>>  Eirene parameters for the groups:
-!*** sps_absr:  particle absorption on the surface
-!*** sps_trno:  surface transparency in positive direction
-!*** sps_trni:  surface transparency in negative direction
-!*** sps_mtri:  surface material in Eirene notation (e.g., 1206 for C)
-!*** sps_tmpr:  surface temperature
-!*** sps_spph:  fudge-factor for physical sputtering
-!*** sps_spch:  fudge-factor for chemical sputtering
-!*** sps_sgrp:  surface group for chemical sputtering
-!*** sps_mtrl:  surface material in human notation (e.g., C)
-!*** sps_id:    identifier of the group of surfaces (assigned in DG)
-  INTEGER :: nn_spcsrf
-  PARAMETER (nn_spcsrf=def_nlim+def_nsts)
-  INTEGER :: n_spcsrf, l_spcsrf(nn_spcsrf), i_spcsrf(def_nspcsrfg), &
-& j_spcsrf(def_nspcsrfg), sps_sgrp(def_nspcsrfg)
-  CHARACTER(len=8) :: sps_mtrl(def_nspcsrfg), sps_id(def_nspcsrfg)
-  COMMON /spcsrfcom/ sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr, &
-& sps_spph, sps_spch, n_spcsrf, l_spcsrf, i_spcsrf, j_spcsrf, sps_sgrp
-  COMMON /spcsrfcch/ sps_mtrl, sps_id
-  SAVE /spcsrfcom/, /spcsrfcch/
   INTEGER :: nstraid, natmid, nmolid, nionid, nstsid, nlimpsd
   PARAMETER (nstraid=def_nstra)
   PARAMETER (natmid=def_natm, nmolid=def_nmol, nionid=def_nion)
