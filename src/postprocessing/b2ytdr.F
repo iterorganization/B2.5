@@ -319,6 +319,7 @@ c 2002-09-11: logic revised
       integer nyiso3(nnisod), nyiso4(nnisod)
       integer nstrai1, nstrat1
 #ifdef B25_EIRENE
+      integer jvft44
       integer IUNOT, NR1ST, NP2ND, NT3RD
       integer NMODE, NAINI, NFILEK, NFILEL
       integer NZADD, NVOLPL, NSP
