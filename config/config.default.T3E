@@ -62,8 +62,8 @@ ifdef LD_CATALYST
   CXXFLAGS = -std=c++11
 endif
 
-LD = f90 -lapp
-LD = f90
+LD = ${FC} -lapp
+LD = ${FC}
 
 LDOPTS = -l /usr/local/pat/libpat.a /usr/local/pat/pat.cld
 LDOPTS = 
