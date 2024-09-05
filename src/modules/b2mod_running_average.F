@@ -107,7 +107,7 @@ c local variables
       integer :: io, iun, idum(0:1), iex
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4)
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -177,7 +177,7 @@ c local variables
          naver = 0
          ntotdt = 0
 
-#ifdef F2003
+#ifndef LEGACYCOMP
          open (newunit=iun,file='b2faveri',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=iex)
 #else
@@ -295,7 +295,7 @@ c local variables
       integer :: idum(0:1), iun
       external cfwuch, cfwuin, cfwure
       external b2xxid, b2wuzd
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -304,7 +304,7 @@ c local variables
 
 *  write 2d averaged plasma profiles
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iun,file=savefile,access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
 #else
@@ -438,7 +438,7 @@ c only the total sources are averaged, not the linearised components.
      *   swrk2(-1:nx,-1:ny,0:1), swrk2s(-1:nx,-1:ny,0:1,0:ns-1),
      *   swrk4(-1:nx,-1:ny,0:3), swrk4s(-1:nx,-1:ny,0:3,0:ns-1),
      *   ne_mean(-1:nx,-1:ny), ni_mean(-1:nx,-1:ny,0:1)
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -465,7 +465,7 @@ c only the total sources are averaged, not the linearised components.
       allocate (e_she(-1:nx,-1:ny))
       allocate (e_shi(-1:nx,-1:ny))
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iun,file='b2faveri',access='SEQUENTIAL',
      .      form='FORMATTED',status='OLD',iostat=iex)
 #else

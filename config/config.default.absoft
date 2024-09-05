@@ -11,9 +11,6 @@ endif
 ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
-ifndef LD_SONNET
-  $(error LD_SONNET not defined)
-endif
 
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 DEFINES += -DNO_CDF
@@ -43,7 +40,7 @@ endif
 CPP = /lib/cpp -C -traditional
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED =
-LINK_MOD = 
+LINK_MOD =
 
 FC = f95
 
@@ -55,11 +52,12 @@ endif
 
 DBLFC = ${FC}
 DDBLOPTION = -Ad # ???
-DBLSED = 
+DBLSED =
 
 INCMOD = -p
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -75,7 +73,7 @@ ifdef USE_EIRENE
 LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
-LD = f95
+LD = ${FC}
 LDOPTS = -lU77
 LDOPTSend = -lU77
 

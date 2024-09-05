@@ -3,7 +3,7 @@
       implicit none
       integer ioun
       character, intent(in) :: chname*(*), chstat*(*), chform*(*)
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -77,7 +77,7 @@
       if (ioun.ne.0) then
        open (ioun,iostat=ios,file=fname,status=fstat,form=fform)
       else
-#ifdef F2003
+#ifndef LEGACYCOMP
        open (newunit=ioun,iostat=ios,file=fname,status=fstat,form=fform)
 #else
        ioun = newunit()
@@ -91,7 +91,7 @@
 *     ------------------------------------------------------------------
       end subroutine cfopen
 
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer function newunit ()
       implicit none
       logical used

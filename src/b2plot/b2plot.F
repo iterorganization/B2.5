@@ -6566,6 +6566,7 @@ c
           if(bad_args(stack_req)) return
           call set_color_map(spop(sstack,isstack))
         case('chor')     ! chord file
+          stack_req=(/0,0,1,1,0,0,0/)
           if(bad_args(stack_req)) return
           call process_chords(spop(sstack,isstack))
         case('chpl')     ! plot chords

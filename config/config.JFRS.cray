@@ -23,7 +23,7 @@ EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
 DEFINES += -DNO_OPT
 ifndef SOLPS_CPP
-  DEFINES += -DCRAY -DF2003
+  DEFINES += -DCRAY
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
@@ -65,6 +65,7 @@ else
   FCOPTS += -O2 -hfp2
 endif
 OBJDEST = -ef -em -J${OBJDIR}
+OBNDEST = -ef -em -J${OBNDIR}
 INCMOD = -p
 MOD = mod
 
@@ -74,7 +75,7 @@ GRLIBES = ${LD_NCARG}
 PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NETCDF}
 
-LD = ftn
+LD = ${FC}
 LDOPTS = -dynamic -hpic
 # JFRS OPENMP
 ifdef USE_OPENMP

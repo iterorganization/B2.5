@@ -115,10 +115,6 @@
       external ipgeti, intfaceh1, intfacer1, intfacev1
       external b2xxid, b2agfs_st, b2agcf, b2agmt_st, b2agmx, b2agbb_st,
      &  b2xgbs, b2wfgm, b2wugm
-#ifndef F2003
-      integer newunit
-      external newunit
-#endif
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -624,11 +620,7 @@ cdpc-debug
 *   ..write summary of geometry
 !      call b2wfgm (nout(0), idout, nx, ny)
 *   ..write structured b2fgmtry_st
-#ifdef F2003
       open (unit=nout(2),file='b2fgmtry_st',iostat=io)
-#else
-      open (unit=nout(2),file='b2fgmtry_st',iostat=io)
-#endif
 *   ..write version number
       call cfverw (nout(2), newversion)
 *   ..save dimensions

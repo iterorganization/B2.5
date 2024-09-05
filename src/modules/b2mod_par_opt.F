@@ -113,7 +113,7 @@
       character*1 str
       character*3 ss
       character*256 cffile, filename
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -185,7 +185,7 @@
         m%cfRegP = 0
         allocate(cfReg(mxnCf))
         cfReg = 0
-#ifdef F2003
+#ifndef LEGACYCOMP
         open (newunit=idb,file='debug_optimization.out')
 #else
         idb = newunit()

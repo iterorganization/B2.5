@@ -22,10 +22,12 @@ CPP = /lib/cpp -traditional
 #
 # Re-define FC for mpi compilation
 #
+
+MPI_FC    ?= mpif90
 ifdef SOLPS_MPI
-FC         = mpif90
+FC         = ${MPI_FC}
 else
-FC         = gfortran
+FC        ?= gfortran
 endif
 
 GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')
