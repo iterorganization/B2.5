@@ -138,6 +138,7 @@ c
       logical, save :: rerun_neoclassical = .true.
       real (kind=R8), allocatable :: mach(:,:)
 #ifdef B25_EIRENE
+      integer jvft44
       real (kind=R8), allocatable :: emach(:,:)
 #endif
       real (kind=R8), parameter :: eps = 1.0e-60_R8
