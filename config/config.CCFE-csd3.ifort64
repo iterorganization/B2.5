@@ -14,18 +14,20 @@ endif
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 
+MPI_FC  ?= mpif90
 ifdef USE_MPI
-FC       = mpif90
+FC       = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC       = mpif90
+FC       = ${MPI_FC}
 else
-FC       = ifort
+FC      ?= ifort
 endif
 endif
 
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 COMPILER_MAJOR_VERSION = $(shell ${FC} --version 2>&1 | head -1 | cut -d ' ' -f 3 | cut -d '.' -f 1 )
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives

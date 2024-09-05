@@ -1,6 +1,7 @@
-      module b2mod_ma28_for_9diag                                     !sv 13.10.06 {
-
+      module b2mod_ma28_for_9diag                                !sv 13.10.06 {
       use b2mod_types
+      implicit none
+
       real (kind=R8), allocatable, save ::
      * r1(:),
      * s1(:),
@@ -23,12 +24,13 @@
      * irnh_save(:),
      * icnh_save(:)
 
-      integer nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
+      integer, save :: nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
       logical, save :: lfirst_ilu9 = .true.
 
       contains
 
       subroutine alloc_b2mod_ma28_for_9diag
+      implicit none
 
       write(*,*) 'Allocating space for b2mod_ma28_for_9diag'
       write(*,*) 'nnd        = ',nnd
@@ -57,6 +59,7 @@
 
       write(*,*) 'Allocated space for b2mod_ma28_for_9diag'
 
+      return
       end subroutine alloc_b2mod_ma28_for_9diag
 
       subroutine dealloc_b2mod_ma28_for_9diag
@@ -81,6 +84,7 @@
       deallocate(irnh_save)
       deallocate(icnh_save)
 
+      return
       end subroutine dealloc_b2mod_ma28_for_9diag
 
       subroutine restart_ma28_for_9
@@ -90,4 +94,4 @@
       return
       end subroutine restart_ma28_for_9
 
-      end module b2mod_ma28_for_9diag                                 !sv 13.10.06 }
+      end module b2mod_ma28_for_9diag                             !sv 13.10.06 }

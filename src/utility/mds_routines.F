@@ -41,7 +41,7 @@
       integer :: status
       integer :: strlen
       character*18 hlp_frm
-#ifdef F2003
+#ifndef LEGACYCOMP
       character(len=:), allocatable :: str1(:)
 #else
       integer, parameter :: strmax = 1024
@@ -55,7 +55,7 @@
       do is=1,ns
         strlen = max(strlen,len_trim(string(is)))
       enddo
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate(character(len=strlen+1) :: str1(ns))
 #else
       call xertst(strlen.le.strmax,

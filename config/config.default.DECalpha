@@ -55,6 +55,7 @@ DBLSED = sed -e s:\#PREC\#:d:g
 INCMOD = -I
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -67,7 +68,7 @@ ifdef LD_CATALYST
   CXXFLAGS = -std=c++11
 endif
 
-LD = f90
+LD = ${FC}
 LDOPTS = 
 
 #!!!Local Variables:
