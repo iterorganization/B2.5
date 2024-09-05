@@ -52,7 +52,6 @@ c
 *  -- LOCAL SCALARS --
       integer is, nplsi
 #ifdef B25_EIRENE
-      integer jvft44
       integer nCvp, iCv, ix, iy, istra
       integer nstsi_in, nstrai_in
       integer, allocatable :: idum(:)
