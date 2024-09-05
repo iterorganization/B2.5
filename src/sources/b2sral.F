@@ -51,7 +51,7 @@
      &          ncall_b2stbr_phys, ncall_b2stbr,
      &          ncall_b2stbc_phys, ncall_b2stbc, ncall_b2sqel, nsdmax,
      &          ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, ntstep_b2wall,
-     &          ncall_b2tfrn, ncall_b2tiner
+     &          ncall_b2tfrn
 #endif
       use b2mod_subsys
       implicit none
@@ -113,7 +113,7 @@
 *   ..subprogram start-up calls
       call subini ('b2sral')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')

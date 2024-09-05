@@ -32,7 +32,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tlhe')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv .and. 0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test me, cflme
       call xertst (0.0_R8.lt.me, 'faulty argument me')
       call xertst (0.0_R8.le.cflme, 'faulty argument cflme')
@@ -53,7 +53,7 @@
         do iFc = 1, nFc
           if (nef(iFc) .le. switch%b2tlhe_ne_min) then
            ! Set at min value
-           cflme_loc(iFc) = switch%b2tlhe_ne_min
+           cflme_loc(iFc) = switch%b2tlhe_cflme_min
           elseif (nef(iFc) .lt. switch%b2tlhe_ne_max ) then
            ! Interpolate for smooth transition
            cflme_loc(iFc) = 

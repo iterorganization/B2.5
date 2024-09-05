@@ -92,7 +92,7 @@
 !WG_TODO         end if !}
 !WG_TODO       end do !}
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      * 'faulty argument ismain')

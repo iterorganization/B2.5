@@ -112,7 +112,7 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall_b2sifrtf.lt.3) then
 *    ..test sign of vol
@@ -127,13 +127,13 @@
       endif
 
 *   ..initialize to 0
-      call sfill (nCv*4, 0.0e0_R8, smbch, 1)                            !srv 11.09.09
-      call sfill (nCv*4, 0.0e0_R8, smbtf, 1)                            !srv 11.09.09
-      call sfill (nCv*4, 0.0e0_R8, smbfrial, 1)                         !srv 13.01.17 { !srv 05.07.17
-      call sfill (nCv*4, 0.0e0_R8, smbfreal, 1)
-      call sfill (nCv*4, 0.0e0_R8, smbtfial, 1)
-      call sfill (nCv*4, 0.0e0_R8, smbtfial_nofl, 1)
-      call sfill (nCv*4, 0.0e0_R8, smbtfeal, 1)                         !srv 13.01.17 }
+      call sfill (nCv*4, 0.0_R8, smbch, 1)                              !srv 11.09.09
+      call sfill (nCv*4, 0.0_R8, smbtf, 1)                              !srv 11.09.09
+      call sfill (nCv*4, 0.0_R8, smbfrial, 1)                           !srv 13.01.17 { !srv 05.07.17
+      call sfill (nCv*4, 0.0_R8, smbfreal, 1)
+      call sfill (nCv*4, 0.0_R8, smbtfial, 1)
+      call sfill (nCv*4, 0.0_R8, smbtfial_nofl, 1)
+      call sfill (nCv*4, 0.0_R8, smbtfeal, 1)                           !srv 13.01.17 }
 
 *   ..make 3rd dimension contiguous by copying to 1-d array (Gaurav Saxena: BSC ACH)
       ctr = 1
@@ -282,7 +282,6 @@ c        .. apply flux limit
             else
               fllim_al_ab = 1.0_R8
             endif
-
             t0 = na(iCv,isb)*na(iCv,is)/
      &                            ((na(iCv,isb)+na(iCv,is)))*gti(iCv)
             smbtfial(iCv,0) = smbtfial(iCv,0) + fllim_al_ab*coef*t0

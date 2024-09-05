@@ -150,7 +150,7 @@
       real (kind=R4) :: cpuval, cpustart, cpuinit
 #endif
       real (kind=R8) ::
-     *  na_min, na_new, dtim, etim,
+     *  dtim, etim,
      &  b2mndr_cpu,
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
      &  density_rescale, ne_wanted,
@@ -241,7 +241,7 @@
 
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, etim, idout0, idout1,
-     1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
+     1  b2mndr_cpu, edition, cputarget, cpuincrement,
      2  ismain, ismain0, savefilestatus, b2time, coronal,
      3  natmi, tally,
      4  density_rescale,
@@ -261,7 +261,7 @@
      1     etim/0.0_R8/, ismain/1/, ismain0/0/,
      2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/
       data idout0/'pgnl;pgmm;pzmm'/, idout1/'pzmm'/
-      data na_new/1.0e14_R8/, na_min/1.0e4_R8/, b2mndr_cpu/0.0_R8/,
+      data b2mndr_cpu/0.0_R8/,
      &     b2mndr_elapsed/0.0_R8/
       data savefile/'plasmastate.xxxx'/,
      1     cpuincrement/3600.0_R8/, savefilestatus/'new'/, b2time/1/,
@@ -1075,14 +1075,6 @@
      &   'faulty internal parameter plasinc,plasnum')
        call ipgetc ('b2mndr_idout0', idout0)
        call ipgetc ('b2mndr_idout1', idout1)
-       call ipgetr ('b2mndr_na_min', na_min)
-       call ipgetr ('b2mndr_na_new', na_new)
-       call xertst (na_min.gt.0.0_R8,
-     &  'faulty internal parameter na_min')
-       call xertst (na_new.gt.0.0_R8,
-     &  'faulty internal parameter na_new')
-       call xertst (na_new.gt.na_min,
-     &  'na_new must be larger than na_min!')
        call ipgetr ('b2mndr_cpu', b2mndr_cpu)
        call xertst (b2mndr_cpu.ge.0.0_R8,
      1  'faulty internal parameter cpu')
@@ -1347,7 +1339,7 @@ cwdk for now, dummy external state is created in b2mod_main
      .      (nint(zamin(is)).eq.1.and.nint(zamax(is)).eq.1)) k = k + 1
        end do
        call xertst (k.eq.1.or.(switch%b2tfnb_xcur.eq.0.0_R8 .and.
-     &                                switch%b2tfnb_ycur.eq.0.0_R8),
+     &                         switch%b2tfnb_ycur.eq.0.0_R8),
      .  'Currents assignment to ions only supported for single '//
      .  'hydrogenic species!')
 *
@@ -1556,21 +1548,21 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       endif
       write(*,"(' Number of midplane cell =',i4)") nmdpl             !srv 22.05.09 }
 *   ..compute length along x-direction                               !srv 13.02.17 {
-      lengthx(:,:) = 0.0e0_R8
-      lengthx(-1,:) = hx(-1,:)*0.5e0_R8
+      lengthx(:,:) = 0.0_R8
+      lengthx(-1,:) = hx(-1,:)*0.5_R8
       do iy = -1, ny
        do ix = 0, nx
         if(on_closed_surface(ix,iy)) then
          if(rightix(ix,iy).ne.nx+1) then
           lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
-     *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+     *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
          else
           lengthx(ix,iy) = hx(ix,iy)*0.5_R8
          endif
         else
          if(leftix(ix,iy).ne.-2) then
           lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
-     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
+     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
          else
           lengthx(ix,iy) = hx(ix,iy)*0.5_R8
          endif
@@ -1578,11 +1570,11 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
        enddo
       enddo                                                          !srv 13.02.17 }
 *   ..compute length along y-direction                               !srv 24.04.02 {
-      lengthy(:,-1) = hy(:,-1)*0.5e0_R8
+      lengthy(:,-1) = hy(:,-1)*0.5_R8
       do iy = 0, ny
        do ix = -1, nx
         lengthy(ix,iy) = lengthy(ix,iy-1) +
-     *      (hy(ix,iy)+hy(ix,iy-1))*0.5e0_R8
+     *      (hy(ix,iy)+hy(ix,iy-1))*0.5_R8
        enddo
       enddo                                                          !srv 24.04.02 }
 *
@@ -1695,7 +1687,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       endif                                                          !srv 25.01.16 }
       do is = 0,ns-1                                                 !srv 25.01.16 {
         do iCv=1,nCv
-          state % pl % na(iCv,is) = max(state % pl % na(iCv,is),na_min)
+          state % pl % na(iCv,is) = min(max(state % pl % na(iCv,is),
+     &      switch % b2mndr_na_min),switch % b2mndr_na_max)
         enddo
       enddo                                                          !srv 25.01.16 }
 !      if(use_mms.ne.0) then                                         !srv 26.02.18 {
@@ -1713,7 +1706,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
      .  state%rtw)
 *   ..extend initial state to species (ns0:ns-1)
       if (ns0.lt.ns) then
-       call sfill (nCv*(ns-ns0), na_new, state % pl % na(1,ns0), 1)
+       call sfill (nCv*(ns-ns0), switch % b2mndr_na_new, 
+     .   state % pl % na(1,ns0), 1)
        call sfill (nCv*(ns-ns0), 0.0_R8, state % pl % ua(1,ns0), 1)
        call sfill (nCv*(ns-ns0), 0.0_R8, state % dv % kinrgy(1,ns0), 1)  !xpb
        call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%uadia(1,0,ns0), 1)   !xpb
@@ -2212,7 +2206,7 @@ c      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc
         call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
         if (switch%pot_eq.eq.0) then                           !srv 13.07.05 {
-          state%pl%po   =0.0e0_R8
+          state%pl%po=0.0_R8
         else if (switch%pot_eq.eq.2) then
           state%pl%po=3.1_R8*state%pl%te/qe
         endif
@@ -2358,7 +2352,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
           call copy_background(nCv, nFc, ns, switch, mpg, geo,
-     .                         state%pl, state%dv)
+     .                         state%pl, state%dv, state_ext)
           call write_f31(mpg)
           close(31)
         end if
@@ -3072,7 +3066,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         write(*,*) 'Saving '//trim(fort_lc)//'31 at end of run'
         open(31,file=trim(fort_lc)//'31')
         call copy_background(nCv, nFc, ns, switch, mpg, geo,
-     &                       state%pl, state%dv)
+     &                       state%pl, state%dv, state_ext)
         call write_f31(mpg)
         close(31)
        end if
@@ -3419,7 +3413,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 * finalise eirene_mc
       if(switch%use_eirene.ne.0.and.itim.gt.0) then
 #ifdef B25_EIRENE
-         call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,state)
+         call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,state,state_ext)
 #else
          call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif

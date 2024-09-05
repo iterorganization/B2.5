@@ -57,7 +57,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:0), nout(0:1), idum(0:9),ns, io
+      integer ninp(0:0), nout(0:1), ns, io
       logical file_open
 *   ..procedures
       external prgini, prgend, cfopen, cfruin, cfruch

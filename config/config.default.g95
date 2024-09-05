@@ -37,7 +37,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional
@@ -49,9 +49,9 @@ LINK_MOD =
 FC = g95
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -C -fbounds-check -ftrace=full
+  FCOPTS = -g -C -fbounds-check -ftrace=full
 else
-FCOPTS = -g -O
+  FCOPTS = -g -O
 endif
 
 DBLFC = ${FC}
@@ -70,11 +70,11 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = $(FC)

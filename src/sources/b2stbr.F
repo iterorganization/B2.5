@@ -5,6 +5,7 @@
      &  nscx, nscxmax, iscx, ismain, dtim,
      &  switch, geo, mpg, st, st_ext, st_avg, main_call)
       use b2mod_types
+      use b2mod_openmp
 !WG_TODO      use b2mod_wall
       use b2mod_diag
       use b2mod_time
@@ -108,6 +109,9 @@
       integer, save :: ncall_iout = -1
 #ifdef B25_EIRENE
       integer ia, im
+#ifdef ASTRA
+      integer, save :: use_astra = 0
+#endif
       character ch3*3
 #endif
       character chns*3, chk*1                                        !srv 11.09.09 } 23.03.12
@@ -142,7 +146,11 @@
 #endif
      *  shi0_ff(nCv,0:nscx-1), wrk0(nCv),
      *  f_redep(nCv,0:ns-1)
+#ifdef _OPENMP
+      real (kind=R8) :: start_time, end_time
+#else
       real (kind=R4) :: start_time, end_time
+#endif
 #ifdef WG_TODO
       logical equilibrium(ntrack), over_erosion
 #endif
@@ -196,6 +204,9 @@
       if (ncall_b2stbr.eq.0) then
 !WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
         if (switch%use_eirene.ne.0) out_tfiles=0
+#if ( defined(B25_EIRENE) && defined(ASTRA) )
+        call ipgeti ('b2mndr_astra', use_astra)
+#endif
         call ipgeti ('b2stbr_out_tfiles', out_tfiles)                !srv 07.04.09
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
         if(switch%b2stbr_first_flight.ne.0) then
@@ -283,7 +294,7 @@
         endif
       endif
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      & 'faulty argument ismain')
@@ -561,7 +572,7 @@ c   --> better solution wanted here..
 #ifdef B25_EIRENE
         call eirene_mc(nCv, nFc, ns, dtim,                          !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir, shn0_eir,
-     &                 main_call, switch, geo, mpg, st)
+     &                 main_call, switch, geo, mpg, st, st_ext)
 
         if(ncall_b2stbr.le.999. and. ncall_b2stbr.le.ncall_iout) then
          do is = 0, ns-1
@@ -1067,8 +1078,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 
       call subini ('b2stbr_neutr_scl')
       if (ncall_b2stbr_neutr_scl.eq.0) then
-        call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-        call xertst(1.le.ns, 'faulty argument ns')
+        call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+        call xertst (1.le.ns, 'faulty argument ns')
       endif
       if(use_eirene.ne.0.and.ank_mods.ne.0) then
 #ifdef B25_EIRENE

@@ -24,7 +24,7 @@
 *   ..local variables
       integer ix, iy, is
       integer, save :: ncall = 0, iout = 0                              !srv 06.12.17
-      real (kind=R8), save :: vis_per = 0.0e0_R8                        !srv 22.11.99
+      real (kind=R8), save :: vis_per = 0.0_R8                          !srv 22.11.99
       real (kind=R8) ::
      &  fac_vism, t0, wrk0(-1:nx,-1:ny)
       character(3) :: chns
@@ -45,13 +45,13 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..calculate the coefficients in difference approximation of viscosity perpendicular current       !srv 22.11.99 
-      avisper  = 0.0e0_R8; bvisper = 0.0e0_R8; cvisper = 0.0e0_R8       !srv 27.01.00 22.03.02
+      avisper  = 0.0_R8; bvisper = 0.0_R8; cvisper = 0.0_R8             !srv 27.01.00 22.03.02
         
       fac_vism = maxval(fac_vis)
-      if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0e0_R8) then             !srv 22.11.99
+      if(fac_vism.ne.0.0_R8 .and. vis_per.ne.0.0_R8) then               !srv 22.11.99
 
        do is = 0,ns-1                                                   !srv 16.10.17
-         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then             !srv 16.10.17
+         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then            !srv 16.10.17
           do iy=-1,ny
             do ix=-1,nx
               if(bottomiy(ix,iy).eq.-2)then

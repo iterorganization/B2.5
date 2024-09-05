@@ -178,12 +178,16 @@ c     return value
 c     ionisation potentials
       real (kind=R8) ::
      *   ip(0:nc-1)
+      integer, save :: extrap_mode = 1, ncall = 0
 
       logical silent_open, streql
       external silent_open, streql, xerrab
 
 *   ..subprogram start-up calls
       call subini ('ratadas')
+      if (ncall.eq.0) then
+        call ipgeti ('adas_extrap', extrap_mode)
+      end if
 
       rtsa=0.0_R8
       rtra=0.0_R8
@@ -956,7 +960,8 @@ c     filling rtsa(ionisation)
           logT=log10(rtt(cT))
           do cD=0,rtnn
             logD=log10(rtn(cD)/1.0e6_R8)
-            call int2d(DTMP1(1:itdimd,1:iddimd),itdimd,iddimd,
+            call int2d(DTMP1(1:itdimd,1:iddimd),
+     &       extrap_mode,itdimd,iddimd,
      1       DTEVDion,ITMAXDion,DDENSDion,IDMAXDion,
      2       logT,logD,ans)
             rtsa(cT,cD,ic)=10.0_R8**(ans-6.0_R8)
@@ -973,7 +978,8 @@ c     filling rtra(recombination)
           logT=log10(rtt(cT))
           do cD=0,rtnn
             logD=log10(rtn(cD)/1.0e6_R8)
-            call int2d(DTMP1(1:itdimd,1:iddimd),itdimd,iddimd,
+            call int2d(DTMP1(1:itdimd,1:iddimd),
+     &       extrap_mode,itdimd,iddimd,
      1       DTEVDrec,ITMAXDrec,DDENSDrec,IDMAXDrec,
      2       logT,logD,ans)
             rtra(cT,cD,ic)=10.0_R8**(ans-6.0_R8)
@@ -1004,7 +1010,8 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
               rtqa(cT,cD,ic)=rtbr(cT,cD,ic)
             else
               if(ic.gt.0) then
-                call int2d(DTMP1(1:itdimd,1:iddimd),itdimd,iddimd,
+                call int2d(DTMP1(1:itdimd,1:iddimd),
+     &           extrap_mode,itdimd,iddimd,
      1           DTEVDprb,ITMAXDprb,DDENSDprb,IDMAXDprb,
      2           logT,logD,ans)
                 rtqa(cT,cD,ic)=10.0_R8**(ans-6.0_R8)/qe
@@ -1022,12 +1029,14 @@ c so is included explicitly in b2stel if fix_recomb is nonzero
               endif
             endif
             if(ic.lt.ncnct-1) then
-              call int2d(DTMP2(1:itdimd,1:iddimd),itdimd,iddimd,
+              call int2d(DTMP2(1:itdimd,1:iddimd),
+     &         extrap_mode,itdimd,iddimd,
      1         DTEVDplt,ITMAXDplt,DDENSDplt,IDMAXDplt,
      2         logT,logD,ans)
               rtqa(cT,cD,ic)=rtqa(cT,cD,ic)+10.0_R8**(ans-6.0_R8)/qe
               rtrd(cT,cD,ic)=rtrd(cT,cD,ic)+10.0_R8**(ans-6.0_R8)/qe
-              call int2d(DTMP3(1:itdimd,1:iddimd),itdimd,iddimd,
+              call int2d(DTMP3(1:itdimd,1:iddimd),
+     &         extrap_mode,itdimd,iddimd,
      1         DTEVDpot,ITMAXDpot,DDENSDpot,IDMAXDpot,
      2         logT,logD,ans)
               if (ans.lt.0.0_R8) then
@@ -1049,7 +1058,8 @@ c     filling rtcx(charge exchange)
           logT=log10(rtt(cT))
           do cD=0,rtnn
             logD=log10(rtn(cD)/1.0e6_R8)
-            call int2d(DTMP1(1:itdimd,1:iddimd),itdimd,iddimd,
+            call int2d(DTMP1(1:itdimd,1:iddimd),
+     &       extrap_mode,itdimd,iddimd,
      1       DTEVDcex,ITMAXDcex,DDENSDcex,IDMAXDcex,
      2       logT,logD,ans)
             rtcx(cT,cD,ic)=10.0_R8**(ans-6.0_R8)
@@ -1066,7 +1076,8 @@ c     filling rtzz(effective charge)
           logT=log10(rtt(cT))
           do cD=0,rtnn
             logD=log10(rtn(cD)/1.0e6_R8)
-            call int2d(DTMP1(1:itdimd,1:iddimd),itdimd,iddimd,
+            call int2d(DTMP1(1:itdimd,1:iddimd),
+     &       extrap_mode,itdimd,iddimd,
      1       DTEVDzav,ITMAXDzav,DDENSDzav,IDMAXDzav,
      2       logT,logD,ans)
             rtzz(cT,cD,ic)=ans
@@ -1083,7 +1094,8 @@ c     filling rtz2(effective square charge)
           logT=log10(rtt(cT))
           do cD=0,rtnn
             logD=log10(rtn(cD)/1.0e6_R8)
-            call int2d(DTMP1(1:itdimd,1:iddimd),itdimd,iddimd,
+            call int2d(DTMP1(1:itdimd,1:iddimd),
+     &       extrap_mode,itdimd,iddimd,
      1       DTEVDza2,ITMAXDza2,DDENSDza2,IDMAXDza2,
      2       logT,logD,ans)
             rtz2(cT,cD,ic)=ans
@@ -1100,7 +1112,8 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
           logT=log10(rtt(cT))
           do cD=0,rtnn
             logD=log10(rtn(cD)/1.0e6_R8)
-            call int2d(DTMP1(1:itdimd,1:iddimd),itdimd,iddimd,
+            call int2d(DTMP1(1:itdimd,1:iddimd),
+     &       extrap_mode,itdimd,iddimd,
      1       DTEVDpot,ITMAXDpot,DDENSDpot,IDMAXDpot,
      2       logT,logD,ans)
             rtpi(cT,cD,ic)=ans
@@ -1114,6 +1127,7 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
         endif
       enddo
 
+      ncall = ncall + 1
       call subend ()
       return
 
