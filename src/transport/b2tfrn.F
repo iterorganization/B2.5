@@ -77,7 +77,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
 *   ..subprogram start-up calls
       call subini ('b2tfrn')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..set internal parameters on first call
 c      if (ncall_b2tfrn.eq.0) then
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -209,7 +209,7 @@ cwdk    to be checked: now we use inverse volume weighting in wkr0
           c071(iCv) = zeff(iCv)*fce2n(zeff(iCv))
         enddo
       else
-        c071 = 0.71e0_R8                                                 !srv 13.01.17
+        c071 = 0.71_R8                                                   !srv 13.01.17
       endif
 
 cwdk  interpolate to cell faces!

@@ -58,12 +58,12 @@
 *   ..subprogram start-up calls
       call subini ('b2tvsq')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       
-      fchvisq   = 0.0e0_R8                                              !srv 11.07.99
-      fchvisq_a = 0.0e0_R8
+      fchvisq   = 0.0_R8                                                !srv 11.07.99
+      fchvisq_a = 0.0_R8
       fac_vism = maxval(fac_vis)
-      if(fac_vism.ne.0.0_R8 .and. switch%fhe_vis_q.ne.0.0e0_R8.and.     !srv 16.10.17
+      if(fac_vism.ne.0.0_R8 .and. switch%fhe_vis_q.ne.0.0_R8.and.       !srv 16.10.17
      &   switch%no_current.eq.0) then
 
 *     ..compute gradients of ti in cell centers
@@ -80,7 +80,7 @@
 
 *       ..calculate the parallel heat flux of ion at the center of cell !lk 23.05.06 05.07.07 {
 
-          qip0 = 0.0e0_R8
+          qip0 = 0.0_R8
 
           if (switch%b2siav_qstyle .eq. 0) then
 
@@ -88,7 +88,7 @@
              if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
               do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                iCv = mpg%ftCv(ic)
-               qip0(iCv) = -2.5e0_R8*geo%cvBb(iCv,3)*geo%cvBb(iCv,2)/
+               qip0(iCv) = -2.5_R8*geo%cvBb(iCv,3)*geo%cvBb(iCv,2)/
      &           (geo%cvBb(iCv,0)*geo%ftBbav2(iFt))*
      &           (ni(iCv)*ti(iCv)/qe)*gti(iCv,1)
               enddo
@@ -137,7 +137,7 @@
               do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                iCv = mpg%ftCv(ic)
                qip0(iCv) = -hcix_c(iCv)*gti(iCv,0)*geo%cvBb(iCv,3)/
-     &           geo%cvBb(iCv,0) - 2.5e0_R8*geo%cvBb(iCv,2)/
+     &           geo%cvBb(iCv,0) - 2.5_R8*geo%cvBb(iCv,2)/
      &           (geo%cvBb(iCv,0)*geo%cvBb(iCv,3))*(ni(iCv)*ti(iCv)/qe)*
      &           gti(iCv,1)
               enddo
@@ -164,7 +164,7 @@
           qip1 = switch%cqip1*ni*ti*sqrt(te+ti)/sqrt(am(is)*mp)
 
 *       ..compute qipgen and its poloidal gradient on faces
-          qipgen = qip1*datan(qip0/qip1)*sqrt(geo%cvBb(:,3))                                                                  
+          qipgen = qip1*datan(qip0/qip1)*sqrt(geo%cvBb(:,3))
           call grad_p(nCv, nFc, nVx, 0, geo, mpg, qipgen, wrkv, gqipgen)
 
           !set gqipgen to zero on faces not in touch with core
@@ -177,18 +177,18 @@
           enddo
 
 *       ..compute tau, nu, alpha, and interpolate to faces
-          tauia1 = 0.0e0_R8
-          nu1    = 0.0e0_R8
-          alpha1 = 0.0e0_R8
+          tauia1 = 0.0_R8
+          nu1    = 0.0_R8
+          alpha1 = 0.0_R8
           do iFt = 1, mpg%nFt 
             if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
               do ic=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                 iCv = mpg%ftCv(ic)
                 if (switch%lluciani.eq.3) then
                   tauia1(iCv) = switch%cvsa_mltpl*tauia(iCv,is)/        !lk 20.11.07 { iyv 06.12.13
-     &             (1.0e0_R8+15.12e16_R8/geo%ftConn(iFt)*
+     &             (1.0_R8+15.12e16_R8/geo%ftConn(iFt)*
      &             (ti(iCv)/ev)**2/ne2(iCv))
-     &             /(1.0e0_R8+15.12e16_R8*geo%ftEps(iFt)**1.5e0_R8
+     &             /(1.0_R8+15.12e16_R8*geo%ftEps(iFt)**1.5_R8
      &             /geo%ftConn(iFt)*(ti(iCv)/ev)**2/ne2(iCv))
                 elseif (switch%lluciani.eq.1) then
                   tauia1(iCv) = tauia(iCv,is)/
@@ -199,11 +199,11 @@
                 endif
                 nu1(iCv) = geo%ftConn(iFt)/(tauia(iCv,is)
      &           *sqrt(ti(iCv)/(mp*am(is)))
-     &           *2.0e0_R8*pi*sqrt(geo%ftEps(iFt)**3))
-                alpha1(iCv) = ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(iCv))+
-     &           2.7e0_R8*nu1(iCv)**2*geo%ftEps(iFt)**3)/(1.0e0_R8+
-     &           0.7e0_R8*sqrt(nu1(iCv))+
-     &           nu1(iCv)**2*geo%ftEps(iFt)**3)-1.0e0_R8)*0.533e0_R8    !lk 20.11.07 }
+     &           *2.0_R8*pi*sqrt(geo%ftEps(iFt)**3))
+                alpha1(iCv) = ((-0.17_R8+1.05_R8*sqrt(nu1(iCv))+
+     &           2.7_R8*nu1(iCv)**2*geo%ftEps(iFt)**3)/(1.0_R8+
+     &           0.7_R8*sqrt(nu1(iCv))+
+     &           nu1(iCv)**2*geo%ftEps(iFt)**3)-1.0_R8)*0.533_R8        !lk 20.11.07 }
               enddo
             endif
           enddo
@@ -233,9 +233,9 @@
 
 *       ..calculate the x-component of the parallel viscosity current
 *         connected with the heat flux 
-          fchvisq_a(:,0,is) = -0.24e0_R8*switch%fhe_vis_q*
+          fchvisq_a(:,0,is) = -0.24_R8*switch%fhe_vis_q*
      &       fac_vis*wrkf*gOnedBsq(:,1)*gqipgen*geo%fcS*geo%fcQalf(:,0)
-          fchvisq_a(:,1,is) =  0.24e0_R8*switch%fhe_vis_q*
+          fchvisq_a(:,1,is) =  0.24_R8*switch%fhe_vis_q*
      &       fac_vis*wrkf*gOnedBsq(:,0)*gqipgen*geo%fcS*geo%fcQalf(:,1)
 
          endif

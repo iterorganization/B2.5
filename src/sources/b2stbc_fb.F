@@ -60,7 +60,7 @@
        call read_b2mod_feedback(99,'    ',feedback_namelist_used)
       endif
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
@@ -693,7 +693,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
      .  'feedback scheme not consistent with B.C.''s!')
       endif ! ncall.eq.0
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
@@ -981,11 +981,31 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
      &                    dv%ne(ic2)) *
      &                    geo%fcS(mpg%fsFc(iFc))
                       end if
-                    endif
-                  enddo
+                    end if
+                  end do
+                  if (mpg%iFssep2.gt.0) then
+                    iFc1 = mpg%fsFcP(mpg%iFssep2,1)
+                    iFc2 = iFc1 + mpg%fsFcP(mpg%iFssep2,2) - 1
+                    do iFc = iFc1, iFc2
+                      ic1 = mpg%fcCv(mpg%fsFc(iFc),1)
+                      ic2 = mpg%fcCv(mpg%fsFc(iFc),2)
+                      if(mpg%cvOnClosedSurface(ic1) .or.
+     &                   mpg%cvOnClosedSurface(ic2)) then
+                        na_feedback_current =
+     &                    na_feedback_current + (pl%na(ic1,is) +
+     &                    pl%na(ic2,is)) *
+     &                    geo%fcS(mpg%fsFc(iFc))
+                        if (is.eq.is_start+1) then
+                          sum_e = sum_e + (dv%ne(ic1) +
+     &                     dv%ne(ic2)) *
+     &                     geo%fcS(mpg%fsFc(iFc))
+                        end if
+                      end if
+                    end do
+                  end if
                   is_end = is
-                endif
-              enddo
+                end if
+              end do
               na_feedback_current = na_feedback_current/sum_e
 
             case (8) ! relative average concentration of this species on desired domain

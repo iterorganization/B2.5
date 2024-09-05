@@ -19,7 +19,6 @@ module b2mod_connectivity
         !< connectivity arrays that no connectivity available
 
 contains
-   
 
   !> Check the connectivity for errors.
   subroutine test_connectivity(nx,ny,crx,cry,cflag, &
@@ -138,8 +137,6 @@ contains
 
   return
   end subroutine test_connectivity
-
-
 
   subroutine init_region(nx,ny,nncut,nncutmax, &
       & leftcut,rightcut,topcut,bottomcut,ccut, &

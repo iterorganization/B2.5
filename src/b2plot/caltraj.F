@@ -826,19 +826,13 @@ c     --------------------------------------------------------------------------
 
 C Projection of the vvtraj upon the axis of the cell (side middle points)
 
-      if((geo%cvBb(iCv,0).gt.0.0_R8.and.geo%cvBb(iCv,2).ge.0.0_R8).or.
-     .   (geo%cvBb(iCv,0).lt.0.0_R8.and.geo%cvBb(iCv,2).lt.0.0_R8)) then
-        rechvv(1)=(1.0_R8/betrag)*  geo%cvEb(iCv,1) *vvtraj(iCv,l)
-        rechvv(2)=(1.0_R8/betrag)*(-geo%cvEb(iCv,0))*vvtraj(iCv,l)
-      else
-        rechvv(1)=(1.0_R8/betrag)*(-geo%cvEb(iCv,1))*vvtraj(iCv,l)
-        rechvv(2)=(1.0_R8/betrag)*  geo%cvEb(iCv,0) *vvtraj(iCv,l)
-      end if
+      rechvv(1)=(geo%signmf/betrag)*  geo%cvEb(iCv,1) *vvtraj(iCv,l)
+      rechvv(2)=(geo%signmf/betrag)*(-geo%cvEb(iCv,0))*vvtraj(iCv,l)
 
 C Projection of the uutraj upon the axis of the cell (side middle points)
 
-      rechuu(1)=(1.0_R8/betrag)*geo%cvEb(iCv,0)*uutraj(iCv,l)
-      rechuu(2)=(1.0_R8/betrag)*geo%cvEb(iCv,1)*uutraj(iCv,l)
+      rechuu(1)=(geo%signmf/betrag)*geo%cvEb(iCv,0)*uutraj(iCv,l)
+      rechuu(2)=(geo%signmf/betrag)*geo%cvEb(iCv,1)*uutraj(iCv,l)
 
       vr=rechvv(1)+rechuu(1)
       vz=rechvv(2)+rechuu(2)

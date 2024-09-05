@@ -2727,7 +2727,7 @@ cdjm Update ion heat sources
       character*13, allocatable :: species_name(:)
       integer use_eirene
       integer, allocatable :: za(:)
-      real (kind=R8), save :: fac_hz = 1.0e0_R8
+      real (kind=R8), save :: fac_hz = 1.0_R8
       real (kind=R8) :: rdum(1)
 *   ..procedures
       intrinsic size
@@ -2784,7 +2784,7 @@ cdjm Update ion heat sources
       vdims(2)=n4id
       call write_cdf_double(ncid,'cvX',geo%cvX,vdims,1)
       call write_cdf_double(ncid,'cvY',geo%cvY,vdims,1)
-*   ..cvBb,cvHz,cvVol,fcS,am:
+*   ..cvBb, cvHz, cvVol, fcS, am:
       call write_cdf_double(ncid,'cvBb',geo%cvBb,vdims,2)
       call write_cdf_double(ncid,'cvHz',geo%cvHz,vdims,1)
       call write_cdf_double(ncid,'cvVol',geo%cvVol,vdims,1)

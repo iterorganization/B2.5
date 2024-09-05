@@ -110,7 +110,7 @@ csw 24sep2013
      &               'faulty input b2tlnl_ii')
       endif
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall_b2sifr.lt.3) then
 *    ..test sign of vol
@@ -201,7 +201,7 @@ csw 24sep2013
      &      geo%cvBb(iCv,3) !srv 12.04.10 11.01.13
            delti=sign(min(abs(delti),dtiapr),delti)
          endif
-c        if(cthi(iCv,isb).ne.2.65e0_R8)
+c        if(cthi(iCv,isb).ne.2.65_R8)
 c     1    write(*,*) iCv,isb,cthi(iCv,isb)
          smbtf(iCv,0) = smbtf(iCv,0)+t0*
      &    (switch%b2sifr_phm1*ehxp(iCv)-

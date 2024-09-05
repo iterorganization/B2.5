@@ -127,9 +127,10 @@
 *   ..subprogram start-up calls
       call subini ('b2npht')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test rxf
-      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
+     . 'faulty argument rxf')
 *   ..set internal parameters on first call
       if (ncall_b2npht.eq.0) then
         if(switch%b2mndt_style.eq.2) then
@@ -273,9 +274,9 @@ cc while the second contribution corresponds to T dn/dt
      &  co%f_luc_sg, co%alfx_c, co%sigx_c, rt%rza, rt%rz2, st_ext,
      &  she0, shi0, shn0, srw)
       endif
-      call b2saxpy (nCv*4, 1.0e0_R8, sr%she, 1, she0, 1)
-      call b2saxpy (nCv*4, 1.0e0_R8, sr%shi, 1, shi0, 1)
-      call b2saxpy (nCv*4, 1.0e0_R8, sr%shn, 1, shn0, 1)
+      call b2saxpy (nCv*4, 1.0_R8, sr%she, 1, she0, 1)
+      call b2saxpy (nCv*4, 1.0_R8, sr%shi, 1, shi0, 1)
+      call b2saxpy (nCv*4, 1.0_R8, sr%shn, 1, shn0, 1)
 
 *   ..sources due to k-eps model
       sr%skt_prod = 0.0_R8
@@ -284,11 +285,11 @@ cc while the second contribution corresponds to T dn/dt
         call b2sikt (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &    pl, dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod,
      &    skt_diss)
-        call b2saxpy (nCv*4, 1.0e0_R8, shekt, 1, she0, 1)
-        call b2saxpy (nCv*4, 1.0e0_R8, shikt, 1, shi0, 1)
-        call b2saxpy (nCv*4, 1.0e0_R8, sr%skt, 1, skt0, 1)
-        call b2saxpy (nCv, 1.0e0_R8, skt_prod, 1, sr%skt_prod, 1)
-        call b2saxpy (nCv, 1.0e0_R8, skt_diss, 1, sr%skt_diss, 1)
+        call b2saxpy (nCv*4, 1.0_R8, shekt, 1, she0, 1)
+        call b2saxpy (nCv*4, 1.0_R8, shikt, 1, shi0, 1)
+        call b2saxpy (nCv*4, 1.0_R8, sr%skt, 1, skt0, 1)
+        call b2saxpy (nCv, 1.0_R8, skt_prod, 1, sr%skt_prod, 1)
+        call b2saxpy (nCv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
       endif
 
 cdjm Jan2017 update particle source components for balance

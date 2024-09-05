@@ -41,7 +41,7 @@
 *     nCv, nFc - integer.
 *     nCv and nFc specify the number of control volumes and cell faces
 *     in the unstructured mesh.
-*     It will hold that 0.le.nCv and 0.le.nFc.
+*     It will hold that 0.lt.nCv and 0.lt.nFc.
 *
 *     ns - integer, output.
 *     ns specifies the number of atomic species in the calculation.
@@ -101,7 +101,7 @@
 *   ..test basic dimensions
       nCv = mpg%nCv
       nFc = mpg%nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty input nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty input nCv, nFc')
 
 * ..return
       call subend ()

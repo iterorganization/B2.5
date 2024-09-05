@@ -156,7 +156,7 @@
        logical :: ex, LRTOR, LZRD45
        character(64) :: fname
        character(6)  :: chname
-       real (kind=R8) :: b(1:nyd+2),c(1:nyd+2),d(1:nyd+2), dseval
+       real (kind=R8) :: b(1:nyd+2), c(1:nyd+2), d(1:nyd+2), dseval
 #endif
        external xerrab
 
@@ -187,8 +187,8 @@
      &           (a_astra(iy)-a_astra(iy-1))
        enddo
        b(ny_astra) = b(ny_astra-1)
-       c = 0.0e0_R8
-       d = 0.0e0_R8
+       c = 0.0_R8
+       d = 0.0_R8
 !       do i = -1, n 
 !        fun(i) = dseval(ny_astra, coord(i), a_astra, Rmaj_astra, b, c, d)
 !        write(*,*) coord(i), fun(i)

@@ -79,8 +79,8 @@ cpax
       real (kind=R8) :: scur(nFc,0:1) !djm Jan2017
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
-c      integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
-c      integer, save :: b2kin=0, b2vis=0
+c      integer, save :: b2tfhi_hybr2 = 0, b2_upwind = 0, flo53 = 0
+c      integer, save :: b2kin = 0, b2vis = 0
 c      real (kind=R8), save :: drift_hyb = 1.0_R8
 c      integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
 c      integer, save :: lim_flux = 0                                    !srv 04.02.03
@@ -110,7 +110,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)        !srv 16
 c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04.02.03
       endif                                                             !srv
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall_b2tfhi.lt.3) then
 *    ..test sign of ni, ti, chci
@@ -149,9 +149,9 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *      ..interpolate na(:,is) to cell faces
          call intface(nCv,nFc,mpg%fcCv,wght,pl%na(:,is),nif)
 *      ..compute flidia
-         flidia(:,0) = flidia(:,0) + 2.5e0_R8*switch%fhi_vdia_par*
+         flidia(:,0) = flidia(:,0) + 2.5_R8*switch%fhi_vdia_par*
      &     nif*dv%vadia(:,0,is)*geo%fcS*geo%fcQalf(:,0)
-         flidia(:,1) = flidia(:,1) + 2.5e0_R8*switch%fhi_vdia_par*
+         flidia(:,1) = flidia(:,1) + 2.5_R8*switch%fhi_vdia_par*
      &     nif*dv%vadia(:,1,is)*geo%fcS*geo%fcQalf(:,1)
         endif
        enddo                                                            !srv 25.01.02 }
@@ -164,8 +164,8 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
      *    w1(-1:nx,-1:ny), w2(-1:nx,-1:ny), w3(-1:nx,-1:ny)
      *   ,w4(-1:nx,-1:ny), w5(-1:nx,-1:ny), w6(-1:nx,-1:ny)
      *         )
-       w1=0.0e0_R8; w2=0.0e0_R8; w3=0.0e0_R8; w4=0.0e0_R8; w5=0.0e0_R8;
-       w6=0.0e0_R8;
+       w1=0.0_R8; w2=0.0_R8; w3=0.0_R8; w4=0.0_R8; w5=0.0_R8;
+       w6=0.0_R8;
       endif                                                             !srv 16.09.02 }
 #endif
 
@@ -192,14 +192,14 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
       endif
 
 *   ..contributions from currents
-      scur(:,0) = 1.5e0_R8/qe*(dv%fchinert(:,0) + dv%fchvispar(:,0)+
+      scur(:,0) = 1.5_R8/qe*(dv%fchinert(:,0) + dv%fchvispar(:,0)+
      &  dv%fchanml(:,0) + dv%fchvisper(:,0) + dv%fchvisq(:,0))*
      &                                          switch%b2tfnb_xcur +
-     &  1.5e0_R8/qe*dv%fchviskt(:,0)
-      scur(:,1) = 1.5e0_R8/qe*(dv%fchinert(:,1) + dv%fchvispar(:,1)+
+     &  1.5_R8/qe*dv%fchviskt(:,0)
+      scur(:,1) = 1.5_R8/qe*(dv%fchinert(:,1) + dv%fchvispar(:,1)+
      &  dv%fchanml(:,1) + switch%fnb_vis_per*dv%fchvisper(:,1) +
      &  switch%fnb_vis_q*dv%fchvisq(:,1))*switch%b2tfnb_ycur +
-     &  1.5e0_R8/qe*dv%fchviskt(:,1)
+     &  1.5_R8/qe*dv%fchviskt(:,1)
 
       if (switch%b2tfhi_iout.eq.2) then
         call my_out_us(70,nFc,1,co%chcn(:,0),'chcn0')
@@ -208,24 +208,23 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
         call my_out_us(70,nFc,1,co%chci(:,1),'chci1')
       endif
 
-
 *   ..convective coefficients
       !floi0
-      floi0(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
+      floi0(:,0) = 1.5_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
      &  flidia(:,0) + scur(:,0) + floi_vhx
-      floi0(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
+      floi0(:,1) = 1.5_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
      &  flidia(:,1) + scur(:,1)
 
       !floi0_mdf
-      floi0_mdf(:,0) = 1.5e0_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
+      floi0_mdf(:,0) = 1.5_R8*dv%fni_he(:,0) + co%chvi(:,0)*nif +
      &  scur(:,0) + floi_vhx
-      floi0_mdf(:,1) = 1.5e0_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
+      floi0_mdf(:,1) = 1.5_R8*dv%fni_he(:,1) + co%chvi(:,1)*nif +
      &  scur(:,1)
 
       !flon0
       if (switch%tn_style.eq.2) then
-        flon0(:,0) = 1.5e0_R8*dv%fnn(:,0) + co%chvi(:,0)*nnf
-        flon0(:,1) = 1.5e0_R8*dv%fnn(:,1) + co%chvi(:,1)*nnf
+        flon0(:,0) = 1.5_R8*dv%fnn(:,0) + co%chvi(:,0)*nnf
+        flon0(:,1) = 1.5_R8*dv%fnn(:,1) + co%chvi(:,1)*nnf
       endif
 
 *   ..apply discretization scheme
@@ -323,8 +322,9 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
         dumm2 = 0.0_R8
         dumm3 = 0.0_R8
         dumm4 = 0.0_R8
+        wrkf = sign(1.5_R8*dv%fni_he,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(1.5_R8*dv%fni_he,floi0_mdf),dumm1,dumm2,fhi_32,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_32,dumm3)
         fhi_32 = sign(fhi_32,dv%fni_he)
         fhi_52 = 0.0_R8
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0_mdf,
@@ -341,33 +341,39 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
         dumm1 = 0.0_R8
         dumm4(:,0) = co%chvi(:,0)*nif
         dumm4(:,1) = co%chvi(:,1)*nif
+        wrkf = sign(dumm4,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_strange,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_strange,dumm3)
         fhi_strange = sign(fhi_strange,dumm4)
-        dumm4(:,0) = 1.5e0_R8/qe*dv%fchinert(:,0)*switch%b2tfnb_xcur
-        dumm4(:,1) = 1.5e0_R8/qe*dv%fchinert(:,1)*switch%b2tfnb_ycur
+        dumm4(:,0) = 1.5_R8/qe*dv%fchinert(:,0)*switch%b2tfnb_xcur
+        dumm4(:,1) = 1.5_R8/qe*dv%fchinert(:,1)*switch%b2tfnb_ycur
+        wrkf = sign(dumm4,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_inert,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_inert,dumm3)
         fhi_inert = sign(fhi_inert,dumm4)
-        dumm4(:,0) = 1.5e0_R8/qe*dv%fchvispar(:,0)*switch%b2tfnb_xcur
-        dumm4(:,1) = 1.5e0_R8/qe*dv%fchvispar(:,1)*switch%b2tfnb_ycur
+        dumm4(:,0) = 1.5_R8/qe*dv%fchvispar(:,0)*switch%b2tfnb_xcur
+        dumm4(:,1) = 1.5_R8/qe*dv%fchvispar(:,1)*switch%b2tfnb_ycur
+        wrkf = sign(dumm4,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_vispar,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_vispar,dumm3)
         fhi_vispar = sign(fhi_vispar,dumm4)
-        dumm4(:,0) = 1.5e0_R8/qe*dv%fchvisper(:,0)*switch%b2tfnb_xcur
-        dumm4(:,1) = 1.5e0_R8/qe*dv%fchvisper(:,1)*switch%b2tfnb_ycur
+        dumm4(:,0) = 1.5_R8/qe*dv%fchvisper(:,0)*switch%b2tfnb_xcur
+        dumm4(:,1) = 1.5_R8/qe*dv%fchvisper(:,1)*switch%b2tfnb_ycur
+        wrkf = sign(dumm4,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_visper,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_visper,dumm3)
         fhi_visper = sign(fhi_visper,dumm4)
-        dumm4(:,0) = 1.5e0_R8/qe*dv%fchvisq(:,0)*switch%b2tfnb_xcur
-        dumm4(:,1) = 1.5e0_R8/qe*dv%fchvisq(:,1)*switch%b2tfnb_ycur
+        dumm4(:,0) = 1.5_R8/qe*dv%fchvisq(:,0)*switch%b2tfnb_xcur
+        dumm4(:,1) = 1.5_R8/qe*dv%fchvisq(:,1)*switch%b2tfnb_ycur
+        wrkf = sign(dumm4,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_visq,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_visq,dumm3)
         fhi_visq = sign(fhi_visq,dumm4)
-        dumm4(:,0) = 1.5e0_R8/qe*dv%fchanml(:,0)*switch%b2tfnb_xcur
-        dumm4(:,1) = 1.5e0_R8/qe*dv%fchanml(:,1)*switch%b2tfnb_ycur
+        dumm4(:,0) = 1.5_R8/qe*dv%fchanml(:,0)*switch%b2tfnb_xcur
+        dumm4(:,1) = 1.5_R8/qe*dv%fchanml(:,1)*switch%b2tfnb_ycur
+        wrkf = sign(dumm4,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    sign(dumm4,floi0_mdf),dumm1,dumm2,fhi_anml,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_anml,dumm3)
         fhi_anml = sign(fhi_anml,dumm4)
       endif
 
@@ -377,14 +383,14 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
 
 csw 17feb2012
         if(no_Ptncr_x_hi.eq.0) then
-          coni0 = hybr(floi0,chci(ix,iy,0,0))-abs(floi0/2.e0)
+          coni0 = hybr(floi0,chci(ix,iy,0,0))-abs(floi0/2.0_R8)
         else
-          coni0 = chci(ix,iy,0,0)-abs(floi0/2.e0)
+          coni0 = chci(ix,iy,0,0)-abs(floi0/2.0_R8)
         endif
 
 cwdk 10.03.16 unified treatment of chvimx in b2tlhi.F. Test for b2tqca_model no longer required
         flomx = chvimx(ix,iy)*(ni(leftix(ix,iy),leftiy(ix,iy),0)
-     &                          +ni(ix,iy,0))/2.d0
+     &                          +ni(ix,iy,0))/2.0_R8
         if(flomx.gt.0.0_R8) then
           t0 =coni0*abs(dti)/(flomx*
      &              max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
@@ -400,10 +406,10 @@ csw 13mar2013 modified hybrid SOLPS4 style (overwrite cone0)
 
 csw 30apr2014 for TESTING only
           if(flo53 .ne. 0) then
-            floi0=floi0*5.d0/3.d0
+            floi0=floi0*5.0_R8/3.0_R8
           endif
 
-          coni0=dim(chci(ix,iy,0,0)/(1.d0+t0), abs(floi0)*
+          coni0=dim(chci(ix,iy,0,0)/(1.0_R8+t0), abs(floi0)*
      .      max(0.0_R8,min(ti(ix,iy),ti(leftix(ix,iy),leftiy(ix,iy))))/
      .      max(b2tfhi_cutlo,ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy))))
         endif
@@ -438,8 +444,8 @@ csw 30apr2014 for SOLPS4 style
           else
             floi(ix,iy,0,0) = floi0-
      &       sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
-     &       min(0.0e0_R8,t1)**2
-            coni(ix,iy,0,0,0) = abs(floi0/2.e0)+coni0/(1+t0)            !srv 02.01.07
+     &       min(0.0_R8,t1)**2
+            coni(ix,iy,0,0,0) = abs(floi0/2.0_R8)+coni0/(1.0_R8+t0)     !srv 02.01.07
           endif
 
         else
@@ -447,9 +453,9 @@ csw 30apr2014 for SOLPS4 style
 csw 17feb2012
           if(no_Ptncr_x_hi.eq.0) then
             coni0_mdf =
-     .        hybr(floi0_mdf,chci(ix,iy,0,0))-abs(floi0_mdf/2.0)        !srv 17.06.09 {
+     .        hybr(floi0_mdf,chci(ix,iy,0,0))-abs(floi0_mdf/2.0_R8)     !srv 17.06.09 {
           else
-            coni0_mdf = chci(ix,iy,0,0)-abs(floi0_mdf/2.0)
+            coni0_mdf = chci(ix,iy,0,0)-abs(floi0_mdf/2.0_R8)
           endif
 
 csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
@@ -468,7 +474,7 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
         if (balance.and.
      &      (balance_netcdf.ne.0).and.
      &      (mdf_fhi.eq.0)) then !djm Jan2017
-          fhi_32(ix,iy,0,0) = 1.5e0_R8*fni_he(ix,iy,0,0)*
+          fhi_32(ix,iy,0,0) = 1.5_R8*fni_he(ix,iy,0,0)*
      &             (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0
           fhi_52(ix,iy,0,0) = 0.0_R8
           fhi_strange(ix,iy,0,0) = chvi(ix,iy,0,0)*
@@ -479,23 +485,23 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
           fhi_cond(ix,iy,0,0) = -coni0*dti0
           fhi_ecrb(ix,iy,0,0) = 0.0_R8
           fhi_pschused(ix,iy,0,0) = 0.0_R8
-          fhi_inert(ix,iy,0,0) = 1.5e0_R8/qe*fchinert(ix,iy,0,0)*
+          fhi_inert(ix,iy,0,0) = 1.5_R8/qe*fchinert(ix,iy,0,0)*
      &         b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-          fhi_vispar(ix,iy,0,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0,0)*
+          fhi_vispar(ix,iy,0,0) = 1.5_R8/qe*fchvispar(ix,iy,0,0)*
      &         b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-          fhi_visper(ix,iy,0,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0,0)*
+          fhi_visper(ix,iy,0,0) = 1.5_R8/qe*fchvisper(ix,iy,0,0)*
      &         b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
           fhi_visq(ix,iy,0,0) =
-     &         1.5e0_R8/qe*fchvisq(ix,iy,0,0)*b2tfnb_xcur*
+     &         1.5_R8/qe*fchvisq(ix,iy,0,0)*b2tfnb_xcur*
      &        (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
           fhi_anml(ix,iy,0,0) =
-     &         1.5e0_R8/qe*fchanml(ix,iy,0,0)*b2tfnb_xcur*
+     &         1.5_R8/qe*fchanml(ix,iy,0,0)*b2tfnb_xcur*
      &        (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
         endif
         if (balance.and.
      &      (balance_netcdf.ne.0).and.
      &      (mdf_fhi.ne.0)) then !djm Jan2017
-          fhi_32(ix,iy,0,0) = 1.5e0_R8*fni_he(ix,iy,0,0)*
+          fhi_32(ix,iy,0,0) = 1.5_R8*fni_he(ix,iy,0,0)*
      &      (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
           fhi_52(ix,iy,0,0) = 0.0_R8
           fhi_strange(ix,iy,0,0) = chvi(ix,iy,0,0)*
@@ -505,17 +511,17 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
           fhi_cond(ix,iy,0,0) = -coni0_mdf*dti0
           fhi_ecrb(ix,iy,0,0) = 0.0_R8
           fhi_pschused(ix,iy,0,0) = -fhiPSch(ix,iy,0,0)
-          fhi_inert(ix,iy,0,0) = 1.5e0_R8/qe*fchinert(ix,iy,0,0)*
+          fhi_inert(ix,iy,0,0) = 1.5_R8/qe*fchinert(ix,iy,0,0)*
      &       b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-          fhi_vispar(ix,iy,0,0) = 1.5e0_R8/qe*fchvispar(ix,iy,0,0)*
+          fhi_vispar(ix,iy,0,0) = 1.5_R8/qe*fchvispar(ix,iy,0,0)*
      &       b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-          fhi_visper(ix,iy,0,0) = 1.5e0_R8/qe*fchvisper(ix,iy,0,0)*
+          fhi_visper(ix,iy,0,0) = 1.5_R8/qe*fchvisper(ix,iy,0,0)*
      &       b2tfnb_xcur*(ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
           fhi_visq(ix,iy,0,0) =
-     &       1.5e0_R8/qe*fchvisq(ix,iy,0,0)*b2tfnb_xcur*
+     &       1.5_R8/qe*fchvisq(ix,iy,0,0)*b2tfnb_xcur*
      &      (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
           fhi_anml(ix,iy,0,0) =
-     &       1.5e0_R8/qe*fchanml(ix,iy,0,0)*b2tfnb_xcur*
+     &       1.5_R8/qe*fchanml(ix,iy,0,0)*b2tfnb_xcur*
      &      (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
         endif
       endif
@@ -523,7 +529,7 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
       if (balance.and.
      &     (balance_netcdf.ne.0).and.
      &     (mdf_fhi.eq.0)) then !djm Jan2017
-        fhi_32(ix,iy,1,1) = 1.5e0_R8*fni_he(ix,iy,1,1)*
+        fhi_32(ix,iy,1,1) = 1.5_R8*fni_he(ix,iy,1,1)*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_strange(ix,iy,1,1) = chvi(ix,iy,1,1)*
      &     (ni(bottomix(ix,iy),bottomiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8*
@@ -531,19 +537,19 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
         fhi_dia(ix,iy,1,1) = flidia(ix,iy,1,1)*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_inert(ix,iy,1,1) =
-     &      1.5e0_R8/qe*fchinert(ix,iy,1,1)*b2tfnb_ycur*
+     &      1.5_R8/qe*fchinert(ix,iy,1,1)*b2tfnb_ycur*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_vispar(ix,iy,1,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1,1)*
+        fhi_vispar(ix,iy,1,1) = 1.5_R8/qe*fchvispar(ix,iy,1,1)*
      &      b2tfnb_ycur*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_visper(ix,iy,1,1) =
-     &      1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1,1)*b2tfnb_ycur*    !srv 02.10.17
+     &      1.5_R8/qe*vis_per*fchvisper(ix,iy,1,1)*b2tfnb_ycur*    !srv 02.10.17
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_visq(ix,iy,1,1) = 1.5e0_R8/qe*vis_q*fchvisq(ix,iy,1,1)*  !srv 02.10.17
+        fhi_visq(ix,iy,1,1) = 1.5_R8/qe*vis_q*fchvisq(ix,iy,1,1)*  !srv 02.10.17
      &      b2tfnb_ycur*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_anml(ix,iy,1,1) =
-     &      1.5e0_R8/qe*fchanml(ix,iy,1,1)*b2tfnb_ycur*
+     &      1.5_R8/qe*fchanml(ix,iy,1,1)*b2tfnb_ycur*
      &     (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_52(ix,iy,1,1) = 0.0_R8
         fhi_cond(ix,iy,1,1) = -coni0*
@@ -554,26 +560,26 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
       if (balance.and.
      &    (balance_netcdf.ne.0).and.
      &    (mdf_fhi.ne.0)) then !djm Jan2017
-        fhi_32(ix,iy,1,1) = 1.5e0_R8*fni_he(ix,iy,1,1)*
+        fhi_32(ix,iy,1,1) = 1.5_R8*fni_he(ix,iy,1,1)*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_strange(ix,iy,1,1) = chvi(ix,iy,1,1)*
      &      (ni(bottomix(ix,iy),bottomiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_dia(ix,iy,1,1) = 0.0_R8
         fhi_inert(ix,iy,1,1) =
-     &       1.5e0_R8/qe*fchinert(ix,iy,1,1)*b2tfnb_ycur*
+     &       1.5_R8/qe*fchinert(ix,iy,1,1)*b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_vispar(ix,iy,1,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1,1)*
+        fhi_vispar(ix,iy,1,1) = 1.5_R8/qe*fchvispar(ix,iy,1,1)*
      &       b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_visper(ix,iy,1,1) =
-     &      1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1,1)*b2tfnb_ycur*     !srv 02.10.17
+     &      1.5_R8/qe*vis_per*fchvisper(ix,iy,1,1)*b2tfnb_ycur*     !srv 02.10.17
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_visq(ix,iy,1,1) = 1.5e0_R8/qe*vis_q*fchvisq(ix,iy,1,1)*   !srv 02.10.17
+        fhi_visq(ix,iy,1,1) = 1.5_R8/qe*vis_q*fchvisq(ix,iy,1,1)*   !srv 02.10.17
      &       b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_anml(ix,iy,1,1) =
-     &       1.5e0_R8/qe*fchanml(ix,iy,1,1)*b2tfnb_ycur*
+     &       1.5_R8/qe*fchanml(ix,iy,1,1)*b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_52(ix,iy,1,1) = 0.0_R8
         fhi_cond(ix,iy,1,1) = -coni0_mdf*
@@ -600,7 +606,7 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
       endif
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &   .or. iout_b2wdat.eq.4) then                   !srv 16.09.02 {
+     &   .or. iout_b2wdat.eq.4) then                        !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhi__qi_32x')
        call my_out(70,nx,ny,w2,'b2tfhi__qi_ki_gTx')
 !       w3=w1+w2
@@ -608,35 +614,33 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
        call my_out(70,nx,ny,w5,'b2tfhi__qidiax')
        call my_out(70,nx,ny,w6,'b2tfhi__chcix_Pat')
        call my_out(70,nx,ny,fhiPSch(-1,-1,0,0),'b2tfhi__fhiPSchx')
-       w1=0.0e0_R8; w2=0.0e0_R8; w3=0.0e0_R8; w4=0.0e0_R8; w5=0.0e0_R8;
-       w6=0.0e0_R8;
-      endif                                                             !srv 16.09.02 }
+       w1=0.0_R8; w2=0.0_R8; w3=0.0_R8; w4=0.0_R8; w5=0.0_R8;
+       w6=0.0_R8;
+      endif                                                 !srv 16.09.02 }
 
-
-        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &          .or. iout_b2wdat.eq.4) then                 !srv 16.09.02 {
-         if(mdf_fhi.eq.0) then                                          !srv 13.10.06 {
-          w1(ix,iy)=1.5e0_R8*fni_he(ix,iy,1,1)*
-     1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &   .or. iout_b2wdat.eq.4) then                        !srv 16.09.02 {
+        if(mdf_fhi.eq.0) then                               !srv 13.10.06 {
+          w1(ix,iy)=1.5_R8*fni_he(ix,iy,1,1)*
+     1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
           w2(ix,iy)=flidia(ix,iy,1,1)*
-     1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
+     1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
           w3(ix,iy)=-coni0*
      1    (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-          w4(ix,iy)=0.0e0_R8
-          w6(ix,iy)=  coni0
-         else
-          w1(ix,iy)=1.5e0_R8*fni_he(ix,iy,1,1)*
-     1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
-          w2(ix,iy)=0.0e0_R8
+          w4(ix,iy)=0.0_R8
+          w6(ix,iy)=coni0
+        else
+          w1(ix,iy)=1.5_R8*fni_he(ix,iy,1,1)*
+     1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
+          w2(ix,iy)=0.0_R8
           w3(ix,iy)=-coni0_mdf*
      1     (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-          w4(ix,iy)=0.0e0_R8
-          w6(ix,iy)=  coni0_mdf
-         endif
-         w5(ix,iy) = flidia(ix,iy,1,1)*
-     &                 (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
-
-        endif                                                           !srv 16.09.02 }
+          w4(ix,iy)=0.0_R8
+          w6(ix,iy)=coni0_mdf
+        endif
+        w5(ix,iy)=flidia(ix,iy,1,1)*
+     &            (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
+      endif                                                    !srv 16.09.02 }
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &           .or. iout_b2wdat.eq.4) then                   !srv 16.09.02 {
@@ -673,10 +677,12 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
-       call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
-       call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
-       call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
-       call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
+       if (balance.and.(balance_netcdf.ne.0)) then 
+         call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
+         call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
+         call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
+         call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
+       endif
        call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfhi__fchvispar_th')
        call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfhi__fchvispar_r')
        call my_out_us(70,nFc,1,dv%fchvisq(1,0),'b2tfhi__fchvisq_th')
@@ -705,10 +711,12 @@ c neutrals
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
-       call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
-       call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
-       call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
-       call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
+       if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+         call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
+         call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
+         call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
+         call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
+       endif
       endif
 
 * ..return

@@ -109,7 +109,7 @@
        endif
       endif
 *   ..test nCv, itcnt
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..obtain work space
       if (ncall.eq.0) then
@@ -210,7 +210,7 @@
         do iCv = 1,nCv
           ner=0
           do iNv = 1,mpg%cvNvP(iCv,2)
-            if (aa(mpg%cvNvP(iCv,1)+iNv-1) .ne. 0.0e0_R8 ) then
+            if (aa(mpg%cvNvP(iCv,1)+iNv-1) .ne. 0.0_R8 ) then
               k      = k+1
               ner    = ner+1
               a(k)   = aa(mpg%cvNvP(iCv,1)+iNv-1)

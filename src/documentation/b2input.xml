@@ -616,8 +616,8 @@
 				</description>
 				<switch>
 					<name>b2mndr_shot_number</name>
-					<type>integer</type>
 					<default>0</default>
+					<type>integer</type>
 				</switch>
 				<switch>
 					<name>b2mndr_run_number</name>
@@ -846,7 +846,7 @@
 			<switchgroup>
 				<name>b2news_facdrift*</name>
 				<description>
-					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
+					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. Note that facdrift_dec and facdrift profile options have not been converted to WG! If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
 					The ion-neutral friction current requires either facdrift or fac_ExB to be turned on as well.
 				</description>
 				<switch>
@@ -873,7 +873,7 @@
 			<switchgroup>
 				<name>b2news_facExB_*</name>
 				<description>
-					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift.
+					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift. Can be superseded by b2news_ExB to set a constant value throughout the run. Note that facExB_dec and facExB profile options have not been converted to WG!
 				</description>
 				<switch>
 					<name>b2news_facExB_dec</name>
@@ -899,7 +899,7 @@
 			<switchgroup>
 				<name>b2news_facvis_*</name>
 				<description>
-					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift.
+					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift. Can be superseded by b2news_vis to set a constant value throughout the run. Note that facvis_dec and facvis profile options have not been converted to WG!
 				</description>
 				<switch>
 					<name>b2news_facvis_dec</name>
@@ -1192,7 +1192,16 @@
 				<type>real</type>
 				<description>
 					Real parameter which multiplies ExB flows. If b2news_ExB.eq.0 and b2news_facExB_start.eq.0 then ExB flows are switched off. If b2news_ExB is nonzero, then ExB flows are multiplied by that constant throughout the run.
-					See also Run section on switches b2news_facExB_... for more details. A spatial fac_ExB profile is also possible, see Numerics section for details.
+					See also Run section on switches b2news_facExB_... for more details.
+				</description>
+			</switch>
+			<switch>
+				<name>b2news_vis</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Real parameter which multiplies the viscous drift flows. If b2news_vis.eq.0 and b2news_facvis_start.eq.0 then the viscous drift flows are switched off. If b2news_vis is nonzero, then the viscous drift flows are multiplied by that constant throughout the run.
+					See also Run section on switches b2news_facvis_... for more details.
 				</description>
 			</switch>
 			<switch>
@@ -1943,7 +1952,7 @@
 			</switch>
 			<switch>
 				<name>b2mndr_hz</name>
-				<default>0.0</default>
+				<default>1.0</default>
 				<type>real</type>
 				<description>
 					hz has been introduced into the new form of the parallel momentum balance equation. If fac_hz = 0.0 then hz = 1 and old form of equations is used. If fac_hz = 1.0 then new form of equations is used.
@@ -1981,6 +1990,7 @@
 				<type>real</type>
 				<description>
 					Xcur is a multiplier to the parallel viscosity, perpendicular viscosity, heat viscosity, ion inertial and anomalous current contributions to the ion poloidal flows (particle and energy).
+					If set to 0 (default), these currents are carried by electrons. If set to 1, these poloidal currents are carried by the main hydrogenic ions. The latter option can only be used if the plasma has a single majority hydrogenic species. Otherwise, an error will be returned.
 				</description>
 			</switch>
 			<switch>
@@ -1989,6 +1999,7 @@
 				<type>real</type>
 				<description>
 					Ycur is a multiplier to the parallel viscosity, perpendicular viscosity, heat viscosity, ion inertial and anomalous current contributions to the ion radial flows (particle and energy).
+					If set to 0, these currents are carried by electrons. If set to 1 (default), these radial currents are carried by the main hydrogenic ions. The latter option can only be used if the plasma has a single majority hydrogenic species. Otherwise, an error will be returned.
 				</description>
 			</switch>
 			<switch>
@@ -1997,7 +2008,7 @@
 				<type>real</type>
 				<description>
 					vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
-					Cannot be used in conjunction with the 9-point stencil numerical treatment.
+					Cannot be used in conjunction with the 9-point stencil numerical treatment. If used with the 5-point stencil treatment and with fluid neutrals, must be equal to b2tfhe_vis_per for numerical stability reasons.
 				</description>
 			</switch>
 			<switch>
@@ -2380,6 +2391,34 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tlhe_far_sol</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
+                                        If set to 1, enables gradual modification of the electron heat flux limiter towards low density regions. Above b2tlhe_ne_max  (default 1.0e18 m^{-3}), the standard value cflme is used. Below b2tlhe_ne_min (default 1.0e17 m^{-3}), the value b2tlhe_cflme_min is used (default 0.2). For densities in between b2tlhe_ne_min and b2tlhe_ne_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tlhi_far_sol</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
+                                        If set to 1, enables gradual modification of the ion heat flux limiter towards low density regions. Above b2tlhi_ni_max  (default 1.0e18 m^{-3}), the standard value cflmi is used. Below b2tlhi_ni_min (default 1.0e17 m^{-3}), the value b2tlhi_cflmi_min is used (default 1.0e1). For densities in between b2tlhi_ni_min and b2tlhi_ni_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tlmv_far_sol</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
+                                        If set to 1, enables gradual modification of the parallel viscosity flux limiter towards low density regions. Above b2tlmv_ni_max  (default 1.0e18 m^{-3}), the standard value cflmv is used. Below b2tlmv_ni_min (default 1.0e17 m^{-3}), the value b2tlmv_cflmv_min is used (default 0.5). For densities in between b2tlmv_ni_min and b2tlmv_ni_max, the flux limiter is computed based on linear interpolation between the limiting values.
+				</description>
+			</switch>
+
+			<switch>
 				<name>b2sihs_phm0</name>
 				<default>1.0</default>
 				<type>real</type>
@@ -2525,7 +2564,7 @@
 			</switch>
 			<switch>
 				<name>b2tfhi_lim_flux</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
 					If '0', flux limit is not applied directly to the ion heat flux but is applied through transport coefficients if 'b2trcl_conductive_limit' is '1'. It is recommended '0'.
@@ -2590,7 +2629,7 @@
 				<description>
 					Integer switch to choose the expression for the ion-neutral conductivity.
 					If ’1’, the ion-neutral conductivity is computed from hydrogen gas diffusivity (SOLPS5.2 treatment).
-					If ’0’ (default), it is computed from the local CX rate (SOLPS5.0/5.1 treatments).
+					If ’0’ (default), it is computed from the local CX rate (SOLPS5.0/5.1 and AFN treatments).
 				</description>
 			</switch>
 			<switch>
@@ -2815,6 +2854,22 @@
 				<type>integer</type>
 				<description>
 					When set to 1, the AFN transport coefficients are used for hydrogenic neutrals. When b2mn_afn.ne.0 and there is no specification of b2stbr_transport_afn, the switch is automatically set to 1.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_afn_vnn</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to 1, a collision frequency related to neutral-neutral collisions is added to the AFN transport coefficients. This is an ad-hoc model for fluid neutral transport in regions where plasma density is extremely low and CX effectively absent (e.g. below dome, far-SOL,...). When set to 0, the correction is not added.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tqna_afn_vnn_ndiff</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When set to 1, perpendicular transport in the AFN model due to neutral-neutral collisions is modelled as density diffusion rather than pressure diffusion. When set to 0, it is modelled as pressure diffusion.
 				</description>
 			</switch>
 			<switch>
@@ -3051,10 +3106,10 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If iout.eq.1, a large set of *.dat output files will be produced containing the values of a variety of code quantities.
-					If iout.eq.4, a more select set of output files will be produced, which usually suffices for everyday analysis.
-					For more detailed debugging analysis, one should instead use "procedure_name"_iout.eq.1.
-					The files and their content are fully described in the Output_description.pdf file in the SOLPSTOP/doc directory.
+					If iout.eq.1, a large set of *.dat output files will be produced containing the values of a variety of code quantities, evaluated at the end of the B2.5 iteration.
+					If iout.eq.4, an even larger set of output files will be produced, for the purposes of a full run analysis, evaluated in the individual routines where the quantities are used.
+					For even more detailed debugging analysis, one should instead use "procedure_name"_iout.eq.1.
+					The files and their content are fully described in the Output_description.pdf file in the $SOLPSTOP/doc directory and Appendix G of the SOLPS-ITER manual.
 				</description>
 			</switch>
 			<switch>
@@ -3073,7 +3128,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If append.ne.0, the output files are appended upon every write, instead of being rewritten every time.
+					If append.ne.0, the output files produced by the b2wdat_iout.eq.4 switch are appended upon every write, instead of being rewritten every time.
 				</description>
 			</switch>
 			<switch>
@@ -3433,6 +3488,16 @@
 					If ramp_slow.eq.0 (default), the ExB and diamagnetic drifts multipliers are ramped on each call of b2news, otherwise they are only changed on the first call of the nstg loop on the timestep.
 				</description>
 			</switch>
+			<switch>
+				<name>b2mndr_use_9pt_stencil</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Master switch to turn on the 9-point stencil numerical treatment. If set to 0, reverts to the old 5-point stencil.
+					Only usable with the SOLPS5.2 physics model.
+					The perpendicular viscosity current terms are not yet available within this treatment.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2mndr_min_ares*</name>
 				<description>
@@ -3546,6 +3611,14 @@
 					<default>-c</default>
 					<type>real</type>
 				</switch>
+				<switch>
+					<name>eirene_M_max</name>
+					<default>1e30</default>
+					<type>real</type>
+					<description>
+						If the Mach number based on the total fluid velocity of a background species exceeds eirene_M_max, all velocity components passed to Eirene are restricted to make the Mach number equal to eirene_M_max. It is an additional restriction on top of eirene_ua_min and eirene_ua_max.
+					</description>
+				</switch>
 			</switchgroup>
 			<switch>
 				<name>eirene_print_minmax</name>
@@ -3637,6 +3710,7 @@
 					vis_per is a multiplier to the perpendicular viscosity current.
 					If vis_per.ne.0.0, the electric potential equation is solved by the subroutine b2npp7 using a 7-point stencil.
 					The value '1.0' is recommended for runs with drifts when perpendicular viscosity and corresponding perpendicular viscosity current is taken into account.
+					Cannot be used in conjunction with the 9-point stencil numerical treatment. If used with the 5-point stencil treatment and with fluid neutrals, must be equal to b2tfnb_vis_per for numerical stability reasons.
 				</description>
 			</switch>
 			<switch>
@@ -3978,11 +4052,27 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2upht_te_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum electron temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
 				<name>b2upht_ti_min</name>
 				<default>0.1</default>
 				<type>real</type>
 				<description>
 					Sets the minimum ion temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_ti_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum ion temperature value (in eV).
 				</description>
 			</switch>
 			<switch>
@@ -3994,6 +4084,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2upht_tn_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum fluid neutral temperature value (in eV).
+				</description>
+			</switch>
+			<switch>
 				<name>b2upht_kt_min</name>
 				<default>1.0e-5</default>
 				<type>real</type>
@@ -4002,11 +4100,27 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2upht_kt_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum turbulent ExB kinetic energy value (in eV).
+				</description>
+			</switch>
+			<switch>
 				<name>b2upht_zt_min</name>
 				<default>1.0e-8</default>
 				<type>real</type>
 				<description>
 					Sets the minimum turbulent ExB enstrophy value (in s^{-2}).
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_zt_max</name>
+				<default>1.0e+30</default>
+				<type>real</type>
+				<description>
+					Sets the maximum turbulent ExB enstrophy value (in s^{-2}).
 				</description>
 			</switch>
 			<switch>
@@ -4020,7 +4134,7 @@
 			<switchgroup>
 				<name>b2news_fac*</name>
 				<description>
-					Parameters for spatial variation of the diamagnetic, ExB and viscosity drift term multipliers. These are allowed to have tanh profiles centered at tanh_a and of width tanh_b, where both quantities are in metres and measured along the radial coordinate for the cell column ix.eq.fac_ref (default value is jxa, see Geometry section for its computation). The maximum value of facdrift and fac_ExB is controlled by their respective _start and _target switches, see Run section for details.
+					Parameters for spatial variation of the diamagnetic, ExB and viscosity drift term multipliers. These are allowed to have tanh profiles centered at tanh_a and of width tanh_b, where both quantities are in metres and measured along the radial coordinate for the cell column ix.eq.fac_ref (default value is jxa, see Geometry section for its computation). The maximum value of facdrift and fac_ExB is controlled by their respective _start and _target switches, see Run section for details. NOTE: none of them have been converted to WG!
 					For consistency with the naming convention of related variables:
 					b2news_facExB_tanh_a is an alias for b2news_fac_ExB_tanh_a,
 					b2news_facExB_tanh_b is an alias for b2news_fac_ExB_tanh_b,
@@ -4479,6 +4593,15 @@
 				</switch>
 			</switchgroup>
 			<switch>
+				<name>b2tfhe_mode_ehx</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Switch to choose between various discretization schemes when computing the poloidal electric field.
+					See code for details.
+				</description>
+			</switch>
+			<switch>
 				<name>b2sigp_style</name>
 				<default>2</default>
 				<type>integer</type>
@@ -4486,6 +4609,14 @@
 					When set to '1', SPB form of the pressure gradient term on the right hand of the momentum balance equation is used.
 					When set to '2', the parallel current term contains a correction due to impurities, when Z_eff is not equal to the average plasma ion charge. Only usable if the potential equation is solved simultaneously (b2news_poteq.eq.1).
 					The default value of '2' is recommended for cases with one main hydrogenic species (or at least where the main species is the lightest one) and any amount of impurities. It is not guaranteed to yield correct results for hydrogen isotopic mixtures or non-hydrogenic plasmas.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sigp_pressure_restriction</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to '1', a CFL-like restriction is applied to the pressure gradient term for minority ions and for neutrals species.
 				</description>
 			</switch>
 			<switch>
@@ -4863,6 +4994,17 @@
 					When set to 1, disables the tail smoothing for of rate coefficients to represent the effect of a power-law tail on the distribution function. It has been added for compatibility with SOLPS4.3
 				</description>
 			</switch>
+			<switch>
+				<name>adas_extrap</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Switch for choosing extrapolation method of ADAS data:
+					If adas_extrap.eq.0, a simple 2-D linear extrapolation in log-log space is used (may lead to spurious results).
+					If adas_extrap.eq.1, use the extrapolated result, but growing no faster than the parameter variation to the 3/2 power (default).
+					If adas_extrap.eq.2, use the nearest domain edge value.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2ardr_*_recomb</name>
 				<description>
@@ -4983,7 +5125,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Number of neutral sources, or 'strata'. Must not be larger than DEF_NSTRA from $SOLPSTOP/include(.local)/DIMENSIONS.F file.
+					Number of neutral sources, or 'strata'. Must not be larger than DEF_NSTRA from the [$SOLPSTOP/modules/B2.5/]src/modules(.local)/b2mod_dimensions.F file.
 					Need not include the time-dependent stratum. If a time-dependent stratum is used, is incremented internally as needed. The incremented value is referred to as NSTRAT below.
 				</description>
 			</switch>
@@ -6491,6 +6633,8 @@
 				<type>integer array of size (NBC)</type>
 				<description>
 					List of core boundary segments, according to their numbering in the current /BOUNDARY/ namelist.
+					For cases with closed field lines, the code will attempt to build the array from the topology information available, i.e., it will contain the list of 'South' boundaries forming a closed contour.
+					For linear cases, in case a "core" type boundary condition is desired, then LCBS must be specified explicitly.
 				</description>
 			</switch>
 			<switch>
