@@ -3,7 +3,7 @@
 
       subroutine b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &  nscxmax, ismain, ismain0, dtim, switch, geo, mpg,
-     &  st, st_ext, st_avg, ierr)
+     &  st, st_ext, st_avg, ierr, ramp_call)
       use b2mod_types
       use b2mod_constants
       use b2mod_numerics_namelist
@@ -15,6 +15,7 @@
       use b2us_plasma
       use b2mod_ma28_for_us
      & , only : restart_ma28_for_us
+      use b2mod_facdrift_ExB
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -67,7 +68,7 @@
       type (B2Average), intent (in) :: st_avg
 *   ..output arguments                                                    !xpb
       integer ierr
-      logical wrong_flow
+      logical wrong_flow, ramp_call
 *   ..common blocks
 
 *-----------------------------------------------------------------------
@@ -128,18 +129,14 @@
       integer, save :: no_neutr_scl = 0
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c     ingeger, save :: nstg2 = 0
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      real (kind=R8) ::                                                 !srv 04.06.99
 !     *   fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1)                        !srv 04.06.99
-!     2 ,facdrift/0.0e0_R8/, facdrift_target/0.0e0_R8/, facdrift_start/0.0e0_R8/, !srv 09.07.99
-!     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                 !srv 09.07.99
 !     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                    !xpb
 !     1  sne0(-1:nx,-1:ny,0:1),                                           !xpb
 !     2  shi0(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),                    !xpb
 !     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      integer, save :: re_compute_pb = 1                                !srv 15.02.10
 *
 *-----------------------------------------------------------------------
@@ -192,44 +189,40 @@ c     ingeger, save :: nstg2 = 0
 * SOLVEPO, SOLVEMT, SOLVEET arrays from b2.numerics.parameters.
 * Please consult the code documentation.
 
-        b2news_solving(1:4)=switch%no_solve.eq.0
-        do i=1,4
-          b2news_solving(i)=b2news_solving(i).or.
+       b2news_solving(1:4)=switch%no_solve.eq.0
+       do i=1,4
+         b2news_solving(i)=b2news_solving(i).or.
      &    (switch%no_solve.lt.0.and.
      &     mod(abs(switch%no_solve),2**i).ge.2**(i-1))
-        enddo
-        if(.not.b2news_solving(1))
+       enddo
+       if(.not.b2news_solving(1))
      >   write(*,*) 'Not solving parallel momentum equations!'
-        if(.not.b2news_solving(2))
+       if(.not.b2news_solving(2))
      >   write(*,*) 'Not solving continuity equations!'
-        if(.not.b2news_solving(3))
+       if(.not.b2news_solving(3))
      >   write(*,*) 'Not solving potential equation!'
-        if(.not.b2news_solving(4))
+       if(.not.b2news_solving(4))
      >   write(*,*) 'Not solving heat equations!'
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-c       call ipgeti ('b2mndt_nstg2', nstg2)
-c       if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
-c         write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
-c       endif
-c       call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+c      call ipgeti ('b2mndt_nstg2', nstg2)
+c      if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
+c        write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
+c      endif
+c      call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+
 csw 26feb2014 some extra variables
-c       call ipgeti ('eirene_neutr_avg', neutr_avg)
-c       call ipgeti ('eirene_underrelax', nrelax)
-c       call ipgeti ('b2stbr_eir_src_nhist', nhist)
-c       call xertst (.not.(
+c      call ipgeti ('eirene_neutr_avg', neutr_avg)
+c      call ipgeti ('eirene_underrelax', nrelax)
+c      call ipgeti ('b2stbr_eir_src_nhist', nhist)
+c      call xertst (.not.(
 c     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
 c     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
 c     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
 c     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
-!       call ipgetr ('b2news_facdrift_target', facdrift_target)          !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_start', facdrift_start)            !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_inc', facdrift_inc)                !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_dec', facdrift_dec)                !srv 09.07.99
-!       facdrift=facdrift_start                                          !srv 09.07.99
-!       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
+!      call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
       endif
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFv')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFv')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
@@ -242,42 +235,53 @@ c     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
 *   ..extensive tests on first few calls
       if (ncall_b2news_.lt.3) then
 *    ..test sign of bb
-        call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
+       call b2xvsg (nCv, geo%cvBb(1,3), 1, 'bb3', '.gt.')
 *    ..test cvVol, cvQgam
-        call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
-        call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
+       call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
+       call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
      &              smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8,
      &              'faulty argument range geo%cvQgam(,1)')
-        call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
+       call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
      &              smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8,
      &              'faulty argument range geo%cvQgam(,0)')
-        call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
+       call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
      &              smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8,
      &              'faulty argument range geo%fcQgam(,1)')
-        call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
+       call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
      &              smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8,
      &              'faulty argument range geo%fcQgam(,0)')
 *    ..test present state
-        call b2xvps (nCv, nFc, ns, st%pl, st%dv)
-        call b2xvsg (nCv*ns, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
+       call b2xvps (nCv, nFc, ns, st%pl, st%dv)
+       call b2xvsg (nCv*ns, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
       endif
 *   ..set rxf0/1/2/3
 *     Note: The potential equation needs an accurate solution on each
 *     iteration; hence the different setting of rxf2.
       rxf0 = switch%b2mndt_rxf*switch%xfm0
       rxf1 = switch%b2mndt_rxf*switch%xfm1
-      rxf2 = 1.0e0_R8 ! (rxf*xfm2)**0.2e0_R8                             !srv 15.01.03
-      if (switch%b2mndt_rxf .eq. 0.0e0_R8) rxf2 = 0.0e0_R8
+      rxf2 = 1.0_R8 ! (rxf*xfm2)**0.2_R8                                 !srv 15.01.03
+      if (switch%b2mndt_rxf .eq. 0.0_R8) rxf2 = 0.0_R8
       rxf3 = switch%b2mndt_rxf*switch%xfm3
 
       zero  = 0.0_R8
       zerof = 0.0_R8
 csw 01oct2012 initialize potential if necessary
       if (switch%pot_eq.eq.0) then                                       !srv 13.07.05 {
-        st%pl%po = 0.0e0_R8
+        st%pl%po = 0.0_R8
       else if (switch%pot_eq.eq.2) then
         st%pl%po = 3.1_R8*st%pl%te/qe
       endif
+
+      if (ramp_call .or. ncall_b2news_.eq.0)
+     &  call b2news_facdrift_fac_ExB_inc(nFc, st%dv%fac_ExB,
+     &    st%dv%facdrift, st%dv%fac_vis, switch)
+*   ..test facdrift, fac_ExB, fac_vis
+      call xertst (0.0_R8.le.minval(st%dv%facdrift) .and.
+     &    1.0_R8.ge.maxval(st%dv%facdrift), 'faulty argument facdrift')
+      call xertst (0.0_R8.le.minval(st%dv%fac_ExB) .and.
+     &    1.0_R8.ge.maxval(st%dv%fac_ExB), 'faulty argument fac_ExB')
+      call xertst (0.0_R8.le.minval(st%dv%fac_vis) .and.
+     &    1.0_R8.ge.maxval(st%dv%fac_vis), 'faulty argument fac_ExB')
 
 * ..main computation
 *   ..compute ni, nn, ne, ne2
@@ -438,7 +442,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       do is = switch%nsmin, switch%nsmax-1
 *    ..DPC
         do iCv = 1, nCv
-          st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)    !srv 24.04.09
+          st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
+     &      switch%b2mndr_na_min),switch%b2mndr_na_max)                  !srv 24.04.09
         enddo
 !! option to impose a speed limit for fluid neutrals in case of spatially hybrid neutrals
         if (switch%spatial_hybrid.ne.0.and.is_neutral(is)) then
@@ -474,7 +479,8 @@ csw 16oct2012 init ier0
           last_solve_9(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
 !        endif                                                           !srv 13.10.06 } 22.05.18
         do iCv = 1, nCv
-          st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)    !srv 24.04.09
+          st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
+     &      switch%b2mndr_na_min),switch%b2mndr_na_max)                  !srv 24.04.09
         enddo
 !        if(re_compute_pb.eq.1) then                                     !srv 15.02.10
 !*    ..re-compute partial pressure                                      !srv 01.10.99
@@ -529,7 +535,7 @@ csw 16oct2012 init ier0
       endif                                                              !srv 12.07.05 }
 
       if (switch%pot_eq.eq.0) then                                       !srv 13.07.05 {
-        st%pl%po        = 0.0e0_R8
+        st%pl%po        = 0.0_R8
         !wdk call b2tfch_ to ensure all currents are properly set to 0
         call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
      &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
@@ -553,7 +559,7 @@ csw 16oct2012 init ier0
      &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
         if (b2news_solving(3)) then
 *   ..solve the potential equation
-          if (switch%fhe_vis_per.eq.0.0e0_R8.or..true.) then             !srv 06.07.00
+          if (switch%fhe_vis_per.eq.0.0_R8.or..true.) then               !srv 06.07.00
             new_matrix = .false.
             do ireg = 0, mpg%nnreg(0)
               new_matrix = new_matrix.or.
@@ -705,7 +711,8 @@ c   recompute particle fluxes
         do is=0,ns-1                                                     !srv 01.10.99
 *    ..DPC
           do iCv = 1, nCv
-            st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)  !srv 24.04.09
+            st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
+     &        switch%b2mndr_na_min),switch%b2mndr_na_max)                !srv 24.04.09
           enddo
 *    ..compute partial pressure
           call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
@@ -741,7 +748,8 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      &                                      switch%use_eirene.ne.0) then !srv 28.06.13 {
         do is=0,ns-1
           do iCv = 1, nCv
-            st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)  !srv 24.04.09
+            st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
+     &        switch%b2mndr_na_min),switch%b2mndr_na_max)                !srv 24.04.09
           enddo
 *    ..compute partial pressure
           call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,   !srv 01.10.99

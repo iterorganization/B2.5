@@ -70,7 +70,7 @@
 *   ..subprogram start-up calls
       call subini ('b2upht')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test rxf, pcm0
       call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
@@ -91,10 +91,10 @@
 
 * ..apply the correction
 *   ..adjust te, ti, po
-      tt0 = 0.0e0_R8
-      tt1 = 0.0e0_R8
-      tt2 = 0.0e0_R8
-      tt3 = 0.0e0_R8
+      tt0 = 0.0_R8
+      tt1 = 0.0_R8
+      tt2 = 0.0_R8
+      tt3 = 0.0_R8
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
 *!!   (stylec is a numerical switch, needs experiments)
@@ -166,7 +166,8 @@
         dte(iCv) = dte1(iCv)
         dti(iCv) = dti1(iCv)                                        !srv 25.07.17
         if (solvereg(ireg))
-     >   te(iCv) = max(switch%b2upht_te_min*ev,te(iCv)+dte(iCv))    !xpb
+     >   te(iCv) = max(switch%b2upht_te_min*ev,
+     >     min(switch%b2upht_te_max*ev,te(iCv)+dte(iCv)))           !xpb !nh
         if ((solvpreg(ireg).and.po_solve).and.switch%pot_eq.eq.1.and.
      &      iCv.le.mpg%nCi.and.add_te_corr_to_po(ireg)) then
           po(iCv) = po(iCv)+dte(iCv)/qe
@@ -174,13 +175,17 @@
           po(iCv) = 3.1_R8*te(iCv)/qe
         end if
         if (solvireg(ireg))
-     >   ti(iCv) = max(switch%b2upht_ti_min*ev,ti(iCv)+dti(iCv))    !xpb
+     >   ti(iCv) = max(switch%b2upht_ti_min*ev,
+     >     min(switch%b2upht_ti_max*ev,ti(iCv)+dti(iCv)))           !xpb !nh
         if (solvnreg(ireg))
-     >   tn(iCv) = max(switch%b2upht_tn_min*ev,tn(iCv)+dtn(iCv))
+     >   tn(iCv) = max(switch%b2upht_tn_min*ev,
+     >     min(switch%b2upht_tn_max*ev,tn(iCv)+dtn(iCv)))
         if (switch%solve_keps.gt.0.and.solvkreg(ireg))
-     >   kt(iCv) = max(switch%b2upht_kt_min*ev,kt(iCv)+dkt(iCv))
+     >   kt(iCv) = max(switch%b2upht_kt_min*ev,
+     >     min(switch%b2upht_tn_max*ev,kt(iCv)+dkt(iCv)))
         if (switch%solve_keps.gt.1.and.solvzreg(ireg))
-     >   zt(iCv) = max(switch%b2upht_zt_min*ev,zt(iCv)+dzt(iCv))
+     >   zt(iCv) = max(switch%b2upht_zt_min*ev,
+     >     min(switch%b2upht_zt_max*ev,zt(iCv)+dzt(iCv)))
       enddo
 *   ..adjust ua
       wrk0 = ne*dte + ni(:,0)*dti

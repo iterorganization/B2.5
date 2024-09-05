@@ -121,8 +121,8 @@ c     local variables:
       enddo
       nz(nspec)=nz(nspec)+1
 
-      z(-1:nx,-1:ny,1) = 1.e0_R8
-      z2(-1:nx,-1:ny,1) = 1.e0_R8
+      z(-1:nx,-1:ny,1) = 1.0_R8
+      z2(-1:nx,-1:ny,1) = 1.0_R8
 
       ncharged=1
       do i=0,ns-1
@@ -167,7 +167,7 @@ c         --------------------------------------
             n(1) = (ne(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
      1       ne(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy)))/
      *       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-            u(1) = 0.e0_R8
+            u(1) = 0.0_R8
             ncharged=1
             do i=0,ns-1
               if(.not.is_neutral(i)) then
@@ -354,8 +354,7 @@ c       ( ix )
 *-----------------------------------------------------------------------
 *.declarations
 
-      real (kind=R8) ::
-     *                  wwpp(ns), n(ns), z(-1:nx,-1:ny,ns), visc(ns),
+      real (kind=R8) :: wwpp(ns), n(ns), z(-1:nx,-1:ny,ns), visc(ns),
      *                  eta(ns), mm(ns), coef, pit, cond,
      *                  z2(-1:nx,-1:ny,ns)
       integer           nz(ns)
@@ -428,7 +427,7 @@ c       ( ix )
         endif
       end do
 
-      coef = 2.e0_R8
+      coef = 2.0_R8
 c       as in phythc, but this value is questionable (div u != 0)
 c       (w_pp = coef * grad_|| up,  e.g. coef=2, if div u = 0;
 c        coef=4/3, if div u = grad_|| up)
@@ -627,24 +626,24 @@ c       calculating  d(), z2n(), p(), ww()
 
 c         const = sqrt(2)*e**4 / (12*pi**1.5_R8*eps0**2)
 !xpb      const = 1.79e-55_R8
-        const = sqrt(2.0_R8)*qe**4 / (12*pi**1.5_R8*eps0**2)             !xpb
-!xpb      lnlam = 12.e0_R8
+        const = sqrt(2.0_R8)*qe**4 / (12.0_R8*pi**1.5_R8*eps0**2)             !xpb
+!xpb      lnlam = 12.0_R8
 
       do j=1,ns
         do i=1,ns
           g(i,j,0) = const * z2n(i)*z2n(j) * sqrt(mu(i,j)) /
      *     ti**1.5_R8 * lnlam
-          g(i,j,1) = -2.e0_R8/5.e0_R8*
-     *     (5.e0_R8*mm(i)+3.e0_R8*mm(j))/(mm(i)+mm(j))*g(i,j,0)
-          g(i,j,2) = -4.e0_R8/5.e0_R8 * mu(i,j)/mm(i) * g(i,j,0)
-          g(i,j,3) =  6.e0_R8/35.e0_R8*
-     *     (7.e0_R8*mm(i)+3.e0_R8*mm(j))/(mm(i)+mm(j))*g(i,j,0)
-          g(i,j,4) = -6.e0_R8/7.e0_R8 * g(i,j,2)
-          g(i,j,5) = - (51.e0_R8/35.e0_R8*mm(j)**2/mm(i) +
-     *     37.e0_R8/7.e0_R8*mm(j)
-     *     + 22.e0_R8/5.e0_R8*mm(i) + 4.e0_R8*mm(i)**2/mm(j) )
+          g(i,j,1) = -2.0_R8/5.0_R8*
+     *     (5.0_R8*mm(i)+3.0_R8*mm(j))/(mm(i)+mm(j))*g(i,j,0)
+          g(i,j,2) = -4.0_R8/5.0_R8 * mu(i,j)/mm(i) * g(i,j,0)
+          g(i,j,3) =  6.0_R8/35.0_R8*
+     *     (7.0_R8*mm(i)+3.0_R8*mm(j))/(mm(i)+mm(j))*g(i,j,0)
+          g(i,j,4) = -6.0_R8/7.0_R8 * g(i,j,2)
+          g(i,j,5) = - (51.0_R8/35.0_R8*mm(j)**2/mm(i)
+     *     + 37.0_R8/7.0_R8*mm(j)
+     *     + 22.0_R8/5.0_R8*mm(i) + 4.0_R8*mm(i)**2/mm(j) )
      *     * mu2(i,j)/(mm(i)+mm(j)) * g(i,j,0)
-          g(i,j,6) = - 24.e0_R8/7.e0_R8*mm(j)*mu2(i,j)/
+          g(i,j,6) = - 24.0_R8/7.0_R8*mm(j)*mu2(i,j)/
      *     (mm(i)+mm(j))*g(i,j,0)
         end do
       end do
@@ -657,7 +656,7 @@ c  ---------------------------------------------------------------------
       do j=1,ns
         do i=1,ns
           a(i,j)       = - g(i,j,2)
-          a(i+ns,j)    = - 7.e0_R8/2.e0_R8*mu(i,j)/mm(i) * g(i,j,4)
+          a(i+ns,j)    = - 7.0_R8/2.0_R8*mu(i,j)/mm(i) * g(i,j,4)
           a(i,j+ns)    = - g(i,j,4)/ti * mu(i,j)
           a(i+ns,j+ns) = - g(i,j,6)*mm(j)/ti
         end do
@@ -707,23 +706,23 @@ c  ---------------------------------------------------------------------
 c        viscosity and viscosity coefficient
 c  ---------------------------------------------------------------------
       do i=1,ns
-        s1 = 0.e0_R8
+        s1 = 0.0_R8
         do k=1,ns
           s1 = s1 + g(i,k,1)
         end do
-        s3a = 0.e0_R8
+        s3a = 0.0_R8
         do k=1,ns
           s3a = s3a + mu(i,k)/ti*g(i,k,3)
         end do
-        s3b = 0.e0_R8
+        s3b = 0.0_R8
         do k=1,ns
           s3b = s3b + 3.5_R8*mu(i,k)/mm(i)*g(i,k,3)
         end do
-        s5 = 0.e0_R8
+        s5 = 0.0_R8
         do k=1,ns
           s5 = s5 + mm(i)*g(i,k,5)/ti
         end do
-        ss = 1.e0_R8/(s1*s5 - s3a*s3b)
+        ss = 1.0_R8/(s1*s5 - s3a*s3b)
         do k=0,nz(i)-1
           pi_pp(n1(i)+k) = n(n1(i)+k)*mm(i) * ( x(i) + s5*ss*ti *
      *     (z2n(i)/z2(n1(i)+k)*w(n1(i)+k) - d(i)*ww(i)) )
@@ -883,8 +882,8 @@ C               of species j in vectors n, z, up, r
 
 C     ----  const = sqrt(2)*e**4 / (12*pi**1.5_R8*eps0**2)
 !xpb      const = 1.79e-55_R8
-        const = sqrt(2.0_R8)*qe**4 / (12*pi**1.5_R8*eps0**2)             !xpb
-!xpb      lnlam = 12.e0_R8
+        const = sqrt(2.0_R8)*qe**4 / (12.0_R8*pi**1.5_R8*eps0**2)          !xpb
+!xpb      lnlam = 12.0_R8
 
       do j=1,ns
         do i=1,ns
@@ -898,21 +897,21 @@ C     ----  const = sqrt(2)*e**4 / (12*pi**1.5_R8*eps0**2)
         do i=1,ns
           g(i,j,1) = -const * z2n(i)*z2n(j) * sqrt(mu(i,j)) /
      *     tt(i,j)**1.5_R8 * lnlam
-          g(i,j,2) = -3.e0_R8/5.e0_R8 * g(i,j,1)
-          g(i,j,3) =  3.e0_R8/14.e0_R8 * g(i,j,1)
+          g(i,j,2) = -3.0_R8/5.0_R8 * g(i,j,1)
+          g(i,j,3) =  3.0_R8/14.0_R8 * g(i,j,1)
           g(i,j,5) =  2.7_R8 * mu2(i,j) * g(i,j,1)
-          g(i,j,4) =  (1.3_R8*mm(j)/mm(i) + 1.6_R8 + 3.e0_R8*mm(i)/
+          g(i,j,4) =  (1.3_R8*mm(j)/mm(i) + 1.6_R8 + 3.0_R8*mm(i)/
      1     mm(j))/2.7_R8
      *                                                    * g(i,j,5)
-          g(i,j,6) = -2.e0_R8/9.e0_R8*
-     1     ( 23.e0_R8/28.e0_R8*mm(j)/mm(i) +8.e0_R8/7.e0_R8 +
-     *     3.e0_R8*mm(i)/mm(j) )*g(i,j,5)
-          g(i,j,7) = -25.e0_R8/42.e0_R8 * g(i,j,5)
-          g(i,j,9) = -35.e0_R8/6.e0_R8 * mu2(i,j) * g(i,j,7)
-          g(i,j,8) =  8.e0_R8/75.e0_R8 *
-     1     ( 433.e0_R8/280.e0_R8*(mm(j)/mm(i))**2 +
-     *     136.e0_R8/35.e0_R8*mm(j)/mm(i) + 459.e0_R8/35.e0_R8 +
-     *     32.e0_R8/5.e0_R8*mm(i)/mm(j) + 5.e0_R8*(mm(i)/mm(j))**2 )
+          g(i,j,6) = -2.0_R8/9.0_R8*
+     1     ( 23.0_R8/28.0_R8*mm(j)/mm(i) + 8.0_R8/7.0_R8 +
+     *        3.0_R8*mm(i)/mm(j) )*g(i,j,5)
+          g(i,j,7) = -25.0_R8/42.0_R8 * g(i,j,5)
+          g(i,j,9) = -35.0_R8/6.0_R8 * mu2(i,j) * g(i,j,7)
+          g(i,j,8) =  8.0_R8/75.0_R8 *
+     1     ( 433.0_R8/280.0_R8*(mm(j)/mm(i))**2 +
+     *     136.0_R8/35.0_R8*mm(j)/mm(i) + 459.0_R8/35.0_R8 +
+     *     32.0_R8/5.0_R8*mm(i)/mm(j) + 5.0_R8*(mm(i)/mm(j))**2 )
      *                  * g(i,j,9)
         end do
       end do
@@ -926,13 +925,13 @@ c  ---------------------------------------------------------------------
       do j=1,ns
         do i=1,ns
            a(i,j)       = - g(i,j,5)*tt(i,j)
-           a(i+ns,j)    = - 7.e0_R8*mu(i,j)/mm(i)*tt(i,j)**2*g(i,j,7)
+           a(i+ns,j)    = - 7.0_R8*mu(i,j)/mm(i)*tt(i,j)**2*g(i,j,7)
            a(i,j+ns)    = - g(i,j,7)*tt(i,j)/t(j)*mu(i,j)
            a(i+ns,j+ns) = - mm(j)/t(j)*g(i,j,9)*tt(i,j)**2
         end do
         do k=1,ns
            a(j,j)       = a(j,j)       + tt(j,k)*g(j,k,4)
-           a(j+ns,j)    = a(j+ns,j)    + 7.e0_R8*mu(j,k)/mm(j)*
+           a(j+ns,j)    = a(j+ns,j)    + 7.0_R8*mu(j,k)/mm(j)*
      *                                       tt(j,k)**2*g(j,k,6)
            a(j,j+ns)    = a(j,j+ns)    + mu(j,k)*tt(j,k)/t(j)*g(j,k,6)
            a(j+ns,j+ns) = a(j+ns,j+ns) + mm(j)/t(j)*g(j,k,8)*tt(j,k)**2
@@ -975,7 +974,7 @@ c  ---------------------------------------------------------------------
           b(i) = b(i) + mu(i,k)/mm(i)*tt(i,k)*g(i,k,2)*(upm(k)-upm(i))
         end do
         b(i) = 2.5_R8*b(i)
-        b(i+ns) = 0.e0_R8
+        b(i+ns) = 0.0_R8
         do k=1,ns
           b(i+ns) = b(i+ns) +
      *      (mu(i,k)/mm(i)*tt(i,k))**2 * g(i,k,3)*(upm(k)-upm(i))
@@ -995,9 +994,9 @@ c       approx. heat conduction coeff.
 c       ( gte in b(1), gti in b(2)...b(ns) )
 c  ---------------------------------------------------------------------
       ce = - inva(1,1)*2.5_R8*p(1)*p(1)
-      ci = 0.e0_R8
+      ci = 0.0_R8
       do i=2,ns
-        cii = 0.e0_R8
+        cii = 0.0_R8
         do j=2,ns
           cii = cii - inva(i,j)*p(j)
         end do
@@ -1013,29 +1012,29 @@ c  ---------------------------------------------------------------------
       hh(1) = x(1+ns)*t(1)
 
       do i=2,ns
-        s2  = 0.e0_R8
+        s2  = 0.0_R8
         do k=1,ns
           s2 = s2 + 2.5_R8*mu(i,k)*g(i,k,2)*tt(i,k)/mm(i)
         end do
-        s3  = 0.e0_R8
+        s3  = 0.0_R8
         do k=1,ns
           s3 = s3 + 17.5_R8*(mu(i,k)/mm(i))**2*g(i,k,3)*tt(i,k)**2
         end do
-        s4  = 0.e0_R8
+        s4  = 0.0_R8
         do k=1,ns
           s4 = s4 + g(i,k,4)*tt(i,k)
         end do
-        s6a = 0.e0_R8
-        s6b = 0.e0_R8
+        s6a = 0.0_R8
+        s6b = 0.0_R8
         do k=1,ns
           s6a = s6a + mu(i,k)/mm(i)*g(i,k,6)*tt(i,k)
           s6b = s6b + mu(i,k)/mm(i)*g(i,k,6)*tt(i,k)**2
         end do
-        s8  = 0.e0_R8
+        s8  = 0.0_R8
         do k=1,ns
           s8 = s8 + g(i,k,8)*tt(i,k)**2
         end do
-        ss = 1.e0_R8/(7.e0_R8*s6a*s6b - s4*s8)
+        ss = 1.0_R8/(7.0_R8*s6a*s6b - s4*s8)
         do k=0,nz(i)-1
           cs = ss*2.5_R8*s8*t(i)*( z2n(i)/z2(n1(i)+k)-d(i) )*t(i)
           ci = ci + cs*n(n1(i)+k)
@@ -1057,7 +1056,7 @@ c  ---------------------------------------------------------------------
           i1  = n(n1(i)+k)*z2(n1(i)+k)/z2n(i)
           h1  = h(n1(i)+k)/mm(i)
           hh1 = hh(n1(i)+k)/mm(i)
-          r(n1(i)+k) = 0.e0_R8
+          r(n1(i)+k) = 0.0_R8
           do j=1,ns
             do l=0,nz(j)-1
               i2 = n(n1(j)+l)*z2(n1(j)+l)/z2n(j)

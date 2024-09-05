@@ -6,12 +6,12 @@ module b2ag_parameters
   use b2ag_ghostcells
 
   implicit none
-  
+
   ! parg - (0:99) real*8 array.
   ! parg(0:*) contains a set of numerical parameters that specify
   ! details of the geometry. The interpretation of these parameters
   ! is problem-dependent; see the code.
-  real (kind=R8) :: parg(0:99) 
+  real (kind=R8) :: parg(0:99)
 
   ! isolating cuts
   integer :: niso, nxiso(1:NISOMX)
@@ -23,7 +23,7 @@ contains
   !> Read and initialize parameters for b2ag
   !> nx, ny: dimensions for the B2 data structures (which are then
   !>         of size (-1:nx, -1:ny)
-  !> nx1, ny1: size of input grid which is to be downscaled to nx, ny  
+  !> nx1, ny1: size of input grid which is to be downscaled to nx, ny
   subroutine b2ag_read_parameters_st(ninp, nout, nx, ny, nx1, ny1, ccut1)
     use b2mod_ipmain
     implicit none
@@ -43,7 +43,7 @@ contains
 
     !   ..read geometry parameters parg
     read (ninp(0),'(a8)',err=91) id
-    call xertst (streql(id,'*param'),&
+    call xertst (streql(id,'*param'), &
          & 'faulty input instead of *param, id='//id)
     read (ninp(0),*,err=92) parg
     ! extract istyle
@@ -72,32 +72,31 @@ contains
 
     call ipgetc ('b2agfs_geometry', local_sonnet)
     if(open_file(lun,local_sonnet, 'data.local/meshes|data/meshes')) then
-        call cfverr(lun,grid_version)
-        if(istyle.eq.-1) then 
-            ! Carre grid input
-            if (grid_version.lt."01.001.028") then
-                read(lun,*) nnx,nny
-                niso = 0
-                nxiso = 0
-            else
-                read(lun,*) nnx,nny,niso,nxiso(1:nisomx)
-                if (niso.eq.1) ccut1 = nxiso(1)
-                doGhostCells = .true.
-            end if
+      call cfverr(lun,grid_version)
+      if(istyle.eq.-1) then
+        ! Carre grid input
+        if (grid_version.lt."01.001.028") then
+          read(lun,*) nnx,nny
+          niso = 0
+          nxiso = 0
+        else
+          read(lun,*) nnx,nny,niso,nxiso(1:nisomx)
+          if (niso.eq.1) ccut1 = nxiso(1)
+          doGhostCells = .true.
         end if
-        close(lun)
+      end if
+      close(lun)
     end if
 
     ! check that b2ag and geometry file sizes are compatible
-    if(nnx+2*niso.ne.nx1.or.nny.ne.ny1) then        
-        write(*,'(a,4i4)') 'b2ag_read_parameters_st: nx,ny code and data disagree',nx1,ny1,nnx+2*niso,nny
-        call xerrab ( 'Dimensions mismatch !' )
+    if(nnx+2*niso.ne.nx1.or.nny.ne.ny1) then
+      write(*,'(a,4i4)') 'b2ag_read_parameters_st: nx,ny code and data disagree',nx1,ny1,nnx+2*niso,nny
+      call xerrab ( 'Dimensions mismatch !' )
     endif
 
-    
     ! fix nx1, ny1 in case ghost cells are not provided
     if (doGhostCells) then
-        call computeGridSizeWithGhostCells_st(nnx, nny, niso, nx1, ny1)
+      call computeGridSizeWithGhostCells_st(nnx, nny, niso, nx1, ny1)
     end if
 
     return
@@ -111,7 +110,7 @@ contains
   end subroutine b2ag_read_parameters_st
 
   !> Read and initialize parameters for b2ag
-  !> nCv, nFc, nVx: dimensions for the B2 data structures  
+  !> nCv, nFc, nVx: dimensions for the B2 data structures
   subroutine b2ag_read_parameters(ninp,nout,m)
     use b2mod_ipmain
     use b2mod_version
@@ -119,10 +118,10 @@ contains
     implicit none
 
     integer, intent(in) :: ninp(0:1), nout(0:1)
-    type(mapping) :: m 
+    type(mapping) :: m
     !internal
     character :: id*8, cnamip*80, cvalip*80
-    integer :: nCv0, nFc0, nVx0, nCi, nCg, lun=96, idum(0:5), idum2(0:4), &
+    integer :: nCv0, nFc0, nVx0, lun=96, idum(0:5), idum2(0:4), &
         & nCmxFc0, nCmxVx0, nFmxCv0, nVmxCv0, nVmxFc0, &
         & nCmxVx, nCmxFc, nFmxCv, nVmxCv, nVmxFc, nCv, nFc, nVx, nncut, &
         & nCmxNv
@@ -139,10 +138,10 @@ contains
      ! means Carre grid input
      !   ..read geometry parameters parg
      read (ninp(0),'(a8)',err=93) id
-     call xertst (streql(id,'*param'),&
+     call xertst (streql(id,'*param'), &
     & 'faulty input instead of *param, id='//id)
      read (ninp(0),*,err=94) parg
-     ! extract istyle 
+     ! extract istyle
      istyle = nint(parg(0))
 
      !   ..echo parg
@@ -168,71 +167,64 @@ contains
 
      call ipgetc ('b2agfs_geometry', local_sonnet)
      if(open_file(lun,local_sonnet, 'data.local/meshes|data/meshes')) then
-         call cfverr(lun,grid_version)
-         if(istyle.eq.-1) then 
-            ! Carre grid input
-            if (grid_version.eq."03.002.000") then
-		! obtain nCv, nFc, nVx from geometry file
-      	        call cfruin (lun, 6, idum, 'nCi,nFc,nVx,nCg,nFs,nFt')
-                nCv0 = idum(0)
-                nFc0 = idum(1)
-	            nVx0 = idum(2)
-                m%nCg = idum(3)
-                m%nFs = idum(4)
-                m%nFt = idum(5)
-                ! if (m%nCg.eq.0) then
-                doGhostCells = .true.
-                ! else
-                ! doGhostCells = .false.
-                ! endif
-        ! obtain nCmxFc and nCmxVx from geometry file
-                call cfruin (lun, 5, idum2, 'nCmxVx,nCmxFc,nFmxCv,nVmxCv,nVmxFc')
-                nCmxVx0 = idum2(0)
-                nCmxFc0 = idum2(1)
-                nFmxCv0 = idum2(2)
-                nVmxCv0 = idum2(3)
-                nVmxFc0 = idum2(4)
-                call cfruin (lun, 1, idum, 'isClassicalGrid')
-                m%isClassicalGrid = idum(0)
-                if (m%isClassicalGrid.eq.1) then
-                 call cfruin (lun, 3, idum, 'nx,ny,nncut')
-                 m%nx = idum(0)
-                 m%ny = idum(1)
-                 nncut = idum(2)
-                end if
-
-                ! read Xpoint information
-                call cfruin (lun, 1, idum,'nX')
-                m%nXp = idum(0)
- 
-            end if
-        end if
-        
+       call cfverr(lun,grid_version)
+       if(istyle.eq.-1) then
+         ! Carre grid input
+         if (grid_version.eq."03.002.000") then
+           ! obtain nCv, nFc, nVx from geometry file
+           call cfruin (lun, 6, idum, 'nCi,nFc,nVx,nCg,nFs,nFt')
+           nCv0 = idum(0)
+           nFc0 = idum(1)
+           nVx0 = idum(2)
+           m%nCg = idum(3)
+           m%nFs = idum(4)
+           m%nFt = idum(5)
+           ! if (m%nCg.eq.0) then
+           doGhostCells = .true.
+           ! else
+           ! doGhostCells = .false.
+           ! endif
+           ! obtain nCmxFc and nCmxVx from geometry file
+           call cfruin (lun, 5, idum2, 'nCmxVx,nCmxFc,nFmxCv,nVmxCv,nVmxFc')
+           nCmxVx0 = idum2(0)
+           nCmxFc0 = idum2(1)
+           nFmxCv0 = idum2(2)
+           nVmxCv0 = idum2(3)
+           nVmxFc0 = idum2(4)
+           call cfruin (lun, 1, idum, 'isClassicalGrid')
+           m%isClassicalGrid = idum(0)
+           if (m%isClassicalGrid.eq.1) then
+             call cfruin (lun, 3, idum, 'nx,ny,nncut')
+             m%nx = idum(0)
+             m%ny = idum(1)
+             nncut = idum(2)
+           end if
+         end if
+       end if
      end if
 
      ! check that b2ag.dat and geometry file sizes are compatible
-     if(nCv.ne.nCv0.or.nFc.ne.nFc0.or.nVx.ne.nVx0) then        
-        write(*,'(a,4i4)') 'b2ag_read_parameters: nCv,nFc, nVx code and data disagree',nCv,nFc,nVx,nCv0,nFc0,nVx0
-        call xerrab ( 'Dimensions mismatch !' )
+     if(nCv.ne.nCv0.or.nFc.ne.nFc0.or.nVx.ne.nVx0) then
+       write(*,'(a,4i4)') 'b2ag_read_parameters: nCv,nFc, nVx code and data disagree',nCv,nFc,nVx,nCv0,nFc0,nVx0
+       call xerrab ( 'Dimensions mismatch !' )
      endif
- 
+
      ! fix nCv, in case ghost cells are not provided
      if (doGhostCells) then
-        rewind lun
-        nCi = nCv
-        call computeGridSizeWithGhostCells(lun,nCv,m%nCg,nFc,nCmxVx0,nCmxFc0, &
-              &  nFmxCv0, nVmxCv0, nVmxFc0,nCv,nCmxVx,nCmxFc, &
-              &  nFmxCv, nVmxCv, nVmxFc,nCmxNv)
-        m%nCv = nCv 
-        m%nFc = nFc0
-        m%nVx = nVx0
-        m%nCi = m%nCv - m%nCg
-        m%nCmxVx = nCmxVx
-        m%nCmxFc = nCmxFc
-        !m%nFmxCv = nFmxCv
-        m%nVmxCv = nVmxCv
-        m%nVmxFc = nVmxFc
-        m%nCmxNv = nCmxNv
+       rewind lun
+       call computeGridSizeWithGhostCells(lun, nCv, m%nCg, nFc, nCmxVx0, nCmxFc0, &
+           &  nFmxCv0, nVmxCv0, nVmxFc0, nCv, nCmxVx, nCmxFc, &
+           &  nFmxCv, nVmxCv, nVmxFc, nCmxNv)
+       m%nCv = nCv
+       m%nFc = nFc0
+       m%nVx = nVx0
+       m%nCi = m%nCv - m%nCg
+       m%nCmxVx = nCmxVx
+       m%nCmxFc = nCmxFc
+      !m%nFmxCv = nFmxCv
+       m%nVmxCv = nVmxCv
+       m%nVmxFc = nVmxFc
+       m%nCmxNv = nCmxNv
 
      end if
      close(lun)
@@ -247,12 +239,9 @@ contains
 93  call xerrab ('error trying to read heading *param')
 94  call xerrab ('error trying to read parg')
 95  call xerrab ('error trying to read non-default internal parameters')
-    
 
   end subroutine b2ag_read_parameters
 
     !-----------------------------------------------------------------------
-
-
 
 end module b2ag_parameters

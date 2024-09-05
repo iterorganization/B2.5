@@ -148,7 +148,7 @@ c
       real (kind=R8) ::
      *   balance(0:DEF_NATM-1)
       real (kind=R8) ::
-     *   mass,vel,vth,press
+     *   mass, vel, vth, press
       integer ispecies(0:nsd_local-1), ismain, ismain0,
      *   boundary_namelist, neutrals_namelist,
      *   sput_frac_flag, use_eirene
@@ -817,7 +817,7 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
        enddo
       else if (switch%lluciani.eq.3) then  ! new formulation
        nu1 = 0.0_R8
-       k1 = 0.58e0_R8
+       k1 = 0.58_R8
        t1 = (4.0_R8*pi*eps0/qe)/qe
        t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
        tau = t2/state%dv%lnlam*state%pl%te/ev*
@@ -827,13 +827,13 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
           iFt = mpg%cvFt(iCv)
           if (iFt.gt.0.and.iFt.le.mpg%nFt) then
             nu1(iCv) = geo%ftConn(iFt)/(tau(iCv)*
-     &        sqrt(state%pl%te(iCv)/me)*2.0e0_R8*pi*
-     &        geo%ftEps(iFt)**1.5e0_R8)
-            k1(iCv) = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1(iCv))
-     &        +1.53e0_R8*nu1(iCv))
-     &        +0.52e0_R8*(geo%ftEps(iFt)**3)*nu1(iCv)
-     &        /(1.0e0_R8+0.89e0_R8*sqrt(geo%ftEps(iFt)**3)*nu1(iCv))
-            t0 = 1.0_R8/k1(iCv)*0.58e0_R8*sqrt(geo%ftEps(iFt)**3)
+     &        sqrt(state%pl%te(iCv)/me)*2.0_R8*pi*
+     &        geo%ftEps(iFt)**1.5_R8)
+            k1(iCv) = 1.0_R8/(1.0_R8+2.01_R8*sqrt(nu1(iCv))
+     &        +1.53_R8*nu1(iCv))
+     &        +0.52_R8*(geo%ftEps(iFt)**3)*nu1(iCv)
+     &        /(1.0_R8+0.89_R8*sqrt(geo%ftEps(iFt)**3)*nu1(iCv))
+            t0 = 1.0_R8/k1(iCv)*0.58_R8*sqrt(geo%ftEps(iFt)**3)
             state%co%sigx_c(iCv) = state%co%sigx_c(iCv)*t0
             state%co%alfx_c(iCv) = state%co%alfx_c(iCv)*t0
           endif
@@ -922,7 +922,7 @@ c
      1   nflai,NFL
       else
         call copy_background(mpg%nCv, mpg%nFc, ns, switch, mpg, geo,
-     &                       state%pl, state%dv)
+     &                       state%pl, state%dv, state_ext)
       endif
 cxpb  Bring in wall data and compute oft-needed wall quantities
 #ifdef WG_TODO
@@ -1214,20 +1214,22 @@ c
       z0=0.0_R8
       t0=0.0_R8
       iFt=0
-      do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
-        iFt=iFt+1
-        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
-        if (mpg%cvOnClosedSurface(iCv)) then
-          do i=1,mpg%ftCvP(iFt,2)
-            r0=r0+geo%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
-     .           geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-            z0=z0+geo%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
-     .           geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-            t0=t0+
-     .           geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-          end do
-        end if
-      end do
+      if (any(mpg%cvOnClosedSurface(1:mpg%nCi))) then
+        do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
+          iFt=iFt+1
+          iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+          if (mpg%cvOnClosedSurface(iCv)) then
+            do i=1,mpg%ftCvP(iFt,2)
+              r0=r0+geo%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .             geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+              z0=z0+geo%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .             geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+              t0=t0+
+     .             geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+            end do
+          end if
+        end do
+      end if
       if (t0.gt.0.0_R8) then
         r0=r0/t0
         z0=z0/t0
@@ -1384,7 +1386,7 @@ c
       call xertst (0.le.neo_ic .and. neo_ic.le.4,
      . 'faulty parameter neoclassical_ic')
       set_resignore_regions_to_zero=.false.
-      wrkf = -state%dv%fch_p(:,0)/(qe*(geo%fcPbs + cutlo))
+      wrkf = -(state%dv%fch_p(:,0)/(geo%fcPbs + cutlo))/qe
       call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,wrkf,state%dv%ue)
       do is=0,ns-1
         state%dv%ue = state%dv%ue +
@@ -1458,9 +1460,9 @@ c
         if(mpg%cvOnClosedSurface(iCv)) then
           do i=1,mpg%ftCvP(iFt,2)
             iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
-            q=q+abs(geo%cvBb(iCv,3)/geo%cvBb(iCv,0))/
-     &              geo%cvX(iCv)*geo%cvHx(iCv)
-            t1=t1+geo%cvHx(iCv)*geo%cvBb(iCv,3)/abs(geo%cvBb(iCv,0))
+            q=q+geo%cvBb(iCv,3)/geo%cvBb(iCv,0)/
+     &          geo%cvX(iCv)*geo%cvHx(iCv)
+            t1=t1+geo%cvHx(iCv)*geo%cvBb(iCv,3)/geo%cvBb(iCv,0)
             t2=t2+geo%cvHx(iCv)
             rave(iFt)=rave(iFt)+sqrt((geo%cvX(iCv)-r0)**2+
      &                               (geo%cvY(iCv)-z0)**2)*geo%cvHx(iCv)
@@ -1746,12 +1748,12 @@ c
         case('pit','pitch')
           description='Pitch'
           nz=1
-          mach(:,0)=geo%cvBb(:,0)/geo%cvBb(:,3)
+          mach(:,0)=abs(geo%cvBb(:,0))/geo%cvBb(:,3)
           call copy(mach,1.0_R8,nz,textbl)
         case('bx','bpol')
           description='b_{x} (T) (poloidal)'
           nz=1
-          call copy(geo%cvBb(:,0),1.0_R8,nz,textbl)
+          call copy(geo%cvBb(:,0),geo%signmf,nz,textbl)
         case('by','brad')
           description='b_{y} (T)'
           nz=1
@@ -1759,7 +1761,8 @@ c
         case('bz','btor')
           description='b_{z} (T) (toroidal)'
           nz=1
-          call copy(geo%cvBb(:,2),1.0_R8,nz,textbl)
+          mach(:,0)=sign(geo%cvBb(:,2),geo%cvEb(:,2))
+          call copy(mach,1.0_R8,nz,textbl)
         case('bb')
           description='bb (T)'
           nz=1
@@ -1771,7 +1774,7 @@ c
         case('ffbz')
           description='Toroidal magnetic flux function (Wb/m)'
           nz=1
-          mach(:,0)=geo%cvBb(:,2)*geo%cvX(:)
+          mach(:,0)=sign(geo%cvBb(:,2),geo%cvEb(:,2))*geo%cvX(:)
           call copy(mach,1.0_R8,nz,textbl)
         case('psi')
           description='Poloidal magnetic flux function (Wb)'
@@ -1818,8 +1821,9 @@ c
             wrkfs(:,is)=state%dv%vaecrb(:,0,is)+state%dv%wadia(:,0,is)
             call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,
      .        wrkfs(1,is),wrkcs(1,is))
-            ww(:,is)=state%pl%ua(:,is)*geo%cvBb(:,2)/geo%cvBb(:,3)-
-     .                     wrkcs(:,is)*geo%cvBb(:,0)/geo%cvBb(:,2)
+            ww(:,is)=sign(state%pl%ua(:,is)*geo%cvBb(:,2)/geo%cvBb(:,3)-
+     .                          wrkcs(:,is)*geo%cvBb(:,0)/geo%cvBb(:,2),
+     .                    geo%cvEb(:,2))
           end do
           call copy(ww,1.0_R8,nz,textpl)
         case('te')
@@ -2419,8 +2423,20 @@ c
           description='Molecule dissociation rate (#.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
-            mach(:,0:nz-1)=srcml(:,1:nz,1)
-            call copy(mach,-1.0_R8/qe,nz,textmn)
+#ifdef B25_EIRENE
+            if (jvft44.lt.20240627) then
+              do is = 0, nz-1
+                mach(:,is)=srcml(:,is+1,1)*geo%cvVol(:)
+              end do
+              call copy(mach,-1.0e6_R8/qe,nz,textmn)
+            else
+              mach(:,0:nz-1)=srcml(:,1:nz,1)
+              call copy(mach,-1.0_R8,nz,textmn)
+            end if
+#else
+            mach(:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textmn)
+#endif
           else
             nz=1
             mach(:,0:nz-1)=0.0_R8
@@ -2430,8 +2446,20 @@ c
           description='Power to atoms due to molecule dissociation (W)'
           if (nmoli.gt.0) then
             nz=nmoli
-            mach(:,0:nz-1)=edissml(:,1:nz,0)
-            call copy(mach,-1.0_R8,nz,textmn)
+#ifdef B25_EIRENE
+            if (jvft44.lt.20240627) then
+              do is = 0, nz-1
+                mach(:,is)=edissml(:,is+1,0)*geo%cvVol(:)
+              end do
+              call copy(mach,-1.0e6_R8,nz,textmn)
+            else
+              mach(:,0:nz-1)=edissml(:,1:nz,0)
+              call copy(mach,-1.0_R8,nz,textmn)
+            end if
+#else
+            mach(:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textmn)
+#endif
           else
             nz=1
             mach(:,0:nz-1)=0.0_R8
@@ -9075,7 +9103,7 @@ c
           description='Vapor pressure (Pa)'
           nz=1
           do ibnd = 1, nbnd
-            data(ibnd)=10.0e0_R8**
+            data(ibnd)=10.0_R8**
      .       (matsurf_vapprs_A(ibnd)/target_temp(ibnd,1) +
      .        matsurf_vapprs_B(ibnd))
           enddo
@@ -11270,6 +11298,9 @@ c
         case('ifsep')    ! ifsep
           stack_name='integer'
           call ipush(istack,iistack,mpg%iFssep)
+        case('ifsep2')   ! ifsep2
+          stack_name='integer'
+          call ipush(istack,iistack,mpg%iFssep2)
         case('ixref')    ! ixref
           if(.not.check_classical_grid(mpg)) return
           stack_name='integer'

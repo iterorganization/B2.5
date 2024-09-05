@@ -82,17 +82,10 @@ c
       do iCv=1,mpg%nCi
         brx=geo%cvX(iCv)
         bzy=geo%cvY(iCv)
-        s=geo%cvEb(iCv,0)
-        t=geo%cvEb(iCv,1)
-        if((geo%cvBb(iCv,0).gt.0.0_R8.and.geo%cvBb(iCv,2).ge.0.0_R8).or.
-     .     (geo%cvBb(iCv,0).lt.0.0_R8.and.geo%cvBb(iCv,2).lt.0.0_R8))
-     .   then
-          u= geo%cvEb(iCv,1)
-          v=-geo%cvEb(iCv,0)
-        else
-          u=-geo%cvEb(iCv,1)
-          v= geo%cvEb(iCv,0)
-        end if
+        s= geo%cvEb(iCv,0)
+        t= geo%cvEb(iCv,1)
+        u= geo%cvEb(iCv,1)*geo%signmf
+        v=-geo%cvEb(iCv,0)*geo%signmf
         rmagst=sqrt(s**2+t**2)
         rmaguv=sqrt(u**2+v**2)
 

@@ -75,7 +75,7 @@
 *   ..subprogram start-up calls
       call subini ('b2spel')
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test ev
       call xertst (0.0_R8.lt.ev, 'faulty argument ev')

@@ -58,8 +58,8 @@ C
       integer, allocatable :: lkindp(:), lkindm(:), lkindi(:)
 c
 c*** Volume data:
-c***    srcml   :   power loss due to molecules, including
-c***    edissml :   power loss due to molecule dissociation
+c***	srcml	:   molecule dissociation rate
+c***	edissml :   power loss due to molecule dissociation
 c*** Surface data:
 c***    wldnek  :   net kinetic energy deposited by neutrals
 c***    wldnep  :   energy released by recombination into molecules
@@ -118,7 +118,7 @@ c
       allocate(ewldm(nlimps,max(1,nmold),0:nstrad))
       allocate(wldra(nlimps,max(1,natmd),0:nstrad))
       allocate(wldrm(nlimps,max(1,nmold),0:nstrad))
-      allocate(wldpp(nlimps,nplsd,0:nstrad))
+      allocate(wldpp(nlimps,max(1,nplsd),0:nstrad))
       allocate(wldpa(nlimps,max(1,natmd),0:nstrad))
       allocate(wldpm(nlimps,max(1,nmold),0:nstrad))
       allocate(wldpeb(nlimps,0:nstrad))
@@ -129,7 +129,7 @@ c
       allocate(emolrad(nCv,max(1,nmold),0:nstrad))
       allocate(eionrad(nCv,max(1,niond),0:nstrad))
       allocate(wlarea(nlimps))
-      allocate(wlabsrp(natmd+nmold+niond+nplsd,nlimps))
+      allocate(wlabsrp(max(1,natmd+nmold+niond+nplsd),nlimps))
       allocate(wldna_res(max(1,natmd),nsgmx))
       allocate(wldnm_res(max(1,nmold),nsgmx))
       allocate(ewlda_res(max(1,natmd),nsgmx))
@@ -142,15 +142,16 @@ c
       allocate(wldspt_res(nsgmx))
       allocate(wldspta_res(max(1,natmd),nsgmx))
       allocate(wldsptm_res(max(1,nmold),nsgmx))
-      allocate(wlpump(natmd+nmold+niond+nplsd,nsgmx))
-      allocate(wlpump_res(natmd+nmold+niond+nplsd,nsgmx))
+      allocate(wlpump(max(1,natmd+nmold+niond+nplsd),nsgmx))
+      allocate(wlpump_res(max(1,natmd+nmold+niond+nplsd),nsgmx))
       allocate(sarea_res(nsgmx))
       allocate(eirdiag_nds_ind(nstsd+1))
       allocate(fnmti_b2(nstsd+1))
       allocate(isrftype(nlimps))
-      allocate(lkindp(nplsd))
+      allocate(lkindp(max(1,nplsd)))
       allocate(lkindm(max(1,nmold)))
       allocate(lkindi(max(1,niond)))
+      allocate(eirtxt(max(1,natmd+nmold+niond+nplsd)))
 
       return
       end subroutine alloc_b2mod_eirdiag
@@ -221,6 +222,7 @@ c
       deallocate(lkindp)
       deallocate(lkindm)
       deallocate(lkindi)
+      deallocate(eirtxt)
 
       return
       end subroutine dealloc_b2mod_eirdiag

@@ -197,8 +197,8 @@ contains
     !   ..subprogram start-up calls
     call subini ('b2mwti')
     !     ..test input
-    call xertst (0.le.nCv,'faulty argument nCv')
-    call xertst (0.le.nFc,'faulty argument nFc')
+    call xertst (0.lt.nCv, 'faulty argument nCv')
+    call xertst (0.lt.nFc, 'faulty argument nFc')
     call xertst (1.le.ns, 'faulty argument ns')
     call xertst (0.le.ismain.and.ismain.lt.ns, &
          'invalid main plasma species index ismain')
@@ -728,7 +728,7 @@ contains
         fetsipp(1) = fetsipp(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).eq.8.and.nncutmax.ne.1) ireg = 11
+      if (mpg%nnreg(0).eq.8.and.mpg%nXpt.ge.2) ireg = 11
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisipp(2) = fnisipp(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesipp(2) = feesipp(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -768,7 +768,7 @@ contains
         fetsapp(1) = fetsapp(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.7.and.nncutmax.ne.1) ireg = 12
+      if (mpg%nnreg(0).ge.7.and.mpg%nXpt.ge.2) ireg = 12
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisapp(2) = fnisapp(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesapp(2) = feesapp(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -802,7 +802,7 @@ contains
         fetsip(1) = fetsip(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.7.and.nncutmax.ne.1) ireg = 7
+      if (mpg%nnreg(0).ge.7.and.mpg%nXpt.ge.2) ireg = 7
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisip(2) = fnisip(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesip(2) = feesip(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -836,7 +836,7 @@ contains
         fetsap(1) = fetsap(1) + fettmp
       end if
       ireg = 0
-      if (mpg%nnreg(0).ge.7.and.nncutmax.ne.1) ireg = 6
+      if (mpg%nnreg(0).ge.7.and.mpg%nXpt.ge.2) ireg = 6
       if (mpg%fcReg(iFc).eq.ireg.and.ireg.ne.0) then
         fnisap(2) = fnisap(2) + dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain)
         feesap(2) = feesap(2) + dv%fhe(iFc,0) + dv%fhe(iFc,1)
@@ -1120,7 +1120,7 @@ contains
       end if
       ireg = 0
       if (mpg%nnreg(0).eq.8) then
-        if (nncutmax.eq.1) then
+        if (mpg%nXpt.eq.1) then
           ireg = 0
         elseif (geometryType.eq.GEOMETRY_CDN) then
           ireg = 25
@@ -1146,7 +1146,7 @@ contains
       end if
       ireg = 0
       if (mpg%nnreg(0).eq.8) then
-        if (nncutmax.eq.1) then
+        if (mpg%nXpt.eq.1) then
           ireg = 0
         elseif (geometryType.eq.GEOMETRY_CDN) then
           ireg = 19
@@ -1172,7 +1172,7 @@ contains
       end if
       ireg = 0
       if (mpg%nnreg(0).eq.8) then
-        if (nncutmax.eq.1) then
+        if (mpg%nXpt.eq.1) then
           ireg = 0
         elseif (geometryType.eq.GEOMETRY_CDN) then
           ireg = 24
@@ -1198,7 +1198,7 @@ contains
       end if
       ireg = 0
       if (mpg%nnreg(0).eq.8) then
-        if (nncutmax.eq.1) then
+        if (mpg%nXpt.eq.1) then
           ireg = 0
         elseif (geometryType.eq.GEOMETRY_CDN) then
           ireg = 15
@@ -1224,7 +1224,7 @@ contains
       end if
       ireg = 0
       if (mpg%nnreg(0).eq.8) then
-        if (nncutmax.eq.1) then
+        if (mpg%nXpt.eq.1) then
           ireg = 0
         elseif (geometryType.eq.GEOMETRY_CDN) then
           ireg = 20
@@ -1328,7 +1328,7 @@ contains
         ktsepi(2) = pl%kt(cvtrg)
       end if
     end if
-    if (nimp.gt.0.and.mpg%nXpt.eq.2) then
+    if (nimp.gt.0.and.mpg%nXpt.ge.2) then
       nesepm(2) = 0.5_R8 * (dv%ne(imp(icsepimp-1))+dv%ne(imp(icsepimp)))
       tesepm(2) = 0.5_R8 * (pl%te(imp(icsepimp-1))+pl%te(imp(icsepimp)))/ev
       tisepm(2) = 0.5_R8 * (pl%ti(imp(icsepimp-1))+pl%ti(imp(icsepimp)))/ev
@@ -1464,7 +1464,7 @@ contains
         tpsepa(1) = 0.0
       endif
     endif
-    if(mpg%nXpt.eq.2) then
+    if(mpg%nXpt.ge.2) then
       if(xymap(ixtr,jsep).gt.0 .and. xymap(topix(ixtr,jsep),topiy(ixtr,jsep)).gt.0) then
         tpsepa(2) = 0.5_R8 *(target_temp(xymap(ixtr,jsep),1)+target_temp(xymap(topix(ixtr,jsep),topiy(ixtr,jsep)),1))
       else

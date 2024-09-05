@@ -136,7 +136,7 @@
 
       subroutine eirene_mc(nCv, nFc, ns, dtim,
      1 sna0, smo0, she0, shi0, shn0,
-     & main_call, switch, geo, mpg, st)
+     & main_call, switch, geo, mpg, st, st_ext)
       use b2mod_subsys
       implicit none
       integer nCv, nFc, ns
@@ -149,6 +149,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (inout) :: mpg
       type (B2State), intent (inout) :: st
+      type(B2StateExt), intent (in) :: st_ext
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
@@ -469,7 +470,8 @@ csw 26feb2013
         st%dv%fluid_frac_hyb = 1.0_R8
       endif
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
-        call copy_background(nCv,nFc,ns,switch,mpg,geo,st%pl,st%dv)
+        call copy_background(nCv,nFc,ns,switch,mpg,geo,st%pl,st%dv,
+     &    st_ext)
         if(ncall.eq.0.or.switch%save_f31.ne.0) then
           call write_f31(mpg)
         endif
@@ -905,7 +907,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         if(ncall.eq.0.and.repeat_first_call.gt.0) then
           do while (eircount.le.repeat_first_call)
            call copy_background(nCv, nFc, ns, switch, mpg,
-     &                          geo, st%pl, st%dv)
+     &                          geo, st%pl, st%dv, st_ext)
 csw 25jan2011 LTIME=.false. in eirsrt call
            my_ltime=.false.
            call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
@@ -3918,19 +3920,20 @@ c     .     ('Negative eirene_ionising_core must be used with BCCON=13')
       end subroutine eirene_mc
 
 * ..finalise save
-      subroutine eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,st)
+      subroutine eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,st,st_ext)
       implicit none
       integer, intent(in) :: nCv, nFc, ns
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
       type (B2State), intent (in) :: st
+      type(B2StateExt), intent (in) :: st_ext
       if(saved_volrec_used) then
         call write_b2mod_neutrals_save(99,'    ')
         call dealloc_b2mod_neutrals_save
       end if
       call copy_background(nCv, nFc, ns, switch,
-     &                     mpg, geo, st%pl, st%dv)
+     &                     mpg, geo, st%pl, st%dv, st_ext)
 !pb   call write_f30(nx, ny)
       call write_f31(mpg)
 csw 26jan2011

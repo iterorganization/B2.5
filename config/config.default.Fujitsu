@@ -37,7 +37,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional
@@ -50,9 +50,9 @@ FC = /opt/Fujitsu/bin/f90
 FC = f95f
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -A2 -Am -X9 -Hasu --trace
+  FCOPTS = -g -A2 -Am -X9 -Hasu --trace
 else
-FCOPTS = -O -A2 -fw -Am -X9 -Kfast,eval
+  FCOPTS = -O -A2 -fw -Am -X9 -Kfast,eval
 endif
 
 DBLFC = ${FC}
@@ -71,14 +71,14 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 ifdef PERFMON
-LDLIBES += -L${SOLPSLIB} -lperf
+  LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 LD = /opt/Fujitsu/bin/f90

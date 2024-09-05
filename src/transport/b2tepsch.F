@@ -46,16 +46,16 @@
 *   ..subprogram start-up calls
       call subini ('b2tepsch')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')   
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 
 *   ..set dummy arrays
       dumm0 = 0.0_R8
 
-      fhePSch = 0.0e0_R8                                                 !srv 13.10.06
-      cone    = 0.0e0_R8                                                 !srv 02.01.07
-      floe    = 0.0e0_R8
+      fhePSch = 0.0_R8                                                   !srv 13.10.06
+      cone    = 0.0_R8                                                   !srv 02.01.07
+      floe    = 0.0_R8
       facdriftm = maxval(facdrift)
-      if(facdriftm.ne.0.0e0_R8) then
+      if(facdriftm.ne.0.0_R8) then
 
 *   ..precompute face and vertex values of nete2
         nete  = ne*te

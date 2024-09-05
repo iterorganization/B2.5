@@ -83,11 +83,11 @@ cxpb Recall iCv is the guard cell
          if (mpg%fcCv(iFc0,1).eq.iCv) then
            t1=atan2(geo%cvY(mpg%fcVx(iFc0,1))-geo%cvY(mpg%fcVx(iFc0,2)),
      *              geo%cvX(mpg%fcVx(iFc0,1))-geo%cvX(mpg%fcVx(iFc0,2)))
-     *       -pi/2e0_R8+angle(ia)
+     *       -pi/2.0_R8+angle(ia)
          else if (mpg%fcCv(iFc0,2).eq.iCv) then
            t1=atan2(geo%cvY(mpg%fcVx(iFc0,2))-geo%cvY(mpg%fcVx(iFc0,1)),
      *              geo%cvX(mpg%fcVx(iFc0,2))-geo%cvX(mpg%fcVx(iFc0,1)))
-     *       -pi/2e0_R8+angle(ia)
+     *       -pi/2.0_R8+angle(ia)
          end if
          x=0.5_R8*(geo%cvX(mpg%fcVx(iFc0,1))+geo%cvX(mpg%fcVx(iFc0,2)))
          y=0.5_R8*(geo%cvY(mpg%fcVx(iFc0,1))+geo%cvY(mpg%fcVx(iFc0,2)))

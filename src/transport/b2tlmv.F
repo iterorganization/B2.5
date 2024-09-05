@@ -32,7 +32,7 @@
 *     ------------------------------------------------------------------
       call subini ('b2tlmv')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test cflmv
       call xertst (0.0_R8.le.cflmv, 'faulty argument cflmv')
 *   ..extensive tests on first few calls
@@ -52,7 +52,7 @@
         do iFc = 1, nFc
           if (nbf(iFc) .le. switch%b2tlmv_ni_min) then
            ! Set at min value
-           cflmv_loc(iFc) = switch%b2tlmv_ni_min
+           cflmv_loc(iFc) = switch%b2tlmv_cflmv_min
           elseif (nbf(iFc) .lt. switch%b2tlmv_ni_max ) then
            ! Interpolate for smooth transition
            cflmv_loc(iFc) = 

@@ -43,7 +43,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tlc0')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv .and. 0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 
       call sfill(nFc*2*ns, 1.0_R8, flc, 1)
@@ -69,7 +69,7 @@
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
      &            *geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))
             t2 = 1.0_R8/(1.0_R8 +
-     &        (dpb/(alpha*vbar/4.0e0_R8*t1 + b2tlc0_cutlo))**gamma)
+     &        (dpb/(alpha*vbar/4.0_R8*t1 + b2tlc0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
             cdpa(iFc,0,is) = cdpa(iFc,0,is)*t2
             cdpahz(iFc,0,is) = cdpahz(iFc,0,is)*t2
@@ -80,7 +80,7 @@
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
      &        *geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))
             t2 = 1.0_R8/(1.0_R8 +
-     &        (dpb/(alpha*vbar/4.0e0_R8*t1 + b2tlc0_cutlo))**gamma)
+     &        (dpb/(alpha*vbar/4.0_R8*t1 + b2tlc0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
             cdpa(iFc,1,is)   = cdpa(iFc,1,is)*t2
             cdpahz(iFc,1,is) = cdpahz(iFc,1,is)*t2
@@ -109,7 +109,7 @@ cwdk    or radial contributions, since neutral transport is isotropic
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
      &           *geo%fcS(iFc)
             t2 = 1.0_R8/(1.0_R8 + 
-     &        (dpb/(alpha*vbar/4.0e0_R8*t1 + b2tlc0_cutlo))**gamma)
+     &        (dpb/(alpha*vbar/4.0_R8*t1 + b2tlc0_cutlo))**gamma)
      &                                                  **(1.0_R8/gamma)
 *    ..poloidal
             cdpa(iFc,0,is)   = cdpa(iFc,0,is)*t2

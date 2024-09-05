@@ -70,6 +70,13 @@
         logical :: LSN ! Identifies topologies where the western target is
                        ! the inner one
         logical :: psi_increasing ! .true. if the psi value increases from the O-point to the active X-point
+
+        real (kind=R8) :: signmf  ! Direction of poloidal field
+                                  ! +1: Going clockwise around plasma
+                                  ! -1: Going counterclockwise around plasma
+
+
+
       end type geometry
 
       contains
@@ -336,11 +343,10 @@
 
 ***********************************************************************
 
-      subroutine write_geometry (nout, nCv, nFc, nVx, nFs, nFt,
-     .                           nVmxCv, gm)
+      subroutine write_geometry (nout, nCv, nFc, nVx, nFs, gm)
 
       implicit none
-      integer, intent(in) :: nout, nCv, nFc, nVx, nFs, nFt, nVmxCv
+      integer, intent(in) :: nout, nCv, nFc, nVx, nFs
       type (geometry), intent (in) :: gm
       external cfwure
 
@@ -428,8 +434,8 @@
      &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2, iFt,
      &           i1, i2, inv_dist(mpg%nVx) , vv(2)
       integer, allocatable :: old_face_list(:), verts(:)
-      real (kind=R8) :: hzconst, dux, duy, du, sbf, Psi1, Psi2,
-     .  count_up, count_down, count_eq, dpsi(mpg%nCv),
+      real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
+     .  Psi1, Psi2, count_up, count_down, count_eq, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
       intrinsic maxval, maxloc, minloc, abs, sqrt
@@ -459,17 +465,17 @@
 
 *   ..set weights for interpolation to faces
       if (switch%fcVol_style.eq.0) then
-       ! weights for inverse volume interpolation
-       do iFc = 1, nFc
-         gm%fcVol(iFc,1) = 0.5_R8*gm%cvVol(mpg%fcCv(iFc,1))
-         gm%fcVol(iFc,2) = 0.5_R8*gm%cvVol(mpg%fcCv(iFc,2))
-       enddo
+        ! weights for inverse volume interpolation
+        do iFc = 1, nFc
+          gm%fcVol(iFc,1) = 0.5_R8*gm%cvVol(mpg%fcCv(iFc,1))
+          gm%fcVol(iFc,2) = 0.5_R8*gm%cvVol(mpg%fcCv(iFc,2))
+        enddo
       elseif (switch%fcVol_style.eq.1) then
-       ! weights for simple averaging
-       do iFc = 1, nFc
-         gm%fcVol(iFc,1) = 0.5_R8
-         gm%fcVol(iFc,2) = 0.5_R8
-       enddo
+        ! weights for simple averaging
+        do iFc = 1, nFc
+          gm%fcVol(iFc,1) = 0.5_R8
+          gm%fcVol(iFc,2) = 0.5_R8
+        enddo
       else
         call xerrab ('wrong value of b2mndr_fcVol_style')
       endif
@@ -509,264 +515,213 @@
 
 *   ..set weights for interpolation to vertices
       if (switch%vxVol_style.eq.0) then
-       ! weights for inverse volume interpolation
-       ! idea: each cell divides its volume equally
-       !       between its vertices
-       do iVx = 1, nVx
-        do inCv = 1, mpg%vxCvP(iVx,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-         gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
-     &     (1._R8/mpg%cvVxP(iCv,2))*gm%cvVol(iCv)
-        enddo
-       enddo
-      elseif (switch%vxVol_style.eq.1) then
-       ! weights based on relative volume fraction
-       ! idea: each cell assigns equal volume fraction
-       !       to each of its vertices
-       do iVx = 1, nVx
-        do inCv = 1, mpg%vxCvP(iVx,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-         if (iCv.le.mpg%nCi) then
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 1._R8/mpg%cvVxP(iCv,2)
-         else
-          ! Make sure guard cells dominate in the interpolation
-          ! to vertices => use volume
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
-     &      (1._R8/mpg%cvVxP(iCv,2))*gm%cvVol(iCv)
-         endif
-        enddo
-       enddo
-      elseif (switch%vxVol_style.eq.2) then
-       ! Assumption: all internal 'radial' faces aligned (boundaries faces possibly non-aligned)
-       ! Idea: assign equal total weight to all cells on either side of the flux surface (inverse volume weighting!)
-       !       (expected: in case of zero gradient along poloidal direction, value at vertex will be
-       !                  average between flux tube values)
-       ! Count cells per vertex with higher, lower Psi
-       ! Exceptional case: equal Psi (pentagon splitting);
-       ! will also catch case where Psi = 0 everywhere
-       do iVx = 1, nVx
-         count_down    = 0.0_R8
-         count_up      = 0.0_R8
-         count_eq      = 0.0_R8
-         do inCv = 1, mpg%vxCvP(iVx,2)
-           iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-           if (gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-             count_up = count_up + 1.0e0_R8
-           elseif (gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-             count_down = count_down + 1.0e0_R8
-           else
-             count_eq = count_eq + 1.0e0_R8
-           endif 
-         enddo
-         do inCv = 1, mpg%vxCvP(iVx,2)
-           iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-           if (iCv.le.mpg%nCi) then
-            if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &          2.0_R8*count_up
-            elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &          2.0_R8*count_down
-            else
-              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &          count_eq
-            endif
-           else
-            ! Make sure guard cells dominate in the interpolation
-            ! to vertices => use small number
-            gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8          
-           endif 
-         enddo
-       enddo
-      elseif (switch%vxVol_style.eq.3) then
-       ! equal weight for each cell around the vertex
-       gm%vxVol = 1.0_R8
-      elseif (switch%vxVol_style.eq.4) then
-       ! try-out: 
-       ! assign 1/4, except guard cells
-       do iVx = 1, nVx
-        do inCv = 1, mpg%vxCvP(iVx,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-         if (iCv.le.mpg%nCi) then
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
-         else
-          ! Make sure guard cells dominate in the interpolation
-          ! to vertices => use volume
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
-         endif
-        enddo
-        if (mpg%vxCvP(iVx,2).eq.3) then
+        ! weights for inverse volume interpolation
+        ! idea: each cell divides its volume equally
+        !       between its vertices
+        do iVx = 1, nVx
           do inCv = 1, mpg%vxCvP(iVx,2)
-           iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-           if (iCv.le.mpg%nCi) then
-            if (mpg%cvVxP(iCv,2) .eq. 5) then
-             gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.125_R8
-            else
-             gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8            
-            endif
-           else
-            ! Make sure guard cells dominate in the interpolation
-            ! to vertices => use volume
-            gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
-           endif
-        enddo        
-        endif
-       enddo
-      elseif (switch%vxVol_style.eq.5) then     
-       do iVx = 1, nVx
-        do inCv = 1, mpg%vxCvP(iVx,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-         gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &         1.0_R8/gm%cvVol(iCv)
-        enddo
-       enddo   
-      elseif (switch%vxVol_style.eq.6) then 
-       ! try-out: 
-       ! assign 1/4, except guard cells
-       ! 1/8 for pent at common vertex
-       ! 1/2 for pent at flux surface verts
-       do iVx = 1, nVx
-
-        do inCv = 1, mpg%vxCvP(iVx,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-         if (iCv.le.mpg%nCi) then
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
-         else
-          ! Make sure guard cells dominate in the interpolation
-          ! to vertices => use volume
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
-         endif
-        enddo
-
-        if (mpg%vxCvP(iVx,2).eq.3) then
-          do inCv = 1, mpg%vxCvP(iVx,2)
-           iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-           if (iCv.le.mpg%nCi) then
-            if (mpg%cvVxP(iCv,2) .eq. 5) then
-             gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.125_R8
-            else
-             gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8            
-            endif
-           else
-            ! Make sure guard cells dominate in the interpolation
-            ! to vertices => use volume
-            gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
-           endif
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+            gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &       (1._R8/mpg%cvVxP(iCv,2))*gm%cvVol(iCv)
           enddo
-
-        elseif (mpg%vxCvP(iVx,2).eq.4) then
-         do inCv = 1, mpg%vxCvP(iVx,2)   
-           iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-           if (iCv.le.mpg%nCi) then
-             gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &            gm%cvVol(iCv)
-           else
-            ! Make sure guard cells dominate in the interpolation
-            ! to vertices => use volume
-            gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &           gm%cvVol(iCv) / 1e2_R8       
-           endif
-         enddo
-                       
-        endif
-
-       enddo
-
-      elseif (switch%vxVol_style .eq. 7) then 
-         !recalculate cvFpsi
-         do iCv = 1, nCv
-            allocate(verts(1:mpg%cvVxP(iCv,2)))
-            verts = mpg%cvVx(mpg%cvVxP(iCv,1):mpg%cvVxP(iCv,1)+
-     &         mpg%cvVxP(iCv,2))
-            gm%cvFpsi(iCv) = sum(gm%vxFpsi(verts))/mpg%cvVxP(iCv,2)
-            i1 = minloc(gm%vxFpsi(verts),1) -1
-            i2 = maxloc(gm%vxFpsi(verts),1) -1
-            dpsi(iCv) = abs(gm%vxFpsi(verts(i2)) - 
-     1                gm%vxFpsi(verts(i1)) )
-            deallocate(verts)
-         enddo
-         !count cells per vertex with higher and lower Psi
-         do iVx = 1, nVx
-            count_down    = 0.0_R8
-            count_up      = 0.0_R8
-            do inCv = 1, mpg%vxCvP(iVx,2)
-               iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-               if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-                  count_up = count_up + 1.0e0_R8
-               elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-                  count_down = count_down + 1.0e0_R8
-               endif 
-            enddo
-            do inCv = 1, mpg%vxCvP(iVx,2)
-              iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-              if (iCv.le.mpg%nCi) then
-               if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 
-     &               count_up / mpg%vxCvP(iVx,2)               
-               elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 
-     &                count_down / mpg%vxCvP(iVx,2)                  
-               endif
-              else 
-                 ! Make guards cells dominate and account for 
-                 ! length difference via distance to vertex
-                 gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
-     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
-     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )            
-              endif 
-            enddo
-            !Special case for pentagon splitting
-            if (mpg%vxCvP(iVx,2).eq.3) then
-              do inCv = 1, mpg%vxCvP(iVx,2)
-               iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-               if (iCv .le. mpg%nCi) then
-                  if (mpg%cvVxP(iCv,2).eq.5) then
-                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.125_R8
-                  else
-                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25_R8  
-                  endif 
-               else
-                 gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
-     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
-     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )                 
-               endif
-
-              enddo
-
-            endif
-
-         enddo
-      elseif (switch%vxVol_style .eq. 8) then
-      !Same as style 2 but with weighting for boundary vertices
-       ! assign 1/4, except guard cells
-       do iVx = 1, nVx
-        do inCv = 1, mpg%vxCvP(iVx,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-         if (iCv.le.mpg%nCi) then
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
-         else
-          ! Make sure guard cells dominate in the interpolation
-          ! to vertices => use volume
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8 *
-     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
-     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  ) 
-         endif
         enddo
-       enddo 
+      elseif (switch%vxVol_style.eq.1) then
+        ! weights based on relative volume fraction
+        ! idea: each cell assigns equal volume fraction
+        !       to each of its vertices
+        do iVx = 1, nVx
+          do inCv = 1, mpg%vxCvP(iVx,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+            if (iCv.le.mpg%nCi) then
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &         1._R8/mpg%cvVxP(iCv,2)
+            else
+              ! Make sure guard cells dominate in the interpolation
+              ! to vertices => use volume
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &         (1._R8/mpg%cvVxP(iCv,2))*gm%cvVol(iCv)
+            endif
+          enddo
+        enddo
+      elseif (switch%vxVol_style.eq.2) then
+        ! Assumption: all internal 'radial' faces aligned (boundaries faces possibly non-aligned)
+        ! Idea: assign equal total weight to all cells on either side of the flux surface (inverse volume weighting!)
+        !       (expected: in case of zero gradient along poloidal direction, value at vertex will be
+        !                  average between flux tube values)
+        ! Count cells per vertex with higher, lower Psi
+        ! Exceptional case: equal Psi (pentagon splitting);
+        ! will also catch case where Psi = 0 everywhere
+        do iVx = 1, nVx
+          count_down    = 0.0_R8
+          count_up      = 0.0_R8
+          count_eq      = 0.0_R8
+          do inCv = 1, mpg%vxCvP(iVx,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+            if (gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
+              count_up = count_up + 1.0e0_R8
+            elseif (gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
+              count_down = count_down + 1.0e0_R8
+            else
+              count_eq = count_eq + 1.0e0_R8
+            endif 
+          enddo
+          do inCv = 1, mpg%vxCvP(iVx,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+            if (iCv.le.mpg%nCi) then
+              if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &            2.0_R8*count_up
+              elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &            2.0_R8*count_down
+              else
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &            count_eq
+              endif
+            else
+              ! Make sure guard cells dominate in the interpolation
+              ! to vertices => use small number
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
+            endif
+          enddo
+        enddo
+      elseif (switch%vxVol_style.eq.3) then
+        ! equal weight for each cell around the vertex
+        gm%vxVol = 1.0_R8
+      elseif (switch%vxVol_style.eq.4) then
+        ! try-out:
+        ! assign 1/4, except guard cells
+        do iVx = 1, nVx
+          do inCv = 1, mpg%vxCvP(iVx,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+            if (iCv.le.mpg%nCi) then
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
+            else
+              ! Make sure guard cells dominate in the interpolation
+              ! to vertices => use volume
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
+            endif
+          enddo
+          if (mpg%vxCvP(iVx,2).eq.3) then
+            do inCv = 1, mpg%vxCvP(iVx,2)
+              iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+              if (iCv.le.mpg%nCi) then
+                if (mpg%cvVxP(iCv,2) .eq. 5) then
+                  gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.125_R8
+                else
+                  gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
+                endif
+              else
+                ! Make sure guard cells dominate in the interpolation
+                ! to vertices => use volume
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
+              endif
+            enddo
+          endif
+        enddo
+      elseif (switch%vxVol_style.eq.5) then
+        do iVx = 1, nVx
+          do inCv = 1, mpg%vxCvP(iVx,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+            gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &         1.0_R8/gm%cvVol(iCv)
+          enddo
+        enddo
+      elseif (switch%vxVol_style.eq.6) then
+        ! try-out:
+        ! assign 1/4, except guard cells
+        ! 1/8 for pent at common vertex
+        ! 1/2 for pent at flux surface verts
+        do iVx = 1, nVx
+          do inCv = 1, mpg%vxCvP(iVx,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+            if (iCv.le.mpg%nCi) then
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
+            else
+              ! Make sure guard cells dominate in the interpolation
+              ! to vertices => use volume
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
+            endif
+          enddo
+          if (mpg%vxCvP(iVx,2).eq.3) then
+            do inCv = 1, mpg%vxCvP(iVx,2)
+              iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+              if (iCv.le.mpg%nCi) then
+                if (mpg%cvVxP(iCv,2) .eq. 5) then
+                  gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.125_R8
+                else
+                  gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
+                endif
+              else
+                ! Make sure guard cells dominate in the interpolation
+                ! to vertices => use volume
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
+              endif
+            enddo
+          elseif (mpg%vxCvP(iVx,2).eq.4) then
+            do inCv = 1, mpg%vxCvP(iVx,2)
+              iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+              if (iCv.le.mpg%nCi) then
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &            gm%cvVol(iCv)
+              else
+                ! Make sure guard cells dominate in the interpolation
+                ! to vertices => use volume
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &           gm%cvVol(iCv) / 1.0e2_R8
+              endif
+            enddo
+          endif
+        enddo
+      elseif (switch%vxVol_style .eq. 7 .or.
+     &        switch%vxVol_style .eq. 8 ) then
+        ! wdk Style 7 and 8 have become basically equal to vxVol_style 2, except for treatment of guard cells
+        ! wdk need to remove obsolete options eventually
 
+        ! Assumption: all internal 'radial' faces aligned (boundaries faces possibly non-aligned)
+        ! Idea: assign equal total weight to all cells on either side of the flux surface (inverse volume weighting!)
+        !       (expected: in case of zero gradient along poloidal direction, value at vertex will be
+        !                  average between flux tube values)
+        ! Count cells per vertex with higher, lower Psi
+        ! Exceptional case: equal Psi (pentagon splitting);
+        ! will also catch case where Psi = 0 everywhere
+        do iVx = 1, nVx
+          count_down    = 0.0_R8
+          count_up      = 0.0_R8
+          count_eq      = 0.0_R8
+          do inCv = 1, mpg%vxCvP(iVx,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+            if (gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
+              count_up = count_up + 1.0e0_R8
+            elseif (gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
+              count_down = count_down + 1.0e0_R8
+            else
+              count_eq = count_eq + 1.0e0_R8
+            endif 
+          enddo
+          do inCv = 1, mpg%vxCvP(iVx,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+            if (iCv.le.mpg%nCi) then
+              if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &            2.0_R8*count_up
+              elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+     &            2.0_R8*count_down
+              else
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &            count_eq
+              endif
+            else
+              ! Make guards cells dominate and account for
+              ! length difference via distance to vertex
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8 *
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  +
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )
+            endif
+          enddo
+        enddo
       elseif (switch%vxVol_style .eq. 9) then 
-         !recalculate cvFpsi
-         do iCv = 1, nCv
-            allocate(verts(1:mpg%cvVxP(iCv,2)))
-            verts = mpg%cvVx(mpg%cvVxP(iCv,1):mpg%cvVxP(iCv,1)+
-     &         mpg%cvVxP(iCv,2))
-            gm%cvFpsi(iCv) = sum(gm%vxFpsi(verts))/mpg%cvVxP(iCv,2)
-            i1 = minloc(gm%vxFpsi(verts),1) -1
-            i2 = maxloc(gm%vxFpsi(verts),1) -1
-            dpsi(iCv) = abs(gm%vxFpsi(verts(i2)) - 
-     1                gm%vxFpsi(verts(i1)) )
-            deallocate(verts)
-         enddo
          !count cells per vertex with higher and lower Psi
          do iVx = 1, nVx
             count_down    = 0.0_R8
@@ -816,83 +771,76 @@
      &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
      &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )            
               endif 
+          enddo
+          !Special case for pentagon splitting
+          if (mpg%vxCvP(iVx,2).eq.3) then
+            do inCv = 1, mpg%vxCvP(iVx,2)
+              iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
+              if (iCv .le. mpg%nCi) then
+                if (mpg%cvVxP(iCv,2).eq.5) then
+                  gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.125_R8
+                else
+                  gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25_R8
+                endif
+              else
+                gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  +
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )
+              endif
             enddo
-            !Special case for pentagon splitting
-            if (mpg%vxCvP(iVx,2).eq.3) then
-              do inCv = 1, mpg%vxCvP(iVx,2)
-               iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-               if (iCv .le. mpg%nCi) then
-                  if (mpg%cvVxP(iCv,2).eq.5) then
-                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.125_R8
-                  else
-                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25_R8  
-                  endif 
-               else
-                 gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
-     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
-     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )                 
-               endif
-
-              enddo
-
-            endif
-
-         enddo
-
-      elseif (switch%vxVol_style .eq. 10) then
-       do iVx = 1, nVx
-        do inCv = 1, mpg%vxCvP(iVx,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-         if (iCv.le.mpg%nCi) then
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
-     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )     
-         else
-          ! Make sure guard cells dominate in the interpolation
-          ! to vertices => use volume
-          gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8 *
-     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
-     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  ) 
-         endif
-        enddo
-       enddo
-      elseif (switch%vxVol_style .eq. 11) then
-       ! Check which type to interpolation type to use 
-       inv_dist(:) = 0
-       do iVx = 1,nVx
-        do inCv = 1, mpg%vxCvP(iVx,2)
-         iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-         if ((mpg%cvVxP(iCv,2).eq.3) .or.
-     &      (mpg%cvVxP(iCv,2).gt.4)) then
-           inv_dist(iVx) = 1
-         endif
-        enddo         
-       enddo
-       
-       ! Compute the interpolation weights
-       do iVx = 1,nVx
-        if (inv_dist(iVx).eq.1) then
-         do inCv = 1, mpg%vxCvP(iVx,2)
-          iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-           gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
-     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )     
-          
-         enddo   
-        else
-         do inCv = 1, mpg%vxCvP(iVx,2)
-          iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-          if (iCv.le.mpg%nCi) then
-           gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
-          else
-          ! Make sure guard cells dominate in the interpolation
-          ! to vertices => use volume
-           gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
           endif
-         enddo         
-        endif    
-       enddo
-     
+        enddo
+      elseif (switch%vxVol_style .eq. 10) then
+        do iVx = 1, nVx
+          do inCv = 1, mpg%vxCvP(iVx,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+            if (iCv.le.mpg%nCi) then
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  +
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )
+            else
+              ! Make sure guard cells dominate in the interpolation
+              ! to vertices => use volume
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8 *
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  +
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )
+            endif
+          enddo
+        enddo
+      elseif (switch%vxVol_style .eq. 11) then
+        ! Check which type to interpolation type to use
+        inv_dist(:) = 0
+        do iVx = 1,nVx
+          do inCv = 1, mpg%vxCvP(iVx,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+            if ((mpg%cvVxP(iCv,2).eq.3) .or.
+     &          (mpg%cvVxP(iCv,2).gt.4)) then
+              inv_dist(iVx) = 1
+            endif
+          enddo
+        enddo
+        ! Compute the interpolation weights
+        do iVx = 1,nVx
+          if (inv_dist(iVx).eq.1) then
+            do inCv = 1, mpg%vxCvP(iVx,2)
+              iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+              gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  +
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )
+            enddo
+          else
+            do inCv = 1, mpg%vxCvP(iVx,2)
+              iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
+              if (iCv.le.mpg%nCi) then
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25_R8
+              else
+                ! Make sure guard cells dominate in the interpolation
+                ! to vertices => use volume
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 0.25e-3_R8
+              endif
+            enddo
+          endif
+        enddo
       else
         call xerrab ('wrong value of b2mndr_vxVol_style')
       endif
@@ -924,15 +872,13 @@
      &    (-sbf*gm%fcQalf(iFc,1)*dux +     gm%fcQalf(iFc,0)*duy)
         gm%fcEb(iFc,2) = sbf*gm%fcBb(iFc,2)/gm%fcBb(iFc,3)
 
-      end do
+        ! Normalize
+        du = sqrt(gm%fcEb(iFc,0)**2+gm%fcEb(iFc,1)**2+gm%fcEb(iFc,2)**2)
+        gm%fcEb(iFc,0) = gm%fcEb(iFc,0)/du
+        gm%fcEb(iFc,1) = gm%fcEb(iFc,1)/du
+        gm%fcEb(iFc,2) = gm%fcEb(iFc,2)/du
 
-      ! normalize
-      gm%fcEb(:,0) = gm%fcEb(:,0)/
-     &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
-      gm%fcEb(:,1) = gm%fcEb(:,1)/
-     &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
-      gm%fcEb(:,2) = gm%fcEb(:,2)/
-     &  sqrt(gm%fcEb(:,0)**2 + gm%fcEb(:,1)**2 + gm%fcEb(:,2)**2)
+      end do
 
 !WG_TODO: Need to provide a calculation for gm%vxEb
 
@@ -940,7 +886,7 @@
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
       hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
       hzconst = 1.0_R8
-      gm%cvHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+switch%b2mndr_hz*
+      gm%cvHz = hzconst*(1.0_R8-switch%b2mndr_hz)+switch%b2mndr_hz*
      & gm%cvVol/gm%cvSz
 
 *   ..compute fcHz and fcPbshz
@@ -948,17 +894,17 @@
         call intface(nCv,nFc,mpg%fcCv,gm%fcVol,gm%cvHz,gm%fcHz)
       else
         if (isymm.eq.0) then
-          gm%fcHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+          gm%fcHz = hzconst*(1.0_R8-switch%b2mndr_hz)+
      &      switch%b2mndr_hz*switch%b2agmt_width
         elseif (isymm.eq.1 .or. isymm.eq.2) then
           do iFc = 1, mpg%nFc
-            gm%fcHz(iFc) = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+            gm%fcHz(iFc) = hzconst*(1.0_R8-switch%b2mndr_hz)+
      &        switch%b2mndr_hz*
      &        pi*(gm%vxX(mpg%fcVx(iFc,1))+gm%vxX(mpg%fcVx(iFc,2)))
           enddo
         else if (isymm.eq.3 .or. isymm.eq.4) then
           do iFc = 1, mpg%nFc
-            gm%fcHz(iFc) = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+            gm%fcHz(iFc) = hzconst*(1.0_R8-switch%b2mndr_hz)+
      &        switch%b2mndr_hz*
      &        pi*(gm%vxY(mpg%fcVx(iFc,1))+gm%vxY(mpg%fcVx(iFc,2)))
           enddo
@@ -971,13 +917,13 @@
         call intvertex(nCv,nVx,mpg,gm%vxVol,gm%cvHz,gm%vxHz)
       else
         if (isymm.eq.0) then
-          gm%vxHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+          gm%vxHz = hzconst*(1.0_R8-switch%b2mndr_hz)+
      &      switch%b2mndr_hz*switch%b2agmt_width
         elseif (isymm.eq.1 .or. isymm.eq.2) then
-          gm%vxHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+          gm%vxHz = hzconst*(1.0_R8-switch%b2mndr_hz)+
      &      switch%b2mndr_hz*2.0_R8*pi*gm%vxX
         else if (isymm.eq.3 .or. isymm.eq.4) then
-          gm%vxHz = hzconst*(1.0e0_R8-switch%b2mndr_hz)+
+          gm%vxHz = hzconst*(1.0_R8-switch%b2mndr_hz)+
      &      switch%b2mndr_hz*2.0_R8*pi*gm%vxY
         endif
       endif
@@ -990,13 +936,13 @@
       ! only supported for cases derived from original, structured grid
       if (switch%use_9pt_stencil.eq.0) then
         if (mpg%isClassicalGrid.eq.1) then
-          nfx = maxval(mpg%imapFcx)
+          nFx = maxval(mpg%imapFcx)
           ! 'poloidal' faces
-          gm%fcQgam(1:nfx,1) = 0.0_R8
-          gm%fcQalf(1:nfx,1) = 0.0_R8
+          gm%fcQgam(1:nFx,1) = 0.0_R8
+          gm%fcQalf(1:nFx,1) = 0.0_R8
           ! 'radial' faces
-          gm%fcQgam(nfx+1:mpg%nFc,1) = 0.0_R8
-          gm%fcQbet(nfx+1:mpg%nFc,0) = 0.0_R8
+          gm%fcQgam(nFx+1:mpg%nFc,1) = 0.0_R8
+          gm%fcQbet(nFx+1:mpg%nFc,0) = 0.0_R8
         else
           call xerrab ('5-point stencil option not supported for UG')
         endif
@@ -1056,8 +1002,8 @@
         iXpt = 1
       else if (mpg%nnreg(0).ge.7) then
         active = .false.
-        do i = mpg%vxCvP(mpg%Xpt(1),1), mpg%vxCvP(mpg%Xpt(1),1) +
-     &                                  mpg%vxCvP(mpg%Xpt(1),2) - 1
+        do i = mpg%vxCvP(mpg%Xpt(1),1),
+     &         mpg%vxCvP(mpg%Xpt(1),1) + mpg%vxCvP(mpg%Xpt(1),2) - 1
           iCv = mpg%vxCv(i)
           if (mpg%cvReg(iCv).eq.1) active = .true.
         end do
@@ -1087,6 +1033,51 @@
        end do
       end if
 
+      ! Compute signmf
+      r0=0.0_R8
+      z0=0.0_R8
+      t0=0.0_R8
+      iFt=0
+      gm%signmf=0.0_R8
+      if (any(mpg%cvOnClosedSurface(1:mpg%nCi))) then
+        do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
+          iFt=iFt+1
+          iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+          if (mpg%cvOnClosedSurface(iCv)) then
+            do i=1,mpg%ftCvP(iFt,2)
+              r0=r0+gm%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+              z0=z0+gm%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+              t0=t0+
+     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+            end do
+          end if
+        end do
+      end if
+      if (t0.gt.0.0_R8) then
+        r0=r0/t0
+        z0=z0/t0
+        iFt=0
+        do while (gm%signmf.eq.0.0_R8.or.iFt.lt.mpg%nFt)
+          iFt=iFt+1
+          iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+          if (mpg%cvOnClosedSurface(iCv)) then
+            do i=1,mpg%ftCvP(iFt,2)
+              gm%signmf=gm%signmf
+     .         -((gm%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))-r0)*
+     .            gm%cvEb(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),1))
+     .         +((gm%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))-z0)*
+     .            gm%cvEb(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),0))
+            end do
+          end if
+        end do
+! signmf is positive if the poloidal field travels clockwise around the O-point
+        gm%signmf=sign(1.0_R8,gm%signmf)
+      else
+        gm%signmf=sign(1.0_R8,gm%cvEb(1,0))
+      end if
+
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
       do i = 1, maxval(mpg%strDiv)
@@ -1095,10 +1086,10 @@
         do while (.not.match_found)
           iFc1 = mpg%divFc(mpg%divFcP(i,1)+k-1)
 !nh check if the vertices belong to a flux surface
-          if ((mpg%vxFs(mpg%fcVx(iFc1,1)).ne.0).and.    
-     &      (mpg%vxFs(mpg%fcVx(iFc1,2)).ne.0)) then ! linear interpolation
+          if ((mpg%vxFs(mpg%fcVx(iFc1,1)).ne.0).and.
+     &        (mpg%vxFs(mpg%fcVx(iFc1,2)).ne.0)) then ! linear interpolation
             Psi1 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,1)))+
-     &                     gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,2))))
+     &                       gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,2))))
             match_found = .true.
           elseif (mpg%vxFs(mpg%fcVx(iFc1,1)).ne.0) then ! take value from vertex 1
             Psi1 = gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,1)))
@@ -1111,23 +1102,23 @@
               Psi1 = 0.0_R8
               write (*,*) 'Warning: no flux surface assigned to any ' //
      &         'of the grid vertices coinciding with '
-              write (*,*) 'target ', i 
+              write (*,*) 'target ', i
               write (*,*) 'Assume Psi = 0'
               match_found = .true.
             else
               k = k+1 ! check next face
             end if
-          end if 
+          end if
         end do
         match_found = .false.
         k = mpg%divFcP(i,2)
         do while (.not.match_found)
           iFc2 = mpg%divFc(mpg%divFcP(i,1)+k-1)
 !nh check if the vertices belong to a flux surface
-          if ((mpg%vxFs(mpg%fcVx(iFc2,1)).ne.0).and.    
-     &      (mpg%vxFs(mpg%fcVx(iFc2,2)).ne.0)) then ! linear interpolation
+          if ((mpg%vxFs(mpg%fcVx(iFc2,1)).ne.0).and.
+     &        (mpg%vxFs(mpg%fcVx(iFc2,2)).ne.0)) then ! linear interpolation
             Psi2 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,1)))+
-     &                     gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,2))))
+     &                       gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,2))))
             match_found = .true.
           elseif (mpg%vxFs(mpg%fcVx(iFc2,1)).ne.0) then ! take value from vertex 1
             Psi2 = gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,1)))
@@ -1142,7 +1133,7 @@
             else
               k = k-1 ! check next face
             end if
-          end if 
+          end if
         end do
         if ((gm%psi_increasing .and. Psi1.gt.Psi2) .or.
      &      (.not.gm%psi_increasing .and. Psi2.gt.Psi1)) then
@@ -1161,8 +1152,7 @@
           iVx2 = mpg%fcVx(mpg%divFc(j),2)
           do k = 1, mpg%nXpt
             do l = mpg%strVxP(k,1), mpg%strVxP(k,1)+mpg%strVxP(k,2)-1
-              if (iVx1.eq.mpg%strVx(l).and.
-     &            mpg%vxFs(iVx1).eq.mpg%vxFs(mpg%Xpt(k))) then
+              if (iVx1.eq.mpg%strVx(l)) then
                 if((gm%psi_increasing .and.
      &              gm%vxFpsi(iVx1).le.gm%vxFpsi(iVx2)).or.
      &             (.not.gm%psi_increasing .and.
@@ -1173,14 +1163,15 @@
                     mpg%ivdiv(i) = iVx1
                   else ! Two strike points on the same target
                        ! We label the active one only
-                    if (mpg%vxFs(iVx1).eq.mpg%iFssep) then
+                    if (mpg%vxFs(iVx1).eq.mpg%iFssep.or.
+     &                 (mpg%vxFs(iVx1).eq.mpg%iFssep2.and.
+     &                  mpg%iFssep2.gt.0)) then
                       mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
                       mpg%ivdiv(i) = iVx1
                     end if
                   end if
                 end if
-              else if (iVx2.eq.mpg%strVx(l).and.
-     &                 mpg%vxFs(iVx2).eq.mpg%vxFs(mpg%Xpt(k))) then
+              else if (iVx2.eq.mpg%strVx(l)) then
                 if((gm%psi_increasing .and.
      &              gm%vxFpsi(iVx2).le.gm%vxFpsi(iVx1)).or.
      &             (.not.gm%psi_increasing .and.
@@ -1191,7 +1182,9 @@
                     mpg%ivdiv(i) = iVx2
                   else ! Two strike points on the same target
                        ! We label the active one only
-                    if (mpg%vxFs(iVx2).eq.mpg%iFssep) then
+                    if (mpg%vxFs(iVx2).eq.mpg%iFssep.or.
+     &                 (mpg%vxFs(iVx2).eq.mpg%iFssep2.and.
+     &                  mpg%iFssep2.gt.0)) then
                       mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
                       mpg%ivdiv(i) = iVx2
                     end if
@@ -1208,7 +1201,6 @@
       return
       end subroutine init_geometry
 
-
 ***********************************************************************
 
       subroutine calc_conn (mpg, gm)
@@ -1216,7 +1208,7 @@
       implicit none
       type (mapping), intent (in) :: mpg
       type (geometry), intent (inout) :: gm
-      integer :: nfx, iCv, iCv1, iCv2, ic
+      integer :: iCv, iCv1, iCv2, ic
       integer :: iFc, iFs, iFt, iVx, i, j
       integer, save :: conn_style = 0, iout = 0
       real (kind=r8) :: wrk0(mpg%nCv), wrk1(mpg%nCv), L1, L2, LL,
@@ -1228,7 +1220,7 @@
 
       ! build poloidal length of cells into wrk1
       wrk1 = 0.0_R8
-      do iFt = 1, mpg%nFt 
+      do iFt = 1, mpg%nFt
         if (mpg%ftFcP(iFt,2) .gt. 0) then
           do j = mpg%ftFcP(iFt,1), mpg%ftFcP(iFt,1)+mpg%ftFcP(iFt,2)-1
             iFc = mpg%ftFc(j)
@@ -1260,7 +1252,7 @@
       tt2 = 0.0_R8
       tt3 = 0.0_R8
       gm%ftConn = 0.0_R8
-      do iFt = 1, mpg%nFt 
+      do iFt = 1, mpg%nFt
         do j = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
           iCv = mpg%ftCv(j)
           wrk0(iCv) = wrk1(iCv)*gm%cvBb(iCv,3)/gm%cvBb(iCv,0)
@@ -1276,7 +1268,7 @@
       ! construct ftEps and ftBbav2
       gm%ftEps = 0.0_R8
       gm%ftBbav2 = 0.0_R8
-      do iFt = 1, mpg%nFt 
+      do iFt = 1, mpg%nFt
         if (mpg%cvOnClosedSurface(mpg%ftCv(mpg%ftCvP(iFt,1)))) then
           gm%ftEps(iFt) = tt0(iFt)**2/tt1(iFt)
           gm%ftBbav2(iFt) = tt2(iFt)/tt3(iFt)
@@ -1286,7 +1278,7 @@
       ! 'effective' connection length for use in k-eps model
       if (conn_style.ne.0.or.maxval(gm%cvConn).eq.0.0_R8) then ! if 0, assumed to be read from b2fgmtry
        gm%cvConn = 0.0_R8
-       do iFt = 1, mpg%nFt 
+       do iFt = 1, mpg%nFt
         iCv = mpg%ftCv(mpg%ftCvP(iFt,1))
         if (mpg%cvOnClosedSurface(iCv)) then
          !core region: actual connection length (same as ftConn)
@@ -1330,7 +1322,8 @@
         iCv2 = mpg%fcCv(iFc,2)
         if (((mpg%cvOnClosedSurface(iCv1).or.iCv1.gt.mpg%nCi) .and.
      &       (mpg%cvOnClosedSurface(iCv2).or.iCv2.gt.mpg%nCi)) .or.
-     &        iFs.eq.mpg%iFssep ) then
+     &        iFs.eq.mpg%iFssep .or.
+     &       (iFs.eq.mpg%iFssep2.and.mpg%iFssep2.gt.0)) then
           do j = mpg%fsVxP(iFs,1), mpg%fsVxP(iFs,1)+mpg%fsVxP(iFs,2)-1
             iVx = mpg%fsVx(j)
             gm%vxConn(iVx) = gm%fsConn(iFs)
@@ -1527,8 +1520,8 @@ csc   than previous face, then identify next vertex
       found_next = .true.
       do while (found_next)
          ! we have a new face, loop over all faces connected to the current vertex
-         found_next = 0
-         do j = mpg%vxFcP(vx_current,1), 
+         found_next = .false.
+         do j = mpg%vxFcP(vx_current,1),
      &          mpg%vxFcP(vx_current,1)+mpg%vxFcP(vx_current,2)-1
            fc_next = mpg%vxFc(j)
            if (fc_next==fc_current) cycle  ! we ingore the current face

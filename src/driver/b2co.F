@@ -66,7 +66,7 @@
       type(mapping), save    :: mpg
       type(geometry), save   :: geo
       type(B2State), save    :: state
-!      type(B2StateExt), save :: state_ext
+      type(B2StateExt), save :: state_ext
       type(switches), save   :: switch
 
 *   ..local variables
@@ -78,7 +78,8 @@
 #endif
 #endif
 #endif
-      integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io, is
+      integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, is
+      integer idum(0:9), io
       integer iflag
 #if ( !defined(NAGF95) && !defined(NAGFOR) )
       integer iargc
@@ -158,7 +159,7 @@
       mpg%nx    = idum(0)
       mpg%ny    = idum(1)
       mpg%nncut = idum(2)
-      call xertst (0.le.mpg%nCv.and.0.le.mpg%nFc,
+      call xertst (0.lt.mpg%nCv.and.0.lt.mpg%nFc,
      &  'faulty input nCv, nFc from geometry file')
 *   ..obtain ns from parameters file
       call cfruin (ninp(2), 1, idum, 'ns')
@@ -178,7 +179,7 @@
       call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, 
      .  mpg%nFt, mpg%nVmxCv)
       call createB2State (nCv, nFc, ns, state)
-!      call createB2StateExt ( mpg%nCv, mpg%nFc, ns, state_ext )
+      call createB2StateExt ( mpg%nCv, mpg%nFc, ns, state_ext )
 *   ..obtain lblmn
       call b2xxid ('b2mn', lblmn(1:60))
       call b2rflb (ninp(0), lblmn(61:120))
@@ -318,10 +319,8 @@
       call alloc_b2mod_eirbra(nCv,ns,natm,nmol,nion,npls,nstra)
 #endif
       call alloc_b2mod_elements(ns,zn,am)
-#ifdef WG_TODO
-      call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,ns_ext,wklng,
+      call alloc_b2mod_b2plot(nCv,nFc,mpg%nVx,ns,ns,wklng,
      1 natm,nmol,nion,nlimps)
-#endif
       call alloc_b2mod_boundary(1, 1, ns, nbcd, nnisod)
       if (switch%b2stbc_boundary_namelist.eq.1)
      > call read_b2mod_boundary_namelist(ns, mpg, .false.)
@@ -476,7 +475,7 @@
       enddo
 * ..end of computation
       call destroyB2State (state)
-!      call destroyB2StateExt (state_ext)
+      call destroyB2StateExt (state_ext)
       call dealloc_geometry (geo)
       call dealloc_mapping (mpg)
       call prgend ()

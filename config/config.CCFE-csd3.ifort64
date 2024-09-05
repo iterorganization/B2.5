@@ -24,7 +24,6 @@ FC       = ifort
 endif
 endif
 
-
 INCMOD   = -I
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 COMPILER_MAJOR_VERSION = $(shell ${FC} --version 2>&1 | head -1 | cut -d ' ' -f 3 | cut -d '.' -f 1 )

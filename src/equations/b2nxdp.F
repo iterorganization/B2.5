@@ -22,7 +22,7 @@
 *   ..initialisation
 *     ------------------------------------------------------------------
       call subini ('b2nxdp')
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (0.0_R8.lt.qe, 'faulty argument qe')
 *   ..extensive tests on first few calls
       if (ncall_b2nxdp.lt.3) then

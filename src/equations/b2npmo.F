@@ -144,7 +144,7 @@
 *   ..subprogram start-up calls
       call subini ('b2npmo')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test itcnt
       call xertst (0.le.itcnt, 'faulty argument itcnt')
@@ -307,7 +307,7 @@ c time-dependent treatment                                            !srv 07.07
       call sfill (nFc*2, 0.0_R8, flct, 1)
       call sfill (nFc*2, 0.0_R8, cvct, 1)
       call sfill (nCv, 0.0_R8, dv%resmt, 1)
-      call sfill (nCv, 0.0e0_R8, ctcft, 1)                              !srv 06.04.07
+      call sfill (nCv, 0.0_R8, ctcft, 1)                               !srv 06.04.07
 
 * ..main computation
 *   ..compute individual species corrections
