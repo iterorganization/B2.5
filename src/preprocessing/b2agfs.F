@@ -479,18 +479,18 @@
           m%nncut = idum(2)
         endif
 
-        ! read Xpoint information
-        call cfruin (nrid, 1, idum,'nX')
-        m%nXp = idum(0)
+!        ! read Xpoint information
+!        call cfruin (nrid, 1, idum,'nX')
+!        m%nXp = idum(0)
 
-        ! read OMPr, OMPz, IMPr, IMPz
-        call cfrure(nrid,2,m%OMPr,'OMPr')
-        call cfrure(nrid,2,m%OMPz,'OMPz')
-        call cfrure(nrid,2,m%IMPr,'IMPr')
-        call cfrure(nrid,2,m%IMPz,'IMPz')
+!        ! read OMPr, OMPz, IMPr, IMPz
+!        call cfrure(nrid,2,m%OMPr,'OMPr')
+!        call cfrure(nrid,2,m%OMPz,'OMPz')
+!        call cfrure(nrid,2,m%IMPr,'IMPr')
+!        call cfrure(nrid,2,m%IMPz,'IMPz')
 
-        ! read Xpoint vertex number
-        call cfruin(nrid,m%nXp,m%Xpoint,'Xpoint(s)')
+!        ! read Xpoint vertex number
+!        call cfruin(nrid,m%nXp,m%Xpoint,'Xpoint(s)')
 
         ! read vertex information
         read(nrid,*,err=91) idcod, id
