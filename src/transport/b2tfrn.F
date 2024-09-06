@@ -54,7 +54,7 @@
      &   floe_eir(nFc,0:1), floi_eir(nFc,0:1), floi_vhx(nFc),
      &   fnef(nFc,0:1), fnec(nFc,0:1)
       real (kind=R8) :: 
-     &   nbf(nFc), pbf(nFc), dpb(nFc,0:1), dpbc(nCv),
+     &   nbf(nFc), pbf(nFc), rzf(nFc), dpb(nFc,0:1), dpbc(nCv),
      &   dnete(nFc,0:1), weight(nFc,2)
       real (kind=R8) ::
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrkVx(nVx),
@@ -106,6 +106,7 @@ c      endif
        weight = 1.0_R8
        call intface(nCv,nFc,mpg%fcCv,weight,pl%na(:,is),nbf)
        call intface(nCv,nFc,mpg%fcCv,weight,dv%pa(:,is),pbf)
+       call intface(nCv,nFc,mpg%fcCv,weight,rt%rza(:,is),rzf)
 
 *   ..compute differences of pb
        call diff(nCv, nFc, nVx, 0, geo, mpg, dv%pa(:,is), wrkVx, dpb)
@@ -133,15 +134,15 @@ cwdk   still to be checked: vis_per and vis_q also in b2tfnb?
      &    switch%fnb_vis_per*dv%fchvisper_a(:,0,is) +
      &    dv%fchanml_a(:,0,is) +
      &    switch%fnb_vis_q*dv%fchvisq_a(:,0,is))*switch%b2tfnb_xcur/
-     &   (rt%rza(:,is)*qe*nbf) +
-     &    dv%fchviskt_a(:,0,is)/(rt%rza(:,is)*qe*nbf)
+     &   (rzf*qe*nbf) +
+     &    dv%fchviskt_a(:,0,is)/(rzf*qe*nbf)
         scur(:,1) = 
      &   (dv%fchinert_a(:,1,is) + dv%fchvispar_a(:,1,is) + 
      &    switch%fnb_vis_per*dv%fchvisper_a(:,1,is) +
      &    dv%fchanml_a(:,1,is) +
      &    switch%fnb_vis_q*dv%fchvisq_a(:,1,is))*switch%b2tfnb_ycur/
-     &   (rt%rza(:,is)*qe*nbf) +
-     &    dv%fchviskt_a(:,1,is)/(rt%rza(:,is)*qe*nbf)
+     &   (rzf*qe*nbf) +
+     &    dv%fchviskt_a(:,1,is)/(rzf*qe*nbf)
         flo_eir   = flo_eir + switch%fnb_drift_hyb*scur
        else
         scur = 0.0_R8 
