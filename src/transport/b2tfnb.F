@@ -81,7 +81,7 @@
      *   nbzb(nCv), nbzbc(nVx),                                          !srv 13.05.16
      *   dnb(nFc,0:1), dpb(nFc,0:1), dpbc(nCv), dpbm(nFc),
      *   dpo(nFc,0:1), dnbti(nFc,0:1),
-     *   nbf(nFc),
+     *   nbf(nFc), rzf(nFc),
      *   dOnedBsq(nFc,0:1),
      *   fna_mdf0(nFc,0:1), flo_factor(nFc,0:1),
      *   cddb(nFc,0:1), cdpb(nFc,0:1)
@@ -135,6 +135,7 @@ c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 0
 *   ..interpolate na and pa to cell faces
       weight = 1.0_R8
       call intface(nCv,nFc,mpg%fcCv,weight,pl%na(:,isb),nbf)
+      call intface(nCv,nFc,mpg%fcCv,weight,rt%rza(:,isb),rzf)
 
 *   ..precompute kmpr and its differences
       kmpr = pl % na(:,isb) / dv % pa(:,isb)
@@ -375,15 +376,15 @@ cwdk                   (original code: simple averaging)
      &     (dv%fchinert_a(:,0,isb) + dv%fchvispar_a(:,0,isb) +
      &      dv%fchvisper_a(:,0,isb) + dv%fchanml_a(:,0,isb)  +
      &      dv%fchvisq_a(:,0,isb))*switch%b2tfnb_xcur/
-     &     (rt%rza(:,isb)*qe*nbf) + 
-     &      dv%fchviskt_a(:,0,isb)/(rt%rza(:,isb)*qe*nbf)
+     &     (rzf*qe*nbf) + 
+     &      dv%fchviskt_a(:,0,isb)/(rzf*qe*nbf)
         scur(:,1) =
      &     (dv%fchinert_a(:,1,isb) + dv%fchvispar_a(:,1,isb) +
      &      switch%fnb_vis_per*dv%fchvisper_a(:,1,isb) +
      &      dv%fchanml_a(:,1,isb) +
      &      switch%fnb_vis_q*dv%fchvisq_a(:,1,isb))*switch%b2tfnb_ycur/
-     &     (rt%rza(:,isb)*qe*nbf) + 
-     &      dv%fchviskt_a(:,1,isb)/(rt%rza(:,isb)*qe*nbf)
+     &     (rzf*qe*nbf) + 
+     &      dv%fchviskt_a(:,1,isb)/(rzf*qe*nbf)
         flo     = flo     + drift_hyb*scur
         flo_mdf = flo_mdf + drift_hyb*scur
         flo2dia(:,0) = flo2dia(:,0) + drift_hyb*scur(:,0)*geo%fcHz
