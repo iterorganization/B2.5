@@ -1,9 +1,12 @@
-c VERSION: 01.07.2000 23:24
-c
+      module b2mod_eirsrt
+      use b2mod_types
+      use b2mod_dimensions
+      implicit none
+
 c*** Control parameters for transfer from B2 to Eirene
 c*** This allows to input some of more often varied Eirene parameters
 c*** to be specified in the B2 input file in a convenient way.
-c*** 
+c***
 c*** DELTAT and EIRENE_STEP_CPU are left in the dummy variable list in
 c*** the eirsrt routine just to minimize the number of possible errors.
 c***>>  Control parameters:
@@ -26,7 +29,8 @@ c*** sps_spch:  fudge-factor for chemical sputtering
 c*** sps_sgrp:  surface group for chemical sputtering
 c*** sps_mtrl:  surface material in human notation (e.g., C)
 c*** sps_id:    identifier of the group of surfaces (assigned in DG)
-     -  sps_absr(DEF_NSPCSRFG), sps_trno(DEF_NSPCSRFG), 
+      real (kind=R8) ::
+     -  sps_absr(DEF_NSPCSRFG), sps_trno(DEF_NSPCSRFG),
      ,  sps_trni(DEF_NSPCSRFG), sps_mtri(DEF_NSPCSRFG),
      ,  sps_tmpr(DEF_NSPCSRFG), sps_spph(DEF_NSPCSRFG),
      ,  sps_spch(DEF_NSPCSRFG)
@@ -35,8 +39,7 @@ c*** sps_id:    identifier of the group of surfaces (assigned in DG)
       integer n_spcsrf, l_spcsrf(nn_spcsrf), i_spcsrf(DEF_NSPCSRFG),
      ,  j_spcsrf(DEF_NSPCSRFG), sps_sgrp(DEF_NSPCSRFG)
       character*8 sps_mtrl(DEF_NSPCSRFG), sps_id(DEF_NSPCSRFG)
-      common/spcsrfcom/
-     r  sps_absr,sps_trno,sps_trni,sps_mtri,sps_tmpr,
-     r  sps_spph,sps_spch,
-     i  n_spcsrf,l_spcsrf,i_spcsrf,j_spcsrf,sps_sgrp
-      common/spcsrfcch/sps_mtrl,sps_id
+
+      save
+
+      end module b2mod_eirsrt
