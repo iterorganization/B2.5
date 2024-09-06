@@ -133,7 +133,7 @@
 *.declarations
 
 *   ..local variables
-      integer :: iCv
+      integer :: ramp_slow, ier0, iCv
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       save ramp_slow                                                     !xpb
       logical domoqt, wrong_flow                                         !xpb
@@ -490,7 +490,7 @@ ctmp.dpc
      &       (3.le.switch%b2mndt_moitlv.or.istg(2).eq.0)
 *      ..maybe write quick trace
             if (domoqt) then
-              if (mod(ncall_b2mndt,switch%ntim_step_out).eq.0) then     !srv 31.01.07
+              if (mod(ncall_b2mndt,switch%ntim_step_out).eq.0) then              !srv 31.01.07
                 call b2mwqt (nout(4), nCv, ns, itim, b2mndt_itcnt,
      &           switch, geo, st%pl, st%dv, st%diag)
                 flush(nout(4))
@@ -584,7 +584,7 @@ ctmp.dpc
 
 *   ..mms time-dependent error analysis
       if(switch%use_mms.eq.2.and.
-     &  mod(ncall_b2mndt+1,ntim_step_out).eq.0
+     &  mod(ncall_b2mndt+1,switch%calc_err_step_out).eq.0
      &  .and.switch%b2mndt_dummy.eq.0) then
         call calc_err(nCv, ns, st%pl, switch, itim, mpg)
       endif
@@ -597,7 +597,9 @@ ctmp.dpc
 * ..return
       ncall_b2mndt = ncall_b2mndt+1
 
-      !reset ncall_b2mndt to 0 in case of initial dummy call for Crank Nicolson
+      !Reset ncall_b2mndt to 0 in case of initial dummy call for Crank Nicolson
+      !This is currently necessary to make Crank Nicolson work
+      !To be assessed whether other counters ncall_* should be reset, too
       if (switch%b2mndt_dummy.eq.1) ncall_b2mndt = 0
 
       call subend ()
