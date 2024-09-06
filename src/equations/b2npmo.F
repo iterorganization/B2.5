@@ -122,7 +122,8 @@
      8  wrkf0(nFc), wrkf1(nFc),
      9  zmc(nCv), z11(nCv),                                            !som 13.11.20
      1  z12(nCv), z22(nCv),
-     2  zf1(nCv), zf2(nCv)
+     2  zf1(nCv), zf2(nCv),
+     3  rho_b_rel(nCv)
 
       real (kind=R8) ::
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
@@ -355,8 +356,16 @@ c time-dependent treatment                                            !srv 07.07
        call b2scopy (nFc*2, dv%fna_fcor(:,:,is), 1, flub, 1)
        call b2sscal (nFc*2, am(is)*mp, flub, 1)
 *    ..add convective term due to new form of ion viscosity term only
+       if (switch%Zhdanov_closure.ne.0 .and.
+     &      switch%Zhdanov_test.ne.1 .and.
+     &      switch%Zhdanov_visu.ne.0 .and.
+     &      switch%zh_vis_type.eq.1) then
+         rho_b_rel = rho_A_rel(:,is)
+       else
+         rho_b_rel = 0.0_R8
+       endif
        call b2nxfv (nCv, nFc, nVx, is, ismain, switch, geo, mpg,
-     &    rho_A_rel, co%cvsahz_cl(:,:,is), co%cvsahz(:,:,is), flubv)
+     &    rho_b_rel, co%cvsahz_cl(:,:,is), co%cvsahz(:,:,is), flubv)
        if (balance_netcdf.ne.0) then
          fmo_b2nxfv(:,:,is)=flubv                                       !djm Jan2017
        endif
