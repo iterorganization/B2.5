@@ -174,6 +174,9 @@ endif
 endif
 endif
 
+# Compiler options with no optimizations
+FNOPTS = $(shell echo ${FCOPTS} | sed -e 's:-O[1-3]:-O0:')
+
 # If compiling with Paraview Catalyst
 ifdef LD_CATALYST
 SRCCAT = ${SRCDIR}/catalyst
@@ -491,8 +494,14 @@ else
 # EXCLUDELIST += ${patsubst ${OBJDIR}/%.o, %.o, ${MNEXTRA} }
 endif
 ifeq ($(COMPILER),pgf90)
+AMEXTRA=${MNEXTRA}
+else
+ifeq ($(COMPILER),ifort64)
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
 ifdef SOLPS_DEBUG
 AMEXTRA=${MNEXTRA}
+endif
+endif
 endif
 endif
 ifndef DIFF
@@ -993,9 +1002,68 @@ ${OBJDIR}/eirmod_refusr.${MOD}:
 	touch ${OBJDIR}/eirmod_refusr.${MOD}
 endif
 
+ifeq ($(COMPILER),ifort64)
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
+${OBJDIR}/b2stel.o: b2stel.F
+	@- /bin/rm -f ${OBJDIR}/b2stel.f ${OBJDIR}/b2stel.o ${OBJDIR}/b2stel.${MOD}
+ifeq ($(strip $(CPP)),)
+	${FC} ${FNOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stel.f
+else
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stel.f
+endif
+	${FC} ${FNOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2stel.o ${OBJDIR}/b2stel.f
+endif
+	@if [ -f b2stel.o ] ; then /bin/mv b2stel.o ${OBJDIR}/ ; fi
+	@if [ -f b2stel.${MOD} ] ; then /bin/mv b2stel.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel__genmod.f90 ] ; then /bin/mv b2stel__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel__genmod.${MOD} ] ; then /bin/mv b2stel__genmod.${MOD} ${OBJDIR}/ ; fi
+
+${OBJDIR}/b2stel_b.o: b2stel_b.F90
+	@- /bin/rm -f ${OBJDIR}/b2stel_b.f90 ${OBJDIR}/b2stel_b.o ${OBJDIR}/b2stel_b.${MOD}
+ifeq ($(strip $(CPP)),)
+	${FC} ${FNOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stel_b.f90
+else
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stel_b.f90
+endif
+	${FC} ${FNOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2stel_b.o ${OBJDIR}/b2stel_b.f90
+endif
+	@if [ -f b2stel_b.o ] ; then /bin/mv b2stel_b.o ${OBJDIR}/ ; fi
+	@if [ -f b2stel_b.${MOD} ] ; then /bin/mv b2stel_b.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel_b__genmod.f90 ] ; then /bin/mv b2stel_b__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel_b__genmod.${MOD} ] ; then /bin/mv b2stel_b__genmod.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel_nodiff__genmod.f90 ] ; then /bin/mv b2stel_nodiff__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel_nodiff__genmod.${MOD} ] ; then /bin/mv b2stel_nodiff__genmod.${MOD} ${OBJDIR}/ ; fi
+
+${OBJDIR}/b2stel_dv.o: b2stel_dv.F90
+	@- /bin/rm -f ${OBJDIR}/b2stel_dv.f90 ${OBJDIR}/b2stel_dv.o ${OBJDIR}/b2stel_dv.${MOD}
+ifeq ($(strip $(CPP)),)
+	${FC} ${FNOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stel_dv.f90
+else
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stel_dv.f90
+endif
+	${FC} ${FNOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2stel_dv.o ${OBJDIR}/b2stel_dv.f90
+endif
+	@if [ -f b2stel_dv.o ] ; then /bin/mv b2stel_dv.o ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv.${MOD} ] ; then /bin/mv b2stel_dv.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv__genmod.f90 ] ; then /bin/mv b2stel_dv__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv__genmod.${MOD} ] ; then /bin/mv b2stel_dv__genmod.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel_nodiff__genmod.f90 ] ; then /bin/mv b2stel_nodiff__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel_nodiff__genmod.${MOD} ] ; then /bin/mv b2stel_nodiff__genmod.${MOD} ${OBJDIR}/ ; fi
+endif
+endif
+
 ifeq ($(COMPILER),gfortran)
 ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -ge 10; echo $$?),0)
-${OBJDIR}/b2mod_mdsplus.o : b2mod_mdsplus.F
+${OBJDIR}/b2mod_mdsplus.o: b2mod_mdsplus.F
 	@- /bin/rm -f ${OBJDIR}/b2mod_mdsplus.f ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.${MOD}
 ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
@@ -1086,7 +1154,7 @@ endif
 
 ${NREXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${MAKES}
 ifdef LD_NETCDF
-	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBNDIR}/b2mod_ipmain.o ${OBNDIR}/b2mod_lwimai.o ${OBNDIR}/b2mod_lwmain.o ${OBNDIR}/b2mod_math.o ${OBNDIR}/b2mod_openmp.o ${OBNDIR}/b2mod_subsys.o ${OBNDIR}/b2mod_xerset.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${LD_NETCDF} ${LD_NAG}
+	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBNDIR}/b2mod_ipmain.o ${OBNDIR}/b2mod_lwimai.o ${OBNDIR}/b2mod_lwmain.o ${OBNDIR}/b2mod_math.o ${OBNDIR}/b2mod_openmp.o ${OBNDIR}/b2mod_stack.o ${OBNDIR}/b2mod_subsys.o ${OBNDIR}/b2mod_xerset.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${LD_NETCDF} ${LD_NAG}
 ifndef SOLPS_DEBUG
 	@-ln -sf $@ ${NCXDIR}/$*
 endif
@@ -1134,7 +1202,7 @@ else
 	$(warning NETCDF library not present!)
 endif
 
-${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBNDIR}/b2mod_ipmain.${MOD} ${OBNDIR}/b2mod_lwimai.${MOD} ${OBNDIR}/b2mod_lwmain.${MOD} ${OBNDIR}/b2mod_math.${MOD} ${OBNDIR}/b2mod_openmp.${MOD} ${OBNDIR}/b2mod_subsys.${MOD} ${OBNDIR}/b2mod_types.${MOD} ${OBNDIR}/b2mod_xerset.${MOD}
+${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBNDIR}/b2mod_ipmain.${MOD} ${OBNDIR}/b2mod_lwimai.${MOD} ${OBNDIR}/b2mod_lwmain.${MOD} ${OBNDIR}/b2mod_math.${MOD} ${OBNDIR}/b2mod_openmp.${MOD} ${OBNDIR}/b2mod_stack.${MOD} ${OBNDIR}/b2mod_subsys.${MOD} ${OBNDIR}/b2mod_types.${MOD} ${OBNDIR}/b2mod_xerset.${MOD}
 ifdef LD_NETCDF
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.F90

@@ -51,9 +51,9 @@ SUBROUTINE B2MXAC_NODIFF(ncv, ns, dv, diag)
 !
 !   ..local variables
   INTEGER :: is
-  EXTERNAL XERTST, samax
+  EXTERNAL XERTST, damax
 !   ..procedures
-  REAL(kind=r8) :: samax
+  REAL(kind=r8) :: damax
   EXTERNAL B2XVFX_NODIFF
 !   ..initialisation
 !
@@ -71,16 +71,16 @@ SUBROUTINE B2MXAC_NODIFF(ncv, ns, dv, diag)
 ! ..compute norms of the corrections
 !   ..compute acorpa, acorua
   DO is=0,ns-1
-    diag%acorpa(is) = samax(ncv, dv%corpa(1, is), 1)
-    diag%acorua(is) = samax(ncv, dv%corua(1, is), 1)
+    diag%acorpa(is) = damax(ncv, dv%corpa(1, is), 1)
+    diag%acorua(is) = damax(ncv, dv%corua(1, is), 1)
   END DO
 !   ..compute acorut, acorte, acorti, acorpo
-  diag%acorut = samax(ncv, dv%corut, 1)
-  diag%acorte = samax(ncv, dv%corte, 1)
-  diag%acorti = samax(ncv, dv%corti, 1)
-  diag%acortn = samax(ncv, dv%cortn, 1)
-  diag%acorpo = samax(ncv, dv%corpo, 1)
-  diag%acorkt = samax(ncv, dv%corkt, 1)
+  diag%acorut = damax(ncv, dv%corut, 1)
+  diag%acorte = damax(ncv, dv%corte, 1)
+  diag%acorti = damax(ncv, dv%corti, 1)
+  diag%acortn = damax(ncv, dv%cortn, 1)
+  diag%acorpo = damax(ncv, dv%corpo, 1)
+  diag%acorkt = damax(ncv, dv%corkt, 1)
 !
 ! ..return
   CALL SUBEND()
