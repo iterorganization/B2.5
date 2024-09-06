@@ -464,6 +464,8 @@ c b2mndt
       integer :: b2mndt_temp0
       integer :: b2mndt_ckn
       integer :: b2mndt_dummy
+      integer :: ntim_step_out
+      integer :: calc_err_step_out
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -984,6 +986,8 @@ c b2mndt
       s % b2mndt_temp0 = 1
       s % b2mndt_ckn = 1
       s % b2mndt_dummy = 0
+      s % ntim_step_out = 1
+      s % calc_err_step_out = 1
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1534,6 +1538,8 @@ c b2mndt
       call ipgeti ('b2mndt_temp0',s%b2mndt_temp0)
       call ipgeti ('b2mndt_ckn',s%b2mndt_ckn)
       call ipgeti ('b2mndt_dummy',s%b2mndt_dummy)
+      call ipgeti ('b2mndt_ntim_step_out',s%ntim_step_out)
+      call ipgeti ('b2mndt_calc_err_step_out',s%calc_err_step_out)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
@@ -2017,7 +2023,11 @@ c b2mndt
       call xertst (1.eq.s%b2mndt_style.or.s%b2mndt_style.eq.2,
      &  'b2mndt_style should be 1 or 2')
       call xertst (s%b2mndt_ckn.eq.1.or.s%b2mndt_ckn.eq.2,
-     &  'b2mndt_ckn should be 1 or 2')     
+     &  'b2mndt_ckn should be 1 or 2')
+      call xertst (1.le.s%ntim_step_out,
+     &   'faulty internal parameter ntim_step_out')
+      call xertst (1.le.s%calc_err_step_out,
+     &   'faulty internal parameter calc_err_step_out')                         
 
 c b2mndr
        call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,

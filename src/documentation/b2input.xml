@@ -3840,6 +3840,14 @@
 					When set to a value of 'K', residuals at each K-th step will be written in b2ftrace. It helps to avoid a huge b2ftrace files during long time run.
 				</description>
 			</switch>
+			<switch>
+				<name>b2mndt_calc_err_step_out</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to a value of 'K', the subroutine calc_err will be run at each K-th step. It allows to output the error at desired times during a time-dependent MMS test.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2stb*</name>
 				<description>

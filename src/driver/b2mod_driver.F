@@ -315,7 +315,7 @@
 #else
       integer ninp(0:6), nout(0:10)
 #endif
-      integer nCv, nFc, ns, ns0
+      integer nCv, nFc, nVx, ns, ns0
       type(switches), intent (inout)   :: switch
       type(mapping), intent (inout)    :: mpg
       type(geometry), intent (inout)   :: geo
@@ -999,6 +999,7 @@
 *     (done in b2mnds)
       nCv = mpg%nCv
       nFc = mpg%nFc
+      nVx = mpg%nVx
 *   ..initialise files and common
       call b2mnds (ninp, nout, nCv, nFc, ns, ns0, switch)
 *   ..set internal parameters on first (and only) call
@@ -1694,10 +1695,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
           state % pl % na(iCv,is) = max(state % pl % na(iCv,is),na_min)
         enddo
       enddo                                                          !srv 25.01.16 }
-!      if(use_mms.ne.0) then                                         !srv 26.02.18 {
-*   ..reset initial state using exact solution
+*   ..reset initial state if using exact solution
        call set_exact_solution(nCv, ns, switch, state % pl, state % dv)
-!      endif                                                         !srv 26.02.18 {
 *   ..test plasma state
       call b2xvps (nCv, nFc, ns, state % pl, state % dv)
 *   ..compute log-log electron rate coefficients
@@ -2003,6 +2002,36 @@ c new CDF movie option (1st frame at t=0)
       idx = 0
       write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
 
+      !Initialize residual if using Crank-Nicolson scheme
+      if (switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.2
+     &       .and.itim.eq.0) then
+        !Dummy call to b2mndt
+        !Temporarily set dummy switch to 1
+        switch%b2mndt_dummy = 1
+        !Temporarily set rxf to 0 to not update any physical quantities
+        switch%b2mndt_rxf = 0.0_R8
+        !Temporarily set inner iterations to 1
+        switch%nstg(0) = 1
+        switch%nstg(1) = 1
+        switch%nstg(2) = 1
+        call b2mndt (nout, nCv, nFc, nVx, ns,
+     &       ismain, ismain0, state%rt%nscx, state%rt%nscxmax,
+     &       state%rt%iscx, itim, dtim, ntim,
+     &       switch, geo, mpg, state, state_ext, state_avg, ierr)
+        !Read again rxf switch and inner iterations switches
+        call ipgetr ('b2mndt_rxf', switch%b2mndt_rxf)
+        call ipgeti ('b2mndt_nstg0', switch%nstg(0))
+        call ipgeti ('b2mndt_nstg1', switch%nstg(1))
+        call ipgeti ('b2mndt_nstg2', switch%nstg(2))
+        !Set back dummy switch to default value of 0
+        switch%b2mndt_dummy = 0
+        !Update plasma snapshots with initialized residuals (without time-stepping sources)
+        state%psnl%resco0 = state%dv%resco0
+        state%psnc%resco0 = state%dv%resco0
+        state%psnl%resmo0 = state%dv%resmo0
+        state%psnc%resmo0 = state%dv%resmo0
+        endif
+
       call subend()
       return
 #ifdef USE_MPI
@@ -2165,36 +2194,6 @@ c      na0, ua0, etc from 3.0.9 -> psnc = Plasma SNapshot Current
 c      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc, which is what currently happens in the b2mxnp and b2mxnu routines in 3.0.9
         call getB2PlasmaSnapshot(state%pl,state%dv,state%psnl)
         call getB2PlasmaSnapshot(state%pl,state%dv,state%psnc)
-
-        !Initialize residual if using Crank-Nicolson scheme
-        if (switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.2
-     &       .and.itim.eq.0) then
-          !Dummy call to b2mndt
-          !Temporarily set dummy switch to 1
-          switch%b2mndt_dummy = 1
-          !Temporarily set rxf to 0 to not update any physical quantities
-          switch%b2mndt_rxf = 0.0_R8
-          !Temporarily set inner iterations to 1
-          switch%nstg(0) = 1
-          switch%nstg(1) = 1
-          switch%nstg(2) = 1
-          call b2mndt (nout, nCv, nFc, nVx, ns,
-     &       ismain, ismain0, state%rt%nscx, state%rt%nscxmax,
-     &       state%rt%iscx, itim, dtim, ntim,
-     &       switch, geo, mpg, state, state_ext, state_avg, ierr)
-          !Read again rxf switch and inner iterations switches
-          call ipgetr ('b2mndt_rxf', switch%b2mndt_rxf)
-          call ipgeti ('b2mndt_nstg0', switch%nstg(0))
-          call ipgeti ('b2mndt_nstg1', switch%nstg(1))
-          call ipgeti ('b2mndt_nstg2', switch%nstg(2))
-          !Set back dummy switch to default value of 0
-          switch%b2mndt_dummy = 0
-          !Update plasma snapshots with initialized residuals (without time-stepping sources)
-          state%psnl%resco0 = state%dv%resco0
-          state%psnc%resco0 = state%dv%resco0
-          state%psnl%resmo0 = state%dv%resmo0
-          state%psnc%resmo0 = state%dv%resmo0
-        endif
 
         call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
