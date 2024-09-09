@@ -99,12 +99,12 @@
         integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
         integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
 
-        integer, allocatable :: cvOMP(:)               ! grid cells that belong to the outer mid plane (OMP)
-        integer, allocatable :: cvIMP(:)               ! grid cells that belong to the inner mid plane (IMP)
-        integer, allocatable :: fcOMP(:)               ! grid faces that belong to the outer mid plane (OMP)
-        integer, allocatable :: fcIMP(:)               ! grid faces that belong to the inner mid plane (IMP)
+!        integer, allocatable :: cvOMP(:)               ! grid cells that belong to the outer mid plane (OMP)
+!        integer, allocatable :: cvIMP(:)               ! grid cells that belong to the inner mid plane (IMP)
+!        integer, allocatable :: fcOMP(:)               ! grid faces that belong to the outer mid plane (OMP)
+!        integer, allocatable :: fcIMP(:)               ! grid faces that belong to the inner mid plane (IMP)
   
-        integer, allocatable :: Xpoint(:)              ! vertex number(s) of Xpoint(s)
+!        integer, allocatable :: Xpoint(:)              ! vertex number(s) of Xpoint(s)
         
         real (kind=R8) :: OMPr(1:2)
         real (kind=R8) :: OMPz(1:2)
