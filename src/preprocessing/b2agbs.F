@@ -246,11 +246,11 @@
         cutoff_width = 0.05_R8
 
         ! Check if reference cell is aligned
-        if ( cv_aligned(ref_ind_cv(iFt)) .eq. .true. ) then
+        if ( cv_aligned(ref_ind_cv(iFt)) ) then
 
           ! Loop over cells
           do k = 0,nc-1
-            if ( cv_aligned(k) .eq. .true. ) then
+            if ( cv_aligned(k) ) then
                if ((( m%cvLbl(cells(k)) .eq. 1) 
      &          .and. (m%cvFcP(cells(k),2) .eq. 4))
      &          .or. ( abs( (psi_ref - psi_max(k))/psi_ref) 
@@ -361,10 +361,10 @@
         ! Complete cells which are not of full width
         ! Forward propagation
         do j = 1,nc-1 ! Starting from second cell
-          if (( cv_done(j) .ne. .true. ) 
-     &     .and. ( cv_done(j-1) .eq. .true. )) then
+          if (( .not. cv_done(j) ) 
+     &     .and. ( cv_done(j-1) )) then
 
-             if ( fc_done(j) .eq. .true.) then
+             if ( fc_done(j) ) then
 
                 call propagate(g,m,cells(0:nc-1),j,faces(0:nf-1),
      &       j+1,cv_done(0:nc-1),fc_done(0:nf-1),psif_max(0:nf-1),
@@ -384,10 +384,10 @@
         ! Backward propagation
         do  j = 1,nc-1
            l = nc - 1 - j
-           if  (( cv_done(l) .ne. .true. )
-     &        .and. ( cv_done(l+1) .eq. .true. ) ) then
+           if  (( .not. cv_done(l) )
+     &        .and. ( cv_done(l+1) ) ) then
 
-             if ( fc_done(l+1) .eq. .true. ) then
+             if ( fc_done(l+1) ) then
 
                 call propagate(g,m,cells(0:nc-1),l,faces(0:nf-1),
      &     l,cv_done(0:nc-1),fc_done(0:nf-1),psif_max(0:nf-1),nc,nf)
@@ -571,7 +571,7 @@
           ! Complex propagation
           if (k .eq. l) then
             ! Reference is faces(k+1) 
-            if ( fc_done(l) .eq. .true. ) then
+            if ( fc_done(l) ) then
               ! Adjust the incline face
               ! Compression or expansion
                 pol_flux_k1 = abs(g%fcBb(faces(k),0)
@@ -633,7 +633,7 @@
 
           elseif ( l .eq. k + 1) then ! forward
             ! Reference is faces(k)
-            if (fc_done(k+1) .eq. .true. ) then
+            if (fc_done(k+1)) then
               ! Adjust inclined face
               pol_flux_k1 = abs(g%fcBb(faces(k),0)
      &         *g%fcS(faces(k))*g%fcQalf(faces(k),0))
