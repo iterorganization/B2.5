@@ -278,12 +278,12 @@
       m%iFssep = 0
       m%iFssep2 = 0
 
-      m%cvOMP = 0
-      m%cvIMP = 0
-      m%fcOMP = 0
-      m%fcIMP = 0
+!      m%cvOMP = 0
+!      m%cvIMP = 0
+!      m%fcOMP = 0
+!      m%fcIMP = 0
 
-      m%Xpoint = 0 
+!      m%Xpoint = 0 
      
       m%OMPr = 0
       m%OMPz = 0
@@ -377,12 +377,12 @@
       deallocate (m%ftLbl)
       deallocate (m%cvLbl)
 
-      deallocate (m%cvOMP)
-      deallocate (m%cvIMP)
-      deallocate (m%fcOMP)
-      deallocate (m%fcIMP)
+!      deallocate (m%cvOMP)
+!      deallocate (m%cvIMP)
+!      deallocate (m%fcOMP)
+!      deallocate (m%fcIMP)
 
-      deallocate (m%Xpoint)
+!      deallocate (m%Xpoint)
       
       return
       end subroutine dealloc_mapping
