@@ -35,8 +35,6 @@ FC      = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
 FC      = ${MPI_FC}
-else
-FC     ?= gfortran
 endif
 endif
 

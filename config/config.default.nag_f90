@@ -36,7 +36,7 @@ CPP = /lib/cpp -C
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
-FC = /afs/ipp-garching.mpg.de/@sys/bin/f90
+FC = nagfor
 FCOPTS = -O -Nl99 -x77 # -mismatch
 INCMOD = -I
 MOD = mod
