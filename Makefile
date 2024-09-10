@@ -1087,6 +1087,25 @@ endif
 	@if [ -f b2stel_dv__genmod.${MOD} ] ; then /bin/mv b2stel_dv__genmod.${MOD} ${OBJDIR}/ ; fi
 	@if [ -f b2stel_nodiff__genmod.f90 ] ; then /bin/mv b2stel_nodiff__genmod.f90 ${OBJDIR}/ ; fi
 	@if [ -f b2stel_nodiff__genmod.${MOD} ] ; then /bin/mv b2stel_nodiff__genmod.${MOD} ${OBJDIR}/ ; fi
+
+${OBJDIR}/b2stel_dv_dv.o: b2stel_dv_dv.F90
+	@- /bin/rm -f ${OBJDIR}/b2stel_dv_dv.f90 ${OBJDIR}/b2stel_dv_dv.o ${OBJDIR}/b2stel_dv_dv.${MOD}
+ifeq ($(strip $(CPP)),)
+	${FC} ${FNOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBJDIR}/b2stel_dv_dv.f90
+else
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBJDIR}/b2stel_dv_dv.f90
+endif
+	${FC} ${FNOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} -o ${OBJDIR}/b2stel_dv_dv.o ${OBJDIR}/b2stel_dv_dv.f90
+endif
+	@if [ -f b2stel_dv_dv.o ] ; then /bin/mv b2stel_dv_dv.o ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv_dv.${MOD} ] ; then /bin/mv b2stel_dv_dv.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv_dv__genmod.f90 ] ; then /bin/mv b2stel_dv_dv__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv_dv__genmod.${MOD} ] ; then /bin/mv b2stel_dv_dv__genmod.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel_nodiff__genmod.f90 ] ; then /bin/mv b2stel_nodiff__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel_nodiff__genmod.${MOD} ] ; then /bin/mv b2stel_nodiff__genmod.${MOD} ${OBJDIR}/ ; fi
 endif
 endif
 
