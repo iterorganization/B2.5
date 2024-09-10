@@ -1816,7 +1816,7 @@ cwdk  now need to recompute full diamagnetic component for ud
           do isa = 0, nspecies-1
             if (na_feedback_target(isa).gt.0.0_R8 .and.
      &          na_feedback_ib(isa).eq.ib .and.
-     &          is.ge.eb2spcr(isa+1)+1 .and.
+     &          is.ge.eb2spcr(isa+1) .and.
      .          is.le.eb2spcr(isa+1)+nfluids(isa+1)) then
               t0 = conpar(is,ib,1)
               fedback_species = .true.
