@@ -155,7 +155,7 @@
 *.declarations
 
 *   ..local variables
-      integer i, j, k, ind, izn0, kmin, kmax
+      integer i, j, k, ind, izn0, kmin, kmax, klow
       character header*60, chk*3, fmtp*(*)
       parameter (fmtp='(2x,a6,4x,a)')
 c$$$      character chdc*(*)
@@ -182,6 +182,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
       allocate (wt(0:nt))
 *   ..set cutll
       if (.not.b2mod_math_initialised) call b2mod_math_init
+      klow = int(cutl4/log(10.0_R8))+1
       Rydberg=(me/(2.0_R8*qe))*(qe**2/(2.0_R8*const_h*eps0))**2
 *   ..set izn0
       izn0 = nint(zn(0))
@@ -197,10 +198,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 *   ..plot rtsa as function of rtt for several rtn
       do ind = 0, njdis-1
        j = jdis(ind)
-       zmax = maxval(rtlsa(0:nt,j,0:ns0-2))/log(10.0_R8)
-       zmin = minval(rtlsa(0:nt,j,0:ns0-2))/log(10.0_R8)
-       kmax = int(zmax)
-       kmin = int(zmin)-1
+       zmax = max(cutl4,maxval(rtlsa(0:nt,j,0:ns0-2)))/log(10.0_R8)
+       zmin = max(cutl4,minval(rtlsa(0:nt,j,0:ns0-2)))/log(10.0_R8)
+       kmax = max(klow+1,int(zmax))
+       kmin = max(klow,int(zmin)-1)
        kmin = max(kmin, kmax - 8)
        write (header,'(a,i2,a,1pe9.2)')
      &   'IONISATION RATE COEFS,        Z0 =',izn0,', NE =',rtn(j)
@@ -213,7 +214,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-        if(real(maxval(wt(0:nt)),R4).gt.0) then
+        if(real(maxval(wt(0:nt)),R4).gt.0.0_R4) then
          call curved_d (rtt, wt, nt+1)
         endif
        enddo
@@ -222,10 +223,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 *   ..plot rtsa as function of rtn for several rtt
       do ind = 0, nidis-1
        i = idis(ind)
-       zmax = maxval(rtlsa(i,0:nn,0:ns0-2))/log(10.0_R8)
-       zmin = minval(rtlsa(i,0:nn,0:ns0-2))/log(10.0_R8)
-       kmax = int(zmax)
-       kmin = int(zmin)-1
+       zmax = max(cutl4,maxval(rtlsa(i,0:nn,0:ns0-2)))/log(10.0_R8)
+       zmin = max(cutl4,minval(rtlsa(i,0:nn,0:ns0-2)))/log(10.0_R8)
+       kmax = max(klow+1,int(zmax))
+       kmin = max(klow,int(zmin)-1)
        kmin = max(kmin, kmax - 8)
        write (header,'(a,i2,a,1pe9.2)')
      &   'IONISATION RATE COEFS,        Z0 =',izn0,', TE =',rtt(i)
@@ -238,7 +239,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-        if(real(maxval(wn(0:nn)),R4).gt.0) then
+        if(real(maxval(wn(0:nn)),R4).gt.0.0_R4) then
          call curved_d (rtn, wn, nn+1)
         endif
        enddo
@@ -247,10 +248,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 *   ..plot rtra as function of rtt for several rtn
       do ind = 0, njdis-1
        j = jdis(ind)
-       zmax = maxval(rtlra(0:nt,j,1:ns0-1))/log(10.0_R8)
-       zmin = minval(rtlra(0:nt,j,1:ns0-1))/log(10.0_R8)
-       kmax = int(zmax)
-       kmin = int(zmin)-1
+       zmax = max(cutl4,maxval(rtlra(0:nt,j,1:ns0-1)))/log(10.0_R8)
+       zmin = max(cutl4,minval(rtlra(0:nt,j,1:ns0-1)))/log(10.0_R8)
+       kmax = max(klow+1,int(zmax))
+       kmin = max(klow,int(zmin)-1)
        kmin = max(kmin, kmax - 8)
        write (header,'(a,i2,a,1pe9.2)')
      &   'RECOMBINATION RATE COEFS,     Z0 =',izn0,', NE =',rtn(j)
@@ -263,7 +264,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-        if(real(maxval(wt(0:nt)),R4).gt.0) then
+        if(real(maxval(wt(0:nt)),R4).gt.0.0_R4) then
          call curved_d (rtt, wt, nt+1)
         endif
        enddo
@@ -272,10 +273,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 *   ..plot rtra as function of rtn for several rtt
       do ind = 0, nidis-1
        i = idis(ind)
-       zmax = maxval(rtlra(i,0:nn,1:ns0-1))/log(10.0_R8)
-       zmin = minval(rtlra(i,0:nn,1:ns0-1))/log(10.0_R8)
-       kmax = int(zmax)
-       kmin = int(zmin)-1
+       zmax = max(cutl4,maxval(rtlra(i,0:nn,1:ns0-1)))/log(10.0_R8)
+       zmin = max(cutl4,minval(rtlra(i,0:nn,1:ns0-1)))/log(10.0_R8)
+       kmax = max(klow+1,int(zmax))
+       kmin = max(klow,int(zmin)-1)
        kmin = max(kmin, kmax - 8)
        write (header,'(a,i2,a,1pe9.2)')
      &   'RECOMBINATION RATE COEFS,     Z0 =',izn0,', TE =',rtt(i)
@@ -288,7 +289,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-        if(real(maxval(wn(0:nn)),R4).gt.0) then
+        if(real(maxval(wn(0:nn)),R4).gt.0.0_R4) then
          call curved_d (rtn, wn, nn+1)
         endif
        enddo
@@ -297,10 +298,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 *   ..plot rtqa as function of rtt for several rtn
       do ind = 0, njdis-1
        j = jdis(ind)
-       zmax = maxval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
-       zmin = minval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
-       kmax = int(zmax)
-       kmin = int(zmin)-1
+       zmax = max(cutl4,maxval(rtlqa(0:nt,j,0:ns0-1)))/log(10.0_R8)
+       zmin = max(cutl4,minval(rtlqa(0:nt,j,0:ns0-1)))/log(10.0_R8)
+       kmax = max(klow+1,int(zmax))
+       kmin = max(klow,int(zmin)-1)
        kmin = max(kmin, kmax - 8)
        write (header,'(a,i2,a,1pe9.2)')
      &   'ENERGY LOSS RATE COEFS,       Z0 =',izn0,', NE =',rtn(j)
@@ -313,7 +314,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-        if(real(maxval(wt(0:nt)),R4).gt.0) then
+        if(real(maxval(wt(0:nt)),R4).gt.0.0_R4) then
          call curved_d (rtt, wt, nt+1)
         endif
        enddo
@@ -322,10 +323,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 *   ..plot rtqa as function of rtn for several rtt
       do ind = 0, nidis-1
        i = idis(ind)
-       zmax = maxval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
-       zmin = minval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
-       kmax = int(zmax)
-       kmin = int(zmin)-1
+       zmax = max(cutl4,maxval(rtlqa(i,0:nn,0:ns0-1)))/log(10.0_R8)
+       zmin = max(cutl4,minval(rtlqa(i,0:nn,0:ns0-1)))/log(10.0_R8)
+       kmax = max(klow+1,int(zmax))
+       kmin = max(klow,int(zmin)-1)
        kmin = max(kmin, kmax - 8)
        write (header,'(a,i2,a,1pe9.2)')
      &   'ENERGY LOSS RATE COEFS,       Z0 =',izn0,', TE =',rtt(i)
@@ -338,7 +339,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-        if(real(maxval(wn(0:nn)),R4).gt.0) then
+        if(real(maxval(wn(0:nn)),R4).gt.0.0_R4) then
          call curved_d (rtn, wn, nn+1)
         endif
        enddo
@@ -348,10 +349,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
       if (fix_recomb.ne.0.and.izn0.le.zmax_recomb) then
        do ind = 0, njdis-1
         j = jdis(ind)
-        zmax = maxval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
-        zmin = minval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
-        kmax = int(zmax)
-        kmin = int(zmin)-1
+        zmax = max(cutl4,maxval(rtlqa(0:nt,j,0:ns0-1)))/log(10.0_R8)
+        zmin = max(cutl4,minval(rtlqa(0:nt,j,0:ns0-1)))/log(10.0_R8)
+        kmax = max(klow+1,int(zmax))
+        kmin = max(klow,int(zmin)-1)
         kmin = max(kmin, kmax - 8)
         write (header,'(a,i2,a,1pe9.2)')
      &   'ENERGY LOSS RATE COEFS(recomb), Z0 =',izn0,', NE =',rtn(j)
@@ -364,7 +365,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
          enddo
          write (chk,'(i3)') k
 *$$$     call dashdc (chdc//chk, 10, 1)
-         if(real(maxval(wt(0:nt)),R4).gt.0) then
+         if(real(maxval(wt(0:nt)),R4).gt.0.0_R4) then
+          do i = 0, nt
+            if (wt(i).lt.0.0_R4) wt(i) = small_R4_constant
+          end do
           call curved_d (rtt, wt, nt+1)
          endif
         enddo
@@ -372,10 +376,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
        enddo
        do ind = 0, njdis-1
         j = jdis(ind)
-        zmax = maxval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
-        zmin = minval(rtlqa(0:nt,j,0:ns0-1))/log(10.0_R8)
-        kmax = int(zmax)
-        kmin = int(zmin)-1
+        zmax = max(cutl4,maxval(rtlqa(0:nt,j,0:ns0-1)))/log(10.0_R8)
+        zmin = max(cutl4,minval(rtlqa(0:nt,j,0:ns0-1)))/log(10.0_R8)
+        kmax = max(klow+1,int(zmax))
+        kmin = max(klow,int(zmin)-1)
         kmin = max(kmin, kmax - 8)
         write (header,'(a,i2,a,1pe9.2)')
      &   'NEG(ENERGY LOSS RATE COEFS(recomb)), Z0 =',izn0,
@@ -389,7 +393,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
          enddo
          write (chk,'(i3)') k
 *$$$     call dashdc (chdc//chk, 10, 1)
-         if(real(maxval(wt(0:nt)),R4).gt.0) then
+         if(real(maxval(wt(0:nt)),R4).gt.0.0_R4) then
+          do i = 0, nt
+            if (wt(i).lt.0.0_R4) wt(i) = small_R4_constant
+          end do
           call curved_d (rtt, wt, nt+1)
          endif
         enddo
@@ -398,10 +405,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 *   ..plot rtqa (with fix_recomb) as function of rtn for several rtt
        do ind = 0, nidis-1
         i = idis(ind)
-        zmax = maxval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
-        zmin = minval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
-        kmax = int(zmax)
-        kmin = int(zmin)-1
+        zmax = max(cutl4,maxval(rtlqa(i,0:nn,0:ns0-1)))/log(10.0_R8)
+        zmin = max(cutl4,minval(rtlqa(i,0:nn,0:ns0-1)))/log(10.0_R8)
+        kmax = max(klow+1,int(zmax))
+        kmin = max(klow,int(zmin)-1)
         kmin = max(kmin, kmax - 8)
         write (header,'(a,i2,a,1pe9.2)')
      &   'ENERGY LOSS RATE COEFS(recomb), Z0 =',izn0,', TE =',rtt(i)
@@ -414,7 +421,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
          enddo
          write (chk,'(i3)') k
 *$$$     call dashdc (chdc//chk, 10, 1)
-         if(real(maxval(wn(0:nn)),R4).gt.0) then
+         if(real(maxval(wn(0:nn)),R4).gt.0.0_R4) then
+          do j = 0, nn
+            if (wn(j).lt.0.0_R4) wn(j) = small_R4_constant
+          end do
           call curved_d (rtn, wn, nn+1)
          endif
         enddo
@@ -422,10 +432,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
        enddo
        do ind = 0, nidis-1
         i = idis(ind)
-        zmax = maxval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
-        zmin = minval(rtlqa(i,0:nn,0:ns0-1))/log(10.0_R8)
-        kmax = int(zmax)
-        kmin = int(zmin)-1
+        zmax = max(cutl4,maxval(rtlqa(i,0:nn,0:ns0-1)))/log(10.0_R8)
+        zmin = max(cutl4,minval(rtlqa(i,0:nn,0:ns0-1)))/log(10.0_R8)
+        kmax = max(klow+1,int(zmax))
+        kmin = max(klow,int(zmin)-1)
         kmin = max(kmin, kmax - 8)
         write (header,'(a,i2,a,1pe9.2)')
      &   'NEG(ENERGY LOSS RATE COEFS(recomb)), Z0 =',izn0,
@@ -439,7 +449,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
          enddo
          write (chk,'(i3)') k
 *$$$     call dashdc (chdc//chk, 10, 1)
-         if(real(maxval(wn(0:nn)),R4).gt.0) then
+         if(real(maxval(wn(0:nn)),R4).gt.0.0_R4) then
+          do j = 0, nn
+            if (wn(j).lt.0.0_R4) wn(j) = small_R4_constant
+          end do
           call curved_d (rtn, wn, nn+1)
          endif
         enddo
@@ -449,10 +462,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 *   ..plot rtqr as function of rtt for several rtn                    !mb 22.05.18
       do ind = 0, njdis-1
        j = jdis(ind)
-       zmax = maxval(rtlqr(0:nt,j,0:ns0-1))/log(10.0_R8)
-       zmin = minval(rtlqr(0:nt,j,0:ns0-1))/log(10.0_R8)
-       kmax = int(zmax)
-       kmin = int(zmin)-1
+       zmax = max(cutl4,maxval(rtlqr(0:nt,j,0:ns0-1)))/log(10.0_R8)
+       zmin = max(cutl4,minval(rtlqr(0:nt,j,0:ns0-1)))/log(10.0_R8)
+       kmax = max(klow+1,int(zmax))
+       kmin = max(klow,int(zmin)-1)
        kmin = max(kmin, kmax - 8)
        write (header,'(a,i2,a,1pe9.2)')
      &   'ENERGY LOSS RATE COEFS,       Z0 =',izn0,', NE =',rtn(j)
@@ -465,7 +478,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-        if(real(maxval(wt(0:nt)),R4).gt.0) then
+        if(real(maxval(wt(0:nt)),R4).gt.0.0_R4) then
           call curved_d (rtt, wt, nt+1)
         endif
        enddo
@@ -474,10 +487,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 *   ..plot rtqr as function of rtn for several rtt                    !mb 22.05.18
       do ind = 0, nidis-1
        i = idis(ind)
-       zmax = maxval(rtlqr(i,0:nn,0:ns0-1))/log(10.0_R8)
-       zmin = minval(rtlqr(i,0:nn,0:ns0-1))/log(10.0_R8)
-       kmax = int(zmax)
-       kmin = int(zmin)-1
+       zmax = max(cutl4,maxval(rtlqr(i,0:nn,0:ns0-1)))/log(10.0_R8)
+       zmin = max(cutl4,minval(rtlqr(i,0:nn,0:ns0-1)))/log(10.0_R8)
+       kmax = max(klow+1,int(zmax))
+       kmin = max(klow,int(zmin)-1)
        kmin = max(kmin, kmax - 8)
        write (header,'(a,i2,a,1pe9.2)')
      &   'ENERGY LOSS RATE COEFS,       Z0 =',izn0,', TE =',rtt(i)
@@ -490,7 +503,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-        if(real(maxval(wn(0:nn)),R4).gt.0) then
+        if(real(maxval(wn(0:nn)),R4).gt.0.0_R4) then
           call curved_d (rtn, wn, nn+1)
         endif
        enddo
@@ -499,10 +512,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 *   ..plot rtcx as function of rtt for several rtn
       do ind = 0, njdis-1
        j = jdis(ind)
-       zmax = maxval(rtlcx(0:nt,j,1:ns0-1))/log(10.0_R8)
-       zmin = minval(rtlcx(0:nt,j,1:ns0-1))/log(10.0_R8)
-       kmax = int(zmax)
-       kmin = int(zmin)-1
+       zmax = max(cutl4,maxval(rtlcx(0:nt,j,1:ns0-1)))/log(10.0_R8)
+       zmin = max(cutl4,minval(rtlcx(0:nt,j,1:ns0-1)))/log(10.0_R8)
+       kmax = max(klow+1,int(zmax))
+       kmin = max(klow,int(zmin)-1)
        kmin = max(kmin, kmax - 8)
        write (header,'(a,i2,a,1pe9.2)')
      &   'CX-RECOMBINATION RATE COEFS,  Z0 =',izn0,', NN =',rtn(j)
@@ -515,7 +528,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-        if(real(maxval(wt(0:nt)),R4).gt.0) then
+        if(real(maxval(wt(0:nt)),R4).gt.0.0_R4) then
          call curved_d (rtt, wt, nt+1)
         endif
        enddo
@@ -524,10 +537,10 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 *   ..plot rtcx as function of rtn for several rtt
       do ind = 0, nidis-1
        i = idis(ind)
-       zmax = maxval(rtlcx(i,0:nn,1:ns0-1))/log(10.0_R8)
-       zmin = minval(rtlcx(i,0:nn,1:ns0-1))/log(10.0_R8)
-       kmax = int(zmax)
-       kmin = int(zmin)-1
+       zmax = max(cutl4,maxval(rtlcx(i,0:nn,1:ns0-1)))/log(10.0_R8)
+       zmin = max(cutl4,minval(rtlcx(i,0:nn,1:ns0-1)))/log(10.0_R8)
+       kmax = max(klow+1,int(zmax))
+       kmin = max(klow,int(zmin)-1)
        kmin = max(kmin, kmax - 8)
        write (header,'(a,i2,a,1pe9.2)')
      &   'CX-RECOMBINATION RATE COEFS,  Z0 =',izn0,', TI =',rtt(i)
@@ -540,7 +553,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
         enddo
         write (chk,'(i3)') k
 *$$$    call dashdc (chdc//chk, 10, 1)
-        if(real(maxval(wn(0:nn)),R4).gt.0) then
+        if(real(maxval(wn(0:nn)),R4).gt.0.0_R4) then
          call curved_d (rtn, wn, nn+1)
         endif
        enddo
