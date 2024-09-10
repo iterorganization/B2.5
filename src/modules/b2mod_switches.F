@@ -427,7 +427,8 @@ c b2tqna
      *  na_alfa1, na_alfa2, na_alfa3, na_alfa4,
      *  te_alfa1, te_alfa2, te_alfa3, te_alfa4,
      *  ti_alfa1, ti_alfa2, ti_alfa3, ti_alfa4,
-     *  vsa_alfa1, vsa_alfa2, vsa_alfa3, vsa_alfa4
+     *  vsa_alfa1, vsa_alfa2, vsa_alfa3, vsa_alfa4,
+     *  vla_alfa1, vla_alfa2, vla_alfa3, vla_alfa4
       integer :: b2tqna_new_df0
       integer :: b2tqna_ixref
       integer :: b2tqna_transport_inputfile
@@ -1031,6 +1032,10 @@ c b2tqna
       s % vsa_alfa2 = 1.0_R8
       s % vsa_alfa3 = 1.0_R8
       s % vsa_alfa4 = 1.0_R8
+      s % vla_alfa1 = 1.0_R8
+      s % vla_alfa2 = 1.0_R8
+      s % vla_alfa3 = 1.0_R8
+      s % vla_alfa4 = 1.0_R8
 
 c fch_anomalous
       s % fch_anomalous = 1.0_R8
@@ -1681,6 +1686,19 @@ c b2tqna
      &      'faulty argument b2tqna_vsa_alfa3')
       call ipgetr ('b2tqna_vsa_alfa4', s%vsa_alfa4)
       call xertst (0.0_R8.le.s%vsa_alfa4,
+     &      'faulty argument b2tqna_vsa_alfa4')
+
+      call ipgetr ('b2tqna_vla_alfa1', s%vla_alfa1)
+      call xertst (0.lt.s%vla_alfa1,
+     &      'faulty argument b2tqna_vsa_alfa1')
+      call ipgetr ('b2tqna_vla_alfa2', s%vla_alfa2)
+      call xertst (0.lt.s%vla_alfa2,
+     &      'faulty argument b2tqna_vsa_alfa2')
+      call ipgetr ('b2tqna_vla_alfa3', s%vla_alfa3)
+      call xertst (0.lt.s%vla_alfa3,
+     &      'faulty argument b2tqna_vsa_alfa3')
+      call ipgetr ('b2tqna_vla_alfa4', s%vla_alfa4)
+      call xertst (0.lt.s%vla_alfa4,
      &      'faulty argument b2tqna_vsa_alfa4')
 
       call ipgetr ('b2tqna_delta1', s%bar_length)

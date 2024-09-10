@@ -504,7 +504,7 @@ c User transport options
         !! the default transport model calculated above is used. Nothing to do.
       elseif(switch%user_transport.eq.6) then                         !srv 13.06.08
         call set_transport_srv(geo,mpg,ns,nCv,switch,dna0,hcib,
-     &    vsa0, hce0)
+     &    vsa0, vla0, hce0)
       else
         call xerrab('transport model undefined or not yet converted')
       endif
@@ -723,7 +723,7 @@ cdpc
       end subroutine modify_tram_coefs
 
       subroutine set_transport_srv(geo,mpg,ns,nCv,switch,dna0,hcib,
-     & vsa0,hce0)
+     & vsa0,vla0,hce0)
 
       use b2mod_types
       use b2us_map
@@ -815,6 +815,9 @@ cdpc
               call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
      &          inner_sol_loc, switch%vsa_alfa1, switch%vsa_alfa2,
      &         switch%vsa_alfa3, switch%vsa_alfa4, iCv, vsa0(iCv,is))
+              call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
+     &          inner_sol_loc,switch%vla_alfa1, switch%vla_alfa2,
+     &         switch%vla_alfa3, switch%vla_alfa4, iCv, vla0(iCv,1,is))
             endif
         enddo
         call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
