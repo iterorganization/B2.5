@@ -10,13 +10,13 @@ NCARG_ROOT  ?= /lustre/home/afil/SOLPS-ITER/OBJECTCODE/NCARG
 NAGDIR      ?= /lustre/home/afil/SOLPS-ITER/OBJECTCODE/nag
 MDSPLUS_DIR ?= /usr/local/depot/mdsplus-6.1
 else
-NCDIR ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/NETCDF
-MSCL_ROOT ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/mscl
-H5DIR ?= ${HDF5_HOME}
-GR_ROOT ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/gr
-GLI_HOME ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/gks
-NCARG_ROOT ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/NCARG
-NAGDIR ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/nag
+NCDIR       ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/NETCDF
+MSCL_ROOT   ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/mscl
+H5DIR       ?= ${HDF5_HOME}
+GR_ROOT     ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/gr
+GLI_HOME    ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/gks
+NCARG_ROOT  ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/NCARG
+NAGDIR      ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/nag
 MDSPLUS_DIR ?= /common/SOLPS-ITER/OBJECTCODE/ifort64/MDSPLUS
 endif
 
@@ -35,60 +35,45 @@ CPP      = /lib/cpp -C -traditional -ffreestanding
 
 MPI_FC  ?= mpifort
 ifdef USE_MPI
-FC       = ${MPI_FC}
+ FC       = ${MPI_FC}
+ COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
+ ifeq (${COMPILER_TYPE},GNU)
+  COMPILER_REDEF = yes
+ endif
 else
-ifdef USE_IMPGYRO
-FC       = ${MPI_FC}
-else
-FC      ?= ifort
-endif
-endif
-
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
-
-ifdef SOLPS_DEBUG
-FCOPTS   = -g -C -debug all -traceback -check all -fPIC -assume no2underscore
-else
-FCOPTS   = -O2 -xHost -fPIC -assume no2underscore
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS  += -fp-model=precise
-endif
+ ifdef USE_IMPGYRO
+  FC       = ${MPI_FC}
+  COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
+  ifeq (${COMPILER_TYPE},GNU)
+   COMPILER_REDEF = yes
+  endif
+ endif
 endif
 
-ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS  += -qopenmp
-LDOPTS  += -qopenmp
-else
-FCOPTS  += -openmp
-LDOPTS  += -openmp
+ifndef COMPILER_REDEF
+ ifdef SOLPS_DEBUG
+  FCOPTS   = -g -C -debug all -traceback -check all -fPIC -assume no2underscore
+ else
+  FCOPTS   = -O2 -xHost -fPIC -assume no2underscore
+ endif
 endif
-endif
-
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
-LDOPTS  += -i_dynamic
-endif
-
-INCMOD   = -I
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 
 ifndef SOLPS_CPP
-DEFINES += -DITM
+ DEFINES += -DITM
 endif
 
 ifdef IMAS_VERSION
-  ifeq ($(shell `pkg-config --exists ggd`; echo $$?),0)
-    GGD_VERSION ?= `pkg-config ggd --modversion`
-  else
-    GGD_VERSION ?= '0.0.0'
-  endif
+ ifeq ($(shell `pkg-config --exists ggd`; echo $$?),0)
+  GGD_VERSION ?= `pkg-config ggd --modversion`
+ else
+  GGD_VERSION ?= '0.0.0'
+ endif
 else
-  ifdef ITM_ENVIRONMENT_LOADED
-    DEFINES += -DGOT_AMNSPROTO
-    INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_intel_17 -I${ITM_GGD_HOME}/include/amd64_intel_17 -I${UAL_INCLUDE}/amd64_ifort -I${ITM_ITMCONSTANTS_DIR}/include/amd64_intel_17 -I${ITM_ITMASSERT_DIR}/0.1/include/amd64_intel_17
-    IMASLIBS = ${LD_AL} -lUALFORTRANInterface_ifort
-  endif
+ ifdef ITM_ENVIRONMENT_LOADED
+  DEFINES += -DGOT_AMNSPROTO
+  INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_intel_17 -I${ITM_GGD_HOME}/include/amd64_intel_17 -I${UAL_INCLUDE}/amd64_ifort -I${ITM_ITMCONSTANTS_DIR}/include/amd64_intel_17 -I${ITM_ITMASSERT_DIR}/0.1/include/amd64_intel_17
+  IMASLIBS = ${LD_AL} -lUALFORTRANInterface_ifort
+ endif
 endif
 
 LD_AL += -lxml2 -lstdc++
