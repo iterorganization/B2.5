@@ -183,7 +183,10 @@
      *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)             !srv 13.01.17 05.07.17
       real (kind=R8) ::
      &  ua_inp(-1:nx,-1:ny,0:ns-1) !, smb_no_dt(-1:nx,-1:ny,0:3)       !srv 09.03.21
-      logical new_matrix, solvedum(0:NNREGMAX), main_lightest
+      logical solvedum(0:NNREGMAX), main_lightest
+#if ( !defined(_OPENMP) || defined(NO_OPENMP_B2NPMO) )
+      logical new_matrix
+#endif
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
       external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
@@ -469,7 +472,7 @@
 !$OMP& PRIVATE(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)
 !$OMP& PRIVATE(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)
 !$OMP& PRIVATE(smbvi, smbvtemp)
-!$OMP& PRIVATE(chns, wrks, new_matrix)
+!$OMP& PRIVATE(chns, wrks)
 !$OMP& FIRSTPRIVATE(lnlam) LASTPRIVATE(lnlam)
 !$OMP& LASTPRIVATE(kt_neo)
 !$OMP& SHARED(solvemt, solvemo)
@@ -806,14 +809,14 @@ cdjm Mar2019 output the total momentum flux and source for balance
        if (solving.and.any(solvemo(is,0:nnreg(0)))) then               !srv 06.07.10 22.05.18
          solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
 c    ..compare 5-pt stencil matrices
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+         call restart_ma28
+#else
          new_matrix = .false.
          do ireg = 0, nnreg(0)
           new_matrix = new_matrix.or.
      &     solvemo(is,ireg).neqv.last_solve_5(is,ireg)
          end do
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
-         call restart_ma28
-#else
          if (new_matrix.or.in_parallel()) call restart_ma28
 #endif
 *    ..compute correction
@@ -871,14 +874,14 @@ csw 21feb2014, execute simultaneous corrections always
 !      if (solving) then                                               !srv 22.05.18
 *   ..compute simultaneous correction
          call sfill (n2, 0.0_R8, wrk0, 1)
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+         call restart_ma28
+#else
          new_matrix = .false.
          do ireg = 0, nnreg(0)
            new_matrix = new_matrix.or.
      &      solvemt(ireg).neqv.last_solve_5(ns,ireg)
          end do
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
-         call restart_ma28
-#else
          if (new_matrix.or.in_parallel()) call restart_ma28
 #endif
          call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,       !srv 04.07.08
