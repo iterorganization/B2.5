@@ -175,16 +175,16 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16
               vntrc_fluid(:,0) = fnac(:,0,is0)/na_fluid(:,is0)  !! poloidal
               vntrc_fluid(:,1) = fnac(:,1,is0)/na_fluid(:,is0)  !! radial
               !! correct from poloidal to diamagnetic
-              pit = abs(geo%cvBb(:,0))/geo%cvBb(:,3)  !! pitch, b_theta / B
-              pit2 = abs(geo%cvBb(:,2))/geo%cvBb(:,3) !! b_phi / B
+              pit = dabs(geo%cvBb(:,0))/geo%cvBb(:,3)  !! pitch, b_theta / B
+              pit2 = dabs(geo%cvBb(:,2))/geo%cvBb(:,3) !! b_phi / B
               vntrc_fluid(:,0) =(vntrc_fluid(:,0)-pl%ua(:,is0)*pit)/pit2
 *        .. kinetic velocities
               if (switch%use_eirene.ne.0) then
                 vntrc_kin(:,0) = pfluxa(:,b2eatcr(is0),1)/na_kin(:,is0) !! poloidal
                 vntrc_kin(:,1) = rfluxa(:,b2eatcr(is0),1)/na_kin(:,is0) !! radial
               !! correct from poloidal to diamagnetic
-                pit = abs(geo%cvBb(:,0))/geo%cvBb(:,3)  !! pitch, b_theta / B
-                pit2 = abs(geo%cvBb(:,2))/geo%cvBb(:,3) !! b_phi / B
+                pit = dabs(geo%cvBb(:,0))/geo%cvBb(:,3)  !! pitch, b_theta / B
+                pit2 = dabs(geo%cvBb(:,2))/geo%cvBb(:,3) !! b_phi / B
                 vntrc_par = tfluxa(:,b2eatcr(is0),1)/na_kin(:,is0) !! approximate parallel velocity as toroidal velocity/b_phi
      &                       /pit2
                 vntrc_kin(:,0) = (vntrc_kin(:,0)-vntrc_par*pit)/pit2

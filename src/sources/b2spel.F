@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_b2cmrc
       use b2us_plasma
+      use b2mod_math
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -60,12 +61,8 @@
      *   rlte, rlne, fxte, fxne, t0, t1, tt
 *   ..procedures
       intrinsic min, max, log
-      real (kind=R8) ::
-     *   trimg
       external xertst
-      external b2xvsg, trimg
-*     (trimg will be used to trim the logarithmic gradients to avoid
-*     some pathetic behaviour near the underflow limit.)
+      external b2xvsg
 *   ..initialisation
 
 *-----------------------------------------------------------------------

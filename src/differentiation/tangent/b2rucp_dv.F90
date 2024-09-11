@@ -313,7 +313,8 @@ SUBROUTINE B2RUCP_NODIFF(nget, version, ns)
 !   ..read /b2cmpa/
   CALL B2RUZD_NODIFF(nget, version, ns, zamin, zamax, zn, am, .true.)
 !   ..read /b2cmpb/
-  CALL CFRUIN(nget, 8, idum, 'cbir,cbnr')
+  idum = 0
+  CALL CFRUIN_OPT(nget, 8, idum, 'cbir,cbnr')
   cbirso = idum(0)
   cbirno = idum(1)
   cbirwe = idum(2)
@@ -324,8 +325,17 @@ SUBROUTINE B2RUCP_NODIFF(nget, version, ns)
   cbnrea = idum(7)
   CALL XERTST(cbnrso + cbnrno + cbnrwe + cbnrea .LE. cbnrmx, &
 &       'faulty parameter cbnrmx')
+  cbrbrk = 0.0_R8
   arg1 = cbnrso + cbnrno + cbnrwe + cbnrea
-  CALL CFRURE(nget, arg1, cbrbrk, 'cbrbrk')
+  CALL CFRURE_OPT(nget, arg1, cbrbrk, 'cbrbrk')
+  cbsna = 0.0_R8
+  cbsmo = 0.0_R8
+  cbshi = 0.0_R8
+  cbshe = 0.0_R8
+  cbsch = 0.0_R8
+  cbrec = 0.0_R8
+  cbmsa = 0.0_R8
+  cbmsb = 0.0_R8
   DO ireg=0,cbnrso+cbnrno+cbnrwe+cbnrea-1
     arg1 = 8*ns
     CALL CFRURE(nget, arg1, cbsna(0, 0, ireg), 'cbsna')

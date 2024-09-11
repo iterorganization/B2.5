@@ -65,7 +65,7 @@ c      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 *   ..procedures
       external xertst, ipgeti, ipgetr
-      external b2xvsg, b2xvff, intface
+      external b2xvsg, intface
 *   ..initialisation
       scur(:,:) = 0.0_R8
 

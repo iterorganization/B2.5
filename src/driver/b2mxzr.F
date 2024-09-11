@@ -41,7 +41,6 @@
       integer is, iCv
 *   ..procedures
       external xertst, sfill
-      external b2xvfx
 
 *-----------------------------------------------------------------------
 *.computation

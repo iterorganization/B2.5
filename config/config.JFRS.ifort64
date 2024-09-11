@@ -3,7 +3,7 @@ MDSPLUS_DIR ?= /opt/mdsplus/7.96.12
 ifdef NCARG_ROOT
 LD_NCARG    ?= `pkg-config ncarg --libs`
 endif
-ifdef USE_MPI
+ifdef SOLPS_MPI
 LD_NETCDF   ?= `pkg-config pnetcdf --libs`
 else
 LD_NETCDF   ?= `pkg-config netcdf-fortran --libs`
@@ -17,9 +17,6 @@ CPP      = /lib/cpp -traditional -ffreestanding
 
 FC       = ftn
 
-INCMOD   = -I
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives
 ifndef SOLPS_DEBUG
@@ -27,24 +24,11 @@ FCOPTS  += -O2 -xHost
 else
 FCOPTS  += -O0 -g -C -traceback -fpe0 -debug all -check all
 endif
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FCOPTS  += ${MPI_CPP}
 endif
-ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS  += -qopenmp
-LDOPTS  += -qopenmp
-else
-FCOPTS  += -openmp
-LDOPTS  += -openmp
-endif
-endif
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
-FCOPTS  += -vec_report0
-LDOPTS  += -i_dynamic
-endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 LDLIBES += ${LD_MPI}
 endif
 

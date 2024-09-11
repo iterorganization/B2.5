@@ -26,8 +26,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2SQEL_DV(ncv, ns, ismain, switch, ev, te, ted, rt, rtd, rtw&
-& , rtwd, nbdirs)
+SUBROUTINE B2SQEL_DV(ncv, ns, ismain, switch, switchd, ev, te, ted, rt, &
+& rtd, rtw, rtwd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_B2CMPA_DIFFV
@@ -47,6 +47,7 @@ SUBROUTINE B2SQEL_DV(ncv, ns, ismain, switch, ev, te, ted, rt, rtd, rtw&
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   REAL(kind=r8) :: ev, te(ncv)
   REAL(kind=r8) :: ted(nbdirsmax, ncv)
   TYPE(B2RATES), INTENT(INOUT) :: rt
@@ -92,6 +93,7 @@ SUBROUTINE B2SQEL_DV(ncv, ns, ismain, switch, ev, te, ted, rt, rtd, rtw&
 !   ..procedures
   INTRINSIC LOG, MIN
   EXTERNAL XERTST
+  EXTERNAL B2XVSG
   INTRINSIC MAX
   INTRINSIC ABS
   REAL(kind=r8) :: y1
@@ -117,12 +119,12 @@ SUBROUTINE B2SQEL_DV(ncv, ns, ismain, switch, ev, te, ted, rt, rtd, rtw&
 !   ..subprogram start-up calls
   CALL SUBINI('b2sqel')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test ev
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')
 !   ..extensive tests on first few calls
-  IF (ncall_b2sqel .LT. 3) CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+  IF (ncall_b2sqel .LT. 3) CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   arg1(:) = te/ev
   DO nd=1,nbdirs
 !   ..compute wrk0()=log(te()/ev)
@@ -188,6 +190,9 @@ SUBROUTINE B2SQEL_DV(ncv, ns, ismain, switch, ev, te, ted, rt, rtd, rtw&
         END DO
         y1 = rt%rlza(icv, 0, is) + rt%rlza(icv, 1, is)*wrk0(icv)
       ELSE
+        DO nd=1,nbdirs
+          y1d(nd) = 0.D0
+        END DO
         y1 = zamax(is)
         DO nd=1,nbdirsmax
           y1d(nd) = 0.D0
@@ -359,6 +364,7 @@ SUBROUTINE B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw)
 !   ..procedures
   INTRINSIC LOG, MIN
   EXTERNAL XERTST
+  EXTERNAL B2XVSG
   INTRINSIC MAX
   INTRINSIC ABS
   REAL(kind=r8) :: y1
@@ -375,12 +381,12 @@ SUBROUTINE B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, te, rt, rtw)
 !   ..subprogram start-up calls
   CALL SUBINI('b2sqel')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test ev
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')
 !   ..extensive tests on first few calls
-  IF (ncall_b2sqel .LT. 3) CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+  IF (ncall_b2sqel .LT. 3) CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
 !   ..compute wrk0()=log(te()/ev)
   arg1(:) = te/ev
   wrk0 = LOG(arg1(:))

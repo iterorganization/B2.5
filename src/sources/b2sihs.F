@@ -13,6 +13,7 @@
       use b2mod_tallies
       use b2mod_sources
       use b2mod_b2cmpa
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only :
 #ifdef WG_TODO
@@ -21,6 +22,7 @@
      &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
 #endif
      &          balance_netcdf
+#endif
       use b2mod_transport_fun                                            !srv 05.07.17
       use b2mod_external                                                 !srv 05.07.17
       use b2mod_subsys
@@ -264,9 +266,11 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
       b2divue=0.0_R8
       b2sihs_divue=0.0_R8
 #ifdef WG_TODO
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         shetmp=she0
       endif
+#endif
 #endif
       do iy = -1, ny
        do ix = -1, nx
@@ -284,16 +288,20 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         endif
        enddo
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO        b2sihs_divue0to3=she0-shetmp
       endif
+#endif
 *   ..contribution from divergence(ua,va)
       b2divua=0.0_R8
       b2sihs_divua=0.0_R8
 #ifdef WG_TODO
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         shitmp=shi0
       endif
+#endif
 #endif
       do is = 0, ns-1
         do iy = -1, ny
@@ -314,18 +322,22 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
           enddo
         enddo
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO        b2sihs_divua0to3=shi0-shitmp
       endif
+#endif
 *   ..contribution from divergence of the electrical drift       !sv 02.06.99
       call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpov)
       call intfaceh(nx,ny,leftix,leftiy,vol,po,wpoh)
       b2exbe=0.0_R8
       b2sihs_exbe=0.0_R8
 #ifdef WG_TODO
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         shetmp=she0
       endif
+#endif
 #endif
       do iy = -1, ny
         do ix = -1, nx
@@ -348,16 +360,20 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
           endif
         enddo
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO        b2sihs_exbe0to3=she0-shetmp
       endif
+#endif
 *   ..contribution from divergence of the electrical drift    !sv 02.06.99
       b2exba=0.0_R8
       b2sihs_exba=0.0_R8
 #ifdef WG_TODO
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         shitmp=shi0
       endif
+#endif
 #endif
       do is = 0, ns-1
         if(.not.is_neutral(is)) then
@@ -380,16 +396,20 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
           enddo
         endif
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO        b2sihs_exba0to3=shi0-shitmp
       endif
+#endif
 *   ..contribution from viscous heating
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
 #ifdef WG_TODO
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         shitmp=shi0
       endif
+#endif
 #endif
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then
@@ -415,9 +435,11 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         enddo
        endif
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO        b2sihs_visa0to3=shi0-shitmp
       endif
+#endif
 
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
 *     in case of small impurity amount see below for b2sigp_style.ne.2
@@ -536,9 +558,11 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
        b2joule=0.0_R8
        b2sihs_joule=0.0_R8
 #ifdef WG_TODO
+#ifndef FIXED_POINT
        if (balance_netcdf.ne.0) then !djm Jan2017
         shetmp=she0
        endif
+#endif
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
@@ -564,17 +588,21 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
          endif
         enddo
        enddo
+#ifndef FIXED_POINT
        if (balance_netcdf.ne.0) then !djm Jan2017
          b2sihs_joule0to3=she0-shetmp
        endif
+#endif
 #endif
 *   ..contribution from atom-atom friction
        b2fraa=0.0_R8
        b2sihs_fraa=0.0_R8
 #ifdef WG_TODO
+#ifndef FIXED_POINT
        if (balance_netcdf.ne.0) then !djm Jan2017
         shitmp=shi0
        endif
+#endif
 #endif
 !      do isb = 0, ns-1
        do isb = nsmin, nsmax-1
@@ -613,9 +641,11 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
          endif
         enddo
        enddo
+#ifndef FIXED_POINT
        if (balance_netcdf.ne.0) then !djm Jan2017
  !WG_TODO        b2sihs_fraa0to3=shi0-shitmp
        endif
+#endif
       endif                                                              !srv 05.07.17
 
       b2str=0.0_R8
@@ -791,10 +821,12 @@ c
       use b2mod_geo_corner
       use b2mod_tallies
       use b2mod_b2cmpa
+#ifndef FIXED_POINT
       use b2mod_balance                                                  !djm Jan2017
      & , only : balance_netcdf
 #ifdef WG_TODO
      &        , b2sihs_diaa0to3, b2sihs_diae0to3
+#endif
 #endif
       use b2mod_subsys
       implicit none
@@ -856,9 +888,11 @@ c
       if(maxval(facdrift).ne.0.0_R8 .and. facgt.ne.0.0_R8) then
         b2wrong2=0.0_R8
 #ifdef WG_TODO
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then !djm Jan2017
           shitmp=shi
         endif
+#endif
 #endif
         do is=0,ns-1
           if(.not.is_neutral(is)) then
@@ -919,14 +953,18 @@ c
             enddo
           endif
         enddo
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO          b2sihs_diaa0to3=shi-shitmp
         endif
+#endif
         b2wrong3=0.0_R8
 #ifdef WG_TODO
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then !djm Jan2017
           shetmp=she
         endif
+#endif
 #endif
         do iy=-1,ny
           do ix=-1,nx
@@ -976,9 +1014,11 @@ c
             endif
           enddo
         enddo
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then !djm Jan2017
  !WG_TODO         b2sihs_diae0to3=she-shetmp
         endif
+#endif
       endif
 
 * ..return

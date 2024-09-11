@@ -13,7 +13,7 @@
 *     to correctly set and pass the input perturbation to tangent AD
 *     coming from the optimization routines
 *-----------------------------------------------------------------------
-      integer :: idir, ii, ip, isigma
+      integer :: idir, ii, ip, ipar
       character*3 ss1
       character*3 ss2
       character*70 key
@@ -58,7 +58,7 @@
       switchdiff%b2tfhi_fkt_hie = 0.0_R8
       switchdiff%b2tfhe_vis_kt = 0.0_R8
       idir = 1 !this indicates the different directions of multidirectional derivative mode
-      do ip = 1, nnvar - nsigma_opt
+      do ip = 1, nnvar - nsigma_opt - nmean_opt ! not subtracting nshift_opt and ncorr_opt because they are not part of nnvar!
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
           select case (partype(ip))
@@ -90,7 +90,7 @@
               write(ss1,"(I3)") paris(ip)
               write (key, *) "parm_alf, species ", ss1
             case default
-              write(*,*) partype(ip)
+              write(*,*) 'partype = ',partype(ip)
               call xerrab ('partype not compatible with spatial points')
           end select
           do ii = 1, spatial_points(ip)
@@ -118,7 +118,7 @@
             parm_hced(idir) = 1.0_R8
             write(ss1,"(I3)") paris(ip)
             write (key, *) "parm_hce, species ", ss1
-          case (5)
+          case (6)
             parm_vlad(idir,paris(ip)) = 1.0_R8
             write(ss1,"(I3)") paris(ip)
             write (key, *) "parm_vla, species ", ss1
@@ -239,7 +239,7 @@
             switchdiff%b2tfhe_vis_kt(idir) = 1.0_R8
             write (key, *) "b2tfhe_vis_kt"
           case default
-            write(*,*) partype(ip)
+            write(*,*) 'partype = ',partype(ip)
             call xerrab ('partype out of bounds')
           end select
           write (*,*) '  Calculating gradient of',trim(key)
@@ -247,20 +247,83 @@
         endif
       end do
 
+      ipar = nnvar - nmean_opt - nsigma_opt ! not subtracting nshift_opt and ncorr_opt because they are not part of nnvar!
+
       if (nsigma_opt.gt.0) then
         sigmad = 0.0_R8
-        isigma = npar_opt - nsigma_opt + 1
         do ip = 1, nsigma
 !         only if sigma is being optimized!
           if (sigma_opt(ip)) then
-            sigmad(isigma,ip) = 1.0_R8
-            isigma = isigma + 1
+            ipar = ipar + 1
+            if (.not. (partype(ipar).eq.0)) then
+              write(*,*) ' ipar, partype(ipar) = ', ipar, partype(ipar)
+              write(*,*) ' this was supposed to be a sigma, partype = 0'
+              write(ss1,"(I3)") ip
+              write(ss2,"(I3)") ipar
+              call xerrab('set_tgt_perturbation: inconsistency '//
+     &         'between sigma '//trim(ss1)//'and partype '//trim(ss2))
+            endif
+            sigmad(idir,ip) = 1.0_R8
+            idir = idir + 1
             write(ss2,"(I3)") ip
             write (key, *) "sigma",ss2
             write (*,*) '  Calculating gradient of',trim(key)
           endif
         end do
       endif
+
+      if (nmean_opt.gt.0) then
+        meand = 0.0_R8
+        do ip = 1, nmean
+!         only if mean is being optimized!
+          if (mean_opt(ip)) then
+            ipar = ipar + 1
+            if (.not. (partype(ipar).eq.-1)) then
+              write(*,*) ' ipar, partype(ipar) = ', ipar, partype(ipar)
+              write(*,*) ' this was supposed to be a mean, partype = -1'
+              write(ss1,"(I3)") ip
+              write(ss2,"(I3)") ipar
+              call xerrab('set_tgt_perturbation: inconsistency '//
+     &         'between mean '//trim(ss1)//'and partype '//trim(ss2))
+            endif
+            meand(idir,ip) = 1.0_R8
+            idir = idir + 1
+            write(ss2,"(I3)") ip
+            write (key, *) "mean",ss2
+            write (*,*) '  Calculating gradient of',trim(key)
+          endif
+        end do
+      endif
+
+      if (nshift_opt.gt.0) then
+        shiftd = 0.0_R8
+        do ip = 1, nshift
+!         only if shift is being optimized!
+          if (shiftopt(ip)) then
+            shiftd(idir,ip) = 1.0_R8
+            idir = idir + 1
+            write(ss2,"(I3)") ip
+            write (key, *) "shift",ss2
+            write (*,*) '  Calculating gradient of',trim(key)
+          endif
+        end do
+      endif
+
+      ! corr_length is one for each cost function
+      if (ncorr_opt.gt.0) then
+        corr_lengthd = 0.0_R8
+        do ip = 1, ncf
+!         only if corr is being optimized!
+          if (corr_opt(ip)) then
+            corr_lengthd(idir,ip) = 1.0_R8
+            idir = idir + 1
+            write(ss2,"(I3)") ip
+            write (key, *) "corr_length",ss2
+            write (*,*) '  Calculating gradient of',trim(key)
+          endif
+        end do
+      endif
+
       par_opt_physd = 0.0_R8
       do ip = 1, npar_opt
         par_opt_physd(ip,ip) = 1.0_R8

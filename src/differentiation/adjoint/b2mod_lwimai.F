@@ -1,5 +1,6 @@
       module b2mod_lwimai
       use b2mod_types
+      use b2mod_stack
       implicit none
       private
       public :: lwiset, lwiget, lwimax
@@ -7,7 +8,7 @@
 *     ------------------------------------------------------------------
 *     LWIMAI is a group of routines (entry points in lwimai) that
 *     maintain a base address for free space in the workspace area
-*     stackw%wi. The subroutines are lwiset, lwiget, and lwimax.
+*     b2mod_stack%wi. The subroutines are lwiset, lwiget, and lwimax.
 *     LWISET frees workspace by resetting the base address.
 *     LWIGET reserves workspace by incrementing the base address.
 *     LWIMAX returns the maximum workspace use.
@@ -23,7 +24,6 @@
       implicit none
       integer, intent(in) :: lwi0
       external prvrti, b25_mpi_stop
-#     include "stackw.h"
 *     (revert base address to lwi0)
       if (lwi0.lt.0.or.lwrki.lt.lwi0) then
         write (0,*) 'lwiset--faulty argument lwi0'
@@ -41,7 +41,6 @@
       integer, intent(out) :: lwi1
       intrinsic max
       external b25_mpi_stop
-#     include "stackw.h"
       if (nwi.lt.0) then
         write (0,*) 'lwiget--faulty argument nwi'
         call b25_mpi_stop
@@ -50,7 +49,7 @@
       lwrki = lwrki+nwi
       lwrkimx = max(lwrki,lwrkimx)
       if (nstcwi.lt.lwrki) then
-        write (0,*) 'lwiget--insufficient workspace stackw%wi(0:*)'
+        write (0,*) 'lwiget--insufficient workspace b2mod_stack%wi(0:*)'
         call b25_mpi_stop
       end if
       return

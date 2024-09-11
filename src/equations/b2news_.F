@@ -22,10 +22,11 @@
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
-     &          rsamoreg
+     &          rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue,
+     &          b2divua, b2exbe
       use b2mod_eirdiag
      & , only : tmb2, dib2, tab2, tib2, pefluxa, rfluxa, pfluxa,
-     &          dmb2, lkindp, lkindm, lkindi, refluxa, dab2
+     &          dmb2, lkindp, lkindm, lkindi, refluxa, dab2, tfluxa
       use b2mod_transport_namelist
      & , only : parm_hce, parm_hci, parm_dna, parm_dpa, parm_vla,
      &          parm_vsa, parm_alf, parm_sig
@@ -36,7 +37,11 @@
      & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar,
      &          lfeedback
       use b2mod_neutrals_namelist
-     & , only : maxw_eff, nstraid, userfluxparm
+     & , only : maxw_eff, nstraid, userfluxparm, b2recyc, arcend,
+     &          targsp, b2species_start, b2species_end, lstrascl, lsns,
+     &          msns, gpfc, nstrai, nstrat, debug_flags, neutrals_count,
+     &          neutrals_time_mod, neutrals_time_switch, neut_scl_lim,
+     &          natmid, ntrack
       use b2mod_b2cmpt
      & , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna,
      &          cfhce, cfhci
@@ -51,6 +56,8 @@
      &          feedback_namelist_used
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+      use b2mod_wall
+     & , only : track_species
 #endif
       use b2mod_ad
       use b2mod_subsys

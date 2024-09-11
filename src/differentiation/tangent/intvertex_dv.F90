@@ -22,6 +22,7 @@ SUBROUTINE INTVERTEX1_NODIFF(ncv, nvx, nz, mpg, vxvol, centre, vertex)
   REAL(kind=r8) :: vxvol(mpg%nvmxcv), centre(ncv, 0:nz), vertex(nvx, 0:&
 & nz)
   INTEGER :: is
+  EXTERNAL INTVERTEX_NODIFF
   DO is=0,nz
     CALL INTVERTEX_NODIFF(ncv, nvx, mpg, vxvol, centre(1, is), vertex(1&
 &                   , is))

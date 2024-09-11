@@ -13,27 +13,29 @@ GLI_HOME    ?= ${IRISLIB}/gli/src
 
 CPP      = /lib/cpp -traditional
 
-ifdef USE_MPI
-FC       = mpif90
+MPI_FC  ?= mpif90
+ifdef SOLPS_MPI
+ FC       = ${MPI_FC}
+ COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
+ ifeq (${COMPILER_TYPE},GNU)
+  COMPILER_REDEF = yes
+ endif
 else
-ifdef USE_IMPGYRO
-FC       = mpif90
-else
-FC       = ifort
-endif
+ ifdef USE_IMPGYRO
+  FC       = ${MPI_FC}
+  COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
+  ifeq (${COMPILER_TYPE},GNU)
+   COMPILER_REDEF = yes
+  endif
+ endif
 endif
 
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-INCMOD   = -I
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
-ifdef SOLPS_DEBUG
-FCOPTS   = -g -C -debug all -traceback -check all
-else
-FCOPTS   = -O2 -xHost
-endif
-ifdef USE_OPENMP
-FCOPTS  += -qopenmp
-LDOPTS  += -qopenmp
+ifndef COMPILER_REDEF
+ ifdef SOLPS_DEBUG
+  FCOPTS   = -g -C -debug all -traceback -check all
+ else
+  FCOPTS   = -O2 -xHost
+ endif
 endif
 
 

@@ -124,13 +124,13 @@ c-----------------------------------------------------------------------
       use b2mod_geo_diffv
       use b2mod_rates
       use b2mod_plasma_diffv
-      use b2mod_indirect
+      use b2mod_indirect_diffv
       use b2mod_constants
       use b2mod_neutrals_namelist_diffv
       use b2mod_numerics_namelist_diffv
       use b2mod_external_diffv
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
 
       implicit none

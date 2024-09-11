@@ -16,6 +16,7 @@ MODULE B2MOD_WALL_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_LAYER_DIFFV
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -26,37 +27,6 @@ MODULE B2MOD_WALL_DIFFV
   PARAMETER (ndepth=201, nline=15)
 !xpb  Namelist data
   INTEGER, SAVE :: nbnd, ndepth_nml
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
   INTEGER, SAVE :: imapx(nwall), imapy(nwall)
   INTEGER, SAVE :: plate_model, plate_option
   LOGICAL :: inertial_cooling(nwall)
@@ -67,19 +37,22 @@ MODULE B2MOD_WALL_DIFFV
 & plate_time_factor(nwall), coating_thickness(nwall), deposition(nwall, &
 & ntrack), monolayer_deposition(nwall, ntrack), erosion(nwall, ntrack), &
 & monolayer_erosion(nwall, ntrack), plate_time(nwall), plate_area(nwall)&
-& , chemical_sputtering(nwall, 0:42-1+6+3+3), physical_sputtering(nwall&
-& , 0:42-1+6+3+3), physical_sputtering_energy(nwall, 0:42-1+6+3+3), &
-& res_sputtering(nwall, 0:42-1+6+3+3), thermal_evaporation(nwall, 0:42-1&
-& +6+3+3), backscattering(nwall, 0:42-1+6+3+3), backscattering_energy(&
-& nwall, 0:42-1+6+3+3)
+& , chemical_sputtering(nwall, 0:def_nsd-1+def_natm+def_nmol+def_nion), &
+& physical_sputtering(nwall, 0:def_nsd-1+def_natm+def_nmol+def_nion), &
+& physical_sputtering_energy(nwall, 0:def_nsd-1+def_natm+def_nmol+&
+& def_nion), res_sputtering(nwall, 0:def_nsd-1+def_natm+def_nmol+&
+& def_nion), thermal_evaporation(nwall, 0:def_nsd-1+def_natm+def_nmol+&
+& def_nion), backscattering(nwall, 0:def_nsd-1+def_natm+def_nmol+&
+& def_nion), backscattering_energy(nwall, 0:def_nsd-1+def_natm+def_nmol+&
+& def_nion)
 !
   CHARACTER(len=6), SAVE :: surface_material_name(nwall)
   CHARACTER(len=6), SAVE :: coating_material_name(nwall)
   CHARACTER(len=6), SAVE :: bulk_material_name(nwall)
 !
-  INTEGER :: xymap(-1:200, -1:100)
+  INTEGER :: xymap(-1:def_nxd, -1:def_nyd)
 !
-  INTEGER, SAVE :: track_index(0:42-1)
+  INTEGER, SAVE :: track_index(0:def_nsd-1)
 !
   INTEGER, ALLOCATABLE, SAVE :: imapw(:), imapreg(:), wall_begin(:), &
 & wall_end(:)
@@ -128,6 +101,7 @@ MODULE B2MOD_WALL_DIFFV
   CHARACTER(len=2), SAVE :: track_species_save(ntrack)
   LOGICAL, SAVE :: track_chem_sput(ntrack)
 !
+  REAL(kind=r8) :: layer_nrelconstituents(nwall, 6+ntrack)
   REAL(kind=r8), ALLOCATABLE :: r1(:), r2(:), z1(:), z2(:)
 !
   NAMELIST /wall_save/ ndepth_nml, track_species, imapx, imapy, xymap, &
@@ -137,9 +111,9 @@ MODULE B2MOD_WALL_DIFFV
 &     physical_sputtering_energy, res_sputtering, thermal_evaporation, &
 &     backscattering, backscattering_energy, plate_time, plate_area, &
 &     monolayer_deposition, monolayer_erosion, layer_nconstituents, &
-&     layer_nzconstituents, layer_nrelconstituents, &
-&     layer_thermal_contact, coating_thickness, coating_material_name, &
-&     layer_alloys, inertial_cooling
+&     layer_nzconstituents, layer_relconstituents, &
+&     layer_nrelconstituents, layer_thermal_contact, coating_thickness, &
+&     coating_material_name, layer_alloys, inertial_cooling
 !
 !xpb Mapping arrays:
 !xpb A wall element numbered iwall can be found in the B2 grid at the position
@@ -167,12 +141,12 @@ CONTAINS
     CALL SUBINI('b2mod_wall_init')
 !xpb  Geometric information
     errdim = .false.
-    IF (nx .GT. 200) THEN
-      WRITE(*, *) 'alloc_b2mod_wall_init: nxd > def_nxd', nx, 200
+    IF (nx .GT. def_nxd) THEN
+      WRITE(*, *) 'alloc_b2mod_wall_init: nxd > def_nxd', nx, def_nxd
       errdim = .true.
     END IF
-    IF (ny .GT. 100) THEN
-      WRITE(*, *) 'alloc_b2mod_wall_init: nyd > def_nyd', ny, 100
+    IF (ny .GT. def_nyd) THEN
+      WRITE(*, *) 'alloc_b2mod_wall_init: nyd > def_nyd', ny, def_nyd
       errdim = .true.
     END IF
     CALL XERTST(.NOT.errdim, 'faulty def_nxd, def_nyd')
@@ -288,6 +262,7 @@ CONTAINS
     target_temp = 0.0_R8
     plate_time = 0.0_R8
     layer_thermal_contact = 1.0_R8
+    layer_nrelconstituents = 0.0_R8
 !
     CALL SUBEND()
     RETURN
@@ -412,6 +387,16 @@ CONTAINS
       OPEN(nread, file=trim(filename)) 
       WRITE(*, *) 'Reading ', TRIM(filename)
       READ(nread, wall_save) 
+!xpb For backward compatibility, NRELCONSTITUENTS --> RELCONSTITUENTS
+      result1 = MAXVAL(layer_nrelconstituents)
+      IF (result1 .GT. 0.0_R8) THEN
+        result1 = MAXVAL(layer_relconstituents)
+        IF (result1 .GT. 0.0_R8) THEN
+          layer_nrelconstituents = 0.0_R8
+        ELSE
+          layer_relconstituents = layer_nrelconstituents
+        END IF
+      END IF
       WRITE(*, *) 'Read ', TRIM(filename)
       CLOSE(nread) 
     ELSE
@@ -715,7 +700,7 @@ CONTAINS
 &           matsurf_nzconstituents(ibnd, j)
           IF (.NOT.found) j = j + 1
         END DO
-        IF (found) todo = todo .OR. layer_nrelconstituents(ibnd, i) .NE.&
+        IF (found) todo = todo .OR. layer_relconstituents(ibnd, i) .NE. &
 &           matsurf_relconstituents(ibnd, j)
       END DO
       IF (todo) THEN
@@ -726,8 +711,8 @@ CONTAINS
 &         'LAYER_NZCONSTITUENTS(', ibnd, ',', i, ')=  ', &
 &         layer_nzconstituents(ibnd, i), ','
           WRITE(nwrite, '(a23,i4,a1,i2,a2,1es15.8,a1)') &
-&         'LAYER_NRELCONSTITUENTS(', ibnd, ',', i, ')=', &
-&         layer_nrelconstituents(ibnd, i), ','
+&         'LAYER_RELCONSTITUENTS(', ibnd, ',', i, ')=', &
+&         layer_relconstituents(ibnd, i), ','
         END DO
       END IF
       DO itrack=1,ntargsp
@@ -1219,6 +1204,11 @@ CONTAINS
     INTEGER :: nf_float
     INTEGER :: nf_real
     INTEGER :: nf_double
+    INTEGER :: nf_ubyte
+    INTEGER :: nf_ushort
+    INTEGER :: nf_uint
+    INTEGER :: nf_int64
+    INTEGER :: nf_uint64
     PARAMETER (nf_byte=1)
 !
     PARAMETER (nf_int1=nf_byte)
@@ -1229,6 +1219,11 @@ CONTAINS
     PARAMETER (nf_float=5)
     PARAMETER (nf_real=nf_float)
     PARAMETER (nf_double=6)
+    PARAMETER (nf_ubyte=7)
+    PARAMETER (nf_ushort=8)
+    PARAMETER (nf_uint=9)
+    PARAMETER (nf_int64=10)
+    PARAMETER (nf_uint64=11)
 !
 !
 ! default fill values:
@@ -1265,10 +1260,15 @@ CONTAINS
     INTEGER :: nf_lock
     INTEGER :: nf_share
     INTEGER :: nf_64bit_offset
+    INTEGER :: nf_64bit_data
+    INTEGER :: nf_cdf5
     INTEGER :: nf_sizehint_default
     INTEGER :: nf_align_chunk
     INTEGER :: nf_format_classic
     INTEGER :: nf_format_64bit
+    INTEGER :: nf_format_64bit_offset
+    INTEGER :: nf_format_64bit_data
+    INTEGER :: nf_format_cdf5
     INTEGER :: nf_diskless
     INTEGER :: nf_mmap
     PARAMETER (nf_nowrite=0)
@@ -1281,10 +1281,15 @@ CONTAINS
     PARAMETER (nf_lock=1024)
     PARAMETER (nf_share=2048)
     PARAMETER (nf_64bit_offset=512)
+    PARAMETER (nf_64bit_data=32)
+    PARAMETER (nf_cdf5=nf_64bit_data)
     PARAMETER (nf_sizehint_default=0)
     PARAMETER (nf_align_chunk=-1)
     PARAMETER (nf_format_classic=1)
     PARAMETER (nf_format_64bit=2)
+    PARAMETER (nf_format_64bit_offset=nf_format_64bit)
+    PARAMETER (nf_format_64bit_data=5)
+    PARAMETER (nf_format_cdf5=nf_format_64bit_data)
     PARAMETER (nf_diskless=8)
     PARAMETER (nf_mmap=16)
 !
@@ -1717,6 +1722,22 @@ CONTAINS
     EXTERNAL NF_GET_ATT_INT
 !
     INTEGER :: NF_GET_ATT_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          nf_int8_t           i8vals(1))
+    EXTERNAL NF_PUT_ATT_INT64
+!
+    INTEGER :: NF_PUT_ATT_INT64
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          nf_int8_t           i8vals(1))
+    EXTERNAL NF_GET_ATT_INT64
+!
+    INTEGER :: NF_GET_ATT_INT64
 !                         (integer             ncid,
 !                          integer             varid,
 !                          character(*)        name,
@@ -2320,6 +2341,28 @@ CONTAINS
     EXTERNAL NF_GET_VARM_DOUBLE
 !
     INTEGER :: NF_GET_VARM_DOUBLE
+    EXTERNAL NF_PUT_VAR1_INT64
+!
+!     64-bit int functions.
+    INTEGER :: NF_PUT_VAR1_INT64
+    EXTERNAL NF_PUT_VARA_INT64
+    INTEGER :: NF_PUT_VARA_INT64
+    EXTERNAL NF_PUT_VARS_INT64
+    INTEGER :: NF_PUT_VARS_INT64
+    EXTERNAL NF_PUT_VARM_INT64
+    INTEGER :: NF_PUT_VARM_INT64
+    EXTERNAL NF_PUT_VAR_INT64
+    INTEGER :: NF_PUT_VAR_INT64
+    EXTERNAL NF_GET_VAR1_INT64
+    INTEGER :: NF_GET_VAR1_INT64
+    EXTERNAL NF_GET_VARA_INT64
+    INTEGER :: NF_GET_VARA_INT64
+    EXTERNAL NF_GET_VARS_INT64
+    INTEGER :: NF_GET_VARS_INT64
+    EXTERNAL NF_GET_VARM_INT64
+    INTEGER :: NF_GET_VARM_INT64
+    EXTERNAL NF_GET_VAR_INT64
+    INTEGER :: NF_GET_VAR_INT64
 !
 !
 !     NetCDF-4.
@@ -2331,23 +2374,13 @@ CONTAINS
 !     $Id: netcdf4.inc,v 1.28 2010/05/25 13:53:02 ed Exp $
 !
 !     New netCDF-4 types.
-    INTEGER :: nf_ubyte
-    INTEGER :: nf_ushort
-    INTEGER :: nf_uint
-    INTEGER :: nf_int64
-    INTEGER :: nf_uint64
     INTEGER :: nf_string
     INTEGER :: nf_vlen
     INTEGER :: nf_opaque
     INTEGER :: nf_enum
     INTEGER :: nf_compound
-    PARAMETER (nf_ubyte=7)
-!
-    PARAMETER (nf_ushort=8)
-    PARAMETER (nf_uint=9)
-    PARAMETER (nf_int64=10)
-    PARAMETER (nf_uint64=11)
     PARAMETER (nf_string=12)
+!
     PARAMETER (nf_vlen=13)
     PARAMETER (nf_opaque=14)
     PARAMETER (nf_enum=15)
@@ -2394,6 +2427,8 @@ CONTAINS
     PARAMETER (nf_chunked=0)
     INTEGER :: nf_contiguous
     PARAMETER (nf_contiguous=1)
+    INTEGER :: nf_compact
+    PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
     INTEGER :: nf_nochecksum
@@ -2562,6 +2597,12 @@ CONTAINS
     EXTERNAL NF_INQ_VAR_DEFLATE
 !
     INTEGER :: NF_INQ_VAR_DEFLATE
+    EXTERNAL NF_DEF_VAR_SZIP
+!
+    INTEGER :: NF_DEF_VAR_SZIP
+    EXTERNAL NF_INQ_VAR_SZIP
+!
+    INTEGER :: NF_INQ_VAR_SZIP
     EXTERNAL NF_DEF_VAR_FLETCHER32
 !
     INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -2586,6 +2627,12 @@ CONTAINS
     EXTERNAL NF_INQ_VAR_ENDIAN
 !
     INTEGER :: NF_INQ_VAR_ENDIAN
+    EXTERNAL NF_DEF_VAR_FILTER
+!
+    INTEGER :: NF_DEF_VAR_FILTER
+    EXTERNAL NF_INQ_VAR_FILTER
+!
+    INTEGER :: NF_INQ_VAR_FILTER
     EXTERNAL NF_INQ_TYPEIDS
 !
 !     User defined types.
@@ -2701,28 +2748,6 @@ CONTAINS
     INTEGER :: NF_GET_VARA
     EXTERNAL NF_GET_VARS
     INTEGER :: NF_GET_VARS
-    EXTERNAL NF_PUT_VAR1_INT64
-!
-!     64-bit int functions.
-    INTEGER :: NF_PUT_VAR1_INT64
-    EXTERNAL NF_PUT_VARA_INT64
-    INTEGER :: NF_PUT_VARA_INT64
-    EXTERNAL NF_PUT_VARS_INT64
-    INTEGER :: NF_PUT_VARS_INT64
-    EXTERNAL NF_PUT_VARM_INT64
-    INTEGER :: NF_PUT_VARM_INT64
-    EXTERNAL NF_PUT_VAR_INT64
-    INTEGER :: NF_PUT_VAR_INT64
-    EXTERNAL NF_GET_VAR1_INT64
-    INTEGER :: NF_GET_VAR1_INT64
-    EXTERNAL NF_GET_VARA_INT64
-    INTEGER :: NF_GET_VARA_INT64
-    EXTERNAL NF_GET_VARS_INT64
-    INTEGER :: NF_GET_VARS_INT64
-    EXTERNAL NF_GET_VARM_INT64
-    INTEGER :: NF_GET_VARM_INT64
-    EXTERNAL NF_GET_VAR_INT64
-    INTEGER :: NF_GET_VAR_INT64
     EXTERNAL NF_GET_VLEN_ELEMENT
 !
 !     For helping F77 users with VLENs.
@@ -2968,6 +2993,10 @@ CONTAINS
     PARAMETER (fillong=-2147483647)
     PARAMETER (filfloat=9.9692099683868690e+36)
     PARAMETER (fildoub=9.9692099683868690e+36)
+    EXTERNAL NF_SET_LOG_LEVEL
+!
+!     This is to turn on netCDF internal logging.
+    INTEGER :: NF_SET_LOG_LEVEL
     INTEGER :: status, nwallid, ntrackid, ntwoid, tid
     INTEGER :: vdims(3)
     EXTERNAL CHECK_CDF_STATUS

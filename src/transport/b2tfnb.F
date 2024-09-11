@@ -12,9 +12,11 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance                                                 !djm Jan2017
      & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
      &          fna_ch, fna_pschused, balance_netcdf
+#endif
       use b2mod_ad
      & , only : ncall_b2tfnb
 #ifndef NAGFOR
@@ -92,7 +94,7 @@ c The following switches are only used in 'WG_TODO' blocks, i.e. not yet convert
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 *   ..procedures
       external xertst, ipgeti, ipgetr                                    !xpb
-      external b2xvsg, b2xvff, intface, diff
+      external b2xvsg, intface, diff
       intrinsic abs, max, sqrt, sign
 *   ..initialisation
 
@@ -772,7 +774,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
           endif
         endif
       endif                                                             !srv 05.03.16 }
-
+#ifndef FIXED_POINT
 * ..compute variables for balance.nc
       if (balance.and.(balance_netcdf.ne.0)) then    !nh 08.01.24
         dumm1 = 0.0_R8
@@ -822,7 +824,7 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
      &    flo_mdf, co%cdna(:,:,isb), dumm2, dumm3, fna_nanom(:,:,isb))
         fna_panom(:,:,isb) = -co%cdpa(:,:,isb)*dpb(:,:)
       endif
-
+#endif
 
       if (switch%iout_b2wdat .eq. 4) then
        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2tfnb_fnb_th'//chns)
