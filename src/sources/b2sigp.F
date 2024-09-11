@@ -251,7 +251,7 @@
           wrk6  = 0.0_R8
 *   ..  compute smbgp
           do iCv = 1, mpg%nCi
-           t0=geo%cvHz(iCv)*geo%cvVol(iCv)*
+           t0=switch%b2sigp_phm0*geo%cvHz(iCv)*geo%cvVol(iCv)*
      &        geo%cvBb(iCv,0)/geo%cvBb(iCv,3) !srv 18.10.02 10.06.05
            wrk5(iCv) = -t0*wrk0(iCv)
            wrk6(iCv) = -t0*rzb(iCv)*(nb(iCv)/ne(iCv))*wrk1(iCv)
@@ -264,8 +264,8 @@ cdjm compute b2sigp_pstat0to3 on cell face
             b2sigp_pstati0to3 = 0.0_R8
             b2sigp_pstate0to3 = 0.0_R8
             do iFc = 1, nFc
-              t0 = geo%fcHz(iFc)*geo%fcS(iFc)*geo%fcBb(iFc,0)/
-     &         geo%fcBb(iFc,3)*geo%fcQalf(iFc,0)
+              t0 = switch%b2sigp_phm0*geo%fcHz(iFc)*geo%fcS(iFc)*
+     &         geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*geo%fcQalf(iFc,0)
               b2sigp_pstat0to3(iFc,0,isb) = t0*(nbf(iFc)*tbf(iFc)+
      &         rzbf(iFc)*nbf(iFc)*tef(iFc))
               b2sigp_pstati0to3(iFc,0,isb) = t0*nbf(iFc)*tbf(iFc)
@@ -286,10 +286,11 @@ cdjm compute b2sigp_pstat0to3 on cell face
           call gradc_p(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, wrk1)
 *   ..  compute smbgp
           do iCv = 1, mpg%nCi
-            t0=geo%cvHz(iCv)*geo%cvVol(iCv)*
+            t0=switch%b2sigp_phm0*geo%cvHz(iCv)*geo%cvVol(iCv)*
      &         geo%cvBb(iCv,0)/geo%cvBb(iCv,3)
             wrk5(iCv) = -t0*wrk0(iCv)
-            wrk6(iCv) = -t0*qe*rzb(iCv)*nb(iCv)*wrk1(iCv)
+            wrk6(iCv) = -t0*qe*rzb(iCv)*nb(iCv)*
+     &                   wrk1(iCv)
             smbgp(iCv,0) = wrk5(iCv) + wrk6(iCv)
           enddo                                                         !srv 23.03.10 }
 #ifndef FIXED_POINT
@@ -297,7 +298,7 @@ cdjm compute b2sigp_pstat0to3 on cell face
           if (balance_netcdf.ne.0) then
             b2sigp_pstat0to3 = 0.0_R8
 !WG_TODO          do iFc = 1,mpg%nFc
-!WG_TODO             t0=geo%fcHz(iFc)*geo%fcS(iFc)*geo%fcBb(iFc,0)/
+!WG_TODO             t0=switch%b2sigp_phm0*geo%fcHz(iFc)*geo%fcS(iFc)*geo%fcBb(iFc,0)/
 !WG_TODO      &        geo%fcBb(iFc,3)*geo%fcQalf(iFc,0)
 !WG_TODO             b2sigp_pstat0to3(iFc,0,isb) =
 !WG_TODO      &         -t0*wrk0(ix,iy)
