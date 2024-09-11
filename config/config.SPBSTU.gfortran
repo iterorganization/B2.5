@@ -32,7 +32,7 @@ DEFINES += -DNO_OPT
 CPP = /lib/cpp -traditional
 
 MPI_FC ?= mpif90
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FC      = ${MPI_FC}
 endif
 
@@ -58,7 +58,7 @@ IMASLIBS = ${LD_AL} -lUALFORTRANInterface_gfortran
 endif
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 LDLIBES += ${LD_MPI}
 endif
 

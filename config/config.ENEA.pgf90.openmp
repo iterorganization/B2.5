@@ -41,7 +41,7 @@ CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 LINK_MOD = 
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
   FC = mpif90
 else
   ifdef USE_IMPGYRO
@@ -51,7 +51,7 @@ else
   endif
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
   DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 

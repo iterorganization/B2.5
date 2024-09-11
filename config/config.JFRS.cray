@@ -5,14 +5,14 @@ LD_NETCDF   ?= `pkg-config netcdf-fortran --libs`
 ifdef NCARG_ROOT
 LD_NCARG    ?= `pkg-config ncarg --libs`
 endif
-ifdef USE_MPI
-ifdef USE_OPENMP
+ifdef SOLPS_MPI
+ifdef SOLPS_OPENMP
 LD_NAG      ?= `pkg-config sci_mpi_mp --libs`
 else
 LD_NAG      ?= `pkg-config sci_mpi --libs`
 endif
 else
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
 LD_NAG      ?= `pkg-config sci_mp --libs`
 else
 LD_NAG      ?= `pkg-config sci --libs`
@@ -41,7 +41,7 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
   DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
@@ -52,7 +52,7 @@ CPPOPTS = -P -I${srcdir} ${EQUIVS}
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 FCOPTS = -e0 -ez
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
   ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
     FCOPTS += -homp
   endif
@@ -78,7 +78,7 @@ LDLIBES = ${LD_NETCDF}
 LD = ${FC}
 LDOPTS = -dynamic -hpic
 # JFRS OPENMP
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
   ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 9; echo $$?),0)
     LDOPTS += -homp
   endif

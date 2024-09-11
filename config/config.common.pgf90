@@ -31,11 +31,11 @@ ifndef ADJ
 FCOPTS  += -fast -Mvect=nofuse
 endif
 endif
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
 FCOPTS += -mp=nonuma
 LDOPTS += -mp=nonuma
 endif
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FCOPTS  += -Mmpi=mpich
 INCMODS += ${MPI_CPP}
 LDOPTS  += ${LD_MPI}

@@ -44,7 +44,7 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 
 DEFINES += -D_OPENMP
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
   DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
