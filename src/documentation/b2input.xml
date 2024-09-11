@@ -5235,7 +5235,8 @@
 				<description>
 					Determines the interpolation weights to get the parallel velocities at the cell faces.
 					style_int_vel.eq.0: interpolation based on cell volumes.
-					style_int_vel.eq.1: interpolation based on cell connector lengths.
+					style_int_vel.eq.1: interpolation based on cell connector lengths. 
+					Only the combination b2tfnb_style_int_vel=0 and b2sihs_style_int_vel=0 works robustly for now. Other combinations gave rise to oscillations. More research needed.
 				</description>
 			</switch>
 			<switch>
@@ -5246,6 +5247,7 @@
 					Determines the interpolation weights to get the parallel velocities at the cell faces for the calculation of divergence ua.
 					style_int_vel.eq.0: interpolation based on cell connector lengths.
 					style_int_vel.eq.1: interpolation based on cell volumes.
+                                        Only the combination b2tfnb_style_int_vel=0 and b2sihs_style_int_vel=0 works robustly for now. Other combinations gave rise to oscillations. More research needed.
 				</description>
 			</switch>
 		</category>
