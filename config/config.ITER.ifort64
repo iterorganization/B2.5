@@ -44,7 +44,7 @@ MPI_FC    ?= mpiifort -fc=mpiifx
 else
 MPI_FC    ?= mpiifort
 endif
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FC         = ${MPI_FC}
 ifndef MPDIR
 MPDIR      = ${EBROOTIMPI}
@@ -76,7 +76,7 @@ else
 FCOPTS    += -march=sandybridge
 endif
 endif
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FCOPTS    += ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
@@ -92,7 +92,7 @@ else
   GGD_VERSION ?= '0.0.0'
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 LDLIBES   += ${LD_MPI}
 else
 ifdef USE_IMPGYRO

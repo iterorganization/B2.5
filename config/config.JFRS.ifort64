@@ -3,7 +3,7 @@ MDSPLUS_DIR ?= /opt/mdsplus/7.96.12
 ifdef NCARG_ROOT
 LD_NCARG    ?= `pkg-config ncarg --libs`
 endif
-ifdef USE_MPI
+ifdef SOLPS_MPI
 LD_NETCDF   ?= `pkg-config pnetcdf --libs`
 else
 LD_NETCDF   ?= `pkg-config netcdf-fortran --libs`
@@ -24,11 +24,11 @@ FCOPTS  += -O2 -xHost
 else
 FCOPTS  += -O0 -g -C -traceback -fpe0 -debug all -check all
 endif
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FCOPTS  += ${MPI_CPP}
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 LDLIBES += ${LD_MPI}
 endif
 

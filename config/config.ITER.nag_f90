@@ -25,7 +25,7 @@ ifndef SOLPS_CPP
   endif
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
   DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
@@ -41,7 +41,7 @@ MOD = mod
 OBJDEST = -mdir ${OBJDIR} -o ${OBJDIR}/$*.o
 OBNDEST = -mdir ${OBNDIR} -o ${OBNDIR}/$*.o
 
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
   FCOPTS += -openmp
   LDOPTS += -openmp
 endif
@@ -52,7 +52,7 @@ GRLIBES = ${LD_NCARG}
 PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
   SOLPSINCLUDE += -I${EBROOTOPENMPI}/include
   INCMODS += -I${EBROOTOPENMPI}/include
 endif
