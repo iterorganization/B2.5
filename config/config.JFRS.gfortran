@@ -4,16 +4,16 @@ ifdef NCARG_ROOT
 LD_NCARG    ?= `pkg-config ncarg --libs`
 endif
 LD_MSCL     ?= -L${SOLPSLIB} -lmscl
-ifdef USE_MPI
+ifdef SOLPS_MPI
 LD_NETCDF   ?= `pkg-config pnetcdf --libs`
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
 LD_NAG      ?= `pkg-config sci_mpi_mp --libs`
 else
 LD_NAG      ?= `pkg-config sci_mpi --libs`
 endif
 else
 LD_NETCDF   ?= `pkg-config netcdf-fortran --libs`
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
 LD_NAG      ?= `pkg-config sci_mp --libs`
 else
 LD_NAG      ?= `pkg-config sci --libs`
@@ -28,7 +28,7 @@ FC = ftn
 
 DDBLOPTION = -Ad # ???
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 INCMODS += ${MPI_CPP}
 LDLIBES += ${LD_MPI}
 endif
