@@ -23,9 +23,10 @@ SUBROUTINE B2TQCA_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext, vsa, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tqca
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tqca, ncall_b2tlnl
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlnl
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -89,11 +90,11 @@ SUBROUTINE B2TQCA_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext, vsa, &
 !srv 11.09.09
   REAL(kind=r8) :: fki, fxi, eta, ctaup, ctaui, ci, t, t0, t1, tau(ncv)&
 & , tnp, w
-  PARAMETER (fki=2.253_R8, eta=0.96_R8, ci=3.9e0_R8)
+  PARAMETER (fki=2.253_R8, eta=0.96_R8, ci=3.9_R8)
 !   ..procedures
   INTRINSIC ABS, SQRT
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   EXTERNAL XERRAB
   INTEGER :: arg1
   REAL(r8) :: arg10
@@ -130,17 +131,17 @@ SUBROUTINE B2TQCA_NODIFF(ncv, ns, switch, geo, pl, dv, rt, st_ext, vsa, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tqca')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2tqca .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test state
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, dv%ne2, 1, 'ne2', '.gt.')
   END IF
 !   ..compute ctaup
 !     Following Balescu; Braginskii has ctaup different by a factor
@@ -340,9 +341,10 @@ SUBROUTINE B2TQCA_DV(ncv, ns, switch, switchd, geo, geod, pl, pld, dv, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tqca
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tqca, ncall_b2tlnl
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlnl
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -416,12 +418,12 @@ SUBROUTINE B2TQCA_DV(ncv, ns, switch, switchd, geo, geod, pl, pld, dv, &
 & , tnp, w
   REAL(kind=r8) :: fxid(nbdirsmax), ctauid(nbdirsmax), td(nbdirsmax), &
 & t0d(nbdirsmax), taud(nbdirsmax, ncv), tnpd(nbdirsmax), wd(nbdirsmax)
-  PARAMETER (fki=2.253_R8, eta=0.96_R8, ci=3.9e0_R8)
+  PARAMETER (fki=2.253_R8, eta=0.96_R8, ci=3.9_R8)
 !   ..procedures
   INTRINSIC ABS, SQRT
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL SFILL_DV
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   EXTERNAL XERRAB
   INTEGER :: arg1
   REAL(r8) :: arg10
@@ -471,17 +473,17 @@ SUBROUTINE B2TQCA_DV(ncv, ns, switch, switchd, geo, geod, pl, pld, dv, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tqca')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2tqca .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test state
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, dv%ne2, 1, 'ne2', '.gt.')
   END IF
 !   ..compute ctaup
 !     Following Balescu; Braginskii has ctaup different by a factor
@@ -503,8 +505,8 @@ SUBROUTINE B2TQCA_DV(ncv, ns, switch, switchd, geo, geod, pl, pld, dv, &
   ctaup = t0*result10
 !
 !   ..compute the Coulomb logarithm
-  CALL B2TLNL_DV(ncv, switch, switch%icase_ii, pl%te, pld%te, pl%ti, pld&
-&          %ti, dv%ne, dvd%ne, dv%lnlam, dvd%lnlam, nbdirs)
+  CALL B2TLNL_DV(ncv, switch, switchd, switch%icase_ii, pl%te, pld%te, &
+&          pl%ti, pld%ti, dv%ne, dvd%ne, dv%lnlam, dvd%lnlam, nbdirs)
 !srv 01.07.09  20.09.11
 ! ..compute vsa, hci
 !   ..compute vsax, hcix

@@ -67,7 +67,7 @@ SUBROUTINE B2NXFV_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 !srv 16.10.17
   REAL(kind=r8) :: ft, dloghz(nfc, 0:1), logcvhz(ncv), logvxhz(nvx)
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVFX_NODIFF, B2XVFV, B2XVSG_NODIFF
+  EXTERNAL B2XVFV, B2XVSG
   INTRINSIC NINT
   INTRINSIC LOG
   INTEGER :: nd
@@ -86,7 +86,7 @@ SUBROUTINE B2NXFV_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxfv')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !
 ! ..compute convection term
   ft = 4.0_R8/3.0_R8
@@ -200,7 +200,7 @@ SUBROUTINE B2NXFV_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, cvsbhz_cl&
 !srv 16.10.17
   REAL(kind=r8) :: ft, dloghz(nfc, 0:1), logcvhz(ncv), logvxhz(nvx)
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVFX_NODIFF, B2XVFV, B2XVSG_NODIFF
+  EXTERNAL B2XVFV, B2XVSG
   INTRINSIC NINT
   INTRINSIC LOG
 !   ..initialization
@@ -217,7 +217,7 @@ SUBROUTINE B2NXFV_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, cvsbhz_cl&
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxfv')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !
 ! ..compute convection term
   ft = 4.0_R8/3.0_R8

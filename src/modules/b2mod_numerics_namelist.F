@@ -106,7 +106,7 @@
       allocate(add_te_corr_to_po(0:nnreg(0)))                      ! IYS 21.09.2018, 21.09.2018
 #else
       call xertst (nsd.le.nsdmax,
-     1 'increase DEF_NSD in DIMENSIONS.F')
+     1 'increase DEF_NSD in b2mod_dimensions')
       call xertst (nnreg(0).le.cvregmax,'increase CVREGMAX')
 #endif
       dtco=1.0_R8

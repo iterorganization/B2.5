@@ -26,6 +26,7 @@
         real (kind=R8) :: signmf  ! Direction of poloidal field
                                   ! +1: Going clockwise around plasma
                                   ! -1: Going counterclockwise around plasma
+        real (kind=R8), allocatable  :: cvFpsi(:)      ! Psi in each cell
 
 !  face based quantities
         real (kind=R8), allocatable  :: fcBb(:,:)      ! Magnetic field: (nFc,0:3) to be recomputed at cell faces (Bx,By,Bz,|B|)
@@ -41,6 +42,7 @@
         real (kind=R8), allocatable  :: fcPbshz(:)     ! Magnetic contact area * hz (at faces)
         real (kind=R8), allocatable  :: fcBzb(:)       ! Factor for P-S/mdf flows
         real (kind=R8), allocatable  :: fcEb(:,:)      ! Unit vector pointing along magnetic field (Cartesian X,Y,Z coordinates)
+        real (kind=R8), allocatable  :: fcFpsi(:)      ! Psi in each face center
 
 !  vertex quantities
         real (kind=R8), allocatable  :: vxBb(:,:)      ! Magnetic field: (nVx,0:3) to be recomputed at vertices (Bx,By,Bz,|B|)
@@ -93,6 +95,7 @@
       allocate (g%cvOnedBsq(nCv))
       allocate (g%cvBzb(nCv))
       allocate (g%cvEb(nCv,0:2))
+      allocate (g%cvFpsi(nCv))
 
 !  face quantites
       allocate (g%fcBb(nFc,0:3))
@@ -108,6 +111,7 @@
       allocate (g%fcPbshz(nFc))
       allocate (g%fcBzb(nFc))
       allocate (g%fcEb(nFc,0:2))
+      allocate (g%fcFpsi(nFc))
 
 !  vertex quantites
       allocate (g%vxBb(nVx,0:3))
@@ -156,6 +160,7 @@
       g%cvOnedBsq = 0._R8
       g%cvBzb = 0._R8
       g%cvEb = 0._R8
+      g%cvFpsi = 0._R8
 
 !  face quantites
       g%fcBb = 0._R8
@@ -171,6 +176,7 @@
       g%fcPbshz = 0._R8
       g%fcBzb = 0._R8
       g%fcEb = 0._R8
+      g%fcFpsi = 0._R8
 
 !  vertex quantites
       g%vxBb = 0._R8
@@ -222,6 +228,7 @@
       deallocate (g%cvOnedBsq)
       deallocate (g%cvBzb)
       deallocate (g%cvEb)
+      deallocate (g%cvFpsi)
 
 !  face quantites
       deallocate (g%fcBb)
@@ -237,6 +244,7 @@
       deallocate (g%fcPbshz)
       deallocate (g%fcBzb)
       deallocate (g%fcEb)
+      deallocate (g%fcFpsi)
 
 !  vertex quantites
       deallocate (g%vxBb)
@@ -406,11 +414,11 @@
       type (geometry), intent (inout) :: gm
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
      &           iCv, iFc, iFt, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2,
-     &           i1, i2, inv_dist(mpg%nVx)
+     &           i1, i2, inv_dist(mpg%nVx), vv(2)
       integer :: count_up, count_down, count_eq
       integer, allocatable :: old_face_list(:), verts(:)
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
-     .  Psi1, Psi2, cvPsi(mpg%nCv), dpsi(mpg%nCv),
+     .  Psi1, Psi2, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
       intrinsic maxval, maxloc, minloc, abs, sqrt
@@ -455,6 +463,26 @@
         call xerrab ('wrong value of b2mndr_fcVol_style')
       endif
 
+*   ..precompute psi in each cell according to vxVol_style=2
+      do iCv = 1, nCv
+        allocate(verts(1:mpg%cvVxP(iCv,2)))
+        verts = mpg%cvVx(mpg%cvVxP(iCv,1):mpg%cvVxP(iCv,1)+
+     &          mpg%cvVxP(iCv,2)-1)
+        gm%cvFpsi(iCv) = 0.5_R8*(
+     &    maxval(gm%vxFpsi(verts(1:mpg%cvVxP(iCv,2)))) +
+     &    minval(gm%vxFpsi(verts(1:mpg%cvVxP(iCv,2)))) )
+        dpsi(iCv) = abs(
+     &    maxval(gm%vxFpsi(verts(1:mpg%cvVxP(iCv,2)))) -
+     &    minval(gm%vxFpsi(verts(1:mpg%cvVxP(iCv,2)))) )
+       deallocate(verts)
+      enddo
+
+*   ..precompute psi in each face center
+      do iFc = 1, nFc
+        gm%fcFpsi(iFc) = 0.5_R8*(gm%vxFpsi(mpg%fcVx(iFc,1)) +
+     &    gm%vxFpsi(mpg%fcVx(iFc,2)) )
+      enddo
+
 *   ..set weights for interpolation to vertices
       if (switch%vxVol_style.eq.0) then
         ! weights for inverse volume interpolation
@@ -490,20 +518,6 @@
         ! Idea: assign equal total weight to all cells on either side of the flux surface (inverse volume weighting!)
         !       (expected: in case of zero gradient along poloidal direction, value at vertex will be
         !                  average between flux tube values)
-        ! calculate cvPsi
-        ! eventually: consider including cvFpsi as variable into the geo-structure
-        do iCv = 1, nCv
-          allocate(verts(1:mpg%cvVxP(iCv,2)))
-          verts = mpg%cvVx(mpg%cvVxP(iCv,1):
-     &                     mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1)
-          cvPsi(iCv) = 0.5_R8*(
-     &     maxval(gm%vxFpsi(verts(1:mpg%cvVxP(iCv,2)))) +
-     &     minval(gm%vxFpsi(verts(1:mpg%cvVxP(iCv,2)))) )
-          dpsi(iCv) = abs(
-     &     maxval(gm%vxFpsi(verts(1:mpg%cvVxP(iCv,2)))) -
-     &     minval(gm%vxFpsi(verts(1:mpg%cvVxP(iCv,2)))) )
-          deallocate(verts)
-        enddo
         ! Count cells per vertex with higher, lower Psi
         ! Exceptional case: equal Psi (pentagon splitting);
         ! will also catch case where Psi = 0 everywhere
@@ -513,9 +527,9 @@
           count_eq   = 0
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-            if (cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
+            if (gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
               count_up = count_up + 1
-            elseif (cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
+            elseif (gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
               count_down = count_down + 1
             else
               count_eq = count_eq + 1
@@ -524,10 +538,10 @@
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
             if (iCv.le.mpg%nCi) then
-              if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
+              if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
                 gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
      &           2.0_R8*count_up
-              elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
+              elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
                 gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
      &           2.0_R8*count_down
               else
@@ -630,12 +644,12 @@
           endif
         enddo
       elseif (switch%vxVol_style .eq. 7) then
-        !calculate cvPsi
+        !recalculate cvFpsi
         do iCv = 1, nCv
           allocate(verts(1:mpg%cvVxP(iCv,2)))
           verts = mpg%cvVx(mpg%cvVxP(iCv,1):
      &                     mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2))
-          cvPsi(iCv) = sum(gm%vxFpsi(verts))/mpg%cvVxP(iCv,2)
+          gm%cvFpsi(iCv) = sum(gm%vxFpsi(verts))/mpg%cvVxP(iCv,2)
           i1 = minloc(gm%vxFpsi(verts),1) -1
           i2 = maxloc(gm%vxFpsi(verts),1) -1
           dpsi(iCv) = abs(gm%vxFpsi(verts(i2)) -
@@ -648,19 +662,19 @@
           count_up   = 0
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-            if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
+            if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
               count_up = count_up + 1
-            elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
+            elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
               count_down = count_down + 1
             endif
           enddo
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
             if (iCv.le.mpg%nCi) then
-              if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx)) then
+              if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
                 gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
      &               real(count_up,R8) / mpg%vxCvP(iVx,2)
-              elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx)) then
+              elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
                 gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
      &               real(count_down,R8) / mpg%vxCvP(iVx,2)
               endif
@@ -708,16 +722,16 @@
           enddo
         enddo
       elseif (switch%vxVol_style .eq. 9) then
-        !calculate cvPsi
+        !recalculate cvFpsi
         do iCv = 1, nCv
           allocate(verts(1:mpg%cvVxP(iCv,2)))
           verts = mpg%cvVx(mpg%cvVxP(iCv,1):
      &                     mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2))
-          cvPsi(iCv) = sum(gm%vxFpsi(verts))/mpg%cvVxP(iCv,2)
+          gm%cvFpsi(iCv) = sum(gm%vxFpsi(verts))/mpg%cvVxP(iCv,2)
           i1 = minloc(gm%vxFpsi(verts),1) -1
           i2 = maxloc(gm%vxFpsi(verts),1) -1
           dpsi(iCv) = abs(gm%vxFpsi(verts(i2)) -
-     1                gm%vxFpsi(verts(i1)) )
+     1                    gm%vxFpsi(verts(i1)) )
           deallocate(verts)
         enddo
         !count cells per vertex with higher and lower Psi
@@ -728,14 +742,14 @@
           dpsi_max_up   = 0.0_R8
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-            if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx) ) then
+            if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx) ) then
               count_up = count_up + 1
-              if ( dpsi(iCv) .gt. dpsi_max_up ) then
+              if ( dpsi(iCv) .gt. dpsi_max_up) then
                 dpsi_max_up = dpsi(iCv)
               endif
-            elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx) ) then
+            elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx) ) then
               count_down = count_down + 1
-              if ( dpsi(iCv) .gt. dpsi_max_down ) then
+              if ( dpsi(iCv) .gt. dpsi_max_down) then
                 dpsi_max_down = dpsi(iCv)
               endif
             endif
@@ -743,7 +757,7 @@
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
             if (iCv.le.mpg%nCi) then
-              if ( cvPsi(iCv) .gt. gm%vxFpsi(iVx) ) then
+              if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx) ) then
                 if (mpg%cvVxP(iCv,2) .eq. 3) then
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
      &               real(count_up,R8) / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
@@ -752,7 +766,7 @@
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
      &               real(count_up,R8) / mpg%vxCvP(iVx,2)
                 endif
-              elseif ( cvPsi(iCv) .lt. gm%vxFpsi(iVx) ) then
+              elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx) ) then
                 if (mpg%cvVxP(iCv,2) .eq. 3) then
                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
      &             real(count_down,R8) / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
@@ -1078,7 +1092,8 @@
 
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
-      do i = 1, maxval(mpg%strDiv)
+      if (allocated(mpg%strDiv)) then
+       do i = 1, maxval(mpg%strDiv)
         match_found = .false.
         k = 1
         do while (.not.match_found)
@@ -1194,7 +1209,8 @@
         end do
         call xertst (match_found .or. mpg%nXpt.eq.0,
      &   'No matching face found for strike point !')
-      end do
+       end do
+      end if
 
       return
       end subroutine init_geometry

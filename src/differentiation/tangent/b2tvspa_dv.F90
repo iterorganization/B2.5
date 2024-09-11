@@ -44,7 +44,8 @@ SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !.end b2tvspa
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+!lkw 20.06.2022
+  INTEGER :: ncv, nfc, nvx, ns, ifc
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
@@ -81,7 +82,7 @@ SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 & nbdirsmax, nfc), wrkvxd(nbdirsmax, nvx)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   INTRINSIC SQRT
   INTRINSIC NINT
@@ -101,13 +102,13 @@ SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   CALL SUBINI('b2tvspa')
 !   ..set internal parameters on first call
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !
 !srv 24.06.99
-  dvpar = 0.0e0_R8
+  dvpar = 0.0_R8
 !srv
   result1 = MAXVAL(fac_vis)
-  IF (switch%no_current .EQ. 0 .AND. switch%fhe_vis_par .NE. 0.0e0_R8 &
+  IF (switch%no_current .EQ. 0 .AND. switch%fhe_vis_par .NE. 0.0_R8 &
 &     .AND. result1 .NE. 0.0_R8) THEN
 !srv
 !     ..compute gradients of OnedBsq on cell faces
@@ -162,11 +163,24 @@ SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
     fchvispar(:, 1) = switch%fhe_vis_par*fac_vis*dvpar*gonedbsq(:, 0)*&
 &     geo%fcs*geo%fcqalf(:, 1)
   ELSE
-    fchvispar = 0.0e0_R8
+    fchvispar = 0.0_R8
     DO nd=1,nbdirsmax
       fchvispard(nd, :, :) = 0.D0
     END DO
   END IF
+!lkw 20.06.2022{
+  DO ifc=1,nfc
+    IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&       cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+      DO nd=1,nbdirs
+        fchvispard(nd, ifc, 0) = 0.D0
+        fchvispard(nd, ifc, 1) = 0.D0
+      END DO
+      fchvispar(ifc, 0) = 0.0_R8
+      fchvispar(ifc, 1) = 0.0_R8
+    END IF
+  END DO
+!lkw 20.06.2022}
 ! ..return
   CALL SUBEND()
   RETURN
@@ -209,7 +223,8 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
 !.end b2tvspa
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+!lkw 20.06.2022
+  INTEGER :: ncv, nfc, nvx, ns, ifc
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -239,7 +254,7 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
 & ), gonedbsq(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   INTRINSIC SQRT
   INTRINSIC NINT
@@ -257,13 +272,13 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
   CALL SUBINI('b2tvspa')
 !   ..set internal parameters on first call
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !
 !srv 24.06.99
-  dvpar = 0.0e0_R8
+  dvpar = 0.0_R8
 !srv
   result1 = MAXVAL(fac_vis)
-  IF (switch%no_current .EQ. 0 .AND. switch%fhe_vis_par .NE. 0.0e0_R8 &
+  IF (switch%no_current .EQ. 0 .AND. switch%fhe_vis_par .NE. 0.0_R8 &
 &     .AND. result1 .NE. 0.0_R8) THEN
 !srv
 !     ..compute gradients of OnedBsq on cell faces
@@ -295,8 +310,17 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
     fchvispar(:, 1) = switch%fhe_vis_par*fac_vis*dvpar*gonedbsq(:, 0)*&
 &     geo%fcs*geo%fcqalf(:, 1)
   ELSE
-    fchvispar = 0.0e0_R8
+    fchvispar = 0.0_R8
   END IF
+!lkw 20.06.2022{
+  DO ifc=1,nfc
+    IF (.NOT.mpg%cvonclosedsurface(mpg%fccv(ifc, 1)) .AND. (.NOT.mpg%&
+&       cvonclosedsurface(mpg%fccv(ifc, 2)))) THEN
+      fchvispar(ifc, 0) = 0.0_R8
+      fchvispar(ifc, 1) = 0.0_R8
+    END IF
+  END DO
+!lkw 20.06.2022}
 ! ..return
   CALL SUBEND()
   RETURN

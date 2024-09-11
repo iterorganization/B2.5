@@ -1,6 +1,7 @@
-      module b2mod_ma28_for_7diag                                     !sv 11.01.00
-
+      module b2mod_ma28_for_7diag                                 !sv 11.01.00
       use b2mod_types
+      implicit none
+
       real (kind=R8), allocatable, save ::
      * r1(:),
      * s1(:),
@@ -23,12 +24,13 @@
      * irnh_save(:),
      * icnh_save(:)
 
-      integer nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
+      integer, save :: nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
       logical, save :: lfirst_ilu7 = .true.
 
       contains
 
       subroutine alloc_b2mod_ma28_for_7diag                           !sv 11.01.00
+      implicit none
 
       write(*,*) 'Allocating space for b2mod_ma28_for_7diag'          !sv 11.01.00
       write(*,*) 'nnd        = ',nnd
@@ -81,13 +83,13 @@
       deallocate(irnh_save)
       deallocate(icnh_save)
 
-      end subroutine dealloc_b2mod_ma28_for_7diag                       !sv 11.01.00
+      end subroutine dealloc_b2mod_ma28_for_7diag                 !sv 11.01.00
 
-      subroutine restart_ma28_for_7                                     !srv 11.01.00
+      subroutine restart_ma28_for_7                               !srv 11.01.00
       implicit none
       lfirst_ilu7=.true.
       write(*,*) 'Restarting ma28'
       return
       end subroutine restart_ma28_for_7
 
-      end module b2mod_ma28_for_7diag                                 !sv 11.01.00
+      end module b2mod_ma28_for_7diag                             !sv 11.01.00

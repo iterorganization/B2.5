@@ -3,6 +3,7 @@ ifeq ($(shell [ -e ${SRCB2}/config/config.common.${COMPILER} ] && echo yes || ec
   include ${SRCB2}/config/config.common.${COMPILER}
   MAKES += ${SRCB2}/config/config.common.${COMPILER}
 endif
+INCMODN := ${INCMODS} ${INCMOD}${OBNDIR}
 INCMODS += ${INCMOD}${OBJDIR}
 ifdef USE_EIRENE
 INCMODS += ${INCMOD}${EIRDIR}
@@ -38,6 +39,7 @@ endif
 	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
 	@if [ -f $*.${MOD} ] ; then /bin/mv $*.${MOD} ${OBJDIR}/ ; fi
 
+ifneq (${MOD},o)
 ${OBJDIR}/%.${MOD} : %.F        # ../src/modules/
 	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o ${OBJDIR}/$*.${MOD}
 ifeq ($(strip $(CPP)),)
@@ -75,12 +77,51 @@ ifeq ($(strip $(LINK_MOD)),)
 else
 	@[ -f $*.${MOD} ] && [ ! -L $*.${MOD} ] && /bin/mv $*.${MOD} ${OBJDIR}/ && /bin/ln -s ${OBJDIR}/$*.${MOD} .
 endif
+endif
 
 CXX ?= g++
 ${OBJDIR}/%.o : %.cxx	#cxx source files
 	@- /bin/rm -f ${OBJDIR}/$*.cxx ${OBJDIR}/$*.o
 	${CXX} -c -o $@ ${CXXFLAGS} ${PARAVIEW_INCLUDE} $^
 	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
+
+ifneq (${OBJDIR},${OBNDIR})
+${OBNDIR}/%.o : %.F
+	@- /bin/rm -f ${OBNDIR}/$*.f ${OBNDIR}/$*.o ${OBNDIR}/$*.${MOD}
+ifeq ($(strip $(CPP)),)
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBNDIR}/$*.f
+else
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBNDIR}/$*.f
+endif
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBNDEST} ${OBNDIR}/$*.f
+endif
+	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBNDIR}/ ; fi
+	@if [ -f $*.${MOD} ] ; then /bin/mv $*.${MOD} ${OBNDIR}/ ; fi
+
+ifneq (${MOD},o)
+${OBNDIR}/%.${MOD} : %.F        # ../src/modules/
+	@- /bin/rm -f ${OBNDIR}/$*.f ${OBNDIR}/$*.o ${OBNDIR}/$*.${MOD}
+ifeq ($(strip $(CPP)),)
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< ${OBNDIR}/$*.f
+else
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< | ${SED} > ${OBNDIR}/$*.f
+endif
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBNDEST} ${OBNDIR}/$*.f
+endif
+	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBNDIR}/ ; fi
+ifeq ($(strip $(LINK_MOD)),)
+	@if [ -f $*.${MOD} ] ; then /bin/mv $*.${MOD} ${OBNDIR}/ ; fi
+else
+	@[ -f $*.${MOD} ] && [ ! -L $*.${MOD} ] && /bin/mv $*.${MOD} ${OBNDIR}/ && /bin/ln -s ${OBNDIR}/$*.${MOD} .
+endif
+endif
+endif
 
 # Local Variables:
 # mode: Makefile

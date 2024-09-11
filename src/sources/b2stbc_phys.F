@@ -116,7 +116,7 @@
      *  pz(nCv), !sxhz(-1:nx,-1:ny),                                    !srv 24.08.08
      *  gOnedBsq(nFc,0:1),
      &  sna0_no_mdf(nCv,0:1,0:ns-1)
-      real (kind=R8), save :: cor9 = 0.0_R8                             !srv 23.09.08
+      real (kind=R8) :: cor9                                            !srv 23.09.08
       character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, ishigh
 #ifdef WG_TODO
@@ -148,7 +148,7 @@
       real (kind=R8) ::
      *  sy, intvertex_s                                                 !srv 24.08.08
       external xertst, ipgeti, eseec0
-      external ipgetr, b2xvsg, b2xvff, b2xvps
+      external ipgetr, b2xvsg, b2xvps
 *   ..initialisation
 #ifdef WG_TODO
       integer ibnd
@@ -206,7 +206,6 @@ c       call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 2
 c       call ipgeti ('b2stbc_type16_kinetic_energy',
 c     1  bc_type16_kinetic_energy)
 c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.02
-        call ipgetr ('b2stbc_BC2_cor9', cor9)
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
@@ -253,6 +252,8 @@ c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.
       PBIG=UP00
 
       sna0_no_mdf = 0.0_R8
+
+      cor9 = switch%b2stbc_cor9
 
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)!srv 18.01.02
 

@@ -63,7 +63,7 @@ SUBROUTINE B2TBFL_DV(ncv, nfc, lcore, mpg, flux, fluxd, tbfl, tbfld, div&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tbfl')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   div = 0.0_R8
   DO nd=1,nbdirsmax
     tbfld(nd, :) = 0.D0
@@ -76,7 +76,7 @@ SUBROUTINE B2TBFL_DV(ncv, nfc, lcore, mpg, flux, fluxd, tbfl, tbfld, div&
     DO nd=1,nbdirs
       tbfld(nd, ib) = 0.D0
     END DO
-    tbfl(ib) = 0.0e0_R8
+    tbfl(ib) = 0.0_R8
 ! loop over number of cells in the boundary
     DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
@@ -157,11 +157,11 @@ SUBROUTINE B2TBFL_NODIFF(ncv, nfc, lcore, mpg, flux, tbfl, div)
 !   ..subprogram start-up calls
   CALL SUBINI('b2tbfl')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   div = 0.0_R8
   DO ib=1,nbc
 ! compute flux through boundary; positive if out of the domain
-    tbfl(ib) = 0.0e0_R8
+    tbfl(ib) = 0.0_R8
 ! loop over number of cells in the boundary
     DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell

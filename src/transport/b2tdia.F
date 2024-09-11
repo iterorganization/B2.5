@@ -38,7 +38,7 @@
      &  facdriftm, wght(nFc,2), gOnedBsq(nFc,0:1), pzf(nFc)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx
+      external b2xvsg
 *-----------------------------------------------------------------------
 *.computation
 

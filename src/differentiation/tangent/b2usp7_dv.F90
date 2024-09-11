@@ -21,7 +21,7 @@
 SUBROUTINE B2USP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, te, conc&
 & , avisper, bvisper, cvisper, sch, respo, corpo, aa11)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
 !      use b2mod_plasma
 !     * , only : fac_vis
@@ -73,12 +73,12 @@ SUBROUTINE B2USP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, te, conc&
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
 !srv 11.01.00
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2UX7P, B2UX9P
+  EXTERNAL B2XVSG, B2XVFF, B2UX7P, B2UX9P
   CHARACTER(len=10) :: arg1
 !   ..initialisation
 !srv 27.01.00
   DATA ncall /0/
-  DATA vis_per /0.0e0_R8/
+  DATA vis_per /0.0_R8/
 !
 !-----------------------------------------------------------------------
 !.computation
@@ -105,14 +105,14 @@ SUBROUTINE B2USP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, te, conc&
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of ne, te, conc, sch
-    CALL B2XVSG_NODIFF(n2, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(n2, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(n2, conc(-1, -1, 0, 0), 1, 'conc', '.ge.')
-    CALL B2XVSG_NODIFF(n2, conc(-1, -1, 1, 1), 1, 'conc', '.ge.')
-    CALL B2XVSG_NODIFF(n2, sch(-1, -1, 1), 1, 'sch1', '.le.')
-    CALL B2XVSG_NODIFF(n2, sch(-1, -1, 3), 1, 'sch3', '.le.')
+    CALL B2XVSG(n2, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(n2, te, 1, 'te', '.gt.')
+    CALL B2XVSG(n2, conc(-1, -1, 0, 0), 1, 'conc', '.ge.')
+    CALL B2XVSG(n2, conc(-1, -1, 1, 1), 1, 'conc', '.ge.')
+    CALL B2XVSG(n2, sch(-1, -1, 1), 1, 'sch1', '.le.')
+    CALL B2XVSG(n2, sch(-1, -1, 3), 1, 'sch3', '.le.')
 !    ..test edge values of conc
-    CALL B2XVFF_NODIFF(nx, ny, conc, 'conc')
+    CALL B2XVFF(nx, ny, conc, 'conc')
   END IF
 !
 ! ..compute the correction
@@ -225,8 +225,8 @@ SUBROUTINE B2USP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, te, conc&
 !WDK tmp: ignore this      
 !WDK will require complex stencil!
 !*   ..compute the seven-point matrix                               !srv 26.01.00
-!      aa11(:,:,-3) = 0.0e0_R8
-!      aa11(:,:, 3) = 0.0e0_R8
+!      aa11(:,:,-3) = 0.0_R8
+!      aa11(:,:, 3) = 0.0_R8
 !
 !      do iy = -1, ny
 !       do ix = -1, nx                                              !srv 26.11.02
