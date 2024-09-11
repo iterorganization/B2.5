@@ -6837,7 +6837,7 @@
 				<description>
 					Choice for the actuator used for the feedback.
 					0: no action
-					1: gas puff via boundary condition
+					1: gas puff strength, imposed via boundary condition for standalone cases or via EIRENE stratum flux for coupled cases. See NA_FEEDBACK_IB for setting which boundary condition or stratum this applies to.
 					2: rescale na [[Experimental!! Does not guarantee stable code runs]]
 					3: core boundary flux condition
 					4: absorption coefficient in Eirene (for coupled mode only)
