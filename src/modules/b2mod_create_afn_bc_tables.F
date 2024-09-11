@@ -2105,7 +2105,7 @@ cc close the file
       character*80 version
       character*120 :: label
       external cfwuin, cfwuch, cfwure
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -2132,7 +2132,7 @@ cc set correct name
 
 
 cc open new file
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=nout,file=filename,iostat=io)
 #else
       nout_st = newunit()
