@@ -3069,8 +3069,8 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					b2sigp_phm0.ne.0.0: pressure gradient terms are calculated.
-					b2sigp_phm0.eq.0.0: pressure gradient terms are zero.
+					Multiplier for the pressure gradient term. Setting b2sigp_phm0.ne.1.0 should only be done 
+					for specific testing purposes.
 				</description>
 			</switch>
 			<switch>
