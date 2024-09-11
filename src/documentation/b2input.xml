@@ -1863,6 +1863,15 @@
 					This switch is only active if, simultaneously, one has b2tqce_model.eq.1 and b2tfhe_fch_pTe.eq.1.0.
 				</description>
 			</switch>
+	                <switch>
+				<name>b2tqce_style_guard_cells</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					When set to '0', b2tqce calculates all classical contributions to the electron transport coefficients on all cells.
+					When set to '1', the electrical conductivity (sig) and the thermo-electric coefficient (alf) are not calculated in the guard cells that lie on open flux surfaces.
+				</description>
+			</switch>
 			<switch>
 				<name>b2tqna_ixref</name>
 				<default>See description (integer)</default>
