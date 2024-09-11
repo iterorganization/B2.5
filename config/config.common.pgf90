@@ -1,9 +1,10 @@
+ifeq (${FC},f77)
+FC = pgf90
+endif
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 LINK_MOD = 
-
-FC ?= pgf90
 
 ifndef SOLPS_CPP
 DEFINES += -DPGF90 -DNOQUAD
@@ -28,11 +29,11 @@ else
 #FCOPTS += -fast
 FCOPTS  += -fast -Mvect=nofuse
 endif
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
 FCOPTS += -mp=nonuma
 LDOPTS += -mp=nonuma
 endif
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FCOPTS  += -Mmpi=mpich
 INCMODS += ${MPI_CPP}
 LDOPTS  += ${LD_MPI}

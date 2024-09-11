@@ -73,11 +73,11 @@ endif
 ifdef USE_IMPGYRO
 EXT_IMPGYRO = .ig
 else
-ifdef USE_MPI
+ifdef SOLPS_MPI
 EXT_MPI = .mpi
 endif
 endif
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
 EXT_OPENMP = .openmp
 endif
 ifdef SOLPS_DEBUG
@@ -108,7 +108,7 @@ ifdef USE_IMPGYRO
   USE_MPI ?= -DUSE_MPI
   include ${OBJDIR}/mpiversion.mk
 else
- ifdef USE_MPI
+ ifdef SOLPS_MPI
   include ${OBJDIR}/mpiversion.mk
  endif
 endif
@@ -134,7 +134,7 @@ endif
 ifdef USE_IMPGYRO
 SOLPSINCLUDE += ${MPI_CPP}
 else
-ifdef USE_MPI
+ifdef SOLPS_MPI
 SOLPSINCLUDE += ${MPI_CPP}
 else
 SOLPSINCLUDE += -I${SRCDIR}/mpi_dummy
@@ -224,7 +224,7 @@ endif
 # OpenMP parallelization, in order to do that, just compile without OpenMP
 # compiler options (ifort -qopenmp or similar)
 
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
 #DEFINES += -DNO_OPENMP_B2XPFE
 #DEFINES += -DNO_OPENMP_B2SIFRTF
 #DEFINES += -DNO_OPENMP_B2SIHS
@@ -774,7 +774,7 @@ endif
 endif
 
 ifeq ($(COMPILER),ifort64)
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
 ifdef USE_EIRENE
 ${OBJDIR}/b2ytdr.o : b2ytdr.F
 	@- /bin/rm -f $*.f $*.o $*.${MOD}
