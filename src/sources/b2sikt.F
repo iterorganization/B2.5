@@ -76,8 +76,7 @@ c      use b2mod_keps
       call subini ('b2sikt')
 *   ..set internal parameters on first call
       if (ncall_b2sikt.eq.0) then
-       if ((switch%b2sikt_local.ne.1).or.
-     &     (switch%b2sikt_sheath_local.ne.1)) then
+       if (switch%b2sikt_sheath_local.ne.1) then
         call xertst(nomp.gt.0,
      &    'No CVs in omp list, check rzomp in b2.user.parameters')
         call xertst(icsepomp.gt.0,

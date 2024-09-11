@@ -384,7 +384,6 @@ c k-enstrophy model
       integer :: b2sikt_iout
       integer :: b2sikt_style
       integer :: b2sikt_model
-      integer :: b2sikt_local
       integer :: b2sikt_sheath_local
       integer :: b2sikt_fac_diss_core_mode
       integer :: b2sikt_min_source
@@ -948,7 +947,6 @@ c k-enstrophy model
       s % b2sikt_iout = 0
       s % b2sikt_style = 0
       s % b2sikt_model = 1
-      s % b2sikt_local = 1
       s % b2sikt_fac_diss_core_mode = 0
       s % b2sikt_sheath_local = 1
       s % b2sikt_min_source = 0
@@ -1516,7 +1514,6 @@ c k-enstrophy model
       call ipgeti ('b2sikt_iout', s % b2sikt_iout)
       call ipgeti ('b2sikt_style', s % b2sikt_style)
       call ipgeti ('b2sikt_model', s % b2sikt_model)
-      call ipgeti ('b2sikt_keps_local', s % b2sikt_local)
       call ipgeti ('b2sikt_fac_sheath_local', s % b2sikt_sheath_local)
       call ipgeti ('b2sikt_min_source', s % b2sikt_min_source)
       call ipgeti ('b2sikt_kt_source_stab', s % b2sikt_kt_source_stab)
@@ -2120,8 +2117,6 @@ c k-enstrophy model
      &  'keps_inc must be .ge. 1.0')
       call xertst (0.0_R8.le.s%keps_fac,
      &  'keps_fac must be .ge. 0.0')
-      call xertst (0.le.s%b2sikt_local .and. s%b2sikt_local.le.1,
-     &  'b2sikt_local must be either 0 or 1')
       call xertst (0.le.s%b2sikt_sheath_local .and.
      &  s%b2sikt_sheath_local.le.1,
      &  'b2sikt_sheath_local must be either 0 or 1')
