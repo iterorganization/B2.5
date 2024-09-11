@@ -15,13 +15,13 @@ GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.
 GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
 GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FC = mpif90
 else
 FC = gfortran
 endif
 
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
 FCOPTS  += -fopenmp
 LDOPTS  += -fopenmp
 endif

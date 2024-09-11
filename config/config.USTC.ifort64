@@ -15,7 +15,7 @@ endif
 CPP      = /lib/cpp -traditional -ffreestanding
 
 MPI_FC  ?= mpif90
-ifdef USE_MPI
+ifdef SOLPS_MPI
  FC       = ${MPI_FC}
  COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
  ifeq (${COMPILER_TYPE},GNU)
@@ -42,7 +42,7 @@ else
  else
   FCOPTS  += -g -C -traceback -debug all -check all
  endif
- ifdef USE_MPI
+ ifdef SOLPS_MPI
   FCOPTS  += ${MPI_CPP}
   LDOPTS  += ${LD_MPI}
  endif

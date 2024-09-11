@@ -13,7 +13,7 @@ CPP      = /lib/cpp -traditional
 
 #MPI_FC  ?= mpif90
 MPI_FC  ?= mpiifort
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FC       = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
@@ -23,7 +23,7 @@ endif
 
 ifdef SOLPS_DEBUG
  FCOPTS   = -g -C -traceback
- ifdef USE_MPI
+ ifdef SOLPS_MPI
   FCOPTS  += -fpe0
  else
   FCOPTS  += -debug all -fPIC -assume no2underscore
@@ -35,7 +35,7 @@ ifdef SOLPS_DEBUG
  endif
 else
  FCOPTS   = -O2 -xHost -fPIC -assume no2underscore
- ifdef USE_MPI
+ ifdef SOLPS_MPI
   FCOPTS  += ${MPI_CPP}
  else
   ifdef USE_IMPGYRO
@@ -44,7 +44,7 @@ else
  endif
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 LDLIBES += ${LD_MPI}
 endif
 
