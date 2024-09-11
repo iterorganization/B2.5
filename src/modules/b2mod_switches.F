@@ -2191,6 +2191,12 @@ c b2srst
 c b2tfnb
       call xertst (0.0_R8.le.s%b2tfnb_flux_limit_min_ti,
      &  'faulty internal parameter flux_limit_min_ti')
+     
+c b2tqce
+      if (.not.(s%b2tqce_style_guard_cells.eq.0.or.
+     &                           s%b2tqce_style_guard_cells.eq.1)) then
+        call xerrab('b2tqce_style_guard_cells is expected to be 0 or 1')
+      endif
 
 c b2mndt
       call xertst (1.le.s%nstg(0).and.1.le.s%nstg(1).and.1.le.s%nstg(2),
