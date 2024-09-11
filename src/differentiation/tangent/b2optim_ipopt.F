@@ -55,13 +55,12 @@
       logical streql, hessian
 !sc   these are the external subroutine names passed to IPOPT
 
-
 !     ..START OF COMPUTATION
 
 !     Allocate and initialize par_opt variables to be used in B2.5
       flag_optim  = .true.
-      call b2mn_init_dv(switch, geo, geod, mpg, mpgd, state, stated,
-     &  state_ext, state_extd, npar_opt)
+      call b2mn_init_dv(switch, switchd, geo, geod, mpg, mpgd, state, stated,
+     &  state_ext, state_extd, state_avg, state_avgd, npar_opt)
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
 #ifdef TGT
@@ -112,7 +111,6 @@
      &    write(*,*) 'IPOPT: warning, G_U(',icon,') set to infty'
       end do
 ! FIXME Z_L/Z_U
-
 
 !     First create a handle for the Ipopt problem (and read the options file)
 !     If Hessian is provided or steepest descent is asked the additional argument needed
@@ -250,7 +248,7 @@
 
 !     Clean up
       call b2mn_fin_dv(switch, geo, geod, mpg, mpgd, state, stated,
-     & state_ext, state_extd, npar_opt)
+     & state_ext, state_extd, state_avg, state_avgd, npar_opt)
       call IPFREE(IPROBLEM)
       deallocate(X,X_L,X_U,Z_L,Z_U)
       deallocate(G,G_L,G_U,LAM)
@@ -270,30 +268,68 @@
       real(kind=r8) j(nncf)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, ipar, isigma
+      integer IER, ipar, isigma, imean, ishift, icorr
       character*3 str
       save j
-!csc important here to check for NEW_X! so that it doesn't recalculate with same X
+!csc important here to check for NEW_X! so that it does not recalculate with same X
       if (new_x.eq.0) then
-        do ipar = 1, npar - nsigma_opt
+        do ipar = 1, npar - nsigma_opt - nmean_opt - nshift_opt
           par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
           write(str,"(I1)") ipar
           if (ipar.ge.10) write(str,"(I2)") ipar
           write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
      &     par_opt_phys(ipar)
         enddo
-        isigma = npar - nsigma_opt + 1
-        do ipar = 1, nsigma
-          if (sigma_opt(ipar)) then
-            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
-            write(str,"(I1)") isigma
-            if (ipar.ge.10) write(str,"(I2)") isigma
-            write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
-     &       sigma(ipar)
-            isigma = isigma + 1
+        if (cftype(1) .eq. 6) then
+          isigma = npar - nsigma_opt - nmean_opt - nshift_opt + 1
+          do ipar = 1, nsigma
+            if (sigma_opt(ipar)) then
+              sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
+              write(str,"(I1)") isigma
+              if (ipar.ge.10) write(str,"(I2)") isigma
+              write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &         sigma(ipar)
+              isigma = isigma + 1
+            endif
+          enddo
+          imean= npar - nmean_opt - nshift_opt + 1
+          do ipar = 1, nmean
+            if (mean_opt(ipar)) then
+              mean(ipar) = real(XX(imean),kind=r8)*par_rescale(imean)
+              write(str,"(I1)") imean
+              if (ipar.ge.10) write(str,"(I2)") imean
+              write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &         mean(ipar)
+              imean = imean + 1
+            endif
+          enddo
+        endif
+        ishift = npar_opt - nshift_opt + 1
+        do ipar = 1, nshift
+          if (shiftopt(ipar)) then
+            shift(ipar) = real(XX(ishift),kind=r8)*par_rescale(ishift)
+            write(str,"(I1)") ishift
+            if (ishift.ge.10) write(str,"(I2)") ishift
+              write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &         shift(ipar)
+            ishift = ishift + 1
           endif
-        enddo
-        call b2mn_step(switch, geo, mpg, state, state_ext, j)
+        end do
+        if (cftype(1) .eq. 6) then ! FIXME invert with shift?
+          icorr = npar_opt - ncorr_opt + 1
+          do ipar = 1, ncf
+            if (corr_opt(ipar)) then
+              corr_length(ipar) = real(XX(icorr),kind=r8)*
+     &                            par_rescale(icorr)
+              write(str,"(I1)") icorr
+              if (icorr.ge.10) write(str,"(I2)") icorr
+              write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &         corr_length(ipar)
+              icorr = icorr + 1
+            endif
+          end do
+        endif
+        call b2mn_step(switch, geo, mpg, state, state_ext, state_avg, j)
       endif
       F = DBLE(j(1))
       IER = 0
@@ -308,35 +344,74 @@
       real(kind=r8) j(nncf), jdiff(nbdirsmax,nncf), gradd(npar)
       double precision DAT(*)
       integer IDAT(*)
-      integer IER, ipar, isigma
+      integer IER, ipar, isigma, imean, ishift, icorr
       character*3 str
       save jdiff
-!csc important here to check for NEW_X! so that it doesn't recalculate with same X
+!csc important here to check for NEW_X! so that it does not recalculate with same X
 ! FIXME automatically choose with preprocessor data
       if (new_x.eq.0) then
-        do ipar = 1, npar - nsigma_opt
+        do ipar = 1, npar - nsigma_opt - nmean_opt - nshift_opt
           par_opt_phys(ipar) = real(XX(ipar),kind=r8)*par_rescale(ipar)
           write(str,"(I1)") ipar
           if (ipar.ge.10) write(str,"(I2)") ipar
           write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
      &     par_opt_phys(ipar)
         enddo
-        isigma = npar - nsigma_opt + 1
-        do ipar = 1, nsigma
-          if (sigma_opt(ipar)) then
-            sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
-            write(str,"(I1)") isigma
-            if (ipar.ge.10) write(str,"(I2)") isigma
-            write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
-     &       sigma(ipar)
-            isigma = isigma + 1
+        if (cftype(1) .eq. 6) then
+          isigma = npar - nsigma_opt - nmean_opt - nshift_opt + 1
+          do ipar = 1, nsigma
+            if (sigma_opt(ipar)) then
+              sigma(ipar) = real(XX(isigma),kind=r8)*par_rescale(isigma)
+              write(str,"(I1)") isigma
+              if (ipar.ge.10) write(str,"(I2)") isigma
+              write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
+     &         sigma(ipar)
+              isigma = isigma + 1
+            endif
+          enddo
+          imean = npar - nmean_opt + - nshift_opt 1
+          do ipar = 1, nmean
+            if (mean_opt(ipar)) then
+              mean(ipar) = real(XX(imean),kind=r8)*par_rescale(imean)
+              write(str,"(I1)") imean
+              if (ipar.ge.10) write(str,"(I2)") imean
+              write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
+     &         mean(ipar)
+              imean = imean + 1
+            endif
+          enddo
+        endif
+        ishift = npar_opt - nshift_opt + 1
+        do ipar = 1, nshift
+          if (shiftopt(ipar)) then
+            shift(ipar) = real(XX(ishift),kind=r8)*par_rescale(ishift)
+            write(str,"(I1)") ishift
+            if (ishift.ge.10) write(str,"(I2)") ishift
+              write(*,*) 'IPOPT: eval_grad_f with x',trim(str),'= ',
+     &         shift(ipar)
+            ishift = ishift + 1
           endif
-        enddo
-! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas
-! because the gradient of the cost function wrt sigma is quite simple and only depends on the cost function. In this way we avoid iterating
+        end do
+        if (cftype(1) .eq. 6) then ! FIXME invert with shift?
+          icorr = npar_opt - ncorr_opt + 1
+          do ipar = 1, ncf
+            if (corr_opt(ipar)) then
+              corr_length(ipar) = real(XX(icorr),kind=r8)*
+     &                            par_rescale(icorr)
+              write(str,"(I1)") icorr
+              if (icorr.ge.10) write(str,"(I2)") icorr
+              write(*,*) 'IPOPT: eval_f with x',trim(str),'= ',
+     &         corr_length(ipar)
+              icorr = icorr + 1
+            endif
+          end do
+        endif
+! if forward, calculate the gradient using an 'effective' number of parameters which only includes the real physical parameters and not the sigmas/means
+! because the gradient of the cost function wrt sigma/means is quite simple and only depends on the cost function. In this way we avoid iterating
 ! the forward problem over unnecessary directions
         call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,
-     &   stated, state_ext, state_extd, j, jdiff, npar_opt-nsigma_opt)
+     &   stated, state_ext, state_extd, state_avg, state_avgd, j, jdiff,
+     &   npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
       endif
 #ifdef TGT
       do ipar = 1, npar
@@ -459,17 +534,22 @@ C   4          *
       double precision DAT(*)
       integer IDAT(*)
       integer ISTOP, IDUM(0:2)
-      logical quitexist, quitexist_
+      logical quitexist, quitexist_, write_state
       character(22) :: opt_state_name
       character*120 label
+      integer, save :: filen = 0
 
       write(*,*) 'IPOPT: iteration ', ITER_COUNT
       write(*,*) 'IPOPT: objval ', OBJVAL
 
 ! Experimental: write intermediate state file?
-      if (ITER_COUNT .gt. 0) then
+      write_state = .false.
+      if (switch%b2optim_save_states.gt.0) then
+        write_state = mod(ITER_COUNT,switch%b2optim_save_states).eq.0
+      endif
+      if (write_state) then
         write(*,*) 'IPOPT: Saving intermediate optimization state'
-        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',ITER_COUNT
+        write (opt_state_name,'(a14,i4.4)') 'b2fstate_optim.',filen
         call cfopen (99,trim(opt_state_name),'new','un*formatted')
         idum(0) = mpg%nCv
         idum(1) = mpg%nFc
@@ -477,12 +557,13 @@ C   4          *
         call cfverw (99, newversion)
         call cfwuin (99, 3, idum, 'nCv,nFc,ns')
         write (label,'(a46,i4)')
-     &    'b2optim_ipopt intermediate optimization state ',ITER_COUNT
+     &    'b2optim_ipopt intermediate optimization state ',filen
         call cfwuch (99, 120, label, 'label')
-        call b2wuzd_nodiff (99, newversion, state%ns, zamin, zamax, zn,
+        call b2wuzd (99, newversion, state%ns, zamin, zamax, zn,
      &   am)
         call write_b2fstate (99, mpg%nCv, mpg%nFc, state%ns, state)
         close(99)
+        filen = filen + 1
       endif
 
 !     And set ISTOP to 1 if you want Ipopt to stop now.  Below is just a

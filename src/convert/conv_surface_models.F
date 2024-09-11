@@ -28,7 +28,7 @@
       logical :: found, lhelp(60), lwgf
       integer :: artificial_slab=0, spatial_hybrid = 0
       integer :: find_loc
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -53,14 +53,14 @@
 
       call find_eirene_numbering(mpg, idim, ipos, istart, iend,
      .                           ilbls, ilble, nd, nsf, ipos_b2)
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=ineir,file='input.dat',iostat=ier)
 #else
       ineir = newunit()
       open (unit=ineir,file='input.dat',iostat=ier)
 #endif
       call xertst (ier.eq.0, 'input.dat not found')
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iouteir,file='input.dat.us')
 #else
       iouteir = newunit()
@@ -390,7 +390,7 @@
       integer, allocatable :: ipos_b2(:)
       integer :: artificial_slab=0
       logical :: exists
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -503,7 +503,7 @@
 
 !  write nondefault standard surface block for Eirene input
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=nblk3,file='eirene_block3.dat')
 #else
       nblk3 = newunit()
@@ -578,7 +578,7 @@
 
 !  write target information for Eirene input block 14
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=nblk14,file='eirene_block14.dat')
 #else
       nblk14 = newunit()

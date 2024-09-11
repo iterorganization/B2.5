@@ -187,7 +187,7 @@ c 2002-09-11: logic revised
       integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, iyped
       integer mw_jxa1, mw_jsep1, iyped1
       integer jsep, jxi, jxa, nxtl, nxtr
-      integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch
+      integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch, pulse, shot
       integer indx, indy, indx1, indy1
       integer coriolis, lhalpha
       integer nncut1, nnreg1(0:2), periodic_bc1
@@ -591,7 +591,7 @@ c 2002-09-11: logic revised
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
       data boundary_namelist/0/, neutrals_namelist/0/
-      data use_eirene/0/, style_b2mndt/1/
+      data use_eirene/0/, style_b2mndt/1/, pulse/0/, shot/0/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
       data atomic_physics_rescale_flag/0/
@@ -1455,6 +1455,8 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
       call ipgeti ('b2mndt_style', style_b2mndt)
+      call ipgeti ('b2mndr_pulse_number', pulse)
+      call ipgeti ('b2mndr_shot_number', shot)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1871,6 +1873,11 @@ c 2002-09-11: logic revised
               read (ninp(2),'(a)') add_comment(i)
             end do
           end if
+        case('b2mndr_shot_number')  ! Replacing with superseding switch b2mndr_pulse_number
+          todo = pulse.eq.0.and.shot.ne.0
+          wait = .true.
+          cnamip = 'b2mndr_pulse_number'
+          if (todo) iswitch = shot
         case default ISWITCHES
           todo = .false.
       end select ISWITCHES
@@ -11664,7 +11671,7 @@ cxpb as they no longer necessarily point to the same species
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
+        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg, switch)
         write(99,'(a5)') '&OPTIMIZATION'
         if (ncf.gt.0) then
           write(99,'(1x,a,i3,a)') 'NCF=',ncf,','
@@ -11773,7 +11780,7 @@ cxpb as they no longer necessarily point to the same species
         if(.not.allocated(iz))
      >   call alloc_b2mod_diag(nCv,nFc,ns,nnreg(0),nstrat,natm,switch)
         if(.not.user_initialised)
-     >   call alloc_b2mod_user(geo,mpg,ns,nnlimi,nnmoli)
+     >   call alloc_b2mod_user(geo,mpg,ns,nnlimi,nnmoli,switch)
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)

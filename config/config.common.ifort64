@@ -1,3 +1,6 @@
+ifeq (${FC},f77)
+FC = ifort
+endif
 EQUIVS   = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 
 CPPOPTS  = -P -I${srcdir} ${EQUIVS}
@@ -7,20 +10,64 @@ LINK_MOD =
 
 DBLFC    = ${FC}
 DBLSED   = sed -e s:\#PREC\#:d:g
-DBLSED   = 
+DBLSED   =
 
 ifndef COMPILER_REDEF
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 13; echo $$?),0)
-FCOPTS  += -align array64byte
-endif
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -gt 17; echo $$?),0)
-FCOPTS  += -qopt-zmm-usage=high
-endif
+ INCMOD = -I
+ OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+ OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
+ COMPILER_MAJOR_VERSION ?= $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
+ ifdef SOLPS_OPENMP
+  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+   FCOPTS += -qopenmp
+   LDOPTS += -qopenmp
+  else
+   FCOPTS += -openmp
+   LDOPTS += -openmp
+  endif
+ endif
+ ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+  FCOPTS += -fp-model=precise
+ endif
+ ifdef SOLPS_DEBUG
+  FCOPTS  += -diag-disable:10182 -diag-disable:10440
+  LDOPTS  += -diag-disable:10182
+  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
+   FCOPTS += -check nouninit
+   LDOPTS += -check nouninit
+  endif
+ endif
+ ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
+  FCOPTS  += -vec_report0
+  LDOPTS  += -i_dynamic
+ endif
+ ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 13; echo $$?),0)
+  FCOPTS  += -align array64byte
+ endif
+ ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -gt 17; echo $$?),0)
+  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
+   FCOPTS  += -mprefer-vector-width=512
+  else
+   FCOPTS  += -qopt-zmm-usage=high
+  endif
+ endif
 else
-FCOPTS += -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -frecursive
-ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
-FCOPTS += -mprefer-vector-width=512
-endif
+ INCMOD = - B
+ OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
+ OBNDEST = -J${OBNDIR} -o ${OBNDIR}/$*.o
+ GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
+ GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
+ DEFINES += -DGFORTRAN -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION} -DNOQUAD -DNO_IEEE
+ FCOPTS += -fno-second-underscore -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans -frecursive
+ ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
+  FCOPTS += -mprefer-vector-width=512
+ endif
+ ifdef SOLPS_OPENMP
+  FCOPTS += -fopenmp
+  LDOPTS += -fopenmp
+ endif
+ FCOPTS += ${MPI_CPP}
+ LDOPTS += ${LD_MPI}
 endif
 
 ifndef SOLPS_CPP
@@ -36,24 +83,42 @@ ifndef SOLPS_CPP
     endif
   endif
   ifdef IMAS_VERSION
-    ifndef COMPILER_REDEF
-      ifdef AL_VERSION
-        AL_MAJOR_VERSION ?= $(shell echo ${AL_VERSION} | cut -d '.' -f1 )
-        AL_MINOR_VERSION ?= $(shell echo ${AL_VERSION} | cut -d '.' -f2 )
-        AL_MICRO_VERSION ?= $(shell echo ${AL_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-      else
-        AL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-        AL_MINOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f2 )
-        AL_MICRO_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-      endif
-      IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
-      IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-      IMAS_MICRO_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f3 )
-      GGD_MAJOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f1 )
-      GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-      GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-      ifeq ($(shell test ${AL_MAJOR_VERSION} -lt 5; echo $$?),0)
+    ifdef AL_VERSION
+      AL_MAJOR_VERSION ?= $(shell echo ${AL_VERSION} | cut -d '.' -f1 )
+      AL_MINOR_VERSION ?= $(shell echo ${AL_VERSION} | cut -d '.' -f2 )
+      AL_MICRO_VERSION ?= $(shell echo ${AL_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
+    else
+      AL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
+      AL_MINOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f2 )
+      AL_MICRO_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
+    endif
+    IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
+    IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
+    IMAS_MICRO_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f3 )
+    GGD_MAJOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f1 )
+    GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
+    GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
+    ifeq ($(shell test ${AL_MAJOR_VERSION} -ge 5; echo $$?),0)
+      IMAS_PKG_LIST += al-fortran al-identifiers-fortran
+    else
+      ifndef COMPILER_REDEF
         IMAS_PKG_LIST += imas-ifort
+        ifeq ($(shell test ${IMAS_MAJOR_VERSION} -ge 4; echo $$?),0)
+          IMAS_PKG_LIST += imas-identifiers-ifort
+        else
+          ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 31; echo $$?),0)
+            IMAS_PKG_LIST += imas-identifiers-ifort
+          endif
+        endif
+      else
+        IMAS_PKG_LIST += imas-gfortran
+        ifeq ($(shell test ${IMAS_MAJOR_VERSION} -ge 4; echo $$?),0)
+          IMAS_PKG_LIST += imas-identifiers-gfortran
+        else
+          ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 31; echo $$?),0)
+            IMAS_PKG_LIST += imas-identifiers-gfortran
+          endif
+        endif
       endif
     endif
     ifdef AMNS_PREFIX
@@ -70,6 +135,8 @@ ifndef SOLPS_CPP
           ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
             ifndef COMPILER_REDEF
               LD_GGD ?= -lggd-ifort
+            else
+              LD_GGD := -lggd-gfortran
             endif
           else
             IMAS_PKG_LIST += imas-lowlevel
@@ -78,7 +145,7 @@ ifndef SOLPS_CPP
       endif
     endif
     LD_AL := `pkg-config ${IMAS_PKG_LIST} --libs`
-    ifdef LD_GDD
+    ifdef LD_GGD
       LD_AL += ${LD_GGD}
     endif
     DEFINES += -DIMAS -DAL_MAJOR_VERSION=${AL_MAJOR_VERSION} -DAL_MINOR_VERSION=${AL_MINOR_VERSION} -DAL_MICRO_VERSION=${AL_MICRO_VERSION} -DIMAS_MAJOR_VERSION=${IMAS_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DIMAS_MICRO_VERSION=${IMAS_MICRO_VERSION} -DGGD_MAJOR_VERSION=${GGD_MAJOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION} -DGGD_MICRO_VERSION=${GGD_MICRO_VERSION}
@@ -93,7 +160,7 @@ ifdef IMAS_PKG_LIST
   endif
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
@@ -116,7 +183,6 @@ endif
 
 LD       = ${FC}
 
-LCPP     = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

@@ -13,7 +13,7 @@
       real (kind=R8), allocatable  :: data1(:),
      1 data2(:,:), data2T(:,:), data3(:,:,:), data3T(:,:,:)
       character, allocatable :: data2c(:,:)
-#ifdef F2003
+#ifndef LEGACYCOMP
       character(len=:), allocatable :: str1(:)
 #else
       integer, parameter :: strmax = 1024
@@ -225,7 +225,7 @@ c first deal with the time vector
             allocate(data2c(dimsize(1),dimsize(2)))
             status=nf_get_var_text(ncid,ivar,data2c)
             call check_cdf_status(status)
-#ifdef F2003
+#ifndef LEGACYCOMP
             allocate(character(len=dimsize(1)+1) :: str1(dimsize(2)))
 #else
             call xertst(dimsize(1).le.strmax,

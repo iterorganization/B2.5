@@ -68,7 +68,7 @@ SUBROUTINE B2TVSKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   REAL(kind=r8) :: weight(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: nd
   REAL(kind=r8), DIMENSION(nFc) :: temp
   INTEGER :: nbdirs
@@ -79,13 +79,13 @@ SUBROUTINE B2TVSKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tvskt')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !
 !   ..calculate the contribution of perpendicular current due to RS in 
 !     kt-model
-  IF (switch%b2tfhe_vis_kt .NE. 0.0e0_R8 .AND. switch%no_current .EQ. 0&
-& ) THEN
+  IF (switch%b2tfhe_vis_kt .NE. 0.0_R8 .AND. switch%no_current .EQ. 0) &
+& THEN
 !
     weight = 1.0_R8
 !
@@ -145,7 +145,7 @@ SUBROUTINE B2TVSKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 &     ismain)
 !
 !     ..set dva in guard cells (constant extrapolation from domain cell)
-    CALL EXTEND_DV(dva, dvad, ncv, mpg, 1, nbdirs)
+    CALL EXTEND_DV(dva, dvad, mpg, 1, nbdirs)
 !
 !     ..compute current density in cell centers through divergence theorem
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, weight, dva, dvad, wrkf, wrkfd, &
@@ -245,7 +245,7 @@ SUBROUTINE B2TVSKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
   REAL(kind=r8) :: weight(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
 !-----------------------------------------------------------------------
 !.computation
 !
@@ -253,13 +253,13 @@ SUBROUTINE B2TVSKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tvskt')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !
 !   ..calculate the contribution of perpendicular current due to RS in 
 !     kt-model
-  IF (switch%b2tfhe_vis_kt .NE. 0.0e0_R8 .AND. switch%no_current .EQ. 0&
-& ) THEN
+  IF (switch%b2tfhe_vis_kt .NE. 0.0_R8 .AND. switch%no_current .EQ. 0) &
+& THEN
 !
     weight = 1.0_R8
 !
@@ -286,7 +286,7 @@ SUBROUTINE B2TVSKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 &     ismain)
 !
 !     ..set dva in guard cells (constant extrapolation from domain cell)
-    CALL EXTEND_NODIFF(dva, ncv, mpg, 1)
+    CALL EXTEND_NODIFF(dva, mpg, 1)
 !
 !     ..compute current density in cell centers through divergence theorem
     CALL INTFACE(ncv, nfc, mpg%fccv, weight, dva, wrkf)

@@ -22,16 +22,11 @@ CPP = /lib/cpp -traditional
 #
 # Re-define FC for mpi compilation
 #
+
+MPI_FC    ?= mpif90
 ifdef SOLPS_MPI
-FC         = mpif90
-else
-FC         = gfortran
+FC         = ${MPI_FC}
 endif
-
-GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')
-
-GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
-GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
 
 DDBLOPTION = -Ad # ???
 
