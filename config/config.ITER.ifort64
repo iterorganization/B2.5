@@ -35,7 +35,7 @@ DEFINES   += -DNO_OPT
 CPP        = /lib/cpp -traditional
 
 MPI_FC    ?= mpiifort
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FC         = ${MPI_FC}
 ifndef MPDIR
 MPDIR      = ${EBROOTIMPI}
@@ -61,7 +61,7 @@ ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
 FCOPTS    += -fp-model=precise
 endif
 endif
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FCOPTS    += ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
@@ -77,7 +77,7 @@ else
   GGD_VERSION ?= '0.0.0'
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 LDLIBES   += ${LD_MPI}
 else
 ifdef USE_IMPGYRO

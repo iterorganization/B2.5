@@ -30,7 +30,7 @@ endif
 CPP = /lib/cpp -traditional
 
 MPI_FC ?= mpif90
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FC      = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
@@ -43,7 +43,7 @@ GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.
 GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
 GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
 
-ifndef USE_OPENMP
+ifndef SOLPS_OPENMP
 FCOPTS  = -fPIC
 LDOPTS  = -fPIC
 endif
@@ -55,7 +55,7 @@ ifdef SOLPS_DEBUG
 FCOPTS += -gdwarf-2
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FCOPTS += ${MPI_CPP}
 endif
 
