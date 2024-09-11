@@ -15,7 +15,7 @@ endif
 CPP = /lib/cpp -traditional
 
 MPI_FC ?= mpif90
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FC      = ${MPI_FC}
 else
 ifdef USE_IMPGYRO

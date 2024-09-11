@@ -42,12 +42,12 @@ else
 FCOPTS += -O2
 endif
 
-ifdef USE_OPENMP
+ifdef SOLPS_OPENMP
 FCOPTS += -fopenmp
 LDOPTS += -fopenmp
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
