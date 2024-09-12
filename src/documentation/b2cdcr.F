@@ -92,6 +92,8 @@
 *       B2YS* - Display the externally imposed source terms.
 *     B2Z* - Reserved for application-dependent postprocessing.
 *
+*     Routines that end in _st are remnants of the structured code versions.
+*
 *
 *  1. Purpose of individual B2.5 routines.
 *
@@ -592,10 +594,13 @@
 *     printed output.
 *
 *     B2XPFE computes the electron particle flux, fne:
-*       fne(,,) = (sum is :: rza(,,is)*fna(,,,is))-(1/qe)*fch(,,) .
+*       fne(iFc,0:1) = (sum is :: rza(iFc,is)*fna(iFc,0:1,is))-(1/qe)*fch(iFc,0:1).
 *
 *     B2XPFI computes the total atom particle flux, fni:
-*       fni(,,) = (sum is :: fna(,,,is)) .
+*       fni(iFc,0:1) = (sum is :: fna(iFc,0:1,is)) .
+*
+*     B2XPFZ computes the total ion particle flux, fni:
+*       fni(iFc,0:1) = (sum is, .not.is_neutral(is) :: fna(iFc,0:1,is)) .
 *
 *     B2XPIC computes the poloidal projection of the ion parallel
 *     current on cell centers.
@@ -605,12 +610,12 @@
 *     B2XPMC computes the mach number of the parallel flow.
 *
 *     B2XPNE computes the electron density, ne:
-*       ne(,) = (sum is :: rza(,,is)*na(,,is)) .
+*       ne(iCv) = (sum is :: rza(iCv,is)*na(iCv,is)) .
 *
 *     B2XPNI computes the total atom density, ni0:
-*       ni(,,0) = (sum is :: na(,,is)) .
+*       ni(iCv,0) = (sum is :: na(iCv,is)) .
 *     and the total ion density, ni1:
-*       ni(,,1) = (sum is :: na(,,is) if is_neutral(is).eqv..false.) .
+*       ni(iCv,1) = (sum is :: na(iCv,is) if is_neutral(is).eqv..false.) .
 *
 *     B2XPNM computes the atom density weighted by rz2/am, ne2m:
 *       ne2m(,) = (sum is :: (rz2(,,is)/am(is))*na(,,is)) .
@@ -623,16 +628,16 @@
 *     B2XPPE computes the electron pressure, pe = ne*te.
 *
 *     B2XPPR computes the total pressure, pr:
-*       pr(,) = ne(,)*te(,) + (sum is :: na(,,is)*ti(,)) .
+*       pr(iCv) = ne(iCv)*te(iCv) + (sum is :: na(iCv,is)*ti(iCv)) .
 *
 *     B2XPPZ computes the plasma pressure, pz:
-*       pz(,) = ne(,)*te(,) + (sum is :: na(,,is)*ti(,), not including neutrals).
+*       pz(iCv) = ne(iCv)*te(iCv) + (sum is :: na(iCv,is)*ti(iCv), not including neutrals).
 *
 *     B2XPRO computes the mass density, ro:
-*       ro(,) = (sum is :: am(is)*mp*na(,,is)) .
+*       ro(iCv) = (sum is :: am(is)*mp*na(iCv,is)) .
 *
 *     B2XPRZ computes the ion mass density, rz:
-*       rz(,) = (sum is :: am(is)*mp*na(,,is), including only charged species).
+*       rz(iCv) = (sum is :: am(is)*mp*na(iCv,is), including only charged species).
 *
 *     B2XPVE computes the parallel electron velocity on cell centers.
 *
@@ -677,12 +682,32 @@
 *     of a quantity defined on the B2.5 mesh.
 *     Not converted for WG.
 *
+*     B2XPEN computes contributions to the total energy fluxes,
+*     as well as the total energy fluxes
+*     The contributions from external species are not included and must
+*     be added explicitly in the calling routine when needed.
+*
 *     B2XZEF computes zeff:
-*       zeff(,) = (sum is :: rz2(,,is)*na(,,is))/ne .
+*       zeff(iCv) = (sum is :: rz2(iCv,is)*na(iCv,is))/ne(iCv) .
 *
 *     B2XZMF computes zmff:
-*       zmff(,) = (sum over is /= ismain :: rz2(,,is)*na(,,is))/
-*                  na(,,ismain)*rz2(,,ismain)
+*       zmff(iCv) = (sum over is /= ismain :: rz2(iCv,is)*na(iCv,is))/
+*                  na(iCv,ismain)*rz2(iCv,ismain)
+*
+*     B2XZDD zeroes out the array elements corresponding to dead cells
+*      and core boundary cells.
+*
+*     B2XEHX computes the modified poloidal electrical field on all cell
+*     faces.
+*
+*     B2XEHY computes the modified radial electrical field on all cell
+*     faces.
+*
+*     B2XPFN computes the total particle flux of hydrogenic atoms, fnn:
+*       fnn(iFc,0:1) = (sum is, is_neutral(is).and.zn(is).eq.1 :: fna(iFc,0:1,is)).
+*
+*     B2XPNN computes the total density of hydrogenic neutrals, nn:
+*       nn = (sum is, is_neutral(is).and.zn(is).eq.1 :: na(,is)).
 *
 *     B2YE (main program) is a postprocessor for B2.5. It calculates
 *     statistical errors based on averaged quantities collected during
