@@ -65,7 +65,7 @@ BLD = ar rucv
 
 GRLIBES = ${LD_NCARG}
 PLLIBES = ${LD_MSCL}
-LDLIBES = ${LD_NAG} ${LD_NETCDF}
+LDLIBES = ${LD_NAG} ${LD_NETCDF} -L${LAPACK_LIB} -llapack -lrefblas -L/cineca/prod/opt/compilers/gnu/6.1.0/none/lib64 -lgfortran
 
 ifdef LD_CATALYST
 CXXFLAGS = -std=c++11
