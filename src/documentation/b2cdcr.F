@@ -298,7 +298,12 @@
 *     B2SIAV computes a linearised representation of the additional
 *     viscosity.
 *
+*     B2SICF computes centrifugal force.
+*
 *     B2SIFR computes a linearised representation of the friction
+*     force between one species and all others.
+*
+*     B2SIFR_ computes a linearised representation of the friction
 *     force between one species and all others.
 *
 *     B2SIFRTF computes a linearised representation of the thermal
@@ -311,6 +316,9 @@
 *     heat equations. These terms specify the contributions of the
 *     divergence of the flow field, of viscous heating, and of the
 *     electron-atom and atom-atom friction.
+*
+*     B2SIKT computes the sources in the energy equations due to the
+*     k-eps model.
 *
 *     B2SMDT modifies the source coefficients to account for the
 *     implicit time discretisation for parallel momentum equations.
@@ -344,6 +352,17 @@
 *     density, parallel momentum, electron heat, atom heat, and charge,
 *     due to the boundary conditions.
 *
+*     B2STBC_FB provides linearised expressions for the sources of
+*     density, parallel momentum, electron heat, atom heat, and charge,
+*     due to feedback boundary conditions after the normal boundary
+*     conditions have been applied.
+*
+*     B2STBC_PHYS provides linearised expressions for the sources of
+*     density, parallel momentum, electron heat, atom heat, and charge,
+*     due to the boundary conditions.
+*     Here the boundary conditions are expressed by use of the old B2
+*     namelist format.
+*
 *     B2STBM provides linearised expressions for the sources of
 *     density, parallel momentum, and heat, due to miscellaneous
 *     application specific processes.
@@ -351,6 +370,11 @@
 *     B2STBR provides linearised expressions for the sources of
 *     density, parallel momentum, and heat, due to special boundary
 *     conditions and the neutral gas recycling model.
+*
+*     B2STBR_PHYS provides linearized expressions for the sources of
+*     density, parallel momentum and heat, due to special boundary
+*     conditions and the neutral gas recycling model, using the neutrals
+*     namelist. Also the advanced fluid neutral (AFN) boundary conditions are computed here.
 *
 *     B2STCX provides linearised expressions for the sources of atom
 *     density and atom parallel momentum, due to charge exchange.
