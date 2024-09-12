@@ -1225,13 +1225,13 @@ ${MNHEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} 
 	${LD} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${OBJDIR}/$*.o ${ADEXTRA} ${OBJDIR}/libb2.a ${MNEXTRA} ${IMASLIBS} ${PLLLIBS} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ${CONTEXTAD}: ${DIFFPATH}/adContext.c ${DIFFPATH}/adContext.h
-	cc -c $< -o $@
+	${CC} -c $< -o $@
 
 ${STACKAD}: ${DIFFPATH}/adStack.c ${DIFFPATH}/adStack.h
-	cc -c $< -o $@
+	${CC} -c $< -o $@
 
 ${DBGAD}: ${DIFFPATH}/adDebug.c ${DIFFPATH}/adDebug.h
-	cc -c $< -o $@
+	${CC} -c $< -o $@
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 	@${BLD} $@ ${LIBOBJS}
