@@ -1106,6 +1106,10 @@ endif
 	@if [ -f b2stel_dv_dv__genmod.${MOD} ] ; then /bin/mv b2stel_dv_dv__genmod.${MOD} ${OBJDIR}/ ; fi
 	@if [ -f b2stel_nodiff__genmod.f90 ] ; then /bin/mv b2stel_nodiff__genmod.f90 ${OBJDIR}/ ; fi
 	@if [ -f b2stel_nodiff__genmod.${MOD} ] ; then /bin/mv b2stel_nodiff__genmod.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv_nodiff__genmod.f90 ] ; then /bin/mv b2stel_dv_nodiff__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel_dv_nodiff__genmod.${MOD} ] ; then /bin/mv b2stel_dv_nodiff__genmod.${MOD} ${OBJDIR}/ ; fi
+	@if [ -f b2stel_nodiff_nodiff__genmod.f90 ] ; then /bin/mv b2stel_nodiff_nodiff__genmod.f90 ${OBJDIR}/ ; fi
+	@if [ -f b2stel_nodiff_nodiff__genmod.${MOD} ] ; then /bin/mv b2stel_nodiff_nodiff__genmod.${MOD} ${OBJDIR}/ ; fi
 endif
 endif
 
