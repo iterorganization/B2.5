@@ -276,15 +276,17 @@
 *     physics common blocks.
 *
 *     B2RUGM reads from an un*formatted file the geometry and magnetic
-*     field.
+*     field. Not converted for WG.
 *
-*     B2RUPS reads the state of the plasma from an un*formatted file.
+*     B2RUPS reads the state of the plasma from an un*formatted file. Not converted for WG.
 *
 *     B2RURC reads a table of atomic rate data from an un*formatted
-*     file.
+*     file. 
 *
 *     B2RUSR reads a table of source term data from an un*formatted
-*     file.
+*     file. Not converted for WG.
+*
+*     B2RUZD reads header info (zamin, zamax, zn, am) from a state file.
 *
 *     B2SCDT modifies the source coefficients to account for the
 *     implicit time discretisation for the isb-th density equation.
