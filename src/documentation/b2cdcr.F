@@ -384,13 +384,19 @@
 *     to the electron-atom collision processes of ionisation,
 *     recombination, and radiation.
 *
+*     B2TANML computes the X and Y components of the anomalous current.
+*
 *     B2TBFL computes the total flux through the boundaries.
+*
+*     B2TCPA computes the parallel current between neighboring cells.
 *
 *     B2TDIA computes the X and Y components of the divergent part of
 *     the diamagnetic current.
 *
 *     B2TEPSCH computes the X and Y components of the Pfirsch-Schlueter
 *     heat flux.
+*
+*     B2TFCC adds contribution from cdpa to floe, cone, floi, coni
 *
 *     B2TFCH computes the electric current between neighboring cells,
 *     and the coefficients that specify its linearisation.
@@ -409,6 +415,12 @@
 *
 *     B2TFRN computes the particle and energy fluxes between
 *     neighbouring cells which are to be provided to Eirene.
+
+*     B2TINER computes the inertial current.
+*
+*     B2TINNT computes the ion-neutral current.
+*
+*     B2TLC0 computes the neutral diffusion flux limit.       
 *
 *     B2TLHE applies a flux limit to the electron heat and charge
 *     transport coefficients.
@@ -420,11 +432,18 @@
 *
 *     B2TLMV applies a flux limit to the viscosity.
 *
+*     B2TLNL computes the Coulomb logarithm according to Braginskii or 
+*     Wesson formulas.
+*
+*     B2TLV0 computes the neutral viscosity flux limit.
+*
 *     B2TQCA computes the classical contributions to the atom
 *     transport coefficients.
 *
 *     B2TQCE computes the classical contributions to the electron
 *     transport coefficients.
+*
+*     B2TQIN computes the classical ion-neutral perpendicular conductivity.
 *
 *     B2TQNA computes the anomalous contributions to the transport
 *     coefficients.
@@ -441,6 +460,12 @@
 *     B2TRNO computes the anomalous transport coefficients, including
 *     geometric factors.
 *
+*     B2TRQL computes the flux limit velocities.
+*
+*     B2TTIA computes the classical Braginskii time of the ion-atom collision.
+*
+*     B2TVSKT computes the current due to RS of kt-model.
+*
 *     B2TVSPA computes the X and Y components of the parallel viscosity
 *     current.
 *
@@ -449,6 +474,9 @@
 *
 *     B2TVSQ computes the X and Y components of the heat viscosity
 *     current.
+*
+*     B2TXCC computes normal conductances between neighbouring cells, 
+*     given the conductivities.
 *
 *     B2TXCV computes viscous conductances between neighbouring
 *     staggered cells, given the viscosities (not used anymore).
@@ -461,9 +489,11 @@
 *
 *     B2TXFX computes conductances between neighbouring cells in the
 *     poloidal direction, given the flux-limited conductivities.
+*     Not converted for WG.
 *
 *     B2TXFY computes conductances between neighbouring cells in the
 *     radial direction, given the flux-limited conductivities.
+*     Not converted for WG.
 *
 *     B2TXSX computes the integrals over cell x-faces of a function
 *     that is provided on the cells.
