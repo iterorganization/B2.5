@@ -546,18 +546,20 @@
 *     common blocks.
 *
 *     B2WFGM writes to a formatted file a summary of the B2.5 geometry
-*     and magnetic field.
+*     and magnetic field. Not converted for WG.
 *
 *     B2WFPI writes a summary of the plasma state to a formatted file.
-*     This routine is an interface to b2wfpj.
+*     This routine is an interface to b2wfpj. Not converted for WG.
 *
 *     B2WFPJ writes a summary of the plasma state to a formatted file.
 *     This routine does not make use of any geometric information.
+*     Not converted for WG.
 *
 *     B2WFPK writes supplementary information about the plasma state to
-*     a formatted file.
+*     a formatted file. Not converted for WG.
 *
 *     B2WFPS writes a summary of the plasma state to a formatted file.
+*     Not converted for WG.
 *
 *     B2WFR0 writes to a formatted file a text containing credits for
 *     the ADPAK atomic physics rate coefficients.
@@ -569,45 +571,46 @@
 *     coefficients that has been prepared for B2.5.
 *
 *     B2WGCR provides graphical output of the residuals and the
-*     corrections.
+*     corrections. Not converted for WG.
 *
 *     B2WGDT provides graphical output of the change in the state.
+*     Not converted for WG.
 *
 *     B2WGGM produces graphical displays of the B2.5 geometry and
-*     magnetic field.
+*     magnetic field. Not converted for WG.
 *
 *     B2WGPI provides graphical output of the plasma state on a uniform
-*     rectangular mesh. This routine is an interface to b2wgpj.
+*     rectangular mesh. This routine is an interface to b2wgpj. Not converted for WG.
 *
 *     B2WGPJ provides graphical output of the plasma state on a uniform
-*     cartesian mesh.
+*     cartesian mesh. Not converted for WG.
 *
 *     B2WGPS provides graphical output of the plasma state.
-*     This routine is an interface to b2wgst.
+*     This routine is an interface to b2wgst. Not converted for WG.
 *
-*     B2WGST provides graphical output of the plasma state.
+*     B2WGST provides graphical output of the plasma state. Not converted for WG.
 *
 *     B2WGRC displays a table of atomic rate coefficients that has been
 *     prepared for B2.5.
 *
-*     B2WGX0 displays the B2.5 mesh in a cartesian representation.
+*     B2WGX0 displays the B2.5 mesh in a cartesian representation. Not converted for WG.
 *
-*     B2WGX1 displays the B2.5 mesh on the physical plane.
+*     B2WGX1 displays the B2.5 mesh on the physical plane. Not converted for WG.
 *
-*     B2WGX2 produces contour plots on a sequence of cartesian domains.
+*     B2WGX2 produces contour plots on a sequence of cartesian domains. Not converted for WG.
 *
-*     B2WGX3 produces contour plots on the physical domain.
+*     B2WGX3 produces contour plots on the physical domain. Not converted for WG.
 *
 *     B2WGX4 produces log-contour plots on a sequence of cartesian
-*     domains.
+*     domains. Not converted for WG.
 *
-*     B2WGX5 produces log-contour plots on the physical domain.
+*     B2WGX5 produces log-contour plots on the physical domain. Not converted for WG.
 *
-*     B2WGXB plots an outline of the B2.5 mesh on the physical domain.
+*     B2WGXB plots an outline of the B2.5 mesh on the physical domain. Not converted for WG.
 *
-*     B2WGXP produces contour plots on a cartesian domain.
+*     B2WGXP produces contour plots on a cartesian domain. Not converted for WG.
 *
-*     B2WGXQ produces log-contour plots on a cartesian domain.
+*     B2WGXQ produces log-contour plots on a cartesian domain. Not converted for WG.
 *
 *     B2WGYP performs the core NCAR operations to produce a contour
 *     plot.
@@ -617,27 +620,29 @@
 *
 *     B2WSAV writes the state of the plasma to an unformatted file,
 *     in the style required for input into the 'old B2' code.
-*     The routine operates as an interface to b2wsax.
+*     The routine operates as an interface to b2wsax. Not converted for WG.
 *
 *     B2WSAX writes the state of the plasma to an unformatted file,
-*     in the style required for input into the 'old B2' code.
+*     in the style required for input into the 'old B2' code. Not converted for WG.
 *
 *     B2WSCP provides special purpose printed output of data in the
-*     physics common blocks.
+*     physics common blocks. Not converted for WG.
 *
 *     B2WSPS provides special purpose printed output concerning the
-*     plasma state. This routine is an interface to b2wsst.
+*     plasma state. This routine is an interface to b2wsst. Not converted for WG.
 *
 *     B2WSST provides special purpose printed output concerning the
-*     plasma state.
+*     plasma state. Not converted for WG.
 *
 *     B2WUCP writes to an un*formatted file the parameters in the
-*     physics common blocks.
+*     physics common blocks. 
 *
 *     B2WUGM writes to an un*formatted file the geometry and magnetic
-*     field.
+*     field. Not converted for WG.
 *
-*     B2WUPS writes the state of the plasma to an un*formatted file.
+*     B2WUPS writes the state of the plasma to an un*formatted file. Not converted for WG.
+*
+*     B2WUZD writes header info (zamax, zamin, zn, am) to an un*formatted file.
 *
 *     B2WURC writes a table of atomic rate coefficients to an
 *     un*formatted file.
