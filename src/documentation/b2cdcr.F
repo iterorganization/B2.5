@@ -405,16 +405,16 @@
 *     to the electron-atom collision processes of ionisation,
 *     recombination, and radiation.
 *
-*     B2TANML computes the X and Y components of the anomalous current.
+*     B2TANML computes the poloidal and radial components of the anomalous current.
 *
 *     B2TBFL computes the total flux through the boundaries.
 *
 *     B2TCPA computes the parallel current between neighboring cells.
 *
-*     B2TDIA computes the X and Y components of the divergent part of
+*     B2TDIA computes the poloidal and radial components of the divergent part of
 *     the diamagnetic current.
 *
-*     B2TEPSCH computes the X and Y components of the Pfirsch-Schlueter
+*     B2TEPSCH computes the poloidal and radial components of the Pfirsch-Schlueter
 *     heat flux.
 *
 *     B2TFCC adds contribution from cdpa to floe, cone, floi, coni
@@ -487,13 +487,13 @@
 *
 *     B2TVSKT computes the current due to RS of kt-model.
 *
-*     B2TVSPA computes the X and Y components of the parallel viscosity
+*     B2TVSPA computes the poloidal and radial components of the parallel viscosity
 *     current.
 *
-*     B2TVSPR computes the X and Y components of the perpendicular viscosity
+*     B2TVSPR computes the poloidal and radial components of the perpendicular viscosity
 *     current.
 *
-*     B2TVSQ computes the X and Y components of the heat viscosity
+*     B2TVSQ computes the poloidal and radial components of the heat viscosity
 *     current.
 *
 *     B2TXCC computes normal conductances between neighbouring cells, 
