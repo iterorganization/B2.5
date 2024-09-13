@@ -512,9 +512,11 @@
 *     B2URMO computes the residual of the parallel momentum balance
 *     equation for one atomic species.
 *
-*     B2URSC computes the residual of a scalar conservation equation.
+*     B2URSC computes the residual of a scalar conservation equation
+*     (with a two-part source lineerization).
 *
-*     B2URSD computes the residual of a scalar conservation equation.
+*     B2URSD computes the residual of a scalar conservation equation
+*     (with a four-part source lineerization).
 *
 *     B2USCO computes a correction towards the solution of the
 *     continuity equation for one atomic species.
