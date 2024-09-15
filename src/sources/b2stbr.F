@@ -57,6 +57,9 @@
 #ifndef ALLOCATE_AND_NAMELIST
       use b2mod_dimensions
 #endif
+#ifdef _OPENMP
+      use omp_lib           !IGNORE
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
