@@ -892,13 +892,15 @@ cdpc
      1           neutral_sources_rescale ! dpc: Eirene coupling 1999.06.28
          endif
          sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+recyc(is,istra)*t0
-         if (is_neutral(is0)) then                 ! IYS 18.09.2018
+         if (is_neutral(is0).and.t0.gt.0.0_R8) then           ! IYS 18.09.2018
            sna_stbr_neut(b2espcr(is0),lbcstra(istra)) =
      &      sna_stbr_neut(b2espcr(is0),lbcstra(istra)) +
      &      recyc(is,istra)*t0
-           if (output.gt.2) write(*,*) 'Recycling: ',
+           if (output.gt.2)
+     >      write(*,'(a,4(a,i4),a,1p,1e15.7)') 'Recycling: ',
      &      'Contribution to sna_stbr_neut. is0 = ',
-     &       is0,' istra = ',istra,' ix = ',ix,' iy = ',iy
+     &       is0,' istra = ',istra,' ix = ',ix,' iy = ',iy,':',
+     &       recyc(is,istra)*t0
          end if
 
          itrack=track_index(is0)
@@ -996,10 +998,11 @@ c chemical sputtering
                  sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra)) =
      &            sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra))
      &            + t1
-                 if (output.gt.2) write(*,*)
+                 if (output.gt.2.and.t1.gt.0.0_R8)
+     >            write(*,'(a,4(a,i4),a,1p,1e15.7)')
      &            'Chemical sputtering from bulk: ',
      &            'Contribution to sna_stbr_sput. is = ',sput_dst_bulk,
-     &            ' istra = ',istra,' ix = ',ix,' iy = ',iy
+     &            ' istra = ',istra,' ix = ',ix,' iy = ',iy,':',t1
                endif
 cxpb  Erosion from the bulk material if chemically sputtered
 cxpb  without mixed materials model
@@ -1133,10 +1136,11 @@ cxpb We first treat the bulk material
                   sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra)) =
      &             sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra))
      &             + t1
-                  if (output.gt.2) write(*,*)
+                  if (output.gt.2.and.t1.gt.0.0_R8)
+     >             write(*,'(a,4(a,i4),a,1p,1e15.7)')
      &             'Physical sputtering from bulk: ',
      &             'Contribution to sna_stbr_sput. is = ',sput_dst_bulk,
-     &             ' istra = ',istra,' ix = ',ix,' iy = ',iy
+     &             ' istra = ',istra,' ix = ',ix,' iy = ',iy,':',t1
 
 cxpb  Erosion from the bulk material if physically sputtered
                   if(itrack.gt.0.and.itrack.le.ntrack.and.
@@ -1237,10 +1241,10 @@ cxpb  We add this promptly redeposited fraction in the deposited material
      &                   lbcstra(istra)) = t1 +
      &               sna_stbr_sput(b2espcr(target_intcode(itrack)),
      &                   lbcstra(istra))
-!                 write(*,*)
+!                 if (t1.gt.0.0_R8) write(*,'(4(a,i4),a,1p,1e15.7)')
 !     &     'Erosion. Contribution to sna_stbr_sput. is = ',
 !     $    target_intcode(itrack),' istra = ',istra,' ix = ',
-!     &      ix,' iy = ',iy
+!     &      ix,' iy = ',iy,':',t1
 
 cxpb  Removal from the deposited material if physically sputtered
 cxpb  with mixed materials model
@@ -1379,10 +1383,12 @@ c thermal evaporation     ! no fix for mixed materials yet
                sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + t1
                sna_stbr_sput(b2espcr(is),lbcstra(istra)) =   ! IYS 18.09.2018
      &          sna_stbr_sput(b2espcr(is),lbcstra(istra)) + t1
-               if (output.gt.2) write(*,*)
+               if (output.gt.2.and.t1.gt.0.0_R8)
+     >          write(*,'(a,4(a,i4),a,1p,1e15.7)')
      &          'Thermal evaporation : ',
      &          'Contribution to sna_stbr_sput. is = ',is,
-     &          ' istra = ',istra,' ix = ',ix,' iy = ',iy
+     &          ' istra = ',istra,' ix = ',ix,' iy = ',iy,
+     &          ':',t1
 cxpb  Erosion from the bulk material if thermally evaporated
                if(itrack.gt.0.and.itrack.le.ntrack.and.
      1              iwall.gt.0.and.main_call)
@@ -1426,10 +1432,11 @@ c radiation enhanced sublimation
                   sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra)) =   ! IYS 18.09.2018
      &              sna_stbr_sput(b2espcr(sput_dst_bulk),lbcstra(istra))
      &              + t1
-                  if (output.gt.2) write(*,*)
+                  if (output.gt.2.and.t1.gt.0.0_R8)
+     >             write(*,'(a,4(a,i4),a,1p,1e15.7)')
      &             'RES sputtering: ',
      &             'Contribution to sna_stbr_sput. is = ',sput_dst_bulk,
-     &             ' istra = ',istra,' ix = ',ix,' iy = ',iy
+     &             ' istra = ',istra,' ix = ',ix,' iy = ',iy,':',t1
                endif
 
 cxpb  Erosion from the bulk material if RES sputtered
@@ -1504,19 +1511,21 @@ cxpb  as deposition
                  if (is_neutral(is)) then                           ! IYS 18.09.2018
                    sna_stbr_neut(b2espcr(is),lbcstra(istra)) =
      &              sna_stbr_neut(b2espcr(is),lbcstra(istra)) + t1
-                   if (output.gt.2) write(*,*) 'Reflection:',
-     >              ' Contribution to sna_stbr_neut. is = ',is,
-     &              ' istra = ',istra,' ix = ',ix,' iy = ',iy
+                   if (output.gt.2.and.t1.gt.0.0_R8)
+     >              write(*,'(a,4(a,i4),a,1p,1e15.7)') 'Reflection:',
+     &              ' Contribution to sna_stbr_neut. is = ',is,
+     &              ' istra = ',istra,' ix = ',ix,' iy = ',iy,':',t1
                  end if
                else
                  sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0) + t1    ! reflection to the neutral
                  if (is_neutral(is0)) then                          ! IYS 18.09.2018
                    sna_stbr_neut(b2espcr(is0),lbcstra(istra)) =
      &              sna_stbr_neut(b2espcr(is0),lbcstra(istra)) + t1
-                   if (output.gt.2)
-     >              write(*,*) 'Reflection into neutral:',
+                   if (output.gt.2.and.t1.gt.0.0_R8)
+     >              write(*,'(a,4(a,i4),a,1p,1e15.7)')
+     &               'Reflection into neutral:',
      &               'Contribution to sna_stbr_neut. is0 = ',is0,
-     &               ' istra = ',istra,' ix = ',ix,' iy = ',iy
+     &               ' istra = ',istra,' ix = ',ix,' iy = ',iy,':',t1
                  endif
                endif
                shi0(ix,iy,0) = shi0(ix,iy,0) + t2
@@ -1538,9 +1547,12 @@ cxpb  as deposition
                 sna_stbr_neut(b2espcr(is+1),lbcstra(istra)) =
      &              sna_stbr_neut(b2espcr(is+1),lbcstra(istra)) +
      2              rcion(is,istra)*t0/neutral_sources_rescale
-                if (output.gt.2) write(*,*) 'Recycling into ions: ',
+                if (output.gt.2.and.t0.gt.0.0_R8)
+     >           write(*,'(a,4(a,i4),a,1p,1e15.7)')
+     &           'Recycling into ions: ',
      &           'Contribution to sna_stbr_neut. is+1 = ',is+1,
-     &           ' istra = ',istra,' ix = ',ix,' iy = ',iy
+     &           ' istra = ',istra,' ix = ',ix,' iy = ',iy,
+     &           ':',rcion(is,istra)*t0/neutral_sources_rescale
               endif
            endif
          endif
@@ -1579,9 +1591,11 @@ cxpb
                  sna_stbr_neut(b2espcr(is0),lbcstra(istra)) =
      &            sna_stbr_neut(b2espcr(is0),lbcstra(istra)) +
      &            recyc(is,istra)*t0
-                 if (output.gt.2) write(*,*) 'Core recycling: ',
+                 if (output.gt.2.and.t0.gt.0.0_R8)
+     >            write(*,'(a,4(a,i4),a,1p,1e15.7)') 'Core recycling: ',
      &            'Contribution to sna_stbr_neut. is0 = ',is0,
-     &            ' istra = ',istra,' ix = ',ix,' iy = ',iy
+     &            ' istra = ',istra,' ix = ',ix,' iy = ',iy,
+     &            ':',recyc(is,istra)*t0
                end if
 
 cwdk  recycling of true parallel momentum
