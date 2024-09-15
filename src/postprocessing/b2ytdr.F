@@ -850,9 +850,9 @@ c 2002-09-11: logic revised
       endif
 *   ..import parameters from Eirene input.dat file
       CALL EIRENE_DEFAULTS_USR
-      inquire(file='input.dat',exist=ex)
+      inquire(file=fort_lc//'1',exist=ex)
       if (ex) then
-        open(unit=45,file='input.dat')
+        open(unit=45,file=fort_lc//'1')
         CALL EIRENE_FIND_PARAM(45)
         close(45)
         CALL EIRENE_SET_PARMMOD(1)
