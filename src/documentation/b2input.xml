@@ -6568,13 +6568,7 @@
 				<default> </default>
 				<type>character*1 array of length (NBC)</type>
 				<description>
-					Specifies the nature of the boundary segment
-					N = 'North' boundary
-					S = 'South' boundary
-					W = 'West' boundary
-					E = 'East' boundary
-					X = 'X' boundary used for specifying a fixed value on a row of cells
-					Y = 'Y' boundary used for specifying a fixed value on a column of cells
+					In the WG code, BCHAR is always equal to 'A' (automatic) and a boundary list is defined by the mesh boundary faces that have fcLbl.ge.BCSTART and fcLbl.le.BCEND.
 				</description>
 			</switch>
 			<switch>
@@ -6622,7 +6616,7 @@
 				<default>-2</default>
 				<type>integer array, length (NBC)</type>
 				<description>
-					For North, South or X boundary conditions, it specifies the row index; for West, East and Y boundary conditions, it specifies the column index.
+					For North, South or X boundary conditions, it specifies the row index; for West, East and Y boundary conditions, it specifies the column index. Obsolete for WG.
 				</description>
 			</switch>
 			<switch>
@@ -6630,7 +6624,7 @@
 				<default>-2</default>
 				<type>integer array, length (NBC)</type>
 				<description>
-					For North, South or X boundary conditions, it specifies the start column index; for West, East and Y boundary conditions, it specifies the start row index.
+					Starting label index (fcLbl) of the cells belonging to this boundary condition.
 				</description>
 			</switch>
 			<switch>
@@ -6638,7 +6632,7 @@
 				<default>-2</default>
 				<type>integer array, length (NBC)</type>
 				<description>
-					For North, South X boundary conditions, it specifies the end column index; for West, East and Y boundary conditions, it specifies the end row index.
+					Ending label index (fcLbl) of the cells belonging to this boundary condition.
 				</description>
 			</switch>
 			<switch>
@@ -6654,7 +6648,7 @@
 				<default>-2</default>
 				<type>integer array of length (2*(NXD+NYD),NBC)</type>
 				<description>
-					Contains the X-coordinate of the cells where boundaries conditions are applied.
+					Contains the X-coordinate of the cells where boundaries conditions are applied. Obsolete for WG.
 				</description>
 			</switch>
 			<switch>
@@ -6662,7 +6656,7 @@
 				<default>-2</default>
 				<type>integer array of length (2*(NXD+NYD),NBC)</type>
 				<description>
-					Contains the Y-coordinate of the cells where boundaries conditions are applied.
+					Contains the Y-coordinate of the cells where boundaries conditions are applied. Obsolete for WG.
 				</description>
 			</switch>
 			<switch>
