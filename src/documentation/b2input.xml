@@ -5467,7 +5467,7 @@
 				<default>-2</default>
 				<type>integer array of length (NSTRAT)</type>
 				<description>
-					Position in the B2.5 grid of the strata. Similar use as BCPOS from /BOUNDARY/ namelist.
+					Position in the B2.5 grid of the strata. Similar use as BCPOS from /BOUNDARY/ namelist. Obsolete for WG.
 				</description>
 			</switch>
 			<switch>
@@ -5475,7 +5475,7 @@
 				<default>-2</default>
 				<type>integer array of length (NSTRAT)</type>
 				<description>
-					Start coordinate on the B2.5 grid the strata. Similar use as BCSTART from /BOUNDARY/ namelist.
+					Starting label index on the B2.5 grid. Similar use as BCSTART from /BOUNDARY/ namelist.
 				</description>
 			</switch>
 			<switch>
@@ -5483,7 +5483,7 @@
 				<default>-2</default>
 				<type>integer array of length (NSTRAT)</type>
 				<description>
-					End coordinate on the B2.5 grid of the strata. Similar use as BCEND from /BOUNDARY/ namelist.
+					Ending label index on the B2.5 grid. Similar use as BCEND from /BOUNDARY/ namelist.
 				</description>
 			</switch>
 			<switch>
@@ -5499,7 +5499,7 @@
 				<default>-2</default>
 				<type>integer array of length (2*(NXD+NYD),NSTRAT)</type>
 				<description>
-					Contains the X-coordinate of the cells where recycling boundaries are applied. Similar use as BC_LIST_X from /BOUNDARY/ namelist.
+					Contains the X-coordinate of the cells where recycling boundaries are applied. Similar use as BC_LIST_X from /BOUNDARY/ namelist. Obsolete for WG.
 				</description>
 			</switch>
 			<switch>
@@ -5507,7 +5507,7 @@
 				<default>-2</default>
 				<type>integer array of length (2*(NXD+NYD),NSTRAT)</type>
 				<description>
-					Contains the Y-coordinate of the cells where recycling boundaries are applied. Similar use as BC_LIST_Y from /BOUNDARY/ namelist.
+					Contains the Y-coordinate of the cells where recycling boundaries are applied. Similar use as BC_LIST_Y from /BOUNDARY/ namelist. Obsolete for WG.
 				</description>
 			</switch>
 			<switch>
@@ -5589,7 +5589,7 @@
 				<type>character*1 array of length (NSTRAT)</type>
 				<description>
 					Contains the type of stratum for Eirene. Possible options include:
-					'N','S','W','E' - topological mesh boundaries (same use as BCCHAR in /BOUNDARY/ namelist)
+					'A' - (automatic) topological mesh boundaries (same use as BCCHAR in /BOUNDARY/ namelist). The boundary mesh faces that have fcLbl.ge.RCSTART and fcLbl.le.RCEND belong to this stratum.
 					'V' - volume recombination source (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored).
 					'C' - constant or feedback gas puff source (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored). Gas puffs for B2.5 fluid neutrals are handled via b2.boundary.parameters. Unless specified otherwise by use of 'eirene_nesepm_istra', it is the first 'C' stratum that is used for feedback puff schemes. See b2cdci for details.
 					'T' - time-dependent source for Eirene (related RCPOS, RCSTART, RCEND and RC_LIST variables are ignored). Long-lived Eirene neutrals are stored in this stratum. See EIRENE_STEP_DT below.
@@ -5608,7 +5608,7 @@
 				<default>'C'</default>
 				<type>character*2 array of length (NSTRAT)</type>
 				<description>
-					Contains the surface material for surface strata, used for AFN neutrals. Possible options:
+					Contains the surface material for surface strata, used for AFN neutrals. Examples:
 					'Be' (beryllium), 'C' (carbon), 'Fe' (iron), 'Mo' (molybdenum) and 'W' (tungsten).
 				</description>
 			</switch>
@@ -5641,7 +5641,7 @@
 				<default>'M'</default>
 				<type>character*1 array of length (NSTRAT)</type>
 				<description>
-					When HYB_TYPE='A', possibility to have automatic switching between fluid and kinetic recycling for the stratum for the advanced hybrid model. See description of use_auto_spatial_hyb. HYB_TYPE should be 'M' for all strata for multispecies simulations (ns &gt; 1).
+					When HYB_TYPE='A' (automatic), possibility to have automatic switching between fluid and kinetic recycling for the stratum for the advanced hybrid model. See description of use_auto_spatial_hyb. HYB_TYPE should be 'M' (manual) for all strata for multispecies simulations (ns &gt; 1).
 				</description>
 			</switch>
 			<switch>
