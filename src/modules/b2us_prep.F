@@ -2435,15 +2435,23 @@
       integer newunit
       external newunit
 #endif
-      integer :: k, iCv2_prev, iCv2
-      integer :: fcsb(mpg%nCi,40), fcsb_col, fcsb_row, fcsb_len(mpg%nCi)
-      real (kind=R8), save :: Qalfmin = 0.0_R8, Qalfmax = 1.0e-2_R8
-      integer, save :: mod_hc = 0, mean_boundary_hc = 0
-
-      call ipgetr('b2us_prep_Qalfmin', Qalfmin)
-      call ipgetr('b2us_prep_Qalfmax', Qalfmax)
-      call ipgeti('b2us_prep_mod_hc', mod_hc)
-      call ipgeti('b2us_prep_mean_boundary_hc', mean_boundary_hc)
+      real (kind=R8), save :: Qalfmin = 1e-3_R8,Qalfmax=1e-2_R8,
+     & pbs_red_fac=1e-2_R8
+      integer, save :: mod_hc = 0, mean_boundary_hc = 0, set_beta=0,
+     & mod_alpha = 0 
+      integer :: fcsb(mpg%nCg), cvsb(mpg%nCg,2), k, ind, ind1, tmp, iFt
+      logical :: iscvsb(mpg%nCv)
+      call ipgetr('b2stbc_Qalfmin',Qalfmin)
+      call ipgetr('b2stbc_Qalfmax',Qalfmax)
+      call ipgetr('b2us_prep_Pbs_reduce_fac',pbs_red_fac)
+      call ipgeti('b2us_prep_mod_hc',mod_hc)
+      call ipgeti('b2us_prep_set_beta_0',set_beta)
+      call ipgeti('b2us_prep_mod_alpha',mod_alpha)
+      call ipgeti('b2us_prep_mean_boundary_hc',mean_boundary_hc)
+      call ipgeti('b2us_prep_mean_boundary_hc',mean_boundary_hc)
+      write (*,*) "Qalfmin=",Qalfmin
+      write (*,*) "Qalfmax=",Qalfmax
+      write (*,*) "Pbs reduce factor=",pbs_red_fac
 
       call alloc_geometry (gm,
      &  mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt, mpg%nVmxCv)
@@ -2513,15 +2521,41 @@
      .        sign(1.0_R8,wbbl(ix,iy,2))
             gm%fcPbs(iFc) = pbs(ix,iy,0)
             gm%fcPbshz(iFc) = pbshz(ix,iy,0)
-            if (abs(gm%fcPbs(iFc)/gm%fcS(iFc)) < Qalfmin .and.
-     .       (maxval(mpg%fcCv(iFc,1:2)) > mpg%nCi) .and.
-     .        mpg%fcLbl(iFc) > 0 .and.
-     .        abs(gm%fcQalf(iFc,0)) > Qalfmax) then
-              gm%fcPbs(iFc) = Qalfmin*gm%fcS(iFc)*
-     .        sign(1.0_R8,gm%fcPbs(iFc))
-              gm%fcPbshz(iFc) = Qalfmin*gm%fcS(iFc)*gm%fcHz(iFc)*
-     .          sign(1.0_R8,gm%fcPbshz(iFc))
-              write(*,*) 'pbs and pbshz was modified for iFc=',iFc
+            wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
+            if (wrk >= Qalfmin .and. wrk < Qalfmax .and.
+     .        mpg%fcLbl(iFc) > 0) then
+              gm%fcPbs(iFc) = Qalfmax*gm%fcS(iFc)*
+     .        sign(1.0,gm%fcPbs(iFc))
+              gm%fcPbshz(iFc) = Qalfmax*gm%fcS(iFc)*gm%fcHz(iFc)*
+     .          sign(1.0,gm%fcPbshz(iFc))
+              if (mod_alpha.eq.1) then
+                gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)
+     .           /gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+                gm%fcQalf(iFc,1) = sign(gm%fcQalf(iFc,1),
+     .            sqrt(1-gm%fcQalf(iFc,0)**2))
+                if (gm%fcQbet(iFc,0) < 0.0_R8) then 
+                  gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
+                  gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)
+                elseif (gm%fcQbet(iFc,0) >= 0.0_R8) then 
+                  gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
+                  gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1) 
+                endif
+              endif
+              write (*,*)'pbs and pbshz were modified for iFc=',iFc
+            elseif (wrk < Qalfmin .and. mpg%fcLbl(iFc) > 0) then
+              gm%fcPbs(iFc) = pbs_red_fac*gm%fcPbs(iFc)
+              gm%fcPbshz(iFc) = pbs_red_fac*gm%fcPbshz(iFc)
+              if (mod_alpha.eq.1) then
+                gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)/
+     .            gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+                gm%fcQalf(iFc,1) = sign(gm%fcQalf(iFc,1),
+     .            sqrt(1-gm%fcQalf(iFc,0)**2))
+                gm%fcQbet(iFc,0) = gm%fcQgam(iFc,0)*gm%fcQalf(iFc,0) +
+     .            gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)
+                gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
+     .            gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)
+              endif
+              write (*,*)'pbs and pbshz were reduced for iFc=',iFc
             endif
           end if
         end do
@@ -2571,48 +2605,115 @@
      .        sign(1.0_R8,wbbv(ix,iy,2))
             gm%fcPbs(iFc) = pbs(ix,iy,1)
             gm%fcPbshz(iFc) = pbshz(ix,iy,1)
-            if (abs(gm%fcPbs(iFc)/gm%fcS(iFc)) < Qalfmin .and.
-     .       (maxval(mpg%fcCv(iFc,1:2)) > mpg%nCi) .and.
-     .        mpg%fcLbl(iFc) > 0 .and.
-     .        abs(gm%fcQalf(iFc,0)) > Qalfmax) then
-              gm%fcPbs(iFc) = Qalfmin*gm%fcS(iFc)*
-     .        sign(1.0_R8,gm%fcPbs(iFc))
-              gm%fcPbshz(iFc) = Qalfmin*gm%fcS(iFc)*gm%fcHz(iFc)*
-     .          sign(1.0_R8,gm%fcPbshz(iFc))
-              write(*,*) 'pbs and pbshz was modified for iFc=',iFc
+            wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
+            if (wrk >= Qalfmin .and. wrk < Qalfmax .and.
+     .        mpg%fcLbl(iFc) > 0 ) then
+              gm%fcPbs(iFc) = Qalfmax*gm%fcS(iFc)*
+     .        sign(1.0,gm%fcPbs(iFc))
+              gm%fcPbshz(iFc) = Qalfmax*gm%fcS(iFc)*gm%fcHz(iFc)*
+     .          sign(1.0,gm%fcPbshz(iFc))
+              if (mod_alpha.eq.1) then
+                gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)
+     .            /gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+                gm%fcQalf(iFc,1) = sign(gm%fcQalf(iFc,1),
+     .            sqrt(1-gm%fcQalf(iFc,0)**2))
+                if (gm%fcQbet(iFc,0) < 0.0_R8) then 
+                  gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
+                  gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)
+                elseif (gm%fcQbet(iFc,0) >= 0.0_R8) then 
+                  gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
+                  gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1) 
+                endif
+              endif
+              write (*,*)'pbs and pbshz were modified for iFc=',iFc
+            elseif (wrk < Qalfmin .and. mpg%fcLbl(iFc) > 0) then
+              gm%fcPbs(iFc) = pbs_red_fac*gm%fcPbs(iFc)
+              gm%fcPbshz(iFc) = pbs_red_fac*gm%fcPbshz(iFc)
+              if (mod_alpha.eq.1) then
+                gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)/
+     .            gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+                gm%fcQalf(iFc,1) = sign(gm%fcQalf(iFc,1),
+     .            sqrt(1-gm%fcQalf(iFc,0)**2))
+                gm%fcQbet(iFc,0) = gm%fcQgam(iFc,0)*gm%fcQalf(iFc,0) +
+     .            gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)
+                gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
+     .            gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)
+              endif
+              write (*,*)'pbs and pbshz were reduced for iFc=',iFc
             endif
           end if
         end do
       end do
 
+      k = 1
+      do ic=mpg%nCi+1,mpg%nCv
+        fcsb(k) = mpg%cvFc(mpg%cvFcP(ic,1))
+        k = k+1
+      enddo
+
+      cvsb = 0
+      iscvsb = .false.
+      print *, "fcs:"
+      do ind=1,mpg%nCg-1
+        do ind1=ind+1,mpg%nCg
+          if (mpg%fcVx(fcsb(ind),1) == mpg%fcVx(fcsb(ind1),1) .or.
+     &        mpg%fcVx(fcsb(ind),1) == mpg%fcVx(fcsb(ind1),2) .or.
+     &        mpg%fcVx(fcsb(ind),2) == mpg%fcVx(fcsb(ind1),1) .or.
+     &        mpg%fcVx(fcsb(ind),2) == mpg%fcVx(fcsb(ind1),2)) then
+            tmp = fcsb(ind+1)
+            fcsb(ind+1) = fcsb(ind1)
+            fcsb(ind1) = tmp
+          endif
+        enddo
+        cvsb(ind,1) = maxval(mpg%fcCv(fcsb(ind),1:2))
+        cvsb(ind,2) = minval(mpg%fcCv(fcsb(ind),1:2))
+        iscvsb(cvsb(ind,2)) = .true.
+        print *, fcsb(ind)
+      enddo
+
+      cvsb(ind,1) = maxval(mpg%fcCv(fcsb(mpg%nCg),1:2))
+      cvsb(ind,2) = minval(mpg%fcCv(fcsb(mpg%nCg),1:2))
+      print *, fcsb(mpg%nCg)
+
       if (mean_boundary_hc.eq.1) then
-       fcsb = 0
-       fcsb_len = 0
-       fcsb_col = 1
-       fcsb_row = 1
-       do iCv=mpg%nCi+1,mpg%nCv
-         if (mpg%cvOnClosedSurface(iCv)) cycle
-         iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
-         iCv2 = minval(mpg%fcCv(iFc,1:2))
-         iCv2_prev = minval(mpg%fcCv
-     &     (mpg%cvFc(mpg%cvFcP(iCv-1,1)),1:2))
-         write(*,*) 'iCv,iFc',iCv,iFc,fcsb_col,fcsb_row
-         if (fcsb_col .gt. 1 .and.
-     &     (mpg%cvReg(iCv2) .ne. mpg%cvReg(iCv2_prev))) then
-          fcsb_len(fcsb_row) = fcsb_col-1
-          fcsb_row = fcsb_row+1
-          fcsb_col = 1
-         endif
-         if (mpg%cvFt(minval(mpg%fcCv(iFc,1:2))).ne.0) then
-           fcsb(fcsb_row,fcsb_col) = iFc
-           fcsb_col = fcsb_col+1
-         endif
-       enddo
-       do k=1,fcsb_row
-         gm%fcHc(fcsb(k,1:fcsb_len(k)),2)=
-     &     sum(gm%fcHc(fcsb(k,1:fcsb_len(k)),2))/fcsb_len(k)
-         write(*,*) fcsb(k,1:fcsb_len(k))
-       enddo
+
+        ind=1
+        do ind1=2,mpg%nCg
+          if (mpg%fcLbl(fcsb(ind1)).le.0) cycle
+          if (mpg%cvFt(minval(mpg%fcCv(fcsb(ind1),:))).ne.
+     &        mpg%cvFt(minval(mpg%fcCv(fcsb(ind1-1),:)))) then
+
+              k = ind1-1
+              write (*,*) fcsb(ind:k)
+
+              gm%fcHc(fcsb(ind:k),2)=
+     &        sum(gm%fcHc(fcsb(ind:k),2))/(ind1-ind)
+              gm%fcHc(fcsb(ind:k),1)=
+     &        sum(gm%fcHc(fcsb(ind:k),1))/(ind1-ind)
+
+              ind = ind1
+          endif
+        enddo
+      endif
+
+      if (set_beta.eq.1) then
+        do iFt=1,mpg%nFt
+          do k=mpg%ftFcP(iFt,1),mpg%ftFcP(iFt,1)+mpg%ftFcP(iFt,2)-1
+            iFc = mpg%ftFc(k)
+            if (.not.iscvsb(mpg%fcCv(iFc,1))
+     &        .and. .not.iscvsb(mpg%fcCv(iFc,2))) cycle
+            if (gm%fcQbet(iFc,0) < 0.0_R8) then 
+              gm%fcQbet(iFc,0) = -1.0_R8
+              gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
+              gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)
+            elseif (gm%fcQbet(iFc,0) >= 0.0_R8) then 
+              gm%fcQbet(iFc,0) =  1.0_R8
+              gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
+              gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1) 
+            endif
+            gm%fcQbet(iFc,1) =  0.0_R8
+          enddo
+        enddo
       endif
 ! vertices
       gm%vxX = 0._R8
