@@ -34,7 +34,7 @@
 *.declarations
 *   ..local variables
       integer iC, is, isp
-      real (kind=R8) :: cfloi_vh(nFc)
+      real (kind=R8) :: cfloi_vh(nCv)
 *   ..procedures
       external intface
 *-----------------------------------------------------------------------

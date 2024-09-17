@@ -890,9 +890,10 @@
       allocate( coeff_ns % chci_al( nFc, 0:1, 0:nspecies-1 ))
       allocate( coeff_ns % cvsa_hAdp_albe( nFc, 0:1, 0:nspecies-1,
      .  0:nspecies-1 ))
-      allocate( coeff_ns % cvsahz_hBdp_al( nFc, 0:1, 0:nspecies-1 ))
+      allocate( coeff_ns % cvsa_hBdp_al( nFc, 0:1, 0:nspecies-1 ))
       allocate( coeff_ns % cvsahz_hAdp_albe( nFc, 0:1, 0:nspecies-1,
      .  0:nspecies-1 ))
+      allocate( coeff_ns % cvsahz_hBdp_al( nFc, 0:1, 0:nspecies-1 ))
       coeff_ns % hci_al = 0.0_R8
       coeff_ns % chci_al = 0.0_R8
       coeff_ns % cvsa_hAdp_albe = 0.0_R8
