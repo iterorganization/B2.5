@@ -133,6 +133,7 @@
      *   ecc(-1:nx,-1:ny,0:3,0:1), ecf(0:1), ebf(0:1),
      *   isx(0:1), isy(0:1),
      *   Xvertices(0:3), Yvertices(0:3)
+      real (kind=R8), save :: Qalfmin=1e-3_R8
       integer, save :: style = 0
 *   ..procedures
       intrinsic min, max
@@ -152,6 +153,8 @@
       call ipgeti ('b2agmt_volhmk', volhmk)
       call ipgetr ('b2agmt_1d_width', width)
       call ipgeti ('b2agmt_style', style)
+      call ipgetr('b2stbc_Qalfmin',Qalfmin)
+
       call xertst (0.0_R8.lt.width, 'faulty input width')
 *   ..test nx, ny, isymm
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -773,7 +776,8 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
           qas(ix,iy,1) = sinang (
      &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
      &      ebf(0), ebf(1))
-          if (abs(qac(ix,iy,1)) .ge. 5.0e-2_R8) then
+          if (abs(qac(ix,iy,1)*bb(ix,iy,0)/bb(ix,iy,3)) 
+     &          .ge. Qalfmin) then
                ! Connector line is purely poloidal: equal to ebf,
                ! but possibly with sign difference
             t0 = ebf(0)*(cry(ix,iy,0) - cry(ix,iy,1)) -
