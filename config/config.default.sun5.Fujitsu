@@ -34,7 +34,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /usr/ccs/lib/cpp
@@ -43,6 +43,7 @@ SED = sed s:\#PREC\#:d:g
 SED = 
 
 FC = /afs/ipp/@sys/soft/fuji_f90/FSUNf90/bin/f90
+FN = ${FC}
 ifdef SOLPS_DEBUG
   FCOPTS = -g -Am -X9 -Hasu
 else
@@ -71,7 +72,9 @@ ifdef USE_EIRENE
 endif
 
 LD = ${FC}
+LN = ${FN}
 LDOPTS = -Bstatic
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

@@ -1,6 +1,7 @@
 ifeq (${FC},f77)
 FC = gfortran
 endif
+FN = gfortran
 ifeq (${CC},cc)
 ifneq (${FC},ftn)
 CC = /usr/bin/gcc
@@ -37,12 +38,12 @@ FCOPTS += -O2
 endif
 
 ifdef SOLPS_OPENMP
-FCOPTS += -fopenmp
-LDOPTS += -fopenmp
+FPOPTS += -fopenmp
+LPOPTS += -fopenmp
 endif
 
 ifdef SOLPS_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 DBLFC = ${FC}
@@ -130,6 +131,7 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = $(FC)
+LN = $(FN)
 # LDOPTS = -Bstatic
 
 

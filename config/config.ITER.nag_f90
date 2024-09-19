@@ -26,7 +26,7 @@ ifndef SOLPS_CPP
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional -ffreestanding
@@ -34,6 +34,7 @@ CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
 FC = nagfor
+FN = ${FC}
 
 FCOPTS = -O -x77 -PIC -compatible -dusty # -mismatch
 INCMOD = -I
@@ -42,8 +43,8 @@ OBJDEST = -mdir ${OBJDIR} -o ${OBJDIR}/$*.o
 OBNDEST = -mdir ${OBNDIR} -o ${OBNDIR}/$*.o
 
 ifdef SOLPS_OPENMP
-  FCOPTS += -openmp
-  LDOPTS += -openmp
+  FPOPTS += -openmp
+  LPOPTS += -openmp
 endif
 
 BLD = ar rucv
@@ -67,6 +68,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 LD = ${FC}
+LN = ${FN}
 DBLFC = ${FC}
 DBLOPTS = -r8
 DBLSED = sed -e s:\#PREC\#:d:g

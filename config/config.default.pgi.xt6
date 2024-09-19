@@ -14,7 +14,7 @@ endif
 
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 ifdef SOLPS_OPENMP
-  DEFINES += -D_OPENMP
+  DPFINES += -D_OPENMP
 endif
 
 ifndef SOLPS_CPP
@@ -36,7 +36,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = cpp -C -traditional
@@ -46,6 +46,7 @@ SED =
 LINK_MOD =
 
 FC = ftn
+FN = ${FC}
 
 ifdef SOLPS_DEBUG
   FCOPTS = -g -C
@@ -56,8 +57,8 @@ else
 endif
 
 ifdef SOLPS_OPENMP
-  FCOPTS += -mp=nonuma
-  LDOPTS += -mp=nonuma
+  FPOPTS += -mp=nonuma
+  LPOPTS += -mp=nonuma
 endif
 
 DBLFC=${FC}
@@ -86,6 +87,7 @@ ifdef USE_EIRENE
 endif
 
 LD = $(FC)
+LN = ${FN}
 
 
 #!!!Local Variables:
