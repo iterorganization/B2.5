@@ -62,10 +62,10 @@ FCOPTS    += -fp-model=precise
 endif
 endif
 ifdef SOLPS_MPI
-FCOPTS    += ${MPI_CPP}
+FPOPTS    += ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
-FCOPTS    += ${MPI_CPP}
+FPOPTS    += ${MPI_CPP}
 endif
 endif
 
@@ -84,6 +84,7 @@ ifdef USE_IMPGYRO
 LDLIBES   += ${LD_MPI}
 endif
 endif
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

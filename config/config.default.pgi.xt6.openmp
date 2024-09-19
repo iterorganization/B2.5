@@ -13,7 +13,7 @@ ifndef LD_NETCDF
 endif
 
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
-DEFINES += -D_OPENMP
+DPFINES += -D_OPENMP
 
 ifndef SOLPS_CPP
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
@@ -28,7 +28,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = cpp -C -traditional
@@ -38,15 +38,17 @@ SED =
 LINK_MOD =
 
 FC = ftn
+FN = ${FC}
 
+FPOPTS = -mp=nonuma
 ifdef SOLPS_DEBUG
-  FCOPTS = -mp=nonuma -g -C
+  FCOPTS = -g -C
 else
-  FCOPTS = -mp=nonuma -O3
+  FCOPTS = -O3
 endif
 
-DBLFC=${FC}
-DDBLOPTION=
+DBLFC = ${FC}
+DDBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g
 DBLSED =
 
@@ -70,11 +72,13 @@ ifdef USE_EIRENE
   LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
-LD = $(FC)
+LD = ${FC}
+LN = ${FN}
+LPOTS = -mp=nonuma
 ifdef SOLPS_DEBUG
   LDOPTS = -g -C
 else
-  LDOPTS = -mp=nonuma -O3
+  LDOPTS = -O3
 endif
 
 

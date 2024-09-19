@@ -28,7 +28,7 @@ ifdef SOLPS_DEBUG
  else
   FCOPTS  += -debug all -fPIC -assume no2underscore
   ifdef USE_IMPGYRO
-   FCOPTS  += ${MPI_CPP}
+   FPOPTS  += ${MPI_CPP}
   else
    FCOPTS  += -check all -fpe0
   endif
@@ -36,10 +36,10 @@ ifdef SOLPS_DEBUG
 else
  FCOPTS   = -O2 -xHost -fPIC -assume no2underscore
  ifdef SOLPS_MPI
-  FCOPTS  += ${MPI_CPP}
+  FPOPTS  += ${MPI_CPP}
  else
   ifdef USE_IMPGYRO
-   FCOPTS  += ${MPI_CPP}
+   FPOPTS  += ${MPI_CPP}
   endif
  endif
 endif

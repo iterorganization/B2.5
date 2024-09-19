@@ -16,6 +16,7 @@ DEFINES += -DNO_OPT
 CPP      = /lib/cpp -traditional -ffreestanding
 
 FC       = ftn
+FN       = ${FC}
 
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives
@@ -25,7 +26,7 @@ else
 FCOPTS  += -O0 -g -C -traceback -fpe0 -debug all -check all
 endif
 ifdef SOLPS_MPI
-FCOPTS  += ${MPI_CPP}
+FPOPTS  += ${MPI_CPP}
 endif
 
 ifdef SOLPS_MPI
@@ -33,6 +34,7 @@ LDLIBES += ${LD_MPI}
 endif
 
 LDOPTS  += -dynamic -fpic -mcmodel=medium -shared-intel
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

@@ -28,7 +28,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C
@@ -37,6 +37,7 @@ SED = sed s:\#PREC\#:d:g
 LINK_MOD = yes
 
 FC = f90
+FN = ${FC}
 FCOPTS = -O3 -v -ff90
 
 DBLFC = ${FC}
@@ -57,7 +58,9 @@ CXXFLAGS = -std=c++11
 endif
 
 LD = ${FC}
+LN = ${FN)
 LDOPTS = 
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

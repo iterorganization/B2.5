@@ -52,6 +52,7 @@ SOLPSINCLUDE += `pkg-config netcdf-fortran --cflags`
 
 LD_AL += -lxml2 -lstdc++
 
+
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:
