@@ -28,7 +28,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /usr/ccs/lib/cpp
@@ -36,6 +36,7 @@ CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
 FC = f90
+FN = ${FC}
 ifdef SOLPS_DEBUG
   FCOPTS = -g -fixed -fns
 else
@@ -60,6 +61,7 @@ ifdef LD_CATALYST
 endif
 
 LD = ${FC}
+LN = ${FN}
 LDOPTS = ${FCOPTS} -lf77compat
 
 

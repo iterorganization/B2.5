@@ -29,7 +29,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C
@@ -37,12 +37,13 @@ CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
 FC = nagfor
+FN = ${FN}
 FCOPTS = -O -Nl99 -x77 # -mismatch
 INCMOD = -I
 MOD = mod
 
 ifdef SOLPS_OPENMP
-  FCOPTS += -openmp
+  FPOPTS += -openmp
 endif
 
 BLD = ar rucv
@@ -56,9 +57,10 @@ ifdef LD_CATALYST
 endif
 
 LD = ${FC}
+LN = ${FN}
 LDOPTS = 
 ifdef SOLPS_OPENMP
-  LDOPTS += -openmp
+  LPOPTS += -openmp
 endif
 
 # LDEXTRA  = env.o

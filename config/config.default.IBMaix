@@ -28,7 +28,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /usr/ccs/lib/cpp
@@ -37,6 +37,7 @@ SED = sed s:\#PREC\#:d:g
 SED =
 
 FC = xlf90
+FN = ${FC}
 ifdef SOLPS_DEBUG
   FCOPTS = -g -C -qfixed -qextchk # -qrealsize=8
 else
@@ -72,6 +73,7 @@ ifdef LD_CATALYST
 endif
 
 LD = ${FC}
+LN = ${FN}
 LDOPTS = -bloadmap:${OBJDIR}/loadmap -bmap:${OBJDIR}/map -pg
 LDOPTS = -bloadmap:${OBJDIR}/loadmap -bmap:${OBJDIR}/map
 

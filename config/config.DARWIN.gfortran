@@ -22,8 +22,8 @@ FC = gfortran
 endif
 
 ifdef SOLPS_OPENMP
-FCOPTS  += -fopenmp
-LDOPTS  += -fopenmp
+FPOPTS  += -fopenmp
+LPOPTS  += -fopenmp
 endif
 
 DDBLOPTION = -Ad # ???

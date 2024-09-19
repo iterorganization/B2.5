@@ -28,7 +28,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional -ffreestanding
@@ -38,11 +38,12 @@ SED =
 LINK_MOD =
 
 FC = g95
+FN = ${FC}
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -C -fbounds-check -ftrace=full -fPIC -fno-second-underscore
+  FCOPTS = -g -C -fbounds-check -ftrace=full -fPIC -fno-second-underscore
 else
-FCOPTS = -O -fPIC -fno-second-underscore
+  FCOPTS = -O -fPIC -fno-second-underscore
 endif
 
 DBLFC = ${FC}
@@ -62,15 +63,15 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifndef SOLPS_CPP
-DEFINES += -DITM -DNO_CDF -DNO_NAG
+  DEFINES += -DITM -DNO_CDF -DNO_NAG
 endif
 
 ifndef SOLPS_CPP
@@ -137,6 +138,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 LD = $(FC)
+LN = ${FN}
 # LDOPTS = -Bstatic
 
 

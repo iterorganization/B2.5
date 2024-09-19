@@ -14,16 +14,17 @@ endif
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 
+FN       = ${FC}
 MPI_FC  ?= mpif90
 ifdef SOLPS_MPI
- FC       = ${MPI_FC}
+ FC      = ${MPI_FC}
  COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
  ifeq (${COMPILER_TYPE},GNU)
   COMPILER_REDEF = yes
  endif
 else
  ifdef USE_IMPGYRO
-  FC       = ${MPI_FC}
+  FC     = ${MPI_FC}
   COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
   ifeq (${COMPILER_TYPE},GNU)
    COMPILER_REDEF = yes
@@ -35,13 +36,13 @@ ifndef COMPILER_REDEF
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives
  ifndef SOLPS_DEBUG
-  FCOPTS  += -O2 -xHost
+  FCOPTS += -O2 -xHost
  else
-  FCOPTS  += -g -C -traceback -debug all -check all
+  FCOPTS += -g -C -traceback -debug all -check all
  endif
  ifdef SOLPS_MPI
-  FCOPTS  += ${MPI_CPP}
-  LDOPTS  += ${LD_MPI}
+  FPOPTS += ${MPI_CPP}
+  LPOPTS += ${LD_MPI}
  endif
 endif
 

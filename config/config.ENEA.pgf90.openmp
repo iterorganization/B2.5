@@ -13,7 +13,8 @@ ifndef LD_NETCDF
 endif
 
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
-DEFINES += -D_OPENMP -DGOT_AMNSPROTO
+DEFINES += -DGOT_AMNSPROTO
+DPFINES += -D_OPENMP
 
 ifndef SOLPS_CPP
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
@@ -36,20 +37,28 @@ SED = sed s:\#PREC\#:d:g
 LINK_MOD = 
 
 ifdef SOLPS_MPI
-  FC = mpif90
+ FC = mpif90
+ COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
+ ifeq (${COMPILER_TYPE},GNU)
+  COMPILER_REDEF = yes
+ endif
 else
-  ifdef USE_IMPGYRO
-    FC = mpif90
-  else
-    FC = pgf90
+ ifdef USE_IMPGYRO
+  FC = mpif90
+  COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
+  ifeq (${COMPILER_TYPE},GNU)
+   COMPILER_REDEF = yes
   endif
+ else
+  FC = pgf90
+ endif
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
-ifeq (${FC},mpif90)
+ifdef COMPILER_REDEF
   ifndef SOLPS_CPP
     DEFINES += -DGFORTRAN
   else
@@ -57,13 +66,12 @@ ifeq (${FC},mpif90)
     DEFINES += ${B25_DEFINES}
   endif
   OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
-  OBNDEST  = -J${OBNDIR} -o ${OBNDIR}/$*.o
   INCMOD   = -B
   GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
   GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
   DEFINES += -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
-  FCOPTS += -fopenmp
-  LDOPTS += -fopenmp
+  FPOPTS += -fopenmp
+  LPOPTS += -fopenmp
 else
   ifndef SOLPS_CPP
     DEFINES += -DPGF90
@@ -79,8 +87,9 @@ else
   else
 #   FCOPTS += -O2
 #   FCOPTS += -fast
-    FCOPTS += -fast -mp=nonuma
-    LDOPTS = -mp=nonuma
+    FPOPTS += -mp=nonuma
+    FCOPTS += -fast
+    LPOPTS = -mp=nonuma
   endif
 endif
 
@@ -101,6 +110,8 @@ ifdef LD_CATALYST
 endif
 
 LD = ${FC}
+LN = ${FN}
+
 
 #!!!Local Variables:
 #!!! mode: Makefile
