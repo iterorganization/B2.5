@@ -59,7 +59,7 @@ FCOPTS += -gdwarf-2
 endif
 
 ifdef SOLPS_MPI
-FCOPTS += ${MPI_CPP}
+FPOPTS += ${MPI_CPP}
 endif
 
 DDBLOPTION =
@@ -78,6 +78,7 @@ LIBOPT = ${PETSC_LIB}
 # CPP has been overwritten by the PETSc variables file and must be reinstated
 CPP    = /lib/cpp -traditional
 endif
+
 
 #!!!Local Variables:
 #!!! mode: Makefile
