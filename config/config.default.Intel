@@ -34,7 +34,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional
@@ -44,6 +44,7 @@ SED =
 LINK_MOD = 
 
 FC = f95i
+FN = ${FC}
 
 ifdef SOLPS_DEBUG
   FCOPTS = -g -O -C
@@ -76,6 +77,7 @@ ifdef USE_EIRENE
 endif
 
 LD = ${FC}
+LN = ${FN}
 # LDOPTS = -Bstatic
 
 

@@ -53,6 +53,7 @@ SOLPSINCLUDE += `pkg-config netcdf-fortran --cflags`
 LD_AL += -lxml2 -lstdc++
 LDLIBES += `pkg-config blas-ifort lapack-ifort --libs`
 
+
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:

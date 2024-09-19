@@ -34,13 +34,14 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /usr/lib/gpp -F
 CPPOPTS = -C -P -N -I$(srcdir) $(EQUIVS)
 
 FC = f90
+FN = $(FC)
 FCOPTS = -Oscalar2,vector3,task1 -ei -r2 -Wr"-v 200" -ef
 INCMOD = -p
 MOD = o
@@ -60,6 +61,7 @@ ifdef PERFMON
 endif
 
 LD = ${FC}
+LN = ${FN}
 LDOPTS = -Wl"-M,s"
 
 

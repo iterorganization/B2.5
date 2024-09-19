@@ -34,7 +34,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional
@@ -44,6 +44,7 @@ SED =
 LINK_MOD = 
 
 FC = f95n
+FN = ${FC}
 FCOPTS = -O4 -maxcontin=99 -mismatch_all -Wc,-malign-double -Wc=/usr/bin/gcc
 
 DBLFC = ${FC}
@@ -64,7 +65,9 @@ ifdef LD_CATALYST
 endif
 
 LD = ${FC}
+LN = ${FN}
 LDOPTS = 
+
 
 #!!!Local Variables:
 #!!! mode: Makefile
