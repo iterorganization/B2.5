@@ -25,7 +25,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 opsys = hpux
@@ -43,6 +43,7 @@ ifeq ($(realkind),8)
 endif
 DEFINES += -DHPUX
 FC = fort77
+FN = ${FN}
 CPP = /lib/cpp
 CPPOPTS = -C -P -I$(srcdir) $(EQUIVS)
 BLD = ar rucv
@@ -59,7 +60,9 @@ ifeq ($(realkind),8)
   LDLIBES = $(LIBB2) $(LAPACK) $(LD_NAG)
 endif
 LD = ${FC}
+LN = ${FN}
 LDOPTS = $(nil)
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

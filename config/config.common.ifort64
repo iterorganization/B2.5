@@ -1,6 +1,7 @@
 ifeq (${FC},f77)
 FC = ifort
 endif
+FN = ifort
 EQUIVS   = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 
 CPPOPTS  = -P -I${srcdir} ${EQUIVS}
@@ -15,17 +16,7 @@ DBLSED   =
 ifndef COMPILER_REDEF
  INCMOD = -I
  OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
- OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
  COMPILER_MAJOR_VERSION ?= $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
- ifdef SOLPS_OPENMP
-  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-   FCOPTS += -qopenmp
-   LDOPTS += -qopenmp
-  else
-   FCOPTS += -openmp
-   LDOPTS += -openmp
-  endif
- endif
  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
   FCOPTS += -fp-model=precise
  endif
@@ -51,6 +42,15 @@ ifndef COMPILER_REDEF
    FCOPTS  += -qopt-zmm-usage=high
   endif
  endif
+ ifdef SOLPS_OPENMP
+  ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+   FPOPTS += -qopenmp
+   LPOPTS += -qopenmp
+  else
+   FPOPTS += -openmp
+   LPOPTS += -openmp
+  endif
+ endif
 else
  INCMOD = - B
  OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
@@ -63,11 +63,12 @@ else
   FCOPTS += -mprefer-vector-width=512
  endif
  ifdef SOLPS_OPENMP
-  FCOPTS += -fopenmp
-  LDOPTS += -fopenmp
+  FPOPTS += -fopenmp
+  LPOPTS += -fopenmp
  endif
- FCOPTS += ${MPI_CPP}
- LDOPTS += ${LD_MPI}
+ FPOPTS += ${MPI_CPP}
+ LPOPTS += ${LD_MPI}
+ COMPILER_MAJOR_VERSION ?= $(shell ${FN} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 endif
 
 ifndef SOLPS_CPP
@@ -155,7 +156,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 MOD      = mod
@@ -176,6 +177,7 @@ LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 LD       = ${FC}
+LN       = ${FN}
 
 
 #!!!Local Variables:

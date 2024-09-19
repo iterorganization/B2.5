@@ -1,6 +1,7 @@
 ifeq (${FC},f77)
 FC = pgf90
 endif
+FN = pgf90
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
@@ -30,14 +31,14 @@ else
 FCOPTS  += -fast -Mvect=nofuse
 endif
 ifdef SOLPS_OPENMP
-FCOPTS += -mp=nonuma
-LDOPTS += -mp=nonuma
+FPOPTS += -mp=nonuma
+LPOPTS += -mp=nonuma
 endif
 ifdef SOLPS_MPI
-FCOPTS  += -Mmpi=mpich
+FPOPTS  += -Mmpi=mpich
 INCMODS += ${MPI_CPP}
-LDOPTS  += ${LD_MPI}
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+LPOPTS  += ${LD_MPI}
+DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 ifndef SOLPS_CPP
@@ -123,6 +124,7 @@ CXXFLAGS = -std=c++11
 endif
 
 LD = ${FC}
+LN = ${FN}
 
 
 #!!!Local Variables:

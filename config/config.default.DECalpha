@@ -28,7 +28,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /usr/ucb/cpp -C
@@ -36,6 +36,7 @@ CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
 FC = f90
+FN = ${FC}
 ifdef SOLPS_DEBUG
   FCOPTS = -g -C # -real_size 64
 else
@@ -63,7 +64,9 @@ ifdef LD_CATALYST
 endif
 
 LD = ${FC}
+LN = ${FN}
 LDOPTS = 
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

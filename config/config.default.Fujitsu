@@ -28,7 +28,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional
@@ -39,6 +39,7 @@ LINK_MOD =
 
 FC = /opt/Fujitsu/bin/f90
 FC = f95f
+FN = ${FC}
 
 ifdef SOLPS_DEBUG
   FCOPTS = -g -A2 -Am -X9 -Hasu --trace
@@ -74,6 +75,7 @@ ifdef LD_CATALYST
 endif
 
 LD = ${FC}
+LN = ${FN}
 # LDOPTS = -Bstatic
 
 

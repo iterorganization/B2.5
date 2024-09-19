@@ -28,7 +28,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 ifdef SOLPS_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional
@@ -38,6 +38,7 @@ SED =
 LINK_MOD = 
 
 FC = ifort
+FN = ${FC}
 
 ifdef SOLPS_DEBUG
   FCOPTS = -g -C -traceback -debug all -fstack-protector
@@ -46,8 +47,8 @@ else
 endif
 
 ifdef SOLPS_OPENMP
-  FCOPTS += -openmp
-  LDOPTS += -openmp
+  FPOPTS += -openmp
+  LPOPTS += -openmp
 endif
 
 DBLFC=${FC}
@@ -78,6 +79,7 @@ ifdef PERFMON
 endif
 
 LD = ${FC}
+LN = ${FN}
 # LDOPTS = -Bstatic
 
 
