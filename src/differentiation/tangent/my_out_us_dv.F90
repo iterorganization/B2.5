@@ -17,6 +17,7 @@ SUBROUTINE MY_OUT_US(nwrite, nel, flag, fun_us, first_name)
 !     unstructured grid similar to the functionality of the my_out-routine
 !     for "original" B2.5 grids.
 !     File names will be appended with "*_st.dat".
+!
   USE B2MOD_TYPES
   USE B2MOD_AD_DIFFV
   USE B2MOD_DIFFSIZES
@@ -28,11 +29,12 @@ SUBROUTINE MY_OUT_US(nwrite, nel, flag, fun_us, first_name)
 !
   CHARACTER(len=64) :: filename, finame
 !      character(len=*), allocatable :: filename, finame
-  CHARACTER(len=24) :: hlp_frm
+  CHARACTER(len=26) :: hlp_frm
   INTEGER :: ic
   INTEGER, SAVE :: ncall=0
   INTEGER, SAVE :: iappend=0
   INTEGER, SAVE :: ndigits=6
+  EXTERNAL IPGETI, XERTST
   INTRINSIC TRIM
 !
   IF (ncall .EQ. 0) THEN
@@ -50,6 +52,7 @@ SUBROUTINE MY_OUT_US(nwrite, nel, flag, fun_us, first_name)
 !    ..folder does not exist: future output will be done in current folder
  10 my_out_folder = ''
   END IF
+!
 !        filename = trim(folder)//trim(first_name)//'_us.dat'
  20 finame = first_name
   filename = TRIM(my_out_folder)//TRIM(finame)//'_us.dat'
@@ -58,8 +61,8 @@ SUBROUTINE MY_OUT_US(nwrite, nel, flag, fun_us, first_name)
   ELSE
     OPEN(nwrite, file=trim(filename), position='append') 
   END IF
-  WRITE(hlp_frm, '(a,i2,a,i2.2,a)') '(1x,i9,1x,es', ndigits + 8, '.', &
-& ndigits, ')'
+  WRITE(hlp_frm, '(a,i2,a,i2.2,a)') '(1x,i9,1x,es', ndigits + 9, '.', &
+& ndigits, 'e3)'
   DO ic=1,nel
     WRITE(nwrite, hlp_frm) ic, fun_us(ic)
   END DO

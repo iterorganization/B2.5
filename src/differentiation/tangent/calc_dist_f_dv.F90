@@ -15,26 +15,25 @@
 ! Description
 !============
 ! Subroutine to compute distance along a set of consecutive faces.
-! No check is made whether the cells are ordened in a 'logical' way. 
+! No check is made whether the cells are ordered in a 'logical' way.
 ! Initialize
-!===========      
+!===========
 ! Modules
-SUBROUTINE CALC_DIST_F_NODIFF(mpg, geo, flist, nf, iref, ds)
+SUBROUTINE CALC_DIST_F_NODIFF(geo, flist, nf, iref, ds)
 !
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
-  USE B2US_MAP_DIFFV
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 ! Input variables
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(MAPPING), INTENT(IN) :: mpg
 ! Output variables
   INTEGER, INTENT(IN) :: nf, iref, flist(nf)
 !
 ! Intermediate variables
   REAL(kind=r8), INTENT(OUT) :: ds(nf)
+!
   REAL(kind=r8) :: dsref
 ! External functions
   INTEGER :: ifc

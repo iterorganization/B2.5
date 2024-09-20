@@ -114,13 +114,13 @@ c-----------------------------------------------------------------------
       use b2mod_geo_diff
       use b2mod_rates
       use b2mod_plasma_diff
-      use b2mod_tallies_diff
-      use b2mod_indirect
+      use b2mod_tallies
+      use b2mod_indirect_diff
       use b2mod_external_diff
       use b2mod_constants
       use b2mod_numerics_namelist_diff
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_eirbra
 #else
       use b2mod_eirbra

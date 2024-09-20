@@ -33,8 +33,8 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional
@@ -44,6 +44,7 @@ SED =
 LINK_MOD = 
 
 FC = ifort
+FN = ${FC}
 
 ifdef SOLPS_DEBUG
   FCOPTS = -g -C -traceback -debug all -fstack-protector
@@ -51,9 +52,9 @@ else
   FCOPTS = -O3
 endif
 
-ifdef USE_OPENMP
-  FCOPTS += -openmp
-  LDOPTS += -openmp
+ifdef SOLPS_OPENMP
+  FPOPTS += -openmp
+  LPOPTS += -openmp
 endif
 
 DBLFC=${FC}
@@ -84,6 +85,7 @@ ifdef PERFMON
 endif
 
 LD = ${FC}
+LN = ${FN}
 # LDOPTS = -Bstatic
 
 

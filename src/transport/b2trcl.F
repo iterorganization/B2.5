@@ -22,6 +22,8 @@
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
+      use b2mod_math
+     & , only : b2mod_math_initialised, cutlo, cutll, small_R4_constant
       use b2mod_ad
      & , only : my_out_folder,
 #ifdef WG_DEBUG
@@ -708,10 +710,10 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
       wrkc = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
      &       abs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
-      wrkc = co%sigx_c*wrkc**2*geo%cvBb(:,3)**2/(am(ismain)*mp)*
-     &  switch%b2tfhi_fsigkt
+      wrkc = co%sigx_c*wrkc**2*geo%cvBb(:,3)**2/(am(ismain)*mp)
       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  wrkc, cdkt(:,0))
+      cdkt(:,0) = cdkt(:,0)*switch%b2tfhi_fsigkt
       cdkt(:,1) = 0.0_R8
       co%sigx_kt = wrkc
 *   ..save the classical transport coefficients

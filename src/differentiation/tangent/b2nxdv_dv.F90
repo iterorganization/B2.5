@@ -20,8 +20,6 @@ SUBROUTINE B2NXDV_DV(ncv, isb, switch, mpg, rob, robd, smqb, smqbd, &
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_MAP_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2nxdv_smo0to3, balance_netcdf
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -33,7 +31,8 @@ SUBROUTINE B2NXDV_DV(ncv, isb, switch, mpg, rob, robd, smqb, smqbd, &
   REAL(kind=r8) :: rob(ncv), smqb(ncv, 0:3), smqdu(ncv), smb(ncv, 0:3)
   REAL(kind=r8) :: robd(nbdirsmax, ncv), smqbd(nbdirsmax, ncv, 0:3), &
 & smqdud(nbdirsmax, ncv), smbd(nbdirsmax, ncv, 0:3)
-!WG_TODO      real (kind=R8) :: smbtmp(nCv,0:3) !djm Jan2017
+!djm Jan2017
+  REAL(kind=r8) :: smbtmp(ncv, 0:3)
 !     ------------------------------------------------------------------
 !     B2NXDV computes the correction to the parallel momentum source
 !     that is required to make the total friction force cancel.
@@ -47,10 +46,10 @@ SUBROUTINE B2NXDV_DV(ncv, isb, switch, mpg, rob, robd, smqb, smqbd, &
 !     ------------------------------------------------------------------
   CALL SUBINI('b2nxdv')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !
-!WG_TODOcdjm Jan2017 Keep source at the start to calculate total change for balance routines
-!WG_TODO      smbtmp = smb
+!djm Jan2017 Keep source at the start to calculate total change for balance routines
+  smbtmp = smb
 !
 !   ..adjust smb
   IF (switch%b2nxdv_style .EQ. 0) THEN
@@ -74,10 +73,6 @@ SUBROUTINE B2NXDV_DV(ncv, isb, switch, mpg, rob, robd, smqb, smqbd, &
     END DO
   END IF
 !
-!djm Store the total change in linearised source for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2nxdv_smo0to3(-1:nx,-1:ny,0:3,isb) = smb-smbtmp
-!WG_TODO      endif
 !
   CALL SUBEND()
   RETURN
@@ -98,8 +93,6 @@ SUBROUTINE B2NXDV_NODIFF(ncv, isb, switch, mpg, rob, smqb, smqdu, smb)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_MAP_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2nxdv_smo0to3, balance_netcdf
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -108,7 +101,8 @@ SUBROUTINE B2NXDV_NODIFF(ncv, isb, switch, mpg, rob, smqb, smqdu, smb)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: rob(ncv), smqb(ncv, 0:3), smqdu(ncv), smb(ncv, 0:3)
-!WG_TODO      real (kind=R8) :: smbtmp(nCv,0:3) !djm Jan2017
+!djm Jan2017
+  REAL(kind=r8) :: smbtmp(ncv, 0:3)
 !     ------------------------------------------------------------------
 !     B2NXDV computes the correction to the parallel momentum source
 !     that is required to make the total friction force cancel.
@@ -119,10 +113,10 @@ SUBROUTINE B2NXDV_NODIFF(ncv, isb, switch, mpg, rob, smqb, smqdu, smb)
 !     ------------------------------------------------------------------
   CALL SUBINI('b2nxdv')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !
-!WG_TODOcdjm Jan2017 Keep source at the start to calculate total change for balance routines
-!WG_TODO      smbtmp = smb
+!djm Jan2017 Keep source at the start to calculate total change for balance routines
+  smbtmp = smb
 !
 !   ..adjust smb
   IF (switch%b2nxdv_style .EQ. 0) THEN
@@ -134,10 +128,6 @@ SUBROUTINE B2NXDV_NODIFF(ncv, isb, switch, mpg, rob, smqb, smqdu, smb)
     END DO
   END IF
 !
-!djm Store the total change in linearised source for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2nxdv_smo0to3(-1:nx,-1:ny,0:3,isb) = smb-smbtmp
-!WG_TODO      endif
 !
   CALL SUBEND()
   RETURN

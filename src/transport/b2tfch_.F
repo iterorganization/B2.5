@@ -22,7 +22,7 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2ttia
+     &          ncall_b2ttia, nsmooth_tvsq
 #endif
       use b2mod_subsys
       implicit none
@@ -65,7 +65,7 @@ c       real (kind=R8), save :: drift_hyb = 1.0_R8, fch_inert = 1.0_R8
 c      real (kind=R8), save :: fch_stochastic = 0.0_R8                   !lk 31.01.08
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
+      external b2xvsg, b2ttia                                            !srv 11.07.99
 *   ..initialization
 
 *-----------------------------------------------------------------------

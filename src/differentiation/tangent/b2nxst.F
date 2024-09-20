@@ -34,7 +34,7 @@
 *   ..subprogram start-up calls
       call subini ('b2nxst')
 *   ..test nCv
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
 *   ..update smt
       smt(:,1) = smt(:,1) + smb(:,1)
       smt(:,3) = smt(:,3) + smb(:,3)*rob/ro

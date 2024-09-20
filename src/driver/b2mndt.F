@@ -44,7 +44,8 @@
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
-     &          rsamoreg
+     &          rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue,
+     &          b2divua, b2exbe
       use b2us_feedback
      & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
@@ -56,7 +57,12 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:10), nCv, nFc, nVx, ns, ismain,
+#ifdef JET
+      integer nout(0:11)
+#else
+      integer nout(0:10)
+#endif
+      integer nCv, nFc, nVx, ns, ismain,
      *  ismain0, nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
       integer, save :: ibatch_av_all = 0
@@ -460,7 +466,7 @@ c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
 *      ..write the tracing data
             if (ank_tracing.ne.0) then
               if (ncall_b2mndt.eq.0.and.istg(2).eq.0) then
-                call alloc_b2mod_user(geo,mpg,ns,nlim,nnmoli)
+                call alloc_b2mod_user(geo,mpg,ns,nlim,nnmoli,switch)
                 call b2filei(ns,mpg%nnreg(0),switch)
               end if
               if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)

@@ -9,6 +9,7 @@
 #else
       use b2mod_eirbra
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       use b2mod_dimensions
       implicit none

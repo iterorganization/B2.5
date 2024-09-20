@@ -44,7 +44,7 @@ MPI_FC    ?= mpiifort -fc=mpiifx
 else
 MPI_FC    ?= mpiifort
 endif
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FC         = ${MPI_FC}
 ifndef MPDIR
 MPDIR      = ${EBROOTIMPI}
@@ -59,14 +59,10 @@ LD_MPI    += -Wl,-rpath,${MPDIR}/lib64
 endif
 else
 ifeq (,$(findstring CentOS,$(OS)))
-FC        ?= ifx
-else
-FC        ?= ifort
+FC         = ifx
 endif
 endif
 endif
-
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
@@ -79,36 +75,14 @@ FCOPTS    += -xHost
 else
 FCOPTS    += -march=sandybridge
 endif
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS    += -fp-model=precise
 endif
-endif
-ifdef USE_MPI
-FCOPTS    += ${MPI_CPP}
+ifdef SOLPS_MPI
+FPOPTS    += ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
-FCOPTS    += ${MPI_CPP}
+FPOPTS    += ${MPI_CPP}
 endif
 endif
-
-ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS    += -qopenmp
-LDOPTS    += -qopenmp
-else
-FCOPTS    += -openmp
-LDOPTS    += -openmp
-endif
-endif
-
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
-FCOPTS    += -vec_report0
-LDOPTS    += -i_dynamic
-endif
-
-INCMOD     = -I
-OBJDEST    = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-OBNDEST    = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 
 LDLIBES    = -lz
 
@@ -118,7 +92,7 @@ else
   GGD_VERSION ?= '0.0.0'
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 LDLIBES   += ${LD_MPI}
 else
 ifdef USE_IMPGYRO
@@ -132,6 +106,7 @@ LIBOPT = ${PETSC_LIB}
 # CPP has been overwritten by the PETSc variables file and must be reinstated
 CPP    = /lib/cpp -traditional
 endif
+
 
 #!!!Local Variables:
 #!!! mode: Makefile
