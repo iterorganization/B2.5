@@ -48,6 +48,7 @@
       subroutine dealloc_b2mod_rates
       implicit none
 
+      if (.not.allocated(rlcx)) return
       deallocate(rlcx)
       deallocate(rlqa)
       deallocate(rlqr)

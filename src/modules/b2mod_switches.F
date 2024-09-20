@@ -405,6 +405,7 @@ c k-enstrophy model
       real (kind=R8) :: b2tfhi_fsigkt
       real (kind=R8) :: b2tfhi_fkt_hie
       real (kind=R8) :: b2tfhe_vis_kt
+      real (kind=R8) :: b2sikt_lpar_ref
 
 c b2tqna
       real (kind=R8) :: b2tqna_ballooning
@@ -534,6 +535,7 @@ c b2stbc
       real (kind=R8) :: nesepm
       real (kind=R8) :: ndes_sol
       real (kind=R8) :: nesepm_overshoot
+      real (kind=R8) :: b2stbc_cor9
       real (kind=R8) :: stab_coeff_sheath_te
       real (kind=R8) :: stab_coeff_sheath_ti
 
@@ -544,6 +546,11 @@ c Feedback
 
 c Med
       integer :: med_style
+
+c Optimization
+      integer :: b2optim_save_states
+      integer :: b2optim_reset_iter
+      real (kind=R8) :: b2optim_reset_drift
 
       end type switches
 
@@ -968,6 +975,7 @@ c k-enstrophy model
       s % b2tfhi_fsigkt = 0.0_R8
       s % b2tfhi_fkt_hie = 0.0_R8
       s % b2tfhe_vis_kt = 0.0_R8
+      s % b2sikt_lpar_ref = 10.0_R8
 
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
@@ -1103,6 +1111,7 @@ c b2stbc_phys
       s % nesepm = 0.0_R8
       s % nesepm_overshoot = 0.0_R8
       s % ndes_sol = 0.0_R8
+      s % b2stbc_cor9 = 0.0_R8
       s % stab_coeff_sheath_te = 0.0_R8
       s % stab_coeff_sheath_ti = 0.0_R8
 
@@ -1111,6 +1120,11 @@ c b2trno
 
 c med
       s % med_style = 0
+
+c Optimization
+      s % b2optim_save_states = 0
+      s % b2optim_reset_iter = 2
+      s % b2optim_reset_drift = 0.4_R8
 
       return
       end subroutine set_defaults_switches
@@ -1536,6 +1550,7 @@ c k-enstrophy model
       call ipgetr ('b2tfhi_fsigkt', s % b2tfhi_fsigkt)
       call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
       call ipgetr ('b2tfhe_vis_kt', s % b2tfhe_vis_kt)
+      call ipgetr ('b2sikt_fac_diss_lpar', s % b2sikt_lpar_ref)
 
 c b2tqna
       call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)
@@ -1687,6 +1702,7 @@ c b2stbc
       call ipgetr ('b2stbc_nesepm', s%nesepm)
       call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
       call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
+      call ipgetr ('b2stbc_BC2_cor9', s%b2stbc_cor9)
       call ipgetr ('b2stbc_stab_coeff_sheath_te',
      &                                s%stab_coeff_sheath_te)
       call ipgetr ('b2stbc_stab_coeff_sheath_ti',
@@ -1700,6 +1716,11 @@ c Feedback
 
 c Med
       call ipgeti ('b2mndr_med_style', s%med_style)
+
+c Optimization
+      call ipgeti ('b2optim_save_states', s%b2optim_save_states)
+      call ipgeti ('b2optim_reset_iter', s%b2optim_reset_iter)
+      call ipgetr ('b2optim_reset_drift', s%b2optim_reset_drift)
 
       return
       end subroutine read_switches
@@ -2118,8 +2139,8 @@ c k-enstrophy model
      &  'b2tfhi_fsigkt must be .ge. 0.0')
       call xertst (0.0_R8.le.s%b2tfhi_fkt_hie,
      &  'b2tfhi_fkt_hie must be .ge. 0.0')
-      call xertst (0.0_R8.le.s%keps_inc,
-     &  'keps_inc must be .ge. 0.0')
+      call xertst (1.0_R8.le.s%keps_inc,
+     &  'keps_inc must be .ge. 1.0')
       call xertst (0.0_R8.le.s%keps_fac,
      &  'keps_fac must be .ge. 0.0')
       call xertst (0.le.s%b2sikt_local .and. s%b2sikt_local.le.1,
@@ -2228,6 +2249,15 @@ c b2ag
 c med
       call xertst (s%med_style.ge.0 .and. s%med_style.le.1,
      &  'faulty parameter b2mndr_med_style')
+
+c Optimization
+      call xertst (s%b2optim_save_states.ge.0,
+     &  'faulty parameter b2optim_save_states')
+      call xertst (s%b2optim_reset_iter.gt.0,
+     &  'faulty parameter b2optim_reset_iter')
+      call xertst (s%b2optim_reset_drift.gt.0.0 .and. 
+     &   s%b2optim_reset_drift.le.1.0_R8,
+     &  'faulty parameter b2optim_reset_drift')
 
       return
       end subroutine check_values_switches

@@ -48,7 +48,7 @@
       lwrk = lwrk+nw
       lwrkmx = max(lwrk,lwrkmx)
       if (nstckw.lt.lwrk) then
-        write(0,*) 'lwget--insufficient workspace stackw%w(0:*)'
+        write(0,*) 'lwget--insufficient workspace b2mod_stack%w(0:*)'
         call b25_mpi_stop
       end if
       return

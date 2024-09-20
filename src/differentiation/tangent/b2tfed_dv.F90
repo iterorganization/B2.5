@@ -72,7 +72,7 @@ SUBROUTINE B2TFED_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
 & (nbdirsmax, nfc), wrkd(nbdirsmax, ncv), wrk0d(nbdirsmax, nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
   REAL(kind=r8) :: result1
@@ -88,12 +88,12 @@ SUBROUTINE B2TFED_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tfed')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2tfed .LT. 3) THEN
 !    ..test sign of te
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   END IF
 !   ..test facdrift
   result1 = MINVAL(facdrift)
@@ -236,7 +236,7 @@ SUBROUTINE B2TFED_NODIFF(ncv, nfc, nvx, switch, geo, mpg, facdrift, &
 & , wrk(ncv), wrk0(nfc), wght(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
   REAL(kind=r8) :: result1
@@ -250,12 +250,12 @@ SUBROUTINE B2TFED_NODIFF(ncv, nfc, nvx, switch, geo, mpg, facdrift, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tfed')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2tfed .LT. 3) THEN
 !    ..test sign of te
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   END IF
 !   ..test facdrift
   result1 = MINVAL(facdrift)

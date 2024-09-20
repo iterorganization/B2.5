@@ -19,16 +19,9 @@ DEFINES += -DNO_OPT
 CPP = /lib/cpp -traditional
 
 MPI_FC ?= mpifort
-ifdef USE_MPI
+ifdef SOLPS_MPI
 FC      = ${MPI_FC}
-else
-FC     ?= gfortran
 endif
-
-GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')
-
-GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
-GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
 
 DDBLOPTION = -Ad # ???
 
@@ -56,9 +49,10 @@ IMASLIBS = ${LD_AL} -lUALFORTRANInterface_gfortran
 endif
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 LDLIBES += ${LD_MPI}
 endif
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

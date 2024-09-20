@@ -75,8 +75,8 @@ SUBROUTINE B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, qe, rza&
 !srv 13.01.17 {
     CALL B2XZEF_DV(ncv, ns, rz2, rz2d, na, nad, ne, ned, zeff, zeffd, &
 &            st_ext, nbdirs)
-    CALL B2XPIC_DV(ncv, ns, mpg, qe, rza, rzad, geo%cvbb, na, nad, ua, &
-&            uad, zeff, zeffd, st_ext, fch_pi_c, fch_pi_cd, nbdirs)
+    CALL B2XPIC_DV(ncv, ns, qe, rza, rzad, geo%cvbb, na, nad, ua, uad, &
+&            zeff, zeffd, st_ext, fch_pi_c, fch_pi_cd, nbdirs)
   ELSE
     fch_pi_c = 0.0_R8
     DO nd=1,nbdirsmax
@@ -200,8 +200,8 @@ SUBROUTINE B2XPVE_NODIFF(ncv, nfc, ns, switch, geo, mpg, qe, rza, rz2, &
   IF (switch%b2sigp_style .EQ. 2) THEN
 !srv 13.01.17 {
     CALL B2XZEF_NODIFF(ncv, ns, rz2, na, ne, zeff, st_ext)
-    CALL B2XPIC_NODIFF(ncv, ns, mpg, qe, rza, geo%cvbb, na, ua, zeff, &
-&                st_ext, fch_pi_c)
+    CALL B2XPIC_NODIFF(ncv, ns, qe, rza, geo%cvbb, na, ua, zeff, st_ext&
+&                , fch_pi_c)
   ELSE
     fch_pi_c = 0.0_R8
   END IF

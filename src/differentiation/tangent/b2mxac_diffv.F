@@ -26,7 +26,6 @@
       real (kind=R8) ::
      *   damax
       external xertst, damax
-      external b2xvfx
 *   ..initialisation
       data ncall/0/
 
@@ -37,9 +36,8 @@
 *   ..subprogram start-up calls
       call subini ('b2mxac')
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
-
 
 * ..compute norms of the corrections
 *   ..compute acorpa, acorua

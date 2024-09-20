@@ -13,6 +13,10 @@
       use b2mod_switches
       use b2us_map
       use b2mod_subsys
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+      use b2mod_ad
+     & , only : ncall_b2smdt
       implicit none
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
@@ -38,14 +42,12 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, iCv, is, k
+      integer iCv, is, k
       character chns*3, chk*1
       real (kind=R8) :: t0, ttim
 *   ..procedures
       external xertst, ipgetr
       external b2xvsg
-*   ..initialisation
-      data ncall/0/                                                  !xpb
 
 *-----------------------------------------------------------------------
 *.computation
@@ -56,7 +58,7 @@
 *   ..test sign of dtim
       call xertst (0.0_R8.lt.dtim, 'faulty argument dtim')
 *   ..extensive tests on first few calls
-      if (ncall.lt.3) then
+      if (ncall_b2smdt.lt.3) then
 *    ..test old state
        call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
       endif
@@ -98,7 +100,7 @@ cdjm Store the total change in linearised sources for balance
       endif                                                          !srv 11.09.09 }
 
 * ..return
-      ncall = ncall+1
+      ncall_b2smdt = ncall_b2smdt+1
       call subend ()
       return
 

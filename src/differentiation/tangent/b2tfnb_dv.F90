@@ -3,18 +3,19 @@
 !
 !  Differentiation of b2tfnb in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
-!                *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_exb)
-!                *(dv.kinrgy) *(dv.flob) *(dv.conb) *(dv.vadia)
-!                *(dv.wadia) *(dv.vaecrb)
+!                *(dv.fna_53) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
+!                *(dv.fna_exb) *(dv.kinrgy) *(dv.flob) *(dv.conb)
+!                *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
 !   with respect to varying inputs: *(dv.fchvispar) *(dv.fchvisper)
 !                *(dv.fchvisq) *(dv.fchinert) *(dv.fchanml) *(dv.fchviskt)
-!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he)
-!                *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_exb) *(dv.kinrgy)
-!                *(dv.flob) *(dv.conb) *(dv.pcca) *(dv.pa) *(dv.vadia)
-!                *(dv.wadia) *(dv.vaecrb) *(rt.rza) *(co.cvla)
-!                *(co.cdna) *(co.cdna_exb) *(co.cdpa) *(co.cvlahz)
-!                *(co.cdpahz) *(co.cddi) *(co.cssb) *(pl.na) *(pl.ua)
-!                *(pl.po) *(pl.ti)
+!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_53)
+!                *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_exb)
+!                *(dv.kinrgy) *(dv.flob) *(dv.conb) *(dv.pcca)
+!                *(dv.pa) *(dv.vadia) *(dv.wadia) *(dv.vaecrb)
+!                *(rt.rza) *(co.cvla) *(co.cdna) *(co.cdna_exb)
+!                *(co.cdpa) *(co.cvlahz) *(co.cdpahz) *(co.cddi)
+!                *(co.cssb) *(pl.na) *(pl.ua) *(pl.po) *(pl.ti)
+!                *(pl.tn)
 !   Plus diff mem management of: dv.fchvispar:in dv.fchvisper:in
 !                dv.fchvisq:in dv.fchinert:in dv.fchanml:in dv.fchviskt:in
 !                dv.fna:in dv.fna_mdf:in dv.fna_52:in dv.fna_32:in
@@ -29,7 +30,7 @@
 !                geo.vxvol:in geo.vxonedbsq:in rt.rza:in co.cvla:in
 !                co.cdna:in co.cdna_exb:in co.cdpa:in co.cvlahz:in
 !                co.cdpahz:in co.cddi:in co.fllim0fna:in co.cssb:in
-!                pl.na:in pl.ua:in pl.po:in pl.ti:in
+!                pl.na:in pl.ua:in pl.po:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -55,16 +56,13 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!      use b2mod_balance                                                 !djm Jan2017
-!     & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
-!     &          fna_ch, fna_pschused, balance_netcdf
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfnb
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfnb, b2tfnb_cutlo
+  USE B2MOD_AD_DIFFV, ONLY : b2tfnb_cutlo
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array pa
 !  Hint: nCv should be the size of dimension 1 of array temp
-!  Hint: nFc should be the size of dimension 1 of array fnapsch
 !  Hint: nFc should be the size of dimension 1 of array fchz
 !  Hint: ISIZE1OFfna_52 should be the size of dimension 1 of array fna_52
 !  Hint: nFc should be the size of dimension 1 of array fcqalf
@@ -124,9 +122,10 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
 & 0:1), conb0(nfc, 0:1), scur(nfc, 0:1)
   REAL(kind=r8) :: flod(nbdirsmax, nfc, 0:1), flo_mdfd(nbdirsmax, nfc, 0&
 & :1), flo2diad(nbdirsmax, nfc, 0:1), flo_hed(nbdirsmax, nfc, 0:1), &
-& vbard(nbdirsmax), t0d(nbdirsmax), t1d(nbdirsmax), t2d(nbdirsmax), t3d(&
-& nbdirsmax), termd(nbdirsmax, nfc), flob0d(nbdirsmax, nfc, 0:1), conb0d&
-& (nbdirsmax, nfc, 0:1), scurd(nbdirsmax, nfc, 0:1)
+& flo_53d(nbdirsmax, nfc, 0:1), vbard(nbdirsmax), t0d(nbdirsmax), t1d(&
+& nbdirsmax), t2d(nbdirsmax), t3d(nbdirsmax), termd(nbdirsmax, nfc), &
+& flob0d(nbdirsmax, nfc, 0:1), conb0d(nbdirsmax, nfc, 0:1), scurd(&
+& nbdirsmax, nfc, 0:1)
 !srv 21.10.10
 !srv 05.03.16
 !srv 05.03.16
@@ -137,19 +136,21 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
 & kmprtivd(nbdirsmax, nvx), kmprd(nbdirsmax, ncv), kmprvd(nbdirsmax, nvx&
 & ), tbfl_fnbd(nbdirsmax, nbc), div_fnbd(nbdirsmax), tbfl_fnb_mdfd(&
 & nbdirsmax, nbc), div_fnb_mdfd(nbdirsmax), rdivd(nbdirsmax)
-! wrk4(nFc),
-  REAL(kind=r8) :: wrk0(nfc), wrk1(nfc), wrk2(nfc), wrk3(nfc), wrk5(nfc)&
-& , wrk6(nfc), wrk7(nfc, 0:1), wrk8(nfc), wrk(ncv), wrkvx(nvx), zeros(&
-& nfc, 0:1), dumm1(nfc, 0:1), zeros1(nfc, 0:1)
-  REAL(kind=r8) :: wrk0d(nbdirsmax, nfc), wrk1d(nbdirsmax, nfc), wrkd(&
-& nbdirsmax, ncv), wrkvxd(nbdirsmax, nvx), zerosd(nbdirsmax, nfc, 0:1), &
-& dumm1d(nbdirsmax, nfc, 0:1), zeros1d(nbdirsmax, nfc, 0:1)
+!    *   wrk5(nFc), wrk7(nFc,0:1),
+  REAL(kind=r8) :: wrk0(nfc), wrk1(nfc), wrk2(nfc), wrk3(nfc), wrk4(nfc)&
+& , wrk6(nfc), wrk8(nfc), wrk(ncv), wrkf(nfc, 0:1), wrkvx(nvx), zeros(&
+& nfc, 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(&
+& nfc, 0:1), zeros1(nfc, 0:1)
+  REAL(kind=r8) :: wrk0d(nbdirsmax, nfc), wrk1d(nbdirsmax, nfc), wrk4d(&
+& nbdirsmax, nfc), wrkd(nbdirsmax, ncv), wrkvxd(nbdirsmax, nvx), zerosd(&
+& nbdirsmax, nfc, 0:1), dumm1d(nbdirsmax, nfc, 0:1), zeros1d(nbdirsmax, &
+& nfc, 0:1)
 !srv 01.10.99 !lk 09.06.11
 !srv 13.05.16
   REAL(kind=r8) :: ub2dia(nfc, 0:1), nbcor(nvx), nbti(ncv), nbzb(ncv), &
 & nbzbc(nvx), dnb(nfc, 0:1), dpb(nfc, 0:1), dpbc(ncv), dpbm(nfc), dpo(&
 & nfc, 0:1), dnbti(nfc, 0:1), nbf(nfc), donedbsq(nfc, 0:1), fna_mdf0(nfc&
-& , 0:1), cddb(nfc, 0:1), cdpb(nfc, 0:1)
+& , 0:1), flo_factor(nfc, 0:1), cddb(nfc, 0:1), cdpb(nfc, 0:1)
   REAL(kind=r8) :: nbtid(nbdirsmax, ncv), nbzbd(nbdirsmax, ncv), nbzbcd(&
 & nbdirsmax, nvx), dpbd(nbdirsmax, nfc, 0:1), dpbcd(nbdirsmax, ncv), &
 & dpbmd(nbdirsmax, nfc), dpod(nbdirsmax, nfc, 0:1), dnbtid(nbdirsmax, &
@@ -158,14 +159,14 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
 !lk
   REAL(kind=r8) :: weight(nfc, 2)
   INTEGER :: xcount
-! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+! The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 !   ..procedures
 !xpb
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, INTFACE, DIFF_NODIFF
+  EXTERNAL B2XVSG, INTFACE, DIFF_NODIFF
   EXTERNAL INTFACE_DV, DIFF_DV
-  INTRINSIC ABS, MAX, SQRT
+  INTRINSIC ABS, MAX, SQRT, SIGN
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
   INTRINSIC NINT
@@ -187,26 +188,31 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
   REAL(kind=r8), DIMENSION(nbdirsmax) :: result10d
   REAL(kind=r8) :: arg10
   REAL(kind=r8), DIMENSION(nbdirsmax) :: arg10d
-  REAL(r8) :: pwr1
-  REAL(r8), DIMENSION(nbdirsmax) :: pwr1d
+  REAL(kind=r8) :: pwx1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: pwx1d
+  REAL(kind=r8) :: pwr1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: pwr1d
   REAL(r8) :: pwx2
   REAL(r8), DIMENSION(nbdirsmax) :: pwx2d
   REAL(r8) :: pwy2
+  REAL(r8) :: pwr2
+  REAL(r8), DIMENSION(nbdirsmax) :: pwr2d
+  REAL(r8) :: pwr10
+  REAL(r8), DIMENSION(nbdirsmax) :: pwr10d
   CHARACTER(len=18) :: arg11
   CHARACTER(len=17) :: arg12
-  CHARACTER(len=23) :: arg13
-  CHARACTER(len=16) :: arg14
-  CHARACTER(len=13) :: arg15
-  CHARACTER(len=11) :: arg16
-  CHARACTER(len=20) :: arg17
-  CHARACTER(len=19) :: arg18
-  CHARACTER(len=15) :: arg19
-  CHARACTER(len=12) :: arg110
-  CHARACTER(len=14) :: arg111
-  CHARACTER(len=21) :: arg112
-  REAL(kind=r8), DIMENSION(nfc) :: arg113
+  CHARACTER(len=16) :: arg13
+  CHARACTER(len=13) :: arg14
+  CHARACTER(len=11) :: arg15
+  CHARACTER(len=20) :: arg16
+  CHARACTER(len=19) :: arg17
+  CHARACTER(len=15) :: arg18
+  CHARACTER(len=12) :: arg19
+  CHARACTER(len=14) :: arg110
+  CHARACTER(len=21) :: arg111
+  REAL(kind=r8), DIMENSION(nfc) :: arg112
   CHARACTER(len=13) :: arg2
-  CHARACTER(len=9) :: arg114
+  CHARACTER(len=9) :: arg113
   INTEGER :: nd
   REAL(r8), DIMENSION(nCv) :: temp
   REAL(r8) :: temp0
@@ -215,18 +221,17 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
   REAL(kind=r8), DIMENSION(nCv) :: temp3
   REAL(kind=r8) :: temp4
   REAL(kind=r8) :: temp5
-  REAL(r8), DIMENSION(nFc) :: temp6
-  REAL(kind=r8), DIMENSION(nFc) :: temp7
+  REAL(kind=r8), DIMENSION(nFc) :: temp6
+  REAL(r8), DIMENSION(nfc) :: temp7
   REAL(r8), DIMENSION(nfc) :: temp8
-  REAL(r8), DIMENSION(nfc) :: temp9
   REAL(r8), DIMENSION(nbdirsmax, nFc, 0:1) :: &
 & dummyzerodiffd
+  REAL(r8) :: temp9
   REAL(r8) :: temp10
   REAL(r8) :: temp11
-  REAL(r8) :: temp12
-  REAL(kind=r8), DIMENSION(nfc) :: temp13
-  REAL(r8), DIMENSION(nFc) :: temp14
-  REAL(r8), DIMENSION(5) :: temp15
+  REAL(kind=r8), DIMENSION(nfc) :: temp12
+  REAL(r8), DIMENSION(nFc) :: temp13
+  REAL(r8), DIMENSION(5) :: temp14
   INTEGER :: nbdirs
 !   ..initialisation
 !
@@ -237,28 +242,30 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tfnb')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..set internal parameters on first call
   drift_hyb = switch%fnb_drift_hyb
 !   ..extensive tests on first few calls
   IF (ncall_b2tfnb .LT. 3) THEN
 !    ..test sign of nb, ne, pb, cdnb, cdpb
-    CALL B2XVSG_NODIFF(ncv, pl%na(:, isb), 1, 'nb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%pa(:, isb), 1, 'pb', '.gt.')
-    wrk0(:) = co%cdna(:, 0, isb)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrk0, 1, 'cdna0', '.ge.')
-    wrk1(:) = co%cdna(:, 1, isb)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrk1, 1, 'cdna1', '.ge.')
+    CALL B2XVSG(ncv, pl%na(:, isb), 1, 'nb', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, dv%pa(:, isb), 1, 'pb', '.gt.')
     DO nd=1,nbdirs
+      wrk0d(nd, :) = 0.D0
+      wrk1d(nd, :) = 0.D0
       wrk0d(nd, :) = geo%fcqalf(:, 0)*cod%cdpa(nd, :, 0, isb)
       wrk1d(nd, :) = geo%fcqalf(:, 1)*cod%cdpa(nd, :, 1, isb)
     END DO
+    wrk0(:) = co%cdna(:, 0, isb)*geo%fcqalf(:, 0)
+    CALL B2XVSG(nfc, wrk0, 1, 'cdna0', '.ge.')
+    wrk1(:) = co%cdna(:, 1, isb)*geo%fcqalf(:, 1)
+    CALL B2XVSG(nfc, wrk1, 1, 'cdna1', '.ge.')
     wrk0(:) = co%cdpa(:, 0, isb)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrk0, 1, 'cdpa0', '.ge.')
+    CALL B2XVSG(nfc, wrk0, 1, 'cdpa0', '.ge.')
     wrk1(:) = co%cdpa(:, 1, isb)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrk1, 1, 'cdna1', '.ge.')
-! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+    CALL B2XVSG(nfc, wrk1, 1, 'cdna1', '.ge.')
+! The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
 !        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
 !        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
   ELSE
@@ -404,6 +411,9 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
 !     ..restriction ExB drift
     xcount = 0
     IF (switch%ion_vlct_restrict .EQ. 2) THEN
+      DO nd=1,nbdirsmax
+        t0d(nd) = 0.D0
+      END DO
 !iyv 06.02.14 {
 !wdk for unstructured grids: apply ExB velocity restriction
 !    to total ExB velocity (instead of individual poloidal and radial
@@ -447,6 +457,10 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
           END DO
           dv%vaecrb(ifc, 1, isb) = dv%vaecrb(ifc, 1, isb)*t1
         END IF
+      END DO
+    ELSE
+      DO nd=1,nbdirsmax
+        t0d(nd) = 0.D0
       END DO
     END IF
     IF (switch%vlct_diagno .GE. 1) THEN
@@ -547,8 +561,8 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
     DO nd=1,nbdirsmax
       zerosd(nd, :, :) = 0.D0
     END DO
-    CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, mpg, zeros, zerosd, cddb, &
-&              cddbd, flob0, flob0d, conb0, conb0d, nbdirs)
+    CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, zeros, zerosd, cddb, cddbd, &
+&              flob0, flob0d, conb0, conb0d, nbdirs)
     DO ifc=1,nfc
       temp4 = kmprti(mpg%fccv(ifc, 2)) - kmprti(mpg%fccv(ifc, 1))
       DO nd=1,nbdirs
@@ -636,22 +650,11 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
         vbar = geo%fcbb(ifc, 0)/geo%fcbb(ifc, 3)*result10
         temp4 = switch%psch*dv%facdrift(ifc)*geo%fcbb(ifc, 3)
         temp5 = switch%psch*dv%facdrift(ifc)
-        arg1 = (dv%vadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
-&         **2 + dv%vadia(ifc, 1, isb)**2
-        temp0 = SQRT(arg1)
         DO nd=1,nbdirs
           arg10d(nd) = 2*temp4**2*wrk1(ifc)*dnbti(ifc, 1)*(dnbti(ifc, 1)&
 &           *wrk1d(nd, ifc)+wrk1(ifc)*dnbtid(nd, ifc, 1))/geo%fcbb(ifc, &
 &           2)**2 + 2*temp5**2*wrk1(ifc)*dnbti(ifc, 0)*(dnbti(ifc, 0)*&
 &           wrk1d(nd, ifc)+wrk1(ifc)*dnbtid(nd, ifc, 0))
-          IF (arg1 .EQ. 0.D0) THEN
-            t3d(nd) = 0.D0
-          ELSE
-            t3d(nd) = arg1d(nd)/(2.0*temp0)
-          END IF
-          arg1d(nd) = 2*geo%fcbb(ifc, 3)**2*dv%wadia(ifc, 0, isb)*dvd%&
-&           wadia(nd, ifc, 0, isb)/geo%fcbb(ifc, 2)**2 + 2*dv%wadia(ifc&
-&           , 1, isb)*dvd%wadia(nd, ifc, 1, isb)
         END DO
         arg10 = temp4*(wrk1(ifc)*dnbti(ifc, 1)/geo%fcbb(ifc, 2))*(temp4*&
 &         (wrk1(ifc)*dnbti(ifc, 1)/geo%fcbb(ifc, 2))) + temp5*(wrk1(ifc)&
@@ -667,25 +670,40 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
         result10 = temp5
         temp5 = result10/(vbar*t1)
         t2 = temp5 + 1.0_R8
-        temp6 = dv%fnapsch(:, 0, isb)/t2
+        temp0 = dv%fnapsch(ifc, 0, isb)/t2
         DO nd=1,nbdirs
           t2d(nd) = (result10d(nd)-temp5*(t1*vbard(nd)+vbar*t1d(nd)))/(&
 &           vbar*t1)
-          dvd%fnapsch(nd, :, 0, isb) = (dvd%fnapsch(nd, :, 0, isb)-temp6&
-&           *t2d(nd))/t2
+          dvd%fnapsch(nd, ifc, 0, isb) = (dvd%fnapsch(nd, ifc, 0, isb)-&
+&           temp0*t2d(nd))/t2
         END DO
-        dv%fnapsch(:, 0, isb) = temp6
-        temp6 = dv%fnapsch(:, 1, isb)/t2
+        dv%fnapsch(ifc, 0, isb) = temp0
+        temp0 = dv%fnapsch(ifc, 1, isb)/t2
+        DO nd=1,nbdirs
+          dvd%fnapsch(nd, ifc, 1, isb) = (dvd%fnapsch(nd, ifc, 1, isb)-&
+&           temp0*t2d(nd))/t2
+        END DO
+        dv%fnapsch(ifc, 1, isb) = temp0
+        arg1 = (dv%vadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
+&         **2 + dv%vadia(ifc, 1, isb)**2
+        temp0 = SQRT(arg1)
+        DO nd=1,nbdirs
+          IF (arg1 .EQ. 0.D0) THEN
+            t3d(nd) = 0.D0
+          ELSE
+            t3d(nd) = arg1d(nd)/(2.0*temp0)
+          END IF
+          arg1d(nd) = 2*geo%fcbb(ifc, 3)**2*dv%wadia(ifc, 0, isb)*dvd%&
+&           wadia(nd, ifc, 0, isb)/geo%fcbb(ifc, 2)**2 + 2*dv%wadia(ifc&
+&           , 1, isb)*dvd%wadia(nd, ifc, 1, isb)
+        END DO
         t3 = temp0
         temp5 = t3/vbar
         temp0 = dv%vadia(ifc, 0, isb)/(temp5+1.0_R8)
         DO nd=1,nbdirs
-          dvd%fnapsch(nd, :, 1, isb) = (dvd%fnapsch(nd, :, 1, isb)-temp6&
-&           *t2d(nd))/t2
           dvd%vadia(nd, ifc, 0, isb) = (dvd%vadia(nd, ifc, 0, isb)-temp0&
 &           *(t3d(nd)-temp5*vbard(nd))/vbar)/(temp5+1.0_R8)
         END DO
-        dv%fnapsch(:, 1, isb) = temp6
         dv%vadia(ifc, 0, isb) = temp0
         temp5 = t3/vbar
         temp0 = dv%vadia(ifc, 1, isb)/(temp5+1.0_R8)
@@ -730,6 +748,77 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
         ub2dia(ifc, 0) = ub2dia(ifc, 0)/(1.0_R8+t3/vbar)
         ub2dia(ifc, 1) = ub2dia(ifc, 1)/(1.0_R8+t3/vbar)
       END DO
+    END IF
+!lkw 25.10.2022}
+    IF (isb .EQ. ismain) THEN
+!lkw 25.10.2022 {
+      DO ifc=1,nfc
+        icv1 = mpg%fccv(ifc, 1)
+        icv2 = mpg%fccv(ifc, 2)
+        IF (pl%ti(icv1) .LT. pl%ti(icv2)) THEN
+          DO nd=1,nbdirs
+            t0d(nd) = pld%ti(nd, icv2)
+          END DO
+          t0 = pl%ti(icv2)
+        ELSE
+          DO nd=1,nbdirs
+            t0d(nd) = pld%ti(nd, icv1)
+          END DO
+          t0 = pl%ti(icv1)
+        END IF
+        temp5 = am(isb)*pi*mp
+        DO nd=1,nbdirs
+          t1d(nd) = 0.5_R8*(pld%na(nd, icv1, isb)+pld%na(nd, icv2, isb))
+          arg1d(nd) = 8.0_R8*t0d(nd)/temp5
+        END DO
+        t1 = 0.5_R8*(pl%na(icv1, isb)+pl%na(icv2, isb))
+        arg1 = 8.0_R8*(t0/temp5)
+        temp5 = SQRT(arg1)
+        DO nd=1,nbdirs
+          IF (arg1 .EQ. 0.D0) THEN
+            vbard(nd) = 0.D0
+          ELSE
+            vbard(nd) = arg1d(nd)/(2.0*temp5)
+          END IF
+        END DO
+        vbar = temp5
+        temp5 = switch%psch*dv%facdrift(ifc)*geo%fcbb(ifc, 3)
+        temp4 = switch%psch*dv%facdrift(ifc)
+        DO nd=1,nbdirs
+          arg10d(nd) = 2*temp5**2*wrk1(ifc)*dnbti(ifc, 1)*(dnbti(ifc, 1)&
+&           *wrk1d(nd, ifc)+wrk1(ifc)*dnbtid(nd, ifc, 1))/geo%fcbb(ifc, &
+&           2)**2 + 2*temp4**2*wrk1(ifc)*dnbti(ifc, 0)*(dnbti(ifc, 0)*&
+&           wrk1d(nd, ifc)+wrk1(ifc)*dnbtid(nd, ifc, 0))
+        END DO
+        arg10 = temp5*(wrk1(ifc)*dnbti(ifc, 1)/geo%fcbb(ifc, 2))*(temp5*&
+&         (wrk1(ifc)*dnbti(ifc, 1)/geo%fcbb(ifc, 2))) + temp4*(wrk1(ifc)&
+&         *dnbti(ifc, 0))*(temp4*(wrk1(ifc)*dnbti(ifc, 0)))
+        temp5 = SQRT(arg10)
+        DO nd=1,nbdirs
+          IF (arg10 .EQ. 0.D0) THEN
+            result10d(nd) = 0.D0
+          ELSE
+            result10d(nd) = arg10d(nd)/(2.0*temp5)
+          END IF
+        END DO
+        result10 = temp5
+        temp5 = result10/(vbar*t1)
+        t2 = temp5 + 1.0_R8
+        temp0 = dv%fnapsch(ifc, 0, isb)/t2
+        DO nd=1,nbdirs
+          t2d(nd) = (result10d(nd)-temp5*(t1*vbard(nd)+vbar*t1d(nd)))/(&
+&           vbar*t1)
+          dvd%fnapsch(nd, ifc, 0, isb) = (dvd%fnapsch(nd, ifc, 0, isb)-&
+&           temp0*t2d(nd))/t2
+        END DO
+        dv%fnapsch(ifc, 0, isb) = temp0
+        temp0 = dv%fnapsch(ifc, 1, isb)/t2
+        DO nd=1,nbdirs
+          dvd%fnapsch(nd, ifc, 1, isb) = (dvd%fnapsch(nd, ifc, 1, isb)-&
+&           temp0*t2d(nd))/t2
+        END DO
+        dv%fnapsch(ifc, 1, isb) = temp0
+      END DO
       DO nd=1,nbdirsmax
         wrk0d(nd, :) = 0.D0
       END DO
@@ -739,6 +828,9 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
       END DO
     END IF
   ELSE
+    DO nd=1,nbdirsmax
+      t0d(nd) = 0.D0
+    END DO
     DO nd=1,nbdirsmax
       conb0d(nd, :, :) = 0.D0
     END DO
@@ -779,9 +871,12 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
     flo_hed(nd, :, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
+    flo_53d(nd, :, :) = 0.D0
+  END DO
+  DO nd=1,nbdirsmax
     flo2diad(nd, :, :) = 0.D0
   END DO
-  temp7 = geo%fcqalf(:, 0)*geo%fcs*geo%fchz
+  temp6 = geo%fcqalf(:, 0)*geo%fcs*geo%fchz
   DO nd=1,nbdirs
     flod(nd, :, 0) = geo%fcpbs*wrk0d(nd, :) + cod%cvla(nd, :, 0, isb) + &
 &     geo%fcs*geo%fcqalf(:, 0)*(drift_hyb*dvd%vaecrb(nd, :, 0, isb)+dvd%&
@@ -797,8 +892,12 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
 &     , :, 0, isb)
     flo_hed(nd, :, 1) = 5.0_R8*cod%cvla(nd, :, 1, isb)/3.0_R8 + &
 &     drift_hyb*geo%fcs*geo%fcqalf(:, 1)*dvd%vaecrb(nd, :, 1, isb)
+    flo_53d(nd, :, 0) = geo%fcpbs*wrk0d(nd, :) + geo%fcs*geo%fcqalf(:, 0&
+&     )*dvd%vaecrb(nd, :, 0, isb)
+    flo_53d(nd, :, 1) = geo%fcs*geo%fcqalf(:, 1)*dvd%vaecrb(nd, :, 1, &
+&     isb)
     flo2diad(nd, :, 0) = geo%fcpbshz*wrk0d(nd, :) + cod%cvlahz(nd, :, 0&
-&     , isb) + temp7*(drift_hyb*dvd%vaecrb(nd, :, 0, isb)+2.0_R8*dvd%&
+&     , isb) + temp6*(drift_hyb*dvd%vaecrb(nd, :, 0, isb)+2.0_R8*dvd%&
 &     vadia(nd, :, 0, isb))
   END DO
   flo(:, 0) = geo%fcpbs*wrk0 + co%cvla(:, 0, isb) + (drift_hyb*dv%vaecrb&
@@ -816,14 +915,14 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
   flo_53(:, 0) = geo%fcpbs*wrk0 + dv%vaecrb(:, 0, isb)*geo%fcs*geo%&
 &   fcqalf(:, 0)
   flo_53(:, 1) = dv%vaecrb(:, 1, isb)*geo%fcs*geo%fcqalf(:, 1)
-  flo2dia(:, 0) = geo%fcpbshz*wrk0 + co%cvlahz(:, 0, isb) + temp7*(&
+  flo2dia(:, 0) = geo%fcpbshz*wrk0 + co%cvlahz(:, 0, isb) + temp6*(&
 &   drift_hyb*dv%vaecrb(:, 0, isb)+2.0_R8*dv%vadia(:, 0, isb))
-  temp7 = geo%fcqalf(:, 1)*geo%fcs*geo%fchz
+  temp6 = geo%fcqalf(:, 1)*geo%fcs*geo%fchz
   DO nd=1,nbdirs
-    flo2diad(nd, :, 1) = cod%cvlahz(nd, :, 1, isb) + temp7*(drift_hyb*&
+    flo2diad(nd, :, 1) = cod%cvlahz(nd, :, 1, isb) + temp6*(drift_hyb*&
 &     dvd%vaecrb(nd, :, 1, isb)+2.0_R8*dvd%vadia(nd, :, 1, isb))
   END DO
-  flo2dia(:, 1) = co%cvlahz(:, 1, isb) + temp7*(drift_hyb*dv%vaecrb(:, 1&
+  flo2dia(:, 1) = co%cvlahz(:, 1, isb) + temp6*(drift_hyb*dv%vaecrb(:, 1&
 &   , isb)+2.0_R8*dv%vadia(:, 1, isb))
   flo_nodrift(:, 0) = co%cvla(:, 0, isb) + geo%fcpbs*wrk0
   flo_nodrift(:, 1) = co%cvla(:, 1, isb)
@@ -833,27 +932,27 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
     DO nd=1,nbdirsmax
       scurd(nd, :, :) = 0.D0
     END DO
-    temp8 = (dv%fchinert(:, 0)+dv%fchvispar(:, 0)+dv%fchvisper(:, 0)+dv%&
+    temp7 = (dv%fchinert(:, 0)+dv%fchvispar(:, 0)+dv%fchvisper(:, 0)+dv%&
 &     fchanml(:, 0)+dv%fchvisq(:, 0))/(qe*nbf)
-    temp9 = dv%fchviskt(:, 0)/(qe*nbf)
+    temp8 = dv%fchviskt(:, 0)/(qe*nbf)
     DO nd=1,nbdirs
       scurd(nd, :, 0) = switch%b2tfnb_xcur*(dvd%fchinert(nd, :, 0)+dvd%&
 &       fchvispar(nd, :, 0)+dvd%fchvisper(nd, :, 0)+dvd%fchanml(nd, :, 0&
-&       )+dvd%fchvisq(nd, :, 0)-temp8*qe*nbfd(nd, :))/(qe*nbf) + (dvd%&
-&       fchviskt(nd, :, 0)-temp9*qe*nbfd(nd, :))/(qe*nbf)
+&       )+dvd%fchvisq(nd, :, 0)-temp7*qe*nbfd(nd, :))/(qe*nbf) + (dvd%&
+&       fchviskt(nd, :, 0)-temp8*qe*nbfd(nd, :))/(qe*nbf)
       flo2diad(nd, :, 0) = flo2diad(nd, :, 0) + drift_hyb*geo%fchz*scurd&
 &       (nd, :, 0)
     END DO
-    scur(:, 0) = switch%b2tfnb_xcur*temp8 + temp9
-    temp9 = (dv%fchinert(:, 1)+dv%fchvispar(:, 1)+switch%fnb_vis_per*dv%&
+    scur(:, 0) = switch%b2tfnb_xcur*temp7 + temp8
+    temp8 = (dv%fchinert(:, 1)+dv%fchvispar(:, 1)+switch%fnb_vis_per*dv%&
 &     fchvisper(:, 1)+dv%fchanml(:, 1)+switch%fnb_vis_q*dv%fchvisq(:, 1)&
 &     )/(qe*nbf)
-    temp8 = dv%fchviskt(:, 1)/(qe*nbf)
+    temp7 = dv%fchviskt(:, 1)/(qe*nbf)
     DO nd=1,nbdirs
       scurd(nd, :, 1) = switch%b2tfnb_ycur*(dvd%fchinert(nd, :, 1)+dvd%&
 &       fchvispar(nd, :, 1)+switch%fnb_vis_per*dvd%fchvisper(nd, :, 1)+&
 &       dvd%fchanml(nd, :, 1)+switch%fnb_vis_q*dvd%fchvisq(nd, :, 1)-&
-&       temp9*qe*nbfd(nd, :))/(qe*nbf) + (dvd%fchviskt(nd, :, 1)-temp8*&
+&       temp8*qe*nbfd(nd, :))/(qe*nbf) + (dvd%fchviskt(nd, :, 1)-temp7*&
 &       qe*nbfd(nd, :))/(qe*nbf)
       flod(nd, :, :) = flod(nd, :, :) + drift_hyb*scurd(nd, :, :)
       flo_mdfd(nd, :, :) = flo_mdfd(nd, :, :) + drift_hyb*scurd(nd, :, :&
@@ -861,7 +960,7 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
       flo2diad(nd, :, 1) = flo2diad(nd, :, 1) + drift_hyb*geo%fchz*scurd&
 &       (nd, :, 1)
     END DO
-    scur(:, 1) = switch%b2tfnb_ycur*temp9 + temp8
+    scur(:, 1) = switch%b2tfnb_ycur*temp8 + temp7
     flo = flo + drift_hyb*scur
     flo_mdf = flo_mdf + drift_hyb*scur
     flo2dia(:, 0) = flo2dia(:, 0) + drift_hyb*scur(:, 0)*geo%fchz
@@ -886,6 +985,138 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
 &            :, :), dv%fna_32(:, :, isb), dvd%fna_32(:, :, :, isb), dv%&
 &            fna_52(:, :, isb), dummyzerodiffd, nbdirs)
   DO nd=1,nbdirsmax
+    wrk4d(nd, :) = 0.D0
+  END DO
+!   ..limit flow by sound speed                                           ! lkw 26.10.2022{
+  DO ifc=1,nfc
+    IF (((.NOT.is_neutral(isb)) .OR. switch%tn_style .EQ. 0) .OR. (&
+&       switch%tn_style .EQ. 2 .AND. NINT(zn(isb)) .NE. 1)) THEN
+      IF (pl%ti(mpg%fccv(ifc, 1)) .LT. pl%ti(mpg%fccv(ifc, 2))) THEN
+        DO nd=1,nbdirs
+          t0d(nd) = pld%ti(nd, mpg%fccv(ifc, 2))
+        END DO
+        t0 = pl%ti(mpg%fccv(ifc, 2))
+      ELSE
+        DO nd=1,nbdirs
+          t0d(nd) = pld%ti(nd, mpg%fccv(ifc, 1))
+        END DO
+        t0 = pl%ti(mpg%fccv(ifc, 1))
+      END IF
+    ELSE IF (switch%tn_style .EQ. 1) THEN
+      IF (pl%tn(mpg%fccv(ifc, 1)) .LT. pl%tn(mpg%fccv(ifc, 2))) THEN
+        DO nd=1,nbdirs
+          t0d(nd) = pld%tn(nd, mpg%fccv(ifc, 2))
+        END DO
+        t0 = pl%tn(mpg%fccv(ifc, 2))
+      ELSE
+        DO nd=1,nbdirs
+          t0d(nd) = pld%tn(nd, mpg%fccv(ifc, 1))
+        END DO
+        t0 = pl%tn(mpg%fccv(ifc, 1))
+      END IF
+    ELSE IF (switch%tn_style .EQ. 2 .AND. NINT(zn(isb)) .EQ. 1) THEN
+      IF (pl%tn(mpg%fccv(ifc, 1)) .LT. pl%tn(mpg%fccv(ifc, 2))) THEN
+        DO nd=1,nbdirs
+          t0d(nd) = pld%tn(nd, mpg%fccv(ifc, 2))
+        END DO
+        t0 = pl%tn(mpg%fccv(ifc, 2))
+      ELSE
+        DO nd=1,nbdirs
+          t0d(nd) = pld%tn(nd, mpg%fccv(ifc, 1))
+        END DO
+        t0 = pl%tn(mpg%fccv(ifc, 1))
+      END IF
+    END IF
+    DO nd=1,nbdirs
+      t3d(nd) = fna_mdf0d(nd, ifc, 0) + fna_mdf0d(nd, ifc, 1)
+      t1d(nd) = pld%na(nd, mpg%fccv(ifc, 1), isb)
+    END DO
+    t3 = fna_mdf0(ifc, 0) + fna_mdf0(ifc, 1)
+    t1 = pl%na(mpg%fccv(ifc, 1), isb)
+    IF (t3 .LT. 0.0_R8) THEN
+      DO nd=1,nbdirs
+        t1d(nd) = pld%na(nd, mpg%fccv(ifc, 2), isb)
+      END DO
+      t1 = pl%na(mpg%fccv(ifc, 2), isb)
+    END IF
+    IF (t3 .GE. 0.) THEN
+      t3 = t3
+    ELSE
+      DO nd=1,nbdirs
+        t3d(nd) = -t3d(nd)
+      END DO
+      t3 = -t3
+    END IF
+    temp5 = am(isb)*pi*mp
+    DO nd=1,nbdirs
+      arg1d(nd) = 8.0_R8*t0d(nd)/temp5
+    END DO
+    arg1 = 8.0_R8*(t0/temp5)
+    temp5 = SQRT(arg1)
+    result10 = temp5
+    vbar = result10*geo%fcs(ifc)
+    temp0 = 0.5_R8*vbar*t1
+    pwx1 = t3/temp0
+    pwr1 = pwx1**gamma
+    pwx2 = 1.0_R8 + pwr1
+    pwy2 = 1.0_R8/gamma
+    pwr2 = pwx2**pwy2
+    wrk4(ifc) = 1.0_R8/pwr2
+    DO nd=1,nbdirs
+      IF (arg1 .EQ. 0.D0) THEN
+        result10d(nd) = 0.D0
+      ELSE
+        result10d(nd) = arg1d(nd)/(2.0*temp5)
+      END IF
+      vbard(nd) = geo%fcs(ifc)*result10d(nd)
+      pwx1d(nd) = (t3d(nd)-t3*(t1*0.5_R8*vbard(nd)+0.5_R8*vbar*t1d(nd))/&
+&       temp0)/temp0
+      IF (pwx1 .LE. 0.D0 .AND. (gamma .EQ. 0.D0 .OR. gamma .NE. INT(&
+&         gamma))) THEN
+        pwr1d(nd) = 0.D0
+      ELSE
+        pwr1d(nd) = gamma*pwx1**(gamma-1)*pwx1d(nd)
+      END IF
+      pwx2d(nd) = pwr1d(nd)
+      IF (pwx2 .LE. 0.D0 .AND. (pwy2 .EQ. 0.D0 .OR. pwy2 .NE. INT(pwy2))&
+&     ) THEN
+        pwr2d(nd) = 0.D0
+      ELSE
+        pwr2d(nd) = pwy2*pwx2**(pwy2-1)*pwx2d(nd)
+      END IF
+      wrk4d(nd, ifc) = -(pwr2d(nd)/pwr2**2)
+      fna_mdf0d(nd, ifc, 0) = wrk4(ifc)*fna_mdf0d(nd, ifc, 0) + fna_mdf0&
+&       (ifc, 0)*wrk4d(nd, ifc)
+      fna_mdf0d(nd, ifc, 1) = wrk4(ifc)*fna_mdf0d(nd, ifc, 1) + fna_mdf0&
+&       (ifc, 1)*wrk4d(nd, ifc)
+    END DO
+    fna_mdf0(ifc, 0) = fna_mdf0(ifc, 0)*wrk4(ifc)
+    fna_mdf0(ifc, 1) = fna_mdf0(ifc, 1)*wrk4(ifc)
+  END DO
+! lkw 26.10.2022}
+!
+!   ..keep the convective flow "correction" factor for further output
+  DO ifc=1,nfc
+    IF (flo_mdf(ifc, 0) .EQ. 0.0_R8 .AND. dv%fna_32(ifc, 0, isb) .EQ. &
+&       0.0_R8) THEN
+      flo_factor(ifc, 0) = 1.0_R8
+    ELSE
+      CALL XERTST(flo_mdf(ifc, 0) .NE. 0.0_R8, 'faulty transformation'//&
+&           ' of poloidal convective particle flow, is = '//chns)
+      flo_factor(ifc, 0) = dv%fna_32(ifc, 0, isb)/(flo_mdf(ifc, 0)*nbf(&
+&       ifc))
+    END IF
+    IF (flo_mdf(ifc, 1) .EQ. 0.0_R8 .AND. dv%fna_32(ifc, 1, isb) .EQ. &
+&       0.0_R8) THEN
+      flo_factor(ifc, 1) = 1.0_R8
+    ELSE
+      CALL XERTST(flo_mdf(ifc, 1) .NE. 0.0_R8, 'faulty transformation'//&
+&           ' of radial convective particle flow, is = '//chns)
+      flo_factor(ifc, 1) = dv%fna_32(ifc, 1, isb)/(flo_mdf(ifc, 1)*nbf(&
+&       ifc))
+    END IF
+  END DO
+  DO nd=1,nbdirsmax
     cdpbd(nd, :, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
@@ -897,16 +1128,16 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
     temp5 = 0.5_R8*switch%b2npco_pcm1*geo%fcpbs(ifc)
     temp4 = geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))
     temp0 = pl%na(mpg%fccv(ifc, 1), isb)
-    temp10 = dv%pcca(mpg%fccv(ifc, 1), 1, isb)
-    temp11 = pl%na(mpg%fccv(ifc, 2), isb)
-    temp12 = dv%pcca(mpg%fccv(ifc, 2), 1, isb)
+    temp9 = dv%pcca(mpg%fccv(ifc, 1), 1, isb)
+    temp10 = pl%na(mpg%fccv(ifc, 2), isb)
+    temp11 = dv%pcca(mpg%fccv(ifc, 2), 1, isb)
     DO nd=1,nbdirs
       cdpbd(nd, ifc, 0) = temp5*(temp0*dvd%pcca(nd, mpg%fccv(ifc, 1), 1&
-&       , isb)+temp10*pld%na(nd, mpg%fccv(ifc, 1), isb)+temp11*dvd%pcca(&
-&       nd, mpg%fccv(ifc, 2), 1, isb)+temp12*pld%na(nd, mpg%fccv(ifc, 2)&
+&       , isb)+temp9*pld%na(nd, mpg%fccv(ifc, 1), isb)+temp10*dvd%pcca(&
+&       nd, mpg%fccv(ifc, 2), 1, isb)+temp11*pld%na(nd, mpg%fccv(ifc, 2)&
 &       , isb))/temp4
     END DO
-    cdpb(ifc, 0) = temp5*((temp10*temp0+temp12*temp11)/temp4)
+    cdpb(ifc, 0) = temp5*((temp9*temp0+temp11*temp10)/temp4)
     temp5 = 0.5_R8*geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2)&
 &     )
     DO nd=1,nbdirs
@@ -929,6 +1160,11 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
 &     :, 0))+temp2*nbfd(nd, :)) + nbf*(flod(nd, :, 0)-flo_mdfd(nd, :, 0)&
 &     ) + (flo(:, 0)-flo_mdf(:, 0))*nbfd(nd, :) - dpb(:, 0)*cod%cdpa(nd&
 &     , :, 0, isb) - co%cdpa(:, 0, isb)*dpbd(nd, :, 0)
+!
+    dvd%fna_53(nd, :, 0, isb) = nbf*flo_53d(nd, :, 0) + flo_53(:, 0)*&
+&     nbfd(nd, :)
+    dvd%fna_53(nd, :, 1, isb) = nbf*flo_53d(nd, :, 1) + flo_53(:, 1)*&
+&     nbfd(nd, :)
 !
 !   ..compute ExB fluxes for k-model
     dvd%fna_exb(nd, :, :) = 0.D0
@@ -971,76 +1207,75 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
 &   ) - co%cdpa(:, 1, isb)*dpb(:, 1) - dv%fnapsch(:, 1, isb)
 !
   temp2 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
-  temp13 = flo2dia(:, 0) - geo%fchz*flo_mdf(:, 0)
+  temp12 = flo2dia(:, 0) - geo%fchz*flo_mdf(:, 0)
   DO nd=1,nbdirs
     dvd%fna_fcor(nd, :, 0, isb) = geo%fchz*fna_mdf0d(nd, :, 0) + (1.0_R8&
 &     -drift_hyb)*geo%fchz*(nbf*(geo%fcs*geo%fcqalf(:, 0)*dvd%vaecrb(nd&
 &     , :, 0, isb)+scurd(nd, :, 0))+temp2*nbfd(nd, :)) + nbf*(flo2diad(&
-&     nd, :, 0)-geo%fchz*flo_mdfd(nd, :, 0)) + temp13*nbfd(nd, :) - dpb(&
+&     nd, :, 0)-geo%fchz*flo_mdfd(nd, :, 0)) + temp12*nbfd(nd, :) - dpb(&
 &     :, 0)*cod%cdpahz(nd, :, 0, isb) - co%cdpahz(:, 0, isb)*dpbd(nd, :&
 &     , 0)
   END DO
   dv%fna_fcor(:, 0, isb) = geo%fchz*fna_mdf0(:, 0) + (1.0_R8-drift_hyb)*&
-&   geo%fchz*(temp2*nbf) + temp13*nbf - co%cdpahz(:, 0, isb)*dpb(:, 0)
-  temp13 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
+&   geo%fchz*(temp2*nbf) + temp12*nbf - co%cdpahz(:, 0, isb)*dpb(:, 0)
+  temp12 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
   temp2 = flo2dia(:, 1) - geo%fchz*flo_mdf(:, 1)
   DO nd=1,nbdirs
     dvd%fna_fcor(nd, :, 1, isb) = geo%fchz*fna_mdf0d(nd, :, 1) + (1.0_R8&
 &     -drift_hyb)*geo%fchz*(nbf*(geo%fcs*geo%fcqalf(:, 1)*dvd%vaecrb(nd&
-&     , :, 1, isb)+scurd(nd, :, 1))+temp13*nbfd(nd, :)) + nbf*(flo2diad(&
+&     , :, 1, isb)+scurd(nd, :, 1))+temp12*nbfd(nd, :)) + nbf*(flo2diad(&
 &     nd, :, 1)-geo%fchz*flo_mdfd(nd, :, 1)) + temp2*nbfd(nd, :) - dpb(:&
 &     , 1)*cod%cdpahz(nd, :, 1, isb) - co%cdpahz(:, 1, isb)*dpbd(nd, :, &
 &     1)
   END DO
   dv%fna_fcor(:, 1, isb) = geo%fchz*fna_mdf0(:, 1) + (1.0_R8-drift_hyb)*&
-&   geo%fchz*(temp13*nbf) + temp2*nbf - co%cdpahz(:, 1, isb)*dpb(:, 1)
+&   geo%fchz*(temp12*nbf) + temp2*nbf - co%cdpahz(:, 1, isb)*dpb(:, 1)
 !
-  temp14 = (-drift_hyb+1.0_R8)*geo%fcs*geo%fcqalf(:, 0)
-  temp13 = flo_he(:, 0) - 5.0_R8*flo_mdf(:, 0)/3.0_R8
+  temp13 = (-drift_hyb+1.0_R8)*geo%fcs*geo%fcqalf(:, 0)
+  temp12 = flo_he(:, 0) - 5.0_R8*flo_mdf(:, 0)/3.0_R8
   DO nd=1,nbdirs
     dvd%fna_he(nd, :, 0, isb) = 5.0_R8*fna_mdf0d(nd, :, 0)/3.0_R8 + &
-&     temp14*(nbf*dvd%vaecrb(nd, :, 0, isb)+dv%vaecrb(:, 0, isb)*nbfd(nd&
+&     temp13*(nbf*dvd%vaecrb(nd, :, 0, isb)+dv%vaecrb(:, 0, isb)*nbfd(nd&
 &     , :)) + nbf*(flo_hed(nd, :, 0)-5.0_R8*flo_mdfd(nd, :, 0)/3.0_R8) +&
-&     temp13*nbfd(nd, :) - 5.0_R8*(dpb(:, 0)*cod%cdpa(nd, :, 0, isb)/&
+&     temp12*nbfd(nd, :) - 5.0_R8*(dpb(:, 0)*cod%cdpa(nd, :, 0, isb)/&
 &     3.0_R8+co%cdpa(:, 0, isb)*dpbd(nd, :, 0)/3.0_R8)
   END DO
-  dv%fna_he(:, 0, isb) = 5.0_R8*(fna_mdf0(:, 0)/3.0_R8) + temp14*(dv%&
-&   vaecrb(:, 0, isb)*nbf) + temp13*nbf - 5.0_R8*(co%cdpa(:, 0, isb)*(&
+  dv%fna_he(:, 0, isb) = 5.0_R8*(fna_mdf0(:, 0)/3.0_R8) + temp13*(dv%&
+&   vaecrb(:, 0, isb)*nbf) + temp12*nbf - 5.0_R8*(co%cdpa(:, 0, isb)*(&
 &   dpb(:, 0)/3.0_R8))
-  temp14 = (-drift_hyb+1.0_R8)*geo%fcs*geo%fcqalf(:, 1)
-  temp13 = flo_he(:, 1) - 5.0_R8*flo_mdf(:, 1)/3.0_R8
+  temp13 = (-drift_hyb+1.0_R8)*geo%fcs*geo%fcqalf(:, 1)
+  temp12 = flo_he(:, 1) - 5.0_R8*flo_mdf(:, 1)/3.0_R8
   DO nd=1,nbdirs
     dvd%fna_he(nd, :, 1, isb) = 5.0_R8*fna_mdf0d(nd, :, 1)/3.0_R8 + &
-&     temp14*(nbf*dvd%vaecrb(nd, :, 1, isb)+dv%vaecrb(:, 1, isb)*nbfd(nd&
+&     temp13*(nbf*dvd%vaecrb(nd, :, 1, isb)+dv%vaecrb(:, 1, isb)*nbfd(nd&
 &     , :)) + nbf*(flo_hed(nd, :, 1)-5.0_R8*flo_mdfd(nd, :, 1)/3.0_R8) +&
-&     temp13*nbfd(nd, :) - 5.0_R8*(dpb(:, 1)*cod%cdpa(nd, :, 1, isb)/&
+&     temp12*nbfd(nd, :) - 5.0_R8*(dpb(:, 1)*cod%cdpa(nd, :, 1, isb)/&
 &     3.0_R8+co%cdpa(:, 1, isb)*dpbd(nd, :, 1)/3.0_R8)
   END DO
-  dv%fna_he(:, 1, isb) = 5.0_R8*(fna_mdf0(:, 1)/3.0_R8) + temp14*(dv%&
-&   vaecrb(:, 1, isb)*nbf) + temp13*nbf - 5.0_R8*(co%cdpa(:, 1, isb)*(&
+  dv%fna_he(:, 1, isb) = 5.0_R8*(fna_mdf0(:, 1)/3.0_R8) + temp13*(dv%&
+&   vaecrb(:, 1, isb)*nbf) + temp12*nbf - 5.0_R8*(co%cdpa(:, 1, isb)*(&
 &   dpb(:, 1)/3.0_R8))
-!
   dv%fna_53(:, 0, isb) = flo_53(:, 0)*nbf
   dv%fna_53(:, 1, isb) = flo_53(:, 1)*nbf
 !
-  temp13 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
+  temp12 = geo%fcs*geo%fcqalf(:, 0)*dv%vaecrb(:, 0, isb) + scur(:, 0)
   DO nd=1,nbdirs
     dvd%fna_32(nd, :, 0, isb) = dvd%fna_32(nd, :, 0, isb) + (1.0_R8-&
 &     drift_hyb)*(nbf*(geo%fcs*geo%fcqalf(:, 0)*dvd%vaecrb(nd, :, 0, isb&
-&     )+scurd(nd, :, 0))+temp13*nbfd(nd, :)) + nbf*(flod(nd, :, 0)-&
+&     )+scurd(nd, :, 0))+temp12*nbfd(nd, :)) + nbf*(flod(nd, :, 0)-&
 &     flo_mdfd(nd, :, 0)) + (flo(:, 0)-flo_mdf(:, 0))*nbfd(nd, :)
   END DO
   dv%fna_32(:, 0, isb) = dv%fna_32(:, 0, isb) + (1.0_R8-drift_hyb)*(&
-&   temp13*nbf) + (flo(:, 0)-flo_mdf(:, 0))*nbf
-  temp13 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
+&   temp12*nbf) + (flo(:, 0)-flo_mdf(:, 0))*nbf
+  temp12 = geo%fcs*geo%fcqalf(:, 1)*dv%vaecrb(:, 1, isb) + scur(:, 1)
   DO nd=1,nbdirs
     dvd%fna_32(nd, :, 1, isb) = dvd%fna_32(nd, :, 1, isb) + (1.0_R8-&
 &     drift_hyb)*(nbf*(geo%fcs*geo%fcqalf(:, 1)*dvd%vaecrb(nd, :, 1, isb&
-&     )+scurd(nd, :, 1))+temp13*nbfd(nd, :)) + nbf*(flod(nd, :, 1)-&
+&     )+scurd(nd, :, 1))+temp12*nbfd(nd, :)) + nbf*(flod(nd, :, 1)-&
 &     flo_mdfd(nd, :, 1)) + (flo(:, 1)-flo_mdf(:, 1))*nbfd(nd, :)
   END DO
   dv%fna_32(:, 1, isb) = dv%fna_32(:, 1, isb) + (1.0_R8-drift_hyb)*(&
-&   temp13*nbf) + (flo(:, 1)-flo_mdf(:, 1))*nbf
+&   temp12*nbf) + (flo(:, 1)-flo_mdf(:, 1))*nbf
 !
   dv%fna_52(:, 0, isb) = dv%fna_52(:, 0, isb) - co%cdpa(:, 0, isb)*dpb(:&
 &   , 0)
@@ -1084,9 +1319,9 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
   DO nd=1,nbdirsmax
     flob0d(nd, :, :) = 0.D0
   END DO
-  CALL CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flo_mdf, flo_mdfd, co%&
-&            cdna(:, :, isb), cod%cdna(:, :, :, isb), flob0, flob0d, &
-&            conb0, conb0d, nbdirs)
+  CALL CALCCOEF_DV(ncv, nfc, nvx, meth, geo, flo_mdf, flo_mdfd, co%cdna(&
+&            :, :, isb), cod%cdna(:, :, :, isb), flob0, flob0d, conb0, &
+&            conb0d, nbdirs)
   DO nd=1,nbdirs
     flob0d(nd, :, 0) = flob0d(nd, :, 0) + (1.0_R8-drift_hyb)*(geo%fcs*&
 &     geo%fcqalf(:, 0)*dvd%vaecrb(nd, :, 0, isb)+scurd(nd, :, 0))
@@ -1158,8 +1393,8 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
   DO nd=1,nbdirsmax
     zerosd(nd, :, :) = 0.D0
   END DO
-  CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, mpg, zeros, zerosd, cdpb, &
-&            cdpbd, flob0, flob0d, conb0, conb0d, nbdirs)
+  CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, zeros, zerosd, cdpb, cdpbd, &
+&            flob0, flob0d, conb0, conb0d, nbdirs)
   DO nd=1,nbdirs
 !wdk flob0 should be zero here
     dvd%flob(nd, :, :) = dvd%flob(nd, :, :) + flob0d(nd, :, :)
@@ -1219,20 +1454,20 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
       arg1 = 8.0_R8*(t2/temp5)
       temp5 = SQRT(arg1)
       vbar = temp5
-      temp12 = pl%na(mpg%fccv(ifc, 1), isb) + pl%na(mpg%fccv(ifc, 2), &
+      temp11 = pl%na(mpg%fccv(ifc, 1), isb) + pl%na(mpg%fccv(ifc, 2), &
 &       isb)
-      temp11 = 0.5_R8*alpha*geo%fcs(ifc)*geo%fcqalf(ifc, 0)
-      temp10 = temp11*temp12*vbar
-      temp0 = dv%fna(ifc, 0, isb)/temp10
+      temp10 = 0.5_R8*alpha*geo%fcs(ifc)*geo%fcqalf(ifc, 0)
+      temp9 = temp10*temp11*vbar
+      temp0 = dv%fna(ifc, 0, isb)/temp9
       DO nd=1,nbdirs
         IF (arg1 .EQ. 0.D0) THEN
           vbard(nd) = 0.D0
         ELSE
           vbard(nd) = arg1d(nd)/(2.0*temp5)
         END IF
-        x1d(nd) = 4.0_R8*(dvd%fna(nd, ifc, 0, isb)-temp0*temp11*(vbar*(&
+        x1d(nd) = 4.0_R8*(dvd%fna(nd, ifc, 0, isb)-temp0*temp10*(vbar*(&
 &         pld%na(nd, mpg%fccv(ifc, 1), isb)+pld%na(nd, mpg%fccv(ifc, 2)&
-&         , isb))+temp12*vbard(nd)))/temp10
+&         , isb))+temp11*vbard(nd)))/temp9
       END DO
       x1 = 4.0_R8*temp0
       IF (x1 .GE. 0.) THEN
@@ -1246,31 +1481,31 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
         END DO
         abs0 = -x1
       END IF
-      pwr1 = abs0**gamma
-      pwx2 = 1.0_R8 + pwr1
+      pwr10 = abs0**gamma
+      pwx2 = 1.0_R8 + pwr10
       pwy2 = 1.0_R8/gamma
-      temp12 = pl%na(mpg%fccv(ifc, 1), isb) + pl%na(mpg%fccv(ifc, 2), &
+      temp11 = pl%na(mpg%fccv(ifc, 1), isb) + pl%na(mpg%fccv(ifc, 2), &
 &       isb)
-      temp11 = 0.5_R8*alpha*geo%fcs(ifc)*geo%fcqalf(ifc, 1)
-      temp10 = temp11*temp12*vbar
-      temp0 = dv%fna(ifc, 1, isb)/temp10
+      temp10 = 0.5_R8*alpha*geo%fcs(ifc)*geo%fcqalf(ifc, 1)
+      temp9 = temp10*temp11*vbar
+      temp0 = dv%fna(ifc, 1, isb)/temp9
       DO nd=1,nbdirs
         IF (abs0 .LE. 0.D0 .AND. (gamma .EQ. 0.D0 .OR. gamma .NE. INT(&
 &           gamma))) THEN
-          pwr1d(nd) = 0.D0
+          pwr10d(nd) = 0.D0
         ELSE
-          pwr1d(nd) = gamma*abs0**(gamma-1)*abs0d(nd)
+          pwr10d(nd) = gamma*abs0**(gamma-1)*abs0d(nd)
         END IF
-        pwx2d(nd) = pwr1d(nd)
+        pwx2d(nd) = pwr10d(nd)
         IF (pwx2 .LE. 0.D0 .AND. (pwy2 .EQ. 0.D0 .OR. pwy2 .NE. INT(pwy2&
 &           ))) THEN
           t0d(nd) = 0.D0
         ELSE
           t0d(nd) = pwy2*pwx2**(pwy2-1)*pwx2d(nd)
         END IF
-        x2d(nd) = 4.0_R8*(dvd%fna(nd, ifc, 1, isb)-temp0*temp11*(vbar*(&
+        x2d(nd) = 4.0_R8*(dvd%fna(nd, ifc, 1, isb)-temp0*temp10*(vbar*(&
 &         pld%na(nd, mpg%fccv(ifc, 1), isb)+pld%na(nd, mpg%fccv(ifc, 2)&
-&         , isb))+temp12*vbard(nd)))/temp10
+&         , isb))+temp11*vbard(nd)))/temp9
       END DO
       t0 = pwx2**pwy2
       x2 = 4.0_R8*temp0
@@ -1285,17 +1520,17 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
         END DO
         abs1 = -x2
       END IF
-      pwr1 = abs1**gamma
-      pwx2 = 1.0_R8 + pwr1
+      pwr10 = abs1**gamma
+      pwx2 = 1.0_R8 + pwr10
       pwy2 = 1.0_R8/gamma
       DO nd=1,nbdirs
         IF (abs1 .LE. 0.D0 .AND. (gamma .EQ. 0.D0 .OR. gamma .NE. INT(&
 &           gamma))) THEN
-          pwr1d(nd) = 0.D0
+          pwr10d(nd) = 0.D0
         ELSE
-          pwr1d(nd) = gamma*abs1**(gamma-1)*abs1d(nd)
+          pwr10d(nd) = gamma*abs1**(gamma-1)*abs1d(nd)
         END IF
-        pwx2d(nd) = pwr1d(nd)
+        pwx2d(nd) = pwr10d(nd)
         IF (pwx2 .LE. 0.D0 .AND. (pwy2 .EQ. 0.D0 .OR. pwy2 .NE. INT(pwy2&
 &           ))) THEN
           t1d(nd) = 0.D0
@@ -1309,121 +1544,119 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
       ELSE
         maxfluxlimit(0) = maxfluxlimit(0)
       END IF
-      temp12 = dv%fna(ifc, 0, isb)/t0
+      temp11 = dv%fna(ifc, 0, isb)/t0
 !srv 13.10.06 {
-      temp15 = dv%conb(ifc, 0, 0:4)/t0
+      temp14 = dv%conb(ifc, 0, 0:4)/t0
       DO nd=1,nbdirs
-        dvd%fna(nd, ifc, 0, isb) = (dvd%fna(nd, ifc, 0, isb)-temp12*t0d(&
+        dvd%fna(nd, ifc, 0, isb) = (dvd%fna(nd, ifc, 0, isb)-temp11*t0d(&
 &         nd))/t0
-        dvd%conb(nd, ifc, 0, 0:4) = (dvd%conb(nd, ifc, 0, 0:4)-temp15*&
+        dvd%conb(nd, ifc, 0, 0:4) = (dvd%conb(nd, ifc, 0, 0:4)-temp14*&
 &         t0d(nd))/t0
       END DO
-      dv%fna(ifc, 0, isb) = temp12
-      temp12 = dv%fna_32(ifc, 0, isb)/t0
+      dv%fna(ifc, 0, isb) = temp11
+      temp11 = dv%fna_32(ifc, 0, isb)/t0
       DO nd=1,nbdirs
         dvd%fna_32(nd, ifc, 0, isb) = (dvd%fna_32(nd, ifc, 0, isb)-&
-&         temp12*t0d(nd))/t0
+&         temp11*t0d(nd))/t0
       END DO
-      dv%fna_32(ifc, 0, isb) = temp12
+      dv%fna_32(ifc, 0, isb) = temp11
       dv%fna_52(ifc, 0, isb) = dv%fna_52(ifc, 0, isb)/t0
       dv%fna_nodrift(ifc, 0, isb) = dv%fna_nodrift(ifc, 0, isb)/t0
       dv%fna_32nd(ifc, 0, isb) = dv%fna_32nd(ifc, 0, isb)/t0
       dv%fna_52nd(ifc, 0, isb) = dv%fna_52nd(ifc, 0, isb)/t0
 ! to check: flob(:,0), conb(:,0,:) refers to connector, not poloidal... do flux limit before computation of flob/conb?
-      temp12 = dv%flob(ifc, 0)/t0
+      temp11 = dv%flob(ifc, 0)/t0
       DO nd=1,nbdirs
-        dvd%flob(nd, ifc, 0) = (dvd%flob(nd, ifc, 0)-temp12*t0d(nd))/t0
+        dvd%flob(nd, ifc, 0) = (dvd%flob(nd, ifc, 0)-temp11*t0d(nd))/t0
       END DO
-      dv%flob(ifc, 0) = temp12
-      dv%conb(ifc, 0, 0:4) = temp15
-      temp12 = dv%fna_he(ifc, 0, isb)/t0
+      dv%flob(ifc, 0) = temp11
+      dv%conb(ifc, 0, 0:4) = temp14
+      temp11 = dv%fna_he(ifc, 0, isb)/t0
       DO nd=1,nbdirs
         dvd%fna_he(nd, ifc, 0, isb) = (dvd%fna_he(nd, ifc, 0, isb)-&
-&         temp12*t0d(nd))/t0
+&         temp11*t0d(nd))/t0
       END DO
-      dv%fna_he(ifc, 0, isb) = temp12
-      temp12 = dv%fna_fcor(ifc, 0, isb)/t0
+      dv%fna_he(ifc, 0, isb) = temp11
+      temp11 = dv%fna_fcor(ifc, 0, isb)/t0
       DO nd=1,nbdirs
         dvd%fna_fcor(nd, ifc, 0, isb) = (dvd%fna_fcor(nd, ifc, 0, isb)-&
-&         temp12*t0d(nd))/t0
+&         temp11*t0d(nd))/t0
       END DO
-      dv%fna_fcor(ifc, 0, isb) = temp12
-      temp12 = dv%fna_mdf(ifc, 0, isb)/t0
+      dv%fna_fcor(ifc, 0, isb) = temp11
+      temp11 = dv%fna_mdf(ifc, 0, isb)/t0
       DO nd=1,nbdirs
         dvd%fna_mdf(nd, ifc, 0, isb) = (dvd%fna_mdf(nd, ifc, 0, isb)-&
-&         temp12*t0d(nd))/t0
+&         temp11*t0d(nd))/t0
       END DO
-      dv%fna_mdf(ifc, 0, isb) = temp12
+      dv%fna_mdf(ifc, 0, isb) = temp11
 !srv 13.10.06 }
-      temp12 = dv%fnapsch(ifc, 0, isb)/t0
+      temp11 = dv%fnapsch(ifc, 0, isb)/t0
       DO nd=1,nbdirs
         dvd%fnapsch(nd, ifc, 0, isb) = (dvd%fnapsch(nd, ifc, 0, isb)-&
-&         temp12*t0d(nd))/t0
+&         temp11*t0d(nd))/t0
       END DO
-      dv%fnapsch(ifc, 0, isb) = temp12
+      dv%fnapsch(ifc, 0, isb) = temp11
       co%fllim0fna(ifc, 0, isb) = t0
       IF (maxfluxlimit(1) .LT. t1) THEN
         maxfluxlimit(1) = t1
       ELSE
         maxfluxlimit(1) = maxfluxlimit(1)
       END IF
-      temp12 = dv%fna(ifc, 1, isb)/t1
+      temp11 = dv%fna(ifc, 1, isb)/t1
 !srv 13.10.06 {
-      temp15 = dv%conb(ifc, 1, 0:4)/t1
+      temp14 = dv%conb(ifc, 1, 0:4)/t1
       DO nd=1,nbdirs
-        dvd%fna(nd, ifc, 1, isb) = (dvd%fna(nd, ifc, 1, isb)-temp12*t1d(&
+        dvd%fna(nd, ifc, 1, isb) = (dvd%fna(nd, ifc, 1, isb)-temp11*t1d(&
 &         nd))/t1
-        dvd%conb(nd, ifc, 1, 0:4) = (dvd%conb(nd, ifc, 1, 0:4)-temp15*&
+        dvd%conb(nd, ifc, 1, 0:4) = (dvd%conb(nd, ifc, 1, 0:4)-temp14*&
 &         t1d(nd))/t1
       END DO
-      dv%fna(ifc, 1, isb) = temp12
-      temp12 = dv%fna_32(ifc, 1, isb)/t1
+      dv%fna(ifc, 1, isb) = temp11
+      temp11 = dv%fna_32(ifc, 1, isb)/t1
       DO nd=1,nbdirs
         dvd%fna_32(nd, ifc, 1, isb) = (dvd%fna_32(nd, ifc, 1, isb)-&
-&         temp12*t1d(nd))/t1
+&         temp11*t1d(nd))/t1
       END DO
-      dv%fna_32(ifc, 1, isb) = temp12
+      dv%fna_32(ifc, 1, isb) = temp11
       dv%fna_52(ifc, 1, isb) = dv%fna_52(ifc, 1, isb)/t1
       dv%fna_nodrift(ifc, 1, isb) = dv%fna_nodrift(ifc, 1, isb)/t1
       dv%fna_32nd(ifc, 1, isb) = dv%fna_32nd(ifc, 1, isb)/t1
       dv%fna_52nd(ifc, 1, isb) = dv%fna_52nd(ifc, 1, isb)/t1
 ! to check: flob(:,1), conb(:,1,:) refers to tangential, not radial...
-      temp12 = dv%flob(ifc, 1)/t1
+      temp11 = dv%flob(ifc, 1)/t1
       DO nd=1,nbdirs
-        dvd%flob(nd, ifc, 1) = (dvd%flob(nd, ifc, 1)-temp12*t1d(nd))/t1
+        dvd%flob(nd, ifc, 1) = (dvd%flob(nd, ifc, 1)-temp11*t1d(nd))/t1
       END DO
-      dv%flob(ifc, 1) = temp12
-      dv%conb(ifc, 1, 0:4) = temp15
-      temp12 = dv%fna_he(ifc, 1, isb)/t1
+      dv%flob(ifc, 1) = temp11
+      dv%conb(ifc, 1, 0:4) = temp14
+      temp11 = dv%fna_he(ifc, 1, isb)/t1
       DO nd=1,nbdirs
         dvd%fna_he(nd, ifc, 1, isb) = (dvd%fna_he(nd, ifc, 1, isb)-&
-&         temp12*t1d(nd))/t1
+&         temp11*t1d(nd))/t1
       END DO
-      dv%fna_he(ifc, 1, isb) = temp12
-      temp12 = dv%fna_fcor(ifc, 1, isb)/t1
+      dv%fna_he(ifc, 1, isb) = temp11
+      temp11 = dv%fna_fcor(ifc, 1, isb)/t1
       DO nd=1,nbdirs
         dvd%fna_fcor(nd, ifc, 1, isb) = (dvd%fna_fcor(nd, ifc, 1, isb)-&
-&         temp12*t1d(nd))/t1
+&         temp11*t1d(nd))/t1
       END DO
-      dv%fna_fcor(ifc, 1, isb) = temp12
-      temp12 = dv%fna_mdf(ifc, 1, isb)/t1
+      dv%fna_fcor(ifc, 1, isb) = temp11
+      temp11 = dv%fna_mdf(ifc, 1, isb)/t1
       DO nd=1,nbdirs
         dvd%fna_mdf(nd, ifc, 1, isb) = (dvd%fna_mdf(nd, ifc, 1, isb)-&
-&         temp12*t1d(nd))/t1
+&         temp11*t1d(nd))/t1
       END DO
-      dv%fna_mdf(ifc, 1, isb) = temp12
+      dv%fna_mdf(ifc, 1, isb) = temp11
 !srv 13.10.06 }
-      temp12 = dv%fnapsch(ifc, 1, isb)/t1
+      temp11 = dv%fnapsch(ifc, 1, isb)/t1
       DO nd=1,nbdirs
         dvd%fnapsch(nd, ifc, 1, isb) = (dvd%fnapsch(nd, ifc, 1, isb)-&
-&         temp12*t1d(nd))/t1
+&         temp11*t1d(nd))/t1
       END DO
-      dv%fnapsch(ifc, 1, isb) = temp12
+      dv%fnapsch(ifc, 1, isb) = temp11
       co%fllim0fna(ifc, 1, isb) = t1
     END DO
   END IF
-!
-!
 !
   IF ((switch%b2npco_iout .NE. 0 .OR. switch%b2tfnb_iout .EQ. 1) .OR. &
 &     switch%iout_b2wdat .EQ. 4) THEN
@@ -1434,9 +1667,11 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
 &              dnb)
     wrk1 = geo%fcpbs*wrk0*nbf
     wrk2 = term
-    wrk3 = dv%vaecrb(:, 0, isb)*nbf*geo%fcs*geo%fcqalf(:, 0)
+! to account possible correction due to hybridization
+    wrk3 = dv%vaecrb(:, 0, isb)*nbf*geo%fcs*geo%fcqalf(:, 0)*(1.0_R8+(&
+&     flo_factor(:, 0)-1.0_R8)*drift_hyb)
 !       wrk4 = -con_2dia*dnb(:,0)
-    wrk5 = -(co%cdpa(:, 0, isb)*dpb(:, 0))
+!       wrk5 = -co%cdpa(:,0,isb)*dpb(:,0)
     wrk6 = term*geo%fchz
 !       wrk7 = -con_mdf*dnb(:,0)
     wrk8 = co%cvla(:, 0, isb)*nbf
@@ -1445,29 +1680,30 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
       CALL MY_OUT_US(70, nfc, 1, wrk3, arg11(:))
       arg12(:) = 'b2tfnb_fnbPSch_th'//chns
       CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 0, isb), arg12(:))
-      arg13(:) = 'b2tfnb_dPat_mdf_gradnax'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk7, arg13(:))
+!        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
 !        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
-    ELSE
-      arg12(:) = 'b2tfnb_dgradpb_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk5, arg12(:))
+!       else
+!        call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpb_th'//chns)
+!*****
+!        Note that dv%fna_52 already contains conductive terms caused by both pressure and density gradient. It is printed below
+!*****
     END IF
-    arg14(:) = 'b2tfnb_bxuana_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, wrk1, arg14(:))
+    arg13(:) = 'b2tfnb_bxuana_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, wrk1, arg13(:))
     arg11(:) = 'b2tfnb_dpccorna_th'//chns
     CALL MY_OUT_US(70, nfc, 1, wrk2, arg11(:))
-    arg15(:) = 'b2tfnb_dpb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dpb(1, 0), arg15(:))
-    arg16(:) = 'b2tfnb_dpbm'//chns
-    CALL MY_OUT_US(70, nfc, 1, dpbm, arg16(:))
+    arg14(:) = 'b2tfnb_dpb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dpb(1, 0), arg14(:))
+    arg15(:) = 'b2tfnb_dpbm'//chns
+    CALL MY_OUT_US(70, nfc, 1, dpbm, arg15(:))
     IF (switch%iout_b2wdat .NE. 4) THEN
-      arg17(:) = 'b2tfnb_dpccorhzna_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk6, arg17(:))
+      arg16(:) = 'b2tfnb_dpccorhzna_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, wrk6, arg16(:))
     END IF
 !srv 05.11.09
     IF (switch%b2tfnb_iout .EQ. 1) THEN
-      arg14(:) = 'b2tfnb_cvlbna_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk8, arg14(:))
+      arg13(:) = 'b2tfnb_cvlbna_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, wrk8, arg13(:))
     END IF
   END IF
 !iys 17.04.2012
@@ -1485,8 +1721,8 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
     END IF
     wrk6 = dv%vadia(:, 0, isb)*nbf*geo%fcs*geo%fcqalf(:, 0)*geo%fchz
     IF (.NOT.is_neutral(isb) .AND. switch%iout_b2wdat .NE. 4) THEN
-      arg18(:) = 'b2tfnb_vadianahz_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk6, arg18(:))
+      arg17(:) = 'b2tfnb_vadianahz_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, wrk6, arg17(:))
     END IF
     arg11(:) = 'b2tfnb_fnb_fcor_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_fcor(1, 0, isb), arg11(:))
@@ -1504,25 +1740,29 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
   IF ((switch%b2npco_iout .NE. 0 .OR. switch%b2tfnb_iout .EQ. 1) .OR. &
 &     switch%iout_b2wdat .EQ. 4) THEN
 !srv 11.09.09 {
-    wrk3 = dv%vaecrb(:, 1, isb)*nbf*geo%fcs*geo%fcqalf(:, 1)
+! to account possible correction due to hybridization
+    wrk3 = dv%vaecrb(:, 1, isb)*nbf*geo%fcs*geo%fcqalf(:, 1)*(1.0_R8+(&
+&     flo_factor(:, 1)-1.0_R8)*drift_hyb)
 !       wrk4 = -con_2dia*dnb(:,1)
-    wrk5 = -(co%cdpa(:, 1, isb)*dpb(:, 1))
+!       wrk5 = -co%cdpa(:,1,isb)*dpb(:,1)
 !       wrk7 = -con_mdf*dnb(:,1)
     wrk8 = co%cvla(:, 1, isb)*nbf
     WRITE(chns, '(i3.3)') isb
     IF (.NOT.is_neutral(isb)) THEN
-      arg14(:) = 'b2tfnb_fnbPSch_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(:, 1, isb), arg14(:))
+      arg13(:) = 'b2tfnb_fnbPSch_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(:, 1, isb), arg13(:))
       arg12(:) = 'b2tfnb_vaecrbna_r'//chns
       CALL MY_OUT_US(70, nfc, 1, wrk3, arg12(:))
 !        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnay'//chns)
 !        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnay'//chns)
-    ELSE
-      arg14(:) = 'b2tfnb_dgradpb_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk5, arg14(:))
+!       else
+!        call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpb_r'//chns)
+!*****
+!        Note that dv%fna_52 already contains conductive terms caused by both pressure and density gradient. It is printed below
+!*****
     END IF
-    arg19(:) = 'b2tfnb_cvlbna_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, wrk8, arg19(:))
+    arg18(:) = 'b2tfnb_cvlbna_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, wrk8, arg18(:))
 !iys 17.04.2012
 !       call my_out_us(70,nFc,1,con_2dia,'b2tfnb_dPat_2diay'//chns)
 !       call my_out_us(70,nFc,1,con_mdf,'b2tfnb_dPat_mdfy'//chns)
@@ -1534,8 +1774,8 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
     WRITE(chns, '(i3.3)') isb
     wrk6 = dv%vadia(:, 1, isb)*nbf*geo%fcs*geo%fcqalf(:, 1)
     IF (.NOT.is_neutral(isb)) THEN
-      arg14(:) = 'b2tfnb_vadiana_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk6, arg14(:))
+      arg13(:) = 'b2tfnb_vadiana_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, wrk6, arg13(:))
     END IF
     wrk6 = dv%vadia(:, 1, isb)*nbf*geo%fcs*geo%fcqalf(:, 1)*geo%fchz
     IF (.NOT.is_neutral(isb) .AND. switch%iout_b2wdat .NE. 4) THEN
@@ -1601,80 +1841,90 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
   END IF
 !
   IF (switch%iout_b2wdat .EQ. 4) THEN
-    arg15(:) = 'b2tfnb_fnb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 0, isb), arg15(:))
-    arg110(:) = 'b2tfnb_fnb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 1, isb), arg110(:))
+    arg14(:) = 'b2tfnb_fnb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 0, isb), arg14(:))
+    arg19(:) = 'b2tfnb_fnb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 1, isb), arg19(:))
     arg11(:) = 'b2tfnb_fnb_fcor_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_fcor(1, 0, isb), arg11(:))
     arg12(:) = 'b2tfnb_fnb_fcor_r'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_fcor(1, 1, isb), arg12(:))
-    arg14(:) = 'b2tfnb_fnb_he_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_fnb_he_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 1, isb), arg19(:))
+    arg13(:) = 'b2tfnb_fnb_he_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_fnb_he_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 1, isb), arg18(:))
     arg12(:) = 'b2tfnb_fnbPSch_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 0, isb), arg12(:))
-    arg14(:) = 'b2tfnb_fnbPSch_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 1, isb), arg14(:))
+    arg13(:) = 'b2tfnb_fnbPSch_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 1, isb), arg13(:))
     IF (isb .EQ. ismain) THEN
-      arg14(:) = 'b2tfnb_vbecrb_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 0, isb), arg14(:))
-      arg19(:) = 'b2tfnb_vbecrb_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 1, isb), arg19(:))
+      arg13(:) = 'b2tfnb_vbecrb_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 0, isb), arg13(:))
+      arg18(:) = 'b2tfnb_vbecrb_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 1, isb), arg18(:))
     END IF
 !       call my_out_us(70,nFc,1,dv%uadia(1,0,isb),'b2tfnb_ubdia_th'//chns)
 !       call my_out_us(70,nFc,1,dv%uadia(1,1,isb),'b2tfnb_ubdia_r'//chns)
-    arg19(:) = 'b2tfnb_vbdia_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 0, isb), arg19(:))
-    arg111(:) = 'b2tfnb_vbdia_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 1, isb), arg111(:))
-    arg19(:) = 'b2tfnb_wbdia_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 0, isb), arg19(:))
-    arg111(:) = 'b2tfnb_wbdia_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 1, isb), arg111(:))
-    arg15(:) = 'b2tfnb_kbnrgy'//chns
-    CALL MY_OUT_US(70, ncv, 0, dv%kinrgy, arg15(:))
+    arg18(:) = 'b2tfnb_vbdia_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 0, isb), arg18(:))
+    arg110(:) = 'b2tfnb_vbdia_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 1, isb), arg110(:))
+    arg18(:) = 'b2tfnb_wbdia_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 0, isb), arg18(:))
+    arg110(:) = 'b2tfnb_wbdia_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 1, isb), arg110(:))
+    arg14(:) = 'b2tfnb_kbnrgy'//chns
+    CALL MY_OUT_US(70, ncv, 0, dv%kinrgy, arg14(:))
+! convective fluxes (drifts + currents + turbulent convection) with account of hybridization and flux limit
+    arg13(:) = 'b2tfnb_fnb_32_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_32(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_fnb_32_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_32(1, 1, isb), arg18(:))
+! conductive fluxes (-D_n \nabla n - D_p \nabla p) with account of flux limit
+    arg13(:) = 'b2tfnb_fnb_52_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_52(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_fnb_52_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_52(1, 1, isb), arg18(:))
   END IF
 !srv 18.06.08 }
 !
   IF (switch%b2tfnb_iout .NE. 0) THEN
 !srv 18.06.08 {
     WRITE(chns, '(i3.3)') isb
-    arg15(:) = 'b2tfnb_fnb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 0, isb), arg15(:))
-    arg110(:) = 'b2tfnb_fnb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 1, isb), arg110(:))
-    arg112(:) = 'b2tfnb_fnb_nodrift_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_nodrift(1, 0, isb), arg112(&
+    arg14(:) = 'b2tfnb_fnb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 0, isb), arg14(:))
+    arg19(:) = 'b2tfnb_fnb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 1, isb), arg19(:))
+    arg111(:) = 'b2tfnb_fnb_nodrift_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_nodrift(1, 0, isb), arg111(&
 &                   :))
-    arg17(:) = 'b2tfnb_fnb_nodrift_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_nodrift(1, 1, isb), arg17(:&
+    arg16(:) = 'b2tfnb_fnb_nodrift_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_nodrift(1, 1, isb), arg16(:&
 &                   ))
     arg11(:) = 'b2tfnb_fnb_fcor_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_fcor(1, 0, isb), arg11(:))
     arg12(:) = 'b2tfnb_fnb_fcor_r'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_fcor(1, 1, isb), arg12(:))
-    arg14(:) = 'b2tfnb_fnb_he_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_fnb_he_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 1, isb), arg19(:))
+    arg13(:) = 'b2tfnb_fnb_he_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_fnb_he_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 1, isb), arg18(:))
     arg12(:) = 'b2tfnb_fnbPSch_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 0, isb), arg12(:))
-    arg14(:) = 'b2tfnb_fnbPSch_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 1, isb), arg14(:))
+    arg13(:) = 'b2tfnb_fnbPSch_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 1, isb), arg13(:))
     arg12(:) = 'b2tfnb_fnb_mdf_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 0, isb), arg12(:))
-    arg14(:) = 'b2tfnb_fnb_mdf_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 1, isb), arg14(:))
-    arg14(:) = 'b2tfnb_fnb_32_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_32(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_fnb_32_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_32(1, 1, isb), arg19(:))
-    arg14(:) = 'b2tfnb_fnb_52_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_52(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_fnb_52_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_52(1, 1, isb), arg19(:))
+    arg13(:) = 'b2tfnb_fnb_mdf_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 1, isb), arg13(:))
+    arg13(:) = 'b2tfnb_fnb_32_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_32(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_fnb_32_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_32(1, 1, isb), arg18(:))
+    arg13(:) = 'b2tfnb_fnb_52_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_52(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_fnb_52_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_52(1, 1, isb), arg18(:))
     arg11(:) = 'b2tfnb_fnb_32nd_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_32nd(1, 0, isb), arg11(:))
     arg12(:) = 'b2tfnb_fnb_32nd_r'//chns
@@ -1683,104 +1933,104 @@ SUBROUTINE B2TFNB_DV(ncv, nfc, nvx, isb, ismain, switch, switchd, geo, &
     CALL MY_OUT_US(70, nfc, 1, dv%fna_52nd(1, 0, isb), arg11(:))
     arg12(:) = 'b2tfnb_fnb_52nd_r'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_52nd(1, 1, isb), arg12(:))
-    arg18(:) = 'b2tfnb_fllim0fnb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%fllim0fna(1, 0, isb), arg18(:))
+    arg17(:) = 'b2tfnb_fllim0fnb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%fllim0fna(1, 0, isb), arg17(:))
     arg11(:) = 'b2tfnb_fllim0fnb_r'//chns
     CALL MY_OUT_US(70, nfc, 1, co%fllim0fna(1, 1, isb), arg11(:))
-    arg14(:) = 'b2tfnb_vbecrb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_vbecrb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 1, isb), arg19(:))
-    arg19(:) = 'b2tfnb_ubdia_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%uadia(1, 0, isb), arg19(:))
-    arg111(:) = 'b2tfnb_ubdia_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%uadia(1, 1, isb), arg111(:))
-    arg19(:) = 'b2tfnb_vbdia_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 0, isb), arg19(:))
-    arg111(:) = 'b2tfnb_vbdia_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 1, isb), arg111(:))
-    arg19(:) = 'b2tfnb_wbdia_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 0, isb), arg19(:))
-    arg111(:) = 'b2tfnb_wbdia_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 1, isb), arg111(:))
-    arg15(:) = 'b2tfnb_kbnrgy'//chns
-    CALL MY_OUT_US(70, ncv, 0, dv%kinrgy, arg15(:))
-    arg111(:) = 'b2tfnb_cvlb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cvla(1, 0, isb), arg111(:))
-    arg15(:) = 'b2tfnb_cvlb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cvla(1, 1, isb), arg15(:))
-    arg14(:) = 'b2tfnb_cvlbhz_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cvlahz(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_cvlbhz_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cvlahz(1, 1, isb), arg19(:))
-    arg14(:) = 'b2tfnb_cdpbhz_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cdpahz(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_cdpbhz_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cdpahz(1, 1, isb), arg19(:))
-    arg111(:) = 'b2tfnb_cdpb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cdpa(1, 0, isb), arg111(:))
-    arg15(:) = 'b2tfnb_cdpb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cdpa(1, 1, isb), arg15(:))
-    arg111(:) = 'b2tfnb_cdnb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cdna(1, 0, isb), arg111(:))
-    arg15(:) = 'b2tfnb_cdnb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cdna(1, 1, isb), arg15(:))
-    arg111(:) = 'b2tfnb_cddb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cddi(1, 0, isb), arg111(:))
-    arg15(:) = 'b2tfnb_cddb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cddi(1, 1, isb), arg15(:))
-    arg16(:) = 'b2tfnb_term'//chns
-    CALL MY_OUT_US(70, nfc, 1, term, arg16(:))
-    arg113(:) = term*geo%fchz
+    arg13(:) = 'b2tfnb_vbecrb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_vbecrb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 1, isb), arg18(:))
+    arg18(:) = 'b2tfnb_ubdia_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%uadia(1, 0, isb), arg18(:))
+    arg110(:) = 'b2tfnb_ubdia_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%uadia(1, 1, isb), arg110(:))
+    arg18(:) = 'b2tfnb_vbdia_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 0, isb), arg18(:))
+    arg110(:) = 'b2tfnb_vbdia_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 1, isb), arg110(:))
+    arg18(:) = 'b2tfnb_wbdia_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 0, isb), arg18(:))
+    arg110(:) = 'b2tfnb_wbdia_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 1, isb), arg110(:))
+    arg14(:) = 'b2tfnb_kbnrgy'//chns
+    CALL MY_OUT_US(70, ncv, 0, dv%kinrgy, arg14(:))
+    arg110(:) = 'b2tfnb_cvlb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cvla(1, 0, isb), arg110(:))
+    arg14(:) = 'b2tfnb_cvlb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cvla(1, 1, isb), arg14(:))
+    arg13(:) = 'b2tfnb_cvlbhz_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cvlahz(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_cvlbhz_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cvlahz(1, 1, isb), arg18(:))
+    arg13(:) = 'b2tfnb_cdpbhz_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cdpahz(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_cdpbhz_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cdpahz(1, 1, isb), arg18(:))
+    arg110(:) = 'b2tfnb_cdpb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cdpa(1, 0, isb), arg110(:))
+    arg14(:) = 'b2tfnb_cdpb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cdpa(1, 1, isb), arg14(:))
+    arg110(:) = 'b2tfnb_cdnb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cdna(1, 0, isb), arg110(:))
+    arg14(:) = 'b2tfnb_cdnb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cdna(1, 1, isb), arg14(:))
+    arg110(:) = 'b2tfnb_cddb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cddi(1, 0, isb), arg110(:))
+    arg14(:) = 'b2tfnb_cddb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cddi(1, 1, isb), arg14(:))
+    arg15(:) = 'b2tfnb_term'//chns
+    CALL MY_OUT_US(70, nfc, 1, term, arg15(:))
+    arg112(:) = term*geo%fchz
     arg2(:) = 'b2tfnb_termhz'//chns
-    CALL MY_OUT_US(70, nfc, 1, arg113(:), arg2(:))
+    CALL MY_OUT_US(70, nfc, 1, arg112(:), arg2(:))
     CALL MY_OUT_US(70, nfc, 1, geo%fcpbs, 'b2tfnb_pbs')
     CALL MY_OUT_US(70, nfc, 1, geo%fcpbshz, 'b2tfnb_pbshz')
-    arg14(:) = 'b2tfnb_ub2dia_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, ub2dia(1, 0), arg14(:))
-    arg19(:) = 'b2tfnb_ub2dia_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, ub2dia(1, 1), arg19(:))
-    arg19(:) = 'b2tfnb_conb_th0'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 0), arg19(:))
-    arg19(:) = 'b2tfnb_conb_th1'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 1), arg19(:))
-    arg19(:) = 'b2tfnb_conb_th2'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 2), arg19(:))
-    arg19(:) = 'b2tfnb_conb_th3'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 3), arg19(:))
-    arg19(:) = 'b2tfnb_conb_th4'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 4), arg19(:))
-    arg111(:) = 'b2tfnb_conb_r0'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 0), arg111(:))
-    arg111(:) = 'b2tfnb_conb_r1'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 1), arg111(:))
-    arg111(:) = 'b2tfnb_conb_r2'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 2), arg111(:))
-    arg111(:) = 'b2tfnb_conb_r3'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 3), arg111(:))
-    arg111(:) = 'b2tfnb_conb_r4'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 4), arg111(:))
-    arg111(:) = 'b2tfnb_flob_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 0), arg111(:))
-    arg15(:) = 'b2tfnb_flob_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 1), arg15(:))
-    arg111(:) = 'b2tfnb_kmprtix'//chns
-    CALL MY_OUT_US(70, nfc, 1, kmprtif(1), arg111(:))
-    arg114(:) = 'b2tfnb_ua'//chns
-    CALL MY_OUT_US(70, ncv, 0, pl%ua(1, isb), arg114(:))
-    arg114(:) = 'b2tfnb_na'//chns
-    CALL MY_OUT_US(70, ncv, 0, pl%na(1, isb), arg114(:))
-    arg114(:) = 'b2tfnb_pa'//chns
-    CALL MY_OUT_US(70, ncv, 0, dv%pa(1, isb), arg114(:))
+    arg13(:) = 'b2tfnb_ub2dia_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, ub2dia(1, 0), arg13(:))
+    arg18(:) = 'b2tfnb_ub2dia_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, ub2dia(1, 1), arg18(:))
+    arg18(:) = 'b2tfnb_conb_th0'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 0), arg18(:))
+    arg18(:) = 'b2tfnb_conb_th1'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 1), arg18(:))
+    arg18(:) = 'b2tfnb_conb_th2'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 2), arg18(:))
+    arg18(:) = 'b2tfnb_conb_th3'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 3), arg18(:))
+    arg18(:) = 'b2tfnb_conb_th4'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 4), arg18(:))
+    arg110(:) = 'b2tfnb_conb_r0'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 0), arg110(:))
+    arg110(:) = 'b2tfnb_conb_r1'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 1), arg110(:))
+    arg110(:) = 'b2tfnb_conb_r2'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 2), arg110(:))
+    arg110(:) = 'b2tfnb_conb_r3'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 3), arg110(:))
+    arg110(:) = 'b2tfnb_conb_r4'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 4), arg110(:))
+    arg110(:) = 'b2tfnb_flob_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 0), arg110(:))
+    arg14(:) = 'b2tfnb_flob_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 1), arg14(:))
+    arg110(:) = 'b2tfnb_kmprtix'//chns
+    CALL MY_OUT_US(70, nfc, 1, kmprtif(1), arg110(:))
+    arg113(:) = 'b2tfnb_ua'//chns
+    CALL MY_OUT_US(70, ncv, 0, pl%ua(1, isb), arg113(:))
+    arg113(:) = 'b2tfnb_na'//chns
+    CALL MY_OUT_US(70, ncv, 0, pl%na(1, isb), arg113(:))
+    arg113(:) = 'b2tfnb_pa'//chns
+    CALL MY_OUT_US(70, ncv, 0, dv%pa(1, isb), arg113(:))
     CALL MY_OUT_US(70, ncv, 0, pl%te, 'b2tfnb_te')
     CALL MY_OUT_US(70, ncv, 0, pl%ti, 'b2tfnb_ti')
     CALL MY_OUT_US(70, ncv, 0, pl%po, 'b2tfnb_po')
-    arg114(:) = 'b2tfnb_zb'//chns
-    CALL MY_OUT_US(70, ncv, 0, rt%rza(1, isb), arg114(:))
-    arg19(:) = 'b2tfnb_facdrift'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%facdrift, arg19(:))
-    arg111(:) = 'b2tfnb_fac_ExB'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fac_exb, arg111(:))
+    arg113(:) = 'b2tfnb_zb'//chns
+    CALL MY_OUT_US(70, ncv, 0, rt%rza(1, isb), arg113(:))
+    arg18(:) = 'b2tfnb_facdrift'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%facdrift, arg18(:))
+    arg110(:) = 'b2tfnb_fac_ExB'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fac_exb, arg110(:))
     CALL MY_OUT_US(70, nfc, 1, dv%fchvispar(1, 0), &
 &                   'b2tfnb_fchvispar_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fchvispar(1, 1), &
@@ -1827,12 +2077,10 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!      use b2mod_balance                                                 !djm Jan2017
-!     & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
-!     &          fna_ch, fna_pschused, balance_netcdf
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfnb
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfnb, b2tfnb_cutlo
+  USE B2MOD_AD_DIFFV, ONLY : b2tfnb_cutlo
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -1886,26 +2134,27 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   REAL(kind=r8) :: kmprti(ncv), kmprtif(nfc), kmprtiv(nvx), kmpr(ncv), &
 & kmprv(nvx), tbfl_fnb(nbc), div_fnb, tbfl_fnb_mdf(nbc), div_fnb_mdf, &
 & rdiv
-! wrk4(nFc),
-  REAL(kind=r8) :: wrk0(nfc), wrk1(nfc), wrk2(nfc), wrk3(nfc), wrk5(nfc)&
-& , wrk6(nfc), wrk7(nfc, 0:1), wrk8(nfc), wrk(ncv), wrkvx(nvx), zeros(&
-& nfc, 0:1), dumm1(nfc, 0:1), zeros1(nfc, 0:1)
+!    *   wrk5(nFc), wrk7(nFc,0:1),
+  REAL(kind=r8) :: wrk0(nfc), wrk1(nfc), wrk2(nfc), wrk3(nfc), wrk4(nfc)&
+& , wrk6(nfc), wrk8(nfc), wrk(ncv), wrkf(nfc, 0:1), wrkvx(nvx), zeros(&
+& nfc, 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(&
+& nfc, 0:1), zeros1(nfc, 0:1)
 !srv 01.10.99 !lk 09.06.11
 !srv 13.05.16
   REAL(kind=r8) :: ub2dia(nfc, 0:1), nbcor(nvx), nbti(ncv), nbzb(ncv), &
 & nbzbc(nvx), dnb(nfc, 0:1), dpb(nfc, 0:1), dpbc(ncv), dpbm(nfc), dpo(&
 & nfc, 0:1), dnbti(nfc, 0:1), nbf(nfc), donedbsq(nfc, 0:1), fna_mdf0(nfc&
-& , 0:1), cddb(nfc, 0:1), cdpb(nfc, 0:1)
+& , 0:1), flo_factor(nfc, 0:1), cddb(nfc, 0:1), cdpb(nfc, 0:1)
 !lk
   REAL(kind=r8) :: weight(nfc, 2)
   INTEGER :: xcount
-! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+! The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 !   ..procedures
 !xpb
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, INTFACE, DIFF_NODIFF
-  INTRINSIC ABS, MAX, SQRT
+  EXTERNAL B2XVSG, INTFACE, DIFF_NODIFF
+  INTRINSIC ABS, MAX, SQRT, SIGN
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
   INTRINSIC NINT
@@ -1920,24 +2169,26 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   REAL(r8) :: arg1
   REAL(kind=r8) :: result10
   REAL(kind=r8) :: arg10
-  REAL(r8) :: pwr1
+  REAL(kind=r8) :: pwx1
+  REAL(kind=r8) :: pwr1
   REAL(r8) :: pwx2
   REAL(r8) :: pwy2
+  REAL(r8) :: pwr2
+  REAL(r8) :: pwr10
   CHARACTER(len=18) :: arg11
   CHARACTER(len=17) :: arg12
-  CHARACTER(len=23) :: arg13
-  CHARACTER(len=16) :: arg14
-  CHARACTER(len=13) :: arg15
-  CHARACTER(len=11) :: arg16
-  CHARACTER(len=20) :: arg17
-  CHARACTER(len=19) :: arg18
-  CHARACTER(len=15) :: arg19
-  CHARACTER(len=12) :: arg110
-  CHARACTER(len=14) :: arg111
-  CHARACTER(len=21) :: arg112
-  REAL(kind=r8), DIMENSION(nfc) :: arg113
+  CHARACTER(len=16) :: arg13
+  CHARACTER(len=13) :: arg14
+  CHARACTER(len=11) :: arg15
+  CHARACTER(len=20) :: arg16
+  CHARACTER(len=19) :: arg17
+  CHARACTER(len=15) :: arg18
+  CHARACTER(len=12) :: arg19
+  CHARACTER(len=14) :: arg110
+  CHARACTER(len=21) :: arg111
+  REAL(kind=r8), DIMENSION(nfc) :: arg112
   CHARACTER(len=13) :: arg2
-  CHARACTER(len=9) :: arg114
+  CHARACTER(len=9) :: arg113
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -1947,24 +2198,24 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tfnb')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..set internal parameters on first call
   drift_hyb = switch%fnb_drift_hyb
 !   ..extensive tests on first few calls
   IF (ncall_b2tfnb .LT. 3) THEN
 !    ..test sign of nb, ne, pb, cdnb, cdpb
-    CALL B2XVSG_NODIFF(ncv, pl%na(:, isb), 1, 'nb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%pa(:, isb), 1, 'pb', '.gt.')
+    CALL B2XVSG(ncv, pl%na(:, isb), 1, 'nb', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, dv%pa(:, isb), 1, 'pb', '.gt.')
     wrk0(:) = co%cdna(:, 0, isb)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrk0, 1, 'cdna0', '.ge.')
+    CALL B2XVSG(nfc, wrk0, 1, 'cdna0', '.ge.')
     wrk1(:) = co%cdna(:, 1, isb)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrk1, 1, 'cdna1', '.ge.')
+    CALL B2XVSG(nfc, wrk1, 1, 'cdna1', '.ge.')
     wrk0(:) = co%cdpa(:, 0, isb)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrk0, 1, 'cdpa0', '.ge.')
+    CALL B2XVSG(nfc, wrk0, 1, 'cdpa0', '.ge.')
     wrk1(:) = co%cdpa(:, 1, isb)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrk1, 1, 'cdna1', '.ge.')
-! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+    CALL B2XVSG(nfc, wrk1, 1, 'cdna1', '.ge.')
+! The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
 !        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
 !        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
   END IF
@@ -2116,8 +2367,8 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
     cddb(:, 0) = -(switch%psch*dv%facdrift*co%cddi(:, 1, isb))
 !*nbf/wrk2
     cddb(:, 1) = switch%psch*dv%facdrift*co%cddi(:, 0, isb)
-    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, zeros, cddb, flob0&
-&                  , conb0)
+    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, zeros, cddb, flob0, &
+&                  conb0)
     DO ifc=1,nfc
       dv%flob(ifc, 0) = 0.5_R8*flob0(ifc, 0)*(kmprti(mpg%fccv(ifc, 1))+&
 &       kmprti(mpg%fccv(ifc, 2))) - conb0(ifc, 0)*(kmprti(mpg%fccv(ifc, &
@@ -2161,8 +2412,8 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 &         facdrift(ifc)*wrk1(ifc)*dnbti(ifc, 0))**2
         result10 = SQRT(arg10)
         t2 = 1.0_R8 + result10/(vbar*t1)
-        dv%fnapsch(:, 0, isb) = dv%fnapsch(:, 0, isb)/t2
-        dv%fnapsch(:, 1, isb) = dv%fnapsch(:, 1, isb)/t2
+        dv%fnapsch(ifc, 0, isb) = dv%fnapsch(ifc, 0, isb)/t2
+        dv%fnapsch(ifc, 1, isb) = dv%fnapsch(ifc, 1, isb)/t2
         arg1 = (dv%vadia(ifc, 0, isb)*geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))&
 &         **2 + dv%vadia(ifc, 1, isb)**2
         t3 = SQRT(arg1)
@@ -2183,6 +2434,29 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
         t3 = SQRT(arg10)
         ub2dia(ifc, 0) = ub2dia(ifc, 0)/(1.0_R8+t3/vbar)
         ub2dia(ifc, 1) = ub2dia(ifc, 1)/(1.0_R8+t3/vbar)
+      END DO
+    END IF
+!lkw 25.10.2022}
+    IF (isb .EQ. ismain) THEN
+!lkw 25.10.2022 {
+      DO ifc=1,nfc
+        icv1 = mpg%fccv(ifc, 1)
+        icv2 = mpg%fccv(ifc, 2)
+        IF (pl%ti(icv1) .LT. pl%ti(icv2)) THEN
+          t0 = pl%ti(icv2)
+        ELSE
+          t0 = pl%ti(icv1)
+        END IF
+        t1 = 0.5_R8*(pl%na(icv1, isb)+pl%na(icv2, isb))
+        arg1 = 8.0_R8*t0/(pi*am(isb)*mp)
+        vbar = SQRT(arg1)
+        arg10 = (switch%psch*dv%facdrift(ifc)*wrk1(ifc)*dnbti(ifc, 1)*&
+&         geo%fcbb(ifc, 3)/geo%fcbb(ifc, 2))**2 + (switch%psch*dv%&
+&         facdrift(ifc)*wrk1(ifc)*dnbti(ifc, 0))**2
+        result10 = SQRT(arg10)
+        t2 = 1.0_R8 + result10/(vbar*t1)
+        dv%fnapsch(ifc, 0, isb) = dv%fnapsch(ifc, 0, isb)/t2
+        dv%fnapsch(ifc, 1, isb) = dv%fnapsch(ifc, 1, isb)/t2
       END DO
     END IF
   END IF
@@ -2248,6 +2522,71 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%na(:, isb), &
 &                flo_mdf, co%cdna(:, :, isb), fna_mdf0(:, :), dv%fna_32(&
 &                :, :, isb), dv%fna_52(:, :, isb))
+!   ..limit flow by sound speed                                           ! lkw 26.10.2022{
+  DO ifc=1,nfc
+    IF (((.NOT.is_neutral(isb)) .OR. switch%tn_style .EQ. 0) .OR. (&
+&       switch%tn_style .EQ. 2 .AND. NINT(zn(isb)) .NE. 1)) THEN
+      IF (pl%ti(mpg%fccv(ifc, 1)) .LT. pl%ti(mpg%fccv(ifc, 2))) THEN
+        t0 = pl%ti(mpg%fccv(ifc, 2))
+      ELSE
+        t0 = pl%ti(mpg%fccv(ifc, 1))
+      END IF
+    ELSE IF (switch%tn_style .EQ. 1) THEN
+      IF (pl%tn(mpg%fccv(ifc, 1)) .LT. pl%tn(mpg%fccv(ifc, 2))) THEN
+        t0 = pl%tn(mpg%fccv(ifc, 2))
+      ELSE
+        t0 = pl%tn(mpg%fccv(ifc, 1))
+      END IF
+    ELSE IF (switch%tn_style .EQ. 2 .AND. NINT(zn(isb)) .EQ. 1) THEN
+      IF (pl%tn(mpg%fccv(ifc, 1)) .LT. pl%tn(mpg%fccv(ifc, 2))) THEN
+        t0 = pl%tn(mpg%fccv(ifc, 2))
+      ELSE
+        t0 = pl%tn(mpg%fccv(ifc, 1))
+      END IF
+    END IF
+    t3 = fna_mdf0(ifc, 0) + fna_mdf0(ifc, 1)
+    t1 = pl%na(mpg%fccv(ifc, 1), isb)
+    IF (t3 .LT. 0.0_R8) t1 = pl%na(mpg%fccv(ifc, 2), isb)
+    IF (t3 .GE. 0.) THEN
+      t3 = t3
+    ELSE
+      t3 = -t3
+    END IF
+    arg1 = 8.0_R8*t0/(pi*am(isb)*mp)
+    result10 = SQRT(arg1)
+    vbar = result10*geo%fcs(ifc)
+    pwx1 = t3/(0.5_R8*vbar*t1)
+    pwr1 = pwx1**gamma
+    pwx2 = 1.0_R8 + pwr1
+    pwy2 = 1.0_R8/gamma
+    pwr2 = pwx2**pwy2
+    wrk4(ifc) = 1.0_R8/pwr2
+    fna_mdf0(ifc, 0) = fna_mdf0(ifc, 0)*wrk4(ifc)
+    fna_mdf0(ifc, 1) = fna_mdf0(ifc, 1)*wrk4(ifc)
+  END DO
+! lkw 26.10.2022}
+!
+!   ..keep the convective flow "correction" factor for further output
+  DO ifc=1,nfc
+    IF (flo_mdf(ifc, 0) .EQ. 0.0_R8 .AND. dv%fna_32(ifc, 0, isb) .EQ. &
+&       0.0_R8) THEN
+      flo_factor(ifc, 0) = 1.0_R8
+    ELSE
+      CALL XERTST(flo_mdf(ifc, 0) .NE. 0.0_R8, 'faulty transformation'//&
+&           ' of poloidal convective particle flow, is = '//chns)
+      flo_factor(ifc, 0) = dv%fna_32(ifc, 0, isb)/(flo_mdf(ifc, 0)*nbf(&
+&       ifc))
+    END IF
+    IF (flo_mdf(ifc, 1) .EQ. 0.0_R8 .AND. dv%fna_32(ifc, 1, isb) .EQ. &
+&       0.0_R8) THEN
+      flo_factor(ifc, 1) = 1.0_R8
+    ELSE
+      CALL XERTST(flo_mdf(ifc, 1) .NE. 0.0_R8, 'faulty transformation'//&
+&           ' of radial convective particle flow, is = '//chns)
+      flo_factor(ifc, 1) = dv%fna_32(ifc, 1, isb)/(flo_mdf(ifc, 1)*nbf(&
+&       ifc))
+    END IF
+  END DO
 !
 !   ..compute Rhie-Chow term
   DO ifc=1,nfc
@@ -2340,8 +2679,8 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   END IF
 !
 !   ..compute flob, conb
-  CALL CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flo_mdf, co%cdna(:&
-&                , :, isb), flob0, conb0)
+  CALL CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, flo_mdf, co%cdna(:, :, &
+&                isb), flob0, conb0)
   flob0(:, 0) = flob0(:, 0) + (1.0_R8-drift_hyb)*(dv%vaecrb(:, 0, isb)*&
 &   geo%fcs*geo%fcqalf(:, 0)+scur(:, 0))
   flob0(:, 1) = flob0(:, 1) + (1.0_R8-drift_hyb)*(dv%vaecrb(:, 1, isb)*&
@@ -2365,8 +2704,7 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 !   ..contribution from pressure diffusion and Rhie-Chow term
   cdpb = cdpb + co%cdpa(:, :, isb)
   zeros = 0.0_R8
-  CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, zeros, cdpb, flob0, &
-&                conb0)
+  CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, zeros, cdpb, flob0, conb0)
 !wdk flob0 should be zero here
   dv%flob = dv%flob + flob0
   dv%conb(:, :, 0) = dv%conb(:, :, 0) + conb0
@@ -2408,8 +2746,8 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
       ELSE
         abs0 = -x1
       END IF
-      pwr1 = abs0**gamma
-      pwx2 = 1.0_R8 + pwr1
+      pwr10 = abs0**gamma
+      pwx2 = 1.0_R8 + pwr10
       pwy2 = 1.0_R8/gamma
       t0 = pwx2**pwy2
       x2 = dv%fna(ifc, 1, isb)/(0.5_R8*(pl%na(mpg%fccv(ifc, 1), isb)+pl%&
@@ -2420,8 +2758,8 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
       ELSE
         abs1 = -x2
       END IF
-      pwr1 = abs1**gamma
-      pwx2 = 1.0_R8 + pwr1
+      pwr10 = abs1**gamma
+      pwx2 = 1.0_R8 + pwr10
       pwy2 = 1.0_R8/gamma
       t1 = pwx2**pwy2
       IF (maxfluxlimit(0) .LT. t0) THEN
@@ -2469,8 +2807,6 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
     END DO
   END IF
 !
-!
-!
   IF ((switch%b2npco_iout .NE. 0 .OR. switch%b2tfnb_iout .EQ. 1) .OR. &
 &     switch%iout_b2wdat .EQ. 4) THEN
 !srv 11.09.09 {
@@ -2480,9 +2816,11 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 &              dnb)
     wrk1 = geo%fcpbs*wrk0*nbf
     wrk2 = term
-    wrk3 = dv%vaecrb(:, 0, isb)*nbf*geo%fcs*geo%fcqalf(:, 0)
+! to account possible correction due to hybridization
+    wrk3 = dv%vaecrb(:, 0, isb)*nbf*geo%fcs*geo%fcqalf(:, 0)*(1.0_R8+(&
+&     flo_factor(:, 0)-1.0_R8)*drift_hyb)
 !       wrk4 = -con_2dia*dnb(:,0)
-    wrk5 = -(co%cdpa(:, 0, isb)*dpb(:, 0))
+!       wrk5 = -co%cdpa(:,0,isb)*dpb(:,0)
     wrk6 = term*geo%fchz
 !       wrk7 = -con_mdf*dnb(:,0)
     wrk8 = co%cvla(:, 0, isb)*nbf
@@ -2491,29 +2829,30 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
       CALL MY_OUT_US(70, nfc, 1, wrk3, arg11(:))
       arg12(:) = 'b2tfnb_fnbPSch_th'//chns
       CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 0, isb), arg12(:))
-      arg13(:) = 'b2tfnb_dPat_mdf_gradnax'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk7, arg13(:))
+!        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
 !        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
-    ELSE
-      arg12(:) = 'b2tfnb_dgradpb_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk5, arg12(:))
+!       else
+!        call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpb_th'//chns)
+!*****
+!        Note that dv%fna_52 already contains conductive terms caused by both pressure and density gradient. It is printed below
+!*****
     END IF
-    arg14(:) = 'b2tfnb_bxuana_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, wrk1, arg14(:))
+    arg13(:) = 'b2tfnb_bxuana_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, wrk1, arg13(:))
     arg11(:) = 'b2tfnb_dpccorna_th'//chns
     CALL MY_OUT_US(70, nfc, 1, wrk2, arg11(:))
-    arg15(:) = 'b2tfnb_dpb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dpb(1, 0), arg15(:))
-    arg16(:) = 'b2tfnb_dpbm'//chns
-    CALL MY_OUT_US(70, nfc, 1, dpbm, arg16(:))
+    arg14(:) = 'b2tfnb_dpb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dpb(1, 0), arg14(:))
+    arg15(:) = 'b2tfnb_dpbm'//chns
+    CALL MY_OUT_US(70, nfc, 1, dpbm, arg15(:))
     IF (switch%iout_b2wdat .NE. 4) THEN
-      arg17(:) = 'b2tfnb_dpccorhzna_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk6, arg17(:))
+      arg16(:) = 'b2tfnb_dpccorhzna_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, wrk6, arg16(:))
     END IF
 !srv 05.11.09
     IF (switch%b2tfnb_iout .EQ. 1) THEN
-      arg14(:) = 'b2tfnb_cvlbna_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk8, arg14(:))
+      arg13(:) = 'b2tfnb_cvlbna_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, wrk8, arg13(:))
     END IF
   END IF
 !iys 17.04.2012
@@ -2531,8 +2870,8 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
     END IF
     wrk6 = dv%vadia(:, 0, isb)*nbf*geo%fcs*geo%fcqalf(:, 0)*geo%fchz
     IF (.NOT.is_neutral(isb) .AND. switch%iout_b2wdat .NE. 4) THEN
-      arg18(:) = 'b2tfnb_vadianahz_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk6, arg18(:))
+      arg17(:) = 'b2tfnb_vadianahz_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, wrk6, arg17(:))
     END IF
     arg11(:) = 'b2tfnb_fnb_fcor_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_fcor(1, 0, isb), arg11(:))
@@ -2550,25 +2889,29 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   IF ((switch%b2npco_iout .NE. 0 .OR. switch%b2tfnb_iout .EQ. 1) .OR. &
 &     switch%iout_b2wdat .EQ. 4) THEN
 !srv 11.09.09 {
-    wrk3 = dv%vaecrb(:, 1, isb)*nbf*geo%fcs*geo%fcqalf(:, 1)
+! to account possible correction due to hybridization
+    wrk3 = dv%vaecrb(:, 1, isb)*nbf*geo%fcs*geo%fcqalf(:, 1)*(1.0_R8+(&
+&     flo_factor(:, 1)-1.0_R8)*drift_hyb)
 !       wrk4 = -con_2dia*dnb(:,1)
-    wrk5 = -(co%cdpa(:, 1, isb)*dpb(:, 1))
+!       wrk5 = -co%cdpa(:,1,isb)*dpb(:,1)
 !       wrk7 = -con_mdf*dnb(:,1)
     wrk8 = co%cvla(:, 1, isb)*nbf
     WRITE(chns, '(i3.3)') isb
     IF (.NOT.is_neutral(isb)) THEN
-      arg14(:) = 'b2tfnb_fnbPSch_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(:, 1, isb), arg14(:))
+      arg13(:) = 'b2tfnb_fnbPSch_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(:, 1, isb), arg13(:))
       arg12(:) = 'b2tfnb_vaecrbna_r'//chns
       CALL MY_OUT_US(70, nfc, 1, wrk3, arg12(:))
 !        call my_out_us(70,nFc,1,wrk7,'b2tfnb_dPat_mdf_gradnay'//chns)
 !        call my_out_us(70,nFc,1,wrk4,'b2tfnb_dPat_2diagradnay'//chns)
-    ELSE
-      arg14(:) = 'b2tfnb_dgradpb_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk5, arg14(:))
+!       else
+!        call my_out_us(70,nFc,1,wrk5,'b2tfnb_dgradpb_r'//chns)
+!*****
+!        Note that dv%fna_52 already contains conductive terms caused by both pressure and density gradient. It is printed below
+!*****
     END IF
-    arg19(:) = 'b2tfnb_cvlbna_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, wrk8, arg19(:))
+    arg18(:) = 'b2tfnb_cvlbna_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, wrk8, arg18(:))
 !iys 17.04.2012
 !       call my_out_us(70,nFc,1,con_2dia,'b2tfnb_dPat_2diay'//chns)
 !       call my_out_us(70,nFc,1,con_mdf,'b2tfnb_dPat_mdfy'//chns)
@@ -2580,8 +2923,8 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
     WRITE(chns, '(i3.3)') isb
     wrk6 = dv%vadia(:, 1, isb)*nbf*geo%fcs*geo%fcqalf(:, 1)
     IF (.NOT.is_neutral(isb)) THEN
-      arg14(:) = 'b2tfnb_vadiana_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, wrk6, arg14(:))
+      arg13(:) = 'b2tfnb_vadiana_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, wrk6, arg13(:))
     END IF
     wrk6 = dv%vadia(:, 1, isb)*nbf*geo%fcs*geo%fcqalf(:, 1)*geo%fchz
     IF (.NOT.is_neutral(isb) .AND. switch%iout_b2wdat .NE. 4) THEN
@@ -2635,80 +2978,90 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
   END IF
 !
   IF (switch%iout_b2wdat .EQ. 4) THEN
-    arg15(:) = 'b2tfnb_fnb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 0, isb), arg15(:))
-    arg110(:) = 'b2tfnb_fnb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 1, isb), arg110(:))
+    arg14(:) = 'b2tfnb_fnb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 0, isb), arg14(:))
+    arg19(:) = 'b2tfnb_fnb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 1, isb), arg19(:))
     arg11(:) = 'b2tfnb_fnb_fcor_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_fcor(1, 0, isb), arg11(:))
     arg12(:) = 'b2tfnb_fnb_fcor_r'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_fcor(1, 1, isb), arg12(:))
-    arg14(:) = 'b2tfnb_fnb_he_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_fnb_he_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 1, isb), arg19(:))
+    arg13(:) = 'b2tfnb_fnb_he_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_fnb_he_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 1, isb), arg18(:))
     arg12(:) = 'b2tfnb_fnbPSch_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 0, isb), arg12(:))
-    arg14(:) = 'b2tfnb_fnbPSch_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 1, isb), arg14(:))
+    arg13(:) = 'b2tfnb_fnbPSch_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 1, isb), arg13(:))
     IF (isb .EQ. ismain) THEN
-      arg14(:) = 'b2tfnb_vbecrb_th'//chns
-      CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 0, isb), arg14(:))
-      arg19(:) = 'b2tfnb_vbecrb_r'//chns
-      CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 1, isb), arg19(:))
+      arg13(:) = 'b2tfnb_vbecrb_th'//chns
+      CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 0, isb), arg13(:))
+      arg18(:) = 'b2tfnb_vbecrb_r'//chns
+      CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 1, isb), arg18(:))
     END IF
 !       call my_out_us(70,nFc,1,dv%uadia(1,0,isb),'b2tfnb_ubdia_th'//chns)
 !       call my_out_us(70,nFc,1,dv%uadia(1,1,isb),'b2tfnb_ubdia_r'//chns)
-    arg19(:) = 'b2tfnb_vbdia_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 0, isb), arg19(:))
-    arg111(:) = 'b2tfnb_vbdia_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 1, isb), arg111(:))
-    arg19(:) = 'b2tfnb_wbdia_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 0, isb), arg19(:))
-    arg111(:) = 'b2tfnb_wbdia_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 1, isb), arg111(:))
-    arg15(:) = 'b2tfnb_kbnrgy'//chns
-    CALL MY_OUT_US(70, ncv, 0, dv%kinrgy, arg15(:))
+    arg18(:) = 'b2tfnb_vbdia_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 0, isb), arg18(:))
+    arg110(:) = 'b2tfnb_vbdia_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 1, isb), arg110(:))
+    arg18(:) = 'b2tfnb_wbdia_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 0, isb), arg18(:))
+    arg110(:) = 'b2tfnb_wbdia_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 1, isb), arg110(:))
+    arg14(:) = 'b2tfnb_kbnrgy'//chns
+    CALL MY_OUT_US(70, ncv, 0, dv%kinrgy, arg14(:))
+! convective fluxes (drifts + currents + turbulent convection) with account of hybridization and flux limit
+    arg13(:) = 'b2tfnb_fnb_32_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_32(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_fnb_32_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_32(1, 1, isb), arg18(:))
+! conductive fluxes (-D_n \nabla n - D_p \nabla p) with account of flux limit
+    arg13(:) = 'b2tfnb_fnb_52_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_52(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_fnb_52_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_52(1, 1, isb), arg18(:))
   END IF
 !srv 18.06.08 }
 !
   IF (switch%b2tfnb_iout .NE. 0) THEN
 !srv 18.06.08 {
     WRITE(chns, '(i3.3)') isb
-    arg15(:) = 'b2tfnb_fnb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 0, isb), arg15(:))
-    arg110(:) = 'b2tfnb_fnb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 1, isb), arg110(:))
-    arg112(:) = 'b2tfnb_fnb_nodrift_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_nodrift(1, 0, isb), arg112(&
+    arg14(:) = 'b2tfnb_fnb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 0, isb), arg14(:))
+    arg19(:) = 'b2tfnb_fnb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna(1, 1, isb), arg19(:))
+    arg111(:) = 'b2tfnb_fnb_nodrift_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_nodrift(1, 0, isb), arg111(&
 &                   :))
-    arg17(:) = 'b2tfnb_fnb_nodrift_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_nodrift(1, 1, isb), arg17(:&
+    arg16(:) = 'b2tfnb_fnb_nodrift_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_nodrift(1, 1, isb), arg16(:&
 &                   ))
     arg11(:) = 'b2tfnb_fnb_fcor_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_fcor(1, 0, isb), arg11(:))
     arg12(:) = 'b2tfnb_fnb_fcor_r'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_fcor(1, 1, isb), arg12(:))
-    arg14(:) = 'b2tfnb_fnb_he_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_fnb_he_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 1, isb), arg19(:))
+    arg13(:) = 'b2tfnb_fnb_he_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_fnb_he_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_he(1, 1, isb), arg18(:))
     arg12(:) = 'b2tfnb_fnbPSch_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 0, isb), arg12(:))
-    arg14(:) = 'b2tfnb_fnbPSch_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 1, isb), arg14(:))
+    arg13(:) = 'b2tfnb_fnbPSch_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fnapsch(1, 1, isb), arg13(:))
     arg12(:) = 'b2tfnb_fnb_mdf_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 0, isb), arg12(:))
-    arg14(:) = 'b2tfnb_fnb_mdf_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 1, isb), arg14(:))
-    arg14(:) = 'b2tfnb_fnb_32_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_32(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_fnb_32_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_32(1, 1, isb), arg19(:))
-    arg14(:) = 'b2tfnb_fnb_52_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_52(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_fnb_52_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fna_52(1, 1, isb), arg19(:))
+    arg13(:) = 'b2tfnb_fnb_mdf_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 1, isb), arg13(:))
+    arg13(:) = 'b2tfnb_fnb_32_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_32(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_fnb_32_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_32(1, 1, isb), arg18(:))
+    arg13(:) = 'b2tfnb_fnb_52_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_52(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_fnb_52_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fna_52(1, 1, isb), arg18(:))
     arg11(:) = 'b2tfnb_fnb_32nd_th'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_32nd(1, 0, isb), arg11(:))
     arg12(:) = 'b2tfnb_fnb_32nd_r'//chns
@@ -2717,104 +3070,104 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
     CALL MY_OUT_US(70, nfc, 1, dv%fna_52nd(1, 0, isb), arg11(:))
     arg12(:) = 'b2tfnb_fnb_52nd_r'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_52nd(1, 1, isb), arg12(:))
-    arg18(:) = 'b2tfnb_fllim0fnb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%fllim0fna(1, 0, isb), arg18(:))
+    arg17(:) = 'b2tfnb_fllim0fnb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%fllim0fna(1, 0, isb), arg17(:))
     arg11(:) = 'b2tfnb_fllim0fnb_r'//chns
     CALL MY_OUT_US(70, nfc, 1, co%fllim0fna(1, 1, isb), arg11(:))
-    arg14(:) = 'b2tfnb_vbecrb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_vbecrb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 1, isb), arg19(:))
-    arg19(:) = 'b2tfnb_ubdia_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%uadia(1, 0, isb), arg19(:))
-    arg111(:) = 'b2tfnb_ubdia_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%uadia(1, 1, isb), arg111(:))
-    arg19(:) = 'b2tfnb_vbdia_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 0, isb), arg19(:))
-    arg111(:) = 'b2tfnb_vbdia_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 1, isb), arg111(:))
-    arg19(:) = 'b2tfnb_wbdia_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 0, isb), arg19(:))
-    arg111(:) = 'b2tfnb_wbdia_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 1, isb), arg111(:))
-    arg15(:) = 'b2tfnb_kbnrgy'//chns
-    CALL MY_OUT_US(70, ncv, 0, dv%kinrgy, arg15(:))
-    arg111(:) = 'b2tfnb_cvlb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cvla(1, 0, isb), arg111(:))
-    arg15(:) = 'b2tfnb_cvlb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cvla(1, 1, isb), arg15(:))
-    arg14(:) = 'b2tfnb_cvlbhz_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cvlahz(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_cvlbhz_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cvlahz(1, 1, isb), arg19(:))
-    arg14(:) = 'b2tfnb_cdpbhz_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cdpahz(1, 0, isb), arg14(:))
-    arg19(:) = 'b2tfnb_cdpbhz_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cdpahz(1, 1, isb), arg19(:))
-    arg111(:) = 'b2tfnb_cdpb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cdpa(1, 0, isb), arg111(:))
-    arg15(:) = 'b2tfnb_cdpb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cdpa(1, 1, isb), arg15(:))
-    arg111(:) = 'b2tfnb_cdnb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cdna(1, 0, isb), arg111(:))
-    arg15(:) = 'b2tfnb_cdnb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cdna(1, 1, isb), arg15(:))
-    arg111(:) = 'b2tfnb_cddb_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cddi(1, 0, isb), arg111(:))
-    arg15(:) = 'b2tfnb_cddb_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, co%cddi(1, 1, isb), arg15(:))
-    arg16(:) = 'b2tfnb_term'//chns
-    CALL MY_OUT_US(70, nfc, 1, term, arg16(:))
-    arg113(:) = term*geo%fchz
+    arg13(:) = 'b2tfnb_vbecrb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_vbecrb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%vaecrb(1, 1, isb), arg18(:))
+    arg18(:) = 'b2tfnb_ubdia_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%uadia(1, 0, isb), arg18(:))
+    arg110(:) = 'b2tfnb_ubdia_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%uadia(1, 1, isb), arg110(:))
+    arg18(:) = 'b2tfnb_vbdia_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 0, isb), arg18(:))
+    arg110(:) = 'b2tfnb_vbdia_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%vadia(1, 1, isb), arg110(:))
+    arg18(:) = 'b2tfnb_wbdia_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 0, isb), arg18(:))
+    arg110(:) = 'b2tfnb_wbdia_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%wadia(1, 1, isb), arg110(:))
+    arg14(:) = 'b2tfnb_kbnrgy'//chns
+    CALL MY_OUT_US(70, ncv, 0, dv%kinrgy, arg14(:))
+    arg110(:) = 'b2tfnb_cvlb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cvla(1, 0, isb), arg110(:))
+    arg14(:) = 'b2tfnb_cvlb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cvla(1, 1, isb), arg14(:))
+    arg13(:) = 'b2tfnb_cvlbhz_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cvlahz(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_cvlbhz_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cvlahz(1, 1, isb), arg18(:))
+    arg13(:) = 'b2tfnb_cdpbhz_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cdpahz(1, 0, isb), arg13(:))
+    arg18(:) = 'b2tfnb_cdpbhz_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cdpahz(1, 1, isb), arg18(:))
+    arg110(:) = 'b2tfnb_cdpb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cdpa(1, 0, isb), arg110(:))
+    arg14(:) = 'b2tfnb_cdpb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cdpa(1, 1, isb), arg14(:))
+    arg110(:) = 'b2tfnb_cdnb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cdna(1, 0, isb), arg110(:))
+    arg14(:) = 'b2tfnb_cdnb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cdna(1, 1, isb), arg14(:))
+    arg110(:) = 'b2tfnb_cddb_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cddi(1, 0, isb), arg110(:))
+    arg14(:) = 'b2tfnb_cddb_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, co%cddi(1, 1, isb), arg14(:))
+    arg15(:) = 'b2tfnb_term'//chns
+    CALL MY_OUT_US(70, nfc, 1, term, arg15(:))
+    arg112(:) = term*geo%fchz
     arg2(:) = 'b2tfnb_termhz'//chns
-    CALL MY_OUT_US(70, nfc, 1, arg113(:), arg2(:))
+    CALL MY_OUT_US(70, nfc, 1, arg112(:), arg2(:))
     CALL MY_OUT_US(70, nfc, 1, geo%fcpbs, 'b2tfnb_pbs')
     CALL MY_OUT_US(70, nfc, 1, geo%fcpbshz, 'b2tfnb_pbshz')
-    arg14(:) = 'b2tfnb_ub2dia_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, ub2dia(1, 0), arg14(:))
-    arg19(:) = 'b2tfnb_ub2dia_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, ub2dia(1, 1), arg19(:))
-    arg19(:) = 'b2tfnb_conb_th0'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 0), arg19(:))
-    arg19(:) = 'b2tfnb_conb_th1'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 1), arg19(:))
-    arg19(:) = 'b2tfnb_conb_th2'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 2), arg19(:))
-    arg19(:) = 'b2tfnb_conb_th3'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 3), arg19(:))
-    arg19(:) = 'b2tfnb_conb_th4'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 4), arg19(:))
-    arg111(:) = 'b2tfnb_conb_r0'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 0), arg111(:))
-    arg111(:) = 'b2tfnb_conb_r1'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 1), arg111(:))
-    arg111(:) = 'b2tfnb_conb_r2'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 2), arg111(:))
-    arg111(:) = 'b2tfnb_conb_r3'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 3), arg111(:))
-    arg111(:) = 'b2tfnb_conb_r4'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 4), arg111(:))
-    arg111(:) = 'b2tfnb_flob_th'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 0), arg111(:))
-    arg15(:) = 'b2tfnb_flob_r'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 1), arg15(:))
-    arg111(:) = 'b2tfnb_kmprtix'//chns
-    CALL MY_OUT_US(70, nfc, 1, kmprtif(1), arg111(:))
-    arg114(:) = 'b2tfnb_ua'//chns
-    CALL MY_OUT_US(70, ncv, 0, pl%ua(1, isb), arg114(:))
-    arg114(:) = 'b2tfnb_na'//chns
-    CALL MY_OUT_US(70, ncv, 0, pl%na(1, isb), arg114(:))
-    arg114(:) = 'b2tfnb_pa'//chns
-    CALL MY_OUT_US(70, ncv, 0, dv%pa(1, isb), arg114(:))
+    arg13(:) = 'b2tfnb_ub2dia_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, ub2dia(1, 0), arg13(:))
+    arg18(:) = 'b2tfnb_ub2dia_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, ub2dia(1, 1), arg18(:))
+    arg18(:) = 'b2tfnb_conb_th0'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 0), arg18(:))
+    arg18(:) = 'b2tfnb_conb_th1'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 1), arg18(:))
+    arg18(:) = 'b2tfnb_conb_th2'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 2), arg18(:))
+    arg18(:) = 'b2tfnb_conb_th3'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 3), arg18(:))
+    arg18(:) = 'b2tfnb_conb_th4'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 0, 4), arg18(:))
+    arg110(:) = 'b2tfnb_conb_r0'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 0), arg110(:))
+    arg110(:) = 'b2tfnb_conb_r1'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 1), arg110(:))
+    arg110(:) = 'b2tfnb_conb_r2'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 2), arg110(:))
+    arg110(:) = 'b2tfnb_conb_r3'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 3), arg110(:))
+    arg110(:) = 'b2tfnb_conb_r4'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%conb(1, 1, 4), arg110(:))
+    arg110(:) = 'b2tfnb_flob_th'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 0), arg110(:))
+    arg14(:) = 'b2tfnb_flob_r'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%flob(1, 1), arg14(:))
+    arg110(:) = 'b2tfnb_kmprtix'//chns
+    CALL MY_OUT_US(70, nfc, 1, kmprtif(1), arg110(:))
+    arg113(:) = 'b2tfnb_ua'//chns
+    CALL MY_OUT_US(70, ncv, 0, pl%ua(1, isb), arg113(:))
+    arg113(:) = 'b2tfnb_na'//chns
+    CALL MY_OUT_US(70, ncv, 0, pl%na(1, isb), arg113(:))
+    arg113(:) = 'b2tfnb_pa'//chns
+    CALL MY_OUT_US(70, ncv, 0, dv%pa(1, isb), arg113(:))
     CALL MY_OUT_US(70, ncv, 0, pl%te, 'b2tfnb_te')
     CALL MY_OUT_US(70, ncv, 0, pl%ti, 'b2tfnb_ti')
     CALL MY_OUT_US(70, ncv, 0, pl%po, 'b2tfnb_po')
-    arg114(:) = 'b2tfnb_zb'//chns
-    CALL MY_OUT_US(70, ncv, 0, rt%rza(1, isb), arg114(:))
-    arg19(:) = 'b2tfnb_facdrift'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%facdrift, arg19(:))
-    arg111(:) = 'b2tfnb_fac_ExB'//chns
-    CALL MY_OUT_US(70, nfc, 1, dv%fac_exb, arg111(:))
+    arg113(:) = 'b2tfnb_zb'//chns
+    CALL MY_OUT_US(70, ncv, 0, rt%rza(1, isb), arg113(:))
+    arg18(:) = 'b2tfnb_facdrift'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%facdrift, arg18(:))
+    arg110(:) = 'b2tfnb_fac_ExB'//chns
+    CALL MY_OUT_US(70, nfc, 1, dv%fac_exb, arg110(:))
     CALL MY_OUT_US(70, nfc, 1, dv%fchvispar(1, 0), &
 &                   'b2tfnb_fchvispar_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fchvispar(1, 1), &

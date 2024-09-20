@@ -26,13 +26,13 @@ SUBROUTINE B2XTVX_NODIFF(nx, ny, nx1, ny1, fun, fun1, wrk)
 !     ------------------------------------------------------------------
   INTEGER :: ix1, iy1, ix, iy
   REAL(kind=r8) :: t0, t1, t2
-  EXTERNAL B2XVFX_NODIFF, RRATIO
+  EXTERNAL B2XVFX, RRATIO
   REAL(kind=r8) :: RRATIO
   INTEGER :: arg1
   INTEGER :: arg2
 !     ------------------------------------------------------------------
 !   ..test edge values of fun
-  CALL B2XVFX_NODIFF(nx, ny, fun, 'b2xtvx--fun')
+  CALL B2XVFX(nx, ny, fun, 'b2xtvx--fun')
 !   ..interpolate in the second index
   DO ix=0,nx
     wrk(ix, -1) = fun(ix, -1)

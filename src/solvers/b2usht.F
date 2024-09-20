@@ -87,7 +87,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..procedures
       intrinsic abs, sqrt, dim
       external xertst, sfill
-      external b2xvsg, b2xvff, b2xvfx, b2uxus                           !srv 02.01.07
+      external b2xvsg, b2uxus                                           !srv 02.01.07
 *   ..initialization
 
 *-----------------------------------------------------------------------
@@ -196,7 +196,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           endif
         endif
       enddo
-! $AD II-LOOP
 
       if (switch%b2usht_iout.ne.0) then
        call my_out_us(70,nCv,0,she(1,1),'b2usht_she1')     
@@ -213,7 +212,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_tt_pre')
       endif
-
+! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -359,7 +358,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           endif
         endif
       enddo
-! $AD II-LOOP
 
       if (switch%b2usht_iout.ne.0) then
        call my_out_us(70,nCv,0,she(1,1),'b2usht_she1_te')     
@@ -378,7 +376,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call my_out_us(70,nFc,1,con0(1,1,0),'b2usht_coney')
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_te_pre')
       endif 
-
+! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -520,7 +518,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           endif
         endif
       enddo
-! $AD II-LOOP
 
       if (switch%b2usht_iout.ne.0) then
        call my_out_us(70,nFc,1,floi(1,0),'b2usht_floix') 
@@ -538,7 +535,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_ti_pre')
       endif
-
+! $AD II-LOOP
       do iFc = 1, nFc
         iCv1 = mpg%fcCv(iFc,1) ! cell number of c1
         iCv2 = mpg%fcCv(iFc,2) ! cell number of c2
@@ -646,10 +643,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
       last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
-! $AD II-LOOP
-      do iCv = 1, nCv
-        corti(iCv) = corti(iCv)
-      enddo
       endif                                                          !srv 22.05.18
 
       if (switch%b2usht_iout.ne.0) then
@@ -790,10 +783,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn')
       last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
-! $AD II-LOOP
-      do iCv = 1, nCv
-        cortn(iCv) = cortn(iCv)
-      enddo
       endif                                                          !srv 22.05.18
       endif
 
@@ -930,10 +919,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
        call b2uxus (nCv, mpg, aa, itcnt, reskt, corkt, 'b2usht_kt')
-! $AD II-LOOP
-       do iCv = 1, nCv
-        corkt(iCv) = corkt(iCv)
-       enddo
       endif !solve_keps - kt
 
       if (switch%b2usht_iout.ne.0) then
@@ -1068,10 +1053,6 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
        call b2uxus (nCv, mpg, aa, itcnt, reszt, corzt, 'b2usht_zt')
-! $AD II-LOOP
-       do iCv = 1, nCv
-        corzt(iCv) = corzt(iCv)
-       enddo
       endif !solve_keps - enstrophy
 
       if (switch%b2usht_iout.ne.0) then

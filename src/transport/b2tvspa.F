@@ -45,7 +45,7 @@
      *   wrk(nCv), wrk0(nFc), wrk1(nFc), wrkVx(nVx), gOnedBsq(nFc,0:1)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx
+      external b2xvsg
 *   ..initialization
 *-----------------------------------------------------------------------
 *.computation

@@ -16,58 +16,37 @@ MODULE B2MOD_B2PLOT_DIFFV
 !
   USE B2MOD_TYPES
   USE B2MOD_LAYER_DIFFV, ONLY : ntrack
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
-!  Common dimensions
 !
-!  version : 01.12.98 21:42
+  REAL(kind=r8), ALLOCATABLE, SAVE :: work(:, :, :), wrkc(:), wrkcs(:, :&
+& ), wrkf(:), wrkfs(:, :), wrkv(:), vxa(:, :), vya(:, :), vza(:, :), vxm&
+& (:, :), vym(:, :), vzm(:, :), vxi(:, :), vyi(:, :), vzi(:, :), arrowx(&
+& :, :), arrowy(:, :), earrowx(:, :), earrowy(:, :), p1(:, :), p2(:, :)&
+& , xx(:, :), yy(:, :), nh(:), zeff(:), uutraj(:, :), vvtraj(:, :), &
+& targetx(:, :), targety(:, :), targetr(:, :), targetz(:, :), wwrk(:), &
+& wrk_hlp(:), ewrk_hlp(:), wwrk_hlp(:), twrk_hlp(:)
 !
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
-!
-  REAL(kind=r8), ALLOCATABLE, SAVE :: work(:, :, :, :), wrk(:), vxa(:, :&
-& ), vya(:, :), vza(:, :), vxm(:, :), vym(:, :), vzm(:, :), vxi(:, :), &
-& vyi(:, :), vzi(:, :), arrowx(:, :, :), arrowy(:, :, :), earrowx(:, :)&
-& , earrowy(:, :), p1(:, :), p2(:, :), xx(:, :), yy(:, :), nh(:, :), &
-& zeff(:, :), uutraj(:, :, :), vvtraj(:, :, :), targetx(:, :), targety(:&
-& , :), targetr(:, :), targetz(:, :), wwrk(:), wrk_hlp(:), ewrk_hlp(:), &
-& wwrk_hlp(:), twrk_hlp(:)
-!
-  REAL(kind=r8), SAVE :: pp1(2, 300+2*100), pp2(2, 300+2*100)
+  REAL(kind=r8), SAVE :: pp1(2, def_nlim+2*def_nyd), pp2(2, def_nlim+2*&
+& def_nyd)
 !
   INTEGER, ALLOCATABLE, SAVE :: ind_hlp(:), indt_hlp(:)
+!
+  INTEGER, ALLOCATABLE, SAVE :: cvix(:), cviy(:), fcxix(:), fcxiy(:), &
+& fcyix(:), fcyiy(:), vxix(:), vxiy(:)
+!
+  REAL(kind=r8), ALLOCATABLE, SAVE :: dsimp(:), dsomp(:), wdimp(:), &
+& wdomp(:)
 !
   REAL(kind=r8), ALLOCATABLE, SAVE :: eirene_stack(:, :, :), &
 & triangle_area(:), triangle_vol(:), wall_stack(:, :, :), wall_flux(:, :&
 & ), wall_area(:), incident_energy(:, :), wall_heatflux(:), wall_temp(:)&
 & , target_stack(:, :, :)
+!
+  LOGICAL, ALLOCATABLE, SAVE :: ic_active(:)
 !
   INTEGER :: wklng
   PARAMETER (wklng=10)
@@ -84,45 +63,45 @@ MODULE B2MOD_B2PLOT_DIFFV
   REAL(kind=r8), SAVE :: arrowl, earrowl, arroww, sepwidth, lwidth, &
 & wwidth, owidth, vwidth, ewidth, zwidth
   INTEGER, SAVE :: nidim, linlog, wlinlog, tlinlog, trglinlog
-  INTEGER, SAVE :: ndim(3, wklng), nedim(2, wklng), nwdim(2, wklng), &
-& typeofplot, iwrk, iewrk, iwwrk, itwrk, movie_skip, average
+  INTEGER, SAVE :: ndim(2, wklng), nedim(2, wklng), nwdim(2, wklng), &
+& ntrfrm, typeofplot, iwrk, iewrk, iwwrk, itwrk, movie_skip, average, &
+& ixref, iyref
 !ank 960511
   INTEGER, SAVE :: nlimi, nstsi, natmi, nmoli, nioni, nlim1
 !ank
-  INTEGER, SAVE :: mcol, scol, vcol, ocol, ecol, acol, zcol, &
+  INTEGER, SAVE :: mcol, scol, vcol, ocol, ecol, fcol, acol, zcol, &
 & y_transform_l, dcol, wcol, tcol, hcol, gcol, bcol, xcol, lfsz, &
 & expsymbol
 !
   LOGICAL, SAVE :: writing_to_file, color_set, use_compile, &
+& plot_vs_full_psi, plot_vs_norm_psi, plot_vs_root_psi, plot_vs_rmaj, &
 & set_resignore_regions_to_zero, plotting_wall, map_to_midplane, &
-& xparallel, plotting_sep, expline
+& xparallel, plotting_sep, bold, expline
 !
   CHARACTER(len=256), SAVE :: graphlabel(wklng), eirene_label(wklng), &
 & wall_label(wklng), target_label(wklng)
   CHARACTER(len=256), SAVE :: solpstop, moviename, expfile, wallfile
   CHARACTER(len=80), SAVE :: b2version
 !
-  INTEGER, SAVE :: nx, ny, ns, nsw, jxa, jxi, jsep, ixref, iyref, nxtr, &
-& nxtl
+  INTEGER, SAVE :: nsw
 !
   INTEGER, SAVE :: neo_ic
 
 CONTAINS
 !
 !
-  SUBROUTINE ALLOC_B2MOD_B2PLOT(nxd, nyd, nsd, ns_ext, wklngd, natmd, &
-&   nmold, niond, nlim)
+  SUBROUTINE ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, nsd, ns_ext, wklngd, &
+&   natmd, nmold, niond, nlim)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: nxd, nyd, nsd, ns_ext, wklngd, natmd, nmold, niond, nlim
+    INTEGER :: ncv, nfc, nvx
+    INTEGER :: nsd, ns_ext, wklngd, natmd, nmold, niond, nlim
     INTEGER :: nsw
-    EXTERNAL GET_JSEP, GET_NXT, IPGETI, XERTST
     INTRINSIC MAX
     INTEGER :: max1
-!
-    nx = nxd
-    ny = nyd
-    ns = nsd
+    INTEGER :: max2
+    INTEGER :: max3
+    INTEGER :: y1
     IF (nsd + 3 .LT. (nsd+1)*(nsd+1) - 1) THEN
       IF ((nsd+1)*(nsd+1) - 1 .LT. ns_ext) THEN
         nsw = ns_ext
@@ -135,40 +114,53 @@ CONTAINS
       nsw = nsd + 3
     END IF
 !
-    CALL GET_JSEP(nx, ny, jxi, jxa, jsep)
-    ixref = jxa
-    iyref = jsep
-    CALL IPGETI('set_transport_ixref', ixref)
-    CALL XERTST(-1 .LE. ixref .AND. ixref .LE. nxd, &
-&         'faulty argument set_transport_ixref')
-    CALL IPGETI('set_transport_iyref', iyref)
-    CALL XERTST(-1 .LE. iyref .AND. iyref .LE. nyd, &
-&         'faulty argument set_transport_iyref')
-    CALL GET_NXT(nx, nxtl, nxtr)
-!
-    ALLOCATE(work(-1:nxd, -1:nyd, 0:nsw, 1:wklngd))
-    ALLOCATE(wrk(-1:nxd+nyd+1))
-    ALLOCATE(wrk_hlp(1:nxd*nyd))
-    ALLOCATE(ind_hlp(1:nxd*nyd))
-    ALLOCATE(arrowx(-1:nxd, -1:nyd, 0:nsw))
-    ALLOCATE(arrowy(-1:nxd, -1:nyd, 0:nsw))
+    ALLOCATE(work(1:ncv, 0:nsw, 1:wklngd))
+    ALLOCATE(wrkc(1:ncv))
+    IF (nsd .LT. ns_ext) THEN
+      max3 = ns_ext
+    ELSE
+      max3 = nsd
+    END IF
+    y1 = max3 - 1
+    IF (2 .LT. y1) THEN
+      max1 = y1
+    ELSE
+      max1 = 2
+    END IF
+    ALLOCATE(wrkcs(1:ncv, 0:max1))
+    ALLOCATE(wrkf(1:nfc))
+    ALLOCATE(wrkfs(1:nfc, 0:nsd-1))
+    ALLOCATE(wrkv(1:nvx))
+    ALLOCATE(wrk_hlp(1:ncv))
+    ALLOCATE(ind_hlp(1:ncv))
+    ALLOCATE(arrowx(1:ncv, 0:nsw))
+    ALLOCATE(arrowy(1:ncv, 0:nsw))
     ALLOCATE(p1(2, nlim))
     ALLOCATE(p2(2, nlim))
-    ALLOCATE(xx(-1:nx, 2))
-    ALLOCATE(yy(-1:ny, 2))
-    ALLOCATE(nh(-1:nxd, -1:nyd))
-    ALLOCATE(zeff(-1:nxd, -1:nyd))
-    ALLOCATE(uutraj(-1:nxd, -1:nyd, 0:nsd-1))
-    ALLOCATE(vvtraj(-1:nxd, -1:nyd, 0:nsd-1))
+    ALLOCATE(xx(1:ncv, 2))
+    ALLOCATE(yy(1:ncv, 2))
+    ALLOCATE(nh(1:ncv))
+    ALLOCATE(zeff(1:ncv))
+    ALLOCATE(uutraj(1:ncv, 0:nsd-1))
+    ALLOCATE(vvtraj(1:ncv, 0:nsd-1))
+    ALLOCATE(cvix(1:ncv))
+    ALLOCATE(cviy(1:ncv))
+    ALLOCATE(fcxix(1:nfc))
+    ALLOCATE(fcxiy(1:nfc))
+    ALLOCATE(fcyix(1:nfc))
+    ALLOCATE(fcyiy(1:nfc))
+    ALLOCATE(vxix(1:nvx))
+    ALLOCATE(vxiy(1:nvx))
+    ALLOCATE(ic_active(1:ncv))
     ALLOCATE(textpl(0:nsd-1))
     ALLOCATE(textplel(0:nsd))
     ALLOCATE(textplel2(0:nsd, 0:nsd))
     IF (1 .LT. natmd) THEN
-      max1 = natmd
+      max2 = natmd
     ELSE
-      max1 = 1
+      max2 = 1
     END IF
-    ALLOCATE(textsp(0:max1-1))
+    ALLOCATE(textsp(0:max2-1))
     ALLOCATE(textwl(0:nsd-1+natmd+nmold+niond))
     ALLOCATE(textwk(0:nsw, wklngd))
     ALLOCATE(textewk(0:MAX(1, natmd, nmold, niond)-1, wklngd))
@@ -302,7 +294,11 @@ CONTAINS
       RETURN
     ELSE
       DEALLOCATE(work)
-      DEALLOCATE(wrk)
+      DEALLOCATE(wrkc)
+      DEALLOCATE(wrkcs)
+      DEALLOCATE(wrkf)
+      DEALLOCATE(wrkfs)
+      DEALLOCATE(wrkv)
       DEALLOCATE(wrk_hlp)
       DEALLOCATE(ind_hlp)
       DEALLOCATE(arrowx)
@@ -315,6 +311,15 @@ CONTAINS
       DEALLOCATE(zeff)
       DEALLOCATE(uutraj)
       DEALLOCATE(vvtraj)
+      DEALLOCATE(cvix)
+      DEALLOCATE(cviy)
+      DEALLOCATE(fcxix)
+      DEALLOCATE(fcxiy)
+      DEALLOCATE(fcyix)
+      DEALLOCATE(fcyiy)
+      DEALLOCATE(vxix)
+      DEALLOCATE(vxiy)
+      DEALLOCATE(ic_active)
       DEALLOCATE(textpl)
       DEALLOCATE(textplel)
       DEALLOCATE(textplel2)
@@ -339,48 +344,58 @@ CONTAINS
   SUBROUTINE DEALLOC_B2MOD_B2PLOT_EIRENE()
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
+    INTRINSIC ALLOCATED
 !
-    DEALLOCATE(eirene_stack)
-    DEALLOCATE(triangle_area)
-    DEALLOCATE(triangle_vol)
-    DEALLOCATE(vxa)
-    DEALLOCATE(vya)
-    DEALLOCATE(vza)
-    DEALLOCATE(vxm)
-    DEALLOCATE(vym)
-    DEALLOCATE(vzm)
-    DEALLOCATE(vxi)
-    DEALLOCATE(vyi)
-    DEALLOCATE(vzi)
-    DEALLOCATE(earrowx)
-    DEALLOCATE(earrowy)
-    DEALLOCATE(ewrk_hlp)
+    IF (.NOT.ALLOCATED(eirene_stack)) THEN
+      RETURN
+    ELSE
+      DEALLOCATE(eirene_stack)
+      DEALLOCATE(triangle_area)
+      DEALLOCATE(triangle_vol)
+      DEALLOCATE(vxa)
+      DEALLOCATE(vya)
+      DEALLOCATE(vza)
+      DEALLOCATE(vxm)
+      DEALLOCATE(vym)
+      DEALLOCATE(vzm)
+      DEALLOCATE(vxi)
+      DEALLOCATE(vyi)
+      DEALLOCATE(vzi)
+      DEALLOCATE(earrowx)
+      DEALLOCATE(earrowy)
+      DEALLOCATE(ewrk_hlp)
 !
-    RETURN
+      RETURN
+    END IF
   END SUBROUTINE DEALLOC_B2MOD_B2PLOT_EIRENE
 
 !
   SUBROUTINE DEALLOC_B2MOD_B2PLOT_WALL()
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
+    INTRINSIC ALLOCATED
 !
-    DEALLOCATE(wwrk_hlp)
-    DEALLOCATE(twrk_hlp)
-    DEALLOCATE(indt_hlp)
-    DEALLOCATE(wall_stack)
-    DEALLOCATE(wall_flux)
-    DEALLOCATE(wall_area)
-    DEALLOCATE(incident_energy)
-    DEALLOCATE(wall_heatflux)
-    DEALLOCATE(wall_temp)
-    DEALLOCATE(targetx)
-    DEALLOCATE(targety)
-    DEALLOCATE(targetr)
-    DEALLOCATE(targetz)
-    DEALLOCATE(wwrk)
-    DEALLOCATE(target_stack)
+    IF (.NOT.ALLOCATED(wwrk_hlp)) THEN
+      RETURN
+    ELSE
+      DEALLOCATE(wwrk_hlp)
+      DEALLOCATE(twrk_hlp)
+      DEALLOCATE(indt_hlp)
+      DEALLOCATE(wall_stack)
+      DEALLOCATE(wall_flux)
+      DEALLOCATE(wall_area)
+      DEALLOCATE(incident_energy)
+      DEALLOCATE(wall_heatflux)
+      DEALLOCATE(wall_temp)
+      DEALLOCATE(targetx)
+      DEALLOCATE(targety)
+      DEALLOCATE(targetr)
+      DEALLOCATE(targetz)
+      DEALLOCATE(wwrk)
+      DEALLOCATE(target_stack)
 !
-    RETURN
+      RETURN
+    END IF
   END SUBROUTINE DEALLOC_B2MOD_B2PLOT_WALL
 
 !
@@ -406,62 +421,6 @@ CONTAINS
 !
     RETURN
   END SUBROUTINE WRITE_B2MOD_B2PLOT
-
-!
-  FUNCTION IX_E2B(ixe)
-    USE B2MOD_INDIRECT
-  USE B2MOD_DIFFSIZES
-    IMPLICIT NONE
-    INTEGER :: ix_e2b
-    INTEGER :: ixe
-    INTEGER :: ic, i
-!
-    IF (ixe .EQ. -1 .OR. ixe .EQ. 0) THEN
-      ix_e2b = -2
-    ELSE
-      i = 1
-      ix_e2b = 0
-      DO WHILE (i .LT. ixe)
-        i = i + 1
-        ix_e2b = ix_e2b + 1
-        DO ic=1,nncut
-          IF (ix_e2b .EQ. leftcut(ic)) i = i + 1
-          IF (ix_e2b .EQ. rightcut(ic)) i = i + 1
-        END DO
-        IF (nncut .EQ. 2 .AND. ix_e2b .EQ. nxtr) i = i + 1
-      END DO
-    END IF
-    RETURN
-  END FUNCTION IX_E2B
-
-!
-  FUNCTION IX_B2E(ixb)
-    USE B2MOD_INDIRECT
-  USE B2MOD_DIFFSIZES
-    IMPLICIT NONE
-    INTEGER :: ix_b2e
-    INTEGER :: ixb
-    INTEGER :: i
-!
-    IF (ixb .EQ. -2) THEN
-      ix_b2e = -1
-    ELSE IF (ixb .GT. nx) THEN
-      ix_b2e = -1
-    ELSE IF (ixb .EQ. -1 .OR. ixb .EQ. nx) THEN
-      ix_b2e = -1
-    ELSE IF (nncut .EQ. 2 .AND. (ixb .GE. nxtl .AND. ixb .LE. nxtr)) &
-&   THEN
-      ix_b2e = -1
-    ELSE
-      ix_b2e = ixb + 1
-      DO i=1,nncut
-        IF (ixb .GE. leftcut(i)) ix_b2e = ix_b2e + 1
-        IF (ixb .GE. rightcut(i)) ix_b2e = ix_b2e + 1
-      END DO
-      IF (nncut .EQ. 2 .AND. ixb .GT. nxtr) ix_b2e = ix_b2e + 1
-    END IF
-    RETURN
-  END FUNCTION IX_B2E
 
 END MODULE B2MOD_B2PLOT_DIFFV
 

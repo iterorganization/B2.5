@@ -3,12 +3,13 @@
 !
 !  Differentiation of b2sral in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar potpar enipar
-!                userfluxparm int4l int1l int2l int3l int0l fb_target
-!                fb_prev fb_current fb_const charge_frac saved_fb_actuator
-!                fb_rescale *(st.pl.na) *(st.dv.fchvispar) *(st.dv.fchinert)
-!                *(st.dv.fchanml) *(st.dv.fna) *(st.dv.fna_mdf)
-!                *(st.dv.fna_32) *(st.dv.fna_he) *(st.dv.fnapsch)
-!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.fne)
+!                b2recyc userfluxparm int4l int1l int2l int3l int0l
+!                fb_target fb_prev fb_current fb_const charge_frac
+!                saved_fb_actuator fb_rescale *(st.pl.na) *(st.dv.fchvispar)
+!                *(st.dv.fchinert) *(st.dv.fchanml) *(st.dv.fna)
+!                *(st.dv.fna_mdf) *(st.dv.fna_32) *(st.dv.fna_he)
+!                *(st.dv.fnapsch) *(st.dv.fna_fcor) *(st.dv.fna_eir)
+!                *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
 !                *(st.dv.kinrgy) *(st.dv.ne) *(st.dv.pa) *(st.sr.sch)
 !                *(st.sr.she) *(st.sr.shi) *(st.sr.shn) *(st.sr.skt)
 !                *(st.sr.smo) *(st.sr.smq) *(st.sr.sna) *(st.srw.sch0)
@@ -16,24 +17,25 @@
 !                *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rza)
 !                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
 !                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
-!                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.fna)
-!                *(st.psnc.kinrgy)
+!                *(st.psnl.na) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
+!                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
 !   with respect to varying inputs: enepar conpar enkpar potpar
-!                mompar enipar userfluxparm int4l int1l int2l int3l
-!                int0l fb_target fb_prev fb_current fb_const charge_frac
-!                saved_fb_actuator fb_rescale switch.b2tfhi_fflokt
-!                *(st.pl.na) *(st.pl.ua) *(st.pl.po) *(st.pl.te)
-!                *(st.pl.ti) *(st.pl.tn) *(st.pl.kt) *(st.co.csig_an)
-!                *(st.co.chce) *(st.co.chci) *(st.co.cvla) *(st.co.cdna)
-!                *(st.co.cdpa) *(st.co.vsaf_cl) *(st.co.hce0) *(st.co.hci0)
-!                *(st.co.hcn0) *(st.co.dpa0) *(st.co.dna0) *(st.dv.fch)
-!                *(st.dv.fch_p) *(st.dv.fchdia) *(st.dv.fchin)
+!                mompar enipar b2recyc userfluxparm int4l int1l
+!                int2l int3l int0l fb_target fb_prev fb_current
+!                fb_const charge_frac saved_fb_actuator fb_rescale
+!                switch.b2tfhi_fflokt *(st.pl.na) *(st.pl.ua) *(st.pl.po)
+!                *(st.pl.te) *(st.pl.ti) *(st.pl.tn) *(st.pl.kt)
+!                *(st.co.csig_an) *(st.co.chce) *(st.co.chci) *(st.co.cvla)
+!                *(st.co.cdna) *(st.co.cdpa) *(st.co.vsaf_cl) *(st.co.hce0)
+!                *(st.co.hci0) *(st.co.hcn0) *(st.co.dpa0) *(st.co.dna0)
+!                *(st.dv.fch) *(st.dv.fch_p) *(st.dv.fchdia) *(st.dv.fchin)
 !                *(st.dv.fchvispar) *(st.dv.fchvisper) *(st.dv.fchvisq)
 !                *(st.dv.fchinert) *(st.dv.fchanml) *(st.dv.fchviskt)
 !                *(st.dv.fna) *(st.dv.fna_mdf) *(st.dv.fna_32)
 !                *(st.dv.fna_he) *(st.dv.fnapsch) *(st.dv.fna_fcor)
-!                *(st.dv.fna_eir) *(st.dv.fne) *(st.dv.fhe) *(st.dv.fhepsch)
+!                *(st.dv.fna_eir) *(st.dv.fhe) *(st.dv.fhepsch)
 !                *(st.dv.fhi) *(st.dv.fhipsch) *(st.dv.fhm) *(st.dv.fkt)
+!                *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
 !                *(st.dv.kinrgy) *(st.dv.pcca) *(st.dv.ne) *(st.dv.ni)
 !                *(st.dv.nn) *(st.dv.pa) *(st.dv.vadia) *(st.dv.wadia)
 !                *(st.dv.vaecrb) *(st.dv.vedia) *(st.dv.veecrb)
@@ -45,53 +47,65 @@
 !                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
 !                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
 !                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
-!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnc.na) *(st.psnc.ne)
-!                *(st.psnc.ni) *(st.psnc.fna) *(st.psnc.kinrgy)
-!                (global)b2recyc[1:nstraid,0:nsdmax-1]
-!   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in mpg.intcellp:in
-!                geo.cvbb:in geo.cvhz:in geo.cvhx:in geo.cvqgam:in
-!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.fcpbshz:in geo.vxvol:in geo.vxonedbsq:in st_ext.am:in
-!                st_ext.za:in st_ext.za2:in st_ext.pt:in st_ext.na:in
-!                st_ext.ua:in st_ext.ta:in st_ext.fhi:in st_ext.fa:in
-!                st_ext.sne:in st_ext.she:in st_ext.shi:in st_ext.sch:in
-!                st_ext.sna:in st_ext.smo:in st.pl.na:in st.pl.ua:in
-!                st.pl.po:in st.pl.te:in st.pl.ti:in st.pl.tn:in
-!                st.pl.kt:in st.pl.zt:in st.co.csig_an:in st.co.chce:in
-!                st.co.chci:in st.co.cvla:in st.co.cdna:in st.co.cdpa:in
-!                st.co.vsaf_cl:in st.co.hce0:in st.co.hci0:in st.co.hcn0:in
-!                st.co.dpa0:in st.co.dna0:in st.dv.fch:in st.dv.fch_p:in
-!                st.dv.fchdia:in st.dv.fchin:in st.dv.fchvispar:in
-!                st.dv.fchvisper:in st.dv.fchvisq:in st.dv.fchinert:in
-!                st.dv.fchanml:in st.dv.fchviskt:in st.dv.fni:in
-!                st.dv.fna:in st.dv.fna_mdf:in st.dv.fna_52:in
+!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne)
+!                *(st.psnl.ni) *(st.psnl.kinrgy) *(st.psnc.na)
+!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
+!   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in-out
+!                mpg.intcellp:in geo.cvbb:in geo.cvx:in geo.cvy:in
+!                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in
+!                geo.vxx:in geo.vxy:in geo.vxvol:in geo.vxonedbsq:in
+!                st_ext.am:in st_ext.za:in st_ext.za2:in st_ext.pt:in
+!                st_ext.na:in st_ext.ua:in st_ext.ta:in st_ext.fhi:in
+!                st_ext.fa:in st_ext.sne:in st_ext.she:in st_ext.shi:in
+!                st_ext.sch:in st_ext.sna:in st_ext.smo:in st.pl.na:in
+!                st.pl.ua:in st.pl.po:in st.pl.te:in st.pl.ti:in
+!                st.pl.tn:in st.pl.kt:in st.pl.zt:in st.co.csig_an:in
+!                st.co.chce:in st.co.chci:in st.co.cvla:in st.co.cdna:in
+!                st.co.cdpa:in st.co.vsaf_cl:in st.co.hce0:in st.co.hci0:in
+!                st.co.hcn0:in st.co.dpa0:in st.co.dna0:in st.dv.fch:in
+!                st.dv.fch_p:in st.dv.fchdia:in st.dv.fchin:in
+!                st.dv.fchvispar:in st.dv.fchvisper:in st.dv.fchvisq:in
+!                st.dv.fchinert:in st.dv.fchanml:in st.dv.fchviskt:in
+!                st.dv.fni:in st.dv.fna:in st.dv.fna_mdf:in st.dv.fna_52:in
 !                st.dv.fna_32:in st.dv.fna_nodrift:in st.dv.fna_he:in
 !                st.dv.fnapsch:in st.dv.fna_fcor:in st.dv.fna_eir:in
 !                st.dv.fne:in st.dv.fne_eir:in st.dv.fhe:in st.dv.fhepsch:in
 !                st.dv.fhe_eir:in st.dv.fhi:in st.dv.fhipsch:in
-!                st.dv.fhi_eir:in st.dv.fhm:in st.dv.fkt:in st.dv.kinrgy:in
-!                st.dv.pcca:in st.dv.ne:in st.dv.ni:in-out st.dv.nn:in-out
-!                st.dv.ue:in st.dv.pa:in st.dv.vadia:in st.dv.wadia:in
-!                st.dv.vaecrb:in st.dv.vedia:in st.dv.wedia:in
-!                st.dv.veecrb:in st.dv.facdrift:in st.dv.fac_exb:in
-!                st.dv.fac_vis:in st.sr.sch:in st.sr.she:in st.sr.shi:in
-!                st.sr.sne:in st.sr.shn:in st.sr.skt:in st.sr.szt:in
-!                st.sr.smo:in st.sr.smq:in st.sr.sna:in st.srw.sch0:in
-!                st.srw.she0:in st.srw.shi0:in st.srw.sne0:in st.srw.shn0:in
-!                st.srw.skt0:in st.srw.szt0:in st.srw.smo0:in st.srw.smq0:in
-!                st.srw.sna0:in st.srw.b2stbm_sch:in st.srw.b2stbm_she:in
-!                st.srw.b2stbm_shi:in st.srw.b2stbm_sne:in st.srw.b2stbm_smo:in
-!                st.srw.b2stbm_sna:in st.rt.rlcx:in st.rt.rlqa:in
-!                st.rt.rlrd:in st.rt.rlbr:in st.rt.rlra:in st.rt.rlsa:in
-!                st.rt.rlza:in st.rt.rlz2:in st.rt.rlpt:in st.rt.rlpi:in
-!                st.rt.rlqr:in st.rt.rza:in st.rt.rz2:in st.rt.rpt:in
-!                st.rt.rpi:in st.rtw.rsa:in st.rtw.rra:in st.rtw.rqa:in
-!                st.rtw.rrd:in st.rtw.rbr:in st.rtw.rcx:in st.rtw.rqr:in
-!                st.psnl.na:in st.psnl.ne:in st.psnl.ni:in st.psnl.fna:in
-!                st.psnl.kinrgy:in st.psnc.na:in st.psnc.ne:in
-!                st.psnc.ni:in st.psnc.fna:in st.psnc.kinrgy:in
+!                st.dv.fhi_eir:in st.dv.fnn_inc:in st.dv.fhm:in
+!                st.dv.fkt:in st.dv.kin_frac_hyb:in st.dv.fluid_frac_hyb:in
+!                st.dv.kinrgy:in st.dv.pcca:in st.dv.ne:in st.dv.ni:in-out
+!                st.dv.nn:in-out st.dv.ue:in st.dv.pa:in st.dv.vadia:in
+!                st.dv.wadia:in st.dv.vaecrb:in st.dv.vedia:in
+!                st.dv.wedia:in st.dv.veecrb:in st.dv.facdrift:in
+!                st.dv.fac_exb:in st.dv.fac_vis:in st.sr.sch:in
+!                st.sr.she:in st.sr.shi:in st.sr.sne:in st.sr.shn:in
+!                st.sr.skt:in st.sr.szt:in st.sr.smo:in st.sr.smq:in
+!                st.sr.sna:in st.srw.sch0:in st.srw.she0:in st.srw.shi0:in
+!                st.srw.sne0:in st.srw.shn0:in st.srw.skt0:in st.srw.szt0:in
+!                st.srw.smo0:in st.srw.smq0:in st.srw.sna0:in st.srw.b2stbc_sch:in
+!                st.srw.b2stbc_she:in st.srw.b2stbc_shi:in st.srw.b2stbc_sne:in
+!                st.srw.b2stbc_shn:in st.srw.b2stbc_skt:in st.srw.b2stbc_szt:in
+!                st.srw.b2stbc_smo:in st.srw.b2stbc_sna:in st.srw.b2stbm_sch:in
+!                st.srw.b2stbm_she:in st.srw.b2stbm_shi:in st.srw.b2stbm_sne:in
+!                st.srw.b2stbm_smo:in st.srw.b2stbm_sna:in st.srw.b2stbr_sch:in
+!                st.srw.b2stbr_she:in st.srw.b2stbr_shi:in st.srw.b2stbr_sne:in
+!                st.srw.b2stbr_shn:in st.srw.b2stbr_skt:in st.srw.b2stbr_szt:in
+!                st.srw.b2stbr_smo:in st.srw.b2stbr_sna:in st.srw.rsana:in
+!                st.srw.rsahi:in st.srw.rsamo:in st.srw.rrana:in
+!                st.srw.rrahi:in st.srw.rramo:in st.srw.rcxna:in
+!                st.srw.rcxhi:in st.srw.rcxmo:in st.srw.rqahe:in
+!                st.srw.rqrad:in st.srw.rqbrm:in st.rt.rlcx:in
+!                st.rt.rlqa:in st.rt.rlrd:in st.rt.rlbr:in st.rt.rlra:in
+!                st.rt.rlsa:in st.rt.rlza:in st.rt.rlz2:in st.rt.rlpt:in
+!                st.rt.rlpi:in st.rt.rlqr:in st.rt.rza:in st.rt.rz2:in
+!                st.rt.rpt:in st.rt.rpi:in st.rtw.rsa:in st.rtw.rra:in
+!                st.rtw.rqa:in st.rtw.rrd:in st.rtw.rbr:in st.rtw.rcx:in
+!                st.rtw.rqr:in st.psnl.na:in st.psnl.ne:in st.psnl.ni:in
+!                st.psnl.fna:in st.psnl.kinrgy:in st.psnc.na:in
+!                st.psnc.ne:in st.psnc.ni:in st.psnc.fna:in st.psnc.kinrgy:in
 !
 !
 !
@@ -106,14 +120,12 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
-& , ismain, ismain0, dtim, switch, switchd, geo, geod, mpg, mpgd, st, &
-& std, st_ext, st_extd, wrong_flow, main_call, nbdirs)
+SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
+& ismain0, dtim, switch, switchd, geo, geod, mpg, mpgd, st, std, st_ext&
+& , st_extd, st_avg, wrong_flow, main_call, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_TALLIES_DIFFV
-!      use b2mod_sources
-!     &     , only: rcxna, rcxhi, rcxmo
   USE B2MOD_INPUT_PROFILE_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
 !      use b2mod_boundary_namelist
@@ -127,10 +139,11 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, ncall_b2sral
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : maxw_eff, nstraid, &
-& userfluxparm, userfluxparmd
+  USE B2MOD_NEUTRALS_NAMELIST_DIFFV
+!     & , only : maxw_eff, nstraid, userfluxparm
   USE B2MOD_RECYCLE_DIFFV, ONLY : int0r, int0l, int0ld, int3r, int3l, &
 & int3ld, int6r, int6l, int2r, int2l, int2ld, int5r, int5l, int1r, int1l&
 & , int1ld, int4r, int4l, int4ld, fna_mol
@@ -143,11 +156,12 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 & fb_rescale, fb_rescaled, dt_prev, feedback_namelist_used
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutlod, cutll, &
 & b2mod_math_initialised, small_r4_constant
-  USE B2MOD_EIRDIAG, ONLY : dab2, lkindi, lkindm, lkindp
-  USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, my_out_folder, &
-& ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, &
-& ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, &
-& ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, ncall_b2tiner
+  USE B2MOD_EIRDIAG, ONLY : dab2, lkindi, lkindm, lkindp, pfluxa, rfluxa&
+& , tfluxa
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, in_no_of_start_points, &
+& ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, ncall_b2stbc, &
+& ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, &
+& ntstep_b2wall, ncall_b2tfrn
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -157,20 +171,21 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 !.end b2sral
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx(0:&
-& nscxmax-1), ismain, ismain0
+  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain&
+& , ismain0
   REAL(kind=r8) :: dtim
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
-  TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
+  TYPE(MAPPING), INTENT(INOUT) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(INOUT) :: mpgd
 !   ..input/output arguments
   TYPE(B2STATE), INTENT(INOUT) :: st
   TYPE(B2STATE_DIFFV), INTENT(INOUT) :: std
   TYPE(B2STATEEXT), INTENT(INOUT) :: st_ext
   TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: st_extd
+  TYPE(B2AVERAGE), INTENT(IN) :: st_avg
 !xpb
   LOGICAL :: wrong_flow
 !dpc
@@ -214,10 +229,9 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
   EXTERNAL SFILL_DV, B2SAXPY_DV
 !   ..procedures
   REAL(kind=r8) :: smin, smax
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVPS_NODIFF, B2XPFE_NODIFF, &
-&     B2XPFI_NODIFF, B2SQEL_NODIFF, B2SQCX_NODIFF, B2STBC_NODIFF, &
-&     B2STBM_NODIFF, B2STBR_NODIFF, B2STEL_NODIFF, B2STCX_NODIFF, IPGETI&
-&     , B2XZDD_NODIFF
+  EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPFE_NODIFF, B2XPFI_NODIFF, &
+&     B2SQEL_NODIFF, B2SQCX_NODIFF, B2STBC_NODIFF, B2STBM_NODIFF, &
+&     B2STBR_NODIFF, B2STEL_NODIFF, B2STCX_NODIFF, IPGETI, B2XZDD_NODIFF
   EXTERNAL B2XPFE_DV, B2XPFI_DV, B2SQEL_DV, B2SQCX_DV, B2STBC_DV, &
 &     B2STBM_DV, B2STBR_DV, B2STEL_DV, B2STCX_DV, B2XZDD_DV
   INTRINSIC INT
@@ -234,10 +248,8 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
   REAL(r8) :: result20
   CHARACTER(len=11) :: arg11
   CHARACTER(len=10) :: arg12
-  REAL(r8), DIMENSION(nbdirsmax, SIZE(st_ext%za, 1), SIZE(st_ext%za, 2)) :: &
-& dummyzerodiffd
   INTEGER :: nd
-  REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd1
+  REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   INTEGER :: nbdirs
 !   ..initialisation
   DATA sources_inputfile /0/
@@ -248,7 +260,7 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 !   ..subprogram start-up calls
   CALL SUBINI('b2sral')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'invalid main plasma species index ismain')
@@ -268,9 +280,9 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 !   ..extensive tests on first few calls
   IF (ncall_b2sral .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, geo%fcvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
 !    ..test range of cvQgam, fcQgam
     result1 = smin(ncv, geo%cvqgam(1, 1), 1)
     result2 = smax(ncv, geo%cvqgam(1, 1), 1)
@@ -291,16 +303,11 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 !    ..test state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, st%pl, st%dv)
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
+    CALL B2XVSG(arg1, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
   END IF
 !   ..compute fne, fni
-  DO nd=1,nbdirsmax
-    dummyzerodiffd(nd, :, :) = 0.D0
-  END DO
-  CALL B2XPFE_DV(ncv, nfc, ns, st_ext%ns, geo, mpg, qe, st%rt%rza, std%&
-&          rt%rza, st_ext%za, dummyzerodiffd, st%dv%fna, std%dv%fna, &
-&          st_ext%fa, st%dv%fch, std%dv%fch, st%dv%fne, std%dv%fne, &
-&          nbdirs)
+  CALL B2XPFE_NODIFF(ncv, nfc, ns, st_ext%ns, geo, mpg, qe, st%rt%rza, &
+&              st_ext%za, st%dv%fna, st_ext%fa, st%dv%fch, st%dv%fne)
   CALL B2XPFI_NODIFF(nfc, ns, st%dv%fna, st%dv%fni)
 !xpb
 !
@@ -310,7 +317,8 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
     IF (switch%b2srdt_numerics_namelist .GE. 1) THEN
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
-&                                 cvonclosedsurface)
+&                                 cvonclosedsurface, switch%b2mndt_style&
+&                                )
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -331,7 +339,8 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
       WRITE(*, *) 'b2sral: catching up ...'
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
-&                                 cvonclosedsurface)
+&                                 cvonclosedsurface, switch%b2mndt_style&
+&                                )
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -367,7 +376,8 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
       END IF
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
-&                                 cvonclosedsurface)
+&                                 cvonclosedsurface, switch%b2mndt_style&
+&                                )
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF
@@ -392,15 +402,15 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
   CALL B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, st%pl&
 &           %na, std%pl%na, st%pl%ua, std%pl%ua, st%dv%facdrift, st%dv%&
 &           fchinert, std%dv%fchinert, nbdirs)
-  CALL B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, st%pl&
-&          , std%pl, st%dv, std%dv, st%co, std%co, st%rt, std%rt, st_ext&
-&          , st_extd, nbdirs)
+  CALL B2TFRN_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg, &
+&          mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std%co, st%rt, std&
+&          %rt, st_ext, st_extd, nbdirs)
 !wdk      endif                                                         !srv 14.07.10 }
 !
 ! ..compute source coefficients
 !   ..compute electron rate coefficients
-  CALL B2SQEL_DV(ncv, ns, ismain, switch, ev, st%pl%te, std%pl%te, st%rt&
-&          , std%rt, st%rtw, std%rtw, nbdirs)
+  CALL B2SQEL_DV(ncv, ns, ismain, switch, switchd, ev, st%pl%te, std%pl%&
+&          te, st%rt, std%rt, st%rtw, std%rtw, nbdirs)
 !   ..compute standard contributions due to boundaries
 !xpb
   wrong_flow = .false.
@@ -409,30 +419,11 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 !srv 28.07.08 03.11.17
     IF (ncall_b2sral .EQ. 0) WRITE(*, *) ' style=', switch%b2sral_style&
 &                            , ' b2stbc called'
-    std%psnl%na = 0.0_R8
-    std%psnl%ua = 0.0_R8
-    std%psnl%po = 0.0_R8
-    std%psnl%te = 0.0_R8
-    std%psnl%ti = 0.0_R8
-    std%psnl%tn = 0.0_R8
-    std%psnl%kt = 0.0_R8
-    std%psnl%zt = 0.0_R8
-    std%psnl%ne = 0.0_R8
-    std%psnl%ni = 0.0_R8
-    std%psnl%nn = 0.0_R8
-    std%psnl%fch = 0.0_R8
-    std%psnl%fna = 0.0_R8
-    std%psnl%fhi = 0.0_R8
-    std%psnl%fhe = 0.0_R8
-    std%psnl%fhn = 0.0_R8
-    std%psnl%fkt = 0.0_R8
-    std%psnl%fzt = 0.0_R8
-    std%psnl%kinrgy = 0.0_R8
     CALL B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd, &
 &            geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, &
-&            std%co, st%rt, std%rt, st%rtw, st_ext, st_extd, st%srw, std&
-&            %srw, st%psnc, std%psnc, st%psnl, std%psnl, &
-&            wrong_flow, main_call, nbdirs)
+&            std%co, st%rt, std%rt, st_ext, st_extd, st%srw, std%srw, st&
+&            %psnc, std%psnc, st%psnl, std%psnl, wrong_flow, main_call, &
+&            nbdirs)
     DO nd=1,nbdirs
 !   .. store contributions from BCs
       std%sr%sna(nd, :, :, :) = std%srw%sna0(nd, :, :, :)
@@ -463,14 +454,14 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 !   ..initialise smq to 0
   arg1 = ncv*4*ns
   DO nd=1,nbdirsmax
-    dummyzerodiffd1(nd) = 0.D0
+    dummyzerodiffd(nd) = 0.D0
   END DO
-  CALL SFILL_DV(arg1, 0.0_R8, dummyzerodiffd1, st%sr%smq, std%sr%smq, 1&
-&         , nbdirs)
+  CALL SFILL_DV(arg1, 0.0_R8, dummyzerodiffd, st%sr%smq, std%sr%smq, 1, &
+&         nbdirs)
 !   ..compute special contributions (boundaries and recycling)
-  CALL B2STBR_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
-&          ismain, dtim, switch, geo, geod, mpg, mpgd, st, std, st_ext, &
-&          st_extd, main_call, nbdirs)
+  CALL B2STBR_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim, &
+&          switch, switchd, geo, geod, mpg, mpgd, st, std, st_ext, &
+&          st_extd, st_avg, main_call, nbdirs)
 !   ..zero out contributions in dead cells
   DO is=0,ns-1
     CALL B2XZDD_DV(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), std%srw%&
@@ -518,8 +509,8 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 &                                , is=0,ns-1)
 !   ..compute more special contributions
   CALL B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod, mpg&
-&          , st%pl, std%pl, st%dv, std%dv, st%co, st%rt, st%rtw, st_ext&
-&          , st_extd, st%sr, st%srw, std%srw, main_call, nbdirs)
+&          , st%pl, std%pl, st%dv, std%dv, st_ext, st_extd, st%sr, st%&
+&          srw, std%srw, main_call, nbdirs)
 !   ..zero out contributions in dead cells and core boundary
   DO is=0,ns-1
     CALL B2XZDD_DV(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), std%srw%&
@@ -556,9 +547,9 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 !
 !   ..compute sources due to electron-atom processes
 !     (parallel momentum source must be pure friction)
-  CALL B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, st%&
-&          pl, std%pl, st%dv, std%dv, st%rt, std%rt, st%rtw, std%rtw, st&
-&          %srw, std%srw, nbdirs)
+  CALL B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, st%pl, &
+&          std%pl, st%dv, std%dv, st%rt, std%rt, st%rtw, std%rtw, st%srw&
+&          , std%srw, nbdirs)
 !srv 11.09.09 {
 !   ..zero out contributions in dead cells and core boundary
   DO is=0,ns-1
@@ -591,10 +582,10 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
   rcxnareg = 0.0_R8
   rcxhireg = 0.0_R8
   rcxmoreg = 0.0_R8
+  st%srw%rcxna = 0.0_R8
+  st%srw%rcxhi = 0.0_R8
+  st%srw%rcxmo = 0.0_R8
 ! IYS 06.11.2017
-!WG_TODO      rcxna=0.0_R8
-!WG_TODO      rcxhi=0.0_R8
-!WG_TODO      rcxmo=0.0_R8
 !
   IF (switch%iout_b2wdat .EQ. 4) THEN
 ! IYS 06.11.2017
@@ -623,13 +614,13 @@ SUBROUTINE B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
 &            rcx, nbdirs)
 !    ..compute sources due to charge exchange
 !      (parallel momentum source must be pure friction)
-    CALL B2STCX_DV(ncv, nfc, ns, iscx(k), ismain, switch, geo, geod, mpg&
-&            , st%pl%na, std%pl%na, st%pl%ua, std%pl%ua, st%pl%ti, std%&
-&            pl%ti, st%pl%tn, std%pl%tn, st%dv%ni, st%rtw%rcx, std%rtw%&
-&            rcx, st%srw%sna0, std%srw%sna0, st%srw%smq0, std%srw%smq0, &
-&            st%srw%shi0, std%srw%shi0, st%srw%shn0, std%srw%shn0, &
+    CALL B2STCX_DV(ncv, nfc, ns, iscx(k), ismain, switch, switchd, geo, &
+&            geod, mpg, st%pl%na, std%pl%na, st%pl%ua, std%pl%ua, st%pl%&
+&            ti, std%pl%ti, st%pl%tn, std%pl%tn, st%dv%ni, std%dv%ni, st&
+&            %rtw%rcx, std%rtw%rcx, st%srw%sna0, std%srw%sna0, st%srw%&
+&            smq0, std%srw%smq0, st%srw%shi0, std%srw%shi0, st%srw%shn0&
+&            , std%srw%shn0, st%srw%rcxna, st%srw%rcxmo, st%srw%rcxhi, &
 &            nbdirs)
-!srv 07.07.09
 !   ..zero out contributions in dead cells and core boundary
     DO is=0,ns-1
       CALL B2XZDD_DV(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is), std%srw&
@@ -775,14 +766,12 @@ END SUBROUTINE B2SRAL_DV
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
-& iscx, ismain, ismain0, dtim, switch, geo, mpg, st, st_ext, wrong_flow&
-& , main_call)
+SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
+& , ismain0, dtim, switch, geo, mpg, st, st_ext, st_avg, wrong_flow, &
+& main_call)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_TALLIES_DIFFV
-!      use b2mod_sources
-!     &     , only: rcxna, rcxhi, rcxmo
   USE B2MOD_INPUT_PROFILE_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
 !      use b2mod_boundary_namelist
@@ -796,10 +785,11 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, ncall_b2sral
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : maxw_eff, nstraid, &
-& userfluxparm
+  USE B2MOD_NEUTRALS_NAMELIST_DIFFV
+!     & , only : maxw_eff, nstraid, userfluxparm
   USE B2MOD_RECYCLE_DIFFV, ONLY : int0r, int0l, int3r, int3l, int6r, &
 & int6l, int2r, int2l, int5r, int5l, int1r, int1l, int4r, int4l, fna_mol
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV, ONLY : conpar, enepar, enipar, nbcd&
@@ -809,11 +799,12 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
 & dt_prev, feedback_namelist_used
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutll, b2mod_math_initialised, &
 & small_r4_constant
-  USE B2MOD_EIRDIAG, ONLY : dab2, lkindi, lkindm, lkindp
-  USE B2MOD_AD_DIFFV, ONLY : b2sral_elm_count, my_out_folder, &
-& ncall_b2sral, ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, &
-& ncall_b2stbc, ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, &
-& ncall_b2stel, ntstep_b2wall, ncall_b2tfrn, ncall_b2tiner
+  USE B2MOD_EIRDIAG, ONLY : dab2, lkindi, lkindm, lkindp, pfluxa, rfluxa&
+& , tfluxa
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, in_no_of_start_points, &
+& ncall_b2stbr_phys, ncall_b2stbr, ncall_b2stbc_phys, ncall_b2stbc, &
+& ncall_b2sqel, nsdmax, ncall_b2stcx, ncall_b2sqcx, ncall_b2stel, &
+& ntstep_b2wall, ncall_b2tfrn
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -822,15 +813,16 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
 !.end b2sral
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx(0:&
-& nscxmax-1), ismain, ismain0
+  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain&
+& , ismain0
   REAL(kind=r8) :: dtim
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING), INTENT(INOUT) :: mpg
 !   ..input/output arguments
   TYPE(B2STATE), INTENT(INOUT) :: st
   TYPE(B2STATEEXT), INTENT(INOUT) :: st_ext
+  TYPE(B2AVERAGE), INTENT(IN) :: st_avg
 !xpb
   LOGICAL :: wrong_flow
 !dpc
@@ -871,10 +863,9 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
 &     smax
 !   ..procedures
   REAL(kind=r8) :: smin, smax
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVPS_NODIFF, B2XPFE_NODIFF, &
-&     B2XPFI_NODIFF, B2SQEL_NODIFF, B2SQCX_NODIFF, B2STBC_NODIFF, &
-&     B2STBM_NODIFF, B2STBR_NODIFF, B2STEL_NODIFF, B2STCX_NODIFF, IPGETI&
-&     , B2XZDD_NODIFF
+  EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPFE_NODIFF, B2XPFI_NODIFF, &
+&     B2SQEL_NODIFF, B2SQCX_NODIFF, B2STBC_NODIFF, B2STBM_NODIFF, &
+&     B2STBR_NODIFF, B2STEL_NODIFF, B2STCX_NODIFF, IPGETI, B2XZDD_NODIFF
   INTRINSIC INT
   INTRINSIC MOD
   INTRINSIC TRIM
@@ -898,7 +889,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2sral')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'invalid main plasma species index ismain')
@@ -918,9 +909,9 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
 !   ..extensive tests on first few calls
   IF (ncall_b2sral .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, geo%fcvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
 !    ..test range of cvQgam, fcQgam
     result1 = smin(ncv, geo%cvqgam(1, 1), 1)
     result2 = smax(ncv, geo%cvqgam(1, 1), 1)
@@ -941,7 +932,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
 !    ..test state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, st%pl, st%dv)
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
+    CALL B2XVSG(arg1, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
   END IF
 !   ..compute fne, fni
   CALL B2XPFE_NODIFF(ncv, nfc, ns, st_ext%ns, geo, mpg, qe, st%rt%rza, &
@@ -955,7 +946,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
     IF (switch%b2srdt_numerics_namelist .GE. 1) THEN
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
-&                                 cvonclosedsurface)
+&                                 cvonclosedsurface, switch%b2mndt_style&
+&                                )
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -976,7 +968,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
       WRITE(*, *) 'b2sral: catching up ...'
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
-&                                 cvonclosedsurface)
+&                                 cvonclosedsurface, switch%b2mndt_style&
+&                                )
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -1012,7 +1005,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
       END IF
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
-&                                 cvonclosedsurface)
+&                                 cvonclosedsurface, switch%b2mndt_style&
+&                                )
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF
@@ -1051,8 +1045,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
     IF (ncall_b2sral .EQ. 0) WRITE(*, *) ' style=', switch%b2sral_style&
 &                            , ' b2stbc called'
     CALL B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo, &
-&                mpg, st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw&
-&                , st%psnc, st%psnl, wrong_flow, main_call)
+&                mpg, st%pl, st%dv, st%co, st%rt, st_ext, st%srw, st%&
+&                psnc, st%psnl, wrong_flow, main_call)
 !   .. store contributions from BCs
     st%sr%sna = st%srw%sna0
     st%sr%smo = st%srw%smo0
@@ -1075,8 +1069,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
   arg1 = ncv*4*ns
   CALL SFILL_NODIFF(arg1, 0.0_R8, st%sr%smq, 1)
 !   ..compute special contributions (boundaries and recycling)
-  CALL B2STBR_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx&
-&              , ismain, dtim, switch, geo, mpg, st, st_ext, main_call)
+  CALL B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
+&              dtim, switch, geo, mpg, st, st_ext, st_avg, main_call)
 !   ..zero out contributions in dead cells
   DO is=0,ns-1
     CALL B2XZDD_NODIFF(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is))
@@ -1116,8 +1110,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
 &                                , is=0,ns-1)
 !   ..compute more special contributions
   CALL B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, mpg, &
-&              st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%sr, st%srw&
-&              , main_call)
+&              st%pl, st%dv, st_ext, st%sr, st%srw, main_call)
 !   ..zero out contributions in dead cells and core boundary
   DO is=0,ns-1
     CALL B2XZDD_NODIFF(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is))
@@ -1146,8 +1139,8 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
 !
 !   ..compute sources due to electron-atom processes
 !     (parallel momentum source must be pure friction)
-  CALL B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, st%pl&
-&              , st%dv, st%rt, st%rtw, st%srw)
+  CALL B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, st%pl, st%&
+&              dv, st%rt, st%rtw, st%srw)
 !srv 11.09.09 {
 !   ..zero out contributions in dead cells and core boundary
   DO is=0,ns-1
@@ -1173,10 +1166,10 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
   rcxnareg = 0.0_R8
   rcxhireg = 0.0_R8
   rcxmoreg = 0.0_R8
+  st%srw%rcxna = 0.0_R8
+  st%srw%rcxhi = 0.0_R8
+  st%srw%rcxmo = 0.0_R8
 ! IYS 06.11.2017
-!WG_TODO      rcxna=0.0_R8
-!WG_TODO      rcxhi=0.0_R8
-!WG_TODO      rcxmo=0.0_R8
 !
   IF (switch%iout_b2wdat .EQ. 4) THEN
 ! IYS 06.11.2017
@@ -1203,8 +1196,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
     CALL B2STCX_NODIFF(ncv, nfc, ns, iscx(k), ismain, switch, geo, mpg, &
 &                st%pl%na, st%pl%ua, st%pl%ti, st%pl%tn, st%dv%ni, st%&
 &                rtw%rcx, st%srw%sna0, st%srw%smq0, st%srw%shi0, st%srw%&
-&                shn0)
-!srv 07.07.09
+&                shn0, st%srw%rcxna, st%srw%rcxmo, st%srw%rcxhi)
 !   ..zero out contributions in dead cells and core boundary
     DO is=0,ns-1
       CALL B2XZDD_NODIFF(ncv, 1, switch, mpg, st%srw%sna0(1, 0, is))

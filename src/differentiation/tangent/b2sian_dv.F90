@@ -27,8 +27,6 @@ SUBROUTINE B2SIAN_DV(ncv, nfc, isb, switch, geo, mpg, mpgd, fchanml, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2sian_smo0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : b2sian_eps
@@ -71,7 +69,7 @@ SUBROUTINE B2SIAN_DV(ncv, nfc, isb, switch, geo, mpg, mpgd, fchanml, &
   REAL(kind=r8) :: wrkd(nbdirsmax, ncv), wrkfd(nbdirsmax, nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC NINT
   CHARACTER(len=12) :: arg1
   INTEGER :: nd
@@ -89,7 +87,7 @@ SUBROUTINE B2SIAN_DV(ncv, nfc, isb, switch, geo, mpg, mpgd, fchanml, &
   CALL SUBINI('b2sian')
 !   ..set internal parameters on first call
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   smban = 0.0_R8
   IF (NINT(zn(isb)) .EQ. 1 .AND. NINT(zamax(isb)) .EQ. 1) THEN
 !   ..  compute smban
@@ -117,10 +115,6 @@ SUBROUTINE B2SIAN_DV(ncv, nfc, isb, switch, geo, mpg, mpgd, fchanml, &
       smband(nd, :, :) = 0.D0
     END DO
   END IF
-!djm Store linearised source for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2sian_smo0to3(-1:nx,-1:ny,0:3,isb)=smban
-!WG_TODO      endif
 !
   IF (switch%b2sian_iout .NE. 0) THEN
     WRITE(chns, '(i3.3)') isb
@@ -158,8 +152,6 @@ SUBROUTINE B2SIAN_NODIFF(ncv, nfc, isb, switch, geo, mpg, fchanml, smban&
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2sian_smo0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : b2sian_eps
@@ -196,7 +188,7 @@ SUBROUTINE B2SIAN_NODIFF(ncv, nfc, isb, switch, geo, mpg, fchanml, smban&
   REAL(kind=r8) :: wrk(ncv), wrkf(nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVFF_NODIFF, B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC NINT
   CHARACTER(len=12) :: arg1
 !   ..initialization
@@ -209,7 +201,7 @@ SUBROUTINE B2SIAN_NODIFF(ncv, nfc, isb, switch, geo, mpg, fchanml, smban&
   CALL SUBINI('b2sian')
 !   ..set internal parameters on first call
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   smban = 0.0_R8
   IF (NINT(zn(isb)) .EQ. 1 .AND. NINT(zamax(isb)) .EQ. 1) THEN
 !   ..  compute smban
@@ -220,10 +212,6 @@ SUBROUTINE B2SIAN_NODIFF(ncv, nfc, isb, switch, geo, mpg, fchanml, smban&
 &       geo%cvbb(icv, 0)/geo%cvbb(icv, 2)*geo%cvbb(icv, 3)*wrk(icv))
     END DO
   END IF
-!djm Store linearised source for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2sian_smo0to3(-1:nx,-1:ny,0:3,isb)=smban
-!WG_TODO      endif
 !
   IF (switch%b2sian_iout .NE. 0) THEN
     WRITE(chns, '(i3.3)') isb

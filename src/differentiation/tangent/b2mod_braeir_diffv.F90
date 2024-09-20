@@ -32,13 +32,15 @@ MODULE B2MOD_BRAEIR_DIFFV
   REAL(kind=r8), ALLOCATABLE, SAVE, PUBLIC :: pux(:), puy(:), pvx(:), &
 & pvy(:)
 !
+  REAL(kind=r8), SAVE, PUBLIC :: l_macro_b25
+!
   TYPE TARGETDATA
       INTEGER :: ntrgdat
       INTEGER, ALLOCATABLE :: faces(:)
       REAL(kind=r8), ALLOCATABLE :: fcori(:), flength(:)
       REAL(kind=r8), ALLOCATABLE :: tet(:), tit(:), tnt(:), fe(:), fsh(:&
 &     ), flux(:, :), dnit(:, :), vxt(:, :), vyt(:, :), vzt(:, :), fi(:, &
-&     :), fel(:, :), vpart(:, :), mach(:, :), usr(:, :)
+&     :), fel(:, :), vpart(:, :), mach(:, :), usr(:, :), zit(:, :)
   END TYPE TARGETDATA
 !
   TYPE(TARGETDATA), ALLOCATABLE :: trgt(:)
@@ -157,6 +159,7 @@ CONTAINS
         ALLOCATE(trgt(ist)%vpart(ndat, nfl))
         ALLOCATE(trgt(ist)%mach(ndat, nfl))
         ALLOCATE(trgt(ist)%usr(ndat, nfl))
+        ALLOCATE(trgt(ist)%zit(ndat, nfl))
       END IF
       trgt(ist)%faces = 0
       trgt(ist)%fcori = 0.0_R8
@@ -176,6 +179,7 @@ CONTAINS
       trgt(ist)%vpart = 0.0_R8
       trgt(ist)%mach = 0.0_R8
       trgt(ist)%usr = 0.0_R8
+      trgt(ist)%zit = 0.0_R8
     END IF
 !
     RETURN
@@ -247,6 +251,7 @@ CONTAINS
           DEALLOCATE(trgt(i)%vpart)
           DEALLOCATE(trgt(i)%mach)
           DEALLOCATE(trgt(i)%usr)
+          DEALLOCATE(trgt(i)%zit)
         END IF
       END DO
       DEALLOCATE(trgt)

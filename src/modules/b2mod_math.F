@@ -120,6 +120,7 @@
 
 *     (trimg will be used to trim the logarithmic gradients to avoid
 *     some pathetic behaviour near the underflow limit.)
+! $AD NOCHECKPOINT
       function trimg(t0,t1,tt)
       implicit none
       real(kind=R8) :: trimg, t0, t1, tt

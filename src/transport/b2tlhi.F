@@ -22,7 +22,7 @@
      *   t0, t1, cflmi_loc(nFc), nif(nFc)
 *   ..procedures
       intrinsic max, sqrt
-      external xertst, b2xvfx
+      external xertst
 *   ..initialisation
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls

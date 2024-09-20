@@ -40,12 +40,13 @@ SED =
 LINK_MOD = 
 
 FC = ifort
+FN = ${FC}
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
-DEFINES += -D_OPENMP
+DPFINES += -D_OPENMP
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 # OpenMP compiler options for intel: -openmp is enough
@@ -55,16 +56,16 @@ ifdef SOLPS_DEBUG
 else
   FCOPTS = -O3
 endif
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-  FCOPTS  += -qopenmp
-  LDOPTS  += -qopenmp
-else
-  FCOPTS  += -openmp
-  LDOPTS  += -openmp
-endif
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
   FCOPTS  += -vec_report0
   LDOPTS  += -i_dynamic
+endif
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+  FPOPTS  += -qopenmp
+  LPOPTS  += -qopenmp
+else
+  FPOPTS  += -openmp
+  LPOPTS  += -openmp
 endif
 
 DBLFC=${FC}
@@ -95,6 +96,7 @@ ifdef PERFMON
 endif
 
 LD = ${FC}
+LN = ${FN}
 
 
 #!!!Local Variables:

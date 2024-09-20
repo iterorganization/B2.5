@@ -11671,7 +11671,7 @@ cxpb as they no longer necessarily point to the same species
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
+        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg, switch)
         write(99,'(a5)') '&OPTIMIZATION'
         if (ncf.gt.0) then
           write(99,'(1x,a,i3,a)') 'NCF=',ncf,','
@@ -11780,7 +11780,7 @@ cxpb as they no longer necessarily point to the same species
         if(.not.allocated(iz))
      >   call alloc_b2mod_diag(nCv,nFc,ns,nnreg(0),nstrat,natm,switch)
         if(.not.user_initialised)
-     >   call alloc_b2mod_user(geo,mpg,ns,nnlimi,nnmoli)
+     >   call alloc_b2mod_user(geo,mpg,ns,nnlimi,nnmoli,switch)
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
