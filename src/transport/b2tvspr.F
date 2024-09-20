@@ -40,7 +40,7 @@
       real (kind=R8) :: weight(nFc,2)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx
+      external b2xvsg
 *-----------------------------------------------------------------------
 *.computation
 

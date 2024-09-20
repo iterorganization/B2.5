@@ -13,7 +13,7 @@
 !
 !
 SUBROUTINE B2TLHI_NODIFF(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nirm&
-& , ni_ext, ti, tn, chvimx)
+& , ni_ext, ti, chvimx)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -27,16 +27,16 @@ SUBROUTINE B2TLHI_NODIFF(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nirm&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: mp, cflmi, ni(ncv, 0:1), nirm(ncv), ni_ext(ncv, 0:1)&
-& , ti(ncv), tn(ncv), chvimx(nfc)
+& , ti(ncv), chvimx(nfc)
 !     ------------------------------------------------------------------
 !     B2TLHI computes the all atom heat transport flux limit velocity.
 !     ------------------------------------------------------------------
 !   ..local variables
-  INTEGER :: icv, ifc
-  REAL(kind=r8) :: t0, t1
+  INTEGER :: ifc
+  REAL(kind=r8) :: t0, t1, cflmi_loc(nfc), nif(nfc)
 !   ..procedures
   INTRINSIC MAX, SQRT
-  EXTERNAL XERTST, B2XVFX_NODIFF
+  EXTERNAL XERTST
   INTRINSIC ABS
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
@@ -54,6 +54,26 @@ SUBROUTINE B2TLHI_NODIFF(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nirm&
 !   ..test mp, cflmi
   CALL XERTST(0.0_R8 .LT. mp, 'faulty argument mp')
   CALL XERTST(0.0_R8 .LE. cflmi, 'faulty argument cflmi')
+! Init local flux limit to constant value
+!
+! Enhanced flux limit for low-density regions
+  cflmi_loc = cflmi
+!
+  IF (switch%b2tlhi_far_sol .EQ. 1) THEN
+! Attempt enhanced flux limit for low-density regions
+    CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, ni(:, 0), nif)
+    DO ifc=1,nfc
+      IF (nif(ifc) .LE. switch%b2tlhi_ni_min) THEN
+! Set at min value
+        cflmi_loc(ifc) = switch%b2tlhi_cflmi_min
+      ELSE IF (nif(ifc) .LT. switch%b2tlhi_ni_max) THEN
+! Interpolate for smooth transition
+        cflmi_loc(ifc) = (cflmi*(nif(ifc)-switch%b2tlhi_ni_min)+switch%&
+&         b2tlhi_cflmi_min*(switch%b2tlhi_ni_max-nif(ifc)))/(switch%&
+&         b2tlhi_ni_max-switch%b2tlhi_ni_min)
+      END IF
+    END DO
+  END IF
 !
 !   ..compute flux limit velocity
   IF (switch%b2tqca_model .EQ. 1) THEN
@@ -72,9 +92,10 @@ SUBROUTINE B2TLHI_NODIFF(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nirm&
 !srv 11.01.13
       arg1 = t0/mp
       result1 = SQRT(arg1)
-      chvimx(ifc) = cflmi*abs0*result1*(nirm(mpg%fccv(ifc, 1))+nirm(mpg%&
-&       fccv(ifc, 2)))/(ni(mpg%fccv(ifc, 1), 0)+ni_ext(mpg%fccv(ifc, 1)&
-&       , 0)+ni(mpg%fccv(ifc, 2), 0)+ni_ext(mpg%fccv(ifc, 2), 0))
+      chvimx(ifc) = cflmi_loc(ifc)*abs0*result1*(nirm(mpg%fccv(ifc, 1))+&
+&       nirm(mpg%fccv(ifc, 2)))/(ni(mpg%fccv(ifc, 1), 0)+ni_ext(mpg%fccv&
+&       (ifc, 1), 0)+ni(mpg%fccv(ifc, 2), 0)+ni_ext(mpg%fccv(ifc, 2), 0)&
+&       )
     END DO
   ELSE IF (switch%b2tqca_model .EQ. 2) THEN
 ! SOLPS4.0 treatment
@@ -101,10 +122,10 @@ SUBROUTINE B2TLHI_NODIFF(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nirm&
       result3 = PIT(mpg%fccv(ifc, 1))
       arg2 = t1/mp
       result4 = SQRT(arg2)
-      chvimx(ifc) = cflmi*geo%fcs(ifc)*abs1*(nirm(mpg%fccv(ifc, 2))*&
-&       result1*result2*t0+nirm(mpg%fccv(ifc, 1))*result3*result4*t1)/((&
-&       ni(mpg%fccv(ifc, 1), 0)+ni_ext(mpg%fccv(ifc, 1), 0)+ni(mpg%fccv(&
-&       ifc, 2), 0)+ni_ext(mpg%fccv(ifc, 2), 0))*max1)
+      chvimx(ifc) = cflmi_loc(ifc)*geo%fcs(ifc)*abs1*(nirm(mpg%fccv(ifc&
+&       , 2))*result1*result2*t0+nirm(mpg%fccv(ifc, 1))*result3*result4*&
+&       t1)/((ni(mpg%fccv(ifc, 1), 0)+ni_ext(mpg%fccv(ifc, 1), 0)+ni(mpg&
+&       %fccv(ifc, 2), 0)+ni_ext(mpg%fccv(ifc, 2), 0))*max1)
     END DO
   END IF
   CALL SUBEND()
@@ -147,8 +168,8 @@ END SUBROUTINE B2TLHI_NODIFF
 !
 !
 !
-SUBROUTINE B2TLHI_DV(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nid, &
-& nirm, nirmd, ni_ext, ti, tid, tn, chvimx, chvimxd, nbdirs)
+SUBROUTINE B2TLHI_DV(ncv, nfc, mp, cflmi, switch, switchd, geo, geod, &
+& mpg, ni, nid, nirm, nirmd, ni_ext, ti, tid, chvimx, chvimxd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -160,22 +181,25 @@ SUBROUTINE B2TLHI_DV(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nid, &
 !
   INTEGER :: ncv, nfc
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
+  TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: mp, cflmi, ni(ncv, 0:1), nirm(ncv), ni_ext(ncv, 0:1)&
-& , ti(ncv), tn(ncv), chvimx(nfc)
+& , ti(ncv), chvimx(nfc)
   REAL(kind=r8) :: nid(nbdirsmax, ncv, 0:1), nirmd(nbdirsmax, ncv), tid(&
 & nbdirsmax, ncv), chvimxd(nbdirsmax, nfc)
 !     ------------------------------------------------------------------
 !     B2TLHI computes the all atom heat transport flux limit velocity.
 !     ------------------------------------------------------------------
 !   ..local variables
-  INTEGER :: icv, ifc
-  REAL(kind=r8) :: t0, t1
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: t0d, t1d
+  INTEGER :: ifc
+  REAL(kind=r8) :: t0, t1, cflmi_loc(nfc), nif(nfc)
+  REAL(kind=r8) :: t0d(nbdirsmax), t1d(nbdirsmax), cflmi_locd(nbdirsmax&
+& , nfc), nifd(nbdirsmax, nfc)
 !   ..procedures
   INTRINSIC MAX, SQRT
-  EXTERNAL XERTST, B2XVFX_NODIFF
+  EXTERNAL XERTST
   INTRINSIC ABS
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
@@ -196,6 +220,7 @@ SUBROUTINE B2TLHI_DV(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nid, &
   REAL(kind=r8) :: temp
   REAL(kind=r8) :: temp0
   REAL(kind=r8) :: temp1
+  REAL(kind=r8) :: temp2
   INTEGER :: nbdirs
 !   ..initialisation
 !     ------------------------------------------------------------------
@@ -204,6 +229,44 @@ SUBROUTINE B2TLHI_DV(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nid, &
 !   ..test mp, cflmi
   CALL XERTST(0.0_R8 .LT. mp, 'faulty argument mp')
   CALL XERTST(0.0_R8 .LE. cflmi, 'faulty argument cflmi')
+! Init local flux limit to constant value
+!
+! Enhanced flux limit for low-density regions
+  cflmi_loc = cflmi
+!
+  IF (switch%b2tlhi_far_sol .EQ. 1) THEN
+! Attempt enhanced flux limit for low-density regions
+    DO nd=1,nbdirsmax
+      nifd(nd, :) = 0.D0
+    END DO
+    CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, ni(:, 0), nid(:, :, 0&
+&             ), nif, nifd, nbdirs)
+    DO nd=1,nbdirsmax
+      cflmi_locd(nd, :) = 0.D0
+    END DO
+    DO ifc=1,nfc
+      IF (nif(ifc) .LE. switch%b2tlhi_ni_min) THEN
+! Set at min value
+        DO nd=1,nbdirs
+          cflmi_locd(nd, ifc) = 0.D0
+        END DO
+        cflmi_loc(ifc) = switch%b2tlhi_cflmi_min
+      ELSE IF (nif(ifc) .LT. switch%b2tlhi_ni_max) THEN
+! Interpolate for smooth transition
+        DO nd=1,nbdirs
+          cflmi_locd(nd, ifc) = (cflmi-switch%b2tlhi_cflmi_min)*nifd(nd&
+&           , ifc)/(switch%b2tlhi_ni_max-switch%b2tlhi_ni_min)
+        END DO
+        cflmi_loc(ifc) = (cflmi*(nif(ifc)-switch%b2tlhi_ni_min)+switch%&
+&         b2tlhi_cflmi_min*(switch%b2tlhi_ni_max-nif(ifc)))/(switch%&
+&         b2tlhi_ni_max-switch%b2tlhi_ni_min)
+      END IF
+    END DO
+  ELSE
+    DO nd=1,nbdirsmax
+      cflmi_locd(nd, :) = 0.D0
+    END DO
+  END IF
 !
 !   ..compute flux limit velocity
   IF (switch%b2tqca_model .EQ. 1) THEN
@@ -240,13 +303,14 @@ SUBROUTINE B2TLHI_DV(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nid, &
       temp = ni_ext(mpg%fccv(ifc, 1), 0) + ni_ext(mpg%fccv(ifc, 2), 0) +&
 &       ni(mpg%fccv(ifc, 1), 0) + ni(mpg%fccv(ifc, 2), 0)
       temp0 = nirm(mpg%fccv(ifc, 1)) + nirm(mpg%fccv(ifc, 2))
-      temp1 = result1*temp0/temp
+      temp1 = cflmi_loc(ifc)*result1*temp0/temp
       DO nd=1,nbdirs
-        chvimxd(nd, ifc) = cflmi*abs0*(temp0*result1d(nd)+result1*(nirmd&
-&         (nd, mpg%fccv(ifc, 1))+nirmd(nd, mpg%fccv(ifc, 2)))-temp1*(nid&
-&         (nd, mpg%fccv(ifc, 1), 0)+nid(nd, mpg%fccv(ifc, 2), 0)))/temp
+        chvimxd(nd, ifc) = abs0*(temp0*(result1*cflmi_locd(nd, ifc)+&
+&         cflmi_loc(ifc)*result1d(nd))+cflmi_loc(ifc)*result1*(nirmd(nd&
+&         , mpg%fccv(ifc, 1))+nirmd(nd, mpg%fccv(ifc, 2)))-temp1*(nid(nd&
+&         , mpg%fccv(ifc, 1), 0)+nid(nd, mpg%fccv(ifc, 2), 0)))/temp
       END DO
-      chvimx(ifc) = cflmi*abs0*temp1
+      chvimx(ifc) = abs0*temp1
     END DO
   ELSE IF (switch%b2tqca_model .EQ. 2) THEN
 ! SOLPS4.0 treatment
@@ -301,20 +365,22 @@ SUBROUTINE B2TLHI_DV(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nid, &
         END IF
       END DO
       result4 = temp1
-      temp1 = geo%fcs(ifc)*cflmi*abs1
+      temp1 = geo%fcs(ifc)*abs1
       temp0 = ni_ext(mpg%fccv(ifc, 1), 0) + ni_ext(mpg%fccv(ifc, 2), 0) &
 &       + ni(mpg%fccv(ifc, 1), 0) + ni(mpg%fccv(ifc, 2), 0)
-      temp = (result1*nirm(mpg%fccv(ifc, 2))*result2*t0+result3*nirm(mpg&
-&       %fccv(ifc, 1))*result4*t1)/(temp0*max1)
+      temp = cflmi_loc(ifc)/(temp0*max1)
+      temp2 = result1*nirm(mpg%fccv(ifc, 2))*result2*t0 + result3*nirm(&
+&       mpg%fccv(ifc, 1))*result4*t1
       DO nd=1,nbdirs
-        chvimxd(nd, ifc) = temp1*(result1*(result2*t0*nirmd(nd, mpg%fccv&
-&         (ifc, 2))+nirm(mpg%fccv(ifc, 2))*(t0*result2d(nd)+result2*t0d(&
-&         nd)))+result3*(result4*t1*nirmd(nd, mpg%fccv(ifc, 1))+nirm(mpg&
-&         %fccv(ifc, 1))*(t1*result4d(nd)+result4*t1d(nd)))-temp*(max1*(&
-&         nid(nd, mpg%fccv(ifc, 1), 0)+nid(nd, mpg%fccv(ifc, 2), 0))+&
-&         temp0*max1d(nd)))/(temp0*max1)
+        chvimxd(nd, ifc) = temp1*(temp*(result1*(result2*t0*nirmd(nd, &
+&         mpg%fccv(ifc, 2))+nirm(mpg%fccv(ifc, 2))*(t0*result2d(nd)+&
+&         result2*t0d(nd)))+result3*(result4*t1*nirmd(nd, mpg%fccv(ifc, &
+&         1))+nirm(mpg%fccv(ifc, 1))*(t1*result4d(nd)+result4*t1d(nd))))&
+&         +temp2*(cflmi_locd(nd, ifc)-temp*(max1*(nid(nd, mpg%fccv(ifc, &
+&         1), 0)+nid(nd, mpg%fccv(ifc, 2), 0))+temp0*max1d(nd)))/(temp0*&
+&         max1))
       END DO
-      chvimx(ifc) = temp1*temp
+      chvimx(ifc) = temp1*(temp2*temp)
     END DO
   END IF
   CALL SUBEND()

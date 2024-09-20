@@ -76,39 +76,9 @@ CONTAINS
 
 !
   SUBROUTINE READ_B2MOD_NEUTR_SRC_SCALING(nread, ns, nstra)
+    USE B2MOD_DIMENSIONS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
     INTEGER :: nread, ns, nstra, idum(0:9)
     EXTERNAL CFRUIN, CFRURE
     INTRINSIC SIZE
@@ -118,7 +88,7 @@ CONTAINS
       CALL CFRUIN(nread, 1, idum, 'nstra')
       nstra = idum(0)
     ELSE
-      nstra = (5*4/2+2)*6 + 1
+      nstra = def_nstra
     END IF
     CALL ALLOC_B2MOD_NEUTR_SRC_SCALING(ns, nstra)
     IF (b2fplasma_version .GE. '01.001.023' .AND. nstra .GT. 0) THEN

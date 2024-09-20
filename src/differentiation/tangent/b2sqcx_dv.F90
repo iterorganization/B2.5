@@ -82,7 +82,7 @@ SUBROUTINE B2SQCX_DV(ncv, ns, ev, switch, amh0, th0, th0d, thn0, thn0d, &
 !   ..procedures
   INTRINSIC LOG
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: arg1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
   REAL(kind=r8) :: result1
@@ -98,7 +98,7 @@ SUBROUTINE B2SQCX_DV(ncv, ns, ev, switch, amh0, th0, th0d, thn0, thn0d, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2sqcx')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test ev, amh0
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')
@@ -107,7 +107,7 @@ SUBROUTINE B2SQCX_DV(ncv, ns, ev, switch, amh0, th0, th0d, thn0, thn0d, &
 !   ..extensive tests on first few calls
   IF (ncall_b2sqcx .LT. 3) THEN
 !    ..test th0
-    CALL B2XVSG_NODIFF(ncv, th0, 1, 'th0', '.gt.')
+    CALL B2XVSG(ncv, th0, 1, 'th0', '.gt.')
     DO nd=1,nbdirsmax
       wrk0d(nd, :) = 0.D0
     END DO
@@ -232,7 +232,7 @@ SUBROUTINE B2SQCX_NODIFF(ncv, ns, ev, switch, amh0, th0, thn0, rlcx0, &
 !   ..procedures
   INTRINSIC LOG
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: arg1
   REAL(kind=r8) :: result1
 !   ..initialisation
@@ -244,7 +244,7 @@ SUBROUTINE B2SQCX_NODIFF(ncv, ns, ev, switch, amh0, th0, thn0, rlcx0, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2sqcx')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test ev, amh0
   CALL XERTST(0.0_R8 .LT. ev, 'faulty argument ev')
@@ -253,7 +253,7 @@ SUBROUTINE B2SQCX_NODIFF(ncv, ns, ev, switch, amh0, th0, thn0, rlcx0, &
 !   ..extensive tests on first few calls
   IF (ncall_b2sqcx .LT. 3) THEN
 !    ..test th0
-    CALL B2XVSG_NODIFF(ncv, th0, 1, 'th0', '.gt.')
+    CALL B2XVSG(ncv, th0, 1, 'th0', '.gt.')
   END IF
 !   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
   DO icv=1,ncv

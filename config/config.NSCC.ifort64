@@ -19,88 +19,33 @@ CPP      = /lib/cpp -traditional
 
 #MPI_FC ?= mpiifort
 MPI_FC  ?= mpif90
-ifdef USE_MPI
-FC       = ${MPI_FC}
-else
-ifdef USE_IMPGYRO
-FC       = ${MPI_FC}
-else
-FC      ?= ifort
-endif
-endif
-
-ifeq (${FC},mpif90)
-OBJDEST  = -J${OBJDIR} -o ${OBJDIR}/$*.o
-OBNDEST  = -J${OBNDIR} -o ${OBNDIR}/$*.o
-INCMOD   = -B
-GFORTRAN_MAJOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 1 )
-GFORTRAN_MINOR_VERSION = $(shell ${FC} --version | head -1 | awk '{printf "%s ",$$NF,"\n"}' | cut -d '.' -f 2 )
-DEFINES += -DGFORTRAN -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION} -DNOQUAD -DNO_IEEE
-FCOPTS  += ${MPI_CPP}
-LDOPTS  += ${LD_MPI}
-ifdef USE_OPENMP
-FCOPTS  += -fopenmp
-LDOPTS  += -fopenmp
-endif
-else
-INCMOD   = -I
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
-ifdef SOLPS_DEBUG
-FCOPTS   = -g -C -debug all -traceback -check all
-else
-FCOPTS   = -O2 -xHost
-endif
-ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS  += -qopenmp
-LDOPTS  += -qopenmp
-else
-FCOPTS  += -openmp
-LDOPTS  += -openmp
-endif
-endif
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
-FCOPTS  += -vec_report0
-LDOPTS  += -i_dynamic
-endif
-endif
-
-ifeq (${FC},mpif90)
+ifdef SOLPS_MPI
+ FC      = ${MPI_FC}
+ COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
+ ifeq (${COMPILER_TYPE},GNU)
   COMPILER_REDEF = yes
-  ifdef IMAS_VERSION
-    ifndef SOLPS_CPP
-      ifdef AL_VERSION
-        AL_MAJOR_VERSION ?= $(shell echo ${AL_VERSION} | cut -d '.' -f1 )
-        AL_MINOR_VERSION ?= $(shell echo ${AL_VERSION} | cut -d '.' -f2 )
-        AL_MICRO_VERSION ?= $(shell echo ${AL_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-      else
-        AL_MAJOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f1 )
-        AL_MINOR_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f2 )
-        AL_MICRO_VERSION ?= $(shell echo ${UAL_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-      endif
-      IMAS_MAJOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f1 )
-      IMAS_MINOR_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f2 )
-      IMAS_MICRO_VERSION ?= $(shell echo ${IMAS_VERSION} | cut -d '.' -f3 )
-      GGD_MAJOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f1 )
-      GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
-      GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-    endif
-    ifeq ($(shell test ${AL_MAJOR_VERSION} -lt 5; echo $$?),0)
-      IMAS_PKG_LIST += imas-gfortran
-    endif
-    ifeq ($(shell test ${IMAS_MAJOR_VERSION} -lt 4; echo $$?),0)
-      ifeq ($(shell test ${IMAS_MINOR_VERSION} -lt 17; echo $$?),0)
-        ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 12; echo $$?),0)
-          ifeq ($(shell test ${GGD_MAJOR_VERSION} -gt 0; echo $$?),0)
-            LD_GGD := -lggd-gfortran
-          endif
-        endif
-      endif
-    endif
+ endif
+else
+ ifdef USE_IMPGYRO
+  FC     = ${MPI_FC}
+  COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
+  ifeq (${COMPILER_TYPE},GNU)
+   COMPILER_REDEF = yes
   endif
+ endif
 endif
+
+ifdef COMPILER_REDEF
+ FPOPTS  += ${MPI_CPP}
+ LPOPTS  += ${LD_MPI}
+else
+ ifdef SOLPS_DEBUG
+  FCOPTS = -g -C -debug all -traceback -check all
+ else
+  FCOPTS = -O2 -xHost
+ endif
+endif
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

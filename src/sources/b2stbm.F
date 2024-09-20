@@ -9,7 +9,9 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_external
+#ifdef USE_IMPGYRO
       use b2mod_impgyro
+#endif
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
 #ifdef WG_RM
@@ -17,10 +19,12 @@
      1 , only : b2stbm_sna,b2stbm_smo,b2stbm_she,b2stbm_shi,b2stbm_sch,
      2          b2stbm_sne
 #endif
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      1 , only : balance_netcdf
      2        , b2stbm_sna0to1, b2stbm_smo0to3, b2stbm_she0to3,
      3          b2stbm_shi0to3
+#endif
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
@@ -463,6 +467,7 @@ cxpb
       srw%b2stbm_shi(:)=srw%shi0(:,0)+srw%shi0(:,1)*pl%ti(:)
       srw%b2stbm_sch(:)=srw%sch0(:,0)+srw%sch0(:,1)*pl%po(:)
 
+#ifndef FIXED_POINT
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2stbm_sna0to1 = srw%sna0
@@ -470,6 +475,7 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stbm_she0to3 = srw%she0
         b2stbm_shi0to3 = srw%shi0
       endif
+#endif
 
 * ..return
   999 if (main_call.or.ncall.eq.0) ncall = ncall+1

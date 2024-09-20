@@ -198,26 +198,30 @@ c
 ! if the file is found
 
       character(len=*) filename
+      character(len=256) filenamecat
       logical exist
 
       inquire(file=filename, exist=exist)
       if(exist) return
 
-      inquire(file='../'//filename, exist=exist)
+      filenamecat='../'//trim(filename)
+      inquire(file=trim(filenamecat), exist=exist)
       if(exist) then
-         filename='../'//trim(filename)
+         filename=trim(filenamecat)
          return
       endif
 
-      inquire(file='../baserun/'//filename, exist=exist)
+      filenamecat='../baserun/'//trim(filename)
+      inquire(file=trim(filenamecat), exist=exist)
       if(exist) then
-         filename='../baserun/'//trim(filename)
+         filename=trim(filenamecat)
          return
       endif
 
-      inquire(file='../../baserun/'//filename, exist=exist)
+      filenamecat='../../baserun/'//trim(filename)
+      inquire(file=trim(filenamecat), exist=exist)
       if(exist) then
-         filename='../../baserun/'//trim(filename)
+         filename=trim(filenamecat)
          return
       endif
 

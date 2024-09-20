@@ -71,7 +71,7 @@ c      integer, save :: iadd_9 = 1                                     !srv 13.1
 *   ..procedures
       intrinsic abs
       external xertst, ipgetr, sfill
-      external b2xvsg, b2xvff, b2xvfx                                 !srv 02.01.07
+      external b2xvsg                                                  !srv 02.01.07
 
 *-----------------------------------------------------------------------
 *.computation

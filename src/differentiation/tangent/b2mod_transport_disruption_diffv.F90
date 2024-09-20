@@ -22,18 +22,19 @@ MODULE B2MOD_TRANSPORT_DISRUPTION_DIFFV
 !
   INTEGER, SAVE :: quenching
   REAL(kind=r8), SAVE :: time_quenching
-  REAL(kind=r8), ALLOCATABLE, SAVE :: rho_(:), f_quench(:, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: rho_(:), f_quench(:)
 
 CONTAINS
 !
 !
-  SUBROUTINE ALLOC_B2MOD_TRANSPORT_DISRUPTION(nxd, nyd)
+  SUBROUTINE ALLOC_B2MOD_TRANSPORT_DISRUPTION(mpg)
+    USE B2US_MAP_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: nxd, nyd
+    TYPE(MAPPING), INTENT(IN) :: mpg
 !
-    ALLOCATE(rho_(-1:nyd))
-    ALLOCATE(f_quench(-1:nxd, -1:nyd))
+    ALLOCATE(rho_(mpg%nfs))
+    ALLOCATE(f_quench(mpg%ncv))
   END SUBROUTINE ALLOC_B2MOD_TRANSPORT_DISRUPTION
 
 !

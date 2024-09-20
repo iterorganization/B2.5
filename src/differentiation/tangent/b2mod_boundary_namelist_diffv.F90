@@ -14,12 +14,13 @@
 !
 MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_VERSION_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_GEO_DIFFV
   USE CARRE_CONSTANTS
   USE B2MOD_AD_DIFFV, ONLY : nsdmax
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -29,39 +30,8 @@ MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV
 !*  lcbs          : boundary segments representing the core boundary in B2
 !*  ncbs          : number of these boundary segments
 !ank }
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
   INTEGER :: nbcd, nnisod
-  PARAMETER (nbcd=6*(4/2+1), nnisod=10)
+  PARAMETER (nbcd=def_nbc, nnisod=def_niso)
   REAL(kind=r8), SAVE :: conpar(0:nsdmax-1, nbcd, 3)
   REAL(kind=r8), SAVE :: conpard(nbdirsmax, 0:nsdmax-1, nbcd, 3)
   REAL(kind=r8), SAVE :: mompar(0:nsdmax-1, nbcd, 2)
@@ -81,9 +51,9 @@ MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV
   INTEGER, SAVE :: abcstart(nbcd)
   INTEGER, SAVE :: abcend(nbcd)
   INTEGER, SAVE :: bc_list_size(nbcd)
-  INTEGER, SAVE :: bc_list_x(2*(200+100), nbcd)
-  INTEGER, SAVE :: bc_list_y(2*(200+100), nbcd)
-  CHARACTER, SAVE :: bc_list_char(2*(200+100), nbcd)
+  INTEGER, SAVE :: bc_list_x(2*(def_nxd+def_nyd), nbcd)
+  INTEGER, SAVE :: bc_list_y(2*(def_nxd+def_nyd), nbcd)
+  CHARACTER, SAVE :: bc_list_char(2*(def_nxd+def_nyd), nbcd)
   INTEGER, SAVE :: bccon(0:nsdmax-1, nbcd)
   INTEGER, SAVE :: bcmom(0:nsdmax-1, nbcd)
   INTEGER, SAVE :: bcene(nbcd)
@@ -100,8 +70,8 @@ MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV
   REAL(kind=r8), SAVE :: niiso(0:nsdmax-1)
   INTEGER, SAVE :: lcbs(nbcd)
   INTEGER, SAVE :: nbcfaces(nbcd)
-  INTEGER, SAVE :: bc_faces(2*(200+100), nbcd)
-  REAL(kind=r8), SAVE :: bc_face_ori(2*(200+100), nbcd)
+  INTEGER, SAVE :: bc_faces(2*(def_nxd+def_nyd), nbcd)
+  REAL(kind=r8), SAVE :: bc_face_ori(2*(def_nxd+def_nyd), nbcd)
 !
   INTEGER, SAVE :: nbc, nniso, ncbs
   REAL(kind=r8), SAVE :: gammai, gammae, teiso, tiiso, phiiso
@@ -135,7 +105,7 @@ MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV
 CONTAINS
 !  Differentiation of initialize_b2mod_boundary as a context to call tangent code (with options multiDirectional context noISIZE 
 !r8):
-!   Plus diff mem management of: mpg.bcfcor:in-out
+!   Plus diff mem management of: mpg.bcfcor:in-out mpg.divfcor:in
 !
 !
   SUBROUTINE INITIALIZE_B2MOD_BOUNDARY_DV(ns, mpg, mpgd, tim, nbdirs)
@@ -154,12 +124,11 @@ CONTAINS
     REAL(kind=r8) :: arg1
     INTEGER :: nbdirs
 !
-!WG_TODO need to clean up here;
-!WG_TODO for now: call alloc_b2mod_boundary with dummy nx=1,ny=1;
-    CALL ALLOC_B2MOD_BOUNDARY(1, 1, ns, nbcd, nnisod)
+    CALL ALLOC_B2MOD_BOUNDARY(def_nxd, def_nyd, ns, nbcd, nnisod)
     CALL READ_B2MOD_BOUNDARY_NAMELIST_DV(ns, mpg, mpgd, .true., nbdirs)
-    CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-    CALL XERTST(nniso .LE. nnisod, 'increase DEF_NISO in DIMENSIONS.F')
+    CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in b2mod_dimensions')
+    CALL XERTST(nniso .LE. nnisod, &
+&         'increase DEF_NISO in b2mod_dimensions')
     CALL WRITE_B2MOD_BOUNDARY_NAMELIST()
     IF (boundary_time_mod .GT. 0.0_R8) THEN
       arg1 = tim/boundary_time_mod
@@ -179,9 +148,9 @@ CONTAINS
       WRITE(*, *) 'b2stbc: catching up ...'
       CALL READ_B2MOD_BOUNDARY_NAMELIST_DV(ns, mpg, mpgd, .true., nbdirs&
 &                                   )
-      CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-      CALL XERTST(nniso .LE. nnisod, 'increase DEF_NISO in DIMENSIONS.F'&
-&          )
+      CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in b2mod_dimensions')
+      CALL XERTST(nniso .LE. nnisod, &
+&           'increase DEF_NISO in b2mod_dimensions')
       CALL WRITE_B2MOD_BOUNDARY_NAMELIST()
       IF (boundary_time_mod .GT. 0.0_R8) THEN
         catch_up = boundary_time_switch .GT. 0.0_R8 .AND. MOD(tim, &
@@ -210,12 +179,11 @@ CONTAINS
     INTRINSIC MOD
     REAL(kind=r8) :: arg1
 !
-!WG_TODO need to clean up here;
-!WG_TODO for now: call alloc_b2mod_boundary with dummy nx=1,ny=1;
-    CALL ALLOC_B2MOD_BOUNDARY(1, 1, ns, nbcd, nnisod)
+    CALL ALLOC_B2MOD_BOUNDARY(def_nxd, def_nyd, ns, nbcd, nnisod)
     CALL READ_B2MOD_BOUNDARY_NAMELIST(ns, mpg, .true.)
-    CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-    CALL XERTST(nniso .LE. nnisod, 'increase DEF_NISO in DIMENSIONS.F')
+    CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in b2mod_dimensions')
+    CALL XERTST(nniso .LE. nnisod, &
+&         'increase DEF_NISO in b2mod_dimensions')
     CALL WRITE_B2MOD_BOUNDARY_NAMELIST()
     IF (boundary_time_mod .GT. 0.0_R8) THEN
       arg1 = tim/boundary_time_mod
@@ -234,9 +202,9 @@ CONTAINS
     DO WHILE (catch_up)
       WRITE(*, *) 'b2stbc: catching up ...'
       CALL READ_B2MOD_BOUNDARY_NAMELIST(ns, mpg, .true.)
-      CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-      CALL XERTST(nniso .LE. nnisod, 'increase DEF_NISO in DIMENSIONS.F'&
-&          )
+      CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in b2mod_dimensions')
+      CALL XERTST(nniso .LE. nnisod, &
+&           'increase DEF_NISO in b2mod_dimensions')
       CALL WRITE_B2MOD_BOUNDARY_NAMELIST()
       IF (boundary_time_mod .GT. 0.0_R8) THEN
         catch_up = boundary_time_switch .GT. 0.0_R8 .AND. MOD(tim, &
@@ -288,9 +256,9 @@ CONTAINS
         bc_elm_count = INT(arg1)
       END IF
       CALL READ_B2MOD_BOUNDARY_NAMELIST(ns, mpg, .true.)
-      CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in DIMENSIONS.F')
-      CALL XERTST(nniso .LE. nnisod, 'increase DEF_NISO in DIMENSIONS.F'&
-&          )
+      CALL XERTST(nbc .LE. nbcd, 'increase DEF_NBC in b2mod_dimensions')
+      CALL XERTST(nniso .LE. nnisod, &
+&           'increase DEF_NISO in b2mod_dimensions')
       CALL WRITE_B2MOD_BOUNDARY_NAMELIST()
     END IF
     RETURN
@@ -917,7 +885,7 @@ CONTAINS
 
 !  Differentiation of read_b2mod_boundary_namelist_us as a context to call tangent code (with options multiDirectional context no
 !ISIZE r8):
-!   Plus diff mem management of: m.bcfcor:in-out
+!   Plus diff mem management of: m.bcfcor:in-out m.divfcor:in
 !
   SUBROUTINE READ_B2MOD_BOUNDARY_NAMELIST_US_DV(ns, m, md0, dotest, &
 &   nbdirs)
@@ -931,24 +899,19 @@ CONTAINS
     LOGICAL, INTENT(IN) :: dotest
     INTEGER :: is, ib, ic, noss, iss, indss, idb, nbcfc, inbc
     INTEGER :: ian, ien
+    CHARACTER(len=3) :: ss
 !
     LOGICAL :: file_ok, todo, assigned
     LOGICAL, ALLOCATABLE :: done(:)
     CHARACTER(len=260) :: filename
-    EXTERNAL FIND_FILE, XERRAB
-    EXTERNAL XERRAB_DV
+    EXTERNAL FIND_FILE, XERRAB, CHECK_BOUNDARY_LABELS_NODIFF
     INTRINSIC TRIM
     INTRINSIC COUNT
-    EXTERNAL COUNT_DV
+    EXTERNAL FIND_FACES
     INTRINSIC ANY
-    EXTERNAL ANY_DV
     INTRINSIC MAXVAL
-    EXTERNAL MAXVAL_DV
     REAL(kind=r8) :: result1
     INTEGER :: nbdirs
-    LOGICAL :: ANY_DV
-    INTEGER :: COUNT_DV
-    REAL(kind=r8) :: MAXVAL_DV
 !
     filename = boundary_filename
     boundary_time_mod = 0.0_R8
@@ -968,6 +931,7 @@ CONTAINS
     acchar = bcchar
     abcstart = bcstart
     abcend = bcend
+! now check that all boundary faces are assigned to a BC
 !
     IF (nbc .GT. 0) THEN
 !
@@ -987,18 +951,24 @@ CONTAINS
             indss = bcstart(ib) + iss - 1
             WRITE(*, *) ' surface index ', indss
 ! find all faces belonging to surface structure INDSS
-            CALL FIND_FACES_NODIFF(indss, inbc, nbcfc, m%mxnbc, m%bcfc, &
-&                            m%bcfcor, m, idb)
+            CALL FIND_FACES(indss, inbc, nbcfc, m%mxnbc, m%bcfc, m%&
+&                     bcfcor, m, idb)
           END DO
 ! iss
+          WRITE(ss, '(i3)') ib
+          CALL XERTST(nbcfc .GT. 0, &
+&               'No faces found for boundary condition = '//ss)
           m%bcfcp(ib, 2) = nbcfc
         ELSE
-          CALL XERRAB('BCCHAR /= A ')
+          CALL XERRAB('BCCHAR /= A')
         END IF
       END DO
       CLOSE(idb) 
     END IF
 !      call bc_to_struct (m)
+!
+    CALL CHECK_BOUNDARY_LABELS_NODIFF(m, nbc, bcstart(1:nbc), bcend(1:&
+&                               nbc), .true.)
 !
     IF (ANY(bc_list_size .GT. 0)) CALL XERRAB(&
 &                  'read_b2mod_boundary_namelist_us -- bc_list_size > 0'&
@@ -1053,6 +1023,14 @@ CONTAINS
           END IF
         END IF
       END DO
+      result1 = MAXVAL(m%fsvxp(:, 2))
+      IF (result1 .GT. 2) THEN
+        IF (m%nnreg(0) .GT. 1 .OR. m%periodic_bc .EQ. 1) CALL XERTST(1 &
+&                                                              .LE. ncbs&
+&                                                              , &
+&                                               'faulty parameters ncbs'&
+&                                                             )
+      END IF
       DO ib=1,ncbs
         CALL XERTST(1 .LE. lcbs(ib) .AND. lcbs(ib) .LE. nbc, &
 &             'faulty parameter lcbs')
@@ -1081,6 +1059,19 @@ CONTAINS
       DO is=0,ns-1
         CALL XERTST(0.0_R8 .LT. niiso(is), 'faulty input niiso')
       END DO
+      DO ib=1,nbc
+        CALL XERTST(bcstart(ib) .LE. bcend(ib), &
+&             'faulty inputs bcstart > bcend')
+        DO is=0,ns-1
+          CALL XERTST(0 .LE. bccon(is, ib), 'faulty input bccon')
+          CALL XERTST(0 .LE. bcmom(is, ib), 'faulty input bcmom')
+        END DO
+        CALL XERTST(0 .LE. bcene(ib), 'faulty input bcene')
+        CALL XERTST(0 .LE. bceni(ib), 'faulty input bcene')
+        CALL XERTST(0 .LE. bcpot(ib), 'faulty input bcpot')
+        CALL XERTST(0 .LE. bcenk(ib), 'faulty input bcenk')
+        CALL XERTST(0 .LE. bcenz(ib), 'faulty input bcenz')
+      END DO
       RETURN
     END IF
   END SUBROUTINE READ_B2MOD_BOUNDARY_NAMELIST_US_DV
@@ -1095,13 +1086,15 @@ CONTAINS
     LOGICAL, INTENT(IN) :: dotest
     INTEGER :: is, ib, ic, noss, iss, indss, idb, nbcfc, inbc
     INTEGER :: ian, ien
+    CHARACTER(len=3) :: ss
 !
     LOGICAL :: file_ok, todo, assigned
     LOGICAL, ALLOCATABLE :: done(:)
     CHARACTER(len=260) :: filename
-    EXTERNAL FIND_FILE, XERRAB
+    EXTERNAL FIND_FILE, XERRAB, CHECK_BOUNDARY_LABELS_NODIFF
     INTRINSIC TRIM
     INTRINSIC COUNT
+    EXTERNAL FIND_FACES
     INTRINSIC ANY
     INTRINSIC MAXVAL
     REAL(kind=r8) :: result1
@@ -1124,6 +1117,7 @@ CONTAINS
     acchar = bcchar
     abcstart = bcstart
     abcend = bcend
+! now check that all boundary faces are assigned to a BC
 !
     IF (nbc .GT. 0) THEN
 !
@@ -1143,18 +1137,24 @@ CONTAINS
             indss = bcstart(ib) + iss - 1
             WRITE(*, *) ' surface index ', indss
 ! find all faces belonging to surface structure INDSS
-            CALL FIND_FACES_NODIFF(indss, inbc, nbcfc, m%mxnbc, m%bcfc, &
-&                            m%bcfcor, m, idb)
+            CALL FIND_FACES(indss, inbc, nbcfc, m%mxnbc, m%bcfc, m%&
+&                     bcfcor, m, idb)
           END DO
 ! iss
+          WRITE(ss, '(i3)') ib
+          CALL XERTST(nbcfc .GT. 0, &
+&               'No faces found for boundary condition = '//ss)
           m%bcfcp(ib, 2) = nbcfc
         ELSE
-          CALL XERRAB('BCCHAR /= A ')
+          CALL XERRAB('BCCHAR /= A')
         END IF
       END DO
       CLOSE(idb) 
     END IF
 !      call bc_to_struct (m)
+!
+    CALL CHECK_BOUNDARY_LABELS_NODIFF(m, nbc, bcstart(1:nbc), bcend(1:&
+&                               nbc), .true.)
 !
     IF (ANY(bc_list_size .GT. 0)) CALL XERRAB(&
 &                  'read_b2mod_boundary_namelist_us -- bc_list_size > 0'&
@@ -1209,6 +1209,14 @@ CONTAINS
           END IF
         END IF
       END DO
+      result1 = MAXVAL(m%fsvxp(:, 2))
+      IF (result1 .GT. 2) THEN
+        IF (m%nnreg(0) .GT. 1 .OR. m%periodic_bc .EQ. 1) CALL XERTST(1 &
+&                                                              .LE. ncbs&
+&                                                              , &
+&                                               'faulty parameters ncbs'&
+&                                                             )
+      END IF
       DO ib=1,ncbs
         CALL XERTST(1 .LE. lcbs(ib) .AND. lcbs(ib) .LE. nbc, &
 &             'faulty parameter lcbs')
@@ -1236,6 +1244,19 @@ CONTAINS
 &           'faulty input boundary_time_switch')
       DO is=0,ns-1
         CALL XERTST(0.0_R8 .LT. niiso(is), 'faulty input niiso')
+      END DO
+      DO ib=1,nbc
+        CALL XERTST(bcstart(ib) .LE. bcend(ib), &
+&             'faulty inputs bcstart > bcend')
+        DO is=0,ns-1
+          CALL XERTST(0 .LE. bccon(is, ib), 'faulty input bccon')
+          CALL XERTST(0 .LE. bcmom(is, ib), 'faulty input bcmom')
+        END DO
+        CALL XERTST(0 .LE. bcene(ib), 'faulty input bcene')
+        CALL XERTST(0 .LE. bceni(ib), 'faulty input bcene')
+        CALL XERTST(0 .LE. bcpot(ib), 'faulty input bcpot')
+        CALL XERTST(0 .LE. bcenk(ib), 'faulty input bcenk')
+        CALL XERTST(0 .LE. bcenz(ib), 'faulty input bcenz')
       END DO
       RETURN
     END IF
@@ -1397,22 +1418,23 @@ CONTAINS
 !
 !**********************************************************************
 !
-  SUBROUTINE CONV_BCPARMS(nx, ny, ns, m, g)
+  SUBROUTINE CONV_BCPARMS(ns, m)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER, INTENT(IN) :: nx, ny, ns
+    INTEGER, INTENT(IN) :: ns
     TYPE(MAPPING), INTENT(INOUT) :: m
-    TYPE(GEOMETRY), INTENT(INOUT) :: g
     INTEGER :: ib, ibc, is, inbc, noss, iss, indss, i, ifc, icv, idb
     INTEGER :: bcs(nbc), bce(nbc), bcl(nbc)
     INTEGER :: minlbl(nbc), maxlbl(nbc)
     INTEGER, ALLOCATABLE :: ifchit(:)
     CHARACTER(len=1) :: lchar(nbc)
+    CHARACTER(len=3) :: ss
     INTRINSIC HUGE
     INTRINSIC COUNT
     EXTERNAL XERRAB
     INTRINSIC MIN
     INTRINSIC MAX
+    EXTERNAL FIND_FACES
     REAL(kind=r8) :: result1
 !
 ! number of boundary conditions
@@ -1556,10 +1578,13 @@ CONTAINS
           indss = bcstart(ib) + iss - 1
           WRITE(*, *) ' surface index ', indss
 !  find all faces belonging to surface structure INDSS
-          CALL FIND_FACES_NODIFF(indss, inbc, bcl(ib), m%mxnbc, m%bcfc, &
-&                          m%bcfcor, m, idb)
+          CALL FIND_FACES(indss, inbc, bcl(ib), m%mxnbc, m%bcfc, m%&
+&                   bcfcor, m, idb)
         END DO
 ! iss
+        WRITE(ss, '(i3)') ib
+        CALL XERTST(bcl(ib) .GT. 0, &
+&             'No faces found for boundary condition = '//ss)
         m%bcfcp(ib, 2) = bcl(ib)
       ELSE
         CALL XERRAB('conv_bcparms -- wrong BCCHAR')
@@ -1569,7 +1594,11 @@ CONTAINS
 !
     acchar(1:nbc) = lchar(1:nbc)
     abcstart(1:nbc) = minlbl(1:nbc)
+! now check that all boundary faces are assigned to a BC
     abcend(1:nbc) = maxlbl(1:nbc)
+!
+    CALL CHECK_BOUNDARY_LABELS_NODIFF(m, nbc, abcstart(1:nbc), abcend(1:&
+&                               nbc), .true.)
 !
     IF (inbc .NE. m%ncg) THEN
       WRITE(*, *) 'inbc, nCg ', inbc, m%ncg
@@ -1593,7 +1622,7 @@ CONTAINS
         WRITE(*, *) 'suspicious faces '
         DO i=1,m%nfc
           IF (ifchit(i) .NE. 0) THEN
-            WRITE(*, *) 'ifc ', i, ifchit(i)
+            WRITE(*, *) 'iFc ', i, ifchit(i)
             WRITE(*, *) 'fcCv ', m%fccv(i, 1), m%fccv(i, 2)
           END IF
         END DO
@@ -1620,24 +1649,21 @@ CONTAINS
 !**********************************************************************
 !
   SUBROUTINE WRITE_BCPARMS(ns, m)
+    USE B2MOD_VERSION_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-!
     INTEGER, INTENT(IN) :: ns
     TYPE(MAPPING), INTENT(INOUT) :: m
     INTEGER :: ib, iout, is
-    CHARACTER(len=1) :: ap
-    CHARACTER(len=10) :: new_boundary_version
+    CHARACTER(len=1), SAVE :: ap=''''
     EXTERNAL XERRAB
     INTRINSIC TRIM
-    ap = ''''
-    new_boundary_version = '03.002.000'
 !
     OPEN(newunit=iout, file='b2us.boundary.parameters') 
-    CALL CFVERW(iout, new_boundary_version)
+    CALL CFVERW(iout, newversion)
 !
     WRITE(iout, '(1x,a)') '&boundary'
-    WRITE(iout, '(1x,a,i0)') 'NBC     = ', m%nbc
+    WRITE(iout, '(1x,a,i3,a)') 'NBC     = ', m%nbc, ','
     WRITE(iout, '(1x,a,(1x,T14,10(2x,4a1)))') 'BCCHAR  =  ', (ap, acchar&
 &   (ib), ap, ',', ib=1,m%nbc)
 !
@@ -1704,7 +1730,7 @@ CONTAINS
     WRITE(iout, '(1x,a,l1,a1)') 'LBNDUSR=', lbndusr, ','
     WRITE(iout, '(1x,a,l1,a1)') 'LFEEDBACK=', lfeedback, ','
 !
-    WRITE(iout, '(1x,a,i0,a1)') 'NNISO = ', nniso, ','
+    WRITE(iout, '(1x,a,i2,a1)') 'NNISO = ', nniso, ','
 !
     IF (nniso .GT. 0) CALL XERRAB('write_bcparms -- nniso > 0')
 !
@@ -1727,30 +1753,95 @@ CONTAINS
 !
     WRITE(iout, '(1x,a)') '/'
     CLOSE(iout) 
+!
+    RETURN
   END SUBROUTINE WRITE_BCPARMS
 
+!
+!
+  SUBROUTINE REPLACE_OUTDATED_BCPARMS(ns, m)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: ns
+    TYPE(MAPPING), INTENT(INOUT) :: m
+    INTEGER :: ib, is
+    LOGICAL :: changed
+!
+!c Here outdated BCs that will not be revived in the WG code can be automatically replaced by new versions.
+!c This should only be done if the change is backward compatible! For example, the non-drift sheath BC BCMOM = 3 can be automatic
+!aly replaced by
+!c BCMOM = 13, because it is drift-compatible but gives the same result as the old BCMOM = 3 for cases without drifts.
+!
+    changed = .false.
+    DO ib=1,m%nbc
+!c BCMOM
+      DO is=0,ns-1
+        IF (bcmom(is, ib) .EQ. 3) THEN
+          bcmom(is, ib) = 13
+          WRITE(*, *) 'Automatically changing BCMOM from 3 to 13'
+          changed = .true.
+        END IF
+      END DO
+!c BCENE
+      IF (bcene(ib) .EQ. 3) THEN
+        bcene(ib) = 15
+        WRITE(*, *) 'Automatically changing BCENE from 3 to 15'
+        changed = .true.
+      END IF
+      IF (bcene(ib) .EQ. 12) THEN
+        bcene(ib) = 15
+        WRITE(*, *) 'Automatically changing BCENE from 12 to 15'
+        changed = .true.
+      END IF
+!c BCENI
+      IF (bceni(ib) .EQ. 3) THEN
+        bceni(ib) = 15
+        WRITE(*, *) 'Automatically changing BCENI from 3 to 15'
+        changed = .true.
+      END IF
+      IF (bceni(ib) .EQ. 12) THEN
+        bceni(ib) = 15
+        WRITE(*, *) 'Automatically changing BCENI from 12 to 15'
+        changed = .true.
+      END IF
+!c BCPOT
+      IF (bcpot(ib) .EQ. 3) THEN
+        bcpot(ib) = 11
+        WRITE(*, *) 'Automatically changing BCPOT from 3 to 11'
+        changed = .true.
+      END IF
+    END DO
+!
+    IF (changed) THEN
+      WRITE(*, *) 'Some outdated BCs'//&
+&     ' in WG have been replaced automatically.'
+      WRITE(*, *) 'See lines above.'
+    END IF
+!
+    RETURN
+  END SUBROUTINE REPLACE_OUTDATED_BCPARMS
+
 !  Differentiation of bc_to_struct as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: m.bcfcor:in-out
+!   Plus diff mem management of: m.bcfcor:in-out m.divfcor:in
 !
 !**********************************************************************
 !
   SUBROUTINE BC_TO_STRUCT_DV(m, md0, nbdirs)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-!
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
     TYPE(MAPPING), INTENT(INOUT) :: m
     TYPE(MAPPING_DIFFV), INTENT(INOUT) :: md0
     INTEGER :: ib, inbc, ibc, ifc, ic1, ic2
-    INTEGER :: iout, ian, ien, i
+    INTEGER :: i, j, k, indd
     INTRINSIC COUNT
-    EXTERNAL COUNT_DV
     INTRINSIC MIN
     INTRINSIC MAX
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
+    INTRINSIC ALLOCATED
+    INTRINSIC MAXVAL
+    INTRINSIC SIZE
     INTEGER :: nbdirs
-    INTEGER :: COUNT_DV
 !
     m%nbc = nbc
 !pb   m%mxnBc = sum(nbcfaces(1:nbc))       ! number of cells with imposed BC
@@ -1768,7 +1859,7 @@ CONTAINS
 !pb     do ibc = 1, nbcfaces(ib)
       DO ibc=1,m%bcfcp(ib, 2)
         inbc = inbc + 1
-!pb       ifc = bc_faces(ibc,ib)
+!pb       iFc = bc_faces(ibc,ib)
         ifc = m%bcfc(m%bcfcp(ib, 1)+ibc-1)
         IF (m%fccv(ifc, 1) .GT. m%fccv(ifc, 2)) THEN
           ic1 = m%fccv(ifc, 2)
@@ -1790,19 +1881,18 @@ CONTAINS
       END DO
     END DO
 !
-    OPEN(newunit=iout, file='bc.testout') 
-    WRITE(iout, *) 'nbc =', m%nbc
-    WRITE(iout, '(a,/(10i6))') 'bcCvP(1) ', (m%bccvp(ib, 1), ib=1,m%nbc)
-    WRITE(iout, '(a,/(10i6))') 'bcCvP(2) ', (m%bccvp(ib, 2), ib=1,m%nbc)
-    DO ib=1,m%nbc
-      ian = m%bccvp(ib, 1)
-      ien = m%bccvp(ib, 1) + m%bccvp(ib, 2) - 1
-      WRITE(iout, *) 'ib = ', ib
-      WRITE(iout, '(a,/(10i6))') 'bcCv(1) ', (m%bccv(i, 1), i=ian,ien)
-      WRITE(iout, '(a,/(10i6))') 'bcCv(2) ', (m%bccv(i, 2), i=ian,ien)
-      WRITE(iout, '(a,/(10f6.2))') 'bcCv(2) ', (m%bcfcor(i), i=ian,ien)
-    END DO
-    CLOSE(iout) 
+    IF (ALLOCATED(m%strdiv)) THEN
+      indd = MAXVAL(m%strdiv)
+      DO i=1,indd
+        DO j=m%divfcp(i, 1),m%divfcp(i, 1)+m%divfcp(i, 2)-1
+          ifc = m%divfc(j)
+          DO k=1,SIZE(m%bcfc)
+            IF (m%bcfc(k) .EQ. ifc) m%divfcor(j) = m%bcfcor(k)
+          END DO
+        END DO
+      END DO
+    END IF
+    RETURN
   END SUBROUTINE BC_TO_STRUCT_DV
 
 !
@@ -1811,14 +1901,16 @@ CONTAINS
   SUBROUTINE BC_TO_STRUCT(m)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-!
     TYPE(MAPPING), INTENT(INOUT) :: m
     INTEGER :: ib, inbc, ibc, ifc, ic1, ic2
-    INTEGER :: iout, ian, ien, i
+    INTEGER :: i, j, k, indd
     INTRINSIC COUNT
     INTRINSIC MIN
     INTRINSIC MAX
     EXTERNAL XERRAB
+    INTRINSIC ALLOCATED
+    INTRINSIC MAXVAL
+    INTRINSIC SIZE
 !
     m%nbc = nbc
 !pb   m%mxnBc = sum(nbcfaces(1:nbc))       ! number of cells with imposed BC
@@ -1836,7 +1928,7 @@ CONTAINS
 !pb     do ibc = 1, nbcfaces(ib)
       DO ibc=1,m%bcfcp(ib, 2)
         inbc = inbc + 1
-!pb       ifc = bc_faces(ibc,ib)
+!pb       iFc = bc_faces(ibc,ib)
         ifc = m%bcfc(m%bcfcp(ib, 1)+ibc-1)
         IF (m%fccv(ifc, 1) .GT. m%fccv(ifc, 2)) THEN
           ic1 = m%fccv(ifc, 2)
@@ -1858,19 +1950,18 @@ CONTAINS
       END DO
     END DO
 !
-    OPEN(newunit=iout, file='bc.testout') 
-    WRITE(iout, *) 'nbc =', m%nbc
-    WRITE(iout, '(a,/(10i6))') 'bcCvP(1) ', (m%bccvp(ib, 1), ib=1,m%nbc)
-    WRITE(iout, '(a,/(10i6))') 'bcCvP(2) ', (m%bccvp(ib, 2), ib=1,m%nbc)
-    DO ib=1,m%nbc
-      ian = m%bccvp(ib, 1)
-      ien = m%bccvp(ib, 1) + m%bccvp(ib, 2) - 1
-      WRITE(iout, *) 'ib = ', ib
-      WRITE(iout, '(a,/(10i6))') 'bcCv(1) ', (m%bccv(i, 1), i=ian,ien)
-      WRITE(iout, '(a,/(10i6))') 'bcCv(2) ', (m%bccv(i, 2), i=ian,ien)
-      WRITE(iout, '(a,/(10f6.2))') 'bcCv(2) ', (m%bcfcor(i), i=ian,ien)
-    END DO
-    CLOSE(iout) 
+    IF (ALLOCATED(m%strdiv)) THEN
+      indd = MAXVAL(m%strdiv)
+      DO i=1,indd
+        DO j=m%divfcp(i, 1),m%divfcp(i, 1)+m%divfcp(i, 2)-1
+          ifc = m%divfc(j)
+          DO k=1,SIZE(m%bcfc)
+            IF (m%bcfc(k) .EQ. ifc) m%divfcor(j) = m%bcfcor(k)
+          END DO
+        END DO
+      END DO
+    END IF
+    RETURN
   END SUBROUTINE BC_TO_STRUCT
 
 END MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV
