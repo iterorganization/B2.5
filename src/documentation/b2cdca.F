@@ -88,7 +88,7 @@
 *
 *-A1. Notes
 *
-*   ..Adherence to ANSI Fortran-77.
+*   ..Originally the code adhered to ANSI Fortran-77.
 *     We respect the standard with the following exceptions.
 *     - 'implicit none' is used to force type declarations for all
 *       constants, variables and functions. We also declare, as external
@@ -102,6 +102,9 @@
 *     syntax on all popular workstations as well as on the Cray.
 *     The code can be distributed using do-enddo syntax or using
 *     labelled do loops, and with or without use of include statements.
+*   ..At present, the code mainly uses Fortran 90, 95 and 2003.
+*     Some users HPC systems may not yet support 2003, although this is becoming 
+*     an exception. The -DLEGACYCOMP preprocessor pragma deals with this.
 *
 *   ..Scientific libraries.
 *     The BLAS (basic linear algebra subroutines) and LAPACK (linear
