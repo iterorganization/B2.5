@@ -69,7 +69,7 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   REAL(kind=r8) :: weight(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   INTRINSIC NINT
   REAL(kind=r8), DIMENSION(ncv) :: arg1
@@ -84,7 +84,7 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tvspr')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..calculate the coefficients in difference approximation of viscosity perpendicular current
 !      call b2txvspr(nx, ny, ns, fac_vis,                               !srv 10.10.17
@@ -93,7 +93,7 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !   ..calculate the contribution of viscosity perpendicular current    !srv 22.11.99
   fac_vism = MAXVAL(fac_vis)
 !srv 22.11.99
-  IF (fac_vism .NE. 0.0_R8 .AND. switch%fhe_vis_per .NE. 0.0e0_R8 .AND. &
+  IF (fac_vism .NE. 0.0_R8 .AND. switch%fhe_vis_per .NE. 0.0_R8 .AND. &
 &     switch%no_current .EQ. 0) THEN
     DO nd=1,nbdirsmax
       wrkfd(nd, :) = 0.D0
@@ -152,7 +152,7 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
         dva = 0.25_R8*dva*vsa0(:, is)
 !
 !      ..set dva in guard cells (constant extrapolation from domain cell)
-        CALL EXTEND_DV(dva, dvad, ncv, mpg, 1, nbdirs)
+        CALL EXTEND_DV(dva, dvad, mpg, 1, nbdirs)
 !
 !      ..compute current density in cell centers through divergence theorem
         CALL INTFACE_DV(ncv, nfc, mpg%fccv, weight, dva, dvad, wrkf, &
@@ -185,7 +185,7 @@ SUBROUTINE B2TVSPR_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
     END DO
   ELSE
 !srv 16.10.17
-    fchvisper = 0.0e0_R8
+    fchvisper = 0.0_R8
     DO nd=1,nbdirsmax
       fchvisperd(nd, :, :) = 0.D0
     END DO
@@ -256,7 +256,7 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po, ti, &
   REAL(kind=r8) :: weight(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   INTRINSIC NINT
   REAL(kind=r8), DIMENSION(ncv) :: arg1
@@ -267,7 +267,7 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po, ti, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tvspr')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..calculate the coefficients in difference approximation of viscosity perpendicular current
 !      call b2txvspr(nx, ny, ns, fac_vis,                               !srv 10.10.17
@@ -276,7 +276,7 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po, ti, &
 !   ..calculate the contribution of viscosity perpendicular current    !srv 22.11.99
   fac_vism = MAXVAL(fac_vis)
 !srv 22.11.99
-  IF (fac_vism .NE. 0.0_R8 .AND. switch%fhe_vis_per .NE. 0.0e0_R8 .AND. &
+  IF (fac_vism .NE. 0.0_R8 .AND. switch%fhe_vis_per .NE. 0.0_R8 .AND. &
 &     switch%no_current .EQ. 0) THEN
 !srv 16.10.17
     DO is=0,ns-1
@@ -304,7 +304,7 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po, ti, &
         dva = 0.25_R8*dva*vsa0(:, is)
 !
 !      ..set dva in guard cells (constant extrapolation from domain cell)
-        CALL EXTEND_NODIFF(dva, ncv, mpg, 1)
+        CALL EXTEND_NODIFF(dva, mpg, 1)
 !
 !      ..compute current density in cell centers through divergence theorem
         CALL INTFACE(ncv, nfc, mpg%fccv, weight, dva, wrkf)
@@ -324,7 +324,7 @@ SUBROUTINE B2TVSPR_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po, ti, &
     END DO
   ELSE
 !srv 16.10.17
-    fchvisper = 0.0e0_R8
+    fchvisper = 0.0_R8
   END IF
 !
   IF (switch%b2tvspr_iout .EQ. 1) THEN

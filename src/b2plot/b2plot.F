@@ -902,7 +902,7 @@ c
       if(.not.allocated(iz))
      > call alloc_b2mod_diag(mpg%nCv,mpg%nFc,ns,mpg%nnreg(0),nstra,natm,
      >                       switch)
-      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,switch)
       if (nomp.gt.0) then
         allocate(dsomp(nomp),wdomp(nomp))
         call set_distances(mpg,geo,nomp,omp,icsepomp-1,dsomp,wdomp)
@@ -6564,6 +6564,7 @@ c
           if(bad_args(stack_req)) return
           call set_color_map(spop(sstack,isstack))
         case('chor')     ! chord file
+          stack_req=(/0,0,1,1,0,0,0/)
           if(bad_args(stack_req)) return
           call process_chords(spop(sstack,isstack))
         case('chpl')     ! plot chords

@@ -15,9 +15,10 @@ endif
 CPP = /lib/cpp -C -traditional
 SED = sed s:\#PREC\#:d:g
 
-LDOPTS   = -tp px # "-tp px" to fix a compiler bug at JET
+LDOPTS = -tp px # "-tp px" to fix a compiler bug at JET
 
 DBLSED = sed -e s:\#PREC\#:d:g
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

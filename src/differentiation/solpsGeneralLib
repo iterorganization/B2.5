@@ -21,7 +21,7 @@ function isRealCell:
 function isClassicalGrid:
   external:
   shape: (param 1, result)
-  type: (integer(), boolean())
+  type: (arrayType(integer(), dimColons(dimColon(none(), none()),dimColon(none(), none()),dimColon(none(), none()))), boolean())
 
 function isInDomain:
   external:
@@ -83,6 +83,26 @@ function anint:
   shape: (param 1, result)
   type: (float(), integer())
 
+function is_comment:
+  external:
+  shape: (param 1, result)
+  type: (character(), boolean())
+
+function is_valid:
+  external:
+  shape: (param 1, result)
+  type: (character(), boolean())
+
+function end_comment:
+  external:
+  shape: (param 1, param 2, result)
+  type: (character(), integer(), boolean())
+
+function only_comments:
+  external:
+  shape: (param 1, result)
+  type: (character(), boolean())
+
 subroutine find_file:
  external:
  shape:(param 1, param 2)
@@ -90,38 +110,43 @@ subroutine find_file:
 
 subroutine tallies:
  external:
- shape:(param 1, param 2, param 3, param 4)
- deps: (id, id, id, id)
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7)
+ deps: (id, id, id, id, id, id, id)
 
-subroutine nf_inq:
+subroutine b2xpne_st:
  external:
- shape:(param 1)
- deps: (id)
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7)
+ deps: (id, id, id, id, id, id, id)
 
-subroutine nf_inq_varid:
+function nf_inq:
  external:
- shape:(param 1)
- deps: (id)
+ shape:(param 1, param 2, param 3, param 4, param 5, result)
+  type: (integer(), integer(), integer(), integer(), integer(), integer())
 
-subroutine nf_inq_var:
+function nf_inq_varid:
  external:
- shape:(param 1)
- deps: (id)
+ shape:(param 1, param 2, param 3, result)
+  type: (integer(), character(), integer(), integer())
 
-subroutine nf_inq_dim:
+function nf_inq_var:
  external:
- shape:(param 1)
- deps: (id)
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, result)
+  type: (integer(), integer(), character(), integer(), integer(), integer(), integer(), integer())
+
+function nf_inq_dim:
+ external:
+ shape:(param 1, param 2, param 3, param 4, result)
+  type: (integer(), integer(), character(), integer(), integer())
 
 subroutine assert:
  external:
  shape:(param 1)
  deps: (id)
 
-subroutine repeat:
+function repeat:
  external:
- shape:(param 1)
- deps: (id)
+ shape:(param 1, param 2, result)
+ type: (character(), integer(), character())
 
 subroutine gspli:
  external:
@@ -353,8 +378,14 @@ function int2str:
 
 subroutine cdfmovie:
  external:
- shape:(param 1, param 2, param 3)
- deps: (id, id, id)
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6)
+ deps: (id, id, id, id, id, id)
+
+subroutine output_ds_cv:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6)
+ deps: (id, id, id, id, id, id)
+
 
 subroutine b2crtimecdf:
  external:
@@ -384,8 +415,8 @@ subroutine check_cdf_status:
 
 subroutine nancheck:
  external:
- shape:(param 1, param 2, param 3, param 4)
- deps: (id, id, id, id)
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
 
 subroutine lower_case:
  external:
@@ -678,13 +709,13 @@ subroutine b2trcc:
 
 subroutine b2trcs:
  external:
- shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9)
- deps: (id, id ,id, id, id, id, id, id, id)
+ shape:()
+ deps: ()
 
 subroutine b2trcf:
  external:
- shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9)
- deps: (id, id ,id, id, id, id, id, id, id)
+ shape:()
+ deps: ()
 
 subroutine wallon:
  external:
@@ -713,8 +744,8 @@ subroutine b2filei:
 
 subroutine b2filew:
  external:
- shape:(param 1, param 2, param 3)
- deps: (id, id ,id)
+ shape:(param 1, param 2)
+ deps: (id, id)
 
 subroutine b2filef:
  external:
@@ -981,65 +1012,90 @@ subroutine pagdef:
  shape:()
  deps: ()
 
-subroutine nf_def_var:
+function nf_get_vara_double:
  external:
- shape:(param 1, param 2, param 3, param 4, param 5, param 6)
- deps: (id, id, id, id, id, id)
+ shape:(param 1, param 2, param 3, param 4, param 5, result)
+  type: (integer(), integer(), integer(), integer(), float(), integer())
 
-subroutine nf_put_att_text:
+function nf_def_var:
  external:
- shape:(param 1, param 2, param 3, param 4, param 5)
- deps: (id, id, id, id, id)
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, result)
+  type: (integer(), character(), integer(), integer(), integer(), integer(), integer())
 
-subroutine nf_inq_varndims:
+function nf_put_att_text:
  external:
- shape:(param 1, param 2, param 3)
- deps: (id, id, id)
+ shape:(param 1, param 2, param 3, param 4, param 5, result)
+  type: (integer(), integer(), character(), integer(), character(), integer())
 
-subroutine nf_inq_vardimid:
+function nf_inq_varndims:
  external:
- shape:(param 1, param 2, param 3)
- deps: (id, id, id)
+ shape:(param 1, param 2, param 3, result)
+  type: (integer(), integer(), integer(), integer())
 
-subroutine nf_inq_dimlen:
+function nf_inq_vardimid:
  external:
- shape:(param 1, param 2, param 3)
- deps: (id, id, id)
+ shape:(param 1, param 2, param 3, result)
+  type: (integer(), integer(), integer(), integer())
 
-subroutine nf_put_vara_text:
+function nf_inq_dimlen:
  external:
- shape:(param 1, param 2, param 3, param 4, param 5)
- deps: (id, id, id, id, id)
+ shape:(param 1, param 2, param 3, result)
+  type: (integer(), integer(), integer(), integer())
 
-subroutine nf_put_vara_double:
+function nf_put_vara_text:
  external:
- shape:(param 1, param 2, param 3, param 4, param 5)
- deps: (id, id, id, id, id)
+ shape:(param 1, param 2, param 3, param 4, param 5, result)
+  type: (integer(), integer(), integer(), integer(), character(), integer())
 
-subroutine nf_redef:
+function nf_put_vara_double:
  external:
- shape:(param 1)
- deps: (id)
+ shape:(param 1, param 2, param 3, param 4, param 5, result)
+  type: (integer(), integer(), integer(), integer(), float(), integer())
 
-subroutine nf_put_var_text:
+function nf_redef:
  external:
- shape:(param 1, param 2, param 3)
- deps: (id, id, id)
+ shape:(param 1, result)
+  type: (integer(), integer())
 
-subroutine nf_put_var_int:
+function nf_put_var_text:
  external:
- shape:(param 1, param 2, param 3)
- deps: (id, id, id)
+ shape:(param 1, param 2, param 3, result)
+  type: (integer(), integer(), character(), integer())
 
-subroutine nf_put_var_double:
+function nf_put_var_int:
  external:
- shape:(param 1, param 2, param 3)
- deps: (id, id, id)
+ shape:(param 1, param 2, param 3, result)
+  type: (integer(), integer(), integer(), integer())
+
+function nf_put_var_double:
+ external:
+ shape:(param 1, param 2, param 3, result)
+  type: (integer(), integer(), float(), integer())
+
+function ieee_is_finite:
+ external:
+ shape:(param 1, result)
+  type: (float(), boolean())
+
+function isplusorminus:
+ external:
+ shape:(param 1, result)
+  type: (character(), boolean())
+
+function isadigit:
+ external:
+ shape:(param 1, result)
+  type: (character(), boolean())
+
+function machsfr:
+ external:
+ shape:(result)
+  type: (float())
 
 subroutine b2mwti:
  external:
- shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9, param 10, param 11, param 12, param 13, param 14, param 15, param 16, param 17, param 18)
- deps: (id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id)
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8, param 9, param 10, param 11, param 12, param 13, param 14, param 15, param 16, param 17, param 18, param 19, param 20, param 21, param 22, param 23)
+ deps: (id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id)
 
 subroutine dealloc_b2mod_mwti:
  external:
@@ -1050,3 +1106,49 @@ subroutine output_ds:
  external:
  shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7)
  deps: (id, id, id, id, id, id, id)
+
+subroutine dealloc_b2mod_ma28_for_us:
+ external:
+ shape:()
+ deps: ()
+
+subroutine restart_ma28_for_us:
+ external:
+ shape:()
+ deps: ()
+
+subroutine alloc_b2mod_b2_to_astra:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine b2wdat:
+ external:
+ shape:(param 1, param 2, param 3, param 4)
+ deps: (id, id, id, id)
+
+subroutine b2xvsg:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5)
+ deps: (id, id, id, id, id)
+
+subroutine calc_err:
+ external:
+ shape:(param 1, param 2, param 3)
+ deps: (id, id, id)
+
+subroutine set_exact_solution:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5)
+ deps: (id, id, id, id, id)
+
+subroutine find_faces:
+ external:
+ shape:(param 1, param 2, param 3, param 4, param 5, param 6, param 7, param 8)
+ deps: (id, id, id, id, id, id, id, id)
+
+subroutine deallocateB2GridMap:
+ external:
+ shape:(param 1)
+ deps: (id)
+

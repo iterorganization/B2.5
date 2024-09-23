@@ -9,6 +9,8 @@
      &  refluxa(:,:,:), refluxm(:,:,:),
      &  pfluxa(:,:,:), pfluxm(:,:,:),
      &  pefluxa(:,:,:), pefluxm(:,:,:),
+     &  tfluxa(:,:,:), tfluxm(:,:,:),
+     &  tefluxa(:,:,:), tefluxm(:,:,:),
      &  emiss(:,:,:), emissmol(:,:,:),
      &  srcml(:,:,:), edissml(:,:,:),
      &  wldnek(:,:), wldnep(:,:),
@@ -18,12 +20,13 @@
      &  wldpp(:,:,:), wldpa(:,:,:),
      &  wldpm(:,:,:), wldpeb(:,:),
      &  wldspt(:,:), wldspta(:,:,:), wldsptm(:,:,:),
-     &  eneutrad(:,:,:),
+     &  eneutrad(:,:,:), emolrad(:,:,:), eionrad(:,:,:),
      &  wlarea(:), wlabsrp(:,:),
      &  wldna_res(:,:),     !incident atom flux
      &  wldnm_res(:,:),     !incident molecule flux
      &  ewlda_res(:,:),     !incident energy flux of atoms
      &  ewldm_res(:,:),     !incident energy flux of molecules
+     &  ewldt_res(:),       !total energy wall load from Eirene particles
      &  ewldea_res(:,:),    !emitted energy flux of atoms
      &  ewldem_res(:,:),    !net incident energy flux due of molecules
      &  ewldrp_res(:),      !kinetic energy of reflected neutrals originated from ions
@@ -41,56 +44,40 @@ C surface elements, controlled by array 'eirdiag_nds_ind'
 C
 
 ! See WNEUTRAL_FLUXES for the description
-      INTEGER, allocatable ::
-     .                                  eirdiag_nds_ind(:),
-     .                                  eirdiag_nds_typ(:),
-     .                                  eirdiag_nds_srf(:),
-     .                                  eirdiag_nds_start(:),
-     .                                  eirdiag_nds_end(:)
+      INTEGER, allocatable :: eirdiag_nds_ind(:), fnmti_b2(:)
 
-C Meaning of the arrays which are written to the fort.44 file
-C 
-C  eirdiag_nds_typ    : type of the surface
-C                       1: poloidal surface (Y=CONST)
-C                       2: radial surface (X=CONST) 
-C  eirdiag_nds_srf    : index of the corresponding radial or poloidal SURFACE
-C                       on which the distribution is given 
-C  eirdiag_nds_start  : index of the first CELL on the surface '..._srf' 
-C  eirdiag_nds_end    : ... of the last CELL ...
-C 
-C  _sfr, _start and _end are given in B2 indexing. 
-C  '_srf' corresponds to the indexing of B2 arrays with fluxes (CELL-1 for outer wall and target).
-C
 C  eirdiag_nds_ind(IS) : is the index AFTER WHICH the data for surface IS is started in arrays '*_res'.
 C                        IF _ind(IS)<0 then this surface is skipped
-C      
+C  fnmti_b2            : the list of the triangle faces making up the non-standard surfaces
+C
 C
       CHARACTER(8), allocatable :: eirtxt(:)
 
       integer nnlimi,nnstsi,nnatmi,nnmoli,nnioni,nnplsi
       integer, allocatable :: isrftype(:)
       integer, allocatable :: lkindp(:), lkindm(:), lkindi(:)
-      logical lhalpha,lvib
 c
 c*** Volume data:
-c***	srcml	:   power loss due to molecules, including
+c***	srcml	:   molecule dissociation rate
 c***	edissml :   power loss due to molecule dissociation
 c*** Surface data:
-c***	wldnek	:   net kinetic energy deposited by neutrals
-c***	wldnep	:   energy released by recombination into molecules
-c***	wldna	:   flux of atoms impinging onto the surface
-c***	ewlda	:   their average energy
-c***	wldnm	:   flux of molecules impinging onto the surface
-c***	ewldm	:   their average energy
-c***	wldra	:   flux of reflected atoms
-c***	wldrm	:   flux of reflected molecules
-c***	wldpp	:   flux of plasma ions impinging onto the surface
-c***	wldpa	:   flux of resulting atoms
-c***	wldpm	:   flux of resulting molecules
-c***	wldpeb	:   power carried away by these atoms and molecules
-c***	wldspt	:   flux of sputtered wall material
-c***	isrftype:   surface type (iliin in Eirene)
+c***    wldnek  :   net kinetic energy deposited by neutrals
+c***    wldnep  :   energy released by recombination into molecules
+c***    wldna   :   flux of atoms impinging onto the surface
+c***    ewlda   :   their average energy
+c***    wldnm   :   flux of molecules impinging onto the surface
+c***    ewldm   :   their average energy
+c***    wldra   :   flux of reflected atoms
+c***    wldrm   :   flux of reflected molecules
+c***    wldpp   :   flux of plasma ions impinging onto the surface
+c***    wldpa   :   flux of resulting atoms
+c***    wldpm   :   flux of resulting molecules
+c***    wldpeb  :   power carried away by these atoms and molecules
+c***    wldspt  :   flux of sputtered wall material
+c***    isrftype:   surface type (iliin in Eirene)
 c***    eneutrad:   power radiated due to neutrals (only atoms at the moment)
+c***    emolrad :   power radiated due to molecules
+c***    eionrad :   power radiated due to molecular ions
 c
 
       contains
@@ -115,6 +102,10 @@ c
       allocate(pfluxm(nCv,max(1,nmold),1))
       allocate(pefluxa(nCv,max(1,natmd),1))
       allocate(pefluxm(nCv,max(1,nmold),1))
+      allocate(tfluxa(nCv,max(1,natmd),1))
+      allocate(tfluxm(nCv,max(1,nmold),1))
+      allocate(tefluxa(nCv,max(1,natmd),1))
+      allocate(tefluxm(nCv,max(1,nmold),1))
       allocate(emiss(nCv,1,1))
       allocate(emissmol(nCv,1,1))
       allocate(srcml(nCv,max(1,nmold),1))
@@ -127,7 +118,7 @@ c
       allocate(ewldm(nlimps,max(1,nmold),0:nstrad))
       allocate(wldra(nlimps,max(1,natmd),0:nstrad))
       allocate(wldrm(nlimps,max(1,nmold),0:nstrad))
-      allocate(wldpp(nlimps,nplsd,0:nstrad))
+      allocate(wldpp(nlimps,max(1,nplsd),0:nstrad))
       allocate(wldpa(nlimps,max(1,natmd),0:nstrad))
       allocate(wldpm(nlimps,max(1,nmold),0:nstrad))
       allocate(wldpeb(nlimps,0:nstrad))
@@ -135,12 +126,15 @@ c
       allocate(wldspta(nlimps,max(1,natmd),0:nstrad))
       allocate(wldsptm(nlimps,max(1,nmold),0:nstrad))
       allocate(eneutrad(nCv,max(1,natmd),0:nstrad))
+      allocate(emolrad(nCv,max(1,nmold),0:nstrad))
+      allocate(eionrad(nCv,max(1,niond),0:nstrad))
       allocate(wlarea(nlimps))
-      allocate(wlabsrp(natmd+nmold+niond+nplsd,nlimps))
+      allocate(wlabsrp(max(1,natmd+nmold+niond+nplsd),nlimps))
       allocate(wldna_res(max(1,natmd),nsgmx))
       allocate(wldnm_res(max(1,nmold),nsgmx))
       allocate(ewlda_res(max(1,natmd),nsgmx))
       allocate(ewldm_res(max(1,nmold),nsgmx))
+      allocate(ewldt_res(nsgmx))
       allocate(ewldea_res(max(1,natmd),nsgmx))
       allocate(ewldem_res(max(1,nmold),nsgmx))
       allocate(ewldrp_res(nsgmx))
@@ -148,18 +142,16 @@ c
       allocate(wldspt_res(nsgmx))
       allocate(wldspta_res(max(1,natmd),nsgmx))
       allocate(wldsptm_res(max(1,nmold),nsgmx))
-      allocate(wlpump(natmd+nmold+niond+nplsd,nsgmx))
-      allocate(wlpump_res(natmd+nmold+niond+nplsd,nsgmx))
+      allocate(wlpump(max(1,natmd+nmold+niond+nplsd),nsgmx))
+      allocate(wlpump_res(max(1,natmd+nmold+niond+nplsd),nsgmx))
       allocate(sarea_res(nsgmx))
       allocate(eirdiag_nds_ind(nstsd+1))
-      allocate(eirdiag_nds_typ(nstsd))
-      allocate(eirdiag_nds_srf(nstsd))
-      allocate(eirdiag_nds_start(nstsd))
-      allocate(eirdiag_nds_end(nstsd))
+      allocate(fnmti_b2(nstsd+1))
       allocate(isrftype(nlimps))
-      allocate(lkindp(nplsd))
+      allocate(lkindp(max(1,nplsd)))
       allocate(lkindm(max(1,nmold)))
       allocate(lkindi(max(1,niond)))
+      allocate(eirtxt(max(1,natmd+nmold+niond+nplsd)))
 
       return
       end subroutine alloc_b2mod_eirdiag
@@ -181,6 +173,10 @@ c
       deallocate(pfluxm)
       deallocate(pefluxa)
       deallocate(pefluxm)
+      deallocate(tfluxa)
+      deallocate(tfluxm)
+      deallocate(tefluxa)
+      deallocate(tefluxm)
       deallocate(emiss)
       deallocate(emissmol)
       deallocate(srcml)
@@ -201,12 +197,15 @@ c
       deallocate(wldspta)
       deallocate(wldsptm)
       deallocate(eneutrad)
+      deallocate(emolrad)
+      deallocate(eionrad)
       deallocate(wlarea)
       deallocate(wlabsrp)
       deallocate(wldna_res)
       deallocate(wldnm_res)
       deallocate(ewlda_res)
       deallocate(ewldm_res)
+      deallocate(ewldt_res)
       deallocate(ewldea_res)
       deallocate(ewldem_res)
       deallocate(ewldrp_res)
@@ -218,14 +217,12 @@ c
       deallocate(wlpump_res)
       deallocate(sarea_res)
       deallocate(eirdiag_nds_ind)
-      deallocate(eirdiag_nds_typ)
-      deallocate(eirdiag_nds_srf)
-      deallocate(eirdiag_nds_start)
-      deallocate(eirdiag_nds_end)
+      deallocate(fnmti_b2)
       deallocate(isrftype)
       deallocate(lkindp)
       deallocate(lkindm)
       deallocate(lkindi)
+      deallocate(eirtxt)
 
       return
       end subroutine dealloc_b2mod_eirdiag

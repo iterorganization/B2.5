@@ -46,7 +46,6 @@ CONTAINS
 !
     itp = itim + 1
 !
-!
 !  calculate averaged plasma profiles and sources
     arg1 = ncv*ns
     CALL BATCH_AVERAGE(arg1, na, na_mean, itp, ntim_batch)
@@ -79,7 +78,6 @@ CONTAINS
     CALL BATCH_AVERAGE_SQ(ncv, shi_tot, e_shi, itp, ntim_batch)
     arg1 = ncv*ns
     CALL BATCH_AVERAGE_SQ(arg1, smo_tot, e_smo, itp, ntim_batch)
-!
 !
     naver = naver + 1
 !
@@ -203,7 +201,7 @@ CONTAINS
     CALL CFVERW(iun, newversion)
     CALL CFWUIN(iun, 2, idum, 'nCv,ns')
     CALL CFWUCH(iun, 120, lble, 'label')
-    CALL B2WUZD_NODIFF(iun, newversion, ns, zamin, zamax, zn, am)
+    CALL B2WUZD(iun, newversion, ns, zamin, zamax, zn, am)
 !
     idum(0) = naver
     CALL CFWUIN(iun, 1, idum, 'naver')

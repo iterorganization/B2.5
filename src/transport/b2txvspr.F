@@ -30,7 +30,7 @@
       character(3) :: chns
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx
+      external b2xvsg
 *-----------------------------------------------------------------------
 *.computation
 

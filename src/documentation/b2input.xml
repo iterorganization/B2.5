@@ -608,12 +608,23 @@
 			<switchgroup>
 				<name>b2mndr_id</name>
 				<description>
-					These switches serve as identification for the simulation. They can be inherited from SOLPS-GUI:
-					Run number : The number of the run. Must be positive and no more than a 4-digit integer (i.e. span from 0 to 9999).
-					Shot number : Shot number identifying the run. Defaults to the last number found in shotnumber.history, or 0 if the file is not found.
-					Database : IMAS IDS database name (supersedes Device). Defaults to 'solps-iter' if $DEVICE if undefined. If $DEVICE is 'iter', the code internally changes it to 'ITER' to follow the IMAS convention.
-					User : The user who ran the simulation.
+					These switches serve as identification for the simulation. They can be inherited from the SOLPS-GUI:
+					IDS path : Only available if using IMAS Access Layer 5. The directory path where the IMAS data entry will be saved. Supersedes the pulse (previously shot) and run numbers. May begin with "$HOME", "$IMASDIR", or "$SOLPSTOP", that will be parsed by the code. If it begins with a '/', is understood as an absolute path, otherwise will be prefixed with the $IMASDIR environment variable. Defaults to the last line in the 'shotnumber.history' file if present, and to $IMASDIR/${pulse_number}/${run_number} otherwise or if $IMASDIR is modified from its default value by the switches below.
+					Pulse number : Pulse number identifying the run (supersedes b2mndr_shot_number). Defaults to the last number found in shotnumber.history, or 0 if the file is not found. Must be positive and non-zero if an IMAS data entry is requested. If using IMAS Access Layer 4, cannot exceed 214748.
+					Run number : The number of the run. Must be positive or zero. If using IMAS Access Layer 4, limited to 5 digits (i.e. span from 0 to 99999).
+					Database : IMAS IDS database name (supersedes b2mndr_device). Defaults to 'solps-iter' if $DEVICE if undefined. If $DEVICE is 'iter', the code internally changes it to 'ITER' to follow the IMAS convention. Can be used to rebuild the IMASDIR path.
+					User : The user who ran the simulation. Can be used to rebuild the IMASDIR path.
 				</description>
+				<switch>
+					<name>b2mndr_ids_path</name>
+					<default>See description</default>
+					<type>character*256</type>
+				</switch>
+				<switch>
+					<name>b2mndr_pulse_number</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
 				<switch>
 					<name>b2mndr_shot_number</name>
 					<default>0</default>
@@ -2614,7 +2625,7 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2sikt_fac_diss_sol</name>
+				<name>b2sikt_fac_diss</name>
 				<default>10.0</default>
 				<type>real</type>
 				<description>
@@ -4909,6 +4920,29 @@
 				<type>real</type>
 				<description>
 					Upper density bound (in m^{-3}) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+				</description>
+			</switch>
+		</category>
+		<category name="Optimization">
+			<switch>
+				<name>b2optim_save_states</name>
+				<default>0</default>
+				<description>
+					If larger than zero, specifies the number of optimization iterations between writes of the intermediate state file b2fstate_optim.XXXX.
+				</description>
+			</switch>
+			<switch>
+				<name>b2optim_reset_drift</name>
+				<default>0.4</default>
+				<description>
+					Percentage value at which drifts are reset at each function/gradient evaluation to avoid simualtion crash.
+				</description>
+			</switch>
+			<switch>
+				<name>b2optim_reset_iter</name>
+				<default>2</default>
+				<description>
+					When resetting drifts, the drift increase multiplier (e.g. fac_exb_inc) will be computed so that drifts are back at 100% in ntim/b2optim_reset_iter iterations.
 				</description>
 			</switch>
 		</category>
@@ -7729,11 +7763,22 @@
 					2 - Difference, on the desired CVs, of calculated electron temperature and values read from file, normalized with average experimental value (units must be eV).
 					3 - Difference, on the desired CVs, of calculated ion temperature and values read from file, normalized with average experimental value (units must be eV).
 					4 - Maximum electron temperature on the desired CVs (output in eV).
-					5 - Maximum heat flux on the desired FCs (output in W).
+					5 - Maximum heat flux on the desired FCs (output in W^{2}/m^{2}).
 					6 - Bayesian MAP cost function. CFSTART, CFEND indicate over which icf indexes the cost functions are to be summed (valid indexes are 1-3 and 7-9).
 					7 - Difference, on the desired CVs, of calculated electron density radial gradient and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-4}).
 					8 - Difference, on the desired CVs, of calculated electron temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m).
 					9 - Difference, on the desired CVs, of calculated ion temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m).
+					10 - Difference, on the desired CVs, of calculated ion saturation current (as ne*cs*eV) and values read from file, normalized with average experimental value (units must be kA/m^{2}).
+					11 - Heat flux peakedness on the desired FCs (output in W^{2}/m^{2}).
+					12 - Difference, on the desired FCs, of calculated perpendicular or parallel heat flux and values read from file, normalized with average experimental value (units must be in MW^{2}/m^{2}). Use PARALLEL_HF to specify whehter the parallel or perpendicular heat flux is used.
+				</description>
+			</switch>
+			<switch>
+				<name>PARALLEL_HF</name>
+				<default>TRUE</default>
+				<type>logical</type>
+				<description>
+					Indicates for cost function 12 if the heat flux considered is the one parallel to the magnetic field (TRUE) or perpendicular to the surface (FALSE). 
 				</description>
 			</switch>
 			<switch>
@@ -7803,7 +7848,7 @@
 				<default>0.0</default>
 				<type>real array of size (NSIGMA)</type>
 				<description>
-					Value of the standard deviation. For absolute STD the units are the same as the experimental data used for the cost function it refers to.
+					Value of the prediction error standard deviation. For absolute STD the units are the same as the experimental data used for the cost function it refers to.
 				</description>
 			</switch>
 			<switch>
@@ -7823,6 +7868,22 @@
 				</description>
 			</switch>
 			<switch>
+				<name>NMEAN</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of predictin error mean variables used for Bayesian MAP cost function.
+				</description>
+			</switch>
+			<switch>
+				<name>MEAN</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NMEAN)</type>
+				<description>
+					Value of the predictin error mean.
+				</description>
+			</switch>
+			<switch>
 				<name>PRIOR_TYPE</name>
 				<default>-1</default>
 				<type>integer array of size (NNVAR)</type>
@@ -7830,6 +7891,7 @@
 					Defines the type of prior distribution for each parameter for the MAP cost function. Possible values are:
 					0 - Uniform distribution (i.e. $\pi(\theta)=1.0$).
 					1 - Uninformative Gaussian prior.
+					2 - Gamma distribution, defined through mean and standard deviation.
 				</description>
 			</switch>
 			<switch>
@@ -7839,7 +7901,7 @@
 				<description>
 					Indicates parameters for the prior distributions.
 					For PRIOR_TYPE=0, not used.
-					For PRIOR_TYPE=1, PRIOR_TYPE(ii,1) indicates the mean of and PRIOR_TYPE(ii,2) indicates the standard deviation of the Gaussian distribution.
+					For PRIOR_TYPE=1 and 2, PRIOR_TYPE(ii,1) indicates the mean and PRIOR_TYPE(ii,2) indicates the standard deviation of the distribution.
 				</description>
 			</switch>
 			<switch>
@@ -7848,6 +7910,98 @@
 				<type>real array of size (NNVAR,2)</type>
 				<description>
 					Indicates the valid range for the prior distributions, outside of which the program will return an infinite cost function value. PRIOR_RANGE(:,1) sets the lower range and PRIOR_RANGE(:,2) sets the upper range. (p_infty is a parameter currently set to 1e30).
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_CF_DATA</name>
+				<default>0</default>
+				<type>integer array of size (NCF)</type>
+				<description>
+					For each cost function where experimental data is read, specifies whether or not to shift the separatrix position in the experimental data spatial coordinate as follows: (r - r_{sep}) - SHIFT_VALUE$. Unique integers larger than zero for each cost function means that each has its specific shift value. Using the same integer for two (or more) cost functions makes to code use the same shift value for those cost functions (the first SHIFT_VALUE among the cost function with the same integer is adopted). Possible usage: Thomson scattering data of density and temperature which should be defined in two separate cost functions but come from the same source and thus have the same shift. NSHIFT is then the number of unique integers and is used to define other parameters below other parameters.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_VALUE</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Defines the value of the shift in millimeters for each cost function with SHIFT_CF_DATA .neq. 0. Tis is also used as initial guess in case of optimization.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_PRIOR_TYPE</name>
+				<default>-1</default>
+				<type>integer array of size (NSHIFT)</type>
+				<description>
+					Same as PRIOR_TYPE but defined for each unique cost function shift.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_PRIOR_PAR</name>
+				<default>-1.0</default>
+				<type>real*8 array of size (NSHIFT,2)</type>
+				<description>
+					Same as PRIOR_PAR but defined for each unique cost function shift.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_PRIOR_RANGE</name>
+				<default>10*p_infty</default>
+				<type>real*8 array of size (NSHIFT,2)</type>
+				<description>
+					Same as PRIOR_RANGE but defined for each unique cost function shift.
+				</description>
+			</switch>
+
+
+			<switch>
+				<name>CORR_MODEL</name>
+				<default>0</default>
+				<type>integer array of size (NCF)</type>
+				<description>
+					Specifies the type of correlation model for the covariance matrix in the MAP cost function.Possible values are:
+					0 - No correlation, thus simple diagonal covariance matrix.
+					1 - Correlation model based on exponential decay with a correlation length specified using CORR_LENGTH.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_LENGTH</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Defines the value of the correlation length in millimeters for each MAP-type cost function with CORR_MODEL>0. This is also used as initial guess in case of optimization.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_CUTOFF</name>
+				<default>0.01</default>
+				<type>real*8</type>
+				<description>
+					For the exponential decay correlation model, off-diagonal elements with value of the exponential below this threshold are set to zero.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_PRIOR_TYPE</name>
+				<default>-1</default>
+				<type>integer array of size (NCORR_OPT)</type>
+				<description>
+					Same as PRIOR_TYPE but defined for each MAP cost function where sensitivity for CORR_LENGTH is calculated or this parameter optimized (see CORR_OPT). NCORR_OPT is the number of correlation lengths which are optimized, so for which a prior is required.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_PRIOR_PAR</name>
+				<default>-1.0</default>
+				<type>real*8 array of size (NCORR_OPT,2)</type>
+				<description>
+					Same as PRIOR_PAR but defined for each MAP cost function where sensitivity for CORR_LENGTH is calculated or this parameter optimized.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_PRIOR_RANGE</name>
+				<default>10*p_infty</default>
+				<type>real*8 array of size (NCORR_OPT,2)</type>
+				<description>
+					Same as PRIOR_RANGE but defined for each MAP cost function where sensitivity for CORR_LENGTH is calculated or this parameter optimized.
 				</description>
 			</switch>
 			<switch>
@@ -7860,17 +8014,18 @@
 			</switch>
 			<switch>
 				<name>PARTYPE</name>
-				<default>-1</default>
+				<default>-2</default>
 				<type>integer array of size (NNVAR)</type>
 				<description>
 					 Indicates the type of sensitivity/optimization parameter. Valid options are:
-					 0 - sigma, standard deviation in likelihood function for Bayesian inference (one for each plasma quantity and location used). These must ALWAYS be the last parameters in the vector!
+					 -1 - mean, error mean in likelihood function for Bayesian inference (one for each plasma quantity and location used). If present, these must ALWAYS be the last parameters in the vector!
+					 0 - sigma, standard deviation in likelihood function for Bayesian inference (one for each plasma quantity and location used). If present, these must ALWAYS be defined after each physical parameter (PARTYPE>0) and before the mean (PARTYPE=-1).
 					 1 - parm_dna or tdata(:,:,1,:)
 					 2 - parm_dpa or tdata(:,:,2,:)
 					 3 - parm_hci or tdata(:,:,3,:)
 					 4 - parm_hce or tdata(:,:,4,:)
-					 5 - parm_vla or tdata(:,:,5,:) (not yet tested!)
-					 6 - nothing yet (presumably y-component of vla?)
+					 5 - tdata(:,:,5,:) (not yet tested!)
+					 6 - parm_vla or tdata(:,:,6,:)
 					 7 - parm_vsa or tdata(:,:,7,:)
 					 8 - parm_sig or tdata(:,:,8,:)
 					 9 - parm_alf or tdata(:,:,9,:)
@@ -7911,7 +8066,31 @@
 				<default>.true.</default>
 				<type>logical array of size (NSIGMA)</type>
 				<description>
-					For each sigma, spcifies whether its sensitivity is computed or not, and thus whether it is optimized or fixed.
+					For each sigma, specifies whether its sensitivity is computed or not, and thus whether it is optimized or fixed.
+				</description>
+			</switch>
+			<switch>
+				<name>MEAN_OPT</name>
+				<default>.false.</default>
+				<type>logical array of size (NMEAN)</type>
+				<description>
+					For each mean, specifies whether its sensitivity is computed or not, and thus whether it is optimized or fixed.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_OPT</name>
+				<default>.false.</default>
+				<type>logical array of size (NSHIFT)</type>
+				<description>
+					For each SHIFT_CF_VALUE, specifies whether its sensitivity is computed or not, and whether is optimized or fixed.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_OPT</name>
+				<default>.false.</default>
+				<type>logical array of size (NCF)</type>
+				<description>
+					For each MAP cost function where CORR_MODEL>0, specifies whether CORR_LENGTH sensitivity is computed or not, and whether is optimized or fixed.
 				</description>
 			</switch>
 			<switch>
@@ -7960,7 +8139,7 @@
 				<default>10*p_infty</default>
 				<type>real array of size (NPAR_OPT)</type>
 				<description>
-					Initial guess for each optimization parameter. (p_infty is a parameter currently set to 1e30).
+					Initial guess for each optimization parameter. Must be defined (p_infty is a parameter currently set to 1e30).
 				</description>
 			</switch>
 			<switch>
@@ -7977,6 +8156,46 @@
 				<type>real array of size (NPAR_OPT)</type>
 				<description>
 					Upper bound for each optimization parameter.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_L</name>
+				<default>-1000.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Lower bound for SHIFT_CF_DATA parameters.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_U</name>
+				<default>1000.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Upper bound for SHIFT_CF_DATA parameters.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_L</name>
+				<default>-10*p_infty</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Lower bound for CORR_LENGTH parameters. Must be specified for each cost function!
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_U</name>
+				<default>10*p_infty</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Upper bound for CORR_LENGTH parameters. Must be specified for each cost function!
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_RESCALE</name>
+				<default>1.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Same as PAR_RESCALE but defined for CORR_LENGTH} parameters. Must be specified for each cost function!
 				</description>
 			</switch>
 			<switch>

@@ -14,6 +14,7 @@
 !
 MODULE B2MOD_LAYER_DIFFV
   USE B2MOD_TYPES
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -21,42 +22,12 @@ MODULE B2MOD_LAYER_DIFFV
 !
   INTEGER :: nwall, ntrack, nalloys
   PARAMETER (ntrack=4, nalloys=6)
-  PARAMETER (nwall=2*(200+2)+(4+2)*(100+2)+300+50)
-!
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
+  PARAMETER (nwall=2*(def_nxd+2)+(def_ncut+2)*(def_nyd+2)+def_nlim+&
+&   def_nsts)
 !
   INTEGER :: layer_nconstituents(nwall)
   INTEGER :: layer_nzconstituents(nwall, 6+ntrack)
-  REAL(kind=r8) :: layer_nrelconstituents(nwall, 6+ntrack)
+  REAL(kind=r8) :: layer_relconstituents(nwall, 6+ntrack)
   REAL(kind=r8), ALLOCATABLE :: layer_thickness(:)
   REAL(kind=r8), ALLOCATABLE :: layer_mass_density(:)
   REAL(kind=r8), ALLOCATABLE :: layer_depth(:)
@@ -121,7 +92,7 @@ CONTAINS
     layer_alloys = ' '
     layer_nconstituents = 0
     layer_nzconstituents = 0
-    layer_nrelconstituents = 0.0_R8
+    layer_relconstituents = 0.0_R8
 !
     RETURN
   END SUBROUTINE ALLOC_B2MOD_LAYER

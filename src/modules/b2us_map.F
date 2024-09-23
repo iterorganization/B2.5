@@ -604,7 +604,7 @@
       subroutine init_mapping(m)
       implicit none
       type (mapping), intent (inout) :: m
-      integer :: i, j, k, l
+      integer :: i, j, k, l, indd
       integer :: iCv, iCv1, iCv2, iFc, iFcc, iFs, iVa, iVb,
      *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, inew
       integer :: totalcount, fscount, iactive, icount, fccount
@@ -917,7 +917,8 @@ cwdk  can be derived directly from data in that file
       deallocate(indXpt)
 
       if (allocated(m%strDiv)) then
-       if (maxval(m%strDiv).gt.0) then
+       indd = maxval(m%strDiv)
+       if (indd.gt.0) then
         allocate(m%ifdiv(maxval(m%strDiv)))
         allocate(m%ivdiv(maxval(m%strDiv)))
         allocate(m%divFcP(maxval(m%strDiv),2))
@@ -927,7 +928,7 @@ cwdk  can be derived directly from data in that file
         m%ivdiv = 0
         m%divFcP(1,1) = 1
         m%divFcP(:,2) = 0
-        do i = 1, maxval(m%strDiv)  ! first assemble all the faces
+        do i = 1, indd  ! first assemble all the faces
           if (i.gt.1) m%divFcP(i,1) = m%divFcP(i-1,1) + m%divFcP(i-1,2)
           do iFc = 1, m%nFc
             if (m%fcReg(iFc).eq.freg(i)) then
@@ -941,7 +942,7 @@ cwdk  can be derived directly from data in that file
         allocate(m%divFcOr(icount))
         m%divFcOr = 0.0_R8
         m%divFc(1:icount) = indFc(1:icount)
-        do i = 1, maxval(m%strDiv) ! now re-order them
+        do i = 1, indd ! now re-order them
           allocate(old_face_list(m%divFcP(i,2)))
           allocate(new_face_list(m%divFcP(i,2)))
           old_face_list(1:m%divFcP(i,2))=

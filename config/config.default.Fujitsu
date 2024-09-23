@@ -36,8 +36,8 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional
@@ -48,6 +48,7 @@ LINK_MOD =
 
 FC = /opt/Fujitsu/bin/f90
 FC = f95f
+FN = ${FC}
 
 ifdef SOLPS_DEBUG
   FCOPTS = -g -A2 -Am -X9 -Hasu --trace
@@ -63,6 +64,7 @@ DBLSED =
 INCMOD = -I
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -81,11 +83,10 @@ ifdef LD_CATALYST
   CXXFLAGS = -std=c++11
 endif
 
-LD = /opt/Fujitsu/bin/f90
-LD = f95f
+LD = ${FC}
+LN = ${FN}
 # LDOPTS = -Bstatic
 
-LCPP = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile

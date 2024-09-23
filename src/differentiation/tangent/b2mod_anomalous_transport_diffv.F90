@@ -35,31 +35,36 @@ CONTAINS
   SUBROUTINE DEALLOC_ANOMALOUS_TRANSPORT()
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
+    INTRINSIC ALLOCATED
 !
-    DEALLOCATE(sig0)
-    DEALLOCATE(hce0)
-    DEALLOCATE(alf0)
-    DEALLOCATE(hci0)
-    DEALLOCATE(hcn0)
-    DEALLOCATE(hcib)
-    DEALLOCATE(chcb)
-    DEALLOCATE(dpa0)
-    DEALLOCATE(dna0)
-    DEALLOCATE(vsa0)
-    DEALLOCATE(vla0)
-    DEALLOCATE(csig_an)
-    DEALLOCATE(calf_an)
-    DEALLOCATE(cvsa_an)
+    IF (.NOT.ALLOCATED(sig0)) THEN
+      RETURN
+    ELSE
+      DEALLOCATE(sig0)
+      DEALLOCATE(hce0)
+      DEALLOCATE(alf0)
+      DEALLOCATE(hci0)
+      DEALLOCATE(hcn0)
+      DEALLOCATE(hcib)
+      DEALLOCATE(chcb)
+      DEALLOCATE(dpa0)
+      DEALLOCATE(dna0)
+      DEALLOCATE(vsa0)
+      DEALLOCATE(vla0)
+      DEALLOCATE(csig_an)
+      DEALLOCATE(calf_an)
+      DEALLOCATE(cvsa_an)
 !srv 15.12.05 11.06.08
-    DEALLOCATE(vma0)
+      DEALLOCATE(vma0)
 !srv 15.12.05 11.06.08
-    DEALLOCATE(dkt0)
-    DEALLOCATE(dzt0)
-    DEALLOCATE(dna_exb)
-    DEALLOCATE(hce_exb)
-    DEALLOCATE(hci_exb)
+      DEALLOCATE(dkt0)
+      DEALLOCATE(dzt0)
+      DEALLOCATE(dna_exb)
+      DEALLOCATE(hce_exb)
+      DEALLOCATE(hci_exb)
 !
-    RETURN
+      RETURN
+    END IF
   END SUBROUTINE DEALLOC_ANOMALOUS_TRANSPORT
 
 !

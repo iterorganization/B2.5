@@ -3,12 +3,13 @@
 !
 !  Differentiation of b2tinnt in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: fchin
-!   with respect to varying inputs: ti na fna *(rt.rza) csigin
-!                po
+!   with respect to varying inputs: fna *(rt.rza) csigin *(pl.na)
+!                *(pl.ua) *(pl.po) *(pl.ti)
 !   Plus diff mem management of: mpg.intcellp:in mpg.intcellr:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.vxvol:in rt.rza:in
+!                geo.cvbb:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxvol:in rt.rza:in pl.na:in
+!                pl.ua:in pl.po:in pl.te:in pl.ti:in
 !
 !
 !
@@ -25,8 +26,8 @@
 !
 !srv 08.03.99 16.06.09
 SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
-& rt, rtd, facdrift, fac_exb, ismain, ismain0, te, po, pod, ti, tid, na&
-& , nad, fna, fnad, csigin, csigind, fchin, fchind, nbdirs)
+& rt, rtd, facdrift, fac_exb, ismain, ismain0, pl, pld, fna, fnad, &
+& csigin, csigind, fchin, fchind, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
@@ -36,6 +37,7 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_EIRDIAG, ONLY : dab2, rfluxa, pfluxa, tfluxa
 !  Hint: nFc should be the size of dimension 1 of array fcqalf
 !  Hint: nFc should be the size of dimension 1 of array fchc
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -48,12 +50,12 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !   ..set internal parameters on first call
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0
-  REAL(kind=r8) :: facdrift(nfc), fac_exb(nfc), te(ncv), po(ncv), ti(ncv&
-& ), na(ncv, 0:ns-1), fna(nfc, 0:1, 0:ns-1), csigin(nfc, 0:1, 0:ns-1, 0:&
-& ns-1)
-  REAL(kind=r8) :: pod(nbdirsmax, ncv), tid(nbdirsmax, ncv), nad(&
-& nbdirsmax, ncv, 0:ns-1), fnad(nbdirsmax, nfc, 0:1, 0:ns-1), csigind(&
-& nbdirsmax, nfc, 0:1, 0:ns-1, 0:ns-1)
+  REAL(kind=r8) :: facdrift(nfc), fac_exb(nfc), fna(nfc, 0:1, 0:ns-1), &
+& csigin(nfc, 0:1, 0:ns-1, 0:ns-1)
+  REAL(kind=r8) :: fnad(nbdirsmax, nfc, 0:1, 0:ns-1), csigind(nbdirsmax&
+& , nfc, 0:1, 0:ns-1, 0:ns-1)
+  TYPE(B2PLASMA), INTENT(IN) :: pl
+  TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
@@ -70,44 +72,53 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !
 !  1. purpose
 !
-!     B2TINNT computes the ion-neutral current
+!     B2TINNT computes the ion-neutral current.
 !
 !-----------------------------------------------------------------------
 !.declarations
 !
 !   ..local variables
-  INTEGER :: is, is0
+  INTEGER :: is, is0, icv
   INTEGER, SAVE :: ncall=0
   REAL(kind=r8), PARAMETER :: eps=1.0e-60_R8
 !srv 08.07.09
 !WG_TODO work(-1:nx,-1:ny,0:1,0:ns-1),
-  REAL(kind=r8) :: fnac(ncv, 0:1, 0:ns-1), vntrc(ncv, 0:1), vntrf(nfc, 0&
-& :1), tif(nfc), naf(nfc, 0:ns-1), dpo(nfc, 0:1), fnan(nfc, 0:1, 0:ns-1)&
-& , wrk(ncv), wrk0(nfc, 0:1, 0:ns-1), wrk1(nfc, 0:1), wrk2(nfc), wrkvx(&
-& nvx), wrk3(nfc, 0:1), wrkv(ncv)
+  REAL(kind=r8) :: fnac(ncv, 0:1, 0:ns-1), vntrc(ncv, 0:1), vntrc_fluid(&
+& ncv, 0:1), vntrc_kin(ncv, 0:1), na_fluid(ncv, 0:ns-1), na_kin(ncv, 0:&
+& ns-1), na_tot(ncv, 0:ns-1), vntrf(nfc, 0:1), tif(nfc), naf(nfc, 0:ns-1&
+& ), dpo(nfc, 0:1), fnan(nfc, 0:1, 0:ns-1), wrk(ncv), wrk0(nfc, 0:1, 0:&
+& ns-1), wrk1(nfc, 0:1), wrk2(nfc), wrkvx(nvx), pit(ncv), pit2(ncv), &
+& vntrc_par(ncv)
   REAL(kind=r8) :: fnacd(nbdirsmax, ncv, 0:1, 0:ns-1), vntrcd(nbdirsmax&
-& , ncv, 0:1), vntrfd(nbdirsmax, nfc, 0:1), tifd(nbdirsmax, nfc), nafd(&
-& nbdirsmax, nfc, 0:ns-1), dpod(nbdirsmax, nfc, 0:1), fnand(nbdirsmax, &
-& nfc, 0:1, 0:ns-1), wrkd(nbdirsmax, ncv), wrk0d(nbdirsmax, nfc, 0:1, 0:&
-& ns-1), wrk1d(nbdirsmax, nfc, 0:1), wrk2d(nbdirsmax, nfc), wrkvxd(&
-& nbdirsmax, nvx), wrkvd(nbdirsmax, ncv)
+& , ncv, 0:1), vntrc_fluidd(nbdirsmax, ncv, 0:1), na_fluidd(nbdirsmax, &
+& ncv, 0:ns-1), na_totd(nbdirsmax, ncv, 0:ns-1), vntrfd(nbdirsmax, nfc, &
+& 0:1), tifd(nbdirsmax, nfc), nafd(nbdirsmax, nfc, 0:ns-1), dpod(&
+& nbdirsmax, nfc, 0:1), fnand(nbdirsmax, nfc, 0:1, 0:ns-1), wrkd(&
+& nbdirsmax, ncv), wrk0d(nbdirsmax, nfc, 0:1, 0:ns-1), wrk1d(nbdirsmax, &
+& nfc, 0:1), wrk2d(nbdirsmax, nfc), wrkvxd(nbdirsmax, nvx)
 !srv 20.10.17
   REAL(kind=r8) :: facdriftm, fac_exbm
   INTRINSIC MAXVAL
-  EXTERNAL XERRAB
+  EXTERNAL B2XVSG
   INTRINSIC LOG
   INTRINSIC NINT
+  INTRINSIC ABS
+  REAL(kind=r8), DIMENSION(nCv) :: abs0
+  REAL(kind=r8), DIMENSION(nCv) :: abs1
+  REAL(kind=r8), DIMENSION(nCv) :: abs2
+  REAL(kind=r8), DIMENSION(nCv) :: abs3
   INTEGER :: nd
   REAL(kind=r8), DIMENSION(nFc) :: temp
   REAL(kind=r8), DIMENSION(ncv) :: temp0
-  REAL(kind=r8), DIMENSION(nFc) :: temp1
-  REAL(kind=r8), DIMENSION(nfc) :: temp2
+  REAL(kind=r8) :: temp1
+  REAL(kind=r8), DIMENSION(nFc) :: temp2
   REAL(kind=r8), DIMENSION(nfc) :: temp3
+  REAL(kind=r8), DIMENSION(nfc) :: temp4
   INTEGER :: nbdirs
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: mode = 1
 !      integer, save :: iout = 0
-!      integer, save :: fchin_in_core = 0                                  !srv 16.11.17
+!      integer, save :: fchin_in_core = 0                                !srv 16.11.17
 !   ..procedures
 !   ..initialisation
 !-----------------------------------------------------------------------
@@ -119,263 +130,382 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !        call ipgeti ('b2tinnt_iout', iout)
 !        call ipgeti ('b2tral_mode', mode)
-!        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 16.11.17
-!   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+!        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16.11.17
+!   ..test input
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(1 .LE. ns, 'faulty argument ns')
+  CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
+&       'faulty argument ismain')
+  CALL XERTST(0 .LE. ismain0 .AND. ismain0 .LT. ns .AND. (is_neutral(&
+&       ismain0) .OR. ismain0 .EQ. ismain), 'faulty argument ismain0')
 !srv 09.07.99
-  fchin = 0.0e0_R8
+  fchin = 0.0_R8
 !srv 20.10.17
   facdriftm = MAXVAL(facdrift)
   fac_exbm = MAXVAL(fac_exb)
+!! end conditions to calculated i-n current
 !
   IF (switch%pot_eq .EQ. 1 .AND. (facdriftm .GT. 0.0_R8 .OR. fac_exbm &
 &     .GT. 0.0_R8) .AND. switch%no_current .EQ. 0 .AND. switch%&
-&     fch_ion_neutral .NE. 0.0e0_R8) THEN
+&     fch_ion_neutral .NE. 0.0_R8) THEN
 !srv 26.07.06 01.07.99
-    IF (switch%use_eirene .NE. 0) THEN
-      CALL XERRAB('b2tinnt not yet available for WG + EIRENE')
+!
+!   ..extensive tests on first few calls
+    IF (ncall .LT. 3) THEN
+!    ..test sign of te
+      CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+      DO nd=1,nbdirsmax
+        wrk2d(nd, :) = 0.D0
+      END DO
+!    ..test sign of csigin
+      DO is=0,ns-1
+        DO is0=0,ns-1
+          DO nd=1,nbdirs
+            wrk2d(nd, :) = 0.D0
+            wrk2d(nd, :) = geo%fcqalf(:, 1)*csigind(nd, :, 1, is, is0)
+          END DO
+          wrk2 = csigin(:, 0, is, is0)*geo%fcqalf(:, 0)
+          CALL B2XVSG(nfc, wrk2, 1, 'csigin0', '.ge.')
+          wrk2 = csigin(:, 1, is, is0)*geo%fcqalf(:, 1)
+          CALL B2XVSG(nfc, wrk2, 1, 'csigin1', '.ge.')
+        END DO
+      END DO
+      DO nd=1,nbdirsmax
+        nafd(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        na_totd(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        na_fluidd(nd, :, :) = 0.D0
+      END DO
+    ELSE
+      DO nd=1,nbdirsmax
+        nafd(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        na_totd(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        wrk2d(nd, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        na_fluidd(nd, :, :) = 0.D0
+      END DO
+    END IF
+!
+!    ..assemble densities (for fluid, kinetic, or hybrid fluid-kinetic neutrals)
+    DO is=0,ns-1
+      DO nd=1,nbdirs
+        na_fluidd(nd, :, is) = pld%na(nd, :, is)
+      END DO
+      na_fluid(:, is) = pl%na(:, is)
+      IF (is_neutral(is) .AND. switch%use_eirene .NE. 0) THEN
+!! -> to prevent dividing by zero for the velocities below
+        na_kin(:, is) = dab2(:, b2eatcr(is), 1) + switch%b2mndr_na_min
+      ELSE
+        na_kin(:, is) = 0.0_R8
+      END IF
+      DO nd=1,nbdirs
+        na_totd(nd, :, is) = na_fluidd(nd, :, is)
+      END DO
+      na_tot(:, is) = na_kin(:, is) + na_fluid(:, is)
+!   ..interpolate na to cell faces
+      CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, na_tot(:, is), &
+&               na_totd(:, :, is), naf(:, is), nafd(:, :, is), nbdirs)
+    END DO
+!    ..computation of gradients and interpolations
+    IF (switch%b2tinnt_style .EQ. 0) THEN
+!! b2tinnt_style = 0
+!   ..interpolate ti to cell faces
+      DO nd=1,nbdirsmax
+        tifd(nd, :) = 0.D0
+      END DO
+      CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, pl%ti, pld%ti, tif&
+&               , tifd, nbdirs)
+!   ..pre-computation of differences
+      DO nd=1,nbdirsmax
+        dpod(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        wrkvxd(nd, :) = 0.D0
+      END DO
+      CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%po, pld%po&
+&            , wrkvx, wrkvxd, dpo, dpod, nbdirs)
+      DO nd=1,nbdirsmax
+        wrk0d(nd, :, :, :) = 0.D0
+      END DO
+      DO is=0,ns-1
+!srv 12.05.18
+        DO nd=1,nbdirs
+          wrkd(nd, :) = na_totd(nd, :, is)/na_tot(:, is)
+        END DO
+        wrk = LOG(na_tot(:, is))
+        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk, wrkd, &
+&              wrkvx, wrkvxd, wrk0(:, :, is), wrk0d(:, :, :, is), nbdirs&
+&             )
+      END DO
+      DO nd=1,nbdirsmax
+        wrk1d(nd, :, :) = 0.D0
+      END DO
+      CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%ti, pld%ti&
+&            , wrkvx, wrkvxd, wrk1, wrk1d, nbdirs)
       DO nd=1,nbdirsmax
         fchind(nd, :, :) = 0.D0
       END DO
+      DO nd=1,nbdirsmax
+        vntrfd(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        fnand(nd, :, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        vntrc_fluidd(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        vntrcd(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        fnacd(nd, :, :, :) = 0.D0
+      END DO
     ELSE
-!   ..extensive tests on first few calls
-      IF (ncall .LT. 3) THEN
-!    ..test sign of te
-        CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-!    ..test sign of csigin
-        DO is=0,ns-1
-          DO is0=0,ns-1
-            wrk3(:, 0) = csigin(:, 0, is, is0)*geo%fcqalf(:, 0)
-            wrk3(:, 1) = csigin(:, 1, is, is0)*geo%fcqalf(:, 1)
-            CALL B2XVSG_NODIFF(nfc, wrk3(:, 0), 1, 'csigin0', '.ge.')
-            CALL B2XVSG_NODIFF(nfc, wrk3(:, 1), 1, 'csigin1', '.ge.')
-          END DO
-        END DO
-      END IF
-      IF (switch%b2tinnt_style .EQ. 0) THEN
-!   ..interpolate ti to cell faces
-        DO nd=1,nbdirsmax
-          tifd(nd, :) = 0.D0
-        END DO
-        CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, ti, tid, tif, &
-&                 tifd, nbdirs)
+      DO nd=1,nbdirsmax
+        wrk0d(nd, :, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        wrkvxd(nd, :) = 0.D0
+      END DO
+!! b2tinnt_style = 1 (default)
+      DO is=0,ns-1
 !   ..pre-computation of differences
-        DO nd=1,nbdirsmax
-          dpod(nd, :, :) = 0.D0
+        DO nd=1,nbdirs
+          wrkd(nd, :) = pl%ti*pld%na(nd, :, is) + pl%na(:, is)*pld%ti(nd&
+&           , :)
         END DO
-        DO nd=1,nbdirsmax
-          wrkvxd(nd, :) = 0.D0
-        END DO
-        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, po, pod, &
-&              wrkvx, wrkvxd, dpo, dpod, nbdirs)
-        DO nd=1,nbdirsmax
-          wrk0d(nd, :, :, :) = 0.D0
-        END DO
-        DO is=0,ns-1
-!srv 12.05.18
-          DO nd=1,nbdirs
-            wrkd(nd, :) = nad(nd, :, is)/na(:, is)
-          END DO
-          wrk = LOG(na(:, is))
-          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk, wrkd&
-&                , wrkvx, wrkvxd, wrk0(:, :, is), wrk0d(:, :, :, is), &
-&                nbdirs)
-        END DO
-        DO nd=1,nbdirsmax
-          wrk1d(nd, :, :) = 0.D0
-        END DO
-        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, ti, tid, &
-&              wrkvx, wrkvxd, wrk1, wrk1d, nbdirs)
-        DO nd=1,nbdirsmax
-          fchind(nd, :, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          vntrfd(nd, :, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          fnand(nd, :, :, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          nafd(nd, :, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          wrk2d(nd, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          vntrcd(nd, :, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          fnacd(nd, :, :, :) = 0.D0
-        END DO
-      ELSE
-        DO nd=1,nbdirsmax
-          nafd(nd, :, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          wrk0d(nd, :, :, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          wrkvxd(nd, :) = 0.D0
-        END DO
-        DO is=0,ns-1
-!   ..interpolate na to cell faces
-          CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, na(:, is), nad(&
-&                   :, :, is), naf(:, is), nafd(:, :, is), nbdirs)
-!   ..pre-computation of differences
-          DO nd=1,nbdirs
-            wrkvd(nd, :) = ti(:)*nad(nd, :, is) + na(:, is)*tid(nd, :)
-          END DO
-          wrkv(:) = na(:, is)*ti(:)
-          CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrkv, &
-&                wrkvd, wrkvx, wrkvxd, wrk0(:, :, is), wrk0d(:, :, :, is&
-&                ), nbdirs)
-        END DO
-        DO nd=1,nbdirsmax
-          dpod(nd, :, :) = 0.D0
-        END DO
-        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, po, pod, &
-&              wrkvx, wrkvxd, dpo, dpod, nbdirs)
-        DO nd=1,nbdirsmax
-          fchind(nd, :, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          vntrfd(nd, :, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          fnand(nd, :, :, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          tifd(nd, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          wrk1d(nd, :, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          wrk2d(nd, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          vntrcd(nd, :, :) = 0.D0
-        END DO
-        DO nd=1,nbdirsmax
-          fnacd(nd, :, :, :) = 0.D0
-        END DO
-      END IF
-!   ..calculate the contribution of ion-neutral current
-      DO is0=0,ns-1
-        IF (is_neutral(is0) .AND. NINT(zn(is0)) .EQ. 1) THEN
-!srv 20.10.17
-!      ..get fluxes divided by area
-          temp = geo%fcs*geo%fcqalf(:, 0) + eps
-          DO nd=1,nbdirs
-            fnand(nd, :, 0, is0) = fnad(nd, :, 0, is0)/temp
-          END DO
-          fnan(:, 0, is0) = fna(:, 0, is0)/temp
-          temp = geo%fcs*geo%fcqalf(:, 1) + eps
-!       ..get fluxes in the cell centre
-          CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, fnan(:, 0, is0), &
-&                   fnand(:, :, 0, is0), fnac(:, 0, is0), fnacd(:, :, 0&
-&                   , is0), nbdirs)
-!      ..get velocities in the cell centre
-          temp0 = fnac(:, 0, is0)/na(:, is0)
-          DO nd=1,nbdirs
-            fnand(nd, :, 1, is0) = fnad(nd, :, 1, is0)/temp
-            vntrcd(nd, :, 0) = (fnacd(nd, :, 0, is0)-temp0*nad(nd, :, &
-&             is0))/na(:, is0)
-          END DO
-          fnan(:, 1, is0) = fna(:, 1, is0)/temp
-          CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellr, fnan(:, 1, is0), &
-&                   fnand(:, :, 1, is0), fnac(:, 1, is0), fnacd(:, :, 1&
-&                   , is0), nbdirs)
-          vntrc(:, 0) = temp0
-          temp0 = fnac(:, 1, is0)/na(:, is0)
-          DO nd=1,nbdirs
-            vntrcd(nd, :, 1) = (fnacd(nd, :, 1, is0)-temp0*nad(nd, :, &
-&             is0))/na(:, is0)
-          END DO
-          vntrc(:, 1) = temp0
-!      ..interpolate velocities in the cell face
-          CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, vntrc(:, 0), &
-&                   vntrcd(:, :, 0), vntrf(:, 0), vntrfd(:, :, 0), &
-&                   nbdirs)
-          CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, vntrc(:, 1), &
-&                   vntrcd(:, :, 1), vntrf(:, 1), vntrfd(:, :, 1), &
-&                   nbdirs)
-!      ..components of ion-neutral current
-          DO is=0,ns-1
-            IF (.NOT.is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
-!srv 20.10.17
-              DO nd=1,nbdirs
-                wrkd(nd, :) = qe*rtd%rza(nd, :, is)
-              END DO
-              wrk = qe*rt%rza(:, is)
-              CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, wrk, wrkd, &
-&                       wrk2, wrk2d, nbdirs)
-              IF (switch%b2tinnt_style .EQ. 0) THEN
-                temp1 = geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:, 2))
-                temp2 = (wrk1(:, 0)+tif*wrk0(:, 0, is))/wrk2
-                temp3 = geo%fcbb(:, 2)*geo%fcbb(:, 2)*(-dpo(:, 0)-temp2)&
-&                 /(geo%fcbb(:, 3)*geo%fcbb(:, 3)) + geo%fcbb(:, 2)*&
-&                 vntrf(:, 1)*temp1
-                DO nd=1,nbdirs
-                  fchind(nd, :, 0) = fchind(nd, :, 0) + temp3*csigind(nd&
-&                   , :, 0, is, is0) + csigin(:, 0, is, is0)*(geo%fcbb(:&
-&                   , 2)**2*(-dpod(nd, :, 0)-(wrk1d(nd, :, 0)+wrk0(:, 0&
-&                   , is)*tifd(nd, :)+tif*wrk0d(nd, :, 0, is)-temp2*&
-&                   wrk2d(nd, :))/wrk2)/geo%fcbb(:, 3)**2+temp1*geo%fcbb&
-&                   (:, 2)*vntrfd(nd, :, 1))
-                END DO
-                fchin(:, 0) = fchin(:, 0) + csigin(:, 0, is, is0)*temp3
-                temp1 = geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:, 2))
-                temp3 = (wrk1(:, 1)+tif*wrk0(:, 1, is))/wrk2
-                temp2 = -dpo(:, 1) - temp3 - geo%fcbb(:, 2)*vntrf(:, 0)*&
-&                 temp1
-                DO nd=1,nbdirs
-                  fchind(nd, :, 1) = fchind(nd, :, 1) + temp2*csigind(nd&
-&                   , :, 1, is, is0) + csigin(:, 1, is, is0)*(-dpod(nd, &
-&                   :, 1)-(wrk1d(nd, :, 1)+wrk0(:, 1, is)*tifd(nd, :)+&
-&                   tif*wrk0d(nd, :, 1, is)-temp3*wrk2d(nd, :))/wrk2-&
-&                   temp1*geo%fcbb(:, 2)*vntrfd(nd, :, 0))
-                END DO
-                fchin(:, 1) = fchin(:, 1) + csigin(:, 1, is, is0)*temp2
-              ELSE
-                temp1 = geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:, 2))
-                temp3 = wrk0(:, 0, is)/(naf(:, is)*wrk2)
-                temp2 = geo%fcbb(:, 2)*geo%fcbb(:, 2)*(-dpo(:, 0)-temp3)&
-&                 /(geo%fcbb(:, 3)*geo%fcbb(:, 3)) + geo%fcbb(:, 2)*&
-&                 vntrf(:, 1)*temp1
-                DO nd=1,nbdirs
-                  fchind(nd, :, 0) = fchind(nd, :, 0) + temp2*csigind(nd&
-&                   , :, 0, is, is0) + csigin(:, 0, is, is0)*(geo%fcbb(:&
-&                   , 2)**2*(-dpod(nd, :, 0)-(wrk0d(nd, :, 0, is)-temp3*&
-&                   (wrk2*nafd(nd, :, is)+naf(:, is)*wrk2d(nd, :)))/(naf&
-&                   (:, is)*wrk2))/geo%fcbb(:, 3)**2+temp1*geo%fcbb(:, 2&
-&                   )*vntrfd(nd, :, 1))
-                END DO
-                fchin(:, 0) = fchin(:, 0) + csigin(:, 0, is, is0)*temp2
-                temp1 = geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:, 2))
-                temp3 = wrk0(:, 1, is)/(naf(:, is)*wrk2)
-                temp2 = -dpo(:, 1) - temp3 - geo%fcbb(:, 2)*vntrf(:, 0)*&
-&                 temp1
-                DO nd=1,nbdirs
-                  fchind(nd, :, 1) = fchind(nd, :, 1) + temp2*csigind(nd&
-&                   , :, 1, is, is0) + csigin(:, 1, is, is0)*(-dpod(nd, &
-&                   :, 1)-(wrk0d(nd, :, 1, is)-temp3*(wrk2*nafd(nd, :, &
-&                   is)+naf(:, is)*wrk2d(nd, :)))/(naf(:, is)*wrk2)-&
-&                   temp1*geo%fcbb(:, 2)*vntrfd(nd, :, 0))
-                END DO
-                fchin(:, 1) = fchin(:, 1) + csigin(:, 1, is, is0)*temp2
-              END IF
-            END IF
-          END DO
-        END IF
+        wrk = pl%na(:, is)*pl%ti
+        CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, wrk, wrkd, &
+&              wrkvx, wrkvxd, wrk0(:, :, is), wrk0d(:, :, :, is), nbdirs&
+&             )
+      END DO
+      DO nd=1,nbdirsmax
+        dpod(nd, :, :) = 0.D0
+      END DO
+      CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pl%po, pld%po&
+&            , wrkvx, wrkvxd, dpo, dpod, nbdirs)
+      DO nd=1,nbdirsmax
+        fchind(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        vntrfd(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        fnand(nd, :, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        tifd(nd, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        wrk1d(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        vntrc_fluidd(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        vntrcd(nd, :, :) = 0.D0
+      END DO
+      DO nd=1,nbdirsmax
+        fnacd(nd, :, :, :) = 0.D0
       END DO
     END IF
+!   ..calculate neutral velocities
+!! Remark: when the perpendicular momentum sources are scored in EIRENE and available in B2.5, this routine should be rewritten. 
+!This would be more self-consistent, whereas now
+!! it is a mix of post-processed EIRENE atom velocities and B2.5 CX rates.
+    DO is0=0,ns-1
+!! end condition for neutral species
+      IF (is_neutral(is0) .AND. NINT(zn(is0)) .EQ. 1) THEN
+!srv 20.10.17
+!      ..get fluxes divided by area
+        temp = geo%fcs*geo%fcqalf(:, 0) + eps
+        DO nd=1,nbdirs
+          fnand(nd, :, 0, is0) = fnad(nd, :, 0, is0)/temp
+        END DO
+        fnan(:, 0, is0) = fna(:, 0, is0)/temp
+        temp = geo%fcs*geo%fcqalf(:, 1) + eps
+!       ..get fluxes in the cell centre
+        CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, fnan(:, 0, is0), &
+&                 fnand(:, :, 0, is0), fnac(:, 0, is0), fnacd(:, :, 0, &
+&                 is0), nbdirs)
+!      ..get velocities in the cell centre
+!        .. fluid velocities
+!! poloidal
+        temp0 = fnac(:, 0, is0)/na_fluid(:, is0)
+        WHERE (geo%cvbb(:, 0) .GE. 0.0) 
+          abs0 = geo%cvbb(:, 0)
+        ELSEWHERE
+          abs0 = -geo%cvbb(:, 0)
+        END WHERE
+!! pitch, b_theta / B
+        pit = abs0/geo%cvbb(:, 3)
+        WHERE (geo%cvbb(:, 2) .GE. 0.0) 
+          abs1 = geo%cvbb(:, 2)
+        ELSEWHERE
+          abs1 = -geo%cvbb(:, 2)
+        END WHERE
+!! b_phi / B
+        pit2 = abs1/geo%cvbb(:, 3)
+        DO nd=1,nbdirs
+          fnand(nd, :, 1, is0) = fnad(nd, :, 1, is0)/temp
+          vntrc_fluidd(nd, :, 0) = (fnacd(nd, :, 0, is0)-temp0*na_fluidd&
+&           (nd, :, is0))/na_fluid(:, is0)
+          vntrc_fluidd(nd, :, 0) = (vntrc_fluidd(nd, :, 0)-pit*pld%ua(nd&
+&           , :, is0))/pit2
+        END DO
+        fnan(:, 1, is0) = fna(:, 1, is0)/temp
+        CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellr, fnan(:, 1, is0), &
+&                 fnand(:, :, 1, is0), fnac(:, 1, is0), fnacd(:, :, 1, &
+&                 is0), nbdirs)
+        vntrc_fluid(:, 0) = temp0
+!! radial
+!! correct from poloidal to diamagnetic
+        temp0 = fnac(:, 1, is0)/na_fluid(:, is0)
+        DO nd=1,nbdirs
+          vntrc_fluidd(nd, :, 1) = (fnacd(nd, :, 1, is0)-temp0*na_fluidd&
+&           (nd, :, is0))/na_fluid(:, is0)
+        END DO
+        vntrc_fluid(:, 1) = temp0
+        vntrc_fluid(:, 0) = (vntrc_fluid(:, 0)-pl%ua(:, is0)*pit)/pit2
+!        .. kinetic velocities
+        IF (switch%use_eirene .NE. 0) THEN
+!! poloidal
+          vntrc_kin(:, 0) = pfluxa(:, b2eatcr(is0), 1)/na_kin(:, is0)
+!! radial
+!! correct from poloidal to diamagnetic
+          vntrc_kin(:, 1) = rfluxa(:, b2eatcr(is0), 1)/na_kin(:, is0)
+          WHERE (geo%cvbb(:, 0) .GE. 0.0) 
+            abs2 = geo%cvbb(:, 0)
+          ELSEWHERE
+            abs2 = -geo%cvbb(:, 0)
+          END WHERE
+!! pitch, b_theta / B
+          pit = abs2/geo%cvbb(:, 3)
+          WHERE (geo%cvbb(:, 2) .GE. 0.0) 
+            abs3 = geo%cvbb(:, 2)
+          ELSEWHERE
+            abs3 = -geo%cvbb(:, 2)
+          END WHERE
+!! b_phi / B
+          pit2 = abs3/geo%cvbb(:, 3)
+!! approximate parallel velocity as toroidal velocity/b_phi
+          vntrc_par = tfluxa(:, b2eatcr(is0), 1)/na_kin(:, is0)/pit2
+          vntrc_kin(:, 0) = (vntrc_kin(:, 0)-vntrc_par*pit)/pit2
+        ELSE
+          vntrc_kin(:, 0) = 0.0_R8
+          vntrc_kin(:, 1) = 0.0_R8
+          vntrc_par = 0.0_R8
+        END IF
+!! density-weighted average of the velocities, needed for spatially hybrid fluid-kinetic neutrals
+        DO icv=1,ncv
+          temp1 = (vntrc_kin(icv, 0)*na_kin(icv, is0)+vntrc_fluid(icv, 0&
+&           )*na_fluid(icv, is0))/na_tot(icv, is0)
+          DO nd=1,nbdirs
+            vntrcd(nd, icv, 0) = (na_fluid(icv, is0)*vntrc_fluidd(nd, &
+&             icv, 0)+vntrc_fluid(icv, 0)*na_fluidd(nd, icv, is0)-temp1*&
+&             na_totd(nd, icv, is0))/na_tot(icv, is0)
+          END DO
+          vntrc(icv, 0) = temp1
+          temp1 = (vntrc_kin(icv, 1)*na_kin(icv, is0)+vntrc_fluid(icv, 1&
+&           )*na_fluid(icv, is0))/na_tot(icv, is0)
+          DO nd=1,nbdirs
+            vntrcd(nd, icv, 1) = (na_fluid(icv, is0)*vntrc_fluidd(nd, &
+&             icv, 1)+vntrc_fluid(icv, 1)*na_fluidd(nd, icv, is0)-temp1*&
+&             na_totd(nd, icv, is0))/na_tot(icv, is0)
+          END DO
+          vntrc(icv, 1) = temp1
+        END DO
+!      ..interpolate velocities in the cell face
+        CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, vntrc(:, 0), &
+&                 vntrcd(:, :, 0), vntrf(:, 0), vntrfd(:, :, 0), nbdirs)
+        CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, vntrc(:, 1), &
+&                 vntrcd(:, :, 1), vntrf(:, 1), vntrfd(:, :, 1), nbdirs)
+!      ..components of ion-neutral current
+        DO is=0,ns-1
+!! end condition for ion species
+          IF (.NOT.is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
+!srv 20.10.17
+            DO nd=1,nbdirs
+              wrkd(nd, :) = qe*rtd%rza(nd, :, is)
+            END DO
+            wrk = qe*rt%rza(:, is)
+            CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, wrk, wrkd, &
+&                     wrk2, wrk2d, nbdirs)
+!! end b2tinnt_style
+            IF (switch%b2tinnt_style .EQ. 0) THEN
+              temp2 = geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:, 2))
+              temp3 = (wrk1(:, 0)+tif*wrk0(:, 0, is))/wrk2
+              temp4 = geo%fcbb(:, 2)*geo%fcbb(:, 2)*(-dpo(:, 0)-temp3)/(&
+&               geo%fcbb(:, 3)*geo%fcbb(:, 3)) + geo%fcbb(:, 2)*vntrf(:&
+&               , 1)*temp2
+              DO nd=1,nbdirs
+                fchind(nd, :, 0) = fchind(nd, :, 0) + temp4*csigind(nd, &
+&                 :, 0, is, is0) + csigin(:, 0, is, is0)*(geo%fcbb(:, 2)&
+&                 **2*(-dpod(nd, :, 0)-(wrk1d(nd, :, 0)+wrk0(:, 0, is)*&
+&                 tifd(nd, :)+tif*wrk0d(nd, :, 0, is)-temp3*wrk2d(nd, :)&
+&                 )/wrk2)/geo%fcbb(:, 3)**2+temp2*geo%fcbb(:, 2)*vntrfd(&
+&                 nd, :, 1))
+              END DO
+              fchin(:, 0) = fchin(:, 0) + csigin(:, 0, is, is0)*temp4
+              temp2 = geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:, 2))
+              temp4 = (wrk1(:, 1)+tif*wrk0(:, 1, is))/wrk2
+              temp3 = -dpo(:, 1) - temp4 - geo%fcbb(:, 3)*vntrf(:, 0)*&
+&               temp2
+              DO nd=1,nbdirs
+                fchind(nd, :, 1) = fchind(nd, :, 1) + temp3*csigind(nd, &
+&                 :, 1, is, is0) + csigin(:, 1, is, is0)*(-dpod(nd, :, 1&
+&                 )-(wrk1d(nd, :, 1)+wrk0(:, 1, is)*tifd(nd, :)+tif*&
+&                 wrk0d(nd, :, 1, is)-temp4*wrk2d(nd, :))/wrk2-temp2*geo&
+&                 %fcbb(:, 3)*vntrfd(nd, :, 0))
+              END DO
+              fchin(:, 1) = fchin(:, 1) + csigin(:, 1, is, is0)*temp3
+            ELSE
+              temp2 = geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:, 2))
+              temp4 = wrk0(:, 0, is)/(naf(:, is)*wrk2)
+              temp3 = geo%fcbb(:, 2)*geo%fcbb(:, 2)*(-dpo(:, 0)-temp4)/(&
+&               geo%fcbb(:, 3)*geo%fcbb(:, 3)) + geo%fcbb(:, 2)*vntrf(:&
+&               , 1)*temp2
+              DO nd=1,nbdirs
+                fchind(nd, :, 0) = fchind(nd, :, 0) + temp3*csigind(nd, &
+&                 :, 0, is, is0) + csigin(:, 0, is, is0)*(geo%fcbb(:, 2)&
+&                 **2*(-dpod(nd, :, 0)-(wrk0d(nd, :, 0, is)-temp4*(wrk2*&
+&                 nafd(nd, :, is)+naf(:, is)*wrk2d(nd, :)))/(naf(:, is)*&
+&                 wrk2))/geo%fcbb(:, 3)**2+temp2*geo%fcbb(:, 2)*vntrfd(&
+&                 nd, :, 1))
+              END DO
+              fchin(:, 0) = fchin(:, 0) + csigin(:, 0, is, is0)*temp3
+              temp2 = geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:, 2))
+              temp4 = wrk0(:, 1, is)/(naf(:, is)*wrk2)
+              temp3 = -dpo(:, 1) - temp4 - geo%fcbb(:, 3)*vntrf(:, 0)*&
+&               temp2
+              DO nd=1,nbdirs
+                fchind(nd, :, 1) = fchind(nd, :, 1) + temp3*csigind(nd, &
+&                 :, 1, is, is0) + csigin(:, 1, is, is0)*(-dpod(nd, :, 1&
+&                 )-(wrk0d(nd, :, 1, is)-temp4*(wrk2*nafd(nd, :, is)+naf&
+&                 (:, is)*wrk2d(nd, :)))/(naf(:, is)*wrk2)-temp2*geo%&
+&                 fcbb(:, 3)*vntrfd(nd, :, 0))
+              END DO
+              fchin(:, 1) = fchin(:, 1) + csigin(:, 1, is, is0)*temp3
+            END IF
+          END IF
+        END DO
+      END IF
+    END DO
   ELSE
     DO nd=1,nbdirsmax
       fchind(nd, :, :) = 0.D0
     END DO
   END IF
-!srv 08.07.09 }
+!! end loop over ion species
+!! end loop over neutral species                                           !srv 08.07.09 }
 !
 !
 ! ..return
@@ -400,8 +530,7 @@ END SUBROUTINE B2TINNT_DV
 !
 !srv 08.03.99 16.06.09
 SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
-& facdrift, fac_exb, ismain, ismain0, te, po, ti, na, fna, csigin, fchin&
-&)
+& facdrift, fac_exb, ismain, ismain0, pl, fna, csigin, fchin)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
@@ -411,6 +540,7 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_EIRDIAG, ONLY : dab2, rfluxa, pfluxa, tfluxa
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
@@ -420,9 +550,9 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
 !   ..set internal parameters on first call
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0
-  REAL(kind=r8) :: facdrift(nfc), fac_exb(nfc), te(ncv), po(ncv), ti(ncv&
-& ), na(ncv, 0:ns-1), fna(nfc, 0:1, 0:ns-1), csigin(nfc, 0:1, 0:ns-1, 0:&
-& ns-1)
+  REAL(kind=r8) :: facdrift(nfc), fac_exb(nfc), fna(nfc, 0:1, 0:ns-1), &
+& csigin(nfc, 0:1, 0:ns-1, 0:ns-1)
+  TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -435,31 +565,38 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
 !
 !  1. purpose
 !
-!     B2TINNT computes the ion-neutral current
+!     B2TINNT computes the ion-neutral current.
 !
 !-----------------------------------------------------------------------
 !.declarations
 !
 !   ..local variables
-  INTEGER :: is, is0
+  INTEGER :: is, is0, icv
   INTEGER, SAVE :: ncall=0
   REAL(kind=r8), PARAMETER :: eps=1.0e-60_R8
 !srv 08.07.09
 !WG_TODO work(-1:nx,-1:ny,0:1,0:ns-1),
-  REAL(kind=r8) :: fnac(ncv, 0:1, 0:ns-1), vntrc(ncv, 0:1), vntrf(nfc, 0&
-& :1), tif(nfc), naf(nfc, 0:ns-1), dpo(nfc, 0:1), fnan(nfc, 0:1, 0:ns-1)&
-& , wrk(ncv), wrk0(nfc, 0:1, 0:ns-1), wrk1(nfc, 0:1), wrk2(nfc), wrkvx(&
-& nvx), wrk3(nfc, 0:1), wrkv(ncv)
+  REAL(kind=r8) :: fnac(ncv, 0:1, 0:ns-1), vntrc(ncv, 0:1), vntrc_fluid(&
+& ncv, 0:1), vntrc_kin(ncv, 0:1), na_fluid(ncv, 0:ns-1), na_kin(ncv, 0:&
+& ns-1), na_tot(ncv, 0:ns-1), vntrf(nfc, 0:1), tif(nfc), naf(nfc, 0:ns-1&
+& ), dpo(nfc, 0:1), fnan(nfc, 0:1, 0:ns-1), wrk(ncv), wrk0(nfc, 0:1, 0:&
+& ns-1), wrk1(nfc, 0:1), wrk2(nfc), wrkvx(nvx), pit(ncv), pit2(ncv), &
+& vntrc_par(ncv)
 !srv 20.10.17
   REAL(kind=r8) :: facdriftm, fac_exbm
   INTRINSIC MAXVAL
-  EXTERNAL XERRAB
+  EXTERNAL B2XVSG
   INTRINSIC LOG
   INTRINSIC NINT
+  INTRINSIC ABS
+  REAL(kind=r8), DIMENSION(nCv) :: abs0
+  REAL(kind=r8), DIMENSION(nCv) :: abs1
+  REAL(kind=r8), DIMENSION(nCv) :: abs2
+  REAL(kind=r8), DIMENSION(nCv) :: abs3
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: mode = 1
 !      integer, save :: iout = 0
-!      integer, save :: fchin_in_core = 0                                  !srv 16.11.17
+!      integer, save :: fchin_in_core = 0                                !srv 16.11.17
 !   ..procedures
 !   ..initialisation
 !-----------------------------------------------------------------------
@@ -471,114 +608,192 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !        call ipgeti ('b2tinnt_iout', iout)
 !        call ipgeti ('b2tral_mode', mode)
-!        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)              !srv 16.11.17
-!   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+!        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16.11.17
+!   ..test input
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(1 .LE. ns, 'faulty argument ns')
+  CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
+&       'faulty argument ismain')
+  CALL XERTST(0 .LE. ismain0 .AND. ismain0 .LT. ns .AND. (is_neutral(&
+&       ismain0) .OR. ismain0 .EQ. ismain), 'faulty argument ismain0')
 !srv 09.07.99
-  fchin = 0.0e0_R8
+  fchin = 0.0_R8
 !srv 20.10.17
   facdriftm = MAXVAL(facdrift)
   fac_exbm = MAXVAL(fac_exb)
+!! end conditions to calculated i-n current
 !
   IF (switch%pot_eq .EQ. 1 .AND. (facdriftm .GT. 0.0_R8 .OR. fac_exbm &
 &     .GT. 0.0_R8) .AND. switch%no_current .EQ. 0 .AND. switch%&
-&     fch_ion_neutral .NE. 0.0e0_R8) THEN
+&     fch_ion_neutral .NE. 0.0_R8) THEN
 !srv 26.07.06 01.07.99
-    IF (switch%use_eirene .NE. 0) THEN
-      CALL XERRAB('b2tinnt not yet available for WG + EIRENE')
-    ELSE
+!
 !   ..extensive tests on first few calls
-      IF (ncall .LT. 3) THEN
+    IF (ncall .LT. 3) THEN
 !    ..test sign of te
-        CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+      CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
 !    ..test sign of csigin
-        DO is=0,ns-1
-          DO is0=0,ns-1
-            wrk3(:, 0) = csigin(:, 0, is, is0)*geo%fcqalf(:, 0)
-            wrk3(:, 1) = csigin(:, 1, is, is0)*geo%fcqalf(:, 1)
-            CALL B2XVSG_NODIFF(nfc, wrk3(:, 0), 1, 'csigin0', '.ge.')
-            CALL B2XVSG_NODIFF(nfc, wrk3(:, 1), 1, 'csigin1', '.ge.')
-          END DO
+      DO is=0,ns-1
+        DO is0=0,ns-1
+          wrk2 = csigin(:, 0, is, is0)*geo%fcqalf(:, 0)
+          CALL B2XVSG(nfc, wrk2, 1, 'csigin0', '.ge.')
+          wrk2 = csigin(:, 1, is, is0)*geo%fcqalf(:, 1)
+          CALL B2XVSG(nfc, wrk2, 1, 'csigin1', '.ge.')
         END DO
-      END IF
-      IF (switch%b2tinnt_style .EQ. 0) THEN
-!   ..interpolate ti to cell faces
-        CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, ti, tif)
-!   ..pre-computation of differences
-        CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, po, wrkvx, dpo)
-        DO is=0,ns-1
-!srv 12.05.18
-          wrk = LOG(na(:, is))
-          CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, wrk, wrkvx, wrk0(&
-&                    :, :, is))
-        END DO
-        CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, ti, wrkvx, wrk1)
-      ELSE
-        DO is=0,ns-1
-!   ..interpolate na to cell faces
-          CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, na(:, is), naf(:, &
-&                is))
-!   ..pre-computation of differences
-          wrkv(:) = na(:, is)*ti(:)
-          CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, wrkv, wrkvx, wrk0&
-&                    (:, :, is))
-        END DO
-        CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, po, wrkvx, dpo)
-      END IF
-!   ..calculate the contribution of ion-neutral current
-      DO is0=0,ns-1
-        IF (is_neutral(is0) .AND. NINT(zn(is0)) .EQ. 1) THEN
-!srv 20.10.17
-!      ..get fluxes divided by area
-          fnan(:, 0, is0) = fna(:, 0, is0)/(geo%fcs*geo%fcqalf(:, 0)+eps&
-&           )
-          fnan(:, 1, is0) = fna(:, 1, is0)/(geo%fcs*geo%fcqalf(:, 1)+eps&
-&           )
-!       ..get fluxes in the cell centre
-          CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, fnan(:, 0, &
-&                       is0), fnac(:, 0, is0))
-          CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellr, fnan(:, 1, &
-&                       is0), fnac(:, 1, is0))
-!      ..get velocities in the cell centre
-          vntrc(:, 0) = fnac(:, 0, is0)/na(:, is0)
-          vntrc(:, 1) = fnac(:, 1, is0)/na(:, is0)
-!      ..interpolate velocities in the cell face
-          CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, vntrc(:, 0), vntrf&
-&                (:, 0))
-          CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, vntrc(:, 1), vntrf&
-&                (:, 1))
-!      ..components of ion-neutral current
-          DO is=0,ns-1
-            IF (.NOT.is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
-!srv 20.10.17
-              wrk = qe*rt%rza(:, is)
-              CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, wrk, wrk2)
-              IF (switch%b2tinnt_style .EQ. 0) THEN
-                fchin(:, 0) = fchin(:, 0) + csigin(:, 0, is, is0)*((-dpo&
-&                 (:, 0)-(wrk1(:, 0)+tif*wrk0(:, 0, is))/wrk2)*(geo%fcbb&
-&                 (:, 2)/geo%fcbb(:, 3))**2+geo%fcbb(:, 2)*vntrf(:, 1)*&
-&                 geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:, 2)))
-                fchin(:, 1) = fchin(:, 1) + csigin(:, 1, is, is0)*(-dpo(&
-&                 :, 1)-(wrk1(:, 1)+tif*wrk0(:, 1, is))/wrk2-geo%fcbb(:&
-&                 , 2)*vntrf(:, 0)*geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%&
-&                 fchc(:, 2)))
-              ELSE
-                fchin(:, 0) = fchin(:, 0) + csigin(:, 0, is, is0)*((-dpo&
-&                 (:, 0)-wrk0(:, 0, is)/(naf(:, is)*wrk2))*(geo%fcbb(:, &
-&                 2)/geo%fcbb(:, 3))**2+geo%fcbb(:, 2)*vntrf(:, 1)*geo%&
-&                 fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:, 2)))
-                fchin(:, 1) = fchin(:, 1) + csigin(:, 1, is, is0)*(-dpo(&
-&                 :, 1)-wrk0(:, 1, is)/(naf(:, is)*wrk2)-geo%fcbb(:, 2)*&
-&                 vntrf(:, 0)*geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(&
-&                 :, 2)))
-              END IF
-            END IF
-          END DO
-        END IF
       END DO
     END IF
+!
+!    ..assemble densities (for fluid, kinetic, or hybrid fluid-kinetic neutrals)
+    DO is=0,ns-1
+      na_fluid(:, is) = pl%na(:, is)
+      IF (is_neutral(is) .AND. switch%use_eirene .NE. 0) THEN
+!! -> to prevent dividing by zero for the velocities below
+        na_kin(:, is) = dab2(:, b2eatcr(is), 1) + switch%b2mndr_na_min
+      ELSE
+        na_kin(:, is) = 0.0_R8
+      END IF
+      na_tot(:, is) = na_kin(:, is) + na_fluid(:, is)
+!   ..interpolate na to cell faces
+      CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, na_tot(:, is), naf(:, &
+&            is))
+    END DO
+!    ..computation of gradients and interpolations
+    IF (switch%b2tinnt_style .EQ. 0) THEN
+!! b2tinnt_style = 0
+!   ..interpolate ti to cell faces
+      CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, pl%ti, tif)
+!   ..pre-computation of differences
+      CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, pl%po, wrkvx, dpo)
+      DO is=0,ns-1
+!srv 12.05.18
+        wrk = LOG(na_tot(:, is))
+        CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, wrk, wrkvx, wrk0(:&
+&                  , :, is))
+      END DO
+      CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, pl%ti, wrkvx, wrk1)
+    ELSE
+!! b2tinnt_style = 1 (default)
+      DO is=0,ns-1
+!   ..pre-computation of differences
+        wrk = pl%na(:, is)*pl%ti
+        CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, wrk, wrkvx, wrk0(:&
+&                  , :, is))
+      END DO
+      CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, pl%po, wrkvx, dpo)
+    END IF
+!   ..calculate neutral velocities
+!! Remark: when the perpendicular momentum sources are scored in EIRENE and available in B2.5, this routine should be rewritten. 
+!This would be more self-consistent, whereas now
+!! it is a mix of post-processed EIRENE atom velocities and B2.5 CX rates.
+    DO is0=0,ns-1
+!! end condition for neutral species
+      IF (is_neutral(is0) .AND. NINT(zn(is0)) .EQ. 1) THEN
+!srv 20.10.17
+!      ..get fluxes divided by area
+        fnan(:, 0, is0) = fna(:, 0, is0)/(geo%fcs*geo%fcqalf(:, 0)+eps)
+        fnan(:, 1, is0) = fna(:, 1, is0)/(geo%fcs*geo%fcqalf(:, 1)+eps)
+!       ..get fluxes in the cell centre
+        CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, fnan(:, 0, is0)&
+&                     , fnac(:, 0, is0))
+        CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellr, fnan(:, 1, is0)&
+&                     , fnac(:, 1, is0))
+!      ..get velocities in the cell centre
+!        .. fluid velocities
+!! poloidal
+        vntrc_fluid(:, 0) = fnac(:, 0, is0)/na_fluid(:, is0)
+!! radial
+!! correct from poloidal to diamagnetic
+        vntrc_fluid(:, 1) = fnac(:, 1, is0)/na_fluid(:, is0)
+        WHERE (geo%cvbb(:, 0) .GE. 0.0) 
+          abs0 = geo%cvbb(:, 0)
+        ELSEWHERE
+          abs0 = -geo%cvbb(:, 0)
+        END WHERE
+!! pitch, b_theta / B
+        pit = abs0/geo%cvbb(:, 3)
+        WHERE (geo%cvbb(:, 2) .GE. 0.0) 
+          abs1 = geo%cvbb(:, 2)
+        ELSEWHERE
+          abs1 = -geo%cvbb(:, 2)
+        END WHERE
+!! b_phi / B
+        pit2 = abs1/geo%cvbb(:, 3)
+        vntrc_fluid(:, 0) = (vntrc_fluid(:, 0)-pl%ua(:, is0)*pit)/pit2
+!        .. kinetic velocities
+        IF (switch%use_eirene .NE. 0) THEN
+!! poloidal
+          vntrc_kin(:, 0) = pfluxa(:, b2eatcr(is0), 1)/na_kin(:, is0)
+!! radial
+!! correct from poloidal to diamagnetic
+          vntrc_kin(:, 1) = rfluxa(:, b2eatcr(is0), 1)/na_kin(:, is0)
+          WHERE (geo%cvbb(:, 0) .GE. 0.0) 
+            abs2 = geo%cvbb(:, 0)
+          ELSEWHERE
+            abs2 = -geo%cvbb(:, 0)
+          END WHERE
+!! pitch, b_theta / B
+          pit = abs2/geo%cvbb(:, 3)
+          WHERE (geo%cvbb(:, 2) .GE. 0.0) 
+            abs3 = geo%cvbb(:, 2)
+          ELSEWHERE
+            abs3 = -geo%cvbb(:, 2)
+          END WHERE
+!! b_phi / B
+          pit2 = abs3/geo%cvbb(:, 3)
+!! approximate parallel velocity as toroidal velocity/b_phi
+          vntrc_par = tfluxa(:, b2eatcr(is0), 1)/na_kin(:, is0)/pit2
+          vntrc_kin(:, 0) = (vntrc_kin(:, 0)-vntrc_par*pit)/pit2
+        ELSE
+          vntrc_kin(:, 0) = 0.0_R8
+          vntrc_kin(:, 1) = 0.0_R8
+          vntrc_par = 0.0_R8
+        END IF
+!! density-weighted average of the velocities, needed for spatially hybrid fluid-kinetic neutrals
+        DO icv=1,ncv
+          vntrc(icv, 0) = (vntrc_fluid(icv, 0)*na_fluid(icv, is0)+&
+&           vntrc_kin(icv, 0)*na_kin(icv, is0))/na_tot(icv, is0)
+          vntrc(icv, 1) = (vntrc_fluid(icv, 1)*na_fluid(icv, is0)+&
+&           vntrc_kin(icv, 1)*na_kin(icv, is0))/na_tot(icv, is0)
+        END DO
+!      ..interpolate velocities in the cell face
+        CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, vntrc(:, 0), vntrf(:&
+&              , 0))
+        CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, vntrc(:, 1), vntrf(:&
+&              , 1))
+!      ..components of ion-neutral current
+        DO is=0,ns-1
+!! end condition for ion species
+          IF (.NOT.is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
+!srv 20.10.17
+            wrk = qe*rt%rza(:, is)
+            CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, wrk, wrk2)
+!! end b2tinnt_style
+            IF (switch%b2tinnt_style .EQ. 0) THEN
+              fchin(:, 0) = fchin(:, 0) + csigin(:, 0, is, is0)*((-dpo(:&
+&               , 0)-(wrk1(:, 0)+tif*wrk0(:, 0, is))/wrk2)*(geo%fcbb(:, &
+&               2)/geo%fcbb(:, 3))**2+geo%fcbb(:, 2)*vntrf(:, 1)*geo%&
+&               fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:, 2)))
+              fchin(:, 1) = fchin(:, 1) + csigin(:, 1, is, is0)*(-dpo(:&
+&               , 1)-(wrk1(:, 1)+tif*wrk0(:, 1, is))/wrk2-geo%fcbb(:, 3)&
+&               *vntrf(:, 0)*geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:&
+&               , 2)))
+            ELSE
+              fchin(:, 0) = fchin(:, 0) + csigin(:, 0, is, is0)*((-dpo(:&
+&               , 0)-wrk0(:, 0, is)/(naf(:, is)*wrk2))*(geo%fcbb(:, 2)/&
+&               geo%fcbb(:, 3))**2+geo%fcbb(:, 2)*vntrf(:, 1)*geo%fcqgam&
+&               (:, 0)*(geo%fchc(:, 1)+geo%fchc(:, 2)))
+              fchin(:, 1) = fchin(:, 1) + csigin(:, 1, is, is0)*(-dpo(:&
+&               , 1)-wrk0(:, 1, is)/(naf(:, is)*wrk2)-geo%fcbb(:, 3)*&
+&               vntrf(:, 0)*geo%fcqgam(:, 0)*(geo%fchc(:, 1)+geo%fchc(:&
+&               , 2)))
+            END IF
+          END IF
+        END DO
+      END IF
+    END DO
   END IF
-!srv 08.07.09 }
+!! end loop over ion species
+!! end loop over neutral species                                           !srv 08.07.09 }
 !
 !
 ! ..return

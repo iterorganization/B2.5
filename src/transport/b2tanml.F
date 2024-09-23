@@ -41,7 +41,7 @@
       real (kind=R8) :: dpo(nFc,0:1), pov(mpg%nVx)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx, diff_r
+      external b2xvsg, diff_r
 *-----------------------------------------------------------------------
 *.computation
 

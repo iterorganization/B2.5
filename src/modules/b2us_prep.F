@@ -2431,7 +2431,7 @@
 #endif
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -2631,7 +2631,7 @@
       end do
 
 #ifdef WG_TODO
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=idb,file='debug.out')
 #else
       idb = newunit()
@@ -3793,7 +3793,7 @@
       integer :: ix, iy, ic, iFc
       integer :: nout_st, io, idum(0:9)
       character lblst*120, lblps*120
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -4750,7 +4750,7 @@
 !      reshireg(0:nnreg(0)) = st % diag % reshireg(0:nnreg(0))
 
 *   ..write b2fstate_st in structured format
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=nout_st,file='b2fstate_st',iostat=io)
 #else
       nout_st = newunit()
@@ -4784,7 +4784,7 @@
       close(nout_st)
 
 *   ..write b2fplasmf_st in structured format
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=nout_st,file='b2fplasmf_st',iostat=io)
 #else
       nout_st = newunit()
@@ -4840,13 +4840,13 @@
         implicit none
         integer, intent(in) :: nnreg(0:2)
         integer :: ii, iout
-#ifndef F2003
+#ifdef LEGACYCOMP
         integer newunit
         external newunit
 #endif
 
 ! csc Provide conversion of x/y directed regions
-#ifdef F2003
+#ifndef LEGACYCOMP
         open(newunit=iout,file='b2us.regions.parameters')
 #else
         iout = newunit()
@@ -4879,7 +4879,7 @@
         integer :: ix, iy, iyi, iyo, iymin, iymax, iout,
      .             n_omp, n_imp, n_sep
         integer :: autodet = 1
-#ifndef F2003
+#ifdef LEGACYCOMP
         integer newunit
         external newunit
 #endif
@@ -5057,7 +5057,7 @@
           call xerrab('conv_midplane: unexpected coordinates for rzimp')
         endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
         open(newunit=iout,file='b2us.midplane.parameters')
 #else
         iout = newunit()
@@ -5070,7 +5070,7 @@
         write(iout,'(a,f6.2,a,f6.2)') ' Ri1 = ', ri(1),' Zi1 = ', zi(1)
         write(iout,'(a,f6.2,a,f6.2)') ' Ri2 = ', ri(2),' Zi2 = ', zi(2)
         close(iout)
-#ifdef F2003
+#ifndef LEGACYCOMP
         open(newunit=iout,file='b2us.user.parameters')
 #else
         open(unit=iout,file='b2us.user.parameters')
