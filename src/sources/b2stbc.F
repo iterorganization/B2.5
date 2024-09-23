@@ -7,9 +7,11 @@
       use b2mod_types
 !      use b2mod_geo_corner
       use b2mod_constants
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan 2017
      1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
      2          b2stbc_shi0to3,balance_netcdf
+#endif
       use b2us_feedback
       use b2mod_b2cmpa
       use b2mod_time
@@ -85,7 +87,7 @@
 *   ..procedures
       intrinsic nint
       external xertst, sfill, b2saxpy, ipgetr, ipgeti
-      external b2xvsg, b2xvff, b2xvps, b2stbc_phys
+      external b2xvsg, b2xvps, b2stbc_phys
 #ifdef WG_TODO
      & , b2stbc_bas, b2ssum                                            !srv 27.06.21
 #endif
@@ -611,6 +613,7 @@ c      write(*,*) 'Copying sne0 to b2stbc_sne'
      2 srw%sne0(:,1)*dv%ne(:)
 c      write(*,*) 'Copied s..0 to b2stbc_s..'
 
+#ifndef FIXED_POINT
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2stbc_sna0to1 = srw%sna0
@@ -618,6 +621,7 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stbc_she0to3 = srw%she0
         b2stbc_shi0to3 = srw%shi0
       endif
+#endif
 
       if(ncall_b2stbc.eq.0 .or. main_call) ncall_b2stbc = ncall_b2stbc+1
       call subend ()

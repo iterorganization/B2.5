@@ -175,7 +175,7 @@ c     .            .gt.0.0_R8
         filename = 'b2.feedback_save.parameters.'//edition
       endif
 cxpb We do the write explicitly to avoid array overflows when the problem
-cxpb size is changed in DIMENSIONS.F
+cxpb size is changed in b2mod_dimensions
       if(feedback_namelist_used) then
         open(nwrite,file=trim(filename))
         write(nwrite,'(a9)') '&FEEDBACK'
@@ -2520,12 +2520,12 @@ cxpb size is changed in DIMENSIONS.F
       use b2mod_version
       implicit none
       integer :: ifb, iout
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open(newunit=iout,file='b2us.feedback_control.parameters')
 #else
       iout = newunit()

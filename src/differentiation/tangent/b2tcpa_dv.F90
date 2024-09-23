@@ -24,10 +24,11 @@
 !.specification
 !
 !srv 13.01.17
-SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, te&
-& , ted, po, pod, ne, ned, na, nad, ua, uad, rza, rzad, rz2, rz2d, zeff&
-& , zeffd, csig, csigd, calf, calfd, ehx, ehxd, st_ext, st_extd, fch_p, &
-& fch_pd, fch_pi_c, fch_pi_cd, fch_pi_f, fch_pi_fd, nbdirs)
+SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
+& , mpgd, te, ted, po, pod, ne, ned, na, nad, ua, uad, rza, rzad, rz2, &
+& rz2d, zeff, zeffd, csig, csigd, calf, calfd, ehx, ehxd, st_ext, &
+& st_extd, fch_p, fch_pd, fch_pi_c, fch_pi_cd, fch_pi_f, fch_pi_fd, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -35,9 +36,10 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, te&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tcpa
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tcpa, ncall_b2xehx
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2xehx
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -49,6 +51,7 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, te&
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -86,10 +89,11 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, te&
 !
 !   ..local variables
   REAL(kind=r8) :: tev(nvx), dtep(nfc), wrk(nfc, 0:1)
-  REAL(kind=r8) :: tevd(nbdirsmax, nvx), dtepd(nbdirsmax, nfc)
+  REAL(kind=r8) :: tevd(nbdirsmax, nvx), dtepd(nbdirsmax, nfc), wrkd(&
+& nbdirsmax, nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: arg1
   INTEGER :: nd
   INTEGER :: nbdirs
@@ -101,15 +105,18 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, te&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tcpa')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2tcpa .LT. 3) THEN
 !    ..test sign of ne, te, csig, calf
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    DO nd=1,nbdirs
+      wrkd(nd, :, :) = 0.D0
+    END DO
     wrk = csig*geo%fcqalf
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, wrk, 1, 'csig', '.ge.')
+    CALL B2XVSG(arg1, wrk, 1, 'csig', '.ge.')
   END IF
 !srv 26.07.06 }
 !
@@ -139,8 +146,8 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, te&
     IF (switch%b2sigp_style .EQ. 2) THEN
       CALL B2XZEF_DV(ncv, ns, rz2, rz2d, na, nad, ne, ned, zeff, zeffd, &
 &              st_ext, nbdirs)
-      CALL B2XPIC_DV(ncv, ns, mpg, qe, rza, rzad, geo%cvbb, na, nad, ua&
-&              , uad, zeff, zeffd, st_ext, fch_pi_c, fch_pi_cd, nbdirs)
+      CALL B2XPIC_DV(ncv, ns, qe, rza, rzad, geo%cvbb, na, nad, ua, uad&
+&              , zeff, zeffd, st_ext, fch_pi_c, fch_pi_cd, nbdirs)
       CALL B2XPIF_DV(ncv, nfc, switch, geo, mpg, fch_pi_c, fch_pi_cd, &
 &              fch_pi_f, fch_pi_fd, nbdirs)
     ELSE
@@ -156,10 +163,10 @@ SUBROUTINE B2TCPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, te&
       fch_pd(nd, :, 1) = 0.D0
     END DO
     fch_p = fch_p - fch_pi_f
-    fch_p(:, 1) = 0.0e0_R8
+    fch_p(:, 1) = 0.0_R8
   ELSE
 !srv 26.07.06 {
-    fch_p = 0.0e0_R8
+    fch_p = 0.0_R8
     ehx = 0.0_R8
     DO nd=1,nbdirsmax
       fch_pd(nd, :, :) = 0.D0
@@ -197,9 +204,10 @@ SUBROUTINE B2TCPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, te, po, ne&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tcpa
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tcpa, ncall_b2xehx
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2xehx
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -239,7 +247,7 @@ SUBROUTINE B2TCPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, te, po, ne&
   REAL(kind=r8) :: tev(nvx), dtep(nfc), wrk(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: arg1
 !   ..initialization
 !-----------------------------------------------------------------------
@@ -249,15 +257,15 @@ SUBROUTINE B2TCPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, te, po, ne&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tcpa')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2tcpa .LT. 3) THEN
 !    ..test sign of ne, te, csig, calf
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
     wrk = csig*geo%fcqalf
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, wrk, 1, 'csig', '.ge.')
+    CALL B2XVSG(arg1, wrk, 1, 'csig', '.ge.')
   END IF
 !srv 26.07.06 }
 !
@@ -273,7 +281,7 @@ SUBROUTINE B2TCPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, te, po, ne&
 &     switch%prl_cur
     IF (switch%b2sigp_style .EQ. 2) THEN
       CALL B2XZEF_NODIFF(ncv, ns, rz2, na, ne, zeff, st_ext)
-      CALL B2XPIC_NODIFF(ncv, ns, mpg, qe, rza, geo%cvbb, na, ua, zeff, &
+      CALL B2XPIC_NODIFF(ncv, ns, qe, rza, geo%cvbb, na, ua, zeff, &
 &                  st_ext, fch_pi_c)
       CALL B2XPIF_NODIFF(ncv, nfc, switch, geo, mpg, fch_pi_c, fch_pi_f)
     ELSE
@@ -282,10 +290,10 @@ SUBROUTINE B2TCPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, te, po, ne&
     END IF
 !srv 13.01.17 }
     fch_p = fch_p - fch_pi_f
-    fch_p(:, 1) = 0.0e0_R8
+    fch_p(:, 1) = 0.0_R8
   ELSE
 !srv 26.07.06 {
-    fch_p = 0.0e0_R8
+    fch_p = 0.0_R8
     ehx = 0.0_R8
   END IF
 !

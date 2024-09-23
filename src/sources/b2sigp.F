@@ -9,10 +9,12 @@
       use b2us_geo
       use b2us_map
       use b2mod_b2cmpa
+#ifndef FIXED_POINT
       use b2mod_balance                                           !djm Jan2017
      & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf,
      &          b2sigp_pstati0to3, b2sigp_pstate0to3, !djm Jul2018
      &          b2sigp_smogpi0to3, b2sigp_smogpe0to3, b2sigp_smogpgr0to3
+#endif
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -148,6 +150,7 @@
               smbgp(ix,iy,1) = 0.0_R8
               smbgp(ix,iy,2) = 0.0_R8
               smbgp(ix,iy,3) = 0.0_R8
+#ifndef FIXED_POINT
               if (balance_netcdf.ne.0) then !djm Jan2017
 !     djm Mar2017 NB - THE FOLLOWING DOES NOT GIVE EXACT BALANCE! FOR EXACT PRESSURE BALANCE IN
 !                      THIS REGION, USE B2SIGP_STYLE = 1
@@ -164,6 +167,7 @@
                 b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
               endif
+#endif
             elseif(rightix(ix,iy).eq.nx+1) then
               wrk5(ix,iy) = -hz(ix,iy)*
      &         (vol(ix,iy)/hx(ix,iy))*
@@ -179,6 +183,7 @@
               smbgp(ix,iy,1) = 0.0_R8
               smbgp(ix,iy,2) = 0.0_R8
               smbgp(ix,iy,3) = 0.0_R8
+#ifndef FIXED_POINT
               if (balance_netcdf.ne.0) then !djm Jan2017
                 b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
      &           (vol(ix,iy)/hx(ix,iy))*
@@ -192,6 +197,7 @@
                 b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
               endif
+#endif
             else
               wrk5(ix,iy) = -hz(ix,iy)*(vol(ix,iy)/hx(ix,iy))*        !srv 16.06.09
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
@@ -210,6 +216,7 @@
               smbgp(ix,iy,1) = 0.0_R8
               smbgp(ix,iy,2) = 0.0_R8
               smbgp(ix,iy,3) = 0.0_R8
+#ifndef FIXED_POINT
               if (balance_netcdf.ne.0) then !djm Jan2017
                 b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
      &           (vol(ix,iy)/hx(ix,iy))*
@@ -223,11 +230,14 @@
                 b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
               endif
+#endif
             endif
           enddo
         enddo
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0.and.ncall_b2sigp.lt.3)
      >   write(*,*) 'Use b2sigp_style.eq.1 or 2'
+#endif
 #endif
       elseif(switch%b2sigp_style.eq.1) then                           !srv 02.07.08 {
 *   ..  compute gradients in cell centers
@@ -246,6 +256,7 @@
          wrk6(iCv) = -t0*rzb(iCv)*(nb(iCv)/ne(iCv))*wrk1(iCv)
          smbgp(iCv,0) = wrk5(iCv) + wrk6(iCv)
         enddo
+#ifndef FIXED_POINT
 cdjm compute b2sigp_pstat0to3 on cell face
         if (balance_netcdf.ne.0) then
           b2sigp_pstat0to3 = 0.0_R8
@@ -260,6 +271,7 @@ cdjm compute b2sigp_pstat0to3 on cell face
             b2sigp_pstate0to3(iFc,0) = t0*rzbf(iFc)*nbf(iFc)*tef(iFc)
           enddo
         endif
+#endif
       else                                                            !srv 23.03.10 {
         call xertst(switch%pot_eq.eq.1,
      &   'b2sigp_style.eq.2 requires pot_eq.eq.1!')
@@ -278,6 +290,7 @@ cdjm compute b2sigp_pstat0to3 on cell face
          wrk6(iCv) = -t0*qe*rzb(iCv)*nb(iCv)*wrk1(iCv)
          smbgp(iCv,0) = wrk5(iCv) + wrk6(iCv)
         enddo                                                         !srv 23.03.10 }
+#ifndef FIXED_POINT
 cdjm compute b2sigp_pstat0to3 on cell face
         if (balance_netcdf.ne.0) then
           b2sigp_pstat0to3 = 0.0_R8
@@ -296,6 +309,7 @@ cdjm compute b2sigp_pstat0to3 on cell face
 !WG_TODO               b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
 !WG_TODO          enddo
         endif
+#endif
       endif                                                           !srv 02.07.08 }
 
       smbgp_b4gr=smbgp !djm Jul2018
@@ -336,7 +350,7 @@ cxpb apply restriction to pressure gradient for minority ions
           call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpo'//chns)
        endif
       endif                                                           !srv 17.06.02 }
-
+#ifndef FIXED_POINT
 cdjm Jan2017 Store linearised source for balance
       if (balance_netcdf.ne.0) then
         b2sigp_smogp0to3(1:nCv,0:3,isb)=smbgp
@@ -344,6 +358,7 @@ cdjm Jan2017 Store linearised source for balance
         b2sigp_smogpe0to3(1:nCv,0,isb)=wrk6 !djm Jul2018
         b2sigp_smogpgr0to3(1:nCv,0:3,isb)=smbgp-smbgp_b4gr
       endif
+#endif
 
 * ..return
       ncall_b2sigp = ncall_b2sigp+1

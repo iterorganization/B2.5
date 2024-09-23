@@ -57,7 +57,7 @@
       logical lnonzero
 *   ..procedures
       external xertst, ipgetr, sfill
-      external b2xvsg, b2xvff, b2ux5p, intfaceh, intfacev
+      external b2xvsg, b2ux5p, intfaceh, intfacev
 *   ..initialisation
 
 *-----------------------------------------------------------------------

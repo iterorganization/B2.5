@@ -22,6 +22,7 @@ c
       use eirmod_wneutrals
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       implicit none
       integer,intent(in) :: typ,ind,istart,iend
@@ -56,6 +57,7 @@ c
       use eirmod_wneutrals
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       use b2mod_dimensions
       implicit none
@@ -112,6 +114,7 @@ c  shift : data offset in the Eirene arrays
       use eirmod_wneutrals
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       use b2mod_dimensions
       implicit none
@@ -155,6 +158,7 @@ c
       use eirmod_wneutrals
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       use b2mod_dimensions
       implicit none
@@ -198,6 +202,7 @@ c
       use eirmod_wneutrals
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       use b2mod_dimensions
       implicit none

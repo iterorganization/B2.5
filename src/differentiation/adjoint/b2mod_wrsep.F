@@ -3,7 +3,7 @@
       use b2mod_diag_diff
       use b2mod_time
       use b2mod_b2cmpa_diff
-      use b2mod_indirect
+      use b2mod_indirect_diff
       implicit none
 
 c======================================================================
@@ -98,16 +98,16 @@ c----------------------------------------------------------------------
       use b2mod_geo_diff
       use b2mod_rates
       use b2mod_plasma_diff
-      use b2mod_sources_diff
+      use b2mod_sources
      . , only : sna
-      use b2mod_tallies_diff
+      use b2mod_tallies
       use b2mod_constants
       use b2mod_user_namelist_diff
       use b2mod_neutrals_namelist_diff
       use b2mod_numerics_namelist_diff
       use b2mod_external_diff
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_eirbra
 #else
       use b2mod_eirbra

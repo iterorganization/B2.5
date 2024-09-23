@@ -16,8 +16,8 @@
       if (.true.) then
        call lwmax (lwmx)
        call lwimax (lwimx)
-       write (*,'(1x,a,i9)') 'maximum use of stackw%w: ', lwmx
-       write (*,'(1x,a,i9)') 'maximum use of stackw%wi:', lwimx
+       write (*,'(1x,a,i9)') 'maximum use of b2mod_stack%w: ', lwmx
+       write (*,'(1x,a,i9)') 'maximum use of b2mod_stack%wi:', lwimx
       endif
 *   ..test use of internal parameters
       call ipfini ()
@@ -50,8 +50,8 @@
       if (.true.) then
        call lwmax (lwmx)
        call lwimax (lwimx)
-       write (*,'(1x,a,i9)') 'maximum use of stackw%w: ', lwmx
-       write (*,'(1x,a,i9)') 'maximum use of stackw%wi:', lwimx
+       write (*,'(1x,a,i9)') 'maximum use of b2mod_stack%w: ', lwmx
+       write (*,'(1x,a,i9)') 'maximum use of b2mod_stack%wi:', lwimx
       endif
 *   ..test use of internal parameters
       if (.false.) call ipfini ()

@@ -15,22 +15,14 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
-& , dv, rt, rtw, srw)
+SUBROUTINE B2STEL_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv&
+& , rt, rtw, srw)
   USE B2MOD_TYPES
-!      use b2mod_diag
   USE B2MOD_TALLIES_DIFFV
   USE B2MOD_CONSTANTS
-!      use b2mod_sources
   USE B2MOD_EIRENE_GLOBALS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMRC_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
-!WG_TODO     &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
-!WG_TODO     &          b2stel_she0to3,
-!WG_TODO     &          b2stel_shi_ion0to3, b2stel_shi_rec0to3,
-!WG_TODO     &          balance_netcdf
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -39,11 +31,12 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2stel
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER :: ncv, nfc, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -67,52 +60,22 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 !-----------------------------------------------------------------------
 !.declarations
 !
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !   ..local variables
 !, k
   INTEGER :: icv, is
-!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(6)
+!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
 !, chk*1                                          !srv 30.06.08
   CHARACTER :: chns*3
-  REAL(kind=r8) :: rf0, t0, t1, tkin, t1i, t1n
+  REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n
   REAL(kind=r8) :: wrk0(ncv)
   REAL(kind=r8) :: sna0_ion(ncv, 0:1, 0:ns-1), sna0_rec(ncv, 0:1, 0:ns-1&
-& ), smq0_ion(ncv, 0:3, 0:ns-1), smq0_rec(ncv, 0:3, 0:ns-1), shi0_ion(&
-& ncv, 0:3), shi0_rec(ncv, 0:3), shn0_ion(ncv, 0:3), shn0_rec(ncv, 0:3)
-  EXTERNAL XERTST, IPGETI, IPGETR, samax, SFILL_NODIFF
+& ), smq0_ion(ncv, 0:3, 0:ns-1), smq0_rec(ncv, 0:3, 0:ns-1), she0_ion(&
+& ncv, 0:3), she0_rec(ncv, 0:3), shi0_ion(ncv, 0:3), shi0_rec(ncv, 0:3)&
+& , shn0_ion(ncv, 0:3), shn0_rec(ncv, 0:3)
+  EXTERNAL XERTST, IPGETI, IPGETR, damax, SFILL_NODIFF
 !   ..procedures
-  REAL(kind=r8) :: samax
-  EXTERNAL B2XVSG_NODIFF
+  REAL(kind=r8) :: damax
+  EXTERNAL B2XVSG
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
   INTRINSIC MAX
@@ -127,6 +90,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
   REAL(r8) :: result2
   REAL(kind=r8) :: result10
   CHARACTER(len=14) :: arg10
+  CHARACTER(len=12) :: arg11
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -146,26 +110,26 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 !WG_TODO         end if !}
 !WG_TODO       end do !}
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'faulty argument ismain')
 !   ..extensive tests on first few calls
   IF (ncall_b2stel .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvbb(1, 3), 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvbb(1, 3), 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, geo%fcvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
 !    ..test sign of na, ni, ne, te, ti
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, dv%ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(arg1, dv%ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%tn, 1, 'tn', '.gt.')
 !   ..test facdrift, fac_ExB
     result1 = MINVAL(dv%facdrift)
     result2 = MAXVAL(dv%facdrift)
@@ -178,10 +142,10 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 !    ..test rate coefficients
     DO is=0,ns-2
       IF (.NOT.LNEXT(is, is + 1)) THEN
-        result10 = samax(ncv, rtw%rsa(1, is), 1)
+        result10 = damax(ncv, rtw%rsa(1, is), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rsa: nonzero for unrelated species')
-        result10 = samax(ncv, rtw%rra(1, is+1), 1)
+        result10 = damax(ncv, rtw%rra(1, is+1), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rra: nonzero for unrelated species')
       END IF
@@ -202,6 +166,10 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
   arg1 = ncv*4
   CALL SFILL_NODIFF(arg1, 0.0_R8, srw%she0, 1)
   arg1 = ncv*4
+  CALL SFILL_NODIFF(arg1, 0.0_R8, she0_ion, 1)
+  arg1 = ncv*4
+  CALL SFILL_NODIFF(arg1, 0.0_R8, she0_rec, 1)
+  arg1 = ncv*4
   CALL SFILL_NODIFF(arg1, 0.0_R8, shi0_ion, 1)
   arg1 = ncv*4
   CALL SFILL_NODIFF(arg1, 0.0_R8, shi0_rec, 1)
@@ -213,9 +181,9 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
   rsanareg = 0.0_R8
   rsahireg = 0.0_R8
   rsamoreg = 0.0_R8
-!WG_TODO      rsana=0.0_R8
-!WG_TODO      rsahi=0.0_R8
-!WG_TODO      rsamo=0.0_R8
+  srw%rsana = 0.0_R8
+  srw%rsahi = 0.0_R8
+  srw%rsamo = 0.0_R8
   DO is=0,ns-2
     IF (LNEXT(is, is + 1)) THEN
 !     ..particle source and heat source
@@ -243,14 +211,19 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 &           , is)
 !srv 11.09.09 }
           sna0_ion(icv, 1, is) = sna0_ion(icv, 1, is) - (1.0_R8+rf0)*t0
-!WG_TODO           rsana(iCv,is) = t0*pl%na(iCv,is)
+          srw%rsana(icv, is) = t0*pl%na(icv, is)
           rsanareg(mpg%cvreg(icv), is) = rsanareg(mpg%cvreg(icv), is) + &
 &           t0*pl%na(icv, is)
+!       ..compute electron energy sink
+          t2 = t0*rt%rpi(icv, is)*ev
+          she0_ion(icv, 0) = she0_ion(icv, 0) + (1.0_R8+rf0)*t2
+          she0_ion(icv, 3) = she0_ion(icv, 3) - rf0*t2/(dv%ne(icv)*pl%te&
+&           (icv))
 !       ..compute atom heat source
           t1 = t0*pl%na(icv, is)*(1.0_R8-switch%boris)*((am(is)+am(is+1)&
 &           )/2.0_R8)*(mp/2.0_R8)*(pl%ua(icv, is)-pl%ua(icv, is+1))**2
-          IF ((switch%tn_style .EQ. 0 .OR. zn(is) .NE. 1) .OR. (.NOT.&
-&             is_neutral(is))) THEN
+          IF ((switch%tn_style .EQ. 0 .OR. NINT(zn(is)) .NE. 1) .OR. (&
+&             .NOT.is_neutral(is))) THEN
 !! combined ion-neutral, and/or non-hydrogenic (default)
             shi0_ion(icv, 0) = shi0_ion(icv, 0) + (1.0_R8+rf0)*t1
             shi0_ion(icv, 3) = shi0_ion(icv, 3) - rf0*t1/(dv%ni(icv, 0)*&
@@ -280,9 +253,9 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
             rsahireg(mpg%cvreg(icv), is) = rsahireg(mpg%cvreg(icv), is) &
 &             + t1i
           END IF
+          srw%rsahi(icv, is) = t1
         END IF
       END DO
-!WG_TODO           rsahi(iCv,is) = t1
 !     ..parallel momentum source
 ! internal cells only
       DO icv=1,mpg%nci
@@ -349,25 +322,28 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
             smq0_ion(icv, 1, is) = smq0_ion(icv, 1, is) - (1.0_R8+rf0)*&
 &             t1
           END IF
-!WG_TODO             rsamo(iCv,is) = rsamo(iCv,is)+t1*pl%ua(iCv,is)
+          srw%rsamo(icv, is) = srw%rsamo(icv, is) + t1*pl%ua(icv, is)
           rsamoreg(mpg%cvreg(icv), is) = rsamoreg(mpg%cvreg(icv), is) + &
 &           t1*pl%ua(icv, is)
-!WG_TODO             rsamo(iCv,is+1) = rsamo(iCv,is+1)-t1*pl%ua(iCv,is)
+          srw%rsamo(icv, is+1) = srw%rsamo(icv, is+1) - t1*pl%ua(icv, is&
+&           )
           rsamoreg(mpg%cvreg(icv), is+1) = rsamoreg(mpg%cvreg(icv), is+1&
 &           ) - t1*pl%ua(icv, is)
         END IF
       END DO
     END IF
   END DO
+!
 !   ..compute sources due to recombination
   rranareg = 0.0_R8
   rrahireg = 0.0_R8
   rramoreg = 0.0_R8
   rqahereg = 0.0_R8
-!WG_TODO      rrana=0.0_R8
-!WG_TODO      rrahi=0.0_R8
-!WG_TODO      rramo=0.0_R8
-!WG_TODO      rqahe=0.0_R8
+  srw%rrana = 0.0_R8
+  srw%rrahi = 0.0_R8
+  srw%rramo = 0.0_R8
+  srw%rqahe = 0.0_R8
+!
   DO is=1,ns-1
     IF (LNEXT(is - 1, is)) THEN
 !     ..particle source and heat source
@@ -395,12 +371,17 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 !srv 11.09.09 {
           sna0_rec(icv, 1, is-1) = sna0_rec(icv, 1, is-1) - rf0*t0*pl%na&
 &           (icv, is)/pl%na(icv, is-1)
-!WG_TODO           rrana(iCv,is) = t0*pl%na(iCv,is)
+          srw%rrana(icv, is) = t0*pl%na(icv, is)
           rranareg(mpg%cvreg(icv), is) = rranareg(mpg%cvreg(icv), is) + &
 &           t0*pl%na(icv, is)
+!       ..compute electron heat source
+          t2 = t0*pl%na(icv, is)*rt%rpi(icv, is)*ev
+          she0_rec(icv, 0) = she0_rec(icv, 0) + (1.0_R8+rf0)*t2
+          she0_rec(icv, 0) = she0_rec(icv, 3) - rf0*t2/(dv%ne(icv)*pl%te&
+&           (icv))
 !       ..compute atom heat source
-          IF ((switch%tn_style .EQ. 0 .OR. zn(is) .NE. 1) .OR. (.NOT.&
-&             is_neutral(is-1))) THEN
+          IF ((switch%tn_style .EQ. 0 .OR. NINT(zn(is)) .NE. 1) .OR. (&
+&             .NOT.is_neutral(is-1))) THEN
 !! combined ion-neutral, and/or non-hydrogenic (default)
             t1 = t0*pl%na(icv, is)*(1.0_R8-switch%boris)*((am(is)+am(is-&
 &             1))/2.0_R8)*(mp/2.0_R8)*(pl%ua(icv, is)-pl%ua(icv, is-1))&
@@ -430,7 +411,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
             shn0_rec(icv, 3) = shn0_rec(icv, 3) - rf0*t1n/((dv%ni(icv, 0&
 &             )-dv%ni(icv, 1))*pl%tn(icv))
           END IF
-!WG_TODO           rrahi(iCv,is) = t1
+          srw%rrahi(icv, is) = t1
           rrahireg(mpg%cvreg(icv), is) = rrahireg(mpg%cvreg(icv), is) + &
 &           t1
 !       ..compute electron heat source for is->is-1, if not already included from ADPAK
@@ -447,8 +428,8 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 &             (icv, is)*ev*pl%na(icv, is)
             srw%she0(icv, 3) = srw%she0(icv, 3) - rf0*t0*rt%rpi(icv, is)&
 &             *ev*pl%na(icv, is)/(dv%ne(icv)*pl%te(icv))
-!WG_TODO             rqahe(iCv,is) = rqahe(iCv,is) -
-!WG_TODO     &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
+            srw%rqahe(icv, is) = srw%rqahe(icv, is) - t0*rt%rpi(icv, is)&
+&             *ev*pl%na(icv, is)
             rqahereg(mpg%cvreg(icv), is) = rqahereg(mpg%cvreg(icv), is) &
 &             - t0*rt%rpi(icv, is)*ev*pl%na(icv, is)
           END IF
@@ -478,23 +459,26 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
           smq0_rec(icv, 0, is-1) = smq0_rec(icv, 0, is-1) + t1*(pl%ua(&
 &           icv, is)+rf0*pl%ua(icv, is-1))
           smq0_rec(icv, 1, is-1) = smq0_rec(icv, 1, is-1) - rf0*t1
-!WG_TODO           rramo(iCv,is) = rramo(iCv,is)+t1*pl%ua(iCv,is)
+          srw%rramo(icv, is) = srw%rramo(icv, is) + t1*pl%ua(icv, is)
           rramoreg(mpg%cvreg(icv), is) = rramoreg(mpg%cvreg(icv), is) + &
 &           t1*pl%ua(icv, is)
-!WG_TODO           rramo(iCv,is-1) = rramo(iCv,is-1)+t1*pl%ua(iCv,is)
+          srw%rramo(icv, is-1) = srw%rramo(icv, is-1) + t1*pl%ua(icv, is&
+&           )
           rramoreg(mpg%cvreg(icv), is-1) = rramoreg(mpg%cvreg(icv), is-1&
 &           ) + t1*pl%ua(icv, is)
         END IF
       END DO
     END IF
   END DO
+!
+!
 !   ..compute source terms for electron heat loss and radiation
 !WG_TODO      b2rad=0.0_R8
   b2radreg = 0.0_R8
   b2bremreg = 0.0_R8
   rqradreg = 0.0_R8
   rqbrmreg = 0.0_R8
-!WG_TODO      rqrad=0.0_R8
+  srw%rqrad = 0.0_R8
 !WG_TODO      b2brem=0.0_R8
 !WG_TODO      rad_imp=0.0_R8
   DO is=0,ns-1
@@ -518,14 +502,14 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
         srw%she0(icv, 0) = srw%she0(icv, 0) + rf0*t0
         srw%she0(icv, 3) = srw%she0(icv, 3) - (1.0_R8+rf0)*t0/(dv%ne(icv&
 &         )*pl%te(icv))
-!WG_TODO          rqahe(iCv,is) = rqahe(iCv,is) + t0
+        srw%rqahe(icv, is) = srw%rqahe(icv, is) + t0
         rqahereg(mpg%cvreg(icv), is) = rqahereg(mpg%cvreg(icv), is) + t0
 !      ..compute line radiation rate for is->any
 !srv 05.06.18
         t0 = switch%b2stel_phm0*rtw%rrd(icv, is)*geo%cvvol(icv)*dv%ne(&
 &         icv)*pl%na(icv, is)
 !      ..compute line radiation
-!WG_TODO          rqrad(iCv,is) = t0
+        srw%rqrad(icv, is) = t0
         rqradreg(mpg%cvreg(icv), is) = rqradreg(mpg%cvreg(icv), is) + t0
         b2radreg(mpg%cvreg(icv)) = b2radreg(mpg%cvreg(icv)) - t0
 !WG_TODO          b2rad=b2rad-t0
@@ -538,7 +522,7 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
         t0 = switch%b2stel_phm0*rtw%rbr(icv, is)*geo%cvvol(icv)*dv%ne(&
 &         icv)*pl%na(icv, is)
 !      ..compute bremsstrahlung radiation
-!WG_TODO          rqbrm(iCv,is) = t0
+        srw%rqbrm(icv, is) = t0
         rqbrmreg(mpg%cvreg(icv), is) = rqbrmreg(mpg%cvreg(icv), is) + t0
         b2bremreg(mpg%cvreg(icv)) = b2bremreg(mpg%cvreg(icv)) - t0
 !WG_TODO          b2brem=b2brem-t0
@@ -618,14 +602,17 @@ SUBROUTINE B2STEL_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
     CALL MY_OUT_US(70, ncv, 0, wrk0, 'b2stel_shi_rec')
 !srv 01.11.10
 !
-!WG_TODO        do is=0,ns-1                                                 !srv 03.02.12 {
-!WG_TODO          write(chns,'(i3.3)') is
-!WG_TODO          call my_out_us(70,nCv,0,rqrad(1,is),'b2stel_rqrad'//chns)
-!WG_TODO          call my_out_us(70,nCv,0,rqbrm(1,is),'b2stel_rqbrm'//chns)
-!WG_TODO        enddo                                                        !srv 03.02.12 }
+!srv 03.02.12 {
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+      arg11(:) = 'b2stel_rqrad'//chns
+      CALL MY_OUT_US(70, ncv, 0, srw%rqrad(1, is), arg11(:))
+      arg11(:) = 'b2stel_rqbrm'//chns
+      CALL MY_OUT_US(70, ncv, 0, srw%rqbrm(1, is), arg11(:))
+    END DO
   END IF
+!srv 03.02.12 }
 !
-!djm Jan2017 Keep linearised sources for balance
 !
 ! ..return
   ncall_b2stel = ncall_b2stel + 1
@@ -662,9 +649,11 @@ END SUBROUTINE B2STEL_NODIFF
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.nn:in geo.cvbb:in
 !                geo.cvvol:in geo.fcvol:in rt.rlqa:in rt.rlra:in
 !                rt.rlsa:in rt.rpi:in srw.she0:in srw.shi0:in srw.shn0:in
-!                srw.smq0:in srw.sna0:in rtw.rsa:in rtw.rra:in
-!                rtw.rqa:in rtw.rqr:in pl.na:in pl.ua:in pl.te:in
-!                pl.ti:in pl.tn:in
+!                srw.smq0:in srw.sna0:in srw.rsana:in srw.rsahi:in
+!                srw.rsamo:in srw.rrana:in srw.rrahi:in srw.rramo:in
+!                srw.rqahe:in srw.rqrad:in srw.rqbrm:in rtw.rsa:in
+!                rtw.rra:in rtw.rqa:in rtw.rqr:in pl.na:in pl.ua:in
+!                pl.te:in pl.ti:in pl.tn:in
 !
 !
 !
@@ -679,22 +668,14 @@ END SUBROUTINE B2STEL_NODIFF
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
-& pl, pld, dv, dvd, rt, rtd, rtw, rtwd, srw, srwd, nbdirs)
+SUBROUTINE B2STEL_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl, &
+& pld, dv, dvd, rt, rtd, rtw, rtwd, srw, srwd, nbdirs)
   USE B2MOD_TYPES
-!      use b2mod_diag
   USE B2MOD_TALLIES_DIFFV
   USE B2MOD_CONSTANTS
-!      use b2mod_sources
   USE B2MOD_EIRENE_GLOBALS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMRC_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
-!WG_TODO     &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
-!WG_TODO     &          b2stel_she0to3,
-!WG_TODO     &          b2stel_shi_ion0to3, b2stel_shi_rec0to3,
-!WG_TODO     &          balance_netcdf
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -703,12 +684,13 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2stel
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER :: ncv, nfc, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
@@ -738,60 +720,30 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
 !-----------------------------------------------------------------------
 !.declarations
 !
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !   ..local variables
 !, k
   INTEGER :: icv, is
-!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(6)
+!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
 !, chk*1                                          !srv 30.06.08
   CHARACTER :: chns*3
-  REAL(kind=r8) :: rf0, t0, t1, tkin, t1i, t1n
+  REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n
   REAL(kind=r8), DIMENSION(nbdirsmax) :: rf0d, t0d, t1d, tkind, t1id, &
 & t1nd
   REAL(kind=r8) :: wrk0(ncv)
   REAL(kind=r8) :: sna0_ion(ncv, 0:1, 0:ns-1), sna0_rec(ncv, 0:1, 0:ns-1&
-& ), smq0_ion(ncv, 0:3, 0:ns-1), smq0_rec(ncv, 0:3, 0:ns-1), shi0_ion(&
-& ncv, 0:3), shi0_rec(ncv, 0:3), shn0_ion(ncv, 0:3), shn0_rec(ncv, 0:3)
+& ), smq0_ion(ncv, 0:3, 0:ns-1), smq0_rec(ncv, 0:3, 0:ns-1), she0_ion(&
+& ncv, 0:3), she0_rec(ncv, 0:3), shi0_ion(ncv, 0:3), shi0_rec(ncv, 0:3)&
+& , shn0_ion(ncv, 0:3), shn0_rec(ncv, 0:3)
   REAL(kind=r8) :: sna0_iond(nbdirsmax, ncv, 0:1, 0:ns-1), sna0_recd(&
 & nbdirsmax, ncv, 0:1, 0:ns-1), smq0_iond(nbdirsmax, ncv, 0:3, 0:ns-1), &
 & smq0_recd(nbdirsmax, ncv, 0:3, 0:ns-1), shi0_iond(nbdirsmax, ncv, 0:3)&
 & , shi0_recd(nbdirsmax, ncv, 0:3), shn0_iond(nbdirsmax, ncv, 0:3), &
 & shn0_recd(nbdirsmax, ncv, 0:3)
-  EXTERNAL XERTST, IPGETI, IPGETR, samax, SFILL_NODIFF
+  EXTERNAL XERTST, IPGETI, IPGETR, damax, SFILL_NODIFF
   EXTERNAL SFILL_DV
 !   ..procedures
-  REAL(kind=r8) :: samax
-  EXTERNAL B2XVSG_NODIFF
+  REAL(kind=r8) :: damax
+  EXTERNAL B2XVSG
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
   INTRINSIC MAX
@@ -812,6 +764,7 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
   REAL(kind=r8) :: result10
   REAL(kind=r8), DIMENSION(nbdirsmax) :: result10d
   CHARACTER(len=14) :: arg10
+  CHARACTER(len=12) :: arg11
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   INTEGER :: nd
   REAL(kind=r8) :: temp
@@ -838,26 +791,26 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
 !WG_TODO         end if !}
 !WG_TODO       end do !}
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'faulty argument ismain')
 !   ..extensive tests on first few calls
   IF (ncall_b2stel .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvbb(1, 3), 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvbb(1, 3), 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = nfc*2
-    CALL B2XVSG_NODIFF(arg1, geo%fcvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(arg1, geo%fcvol, 1, 'vol', '.gt.')
 !    ..test sign of na, ni, ne, te, ti
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, dv%ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(arg1, dv%ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%tn, 1, 'tn', '.gt.')
 !   ..test facdrift, fac_ExB
     result1 = MINVAL(dv%facdrift)
     result2 = MAXVAL(dv%facdrift)
@@ -870,10 +823,10 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
 !    ..test rate coefficients
     DO is=0,ns-2
       IF (.NOT.LNEXT(is, is + 1)) THEN
-        result10 = samax(ncv, rtw%rsa(1, is), 1)
+        result10 = damax(ncv, rtw%rsa(1, is), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rsa: nonzero for unrelated species')
-        result10 = samax(ncv, rtw%rra(1, is+1), 1)
+        result10 = damax(ncv, rtw%rra(1, is+1), 1)
         CALL XERTST(result10 .EQ. 0.0_R8, &
 &             'faulty argument rra: nonzero for unrelated species')
       END IF
@@ -898,6 +851,10 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
   CALL SFILL_DV(arg1, 0.0_R8, dummyzerodiffd, srw%she0, srwd%she0, 1, &
 &         nbdirs)
   arg1 = ncv*4
+  CALL SFILL_NODIFF(arg1, 0.0_R8, she0_ion, 1)
+  arg1 = ncv*4
+  CALL SFILL_NODIFF(arg1, 0.0_R8, she0_rec, 1)
+  arg1 = ncv*4
   CALL SFILL_NODIFF(arg1, 0.0_R8, shi0_ion, 1)
   arg1 = ncv*4
   CALL SFILL_NODIFF(arg1, 0.0_R8, shi0_rec, 1)
@@ -909,6 +866,9 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
   rsanareg = 0.0_R8
   rsahireg = 0.0_R8
   rsamoreg = 0.0_R8
+  srw%rsana = 0.0_R8
+  srw%rsahi = 0.0_R8
+  srw%rsamo = 0.0_R8
   DO nd=1,nbdirsmax
     smq0_iond(nd, :, :, :) = 0.D0
   END DO
@@ -921,9 +881,6 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
   DO nd=1,nbdirsmax
     shi0_iond(nd, :, :) = 0.D0
   END DO
-!WG_TODO      rsana=0.0_R8
-!WG_TODO      rsahi=0.0_R8
-!WG_TODO      rsamo=0.0_R8
   DO is=0,ns-2
     IF (LNEXT(is, is + 1)) THEN
 !     ..particle source and heat source
@@ -975,9 +932,14 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
           sna0_ion(icv, 0, is) = sna0_ion(icv, 0, is) + rf0*t0*pl%na(icv&
 &           , is)
           sna0_ion(icv, 1, is) = sna0_ion(icv, 1, is) - (1.0_R8+rf0)*t0
-!WG_TODO           rsana(iCv,is) = t0*pl%na(iCv,is)
+          srw%rsana(icv, is) = t0*pl%na(icv, is)
           rsanareg(mpg%cvreg(icv), is) = rsanareg(mpg%cvreg(icv), is) + &
 &           t0*pl%na(icv, is)
+!       ..compute electron energy sink
+          t2 = t0*rt%rpi(icv, is)*ev
+          she0_ion(icv, 0) = she0_ion(icv, 0) + (1.0_R8+rf0)*t2
+          she0_ion(icv, 3) = she0_ion(icv, 3) - rf0*t2/(dv%ne(icv)*pl%te&
+&           (icv))
 !       ..compute atom heat source
           temp0 = (-switch%boris+1.0_R8)*mp*(am(is)+am(is+1))
           temp = t0/(2.0_R8*2.0_R8)
@@ -990,8 +952,8 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
 &             %na(nd, icv, is)+pl%na(icv, is)*t0d(nd)/2.0_R8**2))
           END DO
           t1 = temp0*(temp2*temp1)
-          IF ((switch%tn_style .EQ. 0 .OR. zn(is) .NE. 1) .OR. (.NOT.&
-&             is_neutral(is))) THEN
+          IF ((switch%tn_style .EQ. 0 .OR. NINT(zn(is)) .NE. 1) .OR. (&
+&             .NOT.is_neutral(is))) THEN
             temp2 = dv%ni(icv, 0)*pl%ti(icv)
             temp = rf0*t1/temp2
             DO nd=1,nbdirs
@@ -1068,9 +1030,9 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
             rsahireg(mpg%cvreg(icv), is) = rsahireg(mpg%cvreg(icv), is) &
 &             + t1i
           END IF
+          srw%rsahi(icv, is) = t1
         END IF
       END DO
-!WG_TODO           rsahi(iCv,is) = t1
 !     ..parallel momentum source
 ! internal cells only
       DO icv=1,mpg%nci
@@ -1219,21 +1181,27 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
             smq0_ion(icv, 1, is) = smq0_ion(icv, 1, is) - (1.0_R8+rf0)*&
 &             t1
           END IF
-!WG_TODO             rsamo(iCv,is) = rsamo(iCv,is)+t1*pl%ua(iCv,is)
+          srw%rsamo(icv, is) = srw%rsamo(icv, is) + t1*pl%ua(icv, is)
           rsamoreg(mpg%cvreg(icv), is) = rsamoreg(mpg%cvreg(icv), is) + &
 &           t1*pl%ua(icv, is)
-!WG_TODO             rsamo(iCv,is+1) = rsamo(iCv,is+1)-t1*pl%ua(iCv,is)
+          srw%rsamo(icv, is+1) = srw%rsamo(icv, is+1) - t1*pl%ua(icv, is&
+&           )
           rsamoreg(mpg%cvreg(icv), is+1) = rsamoreg(mpg%cvreg(icv), is+1&
 &           ) - t1*pl%ua(icv, is)
         END IF
       END DO
     END IF
   END DO
+!
 !   ..compute sources due to recombination
   rranareg = 0.0_R8
   rrahireg = 0.0_R8
   rramoreg = 0.0_R8
   rqahereg = 0.0_R8
+  srw%rrana = 0.0_R8
+  srw%rrahi = 0.0_R8
+  srw%rramo = 0.0_R8
+  srw%rqahe = 0.0_R8
   DO nd=1,nbdirsmax
     shi0_recd(nd, :, :) = 0.D0
   END DO
@@ -1246,10 +1214,7 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
   DO nd=1,nbdirsmax
     sna0_recd(nd, :, :, :) = 0.D0
   END DO
-!WG_TODO      rrana=0.0_R8
-!WG_TODO      rrahi=0.0_R8
-!WG_TODO      rramo=0.0_R8
-!WG_TODO      rqahe=0.0_R8
+!
   DO is=1,ns-1
     IF (LNEXT(is - 1, is)) THEN
 !     ..particle source and heat source
@@ -1301,12 +1266,17 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
 &             , icv, is)-temp*pld%na(nd, icv, is-1))/pl%na(icv, is-1)
           END DO
           sna0_rec(icv, 1, is-1) = sna0_rec(icv, 1, is-1) - temp
-!WG_TODO           rrana(iCv,is) = t0*pl%na(iCv,is)
+          srw%rrana(icv, is) = t0*pl%na(icv, is)
           rranareg(mpg%cvreg(icv), is) = rranareg(mpg%cvreg(icv), is) + &
 &           t0*pl%na(icv, is)
+!       ..compute electron heat source
+          t2 = t0*pl%na(icv, is)*rt%rpi(icv, is)*ev
+          she0_rec(icv, 0) = she0_rec(icv, 0) + (1.0_R8+rf0)*t2
+          she0_rec(icv, 0) = she0_rec(icv, 3) - rf0*t2/(dv%ne(icv)*pl%te&
+&           (icv))
 !       ..compute atom heat source
-          IF ((switch%tn_style .EQ. 0 .OR. zn(is) .NE. 1) .OR. (.NOT.&
-&             is_neutral(is-1))) THEN
+          IF ((switch%tn_style .EQ. 0 .OR. NINT(zn(is)) .NE. 1) .OR. (&
+&             .NOT.is_neutral(is-1))) THEN
 !! combined ion-neutral, and/or non-hydrogenic (default)
             temp2 = (-switch%boris+1.0_R8)*mp*(am(is)+am(is-1))
             temp = t0/(2.0_R8*2.0_R8)
@@ -1398,7 +1368,7 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
             END DO
             shn0_rec(icv, 3) = shn0_rec(icv, 3) - temp
           END IF
-!WG_TODO           rrahi(iCv,is) = t1
+          srw%rrahi(icv, is) = t1
           rrahireg(mpg%cvreg(icv), is) = rrahireg(mpg%cvreg(icv), is) + &
 &           t1
 !       ..compute electron heat source for is->is-1, if not already included from ADPAK
@@ -1431,8 +1401,8 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
 &               )
             END DO
             srw%she0(icv, 3) = srw%she0(icv, 3) - ev*(temp*temp1)
-!WG_TODO             rqahe(iCv,is) = rqahe(iCv,is) -
-!WG_TODO     &        t0*rt%rpi(iCv,is)*ev*pl%na(iCv,is)
+            srw%rqahe(icv, is) = srw%rqahe(icv, is) - t0*rt%rpi(icv, is)&
+&             *ev*pl%na(icv, is)
             rqahereg(mpg%cvreg(icv), is) = rqahereg(mpg%cvreg(icv), is) &
 &             - t0*rt%rpi(icv, is)*ev*pl%na(icv, is)
           END IF
@@ -1488,23 +1458,26 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
           END DO
           smq0_rec(icv, 0, is-1) = smq0_rec(icv, 0, is-1) + t1*temp2
           smq0_rec(icv, 1, is-1) = smq0_rec(icv, 1, is-1) - rf0*t1
-!WG_TODO           rramo(iCv,is) = rramo(iCv,is)+t1*pl%ua(iCv,is)
+          srw%rramo(icv, is) = srw%rramo(icv, is) + t1*pl%ua(icv, is)
           rramoreg(mpg%cvreg(icv), is) = rramoreg(mpg%cvreg(icv), is) + &
 &           t1*pl%ua(icv, is)
-!WG_TODO           rramo(iCv,is-1) = rramo(iCv,is-1)+t1*pl%ua(iCv,is)
+          srw%rramo(icv, is-1) = srw%rramo(icv, is-1) + t1*pl%ua(icv, is&
+&           )
           rramoreg(mpg%cvreg(icv), is-1) = rramoreg(mpg%cvreg(icv), is-1&
 &           ) + t1*pl%ua(icv, is)
         END IF
       END DO
     END IF
   END DO
+!
+!
 !   ..compute source terms for electron heat loss and radiation
 !WG_TODO      b2rad=0.0_R8
   b2radreg = 0.0_R8
   b2bremreg = 0.0_R8
   rqradreg = 0.0_R8
   rqbrmreg = 0.0_R8
-!WG_TODO      rqrad=0.0_R8
+  srw%rqrad = 0.0_R8
 !WG_TODO      b2brem=0.0_R8
 !WG_TODO      rad_imp=0.0_R8
   DO is=0,ns-1
@@ -1550,14 +1523,14 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
 &           icv)*pld%te(nd, icv)))/temp2
         END DO
         srw%she0(icv, 3) = srw%she0(icv, 3) - temp
-!WG_TODO          rqahe(iCv,is) = rqahe(iCv,is) + t0
+        srw%rqahe(icv, is) = srw%rqahe(icv, is) + t0
         rqahereg(mpg%cvreg(icv), is) = rqahereg(mpg%cvreg(icv), is) + t0
 !      ..compute line radiation rate for is->any
 !srv 05.06.18
         t0 = switch%b2stel_phm0*rtw%rrd(icv, is)*geo%cvvol(icv)*dv%ne(&
 &         icv)*pl%na(icv, is)
 !      ..compute line radiation
-!WG_TODO          rqrad(iCv,is) = t0
+        srw%rqrad(icv, is) = t0
         rqradreg(mpg%cvreg(icv), is) = rqradreg(mpg%cvreg(icv), is) + t0
         b2radreg(mpg%cvreg(icv)) = b2radreg(mpg%cvreg(icv)) - t0
 !WG_TODO          b2rad=b2rad-t0
@@ -1570,7 +1543,7 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
         t0 = switch%b2stel_phm0*rtw%rbr(icv, is)*geo%cvvol(icv)*dv%ne(&
 &         icv)*pl%na(icv, is)
 !      ..compute bremsstrahlung radiation
-!WG_TODO          rqbrm(iCv,is) = t0
+        srw%rqbrm(icv, is) = t0
         rqbrmreg(mpg%cvreg(icv), is) = rqbrmreg(mpg%cvreg(icv), is) + t0
         b2bremreg(mpg%cvreg(icv)) = b2bremreg(mpg%cvreg(icv)) - t0
 !WG_TODO          b2brem=b2brem-t0
@@ -1658,14 +1631,17 @@ SUBROUTINE B2STEL_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
     CALL MY_OUT_US(70, ncv, 0, wrk0, 'b2stel_shi_rec')
 !srv 01.11.10
 !
-!WG_TODO        do is=0,ns-1                                                 !srv 03.02.12 {
-!WG_TODO          write(chns,'(i3.3)') is
-!WG_TODO          call my_out_us(70,nCv,0,rqrad(1,is),'b2stel_rqrad'//chns)
-!WG_TODO          call my_out_us(70,nCv,0,rqbrm(1,is),'b2stel_rqbrm'//chns)
-!WG_TODO        enddo                                                        !srv 03.02.12 }
+!srv 03.02.12 {
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+      arg11(:) = 'b2stel_rqrad'//chns
+      CALL MY_OUT_US(70, ncv, 0, srw%rqrad(1, is), arg11(:))
+      arg11(:) = 'b2stel_rqbrm'//chns
+      CALL MY_OUT_US(70, ncv, 0, srw%rqbrm(1, is), arg11(:))
+    END DO
   END IF
+!srv 03.02.12 }
 !
-!djm Jan2017 Keep linearised sources for balance
 !
 ! ..return
   ncall_b2stel = ncall_b2stel + 1

@@ -26,7 +26,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_neutrals_namelist
-     & , only : maxw_eff, nstraid, userfluxparm
+!     & , only : maxw_eff, nstraid, userfluxparm
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l, fna_mol
@@ -41,10 +41,10 @@
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
 #ifndef B25_EIRENE
       use b2mod_eirdiag
-     & , only : dab2, lkindi, lkindm, lkindp
+     & , only : dab2, lkindi, lkindm, lkindp, pfluxa, rfluxa, tfluxa
 #endif
       use b2mod_ad
-     & , only : my_out_folder,
+     & , only : my_out_folder, in_no_of_start_points,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
@@ -102,7 +102,7 @@
       real (kind=R8) ::
      *  smin, smax
       external xertst, sfill, b2saxpy, smin, smax
-      external b2xvsg, b2xvff, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
+      external b2xvsg, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
      &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
 *   ..initialisation
       data sources_inputfile/0/

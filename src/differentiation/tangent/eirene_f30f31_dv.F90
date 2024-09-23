@@ -13,12 +13,9 @@
 !
 !
 SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
-& , kin_frac_hyb, fnn_inc)
+& , st_ext)
   USE B2MOD_TYPES
-  USE B2MOD_PLASMA_DIFFV
-  USE B2MOD_INDIRECT
   USE B2MOD_SWITCHES_DIFFV
-  USE B2MOD_GEO_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_EIRENE_GLOBALS
   USE B2MOD_B2CMPA_DIFFV
@@ -28,60 +25,31 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
   USE B2MOD_DIAG_DIFFV, ONLY : fluids_list
   USE B2MOD_SUBSYS
   USE B2MOD_BRAEIR_DIFFV
-  USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : crcstra, rcfe, rcfi, mol
+  USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : rcfe, rcfi, mol
   USE B2MOD_RECYCLE_DIFFV, ONLY : fna_mol
 !  Hint: nCv should be the size of dimension 1 of array arg1
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !  version : 28.12.96 21:39
 !
-!  Common dimensions
 !
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
-!
-!     COUPLING-DEFINITION COMMON (KOPPLDIM)
+!     COUPLING DEFINITION COMMON (KOPPLDIM)
 !
 !
 !  -- PRINCIPAL DIMENSIONS -- SHOULD MATCH EIRENE DECLARATIONS!!!
   INTEGER :: nxdd, nydd, nstra, nfl
-  PARAMETER (nxdd=200+4*5, nydd=100, nstra=(5*4/2+2)*6+1, nfl=42)
+  PARAMETER (nxdd=def_nxd+def_ncut*5, nydd=def_nyd, nstra=def_nstra, nfl&
+& = def_nfl)
   INTEGER :: natm, nmol, nion, npls, nspz
-  PARAMETER (natm=6, nmol=3, nion=3, npls=42-6+(6+3)*(6+3), nspz=6+3+3+(&
-&   42-6)+(6+3)*(6+3))
+  PARAMETER (natm=def_natm, nmol=def_nmol, nion=def_nion, npls=def_npls&
+& , nspz=def_natm+def_nmol+def_nion+def_npls)
   INTEGER :: nlim, nsts, nsrfs, nsgmx
-  PARAMETER (nlim=300, nsts=50, nsrfs=4)
-  PARAMETER (nsgmx=300+max(2, 4)*100)
+  PARAMETER (nlim=def_nlim, nsts=def_nsts, nsrfs=def_nsrfs)
+  PARAMETER (nsgmx=def_nlim+max(2, def_ncut)*def_nyd)
 !
   INTEGER :: n1st, n2nd, n3rd
-  PARAMETER (n1st=100+1, n2nd=200+1+4+(4/2-1)*(1+0), n3rd=1)
+  PARAMETER (n1st=def_nyd+1, n2nd=def_nxd+1+def_ncut+(def_ncut/2-1)*(1+&
+&   def_isoextra), n3rd=1)
   INTEGER :: n1f, n2f, n3f
   PARAMETER (n1f=1-1/n1st, n2f=1-1/n2nd, n3f=1-1/n3rd)
   INTEGER :: ngitt, ngittp
@@ -92,7 +60,7 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
   INTEGER :: ndxp, ndyp, nlimps
   PARAMETER (ndxp=nxdd+1, ndyp=nydd+1, nlimps=nlim+nsts)
   INTEGER :: ngtsft, nlmpgs
-  PARAMETER (ngtsft=1*ngitt)
+  PARAMETER (ngtsft=def_ngstal*ngitt)
   PARAMETER (nlmpgs=nlim+(ngtsft+1)*nsts)
 !
   INTEGER :: ncv, nfc, ns
@@ -101,6 +69,7 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
   TYPE(GEOMETRY), INTENT(IN) :: gm
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2DERIVATIVES), INTENT(IN) :: dv
+  TYPE(B2STATEEXT), INTENT(IN) :: st_ext
 !
 !srv 16.09.02
   CHARACTER :: chns*3
@@ -118,17 +87,17 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
 & -1), vvc(ncv, 0:ns-1), nafsqalf(nfc, 0:1, 0:ns-1)
   INTEGER :: ic, ifc, ian, ien, ntrgdat, ifl, i, istra, ic2, iv1, iv2, &
 & icp
-  REAL(kind=r8) :: evi, ebx, eby, ebn, uu, vv, ww, pvxs, pvys, puxs, &
-& puys
+  REAL(kind=r8) :: evi, ebx, eby, ebn, uu, vv, ww, vtot, vmax, pvxs, &
+& pvys, puxs, puys
   REAL(kind=r8) :: wght(nfc, 2)
-  REAL(kind=r8), INTENT(IN) :: kin_frac_hyb(mpg%nfc), fnn_inc(mpg%nfc, 0&
-& :ns-1)
   REAL(kind=r8) :: fnn_inc_b(nfc, ns), fnn_mol_b(nfc, ns)
+  REAL(kind=r8) :: cs(ncv), rz(ncv), pz(ncv)
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
+  INTRINSIC SQRT
   INTRINSIC MIN
   INTRINSIC MAX
-  INTRINSIC SQRT
+  INTRINSIC ABS
   INTRINSIC SIGN
   INTRINSIC COUNT
   INTRINSIC ALLOCATED
@@ -138,17 +107,7 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
   REAL(r8) :: x4
   REAL(r8) :: x5
   REAL(r8) :: x6
-  REAL(r8) :: x7
-  REAL(kind=r8) :: x8
-  REAL(kind=r8) :: x9
-  REAL(kind=r8) :: x10
-  REAL(kind=r8) :: x11
-  REAL(kind=r8) :: x12
-  REAL(kind=r8) :: x13
-  REAL(kind=r8) :: x14
-  REAL(kind=r8) :: x15
-  REAL(kind=r8) :: x16
-  REAL(kind=r8) :: x17
+  REAL(kind=r8) :: y1
   REAL(r8) :: max1
   REAL(r8), DIMENSION(nCv) :: arg1
   REAL(r8) :: result1
@@ -162,9 +121,10 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
   CHARACTER(len=13) :: arg17
   CHARACTER(len=12) :: arg18
   CHARACTER(len=7) :: arg19
-  INTEGER :: arg110
-  REAL(kind=r8) :: arg111
-  CHARACTER(len=8) :: arg112
+  REAL(kind=r8), DIMENSION(ncv) :: arg110
+  INTEGER :: arg111
+  REAL(kind=r8) :: arg112
+  CHARACTER(len=8) :: arg113
   REAL(kind=r8) :: result10
   DATA ncall /0/
 !
@@ -214,6 +174,7 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
     CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellr, dv%vadia(:, 1, is)&
 &                 , vadiac(:, 1, is))
   END DO
+! precompute sound speed for velocity limiting
 !
   IF (switch%copy_background_iout .NE. 0) THEN
 !srv 18.06.08 {
@@ -279,6 +240,11 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
     CALL MY_OUT_US(70, ncv, 0, gm%cvbb(1, 3), 'copy_bb_3')
   END IF
 !
+  CALL B2XPRZ_NODIFF(ncv, ns, mp, am, pl%na, rz, st_ext)
+  CALL B2XPPZ_NODIFF(ncv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)
+  arg110(:) = pz/rz
+  cs = SQRT(arg110(:))
+!
 ! cell centred
   DO ic=1,ncv
     IF (dv%ne(ic) .GT. switch%eir_ne_max) THEN
@@ -343,8 +309,8 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
 !
 ! faces
 !      call intface(nCv,nFc,mpg%fcCv,gm%fcVol,dv%kinrgy,kintmp)
-  arg110 = ns - 1
-  CALL INTFACE1(ncv, nfc, arg110, mpg%fccv, gm%fchc, dv%kinrgy, kintmp)
+  arg111 = ns - 1
+  CALL INTFACE1(ncv, nfc, arg111, mpg%fccv, gm%fchc, dv%kinrgy, kintmp)
   DO ifc=1,nfc
     feib(ifc) = dv%fhi(ifc, 0) + dv%fhi(ifc, 1)
     feeb(ifc) = dv%fhe(ifc, 0) + dv%fhe(ifc, 1)
@@ -358,8 +324,8 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
 !   ..interpolate density to cell faces
 !pb      call intface1(nCv,nFc,ns-1,mpg%fcCv,gm%fcVol,pl%na,naf)
   wght = 1.0_R8
-  arg110 = ns - 1
-  CALL INTFACE1(ncv, nfc, arg110, mpg%fccv, wght, pl%na, naf)
+  arg111 = ns - 1
+  CALL INTFACE1(ncv, nfc, arg111, mpg%fccv, wght, pl%na, naf)
 !
   IF (switch%eirene_uub_style .EQ. 1) THEN
     DO is=0,ns-1
@@ -373,8 +339,8 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
       fna_tmp(1:nfc, 0:ns-1) = dv%fna_eir(1:nfc, 0, 0:ns-1)/nafsqalf(1:&
 &       nfc, 0, 0:ns-1)
     END IF
-    arg110 = ns - 1
-    CALL INTCELL1_NODIFF(nfc, ncv, arg110, mpg, mpg%intcellp, fna_tmp, &
+    arg111 = ns - 1
+    CALL INTCELL1_NODIFF(nfc, ncv, arg111, mpg, mpg%intcellp, fna_tmp, &
 &                  uuc)
   END IF
 !
@@ -396,8 +362,8 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
 &       is)
     END IF
   END DO
-  arg110 = ns - 1
-  CALL INTCELL1_NODIFF(nfc, ncv, arg110, mpg, mpg%intcellr, fna_tmp, vvc&
+  arg111 = ns - 1
+  CALL INTCELL1_NODIFF(nfc, ncv, arg111, mpg, mpg%intcellr, fna_tmp, vvc&
 &               )
 !
 ! for neutrals (needed on Eirene side in case of spatially hybrid neutrals),
@@ -439,38 +405,9 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
         ELSE
           dnib(ic, nflai) = x6
         END IF
-        IF (pl%ua(ic, is) .GT. switch%eir_ua_max) THEN
-          x7 = switch%eir_ua_max
-        ELSE
-          x7 = pl%ua(ic, is)
-        END IF
-        IF (x7 .LT. switch%eir_ua_min) THEN
-          upb(ic, nflai) = switch%eir_ua_min
-        ELSE
-          upb(ic, nflai) = x7
-        END IF
-        IF (wadiac(ic, 0, is) + vaecrbc(ic, 0, is) .GT. switch%&
-&           eir_ua_max) THEN
-          x8 = switch%eir_ua_max
-        ELSE
-          x8 = wadiac(ic, 0, is) + vaecrbc(ic, 0, is)
-        END IF
-        IF (x8 .LT. switch%eir_ua_min) THEN
-          uudiab(ic, nflai) = switch%eir_ua_min
-        ELSE
-          uudiab(ic, nflai) = x8
-        END IF
-        IF (wadiac(ic, 1, is) + vaecrbc(ic, 1, is) .GT. switch%&
-&           eir_ua_max) THEN
-          x9 = switch%eir_ua_max
-        ELSE
-          x9 = wadiac(ic, 1, is) + vaecrbc(ic, 1, is)
-        END IF
-        IF (x9 .LT. switch%eir_ua_min) THEN
-          vvdiab(ic, nflai) = switch%eir_ua_min
-        ELSE
-          vvdiab(ic, nflai) = x9
-        END IF
+        upb(ic, nflai) = pl%ua(ic, is)
+        uudiab(ic, nflai) = wadiac(ic, 0, is) + vaecrbc(ic, 0, is)
+        vvdiab(ic, nflai) = wadiac(ic, 1, is) + vaecrbc(ic, 1, is)
         IF (.NOT.is_neutral(is)) THEN
           prb(ic) = prb(ic) + tib(ic)*dnib(ic, nflai)
         ELSE
@@ -482,114 +419,103 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
 !     * guard cell values used for source sampling in infcop
         IF (switch%eirene_uub_style .EQ. 0) THEN
           IF (switch%eirene_background .EQ. 0 .OR. ic .GT. mpg%nci) THEN
-            x16 = upb(ic, nflai)*gm%cvbb(ic, 0)/gm%cvbb(ic, 3) + switch%&
-&             xwdia*vadiac(ic, 0, is) + switch%xvecrb*vaecrbc(ic, 0, is)
-            IF (x16 .GT. switch%eir_ua_max) THEN
-              x10 = switch%eir_ua_max
-            ELSE
-              x10 = x16
-            END IF
-            IF (x10 .LT. switch%eir_ua_min) THEN
-              uub(ic, nflai) = switch%eir_ua_min
-            ELSE
-              uub(ic, nflai) = x10
-            END IF
+!     internal cell, old treatment -> grad-B drift only
+!     for boundary cells, -> always grad-B drift only, regardless of eirene_background switch
+            uub(ic, nflai) = upb(ic, nflai)*gm%cvbb(ic, 0)/gm%cvbb(ic, 3&
+&             ) + switch%xwdia*vadiac(ic, 0, is) + switch%xvecrb*vaecrbc&
+&             (ic, 0, is)
           ELSE
-            x17 = upb(ic, nflai)*gm%cvbb(ic, 0)/gm%cvbb(ic, 3) + switch%&
-&             xwdia*wadiac(ic, 0, is) + switch%xvecrb*vaecrbc(ic, 0, is)
-            IF (x17 .GT. switch%eir_ua_max) THEN
-              x11 = switch%eir_ua_max
-            ELSE
-              x11 = x17
-            END IF
-            IF (x11 .LT. switch%eir_ua_min) THEN
-              uub(ic, nflai) = switch%eir_ua_min
-            ELSE
-              uub(ic, nflai) = x11
-            END IF
+!     internal cell -> full diamagnetic drift
+            uub(ic, nflai) = upb(ic, nflai)*gm%cvbb(ic, 0)/gm%cvbb(ic, 3&
+&             ) + switch%xwdia*wadiac(ic, 0, is) + switch%xvecrb*vaecrbc&
+&             (ic, 0, is)
           END IF
         ELSE IF (switch%eirene_uub_style .EQ. 1) THEN
-          IF (uuc(ic, is) .GT. switch%eir_ua_max) THEN
-            x12 = switch%eir_ua_max
-          ELSE
-            x12 = uuc(ic, is)
-          END IF
-          IF (x12 .LT. switch%eir_ua_min) THEN
-            uub(ic, nflai) = switch%eir_ua_min
-          ELSE
-            uub(ic, nflai) = x12
-          END IF
+!wdk  uub computed from face fluxes, and interpolated to cell centers
+!     Should be fully compatible with anom. transport, including all contributions to the flow.
+!     Note, computation at N/S boundaries questionable at present, because (certain/all) terms
+!     in fna may have been set to 0. Should consider using the eirene_uub_style.eq.0 treatment
+!     in these cells!
+          uub(ic, nflai) = uuc(ic, is)
         END IF
-        IF (vvc(ic, is) .GT. switch%eir_ua_max) THEN
-          x13 = switch%eir_ua_max
-        ELSE
-          x13 = vvc(ic, is)
-        END IF
-        IF (x13 .LT. switch%eir_ua_min) THEN
-          vvb(ic, nflai) = switch%eir_ua_min
-        ELSE
-          vvb(ic, nflai) = x13
-        END IF
+!
+!wdk  vvb computed from face fluxes, and interpolated to cell centers
+!     Compatible with SOLPS4.3.
+!     Should be fully compatible with anom. transport, including all contributions to the flow.
+!     Note, computation at E/W boundaries questionable, because (certain/all) terms
+!     in fna may have been set to 0.
+        vvb(ic, nflai) = vvc(ic, is)
 !wdk  wwb directly computed from cell-centered velocities.
 !     Compatible with SOLPS4.3, and consistent with sign convention ua,
 !     but may not be fully consistent with respect to drifts.
 !     In particular: convective anomalous contribution (if present) is missing
 !                    (diffusive anomalous contribution zero due to toroidal symm.)
         IF (switch%eirene_background .EQ. 0 .OR. ic .GT. mpg%nci) THEN
-          IF (upb(ic, nflai)*gm%cvbb(ic, 2)/gm%cvbb(ic, 3) - (switch%&
-&             xwdia*vadiac(ic, 0, is)+switch%xvecrb*vaecrbc(ic, 0, is))*&
-&             gm%cvbb(ic, 0)/gm%cvbb(ic, 2) .GT. switch%eir_ua_max) THEN
-            x14 = switch%eir_ua_max
-          ELSE
-            x14 = upb(ic, nflai)*gm%cvbb(ic, 2)/gm%cvbb(ic, 3) - (switch&
-&             %xwdia*vadiac(ic, 0, is)+switch%xvecrb*vaecrbc(ic, 0, is))&
-&             *gm%cvbb(ic, 0)/gm%cvbb(ic, 2)
-          END IF
-          IF (x14 .LT. switch%eir_ua_min) THEN
-            wwb(ic, nflai) = switch%eir_ua_min
-          ELSE
-            wwb(ic, nflai) = x14
-          END IF
+!     internal cell, old treatment -> grad-B drift only (fna)
+!     for boundary cells, -> always grad-B drift only, regardless of eirene_background switch
+          wwb(ic, nflai) = upb(ic, nflai)*gm%cvbb(ic, 2)/gm%cvbb(ic, 3) &
+&           - (switch%xwdia*vadiac(ic, 0, is)+switch%xvecrb*vaecrbc(ic, &
+&           0, is))*gm%cvbb(ic, 0)/gm%cvbb(ic, 2)
         ELSE
-          IF (upb(ic, nflai)*gm%cvbb(ic, 2)/gm%cvbb(ic, 3) - (switch%&
-&             xwdia*wadiac(ic, 0, is)+switch%xvecrb*vaecrbc(ic, 0, is))*&
-&             gm%cvbb(ic, 0)/gm%cvbb(ic, 2) .GT. switch%eir_ua_max) THEN
-            x15 = switch%eir_ua_max
-          ELSE
-            x15 = upb(ic, nflai)*gm%cvbb(ic, 2)/gm%cvbb(ic, 3) - (switch&
-&             %xwdia*wadiac(ic, 0, is)+switch%xvecrb*vaecrbc(ic, 0, is))&
-&             *gm%cvbb(ic, 0)/gm%cvbb(ic, 2)
-          END IF
-          IF (x15 .LT. switch%eir_ua_min) THEN
-            wwb(ic, nflai) = switch%eir_ua_min
-          ELSE
-            wwb(ic, nflai) = x15
-          END IF
+!     internal cell -> full diamagnetic drift
+          wwb(ic, nflai) = upb(ic, nflai)*gm%cvbb(ic, 2)/gm%cvbb(ic, 3) &
+&           - (switch%xwdia*wadiac(ic, 0, is)+switch%xvecrb*vaecrbc(ic, &
+&           0, is))*gm%cvbb(ic, 0)/gm%cvbb(ic, 2)
         END IF
 !
         ebx = gm%cveb(ic, 0)
         eby = gm%cveb(ic, 1)
-        arg111 = ebx*ebx + eby*eby
-        ebn = SQRT(arg111)
-        IF (ebn .GT. 0) THEN
+        arg112 = ebx*ebx + eby*eby
+        ebn = SQRT(arg112)
+        IF (ebn .GT. 0.0_R8) THEN
           ebx = ebx/ebn
           eby = eby/ebn
         END IF
         pux(ic) = ebx
         puy(ic) = eby
-        pvx(ic) = -eby
-        pvy(ic) = ebx
+        pvx(ic) = -(eby*gm%signmf)
+! limit the total velocity, and then scale
+! all individual components
+        pvy(ic) = ebx*gm%signmf
+!
+        arg112 = uub(ic, nflai)**2 + vvb(ic, nflai)**2 + wwb(ic, nflai)&
+&         **2
+        vtot = SQRT(arg112)
+        IF (switch%eir_ua_min .GE. 0.) THEN
+          y1 = switch%eir_ua_min
+        ELSE
+          y1 = -switch%eir_ua_min
+        END IF
+        IF (switch%eir_ua_max .GT. y1) THEN
+          IF (y1 .GT. switch%eir_m_max*cs(ic)) THEN
+            vmax = switch%eir_m_max*cs(ic)
+          ELSE
+            vmax = y1
+          END IF
+        ELSE IF (switch%eir_ua_max .GT. switch%eir_m_max*cs(ic)) THEN
+          vmax = switch%eir_m_max*cs(ic)
+        ELSE
+          vmax = switch%eir_ua_max
+        END IF
+        IF (vtot .GT. vmax) THEN
+          uub(ic, nflai) = uub(ic, nflai)*vmax/vtot
+          vvb(ic, nflai) = vvb(ic, nflai)*vmax/vtot
+          wwb(ic, nflai) = wwb(ic, nflai)*vmax/vtot
+          upb(ic, nflai) = upb(ic, nflai)*vmax/vtot
+          uudiab(ic, nflai) = uudiab(ic, nflai)*vmax/vtot
+          vvdiab(ic, nflai) = vvdiab(ic, nflai)*vmax/vtot
+        END IF
+!
         vxb(ic, nflai) = uub(ic, nflai)*pux(ic) + vvb(ic, nflai)*pvx(ic)
         vyb(ic, nflai) = uub(ic, nflai)*puy(ic) + vvb(ic, nflai)*pvy(ic)
-        arg111 = gm%cveb(ic, 2)
-        vzb(ic, nflai) = wwb(ic, nflai)*SIGN(1.0_R8, arg111)
+        arg112 = gm%cveb(ic, 2)
+        vzb(ic, nflai) = wwb(ic, nflai)*SIGN(1.0_R8, arg112)
       END DO
-!
 ! cell faces
       DO ifc=1,nfc
         fnib(ifc, nflai) = dv%fna(ifc, 0, is) + dv%fna(ifc, 1, is)
         IF (is_neutral(is)) THEN
-          fnn_inc_b(ifc, nflai) = fnn_inc(ifc, is)
+          fnn_inc_b(ifc, nflai) = dv%fnn_inc(ifc, is)
           fnn_mol_b(ifc, nflai) = fna_mol(ifc, is)
         END IF
       END DO
@@ -645,14 +571,14 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
         nflai = nflai + 1
         WRITE(chns, '(i3.3)') is
         WRITE(ccall, '(a1,i1)') '_', icall
-        arg112(:) = 'copy_uub'//chns//ccall
-        CALL MY_OUT_US(70, ncv, 0, uub(1, nflai), arg112(:))
-        arg112(:) = 'copy_vvb'//chns//ccall
-        CALL MY_OUT_US(70, ncv, 0, vvb(1, nflai), arg112(:))
-        arg112(:) = 'copy_wwb'//chns//ccall
-        CALL MY_OUT_US(70, ncv, 0, wwb(1, nflai), arg112(:))
-        arg112(:) = 'copy_upb'//chns//ccall
-        CALL MY_OUT_US(70, ncv, 0, upb(1, nflai), arg112(:))
+        arg113(:) = 'copy_uub'//chns//ccall
+        CALL MY_OUT_US(70, ncv, 0, uub(1, nflai), arg113(:))
+        arg113(:) = 'copy_vvb'//chns//ccall
+        CALL MY_OUT_US(70, ncv, 0, vvb(1, nflai), arg113(:))
+        arg113(:) = 'copy_wwb'//chns//ccall
+        CALL MY_OUT_US(70, ncv, 0, wwb(1, nflai), arg113(:))
+        arg113(:) = 'copy_upb'//chns//ccall
+        CALL MY_OUT_US(70, ncv, 0, upb(1, nflai), arg113(:))
       END IF
     END DO
     CALL MY_OUT_US(70, ncv, 0, teb, 'copy_teb')
@@ -685,9 +611,9 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
         iv2 = mpg%fcvx(ifc, 2)
 ! index of guard cell
         ic = mpg%rccv(ian+i-1, 1)
-        arg111 = (gm%vxx(iv1)-gm%vxx(iv2))**2 + (gm%vxy(iv1)-gm%vxy(iv2)&
+        arg112 = (gm%vxx(iv1)-gm%vxx(iv2))**2 + (gm%vxy(iv1)-gm%vxy(iv2)&
 &         )**2
-        result10 = SQRT(arg111)
+        result10 = SQRT(arg112)
         trgt(istra)%flength(i) = result10*100._R8
         trgt(istra)%tet(i) = teb(ic)
         trgt(istra)%tit(i) = tib(ic)
@@ -696,17 +622,22 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
         trgt(istra)%fsh(i) = delta_sheathb(ifc)
         DO ifl=1,nflai
           trgt(istra)%dnit(i, ifl) = dnib(ic, ifl)
-          IF (zab(ifl) .NE. 0) THEN
+          IF (zab(ifl) .NE. 0 .AND. mol(istra) .EQ. 0) THEN
 !! ion species
             trgt(istra)%flux(i, ifl) = fnib(ifc, ifl)*mpg%rcfcor(ian+i-1&
-&             )*kin_frac_hyb(ifc)
-          ELSE IF (mol(istra) .EQ. 0) THEN
+&             )*dv%kin_frac_hyb(ifc)
+          ELSE IF (zab(ifl) .EQ. 0 .AND. mol(istra) .EQ. 0) THEN
 !! neutral atom species
             trgt(istra)%flux(i, ifl) = fnn_inc_b(ifc, ifl)*mpg%rcfcor(&
-&             ian+i-1)*kin_frac_hyb(ifc)
-          ELSE
+&             ian+i-1)*dv%kin_frac_hyb(ifc)
+            fnib(ifc, ifl) = fnn_inc_b(ifc, ifl)
+          ELSE IF (zab(ifl) .EQ. 0 .AND. mol(istra) .EQ. 1) THEN
 !! neutral molecule species
-            trgt(istra)%flux(i, ifl) = 2.0_R8*fnn_mol_b(ifc, ifl)
+            trgt(istra)%flux(i, ifl) = 2.0_R8*fnn_mol_b(ifc, ifl)*dv%&
+&             fluid_frac_hyb(ifc)
+            fnib(ifc, ifl) = 0.0_R8
+          ELSE IF (fnn_mol_b(ifc, ifl) .GT. 0) THEN
+            CALL XERRAB('no molecular contribution expected here')
           END IF
           IF (trgt(istra)%flux(i, ifl) .LT. 0.0_R8) THEN
             WRITE(*, *) 'negative flux !! istra, i, ifl = ', istra, i, &
@@ -718,26 +649,29 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
 !
           ebx = gm%fceb(ifc, 0)
           eby = gm%fceb(ifc, 1)
-          arg111 = ebx*ebx + eby*eby
-          ebn = SQRT(arg111)
+          arg112 = ebx*ebx + eby*eby
+          ebn = SQRT(arg112)
           IF (ebn .GT. 0) THEN
             ebx = ebx/ebn
             eby = eby/ebn
           END IF
           puxs = ebx
           puys = eby
-          pvxs = -eby
-          pvys = ebx
+          pvxs = -(eby*gm%signmf)
+          pvys = ebx*gm%signmf
+!
           uu = uub(ic, ifl)
           vv = vvb(ic, ifl)
           ww = wwb(ic, ifl)
           trgt(istra)%vxt(i, ifl) = puxs*uu + pvxs*vv
           trgt(istra)%vyt(i, ifl) = puys*uu + pvys*vv
-          trgt(istra)%vzt(i, ifl) = ww
+          arg112 = gm%fceb(ifc, 2)
+          trgt(istra)%vzt(i, ifl) = ww*SIGN(1.0_R8, arg112)
           trgt(istra)%fel(i, ifl) = 0.0_R8
           trgt(istra)%vpart(i, ifl) = 0.0_R8
           trgt(istra)%mach(i, ifl) = 1.0_R8
           trgt(istra)%usr(i, ifl) = 0.0_R8
+          trgt(istra)%zit(i, ifl) = zab(ifl)
         END DO
       END DO
     END IF
@@ -747,6 +681,85 @@ SUBROUTINE COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, gm, pl, dv&
   CALL SUBEND()
   RETURN
 END SUBROUTINE COPY_BACKGROUND_NODIFF
+
+!
+SUBROUTINE WRITE_F30_NODIFF(geo, mpg)
+  USE B2US_MAP_DIFFV
+  USE B2US_GEO_DIFFV
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(GEOMETRY), INTENT(IN) :: geo
+  INTEGER :: i, nb, ilbl, minlbl, maxlbl, nbfaces, nbverts
+  INTEGER, ALLOCATABLE :: bverts(:)
+  INTRINSIC MINVAL
+  INTRINSIC MAXVAL
+  INTRINSIC COUNT
+!
+! open the file
+  WRITE(*, *) 'Writing fort.30 file'
+!
+  OPEN(unit=30, file='fort.30') 
+! identify range of face labels
+!
+  minlbl = MINVAL(mpg%fclbl)
+! first pass: identify number of boundary segments to be written
+  maxlbl = MAXVAL(mpg%fclbl)
+!
+  nb = 0
+! only treat faces with non-zero fclbl
+  DO ilbl=minlbl,maxlbl
+!
+! determine number of faces with this label
+    IF (ilbl .NE. 0) THEN
+!
+      nbfaces = COUNT(mpg%fclbl .EQ. ilbl)
+!
+      IF (nbfaces .GT. 0) nb = nb + 1
+    END IF
+  END DO
+!
+! write file
+!
+  WRITE(30, '(i3)') nb
+!
+! only treat faces with non-zero fclbl
+  DO ilbl=minlbl,maxlbl
+!
+! determine number of faces with this label
+    IF (ilbl .NE. 0) THEN
+!
+! corresponding number of vertices
+      nbfaces = COUNT(mpg%fclbl .EQ. ilbl)
+!
+      nbverts = nbfaces + 1
+!
+      IF (nbfaces .GT. 0) THEN
+!
+        ALLOCATE(bverts(nbverts))
+! sort vertices of the boundary faces into a polygon
+!
+        CALL SORT_VERTICES_NODIFF(nbverts, bverts, mpg%nfc, mpg%fclbl, &
+&                           ilbl, mpg)
+! write into fort.30
+!
+        WRITE(30, '(i3)') ilbl
+        WRITE(30, '(i12)') nbverts
+        DO i=1,nbverts
+          WRITE(30, '(2(2X,E21.14))') geo%vxx(bverts(i)), geo%vxy(bverts&
+&         (i))
+        END DO
+!
+        DEALLOCATE(bverts)
+      END IF
+    END IF
+  END DO
+! close file
+!
+  CLOSE(30) 
+!
+  RETURN
+END SUBROUTINE WRITE_F30_NODIFF
 
 !
 SUBROUTINE WRITE_F31_NODIFF(mpg)
@@ -761,26 +774,24 @@ SUBROUTINE WRITE_F31_NODIFF(mpg)
   IMPLICIT NONE
 !  version : 28.12.96 21:39
 !
-!  Common dimensions
 !
-!  version : 01.12.98 21:42
-!
-!
-!     COUPLING-DEFINITION COMMON (KOPPLDIM)
+!     COUPLING DEFINITION COMMON (KOPPLDIM)
 !
 !
 !  -- PRINCIPAL DIMENSIONS -- SHOULD MATCH EIRENE DECLARATIONS!!!
   INTEGER :: nxdd, nydd, nstra, nfl
-  PARAMETER (nxdd=200+4*5, nydd=100, nstra=(5*4/2+2)*6+1, nfl=42)
+  PARAMETER (nxdd=def_nxd+def_ncut*5, nydd=def_nyd, nstra=def_nstra, nfl&
+& = def_nfl)
   INTEGER :: natm, nmol, nion, npls, nspz
-  PARAMETER (natm=6, nmol=3, nion=3, npls=42-6+(6+3)*(6+3), nspz=6+3+3+(&
-&   42-6)+(6+3)*(6+3))
+  PARAMETER (natm=def_natm, nmol=def_nmol, nion=def_nion, npls=def_npls&
+& , nspz=def_natm+def_nmol+def_nion+def_npls)
   INTEGER :: nlim, nsts, nsrfs, nsgmx
-  PARAMETER (nlim=300, nsts=50, nsrfs=4)
-  PARAMETER (nsgmx=300+max(2, 4)*100)
+  PARAMETER (nlim=def_nlim, nsts=def_nsts, nsrfs=def_nsrfs)
+  PARAMETER (nsgmx=def_nlim+max(2, def_ncut)*def_nyd)
 !
   INTEGER :: n1st, n2nd, n3rd
-  PARAMETER (n1st=100+1, n2nd=200+1+4+(4/2-1)*(1+0), n3rd=1)
+  PARAMETER (n1st=def_nyd+1, n2nd=def_nxd+1+def_ncut+(def_ncut/2-1)*(1+&
+&   def_isoextra), n3rd=1)
   INTEGER :: n1f, n2f, n3f
   PARAMETER (n1f=1-1/n1st, n2f=1-1/n2nd, n3f=1-1/n3rd)
   INTEGER :: ngitt, ngittp
@@ -791,7 +802,7 @@ SUBROUTINE WRITE_F31_NODIFF(mpg)
   INTEGER :: ndxp, ndyp, nlimps
   PARAMETER (ndxp=nxdd+1, ndyp=nydd+1, nlimps=nlim+nsts)
   INTEGER :: ngtsft, nlmpgs
-  PARAMETER (ngtsft=1*ngitt)
+  PARAMETER (ngtsft=def_ngstal*ngitt)
   PARAMETER (nlmpgs=nlim+(ngtsft+1)*nsts)
 !
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -872,20 +883,21 @@ SUBROUTINE WRITE_F31_NODIFF(mpg)
 &       istra
         WRITE(31, '(a)') '*'
 !
-        WRITE(31, '(a1,a6,11a15)') '*', 'Index', 'Flux', 'Ti', 'ni', &
-&       'Vx', 'Vy', 'Vz', 'fi', 'fel', 'vpart', 'mach', 'usr'
-        WRITE(31, '(a1,a6,11a15)') '*', ' ', ' ', '(eV)', '(1/m^3)', &
-&       'm/s', 'm/s', 'm/s', ' ', ' ', ' ', ' '
+        WRITE(31, '(a1,a6,12a15)') '*', 'Index', 'Flux', 'Ti', 'ni', &
+&       'Vx', 'Vy', 'Vz', 'fi', 'fel', 'vpart', 'mach', 'usr', 'Zi'
+        WRITE(31, '(a1,a6,12a15)') '*', ' ', ' ', '(eV)', '(1/m^3)', &
+&       'm/s', 'm/s', 'm/s', ' ', ' ', ' ', ' ', ' '
 !
         WRITE(31, '(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
         WRITE(31, '(i6)') ntrgdat
 !
         DO i=1,ntrgdat
-          WRITE(31, '(i7,11es15.7)') i, trgt(istra)%flux(i, ifl), trgt(&
+          WRITE(31, '(i7,12es15.7)') i, trgt(istra)%flux(i, ifl), trgt(&
 &         istra)%tit(i), trgt(istra)%dnit(i, ifl), trgt(istra)%vxt(i, &
 &         ifl), trgt(istra)%vyt(i, ifl), trgt(istra)%vzt(i, ifl), trgt(&
 &         istra)%fi(i, ifl), trgt(istra)%fel(i, ifl), trgt(istra)%vpart(&
-&         i, ifl), trgt(istra)%mach(i, ifl), trgt(istra)%usr(i, ifl)
+&         i, ifl), trgt(istra)%mach(i, ifl), trgt(istra)%usr(i, ifl), &
+&         trgt(istra)%zit(i, ifl)
         END DO
       END DO
     END IF

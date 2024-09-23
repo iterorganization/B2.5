@@ -39,7 +39,6 @@ SUBROUTINE B2TXCY_DV(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, kapyd, &
   REAL(kind=r8), DIMENSION(nbdirsmax) :: t0d, t1d
   INTRINSIC MAX, SQRT
   EXTERNAL XERTST
-  EXTERNAL B2XXGS
   REAL(r8) :: y1
   REAL(r8), DIMENSION(nbdirsmax) :: y1d
   REAL(r8) :: max1
@@ -167,9 +166,6 @@ SUBROUTINE B2TXCY_DV(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, kapyd, &
 &       fcvol(ifc, 2)*kapy(mpg%fccv(ifc, 2)))/temp0)
     END DO
   END IF
-!   ..reset null regions
-!      call b2xxgs (nx, ny, 0.0_R8, cony(-1,-1,0), 1)
-!      call b2xxgs (nx, ny, 0.0_R8, cony(-1,-1,1), 2)
 !   ..return
   CALL SUBEND()
   RETURN
@@ -207,7 +203,6 @@ SUBROUTINE B2TXCY_NODIFF(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, &
   REAL(kind=r8) :: t0, t1
   INTRINSIC MAX, SQRT
   EXTERNAL XERTST
-  EXTERNAL B2XXGS
   REAL(r8) :: y1
   REAL(r8) :: max1
   REAL(r8) :: result1
@@ -271,9 +266,6 @@ SUBROUTINE B2TXCY_NODIFF(ncv, nfc, mode, geo, mpg, fcvol, fcs, kapy, &
 &       ifc, 1)+geo%fcvol(ifc, 2))
     END DO
   END IF
-!   ..reset null regions
-!      call b2xxgs (nx, ny, 0.0_R8, cony(-1,-1,0), 1)
-!      call b2xxgs (nx, ny, 0.0_R8, cony(-1,-1,1), 2)
 !   ..return
   CALL SUBEND()
   RETURN

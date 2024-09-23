@@ -64,7 +64,6 @@ c      use b2mod_keps
      &  dnac(nCv,0:1), dlbc(nCv,0:1), dtec(nCv,0:1), dtic(nCv,0:1),
      &  dktc(nCv),
      &  fac_diss, fac_sheath, csfs(nCv), connfs(nCv), rhol(nCv)
-      real (kind=R8), save :: lpar_ref = 10.0_R8
 *   ..procedures
       intrinsic min, max, sqrt
       external xertst, ipgeti, ipgetr, sfill
@@ -84,7 +83,6 @@ c      use b2mod_keps
         call xertst(icsepomp.gt.0,
      &    'Invalid icsepomp value, check rzomp in b2.user.parameters')
        endif
-       call ipgetr ('b2sikt_fac_diss_lpar', lpar_ref)
       endif
 *   ..test nCv, ns
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv')
@@ -127,12 +125,12 @@ cwdk     parallel transport due to parallel current fluctuations
           csfs = cs
           connfs = geo%cvConn
           rhol = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
-     &       abs(rza(:,ismain)*qe*geo%cvBb(:,3))
+     &       dabs(rza(:,ismain)*qe*geo%cvBb(:,3))
         else
           csfs = cs(omp(icsepomp))
           connfs = geo%cvConn(omp(icsepomp))
           rhol = sqrt(2.0_R8*pl%ti(omp(icsepomp))*(am(ismain)*mp))/
-     &       abs(rza(omp(icsepomp),ismain)*qe*geo%cvBb(omp(icsepomp),3))
+     &      dabs(rza(omp(icsepomp),ismain)*qe*geo%cvBb(omp(icsepomp),3))
         endif
         call xertst(minval(connfs(1:mpg%nCi)).gt.0.0_R8,
      .    ' connfs in b2sikt <=0!!')
@@ -187,7 +185,7 @@ cwdk     parallel transport due to parallel current fluctuations
      &      (geo%cvBb(:,3)/(geo%cvBb(:,0)*geo%cvConn))**2
          elseif (switch % b2sikt_fac_diss_core_mode .eq.1 ) then
            wrk3 = co%sigx_kt*geo%cvVol*pl%kt*
-     &      (geo%cvBb(:,3)/(geo%cvBb(:,0)*lpar_ref))**2
+     &      (geo%cvBb(:,3)/(geo%cvBb(:,0)*switch%b2sikt_lpar_ref))**2
          else
            call gradc_p(nCv,nFc,nVx,0,geo,mpg,sqrt(pl%kt),wrkv,dktc)
            wrk3 = co%sigx_kt*geo%cvVol*dktc**2

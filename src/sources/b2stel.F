@@ -9,6 +9,7 @@
       use b2mod_eirene_globals
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
      &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
@@ -16,6 +17,7 @@
      &          b2stel_she_ion0to3, b2stel_she_rec0to3,
      &          b2stel_shi_ion0to3, b2stel_shi_rec0to3,
      &          balance_netcdf
+#endif
 #ifdef ASTRA
       use b2mod_b2_to_astra
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 11.06.13
@@ -409,11 +411,13 @@ c accounted for)
           srw%she0(iCv,0) = srw%she0(iCv,0)+rf0*t0
           srw%she0(iCv,3) = srw%she0(iCv,3)-
      &     (1.0_R8+rf0)*t0/(dv%ne(iCv)*pl%te(iCv))
+#ifndef FIXED_POINT
           if (balance_netcdf.ne.0) then
             b2stel_she0to3(iCv,0,is) = rf0*t0
             b2stel_she0to3(iCv,3,is) =
      &           -(1.0_R8+rf0)*t0/(dv%ne(iCv)*pl%te(iCv))
           endif
+#endif
           srw%rqahe(iCv,is) = srw%rqahe(iCv,is) + t0
           rqahereg(mpg%cvReg(iCv),is)=rqahereg(mpg%cvReg(iCv),is)+t0
 *      ..compute line radiation rate for is->any
@@ -543,6 +547,7 @@ c accounted for)
         enddo                                                        !srv 03.02.12 }
       endif                                                          !srv 30.06.08 11.09.09 }
 
+#ifndef FIXED_POINT
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2stel_sna_ion0to1 = sna0_ion
@@ -554,6 +559,7 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stel_shi_ion0to3 = shi0_ion
         b2stel_shi_rec0to3 = shi0_rec
       endif
+#endif
 
 * ..return
       ncall_b2stel = ncall_b2stel+1

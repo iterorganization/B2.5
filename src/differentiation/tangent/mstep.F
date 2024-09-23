@@ -570,7 +570,7 @@ c_______________________________________________________________________
       END SUBROUTINE ADAMS
 c_______________________________________________________________________
       SUBROUTINE RKM(IBND,NS,N,Y,YT,DY,H,T0,TN,REPS,NSTEP,NMAX,IER,
-     . WK) 
+     . WK)
       use b2mod_types
       implicit none
       integer n, nmx, nstep, nmax, ier, ibnd, ns
@@ -578,7 +578,7 @@ c_______________________________________________________________________
       real (kind=R8) :: H, T0, TN, REPS
       PARAMETER(NMX=10000,SFAC=0.9_R8,EPS=1.0e-30_R8)
       PARAMETER(E1=0.20_R8,E2=0.25_R8,CE=15.0_R8)
-      EXTERNAL lines2c 
+      EXTERNAL lines2c
       real (kind=R8) :: Y(N),YT(N),DY(N),WK(N,5)
 
       integer I

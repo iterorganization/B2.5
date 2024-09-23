@@ -86,8 +86,8 @@ CONTAINS
       RETURN
     ELSE
 !xpb  Allocate dummy arrays needed by b2xpfe
-      ALLOCATE(za_ext(-1:nxd, -1:nyd, 0))
-      ALLOCATE(fa_ext(-1:nxd, -1:nyd, 0:1, 0:1, 0))
+      ALLOCATE(za_ext(-1:nxd, -1:nyd, 0:0))
+      ALLOCATE(fa_ext(-1:nxd, -1:nyd, 0:1, 0:1, 0:0))
       za_ext = 0.0_R8
       fa_ext = 0.0_R8
       initialised_externals = .true.
@@ -154,7 +154,7 @@ CONTAINS
   SUBROUTINE READ_B2MOD_EXTERNAL(nxd, nyd, nsd, ismain)
     USE B2MOD_GEO_DIFFV
     USE B2MOD_CONSTANTS
-    USE B2MOD_INDIRECT
+    USE B2MOD_INDIRECT_DIFFV
     USE B2MOD_ELEMENTS_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -166,10 +166,11 @@ CONTAINS
     REAL(kind=r8), ALLOCATABLE :: pdum(:), pot(:), dext(:, :)
     CHARACTER(len=256) :: filename
     LOGICAL :: toread
-    EXTERNAL XERTST, XERRAB, OPEN_FILE, FIND_FILE
+    EXTERNAL XERTST, XERRAB, OPEN_FILE, FIND_FILE, EXTEND_NODIFF
     LOGICAL :: OPEN_FILE
     INTRINSIC NINT
     INTRINSIC REAL
+    INTRINSIC LEN_TRIM
     INTRINSIC MAXVAL
     INTRINSIC ALLOCATED
     INTRINSIC SIGN

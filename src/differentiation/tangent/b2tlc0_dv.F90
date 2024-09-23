@@ -18,9 +18,9 @@
 !
 !
 !
-SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
-& , nad, te, ted, ti, tid, tn, tnd, rza, rzad, cdpa0, cdpa0d, cdpa, &
-& cdpad, cdpahz, cdpahzd, flc, flcd, nbdirs)
+SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
+& , mpgd, na, nad, te, ted, ti, tid, tn, tnd, rza, rzad, cdpa0, cdpa0d, &
+& cdpa, cdpad, cdpahz, cdpahzd, flc, flcd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -30,6 +30,7 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : b2tlc0_cutlo
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -38,6 +39,7 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -60,8 +62,8 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 !     ------------------------------------------------------------------
 !   ..local variables
   INTEGER :: ifc, is
-  REAL(kind=r8) :: alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1&
-& ), pb(ncv), dpbf(nfc, 0:1), pbv(nvx)
+  REAL(kind=r8) :: alpha, gamma, t0, t1, t2, t3, dpb, vbar, maxfluxlimit&
+& (0:1), pb(ncv), dpbf(nfc, 0:1), pbv(nvx)
   REAL(kind=r8) :: t0d(nbdirsmax), t1d(nbdirsmax), t2d(nbdirsmax), dpbd(&
 & nbdirsmax), vbard(nbdirsmax), pbd(nbdirsmax, ncv), dpbfd(nbdirsmax, &
 & nfc, 0:1), pbvd(nbdirsmax, nvx)
@@ -96,7 +98,7 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tlc0')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !
   arg1 = nfc*2*ns
@@ -168,7 +170,7 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
             END DO
             result1 = temp
             vbar = result1*geo%fcs(ifc)*abs0
-            temp = b2tlc0_cutlo + alpha*vbar*t1/4.0e0_R8
+            temp = b2tlc0_cutlo + alpha*vbar*t1/4.0_R8
             pwx1 = dpb/temp
             pwr1 = pwx1**gamma
             pwx2 = 1.0_R8 + pwr1
@@ -176,8 +178,8 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
             pwr2 = pwx2**pwy2
             t2 = 1.0_R8/pwr2
             DO nd=1,nbdirs
-              pwx1d(nd) = (dpbd(nd)-dpb*alpha*(t1*vbard(nd)/4.0e0_R8+&
-&               vbar*t1d(nd)/4.0e0_R8)/temp)/temp
+              pwx1d(nd) = (dpbd(nd)-dpb*alpha*(t1*vbard(nd)/4.0_R8+vbar*&
+&               t1d(nd)/4.0_R8)/temp)/temp
               IF (pwx1 .LE. 0.D0 .AND. (gamma .EQ. 0.D0 .OR. gamma .NE. &
 &                 INT(gamma))) THEN
                 pwr1d(nd) = 0.D0
@@ -239,7 +241,7 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
             END DO
             result1 = temp
             vbar = result1*geo%fcs(ifc)*abs1
-            temp = b2tlc0_cutlo + alpha*vbar*t1/4.0e0_R8
+            temp = b2tlc0_cutlo + alpha*vbar*t1/4.0_R8
             pwx1 = dpb/temp
             pwr1 = pwx1**gamma
             pwx2 = 1.0_R8 + pwr1
@@ -247,8 +249,8 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
             pwr2 = pwx2**pwy2
             t2 = 1.0_R8/pwr2
             DO nd=1,nbdirs
-              pwx1d(nd) = (dpbd(nd)-dpb*alpha*(t1*vbard(nd)/4.0e0_R8+&
-&               vbar*t1d(nd)/4.0e0_R8)/temp)/temp
+              pwx1d(nd) = (dpbd(nd)-dpb*alpha*(t1*vbard(nd)/4.0_R8+vbar*&
+&               t1d(nd)/4.0_R8)/temp)/temp
               IF (pwx1 .LE. 0.D0 .AND. (gamma .EQ. 0.D0 .OR. gamma .NE. &
 &                 INT(gamma))) THEN
                 pwr1d(nd) = 0.D0
@@ -298,14 +300,27 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
           CALL DIFF_DV(ncv, nfc, nvx, 0, geo, geod, mpg, mpgd, pb, pbd, &
 &                pbv, pbvd, dpbf, dpbfd, nbdirs)
           DO ifc=1,nfc
+            DO nd=1,nbdirs
+              t0d(nd) = (tnd(nd, mpg%fccv(ifc, 1))+tnd(nd, mpg%fccv(ifc&
+&               , 2)))/2.0_R8
+              t1d(nd) = nad(nd, mpg%fccv(ifc, 1), is)
+            END DO
+            t0 = (tn(mpg%fccv(ifc, 1))+tn(mpg%fccv(ifc, 2)))/2.0_R8
+! lkw 30.09.2022{
+            t3 = dpbf(ifc, 0)*geo%fcqalf(ifc, 0) + dpbf(ifc, 1)*geo%&
+&             fcqalf(ifc, 1)
+            t1 = na(mpg%fccv(ifc, 1), is)
+! lkw 30.09.2022}
+            IF (t3 .GT. 0) THEN
+              DO nd=1,nbdirs
+                t1d(nd) = nad(nd, mpg%fccv(ifc, 2), is)
+              END DO
+              t1 = na(mpg%fccv(ifc, 2), is)
+            END IF
             arg11 = dpbf(ifc, 0)**2 + dpbf(ifc, 1)**2
             temp = SQRT(arg11)
             result1 = temp
             DO nd=1,nbdirs
-              t0d(nd) = (tnd(nd, mpg%fccv(ifc, 1))+tnd(nd, mpg%fccv(ifc&
-&               , 2)))/2.0_R8
-              t1d(nd) = (nad(nd, mpg%fccv(ifc, 1), is)+nad(nd, mpg%fccv(&
-&               ifc, 2), is))/2.0_R8
 !    ..limit total gradient
               arg11d(nd) = 2*dpbf(ifc, 0)*dpbfd(nd, ifc, 0) + 2*dpbf(ifc&
 &               , 1)*dpbfd(nd, ifc, 1)
@@ -317,9 +332,6 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
               dpbd(nd) = result1*cdpa0d(nd, ifc, is) + cdpa0(ifc, is)*&
 &               result1d(nd)
             END DO
-            t0 = (tn(mpg%fccv(ifc, 1))+tn(mpg%fccv(ifc, 2)))/2.0_R8
-            t1 = (na(mpg%fccv(ifc, 1), is)+na(mpg%fccv(ifc, 2), is))/&
-&             2.0_R8
             dpb = cdpa0(ifc, is)*result1
             temp = am(is)*pi*mp
             DO nd=1,nbdirs
@@ -337,7 +349,7 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
             END DO
             result1 = temp
             vbar = result1*geo%fcs(ifc)
-            temp = b2tlc0_cutlo + alpha*vbar*t1/4.0e0_R8
+            temp = b2tlc0_cutlo + alpha*vbar*t1/4.0_R8
             pwx1 = dpb/temp
             pwr1 = pwx1**gamma
             pwx2 = 1.0_R8 + pwr1
@@ -345,8 +357,8 @@ SUBROUTINE B2TLC0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
             pwr2 = pwx2**pwy2
             t2 = 1.0_R8/pwr2
             DO nd=1,nbdirs
-              pwx1d(nd) = (dpbd(nd)-dpb*alpha*(t1*vbard(nd)/4.0e0_R8+&
-&               vbar*t1d(nd)/4.0e0_R8)/temp)/temp
+              pwx1d(nd) = (dpbd(nd)-dpb*alpha*(t1*vbard(nd)/4.0_R8+vbar*&
+&               t1d(nd)/4.0_R8)/temp)/temp
               IF (pwx1 .LE. 0.D0 .AND. (gamma .EQ. 0.D0 .OR. gamma .NE. &
 &                 INT(gamma))) THEN
                 pwr1d(nd) = 0.D0
@@ -437,6 +449,7 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : b2tlc0_cutlo
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -458,8 +471,8 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
 !     ------------------------------------------------------------------
 !   ..local variables
   INTEGER :: ifc, is
-  REAL(kind=r8) :: alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1&
-& ), pb(ncv), dpbf(nfc, 0:1), pbv(nvx)
+  REAL(kind=r8) :: alpha, gamma, t0, t1, t2, t3, dpb, vbar, maxfluxlimit&
+& (0:1), pb(ncv), dpbf(nfc, 0:1), pbv(nvx)
   CHARACTER :: charns*3
 !   ..procedures
   INTRINSIC MAX, ABS, SQRT
@@ -481,7 +494,7 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tlc0')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !
   arg1 = nfc*2*ns
@@ -518,7 +531,7 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
             arg10 = 8.0_R8*t0/(pi*(am(is)*mp))
             result1 = SQRT(arg10)
             vbar = result1*geo%fcs(ifc)*abs0
-            pwx1 = dpb/(alpha*vbar/4.0e0_R8*t1+b2tlc0_cutlo)
+            pwx1 = dpb/(alpha*vbar/4.0_R8*t1+b2tlc0_cutlo)
             pwr1 = pwx1**gamma
             pwx2 = 1.0_R8 + pwr1
             pwy2 = 1.0_R8/gamma
@@ -545,7 +558,7 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
             arg10 = 8.0_R8*t0/(pi*(am(is)*mp))
             result1 = SQRT(arg10)
             vbar = result1*geo%fcs(ifc)*abs1
-            pwx1 = dpb/(alpha*vbar/4.0e0_R8*t1+b2tlc0_cutlo)
+            pwx1 = dpb/(alpha*vbar/4.0_R8*t1+b2tlc0_cutlo)
             pwr1 = pwx1**gamma
             pwx2 = 1.0_R8 + pwr1
             pwy2 = 1.0_R8/gamma
@@ -574,8 +587,12 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
           CALL DIFF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, pb, pbv, dpbf)
           DO ifc=1,nfc
             t0 = (tn(mpg%fccv(ifc, 1))+tn(mpg%fccv(ifc, 2)))/2.0_R8
-            t1 = (na(mpg%fccv(ifc, 1), is)+na(mpg%fccv(ifc, 2), is))/&
-&             2.0_R8
+! lkw 30.09.2022{
+            t3 = dpbf(ifc, 0)*geo%fcqalf(ifc, 0) + dpbf(ifc, 1)*geo%&
+&             fcqalf(ifc, 1)
+            t1 = na(mpg%fccv(ifc, 1), is)
+! lkw 30.09.2022}
+            IF (t3 .GT. 0) t1 = na(mpg%fccv(ifc, 2), is)
 !    ..limit total gradient
             arg11 = dpbf(ifc, 0)**2 + dpbf(ifc, 1)**2
             result1 = SQRT(arg11)
@@ -583,7 +600,7 @@ SUBROUTINE B2TLC0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, te, ti&
             arg10 = 8.0_R8*t0/(pi*(am(is)*mp))
             result1 = SQRT(arg10)
             vbar = result1*geo%fcs(ifc)
-            pwx1 = dpb/(alpha*vbar/4.0e0_R8*t1+b2tlc0_cutlo)
+            pwx1 = dpb/(alpha*vbar/4.0_R8*t1+b2tlc0_cutlo)
             pwr1 = pwx1**gamma
             pwx2 = 1.0_R8 + pwr1
             pwy2 = 1.0_R8/gamma

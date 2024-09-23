@@ -33,12 +33,12 @@
       integer, intent(in) :: nco
       real(R8), intent(in) :: xco(nco), yco(nco), sclfac
       integer :: iun, i
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iun,file='triangle.coordinates',
      .           access='SEQUENTIAL',form='FORMATTED')
 #else
@@ -64,12 +64,12 @@
       implicit none
       integer, intent(in) :: nel, elem(3,nel)
       integer :: iun, i, is
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iun,file='triangle.elements',
      .           access='SEQUENTIAL',form='FORMATTED')
 #else
@@ -95,12 +95,12 @@
       integer, intent(in) :: nel, neighbor(3,2,nel),bndmdl(3,nel),
      .                       elem_cv(nel), triFc(3,nel)
       integer :: iun, i, is, js
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iun,file='triangle.neighbors',
      .           access='SEQUENTIAL',form='FORMATTED')
 #else

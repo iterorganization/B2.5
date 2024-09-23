@@ -85,10 +85,6 @@
       logical oldversion, ex
       character*256 filename
 *   ..procedures
-#ifndef F2003
-      integer newunit
-      external newunit
-#endif
       logical streql, is_comment
       external xertst, xerrab, sfill, streql, cfwuch, cfwuin, is_comment
       external b2xvsg, b2xxid, b2rflb, b2wups, b2rugm, b2xpne, b2wuzd,

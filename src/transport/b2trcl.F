@@ -22,6 +22,8 @@
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
+      use b2mod_math
+     & , only : b2mod_math_initialised, cutlo, cutll, small_R4_constant
       use b2mod_ad
      & , only : my_out_folder,
 #ifdef WG_DEBUG
@@ -718,7 +720,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             t0 = abs(co%alfx_c(iCv)*gtec(iCv)/
      &         (cflim(3)*jemax + b2trcl_cutlo))
             co%fllim_al_c(iCv)=1.0_R8/(1.0_R8+t0)
-            co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)                 !iyv 19.11.13 !srv 08.10.14
+            co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)             !iyv 19.11.13 !srv 08.10.14
           endif
         enddo
        endif
@@ -739,6 +741,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &  switch%b2tfhi_fsigkt
       call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  wrkc, cdkt(:,0))
+      cdkt(:,0) = cdkt(:,0)*switch%b2tfhi_fsigkt
       cdkt(:,1) = 0.0_R8
       co%sigx_kt = wrkc
 *   ..save the classical transport coefficients

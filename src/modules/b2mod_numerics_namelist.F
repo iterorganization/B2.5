@@ -129,7 +129,7 @@
       allocate(do_sna_corr_core(nspecies))                         !iyv 20.09.22
 #else
       call xertst (nsd.le.nsdmax,
-     1 'increase DEF_NSD in DIMENSIONS.F')
+     1 'increase DEF_NSD in b2mod_dimensions')
       call xertst (nnreg(0).le.cvregmax,'increase CVREGMAX')
 #endif
       dtco=1.0_R8
