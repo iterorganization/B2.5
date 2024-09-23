@@ -1173,6 +1173,9 @@
 *   ..boundary conditions, parameters
 *
 *     /b2cmpb/ - common block.
+*     Old method for specifying boundary conditions. This old option no longer
+*     works for the WG code. However, for now, the code is not removed because 
+*     parts of it are still needed to technically run the code. 
 *     /b2cmpb/ specifies physics parameters for boundary conditions.
 *     For this purpose the boundary is divided up into regions, and for
 *     each region a set of coefficients defines the local conditions.
