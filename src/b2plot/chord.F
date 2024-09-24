@@ -219,7 +219,6 @@ c
       use b2us_map
       use b2us_geo
       use b2mod_subsys
-      use b2mod_chord_shift
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables

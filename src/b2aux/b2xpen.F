@@ -57,18 +57,11 @@ c calculate total fluxes (fht)
       fht = fhe + fhi + fhn + fhj + fnt*(1.0_R8-switch%BoRiS)
       do is=0,ns-1
         fht = fht + fhp(:,:,is) + fhm(:,:,is)*(1.0_R8-switch%BoRiS)
-        if (switch%iout_b2wdat.eq.4) then
-          write (chns,'(i3.3)') is
-          call my_out_us(70,nFc,1,fhp(1,0,is),'b2xpen_fhp_th'//chns)
-          call my_out_us(70,nFc,1,fhp(1,1,is),'b2xpen_fhp_r'//chns)
-          call my_out_us(70,nFc,1,fhm(1,0,is),'b2xpen_fhm_th'//chns)
-          call my_out_us(70,nFc,1,fhm(1,1,is),'b2xpen_fhm_r'//chns)
-        endif
       enddo
 
       if (switch%iout_b2wdat.eq.4) then
-            call my_out_us(70,nFc,1,fht(1,0),'b2xpen_fht_th')
-            call my_out_us(70,nFc,1,fht(1,1),'b2xpen_fht_r')
+        call my_out_us(70,nFc,1,fht(1,0),'b2xpen_fht_th')
+        call my_out_us(70,nFc,1,fht(1,1),'b2xpen_fht_r')
       endif
 *$$$  call subend ()
       return

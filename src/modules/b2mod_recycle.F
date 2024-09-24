@@ -232,20 +232,18 @@ c     on the diffusion approximation (see papers of Niels Horsten).
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
-c     input variables:upf = plasma parallel velocity on face
-c     nif = plasma density on face, isn neutral species index
-      integer,intent(in):: iCv,iCn,iCl,iCr, idir,
-     &    isn,iscx0,istra
-      real (kind=R8),intent(in):: hh, hhn, hhperp,Phi_app, area,
-     2    tif,tef,pof,upf,nif,nef,isign
-c     Output variables: Incident neutral flux has been broken up in two parts:
-c     A constant contribution fnnic and a contribution varying linearly with the 
-c     neutral density fnniv. fmomni: momentum flux of 
-c     incident neutrals.
-      real (kind=R8),intent(out):: fnnic,fnniv,fmomni,nni,nnwwni,feneni
+      integer, intent(in) :: iCv, iCn, iFc,
+     &    isn, iscx0, isi, istra, use_uy_uz_0, use_uy_uz_1, safeguard
+      real (kind=R8), intent(in) :: Phi_app, area, tnf, tif, tef,
+     2    pof, nef, isign, dnndy, dnndz, cosa, sina
+c     Output variables:
+c     fnni: incident neutral flux
+c     fmomni: momentum flux of incident neutrals.
+      real (kind=R8), intent(out) :: fnni, fmomni, nni, nnwwni,
+     &                               feneni
 c     Internal variables
-      real (kind=R8):: dnndyc,dnndyv,dnndzc,dnndzv,nnl,nnr,vcx,vion,
-     2    vtot,fnni,fnni_nodrifts,pit,pit2,sina,cosa,mn,nnf,ux,uy,uz,
+      real (kind=R8) :: vcx,vion,
+     2    vtot,pit,pit2,mn,nnf,ux,uy,uz,
      3    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      4    fmox,fmoy,fmoz,fmomnip,fmomnit,pn,expu,t1,
      5    dnndy,dnndz,t_av,upf2,mfp,c_th
@@ -402,10 +400,152 @@ c     Convert energy flux densities in net energy flux contributions
       feneni = -feneni*area
       call subend ()
       return
-      end subroutine CalcIncidentFluxes
+      end subroutine CalcIncidentFluxesDiffusion
 
-      subroutine CalcIncidentFluxesMaxwellian(iCv,isn,isign,istra,
-     &            idir,area,pl,tf,upf,geo,isrc,fnnic,fnniv,fmomni,
+      subroutine CalcIncidentFluxesKn(Kn_b1,Kn_b2,
+     &            iCv,iCn,iFc,isign,
+     &            isn,iscx0,isi,istra,
+     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,
+     &            rt,dnndy, dnndz,cosa,sina,
+     &            use_uy_uz_0,use_uy_uz_1,L,
+     &            fnni,fmomni,nni,nnwwni,feneni)
+c     This routine is an interface to CalcIncidentFluxesMaxwellian and CalcIncidentFluxesDiffusion
+c     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
+      use b2mod_rates
+      use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_plasma
+      use b2mod_subsys
+      implicit none
+      type (B2Plasma), intent (in) :: pl
+      type (geometry), intent (in) :: geo
+      type (B2rates), intent (in) :: rt
+      integer, intent(in) :: iCv, iCn, iFc,
+     &    isn, iscx0, isi, istra, use_uy_uz_0, use_uy_uz_1
+      real (kind=R8), intent(in) :: Phi_app, area, tnf, tif, tef,
+     &    pof, nef, isign, dnndy, dnndz, cosa, sina,
+     &    Kn_b1, Kn_b2,L
+      real (kind=R8) :: t_av
+c     Output variables
+      real (kind=R8), intent(out) :: fnni, fmomni, nni, nnwwni,
+     &                               feneni
+c     Internal variables
+      real (kind=R8) :: vcx, vion, vtot, mn, mfp, c_th, Kn
+      integer :: ic
+      real (kind=R8) :: fnniM, nnwwniM, nniM, feneniM, fmomniM
+      real (kind=R8) :: fnniD, nnwwniD, nniD, feneniD, fmomniD
+
+      call subini ('CalcIncidentFluxesKn')
+
+c     Calculate rate coefficients at boundary
+      mn = am(isn)*mp
+      vcx=0.0_R8
+      do ic = 0, pl%ns-1
+        t_av = (tif+tnf)/2.0_R8
+        vcx = vcx + pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,iscx0) +
+     &   rt%rlcx(iCv,1,ic,iscx0)*log(t_av/(am(isn)*ev)))
+      enddo
+      vion=expu(
+     2 rt%rlsa(iCv,0,isn)+
+     3 rt%rlsa(iCv,1,isn)*log(tef/ev))*nef
+      vtot =vion + vcx
+      c_th = sqrt(tnf/mn)
+      mfp = c_th/vtot
+      Kn = mfp/L !! L = macroscopic length scale
+
+c     if Kn is low, we use the diffusion approximation
+c     if Kn is larger, we use the drifting maxwellian approximation
+c     if the Kn is in between, we use a linear interpolation
+      if (Kn.lt.Kn_b1) then
+
+        call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
+     &            isn,iscx0,isi,istra,
+     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,
+     &            rt,dnndy, dnndz,cosa,sina,
+     &            use_uy_uz_0,use_uy_uz_1,1,!! <- '1': = safeguard for diffusion BCs
+     &            fnni,fmomni,nni,nnwwni,feneni)
+
+      elseif (Kn.gt.Kn_b2) then
+
+        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
+     &            area,pl,tnf,geo, cosa, sina,
+     &            fnni,fmomni,
+     &            nni,nnwwni,feneni)
+
+      else
+        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
+     &            area,pl,tnf,geo, cosa, sina,
+     &            fnniM,fmomniM,
+     &            nniM,nnwwniM,feneniM)
+        call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
+     &            isn,iscx0,isi,istra,
+     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,
+     &            rt,dnndy, dnndz,cosa,sina,
+     &            use_uy_uz_0,use_uy_uz_1,1,!! <- '1': = safeguard for diffusion BCs
+     &            fnniD,fmomniD,nniD,nnwwniD,feneniD)
+        call CalcLinComb(Kn,Kn_b1,Kn_b2,fnniD,  fnniM,   fnni)
+        call CalcLinComb(Kn,Kn_b1,Kn_b2,fmomniD,fmomniM, fmomni)
+        call CalcLinComb(Kn,Kn_b1,Kn_b2,nniD,   nniM,    nni)
+        call CalcLinComb(Kn,Kn_b1,Kn_b2,nnwwniD,nnwwniM, nnwwni)
+        call CalcLinComb(Kn,Kn_b1,Kn_b2,feneniD,feneniM, feneni)
+      endif
+
+      call subend ()
+      return
+      end subroutine CalcIncidentFluxesKn
+
+      subroutine CalcIncidentFluxesMinKn(iCv,iCn,iFc,isign,
+     &            isn,iscx0,isi,istra,
+     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,
+     &            rt,dnndy, dnndz,cosa,sina,
+     &            use_uy_uz_0,use_uy_uz_1,
+     &            fnni,fmomni,nni,nnwwni,feneni)
+c     This routine is an interface to either CalcIncidentFluxesMaxwellian or CalcIncidentFluxesDiffusion
+c     It will decide which one to use based on the minimum Knudsen of the neutral atoms.
+c     If the choice is based on Kn at each boundary face (as is done in CalcIncidentFluxesKn), additional convergence problems may arise.
+c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest Kn of that "stratum".
+c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
+      use b2mod_rates
+      use b2mod_b2cmpa
+      use b2us_geo
+      use b2us_plasma
+      use b2mod_neutrals_namelist , only: maxw_eff
+      use b2mod_subsys
+      implicit none
+      type (B2Plasma), intent (in) :: pl
+      type (geometry), intent (in) :: geo
+      type (B2rates), intent (in) :: rt
+      integer, intent(in) :: iCv, iCn, iFc,
+     &    isn, iscx0, isi, istra, use_uy_uz_0, use_uy_uz_1
+      real (kind=R8), intent(in) :: Phi_app, area, tnf, tif, tef,
+     &    pof, nef, isign, dnndy, dnndz, cosa, sina
+c     Output variables
+      real (kind=R8), intent(out) :: fnni, fmomni, nni, nnwwni,
+     &                               feneni
+
+      call subini ('CalcIncidentFluxesMinKn')
+
+      if (maxw_eff(istra).eq.0) then
+        call CalcIncidentFluxesDiffusion(iCv,iCn,iFc,isign,
+     &            isn,iscx0,isi,istra,
+     &            Phi_app,area,pl,tif,tnf,tef,pof,nef,geo,
+     &            rt,dnndy, dnndz,cosa,sina,
+     &            use_uy_uz_0,use_uy_uz_1,1, !! <- '1': = safeguard for diffusion BCs
+     &            fnni,fmomni,nni,nnwwni,feneni)
+      else
+        call CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
+     &            area,pl,tnf,geo, cosa, sina,
+     &            fnni,fmomni,
+     &            nni,nnwwni,feneni)
+      endif
+
+      call subend ()
+      return
+      end subroutine CalcIncidentFluxesMinKn
+
+      subroutine CalcIncidentFluxesMaxwellian(iCv,iFc,isn,isign,istra,
+     &            area,pl,tf,geo, cosa, sina,
+     &            fnni,fmomni,
      &            nni,nnwwni,feneni)
 !nh   08.05.2018
 c     This routine calculates the incident neutral particle fluxes based on 
@@ -527,15 +667,19 @@ c     nif = plasma density on face, isn neutral species index
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
 !!      type (B2Rates), intent (in) :: rt
-      integer, intent(in):: iCv,
-     &     idir, isn, iscx0, iwall,istra
-      real (kind=R8),intent(in):: Phi_app, area,recyc0,
-     2    tif,tef,pof,upf,nif,nef,t0,isign
-c     Output variables: Incident neutral flux has been broken up in two parts:
-c     A constant contribution fnnic and a contribution varying linearly with the 
-c     neutral density fnniv. fmomni: momentum flux of 
-c     incident neutrals.
-      real (kind=R8),intent(out):: fmomrec,nnrec,nnwwnrec,fenerec
+      integer, intent(in) :: iCv, nCi, iFc,
+     &     isn, iscx0, isi, iwall, istra,
+     &     use_uy_uz_0
+      real (kind=R8), intent(in) :: Phi_app, area, recyc0, recycm,
+     2    pof, nif, nef, t0, isign, tif, tef, cosa, sina,
+     &    fluid_frac_hyb
+!! fluid_frac_hyb: in fluid neutral cases or standard spatially hybrid cases this multiplier is always equal to 1.
+!! only in the generalized form of the spatially hybrid approach, where the fluid and kinetic treatment are mixed
+!! on a single target stratum, this value can deviate from 1.
+c     Output variables:
+c     fmomni: momentum flux of incident neutrals.
+      real (kind=R8), intent(out) :: fnnrec, fmomrec, nnrec, nnwwnrec,
+     &                               fenerec
 c     Internal variables
       real (kind=R8):: cs,Mj,
      &    shpottauj,ishpottau,pf,pcorf,pt,vt,
@@ -678,15 +822,19 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       type (B2Rates), intent (in) :: rt
-c     input variables:upf = plasma parallel velocity on face
-c     nif = plasma density on face, isn neutral species index
-      integer,intent(in):: iCv, iCn, iCl, iCr, idir,
-     &    isn, iscx0, iwall,istra
-      real (kind=R8),intent(in):: hh, hhn, hhperp,Phi_app, area,recyc0,
-     2    pof,tif,tef,upf,nif,nef,isign
-c     Output variables: Incident neutral flux has been broken up in two parts:
-c     A constant contribution fnnic and a contribution varying linearly with the 
-c     neutral density fnniv. fmomni: momentum flux of 
+      type (mapping), intent (in) :: mpg
+      integer,intent(in):: iCv, iCn, nCi, iFc,
+     &    isn, iscx0, isi, iwall, istra, use_uy_uz_0, use_uy_uz_1,
+     &    safeguard
+      real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
+     2    pof,nef,isign,tif,tnf,tef,
+     &    sina,cosa, dnndy, dnndz,
+     &    fluid_frac_hyb
+!! fluid_frac_hyb: in fluid neutral cases or standard spatially hybrid cases this multiplier is always equal to 1.
+!! only in the generalized form of the spatially hybrid approach, where the fluid and kinetic treatment are mixed
+!! on a single target stratum, this value can deviate from 1.
+c     Output variables:
+c     fmomni: momentum flux of
 c     incident neutrals.
       real (kind=R8),intent(out):: fmomrefl,nnrefl,nnwwnrefl,fenerefl
 c     Internal variables

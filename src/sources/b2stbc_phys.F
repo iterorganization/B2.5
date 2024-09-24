@@ -70,8 +70,8 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iCv1, iCv2, iFc, iVx1, iVx2, is, ib, ibc, ib0,
-     &  ism, ibc0, k,j
+      integer iCv, iCv1, iCv2, iFc, iVx1, iVx2, iFt, is, ib, ibc, ib0,
+     &  ism, ibc0, k, j
 #ifdef WG_TODO
      & ,coreregno, coreregn2, ireg,
      1  bc_type16_ref, bc_type16_ix, bc_type16_iy, bc_type16_i,
@@ -102,7 +102,7 @@
      1  t3, t4, totflux, dsh, vt,
      2  vbnd, totpar, teave, tiave, neave, niave, poave, weight,
      &  naua2sum(0:ns-1), naua2average(0:ns-1),
-     &  pzaverage, pzsum, volsum
+     &  pzaverage, pzsum, volsum                                        !srv 24.03.99 18.01.02
 #ifdef WG_TODO
      1  ,volave
      &  ,s0, s0hz, ua2sum, ua2average(0:ns-1)                           !srv 07.04.00 15.02.02
@@ -131,7 +131,6 @@
       real (kind=R8) ::
      *  upout, uuout, uutest, zbar
 #endif
-      integer :: iFt
       real (kind=R8) ::
      *  rz(nCv), cs, csb, a,                                            !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
@@ -181,7 +180,6 @@
        call ipgeti ('b2stbc_bceni_15_style', bceni_15_style)
        call ipgeti ('b2stbc_bcpot_12_style', bcpot_12_style)
        call ipgeti ('b2stbc_bcenk_17_style', bcenk_17_style)
-       
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c       call ipgeti ('b2tfhe_conduction_only', conduction_only)
 c       call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)        !srv 25.07.05
@@ -209,7 +207,6 @@ c       call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 2
 c       call ipgeti ('b2stbc_type16_kinetic_energy',
 c     1  bc_type16_kinetic_energy)
 c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.02
-        call ipgetr ('b2stbc_BC2_cor9', cor9)
         call ipgetr ('b2stbc_min_ftConn', min_ftConn)
         call ipgeti ('b2stbc_str_for_Qalfmin', str_for_Qalfmin)
       endif
@@ -1206,7 +1203,7 @@ c   (ionising_core option)
             iFt = mpg%cvFt(iCv2)
             s1 = abs(geo%fcPbs(iFc))
             cs = sqrt(pz(iCv1)/rz(iCv1))
-            if (((abs(geo%fcPbs(iFc)/geo%fcS(iFc)) <switch%Qalfmin)
+            if (((abs(geo%fcPbs(iFc)/geo%fcS(iFc)) < switch%Qalfmin)
      &      .or.((geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0)))
      &      .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
               s1 = abs(geo%fcS(iFc))*switch%Qalfmin
@@ -3282,9 +3279,9 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
-            iFt = mpg%cvFt(iCv2)
+            iFt  = mpg%cvFt(iCv2)
             s1hz = geo%fcPbshz(iFc)
-            cs = sqrt(pz(iCv1)/rz(iCv1))
+            cs   = sqrt(pz(iCv1)/rz(iCv1))
              if (((abs(geo%fcPbs(iFc)/geo%fcS(iFc)) <switch%Qalfmin)
      &      .or.((geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0)))
      &      .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
@@ -3297,13 +3294,12 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      &        (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
      &         dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
      &        sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*geo%fcS(iFc)
-            srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +                        !srv 07.05.09 {
+            srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +                 !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
      &         mompar(is,ib,1)*vbnd
             srw%smo0(iCv1,1,IS) = srw%smo0(iCv1,1,IS) -
-     &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)       !srv 07.05.09 }
-          ! endif
-        enddo                                                        !srv 01.02.09 }
+     &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)      !srv 07.05.09 }
+          enddo                                                         !srv 01.02.09 }
 
 * -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM    !srv 01.02.09 {
 !srv added accumulation in order to account twice b.c. for corner cells
@@ -4418,6 +4414,10 @@ c test
 * -- BCENE=15 -- DRIFT-COMPATIBLE SHEATH CONDITION                      !srv 01.02.09 {
       case (15)
         if(ncall_b2stbc_phys.eq.0) then                                 !srv 20.09.17 {
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'BCENE = 15 (style = 0) : with GAMMAE =',GAMMAE,
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
+          write(*,*) 'BCENE=15 - assuming BCCON=14 for all ions'
 #ifdef WG_TODO
           IF(BCCHAR(IB).EQ.'W') THEN
             BCCON14_W(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
@@ -4510,7 +4510,6 @@ cwdk    Todo: corrections for BCCON.ne.14
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-            cs   = sqrt(pz(iCv1)/rz(iCv1))
             iFt = mpg%cvFt(iCv2)
             s1   = abs(geo%fcPbs(iFc))
             vte  = sqrt(pl%te(iCv1)/me)
@@ -4521,10 +4520,9 @@ cwdk    Todo: corrections for BCCON.ne.14
             else
               s1 = abs(geo%fcPbs(iFc))
             endif
-            t0 = 0.0_R8
+            t0 = dv%ne(iCv1)
             t1 = 0.0_R8
             do is = 0, ns-1
-              t0 = t0 + rt%rza(iCv1,is)*pl%na(iCv1,is)  !conpar(is,ib,1)*
               if (.not.is_neutral(is) .and. conpar(is,ib,2).gt.0.0_R8)
      &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
      &            rt%rza(iCv1,is)*pl%na(iCv1,is)
@@ -4551,7 +4549,6 @@ cwdk    Todo: corrections for BCCON.ne.14
      &           (1.0_R8-GAMMAE)*switch%delpo) -
      &          (fac_he_anom_bc*enepar(ib,2) + switch%delpo)*t1         !wdk to check: correct for gammae?
             endif
-
             if(switch%mdf_fhe.ne.0) then
               srw%she0(iCv1,0) = srw%she0(iCv1,0) +
      &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
@@ -4566,7 +4563,6 @@ cwdk    Todo: corrections for BCCON.ne.14
               srw%she0(iCv1,1) = srw%she0(iCv1,1) +
      &          min(0.0_R8,t0)/pl%te(iCv1)
             endif
-          ! endif
           enddo
         else
           call xerrab
@@ -6069,17 +6065,37 @@ c test
           write(*,*) 'BCENI=15 - should have BCCON=14 for all ions'
           call xertst(ENIPAR(IB,1).gt.0.0_R8,
      1     'BCENI = 15, ENIPAR(IB,1) <= 0 not allowed!')              !srv 20.09.17
-          BCCON14_IS(IB) = .TRUE.
-          DO IS = 0, NS-1
-            IF(.NOT.IS_NEUTRAL(IS)) THEN
-              BCCON14_IS(IB) = BCCON14_IS(IB).AND.BCCON(IS,IB).EQ.14
-            ENDIF
-          ENDDO
-          if (BCCON14_IS(IB)) write(*,'(a,a,i3,a)') 'BCCON=14 HAS ',
-     &      'BEEN IMPOSED AT BOUNDARY ',IB,' FOR ALL IONS'
-          if(.not.BCCON14_IS(IB)) write(*,'(a,a,i3,a)') 'BCCON=14 ',
-     &      'HAS NOT BEEN IMPOSED AT BOUNDARY ',IB,' FOR ALL IONS'
           if(bceni_15_style.ne.0) write(*,*) "bceni_15_style = 1"
+#ifdef WG_TODO
+          IF(BCCHAR(IB).EQ.'W') THEN
+            BCCON14_W(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
+            DO IS = 0, NS-1
+              IF(.NOT.IS_NEUTRAL(IS)) THEN
+                IF(BCCON(IS,IB).NE.14) THEN
+                  BCCON14_W(IB) = .FALSE.
+                ENDIF
+              ENDIF
+            ENDDO
+            if(BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
+     &      'BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
+            if(.not.BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
+     &      'HAS NOT BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
+          ENDIF
+          IF(BCCHAR(IB).EQ.'E') THEN
+            BCCON14_E(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
+            DO IS = 0, NS-1
+              IF(.NOT.IS_NEUTRAL(IS)) THEN
+                IF(BCCON(IS,IB).NE.14) THEN
+                  BCCON14_E(IB) = .FALSE.
+                ENDIF
+              ENDIF
+            ENDDO
+            if(BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
+     &       'BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
+            if(.not.BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
+     &       'HAS NOT BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
+          ENDIF
+#endif
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
@@ -6148,14 +6164,10 @@ c test
            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &     switch%stab_coeff_sheath_ti*dv%ne(iCv1)
      &     *cs*geo%fcS(iFc)*pl%ti(iCv1)
-        else
-          if(ncall_b2stbc_phys.eq.0) print *, "bceni_15_style_1"
+          else
            !wdk sheath transmission factor consistent with truncated
            !    Maxwellian distribution on Eirene side (NEMODS=7)
            !    See eirene manual for details.
-            t0 = 0.0_R8
-            t1 = 0.0_R8
-            t2 = 0.0_R8
            do is = 0, ns-1
             if(.not.is_neutral(is)) then
              vt = sqrt(2.0_R8*pl%ti(iCv1)/(am(is)*mp))
@@ -6194,7 +6206,7 @@ c test
      &        max(0.0_R8,t0)
             srw%shi0(iCv1,1) = srw%shi0(iCv1,1) +
      &        min(0.0_R8,t0)/pl%ti(iCv1)
-        endif
+          endif
 cwdk    Todo: corrections for BCCON.ne.14
         enddo                                                           !srv 01.02.09 }
 
@@ -7616,32 +7628,16 @@ c              fchi=0.0_R8
           iVx2 = mpg%fcVx(iFc,2)
           vte  = sqrt(pl%te(iCv1)/me)
           t0 = 0.0_R8
-          wrk = geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3)
-          if (abs(wrk) < geo%Qalfmin) then
-            t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%po)
-            t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%po)
-            srw%sch0(iCv1,0)= PBIG*geo%fcS(iFc)*
-     .         (-cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
-     .         (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%po(iCv2))
-            srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
-          else
-            s1 = geo%fcS(iFc)
-            do is = 0, ns-1
-              if(is_neutral(is)) cycle
-              vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
-     &                mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
-              t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*s1*
-     &             max(csbc(iCv1,is)*abs(wrk),vbc(iCv1,is)*
-     &             sign(1.0_R8,wrk)+vbnd)*pl%na(iCv1,is)
-            enddo
-            fchi = qe*t0
-            fche = sqrt(1/(2*pi))*qe*dv%ne(iCv1)*vte*s1*abs(wrk)*
-     &        expu2(min(0.0_R8,max(-50.0_R8,                             !lkw 31.03.2023
-     &        -qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1))))
-            seec = gammae
-            t0 = max(fchi,(1.0_R8-seec)*fche)*qe/pl%te(iCv1)
+          do is = 0, ns-1
+            t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*cs*s1*
+     *        pl%na(iCv1,is)
+          enddo
+          fchi = qe*t0
+          fche = sqrt(1/(2*pi))*qe*dv%ne(iCv1)*vte*s1*
+     &      expu2(min(0.0_R8,                                            !lkw 31.03.2023
+     &        max(-50.0_R8,-qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1))))
+          seec = gammae
+          t0 = max(fchi,(1.0_R8-seec)*fche)*qe/pl%te(iCv1)
 *    ..compute charge source
             srw%sch0(iCv1,0) = srw%sch0(iCv1,0) +
      &        (1.0_R8-seec)*fche-fchi + t0*pl%po(iCv1)
@@ -7657,7 +7653,7 @@ c              fchi=0.0_R8
 #endif
 cwdk Todo: seecmodel
           wrong_flow = .false.
-        enddo     
+        enddo
 
 * -- BCPOT=12 -- Test condition for south core region ! Solovyev 07.04.14   !srv 03.03.15 {
 c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1

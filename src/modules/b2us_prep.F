@@ -2477,15 +2477,15 @@
       integer newunit
       external newunit
 #endif
-      integer :: fcsb(mpg%nCi,40),fcsb_col,fcsb_row,k,iCv2_prev,iCv2,
-     &  fcsb_len(mpg%nCi)
-      real (kind=R8), save :: Qalfmin = 0.0_R8,Qalfmax=1e-2_R8
+      integer :: k, iCv2_prev, iCv2
+      integer :: fcsb(mpg%nCi,40), fcsb_col, fcsb_row, fcsb_len(mpg%nCi)
+      real (kind=R8), save :: Qalfmin = 0.0_R8, Qalfmax=1.0e-2_R8
       integer, save :: mod_hc = 0, mean_boundary_hc = 0
 
-      call ipgetr('b2us_prep_Qalfmin',Qalfmin)
-      call ipgetr('b2us_prep_Qalfmax',Qalfmax)
-      call ipgeti('b2us_prep_mod_hc',mod_hc)
-      call ipgeti('b2us_prep_mean_boundary_hc',mean_boundary_hc)
+      call ipgetr('b2us_prep_Qalfmin', Qalfmin)
+      call ipgetr('b2us_prep_Qalfmax', Qalfmax)
+      call ipgeti('b2us_prep_mod_hc', mod_hc)
+      call ipgeti('b2us_prep_mean_boundary_hc', mean_boundary_hc)
 
       call alloc_geometry (gm,
      &  mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt, mpg%nVmxCv)
@@ -2566,15 +2566,15 @@
      .        sign(1.0_R8,wbbl(ix,iy,2))
             gm%fcPbs(iFc) = pbs(ix,iy,0)
             gm%fcPbshz(iFc) = pbshz(ix,iy,0)
-            if (abs(gm%fcPbs(iFc)/gm%fcS(iFc))<Qalfmin .and. 
-     .        (maxval(mpg%fcCv(iFc,1:2)) > mpg%nCi) .and.
-     .        mpg%fcLbl(iFc) > 0 .and. 
+            if (abs(gm%fcPbs(iFc)/gm%fcS(iFc)) < Qalfmin .and.
+     .       (maxval(mpg%fcCv(iFc,1:2)) > mpg%nCi) .and.
+     .        mpg%fcLbl(iFc) > 0 .and.
      .        abs(gm%fcQalf(iFc,0)) > Qalfmax) then
               gm%fcPbs(iFc) = Qalfmin*gm%fcS(iFc)*
-     .        sign(1.0,gm%fcPbs(iFc))
+     .        sign(1.0_R8,gm%fcPbs(iFc))
               gm%fcPbshz(iFc) = Qalfmin*gm%fcS(iFc)*gm%fcHz(iFc)*
-     .          sign(1.0,gm%fcPbshz(iFc))
-              write (*,*)'pbs and pbshz was modified for iFc=',iFc
+     .          sign(1.0_R8,gm%fcPbshz(iFc))
+              write(*,*) 'pbs and pbshz was modified for iFc=',iFc
             endif
           end if
         end do
@@ -2598,11 +2598,11 @@
               wrk = sqrt((gm%cvX(Cvs(1))-gm%cvX(Cvs(2)))**2+
      &          (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
               if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
-                gm%fcHc(iFc,1) = 0.01*wrk
-                gm%fcHc(iFc,2) = 0.99*wrk
+                gm%fcHc(iFc,1) = 0.01_R8*wrk
+                gm%fcHc(iFc,2) = 0.99_R8*wrk
               elseif (mpg%fcCv(iFc,2).gt.mpg%nCi) then
-                gm%fcHc(iFc,2) = 0.01*wrk
-                gm%fcHc(iFc,1) = 0.99*wrk
+                gm%fcHc(iFc,2) = 0.01_R8*wrk
+                gm%fcHc(iFc,1) = 0.99_R8*wrk
               endif
             endif
             gm%fcHt(iFc)   = ht(ix,iy,1)
@@ -2624,15 +2624,15 @@
      .        sign(1.0_R8,wbbv(ix,iy,2))
             gm%fcPbs(iFc) = pbs(ix,iy,1)
             gm%fcPbshz(iFc) = pbshz(ix,iy,1)
-            if (abs(gm%fcPbs(iFc)/gm%fcS(iFc))<Qalfmin .and. 
-     .        (maxval(mpg%fcCv(iFc,1:2)) > mpg%nCi) .and.
-     .        mpg%fcLbl(iFc) > 0 .and. 
+            if (abs(gm%fcPbs(iFc)/gm%fcS(iFc)) < Qalfmin .and.
+     .       (maxval(mpg%fcCv(iFc,1:2)) > mpg%nCi) .and.
+     .        mpg%fcLbl(iFc) > 0 .and.
      .        abs(gm%fcQalf(iFc,0)) > Qalfmax) then
               gm%fcPbs(iFc) = Qalfmin*gm%fcS(iFc)*
-     .        sign(1.0,gm%fcPbs(iFc))
+     .        sign(1.0_R8,gm%fcPbs(iFc))
               gm%fcPbshz(iFc) = Qalfmin*gm%fcS(iFc)*gm%fcHz(iFc)*
-     .          sign(1.0,gm%fcPbshz(iFc))
-              write (*,*)'pbs and pbshz was modified for iFc=',iFc
+     .          sign(1.0_R8,gm%fcPbshz(iFc))
+              write(*,*) 'pbs and pbshz was modified for iFc=',iFc
             endif
           end if
         end do
@@ -2649,8 +2649,8 @@
          iCv2 = minval(mpg%fcCv(iFc,1:2))
          iCv2_prev = minval(mpg%fcCv
      &     (mpg%cvFc(mpg%cvFcP(iCv-1,1)),1:2))
-         write (*,*)'iCv,iFc',iCv,iFc,fcsb_col,fcsb_row
-         if (fcsb_col .gt. 1 .and. 
+         write(*,*) 'iCv,iFc',iCv,iFc,fcsb_col,fcsb_row
+         if (fcsb_col .gt. 1 .and.
      &     (mpg%cvReg(iCv2) .ne. mpg%cvReg(iCv2_prev))) then
           fcsb_len(fcsb_row) = fcsb_col-1
           fcsb_row = fcsb_row+1
@@ -2664,7 +2664,7 @@
        do k=1,fcsb_row
          gm%fcHc(fcsb(k,1:fcsb_len(k)),2)=
      &     sum(gm%fcHc(fcsb(k,1:fcsb_len(k)),2))/fcsb_len(k)
-         write (*,*) fcsb(k,1:fcsb_len(k)) 
+         write(*,*) fcsb(k,1:fcsb_len(k))
        enddo
       endif
 ! vertices

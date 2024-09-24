@@ -18,7 +18,7 @@
      *   dtee(:), dtee_ft(:),
      *   dtei(:), dtei_ft(:),
      *   dten(:),
-     *   corr_core_dn(:)                                   ! IYS 19.12.2017
+     *   corr_core_dn(:),                                  ! IYS 19.12.2017
      *   sna_corr(:), taumax(:)                            ! iyv 20.09.22
       logical, allocatable, save ::
      *   solveco(:,:),
@@ -33,7 +33,7 @@
      *   solvezt(:),
      *   last_solve_5(:),
      *   last_solve_9(:),
-     *   add_te_corr_to_po(:)                            ! IYS 21.09.2018
+     *   add_te_corr_to_po(:),                             ! IYS 21.09.2018
      *   do_sna_corr_core(:)                               !iyv 20.09.22
       integer, allocatable, save ::
      *   dtfts(:)
@@ -48,7 +48,7 @@
      &  dtei_ft(1:DEF_NYD)
       real (kind=R8), save :: dten(0:CVREGMAX)
       real (kind=R8), save :: corr_core_dn(0:nsdmax-1)     ! IYS 19.12.2017
-      real (kind=R8), save :: sna_corr(DEF_NATM),taumax(DEF_NATM)       ! IYS 10.03.2023
+      real (kind=R8), save :: sna_corr(DEF_NATM), taumax(DEF_NATM)      ! IYS 10.03.2023
       logical, save :: solveco(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemt(0:CVREGMAX)
@@ -85,7 +85,7 @@
      & write_nml_num,
      & numerics_filename, numerics_time_mod, numerics_time_switch,
      & solvekt, solvezt,
-     & corr_core_dn, corr_core_dt, add_te_corr_to_po,       ! IYS 19.12.2017
+     & corr_core_dn, corr_core_dt, add_te_corr_to_po,      ! IYS 19.12.2017
      & sna_corr, taumax, do_sna_corr_core, dtfts, dtee_ft,
      & dtmo_ft, dtco_ft, dtei_ft
 

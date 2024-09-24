@@ -2217,25 +2217,6 @@ c new CDF movie option (1st frame at t=0)
       use b2mod_facdrift_ExB
      & , only : ncall_drift, facdrift_scalar, fac_exb_scalar,
      &          fac_vis_scalar
-      use b2mod_zhfrtf
-     & , only : is_i, z2n_cv, nal, ia, av_ualpha, gt_ac, gtalc, avm_u,
-     &          rho_a_rel, gavm_uc, z_to_m1_ast, w_out, htdp_out,
-     &          hwdp_out, rtdpgamma_out, rwdpgamma_out, piu_out
-      use b2mod_b2mrel
-     & , only : nucl2s, znnucl_int, s2nucl, amnucl, n2, n3, n4, n5, n6,
-     &          n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu,
-     &          rmd2, mdm, amnucl_mdf, n2_mdf, n5_mdf, n6_mdf, n8_mdf,
-     &          n9_mdf, n10_mdf, n11_mdf, n12_mdf, mum_mdf, rmu_mdf,
-     &          mdm_mdf, znnucl, mu, mu_mdf
-      use b2mod_input_profile
-     & , only : sources_time_mod, sources_time_switch, sources_filename,
-     &          sr_ip_elm_count, new_files, nsdata, nxdata, divheat,
-     &          sdata, xdata
-      use b2mod_facdrift_exb
-     & , only : iy_nocoreexb, facdrift_tanh_a, facdrift_tanh_b,
-     &          facexb_tanh_a, facexb_tanh_b, facvis_tanh_a,
-     &          facvis_tanh_b, fac_exb_profile, facdrift_profile,
-     &          fac_vis_profile
 #endif
       use b2mod_ad
 #ifdef IMAS

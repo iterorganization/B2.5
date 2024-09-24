@@ -531,48 +531,9 @@
        do iCv = 1, nCv
          ce1(iCv)=fce1(zeff(iCv))
          ce2(iCv)=fce2(zeff(iCv))
-       enddo 
-       if (switch%Zhdanov_closure.eq.0.or.switch%Zhdanov_test.eq.1 .or.
-     &     switch%Zhdanov_tf_fr.eq.0) then
-         mm(0:ns-1) = switch%mass_multiplicator
-         mm(ismain) = 1.0_R8
-         am1(0:ns-1)= mm(0:ns-1)*am(0:ns-1)
-         call b2xzmf (nCv, ns, ismain, rz2, na, zmff)
-         call b2xzmc (nCv, ns, ismain, rz2, na, am1, zmc)
-         call b2xzf1 (nCv, ns, ismain, rz2, na, am1, zf1)
-         call b2xzf2 (nCv, ns, ismain, rz2, na, am1, zf2)
-         call b2xz11 (nCv, ns, ismain, rz2, na, am1, z11)
-         call b2xz12 (nCv, ns, ismain, rz2, na, am1, z12)
-         call b2xz22 (nCv, ns, ismain, rz2, na, am1, z22)
-         if (switch%impr_form_fr.eq.0) then
-           do iCv = 1, nCv
-             do is = 0, ns-1
-               cimp1(iCv,is)=fce1(zmff(iCv))
-             end do
-           enddo
-         else
-           do is = 0, ns-1
-             do iCv = 1, nCv
-               cimp1(iCv,is)=fcim1(ismain,is,ns,am1,z11(iCv),
-     &           z12(iCv),z22(iCv),zf1(iCv),zf2(iCv))
-             enddo
-           enddo
-         endif
-         if (switch%impr_form_tf.eq.0) then
-           do iCv = 1, nCv
-             do is = 0, ns-1
-               cimp2(iCv,is)=fce2(zmff(iCv))
-             end do
-           enddo
-         else
-           do is = 0, ns-1
-             do iCv = 1, nCv
-               cimp2(iCv,is)=fcim2(ismain,is,ns,am1,zmc(iCv),
-     &           z11(iCv),z12(iCv),z22(iCv))
-             enddo
-           enddo
-         endif
-       endif
+         cimp1(iCv)=fce1(zmff(iCv))
+         cimp2(iCv)=fce2(zmff(iCv))
+       enddo                                                           !srv 13.01.17 }
 *   ..compute the Coulomb logarithm
        call b2tlnl (nCv, switch, switch%icase_ii, te, ti, ne, lnlam)
 *   ..compute zetap and zetae

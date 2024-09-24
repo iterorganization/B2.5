@@ -549,9 +549,9 @@ c accounted for)
 
         enddo
       endif
-          wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
-     &       srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
-         she_rad_tot = -sum(wrk0)
+      wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
+     &     srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
+      she_rad_tot = -sum(wrk0)
       if (switch%b2stel_iout.eq.1 .or. switch%b2npht_iout.eq.1
      &                            .or. switch%iout_b2wdat .eq. 4) then
 !        do k=0,3

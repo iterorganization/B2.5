@@ -455,8 +455,8 @@
       type (mapping), intent (inout) :: mpg
       type (geometry), intent (inout) :: gm
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
-     &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2, iFt,
-     &           inv_dist(mpg%nVx)
+     &           iCv, iFc, iFt, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2,
+     &           i1, i2, inv_dist(mpg%nVx)
       integer :: count_up, count_down, count_eq
       integer, allocatable :: old_face_list(:), verts(:)
       integer, save :: temp_ignore_geo = 0

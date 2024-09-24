@@ -274,12 +274,12 @@ c 2002-09-11: logic revised
      * xr1(:), xf1(:), xd1(:), xr2(:), xf2(:), xd2(:),
      1 xpr(:), xpf1(:), xpf2(:), x1d(:,:,:,:),
      2 l_conn(:), nbini(:),
-     3 saved_fb_actuator1(:), saved_fb_prev1(:),
-     4 fb_target1(:), fb_alpha1(:), fb_beta1(:),
-     5 fb_puff_min1(:), fb_puff_max1(:),
-     6 fb_const1(:), fb_overshoot1(:),
-     7 fb_time1(:), gpdata1(:,:,:),
-     8 sna_corr1(:), taumax1(:), amfact1(:)
+     3 saved_na_feedback_actuator1(:), na_feedback_target1(:),
+     4 na_feedback_alpha1(:), na_feedback_beta1(:),
+     5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
+     6 na_feedback_const1(:), na_feedback_overshoot1(:),
+     7 na_feedback_time1(:), gpdata1(:,:,:),
+     8 sna_corr1(:), taumax1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
       integer i, j, ij, k, kk, ix, iy, is, ib, ireg, len, nsns1
@@ -539,7 +539,6 @@ c 2002-09-11: logic revised
       real(kind=R8) :: time_dep_puff_param1(10,NSTRAID)
       logical, allocatable :: is_neutral1(:)
       logical, allocatable :: do_sna_corr_core1(:)
-      logical, allocatable :: fb_type_inverse1(:)
 #ifdef B25_EIRENE
       logical ldum(0:60)
       logical LMULPL, LRDMLTI, LRDMLV
@@ -1999,9 +1998,6 @@ c 2002-09-11: logic revised
         case ('b2tfhe_neutral')
           rswitch = fch_ion_neutral
         case ('b2stbr_sna_corr', 'b2stbr_taumax') ! Converted to a species-resolved scheme
-          todo = .false.
-          wait = .true.
-        case ('b2nppo_restrict_po') ! Superseded by real switch b2nppo_restr_po
           todo = .false.
           wait = .true.
         case default RSWITCHES
@@ -3821,17 +3817,6 @@ cxpb This will need to be checked !!!
      .       'SNA_CORR=',(sna_corr1(is),is=1,nspecies1)
             deallocate(sna_corr1)
           end if
-          if(minval(min_na(0:ns-1,0:nnreg(0))).ne.na_min .or.
-     &       maxval(min_na(0:ns-1,0:nnreg(0))).ne.na_min) then
-            do ireg = 0, nnreg(0)
-              cftmp(0:ns-1)=min_na(0:ns-1,ireg)
-              call convert_bundle_r
-     .         (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-              min_na(0:ns1-1,ireg)=cftmp(0:ns1-1)
-              write(99,hlp_frm)
-     .         'MIN_NA(0,',ireg,')=',(min_na(is,ireg),is=0,ns1-1)
-            enddo
-          endif
           if (maxval(taumax).ne.0.05_R8 .or. minval(taumax).ne.0.05_R8
      &      .or. b2stbr_taumax.ne.0.05_R8) then
             allocate(taumax1(1:nspecies1))
