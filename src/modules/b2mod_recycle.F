@@ -517,7 +517,7 @@ c     Here, the choice is made based on maxw_eff (effective), which has been set
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
-      integer, intent(in):: iCv, iCn, iFc,
+      integer, intent(in) :: iCv, iCn, iFc,
      &    isn, iscx0, isi, istra, use_uy_uz_0, use_uy_uz_1
       real (kind=R8), intent(in) :: Phi_app, area, tnf, tif, tef,
      &    pof, nef, isign, dnndy, dnndz, cosa, sina
