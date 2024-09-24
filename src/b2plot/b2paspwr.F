@@ -210,6 +210,7 @@ c*** Extract the case number
       call xertst( 0.le.shot.and.shot.le.214748, 'Invalid shot number')
       call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
 #endif
+      not_default = shot.gt.0.and.run.ge.0
       if (shot.gt.0) then
         write(case_number,'(i6,a1,i5.5)') shot,'/',run
       else
@@ -218,7 +219,7 @@ c*** Extract the case number
         call ipgetc('b2mndr_ids_path', path )
 #endif
         call strip_spaces(path)
-        not_default = .not.streql(path,' ')
+        not_default = not_default.or..not.streql(path,' ')
         filename='shotnumber.history'
         call find_file(filename,ex)
         if (ex) then

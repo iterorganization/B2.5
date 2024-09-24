@@ -21,7 +21,7 @@ ifndef COMPILER_REDEF
   FCOPTS += -fp-model=precise
  endif
  ifdef SOLPS_DEBUG
-  FCOPTS  += -diag-disable:10182 -diag-disable:10440
+  FCOPTS  += -diag-disable:10182,10440
   LDOPTS  += -diag-disable:10182
   ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
    FCOPTS += -check nouninit
