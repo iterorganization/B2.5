@@ -2,6 +2,8 @@
       use b2mod_types
       use b2mod_ad
      & , only : nsdmax, cvregmax
+      use b2mod_b2cmpa
+     & , only : nspecies
 #ifndef ALLOCATE_AND_NAMELIST
       use b2mod_dimensions
 #endif
@@ -14,7 +16,8 @@
      *   dtee(:),
      *   dtei(:),
      *   dten(:),
-     *   corr_core_dn(:)                                   ! IYS 19.12.2017
+     *   corr_core_dn(:),                                  ! IYS 19.12.2017
+     *   sna_corr(:), taumax(:)                            ! iyv 20.09.22
       logical, allocatable, save ::
      *   solveco(:,:),
      *   solvemo(:,:),
@@ -28,7 +31,8 @@
      *   solvezt(:),
      *   last_solve_5(:),
      *   last_solve_9(:),
-     *   add_te_corr_to_po(:)                            ! IYS 21.09.2018
+     *   add_te_corr_to_po(:),                             ! IYS 21.09.2018
+     *   do_sna_corr_core(:)                               !iyv 20.09.22
 #else
       real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX)
       real (kind=R8), save :: dtmo(0:nsdmax-1,0:CVREGMAX)
@@ -36,6 +40,7 @@
       real (kind=R8), save :: dtei(0:CVREGMAX)
       real (kind=R8), save :: dten(0:CVREGMAX)
       real (kind=R8), save :: corr_core_dn(0:nsdmax-1)     ! IYS 19.12.2017
+      real (kind=R8), save :: sna_corr(DEF_NATM), taumax(DEF_NATM)      ! IYS 10.03.2023
       logical, save :: solveco(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemt(0:CVREGMAX)
@@ -49,6 +54,7 @@
       logical, save :: last_solve_5(0:CVREGMAX)
       logical, save :: last_solve_9(0:CVREGMAX)
       logical, save :: add_te_corr_to_po(0:CVREGMAX)       ! IYS 21.09.2018
+      logical, save :: do_sna_corr_core(DEF_NATM)          ! IYS 10.03.2023
 #endif
       real (kind=R8), save :: corr_core_dt                 ! IYS 19.12.2017
       real (kind=R8), save :: time_factor_required,
@@ -70,7 +76,8 @@
      & write_nml_num,
      & numerics_filename, numerics_time_mod, numerics_time_switch,
      & solvekt, solvezt,
-     & corr_core_dn, corr_core_dt, add_te_corr_to_po       ! IYS 19.12.2017
+     & corr_core_dn, corr_core_dt, add_te_corr_to_po,      ! IYS 19.12.2017
+     & sna_corr, taumax, do_sna_corr_core
 
       contains
 
@@ -80,7 +87,7 @@
       integer nCv,nsd,nnreg(0:1)
       type (switches), intent (in) :: switch
 
-      if (allocated(time_factor)) return
+      if (b2mod_numerics_allocated) return
       write(*,*) 'Allocating space for b2mod_numerics'                !srv 25.02.06 11.06.08
 
       allocate(time_factor(nCv))
@@ -90,7 +97,9 @@
       allocate(dtee(0:nnreg(0)))
       allocate(dtei(0:nnreg(0)))
       allocate(dten(0:nnreg(0)))
-      allocate(corr_core_dn(0:nsd-1))    ! IYS 19.12.2017
+      allocate(corr_core_dn(0:nsd-1))                              ! IYS 19.12.2017
+      allocate(sna_corr(nspecies))                                 !iyv 20.09.22
+      allocate(taumax(nspecies))                                   !iyv 20.09.22
       allocate(solveco(0:nsd-1,0:nnreg(0)))
       allocate(solvemo(0:nsd-1,0:nnreg(0)))
       allocate(solvemt(0:nnreg(0)))
@@ -104,6 +113,7 @@
       allocate(last_solve_5(0:nnreg(0)))
       allocate(last_solve_9(0:nnreg(0)))
       allocate(add_te_corr_to_po(0:nnreg(0)))                      ! IYS 21.09.2018, 21.09.2018
+      allocate(do_sna_corr_core(nspecies))                         !iyv 20.09.22
 #else
       call xertst (nsd.le.nsdmax,
      1 'increase DEF_NSD in b2mod_dimensions')
@@ -116,6 +126,8 @@
       dten=1.0_R8
       corr_core_dn=1.0_R8     ! IYS 19.12.2017
       corr_core_dt=1.0_R8     ! IYS 19.12.2017
+      sna_corr=0.0_R8                                              !iyv 20.09.22
+      taumax=0.05_R8                                               !iyv 20.09.22
       time_factor_required=0.1_R8
       core_dt_suppression=1.0_R8
       core_dt_factor=1.0_R8
@@ -128,6 +140,7 @@
       endif
       solvepo=.true.
       add_te_corr_to_po=.true.                                     ! IYS 21.09.2018
+      do_sna_corr_core=.true.                                      !iyv 20.09.22
       solveee=.true.
       solveei=.true.
       solveen=.true.
@@ -162,11 +175,14 @@
       deallocate(dtei)
       deallocate(dten)
       deallocate(corr_core_dn)                                     ! IYS 19.12.2017
+      deallocate(sna_corr)                                         !iyv 20.09.22
+      deallocate(taumax)                                           !iyv 20.09.22
       deallocate(solveco)
       deallocate(solvemo)
       deallocate(solvemt)
       deallocate(solvepo)
       deallocate(add_te_corr_to_po)                                ! IYS 21.09.2018
+      deallocate(do_sna_corr_core)                                 !iyv 20.09.22
       deallocate(solveee)
       deallocate(solveei)
       deallocate(solveen)
@@ -181,10 +197,11 @@
       end subroutine dealloc_b2mod_numerics
 
       subroutine read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,nnreg,
-     .  cvOnClosedSurface,b2mndt_style)
+     .  cvOnClosedSurface,b2mndt_style,new)
       implicit none
 
       integer nCv,ns,nsmin,nsmax,nnreg(0:1)
+      logical :: new
       logical :: file_ok, cvOnClosedSurface(nCv)
       integer iCv, is, ireg, b2mndt_style
       real (kind=R8) :: ttf
@@ -194,7 +211,7 @@
       numerics_time_mod = 0.0_R8
       numerics_time_switch = 0.0_R8
       call find_file(filename,file_ok)
-      if(file_ok) then
+      if(file_ok.and..not.new) then
         open(99,file=filename)
         write(*,*) 'Reading namelist numerics from ',trim(filename)
 #ifdef USE_MPI
@@ -204,20 +221,20 @@
 #endif
         close(99)
         write(*,*) 'Read namelist numerics from ',trim(filename)
-        do ireg = 0, nnreg(0)                                     !srv 22.05.18 {
+        do ireg = 0, nnreg(0)
           solveet(ireg) = (solveee(ireg).and.solveei(ireg))
      &                                  .and.solveet(ireg)
-          if (solveet(ireg).and.b2mndt_style.eq.2) then
-            call xerrab('time-dependent mode requires solveet=false')
-          endif
+          call xertst(b2mndt_style.le.1.or..not.solveet(ireg),
+     &     'Time-dependent mode requires SOLVEET = .false.!')
           do is = nsmin, nsmax-1
             solvemt(ireg) = solvemt(ireg).and.solvemo(is,ireg)
           end do
-          if (solvemt(ireg).and.b2mndt_style.eq.2) then
-            call xerrab('time-dependent mode requires solvemt=false')
-          endif
-        end do                                                    !srv 22.05.18 }
-      else
+          call xertst(b2mndt_style.le.1.or..not.solvemt(ireg),
+     &     'Time-dependent mode requires SOLVEMT = .false.!')
+        end do
+      else if (file_ok.and.new) then
+        call xerrab ('Found unexpected '//trim(filename))
+      else if (.not.new) then
         call xerrab ('No '//trim(filename))
       endif
 
@@ -234,6 +251,12 @@
       do is = 0, ns-1
         call xertst (0.0_R8.lt.corr_core_dn(is),
      &   'faulty parameter corr_core_dn')
+      end do
+      do is = 1, nspecies
+        call xertst (0.0_R8.le.sna_corr(is),
+     &   'faulty parameter sna_corr')
+        call xertst (0.0_R8.lt.taumax(is),
+     &   'faulty parameter taumax')
       end do
       call xertst (0.0_R8.le.time_factor_required,
      & 'faulty parameter time_factor_required')

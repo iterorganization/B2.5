@@ -3794,6 +3794,7 @@ c
         rad_neutr=0.0_R8
         rdneureg=0.0_R8
         recycereg=0.0_R8
+        radarr=0.0_R8
         do ic=1,nCv
           if (ic <= mpg%nCi .and.
      &        mpg%cvReg(ic).ne.0) then
@@ -3807,7 +3808,7 @@ c
 !             rdneureg(k)=rdneureg(k)+eneutrad(ic,iatm,1)
 !             recycereg(k)=recycereg(k)+eneutrad(ic,iatm,1)
 !pb
-              radarr(ic)=eneutrad(ic,iatm,0)
+              radarr(ic)=radarr(ic)+eneutrad(ic,iatm,0)
               rad_neutr=rad_neutr+eneutrad(ic,iatm,0)
               rdneureg(k)=rdneureg(k)+eneutrad(ic,iatm,0)
               recycereg(k)=recycereg(k)+eneutrad(ic,iatm,0)

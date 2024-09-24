@@ -1,6 +1,6 @@
 ! $AD NOCHECKPOINT
-      subroutine b2txcc (nCv, nFc, mode, geo, mpg, fcVol, fcS, kap, 
-     .  con)
+      subroutine b2txcc (nCv, nFc, mode,
+     .  geo, mpg, fcVol, fcS, kap, con)
       use b2mod_types
       use b2us_geo
       use b2us_map

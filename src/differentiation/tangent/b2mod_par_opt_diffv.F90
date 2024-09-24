@@ -259,7 +259,7 @@ CONTAINS
     nnjac = 0
     jcol = 0
     jrow = 0
-    jj = 0.0
+    jj = 0
     partype = -2
     sigma_opt = .true.
     mean_opt = .false.
@@ -1132,7 +1132,7 @@ CONTAINS
     nnjac = 0
     jcol = 0
     jrow = 0
-    jj = 0.0
+    jj = 0
     partype = -2
     sigma_opt = .true.
     mean_opt = .false.

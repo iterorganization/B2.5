@@ -2191,8 +2191,8 @@ c new CDF movie option (1st frame at t=0)
       use b2mod_facdrift_ExB
      & , only : ncall_drift, facdrift_scalar, fac_exb_scalar,
      &          fac_vis_scalar
-      use b2mod_ad
 #endif
+      use b2mod_ad
 #ifdef IMAS
       use b2mod_ual
      , , only : new_batch_edge, put_batch_edge
