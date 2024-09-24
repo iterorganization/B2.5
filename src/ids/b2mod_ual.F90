@@ -198,10 +198,6 @@ contains
         external xertst, xerrab
 
         ids_list = "edge_profiles, edge_sources, edge_transport"
-#if IMAS_MAJOR_VERSION > 3
-        ids_list = trim(ids_list)// &
-          & ", plasma_profiles, plasma_sources, plasma_transport"
-#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         ids_list = trim(ids_list)//", summary"
 #endif
@@ -211,14 +207,12 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         ids_list = trim(ids_list)//", divertors"
 #endif
-#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
 #if AL_MAJOR_VERSION > 4
         if (first_pass) ids_list = trim(ids_list)//", dataset_description"
 #else
         ids_list = trim(ids_list)//", dataset_description"
 #endif
-#endif
-        ids_list = trim(ids_list)//", wall, and radiation"
+        ids_list = trim(ids_list)//", and radiation"
         !! Set data to edge_profiles IDS
         write(*,'(1x,a)') "Writing "//trim(ids_list)//" IDS"
 
@@ -329,10 +323,6 @@ contains
           write(*,*) 'Putting radiation IDS slice'
           call ids_put_slice( idx, "radiation", radiation, status )
           call xertst( status.eq.0, 'Error putting slice in radiation IDS !')
-          write(*,*) 'Putting wall IDS slice'
-          call ids_put_slice( idx, "wall", wall, status )
-          call xertst( status.eq.0, 'Error putting slice in wall IDS !')
-#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
 #if AL_MAJOR_VERSION > 4
           if (first_pass) then
             write(*,*) 'Putting dataset_description IDS'
@@ -343,7 +333,6 @@ contains
           write(*,*) 'Putting dataset_description IDS slice'
           call ids_put_slice( idx, "dataset_description", description, status )
           call xertst( status.eq.0, 'Error putting slice in dataset_description IDS !')
-#endif
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           write(*,*) 'Putting summary IDS slice'
@@ -508,12 +497,10 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           ids_list = trim(ids_list)//", summary"
 #endif
-#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
 #if AL_MAJOR_VERSION > 4
           if (first_pass) ids_list = trim(ids_list)//", and dataset_description"
 #else
           ids_list = trim(ids_list)//", and dataset_description"
-#endif
 #endif
         end if
         write(*,'(1x,a)') "Writing "//trim(ids_list)//" IDS"
@@ -577,7 +564,6 @@ contains
           call ids_put_slice( idx, "edge_sources/1", batch_sources, status )
           call xertst( status.eq.0, 'Error putting slice in batch_sources IDS !')
           if (do_summary) then
-#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
 #if AL_MAJOR_VERSION > 4
             if (first_pass) then
               call ids_put( idx, "dataset_description", description, status )
@@ -586,7 +572,6 @@ contains
 #else
             call ids_put_slice( idx, "dataset_description", description, status )
             call xertst( status.eq.0, 'Error putting slice in dataset_description IDS !')
-#endif
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             call ids_put_slice( idx, "summary", summary, status )
