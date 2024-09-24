@@ -8448,6 +8448,20 @@ contains
     case( VEC_ALIGN_TOROIDAL_ID )
       !! Writing toroidal quantity
       !! Make sure the data field is properly allocated
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+      if ( associated( idsField_vcomp%phi ) ) then
+        if ( .not. all( shape( idsField_vcomp%phi ) ==  &
+                    &   shape(data) )) then
+          deallocate( idsField_vcomp%phi )
+        end if
+      end if
+      !! If required, allocate storage
+      if ( .not. associated( idsField_vcomp%phi ) ) then
+        allocate(idsField_vcomp%phi( size(data, 1) ))
+      end if
+      !! copy toroidal data field
+      idsField_vcomp%phi = data
+#else
       if ( associated( idsField_vcomp%toroidal ) ) then
         if ( .not. all( shape( idsField_vcomp%toroidal ) ==  &
                     &   shape(data) )) then
@@ -8460,6 +8474,7 @@ contains
       end if
       !! copy toroidal data field
       idsField_vcomp%toroidal = data
+#endif
 #if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
     case( VEC_ALIGN_R_MAJOR_ID )
       !! Writing major radius aligned quantity

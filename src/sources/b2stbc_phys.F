@@ -6681,6 +6681,7 @@ cxpb          endif
           write(*,*) 'BCENI=15 - assuming BCCON=14 for all ions'
           call xertst(ENIPAR(IB,1).gt.0.0_R8,
      1     'BCENI = 15, ENIPAR(IB,1) <= 0 not allowed!')              !srv 20.09.17
+          if(bceni_15_style.ne.0) write(*,*) "bceni_15_style = 1"
 #ifdef WG_TODO
           IF(BCCHAR(IB).EQ.'W') THEN
             BCCON14_W(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
