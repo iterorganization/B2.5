@@ -76,7 +76,7 @@
 #endif
       implicit none
 *   ..input arguments
-      integer nCv, nFc, nVx, ns, iCv, iFc
+      integer nCv, nFc, nVx, ns
       integer nscx, nscxmax, iscx(0:nscxmax-1), ismain
       real (kind=R8) :: dtim
       type (switches), intent (inout) :: switch
@@ -106,7 +106,7 @@
 *.declarations
 
 *   ..local variables
-      integer is, k
+      integer iCv, iFc, is, k
 #ifdef WG_TODO
       integer ib, ic, ibnd, itrack
       integer, save :: jxi, jxa, jsep
@@ -132,17 +132,17 @@
       real (kind=R8) ::                                              !srv 29.04.10 {
      &  sna0_eir(nCv,0:1,0:ns-1),
      &  smo0_eir(nCv,0:3,0:ns-1),
-     &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3), shn0_eir(nCv,0:3)    
+     &  she0_eir(nCv,0:3), shi0_eir(nCv,0:3), shn0_eir(nCv,0:3)
 #ifdef B25_EIRENE
      &, fatm_eir(nFc,0:1,nnatmi),                                    !srv 29.04.10 }
      &  fmol_eir(nFc,0:1,nnmoli),                                    !IYS 27.01.17
      &  flxtmp(nCv),
      &  sna_puff(nspecies),  !sna_eir_tot(nspecies),
-     &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),     !iyv 07.03.18 {
+     &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),  !iyv 07.03.18
      &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies),
      &  sna_eir(nspecies)
       real (kind=R8), allocatable, save :: t1(:)
-      integer ip, j, nplsi   
+      integer ip, j, nplsi
 #endif
       integer sput_src,
 #ifdef WG_TODO
@@ -361,10 +361,10 @@
       trfle=0.0_R8
       trfln=0.0_R8
 #ifdef B25_EIRENE
-      if( sum(sna_corr) .gt. 0.0_R8 .and. .not.allocated(t1)) then
+      if( sum(sna_corr).gt.0.0_R8 .and. .not.allocated(t1)) then
         allocate(t1(1:nspecies))
         t1=0.0_R8
-      endif 
+      endif
 #endif
       if (main_call) then
         old_erosion(1:nbnd,1:ntargsp)=erosion(1:nbnd,1:ntargsp)
@@ -600,18 +600,17 @@ c   --> better solution wanted here..
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir, shn0_eir,
      &                 main_call, switch, geo, mpg, st, st_ext)
 
-!!!!!!
 *   ..main part of implementation of method of effective sources (ES)
-        if (sum(sna_corr) .gt. 0.0_R8 ) then                             !iyv 07.03.18 {
+        if (sum(sna_corr).gt.0.0_R8) then                           !iyv 07.03.18 {
           ! if ( iout .ne. 0 )
-           write(*,*) '******* sna_eir correction calculations *******'
+          write(*,*) '******* sna_eir correction calculations *******'
           sna_core = 0.0_R8
           do is=0,st%pl%ns-1
-            do iCv=mpg%nCi+1, nCv
-              k = b2espcr(is)
-              if (is_neutral(is) .or. (.not. do_sna_corr_core(k))) cycle
+            k = b2espcr(is)
+            if (is_neutral(is).or.(.not.do_sna_corr_core(k))) cycle
+            do iCv=mpg%nCi+1,nCv
               if(mpg%cvOnClosedSurface(iCv)) then
-                iFc = mpg%cvFc(mpg%cvFcP(iCv,1))  
+                iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
                 if (switch%mdf_fnb.ne.0) then
                   sna_core(k) = sna_core(k) + st%dv%fna_mdf(iFc,1,is)
                 else
@@ -621,31 +620,31 @@ c   --> better solution wanted here..
             enddo
           enddo
 
-          sna_eir= 0.0_R8
-          ext_sna_tot= 0.0_R8
-          print *, "max sna0_eir", maxval(abs(sna0_eir)),
-     &    size(sna0_eir,1), size(sna0_eir,2),size(sna0_eir,3)
+          sna_eir = 0.0_R8
+          ext_sna_tot = 0.0_R8
+          write(*,*) "max sna0_eir", maxval(abs(sna0_eir)),
+     &     size(sna0_eir,1), size(sna0_eir,2), size(sna0_eir,3)
           do is=0,st%pl%ns-1
+            if(is_neutral(is)) cycle
+            k = b2espcr(is)
             do iCv=1,nCv
-              if( is_neutral(is) ) cycle
-              k = b2espcr(is)
               sna_eir(k) = sna_eir(k) +
-     &       sna0_eir(iCv,0,is) + sna0_eir(iCv,1,is)*st%pl%na(iCv,is)
+     &         sna0_eir(iCv,0,is) + sna0_eir(iCv,1,is)*st%pl%na(iCv,is)
               ext_sna_tot(k) = ext_sna_tot(k) + st_ext%sna(iCv,is)
             enddo
           enddo
 
           sna_puff =0.0_R8
           do is=1,nstrat
-            do ia=1,nnatmi
-              if(latmscl(ia).eq.0) cycle
-              if(crcstra(is).eq.'C') then
-                if(gpfc(ia,is) .ne. 0.0_R8) sna_puff(latmscl(ia)) =
+            if(crcstra(is).eq.'C') then
+              do ia=1,nnatmi
+                if(latmscl(ia).eq.0) cycle
+                if(gpfc(ia,is).ne.0.0_R8) sna_puff(latmscl(ia)) =
      &           sna_puff(latmscl(ia)) + userfluxparm(is,1)*gpfc(ia,is) !*recyctmp
-               end if
-            end do
+              end do
+            end if
           enddo
-          
+
           sna_pump = 0.0_R8
           sna_sptt = 0.0_R8
           do ia = 1, nnatmi
@@ -666,19 +665,19 @@ c   --> better solution wanted here..
             is = latmscl(lkindp(ip))
             if (is.eq.0) cycle
             sna_pump(is) = sna_pump(is) +
-     &                         eirpump(nnatmi+nnmoli+nnioni+ip)
+     &         eirpump(nnatmi+nnmoli+nnioni+ip)
           enddo
 
-
 !           if ( iout .ne. 0 ) then
-            write(*,'(a5,7a16)') 'ia', 'sna_core', 'sna_eir',
-     &  'sna_puff', 'sna_pump', 'sna_sptt', 'sna_ext', 't1'
-            do k = 1, nspecies
-              write(*, '(i5, 7es16.7)') k, sna_core(k),  sna_eir(k),
-     &      sna_puff(k), sna_pump(k), sna_sptt(k), ext_sna_tot(k), t1(k)
-            enddo
+          write(*,'(a5,7a16)') 'ia', 'sna_core', 'sna_eir',
+     &     'sna_puff', 'sna_pump', 'sna_sptt', 'sna_ext', 't1'
+          do k = 1, nspecies
+            write(*, '(i5, 7es16.7)') k, sna_core(k),  sna_eir(k),
+     &       sna_puff(k), sna_pump(k), sna_sptt(k), ext_sna_tot(k),
+     &       t1(k)
+          enddo
 
-            write(*,'(a3,3a17)') 'ia','dG/sna_eir','t1(ia)','t(ia)'
+          write(*,'(a3,3a17)') 'ia','dG/sna_eir','t1(ia)','t(ia)'
 !           endif
 
           do k = 1, nspecies
@@ -689,24 +688,24 @@ c   --> better solution wanted here..
             else
               t01(k) = 0.0_R8
             end if
-            t1(k) = t01(k)* ( 1.0_R8 - exp(-0.02) ) + !c_pumpavr
-     &                     exp(-0.02)*t1(k) !c_pumpavr
+            t1(k) = t01(k)* ( 1.0_R8 - exp(-0.02_R8) ) + !c_pumpavr
+     &                     exp(-0.02_R8)*t1(k) !c_pumpavr
  !           t1(k) = t01(k)
             t(k) = 1.0_R8 +
      &              max( min( taumax(k),t1(k) ), -taumax(k) )
             !if ( iout .ne. 0 )
-             write(*,'(i3,3es17.4)') k, t01(k), t1(k), t(k)
+            write(*,'(i3,3es17.4)') k, t01(k), t1(k), t(k)
 !            sna_eir(k) = sna_eir(k)*t(k)
           enddo
 
           sna_eir = 0.0_R8
           do is = 0, ns-1
             k = b2espcr(is)
-            if( is_neutral(is) ) cycle
-!            if( eirspta(k) .eq. 0.0_R8) then  ! not for sputtered particles yet
+            if(is_neutral(is)) cycle
+!            if(eirspta(k).eq.0.0_R8) then  ! not for sputtered particles yet
             do iCv=1,nCv
-              if (do_sna_corr_core(k) .or. 
-     &                (.not. mpg%cvOnClosedSurface(iCv))) then
+              if (do_sna_corr_core(k) .or.
+     &                (.not.mpg%cvOnClosedSurface(iCv))) then
                 sna0_eir(iCv,0,is) = sna0_eir(iCv,0,is)*t(k)
                 sna0_eir(iCv,1,is) = sna0_eir(iCv,1,is)*t(k)
               end if
@@ -717,7 +716,7 @@ c   --> better solution wanted here..
           end do
 
         end if ! if b2stbr_sna_corr ...                                   !iyv 07.03.18 }
-!!!!!!
+
         if(ncall_b2stbr.le.999. and. ncall_b2stbr.le.ncall_iout) then
          do is = 0, ns-1
           write (chns,'(i3.3)') is
@@ -751,7 +750,7 @@ cwdk       down in this routine
      &    shi0_eir(:,2)*st%dv%ni(:,0) +
      &    shi0_eir(:,3)*st%dv%ni(:,0)*st%pl%ti
         st%srw%shn0_eir_tot = shn0_eir(:,0) + shn0_eir(:,1)*st%pl%tn +
-     1    shn0_eir(:,2)*st%dv%nn + 
+     1    shn0_eir(:,2)*st%dv%nn +
      1    shn0_eir(:,3)*st%pl%tn*st%dv%nn
 
 *       get averaged sources
@@ -787,13 +786,13 @@ cwdk these are now put back into the constant part of the sources (0-component)
         st%srw%she0 = st%srw%she0 + she0_eir
         st%srw%shi0 = st%srw%shi0 + shi0_eir
         if (switch%tn_style.eq.0) then     !! default, combined ion-neutral energy equation
-          st%srw%shi0 = st%srw%shi0 + shn0_eir 
+          st%srw%shi0 = st%srw%shi0 + shn0_eir
         elseif (switch%tn_style.eq.1) then !! pure ion energy equation
           !! combination of condensation reactions (leading to non-zero shn from eirene) and tn_style = 1 is not allowed.
           call xertst (SUM(shn0_eir).eq.0,
      &     'shn_eir.ne.0 is not allowed for tn_style = 1')
         else                               !! separate neutral energy equation
-          st%srw%shn0 = st%srw%shn0 + shn0_eir 
+          st%srw%shn0 = st%srw%shn0 + shn0_eir
         endif
 
 #ifdef ASTRA
@@ -802,17 +801,17 @@ cwdk these are now put back into the constant part of the sources (0-component)
             if(is.eq.ismain) then
               wrk0=sna0_eir(:,0,is)+
      &             sna0_eir(:,1,is)*st%pl%na(:,is)
-              call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, se)
+              call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, se)
             endif
           enddo                                                          !srv 28.07.11 20.02.12 }
           wrk0=she0_eir(:,:,0)+
      &     she0_eir(:,:,1)*st%pl%te(:,:)+she0_eir(:,:,2)*st%dv%ne+
      &     she0_eir(:,:,3)*st%dv%ne*st%pl%te
-          call b2_to_astra_src(mpg, ny, vol, wrk0, svol, seh)             !srv 11.06.13
+          call b2_to_astra_src(mpg, nx, ny, vol, wrk0, svol, seh)             !srv 11.06.13
           wrk0=shi0_eir(:,:,0)+
      &     shi0_eir(:,:,1)*st%pl%ti+shi0_eir(:,:,2)*st%dv%ni(:,:,0)+
      &     shi0_eir(:,:,3)*st%dv%ni(:,:,0)*st%pl%ti
-          call b2_to_astra_src(mpg, ny, vol, wrk0, svol, sih)             !srv 11.06.13
+          call b2_to_astra_src(mpg, nx, ny, vol, wrk0, svol, sih)             !srv 11.06.13
         endif
 #endif
         do ia = 1, nnatmi
@@ -1142,7 +1141,7 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 #endif
       endif
       wrk0=she0_eir(:,0)+she0_eir(:,1)*st%pl%te+
-     &       she0_eir(:,2)*st%dv%ne+she0_eir(:,3)*st%pl%te*st%dv%ne
+     &     she0_eir(:,2)*st%dv%ne+she0_eir(:,3)*st%pl%te*st%dv%ne
       she_eir_tot = -sum(wrk0)
       if (switch%b2stbr_iout.eq.1 .or. switch%b2npht_iout.eq.1
      &                            .or. switch%iout_b2wdat.eq.4 ) then

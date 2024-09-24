@@ -11,13 +11,13 @@ csw 09jan2014 extra module to define some arrays
       use b2mod_astra_to_b2
 #ifdef B25_EIRENE
       use b2mod_neutrals_namelist
-     , ,only: b2espcr, latmscl, mlcmp
+     , , only : b2espcr, latmscl, mlcmp
 #ifndef SOLPS4_3
       use eirmod_wneutrals  ! IGNORE
       use eirmod_extrab25   ! IGNORE
 #else
       use eirdiag ! IGNORE
-     , ,only: nnatmi, nnmoli, dab2, dmb2, tab2, tmb2, rfluxa, rfluxm
+     , , only : nnatmi, nnmoli, dab2, dmb2, tab2, tmb2, rfluxa, rfluxm
 #endif
 #else
       use b2mod_eirdiag
@@ -633,7 +633,7 @@ csw 09jan2014 add 'fun' function
        fun=-DSEVAL(np+1,arg,p,x,cb,cc,cd)
        end function fun
 
-       subroutine b2_to_astra_src(mpg, nyd, vol, source, svol, src)   !srv 11.06.13
+       subroutine b2_to_astra_src(mpg, nxd, nyd, vol, source, svol, src)   !srv 11.06.13
        use b2mod_indirect
        use b2us_map
        implicit none
@@ -642,9 +642,10 @@ csw 09jan2014 add 'fun' function
        integer :: nxd, nyd
        real (kind=R8) :: src(-1:nyd), source(mpg%nCv),
      &                   svol(-1:nyd), vol(mpg%nCv)
+#ifdef WG_TODO
        integer :: iCv
+#endif
        integer, save :: ncall = 0, mintopcut
-
 
        if(ncall.eq.0) then
          mintopcut = nyd                                    !srv 25.02.16
@@ -664,7 +665,7 @@ csw 09jan2014 add 'fun' function
            endif
           enddo
          enddo
-         do iy = mintopcut,nyd    ! open surfaces
+         do iy = mintopcut, nyd    ! open surfaces
           svol(iy) = 0.0_R8
           do ix = -1, nxd
             svol(iy) = svol(iy) + vol(iCv)
@@ -684,8 +685,8 @@ csw 09jan2014 add 'fun' function
           endif
          enddo
        enddo
-       do iy = mintopcut,nyd-1   ! open surfaces
-         do ix = 0,nxd-1          !   -1, nxd
+       do iy = mintopcut, nyd-1   ! open surfaces
+         do ix = 0, nxd-1          !   -1, nxd
 !          src(iy) = src(iy) + vol(iCv)*source(iCv)
            src(iy) = src(iy) + source(iCv)   ! source has been multiplied by vol
          enddo

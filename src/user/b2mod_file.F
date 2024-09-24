@@ -128,11 +128,12 @@ c*** New file - write the headers
         if(nstrai.gt.0) then
           if (nnatmi.gt.0) then
             write(hlp_frmt,'(a,i3,a,i2,a)')
-     /         '(''# it time,'',3x,',nstrai*5,
+     /         '(''# it'',7x,''time'',4x',nstrai*5,
      /         '(1x,a8,i2.2,a3,',nnatmi,'(a8,i2.2,a1,a2,1x)))'
           else
             write(hlp_frmt,'(a,i3,a,i2,a)')
-     /         '(''# it time'',3x,',nstrai*5,'(1x,a8,i2.2,a3))'
+     /         '(''# it'',7x,''time'',4x,',nstrai*5,
+     /         '(1x,a8,i2.2,a3))'
           end if
 #ifdef DBG
           print *,'%%% b2file: header format'   !###
@@ -221,7 +222,7 @@ c*** New file - write the headers
         write(ntrc(ntrc_res),710,err=5) '## ',trim(label)
 
         write(hlp_frmr,'(a,i3,a,i3,a)')
-     /        '(''# it time'',3x,',
+     /        '(''# it'',7x,''time'',4x,',
      -         nregionv*2,
      /        '(2x,a3,a2,i2.2,5x),',
      -         nregionv*(nis_tmp)*2,
@@ -236,7 +237,7 @@ c*** New file - write the headers
      ,                                           i=3,4),k=1,nis_tmp)
       end if
       write(hlp_frmr,'(a,i3,a)')
-     - '(1x,i3.3,e16.9,1p,',nregionv*2*(nis_tmp+1),'(2x,e12.4))'
+     - '(1x,i3.3,1p,e16.9,',nregionv*2*(nis_tmp+1),'(2x,e12.4))'
       filedata(ntrc_res)=.true.
       go to 10
 c
@@ -352,7 +353,7 @@ c======================================================================
       return
       end subroutine b2filec
 c======================================================================
-      subroutine b2filew(it,nregionv, diag)
+      subroutine b2filew(it,nregionv,diag)
       use b2us_plasma
       use b2mod_time
       implicit none

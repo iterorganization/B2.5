@@ -705,52 +705,57 @@ cdpc
 
       subroutine modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
      & inner_sol_loc,core_coef, bar_coef,inner_sol_coef,
-     & outer_sol_coef,iCv, dna0)
+     & outer_sol_coef,iCv,dna0)
 
-        use b2mod_types
-        use b2us_map
-        implicit none
-        type (mapping), intent (in) :: mpg
-        real (kind=R8) :: dna0, core_coef, bar_coef,inner_sol_coef,
+      use b2mod_types
+      use b2us_map
+      implicit none
+      type (mapping), intent (in) :: mpg
+      real (kind=R8) :: dna0, core_coef, bar_coef,inner_sol_coef,
      &     outer_sol_coef
-        integer flux_surf(2),iCv,sep_loc,inner_bar_loc,inner_sol_loc
-        flux_surf = findloc(mpg%imapCv,iCv)-2
-        if (mpg%cvOnClosedSurface(iCv)) then
-          if((flux_surf(2)>=inner_bar_loc).and.
-     &          (flux_surf(2)<=sep_loc)) then
-            dna0 = bar_coef*dna0
-          elseif(flux_surf(2)<inner_bar_loc) then
-            dna0 = core_coef*dna0
-          endif
-        elseif(flux_surf(2)<inner_sol_loc) then
-          dna0 = inner_sol_coef*dna0
-        else
-          dna0 = outer_sol_coef*dna0
+      integer flux_surf(2),iCv,sep_loc,inner_bar_loc,inner_sol_loc
+
+      flux_surf = findloc(mpg%imapCv,iCv)-2
+      if (mpg%cvOnClosedSurface(iCv)) then
+        if ((flux_surf(2) >= inner_bar_loc).and.
+     &      (flux_surf(2) <= sep_loc)) then
+          dna0 = bar_coef*dna0
+        elseif(flux_surf(2)<inner_bar_loc) then
+          dna0 = core_coef*dna0
         endif
+      elseif(flux_surf(2)<inner_sol_loc) then
+        dna0 = inner_sol_coef*dna0
+      else
+        dna0 = outer_sol_coef*dna0
+      endif
+
+      return
       end subroutine modify_tram_coefs
 
       subroutine set_transport_srv(geo,mpg,ns,nCv,switch,dna0,hcib,
-     &  vsa0,hce0)
+     & vsa0,hce0)
 
-        use b2mod_types
-        use b2us_map
-        use b2mod_switches
-        use b2us_geo
-        use b2mod_b2cmpa, only : is_neutral
-        implicit none
-        type (mapping), intent (in) :: mpg
-        type (switches), intent (inout) :: switch
-        type (geometry), intent (in) :: geo
+      use b2mod_types
+      use b2us_map
+      use b2mod_switches
+      use b2us_geo
+      use b2mod_b2cmpa
+     , , only : is_neutral
+      implicit none
+      type (mapping), intent (in) :: mpg
+      type (switches), intent (inout) :: switch
+      type (geometry), intent (in) :: geo
 
-        integer omp_start,j,k,l,iVx,fcs,flux_surf(2),omp_loc(2), nCv,
-     &  size_arr,iFc,inner_bar_loc,sep_loc,inner_sol_loc, ns,is, iCv
-        integer,  allocatable :: cvs(:)
-        real(kind=R8) :: Bmin,len_in
-        real (kind=R8) ::
+      integer omp_start,j,k,l,iVx,fcs,flux_surf(2),omp_loc(2),nCv,
+     & size_arr,iFc,inner_bar_loc,sep_loc,inner_sol_loc,ns,is,iCv
+      integer, allocatable :: cvs(:)
+      real(kind=R8) :: Bmin,len_in
+      real (kind=R8) ::
      *  dna0(nCv,0:ns-1), dpa0(nCv,0:ns-1),
      &  vla0(nCv,0:1,0:ns-1), vsa0(nCv,0:ns-1),
      &  hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1),
-     &  hce0(nCv)  
+     &  hce0(nCv)
+
       iVx=1
       flux_surf = 0
       do while((flux_surf(2).eq.0).and.(iVx<=mpg%nVx))
@@ -826,7 +831,9 @@ cdpc
      &    ,switch%te_alfa1, switch%te_alfa2,switch%te_alfa3,
      &    switch%te_alfa4, iCv, hce0(iCv))
       enddo
-      end subroutine
+
+      return
+      end subroutine set_transport_srv
 #ifdef WG_TODO
       subroutine set_transport(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
      &  hy, qz, dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
@@ -1041,10 +1048,10 @@ cxpb     hcib(ix,iy,is)=d_new*na(in,is)
        call ipgetr ('b2tqna_cdf', cdf)                            !srv 24.04.02
        call ipgetr ('b2tqna_alf', alf)                            !srv 05.11.03
        call ipgeti ('b2tqna_itype', itype)                        !srv 24.04.02
-       call ipgetr ('b2tqswitch%na_alfa1', alfa1)                        !srv 13.11.02 {
-       call xertst (0.le.alfa1,'faulty argument b2tqswitch%na_alfa1')
-       call ipgetr ('b2tqswitch%na_alfa2', alfa2)
-       call xertst (0.le.alfa2,'faulty argument b2tqswitch%na_alfa2')
+       call ipgetr ('b2tqna_alfa1', alfa1)                        !srv 13.11.02 {
+       call xertst (0.le.alfa1,'faulty argument b2tqna_alfa1')
+       call ipgetr ('b2tqna_alfa2', alfa2)
+       call xertst (0.le.alfa2,'faulty argument b2tqna_alfa2')
        call ipgetr ('b2tqna_alfa3', alfa3)                        !srv 13.03.07
        call xertst (0.le.alfa3,'faulty argument b2tqna_alfa3')    !srv 13.03.07
        alfa4 = alfa3                                              !IYS 29.11.2012

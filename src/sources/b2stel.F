@@ -456,26 +456,26 @@ c accounted for)
       do is = 0, ns-1                                                 !srv 28.07.11 {
         if(is.eq.ismain) then
           wrk0=sna0_ion(:,0,is)+sna0_ion(:,1,is)*pl%na(:,is)
-          call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, se)
+          call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, se)
           wrk0=sna0_rec(:,:,0,is)+sna0_rec(:,1,is)*pl%na(:,is)
-          call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, se)
+          call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, se)
         endif
       enddo                                                           !srv 28.07.11 }
 
       wrk0=srw%she0(:,0)+
      &     srw%she0(:,1)*pl%te(:)+srw%she0(:,2)*dv%ne+
      &     srw%she0(:,3)*dv%ne*pl%te
-      call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, seh)              !srv 11.06.13
+      call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, seh)              !srv 11.06.13
 
       wrk0=shi0_ion(:,0)+
      &     shi0_ion(:,1)*pl%ti+shi0_ion(:,2)*dv%ni(:,0)+
      &     shi0_ion(:,3)*dv%ni(:,0)*pl%ti
-      call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, sih)              !srv 11.06.13
+      call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, sih)              !srv 11.06.13
 
       wrk0=shi0_rec(:,0)+
      &     shi0_rec(:,1)*pl%ti+shi0_rec(:,2)*dv%ni(:,0)+
      &     shi0_rec(:,3)*dv%ni(:,0)*pl%ti
-      call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, sih)              !srv 11.06.13
+      call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, sih)              !srv 11.06.13
 #endif
 
       if (switch%b2stel_iout.eq.1 .or. switch%b2npmo_iout.eq.1 .or.
@@ -519,9 +519,9 @@ c accounted for)
 
         enddo
       endif
-          wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
-     &       srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
-         she_rad_tot = -sum(wrk0)
+      wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
+     &     srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
+      she_rad_tot = -sum(wrk0)
       if (switch%b2stel_iout.eq.1 .or. switch%b2npht_iout.eq.1
      &                            .or. switch%iout_b2wdat .eq. 4) then
 !        do k=0,3

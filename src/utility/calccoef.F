@@ -4,7 +4,8 @@
       subroutine calccoef(nCv,nFc,nVx,meth,geo,flo,con,flo0,con0)
       use b2mod_types
       use b2us_geo
-      use b2us_data,  only : mpg
+      use b2us_data
+     , , only : mpg
       implicit none
 *   ..input arguments
       integer nCv, nFc, nVx, meth
@@ -55,16 +56,16 @@
        do iFc = 1,nFc
          cvs = mpg%fcCv(iFc,:)
          if (mpg%cvFt(cvs(1)).eq.mpg%cvFt(cvs(2))) then
-              radcoef = 0.0_R8
+           radcoef = 0.0_R8
          else
-              radcoef = 1.0_R8
+           radcoef = 1.0_R8
          endif
 *    ..geometric factors for cell and vertex contributions
 *      to differences of cell faces (consistent with diff_p, diff_r)
         t00 = geo%fcQalf(iFc,0)
         t01 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &         geo%fcQbet(iFc,1)*radcoef
-        t10 = geo%fcQalf(iFc,1) 
+        t10 = geo%fcQalf(iFc,1)
         t11 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &         geo%fcQbet(iFc,0)
 *    ..convective contributions to flob0, conb0
@@ -80,9 +81,9 @@
       elseif (meth .eq. 1) then ! UPWIND scheme
          cvs = mpg%fcCv(iFc,:)
          if (mpg%cvFt(cvs(1)).eq.mpg%cvFt(cvs(2))) then
-              radcoef = 0.0_R8
+           radcoef = 0.0_R8
          else
-              radcoef = 1.0_R8
+           radcoef = 1.0_R8
          endif
        do iFc = 1,nFc
 *    ..geometric factors for cell and vertex contributions
@@ -90,7 +91,7 @@
         t00 = geo%fcQalf(iFc,0)
         t01 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &         geo%fcQbet(iFc,1)*radcoef
-        t10 = geo%fcQalf(iFc,1) 
+        t10 = geo%fcQalf(iFc,1)
         t11 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &         geo%fcQbet(iFc,0)
 *    ..convective contributions to flob0, conb0
@@ -109,9 +110,9 @@
        do iFc = 1,nFc
          cvs = mpg%fcCv(iFc,:)
          if (mpg%cvFt(cvs(1)).eq.mpg%cvFt(cvs(2))) then
-              radcoef = 0.0_R8
+           radcoef = 0.0_R8
          else
-              radcoef = 1.0_R8
+           radcoef = 1.0_R8
          endif
 *    ..effective diffusion coefficients
         t0 = hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) -
@@ -123,7 +124,7 @@
 !        t00 = geo%fcQalf(iFc,0)
         t01 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &         geo%fcQbet(iFc,1)/(geo%fcQalf(iFc,0) + eps)*radcoef
-!        t10 = geo%fcQalf(iFc,1) 
+!        t10 = geo%fcQalf(iFc,1)
         t11 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &         geo%fcQbet(iFc,0)/(geo%fcQalf(iFc,1) + eps)
 *    ..convective contributions to flob0, conb0

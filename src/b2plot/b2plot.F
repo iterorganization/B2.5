@@ -583,7 +583,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
      1 state%dv%fna, state%dv%fna_53, state%dv%fne_53,
      2 state%dv%fch, state%dv%fhe, state%dv%fhi, state%dv%fhn,
      3 state%rt%rpt, state%pl%te, state%pl%ti, state%pl%tn,
-     4 state%pl%po, switch%BoRiS, state%dv%fhm, state%dv%fhp,
+     4 state%pl%po, state%dv%fhm, state%dv%fhp,
      5 state%dv%fhj, state%dv%fht)
 c calculate divergences of the various fluxes
       do is=0,ns-1

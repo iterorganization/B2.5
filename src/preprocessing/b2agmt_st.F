@@ -773,16 +773,16 @@ cwdk  implementation based on b2agmt_qc_style.eq.3 (?): inverse distance
           qas(ix,iy,1) = sinang (
      &      crx(ix,iy,1)-crx(ix,iy,0), cry(ix,iy,1)-cry(ix,iy,0),
      &      ebf(0), ebf(1))
-          if (abs(qac(ix,iy,1)) .ge. 5e-2) then
+          if (abs(qac(ix,iy,1)) .ge. 5.0e-2_R8) then
                ! Connector line is purely poloidal: equal to ebf,
                ! but possibly with sign difference
-               t0 = ebf(0)*(cry(ix,iy,0) - cry(ix,iy,1)) -
-     &              ebf(1)*(crx(ix,iy,0) - crx(ix,iy,1))
-               if (t0.ge.0.0_R8) then
-               ecf = ebf
-               else
-               ecf = -ebf
-               endif
+            t0 = ebf(0)*(cry(ix,iy,0) - cry(ix,iy,1)) -
+     &           ebf(1)*(crx(ix,iy,0) - crx(ix,iy,1))
+            if (t0.ge.0.0_R8) then
+              ecf = ebf
+            else
+              ecf = -ebf
+            endif
           endif 
           ! angles at bottom face
           qc(ix,iy,1) = cosang (

@@ -2405,8 +2405,8 @@ contains
         !! Outer strikepoint
           iVx = US_GRID_UNDEFINED
           do i = 1, mpg%nStr
-            if ((mpg%nnreg(0).le.7 .or. geoId.eq.GEOMETRY_DDN_TOP) .or. &
-                &   (geoId.eq.GEOMETRY_SN .and. mpg%nnreg(0).eq.8)) then
+            if ( mpg%nnreg(0).le.7 .or. geoId.eq.GEOMETRY_DDN_TOP .or. &
+              & (mpg%nnreg(0).eq.8 .and. geoId.eq.GEOMETRY_SN) ) then
               if (mpg%strDiv(i).eq.2) iVx = mpg%strVx(i)
             else if (geoId.eq.GEOMETRY_CDN .or. geoId.eq.GEOMETRY_DDN_BOTTOM) then
               if (mpg%strDiv(i).eq.4) iVx = mpg%strVx(i)
