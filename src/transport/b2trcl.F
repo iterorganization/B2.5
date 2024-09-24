@@ -105,7 +105,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
       real (kind=R8) ::                                               !srv 03.06.03
      *   t0, dte(nFc), dti(nFc), flomx, connf, epsf
       real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),  !lk 19.09.07
-     &    k2(nCv),collisnum(mpg%nFt),csf(nFc),rz(nCv),pz(nCv)
+     &    k2(nCv), collisnum(mpg%nFt), csf(nFc), rz(nCv), pz(nCv)
       real (kind=R8), save :: min_collisions=0.0_R8
       real (kind=R8) :: inctran
 #ifdef ASTRA
@@ -654,7 +654,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &        pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + 
      &        b2trcl_cutlo)
           else 
-            t0 = (cflim(1)*max(collisnum(iFt), 1e-16_R8))**(-1)
+            t0 = (cflim(1)*max(collisnum(iFt),1.0e-16_R8))**(-1)
           endif
           co%fllim_ki(iFc) = 1.0_R8/(1.0_R8+t0)
           chci(iFc,0)=chci(iFc,0)*co%fllim_ki(iFc)
@@ -720,7 +720,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             t0 = abs(co%alfx_c(iCv)*gtec(iCv)/
      &         (cflim(3)*jemax + b2trcl_cutlo))
             co%fllim_al_c(iCv)=1.0_R8/(1.0_R8+t0)
-            co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)             !iyv 19.11.13 !srv 08.10.14
+            co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)                 !iyv 19.11.13 !srv 08.10.14
           endif
         enddo
        endif

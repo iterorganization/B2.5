@@ -646,7 +646,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2xpen (nCv, nFc, ns, mpg, switch,
      &  st%dv%fna, st%dv%fna_53, st%dv%fne_53,
      &  st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt%rpt, st%pl%te,
-     &  st%pl%ti, st%pl%tn, st%pl%po, switch%BoRiS,
+     &  st%pl%ti, st%pl%tn, st%pl%po,
      &  st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
 
 #ifdef WG_TODO

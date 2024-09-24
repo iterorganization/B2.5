@@ -80,8 +80,8 @@ csw 10oct2012
 #ifdef WG_TODO
      &  flomx,
 #endif
-     &  alfe0(nFc), floe0_mdf(nFc,0:1),fhe_32_loc(nFc,0:1),              !srv 22.11.99 13.10.06 17.06.09
-     *   fhe_52_loc(nFc,0:1)                                   
+     &  alfe0(nFc), floe0_mdf(nFc,0:1), fhe_32_loc(nFc,0:1),             !srv 22.11.99 13.10.06 17.06.09
+     *  fhe_52_loc(nFc,0:1)
       real (kind=R8) ::
      *    fledia(nFc,0:1), c071(nFc), c071c(nCv),                        !srv 22.11.99 25.01.02
      &    zeff(nCv)                                                      !srv 13.01.17

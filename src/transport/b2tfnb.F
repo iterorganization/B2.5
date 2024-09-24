@@ -57,7 +57,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv1, iCv2, iFc, meth, iFt1, iFt2                                     !srv 13.10.06
+      integer iCv1, iCv2, iFc, meth, iFt1, iFt2                          !srv 13.10.06
       character chns*3                                                   !srv 16.09.02
       real (kind=R8) :: drift_hyb
       real (kind=R8) ::
@@ -87,8 +87,8 @@
      *   nbf(nFc),
      *   dOnedBsq(nFc,0:1),
      *   fna_mdf0(nFc,0:1), flo_factor(nFc,0:1),
-     *   cddb(nFc,0:1), cdpb(nFc,0:1),ni_ft(mpg%nFt), vol_ft(mpg%nFt)
-      real (kind=R8) :: weight(nFc,2), coef(nFc)                                    !lk
+     *   cddb(nFc,0:1), cdpb(nFc,0:1), ni_ft(mpg%nFt), vol_ft(mpg%nFt)
+      real (kind=R8) :: weight(nFc,2), coef(nFc)                         !lk
       integer :: xcount
 c The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
@@ -372,8 +372,7 @@ cwdk                   (original code: simple averaging)
         t0 = 0.0_R8
         if (iFt1.ne.0) t0 = t0 + ni_ft(iFt1)
         if (iFt2.ne.0) t0 = t0 + ni_ft(iFt2)
-        if (t0 <
-     & switch%b2tfnb_flux_limit_min_ni) then
+        if (t0 < switch%b2tfnb_flux_limit_min_ni) then
           coef(iFc) = 1.0_R8
         else
           coef(iFc) = 5.0_R8/3.0_R8
@@ -522,11 +521,11 @@ cwdk                   (original code: simple averaging)
      &   dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf +
      &  (flo_he(:,0) - (5.0_R8/3.0_R8)*flo_mdf(:,0))*nbf -
      &  (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
-      dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*(coef) +
+      dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*coef +
      &  (1.0_R8-drift_hyb)*
      &   dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf +
-     &  (flo_he(:,1) - (coef)*flo_mdf(:,1))*nbf -
-     &  (coef)*co%cdpa(:,1,isb)*dpb(:,1)
+     &  (flo_he(:,1) - coef*flo_mdf(:,1))*nbf -
+     &  coef*co%cdpa(:,1,isb)*dpb(:,1)
 
       dv%fna_53(:,0,isb)   = flo_53(:,0)*nbf
       dv%fna_53(:,1,isb)   = flo_53(:,1)*nbf

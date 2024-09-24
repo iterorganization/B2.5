@@ -103,8 +103,8 @@
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),
      3  flv(nFc,0:1,0:ns-1),
-     4  cdpa0(nFc,0:ns-1), cvsa0(nFc,0:ns-1), chcib(nFc,0:ns-1)
-     5  ,inctran
+     4  cdpa0(nFc,0:ns-1), cvsa0(nFc,0:ns-1), chcib(nFc,0:ns-1),
+     5  inctran
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
@@ -188,8 +188,8 @@
      &   geo%fcS, co%hcib(1:nCv,is), co%chcb(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%hcib(1:nCv,is), co%chcb(1:nFc,1,is))
-        call b2txcc (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol
-     &   , geo%fcS, co%hcib(1:nCv,is), chcib(1:nFc,is))
+        call b2txcc (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, co%hcib(1:nCv,is), chcib(1:nFc,is))
       enddo
       call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
      & geo%fcS, co%dna_ExB, co%cdna_ExB(1,0))

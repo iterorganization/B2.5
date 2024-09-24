@@ -465,7 +465,7 @@
          ce2(iCv)=fce2(zeff(iCv))
          cimp1(iCv)=fce1(zmff(iCv))
          cimp2(iCv)=fce2(zmff(iCv))
-       enddo                                                          !srv 13.01.17 }
+       enddo                                                           !srv 13.01.17 }
 *   ..compute the Coulomb logarithm
        call b2tlnl (nCv, switch, switch%icase_ii, te, ti, ne, lnlam)
 *   ..compute zetap and zetae

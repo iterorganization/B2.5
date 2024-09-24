@@ -34,8 +34,8 @@
       real (kind=R8) :: rzomp(2,2), rzimp(2,2), psi_omp(nromp)
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
-      integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o, spfr_cv,epfr_cv,
-     ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp, pfr_cvs(100),npfr_cvs,
+      integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,spfr_cv,epfr_cv,
+     ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,pfr_cvs(100),npfr_cvs,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd)
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)

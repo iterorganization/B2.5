@@ -99,7 +99,8 @@
         integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
         integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
 
-        logical, allocatable :: islongbound(:)         ! (nCv) indicates whether the contol volume is connected to boundary cell
+        logical, allocatable :: islongbound(:)         ! (nCv) indicates whether the control volume is connected to boundary cell
+
         end type mapping
 
       contains
@@ -348,6 +349,7 @@
       deallocate (m%cvLbl)
 
       if (allocated(m%islongbound)) deallocate(m%islongbound)
+
       return
       end subroutine dealloc_mapping
 

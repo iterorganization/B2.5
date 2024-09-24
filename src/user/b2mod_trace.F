@@ -142,7 +142,7 @@ csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
       if(ank_tracing.eq.0) return
 c*** Particle balance in old style by Andrei Kukushkin
       if(filedata(ntrc_bln)) call b2blnc(ns,geo,mpg,st,switch,dtim)
-      if(filedata(ntrc_srt)) call b2wrsrt(geo,mpg,st,switch,ns,dtim)
+      if(filedata(ntrc_srt)) call b2wrsrt(ns,geo,mpg,st)
 #ifdef WG_TODO
 c*** Power balance
       if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,switch%BoRiS)
@@ -177,7 +177,7 @@ c*** Initialise tracing routines
 #ifdef WG_TODO
       if(filedata(ntrc_ble)) call b2blnei(ny,switch)
       if(filedata(ntrc_blm)) call b2blnmi(switch)
-      if(filedata(ntrc_int)) call b2wrinti(nnreg(0),switch)
+      if(filedata(ntrc_int)) call b2wrinti(mpg%nnreg(0),switch)
       if(filedata(ntrc_sep)) call b2wrsepi(nx,ny,ns,switch)
       if(filedata(ntrc_usr)) call b2usrtri(nx,ny,ns,switch)
 #endif

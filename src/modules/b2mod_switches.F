@@ -552,17 +552,18 @@ c b2stbc
 
 c b2trno
       real (kind=R8) :: b2trno_alpha_stoch
+
+c b2nppo
+      integer :: b2nppo_restrict_po
+
+c b2txcx
+      real (kind=R8) :: b2txcx_increase_transp_coefs
+
 c Feedback
       integer :: b2stbc_feedback, use_pump
 
 c Med
       integer :: med_style
-c b2nppo
-      integer :: b2nppo_restrict_po
-c b2txcx
-      real (kind=R8) :: b2txcx_increase_transp_coefs
-      
-
 
 c Optimization
       integer :: b2optim_save_states
@@ -1162,8 +1163,7 @@ c b2trno
 c med
       s % med_style = 0
 
-
-C b2nppo
+c b2nppo
       s % b2nppo_restrict_po = 0
       s % b2txcx_increase_transp_coefs = 0.0_R8
 
@@ -1635,10 +1635,10 @@ c b2tqna
       call xertst (0.le.s%ti_alfa1,'faulty argument b2tqna_ti_alfa1')
       call ipgetr ('b2tqna_ti_alfa2', s%ti_alfa2)
       call xertst (0.le.s%ti_alfa1,'faulty argument b2tqna_ti_alfa2')
-      call ipgetr ('b2tqna_ti_alfa3', s%ti_alfa3)                     
-      call xertst (0.le.s%ti_alfa3,'faulty argument b2tqna_ti_alfa3')   
-      call ipgetr ('b2tqna_ti_alfa4', s%ti_alfa4)                       
-      call xertst (0.le.s%ti_alfa4,'faulty argument b2tqna_ti_alfa4') 
+      call ipgetr ('b2tqna_ti_alfa3', s%ti_alfa3)
+      call xertst (0.le.s%ti_alfa3,'faulty argument b2tqna_ti_alfa3')
+      call ipgetr ('b2tqna_ti_alfa4', s%ti_alfa4)
+      call xertst (0.le.s%ti_alfa4,'faulty argument b2tqna_ti_alfa4')
 
       call ipgetr ('b2tqna_na_alfa1', s%na_alfa1)
       call xertst (0.le.s%na_alfa1,'faulty argument b2tqna_na_alfa1')
@@ -1789,7 +1789,7 @@ c b2siav
       call ipgeti ('b2siav_style_qip', s%b2siav_qstyle)              !srv 28.03.06
 
 c b2trcl
-      call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)                !iyv 06.12.13            
+      call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)                !iyv 06.12.13
 
 c b2stbc
       call ipgeti ('b2stbc_bcene_16_style', s%bcene_16_style)
@@ -1820,12 +1820,11 @@ c Feedback
 
 c Med
       call ipgeti ('b2mndr_med_style', s%med_style)
+
 c b2nppo
       call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
-      call ipgetr ('b2txcx_increase_transp_coefs', 
+      call ipgetr ('b2txcx_increase_transp_coefs',
      &      s%b2txcx_increase_transp_coefs)
-
-
 
 c Optimization
       call ipgeti ('b2optim_save_states', s%b2optim_save_states)
@@ -2365,7 +2364,7 @@ c Optimization
      &  'faulty parameter b2optim_save_states')
       call xertst (s%b2optim_reset_iter.gt.0,
      &  'faulty parameter b2optim_reset_iter')
-      call xertst (s%b2optim_reset_drift.gt.0.0 .and. 
+      call xertst (s%b2optim_reset_drift.gt.0.0 .and.
      &   s%b2optim_reset_drift.le.1.0_R8,
      &  'faulty parameter b2optim_reset_drift')
 

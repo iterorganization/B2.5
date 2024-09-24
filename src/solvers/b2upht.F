@@ -165,19 +165,20 @@
         endif
         dte(iCv) = dte1(iCv)
         dti(iCv) = dti1(iCv)                                        !srv 25.07.17
-        if (solvereg(ireg))
-     >   te(iCv) = max(switch%b2upht_te_min*ev,
+        if (solvireg(ireg))
+     >   ti(iCv) = max(switch%b2upht_ti_min*ev,
+     >     min(switch%b2upht_ti_max*ev,ti(iCv)+dti(iCv)))           !xpb !nh
+        if (solvereg(ireg)) then
+          te(iCv) = max(switch%b2upht_rte_min*ti(iCv),te(iCv))
+          te(iCv) = max(switch%b2upht_te_min*ev,
      >     min(switch%b2upht_te_max*ev,te(iCv)+dte(iCv)))           !xpb !nh
-         te(iCv) = max(switch%b2upht_rte_min*ti(iCv),te(iCv))    
+        end if
         if ((solvpreg(ireg).and.po_solve).and.switch%pot_eq.eq.1.and.
      &      iCv.le.mpg%nCi.and.add_te_corr_to_po(ireg)) then
           po(iCv) = po(iCv)+dte(iCv)/qe
         else if (switch%pot_eq.eq.2) then
           po(iCv) = 3.1_R8*te(iCv)/qe
         end if
-        if (solvireg(ireg))
-     >   ti(iCv) = max(switch%b2upht_ti_min*ev,
-     >     min(switch%b2upht_ti_max*ev,ti(iCv)+dti(iCv)))           !xpb !nh
         if (solvnreg(ireg))
      >   tn(iCv) = max(switch%b2upht_tn_min*ev,
      >     min(switch%b2upht_tn_max*ev,tn(iCv)+dtn(iCv)))
