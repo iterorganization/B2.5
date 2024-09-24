@@ -438,16 +438,16 @@
 
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
 *     in case of small impurity amount see below for b2sigp_style.ne.2
-      if(switch%b2sigp_style.eq.2) then                                      !srv 05.07.17
+      if(switch%b2sigp_style.eq.2) then                                !srv 05.07.17
        call b2xpne (nCv, ns, rz2, na, st_ext%ne2, ne2)
-       call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)                    !srv 13.01.17 {
+       call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)                !srv 13.01.17 {
        call b2xzmf (nCv, ns, ismain, rz2, na, zmff)
        do iCv = 1, nCv
          ce1(iCv)=fce1(zeff(iCv))
          ce2(iCv)=fce2(zeff(iCv))
          cimp1(iCv)=fce1(zmff(iCv))
          cimp2(iCv)=fce2(zmff(iCv))
-       enddo                                                          !srv 13.01.17 }
+       enddo                                                           !srv 13.01.17 }
 *   ..compute the Coulomb logarithm
        call b2tlnl (nCv, switch, switch%icase_ii, te, ti, ne, lnlam)
 *   ..compute zetap and zetae

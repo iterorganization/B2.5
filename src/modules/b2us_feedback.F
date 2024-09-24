@@ -420,10 +420,10 @@ cxpb size is changed in b2mod_dimensions
             nesepm_istra=istrai
           endif
         enddo
-        if (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
+        if ((ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
      &   private_flux_puff.gt.0.0_R8.or.nesepm_sol.gt.0.0_R8.or.
      *   volrec_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8.or.
-     &   nepedm_sol.gt.0.0_R8) then
+     &   nepedm_sol.gt.0.0_R8).and.switch%use_eirene.eq.1) then
           icount = 0
           do istrai = 1, nstrat
             if (crcstra(istrai).eq.'C' .and.
@@ -730,7 +730,7 @@ cxpb size is changed in b2mod_dimensions
      & 'b2mod_feedback: increase size of DEF_NATM')
 
       do ifb = 1, nFb
-        if (fb_actuator(ifb).ne.1) cycle
+        if (fb_actuator(ifb).ne.1.or.switch%use_eirene.eq.0) cycle
         if(fb_istra(ifb).gt.0) then
           call xertst (fb_istra(ifb).le.nstrat,
      1      'faulty internal parameter fb_istra')
@@ -780,7 +780,8 @@ cxpb size is changed in b2mod_dimensions
           if ( (fb_type(ifb).eq.fb_type(ifbb)).and. .not.
      &         ((fb_type(ifb).eq.1).or.(fb_type(ifb).eq.4).or.
      &          (fb_type(ifb).eq.5).or.(fb_type(ifb).eq.7).or.
-     &          (fb_type(ifb).eq.8)) ) call xerrab('init_feedback:'//
+     &          (fb_type(ifb).eq.8)) )
+     &          call xerrab('init_feedback:'//
      &      ' set of feedbacks cannot be applied multiple times')
         enddo
         is_start = is0+1
@@ -955,8 +956,8 @@ cxpb size is changed in b2mod_dimensions
 
         do ifb = 1, nFb
           if( fb_type(ifb) .gt. 0 .and.
-     &       fb_rescale_option(ifb) .gt. 0 .and.
-     &       fb_actuator(ifb) .gt.0) then
+     &        fb_rescale_option(ifb) .gt. 0 .and.
+     &        fb_actuator(ifb) .gt.0) then
 
             if (main_call) then
               fb_prev(ifb) = saved_fb_actuator(ifb)
