@@ -8671,14 +8671,14 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
         enddo                                                           !srv 03.03.15 }
 
 * -- BCPOT=14 -- PRESCRIBE THE TOTAL CURRENT WITHOUT IMPOSING A
-*                 SPECIFIC PROFILE
+*                 SPECIFIC PROFILE. FOLLOW PROFILE OF 1st RING INSIDE.
 cwdk    Intended use: core boundary, total PF boundary,...
 cwdk    For testing purposes, use with care!
 
       case (14)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
-     .     'BCPOT = 14 : specified radial sheath potential ',
+     .     'BCPOT = 14 : specified total current ',
      1     POTPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
         endif
         US = 0.0_R8
