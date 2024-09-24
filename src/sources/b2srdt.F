@@ -138,9 +138,6 @@ csw 24feb2014 check for guard cell (SOLPS4)
       enddo
 
 *   ..modify shedt, shidt, shndt, sktdt, sztdt, schdt, snedt
-#ifndef NO_OPENMP_B2SRDT
-!$OMP DO
-#endif
       do iCv = 1, nCv
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle

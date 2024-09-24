@@ -276,7 +276,8 @@ c 2002-09-11: logic revised
      4 na_feedback_alpha1(:), na_feedback_beta1(:),
      5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
-     7 na_feedback_time1(:), gpdata1(:,:,:)
+     7 na_feedback_time1(:), gpdata1(:,:,:),
+     8 sna_corr1(:), taumax1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
       integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns
@@ -485,7 +486,8 @@ c 2002-09-11: logic revised
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      4  rescale_ra(0:nsdecl-1), rescale_sa(0:nsdecl-1),
      5  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
-     6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
+     6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1),
+     7  b2stbr_sna_corr, b2stbr_taumax
       real (kind=R8) :: recyceir1(nstraid), volrecstart1(nstraid),
      &  userfluxparm1(nstraid,2)
       character cnamip*80, cnbmip*80, cvalip*80
@@ -527,11 +529,13 @@ c 2002-09-11: logic revised
 #endif
       character*13, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary
+      logical new_namelist
       logical chemsp1(nstraid), savestratum(0:nstraid)
       logical :: time_dep_puff1(nstraid), time_dep_puff_func1(nstraid)
       integer :: time_dep_puff_case1(nstraid)
       real(kind=R8) :: time_dep_puff_param1(10,NSTRAID)
       logical, allocatable :: is_neutral1(:)
+      logical, allocatable :: do_sna_corr_core1(:)
 #ifdef B25_EIRENE
       logical ldum(0:60)
       logical LMULPL, LRDMLTI, LRDMLV
@@ -606,6 +610,7 @@ c 2002-09-11: logic revised
       data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
       data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
       data xfrhie_no_drift/1.0_R8/, ycur/1.0_R8/
+      data b2stbr_sna_corr/0.0_R8/, b2stbr_taumax/0.05_R8/
       data fch_ion_neutral/0.0_R8/
       data b2tfhe_vis_par/1.0_R8/, b2tvspa_vis_par/1.0_R8/
 *  ..namelists
@@ -1415,6 +1420,8 @@ c 2002-09-11: logic revised
       call xertst (ns.gt.sput_dst, 'faulty input sput_dst')
       call ipgeti ('b2stbr_sput_dst2', sput_dst2)
       call ipgeti ('b2stbr_sput_dst3', sput_dst3)
+      call ipgetr ('b2stbr_sna_corr', b2stbr_sna_corr)
+      call ipgetr ('b2stbr_taumax', b2stbr_taumax)
       call xertst (sput_dst2.lt.ns, 'faulty b2stbr_sput_dst2')
       call xertst (sput_dst3.lt.ns, 'faulty b2stbr_sput_dst3')
       call ipgeti ('b2news_iy_nocoreExB', iy_nocoreExB)
@@ -1705,23 +1712,25 @@ c 2002-09-11: logic revised
       mw_ix2 = conformal_convert
      .   (non_commensurate,1,mw_ix2,mw_jsep,nx,ny,nx1,ny1,3)
       if (mw_jxa.ge.0) then
-        mw_jxa1= conformal_convert(non_commensurate,1,mw_jxa,mw_jsep,
-     .   nx,ny,nx1,ny1,4)
+        mw_jxa1 =
+     .   conformal_convert(non_commensurate,1,mw_jxa,mw_jsep,
+     .    nx,ny,nx1,ny1,4)
       else
-        mw_jxa1=jxa1
+        mw_jxa1 = jxa1
       endif
       if (mw_jsep.ge.0) then
-        mw_jsep1= conformal_convert(non_commensurate,2,mw_jxa,mw_jsep,
-     .   nx,ny,nx1,ny1,2)
+        mw_jsep1 =
+     .   conformal_convert(non_commensurate,2,mw_jxa,mw_jsep,
+     .    nx,ny,nx1,ny1,2)
       else
-        mw_jsep1=jsep1
+        mw_jsep1 = jsep1
       endif
       if (jxa.ne.-2) then
-        jxa1=conformal_convert(non_commensurate,1,jxa,jsep,
+        jxa1 = conformal_convert(non_commensurate,1,jxa,jsep,
      .   nx,ny,nx1,ny1,4)
       endif
       if (jxi.ne.-2) then
-        jxi1=conformal_convert(non_commensurate,1,jxi,jsep,
+        jxi1 = conformal_convert(non_commensurate,1,jxi,jsep,
      .   nx,ny,nx1,ny1,4)
       endif
       tab = char(9)
@@ -1946,6 +1955,9 @@ c 2002-09-11: logic revised
           ycur_done = .true.
         case ('b2tfhe_neutral')
           rswitch = fch_ion_neutral
+        case ('b2stbr_sna_corr', 'b2stbr_taumax') ! Converted to a species-resolved scheme
+          todo = .false.
+          wait = .true.
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
@@ -3516,10 +3528,16 @@ cxpb This will need to be checked !!!
       new_filename = 'b2.numerics.parameters.2'
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
+      new_namelist = (b2stbr_sna_corr.ne.0.0_R8 .or.
+     &                b2stbr_taumax.ne.0.05_R8) .and.
+     &                numerics_namelist.eq.0
+      todo = todo.or.b2stbr_sna_corr.ne.0.0_R8 .or.
+     &               b2stbr_taumax.ne.0.05_R8
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
         call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
-     >    nnreg,mpg%cvOnClosedSurface,style_b2mndt)
-        if (same_bundling) then
+     >   nnreg,mpg%cvOnClosedSurface,style_b2mndt,new_namelist)
+        if (same_bundling.and.b2stbr_sna_corr.eq.0.0_R8
+     &                   .and.b2stbr_taumax.eq.0.05_R8) then
           if (first_pass) then
             write(nout(5),'(a)') 'b2.numerics.parameters'
             write(*,*) 'No changes needed in b2.numerics.parameters'
@@ -3650,6 +3668,58 @@ cxpb This will need to be checked !!!
           if(time_factor_required.ne.0.1_R8)
      .     write(99,'(1x,a,1p,1g10.3,a)')
      .     'TIME_FACTOR_REQUIRED=',time_factor_required,','
+          write(hlp_frm,'(a,i2,a)')
+     .     '(1x,a,',nspecies1,'(1x,f10.7,'',''))'
+          if (maxval(sna_corr).gt.0.0_R8.or.b2stbr_sna_corr.ne.0.0_R8)
+     >     then
+            allocate(sna_corr1(1:nspecies1))
+            if (maxval(sna_corr).eq.0.0_R8.and.
+     >          b2stbr_sna_corr.ne.0.0_R8) then
+              sna_corr1(1:nspecies1) = b2stbr_sna_corr
+            else
+              do is = 1, nspecies
+                if (ispecies1(is).ne.-1) then
+                  sna_corr1(ispecies1(is)) = sna_corr(is)
+                end if
+              end do
+            end if
+            write(99, hlp_frm)
+     .       'SNA_CORR=',(sna_corr1(is),is=1,nspecies1)
+            deallocate(sna_corr1)
+          end if
+          if (maxval(taumax).ne.0.05_R8 .or. minval(taumax).ne.0.05_R8
+     &      .or. b2stbr_taumax.ne.0.05_R8) then
+            allocate(taumax1(1:nspecies1))
+            if (maxval(taumax).eq.0.05_R8 .and.
+     &          minval(taumax).eq.0.05_R8 .and.
+     &           b2stbr_taumax.ne.0.05_R8) then
+              taumax1(1:nspecies1) = b2stbr_taumax
+            else
+              do is = 1, nspecies
+                if (ispecies1(is).ne.-1) then
+                  taumax1(ispecies1(is)) = taumax(is)
+                end if
+              end do
+            end if
+            write(99, hlp_frm)
+     .       'TAUMAX=',(taumax1(is),is=1,nspecies1)
+            deallocate(taumax1)
+          end if
+          if (.not.(any(do_sna_corr_core(1:nspecies)))) then
+            allocate(do_sna_corr_core1(1:nspecies1))
+            do is = 1, nspecies
+              if (ispecies1(is).ne.-1) then
+                do_sna_corr_core1(ispecies1(is)) = do_sna_corr_core(is)
+              end if
+            end do
+            if (.not.(any(do_sna_corr_core1(1:nspecies1)))) then
+              write(hlp_frm,'(a,i2,a)')
+     .         '(1x,a,',nspecies1,'l1,'','')'
+              write(99, hlp_frm) 'DO_SNA_CORR_CORE=',
+     .         (do_sna_corr_core1(is),is=1,nspecies1)
+            end if
+            deallocate(do_sna_corr_core1)
+          end if
           if (.not.write_nml_num) write(99, '(a,l1,a)')
      >     'WRITE_NML_NUM=',write_nml_num,','
           write(99,'(a1)') '/'
@@ -9643,7 +9713,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
      .           'increase size of ZEILEN in b2ytdr!')
                 JLINE = ILINE + 1
                 READ (IUNIN,'(A80)') ZEILEN(JLINE)
-                READ (ZEILEN(JLINE),'(3I6,1X,A6)')
+                READ (ZEILEN(JLINE),'(3I6)')
      .                               ISL, ITP, IRATIO
                 IF (IRATIO.GT.0) THEN
                   JLINE = JLINE + 1
@@ -9674,16 +9744,16 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
                     IRC1 = 0
                   END IF
                   IF (ITP.EQ.1) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IATM1(ISL), ITP, IRATIO
                   ELSE IF (ITP.EQ.2) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IMOL1(ISL), ITP, IRATIO
                   ELSE IF (ITP.EQ.3) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IION1(ISL), ITP, IRATIO
                   ELSE IF (ITP.EQ.4) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IPLS1(ISL), ITP, IRATIO
                   END IF
                   ILINE = JLINE

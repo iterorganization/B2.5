@@ -3523,7 +3523,25 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-                   If ion_vlct_restrict.ne.0, the parallel speed of ions is limited to be no more than 3 times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than twice the local ion sound speed.
+					If ion_vlct_restrict.ne.0, the parallel speed of ions is limited to be no more than 3 times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than twice the local ion sound speed.
+				</description>
+			</switch>
+			<switch>
+				<name>b2nppo_restr_po</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					If b2nppo_restr_po.ne.0.0, the electric potential is restricted such that its ratio (in absolute value) with the electron temperature (in eV) does not exceed b2nppo_restr_po.
+					If b2nppo_restr_po is negative, the limit only applies to regions of negative electric potential.
+					Only applies on open field lines.
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_rte_min</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					If b2nppo_rte_min.gt.0.0, the electron to ion temperature ratio is forced to not be lower than rte_min (so, Te/Ti >= rte_min).
 				</description>
 			</switch>
 			<switch>
@@ -3846,6 +3864,14 @@
 				<description>
 					Stabilizing term to the source associated with boundary condition BCENI=15.
 					To help suppress ion temperature oscillations, this parameter can be set to a positive value. The range 1-100 is recommended.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npht_stab_shei</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Stabilizing term to the ion and electron heat sources associated with equipartition.
 				</description>
 			</switch>
 			<switch>
