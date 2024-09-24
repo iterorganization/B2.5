@@ -2271,7 +2271,7 @@ c Optimization
      &  'faulty parameter b2optim_save_states')
       call xertst (s%b2optim_reset_iter.gt.0,
      &  'faulty parameter b2optim_reset_iter')
-      call xertst (s%b2optim_reset_drift.gt.0.0 .and. 
+      call xertst (s%b2optim_reset_drift.gt.0.0 .and.
      &   s%b2optim_reset_drift.le.1.0_R8,
      &  'faulty parameter b2optim_reset_drift')
 

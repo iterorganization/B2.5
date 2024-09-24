@@ -1460,6 +1460,7 @@ csw 09oct2012
      .    'Invalid shot number')
          call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
 #endif
+         not_default = not_default.or.(shot.gt.0.and.run.ge.0)
          imasdir = trim(home_dir)//'/public/imasdb/'
      &           //trim(database)//'/'//trim(version)
 #if AL_MAJOR_VERSION < 5
