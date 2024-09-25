@@ -153,10 +153,10 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
          call diff(nCv, nFc, nVx, 1, geo, mpg, nati2, nati2v, dnati2)
 
 *      ..compute P.Sch heat flux
-         dv%fhiPSch(:,0) =  2.5_R8*switch%fhiPSch*
-     &                       dv%facdrift*co%cddi(:,0,is)*dnati2(:,1)
-         dv%fhiPSch(:,1) = -2.5_R8*switch%fhiPSch*
-     &                       dv%facdrift*co%cddi(:,1,is)*dnati2(:,0)
+         dv%fhiPSch(:,0) = dv%fhiPSch(:,0) +
+     &     2.5_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,0,is)*dnati2(:,1)
+         dv%fhiPSch(:,1) = dv%fhiPSch(:,1) -
+     &     2.5_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,1,is)*dnati2(:,0)
 *      ..linearization coefficients for P.Sch flows
          cddi(:,0) = -5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,1,is)
          cddi(:,1) =  5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,0,is)
