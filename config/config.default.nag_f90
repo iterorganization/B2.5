@@ -34,21 +34,22 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
-FC = /afs/ipp-garching.mpg.de/@sys/bin/f90
+FC = nagfor
+FN = ${FN}
 FCOPTS = -O -Nl99 -x77 # -mismatch
 INCMOD = -I
 MOD = mod
 
-ifdef USE_OPENMP
-  FCOPTS += -openmp
+ifdef SOLPS_OPENMP
+  FPOPTS += -openmp
 endif
 
 BLD = ar rucv
@@ -61,8 +62,12 @@ ifdef LD_CATALYST
   CXXFLAGS = -std=c++11
 endif
 
-LD = f90
+LD = ${FC}
+LN = ${FN}
 LDOPTS = 
+ifdef SOLPS_OPENMP
+  LPOPTS += -openmp
+endif
 
 # LDEXTRA  = env.o
 

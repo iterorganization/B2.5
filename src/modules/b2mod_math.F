@@ -2,7 +2,7 @@
       use b2mod_types
       implicit none
 
-      real(kind=R8), save :: cutll, cutlo
+      real(kind=R8), save :: cutll, cutlo, cutl4
       real(kind=R4), save :: small_R4_constant
       logical, save :: b2mod_math_initialised = .false.
 
@@ -69,7 +69,7 @@
       implicit none
       real(kind=R8) :: expu4, t0
       if (.not.b2mod_math_initialised) call b2mod_math_init
-      expu4 = exp(max(t0,cutll))+small_R4_constant
+      expu4 = exp(max(t0,cutl4))
       return
       end function expu4
 
@@ -120,6 +120,7 @@
 
 *     (trimg will be used to trim the logarithmic gradients to avoid
 *     some pathetic behaviour near the underflow limit.)
+! $AD NOCHECKPOINT
       function trimg(t0,t1,tt)
       implicit none
       real(kind=R8) :: trimg, t0, t1, tt
@@ -251,11 +252,13 @@
       subroutine b2mod_math_init
       implicit none
       real(kind=R8) :: machsfr
-      external machsfr
-*   ..set cutll, cutlo
+      real(kind=R4) :: machsfr4
+      external machsfr, machsfr4
+*   ..set cutll, cutlo, cutl4, small_R4_constant
       cutll = log(machsfr())
       cutlo = max(machsfr(),exp(cutll))
-      small_R4_constant = tiny(small_R4_constant)
+      cutl4 = real(log(machsfr4()),R8)
+      small_R4_constant = max(machsfr4(),real(exp(cutl4),R4))
       b2mod_math_initialised = .true.
       return
       end subroutine b2mod_math_init

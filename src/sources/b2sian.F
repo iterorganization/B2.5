@@ -8,8 +8,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2sian_smo0to3, balance_netcdf
+#endif
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -45,7 +47,7 @@
      *    wrk(nCv), wrkf(nFc)
 *   ..procedures
       external xertst
-      external b2xvff, b2xvsg
+      external b2xvsg
 *   ..initialization
 
 *-----------------------------------------------------------------------
@@ -68,10 +70,12 @@
      &          geo%cvBb(iCv,0)/geo%cvBb(iCv,2)*geo%cvBb(iCv,3)*wrk(iCv)
         enddo
       endif
+#ifndef FIXED_POINT
 cdjm Store linearised source for balance
       if (balance_netcdf.ne.0) then
         b2sian_smo0to3(1:nCv,0:3,isb)=smban
       endif
+#endif
 
       if (switch%b2sian_iout.ne.0) then
         write (chns,'(i3.3)') isb

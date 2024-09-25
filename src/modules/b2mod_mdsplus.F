@@ -187,7 +187,7 @@
       character*(*), intent(in) :: name
       character*(*), intent(in) :: units
       integer, intent(in) :: description
-#ifdef F2003
+#ifndef LEGACYCOMP
       character(len=:), allocatable, intent(in) :: string(:)
 #else
       integer, parameter :: strmax = 1024

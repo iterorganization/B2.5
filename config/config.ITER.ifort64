@@ -1,4 +1,5 @@
 # Test whether necessary variables are set
+OS        ?= $(shell grep -m1 NAME /etc/os-release | cut -d '"' -f 2 | cut -d ' ' -f 1 )
 NODENAME  ?= $(shell echo `hostname`)
 LD_MSCL   ?= `pkg-config mscl --libs`
 ifdef NCARG_ROOT
@@ -8,7 +9,11 @@ GLI_HOME  ?= ${EBROOTGLI}
 endif
 ifeq ($(shell `pkg-config --exists netcdf-fortran`; echo $$?),0)
 NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
+ifeq (,$(findstring CentOS,$(OS)))
+LD_NETCDF  = `pkg-config netcdf-fortran --libs`
+else
 LD_NETCDF ?= `nf-config --flibs`
+endif
 ifndef SOLPS_CPP
 DEFINES   += -DCDF_MOVIE
 INCMODS   += `pkg-config netcdf-fortran --cflags`
@@ -29,66 +34,55 @@ ifndef SOLPS_CPP
 DEFINES   += -DNO_NAG
 endif
 endif
-LD_SONNET ?= -L${SOLPSLIB} -lsonnet -lstdc++
 
 DEFINES   += -DNO_OPT
 
 CPP        = /lib/cpp -traditional
 
-ifdef USE_MPI
-FC         = mpiifort
+ifeq (,$(findstring CentOS,$(OS)))
+MPI_FC    ?= mpiifort -fc=mpiifx
+else
+MPI_FC    ?= mpiifort
+endif
+ifdef SOLPS_MPI
+FC         = ${MPI_FC}
 ifndef MPDIR
 MPDIR      = ${EBROOTIMPI}
 LD_MPI    += -Wl,-rpath,${MPDIR}/lib64
 endif
 else
 ifdef USE_IMPGYRO
-FC         = mpiifort
+FC         = ${MPI_FC}
 ifndef MPDIR
 MPDIR      = ${EBROOTIMPI}
 LD_MPI    += -Wl,-rpath,${MPDIR}/lib64
 endif
 else
-FC         = ifort
+ifeq (,$(findstring CentOS,$(OS)))
+FC         = ifx
 endif
 endif
-
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
+endif
 
 FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
 FCOPTS    += -g -C -debug all -traceback -check all -fpe0
+LDOPTS    += -check all
 else
-FCOPTS    += -O2 -march=sandybridge
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS    += -fp-model=precise
+FCOPTS    += -O2
+ifeq (,$(findstring CentOS,$(OS)))
+FCOPTS    += -xHost
+else
+FCOPTS    += -march=sandybridge
 endif
 endif
-ifdef USE_MPI
-FCOPTS    += ${MPI_CPP}
+ifdef SOLPS_MPI
+FPOPTS    += ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
-FCOPTS    += ${MPI_CPP}
+FPOPTS    += ${MPI_CPP}
 endif
 endif
-
-ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS    += -qopenmp
-LDOPTS    += -qopenmp
-else
-FCOPTS    += -openmp
-LDOPTS    += -openmp
-endif
-endif
-
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
-FCOPTS    += -vec_report0
-LDOPTS    += -i_dynamic
-endif
-
-INCMOD     = -I
-OBJDEST    = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
 LDLIBES    = -lz
 
@@ -98,7 +92,7 @@ else
   GGD_VERSION ?= '0.0.0'
 endif
 
-ifdef USE_MPI
+ifdef SOLPS_MPI
 LDLIBES   += ${LD_MPI}
 else
 ifdef USE_IMPGYRO
@@ -112,6 +106,7 @@ LIBOPT = ${PETSC_LIB}
 # CPP has been overwritten by the PETSc variables file and must be reinstated
 CPP    = /lib/cpp -traditional
 endif
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

@@ -17,9 +17,9 @@
 !
 !
 !
-SUBROUTINE B2TLH0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
-& , nad, ti, tn, tnd, chcib, chcibd, chcb, chcbd, fllim0fhi, fllim0fhid&
-& , nbdirs)
+SUBROUTINE B2TLH0_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
+& , mpgd, na, nad, ti, tn, tnd, chcib, chcibd, chcb, chcbd, fllim0fhi, &
+& fllim0fhid, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -29,6 +29,7 @@ SUBROUTINE B2TLH0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlh0, b2tlh0_cutlo
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -37,6 +38,7 @@ SUBROUTINE B2TLH0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -96,7 +98,7 @@ SUBROUTINE B2TLH0_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, na&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tlh0')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..read input on first call
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -410,6 +412,7 @@ SUBROUTINE B2TLH0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ti, tn&
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlh0, b2tlh0_cutlo
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -458,7 +461,7 @@ SUBROUTINE B2TLH0_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ti, tn&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tlh0')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..read input on first call
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality

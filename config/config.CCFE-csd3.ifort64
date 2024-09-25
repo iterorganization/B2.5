@@ -14,42 +14,36 @@ endif
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 
-ifdef USE_MPI
-FC       = mpif90
+FN       = ${FC}
+MPI_FC  ?= mpif90
+ifdef SOLPS_MPI
+ FC      = ${MPI_FC}
+ COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
+ ifeq (${COMPILER_TYPE},GNU)
+  COMPILER_REDEF = yes
+ endif
 else
-ifdef USE_IMPGYRO
-FC       = mpif90
-else
-FC       = ifort
-endif
+ ifdef USE_IMPGYRO
+  FC     = ${MPI_FC}
+  COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
+  ifeq (${COMPILER_TYPE},GNU)
+   COMPILER_REDEF = yes
+  endif
+ endif
 endif
 
-INCMOD   = -I
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-COMPILER_MAJOR_VERSION = $(shell ${FC} --version 2>&1 | head -1 | cut -d ' ' -f 3 | cut -d '.' -f 1 )
+ifndef COMPILER_REDEF
 # OpenMP compiler options for intel: -openmp is enough
 # Might also want -parallel to auto-parallelize loops without openmp directives
-ifndef SOLPS_DEBUG
-FCOPTS  += -O2 -xHost
-else
-FCOPTS  += -g -C -traceback -debug all -check all
-endif
-ifdef USE_MPI
-FCOPTS  += ${MPI_CPP}
-LDOPTS  += ${LD_MPI}
-endif
-ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS  += -qopenmp
-LDOPTS  += -qopenmp
-else
-FCOPTS  += -openmp
-LDOPTS  += -openmp
-endif
-endif
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
-FCOPTS  += -vec_report0
-LDOPTS  += -i_dynamic
+ ifndef SOLPS_DEBUG
+  FCOPTS += -O2 -xHost
+ else
+  FCOPTS += -g -C -traceback -debug all -check all
+ endif
+ ifdef SOLPS_MPI
+  FPOPTS += ${MPI_CPP}
+  LPOPTS += ${LD_MPI}
+ endif
 endif
 
 

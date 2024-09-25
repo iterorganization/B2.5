@@ -14,50 +14,23 @@
 !
 MODULE B2MOD_B2CMPA_DIFFV
   USE B2MOD_TYPES
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !     (/b2cmpa/ contains basic physics parameters)
 ! DPC: constant declaration now in b2mod_constants
   INTEGER :: nsdecl
-  PARAMETER (nsdecl=42)
+  PARAMETER (nsdecl=def_nsd)
   INTEGER :: nspecies
   INTEGER :: partition_number(0:nsdecl-1)
   REAL(kind=r8), SAVE :: zn(0:nsdecl-1), am(0:nsdecl-1), zamax(0:nsdecl-&
 & 1), zamin(0:nsdecl-1), potmin(0:nsdecl-1), potmax(0:nsdecl-1), potimin&
 & (0:nsdecl-1), potimax(0:nsdecl-1)
+  REAL(kind=r8), SAVE :: znd(nbdirsmax, 0:nsdecl-1), amd(nbdirsmax, 0:&
+& nsdecl-1), zamaxd(nbdirsmax, 0:nsdecl-1), zamind(nbdirsmax, 0:nsdecl-1&
+& )
   LOGICAL :: is_neutral(0:nsdecl-1)
   REAL(kind=r8) :: amtol
   PARAMETER (amtol=1.0e-2_R8)
@@ -189,6 +162,7 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: is, js
+    INTRINSIC NINT
     INTRINSIC ABS
     REAL(kind=r8) :: abs0
     IF (am(is) - am(js) .GE. 0.) THEN
@@ -196,8 +170,8 @@ CONTAINS
     ELSE
       abs0 = -(am(is)-am(js))
     END IF
-    lnext = zamax(is) .LT. zamin(js) .AND. zn(is) .EQ. zn(js) .AND. abs0&
-&     .LT. amtol .AND. is .NE. js
+    lnext = zamax(is) .LT. zamin(js) .AND. NINT(zn(is)) .EQ. NINT(zn(js)&
+&     ) .AND. abs0 .LT. amtol .AND. is .NE. js
     RETURN
   END FUNCTION LNEXT
 
