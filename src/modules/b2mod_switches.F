@@ -1579,7 +1579,7 @@ c b2tqna
       call ipgeti ('b2tqna_limit_coeff', s%b2tqna_limit_coeff)
       call ipgetr ('b2tqna_pfr_rescale', s%b2tqna_pfr_rescale)
       call ipgetr ('b2tqna_divsol_rescale', s%b2tqna_divsol_rescale)
-      call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)                !srv 15.12.05
+      call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)
 
 c fch anomalous
       call ipgetr ('b2tfhe_anomalous', s%fch_anomalous)
