@@ -7130,6 +7130,58 @@
 				</description>
 			</switch>
 			<switch>
+				<name>DTEN</name>
+				<default>1.0</default>
+				<type>real array of size (0:NREG)</type>
+				<description>
+					Multiplier to the time used in solving the fluid neutral heat equation in region (ireg).
+				</description>
+			</switch>
+			<switch>
+				<name>DTFTS</name>
+				<default>0</default>
+				<type>integer array of size (DEF_NYD)</type>
+				<description>
+					List of flux tube indices for which individual timestep multipliers can be applied.
+				</description>
+			</switch>
+			<switch>
+				<name>DTCO_FT</name>
+				<default>1.0</default>
+				<type>real array of size (DEF_NYD)</type>
+				<description>
+					Individual timestep multiplier to all continuity equations applied in the corresponding flux tube from the DTFTS list.
+					Must be positive.
+				</description>
+			</switch>
+			<switch>
+				<name>DTMO_FT</name>
+				<default>1.0</default>
+				<type>real array of size (DEF_NYD)</type>
+				<description>
+					Individual timestep multiplier to all parallel momentum equations applied in the corresponding flux tube from the DTFTS list.
+					Must be positive.
+				</description>
+			</switch>
+			<switch>
+				<name>DTEE_FT</name>
+				<default>1.0</default>
+				<type>real array of size (DEF_NYD)</type>
+				<description>
+					Individual timestep multiplier to the electron heat equation applied in the corresponding flux tube from the DTFTS list.
+					Must be positive.
+				</description>
+			</switch>
+			<switch>
+				<name>DTEI_FT</name>
+				<default>1.0</default>
+				<type>real array of size (DEF_NYD)</type>
+				<description>
+					Individual timestep multiplier to the ion heat equation applied in the corresponding flux tube from the DTFTS list.
+					Must be positive.
+				</description>
+			</switch>
+			<switch>
 				<name>SOLVECO</name>
 				<default>.true.</default>
 				<type>logical array of size (0:NS-1,0:NREG)</type>
@@ -7179,12 +7231,36 @@
 				</description>
 			</switch>
 			<switch>
+				<name>SOLVEEN</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					Indicates whether the fluid neutral energy equation is to be solved in region (ireg). Subservient to 'no_solve' switch.
+				</description>
+			</switch>
+			<switch>
 				<name>SOLVEET</name>
 				<type>logical array of size (0:NREG)</type>
 				<description>
 					Indicates whether the total energy equation is to be solved in region (ireg). For the equation to be solved in region (ireg), both SOLVEEE and SOLVEEI must be true in that region. Subservient to 'no_solve' switch.
-					It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with total energy equation, as a group.
+					It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with the total energy equation, as a group.
 					Defaults to .true. unless using the time-dependent mode, in which case it is set to .false. and should not be used.
+				</description>
+			</switch>
+			<switch>
+				<name>SOLVEKT</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					Indicates whether the ExB turbulent kinetic energy equation is to be solved in region (ireg). Subservient to 'no_solve' switch.
+				</description>
+			</switch>
+			<switch>
+				<name>SOLVEZT</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					Indicates whether the ExB turbulent enstrophy equation is to be solved in region (ireg). Subservient to 'no_solve' switch.
 				</description>
 			</switch>
 			<switch>

@@ -80,7 +80,8 @@ csw 10oct2012
 #ifdef WG_TODO
      &  flomx,
 #endif
-     &  alfe0(nFc), floe0_mdf(nFc,0:1)                                   !srv 22.11.99 13.10.06 17.06.09
+     &  alfe0(nFc), floe0_mdf(nFc,0:1),                                  !srv 22.11.99 13.10.06 17.06.09
+     *  fhe_32_loc(nFc,0:1), fhe_52_loc(nFc,0:1)
       real (kind=R8) ::
      *    fledia(nFc,0:1), c071(nFc), c071c(nCv),                        !srv 22.11.99 25.01.02
      &    zeff(nCv)                                                      !srv 13.01.17
@@ -210,7 +211,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
 *   ..apply discretization scheme
       call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
      &  geo,mpg,pl%te,floe0_mdf,
-     &  co%chce,fhe0_mdf,dumm1,dumm2)
+     &  co%chce,fhe0_mdf,fhe_32_loc,fhe_52_loc)
 
 *   ..compute fluxes
       alfe0 = co%calf(:,0)
@@ -509,6 +510,11 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
          call my_out_us(70,nFc,1,fhe_32(1,1),'b2tfhe__fhe_32_r')
          call my_out_us(70,nFc,1,fhe_52(1,0),'b2tfhe__fhe_52_th')
          call my_out_us(70,nFc,1,fhe_52(1,1),'b2tfhe__fhe_52_r')
+       else
+         call my_out_us(70,nFc,1,fhe_32_loc(1,0),'b2tfhe__fhe_32_th')
+         call my_out_us(70,nFc,1,fhe_32_loc(1,1),'b2tfhe__fhe_32_r')
+         call my_out_us(70,nFc,1,fhe_52_loc(1,0),'b2tfhe__fhe_52_th')
+         call my_out_us(70,nFc,1,fhe_52_loc(1,1),'b2tfhe__fhe_52_r')
        endif
 #endif
        call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')

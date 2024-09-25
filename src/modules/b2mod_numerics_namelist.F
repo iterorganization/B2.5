@@ -10,11 +10,13 @@
       implicit none
 
 #ifdef ALLOCATE_AND_NAMELIST
+      integer, allocatable, save ::
+     *   dtfts(:)
       real (kind=R8), allocatable, save ::
-     *   dtco(:,:),
-     *   dtmo(:,:),
-     *   dtee(:),
-     *   dtei(:),
+     *   dtco(:,:), dtco_ft(:),
+     *   dtmo(:,:), dtmo_ft(:),
+     *   dtee(:), dtee_ft(:),
+     *   dtei(:), dtei_ft(:),
      *   dten(:),
      *   corr_core_dn(:),                                  ! IYS 19.12.2017
      *   sna_corr(:), taumax(:)                            ! iyv 20.09.22
@@ -29,15 +31,18 @@
      *   solveet(:),
      *   solvekt(:),
      *   solvezt(:),
-     *   last_solve_5(:),
-     *   last_solve_9(:),
      *   add_te_corr_to_po(:),                             ! IYS 21.09.2018
      *   do_sna_corr_core(:)                               !iyv 20.09.22
 #else
-      real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX)
-      real (kind=R8), save :: dtmo(0:nsdmax-1,0:CVREGMAX)
-      real (kind=R8), save :: dtee(0:CVREGMAX)
-      real (kind=R8), save :: dtei(0:CVREGMAX)
+      integer, save :: dtfts(1:DEF_NYD)
+      real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX),
+     & dtco_ft(1:DEF_NYD)
+      real (kind=R8), save :: dtmo(0:nsdmax-1,0:CVREGMAX),
+     & dtmo_ft(1:DEF_NYD)
+      real (kind=R8), save :: dtee(0:CVREGMAX),
+     &  dtee_ft(1:DEF_NYD)
+      real (kind=R8), save :: dtei(0:CVREGMAX),
+     &  dtei_ft(1:DEF_NYD)
       real (kind=R8), save :: dten(0:CVREGMAX)
       real (kind=R8), save :: corr_core_dn(0:nsdmax-1)     ! IYS 19.12.2017
       real (kind=R8), save :: sna_corr(DEF_NATM), taumax(DEF_NATM)      ! IYS 10.03.2023
@@ -51,8 +56,6 @@
       logical, save :: solveet(0:CVREGMAX)
       logical, save :: solvekt(0:CVREGMAX)
       logical, save :: solvezt(0:CVREGMAX)
-      logical, save :: last_solve_5(0:CVREGMAX)
-      logical, save :: last_solve_9(0:CVREGMAX)
       logical, save :: add_te_corr_to_po(0:CVREGMAX)       ! IYS 21.09.2018
       logical, save :: do_sna_corr_core(DEF_NATM)          ! IYS 10.03.2023
 #endif
@@ -65,6 +68,7 @@
       real (kind=R8), save :: numerics_time_switch
       logical :: first_time_step
       logical, save :: b2mod_numerics_allocated = .false.
+      logical, allocatable, save :: last_solve_5(:), last_solve_9(:)
 
       private :: numerics
       logical, save :: write_nml_num = .true.
@@ -77,7 +81,8 @@
      & numerics_filename, numerics_time_mod, numerics_time_switch,
      & solvekt, solvezt,
      & corr_core_dn, corr_core_dt, add_te_corr_to_po,      ! IYS 19.12.2017
-     & sna_corr, taumax, do_sna_corr_core
+     & sna_corr, taumax, do_sna_corr_core,
+     & dtfts, dtee_ft, dtmo_ft, dtco_ft, dtei_ft
 
       contains
 
@@ -91,11 +96,18 @@
       write(*,*) 'Allocating space for b2mod_numerics'                !srv 25.02.06 11.06.08
 
       allocate(time_factor(nCv))
+      allocate(last_solve_5(0:nnreg(0)))
+      allocate(last_solve_9(0:nnreg(0)))
 #ifdef ALLOCATE_AND_NAMELIST
+      allocate(dtfts(1:DEF_NYD))
       allocate(dtco(0:nsd-1,0:nnreg(0)))
+      allocate(dtco_ft(1:DEF_NYD))
       allocate(dtmo(0:nsd-1,0:nnreg(0)))
+      allocate(dtmo_ft(1:DEF_NYD))
       allocate(dtee(0:nnreg(0)))
+      allocate(dtee_ft(1:DEF_NYD))
       allocate(dtei(0:nnreg(0)))
+      allocate(dtei_ft(1:DEF_NYD))
       allocate(dten(0:nnreg(0)))
       allocate(corr_core_dn(0:nsd-1))                              ! IYS 19.12.2017
       allocate(sna_corr(nspecies))                                 !iyv 20.09.22
@@ -110,8 +122,6 @@
       allocate(solveet(0:nnreg(0)))
       allocate(solvekt(0:nnreg(0)))
       allocate(solvezt(0:nnreg(0)))
-      allocate(last_solve_5(0:nnreg(0)))
-      allocate(last_solve_9(0:nnreg(0)))
       allocate(add_te_corr_to_po(0:nnreg(0)))                      ! IYS 21.09.2018, 21.09.2018
       allocate(do_sna_corr_core(nspecies))                         !iyv 20.09.22
 #else
@@ -119,11 +129,16 @@
      1 'increase DEF_NSD in b2mod_dimensions')
       call xertst (nnreg(0).le.cvregmax,'increase CVREGMAX')
 #endif
+      dtfts=0
       dtco=1.0_R8
       dtmo=1.0_R8
       dtee=1.0_R8
       dtei=1.0_R8
       dten=1.0_R8
+      dtco_ft=1.0_R8
+      dtmo_ft=1.0_R8
+      dtee_ft=1.0_R8
+      dtei_ft=1.0_R8
       corr_core_dn=1.0_R8     ! IYS 19.12.2017
       corr_core_dt=1.0_R8     ! IYS 19.12.2017
       sna_corr=0.0_R8                                              !iyv 20.09.22
@@ -168,11 +183,18 @@
 
       if (.not.b2mod_numerics_allocated) return
       deallocate(time_factor)
+      deallocate(last_solve_5)
+      deallocate(last_solve_9)
 #ifdef ALLOCATE_AND_NAMELIST
+      deallocate(dtfts)
       deallocate(dtco)
+      deallocate(dtco_ft)
       deallocate(dtmo)
+      deallocate(dtmo_ft)
       deallocate(dtee)
+      deallocate(dtee_ft)
       deallocate(dtei)
+      deallocate(dtei_ft)
       deallocate(dten)
       deallocate(corr_core_dn)                                     ! IYS 19.12.2017
       deallocate(sna_corr)                                         !iyv 20.09.22
@@ -189,8 +211,6 @@
       deallocate(solveet)
       deallocate(solvekt)
       deallocate(solvezt)
-      deallocate(last_solve_5)
-      deallocate(last_solve_9)
 #endif
       b2mod_numerics_allocated = .false.
       return
@@ -270,6 +290,16 @@
      & 'faulty parameter dtei')
       call xertst (0.0_R8.lt.minval(dten),
      & 'faulty parameter dten')
+      call xertst (0.le.minval(dtfts),
+     & 'faulty parametere dtfts')
+      call xertst (0.0_R8.lt.minval(dtco_ft),
+     & 'faulty parameter dtco_ft')
+      call xertst (0.0_R8.lt.minval(dtmo_ft),
+     & 'faulty parameter dtmo_ft')
+      call xertst (0.0_R8.lt.minval(dtee_ft),
+     & 'faulty parameter dtee_ft')
+      call xertst (0.0_R8.lt.minval(dtei_ft),
+     & 'faulty parameter dtei_ft')
 
 c additional time modification factor
       ttf=core_dt_suppression
