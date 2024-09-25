@@ -296,11 +296,10 @@ c
       end do
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
-      call b2xpen (nCv, nFc, ns, mpg,
+      call b2xpen (nCv, nFc, ns, mpg, switch,
      1  state%dv%fna, state%dv%fna_53, state%dv%fne_53, state%dv%fch,
      1  state%dv%fhe, state%dv%fhi, state%dv%fhn, state%rt%rpt,
      2  state%pl%te, state%pl%ti, state%pl%tn, state%pl%po,
-     2  switch%BoRiS,
      2  state%dv%fhm, state%dv%fhp, state%dv%fhj, state%dv%fht)
       state%dv%fht=state%dv%fht+state_ext%fhi
       do is=0,state_ext%ns-1
@@ -643,8 +642,9 @@ c 26: using total field for computing dspar
 c 27: Added EMOLRAD and EIONRAD arrays
 c 29: Same indexing error was also present in emolrad and eionrad
 c 30: changed quantities to unstructured grid
+c 32: Corrected units for srcml and edissml
 
-      dbversion=30
+      dbversion=32
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -1263,10 +1263,21 @@ c
         temp(:)=emissmol(:,1,1)
         call mds_put_double_us('\TOP.SNAPSHOT:EMISSMOL','ph.m^-3.s^-1',
      1       nCv,temp,'')
-        forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=srcml(iCv,is+1,1)
-        call mds_put_double_usns('\TOP.SNAPSHOT:SRCML','A',
+        if (jvft44.lt.20240627) then
+          forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=srcml(iCv,is+1,1)
+     1     *1.0e6_R8*gm%cvVol(iCv)/qe
+        else
+          forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=srcml(iCv,is+1,1)
+        endif
+        call mds_put_double_usns('\TOP.SNAPSHOT:SRCML','s^-1',
      1       nCv,nmoli,tmp,'TEXTMN','')
-        forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=edissml(iCv,is+1,1)
+        if (jvft44.lt.20240627) then
+          forall (iCv=1:nCv,is=0:nmoli-1)
+     1       tmp(iCv,is)=edissml(iCv,is+1,1)*1.0e6_R8*gm%cvVol(iCv)
+        else
+          forall (iCv=1:nCv,is=0:nmoli-1)
+     1       tmp(iCv,is)=edissml(iCv,is+1,1)
+        endif
         call mds_put_double_usns('\TOP.SNAPSHOT:EDISSML','W',
      1       nCv,nmoli,tmp,'TEXTMN','')
         forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=emolrad(iCv,is+1,0)

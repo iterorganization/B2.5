@@ -22,10 +22,11 @@
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
-     &          rsamoreg
+     &          rsamoreg, b2divue, b2divua, b2exbe, b2exba, b2visa,
+     &          b2joule, b2fraa
       use b2mod_eirdiag
      & , only : tmb2, dib2, tab2, tib2, pefluxa, rfluxa, pfluxa,
-     &          dmb2, lkindp, lkindm, lkindi, refluxa, dab2
+     &          dmb2, lkindp, lkindm, lkindi, refluxa, dab2, tfluxa
       use b2mod_transport_namelist
      & , only : parm_hce, parm_hci, parm_dna, parm_dpa, parm_vla,
      &          parm_vsa, parm_alf, parm_sig
@@ -36,7 +37,11 @@
      & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar,
      &          lfeedback
       use b2mod_neutrals_namelist
-     & , only : maxw_eff, nstraid, userfluxparm
+     & , only : maxw_eff, nstraid, userfluxparm, b2recyc, arcend,
+     &          targsp, b2species_start, b2species_end, lstrascl, lsns,
+     &          msns, gpfc, nstrai, nstrat, debug_flags, neutrals_count,
+     &          neutrals_time_mod, neutrals_time_switch, neut_scl_lim,
+     &          natmid, ntrack
       use b2mod_b2cmpt
      & , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna,
      &          cfhce, cfhci
@@ -51,6 +56,8 @@
      &          feedback_namelist_used
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+      use b2mod_wall
+     & , only : track_species
 #endif
       use b2mod_ad
       use b2mod_subsys
@@ -636,10 +643,10 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  st%pl, st%dv, st%co, .true.)                                     !djm Jan2017
       st%dv%floi_noc = st%dv%floi                                        !srv 24.10.02
       st%dv%floe_noc = st%dv%floe                                        !srv 24.10.02
-      call b2xpen (nCv, nFc, ns, mpg,
+      call b2xpen (nCv, nFc, ns, mpg, switch,
      &  st%dv%fna, st%dv%fna_53, st%dv%fne_53,
      &  st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt%rpt, st%pl%te,
-     &  st%pl%ti, st%pl%tn, st%pl%po, switch%BoRiS,
+     &  st%pl%ti, st%pl%tn, st%pl%po,
      &  st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
 
 #ifdef WG_TODO

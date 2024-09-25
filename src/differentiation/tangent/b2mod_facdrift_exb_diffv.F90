@@ -14,38 +14,25 @@
 !
 MODULE B2MOD_FACDRIFT_EXB_DIFFV
   USE B2MOD_TYPES
+  USE B2MOD_SWITCHES_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
-  REAL(kind=r8) :: facdrift_target, facdrift_start, facdrift_inc, &
-& facdrift_dec, facexb_target, facexb_start, facexb_inc, facexb_dec, &
-& facvis_target, facvis_start, facvis_inc, facvis_dec, facdrift_scalar, &
-& fac_exb_scalar, fac_vis_scalar, facdrift_tanh_a, facdrift_tanh_b, &
-& facexb_tanh_a, facexb_tanh_b, facvis_tanh_a, facvis_tanh_b
-  INTEGER :: ncall, iy_nocoreexb, fac_ref
-  SAVE facdrift_target, facdrift_start, facdrift_inc, facdrift_dec, &
-&     facexb_target, facexb_start, facexb_inc, facexb_dec, facvis_target&
-&     , facvis_start, facvis_inc, facvis_dec, facdrift_scalar, &
-&     fac_exb_scalar, ncall, iy_nocoreexb, facdrift_tanh_a, &
-&     facdrift_tanh_b, facexb_tanh_a, facexb_tanh_b, fac_ref, &
-&     fac_vis_scalar, facvis_tanh_a, facvis_tanh_b
-  DATA facdrift_target /0.0_R8/
-  DATA facdrift_start /0.0_R8/
-  DATA facdrift_inc /1.0_R8/
-  DATA facdrift_dec /0.0_R8/
-  DATA facexb_target /0.0_R8/
-  DATA facexb_start /0.0_R8/
-  DATA facexb_inc /1.0_R8/
-  DATA facexb_dec /0.0_R8/
-  DATA facvis_target /0.0_R8/
-  DATA facvis_start /0.0_R8/
-  DATA facvis_inc /1.0_R8/
-  DATA facvis_dec /0.0_R8/
+  REAL(kind=r8) :: facdrift_scalar, fac_exb_scalar, fac_vis_scalar, &
+& facdrift_tanh_a, facdrift_tanh_b, facexb_tanh_a, facexb_tanh_b, &
+& facvis_tanh_a, facvis_tanh_b
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: fac_exb_scalard, &
+& fac_vis_scalard
+  INTEGER :: ncall_drift, iy_nocoreexb, fac_ref
+  SAVE facdrift_scalar, fac_exb_scalar, ncall_drift, iy_nocoreexb, &
+&     facdrift_tanh_a, facdrift_tanh_b, facexb_tanh_a, facexb_tanh_b, &
+&     fac_ref, fac_vis_scalar, facvis_tanh_a, facvis_tanh_b
+  SAVE fac_exb_scalard, fac_vis_scalard
   DATA facdrift_scalar /0.0_R8/
   DATA fac_exb_scalar /0.0_R8/
   DATA fac_vis_scalar /0.0_R8/
-  DATA ncall /0/
+  DATA ncall_drift /0/
   DATA iy_nocoreexb /-2/
   DATA facdrift_tanh_a /0.0_R8/
   DATA facdrift_tanh_b /0.0_R8/
@@ -56,303 +43,168 @@ MODULE B2MOD_FACDRIFT_EXB_DIFFV
 
 CONTAINS
 !
-  SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_INIT(nx, ny, ramp_slow)
-    USE B2MOD_INDIRECT
-    USE B2MOD_GEO_DIFFV
-    USE B2MOD_WORK
+  SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_INIT(nfc, fac_exb, facdrift, &
+&   fac_vis, sw)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
-    INTEGER :: nx, ny, ramp_slow
-    INTEGER :: ix, iy, jxi, jxa, jsep
-    REAL(kind=r8) :: dssep
-    INTRINSIC SQRT
-    INTRINSIC TANH
-    REAL(kind=r8) :: result1
-    REAL(kind=r8) :: result2
-    REAL(kind=r8) :: arg1
-    INTEGER :: arg10
-    REAL(kind=r8) :: result3
-    INTEGER :: arg2
-    REAL(kind=r8) :: result4
-    REAL(kind=r8) :: arg3
-    REAL(kind=r8) :: result5
+    INTEGER :: nfc
+    REAL(kind=r8), INTENT(INOUT) :: fac_exb(nfc), facdrift(nfc), fac_vis&
+&   (nfc)
+    TYPE(SWITCHES), INTENT(INOUT) :: sw
+!      integer ix, iy, jxi, jxa, jsep
+!      real (kind=R8) :: dssep
 !
-    IF (ncall .EQ. 0) THEN
-      CALL GET_JSEP(nx, ny, jxi, jxa, jsep)
-      fac_ref = jxa
-      CALL IPGETI('b2news_fac_ref', fac_ref)
-      CALL XERTST(-1 .LE. fac_ref .AND. fac_ref .LE. nx, &
-&           'faulty internal parameter fac_ref')
-      CALL IPGETR('b2news_facdrift_start', facdrift_start)
-      CALL IPGETR('b2news_facdrift_target', facdrift_target)
-      CALL IPGETR('b2news_facdrift_inc', facdrift_inc)
-      CALL IPGETR('b2news_facdrift_dec', facdrift_dec)
-!xpb
-!xpb
-      CALL XERTST(0.0_R8 .LE. facdrift_start .AND. 1.0_R8 .GE. &
-&           facdrift_start, 'faulty argument facdrift_start')
-!xpb
-!xpb
-!xpb
-      CALL XERTST(0.0_R8 .LE. facdrift_target .AND. 1.0_R8 .GE. &
-&           facdrift_target, 'faulty argument facdrift_target')
-!xpb
-!xpb
-      CALL XERTST(1.0_R8 .LE. facdrift_inc, &
-&           'faulty argument facdrift_inc')
-!xpb
-      CALL XERTST(0.0_R8 .LE. facdrift_dec .AND. 1.0_R8 .GE. &
-&           facdrift_dec, 'faulty argument facdrift_dec')
-!xpb
-      facdrift_scalar = facdrift_start
-      IF (facdrift_start .EQ. facdrift_target .AND. facdrift_start .NE. &
-&         0.0_R8) THEN
-        WRITE(*, *) 'facdrift set to a fixed value :', facdrift_start
-      ELSE IF (facdrift_start .NE. facdrift_target .AND. ramp_slow .EQ. &
-&         0) THEN
+    IF (ncall_drift .EQ. 0) THEN
+      facdrift_scalar = sw%facdrift_start
+      IF (sw%facdrift_start .EQ. sw%facdrift_target .AND. sw%&
+&         facdrift_start .NE. 0.0_R8) THEN
+        WRITE(*, *) 'facdrift set to a fixed value :', sw%facdrift_start
+      ELSE IF (sw%facdrift_start .NE. sw%facdrift_target .AND. sw%&
+&         ramp_slow .EQ. 0) THEN
         WRITE(*, '(a,1p,1g9.2,a,1g9.2)') &
-&       'facdrift ramped normally from ', facdrift_start, ' towards ', &
-&       facdrift_target
-      ELSE IF (facdrift_start .NE. facdrift_target .AND. ramp_slow .NE. &
-&         0) THEN
+&       'facdrift ramped normally from ', sw%facdrift_start, ' towards '&
+&       , sw%facdrift_target
+      ELSE IF (sw%facdrift_start .NE. sw%facdrift_target .AND. sw%&
+&         ramp_slow .NE. 0) THEN
         WRITE(*, '(a,1p,1g9.2,a,1g9.2)') 'facdrift ramped slowly from '&
-&       , facdrift_start, ' towards ', facdrift_target
+&       , sw%facdrift_start, ' towards ', sw%facdrift_target
       ELSE
         WRITE(*, *) 'No diamagnetic drifts'
       END IF
-      CALL IPGETR('b2news_facExB_start', facexb_start)
-      CALL IPGETR('b2news_facExB_target', facexb_target)
-      CALL IPGETR('b2news_facExB_inc', facexb_inc)
-      CALL IPGETR('b2news_facExB_dec', facexb_dec)
-      CALL XERTST(0.0_R8 .LE. facexb_start .AND. 1.0_R8 .GE. &
-&           facexb_start, 'faulty argument facExB_start')
-      CALL XERTST(0.0_R8 .LE. facexb_target .AND. 1.0_R8 .GE. &
-&           facexb_target, 'faulty argument facExB_target')
-      CALL XERTST(1.0_R8 .LE. facexb_inc, 'faulty argument facExB_inc')
-      CALL XERTST(0.0_R8 .LE. facexb_dec .AND. 1.0_R8 .GE. facexb_dec, &
-&           'faulty argument facExB_dec')
-      CALL IPGETR('b2news_ExB', fac_exb_scalar)
-!xpb
-      CALL XERTST(0.0_R8 .LE. fac_exb_scalar .AND. 1.0_R8 .GE. &
-&           fac_exb_scalar, 'faulty parameter b2news_ExB')
-!xpb
+      fac_exb_scalar = sw%b2news_exb
       IF (fac_exb_scalar .NE. 0.0_R8) THEN
 ! old style
-        facexb_start = fac_exb_scalar
-        facexb_target = fac_exb_scalar
-        facexb_inc = 1.0_R8
-        facexb_dec = 1.0_R8
+        sw%facexb_start = fac_exb_scalar
+        sw%facexb_target = fac_exb_scalar
+        sw%facexb_inc = 1.0_R8
+        sw%facexb_dec = 1.0_R8
         WRITE(*, *) 'fac_ExB set to a fixed value: ', fac_exb_scalar
-      ELSE IF (facexb_start .NE. 0.0_R8 .AND. facexb_start .EQ. &
-&         facexb_target) THEN
-        fac_exb_scalar = facexb_start
-        facexb_inc = 1.0_R8
-        facexb_dec = 1.0_R8
+      ELSE IF (sw%facexb_start .NE. 0.0_R8 .AND. sw%facexb_start .EQ. sw&
+&         %facexb_target) THEN
+        fac_exb_scalar = sw%facexb_start
+        sw%facexb_inc = 1.0_R8
+        sw%facexb_dec = 1.0_R8
         WRITE(*, *) 'fac_ExB set to a fixed value: ', fac_exb_scalar
-      ELSE IF (facexb_start .NE. 0.0_R8 .AND. facexb_start .NE. &
-&         facexb_target) THEN
-        fac_exb_scalar = facexb_start
-        IF (ramp_slow .EQ. 0) THEN
+      ELSE IF (sw%facexb_start .NE. 0.0_R8 .AND. sw%facexb_start .NE. sw&
+&         %facexb_target) THEN
+        fac_exb_scalar = sw%facexb_start
+        IF (sw%ramp_slow .EQ. 0) THEN
           WRITE(*, '(a,1p,1g9.2,a,1g9.2)') &
-&         'fac_ExB ramped normally from ', facexb_start, ' towards ', &
-&         facexb_target
+&         'fac_ExB ramped normally from ', sw%facexb_start, ' towards '&
+&         , sw%facexb_target
         ELSE
           WRITE(*, '(a,1p,1g9.2,a,1g9.2)') 'fac_ExB ramped slowly from '&
-&         , facexb_start, ' towards ', facexb_target
+&         , sw%facexb_start, ' towards ', sw%facexb_target
         END IF
       ELSE
         WRITE(*, *) 'No ExB'
       END IF
-      CALL IPGETI('b2news_iy_nocoreExB', iy_nocoreexb)
-!xpb
-!xpb
-      CALL XERTST(-2 .LE. iy_nocoreexb .AND. ny .GE. iy_nocoreexb, &
-&           'faulty parameter iy_nocoreExB')
-!xpb
-      DO iy=-1,iy_nocoreexb
-        DO ix=-1,nx
-          IF (on_closed_surface(ix, iy)) fac_exb_profile(ix, iy) = &
-&             0.0_R8
-        END DO
-      END DO
-      CALL IPGETR('b2news_facvis_start', facvis_start)
-      CALL IPGETR('b2news_facvis_target', facvis_target)
-      CALL IPGETR('b2news_facvis_inc', facvis_inc)
-      CALL IPGETR('b2news_facvis_dec', facvis_dec)
-      CALL XERTST(0.0_R8 .LE. facvis_start .AND. 1.0_R8 .GE. &
-&           facvis_start, 'faulty argument facvis_start')
-      CALL XERTST(0.0_R8 .LE. facvis_target .AND. 1.0_R8 .GE. &
-&           facvis_target, 'faulty argument facvis_target')
-      CALL XERTST(1.0_R8 .LE. facvis_inc, 'faulty argument facvis_inc')
-      CALL XERTST(0.0_R8 .LE. facvis_dec .AND. 1.0_R8 .GE. facvis_dec, &
-&           'faulty argument facvis_dec')
-      CALL IPGETR('b2news_vis', fac_vis_scalar)
-!xpb
-      CALL XERTST(0.0_R8 .LE. fac_vis_scalar .AND. 1.0_R8 .GE. &
-&           fac_vis_scalar, 'faulty parameter b2news_vis')
-!xpb
+      fac_vis_scalar = sw%b2news_vis
       IF (fac_vis_scalar .NE. 0.0_R8) THEN
 ! old style
-        facvis_start = fac_vis_scalar
-        facvis_target = fac_vis_scalar
-        facvis_inc = 1.0_R8
-        facvis_dec = 1.0_R8
+        sw%facvis_start = fac_vis_scalar
+        sw%facvis_target = fac_vis_scalar
+        sw%facvis_inc = 1.0_R8
+        sw%facvis_dec = 1.0_R8
         WRITE(*, *) 'fac_vis set to a fixed value: ', fac_vis_scalar
-      ELSE IF (facvis_start .NE. 0.0_R8 .AND. facvis_start .EQ. &
-&         facvis_target) THEN
-        fac_vis_scalar = facvis_start
-        facvis_inc = 1.0_R8
-        facvis_dec = 1.0_R8
+      ELSE IF (sw%facvis_start .NE. 0.0_R8 .AND. sw%facvis_start .EQ. sw&
+&         %facvis_target) THEN
+        fac_vis_scalar = sw%facvis_start
+        sw%facvis_inc = 1.0_R8
+        sw%facvis_dec = 1.0_R8
         WRITE(*, *) 'fac_vis set to a fixed value: ', fac_vis_scalar
-      ELSE IF (facvis_start .NE. 0.0_R8 .AND. facvis_start .NE. &
-&         facvis_target) THEN
-        fac_vis_scalar = facvis_start
-        IF (ramp_slow .EQ. 0) THEN
+      ELSE IF (sw%facvis_start .NE. 0.0_R8 .AND. sw%facvis_start .NE. sw&
+&         %facvis_target) THEN
+        fac_vis_scalar = sw%facvis_start
+        IF (sw%ramp_slow .EQ. 0) THEN
           WRITE(*, '(a,1p,1g9.2,a,1g9.2)') &
-&         'fac_vis ramped normally from ', facvis_start, ' towards ', &
-&         facvis_target
+&         'fac_vis ramped normally from ', sw%facvis_start, ' towards '&
+&         , sw%facvis_target
         ELSE
           WRITE(*, '(a,1p,1g9.2,a,1g9.2)') 'fac_vis ramped slowly from '&
-&         , facvis_start, ' towards ', facvis_target
+&         , sw%facvis_start, ' towards ', sw%facvis_target
         END IF
       ELSE
         WRITE(*, *) 'No vis'
       END IF
-      result1 = CR(fac_ref, -1)
-      result2 = CZ(fac_ref, -1)
-      arg1 = (result1-0.5_R8*(crx(fac_ref, -1, 0)+crx(fac_ref, -1, 1)))&
-&       **2 + (result2-0.5_R8*(cry(fac_ref, -1, 0)+cry(fac_ref, -1, 1)))&
-&       **2
-      ds(-1) = SQRT(arg1)
-      DO iy=0,ny
-        result1 = CR(fac_ref, iy)
-        arg10 = iy - 1
-        result2 = CR(fac_ref, arg10)
-        result3 = CZ(fac_ref, iy)
-        arg2 = iy - 1
-        result4 = CZ(fac_ref, arg2)
-        arg3 = (result1-result2)**2 + (result3-result4)**2
-        result5 = SQRT(arg3)
-        ds(iy) = ds(iy-1) + result5
-      END DO
-      dssep = (ds(jsep)+ds(jsep+1))/2.0_R8
-      DO iy=-1,ny
-        ds(iy) = ds(iy) - dssep
-      END DO
-!
-      CALL IPGETR('b2news_facdrift_tanh_a', facdrift_tanh_a)
-      CALL IPGETR('b2news_facdrift_tanh_b', facdrift_tanh_b)
-      IF (facdrift_tanh_b .NE. 0.0_R8) THEN
-        DO iy=-1,ny
-          DO ix=-1,nx
-            IF (on_closed_surface(ix, iy)) THEN
-              arg1 = (ds(iy)-facdrift_tanh_a)/facdrift_tanh_b
-              facdrift_profile(ix, iy) = facdrift_profile(ix, iy)*0.5_R8&
-&               *(1.0_R8+TANH(arg1))
-            END IF
-          END DO
-        END DO
-      END IF
-      CALL IPGETR('b2news_fac_ExB_tanh_a', facexb_tanh_a)
-      IF (facexb_tanh_a .EQ. 0.0_R8) CALL IPGETR('b2news_facExB_tanh_a'&
-&                                          , facexb_tanh_a)
-      CALL IPGETR('b2news_fac_ExB_tanh_b', facexb_tanh_b)
-      IF (facexb_tanh_b .EQ. 0.0_R8) CALL IPGETR('b2news_facExB_tanh_b'&
-&                                          , facexb_tanh_b)
-      IF (facexb_tanh_b .NE. 0.0_R8) THEN
-        DO iy=-1,ny
-          DO ix=-1,nx
-            IF (on_closed_surface(ix, iy)) THEN
-              arg1 = (ds(iy)-facexb_tanh_a)/facexb_tanh_b
-              fac_exb_profile(ix, iy) = fac_exb_profile(ix, iy)*0.5_R8*(&
-&               1.0_R8+TANH(arg1))
-            END IF
-          END DO
-        END DO
-      END IF
-      CALL IPGETR('b2news_fac_vis_tanh_a', facvis_tanh_a)
-      IF (facvis_tanh_a .EQ. 0.0_R8) CALL IPGETR('b2news_facvis_tanh_a'&
-&                                          , facvis_tanh_a)
-      CALL IPGETR('b2news_fac_vis_tanh_b', facvis_tanh_b)
-      IF (facvis_tanh_b .EQ. 0.0_R8) CALL IPGETR('b2news_facvis_tanh_b'&
-&                                          , facvis_tanh_b)
-      IF (facvis_tanh_b .NE. 0.0_R8) THEN
-        DO iy=-1,ny
-          DO ix=-1,nx
-            IF (on_closed_surface(ix, iy)) THEN
-              arg1 = (ds(iy)-facvis_tanh_a)/facvis_tanh_b
-              fac_vis_profile(ix, iy) = fac_vis_profile(ix, iy)*0.5_R8*(&
-&               1.0_R8+TANH(arg1))
-            END IF
-          END DO
-        END DO
-      END IF
     END IF
 !
-    CALL B2NEWS_FACDRIFT_FAC_EXB_UPDATE()
+    CALL B2NEWS_FACDRIFT_FAC_EXB_UPDATE(nfc, fac_exb, facdrift, fac_vis)
     RETURN
   END SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_INIT
 
 !
-  SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_INC()
+  SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_INC(nfc, fac_exb, facdrift, fac_vis&
+&   , sw)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
+    INTEGER :: nfc
+    REAL(kind=r8), INTENT(INOUT) :: fac_exb(nfc), facdrift(nfc), fac_vis&
+&   (nfc)
+    TYPE(SWITCHES), INTENT(IN) :: sw
     INTRINSIC MIN
-    CALL XERTST(0 .LT. ncall, &
+    CALL XERTST(0 .LT. ncall_drift, &
 &         'b2news_facdrift_fac_ExB_inc called before initialisation')
-    IF (facdrift_scalar*facdrift_inc .GT. facdrift_target) THEN
-      facdrift_scalar = facdrift_target
+    IF (facdrift_scalar*sw%facdrift_inc .GT. sw%facdrift_target) THEN
+      facdrift_scalar = sw%facdrift_target
     ELSE
-      facdrift_scalar = facdrift_scalar*facdrift_inc
+      facdrift_scalar = facdrift_scalar*sw%facdrift_inc
     END IF
-    IF (fac_exb_scalar*facexb_inc .GT. facexb_target) THEN
-      fac_exb_scalar = facexb_target
+    IF (fac_exb_scalar*sw%facexb_inc .GT. sw%facexb_target) THEN
+      fac_exb_scalar = sw%facexb_target
     ELSE
-      fac_exb_scalar = fac_exb_scalar*facexb_inc
+      fac_exb_scalar = fac_exb_scalar*sw%facexb_inc
     END IF
-    IF (fac_vis_scalar*facvis_inc .GT. facvis_target) THEN
-      fac_vis_scalar = facvis_target
+    IF (fac_vis_scalar*sw%facvis_inc .GT. sw%facvis_target) THEN
+      fac_vis_scalar = sw%facvis_target
     ELSE
-      fac_vis_scalar = fac_vis_scalar*facvis_inc
+      fac_vis_scalar = fac_vis_scalar*sw%facvis_inc
     END IF
-    CALL B2NEWS_FACDRIFT_FAC_EXB_UPDATE()
+    CALL B2NEWS_FACDRIFT_FAC_EXB_UPDATE(nfc, fac_exb, facdrift, fac_vis)
     RETURN
   END SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_INC
 
 !
-  SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_DEC()
+  SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_DEC(nfc, fac_exb, facdrift, fac_vis&
+&   , sw)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
+    INTEGER :: nfc
+    REAL(kind=r8), INTENT(INOUT) :: fac_exb(nfc), facdrift(nfc), fac_vis&
+&   (nfc)
+    TYPE(SWITCHES), INTENT(IN) :: sw
     INTRINSIC MAX
-    CALL XERTST(0 .LT. ncall, &
+    CALL XERTST(0 .LT. ncall_drift, &
 &         'b2news_facdrift_fac_ExB_dec called before initialisation')
-    IF (facdrift_scalar*facdrift_dec .LT. facdrift_start) THEN
-      facdrift_scalar = facdrift_start
+    IF (facdrift_scalar*sw%facdrift_dec .LT. sw%facdrift_start) THEN
+      facdrift_scalar = sw%facdrift_start
     ELSE
-      facdrift_scalar = facdrift_scalar*facdrift_dec
+      facdrift_scalar = facdrift_scalar*sw%facdrift_dec
     END IF
-    IF (fac_exb_scalar*facexb_dec .LT. facexb_start) THEN
-      fac_exb_scalar = facexb_start
+    IF (fac_exb_scalar*sw%facexb_dec .LT. sw%facexb_start) THEN
+      fac_exb_scalar = sw%facexb_start
     ELSE
-      fac_exb_scalar = fac_exb_scalar*facexb_dec
+      fac_exb_scalar = fac_exb_scalar*sw%facexb_dec
     END IF
-    IF (fac_vis_scalar*facvis_dec .LT. facvis_start) THEN
-      fac_vis_scalar = facvis_start
+    IF (fac_vis_scalar*sw%facvis_dec .LT. sw%facvis_start) THEN
+      fac_vis_scalar = sw%facvis_start
     ELSE
-      fac_vis_scalar = fac_vis_scalar*facvis_dec
+      fac_vis_scalar = fac_vis_scalar*sw%facvis_dec
     END IF
-    CALL B2NEWS_FACDRIFT_FAC_EXB_UPDATE()
+    CALL B2NEWS_FACDRIFT_FAC_EXB_UPDATE(nfc, fac_exb, facdrift, fac_vis)
     RETURN
   END SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_DEC
 
 !
-  SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_UPDATE()
-    USE B2MOD_PLASMA_DIFFV, ONLY : facdrift, fac_exb, fac_vis
-    USE B2MOD_WORK, ONLY : facdrift_profile, fac_exb_profile, &
-&   fac_vis_profile
+  SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_UPDATE(nfc, fac_exb, facdrift, &
+&   fac_vis)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
+    INTEGER :: nfc
+    REAL(kind=r8), INTENT(INOUT) :: fac_exb(nfc), facdrift(nfc), fac_vis&
+&   (nfc)
+    REAL(kind=r8) :: facdrift_profile, fac_exb_profile, fac_vis_profile
     INTRINSIC MINVAL
     INTRINSIC MAXVAL
     REAL(kind=r8) :: result1
@@ -361,6 +213,9 @@ CONTAINS
     REAL(kind=r8) :: result4
     REAL(kind=r8) :: result5
     REAL(kind=r8) :: result6
+    fac_exb_profile = 1.0_R8
+    facdrift_profile = 1.0_R8
+    fac_vis_profile = 1.0_R8
     facdrift = facdrift_scalar*facdrift_profile
     fac_exb = fac_exb_scalar*fac_exb_profile
     fac_vis = fac_vis_scalar*fac_vis_profile
@@ -372,7 +227,7 @@ CONTAINS
     result6 = MAXVAL(fac_vis)
     WRITE(*, '(1x,a,1p,6g12.5)') 'facdrift, fac_ExB, fac_vis', result1, &
 &   result2, result3, result4, result5, result6
-    ncall = ncall + 1
+    ncall_drift = ncall_drift + 1
     RETURN
   END SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_UPDATE
 

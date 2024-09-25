@@ -42,14 +42,16 @@
        real (kind=R8), allocatable, save :: inv_hi_astra(:)   ! inverse Kaveeva ions heat conduct.  [s/m**2]
 
        real (kind=R8), allocatable, save :: bbaverage2(:)     ! 
-       real (kind=R8), allocatable, save :: sheNB_astra(:,:,:)
-       real (kind=R8), allocatable, save :: shiNB_astra(:,:,:)
+       real (kind=R8), allocatable, save :: sheNB_astra(:,:)
+       real (kind=R8), allocatable, save :: shiNB_astra(:,:)
 
        contains
 
-       subroutine alloc_b2mod_astra_to_b2(nxd, nyd)
+       subroutine alloc_b2mod_astra_to_b2(mpg, nxd, nyd)
+       use b2us_map_diffv
        implicit none
-       integer nxd, nyd
+       type(mapping), intent(in) :: mpg
+       integer, intent(in) :: nxd, nyd
 
        allocate (Rmaj_astra(-1:nyd))
        allocate (Rmajc_astra(-1:nyd))
@@ -78,8 +80,8 @@
        allocate (PiNB_astra(-1:nyd))
        allocate (bbaverage2(-1:nyd))
        allocate (inv_hi_astra(-1:nyd))
-       allocate (sheNB_astra(-1:nxd,-1:nyd,0:3))
-       allocate (shiNB_astra(-1:nxd,-1:nyd,0:3))
+       allocate (sheNB_astra(mpg%nCv,0:3))
+       allocate (shiNB_astra(mpg%nCv,0:3))
 
        Rmaj_astra     = 0.0_R8
        Rmajc_astra    = 0.0_R8
@@ -154,7 +156,7 @@
        logical :: ex, LRTOR, LZRD45
        character(64) :: fname
        character(6)  :: chname
-       real (kind=R8) :: b(1:nyd+2),c(1:nyd+2),d(1:nyd+2), dseval
+       real (kind=R8) :: b(1:nyd+2), c(1:nyd+2), d(1:nyd+2), dseval
 #endif
        external xerrab
 
@@ -185,8 +187,8 @@
      &           (a_astra(iy)-a_astra(iy-1))
        enddo
        b(ny_astra) = b(ny_astra-1)
-       c = 0.0e0_R8
-       d = 0.0e0_R8
+       c = 0.0_R8
+       d = 0.0_R8
 !       do i = -1, n 
 !        fun(i) = dseval(ny_astra, coord(i), a_astra, Rmaj_astra, b, c, d)
 !        write(*,*) coord(i), fun(i)

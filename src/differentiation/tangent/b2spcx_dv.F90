@@ -24,6 +24,7 @@ SUBROUTINE B2SPCX_DV(ncv, ns, ev, amh0, th0, th0d, ne, ned, rlcx0, &
   USE B2MOD_TYPES
   USE B2MOD_B2CMRC_DIFFV
   USE B2MOD_SUBSYS
+  USE B2MOD_MATH_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2spcx
@@ -89,10 +90,8 @@ SUBROUTINE B2SPCX_DV(ncv, ns, ev, amh0, th0, th0d, ne, ned, rlcx0, &
 & , t1d, ttd
 !   ..procedures
   INTRINSIC MIN, MAX, LOG
-  EXTERNAL B2XVSG_NODIFF, TRIMG
-  EXTERNAL TRIMG_DV
-  REAL(kind=r8) :: TRIMG
   EXTERNAL XERTST
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: y1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
   REAL(kind=r8) :: y2
@@ -107,8 +106,6 @@ SUBROUTINE B2SPCX_DV(ncv, ns, ev, amh0, th0, th0d, ne, ned, rlcx0, &
   REAL(kind=r8) :: temp
   REAL(kind=r8) :: temp0
   INTEGER :: nbdirs
-!     (trimg will be used to trim the logarithmic gradients to avoid
-!     some pathetic behaviour near the underflow limit.)
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -118,7 +115,7 @@ SUBROUTINE B2SPCX_DV(ncv, ns, ev, amh0, th0, th0d, ne, ned, rlcx0, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2spcx')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test ev, amh0
   CALL XERTST(0 .LT. ev, 'faulty argument ev')
@@ -126,8 +123,8 @@ SUBROUTINE B2SPCX_DV(ncv, ns, ev, amh0, th0, th0d, ne, ned, rlcx0, &
 &       'faulty argument range amh0')
 !   ..extensive tests on first few calls
   IF (ncall_b2spcx .LT. 3) THEN
-    CALL B2XVSG_NODIFF(ncv, th0, 1, 'th0', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, th0, 1, 'th0', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   END IF
 !
 ! ..compute rate coefficients
@@ -292,6 +289,7 @@ SUBROUTINE B2SPCX_NODIFF(ncv, ns, ev, amh0, th0, ne, rlcx0)
   USE B2MOD_TYPES
   USE B2MOD_B2CMRC_DIFFV
   USE B2MOD_SUBSYS
+  USE B2MOD_MATH_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2spcx
@@ -352,16 +350,13 @@ SUBROUTINE B2SPCX_NODIFF(ncv, ns, ev, amh0, th0, ne, rlcx0)
   REAL(kind=r8) :: rlt0, rln0, fxt0, fxn0, t0, t1, tt
 !   ..procedures
   INTRINSIC MIN, MAX, LOG
-  EXTERNAL B2XVSG_NODIFF, TRIMG
-  REAL(kind=r8) :: TRIMG
   EXTERNAL XERTST
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: y1
   REAL(kind=r8) :: y2
   REAL(kind=r8) :: y3
   REAL(kind=r8) :: y4
   REAL(kind=r8) :: arg1
-!     (trimg will be used to trim the logarithmic gradients to avoid
-!     some pathetic behaviour near the underflow limit.)
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -371,7 +366,7 @@ SUBROUTINE B2SPCX_NODIFF(ncv, ns, ev, amh0, th0, ne, rlcx0)
 !   ..subprogram start-up calls
   CALL SUBINI('b2spcx')
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test ev, amh0
   CALL XERTST(0 .LT. ev, 'faulty argument ev')
@@ -379,8 +374,8 @@ SUBROUTINE B2SPCX_NODIFF(ncv, ns, ev, amh0, th0, ne, rlcx0)
 &       'faulty argument range amh0')
 !   ..extensive tests on first few calls
   IF (ncall_b2spcx .LT. 3) THEN
-    CALL B2XVSG_NODIFF(ncv, th0, 1, 'th0', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, th0, 1, 'th0', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   END IF
 !
 ! ..compute rate coefficients

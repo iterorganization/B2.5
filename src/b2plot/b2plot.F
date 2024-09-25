@@ -579,11 +579,11 @@ c 0 15 30 45 55 65 75 80 85 degree impact
 c calculate additional fluxes (fhj, fhm, fhp, fht)
       call ipgetr ('b2news_BoRiS', switch%BoRiS)
       call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
-      call b2xpen (mpg%nCv, mpg%nFc, ns, mpg,
+      call b2xpen (mpg%nCv, mpg%nFc, ns, mpg, switch,
      1 state%dv%fna, state%dv%fna_53, state%dv%fne_53,
      2 state%dv%fch, state%dv%fhe, state%dv%fhi, state%dv%fhn,
      3 state%rt%rpt, state%pl%te, state%pl%ti, state%pl%tn,
-     4 state%pl%po, switch%BoRiS, state%dv%fhm, state%dv%fhp,
+     4 state%pl%po, state%dv%fhm, state%dv%fhp,
      5 state%dv%fhj, state%dv%fht)
 c calculate divergences of the various fluxes
       do is=0,ns-1
@@ -902,7 +902,7 @@ c
       if(.not.allocated(iz))
      > call alloc_b2mod_diag(mpg%nCv,mpg%nFc,ns,mpg%nnreg(0),nstra,natm,
      >                       switch)
-      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,switch)
       if (nomp.gt.0) then
         allocate(dsomp(nomp),wdomp(nomp))
         call set_distances(mpg,geo,nomp,omp,icsepomp-1,dsomp,wdomp)
@@ -1213,20 +1213,22 @@ c
       z0=0.0_R8
       t0=0.0_R8
       iFt=0
-      do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
-        iFt=iFt+1
-        iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
-        if (mpg%cvOnClosedSurface(iCv)) then
-          do i=1,mpg%ftCvP(iFt,2)
-            r0=r0+geo%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
-     .           geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-            z0=z0+geo%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
-     .           geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-            t0=t0+
-     .           geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-          end do
-        end if
-      end do
+      if (any(mpg%cvOnClosedSurface(1:mpg%nCi))) then
+        do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
+          iFt=iFt+1
+          iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+          if (mpg%cvOnClosedSurface(iCv)) then
+            do i=1,mpg%ftCvP(iFt,2)
+              r0=r0+geo%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .             geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+              z0=z0+geo%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .             geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+              t0=t0+
+     .             geo%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+            end do
+          end if
+        end do
+      end if
       if (t0.gt.0.0_R8) then
         r0=r0/t0
         z0=z0/t0
@@ -1383,7 +1385,7 @@ c
       call xertst (0.le.neo_ic .and. neo_ic.le.4,
      . 'faulty parameter neoclassical_ic')
       set_resignore_regions_to_zero=.false.
-      wrkf = -state%dv%fch_p(:,0)/(qe*(geo%fcPbs + cutlo))
+      wrkf = -(state%dv%fch_p(:,0)/(geo%fcPbs + cutlo))/qe
       call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,wrkf,state%dv%ue)
       do is=0,ns-1
         state%dv%ue = state%dv%ue +
@@ -2420,8 +2422,20 @@ c
           description='Molecule dissociation rate (#.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
-            mach(:,0:nz-1)=srcml(:,1:nz,1)
-            call copy(mach,-1.0_R8/qe,nz,textmn)
+#ifdef B25_EIRENE
+            if (jvft44.lt.20240627) then
+              do is = 0, nz-1
+                mach(:,is)=srcml(:,is+1,1)*geo%cvVol(:)
+              end do
+              call copy(mach,-1.0e6_R8/qe,nz,textmn)
+            else
+              mach(:,0:nz-1)=srcml(:,1:nz,1)
+              call copy(mach,-1.0_R8,nz,textmn)
+            end if
+#else
+            mach(:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textmn)
+#endif
           else
             nz=1
             mach(:,0:nz-1)=0.0_R8
@@ -2431,8 +2445,20 @@ c
           description='Power to atoms due to molecule dissociation (W)'
           if (nmoli.gt.0) then
             nz=nmoli
-            mach(:,0:nz-1)=edissml(:,1:nz,0)
-            call copy(mach,-1.0_R8,nz,textmn)
+#ifdef B25_EIRENE
+            if (jvft44.lt.20240627) then
+              do is = 0, nz-1
+                mach(:,is)=edissml(:,is+1,0)*geo%cvVol(:)
+              end do
+              call copy(mach,-1.0e6_R8,nz,textmn)
+            else
+              mach(:,0:nz-1)=edissml(:,1:nz,0)
+              call copy(mach,-1.0_R8,nz,textmn)
+            end if
+#else
+            mach(:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textmn)
+#endif
           else
             nz=1
             mach(:,0:nz-1)=0.0_R8
@@ -6538,6 +6564,7 @@ c
           if(bad_args(stack_req)) return
           call set_color_map(spop(sstack,isstack))
         case('chor')     ! chord file
+          stack_req=(/0,0,1,1,0,0,0/)
           if(bad_args(stack_req)) return
           call process_chords(spop(sstack,isstack))
         case('chpl')     ! plot chords

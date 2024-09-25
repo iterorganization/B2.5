@@ -104,7 +104,7 @@ SUBROUTINE B2WUPS_NODIFF(nput, nx, ny, ns, ne, na, ua, uadia, te, ti, tn&
   REAL(kind=r8) :: time(1)
 !   ..procedures
   EXTERNAL XERTST, CFWURE
-  EXTERNAL B2XVPS_NODIFF, B2XVSG_NODIFF
+  EXTERNAL B2XVPS_NODIFF, B2XVSG
   INTEGER :: arg1
 !
 !-----------------------------------------------------------------------

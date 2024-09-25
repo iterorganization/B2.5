@@ -18,14 +18,14 @@
 !xpb
 SUBROUTINE B2STBC_BAS_NODIFF(nx, ny, ns, ismain, facdrift, na, ua, uadia&
 & , vaecrb, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni, chce, chve&
-& , chci, chvi, calf, sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, &
+& , chci, chvi, calf, sna0, smo0, she0, shi0, sch0, wrong_flow, &
 & main_call, diagno, b2stbc_fchy_dia, b2stbc_neoclassical, praverage, &
 & b2stbc_fchy_dia_coreonly, secmodel, lbndusr, area_fix, &
 & sheath_drift_fix)
   USE B2MOD_TYPES
   USE B2MOD_GEO_DIFFV
   USE B2MOD_RATES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_ANOMALOUS_TRANSPORT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_GEO_CORNER
@@ -60,7 +60,7 @@ SUBROUTINE B2STBC_BAS_NODIFF(nx, ny, ns, ismain, facdrift, na, ua, uadia&
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: sna0(-1:nx, -1:ny, 0:1, 0:ns-1), smo0(-1:nx, -1:ny, 0&
 & :3, 0:ns-1), she0(-1:nx, -1:ny, 0:3), shi0(-1:nx, -1:ny, 0:3), sch0(-1&
-& :nx, -1:ny, 0:3), sne0(-1:nx, -1:ny, 0:1)
+& :nx, -1:ny, 0:3)
 !xpb
   LOGICAL :: wrong_flow
 !   ..common blocks
@@ -88,7 +88,7 @@ SUBROUTINE B2STBC_BAS_NODIFF(nx, ny, ns, ismain, facdrift, na, ua, uadia&
 !   ..procedures
   INTRINSIC MAX, ABS, SQRT
   EXTERNAL XERTST, ESEEC0_NODIFF
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVPS_NODIFF
+  EXTERNAL B2XVSG, B2XVFF, B2XVPS_NODIFF
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
   REAL(r8) :: y1
@@ -164,23 +164,23 @@ SUBROUTINE B2STBC_BAS_NODIFF(nx, ny, ns, ismain, facdrift, na, ua, uadia&
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of vol, hx, hy
-    CALL B2XVSG_NODIFF(n2, vol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hx, 1, 'hx', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hy, 1, 'hy', '.gt.')
+    CALL B2XVSG(n2, vol, 1, 'vol', '.gt.')
+    CALL B2XVSG(n2, hx, 1, 'hx', '.gt.')
+    CALL B2XVSG(n2, hy, 1, 'hy', '.gt.')
 !    ..test state
 !    ..test edge values of fne, fni, chce, chve, chci, chvi, calf
-    CALL B2XVFF_NODIFF(nx, ny, fne, 'fne')
-    CALL B2XVFF_NODIFF(nx, ny, fni, 'fni')
-    CALL B2XVFF_NODIFF(nx, ny, chce, 'chce')
-    CALL B2XVFF_NODIFF(nx, ny, chve, 'chve')
-    CALL B2XVFF_NODIFF(nx, ny, chci, 'chci')
-    CALL B2XVFF_NODIFF(nx, ny, chvi, 'chvi')
-    CALL B2XVFF_NODIFF(nx, ny, calf, 'calf')
+    CALL B2XVFF(nx, ny, fne, 'fne')
+    CALL B2XVFF(nx, ny, fni, 'fni')
+    CALL B2XVFF(nx, ny, chce, 'chce')
+    CALL B2XVFF(nx, ny, chve, 'chve')
+    CALL B2XVFF(nx, ny, chci, 'chci')
+    CALL B2XVFF(nx, ny, chvi, 'chvi')
+    CALL B2XVFF(nx, ny, calf, 'calf')
 !    ..test sign of chce, chci
-    CALL B2XVSG_NODIFF(n2, chce(-1, -1, 0, 0), 1, 'chce00', '.ge.')
-    CALL B2XVSG_NODIFF(n2, chce(-1, -1, 1, 1), 1, 'chce11', '.ge.')
-    CALL B2XVSG_NODIFF(n2, chci(-1, -1, 0, 0), 1, 'chci00', '.ge.')
-    CALL B2XVSG_NODIFF(n2, chci(-1, -1, 1, 1), 1, 'chci11', '.ge.')
+    CALL B2XVSG(n2, chce(-1, -1, 0, 0), 1, 'chce00', '.ge.')
+    CALL B2XVSG(n2, chce(-1, -1, 1, 1), 1, 'chce11', '.ge.')
+    CALL B2XVSG(n2, chci(-1, -1, 0, 0), 1, 'chci00', '.ge.')
+    CALL B2XVSG(n2, chci(-1, -1, 1, 1), 1, 'chci11', '.ge.')
   END IF
 !   ..initialise resignore array
   IF (ncall .EQ. 0) THEN

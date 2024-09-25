@@ -229,15 +229,15 @@
         do is=0,ns-1
           if(.not.is_neutral(is)) then
 * dna
-            call transform_transport(flag_dna,parm_dna(is),cfdna(0,is))
+            call transform_transport(flag_dna,parm_dna(is),cfdna(:,is))
 * dpa
-            call transform_transport(flag_dpa,parm_dpa(is),cfdpa(0,is))
+            call transform_transport(flag_dpa,parm_dpa(is),cfdpa(:,is))
 * vla
-            call transform_transport(flag_vla,parm_vla(is),cfvla(0,is))
+            call transform_transport(flag_vla,parm_vla(is),cfvla(:,is))
 * vsa
-            call transform_transport(flag_vsa,parm_vsa(is),cfvsa(0,is))
+            call transform_transport(flag_vsa,parm_vsa(is),cfvsa(:,is))
 * hci
-            call transform_transport(flag_hci,parm_hci(is),cfhci(0,is))
+            call transform_transport(flag_hci,parm_hci(is),cfhci(:,is))
           endif
         enddo
 * hce
@@ -3703,7 +3703,7 @@ c*******************************************************************************
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
-      real (kind=R8) :: t_av, df0, df00
+      real (kind=R8) :: t_av, df0
 *   ..input/output arguments
       real (kind=R8), intent(inout) ::
      &  hci0(nCv), hcn0(nCv), hcib(nCv,0:ns-1)
@@ -3730,7 +3730,7 @@ c*******************************************************************************
 
           wrk0 = sqrt(pl%tn/mp)
           do iCv = 1, nCv
-            vcx=0.0_R8
+            vcx = 0.0_R8
             do ic = 0, ns-1
               t_av = 0.5_R8*(pl%ti(iCv)+pl%tn(iCv))
               vcx = vcx + pl%na(iCv,ic) *
@@ -3771,17 +3771,18 @@ c*******************************************************************************
           enddo !! end loop over cells
 
 *   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
-          if (ANY( dna0(:,is)/=0 ).and.switch%afn_vnn_ndiff.ne.1) then
+          if (ANY( dna0(:,is) /= 0.0_R8 ).and.switch%afn_vnn_ndiff.ne.1)
+     >     then
             write(*,*) 'Warning: '//
      .       'dna0 is not zero for neutrals'//
      .       'Recommended choice is zero!'
           endif
-          if (ANY( vla0(:,:,is)/=0 )) then
+          if (ANY( vla0(:,:,is) /= 0.0_R8 )) then
             write(*,*) 'Warning: '//
      .       'vla0 is not zero for neutrals'//
      .       'Recommended choice is zero!'
           endif
-          if (ANY( vma0(:,:,is)/=0 )) then
+          if (ANY( vma0(:,:,is) /= 0.0_R8 )) then
             write(*,*) 'Warning: '//
      .       'vma0 is not zero for neutrals'//
      .       'Recommended choice is zero!'
@@ -3833,6 +3834,10 @@ c*******************************************************************************
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : b2tqna_keps_eps, ncall_transp_keps
+#ifndef NAGFOR
+      use b2mod_ad
+     & , only : my_out_folder
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -3872,10 +3877,10 @@ c*******************************************************************************
           if(switch%keps_local.eq.1) then
 *   ..compute local Larmor radius
             rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti/(am(ismain)*mp))/
-     &       abs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
+     &       dabs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
           else
             rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(omp(icsepomp))/
-     &            (am(ismain)*mp))/abs(rt%rza(omp(icsepomp),ismain)*qe*
+     &            (am(ismain)*mp))/dabs(rt%rza(omp(icsepomp),ismain)*qe*
      &             geo%cvBb(omp(icsepomp),3))
           endif
 *       ..compute radial shear of diamagnetic ExB velocity
@@ -3889,14 +3894,14 @@ cwdk at the moment: assumption that kt is related to main ion species;
 cwdk same dna_ExB for all ion species
             dna_ExB = switch%keps_cd*(pl%kt/(am(ismain)*mp))/
      &      (sqrt(pl%kt/(am(ismain)*mp))/rhol + switch%keps_shear*
-     &       abs(shear) + b2tqna_keps_eps)
+     &       dabs(shear) + b2tqna_keps_eps)
             dna0(:,is) = (dna_ExB + switch%dna_min)*switch%keps_fac
      &        +(1.0_R8-switch%keps_fac)*dna0(:,is)
           elseif(switch%transport_keps.eq.2) then
 *   ..compute D according to KUL, using kt and zt
             dna_ExB = switch%keps_cd*(pl%kt/(am(ismain)*mp))/
      &      (sqrt(pl%zt/(am(ismain)*mp)) + switch%keps_shear*
-     &       abs(shear) + b2tqna_keps_eps)
+     &       dabs(shear) + b2tqna_keps_eps)
             dna0(:,is) = (dna_ExB + switch%dna_min)*switch%keps_fac
      &        +(1.0_R8-switch%keps_fac)*dna0(:,is)
           else

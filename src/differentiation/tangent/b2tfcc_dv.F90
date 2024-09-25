@@ -80,8 +80,9 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
 & , 0:1), con0d(nbdirsmax, nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, DIFF_NODIFF, INTFACE
+  EXTERNAL B2XVSG, DIFF_NODIFF, INTFACE
   EXTERNAL DIFF_DV, INTFACE_DV
+  INTRINSIC NINT
   INTEGER :: nd
   REAL(r8), DIMENSION(nfc) :: temp
   REAL(kind=r8) :: temp0
@@ -102,7 +103,7 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tfcc')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2tfcc .LT. 3) THEN
@@ -111,13 +112,14 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
     END DO
 !    ..test sign of cdpa
     DO is=0,ns-1
-      wrkf(:) = co%cdpa(:, 0, is)*geo%fcqalf(:, 0)
-      CALL B2XVSG_NODIFF(nfc, wrkf, 1, 'cdpa0', '.ge.')
       DO nd=1,nbdirs
+        wrkfd(nd, :) = 0.D0
         wrkfd(nd, :) = geo%fcqalf(:, 1)*cod%cdpa(nd, :, 1, is)
       END DO
+      wrkf(:) = co%cdpa(:, 0, is)*geo%fcqalf(:, 0)
+      CALL B2XVSG(nfc, wrkf, 1, 'cdpa0', '.ge.')
       wrkf(:) = co%cdpa(:, 1, is)*geo%fcqalf(:, 1)
-      CALL B2XVSG_NODIFF(nfc, wrkf, 1, 'cdpa1', '.ge.')
+      CALL B2XVSG(nfc, wrkf, 1, 'cdpa1', '.ge.')
     END DO
   ELSE
     DO nd=1,nbdirsmax
@@ -216,8 +218,8 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
     con(:, 1) = switch%xfac*2.5_R8*co%cdpa(:, 1, is)*nwf*wrkf*tef
 !
 !    ..compute coefficients for stencil
-    CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, mpg, flo, flod, con, cond, &
-&              flo0, flo0d, con0, con0d, nbdirs)
+    CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, flo, flod, con, cond, flo0, &
+&              flo0d, con0, con0d, nbdirs)
     DO nd=1,nbdirs
 !
 !    ..add to previous contributions
@@ -230,7 +232,7 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
 !   ..correct floi, coni, flon, conn
 !
 !    ..compute poloidal/radial coefficients for pressure diffusion term
-    IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+    IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
       DO nd=1,nbdirs
         flod(nd, :, 0) = -(switch%xfac*2.5_R8*(dnw(:, 0)*tif*cod%cdpa(nd&
 &         , :, 0, is)+co%cdpa(:, 0, is)*(tif*dnwd(nd, :, 0)+dnw(:, 0)*&
@@ -268,8 +270,8 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
     END IF
 !
 !    ..compute coefficients for stencil
-    CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, mpg, flo, flod, con, cond, &
-&              flo0, flo0d, con0, con0d, nbdirs)
+    CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, flo, flod, con, cond, flo0, &
+&              flo0d, con0, con0d, nbdirs)
 !
 !    ..add to previous contributions
 ! the logic statements could be simplified but for now this is not done to improve readability
@@ -294,7 +296,7 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
       END IF
     ELSE IF (switch%tn_style .EQ. 2) THEN
 !! separate ion and neutral energy equation, split contributions
-      IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+      IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
         DO nd=1,nbdirs
           dvd%floi(nd, :, :) = dvd%floi(nd, :, :) + flo0d(nd, :, :)
           dvd%coni(nd, :, :, 0) = dvd%coni(nd, :, :, 0) + con0d(nd, :, :&
@@ -358,8 +360,8 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
   con(:, 1) = 0.0_R8
 !
 !   ..compute coefficients for stencil
-  CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, mpg, flo, flod, con, cond, &
-&            flo0, flo0d, con0, con0d, nbdirs)
+  CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, flo, flod, con, cond, flo0, &
+&            flo0d, con0, con0d, nbdirs)
   DO nd=1,nbdirs
 !
 !   ..add to previous contributions
@@ -381,7 +383,7 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, wght, nw, nwd, nwf, nwfd, nbdirs&
 &            )
 !
-    IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+    IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
       DO ifc=1,nfc
         temp1 = 1.25_R8*switch%b2npht_pcm1*geo%fcpbs(ifc)
         temp0 = geo%fcqgam(ifc, 0)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))
@@ -438,8 +440,8 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
     con(:, 1) = 0.0_R8
 !
 !    ..compute coefficients for stencil
-    CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, mpg, flo, flod, con, cond, &
-&              flo0, flo0d, con0, con0d, nbdirs)
+    CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, flo, flod, con, cond, flo0, &
+&              flo0d, con0, con0d, nbdirs)
 !
 !    ..add to previous contributions
 ! the logic statements could be simplified but for now this is not done to improve readability
@@ -464,7 +466,7 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
       END IF
     ELSE IF (switch%tn_style .EQ. 2) THEN
 !! separate ion and neutral energy equation, split contributions
-      IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+      IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
         DO nd=1,nbdirs
           dvd%floi(nd, :, :) = dvd%floi(nd, :, :) + flo0d(nd, :, :)
           dvd%coni(nd, :, :, 0) = dvd%coni(nd, :, :, 0) + con0d(nd, :, :&
@@ -484,6 +486,17 @@ SUBROUTINE B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
   END DO
 !
 !! end loop over species
+!
+  IF (switch%b2npht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, nfc, 1, dv%floe(1, 0), 'b2tfcc_floex')
+    CALL MY_OUT_US(70, nfc, 1, dv%floe(1, 1), 'b2tfcc_floey')
+    CALL MY_OUT_US(70, nfc, 1, dv%cone(1, 0, 0), 'b2tfcc_conex')
+    CALL MY_OUT_US(70, nfc, 1, dv%cone(1, 1, 0), 'b2tfcc_coney')
+    CALL MY_OUT_US(70, nfc, 1, dv%cone(1, 0, 1), 'b2tfcc_conex1')
+    CALL MY_OUT_US(70, nfc, 1, dv%cone(1, 1, 1), 'b2tfcc_coney1')
+    CALL MY_OUT_US(70, nfc, 1, dv%cone(1, 0, 2), 'b2tfcc_conex2')
+    CALL MY_OUT_US(70, nfc, 1, dv%cone(1, 1, 2), 'b2tfcc_coney2')
+  END IF
 !
 ! ..return
   ncall_b2tfcc = ncall_b2tfcc + 1
@@ -545,7 +558,8 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 & nfc, 0:1), flo0(nfc, 0:1), con0(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, DIFF_NODIFF, INTFACE
+  EXTERNAL B2XVSG, DIFF_NODIFF, INTFACE
+  INTRINSIC NINT
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -555,16 +569,16 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tfcc')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2tfcc .LT. 3) THEN
 !    ..test sign of cdpa
     DO is=0,ns-1
       wrkf(:) = co%cdpa(:, 0, is)*geo%fcqalf(:, 0)
-      CALL B2XVSG_NODIFF(nfc, wrkf, 1, 'cdpa0', '.ge.')
+      CALL B2XVSG(nfc, wrkf, 1, 'cdpa0', '.ge.')
       wrkf(:) = co%cdpa(:, 1, is)*geo%fcqalf(:, 1)
-      CALL B2XVSG_NODIFF(nfc, wrkf, 1, 'cdpa1', '.ge.')
+      CALL B2XVSG(nfc, wrkf, 1, 'cdpa1', '.ge.')
     END DO
   END IF
 !
@@ -600,8 +614,7 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
     con(:, 1) = switch%xfac*2.5_R8*co%cdpa(:, 1, is)*nwf*wrkf*tef
 !
 !    ..compute coefficients for stencil
-    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, flo, con, flo0, &
-&                  con0)
+    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, flo, con, flo0, con0)
 !
 !    ..add to previous contributions
     dv%floe = dv%floe + flo0
@@ -610,7 +623,7 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !   ..correct floi, coni, flon, conn
 !
 !    ..compute poloidal/radial coefficients for pressure diffusion term
-    IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+    IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
       flo(:, 0) = -(switch%xfac*2.5_R8*co%cdpa(:, 0, is)*dnw(:, 0)*tif)
       flo(:, 1) = -(switch%xfac*2.5_R8*co%cdpa(:, 1, is)*dnw(:, 1)*tif)
       con(:, 0) = switch%xfac*2.5_R8*co%cdpa(:, 0, is)*nwf*tif
@@ -624,8 +637,7 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
     END IF
 !
 !    ..compute coefficients for stencil
-    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, flo, con, flo0, &
-&                  con0)
+    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, flo, con, flo0, con0)
 !
 !    ..add to previous contributions
 ! the logic statements could be simplified but for now this is not done to improve readability
@@ -641,7 +653,7 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
       END IF
     ELSE IF (switch%tn_style .EQ. 2) THEN
 !! separate ion and neutral energy equation, split contributions
-      IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+      IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
         dv%floi = dv%floi + flo0
         dv%coni(:, :, 0) = dv%coni(:, :, 0) + con0
       ELSE
@@ -677,7 +689,7 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
   con(:, 1) = 0.0_R8
 !
 !   ..compute coefficients for stencil
-  CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, flo, con, flo0, con0)
+  CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, flo, con, flo0, con0)
 !
 !   ..add to previous contributions
   dv%floe = dv%floe + flo0
@@ -694,7 +706,7 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !    ..interpolate nwe to cell faces
     CALL INTFACE(ncv, nfc, mpg%fccv, wght, nw, nwf)
 !
-    IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+    IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
       DO ifc=1,nfc
         con(ifc, 0) = switch%b2npht_pcm1*1.25_R8*geo%fcpbs(ifc)*(dv%pccm&
 &         (mpg%fccv(ifc, 1), 1)*pl%na(mpg%fccv(ifc, 1), is)*pl%ti(mpg%&
@@ -720,8 +732,7 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
     con(:, 1) = 0.0_R8
 !
 !    ..compute coefficients for stencil
-    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, flo, con, flo0, &
-&                  con0)
+    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, flo, con, flo0, con0)
 !
 !    ..add to previous contributions
 ! the logic statements could be simplified but for now this is not done to improve readability
@@ -737,7 +748,7 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
       END IF
     ELSE IF (switch%tn_style .EQ. 2) THEN
 !! separate ion and neutral energy equation, split contributions
-      IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+      IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
         dv%floi = dv%floi + flo0
         dv%coni(:, :, 0) = dv%coni(:, :, 0) + con0
       ELSE
@@ -748,6 +759,17 @@ SUBROUTINE B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
   END DO
 !
 !! end loop over species
+!
+  IF (switch%b2npht_iout .NE. 0) THEN
+    CALL MY_OUT_US(70, nfc, 1, dv%floe(1, 0), 'b2tfcc_floex')
+    CALL MY_OUT_US(70, nfc, 1, dv%floe(1, 1), 'b2tfcc_floey')
+    CALL MY_OUT_US(70, nfc, 1, dv%cone(1, 0, 0), 'b2tfcc_conex')
+    CALL MY_OUT_US(70, nfc, 1, dv%cone(1, 1, 0), 'b2tfcc_coney')
+    CALL MY_OUT_US(70, nfc, 1, dv%cone(1, 0, 1), 'b2tfcc_conex1')
+    CALL MY_OUT_US(70, nfc, 1, dv%cone(1, 1, 1), 'b2tfcc_coney1')
+    CALL MY_OUT_US(70, nfc, 1, dv%cone(1, 0, 2), 'b2tfcc_conex2')
+    CALL MY_OUT_US(70, nfc, 1, dv%cone(1, 1, 2), 'b2tfcc_coney2')
+  END IF
 !
 ! ..return
   ncall_b2tfcc = ncall_b2tfcc + 1

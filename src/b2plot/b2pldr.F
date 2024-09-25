@@ -58,12 +58,6 @@
       call b2xxid ('b2mn', lblmn(1:60))
       call b2rflb (ninp(0), lblmn(61:120))
       label = lblmn
-*   ..read geometry
-      call cfruch (ninp(1), 120, lblgm, 'label')
-      call cfruin (ninp(1), 1, idum, 'isymm')
-      isymm = idum(0)
-      call read_b2fgmtry (ninp(1), mpg, geo)
-      call init_geometry (mpg, geo, switch)
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
       call b2rucp (ninp(2), b2fparam_version, ns)
@@ -73,7 +67,7 @@
       call b2rfcp (ninp(0), ns)
 *   ..test parameters
       call b2xvcp (ns)
-*   ..read and echo code internal parameters
+*   ..read code internal parameters
     1 continue
        read (ninp(0),'(a)',end=2,err=91) line
        if (.not.is_comment(line)) then
@@ -82,10 +76,17 @@
        end if
        goto 1
     2 continue
+*   ..assign switches
       call read_first_switches(switch)
       call set_defaults_switches(switch,ns)
       call read_switches(switch)
       call check_switches(switch,ns)
+*   ..read geometry
+      call cfruch (ninp(1), 120, lblgm, 'label')
+      call cfruin (ninp(1), 1, idum, 'isymm')
+      isymm = idum(0)
+      call read_b2fgmtry (ninp(1), mpg, geo)
+      call init_geometry (mpg, geo, switch)
 *   ..read plasma state file
       call cfruch (ninp(3), 120, lblmn, 'label')
 *   ..read species data

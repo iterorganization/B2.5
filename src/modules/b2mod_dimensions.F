@@ -65,5 +65,11 @@
       integer, parameter :: DEF_NREAC = DEF_NREI+DEF_NREC+DEF_NRCX+
      &                                  DEF_NREL
 
+!
+! parameters needed by B2.5 cost function definition
+!
+
+      integer, parameter :: DEF_NCF = 10
+
 #endif
       end module b2mod_dimensions

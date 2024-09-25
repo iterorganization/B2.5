@@ -53,7 +53,7 @@ SUBROUTINE B2USCO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
 !  1. purpose
 !
 !     B2USCO computes a correction towards the solution of the
-!     continuity equation for one atomic species on an unstructured 
+!     continuity equation for one atomic species on an unstructured
 !     mesh.
 !
 !-----------------------------------------------------------------------
@@ -87,7 +87,7 @@ SUBROUTINE B2USCO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
   INTRINSIC ABS
   EXTERNAL XERTST, IPGETR, SFILL_NODIFF
 !srv 02.01.07
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: result1
   CHARACTER(len=20) :: arg1
@@ -103,36 +103,41 @@ SUBROUTINE B2USCO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
 !       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
 !       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10.06
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test itcnt, rxg
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
   CALL XERTST(0 .LT. rxg, 'faulty argument rxg')
 !   ..extensive tests on first few calls
   IF (ncall_b2usco .LT. 3) THEN
 !    ..test sign of nb, pb
-    CALL B2XVSG_NODIFF(ncv, nb, 1, 'nb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pb, 1, 'pb', '.gt.')
+    CALL B2XVSG(ncv, nb, 1, 'nb', '.gt.')
+    CALL B2XVSG(ncv, pb, 1, 'pb', '.gt.')
 !    ..test sign of snbv
-    CALL B2XVSG_NODIFF(ncv, snbv, 1, 'snbv', '.le.')
+    CALL B2XVSG(ncv, snbv, 1, 'snbv', '.le.')
   END IF
 !
 !   ..initialize matrix
-  aa = 0.0e0_R8
+  aa = 0.0_R8
 !
 !   ..compute the matrix
   DO icv=1,ncv
     ireg = mpg%cvreg(icv)
     IF (solvereg(ireg)) THEN
-      IF (rescb(icv) .GE. 0.) THEN
-        abs0 = rescb(icv)
-      ELSE
-        abs0 = -rescb(icv)
-      END IF
-!srv 13.10.06 {
 !srv 13.10.06 }
-      result1 = RSCAL(pb(icv))
-      aa(mpg%cvnvp(icv, 1)) = (-(snbv(icv)*nb(icv)/pb(icv))+abs0/(rxg*pb&
-&       (icv)))*result1
+      IF (switch%b2mndt_style .LT. 2) THEN
+        IF (rescb(icv) .GE. 0.) THEN
+          abs0 = rescb(icv)
+        ELSE
+          abs0 = -rescb(icv)
+        END IF
+!srv 13.10.06 {
+        result1 = RSCAL(pb(icv))
+        aa(mpg%cvnvp(icv, 1)) = (-(snbv(icv)*nb(icv)/pb(icv))+abs0/(rxg*&
+&         pb(icv)))*result1
+      ELSE
+        result1 = RSCAL(pb(icv))
+        aa(mpg%cvnvp(icv, 1)) = (-(snbv(icv)*nb(icv)/pb(icv)))*result1
+      END IF
     ELSE
       aa(mpg%cvnvp(icv, 1)) = RSCAL(pb(icv))
     END IF
@@ -290,7 +295,7 @@ CONTAINS
 ! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
 !srv 13.10.06
     rscal = t0
-!      rscal = 1.0e0_R8                                           !srv 13.10.06
+!      rscal = 1.0_R8                                             !srv 13.10.06
     RETURN
   END FUNCTION RSCAL
 
@@ -360,7 +365,7 @@ SUBROUTINE B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, &
 !  1. purpose
 !
 !     B2USCO computes a correction towards the solution of the
-!     continuity equation for one atomic species on an unstructured 
+!     continuity equation for one atomic species on an unstructured
 !     mesh.
 !
 !-----------------------------------------------------------------------
@@ -395,7 +400,7 @@ SUBROUTINE B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, &
   INTRINSIC ABS
   EXTERNAL XERTST, IPGETR, SFILL_NODIFF
 !srv 02.01.07
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   REAL(kind=r8) :: abs0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs0d
   REAL(kind=r8) :: result1
@@ -417,21 +422,21 @@ SUBROUTINE B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, &
 !       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
 !       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10.06
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test itcnt, rxg
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
   CALL XERTST(0 .LT. rxg, 'faulty argument rxg')
 !   ..extensive tests on first few calls
   IF (ncall_b2usco .LT. 3) THEN
 !    ..test sign of nb, pb
-    CALL B2XVSG_NODIFF(ncv, nb, 1, 'nb', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pb, 1, 'pb', '.gt.')
+    CALL B2XVSG(ncv, nb, 1, 'nb', '.gt.')
+    CALL B2XVSG(ncv, pb, 1, 'pb', '.gt.')
 !    ..test sign of snbv
-    CALL B2XVSG_NODIFF(ncv, snbv, 1, 'snbv', '.le.')
+    CALL B2XVSG(ncv, snbv, 1, 'snbv', '.le.')
   END IF
 !
 !   ..initialize matrix
-  aa = 0.0e0_R8
+  aa = 0.0_R8
   DO nd=1,nbdirsmax
     aad(nd, :) = 0.D0
   END DO
@@ -440,29 +445,40 @@ SUBROUTINE B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, &
   DO icv=1,ncv
     ireg = mpg%cvreg(icv)
     IF (solvereg(ireg)) THEN
-      IF (rescb(icv) .GE. 0.) THEN
-        DO nd=1,nbdirs
-          abs0d(nd) = rescbd(nd, icv)
-        END DO
-        abs0 = rescb(icv)
-      ELSE
-        DO nd=1,nbdirs
-          abs0d(nd) = -rescbd(nd, icv)
-        END DO
-        abs0 = -rescb(icv)
-      END IF
-!srv 13.10.06 {
 !srv 13.10.06 }
-      CALL RSCAL_DV(pb(icv), pbd(:, icv), result1, result1d, nbdirs)
-      temp = abs0/(rxg*pb(icv))
-      temp0 = snbv(icv)*nb(icv)/pb(icv)
-      DO nd=1,nbdirs
-        aad(nd, mpg%cvnvp(icv, 1)) = result1*((abs0d(nd)-temp*rxg*pbd(nd&
-&         , icv))/(rxg*pb(icv))-(nb(icv)*snbvd(nd, icv)+snbv(icv)*nbd(nd&
-&         , icv)-temp0*pbd(nd, icv))/pb(icv)) + (temp-temp0)*result1d(nd&
-&         )
-      END DO
-      aa(mpg%cvnvp(icv, 1)) = (temp-temp0)*result1
+      IF (switch%b2mndt_style .LT. 2) THEN
+        IF (rescb(icv) .GE. 0.) THEN
+          DO nd=1,nbdirs
+            abs0d(nd) = rescbd(nd, icv)
+          END DO
+          abs0 = rescb(icv)
+        ELSE
+          DO nd=1,nbdirs
+            abs0d(nd) = -rescbd(nd, icv)
+          END DO
+          abs0 = -rescb(icv)
+        END IF
+!srv 13.10.06 {
+        CALL RSCAL_DV(pb(icv), pbd(:, icv), result1, result1d, nbdirs)
+        temp = abs0/(rxg*pb(icv))
+        temp0 = snbv(icv)*nb(icv)/pb(icv)
+        DO nd=1,nbdirs
+          aad(nd, mpg%cvnvp(icv, 1)) = result1*((abs0d(nd)-temp*rxg*pbd(&
+&           nd, icv))/(rxg*pb(icv))-(nb(icv)*snbvd(nd, icv)+snbv(icv)*&
+&           nbd(nd, icv)-temp0*pbd(nd, icv))/pb(icv)) + (temp-temp0)*&
+&           result1d(nd)
+        END DO
+        aa(mpg%cvnvp(icv, 1)) = (temp-temp0)*result1
+      ELSE
+        CALL RSCAL_DV(pb(icv), pbd(:, icv), result1, result1d, nbdirs)
+        temp0 = nb(icv)/pb(icv)
+        DO nd=1,nbdirs
+          aad(nd, mpg%cvnvp(icv, 1)) = -(temp0*(result1*snbvd(nd, icv)+&
+&           snbv(icv)*result1d(nd))+snbv(icv)*result1*(nbd(nd, icv)-&
+&           temp0*pbd(nd, icv))/pb(icv))
+        END DO
+        aa(mpg%cvnvp(icv, 1)) = -(snbv(icv)*result1*temp0)
+      END IF
     ELSE
       CALL RSCAL_DV(pb(icv), pbd(:, icv), aa(mpg%cvnvp(icv, 1)), aad(:, &
 &             mpg%cvnvp(icv, 1)), nbdirs)
@@ -707,7 +723,7 @@ CONTAINS
       rscald(nd) = t0d(nd)
     END DO
     rscal = t0
-!      rscal = 1.0e0_R8                                           !srv 13.10.06
+!      rscal = 1.0_R8                                             !srv 13.10.06
     RETURN
   END SUBROUTINE RSCAL_DV
 
@@ -723,7 +739,7 @@ CONTAINS
 ! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
 !srv 13.10.06
     rscal = t0
-!      rscal = 1.0e0_R8                                           !srv 13.10.06
+!      rscal = 1.0_R8                                             !srv 13.10.06
     RETURN
   END FUNCTION RSCAL
 

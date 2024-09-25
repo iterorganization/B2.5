@@ -20,8 +20,8 @@
 *  1. purpose
 *
 *     B2MD (main program) is a postprocessor for B2. It reads and
-*     displays the plasma state. This program calls the driver routine
-*     b2mddr for the actual computation.
+*     archives the plasma state to an MDSplus database.
+*     This program calls the driver routine b2mddr for the actual computation.
 *
 *
 *  2. specification

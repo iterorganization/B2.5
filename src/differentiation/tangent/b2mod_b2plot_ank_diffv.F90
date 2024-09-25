@@ -134,6 +134,7 @@ CONTAINS
     DO is=1,stack_req(1)
       itmp = IPOP(istack, iistack)
     END DO
+    RETURN
   END SUBROUTINE POP_STACK
 
 !
@@ -172,6 +173,23 @@ CONTAINS
       bad_args = .true.
     END IF
   END FUNCTION BAD_ARGS
+
+!
+  LOGICAL FUNCTION CHECK_CLASSICAL_GRID(mpg)
+    USE B2US_MAP_DIFFV
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    TYPE(MAPPING), INTENT(IN) :: mpg
+!
+    check_classical_grid = mpg%isclassicalgrid .EQ. 1
+    IF (.NOT.check_classical_grid) THEN
+      WRITE(*, *) &
+&     'Option only available if the base grid is classical! '//&
+&     'Skipping...'
+      CALL POP_STACK(stack_req)
+    END IF
+    RETURN
+  END FUNCTION CHECK_CLASSICAL_GRID
 
 !
   SUBROUTINE ALLOC_B2MOD_B2PLOT_ANK(nwall)

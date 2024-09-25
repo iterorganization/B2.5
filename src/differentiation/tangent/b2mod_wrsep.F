@@ -3,7 +3,7 @@
       use b2mod_diag_diffv
       use b2mod_time
       use b2mod_b2cmpa_diffv
-      use b2mod_indirect
+      use b2mod_indirect_diffv
       implicit none
 
 c======================================================================
@@ -107,7 +107,7 @@ c----------------------------------------------------------------------
       use b2mod_numerics_namelist_diffv
       use b2mod_external_diffv
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_eirbra
 #else
       use b2mod_eirbra

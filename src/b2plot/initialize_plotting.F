@@ -12,12 +12,14 @@ c     the zoom common
       integer wsnshwin,wsnX11
       common /zoom_com/ winid,wsnshwin,wsnX11
 
+#ifdef NCAR4
       character*256 devenv
       integer iw
 #ifndef NO_GETENV
       integer lenval, ierror
 #ifndef USE_PXFGETENV
       intrinsic get_environment_variable
+#endif
 #endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine

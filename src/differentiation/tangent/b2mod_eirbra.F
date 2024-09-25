@@ -5,15 +5,21 @@ c
 C     EIRENE TO BRAAMS
 c
       real (kind=R8), allocatable ::
-     ,  sni(:,:,:), smo(:,:,:), see(:,:), sei(:,:),
+     ,  sni(:,:,:), smo(:,:,:), see(:,:), sei(:,:,:),
+     ,  sna_paat(:,:,:), sna_pmat(:,:,:),
+     ,  sna_piat(:,:,:), sna_paml(:,:,:),
+     ,  sna_pmml(:,:,:), sna_piml(:,:,:),
+     ,  sna_paio(:,:,:), sna_pmio(:,:,:),
+     ,  sna_piio(:,:,:),
      ,  sni_papl(:,:,:), sni_pmpl(:,:,:),
      ,  sni_pipl(:,:,:), sni_pppl(:,:,:),
      ,  smo_mapl(:,:,:), smo_mmpl(:,:,:),
      ,  smo_mipl(:,:,:), smo_cppv(:,:,:),
+     ,  sne_pael(:,:), sne_pmel(:,:),
      ,  see_eael(:,:), see_emel(:,:),
      ,  see_eiel(:,:), see_epel(:,:),
-     ,  sei_eapl(:,:), sei_empl(:,:),
-     ,  sei_eipl(:,:), sei_eppl(:,:),
+     ,  sei_eapl(:,:,:), sei_empl(:,:,:),
+     ,  sei_eipl(:,:,:), sei_eppl(:,:,:),
      ,  fluxh(:,:),
      ,  srcstrn(:),
      ,  volsumn(:), volsumm(:), volsumei(:), volsumee(:),
@@ -38,14 +44,24 @@ C> Default output file prefix
 
       contains
 
-      subroutine alloc_b2mod_eirbra(ncv,nsd,natmd,nplsd,nstrad)
+      subroutine alloc_b2mod_eirbra(ncv,nsd,natmd,nmold,niond,nplsd,
+     .  nstrad)
       implicit none
-      integer ncv, nsd, natmd, nplsd, nstrad
+      integer ncv, nsd, natmd, nmold, niond, nplsd, nstrad
 
       allocate(sni(ncv,nsd,nstrad))
       allocate(smo(ncv,nsd,nstrad))
       allocate(see(ncv,nstrad))
-      allocate(sei(ncv,nstrad))
+      allocate(sei(ncv,nsd,nstrad))
+      allocate(sna_paat(ncv,max(1,natmd),nstrad))
+      allocate(sna_pmat(ncv,max(1,natmd),nstrad))
+      allocate(sna_piat(ncv,max(1,natmd),nstrad))
+      allocate(sna_paml(ncv,max(1,nmold),nstrad))
+      allocate(sna_pmml(ncv,max(1,nmold),nstrad))
+      allocate(sna_piml(ncv,max(1,nmold),nstrad))
+      allocate(sna_paio(ncv,max(1,niond),nstrad))
+      allocate(sna_pmio(ncv,max(1,niond),nstrad))
+      allocate(sna_piio(ncv,max(1,niond),nstrad))
       allocate(sni_papl(ncv,nsd,nstrad))
       allocate(sni_pmpl(ncv,nsd,nstrad))
       allocate(sni_pipl(ncv,nsd,nstrad))
@@ -54,14 +70,16 @@ C> Default output file prefix
       allocate(smo_mmpl(ncv,nsd,nstrad))
       allocate(smo_mipl(ncv,nsd,nstrad))
       allocate(smo_cppv(ncv,nsd,nstrad))
+      allocate(sne_pael(ncv,nstrad))
+      allocate(sne_pmel(ncv,nstrad))
       allocate(see_eael(ncv,nstrad))
       allocate(see_emel(ncv,nstrad))
       allocate(see_eiel(ncv,nstrad))
       allocate(see_epel(ncv,nstrad))
-      allocate(sei_eapl(ncv,nstrad))
-      allocate(sei_empl(ncv,nstrad))
-      allocate(sei_eipl(ncv,nstrad))
-      allocate(sei_eppl(ncv,nstrad))
+      allocate(sei_eapl(ncv,nsd,nstrad))
+      allocate(sei_empl(ncv,nsd,nstrad))
+      allocate(sei_eipl(ncv,nsd,nstrad))
+      allocate(sei_eppl(ncv,nsd,nstrad))
       allocate(fluxh(10,nstrad))
       allocate(srcstrn(nstrad))
       allocate(volsumn(nstrad))
@@ -94,6 +112,15 @@ C> Default output file prefix
       deallocate(smo)
       deallocate(see)
       deallocate(sei)
+      deallocate(sna_paat)
+      deallocate(sna_pmat)
+      deallocate(sna_piat)
+      deallocate(sna_paml)
+      deallocate(sna_pmml)
+      deallocate(sna_piml)
+      deallocate(sna_paio)
+      deallocate(sna_pmio)
+      deallocate(sna_piio)
       deallocate(sni_papl)
       deallocate(sni_pmpl)
       deallocate(sni_pipl)
@@ -102,6 +129,8 @@ C> Default output file prefix
       deallocate(smo_mmpl)
       deallocate(smo_mipl)
       deallocate(smo_cppv)
+      deallocate(sne_pael)
+      deallocate(sne_pmel)
       deallocate(see_eael)
       deallocate(see_emel)
       deallocate(see_eiel)
