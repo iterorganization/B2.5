@@ -192,7 +192,6 @@
      2  sput_frc, sput_phys,
      3  delta_min, dt_change_inc, delta_max, dt_change_dec,
      4  dt_min, dt_max, max_delta
-      integer :: ncon, nele_jac
 #ifndef NO_CDF
 #     include <netcdf.inc>
       integer ncid
@@ -2113,7 +2112,7 @@ c   --> better way doing this is necessary)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg, switch)
+        call read_b2mod_par_opt(ns, mpg, switch)
         allocate(par_opt_phys(npar_opt))
         allocate(xsave(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)

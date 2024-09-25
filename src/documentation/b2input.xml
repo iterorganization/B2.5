@@ -8340,62 +8340,6 @@
 					Specifies which kind of Hessian approximation is employed if HESSIAN_APPROXIMATION is set to 'limited-memory'. Can overridden with PETCs/Tao by using command line options for the optimization.
 				</description>
 			</switch>
-			<switch>
-				<name>NNCON</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Number of nonlinear constraints to impose. (not used for the moment)
-				</description>
-			</switch>
-			<switch>
-				<name>GL</name>
-				<default>-10*p_infty</default>
-				<type>real array of size (NNCON)</type>
-				<description>
-					Lower bound for each nonlinear constraints. (not used for the moment)
-				</description>
-			</switch>
-			<switch>
-				<name>GU</name>
-				<default>10*p_infty</default>
-				<type>real array of size (NNCON)</type>
-				<description>
-					Upper bound for each nonlinear constraints. (not used for the moment)
-				</description>
-			</switch>
-			<switch>
-				<name>NNJAC</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Number of non-zeros in Jacobian for the nonlinear constraints. (not used for the moment)
-				</description>
-			</switch>
-			<switch>
-				<name>JCOL</name>
-				<default>0</default>
-				<type>integer array of size (NNJAC)</type>
-				<description>
-					Contains the column index of the non-zero element of the Jacobian for the nonlinear constraints. (not used for the moment)
-				</description>
-			</switch>
-			<switch>
-				<name>JROW</name>
-				<default>0</default>
-				<type>integer array of size (NNJAC)</type>
-				<description>
-					Contains the row index of the non-zero element of the Jacobian for the nonlinear constraints. (not used for the moment)
-				</description>
-			</switch>
-			<switch>
-				<name>JJ</name>
-				<default>0.0</default>
-				<type>real array of size (NNJAC)</type>
-				<description>
-					Contains the value of the non-zero element of the Jacobian for the nonlinear constraints. (not used for the moment)
-				</description>
-			</switch>
 		</category>
 		<category name="b2.sputter_save.parameters">
 			<introduction>

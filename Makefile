@@ -410,7 +410,7 @@ PROG_MNH = b2mn_hess.exe
 ifdef OPT
 PROG_OPT = b2optim_${OPT}.exe
 endif
-OPTEXCL = b2optim_ipopt.exe b2optim_tao.exe
+OPTEXCL = b2optim_tao.exe
 
 EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_90} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT} ${PROG_MND} ${PROG_MNB} ${OPTEXCL}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}

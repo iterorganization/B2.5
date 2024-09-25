@@ -194,7 +194,6 @@ c 2002-09-11: logic revised
       integer ndim, ndm2, nfitanf, nfitend, ifail
       integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt, ntfts
-      integer ncon, nele_jac
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
       character id0*8
       character*4 solps_version
@@ -11777,7 +11776,7 @@ cxpb as they no longer necessarily point to the same species
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg, switch)
+        call read_b2mod_par_opt(ns, mpg, switch)
         write(99,'(a5)') '&OPTIMIZATION'
         if (ncf.gt.0) then
           write(99,'(1x,a,i3,a)') 'NCF=',ncf,','
@@ -11854,20 +11853,6 @@ cxpb as they no longer necessarily point to the same species
         if (.not.streql(limited_memory_update_type,'bfgs'))
      >   write(99,'(1x,a,a,a)') 'LIMITED_MEMORY_UPDATE_TYPE=''',
      >                      trim(limited_memory_update_type),''','
-        if (nncon.gt.0) then
-          write(99,'(1x,a,i3,a)') 'NNCON=',nncon,','
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nncon,'(1x,g11.4,'',''))'
-          write(99,hlp_frm) 'GL=',(gl(i),i=1,nncon)
-          write(99,hlp_frm) 'GU=',(gu(i),i=1,nncon)
-        end if
-        if (nnjac.gt.0) then
-          write(99,'(1x,a,i3,a)') 'NNJAC=',nnjac,','
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnjac,'(1x,i6,'',''))'
-          write(99,hlp_frm) 'JCOL=',(jcol(i),i=1,nnjac)
-          write(99,hlp_frm) 'JROW=',(jrow(i),i=1,nnjac)
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnjac,'(1x,g11.4,'',''))'
-          write(99,hlp_frm) 'JJ=',(jj(i),i=1,nnjac)
-        end if
         write(99,'(a1)') '/'
         close(99)
       else if (todo) then
