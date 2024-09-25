@@ -194,8 +194,9 @@ c 2002-09-11: logic revised
       integer lhalpha
       integer nncut1, nnreg1(0:2), periodic_bc1
       integer ndim, ndm2, nfitanf, nfitend, ifail
-      integer invert_bpol, invert_btor, b2ux7p_style, csigin_style
+      integer invert_bpol, invert_btor, b2ux7p_style
       integer naver, ntotdt, ntfts
+      integer ncon, nele_jac
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
       character id0*8, chns*3
       character*4 solps_version
@@ -3681,7 +3682,7 @@ cxpb This will need to be checked !!!
           if(minval(dten(0:nnreg(0))).ne.1.0_R8 .or.
      &       maxval(dten(0:nnreg(0))).ne.1.0_R8) write(99,hlp_frm)
      .     'DTEN=',(dten(ireg),ireg=0,nnreg(0))
-          ntfts = minloc(dtfts,1)-1
+          ntfts = minloc(dtfts)-1
           if (ntfts.gt.0) then
             write(hlp_frm,'(a,i3,a)') '(1x,a,',ntfts,'(i3,'',''))'
             write(99,hlp_frm) 'DTFTS=',(dtfts(ireg),ireg=1,ntfts)

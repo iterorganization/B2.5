@@ -31,13 +31,10 @@
      *   solveet(:),
      *   solvekt(:),
      *   solvezt(:),
-     *   last_solve_5(:),
-     *   last_solve_9(:),
      *   add_te_corr_to_po(:),                             ! IYS 21.09.2018
      *   do_sna_corr_core(:)                               !iyv 20.09.22
-      integer, allocatable, save ::
-     *   dtfts(:)
 #else
+      integer, save :: dtfts(1:DEF_NYD)
       real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX),
      & dtco_ft(1:DEF_NYD)
       real (kind=R8), save :: dtmo(0:nsdmax-1,0:CVREGMAX),
@@ -61,7 +58,6 @@
       logical, save :: solvezt(0:CVREGMAX)
       logical, save :: add_te_corr_to_po(0:CVREGMAX)       ! IYS 21.09.2018
       logical, save :: do_sna_corr_core(DEF_NATM)          ! IYS 10.03.2023
-      integer, save :: dtfts(1:DEF_NYD)
 #endif
       real (kind=R8), save :: corr_core_dt                 ! IYS 19.12.2017
       real (kind=R8), save :: time_factor_required,
@@ -73,7 +69,6 @@
       logical :: first_time_step
       logical, save :: b2mod_numerics_allocated = .false.
       logical, allocatable, save :: last_solve_5(:), last_solve_9(:)
-      real (kind=R8) :: ts_factor
 
       private :: numerics
       logical, save :: write_nml_num = .true.
@@ -86,8 +81,8 @@
      & numerics_filename, numerics_time_mod, numerics_time_switch,
      & solvekt, solvezt,
      & corr_core_dn, corr_core_dt, add_te_corr_to_po,      ! IYS 19.12.2017
-     & sna_corr, taumax, do_sna_corr_core, dtfts, dtee_ft,
-     & dtmo_ft, dtco_ft, dtei_ft
+     & sna_corr, taumax, do_sna_corr_core,
+     & dtfts, dtee_ft, dtmo_ft, dtco_ft, dtei_ft
 
       contains
 
@@ -111,7 +106,6 @@
       allocate(dtmo_ft(1:DEF_NYD))
       allocate(dtee(0:nnreg(0)))
       allocate(dtee_ft(1:DEF_NYD))
-      allocate(dtfts(1:DEF_NYD))
       allocate(dtei(0:nnreg(0)))
       allocate(dtei_ft(1:DEF_NYD))
       allocate(dten(0:nnreg(0)))
@@ -139,11 +133,6 @@
       dtco=1.0_R8
       dtmo=1.0_R8
       dtee=1.0_R8
-      dtee_ft = 1.0_R8
-      dtei_ft = 1.0_R8
-      dtmo_ft = 1.0_R8
-      dtco_ft = 1.0_R8
-      dtfts = 0
       dtei=1.0_R8
       dten=1.0_R8
       dtco_ft=1.0_R8
@@ -206,7 +195,6 @@
       deallocate(dtmo_ft)
       deallocate(dtee)
       deallocate(dtee_ft)
-      deallocate(dtfts)
       deallocate(dtei)
       deallocate(dtei_ft)
       deallocate(dten)
@@ -304,8 +292,16 @@
      & 'faulty parameter dtei')
       call xertst (0.0_R8.lt.minval(dten),
      & 'faulty parameter dten')
-      call xertst (0.0_R8.lt.minval(min_na),
-     & 'faulty parameter min_na')
+      call xertst (0.le.minval(dtfts),
+     & 'faulty parametere dtfts')
+      call xertst (0.0_R8.lt.minval(dtco_ft),
+     & 'faulty parameter dtco_ft')
+      call xertst (0.0_R8.lt.minval(dtmo_ft),
+     & 'faulty parameter dtmo_ft')
+      call xertst (0.0_R8.lt.minval(dtee_ft),
+     & 'faulty parameter dtee_ft')
+      call xertst (0.0_R8.lt.minval(dtei_ft),
+     & 'faulty parameter dtei_ft')
 
 c additional time modification factor
       ttf=core_dt_suppression
