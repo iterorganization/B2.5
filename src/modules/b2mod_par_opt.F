@@ -82,7 +82,7 @@
 ! - nnvar: number of optimization parameters (not including radially varying transport coefficients)
 ! - npar_opt: actual number of optimization parameters (including spatially varying transport coeff.)
 ! - par_opt_phys: array containing the values of the optimization parameters used to pass them to the
-!                 optimization libraries through b2optim_tao/b2optim_ipopt, and to the routine for
+!                 optimization libraries through b2optim_tao, and to the routine for
 !                 calculating the prior (if needed)
 ! - nsigma_opt stores only the number of sigmas that are actually optimized (which can be .le. nsigma).
 ! - sigma_opt: logical that tells the specific sigmas that are optimized. This differentiation is needed to
@@ -93,11 +93,6 @@
 ! - x0: initial guess of the optimization parameters (one for each actual parameter, so includes the
 !        number of spatial points!)
 ! - xl/xu: lower/ipper bound of optimization parameters (one for each actual parameter, as x0)
-! - nncon: number of nonlinear constraints (not used for now)
-! - gl/gu: lowr/upper bound of such nonlinear constraints (not used for now)
-! - nnjac: number of non-zeros in the jacobian of the nonlinear constraints (not used for now)
-! - jcol/jrow: column/row indices for each non-zero element of the jacobian
-! - jj: value of the jacobian at jcol-jrow
 ! - shift_L/U: lower/upper bound of the cf data shift [mm]
 ! - shiftopt: has similar meaning as shift_opt but 'reduced' to the actual number of unique shifts (e.g.
 !             if some CF have the same shift value because they are the same diagnostic)
@@ -108,7 +103,7 @@
       real (kind=R8), allocatable, save :: par_opt0(:), par_opt(:),
      &       par_opt_phys(:), xsave(:)
       logical, save :: flag_optim = .false., reset_gradient = .false.
-      integer nnvar, nncon, nnjac
+      integer nnvar
       real (kind=R8) :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx),
      &  gu(nvmx), jj(nvmx*nvmx),
      &  par_rescale(nvmx)
@@ -137,8 +132,8 @@
       real (kind=R8) :: rangeold(nvmx,2), parold(nvmx,2)
       integer :: typeold(nvmx)
       private optimization
-      namelist /optimization/ nnvar, nncon, nnjac, x0, xl, xu, gl, gu, 
-     & jcol, jrow, jj, maxiter, cpu_opt, tol_opt, hessian_approximation,
+      namelist /optimization/ nnvar, x0, xl, xu, 
+     & maxiter, cpu_opt, tol_opt, hessian_approximation,
      & limited_memory_update_type, partype, sigma_opt, spatial_dep,
      & spatial_points, par_rescale, paris, parib, ncf,cfstart,cfend,
      & cftype, cfdef, cfweight,prior_type, prior_par, prior_range, 
@@ -151,11 +146,10 @@
 
       contains
 
-      subroutine read_b2mod_par_opt(ncon, nele_jac, ns, m, sw)
+      subroutine read_b2mod_par_opt(ns, m, sw)
       use b2mod_types
       use b2mod_switches
       implicit none
-      integer, intent (out) :: ncon, nele_jac
       type(mapping), intent(inout) :: m
       integer, intent (in) :: ns
       type(switches), intent (in)   :: sw
@@ -209,14 +203,7 @@
       x0 = inf_opt*10.0_R8
       xl = -inf_opt*10.0_R8
       xu = inf_opt*10.0_R8
-      gl = -inf_opt*10.0_R8
-      gu = inf_opt*10.0_R8
       par_rescale = 1.0_R8
-      NELE_JAC = 0
-      nnjac = 0
-      jcol = 0
-      jrow = 0
-      jj = 0
       partype = -2
       sigma_opt = .true.
       mean_opt = .false.
@@ -554,10 +541,6 @@
 ! csc Tests on optimization parameters
       call xertst(nnvar.ge.0.and.nnvar.le.nvmx,
      & 'b2mod_par_opt: nnvar<0 or nnvar>nvmx')
-      call xertst(nncon.le.nvmx,'b2mod_par_opt: increase size of nvmx')
-      call xertst(nnjac.le.nvmx,'b2mod_par_opt: increase size of nvmx')
-      call xertst(nncon.ge.0,'b2mod_par_opt: nncon<0')
-      call xertst(nnjac.ge.0,'b2mod_par_opt: nnjac<0')
       call xertst(all(par_rescale.gt.0.0_R8),
      & 'b2mod_par_opt: par_rescale<=0')
       if (nnvar .gt. 0) then
@@ -748,27 +731,6 @@
        endif
       end if  !cftype(1).eq.6
 
-      if (flag_optim) then
-!     Now do some tests on constraints
-!     For now no constraints are implemented apart from the trivial one in Ipopt
-       call xertst(ncon.ge.0 .and. ncon.le.1,
-     &  'b2mod_par_opt: ncon<0 or ncon>1 (not implemented yet)')
-       if (nncon.gt.0) then
-         write(*,*) 'WARNING! Specified ncon>0: one trivial '//
-     &   'constraint is allowed for Ipopt. If different constraints '//
-     &   'are required they must be implemented first in '//
-     &   'b2optim_[ipopt-tao]'
-       endif
-       if (nnjac .gt. 0) then
-        call xertst(any(jcol(1:nnjac) .gt. 0),'b2mod_par_opt: jcol<=0')
-        call xertst(any(jrow(1:nnjac) .gt. 0),'b2mod_par_opt: jrow<=0')
-        call xertst(maxval(jcol(1:nnjac)) .le. nncon,
-     &  'b2mod_par_opt: jcol>ncon')
-        call xertst(maxval(jrow(1:nnjac)) .le. nnvar,
-     &  'b2mod_par_opt: jrow>nvar')
-       endif
-      endif
-
 !     adjust some arrays when there are radially dependent coefficients
 !     x0, xl, xu are supposed to have the correct dimension already, i.e. one for each spatial point
 !     priors parameters are not
@@ -881,11 +843,7 @@
         imean = imean + 1 !next mean in inital vector x0
        endif
       end do
-      ncon = nncon
-      nele_jac = nnjac
       write (*,*) 'NPAR_OPT = ',npar_opt
-      write (*,*) 'NCON = ',ncon
-      write (*,*) 'NELE_JAC = ',NELE_JAC
 
       return
       end subroutine read_b2mod_par_opt

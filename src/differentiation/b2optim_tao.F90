@@ -24,7 +24,7 @@
       PetscReal            tol
       PetscViewer          viewer
 
-      integer :: ncon, nele_jac, ipar
+      integer :: ipar
       logical :: streql, hessian
       external streql
 
