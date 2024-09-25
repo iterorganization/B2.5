@@ -2437,7 +2437,7 @@
 #endif
       integer :: k, iCv2_prev, iCv2
       integer :: fcsb(mpg%nCi,40), fcsb_col, fcsb_row, fcsb_len(mpg%nCi)
-      real (kind=R8), save :: Qalfmin = 0.0_R8, Qalfmax=1.0e-2_R8
+      real (kind=R8), save :: Qalfmin = 0.0_R8, Qalfmax = 1.0e-2_R8
       integer, save :: mod_hc = 0, mean_boundary_hc = 0
 
       call ipgetr('b2us_prep_Qalfmin', Qalfmin)

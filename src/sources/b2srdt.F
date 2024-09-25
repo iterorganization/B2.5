@@ -128,12 +128,12 @@ csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
           ttim=dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)
           iFt = mpg%cvFt(iCv)
-          if (iFt.eq.0 .and. iCv .gt. mpg%nCi) then
+          if (iFt.eq.0 .and. iCv.gt.mpg%nCi) then
             iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
             iFt = mpg%cvFt(minval(mpg%fcCv(iFc,:)))
           endif
           if (iFt.ne.0) then
-            if (dtco_fts(iFt) .gt. 0.0_R8) then
+            if (dtco_fts(iFt).gt.0.0_R8) then
               ttim=dtim*dtco_fts(iFt)*time_factor(iCv)
             endif
           endif
@@ -153,12 +153,12 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
           ttim=dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)
           iFt = mpg%cvFt(iCv)
-          if (iFt.eq.0 .and. iCv .gt. mpg%nCi) then
+          if (iFt.eq.0 .and. iCv.gt.mpg%nCi) then
             iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
             iFt = mpg%cvFt(minval(mpg%fcCv(iFc,:)))
           endif
           if (iFt.ne.0) then
-            if (dtmo_fts(iFt) .gt. 0.0_R8) then
+            if (dtmo_fts(iFt).gt.0.0_R8) then
               ttim=dtim*dtmo_fts(iFt)*time_factor(iCv)
             endif
           endif
@@ -178,12 +178,12 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
         ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
         iFt = mpg%cvFt(iCv)
-        if (iFt.eq.0 .and. iCv .gt. mpg%nCi) then
+        if (iFt.eq.0 .and. iCv.gt.mpg%nCi) then
           iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
           iFt = mpg%cvFt(minval(mpg%fcCv(iFc,:)))
        endif
         if (iFt.ne.0) then
-          if (dtee_fts(iFt) .gt. 0.0_R8) then
+          if (dtee_fts(iFt).gt.0.0_R8) then
             ttim=dtim*dtee_fts(iFt)*time_factor(iCv)
           endif
         endif
