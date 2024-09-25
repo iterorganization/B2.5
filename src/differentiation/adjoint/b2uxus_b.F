@@ -57,7 +57,7 @@
       integer ncall, style, itmax, iters, itpar, cpu
       parameter (itmax=100)
       real (kind=R8) ::
-     *   acpar, nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
+     *   nrmc(0:itmax-1), cpu_start, cpu_end, c_end, c_start
       integer, save :: nz
       integer, allocatable, save :: ind(:), iasave(:), jasave(:)
       real (kind=R8) :: incrbb(nCv)
@@ -69,8 +69,8 @@
       external xertst, ipgeti, ipgetr,
      &  slv5pt, iluter, xerrab
 *   ..initialization
-      save ncall, style, acpar, cpu
-      data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
+      save ncall, style, cpu
+      data ncall/0/, style/2/, cpu/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -82,18 +82,16 @@
        call ipgeti ('b2ux9p_style', style)
        call xertst (0.le.style.and.style.lt.3,
      &   'faulty internal parameter style')
-       call ipgetr ('b2ux9p_acpar', acpar)
-       call xertst (0.lt.acpar, 'faulty internal parameter acpar')
        call ipgeti ('b2ux9p_cpu', cpu)
        if(style.eq.2) then
-         mult_nonzero=10
+         mult_nonzero=1
          mult_solvdim=15
          mult_solvdim1=10
          call ipgeti ('b2uxus_mult_nonzero', mult_nonzero)
          call ipgeti ('b2uxus_mult_solvdim', mult_solvdim)
          call ipgeti ('b2uxus_mult_solvdim1', mult_solvdim1)
          nnd=nCv
-         n_nonzeros=mpg%nCmxNv
+         n_nonzeros=mult_nonzero*mpg%nCmxNv
          solvdim=mult_solvdim*n_nonzeros
          solvdim1=mult_solvdim1*n_nonzeros
          call alloc_b2mod_ma28_for_us                                  !sv 13.10.06
@@ -104,7 +102,7 @@
        endif
       endif
 *   ..test nCv, itcnt
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..obtain work space
       if (ncall.eq.0) then

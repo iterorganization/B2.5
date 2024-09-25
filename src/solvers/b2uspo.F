@@ -50,7 +50,7 @@
       logical lnonzero
 *   ..procedures
       external xertst, sfill
-      external b2xvsg, b2xvff, b2ux5p
+      external b2xvsg, b2ux5p
 
 *-----------------------------------------------------------------------
 *.computation

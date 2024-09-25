@@ -30,8 +30,8 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 opsys = ultrix
@@ -48,6 +48,7 @@ ifeq ($(realkind),8)
   FCOPTS = -i4 -O
 endif
 FC = f77
+FN = $(FC)
 CPP = /lib/cpp
 CPPOPTS = -C -P -I$(srcdir) $(EQUIVS)
 BLD = ar -r -c -u -s -v
@@ -62,8 +63,10 @@ endif
 ifeq ($(realkind),8)
   LDLIBES = $(LIBB2) $(LD_NAG)
 endif
-LD = f77
+LD = $(FC)
+LN = $(FN)
 LDOPTS = $(nil)
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

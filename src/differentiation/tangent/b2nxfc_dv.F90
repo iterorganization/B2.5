@@ -72,7 +72,7 @@ SUBROUTINE B2NXFC_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd, ub&
   CHARACTER :: charns*3
 !   ..procedures
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVFF_NODIFF, B2XVSG_NODIFF, HBOUT, INTFACEH
+  EXTERNAL B2XVSG, HBOUT, INTFACEH
   REAL(kind=r8), DIMENSION(ncv) :: arg1
   REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg1d
   CHARACTER(len=14) :: arg10
@@ -101,7 +101,7 @@ SUBROUTINE B2NXFC_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd, ub&
   CALL SUBINI('b2nxfc')
 !   ..set internal parameters on first call
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxfc .LT. 3) THEN
     IF (ncall_b2nxfc .EQ. switch%b2news_ncallout) THEN
@@ -110,7 +110,7 @@ SUBROUTINE B2NXFC_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd, ub&
 !WG_TODO     &  'cvsb',cvsb,'ua',cvsb,'na',cvsb,'ua')
     END IF
 !    ..test sign of rob
-    CALL B2XVSG_NODIFF(ncv, rob, 1, 'rob', '.gt.')
+    CALL B2XVSG(ncv, rob, 1, 'rob', '.gt.')
   END IF
 !
 !   ..compute flcbx, cvcbx
@@ -137,12 +137,12 @@ SUBROUTINE B2NXFC_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd, ub&
     DO ifc=1,nfc
       temp = rob(mpg%fccv(ifc, 1)) + rob(mpg%fccv(ifc, 2))
       DO nd=1,nbdirs
-        flcbd(nd, ifc, 0) = flubd(nd, ifc, 0) + geo%fcpbshz(ifc)*&
-&         0.5e0_R8*(temp*wrkfd(nd, ifc)+wrkf(ifc)*(robd(nd, mpg%fccv(ifc&
-&         , 1))+robd(nd, mpg%fccv(ifc, 2))))
+        flcbd(nd, ifc, 0) = flubd(nd, ifc, 0) + geo%fcpbshz(ifc)*0.5_R8*&
+&         (temp*wrkfd(nd, ifc)+wrkf(ifc)*(robd(nd, mpg%fccv(ifc, 1))+&
+&         robd(nd, mpg%fccv(ifc, 2))))
       END DO
-      flcb(ifc, 0) = flub(ifc, 0) + geo%fcpbshz(ifc)*0.5e0_R8*(wrkf(ifc)&
-&       *temp)
+      flcb(ifc, 0) = flub(ifc, 0) + geo%fcpbshz(ifc)*0.5_R8*(wrkf(ifc)*&
+&       temp)
     END DO
     DO nd=1,nbdirs
       cvcbd(nd, :, 0) = cvsbd(nd, :, 0)
@@ -242,7 +242,7 @@ SUBROUTINE B2NXFC_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, ub, &
   CHARACTER :: charns*3
 !   ..procedures
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVFF_NODIFF, B2XVSG_NODIFF, HBOUT, INTFACEH
+  EXTERNAL B2XVSG, HBOUT, INTFACEH
   REAL(kind=r8), DIMENSION(ncv) :: arg1
   CHARACTER(len=14) :: arg10
   CHARACTER(len=13) :: arg11
@@ -267,7 +267,7 @@ SUBROUTINE B2NXFC_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, ub, &
   CALL SUBINI('b2nxfc')
 !   ..set internal parameters on first call
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxfc .LT. 3) THEN
     IF (ncall_b2nxfc .EQ. switch%b2news_ncallout) THEN
@@ -276,7 +276,7 @@ SUBROUTINE B2NXFC_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, ub, &
 !WG_TODO     &  'cvsb',cvsb,'ua',cvsb,'na',cvsb,'ua')
     END IF
 !    ..test sign of rob
-    CALL B2XVSG_NODIFF(ncv, rob, 1, 'rob', '.gt.')
+    CALL B2XVSG(ncv, rob, 1, 'rob', '.gt.')
   END IF
 !
 !   ..compute flcbx, cvcbx
@@ -293,7 +293,7 @@ SUBROUTINE B2NXFC_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, ub, &
 !     ..compute flcbx, cvcbx        
     DO ifc=1,nfc
       flcb(ifc, 0) = flub(ifc, 0) + geo%fcpbshz(ifc)*wrkf(ifc)*(rob(mpg%&
-&       fccv(ifc, 1))+rob(mpg%fccv(ifc, 2)))*0.5e0_R8
+&       fccv(ifc, 1))+rob(mpg%fccv(ifc, 2)))*0.5_R8
     END DO
     cvcb(:, 0) = cvsb(:, 0)
   END IF

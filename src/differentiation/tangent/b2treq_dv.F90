@@ -19,16 +19,18 @@
 !.specification
 !
 !xpb !srv 01.07.09
-SUBROUTINE B2TREQ_DV(ncv, switch, vol, te, ted, ti, tid, ne, ned, ni, &
-& nid, ne2m, ne2md, lnlam, lnlamd, st_ext, ceqp, ceqpd, nbdirs)
+SUBROUTINE B2TREQ_DV(ncv, switch, switchd, vol, vold, te, ted, ti, tid, &
+& ne, ned, ni, nid, ne2m, ne2md, lnlam, lnlamd, st_ext, ceqp, ceqpd, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2treq
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2treq, ncall_b2tlnl
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlnl
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -40,13 +42,14 @@ SUBROUTINE B2TREQ_DV(ncv, switch, vol, te, ted, ti, tid, ne, ned, ni, &
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
 !xpb !srv 01.07.09
   REAL(kind=r8) :: vol(ncv), ni(ncv, 0:1), te(ncv), ti(ncv), ne(ncv), &
 & ne2m(ncv), lnlam(ncv)
-  REAL(kind=r8) :: nid(nbdirsmax, ncv, 0:1), ted(nbdirsmax, ncv), tid(&
-& nbdirsmax, ncv), ned(nbdirsmax, ncv), ne2md(nbdirsmax, ncv), lnlamd(&
-& nbdirsmax, ncv)
+  REAL(kind=r8) :: vold(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), ted(&
+& nbdirsmax, ncv), tid(nbdirsmax, ncv), ned(nbdirsmax, ncv), ne2md(&
+& nbdirsmax, ncv), lnlamd(nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: ceqp(ncv)
   REAL(kind=r8) :: ceqpd(nbdirsmax, ncv)
@@ -80,7 +83,7 @@ SUBROUTINE B2TREQ_DV(ncv, switch, vol, te, ted, ti, tid, ne, ned, ni, &
 !   ..procedures
   INTRINSIC SQRT
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   INTEGER :: nd
@@ -96,20 +99,20 @@ SUBROUTINE B2TREQ_DV(ncv, switch, vol, te, ted, ti, tid, ne, ned, ni, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2treq')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2treq .LT. 3) THEN
 !    ..test vol, state
-    CALL B2XVSG_NODIFF(ncv, vol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, vol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne2m, 1, 'ne2m', '.gt.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, ne2m, 1, 'ne2m', '.gt.')
   END IF
 !
-  CALL B2TLNL_DV(ncv, switch, switch%icase_ei, te, ted, ti, tid, ne, ned&
-&          , lnlam, lnlamd, nbdirs)
+  CALL B2TLNL_DV(ncv, switch, switchd, switch%icase_ei, te, ted, ti, tid&
+&          , ne, ned, lnlam, lnlamd, nbdirs)
 !srv 20.09.11
 !   ..compute ceqp
   DO icv=1,ncv
@@ -154,9 +157,10 @@ SUBROUTINE B2TREQ_NODIFF(ncv, switch, vol, te, ti, ne, ni, ne2m, lnlam, &
   USE B2MOD_B2CMPA_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2treq
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2treq, ncall_b2tlnl
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlnl
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -203,7 +207,7 @@ SUBROUTINE B2TREQ_NODIFF(ncv, switch, vol, te, ti, ne, ni, ne2m, lnlam, &
 !   ..procedures
   INTRINSIC SQRT
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: arg1
   REAL(kind=r8) :: result1
 !   ..initialisation
@@ -214,16 +218,16 @@ SUBROUTINE B2TREQ_NODIFF(ncv, switch, vol, te, ti, ne, ni, ne2m, lnlam, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2treq')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2treq .LT. 3) THEN
 !    ..test vol, state
-    CALL B2XVSG_NODIFF(ncv, vol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, vol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne2m, 1, 'ne2m', '.gt.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, ne2m, 1, 'ne2m', '.gt.')
   END IF
 !
   CALL B2TLNL_NODIFF(ncv, switch, switch%icase_ei, te, ti, ne, lnlam)

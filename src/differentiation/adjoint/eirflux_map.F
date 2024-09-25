@@ -8,35 +8,33 @@ c calculating the index shift in the Eirene flux arrays.
 c to be used in interface subroutines to Eirene flux data
 c
 c typ    : is the type of the surface which has to match
-c          (for targets 2: radial surface)
-c ind    : index of the radial surface which has to match
+c          (for targets 1: radial surface)
+c ind    : index of the non-standard surface which has to match
 c istart,: starting and ending indices on this surface which have to match
 c   iend :
 c shift  : resulting shift which has to be used in accessing the arrays
 c
       subroutine b2neut_ind(typ,ind,istart,iend,shift)
       use b2mod_types
+      use b2mod_neutrals_namelist_diff
 #ifdef B25_EIRENE
       use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
-#endif
       use b2mod_dimensions
-      implicit none
-#ifndef B25_EIRENE
-#     include "COUPLE/KOPPLDIM.F"
 #endif
+      implicit none
       integer,intent(in) :: typ,ind,istart,iend
       integer,intent(out) :: shift
       integer :: is
 
       do is=1,nnstsi
-        if(typ.eq.eirdiag_nds_typ(is).and.
-     f     ind.eq.eirdiag_nds_srf(is)) then
-         if(istart.ge.eirdiag_nds_start(is).and.
-     f      iend.le.eirdiag_nds_end(is)) then
+        if(typ.eq.isrftype(nlim+is).and.ltns(ind).eq.is) then
+         if((iend-istart+1).eq.
+     .      (eirdiag_nds_ind(is+1)-eirdiag_nds_ind(is)+1)) then
 c the surface has been found
-           shift=eirdiag_nds_ind(is)+istart-eirdiag_nds_start(is)
+           shift=eirdiag_nds_ind(is)+istart
            goto 20
          end if
         end if
@@ -44,7 +42,6 @@ c the surface has been found
       shift=-1
    20 return
       end subroutine b2neut_ind
-
 
 c=======================================================================
 c check if surface areas in B2 and Eirene are the same
@@ -57,9 +54,10 @@ c
       subroutine b2neut_surfcheck(s,t,n,shift)
       use b2mod_types
 #ifdef B25_EIRENE
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       use b2mod_dimensions
       implicit none
@@ -98,7 +96,6 @@ c
       return
       end subroutine b2neut_surfcheck
 
-
 c=======================================================================
 cvk power flux delivered to the surface with neutrals
 c
@@ -110,14 +107,14 @@ c          (including sputtered neutrals)
 c  n     : length of arrays wneut and wnpr
 c  shift : data offset in the Eirene arrays
 
-
-
       subroutine b2neut_eng(wneut,wnpr,n,shift)
       use b2mod_types
 #ifdef B25_EIRENE
       use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       use b2mod_dimensions
       implicit none
@@ -158,8 +155,10 @@ c
       use b2mod_types
 #ifdef B25_EIRENE
       use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       use b2mod_dimensions
       implicit none
@@ -186,8 +185,6 @@ c molecules
       return
       end subroutine b2neut_flux
 
-
-
 c=======================================================================
 cak average energy of impinging neutrals
 c
@@ -202,8 +199,10 @@ c
       use b2mod_constants
 #ifdef B25_EIRENE
       use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use b2mod_eirdiag
+      use b2mod_dimensions
 #endif
       use b2mod_dimensions
       implicit none

@@ -1,6 +1,7 @@
-      module b2mod_ma28_for_11diag                                     !srv 02.04.18 {
-
+      module b2mod_ma28_for_11diag                               !srv 02.04.18 {
       use b2mod_types
+      implicit none
+
       real (kind=R8), allocatable, save ::
      * r1(:),
      * s1(:),
@@ -23,11 +24,12 @@
      * irnh_save(:),
      * icnh_save(:)
 
-      integer nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
+      integer, save :: nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
 
       contains
 
       subroutine alloc_b2mod_ma28_for_11diag
+      implicit none
 
       write(*,*) 'Allocating space for b2mod_ma28_for_11diag'
       write(*,*) 'nnd        = ',nnd
@@ -46,7 +48,7 @@
       allocate(ish(1:n_nonzeros))
       allocate(jsh(1:n_nonzeros))
       allocate(ijsh(1:n_nonzeros))
-      allocate(irnh(1:solvdim))
+      allocate(irnh(1:solvdim1))
       allocate(icnh(1:solvdim))
       allocate(icnhkeep(1:solvdim))
       allocate(ikeep(1:nnd,5))
@@ -82,4 +84,4 @@
 
       end subroutine dealloc_b2mod_ma28_for_11diag
 
-      end module b2mod_ma28_for_11diag                                 !srv 02.04.18 }
+      end module b2mod_ma28_for_11diag                           !srv 02.04.18 }

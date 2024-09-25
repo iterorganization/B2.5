@@ -70,7 +70,7 @@ SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, &
   REAL(kind=r8) :: dpod(nbdirsmax, nfc, 0:1), povd(nbdirsmax, mpg%nvx)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF, DIFF_R_NODIFF
+  EXTERNAL B2XVSG, DIFF_R_NODIFF
   INTEGER :: nd
   INTEGER :: nbdirs
 !-----------------------------------------------------------------------
@@ -79,14 +79,15 @@ SUBROUTINE B2TANML_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, &
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2tanml')
-!   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, ns
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !srv 27.02.13
 !
-  IF (switch%no_current .NE. 0 .OR. switch%fch_anomalous .EQ. 0.0e0_R8) &
+  IF (switch%no_current .NE. 0 .OR. switch%fch_anomalous .EQ. 0.0_R8) &
 & THEN
 !srv 27.02.13
-    fchanml = 0.0e0_R8
+    fchanml = 0.0_R8
     DO nd=1,nbdirsmax
       fchanmld(nd, :, :) = 0.D0
     END DO
@@ -176,21 +177,22 @@ SUBROUTINE B2TANML_NODIFF(ncv, nfc, ns, switch, geo, mpg, csig_an, po, &
   REAL(kind=r8) :: dpo(nfc, 0:1), pov(mpg%nvx)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF, DIFF_R_NODIFF
+  EXTERNAL B2XVSG, DIFF_R_NODIFF
 !-----------------------------------------------------------------------
 !.computation
 !
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2tanml')
-!   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, ns
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !srv 27.02.13
 !
-  IF (switch%no_current .NE. 0 .OR. switch%fch_anomalous .EQ. 0.0e0_R8) &
+  IF (switch%no_current .NE. 0 .OR. switch%fch_anomalous .EQ. 0.0_R8) &
 & THEN
 !srv 27.02.13
-    fchanml = 0.0e0_R8
+    fchanml = 0.0_R8
   ELSE
 !srv 27.02.13
 !

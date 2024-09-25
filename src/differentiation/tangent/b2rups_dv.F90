@@ -359,7 +359,7 @@ SUBROUTINE B2RUPS_NODIFF(nget, nx, ny, ns, ne, na, ua, uadia, te, ti, tn&
 & , flocs(-1:nx, -1:ny, 0:1, 0:ns-1)
 !   ..procedures
   EXTERNAL XERTST, CFRURE
-  EXTERNAL B2XVSG_NODIFF, B2XPNE_NODIFF
+  EXTERNAL B2XVSG, B2XPNE_NODIFF
   INTEGER :: arg1
 !
 !-----------------------------------------------------------------------
@@ -388,7 +388,7 @@ SUBROUTINE B2RUPS_NODIFF(nget, nx, ny, ns, ne, na, ua, uadia, te, ti, tn&
       rza(-1:nx, -1:ny, is) = (zamin(is)+zamax(is))/2.0_R8
       rz2(-1:nx, -1:ny, is) = ((zamin(is)+zamax(is))/2.0_R8)**2
     END DO
-    CALL B2XPNE_ST_NODIFF(nx, ny, ns, rza, na, zero, ne)
+    CALL B2XPNE_ST(nx, ny, ns, rza, na, zero, ne)
   END IF
   arg1 = n2*ns
   CALL CFRURE(nget, arg1, ua, 'ua')
@@ -487,7 +487,7 @@ SUBROUTINE B2RUPS_NODIFF(nget, nx, ny, ns, ne, na, ua, uadia, te, ti, tn&
     END DO
   END IF
   arg1 = n2*ns
-  CALL B2XVSG_NODIFF(arg1, kinrgy, 1, 'kinrgy', '.ge.')
+  CALL B2XVSG(arg1, kinrgy, 1, 'kinrgy', '.ge.')
 !   ..read time
   IF (b2fstat_version .GE. '01.001.018') THEN
 !xpb

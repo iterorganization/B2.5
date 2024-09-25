@@ -102,8 +102,19 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 & nbdirsmax, mpg%nft), tt1d(nbdirsmax, mpg%nft), tt2d(nbdirsmax, mpg%nft&
 & ), tt3d(nbdirsmax, mpg%nft)
 !   ..procedures
-  EXTERNAL XERTST, B2XVSG_NODIFF, XERRAB
+  EXTERNAL XERTST, B2XVSG, XERRAB
   INTRINSIC MAX
+  INTRINSIC MIN
+  REAL(kind=r8) :: y1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
+  REAL(kind=r8) :: y2
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y2d
+  REAL(kind=r8) :: y3
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y3d
+  REAL(kind=r8) :: y4
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y4d
+  REAL(kind=r8) :: y5
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: y5d
   REAL(kind=r8) :: max1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: max1d
   REAL(kind=r8) :: max2
@@ -152,7 +163,7 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2upht')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test rxf, pcm0
   CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
@@ -161,24 +172,24 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !   ..test sign of na, ni, vol, te, ti, ne
   IF (ncall_b2upht .LT. 3) THEN
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, tn, 1, 'tn', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, kt, 1, 'kt', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, zt, 1, 'zt', '.ge.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
   END IF
 !
 ! ..apply the correction
 !   ..adjust te, ti, po
-  tt0 = 0.0e0_R8
-  tt1 = 0.0e0_R8
-  tt2 = 0.0e0_R8
-  tt3 = 0.0e0_R8
+  tt0 = 0.0_R8
+  tt1 = 0.0_R8
+  tt2 = 0.0_R8
+  tt3 = 0.0_R8
   DO nd=1,nbdirsmax
     dtid(nd, :) = 0.D0
   END DO
@@ -502,18 +513,20 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
     IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
       ift = mpg%cvft(icv)
-      DO nd=1,nbdirs
-        tt0d(nd, ift) = tt0d(nd, ift) + geo%cvvol(icv)*nid(nd, icv, 1)
-        tt1d(nd, ift) = tt1d(nd, ift) + geo%cvvol(icv)*(dti1(icv)*nid(nd&
-&         , icv, 1)+ni(icv, 1)*dti1d(nd, icv))
-        tt2d(nd, ift) = tt2d(nd, ift) + geo%cvvol(icv)*ned(nd, icv)
-        tt3d(nd, ift) = tt3d(nd, ift) + geo%cvvol(icv)*(dte1(icv)*ned(nd&
-&         , icv)+ne(icv)*dte1d(nd, icv))
-      END DO
-      tt0(ift) = tt0(ift) + geo%cvvol(icv)*ni(icv, 1)
-      tt1(ift) = tt1(ift) + geo%cvvol(icv)*ni(icv, 1)*dti1(icv)
-      tt2(ift) = tt2(ift) + geo%cvvol(icv)*ne(icv)
-      tt3(ift) = tt3(ift) + geo%cvvol(icv)*ne(icv)*dte1(icv)
+      IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+        DO nd=1,nbdirs
+          tt0d(nd, ift) = tt0d(nd, ift) + geo%cvvol(icv)*nid(nd, icv, 1)
+          tt1d(nd, ift) = tt1d(nd, ift) + geo%cvvol(icv)*(dti1(icv)*nid(&
+&           nd, icv, 1)+ni(icv, 1)*dti1d(nd, icv))
+          tt2d(nd, ift) = tt2d(nd, ift) + geo%cvvol(icv)*ned(nd, icv)
+          tt3d(nd, ift) = tt3d(nd, ift) + geo%cvvol(icv)*(dte1(icv)*ned(&
+&           nd, icv)+ne(icv)*dte1d(nd, icv))
+        END DO
+        tt0(ift) = tt0(ift) + geo%cvvol(icv)*ni(icv, 1)
+        tt1(ift) = tt1(ift) + geo%cvvol(icv)*ni(icv, 1)*dti1(icv)
+        tt2(ift) = tt2(ift) + geo%cvvol(icv)*ne(icv)
+        tt3(ift) = tt3(ift) + geo%cvvol(icv)*ne(icv)*dte1(icv)
+      END IF
     END IF
   END DO
 !
@@ -522,24 +535,26 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
     IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
       ift = mpg%cvft(icv)
+      IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
 ! IYS 19.12.2017
-      temp = tt1(ift)/tt0(ift)
-      temp0 = tt1(ift)/tt0(ift)
-      DO nd=1,nbdirs
-        dti1d(nd, icv) = (tt1d(nd, ift)-temp*tt0d(nd, ift))/tt0(ift) + &
-&         corr_core_dt*(dti1d(nd, icv)-(tt1d(nd, ift)-temp0*tt0d(nd, ift&
-&         ))/tt0(ift))
-      END DO
-      dti1(icv) = temp + corr_core_dt*(dti1(icv)-temp0)
+        temp = tt1(ift)/tt0(ift)
+        temp0 = tt1(ift)/tt0(ift)
+        DO nd=1,nbdirs
+          dti1d(nd, icv) = (tt1d(nd, ift)-temp*tt0d(nd, ift))/tt0(ift) +&
+&           corr_core_dt*(dti1d(nd, icv)-(tt1d(nd, ift)-temp0*tt0d(nd, &
+&           ift))/tt0(ift))
+        END DO
+        dti1(icv) = temp + corr_core_dt*(dti1(icv)-temp0)
 ! IYS 19.12.2017
-      temp0 = tt3(ift)/tt2(ift)
-      temp = tt3(ift)/tt2(ift)
-      DO nd=1,nbdirs
-        dte1d(nd, icv) = (tt3d(nd, ift)-temp0*tt2d(nd, ift))/tt2(ift) + &
-&         corr_core_dt*(dte1d(nd, icv)-(tt3d(nd, ift)-temp*tt2d(nd, ift)&
-&         )/tt2(ift))
-      END DO
-      dte1(icv) = temp0 + corr_core_dt*(dte1(icv)-temp)
+        temp0 = tt3(ift)/tt2(ift)
+        temp = tt3(ift)/tt2(ift)
+        DO nd=1,nbdirs
+          dte1d(nd, icv) = (tt3d(nd, ift)-temp0*tt2d(nd, ift))/tt2(ift) &
+&           + corr_core_dt*(dte1d(nd, icv)-(tt3d(nd, ift)-temp*tt2d(nd, &
+&           ift))/tt2(ift))
+        END DO
+        dte1(icv) = temp0 + corr_core_dt*(dte1(icv)-temp)
+      END IF
     END IF
     DO nd=1,nbdirs
       dted(nd, icv) = dte1d(nd, icv)
@@ -548,18 +563,32 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
     END DO
     dte(icv) = dte1(icv)
     dti(icv) = dti1(icv)
-!xpb
+!xpb !nh
     IF (solvereg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. te(icv) + dte(icv)) THEN
+      IF (switch%b2upht_te_max*ev .GT. te(icv) + dte(icv)) THEN
         DO nd=1,nbdirs
-          ted(nd, icv) = ted(nd, icv) + dted(nd, icv)
+          y1d(nd) = ted(nd, icv) + dted(nd, icv)
         END DO
-        te(icv) = te(icv) + dte(icv)
+        y1 = te(icv) + dte(icv)
+      ELSE
+        DO nd=1,nbdirs
+          y1d(nd) = 0.D0
+        END DO
+        y1 = switch%b2upht_te_max*ev
+        DO nd=1,nbdirsmax
+          y1d(nd) = 0.D0
+        END DO
+      END IF
+      IF (switch%b2upht_te_min*ev .LT. y1) THEN
+        DO nd=1,nbdirs
+          ted(nd, icv) = y1d(nd)
+        END DO
+        te(icv) = y1
       ELSE
         DO nd=1,nbdirs
           ted(nd, icv) = 0.D0
         END DO
-        te(icv) = 1.0e-5_R8*ev
+        te(icv) = switch%b2upht_te_min*ev
       END IF
     END IF
     IF (solvpreg(ireg) .AND. po_solve .AND. switch%pot_eq .EQ. 1 .AND. &
@@ -574,57 +603,113 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
       END DO
       po(icv) = 3.1_R8*te(icv)/qe
     END IF
-!xpb
+!xpb !nh
     IF (solvireg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. ti(icv) + dti(icv)) THEN
+      IF (switch%b2upht_ti_max*ev .GT. ti(icv) + dti(icv)) THEN
         DO nd=1,nbdirs
-          tid(nd, icv) = tid(nd, icv) + dtid(nd, icv)
+          y2d(nd) = tid(nd, icv) + dtid(nd, icv)
         END DO
-        ti(icv) = ti(icv) + dti(icv)
+        y2 = ti(icv) + dti(icv)
+      ELSE
+        DO nd=1,nbdirs
+          y2d(nd) = 0.D0
+        END DO
+        y2 = switch%b2upht_ti_max*ev
+        DO nd=1,nbdirsmax
+          y2d(nd) = 0.D0
+        END DO
+      END IF
+      IF (switch%b2upht_ti_min*ev .LT. y2) THEN
+        DO nd=1,nbdirs
+          tid(nd, icv) = y2d(nd)
+        END DO
+        ti(icv) = y2
       ELSE
         DO nd=1,nbdirs
           tid(nd, icv) = 0.D0
         END DO
-        ti(icv) = 1.0e-5_R8*ev
+        ti(icv) = switch%b2upht_ti_min*ev
       END IF
     END IF
     IF (solvnreg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. tn(icv) + dtn(icv)) THEN
+      IF (switch%b2upht_tn_max*ev .GT. tn(icv) + dtn(icv)) THEN
         DO nd=1,nbdirs
-          tnd(nd, icv) = tnd(nd, icv) + dtnd(nd, icv)
+          y3d(nd) = tnd(nd, icv) + dtnd(nd, icv)
         END DO
-        tn(icv) = tn(icv) + dtn(icv)
+        y3 = tn(icv) + dtn(icv)
+      ELSE
+        DO nd=1,nbdirs
+          y3d(nd) = 0.D0
+        END DO
+        y3 = switch%b2upht_tn_max*ev
+        DO nd=1,nbdirsmax
+          y3d(nd) = 0.D0
+        END DO
+      END IF
+      IF (switch%b2upht_tn_min*ev .LT. y3) THEN
+        DO nd=1,nbdirs
+          tnd(nd, icv) = y3d(nd)
+        END DO
+        tn(icv) = y3
       ELSE
         DO nd=1,nbdirs
           tnd(nd, icv) = 0.D0
         END DO
-        tn(icv) = 1.0e-5_R8*ev
+        tn(icv) = switch%b2upht_tn_min*ev
       END IF
     END IF
     IF (switch%solve_keps .GT. 0 .AND. solvkreg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. kt(icv) + dkt(icv)) THEN
+      IF (switch%b2upht_tn_max*ev .GT. kt(icv) + dkt(icv)) THEN
         DO nd=1,nbdirs
-          ktd(nd, icv) = ktd(nd, icv) + dktd(nd, icv)
+          y4d(nd) = ktd(nd, icv) + dktd(nd, icv)
         END DO
-        kt(icv) = kt(icv) + dkt(icv)
+        y4 = kt(icv) + dkt(icv)
+      ELSE
+        DO nd=1,nbdirs
+          y4d(nd) = 0.D0
+        END DO
+        y4 = switch%b2upht_tn_max*ev
+        DO nd=1,nbdirsmax
+          y4d(nd) = 0.D0
+        END DO
+      END IF
+      IF (switch%b2upht_kt_min*ev .LT. y4) THEN
+        DO nd=1,nbdirs
+          ktd(nd, icv) = y4d(nd)
+        END DO
+        kt(icv) = y4
       ELSE
         DO nd=1,nbdirs
           ktd(nd, icv) = 0.D0
         END DO
-        kt(icv) = 1.0e-5_R8*ev
+        kt(icv) = switch%b2upht_kt_min*ev
       END IF
     END IF
     IF (switch%solve_keps .GT. 1 .AND. solvzreg(ireg)) THEN
-      IF (1.0e-8_R8*ev .LT. zt(icv) + dzt(icv)) THEN
+      IF (switch%b2upht_zt_max*ev .GT. zt(icv) + dzt(icv)) THEN
         DO nd=1,nbdirs
-          ztd(nd, icv) = ztd(nd, icv) + dztd(nd, icv)
+          y5d(nd) = ztd(nd, icv) + dztd(nd, icv)
         END DO
-        zt(icv) = zt(icv) + dzt(icv)
+        y5 = zt(icv) + dzt(icv)
+      ELSE
+        DO nd=1,nbdirs
+          y5d(nd) = 0.D0
+        END DO
+        y5 = switch%b2upht_zt_max*ev
+        DO nd=1,nbdirsmax
+          y5d(nd) = 0.D0
+        END DO
+      END IF
+      IF (switch%b2upht_zt_min*ev .LT. y5) THEN
+        DO nd=1,nbdirs
+          ztd(nd, icv) = y5d(nd)
+        END DO
+        zt(icv) = y5
       ELSE
         DO nd=1,nbdirs
           ztd(nd, icv) = 0.D0
         END DO
-        zt(icv) = 1.0e-8_R8*ev
+        zt(icv) = switch%b2upht_zt_min*ev
       END IF
     END IF
   END DO
@@ -746,8 +831,14 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
   REAL(kind=r8) :: dte1(ncv), dti1(ncv), tt0(mpg%nft), tt1(mpg%nft), tt2&
 & (mpg%nft), tt3(mpg%nft)
 !   ..procedures
-  EXTERNAL XERTST, B2XVSG_NODIFF, XERRAB
+  EXTERNAL XERTST, B2XVSG, XERRAB
   INTRINSIC MAX
+  INTRINSIC MIN
+  REAL(kind=r8) :: y1
+  REAL(kind=r8) :: y2
+  REAL(kind=r8) :: y3
+  REAL(kind=r8) :: y4
+  REAL(kind=r8) :: y5
   REAL(kind=r8) :: max1
   REAL(kind=r8) :: max2
   REAL(kind=r8) :: max3
@@ -775,7 +866,7 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2upht')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test rxf, pcm0
   CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
@@ -784,24 +875,24 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
 !   ..test sign of na, ni, vol, te, ti, ne
   IF (ncall_b2upht .LT. 3) THEN
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, tn, 1, 'tn', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, kt, 1, 'kt', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, zt, 1, 'zt', '.ge.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
   END IF
 !
 ! ..apply the correction
 !   ..adjust te, ti, po
-  tt0 = 0.0e0_R8
-  tt1 = 0.0e0_R8
-  tt2 = 0.0e0_R8
-  tt3 = 0.0e0_R8
+  tt0 = 0.0_R8
+  tt1 = 0.0_R8
+  tt2 = 0.0_R8
+  tt3 = 0.0_R8
   DO icv=1,ncv
     ireg = mpg%cvreg(icv)
 !!!   (stylec is a numerical switch, needs experiments)
@@ -934,10 +1025,12 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
     IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
       ift = mpg%cvft(icv)
-      tt0(ift) = tt0(ift) + geo%cvvol(icv)*ni(icv, 1)
-      tt1(ift) = tt1(ift) + geo%cvvol(icv)*ni(icv, 1)*dti1(icv)
-      tt2(ift) = tt2(ift) + geo%cvvol(icv)*ne(icv)
-      tt3(ift) = tt3(ift) + geo%cvvol(icv)*ne(icv)*dte1(icv)
+      IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
+        tt0(ift) = tt0(ift) + geo%cvvol(icv)*ni(icv, 1)
+        tt1(ift) = tt1(ift) + geo%cvvol(icv)*ni(icv, 1)*dti1(icv)
+        tt2(ift) = tt2(ift) + geo%cvvol(icv)*ne(icv)
+        tt3(ift) = tt3(ift) + geo%cvvol(icv)*ne(icv)*dte1(icv)
+      END IF
     END IF
   END DO
 !
@@ -946,22 +1039,29 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
     IF (mpg%cvonclosedsurface(icv) .AND. icv .LE. mpg%nci) THEN
 ! IYS 27.03.2019
       ift = mpg%cvft(icv)
+      IF (ift .GT. 0 .AND. ift .LE. mpg%nft) THEN
 ! IYS 19.12.2017
-      dti1(icv) = tt1(ift)/tt0(ift) + corr_core_dt*(dti1(icv)-tt1(ift)/&
-&       tt0(ift))
+        dti1(icv) = tt1(ift)/tt0(ift) + corr_core_dt*(dti1(icv)-tt1(ift)&
+&         /tt0(ift))
 ! IYS 19.12.2017
-      dte1(icv) = tt3(ift)/tt2(ift) + corr_core_dt*(dte1(icv)-tt3(ift)/&
-&       tt2(ift))
+        dte1(icv) = tt3(ift)/tt2(ift) + corr_core_dt*(dte1(icv)-tt3(ift)&
+&         /tt2(ift))
+      END IF
     END IF
     dte(icv) = dte1(icv)
 !srv 25.07.17
     dti(icv) = dti1(icv)
-!xpb
+!xpb !nh
     IF (solvereg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. te(icv) + dte(icv)) THEN
-        te(icv) = te(icv) + dte(icv)
+      IF (switch%b2upht_te_max*ev .GT. te(icv) + dte(icv)) THEN
+        y1 = te(icv) + dte(icv)
       ELSE
-        te(icv) = 1.0e-5_R8*ev
+        y1 = switch%b2upht_te_max*ev
+      END IF
+      IF (switch%b2upht_te_min*ev .LT. y1) THEN
+        te(icv) = y1
+      ELSE
+        te(icv) = switch%b2upht_te_min*ev
       END IF
     END IF
     IF (solvpreg(ireg) .AND. po_solve .AND. switch%pot_eq .EQ. 1 .AND. &
@@ -970,33 +1070,53 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
     ELSE IF (switch%pot_eq .EQ. 2) THEN
       po(icv) = 3.1_R8*te(icv)/qe
     END IF
-!xpb
+!xpb !nh
     IF (solvireg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. ti(icv) + dti(icv)) THEN
-        ti(icv) = ti(icv) + dti(icv)
+      IF (switch%b2upht_ti_max*ev .GT. ti(icv) + dti(icv)) THEN
+        y2 = ti(icv) + dti(icv)
       ELSE
-        ti(icv) = 1.0e-5_R8*ev
+        y2 = switch%b2upht_ti_max*ev
+      END IF
+      IF (switch%b2upht_ti_min*ev .LT. y2) THEN
+        ti(icv) = y2
+      ELSE
+        ti(icv) = switch%b2upht_ti_min*ev
       END IF
     END IF
     IF (solvnreg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. tn(icv) + dtn(icv)) THEN
-        tn(icv) = tn(icv) + dtn(icv)
+      IF (switch%b2upht_tn_max*ev .GT. tn(icv) + dtn(icv)) THEN
+        y3 = tn(icv) + dtn(icv)
       ELSE
-        tn(icv) = 1.0e-5_R8*ev
+        y3 = switch%b2upht_tn_max*ev
+      END IF
+      IF (switch%b2upht_tn_min*ev .LT. y3) THEN
+        tn(icv) = y3
+      ELSE
+        tn(icv) = switch%b2upht_tn_min*ev
       END IF
     END IF
     IF (switch%solve_keps .GT. 0 .AND. solvkreg(ireg)) THEN
-      IF (1.0e-5_R8*ev .LT. kt(icv) + dkt(icv)) THEN
-        kt(icv) = kt(icv) + dkt(icv)
+      IF (switch%b2upht_tn_max*ev .GT. kt(icv) + dkt(icv)) THEN
+        y4 = kt(icv) + dkt(icv)
       ELSE
-        kt(icv) = 1.0e-5_R8*ev
+        y4 = switch%b2upht_tn_max*ev
+      END IF
+      IF (switch%b2upht_kt_min*ev .LT. y4) THEN
+        kt(icv) = y4
+      ELSE
+        kt(icv) = switch%b2upht_kt_min*ev
       END IF
     END IF
     IF (switch%solve_keps .GT. 1 .AND. solvzreg(ireg)) THEN
-      IF (1.0e-8_R8*ev .LT. zt(icv) + dzt(icv)) THEN
-        zt(icv) = zt(icv) + dzt(icv)
+      IF (switch%b2upht_zt_max*ev .GT. zt(icv) + dzt(icv)) THEN
+        y5 = zt(icv) + dzt(icv)
       ELSE
-        zt(icv) = 1.0e-8_R8*ev
+        y5 = switch%b2upht_zt_max*ev
+      END IF
+      IF (switch%b2upht_zt_min*ev .LT. y5) THEN
+        zt(icv) = y5
+      ELSE
+        zt(icv) = switch%b2upht_zt_min*ev
       END IF
     END IF
   END DO

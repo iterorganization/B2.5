@@ -30,9 +30,6 @@ SUBROUTINE B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-! csc The following are not necessary for computation but are needed
-!     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tiner
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -41,7 +38,6 @@ SUBROUTINE B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !-----------------------------------------------------------------------
 !.end b2tiner
 !
-!   ..extensive tests on first few calls
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
@@ -78,7 +74,7 @@ SUBROUTINE B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 & nbdirsmax, nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   REAL(kind=r8) :: result1
   INTEGER :: nd
@@ -92,10 +88,10 @@ SUBROUTINE B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tiner')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 ! Drift terms
   result1 = MAXVAL(facdrift)
-  IF (switch%fch_inert .NE. 0.0e0_R8 .AND. result1 .NE. 0.0_R8 .AND. &
+  IF (switch%fch_inert .NE. 0.0_R8 .AND. result1 .NE. 0.0_R8 .AND. &
 &     switch%no_current .EQ. 0) THEN
 !srv 07.07.99
 !
@@ -146,14 +142,13 @@ SUBROUTINE B2TINER_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 &     )))
 !
   ELSE
-    fchinert = 0.0e0_R8
+    fchinert = 0.0_R8
     DO nd=1,nbdirsmax
       fchinertd(nd, :, :) = 0.D0
     END DO
   END IF
 !
 ! ..return
-  ncall_b2tiner = ncall_b2tiner + 1
   CALL SUBEND()
   RETURN
 END SUBROUTINE B2TINER_DV
@@ -182,9 +177,6 @@ SUBROUTINE B2TINER_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ua, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-! csc The following are not necessary for computation but are needed
-!     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tiner
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -192,7 +184,6 @@ SUBROUTINE B2TINER_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ua, &
 !-----------------------------------------------------------------------
 !.end b2tiner
 !
-!   ..extensive tests on first few calls
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
@@ -222,7 +213,7 @@ SUBROUTINE B2TINER_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ua, &
 & , wrk1(nfc)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC MAXVAL
   REAL(kind=r8) :: result1
 !   ..initialization
@@ -233,10 +224,10 @@ SUBROUTINE B2TINER_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ua, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tiner')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 ! Drift terms
   result1 = MAXVAL(facdrift)
-  IF (switch%fch_inert .NE. 0.0e0_R8 .AND. result1 .NE. 0.0_R8 .AND. &
+  IF (switch%fch_inert .NE. 0.0_R8 .AND. result1 .NE. 0.0_R8 .AND. &
 &     switch%no_current .EQ. 0) THEN
 !srv 07.07.99
 !
@@ -263,11 +254,10 @@ SUBROUTINE B2TINER_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ua, &
 &     %fcbb(:, 2)*geo%fcs*geo%fcqalf(:, 1))
 !
   ELSE
-    fchinert = 0.0e0_R8
+    fchinert = 0.0_R8
   END IF
 !
 ! ..return
-  ncall_b2tiner = ncall_b2tiner + 1
   CALL SUBEND()
   RETURN
 END SUBROUTINE B2TINER_NODIFF

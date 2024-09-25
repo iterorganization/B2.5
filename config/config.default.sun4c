@@ -30,8 +30,8 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 opsys = sunos
@@ -58,6 +58,7 @@ ifeq ($(realkind),8)
   EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 endif
 FC = f77
+FN = ${FC}
 FCOPTS = -i4 -r$(realkind) -Nl39 -fast -xO4 -xdepend
 CPP = /usr/ccs/lib/cpp
 CPPOPTS = -C -P -I$(srcdir) $(EQUIVS)
@@ -81,7 +82,8 @@ endif
 ifeq ($(realkind),8)
   LDLIBES = $(LIBB2) $(LD_NAG)
 endif
-LD = f77
+LD = ${FC}
+LN = ${FN}
 LDOPTS = -fast
 
 #!!!Local Variables:

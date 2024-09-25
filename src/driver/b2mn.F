@@ -4,8 +4,13 @@
       program b2mn
       use b2mod_types
       use b2mod_main
+     , , only: b2mn_init, b2mn_step, b2mn_fin
       use b2mod_ad
      , , only: nncf
+#ifndef NAGFOR
+      use b2mod_par_opt
+     , , only: npar_opt, nsigma_opt, nmean_opt, nshift_opt, ncorr_opt
+#endif
       use b2us_data
       implicit none
       real(kind=R8) J(nncf)
@@ -55,6 +60,7 @@
 *     ninp(3): un*formatted; provides the initial state.
 *     ninp(4): un*formatted; provides atomic rate data.
 *     ninp(5): un*formatted; provides source term data.
+*     ninp(6): un*formatted; provides the initial differentiated state.
 *
 *     The output units are:
 *     nout(0): formatted; provides summary print output.
@@ -66,7 +72,9 @@
 *     nout(6): un*formatted; save file for restart
 *     nout(7): un*formatted; full plasma description with derived quantities
 *     nout(8): un*formatted; ASTRA coupling data file
-*     nout(9): formatted; postprocessor output. [JET]
+*     nout(9): un*formatted; provides the final differentiated state.
+*     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+*     nout(11): formatted; postprocessor output. [JET]
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *

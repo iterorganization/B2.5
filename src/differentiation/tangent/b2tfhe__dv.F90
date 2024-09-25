@@ -29,8 +29,9 @@
 !.specification
 !
 !djm Jan2017 !srv 29.01.20
-SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
-& pl, pld, dv, dvd, co, cod, rt, rtd, st_ext, st_extd, balance, nbdirs)
+SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
+& , mpgd, pl, pld, dv, dvd, co, cod, rt, rtd, st_ext, st_extd, balance, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
@@ -41,15 +42,12 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!WG_TODO      use b2mod_balance                                                  !djm Jan2017
-!WG_TODO     & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
-!WG_TODO     &          fhe_strange, fhe_pschused, balance_netcdf
 !srv 13.01.17
   USE B2MOD_TRANSPORT_FUN_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfhe
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfhe, ncall_b2xehy, ncall_b2xehx, &
-& b2tfhe_cutlo
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2xehy, ncall_b2xehx, b2tfhe_cutlo
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -61,6 +59,7 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -120,24 +119,25 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   REAL(kind=r8) :: flediad(nbdirsmax, nfc, 0:1), c071d(nbdirsmax, nfc), &
 & c071cd(nbdirsmax, ncv), zeffd(nbdirsmax, ncv)
 !srv 23.12.19
-  REAL(kind=r8) :: facdriftm, fac_exbm
+  REAL(kind=r8) :: facdriftm
   REAL(kind=r8) :: wrkv(nvx), tef(nfc), nef(nfc), tefh(nfc), wrkf(nfc, 0&
 & :1), dte(nfc, 0:1), dpo(nfc, 0:1), dpe(nfc, 0:1), wght(nfc, 2), &
-& fhe0_mdf(nfc, 0:1), dumm0(nfc, 0:1), dumm1(nfc, 0:1), pe(ncv)
+& fhe0_mdf(nfc, 0:1), pe(ncv), wrkc(ncv), dumm1(nfc, 0:1), dumm2(nfc, 0:&
+& 1), dumm3(nfc, 0:1), dumm4(nfc, 0:1)
   REAL(kind=r8) :: tefd(nbdirsmax, nfc), nefd(nbdirsmax, nfc), tefhd(&
-& nbdirsmax, nfc), fhe0_mdfd(nbdirsmax, nfc, 0:1), dumm0d(nbdirsmax, nfc&
-& , 0:1), dumm1d(nbdirsmax, nfc, 0:1)
+& nbdirsmax, nfc), wrkfd(nbdirsmax, nfc, 0:1), fhe0_mdfd(nbdirsmax, nfc&
+& , 0:1), dumm1d(nbdirsmax, nfc, 0:1), dumm2d(nbdirsmax, nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: b2_upwind = 0
 !      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
-!      integer, save :: lim_flux = 0                                      !srv 04.02.03 
+!      integer, save :: lim_flux = 0                                      !srv 04.02.03
 !      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0              !srv 06.07.06
 !      real (kind=R8), save :: drift_hyb = 1.0_R8
 !      integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
 !   ..procedures
   EXTERNAL XERTST
 !srv 11.07.99
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF, B2TTIA_NODIFF
+  EXTERNAL B2XVSG, B2TTIA_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC NINT
   REAL(kind=r8) :: result1
@@ -165,23 +165,25 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !       call ipgetr ('b2tfhe_drift_hyb',drift_hyb)
 !       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 16.06.08 17.01.12
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2tfhe .LT. 3) THEN
 !    ..test sign of ne, te, chce
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    DO nd=1,nbdirs
+      wrkfd(nd, :, 0) = 0.D0
+      wrkfd(nd, :, 1) = 0.D0
+    END DO
     wrkf(:, 0) = co%chce(:, 0)*geo%fcqalf(:, 0)
     wrkf(:, 1) = co%chce(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 0), 1, 'chce0', '.ge.')
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 1), 1, 'chce1', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 0), 1, 'chce0', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 1), 1, 'chce1', '.ge.')
   END IF
 !
   wght = 1.0_R8
 !
   facdriftm = MAXVAL(dv%facdrift)
-!srv 23.12.19
-  fac_exbm = MAXVAL(dv%fac_exb)
   DO nd=1,nbdirs
     dvd%fhepsch(nd, :, :) = 0.D0
   END DO
@@ -190,7 +192,7 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   csig_stoch = 0.0_R8
   fledia = 0.0_R8
 !srv 18.01.07
-  IF (facdriftm .NE. 0.0e0_R8) THEN
+  IF (facdriftm .NE. 0.0_R8) THEN
     DO nd=1,nbdirsmax
       flediad(nd, :, :) = 0.D0
     END DO
@@ -251,7 +253,7 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 &             , nbdirs)
   ELSE
 !srv 13.01.17
-    c071 = 0.71e0_R8
+    c071 = 0.71_R8
     DO nd=1,nbdirsmax
       c071d(nd, :) = 0.D0
     END DO
@@ -281,7 +283,7 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   DO nd=1,nbdirsmax
     floe0d(nd, :, :) = 0.D0
   END DO
-  temp = co%chve(:, 0) + 2.5e0_R8*fledia(:, 0)
+  temp = co%chve(:, 0) + 2.5_R8*fledia(:, 0)
 !
 !srv 13.06.06 {
 !srv 30.12.09 13.01.17
@@ -289,48 +291,48 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
     floe0_mdfd(nd, :, :) = 0.D0
   END DO
   DO nd=1,nbdirs
-    floe0d(nd, :, 0) = 1.5e0_R8*dvd%fne_he(nd, :, 0) + nef*2.5e0_R8*&
-&     flediad(nd, :, 0) + temp*nefd(nd, :) - switch%fch_pte*(c071*dvd%&
-&     fch_p(nd, :, 0)/qe+dv%fch_p(:, 0)*c071d(nd, :)/qe)
-    floe0_mdfd(nd, :, 0) = 1.5e0_R8*dvd%fne_he(nd, :, 0) + co%chve(:, 0)&
-&     *nefd(nd, :) - switch%fch_pte*(c071*dvd%fch_p(nd, :, 0)/qe+dv%&
-&     fch_p(:, 0)*c071d(nd, :)/qe)
+    floe0d(nd, :, 0) = 1.5_R8*dvd%fne_he(nd, :, 0) + nef*2.5_R8*flediad(&
+&     nd, :, 0) + temp*nefd(nd, :) - switch%fch_pte*(c071*dvd%fch_p(nd, &
+&     :, 0)/qe+dv%fch_p(:, 0)*c071d(nd, :)/qe)
+    floe0_mdfd(nd, :, 0) = 1.5_R8*dvd%fne_he(nd, :, 0) + co%chve(:, 0)*&
+&     nefd(nd, :) - switch%fch_pte*(c071*dvd%fch_p(nd, :, 0)/qe+dv%fch_p&
+&     (:, 0)*c071d(nd, :)/qe)
 !srv 11.05.99
-    floe0_mdfd(nd, :, 1) = 1.5e0_R8*dvd%fne_he(nd, :, 1) + co%chve(:, 1)&
-&     *nefd(nd, :)
+    floe0_mdfd(nd, :, 1) = 1.5_R8*dvd%fne_he(nd, :, 1) + co%chve(:, 1)*&
+&     nefd(nd, :)
 !
 !   ..compute fluxes
     alfe0d(nd, :) = cod%calf(nd, :, 0)
 !WG_TODO: harmonic average to faces
     tefhd(nd, :) = tefd(nd, :)
   END DO
-  floe0(:, 0) = 1.5e0_R8*dv%fne_he(:, 0) + temp*nef - switch%fch_pte*(dv&
-&   %fch_p(:, 0)*(c071/qe))
+  floe0(:, 0) = 1.5_R8*dv%fne_he(:, 0) + temp*nef - switch%fch_pte*(dv%&
+&   fch_p(:, 0)*(c071/qe))
 !srv 11.05.99
-  temp = co%chve(:, 1) + 2.5e0_R8*fledia(:, 1)
-  floe0(:, 1) = 1.5e0_R8*dv%fne_he(:, 1) - fchstoch*5.0e0_R8/(3.0e0_R8*&
-&   qe) + temp*nef
-  floe0_mdf(:, 0) = 1.5e0_R8*dv%fne_he(:, 0) + co%chve(:, 0)*nef - c071*&
-&   dv%fch_p(:, 0)/qe*switch%fch_pte
-  floe0_mdf(:, 1) = 1.5e0_R8*dv%fne_he(:, 1) + co%chve(:, 1)*nef - &
-&   5.0e0_R8/3.0e0_R8*fchstoch/qe
+  temp = co%chve(:, 1) + 2.5_R8*fledia(:, 1)
+  floe0(:, 1) = 1.5_R8*dv%fne_he(:, 1) - fchstoch*5.0_R8/(3.0_R8*qe) + &
+&   temp*nef
+  floe0_mdf(:, 0) = 1.5_R8*dv%fne_he(:, 0) + co%chve(:, 0)*nef - c071*dv&
+&   %fch_p(:, 0)/qe*switch%fch_pte
+  floe0_mdf(:, 1) = 1.5_R8*dv%fne_he(:, 1) + co%chve(:, 1)*nef - 5.0_R8/&
+&   3.0_R8*fchstoch/qe
 !
 !   ..apply discretization scheme
   DO nd=1,nbdirsmax
-    dumm0d(nd, :, :) = 0.D0
+    dumm1d(nd, :, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
     fhe0_mdfd(nd, :, :) = 0.D0
   END DO
   CALL CALCFLOW_DV(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, geod, &
 &            mpg, mpgd, pl%te, pld%te, floe0_mdf, floe0_mdfd, co%chce, &
-&            cod%chce, fhe0_mdf, fhe0_mdfd, dumm0, dumm0d, dumm1, dumm1d&
+&            cod%chce, fhe0_mdf, fhe0_mdfd, dumm1, dumm1d, dumm2, dumm2d&
 &            , nbdirs)
   alfe0 = co%calf(:, 0)
   tefh = tef
   DO nd=1,nbdirs
-    floe0d(nd, :, 1) = 1.5e0_R8*dvd%fne_he(nd, :, 1) + nef*2.5e0_R8*&
-&     flediad(nd, :, 1) + temp*nefd(nd, :)
+    floe0d(nd, :, 1) = 1.5_R8*dvd%fne_he(nd, :, 1) + nef*2.5_R8*flediad(&
+&     nd, :, 1) + temp*nefd(nd, :)
 !
     dvd%fhe(nd, :, 0) = fhe0_mdfd(nd, :, 0) + tef*(floe0d(nd, :, 0)-&
 &     floe0_mdfd(nd, :, 0)) + (floe0(:, 0)-floe0_mdf(:, 0))*tefd(nd, :) &
@@ -361,7 +363,7 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   DO nd=1,nbdirsmax
     cone0d(nd, :, :) = 0.D0
   END DO
-  CALL CALCCOEF_DV(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, mpg, &
+  CALL CALCCOEF_DV(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, &
 &            floe0_mdf, floe0_mdfd, co%chce, cod%chce, floe0, floe0d, &
 &            cone0, cone0d, nbdirs)
   DO nd=1,nbdirs
@@ -372,9 +374,6 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   END DO
   dv%floe = dv%floe + floe0
   dv%cone(:, :, 0) = dv%cone(:, :, 0) + cone0
-!srv 18.06.08 }
-!
-!
 !
 !
 !
@@ -440,6 +439,18 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
     CALL MY_OUT_US(70, nfc, 1, ehy, 'b2tfhe__eh_r')
 !srv 13.01.17
   END IF
+!
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 0), &
+&                   'b2tfhe__fhe_mdf_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 1), &
+&                   'b2tfhe__fhe_mdf_r')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 0), &
+&                   'b2tfhe__fhePSch_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 1), &
+&                   'b2tfhe__fhePSch_r')
+  END IF
+!
 ! ..return
   ncall_b2tfhe = ncall_b2tfhe + 1
   CALL SUBEND()
@@ -473,15 +484,12 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!WG_TODO      use b2mod_balance                                                  !djm Jan2017
-!WG_TODO     & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
-!WG_TODO     &          fhe_strange, fhe_pschused, balance_netcdf
 !srv 13.01.17
   USE B2MOD_TRANSPORT_FUN_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfhe
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfhe, ncall_b2xehy, ncall_b2xehx, &
-& b2tfhe_cutlo
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2xehy, ncall_b2xehx, b2tfhe_cutlo
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -539,21 +547,22 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 !srv 13.01.17
   REAL(kind=r8) :: fledia(nfc, 0:1), c071(nfc), c071c(ncv), zeff(ncv)
 !srv 23.12.19
-  REAL(kind=r8) :: facdriftm, fac_exbm
+  REAL(kind=r8) :: facdriftm
   REAL(kind=r8) :: wrkv(nvx), tef(nfc), nef(nfc), tefh(nfc), wrkf(nfc, 0&
 & :1), dte(nfc, 0:1), dpo(nfc, 0:1), dpe(nfc, 0:1), wght(nfc, 2), &
-& fhe0_mdf(nfc, 0:1), dumm0(nfc, 0:1), dumm1(nfc, 0:1), pe(ncv)
+& fhe0_mdf(nfc, 0:1), pe(ncv), wrkc(ncv), dumm1(nfc, 0:1), dumm2(nfc, 0:&
+& 1), dumm3(nfc, 0:1), dumm4(nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: b2_upwind = 0
 !      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
-!      integer, save :: lim_flux = 0                                      !srv 04.02.03 
+!      integer, save :: lim_flux = 0                                      !srv 04.02.03
 !      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0              !srv 06.07.06
 !      real (kind=R8), save :: drift_hyb = 1.0_R8
 !      integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
 !   ..procedures
   EXTERNAL XERTST
 !srv 11.07.99
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF, B2TTIA_NODIFF
+  EXTERNAL B2XVSG, B2TTIA_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC NINT
   REAL(kind=r8) :: result1
@@ -577,29 +586,27 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 !       call ipgetr ('b2tfhe_drift_hyb',drift_hyb)
 !       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 16.06.08 17.01.12
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2tfhe .LT. 3) THEN
 !    ..test sign of ne, te, chce
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
     wrkf(:, 0) = co%chce(:, 0)*geo%fcqalf(:, 0)
     wrkf(:, 1) = co%chce(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 0), 1, 'chce0', '.ge.')
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 1), 1, 'chce1', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 0), 1, 'chce0', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 1), 1, 'chce1', '.ge.')
   END IF
 !
   wght = 1.0_R8
 !
   facdriftm = MAXVAL(dv%facdrift)
-!srv 23.12.19
-  fac_exbm = MAXVAL(dv%fac_exb)
   dv%fhepsch = 0.0_R8
   fchstoch = 0.0_R8
   csig_stoch = 0.0_R8
   fledia = 0.0_R8
 !srv 18.01.07
-  IF (facdriftm .NE. 0.0e0_R8) THEN
+  IF (facdriftm .NE. 0.0_R8) THEN
 !srv 18.01.07
 !srv 12.05.11
     DO is=0,ns-1
@@ -633,7 +640,7 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
     CALL INTFACE(ncv, nfc, mpg%fccv, wght, c071c, c071)
   ELSE
 !srv 13.01.17
-    c071 = 0.71e0_R8
+    c071 = 0.71_R8
   END IF
 !
 !   ..interpolate ne and te to cell faces
@@ -649,23 +656,23 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 ! ..compute fluxes and linearization
 !srv 13.09.02 18.01.07 11.01.13  *signmf
 !srv 30.12.09 13.01.17
-  floe0(:, 0) = 1.5e0_R8*dv%fne_he(:, 0) + (co%chve(:, 0)+2.5e0_R8*&
-&   fledia(:, 0))*nef - c071*dv%fch_p(:, 0)/qe*switch%fch_pte
+  floe0(:, 0) = 1.5_R8*dv%fne_he(:, 0) + (co%chve(:, 0)+2.5_R8*fledia(:&
+&   , 0))*nef - c071*dv%fch_p(:, 0)/qe*switch%fch_pte
 !srv 11.05.99
-  floe0(:, 1) = 1.5e0_R8*dv%fne_he(:, 1) + (co%chve(:, 1)+2.5e0_R8*&
-&   fledia(:, 1))*nef - 5.0e0_R8/3.0e0_R8*fchstoch/qe
+  floe0(:, 1) = 1.5_R8*dv%fne_he(:, 1) + (co%chve(:, 1)+2.5_R8*fledia(:&
+&   , 1))*nef - 5.0_R8/3.0_R8*fchstoch/qe
 !
 !srv 13.06.06 {
 !srv 30.12.09 13.01.17
-  floe0_mdf(:, 0) = 1.5e0_R8*dv%fne_he(:, 0) + co%chve(:, 0)*nef - c071*&
-&   dv%fch_p(:, 0)/qe*switch%fch_pte
+  floe0_mdf(:, 0) = 1.5_R8*dv%fne_he(:, 0) + co%chve(:, 0)*nef - c071*dv&
+&   %fch_p(:, 0)/qe*switch%fch_pte
 !srv 11.05.99
-  floe0_mdf(:, 1) = 1.5e0_R8*dv%fne_he(:, 1) + co%chve(:, 1)*nef - &
-&   5.0e0_R8/3.0e0_R8*fchstoch/qe
+  floe0_mdf(:, 1) = 1.5_R8*dv%fne_he(:, 1) + co%chve(:, 1)*nef - 5.0_R8/&
+&   3.0_R8*fchstoch/qe
 !
 !   ..apply discretization scheme
   CALL CALCFLOW_NODIFF(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, mpg&
-&                , pl%te, floe0_mdf, co%chce, fhe0_mdf, dumm0, dumm1)
+&                , pl%te, floe0_mdf, co%chce, fhe0_mdf, dumm1, dumm2)
 !
 !   ..compute fluxes
   alfe0 = co%calf(:, 0)
@@ -683,15 +690,12 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 &   co%calf(:, 1)*tefh*ehy
 !
 !   ..compute floe, cone
-  CALL CALCCOEF_NODIFF(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, mpg&
-&                , floe0_mdf, co%chce, floe0, cone0)
+  CALL CALCCOEF_NODIFF(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, &
+&                floe0_mdf, co%chce, floe0, cone0)
 !wdk now we always add PSch linearization; do we need to condition
 !    this on mdf /= 0?
   dv%floe = dv%floe + floe0
   dv%cone(:, :, 0) = dv%cone(:, :, 0) + cone0
-!srv 18.06.08 }
-!
-!
 !
 !
 !
@@ -757,6 +761,18 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
     CALL MY_OUT_US(70, nfc, 1, ehy, 'b2tfhe__eh_r')
 !srv 13.01.17
   END IF
+!
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 0), &
+&                   'b2tfhe__fhe_mdf_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 1), &
+&                   'b2tfhe__fhe_mdf_r')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 0), &
+&                   'b2tfhe__fhePSch_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 1), &
+&                   'b2tfhe__fhePSch_r')
+  END IF
+!
 ! ..return
   ncall_b2tfhe = ncall_b2tfhe + 1
   CALL SUBEND()
