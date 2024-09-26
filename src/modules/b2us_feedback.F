@@ -22,11 +22,14 @@
      &          spfr_cv, epfr_cv, npfr_cvs, pfr_cvs
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_wneutrals
+      use eirmod_wneutrals ! IGNORE
      & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm,
      &          ewldrp_res
-      use eirmod_eirbra
+      use eirmod_eirbra    ! IGNORE
      & , only : fnmti_B2
+#else
+      use eirdiag          ! IGNORE
+#endif
 #endif
       use b2mod_dimensions
       implicit none
@@ -66,8 +69,8 @@
      & fb_actuator(DEF_NATM) = 0, fb_istra(DEF_NATM) = 0,
      & fb_reg(nMxFbReg) = 0, fb_regp(DEF_NATM,2) = 0 !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
       integer, parameter :: NACT_LEN = 10
-      real (kind=R8) :: actuator_conv(DEF_NATM,NACT_LEN),
-     & actuator_conv_end(DEF_NATM)
+      real (kind=R8) :: actuator_conv(DEF_NATM,NACT_LEN)
+      integer :: actuator_conv_end(DEF_NATM)
 
 ! csc old switches
       integer, save :: fhiycore_kinetic_energy
@@ -1550,7 +1553,7 @@ cxpb size is changed in b2mod_dimensions
                   end do
                 endif
               enddo
-#ifdef B25_EIRENE
+#if ( defined(B25_EIRENE) && !defined(SOLPS4_3) )
             case (20) !  neutral pressure in PFR
 
               if(ncall.eq.0) then
@@ -1618,7 +1621,7 @@ cxpb size is changed in b2mod_dimensions
                 endif
               enddo
               fb_current(ifb) = sum(srw%rqbrm)+sum(srw%rqrad)
-#ifdef B25_EIRENE
+#if ( defined(B25_EIRENE) && !defined(SOLPS4_3) )
               fb_current(ifb) = fb_current(ifb) -
      &          (sum(emolrad)+sum(eneutrad)+sum(eionrad))
 #endif
@@ -1672,7 +1675,7 @@ cxpb size is changed in b2mod_dimensions
                 write(*,'(a,a,i3)')
      &           'compute_feedback_type: using ',
      &           'total plasma heat flux at outer target by fht ',
-     &           b2espcr(fb_species(ifb))
+     &            b2espcr(fb_species(ifb))
 
                 fb_target(ifb) = 1/fb_target(ifb)
               endif
@@ -1688,7 +1691,6 @@ cxpb size is changed in b2mod_dimensions
                 endif
               enddo
               fb_current(ifb) = 0.0_R8
-
               do iCv = mpg%nCi+1, nCv
                 iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
                 iCv1 = mpg%fcCv(iFc,1)
@@ -1698,17 +1700,19 @@ cxpb size is changed in b2mod_dimensions
                 if (mpg%fcLbl(iFc).eq.2) then
                   t0 = dv%fht(iFc,0)+dv%fht(iFc,1)
                   t0 = t1*t0/geo%fcS(iFc)
+#if ( defined(B25_EIRENE) && !defined(SOLPS4_3) )
                   if (allocated(fnmti_b2) .and.
      &                allocated(ewldrp_res)) then
                     indx = findloc(fnmti_b2,iFc,1)
-                    if (indx .gt. 0) then
+                    if (indx.gt.0) then
                       t0 = t0-ewldrp_res(indx)
                     endif
                   endif
+#endif
                   fb_current(ifb) = max(fb_current(ifb),t0)
                 endif
               enddo
-              if (fb_current(ifb) .ne. 0.0_R8) then
+              if (fb_current(ifb).ne.0.0_R8) then
                 fb_current(ifb) = 1.0_R8/abs(fb_current(ifb))
               endif
             end select
@@ -2768,7 +2772,11 @@ cxpb size is changed in b2mod_dimensions
 
       subroutine eirene_recyct_update(ispecies, factor,
      &      set_for_all_sorts)
-      use eirmod_clgin
+#ifndef SOLPS4_3
+      use eirmod_clgin             ! IGNORE
+#else
+      use clgin                    ! IGNORE
+#endif
       use b2mod_neutrals_namelist
       implicit none
       integer, intent(in) :: ispecies   ! Index of B2.5 species (or isonuclear sequence)
