@@ -4854,7 +4854,7 @@
 				<default>1.0e-3</default>
 				<type>real</type>
 				<description>
-					Restricts the value of magnetically connected face area ratio to value of total face area in BCCON=14, BCMOM=13, BCENE/I=15. If fcPbs < fcS*b2stbc_Qalfmin, fcPbs = fcS*b2stbc_Qalfmin. It is needed for numerical stability of the sheath boundary conditions.
+					Restricts the value of magnetically connected face area ratio to value of total face area in BCCON=14, BCMOM=13, BCENE/I=15. If fcPbs is less than fcS*b2stbc_Qalfmin, then fcPbs is set to fcS*b2stbc_Qalfmin. It is needed for numerical stability of the sheath boundary conditions.
 					Recommended value of this switch is between 1.0e-03 and 1.0e-02.
 				</description>
 			</switch>
