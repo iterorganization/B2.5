@@ -6,7 +6,7 @@
       use b2us_geo
       implicit none
 *   ..input arguments
-      integer nCv, nFc, nVx, meth
+      integer, intent (in) :: nCv, nFc, nVx, meth
       type (geometry), intent (in) :: geo
       real (kind=R8) ::
      *   flo(nFc,0:1), con(nFc,0:1)
