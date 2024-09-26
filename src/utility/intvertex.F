@@ -49,7 +49,7 @@ c
       use b2mod_types
       use b2us_map
       implicit none
-      integer, intent(in) :: iVx,nCv,nVx
+      integer, intent(in) :: iVx, nCv, nVx
       type (mapping), intent(in) :: mpg
       real (kind=R8), intent(in) :: vxvol(mpg%nVmxCv), centre(nCv)
       real (kind=R8) :: vertex
