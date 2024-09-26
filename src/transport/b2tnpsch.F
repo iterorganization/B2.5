@@ -64,12 +64,16 @@
         call diff(nCv, nFc, nVx, 1, geo, mpg, nbti, nbtiv, dnbti)
 
 *     ..compute P.Sch heat flux
-        fnbPSch(:,0) =  switch%fnbPSch*facdrift*cddb(:,0)*dnbti(:,1)
-        fnbPSch(:,1) = -switch%fnbPSch*facdrift*cddb(:,1)*dnbti(:,0)
+        fnbPSch(:,0) =  switch%fnbPSch*facdrift*cddb(:,0)*
+     &    geo%fcQalf(:,0)*dnbti(:,1)
+        fnbPSch(:,1) = -switch%fnbPSch*facdrift*cddb(:,1)*
+     &    geo%fcQalf(:,1)*dnbti(:,0)
 
 *     ..linearization coefficients for P.Sch flows
-        cddb_eff(:,0) = -switch%fnbPSch*facdrift*cddb(:,1)
-        cddb_eff(:,1) =  switch%fnbPSch*facdrift*cddb(:,0)
+        cddb_eff(:,0) = -switch%fnbPSch*facdrift*cddb(:,1)*
+     &    geo%fcQalf(:,1)
+        cddb_eff(:,1) =  switch%fnbPSch*facdrift*cddb(:,0)*
+     &    geo%fcQalf(:,0)
         call calccoef(nCv,nFc,nVx,0,geo,dumm0,cddb_eff,flob0,conb0)
         do iFc = 1, nFc
           flob(iFc,0)   = 0.5_R8*flob0(iFc,0)*

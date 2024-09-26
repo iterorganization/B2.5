@@ -67,14 +67,16 @@
          call diff(nCv, nFc, nVx, 1, geo, mpg, nati2, nati2v, dnati2)
 
 *      ..compute P.Sch heat flux
-         fhiPSch(:,0) = fhiPSch(:,0) +
-     &     2.5_R8*switch%fhiPSch*facdrift*cddi(:,0,is)*dnati2(:,1)
-         fhiPSch(:,1) = fhiPSch(:,1) -
-     &     2.5_R8*switch%fhiPSch*facdrift*cddi(:,1,is)*dnati2(:,0)
+         fhiPSch(:,0) = fhiPSch(:,0) + 2.5_R8*switch%fhiPSch*facdrift*
+     &     cddi(:,0,is)*geo%fcQalf(:,0)*dnati2(:,1)
+         fhiPSch(:,1) = fhiPSch(:,1) - 2.5_R8*switch%fhiPSch*facdrift*
+     &     cddi(:,1,is)*geo%fcQalf(:,1)*dnati2(:,0)
 
 *      ..linearization coefficients for P.Sch flows
-         cddi_eff(:,0) = -5.0_R8*switch%fhiPSch*facdrift*cddi(:,1,is)
-         cddi_eff(:,1) =  5.0_R8*switch%fhiPSch*facdrift*cddi(:,0,is)
+         cddi_eff(:,0) = -5.0_R8*switch%fhiPSch*facdrift*cddi(:,1,is)*
+     &     geo%fcQalf(:,1)
+         cddi_eff(:,1) =  5.0_R8*switch%fhiPSch*facdrift*cddi(:,0,is)*
+     &     geo%fcQalf(:,0)
          call calccoef(nCv,nFc,nVx,0,geo,dumm0,cddi_eff,floi0,coni0)
          do iFc = 1, nFc
           floi(iFc,0)   = floi(iFc,0) +

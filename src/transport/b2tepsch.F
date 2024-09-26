@@ -66,12 +66,14 @@
 
 *   ..compute P.Sch heat flux
         fhePSch(:,0) = -2.5_R8*switch%fhePSch*facdrift*cdde(:,0)*
-     &    dnete2(:,1)
+     &    geo%fcQalf(:,0)*dnete2(:,1)
         fhePSch(:,1) =  2.5_R8*switch%fhePSch*facdrift*cdde(:,1)*
-     &    dnete2(:,0)
+     &    geo%fcQalf(:,1)*dnete2(:,0)
 *     ..linearization coefficients for P.Sch flows
-        cdde_eff(:,0) =  5.0_R8*switch%fhePSch*facdrift*cdde(:,1)
-        cdde_eff(:,1) = -5.0_R8*switch%fhePSch*facdrift*cdde(:,0)
+        cdde_eff(:,0) =  5.0_R8*switch%fhePSch*facdrift*cdde(:,1)*
+     &    geo%fcQalf(:,1)
+        cdde_eff(:,1) = -5.0_R8*switch%fhePSch*facdrift*cdde(:,0)*
+     &    geo%fcQalf(:,0)
         call calccoef(nCv,nFc,nVx,0,geo,dumm0,cdde_eff,floe0,cone0)
         do iFc = 1, nFc
           floe(iFc,0)   = 0.5_R8*floe0(iFc,0)*
