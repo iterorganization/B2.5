@@ -156,14 +156,14 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
          call diff(nCv, nFc, nVx, 1, geo, mpg, nati2, nati2v, dnati2)
 
 *      ..compute P.Sch heat flux
-         dv%fhiPSch(:,0) =  2.5_R8*switch%fhiPSch*
-     &                       dv%facdrift*co%cddi(:,0,is)*dnati2(:,1)
-         dv%fhiPSch(:,1) = -2.5_R8*switch%fhiPSch*
-     &                       dv%facdrift*co%cddi(:,1,is)*dnati2(:,0)
+         dv%fhiPSch(:,0) = dv%fhiPSch(:,0) +
+     &     2.5_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,0,is)*dnati2(:,1)
+         dv%fhiPSch(:,1) = dv%fhiPSch(:,1) -
+     &     2.5_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,1,is)*dnati2(:,0)
 *      ..linearization coefficients for P.Sch flows
          cddi(:,0) = -5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,1,is)
          cddi(:,1) =  5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,0,is)
-         call calccoef(nCv,nFc,nVx,0,geo,dumm0,cddi,floi0,coni0)
+         call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,cddi,floi0,coni0)
          do iFc = 1, nFc
           dv%floi(iFc,0)   = dv%floi(iFc,0) +
      &       0.5_R8*floi0(iFc,0)*
@@ -285,7 +285,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
       dv%fhi_mdf(:,1)  = fhi0_mdf(:,1) - dv%fhiPSch(:,1)
 
 *   ..compute floi, coni
-      call calccoef(nCv,nFc,nVx,meth,geo,floi0_mdf,co%chci,
+      call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0_mdf,co%chci,
      &  floi0,coni0)
       !wdk now we always add PSch linearization; do we need to condition
       !    this on mdf /= 0?
@@ -303,7 +303,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%tn,flon0,
      &    co%chcn,dv%fhn,dumm0,dumm1)
 *     ..compute flon, conn
-        call calccoef(nCv,nFc,nVx,meth,geo,flon0,co%chcn,
+        call calccoef(nCv,nFc,nVx,meth,geo,mpg,flon0,co%chcn,
      &    dv%flon,dv%conn)
       endif
 
@@ -339,7 +339,7 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
      &           (dv%fhi_ExB + dv%fhe_ExB)
 
 *     ..compute flokt, conkt
-        call calccoef(nCv,nFc,nVx,meth,geo,flokt0,cdkt0,
+        call calccoef(nCv,nFc,nVx,meth,geo,mpg,flokt0,cdkt0,
      &    dv%flokt,dv%conkt)
 
        if (switch%solve_keps.gt.1) then
@@ -355,7 +355,7 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
      &    cdzt0,dv%fzt,dumm0,dumm1)
 
 *     ..compute flozt, conzt
-        call calccoef(nCv,nFc,nVx,meth,geo,flozt0,cdzt0,
+        call calccoef(nCv,nFc,nVx,meth,geo,mpg,flozt0,cdzt0,
      &    dv%flozt,dv%conzt)
 
        endif

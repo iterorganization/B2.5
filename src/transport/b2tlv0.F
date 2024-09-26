@@ -96,8 +96,8 @@ cwdk    or radial contributions, since neutral transport is isotropic
         do is = 0, ns-1
          if (is_neutral(is)) then
 *    ..compute differences of parallel velocity
-          call diff (0, geo, mpg, ua(1,is), ubv, dubf)
-          do iFc = 1, mpg%nFc
+          call diff (nCv, nFc, nVx, 0, geo, mpg, ua(1,is), ubv, dubf)
+          do iFc = 1, nFc
 *    ..limit total gradient
             qcl = cvsa0(iFc,is)*sqrt(dubf(iFc,0)**2 + dubf(iFc,1)**2)
             qfl = alpha*geo%fcS(iFc)*

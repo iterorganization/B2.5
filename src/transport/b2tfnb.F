@@ -263,7 +263,7 @@ cwdk                   (original code: simple averaging)
 *     ..linearization coefficients for P.Sch flows
         cddb(:,0) = -switch%PSch*dv%facdrift*co%cddi(:,1,isb)!*nbf/wrk2
         cddb(:,1) =  switch%PSch*dv%facdrift*co%cddi(:,0,isb)!*nbf/wrk2
-        call calccoef(nCv,nFc,nVx,0,geo,zeros,cddb,flob0,conb0)
+        call calccoef(nCv,nFc,nVx,0,geo,mpg,zeros,cddb,flob0,conb0)
         do iFc = 1, nFc
           dv%flob(iFc,0)   = 0.5_R8*flob0(iFc,0)*
      &      (kmprti(mpg%fcCv(iFc,1))+kmprti(mpg%fcCv(iFc,2))) -
@@ -570,7 +570,7 @@ cwdk                   (original code: simple averaging)
       endif
 
 *   ..compute flob, conb
-      call calccoef(nCv,nFc,nVx,meth,geo,
+      call calccoef(nCv,nFc,nVx,meth,geo,mpg,
      &    flo_mdf,co%cdna(:,:,isb),flob0,conb0)
       flob0(:,0) = flob0(:,0) + (1.0_R8-drift_hyb)*
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))
@@ -601,7 +601,7 @@ cwdk                   (original code: simple averaging)
 *   ..contribution from pressure diffusion and Rhie-Chow term
       cdpb = cdpb + co%cdpa(:,:,isb)
       zeros = 0.0_R8
-      call calccoef(nCv,nFc,nVx,0,geo,zeros,cdpb,flob0,conb0)
+      call calccoef(nCv,nFc,nVx,0,geo,mpg,zeros,cdpb,flob0,conb0)
       dv%flob = dv%flob + flob0                                     !wdk flob0 should be zero here
       dv%conb(:,:,0) = dv%conb(:,:,0) + conb0
       dv%conb(:,0,1) = conb0(:,0)*kmprtif                           !wdk is this needed? correct? probably always zero?
