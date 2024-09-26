@@ -260,10 +260,41 @@ cwdk                   (original code: simple averaging)
         ub2dia = dv%vaecrb(:,:,isb) + 2.0_R8*dv%vadia(:,:,isb)
 
 *     ..computation of P.Sch flows
-        call b2tnpsch(nCv, nFc, nVx, switch, geo, mpg,
-     &    dv%facdrift, co%cddi(:,:,isb), pl%ti, pl%na(:,isb), kmprti,
-     &    flobtmp, conbtmp(:, :, 0:2), dv%fnaPSch(:,:,isb))
-
+        wrk  = 1.0_R8/(qe*rt%rza(:,isb))
+        call intface(nCv,nFc,mpg%fcCv,weight,wrk,wrk1)
+        wrk1 = wrk1*geo%fcBzb
+        call intface(nVx,nFc,mpg%fcVx,weight,nbcor,wrk2)
+        dv%fnaPSch(:,0,isb) =  switch%PSch*dv%facdrift*wrk1*dnbti(:,1)*
+     &     geo%fcS*geo%fcQalf(:,0)!*nbf/wrk2
+        dv%fnaPSch(:,1,isb) = -switch%PSch*dv%facdrift*wrk1*dnbti(:,0)*
+     &     geo%fcS*geo%fcQalf(:,1)!*nbf/wrk2
+*     ..linearization coefficients for P.Sch flows
+        cddb(:,0) = -switch%PSch*dv%facdrift*co%cddi(:,1,isb)!*nbf/wrk2
+        cddb(:,1) =  switch%PSch*dv%facdrift*co%cddi(:,0,isb)!*nbf/wrk2
+        call calccoef(nCv,nFc,nVx,0,geo,mpg,zeros,cddb,flob0,conb0)
+        do iFc = 1, nFc
+          dv%flob(iFc,0)   = 0.5_R8*flob0(iFc,0)*
+     &      (kmprti(mpg%fcCv(iFc,1))+kmprti(mpg%fcCv(iFc,2))) -
+     &       conb0(iFc,0)*
+     &      (kmprti(mpg%fcCv(iFc,2))-kmprti(mpg%fcCv(iFc,1)))
+          dv%flob(iFc,1)   = 0.5_R8*flob0(iFc,1)*
+     &      (kmprtiv(mpg%fcVx(iFc,1))+kmprtiv(mpg%fcVx(iFc,2))) -
+     &       conb0(iFc,1)*
+     &      (kmprtiv(mpg%fcVx(iFc,2))-kmprtiv(mpg%fcVx(iFc,1)))
+!wdk      For now, directly add these contributions into conb(,,0),
+!wdk      so they are directly added into the stencil.
+!wdk      Might need to move back to dv%conb(,,3) and dedicated treatment
+!wdk      in b2ux9p if we decide to move away from inverse volume weighting
+!wdk      to compute vertex values of drifts!
+          dv%conb(iFc,0,0) = 0.5_R8*conb0(iFc,0)*
+     &      (kmprti(mpg%fcCv(iFc,1))+kmprti(mpg%fcCv(iFc,2))) -
+     &       0.25_R8*flob0(iFc,0)*
+     &      (kmprti(mpg%fcCv(iFc,2))-kmprti(mpg%fcCv(iFc,1)))
+          dv%conb(iFc,1,0) = 0.5_R8*conb0(iFc,1)*
+     &      (kmprtiv(mpg%fcVx(iFc,1))+kmprtiv(mpg%fcVx(iFc,2))) -
+     &       0.25_R8*flob0(iFc,1)*
+     &      (kmprtiv(mpg%fcVx(iFc,2))-kmprtiv(mpg%fcVx(iFc,1)))
+        enddo
 !WG_TODO        dv%conb(:,:,4) = dv%conb(:,:,3) ! Not needed anymore?
 
         if ((isb.ne.ismain.and..not.is_neutral(isb)).and.
@@ -566,7 +597,7 @@ cwdk                   (original code: simple averaging)
       endif
 
 *   ..compute flob, conb
-      call calccoef(nCv,nFc,nVx,meth,geo,
+      call calccoef(nCv,nFc,nVx,meth,geo,mpg,
      &    flo_mdf,co%cdna(:,:,isb),flob0,conb0)
       flob0(:,0) = flob0(:,0) + (1.0_R8-drift_hyb)*
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))
@@ -597,12 +628,12 @@ cwdk                   (original code: simple averaging)
 *   ..contribution from pressure diffusion and Rhie-Chow term
       cdpb = cdpb + co%cdpa(:,:,isb)
       zeros = 0.0_R8
-      call calccoef(nCv,nFc,nVx,0,geo,zeros,cdpb,flob0,conb0)
-      flobtmp = flobtmp + flob0                                     !wdk flob0 should be zero here
-      conbtmp(:,:,0) = conbtmp(:,:,0) + conb0
-      conbtmp(:,0,1) = conb0(:,0)*kmprtif                           !wdk is this needed? correct? probably always zero?
-      conbtmp(:,1,1) = conb0(:,1)*kmprtif                           !wdk is this needed? correct? probably always zero?
-      conbtmp(:,:,2) = conbtmp(:,:,1)
+      call calccoef(nCv,nFc,nVx,0,geo,mpg,zeros,cdpb,flob0,conb0)
+      dv%flob = dv%flob + flob0                                     !wdk flob0 should be zero here
+      dv%conb(:,:,0) = dv%conb(:,:,0) + conb0
+      dv%conb(:,0,1) = conb0(:,0)*kmprtif                           !wdk is this needed? correct? probably always zero?
+      dv%conb(:,1,1) = conb0(:,1)*kmprtif                           !wdk is this needed? correct? probably always zero?
+      dv%conb(:,:,2) = dv%conb(:,:,1)
 
 *   ..flux limit
       if ((alpha.gt.0.0_R8 .and. maxval(rt%rza(:,isb)).eq.0.0_R8) .and.  !srv 20.11.08

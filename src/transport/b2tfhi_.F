@@ -142,9 +142,60 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 *   ..set dummy arrays
       dumm0 = 0.0_R8
       dumm1 = 0.0_R8
+      facdriftm = maxval(dv%facdrift)
+      dv%fhiPSch = 0.0_R8                                                !srv 13.10.06
+      dv%coni    = 0.0_R8                                                !srv 02.01.07
+      dv%floi    = 0.0_R8
+      if(facdriftm.ne.0.0_R8) then
+       do is = 0, ns-1
+        if(.not.is_neutral(is)) then
 
-      call b2tipsch(nCv, nFc, nVx, ns, switch, geo, mpg, dv%facdrift,
-     &    co%cddi, pl%ti, pl%na, dv%floi, dv%coni, dv%fhiPSch)          !srv 16.10.17
+*      ..precompute face and vertex values of nati and nati2
+         nati  = pl%na(:,is)*pl%ti
+         nati2 = pl%na(:,is)*pl%ti*pl%ti
+         call intvertex(nCv,nVx,mpg,geo%vxVol,nati,nativ)
+         call intvertex(nCv,nVx,mpg,geo%vxVol,nati2,nati2v)
+         call diff(nCv, nFc, nVx, 1, geo, mpg, nati2, nati2v, dnati2)
+
+*      ..compute P.Sch heat flux
+         dv%fhiPSch(:,0) = dv%fhiPSch(:,0) +
+     &     2.5_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,0,is)*dnati2(:,1)
+         dv%fhiPSch(:,1) = dv%fhiPSch(:,1) -
+     &     2.5_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,1,is)*dnati2(:,0)
+*      ..linearization coefficients for P.Sch flows
+         cddi(:,0) = -5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,1,is)
+         cddi(:,1) =  5.0_R8*switch%fhiPSch*dv%facdrift*co%cddi(:,0,is)
+         call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,cddi,floi0,coni0)
+         do iFc = 1, nFc
+          dv%floi(iFc,0)   = dv%floi(iFc,0) +
+     &       0.5_R8*floi0(iFc,0)*
+     &      (nati(mpg%fcCv(iFc,1)) + nati(mpg%fcCv(iFc,2))) -
+     &       coni0(iFc,0)*
+     &      (nati(mpg%fcCv(iFc,2)) - nati(mpg%fcCv(iFc,1)))
+          dv%floi(iFc,1)   = dv%floi(iFc,1) +
+     &       0.5_R8*floi0(iFc,1)*
+     &      (nativ(mpg%fcVx(iFc,1))+nativ(mpg%fcVx(iFc,2))) -
+     &       coni0(iFc,1)*
+     &      (nativ(mpg%fcVx(iFc,2))-nativ(mpg%fcVx(iFc,1)))
+!wdk      For now, directly add these contributions into coni(,,0),
+!wdk      so they are directly added into the stencil.
+!wdk      Might need to move back to dv%coni(,,1) and dedicated treatment
+!wdk      in b2ux9p if we decide to move away from inverse volume weighting
+!wdk      to compute vertex values of drifts!
+          dv%coni(iFc,0,0) = dv%coni(iFc,0,0) +
+     &       0.5_R8*coni0(iFc,0)*
+     &      (nati(mpg%fcCv(iFc,1))+nati(mpg%fcCv(iFc,2))) -
+     &       0.25_R8*floi0(iFc,0)*
+     &      (nati(mpg%fcCv(iFc,2))-nati(mpg%fcCv(iFc,1)))
+          dv%coni(iFc,1,0) = dv%coni(iFc,1,0) +
+     &       0.5_R8*coni0(iFc,1)*
+     &      (nativ(mpg%fcVx(iFc,1))+nativ(mpg%fcVx(iFc,2))) -
+     &       0.25_R8*floi0(iFc,1)*
+     &      (nativ(mpg%fcVx(iFc,2))-nativ(mpg%fcVx(iFc,1)))
+         enddo
+        endif
+       enddo
+      endif
 
       wght   = 1.0_R8
       flidia = 0.0_R8                                                   !srv 25.01.02 {
@@ -245,7 +296,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
       dv%fhi_mdf(:,1)  = fhi0_mdf(:,1) - dv%fhiPSch(:,1)
 
 *   ..compute floi, coni
-      call calccoef(nCv,nFc,nVx,meth,geo,floi0_mdf,co%chci,
+      call calccoef(nCv,nFc,nVx,meth,geo,mpg,floi0_mdf,co%chci,
      &  floi0,coni0)
       !wdk now we always add PSch linearization; do we need to condition
       !    this on mdf /= 0?
@@ -263,7 +314,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%tn,flon0,
      &    co%chcn,dv%fhn,dumm0,dumm1)
 *     ..compute flon, conn
-        call calccoef(nCv,nFc,nVx,meth,geo,flon0,co%chcn,
+        call calccoef(nCv,nFc,nVx,meth,geo,mpg,flon0,co%chcn,
      &    dv%flon,dv%conn)
       endif
 
@@ -299,7 +350,7 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
      &           (dv%fhi_ExB + dv%fhe_ExB)
 
 *     ..compute flokt, conkt
-        call calccoef(nCv,nFc,nVx,meth,geo,flokt0,cdkt0,
+        call calccoef(nCv,nFc,nVx,meth,geo,mpg,flokt0,cdkt0,
      &    dv%flokt,dv%conkt)
 
        if (switch%solve_keps.gt.1) then
@@ -315,7 +366,7 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
      &    cdzt0,dv%fzt,dumm0,dumm1)
 
 *     ..compute flozt, conzt
-        call calccoef(nCv,nFc,nVx,meth,geo,flozt0,cdzt0,
+        call calccoef(nCv,nFc,nVx,meth,geo,mpg,flozt0,cdzt0,
      &    dv%flozt,dv%conzt)
 
        endif
