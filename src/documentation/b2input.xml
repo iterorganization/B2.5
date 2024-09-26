@@ -2764,6 +2764,14 @@
 					When set to 1, the energy required for the Franck-Condon dissociation of the thermally released particles at the surfaces in the AFN boundary conditions is subtracted from the electron energy equation. It is not recommended to turn this switch on, because it seems to lower the electron temperature to unrealistic values.
 				</description>
 			</switch>
+			<switch>
+				<name>b2trcl_min_collisions</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Defines the style of ion heat flux limit. If number of collisions in flux tube(determined by average collisionality) is bigger than the value in the key, old style of ion flux limit will be applied. Otherwise new style  (flux limit is defined by the number of collisions) will be applied.
+				</description>
+			</switch>
 		</category>
 		<category name="Output">
 			<switch>
@@ -3546,6 +3554,30 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tfnb_flux_limit_min_ni</name>
+				<default>1.0e17</default>
+				<type>real</type>
+				<description>
+					If averaged ion density in flux tube is lower than the value in the key, radial ion heat flux due to convective anomalous  particle flux will be decreased in order of 5/3.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shidu</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shidu.eq.0 then shidu (ion heat source due to divergence of velocity) will be zero in boundary-volume cells.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_ne_min</name>
+				<default>1.0e18</default>
+				<type>real</type>
+				<description>
+					If electron density in cell is smaller then the value in the key, ion sources due to viscosity(shiva, shivc) will be zero in that cells.
+				</description>
+			</switch>
+			<switch>
 				<name>b2tfhe_vis_per</name>
 				<default>0.0</default>
 				<type>real</type>
@@ -3872,7 +3904,24 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Stabilizing term to the ion and electron heat sources associated with equipartition.
+					Stabilizing term to the ion and electron heat sources associated with energy exchange.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_bcene_15_restr</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2stbc_bcene_15_restr.eq.1 then positive electron heat source in boundary cells will be changed to zero. It is only applicable for BCENE=15, b2stbc_bcene_15_style.eq.1.
+					It is recommended to use this key with usage b2nppo_restr_po simultaneously.
+				</description>
+			</switch>
+			<switch>
+				<name>b2txcx_increase_transp_coefs</name>
+				<default>0</default>
+				<type>real</type>
+				<description>
+ 					Poloidal transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and pa) can be increased by setting this key. Key defines multiplication factor. 
 				</description>
 			</switch>
 			<switch>
@@ -4798,6 +4847,31 @@
 					Integer switch to choose the numerical treatment of the ion pressure gradient calculation for the ion-neutral current.
 					If b2tinnt_style.eq.0, then the chain rule is first applied to the product of density and temperature, and (grad n)/n is rewritten as grad(log(n)).
 					If b2tinnt_style.eq.1 (default), then the gradient of the product of density and temperature is calculated directly.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_Qalfmin</name>
+				<default>1.0e-3</default>
+				<type>real</type>
+				<description>
+					Restricts the value of magnetically connected face area ratio to value of total face area in BCCON=14, BCMOM=13, BCENE,I=15. If fcPbs < fcS*b2stbc_Qalfmin, fcPbs = fcS*b2stbc_Qalfmin. It is needed for numerical stability of the sheath boundary conditions.
+					Recommended value of this switch is between 1.0e-03 and 1.0e-02.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_min_ftConn</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Sets the same value to magnetically connected face area fcPbs = fcS * b2stbc_Qalfmin for all boundary faces if length of flux tube is less than b2stbc_min_ftConn.
+				</description>
+			</switch>
+			<switch>
+				<name>b2stbc_str_for_Qalfmin</name>
+				<default>3</default>
+				<type>integer</type>
+				<description>
+					Keys b2stbc_Qalfmin and b2stbc_min_ftConn will be applied for boundary region if its label number equal or bigger than b2stbc_str_for_Qalfmin.
 				</description>
 			</switch>
 		</category>
@@ -7304,6 +7378,31 @@
 				<description>
 				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
 					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dn above.
+				</description>
+			</switch>
+			<switch>
+				<name>SNA_CORR</name>
+				<default>0.0</default>
+				<type>real*8 array of size (1:NSPECIES)</type>
+				<description>
+				Multiplier to the neutral source differential between puffing (plus sputtering plus core boundary flux plus any external sources) and pumping, which is further added to the ionization source for code speed-up. One multiplier must be provided per isonuclear sequence. Such settings might be relevant for e.g. a mixture of main ion and trace impurity.
+				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details and keep in mind that in that paper the scheme was described in its original species-unresolved form.
+				</description>
+			</switch>
+			<switch>
+				<name>TAUMAX</name>
+				<default>0.05</default>
+				<type>real*8 array of size (1:NSPECIES)</type>
+				<description>
+				Maximum allowed fraction of ionization source for a given isonuclear sequence from its neutral state (coming from Eirene) to be added or subtracted to the real Eirene source in the method of effective sources for code speed-up.
+				</description>
+			</switch>
+			<switch>
+				<name>DO_SNA_CORR_CORE</name>
+				<default>.true.</default>
+				<type>logical array of size (1:NSPECIES)</type>
+				<description>
+				Parameter which controls exclusion/inclusion of confined region from/in the method of effective sources for code speed-up for each isonuclear sequence. If .true., then the flux through the core boundary of that species is taken into account during the source correction computation, and the source correction is applied on closed flux surfaces (default behavior). If .false., then the particle imbalance is computed as puffing plus sputtering plus any external sources minus pumping without account of the flux through the core boundary, and no source correction is applied on closed surfaces (such a setting might be helpful if the core flux is much bigger than the puffing rate and the core is isolated from the SOL by a strong transport barrier).
 				</description>
 			</switch>
 			<switch>
