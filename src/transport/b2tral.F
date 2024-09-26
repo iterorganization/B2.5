@@ -311,9 +311,13 @@
 *   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
       !wdk note: treatment made consistent with the computation of
       !          PSch-flows in b2tfnb and b2tfhe/i
-      co%cdde(:,0) = geo%fcBzb*geo%fcS*geo%fcQalf(:,0)/
+      !wdk note: for correct treatment of flux-limiting of the PSch flows
+      !          in b2tfnb, we take out the fcQalf factor here (and reapply it later).
+      !          This effectively makes cdde/i normal conductances (not poloidal/radial).
+      !          This renders 0 and 1 components identical at the moment.
+      co%cdde(:,0) = geo%fcBzb*geo%fcS/
      &  (geo%fcQgam(:,0)*(geo%fcHc(:,1) + geo%fcHc(:,2)))/qe
-      co%cdde(:,1) = geo%fcBzb*geo%fcS*geo%fcQalf(:,1)/
+      co%cdde(:,1) = geo%fcBzb*geo%fcS/
      &  (geo%fcQgam(:,0)*(geo%fcHc(:,1) + geo%fcHc(:,2)))/qe
       wght = 1.0_R8
       do is = 0, ns-1
