@@ -84,10 +84,10 @@
           endif                                                          !srv 24.06.99
 
 *       ..components of the viscosity parallel current
-          fchvispar(:,0) =
+          fchvispar_a(:,0,is) =
      &     -switch%fhe_vis_par*fac_vis*dvpar*gOnedBsq(:,1)
      &      *geo%fcS*geo%fcQalf(:,0)
-          fchvispar(:,1) = 
+          fchvispar_a(:,1,is) = 
      &      switch%fhe_vis_par*fac_vis*dvpar*gOnedBsq(:,0)
      &      *geo%fcS*geo%fcQalf(:,1)
 
