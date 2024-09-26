@@ -716,10 +716,10 @@ cdpc
         if ((flux_surf(2) >= inner_bar_loc).and.
      &      (flux_surf(2) <= sep_loc)) then
           dna0 = bar_coef*dna0
-        elseif(flux_surf(2)<inner_bar_loc) then
+        elseif(flux_surf(2) < inner_bar_loc) then
           dna0 = core_coef*dna0
         endif
-      elseif(flux_surf(2)<inner_sol_loc) then
+      elseif(flux_surf(2) < inner_sol_loc) then
         dna0 = inner_sol_coef*dna0
       else
         dna0 = outer_sol_coef*dna0

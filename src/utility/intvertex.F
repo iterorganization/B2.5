@@ -56,7 +56,9 @@ c
   
       integer iCv
       real (kind=R8) :: volsum
+      external xertst
 
+      call xertst(0.lt.iVx.and.iVx.le.nVx, 'faulty vertex index')
       vertex = 0.0_R8
       volsum = 0.0_R8
       do iCv = 1, mpg%vxCvP(iVx,2)
