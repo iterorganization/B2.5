@@ -15,10 +15,6 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpt
       use b2mod_b2cmpb
-!      use b2mod_ranges
-!      use b2mod_neoclassical
-!      use b2mod_geo_corner
-!     &                    , only : lengthy, nmdpl                 !srv 26.11.04
       use b2mod_user_namelist
      , , only : omp
       use b2mod_switches
@@ -40,8 +36,8 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
-     *  ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns,
+     *  nscx, nscxmax, iscx(0:nscxmax-1), ismain
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -226,7 +222,7 @@
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
       if(switch%b2tqna_transport_namelist.eq.1) then
-        do is=0,ns-1
+        do is = 0, ns-1
           if(.not.is_neutral(is)) then
 * dna
             call transform_transport(flag_dna,parm_dna(is),cfdna(:,is))
@@ -488,7 +484,7 @@ cxpb Corrected for dimensionality
       endif
 
       if(switch%b2tqna_iout.ne.0) then                               !srv 10.11.09 {
-        do is = 0,ns-1
+        do is = 0, ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,dna0(1,is),'b2tqna_in_dna0'//chns)
           call my_out_us(70,nCv,0,dpa0(1,is),'b2tqna_in_dpa0'//chns)
@@ -513,7 +509,7 @@ cxpb Corrected for dimensionality
 c User transport options
       if (switch%user_transport.eq.0) then
         !! the default transport model calculated above is used. Nothing to do.
-      elseif(switch%user_transport.eq.6) then                                    !srv 13.06.08
+      elseif(switch%user_transport.eq.6) then                         !srv 13.06.08
         call set_transport_srv(geo,mpg,ns,nCv,switch,dna0,hcib,
      &    vsa0, hce0)
       else
@@ -585,7 +581,7 @@ cdpc
      1      (switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
      1       switch%b2tqna_ballooning*
      1       switch%b2tqna_ballooning_rescale
-            do is=0,ns-1
+            do is = 0, ns-1
               if(.not.is_neutral(is)) then
                 dna0(iCv,is)=dna0(iCv,is)*poloidal_scale_factor
                 dpa0(iCv,is)=dpa0(iCv,is)*poloidal_scale_factor
@@ -742,12 +738,13 @@ cdpc
       use b2mod_b2cmpa
      , , only : is_neutral
       implicit none
+      integer, intent (in) :: nCv, ns
       type (mapping), intent (in) :: mpg
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
 
-      integer omp_start,j,k,l,iVx,fcs,flux_surf(2),omp_loc(2),nCv,
-     & size_arr,iFc,inner_bar_loc,sep_loc,inner_sol_loc,ns,is,iCv
+      integer omp_start,j,k,l,iVx,fcs,flux_surf(2),omp_loc(2),
+     & size_arr,iFc,inner_bar_loc,sep_loc,inner_sol_loc,is,iCv
       integer, allocatable :: cvs(:)
       real(kind=R8) :: Bmin,len_in
       real (kind=R8) ::
@@ -816,20 +813,20 @@ cdpc
       do iCv=1,nCv
         do is=1,ns-1
           if (.not.is_neutral(is)) then
-              call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
-     &          inner_sol_loc,switch%na_alfa1, switch%na_alfa2,
+              call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
+     &          inner_sol_loc, switch%na_alfa1, switch%na_alfa2,
      &          switch%na_alfa3,switch%na_alfa4, iCv, dna0(iCv,is))
-              call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
-     &          inner_sol_loc,switch%ti_alfa1, switch%ti_alfa2,
+              call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
+     &          inner_sol_loc, switch%ti_alfa1, switch%ti_alfa2,
      &          switch%ti_alfa3,switch%ti_alfa4, iCv, hcib(iCv,is))
-              call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
-     &          inner_sol_loc,switch%vsa_alfa1, switch%vsa_alfa2,
+              call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
+     &          inner_sol_loc, switch%vsa_alfa1, switch%vsa_alfa2,
      &         switch%vsa_alfa3, switch%vsa_alfa4, iCv, vsa0(iCv,is))
             endif
         enddo
-        call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,inner_sol_loc
-     &    ,switch%te_alfa1, switch%te_alfa2,switch%te_alfa3,
-     &    switch%te_alfa4, iCv, hce0(iCv))
+        call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
+     &    inner_sol_loc, switch%te_alfa1, switch%te_alfa2,
+     &    switch%te_alfa3, switch%te_alfa4, iCv, hce0(iCv))
       enddo
 
       return
@@ -3970,7 +3967,7 @@ c*******************************************************************************
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns, ismain
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -4001,7 +3998,7 @@ c*******************************************************************************
         endif
       endif
       hci_ExB = 0.0_R8
-      do is=0,ns-1
+      do is = 0, ns-1
         if(.not.is_neutral(is)) then
           if(switch%keps_local.eq.1) then
 *   ..compute local Larmor radius

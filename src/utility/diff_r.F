@@ -7,7 +7,7 @@
       use b2us_map
       implicit none
 *   ..input arguments
-      integer nCv, nFc, nVx, mode
+      integer, intent (in) :: nCv, nFc, nVx, mode
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -18,11 +18,11 @@
 *-----------------------------------------------------------------------
 *.documentation
 *
-*     DIFF_R computes differences of a cell centered quantity fun in the 
+*     DIFF_R computes differences of a cell centered quantity fun in the
 *     radial direction, on faces of a cell.
 *
-*     To compute values of the field in cell vertices, the routine relies 
-*     calls to intvertex. 
+*     To compute values of the field in cell vertices, the routine relies
+*     calls to intvertex.
 *
 *     If mode.eq.0, the routine will interpolate fun to corners in func
 *     If mode.eq.1, the routine assumess func has been pre-computed
@@ -37,7 +37,7 @@
       external intvertex
 
 *-----------------------------------------------------------------------
-*.computation      
+*.computation
 
 *   ..test mode
       call xertst (0.le.mode.and.mode.le.1,
@@ -49,8 +49,8 @@
       endif
 
 *   ..compute radial difference at faces
-      do iFc = 1,nFc
-       dfunr(iFc) = 
+      do iFc = 1, nFc
+       dfunr(iFc) =
      &  (fun(mpg%fcCv(iFc,2))  - fun(mpg%fcCv(iFc,1)))*
      &   geo%fcQalf(iFc,1) +
      &  (funv(mpg%fcVx(iFc,2)) - funv(mpg%fcVx(iFc,1)))*

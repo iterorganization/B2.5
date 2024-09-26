@@ -1,11 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,          !srv 23.11.10
-     1  switch, geo, mpg, pl, dv, rt, co, st_ext, cvsahz,                !srv 09.01.01 03.06.03
-     3  cvsa, chce, chve, chci, chvi, csig, calf, cdkt, csigin,          !xpb
-     4  cthe, cthi, vsaf_cl, cvsa_cl, cvsahz_cl, fllimvisc,              !srv 09.01.01
-     5  csig_cl, calf_cl)                                                !xpb
+      subroutine b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,       !srv 23.11.10
+     1  switch, geo, mpg, pl, dv, rt, co, st_ext, cvsahz,             !srv 09.01.01 03.06.03
+     3  cvsa, chce, chve, chci, chvi, csig, calf, cdkt, csigin,       !xpb
+     4  cthe, cthi, vsaf_cl, cvsa_cl, cvsahz_cl, fllimvisc,           !srv 09.01.01
+     5  csig_cl, calf_cl)                                             !xpb
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -27,7 +27,7 @@
       use b2mod_ad
      & , only : my_out_folder,
 #ifdef WG_DEBUG
-     &          my_out_sf,                                              !srv 27.06.21
+     &          my_out_sf,                                            !srv 27.06.21
 #endif
      &          ncall_b2tlnl,
      &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca,
@@ -36,8 +36,8 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, ismain
-      integer iscx(0:nscx-1)
+      integer, intent (in) :: nCv, nFc, nVx, ns, nscx, ismain
+      integer, intent (in) :: iscx(0:nscx-1)
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -59,7 +59,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      &  vsaf_cl(nFc,0:1,0:ns-1),
      &  cvsa_cl(nFc,0:1,0:ns-1),
      &  cvsahz_cl(nFc,0:1,0:ns-1),                               !srv 09.01.01
-     &  fllimvisc(nFc,0:ns-1), 
+     &  fllimvisc(nFc,0:ns-1),
      &  cvsahz(nFc,0:1,0:ns-1),   !srv 09.01.01
      &  csig_cl(nFc,0:1), calf_cl(nFc,0:1)
 *   ..common blocks
@@ -160,16 +160,16 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         call b2xvsg (nCv, geo%cvVol, 1, 'vol', '.gt.')
 *    ..test range of cvQgam, fcQgam
        call xertst (-1.0_R8.lt.smin(nCv,geo%cvQgam(1,1),1).and.
-     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8, 
+     &   smax(nCv,geo%cvQgam(1,1),1).lt.1.0_R8,
      &   'faulty argument range cvQgam(,1)')
        call xertst (0.0_R8.lt.smin(nCv,geo%cvQgam(1,0),1).and.
-     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8, 
+     &   smax(nCv,geo%cvQgam(1,0),1).le.1.0_R8,
      &   'faulty argument range cvQgam(,0)')
        call xertst (-1.0_R8.lt.smin(nFc,geo%fcQgam(1,1),1).and.
-     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8, 
+     &   smax(nFc,geo%fcQgam(1,1),1).lt.1.0_R8,
      &   'faulty argument range fcQgam(,1)')
        call xertst (0.0_R8.lt.smin(nFc,geo%fcQgam(1,0),1).and.
-     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8, 
+     &   smax(nFc,geo%fcQgam(1,0),1).le.1.0_R8,
      &   'faulty argument range fcQgam(,0)')
 *    ..test sign of na, te, ti
         call b2xvsg (nCv*ns, pl%na, 1, 'na', '.gt.')
@@ -366,7 +366,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           co%f_luc_sg(iFc) = co%f_luc_ke(iFc)
           co%f_luc_al(iFc) = co%f_luc_ke(iFc)
           co%f_luc_et(iFc) = co%f_luc_ki(iFc)
-          do is=0,ns-1
+          do is = 0, ns-1
             if(.not.is_neutral(is)) then
               cvsa(iFc,0,is)    = cvsa(iFc,0,is)*co%f_luc_et(iFc)
               cvsahz(iFc,0,is)  = cvsahz(iFc,0,is)*co%f_luc_et(iFc)
@@ -394,10 +394,10 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         endif
        enddo
       else if (switch%lluciani.eq.3) then  ! new formulation
-*   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
+*   .. plateau and banana correction for ion heat conduction          !lk 19.09.07 {
        call b2ttia (nCv, ns, pl%ti, rt%rz2, dv%ne2, dv%lnlam, tauia)
-*   .. calculate collisionality parameter nu_star   
-       nu1 = 0.0_R8                                                       !lk 12.05.11{
+*   .. calculate collisionality parameter nu_star
+       nu1 = 0.0_R8                                                   !lk 12.05.11{
        k1 = 0.58_R8
        nu2 = 0.0_R8
        k2 = 1.6_R8
@@ -424,7 +424,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &        /(1.0_R8+0.74_R8*sqrt(geo%ftEps(iFt)**3)*nu2(iCv))
            endif
          endif
-       enddo                                                             !lk 19.09.07 }
+       enddo                                                          !lk 19.09.07 }
 *    ..interpolate te, ti and ne2 to cell faces
        wrk1 = 1.0_R8
        call intface(nCv,nFc,mpg%fcCv,wrk1,pl%te,tef)
@@ -572,8 +572,8 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 
       if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
        do is = 0, ns-1
-        write (chns,'(i3.3)') is 
-        if(.not. is_neutral(is)) 
+        write (chns,'(i3.3)') is
+        if(.not. is_neutral(is))
      &  call my_out_us(70,nFc,1,cvsahz(1,0,is),
      &              'b2trcl_luciani_cvsahzx'//chns)
 !        call my_out_us(70,nFc,1,cvsahz(1,1,is),
@@ -614,7 +614,7 @@ c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.
           flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
      &                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
           t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
-     &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) + 
+     &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
      &      b2trcl_cutlo)
           co%fllim_ke(iFc)=1.0_R8/(1.0_R8+t0)
           chce(iFc,0)=chce(iFc,0)*co%fllim_ke(iFc)
@@ -651,16 +651,16 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
      &                             +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
             t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
-     &        pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + 
+     &        pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) +
      &        b2trcl_cutlo)
-          else 
+          else
             t0 = (cflim(1)*max(collisnum(iFt),1.0e-16_R8))**(-1)
           endif
           co%fllim_ki(iFc) = 1.0_R8/(1.0_R8+t0)
           chci(iFc,0)=chci(iFc,0)*co%fllim_ki(iFc)
          endif
         enddo
-        !wdk pragmatic approximation for cell center flux limits: based on interpolation 
+        !wdk pragmatic approximation for cell center flux limits: based on interpolation
         !wdk of face flux limit
         call intcell(nFc,nCv,mpg,mpg%intcellP,co%fllim_ki,co%fllim_ki_c)
         do iCv = 1, nCv
@@ -686,7 +686,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                    !srv 13.01.17
          endif
         enddo
-        !wdk pragmatic approximation for cell center flux limits: based on interpolation 
+        !wdk pragmatic approximation for cell center flux limits: based on interpolation
         !wdk of face flux limit
         call intcell(nFc,nCv,mpg,mpg%intcellP,co%fllim_al,co%fllim_al_c)
         do iCv = 1, nCv
@@ -705,10 +705,10 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &       (pl%te(mpg%fcCv(iFc,1))+pl%te(mpg%fcCv(iFc,2)))/2.0_R8/me)*
      &        qe*(dv%ne(mpg%fcCv(iFc,1))+dv%ne(mpg%fcCv(iFc,2)))/2.0_R8*
      &        abs(geo%fcPbs(iFc))
-            t0 = abs(calf(iFc,0)*dte(iFc))/(cflim(3)*jemax + 
+            t0 = abs(calf(iFc,0)*dte(iFc))/(cflim(3)*jemax +
      &        b2trcl_cutlo)
             co%fllim_al(iFc)=1.0_R8/(1.0_R8+t0)
-            calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                         !srv 13.01.17
+            calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                  !srv 13.01.17
          endif
         enddo
 *   ..apply flux limit to alfx_c at cell centers
@@ -720,7 +720,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             t0 = abs(co%alfx_c(iCv)*gtec(iCv)/
      &         (cflim(3)*jemax + b2trcl_cutlo))
             co%fllim_al_c(iCv)=1.0_R8/(1.0_R8+t0)
-            co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)                 !iyv 19.11.13 !srv 08.10.14
+            co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)          !iyv 19.11.13 !srv 08.10.14
           endif
         enddo
        endif
@@ -728,7 +728,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 *   ..apply flux limit to cvsa
       cflmv = cflim(2)
       do is = 0, ns-1
-       call b2tlmv (nCv, nFc, nVx, is, cflmv, switch, geo, mpg, 
+       call b2tlmv (nCv, nFc, nVx, is, cflmv, switch, geo, mpg,
      &   pl%na(:,is),
      &   pl%ti, pl%ua(:,is), vsaf_cl(:,0,is), cvsa(:,0,is),
      &   cvsahz(:,0,is), fllimvisc(:,is))
@@ -748,7 +748,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       csig_cl = csig
       calf_cl = calf
       cvsa_cl = cvsa
-      cvsahz_cl = cvsahz                                                 !srv 09.01.01
+      cvsahz_cl = cvsahz                                              !srv 09.01.01
 
       if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then
        do is = 0, ns-1
@@ -773,7 +773,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_fllim_chciy')
       endif
 
-      if(switch%b2trcl_iout.ne.0) then                                   !srv 17.06.08 {
+      if(switch%b2trcl_iout.ne.0) then                                !srv 17.06.08 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         call my_out_us(70,nFc,1,cvsa(1,0,is),'cl_cvsa_th'//chns)
@@ -816,11 +816,6 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       ncall_b2trcl = ncall_b2trcl+1
       call subend ()
       return
-
-*-----------------------------------------------------------------------
-*.scribbles
-
-*!!   Still must consider how to deal with a non-orthogonal grid.
 
 *-----------------------------------------------------------------------
 *.end b2trcl
