@@ -524,7 +524,7 @@ cxpb Corrected for dimensionality
 c User transport options
       if (switch%user_transport.eq.0) then
         !! the default transport model calculated above is used. Nothing to do.
-      elseif(switch%user_transport.eq.6) then                                    !srv 13.06.08
+      elseif(switch%user_transport.eq.6) then                         !srv 13.06.08
         call set_transport_srv(geo,mpg,ns,nCv,switch,dna0,hcib,
      &    vsa0, hce0)
       else
@@ -599,19 +599,25 @@ c ap  implementation of Bohm-like transport model 12.07.2023-?
 cdpc
       if(switch%b2tqna_ballooning.ne.0.0_R8) then
         do iCv = 1, nCv
-          poloidal_scale_factor=
-     1     (switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
-     1      switch%b2tqna_ballooning*
-     1      switch%b2tqna_ballooning_rescale
-          do is = 0, ns-1
-            if(.not.is_neutral(is)) then
-              dna0(iCv,is)=dna0(iCv,is)*poloidal_scale_factor
-              dpa0(iCv,is)=dpa0(iCv,is)*poloidal_scale_factor
-              vla0(iCv,:,is)=vla0(iCv,:,is)*poloidal_scale_factor
-              vsa0(iCv,is)=vsa0(iCv,is)*poloidal_scale_factor
-              hci0(iCv)=hci0(iCv)+
-     1         hcib(iCv,is)*(poloidal_scale_factor-1.0_R8)
-              hcib(iCv,is)=hcib(iCv,is)*poloidal_scale_factor
+            poloidal_scale_factor=
+     1      (switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
+     1       switch%b2tqna_ballooning*
+     1       switch%b2tqna_ballooning_rescale
+            do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+                dna0(iCv,is)=dna0(iCv,is)*poloidal_scale_factor
+                dpa0(iCv,is)=dpa0(iCv,is)*poloidal_scale_factor
+                vla0(iCv,:,is)=vla0(iCv,:,is)*poloidal_scale_factor
+                vsa0(iCv,is)=vsa0(iCv,is)*poloidal_scale_factor
+                hci0(iCv)=hci0(iCv)+
+     1           hcib(iCv,is)*(poloidal_scale_factor-1.0_R8)
+                hcib(iCv,is)=hcib(iCv,is)*poloidal_scale_factor
+              endif
+            enddo
+            hce0(iCv)=hce0(iCv)*poloidal_scale_factor
+            if (switch%b2tqna_ballooning_sig.ne.0)  then
+              sig0(iCv)=sig0(iCv)*poloidal_scale_factor
+              alf0(iCv)=alf0(iCv)*poloidal_scale_factor
             endif
           enddo
           hce0(iCv)=hce0(iCv)*poloidal_scale_factor
@@ -760,12 +766,13 @@ cdpc
       use b2mod_b2cmpa
      , , only : is_neutral
       implicit none
+      integer, intent (in) :: nCv, ns
       type (mapping), intent (in) :: mpg
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
 
-      integer omp_start,j,k,l,iVx,fcs,flux_surf(2),omp_loc(2),nCv,
-     & size_arr,iFc,inner_bar_loc,sep_loc,inner_sol_loc,ns,is,iCv
+      integer omp_start,j,k,l,iVx,fcs,flux_surf(2),omp_loc(2),
+     & size_arr,iFc,inner_bar_loc,sep_loc,inner_sol_loc,is,iCv
       integer, allocatable :: cvs(:)
       real(kind=R8) :: Bmin,len_in
       real (kind=R8) ::
@@ -834,20 +841,20 @@ cdpc
       do iCv=1,nCv
         do is=1,ns-1
           if (.not.is_neutral(is)) then
-              call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
-     &          inner_sol_loc,switch%na_alfa1, switch%na_alfa2,
+              call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
+     &          inner_sol_loc, switch%na_alfa1, switch%na_alfa2,
      &          switch%na_alfa3,switch%na_alfa4, iCv, dna0(iCv,is))
-              call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
-     &          inner_sol_loc,switch%ti_alfa1, switch%ti_alfa2,
+              call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
+     &          inner_sol_loc, switch%ti_alfa1, switch%ti_alfa2,
      &          switch%ti_alfa3,switch%ti_alfa4, iCv, hcib(iCv,is))
-              call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
-     &          inner_sol_loc,switch%vsa_alfa1, switch%vsa_alfa2,
+              call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
+     &          inner_sol_loc, switch%vsa_alfa1, switch%vsa_alfa2,
      &         switch%vsa_alfa3, switch%vsa_alfa4, iCv, vsa0(iCv,is))
             endif
         enddo
-        call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,inner_sol_loc
-     &    ,switch%te_alfa1, switch%te_alfa2,switch%te_alfa3,
-     &    switch%te_alfa4, iCv, hce0(iCv))
+        call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
+     &    inner_sol_loc, switch%te_alfa1, switch%te_alfa2,
+     &    switch%te_alfa3, switch%te_alfa4, iCv, hce0(iCv))
       enddo
 
       return

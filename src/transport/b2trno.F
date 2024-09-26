@@ -181,26 +181,25 @@
 *   ..incorporate geometry
       inctran = switch%b2txcx_increase_transp_coefs
       do is = 0, ns-1
-        call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol, 
+        call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
      &   geo%fcS, co%dna0(1:nCv,is), co%cdna(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%dna0(1:nCv,is), co%cdna(1:nFc,1,is))
-        call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol, 
+        call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
      &   geo%fcS, co%dpa0(1:nCv,is), co%cdpa(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%dpa0(1:nCv,is), co%cdpa(1:nFc,1,is))
         call b2txcc (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
      &   geo%fcS, co%dpa0(1:nCv,is), cdpa0(1:nFc,is))
-        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
+        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vla0(1:nCv,0,is), co%cvla(1:nFc,0,is))
-        call b2txsy (nCv, nFc,
-     &   geo, mpg, geo%fcVol, geo%fcS,
+        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vla0(1:nCv,1,is), co%cvla(1:nFc,1,is))
         call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
      &   geo%fcS, co%vsa0(1:nCv,is), co%cvsa(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vsa0(1:nCv,is), co%cvsa(1:nFc,1,is))
-        call b2txcc (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol, 
+        call b2txcc (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
      &   geo%fcS, co%vsa0(1:nCv,is), cvsa0(1:nFc,is))
         call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
      &   geo%fcS, co%hcib(1:nCv,is), co%chcb(1:nFc,0,is))
@@ -252,14 +251,11 @@
 *   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
       if (switch%transport_afn.eq.1) then
-#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRNO))
-!$omp do
-#endif 
        do is = 0, ns-1
          if (is_neutral(is).and.nint(zn(is)).eq.1) then
            wrkc =  co%dpa0(:,is)*(geo%cvBb(:,2)/geo%cvBb(:,3))**2
            call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &                  geo%fcS, wrkc, co%cdpa(1:nFc,0,is))   
+     &                  geo%fcS, wrkc, co%cdpa(1:nFc,0,is))
            call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, wrk1, wrk,
      &                 wrkc, co%cdpahz(1:nFc,0,is))
          endif
@@ -286,33 +282,33 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
      &   geo, mpg, geo%fcVol, geo%fcS,
      &   hve0(1:nCv,1), co%chve(1:nFc,1))
 
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol, 
+      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
      &  geo%fcS, co%hce0, co%chce(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hce0, co%chce(1:nFc,1))
-      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol, 
+      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
      &  geo%fcS, co%sig0, co%csig(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%sig0, co%csig(1:nFc,1))
-      call b2txcx (nCv, nFc, 0.0_R8,   -1, geo, mpg, geo%fcVol, 
+      call b2txcx (nCv, nFc, 0.0_R8,   -1, geo, mpg, geo%fcVol,
      &  geo%fcS, co%alf0, co%calf(1:nFc,0))
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
      &  co%alf0, co%calf(1:nFc,1))
       wrkc = co%dkt0*(1.0_R8 + switch%b2tfhi_fconkt)
-      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol, 
+      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
      &  geo%fcS, wrkc, co%cdkt(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%dkt0, co%cdkt(1:nFc,1))
       wrkc = co%dzt0*(1.0_R8 + switch%b2tfhi_fconzt)
-      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol, 
+      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
      &  geo%fcS, wrkc, co%cdzt(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%dzt0, co%cdzt(1:nFc,1))
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol, 
+      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
      &  geo%fcS, co%hce_ExB, co%chce_ExB(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hce_ExB, co%chce_ExB(1:nFc,1))
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol, 
+      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
      &  geo%fcS, co%hci_ExB, co%chci_ExB(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hci_ExB, co%chci_ExB(1:nFc,1))

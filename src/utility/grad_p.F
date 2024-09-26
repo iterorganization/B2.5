@@ -53,7 +53,7 @@
       endif
 
 *   ..compute poloidal gradients at faces
-      do iFc = 1,nFc
+      do iFc = 1, nFc
        cvs = mpg%fcCv(iFc,:)
        if (mpg%cvFt(cvs(1)).eq.mpg%cvFt(cvs(2))) then
          radcoef = 0.0_R8

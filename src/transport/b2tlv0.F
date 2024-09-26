@@ -1,5 +1,5 @@
       subroutine b2tlv0 (nCv, nFc, nVx, ns, switch, geo, mpg,
-     &  na, ua, te, tn, rza, cvsa0, cvsa, cvsahz, flv)
+     &  na, ua, te,  tn, rza, cvsa0, cvsa, cvsahz, flv)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -113,8 +113,8 @@ cwdk    or radial contributions, since neutral transport is isotropic
         do is = 0, ns-1
          if (is_neutral(is)) then
 *    ..compute differences of parallel velocity
-          call diff (nCv, nFc, nVx, 0, geo, mpg, ua(1,is), ubv, dubf)
-          do iFc = 1, nFc
+          call diff (0, geo, mpg, ua(1,is), ubv, dubf)
+          do iFc = 1, mpg%nFc
 *    ..limit total gradient
             qcl = cvsa0(iFc,is)*sqrt(dubf(iFc,0)**2 + dubf(iFc,1)**2)
             qfl = alpha*geo%fcS(iFc)*

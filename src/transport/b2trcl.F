@@ -635,10 +635,9 @@ c            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.
          if(switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)).and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
-          if (collisnumef(iFc).gt.switch%min_collisions) then
-           flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
-     &                             dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
-           t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
+          flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
+     &                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
+          t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
      &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
      &      b2trcl_cutlo)
           else
@@ -679,9 +678,9 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
      &                             +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
             t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
-     &        pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) + 
+     &        pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) +
      &        b2trcl_cutlo)
-          else 
+          else
             t0 = (cflim(1)*max(collisnum(iFt),1.0e-16_R8))**(-1)
           endif
           co%fllim_ki(iFc) = 1.0_R8/(1.0_R8+t0)
@@ -748,7 +747,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
             t0 = abs(co%alfx_c(iCv)*gtec(iCv)/
      &         (cflim(3)*jemax + b2trcl_cutlo))
             co%fllim_al_c(iCv)=1.0_R8/(1.0_R8+t0)
-            co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)                 !iyv 19.11.13 !srv 08.10.14
+            co%alfx_c(iCv)=co%alfx_c(iCv)*co%fllim_al_c(iCv)          !iyv 19.11.13 !srv 08.10.14
           endif
         enddo
        endif
