@@ -38,7 +38,7 @@
       use b2mod_dimensions
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0
+      integer, intent (in) :: nCv, nFc, nVx, ns, ismain, ismain0
       real (kind=R8) :: praverage(2)
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
