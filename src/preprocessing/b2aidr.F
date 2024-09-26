@@ -657,7 +657,7 @@
 
 *   ..for underlying structured grids, convert to structured output and write b2fstate_st
       if (mpg%isClassicalGrid.eq.1) then
-       call to_struct_plasma (ns,mpg,st)
+       call to_struct_plasma (ns, geo, mpg, st)
       endif
 
 * ..return

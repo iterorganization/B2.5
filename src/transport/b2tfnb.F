@@ -269,8 +269,12 @@ cwdk                   (original code: simple averaging)
      &        sqrt(8.0_R8*t0/(pi*am(isb)*mp))
             t2 = 1.0_R8 + 
      .        sqrt((switch%fnbPSch*dv%facdrift(iFc)*co%cddi(iFc,0,isb)*
+     .        (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))/
+     .        geo%fcS(iFc)*
      .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 +
      .        (switch%fnbPSch*dv%facdrift(iFc)*co%cddi(iFc,1,isb)*
+     .        (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))/
+     .        geo%fcS(iFc)*
      .        dnbti(iFc,0))**2)/(vbar*t1)
             dv%fnaPSch(iFc,0,isb) = dv%fnaPSch(iFc,0,isb)/t2
             dv%fnaPSch(iFc,1,isb) = dv%fnaPSch(iFc,1,isb)/t2
@@ -301,8 +305,12 @@ cwdk                   (original code: simple averaging)
             vbar =   sqrt(8.0_R8*t0/(pi*am(isb)*mp))
             t2 = 1.0_R8 + 
      .        sqrt((switch%fnbPSch*dv%facdrift(iFc)*co%cddi(iFc,0,isb)*
+     .        (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))/
+     .        geo%fcS(iFc)*
      .        dnbti(iFc,1)*geo%fcBb(iFc,3)/geo%fcBb(iFc,2))**2 +
      .        (switch%fnbPSch*dv%facdrift(iFc)*co%cddi(iFc,1,isb)*
+     .        (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2)))/
+     .        geo%fcS(iFc)*
      .        dnbti(iFc,0))**2)/(vbar*t1)
             dv%fnaPSch(iFc,0,isb) = dv%fnaPSch(iFc,0,isb)/t2
             dv%fnaPSch(iFc,1,isb) = dv%fnaPSch(iFc,1,isb)/t2
@@ -941,10 +949,10 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
      &            'b2tfnb_cdnb_th'//chns)
        call my_out_us(70,nFc,1,co%cdna(1,1,isb),
      &            'b2tfnb_cdnb_r'//chns)
-       call my_out_us(70,nFc,1,co%cddi(1,0,isb),
-     &            'b2tfnb_cddb_th'//chns)
-       call my_out_us(70,nFc,1,co%cddi(1,1,isb),
-     &            'b2tfnb_cddb_r'//chns)
+       wrkf(:,0) = co%cddi(:,0,isb)*geo%fcQalf(:,0)
+       wrkf(:,1) = co%cddi(:,1,isb)*geo%fcQalf(:,1)
+       call my_out_us(70,nFc,1,wrkf(1,0),'b2tfnb_cddb_th'//chns)
+       call my_out_us(70,nFc,1,wrkf(1,1),'b2tfnb_cddb_r'//chns)
        call my_out_us(70,nFc,1,term,'b2tfnb_term'//chns)
        call my_out_us(70,nFc,1,term*geo%fcHz,'b2tfnb_termhz'//chns)
        call my_out_us(70,nFc,1,geo%fcPbs,'b2tfnb_pbs')
