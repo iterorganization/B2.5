@@ -196,6 +196,9 @@
         case ('b2tqin_style')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Use b2tqin_csigin_style instead.'
+        case ('b2sikt_aniso')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use b2sikt_fac_aniso instead.'
         case default
           prohib = .false.
         end select
