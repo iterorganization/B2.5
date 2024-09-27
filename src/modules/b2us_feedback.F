@@ -16,7 +16,7 @@
       use b2us_plasma
       use b2mod_user_namelist
      & , only : nomp, omp, icsepomp, nimp, imp, icsepimp,
-     &          spfr_cv, epfr_cv, npfr_cvs, pfr_cvs
+     &        npfr_cvs, pfr_cvs
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_wneutrals ! IGNORE
@@ -1539,28 +1539,6 @@ cxpb size is changed in b2mod_dimensions
               if (fb_current(ifb).eq.0.0_R8)
      &          fb_current(ifb) = fb_target(ifb)
 
-            case (19) !  total particle content
-
-              if(ncall.eq.0) then
-                write(*,'(a,a,i3)')
-     &           'compute_feedback_type: using ',
-     &           'total particle content ',
-     &           b2espcr(fb_species(ifb))
-              endif
-
-              fb_current(ifb) = 0.0_R8
-              is_start=-1
-              is_end=-1
-              do is=0, ns-1
-                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
-                  if(is_start.eq.-1) is_start=is
-                  is_end=is
-                  do iCv = 1, nCv
-                    fb_current(ifb) = fb_current(ifb) +
-     &               pl%na(iCv,is) * geo%cvVol(iCv)
-                  end do
-                endif
-              enddo
 #if ( defined(B25_EIRENE) && !defined(SOLPS4_3) )
             case (20) !  neutral pressure in PFR
 
@@ -1568,7 +1546,6 @@ cxpb size is changed in b2mod_dimensions
                 write(*,'(a,a,i3)')
      &           'compute_feedback_type: using ',
      &           'average neutral pressure for sequence',
-    !  &           '(', spfr_cv, ', ',epfr_cv,')',
      &           b2espcr(fb_species(ifb))
                 write(*,*) spfr_cv, epfr_cv
                 write(*,*) pfr_cvs(1:npfr_cvs)
@@ -1584,30 +1561,17 @@ cxpb size is changed in b2mod_dimensions
                 endif
               enddo
 
-              if (spfr_cv.gt.0 .and. epfr_cv.gt.0) then
-                do iCv = spfr_cv, epfr_cv ! 1218,1224
-                  t0 =
-     &             dab2(iCv,fb_species(ifb),1)*
-     &             tab2(iCv,fb_species(ifb),1) +
-     &             dmb2(iCv,fb_species(ifb),1)*
-     &             tmb2(iCv,fb_species(ifb),1)
-                  fb_current(ifb) = fb_current(ifb) + t0*geo%cvVol(iCv)
-                end do
-                fb_current(ifb) = fb_current(ifb)/
-     &           sum(geo%cvVol(spfr_cv:epfr_cv))
-              elseif (npfr_cvs.gt.0) then
-                do k = 1,npfr_cvs ! 1218,1224
-                  iCv = pfr_cvs(k)
-                  t0 =
-     &             dab2(iCv,fb_species(ifb),1)*
-     &             tab2(iCv,fb_species(ifb),1) +
-     &             dmb2(iCv,fb_species(ifb),1)*
-     &             tmb2(iCv,fb_species(ifb),1)
-                  fb_current(ifb) = fb_current(ifb) + t0*geo%cvVol(iCv)
-                end do
-                fb_current(ifb) = fb_current(ifb)/
-     &           sum(geo%cvVol(pfr_cvs))
-              endif
+              do k = 1,npfr_cvs 
+                iCv = pfr_cvs(k)
+                t0 =
+     &            dab2(iCv,fb_species(ifb),1)*
+     &            tab2(iCv,fb_species(ifb),1) +
+     &            dmb2(iCv,fb_species(ifb),1)*
+     &            tmb2(iCv,fb_species(ifb),1)
+                fb_current(ifb) = fb_current(ifb) + t0*geo%cvVol(iCv)
+              end do
+              fb_current(ifb) = fb_current(ifb)/
+     &         sum(geo%cvVol(pfr_cvs))
 #endif
             case (21) !  ion radiation looses
 
@@ -2320,11 +2284,6 @@ cxpb size is changed in b2mod_dimensions
      >         then
 ! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
 !     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
-                ! if (switch%use_eirene.eq.0) then
-                !   conpar(is_start, fb_ib(ifb), 1) = 0.0_R8
-                ! else
-                !   userfluxparm(fb_istra(ifb),1) = 0.0_R8
-                ! endif
               else
                 if (switch%use_eirene.eq.0) then
                   if (switch%recycle_afn.eq.0 .or.
@@ -2341,15 +2300,6 @@ cxpb size is changed in b2mod_dimensions
                       endif
                     enddo
                   else
-    !                 do istra = 1, nstrai
-    !                 if (((1-recyc(ibc,is_start)).ge.1e-7_R8) .or.
-    !  &               ((1-b2recyc(ibc,is_start)).ge.1e-7_R8)) then
-    !                     b2recyc(is_start,istra) =
-    !  &                  (1+saved_fb_actuator(ifb))
-    !                     recyc(is_start,istra) =
-    !  &                  b2recyc(is_start,fb_ib(ifb))
-    !                 endif
-    !                 enddo
                     do istra = 1, nstrai
                       print *,"istra:", istra, recyc(is_start,istra)
                       if (
