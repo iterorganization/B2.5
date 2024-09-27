@@ -86,22 +86,26 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv, is, k
+  INTEGER :: icv, is, k, ift, ifc
 !srv 11.09.09 }
   CHARACTER :: chns*3, chk*1
   REAL(kind=r8) :: t0, ttim
   REAL(kind=r8) :: wrk0(ncv)
+  REAL(kind=r8) :: dtee_fts(mpg%nft), dtei_fts(mpg%nft), dtco_fts(mpg%&
+& nft), dtmo_fts(mpg%nft)
 !   ..procedures
   EXTERNAL XERTST
   EXTERNAL B2XVSG
   INTRINSIC ABS
   INTRINSIC MAXVAL
+  INTRINSIC MINVAL
   REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
   REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs1
   INTEGER :: arg1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask
   REAL(kind=r8) :: result1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask0
+  REAL(kind=r8) :: result10
   CHARACTER(len=12) :: arg10
 !   ..initialisation
 !
@@ -117,10 +121,135 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
   REAL(kind=r8) :: tempb
   INTEGER*4 :: branch
 !
+! ..include the contributions from dtim
+!   ..modify snadt
+  k = 1
+  dtee_fts = 0.0_R8
+  dtei_fts = 0.0_R8
+  dtco_fts = 0.0_R8
+  dtmo_fts = 0.0_R8
+  DO WHILE (dtfts(k) .NE. 0 .AND. k .LE. def_nyd)
+    dtee_fts(dtfts(k)) = dtee_ft(k)
+    dtei_fts(dtfts(k)) = dtei_ft(k)
+    dtco_fts(dtfts(k)) = dtco_ft(k)
+    dtmo_fts(dtfts(k)) = dtmo_ft(k)
+    k = k + 1
+  END DO
+  DO is=0,ns-1
+    DO icv=1,ncv
+!sw 24feb2014 check for guard cell (SOLPS4)
+!WG_TODO           if(iftimbound(ix,iy) .ne. 0) cycle
+!WG_TODO           if((guard_flows.eq.2 .or.
+!WG_TODO     &        (is_neutral(is) .and. use_eirene.ne.0)) .and.
+!WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+!WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtco(is, mpg%cvreg(icv))*time_factor(icv)
+      ift = mpg%cvft(icv)
+      IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
+        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+        result10 = MINVAL(mpg%fccv(ifc, :))
+        ift = mpg%cvft(result10)
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (ift .NE. 0) THEN
+        IF (dtco_fts(ift) .GT. 0.0_R8) THEN
+          CALL PUSHCONTROL1B(0)
+          ttim = dtim*dtco_fts(ift)*time_factor(icv)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+  END DO
+!
+!   ..modify smodt
+  DO is=0,ns-1
+    DO icv=1,ncv
+!sw 24feb2014 check for guard cell (SOLPS4)
+!WG_TODO            if(iftimbound(ix,iy) .ne. 0) cycle
+!
+      CALL PUSHREAL8(ttim, r8/8)
+      ttim = dtim*dtmo(is, mpg%cvreg(icv))*time_factor(icv)
+      ift = mpg%cvft(icv)
+      IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
+        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+        result10 = MINVAL(mpg%fccv(ifc, :))
+        ift = mpg%cvft(result10)
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (ift .NE. 0) THEN
+        IF (dtmo_fts(ift) .GT. 0.0_R8) THEN
+          CALL PUSHCONTROL1B(0)
+          ttim = dtim*dtmo_fts(ift)*time_factor(icv)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+!srv 09.01.01
+      CALL PUSHREAL8(t0, r8/8)
+      t0 = switch%b2srdt_phm1/ttim*geo%cvvol(icv)*geo%cvhz(icv)
+    END DO
+  END DO
+!
+!   ..modify shedt, shidt, shndt, sktdt, sztdt, schdt, snedt
   DO icv=1,ncv
 !sw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 !
+    CALL PUSHREAL8(ttim, r8/8)
+    ttim = dtim*dtee(mpg%cvreg(icv))*time_factor(icv)
+    ift = mpg%cvft(icv)
+    IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      result10 = MINVAL(mpg%fccv(ifc, :))
+      ift = mpg%cvft(result10)
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (ift .NE. 0) THEN
+      IF (dtee_fts(ift) .GT. 0.0_R8) THEN
+        CALL PUSHCONTROL1B(0)
+        ttim = dtim*dtee_fts(ift)*time_factor(icv)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    CALL PUSHREAL8(t0, r8/8)
+    t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)
+!
+    ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
+    IF (ift .NE. 0) THEN
+      IF (dtei_fts(ift) .GT. 0.0_R8) THEN
+        CALL PUSHCONTROL1B(0)
+        ttim = dtim*dtei_fts(ift)*time_factor(icv)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    CALL PUSHREAL8(t0, r8/8)
+    t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)
+!
+  END DO
+!
+  DO icv=1,ncv
+!sw 24feb2014 check for guard cell (SOLPS4)
+!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
+!
+    CALL PUSHREAL8(ttim, r8/8)
     ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
     CALL PUSHREAL8(t0, r8/8)
     t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)
@@ -215,27 +344,31 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
       ti0b(icv) = ti0b(icv) + ni0(icv, 0)*tempb
     END IF
     CALL POPREAL8(t0, r8/8)
+    CALL POPREAL8(ttim, r8/8)
   END DO
   DO icv=ncv,1,-1
     srb%skt(icv, :) = srb%skt(icv, :) + srb%sktdt(icv, :)
     srb%sktdt(icv, 3) = 0.D0
     srb%sktdt(icv, 2) = 0.D0
     srb%sktdt(icv, 1) = 0.D0
-    ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
-    t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)
     ni0b(icv, 1) = ni0b(icv, 1) + kt0(icv)*t0*srb%sktdt(icv, 0)
     kt0b(icv) = kt0b(icv) + ni0(icv, 1)*t0*srb%sktdt(icv, 0)
     srb%sktdt(icv, 0) = 0.D0
+    CALL POPREAL8(t0, r8/8)
+    CALL POPCONTROL1B(branch)
     srb%shedt(icv, :) = srb%shedt(icv, :) + srb%she(icv, :)
     srb%shedt(icv, 3) = 0.D0
     srb%shedt(icv, 2) = 0.D0
     srb%shedt(icv, 1) = 0.D0
-    ttim = dtim*dtee(mpg%cvreg(icv))*time_factor(icv)
-    t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)
     tempb = t0*1.5_R8*srb%shedt(icv, 0)
     srb%shedt(icv, 0) = 0.D0
     ne0b(icv) = ne0b(icv) + te0(icv)*tempb
     te0b(icv) = te0b(icv) + ne0(icv)*tempb
+    CALL POPREAL8(t0, r8/8)
+    CALL POPCONTROL1B(branch)
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+    CALL POPREAL8(ttim, r8/8)
   END DO
   DO is=ns-1,0,-1
     DO icv=ncv,1,-1
@@ -244,12 +377,15 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
       srb%smodt(icv, 3, is) = 0.D0
       srb%smodt(icv, 2, is) = 0.D0
       srb%smodt(icv, 1, is) = 0.D0
-      ttim = dtim*dtmo(is, mpg%cvreg(icv))*time_factor(icv)
-      t0 = switch%b2srdt_phm1/ttim*geo%cvvol(icv)*geo%cvhz(icv)
       tempb = am(is)*t0*mp*srb%smodt(icv, 0, is)
       srb%smodt(icv, 0, is) = 0.D0
       ua0b(icv, is) = ua0b(icv, is) + na0(icv, is)*tempb
       na0b(icv, is) = na0b(icv, is) + ua0(icv, is)*tempb
+      CALL POPREAL8(t0, r8/8)
+      CALL POPCONTROL1B(branch)
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      CALL POPREAL8(ttim, r8/8)
     END DO
   END DO
   DO is=ns-1,0,-1
@@ -257,10 +393,13 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
       srb%snadt(icv, :, is) = srb%snadt(icv, :, is) + srb%sna(icv, :, is&
 &       )
       srb%snadt(icv, 1, is) = 0.D0
-      ttim = dtim*dtco(is, mpg%cvreg(icv))*time_factor(icv)
       na0b(icv, is) = na0b(icv, is) + switch%b2srdt_phm0*geo%cvvol(icv)*&
 &       srb%snadt(icv, 0, is)/ttim
       srb%snadt(icv, 0, is) = 0.D0
+      CALL POPCONTROL1B(branch)
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      CALL POPREAL8(ttim, r8/8)
     END DO
   END DO
 END SUBROUTINE B2SRDT_B
@@ -326,22 +465,26 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
 !.declarations
 !
 !   ..local variables
-  INTEGER :: icv, is, k
+  INTEGER :: icv, is, k, ift, ifc
 !srv 11.09.09 }
   CHARACTER :: chns*3, chk*1
   REAL(kind=r8) :: t0, ttim
   REAL(kind=r8) :: wrk0(ncv)
+  REAL(kind=r8) :: dtee_fts(mpg%nft), dtei_fts(mpg%nft), dtco_fts(mpg%&
+& nft), dtmo_fts(mpg%nft)
 !   ..procedures
   EXTERNAL XERTST
   EXTERNAL B2XVSG
   INTRINSIC ABS
   INTRINSIC MAXVAL
+  INTRINSIC MINVAL
   REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
   REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs1
   INTEGER :: arg1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask
   REAL(kind=r8) :: result1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask0
+  REAL(kind=r8) :: result10
   CHARACTER(len=12) :: arg10
 !   ..initialisation
 !
@@ -406,6 +549,18 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
 !
 ! ..include the contributions from dtim
 !   ..modify snadt
+  k = 1
+  dtee_fts = 0.0_R8
+  dtei_fts = 0.0_R8
+  dtco_fts = 0.0_R8
+  dtmo_fts = 0.0_R8
+  DO WHILE (dtfts(k) .NE. 0 .AND. k .LE. def_nyd)
+    dtee_fts(dtfts(k)) = dtee_ft(k)
+    dtei_fts(dtfts(k)) = dtei_ft(k)
+    dtco_fts(dtfts(k)) = dtco_ft(k)
+    dtmo_fts(dtfts(k)) = dtmo_ft(k)
+    k = k + 1
+  END DO
   DO is=0,ns-1
     DO icv=1,ncv
 !sw 24feb2014 check for guard cell (SOLPS4)
@@ -415,6 +570,16 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
 !WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
       ttim = dtim*dtco(is, mpg%cvreg(icv))*time_factor(icv)
+      ift = mpg%cvft(icv)
+      IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
+        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+        result10 = MINVAL(mpg%fccv(ifc, :))
+        ift = mpg%cvft(result10)
+      END IF
+      IF (ift .NE. 0) THEN
+        IF (dtco_fts(ift) .GT. 0.0_R8) ttim = dtim*dtco_fts(ift)*&
+&           time_factor(icv)
+      END IF
       sr%snadt(icv, 0, is) = switch%b2srdt_phm0/ttim*geo%cvvol(icv)*na0(&
 &       icv, is)
       sr%snadt(icv, 1, is) = -(switch%b2srdt_phm0/ttim*geo%cvvol(icv))
@@ -429,6 +594,16 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
 !WG_TODO            if(iftimbound(ix,iy) .ne. 0) cycle
 !
       ttim = dtim*dtmo(is, mpg%cvreg(icv))*time_factor(icv)
+      ift = mpg%cvft(icv)
+      IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
+        ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+        result10 = MINVAL(mpg%fccv(ifc, :))
+        ift = mpg%cvft(result10)
+      END IF
+      IF (ift .NE. 0) THEN
+        IF (dtmo_fts(ift) .GT. 0.0_R8) ttim = dtim*dtmo_fts(ift)*&
+&           time_factor(icv)
+      END IF
 !srv 09.01.01
       t0 = switch%b2srdt_phm1/ttim*geo%cvvol(icv)*geo%cvhz(icv)
       sr%smodt(icv, 0, is) = t0*am(is)*mp*ua0(icv, is)*na0(icv, is)
@@ -440,12 +615,21 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
   END DO
 !
 !   ..modify shedt, shidt, shndt, sktdt, sztdt, schdt, snedt
-!$OMP DO
   DO icv=1,ncv
 !sw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 !
     ttim = dtim*dtee(mpg%cvreg(icv))*time_factor(icv)
+    ift = mpg%cvft(icv)
+    IF (ift .EQ. 0 .AND. icv .GT. mpg%nci) THEN
+      ifc = mpg%cvfc(mpg%cvfcp(icv, 1))
+      result10 = MINVAL(mpg%fccv(ifc, :))
+      ift = mpg%cvft(result10)
+    END IF
+    IF (ift .NE. 0) THEN
+      IF (dtee_fts(ift) .GT. 0.0_R8) ttim = dtim*dtee_fts(ift)*&
+&         time_factor(icv)
+    END IF
     t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)
     sr%shedt(icv, 0) = 1.5_R8*t0*ne0(icv)*te0(icv)
     sr%shedt(icv, 1) = 0.0_R8
@@ -454,6 +638,10 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     sr%she(icv, :) = sr%she(icv, :) + sr%shedt(icv, :)
 !
     ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
+    IF (ift .NE. 0) THEN
+      IF (dtei_fts(ift) .GT. 0.0_R8) ttim = dtim*dtei_fts(ift)*&
+&         time_factor(icv)
+    END IF
     t0 = switch%b2srdt_phm3/ttim*geo%cvvol(icv)
     sr%sktdt(icv, 0) = t0*ni0(icv, 1)*kt0(icv)
     sr%sktdt(icv, 1) = 0.0_R8

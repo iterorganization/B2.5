@@ -147,7 +147,6 @@ SUBROUTINE B2TQIN_B(ncv, ns, nscx, iscx, switch, geo, geob, pl, plb, rt&
           t0 = LOG(tav/(am(is0)*ev))
           arg10 = rt%rlcx(icv, 0, is, k) + rt%rlcx(icv, 1, is, k)*t0
           CALL PUSHBOOLEAN(b2mod_math_initialised)
-          CALL PUSHREAL4(small_r4_constant, r4/8)
           CALL PUSHREAL8(cutlo, r8/8)
           CALL PUSHREAL8(cutll, r8/8)
           result1 = EXPU(arg10)
@@ -214,7 +213,6 @@ SUBROUTINE B2TQIN_B(ncv, ns, nscx, iscx, switch, geo, geob, pl, plb, rt&
           arg10 = rt%rlcx(icv, 0, is, k) + rt%rlcx(icv, 1, is, k)*t0
           CALL POPREAL8(cutll, r8/8)
           CALL POPREAL8(cutlo, r8/8)
-          CALL POPREAL4(small_r4_constant, r4/8)
           CALL POPBOOLEAN(b2mod_math_initialised)
           CALL EXPU_B(arg10, arg10b, result1b)
           rtb%rlcx(icv, 0, is, k) = rtb%rlcx(icv, 0, is, k) + arg10b

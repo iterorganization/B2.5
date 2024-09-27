@@ -104,9 +104,11 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg&
   REAL(kind=r8) :: csig_stoch(nfc), fchstoch(nfc)
 !srv 22.11.99 13.10.06 17.06.09
   REAL(kind=r8) :: ehx(nfc), ehy(nfc), floe0(nfc, 0:1), cone0(nfc, 0:1)&
-& , alfe0(nfc), floe0_mdf(nfc, 0:1)
+& , alfe0(nfc), floe0_mdf(nfc, 0:1), fhe_32_loc(nfc, 0:1), fhe_52_loc(&
+& nfc, 0:1)
   REAL(kind=r8) :: ehxb(nfc), ehyb(nfc), floe0b(nfc, 0:1), cone0b(nfc, 0&
-& :1), alfe0b(nfc), floe0_mdfb(nfc, 0:1)
+& :1), alfe0b(nfc), floe0_mdfb(nfc, 0:1), fhe_32_locb(nfc, 0:1), &
+& fhe_52_locb(nfc, 0:1)
 !srv 22.11.99 25.01.02
 !srv 13.01.17
   REAL(kind=r8) :: fledia(nfc, 0:1), c071(nfc), c071c(ncv), zeff(ncv)
@@ -119,7 +121,7 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg&
 & fhe0_mdf(nfc, 0:1), pe(ncv), wrkc(ncv), dumm1(nfc, 0:1), dumm2(nfc, 0:&
 & 1), dumm3(nfc, 0:1), dumm4(nfc, 0:1)
   REAL(kind=r8) :: tefb(nfc), nefb(nfc), tefhb(nfc), wrkfb(nfc, 0:1), &
-& fhe0_mdfb(nfc, 0:1), dumm1b(nfc, 0:1), dumm2b(nfc, 0:1)
+& fhe0_mdfb(nfc, 0:1)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: b2_upwind = 0
 !      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
@@ -233,8 +235,8 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg&
 !
 !   ..apply discretization scheme
   CALL CALCFLOW_FWD(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, geob, &
-&             mpg, mpgb, pl%te, floe0_mdf, co%chce, fhe0_mdf, dumm1, &
-&             dumm2)
+&             mpg, mpgb, pl%te, floe0_mdf, co%chce, fhe0_mdf, fhe_32_loc&
+&             , fhe_52_loc)
 !
 !   ..compute fluxes
   alfe0 = co%calf(:, 0)
@@ -248,7 +250,6 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg&
 !    this on mdf /= 0?
   CALL CALCCOEF_FWD(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, &
 &             floe0_mdf, co%chce, floe0, cone0)
-!
 !
 !
 !
@@ -297,12 +298,12 @@ SUBROUTINE B2TFHE__B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg&
   tefb = tefb + (floe0(:, 0)-floe0_mdf(:, 0))*dvb%fhe(:, 0) + tefhb
   dvb%fhe(:, 0) = 0.D0
   cob%calf(:, 0) = cob%calf(:, 0) + alfe0b
-  dumm1b = 0.D0
-  dumm2b = 0.D0
+  fhe_32_locb = 0.D0
+  fhe_52_locb = 0.D0
   CALL CALCFLOW_BWD(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, geob, &
 &             mpg, mpgb, pl%te, plb%te, floe0_mdf, floe0_mdfb, co%chce, &
-&             cob%chce, fhe0_mdf, fhe0_mdfb, dumm1, dumm1b, dumm2, &
-&             dumm2b)
+&             cob%chce, fhe0_mdf, fhe0_mdfb, fhe_32_loc, fhe_32_locb, &
+&             fhe_52_loc, fhe_52_locb)
   nefb = 0.D0
   dvb%fne_he(:, 1) = dvb%fne_he(:, 1) + 1.5_R8*floe0_mdfb(:, 1)
   nefb = co%chve(:, 1)*floe0_mdfb(:, 1) + co%chve(:, 0)*floe0_mdfb(:, 0)&
@@ -447,7 +448,8 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
   REAL(kind=r8) :: csig_stoch(nfc), fchstoch(nfc)
 !srv 22.11.99 13.10.06 17.06.09
   REAL(kind=r8) :: ehx(nfc), ehy(nfc), floe0(nfc, 0:1), cone0(nfc, 0:1)&
-& , alfe0(nfc), floe0_mdf(nfc, 0:1)
+& , alfe0(nfc), floe0_mdf(nfc, 0:1), fhe_32_loc(nfc, 0:1), fhe_52_loc(&
+& nfc, 0:1)
 !srv 22.11.99 25.01.02
 !srv 13.01.17
   REAL(kind=r8) :: fledia(nfc, 0:1), c071(nfc), c071c(ncv), zeff(ncv)
@@ -577,7 +579,8 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 !
 !   ..apply discretization scheme
   CALL CALCFLOW_NODIFF(ncv, nfc, nvx, switch%b2tfhe_discr_meth, geo, mpg&
-&                , pl%te, floe0_mdf, co%chce, fhe0_mdf, dumm1, dumm2)
+&                , pl%te, floe0_mdf, co%chce, fhe0_mdf, fhe_32_loc, &
+&                fhe_52_loc)
 !
 !   ..compute fluxes
   alfe0 = co%calf(:, 0)
@@ -607,8 +610,7 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 !
 !
 !
-!
-  IF (switch%b2tfhe_iout .NE. 0) THEN
+  IF (switch%b2tfhe_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
 !srv 18.06.08 {
 !lk 31.01.08
     CALL MY_OUT_US(70, nfc, 1, fchstoch, 'b2tfhe__fchstoch_r')
