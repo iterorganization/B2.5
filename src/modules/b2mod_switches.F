@@ -91,7 +91,9 @@ c Advanced fluid neutral models
       real (kind=R8) :: b2mndr_na_max
       real (kind=R8) :: b2mndr_ua_max !! in absolute sense: abs(ua) < ua_max
       real (kind=R8) :: b2mndr_na_new
+      real (kind=R8) :: b2npht_stab_shei
       real (kind=R8) :: b2upht_te_min
+      real (kind=R8) :: b2upht_rte_min
       real (kind=R8) :: b2upht_te_max
       real (kind=R8) :: b2upht_ti_min
       real (kind=R8) :: b2upht_ti_max
@@ -541,6 +543,10 @@ c b2stbc
 
 c b2trno
       real (kind=R8) :: b2trno_alpha_stoch
+
+c b2nppo
+      integer :: b2nppo_restrict_po
+
 c Feedback
       integer :: b2stbc_feedback
 
@@ -651,7 +657,9 @@ c Advanced fluid neutral models
       s % b2mndr_na_max = 1.0e30_R8
       s % b2mndr_ua_max = 1.0e6_R8
       s % b2mndr_na_new = 1.0e14_R8
+      s % b2npht_stab_shei = 0.0_R8
       s % b2upht_te_min = 0.1_R8
+      s % b2upht_rte_min = 0.0_R8
       s % b2upht_te_max = 1.0e30_R8
       s % b2upht_ti_min = 0.1_R8
       s % b2upht_ti_max = 1.0e30_R8
@@ -1121,6 +1129,9 @@ c b2trno
 c med
       s % med_style = 0
 
+c b2nppo
+      s % b2nppo_restrict_po = 0
+
 c Optimization
       s % b2optim_save_states = 0
       s % b2optim_reset_iter = 2
@@ -1226,7 +1237,9 @@ c Advanced fluid neutral models
       call ipgetr ('b2mndr_na_max', s%b2mndr_na_max)
       call ipgetr ('b2mndr_ua_max', s%b2mndr_ua_max)
       call ipgetr ('b2mndr_na_new', s%b2mndr_na_new)
+      call ipgetr ('b2npht_stab_shei', s%b2npht_stab_shei)
       call ipgetr ('b2upht_te_min', s%b2upht_te_min)
+      call ipgetr ('b2upht_rte_min', s%b2upht_rte_min)
       call ipgetr ('b2upht_te_max', s%b2upht_te_max)
       call ipgetr ('b2upht_ti_min', s%b2upht_ti_min)
       call ipgetr ('b2upht_ti_max', s%b2upht_ti_max)
@@ -1566,7 +1579,7 @@ c b2tqna
       call ipgeti ('b2tqna_limit_coeff', s%b2tqna_limit_coeff)
       call ipgetr ('b2tqna_pfr_rescale', s%b2tqna_pfr_rescale)
       call ipgetr ('b2tqna_divsol_rescale', s%b2tqna_divsol_rescale)
-      call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)                !srv 15.12.05
+      call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)
 
 c fch anomalous
       call ipgetr ('b2tfhe_anomalous', s%fch_anomalous)
@@ -1716,6 +1729,9 @@ c Feedback
 
 c Med
       call ipgeti ('b2mndr_med_style', s%med_style)
+
+c b2nppo
+      call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
 
 c Optimization
       call ipgeti ('b2optim_save_states', s%b2optim_save_states)
@@ -2255,7 +2271,7 @@ c Optimization
      &  'faulty parameter b2optim_save_states')
       call xertst (s%b2optim_reset_iter.gt.0,
      &  'faulty parameter b2optim_reset_iter')
-      call xertst (s%b2optim_reset_drift.gt.0.0 .and. 
+      call xertst (s%b2optim_reset_drift.gt.0.0 .and.
      &   s%b2optim_reset_drift.le.1.0_R8,
      &  'faulty parameter b2optim_reset_drift')
 

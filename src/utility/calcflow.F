@@ -2,14 +2,14 @@
 *-----------------------------------------------------------------------
 *.specification
 ! $AD NOCHECKPOINT
-      subroutine calcflow(nCv,nFc,nVx,meth,geo,mpg,fun,flo,con,
-     *  flow,flowf,flowc)
+      subroutine calcflow(nCv, nFc, nVx, meth, geo, mpg,
+     .   fun, flo, con, flow, flowf, flowc)
       use b2mod_types
       use b2us_geo
       use b2us_map
       implicit none
 *   ..input arguments
-      integer nCv, nFc, nVx, meth
+      integer, intent (in) :: nCv, nFc, nVx, meth
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -59,7 +59,7 @@
        call diff(nCv, nFc, nVx, 0, geo, mpg, fun, funv, dfun)
 
 *    ..convective piece
-       do iFc = 1,nFc
+       do iFc = 1, nFc
 *    ..poloidal
         flowf(iFc,0) =
      &    0.5_R8*flo(iFc,0)*(fun(mpg%fcCv(iFc,1))+fun(mpg%fcCv(iFc,2)))
@@ -77,7 +77,7 @@
        call diff(nCv, nFc, nVx, 0, geo, mpg, fun, funv, dfun)
 
 *    ..convective piece
-       do iFc = 1,nFc
+       do iFc = 1, nFc
 *    ..poloidal
         flowf(iFc,0) =
      &    upwind(flo(iFc,0),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2))) 
@@ -94,7 +94,7 @@
 *    ..differences of fun at cell faces
        call diff(nCv, nFc, nVx, 0, geo, mpg, fun, funv, dfun)
 
-       do iFc = 1,nFc
+       do iFc = 1, nFc
 
 *    ..poloidal flow
         t0 = (hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) - 
