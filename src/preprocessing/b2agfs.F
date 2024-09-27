@@ -847,94 +847,93 @@
 
           faces4 = m%cvFc(m%cvFcP(iCv,1):m%cvFcP(iCv,1)+3)
 
-            if (intcellP_new.eq.1) then
-              !NEW METHOD to account for trapezoids
-              v4 = m%cvVx(m%cvVxP(iCv,1): m%cvVxP(iCv,1)+3)
+          if (intcellP_new.eq.1) then
+            !NEW METHOD to account for trapezoids
+            v4 = m%cvVx(m%cvVxP(iCv,1): m%cvVxP(iCv,1)+3)
 
-              i1 = minloc(g%vxFpsi(v4),1) -1
-              i2 = maxloc(g%vxFpsi(v4),1) -1
-              dpsi_max = g%vxFpsi(v4(i2)) - g%vxFpsi(v4(i1))
+            i1 = minloc(g%vxFpsi(v4),1) -1
+            i2 = maxloc(g%vxFpsi(v4),1) -1
+            dpsi_max = g%vxFpsi(v4(i2)) - g%vxFpsi(v4(i1))
 
-              do i = 0,3
-               intP =
+            do i = 0,3
+              intP =
      &         abs( g%vxFpsi(m%fcVx(faces4(i),1)) -
-     &             g%vxFpsi(m%fcVx(faces4(i),2)) ) /  dpsi_max
-               if (intP .gt. 0.95_R8) then
+     &              g%vxFpsi(m%fcVx(faces4(i),2)) ) /  dpsi_max
+              if (intP .gt. 0.95_R8) then
                 m%intcellP(m%cvFcP(iCv,1) + i) = 1.0_R8
                 m%intcellR(m%cvFcP(iCv,1) + i) = 0.0_R8
-               elseif (intP .lt. 0.05_R8) then
+              elseif (intP .lt. 0.05_R8) then
                 m%intcellP(m%cvFcP(iCv,1) + i) = 0.0_R8
                 m%intcellR(m%cvFcP(iCv,1) + i) = 1.0_R8
-               else
+              else
                 m%intcellP(m%cvFcP(iCv,1)+i) = intP
                 !no possible to assign intR value based on intP
-               endif
+              endif
 
-              enddo
+            enddo
 
-              ! To find correct intR
-              !find the most aligned face
-               dpsi4 = abs(g%vxFpsi(m%fcVx(faces4,1)) -
-     &         g%vxFpsi(m%fcVx(faces4,2)))
-               i1 = minloc(dpsi4(0:3),1)-1
-               !find the opposite face index of the most aligned faces
-               !as faces are right turned ordered
-               i2 = i1 + 2
-               if (i2 .gt. 3) then
-                 i2 = i2 - 4
-               endif
+            ! To find correct intR
+            !find the most aligned face
+            dpsi4 = abs(g%vxFpsi(m%fcVx(faces4,1)) -
+     &                  g%vxFpsi(m%fcVx(faces4,2)))
+            i1 = minloc(dpsi4(0:3),1)-1
+            !find the opposite face index of the most aligned faces
+            !as faces are right turned ordered
+            i2 = i1 + 2
+            if (i2 .gt. 3) then
+              i2 = i2 - 4
+            endif
 
+            do i = 0,3
+              if ((i .eq. i1) .or. (i .eq. i2)) then
+                ! aligned face or face with span in radial direction
+                m%intcellR(m%cvFcP(iCv,1)+i) = 1.0_R8
+              else
+                ! not aligned faces => poloidal faces
+                m%intcellR(m%cvFcP(iCv,1)+i) = 0.0_R8
+              endif
+            enddo
 
-               do i = 0,3
-                 if ((i .eq. i1) .or. (i .eq. i2)) then
-                     ! aligned face or face with span in radial direction
-                     m%intcellR(m%cvFcP(iCv,1)+i) = 1.0_R8
-                 else
-                     ! not aligned faces => poloidal faces
-                     m%intcellR(m%cvFcP(iCv,1)+i) = 0.0_R8
-                 endif
-               enddo
+          elseif (intcellP_new.eq.0) then
 
-            elseif (intcellP_new.eq.0) then
-
-             !OLD-METHOD - not correct for trapezoids
-             !find the most aligned face
-             dpsi4 = abs(g%vxFpsi(m%fcVx(faces4,1)) -
-     &                   g%vxFpsi(m%fcVx(faces4,2)))
-             i1 = minloc(dpsi4(0:3),1)-1
-             !find the opposite face index of the most aligned faces
-             ! as faces are right turned ordered
-             ! find the second most aligned face
-             counter = -1
-             do i = 0,3
-               if (i.ne.i1) then
+            !OLD-METHOD - not correct for trapezoids
+            !find the most aligned face
+            dpsi4 = abs(g%vxFpsi(m%fcVx(faces4,1)) -
+     &                  g%vxFpsi(m%fcVx(faces4,2)))
+            i1 = minloc(dpsi4(0:3),1)-1
+            !find the opposite face index of the most aligned faces
+            ! as faces are right turned ordered
+            ! find the second most aligned face
+            counter = -1
+            do i = 0,3
+              if (i.ne.i1) then
                 faces3(counter + 1) = faces4(i)
                 counter = counter + 1
-               endif
-             enddo
+              endif
+            enddo
 
-             dpsi3 = abs(g%vxFpsi(m%fcVx(faces3,1)) -
-     &                   g%vxFpsi(m%fcVx(faces3,2)))
-             i2 = minloc(dpsi3(0:2),1)-1
+            dpsi3 = abs(g%vxFpsi(m%fcVx(faces3,1)) -
+     &                  g%vxFpsi(m%fcVx(faces3,2)))
+            i2 = minloc(dpsi3(0:2),1)-1
 
-             if (i2 .ge. i1) then ! compensate for removed face out of the array
-               i2 = i2 + 1
-             endif
-
-             do i = 0,3
-                 if ((i .eq. i1) .or. (i .eq. i2)) then
-                     ! aligned faces
-                     !intcellP = 0 and intcellR = 1
-                     m%intcellP(m%cvFcP(iCv,1)+i) = 0.0_R8
-                     m%intcellR(m%cvFcP(iCv,1)+i) = 1.0_R8
-                 else
-                     ! not aligned faces => poloidal faces
-                     m%intcellP(m%cvFcP(iCv,1)+i) = 1.0_R8
-                     m%intcellR(m%cvFcP(iCv,1)+i) = 0.0_R8
-                 endif
-             enddo
-
+            if (i2 .ge. i1) then ! compensate for removed face out of the array
+              i2 = i2 + 1
             endif
+
+            do i = 0,3
+              if ((i .eq. i1) .or. (i .eq. i2)) then
+                ! aligned faces
+                !intcellP = 0 and intcellR = 1
+                m%intcellP(m%cvFcP(iCv,1)+i) = 0.0_R8
+                m%intcellR(m%cvFcP(iCv,1)+i) = 1.0_R8
+              else
+                ! not aligned faces => poloidal faces
+                m%intcellP(m%cvFcP(iCv,1)+i) = 1.0_R8
+                m%intcellR(m%cvFcP(iCv,1)+i) = 0.0_R8
+              endif
+            enddo
+
+          endif
 
         elseif (m%cvFcP(iCv,2) == 3) then !tria
 
