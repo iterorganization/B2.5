@@ -1517,7 +1517,7 @@ c k-enstrophy model
       call ipgeti ('b2sikt_fac_sheath_local', s % b2sikt_sheath_local)
       call ipgeti ('b2sikt_min_source', s % b2sikt_min_source)
       call ipgeti ('b2sikt_kt_source_stab', s % b2sikt_kt_source_stab)
-      call ipgetr ('b2sikt_aniso', s % b2sikt_fac_aniso)
+      call ipgetr ('b2sikt_fac_aniso', s % b2sikt_fac_aniso)
       call ipgetr ('b2sikt_fac_sheath', s % b2sikt_fac_sheath)
       call ipgetr ('b2sikt_fac_sheath_core', s % b2sikt_fac_sheath_core)
       call ipgetr ('b2sikt_fac_diss', s % b2sikt_fac_diss)
