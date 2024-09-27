@@ -290,7 +290,7 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL PUSHCONTROL1B(0)
     ELSE
       CALL PUSHCONTROL1B(1)
@@ -319,7 +319,7 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         CALL PUSHCONTROL2B(2)
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -360,7 +360,7 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL PUSHCONTROL2B(1)
     ELSE
       CALL PUSHCONTROL2B(2)
@@ -393,11 +393,10 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !
 ! ..compute source coefficients
 !   ..compute electron rate coefficients
-  CALL PUSHINTEGER4(ncall_b2sqel)
   CALL PUSHBOOLEAN(b2mod_math_initialised)
-  CALL PUSHREAL4(small_r4_constant, r4/8)
   CALL PUSHREAL8(cutlo, r8/8)
   CALL PUSHREAL8(cutll, r8/8)
+  CALL PUSHINTEGER4(ncall_b2sqel)
   CALL PUSHREAL8ARRAY(st%rt%rza, r8*SIZE(st%rt%rza, 1)*SIZE(st%rt%rza, 2&
 &               )/8)
   CALL PUSHREAL8ARRAY(st%rt%rz2, r8*SIZE(st%rt%rz2, 1)*SIZE(st%rt%rz2, 2&
@@ -412,13 +411,12 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !srv 28.07.08 }
   IF (switch%b2sral_style .EQ. 0 .OR. switch%b2sral_style .EQ. 2) THEN
     CALL PUSHREAL8ARRAY(charge_frac, r8*def_nsd/8)
+    CALL PUSHBOOLEAN(b2mod_math_initialised)
+    CALL PUSHREAL8(cutlo, r8/8)
+    CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHINTEGER4(ncall_b2stbc_phys)
     CALL PUSHINTEGER4(ncall_b2stbc)
     CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-    CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
-    CALL PUSHREAL8(cutlo, r8/8)
-    CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHBOOLEAN(lfeedback)
     CALL PUSHREAL8ARRAY(potpar, r8*nbcd*2/8)
     CALL PUSHREAL8ARRAY(enipar, r8*nbcd*2/8)
@@ -487,14 +485,13 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   arg1 = ncv*4*ns
   CALL SFILL_FWD(arg1, 0.0_R8, st%sr%smq, stb%sr%smq, 1)
 !   ..compute special contributions (boundaries and recycling)
+  CALL PUSHBOOLEAN(b2mod_math_initialised)
+  CALL PUSHREAL8(cutlo, r8/8)
+  CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHINTEGER4(ncall_b2stbr_phys)
   CALL PUSHINTEGER4(ncall_b2stbr)
   CALL PUSHINTEGER4(in_no_of_start_points)
   CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-  CALL PUSHBOOLEAN(b2mod_math_initialised)
-  CALL PUSHREAL4(small_r4_constant, r4/8)
-  CALL PUSHREAL8(cutlo, r8/8)
-  CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHREAL8(neut_scl_lim, r8/8)
   CALL PUSHREAL8(neutrals_time_switch, r8/8)
   CALL PUSHREAL8(neutrals_time_mod, r8/8)
@@ -673,7 +670,6 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   DO k=0,nscx-1
 !    ..compute charge exchange rate coefficients
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHREAL8(cutlo, r8/8)
     CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHREAL8ARRAY(st%rtw%rcx, r8*SIZE(st%rtw%rcx, 1)*SIZE(st%rtw%&
@@ -759,7 +755,6 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                rcx, 2)/8)
     CALL POPREAL8(cutll, r8/8)
     CALL POPREAL8(cutlo, r8/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
     CALL B2SQCX_B(ncv, ns, ev, switch, am(iscx(k)), st%pl%ti, stb%pl%ti&
 &           , st%pl%tn, stb%pl%tn, st%rt%rlcx(1:ncv, 0:1, 0:ns-1, k), &
@@ -918,14 +913,13 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPREAL8(neutrals_time_mod, r8/8)
   CALL POPREAL8(neutrals_time_switch, r8/8)
   CALL POPREAL8(neut_scl_lim, r8/8)
-  CALL POPREAL8(cutll, r8/8)
-  CALL POPREAL8(cutlo, r8/8)
-  CALL POPREAL4(small_r4_constant, r4/8)
-  CALL POPBOOLEAN(b2mod_math_initialised)
   CALL POPCHARACTERARRAY(my_out_folder, 7)
   CALL POPINTEGER4(in_no_of_start_points)
   CALL POPINTEGER4(ncall_b2stbr)
   CALL POPINTEGER4(ncall_b2stbr_phys)
+  CALL POPREAL8(cutll, r8/8)
+  CALL POPREAL8(cutlo, r8/8)
+  CALL POPBOOLEAN(b2mod_math_initialised)
   CALL B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim, &
 &         switch, switchb, geo, geob, mpg, mpgb, st, stb, st_ext, &
 &         st_extb, st_avg, main_call)
@@ -1003,13 +997,12 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL POPREAL8ARRAY(enipar, r8*nbcd*2/8)
     CALL POPREAL8ARRAY(potpar, r8*nbcd*2/8)
     CALL POPBOOLEAN(lfeedback)
-    CALL POPREAL8(cutll, r8/8)
-    CALL POPREAL8(cutlo, r8/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
-    CALL POPBOOLEAN(b2mod_math_initialised)
     CALL POPCHARACTERARRAY(my_out_folder, 7)
     CALL POPINTEGER4(ncall_b2stbc)
     CALL POPINTEGER4(ncall_b2stbc_phys)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
+    CALL POPBOOLEAN(b2mod_math_initialised)
     CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
     CALL B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb, &
 &           geo, geob, mpg, mpgb, st%pl, stb%pl, st%dv, stb%dv, st%co, &
@@ -1022,11 +1015,10 @@ SUBROUTINE B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &              /8)
   CALL POPREAL8ARRAY(st%rt%rza, r8*SIZE(st%rt%rza, 1)*SIZE(st%rt%rza, 2)&
 &              /8)
+  CALL POPINTEGER4(ncall_b2sqel)
   CALL POPREAL8(cutll, r8/8)
   CALL POPREAL8(cutlo, r8/8)
-  CALL POPREAL4(small_r4_constant, r4/8)
   CALL POPBOOLEAN(b2mod_math_initialised)
-  CALL POPINTEGER4(ncall_b2sqel)
   CALL B2SQEL_B(ncv, ns, ismain, switch, switchb, ev, st%pl%te, stb%pl%&
 &         te, st%rt, stb%rt, st%rtw, stb%rtw)
   CALL POPREAL8ARRAY(st%dv%pa, r8*SIZE(st%dv%pa, 1)*SIZE(st%dv%pa, 2)/8)
@@ -1273,7 +1265,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -1294,7 +1286,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -1327,7 +1319,7 @@ SUBROUTINE B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF

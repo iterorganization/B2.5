@@ -1005,14 +1005,14 @@ CONTAINS
     USE B2MOD_B2CMFS, ONLY : isymm
     USE B2MOD_SWITCHES_DIFF
     USE B2US_MAP_DIFF
-!  Hint: ISIZE1OFresult1 should be the size of dimension 1 of array result1
 !  Hint: ISIZE1OFfspsi should be the size of dimension 1 of array fspsi
+!  Hint: ISIZE1OFresult1 should be the size of dimension 1 of array result1
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(GEOMETRY), INTENT(INOUT) :: gm
     INTEGER :: i, j, k, l, ncv, nfc, nvx, nfx, icv, ifc, ift, ivx, incv&
-&   , ixpt, ifc1, ifc2, ivx1, ivx2, i1, i2, inv_dist(mpg%nvx), vv(2)
+&   , ixpt, ifc1, ifc2, ivx1, ivx2, i1, i2, inv_dist(mpg%nvx)
     INTEGER :: count_up, count_down, count_eq
     INTEGER, ALLOCATABLE :: old_face_list(:), verts(:)
     REAL(kind=r8) :: hzconst, r0, z0, t0, dux, duy, du, sbf, psi1, psi2&

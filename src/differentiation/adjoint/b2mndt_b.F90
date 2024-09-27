@@ -636,6 +636,9 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
       CALL B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, st%pl, st%dv, &
 &                  st_ext, st%co%chvemx, st%co%chvimx)
 !srv 23.11.10
+      CALL PUSHBOOLEAN(b2mod_math_initialised)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHINTEGER4(ncall_b2ttia)
       CALL PUSHINTEGER4(ncall_b2trno)
       CALL PUSHINTEGER4(ncall_b2trcl)
@@ -650,10 +653,6 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
       CALL PUSHINTEGER4(ncall_b2tlh0)
       CALL PUSHBOOLEANARRAY(b2news_solving, 4)
       CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-      CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
-      CALL PUSHREAL8(cutlo, r8/8)
-      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHREAL8ARRAY(cflim, r8*8/8)
       CALL PUSHREAL8ARRAY(cfalf, r8*8/8)
       CALL PUSHREAL8ARRAY(cfsig, r8*8/8)
@@ -797,6 +796,9 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 !     ..compute source linearisation
       main_call = ntim .NE. 0
       CALL PUSHREAL8ARRAY(charge_frac, r8*def_nsd/8)
+      CALL PUSHBOOLEAN(b2mod_math_initialised)
+      CALL PUSHREAL8(cutlo, r8/8)
+      CALL PUSHREAL8(cutll, r8/8)
       DO ii1=1,ntrack
         CALL PUSHCHARACTERARRAY(track_species(ii1), 2)
       END DO
@@ -824,10 +826,6 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
       CALL PUSHINTEGER4(ntstep_b2wall)
       CALL PUSHCHARACTERARRAY(filename_b2w, 256)
       CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-      CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
-      CALL PUSHREAL8(cutlo, r8/8)
-      CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHREAL8(numerics_time_switch, r8/8)
       CALL PUSHREAL8(numerics_time_mod, r8/8)
       IF (ALLOCATED(time_factor)) THEN
@@ -1143,6 +1141,9 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &         istg(2) .EQ. 0
         IF (switch%b2mndt_style .EQ. 1) THEN
           CALL PUSHREAL8ARRAY(charge_frac, r8*def_nsd/8)
+          CALL PUSHBOOLEAN(b2mod_math_initialised)
+          CALL PUSHREAL8(cutlo, r8/8)
+          CALL PUSHREAL8(cutll, r8/8)
           IF (ALLOCATED(b2bremreg)) THEN
             CALL PUSHREAL8ARRAY(b2bremreg, r8*SIZE(b2bremreg, 1)/8)
             CALL PUSHCONTROL1B(1)
@@ -1348,10 +1349,16 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
           CALL PUSHINTEGER4(ntstep_b2wall)
           CALL PUSHCHARACTERARRAY(filename_b2w, 256)
           CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-          CALL PUSHBOOLEAN(b2mod_math_initialised)
-          CALL PUSHREAL4(small_r4_constant, r4/8)
-          CALL PUSHREAL8(cutlo, r8/8)
-          CALL PUSHREAL8(cutll, r8/8)
+          CALL PUSHINTEGER4(ncall_drift)
+          CALL PUSHREAL8(fac_vis_scalar, r8/8)
+          CALL PUSHREAL8(fac_exb_scalar, r8/8)
+          CALL PUSHREAL8(facdrift_scalar, r8/8)
+          IF (ALLOCATED(last_solve_9)) THEN
+            CALL PUSHBOOLEANARRAY(last_solve_9, SIZE(last_solve_9, 1))
+            CALL PUSHCONTROL1B(1)
+          ELSE
+            CALL PUSHCONTROL1B(0)
+          END IF
           CALL PUSHREAL8(numerics_time_switch, r8/8)
           CALL PUSHREAL8(numerics_time_mod, r8/8)
           IF (ALLOCATED(time_factor)) THEN
@@ -1360,13 +1367,8 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
           ELSE
             CALL PUSHCONTROL1B(0)
           END IF
-          CALL PUSHBOOLEANARRAY(last_solve_9, cvregmax + 1)
           CALL PUSHBOOLEANARRAY(solveet, cvregmax + 1)
           CALL PUSHBOOLEANARRAY(solvemt, cvregmax + 1)
-          CALL PUSHINTEGER4(ncall_drift)
-          CALL PUSHREAL8(fac_vis_scalar, r8/8)
-          CALL PUSHREAL8(fac_exb_scalar, r8/8)
-          CALL PUSHREAL8(facdrift_scalar, r8/8)
           CALL PUSHREAL8ARRAY(cflim, r8*8/8)
           CALL PUSHREAL8ARRAY(cfalf, r8*8/8)
           CALL PUSHREAL8ARRAY(cfsig, r8*8/8)
@@ -1690,6 +1692,10 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                       dv%fhn, 2)/8)
           CALL PUSHREAL8ARRAY(st%dv%fhm, r8*SIZE(st%dv%fhm, 1)*SIZE(st%&
 &                       dv%fhm, 2)*SIZE(st%dv%fhm, 3)/8)
+          CALL PUSHREAL8ARRAY(st%dv%fhp, r8*SIZE(st%dv%fhp, 1)*SIZE(st%&
+&                       dv%fhp, 2)*SIZE(st%dv%fhp, 3)/8)
+          CALL PUSHREAL8ARRAY(st%dv%fhj, r8*SIZE(st%dv%fhj, 1)*SIZE(st%&
+&                       dv%fhj, 2)/8)
           CALL PUSHREAL8ARRAY(st%dv%fkt, r8*SIZE(st%dv%fkt, 1)*SIZE(st%&
 &                       dv%fkt, 2)/8)
           CALL PUSHREAL8ARRAY(st%dv%fzt, r8*SIZE(st%dv%fzt, 1)*SIZE(st%&
@@ -1942,6 +1948,9 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
           CALL PUSHCONTROL2B(0)
         ELSE IF (switch%b2mndt_style .EQ. 2) THEN
           CALL PUSHREAL8ARRAY(charge_frac, r8*def_nsd/8)
+          CALL PUSHBOOLEAN(b2mod_math_initialised)
+          CALL PUSHREAL8(cutlo, r8/8)
+          CALL PUSHREAL8(cutll, r8/8)
           IF (ALLOCATED(b2bremreg)) THEN
             CALL PUSHREAL8ARRAY(b2bremreg, r8*SIZE(b2bremreg, 1)/8)
             CALL PUSHCONTROL1B(1)
@@ -2147,10 +2156,16 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
           CALL PUSHINTEGER4(ntstep_b2wall)
           CALL PUSHCHARACTERARRAY(filename_b2w, 256)
           CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-          CALL PUSHBOOLEAN(b2mod_math_initialised)
-          CALL PUSHREAL4(small_r4_constant, r4/8)
-          CALL PUSHREAL8(cutlo, r8/8)
-          CALL PUSHREAL8(cutll, r8/8)
+          CALL PUSHINTEGER4(ncall_drift)
+          CALL PUSHREAL8(fac_vis_scalar, r8/8)
+          CALL PUSHREAL8(fac_exb_scalar, r8/8)
+          CALL PUSHREAL8(facdrift_scalar, r8/8)
+          IF (ALLOCATED(last_solve_9)) THEN
+            CALL PUSHBOOLEANARRAY(last_solve_9, SIZE(last_solve_9, 1))
+            CALL PUSHCONTROL1B(1)
+          ELSE
+            CALL PUSHCONTROL1B(0)
+          END IF
           CALL PUSHREAL8(numerics_time_switch, r8/8)
           CALL PUSHREAL8(numerics_time_mod, r8/8)
           IF (ALLOCATED(time_factor)) THEN
@@ -2159,13 +2174,8 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
           ELSE
             CALL PUSHCONTROL1B(0)
           END IF
-          CALL PUSHBOOLEANARRAY(last_solve_9, cvregmax + 1)
           CALL PUSHBOOLEANARRAY(solveet, cvregmax + 1)
           CALL PUSHBOOLEANARRAY(solvemt, cvregmax + 1)
-          CALL PUSHINTEGER4(ncall_drift)
-          CALL PUSHREAL8(fac_vis_scalar, r8/8)
-          CALL PUSHREAL8(fac_exb_scalar, r8/8)
-          CALL PUSHREAL8(facdrift_scalar, r8/8)
           CALL PUSHREAL8ARRAY(cflim, r8*8/8)
           CALL PUSHREAL8ARRAY(cfalf, r8*8/8)
           CALL PUSHREAL8ARRAY(cfsig, r8*8/8)
@@ -2489,6 +2499,10 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                       dv%fhn, 2)/8)
           CALL PUSHREAL8ARRAY(st%dv%fhm, r8*SIZE(st%dv%fhm, 1)*SIZE(st%&
 &                       dv%fhm, 2)*SIZE(st%dv%fhm, 3)/8)
+          CALL PUSHREAL8ARRAY(st%dv%fhp, r8*SIZE(st%dv%fhp, 1)*SIZE(st%&
+&                       dv%fhp, 2)*SIZE(st%dv%fhp, 3)/8)
+          CALL PUSHREAL8ARRAY(st%dv%fhj, r8*SIZE(st%dv%fhj, 1)*SIZE(st%&
+&                       dv%fhj, 2)/8)
           CALL PUSHREAL8ARRAY(st%dv%fkt, r8*SIZE(st%dv%fkt, 1)*SIZE(st%&
 &                       dv%fkt, 2)/8)
           CALL PUSHREAL8ARRAY(st%dv%fzt, r8*SIZE(st%dv%fzt, 1)*SIZE(st%&
@@ -2884,11 +2898,12 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                    facdrift, st%dv%fac_exb, st%dv%ne, st%pl%te, st%pl%&
 &                    po, st%dv%vedia, st%dv%veecrb)
 !      ..compute other fluxes
-        CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, st%dv%fna, st%dv%fna_53, &
-&                    st%dv%fne_53, st%dv%fch, st%dv%fhe, st%dv%fhi, st%&
-&                    dv%fhn, st%rt%rpt, st%pl%te, st%pl%ti, st%pl%tn, st&
-&                    %pl%po, switch%boris, st%dv%fhm, st%dv%fhp, st%dv%&
-&                    fhj, st%dv%fht)
+        CALL PUSHCHARACTERARRAY(my_out_folder, 7)
+        CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, switch, st%dv%fna, st%dv%&
+&                    fna_53, st%dv%fne_53, st%dv%fch, st%dv%fhe, st%dv%&
+&                    fhi, st%dv%fhn, st%rt%rpt, st%pl%te, st%pl%ti, st%&
+&                    pl%tn, st%pl%po, st%dv%fhm, st%dv%fhp, st%dv%fhj, &
+&                    st%dv%fht)
 !   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
         IF (switch%b2sigp_style .EQ. 2) THEN
           CALL PUSHREAL8ARRAY(st%dv%ue, r8*SIZE(st%dv%ue, 1)/8)
@@ -2979,7 +2994,12 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
         CALL PUSHINTEGER4(ncall_b2tlnl)
         CALL PUSHREAL8(rxg_npht, r8/8)
         CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-        CALL PUSHBOOLEANARRAY(last_solve_9, cvregmax + 1)
+        IF (ALLOCATED(last_solve_9)) THEN
+          CALL PUSHBOOLEANARRAY(last_solve_9, SIZE(last_solve_9, 1))
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
         CALL PUSHINTEGER4(ier0)
         CALL PUSHREAL8ARRAY(st%srw%b2sihs_divua, r8*SIZE(st%srw%&
 &                     b2sihs_divua, 1)/8)
@@ -3128,7 +3148,9 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
             CALL POPREAL8ARRAY(st%srw%b2sihs_divua, r8*SIZE(st%srw%&
 &                        b2sihs_divua, 1)/8)
             CALL POPINTEGER4(ier0)
-            CALL POPBOOLEANARRAY(last_solve_9, cvregmax + 1)
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 1) CALL POPBOOLEANARRAY(last_solve_9, SIZE(&
+&                                             last_solve_9, 1))
             CALL POPCHARACTERARRAY(my_out_folder, 7)
             CALL POPREAL8(rxg_npht, r8/8)
             CALL POPINTEGER4(ncall_b2tlnl)
@@ -3213,15 +3235,15 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
               stb%dv%fch_p(:, 0) = stb%dv%fch_p(:, 0) - wrkfb/(qe*(geo%&
 &               fcpbs+b2news_cutlo))
             END IF
-            CALL B2XPEN_B(ncv, nfc, ns, mpg, st%dv%fna, stb%dv%fna, st%&
-&                   dv%fna_53, stb%dv%fna_53, st%dv%fne_53, stb%dv%&
-&                   fne_53, st%dv%fch, stb%dv%fch, st%dv%fhe, stb%dv%fhe&
-&                   , st%dv%fhi, stb%dv%fhi, st%dv%fhn, stb%dv%fhn, st%&
-&                   rt%rpt, stb%rt%rpt, st%pl%te, stb%pl%te, st%pl%ti, &
-&                   stb%pl%ti, st%pl%tn, stb%pl%tn, st%pl%po, stb%pl%po&
-&                   , switch%boris, st%dv%fhm, stb%dv%fhm, st%dv%fhp, &
-&                   stb%dv%fhp, st%dv%fhj, stb%dv%fhj, st%dv%fht, stb%dv&
-&                   %fht)
+            CALL POPCHARACTERARRAY(my_out_folder, 7)
+            CALL B2XPEN_B(ncv, nfc, ns, mpg, switch, st%dv%fna, stb%dv%&
+&                   fna, st%dv%fna_53, stb%dv%fna_53, st%dv%fne_53, stb%&
+&                   dv%fne_53, st%dv%fch, stb%dv%fch, st%dv%fhe, stb%dv%&
+&                   fhe, st%dv%fhi, stb%dv%fhi, st%dv%fhn, stb%dv%fhn, &
+&                   st%rt%rpt, stb%rt%rpt, st%pl%te, stb%pl%te, st%pl%ti&
+&                   , stb%pl%ti, st%pl%tn, stb%pl%tn, st%pl%po, stb%pl%&
+&                   po, st%dv%fhm, stb%dv%fhm, st%dv%fhp, stb%dv%fhp, st&
+&                   %dv%fhj, stb%dv%fhj, st%dv%fht, stb%dv%fht)
             stb%dv%fht = 0.D0
             CALL POPREAL8ARRAY(geo%vxonedbsq, r8*SIZE(geo%vxonedbsq, 1)/&
 &                        8)
@@ -3615,6 +3637,10 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                            (st%dv%fzt, 2)/8)
                 CALL POPREAL8ARRAY(st%dv%fkt, r8*SIZE(st%dv%fkt, 1)*SIZE&
 &                            (st%dv%fkt, 2)/8)
+                CALL POPREAL8ARRAY(st%dv%fhj, r8*SIZE(st%dv%fhj, 1)*SIZE&
+&                            (st%dv%fhj, 2)/8)
+                CALL POPREAL8ARRAY(st%dv%fhp, r8*SIZE(st%dv%fhp, 1)*SIZE&
+&                            (st%dv%fhp, 2)*SIZE(st%dv%fhp, 3)/8)
                 CALL POPREAL8ARRAY(st%dv%fhm, r8*SIZE(st%dv%fhm, 1)*SIZE&
 &                            (st%dv%fhm, 2)*SIZE(st%dv%fhm, 3)/8)
                 CALL POPREAL8ARRAY(st%dv%fhn, r8*SIZE(st%dv%fhn, 1)*SIZE&
@@ -3956,22 +3982,20 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
                 CALL POPREAL8ARRAY(cfsig, r8*8/8)
                 CALL POPREAL8ARRAY(cfalf, r8*8/8)
                 CALL POPREAL8ARRAY(cflim, r8*8/8)
-                CALL POPREAL8(facdrift_scalar, r8/8)
-                CALL POPREAL8(fac_exb_scalar, r8/8)
-                CALL POPREAL8(fac_vis_scalar, r8/8)
-                CALL POPINTEGER4(ncall_drift)
                 CALL POPBOOLEANARRAY(solvemt, cvregmax + 1)
                 CALL POPBOOLEANARRAY(solveet, cvregmax + 1)
-                CALL POPBOOLEANARRAY(last_solve_9, cvregmax + 1)
                 CALL POPCONTROL1B(branch)
                 IF (branch .EQ. 1) CALL POPREAL8ARRAY(time_factor, r8*&
 &                                               SIZE(time_factor, 1)/8)
                 CALL POPREAL8(numerics_time_mod, r8/8)
                 CALL POPREAL8(numerics_time_switch, r8/8)
-                CALL POPREAL8(cutll, r8/8)
-                CALL POPREAL8(cutlo, r8/8)
-                CALL POPREAL4(small_r4_constant, r4/8)
-                CALL POPBOOLEAN(b2mod_math_initialised)
+                CALL POPCONTROL1B(branch)
+                IF (branch .EQ. 1) CALL POPBOOLEANARRAY(last_solve_9, &
+&                                                 SIZE(last_solve_9, 1))
+                CALL POPREAL8(facdrift_scalar, r8/8)
+                CALL POPREAL8(fac_exb_scalar, r8/8)
+                CALL POPREAL8(fac_vis_scalar, r8/8)
+                CALL POPINTEGER4(ncall_drift)
                 CALL POPCHARACTERARRAY(my_out_folder, 7)
                 CALL POPCHARACTERARRAY(filename_b2w, 256)
                 CALL POPINTEGER4(ntstep_b2wall)
@@ -4123,6 +4147,9 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
                 CALL POPCONTROL1B(branch)
                 IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2bremreg, r8*SIZE&
 &                                               (b2bremreg, 1)/8)
+                CALL POPREAL8(cutll, r8/8)
+                CALL POPREAL8(cutlo, r8/8)
+                CALL POPBOOLEAN(b2mod_math_initialised)
                 CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
                 CALL B2NEWS__B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 &                        ismain, ismain0, dtim, switch, switchb, geo, &
@@ -4403,6 +4430,10 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                            (st%dv%fzt, 2)/8)
                 CALL POPREAL8ARRAY(st%dv%fkt, r8*SIZE(st%dv%fkt, 1)*SIZE&
 &                            (st%dv%fkt, 2)/8)
+                CALL POPREAL8ARRAY(st%dv%fhj, r8*SIZE(st%dv%fhj, 1)*SIZE&
+&                            (st%dv%fhj, 2)/8)
+                CALL POPREAL8ARRAY(st%dv%fhp, r8*SIZE(st%dv%fhp, 1)*SIZE&
+&                            (st%dv%fhp, 2)*SIZE(st%dv%fhp, 3)/8)
                 CALL POPREAL8ARRAY(st%dv%fhm, r8*SIZE(st%dv%fhm, 1)*SIZE&
 &                            (st%dv%fhm, 2)*SIZE(st%dv%fhm, 3)/8)
                 CALL POPREAL8ARRAY(st%dv%fhn, r8*SIZE(st%dv%fhn, 1)*SIZE&
@@ -4744,22 +4775,20 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
                 CALL POPREAL8ARRAY(cfsig, r8*8/8)
                 CALL POPREAL8ARRAY(cfalf, r8*8/8)
                 CALL POPREAL8ARRAY(cflim, r8*8/8)
-                CALL POPREAL8(facdrift_scalar, r8/8)
-                CALL POPREAL8(fac_exb_scalar, r8/8)
-                CALL POPREAL8(fac_vis_scalar, r8/8)
-                CALL POPINTEGER4(ncall_drift)
                 CALL POPBOOLEANARRAY(solvemt, cvregmax + 1)
                 CALL POPBOOLEANARRAY(solveet, cvregmax + 1)
-                CALL POPBOOLEANARRAY(last_solve_9, cvregmax + 1)
                 CALL POPCONTROL1B(branch)
                 IF (branch .EQ. 1) CALL POPREAL8ARRAY(time_factor, r8*&
 &                                               SIZE(time_factor, 1)/8)
                 CALL POPREAL8(numerics_time_mod, r8/8)
                 CALL POPREAL8(numerics_time_switch, r8/8)
-                CALL POPREAL8(cutll, r8/8)
-                CALL POPREAL8(cutlo, r8/8)
-                CALL POPREAL4(small_r4_constant, r4/8)
-                CALL POPBOOLEAN(b2mod_math_initialised)
+                CALL POPCONTROL1B(branch)
+                IF (branch .EQ. 1) CALL POPBOOLEANARRAY(last_solve_9, &
+&                                                 SIZE(last_solve_9, 1))
+                CALL POPREAL8(facdrift_scalar, r8/8)
+                CALL POPREAL8(fac_exb_scalar, r8/8)
+                CALL POPREAL8(fac_vis_scalar, r8/8)
+                CALL POPINTEGER4(ncall_drift)
                 CALL POPCHARACTERARRAY(my_out_folder, 7)
                 CALL POPCHARACTERARRAY(filename_b2w, 256)
                 CALL POPINTEGER4(ntstep_b2wall)
@@ -4911,6 +4940,9 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
                 CALL POPCONTROL1B(branch)
                 IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2bremreg, r8*SIZE&
 &                                               (b2bremreg, 1)/8)
+                CALL POPREAL8(cutll, r8/8)
+                CALL POPREAL8(cutlo, r8/8)
+                CALL POPBOOLEAN(b2mod_math_initialised)
                 CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
                 CALL B2NEWS_M_B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 &                         ismain, ismain0, dtim, switch, switchb, geo, &
@@ -5186,10 +5218,6 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                                         time_factor, 1)/8)
           CALL POPREAL8(numerics_time_mod, r8/8)
           CALL POPREAL8(numerics_time_switch, r8/8)
-          CALL POPREAL8(cutll, r8/8)
-          CALL POPREAL8(cutlo, r8/8)
-          CALL POPREAL4(small_r4_constant, r4/8)
-          CALL POPBOOLEAN(b2mod_math_initialised)
           CALL POPCHARACTERARRAY(my_out_folder, 7)
           CALL POPCHARACTERARRAY(filename_b2w, 256)
           CALL POPINTEGER4(ntstep_b2wall)
@@ -5217,6 +5245,9 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
           DO ii1=ntrack,1,-1
             CALL POPCHARACTERARRAY(track_species(ii1), 2)
           END DO
+          CALL POPREAL8(cutll, r8/8)
+          CALL POPREAL8(cutlo, r8/8)
+          CALL POPBOOLEAN(b2mod_math_initialised)
           CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
           CALL B2SRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                 ismain0, dtim, switch, switchb, geo, geob, mpg, mpgb, &
@@ -5372,10 +5403,6 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
           CALL POPREAL8ARRAY(cfsig, r8*8/8)
           CALL POPREAL8ARRAY(cfalf, r8*8/8)
           CALL POPREAL8ARRAY(cflim, r8*8/8)
-          CALL POPREAL8(cutll, r8/8)
-          CALL POPREAL8(cutlo, r8/8)
-          CALL POPREAL4(small_r4_constant, r4/8)
-          CALL POPBOOLEAN(b2mod_math_initialised)
           CALL POPCHARACTERARRAY(my_out_folder, 7)
           CALL POPBOOLEANARRAY(b2news_solving, 4)
           CALL POPINTEGER4(ncall_b2tlh0)
@@ -5390,6 +5417,9 @@ SUBROUTINE B2MNDT_B(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
           CALL POPINTEGER4(ncall_b2trcl)
           CALL POPINTEGER4(ncall_b2trno)
           CALL POPINTEGER4(ncall_b2ttia)
+          CALL POPREAL8(cutll, r8/8)
+          CALL POPREAL8(cutlo, r8/8)
+          CALL POPBOOLEAN(b2mod_math_initialised)
           CALL B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                 switch, switchb, geo, geob, mpg, mpgb, st%pl, stb%pl, &
 &                 st%dv, stb%dv, st%rt, stb%rt, st_ext, st_extb, st%co, &
@@ -5970,7 +6000,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
             CALL B2FILEI(ns, mpg%nnreg(0), switch)
           END IF
           IF (MOD(itim, ank_tracing) .EQ. 1 .OR. ank_tracing .EQ. 1) &
-&           CALL B2FILEW(istg(2), mpg%nnreg(0))
+&           CALL B2FILEW(istg(2), mpg%nnreg(0), st%diag)
         END IF
 !      ..update iteration counter
         b2mndt_itcnt = b2mndt_itcnt + 1
@@ -6008,11 +6038,11 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 &                      facdrift, st%dv%fac_exb, st%dv%ne, st%pl%te, st%&
 &                      pl%po, st%dv%vedia, st%dv%veecrb)
 !      ..compute other fluxes
-          CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, st%dv%fna, st%dv%fna_53&
-&                      , st%dv%fne_53, st%dv%fch, st%dv%fhe, st%dv%fhi, &
-&                      st%dv%fhn, st%rt%rpt, st%pl%te, st%pl%ti, st%pl%&
-&                      tn, st%pl%po, switch%boris, st%dv%fhm, st%dv%fhp&
-&                      , st%dv%fhj, st%dv%fht)
+          CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, switch, st%dv%fna, st%dv&
+&                      %fna_53, st%dv%fne_53, st%dv%fch, st%dv%fhe, st%&
+&                      dv%fhi, st%dv%fhn, st%rt%rpt, st%pl%te, st%pl%ti&
+&                      , st%pl%tn, st%pl%po, st%dv%fhm, st%dv%fhp, st%dv&
+&                      %fhj, st%dv%fht)
 !   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
           IF (switch%b2sigp_style .EQ. 2) THEN
             CALL B2XPVE_NODIFF(ncv, nfc, ns, switch, geo, mpg, qe, st%rt&

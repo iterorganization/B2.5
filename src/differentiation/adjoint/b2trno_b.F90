@@ -217,13 +217,12 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !
 ! ..compute transport coefficients
 !   ..compute differential anomalous transport coefficients
+  CALL PUSHBOOLEAN(b2mod_math_initialised)
+  CALL PUSHREAL8(cutlo, r8/8)
+  CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHINTEGER4(ncall_transp_keps)
   CALL PUSHINTEGER4(ncall_b2tqna)
   CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-  CALL PUSHBOOLEAN(b2mod_math_initialised)
-  CALL PUSHREAL4(small_r4_constant, r4/8)
-  CALL PUSHREAL8(cutlo, r8/8)
-  CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHREAL8ARRAY(cflim, r8*8/8)
   CALL PUSHREAL8ARRAY(cfalf, r8*8/8)
   CALL PUSHREAL8ARRAY(cfsig, r8*8/8)
@@ -955,13 +954,12 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPREAL8ARRAY(cfsig, r8*8/8)
   CALL POPREAL8ARRAY(cfalf, r8*8/8)
   CALL POPREAL8ARRAY(cflim, r8*8/8)
-  CALL POPREAL8(cutll, r8/8)
-  CALL POPREAL8(cutlo, r8/8)
-  CALL POPREAL4(small_r4_constant, r4/8)
-  CALL POPBOOLEAN(b2mod_math_initialised)
   CALL POPCHARACTERARRAY(my_out_folder, 7)
   CALL POPINTEGER4(ncall_b2tqna)
   CALL POPINTEGER4(ncall_transp_keps)
+  CALL POPREAL8(cutll, r8/8)
+  CALL POPREAL8(cutlo, r8/8)
+  CALL POPBOOLEAN(b2mod_math_initialised)
   dummyzerodiffb = 0.D0
 ! csc the last three arguments of the b2tqna_b call have been added 
 ! manually to save the sensitivity of transport coefficients in each

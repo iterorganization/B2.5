@@ -196,8 +196,8 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs4
   REAL(kind=r8) :: abs4b
-  REAL(r8), DIMENSION(nCv) :: abs5
-  REAL(r8), DIMENSION(nCv) :: abs5b
+  REAL(r8), DIMENSION(nCv) :: dabs0
+  REAL(r8), DIMENSION(nCv) :: dabs0b
   REAL(r8) :: max1
   REAL(r8) :: max1b
   REAL(r8) :: max2
@@ -285,7 +285,6 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   CALL B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
 !xpb
   CALL PUSHBOOLEAN(b2mod_math_initialised)
-  CALL PUSHREAL4(small_r4_constant, r4/8)
   CALL PUSHREAL8(cutlo, r8/8)
   CALL PUSHREAL8(cutll, r8/8)
   CALL B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin)
@@ -1087,13 +1086,13 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   END DO
   mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0
   WHERE (mask) 
-    abs5 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
+    dabs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
   ELSEWHERE
-    abs5 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
+    dabs0 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
   END WHERE
 !   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
-  wrkc = SQRT(2.0_R8*pl%ti*(am(ismain)*mp))/abs5
+  wrkc = SQRT(2.0_R8*pl%ti*(am(ismain)*mp))/dabs0
   CALL PUSHREAL8ARRAY(wrkc, r8*ncv/8)
   wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)
   CALL B2TXCX_FWD(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc, &
@@ -1218,17 +1217,17 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   tempb9 = geo%cvbb(:, 3)**2*wrkcb/(am(ismain)*mp)
   wrkcb = 2*wrkc*co%sigx_c*tempb9
   cob%sigx_c = cob%sigx_c + wrkc**2*tempb9
-  abs5b = 0.D0
+  dabs0b = 0.D0
   temp12 = 2.0_R8*am(ismain)*pl%ti*mp
   temp13 = SQRT(temp12)
   WHERE (.NOT.temp12 .EQ. 0.D0) plb%ti = plb%ti + am(ismain)*mp*2.0_R8*&
-&     wrkcb/(2.0*temp13*abs5)
-  abs5b = -(temp13*wrkcb/abs5**2)
+&     wrkcb/(2.0*temp13*dabs0)
+  dabs0b = -(temp13*wrkcb/dabs0**2)
   WHERE (.NOT.mask) 
-    rtb%rza(:, ismain) = rtb%rza(:, ismain) - qe*geo%cvbb(:, 3)*abs5b
-    abs5b = 0.D0
+    rtb%rza(:, ismain) = rtb%rza(:, ismain) - qe*geo%cvbb(:, 3)*dabs0b
+    dabs0b = 0.D0
   ELSEWHERE
-    rtb%rza(:, ismain) = rtb%rza(:, ismain) + qe*geo%cvbb(:, 3)*abs5b
+    rtb%rza(:, ismain) = rtb%rza(:, ismain) + qe*geo%cvbb(:, 3)*dabs0b
   END WHERE
   DO is=ns-1,0,-1
     CALL POPREAL8ARRAY(vsaf_cl(:, 0, is), r8*nfc/8)
@@ -2089,7 +2088,6 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   arg1 = ncv*ns
   CALL POPREAL8(cutll, r8/8)
   CALL POPREAL8(cutlo, r8/8)
-  CALL POPREAL4(small_r4_constant, r4/8)
   CALL POPBOOLEAN(b2mod_math_initialised)
   CALL B2TQIN_B(ncv, ns, nscx, iscx, switch, geo, geob, pl, plb, rt, rtb&
 &         , sigin, siginb)
@@ -2235,7 +2233,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs4
-  REAL(r8), DIMENSION(nCv) :: abs5
+  REAL(r8), DIMENSION(nCv) :: dabs0
   REAL(r8) :: max1
   REAL(r8) :: max2
   REAL(r8) :: max3
@@ -2850,13 +2848,13 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   END DO
   mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0
   WHERE (mask) 
-    abs5 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
+    dabs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
   ELSEWHERE
-    abs5 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
+    dabs0 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
   END WHERE
 !   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
-  wrkc = SQRT(2.0_R8*pl%ti*(am(ismain)*mp))/abs5
+  wrkc = SQRT(2.0_R8*pl%ti*(am(ismain)*mp))/dabs0
   wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)
   CALL B2TXCX_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc&
 &              , cdkt(:, 0))
