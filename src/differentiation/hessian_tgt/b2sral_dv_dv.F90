@@ -528,7 +528,7 @@ SUBROUTINE B2SRAL_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -550,7 +550,7 @@ SUBROUTINE B2SRAL_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -587,7 +587,7 @@ SUBROUTINE B2SRAL_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF
@@ -1395,7 +1395,7 @@ SUBROUTINE B2SRAL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -1417,7 +1417,7 @@ SUBROUTINE B2SRAL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -1454,7 +1454,7 @@ SUBROUTINE B2SRAL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF
@@ -2043,7 +2043,7 @@ SUBROUTINE B2SRAL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -2065,7 +2065,7 @@ SUBROUTINE B2SRAL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -2102,7 +2102,7 @@ SUBROUTINE B2SRAL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF
