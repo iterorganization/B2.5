@@ -113,7 +113,7 @@ MODULE B2MOD_PAR_OPT_DIFF
 ! - nncon: number of nonlinear constraints (not used for now)
 ! - gl/gu: lowr/upper bound of such nonlinear constraints (not used for now)
 ! - nnjac: number of non-zeros in the jacobian of the nonlinear constraints (not used for now)
-! - jcol/jrow: column/row indicex for each non-zero element of the jacobian
+! - jcol/jrow: column/row indices for each non-zero element of the jacobian
 ! - jj: value of the jacobian at jcol-jrow
 ! - shift_L/U: lower/upper bound of the cf data shift [mm]
 ! - shiftopt: has similar meaning as shift_opt but 'reduced' to the actual number of unique shifts (e.g.
@@ -251,7 +251,7 @@ CONTAINS
     nnjac = 0
     jcol = 0
     jrow = 0
-    jj = 0.0
+    jj = 0
     partype = -2
     sigma_opt = .true.
     mean_opt = .false.
@@ -1118,7 +1118,7 @@ CONTAINS
     nnjac = 0
     jcol = 0
     jrow = 0
-    jj = 0.0
+    jj = 0
     partype = -2
     sigma_opt = .true.
     mean_opt = .false.

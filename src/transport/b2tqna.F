@@ -15,10 +15,6 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpt
       use b2mod_b2cmpb
-!      use b2mod_ranges
-!      use b2mod_neoclassical
-!      use b2mod_geo_corner
-!     &                    , only : lengthy, nmdpl                 !srv 26.11.04
       use b2mod_user_namelist
      , , only : omp
       use b2mod_switches
@@ -40,8 +36,8 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
-     *  ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns,
+     *  nscx, nscxmax, iscx(0:nscxmax-1), ismain
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -226,7 +222,7 @@
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
       if(switch%b2tqna_transport_namelist.eq.1) then
-        do is=0,ns-1
+        do is = 0, ns-1
           if(.not.is_neutral(is)) then
 * dna
             call transform_transport(flag_dna,parm_dna(is),cfdna(:,is))
@@ -488,7 +484,7 @@ cxpb Corrected for dimensionality
       endif
 
       if(switch%b2tqna_iout.ne.0) then                               !srv 10.11.09 {
-        do is = 0,ns-1
+        do is = 0, ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,dna0(1,is),'b2tqna_in_dna0'//chns)
           call my_out_us(70,nCv,0,dpa0(1,is),'b2tqna_in_dpa0'//chns)
@@ -587,7 +583,7 @@ cdpc
      1      (switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
      1       switch%b2tqna_ballooning*
      1       switch%b2tqna_ballooning_rescale
-            do is=0,ns-1
+            do is = 0, ns-1
               if(.not.is_neutral(is)) then
                 dna0(iCv,is)=dna0(iCv,is)*poloidal_scale_factor
                 dpa0(iCv,is)=dpa0(iCv,is)*poloidal_scale_factor
@@ -3841,7 +3837,7 @@ c*******************************************************************************
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns, ismain
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -3872,7 +3868,7 @@ c*******************************************************************************
         endif
       endif
       hci_ExB = 0.0_R8
-      do is=0,ns-1
+      do is = 0, ns-1
         if(.not.is_neutral(is)) then
           if(switch%keps_local.eq.1) then
 *   ..compute local Larmor radius

@@ -63,8 +63,8 @@
       integer, save :: icase_sifr = 0
 
 ! some variables for chord_find
-      integer lngcov,lngind
-      parameter(lngcov=200,lngind=500 000)
+      integer lngcov, lngind
+      parameter(lngcov=200, lngind=500 000)
       integer, save :: covered(lngcov,lngcov), cvcov(lngind),
      &  icov(lngind), iCvsv
       real (kind=R8), save :: rmin, rmax, zmin, zmax

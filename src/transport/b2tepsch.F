@@ -55,7 +55,7 @@
       floe    = 0.0_R8
       facdriftm = maxval(facdrift)
       if(facdriftm.ne.0.0_R8) then
-       do is = 0,ns-1                                                    !srv 12.05.11
+       do is = 0, ns-1                                                   !srv 12.05.11
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
 
 *   ..precompute face and vertex values of nete2

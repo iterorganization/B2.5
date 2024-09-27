@@ -150,26 +150,34 @@ contains
         logical, intent(in) :: new_eq_ggd
             !< database
         integer :: status
+        character*256 :: ids_list
 #if AL_MAJOR_VERSION > 4
         character(len=:), allocatable :: message
         character(len=STRMAXLEN) :: uri
+        logical, save :: first_pass = .true.
 #endif
 
             !< procedures
         external xertst, xerrab
 
-        !! Set data to edge_profiles IDS
-        write(*,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
+        ids_list = "edge_profiles, edge_sources, edge_transport"
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-          &  "summary, "// &
+        ids_list = trim(ids_list)//", summary"
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-          &  "numerics, "// &
+        ids_list = trim(ids_list)//", numerics"
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
-          &  "divertors, "// &
+        ids_list = trim(ids_list)//", divertors"
 #endif
-          &  "dataset_description, and radiation IDS"
+#if AL_MAJOR_VERSION > 4
+        if (first_pass) ids_list = trim(ids_list)//", dataset_description"
+#else
+        ids_list = trim(ids_list)//", dataset_description"
+#endif
+        ids_list = trim(ids_list)//", and radiation"
+        !! Set data to edge_profiles IDS
+        write(*,'(1x,a)') "Writing "//trim(ids_list)//" IDS"
 
         !! Create and modify new shot/run
         if ( idx.eq.0 ) then
@@ -251,9 +259,17 @@ contains
           write(*,*) 'Putting radiation IDS slice'
           call ids_put_slice( idx, "radiation", radiation, status )
           call xertst( status.eq.0, 'Error putting slice in radiation IDS !')
+#if AL_MAJOR_VERSION > 4
+          if (first_pass) then
+            write(*,*) 'Putting dataset_description IDS'
+            call ids_put( idx, "dataset_description", description, status )
+            call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+          endif
+#else
           write(*,*) 'Putting dataset_description IDS slice'
           call ids_put_slice( idx, "dataset_description", description, status )
           call xertst( status.eq.0, 'Error putting slice in dataset_description IDS !')
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           write(*,*) 'Putting summary IDS slice'
           call ids_put_slice( idx, "summary", summary, status )
@@ -271,6 +287,9 @@ contains
 #endif
         end if
 
+#if AL_MAJOR_VERSION > 4
+       first_pass = .false.
+#endif
         write(*,*) "IDS write finished"
         return
 
@@ -366,24 +385,30 @@ contains
         logical, intent(in) :: do_summary, new_eq_ggd
             !< database
         integer :: status
+        character*256 :: ids_list
 #if AL_MAJOR_VERSION > 4
         character(len=:), allocatable :: message
         character(len=STRMAXLEN) :: uri
+        logical, save :: first_pass = .true.
 #endif
 
             !< procedures
         external xertst, xerrab
 
         !! Set data to edge_profiles IDS
+        ids_list = "batch_profiles and batch_sources"
         if (do_summary) then
-          write(*,'(1x,a)') "Writing batch_profiles, batch_sources, "// &
+          ids_list = "batch_profiles, batch_sources"
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-            &  "summary, "// &
+          ids_list = trim(ids_list)//", summary"
 #endif
-            &  "and dataset_description IDS"
-        else
-          write(*,'(1x,a)') "Writing batch_profiles and batch_sources IDS "
+#if AL_MAJOR_VERSION > 4
+          if (first_pass) ids_list = trim(ids_list)//", and dataset_description"
+#else
+          ids_list = trim(ids_list)//", and dataset_description"
+#endif
         end if
+        write(*,'(1x,a)') "Writing "//trim(ids_list)//" IDS"
 
         !! Create and modify new shot/run
         if ( idx.eq.0 ) then
@@ -442,8 +467,15 @@ contains
           call ids_put_slice( idx, "edge_sources/1", batch_sources, status )
           call xertst( status.eq.0, 'Error putting slice in batch_sources IDS !')
           if (do_summary) then
+#if AL_MAJOR_VERSION > 4
+            if (first_pass) then
+              call ids_put( idx, "dataset_description", description, status )
+              call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+            end if
+#else
             call ids_put_slice( idx, "dataset_description", description, status )
             call xertst( status.eq.0, 'Error putting slice in dataset_description IDS !')
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             call ids_put_slice( idx, "summary", summary, status )
             call xertst( status.eq.0, 'Error putting slice in summary IDS !')
@@ -451,6 +483,9 @@ contains
           end if
         end if
 
+#if AL_MAJOR_VERSION > 4
+       first_pass = .false.
+#endif
         write(*,*) "IDS write finished for batch averages"
         return
 

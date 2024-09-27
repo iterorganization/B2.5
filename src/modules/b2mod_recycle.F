@@ -278,17 +278,17 @@ c   Nuclear Fusion 57.11 (2017): 116043.
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
-      integer,intent(in):: iCv, iCn, iFc,
+      integer, intent(in) :: iCv, iCn, iFc,
      &    isn, iscx0, isi, istra, use_uy_uz_0, use_uy_uz_1, safeguard
-      real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
+      real (kind=R8), intent(in) :: Phi_app, area, tnf, tif, tef,
      2    pof, nef, isign, dnndy, dnndz, cosa, sina
 c     Output variables:
 c     fnni: incident neutral flux
 c     fmomni: momentum flux of incident neutrals.
-      real (kind=R8),intent(out):: fnni, fmomni, nni, nnwwni,
-     &                             feneni
+      real (kind=R8), intent(out) :: fnni, fmomni, nni, nnwwni,
+     &                               feneni
 c     Internal variables
-      real (kind=R8):: vcx,vion,
+      real (kind=R8) :: vcx,vion,
      2    vtot,pit,pit2,mn,nnf,ux,uy,uz,
      3    i0l,i0r,i1l,i1r,i2l,i2r,i3l,i3r,i4l,i4r,i5l,i5r,i6l,i6r,
      4    fmox,fmoy,fmoz,fmomnip,fmomnit,pn,
@@ -422,20 +422,20 @@ c     It will decide which one to use based on the Knudsen number (Kn) of the ne
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
-      integer,intent(in):: iCv,iCn, iFc,
-     &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1
-      real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
-     &    pof,nef,isign,dnndy,dnndz,cosa, sina,
+      integer, intent(in) :: iCv, iCn, iFc,
+     &    isn, iscx0, isi, istra, use_uy_uz_0, use_uy_uz_1
+      real (kind=R8), intent(in) :: Phi_app, area, tnf, tif, tef,
+     &    pof, nef, isign, dnndy, dnndz, cosa, sina,
      &    Kn_b1, Kn_b2,L
       real (kind=R8) :: t_av
 c     Output variables
-      real (kind=R8),intent(out):: fnni,fmomni,nni,nnwwni,
-     &                             feneni
+      real (kind=R8), intent(out) :: fnni, fmomni, nni, nnwwni,
+     &                               feneni
 c     Internal variables
-      real (kind=R8):: vcx,vion,vtot,mn,mfp,c_th,Kn
+      real (kind=R8) :: vcx, vion, vtot, mn, mfp, c_th, Kn
       integer :: ic
-      real (kind=R8):: fnniM,nnwwniM,nniM,feneniM,fmomniM
-      real (kind=R8):: fnniD,nnwwniD,nniD,feneniD,fmomniD
+      real (kind=R8) :: fnniM, nnwwniM, nniM, feneniM, fmomniM
+      real (kind=R8) :: fnniD, nnwwniD, nniD, feneniD, fmomniD
 
       call subini ('CalcIncidentFluxesKn')
 
@@ -517,13 +517,13 @@ c     Here, the choice is made based on maxw_eff (effective), which has been set
       type (B2Plasma), intent (in) :: pl
       type (geometry), intent (in) :: geo
       type (B2rates), intent (in) :: rt
-      integer,intent(in):: iCv,iCn, iFc,
-     &    isn,iscx0,isi,istra, use_uy_uz_0, use_uy_uz_1
-      real (kind=R8),intent(in):: Phi_app, area, tnf, tif, tef,
-     &    pof,nef,isign,dnndy,dnndz,cosa, sina
+      integer, intent(in) :: iCv, iCn, iFc,
+     &    isn, iscx0, isi, istra, use_uy_uz_0, use_uy_uz_1
+      real (kind=R8), intent(in) :: Phi_app, area, tnf, tif, tef,
+     &    pof, nef, isign, dnndy, dnndz, cosa, sina
 c     Output variables
-      real (kind=R8),intent(out):: fnni,fmomni,nni,nnwwni,
-     &                             feneni
+      real (kind=R8), intent(out) :: fnni, fmomni, nni, nnwwni,
+     &                               feneni
 
       call subini ('CalcIncidentFluxesMinKn')
 
@@ -651,18 +651,19 @@ c     nif = plasma density on face, isn neutral species index
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
 !!      type (B2Rates), intent (in) :: rt
-      integer, intent(in):: iCv, nCi, iFc,
-     &     isn, iscx0, isi,iwall,istra,
+      integer, intent(in) :: iCv, nCi, iFc,
+     &     isn, iscx0, isi, iwall, istra,
      &     use_uy_uz_0
-      real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
-     2    pof,nif,nef,t0,isign, tif, tef, cosa, sina,
+      real (kind=R8), intent(in) :: Phi_app, area, recyc0, recycm,
+     2    pof, nif, nef, t0, isign, tif, tef, cosa, sina,
      &    fluid_frac_hyb
 !! fluid_frac_hyb: in fluid neutral cases or standard spatially hybrid cases this multiplier is always equal to 1.
 !! only in the generalized form of the spatially hybrid approach, where the fluid and kinetic treatment are mixed
 !! on a single target stratum, this value can deviate from 1.
 c     Output variables:
 c     fmomni: momentum flux of incident neutrals.
-      real (kind=R8),intent(out):: fnnrec,fmomrec,nnrec,nnwwnrec,fenerec
+      real (kind=R8), intent(out) :: fnnrec, fmomrec, nnrec, nnwwnrec,
+     &                               fenerec
 c     Internal variables
       real (kind=R8):: cs,Mj,
      &    shpottauj,pf,pcorf,pt,vt,
@@ -822,7 +823,7 @@ c     This routine calculates the reflected neutral particle,momentum and energy
       type (B2Rates), intent (in) :: rt
       type (mapping), intent (in) :: mpg
       integer,intent(in):: iCv, iCn, nCi, iFc,
-     &    isn, iscx0, isi, iwall,istra, use_uy_uz_0, use_uy_uz_1,
+     &    isn, iscx0, isi, iwall, istra, use_uy_uz_0, use_uy_uz_1,
      &    safeguard
       real (kind=R8),intent(in):: Phi_app, area,recyc0,recycm,
      2    pof,nef,isign,tif,tnf,tef,

@@ -296,11 +296,10 @@ c
       end do
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
-      call b2xpen (nCv, nFc, ns, mpg,
+      call b2xpen (nCv, nFc, ns, mpg, switch,
      1  state%dv%fna, state%dv%fna_53, state%dv%fne_53, state%dv%fch,
      1  state%dv%fhe, state%dv%fhi, state%dv%fhn, state%rt%rpt,
      2  state%pl%te, state%pl%ti, state%pl%tn, state%pl%po,
-     2  switch%BoRiS,
      2  state%dv%fhm, state%dv%fhp, state%dv%fhj, state%dv%fht)
       state%dv%fht=state%dv%fht+state_ext%fhi
       do is=0,state_ext%ns-1
