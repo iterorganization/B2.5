@@ -25,12 +25,14 @@ SUBROUTINE CALC_LOG_PRIOR_DV(prior, priord, inrange, nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
+!
   REAL(kind=r8), INTENT(INOUT) :: prior
   REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(INOUT) :: priord
   LOGICAL, INTENT(INOUT) :: inrange
   INTEGER :: ii, isigma, imean, ind
   REAL(kind=r8) :: aa, bb
-  INTRINSIC SQRT, EXP, LOG_GAMMA
+  INTRINSIC SQRT, EXP
+  INTRINSIC LOG_GAMMA
   INTRINSIC LOG
   EXTERNAL XERRAB
   REAL(r8) :: arg1
@@ -282,6 +284,8 @@ SUBROUTINE CALC_LOG_PRIOR_DV(prior, priord, inrange, nbdirs)
       ind = ind + 1
     END IF
   END DO
+!
+!
   CALL SUBEND()
   RETURN
 END SUBROUTINE CALC_LOG_PRIOR_DV
@@ -304,11 +308,13 @@ SUBROUTINE CALC_LOG_PRIOR_NODIFF(prior, inrange)
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
+!
   REAL(kind=r8), INTENT(INOUT) :: prior
   LOGICAL, INTENT(INOUT) :: inrange
   INTEGER :: ii, isigma, imean, ind
   REAL(kind=r8) :: aa, bb
-  INTRINSIC SQRT, EXP, LOG_GAMMA
+  INTRINSIC SQRT, EXP
+  INTRINSIC LOG_GAMMA
   INTRINSIC LOG
   EXTERNAL XERRAB
   REAL(r8) :: arg1
@@ -494,6 +500,8 @@ SUBROUTINE CALC_LOG_PRIOR_NODIFF(prior, inrange)
       ind = ind + 1
     END IF
   END DO
+!
+!
   CALL SUBEND()
   RETURN
 END SUBROUTINE CALC_LOG_PRIOR_NODIFF
