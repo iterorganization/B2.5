@@ -146,7 +146,6 @@ MODULE B2MOD_DRIVER_DIFFV_DIFFV
   REAL(kind=r8) :: cputarget, cpuincrement, na_eps, te_eps, ti_eps, &
 & tn_eps, po_eps, ua_eps, kt_eps, zt_eps, sput_frc, sput_phys, delta_min&
 & , dt_change_inc, delta_max, dt_change_dec, dt_min, dt_max, max_delta
-  INTEGER :: ncon, nele_jac
 !     NetCDF-3.
 !
 ! netcdf version 3 fortran interface:
@@ -4125,8 +4124,8 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT_DV_DV(ncon, nele_jac, ns, mpg, mpgd, &
-&                             switch, nbdirs, nbdirs0)
+      CALL READ_B2MOD_PAR_OPT_DV_DV(ns, mpg, mpgd, switch, nbdirs, &
+&                             nbdirs0)
       ALLOCATE(par_opt_physd(nbdirsmax, npar_opt))
       DO nd=1,npar_opt
         par_opt_physd(nd, 1:npar_opt) = 0.d0
@@ -5979,8 +5978,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT_DV(ncon, nele_jac, ns, mpg, mpgd, switch, &
-&                          nbdirs)
+      CALL READ_B2MOD_PAR_OPT_DV(ns, mpg, mpgd, switch, nbdirs)
       ALLOCATE(par_opt_physd(nbdirsmax, npar_opt))
       DO nd=1,npar_opt
         par_opt_physd(nd, 1:npar_opt) = 0.d0
@@ -7740,7 +7738,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg, switch)
+      CALL READ_B2MOD_PAR_OPT(ns, mpg, switch)
       ALLOCATE(par_opt_physd0(nbdirsmax0, npar_opt))
       par_opt_physd0(:, 1:npar_opt) = 0.0_8
       ALLOCATE(par_opt_phys(npar_opt))
@@ -9335,7 +9333,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg, switch)
+      CALL READ_B2MOD_PAR_OPT(ns, mpg, switch)
       ALLOCATE(par_opt_phys(npar_opt))
       ALLOCATE(xsave(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)

@@ -2030,21 +2030,21 @@ SUBROUTINE B2NEWS_M_DV_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
   st%dv%floi_noc = st%dv%floi
 !srv 24.10.02
   st%dv%floe_noc = st%dv%floe
-  CALL B2XPEN_DV_DV(ncv, nfc, ns, mpg, st%dv%fna, std0%dv%fna, std%dv%&
-&             fna, stdd%dv%fna, st%dv%fna_53, std0%dv%fna_53, std%dv%&
-&             fna_53, stdd%dv%fna_53, st%dv%fne_53, std0%dv%fne_53, std%&
-&             dv%fne_53, stdd%dv%fne_53, st%dv%fch, std0%dv%fch, std%dv%&
-&             fch, stdd%dv%fch, st%dv%fhe, std0%dv%fhe, std%dv%fhe, stdd&
-&             %dv%fhe, st%dv%fhi, std0%dv%fhi, std%dv%fhi, stdd%dv%fhi, &
-&             st%dv%fhn, std0%dv%fhn, std%dv%fhn, stdd%dv%fhn, st%rt%rpt&
-&             , std0%rt%rpt, std%rt%rpt, stdd%rt%rpt, st%pl%te, std0%pl%&
-&             te, std%pl%te, stdd%pl%te, st%pl%ti, std0%pl%ti, std%pl%ti&
-&             , stdd%pl%ti, st%pl%tn, std0%pl%tn, std%pl%tn, stdd%pl%tn&
-&             , st%pl%po, std0%pl%po, std%pl%po, stdd%pl%po, switch%&
-&             boris, st%dv%fhm, std0%dv%fhm, std%dv%fhm, stdd%dv%fhm, st&
-&             %dv%fhp, std0%dv%fhp, std%dv%fhp, stdd%dv%fhp, st%dv%fhj, &
-&             std0%dv%fhj, std%dv%fhj, stdd%dv%fhj, st%dv%fht, std0%dv%&
-&             fht, std%dv%fht, stdd%dv%fht, nbdirs, nbdirs0)
+  CALL B2XPEN_DV_DV(ncv, nfc, ns, mpg, switch, st%dv%fna, std0%dv%fna, &
+&             std%dv%fna, stdd%dv%fna, st%dv%fna_53, std0%dv%fna_53, std&
+&             %dv%fna_53, stdd%dv%fna_53, st%dv%fne_53, std0%dv%fne_53, &
+&             std%dv%fne_53, stdd%dv%fne_53, st%dv%fch, std0%dv%fch, std&
+&             %dv%fch, stdd%dv%fch, st%dv%fhe, std0%dv%fhe, std%dv%fhe, &
+&             stdd%dv%fhe, st%dv%fhi, std0%dv%fhi, std%dv%fhi, stdd%dv%&
+&             fhi, st%dv%fhn, std0%dv%fhn, std%dv%fhn, stdd%dv%fhn, st%&
+&             rt%rpt, std0%rt%rpt, std%rt%rpt, stdd%rt%rpt, st%pl%te, &
+&             std0%pl%te, std%pl%te, stdd%pl%te, st%pl%ti, std0%pl%ti, &
+&             std%pl%ti, stdd%pl%ti, st%pl%tn, std0%pl%tn, std%pl%tn, &
+&             stdd%pl%tn, st%pl%po, std0%pl%po, std%pl%po, stdd%pl%po, &
+&             st%dv%fhm, std0%dv%fhm, std%dv%fhm, stdd%dv%fhm, st%dv%fhp&
+&             , std0%dv%fhp, std%dv%fhp, stdd%dv%fhp, st%dv%fhj, std0%dv&
+&             %fhj, std%dv%fhj, stdd%dv%fhj, st%dv%fht, std0%dv%fht, std&
+&             %dv%fht, stdd%dv%fht, nbdirs, nbdirs0)
 !
 !
 !   ..add contribution from cdpa to floe, cone, floi, coni
@@ -3556,14 +3556,14 @@ SUBROUTINE B2NEWS_M_DV_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
   st%dv%floi_noc = st%dv%floi
 !srv 24.10.02
   st%dv%floe_noc = st%dv%floe
-  CALL B2XPEN_DV_NODIFF(ncv, nfc, ns, mpg, st%dv%fna, std%dv%fna, st%dv%&
-&                 fna_53, std%dv%fna_53, st%dv%fne_53, std%dv%fne_53, st&
-&                 %dv%fch, std%dv%fch, st%dv%fhe, std%dv%fhe, st%dv%fhi&
-&                 , std%dv%fhi, st%dv%fhn, std%dv%fhn, st%rt%rpt, std%rt&
-&                 %rpt, st%pl%te, std%pl%te, st%pl%ti, std%pl%ti, st%pl%&
-&                 tn, std%pl%tn, st%pl%po, std%pl%po, switch%boris, st%&
-&                 dv%fhm, std%dv%fhm, st%dv%fhp, std%dv%fhp, st%dv%fhj, &
-&                 std%dv%fhj, st%dv%fht, std%dv%fht, nbdirs)
+  CALL B2XPEN_DV_NODIFF(ncv, nfc, ns, mpg, switch, st%dv%fna, std%dv%fna&
+&                 , st%dv%fna_53, std%dv%fna_53, st%dv%fne_53, std%dv%&
+&                 fne_53, st%dv%fch, std%dv%fch, st%dv%fhe, std%dv%fhe, &
+&                 st%dv%fhi, std%dv%fhi, st%dv%fhn, std%dv%fhn, st%rt%&
+&                 rpt, std%rt%rpt, st%pl%te, std%pl%te, st%pl%ti, std%pl&
+&                 %ti, st%pl%tn, std%pl%tn, st%pl%po, std%pl%po, st%dv%&
+&                 fhm, std%dv%fhm, st%dv%fhp, std%dv%fhp, st%dv%fhj, std&
+&                 %dv%fhj, st%dv%fht, std%dv%fht, nbdirs)
 !
 !
 !   ..add contribution from cdpa to floe, cone, floi, coni
@@ -4492,11 +4492,11 @@ SUBROUTINE B2NEWS_M_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax&
   st%dv%floi_noc = st%dv%floi
 !srv 24.10.02
   st%dv%floe_noc = st%dv%floe
-  CALL B2XPEN_NODIFF_NODIFF(ncv, nfc, ns, mpg, st%dv%fna, st%dv%fna_53, &
-&                     st%dv%fne_53, st%dv%fch, st%dv%fhe, st%dv%fhi, st%&
-&                     dv%fhn, st%rt%rpt, st%pl%te, st%pl%ti, st%pl%tn, &
-&                     st%pl%po, switch%boris, st%dv%fhm, st%dv%fhp, st%&
-&                     dv%fhj, st%dv%fht)
+  CALL B2XPEN_NODIFF_NODIFF(ncv, nfc, ns, mpg, switch, st%dv%fna, st%dv%&
+&                     fna_53, st%dv%fne_53, st%dv%fch, st%dv%fhe, st%dv%&
+&                     fhi, st%dv%fhn, st%rt%rpt, st%pl%te, st%pl%ti, st%&
+&                     pl%tn, st%pl%po, st%dv%fhm, st%dv%fhp, st%dv%fhj, &
+&                     st%dv%fht)
 !
 !
 !   ..add contribution from cdpa to floe, cone, floi, coni
