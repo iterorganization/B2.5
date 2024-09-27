@@ -1,4 +1,4 @@
-      subroutine b2tlv0 (nCv, nFc, nVx, ns, switch, geo, mpg, 
+      subroutine b2tlv0 (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  na, ua, te,  tn, rza, cvsa0, cvsa, cvsahz, flv)
       use b2mod_types
       use b2mod_constants
@@ -17,7 +17,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns
+      integer, intent (in) :: nCv, nFc, nVx, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -36,7 +36,7 @@
 *     ------------------------------------------------------------------
 *   ..local variables
       integer iFc, is
-      character charns*3                                      
+      character charns*3
       real (kind=R8) ::
      *  alpha, gamma, qcl, qfl, tfl, maxfluxlimit(0:1),
      *  dubf(nFc,0:1), ubv(nVx)
@@ -66,22 +66,22 @@
           call diff (nCv, nFc, nVx, 0, geo, mpg, ua(1,is), ubv, dubf)
           do iFc = 1, nFc
 *    ..poloidal
-           qcl = abs(cvsa(iFc,0,is)*dubf(iFc,0))
-           qfl = alpha*geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))*
-     &          (na(mpg%fcCv(iFc,1),is)*tn(mpg%fcCv(iFc,1))+
-     &           na(mpg%fcCv(iFc,2),is)*tn(mpg%fcCv(iFc,2)))/2.0_R8
-           tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+b2tlv0_cutlo))**gamma)
+            qcl = abs(cvsa(iFc,0,is)*dubf(iFc,0))
+            qfl = alpha*geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))*
+     &           (na(mpg%fcCv(iFc,1),is)*tn(mpg%fcCv(iFc,1))+
+     &            na(mpg%fcCv(iFc,2),is)*tn(mpg%fcCv(iFc,2)))/2.0_R8
+            tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+b2tlv0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
             cvsa(iFc,0,is)   = cvsa(iFc,0,is)*tfl
             cvsahz(iFc,0,is) = cvsahz(iFc,0,is)*tfl
             flv(iFc,0,is) = tfl
             maxfluxlimit(0)=max(maxfluxlimit(0),tfl)
 *    ..perpendicular
-           qcl = abs(cvsa(iFc,1,is)*dubf(iFc,1))
-           qfl = alpha*geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))*
-     &          (na(mpg%fcCv(iFc,1),is)*tn(mpg%fcCv(iFc,1))+
-     &           na(mpg%fcCv(iFc,2),is)*tn(mpg%fcCv(iFc,2)))/2.0_R8
-           tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+b2tlv0_cutlo))**gamma)
+            qcl = abs(cvsa(iFc,1,is)*dubf(iFc,1))
+            qfl = alpha*geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))*
+     &           (na(mpg%fcCv(iFc,1),is)*tn(mpg%fcCv(iFc,1))+
+     &            na(mpg%fcCv(iFc,2),is)*tn(mpg%fcCv(iFc,2)))/2.0_R8
+            tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+b2tlv0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
             cvsa(iFc,1,is)   = cvsa(iFc,1,is)*tfl
             cvsahz(iFc,1,is) = cvsahz(iFc,1,is)*tfl
@@ -99,22 +99,22 @@ cwdk    or radial contributions, since neutral transport is isotropic
           call diff (nCv, nFc, nVx, 0, geo, mpg, ua(1,is), ubv, dubf)
           do iFc = 1, nFc
 *    ..limit total gradient
-           qcl = cvsa0(iFc,is)*sqrt(dubf(iFc,0)**2 + dubf(iFc,1)**2)
-           qfl = alpha*geo%fcS(iFc)*
-     &          (na(mpg%fcCv(iFc,1),is)*tn(mpg%fcCv(iFc,1))+
-     &           na(mpg%fcCv(iFc,2),is)*tn(mpg%fcCv(iFc,2)))/2.0_R8
-           tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+b2tlv0_cutlo))**gamma)
+            qcl = cvsa0(iFc,is)*sqrt(dubf(iFc,0)**2 + dubf(iFc,1)**2)
+            qfl = alpha*geo%fcS(iFc)*
+     &           (na(mpg%fcCv(iFc,1),is)*tn(mpg%fcCv(iFc,1))+
+     &            na(mpg%fcCv(iFc,2),is)*tn(mpg%fcCv(iFc,2)))/2.0_R8
+            tfl = 1.0_R8/(1.0_R8 + abs(qcl/(qfl+b2tlv0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
 *    ..poloidal
             cvsa(iFc,0,is)   = cvsa(iFc,0,is)*tfl
             cvsahz(iFc,0,is) = cvsahz(iFc,0,is)*tfl
             flv(iFc,0,is) = tfl
-            maxfluxlimit(0)=max(maxfluxlimit(0),tfl)
+            maxfluxlimit(0) = max(maxfluxlimit(0),tfl)
 *    ..radial
             cvsa(iFc,1,is)   = cvsa(iFc,1,is)*tfl
             cvsahz(iFc,1,is) = cvsahz(iFc,1,is)*tfl
             flv(iFc,1,is) = tfl
-            maxfluxlimit(1)=max(maxfluxlimit(1),tfl)
+            maxfluxlimit(1) = max(maxfluxlimit(1),tfl)
           enddo
          endif
         enddo
@@ -124,15 +124,15 @@ cwdk    or radial contributions, since neutral transport is isotropic
 !      write(*,'(1x,a,1p,2e10.2)') 'b2tlv0: maxfluxlimit = ',maxfluxlimit
 
       if (switch%b2tlv0_iout.ne.0) then
-        do is=0,ns-1          
-          if (is_neutral(is)) then                            
+        do is = 0, ns-1
+          if (is_neutral(is)) then
             write (charns,'(i3.3)') is
             call my_out_us(70,nFc,1, flv(1,0,is),
      &              'fl_visc_th'//charns)
             call my_out_us(70,nFc,1, flv(1,1,is),
      &              'fl_visc_r'//charns)
           endif
-        enddo                                            
+        enddo
       endif
 
 *   ..return
