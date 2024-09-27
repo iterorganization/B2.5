@@ -131,7 +131,6 @@ MODULE B2MOD_DRIVER_DIFF
   REAL(kind=r8) :: cputarget, cpuincrement, na_eps, te_eps, ti_eps, &
 & tn_eps, po_eps, ua_eps, kt_eps, zt_eps, sput_frc, sput_phys, delta_min&
 & , dt_change_inc, delta_max, dt_change_dec, dt_min, dt_max, max_delta
-  INTEGER :: ncon, nele_jac
 !     NetCDF-3.
 !
 ! netcdf version 3 fortran interface:
@@ -3743,7 +3742,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT_B(ncon, nele_jac, ns, mpg, mpgb, switch)
+      CALL READ_B2MOD_PAR_OPT_B(ns, mpg, mpgb, switch)
       ALLOCATE(par_opt_physb(npar_opt))
       par_opt_physb = 0.D0
       ALLOCATE(par_opt_phys(npar_opt))
@@ -5289,7 +5288,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg, switch)
+      CALL READ_B2MOD_PAR_OPT(ns, mpg, switch)
       ALLOCATE(par_opt_phys(npar_opt))
       ALLOCATE(xsave(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
@@ -6122,6 +6121,9 @@ CONTAINS
     WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
 &   'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr
     CALL PUSHREAL8ARRAY(charge_frac, r8*def_nsd/8)
+    CALL PUSHBOOLEAN(b2mod_math_initialised)
+    CALL PUSHREAL8(cutlo, r8/8)
+    CALL PUSHREAL8(cutll, r8/8)
     IF (ALLOCATED(b2bremreg)) THEN
       CALL PUSHREAL8ARRAY(b2bremreg, r8*SIZE(b2bremreg, 1)/8)
       CALL PUSHCONTROL1B(1)
@@ -6332,10 +6334,6 @@ CONTAINS
     CALL PUSHINTEGER4(ntstep_b2wall)
     CALL PUSHCHARACTERARRAY(filename_b2w, 256)
     CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-    CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
-    CALL PUSHREAL8(cutlo, r8/8)
-    CALL PUSHREAL8(cutll, r8/8)
     IF (ALLOCATED(art_sna)) THEN
       CALL PUSHREAL8ARRAY(art_sna, r8*SIZE(art_sna, 1)*SIZE(art_sna, 2)*&
 &                   SIZE(art_sna, 3)/8)
@@ -6371,6 +6369,16 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
+    CALL PUSHINTEGER4(ncall_drift)
+    CALL PUSHREAL8(fac_vis_scalar, r8/8)
+    CALL PUSHREAL8(fac_exb_scalar, r8/8)
+    CALL PUSHREAL8(facdrift_scalar, r8/8)
+    IF (ALLOCATED(last_solve_9)) THEN
+      CALL PUSHBOOLEANARRAY(last_solve_9, SIZE(last_solve_9, 1))
+      CALL PUSHCONTROL1B(1)
+    ELSE
+      CALL PUSHCONTROL1B(0)
+    END IF
     CALL PUSHREAL8(numerics_time_switch, r8/8)
     CALL PUSHREAL8(numerics_time_mod, r8/8)
     IF (ALLOCATED(time_factor)) THEN
@@ -6379,13 +6387,8 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
-    CALL PUSHBOOLEANARRAY(last_solve_9, cvregmax + 1)
     CALL PUSHBOOLEANARRAY(solveet, cvregmax + 1)
     CALL PUSHBOOLEANARRAY(solvemt, cvregmax + 1)
-    CALL PUSHINTEGER4(ncall_drift)
-    CALL PUSHREAL8(fac_vis_scalar, r8/8)
-    CALL PUSHREAL8(fac_exb_scalar, r8/8)
-    CALL PUSHREAL8(facdrift_scalar, r8/8)
     CALL PUSHREAL8ARRAY(cflim, r8*8/8)
     CALL PUSHREAL8ARRAY(cfalf, r8*8/8)
     CALL PUSHREAL8ARRAY(cfsig, r8*8/8)
@@ -6449,13 +6452,6 @@ CONTAINS
     CALL PUSHINTEGER4ARRAY(arcend, nstraid)
     CALL PUSHREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
     CALL PUSHREAL8ARRAY(b2recyc, r8*nsdmax*nstraid/8)
-    CALL PUSHINTEGER4(ank_tracing)
-    CALL PUSHBOOLEAN(user_initialised)
-    CALL PUSHINTEGER4(icsepimp)
-    CALL PUSHINTEGER4ARRAY(imp, nromp)
-    CALL PUSHINTEGER4(nomp)
-    CALL PUSHINTEGER4(icsepomp)
-    CALL PUSHINTEGER4ARRAY(omp, nromp)
     CALL PUSHREAL8(int6r, r8/8)
     CALL PUSHREAL8(int6l, r8/8)
     CALL PUSHREAL8(int5r, r8/8)
@@ -6477,6 +6473,13 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
+    CALL PUSHINTEGER4(ank_tracing)
+    CALL PUSHBOOLEAN(user_initialised)
+    CALL PUSHINTEGER4(icsepimp)
+    CALL PUSHINTEGER4ARRAY(imp, nromp)
+    CALL PUSHINTEGER4(nomp)
+    CALL PUSHINTEGER4(icsepomp)
+    CALL PUSHINTEGER4ARRAY(omp, nromp)
     CALL PUSHBOOLEAN(feedback_namelist_used)
     CALL PUSHREAL8ARRAY(fb_rescale, r8*def_natm/8)
     CALL PUSHREAL8ARRAY(fb_prev, r8*def_natm/8)
@@ -8122,6 +8125,13 @@ CONTAINS
       CALL POPREAL8ARRAY(fb_prev, r8*def_natm/8)
       CALL POPREAL8ARRAY(fb_rescale, r8*def_natm/8)
       CALL POPBOOLEAN(feedback_namelist_used)
+      CALL POPINTEGER4ARRAY(omp, nromp)
+      CALL POPINTEGER4(icsepomp)
+      CALL POPINTEGER4(nomp)
+      CALL POPINTEGER4ARRAY(imp, nromp)
+      CALL POPINTEGER4(icsepimp)
+      CALL POPBOOLEAN(user_initialised)
+      CALL POPINTEGER4(ank_tracing)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(fna_mol, r8*SIZE(fna_mol, 1)&
 &                                     *SIZE(fna_mol, 2)/8)
@@ -8139,13 +8149,6 @@ CONTAINS
       CALL POPREAL8(int5r, r8/8)
       CALL POPREAL8(int6l, r8/8)
       CALL POPREAL8(int6r, r8/8)
-      CALL POPINTEGER4ARRAY(omp, nromp)
-      CALL POPINTEGER4(icsepomp)
-      CALL POPINTEGER4(nomp)
-      CALL POPINTEGER4ARRAY(imp, nromp)
-      CALL POPINTEGER4(icsepimp)
-      CALL POPBOOLEAN(user_initialised)
-      CALL POPINTEGER4(ank_tracing)
       CALL POPREAL8ARRAY(b2recyc, r8*nsdmax*nstraid/8)
       CALL POPREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
       CALL POPINTEGER4ARRAY(arcend, nstraid)
@@ -8191,18 +8194,20 @@ CONTAINS
       CALL POPREAL8ARRAY(cfsig, r8*8/8)
       CALL POPREAL8ARRAY(cfalf, r8*8/8)
       CALL POPREAL8ARRAY(cflim, r8*8/8)
-      CALL POPREAL8(facdrift_scalar, r8/8)
-      CALL POPREAL8(fac_exb_scalar, r8/8)
-      CALL POPREAL8(fac_vis_scalar, r8/8)
-      CALL POPINTEGER4(ncall_drift)
       CALL POPBOOLEANARRAY(solvemt, cvregmax + 1)
       CALL POPBOOLEANARRAY(solveet, cvregmax + 1)
-      CALL POPBOOLEANARRAY(last_solve_9, cvregmax + 1)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(time_factor, r8*SIZE(&
 &                                     time_factor, 1)/8)
       CALL POPREAL8(numerics_time_mod, r8/8)
       CALL POPREAL8(numerics_time_switch, r8/8)
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 1) CALL POPBOOLEANARRAY(last_solve_9, SIZE(&
+&                                       last_solve_9, 1))
+      CALL POPREAL8(facdrift_scalar, r8/8)
+      CALL POPREAL8(fac_exb_scalar, r8/8)
+      CALL POPREAL8(fac_vis_scalar, r8/8)
+      CALL POPINTEGER4(ncall_drift)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_sch, r8*SIZE(art_sch, 1)&
 &                                     *SIZE(art_sch, 2)/8)
@@ -8220,10 +8225,6 @@ CONTAINS
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_sna, r8*SIZE(art_sna, 1)&
 &                                     *SIZE(art_sna, 2)*SIZE(art_sna, 3)&
 &                                     /8)
-      CALL POPREAL8(cutll, r8/8)
-      CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
-      CALL POPBOOLEAN(b2mod_math_initialised)
       CALL POPCHARACTERARRAY(my_out_folder, 7)
       CALL POPCHARACTERARRAY(filename_b2w, 256)
       CALL POPINTEGER4(ntstep_b2wall)
@@ -8371,6 +8372,9 @@ CONTAINS
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2bremreg, r8*SIZE(b2bremreg&
 &                                     , 1)/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
+      CALL POPBOOLEAN(b2mod_math_initialised)
       CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
       switchb%keps_cd = 0.D0
       switchb%keps_heat = 0.D0
@@ -9543,6 +9547,13 @@ CONTAINS
     CALL POPREAL8ARRAY(fb_prev, r8*def_natm/8)
     CALL POPREAL8ARRAY(fb_rescale, r8*def_natm/8)
     CALL POPBOOLEAN(feedback_namelist_used)
+    CALL POPINTEGER4ARRAY(omp, nromp)
+    CALL POPINTEGER4(icsepomp)
+    CALL POPINTEGER4(nomp)
+    CALL POPINTEGER4ARRAY(imp, nromp)
+    CALL POPINTEGER4(icsepimp)
+    CALL POPBOOLEAN(user_initialised)
+    CALL POPINTEGER4(ank_tracing)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(fna_mol, r8*SIZE(fna_mol, 1)*&
 &                                   SIZE(fna_mol, 2)/8)
@@ -9560,13 +9571,6 @@ CONTAINS
     CALL POPREAL8(int5r, r8/8)
     CALL POPREAL8(int6l, r8/8)
     CALL POPREAL8(int6r, r8/8)
-    CALL POPINTEGER4ARRAY(omp, nromp)
-    CALL POPINTEGER4(icsepomp)
-    CALL POPINTEGER4(nomp)
-    CALL POPINTEGER4ARRAY(imp, nromp)
-    CALL POPINTEGER4(icsepimp)
-    CALL POPBOOLEAN(user_initialised)
-    CALL POPINTEGER4(ank_tracing)
     CALL POPREAL8ARRAY(b2recyc, r8*nsdmax*nstraid/8)
     CALL POPREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
     CALL POPINTEGER4ARRAY(arcend, nstraid)
@@ -9612,18 +9616,20 @@ CONTAINS
     CALL POPREAL8ARRAY(cfsig, r8*8/8)
     CALL POPREAL8ARRAY(cfalf, r8*8/8)
     CALL POPREAL8ARRAY(cflim, r8*8/8)
-    CALL POPREAL8(facdrift_scalar, r8/8)
-    CALL POPREAL8(fac_exb_scalar, r8/8)
-    CALL POPREAL8(fac_vis_scalar, r8/8)
-    CALL POPINTEGER4(ncall_drift)
     CALL POPBOOLEANARRAY(solvemt, cvregmax + 1)
     CALL POPBOOLEANARRAY(solveet, cvregmax + 1)
-    CALL POPBOOLEANARRAY(last_solve_9, cvregmax + 1)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(time_factor, r8*SIZE(&
 &                                   time_factor, 1)/8)
     CALL POPREAL8(numerics_time_mod, r8/8)
     CALL POPREAL8(numerics_time_switch, r8/8)
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 1) CALL POPBOOLEANARRAY(last_solve_9, SIZE(&
+&                                     last_solve_9, 1))
+    CALL POPREAL8(facdrift_scalar, r8/8)
+    CALL POPREAL8(fac_exb_scalar, r8/8)
+    CALL POPREAL8(fac_vis_scalar, r8/8)
+    CALL POPINTEGER4(ncall_drift)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_sch, r8*SIZE(art_sch, 1)*&
 &                                   SIZE(art_sch, 2)/8)
@@ -9639,10 +9645,6 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_sna, r8*SIZE(art_sna, 1)*&
 &                                   SIZE(art_sna, 2)*SIZE(art_sna, 3)/8)
-    CALL POPREAL8(cutll, r8/8)
-    CALL POPREAL8(cutlo, r8/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
-    CALL POPBOOLEAN(b2mod_math_initialised)
     CALL POPCHARACTERARRAY(my_out_folder, 7)
     CALL POPCHARACTERARRAY(filename_b2w, 256)
     CALL POPINTEGER4(ntstep_b2wall)
@@ -9786,6 +9788,9 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2bremreg, r8*SIZE(b2bremreg, &
 &                                   1)/8)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
+    CALL POPBOOLEAN(b2mod_math_initialised)
     CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
     parm_dnab = 0.D0
     parm_hceb = 0.D0

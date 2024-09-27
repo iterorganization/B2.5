@@ -230,10 +230,11 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   REAL(r8), DIMENSION(nCv) :: tempb0
   REAL(r8) :: temp
   REAL(r8) :: temp0
-  REAL(r8) :: tempb1
   REAL(r8) :: temp1
+  REAL(r8) :: tempb1
   REAL(r8) :: temp2
   REAL(r8) :: temp3
+  REAL(r8) :: temp4
   REAL(r8) :: tempb2
   REAL(r8) :: tempb3
   REAL(r8) :: tempb4
@@ -426,6 +427,20 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   DO icv=1,mpg%nci
     shei(icv) = co%ceqp(icv)*dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*SQRT(&
 &     pl%te(icv)))*(pl%te(icv)-pl%ti(icv))
+!lkw 29.03.2024{
+    CALL PUSHREAL8(shi0(icv, 0), r8/8)
+    shi0(icv, 0) = shi0(icv, 0) + switch%b2npht_stab_shei*co%ceqp(icv)*&
+&     dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*SQRT(pl%te(icv)))*pl%ti(icv)
+    CALL PUSHREAL8(shi0(icv, 1), r8/8)
+    shi0(icv, 1) = shi0(icv, 1) - switch%b2npht_stab_shei*co%ceqp(icv)*&
+&     dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*SQRT(pl%te(icv)))
+    CALL PUSHREAL8(she0(icv, 0), r8/8)
+    she0(icv, 0) = she0(icv, 0) + switch%b2npht_stab_shei*co%ceqp(icv)*&
+&     dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*SQRT(pl%te(icv)))*pl%te(icv)
+!lkw 29.03.2024}
+    CALL PUSHREAL8(she0(icv, 1), r8/8)
+    she0(icv, 1) = she0(icv, 1) - switch%b2npht_stab_shei*co%ceqp(icv)*&
+&     dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*SQRT(pl%te(icv)))
   END DO
   DO icv=mpg%nci+1,ncv
     shei(icv) = 0.0_R8
@@ -619,18 +634,73 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
     sheib(icv) = 0.D0
   END DO
   DO icv=mpg%nci,1,-1
+    CALL POPREAL8(she0(icv, 1), r8/8)
+    temp4 = SQRT(pl%te(icv))
+    temp3 = pl%te(icv)*temp4
+    temp1 = co%ceqp(icv)*dv%ne(icv)
+    tempb3 = -(switch%b2npht_stab_shei*she0b(icv, 1)/temp3)
+    tempb1 = dv%ni(icv, 0)*tempb3
+    dvb%ni(icv, 0) = dvb%ni(icv, 0) + temp1*tempb3
+    tempb2 = -(temp1*dv%ni(icv, 0)*tempb3/temp3)
+    IF (pl%te(icv) .EQ. 0.D0) THEN
+      plb%te(icv) = plb%te(icv) + temp4*tempb2
+    ELSE
+      plb%te(icv) = plb%te(icv) + (temp4+pl%te(icv)/(2.0*temp4))*tempb2
+    END IF
+    CALL POPREAL8(she0(icv, 0), r8/8)
+    temp4 = SQRT(pl%te(icv))
+    temp2 = co%ceqp(icv)*dv%ne(icv)
+    tempb2 = switch%b2npht_stab_shei*she0b(icv, 0)/temp4
+    tempb3 = dv%ni(icv, 0)*tempb2
+    cob%ceqp(icv) = cob%ceqp(icv) + dv%ne(icv)*tempb1 + dv%ne(icv)*&
+&     tempb3
+    dvb%ne(icv) = dvb%ne(icv) + co%ceqp(icv)*tempb1 + co%ceqp(icv)*&
+&     tempb3
+    IF (.NOT.pl%te(icv) .EQ. 0.D0) plb%te(icv) = plb%te(icv) - temp2*dv%&
+&       ni(icv, 0)*tempb2/(2.0*temp4**2)
+    CALL POPREAL8(shi0(icv, 1), r8/8)
+    temp4 = SQRT(pl%te(icv))
+    temp3 = pl%te(icv)*temp4
+    temp1 = co%ceqp(icv)*dv%ne(icv)
+    tempb3 = -(switch%b2npht_stab_shei*shi0b(icv, 1)/temp3)
+    dvb%ni(icv, 0) = dvb%ni(icv, 0) + temp2*tempb2 + temp1*tempb3
+    tempb1 = dv%ni(icv, 0)*tempb3
+    tempb2 = -(temp1*dv%ni(icv, 0)*tempb3/temp3)
+    IF (pl%te(icv) .EQ. 0.D0) THEN
+      plb%te(icv) = plb%te(icv) + temp4*tempb2
+    ELSE
+      plb%te(icv) = plb%te(icv) + (temp4+pl%te(icv)/(2.0*temp4))*tempb2
+    END IF
+    cob%ceqp(icv) = cob%ceqp(icv) + dv%ne(icv)*tempb1
+    dvb%ne(icv) = dvb%ne(icv) + co%ceqp(icv)*tempb1
+    CALL POPREAL8(shi0(icv, 0), r8/8)
+    temp4 = SQRT(pl%te(icv))
+    temp3 = pl%te(icv)*temp4
+    temp1 = dv%ni(icv, 0)*pl%ti(icv)
+    temp0 = co%ceqp(icv)*dv%ne(icv)
+    tempb3 = switch%b2npht_stab_shei*shi0b(icv, 0)/temp3
+    dvb%ni(icv, 0) = dvb%ni(icv, 0) + pl%ti(icv)*temp0*tempb3
+    plb%ti(icv) = plb%ti(icv) + dv%ni(icv, 0)*temp0*tempb3
+    tempb2 = -(temp0*temp1*tempb3/temp3)
+    IF (pl%te(icv) .EQ. 0.D0) THEN
+      plb%te(icv) = plb%te(icv) + temp4*tempb2
+    ELSE
+      plb%te(icv) = plb%te(icv) + (temp4+pl%te(icv)/(2.0*temp4))*tempb2
+    END IF
     temp = SQRT(pl%te(icv))
     temp0 = pl%te(icv)*temp
-    temp1 = pl%te(icv) - pl%ti(icv)
-    temp2 = dv%ni(icv, 0)*temp1
-    temp3 = co%ceqp(icv)*dv%ne(icv)
+    temp2 = pl%te(icv) - pl%ti(icv)
+    temp3 = dv%ni(icv, 0)*temp2
+    temp4 = co%ceqp(icv)*dv%ne(icv)
     tempb1 = sheib(icv)/temp0
+    cob%ceqp(icv) = cob%ceqp(icv) + dv%ne(icv)*temp1*tempb3 + dv%ne(icv)&
+&     *temp3*tempb1
+    dvb%ne(icv) = dvb%ne(icv) + co%ceqp(icv)*temp1*tempb3 + co%ceqp(icv)&
+&     *temp3*tempb1
     sheib(icv) = 0.D0
-    cob%ceqp(icv) = cob%ceqp(icv) + dv%ne(icv)*temp2*tempb1
-    dvb%ne(icv) = dvb%ne(icv) + co%ceqp(icv)*temp2*tempb1
-    tempb2 = temp3*tempb1
-    tempb4 = -(temp3*temp2*tempb1/temp0)
-    dvb%ni(icv, 0) = dvb%ni(icv, 0) + temp1*tempb2
+    tempb2 = temp4*tempb1
+    tempb4 = -(temp4*temp3*tempb1/temp0)
+    dvb%ni(icv, 0) = dvb%ni(icv, 0) + temp2*tempb2
     tempb3 = dv%ni(icv, 0)*tempb2
     IF (pl%te(icv) .EQ. 0.D0) THEN
       plb%te(icv) = plb%te(icv) + temp*tempb4 + tempb3
@@ -1143,6 +1213,16 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   DO icv=1,mpg%nci
     shei(icv) = co%ceqp(icv)*dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*SQRT(&
 &     pl%te(icv)))*(pl%te(icv)-pl%ti(icv))
+!lkw 29.03.2024{
+    shi0(icv, 0) = shi0(icv, 0) + switch%b2npht_stab_shei*co%ceqp(icv)*&
+&     dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*SQRT(pl%te(icv)))*pl%ti(icv)
+    shi0(icv, 1) = shi0(icv, 1) - switch%b2npht_stab_shei*co%ceqp(icv)*&
+&     dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*SQRT(pl%te(icv)))
+    she0(icv, 0) = she0(icv, 0) + switch%b2npht_stab_shei*co%ceqp(icv)*&
+&     dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*SQRT(pl%te(icv)))*pl%te(icv)
+!lkw 29.03.2024}
+    she0(icv, 1) = she0(icv, 1) - switch%b2npht_stab_shei*co%ceqp(icv)*&
+&     dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*SQRT(pl%te(icv)))
   END DO
   DO icv=mpg%nci+1,ncv
     shei(icv) = 0.0_R8
@@ -1267,6 +1347,7 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   ELSE IF (switch%iout_b2wdat .EQ. 4) THEN
     CALL MY_OUT_US(70, ncv, 0, pl%te, 'b2npht_te')
     CALL MY_OUT_US(70, ncv, 0, pl%ti, 'b2npht_ti')
+    CALL MY_OUT_US(70, ncv, 0, pl%tn, 'b2npht_tn')
   END IF
 !
 ! ..return

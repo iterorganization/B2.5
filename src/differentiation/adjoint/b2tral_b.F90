@@ -240,14 +240,13 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !
 ! ..compute transport coefficients
 !   ..compute anomalous terms
+  CALL PUSHBOOLEAN(b2mod_math_initialised)
+  CALL PUSHREAL8(cutlo, r8/8)
+  CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHINTEGER4(ncall_transp_keps)
   CALL PUSHINTEGER4(ncall_b2tqna)
   CALL PUSHINTEGER4(ncall_b2tlh0)
   CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-  CALL PUSHBOOLEAN(b2mod_math_initialised)
-  CALL PUSHREAL4(small_r4_constant, r4/8)
-  CALL PUSHREAL8(cutlo, r8/8)
-  CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHREAL8ARRAY(cflim, r8*8/8)
   CALL PUSHREAL8ARRAY(cfalf, r8*8/8)
   CALL PUSHREAL8ARRAY(cfsig, r8*8/8)
@@ -329,6 +328,9 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !srv 23.11.10
 !srv 09.01.01 03.06.03
 !xpb
+  CALL PUSHBOOLEAN(b2mod_math_initialised)
+  CALL PUSHREAL8(cutlo, r8/8)
+  CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHINTEGER4(ncall_b2ttia)
   CALL PUSHINTEGER4(ncall_b2tqin)
   CALL PUSHINTEGER4(ncall_b2tqce)
@@ -336,10 +338,6 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL PUSHINTEGER4(ncall_b2tlnl)
   CALL PUSHINTEGER4(ncall_b2tlmv)
   CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-  CALL PUSHBOOLEAN(b2mod_math_initialised)
-  CALL PUSHREAL4(small_r4_constant, r4/8)
-  CALL PUSHREAL8(cutlo, r8/8)
-  CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHREAL8ARRAY(co%fllimvisc, r8*SIZE(co%fllimvisc, 1)*SIZE(co%&
 &               fllimvisc, 2)/8)
   CALL PUSHREAL8ARRAY(co%vsaf_cl, r8*SIZE(co%vsaf_cl, 1)*SIZE(co%vsaf_cl&
@@ -769,10 +767,6 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &              , 2)*SIZE(co%vsaf_cl, 3)/8)
   CALL POPREAL8ARRAY(co%fllimvisc, r8*SIZE(co%fllimvisc, 1)*SIZE(co%&
 &              fllimvisc, 2)/8)
-  CALL POPREAL8(cutll, r8/8)
-  CALL POPREAL8(cutlo, r8/8)
-  CALL POPREAL4(small_r4_constant, r4/8)
-  CALL POPBOOLEAN(b2mod_math_initialised)
   CALL POPCHARACTERARRAY(my_out_folder, 7)
   CALL POPINTEGER4(ncall_b2tlmv)
   CALL POPINTEGER4(ncall_b2tlnl)
@@ -780,6 +774,9 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPINTEGER4(ncall_b2tqce)
   CALL POPINTEGER4(ncall_b2tqin)
   CALL POPINTEGER4(ncall_b2ttia)
+  CALL POPREAL8(cutll, r8/8)
+  CALL POPREAL8(cutlo, r8/8)
+  CALL POPBOOLEAN(b2mod_math_initialised)
   dummyzerodiffb = 0.D0
   dummyzerodiffb0 = 0.D0
   CALL B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, switchb, &
@@ -867,14 +864,13 @@ SUBROUTINE B2TRAL_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPREAL8ARRAY(cfsig, r8*8/8)
   CALL POPREAL8ARRAY(cfalf, r8*8/8)
   CALL POPREAL8ARRAY(cflim, r8*8/8)
-  CALL POPREAL8(cutll, r8/8)
-  CALL POPREAL8(cutlo, r8/8)
-  CALL POPREAL4(small_r4_constant, r4/8)
-  CALL POPBOOLEAN(b2mod_math_initialised)
   CALL POPCHARACTERARRAY(my_out_folder, 7)
   CALL POPINTEGER4(ncall_b2tlh0)
   CALL POPINTEGER4(ncall_b2tqna)
   CALL POPINTEGER4(ncall_transp_keps)
+  CALL POPREAL8(cutll, r8/8)
+  CALL POPREAL8(cutlo, r8/8)
+  CALL POPBOOLEAN(b2mod_math_initialised)
   CALL B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, switch, &
 &         switchb, geo, geob, mpg, mpgb, pl, plb, dv, dvb, rt, rtb, &
 &         st_ext, st_extb, co, cob)

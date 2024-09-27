@@ -441,7 +441,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
               arg10 = rt%rlcx(icv, 0, ic, k) + rt%rlcx(icv, 1, ic, k)*&
 &               LOG(tav/(am(is)*ev))
               CALL PUSHBOOLEAN(b2mod_math_initialised)
-              CALL PUSHREAL4(small_r4_constant, r4/8)
               CALL PUSHREAL8(cutlo, r8/8)
               CALL PUSHREAL8(cutll, r8/8)
               result1 = EXPU(arg10)
@@ -456,7 +455,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
           arg10 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*LOG(pl%te(&
 &           icv)/ev)
           CALL PUSHBOOLEAN(b2mod_math_initialised)
-          CALL PUSHREAL4(small_r4_constant, r4/8)
           CALL PUSHREAL8(cutlo, r8/8)
           CALL PUSHREAL8(cutll, r8/8)
           CALL PUSHREAL8(dion, r8/8)
@@ -862,7 +860,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !
   IF (switch%transport_afn .NE. 0) THEN
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHREAL8(cutlo, r8/8)
     CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHREAL8ARRAY(hcib, r8*ncv*ns/8)
@@ -1095,7 +1092,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL POPREAL8ARRAY(hcib, r8*ncv*ns/8)
     CALL POPREAL8(cutll, r8/8)
     CALL POPREAL8(cutlo, r8/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
     CALL SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl, &
 &                      plb, dv, dvb, rt, rtb, dna0, dna0b, dpa0, dpa0b, &
@@ -1424,7 +1420,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
           CALL POPREAL8(dion, r8/8)
           CALL POPREAL8(cutll, r8/8)
           CALL POPREAL8(cutlo, r8/8)
-          CALL POPREAL4(small_r4_constant, r4/8)
           CALL POPBOOLEAN(b2mod_math_initialised)
           CALL EXPU_B(arg10, arg10b, dionb)
           CALL POPREAL8(arg10, r8/8)
@@ -1442,7 +1437,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
               result1b = pl%na(icv, ic)*vcxb
               CALL POPREAL8(cutll, r8/8)
               CALL POPREAL8(cutlo, r8/8)
-              CALL POPREAL4(small_r4_constant, r4/8)
               CALL POPBOOLEAN(b2mod_math_initialised)
               CALL EXPU_B(arg10, arg10b, result1b)
               temp3 = tav/(am(is)*ev)
@@ -2374,7 +2368,6 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
           arg1 = rt%rlcx(icv, 0, ic, k) + rt%rlcx(icv, 1, ic, k)*LOG(&
 &           t_av/(am(is)*ev))
           CALL PUSHBOOLEAN(b2mod_math_initialised)
-          CALL PUSHREAL4(small_r4_constant, r4/8)
           CALL PUSHREAL8(cutlo, r8/8)
           CALL PUSHREAL8(cutll, r8/8)
           CALL PUSHREAL8(result1, r8/8)
@@ -2385,7 +2378,6 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
         arg1 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*LOG(pl%te(icv)/&
 &         ev)
         CALL PUSHBOOLEAN(b2mod_math_initialised)
-        CALL PUSHREAL4(small_r4_constant, r4/8)
         CALL PUSHREAL8(cutlo, r8/8)
         CALL PUSHREAL8(cutll, r8/8)
         CALL PUSHREAL8(dion, r8/8)
@@ -2547,7 +2539,6 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
         CALL POPREAL8(dion, r8/8)
         CALL POPREAL8(cutll, r8/8)
         CALL POPREAL8(cutlo, r8/8)
-        CALL POPREAL4(small_r4_constant, r4/8)
         CALL POPBOOLEAN(b2mod_math_initialised)
         CALL EXPU_B(arg1, arg1b, dionb)
         CALL POPREAL8(arg1, r8/8)
@@ -2561,7 +2552,6 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
           CALL POPREAL8(result1, r8/8)
           CALL POPREAL8(cutll, r8/8)
           CALL POPREAL8(cutlo, r8/8)
-          CALL POPREAL4(small_r4_constant, r4/8)
           CALL POPBOOLEAN(b2mod_math_initialised)
           CALL EXPU_B(arg1, arg1b, result1b)
           t_av = 0.5_R8*(pl%ti(icv)+pl%tn(icv))
