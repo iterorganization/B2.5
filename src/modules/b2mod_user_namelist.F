@@ -36,7 +36,7 @@
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
       integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
-     ,  spfr_cv,epfr_cv,npfr_cvs,pfr_cvs(100),
+     ,  npfr_cvs,pfr_cvs(100),
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd)
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
@@ -52,7 +52,7 @@
      ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
      ,  j_h_at,j_he_at,j_ne_at,
      ,  l_h_mol,fusion_power,Spmp_He_to_D,lpfrs_pmp,
-     ,  spfr_cv,epfr_cv,npfr_cvs,pfr_cvs,
+     ,  npfr_cvs,pfr_cvs,
      ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
@@ -121,8 +121,6 @@ c***  Standard set-up:
       lpfrb_o=0
       lpfrt_i=0
       lpfrt_o=0
-      spfr_cv=0
-      epfr_cv=0
       npfr_cvs=0
       pfr_cvs=0
       npfrgrp=0

@@ -1049,6 +1049,16 @@
 					See Physics section for more details. Equivalent to LFEEDBACK=.true. in the b2.boundary.parameters namelist.
 				</description>
 			</switch>
+      <switch>
+				<name>b2stbc_use_pump</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2stbc_use_pump.eq.0, current pumping rate will not be used for any FB_ACTUATOR.
+          If b2stbc_use_pump.eq.1, current pumping rate will be used for FB_ACTUATOR.eq.1 (puff) and FB_ACTUATOR.eq.8 (pump). In case of FB_ACTUATOR.eq.8 and using EIRENE, absorption coefficient will be changed the same way for all sequences.
+          If b2stbc_use_pump.eq.2, current pumping rate will be used for FB_ACTUATOR.eq.1 (puff) and FB_ACTUATOR.eq.8 (pump). In case of FB_ACTUATOR.eq.8 and using EIRENE, absorption coefficient will be changed only for this sequence.
+				</description>
+			</switch>
 			<switch>
 				<name>b2stbc_ncallfeedback</name>
 				<default>0</default>
@@ -6720,6 +6730,12 @@
 						14: total particle content of that species on the entire domain (similar to 'b2stbc_ndes' and 'b2stbc_ndes_sol' but actuator applied to any boundary)
 						15: Volumetric recombination (only for kinetic neutral cases) (similar to 'b2stbc_volrec_sol' but actuator applied to any boundary)
 						16: Pedestal electron density (similar to 'b2stbc_nepedm_sol' but actuator applied to any boundary)
+            17: Density of ions at outer midplane
+            18: Total electron radiation losses on the entire domain
+            20: Neutral pressure of this sequence. It is necessary to set PFR_CVS and NPFR_CVS in b2.user.parameters.
+            21: Total ion radiation losses on the entire domain
+            22: Average density of this species at the separatrix
+            23: Power heat flux density at outer target. Outer target must have face label .eq. 2
 				</description>
 			</switch>
 			<switch>
@@ -6739,6 +6755,7 @@
 						   S --&gt; max(0, min(X,S + D)), where D = F*((N - &lt;N&gt;)/dt + (&lt;N&gt;_prev - &lt;N&gt;)/dt_prev)
 						5: rescale done according to SOLPS4 formula: N = C*exp((time-T)*V)
 						6: rescale slowed by fb_alpha (SOLPS4 style)
+            7: If fb_target/fb_current &lt;1-fb_const or &bt; 1+fb_const it coinsides with FB_RESCALE.eq.3. Otherwise it .eq. 1.
 				</description>
 			</switch>
 			<switch>
@@ -6755,6 +6772,7 @@
 					5: ion heat flux BC
 					6: current BC
 					7: density BC
+          8: Pumping absorption coefficient
 				</description>
 			</switch>
 			<switch>
@@ -7909,6 +7927,22 @@
 				<type>character*8 array of size (NNTRGRP)</type>
 				<description>
 					Labels for the neutral data surface groups.
+				</description>
+			</switch>
+      <switch>
+				<name>NPFR_CVS</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of control volumes which are written in PFR_CVS
+				</description>
+			</switch>
+       <switch>
+				<name>PFR_CVS</name>
+				<default>0</default>
+				<type>integer array of size (100)</type>
+				<description>
+					Control volumes, where average neutral pressure for fb_type.eq.20 is calced.
 				</description>
 			</switch>
 			<switch>
