@@ -849,7 +849,7 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
             CALL B2FILEI(ns, mpg%nnreg(0), switch)
           END IF
           IF (MOD(itim, ank_tracing) .EQ. 1 .OR. ank_tracing .EQ. 1) &
-&           CALL B2FILEW(istg(2), mpg%nnreg(0))
+&           CALL B2FILEW(istg(2), mpg%nnreg(0), st%diag)
         END IF
 !      ..update iteration counter
         b2mndt_itcnt = b2mndt_itcnt + 1
@@ -908,14 +908,14 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                te, std%pl%te, st%pl%po, std%pl%po, st%dv%vedia, std%dv&
 &                %vedia, st%dv%veecrb, std%dv%veecrb, nbdirs)
 !      ..compute other fluxes
-        CALL B2XPEN_DV(ncv, nfc, ns, mpg, st%dv%fna, std%dv%fna, st%dv%&
-&                fna_53, std%dv%fna_53, st%dv%fne_53, std%dv%fne_53, st%&
-&                dv%fch, std%dv%fch, st%dv%fhe, std%dv%fhe, st%dv%fhi, &
-&                std%dv%fhi, st%dv%fhn, std%dv%fhn, st%rt%rpt, std%rt%&
-&                rpt, st%pl%te, std%pl%te, st%pl%ti, std%pl%ti, st%pl%tn&
-&                , std%pl%tn, st%pl%po, std%pl%po, switch%boris, st%dv%&
-&                fhm, std%dv%fhm, st%dv%fhp, std%dv%fhp, st%dv%fhj, std%&
-&                dv%fhj, st%dv%fht, std%dv%fht, nbdirs)
+        CALL B2XPEN_DV(ncv, nfc, ns, mpg, switch, st%dv%fna, std%dv%fna&
+&                , st%dv%fna_53, std%dv%fna_53, st%dv%fne_53, std%dv%&
+&                fne_53, st%dv%fch, std%dv%fch, st%dv%fhe, std%dv%fhe, &
+&                st%dv%fhi, std%dv%fhi, st%dv%fhn, std%dv%fhn, st%rt%rpt&
+&                , std%rt%rpt, st%pl%te, std%pl%te, st%pl%ti, std%pl%ti&
+&                , st%pl%tn, std%pl%tn, st%pl%po, std%pl%po, st%dv%fhm, &
+&                std%dv%fhm, st%dv%fhp, std%dv%fhp, st%dv%fhj, std%dv%&
+&                fhj, st%dv%fht, std%dv%fht, nbdirs)
 !   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
         IF (switch%b2sigp_style .EQ. 2) THEN
           CALL B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, qe&
@@ -1466,7 +1466,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
             CALL B2FILEI(ns, mpg%nnreg(0), switch)
           END IF
           IF (MOD(itim, ank_tracing) .EQ. 1 .OR. ank_tracing .EQ. 1) &
-&           CALL B2FILEW(istg(2), mpg%nnreg(0))
+&           CALL B2FILEW(istg(2), mpg%nnreg(0), st%diag)
         END IF
 !      ..update iteration counter
         b2mndt_itcnt = b2mndt_itcnt + 1
@@ -1506,11 +1506,11 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 &                      facdrift, st%dv%fac_exb, st%dv%ne, st%pl%te, st%&
 &                      pl%po, st%dv%vedia, st%dv%veecrb)
 !      ..compute other fluxes
-          CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, st%dv%fna, st%dv%fna_53&
-&                      , st%dv%fne_53, st%dv%fch, st%dv%fhe, st%dv%fhi, &
-&                      st%dv%fhn, st%rt%rpt, st%pl%te, st%pl%ti, st%pl%&
-&                      tn, st%pl%po, switch%boris, st%dv%fhm, st%dv%fhp&
-&                      , st%dv%fhj, st%dv%fht)
+          CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, switch, st%dv%fna, st%dv&
+&                      %fna_53, st%dv%fne_53, st%dv%fch, st%dv%fhe, st%&
+&                      dv%fhi, st%dv%fhn, st%rt%rpt, st%pl%te, st%pl%ti&
+&                      , st%pl%tn, st%pl%po, st%dv%fhm, st%dv%fhp, st%dv&
+&                      %fhj, st%dv%fht)
 !   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
           IF (switch%b2sigp_style .EQ. 2) THEN
             CALL B2XPVE_NODIFF(ncv, nfc, ns, switch, geo, mpg, qe, st%rt&

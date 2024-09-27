@@ -547,6 +547,8 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
       ELSE
         result1d(nd) = arg10d(nd)/(2.0*temp)
       END IF
+!lkw 29.03.2024{
+      arg10d(nd) = pld%te(nd, icv)
     END DO
     result1 = temp
     temp = pl%te(icv) - pl%ti(icv)
@@ -560,6 +562,89 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &       , 0)*(pld%te(nd, icv)-pld%ti(nd, icv)))
     END DO
     shei(icv) = temp2*temp0
+    arg10 = pl%te(icv)
+    temp2 = SQRT(arg10)
+    DO nd=1,nbdirs
+      IF (arg10 .EQ. 0.D0) THEN
+        result1d(nd) = 0.D0
+      ELSE
+        result1d(nd) = arg10d(nd)/(2.0*temp2)
+      END IF
+      arg10d(nd) = pld%te(nd, icv)
+    END DO
+    result1 = temp2
+    temp2 = dv%ni(icv, 0)*pl%ti(icv)
+    temp1 = pl%te(icv)*result1
+    temp0 = co%ceqp(icv)*dv%ne(icv)/temp1
+    DO nd=1,nbdirs
+      shi0d(nd, icv, 0) = shi0d(nd, icv, 0) + switch%b2npht_stab_shei*(&
+&       temp2*(dv%ne(icv)*cod%ceqp(nd, icv)+co%ceqp(icv)*dvd%ne(nd, icv)&
+&       -temp0*(result1*pld%te(nd, icv)+pl%te(icv)*result1d(nd)))/temp1+&
+&       temp0*(pl%ti(icv)*dvd%ni(nd, icv, 0)+dv%ni(icv, 0)*pld%ti(nd, &
+&       icv)))
+    END DO
+    shi0(icv, 0) = shi0(icv, 0) + switch%b2npht_stab_shei*(temp0*temp2)
+    arg10 = pl%te(icv)
+    temp2 = SQRT(arg10)
+    DO nd=1,nbdirs
+      IF (arg10 .EQ. 0.D0) THEN
+        result1d(nd) = 0.D0
+      ELSE
+        result1d(nd) = arg10d(nd)/(2.0*temp2)
+      END IF
+      arg10d(nd) = pld%te(nd, icv)
+    END DO
+    result1 = temp2
+    temp2 = pl%te(icv)*result1
+    temp1 = dv%ni(icv, 0)/temp2
+    temp0 = co%ceqp(icv)*dv%ne(icv)
+    DO nd=1,nbdirs
+      shi0d(nd, icv, 1) = shi0d(nd, icv, 1) - switch%b2npht_stab_shei*(&
+&       temp1*(dv%ne(icv)*cod%ceqp(nd, icv)+co%ceqp(icv)*dvd%ne(nd, icv)&
+&       )+temp0*(dvd%ni(nd, icv, 0)-temp1*(result1*pld%te(nd, icv)+pl%te&
+&       (icv)*result1d(nd)))/temp2)
+    END DO
+    shi0(icv, 1) = shi0(icv, 1) - switch%b2npht_stab_shei*(temp0*temp1)
+    arg10 = pl%te(icv)
+    temp2 = SQRT(arg10)
+    DO nd=1,nbdirs
+      IF (arg10 .EQ. 0.D0) THEN
+        result1d(nd) = 0.D0
+      ELSE
+        result1d(nd) = arg10d(nd)/(2.0*temp2)
+      END IF
+!lkw 29.03.2024}
+      arg10d(nd) = pld%te(nd, icv)
+    END DO
+    result1 = temp2
+    temp2 = dv%ne(icv)*dv%ni(icv, 0)
+    temp1 = co%ceqp(icv)/result1
+    DO nd=1,nbdirs
+      she0d(nd, icv, 0) = she0d(nd, icv, 0) + switch%b2npht_stab_shei*(&
+&       temp2*(cod%ceqp(nd, icv)-temp1*result1d(nd))/result1+temp1*(dv%&
+&       ni(icv, 0)*dvd%ne(nd, icv)+dv%ne(icv)*dvd%ni(nd, icv, 0)))
+    END DO
+    she0(icv, 0) = she0(icv, 0) + switch%b2npht_stab_shei*(temp1*temp2)
+    arg10 = pl%te(icv)
+    temp2 = SQRT(arg10)
+    DO nd=1,nbdirs
+      IF (arg10 .EQ. 0.D0) THEN
+        result1d(nd) = 0.D0
+      ELSE
+        result1d(nd) = arg10d(nd)/(2.0*temp2)
+      END IF
+    END DO
+    result1 = temp2
+    temp2 = pl%te(icv)*result1
+    temp1 = dv%ni(icv, 0)/temp2
+    temp0 = co%ceqp(icv)*dv%ne(icv)
+    DO nd=1,nbdirs
+      she0d(nd, icv, 1) = she0d(nd, icv, 1) - switch%b2npht_stab_shei*(&
+&       temp1*(dv%ne(icv)*cod%ceqp(nd, icv)+co%ceqp(icv)*dvd%ne(nd, icv)&
+&       )+temp0*(dvd%ni(nd, icv, 0)-temp1*(result1*pld%te(nd, icv)+pl%te&
+&       (icv)*result1d(nd)))/temp2)
+    END DO
+    she0(icv, 1) = she0(icv, 1) - switch%b2npht_stab_shei*(temp0*temp1)
   END DO
   DO icv=mpg%nci+1,ncv
     DO nd=1,nbdirs
@@ -715,6 +800,7 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   ELSE IF (switch%iout_b2wdat .EQ. 4) THEN
     CALL MY_OUT_US(70, ncv, 0, pl%te, 'b2npht_te')
     CALL MY_OUT_US(70, ncv, 0, pl%ti, 'b2npht_ti')
+    CALL MY_OUT_US(70, ncv, 0, pl%tn, 'b2npht_tn')
   END IF
 !
 ! ..return
@@ -1094,6 +1180,24 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
     result1 = SQRT(arg10)
     shei(icv) = co%ceqp(icv)*dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*&
 &     result1)*(pl%te(icv)-pl%ti(icv))
+!lkw 29.03.2024{
+    arg10 = pl%te(icv)
+    result1 = SQRT(arg10)
+    shi0(icv, 0) = shi0(icv, 0) + switch%b2npht_stab_shei*co%ceqp(icv)*&
+&     dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*result1)*pl%ti(icv)
+    arg10 = pl%te(icv)
+    result1 = SQRT(arg10)
+    shi0(icv, 1) = shi0(icv, 1) - switch%b2npht_stab_shei*co%ceqp(icv)*&
+&     dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*result1)
+    arg10 = pl%te(icv)
+    result1 = SQRT(arg10)
+    she0(icv, 0) = she0(icv, 0) + switch%b2npht_stab_shei*co%ceqp(icv)*&
+&     dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*result1)*pl%te(icv)
+!lkw 29.03.2024}
+    arg10 = pl%te(icv)
+    result1 = SQRT(arg10)
+    she0(icv, 1) = she0(icv, 1) - switch%b2npht_stab_shei*co%ceqp(icv)*&
+&     dv%ne(icv)*dv%ni(icv, 0)/(pl%te(icv)*result1)
   END DO
   DO icv=mpg%nci+1,ncv
     shei(icv) = 0.0_R8
@@ -1218,6 +1322,7 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   ELSE IF (switch%iout_b2wdat .EQ. 4) THEN
     CALL MY_OUT_US(70, ncv, 0, pl%te, 'b2npht_te')
     CALL MY_OUT_US(70, ncv, 0, pl%ti, 'b2npht_ti')
+    CALL MY_OUT_US(70, ncv, 0, pl%tn, 'b2npht_tn')
   END IF
 !
 ! ..return

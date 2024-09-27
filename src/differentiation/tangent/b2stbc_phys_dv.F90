@@ -103,7 +103,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   REAL(kind=r8) :: wdia(ncv), wrk0(ncv), wrkf(nfc), pz(ncv), gonedbsq(&
 & nfc, 0:1), sna0_no_mdf(ncv, 0:1, 0:ns-1)
 !srv 23.09.08
-  REAL(kind=r8) :: cor9
+  REAL(kind=r8), SAVE :: cor9=0.0_R8
 !srv 11.07.05
   CHARACTER :: chns*3, chk*1
   LOGICAL :: decay_length_ok, ishigh
@@ -261,7 +261,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &       'invalid main neutral species index ismain0')
   CALL XERTST(is_neutral(ismain0) .OR. ismain .EQ. ismain0, &
 &       'invalid main neutral species ismain0; must be neutral')
-!   ..test facdrift (not on first call)                                  !xpb
+!   ..test facdrift (not on first call)                              !xpb
 !xpb
   IF (ncall_b2stbc_phys .GT. 0) THEN
     result1 = MINVAL(dv%facdrift)
@@ -1428,9 +1428,9 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
 ! number of the guard cell face
           ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+          s1hz = geo%fcpbshz(ifc)
           arg10 = pz(icv1)/rz(icv1)
           cs = SQRT(arg10)
-          s1hz = geo%fcpbshz(ifc)
 !            vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
 !     &        dv%vaecrb(iFc,0,is) -
 !     &        dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1)/geo%fcQalf(iFc,0)
@@ -1472,7 +1472,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
       CASE (14) 
 !srv 01.02.09 }
 !
-! -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM  !srv 01.02.09 {
+! -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM    !srv 01.02.09 {
 !srv added accumulation in order to account twice b.c. for corner cells
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, &
 &                                     '(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')&
@@ -2687,6 +2687,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
         CALL XERTST(enipar(ib, 1) .GT. 0.0_R8, &
 &             'BCENI = 15, ENIPAR(IB,1) <= 0 not allowed!')
 !srv 20.09.17
+        IF (bceni_15_style .NE. 0) WRITE(*, *) 'bceni_15_style = 1'
       END IF
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -3335,7 +3336,6 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
         wrong_flow = .false.
       END DO
     CASE (12) 
-!srv 01.02.09 }
 !
 ! -- BCPOT=12 -- Test condition for south core region ! Solovyev 07.04.14   !srv 03.03.15 {
 ! code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
@@ -4772,7 +4772,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 & nfc, 0:1), sna0_no_mdf(ncv, 0:1, 0:ns-1)
   REAL(kind=r8) :: wrkfd(nbdirsmax, nfc), pzd(nbdirsmax, ncv)
 !srv 23.09.08
-  REAL(kind=r8) :: cor9
+  REAL(kind=r8), SAVE :: cor9=0.0_R8
 !srv 11.07.05
   CHARACTER :: chns*3, chk*1
   LOGICAL :: decay_length_ok, ishigh
@@ -5014,7 +5014,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &       'invalid main neutral species index ismain0')
   CALL XERTST(is_neutral(ismain0) .OR. ismain .EQ. ismain0, &
 &       'invalid main neutral species ismain0; must be neutral')
-!   ..test facdrift (not on first call)                                  !xpb
+!   ..test facdrift (not on first call)                              !xpb
 !xpb
   IF (ncall_b2stbc_phys .GT. 0) THEN
     result1 = MINVAL(dv%facdrift)
@@ -6707,6 +6707,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
 ! number of the guard cell face
           ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+          s1hz = geo%fcpbshz(ifc)
           temp5 = pz(icv1)/rz(icv1)
           DO nd=1,nbdirs
             arg10d(nd) = (pzd(nd, icv1)-temp5*rzd(nd, icv1))/rz(icv1)
@@ -6721,7 +6722,6 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             END IF
           END DO
           cs = temp5
-          s1hz = geo%fcpbshz(ifc)
 !            vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
 !     &        dv%vaecrb(iFc,0,is) -
 !     &        dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1)/geo%fcQalf(iFc,0)
@@ -6796,7 +6796,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
       CASE (14) 
 !srv 01.02.09 }
 !
-! -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM  !srv 01.02.09 {
+! -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM    !srv 01.02.09 {
 !srv added accumulation in order to account twice b.c. for corner cells
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, &
 &                                     '(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')&
@@ -8791,6 +8791,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         CALL XERTST(enipar(ib, 1) .GT. 0.0_R8, &
 &             'BCENI = 15, ENIPAR(IB,1) <= 0 not allowed!')
 !srv 20.09.17
+        IF (bceni_15_style .NE. 0) WRITE(*, *) 'bceni_15_style = 1'
       END IF
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -9849,7 +9850,6 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         wrong_flow = .false.
       END DO
     CASE (12) 
-!srv 01.02.09 }
 !
 ! -- BCPOT=12 -- Test condition for south core region ! Solovyev 07.04.14   !srv 03.03.15 {
 ! code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
