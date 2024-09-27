@@ -1224,13 +1224,13 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
   st%dv%floi_noc = st%dv%floi
 !srv 24.10.02
   st%dv%floe_noc = st%dv%floe
-  CALL B2XPEN_DV(ncv, nfc, ns, mpg, st%dv%fna, std%dv%fna, st%dv%fna_53&
-&          , std%dv%fna_53, st%dv%fne_53, std%dv%fne_53, st%dv%fch, std%&
-&          dv%fch, st%dv%fhe, std%dv%fhe, st%dv%fhi, std%dv%fhi, st%dv%&
-&          fhn, std%dv%fhn, st%rt%rpt, std%rt%rpt, st%pl%te, std%pl%te, &
-&          st%pl%ti, std%pl%ti, st%pl%tn, std%pl%tn, st%pl%po, std%pl%po&
-&          , switch%boris, st%dv%fhm, std%dv%fhm, st%dv%fhp, std%dv%fhp&
-&          , st%dv%fhj, std%dv%fhj, st%dv%fht, std%dv%fht, nbdirs)
+  CALL B2XPEN_DV(ncv, nfc, ns, mpg, switch, st%dv%fna, std%dv%fna, st%dv&
+&          %fna_53, std%dv%fna_53, st%dv%fne_53, std%dv%fne_53, st%dv%&
+&          fch, std%dv%fch, st%dv%fhe, std%dv%fhe, st%dv%fhi, std%dv%fhi&
+&          , st%dv%fhn, std%dv%fhn, st%rt%rpt, std%rt%rpt, st%pl%te, std&
+&          %pl%te, st%pl%ti, std%pl%ti, st%pl%tn, std%pl%tn, st%pl%po, &
+&          std%pl%po, st%dv%fhm, std%dv%fhm, st%dv%fhp, std%dv%fhp, st%&
+&          dv%fhj, std%dv%fhj, st%dv%fht, std%dv%fht, nbdirs)
 !
 !   ..add contribution from cdpa to floe, cone, floi, coni
   CALL B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, st%pl&
@@ -2175,10 +2175,10 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
   st%dv%floi_noc = st%dv%floi
 !srv 24.10.02
   st%dv%floe_noc = st%dv%floe
-  CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, st%dv%fna, st%dv%fna_53, st%dv%&
-&              fne_53, st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt&
-&              %rpt, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, switch%&
-&              boris, st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
+  CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, switch, st%dv%fna, st%dv%fna_53&
+&              , st%dv%fne_53, st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%&
+&              fhn, st%rt%rpt, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, &
+&              st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
 !
 !   ..add contribution from cdpa to floe, cone, floi, coni
   CALL B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, st%pl, st%dv, &

@@ -1117,6 +1117,7 @@ CONTAINS
     USE B2MOD_B2CMFS, ONLY : isymm
     USE B2MOD_SWITCHES_DIFFV
     USE B2US_MAP_DIFFV
+!  Hint: mpg%nFs should be the size of dimension 1 of array fspsi
 !  Hint: ISIZE1OFresult1 should be the size of dimension 1 of array result1
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -1124,7 +1125,7 @@ CONTAINS
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(GEOMETRY), INTENT(INOUT) :: gm
     INTEGER :: i, j, k, l, ncv, nfc, nvx, nfx, icv, ifc, ift, ivx, incv&
-&   , ixpt, ifc1, ifc2, ivx1, ivx2, i1, i2, inv_dist(mpg%nvx), vv(2)
+&   , ixpt, ifc1, ifc2, ivx1, ivx2, i1, i2, inv_dist(mpg%nvx)
     INTEGER :: count_up, count_down, count_eq
     INTEGER, ALLOCATABLE :: old_face_list(:), verts(:)
     REAL(kind=r8) :: hzconst, r0, z0, t0, dux, duy, du, sbf, psi1, psi2&
@@ -1137,7 +1138,6 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC REAL
     INTRINSIC SIGN
-    INTRINSIC DABS
     INTRINSIC ANY
     INTRINSIC ALLOCATED
     REAL(kind=r8) :: x1
@@ -1151,7 +1151,7 @@ CONTAINS
     INTEGER :: result12
     INTEGER :: result13
     REAL(r8) :: result14
-    INTEGER :: result16
+    REAL(kind=r8) :: result15
 !
     ncv = mpg%ncv
     nfc = mpg%nfc
@@ -1846,11 +1846,11 @@ CONTAINS
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
     IF (ALLOCATED(mpg%strdiv)) THEN
-      result16 = MAXVAL(mpg%strdiv)
-      DO i=1,result16
+      result15 = MAXVAL(mpg%strdiv)
+      DO i=1,result15
         match_found = .false.
         k = 1
-        result16 = MAXVAL(mpg%strdiv)
+        result15 = MAXVAL(mpg%strdiv)
         DO WHILE (.NOT.match_found)
           ifc1 = mpg%divfc(mpg%divfcp(i, 1)+k-1)
 !nh check if the vertices belong to a flux surface
