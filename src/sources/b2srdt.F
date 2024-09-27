@@ -89,7 +89,7 @@
        call b2xvsg (nCv*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
        call b2xvsg (nCv, kt0, 1, 'kt0', '.ge.')
        call b2xvsg (nCv, zt0, 1, 'zt0', '.ge.')
-       call xertst (maxval(abs(ua0)).lt.c, 'Supra-luminal velocity !')
+       call xertst (maxval(dabs(ua0)).lt.c, 'Supra-luminal velocity !')
 *    ..test current state
        call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
@@ -101,7 +101,7 @@
        call b2xvsg (nCv*ns, kinrgy, 1, 'kinrgy', '.ge.')
        call b2xvsg (nCv, kt, 1, 'kt', '.ge.')
        call b2xvsg (nCv, zt, 1, 'zt', '.ge.')
-       call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocity !')
+       call xertst (maxval(dabs(ua)).lt.c, 'Supra-luminal velocity !')
       endif
 
 * ..include the contributions from dtim
