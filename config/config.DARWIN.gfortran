@@ -18,7 +18,11 @@ GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
 ifdef SOLPS_MPI
 FC = mpif90
 else
+ifdef USE_IMPGYRO
+FC = mpif90
+else
 FC = gfortran
+endif
 endif
 
 ifdef SOLPS_OPENMP
