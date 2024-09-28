@@ -1,7 +1,9 @@
 ifeq (${FC},f77)
 FC = ifort
 endif
+ifeq (${FN},)
 FN = ifort
+endif
 ifeq (${CC},cc)
 ifneq (${FC},ftn)
 CC = icc
