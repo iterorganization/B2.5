@@ -21,6 +21,10 @@ CPP = /lib/cpp -traditional
 MPI_FC ?= mpifort
 ifdef SOLPS_MPI
 FC      = ${MPI_FC}
+else
+ifdef USE_IMPGYRO
+FC      = ${MPI_FC}
+endif
 endif
 
 DDBLOPTION = -Ad # ???
