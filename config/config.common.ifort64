@@ -1,7 +1,9 @@
 ifeq (${FC},f77)
 FC = ifort
 endif
+ifeq (${FN},)
 FN = ifort
+endif
 EQUIVS   = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 
 CPPOPTS  = -P -I${srcdir} ${EQUIVS}
