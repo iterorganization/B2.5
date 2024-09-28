@@ -41,6 +41,7 @@ CPP        = /lib/cpp -traditional
 
 ifeq (,$(findstring CentOS,$(OS)))
 MPI_FC    ?= mpiifort -fc=mpiifx
+FN         = ifx
 else
 MPI_FC    ?= mpiifort
 endif
