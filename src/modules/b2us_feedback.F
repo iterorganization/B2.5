@@ -2229,33 +2229,12 @@ cxpb size is changed in b2mod_dimensions
      &           'gas pump for sequence ',
      &           b2espcr(fb_species(ifb))
               endif
-
-    !           if (switch%use_eirene.eq.1)
-    !  &            call xerrab('cannot control pump in Eirene!')
-
+   
               if(ncall.eq.0 .and. saved_fb_actuator(ifb).eq.0.0_R8) then
-                if (switch%use_eirene.eq.0) then
-                  if (conpar(is_start, fb_ib(ifb), 1).lt.0.0_R8) then
-                    saved_fb_actuator(ifb) =
-     &               conpar(is_start, fb_ib(ifb), 1)
-                    write(message,'(a,i3,a,i2,a)')
-     .              'Initial pump coef set by CONPAR(',
-     .              is_start,',',fb_ib(ifb),',1) !'
-                  elseif(switch%recycle_afn.eq.1.and.
-     &                fb_species(ifb).eq.1) then
-                      write(message,'(a,i3,a,i2,a)')
-     .              'Initial pump coef set by b2recyc(',
-     .              is_start,',',fb_ib(ifb),',1) !'
-                    saved_fb_actuator(ifb) =
-     &                b2recyc(is_start,fb_ib(ifb))-1
-                  else
-                    saved_fb_actuator(ifb) = -1.0e-2_R8
-                      write(*,*) 'Warning!  ','The pump was ',
-     .                'started with an initial rate of 1e-2!'
-                  endif
-                else
-                  saved_fb_actuator(ifb) = 1.0_R8
-                endif
+                saved_fb_actuator(ifb) = fb_puff_max(ifb)
+                  write(*,*) 'Warning!  ','The pump was ',
+     &              'started with an initial rate of ',
+     &              saved_fb_actuator(ifb) 
               endif
 
               if (fb_rescale_option(ifb).lt.4 .or.
@@ -2345,16 +2324,17 @@ cxpb size is changed in b2mod_dimensions
                       endif
                     enddo
                   else
-                    do istra = 1, nstrai
-                      print *,"istra:", istra, recyc(is_start,istra)
-                      if (
-     &                 (1.0_R8-recyc(is_start,istra)).ge.1.0e-7_R8
-     &                 .and. species_start(istra).eq.is_start) then
-                        b2recyc(is_start,istra) =
-     &                   (1.0_R8+saved_fb_actuator(ifb))
-                        recyc(is_start,istra) = b2recyc(is_start,istra)
-                      endif
-                    enddo
+
+                  do istra = 1, nstrai
+                  print *,"istra:", istra, recyc(is_start,istra)
+                  if (((1-recyc(is_start,istra)).ge.1e-7_R8) 
+     &              .and. (species_start(istra) .eq. is_start)) then
+                          b2recyc(is_start,istra) = 
+     &                  (1+saved_fb_actuator(ifb))
+                         recyc(is_start,istra) = 
+     &                  b2recyc(is_start,istra)
+                  endif
+                enddo
                   endif
 #ifdef B25_EIRENE
                 elseif (mod(ncall,eirene_mod).eq.0 .and.
@@ -2588,7 +2568,7 @@ cxpb size is changed in b2mod_dimensions
       type (B2Plasma), intent (inout) :: pl
       type (B2Source), intent (in) :: sr
       type (switches), intent (in) :: switch
-      integer :: is, iFc, iCv1, ib, istra
+      integer :: i, is, iFc, iCv1, ib, istra, find_loc
 
       sna_core = 0.0_R8
       do is = is_start, is_end
@@ -2627,24 +2607,25 @@ cxpb size is changed in b2mod_dimensions
           endif
         enddo
 
-      else
-        do istra = 1, nstrai
-          if (((1.0_R8-recyc(is_start,istra)).ge.1.0e-7_R8)
-     &        .and. (species_start(istra).eq.is_start)) then
-            do is = is_start, is_end
-              do ib = 1, mpg%bcCvP(rcstart(istra)+2,2)
-                iCv1 =
-     &           mpg%bcCv(mpg%bcCvP(rcstart(istra)+2,1)+ib-1,1)
-                sna_pump = sna_pump + sr%sna(iCv1,0,is)
-     &           + pl%na(iCv1,is)*sr%sna(iCv1,1,is)
+        else
+          do istra = 1, nstrai
+            if (((1-recyc(is_start,istra)).ge.1e-7_R8) 
+     &        .and. (species_start(istra) .eq. is_start)) then
+              do is=is_start,is_end
+                ib = find_loc(BCSTART, NBC, RCSTART(istra))
+                write(*,*), "istra, ib index",RCSTART(istra), ib
+                do i = 1, mpg%bcCvP(ib,2)
+                  iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+i-1,1)
+                  sna_pump = sna_pump + sr%sna(iCv1,0,is)
+     &             +pl%na(iCv1,is)*sr%sna
+     &              (iCv1,1,is)
+                enddo
               enddo
-            enddo
-          endif
-        enddo
-      endif
-
-      return
-      end subroutine calc_puff_pump_b25
+            endif
+          enddo
+        endif
+          
+        end subroutine calc_puff_pump_b25
 
 #ifdef B25_EIRENE
       subroutine calc_puff_pump(switch, ns, mpg, nCv, dv,
