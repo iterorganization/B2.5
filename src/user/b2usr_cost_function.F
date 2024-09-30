@@ -8,7 +8,7 @@
 #ifndef TEST_MAP
       use b2mod_constants
       use b2mod_user_namelist
-     & , only : omp, nomp, icsepomp, psi_omp, nromp
+     & , only : omp, nomp, icsepomp, psi_omp
       use b2mod_b2cmpa
      & , only : am
 ! csc The following are not necessary for computation but are needed
@@ -29,7 +29,7 @@
       real(kind=R8) :: BoRiS, J(nncf)
       integer :: nCv, nFc, nVx, ns
       integer :: icf, ic1, ic2, iCv, n1, n2,
-     &           ifc, is, iicf
+     &           ifc
       logical, save :: first_call=.true.
       logical :: inrange
       real (kind=R8) :: qq, prior, lll, lll_cum, curr_shift
@@ -37,7 +37,7 @@
 #ifdef TEST_MAP
       integer, parameter :: nn=4
       real (kind=R8) :: xx(nn), ff(nn), dx
-      integer :: ii, ij, kk
+      integer :: ii, ij, kk, iicf
 #endif
       integer :: isigma, imean
       external calc_dist
