@@ -6768,7 +6768,8 @@
             20: Neutral pressure of this sequence. It is necessary to set PFR_CVS and NPFR_CVS in b2.user.parameters.
             21: Total ion radiation losses on the entire domain
             22: Average density of this species at the separatrix
-            23: Power heat flux density at outer target. Outer target must have face label .eq. 2
+            23: Peak heat flux density at specific boundary. Boundary index should be defined by FB_TYPE_IB. By default it equals 2.
+            24: Peak electron temperature at specific boundary. Boundary index should be defined by FB_TYPE_IB. By default it equals 2.
 				</description>
 			</switch>
 			<switch>

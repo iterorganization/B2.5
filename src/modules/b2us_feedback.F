@@ -60,6 +60,7 @@
 
       integer, save :: fb_reg_par(DEF_NATM,2) = 0, !contains face label to define list of faces for feedback
      & fb_species(DEF_NATM) = 0, fb_ib(DEF_NATM) = -1,
+     & fb_type_ib(DEF_NATM) = 0,
      & fb_type(DEF_NATM) = 0, fb_rescale_option(DEF_NATM) = 0,
      & fb_actuator(DEF_NATM) = 0, fb_istra(DEF_NATM) = 0,
      & fb_reg(nMxFbReg) = 0, fb_regp(DEF_NATM,2) = 0 !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
@@ -114,7 +115,7 @@
      & fb_target, fb_type, fb_rescale_option,
      & fb_actuator, fb_alpha, fb_beta,
      & fb_const, fb_time,
-     & fb_ib, fb_species,
+     & fb_ib, fb_species, fb_type_ib,
      & fb_puff_min, fb_puff_max,
      & fb_overshoot, fb_reg, fb_regp,
      & fb_reg_par, fb_istra
@@ -947,7 +948,7 @@ cxpb size is changed in b2mod_dimensions
       logical main_call
 *   ..local variables
       integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
-     & is_end, iss, iCv1, iCv2, ibc, ib, istra, indx, k
+     & is_end, iss, iCv1, iCv2, ibc, ib, istra, indx, k, find_loc
 #ifdef B25_EIRENE
       integer :: i, j, l
 #endif
@@ -1644,11 +1645,16 @@ cxpb size is changed in b2mod_dimensions
             case (23) !  Total plasma heat flux at outer target
 
               if(ncall.eq.0) then
-                write(*,'(a,a,i3)')
+                if (fb_type_ib(ifb).eq.0) then
+                  fb_type_ib(ifb) = 2
+                  write(*,*), 'No fb_type_ib is found. Set',
+     &              'fb_type_ib=',fb_type_ib(ifb)
+                endif
+                write(*,'(a,a,i3,a,i3)')
      &           'compute_feedback_type: using ',
-     &           'total plasma heat flux at outer target by fht ',
-     &            b2espcr(fb_species(ifb))
-
+     &           ' plasma heat flux density at boundary ',
+     &           fb_type_ib(ifb), ' for sequence ',
+     &           b2espcr(fb_species(ifb))
                 fb_target(ifb) = 1/fb_target(ifb)
               endif
 
@@ -1669,13 +1675,13 @@ cxpb size is changed in b2mod_dimensions
                 iCv2 = mpg%fcCv(iFc,2)
                 t1 = -1.0_R8
                 if (iCv2.gt.iCv1) t1 = 1.0_R8
-                if (mpg%fcLbl(iFc).eq.2) then
+                if (mpg%fcLbl(iFc).eq.fb_type_ib(ifb)) then
                   t0 = dv%fht(iFc,0)+dv%fht(iFc,1)
                   t0 = t1*t0/geo%fcS(iFc)
 #if ( defined(B25_EIRENE) && !defined(SOLPS4_3) )
                   if (allocated(fnmti_b2) .and.
      &                allocated(ewldrp_res)) then
-                    indx = findloc(fnmti_b2,iFc,1)
+                    indx = find_loc(fnmti_b2,nstsd+1,iFc)
                     if (indx.gt.0) then
                       t0 = t0-ewldrp_res(indx)
                     endif
@@ -1687,6 +1693,45 @@ cxpb size is changed in b2mod_dimensions
               if (fb_current(ifb).ne.0.0_R8) then
                 fb_current(ifb) = 1.0_R8/abs(fb_current(ifb))
               endif
+            case (24) ! peak electron temperature at specific boundary
+
+              if(ncall.eq.0) then
+                if (fb_type_ib(ifb).eq.0) then
+                  fb_type_ib(ifb) = 2
+                  write(*,*), 'No fb_type_ib is found. Set',
+     &              'fb_type_ib=',fb_type_ib(ifb)
+                endif
+                write(*,'(a,a,i3,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'electron temperature at boundary ',
+     &           fb_type_ib(ifb), ' for sequence ',
+     &           b2espcr(fb_species(ifb))
+                fb_target(ifb) = 1/fb_target(ifb)
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  is_end=is
+                endif
+              enddo
+              fb_current(ifb) = 0.0_R8
+
+              do iCv=mpg%nCi+1,nCv
+                iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+                iCv1 = mpg%fcCv(iFc,1)
+                iCv2 = mpg%fcCv(iFc,2)
+                t1 = -1.0_R8
+                if (iCv2.gt.iCv1) t1 = 1.0_R8
+                if (mpg%fcLbl(iFc).eq.fb_type_ib(ifb)) then
+                  fb_current(ifb) = max(fb_current(ifb),pl%te(iCv1)/qe)
+                endif
+              enddo
+              fb_current(ifb) = 1/fb_current(ifb)
             end select
 
 ! phase 2:
