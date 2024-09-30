@@ -4733,8 +4733,10 @@
 			<switchgroup>
 				<name>b2npco_pcm.</name>
 				<description>
-					pcm0 specifies an additional under-relaxation factor that is applied to the velocity correction. It is required that 0.le.pcm0.and.0.le.pcm1.
+					pcm specifies multipliers to Rhie-Chow corrections.
 					Not used if running in time-dependent mode (b2mndt_style.eq.2).
+					b2npco_pcm0 is a multiplier for the update on the parallel velocity following the pressure-correction equation.
+					b2npco_pcm1 is a multiplier for the Rhie-Chow terms in the particle fluxes.
 				</description>
 				<switch>
 					<name>b2npco_pcm0</name>
@@ -4759,9 +4761,11 @@
 			<switchgroup>
 				<name>b2npht_pcm*</name>
 				<description>
-					pcm0 specifies an additional under-relaxation factor that is applied to the temperature correction.
+					pcm specifies multipliers to Rhie-Chow corrections.
 					It is required that 0.le.pcm0.and.0.le.pcm1.
 					Not used if running in time-dependent mode (b2mndt_style.eq.2).
+					b2npht_pcm0 is a multiplier for the update on the parallel velocity following the update of Ti and Te.
+					b2npht_pcm1 is a multiplier for the Rhie-Chow terms in the flow fields of ion, electron and neutral heat.	
 				</description>
 				<switch>
 					<name>b2npht_pcm0</name>
