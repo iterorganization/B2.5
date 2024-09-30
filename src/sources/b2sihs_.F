@@ -221,6 +221,16 @@
      1     t0*ne(iCv)*te(iCv)
          srw%b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+      if (switch%b2sihs_shedu.eq.0) then
+        do ib = 1, nbc
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
+            shedu(iCv2,:) = 0.0_R8
+          enddo
+        enddo
+      endif
+      
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divue0to3 = shedu
@@ -324,6 +334,15 @@
      1      t0*ne(iCv)*te(iCv)
         srw%b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+      if (switch%b2sihs_shedd.eq.0) then
+        do ib = 1, nbc
+          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
+            shedd(iCv2,:) = 0.0_R8
+          enddo
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exbe0to3 = shedd

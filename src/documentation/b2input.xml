@@ -3604,6 +3604,22 @@
 					If electron density in cell is smaller then the value in the key, ion sources due to viscosity(shiva, shivc) will be zero in that cells.
 				</description>
 			</switch>
+      <switch>
+				<name>b2sihs_shedu</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shedu.eq.0 then shidu (electron heat source due to divergence of velocity) will be zero in boundary-volume cells.
+				</description>
+			</switch>
+      <switch>
+				<name>b2sihs_shedd</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shedd.eq.0 then shidu (electron heat source due to divergence of drift velocity) will be zero in boundary-volume cells.
+				</description>
+			</switch>
 			<switch>
 				<name>b2tfhe_vis_per</name>
 				<default>0.0</default>

@@ -285,6 +285,8 @@ c phm switches
       real (kind=R8) :: b2stbc_phm1
       real (kind=R8) :: b2stbc_phm2
       integer :: b2sihs_shidu
+      integer :: b2sihs_shedu
+      integer :: b2sihs_shedd
 
 c pcm switches
       real (kind=R8) :: b2npco_pcm0
@@ -851,7 +853,9 @@ c Advanced fluid neutral models
       s % b2stbc_phm1 = 1.0_R8
       s % b2stbc_phm2 = 1.0_R8
       s % b2sihs_shidu = 1
-
+      s % b2sihs_shedu = 1
+      s % b2sihs_shedd = 1
+      
       if ( s % b2mndt_style.eq.2 ) then
         s % b2npco_rxg =  huge(1.0_R8)
         s % b2npht_rxg =  huge(1.0_R8)
@@ -1470,6 +1474,8 @@ c phm switches
       call ipgetr ('b2stbc_phm2', s % b2stbc_phm2)
 
       call ipgeti ('b2sihs_shidu', s % b2sihs_shidu)
+      call ipgeti ('b2sihs_shedu', s % b2sihs_shedu)
+      call ipgeti ('b2sihs_shedd', s % b2sihs_shedd)
 
 c pcm switches
       call ipgetr ('b2npco_pcm0', s% b2npco_pcm0)
