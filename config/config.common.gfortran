@@ -1,7 +1,9 @@
 ifeq (${FC},f77)
 FC = gfortran
 endif
+ifeq (${FN},)
 FN = gfortran
+endif
 ifeq (${CC},cc)
 ifneq (${FC},ftn)
 CC = /usr/bin/gcc

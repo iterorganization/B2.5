@@ -8,7 +8,6 @@
       logical, intent (inout) :: inrange
       integer :: ii, isigma, imean, ind
       real(kind=R8) :: aa, bb
-      intrinsic sqrt, exp
 #ifndef LEGACYCOMP
       intrinsic log_gamma
 #endif

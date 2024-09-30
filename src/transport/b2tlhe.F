@@ -10,7 +10,7 @@
      & , only : ncall_b2tlhe
       use b2mod_subsys
       implicit none
-      integer nCv, nFc
+      integer, intent (in) :: nCv, nFc
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
