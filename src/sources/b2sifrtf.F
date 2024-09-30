@@ -251,7 +251,7 @@ c      .. apply flux limit
 
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jun2019
-        do iCv=1,nCv
+        do iCv = 1, nCv
           b2sifr_smofria0to3(iCv,0:3,isb)=geo%cvVol(iCv)*geo%cvHz(iCv)*
      &                                      smbfria(iCv,0:3)
           b2sifr_smofrea0to3(iCv,0:3,isb)=geo%cvVol(iCv)*geo%cvHz(iCv)*

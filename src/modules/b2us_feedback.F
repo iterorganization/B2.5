@@ -1,6 +1,5 @@
       module b2us_feedback
       use b2mod_types
-      use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
@@ -30,7 +29,7 @@
      * cum_volrec, dt_prev, ddtim
       logical, save :: feedback_namelist_used
       logical, save :: feedback_read, control_read
-      logical, save :: feedback_allocated=.false.
+      logical, save :: feedback_allocated = .false.
       real (kind=R8) :: charge_frac(DEF_NSD)
 
       integer, save :: icped = 0, b2sral_style = 2, ncallfeedback = 0
@@ -916,7 +915,7 @@ cxpb size is changed in b2mod_dimensions
      &  switch, geo, mpg, pl, dv, rt, psnc, psnl, main_call)
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, ns, ismain
+      integer, intent (in) :: nCv, nFc, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -1422,7 +1421,7 @@ cxpb size is changed in b2mod_dimensions
                 if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   do iCv = 1, nCv
-                   fb_current(ifb) = fb_current(ifb) +
+                    fb_current(ifb) = fb_current(ifb) +
      &               pl%na(iCv,is)*geo%cvVol(iCv)
                   enddo
                   is_end=is
@@ -1676,33 +1675,28 @@ cxpb size is changed in b2mod_dimensions
                 saved_fb_actuator(ifb) =
      &            saved_fb_actuator(ifb) * fb_rescale(ifb)
               else
-                saved_fb_actuator(ifb) =
-     &            fb_rescale(ifb)
+                saved_fb_actuator(ifb) = fb_rescale(ifb)
               end if
-              if(fb_puff_min(ifb) .ge. 0.0_R8)
-     &          saved_fb_actuator(ifb) =
-     &            max(fb_puff_min(ifb),
-     &            saved_fb_actuator(ifb))
-              if(fb_puff_max(ifb) .gt. 0.0_R8)
-     &          saved_fb_actuator(ifb) =
-     &            min(fb_puff_max(ifb),
-     &            saved_fb_actuator(ifb))
+              if(fb_puff_min(ifb).ge.0.0_R8)
+     >         saved_fb_actuator(ifb) =
+     &          max(fb_puff_min(ifb),saved_fb_actuator(ifb))
+              if(fb_puff_max(ifb).gt.0.0_R8)
+     >         saved_fb_actuator(ifb) =
+     &          min(fb_puff_max(ifb),saved_fb_actuator(ifb))
 
-              if(fb_overshoot(ifb) .gt. 1.0_R8 .and.
-     &           fb_current(ifb) .gt.
-     &           fb_target(ifb) *
-     &           fb_overshoot(ifb)) then
+              if(fb_overshoot(ifb).gt.1.0_R8 .and.
+     &           fb_current(ifb).gt.fb_target(ifb)*fb_overshoot(ifb))
+     >         then
 ! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
 !     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
                 if (switch%use_eirene.eq.0) then
-                  conpar(is_start, fb_ib(ifb), 1) = 0.0_R8
+                  conpar(is_start,fb_ib(ifb),1) = 0.0_R8
                 else
                   userfluxparm(fb_istra(ifb),1) = 0.0_R8
                 endif
               else
                 if (switch%use_eirene.eq.0) then
-                  conpar(is_start, fb_ib(ifb), 1) =
-     &              saved_fb_actuator(ifb)
+                  conpar(is_start,fb_ib(ifb),1) = saved_fb_actuator(ifb)
                 else
                   userfluxparm(fb_istra(ifb),1) = saved_fb_actuator(ifb)
                 endif

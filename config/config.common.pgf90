@@ -1,7 +1,9 @@
 ifeq (${FC},f77)
 FC = pgf90
 endif
+ifeq (${FN},)
 FN = pgf90
+endif
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
 CPPOPTS = -P -I${srcdir} ${EQUIVS}

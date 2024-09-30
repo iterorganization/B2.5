@@ -1,4 +1,4 @@
-      subroutine b2tlc0 (nCv, nFc, nVx, ns, switch, geo, mpg, na, te, 
+      subroutine b2tlc0 (nCv, nFc, nVx, ns, switch, geo, mpg, na, te,
      &  ti, tn, rza, cdpa0, cdpa, cdpahz, flc)
       use b2mod_types
       use b2mod_constants
@@ -17,7 +17,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns
+      integer, intent (in) :: nCv, nFc, nVx, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -112,7 +112,7 @@ cwdk    or radial contributions, since neutral transport is isotropic
             dpb = cdpa0(iFc,is)*sqrt(dpbf(iFc,0)**2 + dpbf(iFc,1)**2)
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
      &           *geo%fcS(iFc)
-            t2 = 1.0_R8/(1.0_R8 + 
+            t2 = 1.0_R8/(1.0_R8 +
      &        (dpb/(alpha*vbar/4.0_R8*t1 + b2tlc0_cutlo))**gamma)
      &                                                  **(1.0_R8/gamma)
 *    ..poloidal
@@ -134,15 +134,15 @@ cwdk    or radial contributions, since neutral transport is isotropic
 !      write(*,'(1x,a,1p,2e10.2)') 'b2tlc0: maxfluxlimit = ',maxfluxlimit
 
        if (switch%b2tlc0_iout.ne.0) then
-         do is=0,ns-1          
-           if (is_neutral(is)) then                            
+         do is = 0, ns-1
+           if (is_neutral(is)) then
              write (charns,'(i3.3)') is
              call my_out_us(70,nFc,1, flc(1,0,is),
      &               'fl_fn_th'//charns)
              call my_out_us(70,nFc,1, flc(1,1,is),
      &               'fl_fn_r'//charns)
            endif
-         enddo                                            
+         enddo
        endif
 
 *   ..return
