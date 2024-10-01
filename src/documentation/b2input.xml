@@ -3990,6 +3990,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2stbc_BC2_cor9</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					This switch concerns a 9-point correction for the Neumann type boundary conditions (BCCON/BCMOM/BCENE/BCENI/BCPOT/BCENK/BCENZ = 2) for non-orthogonal cells.
+					If b2stbc_BC2_cor9.eq.0.0, gradients tangential to the boundary are ignored. The acutal normal gradient then deviates from the one requested by the user.
+					If b2stbc_BC2_cor9.eq.1.0, an additional term based on the vertex values of the boundary face is added to correct for the tangential gradient, to get the correct (up to interpolation error) normal gradient.
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbc_fix_fch_in_fhe_sheath</name>
 				<default>2</default>
 				<type>integer</type>
