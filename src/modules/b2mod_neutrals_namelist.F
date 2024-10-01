@@ -39,17 +39,19 @@ cank }
 #endif
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_extrab25
-      use eirmod_parmmod
-      use eirmod_comusr
+      use eirmod_extrab25  ! IGNORE
+      use eirmod_parmmod   ! IGNORE
+      use eirmod_comusr    ! IGNORE
      , , only : ntime
+      use eirmod_comnnl    ! IGNORE
 #else
-      use parmmod   ! IGNORE
-      use braeir    ! IGNORE
-      use eirdiag   ! IGNORE
-      use ceirsrt   ! IGNORE
-      use comusr    ! IGNORE
+      use parmmod          ! IGNORE
+      use braeir           ! IGNORE
+      use eirdiag          ! IGNORE
+      use ceirsrt          ! IGNORE
+      use comusr           ! IGNORE
      , , only : ntime
+      use comnnl           ! IGNORE
 #endif
       use eirmod_solps
 #else
@@ -557,13 +559,35 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
 cxpb  In Eirene facelift the time stratum is handled separately
 cxpb  On the B2 side, use nstrat as nstrai + the time stratum
         if (crcstra(nstrai).eq.'T') then
+#ifdef B25_EIRENE
+          if (ntime.ge.1.and.nprnli.gt.0) then
+            nstrat=nstrai
+          else
+            write(*,'(a)')
+     .       'A time stratum is listed in b2.neutrals.parameters '//
+     .       'but turned off in the Eirene input file. Removing...'
+            nstrat=nstrai-1
+          end if
+#else
           nstrat=nstrai
+#endif
           nstrai=nstrai-1
         elseif (crcstra(nstrai+1).eq.'T') then
+#ifdef B25_EIRENE
+          if (ntime.ge.1.and.nprnli.gt.0) then
+            nstrat=nstrai+1
+          else
+            write(*,'(a)')
+     .       'A time stratum is listed in b2.neutrals.parameters '//
+     .       'but turned off in the Eirene input file. Removing...'
+            nstrat=nstrai
+          end if
+#else
           nstrat=nstrai+1
+#endif
         else
 #ifdef B25_EIRENE
-          if (ntime.ge.1) then
+          if (ntime.ge.1.and.nprnli.gt.0) then
             nstrat=nstrai+1
             crcstra(nstrat)='T'
             rcpos(nstrat)=0
