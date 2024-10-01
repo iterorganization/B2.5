@@ -19,8 +19,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_DV(nn, ff, ffd, xx, yy, ss, lll, llld, &
 & isigma, imean, icf, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_PAR_OPT_DIFFV, ONLY : sigma, sigmad, scale_sigma, mean, &
-& meand, nmean, corr_model, corr_length, corr_lengthd, corr_cutoff, &
-& nsigmx
+& meand, nmean, corr_model, corr_length, corr_lengthd, corr_cutoff
   USE B2MOD_CONSTANTS
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -222,7 +221,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, xx, yy, ss, lll, isigma, &
 & imean, icf)
   USE B2MOD_TYPES
   USE B2MOD_PAR_OPT_DIFFV, ONLY : sigma, scale_sigma, mean, nmean, &
-& corr_model, corr_length, corr_cutoff, nsigmx
+& corr_model, corr_length, corr_cutoff
   USE B2MOD_CONSTANTS
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
