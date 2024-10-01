@@ -25,7 +25,7 @@ SUBROUTINE B2TXSX_DV(ncv, nfc, geo, mpg, fcvol, fcs, fun, fund, funsx, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), fun(ncv), funsx(nfc)
@@ -80,7 +80,7 @@ SUBROUTINE B2TXSX_NODIFF(ncv, nfc, geo, mpg, fcvol, fcs, fun, funsx)
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), fun(ncv), funsx(nfc)

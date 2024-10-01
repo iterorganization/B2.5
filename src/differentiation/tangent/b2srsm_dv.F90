@@ -72,7 +72,7 @@ SUBROUTINE B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua, te, ti&
 & shetmp(ncv, 0:3), shitmp(ncv, 0:3)
 !   ..procedures
   EXTERNAL XERTST, IPGETI, B2XVSG
-  INTRINSIC DABS
+  INTRINSIC ABS
   INTRINSIC MAXVAL
   EXTERNAL XERRAB
   REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
