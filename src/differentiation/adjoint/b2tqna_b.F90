@@ -59,10 +59,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_B2CMPB_DIFF
-!      use b2mod_ranges
-!      use b2mod_neoclassical
-!      use b2mod_geo_corner
-!     &                    , only : lengthy, nmdpl                 !srv 26.11.04
   USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -75,7 +71,8 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES), INTENT(INOUT) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -1581,10 +1578,6 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_B2CMPB_DIFF
-!      use b2mod_ranges
-!      use b2mod_neoclassical
-!      use b2mod_geo_corner
-!     &                    , only : lengthy, nmdpl                 !srv 26.11.04
   USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -1597,7 +1590,8 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -2764,7 +2758,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
 !  Hint: nCv should be the size of dimension 1 of array temp
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES), INTENT(INOUT) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -2789,7 +2783,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
   REAL(kind=r8) :: wrkf(nfc), wrkc(ncv), shear(ncv)
   REAL(kind=r8) :: wrkfb(nfc), wrkcb(ncv), shearb(ncv)
   INTRINSIC SQRT
-  INTRINSIC DABS
+  INTRINSIC ABS
   EXTERNAL XERRAB
   INTRINSIC NINT
   INTRINSIC MIN
@@ -3196,7 +3190,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
 !  Hint: nCv should be the size of dimension 1 of array cvbb
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -3211,7 +3205,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
   INTEGER :: is
   REAL(kind=r8) :: wrkf(nfc), wrkc(ncv), shear(ncv)
   INTRINSIC SQRT
-  INTRINSIC DABS
+  INTRINSIC ABS
   EXTERNAL XERRAB
   INTRINSIC NINT
   INTRINSIC MIN

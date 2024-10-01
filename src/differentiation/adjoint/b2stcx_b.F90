@@ -67,7 +67,7 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
   INTRINSIC ABS
   INTRINSIC MAXVAL
   INTRINSIC NINT
-  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
   LOGICAL :: result1
   INTEGER :: arg1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask
@@ -101,14 +101,14 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
     CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
-    mask = ua .GE. 0.0
+    mask = ua .GE. 0.
     WHERE (mask) 
-      abs0 = ua
+      dabs0 = ua
     ELSEWHERE
-      abs0 = -ua
+      dabs0 = -ua
     END WHERE
 !    ..test velocities
-    result10 = MAXVAL(abs0)
+    result10 = MAXVAL(dabs0)
     CALL XERTST(result10 .LT. c, 'Supra-luminal velocities !')
 !    ..test rate coefficients
     DO is=1,ns-1
@@ -492,7 +492,7 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, switchb, geo, &
   INTRINSIC ABS
   INTRINSIC MAXVAL
   INTRINSIC NINT
-  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
   LOGICAL :: result1
   INTEGER :: arg1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask

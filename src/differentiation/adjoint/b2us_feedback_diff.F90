@@ -14,7 +14,6 @@
 !
 MODULE B2US_FEEDBACK_DIFF
   USE B2MOD_TYPES
-  USE B2MOD_RATES
   USE B2MOD_INDIRECT_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFF
@@ -1007,7 +1006,7 @@ CONTAINS
 &   pl, plb, dv, dvb, rt, rtb, psnc, psncb, psnl, psnlb, main_call)
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ncv, nfc, ns, ismain
+    INTEGER, INTENT(IN) :: ncv, nfc, ns, ismain
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
@@ -2941,7 +2940,7 @@ CONTAINS
 &   , dv, rt, psnc, psnl, main_call)
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ncv, nfc, ns, ismain
+    INTEGER, INTENT(IN) :: ncv, nfc, ns, ismain
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
