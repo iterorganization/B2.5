@@ -48,7 +48,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain, ismain0
   REAL(kind=r8) :: praverage(2)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -4701,7 +4701,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain, ismain0
   REAL(kind=r8) :: praverage(2)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd

@@ -14,7 +14,6 @@
 !
 MODULE B2US_FEEDBACK_DIFFV
   USE B2MOD_TYPES
-  USE B2MOD_RATES
   USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -1020,7 +1019,7 @@ CONTAINS
 !  Hint: nCv should be the size of dimension 1 of array temp
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ncv, nfc, ns, ismain
+    INTEGER, INTENT(IN) :: ncv, nfc, ns, ismain
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
@@ -2357,7 +2356,7 @@ CONTAINS
     IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ncv, nfc, ns, ismain
+    INTEGER, INTENT(IN) :: ncv, nfc, ns, ismain
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
