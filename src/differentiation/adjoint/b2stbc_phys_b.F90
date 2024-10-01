@@ -46,7 +46,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain, ismain0
   REAL(kind=r8) :: praverage(2)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -4706,7 +4706,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !                tube just inside domain
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain, ismain0
   REAL(kind=r8) :: praverage(2)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb

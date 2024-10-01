@@ -2215,7 +2215,7 @@ CONTAINS
 &   state_avgb)
     USE B2MOD_AD_DIFF, ONLY : old_erosion, old_deposition
 !  Hint: mpg%nCv should be the size of dimension 1 of array arg1
-!  Hint: ISIZE1OFne should be the size of dimension 1 of array ne
+!  Hint: mpg%nCv should be the size of dimension 1 of array ne
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
     INTEGER :: ninp(0:6), nout(0:10)
@@ -2258,11 +2258,16 @@ CONTAINS
     EXTERNAL XERRAB
     INTRINSIC MAX
     EXTERNAL SET_EXACT_SOLUTION
-    INTRINSIC DABS
+    INTRINSIC ABS
     INTRINSIC MAXVAL
     EXTERNAL CDFMOVIE
     REAL(r8) :: x1
     REAL(r8) :: x1b
+    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
+    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
+    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
+    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%nCv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -2278,6 +2283,16 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%nCv) :: arg14
     REAL(r8), DIMENSION(mpg%nCv) :: arg15
     INTEGER :: arg16
+    LOGICAL, DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: mask
+    LOGICAL, DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: mask0
+    LOGICAL, DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: mask1
+    LOGICAL, DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: mask2
+    LOGICAL, DIMENSION(mpg%nCv) :: mask3
+    REAL(kind=r8) :: result10
+    REAL(kind=r8) :: result20
+    REAL(kind=r8) :: result30
+    REAL(kind=r8) :: result40
+    REAL(kind=r8) :: result50
     REAL(kind=r8), DIMENSION(SIZE(rtlsa, 1), SIZE(rtlsa, 3)) :: tmp
     REAL(kind=r8), DIMENSION(SIZE(rtlra, 1), SIZE(rtlra, 3)) :: tmp0
     REAL(kind=r8), DIMENSION(SIZE(rtlqa, 1), SIZE(rtlqa, 3)) :: tmp1
@@ -3658,13 +3673,43 @@ CONTAINS
 &                    state%rt, state%rtw)
         CALL B2XPNE_NODIFF(ncv, ns, state%rt%rza, state%pl%na, state_ext&
 &                    %ne, state%dv%ne)
-          max_delta = max(&
-     &     maxval(dabs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),&
-     &     maxval(dabs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),&
-     &     maxval(dabs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),&
-     &     maxval(dabs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),&
-     &     maxval(dabs((state%dv%ne - state%psnc%ne)/&
-     &       (state%dv%ne + na_eps))))
+        mask = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.
+        WHERE (mask) 
+          dabs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
+        ELSEWHERE
+          dabs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
+        END WHERE
+        mask0 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.
+        WHERE (mask0) 
+          dabs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
+        ELSEWHERE
+          dabs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
+        END WHERE
+        mask1 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.
+        WHERE (mask1) 
+          dabs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
+        ELSEWHERE
+          dabs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
+        END WHERE
+        mask2 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.
+        WHERE (mask2) 
+          dabs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
+        ELSEWHERE
+          dabs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
+        END WHERE
+        mask3 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.
+        WHERE (mask3) 
+          dabs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
+        ELSEWHERE
+          dabs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
+        END WHERE
+        result10 = MAXVAL(dabs0)
+        result20 = MAXVAL(dabs1)
+        result30 = MAXVAL(dabs2)
+        result40 = MAXVAL(dabs3)
+        result50 = MAXVAL(dabs4)
+        max_delta = MAX(result10, result20, result30, result40, result50&
+&         )
         WRITE(*, *) 'Convergence of bundled rates = ', is, max_delta
       END DO
     END IF
@@ -3788,7 +3833,7 @@ CONTAINS
 &   state_ext, state_avg)
     USE B2MOD_AD_DIFF, ONLY : old_erosion, old_deposition
 !  Hint: mpg%nCv should be the size of dimension 1 of array arg1
-!  Hint: ISIZE1OFne should be the size of dimension 1 of array ne
+!  Hint: mpg%nCv should be the size of dimension 1 of array ne
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
     INTEGER :: ninp(0:6), nout(0:10)
@@ -3824,10 +3869,15 @@ CONTAINS
     EXTERNAL XERRAB
     INTRINSIC MAX
     EXTERNAL SET_EXACT_SOLUTION
-    INTRINSIC DABS
+    INTRINSIC ABS
     INTRINSIC MAXVAL
     EXTERNAL CDFMOVIE
     REAL(r8) :: x1
+    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
+    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
+    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
+    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%nCv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -3847,6 +3897,12 @@ CONTAINS
     LOGICAL, DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: mask0
     LOGICAL, DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: mask1
     LOGICAL, DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: mask2
+    LOGICAL, DIMENSION(mpg%nCv) :: mask3
+    REAL(kind=r8) :: result10
+    REAL(kind=r8) :: result20
+    REAL(kind=r8) :: result30
+    REAL(kind=r8) :: result40
+    REAL(kind=r8) :: result50
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
 !-----------------------------------------------------------------------
@@ -5204,13 +5260,43 @@ CONTAINS
 &                    state%rt, state%rtw)
         CALL B2XPNE_NODIFF(ncv, ns, state%rt%rza, state%pl%na, state_ext&
 &                    %ne, state%dv%ne)
-          max_delta = max(&
-     &     maxval(dabs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),&
-     &     maxval(dabs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),&
-     &     maxval(dabs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),&
-     &     maxval(dabs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),&
-     &     maxval(dabs((state%dv%ne - state%psnc%ne)/&
-     &       (state%dv%ne + na_eps))))
+        mask = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.
+        WHERE (mask) 
+          dabs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
+        ELSEWHERE
+          dabs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
+        END WHERE
+        mask0 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.
+        WHERE (mask0) 
+          dabs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
+        ELSEWHERE
+          dabs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
+        END WHERE
+        mask1 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.
+        WHERE (mask1) 
+          dabs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
+        ELSEWHERE
+          dabs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
+        END WHERE
+        mask2 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.
+        WHERE (mask2) 
+          dabs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
+        ELSEWHERE
+          dabs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
+        END WHERE
+        mask3 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.
+        WHERE (mask3) 
+          dabs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
+        ELSEWHERE
+          dabs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
+        END WHERE
+        result10 = MAXVAL(dabs0)
+        result20 = MAXVAL(dabs1)
+        result30 = MAXVAL(dabs2)
+        result40 = MAXVAL(dabs3)
+        result50 = MAXVAL(dabs4)
+        max_delta = MAX(result10, result20, result30, result40, result50&
+&         )
         WRITE(*, *) 'Convergence of bundled rates = ', is, max_delta
       END DO
     END IF

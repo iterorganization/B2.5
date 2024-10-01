@@ -20,7 +20,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_B(nn, ff, ffb, xx, yy, ss, lll, lllb, &
 & isigma, imean, icf)
   USE B2MOD_TYPES
   USE B2MOD_PAR_OPT_DIFF, ONLY : sigma, sigmab, scale_sigma, mean, meanb&
-& , nmean, corr_model, corr_length, corr_lengthb, corr_cutoff, nsigmx
+& , nmean, corr_model, corr_length, corr_lengthb, corr_cutoff
   USE B2MOD_CONSTANTS
   USE B2MOD_SUBSYS
   IMPLICIT NONE
@@ -223,7 +223,7 @@ SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, xx, yy, ss, lll, isigma, &
 & imean, icf)
   USE B2MOD_TYPES
   USE B2MOD_PAR_OPT_DIFF, ONLY : sigma, scale_sigma, mean, nmean, &
-& corr_model, corr_length, corr_cutoff, nsigmx
+& corr_model, corr_length, corr_cutoff
   USE B2MOD_CONSTANTS
   USE B2MOD_SUBSYS
   IMPLICIT NONE

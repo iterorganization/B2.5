@@ -24,7 +24,7 @@ SUBROUTINE GRAD_P_FWD(ncv, nfc, nvx, mode, geo, mpg, mpgb, fun, funv, &
   USE B2US_MAP_DIFF
   IMPLICIT NONE
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), funv(nvx)
@@ -98,7 +98,7 @@ SUBROUTINE GRAD_P_BWD(ncv, nfc, nvx, mode, geo, mpg, mpgb, fun, funb, &
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
   IMPLICIT NONE
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFF) :: mpgb
@@ -151,7 +151,7 @@ SUBROUTINE GRAD_P_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funv, gfunp&
   USE B2US_MAP_DIFF
   IMPLICIT NONE
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), funv(nvx)
