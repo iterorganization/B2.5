@@ -74,11 +74,9 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & switch, switchb, geo, geob, mpg, mpgb, pl, plb, dv, dvb, rt, rtb, &
 & st_ext, st_extb, co, cob)
   USE B2MOD_TYPES
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_B2CMPT_DIFF
-!      use b2mod_neoclassical
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -104,7 +102,8 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   IMPLICIT NONE
 !   ..read data on first call
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES), INTENT(INOUT) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -992,11 +991,9 @@ END SUBROUTINE B2TRNO_B
 SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 & , switch, geo, mpg, pl, dv, rt, st_ext, co)
   USE B2MOD_TYPES
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_B2CMPT_DIFF
-!      use b2mod_neoclassical
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -1018,7 +1015,8 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   IMPLICIT NONE
 !   ..read data on first call
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -1504,12 +1502,6 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   ncall_b2trno = ncall_b2trno + 1
   CALL SUBEND()
   RETURN
-!
-!-----------------------------------------------------------------------
-!.scribbles
-!
-!!!   Consider to apply a flux limit to the anomalous particle transport.
-!!!   Still must consider how to deal with a non-orthogonal grid.
 !
 !-----------------------------------------------------------------------
 !.end b2trno

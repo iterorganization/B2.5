@@ -77,8 +77,8 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !  Hint: nCv should be the size of dimension 1 of array temp
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, ismain
-  INTEGER :: iscx(0:nscx-1)
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, ismain
+  INTEGER, INTENT(IN) :: iscx(0:nscx-1)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -196,8 +196,8 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs4
   REAL(kind=r8) :: abs4b
-  REAL(r8), DIMENSION(nCv) :: dabs0
-  REAL(r8), DIMENSION(nCv) :: dabs0b
+  REAL(kind=r8), DIMENSION(nCv) :: dabs0
+  REAL(kind=r8), DIMENSION(nCv) :: dabs0b
   REAL(r8) :: max1
   REAL(r8) :: max1b
   REAL(r8) :: max2
@@ -600,9 +600,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     CALL PUSHCONTROL2B(1)
   ELSE IF (switch%lluciani .EQ. 3) THEN
 ! new formulation
-!   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
+!   .. plateau and banana correction for ion heat conduction          !lk 19.09.07 {
     CALL B2TTIA_NODIFF(ncv, ns, pl%ti, rt%rz2, dv%ne2, dv%lnlam, tauia)
-!   .. calculate collisionality parameter nu_star   
+!   .. calculate collisionality parameter nu_star
 !lk 12.05.11{
     nu1 = 0.0_R8
     k1 = 0.58_R8
@@ -1084,7 +1084,7 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &                (:, is), pl%ti, pl%ua(:, is), vsaf_cl(:, 0, is), cvsa(:&
 &                , 0, is), cvsahz(:, 0, is), fllimvisc(:, is))
   END DO
-  mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0
+  mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.
   WHERE (mask) 
     dabs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
   ELSEWHERE
@@ -2143,8 +2143,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !  Hint: nCv should be the size of dimension 1 of array cvbb
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, ismain
-  INTEGER :: iscx(0:nscx-1)
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, ismain
+  INTEGER, INTENT(IN) :: iscx(0:nscx-1)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -2233,7 +2233,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs4
-  REAL(r8), DIMENSION(nCv) :: dabs0
+  REAL(kind=r8), DIMENSION(nCv) :: dabs0
   REAL(r8) :: max1
   REAL(r8) :: max2
   REAL(r8) :: max3
@@ -2533,9 +2533,9 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     END DO
   ELSE IF (switch%lluciani .EQ. 3) THEN
 ! new formulation
-!   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
+!   .. plateau and banana correction for ion heat conduction          !lk 19.09.07 {
     CALL B2TTIA_NODIFF(ncv, ns, pl%ti, rt%rz2, dv%ne2, dv%lnlam, tauia)
-!   .. calculate collisionality parameter nu_star   
+!   .. calculate collisionality parameter nu_star
 !lk 12.05.11{
     nu1 = 0.0_R8
     k1 = 0.58_R8
@@ -2750,7 +2750,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           co%fllim_ki(ifc) = 1.0_R8/(1.0_R8+t0)
           chci(ifc, 0) = chci(ifc, 0)*co%fllim_ki(ifc)
         END IF
-!wdk pragmatic approximation for cell center flux limits: based on interpolation 
+!wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
 
       END DO
@@ -2786,7 +2786,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !srv 13.01.17
           calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
         END IF
-!wdk pragmatic approximation for cell center flux limits: based on interpolation 
+!wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
 
       END DO
@@ -2846,7 +2846,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &                (:, is), pl%ti, pl%ua(:, is), vsaf_cl(:, 0, is), cvsa(:&
 &                , 0, is), cvsahz(:, 0, is), fllimvisc(:, is))
   END DO
-  mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0
+  mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.
   WHERE (mask) 
     dabs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
   ELSEWHERE
@@ -2947,11 +2947,6 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   ncall_b2trcl = ncall_b2trcl + 1
   CALL SUBEND()
   RETURN
-!
-!-----------------------------------------------------------------------
-!.scribbles
-!
-!!!   Still must consider how to deal with a non-orthogonal grid.
 !
 !-----------------------------------------------------------------------
 !.end b2trcl

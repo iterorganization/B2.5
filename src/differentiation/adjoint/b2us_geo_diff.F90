@@ -1025,18 +1025,20 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC REAL
     INTRINSIC SIGN
-    INTRINSIC DABS
     INTRINSIC ANY
     INTRINSIC ALLOCATED
     REAL(kind=r8) :: x1
+    REAL(kind=r8), DIMENSION(mpg%nFs) :: dabs0
     REAL(kind=r8), DIMENSION(mpg%nFs) :: abs0
-    REAL(kind=r8), DIMENSION(mpg%nFs) :: abs1
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     INTEGER :: result10
     INTEGER :: result11
     INTEGER :: result12
     INTEGER :: result13
+    LOGICAL, DIMENSION(mpg%nFs) :: mask
+    REAL(kind=r8) :: result14
+    LOGICAL, DIMENSION(mpg%nFs) :: mask0
     INTEGER :: result15
 !
     ncv = mpg%ncv
@@ -1596,14 +1598,15 @@ CONTAINS
             IF (gm%vxy(mpg%tgvx(1)) .GT. gm%vxy(ivx) .OR. (gm%vxy(mpg%&
 &               tgvx(1)) .EQ. gm%vxy(ivx) .AND. gm%vxx(mpg%tgvx(1)) .GT.&
 &               gm%vxx(ivx))) gm%lsn = .false.
-            WHERE (gm%fspsi .GE. 0.0) 
-              abs0 = gm%fspsi
+            mask = gm%fspsi .GE. 0.
+            WHERE (mask) 
+              dabs0 = gm%fspsi
             ELSEWHERE
-              abs0 = -gm%fspsi
+              dabs0 = -gm%fspsi
             END WHERE
-            result1 = MAXVAL(abs0)
+            result14 = MAXVAL(dabs0)
             gm%psi_increasing = gm%fspsi(mpg%vxfs(ivx)) .LT. gm%fspsi(&
-&             mpg%vxfs(mpg%tgvx(1))) .OR. result1 .EQ. 0.0_R8
+&             mpg%vxfs(mpg%tgvx(1))) .OR. result14 .EQ. 0.0_R8
           END IF
         END DO
       ELSE IF (mpg%nnreg(0) .EQ. 4) THEN
@@ -1651,12 +1654,13 @@ CONTAINS
               IF (.NOT.match_found) THEN
                 IF (mpg%vxfs(mpg%cvvx(j)) .NE. mpg%vxfs(mpg%xpt(ixpt))) &
 &               THEN
-                  WHERE (gm%fspsi .GE. 0.0) 
-                    abs1 = gm%fspsi
+                  mask0 = gm%fspsi .GE. 0.0
+                  WHERE (mask0) 
+                    abs0 = gm%fspsi
                   ELSEWHERE
-                    abs1 = -gm%fspsi
+                    abs0 = -gm%fspsi
                   END WHERE
-                  result1 = MAXVAL(abs1)
+                  result1 = MAXVAL(abs0)
                   gm%psi_increasing = gm%fspsi(mpg%vxfs(mpg%cvvx(j))) &
 &                   .LT. gm%fspsi(mpg%vxfs(mpg%xpt(ixpt))) .OR. result1 &
 &                   .EQ. 0.0_R8

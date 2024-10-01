@@ -99,13 +99,13 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
   INTRINSIC ABS
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
-  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
-  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs1
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs1
   INTEGER :: arg1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask
   REAL(kind=r8) :: result1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask0
-  REAL(kind=r8) :: result10
+  INTEGER :: result10
   CHARACTER(len=12) :: arg10
 !   ..initialisation
 !
@@ -478,13 +478,13 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
   INTRINSIC ABS
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
-  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
-  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs1
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs1
   INTEGER :: arg1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask
   REAL(kind=r8) :: result1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask0
-  REAL(kind=r8) :: result10
+  INTEGER :: result10
   CHARACTER(len=12) :: arg10
 !   ..initialisation
 !
@@ -515,13 +515,13 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     CALL B2XVSG(arg1, kinrgy0, 1, 'kinrgy0', '.ge.')
     CALL B2XVSG(ncv, kt0, 1, 'kt0', '.ge.')
     CALL B2XVSG(ncv, zt0, 1, 'zt0', '.ge.')
-    mask = ua0 .GE. 0.0
+    mask = ua0 .GE. 0.
     WHERE (mask) 
-      abs0 = ua0
+      dabs0 = ua0
     ELSEWHERE
-      abs0 = -ua0
+      dabs0 = -ua0
     END WHERE
-    result1 = MAXVAL(abs0)
+    result1 = MAXVAL(dabs0)
     CALL XERTST(result1 .LT. c, 'Supra-luminal velocity !')
 !    ..test current state
     arg1 = ncv*ns
@@ -537,13 +537,13 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     CALL B2XVSG(arg1, kinrgy, 1, 'kinrgy', '.ge.')
     CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
     CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
-    mask0 = ua .GE. 0.0
+    mask0 = ua .GE. 0.
     WHERE (mask0) 
-      abs1 = ua
+      dabs1 = ua
     ELSEWHERE
-      abs1 = -ua
+      dabs1 = -ua
     END WHERE
-    result1 = MAXVAL(abs1)
+    result1 = MAXVAL(dabs1)
     CALL XERTST(result1 .LT. c, 'Supra-luminal velocity !')
   END IF
 !

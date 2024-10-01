@@ -28,7 +28,6 @@ SUBROUTINE CALC_LOG_PRIOR_B(prior, priorb, inrange)
   LOGICAL, INTENT(INOUT) :: inrange
   INTEGER :: ii, isigma, imean, ind
   REAL(kind=r8) :: aa, bb
-  INTRINSIC SQRT, EXP
   INTRINSIC LOG_GAMMA
   INTRINSIC LOG
   EXTERNAL XERRAB
@@ -293,7 +292,6 @@ SUBROUTINE CALC_LOG_PRIOR_NODIFF(prior, inrange)
   LOGICAL, INTENT(INOUT) :: inrange
   INTEGER :: ii, isigma, imean, ind
   REAL(kind=r8) :: aa, bb
-  INTRINSIC SQRT, EXP
   INTRINSIC LOG_GAMMA
   INTRINSIC LOG
   EXTERNAL XERRAB

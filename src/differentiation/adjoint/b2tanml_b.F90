@@ -32,7 +32,7 @@ SUBROUTINE B2TANML_B(ncv, nfc, ns, switch, geo, geob, mpg, mpgb, csig_an&
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFF) :: geob
@@ -119,7 +119,7 @@ SUBROUTINE B2TANML_NODIFF(ncv, nfc, ns, switch, geo, mpg, csig_an, po, &
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
