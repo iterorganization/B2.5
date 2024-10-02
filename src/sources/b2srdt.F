@@ -205,13 +205,13 @@ csw 24feb2014 check for guard cell (SOLPS4)
         sr%sktdt(iCv,1) = 0.0_R8
         sr%sktdt(iCv,2) = 0.0_R8
         sr%sktdt(iCv,3) = -t0
-        sr%sktdt(iCv,:) = sr%skt(iCv,:)+sr%sktdt(iCv,:)
+        sr%skt(iCv,:) = sr%skt(iCv,:)+sr%sktdt(iCv,:)
 
         sr%sztdt(iCv,0) = t0*ni0(iCv,1)*zt0(iCv)
         sr%sztdt(iCv,1) = 0.0_R8
         sr%sztdt(iCv,2) = 0.0_R8
         sr%sztdt(iCv,3) = -t0
-        sr%sztdt(iCv,:) = sr%szt(iCv,:)+sr%sztdt(iCv,:)
+        sr%szt(iCv,:) = sr%szt(iCv,:)+sr%sztdt(iCv,:)
       enddo
 
       do iCv = 1, nCv
