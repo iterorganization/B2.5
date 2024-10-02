@@ -26,9 +26,10 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tqce
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tqce, ncall_b2tlnl
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlnl
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -87,12 +88,12 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   INTEGER :: icv
 !srv 11.09.09
   REAL(kind=r8) :: ctaue, ce, t0, t1, z, tau(ncv), tnp
-  PARAMETER (ce=3.16e0_R8)
+  PARAMETER (ce=3.16_R8)
 !xpb      parameter (lnlam=12.0_R8)
 !   ..procedures
   INTRINSIC SQRT
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   EXTERNAL XERRAB
   REAL(r8) :: arg1
   REAL(kind=r8) :: result1
@@ -134,15 +135,15 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
 !   ..subprogram start-up calls
   CALL SUBINI('b2tqce')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2tqce .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test state
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, dv%ne2, 1, 'ne2', '.gt.')
   END IF
 !   ..compute ctaue
 !     Following Balescu. The mathematical expression is:
@@ -401,9 +402,10 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tqce
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tqce, ncall_b2tlnl
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tlnl
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -471,13 +473,13 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
   REAL(kind=r8) :: ctaue, ce, t0, t1, z, tau(ncv), tnp
   REAL(kind=r8) :: t0d(nbdirsmax), zd(nbdirsmax), taud(nbdirsmax, ncv), &
 & tnpd(nbdirsmax)
-  PARAMETER (ce=3.16e0_R8)
+  PARAMETER (ce=3.16_R8)
 !xpb      parameter (lnlam=12.0_R8)
 !   ..procedures
   INTRINSIC SQRT
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL SFILL_DV
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   EXTERNAL XERRAB
   REAL(r8) :: arg1
   REAL(kind=r8) :: result1
@@ -529,15 +531,15 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tqce')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2tqce .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test state
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, dv%ne2, 1, 'ne2', '.gt.')
   END IF
 !   ..compute ctaue
 !     Following Balescu. The mathematical expression is:
@@ -563,8 +565,8 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
   END IF
 !
 !   ..compute the Coulomb logarithm
-  CALL B2TLNL_DV(ncv, switch, switch%icase_ee, pl%te, pld%te, pl%ti, pld&
-&          %ti, dv%ne, dvd%ne, dv%lnlam, dvd%lnlam, nbdirs)
+  CALL B2TLNL_DV(ncv, switch, switchd, switch%icase_ee, pl%te, pld%te, &
+&          pl%ti, pld%ti, dv%ne, dvd%ne, dv%lnlam, dvd%lnlam, nbdirs)
 ! ..compute classical hce, sig, alf
 !   ..compute hcex, sigx, alfx.
   IF (switch%b2tqce_style_guard_cells .EQ. 0) THEN

@@ -1,0 +1,108 @@
+// C++ part of the adaptor for paraview catalyst for b2.5 simulation.
+// Author: Jure Bartol
+// Created on: 22.07.2016
+// Modified on: 05.09.2016
+
+#include "vtkCPDataDescription.h"
+#include "vtkCPInputDataDescription.h"
+#include "vtkCPProcessor.h"
+#include "vtkCPPythonScriptPipeline.h"
+#include "vtkCPPythonAdaptorAPI.h"
+#include "vtkSmartPointer.h"
+#include "vtkDoubleArray.h"
+#include "vtkPointData.h"
+#include "vtkCellData.h"
+#include "vtkPolyData.h"
+
+
+extern "C" void creategrid_(double* crx, double* cry, int* ncrx, int* nx, int* ny) {
+//crx - x coordinate, cry - y coordinate, ncrx - number of points,
+//nx - number of cells in x direction, ny - number of cells in y direction
+
+  if (!vtkCPPythonAdaptorAPI::GetCoProcessorData()){
+    vtkGenericWarningMacro("Unable to access CoProcessorData.");
+    return;
+    }
+
+  //create vtk points
+  vtkPoints* points = vtkPoints::New();
+  points->SetNumberOfPoints(*ncrx);
+  int numOfCells = (*nx+2)*(*ny+2);
+  for (vtkIdType id = 0; id < numOfCells-1 ; ++id){
+    points->SetPoint(0+id*4, crx[id], cry[id], 0.0);
+    points->SetPoint(1+id*4, crx[id+numOfCells], cry[id+numOfCells], 0.0);
+    points->SetPoint(2+id*4, crx[id+2*numOfCells], cry[id+2*numOfCells], 0.0);
+    points->SetPoint(3+id*4, crx[id+3*numOfCells], cry[id+3*numOfCells], 0.0);
+}
+
+  //create vtk cells
+  vtkPolyData* grid = vtkPolyData::New();
+  vtkCPPythonAdaptorAPI::GetCoProcessorData()->GetInputDescriptionByName("input")->SetGrid(grid);
+  grid->SetPoints(points);
+  points->Delete();
+  grid->Allocate(numOfCells);
+  vtkIdType ids[4];
+  for (int i = 0 ; i < numOfCells ; i++){
+    ids[0] = 0+i*4;
+    ids[1] = 1+i*4;
+    ids[2] = 3+i*4;
+    ids[3] = 2+i*4;
+    grid->InsertNextCell(9,4,ids);
+    }
+}
+
+extern "C" void adddata_(double* values, char* name, int* numCells, int *dimension) {
+// value - array of field data, name - name of the field, numCells - number of Cells
+// dimension - dimension of field data to attach to cells
+
+  vtkCPInputDataDescription* idd = vtkCPPythonAdaptorAPI::GetCoProcessorData()->GetInputDescriptionByName("input");
+  vtkPolyData* grid = vtkPolyData::SafeDownCast(idd->GetGrid());
+  if (!grid)
+    {
+    vtkGenericWarningMacro("No adaptor grid to attach field data to.");
+    return;
+    }
+
+  if (*dimension <= 3){
+    vtkDoubleArray* cellData = vtkDoubleArray::New();
+    cellData->SetName(name);
+    cellData->SetNumberOfComponents(*dimension);
+    cellData->SetNumberOfTuples(*numCells);
+    switch (*dimension){
+    case 1: { 
+      for (vtkIdType i = 0; i < *numCells; ++i){
+        cellData->SetTuple1(i,values[i]);
+      } break;
+    }
+    case 2: {
+      for (vtkIdType i = 0; i < *numCells; ++i){ 
+       cellData->SetTuple2(i, values[i], values[i+(*numCells)]);
+      } break;
+    }
+    case 3: {
+      for (vtkIdType i = 0; i < *numCells; ++i){ 
+        cellData->SetTuple3(i, values[i], values[i+(*numCells)], values[i+2*(*numCells)]);
+      } break;
+    }
+    }
+    grid->GetCellData()->AddArray(cellData);
+    cellData->Delete();
+    cellData = NULL;
+  }
+  else {
+      char new_name[50];
+      for (int s = 0; s < *dimension; ++s){
+       sprintf(new_name, "%s_%d", name, s);
+       vtkDoubleArray* cellData = vtkDoubleArray::New();
+       cellData->SetName(new_name);
+       cellData->SetNumberOfComponents(1);
+       cellData->SetNumberOfTuples(*numCells);
+       for (vtkIdType i = 0; i < *numCells; ++i){ 
+         cellData->SetTuple1(i, values[i+s*(*numCells)]);
+       }
+       grid->GetCellData()->AddArray(cellData);
+       cellData->Delete();
+       cellData = NULL;
+      } 
+    }
+}

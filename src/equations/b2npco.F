@@ -12,11 +12,13 @@
       use b2us_plasma
       use b2mod_numerics_namelist                                        !srv 07.07.21 {
      & , only : dtco, time_factor                                        !srv 07.07.21 }
+#ifndef FIXED_POINT
       use b2mod_balance
      & ,only : update_balance_sources_particles, balance_netcdf,         !djm Jan2017
      &         tot_sna0to1, fna_tot                                      !djm Mar2019
+#endif
       use b2mod_ad
-     & , only : ncall_b2npco
+     & , only : ncall_b2npco, rxg_npco
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -75,13 +77,11 @@
       character chns*3                                             !srv 04.07.08
       real (kind=R8) ::
      *   aa(mpg%nCmxNv), wrk0(nCv)
-      real (kind=R8), save ::
-     *   rxg
       logical warning
       integer :: iCv
 *   ..procedures
       external xertst, ipgetr
-      external b2xvsg, b2xvff, b2ursc, b2usco, b2upco
+      external b2xvsg, b2ursc, b2usco, b2upco
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -115,7 +115,7 @@
 *   ..set internal parameters on first call
       if (ncall_b2npco.eq.0) then
         if(switch%b2mndt_style.eq.2) then
-          rxg = huge(1.0_R8)
+          rxg_npco = huge(1.0_R8)
           if (switch%b2npco_pcm0.gt.0.0_R8) then
             call xerrab('b2npco_pcm0 must be 0 for time-dependent mode')
           endif
@@ -133,7 +133,7 @@
             write(6,*) 'Time derivative terms may be inacurrate !'
           end if
         else
-          rxg = switch%b2npco_rxg
+          rxg_npco = switch%b2npco_rxg
         endif
       endif
 *   ..extensive tests on first few calls
@@ -149,12 +149,14 @@
        call b2xvsg (nCv, dv%pa(1,isb), 1, 'pb', '.gt.')
        call b2xvsg (nCv, pl%na(1,isb), 1, 'nb', '.gt.')
       endif
+#ifndef FIXED_POINT
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
         tot_sna0to1(:,:,isb)=sr%sna(:,:,isb)    !djm Mar2019
         fna_tot(:,:,isb)=dv%fna(:,:,isb)        !djm Mar2019
         call update_balance_sources_particles(nCv,isb,pl%na(:,isb))
       endif
+#endif
 
       if(switch%b2mndt_style.eq.2) then                                 !srv 07.07.21 {
 *  .. calculate time-dependent source
@@ -180,7 +182,7 @@ cdjm Jan2017 update particle source components for balance
       write (chns,'(i3.3)') isb
       if(solving.and.any(solvcreg(0:mpg%nnreg(0)))) then                !srv 22.05.18
         call b2usco (nCv, nFc, nVx, isb, switch, geo, mpg, nregionv,    !srv 13.10.06 26.09.12
-     &   solvcreg, itcnt, rxg, pl%na(:,isb), dv%pa(:,isb),
+     &   solvcreg, itcnt, rxg_npco, pl%na(:,isb), dv%pa(:,isb),
      &   sr%sna(:,1,isb), dv%flob, dv%conb,
      &   dv%resco(:,isb), dv%corpa(:,isb), aa, 'b2usco_'//chns)
 *   ..apply correction

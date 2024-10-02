@@ -30,7 +30,7 @@
       integer iptinc, iptbmx, ipgtmx, ipcnt
       real (kind=R8) ::
      *   xdmx
-      parameter (iptinc=233, iptbmx=377, ipgtmx=400, xdmx=0.8_R8)
+      parameter (iptinc=233, iptbmx=377, ipgtmx=4000, xdmx=0.8_R8)
       character ipnam(0:iptbmx-1)*80, ipval(0:iptbmx-1)*80
       integer ipstat(0:iptbmx-1)
       save ipcnt, ipnam, ipval, ipstat
@@ -170,13 +170,17 @@
         case ('b2npmo_modvis')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete'
+        case ('eirene_lhalpha')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use "DEFINE_LINES" in block 12 '//
+     &     'of Eirene input file instead'
+        case ('eirene_lvib')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now deprecated'
         case ('b2stel_fix_recomb_energy')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Deprecated, '//
      &     're-run b2ar using "b2ardr_fix_recomb"'
-        case ('b2mndt_style')
-          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
-     &     trim(ipnam(ip)),'New model is based on b2mndt_style = 1.'
         case ('b2news_guard_flows')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete.'
@@ -186,6 +190,9 @@
         case ('b2sifr_styl1')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete.'
+        case ('b2tqin_style')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use b2tqin_csigin_style instead.'
         case default
           prohib = .false.
         end select

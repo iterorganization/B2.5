@@ -33,8 +33,8 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional -ffreestanding
@@ -44,11 +44,12 @@ SED =
 LINK_MOD =
 
 FC = g95
+FN = ${FC}
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -C -fbounds-check -ftrace=full -fPIC -fno-second-underscore
+  FCOPTS = -g -C -fbounds-check -ftrace=full -fPIC -fno-second-underscore
 else
-FCOPTS = -O -fPIC -fno-second-underscore
+  FCOPTS = -O -fPIC -fno-second-underscore
 endif
 
 DBLFC = ${FC}
@@ -65,18 +66,18 @@ BLD = ar rucv
 
 GRLIBES = ${LD_NCARG}
 PLLIBES = ${LD_MSCL}
-LDLIBES = ${LD_NAG} ${LD_NETCDF}
+LDLIBES = ${LD_NAG} ${LD_NETCDF} -L${LAPACK_LIB} -llapack -lrefblas -L/cineca/prod/opt/compilers/gnu/6.1.0/none/lib64 -lgfortran
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifndef SOLPS_CPP
-DEFINES += -DITM -DNO_CDF -DNO_NAG
+  DEFINES += -DITM -DNO_CDF -DNO_NAG
 endif
 
 ifndef SOLPS_CPP
@@ -143,6 +144,7 @@ ifdef IMAS_PKG_LIST
 endif
 
 LD = $(FC)
+LN = ${FN}
 # LDOPTS = -Bstatic
 
 

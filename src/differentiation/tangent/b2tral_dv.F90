@@ -2,8 +2,8 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2tral in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci tdata *(dv.lnlam) *(co.csig)
+!   variations   of useful results: tdata cfvla cfvsa cfalf cfdpa
+!                cfsig cfdna cfhce cfhci *(dv.lnlam) *(co.csig)
 !                *(co.calf) *(co.csig_an) *(co.csigin) *(co.chce)
 !                *(co.chce_exb) *(co.chci) *(co.chci_exb) *(co.chcn)
 !                *(co.cdkt) *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
@@ -17,9 +17,9 @@
 !                *(co.fllim_ke) *(co.fllim_al) *(co.fllim_al_c)
 !                *(co.fllim_ki_c) *(co.f_luc_ke) *(co.f_luc_ki)
 !                *(co.f_luc_et) *(co.f_luc_sg) *(co.f_luc_al)
-!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
-!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
-!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
+!   with respect to varying inputs: tdata cfvla cfvsa cfalf cfdpa
+!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
 !                *(dv.ni) *(dv.ne2) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx)
 !                *(rt.rlsa) *(rt.rza) *(rt.rz2) switch.keps_cd
 !                switch.keps_heat switch.keps_heat_i switch.keps_sig
@@ -48,18 +48,18 @@
 !                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fchc:in
 !                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
 !                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcbzb:in
-!                geo.vxvol:in geo.ftconn:in geo.fteps:in st_ext.am:in
-!                st_ext.za2:in st_ext.na:in st_ext.ni:in rt.rlcx:in
-!                rt.rlsa:in rt.rza:in rt.rz2:in co.csig:in co.calf:in
-!                co.csig_an:in co.calf_an:in co.csig_cl:in co.calf_cl:in
-!                co.csigin:in co.chve:in co.chce:in co.chce_exb:in
-!                co.chvi:in co.chci:in co.chci_exb:in co.chcn:in
-!                co.cdkt:in co.cdzt:in co.chvemx:in co.chvimx:in
-!                co.cvla:in co.cdna:in co.cdna_exb:in co.cdpa:in
-!                co.cvsa:in co.cvlahz:in co.cdnahz:in co.cdpahz:in
-!                co.cvsahz:in co.cddi:in co.cvsahz_cl:in co.chcb:in
-!                co.cvsa_an:in co.cvmahz:in co.cthe:in co.cthi:in
-!                co.cvsa_cl:in co.fllim0fhi:in co.fllimvisc:in
+!                geo.vxvol:in geo.ftconn:in geo.fsconn:in geo.fteps:in
+!                st_ext.am:in st_ext.za2:in st_ext.na:in st_ext.ni:in
+!                rt.rlcx:in rt.rlsa:in rt.rza:in rt.rz2:in co.csig:in
+!                co.calf:in co.csig_an:in co.calf_an:in co.csig_cl:in
+!                co.calf_cl:in co.csigin:in co.chve:in co.chce:in
+!                co.chce_exb:in co.chvi:in co.chci:in co.chci_exb:in
+!                co.chcn:in co.cdkt:in co.cdzt:in co.chvemx:in
+!                co.chvimx:in co.cvla:in co.cdna:in co.cdna_exb:in
+!                co.cdpa:in co.cvsa:in co.cvlahz:in co.cdnahz:in
+!                co.cdpahz:in co.cvsahz:in co.cddi:in co.cvsahz_cl:in
+!                co.chcb:in co.cvsa_an:in co.cvmahz:in co.cthe:in
+!                co.cthi:in co.cvsa_cl:in co.fllim0fhi:in co.fllimvisc:in
 !                co.vsaf_cl:in co.sig0:in co.hce0:in co.hci0:in
 !                co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in co.dna_exb:in
 !                co.hce_exb:in co.hci_exb:in co.dpa0:in co.dna0:in
@@ -83,7 +83,6 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-!srv 23.11.10
 SUBROUTINE B2TRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & switch, switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, rt, rtd, &
 & st_ext, st_extd, co, cod, nbdirs)
@@ -95,24 +94,25 @@ SUBROUTINE B2TRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : alloc_input_profile
+  USE B2MOD_AD_DIFFV, ONLY : b2news_solving, ncall_b2tral
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_B2CMPT_DIFFV, ONLY : cfvla, cfvlad, cflim, cfvsa, cfvsad, &
-& cfalf, cfalfd, cfdpa, cfdpad, cfsig, cfsigd, cfdna, cfdnad, cfhce, &
-& cfhced, cfhci, cfhcid
+  USE B2MOD_B2CMPT_DIFFV, ONLY : cfvla, cfvlad, cflim, cflimd, cfvsa, &
+& cfvsad, cfalf, cfalfd, cfdpa, cfdpad, cfsig, cfsigd, cfdna, cfdnad, &
+& cfhce, cfhced, cfhci, cfhcid
   USE B2MOD_TRANSPORT_NAMELIST_DIFFV, ONLY : parm_hce, parm_hced, &
 & parm_hci, parm_hcid, parm_dna, parm_dnad, parm_dpa, parm_dpad, &
 & parm_vla, parm_vlad, parm_vsa, parm_vsad, parm_alf, parm_alfd, &
 & parm_sig, parm_sigd
   USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : ndata, no_pflux, tr_ip_new_files&
-& , region_flags, tdata, tdatad, tr_ip_elm_count, no_div, addspec, &
-& alloc_input_profile, nss, nrr, nkind_coeff, nkind_data, &
-& poloidal_scaling, transport_ip_filename, nscale, &
-& transport_ip_time_switch, transport_ip_time_mod
-  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, b2news_solving, ncall_b2tral&
-& , ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tlnl, ncall_b2tqca&
-& , ncall_b2tlh0, ncall_b2tqna, ncall_b2trno, ncall_transp_keps, nsdmax,&
-& cvregmax, ncall_b2trcl, ncall_b2ttia
+& , region_flags, tdata, tdatad, tr_ip_elm_count, no_div, addspec, nss, &
+& nrr, nkind_coeff, nkind_data, poloidal_scaling, transport_ip_filename,&
+& nscale, transport_ip_time_switch, transport_ip_time_mod
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2tlmv, ncall_b2tqin, &
+& ncall_b2tqce, ncall_b2tlnl, ncall_b2tqca, ncall_b2tlh0, ncall_b2tqna, &
+& ncall_b2trno, ncall_transp_keps, nsdmax, cvregmax, ncall_b2trcl, &
+& ncall_b2ttia
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutlod, cutll, &
 & b2mod_math_initialised, small_r4_constant
   USE B2MOD_SUBSYS
@@ -242,7 +242,7 @@ SUBROUTINE B2TRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2tral')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..read data on first call
   IF (ncall_b2tral .EQ. 0) THEN
@@ -287,7 +287,7 @@ SUBROUTINE B2TRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &          cvsahz_cl, co%fllimvisc, co%csig_cl, co%calf_cl, nbdirs)
 !   ..add to previous contributions=
 !srv 16.10.17 {
-  ft = 4.0e0_R8/3.0e0_R8
+  ft = 4.0_R8/3.0_R8
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
       DO nd=1,nbdirs
@@ -615,7 +615,6 @@ END SUBROUTINE B2TRAL_DV
 !-----------------------------------------------------------------------
 !.specification
 !
-!srv 23.11.10
 SUBROUTINE B2TRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 & , switch, geo, mpg, pl, dv, rt, st_ext, co)
   USE B2MOD_TYPES
@@ -626,6 +625,8 @@ SUBROUTINE B2TRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : alloc_input_profile
+  USE B2MOD_AD_DIFFV, ONLY : b2news_solving, ncall_b2tral
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_B2CMPT_DIFFV, ONLY : cfvla, cflim, cfvsa, cfalf, cfdpa, &
@@ -633,14 +634,13 @@ SUBROUTINE B2TRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_TRANSPORT_NAMELIST_DIFFV, ONLY : parm_hce, parm_hci, &
 & parm_dna, parm_dpa, parm_vla, parm_vsa, parm_alf, parm_sig
   USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : ndata, no_pflux, tr_ip_new_files&
-& , region_flags, tdata, tr_ip_elm_count, no_div, addspec, &
-& alloc_input_profile, nss, nrr, nkind_coeff, nkind_data, &
-& poloidal_scaling, transport_ip_filename, nscale, &
-& transport_ip_time_switch, transport_ip_time_mod
-  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, b2news_solving, ncall_b2tral&
-& , ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tlnl, ncall_b2tqca&
-& , ncall_b2tlh0, ncall_b2tqna, ncall_b2trno, ncall_transp_keps, nsdmax,&
-& cvregmax, ncall_b2trcl, ncall_b2ttia
+& , region_flags, tdata, tr_ip_elm_count, no_div, addspec, nss, nrr, &
+& nkind_coeff, nkind_data, poloidal_scaling, transport_ip_filename, &
+& nscale, transport_ip_time_switch, transport_ip_time_mod
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2tlmv, ncall_b2tqin, &
+& ncall_b2tqce, ncall_b2tlnl, ncall_b2tqca, ncall_b2tlh0, ncall_b2tqna, &
+& ncall_b2trno, ncall_transp_keps, nsdmax, cvregmax, ncall_b2trcl, &
+& ncall_b2ttia
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutll, b2mod_math_initialised, &
 & small_r4_constant
   USE B2MOD_SUBSYS
@@ -740,7 +740,7 @@ SUBROUTINE B2TRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tral')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..read data on first call
   IF (ncall_b2tral .EQ. 0) THEN
@@ -775,7 +775,7 @@ SUBROUTINE B2TRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 &              fllimvisc, co%csig_cl, co%calf_cl)
 !   ..add to previous contributions=
 !srv 16.10.17 {
-  ft = 4.0e0_R8/3.0e0_R8
+  ft = 4.0_R8/3.0_R8
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
       co%cvsa(:, 0, is) = ft*co%cvsa_cl(:, 0, is) + co%cvsa(:, 0, is)

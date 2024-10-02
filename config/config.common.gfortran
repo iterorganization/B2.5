@@ -1,8 +1,24 @@
+ifeq (${FC},f77)
+FC = gfortran
+endif
+ifeq (${FN},)
+FN = gfortran
+endif
+ifeq (${CC},cc)
+ifneq (${FC},ftn)
+CC = /usr/bin/gcc
+endif
+endif
 EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 DEFINES += -DNO_IEEE
 ifndef SOLPS_CPP
 DEFINES += -DGFORTRAN
 endif
+
+GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')
+
+GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
+GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
 
 DEFINES += -DCOMPILER_MAJOR_VERSION=${GFORTRAN_MAJOR_VERSION} -DCOMPILER_MINOR_VERSION=${GFORTRAN_MINOR_VERSION}
 
@@ -23,13 +39,13 @@ else
 FCOPTS += -O2
 endif
 
-ifdef USE_OPENMP
-FCOPTS += -fopenmp
-LDOPTS += -fopenmp
+ifdef SOLPS_OPENMP
+FPOPTS += -fopenmp
+LPOPTS += -fopenmp
 endif
 
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 DBLFC = ${FC}
@@ -117,6 +133,7 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = $(FC)
+LN = $(FN)
 # LDOPTS = -Bstatic
 
 

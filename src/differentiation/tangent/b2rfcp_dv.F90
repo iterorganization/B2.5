@@ -327,6 +327,24 @@ SUBROUTINE B2RFCP_NODIFF(nrid, ns)
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test nsdecl
   CALL XERTST(ns .LE. nsdecl, 'faulty parameter nsdecl')
+!   ..init region parameters to zero
+  cbirso = 0
+  cbirno = 0
+  cbirwe = 0
+  cbirea = 0
+  cbnrso = 0
+  cbnrno = 0
+  cbnrwe = 0
+  cbnrea = 0
+  cbrbrk = 0.0_R8
+  cbsna = 0.0_R8
+  cbsmo = 0.0_R8
+  cbshi = 0.0_R8
+  cbshe = 0.0_R8
+  cbsch = 0.0_R8
+  cbrec = 0.0_R8
+  cbmsa = 0.0_R8
+  cbmsb = 0.0_R8
 !
 ! ..read parameters
 !   ..initialise mode

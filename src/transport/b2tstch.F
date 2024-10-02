@@ -41,7 +41,7 @@
       save ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 *   ..procedures
       external ipgetr, ipgeti, xertst, xerrab
-      external b2xvsg, b2xvff, b2xvfx
+      external b2xvsg
       external get_jsep
 *   ..initialization
       data ncall/0/, delta_stoch/0.0_R8/, sig_stoch/1.0_R8/

@@ -134,7 +134,6 @@
       save ncall
 *   ..procedures
       external xertst, cfwuin, cfwure
-      external b2xvfx
 *   ..initialisation
       data ncall/0/
 

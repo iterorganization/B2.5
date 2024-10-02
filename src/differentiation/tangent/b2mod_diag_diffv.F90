@@ -114,6 +114,7 @@ CONTAINS
     LOGICAL :: STREQL
     INTRINSIC ALLOCATED
     INTRINSIC MAX
+    INTRINSIC NINT
     INTRINSIC TRIM
     EXTERNAL XERRAB
 !
@@ -204,7 +205,7 @@ CONTAINS
       END DO
       IF (switch%spatial_hybrid .NE. 0) THEN
         DO is=0,nsd-1
-          IF (is_neutral(is)) THEN
+          IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
             i = i + 1
             fluids_list(is) = i
             ions_list(i) = is

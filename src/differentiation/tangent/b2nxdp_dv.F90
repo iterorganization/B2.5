@@ -39,7 +39,7 @@ SUBROUTINE B2NXDP_DV(ncv, mpg, solvereg, qe, te, ted, nep, nepd, ne, ned&
 !     ------------------------------------------------------------------
   INTEGER :: icv, ireg
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: nd
   REAL(kind=r8) :: temp
   REAL(kind=r8) :: temp0
@@ -47,13 +47,13 @@ SUBROUTINE B2NXDP_DV(ncv, mpg, solvereg, qe, te, ted, nep, nepd, ne, ned&
 !   ..initialisation
 !     ------------------------------------------------------------------
   CALL SUBINI('b2nxdp')
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(0.0_R8 .LT. qe, 'faulty argument qe')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxdp .LT. 3) THEN
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, nep, 1, 'nep', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, nep, 1, 'nep', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   END IF
 !   ..compute delpo
   DO icv=1,ncv
@@ -110,17 +110,17 @@ SUBROUTINE B2NXDP_NODIFF(ncv, mpg, solvereg, qe, te, nep, ne, delpo)
 !     ------------------------------------------------------------------
   INTEGER :: icv, ireg
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
 !   ..initialisation
 !     ------------------------------------------------------------------
   CALL SUBINI('b2nxdp')
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(0.0_R8 .LT. qe, 'faulty argument qe')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxdp .LT. 3) THEN
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, nep, 1, 'nep', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, nep, 1, 'nep', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
   END IF
 !   ..compute delpo
   DO icv=1,ncv

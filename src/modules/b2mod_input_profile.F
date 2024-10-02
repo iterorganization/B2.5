@@ -486,7 +486,7 @@ cdjm Jan2017 Keep linearised sources for balance
       use b2mod_user_namelist
      , , only : nomp, omp, icsepomp
       IMPLICIT NONE
-      integer :: nCv, nFc, ns
+      integer, intent (in) :: nCv, nFc, ns
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
