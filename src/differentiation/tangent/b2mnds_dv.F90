@@ -18,7 +18,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, nbdirs)
+SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, switchd&
+& , nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_VERSION_DIFFV
@@ -42,9 +43,11 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, nbdirs)
 !.end b2mnds
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ninp(0:6), nout(0:10), ncv, nfc, ns, ns0
+  INTEGER :: ninp(0:6), ncv, nfc, ns, ns0
   INTEGER :: nsd(nbdirsmax)
+  INTEGER :: nout(0:10)
   TYPE(SWITCHES), INTENT(INOUT) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
 !   ..output arguments (unspecified on entry)
 !     (none)
 !   ..common blocks
@@ -90,7 +93,7 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, nbdirs)
 !     nCv, nFc - integer, input.
 !     nCv and nFc specify the number of cells and faces in the
 !     unstructured data format.
-!     It will hold that 0.le.nCv and 0.le.nFc.
+!     It will hold that 0.lt.nCv and 0.lt.nFc.
 !
 !     ns - integer, input.
 !     ns specifies the number of atomic species in the calculation.
@@ -127,10 +130,10 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, nbdirs)
 !   ..procedures
   LOGICAL :: IS_COMMENT
   EXTERNAL XERTST, XERRAB, CFRUCH, CFRUIN, CFWUCH, CFWUIN
-  EXTERNAL XERTST_DV, XERRAB_DV
+  EXTERNAL XERTST_DV, XERRAB_DV, CFRUIN_DV
   EXTERNAL B2RUCP_NODIFF, B2RURC_NODIFF, B2RUSR, B2RFLB, B2RFCP_NODIFF, &
 &     B2XXID, B2MWQ0_NODIFF, B2WFCP_NODIFF, B2WUCP_NODIFF, B2RUZD_NODIFF&
-&     , B2WUZD_NODIFF, B2XVCP_NODIFF
+&     , B2WUZD, B2XVCP_NODIFF
   INTRINSIC INDEX
   INTRINSIC TRIM
   LOGICAL :: result1
@@ -179,7 +182,7 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, nbdirs)
 &       .AND. 1 .LE. nout(5) .AND. 1 .LE. nout(9) .AND. 1 .LE. nout(10)&
 &       , 'faulty argument ninp, nout')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(ns .LE. nsdecl, 'faulty parameter nsdecl')
 !
@@ -299,26 +302,29 @@ SUBROUTINE B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, nbdirs)
 !xpb
   CALL CFWUIN(nout(2), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(2), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF(nout(2), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD(nout(2), newversion, ns, zamin, zamax, zn, am)
   CALL CFVERW(nout(3), newversion)
 !xpb
   CALL CFWUIN(nout(3), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(3), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF(nout(3), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD(nout(3), newversion, ns, zamin, zamax, zn, am)
   CALL CFVERW(nout(5), newversion)
 !xpb
   CALL CFWUIN(nout(5), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(5), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF(nout(5), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD(nout(5), newversion, ns, zamin, zamax, zn, am)
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
 ! The switches are now also loaded in a module b2mod_switches.
-! Hence, they can be accessed in the classical way using ipgeti/ipgetr or in a new way using this module.
-! The b2mod_switches is mainly intended for switches that are used in different functions/subroutines to reduce code duplication
+! Hence, they can be accessed in the classical way using ipgeti/ipgetr
+! or in a new way using this module.
+! The b2mod_switches is mainly intended for switches that are used in
+! different functions/subroutines to reduce code duplication
 ! and to centralize consistency checks on the switches.
 !
-!
+! read main model switches to correctly set the corresponding defaults
+  CALL READ_FIRST_SWITCHES(switch)
 ! load default values of switches
   CALL SET_DEFAULTS_SWITCHES(switch, ns)
 ! overwrite with values provided in b2mn.dat
@@ -381,7 +387,8 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 !.end b2mnds
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ninp(0:6), nout(0:10), ncv, nfc, ns, ns0
+  INTEGER :: ninp(0:6), ncv, nfc, ns, ns0
+  INTEGER :: nout(0:10)
   TYPE(SWITCHES), INTENT(INOUT) :: switch
 !   ..output arguments (unspecified on entry)
 !     (none)
@@ -428,7 +435,7 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 !     nCv, nFc - integer, input.
 !     nCv and nFc specify the number of cells and faces in the
 !     unstructured data format.
-!     It will hold that 0.le.nCv and 0.le.nFc.
+!     It will hold that 0.lt.nCv and 0.lt.nFc.
 !
 !     ns - integer, input.
 !     ns specifies the number of atomic species in the calculation.
@@ -467,7 +474,7 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
   EXTERNAL XERTST, XERRAB, CFRUCH, CFRUIN, CFWUCH, CFWUIN
   EXTERNAL B2RUCP_NODIFF, B2RURC_NODIFF, B2RUSR, B2RFLB, B2RFCP_NODIFF, &
 &     B2XXID, B2MWQ0_NODIFF, B2WFCP_NODIFF, B2WUCP_NODIFF, B2RUZD_NODIFF&
-&     , B2WUZD_NODIFF, B2XVCP_NODIFF
+&     , B2WUZD, B2XVCP_NODIFF
   INTRINSIC INDEX
   INTRINSIC TRIM
   LOGICAL :: result1
@@ -515,7 +522,7 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 &       .AND. 1 .LE. nout(5) .AND. 1 .LE. nout(9) .AND. 1 .LE. nout(10)&
 &       , 'faulty argument ninp, nout')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(ns .LE. nsdecl, 'faulty parameter nsdecl')
 !
@@ -629,26 +636,29 @@ SUBROUTINE B2MNDS_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 !xpb
   CALL CFWUIN(nout(2), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(2), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF(nout(2), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD(nout(2), newversion, ns, zamin, zamax, zn, am)
   CALL CFVERW(nout(3), newversion)
 !xpb
   CALL CFWUIN(nout(3), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(3), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF(nout(3), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD(nout(3), newversion, ns, zamin, zamax, zn, am)
   CALL CFVERW(nout(5), newversion)
 !xpb
   CALL CFWUIN(nout(5), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(5), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF(nout(5), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD(nout(5), newversion, ns, zamin, zamax, zn, am)
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
 ! The switches are now also loaded in a module b2mod_switches.
-! Hence, they can be accessed in the classical way using ipgeti/ipgetr or in a new way using this module.
-! The b2mod_switches is mainly intended for switches that are used in different functions/subroutines to reduce code duplication
+! Hence, they can be accessed in the classical way using ipgeti/ipgetr
+! or in a new way using this module.
+! The b2mod_switches is mainly intended for switches that are used in
+! different functions/subroutines to reduce code duplication
 ! and to centralize consistency checks on the switches.
 !
-!
+! read main model switches to correctly set the corresponding defaults
+  CALL READ_FIRST_SWITCHES(switch)
 ! load default values of switches
   CALL SET_DEFAULTS_SWITCHES(switch, ns)
 ! overwrite with values provided in b2mn.dat

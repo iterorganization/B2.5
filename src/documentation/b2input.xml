@@ -2812,7 +2812,7 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2sikt_fac_diss_sol</name>
+				<name>b2sikt_fac_diss</name>
 				<default>10.0</default>
 				<type>real</type>
 				<description>
@@ -3710,7 +3710,25 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-                   If ion_vlct_restrict.ne.0, the parallel speed of ions is limited to be no more than 3 times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than twice the local ion sound speed.
+					If ion_vlct_restrict.ne.0, the parallel speed of ions is limited to be no more than 3 times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than twice the local ion sound speed.
+				</description>
+			</switch>
+			<switch>
+				<name>b2nppo_restr_po</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					If b2nppo_restr_po.ne.0.0, the electric potential is restricted such that its ratio (in absolute value) with the electron temperature (in eV) does not exceed b2nppo_restr_po.
+					If b2nppo_restr_po is negative, the limit only applies to regions of negative electric potential.
+					Only applies on open field lines.
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_rte_min</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					If b2nppo_rte_min.gt.0.0, the electron to ion temperature ratio is forced to not be lower than rte_min (so, Te/Ti >= rte_min).
 				</description>
 			</switch>
 			<switch>
@@ -4033,6 +4051,14 @@
 				<description>
 					Stabilizing term to the source associated with boundary condition BCENI=15.
 					To help suppress ion temperature oscillations, this parameter can be set to a positive value. The range 1-100 is recommended.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npht_stab_shei</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Stabilizing term to the heat sources associated with ion-electron energy exchange.
 				</description>
 			</switch>
 			<switch>
@@ -5107,6 +5133,29 @@
 				<type>real</type>
 				<description>
 					Upper density bound (in m^{-3}) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+				</description>
+			</switch>
+		</category>
+		<category name="Optimization">
+			<switch>
+				<name>b2optim_save_states</name>
+				<default>0</default>
+				<description>
+					If larger than zero, specifies the number of optimization iterations between writes of the intermediate state file b2fstate_optim.XXXX.
+				</description>
+			</switch>
+			<switch>
+				<name>b2optim_reset_drift</name>
+				<default>0.4</default>
+				<description>
+					Percentage value at which drifts are reset at each function/gradient evaluation to avoid simualtion crash.
+				</description>
+			</switch>
+			<switch>
+				<name>b2optim_reset_iter</name>
+				<default>2</default>
+				<description>
+					When resetting drifts, the drift increase multiplier (e.g. fac_exb_inc) will be computed so that drifts are back at 100% in ntim/b2optim_reset_iter iterations.
 				</description>
 			</switch>
 		</category>
@@ -7268,6 +7317,58 @@
 				</description>
 			</switch>
 			<switch>
+				<name>DTEN</name>
+				<default>1.0</default>
+				<type>real array of size (0:NREG)</type>
+				<description>
+					Multiplier to the time used in solving the fluid neutral heat equation in region (ireg).
+				</description>
+			</switch>
+			<switch>
+				<name>DTFTS</name>
+				<default>0</default>
+				<type>integer array of size (DEF_NYD)</type>
+				<description>
+					List of flux tube indices for which individual timestep multipliers can be applied.
+				</description>
+			</switch>
+			<switch>
+				<name>DTCO_FT</name>
+				<default>1.0</default>
+				<type>real array of size (DEF_NYD)</type>
+				<description>
+					Individual timestep multiplier to all continuity equations applied in the corresponding flux tube from the DTFTS list.
+					Must be positive.
+				</description>
+			</switch>
+			<switch>
+				<name>DTMO_FT</name>
+				<default>1.0</default>
+				<type>real array of size (DEF_NYD)</type>
+				<description>
+					Individual timestep multiplier to all parallel momentum equations applied in the corresponding flux tube from the DTFTS list.
+					Must be positive.
+				</description>
+			</switch>
+			<switch>
+				<name>DTEE_FT</name>
+				<default>1.0</default>
+				<type>real array of size (DEF_NYD)</type>
+				<description>
+					Individual timestep multiplier to the electron heat equation applied in the corresponding flux tube from the DTFTS list.
+					Must be positive.
+				</description>
+			</switch>
+			<switch>
+				<name>DTEI_FT</name>
+				<default>1.0</default>
+				<type>real array of size (DEF_NYD)</type>
+				<description>
+					Individual timestep multiplier to the ion heat equation applied in the corresponding flux tube from the DTFTS list.
+					Must be positive.
+				</description>
+			</switch>
+			<switch>
 				<name>SOLVECO</name>
 				<default>.true.</default>
 				<type>logical array of size (0:NS-1,0:NREG)</type>
@@ -7317,12 +7418,36 @@
 				</description>
 			</switch>
 			<switch>
+				<name>SOLVEEN</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					Indicates whether the fluid neutral energy equation is to be solved in region (ireg). Subservient to 'no_solve' switch.
+				</description>
+			</switch>
+			<switch>
 				<name>SOLVEET</name>
 				<type>logical array of size (0:NREG)</type>
 				<description>
 					Indicates whether the total energy equation is to be solved in region (ireg). For the equation to be solved in region (ireg), both SOLVEEE and SOLVEEI must be true in that region. Subservient to 'no_solve' switch.
-					It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with total energy equation, as a group.
+					It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with the total energy equation, as a group.
 					Defaults to .true. unless using the time-dependent mode, in which case it is set to .false. and should not be used.
+				</description>
+			</switch>
+			<switch>
+				<name>SOLVEKT</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					Indicates whether the ExB turbulent kinetic energy equation is to be solved in region (ireg). Subservient to 'no_solve' switch.
+				</description>
+			</switch>
+			<switch>
+				<name>SOLVEZT</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					Indicates whether the ExB turbulent enstrophy equation is to be solved in region (ireg). Subservient to 'no_solve' switch.
 				</description>
 			</switch>
 			<switch>
@@ -7354,8 +7479,8 @@
 				<default>1.0</default>
 				<type>real array of size (0:NS-1)</type>
 				<description>
-				  Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
-				  See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
+					Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
+					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
 				</description>
 			</switch>
 			<switch>
@@ -7363,8 +7488,33 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
+					Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
 					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dn above.
+				</description>
+			</switch>
+			<switch>
+				<name>SNA_CORR</name>
+				<default>0.0</default>
+				<type>real array of size (1:NSPECIES)</type>
+				<description>
+					Multiplier to the neutral source differential between puffing (plus sputtering plus core boundary flux plus any external sources) and pumping, which is further added to the ionization source for code speed-up. One multiplier must be provided per isonuclear sequence. Such settings might be relevant for e.g. a mixture of main ion and trace impurity.
+					See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details and keep in mind that in that paper the scheme was described in its original species-unresolved form.
+				</description>
+			</switch>
+			<switch>
+				<name>TAUMAX</name>
+				<default>0.05</default>
+				<type>real array of size (1:NSPECIES)</type>
+				<description>
+					Maximum allowed fraction of ionization source for a given isonuclear sequence from its neutral state (coming from Eirene) to be added or subtracted to the real Eirene source in the method of effective sources for code speed-up.
+				</description>
+			</switch>
+			<switch>
+				<name>DO_SNA_CORR_CORE</name>
+				<default>.true.</default>
+				<type>logical array of size (1:NSPECIES)</type>
+				<description>
+					Parameter which controls exclusion/inclusion of confined region from/in the method of effective sources for code speed-up for each isonuclear sequence. If .true., then the flux through the core boundary of that species is taken into account during the source correction computation, and the source correction is applied on closed flux surfaces (default behavior). If .false., then the particle imbalance is computed as puffing plus sputtering plus any external sources minus pumping without account of the flux through the core boundary, and no source correction is applied on closed surfaces (such a setting might be helpful if the core flux is much bigger than the puffing rate and the core is isolated from the SOL by a strong transport barrier).
 				</description>
 			</switch>
 			<switch>
@@ -7927,11 +8077,22 @@
 					2 - Difference, on the desired CVs, of calculated electron temperature and values read from file, normalized with average experimental value (units must be eV).
 					3 - Difference, on the desired CVs, of calculated ion temperature and values read from file, normalized with average experimental value (units must be eV).
 					4 - Maximum electron temperature on the desired CVs (output in eV).
-					5 - Maximum heat flux on the desired FCs (output in W).
+					5 - Maximum heat flux on the desired FCs (output in W^{2}/m^{2}).
 					6 - Bayesian MAP cost function. CFSTART, CFEND indicate over which icf indexes the cost functions are to be summed (valid indexes are 1-3 and 7-9).
 					7 - Difference, on the desired CVs, of calculated electron density radial gradient and experimental values read from file, normalized with average experimental value  (units must be 10^{19}m^{-4}).
 					8 - Difference, on the desired CVs, of calculated electron temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m).
 					9 - Difference, on the desired CVs, of calculated ion temperature radial gradient and values read from file, normalized with average experimental value (units must be eV/m).
+					10 - Difference, on the desired CVs, of calculated ion saturation current (as ne*cs*eV) and values read from file, normalized with average experimental value (units must be kA/m^{2}).
+					11 - Heat flux peakedness on the desired FCs (output in W^{2}/m^{2}).
+					12 - Difference, on the desired FCs, of calculated perpendicular or parallel heat flux and values read from file, normalized with average experimental value (units must be in MW^{2}/m^{2}). Use PARALLEL_HF to specify whehter the parallel or perpendicular heat flux is used.
+				</description>
+			</switch>
+			<switch>
+				<name>PARALLEL_HF</name>
+				<default>TRUE</default>
+				<type>logical</type>
+				<description>
+					Indicates for cost function 12 if the heat flux considered is the one parallel to the magnetic field (TRUE) or perpendicular to the surface (FALSE). 
 				</description>
 			</switch>
 			<switch>
@@ -8001,7 +8162,7 @@
 				<default>0.0</default>
 				<type>real array of size (NSIGMA)</type>
 				<description>
-					Value of the standard deviation. For absolute STD the units are the same as the experimental data used for the cost function it refers to.
+					Value of the prediction error standard deviation. For absolute STD the units are the same as the experimental data used for the cost function it refers to.
 				</description>
 			</switch>
 			<switch>
@@ -8021,6 +8182,22 @@
 				</description>
 			</switch>
 			<switch>
+				<name>NMEAN</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of predictin error mean variables used for Bayesian MAP cost function.
+				</description>
+			</switch>
+			<switch>
+				<name>MEAN</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NMEAN)</type>
+				<description>
+					Value of the predictin error mean.
+				</description>
+			</switch>
+			<switch>
 				<name>PRIOR_TYPE</name>
 				<default>-1</default>
 				<type>integer array of size (NNVAR)</type>
@@ -8028,6 +8205,7 @@
 					Defines the type of prior distribution for each parameter for the MAP cost function. Possible values are:
 					0 - Uniform distribution (i.e. $\pi(\theta)=1.0$).
 					1 - Uninformative Gaussian prior.
+					2 - Gamma distribution, defined through mean and standard deviation.
 				</description>
 			</switch>
 			<switch>
@@ -8037,7 +8215,7 @@
 				<description>
 					Indicates parameters for the prior distributions.
 					For PRIOR_TYPE=0, not used.
-					For PRIOR_TYPE=1, PRIOR_TYPE(ii,1) indicates the mean of and PRIOR_TYPE(ii,2) indicates the standard deviation of the Gaussian distribution.
+					For PRIOR_TYPE=1 and 2, PRIOR_TYPE(ii,1) indicates the mean and PRIOR_TYPE(ii,2) indicates the standard deviation of the distribution.
 				</description>
 			</switch>
 			<switch>
@@ -8046,6 +8224,98 @@
 				<type>real array of size (NNVAR,2)</type>
 				<description>
 					Indicates the valid range for the prior distributions, outside of which the program will return an infinite cost function value. PRIOR_RANGE(:,1) sets the lower range and PRIOR_RANGE(:,2) sets the upper range. (p_infty is a parameter currently set to 1e30).
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_CF_DATA</name>
+				<default>0</default>
+				<type>integer array of size (NCF)</type>
+				<description>
+					For each cost function where experimental data is read, specifies whether or not to shift the separatrix position in the experimental data spatial coordinate as follows: (r - r_{sep}) - SHIFT_VALUE$. Unique integers larger than zero for each cost function means that each has its specific shift value. Using the same integer for two (or more) cost functions makes to code use the same shift value for those cost functions (the first SHIFT_VALUE among the cost function with the same integer is adopted). Possible usage: Thomson scattering data of density and temperature which should be defined in two separate cost functions but come from the same source and thus have the same shift. NSHIFT is then the number of unique integers and is used to define other parameters below other parameters.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_VALUE</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Defines the value of the shift in millimeters for each cost function with SHIFT_CF_DATA .neq. 0. Tis is also used as initial guess in case of optimization.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_PRIOR_TYPE</name>
+				<default>-1</default>
+				<type>integer array of size (NSHIFT)</type>
+				<description>
+					Same as PRIOR_TYPE but defined for each unique cost function shift.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_PRIOR_PAR</name>
+				<default>-1.0</default>
+				<type>real*8 array of size (NSHIFT,2)</type>
+				<description>
+					Same as PRIOR_PAR but defined for each unique cost function shift.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_PRIOR_RANGE</name>
+				<default>10*p_infty</default>
+				<type>real*8 array of size (NSHIFT,2)</type>
+				<description>
+					Same as PRIOR_RANGE but defined for each unique cost function shift.
+				</description>
+			</switch>
+
+
+			<switch>
+				<name>CORR_MODEL</name>
+				<default>0</default>
+				<type>integer array of size (NCF)</type>
+				<description>
+					Specifies the type of correlation model for the covariance matrix in the MAP cost function.Possible values are:
+					0 - No correlation, thus simple diagonal covariance matrix.
+					1 - Correlation model based on exponential decay with a correlation length specified using CORR_LENGTH.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_LENGTH</name>
+				<default>0.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Defines the value of the correlation length in millimeters for each MAP-type cost function with CORR_MODEL>0. This is also used as initial guess in case of optimization.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_CUTOFF</name>
+				<default>0.01</default>
+				<type>real*8</type>
+				<description>
+					For the exponential decay correlation model, off-diagonal elements with value of the exponential below this threshold are set to zero.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_PRIOR_TYPE</name>
+				<default>-1</default>
+				<type>integer array of size (NCORR_OPT)</type>
+				<description>
+					Same as PRIOR_TYPE but defined for each MAP cost function where sensitivity for CORR_LENGTH is calculated or this parameter optimized (see CORR_OPT). NCORR_OPT is the number of correlation lengths which are optimized, so for which a prior is required.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_PRIOR_PAR</name>
+				<default>-1.0</default>
+				<type>real*8 array of size (NCORR_OPT,2)</type>
+				<description>
+					Same as PRIOR_PAR but defined for each MAP cost function where sensitivity for CORR_LENGTH is calculated or this parameter optimized.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_PRIOR_RANGE</name>
+				<default>10*p_infty</default>
+				<type>real*8 array of size (NCORR_OPT,2)</type>
+				<description>
+					Same as PRIOR_RANGE but defined for each MAP cost function where sensitivity for CORR_LENGTH is calculated or this parameter optimized.
 				</description>
 			</switch>
 			<switch>
@@ -8058,17 +8328,18 @@
 			</switch>
 			<switch>
 				<name>PARTYPE</name>
-				<default>-1</default>
+				<default>-2</default>
 				<type>integer array of size (NNVAR)</type>
 				<description>
 					 Indicates the type of sensitivity/optimization parameter. Valid options are:
-					 0 - sigma, standard deviation in likelihood function for Bayesian inference (one for each plasma quantity and location used). These must ALWAYS be the last parameters in the vector!
+					 -1 - mean, error mean in likelihood function for Bayesian inference (one for each plasma quantity and location used). If present, these must ALWAYS be the last parameters in the vector!
+					 0 - sigma, standard deviation in likelihood function for Bayesian inference (one for each plasma quantity and location used). If present, these must ALWAYS be defined after each physical parameter (PARTYPE>0) and before the mean (PARTYPE=-1).
 					 1 - parm_dna or tdata(:,:,1,:)
 					 2 - parm_dpa or tdata(:,:,2,:)
 					 3 - parm_hci or tdata(:,:,3,:)
 					 4 - parm_hce or tdata(:,:,4,:)
-					 5 - parm_vla or tdata(:,:,5,:) (not yet tested!)
-					 6 - nothing yet (presumably y-component of vla?)
+					 5 - tdata(:,:,5,:) (not yet tested!)
+					 6 - parm_vla or tdata(:,:,6,:)
 					 7 - parm_vsa or tdata(:,:,7,:)
 					 8 - parm_sig or tdata(:,:,8,:)
 					 9 - parm_alf or tdata(:,:,9,:)
@@ -8109,7 +8380,31 @@
 				<default>.true.</default>
 				<type>logical array of size (NSIGMA)</type>
 				<description>
-					For each sigma, spcifies whether its sensitivity is computed or not, and thus whether it is optimized or fixed.
+					For each sigma, specifies whether its sensitivity is computed or not, and thus whether it is optimized or fixed.
+				</description>
+			</switch>
+			<switch>
+				<name>MEAN_OPT</name>
+				<default>.false.</default>
+				<type>logical array of size (NMEAN)</type>
+				<description>
+					For each mean, specifies whether its sensitivity is computed or not, and thus whether it is optimized or fixed.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_OPT</name>
+				<default>.false.</default>
+				<type>logical array of size (NSHIFT)</type>
+				<description>
+					For each SHIFT_CF_VALUE, specifies whether its sensitivity is computed or not, and whether is optimized or fixed.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_OPT</name>
+				<default>.false.</default>
+				<type>logical array of size (NCF)</type>
+				<description>
+					For each MAP cost function where CORR_MODEL>0, specifies whether CORR_LENGTH sensitivity is computed or not, and whether is optimized or fixed.
 				</description>
 			</switch>
 			<switch>
@@ -8158,7 +8453,7 @@
 				<default>10*p_infty</default>
 				<type>real array of size (NPAR_OPT)</type>
 				<description>
-					Initial guess for each optimization parameter. (p_infty is a parameter currently set to 1e30).
+					Initial guess for each optimization parameter. Must be defined (p_infty is a parameter currently set to 1e30).
 				</description>
 			</switch>
 			<switch>
@@ -8175,6 +8470,46 @@
 				<type>real array of size (NPAR_OPT)</type>
 				<description>
 					Upper bound for each optimization parameter.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_L</name>
+				<default>-1000.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Lower bound for SHIFT_CF_DATA parameters.
+				</description>
+			</switch>
+			<switch>
+				<name>SHIFT_U</name>
+				<default>1000.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Upper bound for SHIFT_CF_DATA parameters.
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_L</name>
+				<default>-10*p_infty</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Lower bound for CORR_LENGTH parameters. Must be specified for each cost function!
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_U</name>
+				<default>10*p_infty</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Upper bound for CORR_LENGTH parameters. Must be specified for each cost function!
+				</description>
+			</switch>
+			<switch>
+				<name>CORR_RESCALE</name>
+				<default>1.0</default>
+				<type>real*8 array of size (NCF)</type>
+				<description>
+					Same as PAR_RESCALE but defined for CORR_LENGTH} parameters. Must be specified for each cost function!
 				</description>
 			</switch>
 			<switch>

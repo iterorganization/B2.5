@@ -22,7 +22,9 @@ csw 09jan2014 extra module to define some arrays
 #else
       use b2mod_eirdiag
 #endif
+#ifndef B25_EIRENE
       use b2mod_dimensions
+#endif
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
@@ -41,7 +43,7 @@ csw 09jan2014 declare fun to be private
        real (kind=R8), allocatable, save :: R_midpl(:)    ! radial surface coordinates     [m]
        real (kind=R8), allocatable, save :: Z_midpl(:)    ! Z              coordinates     [m]
        real (kind=R8), allocatable, save :: Rc_midpl(:)   ! radial cell centre coordinates [m]
-       real (kind=R8), allocatable, save :: chci_koeff(:,:) !
+       real (kind=R8), allocatable, save :: chci_koeff(:) !
        real (kind=R8), allocatable, save :: sfna(:,:)     ! integrated partical flux        [1/s]
        real (kind=R8), allocatable, save :: sfna_mdf(:,:) ! integrated modified partical flux    [1/s]
        real (kind=R8), allocatable, save :: sfne(:)       ! integrated electron flux        [1/s]
@@ -50,9 +52,12 @@ csw 09jan2014 declare fun to be private
        integer, save :: iy_Ratb, iy_crb_astra
        contains
 
-       subroutine alloc_b2mod_b2_to_astra(nxd, nyd, nsd)
+       subroutine alloc_b2mod_b2_to_astra(mpg, nyd, nsd)
+        use b2us_map_diffv
         implicit none
-        integer nxd, nyd, nsd
+        type(mapping), intent(in) :: mpg
+        integer, intent(in) :: nyd, nsd
+
         allocate (se(-1:nyd))
         allocate (seh(-1:nyd))                            !srv 11.06.13
         allocate (sih(-1:nyd))                            !srv 11.06.13
@@ -60,7 +65,7 @@ csw 09jan2014 declare fun to be private
         allocate (R_midpl(-1:nyd))
         allocate (Z_midpl(-1:nyd))
         allocate (Rc_midpl(-1:nyd))
-        allocate (chci_koeff(-1:nxd,-1:nyd))
+        allocate (chci_koeff(mpg%nCv))
         allocate (sfna(-1:nyd,0:nsd))
         allocate (sfna_mdf(-1:nyd,0:nsd))
         allocate (sfne(-1:nyd))
@@ -94,7 +99,7 @@ csw 09jan2014 declare fun to be private
        subroutine write_b2_to_astra(nxd, nyd, nsd, ismain, ismain0,
      &   nwrite)
         use b2mod_anomalous_transport_diffv
-        use b2mod_indirect
+        use b2mod_indirect_diffv
         use b2mod_geo_diffv
         use b2mod_plasma_diffv
         use b2mod_constants
@@ -628,14 +633,16 @@ csw 09jan2014 add 'fun' function
        fun=-DSEVAL(np+1,arg,p,x,cb,cc,cd)
        end function fun
 
-       subroutine b2_to_astra_src(nxd, nyd, vol, source, svol, src)   !srv 11.06.13
-       use b2mod_indirect
+       subroutine b2_to_astra_src(mpg, nyd, vol, source, svol, src)   !srv 11.06.13
+       use b2mod_indirect_diffv
+       use b2us_map_diffv
        implicit none
 !       integrated source   [1/s]
+       type(mapping), intent(in) :: mpg
        integer :: nxd, nyd
-       real (kind=R8) :: src(-1:nyd), source(-1:nxd,-1:nyd),
-     &                   svol(-1:nyd), vol(-1:nxd,-1:nyd)
-       integer :: ix, iy
+       real (kind=R8) :: src(-1:nyd), source(mpg%nCv),
+     &                   svol(-1:nyd), vol(mpg%nCv)
+       integer :: iCv
        integer, save :: ncall = 0, mintopcut
 
 
@@ -648,42 +655,46 @@ csw 09jan2014 add 'fun' function
             mintopcut=minval(topcut(1:nncut))
           endif
          endif
+#ifdef WG_TODO
          do iy = 0, mintopcut-1    ! closed surfaces
           svol(iy) = 0.0_R8
           do ix = -1, nxd
-           if(on_closed_surface(ix,iy)) then
-            svol(iy) = svol(iy) + vol(ix,iy)
+           if(mpg%cvOnClosedSurface(iCv)) then
+            svol(iy) = svol(iy) + vol(iCv)
            endif
           enddo
          enddo
          do iy = mintopcut,nyd    ! open surfaces
           svol(iy) = 0.0_R8
           do ix = -1, nxd
-            svol(iy) = svol(iy) + vol(ix,iy)
+            svol(iy) = svol(iy) + vol(iCv)
           enddo
          enddo
+#endif
 !         write (*,"(a, i5)") '    svol ncall=', ncall
 !         write (*,"(es15.7)") svol
        endif
 
+#ifdef WG_TODO
        do iy = 0, mintopcut-1
          do ix = -1, nxd
-          if(on_closed_surface(ix,iy)) then   ! closed surfaces
-!          src(iy) = src(iy) + vol(ix,iy)*source(ix,iy)
-           src(iy) = src(iy) + source(ix,iy)   ! source has been multiplied by vol
+          if(mpg%cvOnClosedSurface(iCv)) then   ! closed surfaces
+!          src(iy) = src(iy) + vol(iCv)*source(iCv)
+           src(iy) = src(iy) + source(iCv)   ! source has been multiplied by vol
           endif
          enddo
        enddo
        do iy = mintopcut,nyd-1   ! open surfaces
          do ix = 0,nxd-1          !   -1, nxd
-!          src(iy) = src(iy) + vol(ix,iy)*source(ix,iy)
-           src(iy) = src(iy) + source(ix,iy)   ! source has been multiplied by vol
+!          src(iy) = src(iy) + vol(iCv)*source(iCv)
+           src(iy) = src(iy) + source(iCv)   ! source has been multiplied by vol
          enddo
        enddo
 !         write (*,"(a, i5)") '       src         svol      ncall=', ncall
 !         do iy = 0, nyd-1
 !          write (*,"(2es15.7)") src(iy),svol(iy)
 !        enddo
+#endif
 
        ncall = ncall + 1
        end subroutine b2_to_astra_src

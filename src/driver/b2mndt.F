@@ -44,7 +44,8 @@
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
-     &          rsamoreg
+     &          rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue,
+     &          b2divua, b2exbe
       use b2us_feedback
      & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
@@ -56,7 +57,12 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:10), nCv, nFc, nVx, ns, ismain,
+#ifdef JET
+      integer nout(0:11)
+#else
+      integer nout(0:10)
+#endif
+      integer nCv, nFc, nVx, ns, ismain,
      *  ismain0, nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
       integer, save :: ibatch_av_all = 0
@@ -462,11 +468,11 @@ c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
 *      ..write the tracing data
             if (ank_tracing.ne.0) then
               if (ncall_b2mndt.eq.0.and.istg(2).eq.0) then
-                call alloc_b2mod_user(geo,mpg,ns,nlim,nnmoli)
+                call alloc_b2mod_user(geo,mpg,ns,nlim,nnmoli,switch)
                 call b2filei(ns,mpg%nnreg(0),switch)
               end if
               if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >         call b2filew(istg(2),mpg%nnreg(0))
+     >         call b2filew(istg(2),mpg%nnreg(0),st%diag)
             endif
 *      ..update iteration counter
             b2mndt_itcnt = b2mndt_itcnt+1
@@ -496,10 +502,10 @@ c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
      &       st%dv%facdrift, st%dv%fac_ExB, st%dv%ne, st%pl%te,
      &       st%pl%po, st%dv%vedia, st%dv%veecrb)
 *      ..compute other fluxes
-            call b2xpen (nCv, nFc, ns, mpg,
+            call b2xpen (nCv, nFc, ns, mpg, switch,
      &       st%dv%fna, st%dv%fna_53, st%dv%fne_53,
      &       st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt%rpt,
-     &       st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, switch%BoRiS,
+     &       st%pl%te, st%pl%ti, st%pl%tn, st%pl%po,
      &       st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
             if (switch%b2sigp_style.eq.2) then

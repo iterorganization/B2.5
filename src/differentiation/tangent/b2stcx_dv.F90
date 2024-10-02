@@ -16,17 +16,13 @@
 !.specification
 !
 !srv 09.01.01
-!srv 07.07.09
 SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
-& , ua, ti, tn, ni, rcx, sna0, smq0, shi0, shn0)
+& , ua, ti, tn, ni, rcx, sna0, smq0, shi0, shn0, rcxna, rcxmo, rcxhi)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
 !      use b2mod_tallies
 !      use b2mod_sources
   USE B2MOD_B2CMPA_DIFFV
-!      use b2mod_balance !djm Jan2017
-!     & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
-!     &          balance_netcdf
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -46,7 +42,8 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 & ni(ncv, 0:1), rcx(ncv, 0:ns-1)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: sna0(ncv, 0:1, 0:ns-1), smq0(ncv, 0:3, 0:ns-1), shi0(&
-& ncv, 0:3), shn0(ncv, 0:3)
+& ncv, 0:3), shn0(ncv, 0:3), rcxna(ncv, 0:ns-1), rcxmo(ncv, 0:ns-1), &
+& rcxhi(ncv, 0:ns-1)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -68,7 +65,11 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
   EXTERNAL XERTST, damax, SFILL_NODIFF
 !   ..procedures
   REAL(kind=r8) :: damax
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
+  INTRINSIC ABS
+  INTRINSIC MAXVAL
+  INTRINSIC NINT
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
   LOGICAL :: result1
   INTEGER :: arg1
   REAL(kind=r8) :: result10
@@ -81,8 +82,10 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 !   ..subprogram start-up calls
   CALL SUBINI('b2stcx')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
+  CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
+&       'faulty argument ismain')
 !   ..test is0
   CALL XERTST(0 .LE. is0 .AND. is0 .LT. ns - 1, 'faulty argument is0')
   result1 = LNEXT(is0, is0 + 1)
@@ -91,13 +94,21 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 !   ..extensive tests on first few calls
   IF (ncall_b2stcx .LT. 3) THEN
 !    ..test sign of vol, na, ti, ni
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    WHERE (ua .GE. 0.0) 
+      abs0 = ua
+    ELSEWHERE
+      abs0 = -ua
+    END WHERE
+!    ..test velocities
+    result10 = MAXVAL(abs0)
+    CALL XERTST(result10 .LT. c, 'Supra-luminal velocities !')
 !    ..test rate coefficients
     DO is=1,ns-1
       IF (.NOT.LNEXT(is - 1, is)) THEN
@@ -144,10 +155,10 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 &             na(icv, is)
             sna0(icv, 1, is) = sna0(icv, 1, is) - t0*na(icv, is0)
             sna0(icv, 1, is0) = sna0(icv, 1, is0) - t0*na(icv, is)
-!WG_TODO            rcxna(iCv,is)=rcxna(iCv,is)+
-!WG_TODO     1       t0*na(iCv,is0)*na(iCv,is)
-!WG_TODO            rcxna(iCv,is0)=rcxna(iCv,is0)-
-!WG_TODO     1       t0*na(iCv,is0)*na(iCv,is)
+            rcxna(icv, is) = rcxna(icv, is) + t0*na(icv, is0)*na(icv, is&
+&             )
+            rcxna(icv, is0) = rcxna(icv, is0) - t0*na(icv, is0)*na(icv, &
+&             is)
 !WG_TODO            rcxnareg(mpg%cvReg(iCv),is)=
 !WG_TODO     1       rcxnareg(mpg%cvReg(iCv),is)+t0*na(iCv,is0)*na(iCv,is)
 !WG_TODO            rcxnareg(mpg%cvReg(iCv),is0)=
@@ -182,7 +193,7 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
             shi0(icv, 0) = shi0(icv, 0) + t1
           ELSE
 !tn_style=2
-            IF (zn(is) .EQ. 1 .AND. zn(is0) .EQ. 1) THEN
+            IF (NINT(zn(is)) .EQ. 1 .AND. NINT(zn(is0)) .EQ. 1) THEN
 ! CX between hydrogenic species
               tkin = mp/2.0_R8*((am(is0)+am(is0+1))/2.0_R8)*du1**2
               t1 = t0*na(icv, is0)*na(icv, is)*(1.5_R8*(tn(icv)-ti(icv))&
@@ -190,14 +201,14 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
               tkin = mp/2.0_R8*((am(is)+am(is-1))/2.0_R8)*du0**2
               t1n = t0*na(icv, is0)*na(icv, is)*(1.5_R8*(ti(icv)-tn(icv)&
 &               )+tkin)
-            ELSE IF (zn(is0) .EQ. 1) THEN
+            ELSE IF (NINT(zn(is0)) .EQ. 1) THEN
 ! only is0/is0+1 hydrogenic
               tkin = mp/2.0_R8*((am(is)+am(is-1))/2.0_R8*du0**2+(am(is0)&
 &               +am(is0+1))/2.0_R8*du1**2)
               t1 = t0*na(icv, is0)*na(icv, is)*(tkin+1.5_R8*tn(icv))
               tkin = mp/2.0_R8*((am(is)+am(is-1))/2.0_R8)*du0**2
               t1n = -(t0*na(icv, is0)*na(icv, is)*1.5_R8*tn(icv))
-            ELSE IF (zn(is) .EQ. 1) THEN
+            ELSE IF (NINT(zn(is)) .EQ. 1) THEN
 ! only is/is-1 hydrogenic
               tkin = mp/2.0_R8*((am(is0)+am(is0+1))/2.0_R8)*du1**2
               t1 = t0*na(icv, is0)*na(icv, is)*(-(1.5_R8*ti(icv))+tkin)
@@ -213,10 +224,10 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
             shi0(icv, 0) = shi0(icv, 0) + t1
             shn0(icv, 0) = shn0(icv, 0) + t1n
           END IF
+          rcxhi(icv, is) = rcxhi(icv, is) + t1
+!WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
         END IF
       END DO
-!WG_TODO           rcxhi(iCv,is)=rcxhi(iCv,is)+t1
-!WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
 !     ..parallel momentum source
       rg0 = switch%b2stcx_rg0
 !!   (rg0 for numerical stabilisation; needs experiments.) (default = 1.0)
@@ -309,16 +320,16 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 &             result10
             smq0(icv, 1, is0) = smq0(icv, 1, is0) - (1.0_R8+rg0)*t2
           END IF
-        END IF
-      END DO
-    END IF
-  END DO
-!WG_TODO            rcxmo(iCv,is)=rcxmo(iCv,is)+t1*ua(iCv,is)
-!WG_TODO            rcxmo(iCv,is0)=rcxmo(iCv,is0)-t2*ua(iCv,is)
+          rcxmo(icv, is) = rcxmo(icv, is) + t1*ua(icv, is)
+          rcxmo(icv, is0) = rcxmo(icv, is0) - t2*ua(icv, is)
 !WG_TODO            rcxmoreg(mpg%cvReg(iCv),is)=
 !WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is)+t1*ua(iCv,is)
 !WG_TODO            rcxmoreg(mpg%cvReg(iCv),is0)=
 !WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is0)-t2*ua(iCv,is0)
+        END IF
+      END DO
+    END IF
+  END DO
 !
 !
   WRITE(chcx, '(i3.3)') is0
@@ -374,12 +385,6 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
     END DO
   END IF
 !
-!djm Jan2017 Keep linearised sources for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2stcx_sna0to1 = sna0
-!WG_TODO        b2stcx_smq0to3 = smq0
-!WG_TODO        b2stcx_shi0to3 = shi0
-!WG_TODO      endif
 !
 ! ..return
   ncall_b2stcx = ncall_b2stcx + 1
@@ -425,18 +430,15 @@ END SUBROUTINE B2STCX_NODIFF
 !.specification
 !
 !srv 09.01.01
-!srv 07.07.09
-SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, geo, geod, mpg, &
-& na, nad, ua, uad, ti, tid, tn, tnd, ni, rcx, rcxd, sna0, sna0d, smq0, &
-& smq0d, shi0, shi0d, shn0, shn0d, nbdirs)
+SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo, &
+& geod, mpg, na, nad, ua, uad, ti, tid, tn, tnd, ni, nid, rcx, rcxd, &
+& sna0, sna0d, smq0, smq0d, shi0, shi0d, shn0, shn0d, rcxna, rcxmo, &
+& rcxhi, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
 !      use b2mod_tallies
 !      use b2mod_sources
   USE B2MOD_B2CMPA_DIFFV
-!      use b2mod_balance !djm Jan2017
-!     & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
-!     &          balance_netcdf
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
@@ -451,17 +453,19 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, geo, geod, mpg, &
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, ns, is0, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), ti(ncv), tn(ncv), &
 & ni(ncv, 0:1), rcx(ncv, 0:ns-1)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
-& -1), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), rcxd(nbdirsmax, ncv, 0:&
-& ns-1)
+& -1), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1&
+& ), rcxd(nbdirsmax, ncv, 0:ns-1)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: sna0(ncv, 0:1, 0:ns-1), smq0(ncv, 0:3, 0:ns-1), shi0(&
-& ncv, 0:3), shn0(ncv, 0:3)
+& ncv, 0:3), shn0(ncv, 0:3), rcxna(ncv, 0:ns-1), rcxmo(ncv, 0:ns-1), &
+& rcxhi(ncv, 0:ns-1)
   REAL(kind=r8) :: sna0d(nbdirsmax, ncv, 0:1, 0:ns-1), smq0d(nbdirsmax, &
 & ncv, 0:3, 0:ns-1), shi0d(nbdirsmax, ncv, 0:3), shn0d(nbdirsmax, ncv, 0&
 & :3)
@@ -489,7 +493,11 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, geo, geod, mpg, &
   EXTERNAL SFILL_DV
 !   ..procedures
   REAL(kind=r8) :: damax
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
+  INTRINSIC ABS
+  INTRINSIC MAXVAL
+  INTRINSIC NINT
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
   LOGICAL :: result1
   INTEGER :: arg1
   REAL(kind=r8) :: result10
@@ -513,8 +521,10 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, geo, geod, mpg, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2stcx')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
+  CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
+&       'faulty argument ismain')
 !   ..test is0
   CALL XERTST(0 .LE. is0 .AND. is0 .LT. ns - 1, 'faulty argument is0')
   result1 = LNEXT(is0, is0 + 1)
@@ -523,13 +533,21 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, geo, geod, mpg, &
 !   ..extensive tests on first few calls
   IF (ncall_b2stcx .LT. 3) THEN
 !    ..test sign of vol, na, ti, ni
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, tn, 1, 'tn', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    WHERE (ua .GE. 0.0) 
+      abs0 = ua
+    ELSEWHERE
+      abs0 = -ua
+    END WHERE
+!    ..test velocities
+    result10 = MAXVAL(abs0)
+    CALL XERTST(result10 .LT. c, 'Supra-luminal velocities !')
 !    ..test rate coefficients
     DO is=1,ns-1
       IF (.NOT.LNEXT(is - 1, is)) THEN
@@ -603,10 +621,10 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, geo, geod, mpg, &
             sna0(icv, 0, is0+1) = sna0(icv, 0, is0+1) + temp*na(icv, is)
             sna0(icv, 1, is) = sna0(icv, 1, is) - t0*na(icv, is0)
             sna0(icv, 1, is0) = sna0(icv, 1, is0) - t0*na(icv, is)
-!WG_TODO            rcxna(iCv,is)=rcxna(iCv,is)+
-!WG_TODO     1       t0*na(iCv,is0)*na(iCv,is)
-!WG_TODO            rcxna(iCv,is0)=rcxna(iCv,is0)-
-!WG_TODO     1       t0*na(iCv,is0)*na(iCv,is)
+            rcxna(icv, is) = rcxna(icv, is) + t0*na(icv, is0)*na(icv, is&
+&             )
+            rcxna(icv, is0) = rcxna(icv, is0) - t0*na(icv, is0)*na(icv, &
+&             is)
 !WG_TODO            rcxnareg(mpg%cvReg(iCv),is)=
 !WG_TODO     1       rcxnareg(mpg%cvReg(iCv),is)+t0*na(iCv,is0)*na(iCv,is)
 !WG_TODO            rcxnareg(mpg%cvReg(iCv),is0)=
@@ -679,7 +697,7 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, geo, geod, mpg, &
             shi0(icv, 0) = shi0(icv, 0) + t1
           ELSE
 !tn_style=2
-            IF (zn(is) .EQ. 1 .AND. zn(is0) .EQ. 1) THEN
+            IF (NINT(zn(is)) .EQ. 1 .AND. NINT(zn(is0)) .EQ. 1) THEN
 ! CX between hydrogenic species
               temp1 = mp*(am(is0)+am(is0+1))
               DO nd=1,nbdirs
@@ -709,7 +727,7 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, geo, geod, mpg, &
 &                 1.5_R8*(tid(nd, icv)-tnd(nd, icv))+tkind(nd))
               END DO
               t1n = temp0*temp2
-            ELSE IF (zn(is0) .EQ. 1) THEN
+            ELSE IF (NINT(zn(is0)) .EQ. 1) THEN
               tkin = mp/2.0_R8*((am(is)+am(is-1))/2.0_R8*du0**2+(am(is0)&
 &               +am(is0+1))/2.0_R8*du1**2)
               temp1 = tkin + 1.5_R8*tn(icv)
@@ -732,7 +750,7 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, geo, geod, mpg, &
 &                 t0d(nd)+t0*tnd(nd, icv))))
               END DO
               t1n = -(1.5_R8*(temp1*(t0*tn(icv))))
-            ELSE IF (zn(is) .EQ. 1) THEN
+            ELSE IF (NINT(zn(is)) .EQ. 1) THEN
 ! only is/is-1 hydrogenic
               temp1 = mp*(am(is0)+am(is0+1))
               DO nd=1,nbdirs
@@ -788,10 +806,10 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, geo, geod, mpg, &
             shi0(icv, 0) = shi0(icv, 0) + t1
             shn0(icv, 0) = shn0(icv, 0) + t1n
           END IF
+          rcxhi(icv, is) = rcxhi(icv, is) + t1
+!WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
         END IF
       END DO
-!WG_TODO           rcxhi(iCv,is)=rcxhi(iCv,is)+t1
-!WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
 !     ..parallel momentum source
       rg0 = switch%b2stcx_rg0
 !!   (rg0 for numerical stabilisation; needs experiments.) (default = 1.0)
@@ -1009,16 +1027,16 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, geo, geod, mpg, &
 &             temp1)
             smq0(icv, 1, is0) = smq0(icv, 1, is0) - (1.0_R8+rg0)*t2
           END IF
-        END IF
-      END DO
-    END IF
-  END DO
-!WG_TODO            rcxmo(iCv,is)=rcxmo(iCv,is)+t1*ua(iCv,is)
-!WG_TODO            rcxmo(iCv,is0)=rcxmo(iCv,is0)-t2*ua(iCv,is)
+          rcxmo(icv, is) = rcxmo(icv, is) + t1*ua(icv, is)
+          rcxmo(icv, is0) = rcxmo(icv, is0) - t2*ua(icv, is)
 !WG_TODO            rcxmoreg(mpg%cvReg(iCv),is)=
 !WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is)+t1*ua(iCv,is)
 !WG_TODO            rcxmoreg(mpg%cvReg(iCv),is0)=
 !WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is0)-t2*ua(iCv,is0)
+        END IF
+      END DO
+    END IF
+  END DO
 !
 !
   WRITE(chcx, '(i3.3)') is0
@@ -1074,12 +1092,6 @@ SUBROUTINE B2STCX_DV(ncv, nfc, ns, is0, ismain, switch, geo, geod, mpg, &
     END DO
   END IF
 !
-!djm Jan2017 Keep linearised sources for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2stcx_sna0to1 = sna0
-!WG_TODO        b2stcx_smq0to3 = smq0
-!WG_TODO        b2stcx_shi0to3 = shi0
-!WG_TODO      endif
 !
 ! ..return
   ncall_b2stcx = ncall_b2stcx + 1

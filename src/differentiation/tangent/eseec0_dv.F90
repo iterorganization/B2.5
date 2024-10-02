@@ -20,7 +20,7 @@ SUBROUTINE ESEEC0_NODIFF(tef, tif, nef, pof, bpf, bbf, material, ix, iy&
 & , nx, ny, ns, ismain, sec, diagno)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_GEO_DIFFV
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SUBSYS

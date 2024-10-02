@@ -30,6 +30,12 @@ endif
 
 DDBLOPTION = -Ad # ???
 
+ifdef TAO
+include ${PETSC_DIR}/lib/petsc/conf/variables
+LIBOPT = ${PETSC_LIB}
+CPP    = /lib/cpp -traditional
+endif
+
 #!!!Local Variables:
 #!!! mode: Makefile
 #!!! End:

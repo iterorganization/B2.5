@@ -2,8 +2,8 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2rurc as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtlsa:out rtlcx:out rtlqa:out
-!                rtlra:out
+!   Plus diff mem management of: rtlsa:out rtlcx:out rtzmax:out
+!                rtlqa:out rtzn:out rtlra:out rtzmin:out
 !
 !
 !
@@ -184,19 +184,15 @@ SUBROUTINE B2RURC_DV(nget, version, nbdirs)
   PARAMETER (lnzero=-1.0e30_R8)
   EXTERNAL XERTST, smax, CFRURE, CFRURE_DEP, CFRUIN, CFRUIN_OPT, &
 &     CFRUIN_DEP
-  EXTERNAL XERTST_DV
+  EXTERNAL XERTST_DV, CFRURE_DV, CFRUIN_DV
 !   ..procedures
   REAL(kind=r8) :: smax
   INTRINSIC MAXVAL
-  EXTERNAL MAXVAL_DV
   INTRINSIC MINVAL
-  EXTERNAL MINVAL_DV
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: nbdirs
-  REAL(kind=r8) :: MINVAL_DV
-  REAL(kind=r8) :: MAXVAL_DV
 !
 !-----------------------------------------------------------------------
 !.computation

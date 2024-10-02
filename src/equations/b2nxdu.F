@@ -38,7 +38,7 @@
       integer iCv, is
 *   ..procedures
       external xertst, sfill
-      external b2xvsg, b2xvfx
+      external b2xvsg
 *   ..initialisation
 
 *-----------------------------------------------------------------------

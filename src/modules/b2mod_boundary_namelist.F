@@ -2026,7 +2026,7 @@ cc BCPOT
       subroutine bc_to_struct (m)
       type(mapping), intent(inout) :: m
       integer :: ib, inbc, ibc, iFc, ic1, ic2
-      integer :: i, j, k
+      integer :: i, j, k, indd
 #ifdef WG_DEBUG
       integer :: iout, ian, ien
 #endif
@@ -2065,7 +2065,8 @@ cc BCPOT
       end do
 
       if (allocated(m%strDiv)) then
-        do i = 1, maxval(m%strDiv)
+        indd = maxval(m%strDiv)
+        do i = 1, indd
           do j = m%divFcP(i,1), m%divFcP(i,1) + m%divFcP(i,2) - 1
             iFc = m%divFc(j)
             do k = 1, size(m%bcFc)

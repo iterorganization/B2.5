@@ -15,10 +15,6 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpt
       use b2mod_b2cmpb
-!      use b2mod_ranges
-!      use b2mod_neoclassical
-!      use b2mod_geo_corner
-!     &                    , only : lengthy, nmdpl                 !srv 26.11.04
       use b2mod_user_namelist
      , , only : omp
       use b2mod_switches
@@ -40,8 +36,8 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
-     *  ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns,
+     *  nscx, nscxmax, iscx(0:nscxmax-1), ismain
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -226,18 +222,18 @@
 *   ..compute auxiliary wrk0
       wrk0 = sqrt(pl%ti/mp)
       if(switch%b2tqna_transport_namelist.eq.1) then
-        do is=0,ns-1
+        do is = 0, ns-1
           if(.not.is_neutral(is)) then
 * dna
-            call transform_transport(flag_dna,parm_dna(is),cfdna(0,is))
+            call transform_transport(flag_dna,parm_dna(is),cfdna(:,is))
 * dpa
-            call transform_transport(flag_dpa,parm_dpa(is),cfdpa(0,is))
+            call transform_transport(flag_dpa,parm_dpa(is),cfdpa(:,is))
 * vla
-            call transform_transport(flag_vla,parm_vla(is),cfvla(0,is))
+            call transform_transport(flag_vla,parm_vla(is),cfvla(:,is))
 * vsa
-            call transform_transport(flag_vsa,parm_vsa(is),cfvsa(0,is))
+            call transform_transport(flag_vsa,parm_vsa(is),cfvsa(:,is))
 * hci
-            call transform_transport(flag_hci,parm_hci(is),cfhci(0,is))
+            call transform_transport(flag_hci,parm_hci(is),cfhci(:,is))
           endif
         enddo
 * hce
@@ -488,7 +484,7 @@ cxpb Corrected for dimensionality
       endif
 
       if(switch%b2tqna_iout.ne.0) then                               !srv 10.11.09 {
-        do is = 0,ns-1
+        do is = 0, ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,dna0(1,is),'b2tqna_in_dna0'//chns)
           call my_out_us(70,nCv,0,dpa0(1,is),'b2tqna_in_dpa0'//chns)
@@ -587,7 +583,7 @@ cdpc
      1      (switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
      1       switch%b2tqna_ballooning*
      1       switch%b2tqna_ballooning_rescale
-            do is=0,ns-1
+            do is = 0, ns-1
               if(.not.is_neutral(is)) then
                 dna0(iCv,is)=dna0(iCv,is)*poloidal_scale_factor
                 dpa0(iCv,is)=dpa0(iCv,is)*poloidal_scale_factor
@@ -3834,10 +3830,14 @@ c*******************************************************************************
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : b2tqna_keps_eps, ncall_transp_keps
+#ifndef NAGFOR
+      use b2mod_ad
+     & , only : my_out_folder
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns, ismain
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -3868,15 +3868,15 @@ c*******************************************************************************
         endif
       endif
       hci_ExB = 0.0_R8
-      do is=0,ns-1
+      do is = 0, ns-1
         if(.not.is_neutral(is)) then
           if(switch%keps_local.eq.1) then
 *   ..compute local Larmor radius
             rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti/(am(ismain)*mp))/
-     &       abs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
+     &       dabs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
           else
             rhol = am(ismain)*mp*sqrt(2.0_R8*pl%ti(omp(icsepomp))/
-     &            (am(ismain)*mp))/abs(rt%rza(omp(icsepomp),ismain)*qe*
+     &            (am(ismain)*mp))/dabs(rt%rza(omp(icsepomp),ismain)*qe*
      &             geo%cvBb(omp(icsepomp),3))
           endif
 *       ..compute radial shear of diamagnetic ExB velocity
@@ -3890,14 +3890,14 @@ cwdk at the moment: assumption that kt is related to main ion species;
 cwdk same dna_ExB for all ion species
             dna_ExB = switch%keps_cd*(pl%kt/(am(ismain)*mp))/
      &      (sqrt(pl%kt/(am(ismain)*mp))/rhol + switch%keps_shear*
-     &       abs(shear) + b2tqna_keps_eps)
+     &       dabs(shear) + b2tqna_keps_eps)
             dna0(:,is) = (dna_ExB + switch%dna_min)*switch%keps_fac
      &        +(1.0_R8-switch%keps_fac)*dna0(:,is)
           elseif(switch%transport_keps.eq.2) then
 *   ..compute D according to KUL, using kt and zt
             dna_ExB = switch%keps_cd*(pl%kt/(am(ismain)*mp))/
      &      (sqrt(pl%zt/(am(ismain)*mp)) + switch%keps_shear*
-     &       abs(shear) + b2tqna_keps_eps)
+     &       dabs(shear) + b2tqna_keps_eps)
             dna0(:,is) = (dna_ExB + switch%dna_min)*switch%keps_fac
      &        +(1.0_R8-switch%keps_fac)*dna0(:,is)
           else

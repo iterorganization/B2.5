@@ -10,10 +10,12 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+#ifndef FIXED_POINT
       use b2mod_balance                                                 !djm Jan2017
      & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
+#endif
       use b2mod_ad
-     & , only : ncall_b2siav
+     & , only : ncall_b2siav, nsmooth_siav
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -54,7 +56,6 @@
 
 *   ..local variables
       integer ic, iCv, iFc, iFt, k
-      integer, save :: nsmooth = 2
       character chns*3, chk*1                                           !srv 17.06.02
       real (kind=R8) ::
      *     t0, ft                                                       !srv 16.10.17
@@ -119,7 +120,7 @@
 
             !smoothing: interpolate to faces and back to cell centers
             wght = 1.0_R8
-            do k = 1, nsmooth
+            do k = 1, nsmooth_siav
              call intface(nCv,nFc,mpg%fcCv,wght,qip0,wrkf)
              call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf,qip0)
              !copy value of qip0 across separatrix
@@ -301,11 +302,13 @@
         call my_out_us(70,nFc,1,cvsbhz_cl(1,1),'b2siav_cvsbhz_r'//chns)
       endif                                                             !srv 17.06.02 }
 
+#ifndef FIXED_POINT
 cdjm Jan2017 Store linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2siav_smovh0to3(1:nCv,0:3,isb)=smbvh
         b2siav_smovv0to3(1:nCv,0:3,isb)=smbvv
       endif
+#endif
 
 * ..return
       ncall_b2siav = ncall_b2siav+1

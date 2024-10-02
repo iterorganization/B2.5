@@ -14,16 +14,10 @@ endif
 
 CPP = /lib/cpp -traditional -ffreestanding
 
-FC ?= gfortran
-
-GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')
-
-GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
-GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
-
 FCOPTS = -freal-4-real-8
 
 DDBLOPTION = -Ad # ???
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

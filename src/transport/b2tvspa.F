@@ -14,7 +14,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain                                 !lkw 20.06.2022
+      integer, intent(in) :: nCv, nFc, nVx, ns, ismain                  !lkw 20.06.2022
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -45,7 +45,7 @@
      *   wrk(nCv), wrk0(nFc), wrk1(nFc), wrkVx(nVx), gOnedBsq(nFc,0:1)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx
+      external b2xvsg
 *   ..initialization
 *-----------------------------------------------------------------------
 *.computation

@@ -15,8 +15,7 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2MXAR_NODIFF(ncv, ns, nregionv, boris, switch, geo, mpg, pl&
-& , dv, diag)
+SUBROUTINE B2MXAR_NODIFF(ncv, ns, switch, geo, mpg, pl, dv, diag)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -32,13 +31,12 @@ SUBROUTINE B2MXAR_NODIFF(ncv, ns, nregionv, boris, switch, geo, mpg, pl&
 !.end b2mxar
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, ns, nregionv
+  INTEGER :: ncv, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2DERIVATIVES), INTENT(IN) :: dv
-  REAL(kind=r8) :: boris
 !   ..output arguments (unspecified on entry)
   TYPE(B2DIAGNOSTIC), INTENT(INOUT) :: diag
 !   ..common blocks
@@ -68,6 +66,7 @@ SUBROUTINE B2MXAR_NODIFF(ncv, ns, nregionv, boris, switch, geo, mpg, pl&
 !   ..procedures
   INTRINSIC SQRT, ABS
   EXTERNAL XERTST
+  INTRINSIC NINT
   REAL(r8) :: abs0
   REAL(r8) :: abs1
   REAL(r8) :: abs2
@@ -92,7 +91,7 @@ SUBROUTINE B2MXAR_NODIFF(ncv, ns, nregionv, boris, switch, geo, mpg, pl&
   CALL SUBINI('b2mxar')
 !   ..set internal parameters on first call
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !
 ! ..compute scaled norms
@@ -166,7 +165,7 @@ SUBROUTINE B2MXAR_NODIFF(ncv, ns, nregionv, boris, switch, geo, mpg, pl&
       prvn = prvi
     ELSE
       DO is=0,ns-1
-        IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+        IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
           prvi = prvi + geo%cvvol(icv)*pl%na(icv, is)*pl%ti(icv)
         ELSE
           prvn = prvn + geo%cvvol(icv)*pl%na(icv, is)*pl%tn(icv)
@@ -212,10 +211,10 @@ SUBROUTINE B2MXAR_NODIFF(ncv, ns, nregionv, boris, switch, geo, mpg, pl&
     END IF
     t4 = t4 + abs7
   END DO
-  diag%areshe = t0/((1.5_R8+boris)*prvi)
-  diag%areshi = t1/((1.5_R8+boris)*prvi)
+  diag%areshe = t0/((1.5_R8+switch%boris)*prvi)
+  diag%areshi = t1/((1.5_R8+switch%boris)*prvi)
   diag%arespo = t2/(qe*nevi)
-  diag%areshn = t3/((1.5_R8+boris)*prvn)
+  diag%areshn = t3/((1.5_R8+switch%boris)*prvn)
   diag%areskt = t4/prvi
 !
 ! ..compute regional scaled sums
@@ -283,8 +282,8 @@ SUBROUTINE B2MXAR_NODIFF(ncv, ns, nregionv, boris, switch, geo, mpg, pl&
     diag%reshireg(mpg%cvreg(icv)) = diag%reshireg(mpg%cvreg(icv)) + &
 &     abs11
   END DO
-  diag%reshereg = diag%reshereg/((1.5_R8+boris)*prvi)
-  diag%reshireg = diag%reshireg/((1.5_R8+boris)*prvi)
+  diag%reshereg = diag%reshereg/((1.5_R8+switch%boris)*prvi)
+  diag%reshireg = diag%reshireg/((1.5_R8+switch%boris)*prvi)
 !
 ! ..return
   CALL SUBEND()

@@ -12,6 +12,7 @@
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
      &          feedback_namelist_used
       use b2mod_sputter
+     & , only : sput_dst, dealloc_sputter_data, dealloc_b2mod_sputter
       use b2mod_solpstop
       use b2mod_ysmp_sdrv
      & , only : dealloc_b2mod_ysmp_sdrv
@@ -28,6 +29,7 @@
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
       use b2mod_transport_disruption
+     & , only : dealloc_b2mod_transport_disruption
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -44,10 +46,12 @@
       use b2mod_running_average
      & , only : run_av_init, run_av_get_plasma, run_av_save,
      & run_av_fin
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : balance_netcdf, alloc_b2mod_balance, write_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
      &          balance_average, update_average_balance
+#endif
       use b2mod_equation_sources                                        !srv 26.02.18
       use b2mod_boundary_sources                                        !srv 26.02.18
       use b2mod_switches
@@ -405,7 +409,7 @@
 *
 *  5. parameters (see also routine b2cdcv)
 *
-*     ninp - (0:5) integer array, input.
+*     ninp - (0:6) integer array, input.
 *     ninp specifies the input unit numbers, as follows.
 *     ninp(0): formatted; provides physics and numerics parameters.
 *     ninp(1): un*formatted; provides the geometry.
@@ -415,7 +419,7 @@
 *     ninp(5): un*formatted; provides source term data.
 *     ninp(6): un*formatted; provides the initial differentiated state.
 *
-*     nout - (0:5) integer array, input.
+*     nout - (0:11) integer array, input.
 *     nout specifies the output unit numbers, as follows.
 *     nout(0): formatted; provides summary print output.
 *     nout(1): un*formatted; provides actual physics parameters.
@@ -425,6 +429,7 @@
 *     nout(5): un*formatted; may provide detailed convergence data.
 *     nout(9): un*formatted; provides the final differentiated state.
 *     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+*     nout(11): formatted; postprocessor output. [JET]
 *
 *     nx, ny - integer, input.
 *     nx and ny specify the number of interior cells along the first
@@ -1021,11 +1026,13 @@
       if (ncall.eq.0) then
        if (switch%Zhdanov_closure.gt.0)
      &   call createB2Coeff_nspecies(nCv, nFc, nspecies, state % co_ns)
+#ifndef FIXED_POINT
        balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
        call ipgeti ('balance_netcdf', balance_netcdf)                   !djm Jan2017
        call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
+#endif
        call ipgeti ('b2mndr_iout', iout)                                !srv 25.01.16
        call ipgeti ('b2mndr_use_mms', use_mms)                          !srv 26.02.18 {
        call ipgeti ('b2mndr_boundary_sources', boundary_sources)
@@ -1455,6 +1462,7 @@ csw 09oct2012
      .    'Invalid shot number')
          call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
 #endif
+         not_default = not_default.or.(shot.gt.0.and.run.ge.0)
          imasdir = trim(home_dir)//'/public/imasdb/'
      &           //trim(database)//'/'//trim(version)
 #if AL_MAJOR_VERSION < 5
@@ -2017,11 +2025,11 @@ c   --> better way doing this is necessary)
           call b2xpne (nCv, ns, state%rt%rza, state%pl%na,
      .       state_ext%ne, state%dv%ne)
           max_delta = max(
-     1     maxval(abs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),
-     2     maxval(abs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),
-     3     maxval(abs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),
-     4     maxval(abs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),
-     5     maxval(abs((state%dv%ne - state%psnc%ne)/
+     1     maxval(dabs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),
+     2     maxval(dabs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),
+     3     maxval(dabs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),
+     4     maxval(dabs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),
+     5     maxval(dabs((state%dv%ne - state%psnc%ne)/
      6       (state%dv%ne + na_eps))))
           write (*,*) 'Convergence of bundled rates = ',is,max_delta
         enddo
@@ -2094,10 +2102,7 @@ c   --> better way doing this is necessary)
         if (is_neutral(is)) natmi = natmi+1
       enddo
       call read_neutrals_namelist(ns, mpg, switch, .true.)
-      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
-      if (any(cftype.eq.6)) call xertst(
-     & flag_optim.or.(switch%b2optim_namelist .eq. 1),
-     & 'cftype=6 requires b2.optimization.namelist')
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,switch)
       if(switch%b2tqna_transport_namelist.eq.1) then
         call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
@@ -2110,12 +2115,14 @@ c   --> better way doing this is necessary)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
+        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg, switch)
         allocate(par_opt_phys(npar_opt))
+        allocate(xsave(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
+        xsave(1:npar_opt) = x0(1:npar_opt)
       endif
       call xertst (natmi.le.DEF_NATM,
-     .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+     .  'Increase DEF_NATM in b2mod_dimensions and recompile !')
       call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,switch)
 cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (ns, switch, mpg)
@@ -2184,8 +2191,11 @@ c new CDF movie option (1st frame at t=0)
      &          told, fna_mol
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
-      use b2mod_ad
+      use b2mod_facdrift_ExB
+     & , only : ncall_drift, facdrift_scalar, fac_exb_scalar,
+     &          fac_vis_scalar
 #endif
+      use b2mod_ad
 #ifdef IMAS
       use b2mod_ual
      , , only : new_batch_edge, put_batch_edge
@@ -2208,9 +2218,6 @@ c new CDF movie option (1st frame at t=0)
       type(B2StateExt), intent (inout) :: state_ext
       type(B2Average), intent (inout)  :: state_avg
       type(switches), intent (inout)   :: switch
-#ifdef FIXED_POINT
-      type(B2State) :: state0
-#endif
       real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
       integer i, is, icf
@@ -2234,7 +2241,7 @@ c new CDF movie option (1st frame at t=0)
       integer ierror, status
 #endif
 #endif
-      character*1 ss
+      character*2 ss
       logical ok, found
 *   ..procedures
       real(kind=R8) :: epoch_seconds
@@ -2279,15 +2286,15 @@ cwdk  set some integers
 
       write (*,*) 'b2mndr_1, start: nCv = ',nCv
 #ifdef FIXED_POINT
-! The 'FIXED_POINT' compilation option here and below transforms the time-stepping loop into
+! The FIXED POINT compilation option here and below transforms the time-stepping loop into
 ! a fixed-point type of iterator such that Tapenade can apply the two-phase checkpointing strategy
 ! and save only the final converged primal state instead of all the intermediate states. The AD pragma
 ! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
-! Note that when compiling the FIXED_POINT version some parts of the standard time-stepping are
+! Note that when compiling the 'FIXED_POINT' version some parts of the standard time-stepping are 
 ! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
-      state0 = state
 ! $AD FP-LOOP "state"
-      do while ((res_max.ge.res_quit) .and. (itim.lt.ntim))
+      do while ((res_max.ge.res_quit) .and. (itim.lt.ntim) .and.
+     &          (.not.quit))
 #else
     1 continue
 #endif
@@ -2411,6 +2418,7 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    state_ext, switch%BoRiS, J)
         do icf = 1, ncf
           write (ss,'(I1)') icf
+          if (icf.gt.9) write (ss,'(I2)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)
         end do
 *    ..produce data for movie
@@ -2441,9 +2449,11 @@ csw 09oct2012 set default potential already at this point (BCs)
           close(nout(7))
         endif
 !djm Jun2017
+#ifndef FIXED_POINT
         if((balance_netcdf.ne.0).and.(ntim.gt.0)) then
           call update_average_balance(state,itim,ntim)
         endif
+#endif
 #endif
 *    ..increment
         itim = itim+1
@@ -2454,41 +2464,41 @@ csw 09oct2012 set default potential already at this point (BCs)
         write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
      &    ' TIME ',tim,' NTIM ',ntim,' DTIM ',dtim
 #ifndef FIXED_POINT
-        write(*,*) 'delta na ',maxval(abs((state%pl%na-state%psnc%na)/
+        write(*,*) 'delta na ',maxval(dabs((state%pl%na-state%psnc%na)/
      &    (state%pl%na+na_eps)))
-        write(*,*) 'delta te ',maxval(abs((state%pl%te-state%psnc%te)/
+        write(*,*) 'delta te ',maxval(dabs((state%pl%te-state%psnc%te)/
      &    (state%pl%te+te_eps*ev)))
-        write(*,*) 'delta ti ',maxval(abs((state%pl%ti-state%psnc%ti)/
+        write(*,*) 'delta ti ',maxval(dabs((state%pl%ti-state%psnc%ti)/
      &    (state%pl%ti+ti_eps*ev)))
-        write(*,*) 'delta tn ',maxval(abs((state%pl%tn-state%psnc%tn)/
+        write(*,*) 'delta tn ',maxval(dabs((state%pl%tn-state%psnc%tn)/
      &    (state%pl%tn+tn_eps*ev)))
-        write(*,*) 'delta po ',maxval(abs((state%pl%po-state%psnc%po)/
-     &    (abs(state%pl%po)+po_eps)))
-        write(*,*) 'delta kt ',maxval(abs((state%pl%kt-state%psnc%kt)/
-     &    (abs(state%pl%kt)+kt_eps*ev)))
-        write(*,*) 'delta zt ',maxval(abs((state%pl%zt-state%psnc%zt)/
-     &    (abs(state%pl%zt)+zt_eps*ev)))
+        write(*,*) 'delta po ',maxval(dabs((state%pl%po-state%psnc%po)/
+     &    (dabs(state%pl%po)+po_eps)))
+        write(*,*) 'delta kt ',maxval(dabs((state%pl%kt-state%psnc%kt)/
+     &    (dabs(state%pl%kt)+kt_eps*ev)))
+        write(*,*) 'delta zt ',maxval(dabs((state%pl%zt-state%psnc%zt)/
+     &    (dabs(state%pl%zt)+zt_eps*ev)))
         write(*,*) 'delta ua ',
-     *   maxval(abs((state%pl%na*state%pl%ua-
+     *   maxval(dabs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
      &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps)))
         if(delta_min.gt.0.0_R8.and.delta_max.gt.0.0_R8) then
           max_delta=max(
-     &     maxval(abs((state%pl%na-state%psnc%na)/
+     &     maxval(dabs((state%pl%na-state%psnc%na)/
      &    (state%pl%na+na_eps))),
-     &     maxval(abs((state%pl%te-state%psnc%te)/
+     &     maxval(dabs((state%pl%te-state%psnc%te)/
      &    (state%pl%te+te_eps*ev))),
-     &     maxval(abs((state%pl%ti-state%psnc%ti)/
+     &     maxval(dabs((state%pl%ti-state%psnc%ti)/
      &    (state%pl%ti+ti_eps*ev))),
-     &     maxval(abs((state%pl%tn-state%psnc%tn)/
+     &     maxval(dabs((state%pl%tn-state%psnc%tn)/
      &    (state%pl%tn+tn_eps*ev))),
-     &     maxval(abs((state%pl%po-state%psnc%po)/
+     &     maxval(dabs((state%pl%po-state%psnc%po)/
      &    (abs(state%pl%po)+po_eps))),
-     &     maxval(abs((state%pl%kt-state%psnc%kt)/
+     &     maxval(dabs((state%pl%kt-state%psnc%kt)/
      &    (state%pl%kt+kt_eps*ev))),
-     &     maxval(abs((state%pl%zt-state%psnc%zt)/
+     &     maxval(dabs((state%pl%zt-state%psnc%zt)/
      &    (state%pl%zt+zt_eps*ev))),
-     &     maxval(abs((state%pl%na*state%pl%ua-
+     &     maxval(dabs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
      &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps))))
           if(max_delta.gt.delta_max) then
@@ -2533,10 +2543,10 @@ csw 09oct2012 set default potential already at this point (BCs)
           if(tran_num.le.99) then
             write(tran_file_name,'(a4,i2)') 'tran',tran_num
             if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-            call cfopen (nout(9),tran_file_name,'new','unformatted')
+            call cfopen (nout(11),tran_file_name,'new','unformatted')
             call set_b2mod_ppout
-            call write_b2mod_ppout(nout(9))
-            close(nout(9))
+            call write_b2mod_ppout(nout(11))
+            close(nout(11))
             write(*,*) 'Saved ',tran_file_name
           else
             write(*,*) 'More than 99 tran files --- no more saved'
@@ -2554,6 +2564,7 @@ c new CDF movie option
 #endif
           save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
         endif
+#endif
         lwti = .false.
         lwav = .false.
         if(b2time.gt.0) then
@@ -2588,6 +2599,7 @@ c new CDF movie option
              write(*,*) 'Saved ',run_av_name
           end if
         end if
+#ifndef FIXED_POINT
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
@@ -2607,6 +2619,7 @@ c new CDF movie option
      .                  geo,mpg,state,switch,state_ext)
         endif
 *    ..loop
+#endif
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
 #ifdef _OPENMP
@@ -2639,7 +2652,6 @@ c new CDF movie option
      &     ' estimated remaining elapsed time (s) =',
      &                 (ntim-itim)*(elapsedval-elapsedstart)
         end if
-#endif
         res_max = 0.0_R8
         do is = 0, ns-1
           if (any(solveco(is,:)))
@@ -2669,10 +2681,13 @@ c new CDF movie option
      &        (state%diag%aresco(ismain)*
      &                           min_aresco).le.(min_aresco*min_aresco)  !jwk
         endif                                                            !jwk
-        quit=quitexist_.or.quitexist.or.quit_residual.or.                !jwk !srv 13.04.11
+#endif
+        quit=quitexist_.or.quitexist.or.                                 !jwk !srv 13.04.11
      1      (cpuval-cpuinit.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8).or.
      1      (elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
-     &       b2mndr_elapsed.gt.0.0_R8).or.
+     &       b2mndr_elapsed.gt.0.0_R8)
+#ifndef FIXED_POINT
+     &      .or. quit_residual.or.
      2      (etim.gt.switch%b2mndr_stim.and.tim.ge.etim.and.
      &       etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
@@ -3252,9 +3267,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
 #endif
 #ifdef FIXED_POINT
-        call calc_res_fp(ns, state, state0, res_max)
         write(*,*) 'MAX RESIDUAL ',res_max
-        state0 = state
+        primal_iterations = itim
 *   ..end loop
       end do
 *   ..call cost function
@@ -3262,12 +3276,14 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &    state_ext, switch%BoRiS, J)
       do icf = 1, ncf
         write (ss,'(I1)') icf
+        if (icf.gt.9) write (ss,'(I2)') icf
         write(*,*) 'Cost function value '//ss//': ',J(icf)
       end do
 #else
         goto 1
 *   ..end loop
       endif  !}
+      primal_iterations = itim
 #endif
       call subend ()
       return
@@ -3435,10 +3451,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if(tran_num.le.99) then
           write(tran_file_name,'(a4,i2)') 'tran',tran_num
           if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-          call cfopen (nout(10),tran_file_name,'new','unformatted')
+          call cfopen (nout(11),tran_file_name,'new','unformatted')
           call set_b2mod_ppout
-          call write_b2mod_ppout(nout(10))
-          close(nout(10))
+          call write_b2mod_ppout(nout(11))
+          close(nout(11))
           write(*,*) 'Saved ',tran_file_name
         else
           write(*,*) 'More than 99 tran files --- no more saved'
@@ -3474,6 +3490,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           call tallies(ns,tim,mpg,geo,state,state_ext,switch)
         endif
       endif
+#ifndef FIXED_POINT
 *   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
@@ -3486,6 +3503,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      >   'NO_CDF is set at compilation, cannot write balance.nc'
 #endif
       endif
+#endif
 *   ..write out last IDS if not yet done
       ids_done = .false.
       write_ids = .false.
@@ -3885,8 +3903,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 
 * ..return
       ncall = ncall+1
-      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1))
-     &  deallocate(par_opt_phys)
+      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1)) then
+        deallocate(par_opt_phys)
+        deallocate(xsave)
+      endif
       deallocate(old_erosion, old_deposition)
       deallocate(rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag
@@ -3897,7 +3917,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
       call dealloc_b2mod_tallies
+#ifndef FIXED_POINT
       call dealloc_b2mod_balance
+#endif
       call dealloc_input_profile
       call dealloc_b2mod_elements
       call dealloc_b2mod_boundary
@@ -3915,7 +3937,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 !WG_RM      call dealloc_b2mod_ma28_for_7diag
 !WG_RM      call dealloc_b2mod_ma28_for_9diag
       call dealloc_b2mod_ma28_for_us
+#ifndef FIXED_POINT
       call dealloc_b2mod_eirene_sources
+#endif
 !WG_TODO      call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
       call dealloc_b2mod_transport_disruption

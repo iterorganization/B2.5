@@ -558,11 +558,11 @@
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
             if (gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-              count_up = count_up + 1.0e0_R8
+              count_up = count_up + 1.0_R8
             elseif (gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-              count_down = count_down + 1.0e0_R8
+              count_down = count_down + 1.0_R8
             else
-              count_eq = count_eq + 1.0e0_R8
+              count_eq = count_eq + 1.0_R8
             endif 
           enddo
           do inCv = 1, mpg%vxCvP(iVx,2)
@@ -692,11 +692,11 @@
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
             if (gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-              count_up = count_up + 1.0e0_R8
+              count_up = count_up + 1.0_R8
             elseif (gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-              count_down = count_down + 1.0e0_R8
+              count_down = count_down + 1.0_R8
             else
-              count_eq = count_eq + 1.0e0_R8
+              count_eq = count_eq + 1.0_R8
             endif 
           enddo
           do inCv = 1, mpg%vxCvP(iVx,2)

@@ -15,20 +15,10 @@
 MODULE B2MOD_DRIVER_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_VERSION_DIFFV
-!WG_RM      use b2mod_geo
-!WG_RM      use b2mod_ma28
-!WG_RM      use b2mod_plasma
-!WG_RM      use b2mod_rates
-!WG_RM      use b2mod_residuals
-!WG_RM      use b2mod_sources
-!WG_RM      use b2mod_transport
   USE B2MOD_TALLIES_DIFFV
-!WG_RM      use b2mod_indirect
   USE B2MOD_CONSTANTS
-!WG_RM      use b2mod_geo_corner
   USE B2MOD_TIME
   USE B2MOD_DIAG_DIFFV
-!WG_RM      use b2mod_work
   USE B2MOD_ELEMENTS_DIFFV
   USE B2US_FEEDBACK_DIFFV, ONLY : write_b2us_feedback, &
 & init_feedback, &
@@ -36,30 +26,28 @@ MODULE B2MOD_DRIVER_DIFFV
 & fb_prevd, fb_current, fb_currentd, cum_volrec, fb_const, fb_constd, &
 & charge_frac, charge_fracd, saved_fb_actuator, saved_fb_actuatord, &
 & fb_rescale, fb_rescaled, dt_prev, feedback_namelist_used
-  USE B2MOD_SPUTTER_DIFFV
+  USE B2MOD_SPUTTER_DIFFV, ONLY : sput_dst, dealloc_sputter_data, &
+& dealloc_b2mod_sputter
+  USE B2MOD_SOLPSTOP
   USE B2MOD_YSMP_SDRV_DIFFV, ONLY : dealloc_b2mod_ysmp_sdrv
   USE B2MOD_WALL_DIFFV, ONLY : dealloc_b2mod_wall
-  USE B2MOD_NEOCLASSICAL_DIFFV
+  USE B2MOD_NEOCLASSICAL_DIFFV, ONLY : dealloc_b2mod_neoclassical
   USE B2MOD_FIRST_FLIGHT_DIFFV
   USE B2MOD_INPUT_PROFILE_DIFFV
   USE B2MOD_USER_NAMELIST_DIFFV
-!WG_RM      use b2mod_ma28_for_7diag
-!WG_RM      use b2mod_ma28_for_9diag
   USE B2MOD_MA28_FOR_US
   USE B2MOD_TRANSPORT_MODELS_DIFFV
   USE B2MOD_NEUTR_SRC_SCALING_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_TRANSPORT_NAMELIST_DIFFV
-!WG_RM      use b2mod_anomalous_transport
-  USE B2MOD_TRANSPORT_DISRUPTION_DIFFV
+  USE B2MOD_TRANSPORT_DISRUPTION_DIFFV, ONLY : &
+& dealloc_b2mod_transport_disruption
   USE B2MOD_B2CMFS
-!WG_RM      use b2mod_b2cmgs
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPB_DIFFV
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_B2CMRC_DIFFV
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
-!WG_RM      use b2mod_external
   USE B2MOD_MWTI
   USE B2MOD_FILE
   USE B2MOD_BATCH_AVERAGE_DIFFV, ONLY : batch_av_all_init, &
@@ -70,13 +58,6 @@ MODULE B2MOD_DRIVER_DIFFV
   USE B2MOD_RUNNING_AVERAGE_DIFFV, ONLY : run_av_init, run_av_init_dv, &
 & run_av_get_plasma, run_av_save, &
 & run_av_fin, run_av_fin_dv
-!djm Jan2017
-!WG_TODO write_balance,
-!WG_TODO, update_average_balance
-  USE B2MOD_BALANCE_DIFFV, ONLY : balance_netcdf, alloc_b2mod_balance, &
-& dealloc_b2mod_balance, &
-& dealloc_b2mod_eirene_sources, &
-& balance_average
 !srv 26.02.18
   USE B2MOD_EQUATION_SOURCES_DIFFV
 !srv 26.02.18
@@ -87,48 +68,19 @@ MODULE B2MOD_DRIVER_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2US_IO_DIFFV
   USE B2MOD_PAR_OPT_DIFFV
-  USE B2MOD_B2PLOT_DIFFV, ONLY : nlimi
+  USE B2MOD_B2PLOT_DIFFV, ONLY : wklng, nlimi, alloc_b2mod_b2plot, &
+& dealloc_b2mod_b2plot
 !
   USE B2MOD_BRAEIR_DIFFV
   USE B2MOD_EIRBRA
   USE B2MOD_B2_TO_ASTRA, ONLY : write_b2_to_astra
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
 !   ..common blocks
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !   ..local variables
   INTEGER :: ncall, ntim, mvinc, mvnum, jsep, jxi, jxa, isfb, ix1, ix2, &
 & ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5, nxtl, nxtr
@@ -142,20 +94,22 @@ MODULE B2MOD_DRIVER_DIFFV
   INTEGER, SAVE :: ird_aver=0
   INTEGER, SAVE :: shot=0
   INTEGER, SAVE :: run=0
+  INTEGER, SAVE :: ids_save=0
+  INTEGER, SAVE :: ids_av=0
 !srv 26.02.18
   INTEGER, SAVE :: use_mms=0
 !srv 26.02.18
   INTEGER, SAVE :: boundary_sources=0
   INTEGER, SAVE :: equation_sources=0
   REAL(kind=r4) :: cpuval, cpustart, cpuinit
-  REAL(kind=r8) :: na_min, na_new, dtim, etim, b2mndr_cpu, &
-& b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit, density_rescale&
-& , ne_wanted, ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, &
-& factor, ixfb, iyfb, ax, ay
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: na_mind, na_newd
-!WG_TODO      real (kind=R8), allocatable ::
-!WG_TODO     *  rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
-!WG_TODO     *  rza0(:,:), rz20(:,:), rpt0(:,:), rpi0(:,:)
+  REAL(kind=r8) :: dtim, etim, b2mndr_cpu, b2mndr_elapsed, elapsedval, &
+& elapsedstart, elapsedinit, density_rescale, ne_wanted, ne_wanted_time&
+& , ne_wanted_next_time, ne_wanted_mod_time, factor, ixfb, iyfb, ax, ay&
+& , scl
+  REAL(kind=r8), ALLOCATABLE :: rza0(:, :), rz20(:, :), rpt0(:, :), rpi0&
+& (:, :)
+  REAL(kind=r8), ALLOCATABLE :: rza0d(:, :, :), rz20d(:, :, :), rpt0d(:&
+& , :, :), rpi0d(:, :, :)
   SAVE ne_wanted, ne_wanted_time, ne_wanted_next_time, &
 &     ne_wanted_mod_time, ixfb, iyfb
   CHARACTER :: idout0*32, idout1*32, savefile*16, savefilestatus*3
@@ -163,7 +117,7 @@ MODULE B2MOD_DRIVER_DIFFV
 !srv 25.01.16
   CHARACTER :: chns*3
   INTEGER :: itim, ierr, edition, b2time, coronal, tally, ismain, &
-& ismain0, natmi, no_solve, external_species, idx, status
+& ismain0, natmi, no_solve, external_species, idx
   INTEGER, SAVE :: edition_p=0
   INTEGER, SAVE :: plasinc=1
   INTEGER, SAVE :: plasnum=0
@@ -177,7 +131,7 @@ MODULE B2MOD_DRIVER_DIFFV
   INTEGER, SAVE :: iav_run=0
   INTEGER, SAVE :: iav_cont=1
   INTEGER, SAVE :: ntim_run=1000
-  LOGICAL :: lwti, lwav, lrav, lrer, continued
+  LOGICAL :: lwti, lwav, lrav, lrer, continued, ids_replace
   CHARACTER(len=22) :: batch_name, aver_name, run_av_name
   REAL(kind=r8) :: cputarget, cpuincrement, na_eps, te_eps, ti_eps, &
 & tn_eps, po_eps, ua_eps, kt_eps, zt_eps, sput_frc, sput_phys, delta_min&
@@ -200,6 +154,11 @@ MODULE B2MOD_DRIVER_DIFFV
   INTEGER :: nf_float
   INTEGER :: nf_real
   INTEGER :: nf_double
+  INTEGER :: nf_ubyte
+  INTEGER :: nf_ushort
+  INTEGER :: nf_uint
+  INTEGER :: nf_int64
+  INTEGER :: nf_uint64
   PARAMETER (nf_byte=1)
 !
   PARAMETER (nf_int1=nf_byte)
@@ -210,6 +169,11 @@ MODULE B2MOD_DRIVER_DIFFV
   PARAMETER (nf_float=5)
   PARAMETER (nf_real=nf_float)
   PARAMETER (nf_double=6)
+  PARAMETER (nf_ubyte=7)
+  PARAMETER (nf_ushort=8)
+  PARAMETER (nf_uint=9)
+  PARAMETER (nf_int64=10)
+  PARAMETER (nf_uint64=11)
 !
 !
 ! default fill values:
@@ -246,10 +210,15 @@ MODULE B2MOD_DRIVER_DIFFV
   INTEGER :: nf_lock
   INTEGER :: nf_share
   INTEGER :: nf_64bit_offset
+  INTEGER :: nf_64bit_data
+  INTEGER :: nf_cdf5
   INTEGER :: nf_sizehint_default
   INTEGER :: nf_align_chunk
   INTEGER :: nf_format_classic
   INTEGER :: nf_format_64bit
+  INTEGER :: nf_format_64bit_offset
+  INTEGER :: nf_format_64bit_data
+  INTEGER :: nf_format_cdf5
   INTEGER :: nf_diskless
   INTEGER :: nf_mmap
   PARAMETER (nf_nowrite=0)
@@ -262,10 +231,15 @@ MODULE B2MOD_DRIVER_DIFFV
   PARAMETER (nf_lock=1024)
   PARAMETER (nf_share=2048)
   PARAMETER (nf_64bit_offset=512)
+  PARAMETER (nf_64bit_data=32)
+  PARAMETER (nf_cdf5=nf_64bit_data)
   PARAMETER (nf_sizehint_default=0)
   PARAMETER (nf_align_chunk=-1)
   PARAMETER (nf_format_classic=1)
   PARAMETER (nf_format_64bit=2)
+  PARAMETER (nf_format_64bit_offset=nf_format_64bit)
+  PARAMETER (nf_format_64bit_data=5)
+  PARAMETER (nf_format_cdf5=nf_format_64bit_data)
   PARAMETER (nf_diskless=8)
   PARAMETER (nf_mmap=16)
 !
@@ -698,6 +672,22 @@ MODULE B2MOD_DRIVER_DIFFV
   EXTERNAL NF_GET_ATT_INT
 !
   INTEGER :: NF_GET_ATT_INT
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          integer             xtype,
+!                          integer             len,
+!                          nf_int8_t           i8vals(1))
+  EXTERNAL NF_PUT_ATT_INT64
+!
+  INTEGER :: NF_PUT_ATT_INT64
+!                         (integer             ncid,
+!                          integer             varid,
+!                          character(*)        name,
+!                          nf_int8_t           i8vals(1))
+  EXTERNAL NF_GET_ATT_INT64
+!
+  INTEGER :: NF_GET_ATT_INT64
 !                         (integer             ncid,
 !                          integer             varid,
 !                          character(*)        name,
@@ -1301,6 +1291,28 @@ MODULE B2MOD_DRIVER_DIFFV
   EXTERNAL NF_GET_VARM_DOUBLE
 !
   INTEGER :: NF_GET_VARM_DOUBLE
+  EXTERNAL NF_PUT_VAR1_INT64
+!
+!     64-bit int functions.
+  INTEGER :: NF_PUT_VAR1_INT64
+  EXTERNAL NF_PUT_VARA_INT64
+  INTEGER :: NF_PUT_VARA_INT64
+  EXTERNAL NF_PUT_VARS_INT64
+  INTEGER :: NF_PUT_VARS_INT64
+  EXTERNAL NF_PUT_VARM_INT64
+  INTEGER :: NF_PUT_VARM_INT64
+  EXTERNAL NF_PUT_VAR_INT64
+  INTEGER :: NF_PUT_VAR_INT64
+  EXTERNAL NF_GET_VAR1_INT64
+  INTEGER :: NF_GET_VAR1_INT64
+  EXTERNAL NF_GET_VARA_INT64
+  INTEGER :: NF_GET_VARA_INT64
+  EXTERNAL NF_GET_VARS_INT64
+  INTEGER :: NF_GET_VARS_INT64
+  EXTERNAL NF_GET_VARM_INT64
+  INTEGER :: NF_GET_VARM_INT64
+  EXTERNAL NF_GET_VAR_INT64
+  INTEGER :: NF_GET_VAR_INT64
 !
 !
 !     NetCDF-4.
@@ -1312,23 +1324,13 @@ MODULE B2MOD_DRIVER_DIFFV
 !     $Id: netcdf4.inc,v 1.28 2010/05/25 13:53:02 ed Exp $
 !
 !     New netCDF-4 types.
-  INTEGER :: nf_ubyte
-  INTEGER :: nf_ushort
-  INTEGER :: nf_uint
-  INTEGER :: nf_int64
-  INTEGER :: nf_uint64
   INTEGER :: nf_string
   INTEGER :: nf_vlen
   INTEGER :: nf_opaque
   INTEGER :: nf_enum
   INTEGER :: nf_compound
-  PARAMETER (nf_ubyte=7)
-!
-  PARAMETER (nf_ushort=8)
-  PARAMETER (nf_uint=9)
-  PARAMETER (nf_int64=10)
-  PARAMETER (nf_uint64=11)
   PARAMETER (nf_string=12)
+!
   PARAMETER (nf_vlen=13)
   PARAMETER (nf_opaque=14)
   PARAMETER (nf_enum=15)
@@ -1375,6 +1377,8 @@ MODULE B2MOD_DRIVER_DIFFV
   PARAMETER (nf_chunked=0)
   INTEGER :: nf_contiguous
   PARAMETER (nf_contiguous=1)
+  INTEGER :: nf_compact
+  PARAMETER (nf_compact=2)
 !
 !     For NF_DEF_VAR_FLETCHER32
   INTEGER :: nf_nochecksum
@@ -1543,6 +1547,12 @@ MODULE B2MOD_DRIVER_DIFFV
   EXTERNAL NF_INQ_VAR_DEFLATE
 !
   INTEGER :: NF_INQ_VAR_DEFLATE
+  EXTERNAL NF_DEF_VAR_SZIP
+!
+  INTEGER :: NF_DEF_VAR_SZIP
+  EXTERNAL NF_INQ_VAR_SZIP
+!
+  INTEGER :: NF_INQ_VAR_SZIP
   EXTERNAL NF_DEF_VAR_FLETCHER32
 !
   INTEGER :: NF_DEF_VAR_FLETCHER32
@@ -1567,6 +1577,12 @@ MODULE B2MOD_DRIVER_DIFFV
   EXTERNAL NF_INQ_VAR_ENDIAN
 !
   INTEGER :: NF_INQ_VAR_ENDIAN
+  EXTERNAL NF_DEF_VAR_FILTER
+!
+  INTEGER :: NF_DEF_VAR_FILTER
+  EXTERNAL NF_INQ_VAR_FILTER
+!
+  INTEGER :: NF_INQ_VAR_FILTER
   EXTERNAL NF_INQ_TYPEIDS
 !
 !     User defined types.
@@ -1682,28 +1698,6 @@ MODULE B2MOD_DRIVER_DIFFV
   INTEGER :: NF_GET_VARA
   EXTERNAL NF_GET_VARS
   INTEGER :: NF_GET_VARS
-  EXTERNAL NF_PUT_VAR1_INT64
-!
-!     64-bit int functions.
-  INTEGER :: NF_PUT_VAR1_INT64
-  EXTERNAL NF_PUT_VARA_INT64
-  INTEGER :: NF_PUT_VARA_INT64
-  EXTERNAL NF_PUT_VARS_INT64
-  INTEGER :: NF_PUT_VARS_INT64
-  EXTERNAL NF_PUT_VARM_INT64
-  INTEGER :: NF_PUT_VARM_INT64
-  EXTERNAL NF_PUT_VAR_INT64
-  INTEGER :: NF_PUT_VAR_INT64
-  EXTERNAL NF_GET_VAR1_INT64
-  INTEGER :: NF_GET_VAR1_INT64
-  EXTERNAL NF_GET_VARA_INT64
-  INTEGER :: NF_GET_VARA_INT64
-  EXTERNAL NF_GET_VARS_INT64
-  INTEGER :: NF_GET_VARS_INT64
-  EXTERNAL NF_GET_VARM_INT64
-  INTEGER :: NF_GET_VARM_INT64
-  EXTERNAL NF_GET_VAR_INT64
-  INTEGER :: NF_GET_VAR_INT64
   EXTERNAL NF_GET_VLEN_ELEMENT
 !
 !     For helping F77 users with VLENs.
@@ -1949,12 +1943,19 @@ MODULE B2MOD_DRIVER_DIFFV
   PARAMETER (fillong=-2147483647)
   PARAMETER (filfloat=9.9692099683868690e+36)
   PARAMETER (fildoub=9.9692099683868690e+36)
+  EXTERNAL NF_SET_LOG_LEVEL
+!
+!     This is to turn on netCDF internal logging.
+  INTEGER :: NF_SET_LOG_LEVEL
   INTEGER :: ncid
   REAL(kind=r8) :: delta_cdfmovie_time, save_cdfmovie_time
   REAL(kind=r8) :: delta_plasma_time, save_plasma_time
+  REAL(kind=r8) :: delta_ids_time, save_ids_time
   REAL(kind=r8) :: te_hot, ne_hot_frac
   LOGICAL :: quitexist, quit, quitexist_
-  LOGICAL :: write_save
+  LOGICAL :: write_save, write_ids, write_av
+  LOGICAL :: process_ids, process_av
+  LOGICAL, SAVE :: summary_av=.false.
   REAL(kind=r8) :: stack_dtim(20)
   INTEGER :: stack_ntim(20)
   INTEGER :: stack_ptr
@@ -1964,16 +1965,16 @@ MODULE B2MOD_DRIVER_DIFFV
   REAL(kind=r8) :: hzconst
 !
 !   ..initialisation
-  SAVE ncall, ntim, mvinc, mvnum, dtim, etim, idout0, idout1, na_min, &
-&     na_new, b2mndr_cpu, edition, cputarget, cpuincrement, ismain, &
-&     ismain0, savefilestatus, b2time, coronal, natmi, tally, &
-&     density_rescale, na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, &
-&     kt_eps, zt_eps, sput_frc, sput_phys, delta_min, dt_change_inc, &
-&     delta_max, dt_change_dec, no_solve, dt_min, dt_max, te_hot, &
-&     ne_hot_frac, external_species, b2mndr_elapsed
-  SAVE na_mind, na_newd
+  SAVE ncall, ntim, mvinc, mvnum, dtim, etim, idout0, idout1, b2mndr_cpu&
+&     , edition, cputarget, cpuincrement, ismain, ismain0, &
+&     savefilestatus, b2time, coronal, natmi, tally, density_rescale, &
+&     na_eps, te_eps, ti_eps, tn_eps, po_eps, ua_eps, kt_eps, zt_eps, &
+&     sput_frc, sput_phys, delta_min, dt_change_inc, delta_max, &
+&     dt_change_dec, no_solve, dt_min, dt_max, te_hot, ne_hot_frac, &
+&     external_species, b2mndr_elapsed
   SAVE delta_cdfmovie_time, save_cdfmovie_time
   SAVE delta_plasma_time, save_plasma_time
+  SAVE delta_ids_time, save_ids_time
   SAVE min_areshe, min_areshi, min_aresco, res_quit, res_max
   DATA ncall /0/
   DATA ntim /1/
@@ -1987,8 +1988,6 @@ MODULE B2MOD_DRIVER_DIFFV
   DATA ne_hot_frac /0.0_R8/
   DATA idout0 /'pgnl;pgmm;pzmm'/
   DATA idout1 /'pzmm'/
-  DATA na_new /1.0e14_R8/
-  DATA na_min /1.0e4_R8/
   DATA b2mndr_cpu /0.0_R8/
   DATA b2mndr_elapsed /0.0_R8/
   DATA savefile /'plasmastate.xxxx'/
@@ -2020,6 +2019,8 @@ MODULE B2MOD_DRIVER_DIFFV
   DATA save_cdfmovie_time /0.0_R8/
   DATA delta_plasma_time /0.0_R8/
   DATA save_plasma_time /0.0_R8/
+  DATA delta_ids_time /0.0_R8/
+  DATA save_ids_time /0.0_R8/
   DATA min_areshe /0.0_R8/
   DATA min_areshi /0.0_R8/
   DATA min_aresco /0.0_R8/
@@ -2030,22 +2031,36 @@ MODULE B2MOD_DRIVER_DIFFV
 
 CONTAINS
 !  Differentiation of b2mndr_0 as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtlsa:out rtlcx:out rtlqa:out
-!                rtlra:out b2voloncf:in-out b2data:in-out b2dataoncf:in-out
-!                par_opt_phys:in-out mpg.bcfcor:in-out mpg.rcfcor:in-out
+!   Plus diff mem management of: b2voloncf:in-out b2data:in-out
+!                b2dataoncf:in-out par_opt_phys:in-out rtlsa:out
+!                rtlcx:out rtlqa:out rtlra:out rpi0:in-out rz20:in-out
+!                rpt0:in-out rza0:in-out state_avg.na_mean:in-out
+!                state_avg.ua_mean:in-out state_avg.te_mean:in-out
+!                state_avg.ti_mean:in-out state_avg.po_mean:in-out
+!                state_avg.kt_mean:in-out state_avg.zt_mean:in-out
+!                state_avg.sna_mean:in-out state_avg.smo_mean:in-out
+!                state_avg.she_mean:in-out state_avg.shi_mean:in-out
+!                state_avg.shn_mean:in-out state_avg.e_na:in-out
+!                state_avg.e_ua:in-out state_avg.e_te:in-out state_avg.e_ti:in-out
+!                state_avg.e_po:in-out state_avg.e_kt:in-out state_avg.e_zt:in-out
+!                state_avg.e_sna:in-out state_avg.e_smo:in-out
+!                state_avg.e_she:in-out state_avg.e_shi:in-out
+!                state_avg.e_shn:in-out mpg.bcfcor:in-out mpg.rcfcor:in-out
 !                mpg.cffcor:in-out mpg.intcellp:in-out mpg.intcellr:in-out
-!                geo.cvbb:in-out geo.cvx:in-out geo.cvy:in-out
-!                geo.cvsz:in-out geo.cvhz:in-out geo.cvhx:in-out
-!                geo.cvqgam:in-out geo.cvvol:in-out geo.cvonedbsq:in-out
-!                geo.cvbzb:in-out geo.cveb:in-out geo.fcbb:in-out
-!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
-!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
-!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
-!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
+!                mpg.divfcor:in-out geo.cvbb:in-out geo.cvx:in-out
+!                geo.cvy:in-out geo.cvsz:in-out geo.cvhz:in-out
+!                geo.cvhx:in-out geo.cvqgam:in-out geo.cvvol:in-out
+!                geo.cvonedbsq:in-out geo.cvbzb:in-out geo.cveb:in-out
+!                geo.cvfpsi:in-out geo.fcbb:in-out geo.fcs:in-out
+!                geo.fchc:in-out geo.fcht:in-out geo.fchz:in-out
+!                geo.fcvol:in-out geo.fcqgam:in-out geo.fcqalf:in-out
+!                geo.fcqbet:in-out geo.fcpbs:in-out geo.fcpbshz:in-out
+!                geo.fcbzb:in-out geo.fceb:in-out geo.fcfpsi:in-out
 !                geo.vxbb:in-out geo.vxx:in-out geo.vxy:in-out
 !                geo.vxhz:in-out geo.vxvol:in-out geo.vxffbz:in-out
 !                geo.vxfpsi:in-out geo.vxonedbsq:in-out geo.vxbzb:in-out
-!                geo.cvconn:in-out geo.ftconn:in-out geo.fteps:in-out
+!                geo.vxeb:in-out geo.cvconn:in-out geo.vxconn:in-out
+!                geo.ftconn:in-out geo.fsconn:in-out geo.fteps:in-out
 !                geo.ftbbav2:in-out geo.fspsi:in-out state.pl.na:in-out
 !                state.pl.ua:in-out state.pl.po:in-out state.pl.te:in-out
 !                state.pl.ti:in-out state.pl.tn:in-out state.pl.kt:in-out
@@ -2101,11 +2116,12 @@ CONTAINS
 !                state.dv.fhe_exb:in-out state.dv.fhi:in-out state.dv.fhi_mdf:in-out
 !                state.dv.fhit:in-out state.dv.fhipsch:in-out state.dv.fhi_eir:in-out
 !                state.dv.fhi_exb:in-out state.dv.fnn:in-out state.dv.fnn_32:in-out
-!                state.dv.fnn_52:in-out state.dv.fhn:in-out state.dv.fhm:in-out
-!                state.dv.fhp:in-out state.dv.fhj:in-out state.dv.fht:in-out
-!                state.dv.fkt:in-out state.dv.fzt:in-out state.dv.kinrgy:in-out
-!                state.dv.conc:in-out state.dv.flob:in-out state.dv.floe:in-out
-!                state.dv.floi:in-out state.dv.floe_noc:in-out
+!                state.dv.fnn_52:in-out state.dv.fhn:in-out state.dv.fnn_inc:in-out
+!                state.dv.fhm:in-out state.dv.fhp:in-out state.dv.fhj:in-out
+!                state.dv.fht:in-out state.dv.fkt:in-out state.dv.fzt:in-out
+!                state.dv.kin_frac_hyb:in-out state.dv.fluid_frac_hyb:in-out
+!                state.dv.kinrgy:in-out state.dv.conc:in-out state.dv.flob:in-out
+!                state.dv.floe:in-out state.dv.floi:in-out state.dv.floe_noc:in-out
 !                state.dv.floi_noc:in-out state.dv.flon:in-out
 !                state.dv.flokt:in-out state.dv.flozt:in-out state.dv.conn:in-out
 !                state.dv.conkt:in-out state.dv.conzt:in-out state.dv.conb:in-out
@@ -2127,54 +2143,83 @@ CONTAINS
 !                state.sr.sch:in-out state.sr.she:in-out state.sr.shi:in-out
 !                state.sr.sne:in-out state.sr.shn:in-out state.sr.skt:in-out
 !                state.sr.szt:in-out state.sr.smo:in-out state.sr.smq:in-out
-!                state.sr.sna:in-out state.sr.skt_diss:in-out state.sr.skt_prod:in-out
-!                state.sr_eir.sch:in-out state.sr_eir.she:in-out
-!                state.sr_eir.shi:in-out state.sr_eir.sne:in-out
-!                state.sr_eir.smo:in-out state.sr_eir.smq:in-out
-!                state.sr_eir.sna:in-out state.srw.sch0:in-out
-!                state.srw.she0:in-out state.srw.shi0:in-out state.srw.sne0:in-out
-!                state.srw.shn0:in-out state.srw.skt0:in-out state.srw.szt0:in-out
-!                state.srw.smo0:in-out state.srw.smq0:in-out state.srw.sna0:in-out
+!                state.sr.sna:in-out state.sr.shedt:in-out state.sr.sktdt:in-out
+!                state.sr.sztdt:in-out state.sr.snedt:in-out state.sr.shidt:in-out
+!                state.sr.shndt:in-out state.sr.schdt:in-out state.sr.smodt:in-out
+!                state.sr.snadt:in-out state.sr.skt_diss:in-out
+!                state.sr.skt_prod:in-out state.sr_eir.sch:in-out
+!                state.sr_eir.she:in-out state.sr_eir.shi:in-out
+!                state.sr_eir.sne:in-out state.sr_eir.smo:in-out
+!                state.sr_eir.smq:in-out state.sr_eir.sna:in-out
+!                state.srw.sch0:in-out state.srw.she0:in-out state.srw.shi0:in-out
+!                state.srw.sne0:in-out state.srw.shn0:in-out state.srw.skt0:in-out
+!                state.srw.szt0:in-out state.srw.smo0:in-out state.srw.smq0:in-out
+!                state.srw.sna0:in-out state.srw.smcf:in-out state.srw.smpr:in-out
+!                state.srw.smpt:in-out state.srw.smfr:in-out state.srw.b2stbc_sch:in-out
+!                state.srw.b2stbc_she:in-out state.srw.b2stbc_shi:in-out
+!                state.srw.b2stbc_sne:in-out state.srw.b2stbc_shn:in-out
+!                state.srw.b2stbc_skt:in-out state.srw.b2stbc_szt:in-out
+!                state.srw.b2stbc_smo:in-out state.srw.b2stbc_sna:in-out
 !                state.srw.b2stbm_sch:in-out state.srw.b2stbm_she:in-out
 !                state.srw.b2stbm_shi:in-out state.srw.b2stbm_sne:in-out
 !                state.srw.b2stbm_smo:in-out state.srw.b2stbm_smq:in-out
-!                state.srw.b2stbm_sna:in-out state.rt.rlcx:in-out
-!                state.rt.rlqa:in-out state.rt.rlrd:in-out state.rt.rlbr:in-out
-!                state.rt.rlra:in-out state.rt.rlsa:in-out state.rt.rlza:in-out
-!                state.rt.rlz2:in-out state.rt.rlpt:in-out state.rt.rlpi:in-out
-!                state.rt.rlqr:in-out state.rt.rza:in-out state.rt.rz2:in-out
-!                state.rt.rpt:in-out state.rt.rpi:in-out state.rtw.rsa:in-out
-!                state.rtw.rra:in-out state.rtw.rqa:in-out state.rtw.rrd:in-out
-!                state.rtw.rbr:in-out state.rtw.rcx:in-out state.rtw.rqr:in-out
-!                state.psnl.na:in-out state.psnl.ua:in-out state.psnl.po:in-out
-!                state.psnl.te:in-out state.psnl.ti:in-out state.psnl.tn:in-out
-!                state.psnl.kt:in-out state.psnl.zt:in-out state.psnl.ne:in-out
-!                state.psnl.ni:in-out state.psnl.nn:in-out state.psnl.fch:in-out
-!                state.psnl.fna:in-out state.psnl.fhi:in-out state.psnl.fhe:in-out
-!                state.psnl.fhn:in-out state.psnl.fkt:in-out state.psnl.fzt:in-out
-!                state.psnl.kinrgy:in-out state.psnc.na:in-out
-!                state.psnc.ua:in-out state.psnc.po:in-out state.psnc.te:in-out
-!                state.psnc.ti:in-out state.psnc.tn:in-out state.psnc.kt:in-out
-!                state.psnc.zt:in-out state.psnc.ne:in-out state.psnc.ni:in-out
-!                state.psnc.nn:in-out state.psnc.fch:in-out state.psnc.fna:in-out
-!                state.psnc.fhi:in-out state.psnc.fhe:in-out state.psnc.fhn:in-out
-!                state.psnc.fkt:in-out state.psnc.fzt:in-out state.psnc.kinrgy:in-out
-!                state.diag.srcna:in-out state.diag.srcmo:in-out
-!                state.diag.srcpo:in-out state.diag.srche:in-out
-!                state.diag.srchi:in-out state.diag.srcmt:in-out
-!                state.diag.aresco:in-out state.diag.aresmo:in-out
-!                state.diag.acorpa:in-out state.diag.acorua:in-out
-!                state.diag.rescoreg:in-out state.diag.resmoreg:in-out
-!                state.diag.reshereg:in-out state.diag.reshireg:in-out
-!                state.update.ua:in-out state.update.na:in-out
-!                state.update.pa:in-out state.update.po:in-out
-!                state.update.te:in-out state.update.ti:in-out
-!                state.update.kt:in-out state.update.zt:in-out
-!                (global)na_mean:in-out
+!                state.srw.b2stbm_sna:in-out state.srw.b2stbr_sch:in-out
+!                state.srw.b2stbr_she:in-out state.srw.b2stbr_shi:in-out
+!                state.srw.b2stbr_sne:in-out state.srw.b2stbr_shn:in-out
+!                state.srw.b2stbr_skt:in-out state.srw.b2stbr_szt:in-out
+!                state.srw.b2stbr_smo:in-out state.srw.b2stbr_sna:in-out
+!                state.srw.b2npmo_smaf:in-out state.srw.b2npmo_smag:in-out
+!                state.srw.b2npmo_smav:in-out state.srw.rsana:in-out
+!                state.srw.rsahi:in-out state.srw.rsamo:in-out
+!                state.srw.rrana:in-out state.srw.rrahi:in-out
+!                state.srw.rramo:in-out state.srw.rcxna:in-out
+!                state.srw.rcxhi:in-out state.srw.rcxmo:in-out
+!                state.srw.rqahe:in-out state.srw.rqrad:in-out
+!                state.srw.rqbrm:in-out state.srw.b2sihs_joule:in-out
+!                state.srw.b2sihs_divue:in-out state.srw.b2sihs_divua:in-out
+!                state.srw.b2sihs_exbe:in-out state.srw.b2sihs_exba:in-out
+!                state.srw.b2sihs_visa:in-out state.srw.b2sihs_fraa:in-out
+!                state.srw.b2sihs_str:in-out state.srw.sna0_eir_tot:in-out
+!                state.srw.smo0_eir_tot:in-out state.srw.sne0_eir_tot:in-out
+!                state.srw.she0_eir_tot:in-out state.srw.shi0_eir_tot:in-out
+!                state.srw.shn0_eir_tot:in-out state.srw.sch0_eir_tot:in-out
+!                state.rt.rlcx:in-out state.rt.rlqa:in-out state.rt.rlrd:in-out
+!                state.rt.rlbr:in-out state.rt.rlra:in-out state.rt.rlsa:in-out
+!                state.rt.rlza:in-out state.rt.rlz2:in-out state.rt.rlpt:in-out
+!                state.rt.rlpi:in-out state.rt.rlqr:in-out state.rt.rza:in-out
+!                state.rt.rz2:in-out state.rt.rpt:in-out state.rt.rpi:in-out
+!                state.rtw.rsa:in-out state.rtw.rra:in-out state.rtw.rqa:in-out
+!                state.rtw.rrd:in-out state.rtw.rbr:in-out state.rtw.rcx:in-out
+!                state.rtw.rqr:in-out state.psnl.na:in-out state.psnl.ua:in-out
+!                state.psnl.po:in-out state.psnl.te:in-out state.psnl.ti:in-out
+!                state.psnl.tn:in-out state.psnl.kt:in-out state.psnl.zt:in-out
+!                state.psnl.ne:in-out state.psnl.ni:in-out state.psnl.nn:in-out
+!                state.psnl.fch:in-out state.psnl.fna:in-out state.psnl.fhi:in-out
+!                state.psnl.fhe:in-out state.psnl.fhn:in-out state.psnl.fkt:in-out
+!                state.psnl.fzt:in-out state.psnl.kinrgy:in-out
+!                state.psnc.na:in-out state.psnc.ua:in-out state.psnc.po:in-out
+!                state.psnc.te:in-out state.psnc.ti:in-out state.psnc.tn:in-out
+!                state.psnc.kt:in-out state.psnc.zt:in-out state.psnc.ne:in-out
+!                state.psnc.ni:in-out state.psnc.nn:in-out state.psnc.fch:in-out
+!                state.psnc.fna:in-out state.psnc.fhi:in-out state.psnc.fhe:in-out
+!                state.psnc.fhn:in-out state.psnc.fkt:in-out state.psnc.fzt:in-out
+!                state.psnc.kinrgy:in-out state.diag.srcna:in-out
+!                state.diag.srcmo:in-out state.diag.srcpo:in-out
+!                state.diag.srche:in-out state.diag.srchi:in-out
+!                state.diag.srcmt:in-out state.diag.aresco:in-out
+!                state.diag.aresmo:in-out state.diag.acorpa:in-out
+!                state.diag.acorua:in-out state.diag.rescoreg:in-out
+!                state.diag.resmoreg:in-out state.diag.reshereg:in-out
+!                state.diag.reshireg:in-out state.update.ua:in-out
+!                state.update.na:in-out state.update.pa:in-out
+!                state.update.po:in-out state.update.te:in-out
+!                state.update.ti:in-out state.update.kt:in-out
+!                state.update.zt:in-out
 !
 !
-  SUBROUTINE B2MNDR_0_DV(ninp, nout, ns, nsd, ns0, switch, geo, geod, &
-&   mpg, mpgd, state, stated, state_ext, nbdirs)
+  SUBROUTINE B2MNDR_0_DV(ninp, nout, ns, nsd, ns0, switch, switchd, geo&
+&   , geod, mpg, mpgd, state, stated, state_ext, state_extd, state_avg, &
+&   state_avgd, nbdirs)
     USE B2MOD_AD_DIFFV, ONLY : old_erosion, old_deposition
 !  Hint: mpg%nCv should be the size of dimension 1 of array arg1
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -2185,6 +2230,7 @@ CONTAINS
     INTEGER :: ncv, nfc, nvx, ns, ns0
     INTEGER :: nsd(nbdirsmax)
     TYPE(SWITCHES), INTENT(INOUT) :: switch
+    TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(MAPPING_DIFFV), INTENT(INOUT) :: mpgd
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
@@ -2192,6 +2238,9 @@ CONTAINS
     TYPE(B2STATE), INTENT(INOUT) :: state
     TYPE(B2STATE_DIFFV), INTENT(INOUT) :: stated
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
+    TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
+    TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
+    TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: state_avgd
 !   ..output arguments (unspecified on entry)
 !     (none)
 !   ..local variables
@@ -2199,24 +2248,33 @@ CONTAINS
 &   rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1), rescale_rd(0:nsdecl-&
 &   1), rescale_br(0:nsdecl-1)
     INTEGER :: atomic_physics_rescale_flag
-    INTEGER :: icv, is, k, idum(0:9)
+    INTEGER :: icv, is, istra, k, idum(0:9)
     CHARACTER(len=256) :: filename
     LOGICAL :: ex, found
     NAMELIST /atomic_physics_rescale/ rescale_sa, rescale_ra, rescale_qa&
 &       , rescale_cx, rescale_rd, rescale_br
-    EXTERNAL RRATIO, smax
+    EXTERNAL RRATIO, smax, STREQL
 !   ..procedures
     REAL(kind=r8) :: RRATIO, smax
+    LOGICAL :: STREQL
+    INTRINSIC NINT
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     INTRINSIC MINVAL
-    EXTERNAL MINVAL_DV
     INTRINSIC MIN
     INTRINSIC LOG
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
-    INTRINSIC NINT
     INTRINSIC MAX
+    EXTERNAL SET_EXACT_SOLUTION
+    INTRINSIC ABS
+    INTRINSIC MAXVAL
+    REAL(r8) :: x1
+    REAL(r8), DIMENSION(nbdirsmax) :: x1d
+    REAL(r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: abs0
+    REAL(r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: abs1
+    REAL(r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: abs2
+    REAL(r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: abs3
+    REAL(r8), DIMENSION(mpg%nCv) :: abs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -2232,9 +2290,13 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%nCv) :: arg14
     REAL(r8), DIMENSION(mpg%nCv) :: arg15
     INTEGER :: arg16
+    REAL(r8) :: result10
+    REAL(r8) :: result20
+    REAL(r8) :: result30
+    REAL(r8) :: result40
+    REAL(r8) :: result50
     INTEGER :: nd
     INTEGER :: nbdirs
-    REAL(kind=r8) :: MINVAL_DV
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
 !-----------------------------------------------------------------------
@@ -2268,7 +2330,7 @@ CONTAINS
 !
 !  5. parameters (see also routine b2cdcv)
 !
-!     ninp - (0:5) integer array, input.
+!     ninp - (0:6) integer array, input.
 !     ninp specifies the input unit numbers, as follows.
 !     ninp(0): formatted; provides physics and numerics parameters.
 !     ninp(1): un*formatted; provides the geometry.
@@ -2278,7 +2340,7 @@ CONTAINS
 !     ninp(5): un*formatted; provides source term data.
 !     ninp(6): un*formatted; provides the initial differentiated state.
 !
-!     nout - (0:5) integer array, input.
+!     nout - (0:11) integer array, input.
 !     nout specifies the output unit numbers, as follows.
 !     nout(0): formatted; provides summary print output.
 !     nout(1): un*formatted; provides actual physics parameters.
@@ -2288,6 +2350,7 @@ CONTAINS
 !     nout(5): un*formatted; may provide detailed convergence data.
 !     nout(9): un*formatted; provides the final differentiated state.
 !     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+!     nout(11): formatted; postprocessor output. [JET]
 !
 !     nx, ny - integer, input.
 !     nx and ny specify the number of interior cells along the first
@@ -2691,8 +2754,8 @@ CONTAINS
 !     vol - (-1:nx,-1:ny) real*8 array.
 !     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
 !     the (ix,iy) cell. (In the case of toroidal symmetry this volume
-!     includes a factor 2*pi*crx, while in the case of cylindrical
-!     symmetry it includes a factor 2*pi*cry.)
+!     includes a factor 2*pi*R, while in the case of cylindrical
+!     symmetry it includes a factor 2*pi*Z.)
 !     It will hold that 0.lt.vol(,).
 !
 !     hx, hy - (-1:nx,-1:ny) real*8 array.
@@ -2877,19 +2940,12 @@ CONTAINS
     nfc = mpg%nfc
     nvx = mpg%nvx
 !   ..initialise files and common
-    CALL B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, nbdirs)
+    CALL B2MNDS_DV(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, switchd, &
+&            nbdirs)
 !   ..set internal parameters on first (and only) call
 !     (Note that the internal parameters are only defined following
 !     the call to b2mnds.)
     IF (ncall .EQ. 0) THEN
-! Default: do not create balance arrays
-      balance_netcdf = 0
-! Default: do not perform averages of balance arrays
-      balance_average = 0
-      CALL IPGETI('balance_netcdf', balance_netcdf)
-!djm Jan2017
-      CALL IPGETI('balance_average', balance_average)
-      IF (balance_netcdf .NE. 0) CALL ALLOC_B2MOD_BALANCE(ncv, nfc, ns)
       CALL IPGETI('b2mndr_iout', iout)
 !srv 25.01.16
       CALL IPGETI('b2mndr_use_mms', use_mms)
@@ -2921,8 +2977,8 @@ CONTAINS
       found = .false.
       is = ismain
       DO WHILE (is .GE. 0 .AND. (.NOT.found))
-        IF (is_neutral(is) .AND. zn(is) .EQ. zn(ismain) .AND. am(is) &
-&           .EQ. am(ismain)) THEN
+        IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. NINT(zn(ismain)) &
+&           .AND. NINT(am(is)) .EQ. NINT(am(ismain))) THEN
           ismain0 = is
           found = .true.
         END IF
@@ -2980,14 +3036,6 @@ CONTAINS
 &           'faulty internal parameter plasinc,plasnum')
       CALL IPGETC('b2mndr_idout0', idout0)
       CALL IPGETC('b2mndr_idout1', idout1)
-      CALL IPGETR('b2mndr_na_min', na_min)
-      CALL IPGETR('b2mndr_na_new', na_new)
-      CALL XERTST(na_min .GT. 0.0_R8, 'faulty internal parameter na_min'&
-&          )
-      CALL XERTST(na_new .GT. 0.0_R8, 'faulty internal parameter na_new'&
-&          )
-      CALL XERTST(na_new .GT. na_min, &
-&           'na_new must be larger than na_min!')
       CALL IPGETR('b2mndr_cpu', b2mndr_cpu)
       CALL XERTST(b2mndr_cpu .GE. 0.0_R8, &
 &           'faulty internal parameter cpu')
@@ -3005,11 +3053,20 @@ CONTAINS
 &                                        'Saving CDF movie files every '&
 &                                          , delta_cdfmovie_time, &
 &                                          ' simulation seconds'
+      CALL XERTST(delta_cdfmovie_time .EQ. 0.0_R8 .OR. &
+&           delta_cdfmovie_time .GE. dtim, &
+&           'b2mndr_cdfmovietim too short compared to timestep !')
       CALL IPGETR('b2mndr_plasmatim', delta_plasma_time)
       IF (delta_plasma_time .GT. 0.0_R8) WRITE(*, *) &
 &                                     'Saving plasma state files every '&
 &                                        , delta_plasma_time, &
 &                                        ' simulation seconds'
+      CALL XERTST(delta_plasma_time .EQ. 0.0_R8 .OR. delta_plasma_time &
+&           .GE. dtim, &
+&           'b2mndr_plasmatim too short compared to timestep !')
+      CALL IPGETR('b2mndr_ids_time', delta_ids_time)
+      IF (delta_ids_time .GT. 0.0_R8) WRITE(*, *) &
+&              'Not compiled with IMAS option, IDS will not be written.'
       CALL IPGETI('b2mndr_ntim_save', ntim_save)
       CALL IPGETI('b2mndt_av', iav_run)
       CALL IPGETI('b2mndt_av_continue', iav_cont)
@@ -3071,12 +3128,26 @@ CONTAINS
       CALL XERTST(0.0_R8 .LE. dt_max, 'faulty internal parameter dt_max'&
 &          )
 ! modify rate coefficients for coronal model
-!WG_TODO       allocate(
-!WG_TODO     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
-!WG_TODO     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-!WG_TODO     &  rbr(-1:nx,-1:ny,0:ns-1),
-!WG_TODO     *  rza0(nCv,0:ns-1), rz20(nCv,0:ns-1),
-!WG_TODO     *  rpt0(nCv,0:ns-1), rpi0(nCv,0:ns-1))
+      ALLOCATE(rza0d(nbdirsmax, ncv, 0:ns-1))
+      DO nd=1,nbdirsmax
+        rza0d(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(rza0(ncv, 0:ns-1))
+      ALLOCATE(rz20d(nbdirsmax, ncv, 0:ns-1))
+      DO nd=1,nbdirsmax
+        rz20d(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(rz20(ncv, 0:ns-1))
+      ALLOCATE(rpt0d(nbdirsmax, ncv, 0:ns-1))
+      DO nd=1,nbdirsmax
+        rpt0d(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(rpt0(ncv, 0:ns-1))
+      ALLOCATE(rpi0d(nbdirsmax, ncv, 0:ns-1))
+      DO nd=1,nbdirsmax
+        rpi0d(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(rpi0(ncv, 0:ns-1))
       CALL IPGETI('b2mndr_coronal_model', coronal)
       IF (coronal .NE. 0) THEN
         WRITE(*, *) &
@@ -3167,18 +3238,27 @@ CONTAINS
           WRITE(*, *) 'Adding ', LOG(switch%neutral_sources_rescale), &
 &         ' to relevant rtlra and rtlqr'
           DO is=0,ns-2
+            scl = switch%neutral_sources_rescale
+            DO istra=1,nstrai
+              IF (STREQL(crcstra(istra), 'V') .AND. species_start(istra)&
+&                 .EQ. is) scl = scl*strasclfl(istra)
+            END DO
             IF (is_neutral(is) .AND. LNEXT(is, is + 1)) THEN
-              rtlra(:, :, is+1) = rtlra(:, :, is+1) + LOG(switch%&
-&               neutral_sources_rescale)
+              rtlra(:, :, is+1) = rtlra(:, :, is+1) + LOG(scl)
               WRITE(*, *) is, zamax(is), rtlra(0, 0, is+1)
 !mb 22.05.18
-              rtlqr(:, :, is+1) = rtlqr(:, :, is+1) + LOG(switch%&
-&               neutral_sources_rescale)
+              rtlqr(:, :, is+1) = rtlqr(:, :, is+1) + LOG(scl)
               WRITE(*, '(i3,1p,2e16.8)') is, zamax(is), rtlqr(0, 0, is+1&
 &             )
             END IF
           END DO
-        ELSE
+          IF (switch%spatial_hybrid .EQ. 1) THEN
+            WRITE(*, *) 'Neutral sources rescaling has to be turned '//&
+&           'off for hybrid fluid-kinetic model!'
+            WRITE(0, *) 'Neutral sources rescaling has to be turned '//&
+&           'off for hybrid fluid-kinetic model!'
+          END IF
+        ELSE IF (switch%spatial_hybrid .EQ. 0) THEN
           WRITE(*, *) 'Neutral sources rescaling not turned on '//&
 &         'while coupled to Eirene!'
           WRITE(0, *) 'Neutral sources rescaling not turned on '//&
@@ -3236,8 +3316,16 @@ CONTAINS
 !pb 29.07.16
       CALL IPGETI('b2mndr_av_read', ird_aver)
 !pb 29.09.16
-! ..return
+      CALL IPGETI('b2mndr_ids_save', ids_save)
+      CALL IPGETI('b2mndr_ids_av', ids_av)
+      CALL XERTST(0 .LE. ids_av, 'Invalid ids_av value')
+      summary_av = ids_av .GT. 0 .AND. ids_save .EQ. 0 .AND. &
+&       delta_ids_time .EQ. 0.0_R8
+      IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&         0.0_R8) WRITE(*, *) &
+&              'Not compiled with IMAS option, IDS will not be written.'
     ELSE
+! ..return
       CALL XERRAB('error, b2mndr has been called more than once')
     END IF
 !
@@ -3268,12 +3356,17 @@ CONTAINS
     END IF
 !
     CALL ALLOC_B2MOD_TALLIES(mpg%nnreg, ns)
+!
 !   ..read initial state
     CALL READ_B2FSTATE_DV(ninp(3), mpg%ncv, mpg%nfc, ns, nsd, state, &
 &                   stated, nbdirs)
     result1 = smax(ncv, state%pl%kt, 1)
-    IF (switch%solve_keps .GT. 0 .AND. (.NOT.result1 .GT. 0.0_R8)) state&
-&     %pl%kt = state%pl%ti*0.1_R8
+    IF (switch%solve_keps .GT. 0 .AND. (.NOT.result1 .GT. 0.0_R8)) THEN
+      DO nd=1,nbdirs
+        stated%pl%kt(nd, :) = 0.D0
+      END DO
+      state%pl%kt = state%pl%ti*0.1_R8
+    END IF
 !      if (switch%solve_keps.gt.1 .and.
 !     &   .not.smax(nCv,state%pl%zt,1).gt.0.0_R8)
 !     .  state%pl%zt = state%pl%ti*1e5_R8
@@ -3281,21 +3374,22 @@ CONTAINS
 &                        diag, nbdirs)
 !WG_TODO      call init_state(mpg, geo, state)
 !
-!
 !   initialize 2d batch averages
     IF (ibatch_av_all .GT. 0) CALL BATCH_AV_ALL_INIT(ncv, ns)
 !
 !   initialize and/or read running averages
     IF (iav_run .GT. 0 .OR. ird_aver .GT. 0) THEN
       lrer = ird_aver .EQ. 0
-      CALL RUN_AV_INIT_DV(iav_cont, ncv, ns, .true., lrer, nbdirs)
+      CALL RUN_AV_INIT_DV(iav_cont, ncv, ns, .true., lrer, state_avg, &
+&                   state_avgd, nbdirs)
     END IF
 !
 !   get averaged plasma profiles
     IF (ird_aver .GT. 0) CALL RUN_AV_GET_PLASMA(state%pl%na, state%pl%te&
 &                                         , state%pl%ti, state%pl%ua, &
 &                                         state%pl%po, state%pl%kt, &
-&                                         state%pl%zt, ncv, ns)
+&                                         state%pl%zt, ncv, ns, &
+&                                         state_avg)
 !
     WRITE(*, *) 'Starting conversion to unstructured format...'
 !
@@ -3381,23 +3475,34 @@ CONTAINS
 !srv 25.01.16 {
     DO is=0,ns-1
       DO icv=1,ncv
-        IF (state%pl%na(icv, is) .LT. na_min) THEN
+        IF (state%pl%na(icv, is) .LT. switch%b2mndr_na_min) THEN
+          DO nd=1,nbdirs
+            x1d(nd) = 0.D0
+          END DO
+          x1 = switch%b2mndr_na_min
+        ELSE
+          DO nd=1,nbdirs
+            x1d(nd) = 0.D0
+          END DO
+          x1 = state%pl%na(icv, is)
+        END IF
+        IF (x1 .GT. switch%b2mndr_na_max) THEN
           DO nd=1,nbdirs
             stated%pl%na(nd, icv, is) = 0.D0
           END DO
-          state%pl%na(icv, is) = na_min
+          state%pl%na(icv, is) = switch%b2mndr_na_max
         ELSE
           DO nd=1,nbdirs
             stated%pl%na(nd, icv, is) = 0.D0
           END DO
-          state%pl%na(icv, is) = state%pl%na(icv, is)
+          state%pl%na(icv, is) = x1
         END IF
       END DO
     END DO
 !srv 25.01.16 }
 !      if(use_mms.ne.0) then                                         !srv 26.02.18 {
 !   ..reset initial state using exact solution
-    CALL SET_EXACT_SOLUTION_NODIFF(ncv, ns, switch, state%pl, state%dv)
+    CALL SET_EXACT_SOLUTION(ncv, ns, switch, state%pl, state%dv)
 !      endif                                                         !srv 26.02.18 {
 !   ..test plasma state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, state%pl, state%dv)
@@ -3411,7 +3516,8 @@ CONTAINS
 !   ..extend initial state to species (ns0:ns-1)
     IF (ns0 .LT. ns) THEN
       arg16 = ncv*(ns-ns0)
-      CALL SFILL_NODIFF(arg16, na_new, state%pl%na(1, ns0), 1)
+      CALL SFILL_NODIFF(arg16, switch%b2mndr_na_new, state%pl%na(1, ns0)&
+&                 , 1)
       arg16 = ncv*(ns-ns0)
       CALL SFILL_NODIFF(arg16, 0.0_R8, state%pl%ua(1, ns0), 1)
       arg16 = ncv*(ns-ns0)
@@ -3455,6 +3561,8 @@ CONTAINS
           IF (.NOT.(is_neutral(is) .OR. NINT(zn(is)) .NE. 2)) THEN
             DO nd=1,nbdirs
               stated%pl%na(nd, :, is) = 0.D0
+              stated%dv%ne(nd, :) = 0.D0
+              stated%dv%kinrgy(nd, :, is) = 0.D0
             END DO
             state%pl%na(:, is) = state%pl%na(:, is)*(-density_rescale)
             state%dv%ne(:) = state%dv%ne(:) + state%pl%na(:, is)*state%&
@@ -3486,7 +3594,9 @@ CONTAINS
       ELSE
         DO nd=1,nbdirs
           stated%pl%na(nd, :, :) = 0.D0
+          stated%dv%ne(nd, :) = 0.D0
           stated%dv%fch(nd, :, :) = 0.D0
+          stated%dv%kinrgy(nd, :, :) = 0.D0
         END DO
         state%pl%na = state%pl%na*density_rescale
         state%dv%ne = (state%dv%ne-state_ext%ne)*density_rescale + &
@@ -3536,6 +3646,7 @@ CONTAINS
         IF (is_neutral(is)) THEN
           DO nd=1,nbdirs
             stated%pl%na(nd, :, is) = 0.D0
+            stated%dv%kinrgy(nd, :, is) = 0.D0
           END DO
           state%pl%na(:, is) = state%pl%na(:, is)*switch%neutral_rescale
           state%dv%fna(:, :, is) = state%dv%fna(:, :, is)*switch%&
@@ -3564,9 +3675,77 @@ CONTAINS
     END IF
 !   ..if we rescaled or added species, recompute dependent quantities
 !   ..until convergence
-    IF (ns0 .LT. ns .OR. density_rescale .NE. 1.0_R8) CALL XERRAB(&
-&                               'b2mndr - rescaling not yet done for WG'&
-&                                                          )
+    IF (ns0 .LT. ns .OR. density_rescale .NE. 1.0_R8) THEN
+      IF (ns0 .LT. ns) THEN
+        DO is=ns0,ns-1
+          DO nd=1,nbdirs
+            stated%rt%rza(nd, :, is) = 0.D0
+          END DO
+          state%rt%rza(:, is) = (zamin(is)+zamax(is))/2.0_R8
+          state%rt%rz2(:, is) = ((zamin(is)+zamax(is))/2.0_R8)**2
+          state%rt%rpt(:, is) = (potmin(is)+potmax(is))/2.0_R8
+          state%rt%rpi(:, is) = (potimin(is)+potimax(is))/2.0_R8
+        END DO
+        CALL B2XPNE_NODIFF(ncv, ns, state%rt%rza, state%pl%na, state_ext&
+&                    %ne, state%dv%ne)
+      END IF
+      max_delta = 1.0_R8
+      is = 0
+      DO WHILE (max_delta .GT. 1.0e-6_R8 .AND. is .LT. 10)
+        is = is + 1
+        arg16 = ncv*ns
+        CALL B2SCOPY_NODIFF(arg16, state%rt%rza, 1, rza0, 1)
+        arg16 = ncv*ns
+        CALL B2SCOPY_NODIFF(arg16, state%rt%rz2, 1, rz20, 1)
+        arg16 = ncv*ns
+        CALL B2SCOPY_NODIFF(arg16, state%rt%rpt, 1, rpt0, 1)
+        arg16 = ncv*ns
+        CALL B2SCOPY_NODIFF(arg16, state%rt%rpi, 1, rpi0, 1)
+        CALL B2SCOPY_NODIFF(ncv, state%dv%ne, 1, state%psnc%ne, 1)
+!    ..compute log-log electron rate coefficients
+        CALL B2SPEL_NODIFF(ncv, ns, ev, state%pl%te, state%dv%ne, state%&
+&                    rt)
+!   ..compute electron rate coefficients
+        CALL B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, state%pl%te, &
+&                    state%rt, state%rtw)
+        CALL B2XPNE_NODIFF(ncv, ns, state%rt%rza, state%pl%na, state_ext&
+&                    %ne, state%dv%ne)
+        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.0) 
+          abs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
+        ELSEWHERE
+          abs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
+        END WHERE
+        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.0) 
+          abs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
+        ELSEWHERE
+          abs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
+        END WHERE
+        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.0) 
+          abs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
+        ELSEWHERE
+          abs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
+        END WHERE
+        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.0) 
+          abs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
+        ELSEWHERE
+          abs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
+        END WHERE
+        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.0&
+&       ) 
+          abs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
+        ELSEWHERE
+          abs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
+        END WHERE
+        result10 = MAXVAL(abs0)
+        result20 = MAXVAL(abs1)
+        result30 = MAXVAL(abs2)
+        result40 = MAXVAL(abs3)
+        result50 = MAXVAL(abs4)
+        max_delta = MAX(result10, result20, result30, result40, result50&
+&         )
+        WRITE(*, *) 'Convergence of bundled rates = ', is, max_delta
+      END DO
+    END IF
 !srv 04.02.15 }
 !   ..rewrite input file with inverted velocity
     IF (inverse_ua .NE. 0) THEN
@@ -3579,7 +3758,7 @@ CONTAINS
       CALL CFWUIN(70, 3, idum, 'nCv,nFc,ns')
       label = TRIM(label)//' Inverted velocities'
       CALL CFWUCH(70, 120, label, 'label')
-      CALL B2WUZD_NODIFF(70, newversion, ns, zamin, zamax, zn, am)
+      CALL B2WUZD(70, newversion, ns, zamin, zamax, zn, am)
       state%pl%ua = -state%pl%ua
 !     ..write plasma state
       CALL WRITE_B2FSTATE(70, ncv, nfc, ns, state)
@@ -3601,21 +3780,36 @@ CONTAINS
 !WG_TODO     &  te, ti, po, fna, fhe, fhi, fch)
 !
 ! ..main loop
-    IF (switch%b2mndr_stim .GE. 0.0_R8) tim = switch%b2mndr_stim
+    IF (switch%b2mndr_stim .GE. 0.0_R8) THEN
+      continued = tim .EQ. switch%b2mndr_stim
+      tim = switch%b2mndr_stim
+      run_start_time = switch%b2mndr_stim
+    ELSE
+      continued = .true.
+      run_start_time = 0.0_R8
+    END IF
     CALL XERTST(etim .EQ. 0.0_R8 .OR. etim .GT. tim, 'faulty input etim'&
 &        )
+    IF (etim .GT. tim) THEN
+      run_end_time = etim
+    ELSE
+      run_end_time = 0.0_R8
+    END IF
     save_plasma_time = tim + delta_plasma_time
+    save_ids_time = tim + delta_ids_time
     save_cdfmovie_time = tim
 !   ..initialise tracing routines
     WRITE(*, *) 'Calling alloc_b2mod_elements'
     CALL ALLOC_B2MOD_ELEMENTS(ns, zn, am)
-    CALL ALLOC_B2MOD_NEUTRALS(mpg%nci/2, mpg%nci/2, ns, natm, nmol, nion&
-&                       , nstraid, nsts, sput_dst)
+    CALL ALLOC_B2MOD_NEUTRALS(ns, natm, nmol, nion, nstraid, nsts, &
+&                       sput_dst)
     natmi = 0
     DO is=0,ns-1
       IF (is_neutral(is)) natmi = natmi + 1
     END DO
-    CALL ALLOC_B2MOD_USER(geo, mpg, ns, nlim, nmol, nsts)
+    CALL READ_NEUTRALS_NAMELIST_DV(ns, mpg, mpgd, switch, .true., nbdirs&
+&                           )
+    CALL ALLOC_B2MOD_USER(geo, mpg, ns, nlim, nmol, switch)
     IF (switch%b2tqna_transport_namelist .EQ. 1) THEN
       CALL ALLOC_TRANSPORT_NAMELIST(ns)
       CALL READ_B2MOD_TRANSPORT_NAMELIST()
@@ -3627,42 +3821,45 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT_DV(ncon, nele_jac, ns, mpg, mpgd, nbdirs)
+      CALL READ_B2MOD_PAR_OPT_DV(ncon, nele_jac, ns, mpg, mpgd, switch, &
+&                          nbdirs)
       ALLOCATE(par_opt_physd(nbdirsmax, npar_opt))
       DO nd=1,npar_opt
         par_opt_physd(nd, 1:npar_opt) = 0.D0
         par_opt_physd(nd, nd) = 1.0_R8
       END DO
       ALLOCATE(par_opt_phys(npar_opt))
+      ALLOCATE(xsave(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
+      xsave(1:npar_opt) = x0(1:npar_opt)
     END IF
-    CALL XERTST(natmi .LE. 6, &
-&         'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+    CALL XERTST(natmi .LE. def_natm, &
+&         'Increase DEF_NATM in b2mod_dimensions and recompile !')
     CALL ALLOC_B2MOD_DIAG(ncv, nfc, ns, mpg%nnreg(0), nstra, natm, &
 &                   switch)
 !xpb initialize the data necessary for boundary conditions
-    CALL B2STBR_INIT_DV(ns, switch, mpg, mpgd, nbdirs)
+    CALL B2STBR_INIT_DV(ns, switch, switchd, mpg, mpgd, nbdirs)
 !xpb read the Eirene output for 0-timestep runs and
 !xpb for neutral fluxes used in b2stbc_phys
-    CALL READ_NEUTRALS_NAMELIST_DV(ns, mpg, mpgd, switch, .true., nbdirs&
-&                           )
     IF (switch%b2stbc_feedback .EQ. 1 .OR. lfeedback) CALL INIT_FEEDBACK&
-&                                                                 (ncv, &
-&                                                                  nfc, &
-&                                                                  nvx, &
+&                                                                 (nfc, &
 &                                                                  ns, &
-&                                                                  natmi&
-&                                                                  , &
 &                                                                 switch&
-&                                                                  , geo&
 &                                                                  , mpg&
 &                                                                 )
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
     nlimi = 0
+    IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&       0.0_R8) CALL ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns&
+&                                 , wklng, natm, nmol, nion, nlimps)
 ! new CDF movie option (1st frame at t=0)
-    IF (tim .GE. save_cdfmovie_time .AND. delta_cdfmovie_time .GT. &
-&       0.0_R8) save_cdfmovie_time = save_cdfmovie_time + &
-&       delta_cdfmovie_time
+    IF (tim .GE. save_cdfmovie_time - dtim/2.0_R8 .AND. &
+&       delta_cdfmovie_time .GT. 0.0_R8) THEN
+      IF (switch%use_eirene .EQ. 0) CALL CDFMOVIE(ncid, ncv, ns, geo, &
+&                                           state, switch)
+      save_cdfmovie_time = save_cdfmovie_time + delta_cdfmovie_time
+    END IF
+    idx = 0
     WRITE(*, *) 'b2mndr_0, end: nCv = ', mpg%ncv
 !
     CALL SUBEND()
@@ -3672,7 +3869,7 @@ CONTAINS
 !
 !
   SUBROUTINE B2MNDR_0(ninp, nout, ns, ns0, switch, geo, mpg, state, &
-&   state_ext)
+&   state_ext, state_avg)
     USE B2MOD_AD_DIFFV, ONLY : old_erosion, old_deposition
 !  Hint: mpg%nCv should be the size of dimension 1 of array arg1
   USE B2MOD_DIFFSIZES
@@ -3685,6 +3882,7 @@ CONTAINS
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
     TYPE(B2STATE), INTENT(INOUT) :: state
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
+    TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
 !   ..output arguments (unspecified on entry)
 !     (none)
 !   ..local variables
@@ -3692,22 +3890,32 @@ CONTAINS
 &   rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1), rescale_rd(0:nsdecl-&
 &   1), rescale_br(0:nsdecl-1)
     INTEGER :: atomic_physics_rescale_flag
-    INTEGER :: icv, is, k, idum(0:9)
+    INTEGER :: icv, is, istra, k, idum(0:9)
     CHARACTER(len=256) :: filename
     LOGICAL :: ex, found
     NAMELIST /atomic_physics_rescale/ rescale_sa, rescale_ra, rescale_qa&
 &       , rescale_cx, rescale_rd, rescale_br
-    EXTERNAL RRATIO, smax
+    EXTERNAL RRATIO, smax, STREQL
 !   ..procedures
     REAL(kind=r8) :: RRATIO, smax
+    LOGICAL :: STREQL
+    INTRINSIC NINT
     EXTERNAL FIND_FILE
     INTRINSIC TRIM
     INTRINSIC MINVAL
     INTRINSIC MIN
     INTRINSIC LOG
     EXTERNAL XERRAB
-    INTRINSIC NINT
     INTRINSIC MAX
+    EXTERNAL SET_EXACT_SOLUTION
+    INTRINSIC ABS
+    INTRINSIC MAXVAL
+    REAL(r8) :: x1
+    REAL(r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: abs0
+    REAL(r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: abs1
+    REAL(r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: abs2
+    REAL(r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: abs3
+    REAL(r8), DIMENSION(mpg%nCv) :: abs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -3723,6 +3931,11 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%nCv) :: arg14
     REAL(r8), DIMENSION(mpg%nCv) :: arg15
     INTEGER :: arg16
+    REAL(r8) :: result10
+    REAL(r8) :: result20
+    REAL(r8) :: result30
+    REAL(r8) :: result40
+    REAL(r8) :: result50
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
 !-----------------------------------------------------------------------
@@ -3756,7 +3969,7 @@ CONTAINS
 !
 !  5. parameters (see also routine b2cdcv)
 !
-!     ninp - (0:5) integer array, input.
+!     ninp - (0:6) integer array, input.
 !     ninp specifies the input unit numbers, as follows.
 !     ninp(0): formatted; provides physics and numerics parameters.
 !     ninp(1): un*formatted; provides the geometry.
@@ -3766,7 +3979,7 @@ CONTAINS
 !     ninp(5): un*formatted; provides source term data.
 !     ninp(6): un*formatted; provides the initial differentiated state.
 !
-!     nout - (0:5) integer array, input.
+!     nout - (0:11) integer array, input.
 !     nout specifies the output unit numbers, as follows.
 !     nout(0): formatted; provides summary print output.
 !     nout(1): un*formatted; provides actual physics parameters.
@@ -3776,6 +3989,7 @@ CONTAINS
 !     nout(5): un*formatted; may provide detailed convergence data.
 !     nout(9): un*formatted; provides the final differentiated state.
 !     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+!     nout(11): formatted; postprocessor output. [JET]
 !
 !     nx, ny - integer, input.
 !     nx and ny specify the number of interior cells along the first
@@ -4179,8 +4393,8 @@ CONTAINS
 !     vol - (-1:nx,-1:ny) real*8 array.
 !     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
 !     the (ix,iy) cell. (In the case of toroidal symmetry this volume
-!     includes a factor 2*pi*crx, while in the case of cylindrical
-!     symmetry it includes a factor 2*pi*cry.)
+!     includes a factor 2*pi*R, while in the case of cylindrical
+!     symmetry it includes a factor 2*pi*Z.)
 !     It will hold that 0.lt.vol(,).
 !
 !     hx, hy - (-1:nx,-1:ny) real*8 array.
@@ -4370,14 +4584,6 @@ CONTAINS
 !     (Note that the internal parameters are only defined following
 !     the call to b2mnds.)
     IF (ncall .EQ. 0) THEN
-! Default: do not create balance arrays
-      balance_netcdf = 0
-! Default: do not perform averages of balance arrays
-      balance_average = 0
-      CALL IPGETI('balance_netcdf', balance_netcdf)
-!djm Jan2017
-      CALL IPGETI('balance_average', balance_average)
-      IF (balance_netcdf .NE. 0) CALL ALLOC_B2MOD_BALANCE(ncv, nfc, ns)
       CALL IPGETI('b2mndr_iout', iout)
 !srv 25.01.16
       CALL IPGETI('b2mndr_use_mms', use_mms)
@@ -4409,8 +4615,8 @@ CONTAINS
       found = .false.
       is = ismain
       DO WHILE (is .GE. 0 .AND. (.NOT.found))
-        IF (is_neutral(is) .AND. zn(is) .EQ. zn(ismain) .AND. am(is) &
-&           .EQ. am(ismain)) THEN
+        IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. NINT(zn(ismain)) &
+&           .AND. NINT(am(is)) .EQ. NINT(am(ismain))) THEN
           ismain0 = is
           found = .true.
         END IF
@@ -4468,14 +4674,6 @@ CONTAINS
 &           'faulty internal parameter plasinc,plasnum')
       CALL IPGETC('b2mndr_idout0', idout0)
       CALL IPGETC('b2mndr_idout1', idout1)
-      CALL IPGETR('b2mndr_na_min', na_min)
-      CALL IPGETR('b2mndr_na_new', na_new)
-      CALL XERTST(na_min .GT. 0.0_R8, 'faulty internal parameter na_min'&
-&          )
-      CALL XERTST(na_new .GT. 0.0_R8, 'faulty internal parameter na_new'&
-&          )
-      CALL XERTST(na_new .GT. na_min, &
-&           'na_new must be larger than na_min!')
       CALL IPGETR('b2mndr_cpu', b2mndr_cpu)
       CALL XERTST(b2mndr_cpu .GE. 0.0_R8, &
 &           'faulty internal parameter cpu')
@@ -4493,11 +4691,20 @@ CONTAINS
 &                                        'Saving CDF movie files every '&
 &                                          , delta_cdfmovie_time, &
 &                                          ' simulation seconds'
+      CALL XERTST(delta_cdfmovie_time .EQ. 0.0_R8 .OR. &
+&           delta_cdfmovie_time .GE. dtim, &
+&           'b2mndr_cdfmovietim too short compared to timestep !')
       CALL IPGETR('b2mndr_plasmatim', delta_plasma_time)
       IF (delta_plasma_time .GT. 0.0_R8) WRITE(*, *) &
 &                                     'Saving plasma state files every '&
 &                                        , delta_plasma_time, &
 &                                        ' simulation seconds'
+      CALL XERTST(delta_plasma_time .EQ. 0.0_R8 .OR. delta_plasma_time &
+&           .GE. dtim, &
+&           'b2mndr_plasmatim too short compared to timestep !')
+      CALL IPGETR('b2mndr_ids_time', delta_ids_time)
+      IF (delta_ids_time .GT. 0.0_R8) WRITE(*, *) &
+&              'Not compiled with IMAS option, IDS will not be written.'
       CALL IPGETI('b2mndr_ntim_save', ntim_save)
       CALL IPGETI('b2mndt_av', iav_run)
       CALL IPGETI('b2mndt_av_continue', iav_cont)
@@ -4559,12 +4766,10 @@ CONTAINS
       CALL XERTST(0.0_R8 .LE. dt_max, 'faulty internal parameter dt_max'&
 &          )
 ! modify rate coefficients for coronal model
-!WG_TODO       allocate(
-!WG_TODO     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
-!WG_TODO     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-!WG_TODO     &  rbr(-1:nx,-1:ny,0:ns-1),
-!WG_TODO     *  rza0(nCv,0:ns-1), rz20(nCv,0:ns-1),
-!WG_TODO     *  rpt0(nCv,0:ns-1), rpi0(nCv,0:ns-1))
+      ALLOCATE(rza0(ncv, 0:ns-1))
+      ALLOCATE(rz20(ncv, 0:ns-1))
+      ALLOCATE(rpt0(ncv, 0:ns-1))
+      ALLOCATE(rpi0(ncv, 0:ns-1))
       CALL IPGETI('b2mndr_coronal_model', coronal)
       IF (coronal .NE. 0) THEN
         WRITE(*, *) &
@@ -4655,18 +4860,27 @@ CONTAINS
           WRITE(*, *) 'Adding ', LOG(switch%neutral_sources_rescale), &
 &         ' to relevant rtlra and rtlqr'
           DO is=0,ns-2
+            scl = switch%neutral_sources_rescale
+            DO istra=1,nstrai
+              IF (STREQL(crcstra(istra), 'V') .AND. species_start(istra)&
+&                 .EQ. is) scl = scl*strasclfl(istra)
+            END DO
             IF (is_neutral(is) .AND. LNEXT(is, is + 1)) THEN
-              rtlra(:, :, is+1) = rtlra(:, :, is+1) + LOG(switch%&
-&               neutral_sources_rescale)
+              rtlra(:, :, is+1) = rtlra(:, :, is+1) + LOG(scl)
               WRITE(*, *) is, zamax(is), rtlra(0, 0, is+1)
 !mb 22.05.18
-              rtlqr(:, :, is+1) = rtlqr(:, :, is+1) + LOG(switch%&
-&               neutral_sources_rescale)
+              rtlqr(:, :, is+1) = rtlqr(:, :, is+1) + LOG(scl)
               WRITE(*, '(i3,1p,2e16.8)') is, zamax(is), rtlqr(0, 0, is+1&
 &             )
             END IF
           END DO
-        ELSE
+          IF (switch%spatial_hybrid .EQ. 1) THEN
+            WRITE(*, *) 'Neutral sources rescaling has to be turned '//&
+&           'off for hybrid fluid-kinetic model!'
+            WRITE(0, *) 'Neutral sources rescaling has to be turned '//&
+&           'off for hybrid fluid-kinetic model!'
+          END IF
+        ELSE IF (switch%spatial_hybrid .EQ. 0) THEN
           WRITE(*, *) 'Neutral sources rescaling not turned on '//&
 &         'while coupled to Eirene!'
           WRITE(0, *) 'Neutral sources rescaling not turned on '//&
@@ -4724,8 +4938,16 @@ CONTAINS
 !pb 29.07.16
       CALL IPGETI('b2mndr_av_read', ird_aver)
 !pb 29.09.16
-! ..return
+      CALL IPGETI('b2mndr_ids_save', ids_save)
+      CALL IPGETI('b2mndr_ids_av', ids_av)
+      CALL XERTST(0 .LE. ids_av, 'Invalid ids_av value')
+      summary_av = ids_av .GT. 0 .AND. ids_save .EQ. 0 .AND. &
+&       delta_ids_time .EQ. 0.0_R8
+      IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&         0.0_R8) WRITE(*, *) &
+&              'Not compiled with IMAS option, IDS will not be written.'
     ELSE
+! ..return
       CALL XERRAB('error, b2mndr has been called more than once')
     END IF
 !
@@ -4755,6 +4977,7 @@ CONTAINS
     END IF
 !
     CALL ALLOC_B2MOD_TALLIES(mpg%nnreg, ns)
+!
 !   ..read initial state
     CALL READ_B2FSTATE(ninp(3), mpg%ncv, mpg%nfc, ns, state)
     result1 = smax(ncv, state%pl%kt, 1)
@@ -4766,21 +4989,21 @@ CONTAINS
     CALL CREATEB2DIAGNOSTIC(ncv, ns, mpg%nnreg, state%diag)
 !WG_TODO      call init_state(mpg, geo, state)
 !
-!
 !   initialize 2d batch averages
     IF (ibatch_av_all .GT. 0) CALL BATCH_AV_ALL_INIT(ncv, ns)
 !
 !   initialize and/or read running averages
     IF (iav_run .GT. 0 .OR. ird_aver .GT. 0) THEN
       lrer = ird_aver .EQ. 0
-      CALL RUN_AV_INIT(iav_cont, ncv, ns, .true., lrer)
+      CALL RUN_AV_INIT(iav_cont, ncv, ns, .true., lrer, state_avg)
     END IF
 !
 !   get averaged plasma profiles
     IF (ird_aver .GT. 0) CALL RUN_AV_GET_PLASMA(state%pl%na, state%pl%te&
 &                                         , state%pl%ti, state%pl%ua, &
 &                                         state%pl%po, state%pl%kt, &
-&                                         state%pl%zt, ncv, ns)
+&                                         state%pl%zt, ncv, ns, &
+&                                         state_avg)
 !
     WRITE(*, *) 'Starting conversion to unstructured format...'
 !
@@ -4866,17 +5089,22 @@ CONTAINS
 !srv 25.01.16 {
     DO is=0,ns-1
       DO icv=1,ncv
-        IF (state%pl%na(icv, is) .LT. na_min) THEN
-          state%pl%na(icv, is) = na_min
+        IF (state%pl%na(icv, is) .LT. switch%b2mndr_na_min) THEN
+          x1 = switch%b2mndr_na_min
         ELSE
-          state%pl%na(icv, is) = state%pl%na(icv, is)
+          x1 = state%pl%na(icv, is)
+        END IF
+        IF (x1 .GT. switch%b2mndr_na_max) THEN
+          state%pl%na(icv, is) = switch%b2mndr_na_max
+        ELSE
+          state%pl%na(icv, is) = x1
         END IF
       END DO
     END DO
 !srv 25.01.16 }
 !      if(use_mms.ne.0) then                                         !srv 26.02.18 {
 !   ..reset initial state using exact solution
-    CALL SET_EXACT_SOLUTION_NODIFF(ncv, ns, switch, state%pl, state%dv)
+    CALL SET_EXACT_SOLUTION(ncv, ns, switch, state%pl, state%dv)
 !      endif                                                         !srv 26.02.18 {
 !   ..test plasma state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, state%pl, state%dv)
@@ -4890,7 +5118,8 @@ CONTAINS
 !   ..extend initial state to species (ns0:ns-1)
     IF (ns0 .LT. ns) THEN
       arg16 = ncv*(ns-ns0)
-      CALL SFILL_NODIFF(arg16, na_new, state%pl%na(1, ns0), 1)
+      CALL SFILL_NODIFF(arg16, switch%b2mndr_na_new, state%pl%na(1, ns0)&
+&                 , 1)
       arg16 = ncv*(ns-ns0)
       CALL SFILL_NODIFF(arg16, 0.0_R8, state%pl%ua(1, ns0), 1)
       arg16 = ncv*(ns-ns0)
@@ -5033,9 +5262,74 @@ CONTAINS
     END IF
 !   ..if we rescaled or added species, recompute dependent quantities
 !   ..until convergence
-    IF (ns0 .LT. ns .OR. density_rescale .NE. 1.0_R8) CALL XERRAB(&
-&                               'b2mndr - rescaling not yet done for WG'&
-&                                                          )
+    IF (ns0 .LT. ns .OR. density_rescale .NE. 1.0_R8) THEN
+      IF (ns0 .LT. ns) THEN
+        DO is=ns0,ns-1
+          state%rt%rza(:, is) = (zamin(is)+zamax(is))/2.0_R8
+          state%rt%rz2(:, is) = ((zamin(is)+zamax(is))/2.0_R8)**2
+          state%rt%rpt(:, is) = (potmin(is)+potmax(is))/2.0_R8
+          state%rt%rpi(:, is) = (potimin(is)+potimax(is))/2.0_R8
+        END DO
+        CALL B2XPNE_NODIFF(ncv, ns, state%rt%rza, state%pl%na, state_ext&
+&                    %ne, state%dv%ne)
+      END IF
+      max_delta = 1.0_R8
+      is = 0
+      DO WHILE (max_delta .GT. 1.0e-6_R8 .AND. is .LT. 10)
+        is = is + 1
+        arg16 = ncv*ns
+        CALL B2SCOPY_NODIFF(arg16, state%rt%rza, 1, rza0, 1)
+        arg16 = ncv*ns
+        CALL B2SCOPY_NODIFF(arg16, state%rt%rz2, 1, rz20, 1)
+        arg16 = ncv*ns
+        CALL B2SCOPY_NODIFF(arg16, state%rt%rpt, 1, rpt0, 1)
+        arg16 = ncv*ns
+        CALL B2SCOPY_NODIFF(arg16, state%rt%rpi, 1, rpi0, 1)
+        CALL B2SCOPY_NODIFF(ncv, state%dv%ne, 1, state%psnc%ne, 1)
+!    ..compute log-log electron rate coefficients
+        CALL B2SPEL_NODIFF(ncv, ns, ev, state%pl%te, state%dv%ne, state%&
+&                    rt)
+!   ..compute electron rate coefficients
+        CALL B2SQEL_NODIFF(ncv, ns, ismain, switch, ev, state%pl%te, &
+&                    state%rt, state%rtw)
+        CALL B2XPNE_NODIFF(ncv, ns, state%rt%rza, state%pl%na, state_ext&
+&                    %ne, state%dv%ne)
+        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.0) 
+          abs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
+        ELSEWHERE
+          abs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
+        END WHERE
+        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.0) 
+          abs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
+        ELSEWHERE
+          abs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
+        END WHERE
+        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.0) 
+          abs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
+        ELSEWHERE
+          abs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
+        END WHERE
+        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.0) 
+          abs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
+        ELSEWHERE
+          abs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
+        END WHERE
+        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.0&
+&       ) 
+          abs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
+        ELSEWHERE
+          abs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
+        END WHERE
+        result10 = MAXVAL(abs0)
+        result20 = MAXVAL(abs1)
+        result30 = MAXVAL(abs2)
+        result40 = MAXVAL(abs3)
+        result50 = MAXVAL(abs4)
+        max_delta = MAX(result10, result20, result30, result40, result50&
+&         )
+        WRITE(*, *) 'Convergence of bundled rates = ', is, max_delta
+      END DO
+    END IF
 !srv 04.02.15 }
 !   ..rewrite input file with inverted velocity
     IF (inverse_ua .NE. 0) THEN
@@ -5048,7 +5342,7 @@ CONTAINS
       CALL CFWUIN(70, 3, idum, 'nCv,nFc,ns')
       label = TRIM(label)//' Inverted velocities'
       CALL CFWUCH(70, 120, label, 'label')
-      CALL B2WUZD_NODIFF(70, newversion, ns, zamin, zamax, zn, am)
+      CALL B2WUZD(70, newversion, ns, zamin, zamax, zn, am)
       state%pl%ua = -state%pl%ua
 !     ..write plasma state
       CALL WRITE_B2FSTATE(70, ncv, nfc, ns, state)
@@ -5070,21 +5364,35 @@ CONTAINS
 !WG_TODO     &  te, ti, po, fna, fhe, fhi, fch)
 !
 ! ..main loop
-    IF (switch%b2mndr_stim .GE. 0.0_R8) tim = switch%b2mndr_stim
+    IF (switch%b2mndr_stim .GE. 0.0_R8) THEN
+      continued = tim .EQ. switch%b2mndr_stim
+      tim = switch%b2mndr_stim
+      run_start_time = switch%b2mndr_stim
+    ELSE
+      continued = .true.
+      run_start_time = 0.0_R8
+    END IF
     CALL XERTST(etim .EQ. 0.0_R8 .OR. etim .GT. tim, 'faulty input etim'&
 &        )
+    IF (etim .GT. tim) THEN
+      run_end_time = etim
+    ELSE
+      run_end_time = 0.0_R8
+    END IF
     save_plasma_time = tim + delta_plasma_time
+    save_ids_time = tim + delta_ids_time
     save_cdfmovie_time = tim
 !   ..initialise tracing routines
     WRITE(*, *) 'Calling alloc_b2mod_elements'
     CALL ALLOC_B2MOD_ELEMENTS(ns, zn, am)
-    CALL ALLOC_B2MOD_NEUTRALS(mpg%nci/2, mpg%nci/2, ns, natm, nmol, nion&
-&                       , nstraid, nsts, sput_dst)
+    CALL ALLOC_B2MOD_NEUTRALS(ns, natm, nmol, nion, nstraid, nsts, &
+&                       sput_dst)
     natmi = 0
     DO is=0,ns-1
       IF (is_neutral(is)) natmi = natmi + 1
     END DO
-    CALL ALLOC_B2MOD_USER(geo, mpg, ns, nlim, nmol, nsts)
+    CALL READ_NEUTRALS_NAMELIST(ns, mpg, switch, .true.)
+    CALL ALLOC_B2MOD_USER(geo, mpg, ns, nlim, nmol, switch)
     IF (switch%b2tqna_transport_namelist .EQ. 1) THEN
       CALL ALLOC_TRANSPORT_NAMELIST(ns)
       CALL READ_B2MOD_TRANSPORT_NAMELIST()
@@ -5096,36 +5404,39 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg)
+      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg, switch)
       ALLOCATE(par_opt_phys(npar_opt))
+      ALLOCATE(xsave(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
+      xsave(1:npar_opt) = x0(1:npar_opt)
     END IF
-    CALL XERTST(natmi .LE. 6, &
-&         'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+    CALL XERTST(natmi .LE. def_natm, &
+&         'Increase DEF_NATM in b2mod_dimensions and recompile !')
     CALL ALLOC_B2MOD_DIAG(ncv, nfc, ns, mpg%nnreg(0), nstra, natm, &
 &                   switch)
 !xpb initialize the data necessary for boundary conditions
     CALL B2STBR_INIT_NODIFF(ns, switch, mpg)
 !xpb read the Eirene output for 0-timestep runs and
 !xpb for neutral fluxes used in b2stbc_phys
-    CALL READ_NEUTRALS_NAMELIST(ns, mpg, switch, .true.)
     IF (switch%b2stbc_feedback .EQ. 1 .OR. lfeedback) CALL INIT_FEEDBACK&
-&                                                                 (ncv, &
-&                                                                  nfc, &
-&                                                                  nvx, &
+&                                                                 (nfc, &
 &                                                                  ns, &
-&                                                                  natmi&
-&                                                                  , &
 &                                                                 switch&
-&                                                                  , geo&
 &                                                                  , mpg&
 &                                                                 )
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
     nlimi = 0
+    IF ((ids_save .NE. 0 .OR. ids_av .GT. 0) .OR. delta_ids_time .GT. &
+&       0.0_R8) CALL ALLOC_B2MOD_B2PLOT(ncv, nfc, nvx, ns, state_ext%ns&
+&                                 , wklng, natm, nmol, nion, nlimps)
 ! new CDF movie option (1st frame at t=0)
-    IF (tim .GE. save_cdfmovie_time .AND. delta_cdfmovie_time .GT. &
-&       0.0_R8) save_cdfmovie_time = save_cdfmovie_time + &
-&       delta_cdfmovie_time
+    IF (tim .GE. save_cdfmovie_time - dtim/2.0_R8 .AND. &
+&       delta_cdfmovie_time .GT. 0.0_R8) THEN
+      IF (switch%use_eirene .EQ. 0) CALL CDFMOVIE(ncid, ncv, ns, geo, &
+&                                           state, switch)
+      save_cdfmovie_time = save_cdfmovie_time + delta_cdfmovie_time
+    END IF
+    idx = 0
     WRITE(*, *) 'b2mndr_0, end: nCv = ', mpg%ncv
 !
     CALL SUBEND()
@@ -5134,31 +5445,31 @@ CONTAINS
 
 !  Differentiation of b2mndr_1 in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar potpar enipar
-!                tdata j
-!   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
-!                enepar conpar enkpar potpar mompar enipar b2recyc
-!                sigma *par_opt_phys parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!                b2recyc tdata j
+!   with respect to varying inputs: enepar conpar enkpar potpar
+!                mompar enipar b2recyc tdata parm_hce parm_hci
+!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
+!                corr_length sigma shift *par_opt_phys mean *rtlsa
+!                *rtlcx *rtlqa *rtlra switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
 !                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
 !                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
-!   Plus diff mem management of: rtlsa:in rtlcx:in rtlqa:in rtlra:in
-!                b2voloncf:in b2data:in b2dataoncf:in par_opt_phys:in
-!                mpg.bcfcor:in mpg.rcfcor:in mpg.cffcor:in mpg.intcellp:in
+!   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
+!                par_opt_phys:in rtlsa:in rtlcx:in rtlqa:in rtlra:in
+!                mpg.bcfcor:in mpg.rcfcor:in-out mpg.intcellp:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
-!                geo.cvonedbsq:in geo.cveb:in geo.fcbb:in geo.fcs:in
+!                geo.cvonedbsq:in geo.cvfpsi:in geo.fcbb:in geo.fcs:in
 !                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
 !                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.fcpbshz:in geo.fcbzb:in geo.fceb:in geo.vxbb:in
-!                geo.vxx:in geo.vxy:in geo.vxhz:in geo.vxvol:in
-!                geo.vxonedbsq:in geo.cvconn:in geo.ftconn:in geo.fteps:in
+!                geo.fcpbshz:in geo.fcbzb:in geo.vxbb:in geo.vxx:in
+!                geo.vxy:in geo.vxhz:in geo.vxvol:in geo.vxonedbsq:in
+!                geo.cvconn:in geo.ftconn:in geo.fsconn:in geo.fteps:in
 !                geo.ftbbav2:in state_ext.am:in state_ext.ne:in
 !                state_ext.ne2:in state_ext.ue:in state_ext.za:in
 !                state_ext.za2:in state_ext.pt:in state_ext.na:in
@@ -5209,63 +5520,86 @@ CONTAINS
 !                state.dv.fhe_exb:in state.dv.fhi:in state.dv.fhi_mdf:in
 !                state.dv.fhipsch:in state.dv.fhi_eir:in state.dv.fhi_exb:in
 !                state.dv.fnn:in state.dv.fnn_32:in state.dv.fnn_52:in
-!                state.dv.fhn:in state.dv.fhm:in state.dv.fhp:in
-!                state.dv.fhj:in state.dv.fht:in state.dv.fkt:in
-!                state.dv.fzt:in state.dv.kinrgy:in state.dv.conc:in
-!                state.dv.flob:in state.dv.floe:in state.dv.floi:in
-!                state.dv.floe_noc:in state.dv.floi_noc:in state.dv.flon:in
-!                state.dv.flokt:in state.dv.flozt:in state.dv.conn:in
-!                state.dv.conkt:in state.dv.conzt:in state.dv.conb:in
-!                state.dv.cone:in state.dv.coni:in state.dv.fllime:in
-!                state.dv.fllimi:in state.dv.resmo:in state.dv.resco:in
-!                state.dv.respo:in state.dv.reshe:in state.dv.reshi:in
-!                state.dv.resht:in state.dv.resmt:in state.dv.reshn:in
-!                state.dv.reskt:in state.dv.reszt:in state.dv.corua:in
-!                state.dv.corpa:in state.dv.corut:in state.dv.corpo:in
-!                state.dv.cortt:in state.dv.corte:in state.dv.corti:in
-!                state.dv.cortn:in state.dv.corkt:in state.dv.corzt:in
-!                state.dv.pcca:in state.dv.pccm:in state.dv.ne:in
-!                state.dv.ni:in-out state.dv.nn:in-out state.dv.ue:in
-!                state.dv.ne2:in state.dv.pa:in state.dv.pz:in
-!                state.dv.lnlam:in state.dv.uadia:in state.dv.vadia:in
-!                state.dv.wadia:in state.dv.vaecrb:in state.dv.vedia:in
-!                state.dv.wedia:in state.dv.veecrb:in state.dv.facdrift:in
-!                state.dv.fac_exb:in state.dv.fac_vis:in state.sr.sch:in
-!                state.sr.she:in state.sr.shi:in state.sr.sne:in
-!                state.sr.shn:in state.sr.skt:in state.sr.szt:in
-!                state.sr.smo:in state.sr.smq:in state.sr.sna:in
-!                state.sr.skt_diss:in state.sr.skt_prod:in state.srw.sch0:in
-!                state.srw.she0:in state.srw.shi0:in state.srw.sne0:in
-!                state.srw.shn0:in state.srw.skt0:in state.srw.szt0:in
-!                state.srw.smo0:in state.srw.smq0:in state.srw.sna0:in
-!                state.srw.b2stbm_sch:in state.srw.b2stbm_she:in
-!                state.srw.b2stbm_shi:in state.srw.b2stbm_sne:in
-!                state.srw.b2stbm_smo:in state.srw.b2stbm_sna:in
-!                state.rt.rlcx:in state.rt.rlqa:in state.rt.rlrd:in
-!                state.rt.rlbr:in state.rt.rlra:in state.rt.rlsa:in
-!                state.rt.rlza:in state.rt.rlz2:in state.rt.rlpt:in
-!                state.rt.rlpi:in state.rt.rlqr:in state.rt.rza:in
-!                state.rt.rz2:in state.rt.rpt:in state.rt.rpi:in
-!                state.rtw.rsa:in state.rtw.rra:in state.rtw.rqa:in
-!                state.rtw.rrd:in state.rtw.rbr:in state.rtw.rcx:in
-!                state.rtw.rqr:in state.psnl.na:in state.psnl.ua:in
-!                state.psnl.po:in state.psnl.te:in state.psnl.ti:in
+!                state.dv.fhn:in state.dv.fnn_inc:in state.dv.fhm:in
+!                state.dv.fhp:in state.dv.fhj:in state.dv.fht:in
+!                state.dv.fkt:in state.dv.fzt:in state.dv.kin_frac_hyb:in
+!                state.dv.fluid_frac_hyb:in state.dv.kinrgy:in
+!                state.dv.conc:in state.dv.flob:in state.dv.floe:in
+!                state.dv.floi:in state.dv.floe_noc:in state.dv.floi_noc:in
+!                state.dv.flon:in state.dv.flokt:in state.dv.flozt:in
+!                state.dv.conn:in state.dv.conkt:in state.dv.conzt:in
+!                state.dv.conb:in state.dv.cone:in state.dv.coni:in
+!                state.dv.resmo:in state.dv.resco:in state.dv.respo:in
+!                state.dv.reshe:in state.dv.reshi:in state.dv.resht:in
+!                state.dv.resmt:in state.dv.reshn:in state.dv.reskt:in
+!                state.dv.reszt:in state.dv.corua:in state.dv.corpa:in
+!                state.dv.corut:in state.dv.corpo:in state.dv.cortt:in
+!                state.dv.corte:in state.dv.corti:in state.dv.cortn:in
+!                state.dv.corkt:in state.dv.corzt:in state.dv.pcca:in
+!                state.dv.pccm:in state.dv.ne:in state.dv.ni:in-out
+!                state.dv.nn:in-out state.dv.ue:in state.dv.ne2:in
+!                state.dv.pa:in state.dv.pz:in state.dv.lnlam:in
+!                state.dv.uadia:in state.dv.vadia:in state.dv.wadia:in
+!                state.dv.vaecrb:in state.dv.vedia:in state.dv.wedia:in
+!                state.dv.veecrb:in state.dv.facdrift:in state.dv.fac_exb:in
+!                state.dv.fac_vis:in state.sr.sch:in state.sr.she:in
+!                state.sr.shi:in state.sr.sne:in state.sr.shn:in
+!                state.sr.skt:in state.sr.szt:in state.sr.smo:in
+!                state.sr.smq:in state.sr.sna:in state.sr.shedt:in
+!                state.sr.sktdt:in state.sr.sztdt:in state.sr.snedt:in
+!                state.sr.shidt:in state.sr.shndt:in state.sr.schdt:in
+!                state.sr.smodt:in state.sr.snadt:in state.sr.skt_diss:in
+!                state.sr.skt_prod:in state.srw.sch0:in state.srw.she0:in
+!                state.srw.shi0:in state.srw.sne0:in state.srw.shn0:in
+!                state.srw.skt0:in state.srw.szt0:in state.srw.smo0:in
+!                state.srw.smq0:in state.srw.sna0:in state.srw.smcf:in
+!                state.srw.smpr:in state.srw.smpt:in state.srw.smfr:in
+!                state.srw.b2stbc_sch:in state.srw.b2stbc_she:in
+!                state.srw.b2stbc_shi:in state.srw.b2stbc_sne:in
+!                state.srw.b2stbc_shn:in state.srw.b2stbc_skt:in
+!                state.srw.b2stbc_szt:in state.srw.b2stbc_smo:in
+!                state.srw.b2stbc_sna:in state.srw.b2stbm_sch:in
+!                state.srw.b2stbm_she:in state.srw.b2stbm_shi:in
+!                state.srw.b2stbm_sne:in state.srw.b2stbm_smo:in
+!                state.srw.b2stbm_sna:in state.srw.b2stbr_sch:in
+!                state.srw.b2stbr_she:in state.srw.b2stbr_shi:in
+!                state.srw.b2stbr_sne:in state.srw.b2stbr_shn:in
+!                state.srw.b2stbr_skt:in state.srw.b2stbr_szt:in
+!                state.srw.b2stbr_smo:in state.srw.b2stbr_sna:in
+!                state.srw.b2npmo_smaf:in state.srw.b2npmo_smag:in
+!                state.srw.b2npmo_smav:in state.srw.rsana:in state.srw.rsahi:in
+!                state.srw.rsamo:in state.srw.rrana:in state.srw.rrahi:in
+!                state.srw.rramo:in state.srw.rcxna:in state.srw.rcxhi:in
+!                state.srw.rcxmo:in state.srw.rqahe:in state.srw.rqrad:in
+!                state.srw.rqbrm:in state.srw.b2sihs_joule:in state.srw.b2sihs_divue:in
+!                state.srw.b2sihs_divua:in state.srw.b2sihs_exbe:in
+!                state.srw.b2sihs_exba:in state.srw.b2sihs_visa:in
+!                state.srw.b2sihs_fraa:in state.srw.b2sihs_str:in
+!                state.srw.sna0_eir_tot:in state.srw.smo0_eir_tot:in
+!                state.srw.she0_eir_tot:in state.srw.shi0_eir_tot:in
+!                state.srw.shn0_eir_tot:in state.rt.rlcx:in state.rt.rlqa:in
+!                state.rt.rlrd:in state.rt.rlbr:in state.rt.rlra:in
+!                state.rt.rlsa:in state.rt.rlza:in state.rt.rlz2:in
+!                state.rt.rlpt:in state.rt.rlpi:in state.rt.rlqr:in
+!                state.rt.rza:in state.rt.rz2:in state.rt.rpt:in
+!                state.rt.rpi:in state.rtw.rsa:in state.rtw.rra:in
+!                state.rtw.rqa:in state.rtw.rrd:in state.rtw.rbr:in
+!                state.rtw.rcx:in state.rtw.rqr:in state.psnl.na:in
+!                state.psnl.ua:in state.psnl.te:in state.psnl.ti:in
 !                state.psnl.tn:in state.psnl.kt:in state.psnl.zt:in
-!                state.psnl.ne:in state.psnl.ni:in state.psnl.fch:in
-!                state.psnl.fna:in state.psnl.fhi:in state.psnl.fhe:in
-!                state.psnl.fkt:in state.psnl.fzt:in state.psnl.kinrgy:in
-!                state.psnc.na:in state.psnc.ua:in state.psnc.po:in
-!                state.psnc.te:in state.psnc.ti:in state.psnc.tn:in
-!                state.psnc.kt:in state.psnc.zt:in state.psnc.ne:in
-!                state.psnc.ni:in state.psnc.nn:in state.psnc.fch:in
-!                state.psnc.fna:in state.psnc.fhi:in state.psnc.fhe:in
-!                state.psnc.fkt:in state.psnc.fzt:in state.psnc.kinrgy:in
-!                state.diag.aresco:in state.diag.aresmo:in state.diag.acorpa:in
-!                state.diag.acorua:in state.diag.rescoreg:in state.diag.resmoreg:in
+!                state.psnl.ne:in state.psnl.ni:in state.psnl.nn:in
+!                state.psnl.fna:in state.psnl.kinrgy:in state.psnc.na:in
+!                state.psnc.ua:in state.psnc.te:in state.psnc.ti:in
+!                state.psnc.tn:in state.psnc.kt:in state.psnc.zt:in
+!                state.psnc.ne:in state.psnc.ni:in state.psnc.nn:in
+!                state.psnc.fna:in state.psnc.kinrgy:in state.diag.aresco:in
+!                state.diag.aresmo:in state.diag.acorpa:in state.diag.acorua:in
+!                state.diag.rescoreg:in state.diag.resmoreg:in
 !                state.diag.reshereg:in state.diag.reshireg:in
 !
   SUBROUTINE B2MNDR_1_DV(nout, ns, switch, switchd, geo, geod, mpg, mpgd&
-&   , state, stated, state_ext, state_extd, j, jd, nbdirs)
+&   , state, stated, state_ext, state_extd, state_avg, state_avgd, j, jd&
+&   , nbdirs)
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
     USE B2MOD_BATCH_AVERAGE_DIFFV, ONLY : e_she, e_shi, e_ua, ua_mean, &
@@ -5277,9 +5611,9 @@ CONTAINS
 &   int1l, int1ld, int4r, int4l, int4ld, uold, mold, told, fna_mol
     USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutlod, cutll, &
 &   b2mod_math_initialised, small_r4_constant
+    USE B2MOD_FACDRIFT_EXB_DIFFV, ONLY : ncall_drift, facdrift_scalar, &
+&   fac_exb_scalar, fac_exb_scalard, fac_vis_scalar, fac_vis_scalard
     USE B2MOD_AD_DIFFV
-!  Hint: mpg%nCv should be the size of dimension 1 of array abs
-!  Hint: 0:state%pl%ns-1 should be the size of dimension 2 of array abs
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -5292,79 +5626,39 @@ CONTAINS
     TYPE(B2STATE_DIFFV), INTENT(INOUT) :: stated
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
+    TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
+    TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: state_avgd
     TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
-    INTEGER :: nndirs
-!! incident fluid neutral flux
-    REAL(kind=r8) :: j(nncf), kin_frac_hyb(mpg%nfc), fnn_inc(mpg%nfc, 0:&
-&   ns-1)
+    REAL(kind=r8) :: j(nncf)
     REAL(kind=r8) :: jd(nbdirsmax, nncf)
     INTEGER :: ncv, nfc, nvx
     INTEGER :: i, is, icf
     CHARACTER(len=256) :: filename, fort31name
-    CHARACTER(len=1) :: ss
+    CHARACTER(len=2) :: ss
     LOGICAL :: ok, found
-!   ..procedures
-    INTRINSIC CPU_TIME
     EXTERNAL EPOCH_SECONDS
+!   ..procedures
     REAL(kind=r8) :: EPOCH_SECONDS
+    LOGICAL, SAVE :: first_opt_call=.true.
+    INTRINSIC CPU_TIME
     INTRINSIC MOD
-    INTRINSIC ABS
-    INTRINSIC MAXVAL
     INTRINSIC MAX
+    INTRINSIC REAL
     INTRINSIC MIN
-    INTRINSIC ALLOCATED
     INTRINSIC ANY
-    EXTERNAL FIND_FILE
-    REAL(r8), DIMENSION(mpg%nCv) :: x1
-    REAL(r8), DIMENSION(mpg%nCv) :: x2
-    REAL(r8), DIMENSION(mpg%nCv) :: x3
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: x4
-    REAL(r8) :: x5
+    REAL(r8) :: x1
     REAL(r8) :: y1
     REAL(kind=r8) :: y2
     REAL(kind=r8) :: y3
     REAL(r8) :: y4
-    REAL(r8), DIMENSION(mpg%nCv) :: x6
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: x7
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs0
-    REAL(r8), DIMENSION(mpg%nCv) :: abs1
-    REAL(r8), DIMENSION(mpg%nCv) :: abs2
-    REAL(r8), DIMENSION(mpg%nCv) :: abs3
-    REAL(r8), DIMENSION(mpg%nCv) :: abs4
-    REAL(r8), DIMENSION(mpg%nCv) :: abs5
-    REAL(r8), DIMENSION(mpg%nCv) :: abs6
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs7
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs8
+    INTEGER :: max1
     REAL(r8) :: min1
     REAL(kind=r8) :: min2
     REAL(kind=r8) :: min3
-    REAL(r8), DIMENSION(mpg%nCv) :: abs9
-    REAL(r8), DIMENSION(mpg%nCv) :: abs10
-    REAL(r8), DIMENSION(mpg%nCv) :: abs11
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs12
-    REAL(r8), DIMENSION(mpg%nCv) :: abs13
-    REAL(r8), DIMENSION(mpg%nCv) :: abs14
-    REAL(r8), DIMENSION(mpg%nCv) :: abs15
-    REAL(r8), DIMENSION(mpg%nCv) :: abs16
-    REAL(r8), DIMENSION(mpg%nCv) :: abs17
-    REAL(r8), DIMENSION(mpg%nCv) :: abs18
-    REAL(r8), DIMENSION(mpg%nCv) :: abs19
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs20
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs21
-    REAL(r8) :: result1
-    REAL(r8) :: result2
-    REAL(r8) :: result3
-    REAL(r8) :: result4
-    REAL(r8) :: result5
-    REAL(r8) :: result6
-    REAL(r8) :: result7
-    REAL(r8) :: result8
     REAL(kind=r4) :: arg1
-    INTEGER :: arg10
     INTEGER :: nd
     INTEGER :: nbdirs
-    LOGICAL, SAVE :: first_opt_call=.true.
 !
     CALL SUBINI('b2mndr_1')
 !   ..no error so far
@@ -5383,6 +5677,8 @@ CONTAINS
 !jwk
     quit_residual = .false.
     res_max = 10.0_R8*res_quit
+    gradient_res = 10.0_R8*res_quit
+    continued = continued .AND. ntim .GT. 0
     ne_wanted_next_time = tim
     CALL CPU_TIME(cpuinit)
     elapsedinit = EPOCH_SECONDS()
@@ -5392,27 +5688,6 @@ CONTAINS
     nvx = mpg%nvx
 !
     WRITE(*, *) 'b2mndr_1, start: nCv = ', ncv
-    DO nd=1,nbdirsmax
-      cfnormd(nd, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      voldd(nd, :) = 0.D0
-    END DO
-    IF (ALLOCATED(b2voloncfd)) THEN
-      DO nd=1,nbdirsmax
-        b2voloncfd(nd, :, :) = 0.D0
-      END DO
-    END IF
-    IF (ALLOCATED(b2datad)) THEN
-      DO nd=1,nbdirsmax
-        b2datad(nd, :) = 0.D0
-      END DO
-    END IF
-    IF (ALLOCATED(b2dataoncfd)) THEN
-      DO nd=1,nbdirsmax
-        b2dataoncfd(nd, :) = 0.D0
-      END DO
-    END IF
     DO nd=1,nbdirsmax
       userfluxparmd(nd, :, :) = 0.D0
     END DO
@@ -5476,10 +5751,7 @@ CONTAINS
     DO nd=1,nbdirsmax
       fb_rescaled(nd, :) = 0.D0
     END DO
-    DO nd=1,nbdirsmax
-      jd(nd, :) = 0.D0
-    END DO
-    if (first_opt_call) then
+    if (first_opt_call .and. .not.reset_gradient) then
     DO nd=1,nbdirsmax
       stated%pl%na(nd, :, :) = 0.D0
     END DO
@@ -5727,6 +5999,9 @@ CONTAINS
       stated%dv%fna_32(nd, :, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
+      stated%dv%fna_53(nd, :, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
       stated%dv%fna_he(nd, :, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
@@ -5745,10 +6020,10 @@ CONTAINS
       stated%dv%fmo(nd, :, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
-      stated%dv%fne(nd, :, :) = 0.D0
+      stated%dv%fne_he(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
-      stated%dv%fne_he(nd, :, :) = 0.D0
+      stated%dv%fne_53(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%dv%fhe(nd, :, :) = 0.D0
@@ -5784,10 +6059,25 @@ CONTAINS
       stated%dv%fhm(nd, :, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
+      stated%dv%fhp(nd, :, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%dv%fhj(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%dv%fht(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
       stated%dv%fkt(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%dv%fzt(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%dv%kin_frac_hyb(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%dv%fluid_frac_hyb(nd, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%dv%kinrgy(nd, :, :) = 0.D0
@@ -5961,6 +6251,27 @@ CONTAINS
       stated%sr%sna(nd, :, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
+      stated%sr%shedt(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%sr%sktdt(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%sr%shidt(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%sr%shndt(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%sr%schdt(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%sr%smodt(nd, :, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%sr%snadt(nd, :, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
       stated%srw%sch0(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
@@ -6039,13 +6350,37 @@ CONTAINS
       stated%rtw%rqr(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
+      stated%psnl%na(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%psnl%ua(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%psnl%te(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%psnl%ti(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%psnl%tn(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%psnl%kt(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%psnl%ne(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%psnl%ni(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%psnl%kinrgy(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
       stated%psnc%na(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%psnc%ua(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      stated%psnc%po(nd, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%psnc%te(nd, :) = 0.D0
@@ -6060,9 +6395,6 @@ CONTAINS
       stated%psnc%kt(nd, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
-      stated%psnc%zt(nd, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
       stated%psnc%ne(nd, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
@@ -6072,92 +6404,85 @@ CONTAINS
       stated%psnc%nn(nd, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
-      stated%psnc%fch(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      stated%psnc%fna(nd, :, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      stated%psnc%fhi(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      stated%psnc%fhe(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      stated%psnc%fkt(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      stated%psnc%fzt(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
       stated%psnc%kinrgy(nd, :, :) = 0.D0
     END DO
     first_opt_call = .false.
     endif
- 1  WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
-&   'b2mndr_00:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr, &
-&   quit
+! The FIXED POINT compilation option here and below transforms the time-stepping loop into
+! a fixed-point type of iterator such that Tapenade can apply the two-phase checkpointing strategy
+! and save only the final converged primal state instead of all the intermediate states. The AD pragma
+! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
+! Note that when compiling the 'FIXED_POINT' version some parts of the standard time-stepping are 
+! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
+    DO WHILE (res_max .GE. res_quit .AND. itim .LT. ntim .AND. (.NOT.&
+&             quit))
+      WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
+&     'b2mndr_00:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr&
+&     , quit
 !
-    CALL CPU_TIME(cpustart)
-    elapsedstart = EPOCH_SECONDS()
-!}
-!   ..loop test
-!!!   (Note: better loop control yet to be developed)
-    IF (first_time_step .OR. (.NOT.quit .AND. itim .LT. ntim .AND. ierr &
-&       .EQ. 0 .AND. (etim .GT. tim .OR. etim .EQ. 0.0_R8))) THEN
-!{
-!
-!
-!    ..guess the next state
-      state%psnl%na = state%psnc%na
+      CALL CPU_TIME(cpustart)
+      elapsedstart = EPOCH_SECONDS()
       DO nd=1,nbdirs
+!
+!
+!    ..set snapshot values. The behaviour is made to be backward compatible with ua0, uap etc in 3.0.9
+!      nap, uap, etc from 3.0.9 -> psnl = Plasma SNapshot Last
+!      na0, ua0, etc from 3.0.9 -> psnc = Plasma SNapshot Current
+!      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc, which is what currently happens in the b2mxnp a
+!nd b2mxnu routines in 3.0.9
+        stated%psnl%na(nd, :, :) = stated%pl%na(nd, :, :)
         stated%psnc%na(nd, :, :) = stated%pl%na(nd, :, :)
+        stated%psnl%ua(nd, :, :) = stated%pl%ua(nd, :, :)
         stated%psnc%ua(nd, :, :) = stated%pl%ua(nd, :, :)
+        stated%psnl%ne(nd, :) = stated%dv%ne(nd, :)
         stated%psnc%ne(nd, :) = stated%dv%ne(nd, :)
+        stated%psnl%ni(nd, :, :) = stated%dv%ni(nd, :, :)
+        stated%psnc%ni(nd, :, :) = stated%dv%ni(nd, :, :)
+        stated%psnl%te(nd, :) = stated%pl%te(nd, :)
         stated%psnc%te(nd, :) = stated%pl%te(nd, :)
+        stated%psnl%ti(nd, :) = stated%pl%ti(nd, :)
         stated%psnc%ti(nd, :) = stated%pl%ti(nd, :)
+        stated%psnl%tn(nd, :) = stated%pl%tn(nd, :)
         stated%psnc%tn(nd, :) = stated%pl%tn(nd, :)
+        stated%psnl%kinrgy(nd, :, :) = stated%dv%kinrgy(nd, :, :)
         stated%psnc%kinrgy(nd, :, :) = stated%dv%kinrgy(nd, :, :)
-        stated%psnc%po(nd, :) = stated%pl%po(nd, :)
+        stated%psnl%kt(nd, :) = stated%pl%kt(nd, :)
         stated%psnc%kt(nd, :) = stated%pl%kt(nd, :)
-        stated%psnc%zt(nd, :) = stated%pl%zt(nd, :)
-        stated%psnc%fna(nd, :, :, :) = stated%dv%fna(nd, :, :, :)
-        stated%psnc%fhe(nd, :, :) = stated%dv%fhe(nd, :, :)
-        stated%psnc%fhi(nd, :, :) = stated%dv%fhi(nd, :, :)
-        stated%psnc%fch(nd, :, :) = stated%dv%fch(nd, :, :)
-        stated%psnc%fkt(nd, :, :) = stated%dv%fkt(nd, :, :)
-        stated%psnc%fzt(nd, :, :) = stated%dv%fzt(nd, :, :)
+        stated%psnc%zt(nd, :) = 0.D0
       END DO
+      state%psnl%na = state%pl%na
       state%psnc%na = state%pl%na
-      state%psnl%ua = state%psnc%ua
+      state%psnl%ua = state%pl%ua
       state%psnc%ua = state%pl%ua
-      state%psnl%ne = state%psnc%ne
+      state%psnl%ne = state%dv%ne
       state%psnc%ne = state%dv%ne
-      state%psnl%te = state%psnc%te
+      state%psnl%ni = state%dv%ni
+      state%psnc%ni = state%dv%ni
+      state%psnl%te = state%pl%te
       state%psnc%te = state%pl%te
-      state%psnl%ti = state%psnc%ti
+      state%psnl%ti = state%pl%ti
       state%psnc%ti = state%pl%ti
-      state%psnl%tn = state%psnc%tn
+      state%psnl%tn = state%pl%tn
       state%psnc%tn = state%pl%tn
-      state%psnl%kinrgy = state%psnc%kinrgy
+      state%psnl%kinrgy = state%dv%kinrgy
       state%psnc%kinrgy = state%dv%kinrgy
-      state%psnl%po = state%psnc%po
+      state%psnl%po = state%pl%po
       state%psnc%po = state%pl%po
-      state%psnl%kt = state%psnc%kt
+      state%psnl%kt = state%pl%kt
       state%psnc%kt = state%pl%kt
-      state%psnl%zt = state%psnc%zt
+      state%psnl%zt = state%pl%zt
       state%psnc%zt = state%pl%zt
-      state%psnl%fna = state%psnc%fna
+      state%psnl%fna = state%dv%fna
       state%psnc%fna = state%dv%fna
-      state%psnl%fhe = state%psnc%fhe
+      state%psnl%fhe = state%dv%fhe
       state%psnc%fhe = state%dv%fhe
-      state%psnl%fhi = state%psnc%fhi
+      state%psnl%fhi = state%dv%fhi
       state%psnc%fhi = state%dv%fhi
-      state%psnl%fch = state%psnc%fch
+      state%psnl%fch = state%dv%fch
       state%psnc%fch = state%dv%fch
-      state%psnl%fkt = state%psnc%fkt
+      state%psnl%fkt = state%dv%fkt
       state%psnc%fkt = state%dv%fkt
-      state%psnl%fzt = state%psnc%fzt
+      state%psnl%fzt = state%dv%fzt
       state%psnc%fzt = state%dv%fzt
       CALL B2TRCS()
 !sw 09oct2012 set default potential already at this point (BCs)
@@ -6166,7 +6491,7 @@ CONTAINS
         DO nd=1,nbdirs
           stated%pl%po(nd, :) = 0.D0
         END DO
-        state%pl%po = 0.0e0_R8
+        state%pl%po = 0.0_R8
       ELSE IF (switch%pot_eq .EQ. 2) THEN
         DO nd=1,nbdirs
           stated%pl%po(nd, :) = 3.1_R8*stated%pl%te(nd, :)/qe
@@ -6176,268 +6501,30 @@ CONTAINS
 !
 !    ..perform one time step
       ok = .false.
-      DO WHILE (.NOT.ok)
-        WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
-&       'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, &
-&       stack_ptr
-        CALL B2MNDT_DV(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
-&                ismain0, state%rt%nscx, state%rt%nscxmax, state%rt%iscx&
-&                , itim, dtim, ntim, switch, switchd, geo, geod, mpg, &
-&                mpgd, state, stated, state_ext, state_extd, ierr, &
-&                nbdirs)
-        IF (ierr .EQ. 10) THEN
-          stack_ptr = stack_ptr + 1
-          CALL XERTST(stack_ptr .LE. 20, 'Too deep in b2mndr')
-! dpc 2000.06.24 was ntim+10
-          stack_ntim(stack_ptr) = ntim - itim
-          stack_dtim(stack_ptr) = dtim
-          dtim = dtim/10.0_R8
-          ntim = itim + 10
-          itim_plas = itim_plas - 10
-          CALL PUTB2PLASMASNAPSHOT_DV(state%pl, stated%pl, state%dv, &
-&                               stated%dv, state%psnc, stated%psnc, &
-&                               nbdirs)
-        ELSE
-          ok = ierr .EQ. 0
-        END IF
-      END DO
-!    ..call cost function
-      CALL B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, geod, mpg, &
-&                           mpgd, state, stated, state_ext, state_extd, &
-&                           switch%boris, j, jd, nbdirs+nsigma_opt)
-      if (first_time_step) write(*,*) 'nbdirs: ',nbdirs
+      WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
+&     'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr
+      CALL B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, state%rt%&
+&              nscx, state%rt%nscxmax, state%rt%iscx, itim, dtim, ntim, &
+&              switch, switchd, geo, geod, mpg, mpgd, state, stated, &
+&              state_ext, state_extd, state_avg, state_avgd, ierr, &
+&              nbdirs)
+!     manually inserted call to cost function, for output purposes only
+      CALL B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, state, &
+&             stated, state_ext, switch%boris, j, jd,&
+&             nbdirs+nsigma_opt+nmean_opt+nshift_opt+ncorr_opt)
+      if (first_time_step) write(*,*) 'nbdirs: ',nbdirs+nsigma_opt+nmean_opt+nshift_opt+ncorr_opt
       call print_tgt_gradient(jd)
-      DO icf=1,ncf
-        WRITE(ss, '(I1)') icf
-        WRITE(*, *) 'Cost function value '//ss//': ', j(icf)
-      END DO
-!    ..produce data for movie
-!    ..extra writes of b2fplasmf.xxxx
-      IF (MOD(itim_plas, plasinc) .EQ. 0 .AND. nwrit_plas .LE. plasnum &
-&         .AND. plasnum .GT. 0 .AND. plasinc .GT. 0) THEN
-        nwrit_plas = nwrit_plas + 1
-        WRITE(savefile_p(11:14), '(i4)') edition_p
-        edition_p = edition_p + 1
-        DO i=11,14
-          IF (savefile_p(i:i) .EQ. ' ') savefile_p(i:i) = '0'
-        END DO
-        CALL CFOPEN(nout(7), savefile_p, 'new', 'un*formatted')
-        WRITE(*, *) 'Writing extra b2plasmf:', itim, itim_plas, plasinc&
-&       , MOD(itim_plas, plasinc), tim
-        WRITE(*, *) savefile_p
-        CALL CFVERW(nout(7), newversion)
-        idum(0) = ncv
-        idum(1) = nfc
-        idum(2) = ns
-        CALL CFWUIN(nout(7), 3, idum, 'nCv,nFc,ns')
-        CALL WRITE_B2FPLASMA(nout(7), ncv, nfc, ns, state)
-        CLOSE(nout(7)) 
-      END IF
-!djm Jun2017
+      do icf=1,ncf
+        write(ss, '(I1)') icf
+        if (icf.gt.9) write (ss,'(I2)') icf
+        write(*, *) 'Cost function value '//ss//': ', j(icf)
+      end do
 !    ..increment
       itim = itim + 1
       itim_plas = itim_plas + 1
       IF (no_solve .LE. 0) tim = tim + dtim
       WRITE(*, '(1x,a,i9,a,es14.6,a,i9,a,es10.2)') 'ITER ', itim, &
 &     ' TIME ', tim, ' NTIM ', ntim, ' DTIM ', dtim
-      WHERE ((state%pl%na-state%psnc%na)/(state%pl%na+na_eps) .GE. 0.0) 
-        abs0 = (state%pl%na-state%psnc%na)/(state%pl%na+na_eps)
-      ELSEWHERE
-        abs0 = -((state%pl%na-state%psnc%na)/(state%pl%na+na_eps))
-      END WHERE
-      result1 = MAXVAL(abs0)
-      WRITE(*, *) 'delta na ', result1
-      WHERE ((state%pl%te-state%psnc%te)/(state%pl%te+te_eps*ev) .GE. &
-&         0.0) 
-        abs1 = (state%pl%te-state%psnc%te)/(state%pl%te+te_eps*ev)
-      ELSEWHERE
-        abs1 = -((state%pl%te-state%psnc%te)/(state%pl%te+te_eps*ev))
-      END WHERE
-      result1 = MAXVAL(abs1)
-      WRITE(*, *) 'delta te ', result1
-      WHERE ((state%pl%ti-state%psnc%ti)/(state%pl%ti+ti_eps*ev) .GE. &
-&         0.0) 
-        abs2 = (state%pl%ti-state%psnc%ti)/(state%pl%ti+ti_eps*ev)
-      ELSEWHERE
-        abs2 = -((state%pl%ti-state%psnc%ti)/(state%pl%ti+ti_eps*ev))
-      END WHERE
-      result1 = MAXVAL(abs2)
-      WRITE(*, *) 'delta ti ', result1
-      WHERE ((state%pl%tn-state%psnc%tn)/(state%pl%tn+tn_eps*ev) .GE. &
-&         0.0) 
-        abs3 = (state%pl%tn-state%psnc%tn)/(state%pl%tn+tn_eps*ev)
-      ELSEWHERE
-        abs3 = -((state%pl%tn-state%psnc%tn)/(state%pl%tn+tn_eps*ev))
-      END WHERE
-      result1 = MAXVAL(abs3)
-      WRITE(*, *) 'delta tn ', result1
-      WHERE (state%pl%po .GE. 0.0) 
-        abs9 = state%pl%po
-      ELSEWHERE
-        abs9 = -state%pl%po
-      END WHERE
-      x1 = (state%pl%po-state%psnc%po)/(abs9+po_eps)
-      WHERE (x1 .GE. 0.0) 
-        abs4 = x1
-      ELSEWHERE
-        abs4 = -x1
-      END WHERE
-      result1 = MAXVAL(abs4)
-      WRITE(*, *) 'delta po ', result1
-      WHERE (state%pl%kt .GE. 0.0) 
-        abs10 = state%pl%kt
-      ELSEWHERE
-        abs10 = -state%pl%kt
-      END WHERE
-      x2 = (state%pl%kt-state%psnc%kt)/(abs10+kt_eps*ev)
-      WHERE (x2 .GE. 0.0) 
-        abs5 = x2
-      ELSEWHERE
-        abs5 = -x2
-      END WHERE
-      result1 = MAXVAL(abs5)
-      WRITE(*, *) 'delta kt ', result1
-      WHERE (state%pl%zt .GE. 0.0) 
-        abs11 = state%pl%zt
-      ELSEWHERE
-        abs11 = -state%pl%zt
-      END WHERE
-      x3 = (state%pl%zt-state%psnc%zt)/(abs11+zt_eps*ev)
-      WHERE (x3 .GE. 0.0) 
-        abs6 = x3
-      ELSEWHERE
-        abs6 = -x3
-      END WHERE
-      result1 = MAXVAL(abs6)
-      WRITE(*, *) 'delta zt ', result1
-      WHERE (state%pl%na*state%pl%ua .GE. 0.0) 
-        abs12 = state%pl%na*state%pl%ua
-      ELSEWHERE
-        abs12 = -(state%pl%na*state%pl%ua)
-      END WHERE
-      x4 = (state%pl%na*state%pl%ua-state%psnc%na*state%psnc%ua)/(abs12+&
-&       na_eps*ua_eps)
-      WHERE (x4 .GE. 0.0) 
-        abs7 = x4
-      ELSEWHERE
-        abs7 = -x4
-      END WHERE
-      result1 = MAXVAL(abs7)
-      WRITE(*, *) 'delta ua ', result1
-      IF (delta_min .GT. 0.0_R8 .AND. delta_max .GT. 0.0_R8) THEN
-        WHERE ((state%pl%na-state%psnc%na)/(state%pl%na+na_eps) .GE. 0.0&
-&       ) 
-          abs8 = (state%pl%na-state%psnc%na)/(state%pl%na+na_eps)
-        ELSEWHERE
-          abs8 = -((state%pl%na-state%psnc%na)/(state%pl%na+na_eps))
-        END WHERE
-        WHERE ((state%pl%te-state%psnc%te)/(state%pl%te+te_eps*ev) .GE. &
-&           0.0) 
-          abs13 = (state%pl%te-state%psnc%te)/(state%pl%te+te_eps*ev)
-        ELSEWHERE
-          abs13 = -((state%pl%te-state%psnc%te)/(state%pl%te+te_eps*ev))
-        END WHERE
-        WHERE ((state%pl%ti-state%psnc%ti)/(state%pl%ti+ti_eps*ev) .GE. &
-&           0.0) 
-          abs14 = (state%pl%ti-state%psnc%ti)/(state%pl%ti+ti_eps*ev)
-        ELSEWHERE
-          abs14 = -((state%pl%ti-state%psnc%ti)/(state%pl%ti+ti_eps*ev))
-        END WHERE
-        WHERE ((state%pl%tn-state%psnc%tn)/(state%pl%tn+tn_eps*ev) .GE. &
-&           0.0) 
-          abs15 = (state%pl%tn-state%psnc%tn)/(state%pl%tn+tn_eps*ev)
-        ELSEWHERE
-          abs15 = -((state%pl%tn-state%psnc%tn)/(state%pl%tn+tn_eps*ev))
-        END WHERE
-        WHERE (state%pl%po .GE. 0.0) 
-          abs17 = state%pl%po
-        ELSEWHERE
-          abs17 = -state%pl%po
-        END WHERE
-        x6 = (state%pl%po-state%psnc%po)/(abs17+po_eps)
-        WHERE (x6 .GE. 0.0) 
-          abs16 = x6
-        ELSEWHERE
-          abs16 = -x6
-        END WHERE
-        WHERE ((state%pl%kt-state%psnc%kt)/(state%pl%kt+kt_eps*ev) .GE. &
-&           0.0) 
-          abs18 = (state%pl%kt-state%psnc%kt)/(state%pl%kt+kt_eps*ev)
-        ELSEWHERE
-          abs18 = -((state%pl%kt-state%psnc%kt)/(state%pl%kt+kt_eps*ev))
-        END WHERE
-        WHERE ((state%pl%zt-state%psnc%zt)/(state%pl%zt+zt_eps*ev) .GE. &
-&           0.0) 
-          abs19 = (state%pl%zt-state%psnc%zt)/(state%pl%zt+zt_eps*ev)
-        ELSEWHERE
-          abs19 = -((state%pl%zt-state%psnc%zt)/(state%pl%zt+zt_eps*ev))
-        END WHERE
-        WHERE (state%pl%na*state%pl%ua .GE. 0.0) 
-          abs21 = state%pl%na*state%pl%ua
-        ELSEWHERE
-          abs21 = -(state%pl%na*state%pl%ua)
-        END WHERE
-        x7 = (state%pl%na*state%pl%ua-state%psnc%na*state%psnc%ua)/(&
-&         abs21+na_eps*ua_eps)
-        WHERE (x7 .GE. 0.0) 
-          abs20 = x7
-        ELSEWHERE
-          abs20 = -x7
-        END WHERE
-        result1 = MAXVAL(abs8)
-        result2 = MAXVAL(abs13)
-        result3 = MAXVAL(abs14)
-        result4 = MAXVAL(abs15)
-        result5 = MAXVAL(abs16)
-        result6 = MAXVAL(abs18)
-        result7 = MAXVAL(abs19)
-        result8 = MAXVAL(abs20)
-        max_delta = MAX(result1, result2, result3, result4, result5, &
-&         result6, result7, result8)
-        IF (max_delta .GT. delta_max) THEN
-          WRITE(*, *) 'b2mndr_delta: max_delta > delta_max'
-          IF (dt_min .LT. dtim*dt_change_dec) THEN
-            dtim = dtim*dt_change_dec
-          ELSE
-            dtim = dt_min
-          END IF
-          WRITE(*, *) 'b2mndr_dtim: dtim ', dtim
-        ELSE IF (max_delta .LT. delta_min) THEN
-          WRITE(*, *) 'b2mndr_delta: max_delta < delta_min'
-          IF (dt_max .GT. dtim*dt_change_inc) THEN
-            dtim = dtim*dt_change_inc
-          ELSE
-            dtim = dt_max
-          END IF
-          WRITE(*, *) 'b2mndr_dtim: dtim ', dtim
-        ELSE
-          WRITE(*, *) 'b2mndr_delta: max_delta OK'
-          WRITE(*, *) 'b2mndr_dtim: dtim ', dtim
-        END IF
-      END IF
-      DO WHILE (itim .EQ. ntim .AND. stack_ptr .GT. 0)
-        WRITE(*, '(a,i8,1p,g14.7,i8,i3)') &
-&       'b2mndr_01:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, &
-&       stack_ptr
-! dpc 2000.06.24 was stack_ntim(stack_ptr)
-        ntim = stack_ntim(stack_ptr) + itim - 1
-        dtim = stack_dtim(stack_ptr)
-        stack_ptr = stack_ptr - 1
-        WRITE(*, '(a,i8,1p,g14.7,i8,i3)') &
-&       'b2mndr_02:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, &
-&       stack_ptr
-      END DO
-!    ..produce time-dependent file
-      IF (switch%save_f31 .LT. 0) THEN
-        WRITE(fort31name, '(a,i8.8)') fort_lc//'31.', itim
-        WRITE(*, *) 'Saving ', fort31name, ' at time ', tim
-        OPEN(31, file=fort31name) 
-        CALL COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, geo, &
-&                             state%pl, state%dv, kin_frac_hyb, fnn_inc)
-        CALL WRITE_F31_NODIFF(mpg)
-        CLOSE(31) 
-      END IF
-!
       lwti = .false.
       lwav = .false.
       IF (b2time .GT. 0) THEN
@@ -6446,9 +6533,15 @@ CONTAINS
       IF (ntim_batch .GT. 0) THEN
         IF (MOD(itim, ntim_batch) .EQ. 0) lwav = .true.
       END IF
-      CALL B2MWTI(itim, tim, ntim, b2time, ntim_batch, ncv, ns, geo, mpg&
-&           , switch, state%pl, state%dv, state%co, ismain, ismain0, &
-&           lwti, lwav, .true.)
+      IF (1 .LT. mpg%nxpt) THEN
+        max1 = mpg%nxpt
+      ELSE
+        max1 = 1
+      END IF
+      CALL B2MWTI(itim, tim, ntim, b2time, ntim_batch, ncv, nfc, ns, &
+&           max1, geo, mpg, switch, state%pl, state%dv, state%co, state%&
+&           rt, state%srw, state_ext, ismain, ismain0, lwti, lwav, &
+&           .true.)
       IF (ibatch_av_all .GT. 0 .AND. lwav) THEN
         edition_batch = edition_batch + 1
         WRITE(batch_name, '(a18,i4.4)') 'batch_av/batch_av.', &
@@ -6462,22 +6555,11 @@ CONTAINS
         IF (lrav) THEN
           edition_run = edition_run + 1
           WRITE(run_av_name, '(a14,i4.4)') 'run_av/run_av.', edition_run
-          CALL RUN_AV_SAVE(run_av_name, ncv, ns, .true., .false.)
+          CALL RUN_AV_SAVE(run_av_name, ncv, ns, .true., .false., &
+&                    state_avg)
           WRITE(*, *) 'Saved ', run_av_name
         END IF
       END IF
-      IF (first_time_step) THEN
-        IF (.NOT.ALLOCATED(iz)) CALL ALLOC_B2MOD_DIAG(ncv, nfc, ns, mpg%&
-&                                               nnreg(0), nstra, natm, &
-&                                               switch)
-        CALL B2TRCI(switch)
-        IF (write_nml_user) CALL WRITE_B2MOD_USER_NAMELIST()
-      END IF
-      IF (ank_tracing .NE. 0) THEN
-        IF (MOD(itim, ank_tracing) .EQ. 1 .OR. ank_tracing .EQ. 1) CALL &
-&         B2TRACE(ns, nxtl, nxtr, ismain, dtim, geo, mpg, state, switch)
-      END IF
-!    ..loop
 !srv 18.05.09 13.04.11
       INQUIRE(file='_quit', exist=quitexist_) 
       INQUIRE(file='.quit', exist=quitexist) 
@@ -6485,17 +6567,17 @@ CONTAINS
       elapsedval = EPOCH_SECONDS()
       IF (b2mndr_cpu .GT. 0.0_R8) THEN
         arg1 = cpuval - cpustart
-        x5 = (ntim-itim)*REAL(arg1, r8)
+        x1 = (ntim-itim)*REAL(arg1, r8)
         y4 = b2mndr_cpu - REAL(cpuval - cpuinit, r8)
         IF (0.0_R8 .LT. y4) THEN
           y1 = y4
         ELSE
           y1 = 0.0_R8
         END IF
-        IF (x5 .GT. y1) THEN
+        IF (x1 .GT. y1) THEN
           min1 = y1
         ELSE
-          min1 = x5
+          min1 = x1
         END IF
 !srv 18.05.09
         WRITE(*, '(1x,3(a,es11.3))') 'b2-step-cpu =', cpuval - cpustart&
@@ -6538,6 +6620,9 @@ CONTAINS
 &       ' estimated remaining elapsed time (s) =', (ntim-itim)*(&
 &       elapsedval-elapsedstart)
       END IF
+      gradient_res = 0.0_R8
+      call calc_res_fp_multi(nbdirs, nCv, ns, switch%tn_style, &
+&       switch%solve_keps, stated%diag, gradient_res)
       res_max = 0.0_R8
       DO is=0,ns-1
         IF (ANY(solveco(is, :))) THEN
@@ -6597,83 +6682,37 @@ CONTAINS
           res_max = res_max
         END IF
       END IF
-!jwk
-      IF (test_residual .AND. MOD(itim, 10) .EQ. 0 .AND. no_solve .LE. 0&
-&     ) THEN
-!jwk
-!jwk
-!jwk
-!jwk
-!jwk
-        quit_residual = state%diag%areshe*min_areshe .LE. min_areshe*&
-&         min_areshe .AND. state%diag%areshi*min_areshi .LE. min_areshi*&
-&         min_areshi .AND. state%diag%aresco(ismain)*min_aresco .LE. &
-&         min_aresco*min_aresco
-      END IF
 !jwk !srv 13.04.11
-      quit = (((((quitexist_ .OR. quitexist) .OR. quit_residual) .OR. (&
-&       cpuval - cpuinit .GT. b2mndr_cpu .AND. b2mndr_cpu .GT. 0.0_R8)) &
-&       .OR. (elapsedval - elapsedinit .GT. b2mndr_elapsed .AND. &
-&       b2mndr_elapsed .GT. 0.0_R8)) .OR. (etim .GT. switch%b2mndr_stim &
-&       .AND. tim .GE. etim .AND. etim .NE. 0.0_R8)) .OR. (no_solve .EQ.&
-&       1 .AND. itim .EQ. ntim)
-      write_save = cpuval .GT. cputarget .AND. cpuincrement .GT. 0.0_R8
-      write_save = write_save .OR. (tim .GE. save_plasma_time .AND. &
-&       delta_plasma_time .GT. 0.0_R8)
-      IF (ntim_save .GT. 0 .AND. itim .GT. 0) write_save = write_save &
-&         .OR. MOD(itim, ntim_save) .EQ. 0
-      write_save = write_save .AND. (.NOT.quit)
-      IF (write_save) THEN
-        WRITE(savefile(13:16), '(i4)') edition
-        edition = edition + 1
-        IF (cpuval .GT. cputarget .AND. cpuincrement .GT. 0.0_R8) &
-&         cputarget = cputarget + cpuincrement
-        IF (tim .GE. save_plasma_time .AND. delta_plasma_time .GT. &
-&           0.0_R8) save_plasma_time = save_plasma_time + &
-&           delta_plasma_time
-        IF (edition .GT. 9999) THEN
-          edition = 0
-          savefilestatus = 'old'
-        END IF
-        DO i=13,16
-          IF (savefile(i:i) .EQ. ' ') savefile(i:i) = '0'
-        END DO
-        CALL CFOPEN(nout(6), savefile, savefilestatus, 'unformatted')
-        CALL CFVERW(nout(6), newversion)
-!xpb/dpc
-!       ..test plasma state
-        CALL B2XVPS_NODIFF(ncv, nfc, ns, state%pl, state%dv)
-        arg10 = ncv*ns
-        CALL B2XVSG_NODIFF(arg10, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
-!       ..write plasma state
-        CALL WRITE_B2FSTATE(nout(6), ncv, nfc, ns, state)
-        CLOSE(nout(6)) 
-!       ..write additional save namelist data
-        filename = 'b2.feedback_save.parameters'
-        CALL FIND_FILE(filename, found)
-        IF (found) CALL WRITE_B2US_FEEDBACK(99, savefile(13:16))
-        filename = 'b2.neutrals_save.parameters'
-        CALL FIND_FILE(filename, found)
-        IF (found) CALL WRITE_B2MOD_NEUTRALS_SAVE(99, savefile(13:16))
-        WRITE(*, *) 'Plasmastate savefile ', savefile, ' saved'
-        IF (iav_run .GT. 0) THEN
-          WRITE(aver_name, '(a17,a4)') 'plasmastate_aver.', savefile(13:&
-&         16)
-          CALL RUN_AV_SAVE(aver_name, ncv, ns, .true., .true.)
-          WRITE(*, *) aver_name, ' saved '
-        END IF
-      END IF
-      first_time_step = .false.
-      GOTO 1
-    END IF
-!
+      quit = ((quitexist_ .OR. quitexist) .OR. (cpuval - cpuinit .GT. &
+&       b2mndr_cpu .AND. b2mndr_cpu .GT. 0.0_R8)) .OR. (elapsedval - &
+&       elapsedinit .GT. b2mndr_elapsed .AND. b2mndr_elapsed .GT. 0.0_R8&
+&       )
+      WRITE(*, *) 'MAX RESIDUAL ', res_max
+      primal_res = res_max
+      WRITE(*, *) 'MAX TGT RESIDUAL ', gradient_res
+      res_max = max(res_max, gradient_res)
+      primal_iterations = itim
+      gradient_iterations = itim
+    END DO
 !   ..end loop
+!   ..call cost function
+    CALL B2USR_COST_FUNCTION_DV(ncv, nfc, nvx, ns, geo, mpg, state, &
+&                         stated, state_ext, switch%boris, j, jd, &
+&                         nbdirs+nsigma_opt+nmean_opt+nshift_opt+ncorr_opt)
+    if (first_time_step) write(*,*) 'nbdirs: ',nbdirs+nsigma_opt+nmean_opt+nshift_opt+ncorr_opt
+    call print_tgt_gradient(jd)
+    DO icf=1,ncf
+      WRITE(ss, '(I1)') icf
+      IF (icf .GT. 9) WRITE(ss, '(I2)') icf
+      WRITE(*, *) 'Cost function value '//ss//': ', j(icf)
+    END DO
     CALL SUBEND()
     RETURN
   END SUBROUTINE B2MNDR_1_DV
 
 !
-  SUBROUTINE B2MNDR_1(nout, ns, switch, geo, mpg, state, state_ext, j)
+  SUBROUTINE B2MNDR_1(nout, ns, switch, geo, mpg, state, state_ext, &
+&   state_avg, j)
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
     USE B2MOD_BATCH_AVERAGE_DIFFV, ONLY : e_she, e_shi, e_ua, ua_mean, &
@@ -6685,9 +6724,9 @@ CONTAINS
 &   mold, told, fna_mol
     USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutll, b2mod_math_initialised, &
 &   small_r4_constant
+    USE B2MOD_FACDRIFT_EXB_DIFFV, ONLY : ncall_drift, facdrift_scalar, &
+&   fac_exb_scalar, fac_vis_scalar
     USE B2MOD_AD_DIFFV
-!  Hint: mpg%nCv should be the size of dimension 1 of array abs
-!  Hint: 0:state%pl%ns-1 should be the size of dimension 2 of array abs
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: nout(0:10), ns, idum(0:9)
@@ -6695,73 +6734,33 @@ CONTAINS
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
     TYPE(B2STATE), INTENT(INOUT) :: state
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
+    TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
     TYPE(SWITCHES), INTENT(INOUT) :: switch
-!! incident fluid neutral flux
-    REAL(kind=r8) :: j(nncf), kin_frac_hyb(mpg%nfc), fnn_inc(mpg%nfc, 0:&
-&   ns-1)
+    REAL(kind=r8) :: j(nncf)
     INTEGER :: ncv, nfc, nvx
     INTEGER :: i, is, icf
     CHARACTER(len=256) :: filename, fort31name
-    CHARACTER(len=1) :: ss
+    CHARACTER(len=2) :: ss
     LOGICAL :: ok, found
-!   ..procedures
-    INTRINSIC CPU_TIME
     EXTERNAL EPOCH_SECONDS
+!   ..procedures
     REAL(kind=r8) :: EPOCH_SECONDS
+    INTRINSIC CPU_TIME
     INTRINSIC MOD
-    INTRINSIC ABS
-    INTRINSIC MAXVAL
     INTRINSIC MAX
+    INTRINSIC REAL
     INTRINSIC MIN
-    INTRINSIC ALLOCATED
     INTRINSIC ANY
-    EXTERNAL FIND_FILE
-    REAL(r8), DIMENSION(mpg%nCv) :: x1
-    REAL(r8), DIMENSION(mpg%nCv) :: x2
-    REAL(r8), DIMENSION(mpg%nCv) :: x3
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: x4
-    REAL(r8) :: x5
+    REAL(r8) :: x1
     REAL(r8) :: y1
     REAL(kind=r8) :: y2
     REAL(kind=r8) :: y3
     REAL(r8) :: y4
-    REAL(r8), DIMENSION(mpg%nCv) :: x6
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: x7
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs0
-    REAL(r8), DIMENSION(mpg%nCv) :: abs1
-    REAL(r8), DIMENSION(mpg%nCv) :: abs2
-    REAL(r8), DIMENSION(mpg%nCv) :: abs3
-    REAL(r8), DIMENSION(mpg%nCv) :: abs4
-    REAL(r8), DIMENSION(mpg%nCv) :: abs5
-    REAL(r8), DIMENSION(mpg%nCv) :: abs6
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs7
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs8
+    INTEGER :: max1
     REAL(r8) :: min1
     REAL(kind=r8) :: min2
     REAL(kind=r8) :: min3
-    REAL(r8), DIMENSION(mpg%nCv) :: abs9
-    REAL(r8), DIMENSION(mpg%nCv) :: abs10
-    REAL(r8), DIMENSION(mpg%nCv) :: abs11
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs12
-    REAL(r8), DIMENSION(mpg%nCv) :: abs13
-    REAL(r8), DIMENSION(mpg%nCv) :: abs14
-    REAL(r8), DIMENSION(mpg%nCv) :: abs15
-    REAL(r8), DIMENSION(mpg%nCv) :: abs16
-    REAL(r8), DIMENSION(mpg%nCv) :: abs17
-    REAL(r8), DIMENSION(mpg%nCv) :: abs18
-    REAL(r8), DIMENSION(mpg%nCv) :: abs19
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs20
-    REAL(r8), DIMENSION(mpg%nCv, 0:state%pl%ns-1) :: abs21
-    REAL(r8) :: result1
-    REAL(r8) :: result2
-    REAL(r8) :: result3
-    REAL(r8) :: result4
-    REAL(r8) :: result5
-    REAL(r8) :: result6
-    REAL(r8) :: result7
-    REAL(r8) :: result8
     REAL(kind=r4) :: arg1
-    INTEGER :: arg10
 !
     CALL SUBINI('b2mndr_1')
 !   ..no error so far
@@ -6780,6 +6779,7 @@ CONTAINS
 !jwk
     quit_residual = .false.
     res_max = 10.0_R8*res_quit
+    continued = continued .AND. ntim .GT. 0
     ne_wanted_next_time = tim
     CALL CPU_TIME(cpuinit)
     elapsedinit = EPOCH_SECONDS()
@@ -6789,320 +6789,92 @@ CONTAINS
     nvx = mpg%nvx
 !
     WRITE(*, *) 'b2mndr_1, start: nCv = ', ncv
- 1  WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
-&   'b2mndr_00:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr, &
-&   quit
+! The FIXED POINT compilation option here and below transforms the time-stepping loop into
+! a fixed-point type of iterator such that Tapenade can apply the two-phase checkpointing strategy
+! and save only the final converged primal state instead of all the intermediate states. The AD pragma
+! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
+! Note that when compiling the 'FIXED_POINT' version some parts of the standard time-stepping are 
+! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
+    DO WHILE (res_max .GE. res_quit .AND. itim .LT. ntim .AND. (.NOT.&
+&             quit))
+      WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') &
+&     'b2mndr_00:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr&
+&     , quit
 !
-    CALL CPU_TIME(cpustart)
-    elapsedstart = EPOCH_SECONDS()
-!}
-!   ..loop test
-!!!   (Note: better loop control yet to be developed)
-    IF (first_time_step .OR. (.NOT.quit .AND. itim .LT. ntim .AND. ierr &
-&       .EQ. 0 .AND. (etim .GT. tim .OR. etim .EQ. 0.0_R8))) THEN
-!{
+      CALL CPU_TIME(cpustart)
+      elapsedstart = EPOCH_SECONDS()
 !
 !
-!    ..guess the next state
-      state%psnl%na = state%psnc%na
+!    ..set snapshot values. The behaviour is made to be backward compatible with ua0, uap etc in 3.0.9
+!      nap, uap, etc from 3.0.9 -> psnl = Plasma SNapshot Last
+!      na0, ua0, etc from 3.0.9 -> psnc = Plasma SNapshot Current
+!      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc, which is what currently happens in the b2mxnp a
+!nd b2mxnu routines in 3.0.9
+      state%psnl%na = state%pl%na
       state%psnc%na = state%pl%na
-      state%psnl%ua = state%psnc%ua
+      state%psnl%ua = state%pl%ua
       state%psnc%ua = state%pl%ua
-      state%psnl%ne = state%psnc%ne
+      state%psnl%ne = state%dv%ne
       state%psnc%ne = state%dv%ne
-      state%psnl%te = state%psnc%te
+      state%psnl%ni = state%dv%ni
+      state%psnc%ni = state%dv%ni
+      state%psnl%te = state%pl%te
       state%psnc%te = state%pl%te
-      state%psnl%ti = state%psnc%ti
+      state%psnl%ti = state%pl%ti
       state%psnc%ti = state%pl%ti
-      state%psnl%tn = state%psnc%tn
+      state%psnl%tn = state%pl%tn
       state%psnc%tn = state%pl%tn
-      state%psnl%kinrgy = state%psnc%kinrgy
+      state%psnl%kinrgy = state%dv%kinrgy
       state%psnc%kinrgy = state%dv%kinrgy
-      state%psnl%po = state%psnc%po
+      state%psnl%po = state%pl%po
       state%psnc%po = state%pl%po
-      state%psnl%kt = state%psnc%kt
+      state%psnl%kt = state%pl%kt
       state%psnc%kt = state%pl%kt
-      state%psnl%zt = state%psnc%zt
+      state%psnl%zt = state%pl%zt
       state%psnc%zt = state%pl%zt
-      state%psnl%fna = state%psnc%fna
+      state%psnl%fna = state%dv%fna
       state%psnc%fna = state%dv%fna
-      state%psnl%fhe = state%psnc%fhe
+      state%psnl%fhe = state%dv%fhe
       state%psnc%fhe = state%dv%fhe
-      state%psnl%fhi = state%psnc%fhi
+      state%psnl%fhi = state%dv%fhi
       state%psnc%fhi = state%dv%fhi
-      state%psnl%fch = state%psnc%fch
+      state%psnl%fch = state%dv%fch
       state%psnc%fch = state%dv%fch
-      state%psnl%fkt = state%psnc%fkt
+      state%psnl%fkt = state%dv%fkt
       state%psnc%fkt = state%dv%fkt
-      state%psnl%fzt = state%psnc%fzt
+      state%psnl%fzt = state%dv%fzt
       state%psnc%fzt = state%dv%fzt
       CALL B2TRCS()
 !sw 09oct2012 set default potential already at this point (BCs)
       IF (switch%pot_eq .EQ. 0) THEN
 !srv 13.07.05 {
-        state%pl%po = 0.0e0_R8
+        state%pl%po = 0.0_R8
       ELSE IF (switch%pot_eq .EQ. 2) THEN
         state%pl%po = 3.1_R8*state%pl%te/qe
       END IF
 !
 !    ..perform one time step
       ok = .false.
-      DO WHILE (.NOT.ok)
-        WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
-&       'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, &
-&       stack_ptr
-        CALL B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, nxtl, nxtr, ismain, &
-&                    ismain0, state%rt%nscx, state%rt%nscxmax, state%rt%&
-&                    iscx, itim, dtim, ntim, switch, geo, mpg, state, &
-&                    state_ext, ierr)
-        IF (ierr .EQ. 10) THEN
-          stack_ptr = stack_ptr + 1
-          CALL XERTST(stack_ptr .LE. 20, 'Too deep in b2mndr')
-! dpc 2000.06.24 was ntim+10
-          stack_ntim(stack_ptr) = ntim - itim
-          stack_dtim(stack_ptr) = dtim
-          dtim = dtim/10.0_R8
-          ntim = itim + 10
-          itim_plas = itim_plas - 10
-          CALL PUTB2PLASMASNAPSHOT(state%pl, state%dv, state%psnc)
-        ELSE
-          ok = ierr .EQ. 0
-        END IF
-      END DO
-!    ..call cost function
-      CALL B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, state&
-&                               , state_ext, switch%boris, j)
-      DO icf=1,ncf
-        WRITE(ss, '(I1)') icf
-        WRITE(*, *) 'Cost function value '//ss//': ', j(icf)
-      END DO
-!    ..produce data for movie
-!    ..extra writes of b2fplasmf.xxxx
-      IF (MOD(itim_plas, plasinc) .EQ. 0 .AND. nwrit_plas .LE. plasnum &
-&         .AND. plasnum .GT. 0 .AND. plasinc .GT. 0) THEN
-        nwrit_plas = nwrit_plas + 1
-        WRITE(savefile_p(11:14), '(i4)') edition_p
-        edition_p = edition_p + 1
-        DO i=11,14
-          IF (savefile_p(i:i) .EQ. ' ') savefile_p(i:i) = '0'
-        END DO
-        CALL CFOPEN(nout(7), savefile_p, 'new', 'un*formatted')
-        WRITE(*, *) 'Writing extra b2plasmf:', itim, itim_plas, plasinc&
-&       , MOD(itim_plas, plasinc), tim
-        WRITE(*, *) savefile_p
-        CALL CFVERW(nout(7), newversion)
-        idum(0) = ncv
-        idum(1) = nfc
-        idum(2) = ns
-        CALL CFWUIN(nout(7), 3, idum, 'nCv,nFc,ns')
-        CALL WRITE_B2FPLASMA(nout(7), ncv, nfc, ns, state)
-        CLOSE(nout(7)) 
-      END IF
-!djm Jun2017
+      WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
+&     'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr
+      CALL B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, state&
+&                  %rt%nscx, state%rt%nscxmax, state%rt%iscx, itim, dtim&
+&                  , ntim, switch, geo, mpg, state, state_ext, state_avg&
+&                  , ierr)
+!     manually inserted call to cost function, for output purposes only
+      call b2usr_cost_function_nodiff(ncv, nfc, nvx, ns, geo, mpg, state, &
+&                             state_ext, switch%boris, j)
+      do icf=1,ncf
+        write(ss, '(I1)') icf
+        if (icf.gt.9) write (ss,'(I2)') icf
+        write(*, *) 'Cost function value '//ss//': ', j(icf)
+      end do
 !    ..increment
       itim = itim + 1
       itim_plas = itim_plas + 1
       IF (no_solve .LE. 0) tim = tim + dtim
       WRITE(*, '(1x,a,i9,a,es14.6,a,i9,a,es10.2)') 'ITER ', itim, &
 &     ' TIME ', tim, ' NTIM ', ntim, ' DTIM ', dtim
-      WHERE ((state%pl%na-state%psnc%na)/(state%pl%na+na_eps) .GE. 0.0) 
-        abs0 = (state%pl%na-state%psnc%na)/(state%pl%na+na_eps)
-      ELSEWHERE
-        abs0 = -((state%pl%na-state%psnc%na)/(state%pl%na+na_eps))
-      END WHERE
-      result1 = MAXVAL(abs0)
-      WRITE(*, *) 'delta na ', result1
-      WHERE ((state%pl%te-state%psnc%te)/(state%pl%te+te_eps*ev) .GE. &
-&         0.0) 
-        abs1 = (state%pl%te-state%psnc%te)/(state%pl%te+te_eps*ev)
-      ELSEWHERE
-        abs1 = -((state%pl%te-state%psnc%te)/(state%pl%te+te_eps*ev))
-      END WHERE
-      result1 = MAXVAL(abs1)
-      WRITE(*, *) 'delta te ', result1
-      WHERE ((state%pl%ti-state%psnc%ti)/(state%pl%ti+ti_eps*ev) .GE. &
-&         0.0) 
-        abs2 = (state%pl%ti-state%psnc%ti)/(state%pl%ti+ti_eps*ev)
-      ELSEWHERE
-        abs2 = -((state%pl%ti-state%psnc%ti)/(state%pl%ti+ti_eps*ev))
-      END WHERE
-      result1 = MAXVAL(abs2)
-      WRITE(*, *) 'delta ti ', result1
-      WHERE ((state%pl%tn-state%psnc%tn)/(state%pl%tn+tn_eps*ev) .GE. &
-&         0.0) 
-        abs3 = (state%pl%tn-state%psnc%tn)/(state%pl%tn+tn_eps*ev)
-      ELSEWHERE
-        abs3 = -((state%pl%tn-state%psnc%tn)/(state%pl%tn+tn_eps*ev))
-      END WHERE
-      result1 = MAXVAL(abs3)
-      WRITE(*, *) 'delta tn ', result1
-      WHERE (state%pl%po .GE. 0.0) 
-        abs9 = state%pl%po
-      ELSEWHERE
-        abs9 = -state%pl%po
-      END WHERE
-      x1 = (state%pl%po-state%psnc%po)/(abs9+po_eps)
-      WHERE (x1 .GE. 0.0) 
-        abs4 = x1
-      ELSEWHERE
-        abs4 = -x1
-      END WHERE
-      result1 = MAXVAL(abs4)
-      WRITE(*, *) 'delta po ', result1
-      WHERE (state%pl%kt .GE. 0.0) 
-        abs10 = state%pl%kt
-      ELSEWHERE
-        abs10 = -state%pl%kt
-      END WHERE
-      x2 = (state%pl%kt-state%psnc%kt)/(abs10+kt_eps*ev)
-      WHERE (x2 .GE. 0.0) 
-        abs5 = x2
-      ELSEWHERE
-        abs5 = -x2
-      END WHERE
-      result1 = MAXVAL(abs5)
-      WRITE(*, *) 'delta kt ', result1
-      WHERE (state%pl%zt .GE. 0.0) 
-        abs11 = state%pl%zt
-      ELSEWHERE
-        abs11 = -state%pl%zt
-      END WHERE
-      x3 = (state%pl%zt-state%psnc%zt)/(abs11+zt_eps*ev)
-      WHERE (x3 .GE. 0.0) 
-        abs6 = x3
-      ELSEWHERE
-        abs6 = -x3
-      END WHERE
-      result1 = MAXVAL(abs6)
-      WRITE(*, *) 'delta zt ', result1
-      WHERE (state%pl%na*state%pl%ua .GE. 0.0) 
-        abs12 = state%pl%na*state%pl%ua
-      ELSEWHERE
-        abs12 = -(state%pl%na*state%pl%ua)
-      END WHERE
-      x4 = (state%pl%na*state%pl%ua-state%psnc%na*state%psnc%ua)/(abs12+&
-&       na_eps*ua_eps)
-      WHERE (x4 .GE. 0.0) 
-        abs7 = x4
-      ELSEWHERE
-        abs7 = -x4
-      END WHERE
-      result1 = MAXVAL(abs7)
-      WRITE(*, *) 'delta ua ', result1
-      IF (delta_min .GT. 0.0_R8 .AND. delta_max .GT. 0.0_R8) THEN
-        WHERE ((state%pl%na-state%psnc%na)/(state%pl%na+na_eps) .GE. 0.0&
-&       ) 
-          abs8 = (state%pl%na-state%psnc%na)/(state%pl%na+na_eps)
-        ELSEWHERE
-          abs8 = -((state%pl%na-state%psnc%na)/(state%pl%na+na_eps))
-        END WHERE
-        WHERE ((state%pl%te-state%psnc%te)/(state%pl%te+te_eps*ev) .GE. &
-&           0.0) 
-          abs13 = (state%pl%te-state%psnc%te)/(state%pl%te+te_eps*ev)
-        ELSEWHERE
-          abs13 = -((state%pl%te-state%psnc%te)/(state%pl%te+te_eps*ev))
-        END WHERE
-        WHERE ((state%pl%ti-state%psnc%ti)/(state%pl%ti+ti_eps*ev) .GE. &
-&           0.0) 
-          abs14 = (state%pl%ti-state%psnc%ti)/(state%pl%ti+ti_eps*ev)
-        ELSEWHERE
-          abs14 = -((state%pl%ti-state%psnc%ti)/(state%pl%ti+ti_eps*ev))
-        END WHERE
-        WHERE ((state%pl%tn-state%psnc%tn)/(state%pl%tn+tn_eps*ev) .GE. &
-&           0.0) 
-          abs15 = (state%pl%tn-state%psnc%tn)/(state%pl%tn+tn_eps*ev)
-        ELSEWHERE
-          abs15 = -((state%pl%tn-state%psnc%tn)/(state%pl%tn+tn_eps*ev))
-        END WHERE
-        WHERE (state%pl%po .GE. 0.0) 
-          abs17 = state%pl%po
-        ELSEWHERE
-          abs17 = -state%pl%po
-        END WHERE
-        x6 = (state%pl%po-state%psnc%po)/(abs17+po_eps)
-        WHERE (x6 .GE. 0.0) 
-          abs16 = x6
-        ELSEWHERE
-          abs16 = -x6
-        END WHERE
-        WHERE ((state%pl%kt-state%psnc%kt)/(state%pl%kt+kt_eps*ev) .GE. &
-&           0.0) 
-          abs18 = (state%pl%kt-state%psnc%kt)/(state%pl%kt+kt_eps*ev)
-        ELSEWHERE
-          abs18 = -((state%pl%kt-state%psnc%kt)/(state%pl%kt+kt_eps*ev))
-        END WHERE
-        WHERE ((state%pl%zt-state%psnc%zt)/(state%pl%zt+zt_eps*ev) .GE. &
-&           0.0) 
-          abs19 = (state%pl%zt-state%psnc%zt)/(state%pl%zt+zt_eps*ev)
-        ELSEWHERE
-          abs19 = -((state%pl%zt-state%psnc%zt)/(state%pl%zt+zt_eps*ev))
-        END WHERE
-        WHERE (state%pl%na*state%pl%ua .GE. 0.0) 
-          abs21 = state%pl%na*state%pl%ua
-        ELSEWHERE
-          abs21 = -(state%pl%na*state%pl%ua)
-        END WHERE
-        x7 = (state%pl%na*state%pl%ua-state%psnc%na*state%psnc%ua)/(&
-&         abs21+na_eps*ua_eps)
-        WHERE (x7 .GE. 0.0) 
-          abs20 = x7
-        ELSEWHERE
-          abs20 = -x7
-        END WHERE
-        result1 = MAXVAL(abs8)
-        result2 = MAXVAL(abs13)
-        result3 = MAXVAL(abs14)
-        result4 = MAXVAL(abs15)
-        result5 = MAXVAL(abs16)
-        result6 = MAXVAL(abs18)
-        result7 = MAXVAL(abs19)
-        result8 = MAXVAL(abs20)
-        max_delta = MAX(result1, result2, result3, result4, result5, &
-&         result6, result7, result8)
-        IF (max_delta .GT. delta_max) THEN
-          WRITE(*, *) 'b2mndr_delta: max_delta > delta_max'
-          IF (dt_min .LT. dtim*dt_change_dec) THEN
-            dtim = dtim*dt_change_dec
-          ELSE
-            dtim = dt_min
-          END IF
-          WRITE(*, *) 'b2mndr_dtim: dtim ', dtim
-        ELSE IF (max_delta .LT. delta_min) THEN
-          WRITE(*, *) 'b2mndr_delta: max_delta < delta_min'
-          IF (dt_max .GT. dtim*dt_change_inc) THEN
-            dtim = dtim*dt_change_inc
-          ELSE
-            dtim = dt_max
-          END IF
-          WRITE(*, *) 'b2mndr_dtim: dtim ', dtim
-        ELSE
-          WRITE(*, *) 'b2mndr_delta: max_delta OK'
-          WRITE(*, *) 'b2mndr_dtim: dtim ', dtim
-        END IF
-      END IF
-      DO WHILE (itim .EQ. ntim .AND. stack_ptr .GT. 0)
-        WRITE(*, '(a,i8,1p,g14.7,i8,i3)') &
-&       'b2mndr_01:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, &
-&       stack_ptr
-! dpc 2000.06.24 was stack_ntim(stack_ptr)
-        ntim = stack_ntim(stack_ptr) + itim - 1
-        dtim = stack_dtim(stack_ptr)
-        stack_ptr = stack_ptr - 1
-        WRITE(*, '(a,i8,1p,g14.7,i8,i3)') &
-&       'b2mndr_02:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, &
-&       stack_ptr
-      END DO
-!    ..produce time-dependent file
-      IF (switch%save_f31 .LT. 0) THEN
-        WRITE(fort31name, '(a,i8.8)') fort_lc//'31.', itim
-        WRITE(*, *) 'Saving ', fort31name, ' at time ', tim
-        OPEN(31, file=fort31name) 
-        CALL COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, geo, &
-&                             state%pl, state%dv, kin_frac_hyb, fnn_inc)
-        CALL WRITE_F31_NODIFF(mpg)
-        CLOSE(31) 
-      END IF
-!
       lwti = .false.
       lwav = .false.
       IF (b2time .GT. 0) THEN
@@ -7111,9 +6883,15 @@ CONTAINS
       IF (ntim_batch .GT. 0) THEN
         IF (MOD(itim, ntim_batch) .EQ. 0) lwav = .true.
       END IF
-      CALL B2MWTI(itim, tim, ntim, b2time, ntim_batch, ncv, ns, geo, mpg&
-&           , switch, state%pl, state%dv, state%co, ismain, ismain0, &
-&           lwti, lwav, .true.)
+      IF (1 .LT. mpg%nxpt) THEN
+        max1 = mpg%nxpt
+      ELSE
+        max1 = 1
+      END IF
+      CALL B2MWTI(itim, tim, ntim, b2time, ntim_batch, ncv, nfc, ns, &
+&           max1, geo, mpg, switch, state%pl, state%dv, state%co, state%&
+&           rt, state%srw, state_ext, ismain, ismain0, lwti, lwav, &
+&           .true.)
       IF (ibatch_av_all .GT. 0 .AND. lwav) THEN
         edition_batch = edition_batch + 1
         WRITE(batch_name, '(a18,i4.4)') 'batch_av/batch_av.', &
@@ -7127,22 +6905,11 @@ CONTAINS
         IF (lrav) THEN
           edition_run = edition_run + 1
           WRITE(run_av_name, '(a14,i4.4)') 'run_av/run_av.', edition_run
-          CALL RUN_AV_SAVE(run_av_name, ncv, ns, .true., .false.)
+          CALL RUN_AV_SAVE(run_av_name, ncv, ns, .true., .false., &
+&                    state_avg)
           WRITE(*, *) 'Saved ', run_av_name
         END IF
       END IF
-      IF (first_time_step) THEN
-        IF (.NOT.ALLOCATED(iz)) CALL ALLOC_B2MOD_DIAG(ncv, nfc, ns, mpg%&
-&                                               nnreg(0), nstra, natm, &
-&                                               switch)
-        CALL B2TRCI(switch)
-        IF (write_nml_user) CALL WRITE_B2MOD_USER_NAMELIST()
-      END IF
-      IF (ank_tracing .NE. 0) THEN
-        IF (MOD(itim, ank_tracing) .EQ. 1 .OR. ank_tracing .EQ. 1) CALL &
-&         B2TRACE(ns, nxtl, nxtr, ismain, dtim, geo, mpg, state, switch)
-      END IF
-!    ..loop
 !srv 18.05.09 13.04.11
       INQUIRE(file='_quit', exist=quitexist_) 
       INQUIRE(file='.quit', exist=quitexist) 
@@ -7150,17 +6917,17 @@ CONTAINS
       elapsedval = EPOCH_SECONDS()
       IF (b2mndr_cpu .GT. 0.0_R8) THEN
         arg1 = cpuval - cpustart
-        x5 = (ntim-itim)*REAL(arg1, r8)
+        x1 = (ntim-itim)*REAL(arg1, r8)
         y4 = b2mndr_cpu - REAL(cpuval - cpuinit, r8)
         IF (0.0_R8 .LT. y4) THEN
           y1 = y4
         ELSE
           y1 = 0.0_R8
         END IF
-        IF (x5 .GT. y1) THEN
+        IF (x1 .GT. y1) THEN
           min1 = y1
         ELSE
-          min1 = x5
+          min1 = x1
         END IF
 !srv 18.05.09
         WRITE(*, '(1x,3(a,es11.3))') 'b2-step-cpu =', cpuval - cpustart&
@@ -7262,233 +7029,47 @@ CONTAINS
           res_max = res_max
         END IF
       END IF
-!jwk
-      IF (test_residual .AND. MOD(itim, 10) .EQ. 0 .AND. no_solve .LE. 0&
-&     ) THEN
-!jwk
-!jwk
-!jwk
-!jwk
-!jwk
-        quit_residual = state%diag%areshe*min_areshe .LE. min_areshe*&
-&         min_areshe .AND. state%diag%areshi*min_areshi .LE. min_areshi*&
-&         min_areshi .AND. state%diag%aresco(ismain)*min_aresco .LE. &
-&         min_aresco*min_aresco
-      END IF
 !jwk !srv 13.04.11
-      quit = (((((quitexist_ .OR. quitexist) .OR. quit_residual) .OR. (&
-&       cpuval - cpuinit .GT. b2mndr_cpu .AND. b2mndr_cpu .GT. 0.0_R8)) &
-&       .OR. (elapsedval - elapsedinit .GT. b2mndr_elapsed .AND. &
-&       b2mndr_elapsed .GT. 0.0_R8)) .OR. (etim .GT. switch%b2mndr_stim &
-&       .AND. tim .GE. etim .AND. etim .NE. 0.0_R8)) .OR. (no_solve .EQ.&
-&       1 .AND. itim .EQ. ntim)
-      write_save = cpuval .GT. cputarget .AND. cpuincrement .GT. 0.0_R8
-      write_save = write_save .OR. (tim .GE. save_plasma_time .AND. &
-&       delta_plasma_time .GT. 0.0_R8)
-      IF (ntim_save .GT. 0 .AND. itim .GT. 0) write_save = write_save &
-&         .OR. MOD(itim, ntim_save) .EQ. 0
-      write_save = write_save .AND. (.NOT.quit)
-      IF (write_save) THEN
-        WRITE(savefile(13:16), '(i4)') edition
-        edition = edition + 1
-        IF (cpuval .GT. cputarget .AND. cpuincrement .GT. 0.0_R8) &
-&         cputarget = cputarget + cpuincrement
-        IF (tim .GE. save_plasma_time .AND. delta_plasma_time .GT. &
-&           0.0_R8) save_plasma_time = save_plasma_time + &
-&           delta_plasma_time
-        IF (edition .GT. 9999) THEN
-          edition = 0
-          savefilestatus = 'old'
-        END IF
-        DO i=13,16
-          IF (savefile(i:i) .EQ. ' ') savefile(i:i) = '0'
-        END DO
-        CALL CFOPEN(nout(6), savefile, savefilestatus, 'unformatted')
-        CALL CFVERW(nout(6), newversion)
-!xpb/dpc
-!       ..test plasma state
-        CALL B2XVPS_NODIFF(ncv, nfc, ns, state%pl, state%dv)
-        arg10 = ncv*ns
-        CALL B2XVSG_NODIFF(arg10, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
-!       ..write plasma state
-        CALL WRITE_B2FSTATE(nout(6), ncv, nfc, ns, state)
-        CLOSE(nout(6)) 
-!       ..write additional save namelist data
-        filename = 'b2.feedback_save.parameters'
-        CALL FIND_FILE(filename, found)
-        IF (found) CALL WRITE_B2US_FEEDBACK(99, savefile(13:16))
-        filename = 'b2.neutrals_save.parameters'
-        CALL FIND_FILE(filename, found)
-        IF (found) CALL WRITE_B2MOD_NEUTRALS_SAVE(99, savefile(13:16))
-        WRITE(*, *) 'Plasmastate savefile ', savefile, ' saved'
-        IF (iav_run .GT. 0) THEN
-          WRITE(aver_name, '(a17,a4)') 'plasmastate_aver.', savefile(13:&
-&         16)
-          CALL RUN_AV_SAVE(aver_name, ncv, ns, .true., .true.)
-          WRITE(*, *) aver_name, ' saved '
-        END IF
-      END IF
-      first_time_step = .false.
-      GOTO 1
-    ELSE
-!
+      quit = ((quitexist_ .OR. quitexist) .OR. (cpuval - cpuinit .GT. &
+&       b2mndr_cpu .AND. b2mndr_cpu .GT. 0.0_R8)) .OR. (elapsedval - &
+&       elapsedinit .GT. b2mndr_elapsed .AND. b2mndr_elapsed .GT. 0.0_R8&
+&       )
+      WRITE(*, *) 'MAX RESIDUAL ', res_max
+      primal_res = res_max
+      primal_iterations = itim
+    END DO
 !   ..end loop
-      CALL SUBEND()
-      RETURN
-    END IF
+!   ..call cost function
+    CALL B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, state, &
+&                             state_ext, switch%boris, j)
+    DO icf=1,ncf
+      WRITE(ss, '(I1)') icf
+      IF (icf .GT. 9) WRITE(ss, '(I2)') icf
+      WRITE(*, *) 'Cost function value '//ss//': ', j(icf)
+    END DO
+    CALL SUBEND()
+    RETURN
   END SUBROUTINE B2MNDR_1
 
 !  Differentiation of b2mndr_2 as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtlsa:out rtlcx:out rtlqa:out
-!                rtlra:out b2voloncf:out b2data:out b2dataoncf:out
-!                par_opt_phys:out mpg.bcfcor:in-out mpg.rcfcor:in-out
-!                mpg.cffcor:in-out mpg.intcellp:in-out mpg.intcellr:in-out
-!                geo.cvbb:in-out geo.cvx:in-out geo.cvy:in-out
-!                geo.cvsz:in-out geo.cvhz:in-out geo.cvhx:in-out
-!                geo.cvqgam:in-out geo.cvvol:in-out geo.cvonedbsq:in-out
-!                geo.cvbzb:in-out geo.cveb:in-out geo.fcbb:in-out
-!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
-!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
-!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
-!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
-!                geo.vxbb:in-out geo.vxx:in-out geo.vxy:in-out
-!                geo.vxhz:in-out geo.vxvol:in-out geo.vxffbz:in-out
-!                geo.vxfpsi:in-out geo.vxonedbsq:in-out geo.vxbzb:in-out
-!                geo.cvconn:in-out geo.ftconn:in-out geo.fteps:in-out
-!                geo.ftbbav2:in-out geo.fspsi:in-out state_ext.zn:in-out
-!                state_ext.am:in-out state_ext.ne:in-out state_ext.ne2:in-out
-!                state_ext.ue:in-out state_ext.za:in-out state_ext.za2:in-out
-!                state_ext.pt:in-out state_ext.na:in-out state_ext.ni:in-out
-!                state_ext.ua:in-out state_ext.ta:in-out state_ext.fhi:in-out
-!                state_ext.fa:in-out state_ext.sne:in-out state_ext.she:in-out
-!                state_ext.shi:in-out state_ext.sch:in-out state_ext.sna:in-out
-!                state_ext.smo:in-out state.pl.na:in-out state.pl.ua:in-out
-!                state.pl.po:in-out state.pl.te:in-out state.pl.ti:in-out
-!                state.pl.tn:in-out state.pl.kt:in-out state.pl.zt:in-out
-!                state.co.csig:in-out state.co.calf:in-out state.co.csig_an:in-out
-!                state.co.calf_an:in-out state.co.csig_cl:in-out
-!                state.co.calf_cl:in-out state.co.csigin:in-out
-!                state.co.chve:in-out state.co.chce:in-out state.co.chce_exb:in-out
-!                state.co.chvi:in-out state.co.chci:in-out state.co.chci_exb:in-out
-!                state.co.chcn:in-out state.co.cdkt:in-out state.co.cdzt:in-out
-!                state.co.chvemx:in-out state.co.chvimx:in-out
-!                state.co.cvla:in-out state.co.cdna:in-out state.co.cdna_exb:in-out
-!                state.co.cdpa:in-out state.co.cvsa:in-out state.co.cvlahz:in-out
-!                state.co.cdnahz:in-out state.co.cdpahz:in-out
-!                state.co.cvsahz:in-out state.co.cddi:in-out state.co.cvsahz_cl:in-out
-!                state.co.chcb:in-out state.co.cvsa_an:in-out state.co.cvmahz:in-out
-!                state.co.cvsahz_eff:in-out state.co.cthe:in-out
-!                state.co.cthi:in-out state.co.cvsa_cl:in-out state.co.ceqp:in-out
-!                state.co.fllim0fhi:in-out state.co.fllimvisc:in-out
-!                state.co.fllim0fna:in-out state.co.vsaf_cl:in-out
-!                state.co.sig0:in-out state.co.hce0:in-out state.co.hci0:in-out
-!                state.co.hcn0:in-out state.co.alf0:in-out state.co.dkt0:in-out
-!                state.co.dzt0:in-out state.co.dna_exb:in-out state.co.hce_exb:in-out
-!                state.co.hci_exb:in-out state.co.dpa0:in-out state.co.dna0:in-out
-!                state.co.vsa0:in-out state.co.hcib:in-out state.co.vla0:in-out
-!                state.co.vma0:in-out state.co.kt_neo:in-out state.co.alfx_c:in-out
-!                state.co.sigx_c:in-out state.co.sigx_kt:in-out
-!                state.co.hcix_c:in-out state.co.fllim_ki:in-out
-!                state.co.fllim_ke:in-out state.co.fllim_al:in-out
-!                state.co.fllim_al_c:in-out state.co.fllim_ki_c:in-out
-!                state.co.f_luc_ke:in-out state.co.f_luc_ki:in-out
-!                state.co.f_luc_et:in-out state.co.f_luc_sg:in-out
-!                state.co.f_luc_al:in-out state.co.cssb:in-out
-!                state.dv.fch:in-out state.dv.fch_32:in-out state.dv.fch_52:in-out
-!                state.dv.fch_p:in-out state.dv.fchdia:in-out state.dv.fchin:in-out
-!                state.dv.fchvispar:in-out state.dv.fchvisper:in-out
-!                state.dv.fchvisq:in-out state.dv.fchinert:in-out
-!                state.dv.fchanml:in-out state.dv.fchviskt:in-out
-!                state.dv.fch_pi_c:in-out state.dv.fch_pi_f:in-out
-!                state.dv.fni_32:in-out state.dv.fni_52:in-out
-!                state.dv.fni:in-out state.dv.fni_he:in-out state.dv.fna:in-out
-!                state.dv.fna_mdf:in-out state.dv.fna_52:in-out
-!                state.dv.fna_32:in-out state.dv.fna_53:in-out
-!                state.dv.fna_52nd:in-out state.dv.fna_32nd:in-out
-!                state.dv.fna_nodrift:in-out state.dv.fna_he:in-out
-!                state.dv.fnapsch:in-out state.dv.fna_fcor:in-out
-!                state.dv.fna_eir:in-out state.dv.fna_exb:in-out
-!                state.dv.fmo:in-out state.dv.fne:in-out state.dv.fne_he:in-out
-!                state.dv.fne_32:in-out state.dv.fne_52:in-out
-!                state.dv.fne_eir:in-out state.dv.fne_53:in-out
-!                state.dv.fhe:in-out state.dv.fhe_mdf:in-out state.dv.fhet:in-out
-!                state.dv.fhepsch:in-out state.dv.fhe_eir:in-out
-!                state.dv.fhe_exb:in-out state.dv.fhi:in-out state.dv.fhi_mdf:in-out
-!                state.dv.fhit:in-out state.dv.fhipsch:in-out state.dv.fhi_eir:in-out
-!                state.dv.fhi_exb:in-out state.dv.fnn:in-out state.dv.fnn_32:in-out
-!                state.dv.fnn_52:in-out state.dv.fhn:in-out state.dv.fhm:in-out
-!                state.dv.fhp:in-out state.dv.fhj:in-out state.dv.fht:in-out
-!                state.dv.fkt:in-out state.dv.fzt:in-out state.dv.kinrgy:in-out
-!                state.dv.conc:in-out state.dv.flob:in-out state.dv.floe:in-out
-!                state.dv.floi:in-out state.dv.floe_noc:in-out
-!                state.dv.floi_noc:in-out state.dv.flon:in-out
-!                state.dv.flokt:in-out state.dv.flozt:in-out state.dv.conn:in-out
-!                state.dv.conkt:in-out state.dv.conzt:in-out state.dv.conb:in-out
-!                state.dv.cone:in-out state.dv.coni:in-out state.dv.fllime:in-out
-!                state.dv.fllimi:in-out state.dv.resmo:in-out state.dv.resco:in-out
-!                state.dv.respo:in-out state.dv.reshe:in-out state.dv.reshi:in-out
-!                state.dv.resht:in-out state.dv.resmt:in-out state.dv.reshn:in-out
-!                state.dv.reskt:in-out state.dv.reszt:in-out state.dv.corua:in-out
-!                state.dv.corpa:in-out state.dv.corut:in-out state.dv.corpo:in-out
-!                state.dv.cortt:in-out state.dv.corte:in-out state.dv.corti:in-out
-!                state.dv.cortn:in-out state.dv.corkt:in-out state.dv.corzt:in-out
-!                state.dv.pcca:in-out state.dv.pccm:in-out state.dv.ne:in-out
-!                state.dv.ni:in-out state.dv.nn:in-out state.dv.ue:in-out
-!                state.dv.ne2:in-out state.dv.pa:in-out state.dv.pz:in-out
-!                state.dv.lnlam:in-out state.dv.uadia:in-out state.dv.vadia:in-out
-!                state.dv.wadia:in-out state.dv.vaecrb:in-out state.dv.vedia:in-out
-!                state.dv.wedia:in-out state.dv.veecrb:in-out state.dv.facdrift:in-out
-!                state.dv.fac_exb:in-out state.dv.fac_vis:in-out
-!                state.sr.sch:in-out state.sr.she:in-out state.sr.shi:in-out
-!                state.sr.sne:in-out state.sr.shn:in-out state.sr.skt:in-out
-!                state.sr.szt:in-out state.sr.smo:in-out state.sr.smq:in-out
-!                state.sr.sna:in-out state.sr.skt_diss:in-out state.sr.skt_prod:in-out
-!                state.sr_eir.sch:in-out state.sr_eir.she:in-out
-!                state.sr_eir.shi:in-out state.sr_eir.sne:in-out
-!                state.sr_eir.smo:in-out state.sr_eir.smq:in-out
-!                state.sr_eir.sna:in-out state.srw.sch0:in-out
-!                state.srw.she0:in-out state.srw.shi0:in-out state.srw.sne0:in-out
-!                state.srw.shn0:in-out state.srw.skt0:in-out state.srw.szt0:in-out
-!                state.srw.smo0:in-out state.srw.smq0:in-out state.srw.sna0:in-out
-!                state.srw.b2stbm_sch:in-out state.srw.b2stbm_she:in-out
-!                state.srw.b2stbm_shi:in-out state.srw.b2stbm_sne:in-out
-!                state.srw.b2stbm_smo:in-out state.srw.b2stbm_smq:in-out
-!                state.srw.b2stbm_sna:in-out state.rt.rlcx:in-out
-!                state.rt.rlqa:in-out state.rt.rlrd:in-out state.rt.rlbr:in-out
-!                state.rt.rlra:in-out state.rt.rlsa:in-out state.rt.rlza:in-out
-!                state.rt.rlz2:in-out state.rt.rlpt:in-out state.rt.rlpi:in-out
-!                state.rt.rlqr:in-out state.rt.rza:in-out state.rt.rz2:in-out
-!                state.rt.rpt:in-out state.rt.rpi:in-out state.rtw.rsa:in-out
-!                state.rtw.rra:in-out state.rtw.rqa:in-out state.rtw.rrd:in-out
-!                state.rtw.rbr:in-out state.rtw.rcx:in-out state.rtw.rqr:in-out
-!                state.psnl.na:in-out state.psnl.ua:in-out state.psnl.po:in-out
-!                state.psnl.te:in-out state.psnl.ti:in-out state.psnl.tn:in-out
-!                state.psnl.kt:in-out state.psnl.zt:in-out state.psnl.ne:in-out
-!                state.psnl.ni:in-out state.psnl.nn:in-out state.psnl.fch:in-out
-!                state.psnl.fna:in-out state.psnl.fhi:in-out state.psnl.fhe:in-out
-!                state.psnl.fhn:in-out state.psnl.fkt:in-out state.psnl.fzt:in-out
-!                state.psnl.kinrgy:in-out state.psnc.na:in-out
-!                state.psnc.ua:in-out state.psnc.po:in-out state.psnc.te:in-out
-!                state.psnc.ti:in-out state.psnc.tn:in-out state.psnc.kt:in-out
-!                state.psnc.zt:in-out state.psnc.ne:in-out state.psnc.ni:in-out
-!                state.psnc.nn:in-out state.psnc.fch:in-out state.psnc.fna:in-out
-!                state.psnc.fhi:in-out state.psnc.fhe:in-out state.psnc.fhn:in-out
-!                state.psnc.fkt:in-out state.psnc.fzt:in-out state.psnc.kinrgy:in-out
-!                state.diag.srcna:in-out state.diag.srcmo:in-out
-!                state.diag.srcpo:in-out state.diag.srche:in-out
-!                state.diag.srchi:in-out state.diag.srcmt:in-out
-!                state.diag.aresco:in-out state.diag.aresmo:in-out
-!                state.diag.acorpa:in-out state.diag.acorua:in-out
-!                state.diag.rescoreg:in-out state.diag.resmoreg:in-out
-!                state.diag.reshereg:in-out state.diag.reshireg:in-out
-!                state.update.ua:in-out state.update.na:in-out
-!                state.update.pa:in-out state.update.po:in-out
-!                state.update.te:in-out state.update.ti:in-out
-!                state.update.kt:in-out state.update.zt:in-out
-!                (global)na_mean:out
+!   Plus diff mem management of: b2voloncf:out b2data:out b2dataoncf:out
+!                par_opt_phys:out rtlsa:out rtlcx:out rtzmax:out
+!                rtlqa:out rtzn:out rtlra:out rtzmin:out rpi0:out
+!                rz20:out rpt0:out rza0:out state_avg.na_mean:out
+!                state_avg.ua_mean:out state_avg.te_mean:out state_avg.ti_mean:out
+!                state_avg.po_mean:out state_avg.kt_mean:out state_avg.zt_mean:out
+!                state_avg.sna_mean:out state_avg.smo_mean:out
+!                state_avg.she_mean:out state_avg.shi_mean:out
+!                state_avg.shn_mean:out state_avg.e_na:out state_avg.e_ua:out
+!                state_avg.e_te:out state_avg.e_ti:out state_avg.e_po:out
+!                state_avg.e_kt:out state_avg.e_zt:out state_avg.e_sna:out
+!                state_avg.e_smo:out state_avg.e_she:out state_avg.e_shi:out
+!                state_avg.e_shn:out state.sr_eir.sch:out state.sr_eir.she:out
+!                state.sr_eir.shi:out state.sr_eir.sne:out state.sr_eir.smo:out
+!                state.sr_eir.smq:out state.sr_eir.sna:out
 !
-  SUBROUTINE B2MNDR_2_DV(nout, ns, switch, geo, geod, mpg, mpgd, state, &
-&   stated, state_ext, state_extd, nbdirs)
+  SUBROUTINE B2MNDR_2_DV(nout, ns, switch, geo, mpg, state, stated, &
+&   state_ext, state_avg, state_avgd, nbdirs)
     USE B2MOD_SWITCHES_DIFFV
     USE B2MOD_AD_DIFFV, ONLY : old_erosion, old_deposition
 !  Hint: mpg%nCv should be the size of dimension 1 of array arg1
@@ -7496,19 +7077,24 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: nout(0:10), ns, idum(0:9)
-    TYPE(SWITCHES), INTENT(IN) :: switch
+    TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(MAPPING), INTENT(INOUT) :: mpg
-    TYPE(MAPPING_DIFFV), INTENT(INOUT) :: mpgd
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
-    TYPE(GEOMETRY_DIFFV), INTENT(INOUT) :: geod
     TYPE(B2STATE), INTENT(INOUT) :: state
     TYPE(B2STATE_DIFFV), INTENT(INOUT) :: stated
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
-    TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
+    TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
+    TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: state_avgd
 !srv 29.11.18
-    INTEGER :: ncv, nfc, nvx, is
+    INTEGER :: ncv, nfc, is
+    LOGICAL :: ids_done
+    EXTERNAL CALC_ERR
     EXTERNAL B2WDAT
-    EXTERNAL B2WDAT_DV
+    INTRINSIC TRIM
+    INTRINSIC MOD
+    INTRINSIC MAX
+    EXTERNAL XERRAB
+    INTEGER :: max1
     CHARACTER(len=9) :: arg1
     REAL(r8), DIMENSION(mpg%nCv) :: arg10
     REAL(r8), DIMENSION(mpg%nCv) :: arg11
@@ -7543,17 +7129,16 @@ CONTAINS
 !jwk
     IF (quit_residual) WRITE(*, *) &
 &                     'stopping because min_residual criteria satisfied'
+    IF (res_max .LE. res_quit) WRITE(*, *) &
+&                         'stopping because res_quit criteria satisfied'
 !
     ncv = mpg%ncv
     nfc = mpg%nfc
-    nvx = mpg%nvx
 !
 ! finalise feedback
     CALL WRITE_B2US_FEEDBACK(99, '    ')
 ! finalise transport_models
     CALL WRITE_B2MOD_TRANSPORT_MODELS(99, '    ')
-! finalise sputtering
-! ..display and save the result of the calculation
 !   ..save final state
     CALL WRITE_B2FSTATE(nout(2), ncv, nfc, ns, state)
 !   ..write plasma state
@@ -7570,7 +7155,7 @@ CONTAINS
 !   ..mms error analysis
     IF (use_mms .NE. 0) THEN
 !srv 26.02.18 {
-      CALL CALC_ERR_NODIFF(ncv, ns, state%pl, state%dv)
+      CALL CALC_ERR(ncv, ns, state%pl)
     END IF
 !srv 29.11.18 }
     IF (iout .NE. 0) THEN
@@ -7592,13 +7177,74 @@ CONTAINS
         CALL MY_OUT_US(70, ncv, 0, state%pl%po, 'b2mndr_po_out')
       END IF
     END IF
-    CALL B2WDAT(ncv, nfc, nvx, ns, ismain, ismain0, mpg, geo, state, &
-&         state_ext, switch%boris)
+    CALL B2WDAT(ns, mpg, geo, state)
 !srv 05.10.01
+!   ..write out fort.30 and fort.31 files if not yet done
+    IF (switch%use_eirene .EQ. 0) THEN
+!WG_TODO       if (switch%save_f30.ne.0) call write_f30(nx, ny)
+      IF (switch%save_f31 .NE. 0) THEN
+        WRITE(*, *) 'Saving '//TRIM(fort_lc)//'31 at end of run'
+        OPEN(31, file=trim(fort_lc)//'31') 
+        CALL COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, geo, &
+&                             state%pl, state%dv, state_ext)
+        CALL WRITE_F31_NODIFF(mpg)
+        CLOSE(31) 
+      END IF
+    END IF
+!   ..produce last CDF movie frame if not yet done
+    IF (tim .GT. save_cdfmovie_time - delta_cdfmovie_time + dtim .AND. &
+&       delta_cdfmovie_time .GT. 0.0_R8) CALL CDFMOVIE(ncid, ncv, ns, &
+&                                                geo, state, switch)
+!   ..produce 2d profiles if not yet done
+    IF (b2time .GT. 0) THEN
+      IF ((MOD(itim, b2time) .NE. 0 .AND. itim .GT. 1) .OR. itim .EQ. 0&
+&     ) THEN
+        IF (1 .LT. mpg%nxpt) THEN
+          max1 = mpg%nxpt
+        ELSE
+          max1 = 1
+        END IF
+        CALL B2MWTI(itim, tim, ntim, b2time, ntim_batch, ncv, nfc, ns, &
+&             max1, geo, mpg, switch, state%pl, state%dv, state%co, &
+&             state%rt, state%srw, state_ext, ismain, ismain0, .true., &
+&             .false., .false.)
+      END IF
+      CALL DEALLOC_B2MOD_MWTI()
+    END IF
+!   ..write out last tallies if not yet done
+    IF (tally .GT. 0) THEN
+      IF (MOD(itim, tally) .NE. 0 .AND. itim .GT. 1) CALL TALLIES(ns, &
+&                                                           tim, mpg, &
+&                                                           geo, state, &
+&                                                           state_ext, &
+&                                                           switch)
+    END IF
+!   ..write out last IDS if not yet done
+    ids_done = .false.
+    write_ids = .false.
+    ids_replace = .false.
+    IF (ids_save .GT. 0) THEN
+      ids_done = MOD(itim, ids_save) .EQ. 0
+      write_ids = MOD(itim, ids_save) .NE. 0
+    END IF
+    IF (delta_ids_time .GT. 0.0_R8) THEN
+      ids_done = ids_done .OR. tim .LE. save_ids_time - delta_ids_time +&
+&       dtim
+      write_ids = write_ids .OR. tim .GT. save_ids_time - delta_ids_time&
+&       + dtim
+    END IF
+    write_ids = write_ids .OR. ids_save .LT. 0
+    write_ids = write_ids .AND. ntim .GT. 0 .AND. (.NOT.ids_done)
+!
+!
+! finalise eirene_mc
+    IF (switch%use_eirene .NE. 0 .AND. itim .GT. 0) CALL XERRAB(&
+&                       'b2mndr not compiled with the B25_EIRENE option'&
+&                                                        )
 !
     IF (iav_run .GT. 0) THEN
-      CALL RUN_AV_SAVE('b2favere', ncv, ns, .true., .true.)
-      CALL RUN_AV_FIN_DV(nbdirs)
+      CALL RUN_AV_SAVE('b2favere', ncv, ns, .true., .true., state_avg)
+      CALL RUN_AV_FIN_DV(state_avg, state_avgd, nbdirs)
     END IF
 !
     IF (ibatch_av_all .GT. 0) CALL BATCH_AV_ALL_FIN()
@@ -7613,10 +7259,26 @@ CONTAINS
         DEALLOCATE(par_opt_physd)
       END IF
       DEALLOCATE(par_opt_phys)
+      DEALLOCATE(xsave)
     END IF
     DEALLOCATE(old_erosion)
     DEALLOCATE(old_deposition)
-!WG_TODO      deallocate(rza0, rz20, rpt0, rpi0)
+    IF (ALLOCATED(rza0d)) THEN
+      DEALLOCATE(rza0d)
+    END IF
+    DEALLOCATE(rza0)
+    IF (ALLOCATED(rz20d)) THEN
+      DEALLOCATE(rz20d)
+    END IF
+    DEALLOCATE(rz20)
+    IF (ALLOCATED(rpt0d)) THEN
+      DEALLOCATE(rpt0d)
+    END IF
+    DEALLOCATE(rpt0)
+    IF (ALLOCATED(rpi0d)) THEN
+      DEALLOCATE(rpi0d)
+    END IF
+    DEALLOCATE(rpi0)
     CALL DEALLOC_B2MOD_DIAG()
 !WG_RM      call dealloc_b2mod_ma28
     CALL DEALLOC_B2MOD_WALL()
@@ -7625,7 +7287,6 @@ CONTAINS
     CALL DEALLOC_SPUTTER_DATA()
     CALL DEALLOC_B2MOD_SPUTTER()
     CALL DEALLOC_B2MOD_TALLIES()
-    CALL DEALLOC_B2MOD_BALANCE()
     CALL DEALLOC_INPUT_PROFILE()
     CALL DEALLOC_B2MOD_ELEMENTS()
     CALL DEALLOC_B2MOD_BOUNDARY()
@@ -7643,7 +7304,6 @@ CONTAINS
 !WG_RM      call dealloc_b2mod_ma28_for_7diag
 !WG_RM      call dealloc_b2mod_ma28_for_9diag
     CALL DEALLOC_B2MOD_MA28_FOR_US()
-    CALL DEALLOC_B2MOD_EIRENE_SOURCES()
 !WG_TODO      call dealloc_b2mod_external_dummy
     CALL DEALLOC_B2MOD_TRANSPORT_MODELS()
     CALL DEALLOC_B2MOD_TRANSPORT_DISRUPTION()
@@ -7651,6 +7311,7 @@ CONTAINS
     IF (boundary_sources .NE. 0) CALL DEALLOC_B2MOD_BOUNDARY_SOURCES()
 !srv 26.02.18
     IF (equation_sources .NE. 0) CALL DEALLOC_B2MOD_EQUATION_SOURCES()
+    CALL DEALLOC_B2MOD_B2PLOT()
     CALL DEALLOC_B2MOD_BRAEIR()
     CALL DESTROYB2SOURCEEIR_DV(state%sr_eir, stated%sr_eir, nbdirs)
     CALL SUBEND()
@@ -7658,21 +7319,30 @@ CONTAINS
   END SUBROUTINE B2MNDR_2_DV
 
 !
-  SUBROUTINE B2MNDR_2(nout, ns, switch, geo, mpg, state, state_ext)
+  SUBROUTINE B2MNDR_2(nout, ns, switch, geo, mpg, state, state_ext, &
+&   state_avg)
     USE B2MOD_SWITCHES_DIFFV
     USE B2MOD_AD_DIFFV, ONLY : old_erosion, old_deposition
 !  Hint: mpg%nCv should be the size of dimension 1 of array arg1
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: nout(0:10), ns, idum(0:9)
-    TYPE(SWITCHES), INTENT(IN) :: switch
+    TYPE(SWITCHES), INTENT(INOUT) :: switch
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
     TYPE(B2STATE), INTENT(INOUT) :: state
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
+    TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
 !srv 29.11.18
-    INTEGER :: ncv, nfc, nvx, is
+    INTEGER :: ncv, nfc, is
+    LOGICAL :: ids_done
+    EXTERNAL CALC_ERR
     EXTERNAL B2WDAT
+    INTRINSIC TRIM
+    INTRINSIC MOD
+    INTRINSIC MAX
+    EXTERNAL XERRAB
+    INTEGER :: max1
     CHARACTER(len=9) :: arg1
     REAL(r8), DIMENSION(mpg%nCv) :: arg10
     REAL(r8), DIMENSION(mpg%nCv) :: arg11
@@ -7706,17 +7376,16 @@ CONTAINS
 !jwk
     IF (quit_residual) WRITE(*, *) &
 &                     'stopping because min_residual criteria satisfied'
+    IF (res_max .LE. res_quit) WRITE(*, *) &
+&                         'stopping because res_quit criteria satisfied'
 !
     ncv = mpg%ncv
     nfc = mpg%nfc
-    nvx = mpg%nvx
 !
 ! finalise feedback
     CALL WRITE_B2US_FEEDBACK(99, '    ')
 ! finalise transport_models
     CALL WRITE_B2MOD_TRANSPORT_MODELS(99, '    ')
-! finalise sputtering
-! ..display and save the result of the calculation
 !   ..save final state
     CALL WRITE_B2FSTATE(nout(2), ncv, nfc, ns, state)
 !   ..write plasma state
@@ -7733,7 +7402,7 @@ CONTAINS
 !   ..mms error analysis
     IF (use_mms .NE. 0) THEN
 !srv 26.02.18 {
-      CALL CALC_ERR_NODIFF(ncv, ns, state%pl, state%dv)
+      CALL CALC_ERR(ncv, ns, state%pl)
     END IF
 !srv 29.11.18 }
     IF (iout .NE. 0) THEN
@@ -7755,13 +7424,74 @@ CONTAINS
         CALL MY_OUT_US(70, ncv, 0, state%pl%po, 'b2mndr_po_out')
       END IF
     END IF
-    CALL B2WDAT(ncv, nfc, nvx, ns, ismain, ismain0, mpg, geo, state, &
-&         state_ext, switch%boris)
+    CALL B2WDAT(ns, mpg, geo, state)
 !srv 05.10.01
+!   ..write out fort.30 and fort.31 files if not yet done
+    IF (switch%use_eirene .EQ. 0) THEN
+!WG_TODO       if (switch%save_f30.ne.0) call write_f30(nx, ny)
+      IF (switch%save_f31 .NE. 0) THEN
+        WRITE(*, *) 'Saving '//TRIM(fort_lc)//'31 at end of run'
+        OPEN(31, file=trim(fort_lc)//'31') 
+        CALL COPY_BACKGROUND_NODIFF(ncv, nfc, ns, switch, mpg, geo, &
+&                             state%pl, state%dv, state_ext)
+        CALL WRITE_F31_NODIFF(mpg)
+        CLOSE(31) 
+      END IF
+    END IF
+!   ..produce last CDF movie frame if not yet done
+    IF (tim .GT. save_cdfmovie_time - delta_cdfmovie_time + dtim .AND. &
+&       delta_cdfmovie_time .GT. 0.0_R8) CALL CDFMOVIE(ncid, ncv, ns, &
+&                                                geo, state, switch)
+!   ..produce 2d profiles if not yet done
+    IF (b2time .GT. 0) THEN
+      IF ((MOD(itim, b2time) .NE. 0 .AND. itim .GT. 1) .OR. itim .EQ. 0&
+&     ) THEN
+        IF (1 .LT. mpg%nxpt) THEN
+          max1 = mpg%nxpt
+        ELSE
+          max1 = 1
+        END IF
+        CALL B2MWTI(itim, tim, ntim, b2time, ntim_batch, ncv, nfc, ns, &
+&             max1, geo, mpg, switch, state%pl, state%dv, state%co, &
+&             state%rt, state%srw, state_ext, ismain, ismain0, .true., &
+&             .false., .false.)
+      END IF
+      CALL DEALLOC_B2MOD_MWTI()
+    END IF
+!   ..write out last tallies if not yet done
+    IF (tally .GT. 0) THEN
+      IF (MOD(itim, tally) .NE. 0 .AND. itim .GT. 1) CALL TALLIES(ns, &
+&                                                           tim, mpg, &
+&                                                           geo, state, &
+&                                                           state_ext, &
+&                                                           switch)
+    END IF
+!   ..write out last IDS if not yet done
+    ids_done = .false.
+    write_ids = .false.
+    ids_replace = .false.
+    IF (ids_save .GT. 0) THEN
+      ids_done = MOD(itim, ids_save) .EQ. 0
+      write_ids = MOD(itim, ids_save) .NE. 0
+    END IF
+    IF (delta_ids_time .GT. 0.0_R8) THEN
+      ids_done = ids_done .OR. tim .LE. save_ids_time - delta_ids_time +&
+&       dtim
+      write_ids = write_ids .OR. tim .GT. save_ids_time - delta_ids_time&
+&       + dtim
+    END IF
+    write_ids = write_ids .OR. ids_save .LT. 0
+    write_ids = write_ids .AND. ntim .GT. 0 .AND. (.NOT.ids_done)
+!
+!
+! finalise eirene_mc
+    IF (switch%use_eirene .NE. 0 .AND. itim .GT. 0) CALL XERRAB(&
+&                       'b2mndr not compiled with the B25_EIRENE option'&
+&                                                        )
 !
     IF (iav_run .GT. 0) THEN
-      CALL RUN_AV_SAVE('b2favere', ncv, ns, .true., .true.)
-      CALL RUN_AV_FIN()
+      CALL RUN_AV_SAVE('b2favere', ncv, ns, .true., .true., state_avg)
+      CALL RUN_AV_FIN(state_avg)
     END IF
 !
     IF (ibatch_av_all .GT. 0) CALL BATCH_AV_ALL_FIN()
@@ -7773,10 +7503,14 @@ CONTAINS
     ncall = ncall + 1
     IF (.NOT.flag_optim .AND. switch%b2optim_namelist .EQ. 1) THEN
       DEALLOCATE(par_opt_phys)
+      DEALLOCATE(xsave)
     END IF
     DEALLOCATE(old_erosion)
     DEALLOCATE(old_deposition)
-!WG_TODO      deallocate(rza0, rz20, rpt0, rpi0)
+    DEALLOCATE(rza0)
+    DEALLOCATE(rz20)
+    DEALLOCATE(rpt0)
+    DEALLOCATE(rpi0)
     CALL DEALLOC_B2MOD_DIAG()
 !WG_RM      call dealloc_b2mod_ma28
     CALL DEALLOC_B2MOD_WALL()
@@ -7785,7 +7519,6 @@ CONTAINS
     CALL DEALLOC_SPUTTER_DATA()
     CALL DEALLOC_B2MOD_SPUTTER()
     CALL DEALLOC_B2MOD_TALLIES()
-    CALL DEALLOC_B2MOD_BALANCE()
     CALL DEALLOC_INPUT_PROFILE()
     CALL DEALLOC_B2MOD_ELEMENTS()
     CALL DEALLOC_B2MOD_BOUNDARY()
@@ -7803,7 +7536,6 @@ CONTAINS
 !WG_RM      call dealloc_b2mod_ma28_for_7diag
 !WG_RM      call dealloc_b2mod_ma28_for_9diag
     CALL DEALLOC_B2MOD_MA28_FOR_US()
-    CALL DEALLOC_B2MOD_EIRENE_SOURCES()
 !WG_TODO      call dealloc_b2mod_external_dummy
     CALL DEALLOC_B2MOD_TRANSPORT_MODELS()
     CALL DEALLOC_B2MOD_TRANSPORT_DISRUPTION()
@@ -7811,6 +7543,7 @@ CONTAINS
     IF (boundary_sources .NE. 0) CALL DEALLOC_B2MOD_BOUNDARY_SOURCES()
 !srv 26.02.18
     IF (equation_sources .NE. 0) CALL DEALLOC_B2MOD_EQUATION_SOURCES()
+    CALL DEALLOC_B2MOD_B2PLOT()
     CALL DEALLOC_B2MOD_BRAEIR()
     CALL DESTROYB2SOURCEEIR(state%sr_eir)
     CALL SUBEND()

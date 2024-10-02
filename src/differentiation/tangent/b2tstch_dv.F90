@@ -20,7 +20,7 @@ SUBROUTINE B2TSTCH_NODIFF(nx, ny, po, te, ne, csig_stoch, fchstoch)
   USE B2MOD_TYPES
   USE B2MOD_GEO_DIFFV
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SUBSYS
@@ -54,20 +54,20 @@ SUBROUTINE B2TSTCH_NODIFF(nx, ny, po, te, ne, csig_stoch, fchstoch)
   INTEGER :: ncall, ix, iy, bottomdelta1, ixref
   INTEGER :: jxi, jxa, jsep
 !lk 31.01.08 }
-  REAL(kind=r8), SAVE :: fch_stochastic=0.0e0_R8
+  REAL(kind=r8), SAVE :: fch_stochastic=0.0_R8
   REAL(kind=r8) :: sig_stoch, delta_stoch, width
   SAVE ncall, jsep, ixref, sig_stoch, delta_stoch, bottomdelta1
 !   ..procedures
   EXTERNAL IPGETR, IPGETI, XERTST, XERRAB
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   EXTERNAL GET_JSEP
   INTRINSIC LOG
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
 !   ..initialization
   DATA ncall /0/
-  DATA delta_stoch /0.0e0_R8/
-  DATA sig_stoch /1.0e0_R8/
+  DATA delta_stoch /0.0_R8/
+  DATA sig_stoch /1.0_R8/
 !-----------------------------------------------------------------------
 !.computation
 !
@@ -91,7 +91,7 @@ SUBROUTINE B2TSTCH_NODIFF(nx, ny, po, te, ne, csig_stoch, fchstoch)
 &         'faulty argument b2tqna_ixref')
 !
     bottomdelta1 = jsep + 1
-    width = 0.0e0_R8
+    width = 0.0_R8
     DO iy=jsep,0,-1
       result1 = HY1(ixref, iy)
       width = width + result1
@@ -106,10 +106,10 @@ SUBROUTINE B2TSTCH_NODIFF(nx, ny, po, te, ne, csig_stoch, fchstoch)
 !     &                               ixref, bottomdelta1, topcut(1)
   END IF
 !
-  csig_stoch = 0.0e0_R8
-  fchstoch = 0.0e0_R8
+  csig_stoch = 0.0_R8
+  fchstoch = 0.0_R8
 !lk 31.01.08 }
-  IF (fch_stochastic .NE. 0.0e0_R8) THEN
+  IF (fch_stochastic .NE. 0.0_R8) THEN
 !lk 31.01.08 {
 !
     DO iy=bottomdelta1,jsep+1
@@ -120,13 +120,13 @@ SUBROUTINE B2TSTCH_NODIFF(nx, ny, po, te, ne, csig_stoch, fchstoch)
           result1 = HY1(ix, iy)
           result2 = HY1(bottomix(ix, iy), bottomiy(ix, iy))
           csig_stoch(ix, iy) = sig_stoch*qe*(ne(ix, iy)+ne(bottomix(ix, &
-&           iy), bottomiy(ix, iy)))/2.0e0_R8*(vol(ix, iy)+vol(bottomix(&
-&           ix, iy), bottomiy(ix, iy)))*2.0e0_R8/(result1+result2)**2
+&           iy), bottomiy(ix, iy)))/2.0_R8*(vol(ix, iy)+vol(bottomix(ix&
+&           , iy), bottomiy(ix, iy)))*2.0_R8/(result1+result2)**2
           fchstoch(ix, iy) = -(csig_stoch(ix, iy)*(po(ix, iy)-po(&
-&           bottomix(ix, iy), bottomiy(ix, iy))-0.5e0_R8/qe*(te(ix, iy)-&
-&           te(bottomix(ix, iy), bottomiy(ix, iy)))-(te(ix, iy)+te(&
-&           bottomix(ix, iy), bottomiy(ix, iy)))/2.0e0_R8/qe*(LOG(ne(ix&
-&           , iy))-LOG(ne(bottomix(ix, iy), bottomiy(ix, iy))))))
+&           bottomix(ix, iy), bottomiy(ix, iy))-0.5_R8/qe*(te(ix, iy)-te&
+&           (bottomix(ix, iy), bottomiy(ix, iy)))-(te(ix, iy)+te(&
+&           bottomix(ix, iy), bottomiy(ix, iy)))/2.0_R8/qe*(LOG(ne(ix, &
+&           iy))-LOG(ne(bottomix(ix, iy), bottomiy(ix, iy))))))
         END IF
       END DO
     END DO
