@@ -3,19 +3,19 @@
 !
 !  Differentiation of b2srdt in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(sr.sch) *(sr.she) *(sr.shi)
-!                *(sr.shn) *(sr.smo) *(sr.sna) *(sr.shedt) *(sr.sktdt)
-!                *(sr.shidt) *(sr.shndt) *(sr.schdt) *(sr.smodt)
-!                *(sr.snadt)
-!   with respect to varying inputs: ni0 tn0 te0 na0 nn0 kt0 *(sr.sch)
-!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.smo)
-!                *(sr.sna) *(sr.shedt) *(sr.sktdt) *(sr.shidt)
+!                *(sr.shn) *(sr.skt) *(sr.szt) *(sr.smo) *(sr.sna)
+!                *(sr.shedt) *(sr.sktdt) *(sr.sztdt) *(sr.shidt)
 !                *(sr.shndt) *(sr.schdt) *(sr.smodt) *(sr.snadt)
-!                ti0 kinrgy0 ne0 ua0
+!   with respect to varying inputs: ni0 tn0 te0 na0 nn0 kt0 *(sr.sch)
+!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt)
+!                *(sr.smo) *(sr.sna) *(sr.shedt) *(sr.sktdt) *(sr.sztdt)
+!                *(sr.shidt) *(sr.shndt) *(sr.schdt) *(sr.smodt)
+!                *(sr.snadt) ti0 kinrgy0 zt0 ne0 ua0
 !   Plus diff mem management of: sr.sch:in sr.she:in sr.shi:in
-!                sr.sne:in sr.shn:in sr.skt:in sr.smo:in sr.sna:in
-!                sr.shedt:in sr.sktdt:in sr.sztdt:in sr.snedt:in
-!                sr.shidt:in sr.shndt:in sr.schdt:in sr.smodt:in
-!                sr.snadt:in
+!                sr.sne:in sr.shn:in sr.skt:in sr.szt:in sr.smo:in
+!                sr.sna:in sr.shedt:in sr.sktdt:in sr.sztdt:in
+!                sr.snedt:in sr.shidt:in sr.shndt:in sr.schdt:in
+!                sr.smodt:in sr.snadt:in
 !
 !
 !
@@ -301,20 +301,25 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
       srd%sktdt(nd, icv, 1) = 0.D0
       srd%sktdt(nd, icv, 2) = 0.D0
       srd%sktdt(nd, icv, 3) = 0.D0
-      srd%sktdt(nd, icv, :) = srd%skt(nd, icv, :) + srd%sktdt(nd, icv, :&
-&       )
+      srd%skt(nd, icv, :) = srd%skt(nd, icv, :) + srd%sktdt(nd, icv, :)
+!
+      srd%sztdt(nd, icv, 0) = t0*(zt0(icv)*ni0d(nd, icv, 1)+ni0(icv, 1)*&
+&       zt0d(nd, icv))
+      srd%sztdt(nd, icv, 1) = 0.D0
+      srd%sztdt(nd, icv, 2) = 0.D0
+      srd%sztdt(nd, icv, 3) = 0.D0
+      srd%szt(nd, icv, :) = srd%szt(nd, icv, :) + srd%sztdt(nd, icv, :)
     END DO
     sr%sktdt(icv, 0) = t0*ni0(icv, 1)*kt0(icv)
     sr%sktdt(icv, 1) = 0.0_R8
     sr%sktdt(icv, 2) = 0.0_R8
     sr%sktdt(icv, 3) = -t0
-    sr%sktdt(icv, :) = sr%skt(icv, :) + sr%sktdt(icv, :)
-!
+    sr%skt(icv, :) = sr%skt(icv, :) + sr%sktdt(icv, :)
     sr%sztdt(icv, 0) = t0*ni0(icv, 1)*zt0(icv)
     sr%sztdt(icv, 1) = 0.0_R8
     sr%sztdt(icv, 2) = 0.0_R8
     sr%sztdt(icv, 3) = -t0
-    sr%sztdt(icv, :) = sr%szt(icv, :) + sr%sztdt(icv, :)
+    sr%szt(icv, :) = sr%szt(icv, :) + sr%sztdt(icv, :)
   END DO
 !
   DO icv=1,ncv
@@ -752,13 +757,13 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     sr%sktdt(icv, 1) = 0.0_R8
     sr%sktdt(icv, 2) = 0.0_R8
     sr%sktdt(icv, 3) = -t0
-    sr%sktdt(icv, :) = sr%skt(icv, :) + sr%sktdt(icv, :)
+    sr%skt(icv, :) = sr%skt(icv, :) + sr%sktdt(icv, :)
 !
     sr%sztdt(icv, 0) = t0*ni0(icv, 1)*zt0(icv)
     sr%sztdt(icv, 1) = 0.0_R8
     sr%sztdt(icv, 2) = 0.0_R8
     sr%sztdt(icv, 3) = -t0
-    sr%sztdt(icv, :) = sr%szt(icv, :) + sr%sztdt(icv, :)
+    sr%szt(icv, :) = sr%szt(icv, :) + sr%sztdt(icv, :)
   END DO
 !
   DO icv=1,ncv

@@ -7,9 +7,9 @@
 !                *(dv.reskt) *(dv.reszt) *(dv.cortt) *(dv.corte)
 !                *(dv.corti) *(dv.cortn) *(dv.corkt) *(dv.corzt)
 !                *(dv.lnlam) *(dv.vaecrb) *(sr.she) *(sr.shi) *(sr.shn)
-!                *(sr.skt) *(sr.shedt) *(sr.sktdt) *(sr.shidt)
-!                *(sr.shndt) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti)
-!                *(pl.tn) *(pl.kt) *(pl.zt)
+!                *(sr.skt) *(sr.szt) *(sr.shedt) *(sr.sktdt) *(sr.sztdt)
+!                *(sr.shidt) *(sr.shndt) *(pl.ua) *(pl.po) *(pl.te)
+!                *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
 !   with respect to varying inputs: *(dv.fch) *(dv.fhe) *(dv.fhe_mdf)
 !                *(dv.fhi) *(dv.fhi_mdf) *(dv.fhn) *(dv.fkt) *(dv.fzt)
 !                *(dv.floe) *(dv.floi) *(dv.flon) *(dv.flokt) *(dv.flozt)
@@ -19,16 +19,17 @@
 !                *(dv.corte) *(dv.corti) *(dv.cortn) *(dv.corkt)
 !                *(dv.corzt) *(dv.pccm) *(dv.ne) *(dv.ni) *(dv.nn)
 !                *(dv.ue) *(dv.lnlam) *(dv.vaecrb) *(psnl.na) *(psnl.te)
-!                *(psnl.ti) *(psnl.tn) *(psnl.kt) *(psnl.ne) *(psnl.ni)
-!                *(psnl.kinrgy) *(rt.rz2) switch.b2sikt_fac_sheath
+!                *(psnl.ti) *(psnl.tn) *(psnl.kt) *(psnl.zt) *(psnl.ne)
+!                *(psnl.ni) *(psnl.kinrgy) *(rt.rz2) switch.b2sikt_fac_sheath
 !                switch.b2sikt_fac_sheath_core switch.b2sikt_fac_diss
 !                switch.b2sikt_fac_diss_core switch.b2sikt_fac_vis_rs
-!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.shedt)
-!                *(sr.sktdt) *(sr.shidt) *(sr.shndt) *(co.cvsa)
-!                *(co.cvsahz_eff) *(co.ceqp) *(co.dna_exb) *(co.hce_exb)
-!                *(co.hci_exb) *(co.alfx_c) *(co.sigx_c) *(co.sigx_kt)
-!                *(co.f_luc_sg) *(pl.na) *(pl.ua) *(pl.po) *(pl.te)
-!                *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
+!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt)
+!                *(sr.shedt) *(sr.sktdt) *(sr.sztdt) *(sr.shidt)
+!                *(sr.shndt) *(co.cvsa) *(co.cvsahz_eff) *(co.ceqp)
+!                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.alfx_c)
+!                *(co.sigx_c) *(co.sigx_kt) *(co.f_luc_sg) *(pl.na)
+!                *(pl.ua) *(pl.po) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt)
+!                *(pl.zt)
 !   Plus diff mem management of: dv.fch:in dv.fna_fcor:in dv.fne:in
 !                dv.fhe:in dv.fhe_mdf:in dv.fhi:in dv.fhi_mdf:in
 !                dv.fhn:in dv.fkt:in dv.fzt:in dv.floe:in dv.floi:in
@@ -40,22 +41,23 @@
 !                dv.pccm:in dv.ne:in dv.ni:in dv.nn:in dv.ue:in
 !                dv.lnlam:in dv.vaecrb:in dv.fac_exb:in mpg.intcellp:in
 !                mpg.intcellr:in psnl.na:in psnl.te:in psnl.ti:in
-!                psnl.tn:in psnl.kt:in psnl.ne:in psnl.ni:in psnl.kinrgy:in
-!                geo.cvbb:in geo.cvhz:in geo.cvvol:in geo.cvonedbsq:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.fcpbs:in geo.vxvol:in geo.vxonedbsq:in
-!                geo.cvconn:in st_ext.am:in st_ext.ne2:in st_ext.za2:in
-!                st_ext.na:in st_ext.ta:in rt.rz2:in srw.b2sihs_joule:in
-!                srw.b2sihs_divue:in srw.b2sihs_divua:in srw.b2sihs_exbe:in
-!                srw.b2sihs_exba:in srw.b2sihs_visa:in srw.b2sihs_fraa:in
-!                srw.b2sihs_str:in sr.she:in sr.shi:in sr.shn:in
-!                sr.skt:in sr.szt:in sr.shedt:in sr.sktdt:in sr.sztdt:in
-!                sr.shidt:in sr.shndt:in sr.skt_diss:in sr.skt_prod:in
-!                co.cvsa:in co.cvsahz_eff:in co.ceqp:in co.dna_exb:in
-!                co.hce_exb:in co.hci_exb:in co.alfx_c:in co.sigx_c:in
-!                co.sigx_kt:in co.f_luc_sg:in pl.na:in pl.ua:in
-!                pl.po:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
+!                psnl.tn:in psnl.kt:in psnl.zt:in psnl.ne:in psnl.ni:in
+!                psnl.kinrgy:in geo.cvbb:in geo.cvhz:in geo.cvvol:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
+!                geo.vxonedbsq:in geo.cvconn:in st_ext.am:in st_ext.ne2:in
+!                st_ext.za2:in st_ext.na:in st_ext.ta:in rt.rz2:in
+!                srw.b2sihs_joule:in srw.b2sihs_divue:in srw.b2sihs_divua:in
+!                srw.b2sihs_exbe:in srw.b2sihs_exba:in srw.b2sihs_visa:in
+!                srw.b2sihs_fraa:in srw.b2sihs_str:in sr.she:in
+!                sr.shi:in sr.shn:in sr.skt:in sr.szt:in sr.shedt:in
+!                sr.sktdt:in sr.sztdt:in sr.shidt:in sr.shndt:in
+!                sr.skt_diss:in sr.skt_prod:in co.cvsa:in co.cvsahz_eff:in
+!                co.ceqp:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
+!                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.f_luc_sg:in
+!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
+!                pl.kt:in pl.zt:in
 !
 !
 !
@@ -324,10 +326,11 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !  .. calculate time-dependent source
     CALL B2SHDT_DV(ncv, mpg%nci, ns, dtim, geo%cvvol, psnl%na, psnld%na&
 &            , psnl%te, psnld%te, psnl%ti, psnld%ti, psnl%tn, psnld%tn, &
-&            psnl%kt, psnld%kt, psnl%zt, dv%ne, dvd%ne, dv%ni, dvd%ni, &
-&            dv%nn, dvd%nn, psnl%kinrgy, psnld%kinrgy, switch, mpg, sr%&
-&            shedt, srd%shedt, sr%shidt, srd%shidt, sr%shndt, srd%shndt&
-&            , sr%sktdt, srd%sktdt, sr%sztdt, nbdirs)
+&            psnl%kt, psnld%kt, psnl%zt, psnld%zt, dv%ne, dvd%ne, dv%ni&
+&            , dvd%ni, dv%nn, dvd%nn, psnl%kinrgy, psnld%kinrgy, switch&
+&            , mpg, sr%shedt, srd%shedt, sr%shidt, srd%shidt, sr%shndt, &
+&            srd%shndt, sr%sktdt, srd%sktdt, sr%sztdt, srd%sztdt, nbdirs&
+&           )
     DO nd=1,nbdirs
 !  .. add contributions from time-dependent sources
 !c If e.g. d(nT)/dt = n dT/dt + T dn/dt,
@@ -394,6 +397,12 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &       psnl%kt/dtim*geo%cvvol
     END IF
     IF (switch%solve_keps .GT. 1) THEN
+      DO nd=1,nbdirs
+        srd%szt(nd, :, :) = srd%szt(nd, :, :) + srd%sztdt(nd, :, :)
+        srd%szt(nd, :, 0) = srd%szt(nd, :, 0) - geo%cvvol*1.5_R8*(psnl%&
+&         zt*(dvd%ni(nd, :, 1)-psnld%ni(nd, :, 1))/dtim+(dv%ni(:, 1)-&
+&         psnl%ni(:, 1))*psnld%zt(nd, :)/dtim)
+      END DO
       sr%szt = sr%szt + sr%sztdt
       sr%szt(:, 0) = sr%szt(:, 0) - 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*&
 &       psnl%zt/dtim*geo%cvvol
@@ -441,6 +450,10 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &            , mpg, mpgd, pl, pld, dv, dvd, rt%rza, co, cod, st_ext, &
 &            st_extd, shekt, shektd, shikt, shiktd, skt0, skt0d, &
 &            skt_prod, skt_prodd, skt_diss, skt_dissd, nbdirs)
+    DO nd=1,nbdirs
+      szt0d(nd, :, :) = 0.D0
+    END DO
+    szt0 = 0.0_R8
     arg1 = ncv*4
     CALL B2SAXPY_DV(arg1, 1.0_R8, shekt, shektd, 1, she0, she0d, 1, &
 &             nbdirs)
@@ -450,11 +463,20 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
     arg1 = ncv*4
     CALL B2SAXPY_DV(arg1, 1.0_R8, sr%skt, srd%skt, 1, skt0, skt0d, 1, &
 &             nbdirs)
+    arg1 = ncv*4
+    DO nd=1,nbdirsmax
+      szt0d(nd, :, :) = 0.D0
+    END DO
+    CALL B2SAXPY_DV(arg1, 1.0_R8, sr%szt, srd%szt, 1, szt0, szt0d, 1, &
+&             nbdirs)
     CALL B2SAXPY_NODIFF(ncv, 1.0_R8, skt_prod, 1, sr%skt_prod, 1)
     CALL B2SAXPY_NODIFF(ncv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
   ELSE
     DO nd=1,nbdirsmax
       skt0d(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      szt0d(nd, :, :) = 0.D0
     END DO
   END IF
 !
@@ -501,14 +523,12 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &                                                dvd%fkt, dv%reskt, dvd%&
 &                                                reskt, nbdirs)
   IF ((switch%solve_keps .GT. 1 .AND. ANY(solvzreg(0:mpg%nnreg(0)))) &
-&     .OR. switch%get_residuals .EQ. 1) THEN
-    DO nd=1,nbdirsmax
-      szt0d(nd, :, :) = 0.D0
-    END DO
-    CALL B2URSD_DV(ncv, nfc, mpg, dv%ni(:, 1), dvd%ni(:, :, 1), pl%zt, &
-&            pld%zt, szt0, szt0d, dv%fzt, dvd%fzt, dv%reszt, dvd%reszt, &
-&            nbdirs)
-  END IF
+&     .OR. switch%get_residuals .EQ. 1) CALL B2URSD_DV(ncv, nfc, mpg, dv&
+&                                                %ni(:, 1), dvd%ni(:, :&
+&                                                , 1), pl%zt, pld%zt, &
+&                                                szt0, szt0d, dv%fzt, &
+&                                                dvd%fzt, dv%reszt, dvd%&
+&                                                reszt, nbdirs)
 !
 ! residuals for separate neutral energy equation
   IF (switch%tn_style .EQ. 2) THEN
@@ -749,12 +769,13 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &            %coni, dvd%coni, dv%flon, dvd%flon, dv%conn, dvd%conn, dv%&
 &            flokt, dvd%flokt, dv%conkt, dvd%conkt, dv%flozt, dvd%flozt&
 &            , dv%conzt, dvd%conzt, she0, she0d, shi0, shi0d, shn0, &
-&            shn0d, skt0, skt0d, szt0, co%ceqp, cod%ceqp, dv%resht, dvd%&
-&            resht, dv%reshe, dvd%reshe, dv%reshi, dvd%reshi, dv%reshn, &
-&            dvd%reshn, dv%reskt, dvd%reskt, dv%reszt, dvd%reszt, dv%&
-&            cortt, dvd%cortt, dv%corte, dvd%corte, dv%corti, dvd%corti&
-&            , dv%cortn, dvd%cortn, dv%corkt, dvd%corkt, dv%corzt, dvd%&
-&            corzt, wrkf, wrkfd, wrkc, wrkcd, aa, aad, nbdirs)
+&            shn0d, skt0, skt0d, szt0, szt0d, co%ceqp, cod%ceqp, dv%&
+&            resht, dvd%resht, dv%reshe, dvd%reshe, dv%reshi, dvd%reshi&
+&            , dv%reshn, dvd%reshn, dv%reskt, dvd%reskt, dv%reszt, dvd%&
+&            reszt, dv%cortt, dvd%cortt, dv%corte, dvd%corte, dv%corti, &
+&            dvd%corti, dv%cortn, dvd%cortn, dv%corkt, dvd%corkt, dv%&
+&            corzt, dvd%corzt, wrkf, wrkfd, wrkc, wrkcd, aa, aad, nbdirs&
+&           )
 !   ..apply correction
 !srv 22.05.18
     CALL B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
@@ -1108,12 +1129,15 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
     CALL B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl, &
 &                dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod, &
 &                skt_diss)
+    szt0 = 0.0_R8
     arg1 = ncv*4
     CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shekt, 1, she0, 1)
     arg1 = ncv*4
     CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shikt, 1, shi0, 1)
     arg1 = ncv*4
     CALL B2SAXPY_NODIFF(arg1, 1.0_R8, sr%skt, 1, skt0, 1)
+    arg1 = ncv*4
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, sr%szt, 1, szt0, 1)
     CALL B2SAXPY_NODIFF(ncv, 1.0_R8, skt_prod, 1, sr%skt_prod, 1)
     CALL B2SAXPY_NODIFF(ncv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
   END IF

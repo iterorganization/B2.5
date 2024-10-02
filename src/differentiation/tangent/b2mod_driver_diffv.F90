@@ -6240,6 +6240,9 @@ CONTAINS
       stated%sr%skt(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
+      stated%sr%szt(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
       stated%sr%smo(nd, :, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
@@ -6253,6 +6256,9 @@ CONTAINS
     END DO
     DO nd=1,nbdirsmax
       stated%sr%sktdt(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%sr%sztdt(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%sr%shidt(nd, :, :) = 0.D0
@@ -6283,6 +6289,9 @@ CONTAINS
     END DO
     DO nd=1,nbdirsmax
       stated%srw%skt0(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%srw%szt0(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%srw%smo0(nd, :, :, :) = 0.D0
@@ -6366,6 +6375,9 @@ CONTAINS
       stated%psnl%kt(nd, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
+      stated%psnl%zt(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
       stated%psnl%ne(nd, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
@@ -6391,6 +6403,9 @@ CONTAINS
     END DO
     DO nd=1,nbdirsmax
       stated%psnc%kt(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%psnc%zt(nd, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%psnc%ne(nd, :) = 0.D0
@@ -6446,7 +6461,8 @@ CONTAINS
         stated%psnc%kinrgy(nd, :, :) = stated%dv%kinrgy(nd, :, :)
         stated%psnl%kt(nd, :) = stated%pl%kt(nd, :)
         stated%psnc%kt(nd, :) = stated%pl%kt(nd, :)
-        stated%psnc%zt(nd, :) = 0.D0
+        stated%psnl%zt(nd, :) = stated%pl%zt(nd, :)
+        stated%psnc%zt(nd, :) = stated%pl%zt(nd, :)
       END DO
       state%psnl%na = state%pl%na
       state%psnc%na = state%pl%na

@@ -4622,8 +4622,8 @@ END SUBROUTINE B2STBC_PHYS_NODIFF
 
 !  Differentiation of b2stbc_phys in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar enipar *(srw.sch0)
-!                *(srw.she0) *(srw.shi0) *(srw.skt0) *(srw.smo0)
-!                *(srw.sna0)
+!                *(srw.she0) *(srw.shi0) *(srw.skt0) *(srw.szt0)
+!                *(srw.smo0) *(srw.sna0)
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar *(dv.fch) *(dv.fch_p) *(dv.fchdia)
 !                *(dv.fchin) *(dv.fchvispar) *(dv.fchvisper) *(dv.fchvisq)
@@ -4632,10 +4632,11 @@ END SUBROUTINE B2STBC_PHYS_NODIFF
 !                *(dv.fhi) *(dv.fhipsch) *(dv.fhm) *(dv.fkt) *(dv.ne)
 !                *(dv.ni) *(dv.vadia) *(dv.vaecrb) *(dv.vedia)
 !                *(dv.veecrb) *(rt.rza) *(srw.sch0) *(srw.she0)
-!                *(srw.shi0) *(srw.skt0) *(srw.smo0) *(srw.sna0)
-!                switch.b2tfhi_fflokt *(co.chce) *(co.chci) *(co.cdna)
-!                *(co.hce0) *(co.hci0) *(co.hcn0) *(co.dpa0) *(co.dna0)
-!                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti) *(pl.kt)
+!                *(srw.shi0) *(srw.skt0) *(srw.szt0) *(srw.smo0)
+!                *(srw.sna0) switch.b2tfhi_fflokt switch.b2tfhi_fflozt
+!                *(co.chce) *(co.chci) *(co.cdna) *(co.hce0) *(co.hci0)
+!                *(co.hcn0) *(co.dpa0) *(co.dna0) *(pl.na) *(pl.ua)
+!                *(pl.po) *(pl.te) *(pl.ti) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.fch:in dv.fch_p:in dv.fchdia:in
 !                dv.fchin:in dv.fchvispar:in dv.fchvisper:in dv.fchvisq:in
 !                dv.fchinert:in dv.fchviskt:in dv.fna:in dv.fnapsch:in
@@ -11386,6 +11387,10 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
 ! number of the guard cell face
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+        DO nd=1,nbdirs
+          srwd%szt0(nd, icv1, 0) = 0.D0
+          srwd%szt0(nd, icv1, 1) = 0.D0
+        END DO
         srw%szt0(icv1, 0) = vbig*ne00*geo%fcs(ifc)*enzpar(ib, 1)*ev
         srw%szt0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
       END DO
@@ -11406,12 +11411,22 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
         ivx1 = mpg%fcvx(ifc, 1)
         ivx2 = mpg%fcvx(ifc, 2)
-        t1 = INTVERTEX_S_NODIFF(ivx1, ncv, nvx, mpg, geo%vxvol, pl%zt)
-        t2 = INTVERTEX_S_NODIFF(ivx2, ncv, nvx, mpg, geo%vxvol, pl%zt)
-        srw%szt0(icv1, 0) = vbig*ne00*geo%fcs(ifc)*(ev*enzpar(ib, 1)*(&
-&         geo%fchc(ifc, 1)+geo%fchc(ifc, 2))*geo%fcqgam(ifc, 0)-cor9*(t2&
-&         -t1)*geo%fcqgam(ifc, 1)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/&
-&         geo%fcht(ifc)*mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)+pl%zt(icv2))
+        CALL INTVERTEX_S_DV(ivx1, ncv, nvx, mpg, geo%vxvol, pl%zt, pld%&
+&                     zt, t1, t1d, nbdirs)
+        CALL INTVERTEX_S_DV(ivx2, ncv, nvx, mpg, geo%vxvol, pl%zt, pld%&
+&                     zt, t2, t2d, nbdirs)
+        temp5 = vbig*ne00*geo%fcs(ifc)
+        temp3 = cor9*geo%fcqgam(ifc, 1)*(geo%fchc(ifc, 1)+geo%fchc(ifc, &
+&         2))
+        temp2 = mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)
+        DO nd=1,nbdirs
+          srwd%szt0(nd, icv1, 0) = temp5*(pld%zt(nd, icv2)-temp3*temp2*(&
+&           t2d(nd)-t1d(nd))/geo%fcht(ifc))
+          srwd%szt0(nd, icv1, 1) = 0.D0
+        END DO
+        srw%szt0(icv1, 0) = temp5*(ev*enzpar(ib, 1)*geo%fcqgam(ifc, 0)*(&
+&         geo%fchc(ifc, 1)+geo%fchc(ifc, 2))+pl%zt(icv2)-temp3*(temp2*((&
+&         t2-t1)/geo%fcht(ifc))))
         srw%szt0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
       END DO
     CASE (3) 
@@ -11476,8 +11491,22 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-        arg10 = pz(icv1)/rz(icv1)
-        cs = SQRT(arg10)
+        temp5 = pz(icv1)/rz(icv1)
+        DO nd=1,nbdirs
+          arg10d(nd) = (pzd(nd, icv1)-temp5*rzd(nd, icv1))/rz(icv1)
+          srwd%szt0(nd, icv1, 0) = 0.D0
+        END DO
+        arg10 = temp5
+        temp5 = SQRT(arg10)
+        DO nd=1,nbdirs
+          IF (arg10 .EQ. 0.D0) THEN
+            csd(nd) = 0.D0
+          ELSE
+            csd(nd) = arg10d(nd)/(2.0*temp5)
+          END IF
+          srwd%szt0(nd, icv1, 3) = enzpar(ib, 1)*geo%fcs(ifc)*csd(nd)
+        END DO
+        cs = temp5
         srw%szt0(icv1, 0) = 0.0_R8
         srw%szt0(icv1, 3) = geo%fcs(ifc)*cs*enzpar(ib, 1)
       END DO
@@ -11494,15 +11523,45 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-        arg10 = pz(icv1)/rz(icv1)
-        cs = SQRT(arg10)
+        temp5 = pz(icv1)/rz(icv1)
+        DO nd=1,nbdirs
+          arg10d(nd) = (pzd(nd, icv1)-temp5*rzd(nd, icv1))/rz(icv1)
+        END DO
+        arg10 = temp5
+        temp5 = SQRT(arg10)
+        DO nd=1,nbdirs
+          IF (arg10 .EQ. 0.D0) THEN
+            csd(nd) = 0.D0
+          ELSE
+            csd(nd) = arg10d(nd)/(2.0*temp5)
+          END IF
+        END DO
+        cs = temp5
         t0 = 0.0_R8
         t1 = 0.0_R8
+        DO nd=1,nbdirsmax
+          t0d(nd) = 0.D0
+        END DO
+        DO nd=1,nbdirsmax
+          t1d(nd) = 0.D0
+        END DO
         DO is=0,ns-1
           IF (.NOT.is_neutral(is)) THEN
+            DO nd=1,nbdirs
+              t0d(nd) = t0d(nd) + pl%na(icv1, is)*conpard(nd, is, ib, 1)&
+&               + conpar(is, ib, 1)*pld%na(nd, icv1, is)
+            END DO
             t0 = t0 + conpar(is, ib, 1)*pl%na(icv1, is)
-            IF (conpar(is, ib, 2) .GT. 0.0_R8) t1 = t1 + co%dna0(icv1, &
-&               is)/conpar(is, ib, 2)*pl%na(icv1, is)
+            IF (conpar(is, ib, 2) .GT. 0.0_R8) THEN
+              temp6 = co%dna0(icv1, is)*pl%na(icv1, is)/conpar(is, ib, 2&
+&               )
+              DO nd=1,nbdirs
+                t1d(nd) = t1d(nd) + (pl%na(icv1, is)*cod%dna0(nd, icv1, &
+&                 is)+co%dna0(icv1, is)*pld%na(nd, icv1, is)-temp6*&
+&                 conpard(nd, is, ib, 2))/conpar(is, ib, 2)
+              END DO
+              t1 = t1 + temp6
+            END IF
           END IF
         END DO
         IF (geo%fcpbs(ifc) .GE. 0.) THEN
@@ -11510,8 +11569,15 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         ELSE
           abs9 = -geo%fcpbs(ifc)
         END IF
-        srw%szt0(icv1, 1) = srw%szt0(icv1, 1) - enzpar(ib, 1)*t0*cs*abs9&
-&         *(1.0_R8+switch%b2tfhi_fflozt) - enzpar(ib, 2)*t1*geo%fcs(ifc)
+        temp5 = enzpar(ib, 1)*abs9
+        DO nd=1,nbdirs
+          srwd%szt0(nd, icv1, 1) = srwd%szt0(nd, icv1, 1) - temp5*((&
+&           switch%b2tfhi_fflozt+1.0_R8)*(cs*t0d(nd)+t0*csd(nd))+t0*cs*&
+&           switchd%b2tfhi_fflozt(nd)) - geo%fcs(ifc)*enzpar(ib, 2)*t1d(&
+&           nd)
+        END DO
+        srw%szt0(icv1, 1) = srw%szt0(icv1, 1) - temp5*(t0*cs*(switch%&
+&         b2tfhi_fflozt+1.0_R8)) - enzpar(ib, 2)*t1*geo%fcs(ifc)
       END DO
     CASE (16) 
 !wdk    Todo: corrections for BCCON.ne.14
@@ -11533,6 +11599,9 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !     ..compute average zt on core boundary
       t0 = 0.0_R8
       t1 = 0.0_R8
+      DO nd=1,nbdirsmax
+        t1d(nd) = 0.D0
+      END DO
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -11549,9 +11618,15 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 ! number of the guard cell face
             ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
             t0 = t0 + geo%cvvol(icv2)
+            DO nd=1,nbdirs
+              t1d(nd) = t1d(nd) + geo%cvvol(icv2)*pld%zt(nd, icv2)
+            END DO
             t1 = t1 + geo%cvvol(icv2)*pl%zt(icv2)
           END DO
         END IF
+      END DO
+      DO nd=1,nbdirs
+        t1d(nd) = t1d(nd)/t0
       END DO
       t1 = t1/t0
 !     ..impose zt with perturbation
@@ -11563,8 +11638,12 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-        srw%szt0(icv1, 0) = vbig*ne00*geo%fcs(ifc)*(pl%zt(icv2)+enzpar(&
-&         ib, 1)*ev-t1)
+        temp5 = vbig*ne00*geo%fcs(ifc)
+        DO nd=1,nbdirs
+          srwd%szt0(nd, icv1, 0) = temp5*(pld%zt(nd, icv2)-t1d(nd))
+          srwd%szt0(nd, icv1, 1) = 0.D0
+        END DO
+        srw%szt0(icv1, 0) = temp5*(enzpar(ib, 1)*ev+pl%zt(icv2)-t1)
         srw%szt0(icv1, 1) = -(vbig*ne00*geo%fcs(ifc))
       END DO
     CASE DEFAULT
