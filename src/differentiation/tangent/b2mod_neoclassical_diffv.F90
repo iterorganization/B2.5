@@ -27,20 +27,23 @@ MODULE B2MOD_NEOCLASSICAL_DIFFV
   LOGICAL, SAVE :: newneo
   INTEGER, SAVE :: nsl
   INTEGER, ALLOCATABLE, SAVE :: ncl(:), isort(:, :)
-  REAL(kind=r8), ALLOCATABLE, SAVE :: m(:), zsp(:, :), theta(:, :), bav_&
-& (:), b2av_(:), bi2a_(:), rbt_(:), bgradp_(:), dpsidr_(:), rnq_(:), fc_&
-& (:), gclass_(:), fm_(:, :), r2i_(:), rho_(:)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: m(:), zsp(:, :), theta(:), bav_(:)&
+& , b2av_(:), bi2a_(:), rbt_(:), bgradp_(:), dpsidr_(:), rnq_(:), fc_(:)&
+& , gclass_(:), fm_(:, :), r2i_(:), rho_(:)
   REAL(kind=r8), ALLOCATABLE, SAVE :: dd(:, :, :), vvn(:, :, :), chi(:, &
 & :, :), vwt(:, :, :)
 
 CONTAINS
 !
 !
-  SUBROUTINE ALLOC_B2MOD_NEOCLASSICAL(nxd, nyd, nsd, mmxd)
+  SUBROUTINE ALLOC_B2MOD_NEOCLASSICAL(mpg, nsd, mmxd)
+    USE B2US_MAP_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
-    INTEGER :: nxd, nyd, nsd, nzd, mmxd
+    TYPE(MAPPING), INTENT(IN) :: mpg
+    INTEGER, INTENT(IN) :: nsd, mmxd
+    INTEGER :: nzd
     INTRINSIC MAXVAL
     INTRINSIC NINT
     REAL(kind=r8) :: result1
@@ -52,23 +55,23 @@ CONTAINS
     ALLOCATE(isort(0:nsd, 0:nzd-1))
     ALLOCATE(m(0:nsd))
     ALLOCATE(zsp(0:nsd, 0:nzd-1))
-    ALLOCATE(theta(-1:nxd, -1:nyd))
-    ALLOCATE(bav_(-1:nyd))
-    ALLOCATE(b2av_(-1:nyd))
-    ALLOCATE(bi2a_(-1:nyd))
-    ALLOCATE(rbt_(-1:nyd))
-    ALLOCATE(bgradp_(-1:nyd))
-    ALLOCATE(dpsidr_(-1:nyd))
-    ALLOCATE(rnq_(-1:nyd))
-    ALLOCATE(fc_(-1:nyd))
-    ALLOCATE(gclass_(-1:nyd))
-    ALLOCATE(fm_(1:mmxd, -1:nyd))
-    ALLOCATE(r2i_(-1:nyd))
-    ALLOCATE(rho_(-1:nyd))
-    ALLOCATE(dd(0:nsd, 0:nzd-1, -1:nyd))
-    ALLOCATE(vvn(0:nsd, 0:nzd-1, -1:nyd))
-    ALLOCATE(chi(0:nsd, 0:nzd-1, -1:nyd))
-    ALLOCATE(vwt(0:nsd, 0:nzd-1, -1:nyd))
+    ALLOCATE(theta(mpg%ncv))
+    ALLOCATE(bav_(mpg%nft))
+    ALLOCATE(b2av_(mpg%nft))
+    ALLOCATE(bi2a_(mpg%nft))
+    ALLOCATE(rbt_(mpg%nft))
+    ALLOCATE(bgradp_(mpg%nft))
+    ALLOCATE(dpsidr_(mpg%nft))
+    ALLOCATE(rnq_(mpg%nft))
+    ALLOCATE(fc_(mpg%nft))
+    ALLOCATE(gclass_(mpg%nft))
+    ALLOCATE(fm_(1:mmxd, mpg%nft))
+    ALLOCATE(r2i_(mpg%nft))
+    ALLOCATE(rho_(mpg%nft))
+    ALLOCATE(dd(0:nsd, 0:nzd-1, mpg%nft))
+    ALLOCATE(vvn(0:nsd, 0:nzd-1, mpg%nft))
+    ALLOCATE(chi(0:nsd, 0:nzd-1, mpg%nft))
+    ALLOCATE(vwt(0:nsd, 0:nzd-1, mpg%nft))
   END SUBROUTINE ALLOC_B2MOD_NEOCLASSICAL
 
 !

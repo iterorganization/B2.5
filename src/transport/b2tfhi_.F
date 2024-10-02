@@ -11,17 +11,19 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance                                                 !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
      &          fhi_visper, fhi_visq, fhi_anml, balance_netcdf
+#endif
       use b2mod_ad
      & , only : ncall_b2tfhi
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : b2tfhi_cutlo
+     & , only : b2tfhi_cutlo, my_out_folder
 #endif
       use b2mod_subsys
       implicit none
@@ -57,7 +59,8 @@
 *   ..local variables
       integer iFc, is, meth
       real (kind=R8) ::
-     *   floi0(nFc,0:1), coni0(nFc,0:1),
+     *   floi0(nFc,0:1), coni0(nFc,0:1), fhi_32_loc(nFc,0:1),
+     *   fhi_52_loc(nFc,0:1),
 #ifdef WG_TODO
      &   flomx,
 #endif
@@ -86,7 +89,7 @@ c      integer, save :: conductive_limit = 1                             !srv 16
 c      integer, save :: lim_flux = 0                                    !srv 04.02.03
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff
+      external b2xvsg
 *   ..initialization
 
 *-----------------------------------------------------------------------
@@ -138,7 +141,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
       dumm1 = 0.0_R8
 
       call b2tipsch(nCv, nFc, nVx, ns, switch, geo, mpg, dv%facdrift,
-     &    co%cddi, pl%ti, pl%na, dv%floi, dv%coni, dv%fhiPSch)           !srv 16.10.17
+     &    co%cddi, pl%ti, pl%na, dv%floi, dv%coni, dv%fhiPSch)          !srv 16.10.17
 
       wght   = 1.0_R8
       flidia = 0.0_R8                                                   !srv 25.01.02 {
@@ -229,7 +232,7 @@ c       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04
 
 *   ..apply discretization scheme
       call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0_mdf,
-     &  co%chci,fhi0_mdf,dumm0,dumm1)
+     &  co%chci,fhi0_mdf,fhi_32_loc,fhi_52_loc)
 
 *   ..compute ion fluxes
       dv%fhi(:,0) = fhi0_mdf(:,0) +  (floi0(:,0) - floi0_mdf(:,0))*tif
@@ -316,6 +319,7 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
 
       endif
 
+#ifndef FIXED_POINT
 *   ..fluxes for balance.nc file                  !nh  Jan2024
       if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
         dumm1 = 0.0_R8
@@ -376,6 +380,7 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
      &    wrkf,dumm1,dumm2,fhi_anml,dumm3)
         fhi_anml = sign(fhi_anml,dumm4)
       endif
+#endif
 
 #ifdef WG_TODO
       if(lim_flux.eq.1 .and. conductive_limit.eq.0) then             !srv 17.01.12
@@ -471,6 +476,7 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
           t1_mdf = t0_mdf/(1.0_R8+t0_mdf)                              !srv 17.06.09 {
         endif
 
+#ifndef FIXED_POINT
         if (balance.and.
      &      (balance_netcdf.ne.0).and.
      &      (mdf_fhi.eq.0)) then !djm Jan2017
@@ -573,9 +579,9 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
      &       b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_visper(ix,iy,1,1) =
-     &      1.5_R8/qe*vis_per*fchvisper(ix,iy,1,1)*b2tfnb_ycur*     !srv 02.10.17
+     &      1.5_R8/qe*vis_per*fchvisper(ix,iy,1,1)*b2tfnb_ycur*         !srv 02.10.17
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-        fhi_visq(ix,iy,1,1) = 1.5_R8/qe*vis_q*fchvisq(ix,iy,1,1)*   !srv 02.10.17
+        fhi_visq(ix,iy,1,1) = 1.5_R8/qe*vis_q*fchvisq(ix,iy,1,1)*       !srv 02.10.17
      &       b2tfnb_ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
         fhi_anml(ix,iy,1,1) =
@@ -587,10 +593,10 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
         fhi_ecrb(ix,iy,1,1) = 0.0_R8
         fhi_pschused(ix,iy,1,1) = -fhiPSch(ix,iy,1,1)
       endif
-
+#endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                    .or. iout_b2wdat.eq.4) then                 !srv 16.09.02 {
-        if(mdf_fhi.eq.0) then                                         !srv 13.10.06 {
+     &                    .or. iout_b2wdat.eq.4) then                   !srv 16.09.02 {
+        if(mdf_fhi.eq.0) then                                           !srv 13.10.06 {
           w1(ix,iy)=floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
      &                    +ti(ix,iy))/2.0_R8
           w2(ix,iy)= -coni0*dti0
@@ -606,7 +612,7 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
       endif
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &   .or. iout_b2wdat.eq.4) then                        !srv 16.09.02 {
+     &   .or. iout_b2wdat.eq.4) then                                    !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhi__qi_32x')
        call my_out(70,nx,ny,w2,'b2tfhi__qi_ki_gTx')
 !       w3=w1+w2
@@ -616,11 +622,11 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
        call my_out(70,nx,ny,fhiPSch(-1,-1,0,0),'b2tfhi__fhiPSchx')
        w1=0.0_R8; w2=0.0_R8; w3=0.0_R8; w4=0.0_R8; w5=0.0_R8;
        w6=0.0_R8;
-      endif                                                 !srv 16.09.02 }
+      endif                                                             !srv 16.09.02 }
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &   .or. iout_b2wdat.eq.4) then                        !srv 16.09.02 {
-        if(mdf_fhi.eq.0) then                               !srv 13.10.06 {
+     &   .or. iout_b2wdat.eq.4) then                                    !srv 16.09.02 {
+        if(mdf_fhi.eq.0) then                                           !srv 13.10.06 {
           w1(ix,iy)=1.5_R8*fni_he(ix,iy,1,1)*
      1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
           w2(ix,iy)=flidia(ix,iy,1,1)*
@@ -640,10 +646,10 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
         endif
         w5(ix,iy)=flidia(ix,iy,1,1)*
      &            (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-      endif                                                    !srv 16.09.02 }
+      endif                                                             !srv 16.09.02 }
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &           .or. iout_b2wdat.eq.4) then                   !srv 16.09.02 {
+     &           .or. iout_b2wdat.eq.4) then                            !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhi__qi_32y')
 !       call my_out(70,nx,ny,w2,'qiy2')
        call my_out(70,nx,ny,w3,'b2tfhi__qi_ki_gTy')
@@ -662,7 +668,7 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
       endif
 #endif
 
-      if(switch%b2tfhi_iout.ne.0) then                                                !srv 18.06.08 {
+      if(switch%b2tfhi_iout.ne.0) then                                  !srv 18.06.08 {
        call my_out_us(70,nFc,1,dv%floi(1,0),'b2tfhi__floi_th')
        call my_out_us(70,nFc,1,dv%floi(1,1),'b2tfhi__floi_r')
        call my_out_us(70,nFc,1,dv%coni(1,0,0),'b2tfhi__coni_th0')
@@ -677,12 +683,19 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
-       if (balance.and.(balance_netcdf.ne.0)) then 
+#ifndef FIXED_POINT
+       if (balance.and.(balance_netcdf.ne.0)) then
          call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
          call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
          call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
          call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
+       else
+         call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
+         call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
+         call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
+         call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
        endif
+#endif
        call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfhi__fchvispar_th')
        call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfhi__fchvispar_r')
        call my_out_us(70,nFc,1,dv%fchvisq(1,0),'b2tfhi__fchvisq_th')
@@ -711,12 +724,19 @@ c neutrals
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
+#ifndef FIXED_POINT
        if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
          call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
          call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
          call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
          call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
+       else
+         call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
+         call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
+         call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
+         call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
        endif
+#endif
       endif
 
 * ..return

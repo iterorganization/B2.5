@@ -76,7 +76,7 @@ SUBROUTINE B2XVCP_NODIFF(ns)
   CHARACTER(len=80) :: message
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: ANINT
   INTRINSIC TRIM
   INTEGER :: result1
@@ -91,10 +91,10 @@ SUBROUTINE B2XVCP_NODIFF(ns)
 !   ..test nsdecl
   CALL XERTST(ns .LE. nsdecl, 'faulty parameter nsdecl')
 !   ..test parameters in /b2cmpa/
-  CALL B2XVSG_NODIFF(ns, zn, 1, 'zn', '.gt.')
-  CALL B2XVSG_NODIFF(ns, am, 1, 'am', '.gt.')
-  CALL B2XVSG_NODIFF(ns, zamin, 1, 'zamin', '.ge.')
-  CALL B2XVSG_NODIFF(ns, zamax, 1, 'zamax', '.ge.')
+  CALL B2XVSG(ns, zn, 1, 'zn', '.gt.')
+  CALL B2XVSG(ns, am, 1, 'am', '.gt.')
+  CALL B2XVSG(ns, zamin, 1, 'zamin', '.ge.')
+  CALL B2XVSG(ns, zamax, 1, 'zamax', '.ge.')
   DO is=0,ns-1
     result1 = ANINT(zn(is))
     CALL XERTST(zn(is) .EQ. result1, 'faulty argument zn; not integral')
@@ -113,75 +113,79 @@ SUBROUTINE B2XVCP_NODIFF(ns)
 &                                   )
   END DO
 !   ..test region boundaries in /b2cmpb/
-  CALL XERTST(cbirso .EQ. 0 .AND. cbirso + cbnrso .EQ. cbirno .AND. &
-&       cbirno + cbnrno .EQ. cbirwe .AND. cbirwe + cbnrwe .EQ. cbirea &
-&       .AND. cbirea + cbnrea .LE. cbnrmx, 'faulty argument cbir, cbnr')
-  DO ireg=cbirso,cbirso+cbnrso-2
-    CALL XERTST(cbrbrk(ireg) .LE. cbrbrk(ireg+1), &
-&         'faulty argument cbrbrk, south, not monotone')
-  END DO
-  CALL XERTST(1.0_R8 .LT. cbrbrk(cbirso+cbnrso-1), &
-&       'faulty argument cbrbrk, south, endpoint')
-  DO ireg=cbirno,cbirno+cbnrno-2
-    CALL XERTST(cbrbrk(ireg) .LE. cbrbrk(ireg+1), &
-&         'faulty argument cbrbrk, north, not monotone')
-  END DO
-  CALL XERTST(1.0_R8 .LT. cbrbrk(cbirno+cbnrno-1), &
-&       'faulty argument cbrbrk, north, endpoint')
-  DO ireg=cbirwe,cbirwe+cbnrwe-2
-    CALL XERTST(cbrbrk(ireg) .LE. cbrbrk(ireg+1), &
-&         'faulty argument cbrbrk, west, not monotone')
-  END DO
-  CALL XERTST(1.0_R8 .LT. cbrbrk(cbirwe+cbnrwe-1), &
-&       'faulty argument cbrbrk, west, endpoint')
-  DO ireg=cbirea,cbirea+cbnrea-2
-    CALL XERTST(cbrbrk(ireg) .LE. cbrbrk(ireg+1), &
-&         'faulty argument cbrbrk, east, not monotone')
-  END DO
-  CALL XERTST(1.0_R8 .LT. cbrbrk(cbirea+cbnrea-1), &
-&       'faulty argument cbrbrk, east, endpoint')
-!   ..test boundary cross-consistency in /b2cmpb/
-!   ..test parameters in /b2cmpb/
-  DO ireg=0,cbnrso+cbnrno+cbnrwe+cbnrea-1
-!    ..test cbsna, cbsmo, cbshi
-    DO is=0,ns-1
-      CALL XERTST(0.0_R8 .LE. cbsna(0, is, ireg) .AND. cbsna(1, is, ireg&
-&           ) .LE. 0.0_R8 .AND. cbsna(2, is, ireg) .LE. 0.0_R8 .AND. &
-&           cbsna(3, is, ireg) .LE. 0.0_R8 .AND. cbsna(4, is, ireg) .LE.&
-&           0.0_R8 .AND. cbsna(5, is, ireg) .LE. 0.0_R8 .AND. 0.0_R8 &
-&           .LE. cbsna(6, is, ireg) .AND. cbsna(7, is, ireg) .LE. 0.0_R8&
-&           , 'faulty argument sign cbsna')
-      CALL XERTST(cbsmo(3, is, ireg) .LE. 0.0_R8 .AND. cbsmo(4, is, ireg&
-&           ) .LE. 0.0_R8 .AND. cbsmo(6, is, ireg) .LE. 0.0_R8, &
-&           'faulty argument sign cbsmo')
-      CALL XERTST(0.0_R8 .LE. cbshi(0, is, ireg) .AND. cbshi(1, is, ireg&
-&           ) .LE. 0.0_R8 .AND. cbshi(2, is, ireg) .LE. 0.0_R8 .AND. &
-&           cbshi(3, is, ireg) .LE. 0.0_R8 .AND. cbshi(4, is, ireg) .LE.&
-&           0.0_R8 .AND. cbshi(5, is, ireg) .LE. 0.0_R8 .AND. 0.0_R8 &
-&           .LE. cbshi(6, is, ireg) .AND. cbshi(7, is, ireg) .LE. 0.0_R8&
-&           , 'faulty argument sign cbshi')
+  IF (cbnrso .GT. 0 .AND. cbnrno .GT. 0 .AND. cbnrwe .GT. 0 .AND. cbnrea&
+&     .GT. 0) THEN
+    CALL XERTST(cbirso .EQ. 0 .AND. cbirso + cbnrso .EQ. cbirno .AND. &
+&         cbirno + cbnrno .EQ. cbirwe .AND. cbirwe + cbnrwe .EQ. cbirea &
+&         .AND. cbirea + cbnrea .LE. cbnrmx, &
+&         'faulty argument cbir, cbnr')
+    DO ireg=cbirso,cbirso+cbnrso-2
+      CALL XERTST(cbrbrk(ireg) .LE. cbrbrk(ireg+1), &
+&           'faulty argument cbrbrk, south, not monotone')
     END DO
-!    ..test cbshe
-    CALL XERTST(0.0_R8 .LE. cbshe(0, ireg) .AND. cbshe(1, ireg) .LE. &
-&         0.0_R8 .AND. cbshe(2, ireg) .LE. 0.0_R8 .AND. cbshe(3, ireg) &
-&         .LE. 0.0_R8 .AND. cbshe(4, ireg) .LE. 0.0_R8 .AND. cbshe(5, &
-&         ireg) .LE. 0.0_R8 .AND. 0.0_R8 .LE. cbshe(6, ireg) .AND. cbshe&
-&         (7, ireg) .LE. 0.0_R8, 'faulty argument sign cbshe')
-!    ..test cbsch
-    CALL XERTST(cbsch(1, ireg) .LE. 0.0_R8 .AND. cbsch(3, ireg) .LE. &
-&         0.0_R8 .AND. cbsch(5, ireg) .LE. 0.0_R8 .AND. cbsch(6, ireg) &
-&         .GE. 0.0_R8 .AND. cbsch(7, ireg) .GE. 0.0_R8, &
-&         'faulty argument sign cbsch')
-  END DO
-!    ..test cbrec, cbmsa, cbmsb
+    CALL XERTST(1.0_R8 .LT. cbrbrk(cbirso+cbnrso-1), &
+&         'faulty argument cbrbrk, south, endpoint')
+    DO ireg=cbirno,cbirno+cbnrno-2
+      CALL XERTST(cbrbrk(ireg) .LE. cbrbrk(ireg+1), &
+&           'faulty argument cbrbrk, north, not monotone')
+    END DO
+    CALL XERTST(1.0_R8 .LT. cbrbrk(cbirno+cbnrno-1), &
+&         'faulty argument cbrbrk, north, endpoint')
+    DO ireg=cbirwe,cbirwe+cbnrwe-2
+      CALL XERTST(cbrbrk(ireg) .LE. cbrbrk(ireg+1), &
+&           'faulty argument cbrbrk, west, not monotone')
+    END DO
+    CALL XERTST(1.0_R8 .LT. cbrbrk(cbirwe+cbnrwe-1), &
+&         'faulty argument cbrbrk, west, endpoint')
+    DO ireg=cbirea,cbirea+cbnrea-2
+      CALL XERTST(cbrbrk(ireg) .LE. cbrbrk(ireg+1), &
+&           'faulty argument cbrbrk, east, not monotone')
+    END DO
+    CALL XERTST(1.0_R8 .LT. cbrbrk(cbirea+cbnrea-1), &
+&         'faulty argument cbrbrk, east, endpoint')
+!    ..test boundary cross-consistency in /b2cmpb/
+!    ..test parameters in /b2cmpb/
+    DO ireg=0,cbnrso+cbnrno+cbnrwe+cbnrea-1
+!     ..test cbsna, cbsmo, cbshi
+      DO is=0,ns-1
+        CALL XERTST(0.0_R8 .LE. cbsna(0, is, ireg) .AND. cbsna(1, is, &
+&             ireg) .LE. 0.0_R8 .AND. cbsna(2, is, ireg) .LE. 0.0_R8 &
+&             .AND. cbsna(3, is, ireg) .LE. 0.0_R8 .AND. cbsna(4, is, &
+&             ireg) .LE. 0.0_R8 .AND. cbsna(5, is, ireg) .LE. 0.0_R8 &
+&             .AND. 0.0_R8 .LE. cbsna(6, is, ireg) .AND. cbsna(7, is, &
+&             ireg) .LE. 0.0_R8, 'faulty argument sign cbsna')
+        CALL XERTST(cbsmo(3, is, ireg) .LE. 0.0_R8 .AND. cbsmo(4, is, &
+&             ireg) .LE. 0.0_R8 .AND. cbsmo(6, is, ireg) .LE. 0.0_R8, &
+&             'faulty argument sign cbsmo')
+        CALL XERTST(0.0_R8 .LE. cbshi(0, is, ireg) .AND. cbshi(1, is, &
+&             ireg) .LE. 0.0_R8 .AND. cbshi(2, is, ireg) .LE. 0.0_R8 &
+&             .AND. cbshi(3, is, ireg) .LE. 0.0_R8 .AND. cbshi(4, is, &
+&             ireg) .LE. 0.0_R8 .AND. cbshi(5, is, ireg) .LE. 0.0_R8 &
+&             .AND. 0.0_R8 .LE. cbshi(6, is, ireg) .AND. cbshi(7, is, &
+&             ireg) .LE. 0.0_R8, 'faulty argument sign cbshi')
+      END DO
+!     ..test cbshe
+      CALL XERTST(0.0_R8 .LE. cbshe(0, ireg) .AND. cbshe(1, ireg) .LE. &
+&           0.0_R8 .AND. cbshe(2, ireg) .LE. 0.0_R8 .AND. cbshe(3, ireg)&
+&           .LE. 0.0_R8 .AND. cbshe(4, ireg) .LE. 0.0_R8 .AND. cbshe(5, &
+&           ireg) .LE. 0.0_R8 .AND. 0.0_R8 .LE. cbshe(6, ireg) .AND. &
+&           cbshe(7, ireg) .LE. 0.0_R8, 'faulty argument sign cbshe')
+!     ..test cbsch
+      CALL XERTST(cbsch(1, ireg) .LE. 0.0_R8 .AND. cbsch(3, ireg) .LE. &
+&           0.0_R8 .AND. cbsch(5, ireg) .LE. 0.0_R8 .AND. cbsch(6, ireg)&
+&           .GE. 0.0_R8 .AND. cbsch(7, ireg) .GE. 0.0_R8, &
+&           'faulty argument sign cbsch')
+    END DO
+  END IF
+!     ..test cbrec, cbmsa, cbmsb
 !      (there are no tests for cbrec, cbmsa, cbmsb)
 !   ..test parameters in /b2cmpt/
   DO is=0,ns-1
-    CALL B2XVSG_NODIFF(3, cfdf0(0, is), 1, 'cfdf0', '.ge.')
-    CALL B2XVSG_NODIFF(3, cfdna(0, is), 1, 'cfdna', '.ge.')
-    CALL B2XVSG_NODIFF(3, cfdpa(0, is), 1, 'cfdpa', '.ge.')
-    CALL B2XVSG_NODIFF(3, cfvsa(0, is), 1, 'cfvsa', '.ge.')
-    CALL B2XVSG_NODIFF(3, cfhci(0, is), 1, 'cfhci', '.ge.')
+    CALL B2XVSG(3, cfdf0(0, is), 1, 'cfdf0', '.ge.')
+    CALL B2XVSG(3, cfdna(0, is), 1, 'cfdna', '.ge.')
+    CALL B2XVSG(3, cfdpa(0, is), 1, 'cfdpa', '.ge.')
+    CALL B2XVSG(3, cfvsa(0, is), 1, 'cfvsa', '.ge.')
+    CALL B2XVSG(3, cfhci(0, is), 1, 'cfhci', '.ge.')
     IF (cfdf0(2, is) .GT. 0.0_R8) THEN
       WRITE(message, '(a,i3,a,i3,a)') 'Need to specify cfdf0(3,', is, &
 &     ') and/or cfdf0(4,', is, ')!'
@@ -189,13 +193,13 @@ SUBROUTINE B2XVCP_NODIFF(ns)
 &           , TRIM(message))
     END IF
   END DO
-  CALL B2XVSG_NODIFF(3, cfhce(0), 1, 'cfhce', '.ge.')
-  CALL B2XVSG_NODIFF(3, cfsig(0), 1, 'cfsig', '.ge.')
+  CALL B2XVSG(3, cfhce(0), 1, 'cfhce', '.ge.')
+  CALL B2XVSG(3, cfsig(0), 1, 'cfsig', '.ge.')
   DO i=0,3
     CALL XERTST(cfalf(i)**2 .LE. cfhce(i)*cfsig(i), &
 &         'faulty argument, cfhce*cfsig.lt.cfalf**2')
   END DO
-  CALL B2XVSG_NODIFF(5, cflim(0), 1, 'cflim', '.ge.')
+  CALL B2XVSG(5, cflim(0), 1, 'cflim', '.ge.')
 !
 ! ..return
   CALL SUBEND()

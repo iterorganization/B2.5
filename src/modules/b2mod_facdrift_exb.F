@@ -6,15 +6,15 @@
      & facdrift_scalar, fac_ExB_scalar, fac_vis_scalar,
      & facdrift_tanh_a, facdrift_tanh_b, facExB_tanh_a, facExB_tanh_b,
      1 facvis_tanh_a, facvis_tanh_b
-      integer ncall, iy_nocoreExB, fac_ref
+      integer ncall_drift, iy_nocoreExB, fac_ref
       save
-     3 facdrift_scalar, fac_ExB_scalar, ncall, iy_nocoreExB,
+     3 facdrift_scalar, fac_ExB_scalar, ncall_drift, iy_nocoreExB,
      & facdrift_tanh_a, facdrift_tanh_b, facExB_tanh_a, facExB_tanh_b,
      & fac_ref, fac_vis_scalar, facvis_tanh_a, facvis_tanh_b
       data
      & facdrift_scalar/0.0_R8/, fac_ExB_scalar/0.0_R8/,
      1 fac_vis_scalar/0.0_R8/,
-     & ncall/0/, iy_nocoreExB/-2/,
+     & ncall_drift/0/, iy_nocoreExB/-2/,
      & facdrift_tanh_a/0.0_R8/, facdrift_tanh_b/0.0_R8/,
      & facExB_tanh_a/0.0_R8/, facExB_tanh_b/0.0_R8/,
      & facvis_tanh_a/0.0_R8/, facvis_tanh_b/0.0_R8/
@@ -25,6 +25,7 @@
 #ifdef WG_TODO
       use b2mod_indirect
       use b2mod_geo
+     & , only: cr, cz, crx, cry 
       use b2mod_work
 #endif
       implicit none
@@ -35,7 +36,7 @@
 !      integer ix, iy, jxi, jxa, jsep
 !      real (kind=R8) :: dssep
 
-      if(ncall.eq.0) then
+      if(ncall_drift.eq.0) then
 #ifdef WG_TODO
        call get_jsep(nx,ny,jxi,jxa,jsep)
        fac_ref=jxa
@@ -211,7 +212,7 @@ c old style
       real (kind=R8), intent (inout) :: fac_ExB(nFc), facdrift(nFc),
      & fac_vis(nFc)
       type (switches), intent (in) :: sw
-      call xertst (0.lt.ncall,
+      call xertst (0.lt.ncall_drift,
      &     'b2news_facdrift_fac_ExB_inc called before initialisation')
       facdrift_scalar=min(facdrift_scalar*sw%facdrift_inc,
      &                    sw%facdrift_target)
@@ -228,7 +229,7 @@ c old style
       real (kind=R8), intent (inout) :: fac_ExB(nFc), facdrift(nFc),
      & fac_vis(nFc)
       type (switches), intent (in) :: sw
-      call xertst (0.lt.ncall,
+      call xertst (0.lt.ncall_drift,
      &     'b2news_facdrift_fac_ExB_dec called before initialisation')
       facdrift_scalar=max(facdrift_scalar*sw%facdrift_dec,
      &                    sw%facdrift_start)
@@ -259,7 +260,7 @@ c old style
      &   minval(facdrift),maxval(facdrift),
      &   minval(fac_ExB),maxval(fac_ExB),
      &   minval(fac_vis),maxval(fac_vis)
-      ncall=ncall+1
+      ncall_drift=ncall_drift+1
       return
       end subroutine b2news_facdrift_fac_ExB_update
 

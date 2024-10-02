@@ -23,9 +23,11 @@
       use b2mod_ad
      & , only : ncall_b2sifrtf
       use b2mod_subsys
+#ifndef FIXED_POINT
       use b2mod_balance                                                 !djm Jun2019
      & , only : b2sifr_smofrea0to3, b2sifr_smofria0to3,
      &          b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, isb, ismain
@@ -89,7 +91,7 @@
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgeti, ipgetr, sfill
-      external b2xvff, b2xvfx, b2xvsg
+      external b2xvsg
 
 *-----------------------------------------------------------------------
 *.computation
@@ -299,8 +301,9 @@ c        .. apply flux limit
       smbtfia = smbtfial
       smbtfea = smbtfeal
 
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jun2019
-        do iCv=1,nCv
+        do iCv = 1, nCv
           b2sifr_smofria0to3(iCv,0:3,isb)=geo%cvVol(iCv)*geo%cvHz(iCv)*
      &                                      smbfria(iCv,0:3)
           b2sifr_smofrea0to3(iCv,0:3,isb)=geo%cvVol(iCv)*geo%cvHz(iCv)*
@@ -311,6 +314,7 @@ c        .. apply flux limit
      &                                      smbtfea(iCv,0:3)
         enddo
       endif
+#endif
 
       if (iout.ne.0) then !  . or. iout_b2wdat.eq.4) then               !srv 05.07.17
        write (chns,'(i3.3)') isb

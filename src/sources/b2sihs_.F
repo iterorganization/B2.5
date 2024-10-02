@@ -21,11 +21,13 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2sihs_divue0to3, b2sihs_exbe0to3,
      &          b2sihs_joule0to3, b2sihs_divua0to3,
      &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
      &          balance_netcdf
+#endif
       use b2mod_transport_fun                                         !srv 05.07.17
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -116,7 +118,7 @@
 *   ..procedures
       intrinsic min, max, sqrt
       external xertst, ipgeti, ipgetr, sfill
-      external b2xvff, b2xvfx, b2xvfv, b2xvsg
+      external b2xvfv, b2xvsg
 *   ..initialization
 *     Note 0: style determines the form of the strange electron-atom
 *     energy transfer term.
@@ -226,9 +228,11 @@
      1     t0*ne(iCv)*te(iCv)
          srw%b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divue0to3 = shedu
       endif
+#endif
       call b2saxpy (nCv*4, 1.0_R8, shedu, 1, she0, 1)                 !srv 11.09.09
 *   ..contribution from divergence ua
       b2divua=0.0_R8
@@ -286,9 +290,11 @@
      1         t0*ni(iCv,0)*ti(iCv)
         enddo
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divua0to3 = shidu
       endif
+#endif
       if (switch%tn_style.lt.2) then
         call b2saxpy (nCv*4, 1.0_R8, shidu, 1, shi0, 1)
       else
@@ -316,11 +322,13 @@
      1      t0*ne(iCv)*te(iCv)
         srw%b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exbe0to3 = shedd
       endif
       call b2saxpy (nCv*4, 1.0_R8, shedd, 1, she0, 1)                  !srv 11.09.09
 *   ..contribution from divergence of the electrical drift             !srv 02.06.99                                               !srv 02.06.99
+#endif
       b2exba=0.0_R8
       srw%b2sihs_exba=0.0_R8
       do is = 0, ns-1
@@ -345,10 +353,12 @@
         enddo
        endif
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exba0to3 = shidd
       endif
       call b2saxpy (nCv*4, 1.0_R8, shidd, 1, shi0, 1)                  !srv 11.09.09
+#endif
 *   ..contribution from viscous heating
       if ((switch%Zhdanov_closure.eq.1) .and. 
      &    (switch%Zhdanov_test.eq.0) .and.
@@ -446,9 +456,11 @@
         enddo
        endif                                                           !srv 29.08.02
       enddo
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_visa0to3 = shivc+shiva
       endif
+#endif
       if (switch%tn_style.lt.2) then
        call b2saxpy (nCv*4, 1.0_R8, shivc , 1, shi0, 1)
        call b2saxpy (nCv*4, 1.0_R8, shiva , 1, shi0, 1)
@@ -461,7 +473,7 @@
 
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
 *     in case of small impurity amount see below for b2sigp_style.ne.2
-      if(switch%b2sigp_style.eq.2) then                                      !srv 05.07.17
+      if(switch%b2sigp_style.eq.2) then                                !srv 05.07.17
        call b2xpne (nCv, ns, rz2, na, st_ext%ne2, ne2)
        call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)                    !srv 13.01.17 {
        do iCv = 1, nCv
@@ -621,10 +633,12 @@
           srw%b2sihs_joule(iCv)=t0
         endif                                                        !srv 26.11.02
        enddo
-      endif                                                           !srv 05.07.17
+      endif                                                          !srv 05.07.17
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_joule0to3 = shefr
       endif
+#endif
       call b2saxpy (nCv*4, 1.0_R8, shefr, 1, she0, 1)                !srv 11.09.09
 *   ..contribution from atom-atom friction
       if(switch%b2sigp_style.ne.2) then                           !srv 05.07.17
@@ -659,9 +673,11 @@
         enddo
        enddo
       endif                                                           !srv 05.07.17
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_fraa0to3 = shifr
       endif
+#endif
       call b2saxpy (nCv*4, 1.0_R8, shifr, 1, shi0, 1)                 !srv 11.09.09
       b2str=0.0_R8
       srw%b2sihs_str=0.0_R8

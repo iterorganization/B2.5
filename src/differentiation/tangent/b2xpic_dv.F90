@@ -16,18 +16,16 @@
 !
 !
 !srv 13.01.17
-SUBROUTINE B2XPIC_DV(ncv, ns, mpg, qe, rza, rzad, bb, na, nad, ua, uad, &
-& zeff, zeffd, st_ext, fch_pi_c, fch_pi_cd, nbdirs)
+SUBROUTINE B2XPIC_DV(ncv, ns, qe, rza, rzad, bb, na, nad, ua, uad, zeff&
+& , zeffd, st_ext, fch_pi_c, fch_pi_cd, nbdirs)
   USE B2MOD_TYPES
   USE B2US_PLASMA_DIFFV
-  USE B2US_MAP_DIFFV
 !  Hint: nCv should be the size of dimension 1 of array temp
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
   INTEGER :: ncv, ns
-  TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   REAL(kind=r8) :: qe, rza(ncv, 0:ns-1), na(ncv, 0:ns-1), ua(ncv, 0:ns-1&
 & ), bb(ncv, 0:3), zeff(ncv)
@@ -97,16 +95,14 @@ END SUBROUTINE B2XPIC_DV
 !
 !
 !srv 13.01.17
-SUBROUTINE B2XPIC_NODIFF(ncv, ns, mpg, qe, rza, bb, na, ua, zeff, st_ext&
-& , fch_pi_c)
+SUBROUTINE B2XPIC_NODIFF(ncv, ns, qe, rza, bb, na, ua, zeff, st_ext, &
+& fch_pi_c)
   USE B2MOD_TYPES
   USE B2US_PLASMA_DIFFV
-  USE B2US_MAP_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
   INTEGER :: ncv, ns
-  TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   REAL(kind=r8) :: qe, rza(ncv, 0:ns-1), na(ncv, 0:ns-1), ua(ncv, 0:ns-1&
 & ), bb(ncv, 0:3), zeff(ncv)

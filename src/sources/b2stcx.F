@@ -12,9 +12,11 @@
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
      &          balance_netcdf
+#endif
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -307,13 +309,13 @@ ctmp.dpc
       do is = 0, ns-1                     !srv 28.07.11 {
         if(is.eq.ismain) then
           wrk0=sna0(:,0,is)+sna0(:,1,is)*na(:,is)
-          call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, se)
+          call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, se)
         endif
       enddo
       wrk0=shi0(:,0)+
      &     shi0(:,1)*ti+shi0(:,2)*ni(:,0)+
      &     shi0(:,3)*ni(:,0)*ti
-      call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, sih)                !srv 11.06.13
+      call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, sih)                !srv 11.06.13
 #endif
 
       write (chcx,'(i3.3)') is0
@@ -369,12 +371,14 @@ ctmp.dpc
         enddo
       endif
 
+#ifndef FIXED_POINT
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2stcx_sna0to1 = sna0
         b2stcx_smq0to3 = smq0
         b2stcx_shi0to3 = shi0
       endif
+#endif
 
 * ..return
       ncall_b2stcx = ncall_b2stcx+1

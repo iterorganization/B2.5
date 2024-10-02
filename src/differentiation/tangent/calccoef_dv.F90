@@ -17,11 +17,10 @@
 !
 !-----------------------------------------------------------------------
 !.specification
-SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flo, flod, con, &
-& cond, flo0, flo0d, con0, con0d, nbdirs)
+SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, flo, flod, con, cond, &
+& flo0, flo0d, con0, con0d, nbdirs)
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
-  USE B2US_MAP_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -32,7 +31,6 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flo, flod, con, &
 !   ..input arguments
   INTEGER :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: flo(nfc, 0:1), con(nfc, 0:1)
   REAL(kind=r8) :: flod(nbdirsmax, nfc, 0:1), cond(nbdirsmax, nfc, 0:1)
 !   ..output arguments
@@ -42,10 +40,10 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flo, flod, con, &
 !-----------------------------------------------------------------------
 !.documentation
 !
-!     CALCCOEF computes the coefficients flo0 and con0 for the 
+!     CALCCOEF computes the coefficients flo0 and con0 for the
 !     linearization of the total (poloidal + radial) convective-conductive
 !     flow across a face in the standardized form
-!     
+!
 !     flow = 0.5*flo0(,0)*(phi_c1 + phi_c2) - con0(,0)*(phi_c2 - phi_c1)
 !          + 0.5*flo0(,1)*(phi_v1 + phi_v2) - con0(,1)*(phi_v2 - phi_v1)
 !
@@ -54,7 +52,6 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flo, flod, con, &
 !     flo(nFc,1) contains the convective coefficient, radial direction
 !     con(nFc,0) contains the conductive coefficient, poloidal direction
 !     con(nFc,1) contains the conductive coefficient, radial direction
-!     
 !
 !-----------------------------------------------------------------------
 !.declarations
@@ -91,7 +88,7 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flo, flod, con, &
   INTEGER :: nbdirs
 !
 !-----------------------------------------------------------------------
-!.computation      
+!.computation
 !
   IF (meth .EQ. 0) THEN
 ! CENTRAL scheme
@@ -230,7 +227,7 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flo, flod, con, &
 !        t00 = geo%fcQalf(iFc,0)
       t01 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet&
 &       (ifc, 1)/(geo%fcqalf(ifc, 0)+eps)
-!        t10 = geo%fcQalf(iFc,1) 
+!        t10 = geo%fcQalf(iFc,1)
       t11 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet&
 &       (ifc, 0)/(geo%fcqalf(ifc, 1)+eps)
       flo0(ifc, 0) = flo(ifc, 0) + flo(ifc, 1)
@@ -275,14 +272,14 @@ SUBROUTINE CALCCOEF_DV(ncv, nfc, nvx, meth, geo, mpg, flo, flod, con, &
     CALL XERRAB('calccoef -- meth 3 to be implemented')
 !
   ELSE
-    CALL XERRAB('calccoef -- wrong value of meth')
-  END IF
 !
+    CALL XERRAB('calccoef -- wrong value of meth')
+!
+  END IF
 !
 !   ..return
   RETURN
 END SUBROUTINE CALCCOEF_DV
-!
 
 !
 !
@@ -297,11 +294,10 @@ END SUBROUTINE CALCCOEF_DV
 !
 !-----------------------------------------------------------------------
 !.specification
-SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0&
-& , con0)
+SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, flo, con, flo0, &
+& con0)
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
-  USE B2US_MAP_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
@@ -311,17 +307,16 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0&
 !   ..input arguments
   INTEGER :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: flo(nfc, 0:1), con(nfc, 0:1)
 !   ..output arguments
   REAL(kind=r8) :: flo0(nfc, 0:1), con0(nfc, 0:1)
 !-----------------------------------------------------------------------
 !.documentation
 !
-!     CALCCOEF computes the coefficients flo0 and con0 for the 
+!     CALCCOEF computes the coefficients flo0 and con0 for the
 !     linearization of the total (poloidal + radial) convective-conductive
 !     flow across a face in the standardized form
-!     
+!
 !     flow = 0.5*flo0(,0)*(phi_c1 + phi_c2) - con0(,0)*(phi_c2 - phi_c1)
 !          + 0.5*flo0(,1)*(phi_v1 + phi_v2) - con0(,1)*(phi_v2 - phi_v1)
 !
@@ -330,7 +325,6 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0&
 !     flo(nFc,1) contains the convective coefficient, radial direction
 !     con(nFc,0) contains the conductive coefficient, poloidal direction
 !     con(nFc,1) contains the conductive coefficient, radial direction
-!     
 !
 !-----------------------------------------------------------------------
 !.declarations
@@ -355,7 +349,7 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0&
   REAL(kind=r8) :: result1
 !
 !-----------------------------------------------------------------------
-!.computation      
+!.computation
 !
   IF (meth .EQ. 0) THEN
 ! CENTRAL scheme
@@ -438,7 +432,7 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0&
 !        t00 = geo%fcQalf(iFc,0)
       t01 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet&
 &       (ifc, 1)/(geo%fcqalf(ifc, 0)+eps)
-!        t10 = geo%fcQalf(iFc,1) 
+!        t10 = geo%fcQalf(iFc,1)
       t11 = (geo%fchc(ifc, 1)+geo%fchc(ifc, 2))/geo%fcht(ifc)*geo%fcqbet&
 &       (ifc, 0)/(geo%fcqalf(ifc, 1)+eps)
 !    ..convective contributions to flob0, conb0
@@ -467,12 +461,12 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, mpg, flo, con, flo0&
     CALL XERRAB('calccoef -- meth 3 to be implemented')
 !
   ELSE
-    CALL XERRAB('calccoef -- wrong value of meth')
-  END IF
 !
+    CALL XERRAB('calccoef -- wrong value of meth')
+!
+  END IF
 !
 !   ..return
   RETURN
 END SUBROUTINE CALCCOEF_NODIFF
-!
 

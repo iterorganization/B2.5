@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sikt (nCv, nFc, nVx, ns, ismain, switch, geo, mpg, 
+      subroutine b2sikt (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &   pl, dv, rza, co, st_ext, she0, shi0, skt0, skt_prod, skt_diss)
       use b2mod_types
 !      use b2mod_indirect
@@ -30,7 +30,7 @@ c      use b2mod_keps
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -41,7 +41,7 @@ c      use b2mod_keps
       real (kind=R8) :: rza(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   she0(nCv,0:3), shi0(nCv,0:3), 
+     *   she0(nCv,0:3), shi0(nCv,0:3),
      *   skt0(nCv,0:3), skt_prod(nCv), skt_diss(nCv)
 *-----------------------------------------------------------------------
 *.documentation
@@ -53,18 +53,17 @@ c      use b2mod_keps
 *
 *-----------------------------------------------------------------------
 *.declarations
-      
+
 *   ..local variables
       integer ic
 
-      real (kind=R8) :: wrks(nCv), wrkv(nVx), rz(nCv), 
+      real (kind=R8) :: wrks(nCv), wrkv(nVx), rz(nCv),
      &  pz(nCv), cs(nCv), t0, t1, t2, t3, t4,
      &  wrk0(nCv), wrk1(nCv), wrk2(nCv), wrk3(nCv), wrkf(nFc),
      &  wrkg0(nCv,0:1), wrkg1(nCv,0:1), wrkg2(nCv,0:1),
      &  dnac(nCv,0:1), dlbc(nCv,0:1), dtec(nCv,0:1), dtic(nCv,0:1),
      &  dktc(nCv),
      &  fac_diss, fac_sheath, csfs(nCv), connfs(nCv), rhol(nCv)
-      real (kind=R8), save :: lpar_ref = 10.0_R8
 *   ..procedures
       intrinsic min, max, sqrt
       external xertst, ipgeti, ipgetr, sfill
@@ -84,7 +83,6 @@ c      use b2mod_keps
         call xertst(icsepomp.gt.0,
      &    'Invalid icsepomp value, check rzomp in b2.user.parameters')
        endif
-       call ipgetr ('b2sikt_fac_diss_lpar', lpar_ref)
       endif
 *   ..test nCv, ns
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv')
@@ -117,7 +115,7 @@ c      use b2mod_keps
       if (switch%b2sikt_model.eq.1) then
 cwdk  KU Leuven k model
 cwdk  source : driven by ExB energy flux
-cwdk  sink   : 
+cwdk  sink   :
 cwdk   - ad hoc term, ~1/(connection length), as a proxy for enhanced
 cwdk     parallel transport due to parallel current fluctuations
         call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)
@@ -127,12 +125,12 @@ cwdk     parallel transport due to parallel current fluctuations
           csfs = cs
           connfs = geo%cvConn
           rhol = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
-     &       abs(rza(:,ismain)*qe*geo%cvBb(:,3))
+     &       dabs(rza(:,ismain)*qe*geo%cvBb(:,3))
         else
           csfs = cs(omp(icsepomp))
           connfs = geo%cvConn(omp(icsepomp))
           rhol = sqrt(2.0_R8*pl%ti(omp(icsepomp))*(am(ismain)*mp))/
-     &       abs(rza(omp(icsepomp),ismain)*qe*geo%cvBb(omp(icsepomp),3))
+     &      dabs(rza(omp(icsepomp),ismain)*qe*geo%cvBb(omp(icsepomp),3))
         endif
         call xertst(minval(connfs(1:mpg%nCi)).gt.0.0_R8,
      .    ' connfs in b2sikt <=0!!')
@@ -141,7 +139,7 @@ cwdk     parallel transport due to parallel current fluctuations
 *      ..logarithm of magnetic field in cell center
          wrks(:) = 2.0_R8*log(geo%cvBb(:,3))
 *      ..gradients na and log(bb) in poloidal and radial direction
-         call gradc(nCv, nFc, nVx, 0, geo, mpg, 
+         call gradc(nCv, nFc, nVx, 0, geo, mpg,
      &      pl%na(:,ismain), wrkv, dnac)
          call gradc(nCv, nFc, nVx, 0, geo, mpg, wrks, wrkv, dlbc)
          call gradc(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dtec)
@@ -156,9 +154,9 @@ cwdk     parallel transport due to parallel current fluctuations
           wrks = -2.0_R8/3.0_R8*geo%cvVol*pl%na(:,ismain)*wrk2*
      &     (switch%b2sikt_fac_vis_RS*co%dna_ExB*am(ismain)*mp*wrk2 +
      &      pl%kt)
-          call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk0, 
+          call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk0,
      &      dv%vaecrb(:,0,ismain), wrkg0)
-          call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk1, 
+          call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk1,
      &      dv%vaecrb(:,1,ismain), wrkg1)
           wrkf = dv%vaecrb(:,0,ismain)*geo%fcBb(:,3)/geo%fcBb(:,2)
           wrk2 = wrk0*geo%cvBb(:,3)/geo%cvBb(:,2)
@@ -187,7 +185,7 @@ cwdk     parallel transport due to parallel current fluctuations
      &      (geo%cvBb(:,3)/(geo%cvBb(:,0)*geo%cvConn))**2
          elseif (switch % b2sikt_fac_diss_core_mode .eq.1 ) then
            wrk3 = co%sigx_kt*geo%cvVol*pl%kt*
-     &      (geo%cvBb(:,3)/(geo%cvBb(:,0)*lpar_ref))**2
+     &      (geo%cvBb(:,3)/(geo%cvBb(:,0)*switch%b2sikt_lpar_ref))**2
          else
            call gradc_p(nCv,nFc,nVx,0,geo,mpg,sqrt(pl%kt),wrkv,dktc)
            wrk3 = co%sigx_kt*geo%cvVol*dktc**2
@@ -292,9 +290,9 @@ cwdk     parallel transport due to parallel current fluctuations
      &     (switch%b2sikt_fac_vis_RS*co%dna_ExB*am(ismain)*mp*wrk2 +
      &      pl%kt)
         call my_out_us(70,nCv,0,wrks,'b2sikt_RS_symmetric')
-        call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk0, 
+        call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk0,
      &    dv%vaecrb(:,0,ismain), wrkg0)
-        call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk1, 
+        call gradc_div(nCv, nFc, nVx, 1, geo, mpg, wrk1,
      &    dv%vaecrb(:,1,ismain), wrkg1)
         wrkf = dv%vaecrb(:,0,ismain)*geo%fcBb(:,3)/geo%fcBb(:,2)
         wrk2 = wrk0*geo%cvBb(:,3)/geo%cvBb(:,2)

@@ -20,7 +20,7 @@
 SUBROUTINE B2NPP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, rxf, ne, te&
 & , conc, avisper, bvisper, cvisper, sch, po, fch, respo, corpo, ierr)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SUBSYS
@@ -80,8 +80,7 @@ SUBROUTINE B2NPP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, rxf, ne, te&
 !   ..procedures
   EXTERNAL XERTST
 !srv 06.07.00
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2URSD_NODIFF, B2USP7_NODIFF, &
-&     B2UPPO_NODIFF
+  EXTERNAL B2XVSG, B2XVFF, B2URSD_NODIFF, B2USP7_NODIFF, B2UPPO
   INTEGER :: arg1
 !   ..initialisation
   DATA ncall /0/
@@ -110,27 +109,27 @@ SUBROUTINE B2NPP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, rxf, ne, te&
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of ne, te
-    CALL B2XVSG_NODIFF(n2, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(n2, te, 1, 'te', '.gt.')
+    CALL B2XVSG(n2, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(n2, te, 1, 'te', '.gt.')
 !    ..test sign of conc, avisper, bvisper, cvisper                !srv 27.01.00
-    CALL B2XVSG_NODIFF(n2, conc(-1, -1, 0, 0), 1, 'conc', '.ge.')
-    CALL B2XVSG_NODIFF(n2, conc(-1, -1, 1, 1), 1, 'conc', '.ge.')
+    CALL B2XVSG(n2, conc(-1, -1, 0, 0), 1, 'conc', '.ge.')
+    CALL B2XVSG(n2, conc(-1, -1, 1, 1), 1, 'conc', '.ge.')
     arg1 = n2*2
-    CALL B2XVSG_NODIFF(arg1, avisper, 1, 'avisper', '.ge.')
+    CALL B2XVSG(arg1, avisper, 1, 'avisper', '.ge.')
 !srv 27.01.00
     arg1 = n2*2
-    CALL B2XVSG_NODIFF(arg1, bvisper, 1, 'bvisper', '.ge.')
+    CALL B2XVSG(arg1, bvisper, 1, 'bvisper', '.ge.')
 !srv 27.01.00
     arg1 = n2*2
-    CALL B2XVSG_NODIFF(arg1, cvisper, 1, 'cvisper', '.ge.')
+    CALL B2XVSG(arg1, cvisper, 1, 'cvisper', '.ge.')
 !srv 27.01.00
 !    ..test edge values of conc
-    CALL B2XVFF_NODIFF(nx, ny, conc, 'conc')
+    CALL B2XVFF(nx, ny, conc, 'conc')
 !    ..test sign of sch
-    CALL B2XVSG_NODIFF(n2, sch(-1, -1, 1), 1, 'sch1', '.le.')
-    CALL B2XVSG_NODIFF(n2, sch(-1, -1, 3), 1, 'sch3', '.le.')
+    CALL B2XVSG(n2, sch(-1, -1, 1), 1, 'sch1', '.le.')
+    CALL B2XVSG(n2, sch(-1, -1, 3), 1, 'sch3', '.le.')
 !    ..test edge values of fch
-    CALL B2XVFF_NODIFF(nx, ny, fch, 'fch')
+    CALL B2XVFF(nx, ny, fch, 'fch')
   END IF
 !
 ! ..main computation

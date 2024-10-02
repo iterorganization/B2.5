@@ -52,7 +52,7 @@ c
 c
       subroutine b2filei(ns,nregionv,switch)
       use b2mod_plasma_diff
-      use b2mod_version_diff
+      use b2mod_version
       implicit none
 c
       integer ns, nregionv

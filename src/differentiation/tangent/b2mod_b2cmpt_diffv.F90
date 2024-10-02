@@ -22,11 +22,12 @@ MODULE B2MOD_B2CMPT_DIFFV
   REAL(kind=r8), SAVE :: cfdf0(0:7, 0:nsdecl-1), cfdna(0:7, 0:nsdecl-1)&
 & , cfdpa(0:7, 0:nsdecl-1), cfvla(0:7, 0:nsdecl-1), cfvsa(0:7, 0:nsdecl-&
 & 1), cfhci(0:7, 0:nsdecl-1)
-  REAL(kind=r8), SAVE :: cfdnad(nbdirsmax, 0:7, 0:nsdecl-1), cfdpad(&
-& nbdirsmax, 0:7, 0:nsdecl-1), cfvlad(nbdirsmax, 0:7, 0:nsdecl-1), &
-& cfvsad(nbdirsmax, 0:7, 0:nsdecl-1), cfhcid(nbdirsmax, 0:7, 0:nsdecl-1)
+  REAL(kind=r8), SAVE :: cfdf0d(nbdirsmax, 0:7, 0:nsdecl-1), cfdnad(&
+& nbdirsmax, 0:7, 0:nsdecl-1), cfdpad(nbdirsmax, 0:7, 0:nsdecl-1), &
+& cfvlad(nbdirsmax, 0:7, 0:nsdecl-1), cfvsad(nbdirsmax, 0:7, 0:nsdecl-1)&
+& , cfhcid(nbdirsmax, 0:7, 0:nsdecl-1)
   REAL(kind=r8), SAVE :: cfhce(0:7), cfsig(0:7), cfalf(0:7), cflim(0:7)
   REAL(kind=r8), SAVE :: cfhced(nbdirsmax, 0:7), cfsigd(nbdirsmax, 0:7)&
-& , cfalfd(nbdirsmax, 0:7)
+& , cfalfd(nbdirsmax, 0:7), cflimd(nbdirsmax, 0:7)
 END MODULE B2MOD_B2CMPT_DIFFV
 

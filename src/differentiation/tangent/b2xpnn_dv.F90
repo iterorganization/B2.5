@@ -32,6 +32,7 @@ SUBROUTINE B2XPNN_DV(ncv, ns, na, nad, nn, nnd, nbdirs)
 !       nn = (sum is, is_neutral(is).and.zn(is).eq.1 :: na(,is)) .
 !     ------------------------------------------------------------------
   INTEGER :: is
+  INTRINSIC NINT
   INTEGER :: nd
   INTEGER :: nbdirs
 !     ------------------------------------------------------------------
@@ -44,7 +45,7 @@ SUBROUTINE B2XPNN_DV(ncv, ns, na, nad, nn, nnd, nbdirs)
     nnd(nd, :) = 0.D0
   END DO
   DO is=0,ns-1
-    IF (is_neutral(is) .AND. zn(is) .EQ. 1) THEN
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
       DO nd=1,nbdirs
         nnd(nd, :) = nnd(nd, :) + nad(nd, :, is)
       END DO
@@ -81,11 +82,12 @@ SUBROUTINE B2XPNN_NODIFF(ncv, ns, na, nn)
 !       nn = (sum is, is_neutral(is).and.zn(is).eq.1 :: na(,is)) .
 !     ------------------------------------------------------------------
   INTEGER :: is
+  INTRINSIC NINT
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpnn')
   nn = 0.0_R8
   DO is=0,ns-1
-    IF (is_neutral(is) .AND. zn(is) .EQ. 1) nn = nn + na(:, is)
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) nn = nn + na(:, is)
   END DO
 !$$$  call subend ()
   RETURN

@@ -1,6 +1,5 @@
       module b2us_feedback
       use b2mod_types
-      use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
@@ -30,7 +29,7 @@
      * cum_volrec, dt_prev, ddtim
       logical, save :: feedback_namelist_used
       logical, save :: feedback_read, control_read
-      logical, save :: feedback_allocated=.false.
+      logical, save :: feedback_allocated = .false.
       real (kind=R8) :: charge_frac(DEF_NSD)
 
       integer, save :: icped = 0, b2sral_style = 2, ncallfeedback = 0
@@ -168,7 +167,7 @@ c     .            .gt.0.0_R8
         filename = 'b2.feedback_save.parameters.'//edition
       endif
 cxpb We do the write explicitly to avoid array overflows when the problem
-cxpb size is changed in DIMENSIONS.F
+cxpb size is changed in b2mod_dimensions
       if(feedback_namelist_used) then
         open(nwrite,file=trim(filename))
         write(nwrite,'(a9)') '&FEEDBACK'
@@ -420,10 +419,10 @@ cxpb size is changed in DIMENSIONS.F
             nesepm_istra=istrai
           endif
         enddo
-        if (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
+        if ((ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
      &   private_flux_puff.gt.0.0_R8.or.nesepm_sol.gt.0.0_R8.or.
      *   volrec_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8.or.
-     &   nepedm_sol.gt.0.0_R8) then
+     &   nepedm_sol.gt.0.0_R8).and.switch%use_eirene.eq.1) then
           icount = 0
           do istrai = 1, nstrat
             if (crcstra(istrai).eq.'C' .and.
@@ -730,7 +729,7 @@ cxpb size is changed in DIMENSIONS.F
      & 'b2mod_feedback: increase size of DEF_NATM')
 
       do ifb = 1, nFb
-        if (fb_actuator(ifb).ne.1) cycle
+        if (fb_actuator(ifb).ne.1.or.switch%use_eirene.eq.0) cycle
         if(fb_istra(ifb).gt.0) then
           call xertst (fb_istra(ifb).le.nstrat,
      1      'faulty internal parameter fb_istra')
@@ -780,7 +779,8 @@ cxpb size is changed in DIMENSIONS.F
           if ( (fb_type(ifb).eq.fb_type(ifbb)).and. .not.
      &         ((fb_type(ifb).eq.1).or.(fb_type(ifb).eq.4).or.
      &          (fb_type(ifb).eq.5).or.(fb_type(ifb).eq.7).or.
-     &          (fb_type(ifb).eq.8)) ) call xerrab('init_feedback:'//
+     &          (fb_type(ifb).eq.8)) )
+     &          call xerrab('init_feedback:'//
      &      ' set of feedbacks cannot be applied multiple times')
         enddo
         is_start = is0+1
@@ -915,7 +915,7 @@ cxpb size is changed in DIMENSIONS.F
      &  switch, geo, mpg, pl, dv, rt, psnc, psnl, main_call)
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, ns, ismain
+      integer, intent (in) :: nCv, nFc, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -955,8 +955,8 @@ cxpb size is changed in DIMENSIONS.F
 
         do ifb = 1, nFb
           if( fb_type(ifb) .gt. 0 .and.
-     &       fb_rescale_option(ifb) .gt. 0 .and.
-     &       fb_actuator(ifb) .gt.0) then
+     &        fb_rescale_option(ifb) .gt. 0 .and.
+     &        fb_actuator(ifb) .gt.0) then
 
             if (main_call) then
               fb_prev(ifb) = saved_fb_actuator(ifb)
@@ -1421,7 +1421,7 @@ cxpb size is changed in DIMENSIONS.F
                 if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
                   do iCv = 1, nCv
-                   fb_current(ifb) = fb_current(ifb) +
+                    fb_current(ifb) = fb_current(ifb) +
      &               pl%na(iCv,is)*geo%cvVol(iCv)
                   enddo
                   is_end=is
@@ -1675,33 +1675,28 @@ cxpb size is changed in DIMENSIONS.F
                 saved_fb_actuator(ifb) =
      &            saved_fb_actuator(ifb) * fb_rescale(ifb)
               else
-                saved_fb_actuator(ifb) =
-     &            fb_rescale(ifb)
+                saved_fb_actuator(ifb) = fb_rescale(ifb)
               end if
-              if(fb_puff_min(ifb) .ge. 0.0_R8)
-     &          saved_fb_actuator(ifb) =
-     &            max(fb_puff_min(ifb),
-     &            saved_fb_actuator(ifb))
-              if(fb_puff_max(ifb) .gt. 0.0_R8)
-     &          saved_fb_actuator(ifb) =
-     &            min(fb_puff_max(ifb),
-     &            saved_fb_actuator(ifb))
+              if(fb_puff_min(ifb).ge.0.0_R8)
+     >         saved_fb_actuator(ifb) =
+     &          max(fb_puff_min(ifb),saved_fb_actuator(ifb))
+              if(fb_puff_max(ifb).gt.0.0_R8)
+     >         saved_fb_actuator(ifb) =
+     &          min(fb_puff_max(ifb),saved_fb_actuator(ifb))
 
-              if(fb_overshoot(ifb) .gt. 1.0_R8 .and.
-     &           fb_current(ifb) .gt.
-     &           fb_target(ifb) *
-     &           fb_overshoot(ifb)) then
+              if(fb_overshoot(ifb).gt.1.0_R8 .and.
+     &           fb_current(ifb).gt.fb_target(ifb)*fb_overshoot(ifb))
+     >         then
 ! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
 !     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
                 if (switch%use_eirene.eq.0) then
-                  conpar(is_start, fb_ib(ifb), 1) = 0.0_R8
+                  conpar(is_start,fb_ib(ifb),1) = 0.0_R8
                 else
                   userfluxparm(fb_istra(ifb),1) = 0.0_R8
                 endif
               else
                 if (switch%use_eirene.eq.0) then
-                  conpar(is_start, fb_ib(ifb), 1) =
-     &              saved_fb_actuator(ifb)
+                  conpar(is_start,fb_ib(ifb),1) = saved_fb_actuator(ifb)
                 else
                   userfluxparm(fb_istra(ifb),1) = saved_fb_actuator(ifb)
                 endif

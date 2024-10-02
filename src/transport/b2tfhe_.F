@@ -13,9 +13,11 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance                                                  !djm Jan2017
      & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
      &          fhe_strange, fhe_pschused, balance_netcdf
+#endif
       use b2mod_transport_fun                                            !srv 13.01.17
       use b2mod_ad
      & , only : ncall_b2tfhe
@@ -78,7 +80,8 @@ csw 10oct2012
 #ifdef WG_TODO
      &  flomx,
 #endif
-     &  alfe0(nFc), floe0_mdf(nFc,0:1)                                   !srv 22.11.99 13.10.06 17.06.09
+     &  alfe0(nFc), floe0_mdf(nFc,0:1),                                  !srv 22.11.99 13.10.06 17.06.09
+     *  fhe_32_loc(nFc,0:1), fhe_52_loc(nFc,0:1)
       real (kind=R8) ::
      *    fledia(nFc,0:1), c071(nFc), c071c(nCv),                        !srv 22.11.99 25.01.02
      &    zeff(nCv)                                                      !srv 13.01.17
@@ -102,7 +105,7 @@ c      real (kind=R8), save :: drift_hyb = 1.0_R8
 c      integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
+      external b2xvsg, b2ttia                                             !srv 11.07.99
 *   ..initialization
 
 *-----------------------------------------------------------------------
@@ -208,7 +211,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
 *   ..apply discretization scheme
       call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
      &  geo,mpg,pl%te,floe0_mdf,
-     &  co%chce,fhe0_mdf,dumm1,dumm2)
+     &  co%chce,fhe0_mdf,fhe_32_loc,fhe_52_loc)
 
 *   ..compute fluxes
       alfe0 = co%calf(:,0)
@@ -232,6 +235,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
       dv%floe        = dv%floe + floe0
       dv%cone(:,:,0) = dv%cone(:,:,0) + cone0
 
+#ifndef FIXED_POINT
 *   ..fluxes for balance.nc file                  !nh  Jan2024
       if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
         dumm1 = 0.0_R8
@@ -271,6 +275,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
      &    pl%te,wrkf,dumm1,dumm2,fhe_strange,dumm3)
         fhe_strange = sign(fhe_strange,dumm4)
       endif
+#endif
 
 #ifdef WG_TODO
         if(lim_flux.eq.1 .and. conductive_limit.eq.0) then               !srv 04.02.03 17.01.12
@@ -438,8 +443,8 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 #ifdef WG_TODO
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                                .or. iout_b2wdat.eq.4) then   !srv 16.09.02 {
-       call my_out(70,nx,ny,w1,'b2tfhe__qe_32y')                    !srv 16.09.02 {
+     &                                .or. iout_b2wdat.eq.4) then        !srv 16.09.02 {
+       call my_out(70,nx,ny,w1,'b2tfhe__qe_32y')                         !srv 16.09.02 {
 !       call my_out(70,nx,ny,w2,'b2tfhe__qe_stry')
        call my_out(70,nx,ny,w3,'b2tfhe__qe_ke_gTy')
        call my_out(70,nx,ny,w4,'b2tfhe__qe_alphaTehy')
@@ -455,8 +460,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
       endif                                                              !srv 16.09.02 }
 #endif
 
-
-      if(switch%b2tfhe_iout.ne.0) then                                   !srv 18.06.08 {
+      if(switch%b2tfhe_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then      !srv 18.06.08 {
        call my_out_us(70,nFc,1,fchstoch,'b2tfhe__fchstoch_r')            !lk 31.01.08
        call my_out_us(70,nFc,1,dv%fne_he(1,0),'b2tfhe__fne_th')
        call my_out_us(70,nFc,1,dv%fne_he(1,1),'b2tfhe__fne_r')
@@ -491,12 +495,6 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,dv%fhe(1,1),'b2tfhe__fhe_r')
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,0),'b2tfhe__fhe_mdf_th')
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,1),'b2tfhe__fhe_mdf_r')
-       if (balance.and.(balance_netcdf.ne.0)) then 
-         call my_out_us(70,nFc,1,fhe_32(1,0),'b2tfhe__fhe_32_th')
-         call my_out_us(70,nFc,1,fhe_32(1,1),'b2tfhe__fhe_32_r')
-         call my_out_us(70,nFc,1,fhe_52(1,0),'b2tfhe__fhe_52_th')
-         call my_out_us(70,nFc,1,fhe_52(1,1),'b2tfhe__fhe_52_r')
-       endif
        call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
        call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
        call my_out_us(70,nFc,1,ehx,'b2tfhe__eh_th')                      !srv 13.01.17
@@ -506,12 +504,19 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
       if(switch%iout_b2wdat.eq.4) then
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,0),'b2tfhe__fhe_mdf_th')
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,1),'b2tfhe__fhe_mdf_r')
+#ifndef FIXED_POINT
        if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
          call my_out_us(70,nFc,1,fhe_32(1,0),'b2tfhe__fhe_32_th')
          call my_out_us(70,nFc,1,fhe_32(1,1),'b2tfhe__fhe_32_r')
          call my_out_us(70,nFc,1,fhe_52(1,0),'b2tfhe__fhe_52_th')
          call my_out_us(70,nFc,1,fhe_52(1,1),'b2tfhe__fhe_52_r')
+       else
+         call my_out_us(70,nFc,1,fhe_32_loc(1,0),'b2tfhe__fhe_32_th')
+         call my_out_us(70,nFc,1,fhe_32_loc(1,1),'b2tfhe__fhe_32_r')
+         call my_out_us(70,nFc,1,fhe_52_loc(1,0),'b2tfhe__fhe_52_th')
+         call my_out_us(70,nFc,1,fhe_52_loc(1,1),'b2tfhe__fhe_52_r')
        endif
+#endif
        call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
        call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
       endif

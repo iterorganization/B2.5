@@ -16,7 +16,7 @@ MODULE B2MOD_GEO_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_VERSION_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_GEO_CORNER
   USE B2MOD_CELLHELPER
   USE B2MOD_GRID_MAPPING
@@ -38,53 +38,60 @@ MODULE B2MOD_GEO_DIFFV
   LOGICAL, SAVE :: b2mod_geo_allocated=.false.
 !
   PUBLIC :: abs_diff, dist, disx, disy, distc, match
-  PUBLIC :: cr, cz, hy1, pit, sy
+  PUBLIC :: cr, cz, hy1, sy
 
 CONTAINS
 !
+!**********************************************************************
 !
   SUBROUTINE ALLOC_B2MOD_GEO(nxd, nyd)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: nxd, nyd
 !
-    ALLOCATE(bb(-1:nxd, -1:nyd, 0:3))
-    ALLOCATE(crx(-1:nxd, -1:nyd, 0:3))
-    ALLOCATE(cry(-1:nxd, -1:nyd, 0:3))
-    ALLOCATE(ffbz(-1:nxd, -1:nyd, 0:3))
-    ALLOCATE(fpsi(-1:nxd, -1:nyd, 0:3, 0:2))
-    ALLOCATE(gs(-1:nxd, -1:nyd, 0:2))
-    ALLOCATE(hx(-1:nxd, -1:nyd))
-    ALLOCATE(hy(-1:nxd, -1:nyd))
-    ALLOCATE(hz(-1:nxd, -1:nyd))
+    IF (b2mod_geo_allocated) THEN
+      RETURN
+    ELSE
+!
+      ALLOCATE(bb(-1:nxd, -1:nyd, 0:3))
+      ALLOCATE(crx(-1:nxd, -1:nyd, 0:3))
+      ALLOCATE(cry(-1:nxd, -1:nyd, 0:3))
+      ALLOCATE(ffbz(-1:nxd, -1:nyd, 0:3))
+      ALLOCATE(fpsi(-1:nxd, -1:nyd, 0:3, 0:2))
+      ALLOCATE(gs(-1:nxd, -1:nyd, 0:2))
+      ALLOCATE(hx(-1:nxd, -1:nyd))
+      ALLOCATE(hy(-1:nxd, -1:nyd))
+      ALLOCATE(hz(-1:nxd, -1:nyd))
 !srv 09.01.01
-    ALLOCATE(hc(-1:nxd, -1:nyd, 0:3))
-    ALLOCATE(ht(-1:nxd, -1:nyd, 0:1))
-    ALLOCATE(qz(-1:nxd, -1:nyd, 0:1))
-    ALLOCATE(qc(-1:nxd, -1:nyd, 0:1))
-    ALLOCATE(qs(-1:nxd, -1:nyd, 0:1))
-    ALLOCATE(qac(-1:nxd, -1:nyd, 0:1))
-    ALLOCATE(qas(-1:nxd, -1:nyd, 0:1))
-    ALLOCATE(vol(-1:nxd, -1:nyd))
-    ALLOCATE(pbs(-1:nxd, -1:nyd, 0:1))
-    ALLOCATE(pbshz(-1:nxd, -1:nyd, 0:1))
+      ALLOCATE(hc(-1:nxd, -1:nyd, 0:3))
+      ALLOCATE(ht(-1:nxd, -1:nyd, 0:1))
+      ALLOCATE(qz(-1:nxd, -1:nyd, 0:1))
+      ALLOCATE(qc(-1:nxd, -1:nyd, 0:1))
+      ALLOCATE(qs(-1:nxd, -1:nyd, 0:1))
+      ALLOCATE(qac(-1:nxd, -1:nyd, 0:1))
+      ALLOCATE(qas(-1:nxd, -1:nyd, 0:1))
+      ALLOCATE(vol(-1:nxd, -1:nyd))
+      ALLOCATE(pbs(-1:nxd, -1:nyd, 0:1))
+      ALLOCATE(pbshz(-1:nxd, -1:nyd, 0:1))
 !srv 09.01.01
-    ALLOCATE(ebc(-1:nxd, -1:nyd, 0:2))
-    ALLOCATE(conn(-1:nyd))
-    ALLOCATE(cell_width(-1:nxd, -1:nyd))
-    ALLOCATE(cell_height(-1:nxd, -1:nyd))
+      ALLOCATE(ebc(-1:nxd, -1:nyd, 0:2))
+      ALLOCATE(conn(-1:nyd))
+      ALLOCATE(cell_width(-1:nxd, -1:nyd))
+      ALLOCATE(cell_height(-1:nxd, -1:nyd))
 !
-    b2mod_geo_allocated = .true.
+      b2mod_geo_allocated = .true.
 !
-    CALL ALLOC_B2MOD_GEO_CORNER(nxd, nyd)
+      CALL ALLOC_B2MOD_GEO_CORNER(nxd, nyd)
 !
-    RETURN
+      RETURN
+    END IF
   END SUBROUTINE ALLOC_B2MOD_GEO
 
 !
   SUBROUTINE DEALLOC_B2MOD_GEO()
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
+    LOGICAL :: mapinitialized
 !
     IF (b2mod_geo_allocated) THEN
 !
@@ -125,9 +132,11 @@ CONTAINS
   END SUBROUTINE DEALLOC_B2MOD_GEO
 
 !
+!**********************************************************************
+!
   SUBROUTINE READ_B2MOD_GEO(nx, ny, nread)
     USE B2MOD_MATH_DIFFV
-    USE B2MOD_INDIRECT
+    USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: nread, nx, ny, n2
@@ -272,6 +281,8 @@ CONTAINS
     RETURN
   END SUBROUTINE READ_B2MOD_GEO
 
+!
+!**********************************************************************
 !
   SUBROUTINE WRITE_B2MOD_GEO(nwrite)
   USE B2MOD_DIFFSIZES
@@ -2208,23 +2219,8 @@ CONTAINS
   END FUNCTION MATCHBOTTOM
 
 !
-  FUNCTION PIT(ix, iy)
-  USE B2MOD_DIFFSIZES
-    IMPLICIT NONE
-    INTEGER, INTENT(IN) :: ix, iy
-    REAL(kind=r8) :: pit
-    INTRINSIC SQRT
-    REAL(kind=r8) :: arg1
-    REAL(kind=r8) :: result1
-    arg1 = bb(ix, iy, 0)**2 + bb(ix, iy, 1)**2
-    result1 = SQRT(arg1)
-    pit = result1/bb(ix, iy, 3)
-    RETURN
-  END FUNCTION PIT
-
-!
   FUNCTION SY(ix, iy)
-    USE B2MOD_INDIRECT
+    USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ix, iy

@@ -37,21 +37,22 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 FC       = ifort
+FN       = ${FC}
 CPP      = /lib/cpp -C -traditional
 CPPOPTS  = -P -I${srcdir} ${EQUIVS}
 
-#FCOPTS   = -Ad -Am -X9 -fw -Kfast,eval -x- -O -M${OBJDIR}
-#FCOPTS   = -r8 -O0 -check -g -traceback -save -fpconstant -ftz
-#FCOPTS   = -r8 -O -g -traceback -save -fpconstant -ftz
+#FCOPTS  = -Ad -Am -X9 -fw -Kfast,eval -x- -O -M${OBJDIR}
+#FCOPTS  = -r8 -O0 -check -g -traceback -save -fpconstant -ftz
+#FCOPTS  = -r8 -O -g -traceback -save -fpconstant -ftz
 ifdef SOLPS_DEBUG
-  FCOPTS   = -C -g -check -traceback -fpconstant -save -ftz -vec-report0
+  FCOPTS = -C -g -check -traceback -fpconstant -save -ftz -vec-report0
 else
-  FCOPTS   = -O -xavx -traceback -fpconstant -save -ftz -vec-report0
+  FCOPTS = -O -xavx -traceback -fpconstant -save -ftz -vec-report0
 endif
 
 DBLFC    = ${FC}
@@ -74,6 +75,7 @@ ifdef USE_EIRENE
 endif
 
 LD       = ${FC}
+LN       = ${FN}
 #LDFLAGS = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lnetcdf -lnag /usr/lib/libstdc++.so.2.9 # -lw -lnsl /usr/lib/libC.so.5 ${SOLPS_LIBS}
 LDFLAGS  = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lnetcdf -lnag -lstdc++
 LDOPTSend= -Wl,-Map,${OBJDIR}/loadmap
