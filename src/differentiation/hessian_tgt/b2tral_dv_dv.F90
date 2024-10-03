@@ -261,7 +261,8 @@ SUBROUTINE B2TRAL_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !.end b2tral
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES_DIFFV0), INTENT(INOUT) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
@@ -1003,7 +1004,8 @@ SUBROUTINE B2TRAL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 !.end b2tral
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -1526,7 +1528,8 @@ SUBROUTINE B2TRAL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 !.end b2tral
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg

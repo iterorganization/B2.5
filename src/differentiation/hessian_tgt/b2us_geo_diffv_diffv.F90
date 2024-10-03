@@ -2236,8 +2236,8 @@ CONTAINS
     INTRINSIC ANY
     INTRINSIC ALLOCATED
     REAL(kind=r8) :: x1
+    REAL(kind=r8), DIMENSION(mpg%nfs) :: dabs0
     REAL(kind=r8), DIMENSION(mpg%nfs) :: abs0
-    REAL(kind=r8), DIMENSION(mpg%nfs) :: abs1
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: arg10
@@ -2246,7 +2246,8 @@ CONTAINS
     INTEGER :: result12
     INTEGER :: result13
     REAL(r8) :: result14
-    INTEGER :: result15
+    REAL(kind=r8) :: result15
+    INTEGER :: result16
     REAL(kind=r8) :: arg1
 !
     ncv = mpg%ncv
@@ -2825,14 +2826,14 @@ CONTAINS
             IF (gm%vxy(mpg%tgvx(1)) .GT. gm%vxy(ivx) .OR. (gm%vxy(mpg%&
 &               tgvx(1)) .EQ. gm%vxy(ivx) .AND. gm%vxx(mpg%tgvx(1)) .GT.&
 &               gm%vxx(ivx))) gm%lsn = .false.
-            WHERE (gm%fspsi .GE. 0.0) 
-              abs0 = gm%fspsi
+            WHERE (gm%fspsi .GE. 0.) 
+              dabs0 = gm%fspsi
             ELSEWHERE
-              abs0 = -gm%fspsi
+              dabs0 = -gm%fspsi
             END WHERE
-            result1 = MAXVAL(abs0)
+            result15 = MAXVAL(dabs0)
             gm%psi_increasing = gm%fspsi(mpg%vxfs(ivx)) .LT. gm%fspsi(&
-&             mpg%vxfs(mpg%tgvx(1))) .OR. result1 .EQ. 0.0_R8
+&             mpg%vxfs(mpg%tgvx(1))) .OR. result15 .EQ. 0.0_R8
           END IF
         END DO
       ELSE IF (mpg%nnreg(0) .EQ. 4) THEN
@@ -2881,11 +2882,11 @@ CONTAINS
                 IF (mpg%vxfs(mpg%cvvx(j)) .NE. mpg%vxfs(mpg%xpt(ixpt))) &
 &               THEN
                   WHERE (gm%fspsi .GE. 0.0) 
-                    abs1 = gm%fspsi
+                    abs0 = gm%fspsi
                   ELSEWHERE
-                    abs1 = -gm%fspsi
+                    abs0 = -gm%fspsi
                   END WHERE
-                  result1 = MAXVAL(abs1)
+                  result1 = MAXVAL(abs0)
                   gm%psi_increasing = gm%fspsi(mpg%vxfs(mpg%cvvx(j))) &
 &                   .LT. gm%fspsi(mpg%vxfs(mpg%xpt(ixpt))) .OR. result1 &
 &                   .EQ. 0.0_R8
@@ -2943,11 +2944,11 @@ CONTAINS
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
     IF (ALLOCATED(mpg%strdiv)) THEN
-      result15 = MAXVAL(mpg%strdiv)
-      DO i=1,result15
+      result16 = MAXVAL(mpg%strdiv)
+      DO i=1,result16
         match_found = .false.
         k = 1
-        result15 = MAXVAL(mpg%strdiv)
+        result16 = MAXVAL(mpg%strdiv)
         DO WHILE (.NOT.match_found)
           ifc1 = mpg%divfc(mpg%divfcp(i, 1)+k-1)
 !nh check if the vertices belong to a flux surface
