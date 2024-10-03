@@ -3,20 +3,20 @@
 !
 !  Differentiation of b2srdt in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: ni0 tn0 te0 na0 nn0 kt0 *(sr.sch)
-!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.smo)
-!                *(sr.sna) *(sr.shedt) *(sr.sktdt) *(sr.shidt)
-!                *(sr.shndt) *(sr.schdt) *(sr.smodt) *(sr.snadt)
-!                ti0 kinrgy0 ne0 ua0
+!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt)
+!                *(sr.smo) *(sr.sna) *(sr.shedt) *(sr.sktdt) *(sr.sztdt)
+!                *(sr.shidt) *(sr.shndt) *(sr.schdt) *(sr.smodt)
+!                *(sr.snadt) ti0 kinrgy0 zt0 ne0 ua0
 !   with respect to varying inputs: ni0 tn0 te0 na0 nn0 kt0 *(sr.sch)
-!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.smo)
-!                *(sr.sna) *(sr.shedt) *(sr.sktdt) *(sr.shidt)
-!                *(sr.shndt) *(sr.schdt) *(sr.smodt) *(sr.snadt)
-!                ti0 kinrgy0 ne0 ua0
+!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt)
+!                *(sr.smo) *(sr.sna) *(sr.shedt) *(sr.sktdt) *(sr.sztdt)
+!                *(sr.shidt) *(sr.shndt) *(sr.schdt) *(sr.smodt)
+!                *(sr.snadt) ti0 kinrgy0 zt0 ne0 ua0
 !   Plus diff mem management of: sr.sch:in sr.she:in sr.shi:in
-!                sr.sne:in sr.shn:in sr.skt:in sr.smo:in sr.sna:in
-!                sr.shedt:in sr.sktdt:in sr.sztdt:in sr.snedt:in
-!                sr.shidt:in sr.shndt:in sr.schdt:in sr.smodt:in
-!                sr.snadt:in
+!                sr.sne:in sr.shn:in sr.skt:in sr.szt:in sr.smo:in
+!                sr.sna:in sr.shedt:in sr.sktdt:in sr.sztdt:in
+!                sr.snedt:in sr.shidt:in sr.shndt:in sr.schdt:in
+!                sr.smodt:in sr.snadt:in
 !
 !
 !
@@ -347,11 +347,18 @@ SUBROUTINE B2SRDT_B(ncv, ns, dtim, switch, geo, mpg, na0, na0b, ua0, &
     CALL POPREAL8(ttim, r8/8)
   END DO
   DO icv=ncv,1,-1
-    srb%skt(icv, :) = srb%skt(icv, :) + srb%sktdt(icv, :)
+    srb%sktdt(icv, :) = srb%sktdt(icv, :) + srb%skt(icv, :)
     srb%sktdt(icv, 3) = 0.D0
     srb%sktdt(icv, 2) = 0.D0
     srb%sktdt(icv, 1) = 0.D0
-    ni0b(icv, 1) = ni0b(icv, 1) + kt0(icv)*t0*srb%sktdt(icv, 0)
+    srb%sztdt(icv, :) = srb%sztdt(icv, :) + srb%szt(icv, :)
+    srb%sztdt(icv, 3) = 0.D0
+    srb%sztdt(icv, 2) = 0.D0
+    srb%sztdt(icv, 1) = 0.D0
+    ni0b(icv, 1) = ni0b(icv, 1) + zt0(icv)*t0*srb%sztdt(icv, 0) + kt0(&
+&     icv)*t0*srb%sktdt(icv, 0)
+    zt0b(icv) = zt0b(icv) + ni0(icv, 1)*t0*srb%sztdt(icv, 0)
+    srb%sztdt(icv, 0) = 0.D0
     kt0b(icv) = kt0b(icv) + ni0(icv, 1)*t0*srb%sktdt(icv, 0)
     srb%sktdt(icv, 0) = 0.D0
     CALL POPREAL8(t0, r8/8)
@@ -647,13 +654,13 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     sr%sktdt(icv, 1) = 0.0_R8
     sr%sktdt(icv, 2) = 0.0_R8
     sr%sktdt(icv, 3) = -t0
-    sr%sktdt(icv, :) = sr%skt(icv, :) + sr%sktdt(icv, :)
+    sr%skt(icv, :) = sr%skt(icv, :) + sr%sktdt(icv, :)
 !
     sr%sztdt(icv, 0) = t0*ni0(icv, 1)*zt0(icv)
     sr%sztdt(icv, 1) = 0.0_R8
     sr%sztdt(icv, 2) = 0.0_R8
     sr%sztdt(icv, 3) = -t0
-    sr%sztdt(icv, :) = sr%szt(icv, :) + sr%sztdt(icv, :)
+    sr%szt(icv, :) = sr%szt(icv, :) + sr%sztdt(icv, :)
   END DO
 !
   DO icv=1,ncv
