@@ -11,16 +11,17 @@
 !                *(dv.corte) *(dv.corti) *(dv.cortn) *(dv.corkt)
 !                *(dv.corzt) *(dv.pccm) *(dv.ne) *(dv.ni) *(dv.nn)
 !                *(dv.ue) *(dv.lnlam) *(dv.vaecrb) *(psnl.na) *(psnl.te)
-!                *(psnl.ti) *(psnl.tn) *(psnl.kt) *(psnl.ne) *(psnl.ni)
-!                *(psnl.kinrgy) *(rt.rz2) switch.b2sikt_fac_sheath
+!                *(psnl.ti) *(psnl.tn) *(psnl.kt) *(psnl.zt) *(psnl.ne)
+!                *(psnl.ni) *(psnl.kinrgy) *(rt.rz2) switch.b2sikt_fac_sheath
 !                switch.b2sikt_fac_sheath_core switch.b2sikt_fac_diss
 !                switch.b2sikt_fac_diss_core switch.b2sikt_fac_vis_rs
-!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.shedt)
-!                *(sr.sktdt) *(sr.shidt) *(sr.shndt) *(co.cvsa)
-!                *(co.cvsahz_eff) *(co.ceqp) *(co.dna_exb) *(co.hce_exb)
-!                *(co.hci_exb) *(co.alfx_c) *(co.sigx_c) *(co.sigx_kt)
-!                *(co.f_luc_sg) *(pl.na) *(pl.ua) *(pl.po) *(pl.te)
-!                *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
+!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt)
+!                *(sr.shedt) *(sr.sktdt) *(sr.sztdt) *(sr.shidt)
+!                *(sr.shndt) *(co.cvsa) *(co.cvsahz_eff) *(co.ceqp)
+!                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.alfx_c)
+!                *(co.sigx_c) *(co.sigx_kt) *(co.f_luc_sg) *(pl.na)
+!                *(pl.ua) *(pl.po) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt)
+!                *(pl.zt)
 !   with respect to varying inputs: *(dv.fch) *(dv.fhe) *(dv.fhe_mdf)
 !                *(dv.fhi) *(dv.fhi_mdf) *(dv.fhn) *(dv.fkt) *(dv.fzt)
 !                *(dv.floe) *(dv.floi) *(dv.flon) *(dv.flokt) *(dv.flozt)
@@ -30,16 +31,17 @@
 !                *(dv.corte) *(dv.corti) *(dv.cortn) *(dv.corkt)
 !                *(dv.corzt) *(dv.pccm) *(dv.ne) *(dv.ni) *(dv.nn)
 !                *(dv.ue) *(dv.lnlam) *(dv.vaecrb) *(psnl.na) *(psnl.te)
-!                *(psnl.ti) *(psnl.tn) *(psnl.kt) *(psnl.ne) *(psnl.ni)
-!                *(psnl.kinrgy) *(rt.rz2) switch.b2sikt_fac_sheath
+!                *(psnl.ti) *(psnl.tn) *(psnl.kt) *(psnl.zt) *(psnl.ne)
+!                *(psnl.ni) *(psnl.kinrgy) *(rt.rz2) switch.b2sikt_fac_sheath
 !                switch.b2sikt_fac_sheath_core switch.b2sikt_fac_diss
 !                switch.b2sikt_fac_diss_core switch.b2sikt_fac_vis_rs
-!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.shedt)
-!                *(sr.sktdt) *(sr.shidt) *(sr.shndt) *(co.cvsa)
-!                *(co.cvsahz_eff) *(co.ceqp) *(co.dna_exb) *(co.hce_exb)
-!                *(co.hci_exb) *(co.alfx_c) *(co.sigx_c) *(co.sigx_kt)
-!                *(co.f_luc_sg) *(pl.na) *(pl.ua) *(pl.po) *(pl.te)
-!                *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
+!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt)
+!                *(sr.shedt) *(sr.sktdt) *(sr.sztdt) *(sr.shidt)
+!                *(sr.shndt) *(co.cvsa) *(co.cvsahz_eff) *(co.ceqp)
+!                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.alfx_c)
+!                *(co.sigx_c) *(co.sigx_kt) *(co.f_luc_sg) *(pl.na)
+!                *(pl.ua) *(pl.po) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt)
+!                *(pl.zt)
 !   Plus diff mem management of: dv.fch:in dv.fna_fcor:in dv.fne:in
 !                dv.fhe:in dv.fhe_mdf:in dv.fhi:in dv.fhi_mdf:in
 !                dv.fhn:in dv.fkt:in dv.fzt:in dv.floe:in dv.floi:in
@@ -51,22 +53,23 @@
 !                dv.pccm:in dv.ne:in dv.ni:in dv.nn:in dv.ue:in
 !                dv.lnlam:in dv.vaecrb:in dv.fac_exb:in mpg.intcellp:in
 !                mpg.intcellr:in psnl.na:in psnl.te:in psnl.ti:in
-!                psnl.tn:in psnl.kt:in psnl.ne:in psnl.ni:in psnl.kinrgy:in
-!                geo.cvbb:in geo.cvhz:in geo.cvvol:in geo.cvonedbsq:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.fcpbs:in geo.vxvol:in geo.vxonedbsq:in
-!                geo.cvconn:in st_ext.am:in st_ext.ne2:in st_ext.za2:in
-!                st_ext.na:in st_ext.ta:in rt.rz2:in srw.b2sihs_joule:in
-!                srw.b2sihs_divue:in srw.b2sihs_divua:in srw.b2sihs_exbe:in
-!                srw.b2sihs_exba:in srw.b2sihs_visa:in srw.b2sihs_fraa:in
-!                srw.b2sihs_str:in sr.she:in sr.shi:in sr.shn:in
-!                sr.skt:in sr.szt:in sr.shedt:in sr.sktdt:in sr.sztdt:in
-!                sr.shidt:in sr.shndt:in sr.skt_diss:in sr.skt_prod:in
-!                co.cvsa:in co.cvsahz_eff:in co.ceqp:in co.dna_exb:in
-!                co.hce_exb:in co.hci_exb:in co.alfx_c:in co.sigx_c:in
-!                co.sigx_kt:in co.f_luc_sg:in pl.na:in pl.ua:in
-!                pl.po:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
+!                psnl.tn:in psnl.kt:in psnl.zt:in psnl.ne:in psnl.ni:in
+!                psnl.kinrgy:in geo.cvbb:in geo.cvhz:in geo.cvvol:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
+!                geo.vxonedbsq:in geo.cvconn:in st_ext.am:in st_ext.ne2:in
+!                st_ext.za2:in st_ext.na:in st_ext.ta:in rt.rz2:in
+!                srw.b2sihs_joule:in srw.b2sihs_divue:in srw.b2sihs_divua:in
+!                srw.b2sihs_exbe:in srw.b2sihs_exba:in srw.b2sihs_visa:in
+!                srw.b2sihs_fraa:in srw.b2sihs_str:in sr.she:in
+!                sr.shi:in sr.shn:in sr.skt:in sr.szt:in sr.shedt:in
+!                sr.sktdt:in sr.sztdt:in sr.shidt:in sr.shndt:in
+!                sr.skt_diss:in sr.skt_prod:in co.cvsa:in co.cvsahz_eff:in
+!                co.ceqp:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
+!                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.f_luc_sg:in
+!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
+!                pl.kt:in pl.zt:in
 !
 !
 !
@@ -298,6 +301,14 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
       sr%skt = sr%skt + sr%sktdt
       sr%skt(:, 0) = sr%skt(:, 0) - 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*&
 &       psnl%kt/dtim*geo%cvvol
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (switch%solve_keps .GT. 1) THEN
+      sr%szt = sr%szt + sr%sztdt
+      sr%szt(:, 0) = sr%szt(:, 0) - 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*&
+&       psnl%zt/dtim*geo%cvvol
       CALL PUSHCONTROL2B(0)
     ELSE
       CALL PUSHCONTROL2B(1)
@@ -340,12 +351,15 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
     CALL B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl, &
 &                dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod, &
 &                skt_diss)
+    szt0 = 0.0_R8
     arg1 = ncv*4
     CALL B2SAXPY_FWD(arg1, 1.0_R8, shekt, 1, she0, she0b, 1)
     arg1 = ncv*4
     CALL B2SAXPY_FWD(arg1, 1.0_R8, shikt, 1, shi0, shi0b, 1)
     arg1 = ncv*4
     CALL B2SAXPY_FWD(arg1, 1.0_R8, sr%skt, 1, skt0, skt0b, 1)
+    arg1 = ncv*4
+    CALL B2SAXPY_FWD(arg1, 1.0_R8, sr%szt, 1, szt0, szt0b, 1)
     CALL PUSHCONTROL1B(0)
   ELSE
     CALL PUSHCONTROL1B(1)
@@ -598,17 +612,18 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 &           coni, dvb%coni, dv%flon, dvb%flon, dv%conn, dvb%conn, dv%&
 &           flokt, dvb%flokt, dv%conkt, dvb%conkt, dv%flozt, dvb%flozt, &
 &           dv%conzt, dvb%conzt, she0, she0b, shi0, shi0b, shn0, shn0b, &
-&           skt0, skt0b, szt0, co%ceqp, cob%ceqp, dv%resht, dvb%resht, &
-&           dv%reshe, dvb%reshe, dv%reshi, dvb%reshi, dv%reshn, dvb%&
-&           reshn, dv%reskt, dvb%reskt, dv%reszt, dvb%reszt, dv%cortt, &
-&           dvb%cortt, dv%corte, dvb%corte, dv%corti, dvb%corti, dv%&
-&           cortn, dvb%cortn, dv%corkt, dvb%corkt, dv%corzt, dvb%corzt, &
-&           wrkf, wrkfb, wrkc, wrkcb, aa, aab)
+&           skt0, skt0b, szt0, szt0b, co%ceqp, cob%ceqp, dv%resht, dvb%&
+&           resht, dv%reshe, dvb%reshe, dv%reshi, dvb%reshi, dv%reshn, &
+&           dvb%reshn, dv%reskt, dvb%reskt, dv%reszt, dvb%reszt, dv%&
+&           cortt, dvb%cortt, dv%corte, dvb%corte, dv%corti, dvb%corti, &
+&           dv%cortn, dvb%cortn, dv%corkt, dvb%corkt, dv%corzt, dvb%&
+&           corzt, wrkf, wrkfb, wrkc, wrkcb, aa, aab)
     dvb%corkt = 0.D0
     dvb%corzt = 0.D0
   ELSE
     shi0b = 0.D0
     skt0b = 0.D0
+    szt0b = 0.D0
     shn0b = 0.D0
     she0b = 0.D0
   END IF
@@ -720,7 +735,6 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   END IF
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
-    szt0b = 0.D0
     CALL B2URSD_B(ncv, nfc, mpg, dv%ni(:, 1), dvb%ni(:, 1), pl%zt, plb%&
 &           zt, szt0, szt0b, dv%fzt, dvb%fzt, dv%reszt, dvb%reszt)
     dvb%reszt = 0.D0
@@ -754,6 +768,8 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   END IF
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
+    CALL B2SAXPY_BWD(arg1, 1.0_R8, sr%szt, srb%szt, 1, szt0, szt0b, 1)
+    arg1 = ncv*4
     CALL B2SAXPY_BWD(arg1, 1.0_R8, sr%skt, srb%skt, 1, skt0, skt0b, 1)
     arg1 = ncv*4
     shiktb = 0.D0
@@ -796,14 +812,23 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   END IF
   CALL POPCONTROL2B(branch)
   IF (branch .EQ. 0) THEN
+    tempb0 = -(psnl%zt*geo%cvvol*1.5_R8*srb%szt(:, 0)/dtim)
+    psnlb%zt = psnlb%zt - (dv%ni(:, 1)-psnl%ni(:, 1))*geo%cvvol*1.5_R8*&
+&     srb%szt(:, 0)/dtim
+    dvb%ni(:, 1) = dvb%ni(:, 1) + tempb0
+    psnlb%ni(:, 1) = psnlb%ni(:, 1) - tempb0
+    srb%sztdt = srb%sztdt + srb%szt
+  ELSE IF (branch .NE. 1) THEN
+    GOTO 100
+  END IF
+  CALL POPCONTROL1B(branch)
+  IF (branch .EQ. 0) THEN
     tempb0 = -(psnl%kt*geo%cvvol*1.5_R8*srb%skt(:, 0)/dtim)
     psnlb%kt = psnlb%kt - (dv%ni(:, 1)-psnl%ni(:, 1))*geo%cvvol*1.5_R8*&
 &     srb%skt(:, 0)/dtim
     dvb%ni(:, 1) = dvb%ni(:, 1) + tempb0
     psnlb%ni(:, 1) = psnlb%ni(:, 1) - tempb0
     srb%sktdt = srb%sktdt + srb%skt
-  ELSE IF (branch .NE. 1) THEN
-    GOTO 100
   END IF
   CALL POPCONTROL2B(branch)
   IF (branch .EQ. 0) THEN
@@ -844,10 +869,10 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
   CALL POPCHARACTERARRAY(my_out_folder, 7)
   CALL B2SHDT_B(ncv, mpg%nci, ns, dtim, geo%cvvol, psnl%na, psnlb%na, &
 &         psnl%te, psnlb%te, psnl%ti, psnlb%ti, psnl%tn, psnlb%tn, psnl%&
-&         kt, psnlb%kt, psnl%zt, dv%ne, dvb%ne, dv%ni, dvb%ni, dv%nn, &
-&         dvb%nn, psnl%kinrgy, psnlb%kinrgy, switch, mpg, sr%shedt, srb%&
-&         shedt, sr%shidt, srb%shidt, sr%shndt, srb%shndt, sr%sktdt, srb&
-&         %sktdt, sr%sztdt)
+&         kt, psnlb%kt, psnl%zt, psnlb%zt, dv%ne, dvb%ne, dv%ni, dvb%ni&
+&         , dv%nn, dvb%nn, psnl%kinrgy, psnlb%kinrgy, switch, mpg, sr%&
+&         shedt, srb%shedt, sr%shidt, srb%shidt, sr%shndt, srb%shndt, sr&
+&         %sktdt, srb%sktdt, sr%sztdt, srb%sztdt)
  100 CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) dvb%fhn = 0.D0
 END SUBROUTINE B2NPHT_B
@@ -1143,12 +1168,15 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
     CALL B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl, &
 &                dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod, &
 &                skt_diss)
+    szt0 = 0.0_R8
     arg1 = ncv*4
     CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shekt, 1, she0, 1)
     arg1 = ncv*4
     CALL B2SAXPY_NODIFF(arg1, 1.0_R8, shikt, 1, shi0, 1)
     arg1 = ncv*4
     CALL B2SAXPY_NODIFF(arg1, 1.0_R8, sr%skt, 1, skt0, 1)
+    arg1 = ncv*4
+    CALL B2SAXPY_NODIFF(arg1, 1.0_R8, sr%szt, 1, szt0, 1)
     CALL B2SAXPY_NODIFF(ncv, 1.0_R8, skt_prod, 1, sr%skt_prod, 1)
     CALL B2SAXPY_NODIFF(ncv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
   END IF
