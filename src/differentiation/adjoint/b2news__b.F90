@@ -63,21 +63,22 @@
 !                *(st.dv.ne2) *(st.dv.pa) *(st.dv.pz) *(st.dv.lnlam)
 !                *(st.dv.vadia) *(st.dv.wadia) *(st.dv.vaecrb)
 !                *(st.dv.vedia) *(st.dv.veecrb) *(st.sr.sch) *(st.sr.she)
-!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.smo)
-!                *(st.sr.smq) *(st.sr.sna) *(st.sr.shedt) *(st.sr.sktdt)
-!                *(st.sr.shidt) *(st.sr.shndt) *(st.sr.schdt) *(st.sr.smodt)
-!                *(st.sr.snadt) *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0)
-!                *(st.srw.shn0) *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0)
-!                *(st.srw.sna0) *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra)
-!                *(st.rt.rlsa) *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt)
-!                *(st.rt.rlpi) *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2)
-!                *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra)
-!                *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na)
-!                *(st.psnl.ua) *(st.psnl.te) *(st.psnl.ti) *(st.psnl.tn)
-!                *(st.psnl.kt) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
+!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.szt)
+!                *(st.sr.smo) *(st.sr.smq) *(st.sr.sna) *(st.sr.shedt)
+!                *(st.sr.sktdt) *(st.sr.sztdt) *(st.sr.shidt) *(st.sr.shndt)
+!                *(st.sr.schdt) *(st.sr.smodt) *(st.sr.snadt) *(st.srw.sch0)
+!                *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0)
+!                *(st.srw.szt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
+!                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra) *(st.rt.rlsa)
+!                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
+!                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
+!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
+!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ua)
+!                *(st.psnl.te) *(st.psnl.ti) *(st.psnl.tn) *(st.psnl.kt)
+!                *(st.psnl.zt) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
 !                *(st.psnc.na) *(st.psnc.ua) *(st.psnc.te) *(st.psnc.ti)
-!                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.ne) *(st.psnc.ni)
-!                *(st.psnc.nn) *(st.psnc.kinrgy)
+!                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.zt) *(st.psnc.ne)
+!                *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.kinrgy)
 !   with respect to varying inputs: tdata fb_target saved_fb_actuator
 !                fb_const fb_current fb_prev fb_rescale int0l int1l
 !                int2l int3l int4l b2recyc userfluxparm conpar
@@ -139,21 +140,22 @@
 !                *(st.dv.ne2) *(st.dv.pa) *(st.dv.pz) *(st.dv.lnlam)
 !                *(st.dv.vadia) *(st.dv.wadia) *(st.dv.vaecrb)
 !                *(st.dv.vedia) *(st.dv.veecrb) *(st.sr.sch) *(st.sr.she)
-!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.smo)
-!                *(st.sr.smq) *(st.sr.sna) *(st.sr.shedt) *(st.sr.sktdt)
-!                *(st.sr.shidt) *(st.sr.shndt) *(st.sr.schdt) *(st.sr.smodt)
-!                *(st.sr.snadt) *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0)
-!                *(st.srw.shn0) *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0)
-!                *(st.srw.sna0) *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra)
-!                *(st.rt.rlsa) *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt)
-!                *(st.rt.rlpi) *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2)
-!                *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra)
-!                *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na)
-!                *(st.psnl.ua) *(st.psnl.te) *(st.psnl.ti) *(st.psnl.tn)
-!                *(st.psnl.kt) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
+!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.szt)
+!                *(st.sr.smo) *(st.sr.smq) *(st.sr.sna) *(st.sr.shedt)
+!                *(st.sr.sktdt) *(st.sr.sztdt) *(st.sr.shidt) *(st.sr.shndt)
+!                *(st.sr.schdt) *(st.sr.smodt) *(st.sr.snadt) *(st.srw.sch0)
+!                *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0)
+!                *(st.srw.szt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
+!                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra) *(st.rt.rlsa)
+!                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
+!                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
+!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
+!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ua)
+!                *(st.psnl.te) *(st.psnl.ti) *(st.psnl.tn) *(st.psnl.kt)
+!                *(st.psnl.zt) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
 !                *(st.psnc.na) *(st.psnc.ua) *(st.psnc.te) *(st.psnc.ti)
-!                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.ne) *(st.psnc.ni)
-!                *(st.psnc.nn) *(st.psnc.kinrgy)
+!                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.zt) *(st.psnc.ne)
+!                *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.kinrgy)
 !   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in-out
 !                mpg.intcellp:in mpg.intcellr:in geo.cvbb:in geo.cvx:in
 !                geo.cvy:in geo.cvhz:in geo.cvhx:in geo.cvqgam:in
@@ -1120,6 +1122,8 @@ SUBROUTINE B2NEWS__B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &                 , 2)/8)
     CALL PUSHREAL8ARRAY(st%sr%skt, r8*SIZE(st%sr%skt, 1)*SIZE(st%sr%skt&
 &                 , 2)/8)
+    CALL PUSHREAL8ARRAY(st%sr%szt, r8*SIZE(st%sr%szt, 1)*SIZE(st%sr%szt&
+&                 , 2)/8)
     CALL PUSHREAL8ARRAY(st%sr%smo, r8*SIZE(st%sr%smo, 1)*SIZE(st%sr%smo&
 &                 , 2)*SIZE(st%sr%smo, 3)/8)
     CALL PUSHREAL8ARRAY(st%sr%sna, r8*SIZE(st%sr%sna, 1)*SIZE(st%sr%sna&
@@ -1921,6 +1925,8 @@ SUBROUTINE B2NEWS__B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &               )/8)
   CALL PUSHREAL8ARRAY(st%sr%skt, r8*SIZE(st%sr%skt, 1)*SIZE(st%sr%skt, 2&
 &               )/8)
+  CALL PUSHREAL8ARRAY(st%sr%szt, r8*SIZE(st%sr%szt, 1)*SIZE(st%sr%szt, 2&
+&               )/8)
   CALL PUSHREAL8ARRAY(st%sr%shedt, r8*SIZE(st%sr%shedt, 1)*SIZE(st%sr%&
 &               shedt, 2)/8)
   CALL PUSHREAL8ARRAY(st%sr%sktdt, r8*SIZE(st%sr%sktdt, 1)*SIZE(st%sr%&
@@ -2388,6 +2394,8 @@ SUBROUTINE B2NEWS__B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &              sktdt, 2)/8)
   CALL POPREAL8ARRAY(st%sr%shedt, r8*SIZE(st%sr%shedt, 1)*SIZE(st%sr%&
 &              shedt, 2)/8)
+  CALL POPREAL8ARRAY(st%sr%szt, r8*SIZE(st%sr%szt, 1)*SIZE(st%sr%szt, 2)&
+&              /8)
   CALL POPREAL8ARRAY(st%sr%skt, r8*SIZE(st%sr%skt, 1)*SIZE(st%sr%skt, 2)&
 &              /8)
   CALL POPREAL8ARRAY(st%sr%shn, r8*SIZE(st%sr%shn, 1)*SIZE(st%sr%shn, 2)&
@@ -3088,6 +3096,8 @@ SUBROUTINE B2NEWS__B(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
 &                2)*SIZE(st%sr%sna, 3)/8)
     CALL POPREAL8ARRAY(st%sr%smo, r8*SIZE(st%sr%smo, 1)*SIZE(st%sr%smo, &
 &                2)*SIZE(st%sr%smo, 3)/8)
+    CALL POPREAL8ARRAY(st%sr%szt, r8*SIZE(st%sr%szt, 1)*SIZE(st%sr%szt, &
+&                2)/8)
     CALL POPREAL8ARRAY(st%sr%skt, r8*SIZE(st%sr%skt, 1)*SIZE(st%sr%skt, &
 &                2)/8)
     CALL POPREAL8ARRAY(st%sr%shn, r8*SIZE(st%sr%shn, 1)*SIZE(st%sr%shn, &

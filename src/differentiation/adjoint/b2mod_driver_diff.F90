@@ -5596,10 +5596,11 @@ CONTAINS
 !                state.sr.sch:(loc) *(state.sr.sch):(loc) state.sr.she:(loc)
 !                *(state.sr.she):(loc) state.sr.shi:(loc) *(state.sr.shi):(loc)
 !                state.sr.sne:(loc) state.sr.shn:(loc) *(state.sr.shn):(loc)
-!                *(state.sr.skt):(loc) state.sr.smo:(loc) *(state.sr.smo):(loc)
-!                state.sr.smq:(loc) *(state.sr.smq):(loc) state.sr.sna:(loc)
-!                *(state.sr.sna):(loc) state.sr.shedt:(loc) *(state.sr.shedt):(loc)
-!                *(state.sr.sktdt):(loc) state.sr.shidt:(loc) *(state.sr.shidt):(loc)
+!                *(state.sr.skt):(loc) *(state.sr.szt):(loc) state.sr.smo:(loc)
+!                *(state.sr.smo):(loc) state.sr.smq:(loc) *(state.sr.smq):(loc)
+!                state.sr.sna:(loc) *(state.sr.sna):(loc) state.sr.shedt:(loc)
+!                *(state.sr.shedt):(loc) *(state.sr.sktdt):(loc)
+!                *(state.sr.sztdt):(loc) state.sr.shidt:(loc) *(state.sr.shidt):(loc)
 !                state.sr.shndt:(loc) *(state.sr.shndt):(loc) *(state.sr.schdt):(loc)
 !                state.sr.smodt:(loc) *(state.sr.smodt):(loc) state.sr.snadt:(loc)
 !                *(state.sr.snadt):(loc) state.sr.skt_diss:(loc)
@@ -5607,10 +5608,10 @@ CONTAINS
 !                state.srw.she0:(loc) *(state.srw.she0):(loc) state.srw.shi0:(loc)
 !                *(state.srw.shi0):(loc) state.srw.sne0:(loc) state.srw.shn0:(loc)
 !                *(state.srw.shn0):(loc) state.srw.skt0:(loc) *(state.srw.skt0):(loc)
-!                state.srw.szt0:(loc) state.srw.smo0:(loc) *(state.srw.smo0):(loc)
-!                state.srw.smq0:(loc) *(state.srw.smq0):(loc) state.srw.sna0:(loc)
-!                *(state.srw.sna0):(loc) state.srw.smpr:(loc) state.srw.smpt:(loc)
-!                state.srw.smfr:(loc) state.srw.b2stbc_sch:(loc)
+!                state.srw.szt0:(loc) *(state.srw.szt0):(loc) state.srw.smo0:(loc)
+!                *(state.srw.smo0):(loc) state.srw.smq0:(loc) *(state.srw.smq0):(loc)
+!                state.srw.sna0:(loc) *(state.srw.sna0):(loc) state.srw.smpr:(loc)
+!                state.srw.smpt:(loc) state.srw.smfr:(loc) state.srw.b2stbc_sch:(loc)
 !                state.srw.b2stbc_she:(loc) state.srw.b2stbc_shi:(loc)
 !                state.srw.b2stbc_sne:(loc) state.srw.b2stbc_shn:(loc)
 !                state.srw.b2stbc_skt:(loc) state.srw.b2stbc_szt:(loc)
@@ -5650,20 +5651,21 @@ CONTAINS
 !                state.psnl.po:(loc) state.psnl.te:(loc) *(state.psnl.te):(loc)
 !                state.psnl.ti:(loc) *(state.psnl.ti):(loc) state.psnl.tn:(loc)
 !                *(state.psnl.tn):(loc) state.psnl.kt:(loc) *(state.psnl.kt):(loc)
-!                state.psnl.zt:(loc) state.psnl.ne:(loc) *(state.psnl.ne):(loc)
-!                state.psnl.ni:(loc) *(state.psnl.ni):(loc) state.psnl.fch:(loc)
-!                state.psnl.fna:(loc) state.psnl.fhi:(loc) state.psnl.fhe:(loc)
-!                state.psnl.fkt:(loc) state.psnl.fzt:(loc) state.psnl.kinrgy:(loc)
-!                *(state.psnl.kinrgy):(loc) state.psnc.na:(loc)
-!                *(state.psnc.na):(loc) state.psnc.ua:(loc) *(state.psnc.ua):(loc)
-!                state.psnc.po:(loc) state.psnc.te:(loc) *(state.psnc.te):(loc)
-!                state.psnc.ti:(loc) *(state.psnc.ti):(loc) state.psnc.tn:(loc)
-!                *(state.psnc.tn):(loc) state.psnc.kt:(loc) *(state.psnc.kt):(loc)
-!                state.psnc.zt:(loc) state.psnc.ne:(loc) *(state.psnc.ne):(loc)
-!                state.psnc.ni:(loc) *(state.psnc.ni):(loc) state.psnc.nn:(loc)
-!                *(state.psnc.nn):(loc) state.psnc.fch:(loc) state.psnc.fna:(loc)
-!                state.psnc.fhi:(loc) state.psnc.fhe:(loc) state.psnc.fkt:(loc)
-!                state.psnc.fzt:(loc) state.psnc.kinrgy:(loc) *(state.psnc.kinrgy):(loc)
+!                state.psnl.zt:(loc) *(state.psnl.zt):(loc) state.psnl.ne:(loc)
+!                *(state.psnl.ne):(loc) state.psnl.ni:(loc) *(state.psnl.ni):(loc)
+!                state.psnl.fch:(loc) state.psnl.fna:(loc) state.psnl.fhi:(loc)
+!                state.psnl.fhe:(loc) state.psnl.fkt:(loc) state.psnl.fzt:(loc)
+!                state.psnl.kinrgy:(loc) *(state.psnl.kinrgy):(loc)
+!                state.psnc.na:(loc) *(state.psnc.na):(loc) state.psnc.ua:(loc)
+!                *(state.psnc.ua):(loc) state.psnc.po:(loc) state.psnc.te:(loc)
+!                *(state.psnc.te):(loc) state.psnc.ti:(loc) *(state.psnc.ti):(loc)
+!                state.psnc.tn:(loc) *(state.psnc.tn):(loc) state.psnc.kt:(loc)
+!                *(state.psnc.kt):(loc) state.psnc.zt:(loc) *(state.psnc.zt):(loc)
+!                state.psnc.ne:(loc) *(state.psnc.ne):(loc) state.psnc.ni:(loc)
+!                *(state.psnc.ni):(loc) state.psnc.nn:(loc) *(state.psnc.nn):(loc)
+!                state.psnc.fch:(loc) state.psnc.fna:(loc) state.psnc.fhi:(loc)
+!                state.psnc.fhe:(loc) state.psnc.fkt:(loc) state.psnc.fzt:(loc)
+!                state.psnc.kinrgy:(loc) *(state.psnc.kinrgy):(loc)
 !   Plus diff mem management of: par_opt_phys:in rtlsa:in rtlra:in
 !                rtlqa:in rtlcx:in b2data:in b2dataoncf:in b2voloncf:in
 !                mpg.bcfcor:in mpg.rcfcor:in-out mpg.intcellp:in
@@ -7547,11 +7549,13 @@ CONTAINS
     stateb1%sr%shi = 0.D0
     stateb1%sr%shn = 0.D0
     stateb1%sr%skt = 0.D0
+    stateb1%sr%szt = 0.D0
     stateb1%sr%smo = 0.D0
     stateb1%sr%smq = 0.D0
     stateb1%sr%sna = 0.D0
     stateb1%sr%shedt = 0.D0
     stateb1%sr%sktdt = 0.D0
+    stateb1%sr%sztdt = 0.D0
     stateb1%sr%shidt = 0.D0
     stateb1%sr%shndt = 0.D0
     stateb1%sr%schdt = 0.D0
@@ -7562,6 +7566,7 @@ CONTAINS
     stateb1%srw%shi0 = 0.D0
     stateb1%srw%shn0 = 0.D0
     stateb1%srw%skt0 = 0.D0
+    stateb1%srw%szt0 = 0.D0
     stateb1%srw%smo0 = 0.D0
     stateb1%srw%smq0 = 0.D0
     stateb1%srw%sna0 = 0.D0
@@ -7589,6 +7594,7 @@ CONTAINS
     stateb1%psnl%ti = 0.D0
     stateb1%psnl%tn = 0.D0
     stateb1%psnl%kt = 0.D0
+    stateb1%psnl%zt = 0.D0
     stateb1%psnl%ne = 0.D0
     stateb1%psnl%ni = 0.D0
     stateb1%psnl%kinrgy = 0.D0
@@ -7598,6 +7604,7 @@ CONTAINS
     stateb1%psnc%ti = 0.D0
     stateb1%psnc%tn = 0.D0
     stateb1%psnc%kt = 0.D0
+    stateb1%psnc%zt = 0.D0
     stateb1%psnc%ne = 0.D0
     stateb1%psnc%ni = 0.D0
     stateb1%psnc%nn = 0.D0
@@ -8517,7 +8524,10 @@ CONTAINS
         stateb1%pl%po = 0.D0
       END IF
       CALL POPREAL8ARRAY(state%psnc%zt, r8*SIZE(state%psnc%zt, 1)/8)
+      stateb1%pl%zt = stateb1%pl%zt + stateb1%psnc%zt + stateb1%psnl%zt
+      stateb1%psnc%zt = 0.D0
       CALL POPREAL8ARRAY(state%psnl%zt, r8*SIZE(state%psnl%zt, 1)/8)
+      stateb1%psnl%zt = 0.D0
       CALL POPREAL8ARRAY(state%psnc%kt, r8*SIZE(state%psnc%kt, 1)/8)
       stateb1%pl%kt = stateb1%pl%kt + stateb1%psnc%kt + stateb1%psnl%kt
       stateb1%psnc%kt = 0.D0
@@ -9934,7 +9944,10 @@ CONTAINS
       stateb1%pl%po = 0.D0
     END IF
     CALL POPREAL8ARRAY(state%psnc%zt, r8*SIZE(state%psnc%zt, 1)/8)
+    stateb1%pl%zt = stateb1%pl%zt + stateb1%psnc%zt + stateb1%psnl%zt
+    stateb1%psnc%zt = 0.D0
     CALL POPREAL8ARRAY(state%psnl%zt, r8*SIZE(state%psnl%zt, 1)/8)
+    stateb1%psnl%zt = 0.D0
     CALL POPREAL8ARRAY(state%psnc%kt, r8*SIZE(state%psnc%kt, 1)/8)
     stateb1%pl%kt = stateb1%pl%kt + stateb1%psnc%kt + stateb1%psnl%kt
     stateb1%psnc%kt = 0.D0
