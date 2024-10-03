@@ -149,7 +149,7 @@ CONTAINS
     INTRINSIC ABS
     INTRINSIC MAXVAL
     INTRINSIC TRIM
-    REAL(kind=r8), DIMENSION(0:def_natm-1) :: abs0
+    REAL(kind=r8), DIMENSION(0:def_natm-1) :: dabs0
     REAL(kind=r8) :: result1
 !
     IF (edition .EQ. '    ') THEN
@@ -184,12 +184,12 @@ CONTAINS
 &                                    'SAVED_CBSNA_SOL= ', &
 &                                    saved_cbsna_sol, ','
     WRITE(hlp_frm, '(a,i2,a)') '(a,1p,', nspecies, '(1x,1e15.8,'',''))'
-    WHERE (saved_na_feedback_actuator .GE. 0.0) 
-      abs0 = saved_na_feedback_actuator
+    WHERE (saved_na_feedback_actuator .GE. 0.) 
+      dabs0 = saved_na_feedback_actuator
     ELSEWHERE
-      abs0 = -saved_na_feedback_actuator
+      dabs0 = -saved_na_feedback_actuator
     END WHERE
-    result1 = MAXVAL(abs0)
+    result1 = MAXVAL(dabs0)
     IF (result1 .GT. 0.0_R8) WRITE(nwrite, hlp_frm) &
 &                            'SAVED_NA_FEEDBACK_ACTUATOR=', (&
 &                            saved_na_feedback_actuator(is), is=0,&

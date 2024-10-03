@@ -48,7 +48,7 @@ SUBROUTINE B2TLV0_DV_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod0, &
   IMPLICIT NONE
 !     ------------------------------------------------------------------
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -972,7 +972,7 @@ SUBROUTINE B2TLV0_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
   IMPLICIT NONE
 !     ------------------------------------------------------------------
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -1393,7 +1393,7 @@ SUBROUTINE B2TLV0_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na&
   IMPLICIT NONE
 !     ------------------------------------------------------------------
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg

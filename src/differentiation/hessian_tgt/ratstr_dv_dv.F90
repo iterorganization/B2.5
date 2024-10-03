@@ -39,7 +39,7 @@ SUBROUTINE RATSTR_NODIFF_NODIFF(nrid, nz, rtt, nt, rtn, nn, rtsa, rtra, &
 # ifndef CONSTANTS_PROVIDED
   REAL(kind=r8) :: const_h
   PARAMETER (const_h=6.62607015e-34_R8)
-#endif
+# endif
 !   ..input arguments (unchanged on exit)
   INTEGER :: nrid, nz, nt, nn
   REAL(kind=r8) :: rtt(0:nt), rtn(0:nn)

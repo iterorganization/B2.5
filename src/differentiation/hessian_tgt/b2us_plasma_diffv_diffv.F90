@@ -797,11 +797,13 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: shi
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: shn
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: skt
+      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: szt
       REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: smo
       REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: smq
       REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: sna
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: shedt
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: sktdt
+      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: sztdt
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: shidt
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: shndt
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: schdt
@@ -1007,6 +1009,7 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: shi0
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: shn0
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: skt0
+      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: szt0
       REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: smo0
       REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: smq0
       REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: sna0
@@ -1171,6 +1174,7 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: ti
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: tn
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: kt
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: zt
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: ne
       REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: ni
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: nn
@@ -1535,12 +1539,13 @@ CONTAINS
 !                std.dv.lnlam:in-out std.dv.vadia:in-out std.dv.wadia:in-out
 !                std.dv.vaecrb:in-out std.dv.vedia:in-out std.dv.veecrb:in-out
 !                std.sr.sch:in-out std.sr.she:in-out std.sr.shi:in-out
-!                std.sr.shn:in-out std.sr.skt:in-out std.sr.smo:in-out
-!                std.sr.smq:in-out std.sr.sna:in-out std.sr.shedt:in-out
-!                std.sr.sktdt:in-out std.sr.shidt:in-out std.sr.shndt:in-out
-!                std.sr.schdt:in-out std.sr.smodt:in-out std.sr.snadt:in-out
-!                std.srw.sch0:in-out std.srw.she0:in-out std.srw.shi0:in-out
-!                std.srw.shn0:in-out std.srw.skt0:in-out std.srw.smo0:in-out
+!                std.sr.shn:in-out std.sr.skt:in-out std.sr.szt:in-out
+!                std.sr.smo:in-out std.sr.smq:in-out std.sr.sna:in-out
+!                std.sr.shedt:in-out std.sr.sktdt:in-out std.sr.sztdt:in-out
+!                std.sr.shidt:in-out std.sr.shndt:in-out std.sr.schdt:in-out
+!                std.sr.smodt:in-out std.sr.snadt:in-out std.srw.sch0:in-out
+!                std.srw.she0:in-out std.srw.shi0:in-out std.srw.shn0:in-out
+!                std.srw.skt0:in-out std.srw.szt0:in-out std.srw.smo0:in-out
 !                std.srw.smq0:in-out std.srw.sna0:in-out std.rt.rlcx:in-out
 !                std.rt.rlqa:in-out std.rt.rlra:in-out std.rt.rlsa:in-out
 !                std.rt.rlza:in-out std.rt.rlz2:in-out std.rt.rlpt:in-out
@@ -1549,27 +1554,28 @@ CONTAINS
 !                std.rtw.rsa:in-out std.rtw.rra:in-out std.rtw.rqa:in-out
 !                std.rtw.rcx:in-out std.rtw.rqr:in-out std.psnl.na:in-out
 !                std.psnl.ua:in-out std.psnl.te:in-out std.psnl.ti:in-out
-!                std.psnl.tn:in-out std.psnl.kt:in-out std.psnl.ne:in-out
-!                std.psnl.ni:in-out std.psnl.nn:out std.psnl.kinrgy:in-out
-!                std.psnc.na:in-out std.psnc.ua:in-out std.psnc.te:in-out
-!                std.psnc.ti:in-out std.psnc.tn:in-out std.psnc.kt:in-out
-!                std.psnc.ne:in-out std.psnc.ni:in-out std.psnc.nn:in-out
-!                std.psnc.kinrgy:in-out st.pl.na:in-out st.pl.ua:in-out
-!                st.pl.po:in-out st.pl.te:in-out st.pl.ti:in-out
-!                st.pl.tn:in-out st.pl.kt:in-out st.pl.zt:in-out
-!                st.co.csig:in-out st.co.calf:in-out st.co.csig_an:in-out
-!                st.co.calf_an:in-out st.co.csig_cl:in-out st.co.calf_cl:in-out
-!                st.co.csigin:in-out st.co.chve:in-out st.co.chce:in-out
-!                st.co.chce_exb:in-out st.co.chvi:in-out st.co.chci:in-out
-!                st.co.chci_exb:in-out st.co.chcn:in-out st.co.cdkt:in-out
-!                st.co.cdzt:in-out st.co.chvemx:in-out st.co.chvimx:in-out
-!                st.co.cvla:in-out st.co.cdna:in-out st.co.cdna_exb:in-out
-!                st.co.cdpa:in-out st.co.cvsa:in-out st.co.cvlahz:in-out
-!                st.co.cdnahz:in-out st.co.cdpahz:in-out st.co.cvsahz:in-out
-!                st.co.cddi:in-out st.co.cvsahz_cl:in-out st.co.chcb:in-out
-!                st.co.cvsa_an:in-out st.co.cvmahz:in-out st.co.cvsahz_eff:in-out
-!                st.co.cthe:in-out st.co.cthi:in-out st.co.cvsa_cl:in-out
-!                st.co.ceqp:in-out st.co.fllim0fhi:in-out st.co.fllimvisc:in-out
+!                std.psnl.tn:in-out std.psnl.kt:in-out std.psnl.zt:in-out
+!                std.psnl.ne:in-out std.psnl.ni:in-out std.psnl.nn:out
+!                std.psnl.kinrgy:in-out std.psnc.na:in-out std.psnc.ua:in-out
+!                std.psnc.te:in-out std.psnc.ti:in-out std.psnc.tn:in-out
+!                std.psnc.kt:in-out std.psnc.zt:in-out std.psnc.ne:in-out
+!                std.psnc.ni:in-out std.psnc.nn:in-out std.psnc.kinrgy:in-out
+!                st.pl.na:in-out st.pl.ua:in-out st.pl.po:in-out
+!                st.pl.te:in-out st.pl.ti:in-out st.pl.tn:in-out
+!                st.pl.kt:in-out st.pl.zt:in-out st.co.csig:in-out
+!                st.co.calf:in-out st.co.csig_an:in-out st.co.calf_an:in-out
+!                st.co.csig_cl:in-out st.co.calf_cl:in-out st.co.csigin:in-out
+!                st.co.chve:in-out st.co.chce:in-out st.co.chce_exb:in-out
+!                st.co.chvi:in-out st.co.chci:in-out st.co.chci_exb:in-out
+!                st.co.chcn:in-out st.co.cdkt:in-out st.co.cdzt:in-out
+!                st.co.chvemx:in-out st.co.chvimx:in-out st.co.cvla:in-out
+!                st.co.cdna:in-out st.co.cdna_exb:in-out st.co.cdpa:in-out
+!                st.co.cvsa:in-out st.co.cvlahz:in-out st.co.cdnahz:in-out
+!                st.co.cdpahz:in-out st.co.cvsahz:in-out st.co.cddi:in-out
+!                st.co.cvsahz_cl:in-out st.co.chcb:in-out st.co.cvsa_an:in-out
+!                st.co.cvmahz:in-out st.co.cvsahz_eff:in-out st.co.cthe:in-out
+!                st.co.cthi:in-out st.co.cvsa_cl:in-out st.co.ceqp:in-out
+!                st.co.fllim0fhi:in-out st.co.fllimvisc:in-out
 !                st.co.fllim0fna:in-out st.co.vsaf_cl:in-out st.co.sig0:in-out
 !                st.co.hce0:in-out st.co.hci0:in-out st.co.hcn0:in-out
 !                st.co.alf0:in-out st.co.dkt0:in-out st.co.dzt0:in-out
@@ -2250,11 +2256,12 @@ CONTAINS
 !                std.dv.lnlam:out std.dv.vadia:out std.dv.wadia:out
 !                std.dv.vaecrb:out std.dv.vedia:out std.dv.veecrb:out
 !                std.sr.sch:out std.sr.she:out std.sr.shi:out std.sr.shn:out
-!                std.sr.skt:out std.sr.smo:out std.sr.smq:out std.sr.sna:out
-!                std.sr.shedt:out std.sr.sktdt:out std.sr.shidt:out
-!                std.sr.shndt:out std.sr.schdt:out std.sr.smodt:out
-!                std.sr.snadt:out std.srw.sch0:out std.srw.she0:out
-!                std.srw.shi0:out std.srw.shn0:out std.srw.skt0:out
+!                std.sr.skt:out std.sr.szt:out std.sr.smo:out std.sr.smq:out
+!                std.sr.sna:out std.sr.shedt:out std.sr.sktdt:out
+!                std.sr.sztdt:out std.sr.shidt:out std.sr.shndt:out
+!                std.sr.schdt:out std.sr.smodt:out std.sr.snadt:out
+!                std.srw.sch0:out std.srw.she0:out std.srw.shi0:out
+!                std.srw.shn0:out std.srw.skt0:out std.srw.szt0:out
 !                std.srw.smo0:out std.srw.smq0:out std.srw.sna0:out
 !                std.rt.rlcx:out std.rt.rlqa:out std.rt.rlra:out
 !                std.rt.rlsa:out std.rt.rlza:out std.rt.rlz2:out
@@ -2263,21 +2270,22 @@ CONTAINS
 !                std.rtw.rsa:out std.rtw.rra:out std.rtw.rqa:out
 !                std.rtw.rcx:out std.rtw.rqr:out std.psnl.na:out
 !                std.psnl.ua:out std.psnl.te:out std.psnl.ti:out
-!                std.psnl.tn:out std.psnl.kt:out std.psnl.ne:out
-!                std.psnl.ni:out std.psnl.nn:out std.psnl.kinrgy:out
-!                std.psnc.na:out std.psnc.ua:out std.psnc.te:out
-!                std.psnc.ti:out std.psnc.tn:out std.psnc.kt:out
-!                std.psnc.ne:out std.psnc.ni:out std.psnc.nn:out
-!                std.psnc.kinrgy:out std.diag.aresco:out std.diag.aresmo:out
-!                std.diag.acorpa:out std.diag.acorua:out std.diag.rescoreg:out
-!                std.diag.resmoreg:out std.diag.reshereg:out std.diag.reshireg:out
-!                st.pl.na:out st.pl.ua:out st.pl.po:out st.pl.te:out
-!                st.pl.ti:out st.pl.tn:out st.pl.kt:out st.pl.zt:out
-!                st.co.csig:out st.co.calf:out st.co.csig_an:out
-!                st.co.calf_an:out st.co.csig_cl:out st.co.csigin:out
-!                st.co.chve:out st.co.chce:out st.co.chce_exb:out
-!                st.co.chvi:out st.co.chci:out st.co.chci_exb:out
-!                st.co.chcn:out st.co.cdkt:out st.co.cdzt:out st.co.chvemx:out
+!                std.psnl.tn:out std.psnl.kt:out std.psnl.zt:out
+!                std.psnl.ne:out std.psnl.ni:out std.psnl.nn:out
+!                std.psnl.kinrgy:out std.psnc.na:out std.psnc.ua:out
+!                std.psnc.te:out std.psnc.ti:out std.psnc.tn:out
+!                std.psnc.kt:out std.psnc.zt:out std.psnc.ne:out
+!                std.psnc.ni:out std.psnc.nn:out std.psnc.kinrgy:out
+!                std.diag.aresco:out std.diag.aresmo:out std.diag.acorpa:out
+!                std.diag.acorua:out std.diag.rescoreg:out std.diag.resmoreg:out
+!                std.diag.reshereg:out std.diag.reshireg:out st.pl.na:out
+!                st.pl.ua:out st.pl.po:out st.pl.te:out st.pl.ti:out
+!                st.pl.tn:out st.pl.kt:out st.pl.zt:out st.co.csig:out
+!                st.co.calf:out st.co.csig_an:out st.co.calf_an:out
+!                st.co.csig_cl:out st.co.csigin:out st.co.chve:out
+!                st.co.chce:out st.co.chce_exb:out st.co.chvi:out
+!                st.co.chci:out st.co.chci_exb:out st.co.chcn:out
+!                st.co.cdkt:out st.co.cdzt:out st.co.chvemx:out
 !                st.co.chvimx:out st.co.cvla:out st.co.cdna:out
 !                st.co.cdna_exb:out st.co.cdpa:out st.co.cvsa:out
 !                st.co.cvlahz:out st.co.cdnahz:out st.co.cdpahz:out
@@ -11798,16 +11806,17 @@ CONTAINS
 
 !  Differentiation of createb2source_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: srd.sch:in-out srd.she:in-out
-!                srd.shi:in-out srd.shn:in-out srd.skt:in-out srd.smo:in-out
-!                srd.smq:in-out srd.sna:in-out srd.shedt:in-out
-!                srd.sktdt:in-out srd.shidt:in-out srd.shndt:in-out
-!                srd.schdt:in-out srd.smodt:in-out srd.snadt:in-out
-!                sr.sch:in-out sr.she:in-out sr.shi:in-out sr.sne:in-out
-!                sr.shn:in-out sr.skt:in-out sr.szt:in-out sr.smo:in-out
-!                sr.smq:in-out sr.sna:in-out sr.shedt:in-out sr.sktdt:in-out
-!                sr.sztdt:in-out sr.snedt:in-out sr.shidt:in-out
-!                sr.shndt:in-out sr.schdt:in-out sr.smodt:in-out
-!                sr.snadt:in-out sr.skt_diss:in-out sr.skt_prod:in-out
+!                srd.shi:in-out srd.shn:in-out srd.skt:in-out srd.szt:in-out
+!                srd.smo:in-out srd.smq:in-out srd.sna:in-out srd.shedt:in-out
+!                srd.sktdt:in-out srd.sztdt:in-out srd.shidt:in-out
+!                srd.shndt:in-out srd.schdt:in-out srd.smodt:in-out
+!                srd.snadt:in-out sr.sch:in-out sr.she:in-out sr.shi:in-out
+!                sr.sne:in-out sr.shn:in-out sr.skt:in-out sr.szt:in-out
+!                sr.smo:in-out sr.smq:in-out sr.sna:in-out sr.shedt:in-out
+!                sr.sktdt:in-out sr.sztdt:in-out sr.snedt:in-out
+!                sr.shidt:in-out sr.shndt:in-out sr.schdt:in-out
+!                sr.smodt:in-out sr.snadt:in-out sr.skt_diss:in-out
+!                sr.skt_prod:in-out
 !  Differentiation of createb2source as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: sr.sch:in-out sr.she:in-out sr.shi:in-out
 !                sr.sne:in-out sr.shn:in-out sr.skt:in-out sr.szt:in-out
@@ -11933,6 +11942,8 @@ CONTAINS
       ALLOCATE(srd0%skt_diss(nbdirsmax0, ncv), source=0._R8)
       srd0%skt_diss(:, 1:ncv) = 0.0_8
       ALLOCATE(sr%skt_diss(ncv), source=0._R8)
+      ALLOCATE(srdd%szt(nbdirsmax0, nbdirsmax, ncv, 0:3), source=0._R8)
+      srdd%szt(:, 1:nbdirsmax, 1:ncv, 0:3) = 0.0_8
       ALLOCATE(srd%szt(nbdirsmax, ncv, 0:3), source=0._R8)
       DO nd=1,nbdirsmax
         srd%szt(nd, 1:ncv, 0:3) = 0.d0
@@ -12017,6 +12028,9 @@ CONTAINS
       ALLOCATE(srd0%sktdt(nbdirsmax0, ncv, 0:3), source=0._R8)
       srd0%sktdt(:, 1:ncv, 0:3) = 0.0_8
       ALLOCATE(sr%sktdt(ncv, 0:3), source=0._R8)
+      ALLOCATE(srdd%sztdt(nbdirsmax0, nbdirsmax, ncv, 0:3), source=0._R8&
+&     )
+      srdd%sztdt(:, 1:nbdirsmax, 1:ncv, 0:3) = 0.0_8
       ALLOCATE(srd%sztdt(nbdirsmax, ncv, 0:3), source=0._R8)
       DO nd=1,nbdirsmax
         srd%sztdt(nd, 1:ncv, 0:3) = 0.d0
@@ -12294,14 +12308,15 @@ CONTAINS
 
 !  Differentiation of destroyb2source_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: srd.sch:out srd.she:out srd.shi:out
-!                srd.shn:out srd.skt:out srd.smo:out srd.smq:out
-!                srd.sna:out srd.shedt:out srd.sktdt:out srd.shidt:out
-!                srd.shndt:out srd.schdt:out srd.smodt:out srd.snadt:out
-!                sr.sch:out sr.she:out sr.shi:out sr.sne:out sr.shn:out
-!                sr.skt:out sr.szt:out sr.smo:out sr.smq:out sr.sna:out
-!                sr.shedt:out sr.sktdt:out sr.sztdt:out sr.snedt:out
-!                sr.shidt:out sr.shndt:out sr.schdt:out sr.smodt:out
-!                sr.snadt:out sr.skt_diss:out sr.skt_prod:out
+!                srd.shn:out srd.skt:out srd.szt:out srd.smo:out
+!                srd.smq:out srd.sna:out srd.shedt:out srd.sktdt:out
+!                srd.sztdt:out srd.shidt:out srd.shndt:out srd.schdt:out
+!                srd.smodt:out srd.snadt:out sr.sch:out sr.she:out
+!                sr.shi:out sr.sne:out sr.shn:out sr.skt:out sr.szt:out
+!                sr.smo:out sr.smq:out sr.sna:out sr.shedt:out
+!                sr.sktdt:out sr.sztdt:out sr.snedt:out sr.shidt:out
+!                sr.shndt:out sr.schdt:out sr.smodt:out sr.snadt:out
+!                sr.skt_diss:out sr.skt_prod:out
 !  Differentiation of destroyb2source as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: sr.sch:out sr.she:out sr.shi:out
 !                sr.sne:out sr.shn:out sr.skt:out sr.szt:out sr.smo:out
@@ -12429,6 +12444,9 @@ CONTAINS
       END IF
       DEALLOCATE(sr%skt_prod)
       IF (ALLOCATED(srd%szt)) THEN
+        IF (ALLOCATED(srdd%szt)) THEN
+          DEALLOCATE(srdd%szt)
+        END IF
         DEALLOCATE(srd%szt)
       END IF
       IF (ALLOCATED(srd0%szt)) THEN
@@ -12513,6 +12531,9 @@ CONTAINS
       END IF
       DEALLOCATE(sr%sktdt)
       IF (ALLOCATED(srd%sztdt)) THEN
+        IF (ALLOCATED(srdd%sztdt)) THEN
+          DEALLOCATE(srdd%sztdt)
+        END IF
         DEALLOCATE(srd%sztdt)
       END IF
       IF (ALLOCATED(srd0%sztdt)) THEN
@@ -13204,21 +13225,21 @@ CONTAINS
 !  Differentiation of createb2sourcework_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: srwd.sch0:in-out srwd.she0:in-out
 !                srwd.shi0:in-out srwd.shn0:in-out srwd.skt0:in-out
-!                srwd.smo0:in-out srwd.smq0:in-out srwd.sna0:in-out
-!                srw.sch0:in-out srw.she0:in-out srw.shi0:in-out
-!                srw.sne0:in-out srw.shn0:in-out srw.skt0:in-out
-!                srw.szt0:in-out srw.smo0:in-out srw.smq0:in-out
-!                srw.sna0:in-out srw.smcf:in-out srw.smpr:in-out
-!                srw.smpt:in-out srw.smfr:in-out srw.b2stbc_sch:in-out
-!                srw.b2stbc_she:in-out srw.b2stbc_shi:in-out srw.b2stbc_sne:in-out
-!                srw.b2stbc_shn:in-out srw.b2stbc_skt:in-out srw.b2stbc_szt:in-out
-!                srw.b2stbc_smo:in-out srw.b2stbc_sna:in-out srw.b2stbm_sch:in-out
-!                srw.b2stbm_she:in-out srw.b2stbm_shi:in-out srw.b2stbm_sne:in-out
-!                srw.b2stbm_smo:in-out srw.b2stbm_smq:in-out srw.b2stbm_sna:in-out
-!                srw.b2stbr_sch:in-out srw.b2stbr_she:in-out srw.b2stbr_shi:in-out
-!                srw.b2stbr_sne:in-out srw.b2stbr_shn:in-out srw.b2stbr_skt:in-out
-!                srw.b2stbr_szt:in-out srw.b2stbr_smo:in-out srw.b2stbr_sna:in-out
-!                srw.b2npmo_smaf:in-out srw.b2npmo_smag:in-out
+!                srwd.szt0:in-out srwd.smo0:in-out srwd.smq0:in-out
+!                srwd.sna0:in-out srw.sch0:in-out srw.she0:in-out
+!                srw.shi0:in-out srw.sne0:in-out srw.shn0:in-out
+!                srw.skt0:in-out srw.szt0:in-out srw.smo0:in-out
+!                srw.smq0:in-out srw.sna0:in-out srw.smcf:in-out
+!                srw.smpr:in-out srw.smpt:in-out srw.smfr:in-out
+!                srw.b2stbc_sch:in-out srw.b2stbc_she:in-out srw.b2stbc_shi:in-out
+!                srw.b2stbc_sne:in-out srw.b2stbc_shn:in-out srw.b2stbc_skt:in-out
+!                srw.b2stbc_szt:in-out srw.b2stbc_smo:in-out srw.b2stbc_sna:in-out
+!                srw.b2stbm_sch:in-out srw.b2stbm_she:in-out srw.b2stbm_shi:in-out
+!                srw.b2stbm_sne:in-out srw.b2stbm_smo:in-out srw.b2stbm_smq:in-out
+!                srw.b2stbm_sna:in-out srw.b2stbr_sch:in-out srw.b2stbr_she:in-out
+!                srw.b2stbr_shi:in-out srw.b2stbr_sne:in-out srw.b2stbr_shn:in-out
+!                srw.b2stbr_skt:in-out srw.b2stbr_szt:in-out srw.b2stbr_smo:in-out
+!                srw.b2stbr_sna:in-out srw.b2npmo_smaf:in-out srw.b2npmo_smag:in-out
 !                srw.b2npmo_smav:in-out srw.rsana:in-out srw.rsahi:in-out
 !                srw.rsamo:in-out srw.rrana:in-out srw.rrahi:in-out
 !                srw.rramo:in-out srw.rcxna:in-out srw.rcxhi:in-out
@@ -13327,6 +13348,9 @@ CONTAINS
       ALLOCATE(srwd0%skt0(nbdirsmax0, ncv, 0:3), source=0._R8)
       srwd0%skt0(:, 1:ncv, 0:3) = 0.0_8
       ALLOCATE(srw%skt0(ncv, 0:3), source=0._R8)
+      ALLOCATE(srwdd%szt0(nbdirsmax0, nbdirsmax, ncv, 0:3), source=0._R8&
+&     )
+      srwdd%szt0(:, 1:nbdirsmax, 1:ncv, 0:3) = 0.0_8
       ALLOCATE(srwd%szt0(nbdirsmax, ncv, 0:3), source=0._R8)
       DO nd=1,nbdirsmax
         srwd%szt0(nd, 1:ncv, 0:3) = 0.d0
@@ -14569,28 +14593,29 @@ CONTAINS
 !  Differentiation of destroyb2sourcework_dv as a context to call tangent code (with options multiDirectional context noISIZE r8)
 !:
 !   Plus diff mem management of: srwd.sch0:out srwd.she0:out srwd.shi0:out
-!                srwd.shn0:out srwd.skt0:out srwd.smo0:out srwd.smq0:out
-!                srwd.sna0:out srw.sch0:out srw.she0:out srw.shi0:out
-!                srw.sne0:out srw.shn0:out srw.skt0:out srw.szt0:out
-!                srw.smo0:out srw.smq0:out srw.sna0:out srw.smcf:out
-!                srw.smpr:out srw.smpt:out srw.smfr:out srw.b2stbc_sch:out
-!                srw.b2stbc_she:out srw.b2stbc_shi:out srw.b2stbc_sne:out
-!                srw.b2stbc_shn:out srw.b2stbc_skt:out srw.b2stbc_szt:out
-!                srw.b2stbc_smo:out srw.b2stbc_sna:out srw.b2stbm_sch:out
-!                srw.b2stbm_she:out srw.b2stbm_shi:out srw.b2stbm_sne:out
-!                srw.b2stbm_smo:out srw.b2stbm_smq:out srw.b2stbm_sna:out
-!                srw.b2stbr_sch:out srw.b2stbr_she:out srw.b2stbr_shi:out
-!                srw.b2stbr_sne:out srw.b2stbr_shn:out srw.b2stbr_skt:out
-!                srw.b2stbr_szt:out srw.b2stbr_smo:out srw.b2stbr_sna:out
-!                srw.b2npmo_smaf:out srw.b2npmo_smag:out srw.b2npmo_smav:out
-!                srw.rsana:out srw.rsahi:out srw.rsamo:out srw.rrana:out
-!                srw.rrahi:out srw.rramo:out srw.rcxna:out srw.rcxhi:out
-!                srw.rcxmo:out srw.rqahe:out srw.rqrad:out srw.rqbrm:out
-!                srw.b2sihs_joule:out srw.b2sihs_divue:out srw.b2sihs_divua:out
-!                srw.b2sihs_exbe:out srw.b2sihs_exba:out srw.b2sihs_visa:out
-!                srw.b2sihs_fraa:out srw.b2sihs_str:out srw.sna0_eir_tot:out
-!                srw.smo0_eir_tot:out srw.sne0_eir_tot:out srw.she0_eir_tot:out
-!                srw.shi0_eir_tot:out srw.shn0_eir_tot:out srw.sch0_eir_tot:out
+!                srwd.shn0:out srwd.skt0:out srwd.szt0:out srwd.smo0:out
+!                srwd.smq0:out srwd.sna0:out srw.sch0:out srw.she0:out
+!                srw.shi0:out srw.sne0:out srw.shn0:out srw.skt0:out
+!                srw.szt0:out srw.smo0:out srw.smq0:out srw.sna0:out
+!                srw.smcf:out srw.smpr:out srw.smpt:out srw.smfr:out
+!                srw.b2stbc_sch:out srw.b2stbc_she:out srw.b2stbc_shi:out
+!                srw.b2stbc_sne:out srw.b2stbc_shn:out srw.b2stbc_skt:out
+!                srw.b2stbc_szt:out srw.b2stbc_smo:out srw.b2stbc_sna:out
+!                srw.b2stbm_sch:out srw.b2stbm_she:out srw.b2stbm_shi:out
+!                srw.b2stbm_sne:out srw.b2stbm_smo:out srw.b2stbm_smq:out
+!                srw.b2stbm_sna:out srw.b2stbr_sch:out srw.b2stbr_she:out
+!                srw.b2stbr_shi:out srw.b2stbr_sne:out srw.b2stbr_shn:out
+!                srw.b2stbr_skt:out srw.b2stbr_szt:out srw.b2stbr_smo:out
+!                srw.b2stbr_sna:out srw.b2npmo_smaf:out srw.b2npmo_smag:out
+!                srw.b2npmo_smav:out srw.rsana:out srw.rsahi:out
+!                srw.rsamo:out srw.rrana:out srw.rrahi:out srw.rramo:out
+!                srw.rcxna:out srw.rcxhi:out srw.rcxmo:out srw.rqahe:out
+!                srw.rqrad:out srw.rqbrm:out srw.b2sihs_joule:out
+!                srw.b2sihs_divue:out srw.b2sihs_divua:out srw.b2sihs_exbe:out
+!                srw.b2sihs_exba:out srw.b2sihs_visa:out srw.b2sihs_fraa:out
+!                srw.b2sihs_str:out srw.sna0_eir_tot:out srw.smo0_eir_tot:out
+!                srw.sne0_eir_tot:out srw.she0_eir_tot:out srw.shi0_eir_tot:out
+!                srw.shn0_eir_tot:out srw.sch0_eir_tot:out
 !  Differentiation of destroyb2sourcework as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: srw.sch0:out srw.she0:out srw.shi0:out
 !                srw.sne0:out srw.shn0:out srw.skt0:out srw.szt0:out
@@ -14683,6 +14708,9 @@ CONTAINS
       END IF
       DEALLOCATE(srw%skt0)
       IF (ALLOCATED(srwd%szt0)) THEN
+        IF (ALLOCATED(srwdd%szt0)) THEN
+          DEALLOCATE(srwdd%szt0)
+        END IF
         DEALLOCATE(srwd%szt0)
       END IF
       IF (ALLOCATED(srwd0%szt0)) THEN
@@ -17209,11 +17237,11 @@ CONTAINS
 !r8):
 !   Plus diff mem management of: snapd.na:in-out snapd.ua:in-out
 !                snapd.te:in-out snapd.ti:in-out snapd.tn:in-out
-!                snapd.kt:in-out snapd.ne:in-out snapd.ni:in-out
-!                snapd.nn:in-out snapd.kinrgy:in-out snap.na:in-out
-!                snap.ua:in-out snap.po:in-out snap.te:in-out snap.ti:in-out
-!                snap.tn:in-out snap.kt:in-out snap.zt:in-out snap.ne:in-out
-!                snap.ni:in-out snap.nn:in-out snap.fch:in-out
+!                snapd.kt:in-out snapd.zt:in-out snapd.ne:in-out
+!                snapd.ni:in-out snapd.nn:in-out snapd.kinrgy:in-out
+!                snap.na:in-out snap.ua:in-out snap.po:in-out snap.te:in-out
+!                snap.ti:in-out snap.tn:in-out snap.kt:in-out snap.zt:in-out
+!                snap.ne:in-out snap.ni:in-out snap.nn:in-out snap.fch:in-out
 !                snap.fna:in-out snap.fhi:in-out snap.fhe:in-out
 !                snap.fhn:in-out snap.fkt:in-out snap.fzt:in-out
 !                snap.kinrgy:in-out
@@ -17308,6 +17336,8 @@ CONTAINS
       ALLOCATE(snapd0%kt(nbdirsmax0, ncv), source=0._R8)
       snapd0%kt(:, 1:ncv) = 0.0_8
       ALLOCATE(snap%kt(ncv), source=0._R8)
+      ALLOCATE(snapdd%zt(nbdirsmax0, nbdirsmax, ncv), source=0._R8)
+      snapdd%zt(:, 1:nbdirsmax, 1:ncv) = 0.0_8
       ALLOCATE(snapd%zt(nbdirsmax, ncv), source=0._R8)
       DO nd=1,nbdirsmax
         snapd%zt(nd, 1:ncv) = 0.d0
@@ -17661,13 +17691,13 @@ CONTAINS
 !  Differentiation of destroyb2plasmasnapshot_dv as a context to call tangent code (with options multiDirectional context noISIZE
 ! r8):
 !   Plus diff mem management of: snapd.na:out snapd.ua:out snapd.te:out
-!                snapd.ti:out snapd.tn:out snapd.kt:out snapd.ne:out
-!                snapd.ni:out snapd.nn:out snapd.kinrgy:out snap.na:out
-!                snap.ua:out snap.po:out snap.te:out snap.ti:out
-!                snap.tn:out snap.kt:out snap.zt:out snap.ne:out
-!                snap.ni:out snap.nn:out snap.fch:out snap.fna:out
-!                snap.fhi:out snap.fhe:out snap.fhn:out snap.fkt:out
-!                snap.fzt:out snap.kinrgy:out
+!                snapd.ti:out snapd.tn:out snapd.kt:out snapd.zt:out
+!                snapd.ne:out snapd.ni:out snapd.nn:out snapd.kinrgy:out
+!                snap.na:out snap.ua:out snap.po:out snap.te:out
+!                snap.ti:out snap.tn:out snap.kt:out snap.zt:out
+!                snap.ne:out snap.ni:out snap.nn:out snap.fch:out
+!                snap.fna:out snap.fhi:out snap.fhe:out snap.fhn:out
+!                snap.fkt:out snap.fzt:out snap.kinrgy:out
 !  Differentiation of destroyb2plasmasnapshot as a context to call tangent code (with options multiDirectional context noISIZE r8
 !):
 !   Plus diff mem management of: snap.na:out snap.ua:out snap.po:out
@@ -17838,6 +17868,9 @@ CONTAINS
       END IF
       DEALLOCATE(snap%kt)
       IF (ALLOCATED(snapd%zt)) THEN
+        IF (ALLOCATED(snapdd%zt)) THEN
+          DEALLOCATE(snapdd%zt)
+        END IF
         DEALLOCATE(snapd%zt)
       END IF
       IF (ALLOCATED(snapd0%zt)) THEN
@@ -20226,12 +20259,13 @@ CONTAINS
 !                std.dv.lnlam:in-out std.dv.vadia:in-out std.dv.wadia:in-out
 !                std.dv.vaecrb:in-out std.dv.vedia:in-out std.dv.veecrb:in-out
 !                std.sr.sch:in-out std.sr.she:in-out std.sr.shi:in-out
-!                std.sr.shn:in-out std.sr.skt:in-out std.sr.smo:in-out
-!                std.sr.smq:in-out std.sr.sna:in-out std.sr.shedt:in-out
-!                std.sr.sktdt:in-out std.sr.shidt:in-out std.sr.shndt:in-out
-!                std.sr.schdt:in-out std.sr.smodt:in-out std.sr.snadt:in-out
-!                std.srw.sch0:in-out std.srw.she0:in-out std.srw.shi0:in-out
-!                std.srw.shn0:in-out std.srw.skt0:in-out std.srw.smo0:in-out
+!                std.sr.shn:in-out std.sr.skt:in-out std.sr.szt:in-out
+!                std.sr.smo:in-out std.sr.smq:in-out std.sr.sna:in-out
+!                std.sr.shedt:in-out std.sr.sktdt:in-out std.sr.sztdt:in-out
+!                std.sr.shidt:in-out std.sr.shndt:in-out std.sr.schdt:in-out
+!                std.sr.smodt:in-out std.sr.snadt:in-out std.srw.sch0:in-out
+!                std.srw.she0:in-out std.srw.shi0:in-out std.srw.shn0:in-out
+!                std.srw.skt0:in-out std.srw.szt0:in-out std.srw.smo0:in-out
 !                std.srw.smq0:in-out std.srw.sna0:in-out std.rt.rlcx:in-out
 !                std.rt.rlqa:in-out std.rt.rlra:in-out std.rt.rlsa:in-out
 !                std.rt.rlza:in-out std.rt.rlz2:in-out std.rt.rlpt:in-out
@@ -20240,27 +20274,28 @@ CONTAINS
 !                std.rtw.rsa:in-out std.rtw.rra:in-out std.rtw.rqa:in-out
 !                std.rtw.rcx:in-out std.rtw.rqr:in-out std.psnl.na:in-out
 !                std.psnl.ua:in-out std.psnl.te:in-out std.psnl.ti:in-out
-!                std.psnl.tn:in-out std.psnl.kt:in-out std.psnl.ne:in-out
-!                std.psnl.ni:in-out std.psnl.nn:out std.psnl.kinrgy:in-out
-!                std.psnc.na:in-out std.psnc.ua:in-out std.psnc.te:in-out
-!                std.psnc.ti:in-out std.psnc.tn:in-out std.psnc.kt:in-out
-!                std.psnc.ne:in-out std.psnc.ni:in-out std.psnc.nn:in-out
-!                std.psnc.kinrgy:in-out st.pl.na:in-out st.pl.ua:in-out
-!                st.pl.po:in-out st.pl.te:in-out st.pl.ti:in-out
-!                st.pl.tn:in-out st.pl.kt:in-out st.pl.zt:in-out
-!                st.co.csig:in-out st.co.calf:in-out st.co.csig_an:in-out
-!                st.co.calf_an:in-out st.co.csig_cl:in-out st.co.calf_cl:in-out
-!                st.co.csigin:in-out st.co.chve:in-out st.co.chce:in-out
-!                st.co.chce_exb:in-out st.co.chvi:in-out st.co.chci:in-out
-!                st.co.chci_exb:in-out st.co.chcn:in-out st.co.cdkt:in-out
-!                st.co.cdzt:in-out st.co.chvemx:in-out st.co.chvimx:in-out
-!                st.co.cvla:in-out st.co.cdna:in-out st.co.cdna_exb:in-out
-!                st.co.cdpa:in-out st.co.cvsa:in-out st.co.cvlahz:in-out
-!                st.co.cdnahz:in-out st.co.cdpahz:in-out st.co.cvsahz:in-out
-!                st.co.cddi:in-out st.co.cvsahz_cl:in-out st.co.chcb:in-out
-!                st.co.cvsa_an:in-out st.co.cvmahz:in-out st.co.cvsahz_eff:in-out
-!                st.co.cthe:in-out st.co.cthi:in-out st.co.cvsa_cl:in-out
-!                st.co.ceqp:in-out st.co.fllim0fhi:in-out st.co.fllimvisc:in-out
+!                std.psnl.tn:in-out std.psnl.kt:in-out std.psnl.zt:in-out
+!                std.psnl.ne:in-out std.psnl.ni:in-out std.psnl.nn:out
+!                std.psnl.kinrgy:in-out std.psnc.na:in-out std.psnc.ua:in-out
+!                std.psnc.te:in-out std.psnc.ti:in-out std.psnc.tn:in-out
+!                std.psnc.kt:in-out std.psnc.zt:in-out std.psnc.ne:in-out
+!                std.psnc.ni:in-out std.psnc.nn:in-out std.psnc.kinrgy:in-out
+!                st.pl.na:in-out st.pl.ua:in-out st.pl.po:in-out
+!                st.pl.te:in-out st.pl.ti:in-out st.pl.tn:in-out
+!                st.pl.kt:in-out st.pl.zt:in-out st.co.csig:in-out
+!                st.co.calf:in-out st.co.csig_an:in-out st.co.calf_an:in-out
+!                st.co.csig_cl:in-out st.co.calf_cl:in-out st.co.csigin:in-out
+!                st.co.chve:in-out st.co.chce:in-out st.co.chce_exb:in-out
+!                st.co.chvi:in-out st.co.chci:in-out st.co.chci_exb:in-out
+!                st.co.chcn:in-out st.co.cdkt:in-out st.co.cdzt:in-out
+!                st.co.chvemx:in-out st.co.chvimx:in-out st.co.cvla:in-out
+!                st.co.cdna:in-out st.co.cdna_exb:in-out st.co.cdpa:in-out
+!                st.co.cvsa:in-out st.co.cvlahz:in-out st.co.cdnahz:in-out
+!                st.co.cdpahz:in-out st.co.cvsahz:in-out st.co.cddi:in-out
+!                st.co.cvsahz_cl:in-out st.co.chcb:in-out st.co.cvsa_an:in-out
+!                st.co.cvmahz:in-out st.co.cvsahz_eff:in-out st.co.cthe:in-out
+!                st.co.cthi:in-out st.co.cvsa_cl:in-out st.co.ceqp:in-out
+!                st.co.fllim0fhi:in-out st.co.fllimvisc:in-out
 !                st.co.fllim0fna:in-out st.co.vsaf_cl:in-out st.co.sig0:in-out
 !                st.co.hce0:in-out st.co.hci0:in-out st.co.hcn0:in-out
 !                st.co.alf0:in-out st.co.dkt0:in-out st.co.dzt0:in-out

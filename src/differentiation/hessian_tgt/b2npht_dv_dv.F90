@@ -7,13 +7,14 @@
 !                *(dv.reskt) *(dv.reszt) *(dv.cortt) *(dv.corte)
 !                *(dv.corti) *(dv.cortn) *(dv.corkt) *(dv.corzt)
 !                *(dv.lnlam) *(dv.vaecrb) *(srd.she) *(srd.shi)
-!                *(srd.shn) *(srd.skt) *(srd.shedt) *(srd.sktdt)
-!                *(srd.shidt) *(srd.shndt) *(dvd.fhn) *(dvd.flon)
-!                *(dvd.conn) *(dvd.reshe) *(dvd.reshi) *(dvd.resht)
-!                *(dvd.reshn) *(dvd.reskt) *(dvd.reszt) *(dvd.cortt)
-!                *(dvd.corte) *(dvd.corti) *(dvd.cortn) *(dvd.corkt)
-!                *(dvd.corzt) *(dvd.lnlam) *(dvd.vaecrb) *(sr.she)
-!                *(sr.shi) *(sr.shn) *(sr.skt) *(sr.shedt) *(sr.sktdt)
+!                *(srd.shn) *(srd.skt) *(srd.szt) *(srd.shedt)
+!                *(srd.sktdt) *(srd.sztdt) *(srd.shidt) *(srd.shndt)
+!                *(dvd.fhn) *(dvd.flon) *(dvd.conn) *(dvd.reshe)
+!                *(dvd.reshi) *(dvd.resht) *(dvd.reshn) *(dvd.reskt)
+!                *(dvd.reszt) *(dvd.cortt) *(dvd.corte) *(dvd.corti)
+!                *(dvd.cortn) *(dvd.corkt) *(dvd.corzt) *(dvd.lnlam)
+!                *(dvd.vaecrb) *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt)
+!                *(sr.szt) *(sr.shedt) *(sr.sktdt) *(sr.sztdt)
 !                *(sr.shidt) *(sr.shndt) *(pld.ua) *(pld.po) *(pld.te)
 !                *(pld.ti) *(pld.tn) *(pld.kt) *(pld.zt) *(pl.ua)
 !                *(pl.po) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
@@ -26,33 +27,34 @@
 !                *(dv.corte) *(dv.corti) *(dv.cortn) *(dv.corkt)
 !                *(dv.corzt) *(dv.pccm) *(dv.ne) *(dv.ni) *(dv.nn)
 !                *(dv.ue) *(dv.lnlam) *(dv.vaecrb) *(psnl.na) *(psnl.te)
-!                *(psnl.ti) *(psnl.tn) *(psnl.kt) *(psnl.ne) *(psnl.ni)
-!                *(psnl.kinrgy) *(srd.she) *(srd.shi) *(srd.shn)
-!                *(srd.skt) *(srd.shedt) *(srd.sktdt) *(srd.shidt)
-!                *(srd.shndt) *(rtd.rz2) *(rt.rz2) *(dvd.fch) *(dvd.fhe)
-!                *(dvd.fhe_mdf) *(dvd.fhi) *(dvd.fhi_mdf) *(dvd.fhn)
-!                *(dvd.fkt) *(dvd.fzt) *(dvd.floe) *(dvd.floi)
-!                *(dvd.flon) *(dvd.flokt) *(dvd.flozt) *(dvd.conn)
-!                *(dvd.conkt) *(dvd.conzt) *(dvd.cone) *(dvd.coni)
-!                *(dvd.reshe) *(dvd.reshi) *(dvd.resht) *(dvd.reshn)
-!                *(dvd.reskt) *(dvd.reszt) *(dvd.cortt) *(dvd.corte)
-!                *(dvd.corti) *(dvd.cortn) *(dvd.corkt) *(dvd.corzt)
-!                *(dvd.pccm) *(dvd.ne) *(dvd.ni) *(dvd.nn) *(dvd.ue)
-!                *(dvd.lnlam) *(dvd.vaecrb) switch.b2sikt_fac_sheath
-!                switch.b2sikt_fac_sheath_core switch.b2sikt_fac_diss
-!                switch.b2sikt_fac_diss_core switch.b2sikt_fac_vis_rs
-!                *(psnld.na) *(psnld.te) *(psnld.ti) *(psnld.tn)
-!                *(psnld.kt) *(psnld.ne) *(psnld.ni) *(psnld.kinrgy)
-!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.shedt)
-!                *(sr.sktdt) *(sr.shidt) *(sr.shndt) *(cod.cvsa)
-!                *(cod.cvsahz_eff) *(cod.ceqp) *(cod.dna_exb) *(cod.hce_exb)
-!                *(cod.hci_exb) *(cod.alfx_c) *(cod.sigx_c) *(cod.sigx_kt)
-!                *(cod.f_luc_sg) *(co.cvsa) *(co.cvsahz_eff) *(co.ceqp)
-!                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.alfx_c)
-!                *(co.sigx_c) *(co.sigx_kt) *(co.f_luc_sg) *(pld.na)
-!                *(pld.ua) *(pld.po) *(pld.te) *(pld.ti) *(pld.tn)
-!                *(pld.kt) *(pld.zt) *(pl.na) *(pl.ua) *(pl.po)
-!                *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
+!                *(psnl.ti) *(psnl.tn) *(psnl.kt) *(psnl.zt) *(psnl.ne)
+!                *(psnl.ni) *(psnl.kinrgy) *(srd.she) *(srd.shi)
+!                *(srd.shn) *(srd.skt) *(srd.szt) *(srd.shedt)
+!                *(srd.sktdt) *(srd.sztdt) *(srd.shidt) *(srd.shndt)
+!                *(rtd.rz2) *(rt.rz2) *(dvd.fch) *(dvd.fhe) *(dvd.fhe_mdf)
+!                *(dvd.fhi) *(dvd.fhi_mdf) *(dvd.fhn) *(dvd.fkt)
+!                *(dvd.fzt) *(dvd.floe) *(dvd.floi) *(dvd.flon)
+!                *(dvd.flokt) *(dvd.flozt) *(dvd.conn) *(dvd.conkt)
+!                *(dvd.conzt) *(dvd.cone) *(dvd.coni) *(dvd.reshe)
+!                *(dvd.reshi) *(dvd.resht) *(dvd.reshn) *(dvd.reskt)
+!                *(dvd.reszt) *(dvd.cortt) *(dvd.corte) *(dvd.corti)
+!                *(dvd.cortn) *(dvd.corkt) *(dvd.corzt) *(dvd.pccm)
+!                *(dvd.ne) *(dvd.ni) *(dvd.nn) *(dvd.ue) *(dvd.lnlam)
+!                *(dvd.vaecrb) switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
+!                switch.b2sikt_fac_vis_rs *(psnld.na) *(psnld.te)
+!                *(psnld.ti) *(psnld.tn) *(psnld.kt) *(psnld.zt)
+!                *(psnld.ne) *(psnld.ni) *(psnld.kinrgy) *(sr.she)
+!                *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt) *(sr.shedt)
+!                *(sr.sktdt) *(sr.sztdt) *(sr.shidt) *(sr.shndt)
+!                *(cod.cvsa) *(cod.cvsahz_eff) *(cod.ceqp) *(cod.dna_exb)
+!                *(cod.hce_exb) *(cod.hci_exb) *(cod.alfx_c) *(cod.sigx_c)
+!                *(cod.sigx_kt) *(cod.f_luc_sg) *(co.cvsa) *(co.cvsahz_eff)
+!                *(co.ceqp) *(co.dna_exb) *(co.hce_exb) *(co.hci_exb)
+!                *(co.alfx_c) *(co.sigx_c) *(co.sigx_kt) *(co.f_luc_sg)
+!                *(pld.na) *(pld.ua) *(pld.po) *(pld.te) *(pld.ti)
+!                *(pld.tn) *(pld.kt) *(pld.zt) *(pl.na) *(pl.ua)
+!                *(pl.po) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.fch:in dv.fna_fcor:in dv.fne:in
 !                dv.fhe:in dv.fhe_mdf:in dv.fhi:in dv.fhi_mdf:in
 !                dv.fhn:in dv.fkt:in dv.fzt:in dv.floe:in dv.floi:in
@@ -63,15 +65,16 @@
 !                dv.corti:in dv.cortn:in dv.corkt:in dv.corzt:in
 !                dv.pccm:in dv.ne:in dv.ni:in dv.nn:in dv.ue:in
 !                dv.lnlam:in dv.vaecrb:in dv.fac_exb:in psnl.na:in
-!                psnl.te:in psnl.ti:in psnl.tn:in psnl.kt:in psnl.ne:in
-!                psnl.ni:in psnl.kinrgy:in geo.cvbb:in geo.cvhz:in
-!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in st_ext.am:in
-!                st_ext.ne2:in st_ext.za2:in st_ext.na:in st_ext.ta:in
-!                srd.she:in srd.shi:in srd.shn:in srd.skt:in srd.shedt:in
-!                srd.sktdt:in srd.shidt:in srd.shndt:in rtd.rz2:in
+!                psnl.te:in psnl.ti:in psnl.tn:in psnl.kt:in psnl.zt:in
+!                psnl.ne:in psnl.ni:in psnl.kinrgy:in geo.cvbb:in
+!                geo.cvhz:in geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.fcpbs:in geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in
+!                st_ext.am:in st_ext.ne2:in st_ext.za2:in st_ext.na:in
+!                st_ext.ta:in srd.she:in srd.shi:in srd.shn:in
+!                srd.skt:in srd.szt:in srd.shedt:in srd.sktdt:in
+!                srd.sztdt:in srd.shidt:in srd.shndt:in rtd.rz2:in
 !                rt.rz2:in dvd.fch:in dvd.fhe:in dvd.fhe_mdf:in
 !                dvd.fhi:in dvd.fhi_mdf:in dvd.fhn:in dvd.fkt:in
 !                dvd.fzt:in dvd.floe:in dvd.floi:in dvd.flon:in
@@ -85,18 +88,18 @@
 !                srw.b2sihs_divua:in srw.b2sihs_exbe:in srw.b2sihs_exba:in
 !                srw.b2sihs_visa:in srw.b2sihs_fraa:in srw.b2sihs_str:in
 !                psnld.na:in psnld.te:in psnld.ti:in psnld.tn:in
-!                psnld.kt:in psnld.ne:in psnld.ni:in psnld.kinrgy:in
-!                sr.she:in sr.shi:in sr.shn:in sr.skt:in sr.szt:in
-!                sr.shedt:in sr.sktdt:in sr.sztdt:in sr.shidt:in
-!                sr.shndt:in sr.skt_diss:in sr.skt_prod:in cod.cvsa:in
-!                cod.cvsahz_eff:in cod.ceqp:in cod.dna_exb:in cod.hce_exb:in
-!                cod.hci_exb:in cod.alfx_c:in cod.sigx_c:in cod.sigx_kt:in
-!                cod.f_luc_sg:in co.cvsa:in co.cvsahz_eff:in co.ceqp:in
-!                co.dna_exb:in co.hce_exb:in co.hci_exb:in co.alfx_c:in
-!                co.sigx_c:in co.sigx_kt:in co.f_luc_sg:in pld.na:in
-!                pld.ua:in pld.po:in pld.te:in pld.ti:in pld.tn:in
-!                pld.kt:in pld.zt:in pl.na:in pl.ua:in pl.po:in
-!                pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
+!                psnld.kt:in psnld.zt:in psnld.ne:in psnld.ni:in
+!                psnld.kinrgy:in sr.she:in sr.shi:in sr.shn:in
+!                sr.skt:in sr.szt:in sr.shedt:in sr.sktdt:in sr.sztdt:in
+!                sr.shidt:in sr.shndt:in sr.skt_diss:in sr.skt_prod:in
+!                cod.cvsa:in cod.cvsahz_eff:in cod.ceqp:in cod.dna_exb:in
+!                cod.hce_exb:in cod.hci_exb:in cod.alfx_c:in cod.sigx_c:in
+!                cod.sigx_kt:in cod.f_luc_sg:in co.cvsa:in co.cvsahz_eff:in
+!                co.ceqp:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
+!                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.f_luc_sg:in
+!                pld.na:in pld.ua:in pld.po:in pld.te:in pld.ti:in
+!                pld.tn:in pld.kt:in pld.zt:in pl.na:in pl.ua:in
+!                pl.po:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
 !        Generated by TAPENADE     (INRIA, Ecuador team)
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
@@ -106,9 +109,9 @@
 !                *(dv.reskt) *(dv.reszt) *(dv.cortt) *(dv.corte)
 !                *(dv.corti) *(dv.cortn) *(dv.corkt) *(dv.corzt)
 !                *(dv.lnlam) *(dv.vaecrb) *(sr.she) *(sr.shi) *(sr.shn)
-!                *(sr.skt) *(sr.shedt) *(sr.sktdt) *(sr.shidt)
-!                *(sr.shndt) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti)
-!                *(pl.tn) *(pl.kt) *(pl.zt)
+!                *(sr.skt) *(sr.szt) *(sr.shedt) *(sr.sktdt) *(sr.sztdt)
+!                *(sr.shidt) *(sr.shndt) *(pl.ua) *(pl.po) *(pl.te)
+!                *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
 !   with respect to varying inputs: *(dv.fch) *(dv.fhe) *(dv.fhe_mdf)
 !                *(dv.fhi) *(dv.fhi_mdf) *(dv.fhn) *(dv.fkt) *(dv.fzt)
 !                *(dv.floe) *(dv.floi) *(dv.flon) *(dv.flokt) *(dv.flozt)
@@ -118,16 +121,17 @@
 !                *(dv.corte) *(dv.corti) *(dv.cortn) *(dv.corkt)
 !                *(dv.corzt) *(dv.pccm) *(dv.ne) *(dv.ni) *(dv.nn)
 !                *(dv.ue) *(dv.lnlam) *(dv.vaecrb) *(psnl.na) *(psnl.te)
-!                *(psnl.ti) *(psnl.tn) *(psnl.kt) *(psnl.ne) *(psnl.ni)
-!                *(psnl.kinrgy) *(rt.rz2) switch.b2sikt_fac_sheath
+!                *(psnl.ti) *(psnl.tn) *(psnl.kt) *(psnl.zt) *(psnl.ne)
+!                *(psnl.ni) *(psnl.kinrgy) *(rt.rz2) switch.b2sikt_fac_sheath
 !                switch.b2sikt_fac_sheath_core switch.b2sikt_fac_diss
 !                switch.b2sikt_fac_diss_core switch.b2sikt_fac_vis_rs
-!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.shedt)
-!                *(sr.sktdt) *(sr.shidt) *(sr.shndt) *(co.cvsa)
-!                *(co.cvsahz_eff) *(co.ceqp) *(co.dna_exb) *(co.hce_exb)
-!                *(co.hci_exb) *(co.alfx_c) *(co.sigx_c) *(co.sigx_kt)
-!                *(co.f_luc_sg) *(pl.na) *(pl.ua) *(pl.po) *(pl.te)
-!                *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
+!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt)
+!                *(sr.shedt) *(sr.sktdt) *(sr.sztdt) *(sr.shidt)
+!                *(sr.shndt) *(co.cvsa) *(co.cvsahz_eff) *(co.ceqp)
+!                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.alfx_c)
+!                *(co.sigx_c) *(co.sigx_kt) *(co.f_luc_sg) *(pl.na)
+!                *(pl.ua) *(pl.po) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt)
+!                *(pl.zt)
 !   Plus diff mem management of: dv.fch:in dv.fna_fcor:in dv.fne:in
 !                dv.fhe:in dv.fhe_mdf:in dv.fhi:in dv.fhi_mdf:in
 !                dv.fhn:in dv.fkt:in dv.fzt:in dv.floe:in dv.floi:in
@@ -139,22 +143,23 @@
 !                dv.pccm:in dv.ne:in dv.ni:in dv.nn:in dv.ue:in
 !                dv.lnlam:in dv.vaecrb:in dv.fac_exb:in mpg.intcellp:in
 !                mpg.intcellr:in psnl.na:in psnl.te:in psnl.ti:in
-!                psnl.tn:in psnl.kt:in psnl.ne:in psnl.ni:in psnl.kinrgy:in
-!                geo.cvbb:in geo.cvhz:in geo.cvvol:in geo.cvonedbsq:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.fcpbs:in geo.vxvol:in geo.vxonedbsq:in
-!                geo.cvconn:in st_ext.am:in st_ext.ne2:in st_ext.za2:in
-!                st_ext.na:in st_ext.ta:in rt.rz2:in srw.b2sihs_joule:in
-!                srw.b2sihs_divue:in srw.b2sihs_divua:in srw.b2sihs_exbe:in
-!                srw.b2sihs_exba:in srw.b2sihs_visa:in srw.b2sihs_fraa:in
-!                srw.b2sihs_str:in sr.she:in sr.shi:in sr.shn:in
-!                sr.skt:in sr.szt:in sr.shedt:in sr.sktdt:in sr.sztdt:in
-!                sr.shidt:in sr.shndt:in sr.skt_diss:in sr.skt_prod:in
-!                co.cvsa:in co.cvsahz_eff:in co.ceqp:in co.dna_exb:in
-!                co.hce_exb:in co.hci_exb:in co.alfx_c:in co.sigx_c:in
-!                co.sigx_kt:in co.f_luc_sg:in pl.na:in pl.ua:in
-!                pl.po:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
+!                psnl.tn:in psnl.kt:in psnl.zt:in psnl.ne:in psnl.ni:in
+!                psnl.kinrgy:in geo.cvbb:in geo.cvhz:in geo.cvvol:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
+!                geo.vxonedbsq:in geo.cvconn:in st_ext.am:in st_ext.ne2:in
+!                st_ext.za2:in st_ext.na:in st_ext.ta:in rt.rz2:in
+!                srw.b2sihs_joule:in srw.b2sihs_divue:in srw.b2sihs_divua:in
+!                srw.b2sihs_exbe:in srw.b2sihs_exba:in srw.b2sihs_visa:in
+!                srw.b2sihs_fraa:in srw.b2sihs_str:in sr.she:in
+!                sr.shi:in sr.shn:in sr.skt:in sr.szt:in sr.shedt:in
+!                sr.sktdt:in sr.sztdt:in sr.shidt:in sr.shndt:in
+!                sr.skt_diss:in sr.skt_prod:in co.cvsa:in co.cvsahz_eff:in
+!                co.ceqp:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
+!                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.f_luc_sg:in
+!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
+!                pl.kt:in pl.zt:in
 !
 !
 !
@@ -360,11 +365,13 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
   REAL(r8), DIMENSION(nCv) :: temp10
   REAL(r8), DIMENSION(nCv) :: temp11
   REAL(r8), DIMENSION(nCv) :: temp12
-  REAL(r8) :: temp13
-  REAL(r8) :: temp14
+  REAL(r8), DIMENSION(nCv) :: temp13
+  REAL(r8), DIMENSION(nCv) :: temp14
   REAL(r8) :: temp15
   REAL(r8) :: temp16
   REAL(r8) :: temp17
+  REAL(r8) :: temp18
+  REAL(r8) :: temp19
   INTEGER :: nbdirs0
 !   ..initialisation
 !
@@ -494,14 +501,15 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
 &               %na, psnld%na, psnldd%na, psnl%te, psnld0%te, psnld%te, &
 &               psnldd%te, psnl%ti, psnld0%ti, psnld%ti, psnldd%ti, psnl&
 &               %tn, psnld0%tn, psnld%tn, psnldd%tn, psnl%kt, psnld0%kt&
-&               , psnld%kt, psnldd%kt, psnl%zt, dv%ne, dvd0%ne, dvd%ne, &
-&               dvdd%ne, dv%ni, dvd0%ni, dvd%ni, dvdd%ni, dv%nn, dvd0%nn&
-&               , dvd%nn, dvdd%nn, psnl%kinrgy, psnld0%kinrgy, psnld%&
-&               kinrgy, psnldd%kinrgy, switch, mpg, sr%shedt, srd0%shedt&
-&               , srd%shedt, srdd%shedt, sr%shidt, srd0%shidt, srd%shidt&
-&               , srdd%shidt, sr%shndt, srd0%shndt, srd%shndt, srdd%&
-&               shndt, sr%sktdt, srd0%sktdt, srd%sktdt, srdd%sktdt, sr%&
-&               sztdt, nbdirs, nbdirs0)
+&               , psnld%kt, psnldd%kt, psnl%zt, psnld0%zt, psnld%zt, &
+&               psnldd%zt, dv%ne, dvd0%ne, dvd%ne, dvdd%ne, dv%ni, dvd0%&
+&               ni, dvd%ni, dvdd%ni, dv%nn, dvd0%nn, dvd%nn, dvdd%nn, &
+&               psnl%kinrgy, psnld0%kinrgy, psnld%kinrgy, psnldd%kinrgy&
+&               , switch, mpg, sr%shedt, srd0%shedt, srd%shedt, srdd%&
+&               shedt, sr%shidt, srd0%shidt, srd%shidt, srdd%shidt, sr%&
+&               shndt, srd0%shndt, srd%shndt, srdd%shndt, sr%sktdt, srd0&
+&               %sktdt, srd%sktdt, srdd%sktdt, sr%sztdt, srd0%sztdt, srd&
+&               %sztdt, srdd%sztdt, nbdirs, nbdirs0)
     DO nd=1,nbdirs
       temp3 = (dv%ne-psnl%ne)/dtim
       DO nd0=1,nbdirs0
@@ -662,6 +670,29 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
 &       psnl%kt/dtim*geo%cvvol
     END IF
     IF (switch%solve_keps .GT. 1) THEN
+      DO nd=1,nbdirs
+        temp13 = dvd%ni(nd, :, 1) - psnld%ni(nd, :, 1)
+        temp14 = psnld%zt(nd, :)/dtim
+        DO nd0=1,nbdirs0
+          srdd%szt(nd0, nd, :, :) = srdd%szt(nd0, nd, :, :) + srdd%sztdt&
+&           (nd0, nd, :, :)
+          srdd%szt(nd0, nd, :, 0) = srdd%szt(nd0, nd, :, 0) - geo%cvvol*&
+&           1.5_R8*(temp13*psnld0%zt(nd0, :)/dtim+psnl%zt*(dvdd%ni(nd0, &
+&           nd, :, 1)-psnldd%ni(nd0, nd, :, 1))/dtim+temp14*(dvd0%ni(nd0&
+&           , :, 1)-psnld0%ni(nd0, :, 1))+(dv%ni(:, 1)-psnl%ni(:, 1))*&
+&           psnldd%zt(nd0, nd, :)/dtim)
+        END DO
+        srd%szt(nd, :, :) = srd%szt(nd, :, :) + srd%sztdt(nd, :, :)
+        srd%szt(nd, :, 0) = srd%szt(nd, :, 0) - geo%cvvol*1.5_R8*(psnl%&
+&         zt/dtim*temp13+(dv%ni(:, 1)-psnl%ni(:, 1))*temp14)
+      END DO
+      DO nd0=1,nbdirs0
+        srd0%szt(nd0, :, :) = srd0%szt(nd0, :, :) + srd0%sztdt(nd0, :, :&
+&         )
+        srd0%szt(nd0, :, 0) = srd0%szt(nd0, :, 0) - geo%cvvol*1.5_R8*(&
+&         psnl%zt*(dvd0%ni(nd0, :, 1)-psnld0%ni(nd0, :, 1))/dtim+(dv%ni(&
+&         :, 1)-psnl%ni(:, 1))*psnld0%zt(nd0, :)/dtim)
+      END DO
       sr%szt = sr%szt + sr%sztdt
       sr%szt(:, 0) = sr%szt(:, 0) - 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*&
 &       psnl%zt/dtim*geo%cvvol
@@ -728,6 +759,10 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
 &               shektdd, shikt, shiktd0, shiktd, shiktdd, skt0, skt0d0, &
 &               skt0d, skt0dd, skt_prod, skt_prodd0, skt_prodd, skt_diss&
 &               , skt_dissd0, skt_dissd, nbdirs, nbdirs0)
+    DO nd=1,nbdirs
+      szt0d(nd, :, :) = 0.d0
+    END DO
+    szt0 = 0.0_R8
     arg1 = ncv*4
     CALL B2SAXPY_DV_DV(arg1, 1.0_R8, shekt, shektd0, shektd, shektdd, 1&
 &                , she0, she0d0, she0d, she0dd, 1, nbdirs, nbdirs0)
@@ -737,14 +772,27 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
     arg1 = ncv*4
     CALL B2SAXPY_DV_DV(arg1, 1.0_R8, sr%skt, srd0%skt, srd%skt, srdd%skt&
 &                , 1, skt0, skt0d0, skt0d, skt0dd, 1, nbdirs, nbdirs0)
+    arg1 = ncv*4
+    DO nd=1,nbdirsmax
+      szt0d(nd, :, :) = 0.d0
+    END DO
+    szt0dd(:, :, :, :) = 0.0_8
+    szt0d0(:, :, :) = 0.0_8
+    CALL B2SAXPY_DV_DV(arg1, 1.0_R8, sr%szt, srd0%szt, srd%szt, srdd%szt&
+&                , 1, szt0, szt0d0, szt0d, szt0dd, 1, nbdirs, nbdirs0)
     CALL B2SAXPY_NODIFF_NODIFF(ncv, 1.0_R8, skt_prod, 1, sr%skt_prod, 1)
     CALL B2SAXPY_NODIFF_NODIFF(ncv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
   ELSE
     DO nd=1,nbdirsmax
       skt0d(nd, :, :) = 0.d0
     END DO
+    DO nd=1,nbdirsmax
+      szt0d(nd, :, :) = 0.d0
+    END DO
     skt0dd(:, :, :, :) = 0.0_8
     skt0d0(:, :, :) = 0.0_8
+    szt0d0(:, :, :) = 0.0_8
+    szt0dd(:, :, :, :) = 0.0_8
   END IF
 !
 !
@@ -807,18 +855,20 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
 &                                                   dvdd%reskt, nbdirs, &
 &                                                   nbdirs0)
   IF ((switch%solve_keps .GT. 1 .AND. ANY(solvzreg(0:mpg%nnreg(0)))) &
-&     .OR. switch%get_residuals .EQ. 1) THEN
-    DO nd=1,nbdirsmax
-      szt0d(nd, :, :) = 0.d0
-    END DO
-    szt0dd(:, :, :, :) = 0.0_8
-    szt0d0(:, :, :) = 0.0_8
-    CALL B2URSD_DV_DV(ncv, nfc, mpg, dv%ni(:, 1), dvd0%ni(:, :, 1), dvd%&
-&               ni(:, :, 1), dvdd%ni(:, :, :, 1), pl%zt, pld0%zt, pld%zt&
-&               , pldd%zt, szt0, szt0d0, szt0d, szt0dd, dv%fzt, dvd0%fzt&
-&               , dvd%fzt, dvdd%fzt, dv%reszt, dvd0%reszt, dvd%reszt, &
-&               dvdd%reszt, nbdirs, nbdirs0)
-  END IF
+&     .OR. switch%get_residuals .EQ. 1) CALL B2URSD_DV_DV(ncv, nfc, mpg&
+&                                                   , dv%ni(:, 1), dvd0%&
+&                                                   ni(:, :, 1), dvd%ni(&
+&                                                   :, :, 1), dvdd%ni(:&
+&                                                   , :, :, 1), pl%zt, &
+&                                                   pld0%zt, pld%zt, &
+&                                                   pldd%zt, szt0, &
+&                                                   szt0d0, szt0d, &
+&                                                   szt0dd, dv%fzt, dvd0&
+&                                                   %fzt, dvd%fzt, dvdd%&
+&                                                   fzt, dv%reszt, dvd0%&
+&                                                   reszt, dvd%reszt, &
+&                                                   dvdd%reszt, nbdirs, &
+&                                                   nbdirs0)
 !
 ! residuals for separate neutral energy equation
   IF (switch%tn_style .EQ. 2) THEN
@@ -869,16 +919,16 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
 !
   DO icv=1,mpg%nci
     arg10 = pl%te(icv)
-    temp13 = SQRT(arg10)
+    temp15 = SQRT(arg10)
     DO nd0=1,nbdirs0
       arg10d0(nd0) = pld0%te(nd0, icv)
       IF (arg10 .EQ. 0.0_8) THEN
         tempd(nd0) = 0.0_8
       ELSE
-        tempd(nd0) = arg10d0(nd0)/(2.0*temp13)
+        tempd(nd0) = arg10d0(nd0)/(2.0*temp15)
       END IF
     END DO
-    temp = temp13
+    temp = temp15
     DO nd=1,nbdirs
       DO nd0=nd,nbdirs0
         arg10dd(nd0, nd) = pldd%te(nd0, nd, icv)
@@ -890,12 +940,12 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
         END DO
         result1d(nd) = 0.d0
       ELSE
-        temp13 = arg10d(nd)/(2.0*temp)
+        temp15 = arg10d(nd)/(2.0*temp)
         DO nd0=1,nbdirs0
-          result1dd(nd0, nd) = (arg10dd(nd0, nd)-temp13*2.0*tempd(nd0))/&
+          result1dd(nd0, nd) = (arg10dd(nd0, nd)-temp15*2.0*tempd(nd0))/&
 &           (2.0*temp)
         END DO
-        result1d(nd) = temp13
+        result1d(nd) = temp15
       END IF
 !lkw 29.03.2024{
       DO nd0=1,nbdirs0
@@ -906,51 +956,51 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
     result1 = temp
     temp = pl%te(icv) - pl%ti(icv)
     temp1 = pl%te(icv)*result1
-    temp13 = co%ceqp(icv)/temp1
+    temp15 = co%ceqp(icv)/temp1
     DO nd0=1,nbdirs0
       result1d0(nd0) = tempd(nd0)
       tempd(nd0) = pld0%te(nd0, icv) - pld0%ti(nd0, icv)
       temp0d(nd0) = temp*dvd0%ni(nd0, icv, 0) + dv%ni(icv, 0)*tempd(nd0)
       temp1d(nd0) = result1*pld0%te(nd0, icv) + pl%te(icv)*result1d0(nd0&
 &       )
-      temp2d(nd0) = dv%ne(icv)*(cod0%ceqp(nd0, icv)-temp13*temp1d(nd0))/&
-&       temp1 + temp13*dvd0%ne(nd0, icv)
+      temp2d(nd0) = dv%ne(icv)*(cod0%ceqp(nd0, icv)-temp15*temp1d(nd0))/&
+&       temp1 + temp15*dvd0%ne(nd0, icv)
     END DO
     temp0 = dv%ni(icv, 0)*temp
-    temp2 = temp13*dv%ne(icv)
+    temp2 = temp15*dv%ne(icv)
     DO nd=1,nbdirs
-      temp13 = temp0/temp1
-      temp14 = result1*pld%te(nd, icv) + pl%te(icv)*result1d(nd)
-      temp15 = dv%ne(icv)*cod%ceqp(nd, icv) + co%ceqp(icv)*dvd%ne(nd, &
-&       icv) - temp2*temp14
-      temp16 = pld%te(nd, icv) - pld%ti(nd, icv)
-      temp17 = temp*dvd%ni(nd, icv, 0) + dv%ni(icv, 0)*temp16
+      temp15 = temp0/temp1
+      temp16 = result1*pld%te(nd, icv) + pl%te(icv)*result1d(nd)
+      temp17 = dv%ne(icv)*cod%ceqp(nd, icv) + co%ceqp(icv)*dvd%ne(nd, &
+&       icv) - temp2*temp16
+      temp18 = pld%te(nd, icv) - pld%ti(nd, icv)
+      temp19 = temp*dvd%ni(nd, icv, 0) + dv%ni(icv, 0)*temp18
       DO nd0=1,nbdirs0
-        sheidd(nd0, nd, icv) = temp13*(cod%ceqp(nd, icv)*dvd0%ne(nd0, &
+        sheidd(nd0, nd, icv) = temp15*(cod%ceqp(nd, icv)*dvd0%ne(nd0, &
 &         icv)+dv%ne(icv)*codd%ceqp(nd0, nd, icv)+dvd%ne(nd, icv)*cod0%&
-&         ceqp(nd0, icv)+co%ceqp(icv)*dvdd%ne(nd0, nd, icv)-temp14*&
+&         ceqp(nd0, icv)+co%ceqp(icv)*dvdd%ne(nd0, nd, icv)-temp16*&
 &         temp2d(nd0)-temp2*(pld%te(nd, icv)*result1d0(nd0)+result1*pldd&
 &         %te(nd0, nd, icv)+result1d(nd)*pld0%te(nd0, icv)+pl%te(icv)*&
-&         result1dd(nd0, nd))) + temp15*(temp0d(nd0)-temp13*temp1d(nd0))&
-&         /temp1 + temp17*temp2d(nd0) + temp2*(dvd%ni(nd, icv, 0)*tempd(&
-&         nd0)+temp*dvdd%ni(nd0, nd, icv, 0)+temp16*dvd0%ni(nd0, icv, 0)&
+&         result1dd(nd0, nd))) + temp17*(temp0d(nd0)-temp15*temp1d(nd0))&
+&         /temp1 + temp19*temp2d(nd0) + temp2*(dvd%ni(nd, icv, 0)*tempd(&
+&         nd0)+temp*dvdd%ni(nd0, nd, icv, 0)+temp18*dvd0%ni(nd0, icv, 0)&
 &         +dv%ni(icv, 0)*(pldd%te(nd0, nd, icv)-pldd%ti(nd0, nd, icv)))
       END DO
-      sheid(nd, icv) = temp15*temp13 + temp2*temp17
+      sheid(nd, icv) = temp17*temp15 + temp2*temp19
     END DO
     arg10 = pl%te(icv)
-    temp17 = SQRT(arg10)
+    temp19 = SQRT(arg10)
     DO nd0=1,nbdirs0
       sheid0(nd0, icv) = temp0*temp2d(nd0) + temp2*temp0d(nd0)
       arg10d0(nd0) = pld0%te(nd0, icv)
       IF (arg10 .EQ. 0.0_8) THEN
         temp2d(nd0) = 0.0_8
       ELSE
-        temp2d(nd0) = arg10d0(nd0)/(2.0*temp17)
+        temp2d(nd0) = arg10d0(nd0)/(2.0*temp19)
       END IF
     END DO
     shei(icv) = temp2*temp0
-    temp2 = temp17
+    temp2 = temp19
     DO nd=1,nbdirs
       IF (arg10 .EQ. 0.d0) THEN
         DO nd0=1,nbdirs0
@@ -958,12 +1008,12 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
         END DO
         result1d(nd) = 0.d0
       ELSE
-        temp17 = arg10d(nd)/(2.0*temp2)
+        temp19 = arg10d(nd)/(2.0*temp2)
         DO nd0=1,nbdirs0
-          result1dd(nd0, nd) = (arg10dd(nd0, nd)-temp17*2.0*temp2d(nd0))&
+          result1dd(nd0, nd) = (arg10dd(nd0, nd)-temp19*2.0*temp2d(nd0))&
 &           /(2.0*temp2)
         END DO
-        result1d(nd) = temp17
+        result1d(nd) = temp19
       END IF
       DO nd0=1,nbdirs0
         arg10dd(nd0, nd) = pldd%te(nd0, nd, icv)
@@ -972,42 +1022,42 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
     END DO
     result1 = temp2
     temp1 = pl%te(icv)*result1
-    temp17 = co%ceqp(icv)/temp1
+    temp19 = co%ceqp(icv)/temp1
     DO nd0=1,nbdirs0
       result1d0(nd0) = temp2d(nd0)
       temp2d(nd0) = pl%ti(icv)*dvd0%ni(nd0, icv, 0) + dv%ni(icv, 0)*pld0&
 &       %ti(nd0, icv)
       temp1d(nd0) = result1*pld0%te(nd0, icv) + pl%te(icv)*result1d0(nd0&
 &       )
-      temp0d(nd0) = dv%ne(icv)*(cod0%ceqp(nd0, icv)-temp17*temp1d(nd0))/&
-&       temp1 + temp17*dvd0%ne(nd0, icv)
+      temp0d(nd0) = dv%ne(icv)*(cod0%ceqp(nd0, icv)-temp19*temp1d(nd0))/&
+&       temp1 + temp19*dvd0%ne(nd0, icv)
     END DO
     temp2 = dv%ni(icv, 0)*pl%ti(icv)
-    temp0 = temp17*dv%ne(icv)
+    temp0 = temp19*dv%ne(icv)
     DO nd=1,nbdirs
-      temp17 = temp2/temp1
-      temp16 = result1*pld%te(nd, icv) + pl%te(icv)*result1d(nd)
-      temp15 = dv%ne(icv)*cod%ceqp(nd, icv) + co%ceqp(icv)*dvd%ne(nd, &
-&       icv) - temp0*temp16
-      temp14 = pl%ti(icv)*dvd%ni(nd, icv, 0) + dv%ni(icv, 0)*pld%ti(nd, &
+      temp19 = temp2/temp1
+      temp18 = result1*pld%te(nd, icv) + pl%te(icv)*result1d(nd)
+      temp17 = dv%ne(icv)*cod%ceqp(nd, icv) + co%ceqp(icv)*dvd%ne(nd, &
+&       icv) - temp0*temp18
+      temp16 = pl%ti(icv)*dvd%ni(nd, icv, 0) + dv%ni(icv, 0)*pld%ti(nd, &
 &       icv)
       DO nd0=1,nbdirs0
         shi0dd(nd0, nd, icv, 0) = shi0dd(nd0, nd, icv, 0) + switch%&
-&         b2npht_stab_shei*(temp17*(cod%ceqp(nd, icv)*dvd0%ne(nd0, icv)+&
+&         b2npht_stab_shei*(temp19*(cod%ceqp(nd, icv)*dvd0%ne(nd0, icv)+&
 &         dv%ne(icv)*codd%ceqp(nd0, nd, icv)+dvd%ne(nd, icv)*cod0%ceqp(&
-&         nd0, icv)+co%ceqp(icv)*dvdd%ne(nd0, nd, icv)-temp16*temp0d(nd0&
+&         nd0, icv)+co%ceqp(icv)*dvdd%ne(nd0, nd, icv)-temp18*temp0d(nd0&
 &         )-temp0*(pld%te(nd, icv)*result1d0(nd0)+result1*pldd%te(nd0, &
 &         nd, icv)+result1d(nd)*pld0%te(nd0, icv)+pl%te(icv)*result1dd(&
-&         nd0, nd)))+temp15*(temp2d(nd0)-temp17*temp1d(nd0))/temp1+&
-&         temp14*temp0d(nd0)+temp0*(dvd%ni(nd, icv, 0)*pld0%ti(nd0, icv)&
+&         nd0, nd)))+temp17*(temp2d(nd0)-temp19*temp1d(nd0))/temp1+&
+&         temp16*temp0d(nd0)+temp0*(dvd%ni(nd, icv, 0)*pld0%ti(nd0, icv)&
 &         +pl%ti(icv)*dvdd%ni(nd0, nd, icv, 0)+pld%ti(nd, icv)*dvd0%ni(&
 &         nd0, icv, 0)+dv%ni(icv, 0)*pldd%ti(nd0, nd, icv)))
       END DO
       shi0d(nd, icv, 0) = shi0d(nd, icv, 0) + switch%b2npht_stab_shei*(&
-&       temp15*temp17+temp0*temp14)
+&       temp17*temp19+temp0*temp16)
     END DO
     arg10 = pl%te(icv)
-    temp17 = SQRT(arg10)
+    temp19 = SQRT(arg10)
     DO nd0=1,nbdirs0
       shi0d0(nd0, icv, 0) = shi0d0(nd0, icv, 0) + switch%&
 &       b2npht_stab_shei*(temp2*temp0d(nd0)+temp0*temp2d(nd0))
@@ -1015,11 +1065,11 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
       IF (arg10 .EQ. 0.0_8) THEN
         temp2d(nd0) = 0.0_8
       ELSE
-        temp2d(nd0) = arg10d0(nd0)/(2.0*temp17)
+        temp2d(nd0) = arg10d0(nd0)/(2.0*temp19)
       END IF
     END DO
     shi0(icv, 0) = shi0(icv, 0) + switch%b2npht_stab_shei*(temp0*temp2)
-    temp2 = temp17
+    temp2 = temp19
     DO nd=1,nbdirs
       IF (arg10 .EQ. 0.d0) THEN
         DO nd0=1,nbdirs0
@@ -1027,12 +1077,12 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
         END DO
         result1d(nd) = 0.d0
       ELSE
-        temp17 = arg10d(nd)/(2.0*temp2)
+        temp19 = arg10d(nd)/(2.0*temp2)
         DO nd0=1,nbdirs0
-          result1dd(nd0, nd) = (arg10dd(nd0, nd)-temp17*2.0*temp2d(nd0))&
+          result1dd(nd0, nd) = (arg10dd(nd0, nd)-temp19*2.0*temp2d(nd0))&
 &           /(2.0*temp2)
         END DO
-        result1d(nd) = temp17
+        result1d(nd) = temp19
       END IF
       DO nd0=1,nbdirs0
         arg10dd(nd0, nd) = pldd%te(nd0, nd, icv)
@@ -1041,38 +1091,38 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
     END DO
     result1 = temp2
     temp2 = pl%te(icv)*result1
-    temp17 = dv%ni(icv, 0)/temp2
+    temp19 = dv%ni(icv, 0)/temp2
     DO nd0=1,nbdirs0
       result1d0(nd0) = temp2d(nd0)
       temp2d(nd0) = result1*pld0%te(nd0, icv) + pl%te(icv)*result1d0(nd0&
 &       )
-      temp1d(nd0) = (dvd0%ni(nd0, icv, 0)-temp17*temp2d(nd0))/temp2
+      temp1d(nd0) = (dvd0%ni(nd0, icv, 0)-temp19*temp2d(nd0))/temp2
       temp0d(nd0) = dv%ne(icv)*cod0%ceqp(nd0, icv) + co%ceqp(icv)*dvd0%&
 &       ne(nd0, icv)
     END DO
-    temp1 = temp17
+    temp1 = temp19
     temp0 = co%ceqp(icv)*dv%ne(icv)
     DO nd=1,nbdirs
-      temp17 = dv%ne(icv)*cod%ceqp(nd, icv) + co%ceqp(icv)*dvd%ne(nd, &
+      temp19 = dv%ne(icv)*cod%ceqp(nd, icv) + co%ceqp(icv)*dvd%ne(nd, &
 &       icv)
-      temp16 = temp0/temp2
-      temp15 = result1*pld%te(nd, icv) + pl%te(icv)*result1d(nd)
-      temp14 = dvd%ni(nd, icv, 0) - temp1*temp15
+      temp18 = temp0/temp2
+      temp17 = result1*pld%te(nd, icv) + pl%te(icv)*result1d(nd)
+      temp16 = dvd%ni(nd, icv, 0) - temp1*temp17
       DO nd0=1,nbdirs0
         shi0dd(nd0, nd, icv, 1) = shi0dd(nd0, nd, icv, 1) - switch%&
-&         b2npht_stab_shei*(temp17*temp1d(nd0)+temp1*(cod%ceqp(nd, icv)*&
+&         b2npht_stab_shei*(temp19*temp1d(nd0)+temp1*(cod%ceqp(nd, icv)*&
 &         dvd0%ne(nd0, icv)+dv%ne(icv)*codd%ceqp(nd0, nd, icv)+dvd%ne(nd&
 &         , icv)*cod0%ceqp(nd0, icv)+co%ceqp(icv)*dvdd%ne(nd0, nd, icv))&
-&         +temp16*(dvdd%ni(nd0, nd, icv, 0)-temp15*temp1d(nd0)-temp1*(&
+&         +temp18*(dvdd%ni(nd0, nd, icv, 0)-temp17*temp1d(nd0)-temp1*(&
 &         pld%te(nd, icv)*result1d0(nd0)+result1*pldd%te(nd0, nd, icv)+&
 &         result1d(nd)*pld0%te(nd0, icv)+pl%te(icv)*result1dd(nd0, nd)))&
-&         +temp14*(temp0d(nd0)-temp16*temp2d(nd0))/temp2)
+&         +temp16*(temp0d(nd0)-temp18*temp2d(nd0))/temp2)
       END DO
       shi0d(nd, icv, 1) = shi0d(nd, icv, 1) - switch%b2npht_stab_shei*(&
-&       temp1*temp17+temp14*temp16)
+&       temp1*temp19+temp16*temp18)
     END DO
     arg10 = pl%te(icv)
-    temp17 = SQRT(arg10)
+    temp19 = SQRT(arg10)
     DO nd0=1,nbdirs0
       shi0d0(nd0, icv, 1) = shi0d0(nd0, icv, 1) - switch%&
 &       b2npht_stab_shei*(temp1*temp0d(nd0)+temp0*temp1d(nd0))
@@ -1080,11 +1130,11 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
       IF (arg10 .EQ. 0.0_8) THEN
         temp2d(nd0) = 0.0_8
       ELSE
-        temp2d(nd0) = arg10d0(nd0)/(2.0*temp17)
+        temp2d(nd0) = arg10d0(nd0)/(2.0*temp19)
       END IF
     END DO
     shi0(icv, 1) = shi0(icv, 1) - switch%b2npht_stab_shei*(temp0*temp1)
-    temp2 = temp17
+    temp2 = temp19
     DO nd=1,nbdirs
       IF (arg10 .EQ. 0.d0) THEN
         DO nd0=1,nbdirs0
@@ -1092,12 +1142,12 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
         END DO
         result1d(nd) = 0.d0
       ELSE
-        temp17 = arg10d(nd)/(2.0*temp2)
+        temp19 = arg10d(nd)/(2.0*temp2)
         DO nd0=1,nbdirs0
-          result1dd(nd0, nd) = (arg10dd(nd0, nd)-temp17*2.0*temp2d(nd0))&
+          result1dd(nd0, nd) = (arg10dd(nd0, nd)-temp19*2.0*temp2d(nd0))&
 &           /(2.0*temp2)
         END DO
-        result1d(nd) = temp17
+        result1d(nd) = temp19
       END IF
 !lkw 29.03.2024}
       DO nd0=1,nbdirs0
@@ -1106,34 +1156,34 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
       arg10d(nd) = pld%te(nd, icv)
     END DO
     result1 = temp2
-    temp17 = co%ceqp(icv)/result1
+    temp19 = co%ceqp(icv)/result1
     DO nd0=1,nbdirs0
       result1d0(nd0) = temp2d(nd0)
       temp2d(nd0) = dv%ni(icv, 0)*dvd0%ne(nd0, icv) + dv%ne(icv)*dvd0%ni&
 &       (nd0, icv, 0)
-      temp1d(nd0) = (cod0%ceqp(nd0, icv)-temp17*result1d0(nd0))/result1
+      temp1d(nd0) = (cod0%ceqp(nd0, icv)-temp19*result1d0(nd0))/result1
     END DO
     temp2 = dv%ne(icv)*dv%ni(icv, 0)
-    temp1 = temp17
+    temp1 = temp19
     DO nd=1,nbdirs
-      temp17 = temp2/result1
-      temp16 = cod%ceqp(nd, icv) - temp1*result1d(nd)
-      temp15 = dv%ni(icv, 0)*dvd%ne(nd, icv) + dv%ne(icv)*dvd%ni(nd, icv&
+      temp19 = temp2/result1
+      temp18 = cod%ceqp(nd, icv) - temp1*result1d(nd)
+      temp17 = dv%ni(icv, 0)*dvd%ne(nd, icv) + dv%ne(icv)*dvd%ni(nd, icv&
 &       , 0)
       DO nd0=1,nbdirs0
         she0dd(nd0, nd, icv, 0) = she0dd(nd0, nd, icv, 0) + switch%&
-&         b2npht_stab_shei*(temp17*(codd%ceqp(nd0, nd, icv)-result1d(nd)&
-&         *temp1d(nd0)-temp1*result1dd(nd0, nd))+temp16*(temp2d(nd0)-&
-&         temp17*result1d0(nd0))/result1+temp15*temp1d(nd0)+temp1*(dvd%&
+&         b2npht_stab_shei*(temp19*(codd%ceqp(nd0, nd, icv)-result1d(nd)&
+&         *temp1d(nd0)-temp1*result1dd(nd0, nd))+temp18*(temp2d(nd0)-&
+&         temp19*result1d0(nd0))/result1+temp17*temp1d(nd0)+temp1*(dvd%&
 &         ne(nd, icv)*dvd0%ni(nd0, icv, 0)+dv%ni(icv, 0)*dvdd%ne(nd0, nd&
 &         , icv)+dvd%ni(nd, icv, 0)*dvd0%ne(nd0, icv)+dv%ne(icv)*dvdd%ni&
 &         (nd0, nd, icv, 0)))
       END DO
       she0d(nd, icv, 0) = she0d(nd, icv, 0) + switch%b2npht_stab_shei*(&
-&       temp16*temp17+temp1*temp15)
+&       temp18*temp19+temp1*temp17)
     END DO
     arg10 = pl%te(icv)
-    temp17 = SQRT(arg10)
+    temp19 = SQRT(arg10)
     DO nd0=1,nbdirs0
       she0d0(nd0, icv, 0) = she0d0(nd0, icv, 0) + switch%&
 &       b2npht_stab_shei*(temp2*temp1d(nd0)+temp1*temp2d(nd0))
@@ -1141,11 +1191,11 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
       IF (arg10 .EQ. 0.0_8) THEN
         temp2d(nd0) = 0.0_8
       ELSE
-        temp2d(nd0) = arg10d0(nd0)/(2.0*temp17)
+        temp2d(nd0) = arg10d0(nd0)/(2.0*temp19)
       END IF
     END DO
     she0(icv, 0) = she0(icv, 0) + switch%b2npht_stab_shei*(temp1*temp2)
-    temp2 = temp17
+    temp2 = temp19
     DO nd=1,nbdirs
       IF (arg10 .EQ. 0.d0) THEN
         DO nd0=1,nbdirs0
@@ -1153,45 +1203,45 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
         END DO
         result1d(nd) = 0.d0
       ELSE
-        temp17 = arg10d(nd)/(2.0*temp2)
+        temp19 = arg10d(nd)/(2.0*temp2)
         DO nd0=1,nbdirs0
-          result1dd(nd0, nd) = (arg10dd(nd0, nd)-temp17*2.0*temp2d(nd0))&
+          result1dd(nd0, nd) = (arg10dd(nd0, nd)-temp19*2.0*temp2d(nd0))&
 &           /(2.0*temp2)
         END DO
-        result1d(nd) = temp17
+        result1d(nd) = temp19
       END IF
     END DO
     result1 = temp2
     temp2 = pl%te(icv)*result1
-    temp17 = dv%ni(icv, 0)/temp2
+    temp19 = dv%ni(icv, 0)/temp2
     DO nd0=1,nbdirs0
       result1d0(nd0) = temp2d(nd0)
       temp2d(nd0) = result1*pld0%te(nd0, icv) + pl%te(icv)*result1d0(nd0&
 &       )
-      temp1d(nd0) = (dvd0%ni(nd0, icv, 0)-temp17*temp2d(nd0))/temp2
+      temp1d(nd0) = (dvd0%ni(nd0, icv, 0)-temp19*temp2d(nd0))/temp2
       temp0d(nd0) = dv%ne(icv)*cod0%ceqp(nd0, icv) + co%ceqp(icv)*dvd0%&
 &       ne(nd0, icv)
     END DO
-    temp1 = temp17
+    temp1 = temp19
     temp0 = co%ceqp(icv)*dv%ne(icv)
     DO nd=1,nbdirs
-      temp17 = dv%ne(icv)*cod%ceqp(nd, icv) + co%ceqp(icv)*dvd%ne(nd, &
+      temp19 = dv%ne(icv)*cod%ceqp(nd, icv) + co%ceqp(icv)*dvd%ne(nd, &
 &       icv)
-      temp16 = temp0/temp2
-      temp15 = result1*pld%te(nd, icv) + pl%te(icv)*result1d(nd)
-      temp14 = dvd%ni(nd, icv, 0) - temp1*temp15
+      temp18 = temp0/temp2
+      temp17 = result1*pld%te(nd, icv) + pl%te(icv)*result1d(nd)
+      temp16 = dvd%ni(nd, icv, 0) - temp1*temp17
       DO nd0=1,nbdirs0
         she0dd(nd0, nd, icv, 1) = she0dd(nd0, nd, icv, 1) - switch%&
-&         b2npht_stab_shei*(temp17*temp1d(nd0)+temp1*(cod%ceqp(nd, icv)*&
+&         b2npht_stab_shei*(temp19*temp1d(nd0)+temp1*(cod%ceqp(nd, icv)*&
 &         dvd0%ne(nd0, icv)+dv%ne(icv)*codd%ceqp(nd0, nd, icv)+dvd%ne(nd&
 &         , icv)*cod0%ceqp(nd0, icv)+co%ceqp(icv)*dvdd%ne(nd0, nd, icv))&
-&         +temp16*(dvdd%ni(nd0, nd, icv, 0)-temp15*temp1d(nd0)-temp1*(&
+&         +temp18*(dvdd%ni(nd0, nd, icv, 0)-temp17*temp1d(nd0)-temp1*(&
 &         pld%te(nd, icv)*result1d0(nd0)+result1*pldd%te(nd0, nd, icv)+&
 &         result1d(nd)*pld0%te(nd0, icv)+pl%te(icv)*result1dd(nd0, nd)))&
-&         +temp14*(temp0d(nd0)-temp16*temp2d(nd0))/temp2)
+&         +temp16*(temp0d(nd0)-temp18*temp2d(nd0))/temp2)
       END DO
       she0d(nd, icv, 1) = she0d(nd, icv, 1) - switch%b2npht_stab_shei*(&
-&       temp1*temp17+temp14*temp16)
+&       temp1*temp19+temp16*temp18)
     END DO
     DO nd0=1,nbdirs0
       she0d0(nd0, icv, 1) = she0d0(nd0, icv, 1) - switch%&
@@ -1338,20 +1388,20 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
 &               , dvd0%flozt, dvd%flozt, dvdd%flozt, dv%conzt, dvd0%&
 &               conzt, dvd%conzt, dvdd%conzt, she0, she0d0, she0d, &
 &               she0dd, shi0, shi0d0, shi0d, shi0dd, shn0, shn0d0, shn0d&
-&               , shn0dd, skt0, skt0d0, skt0d, skt0dd, szt0, co%ceqp, &
-&               cod0%ceqp, cod%ceqp, codd%ceqp, dv%resht, dvd0%resht, &
-&               dvd%resht, dvdd%resht, dv%reshe, dvd0%reshe, dvd%reshe, &
-&               dvdd%reshe, dv%reshi, dvd0%reshi, dvd%reshi, dvdd%reshi&
-&               , dv%reshn, dvd0%reshn, dvd%reshn, dvdd%reshn, dv%reskt&
-&               , dvd0%reskt, dvd%reskt, dvdd%reskt, dv%reszt, dvd0%&
-&               reszt, dvd%reszt, dvdd%reszt, dv%cortt, dvd0%cortt, dvd%&
-&               cortt, dvdd%cortt, dv%corte, dvd0%corte, dvd%corte, dvdd&
-&               %corte, dv%corti, dvd0%corti, dvd%corti, dvdd%corti, dv%&
-&               cortn, dvd0%cortn, dvd%cortn, dvdd%cortn, dv%corkt, dvd0&
-&               %corkt, dvd%corkt, dvdd%corkt, dv%corzt, dvd0%corzt, dvd&
-&               %corzt, dvdd%corzt, wrkf, wrkfd0, wrkfd, wrkfdd, wrkc, &
-&               wrkcd0, wrkcd, wrkcdd, aa, aad0, aad, aadd, nbdirs, &
-&               nbdirs0)
+&               , shn0dd, skt0, skt0d0, skt0d, skt0dd, szt0, szt0d0, &
+&               szt0d, szt0dd, co%ceqp, cod0%ceqp, cod%ceqp, codd%ceqp, &
+&               dv%resht, dvd0%resht, dvd%resht, dvdd%resht, dv%reshe, &
+&               dvd0%reshe, dvd%reshe, dvdd%reshe, dv%reshi, dvd0%reshi&
+&               , dvd%reshi, dvdd%reshi, dv%reshn, dvd0%reshn, dvd%reshn&
+&               , dvdd%reshn, dv%reskt, dvd0%reskt, dvd%reskt, dvdd%&
+&               reskt, dv%reszt, dvd0%reszt, dvd%reszt, dvdd%reszt, dv%&
+&               cortt, dvd0%cortt, dvd%cortt, dvdd%cortt, dv%corte, dvd0&
+&               %corte, dvd%corte, dvdd%corte, dv%corti, dvd0%corti, dvd&
+&               %corti, dvdd%corti, dv%cortn, dvd0%cortn, dvd%cortn, &
+&               dvdd%cortn, dv%corkt, dvd0%corkt, dvd%corkt, dvdd%corkt&
+&               , dv%corzt, dvd0%corzt, dvd%corzt, dvdd%corzt, wrkf, &
+&               wrkfd0, wrkfd, wrkfdd, wrkc, wrkcd0, wrkcd, wrkcdd, aa, &
+&               aad0, aad, aadd, nbdirs, nbdirs0)
 !   ..apply correction
 !srv 22.05.18
     CALL B2UPHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, mpg, &
@@ -1428,9 +1478,9 @@ END SUBROUTINE B2NPHT_DV_DV
 !                *(dv.reskt) *(dv.reszt) *(dv.cortt) *(dv.corte)
 !                *(dv.corti) *(dv.cortn) *(dv.corkt) *(dv.corzt)
 !                *(dv.lnlam) *(dv.vaecrb) *(sr.she) *(sr.shi) *(sr.shn)
-!                *(sr.skt) *(sr.shedt) *(sr.sktdt) *(sr.shidt)
-!                *(sr.shndt) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti)
-!                *(pl.tn) *(pl.kt) *(pl.zt)
+!                *(sr.skt) *(sr.szt) *(sr.shedt) *(sr.sktdt) *(sr.sztdt)
+!                *(sr.shidt) *(sr.shndt) *(pl.ua) *(pl.po) *(pl.te)
+!                *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
 !   with respect to varying inputs: *(dv.fch) *(dv.fhe) *(dv.fhe_mdf)
 !                *(dv.fhi) *(dv.fhi_mdf) *(dv.fhn) *(dv.fkt) *(dv.fzt)
 !                *(dv.floe) *(dv.floi) *(dv.flon) *(dv.flokt) *(dv.flozt)
@@ -1440,16 +1490,17 @@ END SUBROUTINE B2NPHT_DV_DV
 !                *(dv.corte) *(dv.corti) *(dv.cortn) *(dv.corkt)
 !                *(dv.corzt) *(dv.pccm) *(dv.ne) *(dv.ni) *(dv.nn)
 !                *(dv.ue) *(dv.lnlam) *(dv.vaecrb) *(psnl.na) *(psnl.te)
-!                *(psnl.ti) *(psnl.tn) *(psnl.kt) *(psnl.ne) *(psnl.ni)
-!                *(psnl.kinrgy) *(rt.rz2) switch.b2sikt_fac_sheath
+!                *(psnl.ti) *(psnl.tn) *(psnl.kt) *(psnl.zt) *(psnl.ne)
+!                *(psnl.ni) *(psnl.kinrgy) *(rt.rz2) switch.b2sikt_fac_sheath
 !                switch.b2sikt_fac_sheath_core switch.b2sikt_fac_diss
 !                switch.b2sikt_fac_diss_core switch.b2sikt_fac_vis_rs
-!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.shedt)
-!                *(sr.sktdt) *(sr.shidt) *(sr.shndt) *(co.cvsa)
-!                *(co.cvsahz_eff) *(co.ceqp) *(co.dna_exb) *(co.hce_exb)
-!                *(co.hci_exb) *(co.alfx_c) *(co.sigx_c) *(co.sigx_kt)
-!                *(co.f_luc_sg) *(pl.na) *(pl.ua) *(pl.po) *(pl.te)
-!                *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
+!                *(sr.she) *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt)
+!                *(sr.shedt) *(sr.sktdt) *(sr.sztdt) *(sr.shidt)
+!                *(sr.shndt) *(co.cvsa) *(co.cvsahz_eff) *(co.ceqp)
+!                *(co.dna_exb) *(co.hce_exb) *(co.hci_exb) *(co.alfx_c)
+!                *(co.sigx_c) *(co.sigx_kt) *(co.f_luc_sg) *(pl.na)
+!                *(pl.ua) *(pl.po) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt)
+!                *(pl.zt)
 !   Plus diff mem management of: dv.fch:in dv.fna_fcor:in dv.fne:in
 !                dv.fhe:in dv.fhe_mdf:in dv.fhi:in dv.fhi_mdf:in
 !                dv.fhn:in dv.fkt:in dv.fzt:in dv.floe:in dv.floi:in
@@ -1461,22 +1512,23 @@ END SUBROUTINE B2NPHT_DV_DV
 !                dv.pccm:in dv.ne:in dv.ni:in dv.nn:in dv.ue:in
 !                dv.lnlam:in dv.vaecrb:in dv.fac_exb:in mpg.intcellp:in
 !                mpg.intcellr:in psnl.na:in psnl.te:in psnl.ti:in
-!                psnl.tn:in psnl.kt:in psnl.ne:in psnl.ni:in psnl.kinrgy:in
-!                geo.cvbb:in geo.cvhz:in geo.cvvol:in geo.cvonedbsq:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.fcpbs:in geo.vxvol:in geo.vxonedbsq:in
-!                geo.cvconn:in st_ext.am:in st_ext.ne2:in st_ext.za2:in
-!                st_ext.na:in st_ext.ta:in rt.rz2:in srw.b2sihs_joule:in
-!                srw.b2sihs_divue:in srw.b2sihs_divua:in srw.b2sihs_exbe:in
-!                srw.b2sihs_exba:in srw.b2sihs_visa:in srw.b2sihs_fraa:in
-!                srw.b2sihs_str:in sr.she:in sr.shi:in sr.shn:in
-!                sr.skt:in sr.szt:in sr.shedt:in sr.sktdt:in sr.sztdt:in
-!                sr.shidt:in sr.shndt:in sr.skt_diss:in sr.skt_prod:in
-!                co.cvsa:in co.cvsahz_eff:in co.ceqp:in co.dna_exb:in
-!                co.hce_exb:in co.hci_exb:in co.alfx_c:in co.sigx_c:in
-!                co.sigx_kt:in co.f_luc_sg:in pl.na:in pl.ua:in
-!                pl.po:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
+!                psnl.tn:in psnl.kt:in psnl.zt:in psnl.ne:in psnl.ni:in
+!                psnl.kinrgy:in geo.cvbb:in geo.cvhz:in geo.cvvol:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
+!                geo.vxonedbsq:in geo.cvconn:in st_ext.am:in st_ext.ne2:in
+!                st_ext.za2:in st_ext.na:in st_ext.ta:in rt.rz2:in
+!                srw.b2sihs_joule:in srw.b2sihs_divue:in srw.b2sihs_divua:in
+!                srw.b2sihs_exbe:in srw.b2sihs_exba:in srw.b2sihs_visa:in
+!                srw.b2sihs_fraa:in srw.b2sihs_str:in sr.she:in
+!                sr.shi:in sr.shn:in sr.skt:in sr.szt:in sr.shedt:in
+!                sr.sktdt:in sr.sztdt:in sr.shidt:in sr.shndt:in
+!                sr.skt_diss:in sr.skt_prod:in co.cvsa:in co.cvsahz_eff:in
+!                co.ceqp:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
+!                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.f_luc_sg:in
+!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
+!                pl.kt:in pl.zt:in
 !
 !
 !
@@ -1746,11 +1798,11 @@ SUBROUTINE B2NPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
 !  .. calculate time-dependent source
     CALL B2SHDT_DV_NODIFF(ncv, mpg%nci, ns, dtim, geo%cvvol, psnl%na, &
 &                   psnld%na, psnl%te, psnld%te, psnl%ti, psnld%ti, psnl&
-&                   %tn, psnld%tn, psnl%kt, psnld%kt, psnl%zt, dv%ne, &
-&                   dvd%ne, dv%ni, dvd%ni, dv%nn, dvd%nn, psnl%kinrgy, &
-&                   psnld%kinrgy, switch, mpg, sr%shedt, srd%shedt, sr%&
-&                   shidt, srd%shidt, sr%shndt, srd%shndt, sr%sktdt, srd&
-&                   %sktdt, sr%sztdt, nbdirs)
+&                   %tn, psnld%tn, psnl%kt, psnld%kt, psnl%zt, psnld%zt&
+&                   , dv%ne, dvd%ne, dv%ni, dvd%ni, dv%nn, dvd%nn, psnl%&
+&                   kinrgy, psnld%kinrgy, switch, mpg, sr%shedt, srd%&
+&                   shedt, sr%shidt, srd%shidt, sr%shndt, srd%shndt, sr%&
+&                   sktdt, srd%sktdt, sr%sztdt, srd%sztdt, nbdirs)
     DO nd=1,nbdirs
 !  .. add contributions from time-dependent sources
 !c If e.g. d(nT)/dt = n dT/dt + T dn/dt,
@@ -1817,6 +1869,12 @@ SUBROUTINE B2NPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
 &       psnl%kt/dtim*geo%cvvol
     END IF
     IF (switch%solve_keps .GT. 1) THEN
+      DO nd=1,nbdirs
+        srd%szt(nd, :, :) = srd%szt(nd, :, :) + srd%sztdt(nd, :, :)
+        srd%szt(nd, :, 0) = srd%szt(nd, :, 0) - geo%cvvol*1.5_R8*(psnl%&
+&         zt*(dvd%ni(nd, :, 1)-psnld%ni(nd, :, 1))/dtim+(dv%ni(:, 1)-&
+&         psnl%ni(:, 1))*psnld%zt(nd, :)/dtim)
+      END DO
       sr%szt = sr%szt + sr%sztdt
       sr%szt(:, 0) = sr%szt(:, 0) - 1.5_R8*(dv%ni(:, 1)-psnl%ni(:, 1))*&
 &       psnl%zt/dtim*geo%cvvol
@@ -1867,6 +1925,10 @@ SUBROUTINE B2NPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
 &                   cod, st_ext, st_extd, shekt, shektd, shikt, shiktd, &
 &                   skt0, skt0d, skt_prod, skt_prodd, skt_diss, &
 &                   skt_dissd, nbdirs)
+    DO nd=1,nbdirs
+      szt0d(nd, :, :) = 0.d0
+    END DO
+    szt0 = 0.0_R8
     arg1 = ncv*4
     CALL B2SAXPY_DV_NODIFF(arg1, 1.0_R8, shekt, shektd, 1, she0, she0d, &
 &                    1, nbdirs)
@@ -1876,11 +1938,20 @@ SUBROUTINE B2NPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
     arg1 = ncv*4
     CALL B2SAXPY_DV_NODIFF(arg1, 1.0_R8, sr%skt, srd%skt, 1, skt0, skt0d&
 &                    , 1, nbdirs)
+    arg1 = ncv*4
+    DO nd=1,nbdirsmax
+      szt0d(nd, :, :) = 0.d0
+    END DO
+    CALL B2SAXPY_DV_NODIFF(arg1, 1.0_R8, sr%szt, srd%szt, 1, szt0, szt0d&
+&                    , 1, nbdirs)
     CALL B2SAXPY_NODIFF_NODIFF(ncv, 1.0_R8, skt_prod, 1, sr%skt_prod, 1)
     CALL B2SAXPY_NODIFF_NODIFF(ncv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
   ELSE
     DO nd=1,nbdirsmax
       skt0d(nd, :, :) = 0.d0
+    END DO
+    DO nd=1,nbdirsmax
+      szt0d(nd, :, :) = 0.d0
     END DO
   END IF
 !
@@ -1930,14 +2001,14 @@ SUBROUTINE B2NPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
 &                                                       , dv%reskt, dvd%&
 &                                                       reskt, nbdirs)
   IF ((switch%solve_keps .GT. 1 .AND. ANY(solvzreg(0:mpg%nnreg(0)))) &
-&     .OR. switch%get_residuals .EQ. 1) THEN
-    DO nd=1,nbdirsmax
-      szt0d(nd, :, :) = 0.d0
-    END DO
-    CALL B2URSD_DV_NODIFF(ncv, nfc, mpg, dv%ni(:, 1), dvd%ni(:, :, 1), &
-&                   pl%zt, pld%zt, szt0, szt0d, dv%fzt, dvd%fzt, dv%&
-&                   reszt, dvd%reszt, nbdirs)
-  END IF
+&     .OR. switch%get_residuals .EQ. 1) CALL B2URSD_DV_NODIFF(ncv, nfc, &
+&                                                       mpg, dv%ni(:, 1)&
+&                                                       , dvd%ni(:, :, 1&
+&                                                       ), pl%zt, pld%zt&
+&                                                       , szt0, szt0d, &
+&                                                       dv%fzt, dvd%fzt&
+&                                                       , dv%reszt, dvd%&
+&                                                       reszt, nbdirs)
 !
 ! residuals for separate neutral energy equation
   IF (switch%tn_style .EQ. 2) THEN
@@ -2180,13 +2251,13 @@ SUBROUTINE B2NPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
 &                   flon, dvd%flon, dv%conn, dvd%conn, dv%flokt, dvd%&
 &                   flokt, dv%conkt, dvd%conkt, dv%flozt, dvd%flozt, dv%&
 &                   conzt, dvd%conzt, she0, she0d, shi0, shi0d, shn0, &
-&                   shn0d, skt0, skt0d, szt0, co%ceqp, cod%ceqp, dv%&
-&                   resht, dvd%resht, dv%reshe, dvd%reshe, dv%reshi, dvd&
-&                   %reshi, dv%reshn, dvd%reshn, dv%reskt, dvd%reskt, dv&
-&                   %reszt, dvd%reszt, dv%cortt, dvd%cortt, dv%corte, &
-&                   dvd%corte, dv%corti, dvd%corti, dv%cortn, dvd%cortn&
-&                   , dv%corkt, dvd%corkt, dv%corzt, dvd%corzt, wrkf, &
-&                   wrkfd, wrkc, wrkcd, aa, aad, nbdirs)
+&                   shn0d, skt0, skt0d, szt0, szt0d, co%ceqp, cod%ceqp, &
+&                   dv%resht, dvd%resht, dv%reshe, dvd%reshe, dv%reshi, &
+&                   dvd%reshi, dv%reshn, dvd%reshn, dv%reskt, dvd%reskt&
+&                   , dv%reszt, dvd%reszt, dv%cortt, dvd%cortt, dv%corte&
+&                   , dvd%corte, dv%corti, dvd%corti, dv%cortn, dvd%&
+&                   cortn, dv%corkt, dvd%corkt, dv%corzt, dvd%corzt, &
+&                   wrkf, wrkfd, wrkc, wrkcd, aa, aad, nbdirs)
 !   ..apply correction
 !srv 22.05.18
     CALL B2UPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
@@ -2544,12 +2615,15 @@ SUBROUTINE B2NPHT_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, &
     CALL B2SIKT_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
 &                       mpg, pl, dv, rt%rza, co, st_ext, shekt, shikt, &
 &                       skt0, skt_prod, skt_diss)
+    szt0 = 0.0_R8
     arg1 = ncv*4
     CALL B2SAXPY_NODIFF_NODIFF(arg1, 1.0_R8, shekt, 1, she0, 1)
     arg1 = ncv*4
     CALL B2SAXPY_NODIFF_NODIFF(arg1, 1.0_R8, shikt, 1, shi0, 1)
     arg1 = ncv*4
     CALL B2SAXPY_NODIFF_NODIFF(arg1, 1.0_R8, sr%skt, 1, skt0, 1)
+    arg1 = ncv*4
+    CALL B2SAXPY_NODIFF_NODIFF(arg1, 1.0_R8, sr%szt, 1, szt0, 1)
     CALL B2SAXPY_NODIFF_NODIFF(ncv, 1.0_R8, skt_prod, 1, sr%skt_prod, 1)
     CALL B2SAXPY_NODIFF_NODIFF(ncv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
   END IF

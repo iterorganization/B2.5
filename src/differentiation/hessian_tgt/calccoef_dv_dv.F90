@@ -38,7 +38,7 @@ SUBROUTINE CALCCOEF_DV_DV(ncv, nfc, nvx, meth, geo, flo, flod0, flod, &
 !.end calccoef
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, meth
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
   REAL(kind=r8) :: flo(nfc, 0:1), con(nfc, 0:1)
   REAL(kind=r8) :: flod0(nbdirsmax0, nfc, 0:1), cond0(nbdirsmax0, nfc, 0&
@@ -515,7 +515,7 @@ SUBROUTINE CALCCOEF_DV_NODIFF(ncv, nfc, nvx, meth, geo, flo, flod, con, &
 !.end calccoef
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, meth
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
   REAL(kind=r8) :: flo(nfc, 0:1), con(nfc, 0:1)
   REAL(kind=r8) :: flod(nbdirsmax, nfc, 0:1), cond(nbdirsmax, nfc, 0:1)
@@ -791,7 +791,7 @@ SUBROUTINE CALCCOEF_NODIFF_NODIFF(ncv, nfc, nvx, meth, geo, flo, con, &
 !.end calccoef
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, meth
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
   REAL(kind=r8) :: flo(nfc, 0:1), con(nfc, 0:1)
 !   ..output arguments
