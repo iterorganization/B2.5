@@ -226,11 +226,11 @@
 *     B2FU reads in a formatted b2fplasmf file, and writes out a
 *     an unformatted b2fplasma file.
 *
-*     B2OBEQ calculates difference betwenn eperimental and model data.
+*     B2OBEQ calculates difference between experimental and model data.
 *
 *     B2OBFN calculates value of objective functional.
 *
-*     B2OBLM calculates difference betwenn eperimental and model data.
+*     B2OBLM calculates difference between experimental and model data.
 *
 *     B2PL (main program) is a postprocessor for B2.5. It reads and
 *     displays the plasma state. This program calls the driver routine
