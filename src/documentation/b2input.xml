@@ -3828,8 +3828,26 @@
 				<type>integer</type>
 				<description>
 					Since v3.2.0, the physics model always corresponds to b2mndt_style=1 option (SOLPS5.2). Hence b2mndt_style=0 is no longer allowed.
-					If b2mndt_style=2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode.
-          B2news_m uses new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations (and optionally also Tn and k-epsilon equations).
+					If b2mndt_style=2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode, using an implicit Euler time-stepping scheme.
+                    B2news_m uses new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations (and optionally also Tn and k-epsilon equations).
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_ckn</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_ckn=2, the Crank-Nicolson time-stepping scheme is activated. 
+					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order. 
+					This scheme can only be used in time-dependent mode (b2mndt_style=2).
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_dummy</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					This switch is used internally in the code to initially run a dummy call to b2mndt, which is needed to use the Crank-Nicolson time-stepping scheme (b2mndt_ckn=2). This switch is not meant to be changed by users, it should always stay at its default value of 0.
 				</description>
 			</switch>
 			<switch>

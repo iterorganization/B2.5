@@ -141,7 +141,7 @@
             close(70)
           elseif (switch%use_mms.eq.2) then
             write (chitim,'(i4.4)') itim
-            filename='bv_te_us'//chitim//'.dat'
+            filename='bv_ti_us'//chitim//'.dat'
             call find_file(filename,lexist)
             call xertst(lexist,'File '//trim(filename)//' not found')
             open(70,file=trim(filename))
