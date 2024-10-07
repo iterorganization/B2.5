@@ -190,9 +190,12 @@ c make sure fhn is zero when not solving a separate neutral energy equation
       if (switch % tn_style.ne.2) then
         dv%fhn = 0.0_R8
       endif
-
+!fc This is the old positioning of time-dependent treatment
+!fc It had to be moved to later in the file to allow for the use of Crank-Nicolson
+!fc These lines should eventually be removed 
+      if(switch%b2mndt_temp0.eq.0) then !temp0=0 backward compatible
 c time-dependent treatment                                              !srv 07.07.21 {
-      if(switch%b2mndt_style.eq.2) then
+      if(switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.1) then
 *  .. calculate time-dependent source
         call b2shdt (nCv, mpg%nCi, ns, dtim, switch%BoRiS,
      &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
@@ -211,6 +214,7 @@ c time-dependent treatment                                              !srv 07.
      &                                    psnl%tn/dtim*geo%cvVol
         endif
       endif                                                              !srv 207.07.21 }
+      endif
 
 *   ..compute final heat sources
       if(switch%b2npht_style.eq.0) then
@@ -252,6 +256,56 @@ cdjm Jan2017 update particle source components for balance
         call update_balance_sources_heat(nx,ny,ne,ni,te,ti)
       endif
 #endif
+!fc This is the new positioning of time-dependent treatment
+!fc It had to be moved here to allow for the use of Crank-Nicolson
+      if(switch%b2mndt_temp0.eq.1) then !temp0=1 new default
+c time-dependent treatment                                              !srv 07.07.21 {
+      if(switch%b2mndt_style.eq.2) then
+*    ..compute residual without time-stepping sources (needed at next time-step for ckn scheme)
+        if (switch%b2mndt_ckn.eq.2) then
+*       ..electrons
+          if ((solving(4).and.any(solvereg(0:mpg%nnreg(0)))).or.
+     &     switch%get_residuals.eq.1) then                              !srv 22.05.18
+            if (switch%mdf_fhe.eq.0) then
+              call b2ursd (nCv, nFc, mpg, dv%ne, pl%te, she0,
+     &                     dv%fhe, dv%reshe0)
+            else
+              call b2ursd (nCv, nFc, mpg, dv%ne, pl%te, she0,
+     &                     dv%fhe_mdf, dv%reshe0)
+            endif
+          endif
+*       ..ions
+          if ((solving(4).and.any(solvireg(0:mpg%nnreg(0)))).or.
+     &     switch%get_residuals.eq.1) then    !srv 22.05.18
+            if (switch%mdf_fhi.eq.0) then
+              call b2ursd (nCv, nFc, mpg, dv%ni(:,0), pl%ti, shi0,
+     &                     dv%fhi, dv%reshi0)
+            else
+              call b2ursd (nCv, nFc, mpg, dv%ni(:,0), pl%ti, shi0,
+     &                     dv%fhi_mdf, dv%reshi0)
+            endif
+          endif
+        endif
+*  .. calculate time-dependent source
+        call b2shdt (nCv, mpg%nCi, ns, dtim, switch%BoRiS,
+     &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
+     &    dv%ne, dv%ni, dv%nn,
+     &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt)
+*  .. add contribution from time-dependent source
+        she0 = she0+sr%shedt
+        she0(:,0)=she0(:,0)-1.5_R8*(dv%ne-psnl%ne)
+     &                *switch%b2mndt_ckn*psnl%te/dtim*geo%cvVol
+        shi0 = shi0+sr%shidt
+        shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
+     &                *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol
+        if (switch%tn_style.eq.2) then
+          shn0 = shn0+sr%shndt
+          shn0(:,0)=shn0(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))
+     &                  *switch%b2mndt_ckn*psnl%tn/dtim*geo%cvVol
+        endif
+      endif                                                              !srv 207.07.21 }
+      endif
+
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
 *   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
@@ -300,7 +354,7 @@ c residuals for separate neutral energy equation
       else
         dv%reshn = 0.0_R8         !! this is needed because reshn is added to the total energy equation
       endif
-
+*     ..compute equipartition
       do iCv = 1, mpg%nCi
         shei(iCv) = co%ceqp(iCv)*dv%ne(iCv)*dv%ni(iCv,0)/
      &     (pl%te(iCv)*sqrt(pl%te(iCv)))*(pl%te(iCv)-pl%ti(iCv))
@@ -319,6 +373,7 @@ c residuals for separate neutral energy equation
 !        dv%reshe = dv%reshe - shei
 !        dv%reshi = dv%reshi + shei
 !      endif                                                             !srv 22.05.18
+*     ..correct residual with equipartition
       if ((solving(4).and.any(solvereg(0:mpg%nnreg(0))))                     !srv 22.05.18 {
      &    .or.switch%get_residuals.eq.1) dv%reshe = dv%reshe - shei
       if ((solving(4).and.any(solvireg(0:mpg%nnreg(0))))
@@ -328,6 +383,22 @@ c residuals for separate neutral energy equation
      &   any(solvtreg(0:mpg%nnreg(0))).or.
      &   switch%get_residuals.eq.1)
      &   dv%resht = dv%reshe + dv%reshi + dv%reshn                       !srv 22.05.18 }
+
+*    ..modify residual for ckn scheme
+      if (switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.2) then
+        if ((solving(4).and.any(solvereg(0:mpg%nnreg(0)))).or.
+     &     switch%get_residuals.eq.1) then
+          dv%reshe0 = dv%reshe0 - shei !correct res0 with equipartition
+          dv%reshe(1:mpg%nCi) = dv%reshe(1:mpg%nCi) +
+     &                          psnl%reshe0(1:mpg%nCi)
+        endif
+        if ((solving(4).and.any(solvireg(0:mpg%nnreg(0)))).or.
+     &     switch%get_residuals.eq.1) then
+          dv%reshi0 = dv%reshi0 + shei !correct res0 with equipartition
+          dv%reshi(1:mpg%nCi) = dv%reshi(1:mpg%nCi) +
+     &                          psnl%reshi0(1:mpg%nCi)
+        endif
+      endif
 
       if(switch%b2npht_iout .eq. 1 .or. switch%iout_b2wdat .eq. 4) then  !srv 17.07.05 01.11.10 {
         call my_out_us(70,nCv,0,shei,'b2npht_shei')

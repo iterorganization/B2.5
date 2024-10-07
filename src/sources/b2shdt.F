@@ -76,7 +76,7 @@
 
       do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
-        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
         shedt(iCv,0) = 1.5_R8*t0*ne(iCv)*tep(iCv)               !srv 06.01.21 {
         shedt(iCv,1) = 0.0_R8
         shedt(iCv,2) = 0.0_R8
@@ -85,7 +85,7 @@
 
       do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
-        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
         shidt(iCv,0) = 1.5_R8*t0*ni(iCv,0)*tip(iCv)             !srv 06.01.21 {
         shidt(iCv,1) = 0.0_R8
         shidt(iCv,2) = 0.0_R8
@@ -105,7 +105,7 @@
       if (switch%tn_style.eq.2) then
         do iCv = 1, nCi ! only internal cells
           ttim=dtim*dten(mpg%cvReg(iCv))*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
+          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
           shndt(iCv,0) = 1.5_R8*t0*nn(iCv)*tnp(iCv)               !srv 06.01.21 {
           shndt(iCv,1) = 0.0_R8
           shndt(iCv,2) = 0.0_R8
