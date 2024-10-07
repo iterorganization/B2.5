@@ -45,7 +45,7 @@
 *     history, the mesh was structured and topologically rectangular. The
 *     current version uses an unstructured mesh such that it becomes possible to
 *     mesh up to the real vessel walls and to have better control over local
-*     refinement.There are nCv (1:nCv) cells, comprised of nCi internal cells
+*     refinement. There are nCv (1:nCv) cells, comprised of nCi internal cells
 *     and nCg guard cells.
 *
 *     The primary data describing the mesh are the coordinates of the
