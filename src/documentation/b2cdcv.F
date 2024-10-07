@@ -1347,9 +1347,9 @@
 *     (iCv) cell.
 *
 *     shi0 - (1:nCv,0:3) real*8 array.
-*     For (iCv) in (1:nCv), shi0(ix,iy,0:3) are the coefficients
+*     For (iCv) in (1:nCv), shi0(iCv,0:3) are the coefficients
 *     in the expression
-*       shi0(ix,iy,0)+
+*       shi0(iCv,0)+
 *         shi0(iCv,1)*ti(iCv)+
 *         shi0(iCv,2)*ni(iCv)+
 *         shi0(iCv,3)*ni(iCv)*ti(iCv)
@@ -1358,7 +1358,7 @@
 *     (iCv) cell.
 *
 *     sch0 - (1:nCv,0:3) real*8 array.
-*     For (iCv) in (1:nCv), sch0(ix,iy,0:3) are the coefficients
+*     For (iCv) in (1:nCv), sch0(iCv,0:3) are the coefficients
 *     in the expression
 *       sch0(iCv,0)+
 *         sch0(iCv,1)*po(iCv)+
