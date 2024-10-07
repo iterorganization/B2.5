@@ -5390,9 +5390,9 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If 0, refers to the obsolete SOLPS5.0 physics model, no longer supported.
-					If 1, the SOLPS5.2 physics model is used, and b2news_ is called to compute the new plasma state. (default)
-					If 2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode. B2news_m uses a different order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations (and optionally also the Tn and k-epsilon equations, if requested).
+					Since v3.2.0, the physics model always corresponds to b2mndt_style=1 option (SOLPS5.2). Hence b2mndt_style=0 is no longer allowed.
+					If b2mndt_style=2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode, using an implicit Euler time-stepping scheme.
+                    B2news_m uses new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations (and optionally also Tn and k-epsilon equations).
 				</description>
 			</switch>
 			<switch>
@@ -5400,8 +5400,9 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If b2mndt_ckn=2, the 2nd order Crank-Nicolson time-stepping scheme is used, instead of the default 1st order implicit Euler scheme.
-					This scheme can be used both in time-dependent mode (b2mndt_style=2) and in steady-state mode (b2mndt_style=1).
+					If b2mndt_ckn=2, the Crank-Nicolson time-stepping scheme is activated. 
+					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order. 
+					This scheme can only be used in time-dependent mode (b2mndt_style=2).
 				</description>
 			</switch>
 			<switch>
@@ -5409,101 +5410,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					This switch is used internally in the code to initially run a dummy call to b2mndt, which is needed to start up the Crank-Nicolson time-stepping scheme (b2mndt_ckn=2).
-					This switch is not meant to be changed by users! Please always keep it at its default value of 0.
-				</description>
-			</switch>
-			<switch>
-				<name>b2mndt_ckn</name>
-				<default>1</default>
-				<type>integer</type>
-				<description>
-					If b2mndt_ckn=2, the Crank-Nicolson time-stepping scheme is activated.
-					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order.
-					The scheme is meant to be used in time-dependent mode  (b2mndt_style=2).
-					It can in principle be used in steady-state mode (b2mndt_style=1) for false time-stepping, but whether this is beneficial or detrimental is still unclear.
-				</description>
-			</switch>
-			<switch>
-				<name>b2mndt_bdf</name>
-				<default>1</default>
-				<type>integer</type>
-				<description>
-					If b2mndt_bdf=2, the Backward Differentiation 2 time-stepping scheme is activated.
-					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order.
-					The scheme needs to be started up in the first time-step with a different scheme, which can be set with the switch b2mndt_startup.
-					This scheme is meant to be used in time-dependent mode (b2mndt_style=2).
-					It can in principle be used in steady-state mode (b2mndt_style=1) for false time-stepping, but whether this is beneficial or detrimental is still unclear.
-				</description>
-			</switch>
-			<switch>
-				<name>b2mndt_startup</name>
-				<default>1</default>
-				<type>integer</type>
-				<description>
-					When using a backward differentiation scheme (b2mndt_bdf=2), this switch decides which other time-stepping scheme to use for start-up in the first time-step.
-					If set to 1 (default), the implicit Euler scheme is used. If set to 2, the Crank-Nicolson scheme is used.
-				</description>
-			</switch>
-			<switch>
-				<name>b2mndt_var_style</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Option to use a cell-based spatially varying false timestep computed at runtime based on local criteria. Can only be used in steady-state mode (b2mndt_style=1). In its current implementation, the methods can be used in conjunction with region-based multipliers (DTCO etc.) but not with flux-tube-based appraoches (DTCO_FTS etc.) and not with the core suppression mechanism (CORE_DT_SUPPRESSION).
-					If 0, no cell-based timestep multiplier.
-					If 1, local timestep based on the electron temperature. The baseline timestep (b2mndr_dtim) is applied below b2mndt_var_te_min. Above b2mndt_var_te_max, the baseline timestep is multiplied by b2mndt_var_mult. Log-log interpolation is used in between. 
-					If 2, local timestep based on the ratio of the source strengths compared to the particle/momentum/energy content of each cell. dt2 = abs(content)/abs(S)/Fs, where 'content' is the particle, parallel momentum, ion heat, or electron heat content of a cell, 'Fs' is a safety factor, and 'S' is the strength of the source terms. The included contributions are those computed by EIRENE, and B2.5 contributions due to ionization, recombination and CX (e.g. ionization between higher ionization stages or CX when using fluid neutrals). Other source contributions are not included because they are only computed after the calculation of the timestepping sources. The final timestep is determined as dt = min(max(dt2,b2mndr_dt),b2mndr_dt*b2mndt_var_mult), such that the user can retain control over the minimum and maximum timestep. 
-					If 3, CFL-criterion based on drift velocities. Highly experimental. Still under development. See code for details.
-					If 4, Combination of 3 and 2. Highly experimental. Still under development. See code for details. 
-				</description>
-			</switch>
-			<switch>
-				<name>b2mndt_var_mult</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					Maximum multiplier to the timestep when using b2mndt_var_style > 0.
-				</description>
-			</switch>
-			<switch>
-				<name>b2mndt_var_te_min</name>
-				<default>0.0</default>
-				<type>real</type>
-				<description>
-					The electron temperature below which the baseline timestep is used when using b2mndt_var_style = 1.
-				</description>
-			</switch>
-			<switch>
-				<name>b2mndt_var_te_max</name>
-				<default>1.0e30</default>
-				<type>real</type>
-				<description>
-					The electron temperature above which the maximum timestep is used when using b2mndt_var_style = 1.
-				</description>
-			</switch>
-			<switch>
-				<name>b2mndt_var_style2_SF</name>
-				<default>10.0</default>
-				<type>real</type>
-				<description>
-					Safety factor Fs when using b2mndt_var_style = 2 or 4.
-				</description>
-			</switch>
-			<switch>
-				<name>b2mndt_var_style3_Cmax</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					CFL (Courant-Friedrichs-Lewy) limit when using b2mndt_var_style = 3 or 4.
-				</description>
-			</switch>
-			<switch>
-				<name>b2mndt_var_style_nfilter</name>
-				<default>1</default>
-				<type>real</type>
-				<description>
-					When using b2mndt_var_style = 3, carry over the minimum timestep between neighbours nfilter times. (Highly experimental).
+					This switch is used internally in the code to initially run a dummy call to b2mndt, which is needed to use the Crank-Nicolson time-stepping scheme (b2mndt_ckn=2). This switch is not meant to be changed by users, it should always stay at its default value of 0.
 				</description>
 			</switch>
 			<switch>

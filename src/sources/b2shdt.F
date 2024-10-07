@@ -84,7 +84,7 @@
 
       do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
-        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
+        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
         shedt(iCv,0) = 1.5_R8*t0*ne(iCv)*tep(iCv)               !srv 06.01.21 {
         shedt(iCv,1) = 0.0_R8
         shedt(iCv,2) = 0.0_R8
@@ -93,36 +93,26 @@
 
       do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
-        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
-        if (switch%tn_style.eq.0) then
-          shidt(iCv,0) = 1.5_R8*t0*ni(iCv,0)*tip(iCv)           !srv 06.01.21 {
-          shidt(iCv,1) = 0.0_R8
-          shidt(iCv,2) = 0.0_R8
-          shidt(iCv,3) = -1.5_R8*t0                             !srv 06.01.21 }
-          if (switch%BoRiS.eq.1.0_R8) then
-            do is = 0, ns-1
-              shidt(iCv,0) = shidt(iCv,0)+t0*
-     &           (kinrgyp(iCv,is)+tip(iCv))*nap(iCv,is)         !srv 10.10.22 {
-              shidt(iCv,2) = shidt(iCv,2)-t0*
-     &           (kinrgyp(iCv,is)+tip(iCv))*nap(iCv,is)/
-     &           ni(iCv,0)                                      !srv 10.10.22 }
-            enddo
-          endif
-        else
-          shidt(iCv,0) = 1.5_R8*t0*ni(iCv,1)*tip(iCv)
-          shidt(iCv,1) = 0.0_R8
-          shidt(iCv,2) = 0.0_R8
-          shidt(iCv,3) = -1.5_R8*t0*ni(iCv,1)/ni(iCv,0)          ! this is needed because the source scaling for shi remains based on ni(:,0), even though physically it involves ni(:,1)
-                                                                 ! when using a pure ion or separate ion-neutral energy equation
-          call xertst (switch%BoRiS.eq.0.0_R8,
-     &     'BoRiS switch usage not allowed with tn_style.ne.0')
+        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
+        shidt(iCv,0) = 1.5_R8*t0*ni(iCv,0)*tip(iCv)             !srv 06.01.21 {
+        shidt(iCv,1) = 0.0_R8
+        shidt(iCv,2) = 0.0_R8
+        shidt(iCv,3) = -1.5_R8*t0                               !srv 06.01.21 }
+        if (BoRiS.eq.1.0_R8) then
+          do is = 0, ns-1
+            shidt(iCv,0) = shidt(iCv,0)+t0*
+     &         (kinrgyp(iCv,is)+tip(iCv))*nap(iCv,is)           !srv 10.10.22 {
+            shidt(iCv,2) = shidt(iCv,2)-t0*
+     &         (kinrgyp(iCv,is)+tip(iCv))*nap(iCv,is)/
+     &         ni(iCv,0)                                        !srv 10.10.22 }
+          enddo
         endif
       enddo
 
       if (switch%tn_style.eq.2) then
         do iCv = 1, nCi ! only internal cells
           ttim=dtim*dten(mpg%cvReg(iCv))*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
+          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
           shndt(iCv,0) = 1.5_R8*t0*nn(iCv)*tnp(iCv)               !srv 06.01.21 {
           shndt(iCv,1) = 0.0_R8
           shndt(iCv,2) = 0.0_R8
