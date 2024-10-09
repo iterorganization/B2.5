@@ -612,7 +612,7 @@ PROGRAM B2MN_DV_DV
 &                state, stated0, stated, statedd, state_ext, state_extd0&
 &                , state_extd, state_avg, state_avgd, npar_opt, npar_opt)
   CALL XERTST(npar_opt .LE. nbdirsmax, &
-&       'Increase size of nbdirsmax in diffsizes.F')
+&       'Increase size of nbdirsmax in b2mod_diffsizes.F')
   CALL XERTST(switch%b2optim_namelist .EQ. 1, &
 &       'Sensitivity calculation needs b2optim_namelist=1!')
   arg1 = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
@@ -958,7 +958,7 @@ SUBROUTINE B2MN_DV_NODIFF()
   CALL B2MN_INIT_DV(switch, switchd, geo, geod, mpg, mpgd, state, stated&
 &             , state_ext, state_extd, state_avg, state_avgd, npar_opt)
   CALL XERTST(npar_opt .LE. nbdirsmax, &
-&       'Increase size of nbdirsmax in diffsizes.F')
+&       'Increase size of nbdirsmax in b2mod_diffsizes.F')
   CALL XERTST(switch%b2optim_namelist .EQ. 1, &
 &       'Sensitivity calculation needs b2optim_namelist=1!')
 ! default case, valid for any species mix

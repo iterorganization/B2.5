@@ -44,7 +44,7 @@
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
 #ifdef TGT
-      call xertst(npar_opt.le.nbdirsmax, 'Increase size of nbdirsmax in diffsizes.F')
+      call xertst(npar_opt.le.nbdirsmax, 'Increase size of nbdirsmax in b2mod_diffsizes.F')
       call set_tgt_perturbation(switchd)
 #endif
 
@@ -410,7 +410,7 @@
           shift(ipar) = x_v(ishift)*par_rescale(ishift)
           write(str,"(I1)") ishift
           if (ishift.ge.10) write(str,"(I2)") ishift
-          write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', shift(ipar)
+          write(*,*) 'TAO: eval_F with x',trim(str),'= ', shift(ipar)
           ishift = ishift + 1
         endif
       end do
@@ -421,7 +421,7 @@
             corr_length(ipar) = x_v(icorr)*par_rescale(icorr)
             write(str,"(I1)") icorr
             if (icorr.ge.10) write(str,"(I2)") icorr
-            write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', corr_length(ipar)
+            write(*,*) 'TAO: eval_F with x',trim(str),'= ', corr_length(ipar)
             icorr = icorr + 1
           endif
         end do
@@ -503,7 +503,7 @@
           shift(ipar) = x_v(ishift)*par_rescale(ishift)
           write(str,"(I1)") ishift
           if (ishift.ge.10) write(str,"(I2)") ishift
-          write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', shift(ipar)
+          write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', shift(ipar)
           ishift = ishift + 1
         endif
       end do
@@ -514,7 +514,7 @@
             corr_length(ipar) = x_v(icorr)*par_rescale(icorr)
             write(str,"(I1)") icorr
             if (icorr.ge.10) write(str,"(I2)") icorr
-            write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', corr_length(ipar)
+            write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', corr_length(ipar)
             icorr = icorr + 1
           endif
         end do
