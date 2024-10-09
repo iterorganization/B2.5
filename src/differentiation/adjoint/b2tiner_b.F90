@@ -33,7 +33,7 @@ SUBROUTINE B2TINER_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, na&
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFF) :: geob
@@ -150,7 +150,7 @@ SUBROUTINE B2TINER_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na, ua, &
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg

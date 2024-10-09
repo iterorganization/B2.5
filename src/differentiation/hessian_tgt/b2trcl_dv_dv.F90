@@ -125,9 +125,9 @@ SUBROUTINE B2TRCL_DV_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : my_out_folder, ncall_b2tlnl, &
 & ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca, ncall_b2ttia
   USE B2MOD_SUBSYS
-!  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nCv should be the size of dimension 1 of array arg1
 !  Hint: nCv should be the size of dimension 1 of array result1
+!  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nCv should be the size of dimension 1 of array temp
 !  Hint: nCv should be the size of dimension 1 of array lnlam
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -137,16 +137,11 @@ SUBROUTINE B2TRCL_DV_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   IMPLICIT NONE
 !
 !-----------------------------------------------------------------------
-!.scribbles
-!
-!!!   Still must consider how to deal with a non-orthogonal grid.
-!
-!-----------------------------------------------------------------------
 !.end b2trcl
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, ismain
-  INTEGER :: iscx(0:nscx-1)
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, ismain
+  INTEGER, INTENT(IN) :: iscx(0:nscx-1)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
@@ -352,10 +347,10 @@ SUBROUTINE B2TRCL_DV_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: abs4d0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs4d
   REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: abs4dd
-  REAL(r8), DIMENSION(ncv) :: abs5
-  REAL(r8), DIMENSION(nbdirsmax0, ncv) :: abs5d0
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: abs5d
-  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: abs5dd
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
+  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv) :: dabs0d0
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs0d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: dabs0dd
   REAL(r8) :: max1
   REAL(r8), DIMENSION(nbdirsmax0) :: max1d0
   REAL(r8), DIMENSION(nbdirsmax) :: max1d
@@ -1394,7 +1389,7 @@ SUBROUTINE B2TRCL_DV_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     result12dd(:, :) = 0.0_8
   ELSE IF (switch%lluciani .EQ. 3) THEN
 ! new formulation
-!   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
+!   .. plateau and banana correction for ion heat conduction          !lk 19.09.07 {
     DO nd=1,nbdirsmax
       tauiad(nd, :, :) = 0.d0
     END DO
@@ -1404,7 +1399,7 @@ SUBROUTINE B2TRCL_DV_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &               rtd0%rz2, rtd%rz2, rtdd%rz2, dv%ne2, dvd0%ne2, dvd%ne2, &
 &               dvdd%ne2, dv%lnlam, dvd0%lnlam, dvd%lnlam, dvdd%lnlam, &
 &               tauia, tauiad0, tauiad, tauiadd, nbdirs, nbdirs0)
-!   .. calculate collisionality parameter nu_star   
+!   .. calculate collisionality parameter nu_star
 !lk 12.05.11{
     nu1 = 0.0_R8
     k1 = 0.58_R8
@@ -2654,7 +2649,7 @@ SUBROUTINE B2TRCL_DV_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           chci(ifc, 0) = chci(ifc, 0)*co%fllim_ki(ifc)
         END IF
       END DO
-!wdk pragmatic approximation for cell center flux limits: based on interpolation 
+!wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
       CALL INTCELL_DV_DV(nfc, ncv, mpg, mpg%intcellp, co%fllim_ki, cod0%&
 &                  fllim_ki, cod%fllim_ki, codd%fllim_ki, co%fllim_ki_c&
@@ -2820,7 +2815,7 @@ SUBROUTINE B2TRCL_DV_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
         END IF
       END DO
-!wdk pragmatic approximation for cell center flux limits: based on interpolation 
+!wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
       CALL INTCELL_DV_DV(nfc, ncv, mpg, mpg%intcellp, co%fllim_al, cod0%&
 &                  fllim_al, cod%fllim_al, codd%fllim_al, co%fllim_al_c&
@@ -3128,37 +3123,37 @@ SUBROUTINE B2TRCL_DV_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &               nbdirs0)
   END DO
   DO nd=1,nbdirsmax
-    abs5d(nd, :) = 0.d0
+    dabs0d(nd, :) = 0.d0
   END DO
-  abs5dd(:, :, :) = 0.0_8
+  dabs0dd(:, :, :) = 0.0_8
   DO nd=1,nbdirs
     DO nd0=nd,nbdirs0
-      WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs5dd(nd0, &
+      WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0dd(nd0, &
 &       nd, :) = qe*geo%cvbb(:, 3)*rtdd%rza(nd0, nd, :, ismain)
     END DO
-    WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs5d(nd, :) = &
+    WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d(nd, :) = &
 &       qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain)
   END DO
-  abs5d0(:, :) = 0.0_8
+  dabs0d0(:, :) = 0.0_8
   DO nd0=1,nbdirs0
-    WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs5d0(nd0, :)&
+    WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d0(nd0, :)&
 &      = qe*geo%cvbb(:, 3)*rtd0%rza(nd0, :, ismain)
   END DO
-  WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs5 = rt%rza(:, &
+  WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0 = rt%rza(:, &
 &     ismain)*qe*geo%cvbb(:, 3)
   DO nd=1,nbdirs
     DO nd0=nd,nbdirs0
-      WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs5dd(&
+      WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0dd(&
 &       nd0, nd, :) = -(qe*geo%cvbb(:, 3)*rtdd%rza(nd0, nd, :, ismain))
     END DO
-    WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs5d(nd, &
+    WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d(nd, &
 &     :) = -(qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain))
   END DO
   DO nd0=1,nbdirs0
-    WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs5d0(nd0&
+    WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d0(nd0&
 &     , :) = -(qe*geo%cvbb(:, 3)*rtd0%rza(nd0, :, ismain))
   END DO
-  WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs5 = -(rt%&
+  WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0 = -(rt%&
 &     rza(:, ismain)*qe*geo%cvbb(:, 3))
   arg15(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
   temp17 = SQRT(arg15(:))
@@ -3172,10 +3167,10 @@ SUBROUTINE B2TRCL_DV_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
       temp12d(nd0, :) = arg15d0(nd0, :)/(2.0*temp17)
     END WHERE
     result13d0(nd0, :) = temp12d(nd0, :)
-    wrkcd0(nd0, :) = (result13d0(nd0, :)-result13*abs5d0(nd0, :)/abs5)/&
-&     abs5
+    wrkcd0(nd0, :) = (result13d0(nd0, :)-result13*dabs0d0(nd0, :)/dabs0)&
+&     /dabs0
   END DO
-  wrkc = result13/abs5
+  wrkc = result13/dabs0
   DO nd=1,nbdirsmax
     cdktd(nd, :, :) = 0.d0
   END DO
@@ -3206,13 +3201,13 @@ SUBROUTINE B2TRCL_DV_DV(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &         nd0, nd, :)-temp17*2.0*temp12d(nd0, :))/(2.0*temp12)
     END DO
     WHERE (.NOT.arg15(:) .EQ. 0.d0) result13d(nd, :) = temp17
-    temp22 = result13/abs5
-    temp23 = (result13d(nd, :)-abs5d(nd, :)*temp22)/abs5
+    temp22 = result13/dabs0
+    temp23 = (result13d(nd, :)-dabs0d(nd, :)*temp22)/dabs0
     wrkcd(nd, :) = temp23
     DO nd0=1,nbdirs0
-      wrkcdd(nd0, nd, :) = (result13dd(nd0, nd, :)-temp22*abs5dd(nd0, nd&
-&       , :)-abs5d(nd, :)*(result13d0(nd0, :)-temp22*abs5d0(nd0, :))/&
-&       abs5-temp23*abs5d0(nd0, :))/abs5
+      wrkcdd(nd0, nd, :) = (result13dd(nd0, nd, :)-temp22*dabs0dd(nd0, &
+&       nd, :)-dabs0d(nd, :)*(result13d0(nd0, :)-temp22*dabs0d0(nd0, :))&
+&       /dabs0-temp23*dabs0d0(nd0, :))/dabs0
       wrkcdd(nd0, nd, :) = geo%cvbb(:, 3)**2*(cod%sigx_c(nd, :)*2*wrkc*&
 &       wrkcd0(nd0, :)+wrkc**2*codd%sigx_c(nd0, nd, :)+wrkcd(nd, :)*(&
 &       wrkc*2*cod0%sigx_c(nd0, :)+2*co%sigx_c*wrkcd0(nd0, :))+2*co%&
@@ -3417,9 +3412,9 @@ SUBROUTINE B2TRCL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : my_out_folder, ncall_b2tlnl, &
 & ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca, ncall_b2ttia
   USE B2MOD_SUBSYS
-!  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nCv should be the size of dimension 1 of array arg1
 !  Hint: nCv should be the size of dimension 1 of array result1
+!  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nCv should be the size of dimension 1 of array temp
 !  Hint: nCv should be the size of dimension 1 of array lnlam
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -3427,16 +3422,11 @@ SUBROUTINE B2TRCL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
   IMPLICIT NONE
 !
 !-----------------------------------------------------------------------
-!.scribbles
-!
-!!!   Still must consider how to deal with a non-orthogonal grid.
-!
-!-----------------------------------------------------------------------
 !.end b2trcl
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, ismain
-  INTEGER :: iscx(0:nscx-1)
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, ismain
+  INTEGER, INTENT(IN) :: iscx(0:nscx-1)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -3566,8 +3556,8 @@ SUBROUTINE B2TRCL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs4
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs4d
-  REAL(r8), DIMENSION(ncv) :: abs5
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: abs5d
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs0d
   REAL(r8) :: max1
   REAL(r8), DIMENSION(nbdirsmax) :: max1d
   REAL(r8) :: max2
@@ -4128,14 +4118,14 @@ SUBROUTINE B2TRCL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
     END DO
   ELSE IF (switch%lluciani .EQ. 3) THEN
 ! new formulation
-!   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
+!   .. plateau and banana correction for ion heat conduction          !lk 19.09.07 {
     DO nd=1,nbdirsmax
       tauiad(nd, :, :) = 0.d0
     END DO
     CALL B2TTIA_DV_NODIFF(ncv, ns, pl%ti, pld%ti, rt%rz2, rtd%rz2, dv%&
 &                   ne2, dvd%ne2, dv%lnlam, dvd%lnlam, tauia, tauiad, &
 &                   nbdirs)
-!   .. calculate collisionality parameter nu_star   
+!   .. calculate collisionality parameter nu_star
 !lk 12.05.11{
     nu1 = 0.0_R8
     k1 = 0.58_R8
@@ -4679,7 +4669,7 @@ SUBROUTINE B2TRCL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
           chci(ifc, 0) = chci(ifc, 0)*co%fllim_ki(ifc)
         END IF
       END DO
-!wdk pragmatic approximation for cell center flux limits: based on interpolation 
+!wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
       CALL INTCELL_DV_NODIFF(nfc, ncv, mpg, mpg%intcellp, co%fllim_ki, &
 &                      cod%fllim_ki, co%fllim_ki_c, cod%fllim_ki_c, &
@@ -4754,7 +4744,7 @@ SUBROUTINE B2TRCL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
           calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
         END IF
       END DO
-!wdk pragmatic approximation for cell center flux limits: based on interpolation 
+!wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
       CALL INTCELL_DV_NODIFF(nfc, ncv, mpg, mpg%intcellp, co%fllim_al, &
 &                      cod%fllim_al, co%fllim_al_c, cod%fllim_al_c, &
@@ -4885,24 +4875,24 @@ SUBROUTINE B2TRCL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
 &                   (:, :, 0, is), fllimvisc(:, is), nbdirs)
   END DO
   DO nd=1,nbdirsmax
-    abs5d(nd, :) = 0.d0
+    dabs0d(nd, :) = 0.d0
   END DO
   DO nd=1,nbdirs
-    WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs5d(nd, :) = &
+    WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d(nd, :) = &
 &       qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain)
   END DO
-  WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs5 = rt%rza(:, &
+  WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0 = rt%rza(:, &
 &     ismain)*qe*geo%cvbb(:, 3)
   DO nd=1,nbdirs
-    WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs5d(nd, &
+    WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d(nd, &
 &     :) = -(qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain))
   END DO
-  WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs5 = -(rt%&
+  WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0 = -(rt%&
 &     rza(:, ismain)*qe*geo%cvbb(:, 3))
   arg15(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
   temp12 = SQRT(arg15(:))
   result13 = temp12
-  wrkc = result13/abs5
+  wrkc = result13/dabs0
   DO nd=1,nbdirsmax
     cdktd(nd, :, :) = 0.d0
   END DO
@@ -4915,7 +4905,7 @@ SUBROUTINE B2TRCL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
     ELSEWHERE
       result13d(nd, :) = arg15d(nd, :)/(2.0*temp12)
     END WHERE
-    wrkcd(nd, :) = (result13d(nd, :)-result13*abs5d(nd, :)/abs5)/abs5
+    wrkcd(nd, :) = (result13d(nd, :)-result13*dabs0d(nd, :)/dabs0)/dabs0
     wrkcd(nd, :) = geo%cvbb(:, 3)**2*(wrkc**2*cod%sigx_c(nd, :)+co%&
 &     sigx_c*2*wrkc*wrkcd(nd, :))/(am(ismain)*mp)
     cdktd(nd, :, 1) = 0.d0
@@ -5062,23 +5052,17 @@ SUBROUTINE B2TRCL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : my_out_folder, ncall_b2tlnl, &
 & ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tqca, ncall_b2ttia
   USE B2MOD_SUBSYS
-!  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nCv should be the size of dimension 1 of array arg1
 !  Hint: nCv should be the size of dimension 1 of array result1
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
 !-----------------------------------------------------------------------
-!.scribbles
-!
-!!!   Still must consider how to deal with a non-orthogonal grid.
-!
-!-----------------------------------------------------------------------
 !.end b2trcl
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, ismain
-  INTEGER :: iscx(0:nscx-1)
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, ismain
+  INTEGER, INTENT(IN) :: iscx(0:nscx-1)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -5168,7 +5152,7 @@ SUBROUTINE B2TRCL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs4
-  REAL(r8), DIMENSION(ncv) :: abs5
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
   REAL(r8) :: max1
   REAL(r8) :: max2
   REAL(r8) :: max3
@@ -5482,10 +5466,10 @@ SUBROUTINE B2TRCL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
     END DO
   ELSE IF (switch%lluciani .EQ. 3) THEN
 ! new formulation
-!   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
+!   .. plateau and banana correction for ion heat conduction          !lk 19.09.07 {
     CALL B2TTIA_NODIFF_NODIFF(ncv, ns, pl%ti, rt%rz2, dv%ne2, dv%lnlam, &
 &                       tauia)
-!   .. calculate collisionality parameter nu_star   
+!   .. calculate collisionality parameter nu_star
 !lk 12.05.11{
     nu1 = 0.0_R8
     k1 = 0.58_R8
@@ -5735,7 +5719,7 @@ SUBROUTINE B2TRCL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
           chci(ifc, 0) = chci(ifc, 0)*co%fllim_ki(ifc)
         END IF
       END DO
-!wdk pragmatic approximation for cell center flux limits: based on interpolation 
+!wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
       CALL INTCELL_NODIFF_NODIFF(nfc, ncv, mpg, mpg%intcellp, co%&
 &                          fllim_ki, co%fllim_ki_c)
@@ -5770,7 +5754,7 @@ SUBROUTINE B2TRCL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
           calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
         END IF
       END DO
-!wdk pragmatic approximation for cell center flux limits: based on interpolation 
+!wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
       CALL INTCELL_NODIFF_NODIFF(nfc, ncv, mpg, mpg%intcellp, co%&
 &                          fllim_al, co%fllim_al_c)
@@ -5833,16 +5817,16 @@ SUBROUTINE B2TRCL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, &
 &                       0, is), cvsa(:, 0, is), cvsahz(:, 0, is), &
 &                       fllimvisc(:, is))
   END DO
-  WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) 
-    abs5 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
+  WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) 
+    dabs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
   ELSEWHERE
-    abs5 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
+    dabs0 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
   END WHERE
 !   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
   arg15(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
   result13 = SQRT(arg15(:))
-  wrkc = result13/abs5
+  wrkc = result13/dabs0
   wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)
   CALL B2TXCX_NODIFF_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs&
 &                     , wrkc, cdkt(:, 0))

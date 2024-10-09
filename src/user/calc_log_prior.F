@@ -8,7 +8,9 @@
       logical, intent (inout) :: inrange
       integer :: ii, isigma, imean, ind
       real(kind=R8) :: aa, bb
-      intrinsic sqrt, exp, log_gamma
+#ifndef LEGACYCOMP
+      intrinsic log_gamma
+#endif
 ! sc  Routine based on R. De Wolf et al 2021 Nucl. Fusion 61 046048
       call subini('calc_log_prior')
 ! sc  Initialize prior
@@ -52,7 +54,7 @@
           prior = prior
         case (1) !Uninformative, proper, Gaussian prior.
           prior = prior - log(prior_par(ind+isigma,2)) -
-     &            0.5_R8*log(2.0_R8*pi) - 
+     &            0.5_R8*log(2.0_R8*pi) -
      &            0.5_R8*((sigma(ii)-prior_par(ind+isigma,1))/
      &            prior_par(ind+isigma,2))**2
         case (2) ! gamma distribution x**(alpha-1)*exp(-beta*xx)*beta**alpha/Gamma(alpha)
@@ -159,8 +161,81 @@
         endif
         ind = ind + 1
       end do
-      
-     
+
+
       call subend ()
       return
+
+#ifdef LEGACYCOMP
+      contains
+
+      function log_gamma(xx)
+      implicit none
+      real(kind=R8) :: log_gamma
+      real(kind=R8), intent(in) :: xx
+
+C+
+C Project     :	Course FORTRAN Codes
+C
+C Name        :	GAMMLN
+C
+C Purpose     :	Numerical Recipes natural log of the gamma function.
+C
+C Explanation :	This function calculates the natural log of the gamma
+C               function for XX > 0, where the gamma function, GAMMA(a),
+C               is given by:
+C
+C                   GAMMA(XX) = INT_0^INFTY t**(a-1) EXP(-t) dt.
+C
+C Use         :	Result = GAMMLN(XX)
+C
+C Inputs      : XX:     Scalar containing the value passed to the gamma function.
+C
+C Outputs     :	Result: ln(GAMMA(XX)).
+C
+C Calls       :	None.
+C
+C Common      :	None.
+C
+C Restrictions:	FORTRAN 77 coding.
+C
+C Side effects:	None.
+C
+C Category    :	Data fitting.
+C
+C Prev. Hist. :	Based on the GAMMLN function of Numerical Recipes for FORTRAN 77.
+C
+C Written     :	Donald G. Luttermoser, ETSU/Physics, 2 October 2013.
+C
+C Modified    :	Version 1, Donald G. Luttermoser, ETSU/Physics, 2 Oct 2013
+C			Initial program.
+C
+C Version     :	Version 1,  2 October 2013.
+C
+C-
+      INTEGER J
+      REAL(KIND=R8) :: SER, STP, TMP, X, Y, COF(6)
+      SAVE COF, STP
+C
+      DATA COF, STP/76.18009172947146_R8, -86.50532032941677_R8,
+     +    24.01409824083091_R8, -1.231739572450155_R8,
+     +    0.1208650973866179E-2_R8, -0.5395239384953E-5_R8,
+     +    2.5066282746310005_R8/
+C
+      X = XX
+      Y = X
+      TMP = X + 5.5_R8
+      TMP = (X + 0.5_R8) * LOG(TMP) - TMP
+      SER = 1.000000000190015_R8
+C
+      DO 11 J = 1, 6
+          Y = Y + 1.0_R8
+          SER = SER + COF(J)/Y
+ 11   CONTINUE
+C
+      log_gamma = TMP + LOG(STP * SER / X)
+C
+      RETURN
+      end function log_gamma
+#endif
       end subroutine calc_log_prior

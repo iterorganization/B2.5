@@ -3,11 +3,11 @@
 !
 !  Differentiation of b2srst in reverse (adjoint) mode (with options context noISIZE r8):
 !   gradient     of useful results: ti tn na ua kt *(sr.sch) *(sr.she)
-!                *(sr.shi) *(sr.shn) *(sr.skt) *(sr.smo) *(sr.sna)
-!                po te
+!                *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt) *(sr.smo)
+!                *(sr.sna) po te zt
 !   with respect to varying inputs: ti tn na ua kt *(sr.sch) *(sr.she)
-!                *(sr.shi) *(sr.shn) *(sr.skt) *(sr.smo) *(sr.sna)
-!                po te
+!                *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt) *(sr.smo)
+!                *(sr.sna) po te zt
 !   Plus diff mem management of: sr.sch:in sr.she:in sr.shi:in
 !                sr.sne:in sr.shn:in sr.skt:in sr.szt:in sr.smo:in
 !                sr.sna:in
@@ -99,7 +99,9 @@ SUBROUTINE B2SRST_B(ncv, ns, switch, na, nab, ua, uab, te, teb, ti, tib&
   REAL(r8) :: min9
   REAL(r8) :: min9b
   REAL(r8) :: min10
+  REAL(r8) :: min10b
   REAL(r8) :: min11
+  REAL(r8) :: min11b
   REAL(r8) :: max3
   REAL(r8) :: max3b
   REAL(r8) :: max4
@@ -577,6 +579,95 @@ SUBROUTINE B2SRST_B(ncv, ns, switch, na, nab, ua, uab, te, teb, ti, tib&
     CALL PUSHREAL8(sr%skt(icv, 3), r8/8)
     sr%skt(icv, 3) = 1.0_R8/(kt(icv)+b2srst_kt_eps)*min9
 !     ..modify szt(,0:1)
+    t0 = sr%szt(icv, 0) + sr%szt(icv, 1)*zt(icv)
+    IF (sr%szt(icv, 0) .LT. (1.0_R8+switch%b2srst_rf2)*t0) THEN
+      IF ((1.0_R8+switch%b2srst_rf2)*t0 .LT. -(switch%b2srst_rf2*t0)) &
+&     THEN
+        CALL PUSHREAL8(sr%szt(icv, 0), r8/8)
+        sr%szt(icv, 0) = -(switch%b2srst_rf2*t0)
+        CALL PUSHCONTROL2B(0)
+      ELSE
+        CALL PUSHREAL8(sr%szt(icv, 0), r8/8)
+        sr%szt(icv, 0) = (1.0_R8+switch%b2srst_rf2)*t0
+        CALL PUSHCONTROL2B(1)
+      END IF
+    ELSE IF (sr%szt(icv, 0) .LT. -(switch%b2srst_rf2*t0)) THEN
+      CALL PUSHREAL8(sr%szt(icv, 0), r8/8)
+      sr%szt(icv, 0) = -(switch%b2srst_rf2*t0)
+      CALL PUSHCONTROL2B(2)
+    ELSE
+      CALL PUSHREAL8(sr%szt(icv, 0), r8/8)
+      sr%szt(icv, 0) = sr%szt(icv, 0)
+      CALL PUSHCONTROL2B(3)
+    END IF
+    IF (sr%szt(icv, 1)*zt(icv) .GT. -(switch%b2srst_rf2*t0)) THEN
+      IF (-(switch%b2srst_rf2*t0) .GT. (1.0_R8+switch%b2srst_rf2)*t0) &
+&     THEN
+        CALL PUSHREAL8(min10, r8/8)
+        min10 = (1.0_R8+switch%b2srst_rf2)*t0
+        CALL PUSHCONTROL2B(0)
+      ELSE
+        CALL PUSHREAL8(min10, r8/8)
+        min10 = -(switch%b2srst_rf2*t0)
+        CALL PUSHCONTROL2B(1)
+      END IF
+    ELSE IF (sr%szt(icv, 1)*zt(icv) .GT. (1.0_R8+switch%b2srst_rf2)*t0) &
+&   THEN
+      CALL PUSHREAL8(min10, r8/8)
+      min10 = (1.0_R8+switch%b2srst_rf2)*t0
+      CALL PUSHCONTROL2B(2)
+    ELSE
+      CALL PUSHREAL8(min10, r8/8)
+      min10 = sr%szt(icv, 1)*zt(icv)
+      CALL PUSHCONTROL2B(3)
+    END IF
+    CALL PUSHREAL8(sr%szt(icv, 1), r8/8)
+    sr%szt(icv, 1) = 1.0_R8/(zt(icv)+b2srst_zt_eps)*min10
+!     ..modify szt(,2:3)
+    t0 = sr%szt(icv, 2) + sr%szt(icv, 3)*zt(icv)
+    IF (sr%szt(icv, 2) .LT. (1.0_R8+switch%b2srst_rf2)*t0) THEN
+      IF ((1.0_R8+switch%b2srst_rf2)*t0 .LT. -(switch%b2srst_rf2*t0)) &
+&     THEN
+        CALL PUSHREAL8(sr%szt(icv, 2), r8/8)
+        sr%szt(icv, 2) = -(switch%b2srst_rf2*t0)
+        CALL PUSHCONTROL2B(0)
+      ELSE
+        CALL PUSHREAL8(sr%szt(icv, 2), r8/8)
+        sr%szt(icv, 2) = (1.0_R8+switch%b2srst_rf2)*t0
+        CALL PUSHCONTROL2B(1)
+      END IF
+    ELSE IF (sr%szt(icv, 2) .LT. -(switch%b2srst_rf2*t0)) THEN
+      CALL PUSHREAL8(sr%szt(icv, 2), r8/8)
+      sr%szt(icv, 2) = -(switch%b2srst_rf2*t0)
+      CALL PUSHCONTROL2B(2)
+    ELSE
+      CALL PUSHREAL8(sr%szt(icv, 2), r8/8)
+      sr%szt(icv, 2) = sr%szt(icv, 2)
+      CALL PUSHCONTROL2B(3)
+    END IF
+    IF (sr%szt(icv, 3)*zt(icv) .GT. -(switch%b2srst_rf2*t0)) THEN
+      IF (-(switch%b2srst_rf2*t0) .GT. (1.0_R8+switch%b2srst_rf2)*t0) &
+&     THEN
+        CALL PUSHREAL8(min11, r8/8)
+        min11 = (1.0_R8+switch%b2srst_rf2)*t0
+        CALL PUSHCONTROL2B(0)
+      ELSE
+        CALL PUSHREAL8(min11, r8/8)
+        min11 = -(switch%b2srst_rf2*t0)
+        CALL PUSHCONTROL2B(1)
+      END IF
+    ELSE IF (sr%szt(icv, 3)*zt(icv) .GT. (1.0_R8+switch%b2srst_rf2)*t0) &
+&   THEN
+      CALL PUSHREAL8(min11, r8/8)
+      min11 = (1.0_R8+switch%b2srst_rf2)*t0
+      CALL PUSHCONTROL2B(2)
+    ELSE
+      CALL PUSHREAL8(min11, r8/8)
+      min11 = sr%szt(icv, 3)*zt(icv)
+      CALL PUSHCONTROL2B(3)
+    END IF
+    CALL PUSHREAL8(sr%szt(icv, 3), r8/8)
+    sr%szt(icv, 3) = 1.0_R8/(zt(icv)+b2srst_zt_eps)*min11
     IF (0.0_R8 .LT. sr%sch(icv, 1)) THEN
       CALL PUSHREAL8(max3, r8/8)
       max3 = sr%sch(icv, 1)
@@ -639,6 +730,94 @@ SUBROUTINE B2SRST_B(ncv, ns, switch, na, nab, ua, uab, te, teb, ti, tib&
     ELSE
       CALL POPREAL8(max3, r8/8)
     END IF
+    CALL POPREAL8(sr%szt(icv, 3), r8/8)
+    tempb = srb%szt(icv, 3)/(b2srst_zt_eps+zt(icv))
+    srb%szt(icv, 3) = 0.D0
+    min11b = tempb
+    ztb(icv) = ztb(icv) - min11*tempb/(b2srst_zt_eps+zt(icv))
+    CALL POPCONTROL2B(branch)
+    IF (branch .LT. 2) THEN
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL8(min11, r8/8)
+        t0b = (switch%b2srst_rf2+1.0_R8)*min11b
+      ELSE
+        CALL POPREAL8(min11, r8/8)
+        t0b = -(switch%b2srst_rf2*min11b)
+      END IF
+    ELSE IF (branch .EQ. 2) THEN
+      CALL POPREAL8(min11, r8/8)
+      t0b = (switch%b2srst_rf2+1.0_R8)*min11b
+    ELSE
+      CALL POPREAL8(min11, r8/8)
+      srb%szt(icv, 3) = srb%szt(icv, 3) + zt(icv)*min11b
+      ztb(icv) = ztb(icv) + sr%szt(icv, 3)*min11b
+      t0b = 0.D0
+    END IF
+    CALL POPCONTROL2B(branch)
+    IF (branch .LT. 2) THEN
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL8(sr%szt(icv, 2), r8/8)
+        t0b = t0b - switch%b2srst_rf2*srb%szt(icv, 2)
+        srb%szt(icv, 2) = 0.D0
+      ELSE
+        CALL POPREAL8(sr%szt(icv, 2), r8/8)
+        t0b = t0b + (switch%b2srst_rf2+1.0_R8)*srb%szt(icv, 2)
+        srb%szt(icv, 2) = 0.D0
+      END IF
+    ELSE IF (branch .EQ. 2) THEN
+      CALL POPREAL8(sr%szt(icv, 2), r8/8)
+      t0b = t0b - switch%b2srst_rf2*srb%szt(icv, 2)
+      srb%szt(icv, 2) = 0.D0
+    ELSE
+      CALL POPREAL8(sr%szt(icv, 2), r8/8)
+    END IF
+    srb%szt(icv, 2) = srb%szt(icv, 2) + t0b
+    srb%szt(icv, 3) = srb%szt(icv, 3) + zt(icv)*t0b
+    tempb = srb%szt(icv, 1)/(b2srst_zt_eps+zt(icv))
+    ztb(icv) = ztb(icv) + sr%szt(icv, 3)*t0b - min10*tempb/(&
+&     b2srst_zt_eps+zt(icv))
+    CALL POPREAL8(sr%szt(icv, 1), r8/8)
+    srb%szt(icv, 1) = 0.D0
+    min10b = tempb
+    CALL POPCONTROL2B(branch)
+    IF (branch .LT. 2) THEN
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL8(min10, r8/8)
+        t0b = (switch%b2srst_rf2+1.0_R8)*min10b
+      ELSE
+        CALL POPREAL8(min10, r8/8)
+        t0b = -(switch%b2srst_rf2*min10b)
+      END IF
+    ELSE IF (branch .EQ. 2) THEN
+      CALL POPREAL8(min10, r8/8)
+      t0b = (switch%b2srst_rf2+1.0_R8)*min10b
+    ELSE
+      CALL POPREAL8(min10, r8/8)
+      srb%szt(icv, 1) = srb%szt(icv, 1) + zt(icv)*min10b
+      ztb(icv) = ztb(icv) + sr%szt(icv, 1)*min10b
+      t0b = 0.D0
+    END IF
+    CALL POPCONTROL2B(branch)
+    IF (branch .LT. 2) THEN
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL8(sr%szt(icv, 0), r8/8)
+        t0b = t0b - switch%b2srst_rf2*srb%szt(icv, 0)
+        srb%szt(icv, 0) = 0.D0
+      ELSE
+        CALL POPREAL8(sr%szt(icv, 0), r8/8)
+        t0b = t0b + (switch%b2srst_rf2+1.0_R8)*srb%szt(icv, 0)
+        srb%szt(icv, 0) = 0.D0
+      END IF
+    ELSE IF (branch .EQ. 2) THEN
+      CALL POPREAL8(sr%szt(icv, 0), r8/8)
+      t0b = t0b - switch%b2srst_rf2*srb%szt(icv, 0)
+      srb%szt(icv, 0) = 0.D0
+    ELSE
+      CALL POPREAL8(sr%szt(icv, 0), r8/8)
+    END IF
+    srb%szt(icv, 0) = srb%szt(icv, 0) + t0b
+    srb%szt(icv, 1) = srb%szt(icv, 1) + zt(icv)*t0b
+    ztb(icv) = ztb(icv) + sr%szt(icv, 1)*t0b
     CALL POPREAL8(sr%skt(icv, 3), r8/8)
     tempb = srb%skt(icv, 3)/(b2srst_kt_eps+kt(icv))
     srb%skt(icv, 3) = 0.D0

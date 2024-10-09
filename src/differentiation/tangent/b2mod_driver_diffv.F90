@@ -136,7 +136,6 @@ MODULE B2MOD_DRIVER_DIFFV
   REAL(kind=r8) :: cputarget, cpuincrement, na_eps, te_eps, ti_eps, &
 & tn_eps, po_eps, ua_eps, kt_eps, zt_eps, sput_frc, sput_phys, delta_min&
 & , dt_change_inc, delta_max, dt_change_dec, dt_min, dt_max, max_delta
-  INTEGER :: ncon, nele_jac
 !     NetCDF-3.
 !
 ! netcdf version 3 fortran interface:
@@ -2270,11 +2269,11 @@ CONTAINS
     INTRINSIC MAXVAL
     REAL(r8) :: x1
     REAL(r8), DIMENSION(nbdirsmax) :: x1d
-    REAL(r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: abs0
-    REAL(r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: abs1
-    REAL(r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: abs2
-    REAL(r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: abs3
-    REAL(r8), DIMENSION(mpg%nCv) :: abs4
+    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
+    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
+    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
+    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%nCv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -2290,11 +2289,11 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%nCv) :: arg14
     REAL(r8), DIMENSION(mpg%nCv) :: arg15
     INTEGER :: arg16
-    REAL(r8) :: result10
-    REAL(r8) :: result20
-    REAL(r8) :: result30
-    REAL(r8) :: result40
-    REAL(r8) :: result50
+    REAL(kind=r8) :: result10
+    REAL(kind=r8) :: result20
+    REAL(kind=r8) :: result30
+    REAL(kind=r8) :: result40
+    REAL(kind=r8) :: result50
     INTEGER :: nd
     INTEGER :: nbdirs
 !   ..initialisation
@@ -3710,37 +3709,37 @@ CONTAINS
 &                    state%rt, state%rtw)
         CALL B2XPNE_NODIFF(ncv, ns, state%rt%rza, state%pl%na, state_ext&
 &                    %ne, state%dv%ne)
-        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.0) 
-          abs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
+        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.) 
+          dabs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
         ELSEWHERE
-          abs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
+          dabs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.0) 
-          abs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
+        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.) 
+          dabs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
         ELSEWHERE
-          abs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
+          dabs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.0) 
-          abs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
+        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.) 
+          dabs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
         ELSEWHERE
-          abs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
+          dabs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.0) 
-          abs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
+        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.) 
+          dabs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
         ELSEWHERE
-          abs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
+          dabs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
         END WHERE
-        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.0&
+        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.&
 &       ) 
-          abs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
+          dabs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
         ELSEWHERE
-          abs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
+          dabs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
         END WHERE
-        result10 = MAXVAL(abs0)
-        result20 = MAXVAL(abs1)
-        result30 = MAXVAL(abs2)
-        result40 = MAXVAL(abs3)
-        result50 = MAXVAL(abs4)
+        result10 = MAXVAL(dabs0)
+        result20 = MAXVAL(dabs1)
+        result30 = MAXVAL(dabs2)
+        result40 = MAXVAL(dabs3)
+        result50 = MAXVAL(dabs4)
         max_delta = MAX(result10, result20, result30, result40, result50&
 &         )
         WRITE(*, *) 'Convergence of bundled rates = ', is, max_delta
@@ -3821,8 +3820,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT_DV(ncon, nele_jac, ns, mpg, mpgd, switch, &
-&                          nbdirs)
+      CALL READ_B2MOD_PAR_OPT_DV(ns, mpg, mpgd, switch, nbdirs)
       ALLOCATE(par_opt_physd(nbdirsmax, npar_opt))
       DO nd=1,npar_opt
         par_opt_physd(nd, 1:npar_opt) = 0.D0
@@ -3911,11 +3909,11 @@ CONTAINS
     INTRINSIC ABS
     INTRINSIC MAXVAL
     REAL(r8) :: x1
-    REAL(r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: abs0
-    REAL(r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: abs1
-    REAL(r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: abs2
-    REAL(r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: abs3
-    REAL(r8), DIMENSION(mpg%nCv) :: abs4
+    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
+    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
+    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
+    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%nCv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -3931,11 +3929,11 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%nCv) :: arg14
     REAL(r8), DIMENSION(mpg%nCv) :: arg15
     INTEGER :: arg16
-    REAL(r8) :: result10
-    REAL(r8) :: result20
-    REAL(r8) :: result30
-    REAL(r8) :: result40
-    REAL(r8) :: result50
+    REAL(kind=r8) :: result10
+    REAL(kind=r8) :: result20
+    REAL(kind=r8) :: result30
+    REAL(kind=r8) :: result40
+    REAL(kind=r8) :: result50
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
 !-----------------------------------------------------------------------
@@ -5294,37 +5292,37 @@ CONTAINS
 &                    state%rt, state%rtw)
         CALL B2XPNE_NODIFF(ncv, ns, state%rt%rza, state%pl%na, state_ext&
 &                    %ne, state%dv%ne)
-        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.0) 
-          abs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
+        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.) 
+          dabs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
         ELSEWHERE
-          abs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
+          dabs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.0) 
-          abs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
+        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.) 
+          dabs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
         ELSEWHERE
-          abs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
+          dabs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.0) 
-          abs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
+        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.) 
+          dabs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
         ELSEWHERE
-          abs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
+          dabs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.0) 
-          abs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
+        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.) 
+          dabs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
         ELSEWHERE
-          abs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
+          dabs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
         END WHERE
-        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.0&
+        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.&
 &       ) 
-          abs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
+          dabs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
         ELSEWHERE
-          abs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
+          dabs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
         END WHERE
-        result10 = MAXVAL(abs0)
-        result20 = MAXVAL(abs1)
-        result30 = MAXVAL(abs2)
-        result40 = MAXVAL(abs3)
-        result50 = MAXVAL(abs4)
+        result10 = MAXVAL(dabs0)
+        result20 = MAXVAL(dabs1)
+        result30 = MAXVAL(dabs2)
+        result40 = MAXVAL(dabs3)
+        result50 = MAXVAL(dabs4)
         max_delta = MAX(result10, result20, result30, result40, result50&
 &         )
         WRITE(*, *) 'Convergence of bundled rates = ', is, max_delta
@@ -5404,7 +5402,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg, switch)
+      CALL READ_B2MOD_PAR_OPT(ns, mpg, switch)
       ALLOCATE(par_opt_phys(npar_opt))
       ALLOCATE(xsave(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
@@ -6242,6 +6240,9 @@ CONTAINS
       stated%sr%skt(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
+      stated%sr%szt(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
       stated%sr%smo(nd, :, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
@@ -6255,6 +6256,9 @@ CONTAINS
     END DO
     DO nd=1,nbdirsmax
       stated%sr%sktdt(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%sr%sztdt(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%sr%shidt(nd, :, :) = 0.D0
@@ -6285,6 +6289,9 @@ CONTAINS
     END DO
     DO nd=1,nbdirsmax
       stated%srw%skt0(nd, :, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%srw%szt0(nd, :, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%srw%smo0(nd, :, :, :) = 0.D0
@@ -6368,6 +6375,9 @@ CONTAINS
       stated%psnl%kt(nd, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
+      stated%psnl%zt(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
       stated%psnl%ne(nd, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
@@ -6393,6 +6403,9 @@ CONTAINS
     END DO
     DO nd=1,nbdirsmax
       stated%psnc%kt(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      stated%psnc%zt(nd, :) = 0.D0
     END DO
     DO nd=1,nbdirsmax
       stated%psnc%ne(nd, :) = 0.D0
@@ -6448,7 +6461,8 @@ CONTAINS
         stated%psnc%kinrgy(nd, :, :) = stated%dv%kinrgy(nd, :, :)
         stated%psnl%kt(nd, :) = stated%pl%kt(nd, :)
         stated%psnc%kt(nd, :) = stated%pl%kt(nd, :)
-        stated%psnc%zt(nd, :) = 0.D0
+        stated%psnl%zt(nd, :) = stated%pl%zt(nd, :)
+        stated%psnc%zt(nd, :) = stated%pl%zt(nd, :)
       END DO
       state%psnl%na = state%pl%na
       state%psnc%na = state%pl%na

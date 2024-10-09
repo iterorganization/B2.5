@@ -136,7 +136,7 @@ CONTAINS
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
     IMPLICIT NONE
 !
-    INTEGER :: ncv, nfc, ns
+    INTEGER, INTENT(IN) :: ncv, nfc, ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
     TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
@@ -1225,7 +1225,7 @@ CONTAINS
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
-    INTEGER :: ncv, nfc, ns
+    INTEGER, INTENT(IN) :: ncv, nfc, ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
@@ -1900,7 +1900,7 @@ CONTAINS
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
-    INTEGER :: ncv, nfc, ns
+    INTEGER, INTENT(IN) :: ncv, nfc, ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(B2PLASMA), INTENT(IN) :: pl

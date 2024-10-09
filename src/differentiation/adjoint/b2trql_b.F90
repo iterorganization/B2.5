@@ -41,7 +41,7 @@ SUBROUTINE B2TRQL_B(ncv, nfc, ns, switch, switchb, geo, geob, mpg, mpgb&
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -165,7 +165,7 @@ SUBROUTINE B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, pl, dv, st_ext&
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg

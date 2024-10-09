@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, ua,              !srv 20.09.06 { 16.10.17
+      subroutine b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, ua,      !srv 20.09.06 { 16.10.17
      &           vsaf_cl, fac_vis, fchvispar)                           !srv 22.06.08
       use b2mod_types
       use b2mod_boundary_namelist
@@ -14,7 +14,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, iFc                                     !lkw 20.06.2022
+      integer, intent (in) :: nCv, nFc, nVx, ns                         !lkw 20.06.2022
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -39,7 +39,7 @@
 *   ..global named constants
 
 *   ..local variables
-      integer is
+      integer is, iFc
       real (kind=R8) ::
      *   dvpar(nFc),
      *   wrk(nCv), wrk0(nFc), wrk1(nFc), wrkVx(nVx), gOnedBsq(nFc,0:1)

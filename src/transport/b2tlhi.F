@@ -1,4 +1,4 @@
-      subroutine b2tlhi (nCv, nFc, mp, cflmi, switch, geo, mpg, 
+      subroutine b2tlhi (nCv, nFc, mp, cflmi, switch, geo, mpg,
      &  ni, nirm, ni_ext, ti, chvimx)
       use b2mod_types
       use b2mod_switches
@@ -6,7 +6,7 @@
       use b2us_map
       use b2mod_subsys
       implicit none
-      integer nCv, nFc
+      integer, intent (in) :: nCv, nFc
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -44,8 +44,8 @@
            cflmi_loc(iFc) = switch%b2tlhi_cflmi_min
           elseif (nif(iFc) .lt. switch%b2tlhi_ni_max ) then
            ! Interpolate for smooth transition
-           cflmi_loc(iFc) = 
-     .      (cflmi*(nif(iFc) - switch%b2tlhi_ni_min) + 
+           cflmi_loc(iFc) =
+     .      (cflmi*(nif(iFc) - switch%b2tlhi_ni_min) +
      .       switch%b2tlhi_cflmi_min*(switch%b2tlhi_ni_max - nif(iFc)))/
      .      (switch%b2tlhi_ni_max - switch%b2tlhi_ni_min)
           endif
@@ -55,7 +55,7 @@
 *   ..compute flux limit velocity
       if (switch%b2tqca_model.eq.1) then  ! SOLPS5.0 treatments
         do iFc = 1, nFc
-cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqca_model, 
+cwdk perhaps the if-test should be based on a 'mode' switch, instead of b2tqca_model,
 c    because now both options are interchangeable
           t0 = max(ti(mpg%fcCv(iFc,1)),ti(mpg%fcCv(iFc,2)))
           chvimx(iFc) = cflmi_loc(iFc)*abs(geo%fcPbs(iFc))*sqrt(t0/mp)*!srv 11.01.13
@@ -73,7 +73,7 @@ c           Removes need for different treatment later on in the code (b2tfhi), 
 c           ensures consistency with b2trcl_conductive_limit .ne. 0
         chvimx(iFc) = cflmi_loc(iFc)*
      &    geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))*
-     &   (nirm(mpg%fcCv(iFc,2))*pit(mpg%fcCv(iFc,2))*sqrt(t0/mp)*t0 + 
+     &   (nirm(mpg%fcCv(iFc,2))*pit(mpg%fcCv(iFc,2))*sqrt(t0/mp)*t0 +
      &    nirm(mpg%fcCv(iFc,1))*pit(mpg%fcCv(iFc,1))*sqrt(t1/mp)*t1)/
      &   ((ni(mpg%fcCv(iFc,1),0)+ni_ext(mpg%fcCv(iFc,1),0)+
      &     ni(mpg%fcCv(iFc,2),0)+ni_ext(mpg%fcCv(iFc,2),0))*max(t0,t1))

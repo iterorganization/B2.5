@@ -24,7 +24,7 @@ SUBROUTINE DIFF_P_FWD(ncv, nfc, nvx, mode, geo, mpg, mpgb, fun, funv, &
   USE B2US_MAP_DIFF
   IMPLICIT NONE
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), funv(nvx)
@@ -33,10 +33,10 @@ SUBROUTINE DIFF_P_FWD(ncv, nfc, nvx, mode, geo, mpg, mpgb, fun, funv, &
 !-----------------------------------------------------------------------
 !.documentation
 !
-!     DIFF_P computes differences of a cell centered quantity fun in the 
-!     poloidal direction, on faces of a cell. 
+!     DIFF_P computes differences of a cell centered quantity fun in the
+!     poloidal direction, on faces of a cell.
 !
-!     To compute values of the field in cell vertices, the routine relies 
+!     To compute values of the field in cell vertices, the routine relies
 !     calls to intvertex.
 !
 !     If mode.eq.0, the routine will interpolate fun to vertices (funv)
@@ -54,7 +54,7 @@ SUBROUTINE DIFF_P_FWD(ncv, nfc, nvx, mode, geo, mpg, mpgb, fun, funv, &
   TYPE(MAPPING_DIFF) :: mpgb
 !
 !-----------------------------------------------------------------------
-!.computation      
+!.computation
 !
 !   ..test mode
 !
@@ -98,7 +98,7 @@ SUBROUTINE DIFF_P_BWD(ncv, nfc, nvx, mode, geo, mpg, mpgb, fun, funb, &
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
   IMPLICIT NONE
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFF) :: mpgb
@@ -150,7 +150,7 @@ SUBROUTINE DIFF_P_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funv, dfunp&
   USE B2US_MAP_DIFF
   IMPLICIT NONE
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), funv(nvx)
@@ -159,10 +159,10 @@ SUBROUTINE DIFF_P_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funv, dfunp&
 !-----------------------------------------------------------------------
 !.documentation
 !
-!     DIFF_P computes differences of a cell centered quantity fun in the 
-!     poloidal direction, on faces of a cell. 
+!     DIFF_P computes differences of a cell centered quantity fun in the
+!     poloidal direction, on faces of a cell.
 !
-!     To compute values of the field in cell vertices, the routine relies 
+!     To compute values of the field in cell vertices, the routine relies
 !     calls to intvertex.
 !
 !     If mode.eq.0, the routine will interpolate fun to vertices (funv)
@@ -178,7 +178,7 @@ SUBROUTINE DIFF_P_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funv, dfunp&
   EXTERNAL INTVERTEX_NODIFF
 !
 !-----------------------------------------------------------------------
-!.computation      
+!.computation
 !
 !   ..test mode
   CALL XERTST(0 .LE. mode .AND. mode .LE. 1, &

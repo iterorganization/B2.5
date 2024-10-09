@@ -25,6 +25,7 @@ DEFINES += -DNO_OPT
 CPP = /lib/cpp -traditional
 
 FC = ftn
+FN = ${FC}
 
 DDBLOPTION = -Ad # ???
 
@@ -34,6 +35,7 @@ LDLIBES += ${LD_MPI}
 endif
 
 LDOPTS += -dynamic -fpic -mcmodel=medium
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

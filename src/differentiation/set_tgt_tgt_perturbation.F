@@ -10,7 +10,7 @@
       type(switches_diffv), intent(inout) :: switchd
       type(switches_diffv0), intent(inout) :: switchd0
 *-----------------------------------------------------------------------
-*     set_tgt_perturbation is used in b2optim_tao and b2optim_ipopt
+*     set_tgt_perturbation is used in b2optim_tao
 *     to correctly set and pass the input perturbation to tangent AD
 *     coming from the optimization routines
 *-----------------------------------------------------------------------

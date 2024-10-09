@@ -24,13 +24,13 @@ endif
 endif
 
 ifndef SOLPS_DEBUG
-FCOPTS  += -O2  -xHost
+FCOPTS  += -O2 -xHost
 else
 FCOPTS  += -g -C -traceback -debug all -check all
 endif
 ifdef SOLPS_MPI
-FCOPTS  += ${MPI_CPP}
-LDOPTS  += ${LD_MPI}
+FPOPTS  += ${MPI_CPP}
+LPOPTS  += ${LD_MPI}
 endif
 
 ifeq ($(shell `pkg-config --exists ggd`; echo $$?),0)

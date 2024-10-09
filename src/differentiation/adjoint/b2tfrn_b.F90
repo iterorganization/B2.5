@@ -57,7 +57,7 @@ SUBROUTINE B2TFRN_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
 !  Hint: nFc should be the size of dimension 1 of array vaecrb
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -379,7 +379,7 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg

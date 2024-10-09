@@ -6,7 +6,7 @@
       use b2us_geo
       implicit none
 *   ..input arguments
-      integer nCv, nFc, nVx, meth
+      integer, intent (in) :: nCv, nFc, nVx, meth
       type (geometry), intent (in) :: geo
       real (kind=R8) ::
      *   flo(nFc,0:1), con(nFc,0:1)
@@ -49,7 +49,7 @@
 
       if (meth .eq. 0) then ! CENTRAL scheme
 
-       do iFc = 1,nFc
+       do iFc = 1, nFc
 *    ..geometric factors for cell and vertex contributions
 *      to differences of cell faces (consistent with diff_p, diff_r)
         t00 = geo%fcQalf(iFc,0)
@@ -70,7 +70,7 @@
 
       elseif (meth .eq. 1) then ! UPWIND scheme
 
-       do iFc = 1,nFc
+       do iFc = 1, nFc
 *    ..geometric factors for cell and vertex contributions
 *      to differences of cell faces (consistent with diff_p, diff_r)
         t00 = geo%fcQalf(iFc,0)
@@ -92,7 +92,7 @@
 
       elseif (meth .eq. 2) then ! SOLPS5 hybrid scheme
 
-       do iFc = 1,nFc
+       do iFc = 1, nFc
 *    ..effective diffusion coefficients
         t0 = hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) -
      &    0.5_R8*abs(flo(iFc,0))

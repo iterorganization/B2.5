@@ -2,7 +2,7 @@
       use b2mod_types
       use b2us_map
       implicit none
-      integer nCv,nFc,nz
+      integer, intent (in) :: nCv,nFc,nz
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   wght(mpg%nCmxFc),face(nFc,0:nz),centre(nCv,0:nz)
@@ -18,7 +18,7 @@ c
       use b2mod_types
       use b2us_map
       implicit none
-      integer nCv,nFc
+      integer, intent (in) :: nCv,nFc
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   wght(mpg%nCmxFc),face(nFc),centre(nCv)

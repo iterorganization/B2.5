@@ -20,7 +20,7 @@ SUBROUTINE B2TLHI_NODIFF(ncv, nfc, mp, cflmi, switch, geo, mpg, ni, nirm&
   USE B2US_MAP_DIFF
   USE B2MOD_SUBSYS
   IMPLICIT NONE
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -163,7 +163,7 @@ SUBROUTINE B2TLHI_B(ncv, nfc, mp, cflmi, switch, switchb, geo, geob, mpg&
   USE B2US_MAP_DIFF
   USE B2MOD_SUBSYS
   IMPLICIT NONE
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo

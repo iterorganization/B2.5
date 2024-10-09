@@ -132,27 +132,23 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, switchb, ev, te, teb, rt, &
 !      ..compute ionisation rate coefficient
       arg1 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*wrk0(icv)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8(cutlo, r8/8)
       CALL PUSHREAL8(cutll, r8/8)
       res = EXPU(arg1)
 !      ..compute recombination rate coefficient
       arg1 = rt%rlra(icv, 0, is) + rt%rlra(icv, 1, is)*wrk0(icv)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8(cutlo, r8/8)
       CALL PUSHREAL8(cutll, r8/8)
       res0 = EXPU(arg1)
 !      ..compute heat loss rate coefficient
       arg1 = rt%rlqa(icv, 0, is) + rt%rlqa(icv, 1, is)*wrk0(icv)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8(cutlo, r8/8)
       CALL PUSHREAL8(cutll, r8/8)
       res1 = EXPU(arg1)
       arg1 = rt%rlqr(icv, 0, is) + rt%rlqr(icv, 1, is)*wrk0(icv)
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8(cutlo, r8/8)
       CALL PUSHREAL8(cutll, r8/8)
       res2 = EXPU(arg1)
@@ -278,7 +274,6 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, switchb, ev, te, teb, rt, &
       resb2 = result1b
       CALL POPREAL8(cutll, r8/8)
       CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
       CALL EXPU_B(arg1, arg1b, resb2)
       rtb%rlqr(icv, 0, is) = rtb%rlqr(icv, 0, is) + arg1b
@@ -290,7 +285,6 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, switchb, ev, te, teb, rt, &
       resb1 = result1b
       CALL POPREAL8(cutll, r8/8)
       CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
       CALL EXPU_B(arg1, arg1b, resb1)
       rtb%rlqa(icv, 0, is) = rtb%rlqa(icv, 0, is) + arg1b
@@ -302,7 +296,6 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, switchb, ev, te, teb, rt, &
       resb0 = result1b
       CALL POPREAL8(cutll, r8/8)
       CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
       CALL EXPU_B(arg1, arg1b, resb0)
       rtb%rlra(icv, 0, is) = rtb%rlra(icv, 0, is) + arg1b
@@ -314,7 +307,6 @@ SUBROUTINE B2SQEL_B(ncv, ns, ismain, switch, switchb, ev, te, teb, rt, &
       resb = result1b
       CALL POPREAL8(cutll, r8/8)
       CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
       CALL EXPU_B(arg1, arg1b, resb)
       rtb%rlsa(icv, 0, is) = rtb%rlsa(icv, 0, is) + arg1b

@@ -41,6 +41,7 @@ CPP        = /lib/cpp -traditional
 
 ifeq (,$(findstring CentOS,$(OS)))
 MPI_FC    ?= mpiifort -fc=mpiifx
+FN         = ifx
 else
 MPI_FC    ?= mpiifort
 endif
@@ -77,10 +78,10 @@ FCOPTS    += -march=sandybridge
 endif
 endif
 ifdef SOLPS_MPI
-FCOPTS    += ${MPI_CPP}
+FPOPTS    += ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
-FCOPTS    += ${MPI_CPP}
+FPOPTS    += ${MPI_CPP}
 endif
 endif
 
@@ -106,6 +107,7 @@ LIBOPT = ${PETSC_LIB}
 # CPP has been overwritten by the PETSc variables file and must be reinstated
 CPP    = /lib/cpp -traditional
 endif
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

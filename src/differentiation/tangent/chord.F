@@ -222,12 +222,22 @@ c
       use b2us_map_diffv
       use b2us_geo_diffv
       use b2mod_subsys
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad_diffv
      & , only : covered, rmin, rmax, zmin, zmax, first, cvcov, icov,
      &          iCvsv, lngind, lngcov
       implicit none
+#else
+      implicit none
+      integer lngcov, lngind
+      parameter(lngcov=200, lngind=500 000)
+      integer, save :: covered(lngcov,lngcov), cvcov(lngind),
+     &  icov(lngind), iCvsv
+      real (kind=R8), save :: rmin, rmax, zmin, zmax
+      logical, save :: first = .true.
+#endif
 
 !DIAG      integer rectangles, triangles, chain      ! diag
 !DIAG      common /chord_diag/ rectangles, triangles, chain      ! diag

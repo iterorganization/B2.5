@@ -147,10 +147,10 @@ SUBROUTINE B2TINNT_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, &
   INTRINSIC LOG
   INTRINSIC NINT
   INTRINSIC ABS
-  REAL(kind=r8), DIMENSION(ncv) :: abs0
-  REAL(kind=r8), DIMENSION(ncv) :: abs1
-  REAL(kind=r8), DIMENSION(ncv) :: abs2
-  REAL(kind=r8), DIMENSION(ncv) :: abs3
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
+  REAL(kind=r8), DIMENSION(ncv) :: dabs1
+  REAL(kind=r8), DIMENSION(ncv) :: dabs2
+  REAL(kind=r8), DIMENSION(ncv) :: dabs3
   INTEGER :: nd
   REAL(kind=r8), DIMENSION(nfc) :: temp
   REAL(kind=r8), DIMENSION(ncv) :: temp0
@@ -520,20 +520,20 @@ SUBROUTINE B2TINNT_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, &
 &           , :, is0))/na_fluid(:, is0)
         END DO
         temp0 = temp5
-        WHERE (geo%cvbb(:, 0) .GE. 0.0) 
-          abs0 = geo%cvbb(:, 0)
+        WHERE (geo%cvbb(:, 0) .GE. 0.) 
+          dabs0 = geo%cvbb(:, 0)
         ELSEWHERE
-          abs0 = -geo%cvbb(:, 0)
+          dabs0 = -geo%cvbb(:, 0)
         END WHERE
 !! pitch, b_theta / B
-        pit = abs0/geo%cvbb(:, 3)
-        WHERE (geo%cvbb(:, 2) .GE. 0.0) 
-          abs1 = geo%cvbb(:, 2)
+        pit = dabs0/geo%cvbb(:, 3)
+        WHERE (geo%cvbb(:, 2) .GE. 0.) 
+          dabs1 = geo%cvbb(:, 2)
         ELSEWHERE
-          abs1 = -geo%cvbb(:, 2)
+          dabs1 = -geo%cvbb(:, 2)
         END WHERE
 !! b_phi / B
-        pit2 = abs1/geo%cvbb(:, 3)
+        pit2 = dabs1/geo%cvbb(:, 3)
         DO nd=1,nbdirs
           temp5 = (fnacd(nd, :, 0, is0)-temp0*na_fluidd(nd, :, is0))/&
 &           na_fluid(:, is0)
@@ -595,20 +595,20 @@ SUBROUTINE B2TINNT_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, &
 !! radial
 !! correct from poloidal to diamagnetic
           vntrc_kin(:, 1) = rfluxa(:, b2eatcr(is0), 1)/na_kin(:, is0)
-          WHERE (geo%cvbb(:, 0) .GE. 0.0) 
-            abs2 = geo%cvbb(:, 0)
+          WHERE (geo%cvbb(:, 0) .GE. 0.) 
+            dabs2 = geo%cvbb(:, 0)
           ELSEWHERE
-            abs2 = -geo%cvbb(:, 0)
+            dabs2 = -geo%cvbb(:, 0)
           END WHERE
 !! pitch, b_theta / B
-          pit = abs2/geo%cvbb(:, 3)
-          WHERE (geo%cvbb(:, 2) .GE. 0.0) 
-            abs3 = geo%cvbb(:, 2)
+          pit = dabs2/geo%cvbb(:, 3)
+          WHERE (geo%cvbb(:, 2) .GE. 0.) 
+            dabs3 = geo%cvbb(:, 2)
           ELSEWHERE
-            abs3 = -geo%cvbb(:, 2)
+            dabs3 = -geo%cvbb(:, 2)
           END WHERE
 !! b_phi / B
-          pit2 = abs3/geo%cvbb(:, 3)
+          pit2 = dabs3/geo%cvbb(:, 3)
 !! approximate parallel velocity as toroidal velocity/b_phi
           vntrc_par = tfluxa(:, b2eatcr(is0), 1)/na_kin(:, is0)/pit2
           vntrc_kin(:, 0) = (vntrc_kin(:, 0)-vntrc_par*pit)/pit2
@@ -990,10 +990,10 @@ SUBROUTINE B2TINNT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
   INTRINSIC LOG
   INTRINSIC NINT
   INTRINSIC ABS
-  REAL(kind=r8), DIMENSION(ncv) :: abs0
-  REAL(kind=r8), DIMENSION(ncv) :: abs1
-  REAL(kind=r8), DIMENSION(ncv) :: abs2
-  REAL(kind=r8), DIMENSION(ncv) :: abs3
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
+  REAL(kind=r8), DIMENSION(ncv) :: dabs1
+  REAL(kind=r8), DIMENSION(ncv) :: dabs2
+  REAL(kind=r8), DIMENSION(ncv) :: dabs3
   INTEGER :: nd
   REAL(kind=r8), DIMENSION(nfc) :: temp
   REAL(kind=r8), DIMENSION(ncv) :: temp0
@@ -1227,20 +1227,20 @@ SUBROUTINE B2TINNT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
 !        .. fluid velocities
 !! poloidal
         temp0 = fnac(:, 0, is0)/na_fluid(:, is0)
-        WHERE (geo%cvbb(:, 0) .GE. 0.0) 
-          abs0 = geo%cvbb(:, 0)
+        WHERE (geo%cvbb(:, 0) .GE. 0.) 
+          dabs0 = geo%cvbb(:, 0)
         ELSEWHERE
-          abs0 = -geo%cvbb(:, 0)
+          dabs0 = -geo%cvbb(:, 0)
         END WHERE
 !! pitch, b_theta / B
-        pit = abs0/geo%cvbb(:, 3)
-        WHERE (geo%cvbb(:, 2) .GE. 0.0) 
-          abs1 = geo%cvbb(:, 2)
+        pit = dabs0/geo%cvbb(:, 3)
+        WHERE (geo%cvbb(:, 2) .GE. 0.) 
+          dabs1 = geo%cvbb(:, 2)
         ELSEWHERE
-          abs1 = -geo%cvbb(:, 2)
+          dabs1 = -geo%cvbb(:, 2)
         END WHERE
 !! b_phi / B
-        pit2 = abs1/geo%cvbb(:, 3)
+        pit2 = dabs1/geo%cvbb(:, 3)
         DO nd=1,nbdirs
           fnand(nd, :, 1, is0) = fnad(nd, :, 1, is0)/temp
           vntrc_fluidd(nd, :, 0) = (fnacd(nd, :, 0, is0)-temp0*na_fluidd&
@@ -1269,20 +1269,20 @@ SUBROUTINE B2TINNT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
 !! radial
 !! correct from poloidal to diamagnetic
           vntrc_kin(:, 1) = rfluxa(:, b2eatcr(is0), 1)/na_kin(:, is0)
-          WHERE (geo%cvbb(:, 0) .GE. 0.0) 
-            abs2 = geo%cvbb(:, 0)
+          WHERE (geo%cvbb(:, 0) .GE. 0.) 
+            dabs2 = geo%cvbb(:, 0)
           ELSEWHERE
-            abs2 = -geo%cvbb(:, 0)
+            dabs2 = -geo%cvbb(:, 0)
           END WHERE
 !! pitch, b_theta / B
-          pit = abs2/geo%cvbb(:, 3)
-          WHERE (geo%cvbb(:, 2) .GE. 0.0) 
-            abs3 = geo%cvbb(:, 2)
+          pit = dabs2/geo%cvbb(:, 3)
+          WHERE (geo%cvbb(:, 2) .GE. 0.) 
+            dabs3 = geo%cvbb(:, 2)
           ELSEWHERE
-            abs3 = -geo%cvbb(:, 2)
+            dabs3 = -geo%cvbb(:, 2)
           END WHERE
 !! b_phi / B
-          pit2 = abs3/geo%cvbb(:, 3)
+          pit2 = dabs3/geo%cvbb(:, 3)
 !! approximate parallel velocity as toroidal velocity/b_phi
           vntrc_par = tfluxa(:, b2eatcr(is0), 1)/na_kin(:, is0)/pit2
           vntrc_kin(:, 0) = (vntrc_kin(:, 0)-vntrc_par*pit)/pit2
@@ -1476,10 +1476,10 @@ SUBROUTINE B2TINNT_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt&
   INTRINSIC LOG
   INTRINSIC NINT
   INTRINSIC ABS
-  REAL(kind=r8), DIMENSION(ncv) :: abs0
-  REAL(kind=r8), DIMENSION(ncv) :: abs1
-  REAL(kind=r8), DIMENSION(ncv) :: abs2
-  REAL(kind=r8), DIMENSION(ncv) :: abs3
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
+  REAL(kind=r8), DIMENSION(ncv) :: dabs1
+  REAL(kind=r8), DIMENSION(ncv) :: dabs2
+  REAL(kind=r8), DIMENSION(ncv) :: dabs3
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !      integer, save :: mode = 1
 !      integer, save :: iout = 0
@@ -1594,20 +1594,20 @@ SUBROUTINE B2TINNT_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt&
 !! radial
 !! correct from poloidal to diamagnetic
         vntrc_fluid(:, 1) = fnac(:, 1, is0)/na_fluid(:, is0)
-        WHERE (geo%cvbb(:, 0) .GE. 0.0) 
-          abs0 = geo%cvbb(:, 0)
+        WHERE (geo%cvbb(:, 0) .GE. 0.) 
+          dabs0 = geo%cvbb(:, 0)
         ELSEWHERE
-          abs0 = -geo%cvbb(:, 0)
+          dabs0 = -geo%cvbb(:, 0)
         END WHERE
 !! pitch, b_theta / B
-        pit = abs0/geo%cvbb(:, 3)
-        WHERE (geo%cvbb(:, 2) .GE. 0.0) 
-          abs1 = geo%cvbb(:, 2)
+        pit = dabs0/geo%cvbb(:, 3)
+        WHERE (geo%cvbb(:, 2) .GE. 0.) 
+          dabs1 = geo%cvbb(:, 2)
         ELSEWHERE
-          abs1 = -geo%cvbb(:, 2)
+          dabs1 = -geo%cvbb(:, 2)
         END WHERE
 !! b_phi / B
-        pit2 = abs1/geo%cvbb(:, 3)
+        pit2 = dabs1/geo%cvbb(:, 3)
         vntrc_fluid(:, 0) = (vntrc_fluid(:, 0)-pl%ua(:, is0)*pit)/pit2
 !        .. kinetic velocities
         IF (switch%use_eirene .NE. 0) THEN
@@ -1616,20 +1616,20 @@ SUBROUTINE B2TINNT_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt&
 !! radial
 !! correct from poloidal to diamagnetic
           vntrc_kin(:, 1) = rfluxa(:, b2eatcr(is0), 1)/na_kin(:, is0)
-          WHERE (geo%cvbb(:, 0) .GE. 0.0) 
-            abs2 = geo%cvbb(:, 0)
+          WHERE (geo%cvbb(:, 0) .GE. 0.) 
+            dabs2 = geo%cvbb(:, 0)
           ELSEWHERE
-            abs2 = -geo%cvbb(:, 0)
+            dabs2 = -geo%cvbb(:, 0)
           END WHERE
 !! pitch, b_theta / B
-          pit = abs2/geo%cvbb(:, 3)
-          WHERE (geo%cvbb(:, 2) .GE. 0.0) 
-            abs3 = geo%cvbb(:, 2)
+          pit = dabs2/geo%cvbb(:, 3)
+          WHERE (geo%cvbb(:, 2) .GE. 0.) 
+            dabs3 = geo%cvbb(:, 2)
           ELSEWHERE
-            abs3 = -geo%cvbb(:, 2)
+            dabs3 = -geo%cvbb(:, 2)
           END WHERE
 !! b_phi / B
-          pit2 = abs3/geo%cvbb(:, 3)
+          pit2 = dabs3/geo%cvbb(:, 3)
 !! approximate parallel velocity as toroidal velocity/b_phi
           vntrc_par = tfluxa(:, b2eatcr(is0), 1)/na_kin(:, is0)/pit2
           vntrc_kin(:, 0) = (vntrc_kin(:, 0)-vntrc_par*pit)/pit2
