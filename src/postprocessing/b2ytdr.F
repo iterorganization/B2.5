@@ -189,16 +189,17 @@ c 2002-09-11: logic revised
       integer jsep, jxi, jxa, nxtl, nxtr
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch, pulse, shot
       integer indx, indy, indx1, indy1
-      integer coriolis, lhalpha
+      integer lhalpha
       integer nncut1, nnreg1(0:2), periodic_bc1
       integer ndim, ndm2, nfitanf, nfitend, ifail
-      integer invert_bpol, invert_btor, b2ux7p_style
+      integer invert_bpol, invert_btor, b2ux7p_style, csigin_style
       integer naver, ntotdt, ntfts
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
       character id0*8
       character*4 solps_version
       data solps_version / 'iter' /
       data invert_bpol/0/, invert_btor/0/, b2ux7p_style/2/
+      data csigin_style/0/
       character*10 :: b2fgmtry_oldversion, b2fgmtry_newversion
       data b2fgmtry_oldversion / '00.000.000' /
       character tab
@@ -479,7 +480,7 @@ c 2002-09-11: logic revised
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch, ycur,
      .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,
-     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
+     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert, fac_aniso,
      .  sources_time_mod, sources_time_switch, fch_ion_neutral,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
@@ -607,7 +608,7 @@ c 2002-09-11: logic revised
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
       data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
-      data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
+      data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/
       data xfrhie_no_drift/1.0_R8/, ycur/1.0_R8/
       data b2stbr_sna_corr/0.0_R8/, b2stbr_taumax/0.05_R8/
       data fch_ion_neutral/0.0_R8/
@@ -1447,15 +1448,16 @@ c 2002-09-11: logic revised
       call ipgeti ('b2tqna_mw_jsep', mw_jsep)
       call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
      .                     istyle_cur_contr_on_S_and_N)
-      call ipgeti ('b2news_coriolis', coriolis)
       call ipgetr ('b2tfnb_xfrhie', xfrhie)
       call ipgetr ('b2tfnb_xfrhiehz', xfrhiehz)
       call ipgetr ('b2tfnb_xfrhie_no_drift', xfrhie_no_drift)
       call ipgetr ('b2tfhe_inert', b2tfhe_inert)
+      call ipgetr ('b2sikt_aniso', fac_aniso)
       call ipgetr ('b2tfhe_vis_par', b2tfhe_vis_par)
       call ipgetr ('b2tvspa_vis_par', b2tvspa_vis_par)
       call ipgeti ('b2ux7p_style', b2ux7p_style)
       if (b2ux7p_style.eq.3) b2ux7p_style = 2
+      call ipgeti ('b2tqin_csigin_style', csigin_style)
       call ipgetr ('b2tfnb_ycur', ycur)
       if (.not.hydrogen) ycur = 0.0_R8
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
@@ -1840,13 +1842,17 @@ c 2002-09-11: logic revised
         case('b2trcl_conductive limit')
           cnamip = 'b2trcl_conductive_limit'
           todo = .false.
-        case('b2news_coriolis','b2npht_style_shei',
-     &                         'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
+        case('b2tqin_style')
+          cnamip = 'b2tqin_csigin_style'
+          todo = csigin_style.eq.0
+        case('b2news_coriolis', 'b2npht_style_shei',
+     &                          'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
           todo = .false.
           wait = .true.
-        case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
+        case('eirene_fixmap', 'b2tfnb_fnb_nodrift_style',  ! No longer needed
      &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib',
-     &       'b2stel_fix_recomb_energy','b2mndr_redef_pbs')
+     &       'b2stel_fix_recomb_energy', 'b2mndr_redef_pbs',
+     &       'b2news_guard_flows', 'b2npmo_b2sifr_', 'b2sifr_styl1')
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
@@ -1909,29 +1915,17 @@ c 2002-09-11: logic revised
             cnamip = 'b2mndr_na_new'
           end if
           todo = .false.
-        case('b2tfnb_xfrhie')  ! Needs to be replaced by xfrhiehz value if coriolis=1
-          todo = coriolis.ne.0
-          if (todo) rswitch = xfrhiehz
-        case('b2tfnb_xfrhiehz') ! Needs to be rewritten as xfrhie if coriolis=1
-          todo = coriolis.ne.0
-          if (todo) then
-            rswitch = xfrhiehz
-            cnamip = 'b2tfnb_xfrhie'
-          else
-            wait = .true.
-          endif
-        case ('b2tfnb_xfrhie_no_drift') ! Needs to be rewritten as xfrhie
-          todo = xfrhie_no_drift.ne.xfrhie .and.
-     &           xfrhie_no_drift.ne.1.0_R8
-          if (todo) then
-            rswitch = xfrhie_no_drift
-            cnamip = 'b2tfnb_xfrhie'
-          else
-            wait = .true.
-          endif
+        case('b2tfnb_xfrhie', 'b2tfnb_xfrhiehz',
+     &       'b2tfnb_xfrhie_no_drift')  ! Now obsolete, removed from list
+          todo = .false.
+          wait = .true.
         case ('b2tfhe_inert') ! needs to be rewritten as b2tiner_inert
           rswitch = b2tfhe_inert
           cnamip = 'b2tiner_inert'
+        case ('b2sikt_aniso') ! needs to be rewritten as b2sikt_fac_aniso
+          todo = fac_aniso.ne.1.0_R8
+          rswitch = fac_aniso
+          cnamip = 'b2sikt_fac_aniso'
         case ('b2tvspa_vis_par') ! obsolete, superseded by b2tfhe_vis_par
           todo = b2tvspa_vis_par.ne.1.0_R8 .and.
      &           b2tfhe_vis_par .eq.1.0_R8
