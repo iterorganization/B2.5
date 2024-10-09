@@ -232,15 +232,16 @@ TAGSLIST += ${SRCB2}/${DIFFDIR}/*.F*
 #TAGSLIST += ${SRCDIR}/differentiated_files${EXT_DIFF}/*.F
 IDSDIFFMODS = ${patsubst %,${SRCDIR}/ids/%,b2mod_cellhelper.F90 b2mod_connectivity.F90 b2mod_constants.F90 b2mod_grid_mapping.F90 b2mod_interp.F90 carre_constants.F90 helper.F90 logging.F90 tradui_constants.F90}
 endif
-ifneq ($(shell `pkg-config --exists petsc`; echo $$?),0)
 ifdef TAO
+ifdef TAO_NEW
+DEFINES += -DTAO_NEW
+endif
 SOLPSINCLUDE += -I${PETSC_DIR}/include
 MODINCLUDE += -I${PETSC_DIR}/include
 ifdef PETSC_ARCH
 ifeq ($(shell [ -d ${PETSC_DIR}/${PETSC_ARCH}/include ] && echo yes || echo no ),yes)
 SOLPSINCLUDE += -I${PETSC_DIR}/${PETSC_ARCH}/include
 MODINCLUDE += -I${PETSC_DIR}/${PETSC_ARCH}/include
-endif
 endif
 endif
 endif
