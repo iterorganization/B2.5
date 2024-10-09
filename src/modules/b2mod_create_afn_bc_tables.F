@@ -2,6 +2,10 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_math
+#ifndef NO_IEEE
+      use ieee_arithmetic    ! IGNORE
+#endif
+      implicit none
 c**************************************************************************************
 c*********   Module to create new databases for advanced fluid neutral BCs  ***********
 c**************************************************************************************
@@ -34,11 +38,14 @@ cc global variables
      &                        Eomin, mass
       real (kind=R8), save :: TRIMdata(2688,7)
       integer, save :: nv, ntheta, ntp, nT, nM, nSh, nphi
-      integer, save :: nE = 12, nA = 7, cE = 5, cA = 6, cR = 7, !! these values are hardcoded because the format of the TRIM data is not expected to change
+      integer, save :: nE = 12, nA = 7, cE = 5, cA = 6, cR = 7, !! these values are hard-coded because the format of the TRIM data is not expected to change
      &                 nB = 32
       real (kind=R8), allocatable, save :: Rv(:,:),
      &  Rmomparv(:,:),Rmomperpv(:,:),Rpv1(:,:),Rpv2(:,:),
      &  Rpv3(:,:),REv(:,:)
+#ifdef NO_IEEE
+      logical, external :: my_isnan
+#endif
 
 cc description of global variables
 c    M: discretization vector toroidal Mach number
@@ -96,7 +103,6 @@ c    Rpv1: contribution in pressure of reflected particles, see PhD N. Horsten E
 c    Rpv2: contribution in pressure of reflected particles, see PhD N. Horsten Eq. 4.67
 c    Rpv3: contribution in pressure of reflected particles, see PhD N. Horsten Eq. 4.70
 c    REv: energy reflection coefficient, see PHD N. Horsten Eq. 4.73
-
 
       contains
 
@@ -299,7 +305,12 @@ cc Interpolate the reflection data from TRIM to the format we need, i.e. as a fu
             call CalcVelTRIM(mass,n,t1,t2,vi,vout)
             !! check for NaNs
             do ii = 1,3
-              if (isnan(vout(ii))) then !! should not happen anymore after bug fixes, but can stay here just in case.
+!! should not happen anymore after bug fixes, but can stay here just in case.
+#ifndef NO_IEEE
+              if (ieee_is_nan(vout(ii))) then
+#else
+              if (my_isnan(vout(ii))) then
+#endif
                 write(*,*) 'NaN error in vout!'
                 write(*,*) 'k', k
                 write(*,*) 'ii', ii
@@ -1974,12 +1985,18 @@ c simple 1D linear interpolation / extrapolation
       subroutine remove_NaNs(nx,x)
       use b2mod_types
       use b2mod_subsys
+#ifndef NO_IEEE
+      use ieee_arithmetic    ! IGNORE
+#endif
       implicit none
 ** input/output
       integer :: nx
       real (kind=R8), dimension(:), intent(inout) :: x(nx)
 ** local
       integer :: i
+#ifdef NO_IEEE
+      logical, external :: my_isnan
+#endif
 
       call subini ('remove_NaNs')
 
@@ -1987,7 +2004,11 @@ c simple 1D linear interpolation / extrapolation
 c replace NaN values by 0 (otherwise a single NaN value in x could cause SUM(x) to be NaN)
 
       do i = 1,nx
-        if (isnan(x(i))) then
+#ifndef NO_IEEE
+        if (ieee_is_nan(x(i))) then
+#else
+        if (my_isnan(x(i))) then
+#endif
           x(i) = 0.0_R8
         endif
       enddo
@@ -2032,8 +2053,7 @@ cc set correct name
       filename = incident(1:len_trim(incident))//'_on_'//
      &           material(1:len_trim(material))
 
-
-cc the format of the TRIM data files is hardcoded because it is not expected to change (untill some new database is created)
+cc the format of the TRIM data files is hard-coded because it is not expected to change (until some new database is created)
 
 cc open the TRIM file stored in the EIRENE source code
       if (open_file(9,filename,

@@ -1982,8 +1982,7 @@
 				<name>b2tqna_ballooning</name>
 				<description>
 					Ballooning model switches. If ballooning.ne.0, then all transport coefficients in cell (i) are rescaled by a factor of ballooning_rescale*abs(bb_ref/bb(i))**ballooning .
-					The default value for bb_ref is the arithmetic average of the total magnetic field strength over the entire computational domain. If b2tqna_ballooning_sig.ne.0 (default),
-					the ballooning factor is also applied to the anomalous radial electrical conductivity and the anomalous radial thermo-electric coefficient.
+					The default value for bb_ref is the arithmetic average of the total magnetic field strength over the entire computational domain. If b2tqna_ballooning_sig.ne.0 (default), the ballooning factor is also applied to the anomalous radial electrical conductivity and the anomalous radial thermo-electric coefficient.
 				</description>
 				<switch>
 					<name>b2tqna_ballooning</name>
@@ -2698,7 +2697,7 @@
 				<name>b2tfhi_fflokt*</name>
 				<description>
 					fflokt and fconkt are fudge factors to approximate enhanced parallel transport of k due to term related to (fluctuations in parallel current) * (fluctuations in potential)
-          In principle this models the same effect as skt_diss (thus: needs b2sikt_fac_sheath_* = 0.0).
+					In principle this models the same effect as skt_diss (thus: needs b2sikt_fac_sheath_* = 0.0).
 				</description>
 				<switch>
 					<name>b2tfhi_fflokt</name>
@@ -2732,7 +2731,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Multiplier to the perpendicular current due to Reynolds-stress in k-model
+					Multiplier to the perpendicular current due to Reynolds-stress in k-model.
 				</description>
 			</switch>
 			<switchgroup>
@@ -2782,8 +2781,8 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If '0': use sound speed, connection length and Larmor radius at OMP in k(-eps)-model.
-					If '1': use local sound speed, connection length and Larmor radius.
+					If '0': use sound speed, connection length, and Larmor radius at OMP in k(-eps)-model.
+					If '1': use local sound speed, connection length, and Larmor radius.
 				</description>
 			</switch>
 			<switch>
@@ -2996,7 +2995,7 @@
 				<default>1.0e-3</default>
 				<type>real</type>
 				<description>
-			    When the magnetic field lines are almost tangential to a wall structure, the sheath conditions from BCMOM = 13 are replaced by leakage conditions. This happens when abs(fcQalf(iFc,0)*cvBb(iCv1,0)/cvBb(iCv1,3)).lt.Qalfmin.
+					When the magnetic field lines are almost tangential to a wall structure, the sheath boundary conditions from BCMOM = 13 are replaced by leakage conditions. This happens when abs(fcQalf(iFc,0)*cvBb(iCv1,0)/cvBb(iCv1,3)).lt.Qalfmin.
 				</description>
 			</switch>
 			<switch>
@@ -3004,15 +3003,15 @@
 				<default>3.1</default>
 				<type>real</type>
 				<description>
-			    Potential drop used for BCENI/E = 15 when the potential equation is not solved (pot_eq.ne.1).
+					Potential drop used for BCENI/E = 15 when the potential equation is not solved (pot_eq.ne.1), in units of the local electron temperature.
 				</description>
 			</switch>
 			<switchgroup>
 				<name>b2tlc0_style_*</name>
 				<description>
-				 Determines the method for applying flux limiters to fluid neutrals.
-				 style.eq.0: old treatment where the radial and poloidal conductive fluxes are limited separately.
-				 style.eq.1: improved treatment (isotropic flux limiters) where the total conductive flux is limited, preventing artificial rotation of the flow.
+					Determines the method for applying flux limiters to fluid neutrals.
+					style.eq.0: old treatment where the radial and poloidal conductive fluxes are limited separately.
+					style.eq.1: improved treatment (isotropic flux limiters) where the total conductive flux is limited, preventing artificial rotation of the flow.
 				</description>
 				<switch>
 					<name>b2tlv0_style</name>
@@ -3030,40 +3029,40 @@
 					<type>integer</type>
 				</switch>
 			</switchgroup>
-		  <switchgroup>
-			<name>b2tqna_keps_dna_min*</name>
-			<description>
-			 Minimum transport coefficients for use in k-epsilon model. It is also possible to use these minima for other transport models by setting b2tqna_limit_coeff.eq.1.
-			</description>
-			<switch>
-				<name>b2tqna_keps_dna_min</name>
-				<default>1.0e-2</default>
-				<type>real</type>
-			</switch>
-			<switch>
-				<name>b2tqna_keps_vsa_min</name>
-				<default>1.0e-2</default>
-				<type>real</type>
-			</switch>
-			<switch>
-				<name>b2tqna_keps_hci_min</name>
-				<default>1.0e-2</default>
-				<type>real</type>
-			</switch>
-			<switch>
-				<name>b2tqna_keps_hce_min</name>
-				<default>1.0e-2</default>
-				<type>real</type>
-			</switch>
+			<switchgroup>
+				<name>b2tqna_keps_dna_min*</name>
+				<description>
+					Minimum transport coefficients for use in k-epsilon model. It is also possible to use these minima for other transport models by setting b2tqna_limit_coeff.eq.1.
+				</description>
+				<switch>
+					<name>b2tqna_keps_dna_min</name>
+					<default>1.0e-2</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2tqna_keps_vsa_min</name>
+					<default>1.0e-2</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2tqna_keps_hci_min</name>
+					<default>1.0e-2</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2tqna_keps_hce_min</name>
+					<default>1.0e-2</default>
+					<type>real</type>
+				</switch>
 			</switchgroup>
 			<switch>
-			<name>b2tqna_limit_coeff</name>
-			<default>0</default>
-			<type>integer</type>
-			<description>
-			b2tqna_limit_coeff.ne.0: the minimum transport coefficients dna_min, vsa_min, hci_min and hce_min are for whatever transport model is selected.
-			b2tqna_limit_coeff.eq.0: the minimum transport coefficients dna_min, vsa_min, hci_min and hce_min are only used for the k-epsilon model.
-			</description>
+				<name>b2tqna_limit_coeff</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					b2tqna_limit_coeff.ne.0: the minimum transport coefficients dna_min, vsa_min, hci_min and hce_min are for whatever transport model is selected.
+					b2tqna_limit_coeff.eq.0: the minimum transport coefficients dna_min, vsa_min, hci_min and hce_min are only used for the k-epsilon model.
+				</description>
 			</switch>
 			<switch>
 				<name>b2siav_cqip1</name>
@@ -3078,8 +3077,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier for the pressure gradient term. Setting b2sigp_phm0.ne.1.0 should only be done 
-					for specific testing purposes.
+					Multiplier for the pressure gradient term. Setting b2sigp_phm0.ne.1.0 should only be done for specific testing purposes.
 				</description>
 			</switch>
 			<switch>
@@ -3087,8 +3085,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-				 Multiplier for the convective term due to new form of ion
-				  viscosity term in the momentum correction equation. Applies to hydrogenic ions and fluid neutrals.
+				 Multiplier for the convective term due to new form of ion viscosity term in the momentum correction equation. Applies to hydrogenic ions and fluid neutrals.
 				</description>
 			</switch>
 			<switch>
@@ -3096,8 +3093,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier for the convective term due to new form of ion
-					viscosity term in the momentum correction equation. Applies only to hydrogenic fluid neutrals.
+					Multiplier for the convective term due to new form of ion viscosity term in the momentum correction equation. Applies only to hydrogenic fluid neutrals.
 				</description>
 			</switch>
 			<switch>
@@ -3138,8 +3134,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					The correct switch is now b2tfhe_anomalous. b2tanml_anomalous is kept for backward compatibility. b2tanml_anomalous will only be read if
-					b2tfhe_anomalous.eq.1.0.
+					The correct switch is now b2tfhe_anomalous. b2tanml_anomalous is kept for backward compatibility. b2tanml_anomalous will only be read if b2tfhe_anomalous.eq.1.0.
 				</description>
 			</switch>
 			<switch>
@@ -3151,25 +3146,25 @@
 				</description>
 			</switch>
 			<switchgroup>
-			<name>b2tstbc_bc_ref*</name>
-			<description>
-			 Under-relaxation factors related to feedback schemes for boundary conditions. Not yet available for WG.
-			</description>
-			<switch>
-				<name>b2tstbc_bc_ref</name>
-				<default>0.01</default>
-				<type>real</type>
-			</switch>
-			<switch>
-				<name>2tstbc_bc_ref_ti</name>
-				<default>0.01</default>
-				<type>real</type>
-			</switch>
-			<switch>
-				<name>2tstbc_bc_ref_te</name>
-				<default>0.01</default>
-				<type>real</type>
-			</switch>
+				<name>b2tstbc_bc_ref*</name>
+				<description>
+					Under-relaxation factors related to feedback schemes for boundary conditions. Not yet available for WG.
+				</description>
+				<switch>
+					<name>b2tstbc_bc_ref</name>
+					<default>0.01</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>2tstbc_bc_ref_ti</name>
+					<default>0.01</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>2tstbc_bc_ref_te</name>
+					<default>0.01</default>
+					<type>real</type>
+				</switch>
 			</switchgroup>
 		</category>
 		<category name="Output">
@@ -3965,7 +3960,7 @@
 				<default>1.0e6</default>
 				<type>real</type>
 				<description>
-				  Puts a hard limit on the absolute value of the parallel velocity, but applies only to fluid neutrals and in case the spatially hybrid fluid-kinetic model is active (spatial_hybrid.ne.0).
+					Puts a hard limit on the absolute value of the parallel velocity, but applies only to fluid neutrals and in case the spatially hybrid fluid-kinetic model is active (spatial_hybrid.ne.0).
 					This switch was introduced when b2npmo_ion_vlct_restrict only applied to ions. Now that b2npmo_ion_vlct_restrict also applies to fluid neutrals, the removal of b2mndr_ua_max can be considered.
 					For now it is kept for backward compatibility with published results.
 				</description>
@@ -4067,8 +4062,8 @@
 				<type>integer</type>
 				<description>
 					If '0', use the SOLPS5.0 scheme for neutral heat conductivity flux limits.
-					If '1', SPB form to calculate parallel and perpendicular neutral heat conductivity flux limit (does not preserve symmetry, kept for backward compatibility reasons).
-					If '2', modifies the SPB treatment for the flux limits to be applied on the transport coefficients directly.
+					If '1', SPb form to calculate parallel and perpendicular neutral heat conductivity flux limit (does not preserve symmetry, kept for backward compatibility reasons).
+					If '2', modifies the SPb treatment for the flux limits to be applied on the transport coefficients directly.
 					It is recommended '2'.
 				</description>
 			</switch>
@@ -4507,8 +4502,8 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '2', SPB form of adding currents on the South core boundary is included by using BCPOT=12, and on the South PFR and North boundaries by using BCPOT=13. It is recommended '2', in conjunction with the BCPOT=12 and BCPOT=13 settings, respectively.
-					When set to '1', SPB form of adding currents on South and North boundaries is done explicitly in addition to other existing boundary conditions for the potential equation.
+					When set to '2', SPb form of adding currents on the South core boundary is included by using BCPOT=12, and on the South PFR and North boundaries by using BCPOT=13. It is recommended '2', in conjunction with the BCPOT=12 and BCPOT=13 settings, respectively.
+					When set to '1', SPb form of adding currents on South and North boundaries is done explicitly in addition to other existing boundary conditions for the potential equation.
 					The old 5.0 calculation is recovered by using the value '0'.
 				</description>
 			</switch>
@@ -4769,8 +4764,8 @@
 			<switchgroup>
 				<name>b2npco_pcm.</name>
 				<description>
-					pcm specifies multipliers to Rhie-Chow corrections.
-					Not used if running in time-dependent mode (b2mndt_style.eq.2).
+					Specifiy multipliers to Rhie-Chow corrections from particle equations
+					Not used (and default set to zero) if running in time-dependent mode (b2mndt_style.eq.2).
 					b2npco_pcm0 is a multiplier for the update on the parallel velocity following the pressure-correction equation.
 					b2npco_pcm1 is a multiplier for the Rhie-Chow terms in the particle fluxes.
 				</description>
@@ -4797,11 +4792,10 @@
 			<switchgroup>
 				<name>b2npht_pcm*</name>
 				<description>
-					pcm specifies multipliers to Rhie-Chow corrections.
-					It is required that 0.le.pcm0.and.0.le.pcm1.
-					Not used if running in time-dependent mode (b2mndt_style.eq.2).
+					Specifies multipliers to Rhie-Chow corrections from heat equations.
+					Not used (and default set to zero) if running in time-dependent mode (b2mndt_style.eq.2).
 					b2npht_pcm0 is a multiplier for the update on the parallel velocity following the update of Ti and Te.
-					b2npht_pcm1 is a multiplier for the Rhie-Chow terms in the flow fields of ion, electron and neutral heat.	
+					b2npht_pcm1 is a multiplier for the Rhie-Chow terms in the flow fields of ion, electron, and neutral heat.
 				</description>
 				<switch>
 					<name>b2npht_pcm0</name>
@@ -4828,7 +4822,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPB form of the program b2sihs_ is called. b2npht_style.eq.0 no longer available for WG.
+					When set to '1', SPb form of the program b2sihs_ is called. b2npht_style.eq.0 no longer available for WG.
 				</description>
 			</switch>
 			<switch>
@@ -4865,7 +4859,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					style specifies the precise form of interpolation used in the computation of flcb and cvcb. When set to '1', SPB form of the transport terms in the momentum correction equation is used.
+					style specifies the precise form of interpolation used in the computation of flcb and cvcb. When set to '1', SPb form of the transport terms in the momentum correction equation is used.
 					It is recommended '1'.
 				</description>
 			</switch>
@@ -4874,7 +4868,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPB form of an expression that occurs in the electron-atom thermal force is used. Only used if b2sigp_style.ne.2.
+					When set to '1', SPb form of an expression that occurs in the electron-atom thermal force is used. Only used if b2sigp_style.ne.2.
 					It is recommended '1'.
 				</description>
 			</switch>
@@ -4909,7 +4903,7 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPB form of the pressure gradient term on the right hand of the momentum balance equation is used.
+					When set to '1', SPb form of the pressure gradient term on the right hand of the momentum balance equation is used.
 					When set to '2', the parallel current term contains a correction due to impurities, when Z_eff is not equal to the average plasma ion charge. Only usable if the potential equation is solved simultaneously (b2news_poteq.eq.1).
 					The default value of '2' is recommended for cases with one main hydrogenic species (or at least where the main species is the lightest one) and any amount of impurities. It is not guaranteed to yield correct results for hydrogen isotopic mixtures or non-hydrogenic plasmas.
 				</description>
@@ -5123,7 +5117,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPB new form of calculating electron heat flux is used. It is recommended '1' for runs with drifts.
+					If '1', SPb new form of calculating electron heat flux is used. It is recommended '1' for runs with drifts.
 				</description>
 			</switch>
 			<switch>
@@ -5147,7 +5141,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPB new form of calculating ion heat flux is used.
+					If '1', SPb new form of calculating ion heat flux is used.
 					It is recommended '1' for runs with drifts.
 				</description>
 			</switch>
@@ -5198,7 +5192,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPB new form of calculating particle flux is used.
+					If '1', SPb new form of calculating particle flux is used.
 					It is recommended '1' for runs with drifts.
 				</description>
 			</switch>
@@ -5284,7 +5278,7 @@
 				<description>
 					Determines the interpolation weights to get the parallel velocities at the cell faces.
 					style_int_vel.eq.0: interpolation based on cell volumes.
-					style_int_vel.eq.1: interpolation based on cell connector lengths. 
+					style_int_vel.eq.1: interpolation based on cell connector lengths.
 					Only the combination b2tfnb_style_int_vel=0 and b2sihs_style_int_vel=0 works robustly for now. Other combinations gave rise to oscillations. More research needed.
 				</description>
 			</switch>
@@ -5486,7 +5480,7 @@
 			<introduction>
 				<namelist>NEUTRALS</namelist>
 				<description>
-					This namelist is used to set parameters for the B2.5 neutral fluid model, for the Eirene Monte Carlo neutrals, andor hybrid fluid-kinetic runs.
+					This namelist is used to set parameters for the B2.5 neutral fluid model, for the Eirene Monte Carlo neutrals, and/or hybrid fluid-kinetic runs.
 					When coupling to Eirene, it is essential that the neutral boundaries conditions declared here be in the same exact order than they are in the Eirene input file.
 					For coupled cases, some of the parameters will become active only on the second call to Eirene, while values inherited from the Eirene input file will be used for the first call. In such cases, use of the switch 'eirene_repeat_first_call' is recommended.
 					This namelist is read if either 'b2stbr_neutrals_namelist' or 'b2mndr_eirene' are set to 1.
@@ -6800,8 +6794,6 @@
 						22 : radial leakage condition for the electron temperature. ENEPAR(,1) specifies the leakage velocity in units of the electron thermal velocity. A temperature gradient such that the diffusive flux is set to match this leakage is imposed.
 						23 : prescribe the value of the electron temperature, with a poloidal perturbation taken from the flux tube just inside the domain. Intended only for core boundaries. ENEPAR(,1) specifies the desired average electron temperature in eV.
 						24 : feedback on the total electron energy flux, by imposing a flux surface averaged temperature, with a poloidal perturbation taken from the flux tube just inside the domain. Intended only for core boundaries. ENEPAR(,1) specifies the energy flux in W. ENEPAR(,2) specifies the strength of the feedback.
-   
-
 				</description>
 			</switch>
 
@@ -6865,12 +6857,12 @@
 						13 : imposes the currents due to drifts for the private flux and main chamber boundaries. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
 						14 : prescribe the total current without imposing a specific profile. Follow the profile of the 1st flux tube inside. Intended use: core boundary, total PF boundary,.. For testing purposes, use with care!
 						15 : feedback boundary condition on total current with constant potential. {\tt POTPAR(,1)} specifies the electric current in $A$. POTPAR(,2) specifies the strength of the feedback.
-						16 : constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries. Still experimental, will not work for drift cases. Not yet available for WG. 
+						16 : constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries. Still experimental, will not work for drift cases. Not yet available for WG.
 						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away.
 							POTPAR(,,1) specifies the desired potential in V.
 							POTPAR(,,2) is the strength of the feedback
-							Not yet available for WG. 
-						22 : prescribe the value of the potential, with a perturbation taken from the first flux tube in the domain. Intended for core boundaries only. POTPAR(,1) specifies the average potential. 
+							Not yet available for WG.
+						22 : prescribe the value of the potential, with a perturbation taken from the first flux tube in the domain. Intended for core boundaries only. POTPAR(,1) specifies the average potential.
 						23 : potential feedback on the total current for the core boundary, imposing a flux surface averaged potential, with poloidal perturbation taken from flux tube just inside domain. The feedback is scaled with the ion temperature.
 							POTPAR(,,1) specifies the desired integral current through flux surfaces (in Amperes).
 							POTPAR(,,2) is the strength of the feedback
@@ -6883,14 +6875,14 @@
 					Specifying the type of boundary condition for the turbulent kinetic energy (kt) for each segment; makes use of ENKPAR to specify additional information, as indicated
 						 0 : default, no boundary condition is applied
 						 1 : prescribe the value of the turbulent kinetic energy, ENKPAR(,1) specifies the energy in eV.
-						 2 : prescribe the gradient of the turbulent kinetic energy, ENKPAR(,1) specifies the gradient of the turbulent kinetic energy in eV/m
+						 2 : prescribe the gradient of the turbulent kinetic energy, ENKPAR(,1) specifies the gradient of the turbulent kinetic energy in eV/m.
 						 6 : prescribe the total flux of turbulent kinetic energy, following the profile of the total heat flux. ENKPAR(,1) specifies the flux in W.
 						 7 : prescribe the total flux of turbulent kinetic energy, following the profile of the particle flux. ENKPAR(,1) specifies the flux in W.
 						 8 : prescribe the total flux of turbulent kinetic energy, with constant flux density. ENKPAR(,1) specifies the flux in W.
-						14 : leakage option for turbulent kinetic energy, ENKPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub>; = &alpha; C<sub>s,collective</sub> n<sub>i</sub> &kappa;
-						15 : sheath loss boundary condition. For now it assumed that BCCON = 14 is used. ENKPAR(,1) specifies the sheath transmission factor corresponding to the particle fluxes dictated by CONPAR(,,1) and ENKPAR(,2) specifies the sheath transmission factor corresponding to the particle fluxes dictated by CONPAR(,,2).
-						16 : prescribe the value of the turbulent kinetic energy, with a poloidal perturbation taken from the flux tube just inside domain. kt = ENKPAR(,1) + kt2 - kt2av, where kt2 is the enstrophy in the first cell inside the domain, and kt2av is the average enstrohpy in the flux tube just inside the domain. Intended for core boundaries only. 
-						17 : feedback on the turbulent kinetic energy flux, by imposing a flux surface averaged &kappa;, with a poloidal perturbation taken from the flux tube just inside the domain. Intended for core boundaries only. ENKPAR(,1) specifies the flux in W. ENKPAR(,2) specifies the strength of the feedback. 
+						14 : leakage option for turbulent kinetic energy, ENKPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub>; = &alpha; C<sub>s,collective</sub> n<sub>i</sub> &kappa;.
+						15 : sheath loss boundary condition. For now it assumes that BCCON = 14 is used. ENKPAR(,1) specifies the sheath transmission factor corresponding to the particle fluxes dictated by CONPAR(,,1) and ENKPAR(,2) specifies the sheath transmission factor corresponding to the particle fluxes dictated by CONPAR(,,2).
+						16 : prescribe the value of the turbulent kinetic energy, with a poloidal perturbation taken from the flux tube just inside domain. kt = ENKPAR(,1) + kt2 - kt2av, where kt2 is the turbulent kinetic energy in the first cell inside the domain, and kt2av is the average turbulent kinetic energy in the flux tube just inside the domain. Intended for core boundaries only.
+						17 : feedback on the turbulent kinetic energy flux, by imposing a flux surface averaged &kappa;, with a poloidal perturbation taken from the flux tube just inside the domain. Intended for core boundaries only. ENKPAR(,1) specifies the flux in W. ENKPAR(,2) specifies the strength of the feedback.
 				</description>
 			</switch>
 		 	<switch>
@@ -6899,11 +6891,11 @@
 				<description>
 					Specifying the type of boundary condition for the turbulent enstrophy (zt) for each segment; makes use of ENZPAR to specify additional information, as indicated
 						 0 : default, no boundary condition is applied
-						 1 : prescribe the value of the turbulent enstrophy, ENZPAR(,1) specifies the energy in eV.
-						 2 : prescribe the gradient of the turbulent enstrophy, ENZPAR(,1) specifies the gradient of the turbulent enstrophy in eV/m.
+						 1 : prescribe the value of the turbulent enstrophy, ENZPAR(,1) specifies the enstrophy in s<sup>-2</sup>.
+						 2 : prescribe the gradient of the turbulent enstrophy, ENZPAR(,1) specifies the gradient of the turbulent enstrophy in s<sup>-2</sup>/m.
 						14 : leakage option for turbulent enstrophy, ENZPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s,collective</sub> n<sub>i</sub> &zeta;
-						15 : sheath loss boundary condition. For now it assumed that BCCON = 14 is used. ENZPAR(,1) specifies the sheath transmission factor corresponding to the particle fluxes dictated by CONPAR(,,1) and ENZPAR(,2) specifies the sheath transmission factor corresponding to  the particle fluxes dictated by CONPAR(,,2).
-						16 : prescribe the value of the turbulent enstorphy, with a poloidal perturbation taken from the flux tube just inside domain. zt = ENZPAR(,1) + zt2 - zt2av, where zt2 is the enstrophy in the first cell inside the domain, and zt2av is the average enstrohpy in the flux tube just inside the domain. Intended for core boundaries only.
+						15 : sheath loss boundary condition. For now it assumes that BCCON = 14 is used. ENZPAR(,1) specifies the sheath transmission factor corresponding to the particle fluxes dictated by CONPAR(,,1) and ENZPAR(,2) specifies the sheath transmission factor corresponding to the particle fluxes dictated by CONPAR(,,2).
+						16 : prescribe the value of the turbulent enstrophy, with a poloidal perturbation taken from the flux tube just inside the domain. zt = ENZPAR(,1) + zt2 - zt2av, where zt2 is the enstrophy in the first cell inside the domain, and zt2av is the average enstrohpy in the flux tube just inside the domain. Intended for core boundaries only.
 				</description>
 			</switch>
 			<switch>
@@ -8441,7 +8433,7 @@
 				<default>TRUE</default>
 				<type>logical</type>
 				<description>
-					Indicates for cost function 12 if the heat flux considered is the one parallel to the magnetic field (TRUE) or perpendicular to the surface (FALSE). 
+					Indicates for cost function 12 if the heat flux considered is the one parallel to the magnetic field (TRUE) or perpendicular to the surface (FALSE).
 				</description>
 			</switch>
 			<switch>

@@ -1900,14 +1900,20 @@ c b2sral
      .  'b2sral_style should be 0, 1 or 2')
 
 c b2npco
-       call xertst (0.lt.s%b2npco_rxg, 'faulty parameter b2npco rxg')
-       call xertst (0.le.s%b2npco_pcm0, 'faulty parameter b2npco pcm0')
-       call xertst (0.le.s%b2npco_pcm1, 'faulty parameter b2npco pcm1')
+       call xertst (0.0_R8.lt.s%b2npco_rxg,
+     .  'faulty parameter b2npco rxg')
+       call xertst (0.0_R8.le.s%b2npco_pcm0,
+     .  'faulty parameter b2npco pcm0')
+       call xertst (0.0_R8.le.s%b2npco_pcm1,
+     .  'faulty parameter b2npco pcm1')
 
 c b2npht
-       call xertst (0.le.s%b2npht_pcm0, 'faulty parameter b2npht pcm0')
-       call xertst (0.le.s%b2npht_pcm1, 'faulty parameter b2npht pcm1')
-       call xertst (0.lt.s%b2npht_rxg, 'faulty parameter b2npht rxg')
+       call xertst (0.0_R8.le.s%b2npht_pcm0,
+     .  'faulty parameter b2npht pcm0')
+       call xertst (0.0_R8.le.s%b2npht_pcm1,
+     .  'faulty parameter b2npht pcm1')
+       call xertst (0.0_R8.lt.s%b2npht_rxg,
+     .  'faulty parameter b2npht rxg')
 
 c b2nxfc
        call xertst (0.le.s%b2nxfc_style.and.s%b2nxfc_style.lt.2,
