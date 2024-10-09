@@ -141,7 +141,15 @@
           else if (i.eq.iseg(jxi,iy)) then
             ixref(i,iy) = jxi
           else
-            ixref(i,iy) = rightix(ixleft(i,iy),iy)
+            do ix=1,nx
+              if (isRealCell(cflags(ix,iy,CELLFLAG_TYPE)) .and. 
+     &          (.not.isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)))) exit
+            enddo
+            if (ix.ge.nx) then
+              ixref(i,iy) = rightix(ixleft(i,iy),iy)
+            else
+              ixref(i,iy) = ix
+            endif
           end if
         end do
       end do
@@ -154,7 +162,6 @@
           if (region(ix,iy,0).eq.0) cycle
           if (iseg(ix,iy).eq.0) cycle
           if (ixref(iseg(ix,iy),iy).eq.-2) cycle
-          if (isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
 
           if (leftix(ixref(iseg(ix,iy),iy),iy).ne.-2) then
             pol_flux = wbbl(ixref(iseg(ix,iy),iy),iy,0) *
@@ -164,7 +171,9 @@
             pol_flux = bb(ixref(iseg(ix,iy),iy),iy,0) *
      &                 hy(ixref(iseg(ix,iy),iy),iy)
           end if
-
+          wrk = wbbl(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy,0)
+          if ((abs(wrk).lt.abs(pol_flux)) .and. 
+     &        isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) ) cycle
           if (leftix(ix,iy).ne.-2) then ! do not adjust pbs if leftix=-2
                                         ! since there is no western face
             wbbl(ix,iy,0) = pol_flux / (gs(ix,iy,0) * qc(ix,iy,0))
