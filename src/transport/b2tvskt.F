@@ -34,7 +34,7 @@
 *
 *  1. purpose
 *
-*     B2TVSKT computes the current due to RS of kt-model
+*     B2TVSKT computes the current due to RS of kt-model.
 *
 *-----------------------------------------------------------------------
 *.declarations
