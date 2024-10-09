@@ -192,7 +192,6 @@
      2  sput_frc, sput_phys,
      3  delta_min, dt_change_inc, delta_max, dt_change_dec,
      4  dt_min, dt_max, max_delta
-      integer :: ncon, nele_jac
 #ifndef NO_CDF
 #     include <netcdf.inc>
       integer ncid
@@ -1460,6 +1459,7 @@ csw 09oct2012
      .    'Invalid shot number')
          call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
 #endif
+         not_default = not_default.or.(shot.gt.0.and.run.ge.0)
          imasdir = trim(home_dir)//'/public/imasdb/'
      &           //trim(database)//'/'//trim(version)
 #if AL_MAJOR_VERSION < 5
@@ -2112,7 +2112,7 @@ c   --> better way doing this is necessary)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg, switch)
+        call read_b2mod_par_opt(ns, mpg, switch)
         allocate(par_opt_phys(npar_opt))
         allocate(xsave(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
@@ -2191,8 +2191,8 @@ c new CDF movie option (1st frame at t=0)
       use b2mod_facdrift_ExB
      & , only : ncall_drift, facdrift_scalar, fac_exb_scalar,
      &          fac_vis_scalar
-      use b2mod_ad
 #endif
+      use b2mod_ad
 #ifdef IMAS
       use b2mod_ual
      , , only : new_batch_edge, put_batch_edge

@@ -15,7 +15,7 @@
 #endif
       use b2mod_subsys
       implicit none
-      integer nCv, nFc, nVx, isb
+      integer, intent (in) ::  nCv, nFc, nVx, isb
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg

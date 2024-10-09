@@ -35,14 +35,14 @@ CPP      = /lib/cpp -C -traditional -ffreestanding
 
 MPI_FC  ?= mpifort
 ifdef SOLPS_MPI
- FC       = ${MPI_FC}
+ FC      = ${MPI_FC}
  COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
  ifeq (${COMPILER_TYPE},GNU)
   COMPILER_REDEF = yes
  endif
 else
  ifdef USE_IMPGYRO
-  FC       = ${MPI_FC}
+  FC     = ${MPI_FC}
   COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
   ifeq (${COMPILER_TYPE},GNU)
    COMPILER_REDEF = yes
@@ -52,14 +52,10 @@ endif
 
 ifndef COMPILER_REDEF
  ifdef SOLPS_DEBUG
-  FCOPTS   = -g -C -debug all -traceback -check all -fPIC -assume no2underscore
+  FCOPTS = -g -C -debug all -traceback -check all -fPIC -assume no2underscore
  else
-  FCOPTS   = -O2 -xHost -fPIC -assume no2underscore
+  FCOPTS = -O2 -xHost -fPIC -assume no2underscore
  endif
-endif
-
-ifndef SOLPS_CPP
- DEFINES += -DITM
 endif
 
 ifdef IMAS_VERSION
@@ -77,6 +73,7 @@ else
 endif
 
 LD_AL += -lxml2 -lstdc++
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

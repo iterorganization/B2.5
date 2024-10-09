@@ -158,11 +158,11 @@
       call b2xpfi (nFc, ns, st%dv%fna, st%dv%fni)
 
 *   ..test facdrift and fac_ExB
-      if (ncall_b2sral.eq.0) then                                              !xpb
+      if (ncall_b2sral.eq.0) then                                       !xpb
         if(switch%b2srdt_numerics_namelist.ge.1) then
           call read_b2mod_numerics_namelist(nCv,ns,
      .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
-     .      switch%b2mndt_style)
+     .      switch%b2mndt_style,.false.)
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
@@ -182,7 +182,7 @@
           write(*,*) 'b2sral: catching up ...'
           call read_b2mod_numerics_namelist(nCv,ns,
      .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
-     .      switch%b2mndt_style)
+     .      switch%b2mndt_style,.false.)
           call write_b2mod_numerics_namelist
           if(numerics_time_mod.gt.0.0_R8) then
             catch_up=mod(tim,numerics_time_mod).ge.numerics_time_switch
@@ -216,7 +216,7 @@
      >     b2sral_elm_count=int(tim/numerics_time_mod)
           call read_b2mod_numerics_namelist(nCv,ns,
      .     switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
-     .     switch%b2mndt_style)
+     .     switch%b2mndt_style,.false.)
           call write_b2mod_numerics_namelist
         endif
       endif                                                             !xpb

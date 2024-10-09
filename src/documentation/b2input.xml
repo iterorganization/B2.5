@@ -3948,7 +3948,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-          If ion_vlct_restrict.ne.0, the parallel speed of ions and fluid neutrals is limited to be no more than M times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than M the local ion sound speed.
+  					If ion_vlct_restrict.ne.0, the parallel speed of ions and fluid neutrals is limited to be no more than M times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than M the local ion sound speed.
 					M is given by b2npmo_ion_vlct_restrict_M.
 				</description>
 			</switch>
@@ -3968,6 +3968,24 @@
 				  Puts a hard limit on the absolute value of the parallel velocity, but applies only to fluid neutrals and in case the spatially hybrid fluid-kinetic model is active (spatial_hybrid.ne.0).
 					This switch was introduced when b2npmo_ion_vlct_restrict only applied to ions. Now that b2npmo_ion_vlct_restrict also applies to fluid neutrals, the removal of b2mndr_ua_max can be considered.
 					For now it is kept for backward compatibility with published results.
+				</description>
+			</switch>
+			<switch>
+				<name>b2nppo_restr_po</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					If b2nppo_restr_po.ne.0.0, the electric potential is restricted such that its ratio (in absolute value) with the electron temperature (in eV) does not exceed b2nppo_restr_po.
+					If b2nppo_restr_po is negative, the limit only applies to regions of negative electric potential.
+					Only applies on open field lines.
+				</description>
+			</switch>
+			<switch>
+				<name>b2upht_rte_min</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					If b2nppo_rte_min.gt.0.0, the electron to ion temperature ratio is forced to not be lower than rte_min (so, Te/Ti >= rte_min).
 				</description>
 			</switch>
 			<switch>
@@ -4317,6 +4335,14 @@
 				<description>
 					Stabilizing term to the source associated with boundary condition BCENI=15.
 					To help suppress ion temperature oscillations, this parameter can be set to a positive value. The range 1-100 is recommended.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npht_stab_shei</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Stabilizing term to the heat sources associated with ion-electron energy exchange.
 				</description>
 			</switch>
 			<switch>
@@ -7640,6 +7666,58 @@
 				</description>
 			</switch>
 			<switch>
+				<name>DTEN</name>
+				<default>1.0</default>
+				<type>real array of size (0:NREG)</type>
+				<description>
+					Multiplier to the time used in solving the fluid neutral heat equation in region (ireg).
+				</description>
+			</switch>
+			<switch>
+				<name>DTFTS</name>
+				<default>0</default>
+				<type>integer array of size (DEF_NYD)</type>
+				<description>
+					List of flux tube indices for which individual timestep multipliers can be applied.
+				</description>
+			</switch>
+			<switch>
+				<name>DTCO_FT</name>
+				<default>1.0</default>
+				<type>real array of size (DEF_NYD)</type>
+				<description>
+					Individual timestep multiplier to all continuity equations applied in the corresponding flux tube from the DTFTS list.
+					Must be positive.
+				</description>
+			</switch>
+			<switch>
+				<name>DTMO_FT</name>
+				<default>1.0</default>
+				<type>real array of size (DEF_NYD)</type>
+				<description>
+					Individual timestep multiplier to all parallel momentum equations applied in the corresponding flux tube from the DTFTS list.
+					Must be positive.
+				</description>
+			</switch>
+			<switch>
+				<name>DTEE_FT</name>
+				<default>1.0</default>
+				<type>real array of size (DEF_NYD)</type>
+				<description>
+					Individual timestep multiplier to the electron heat equation applied in the corresponding flux tube from the DTFTS list.
+					Must be positive.
+				</description>
+			</switch>
+			<switch>
+				<name>DTEI_FT</name>
+				<default>1.0</default>
+				<type>real array of size (DEF_NYD)</type>
+				<description>
+					Individual timestep multiplier to the ion heat equation applied in the corresponding flux tube from the DTFTS list.
+					Must be positive.
+				</description>
+			</switch>
+			<switch>
 				<name>SOLVECO</name>
 				<default>.true.</default>
 				<type>logical array of size (0:NS-1,0:NREG)</type>
@@ -7689,12 +7767,36 @@
 				</description>
 			</switch>
 			<switch>
+				<name>SOLVEEN</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					Indicates whether the fluid neutral energy equation is to be solved in region (ireg). Subservient to 'no_solve' switch.
+				</description>
+			</switch>
+			<switch>
 				<name>SOLVEET</name>
 				<type>logical array of size (0:NREG)</type>
 				<description>
 					Indicates whether the total energy equation is to be solved in region (ireg). For the equation to be solved in region (ireg), both SOLVEEE and SOLVEEI must be true in that region. Subservient to 'no_solve' switch.
-					It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with total energy equation, as a group.
+					It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with the total energy equation, as a group.
 					Defaults to .true. unless using the time-dependent mode, in which case it is set to .false. and should not be used.
+				</description>
+			</switch>
+			<switch>
+				<name>SOLVEKT</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					Indicates whether the ExB turbulent kinetic energy equation is to be solved in region (ireg). Subservient to 'no_solve' switch.
+				</description>
+			</switch>
+			<switch>
+				<name>SOLVEZT</name>
+				<default>.true.</default>
+				<type>logical array of size (0:NREG)</type>
+				<description>
+					Indicates whether the ExB turbulent enstrophy equation is to be solved in region (ireg). Subservient to 'no_solve' switch.
 				</description>
 			</switch>
 			<switch>
@@ -7726,8 +7828,8 @@
 				<default>1.0</default>
 				<type>real array of size (0:NS-1)</type>
 				<description>
-				  Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
-				  See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
+					Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
+					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
 				</description>
 			</switch>
 			<switch>
@@ -7735,8 +7837,33 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
+					Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
 					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dn above.
+				</description>
+			</switch>
+			<switch>
+				<name>SNA_CORR</name>
+				<default>0.0</default>
+				<type>real array of size (1:NSPECIES)</type>
+				<description>
+					Multiplier to the neutral source differential between puffing (plus sputtering plus core boundary flux plus any external sources) and pumping, which is further added to the ionization source for code speed-up. One multiplier must be provided per isonuclear sequence. Such settings might be relevant for e.g. a mixture of main ion and trace impurity.
+					See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details and keep in mind that in that paper the scheme was described in its original species-unresolved form.
+				</description>
+			</switch>
+			<switch>
+				<name>TAUMAX</name>
+				<default>0.05</default>
+				<type>real array of size (1:NSPECIES)</type>
+				<description>
+					Maximum allowed fraction of ionization source for a given isonuclear sequence from its neutral state (coming from Eirene) to be added or subtracted to the real Eirene source in the method of effective sources for code speed-up.
+				</description>
+			</switch>
+			<switch>
+				<name>DO_SNA_CORR_CORE</name>
+				<default>.true.</default>
+				<type>logical array of size (1:NSPECIES)</type>
+				<description>
+					Parameter which controls exclusion/inclusion of confined region from/in the method of effective sources for code speed-up for each isonuclear sequence. If .true., then the flux through the core boundary of that species is taken into account during the source correction computation, and the source correction is applied on closed flux surfaces (default behavior). If .false., then the particle imbalance is computed as puffing plus sputtering plus any external sources minus pumping without account of the flux through the core boundary, and no source correction is applied on closed surfaces (such a setting might be helpful if the core flux is much bigger than the puffing rate and the core is isolated from the SOL by a strong transport barrier).
 				</description>
 			</switch>
 			<switch>
@@ -8772,62 +8899,6 @@
 				<type>character*256</type>
 				<description>
 					Specifies which kind of Hessian approximation is employed if HESSIAN_APPROXIMATION is set to 'limited-memory'. Can overridden with PETCs/Tao by using command line options for the optimization.
-				</description>
-			</switch>
-			<switch>
-				<name>NNCON</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Number of nonlinear constraints to impose. (not used for the moment)
-				</description>
-			</switch>
-			<switch>
-				<name>GL</name>
-				<default>-10*p_infty</default>
-				<type>real array of size (NNCON)</type>
-				<description>
-					Lower bound for each nonlinear constraints. (not used for the moment)
-				</description>
-			</switch>
-			<switch>
-				<name>GU</name>
-				<default>10*p_infty</default>
-				<type>real array of size (NNCON)</type>
-				<description>
-					Upper bound for each nonlinear constraints. (not used for the moment)
-				</description>
-			</switch>
-			<switch>
-				<name>NNJAC</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Number of non-zeros in Jacobian for the nonlinear constraints. (not used for the moment)
-				</description>
-			</switch>
-			<switch>
-				<name>JCOL</name>
-				<default>0</default>
-				<type>integer array of size (NNJAC)</type>
-				<description>
-					Contains the column index of the non-zero element of the Jacobian for the nonlinear constraints. (not used for the moment)
-				</description>
-			</switch>
-			<switch>
-				<name>JROW</name>
-				<default>0</default>
-				<type>integer array of size (NNJAC)</type>
-				<description>
-					Contains the row index of the non-zero element of the Jacobian for the nonlinear constraints. (not used for the moment)
-				</description>
-			</switch>
-			<switch>
-				<name>JJ</name>
-				<default>0.0</default>
-				<type>real array of size (NNJAC)</type>
-				<description>
-					Contains the value of the non-zero element of the Jacobian for the nonlinear constraints. (not used for the moment)
 				</description>
 			</switch>
 		</category>

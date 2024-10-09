@@ -10,6 +10,7 @@ LD_NAG    ?= -L${SOLPSLIB} -lblaslapack
 CPP = cpp -traditional
 
 FC = ftn
+FN = ${FC}
 
 ifdef SOLPS_DEBUG
 #FCOPTS = -g -fbounds-check -fbacktrace #-finit-local-zero
@@ -29,6 +30,7 @@ GGD_VERSION ?= '0.0.0'
 endif
 
 DBLOPTION =
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

@@ -38,7 +38,7 @@
       use b2mod_dimensions
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0
+      integer, intent (in) :: nCv, nFc, nVx, ns, ismain, ismain0
       real (kind=R8) :: praverage(2)
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
@@ -116,7 +116,7 @@
      *  pz(nCv), !sxhz(-1:nx,-1:ny),                                    !srv 24.08.08
      *  gOnedBsq(nFc,0:1),
      &  sna0_no_mdf(nCv,0:1,0:ns-1)
-      real (kind=R8) :: cor9                                            !srv 23.09.08
+      real (kind=R8), save :: cor9 = 0.0_R8                             !srv 23.09.08
       character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, ishigh
 #ifdef WG_TODO
@@ -218,8 +218,8 @@ c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.
      . 'invalid main neutral species index ismain0')
       call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
      . 'invalid main neutral species ismain0; must be neutral')
-*   ..test facdrift (not on first call)                                  !xpb
-      if (ncall_b2stbc_phys.gt.0)                                                    !xpb
+*   ..test facdrift (not on first call)                              !xpb
+      if (ncall_b2stbc_phys.gt.0)                                    !xpb
      > call xertst (0.0_R8.le.minval(dv%facdrift) .and.
      &       1.0_R8.ge.maxval(dv%facdrift), 'faulty argument facdrift')
 *   ..extensive tests on first few calls
@@ -573,7 +573,7 @@ cwdk  now need to recompute full diamagnetic component for ud
             srw%sna0(iCv1,0,is)=  VBIG*geo%fcS(iFc)*
      .         (conpar(is,ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
      .          geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
-     .          (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .         (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%na(iCv2,is))
             srw%sna0(iCv1,1,is)= -VBIG*geo%fcS(iFc)
             sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
@@ -3441,8 +3441,8 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
-            cs   = sqrt(pz(iCv1)/rz(iCv1))
             s1hz = geo%fcPbshz(iFc)
+            cs   = sqrt(pz(iCv1)/rz(iCv1))
 !            vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
 !     &        dv%vaecrb(iFc,0,is) -
 !     &        dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1)/geo%fcQalf(iFc,0)
@@ -3450,11 +3450,11 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      &        (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
      &         dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
      &        sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*geo%fcS(iFc)
-            srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +                        !srv 07.05.09 {
+            srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +                 !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
      &         mompar(is,ib,1)*vbnd
             srw%smo0(iCv1,1,IS) = srw%smo0(iCv1,1,IS) -
-     &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)        !srv 07.05.09 }
+     &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)      !srv 07.05.09 }
             ! Avoid setting to sound speed at very shallow incidence
             ! Set mom. flux to leakage instead
             if (abs(geo%fcQalf(iFc,0)*geo%cvBb(iCv1,0)/geo%cvBb(iCv1,3))
@@ -3468,9 +3468,9 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      &            geo%fcHz(iFc)
               endif
             endif
-          enddo                                                        !srv 01.02.09 }
+          enddo                                                         !srv 01.02.09 }
 
-* -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM  !srv 01.02.09 {
+* -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM    !srv 01.02.09 {
 !srv added accumulation in order to account twice b.c. for corner cells
         case (14)
           if(ncall_b2stbc_phys.eq.0) then
@@ -3713,7 +3713,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           srw%she0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
      .       (EV*enepar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
      .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
-     .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .       (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%te(iCv2))
           srw%she0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
         enddo
@@ -5635,7 +5635,7 @@ cwdk     * need to correct this BC for hybrid scheme
           srw%shi0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
      .       (EV*enipar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
      .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
-     .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .       (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%ti(iCv2))
           srw%shi0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
         enddo
@@ -6681,6 +6681,7 @@ cxpb          endif
           write(*,*) 'BCENI=15 - assuming BCCON=14 for all ions'
           call xertst(ENIPAR(IB,1).gt.0.0_R8,
      1     'BCENI = 15, ENIPAR(IB,1) <= 0 not allowed!')              !srv 20.09.17
+          if(bceni_15_style.ne.0) write(*,*) "bceni_15_style = 1"
 #ifdef WG_TODO
           IF(BCCHAR(IB).EQ.'W') THEN
             BCCON14_W(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
@@ -8102,7 +8103,7 @@ cwdk     * need to correct this BC for hybrid scheme
           srw%sch0(iCv1,0)=  PBIG*geo%fcS(iFc)*
      .       (potpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
      .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
-     .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .       (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%po(iCv2))
           srw%sch0(iCv1,1) = -PBIG*geo%fcS(iFc)
 #ifdef B25_EIRENE
@@ -8476,7 +8477,7 @@ c              fchi=0.0_R8
           enddo
           fchi = qe*t0
           fche = sqrt(1/(2*pi))*qe*dv%ne(iCv1)*vte*s1*
-     &      expu2(min(0.0_R8,                                                   !lkw 31.03.2023
+     &      expu2(min(0.0_R8,                                            !lkw 31.03.2023
      &        max(-50.0_R8,-qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1))))
           seec = gammae
           t0 = max(fchi,(1.0_R8-seec)*fche)*qe/pl%te(iCv1)
@@ -8494,7 +8495,7 @@ c              fchi=0.0_R8
 #endif
 cwdk Todo: seecmodel
           wrong_flow = .false.
-        enddo                                                         !srv 01.02.09 }
+        enddo
 
 * -- BCPOT=12 -- Test condition for south core region ! Solovyev 07.04.14   !srv 03.03.15 {
 c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
@@ -9431,7 +9432,7 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
           srw%skt0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
      .       (EV*enkpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
      .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
-     .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .       (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%kt(iCv2))
           srw%skt0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
         enddo
@@ -9833,7 +9834,7 @@ cwdk    Todo: corrections for BCCON.ne.14
           srw%szt0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
      .       (EV*enzpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
      .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
-     .        (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .       (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%zt(iCv2))
           srw%szt0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
         enddo

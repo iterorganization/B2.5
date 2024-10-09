@@ -112,6 +112,7 @@ SUBROUTINE B2STBR_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_SUBSYS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
   USE B2MOD_B2CMPB_DIFFV_DIFFV
+  USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   USE B2MOD_TALLIES_DIFFV_DIFFV
   USE B2MOD_DIMENSIONS
   USE B2MOD_SWITCHES_DIFFV_DIFFV
@@ -2235,7 +2236,6 @@ SUBROUTINE B2STBR_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   tresn = 0.0_R8
   trfle = 0.0_R8
   trfln = 0.0_R8
-!
   IF (main_call) THEN
     old_erosion(1:nbnd, 1:ntargsp) = erosion(1:nbnd, 1:ntargsp)
     old_deposition(1:nbnd, 1:ntargsp) = deposition(1:nbnd, 1:ntargsp)
@@ -2573,6 +2573,7 @@ SUBROUTINE B2STBR_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   USE B2MOD_SUBSYS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
   USE B2MOD_B2CMPB_DIFFV_DIFFV
+  USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   USE B2MOD_TALLIES_DIFFV_DIFFV
   USE B2MOD_DIMENSIONS
   USE B2MOD_SWITCHES_DIFFV_DIFFV
@@ -4686,7 +4687,6 @@ SUBROUTINE B2STBR_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   tresn = 0.0_R8
   trfle = 0.0_R8
   trfln = 0.0_R8
-!
   IF (main_call) THEN
     old_erosion(1:nbnd, 1:ntargsp) = erosion(1:nbnd, 1:ntargsp)
     old_deposition(1:nbnd, 1:ntargsp) = deposition(1:nbnd, 1:ntargsp)
@@ -4988,6 +4988,7 @@ SUBROUTINE B2STBR_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   USE B2MOD_SUBSYS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
   USE B2MOD_B2CMPB_DIFFV_DIFFV
+  USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   USE B2MOD_TALLIES_DIFFV_DIFFV
   USE B2MOD_DIMENSIONS
   USE B2MOD_SWITCHES_DIFFV_DIFFV
@@ -7052,7 +7053,6 @@ SUBROUTINE B2STBR_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   tresn = 0.0_R8
   trfle = 0.0_R8
   trfln = 0.0_R8
-!
   IF (main_call) THEN
     old_erosion(1:nbnd, 1:ntargsp) = erosion(1:nbnd, 1:ntargsp)
     old_deposition(1:nbnd, 1:ntargsp) = deposition(1:nbnd, 1:ntargsp)

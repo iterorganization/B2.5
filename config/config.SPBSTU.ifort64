@@ -9,43 +9,43 @@
 #LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
 #LD_NAG      ?= -L${NAGDIR} -lnag
 
-CPP      = /lib/cpp -traditional
+CPP        = /lib/cpp -traditional
 
-#MPI_FC  ?= mpif90
-MPI_FC  ?= mpiifort
+#MPI_FC   ?= mpif90
+MPI_FC    ?= mpiifort
 ifdef SOLPS_MPI
-FC       = ${MPI_FC}
+ FC        = ${MPI_FC}
 else
-ifdef USE_IMPGYRO
-FC       = ${MPI_FC}
-endif
+ ifdef USE_IMPGYRO
+  FC       = ${MPI_FC}
+ endif
 endif
 
 ifdef SOLPS_DEBUG
- FCOPTS   = -g -C -traceback
+ FCOPTS    = -g -C -traceback
  ifdef SOLPS_MPI
   FCOPTS  += -fpe0
  else
   FCOPTS  += -debug all -fPIC -assume no2underscore
   ifdef USE_IMPGYRO
-   FCOPTS  += ${MPI_CPP}
+   FPOPTS += ${MPI_CPP}
   else
-   FCOPTS  += -check all -fpe0
+   FCOPTS += -check all -fpe0
   endif
  endif
 else
- FCOPTS   = -O2 -xHost -fPIC -assume no2underscore
+ FCOPTS    = -O2 -xHost -fPIC -assume no2underscore
  ifdef SOLPS_MPI
-  FCOPTS  += ${MPI_CPP}
+  FPOPTS  += ${MPI_CPP}
  else
   ifdef USE_IMPGYRO
-   FCOPTS  += ${MPI_CPP}
+   FPOPTS  += ${MPI_CPP}
   endif
  endif
 endif
 
 ifdef SOLPS_MPI
-LDLIBES += ${LD_MPI}
+ LDLIBES += ${LD_MPI}
 endif
 
 

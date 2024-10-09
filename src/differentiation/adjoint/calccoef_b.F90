@@ -22,7 +22,7 @@ SUBROUTINE CALCCOEF_FWD(ncv, nfc, nvx, meth, geo, flo, con, flo0, con0)
   USE B2US_GEO_DIFF
   IMPLICIT NONE
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, meth
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
   REAL(kind=r8) :: flo(nfc, 0:1), con(nfc, 0:1)
 !   ..output arguments
@@ -230,7 +230,7 @@ SUBROUTINE CALCCOEF_BWD(ncv, nfc, nvx, meth, geo, flo, flob, con, conb, &
   USE B2MOD_TYPES
   USE B2US_GEO_DIFF
   IMPLICIT NONE
-  INTEGER :: ncv, nfc, nvx, meth
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
   REAL(kind=r8) :: flo(nfc, 0:1), con(nfc, 0:1)
   REAL(kind=r8) :: flob(nfc, 0:1), conb(nfc, 0:1)
@@ -402,7 +402,7 @@ SUBROUTINE CALCCOEF_NODIFF(ncv, nfc, nvx, meth, geo, flo, con, flo0, &
   USE B2US_GEO_DIFF
   IMPLICIT NONE
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, meth
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
   REAL(kind=r8) :: flo(nfc, 0:1), con(nfc, 0:1)
 !   ..output arguments
