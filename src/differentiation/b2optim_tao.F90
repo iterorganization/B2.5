@@ -73,18 +73,38 @@
         call TaoSetType(tao,TAOBQNLS,ierr)
         CHKERRA(ierr)
       endif
+#ifdef TAO_NEW
+      call TaoSetSolution(tao,X,ierr)
+#else
       call TaoSetInitialVector(tao,X,ierr)
+#endif
       CHKERRA(ierr)
       call TaoSetVariableBounds(tao,X_L,X_U,ierr)
       CHKERRA(ierr)
+#ifdef TAO_NEW
+      call TaoSetObjectiveAndGradient(tao,PETSC_NULL_VEC,FormFunctionGradient,0,ierr)
+#else
       call TaoSetObjectiveAndGradientRoutine(tao,FormFunctionGradient,0,ierr)
+#endif
       CHKERRA(ierr)
+#ifdef TAO_NEW
+      call TaoSetObjective(tao,FormFunction,0,ierr)
+#else
       call TaoSetObjectiveRoutine(tao,FormFunction,0,ierr)
+#endif
       CHKERRA(ierr)
+#ifdef TAO_NEW
+      call TaoSetGradient(tao,PETSC_NULL_VEC,FormGradient,0,ierr)
+#else
       call TaoSetGradientRoutine(tao,FormGradient,0,ierr)
+#endif
       CHKERRA(ierr)
       if (hessian) then
+#ifdef TAO_NEW
+        call TaoSetHessian(tao,Hess,Hess,FormHessian,0,ierr)
+#else
         call TaoSetHessianRoutine(tao,Hess,Hess,FormHessian,0,ierr)
+#endif
         CHKERRA(ierr)
       endif
 
