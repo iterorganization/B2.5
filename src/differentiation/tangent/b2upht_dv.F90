@@ -564,26 +564,61 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
     dte(icv) = dte1(icv)
     dti(icv) = dti1(icv)
 !xpb !nh
-    IF (solvereg(ireg)) THEN
-      IF (switch%b2upht_te_max*ev .GT. te(icv) + dte(icv)) THEN
+    IF (solvireg(ireg)) THEN
+      IF (switch%b2upht_ti_max*ev .GT. ti(icv) + dti(icv)) THEN
         DO nd=1,nbdirs
-          y1d(nd) = ted(nd, icv) + dted(nd, icv)
+          y1d(nd) = tid(nd, icv) + dtid(nd, icv)
         END DO
-        y1 = te(icv) + dte(icv)
+        y1 = ti(icv) + dti(icv)
       ELSE
         DO nd=1,nbdirs
           y1d(nd) = 0.D0
         END DO
-        y1 = switch%b2upht_te_max*ev
+        y1 = switch%b2upht_ti_max*ev
         DO nd=1,nbdirsmax
           y1d(nd) = 0.D0
         END DO
       END IF
-      IF (switch%b2upht_te_min*ev .LT. y1) THEN
+      IF (switch%b2upht_ti_min*ev .LT. y1) THEN
         DO nd=1,nbdirs
-          ted(nd, icv) = y1d(nd)
+          tid(nd, icv) = y1d(nd)
         END DO
-        te(icv) = y1
+        ti(icv) = y1
+      ELSE
+        DO nd=1,nbdirs
+          tid(nd, icv) = 0.D0
+        END DO
+        ti(icv) = switch%b2upht_ti_min*ev
+      END IF
+    END IF
+    IF (solvereg(ireg)) THEN
+      IF (switch%b2upht_rte_min*ti(icv) .LT. te(icv)) THEN
+        te(icv) = te(icv)
+      ELSE
+        DO nd=1,nbdirs
+          ted(nd, icv) = switch%b2upht_rte_min*tid(nd, icv)
+        END DO
+        te(icv) = switch%b2upht_rte_min*ti(icv)
+      END IF
+      IF (switch%b2upht_te_max*ev .GT. te(icv) + dte(icv)) THEN
+        DO nd=1,nbdirs
+          y2d(nd) = ted(nd, icv) + dted(nd, icv)
+        END DO
+        y2 = te(icv) + dte(icv)
+      ELSE
+        DO nd=1,nbdirs
+          y2d(nd) = 0.D0
+        END DO
+        y2 = switch%b2upht_te_max*ev
+        DO nd=1,nbdirsmax
+          y2d(nd) = 0.D0
+        END DO
+      END IF
+      IF (switch%b2upht_te_min*ev .LT. y2) THEN
+        DO nd=1,nbdirs
+          ted(nd, icv) = y2d(nd)
+        END DO
+        te(icv) = y2
       ELSE
         DO nd=1,nbdirs
           ted(nd, icv) = 0.D0
@@ -602,34 +637,6 @@ SUBROUTINE B2UPHT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
         pod(nd, icv) = 3.1_R8*ted(nd, icv)/qe
       END DO
       po(icv) = 3.1_R8*te(icv)/qe
-    END IF
-!xpb !nh
-    IF (solvireg(ireg)) THEN
-      IF (switch%b2upht_ti_max*ev .GT. ti(icv) + dti(icv)) THEN
-        DO nd=1,nbdirs
-          y2d(nd) = tid(nd, icv) + dtid(nd, icv)
-        END DO
-        y2 = ti(icv) + dti(icv)
-      ELSE
-        DO nd=1,nbdirs
-          y2d(nd) = 0.D0
-        END DO
-        y2 = switch%b2upht_ti_max*ev
-        DO nd=1,nbdirsmax
-          y2d(nd) = 0.D0
-        END DO
-      END IF
-      IF (switch%b2upht_ti_min*ev .LT. y2) THEN
-        DO nd=1,nbdirs
-          tid(nd, icv) = y2d(nd)
-        END DO
-        ti(icv) = y2
-      ELSE
-        DO nd=1,nbdirs
-          tid(nd, icv) = 0.D0
-        END DO
-        ti(icv) = switch%b2upht_ti_min*ev
-      END IF
     END IF
     IF (solvnreg(ireg)) THEN
       IF (switch%b2upht_tn_max*ev .GT. tn(icv) + dtn(icv)) THEN
@@ -1052,14 +1059,31 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
 !srv 25.07.17
     dti(icv) = dti1(icv)
 !xpb !nh
-    IF (solvereg(ireg)) THEN
-      IF (switch%b2upht_te_max*ev .GT. te(icv) + dte(icv)) THEN
-        y1 = te(icv) + dte(icv)
+    IF (solvireg(ireg)) THEN
+      IF (switch%b2upht_ti_max*ev .GT. ti(icv) + dti(icv)) THEN
+        y1 = ti(icv) + dti(icv)
       ELSE
-        y1 = switch%b2upht_te_max*ev
+        y1 = switch%b2upht_ti_max*ev
       END IF
-      IF (switch%b2upht_te_min*ev .LT. y1) THEN
-        te(icv) = y1
+      IF (switch%b2upht_ti_min*ev .LT. y1) THEN
+        ti(icv) = y1
+      ELSE
+        ti(icv) = switch%b2upht_ti_min*ev
+      END IF
+    END IF
+    IF (solvereg(ireg)) THEN
+      IF (switch%b2upht_rte_min*ti(icv) .LT. te(icv)) THEN
+        te(icv) = te(icv)
+      ELSE
+        te(icv) = switch%b2upht_rte_min*ti(icv)
+      END IF
+      IF (switch%b2upht_te_max*ev .GT. te(icv) + dte(icv)) THEN
+        y2 = te(icv) + dte(icv)
+      ELSE
+        y2 = switch%b2upht_te_max*ev
+      END IF
+      IF (switch%b2upht_te_min*ev .LT. y2) THEN
+        te(icv) = y2
       ELSE
         te(icv) = switch%b2upht_te_min*ev
       END IF
@@ -1069,19 +1093,6 @@ SUBROUTINE B2UPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, po_solve, &
       po(icv) = po(icv) + dte(icv)/qe
     ELSE IF (switch%pot_eq .EQ. 2) THEN
       po(icv) = 3.1_R8*te(icv)/qe
-    END IF
-!xpb !nh
-    IF (solvireg(ireg)) THEN
-      IF (switch%b2upht_ti_max*ev .GT. ti(icv) + dti(icv)) THEN
-        y2 = ti(icv) + dti(icv)
-      ELSE
-        y2 = switch%b2upht_ti_max*ev
-      END IF
-      IF (switch%b2upht_ti_min*ev .LT. y2) THEN
-        ti(icv) = y2
-      ELSE
-        ti(icv) = switch%b2upht_ti_min*ev
-      END IF
     END IF
     IF (solvnreg(ireg)) THEN
       IF (switch%b2upht_tn_max*ev .GT. tn(icv) + dtn(icv)) THEN

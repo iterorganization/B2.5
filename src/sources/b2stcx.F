@@ -89,7 +89,7 @@
        call b2xvsg (nCv, tn, 1, 'tn', '.gt.')
        call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
 *    ..test velocities
-       call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocities !')
+       call xertst (maxval(dabs(ua)).lt.c, 'Supra-luminal velocities !')
 *    ..test rate coefficients
        do is = 1, ns-1
         if (.not.lnext(is-1,is)) then
@@ -309,13 +309,13 @@ ctmp.dpc
       do is = 0, ns-1                     !srv 28.07.11 {
         if(is.eq.ismain) then
           wrk0=sna0(:,0,is)+sna0(:,1,is)*na(:,is)
-          call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, se)
+          call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, se)
         endif
       enddo
       wrk0=shi0(:,0)+
      &     shi0(:,1)*ti+shi0(:,2)*ni(:,0)+
      &     shi0(:,3)*ni(:,0)*ti
-      call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, sih)                !srv 11.06.13
+      call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, sih)                !srv 11.06.13
 #endif
 
       write (chcx,'(i3.3)') is0

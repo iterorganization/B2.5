@@ -6,7 +6,7 @@
 !                nn flon conkt reshe reshi corte corzt reskt kt
 !                reshn corti flozt cortn resht cortt corkt flokt
 !                ceqp conzt cone coni te reszt zt
-!   with respect to varying inputs: conn ti tn ne floe ni floi
+!   with respect to varying inputs: conn ti tn ne floe szt ni floi
 !                nn flon conkt reshe reshi corte reskt kt reshn
 !                corti flozt cortn resht she shi cortt skt shn
 !                flokt ceqp conzt cone coni te reszt zt
@@ -28,11 +28,11 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
 & , neb, ni, nib, nn, nnb, te, teb, ti, tib, tn, tnb, kt, ktb, zt, ztb, &
 & floe, floeb, cone, coneb, floi, floib, coni, conib, flon, flonb, conn&
 & , connb, flokt, floktb, conkt, conktb, flozt, floztb, conzt, conztb, &
-& she, sheb, shi, shib, shn, shnb, skt, sktb, szt, ceqp, ceqpb, resht, &
-& reshtb, reshe, resheb, reshi, reshib, reshn, reshnb, reskt, resktb, &
-& reszt, resztb, cortt, corttb, corte, corteb, corti, cortib, cortn, &
-& cortnb, corkt, corktb, corzt, corztb, flo0, flo0b, con0, con0b, aa, &
-& aab)
+& she, sheb, shi, shib, shn, shnb, skt, sktb, szt, sztb, ceqp, ceqpb, &
+& resht, reshtb, reshe, resheb, reshi, reshib, reshn, reshnb, reskt, &
+& resktb, reszt, resztb, cortt, corttb, corte, corteb, corti, cortib, &
+& cortn, cortnb, corkt, corktb, corzt, corztb, flo0, flo0b, con0, con0b&
+& , aa, aab)
   USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_SWITCHES_DIFF
@@ -66,8 +66,8 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
 & , 0:3), szt(ncv, 0:3), ceqp(ncv), resht(ncv), reshe(ncv), reshi(ncv), &
 & reshn(ncv), reskt(ncv), reszt(ncv)
   REAL(kind=r8) :: sheb(ncv, 0:3), shib(ncv, 0:3), shnb(ncv, 0:3), sktb(&
-& ncv, 0:3), ceqpb(ncv), reshtb(ncv), resheb(ncv), reshib(ncv), reshnb(&
-& ncv), resktb(ncv), resztb(ncv)
+& ncv, 0:3), sztb(ncv, 0:3), ceqpb(ncv), reshtb(ncv), resheb(ncv), &
+& reshib(ncv), reshnb(ncv), resktb(ncv), resztb(ncv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: cortt(ncv), corte(ncv), corti(ncv), cortn(ncv), corkt&
 & (ncv), corzt(ncv)
@@ -1231,6 +1231,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
       flo0b(ifc, 0) = flo0b(ifc, 0) + 0.5_R8*t2b - 0.5_R8*t1b
       con0b(ifc, 0, 0) = con0b(ifc, 0, 0) - t2b - t1b
     END DO
+    sztb = 0.D0
     CALL POPREAL8ARRAY(reszt, r8*ncv/8)
 !$BWD-OF II-LOOP 
     DO icv=1,ncv
@@ -1255,6 +1256,8 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
             resztb(icv) = resztb(icv) - abs5b
           END IF
         END IF
+        sztb(icv, 1) = sztb(icv, 1) - aab(mpg%cvnvp(icv, 1))
+        sztb(icv, 3) = sztb(icv, 3) - ni(icv, 1)*aab(mpg%cvnvp(icv, 1))
         nib(icv, 1) = nib(icv, 1) - szt(icv, 3)*aab(mpg%cvnvp(icv, 1))
         aab(mpg%cvnvp(icv, 1)) = 0.D0
       END IF
@@ -1264,6 +1267,7 @@ SUBROUTINE B2USHT_B(ncv, nfc, nvx, ns, switch, geo, mpg, mpgb, itcnt, ne&
     con0b(:, :, 0) = 0.D0
     floztb = floztb + flo0b
   ELSE
+    sztb = 0.D0
     con0b = 0.D0
   END IF
   CALL POPCONTROL1B(branch)

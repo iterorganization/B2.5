@@ -130,7 +130,6 @@
   cpmpxy
   b2mwmv
   b2optim_tao
-  b2optim_ipopt
   fortranAdaptor
   b2npp7_dv
   b2usp7_dv

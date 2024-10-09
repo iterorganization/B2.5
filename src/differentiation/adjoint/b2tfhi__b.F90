@@ -114,13 +114,15 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 !
 !   ..local variables
   INTEGER :: ifc, is, meth
-  REAL(kind=r8) :: floi0(nfc, 0:1), coni0(nfc, 0:1), floi0_mdf(nfc, 0:1)&
-& , wght(nfc, 2), dumm0(nfc, 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), &
-& dumm3(nfc, 0:1), dumm4(nfc, 0:1), fhi0_mdf(nfc, 0:1), flon0(nfc, 0:1)&
-& , flokt0(nfc, 0:1), flozt0(nfc, 0:1), flo0_exb(nfc, 0:1)
-  REAL(kind=r8) :: floi0b(nfc, 0:1), coni0b(nfc, 0:1), floi0_mdfb(nfc, 0&
-& :1), dumm0b(nfc, 0:1), dumm1b(nfc, 0:1), fhi0_mdfb(nfc, 0:1), flon0b(&
-& nfc, 0:1), flokt0b(nfc, 0:1), flozt0b(nfc, 0:1), flo0_exbb(nfc, 0:1)
+  REAL(kind=r8) :: floi0(nfc, 0:1), coni0(nfc, 0:1), fhi_32_loc(nfc, 0:1&
+& ), fhi_52_loc(nfc, 0:1), floi0_mdf(nfc, 0:1), wght(nfc, 2), dumm0(nfc&
+& , 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(nfc, &
+& 0:1), fhi0_mdf(nfc, 0:1), flon0(nfc, 0:1), flokt0(nfc, 0:1), flozt0(&
+& nfc, 0:1), flo0_exb(nfc, 0:1)
+  REAL(kind=r8) :: floi0b(nfc, 0:1), coni0b(nfc, 0:1), fhi_32_locb(nfc, &
+& 0:1), fhi_52_locb(nfc, 0:1), floi0_mdfb(nfc, 0:1), dumm0b(nfc, 0:1), &
+& dumm1b(nfc, 0:1), fhi0_mdfb(nfc, 0:1), flon0b(nfc, 0:1), flokt0b(nfc, &
+& 0:1), flozt0b(nfc, 0:1), flo0_exbb(nfc, 0:1)
 !pax
 !srv 25.01.02
   REAL(kind=r8) :: flidia(nfc, 0:1), facdriftm, nif(nfc), nnf(nfc), tif(&
@@ -306,7 +308,7 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 !
 !   ..apply discretization scheme
   CALL CALCFLOW_FWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, pl%ti, &
-&             floi0_mdf, co%chci, fhi0_mdf, dumm0, dumm1)
+&             floi0_mdf, co%chci, fhi0_mdf, fhi_32_loc, fhi_52_loc)
 !
 !   ..compute ion fluxes
 !
@@ -472,10 +474,12 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   floi0_mdfb(:, 0) = floi0_mdfb(:, 0) - tif*dvb%fhi(:, 0)
   tifb = tifb + (floi0(:, 0)-floi0_mdf(:, 0))*dvb%fhi(:, 0)
   dvb%fhi(:, 0) = 0.D0
-  dumm1b = 0.D0
+  fhi_32_locb = 0.D0
+  fhi_52_locb = 0.D0
   CALL CALCFLOW_BWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, pl%ti, &
 &             plb%ti, floi0_mdf, floi0_mdfb, co%chci, cob%chci, fhi0_mdf&
-&             , fhi0_mdfb, dumm0, dumm0b, dumm1, dumm1b)
+&             , fhi0_mdfb, fhi_32_loc, fhi_32_locb, fhi_52_loc, &
+&             fhi_52_locb)
   CALL POPCONTROL1B(branch)
   IF (branch .EQ. 0) THEN
     nnfb = 0.D0
@@ -607,10 +611,8 @@ SUBROUTINE B2TFHI__B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
         cob%cddi(:, 1, is) = cob%cddi(:, 1, is) + dnati2(:, 0)*tempb - &
 &         switch%fhipsch*5.0_R8*dv%facdrift*cddib(:, 0)
         cddib(:, 0) = 0.D0
-        dvb%fhipsch(:, 1) = 0.D0
         dnati2b(:, 0) = dnati2b(:, 0) + co%cddi(:, 1, is)*tempb
         tempb = switch%fhipsch*2.5_R8*dv%facdrift*dvb%fhipsch(:, 0)
-        dvb%fhipsch(:, 0) = 0.D0
         cob%cddi(:, 0, is) = cob%cddi(:, 0, is) + dnati2(:, 1)*tempb
         dnati2b(:, 1) = dnati2b(:, 1) + co%cddi(:, 0, is)*tempb
         nati2 = pl%na(:, is)*pl%ti*pl%ti
@@ -701,10 +703,11 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !
 !   ..local variables
   INTEGER :: ifc, is, meth
-  REAL(kind=r8) :: floi0(nfc, 0:1), coni0(nfc, 0:1), floi0_mdf(nfc, 0:1)&
-& , wght(nfc, 2), dumm0(nfc, 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), &
-& dumm3(nfc, 0:1), dumm4(nfc, 0:1), fhi0_mdf(nfc, 0:1), flon0(nfc, 0:1)&
-& , flokt0(nfc, 0:1), flozt0(nfc, 0:1), flo0_exb(nfc, 0:1)
+  REAL(kind=r8) :: floi0(nfc, 0:1), coni0(nfc, 0:1), fhi_32_loc(nfc, 0:1&
+& ), fhi_52_loc(nfc, 0:1), floi0_mdf(nfc, 0:1), wght(nfc, 2), dumm0(nfc&
+& , 0:1), dumm1(nfc, 0:1), dumm2(nfc, 0:1), dumm3(nfc, 0:1), dumm4(nfc, &
+& 0:1), fhi0_mdf(nfc, 0:1), flon0(nfc, 0:1), flokt0(nfc, 0:1), flozt0(&
+& nfc, 0:1), flo0_exb(nfc, 0:1)
 !pax
 !srv 25.01.02
   REAL(kind=r8) :: flidia(nfc, 0:1), facdriftm, nif(nfc), nnf(nfc), tif(&
@@ -791,10 +794,10 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 &                  dnati2)
 !
 !      ..compute P.Sch heat flux
-        dv%fhipsch(:, 0) = 2.5_R8*switch%fhipsch*dv%facdrift*co%cddi(:, &
-&         0, is)*dnati2(:, 1)
-        dv%fhipsch(:, 1) = -(2.5_R8*switch%fhipsch*dv%facdrift*co%cddi(:&
-&         , 1, is)*dnati2(:, 0))
+        dv%fhipsch(:, 0) = dv%fhipsch(:, 0) + 2.5_R8*switch%fhipsch*dv%&
+&         facdrift*co%cddi(:, 0, is)*dnati2(:, 1)
+        dv%fhipsch(:, 1) = dv%fhipsch(:, 1) - 2.5_R8*switch%fhipsch*dv%&
+&         facdrift*co%cddi(:, 1, is)*dnati2(:, 0)
 !      ..linearization coefficients for P.Sch flows
         cddi(:, 0) = -(5.0_R8*switch%fhipsch*dv%facdrift*co%cddi(:, 1, &
 &         is))
@@ -903,7 +906,7 @@ SUBROUTINE B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 !
 !   ..apply discretization scheme
   CALL CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, pl%ti, floi0_mdf, &
-&                co%chci, fhi0_mdf, dumm0, dumm1)
+&                co%chci, fhi0_mdf, fhi_32_loc, fhi_52_loc)
 !
 !   ..compute ion fluxes
   dv%fhi(:, 0) = fhi0_mdf(:, 0) + (floi0(:, 0)-floi0_mdf(:, 0))*tif

@@ -13,14 +13,14 @@ CPP      = /lib/cpp -C -traditional -ffreestanding
 
 MPI_FC  ?= mpif90
 ifdef SOLPS_MPI
- FC       = ${MPI_FC}
+ FC      = ${MPI_FC}
  COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
  ifeq (${COMPILER_TYPE},GNU)
   COMPILER_REDEF = yes
  endif
 else
  ifdef USE_IMPGYRO
-  FC       = ${MPI_FC}
+  FC     = ${MPI_FC}
   COMPILER_TYPE = $(shell ${FC} --version | head -1 | cut -d ' ' -f 1)
   ifeq (${COMPILER_TYPE},GNU)
    COMPILER_REDEF = yes
@@ -30,9 +30,9 @@ endif
 
 ifndef COMPILER_REDEF
  ifdef SOLPS_DEBUG
-  FCOPTS   = -g -C -debug all -traceback -check all
+  FCOPTS = -g -C -debug all -traceback -check all
  else
-  FCOPTS   = -O2 -xHost
+  FCOPTS = -O2 -xHost
  endif
 endif
 

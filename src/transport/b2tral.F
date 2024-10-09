@@ -46,8 +46,8 @@
       use b2mod_ipmain
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1), 
-     &  ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns, nscx, nscxmax,
+     &                        iscx(0:nscxmax-1), ismain
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -122,7 +122,7 @@
      &    (switch%no_solve.lt.0.and.
      &     mod(abs(switch%no_solve),2**is).ge.2**(is-1))
         enddo
-        call alloc_input_profile(nCV,ns)
+        call alloc_input_profile(nCv,ns)
       end if
 
 * ..compute transport coefficients
@@ -322,7 +322,7 @@ cwdk combined check for poloidal or radial diffusion
       if(switch%b2npp7_iout.ne.0 .or. switch%b2nppo_iout.ne.0) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-        do is0=0,ns-1
+        do is0 = 0, ns-1
          write (chns0,'(i3.3)') is0
          if(is0.ne.is .and. .not.is_neutral(is)) then
           call my_out_us(70,nFc,1,co%csigin(1,0,is,is0),

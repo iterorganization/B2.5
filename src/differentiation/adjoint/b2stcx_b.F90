@@ -67,11 +67,12 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
   INTRINSIC ABS
   INTRINSIC MAXVAL
   INTRINSIC NINT
-  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
   LOGICAL :: result1
   INTEGER :: arg1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask
   REAL(kind=r8) :: result10
+  REAL(kind=r8) :: result11
   CHARACTER(len=10) :: arg10
 !   ..initialisation
 !-----------------------------------------------------------------------
@@ -100,20 +101,20 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
     CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
-    mask = ua .GE. 0.0
+    mask = ua .GE. 0.
     WHERE (mask) 
-      abs0 = ua
+      dabs0 = ua
     ELSEWHERE
-      abs0 = -ua
+      dabs0 = -ua
     END WHERE
 !    ..test velocities
-    result10 = MAXVAL(abs0)
+    result10 = MAXVAL(dabs0)
     CALL XERTST(result10 .LT. c, 'Supra-luminal velocities !')
 !    ..test rate coefficients
     DO is=1,ns-1
       IF (.NOT.LNEXT(is - 1, is)) THEN
-        result10 = damax(ncv, rcx(1, is), 1)
-        CALL XERTST(result10 .EQ. 0.0_R8, &
+        result11 = damax(ncv, rcx(1, is), 1)
+        CALL XERTST(result11 .EQ. 0.0_R8, &
 &             'faulty argument rcx: nonzero for unrelated species')
       END IF
     END DO
@@ -253,71 +254,71 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
             smq0(icv, 1, is0) = smq0(icv, 1, is0) - (1.0_R8+rg0)*t2
           ELSE IF (switch%b2stcx_styl0 .EQ. 1) THEN
 !       ..compute parallel momentum source
-            result10 = ROXA(icv, is)
+            result11 = ROXA(icv, is)
             smq0(icv, 2, is) = smq0(icv, 2, is) + rg0*t1*ua(icv, is)/&
-&             result10
-            result10 = ROXA(icv, is)
+&             result11
+            result11 = ROXA(icv, is)
             smq0(icv, 3, is) = smq0(icv, 3, is) - (1.0_R8+rg0)*t1/&
-&             result10
+&             result11
             arg1 = is - 1
-            result10 = ROXA(icv, arg1)
+            result11 = ROXA(icv, arg1)
             smq0(icv, 2, is-1) = smq0(icv, 2, is-1) + t1*(ua(icv, is)+&
-&             rg0*ua(icv, is-1))/result10
+&             rg0*ua(icv, is-1))/result11
             arg1 = is - 1
-            result10 = ROXA(icv, arg1)
-            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result10
+            result11 = ROXA(icv, arg1)
+            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result11
             arg1 = is0 + 1
-            result10 = ROXA(icv, arg1)
+            result11 = ROXA(icv, arg1)
             smq0(icv, 2, is0+1) = smq0(icv, 2, is0+1) + t2*(ua(icv, is0)&
-&             +rg0*ua(icv, is0+1))/result10
+&             +rg0*ua(icv, is0+1))/result11
             arg1 = is0 + 1
-            result10 = ROXA(icv, arg1)
-            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result10
-            result10 = ROXA(icv, is0)
+            result11 = ROXA(icv, arg1)
+            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result11
+            result11 = ROXA(icv, is0)
             smq0(icv, 2, is0) = smq0(icv, 2, is0) + rg0*t2*ua(icv, is0)/&
-&             result10
-            result10 = ROXA(icv, is0)
+&             result11
+            result11 = ROXA(icv, is0)
             smq0(icv, 3, is0) = smq0(icv, 3, is0) - (1.0_R8+rg0)*t2/&
-&             result10
+&             result11
           ELSE IF (switch%b2stcx_styl0 .EQ. 2) THEN
 !       ..compute parallel momentum source
             smq0(icv, 0, is) = smq0(icv, 0, is) + rg0*t1*ua(icv, is)
-            result10 = ROXA(icv, is)
+            result11 = ROXA(icv, is)
             smq0(icv, 3, is) = smq0(icv, 3, is) - (1.0_R8+rg0)*t1/&
-&             result10
+&             result11
             smq0(icv, 0, is-1) = smq0(icv, 0, is-1) + t1*(ua(icv, is)+&
 &             rg0*ua(icv, is-1))
             arg1 = is - 1
-            result10 = ROXA(icv, arg1)
-            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result10
+            result11 = ROXA(icv, arg1)
+            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result11
             smq0(icv, 0, is0+1) = smq0(icv, 0, is0+1) + t2*(ua(icv, is0)&
 &             +rg0*ua(icv, is0+1))
             arg1 = is0 + 1
-            result10 = ROXA(icv, arg1)
-            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result10
+            result11 = ROXA(icv, arg1)
+            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result11
             smq0(icv, 0, is0) = smq0(icv, 0, is0) + rg0*t2*ua(icv, is0)
-            result10 = ROXA(icv, is0)
+            result11 = ROXA(icv, is0)
             smq0(icv, 3, is0) = smq0(icv, 3, is0) - (1.0_R8+rg0)*t2/&
-&             result10
+&             result11
           ELSE IF (switch%b2stcx_styl0 .EQ. 3) THEN
 !       ..compute parallel momentum source
-            result10 = ROXA(icv, is)
+            result11 = ROXA(icv, is)
             smq0(icv, 2, is) = smq0(icv, 2, is) + rg0*t1*ua(icv, is)/&
-&             result10
+&             result11
             smq0(icv, 1, is) = smq0(icv, 1, is) - (1.0_R8+rg0)*t1
             arg1 = is - 1
-            result10 = ROXA(icv, arg1)
+            result11 = ROXA(icv, arg1)
             smq0(icv, 2, is-1) = smq0(icv, 2, is-1) + t1*(ua(icv, is)+&
-&             rg0*ua(icv, is-1))/result10
+&             rg0*ua(icv, is-1))/result11
             smq0(icv, 1, is-1) = smq0(icv, 1, is-1) - rg0*t1
             arg1 = is0 + 1
-            result10 = ROXA(icv, arg1)
+            result11 = ROXA(icv, arg1)
             smq0(icv, 2, is0+1) = smq0(icv, 2, is0+1) + t2*(ua(icv, is0)&
-&             +rg0*ua(icv, is0+1))/result10
+&             +rg0*ua(icv, is0+1))/result11
             smq0(icv, 1, is0+1) = smq0(icv, 1, is0+1) - rg0*t2
-            result10 = ROXA(icv, is0)
+            result11 = ROXA(icv, is0)
             smq0(icv, 2, is0) = smq0(icv, 2, is0) + rg0*t2*ua(icv, is0)/&
-&             result10
+&             result11
             smq0(icv, 1, is0) = smq0(icv, 1, is0) - (1.0_R8+rg0)*t2
           END IF
           rcxmo(icv, is) = rcxmo(icv, is) + t1*ua(icv, is)
@@ -491,12 +492,13 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, switchb, geo, &
   INTRINSIC ABS
   INTRINSIC MAXVAL
   INTRINSIC NINT
-  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
   LOGICAL :: result1
   INTEGER :: arg1
   LOGICAL, DIMENSION(ncv, 0:ns-1) :: mask
   REAL(kind=r8) :: result10
-  REAL(kind=r8) :: result10b
+  REAL(kind=r8) :: result11
+  REAL(kind=r8) :: result11b
   CHARACTER(len=10) :: arg10
 !   ..initialisation
 !-----------------------------------------------------------------------
@@ -623,52 +625,52 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, switchb, geo, &
             CALL PUSHCONTROL3B(1)
           ELSE IF (switch%b2stcx_styl0 .EQ. 1) THEN
 !       ..compute parallel momentum source
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, is)
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, is)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, is)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, is)
             arg1 = is - 1
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, arg1)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, arg1)
             arg1 = is - 1
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, arg1)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, arg1)
             arg1 = is0 + 1
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, arg1)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, arg1)
             arg1 = is0 + 1
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, arg1)
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, is0)
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, is0)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, arg1)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, is0)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, is0)
             CALL PUSHCONTROL3B(2)
           ELSE IF (switch%b2stcx_styl0 .EQ. 2) THEN
 !       ..compute parallel momentum source
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, is)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, is)
             arg1 = is - 1
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, arg1)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, arg1)
             arg1 = is0 + 1
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, arg1)
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, is0)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, arg1)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, is0)
             CALL PUSHCONTROL3B(3)
           ELSE IF (switch%b2stcx_styl0 .EQ. 3) THEN
 !       ..compute parallel momentum source
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, is)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, is)
             arg1 = is - 1
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, arg1)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, arg1)
             arg1 = is0 + 1
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, arg1)
-            CALL PUSHREAL8(result10, r8/8)
-            result10 = ROXA(icv, is0)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, arg1)
+            CALL PUSHREAL8(result11, r8/8)
+            result11 = ROXA(icv, is0)
             CALL PUSHCONTROL3B(4)
           ELSE
             CALL PUSHCONTROL3B(5)
@@ -705,132 +707,132 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, switchb, geo, &
 &             rg0*smq0b(icv, 0, is)
             uab(icv, is-1) = uab(icv, is-1) + rg0*t1*smq0b(icv, 0, is-1)
           ELSE
-            tempb2 = -((rg0+1.0_R8)*smq0b(icv, 3, is0)/result10)
+            tempb2 = -((rg0+1.0_R8)*smq0b(icv, 3, is0)/result11)
             t2b = tempb2
-            result10b = -(t2*tempb2/result10)
-            CALL POPREAL8(result10, r8/8)
-            CALL ROXA_B(icv, is0, result10b)
+            result11b = -(t2*tempb2/result11)
+            CALL POPREAL8(result11, r8/8)
+            CALL ROXA_B(icv, is0, result11b)
             uab(icv, is0) = uab(icv, is0) + t2*rg0*smq0b(icv, 2, is0)/&
-&             result10
-            tempb2 = ua(icv, is0)*rg0*smq0b(icv, 2, is0)/result10
+&             result11
+            tempb2 = ua(icv, is0)*rg0*smq0b(icv, 2, is0)/result11
             t2b = t2b + tempb2
-            result10b = -(t2*tempb2/result10)
-            CALL POPREAL8(result10, r8/8)
-            CALL ROXA_B(icv, is0, result10b)
-            tempb2 = -(rg0*smq0b(icv, 3, is0+1)/result10)
+            result11b = -(t2*tempb2/result11)
+            CALL POPREAL8(result11, r8/8)
+            CALL ROXA_B(icv, is0, result11b)
+            tempb2 = -(rg0*smq0b(icv, 3, is0+1)/result11)
             t2b = t2b + tempb2
-            result10b = -(t2*tempb2/result10)
+            result11b = -(t2*tempb2/result11)
             arg1 = is0 + 1
-            CALL POPREAL8(result10, r8/8)
-            CALL ROXA_B(icv, arg1, result10b)
-            temp1 = t2/result10
+            CALL POPREAL8(result11, r8/8)
+            CALL ROXA_B(icv, arg1, result11b)
+            temp1 = t2/result11
             uab(icv, is0) = uab(icv, is0) + temp1*smq0b(icv, 2, is0+1)
             uab(icv, is0+1) = uab(icv, is0+1) + rg0*temp1*smq0b(icv, 2, &
 &             is0+1)
             tempb2 = (ua(icv, is0)+rg0*ua(icv, is0+1))*smq0b(icv, 2, is0&
-&             +1)/result10
+&             +1)/result11
             t2b = t2b + tempb2
-            result10b = -(temp1*tempb2)
+            result11b = -(temp1*tempb2)
             arg1 = is0 + 1
-            CALL POPREAL8(result10, r8/8)
-            CALL ROXA_B(icv, arg1, result10b)
-            tempb2 = -(rg0*smq0b(icv, 3, is-1)/result10)
+            CALL POPREAL8(result11, r8/8)
+            CALL ROXA_B(icv, arg1, result11b)
+            tempb2 = -(rg0*smq0b(icv, 3, is-1)/result11)
             t1b = tempb2
-            result10b = -(t1*tempb2/result10)
+            result11b = -(t1*tempb2/result11)
             arg1 = is - 1
-            CALL POPREAL8(result10, r8/8)
-            CALL ROXA_B(icv, arg1, result10b)
-            temp1 = t1/result10
+            CALL POPREAL8(result11, r8/8)
+            CALL ROXA_B(icv, arg1, result11b)
+            temp1 = t1/result11
             uab(icv, is-1) = uab(icv, is-1) + rg0*temp1*smq0b(icv, 2, is&
 &             -1)
             tempb2 = (ua(icv, is)+rg0*ua(icv, is-1))*smq0b(icv, 2, is-1)&
-&             /result10
+&             /result11
             t1b = t1b + tempb2
-            result10b = -(temp1*tempb2)
+            result11b = -(temp1*tempb2)
             arg1 = is - 1
-            CALL POPREAL8(result10, r8/8)
-            CALL ROXA_B(icv, arg1, result10b)
-            tempb2 = -((rg0+1.0_R8)*smq0b(icv, 3, is)/result10)
+            CALL POPREAL8(result11, r8/8)
+            CALL ROXA_B(icv, arg1, result11b)
+            tempb2 = -((rg0+1.0_R8)*smq0b(icv, 3, is)/result11)
             t1b = t1b + tempb2
-            result10b = -(t1*tempb2/result10)
-            CALL POPREAL8(result10, r8/8)
+            result11b = -(t1*tempb2/result11)
+            CALL POPREAL8(result11, r8/8)
             uab(icv, is) = uab(icv, is) + temp1*smq0b(icv, 2, is-1) + t1&
-&             *rg0*smq0b(icv, 2, is)/result10
-            CALL ROXA_B(icv, is, result10b)
-            tempb2 = ua(icv, is)*rg0*smq0b(icv, 2, is)/result10
+&             *rg0*smq0b(icv, 2, is)/result11
+            CALL ROXA_B(icv, is, result11b)
+            tempb2 = ua(icv, is)*rg0*smq0b(icv, 2, is)/result11
             t1b = t1b + tempb2
-            result10b = -(t1*tempb2/result10)
-            CALL POPREAL8(result10, r8/8)
-            CALL ROXA_B(icv, is, result10b)
+            result11b = -(t1*tempb2/result11)
+            CALL POPREAL8(result11, r8/8)
+            CALL ROXA_B(icv, is, result11b)
           END IF
         ELSE IF (branch .EQ. 3) THEN
-          tempb2 = -((rg0+1.0_R8)*smq0b(icv, 3, is0)/result10)
+          tempb2 = -((rg0+1.0_R8)*smq0b(icv, 3, is0)/result11)
           t2b = tempb2
-          result10b = -(t2*tempb2/result10)
-          CALL POPREAL8(result10, r8/8)
-          CALL ROXA_B(icv, is0, result10b)
+          result11b = -(t2*tempb2/result11)
+          CALL POPREAL8(result11, r8/8)
+          CALL ROXA_B(icv, is0, result11b)
           uab(icv, is0) = uab(icv, is0) + t2*rg0*smq0b(icv, 0, is0) + t2&
 &           *smq0b(icv, 0, is0+1)
-          tempb2 = -(rg0*smq0b(icv, 3, is0+1)/result10)
+          tempb2 = -(rg0*smq0b(icv, 3, is0+1)/result11)
           t2b = t2b + ua(icv, is0)*rg0*smq0b(icv, 0, is0) + tempb2 + (ua&
 &           (icv, is0)+rg0*ua(icv, is0+1))*smq0b(icv, 0, is0+1)
-          result10b = -(t2*tempb2/result10)
+          result11b = -(t2*tempb2/result11)
           arg1 = is0 + 1
-          CALL POPREAL8(result10, r8/8)
-          CALL ROXA_B(icv, arg1, result10b)
+          CALL POPREAL8(result11, r8/8)
+          CALL ROXA_B(icv, arg1, result11b)
           uab(icv, is0+1) = uab(icv, is0+1) + rg0*t2*smq0b(icv, 0, is0+1&
 &           )
-          tempb2 = -(rg0*smq0b(icv, 3, is-1)/result10)
+          tempb2 = -(rg0*smq0b(icv, 3, is-1)/result11)
           t1b = tempb2
-          result10b = -(t1*tempb2/result10)
+          result11b = -(t1*tempb2/result11)
           arg1 = is - 1
-          CALL POPREAL8(result10, r8/8)
-          CALL ROXA_B(icv, arg1, result10b)
+          CALL POPREAL8(result11, r8/8)
+          CALL ROXA_B(icv, arg1, result11b)
           uab(icv, is) = uab(icv, is) + t1*smq0b(icv, 0, is-1) + t1*rg0*&
 &           smq0b(icv, 0, is)
           uab(icv, is-1) = uab(icv, is-1) + rg0*t1*smq0b(icv, 0, is-1)
-          tempb2 = -((rg0+1.0_R8)*smq0b(icv, 3, is)/result10)
+          tempb2 = -((rg0+1.0_R8)*smq0b(icv, 3, is)/result11)
           t1b = t1b + (ua(icv, is)+rg0*ua(icv, is-1))*smq0b(icv, 0, is-1&
 &           ) + tempb2 + ua(icv, is)*rg0*smq0b(icv, 0, is)
-          result10b = -(t1*tempb2/result10)
-          CALL POPREAL8(result10, r8/8)
-          CALL ROXA_B(icv, is, result10b)
+          result11b = -(t1*tempb2/result11)
+          CALL POPREAL8(result11, r8/8)
+          CALL ROXA_B(icv, is, result11b)
         ELSE IF (branch .EQ. 4) THEN
-          tempb2 = ua(icv, is0)*rg0*smq0b(icv, 2, is0)/result10
+          tempb2 = ua(icv, is0)*rg0*smq0b(icv, 2, is0)/result11
           t2b = tempb2 - (rg0+1.0_R8)*smq0b(icv, 1, is0)
           uab(icv, is0) = uab(icv, is0) + t2*rg0*smq0b(icv, 2, is0)/&
-&           result10
-          result10b = -(t2*tempb2/result10)
-          CALL POPREAL8(result10, r8/8)
-          CALL ROXA_B(icv, is0, result10b)
-          temp1 = t2/result10
+&           result11
+          result11b = -(t2*tempb2/result11)
+          CALL POPREAL8(result11, r8/8)
+          CALL ROXA_B(icv, is0, result11b)
+          temp1 = t2/result11
           uab(icv, is0) = uab(icv, is0) + temp1*smq0b(icv, 2, is0+1)
           uab(icv, is0+1) = uab(icv, is0+1) + rg0*temp1*smq0b(icv, 2, &
 &           is0+1)
           tempb2 = (ua(icv, is0)+rg0*ua(icv, is0+1))*smq0b(icv, 2, is0+1&
-&           )/result10
+&           )/result11
           t2b = t2b + tempb2 - rg0*smq0b(icv, 1, is0+1)
-          result10b = -(temp1*tempb2)
+          result11b = -(temp1*tempb2)
           arg1 = is0 + 1
-          CALL POPREAL8(result10, r8/8)
-          CALL ROXA_B(icv, arg1, result10b)
-          temp1 = t1/result10
+          CALL POPREAL8(result11, r8/8)
+          CALL ROXA_B(icv, arg1, result11b)
+          temp1 = t1/result11
           uab(icv, is-1) = uab(icv, is-1) + rg0*temp1*smq0b(icv, 2, is-1&
 &           )
           tempb2 = (ua(icv, is)+rg0*ua(icv, is-1))*smq0b(icv, 2, is-1)/&
-&           result10
+&           result11
           t1b = tempb2 - rg0*smq0b(icv, 1, is-1)
-          result10b = -(temp1*tempb2)
+          result11b = -(temp1*tempb2)
           arg1 = is - 1
-          CALL POPREAL8(result10, r8/8)
+          CALL POPREAL8(result11, r8/8)
           uab(icv, is) = uab(icv, is) + temp1*smq0b(icv, 2, is-1) + t1*&
-&           rg0*smq0b(icv, 2, is)/result10
-          CALL ROXA_B(icv, arg1, result10b)
-          tempb2 = ua(icv, is)*rg0*smq0b(icv, 2, is)/result10
+&           rg0*smq0b(icv, 2, is)/result11
+          CALL ROXA_B(icv, arg1, result11b)
+          tempb2 = ua(icv, is)*rg0*smq0b(icv, 2, is)/result11
           t1b = t1b + tempb2 - (rg0+1.0_R8)*smq0b(icv, 1, is)
-          result10b = -(t1*tempb2/result10)
-          CALL POPREAL8(result10, r8/8)
-          CALL ROXA_B(icv, is, result10b)
+          result11b = -(t1*tempb2/result11)
+          CALL POPREAL8(result11, r8/8)
+          CALL ROXA_B(icv, is, result11b)
         ELSE
           t1b = 0.D0
           t2b = 0.D0

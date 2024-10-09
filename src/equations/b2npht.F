@@ -286,9 +286,11 @@ cc while the second contribution corresponds to T dn/dt
         call b2sikt (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &    pl, dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod,
      &    skt_diss)
+        szt0 = 0.0_R8
         call b2saxpy (nCv*4, 1.0_R8, shekt, 1, she0, 1)
         call b2saxpy (nCv*4, 1.0_R8, shikt, 1, shi0, 1)
         call b2saxpy (nCv*4, 1.0_R8, sr%skt, 1, skt0, 1)
+        call b2saxpy (nCv*4, 1.0_R8, sr%szt, 1, szt0, 1)
         call b2saxpy (nCv, 1.0_R8, skt_prod, 1, sr%skt_prod, 1)
         call b2saxpy (nCv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
       endif
@@ -352,6 +354,20 @@ c residuals for separate neutral energy equation
       do iCv = 1, mpg%nCi
         shei(iCv) = co%ceqp(iCv)*dv%ne(iCv)*dv%ni(iCv,0)/
      &     (pl%te(iCv)*sqrt(pl%te(iCv)))*(pl%te(iCv)-pl%ti(iCv))
+        shi0(iCv,0) = shi0(iCv,0) + switch%b2npht_stab_shei*             !lkw 29.03.2024{
+     &     co%ceqp(iCv)*
+     &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))*
+     &     pl%ti(iCv)
+        shi0(iCv,1) = shi0(iCv,1) - switch%b2npht_stab_shei*
+     &    co%ceqp(iCv)*
+     &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))
+        she0(iCv,0) = she0(iCv,0) + switch%b2npht_stab_shei
+     &    *co%ceqp(iCv)*
+     &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))*
+     &     pl%te(iCv)
+        she0(iCv,1) = she0(iCv,1) - switch%b2npht_stab_shei
+     &    *co%ceqp(iCv)*
+     &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))         !lkw 29.03.2024}
       enddo
       do iCv = mpg%nCi+1, nCv
         shei(iCv) = 0.0_R8
@@ -473,6 +489,7 @@ c residuals for separate neutral energy equation
       elseif (switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nCv,0,pl%te,'b2npht_te')
         call my_out_us(70,nCv,0,pl%ti,'b2npht_ti')
+        call my_out_us(70,nCv,0,pl%tn,'b2npht_tn')
       end if
 
 * ..return

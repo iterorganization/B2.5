@@ -3,7 +3,7 @@
       use b2mod_types
       use b2mod_par_opt
      & , only : sigma, scale_sigma, mean, nmean, corr_model,
-     &          corr_length, corr_cutoff, nsigmx
+     &          corr_length, corr_cutoff
       use b2mod_constants
       use b2mod_subsys
       implicit none

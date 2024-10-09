@@ -414,7 +414,7 @@
       type (geometry), intent (inout) :: gm
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
      &           iCv, iFc, iFt, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2,
-     &           i1, i2, inv_dist(mpg%nVx), vv(2)
+     &           i1, i2, inv_dist(mpg%nVx)
       integer :: count_up, count_down, count_eq
       integer, allocatable :: old_face_list(:), verts(:)
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
@@ -988,7 +988,7 @@
             end if
             gm%psi_increasing = gm%fsPsi(mpg%vxFs(iVx)).lt.
      &                          gm%fsPsi(mpg%vxFs(mpg%tgVx(1))).or.
-     &                          maxval(abs(gm%fsPsi)).eq.0.0_R8
+     &                          maxval(dabs(gm%fsPsi)).eq.0.0_R8
           end if
         end do
       else if (mpg%nnreg(0).eq.4) then
