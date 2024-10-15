@@ -543,7 +543,7 @@ SUBROUTINE B2NPHT_DV_DV(ncv, nfc, nvx, ns, switch, switchd0, switchd, &
         temp4 = dvd%ni(nd, :, 0) - psnld%ni(nd, :, 0)
         temp5 = psnld%ti(nd, :)/dtim
         DO nd0=1,nbdirs0
-! default, combined ion-neutral eneregy equation
+! default, combined ion-neutral energy equation
           srdd%shi(nd0, nd, :, :) = srdd%shi(nd0, nd, :, :) + srdd%shidt&
 &           (nd0, nd, :, :)
           srdd%shi(nd0, nd, :, 0) = srdd%shi(nd0, nd, :, 0) - geo%cvvol*&
@@ -1818,7 +1818,7 @@ SUBROUTINE B2NPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, switchd, geo, &
 &     geo%cvvol
     IF (switch%tn_style .EQ. 0) THEN
       DO nd=1,nbdirs
-! default, combined ion-neutral eneregy equation
+! default, combined ion-neutral energy equation
         srd%shi(nd, :, :) = srd%shi(nd, :, :) + srd%shidt(nd, :, :)
         srd%shi(nd, :, 0) = srd%shi(nd, :, 0) - geo%cvvol*1.5_R8*(psnl%&
 &         ti*(dvd%ni(nd, :, 0)-psnld%ni(nd, :, 0))/dtim+(dv%ni(:, 0)-&
@@ -2559,7 +2559,7 @@ SUBROUTINE B2NPHT_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, &
     sr%she(:, 0) = sr%she(:, 0) - 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*&
 &     geo%cvvol
     IF (switch%tn_style .EQ. 0) THEN
-! default, combined ion-neutral eneregy equation
+! default, combined ion-neutral energy equation
       sr%shi = sr%shi + sr%shidt
       sr%shi(:, 0) = sr%shi(:, 0) - 1.5_R8*(dv%ni(:, 0)-psnl%ni(:, 0))*&
 &       psnl%ti/dtim*geo%cvvol
