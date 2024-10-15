@@ -2479,8 +2479,8 @@
 				<type>integer</type>
 				<description>
 					Integer switch to choose the expression for the ion-neutral conductivity.
-					If ’1’, the ion-neutral conductivity is computed from hydrogen gas diffusivity (SOLPS5.2 treatment).
-					If ’0’ (default), it is computed from the local CX rate (SOLPS5.0/5.1 and AFN treatments).
+					If '1', the ion-neutral conductivity is computed from hydrogen gas diffusivity (SOLPS5.2 treatment).
+					If '0' (default), it is computed from the local CX rate (SOLPS5.0/5.1 and AFN treatments).
 				</description>
 			</switch>
 			<switch>
@@ -6702,7 +6702,7 @@
 						 1 : prescribe the value of the density, CONPAR(,,1) specifies the required density in m<sup>-3</sup>
 						 2 : prescribe the gradient of the density, CONPAR(,,1) specifies the required density gradient in m<sup>-4</sup>
 						 3 : sheath conditions, CONPAR(,,1) not used (zero gradient is used)
-						 4 : prescribe the value of the density, weakly a mixed boundary condition, CONPAR(,,1) specifies the required density in m<sup>-3</sup> and CONPAR(,,2) specifies the 'strength' of the boundary condition. Not yet available for WG.
+						 4 : prescribe the value of the density, weakly a mixed boundary condition, CONPAR(,,1) specifies the required density in m<sup>-3</sup> and CONPAR(,,2) specifies the 'strength' of the boundary condition.
 						 5 : prescribe the particle flux per unit area, CONPAR(,,1) specifies the required particle flux density in m<sup>-2</sup>.s<sup>-1</sup>
 						 6 : prescribe the total particle flux for a constant density, CONPAR(,,1) specifies the particle flux in s<sup>-1</sup>. Not yet available for WG.
 						 7 : prescribe the given profile of density from the bv_na.dat file (requires b2mndr_boundary_sources.eq.1)
@@ -6744,7 +6744,7 @@
 						 3 : sheath conditions, Mach number as input,
 							if MOMPAR(,,2) &lt; 0.5, then the velocity is set to exactly
 							MOMPAR(,,1) * C<sub>s,collective</sub>, otherwise the velocity is set to be at least MOMPAR(,,1) * C<sub>s,a</sub>, the thermal velocity of that species. BCMOM = 3 was not adapted for WG. Replace with drift-compatible BCMOM = 13.
-						 4 : prescribe the value of the velocity, weakly a mixed boundary condition, MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup> and MOMPAR(,,2) specifies the 'strength' of the boundary condition. Not yet available for WG.
+						 4 : prescribe the value of the velocity, weakly a mixed boundary condition, MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup> and MOMPAR(,,2) specifies the 'strength' of the boundary condition.
 						 5 : prescribe the parallel momentum flux per unit area, MOMPAR(,,1) specifies the parallel momentum flux density in N.m<sup>-2</sup>
 						 6 : prescribe the total parallel momentum flux for a constant parallel velocity [not yet available]
 						 7 : prescribe the given profile of parallel velocity from the bv_ua.dat file (requires b2mndr_boundary_sources.eq.1)
@@ -6770,7 +6770,7 @@
 						 1 : prescribe the value of the electron temperature, ENEPAR(,1) specifies the temperature in eV
 						 2 : prescribe the gradient of the electron temperature, ENEPAR(,1) specifies the temperature gradient in eV.m<sup>-1</sup>
 						 3 : sheath conditions, electron energy transmission, ENEPAR(,1) specifies an additional contribution to the energy transmission coefficient in addition to that of the potential difference [the sound speed used depends on settings of MOMPAR(,ISMAIN,2)]. BCENE = 3 not adapted for WG. Replace with drift-compatible BCENE = 15.
-						 4 : prescribe the value of the electron temperature, weakly a mixed boundary condition, ENEPAR(,1) specifies the temperature in eV and ENEPAR(,2) specifies the 'strength' of the boundary condition. Not yet available for WG.
+						 4 : prescribe the value of the electron temperature, weakly a mixed boundary condition, ENEPAR(,1) specifies the temperature in eV and ENEPAR(,2) specifies the 'strength' of the boundary condition.
 						 5 : prescribe the electron energy flux per unit area, ENEPAR(,1) specifies the energy flux density in W.m<sup>-2</sup>. Not yet available for WG.
 						 6 : prescribe the total electron energy flux for a constant electron temperature, ENEPAR(,1) specifies the energy flux in W (no longer supported, use types [16] or [17] instead)
 						 7 : prescribe the electron temperature profile from the bv_te.dat file (requires b2mndr_boundary_sources.eq.1)
@@ -6806,7 +6806,7 @@
 						 1 : prescribe the value of the ion temperature, ENIPAR(,1) specifies the temperature in eV
 						 2 : prescribe the gradient of the ion temperature, ENIPAR(,1) specifies the temperature gradient in eV.m<sup>-1</sup>
 						 3 : sheath conditions, ion energy transmission, ENIPAR(,1) specifies the contribution to the energy transmission coefficient [the sound speed used depends on settings of MOMPAR(,ISMAIN,2)]. BCENI = 3 not adapted for WG. Replace with drift-compatible BCENI = 15.
-						 4 : prescribe the value of the ion temperature, weakly a mixed boundary condition, ENIPAR(,1) specifies the temperature in eV and ENIPAR(,2) specifies the 'strength' of the boundary condition. Not yet available for WG.
+						 4 : prescribe the value of the ion temperature, weakly a mixed boundary condition, ENIPAR(,1) specifies the temperature in eV and ENIPAR(,2) specifies the 'strength' of the boundary condition.
 						 5 : prescribe the ion energy flux per unit area, ENIPAR(,1) specifies the energy flux density in W.m<sup>-2</sup>. Not yet available for WG.
 						 6 : prescribe the total ion energy flux for a constant ion temperature, ENIPAR(,1) specifies the energy flux in W (no longer supported, use types [16] or [17] instead)
 						 7 : prescribe the ion temperature profile from the bv_ti.dat file (requires b2mndr_boundary_sources.eq.1)
@@ -6845,7 +6845,7 @@
 						 2 : prescribe the gradient of the potential, POTPAR(,1) specifies the potential gradient in V.m<sup>-1</sup>
 						 3 : sheath conditions,
 							POTPAR(,2) used for biasing [see code for details]. BCPOT = 3 not adapted for WG. Replace with drift-compatible BCPOT = 11.
-						 4 : prescribe the value of the potential weakly a mixed boundary condition, POTPAR(,1) specifies the potential in V and POTPAR(,2) specifies the 'strength' of the boundary condition. Not yet available for WG.
+						 4 : prescribe the value of the potential weakly a mixed boundary condition, POTPAR(,1) specifies the potential in V and POTPAR(,2) specifies the 'strength' of the boundary condition.
 						 5 : prescribe the current flux density per unit area, POTPAR(,1) specifies the electric current flux density in A.m<sup>-2</sup>. Not yet available for WG.
 						 6 : prescribe the total current flux density for a constant potential [not yet available]
 						 7 : prescribe the given profile of potential from the bv_po.dat file (requires b2mndr_boundary_sources.eq.1)
