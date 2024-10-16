@@ -231,7 +231,7 @@ cc while the second contribution corresponds to T dn/dt
         sr%she = sr%she+sr%shedt
         sr%she(:,0)=sr%she(:,0)-1.5_R8*(dv%ne-psnl%ne)*
      &                                  psnl%te/dtim*geo%cvVol
-        if (switch%tn_style.eq.0) then     ! default, combined ion-neutral eneregy equation
+        if (switch%tn_style.eq.0) then     ! default, combined ion-neutral energy equation
           sr%shi = sr%shi+sr%shidt
           sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
      &                                  psnl%ti/dtim*geo%cvVol

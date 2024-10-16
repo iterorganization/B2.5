@@ -392,7 +392,7 @@ endif
 PROG_GE = b2pl.exe
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe
 PROG_MN = b2mn.exe b2mnastra.exe
-PROG_AM = b2ar.exe
+PROG_AM = b2ab.exe b2ar.exe
 PROG_XD = b2xd.exe
 PROG_OE = b2ag.exe b2ai.exe b2fu.exe b2ts.exe b2uf.exe b2us.exe b2ye.exe b2yt.exe b2ymb.exe b2yrp.exe b2ydm.exe b2plasmastate_inspect.exe calc_atomic_data.exe
 PROG_CO = b2co.exe
@@ -450,6 +450,7 @@ MNDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MND}}
 MNBEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MNB}}
 OPTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OPT}}
 MNHEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MNH}}
+
 CONTEXTAD = ${OBJDIR}/adContext.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
@@ -501,7 +502,7 @@ MAIN: VERSION ${MNEXE}
 
 ifdef USE_EIRENE
 VPATH+=${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS-ITER
-MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90 
+MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
 MODLISTF+=${SRCEIR}/modules/*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f
 MODLISTF90+=${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
 MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a ${EIRDIR}/ioflush.o

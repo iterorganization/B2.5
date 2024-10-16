@@ -276,7 +276,7 @@ SUBROUTINE B2NPHT_B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg, &
     sr%she(:, 0) = sr%she(:, 0) - 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*&
 &     geo%cvvol
     IF (switch%tn_style .EQ. 0) THEN
-! default, combined ion-neutral eneregy equation
+! default, combined ion-neutral energy equation
       sr%shi = sr%shi + sr%shidt
       sr%shi(:, 0) = sr%shi(:, 0) - 1.5_R8*(dv%ni(:, 0)-psnl%ni(:, 0))*&
 &       psnl%ti/dtim*geo%cvvol
@@ -1113,7 +1113,7 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
     sr%she(:, 0) = sr%she(:, 0) - 1.5_R8*(dv%ne-psnl%ne)*psnl%te/dtim*&
 &     geo%cvvol
     IF (switch%tn_style .EQ. 0) THEN
-! default, combined ion-neutral eneregy equation
+! default, combined ion-neutral energy equation
       sr%shi = sr%shi + sr%shidt
       sr%shi(:, 0) = sr%shi(:, 0) - 1.5_R8*(dv%ni(:, 0)-psnl%ni(:, 0))*&
 &       psnl%ti/dtim*geo%cvvol
