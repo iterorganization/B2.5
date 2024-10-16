@@ -163,6 +163,7 @@ c ECH model
       real (kind=R8) :: ech_Rdep
       real (kind=R8) :: ech_Zdep
       real (kind=R8) :: ech_RFfreq
+      real (kind=R8) :: ech_gaussian_width
 
 c iout switches
       integer :: iout_b2wdat
@@ -518,6 +519,8 @@ c b2srst
 c b2tfnb
       integer :: b2tfnb_no_hybr
       real (kind=R8) :: b2tfnb_flux_limit_min_ti
+      real (kind=R8) :: b2tfnb_facdna_start
+      real (kind=R8) :: b2tfnb_facvla_start
 
 c b2srsm
       integer :: b2srsm_enable
@@ -1004,12 +1007,13 @@ c ECH model
       s % ech_out = 0
       s % ech_harmonics = 0
       s % ech_coupling = 0
-      s % ech_gaussian_symmetry = 1
+      s % ech_gaussian_symmetry = 0
       s % ech_power = 0.0_R8
       s % ech_absfract = 0.0_R8
       s % ech_Rdep = 0.0_R8
       s % ech_Zdep = 0.0_R8
       s % ech_RFfreq = 0.0_R8
+      s % ech_gaussian_width = 0.0_R8
 
 c Bohm-like transport model
       s % transport_bohm = 0
@@ -1113,6 +1117,8 @@ c b2sihs_
 c b2tfnb
       s % b2tfnb_no_hybr = 0
       s % b2tfnb_flux_limit_min_ti = 0.0_R8
+      s % b2tfnb_facdna_start = 1.0_R8
+      s % b2tfnb_facvla_start = 1.0_R8
 
 c b2srsm
       s % b2srsm_enable = 0
@@ -1346,6 +1352,7 @@ c ECH model
       call ipgetr ('b2sral_ECH_absorption_frac', s % ech_absfract)
       call ipgetr ('b2sral_ECH_Zdep', s % ech_Zdep)
       call ipgetr ('b2sral_ECH_RFfrequency', s % ech_RFfreq)
+      call ipgetr ('b2sral_ECH_gauss_width', s % ech_gaussian_width)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
@@ -1733,6 +1740,8 @@ c b2tfnb
      &  s%b2tfnb_flux_limit_min_ti)
       s%b2tfnb_flux_limit_min_ti=s%b2tfnb_flux_limit_min_ti*ev
       call ipgeti ('b2tfnb_no_hybr', s%b2tfnb_no_hybr)
+      call ipgetr ('b2tfnb_facdna_start', s%b2tfnb_facdna_start)
+      call ipgetr ('b2tfnb_facvla_start', s%b2tfnb_facvla_start)
 
 c b2srsm
       call ipgeti ('b2srsm_enable', s%b2srsm_enable)
@@ -2229,11 +2238,13 @@ c k-enstrophy model
 
 c ECH model
       call xertst (0.le.s%use_ech.le.1,
-     &              'b2sral_use_ECH value not coded')
+     1              'b2sral_use_ECH value not coded')
       call xertst (0.le.s%ech_coupling.le.8,
-     &              'b2sral_ECH_coupling value not coded')
+     1              'b2sral_ECH_coupling value not coded')
       call xertst (0.0_R8.lt.s%ech_RFfreq.or.s%use_ech.eq.0,
      1              'b2sral_ECH_RFfrequency must be .gt. 0.0')
+      call xertst (0.0.lt.s%ech_gaussian_width.or.s%use_ech.eq.0,
+     1              'b2sral_ECH_gauss_width must be .gt. 0.0')
       call xertst (1.lt.s%ech_harmonics.or.s%use_ech.eq.0,
      1              'b2sral_ECH_harmonics must be .ge. 1')
       call xertst (0.0_R8.lt.s%ech_power.or.s%use_ech.eq.0,
@@ -2484,6 +2495,12 @@ c k-enstrophy model
 
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
+      if (s%b2tfnb_facdna_start.le.0.0_R8) then
+        call xerrab('b2tfnb_facdna_start must be .gt. 0.0')
+      endif
+      if (s%b2tfnb_facvla_start.le.0.0_R8) then
+        call xerrab('b2tfnb_facvla_start must be .gt. 0.0')
+      endif
 
       if(s%b2mndt_style.eq.2 .and. s%b2mndt_rxf.lt.1.0_R8) then
         call xerrab('time-dependent mode requires rxf = 1.0')
