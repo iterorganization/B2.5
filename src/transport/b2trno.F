@@ -87,12 +87,10 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, is, mode, k, cvs(2)
+      integer iFc, is, mode, k, cvs(2)
       character(3) chns                                               !srv 17.06.08
       integer, save :: flux_limit_style = 2                           !srv 07.12.15
-      integer, save :: user_transport = 0                             !mb  11.10.17  
-      real (kind=R8), save :: fch_stochastic = 0.0_R8,
-     &                        alpha_stoch = 1.0e0_R8                  !srv 17.12.13
+      integer, save :: set_chcb_0 = 0
       real (kind=R8) ::
      &  csig_stoch(nFc),
 #ifdef WG_TODO
@@ -100,7 +98,7 @@
 #endif
      &  chce_stoch(nFc)                                               !srv 20.09.17
       real (kind=R8) ::
-     *  wrk(nFc), wrk1(nFc,2), wrkv(nVx), wrk_afn(nCv),
+     *  wrk(nFc), wrk1(nFc,2), wrkc(nCv),wrk0,
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),
      3  flv(nFc,0:1,0:ns-1),
@@ -124,23 +122,8 @@
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
-      if (ncall.eq.0) then
-        call ipgeti ('b2tqna_user_transport', user_transport)        !mb  11.10.17
-        call ipgetr ('b2trno_pol_anom_scale', pol_anom_scale)
-        call ipgeti ('b2tral_mode', mode)
-        call ipgeti ('b2trno_flux_limit_to_dpa', flux_limit_to_dpa)
-        call ipgeti ('b2trno_csig_an_style', csig_an_style)          !srv 15.06.08
-        call ipgeti ('b2trno_iout', iout)                            !srv 17.06.08
-        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 19.05.10 {
-        call ipgeti ('b2npco_iout', iout_b2npco)
-        call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgeti ('b2nph9_iout', iout_b2nph9)
-        call ipgeti ('b2npht_iout', iout_b2npht)
-        call ipgeti ('b2npp7_iout', iout_b2npp7)
-        call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 19.05.10 }
-        call ipgetr ('b2tfhe_stochastic', fch_stochastic)            !lk 31.01.08
-        call ipgetr ('b2trno_con_e_stochastic', alpha_stoch)         !lk 31.01.08
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
+      if (ncall_b2trno.eq.0) then
+        call ipgeti('b2trno_set_chcb_0', set_chcb_0)
       end if
 *   ..extensive tests on first few calls
       if (ncall_b2trno.lt.3) then
@@ -312,6 +295,44 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
      &  geo%fcS, co%hci_ExB, co%chci_ExB(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hci_ExB, co%chci_ExB(1:nFc,1))
+
+      if (set_chcb_0.eq.1) then
+        do k=1, mpg%nCg
+          iFc = mpg%fcs_wall(k)
+          wrk0 = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
+          if ((wrk0 >= switch%Qalfmin)) then
+            co%chcb(iFc,1,:) = 0.0_R8
+            co%calf(iFc,1) = 0.0_R8
+            co%csig(iFc,1) = 0.0_R8
+            co%chce(iFc,1) = 0.0_R8
+            co%cdna(iFc,1,:) = 0.0_R8
+          endif
+        enddo
+        do iFc=1,mpg%nFc
+          cvs = mpg%fcCv(iFc,1:2)
+          if (mpg%islongbound(cvs(1)).and.
+     &          mpg%islongbound(cvs(2))) then
+            co%chcb(iFc,1,:) = 0.0_R8
+            co%chce(iFc,1) = 0.0_R8
+            do is = 0, ns-1
+              if (co%cdna(iFc,0,is)*geo%fcQalf(iFc,0) + 
+     .            co%cdpa(iFc,0,is)*geo%fcQalf(iFc,0) +
+     .            co%cdpa(iFc,1,is)*geo%fcQalf(iFc,1) .gt. 0.0_R8) then
+                co%cdna(iFc,1,is) = 0.0_R8
+              else
+                co%cdna(iFc,1,is) = co%cdna(iFc,1,is)/inctran
+              endif
+            enddo
+            if (co%csig(iFc,0)*geo%fcQalf(iFc,0) .gt. 0.0_R8) then
+              co%calf(iFc,1) = 0.0_R8
+              co%csig(iFc,1) = 0.0_R8
+            else
+              co%calf(iFc,1) = co%calf(iFc,1)/inctran
+              co%csig(iFc,1) = co%csig(iFc,1)/inctran           
+            endif
+          endif
+        enddo
+      endif
 
 *   ..set csigx = 0 and calfx = 0
       if (switch%csig_an_style.eq.1) then
