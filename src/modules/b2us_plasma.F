@@ -2763,6 +2763,9 @@ cwdk move to dv
       call cfrure (ninp, nCv,      st % co % dna_ExB, 'dna_ExB')
       call cfrure (ninp, nCv,      st % co % hce_ExB, 'hce_ExB')
       call cfrure (ninp, nCv,      st % co % hci_ExB, 'hci_ExB')
+      call cfrure (ninp, nCv*2*ns, st % co % dna_bohm,'dna_bohm')
+      call cfrure (ninp, nCv*2*ns, st % co % vla_bohm,'vla_bohm')
+      call cfrure (ninp, nCv*2*ns, st % co % vsa_bohm,'vsa_bohm')
 
 * ..return
       call subend ()
@@ -2936,6 +2939,9 @@ cwdk move to dv
       call cfwure (nout, nCv,      st % co % dna_ExB, 'dna_ExB')
       call cfwure (nout, nCv,      st % co % hce_ExB, 'hce_ExB')
       call cfwure (nout, nCv,      st % co % hci_ExB, 'hci_ExB')
+      call cfwure (nout, nCv*2*ns, st % co % dna_bohm,'dna_bohm')
+      call cfwure (nout, nCv*2*ns, st % co % vla_bohm,'vla_bohm')
+      call cfwure (nout, nCv*2*ns, st % co % vsa_bohm,'vsa_bohm')
 
 * ..return
       call subend ()
