@@ -99,8 +99,10 @@
         integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
         integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
 
-        logical, allocatable :: islongbound(:)         ! (nCv) indicates whether the control volume is connected to boundary cell
-
+        logical, allocatable :: islongbound(:)         ! (nCv) indicates whether the contol volume is connected to boundary cell
+        integer, allocatable :: fcs_wall(:)         ! (nCv) indicates whether the contol volume is connected to boundary cell
+        integer, allocatable :: fcs_wall_ind(:,:)         ! (nCv) indicates whether the contol volume is connected to boundary cell
+        integer :: nFcs_wall
         end type mapping
 
       contains
@@ -349,7 +351,8 @@
       deallocate (m%cvLbl)
 
       if (allocated(m%islongbound)) deallocate(m%islongbound)
-
+      if (allocated(m%fcs_wall)) deallocate(m%fcs_wall)
+      if (allocated(m%fcs_wall_ind)) deallocate(m%fcs_wall_ind)
       return
       end subroutine dealloc_mapping
 
@@ -615,7 +618,8 @@
      *                        old_face_list(:), new_face_list(:)
       integer :: fcsb(maxval(m%fcLbl),m%nCi), 
      *  fcsbcounter(maxval(m%fcLbl)),cvsb(maxval(m%fcLbl),m%nCi)
-      logical :: duplicate, left_match_found, right_match_found
+      logical :: duplicate, left_match_found, right_match_found,
+     * is_found
       external ipgeti, xerrab
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
@@ -1061,6 +1065,63 @@ cwdk  can be derived directly from data in that file
       do iCv=1,m%nCv
         if (m%islongbound(iCv))
      &    write (*,*) iCv
+      enddo
+
+      allocate(m%fcs_wall(m%nCg))
+
+      k = 1
+      do l=m%nCi+1,m%nCv
+        m%fcs_wall(k) = m%cvFc(m%cvFcP(l,1))
+        k = k+1
+      enddo
+
+      m%nFcs_wall = 1
+      do k=1,m%nCg-1
+        is_found = .false.
+        do l=k+1,m%nCg
+          if (m%fcVx(m%fcs_wall(k),1) == m%fcVx(m%fcs_wall(l),1) .or.
+     &        m%fcVx(m%fcs_wall(k),1) == m%fcVx(m%fcs_wall(l),2) .or.
+     &        m%fcVx(m%fcs_wall(k),2) == m%fcVx(m%fcs_wall(l),1) .or.
+     &        m%fcVx(m%fcs_wall(k),2) == m%fcVx(m%fcs_wall(l),2)) then
+            is_found = .true.
+            inew = m%fcs_wall(k+1)
+            m%fcs_wall(k+1) = m%fcs_wall(l)
+            m%fcs_wall(l) = inew
+            if (maxval(m%cvFt(m%fcCv(m%fcs_wall(k+1),1:2))) .ne.
+     &          maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
+                  write (*,*), "changed ft between", m%fcs_wall(k),
+     &              m%fcs_wall(k+1)
+                  m%nFcs_wall = m%nFcs_wall+1
+            endif
+            exit
+          endif
+        enddo
+        if (.not.is_found) then
+          write (*,*), "Can't find pair to", m%fcs_wall(k), 
+     &      "Assume end of group"
+          m%nFcs_wall = m%nFcs_wall+1
+        endif
+      enddo
+      allocate(m%fcs_wall_ind(m%nFcs_wall,2))
+      j = 1
+      l = 1
+      do k=1,m%nCg
+        if (maxval(m%cvFt(m%fcCv(m%fcs_wall(k+1),1:2))) .ne.
+     &        maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
+              write (*,*), "changed ft between", m%fcs_wall(k),
+     &          m%fcs_wall(k+1)
+          m%fcs_wall_ind(l,1) = j
+          m%fcs_wall_ind(l,2) = k-j+1
+          j = k+1
+          l = l+1
+        endif
+      enddo
+      write(*,*) "Nfcs wall",m%nFcs_wall
+      write(*,*) "wall fcs:"
+      do j=1,m%nFcs_wall
+        write(*,*) m%fcs_wall_ind(j,1),sum(m%fcs_wall_ind(j,1:2))-1
+        write(*,*) m%fcs_wall(m%fcs_wall_ind(j,1):
+     &      sum(m%fcs_wall_ind(j,1:2))-1)
       enddo
 
       write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc
