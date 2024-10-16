@@ -161,7 +161,8 @@ c***  Standard set-up:
       integer i
       logical done, ifail, found
       integer, save :: use_eirene, neutrals_namelist
-      integer :: omp_ci(m%nCi), imp_ci(m%nCi), nomp_ci, nimp_ci
+      integer :: omp_ci(m%nCi), imp_ci(m%nCi), omp_fc(m%nFc),
+     &           imp_fc(m%nFc), nomp_ci, nimp_ci, nomp_fc, nimp_fc
       integer j, k, is, im
       logical old_style
       logical, save :: hydrogen, helium, neon
@@ -198,8 +199,8 @@ c***  Standard set-up:
       nomp = 0
       omp = 0 !Need to add check for monotonicity in list
 ! Define OMP list by finding CVs which are intersected by the rzomp segment
-      call cv_intersections (geo, m, rzomp, omp, omp_ci, nomp,
-     & nomp_ci, nromp, 1, ifail)
+      call cv_intersections (geo, m, rzomp, omp, omp_ci, omp_fc, nomp,
+     & nomp_ci, nomp_fc, nromp, 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
 ! Here we need to guarantee ordering of CVs. With classical grids the conversion
 ! is done such that CVs are ordered from left to right and bottom to top wrt
@@ -359,8 +360,8 @@ c*** Set default values according to current species list
 ! Same logic as OMP list, find CVs intersected by rzimp segment
       nimp = 0
       imp = 0
-      call cv_intersections (geo, m, rzimp, imp, imp_ci, nimp,
-     & nimp_ci, nromp, 1, ifail)
+      call cv_intersections (geo, m, rzimp, imp, imp_ci, imp_fc, nimp,
+     & nimp_ci, nimp_fc, nromp, 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
       do ic=2,nimp
         if (geo%cvX(imp(ic)).lt.geo%cvX(imp(ic-1)))
