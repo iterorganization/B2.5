@@ -307,6 +307,23 @@
 					Obsolete. Should use b2agdr_redef_pbs instead.
 				</description>
 			</switch>
+      <switch>
+				<name>b2stbc_Qalfmin</name>
+				<default>1e-3</default>
+				<type>real</type>
+				<description>
+					If abs(cos(alpha)*bx).ge.b2stbc_Qalfmin beta angle is assigned to zero during writing of b2fgmtry.
+          If abs(cos(alpha)*bx).lt.b2stbc_Qalfmin boundary faces treated like field-alinged faces in BCMOM=13, BCCON=14, BCENE=15 (style=1), BCENI=15 (style=0) and BCPOT=11. Leakage coffients (if it is needed) equal to b2stbc_Qalfmax key.
+				</description>
+			</switch>
+      <switch>
+				<name>b2stbc_Qalfmax</name>
+				<default>1e-3</default>
+				<type>real</type>
+				<description>
+					If abs(cos(alpha)*bx).ge.b2stbc_Qalfmin .and. abs(cos(alpha)*bx).lt.b2stbc_Qalfmax fcPbs equals to b2stbc_Qalfmax*fcS for boundary faces during writing of b2fgmtry.
+				</description>
+			</switch>
 			<switch>
 				<name>b2agfs_periodic_bc</name>
 				<default>0</default>
