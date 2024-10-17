@@ -163,6 +163,8 @@ c Zhdanov closure switches
       real (kind=R8) :: b2tfnb_alpha
       real (kind=R8) :: b2tfnb_gamma
       real (kind=R8) :: fch_stochastic
+      real (kind=R8) :: Qalfmin
+      real (kind=R8) :: Qalfmax
       real (kind=R8) :: delpo
       real (kind=R8) :: Kn_b1
       real (kind=R8) :: Kn_b2
@@ -846,9 +848,11 @@ c Zhdanov closure switches
       s % b2tfnb_alpha = 0.0_R8
       s % b2tfnb_gamma = 2.0_R8
       s % fch_stochastic = 0.0_R8
-      s % delpo = 3.1_R8
-      s % Kn_b1 = 0.01_R8
-      s % Kn_b2 = 0.10_R8
+      s % Qalfmin        = 1.0e-3_R8
+      s % Qalfmax        = 1.0e-3_R8
+      s % delpo          = 3.1_R8
+      s % Kn_b1         = 0.01_R8
+      s % Kn_b2         = 0.10_R8
       s % pol_anom_scale = 1.0_R8
       s % auto_spatial_hyb_Kn_1 = 0.0_R8
       s % auto_spatial_hyb_Kn_2 = 100.0_R8
@@ -1549,7 +1553,9 @@ c Zhdanov closure
       call ipgetr ('b2tlc0_gamma', s % b2tlc0_gamma)
       call ipgetr ('b2tfnb_alpha', s % b2tfnb_alpha)
       call ipgetr ('b2tfnb_gamma', s % b2tfnb_gamma)
-      call ipgetr ('b2tfhe_stochastic', s % fch_stochastic)           !lk 31.01.08
+      call ipgetr ('b2tfhe_stochastic', s%fch_stochastic)           !lk 31.01.08
+      call ipgetr ('b2stbc_Qalfmin', s % Qalfmin)
+      call ipgetr ('b2stbc_Qalfmax', s % Qalfmax)
       call ipgetr ('b2stbc_delpo', s % delpo)
       call ipgetr ('b2stbr_Kn_b1', s % Kn_b1)
       call ipgetr ('b2stbr_Kn_b2', s % Kn_b2)
