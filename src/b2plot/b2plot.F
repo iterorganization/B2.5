@@ -77,6 +77,7 @@ c 2002-09-11: logic revised
       use b2mod_interp
       use b2mod_subsys
       use b2mod_dimensions
+      use b2mod_chord_shift
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -85,9 +86,6 @@ c 2002-09-11: logic revised
 c
 c  version : 27.07.96 20:37
 c
-      logical ratio
-      common /t_ratio/ ratio
-
       real (kind=R8) ::
      *   pr(-1:nxd,-1:nyd), ro(-1:nxd,-1:nyd,0:nsd_local-1),
      3   energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
@@ -165,7 +163,7 @@ c
       real (kind=R8) ::
      *   balance(0:DEF_NATM-1)
       real (kind=R8) ::
-     *   mass,vel,vth,press
+     *   mass, vel, vth, press
       integer ispecies(0:nsd_local-1), ismain, ismain0,
      *   neutrals_namelist, sput_frac_flag, use_eirene
 
@@ -190,10 +188,6 @@ c
       character*256 description
       character*24 hlp_frm
       CHARACTER FILNAM*8, H123*4, REAC*9, CRC*3
-c
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 c
       logical ex, cflag, found, eirc_done
       logical open_file, streql, isaletter
@@ -363,6 +357,7 @@ c
 #endif
       lucdf=0
       eirc_done=.false.
+      call init_chord_shift
 c
       ns=max(nsd_local,1)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',ns,'i3)'

@@ -1,7 +1,8 @@
 
       subroutine lined_d(xa,ya,xb,yb)
       use b2mod_types
-#include <graphics_vars.h>
+      use b2mod_graphics
+      implicit none
       real (kind=R8) :: xa,xb,ya,yb
       real (kind=R4) :: xas,xbs,yas,ybs
 
@@ -48,7 +49,8 @@ c      write(*,*) 'lined: ',xas,yas,xbs,ybs
 
       subroutine grpts_d(xa,ya,is)
       use b2mod_types
-#include <graphics_vars.h>
+      use b2mod_graphics
+      implicit none
       real (kind=R8) :: xa,ya
       real (kind=R4) :: xas,yas
       integer is

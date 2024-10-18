@@ -4,8 +4,8 @@ c  version : 23.08.97 11:56
 c
 c======================================================================
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       logical, intent(in) :: onflag
       integer, intent(in) :: inum, ilog
       real (kind=R8), intent(in) :: wmind, wmaxd
@@ -27,8 +27,8 @@ c     if(onflag) call ank_interface(inum)
 c======================================================================
       subroutine set_wall_on(wmind,wmaxd,ilog)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer, intent(in) :: ilog
       real (kind=R8), intent(in) :: wmind, wmaxd
       wmin=real(wmind,R4)
@@ -40,8 +40,8 @@ c======================================================================
 c======================================================================
       subroutine set_wlinlog(ilog)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer, intent(in) :: ilog
       wlinlog=ilog
       return
@@ -49,8 +49,8 @@ c======================================================================
 c======================================================================
       subroutine walloff
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       wall=.false.
       return
       end subroutine walloff

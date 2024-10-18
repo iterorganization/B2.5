@@ -1,7 +1,9 @@
       module b2mod_rdload
       use b2mod_types
       use b2mod_dimensions
-
+      implicit none
+c  VERSION : 31.08.97 11:43
+c
 c=====================================================
 c*** The common blocks for rdload code.
 c***
