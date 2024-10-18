@@ -253,7 +253,6 @@ c
      *   x,y,z,r
 
       integer ir,iz
-
       integer ipos,jpos
 
 #ifdef EASY

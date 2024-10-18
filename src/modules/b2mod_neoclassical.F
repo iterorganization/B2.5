@@ -3,6 +3,7 @@
       use b2mod_b2cmpa
       use b2mod_ranges
       use b2mod_version
+      implicit none
 
 c     max. number of ionisation stages
       integer, save :: nzdecl
@@ -22,9 +23,10 @@ c     max. number of ionisation stages
      *  dd(:,:,:), vvn(:,:,:),
      *  chi(:,:,:), vwt(:,:,:)
 
-      real (kind=R8) ::
+      real (kind=R8), save ::
      *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,
-     &   fm(0:nmaxgr-1), r2i, cosbl(0:nmaxgr-1),
+     &   r2i
+      real (kind=R8), save :: fm(0:nmaxgr-1), cosbl(0:nmaxgr-1),
      &   cosb2(0:nmaxgr-1), sinbl(0:nmaxgr-1), sinb2(0:nmaxgr-1)
 
       contains

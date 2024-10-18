@@ -77,7 +77,7 @@
       parameter (wklng=10)
 
 #ifndef PSR
-      character*16, allocatable, save ::
+      character*19, allocatable, save ::
      *  textpl(:),
      *  textplel(:),
      *  textplel2(:,:),
@@ -94,7 +94,7 @@
      *  texttrack(:),
      *  texttargsp(:)    
 #else
-      character*16, save ::
+      character*19, save ::
      *  textpl(0:DEF_NPLS-1),
      *  textplel(0:DEF_NPLS),
      *  textplel2(0:DEF_NPLS,0:DEF_NPLS),
