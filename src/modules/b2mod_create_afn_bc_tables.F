@@ -222,6 +222,9 @@ c*******************************************************************************
       use b2mod_types
       use b2mod_constants
       use b2mod_subsys
+#ifdef LEGACYCOMP
+      use b2mod_math
+#endif
       implicit none
 ** local variables
       real (kind=R8) :: v(nv), dtheta, theta(ntheta), Ei,
@@ -230,6 +233,9 @@ c*******************************************************************************
      &                  voavg(3), ER(ntp), ERavg, vout(3),
      &                  finish_ratio
       integer :: i, j, k, ii
+#ifndef LEGACYCOMP
+      intrinsic norm2
+#endif
 
 cc description of variables
 
@@ -326,7 +332,11 @@ cc Interpolate the reflection data from TRIM to the format we need, i.e. as a fu
           voavg(3) = SUM(vo(:,3))/SIZE(vo(:,3));
           !! energy of reflected particles
           do k = 1,ntp
+#ifndef LEGACYCOMP
             ER(k) = 0.5*mass*(NORM2(vo(k,:)))**2
+#else
+            ER(k) = 0.5*mass*(NORM2(3,vo(k,:)))**2
+#endif
           enddo
           !! take average
           ERavg = SUM(ER)/SIZE(ER)
@@ -380,7 +390,6 @@ c   RN_EiThetai_trans: transpose of RN_EiThetai
 c   dtheta: distance between discretization points of theta
 c   i,j: loop variables
 
-
 ** documentation
 cc This function is used to interpolate the reflection coefficient from the
 cc TRIM code database to the discrete velocities and polar angles where the
@@ -406,8 +415,6 @@ cc Energies and angles from the TRIM code database
       allocate(Ei_mesh(nA+1,nE))
       allocate(Thetai_mesh(nA+1,nE))
       call meshgrid(nE,nA+1,E,A,Ei_mesh,Thetai_mesh)
-
-
 
 cc Incident energies and polar angles to where the data has to be
 cc interpolated
@@ -473,13 +480,15 @@ cc deallocate
 * ..return
       call subend ()
       return
-
       end subroutine InterpolateRN
 
       subroutine CalcVelTRIM(mass,n,t1,t2,v,vout)
       use b2mod_types
       use b2mod_constants
       use b2mod_subsys
+#ifdef LEGACYCOMP
+      use b2mod_math
+#endif
       implicit none
 
 ** input
@@ -500,6 +509,9 @@ cc deallocate
      &                  Phit(25,5), Phitt(5,5), Phittt(5),
      &                  Eo, To, Phio, Es, Ts, Phis, vo,
      &                  vn(3), vt1(3), vt2(3), P(31,5)
+#ifndef LEGACYCOMP
+      intrinsic norm2
+#endif
 
 cc description of variables
 
@@ -582,9 +594,17 @@ cc Allocate
       enddo
 cc Calculate angle and energy of incidence
       dotvn = dot_product(v,n)
+#ifndef LEGACYCOMP
       theta = acos(-dotvn/NORM2(v))
-      theta = theta/pi*180
+#else
+      theta = acos(-dotvn/NORM2(3,v))
+#endif
+      theta = theta/pi*180.0_R8
+#ifndef LEACYCOMP
       Ei = 0.5*mass*NORM2(v)**2/eV
+#else
+      Ei = 0.5*mass*NORM2(3,v)**2/eV
+#endif
       dotvt2 = dot_product(v,t2)
       dotvt1 = dot_product(v,t1)
       phi = atan(dotvt2/dotvt1)
@@ -594,10 +614,10 @@ cc Calculate angle and energy of incidence
 cc Determine weight coefficients and reflection coefficients and parameters
 cc P contains reflection parameters
       if (Ei.lt.E(1)) then
-        jE = 2;
-        iE = 1;
-        wE1 = (Ei-E(jE))/(E(jE)-E(iE))+1;
-        wE2 = -(Ei-E(jE))/(E(jE)-E(iE));
+        jE = 2
+        iE = 1
+        wE1 = (Ei-E(jE))/(E(jE)-E(iE))+1
+        wE2 = -(Ei-E(jE))/(E(jE)-E(iE))
         if (theta.gt.A(nA)) then
           iA = SIZE(A)
           wA1 = (theta-A(iA))/(A(iA)-A(iA-1))+1
@@ -606,14 +626,14 @@ cc P contains reflection parameters
           index12 = ((jE-1)*nA+iA-2)*nB
           index21 = ((iE-1)*nA+iA-1)*nB
           index22 = ((iE-1)*nA+iA-2)*nB
-          P11 = TRIMdata(index11+2:index11+32,1:5);
-          P12 = TRIMdata(index12+2:index12+32,1:5);
-          P21 = TRIMdata(index21+2:index21+32,1:5);
-          P22 = TRIMdata(index22+2:index22+32,1:5);
+          P11 = TRIMdata(index11+2:index11+32,1:5)
+          P12 = TRIMdata(index12+2:index12+32,1:5)
+          P21 = TRIMdata(index21+2:index21+32,1:5)
+          P22 = TRIMdata(index22+2:index22+32,1:5)
         else
           call search(theta,nA,A,iA,jA)
-          wA1 = (theta-A(iA))/(A(jA)-A(iA));
-          wA2 = (A(jA)-theta)/(A(jA)-A(iA));
+          wA1 = (theta-A(iA))/(A(jA)-A(iA))
+          wA2 = (A(jA)-theta)/(A(jA)-A(iA))
           index11 = ((jE-1)*nA+jA-1)*nB
           index12 = ((jE-1)*nA+iA-1)*nB
           index21 = ((iE-1)*nA+jA-1)*nB
@@ -703,10 +723,10 @@ cc sample Eout, Thetaout and Phiout (s is samples, o is out, t is temp)
 cc note: TRIM-code contains the cosine of the angles, which is what will result here as well
 
 cc The energy of the reflected particle has to be larger than 0 eV
-      Et = max(Eomin,Et);
+      Et = max(Eomin,Et)
 
 cc The energy of the reflected particle has to be smaller than the incident energy
-      Et = min(Et,Ei);
+      Et = min(Et,Ei)
 
 cc Calculate weights for Eo
       if (Es.gt.Q(5)) then !! Maximum value of the reflected energy is the incident energy
@@ -826,7 +846,6 @@ cc deallocate
 * ..return
       call subend ()
       return
-
       end subroutine CalcVelTRIM
 
 
@@ -1014,8 +1033,6 @@ cc Scaling
       return
       end subroutine CalcPressureCoefficientsTRIM
 
-
-
 c**************************************************************************************
 c*********   Phase 2: Integrate response over incident distributions        ***********
 c**************************************************************************************
@@ -1040,7 +1057,6 @@ c   logTmax: log10 of Tmax
       call subini ('Discretize_M_T_Sh')
 cc create the discretization vectors Tv (temperature) and Mv (toroidal mach number) based on the minimum, maximum, and number of discretization points
 
-
 cc allocate arrays
       allocate(M(nM))
       allocate(T(nT))
@@ -1051,7 +1067,6 @@ cc discretize the toroidal Mach number
       do i = 1,nM
         M(i) = Mmin + dM/2 + (i-1)*dM
       enddo
-
 
 cc discretize the temperature
       logTmin = log10(Tmin)
@@ -1072,7 +1087,6 @@ cc discretize the sheath potential drop
 * ..return
       call subend ()
       return
-
       end subroutine Discretize_M_T_Sh
 
 
@@ -1115,7 +1129,6 @@ cc discretize theta
       do i = 1, ntheta
        theta(i) = dtheta/2 + (i - 1) * dtheta
       end do
-
 
 cc allocate arrays
       allocate(R1(nM,nT,nSh))
@@ -1162,7 +1175,6 @@ cc allocate arrays
 * ..return
       call subend ()
       return
-
       end subroutine CalcFluidReflCoefficients
 
       subroutine CalcReflectionCoefficientsFluidTRIM(
@@ -1233,7 +1245,6 @@ c calculated
 
       tref = Tin*eV
       vmin = sqrt(2*deltaP*tref/mass)
-
 
       if (vmin.le.vin(size(vin)-1)) then
         !Find the index of the first element in v that is greater than or equal to vmin
@@ -1467,10 +1478,7 @@ cc final integral
 * ..return
       call subend ()
       return
-
       end subroutine CalcReflectionCoefficientsFluidTRIM
-
-
 
 c**************************************************************************************
 c*********                        Helper functions                          ***********
@@ -1512,7 +1520,6 @@ cc using a recursive binary search
 * ..return
       call subend ()
       return
-
       end subroutine search
 
       subroutine inverseVector(vec_in,vec_out)
@@ -1533,7 +1540,6 @@ cc using a recursive binary search
 * ..return
       call subend ()
       return
-
       end subroutine inverseVector
 
 
@@ -1557,7 +1563,7 @@ cc and each column of yy is equal to y.
 
       call subini ('meshgrid')
 
-	! Generate the grid coordinates
+      ! Generate the grid coordinates
       do j = 1, nx
 	do i = 1, ny
           xx(i, j) = x(j)
@@ -1568,7 +1574,6 @@ cc and each column of yy is equal to y.
 * ..return
       call subend ()
       return
-
       end subroutine meshgrid
 
 
@@ -1629,7 +1634,6 @@ c   m11: contribution from 'bottom right' point
 
 c   i, j: loop variables over query points
 c   ii, jj: variables to find the x and y values surrounding a query point
-
 
       call subini ('interp2')
 
@@ -1720,11 +1724,9 @@ c   ii, jj: variables to find the x and y values surrounding a query point
         endif
       enddo
 
-
 * ..return
       call subend ()
       return
-
       end subroutine extrapolate_RN_minenergy
 
       subroutine extrapolate_Rpv_angle(nv,ntheta,Rpv, Thetai_v,
@@ -1767,7 +1769,6 @@ c    slope: slope between extrap_value1 and extrap_value2
 c    delta_theta: distance over which we need to extrapolate
 c    i, j: loop variables
 
-
       call subini ('extrapolate_Rpv_angle')
       ! Interpolate Rpv for Thetai_v > A(end)
       do i = 1, nv
@@ -1795,7 +1796,6 @@ c    i, j: loop variables
 * ..return
       call subend ()
       return
-
       end subroutine extrapolate_Rpv_angle
 
 
@@ -1863,11 +1863,9 @@ c    i, j: loop variables
         endif
       enddo
 
-
 * ..return
       call subend ()
       return
-
       end subroutine extrapolate_Rpv_minenergy
 
       subroutine extrapolate_Rpv_maxenergy(nv, ntheta, Rpv, Ei_v,
@@ -1917,7 +1915,6 @@ cc similar as subroutine extrapolate_Rpv_minenergy, but for maximum
 * ..return
       call subend ()
       return
-
       end subroutine extrapolate_Rpv_maxenergy
 
       function interp1(nx, x, y, xq) result(yq)
@@ -2010,9 +2007,7 @@ c replace NaN values by 0 (otherwise a single NaN value in x could cause SUM(x) 
 * ..return
       call subend ()
       return
-
       end subroutine remove_NaNs
-
 
 c**************************************************************************************
 c*************************   Read & write routines     ********************************
@@ -2099,7 +2094,6 @@ cc close the file
 * ..return
       call subend ()
       return
-
       end subroutine read_TRIM
 
 
@@ -2150,7 +2144,7 @@ cc open new file
       open (unit=nout,file=filename,iostat=io)
 #endif
 
-      version = 'VERSION00.000.000 Fortran'
+      version = 'VERSION'//default_version//' Fortran'
 
       call cfverw (nout, version)
       idum(1) = nM
@@ -2159,7 +2153,7 @@ cc open new file
       call cfwuin (nout, 3, idum, 'nm,nt,nshpottau')
 
       label = 'Coefficients for advanced fluid boundary conditions '//
-     &         'based on TRIM data'
+     &        'based on TRIM data'
       call cfwuch (nout, 120, label, 'label')
 
       call cfwure (nout, nM, M, 'M')
@@ -2186,11 +2180,9 @@ cc open new file
 cc close the file
       close (nout)
 
-
 * ..return
       call subend ()
       return
-
       end subroutine write_fluid_TRIM
 
       subroutine deallocate_all_TRIM()
