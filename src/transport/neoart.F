@@ -274,6 +274,3 @@ c       coeff and clear coeffc
 
       return
       end subroutine neoart
-
-
-

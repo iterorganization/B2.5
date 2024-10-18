@@ -23,6 +23,7 @@ c
       integer i,j,iyl,iyr,iy,is,isep,iCv,iCn,iFc,iVx,nlist
       integer iystart,iyend
       integer len_of_digits
+      intrinsic min,max
       external xertst, len_of_digits
 
       call subini ('fy')
