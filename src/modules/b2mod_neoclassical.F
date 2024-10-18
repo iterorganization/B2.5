@@ -1,6 +1,7 @@
       module b2mod_neoclassical
       use b2mod_types
       use b2mod_b2cmpa
+      use b2mod_ranges
       use b2mod_version
 
 c     max. number of ionisation stages
@@ -20,6 +21,11 @@ c     max. number of ionisation stages
       real (kind=R8), allocatable, save ::
      *  dd(:,:,:), vvn(:,:,:),
      *  chi(:,:,:), vwt(:,:,:)
+
+      real (kind=R8) ::
+     *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,
+     &   fm(0:nmaxgr-1), r2i, cosbl(0:nmaxgr-1),
+     &   cosb2(0:nmaxgr-1), sinbl(0:nmaxgr-1), sinb2(0:nmaxgr-1)
 
       contains
 

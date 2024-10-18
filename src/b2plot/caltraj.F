@@ -1,3 +1,7 @@
+#ifdef NO_NAG
+#define ranf g05caf
+#define ranset g05cbf
+#endif
 C     =======================================================================
 C     SUBROUTINES FOR B2PLOT COMMAND TRAJ
 C     =======================================================================
@@ -77,8 +81,6 @@ c     INPUT
 c     the traj common
       integer nplot                     !number of plots
       common /t_com/ nplot              !getting the values
-      logical ratio
-      common /t_ratio/ ratio
 
       real (kind=R8), allocatable ::
      1   warr(:,:)                      !the stack
@@ -901,9 +903,6 @@ c     see file b2plot.F, initialisation of values(...) )
       integer nplot
       common /t_com/ nplot
       data nplot /10/
-      logical ratio
-      common /t_ratio/ ratio
-      data ratio /.true./
       end block data
 c
       subroutine allocate_particles(warr,ipc,ips,p_r,p_z,nps,np)
@@ -1106,9 +1105,6 @@ c at this point we might still need to add either "nadd" or "ikilled" particles
       end subroutine allocate_particles
 c
 #ifdef NO_NAG
-#define ranf g05caf
-#define ranset g05cbf
-
       function ranf (dummy)                       !srv 17.12.07
       use b2mod_types
       implicit none

@@ -1,25 +1,25 @@
-      subroutine neoart(nsl,ncl,nsdecl,nzdecl,zsp,m,t,den,ds,rho,epsn,
+      subroutine neoart(nsp,ncs,nsd,nzd,zzs,msp,t,den,ds,rho,epsn,
      +                  nreg,sigma,nleg,nenergy,ncof,
      +                  neogeo,neofrc,ic,eparr,coeff)
 c--------------------------------------------------------------------
 c     subroutine this routine calculates the transport coefficients
 c     of neoclassical theory.
 c
-c     input   nsl        : the number of species
-c             ncl        : array(nsdecl+1) that gives the number of
-c                         charge states per species
-c             nsdecl     : actual (first) dimension of the zsp,den,
+c     input   nsp        : the number of species
+c             ncs        : array(nsd+1) that gives the number of
+c                          charge states per species
+c             nsd        : actual (first) dimension of the zzs,den,
 c                          and ds array
-c             nzdecl     : actual (second) dimens. of array
-c             zsp        : array(nsdecl+1,nzdecl) of real that contains
+c             nzd        : actual (second) dimens. of array
+c             zzs        : array(nsd+1,nzd) of real that contains
 c                          the charge number of every component
-c             m          : array(nsdecl+1) that contains the mass of
+c             msp        : array(nsd+1) that contains the mass of
 c                          every species in kg
 c             t          : array(nsdelc+1) that contains the temperature
 c                          of the species in keV
-c             den        : array(nsdecl+1,nzdecl) that contains the density
+c             den        : array(nsd+1,nzd) that contains the density
 c                          of every component in units of 10^19 m^-3
-c             ds         : array(nsdecl+1,nzdecl,2) that contains the first
+c             ds         : array(nsd+1,nzd,2) that contains the first
 c                          and second thermodynamic force (pressure
 c                          gradient and temperature gradient)
 c
@@ -96,7 +96,7 @@ c                          3 both banana plateau, classical, and P-S
 c                          4 all contributions
 c             eparr      : the parallel electric field times the
 c                          major radius, i.e. the loop voltage
-c             coeff      : array(nsdecl+1,nzdecl,4) that contains the transp.
+c             coeff      : array(nsd+1,nzd,4) that contains the transp.
 c                          coefficients of species nsm,ncm the last
 c                          index gives
 c                          1 particle flux   \gamma_ij
@@ -115,32 +115,27 @@ c--------------------------------------------------------------------
       use b2mod_types
       use b2mod_ranges
       use b2mod_constants
+      use b2mod_neoclassical
 
       implicit none
 
       integer ::
-     *       nsdecl,nzdecl,nreg,nleg,nenergy,ncof,ic
+     *       nsd,nzd,nreg,nleg,nenergy,ncof,ic
       real (kind=R8) ::
-     *       ds(0:nsdecl,0:nzdecl-1,2),eparr
+     *       ds(0:nsd,0:nzd-1,2),eparr
       logical neogeo, neofrc
 
       integer ::
-     *       nsl,ncl(0:nsdecl),i,j,k,l
+     *       nsp,ncs(0:nsd),i,j,k,l
       real (kind=R8) ::
-     *       m(0:nsdecl),rho,den(0:nsdecl,0:nzdecl-1),t(0:nsdecl),
-     &       ntau(0:nsdecl,0:nsdecl),coeff(0:nsdecl,0:nzdecl-1,4),
-     &       zsp(0:nsdecl,0:nzdecl-1),eparn,epsn,
-     &       xi(0:nsdecl,0:nzdecl-1),
-     &       uai(0:nsdecl,0:nzdecl,3),sigma(4), dum,
-     &       la(3,3,0:nsdecl), lab(3,3,0:nsdecl,0:nsdecl), mm(3,3),
+     *       msp(0:nsd),rho,den(0:nsd,0:nzd-1),t(0:nsd),
+     &       ntau(0:nsd,0:nsd),coeff(0:nsd,0:nzd-1,4),
+     &       zzs(0:nsd,0:nzd-1),eparn,epsn,
+     &       xi(0:nsd,0:nzd-1),
+     &       uai(0:nsd,0:nzd,3),sigma(4), dum,
+     &       la(3,3,0:nsd), lab(3,3,0:nsd,0:nsd), mm(3,3),
      &       nn(3,3),ta,tb,ma,mb,
-     &       coeffc(0:nsdecl,0:nzdecl-1,4)
-      real (kind=R8) ::
-     *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,
-     &   fm(0:nmaxgr-1), r2i, cosbl(0:nmaxgr-1),
-     &   cosb2(0:nmaxgr-1), sinbl(0:nmaxgr-1), sinb2(0:nmaxgr-1)
-      common /b2ngeom/ bav,b2av,bi2a,rbt,bgradp,dpsidr,rnq,fc,
-     *                 gclass,fm,r2i,cosbl,cosb2,sinbl,sinb2
+     &       coeffc(0:nsd,0:nzd-1,4)
 
       if  ((neofrc).and.(neogeo)) call perr(16)
 
@@ -164,35 +159,34 @@ c     culated then go through the following loop.
       endif
       if (ncof.ne.1) call perr(14)
 
-
-      call colxi(nsdecl,nzdecl,nsl,ncl,zsp,den,t,m,ntau,xi)
+      call colxi(nsd,nzd,nsp,ncs,zzs,den,t,msp,ntau,xi)
 
 c     switch off ion - electron collisions?
       if (ncof.eq.0) then
 c       yes switch off
         j = 0
-        do i = 0, nsl-1
-          if (zsp(i,0).lt.0.0_R8) j = i
+        do i = 0, nsp-1
+          if (zzs(i,0).lt.0.0_R8) j = i
         enddo
         if (j.ne.0) then
-          do i = 0, nsl-1
+          do i = 0, nsp-1
             if (j.ne.i) ntau(i,j) = 0.0_R8
           enddo
         endif
       endif
 
 c     calculate the friction coefficients
-      do i = 0, nsl-1
+      do i = 0, nsp-1
         do k = 1, 3
           do l = 1, 3
             la(k,l,i) = 0.0_R8
           enddo
         enddo
-        do j = 0, nsl-1
+        do j = 0, nsp-1
           ta = t(i)
           tb = t(j)
-          ma = m(i)
-          mb = m(j)
+          ma = msp(i)
+          mb = msp(j)
           call menn(ta,tb,ma,mb,mm,nn)
           do k = 1, 3
             do l = 1, 3
@@ -207,8 +201,8 @@ c     end of the if statement on neofrc
       endif
 
 c     make the coefficients zero
-      do i = 0, nsdecl
-        do j = 0, nzdecl-1
+      do i = 0, nsd
+        do j = 0, nzd-1
           do k = 1,4
             coeff(i,j,k) = 0.0_R8
             coeffc(i,j,k) = 0.0_R8
@@ -221,14 +215,14 @@ cc     normalize the eparr  (CHECK !!!)
 
 c     calculate the classical transport contribution
       if ((ic.eq.0).or.(ic.eq.4)) then
-        call class(nsdecl,nzdecl,nsl,ncl,t,zsp,xi,la,lab,ds,coeffc)
+        call class(nsd,nzd,nsp,ncs,t,zzs,xi,la,lab,ds,coeffc)
 c       add the correct normalization factor, put result
 c       in coeff and clear coeffc
-        do i = 0, nsl-1
-          do j = 0, ncl(i)-1
+        do i = 0, nsp-1
+          do j = 0, ncs(i)-1
             do k = 1, 2
               coeff(i,j,k) = coeff(i,j,k)+ coeffc(i,j,k)*
-     +          gclass/((ev/1000.0_R8)*zsp(i,j)*dpsidr**2)
+     +          gclass/((ev/1000.0_R8)*zzs(i,j)*dpsidr**2)
               coeffc(i,j,k) = 0.0_R8
             enddo
           enddo
@@ -237,16 +231,16 @@ c       in coeff and clear coeffc
 
 c     calculate the Pfirsch-Schlueter contribution
       if ((ic.eq.2).or.(ic.eq.3).or.(ic.eq.4)) then
-        call ps(nsdecl,nzdecl,nsl,ncl,neofrc,ntau,xi,la,lab,m,t,den,
-     +           zsp,sigma,ds,rnq,uai,coeffc)
+        call ps(nsd,nzd,nsp,ncs,neofrc,ntau,xi,la,lab,msp,t,den,
+     +           zzs,sigma,ds,rnq,uai,coeffc)
 c       add the correct normalization factor, put result in
 c       coeff and clear coeffc
-        do i = 0, nsl-1
-          do j = 0, ncl(i)-1
+        do i = 0, nsp-1
+          do j = 0, ncs(i)-1
             do k = 1, 2
               coeff(i,j,k) = coeff(i,j,k) - coeffc(i,j,k)*
      +          (1.- b2av*bi2a)*(rbt/dpsidr)**2/
-     +          ((ev/1000.0_R8)*zsp(i,j)*b2av)
+     +          ((ev/1000.0_R8)*zzs(i,j)*b2av)
               coeffc(i,j,k) = 0.0_R8
             enddo
           enddo
@@ -254,26 +248,26 @@ c       coeff and clear coeffc
       endif
 
       if ((ic.eq.1).or.(ic.eq.3).or.(ic.eq.4)) then
-        call bp(nsdecl,nzdecl,nsl,ncl,neofrc,t,m,den,zsp,ntau,xi,la,
+        call bp(nsd,nzd,nsp,ncs,neofrc,t,msp,den,zzs,ntau,xi,la,
      +   lab,epsn,nenergy,nleg,nreg,bgradp,fc,fm,mmx,ds,eparn,
      +   coeffc)
 c       add the correct normalizing factor. put result in
 c       coeff and clear coeffc
-        do i = 0, nsl-1
-          do j = 0, ncl(i)-1
+        do i = 0, nsp-1
+          do j = 0, ncs(i)-1
             do k = 1, 2
               coeff(i,j,k) = coeff(i,j,k) - coeffc(i,j,k)*
-     +          (rbt/dpsidr)**2/((ev/1000.0_R8)*zsp(i,j)*b2av)
+     +          (rbt/dpsidr)**2/((ev/1000.0_R8)*zzs(i,j)*b2av)
               coeffc(i,j,k) = 0.0_R8
             enddo
           enddo
         enddo
       endif
 
-      do i = 0, nsl-1
-        do j = 0, ncl(i)-1
+      do i = 0, nsp-1
+        do j = 0, ncs(i)-1
           coeff(i,j,3) = coeffc(i,j,3)*(ev*1000.0_R8*1.0e19_R8)*
-     +                   den(i,j)*zsp(i,j)*rbt*bav/(dpsidr*b2av)
+     +                   den(i,j)*zzs(i,j)*rbt*bav/(dpsidr*b2av)
           coeff(i,j,4) = 1.0e3_R8*coeffc(i,j,4)*rbt/(b2av*dpsidr)
         enddo
       enddo
