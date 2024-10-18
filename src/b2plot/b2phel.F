@@ -24,7 +24,10 @@ c----------------------------------------------------------------------
 c
 c*** Local variables
 c
-      integer i,j,k,m,n,is
+      integer i,j,k,is
+#ifdef WG_TODO
+      integer m,n
+#endif
       real (kind=R8) ::
      . hlp,hlp_tot,hlp_he,hlp_s,hlp_si,hlp_so
 #ifdef WG_TODO

@@ -1,7 +1,8 @@
 c
       subroutine vesselon(onflag)
       use b2mod_types
-#include "graphics_vars.h"
+      use b2mod_graphics
+      implicit none
       logical onflag
       logical exist
       character*256 filename

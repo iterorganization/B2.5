@@ -105,8 +105,7 @@
       logical, save :: flag_optim = .false., reset_gradient = .false.
       integer nnvar
       real (kind=R8) :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx),
-     &  gu(nvmx), jj(nvmx*nvmx),
-     &  par_rescale(nvmx)
+     &  gu(nvmx), par_rescale(nvmx)
       integer :: jcol(nvmx*nvmx), jrow(nvmx*nvmx)
 ! sc some variables that allows to change optimization parameters, read from b2.optimization.parameters
       character*256, save :: limited_memory_update_type,
@@ -156,7 +155,7 @@
       ! csc local variables
       integer :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff,
      &           noss, ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc,
-     &           jj, imean, curr_ind
+     &           imean, curr_ind
       integer, allocatable :: cfReg(:), shiftcfdata(:)
       logical :: done, optimize
       character*3 ss

@@ -1,7 +1,9 @@
 
       subroutine set_globalheader
       use b2mod_types
-#include <graphics_vars.h>
+      use b2mod_graphics
+      implicit none
+
       globalheader=extralabel
       extralabel=' '
       return

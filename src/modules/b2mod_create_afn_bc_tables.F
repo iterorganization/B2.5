@@ -708,7 +708,6 @@ cc The energy of the reflected particle has to be larger than 0 eV
 cc The energy of the reflected particle has to be smaller than the incident energy
       Et = min(Et,Ei);
 
-
 cc Calculate weights for Eo
       if (Es.gt.Q(5)) then !! Maximum value of the reflected energy is the incident energy
         jEo = SIZE(Q)
@@ -774,7 +773,6 @@ cc Calculate weights for To
         To   = wTo1*Ttt(jTo) + wTo2*Ttt(iTo)
       endif
 
-
 cc interpolate Phio
       Phittt = wTo1*Phitt(jTo,:)+wTo2*Phitt(iTo,:)
 
@@ -832,7 +830,6 @@ cc deallocate
       end subroutine CalcVelTRIM
 
 
-
       subroutine CalcPressureCoefficientsTRIM(v)
       use b2mod_constants
       use b2mod_types
@@ -881,7 +878,6 @@ c   Thetai_vv: meshgrid of Thetai_v
 c   Ei_vv: meshgrid of Ei_v
 c   fac: temporary variable for scaling factors
 
-
 ** Documentation
 * This function calculates the pressure reflection coefficients from the
 * TRIM code database in a deterministic way due to issues when the
@@ -889,7 +885,6 @@ c   fac: temporary variable for scaling factors
       call subini ('CalcPressureCoefficientsTRIM')
 
 ** Computation
-
 
 cc Pressure reflection coefficients for the energy and angles given in the database
       allocate(Rp1(nE,nA))
@@ -1088,7 +1083,7 @@ cc discretize the sheath potential drop
 ** local
       integer :: i, j
       real (kind=R8) :: v(nv), theta(ntheta), dtheta,
-     &                  dv(nv), phi(nphi), deltaP
+     &                  dv(nv), deltaP
 
 cc description of variables
 
@@ -1096,7 +1091,6 @@ c   i,j: loop variables
 c   theta: discretization vector polar angle
 c   dtheta: distance between discretization points theta
 c   dv: distance between discretization points v
-c   phi: azimuthal angle
 c   deltaP: factor for sheath potential drop
 
       call subini ('CalcFluidReflCoefficients')
@@ -1829,7 +1823,7 @@ cc description of variables
 c    nv: number of elements in v
 c    ntheta: number of elements in theta
 c    nE: number of elements in E
-c    nA: numbeer of elments in A
+c    nA: number of elments in A
 
 c    Ei_v: energy corresponding to v
 c    E: discretization vector of the incident energy in TRIM
@@ -1979,7 +1973,7 @@ c simple 1D linear interpolation / extrapolation
           yq = yp + (y(j) - yp) * (xq - xp) / (x(j) - xp)
         end if
 
-
+      return
       end function interp1
 
       subroutine remove_NaNs(nx,x)
@@ -1991,7 +1985,7 @@ c simple 1D linear interpolation / extrapolation
       implicit none
 ** input/output
       integer :: nx
-      real (kind=R8), dimension(:), intent(inout) :: x(nx)
+      real (kind=R8), intent(inout) :: x(nx)
 ** local
       integer :: i
 #ifdef NO_IEEE
@@ -2121,7 +2115,7 @@ cc close the file
       character(len=*), intent(in) :: incident, material
 ** local
       character*256 :: filename
-      integer :: nout, nout_st, idum(3), io, ntot
+      integer :: nout, idum(3), io, ntot
       character*80 version
       character*120 :: label
       external cfwuin, cfwuch, cfwure
@@ -2134,7 +2128,7 @@ cc description of variables
 c   incident: incident particle
 c   material: wall material
 c   filename: name of output file (e.g. hc.fnn.coarse)
-c   nout / nout_st: dummy numbeers for the output files
+c   nout: dummy numbers for the output files
 c   idum: dummy variable to group output
 c   io: error number
 c   ntot: total number of values per field
@@ -2142,20 +2136,17 @@ c   version: TODO
 c   label: description of the file
 
       call subini ('write_fluid_TRIM')
-cc set nout number (irrelevant)
-      nout = 11
 cc set correct name
       filename = incident(1:len_trim(incident))//
      &           material(1:len_trim(material))//
      &           '.fnn.coarse'
       call lower_case(filename)
 
-
 cc open new file
 #ifndef LEGACYCOMP
       open (newunit=nout,file=filename,iostat=io)
 #else
-      nout_st = newunit()
+      nout = newunit()
       open (unit=nout,file=filename,iostat=io)
 #endif
 

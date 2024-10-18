@@ -24,9 +24,6 @@ c
       integer iystart,iyend
       integer len_of_digits
       external xertst, len_of_digits
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
 
       call subini ('fy')
       if(mpg%isClassicalGrid.eq.0) return
@@ -538,9 +535,6 @@ c
       real (kind=R8), allocatable :: wrk(:)
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
 
       if (nimp.eq.0) return
       if (b2plot_debug.ge.5)
@@ -830,9 +824,6 @@ c
       real (kind=R8), allocatable :: wrk(:)
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
 
       if (nomp.eq.0) return
       if (b2plot_debug.ge.5)
