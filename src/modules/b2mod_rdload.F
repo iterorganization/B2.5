@@ -1,3 +1,7 @@
+      module b2mod_rdload
+      use b2mod_types
+      use b2mod_dimensions
+      implicit none
 c  VERSION : 31.08.97 11:43
 c
 c=====================================================
@@ -53,7 +57,5 @@ c=====================================================
      *   xsrc,ysrc,ssrc,sb,se,xb,yb,ddx,ddy,xc,yc,xs,ys,
      ,  ztrg(nplgm),radld(nplgm),xp(nplgm),yp(nplgm),
      ,  xysrc(2,nsrcm),ssrcm(nsrcm),ttsrc,tttrg,chords(2,2,nchrdm)
-      common/shdcom/xsrc,ysrc,ssrc,sb,se,xb,yb,ddx,ddy,xc,yc,xs,ys,
-     ,   jb,jc,jm,jsc,jcb
-      common/rldcom/ztrg,radld,xp,yp,xysrc,ssrcm,ttsrc,tttrg,chords,
-     i  nplgs,nbndry,nsrc,nsrcs,ntrg,nchrd,lbnd,ltrg
+
+      end module b2mod_rdload

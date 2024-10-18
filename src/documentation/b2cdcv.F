@@ -99,11 +99,13 @@
 *     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
 *     fcQalf(iFc,1) specifies sin(t), where t is the included angle
 *     between the magnetic field vector and the face normal.
+*     If Bz is negative, fcQalf(iFc,1) is modified to be -sin(t).
 *
 *     fcQbet - (1:nFc,0:1) real*8 array.
 *     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
 *     fcQbet(iFc,1) specifies sin(t), where t is the included angle
 *     between the cell-connector and the magnetic field vector.
+*     If Bz is negative, fcQbet(iFc,0) is modified to be -cos(t).
 *
 *     fcPbs - (1:nFc) real*8 array.
 *     For iFc in (1:nFc), fcPbs(iFc) specifies the product

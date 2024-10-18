@@ -73,6 +73,7 @@ c 2002-09-11: logic revised
 #endif
       use b2mod_subsys
       use b2mod_dimensions
+      use b2mod_chord_shift
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -81,9 +82,6 @@ c 2002-09-11: logic revised
 c
 c  version : 27.07.96 20:37
 c
-      logical ratio
-      common /t_ratio/ ratio
-
       real (kind=R8) ::
      1   r_ref, z_ref, s_ref(nomp), profile(nomp),
 #ifdef WG_TODO
@@ -175,10 +173,6 @@ c
       character*256 description
       character*24 hlp_frm
       CHARACTER FILNAM*8, H123*4, REAC*9, CRC*3
-c
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 c
       logical ex, cflag, found, eirc_done, classical_style
       logical open_file, streql, isaletter
@@ -413,6 +407,7 @@ c
 #endif
       lucdf=0
       eirc_done=.false.
+      call init_chord_shift
 c
       ns=max(nsd_local,1)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',ns,'i3)'

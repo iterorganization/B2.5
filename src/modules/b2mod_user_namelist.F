@@ -196,7 +196,7 @@ c***  Standard set-up:
 ! Define OMP list by finding CVs which are intersected by the rzomp segment
       call cv_intersections (geo, m, rzomp, omp, nomp, nromp,
      & 1, ifail)
-      call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
+      call xertst(.not.ifail, 'Increase DEF_NYD in b2mod_dimensions')
 ! Here we need to guarantee ordering of CVs. With classical grids the conversion
 ! is done such that CVs are ordered from left to right and bottom to top wrt
 ! the structured computational domain. With fully unstructured grids this is not guaranteed.
@@ -362,7 +362,7 @@ c*** Set default values according to current species list
       imp = 0
       call cv_intersections (geo, m, rzimp, imp, nimp, nromp,
      & 1, ifail)
-      call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
+      call xertst(.not.ifail, 'Increase DEF_NYD in b2mod_dimensions')
       do ic=2,nimp
         if (geo%cvX(imp(ic)).lt.geo%cvX(imp(ic-1)))
      &   call xerrab('IMP LIST NOT SORTED')

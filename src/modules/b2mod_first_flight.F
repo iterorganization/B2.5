@@ -14,6 +14,7 @@
       subroutine alloc_b2mod_first_flight(in_no_of_slices,
      *     in_size_of_table, in_no_of_start_points, in_dl)
       use b2mod_constants
+      use b2mod_chord_shift
       implicit none
       integer in_no_of_slices,in_size_of_table,
      *     in_no_of_start_points
@@ -37,6 +38,8 @@
       allocate(index(no_of_start_points,no_of_slices,0:1))
       ptr_index=0
       dl=in_dl
+      call init_chord_shift
+      return
       end subroutine alloc_b2mod_first_flight
 
       subroutine dealloc_b2mod_first_flight

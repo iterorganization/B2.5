@@ -6,11 +6,11 @@ C =====================================================================
       use b2mod_indirect
       use b2mod_b2plot_ank
       use b2mod_b2plot_debug
+      use b2mod_graphics
       use b2mod_wall
       implicit none
       integer nCv
       logical physical, from_target
-#include "graphics_vars.h"
 
       real (kind=R8) :: zlod,zhid
       real (kind=R4) :: zlo,zhi,rlo,rhi,zinc,zval,clv

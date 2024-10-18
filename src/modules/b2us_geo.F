@@ -36,8 +36,10 @@
         real (kind=R8), allocatable  :: fcHz(:)        ! Length in third (z) direction
         real (kind=R8), allocatable  :: fcVol(:,:)     ! Part of volume of neighboring cell centers associated with the face; for interpolation
         real (kind=R8), allocatable  :: fcQgam(:,:)    ! Cosine (:,0) and sine (:,1) of gamma
-        real (kind=R8), allocatable  :: fcQalf(:,:)    ! Cosine (:,0) and sine (:,1) of alpha
-        real (kind=R8), allocatable  :: fcQbet(:,:)    ! Cosine (:,0) and sine (:,1) of beta
+        real (kind=R8), allocatable  :: fcQalf(:,:)    ! Cosine (:,0) and sine (:,1) of alpha for positive Bz;
+                                                       ! Cosine (:,0) and (-1)*sine (:,1) of alpha for negative Bz
+        real (kind=R8), allocatable  :: fcQbet(:,:)    ! Cosine (:,0) and sine (:,1) of beta for positive Bz;
+                                                       ! (-1)*Cosine (:,0) and sine (:,1) of beta for negative Bz
         real (kind=R8), allocatable  :: fcPbs(:)       ! Magnetic contact area
         real (kind=R8), allocatable  :: fcPbshz(:)     ! Magnetic contact area * hz (at faces)
         real (kind=R8), allocatable  :: fcBzb(:)       ! Factor for P-S/mdf flows
