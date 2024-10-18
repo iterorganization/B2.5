@@ -504,6 +504,7 @@ c     close Plot-Screen
 c     -----------------------------------------------------------------------
 c     CALCULATING NEW POSITIONS
 c     -----------------------------------------------------------------------
+
       subroutine trajectories(mpg,geo,rre,zre,iCv,l,deltat)
 
       use b2mod_types
@@ -733,6 +734,7 @@ C      Through one of the walls or corners it has to go! :)
 C
       return
       end subroutine intersection
+
 c------------------------------------------------------------------------------
 c     CALCULATE THE INTERSECTION OF TWO LINES
 c------------------------------------------------------------------------------
@@ -1083,7 +1085,7 @@ c add particle of species is in cell (ix,iy)
         enddo
       enddo
 c at this point we might still need to add either "nadd" or "ikilled" particles
- 3000 continue
+c3000 continue
       phase1=.false.
       if (b2plot_debug.ge.8)
      . write(*,5000) 3000,killval,addval,phase1,ikilled,nadd

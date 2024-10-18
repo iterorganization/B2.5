@@ -54,7 +54,7 @@ c=====================================================
       integer jb,jc,jm,jsc,jcb,nplgs,nbndry,nsrc,nsrcs,ntrg,nchrd,
      ,  lbnd(nplgm),ltrg(nplgm)
       real (kind=R8) ::
-     *   xsrc,ysrc,ssrc,sb,se,xb,yb,ddx,ddy,xc,yc,xs,ys,
+     *  xsrc,ysrc,ssrc,sb,se,xb,yb,ddx,ddy,xc,yc,xs,ys,
      ,  ztrg(nplgm),radld(nplgm),xp(nplgm),yp(nplgm),
      ,  xysrc(2,nsrcm),ssrcm(nsrcm),ttsrc,tttrg,chords(2,2,nchrdm)
 

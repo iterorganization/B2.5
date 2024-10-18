@@ -482,18 +482,3 @@ c     conversion of constants to CGS units
       call subend ()
       return
       end subroutine chang_hinton
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

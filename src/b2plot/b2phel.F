@@ -19,7 +19,7 @@ c----------------------------------------------------------------------
 #endif
       use b2us_data
       use b2mod_dimensions
-      IMPLICIT NONE
+      implicit none
       integer lun
 c
 c*** Local variables
