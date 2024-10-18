@@ -3,6 +3,7 @@ c
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2plot_values
+      use b2mod_chord_shift
       implicit none
       character*(*) filename
       character*80 dataname
@@ -10,10 +11,6 @@ c
       real (kind=R8) ::
      1  rcol,x,y,x1,y1,z1,x2,y2,z2,r,z,ro,zo
       integer icol,npoints,npointsl,i
-
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 
       if(.not.open_file(90,filename,
      1 'data.local/chords|data/chords')) return

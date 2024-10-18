@@ -435,7 +435,6 @@ c     conversion of constants to CGS units
        enddo
       enddo
 
-
 *   ..return
       call subend ()
       return
@@ -464,7 +463,7 @@ c     conversion of constants to CGS units
      1 cr2max,cr2min,cr1max,cr1min,
      2 bave,epsilon,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi,
-     2 bracket1, bracket2, ammin
+     2 bracket1,bracket2,ammin
       real (kind=R8) :: lnlam(-1:nx,-1:ny)
       external xertst
 
@@ -512,7 +511,7 @@ c     conversion of constants to CGS units
      1   ((cr2max-cr2min)-(cr1max-cr1min))
         deltap=-2._R8
         if (b2plot_debug.ge.8) write(*,*) 'deltap: ',deltap
-        f1=(1_R8+1.5_R8*(epsilon**2+epsilon*deltap)+
+        f1=(1.0_R8+1.5_R8*(epsilon**2+epsilon*deltap)+
      1   0.375_R8*epsilon**3*deltap)/(1_R8+0.5_R8*epsilon*deltap)
         if (b2plot_debug.ge.8) write(*,*) 'f1: ',f1
         f2=sqrt(1_R8-epsilon**2)*(1.0_R8+0.5_R8*epsilon*deltap)/
@@ -595,18 +594,3 @@ c     conversion of constants to CGS units
       call subend ()
       return
       end subroutine chang_hinton
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
