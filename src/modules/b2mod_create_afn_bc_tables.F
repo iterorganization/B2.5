@@ -600,7 +600,7 @@ cc Calculate angle and energy of incidence
       theta = acos(-dotvn/NORM2(3,v))
 #endif
       theta = theta/pi*180.0_R8
-#ifndef LEACYCOMP
+#ifndef LEGACYCOMP
       Ei = 0.5*mass*NORM2(v)**2/eV
 #else
       Ei = 0.5*mass*NORM2(3,v)**2/eV
