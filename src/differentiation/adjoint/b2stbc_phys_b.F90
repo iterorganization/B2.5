@@ -46,7 +46,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain, ismain0
   REAL(kind=r8) :: praverage(2)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -101,7 +101,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
   REAL(kind=r8) :: wdia(ncv), wrk0(ncv), wrkf(nfc), pz(ncv), gonedbsq(&
 & nfc, 0:1), sna0_no_mdf(ncv, 0:1, 0:ns-1)
 !srv 23.09.08
-  REAL(kind=r8) :: cor9
+  REAL(kind=r8), SAVE :: cor9=0.0_R8
 !srv 11.07.05
   CHARACTER :: chns*3, chk*1
   LOGICAL :: decay_length_ok, ishigh
@@ -257,7 +257,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 &       'invalid main neutral species index ismain0')
   CALL XERTST(is_neutral(ismain0) .OR. ismain .EQ. ismain0, &
 &       'invalid main neutral species ismain0; must be neutral')
-!   ..test facdrift (not on first call)                                  !xpb
+!   ..test facdrift (not on first call)                              !xpb
 !xpb
   IF (ncall_b2stbc_phys .GT. 0) THEN
     result1 = MINVAL(dv%facdrift)
@@ -1419,8 +1419,8 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
 ! number of the guard cell face
           ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
-          cs = SQRT(pz(icv1)/rz(icv1))
           s1hz = geo%fcpbshz(ifc)
+          cs = SQRT(pz(icv1)/rz(icv1))
 !            vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
 !     &        dv%vaecrb(iFc,0,is) -
 !     &        dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1)/geo%fcQalf(iFc,0)
@@ -1462,7 +1462,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
         END DO
       CASE (14) 
 !
-! -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM  !srv 01.02.09 {
+! -- BCMOM=14 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM    !srv 01.02.09 {
 !srv added accumulation in order to account twice b.c. for corner cells
         IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, &
 &                                     '(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')&
@@ -2672,6 +2672,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !srv 20.09.17
         CALL XERTST(enipar(ib, 1) .GT. 0.0_R8, &
 &             'BCENI = 15, ENIPAR(IB,1) <= 0 not allowed!')
+        IF (bceni_15_style .NE. 0) WRITE(*, *) 'bceni_15_style = 1'
       END IF
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -3312,7 +3313,6 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
         srw%sch0(icv1, 1) = srw%sch0(icv1, 1) - t0
 !wdk Todo: seecmodel
         wrong_flow = .false.
-!srv 01.02.09 }
       END DO
     CASE (12) 
 !
@@ -4597,10 +4597,11 @@ END SUBROUTINE B2STBC_PHYS_NODIFF
 !                *(dv.fhi) *(dv.fhipsch) *(dv.fhm) *(dv.fkt) *(dv.ne)
 !                *(dv.ni) *(dv.vadia) *(dv.vaecrb) *(dv.vedia)
 !                *(dv.veecrb) *(rt.rza) *(srw.sch0) *(srw.she0)
-!                *(srw.shi0) *(srw.skt0) *(srw.smo0) *(srw.sna0)
-!                switch.b2tfhi_fflokt *(co.chce) *(co.chci) *(co.cdna)
-!                *(co.hce0) *(co.hci0) *(co.hcn0) *(co.dpa0) *(co.dna0)
-!                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti) *(pl.kt)
+!                *(srw.shi0) *(srw.skt0) *(srw.szt0) *(srw.smo0)
+!                *(srw.sna0) switch.b2tfhi_fflokt switch.b2tfhi_fflozt
+!                *(co.chce) *(co.chci) *(co.cdna) *(co.hce0) *(co.hci0)
+!                *(co.hcn0) *(co.dpa0) *(co.dna0) *(pl.na) *(pl.ua)
+!                *(pl.po) *(pl.te) *(pl.ti) *(pl.kt) *(pl.zt)
 !   with respect to varying inputs: conpar mompar enepar enipar
 !                potpar enkpar *(dv.fch) *(dv.fch_p) *(dv.fchdia)
 !                *(dv.fchin) *(dv.fchvispar) *(dv.fchvisper) *(dv.fchvisq)
@@ -4609,10 +4610,11 @@ END SUBROUTINE B2STBC_PHYS_NODIFF
 !                *(dv.fhi) *(dv.fhipsch) *(dv.fhm) *(dv.fkt) *(dv.ne)
 !                *(dv.ni) *(dv.vadia) *(dv.vaecrb) *(dv.vedia)
 !                *(dv.veecrb) *(rt.rza) *(srw.sch0) *(srw.she0)
-!                *(srw.shi0) *(srw.skt0) *(srw.smo0) *(srw.sna0)
-!                switch.b2tfhi_fflokt *(co.chce) *(co.chci) *(co.cdna)
-!                *(co.hce0) *(co.hci0) *(co.hcn0) *(co.dpa0) *(co.dna0)
-!                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti) *(pl.kt)
+!                *(srw.shi0) *(srw.skt0) *(srw.szt0) *(srw.smo0)
+!                *(srw.sna0) switch.b2tfhi_fflokt switch.b2tfhi_fflozt
+!                *(co.chce) *(co.chci) *(co.cdna) *(co.hce0) *(co.hci0)
+!                *(co.hcn0) *(co.dpa0) *(co.dna0) *(pl.na) *(pl.ua)
+!                *(pl.po) *(pl.te) *(pl.ti) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.fch:in dv.fch_p:in dv.fchdia:in
 !                dv.fchin:in dv.fchvispar:in dv.fchvisper:in dv.fchvisq:in
 !                dv.fchinert:in dv.fchviskt:in dv.fna:in dv.fnapsch:in
@@ -4675,11 +4677,11 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   USE B2MOD_DIMENSIONS
   IMPLICIT NONE
 !
-! -- BCENZ=16 -- Prescribe the value of the turb. enstropy, with poloidal
-!                perturbation taken from flux tube just inside domain
-!
 ! -- BCENE=9 -- PRESCRIBE THE DECAY LENGTH FOR THE ELECTRON TEMPERATURE
 !
+!
+! -- BCENZ=16 -- Prescribe the value of the turb. enstropy, with poloidal
+!                perturbation taken from flux tube just inside domain
 !
 !
 ! -- BCENK=17 -- Feedback on turb. kin. energy flux, by imposing a flux surface
@@ -4706,7 +4708,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !                tube just inside domain
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain, ismain0
   REAL(kind=r8) :: praverage(2)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb
@@ -4774,7 +4776,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 & nfc, 0:1), sna0_no_mdf(ncv, 0:1, 0:ns-1)
   REAL(kind=r8) :: wrkfb(nfc), pzb(ncv)
 !srv 23.09.08
-  REAL(kind=r8) :: cor9
+  REAL(kind=r8), SAVE :: cor9=0.0_R8
 !srv 11.07.05
   CHARACTER :: chns*3, chk*1
   LOGICAL :: decay_length_ok, ishigh
@@ -5070,6 +5072,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   INTEGER :: ad_to102
   INTEGER :: ad_to103
   INTEGER :: ad_to104
+  INTEGER :: ad_to105
 !   ..initialisation
 !-----------------------------------------------------------------------
 !.computation
@@ -6103,9 +6106,9 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 ! number of the guard cell face
           CALL PUSHINTEGER4(ifc)
           ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+          s1hz = geo%fcpbshz(ifc)
           CALL PUSHREAL8(cs, r8/8)
           cs = SQRT(pz(icv1)/rz(icv1))
-          s1hz = geo%fcpbshz(ifc)
 !            vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
 !     &        dv%vaecrb(iFc,0,is) -
 !     &        dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1)/geo%fcQalf(iFc,0)
@@ -6607,7 +6610,6 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           END IF
 !lkw 31.03.2023
           CALL PUSHBOOLEAN(b2mod_math_initialised)
-          CALL PUSHREAL4(small_r4_constant, r4/8)
           CALL PUSHREAL8(cutlo, r8/8)
           CALL PUSHREAL8(cutll, r8/8)
           CALL PUSHREAL8(result10, r8/8)
@@ -7186,6 +7188,20 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
       CALL PUSHINTEGER4(ibc - 1)
       CALL PUSHCONTROL4B(6)
     CASE (15) 
+!
+! -- BCENI=15 -- from b2stbc_spb                                      !srv 01.02.09 {
+!
+      IF (ncall_b2stbc_phys .EQ. 0) THEN
+!srv 20.09.17
+!srv 20.09.17
+        IF (bceni_15_style .NE. 0) THEN
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(1)
+        END IF
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
@@ -7757,7 +7773,6 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         END IF
 !lkw 31.03.2023
         CALL PUSHBOOLEAN(b2mod_math_initialised)
-        CALL PUSHREAL4(small_r4_constant, r4/8)
         CALL PUSHREAL8(cutlo, r8/8)
         CALL PUSHREAL8(cutll, r8/8)
         CALL PUSHREAL8(result10, r8/8)
@@ -8685,53 +8700,64 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !
     SELECT CASE  (bcenz(ib)) 
     CASE (0) 
-      CALL PUSHCONTROL3B(4)
+      CALL PUSHCONTROL3B(5)
     CASE (1) 
-      CALL PUSHCONTROL3B(4)
-    CASE (2) 
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
-! number of the corresponding domain cell
-        CALL PUSHINTEGER4(icv2)
-        icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+        CALL PUSHINTEGER4(icv1)
 ! number of the guard cell face
       END DO
       CALL PUSHINTEGER4(ibc - 1)
       CALL PUSHCONTROL3B(0)
-    CASE (3) 
-      CALL PUSHCONTROL3B(4)
-    CASE (4) 
-      CALL PUSHCONTROL3B(4)
-    CASE (5) 
-      CALL PUSHCONTROL3B(4)
-    CASE (6) 
-      CALL PUSHCONTROL3B(4)
-    CASE (7) 
-      CALL PUSHCONTROL3B(4)
-    CASE (8) 
-      CALL PUSHCONTROL3B(4)
-    CASE (9) 
-      CALL PUSHCONTROL3B(4)
-    CASE (10) 
-      CALL PUSHCONTROL3B(4)
-    CASE (11) 
-      CALL PUSHCONTROL3B(4)
-    CASE (12) 
-      CALL PUSHCONTROL3B(4)
-    CASE (13) 
-      CALL PUSHCONTROL3B(4)
-    CASE (14) 
+    CASE (2) 
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
+        CALL PUSHINTEGER4(icv1)
 ! number of the corresponding domain cell
         CALL PUSHINTEGER4(icv2)
         icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
+        CALL PUSHINTEGER4(ifc)
       END DO
       CALL PUSHINTEGER4(ibc - 1)
       CALL PUSHCONTROL3B(1)
+    CASE (3) 
+      CALL PUSHCONTROL3B(5)
+    CASE (4) 
+      CALL PUSHCONTROL3B(5)
+    CASE (5) 
+      CALL PUSHCONTROL3B(5)
+    CASE (6) 
+      CALL PUSHCONTROL3B(5)
+    CASE (7) 
+      CALL PUSHCONTROL3B(5)
+    CASE (8) 
+      CALL PUSHCONTROL3B(5)
+    CASE (9) 
+      CALL PUSHCONTROL3B(5)
+    CASE (10) 
+      CALL PUSHCONTROL3B(5)
+    CASE (11) 
+      CALL PUSHCONTROL3B(5)
+    CASE (12) 
+      CALL PUSHCONTROL3B(5)
+    CASE (13) 
+      CALL PUSHCONTROL3B(5)
+    CASE (14) 
+! loop over number of cells in the boundary
+      DO ibc=1,mpg%bccvp(ib, 2)
+! number of the guard cell
+        CALL PUSHINTEGER4(icv1)
+! number of the corresponding domain cell
+        CALL PUSHINTEGER4(icv2)
+        icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
+! number of the guard cell face
+        CALL PUSHINTEGER4(ifc)
+      END DO
+      CALL PUSHINTEGER4(ibc - 1)
+      CALL PUSHCONTROL3B(2)
     CASE (15) 
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
@@ -8744,10 +8770,38 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 ! number of the guard cell face
         CALL PUSHINTEGER4(ifc)
         ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+        CALL PUSHREAL8(cs, r8/8)
+        cs = SQRT(pz(icv1)/rz(icv1))
+        CALL PUSHREAL8(t0, r8/8)
+        t0 = 0.0_R8
+        DO is=0,ns-1
+          IF (.NOT.is_neutral(is)) THEN
+            t0 = t0 + conpar(is, ib, 1)*pl%na(icv1, is)
+            IF (conpar(is, ib, 2) .GT. 0.0_R8) THEN
+              CALL PUSHCONTROL2B(2)
+            ELSE
+              CALL PUSHCONTROL2B(1)
+            END IF
+          ELSE
+            CALL PUSHCONTROL2B(0)
+          END IF
+        END DO
+        IF (geo%fcpbs(ifc) .GE. 0.) THEN
+          CALL PUSHREAL8(abs9, r8/8)
+          abs9 = geo%fcpbs(ifc)
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHREAL8(abs9, r8/8)
+          abs9 = -geo%fcpbs(ifc)
+          CALL PUSHCONTROL1B(1)
+        END IF
       END DO
       CALL PUSHINTEGER4(ibc - 1)
-      CALL PUSHCONTROL3B(2)
+      CALL PUSHCONTROL3B(3)
     CASE (16) 
+!     ..compute average zt on core boundary
+      CALL PUSHREAL8(t0, r8/8)
+      t0 = 0.0_R8
 ! identify core boundaries; assume all core boundaries
 ! form single flux surface
 ! implicit assumption at the moment: first ring in the
@@ -8763,6 +8817,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             CALL PUSHINTEGER4(icv2)
             icv2 = mpg%bccv(mpg%bccvp(ib0, 1)+ibc0-1, 2)
 ! number of the guard cell face
+            t0 = t0 + geo%cvvol(icv2)
           END DO
           CALL PUSHINTEGER4(ibc0 - 1)
           CALL PUSHCONTROL1B(1)
@@ -8774,15 +8829,17 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 ! loop over number of cells in the boundary
       DO ibc=1,mpg%bccvp(ib, 2)
 ! number of the guard cell
+        CALL PUSHINTEGER4(icv1)
 ! number of the domain cell
         CALL PUSHINTEGER4(icv2)
         icv2 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 2)
 ! number of the guard cell face
+        CALL PUSHINTEGER4(ifc)
       END DO
       CALL PUSHINTEGER4(ibc - 1)
-      CALL PUSHCONTROL3B(3)
-    CASE DEFAULT
       CALL PUSHCONTROL3B(4)
+    CASE DEFAULT
+      CALL PUSHCONTROL3B(5)
     END SELECT
   END DO
   naua2averageb = 0.D0
@@ -8792,40 +8849,135 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   pzb = 0.D0
   DO ib=nbc,1,-1
     CALL POPCONTROL3B(branch)
-    IF (branch .LT. 2) THEN
+    IF (branch .LT. 3) THEN
       IF (branch .EQ. 0) THEN
         CALL POPINTEGER4(ad_to100)
         DO ibc=ad_to100,1,-1
-          CALL POPINTEGER4(icv2)
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          srwb%szt0(icv1, 1) = 0.D0
+          srwb%szt0(icv1, 0) = 0.D0
+          CALL POPINTEGER4(icv1)
         END DO
-      ELSE
+      ELSE IF (branch .EQ. 1) THEN
         CALL POPINTEGER4(ad_to101)
         DO ibc=ad_to101,1,-1
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          srwb%szt0(icv1, 1) = 0.D0
+          ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+          tempb7 = vbig*ne00*geo%fcs(ifc)*srwb%szt0(icv1, 0)
+          srwb%szt0(icv1, 0) = 0.D0
+          plb%zt(icv2) = plb%zt(icv2) + tempb7
+          tempb6 = -(mpg%bcfcor(mpg%bccvp(ib, 1)+ibc-1)*cor9*geo%fcqgam(&
+&           ifc, 1)*(geo%fchc(ifc, 1)+geo%fchc(ifc, 2))*tempb7/geo%fcht(&
+&           ifc))
+          t2b = tempb6
+          t1b = -tempb6
+          ivx2 = mpg%fcvx(ifc, 2)
+          CALL INTVERTEX_S_B(ivx2, ncv, nvx, mpg, geo%vxvol, pl%zt, plb%&
+&                      zt, t2b)
+          ivx1 = mpg%fcvx(ifc, 1)
+          CALL INTVERTEX_S_B(ivx1, ncv, nvx, mpg, geo%vxvol, pl%zt, plb%&
+&                      zt, t1b)
+          CALL POPINTEGER4(ifc)
           CALL POPINTEGER4(icv2)
+          CALL POPINTEGER4(icv1)
+        END DO
+      ELSE
+        CALL POPINTEGER4(ad_to102)
+        DO ibc=ad_to102,1,-1
+          icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+          ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+          csb0 = geo%fcs(ifc)*enzpar(ib, 1)*srwb%szt0(icv1, 3)
+          srwb%szt0(icv1, 3) = 0.D0
+          srwb%szt0(icv1, 0) = 0.D0
+          temp7 = pz(icv1)/rz(icv1)
+          IF (temp7 .EQ. 0.D0) THEN
+            tempb7 = 0.D0
+          ELSE
+            tempb7 = csb0/(rz(icv1)*2.0*SQRT(temp7))
+          END IF
+          pzb(icv1) = pzb(icv1) + tempb7
+          rzb(icv1) = rzb(icv1) - temp7*tempb7
+          CALL POPINTEGER4(ifc)
+          CALL POPINTEGER4(icv2)
+          CALL POPINTEGER4(icv1)
         END DO
       END IF
-    ELSE IF (branch .EQ. 2) THEN
-      CALL POPINTEGER4(ad_to102)
-      DO ibc=ad_to102,1,-1
+    ELSE IF (branch .EQ. 3) THEN
+      CALL POPINTEGER4(ad_to103)
+      DO ibc=ad_to103,1,-1
+        icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+        ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+        tempb7 = -(enzpar(ib, 1)*abs9*srwb%szt0(icv1, 1))
+        t1b = -(enzpar(ib, 2)*geo%fcs(ifc)*srwb%szt0(icv1, 1))
+        t0b = cs*(switch%b2tfhi_fflozt+1.0_R8)*tempb7
+        csb0 = t0*(switch%b2tfhi_fflozt+1.0_R8)*tempb7
+        switchb%b2tfhi_fflozt = switchb%b2tfhi_fflozt + t0*cs*tempb7
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPREAL8(abs9, r8/8)
+        ELSE
+          CALL POPREAL8(abs9, r8/8)
+        END IF
+        DO is=ns-1,0,-1
+          CALL POPCONTROL2B(branch)
+          IF (branch .NE. 0) THEN
+            IF (branch .NE. 1) THEN
+              tempb5 = t1b/conpar(is, ib, 2)
+              cob%dna0(icv1, is) = cob%dna0(icv1, is) + pl%na(icv1, is)*&
+&               tempb5
+              plb%na(icv1, is) = plb%na(icv1, is) + co%dna0(icv1, is)*&
+&               tempb5
+              conparb(is, ib, 2) = conparb(is, ib, 2) - co%dna0(icv1, is&
+&               )*pl%na(icv1, is)*tempb5/conpar(is, ib, 2)
+            END IF
+            conparb(is, ib, 1) = conparb(is, ib, 1) + pl%na(icv1, is)*&
+&             t0b
+            plb%na(icv1, is) = plb%na(icv1, is) + conpar(is, ib, 1)*t0b
+          END IF
+        END DO
+        CALL POPREAL8(t0, r8/8)
+        CALL POPREAL8(cs, r8/8)
+        temp7 = pz(icv1)/rz(icv1)
+        IF (temp7 .EQ. 0.D0) THEN
+          tempb7 = 0.D0
+        ELSE
+          tempb7 = csb0/(rz(icv1)*2.0*SQRT(temp7))
+        END IF
+        pzb(icv1) = pzb(icv1) + tempb7
+        rzb(icv1) = rzb(icv1) - temp7*tempb7
         CALL POPINTEGER4(ifc)
         CALL POPINTEGER4(icv2)
         CALL POPINTEGER4(icv1)
       END DO
-    ELSE IF (branch .EQ. 3) THEN
-      CALL POPINTEGER4(ad_to104)
-      DO ibc=ad_to104,1,-1
+    ELSE IF (branch .EQ. 4) THEN
+      t1b = 0.D0
+      CALL POPINTEGER4(ad_to105)
+      DO ibc=ad_to105,1,-1
+        icv1 = mpg%bccv(mpg%bccvp(ib, 1)+ibc-1, 1)
+        srwb%szt0(icv1, 1) = 0.D0
+        ifc = mpg%cvfc(mpg%cvfcp(icv1, 1))
+        tempb7 = vbig*ne00*geo%fcs(ifc)*srwb%szt0(icv1, 0)
+        srwb%szt0(icv1, 0) = 0.D0
+        plb%zt(icv2) = plb%zt(icv2) + tempb7
+        t1b = t1b - tempb7
+        CALL POPINTEGER4(ifc)
         CALL POPINTEGER4(icv2)
+        CALL POPINTEGER4(icv1)
       END DO
+      t1b = t1b/t0
       DO ib0=nbc,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
-          CALL POPINTEGER4(ad_to103)
-          DO ibc0=ad_to103,1,-1
+          CALL POPINTEGER4(ad_to104)
+          DO ibc0=ad_to104,1,-1
+            plb%zt(icv2) = plb%zt(icv2) + geo%cvvol(icv2)*t1b
             CALL POPINTEGER4(icv2)
           END DO
         END IF
         CALL POPINTEGER4(icv1)
       END DO
+      CALL POPREAL8(t0, r8/8)
     END IF
     CALL POPCONTROL4B(branch)
     IF (branch .LT. 5) THEN
@@ -9304,7 +9456,6 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             CALL POPREAL8(result10, r8/8)
             CALL POPREAL8(cutll, r8/8)
             CALL POPREAL8(cutlo, r8/8)
-            CALL POPREAL4(small_r4_constant, r4/8)
             CALL POPBOOLEAN(b2mod_math_initialised)
             CALL EXPU2_B(min14, min14b, result10b)
             CALL POPCONTROL1B(branch)
@@ -10347,6 +10498,7 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           CALL POPINTEGER4(icv2)
           CALL POPINTEGER4(icv1)
         END DO
+        CALL POPCONTROL1B(branch)
       ELSE IF (branch .EQ. 8) THEN
         t2b = 0.D0
         CALL POPINTEGER4(ad_to56)
@@ -11058,7 +11210,6 @@ SUBROUTINE B2STBC_PHYS_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
             CALL POPREAL8(result10, r8/8)
             CALL POPREAL8(cutll, r8/8)
             CALL POPREAL8(cutlo, r8/8)
-            CALL POPREAL4(small_r4_constant, r4/8)
             CALL POPBOOLEAN(b2mod_math_initialised)
             CALL EXPU2_B(min8, min8b, result10b)
             CALL POPCONTROL1B(branch)

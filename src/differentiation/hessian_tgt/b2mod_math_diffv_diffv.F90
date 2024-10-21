@@ -23,7 +23,7 @@ MODULE B2MOD_MATH_DIFFV_DIFFV
   IMPLICIT NONE
 !
 !
-  REAL(kind=r8), SAVE :: cutll, cutlo
+  REAL(kind=r8), SAVE :: cutll, cutlo, cutl4
   REAL(kind=r8), DIMENSION(nbdirsmax0), SAVE :: cutlod0
   REAL(kind=r8), DIMENSION(nbdirsmax), SAVE :: cutlod
   REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax), SAVE :: cutlodd
@@ -509,12 +509,12 @@ CONTAINS
     INTRINSIC EXP
     REAL(kind=r8) :: max1
     IF (.NOT.b2mod_math_initialised) CALL B2MOD_MATH_INIT()
-    IF (t0 .LT. cutll) THEN
-      max1 = cutll
+    IF (t0 .LT. cutl4) THEN
+      max1 = cutl4
     ELSE
       max1 = t0
     END IF
-    expu4 = EXP(max1) + small_r4_constant
+    expu4 = EXP(max1)
     RETURN
   END FUNCTION EXPU4
 
@@ -1211,16 +1211,22 @@ CONTAINS
   SUBROUTINE B2MOD_MATH_INIT()
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    EXTERNAL MACHSFR
+    EXTERNAL MACHSFR, MACHSFR4
     REAL(kind=r8) :: MACHSFR
+    REAL(kind=r4) :: MACHSFR4
     INTRINSIC LOG
     INTRINSIC EXP
     INTRINSIC MAX
-    INTRINSIC TINY
+    INTRINSIC REAL
     REAL(kind=r8) :: result1
+    REAL(kind=r4) :: result10
+    REAL(kind=r4) :: arg1
+    REAL(kind=r8) :: arg10
+    REAL(kind=r4) :: x2
     REAL(kind=r8) :: x1
+    REAL(kind=r4) :: y2
     REAL(kind=r8) :: y1
-!   ..set cutll, cutlo
+!   ..set cutll, cutlo, cutl4, small_R4_constant
     result1 = MACHSFR()
     cutll = LOG(result1)
     x1 = MACHSFR()
@@ -1230,7 +1236,17 @@ CONTAINS
     ELSE
       cutlo = x1
     END IF
-    small_r4_constant = TINY(small_r4_constant)
+    result10 = MACHSFR4()
+    arg1 = LOG(result10)
+    cutl4 = REAL(arg1, r8)
+    x2 = MACHSFR4()
+    arg10 = EXP(cutl4)
+    y2 = REAL(arg10, r4)
+    IF (x2 .LT. y2) THEN
+      small_r4_constant = y2
+    ELSE
+      small_r4_constant = x2
+    END IF
     b2mod_math_initialised = .true.
     RETURN
   END SUBROUTINE B2MOD_MATH_INIT

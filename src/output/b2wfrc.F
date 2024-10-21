@@ -29,7 +29,7 @@
 *  1. purpose
 *
 *     B2WFRC writes to a formatted file a table of atomic rate
-*     coefficients that has been prepared for B2.
+*     coefficients that has been prepared for B2.5.
 *
 *
 *  3. description

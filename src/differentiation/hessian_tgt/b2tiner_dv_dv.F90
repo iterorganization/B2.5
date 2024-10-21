@@ -50,7 +50,7 @@ SUBROUTINE B2TINER_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, &
 !.end b2tiner
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -265,7 +265,7 @@ SUBROUTINE B2TINER_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
 !.end b2tiner
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
@@ -411,7 +411,7 @@ SUBROUTINE B2TINER_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na&
 !.end b2tiner
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg

@@ -95,36 +95,38 @@
 !                stated.dv.wadia:in-out stated.dv.vaecrb:in-out
 !                stated.dv.vedia:in-out stated.dv.veecrb:in-out
 !                stated.sr.sch:in-out stated.sr.she:in-out stated.sr.shi:in-out
-!                stated.sr.shn:in-out stated.sr.skt:in-out stated.sr.smo:in-out
-!                stated.sr.smq:in-out stated.sr.sna:in-out stated.sr.shedt:in-out
-!                stated.sr.sktdt:in-out stated.sr.shidt:in-out
+!                stated.sr.shn:in-out stated.sr.skt:in-out stated.sr.szt:in-out
+!                stated.sr.smo:in-out stated.sr.smq:in-out stated.sr.sna:in-out
+!                stated.sr.shedt:in-out stated.sr.sktdt:in-out
+!                stated.sr.sztdt:in-out stated.sr.shidt:in-out
 !                stated.sr.shndt:in-out stated.sr.schdt:in-out
 !                stated.sr.smodt:in-out stated.sr.snadt:in-out
 !                stated.srw.sch0:in-out stated.srw.she0:in-out
 !                stated.srw.shi0:in-out stated.srw.shn0:in-out
-!                stated.srw.skt0:in-out stated.srw.smo0:in-out
-!                stated.srw.smq0:in-out stated.srw.sna0:in-out
-!                stated.rt.rlcx:in-out stated.rt.rlqa:in-out stated.rt.rlra:in-out
-!                stated.rt.rlsa:in-out stated.rt.rlza:in-out stated.rt.rlz2:in-out
-!                stated.rt.rlpt:in-out stated.rt.rlpi:in-out stated.rt.rlqr:in-out
-!                stated.rt.rza:in-out stated.rt.rz2:in-out stated.rt.rpt:in-out
-!                stated.rt.rpi:in-out stated.rtw.rsa:in-out stated.rtw.rra:in-out
-!                stated.rtw.rqa:in-out stated.rtw.rcx:in-out stated.rtw.rqr:in-out
-!                stated.psnl.na:in-out stated.psnl.ua:in-out stated.psnl.te:in-out
-!                stated.psnl.ti:in-out stated.psnl.tn:in-out stated.psnl.kt:in-out
-!                stated.psnl.ne:in-out stated.psnl.ni:in-out stated.psnl.kinrgy:in-out
+!                stated.srw.skt0:in-out stated.srw.szt0:in-out
+!                stated.srw.smo0:in-out stated.srw.smq0:in-out
+!                stated.srw.sna0:in-out stated.rt.rlcx:in-out stated.rt.rlqa:in-out
+!                stated.rt.rlra:in-out stated.rt.rlsa:in-out stated.rt.rlza:in-out
+!                stated.rt.rlz2:in-out stated.rt.rlpt:in-out stated.rt.rlpi:in-out
+!                stated.rt.rlqr:in-out stated.rt.rza:in-out stated.rt.rz2:in-out
+!                stated.rt.rpt:in-out stated.rt.rpi:in-out stated.rtw.rsa:in-out
+!                stated.rtw.rra:in-out stated.rtw.rqa:in-out stated.rtw.rcx:in-out
+!                stated.rtw.rqr:in-out stated.psnl.na:in-out stated.psnl.ua:in-out
+!                stated.psnl.te:in-out stated.psnl.ti:in-out stated.psnl.tn:in-out
+!                stated.psnl.kt:in-out stated.psnl.zt:in-out stated.psnl.ne:in-out
+!                stated.psnl.ni:in-out stated.psnl.kinrgy:in-out
 !                stated.psnc.na:in-out stated.psnc.ua:in-out stated.psnc.te:in-out
 !                stated.psnc.ti:in-out stated.psnc.tn:in-out stated.psnc.kt:in-out
-!                stated.psnc.ne:in-out stated.psnc.ni:in-out stated.psnc.nn:in-out
-!                stated.psnc.kinrgy:in-out stated.diag.aresco:in-out
-!                stated.diag.aresmo:in-out stated.diag.acorpa:in-out
-!                stated.diag.acorua:in-out stated.diag.rescoreg:in-out
-!                stated.diag.resmoreg:in-out stated.diag.reshereg:in-out
-!                stated.diag.reshireg:in-out state.pl.na:in-out
-!                state.pl.ua:in-out state.pl.po:in-out state.pl.te:in-out
-!                state.pl.ti:in-out state.pl.tn:in-out state.pl.kt:in-out
-!                state.pl.zt:in-out state.co.csig:in-out state.co.calf:in-out
-!                state.co.csig_an:in-out state.co.calf_an:in-out
+!                stated.psnc.zt:in-out stated.psnc.ne:in-out stated.psnc.ni:in-out
+!                stated.psnc.nn:in-out stated.psnc.kinrgy:in-out
+!                stated.diag.aresco:in-out stated.diag.aresmo:in-out
+!                stated.diag.acorpa:in-out stated.diag.acorua:in-out
+!                stated.diag.rescoreg:in-out stated.diag.resmoreg:in-out
+!                stated.diag.reshereg:in-out stated.diag.reshireg:in-out
+!                state.pl.na:in-out state.pl.ua:in-out state.pl.po:in-out
+!                state.pl.te:in-out state.pl.ti:in-out state.pl.tn:in-out
+!                state.pl.kt:in-out state.pl.zt:in-out state.co.csig:in-out
+!                state.co.calf:in-out state.co.csig_an:in-out state.co.calf_an:in-out
 !                state.co.csig_cl:in-out state.co.calf_cl:in-out
 !                state.co.csigin:in-out state.co.chve:in-out state.co.chce:in-out
 !                state.co.chce_exb:in-out state.co.chvi:in-out
@@ -610,7 +612,7 @@ PROGRAM B2MN_DV_DV
 &                state, stated0, stated, statedd, state_ext, state_extd0&
 &                , state_extd, state_avg, state_avgd, npar_opt, npar_opt)
   CALL XERTST(npar_opt .LE. nbdirsmax, &
-&       'Increase size of nbdirsmax in diffsizes.F')
+&       'Increase size of nbdirsmax in b2mod_diffsizes.F')
   CALL XERTST(switch%b2optim_namelist .EQ. 1, &
 &       'Sensitivity calculation needs b2optim_namelist=1!')
   arg1 = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
@@ -956,7 +958,7 @@ SUBROUTINE B2MN_DV_NODIFF()
   CALL B2MN_INIT_DV(switch, switchd, geo, geod, mpg, mpgd, state, stated&
 &             , state_ext, state_extd, state_avg, state_avgd, npar_opt)
   CALL XERTST(npar_opt .LE. nbdirsmax, &
-&       'Increase size of nbdirsmax in diffsizes.F')
+&       'Increase size of nbdirsmax in b2mod_diffsizes.F')
   CALL XERTST(switch%b2optim_namelist .EQ. 1, &
 &       'Sensitivity calculation needs b2optim_namelist=1!')
 ! default case, valid for any species mix

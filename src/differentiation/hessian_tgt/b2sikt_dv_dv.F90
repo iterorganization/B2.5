@@ -98,7 +98,7 @@ SUBROUTINE B2SIKT_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
 !.end b2sikt
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV0), INTENT(IN) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
@@ -145,6 +145,7 @@ SUBROUTINE B2SIKT_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
 !
 !-----------------------------------------------------------------------
 !.declarations
+!
 !   ..local variables
   INTEGER :: ic
 !
@@ -197,8 +198,8 @@ SUBROUTINE B2SIKT_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
   INTRINSIC LOG
   EXTERNAL XERRAB
   INTRINSIC MOD
-  REAL(kind=r8), DIMENSION(ncv) :: abs0
-  REAL(kind=r8) :: abs1
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
+  REAL(kind=r8) :: dabs1
   REAL(kind=r8) :: min1
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: min1d0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
@@ -306,7 +307,7 @@ SUBROUTINE B2SIKT_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
   IF (switch%b2sikt_model .EQ. 1) THEN
 !wdk  KU Leuven k model
 !wdk  source : driven by ExB energy flux
-!wdk  sink   : 
+!wdk  sink   :
 !wdk   - ad hoc term, ~1/(connection length), as a proxy for enhanced
 !wdk     parallel transport due to parallel current fluctuations
     rzdd(:, :, :) = 0.0_8
@@ -370,14 +371,14 @@ SUBROUTINE B2SIKT_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
       END DO
       csfs = cs
       connfs = geo%cvconn
-      WHERE (rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) 
-        abs0 = rza(:, ismain)*qe*geo%cvbb(:, 3)
+      WHERE (rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) 
+        dabs0 = rza(:, ismain)*qe*geo%cvbb(:, 3)
       ELSEWHERE
-        abs0 = -(rza(:, ismain)*qe*geo%cvbb(:, 3))
+        dabs0 = -(rza(:, ismain)*qe*geo%cvbb(:, 3))
       END WHERE
       arg11(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
       result1 = SQRT(arg11(:))
-      rhol = result1/abs0
+      rhol = result1/dabs0
     ELSE
       csfsdd(:, :, :) = 0.0_8
       DO nd=1,nbdirs
@@ -393,14 +394,14 @@ SUBROUTINE B2SIKT_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd0, &
       connfs = geo%cvconn(omp(icsepomp))
       IF (rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) .GE. &
 &         0.) THEN
-        abs1 = rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3)
+        dabs1 = rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3)
       ELSE
-        abs1 = -(rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3&
-&         ))
+        dabs1 = -(rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), &
+&         3))
       END IF
       arg12 = 2.0_R8*pl%ti(omp(icsepomp))*(am(ismain)*mp)
       result10 = SQRT(arg12)
-      rhol = result10/abs1
+      rhol = result10/dabs1
     END IF
     result11 = MINVAL(connfs(1:mpg%nci))
     CALL XERTST(result11 .GT. 0.0_R8, ' connfs in b2sikt <=0!!')
@@ -1266,7 +1267,7 @@ SUBROUTINE B2SIKT_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
 !.end b2sikt
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -1298,6 +1299,7 @@ SUBROUTINE B2SIKT_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
 !
 !-----------------------------------------------------------------------
 !.declarations
+!
 !   ..local variables
   INTEGER :: ic
 !
@@ -1326,8 +1328,8 @@ SUBROUTINE B2SIKT_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
   INTRINSIC LOG
   EXTERNAL XERRAB
   INTRINSIC MOD
-  REAL(kind=r8), DIMENSION(ncv) :: abs0
-  REAL(kind=r8) :: abs1
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
+  REAL(kind=r8) :: dabs1
   REAL(kind=r8) :: min1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
   INTEGER :: arg1
@@ -1410,7 +1412,7 @@ SUBROUTINE B2SIKT_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
   IF (switch%b2sikt_model .EQ. 1) THEN
 !wdk  KU Leuven k model
 !wdk  source : driven by ExB energy flux
-!wdk  sink   : 
+!wdk  sink   :
 !wdk   - ad hoc term, ~1/(connection length), as a proxy for enhanced
 !wdk     parallel transport due to parallel current fluctuations
     CALL B2XPRZ_DV_NODIFF(ncv, ns, mp, am, pl%na, pld%na, rz, rzd, &
@@ -1434,14 +1436,14 @@ SUBROUTINE B2SIKT_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
       END DO
       csfs = cs
       connfs = geo%cvconn
-      WHERE (rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) 
-        abs0 = rza(:, ismain)*qe*geo%cvbb(:, 3)
+      WHERE (rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) 
+        dabs0 = rza(:, ismain)*qe*geo%cvbb(:, 3)
       ELSEWHERE
-        abs0 = -(rza(:, ismain)*qe*geo%cvbb(:, 3))
+        dabs0 = -(rza(:, ismain)*qe*geo%cvbb(:, 3))
       END WHERE
       arg11(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
       result1 = SQRT(arg11(:))
-      rhol = result1/abs0
+      rhol = result1/dabs0
     ELSE
       DO nd=1,nbdirs
         csfsd(nd, :) = csd(nd, omp(icsepomp))
@@ -1450,14 +1452,14 @@ SUBROUTINE B2SIKT_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
       connfs = geo%cvconn(omp(icsepomp))
       IF (rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) .GE. &
 &         0.) THEN
-        abs1 = rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3)
+        dabs1 = rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3)
       ELSE
-        abs1 = -(rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3&
-&         ))
+        dabs1 = -(rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), &
+&         3))
       END IF
       arg12 = 2.0_R8*pl%ti(omp(icsepomp))*(am(ismain)*mp)
       result10 = SQRT(arg12)
-      rhol = result10/abs1
+      rhol = result10/dabs1
     END IF
     result11 = MINVAL(connfs(1:mpg%nci))
     CALL XERTST(result11 .GT. 0.0_R8, ' connfs in b2sikt <=0!!')
@@ -1899,7 +1901,7 @@ SUBROUTINE B2SIKT_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
 !.end b2sikt
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -1921,6 +1923,7 @@ SUBROUTINE B2SIKT_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
 !
 !-----------------------------------------------------------------------
 !.declarations
+!
 !   ..local variables
   INTEGER :: ic
 !
@@ -1938,8 +1941,8 @@ SUBROUTINE B2SIKT_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
   INTRINSIC LOG
   EXTERNAL XERRAB
   INTRINSIC MOD
-  REAL(kind=r8), DIMENSION(ncv) :: abs0
-  REAL(kind=r8) :: abs1
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
+  REAL(kind=r8) :: dabs1
   REAL(kind=r8) :: min1
   INTEGER :: arg1
   REAL(kind=r8), DIMENSION(ncv) :: arg10
@@ -2007,7 +2010,7 @@ SUBROUTINE B2SIKT_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
   IF (switch%b2sikt_model .EQ. 1) THEN
 !wdk  KU Leuven k model
 !wdk  source : driven by ExB energy flux
-!wdk  sink   : 
+!wdk  sink   :
 !wdk   - ad hoc term, ~1/(connection length), as a proxy for enhanced
 !wdk     parallel transport due to parallel current fluctuations
     CALL B2XPRZ_NODIFF_NODIFF(ncv, ns, mp, am, pl%na, rz, st_ext)
@@ -2018,27 +2021,27 @@ SUBROUTINE B2SIKT_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
     IF (switch%b2sikt_sheath_local .EQ. 1) THEN
       csfs = cs
       connfs = geo%cvconn
-      WHERE (rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) 
-        abs0 = rza(:, ismain)*qe*geo%cvbb(:, 3)
+      WHERE (rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) 
+        dabs0 = rza(:, ismain)*qe*geo%cvbb(:, 3)
       ELSEWHERE
-        abs0 = -(rza(:, ismain)*qe*geo%cvbb(:, 3))
+        dabs0 = -(rza(:, ismain)*qe*geo%cvbb(:, 3))
       END WHERE
       arg11(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
       result1 = SQRT(arg11(:))
-      rhol = result1/abs0
+      rhol = result1/dabs0
     ELSE
       csfs = cs(omp(icsepomp))
       connfs = geo%cvconn(omp(icsepomp))
       IF (rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) .GE. &
 &         0.) THEN
-        abs1 = rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3)
+        dabs1 = rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3)
       ELSE
-        abs1 = -(rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3&
-&         ))
+        dabs1 = -(rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), &
+&         3))
       END IF
       arg12 = 2.0_R8*pl%ti(omp(icsepomp))*(am(ismain)*mp)
       result10 = SQRT(arg12)
-      rhol = result10/abs1
+      rhol = result10/dabs1
     END IF
     result11 = MINVAL(connfs(1:mpg%nci))
     CALL XERTST(result11 .GT. 0.0_R8, ' connfs in b2sikt <=0!!')

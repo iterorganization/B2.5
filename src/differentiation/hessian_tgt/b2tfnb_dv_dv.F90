@@ -36,12 +36,11 @@
 !                dv.fna_he:in dv.fnapsch:in dv.fna_fcor:in dv.fna_exb:in
 !                dv.kinrgy:in dv.flob:in dv.conb:in dv.pcca:in
 !                dv.pa:in dv.uadia:in dv.vadia:in dv.wadia:in dv.vaecrb:in
-!                dv.facdrift:in dv.fac_exb:in geo.cvonedbsq:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in geo.fcbzb:in
-!                geo.vxvol:in geo.vxonedbsq:in rtd.rza:in rt.rza:in
-!                dvd.fchvispar:in dvd.fchvisper:in dvd.fchvisq:in
+!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
+!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
+!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in
+!                geo.fcbzb:in geo.vxvol:in geo.vxonedbsq:in rtd.rza:in
+!                rt.rza:in dvd.fchvispar:in dvd.fchvisper:in dvd.fchvisq:in
 !                dvd.fchinert:in dvd.fchanml:in dvd.fchviskt:in
 !                dvd.fna:in dvd.fna_mdf:in dvd.fna_32:in dvd.fna_53:in
 !                dvd.fna_he:in dvd.fnapsch:in dvd.fna_fcor:in dvd.fna_exb:in

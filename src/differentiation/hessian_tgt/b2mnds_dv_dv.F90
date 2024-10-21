@@ -142,7 +142,7 @@ SUBROUTINE B2MNDS_DV_DV(ninp, nout, ncv, nfc, ns, nsd0, nsd, ns0, switch&
   EXTERNAL B2RUCP_NODIFF_NODIFF, B2RURC_NODIFF_NODIFF, B2RUSR, B2RFLB, &
 &     B2RFCP_NODIFF_NODIFF, B2XXID, B2MWQ0_NODIFF_NODIFF, &
 &     B2WFCP_NODIFF_NODIFF, B2WUCP_NODIFF_NODIFF, B2RUZD_NODIFF_NODIFF, &
-&     B2WUZD_NODIFF0, B2XVCP_NODIFF_NODIFF
+&     B2WUZD_NODIFF, B2XVCP_NODIFF_NODIFF
   INTRINSIC INDEX
   INTRINSIC TRIM
   LOGICAL :: result1
@@ -312,17 +312,17 @@ SUBROUTINE B2MNDS_DV_DV(ninp, nout, ncv, nfc, ns, nsd0, nsd, ns0, switch&
 !xpb
   CALL CFWUIN(nout(2), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(2), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF0(nout(2), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD_NODIFF(nout(2), newversion, ns, zamin, zamax, zn, am)
   CALL CFVERW(nout(3), newversion)
 !xpb
   CALL CFWUIN(nout(3), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(3), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF0(nout(3), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD_NODIFF(nout(3), newversion, ns, zamin, zamax, zn, am)
   CALL CFVERW(nout(5), newversion)
 !xpb
   CALL CFWUIN(nout(5), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(5), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF0(nout(5), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD_NODIFF(nout(5), newversion, ns, zamin, zamax, zn, am)
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
@@ -500,7 +500,7 @@ SUBROUTINE B2MNDS_DV_NODIFF(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, &
   EXTERNAL B2RUCP_NODIFF_NODIFF, B2RURC_NODIFF_NODIFF, B2RUSR, B2RFLB, &
 &     B2RFCP_NODIFF_NODIFF, B2XXID, B2MWQ0_NODIFF_NODIFF, &
 &     B2WFCP_NODIFF_NODIFF, B2WUCP_NODIFF_NODIFF, B2RUZD_NODIFF_NODIFF, &
-&     B2WUZD_NODIFF0, B2XVCP_NODIFF_NODIFF
+&     B2WUZD_NODIFF, B2XVCP_NODIFF_NODIFF
   INTRINSIC INDEX
   INTRINSIC TRIM
   LOGICAL :: result1
@@ -663,17 +663,17 @@ SUBROUTINE B2MNDS_DV_NODIFF(ninp, nout, ncv, nfc, ns, nsd, ns0, switch, &
 !xpb
   CALL CFWUIN(nout(2), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(2), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF0(nout(2), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD_NODIFF(nout(2), newversion, ns, zamin, zamax, zn, am)
   CALL CFVERW(nout(3), newversion)
 !xpb
   CALL CFWUIN(nout(3), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(3), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF0(nout(3), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD_NODIFF(nout(3), newversion, ns, zamin, zamax, zn, am)
   CALL CFVERW(nout(5), newversion)
 !xpb
   CALL CFWUIN(nout(5), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(5), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF0(nout(5), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD_NODIFF(nout(5), newversion, ns, zamin, zamax, zn, am)
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
@@ -840,7 +840,7 @@ SUBROUTINE B2MNDS_NODIFF_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
   EXTERNAL B2RUCP_NODIFF_NODIFF, B2RURC_NODIFF_NODIFF, B2RUSR, B2RFLB, &
 &     B2RFCP_NODIFF_NODIFF, B2XXID, B2MWQ0_NODIFF_NODIFF, &
 &     B2WFCP_NODIFF_NODIFF, B2WUCP_NODIFF_NODIFF, B2RUZD_NODIFF_NODIFF, &
-&     B2WUZD_NODIFF0, B2XVCP_NODIFF_NODIFF
+&     B2WUZD_NODIFF, B2XVCP_NODIFF_NODIFF
   INTRINSIC INDEX
   INTRINSIC TRIM
   LOGICAL :: result1
@@ -1002,17 +1002,17 @@ SUBROUTINE B2MNDS_NODIFF_NODIFF(ninp, nout, ncv, nfc, ns, ns0, switch)
 !xpb
   CALL CFWUIN(nout(2), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(2), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF0(nout(2), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD_NODIFF(nout(2), newversion, ns, zamin, zamax, zn, am)
   CALL CFVERW(nout(3), newversion)
 !xpb
   CALL CFWUIN(nout(3), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(3), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF0(nout(3), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD_NODIFF(nout(3), newversion, ns, zamin, zamax, zn, am)
   CALL CFVERW(nout(5), newversion)
 !xpb
   CALL CFWUIN(nout(5), 3, idum, 'nCv,nFc,ns')
   CALL CFWUCH(nout(5), 120, lblmn, 'label')
-  CALL B2WUZD_NODIFF0(nout(5), newversion, ns, zamin, zamax, zn, am)
+  CALL B2WUZD_NODIFF(nout(5), newversion, ns, zamin, zamax, zn, am)
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !

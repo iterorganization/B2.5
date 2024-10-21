@@ -525,8 +525,8 @@ cwdk  now need to recompute full diamagnetic component for ud
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1       'BCCON = 1, CONPAR(,,1) !> 0')
-            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
-            if (mpg%cvOnClosedSurface(icv)) then
+            iCv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(iCv)) then
              if(is.eq.ismain.and.switch%use_astra.ne.0) then
 #ifdef ASTRA
               CONPAR(IS,IB,1) = neb_astra                               !srv 28.07.11
@@ -605,7 +605,6 @@ cwdk  now need to recompute full diamagnetic component for ud
 *                 A MIXED BOUNDARY CONDITION
 
         case (4)
-          call xerrab ('b2stbc_phys -- BCCON = 4 not adapted for WG')
           if(ncall_b2stbc_phys.eq.0) then
             if (CONPAR(IS,IB,1).eq.0.0_R8) then
               CONPAR(IS,IB,1) = switch%b2mndr_na_min
@@ -619,8 +618,8 @@ cwdk  now need to recompute full diamagnetic component for ud
      1       'BCCON = 4, CONPAR(,,1) !> 0')
             call xertst(CONPAR(IS,IB,2).gt.0.0_R8,
      1       'BCCON = 4, CONPAR(,,2) !> 0')
-            icv = mpg%bcCv(mpg%bcCvP(ib,1),1)
-            if (mpg%cvOnClosedSurface(icv).and.ishigh)
+            iCv = mpg%bcCv(mpg%bcCvP(ib,1),1)
+            if (mpg%cvOnClosedSurface(iCv).and.ishigh)
      .       call xertst (switch%ionising_core.eq.0,
      .        'ionising_core switch usage inconsistent with BCCON = 4')
           endif
@@ -3085,7 +3084,6 @@ cxpb  and max(,,) statement for stability
 *                 A MIXED BOUNDARY CONDITION
 
         case (4)
-          call xerrab ('b2stbc_phys -- BCMOM = 4 not adapted for WG')
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'BCMOM =  4 : weak velocity ',MOMPAR(IS,IB,1),' on ',
@@ -3965,7 +3963,6 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 *                 WEAKLY A MIXED BOUNDARY CONDITION
 
       case (4)
-        call xerrab ('b2stbc_phys -- BCENE = 4 not adapted for WG')
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'BCENE =  4 : weak electron temperature ',ENEPAR(IB,1),
@@ -5823,7 +5820,6 @@ cwdk     * need to correct this BC for hybrid scheme
 *                 A MIXED BOUNDARY CONDITION
 
       case (4)
-        call xerrab ('b2stbc_phys -- BCENI = 4 not adapted for WG')
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'BCENI =  4 : weak ion temperature ',ENIPAR(IB,1),' on ',
@@ -8291,7 +8287,6 @@ c              fchi=0.0_R8
 *                 WEAKLY A MIXED BOUNDARY CONDITION
 
       case (4)
-        call xerrab ('b2stbc_phys -- BCPOT = 4 not adapted for WG')
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'BCPOT =  4 : weak potential ',POTPAR(IB,1),
@@ -8672,14 +8667,14 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
         enddo                                                           !srv 03.03.15 }
 
 * -- BCPOT=14 -- PRESCRIBE THE TOTAL CURRENT WITHOUT IMPOSING A
-*                 SPECIFIC PROFILE
+*                 SPECIFIC PROFILE. FOLLOW PROFILE OF 1st RING INSIDE.
 cwdk    Intended use: core boundary, total PF boundary,...
 cwdk    For testing purposes, use with care!
 
       case (14)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
-     .     'BCPOT = 14 : specified radial sheath potential ',
+     .     'BCPOT = 14 : specified total current ',
      1     POTPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
         endif
         US = 0.0_R8

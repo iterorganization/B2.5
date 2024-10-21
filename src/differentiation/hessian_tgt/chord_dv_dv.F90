@@ -92,6 +92,7 @@ FUNCTION CHORD_VALUE_NODIFF_NODIFF(ncv, tt, xp, yp, zp, dxp, dyp, dzp, &
   USE B2MOD_TYPES
   USE B2US_DATA_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
+  USE B2MOD_CHORD_SHIFT
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -106,8 +107,6 @@ FUNCTION CHORD_VALUE_NODIFF_NODIFF(ncv, tt, xp, yp, zp, dxp, dyp, dzp, &
   INTEGER :: icv
   LOGICAL :: found
 !
-  REAL(kind=r8) :: rshift, zshift, r0, z0, a0, b0, tt0
-  COMMON /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
   INTRINSIC SQRT, SIN, COS, ABS, ATAN2
   EXTERNAL CHORD_FIND_NODIFF_NODIFF, XERTST
   REAL(kind=r8) :: abs0
@@ -200,6 +199,7 @@ SUBROUTINE CHORD_FIND_NODIFF_NODIFF(mpg, geo, xp, yp, zp, found, cvpos)
   USE B2MOD_TYPES
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
+  USE B2MOD_CHORD_SHIFT
   USE B2MOD_SUBSYS
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -230,9 +230,6 @@ SUBROUTINE CHORD_FIND_NODIFF_NODIFF(mpg, geo, xp, yp, zp, found, cvpos)
   INTEGER :: irmin, irmax, izmin, izmax
   REAL(kind=r8) :: r1, r2, z1, z2
   INTEGER :: xmin(lngcov), xmax(lngcov), ymin, ymax
-!
-  REAL(kind=r8) :: rshift, zshift, r0, z0, a0, b0, tt0
-  COMMON /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 !
   EXTERNAL XERRAB
   INTRINSIC MINVAL

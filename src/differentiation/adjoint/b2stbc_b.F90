@@ -15,11 +15,11 @@
 !                *(dv.ne) *(dv.ni) *(dv.vadia) *(dv.vaecrb) *(dv.vedia)
 !                *(dv.veecrb) *(psnl.na) *(psnl.ne) *(psnl.ni)
 !                *(psnl.kinrgy) *(rt.rza) *(srw.sch0) *(srw.she0)
-!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.smo0)
-!                *(srw.sna0) switch.b2tfhi_fflokt *(co.chce) *(co.chci)
-!                *(co.cdna) *(co.hce0) *(co.hci0) *(co.hcn0) *(co.dpa0)
-!                *(co.dna0) *(pl.na) *(pl.ua) *(pl.po) *(pl.te)
-!                *(pl.ti) *(pl.kt)
+!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.szt0)
+!                *(srw.smo0) *(srw.sna0) switch.b2tfhi_fflokt switch.b2tfhi_fflozt
+!                *(co.chce) *(co.chci) *(co.cdna) *(co.hce0) *(co.hci0)
+!                *(co.hcn0) *(co.dpa0) *(co.dna0) *(pl.na) *(pl.ua)
+!                *(pl.po) *(pl.te) *(pl.ti) *(pl.kt) *(pl.zt)
 !   with respect to varying inputs: fb_target saved_fb_actuator
 !                fb_const fb_current fb_prev fb_rescale userfluxparm
 !                conpar mompar enepar enipar potpar enkpar charge_frac
@@ -33,11 +33,11 @@
 !                *(dv.ne) *(dv.ni) *(dv.vadia) *(dv.vaecrb) *(dv.vedia)
 !                *(dv.veecrb) *(psnl.na) *(psnl.ne) *(psnl.ni)
 !                *(psnl.kinrgy) *(rt.rza) *(srw.sch0) *(srw.she0)
-!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.smo0)
-!                *(srw.sna0) switch.b2tfhi_fflokt *(co.chce) *(co.chci)
-!                *(co.cdna) *(co.hce0) *(co.hci0) *(co.hcn0) *(co.dpa0)
-!                *(co.dna0) *(pl.na) *(pl.ua) *(pl.po) *(pl.te)
-!                *(pl.ti) *(pl.kt)
+!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.szt0)
+!                *(srw.smo0) *(srw.sna0) switch.b2tfhi_fflokt switch.b2tfhi_fflozt
+!                *(co.chce) *(co.chci) *(co.cdna) *(co.hce0) *(co.hci0)
+!                *(co.hcn0) *(co.dpa0) *(co.dna0) *(pl.na) *(pl.ua)
+!                *(pl.po) *(pl.te) *(pl.ti) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: psnc.na:in psnc.ne:in psnc.ni:in
 !                psnc.fna:in psnc.kinrgy:in dv.fch:in dv.fch_p:in
 !                dv.fchdia:in dv.fchin:in dv.fchvispar:in dv.fchvisper:in
@@ -165,6 +165,7 @@ SUBROUTINE B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb&
   REAL(r8) :: dummydiffb3
   REAL(r8) :: dummydiffb4
   REAL(r8) :: dummydiffb5
+  REAL(r8) :: dummydiffb6
   REAL(kind=r8), DIMENSION(nCv) :: dummyzerodiffb
   REAL(kind=r8), DIMENSION(nCv) :: dummyzerodiffb0
   REAL(kind=r8), DIMENSION(nCv) :: dummyzerodiffb1
@@ -196,6 +197,8 @@ SUBROUTINE B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb&
   CALL SFILL_FWD(arg1, 0.0_R8, srw%sch0, srwb%sch0, 1)
   arg1 = ncv*4
   CALL SFILL_FWD(arg1, 0.0_R8, srw%skt0, srwb%skt0, 1)
+  arg1 = ncv*4
+  CALL SFILL_FWD(arg1, 0.0_R8, srw%szt0, srwb%szt0, 1)
 !
 ! ..compute standard form volume sources
 !   (This code placed here for want of a better location)
@@ -337,6 +340,8 @@ SUBROUTINE B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb&
     CALL B2SAXPY_BWD(ncv, switch%sna0ep, geo%cvvol, dummyzerodiffb, 1, &
 &              srw%sna0(1, 0, is), srwb%sna0(1, 0, is), 1)
   END DO
+  CALL SFILL_BWD(arg1, 0.0_R8, dummydiffb6, srw%szt0, srwb%szt0, 1)
+  arg1 = ncv*4
   CALL SFILL_BWD(arg1, 0.0_R8, dummydiffb5, srw%skt0, srwb%skt0, 1)
   arg1 = ncv*4
   CALL SFILL_BWD(arg1, 0.0_R8, dummydiffb4, srw%sch0, srwb%sch0, 1)

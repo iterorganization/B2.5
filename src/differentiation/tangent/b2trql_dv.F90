@@ -46,7 +46,7 @@ SUBROUTINE B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd&
 !.end b2trql
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -206,7 +206,7 @@ SUBROUTINE B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, pl, dv, st_ext&
 !.end b2trql
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg

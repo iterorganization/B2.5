@@ -10,7 +10,8 @@
 !                *(dv.fna_fcor) *(dv.fna_eir) *(dv.kinrgy) *(dv.ne)
 !                *(psnl.na) *(psnl.ne) *(psnl.ni) *(psnl.kinrgy)
 !                *(srw.sch0) *(srw.she0) *(srw.shi0) *(srw.shn0)
-!                *(srw.skt0) *(srw.smo0) *(srw.sna0) *(pl.na)
+!                *(srw.skt0) *(srw.szt0) *(srw.smo0) *(srw.sna0)
+!                *(pl.na)
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar userfluxparm fb_target fb_prev fb_current
 !                fb_const charge_frac saved_fb_actuator fb_rescale
@@ -24,11 +25,11 @@
 !                *(dv.ne) *(dv.ni) *(dv.vadia) *(dv.vaecrb) *(dv.vedia)
 !                *(dv.veecrb) *(psnl.na) *(psnl.ne) *(psnl.ni)
 !                *(psnl.kinrgy) *(rt.rza) *(srw.sch0) *(srw.she0)
-!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.smo0)
-!                *(srw.sna0) switch.b2tfhi_fflokt *(co.chce) *(co.chci)
-!                *(co.cdna) *(co.hce0) *(co.hci0) *(co.hcn0) *(co.dpa0)
-!                *(co.dna0) *(pl.na) *(pl.ua) *(pl.po) *(pl.te)
-!                *(pl.ti) *(pl.kt)
+!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.szt0)
+!                *(srw.smo0) *(srw.sna0) switch.b2tfhi_fflokt switch.b2tfhi_fflozt
+!                *(co.chce) *(co.chci) *(co.cdna) *(co.hce0) *(co.hci0)
+!                *(co.hcn0) *(co.dpa0) *(co.dna0) *(pl.na) *(pl.ua)
+!                *(pl.po) *(pl.te) *(pl.ti) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: psnc.na:in psnc.ne:in psnc.ni:in
 !                psnc.fna:in psnc.kinrgy:in dv.fch:in dv.fch_p:in
 !                dv.fchdia:in dv.fchin:in dv.fchvispar:in dv.fchvisper:in
@@ -164,9 +165,10 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd3
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd4
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd5
-  REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd6
+  REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd6
   REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd7
   REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd8
+  REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd9
   INTEGER :: nbdirs
 !   ..initialisation
 !-----------------------------------------------------------------------
@@ -287,27 +289,31 @@ SUBROUTINE B2STBC_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
   CALL SFILL_DV(arg1, 0.0_R8, dummyzerodiffd5, srw%skt0, srwd%skt0, 1, &
 &         nbdirs)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0_R8, srw%szt0, 1)
+  DO nd=1,nbdirsmax
+    dummyzerodiffd6(nd) = 0.D0
+  END DO
+  CALL SFILL_DV(arg1, 0.0_R8, dummyzerodiffd6, srw%szt0, srwd%szt0, 1, &
+&         nbdirs)
 !
 ! ..compute standard form volume sources
 !   (This code placed here for want of a better location)
 !   ..low-level particle source
   DO is=0,ns-1
     DO nd=1,nbdirsmax
-      dummyzerodiffd6(nd, :) = 0.D0
+      dummyzerodiffd7(nd, :) = 0.D0
     END DO
-    CALL B2SAXPY_DV(ncv, switch%sna0ep, geo%cvvol, dummyzerodiffd6, 1, &
+    CALL B2SAXPY_DV(ncv, switch%sna0ep, geo%cvvol, dummyzerodiffd7, 1, &
 &             srw%sna0(1, 0, is), srwd%sna0(:, 1, 0, is), 1, nbdirs)
   END DO
   DO nd=1,nbdirsmax
-    dummyzerodiffd7(nd, :) = 0.D0
-  END DO
-  CALL B2SAXPY_DV(ncv, switch%she0ep, geo%cvvol, dummyzerodiffd7, 1, srw&
-&           %she0(1, 0), srwd%she0(:, 1, 0), 1, nbdirs)
-  DO nd=1,nbdirsmax
     dummyzerodiffd8(nd, :) = 0.D0
   END DO
-  CALL B2SAXPY_DV(ncv, switch%shi0ep, geo%cvvol, dummyzerodiffd8, 1, srw&
+  CALL B2SAXPY_DV(ncv, switch%she0ep, geo%cvvol, dummyzerodiffd8, 1, srw&
+&           %she0(1, 0), srwd%she0(:, 1, 0), 1, nbdirs)
+  DO nd=1,nbdirsmax
+    dummyzerodiffd9(nd, :) = 0.D0
+  END DO
+  CALL B2SAXPY_DV(ncv, switch%shi0ep, geo%cvvol, dummyzerodiffd9, 1, srw&
 &           %shi0(1, 0), srwd%shi0(:, 1, 0), 1, nbdirs)
 !
   IF (switch%b2stbc_boundary_namelist .GE. 1) THEN

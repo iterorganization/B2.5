@@ -17,7 +17,6 @@
 !
 MODULE B2US_FEEDBACK_DIFFV_DIFFV
   USE B2MOD_TYPES
-  USE B2MOD_RATES
   USE B2MOD_INDIRECT_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
@@ -498,10 +497,10 @@ CONTAINS
         IF (nesepm_istra .LE. 0 .AND. crcstra(istrai) .EQ. 'C') &
 &         nesepm_istra = istrai
       END DO
-      IF ((((((ndes .GT. 0.0_R8 .OR. nesepm_pfr .GT. 0.0_R8) .OR. &
+      IF (((((((ndes .GT. 0.0_R8 .OR. nesepm_pfr .GT. 0.0_R8) .OR. &
 &         private_flux_puff .GT. 0.0_R8) .OR. nesepm_sol .GT. 0.0_R8) &
 &         .OR. volrec_sol .GT. 0.0_R8) .OR. ndes_sol .GT. 0.0_R8) .OR. &
-&         nepedm_sol .GT. 0.0_R8) THEN
+&         nepedm_sol .GT. 0.0_R8) .AND. switch%use_eirene .EQ. 1) THEN
         icount = 0
         DO istrai=1,nstrat
           IF (crcstra(istrai) .EQ. 'C' .AND. species_start(istrai) .LE. &
@@ -818,7 +817,8 @@ CONTAINS
 &         'b2mod_feedback: increase size of DEF_NATM')
 !
     DO ifb=1,nfb
-      IF (fb_actuator(ifb) .EQ. 1) THEN
+      IF (.NOT.(fb_actuator(ifb) .NE. 1 .OR. switch%use_eirene .EQ. 0)) &
+&     THEN
         IF (fb_istra(ifb) .GT. 0) THEN
           CALL XERTST(fb_istra(ifb) .LE. nstrat, &
 &               'faulty internal parameter fb_istra')
@@ -1083,7 +1083,7 @@ CONTAINS
 !  Hint: nCv should be the size of dimension 1 of array temp
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ncv, nfc, ns, ismain
+    INTEGER, INTENT(IN) :: ncv, nfc, ns, ismain
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
@@ -3404,7 +3404,7 @@ CONTAINS
 !  Hint: nCv should be the size of dimension 1 of array temp
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ncv, nfc, ns, ismain
+    INTEGER, INTENT(IN) :: ncv, nfc, ns, ismain
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
@@ -4735,7 +4735,7 @@ CONTAINS
     IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ncv, nfc, ns, ismain
+    INTEGER, INTENT(IN) :: ncv, nfc, ns, ismain
     TYPE(SWITCHES), INTENT(IN) :: switch
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
