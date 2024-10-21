@@ -2211,6 +2211,7 @@ CONTAINS
     USE B2MOD_B2CMFS, ONLY : isymm
     USE B2MOD_SWITCHES_DIFFV_DIFFV
     USE B2US_MAP_DIFFV_DIFFV
+!  Hint: mpg%nFs should be the size of dimension 1 of array fspsi
 !  Hint: ISIZE1OFresult1 should be the size of dimension 1 of array result1
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -2218,7 +2219,7 @@ CONTAINS
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(GEOMETRY), INTENT(INOUT) :: gm
     INTEGER :: i, j, k, l, ncv, nfc, nvx, nfx, icv, ifc, ift, ivx, incv&
-&   , ixpt, ifc1, ifc2, ivx1, ivx2, i1, i2, inv_dist(mpg%nvx), vv(2)
+&   , ixpt, ifc1, ifc2, ivx1, ivx2, i1, i2, inv_dist(mpg%nvx)
     INTEGER :: count_up, count_down, count_eq
     INTEGER, ALLOCATABLE :: old_face_list(:), verts(:)
     REAL(kind=r8) :: hzconst, r0, z0, t0, dux, duy, du, sbf, psi1, psi2&
@@ -2232,12 +2233,11 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC REAL
     INTRINSIC SIGN
-    INTRINSIC DABS
     INTRINSIC ANY
     INTRINSIC ALLOCATED
     REAL(kind=r8) :: x1
+    REAL(kind=r8), DIMENSION(mpg%nfs) :: dabs0
     REAL(kind=r8), DIMENSION(mpg%nfs) :: abs0
-    REAL(kind=r8), DIMENSION(mpg%nfs) :: abs1
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: arg10
@@ -2246,6 +2246,7 @@ CONTAINS
     INTEGER :: result12
     INTEGER :: result13
     REAL(r8) :: result14
+    REAL(kind=r8) :: result15
     INTEGER :: result16
     REAL(kind=r8) :: arg1
 !
@@ -2825,14 +2826,14 @@ CONTAINS
             IF (gm%vxy(mpg%tgvx(1)) .GT. gm%vxy(ivx) .OR. (gm%vxy(mpg%&
 &               tgvx(1)) .EQ. gm%vxy(ivx) .AND. gm%vxx(mpg%tgvx(1)) .GT.&
 &               gm%vxx(ivx))) gm%lsn = .false.
-            WHERE (gm%fspsi .GE. 0.0) 
-              abs0 = gm%fspsi
+            WHERE (gm%fspsi .GE. 0.) 
+              dabs0 = gm%fspsi
             ELSEWHERE
-              abs0 = -gm%fspsi
+              dabs0 = -gm%fspsi
             END WHERE
-            result1 = MAXVAL(abs0)
+            result15 = MAXVAL(dabs0)
             gm%psi_increasing = gm%fspsi(mpg%vxfs(ivx)) .LT. gm%fspsi(&
-&             mpg%vxfs(mpg%tgvx(1))) .OR. result1 .EQ. 0.0_R8
+&             mpg%vxfs(mpg%tgvx(1))) .OR. result15 .EQ. 0.0_R8
           END IF
         END DO
       ELSE IF (mpg%nnreg(0) .EQ. 4) THEN
@@ -2881,11 +2882,11 @@ CONTAINS
                 IF (mpg%vxfs(mpg%cvvx(j)) .NE. mpg%vxfs(mpg%xpt(ixpt))) &
 &               THEN
                   WHERE (gm%fspsi .GE. 0.0) 
-                    abs1 = gm%fspsi
+                    abs0 = gm%fspsi
                   ELSEWHERE
-                    abs1 = -gm%fspsi
+                    abs0 = -gm%fspsi
                   END WHERE
-                  result1 = MAXVAL(abs1)
+                  result1 = MAXVAL(abs0)
                   gm%psi_increasing = gm%fspsi(mpg%vxfs(mpg%cvvx(j))) &
 &                   .LT. gm%fspsi(mpg%vxfs(mpg%xpt(ixpt))) .OR. result1 &
 &                   .EQ. 0.0_R8

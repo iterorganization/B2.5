@@ -21,12 +21,13 @@ SUBROUTINE INTVERTEX1_NODIFF_NODIFF(ncv, nvx, nz, mpg, vxvol, centre, &
   USE B2US_MAP_DIFFV_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
+  INTEGER, INTENT(IN) :: ncv, nvx, nz
   TYPE(MAPPING), INTENT(IN) :: mpg
-  INTEGER :: ncv, nvx, nz
   REAL(kind=r8) :: vxvol(mpg%nvmxcv), centre(ncv, 0:nz), vertex(nvx, 0:&
 & nz)
   INTEGER :: is
   EXTERNAL INTVERTEX_NODIFF_NODIFF
+!
   DO is=0,nz
     CALL INTVERTEX_NODIFF_NODIFF(ncv, nvx, mpg, vxvol, centre(1, is), &
 &                          vertex(1, is))
@@ -50,7 +51,7 @@ SUBROUTINE INTVERTEX_DV_DV(ncv, nvx, mpg, vxvol, centre, centred0, &
   USE B2MOD_DIFFSIZES
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
   IMPLICIT NONE
-  INTEGER :: ncv, nvx
+  INTEGER, INTENT(IN) :: ncv, nvx
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: vxvol(mpg%nvmxcv), centre(ncv), vertex(nvx)
   REAL(kind=r8) :: centred0(nbdirsmax0, ncv), vertexd0(nbdirsmax0, nvx)
@@ -120,7 +121,7 @@ SUBROUTINE INTVERTEX_DV_NODIFF(ncv, nvx, mpg, vxvol, centre, centred, &
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER :: ncv, nvx
+  INTEGER, INTENT(IN) :: ncv, nvx
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: vxvol(mpg%nvmxcv), centre(ncv), vertex(nvx)
   REAL(kind=r8) :: centred(nbdirsmax, ncv), vertexd(nbdirsmax, nvx)
@@ -161,7 +162,7 @@ SUBROUTINE INTVERTEX_NODIFF_NODIFF(ncv, nvx, mpg, vxvol, centre, vertex)
   USE B2US_MAP_DIFFV_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER :: ncv, nvx
+  INTEGER, INTENT(IN) :: ncv, nvx
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: vxvol(mpg%nvmxcv), centre(ncv), vertex(nvx)
   INTEGER :: ivx, icv
@@ -191,14 +192,14 @@ END SUBROUTINE INTVERTEX_NODIFF_NODIFF
 SUBROUTINE INTVERTEX_S_DV_DV(ivx, ncv, nvx, mpg, vxvol, centre, centred0&
 & , centred, centredd, vertex, vertexd0, vertexd, vertexdd, nbdirs, &
 & nbdirs0)
-!same as intevertex, but interpolation to a single vertex iVx
+!same as intvertex, but interpolation to a single vertex iVx
   USE B2MOD_TYPES
   USE B2US_MAP_DIFFV_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
   IMPLICIT NONE
-  INTEGER :: ncv, nvx, ivx
+  INTEGER, INTENT(IN) :: ivx, ncv, nvx
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8), INTENT(IN) :: vxvol(mpg%nvmxcv), centre(ncv)
   REAL(kind=r8), INTENT(IN) :: centred0(nbdirsmax0, ncv)
@@ -211,12 +212,14 @@ SUBROUTINE INTVERTEX_S_DV_DV(ivx, ncv, nvx, mpg, vxvol, centre, centred0&
 & vertexdd
   INTEGER :: icv
   REAL(kind=r8) :: volsum
+  EXTERNAL XERTST
   INTEGER :: nd
   REAL(kind=r8) :: temp
   INTEGER :: nbdirs
   INTEGER :: nd0
   INTEGER :: nbdirs0
 !
+  CALL XERTST(0 .LT. ivx .AND. ivx .LE. nvx, 'invalid vertex index')
   vertex = 0.0_R8
   volsum = 0.0_R8
   DO nd=1,nbdirsmax
@@ -227,7 +230,7 @@ SUBROUTINE INTVERTEX_S_DV_DV(ivx, ncv, nvx, mpg, vxvol, centre, centred0&
   END DO
   vertexd0(:) = 0.0_8
   DO icv=1,mpg%vxcvp(ivx, 2)
-    volsum = volsum + 1._R8/vxvol(mpg%vxcvp(ivx, 1)+icv-1)
+    volsum = volsum + 1.0_R8/vxvol(mpg%vxcvp(ivx, 1)+icv-1)
     temp = vxvol(mpg%vxcvp(ivx, 1)+icv-1)
     DO nd=1,nbdirs
       DO nd0=nd,nbdirs0
@@ -263,13 +266,13 @@ END SUBROUTINE INTVERTEX_S_DV_DV
 !
 SUBROUTINE INTVERTEX_S_DV_NODIFF(ivx, ncv, nvx, mpg, vxvol, centre, &
 & centred, vertex, vertexd, nbdirs)
-!same as intevertex, but interpolation to a single vertex iVx
+!same as intvertex, but interpolation to a single vertex iVx
   USE B2MOD_TYPES
   USE B2US_MAP_DIFFV_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER :: ncv, nvx, ivx
+  INTEGER, INTENT(IN) :: ivx, ncv, nvx
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8), INTENT(IN) :: vxvol(mpg%nvmxcv), centre(ncv)
   REAL(kind=r8), INTENT(IN) :: centred(nbdirsmax, ncv)
@@ -277,17 +280,19 @@ SUBROUTINE INTVERTEX_S_DV_NODIFF(ivx, ncv, nvx, mpg, vxvol, centre, &
   REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(OUT) :: vertexd
   INTEGER :: icv
   REAL(kind=r8) :: volsum
+  EXTERNAL XERTST
   INTEGER :: nd
   REAL(kind=r8) :: temp
   INTEGER :: nbdirs
 !
+  CALL XERTST(0 .LT. ivx .AND. ivx .LE. nvx, 'invalid vertex index')
   vertex = 0.0_R8
   volsum = 0.0_R8
   DO nd=1,nbdirsmax
     vertexd(nd) = 0.d0
   END DO
   DO icv=1,mpg%vxcvp(ivx, 2)
-    volsum = volsum + 1._R8/vxvol(mpg%vxcvp(ivx, 1)+icv-1)
+    volsum = volsum + 1.0_R8/vxvol(mpg%vxcvp(ivx, 1)+icv-1)
     temp = vxvol(mpg%vxcvp(ivx, 1)+icv-1)
     DO nd=1,nbdirs
       vertexd(nd) = vertexd(nd) + centred(nd, mpg%vxcv(mpg%vxcvp(ivx, 1)&
@@ -307,22 +312,24 @@ END SUBROUTINE INTVERTEX_S_DV_NODIFF
 !
 FUNCTION INTVERTEX_S_NODIFF_NODIFF(ivx, ncv, nvx, mpg, vxvol, centre) &
 &RESULT (vertex)
-!same as intevertex, but interpolation to a single vertex iVx
+!same as intvertex, but interpolation to a single vertex iVx
   USE B2MOD_TYPES
   USE B2US_MAP_DIFFV_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER :: ncv, nvx, ivx
+  INTEGER, INTENT(IN) :: ivx, ncv, nvx
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8), INTENT(IN) :: vxvol(mpg%nvmxcv), centre(ncv)
   REAL(kind=r8) :: vertex
   INTEGER :: icv
   REAL(kind=r8) :: volsum
+  EXTERNAL XERTST
 !
+  CALL XERTST(0 .LT. ivx .AND. ivx .LE. nvx, 'invalid vertex index')
   vertex = 0.0_R8
   volsum = 0.0_R8
   DO icv=1,mpg%vxcvp(ivx, 2)
-    volsum = volsum + 1._R8/vxvol(mpg%vxcvp(ivx, 1)+icv-1)
+    volsum = volsum + 1.0_R8/vxvol(mpg%vxcvp(ivx, 1)+icv-1)
     vertex = vertex + centre(mpg%vxcv(mpg%vxcvp(ivx, 1)+icv-1))/vxvol(&
 &     mpg%vxcvp(ivx, 1)+icv-1)
   END DO

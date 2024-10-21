@@ -202,7 +202,7 @@ c j1 is position in arrays of first nonzero in row.
           j = icn(jj)
           themax = max(themax,abs(a(jj)))
           if (ikeep(j,2).eq.i) go to 110
-c first time column has ocurred in current row.
+c first time column has occurred in current row.
           ikeep(j,2) = i
           ikeep(j,3) = jj - move - newj1
           if (move.eq.0) go to 120

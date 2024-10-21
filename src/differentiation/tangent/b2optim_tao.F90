@@ -24,7 +24,7 @@
       PetscReal            tol
       PetscViewer          viewer
 
-      integer :: ncon, nele_jac, ipar
+      integer :: ipar
       logical :: streql, hessian
       external streql
 
@@ -44,7 +44,7 @@
       par_opt_phys = 0.0_R8
 !     Initialize derivatives of estimated parameters
 #ifdef TGT
-      call xertst(npar_opt.le.nbdirsmax, 'Increase size of nbdirsmax in diffsizes.F')
+      call xertst(npar_opt.le.nbdirsmax, 'Increase size of nbdirsmax in b2mod_diffsizes.F')
       call set_tgt_perturbation(switchd)
 #endif
 
@@ -73,18 +73,38 @@
         call TaoSetType(tao,TAOBQNLS,ierr)
         CHKERRA(ierr)
       endif
+#ifdef TAO_NEW
+      call TaoSetSolution(tao,X,ierr)
+#else
       call TaoSetInitialVector(tao,X,ierr)
+#endif
       CHKERRA(ierr)
       call TaoSetVariableBounds(tao,X_L,X_U,ierr)
       CHKERRA(ierr)
+#ifdef TAO_NEW
+      call TaoSetObjectiveAndGradient(tao,PETSC_NULL_VEC,FormFunctionGradient,0,ierr)
+#else
       call TaoSetObjectiveAndGradientRoutine(tao,FormFunctionGradient,0,ierr)
+#endif
       CHKERRA(ierr)
+#ifdef TAO_NEW
+      call TaoSetObjective(tao,FormFunction,0,ierr)
+#else
       call TaoSetObjectiveRoutine(tao,FormFunction,0,ierr)
+#endif
       CHKERRA(ierr)
+#ifdef TAO_NEW
+      call TaoSetGradient(tao,PETSC_NULL_VEC,FormGradient,0,ierr)
+#else
       call TaoSetGradientRoutine(tao,FormGradient,0,ierr)
+#endif
       CHKERRA(ierr)
       if (hessian) then
+#ifdef TAO_NEW
+        call TaoSetHessian(tao,Hess,Hess,FormHessian,0,ierr)
+#else
         call TaoSetHessianRoutine(tao,Hess,Hess,FormHessian,0,ierr)
+#endif
         CHKERRA(ierr)
       endif
 
@@ -412,7 +432,7 @@
           shift(ipar) = x_v(ishift)*par_rescale(ishift)
           write(str,"(I1)") ishift
           if (ishift.ge.10) write(str,"(I2)") ishift
-          write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', shift(ipar)
+          write(*,*) 'TAO: eval_F with x',trim(str),'= ', shift(ipar)
           ishift = ishift + 1
         endif
       end do
@@ -423,7 +443,7 @@
             corr_length(ipar) = x_v(icorr)*par_rescale(icorr)
             write(str,"(I1)") icorr
             if (icorr.ge.10) write(str,"(I2)") icorr
-            write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', corr_length(ipar)
+            write(*,*) 'TAO: eval_F with x',trim(str),'= ', corr_length(ipar)
             icorr = icorr + 1
           endif
         end do
@@ -505,7 +525,7 @@
           shift(ipar) = x_v(ishift)*par_rescale(ishift)
           write(str,"(I1)") ishift
           if (ishift.ge.10) write(str,"(I2)") ishift
-          write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', shift(ipar)
+          write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', shift(ipar)
           ishift = ishift + 1
         endif
       end do
@@ -516,7 +536,7 @@
             corr_length(ipar) = x_v(icorr)*par_rescale(icorr)
             write(str,"(I1)") icorr
             if (icorr.ge.10) write(str,"(I2)") icorr
-            write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', corr_length(ipar)
+            write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', corr_length(ipar)
             icorr = icorr + 1
           endif
         end do

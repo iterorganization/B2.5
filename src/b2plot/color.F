@@ -3,8 +3,9 @@ C ================= User-defined colors =========================
 C ===============================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_graphics
+      implicit none
       integer iw
-#include <graphics_vars.h>
 #ifdef PLPLOT
       call plscmap0n(18)
       ncol=17-2
@@ -113,8 +114,10 @@ C Done.
 c
       integer function no_available_colors(ityp)
       use b2mod_types
+      use b2mod_graphics
+      implicit none
       integer ityp
-#include <graphics_vars.h>
+
       if(partition_colors.ne.0.0_R4) then
        if(ityp.eq.0) then
         no_available_colors=int(NCOL*partition_colors)
@@ -128,9 +131,11 @@ c
 c
       function choose_color(icol,ityp)
       use b2mod_types
+      use b2mod_graphics
+      implicit none
       integer icol, ityp
-#include <graphics_vars.h>
       integer choose_color
+
       if(partition_colors.ne.0.0_R4) then
        if(ityp.eq.0) then
         if(fill_option.eq.0) then
@@ -159,8 +164,10 @@ c
 c
       subroutine set_partition_colors(val)
       use b2mod_types
-#include <graphics_vars.h>
+      use b2mod_graphics
+      implicit none
       real (kind=R8) :: val
+
       if(val.lt.0.0.or.val.gt.1.0) then
        write(*,*) 'set_partition_colors: parameter out of range'
        partition_colors=1.0_R4

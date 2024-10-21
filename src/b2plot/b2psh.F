@@ -28,15 +28,12 @@ c     SETTING THE WINDOW ID
 c     ----------------------------------------------------------------------
 
       subroutine setwinid(n)
+      use b2mod_graphics
+      implicit none
 
 c     INPUT
       integer n
 
-c     the zoom common
-      integer winid
-      integer wsnshwin,wsnX11
-      common /zoom_com/ winid,wsnshwin,wsnX11
-      
       winid=n
       write(*,*) 'Setting WindowID to: ',winid
 

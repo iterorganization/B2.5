@@ -22,7 +22,7 @@ SUBROUTINE GRADC_DIV_PAR_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funf&
   USE B2US_MAP_DIFF
   IMPLICIT NONE
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), funf(nfc)

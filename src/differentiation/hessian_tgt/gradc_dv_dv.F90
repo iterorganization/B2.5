@@ -44,7 +44,7 @@ SUBROUTINE GRADC_DV_DV(ncv, nfc, nvx, mode, geo, geod0, geod, mpg, mpgd&
 !.end gradc
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
@@ -146,7 +146,7 @@ SUBROUTINE GRADC_DV_NODIFF(ncv, nfc, nvx, mode, geo, geod, mpg, mpgd, &
 !.end gradc
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -226,7 +226,7 @@ SUBROUTINE GRADC_NODIFF_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funv&
 !.end gradc
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), funv(nvx)

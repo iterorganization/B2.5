@@ -48,7 +48,7 @@ SUBROUTINE B2TANML_DV_DV(ncv, nfc, ns, switch, geo, geod0, geod, mpg, &
 !.end b2tanml
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -199,7 +199,7 @@ SUBROUTINE B2TANML_DV_NODIFF(ncv, nfc, ns, switch, geo, geod, mpg, mpgd&
 !.end b2tanml
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
@@ -311,7 +311,7 @@ SUBROUTINE B2TANML_NODIFF_NODIFF(ncv, nfc, ns, switch, geo, mpg, csig_an&
 !.end b2tanml
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg

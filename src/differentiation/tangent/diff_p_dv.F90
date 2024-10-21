@@ -30,7 +30,7 @@ SUBROUTINE DIFF_P_DV(ncv, nfc, nvx, mode, geo, mpg, mpgd, fun, fund, &
 !.end diff_p
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
@@ -42,10 +42,10 @@ SUBROUTINE DIFF_P_DV(ncv, nfc, nvx, mode, geo, mpg, mpgd, fun, fund, &
 !-----------------------------------------------------------------------
 !.documentation
 !
-!     DIFF_P computes differences of a cell centered quantity fun in the 
-!     poloidal direction, on faces of a cell. 
+!     DIFF_P computes differences of a cell centered quantity fun in the
+!     poloidal direction, on faces of a cell.
 !
-!     To compute values of the field in cell vertices, the routine relies 
+!     To compute values of the field in cell vertices, the routine relies
 !     calls to intvertex.
 !
 !     If mode.eq.0, the routine will interpolate fun to vertices (funv)
@@ -65,7 +65,7 @@ SUBROUTINE DIFF_P_DV(ncv, nfc, nvx, mode, geo, mpg, mpgd, fun, fund, &
   INTEGER :: nbdirs
 !
 !-----------------------------------------------------------------------
-!.computation      
+!.computation
 !
 !   ..test mode
   CALL XERTST(0 .LE. mode .AND. mode .LE. 1, &
@@ -117,7 +117,7 @@ SUBROUTINE DIFF_P_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funv, dfunp&
 !.end diff_p
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), funv(nvx)
@@ -126,10 +126,10 @@ SUBROUTINE DIFF_P_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funv, dfunp&
 !-----------------------------------------------------------------------
 !.documentation
 !
-!     DIFF_P computes differences of a cell centered quantity fun in the 
-!     poloidal direction, on faces of a cell. 
+!     DIFF_P computes differences of a cell centered quantity fun in the
+!     poloidal direction, on faces of a cell.
 !
-!     To compute values of the field in cell vertices, the routine relies 
+!     To compute values of the field in cell vertices, the routine relies
 !     calls to intvertex.
 !
 !     If mode.eq.0, the routine will interpolate fun to vertices (funv)
@@ -145,7 +145,7 @@ SUBROUTINE DIFF_P_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funv, dfunp&
   EXTERNAL INTVERTEX_NODIFF
 !
 !-----------------------------------------------------------------------
-!.computation      
+!.computation
 !
 !   ..test mode
   CALL XERTST(0 .LE. mode .AND. mode .LE. 1, &
