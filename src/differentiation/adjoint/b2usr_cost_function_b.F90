@@ -28,8 +28,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, mpg, st, stb, &
   USE B2US_GEO_DIFF
   USE B2MOD_PAR_OPT_DIFF
   USE B2MOD_CONSTANTS
-  USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp, nomp, icsepomp, psi_omp, &
-& nromp
+  USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp, nomp, icsepomp, psi_omp
   USE B2MOD_B2CMPA_DIFF, ONLY : am, amb0
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -46,7 +45,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, mpg, st, stb, &
   REAL(kind=r8) :: boris, j(nncf)
   REAL(kind=r8) :: jb(nncf)
   INTEGER :: ncv, nfc, nvx, ns
-  INTEGER :: icf, ic1, ic2, icv, n1, n2, ifc, is, iicf
+  INTEGER :: icf, ic1, ic2, icv, n1, n2, ifc
   LOGICAL, SAVE :: first_call=.true.
   LOGICAL :: inrange
   REAL(kind=r8) :: qq, prior, lll, lll_cum, curr_shift
@@ -809,8 +808,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   USE B2US_GEO_DIFF
   USE B2MOD_PAR_OPT_DIFF
   USE B2MOD_CONSTANTS
-  USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp, nomp, icsepomp, psi_omp, &
-& nromp
+  USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp, nomp, icsepomp, psi_omp
   USE B2MOD_B2CMPA_DIFF, ONLY : am
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -824,7 +822,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   REAL(kind=r8) :: boris, j(nncf)
   INTEGER :: ncv, nfc, nvx, ns
-  INTEGER :: icf, ic1, ic2, icv, n1, n2, ifc, is, iicf
+  INTEGER :: icf, ic1, ic2, icv, n1, n2, ifc
   LOGICAL, SAVE :: first_call=.true.
   LOGICAL :: inrange
   REAL(kind=r8) :: qq, prior, lll, lll_cum, curr_shift

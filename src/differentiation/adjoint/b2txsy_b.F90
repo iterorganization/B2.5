@@ -22,7 +22,7 @@ SUBROUTINE B2TXSY_B(ncv, nfc, geo, mpg, fcvol, fcs, fun, funb, funsy, &
   USE B2US_MAP_DIFF
   USE B2MOD_SUBSYS
   IMPLICIT NONE
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), fun(ncv), funsy(nfc)
@@ -64,7 +64,7 @@ SUBROUTINE B2TXSY_NODIFF(ncv, nfc, geo, mpg, fcvol, fcs, fun, funsy)
   USE B2US_MAP_DIFF
   USE B2MOD_SUBSYS
   IMPLICIT NONE
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), fun(ncv), funsy(nfc)

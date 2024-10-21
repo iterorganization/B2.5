@@ -146,7 +146,6 @@ MODULE B2MOD_DRIVER_DIFFV_DIFFV
   REAL(kind=r8) :: cputarget, cpuincrement, na_eps, te_eps, ti_eps, &
 & tn_eps, po_eps, ua_eps, kt_eps, zt_eps, sput_frc, sput_phys, delta_min&
 & , dt_change_inc, delta_max, dt_change_dec, dt_min, dt_max, max_delta
-  INTEGER :: ncon, nele_jac
 !     NetCDF-3.
 !
 ! netcdf version 3 fortran interface:
@@ -2129,28 +2128,30 @@ CONTAINS
 !                stated.dv.wadia:in-out stated.dv.vaecrb:in-out
 !                stated.dv.vedia:in-out stated.dv.veecrb:in-out
 !                stated.sr.sch:in-out stated.sr.she:in-out stated.sr.shi:in-out
-!                stated.sr.shn:in-out stated.sr.skt:in-out stated.sr.smo:in-out
-!                stated.sr.smq:in-out stated.sr.sna:in-out stated.sr.shedt:in-out
-!                stated.sr.sktdt:in-out stated.sr.shidt:in-out
+!                stated.sr.shn:in-out stated.sr.skt:in-out stated.sr.szt:in-out
+!                stated.sr.smo:in-out stated.sr.smq:in-out stated.sr.sna:in-out
+!                stated.sr.shedt:in-out stated.sr.sktdt:in-out
+!                stated.sr.sztdt:in-out stated.sr.shidt:in-out
 !                stated.sr.shndt:in-out stated.sr.schdt:in-out
 !                stated.sr.smodt:in-out stated.sr.snadt:in-out
 !                stated.srw.sch0:in-out stated.srw.she0:in-out
 !                stated.srw.shi0:in-out stated.srw.shn0:in-out
-!                stated.srw.skt0:in-out stated.srw.smo0:in-out
-!                stated.srw.smq0:in-out stated.srw.sna0:in-out
-!                stated.rt.rlcx:in-out stated.rt.rlqa:in-out stated.rt.rlra:in-out
-!                stated.rt.rlsa:in-out stated.rt.rlza:in-out stated.rt.rlz2:in-out
-!                stated.rt.rlpt:in-out stated.rt.rlpi:in-out stated.rt.rlqr:in-out
-!                stated.rt.rza:in-out stated.rt.rz2:in-out stated.rt.rpt:in-out
-!                stated.rt.rpi:in-out stated.rtw.rsa:in-out stated.rtw.rra:in-out
-!                stated.rtw.rqa:in-out stated.rtw.rcx:in-out stated.rtw.rqr:in-out
-!                stated.psnl.na:in-out stated.psnl.ua:in-out stated.psnl.te:in-out
-!                stated.psnl.ti:in-out stated.psnl.tn:in-out stated.psnl.kt:in-out
-!                stated.psnl.ne:in-out stated.psnl.ni:in-out stated.psnl.nn:out
-!                stated.psnl.kinrgy:in-out stated.psnc.na:in-out
-!                stated.psnc.ua:in-out stated.psnc.te:in-out stated.psnc.ti:in-out
-!                stated.psnc.tn:in-out stated.psnc.kt:in-out stated.psnc.ne:in-out
-!                stated.psnc.ni:in-out stated.psnc.nn:in-out stated.psnc.kinrgy:in-out
+!                stated.srw.skt0:in-out stated.srw.szt0:in-out
+!                stated.srw.smo0:in-out stated.srw.smq0:in-out
+!                stated.srw.sna0:in-out stated.rt.rlcx:in-out stated.rt.rlqa:in-out
+!                stated.rt.rlra:in-out stated.rt.rlsa:in-out stated.rt.rlza:in-out
+!                stated.rt.rlz2:in-out stated.rt.rlpt:in-out stated.rt.rlpi:in-out
+!                stated.rt.rlqr:in-out stated.rt.rza:in-out stated.rt.rz2:in-out
+!                stated.rt.rpt:in-out stated.rt.rpi:in-out stated.rtw.rsa:in-out
+!                stated.rtw.rra:in-out stated.rtw.rqa:in-out stated.rtw.rcx:in-out
+!                stated.rtw.rqr:in-out stated.psnl.na:in-out stated.psnl.ua:in-out
+!                stated.psnl.te:in-out stated.psnl.ti:in-out stated.psnl.tn:in-out
+!                stated.psnl.kt:in-out stated.psnl.zt:in-out stated.psnl.ne:in-out
+!                stated.psnl.ni:in-out stated.psnl.nn:out stated.psnl.kinrgy:in-out
+!                stated.psnc.na:in-out stated.psnc.ua:in-out stated.psnc.te:in-out
+!                stated.psnc.ti:in-out stated.psnc.tn:in-out stated.psnc.kt:in-out
+!                stated.psnc.zt:in-out stated.psnc.ne:in-out stated.psnc.ni:in-out
+!                stated.psnc.nn:in-out stated.psnc.kinrgy:in-out
 !                stated.diag.aresco:in-out stated.diag.aresmo:in-out
 !                stated.diag.acorpa:in-out stated.diag.acorua:in-out
 !                stated.diag.rescoreg:in-out stated.diag.resmoreg:in-out
@@ -2556,11 +2557,11 @@ CONTAINS
     REAL(r8) :: x1
     REAL(r8), DIMENSION(nbdirsmax) :: x1d
     INTRINSIC SIZE
-    REAL(r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: abs0
-    REAL(r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: abs1
-    REAL(r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: abs2
-    REAL(r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: abs3
-    REAL(r8), DIMENSION(mpg%ncv) :: abs4
+    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
+    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
+    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
+    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%ncv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -2576,11 +2577,11 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%ncv) :: arg14
     REAL(r8), DIMENSION(mpg%ncv) :: arg15
     INTEGER :: arg16
-    REAL(r8) :: result10
-    REAL(r8) :: result20
-    REAL(r8) :: result30
-    REAL(r8) :: result40
-    REAL(r8) :: result50
+    REAL(kind=r8) :: result10
+    REAL(kind=r8) :: result20
+    REAL(kind=r8) :: result30
+    REAL(kind=r8) :: result40
+    REAL(kind=r8) :: result50
     INTEGER :: nd
     INTEGER :: nbdirs
     INTEGER :: nbdirs0
@@ -4014,37 +4015,37 @@ CONTAINS
 &                           te, state%rt, state%rtw)
         CALL B2XPNE_NODIFF_NODIFF(ncv, ns, state%rt%rza, state%pl%na, &
 &                           state_ext%ne, state%dv%ne)
-        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.0) 
-          abs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
+        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.) 
+          dabs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
         ELSEWHERE
-          abs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
+          dabs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.0) 
-          abs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
+        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.) 
+          dabs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
         ELSEWHERE
-          abs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
+          dabs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.0) 
-          abs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
+        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.) 
+          dabs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
         ELSEWHERE
-          abs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
+          dabs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.0) 
-          abs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
+        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.) 
+          dabs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
         ELSEWHERE
-          abs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
+          dabs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
         END WHERE
-        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.0&
+        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.&
 &       ) 
-          abs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
+          dabs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
         ELSEWHERE
-          abs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
+          dabs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
         END WHERE
-        result10 = MAXVAL(abs0)
-        result20 = MAXVAL(abs1)
-        result30 = MAXVAL(abs2)
-        result40 = MAXVAL(abs3)
-        result50 = MAXVAL(abs4)
+        result10 = MAXVAL(dabs0)
+        result20 = MAXVAL(dabs1)
+        result30 = MAXVAL(dabs2)
+        result40 = MAXVAL(dabs3)
+        result50 = MAXVAL(dabs4)
         max_delta = MAX(result10, result20, result30, result40, result50&
 &         )
         WRITE(*, *) 'Convergence of bundled rates = ', is, max_delta
@@ -4062,7 +4063,7 @@ CONTAINS
       CALL CFWUIN(70, 3, idum, 'nCv,nFc,ns')
       label = TRIM(label)//' Inverted velocities'
       CALL CFWUCH(70, 120, label, 'label')
-      CALL B2WUZD_NODIFF0(70, newversion, ns, zamin, zamax, zn, am)
+      CALL B2WUZD_NODIFF(70, newversion, ns, zamin, zamax, zn, am)
       state%pl%ua = -state%pl%ua
 !     ..write plasma state
       CALL WRITE_B2FSTATE(70, ncv, nfc, ns, state)
@@ -4125,8 +4126,8 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT_DV_DV(ncon, nele_jac, ns, mpg, mpgd, &
-&                             switch, nbdirs, nbdirs0)
+      CALL READ_B2MOD_PAR_OPT_DV_DV(ns, mpg, mpgd, switch, nbdirs, &
+&                             nbdirs0)
       ALLOCATE(par_opt_physd(nbdirsmax, npar_opt))
       DO nd=1,npar_opt
         par_opt_physd(nd, 1:npar_opt) = 0.d0
@@ -4413,11 +4414,11 @@ CONTAINS
     REAL(r8) :: x1
     REAL(r8), DIMENSION(nbdirsmax) :: x1d
     INTRINSIC SIZE
-    REAL(r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: abs0
-    REAL(r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: abs1
-    REAL(r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: abs2
-    REAL(r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: abs3
-    REAL(r8), DIMENSION(mpg%ncv) :: abs4
+    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
+    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
+    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
+    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%ncv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -4433,11 +4434,11 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%ncv) :: arg14
     REAL(r8), DIMENSION(mpg%ncv) :: arg15
     INTEGER :: arg16
-    REAL(r8) :: result10
-    REAL(r8) :: result20
-    REAL(r8) :: result30
-    REAL(r8) :: result40
-    REAL(r8) :: result50
+    REAL(kind=r8) :: result10
+    REAL(kind=r8) :: result20
+    REAL(kind=r8) :: result30
+    REAL(kind=r8) :: result40
+    REAL(kind=r8) :: result50
     INTEGER :: nd
     INTEGER :: nbdirs
 !   ..initialisation
@@ -5868,37 +5869,37 @@ CONTAINS
 &                           te, state%rt, state%rtw)
         CALL B2XPNE_NODIFF_NODIFF(ncv, ns, state%rt%rza, state%pl%na, &
 &                           state_ext%ne, state%dv%ne)
-        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.0) 
-          abs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
+        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.) 
+          dabs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
         ELSEWHERE
-          abs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
+          dabs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.0) 
-          abs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
+        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.) 
+          dabs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
         ELSEWHERE
-          abs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
+          dabs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.0) 
-          abs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
+        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.) 
+          dabs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
         ELSEWHERE
-          abs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
+          dabs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.0) 
-          abs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
+        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.) 
+          dabs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
         ELSEWHERE
-          abs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
+          dabs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
         END WHERE
-        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.0&
+        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.&
 &       ) 
-          abs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
+          dabs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
         ELSEWHERE
-          abs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
+          dabs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
         END WHERE
-        result10 = MAXVAL(abs0)
-        result20 = MAXVAL(abs1)
-        result30 = MAXVAL(abs2)
-        result40 = MAXVAL(abs3)
-        result50 = MAXVAL(abs4)
+        result10 = MAXVAL(dabs0)
+        result20 = MAXVAL(dabs1)
+        result30 = MAXVAL(dabs2)
+        result40 = MAXVAL(dabs3)
+        result50 = MAXVAL(dabs4)
         max_delta = MAX(result10, result20, result30, result40, result50&
 &         )
         WRITE(*, *) 'Convergence of bundled rates = ', is, max_delta
@@ -5916,7 +5917,7 @@ CONTAINS
       CALL CFWUIN(70, 3, idum, 'nCv,nFc,ns')
       label = TRIM(label)//' Inverted velocities'
       CALL CFWUCH(70, 120, label, 'label')
-      CALL B2WUZD_NODIFF0(70, newversion, ns, zamin, zamax, zn, am)
+      CALL B2WUZD_NODIFF(70, newversion, ns, zamin, zamax, zn, am)
       state%pl%ua = -state%pl%ua
 !     ..write plasma state
       CALL WRITE_B2FSTATE(70, ncv, nfc, ns, state)
@@ -5979,8 +5980,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT_DV(ncon, nele_jac, ns, mpg, mpgd, switch, &
-&                          nbdirs)
+      CALL READ_B2MOD_PAR_OPT_DV(ns, mpg, mpgd, switch, nbdirs)
       ALLOCATE(par_opt_physd(nbdirsmax, npar_opt))
       DO nd=1,npar_opt
         par_opt_physd(nd, 1:npar_opt) = 0.d0
@@ -6228,11 +6228,11 @@ CONTAINS
     INTRINSIC MAXVAL
     REAL(r8) :: x1
     INTRINSIC SIZE
-    REAL(r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: abs0
-    REAL(r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: abs1
-    REAL(r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: abs2
-    REAL(r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: abs3
-    REAL(r8), DIMENSION(mpg%ncv) :: abs4
+    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
+    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
+    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
+    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%ncv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -6248,11 +6248,11 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%ncv) :: arg14
     REAL(r8), DIMENSION(mpg%ncv) :: arg15
     INTEGER :: arg16
-    REAL(r8) :: result10
-    REAL(r8) :: result20
-    REAL(r8) :: result30
-    REAL(r8) :: result40
-    REAL(r8) :: result50
+    REAL(kind=r8) :: result10
+    REAL(kind=r8) :: result20
+    REAL(kind=r8) :: result30
+    REAL(kind=r8) :: result40
+    REAL(kind=r8) :: result50
     INTEGER :: nbdirs
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
@@ -7630,37 +7630,37 @@ CONTAINS
 &                           te, state%rt, state%rtw)
         CALL B2XPNE_NODIFF_NODIFF(ncv, ns, state%rt%rza, state%pl%na, &
 &                           state_ext%ne, state%dv%ne)
-        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.0) 
-          abs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
+        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.) 
+          dabs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
         ELSEWHERE
-          abs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
+          dabs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.0) 
-          abs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
+        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.) 
+          dabs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
         ELSEWHERE
-          abs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
+          dabs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.0) 
-          abs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
+        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.) 
+          dabs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
         ELSEWHERE
-          abs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
+          dabs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.0) 
-          abs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
+        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.) 
+          dabs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
         ELSEWHERE
-          abs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
+          dabs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
         END WHERE
-        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.0&
+        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.&
 &       ) 
-          abs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
+          dabs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
         ELSEWHERE
-          abs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
+          dabs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
         END WHERE
-        result10 = MAXVAL(abs0)
-        result20 = MAXVAL(abs1)
-        result30 = MAXVAL(abs2)
-        result40 = MAXVAL(abs3)
-        result50 = MAXVAL(abs4)
+        result10 = MAXVAL(dabs0)
+        result20 = MAXVAL(dabs1)
+        result30 = MAXVAL(dabs2)
+        result40 = MAXVAL(dabs3)
+        result50 = MAXVAL(dabs4)
         max_delta = MAX(result10, result20, result30, result40, result50&
 &         )
         WRITE(*, *) 'Convergence of bundled rates = ', is, max_delta
@@ -7678,7 +7678,7 @@ CONTAINS
       CALL CFWUIN(70, 3, idum, 'nCv,nFc,ns')
       label = TRIM(label)//' Inverted velocities'
       CALL CFWUCH(70, 120, label, 'label')
-      CALL B2WUZD_NODIFF0(70, newversion, ns, zamin, zamax, zn, am)
+      CALL B2WUZD_NODIFF(70, newversion, ns, zamin, zamax, zn, am)
       state%pl%ua = -state%pl%ua
 !     ..write plasma state
       CALL WRITE_B2FSTATE(70, ncv, nfc, ns, state)
@@ -7740,7 +7740,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg, switch)
+      CALL READ_B2MOD_PAR_OPT(ns, mpg, switch)
       ALLOCATE(par_opt_physd0(nbdirsmax0, npar_opt))
       par_opt_physd0(:, 1:npar_opt) = 0.0_8
       ALLOCATE(par_opt_phys(npar_opt))
@@ -7827,11 +7827,11 @@ CONTAINS
     INTRINSIC MAXVAL
     REAL(r8) :: x1
     INTRINSIC SIZE
-    REAL(r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: abs0
-    REAL(r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: abs1
-    REAL(r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: abs2
-    REAL(r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: abs3
-    REAL(r8), DIMENSION(mpg%ncv) :: abs4
+    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
+    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
+    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
+    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%ncv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -7847,11 +7847,11 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%ncv) :: arg14
     REAL(r8), DIMENSION(mpg%ncv) :: arg15
     INTEGER :: arg16
-    REAL(r8) :: result10
-    REAL(r8) :: result20
-    REAL(r8) :: result30
-    REAL(r8) :: result40
-    REAL(r8) :: result50
+    REAL(kind=r8) :: result10
+    REAL(kind=r8) :: result20
+    REAL(kind=r8) :: result30
+    REAL(kind=r8) :: result40
+    REAL(kind=r8) :: result50
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
 !-----------------------------------------------------------------------
@@ -9225,37 +9225,37 @@ CONTAINS
 &                           te, state%rt, state%rtw)
         CALL B2XPNE_NODIFF_NODIFF(ncv, ns, state%rt%rza, state%pl%na, &
 &                           state_ext%ne, state%dv%ne)
-        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.0) 
-          abs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
+        WHERE ((state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.) 
+          dabs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
         ELSEWHERE
-          abs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
+          dabs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.0) 
-          abs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
+        WHERE ((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.) 
+          dabs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
         ELSEWHERE
-          abs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
+          dabs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.0) 
-          abs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
+        WHERE ((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.) 
+          dabs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
         ELSEWHERE
-          abs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
+          dabs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
         END WHERE
-        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.0) 
-          abs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
+        WHERE ((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.) 
+          dabs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
         ELSEWHERE
-          abs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
+          dabs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
         END WHERE
-        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.0&
+        WHERE ((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.&
 &       ) 
-          abs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
+          dabs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
         ELSEWHERE
-          abs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
+          dabs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
         END WHERE
-        result10 = MAXVAL(abs0)
-        result20 = MAXVAL(abs1)
-        result30 = MAXVAL(abs2)
-        result40 = MAXVAL(abs3)
-        result50 = MAXVAL(abs4)
+        result10 = MAXVAL(dabs0)
+        result20 = MAXVAL(dabs1)
+        result30 = MAXVAL(dabs2)
+        result40 = MAXVAL(dabs3)
+        result50 = MAXVAL(dabs4)
         max_delta = MAX(result10, result20, result30, result40, result50&
 &         )
         WRITE(*, *) 'Convergence of bundled rates = ', is, max_delta
@@ -9273,7 +9273,7 @@ CONTAINS
       CALL CFWUIN(70, 3, idum, 'nCv,nFc,ns')
       label = TRIM(label)//' Inverted velocities'
       CALL CFWUCH(70, 120, label, 'label')
-      CALL B2WUZD_NODIFF0(70, newversion, ns, zamin, zamax, zn, am)
+      CALL B2WUZD_NODIFF(70, newversion, ns, zamin, zamax, zn, am)
       state%pl%ua = -state%pl%ua
 !     ..write plasma state
       CALL WRITE_B2FSTATE(70, ncv, nfc, ns, state)
@@ -9335,7 +9335,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg, switch)
+      CALL READ_B2MOD_PAR_OPT(ns, mpg, switch)
       ALLOCATE(par_opt_phys(npar_opt))
       ALLOCATE(xsave(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
@@ -9462,12 +9462,13 @@ CONTAINS
 !                stated.dv.lnlam:in stated.dv.vadia:in stated.dv.wadia:in
 !                stated.dv.vaecrb:in stated.dv.vedia:in stated.dv.veecrb:in
 !                stated.sr.sch:in stated.sr.she:in stated.sr.shi:in
-!                stated.sr.shn:in stated.sr.skt:in stated.sr.smo:in
-!                stated.sr.smq:in stated.sr.sna:in stated.sr.shedt:in
-!                stated.sr.sktdt:in stated.sr.shidt:in stated.sr.shndt:in
-!                stated.sr.schdt:in stated.sr.smodt:in stated.sr.snadt:in
-!                stated.srw.sch0:in stated.srw.she0:in stated.srw.shi0:in
-!                stated.srw.shn0:in stated.srw.skt0:in stated.srw.smo0:in
+!                stated.sr.shn:in stated.sr.skt:in stated.sr.szt:in
+!                stated.sr.smo:in stated.sr.smq:in stated.sr.sna:in
+!                stated.sr.shedt:in stated.sr.sktdt:in stated.sr.sztdt:in
+!                stated.sr.shidt:in stated.sr.shndt:in stated.sr.schdt:in
+!                stated.sr.smodt:in stated.sr.snadt:in stated.srw.sch0:in
+!                stated.srw.she0:in stated.srw.shi0:in stated.srw.shn0:in
+!                stated.srw.skt0:in stated.srw.szt0:in stated.srw.smo0:in
 !                stated.srw.smq0:in stated.srw.sna0:in stated.rt.rlcx:in
 !                stated.rt.rlqa:in stated.rt.rlra:in stated.rt.rlsa:in
 !                stated.rt.rlza:in stated.rt.rlz2:in stated.rt.rlpt:in
@@ -9476,76 +9477,76 @@ CONTAINS
 !                stated.rtw.rsa:in stated.rtw.rra:in stated.rtw.rqa:in
 !                stated.rtw.rcx:in stated.rtw.rqr:in stated.psnl.na:in
 !                stated.psnl.ua:in stated.psnl.te:in stated.psnl.ti:in
-!                stated.psnl.tn:in stated.psnl.kt:in stated.psnl.ne:in
-!                stated.psnl.ni:in stated.psnl.kinrgy:in stated.psnc.na:in
-!                stated.psnc.ua:in stated.psnc.te:in stated.psnc.ti:in
-!                stated.psnc.tn:in stated.psnc.kt:in stated.psnc.ne:in
-!                stated.psnc.ni:in stated.psnc.nn:in stated.psnc.kinrgy:in
-!                stated.diag.aresco:in stated.diag.aresmo:in stated.diag.acorpa:in
-!                stated.diag.acorua:in stated.diag.rescoreg:in
-!                stated.diag.resmoreg:in stated.diag.reshereg:in
-!                stated.diag.reshireg:in state.pl.na:in state.pl.ua:in
-!                state.pl.po:in state.pl.te:in state.pl.ti:in state.pl.tn:in
-!                state.pl.kt:in state.pl.zt:in state.co.csig:in
-!                state.co.calf:in state.co.csig_an:in state.co.calf_an:in
-!                state.co.csig_cl:in state.co.calf_cl:in state.co.csigin:in
-!                state.co.chve:in state.co.chce:in state.co.chce_exb:in
-!                state.co.chvi:in state.co.chci:in state.co.chci_exb:in
-!                state.co.chcn:in state.co.cdkt:in state.co.cdzt:in
-!                state.co.chvemx:in state.co.chvimx:in state.co.cvla:in
-!                state.co.cdna:in state.co.cdna_exb:in state.co.cdpa:in
-!                state.co.cvsa:in state.co.cvlahz:in state.co.cdnahz:in
-!                state.co.cdpahz:in state.co.cvsahz:in state.co.cddi:in
-!                state.co.cvsahz_cl:in state.co.chcb:in state.co.cvsa_an:in
-!                state.co.cvmahz:in state.co.cvsahz_eff:in state.co.cthe:in
-!                state.co.cthi:in state.co.cvsa_cl:in state.co.ceqp:in
-!                state.co.fllim0fhi:in state.co.fllimvisc:in state.co.fllim0fna:in
-!                state.co.vsaf_cl:in state.co.sig0:in state.co.hce0:in
-!                state.co.hci0:in state.co.hcn0:in state.co.alf0:in
-!                state.co.dkt0:in state.co.dzt0:in state.co.dna_exb:in
-!                state.co.hce_exb:in state.co.hci_exb:in state.co.dpa0:in
-!                state.co.dna0:in state.co.vsa0:in state.co.hcib:in
-!                state.co.vla0:in state.co.vma0:in state.co.kt_neo:in
-!                state.co.alfx_c:in state.co.sigx_c:in state.co.sigx_kt:in
-!                state.co.hcix_c:in state.co.fllim_ki:in state.co.fllim_ke:in
-!                state.co.fllim_al:in state.co.fllim_al_c:in state.co.fllim_ki_c:in
-!                state.co.f_luc_ke:in state.co.f_luc_ki:in state.co.f_luc_et:in
-!                state.co.f_luc_sg:in state.co.f_luc_al:in state.co.cssb:in
-!                state.dv.fch:in state.dv.fch_32:in state.dv.fch_52:in
-!                state.dv.fch_p:in state.dv.fchdia:in state.dv.fchin:in
-!                state.dv.fchvispar:in state.dv.fchvisper:in state.dv.fchvisq:in
-!                state.dv.fchinert:in state.dv.fchanml:in state.dv.fchviskt:in
-!                state.dv.fch_pi_c:in state.dv.fch_pi_f:in state.dv.fni_32:in
-!                state.dv.fni_52:in state.dv.fni:in state.dv.fni_he:in
-!                state.dv.fna:in state.dv.fna_mdf:in state.dv.fna_52:in
-!                state.dv.fna_32:in state.dv.fna_53:in state.dv.fna_52nd:in
-!                state.dv.fna_32nd:in state.dv.fna_nodrift:in state.dv.fna_he:in
-!                state.dv.fnapsch:in state.dv.fna_fcor:in state.dv.fna_eir:in
-!                state.dv.fna_exb:in state.dv.fmo:in state.dv.fne:in
-!                state.dv.fne_he:in state.dv.fne_32:in state.dv.fne_52:in
-!                state.dv.fne_eir:in state.dv.fne_53:in state.dv.fhe:in
-!                state.dv.fhe_mdf:in state.dv.fhepsch:in state.dv.fhe_eir:in
-!                state.dv.fhe_exb:in state.dv.fhi:in state.dv.fhi_mdf:in
-!                state.dv.fhipsch:in state.dv.fhi_eir:in state.dv.fhi_exb:in
-!                state.dv.fnn:in state.dv.fnn_32:in state.dv.fnn_52:in
-!                state.dv.fhn:in state.dv.fnn_inc:in state.dv.fhm:in
-!                state.dv.fhp:in state.dv.fhj:in state.dv.fht:in
-!                state.dv.fkt:in state.dv.fzt:in state.dv.kin_frac_hyb:in
-!                state.dv.fluid_frac_hyb:in state.dv.kinrgy:in
-!                state.dv.conc:in state.dv.flob:in state.dv.floe:in
-!                state.dv.floi:in state.dv.floe_noc:in state.dv.floi_noc:in
-!                state.dv.flon:in state.dv.flokt:in state.dv.flozt:in
-!                state.dv.conn:in state.dv.conkt:in state.dv.conzt:in
-!                state.dv.conb:in state.dv.cone:in state.dv.coni:in
-!                state.dv.resmo:in state.dv.resco:in state.dv.respo:in
-!                state.dv.reshe:in state.dv.reshi:in state.dv.resht:in
-!                state.dv.resmt:in state.dv.reshn:in state.dv.reskt:in
-!                state.dv.reszt:in state.dv.corua:in state.dv.corpa:in
-!                state.dv.corut:in state.dv.corpo:in state.dv.cortt:in
-!                state.dv.corte:in state.dv.corti:in state.dv.cortn:in
-!                state.dv.corkt:in state.dv.corzt:in state.dv.pcca:in
-!                state.dv.pccm:in state.dv.ne:in state.dv.ni:in
-!                state.dv.nn:in state.dv.ue:in state.dv.ne2:in
+!                stated.psnl.tn:in stated.psnl.kt:in stated.psnl.zt:in
+!                stated.psnl.ne:in stated.psnl.ni:in stated.psnl.kinrgy:in
+!                stated.psnc.na:in stated.psnc.ua:in stated.psnc.te:in
+!                stated.psnc.ti:in stated.psnc.tn:in stated.psnc.kt:in
+!                stated.psnc.zt:in stated.psnc.ne:in stated.psnc.ni:in
+!                stated.psnc.nn:in stated.psnc.kinrgy:in stated.diag.aresco:in
+!                stated.diag.aresmo:in stated.diag.acorpa:in stated.diag.acorua:in
+!                stated.diag.rescoreg:in stated.diag.resmoreg:in
+!                stated.diag.reshereg:in stated.diag.reshireg:in
+!                state.pl.na:in state.pl.ua:in state.pl.po:in state.pl.te:in
+!                state.pl.ti:in state.pl.tn:in state.pl.kt:in state.pl.zt:in
+!                state.co.csig:in state.co.calf:in state.co.csig_an:in
+!                state.co.calf_an:in state.co.csig_cl:in state.co.calf_cl:in
+!                state.co.csigin:in state.co.chve:in state.co.chce:in
+!                state.co.chce_exb:in state.co.chvi:in state.co.chci:in
+!                state.co.chci_exb:in state.co.chcn:in state.co.cdkt:in
+!                state.co.cdzt:in state.co.chvemx:in state.co.chvimx:in
+!                state.co.cvla:in state.co.cdna:in state.co.cdna_exb:in
+!                state.co.cdpa:in state.co.cvsa:in state.co.cvlahz:in
+!                state.co.cdnahz:in state.co.cdpahz:in state.co.cvsahz:in
+!                state.co.cddi:in state.co.cvsahz_cl:in state.co.chcb:in
+!                state.co.cvsa_an:in state.co.cvmahz:in state.co.cvsahz_eff:in
+!                state.co.cthe:in state.co.cthi:in state.co.cvsa_cl:in
+!                state.co.ceqp:in state.co.fllim0fhi:in state.co.fllimvisc:in
+!                state.co.fllim0fna:in state.co.vsaf_cl:in state.co.sig0:in
+!                state.co.hce0:in state.co.hci0:in state.co.hcn0:in
+!                state.co.alf0:in state.co.dkt0:in state.co.dzt0:in
+!                state.co.dna_exb:in state.co.hce_exb:in state.co.hci_exb:in
+!                state.co.dpa0:in state.co.dna0:in state.co.vsa0:in
+!                state.co.hcib:in state.co.vla0:in state.co.vma0:in
+!                state.co.kt_neo:in state.co.alfx_c:in state.co.sigx_c:in
+!                state.co.sigx_kt:in state.co.hcix_c:in state.co.fllim_ki:in
+!                state.co.fllim_ke:in state.co.fllim_al:in state.co.fllim_al_c:in
+!                state.co.fllim_ki_c:in state.co.f_luc_ke:in state.co.f_luc_ki:in
+!                state.co.f_luc_et:in state.co.f_luc_sg:in state.co.f_luc_al:in
+!                state.co.cssb:in state.dv.fch:in state.dv.fch_32:in
+!                state.dv.fch_52:in state.dv.fch_p:in state.dv.fchdia:in
+!                state.dv.fchin:in state.dv.fchvispar:in state.dv.fchvisper:in
+!                state.dv.fchvisq:in state.dv.fchinert:in state.dv.fchanml:in
+!                state.dv.fchviskt:in state.dv.fch_pi_c:in state.dv.fch_pi_f:in
+!                state.dv.fni_32:in state.dv.fni_52:in state.dv.fni:in
+!                state.dv.fni_he:in state.dv.fna:in state.dv.fna_mdf:in
+!                state.dv.fna_52:in state.dv.fna_32:in state.dv.fna_53:in
+!                state.dv.fna_52nd:in state.dv.fna_32nd:in state.dv.fna_nodrift:in
+!                state.dv.fna_he:in state.dv.fnapsch:in state.dv.fna_fcor:in
+!                state.dv.fna_eir:in state.dv.fna_exb:in state.dv.fmo:in
+!                state.dv.fne:in state.dv.fne_he:in state.dv.fne_32:in
+!                state.dv.fne_52:in state.dv.fne_eir:in state.dv.fne_53:in
+!                state.dv.fhe:in state.dv.fhe_mdf:in state.dv.fhepsch:in
+!                state.dv.fhe_eir:in state.dv.fhe_exb:in state.dv.fhi:in
+!                state.dv.fhi_mdf:in state.dv.fhipsch:in state.dv.fhi_eir:in
+!                state.dv.fhi_exb:in state.dv.fnn:in state.dv.fnn_32:in
+!                state.dv.fnn_52:in state.dv.fhn:in state.dv.fnn_inc:in
+!                state.dv.fhm:in state.dv.fhp:in state.dv.fhj:in
+!                state.dv.fht:in state.dv.fkt:in state.dv.fzt:in
+!                state.dv.kin_frac_hyb:in state.dv.fluid_frac_hyb:in
+!                state.dv.kinrgy:in state.dv.conc:in state.dv.flob:in
+!                state.dv.floe:in state.dv.floi:in state.dv.floe_noc:in
+!                state.dv.floi_noc:in state.dv.flon:in state.dv.flokt:in
+!                state.dv.flozt:in state.dv.conn:in state.dv.conkt:in
+!                state.dv.conzt:in state.dv.conb:in state.dv.cone:in
+!                state.dv.coni:in state.dv.resmo:in state.dv.resco:in
+!                state.dv.respo:in state.dv.reshe:in state.dv.reshi:in
+!                state.dv.resht:in state.dv.resmt:in state.dv.reshn:in
+!                state.dv.reskt:in state.dv.reszt:in state.dv.corua:in
+!                state.dv.corpa:in state.dv.corut:in state.dv.corpo:in
+!                state.dv.cortt:in state.dv.corte:in state.dv.corti:in
+!                state.dv.cortn:in state.dv.corkt:in state.dv.corzt:in
+!                state.dv.pcca:in state.dv.pccm:in state.dv.ne:in
+!                state.dv.ni:in state.dv.nn:in state.dv.ue:in state.dv.ne2:in
 !                state.dv.pa:in state.dv.pz:in state.dv.lnlam:in
 !                state.dv.uadia:in state.dv.vadia:in state.dv.wadia:in
 !                state.dv.vaecrb:in state.dv.vedia:in state.dv.wedia:in
@@ -10908,6 +10909,12 @@ CONTAINS
       END DO
       DO nd=1,nbdirsmax
         DO nd0=1,nbdirs0
+          statedd%sr%szt(nd0, nd, :, :) = 0.0_8
+        END DO
+        stated%sr%szt(nd, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
           statedd%sr%smo(nd0, nd, :, :, :) = 0.0_8
         END DO
         stated%sr%smo(nd, :, :, :) = 0.d0
@@ -10935,6 +10942,12 @@ CONTAINS
           statedd%sr%sktdt(nd0, nd, :, :) = 0.0_8
         END DO
         stated%sr%sktdt(nd, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
+          statedd%sr%sztdt(nd0, nd, :, :) = 0.0_8
+        END DO
+        stated%sr%sztdt(nd, :, :) = 0.d0
       END DO
       DO nd=1,nbdirsmax
         DO nd0=1,nbdirs0
@@ -10995,6 +11008,12 @@ CONTAINS
           statedd%srw%skt0(nd0, nd, :, :) = 0.0_8
         END DO
         stated%srw%skt0(nd, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
+          statedd%srw%szt0(nd0, nd, :, :) = 0.0_8
+        END DO
+        stated%srw%szt0(nd, :, :) = 0.d0
       END DO
       DO nd=1,nbdirsmax
         DO nd0=1,nbdirs0
@@ -11160,6 +11179,12 @@ CONTAINS
       END DO
       DO nd=1,nbdirsmax
         DO nd0=1,nbdirs0
+          statedd%psnl%zt(nd0, nd, :) = 0.0_8
+        END DO
+        stated%psnl%zt(nd, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
           statedd%psnl%ne(nd0, nd, :) = 0.0_8
         END DO
         stated%psnl%ne(nd, :) = 0.d0
@@ -11214,6 +11239,12 @@ CONTAINS
       END DO
       DO nd=1,nbdirsmax
         DO nd0=1,nbdirs0
+          statedd%psnc%zt(nd0, nd, :) = 0.0_8
+        END DO
+        stated%psnc%zt(nd, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
           statedd%psnc%ne(nd0, nd, :) = 0.0_8
         END DO
         stated%psnc%ne(nd, :) = 0.d0
@@ -11237,14 +11268,6 @@ CONTAINS
         stated%psnc%kinrgy(nd, :, :) = 0.d0
       END DO
       first_opt_call = .false.
-      cfvlad0(:, :, :) = 0.0_8
-      cfvsad0(:, :, :) = 0.0_8
-      cfalfd0(:, :) = 0.0_8
-      cfdpad0(:, :, :) = 0.0_8
-      cfsigd0(:, :) = 0.0_8
-      cfdnad0(:, :, :) = 0.0_8
-      cfhced0(:, :) = 0.0_8
-      cfhcid0(:, :, :) = 0.0_8
       IF (ALLOCATED(b2voloncfdd)) b2voloncfdd(:, :, :, :) = 0.0_8
       cfnormdd(:, :, :) = 0.0_8
       IF (ALLOCATED(b2voloncfd0)) b2voloncfd0(:, :, :) = 0.0_8
@@ -11269,6 +11292,14 @@ CONTAINS
       int3ld0(:) = 0.0_8
       int3ldd(:, :) = 0.0_8
       int0ld0(:) = 0.0_8
+      cfvlad0(:, :, :) = 0.0_8
+      cfvsad0(:, :, :) = 0.0_8
+      cfalfd0(:, :) = 0.0_8
+      cfdpad0(:, :, :) = 0.0_8
+      cfsigd0(:, :) = 0.0_8
+      cfdnad0(:, :, :) = 0.0_8
+      cfhced0(:, :) = 0.0_8
+      cfhcid0(:, :, :) = 0.0_8
       saved_fb_actuatordd(:, :, :) = 0.0_8
       fb_targetd0(:, :) = 0.0_8
       fb_prevd0(:, :) = 0.0_8
@@ -11446,11 +11477,13 @@ CONTAINS
       statedd%sr%shi(:, :, :, :) = 0.0_8
       statedd%sr%shn(:, :, :, :) = 0.0_8
       statedd%sr%skt(:, :, :, :) = 0.0_8
+      statedd%sr%szt(:, :, :, :) = 0.0_8
       statedd%sr%smo(:, :, :, :, :) = 0.0_8
       statedd%sr%smq(:, :, :, :, :) = 0.0_8
       statedd%sr%sna(:, :, :, :, :) = 0.0_8
       statedd%sr%shedt(:, :, :, :) = 0.0_8
       statedd%sr%sktdt(:, :, :, :) = 0.0_8
+      statedd%sr%sztdt(:, :, :, :) = 0.0_8
       statedd%sr%shidt(:, :, :, :) = 0.0_8
       statedd%sr%shndt(:, :, :, :) = 0.0_8
       statedd%sr%schdt(:, :, :, :) = 0.0_8
@@ -11461,6 +11494,7 @@ CONTAINS
       statedd%srw%shi0(:, :, :, :) = 0.0_8
       statedd%srw%shn0(:, :, :, :) = 0.0_8
       statedd%srw%skt0(:, :, :, :) = 0.0_8
+      statedd%srw%szt0(:, :, :, :) = 0.0_8
       statedd%srw%smo0(:, :, :, :, :) = 0.0_8
       statedd%srw%smq0(:, :, :, :, :) = 0.0_8
       statedd%srw%sna0(:, :, :, :, :) = 0.0_8
@@ -11488,6 +11522,7 @@ CONTAINS
       statedd%psnl%ti(:, :, :) = 0.0_8
       statedd%psnl%tn(:, :, :) = 0.0_8
       statedd%psnl%kt(:, :, :) = 0.0_8
+      statedd%psnl%zt(:, :, :) = 0.0_8
       statedd%psnl%ne(:, :, :) = 0.0_8
       statedd%psnl%ni(:, :, :, :) = 0.0_8
       statedd%psnl%kinrgy(:, :, :, :) = 0.0_8
@@ -11497,6 +11532,7 @@ CONTAINS
       statedd%psnc%ti(:, :, :) = 0.0_8
       statedd%psnc%tn(:, :, :) = 0.0_8
       statedd%psnc%kt(:, :, :) = 0.0_8
+      statedd%psnc%zt(:, :, :) = 0.0_8
       statedd%psnc%ne(:, :, :) = 0.0_8
       statedd%psnc%ni(:, :, :, :) = 0.0_8
       statedd%psnc%nn(:, :, :) = 0.0_8
@@ -11664,11 +11700,13 @@ CONTAINS
       stated0%sr%shi(:, :, :) = 0.0_8
       stated0%sr%shn(:, :, :) = 0.0_8
       stated0%sr%skt(:, :, :) = 0.0_8
+      stated0%sr%szt(:, :, :) = 0.0_8
       stated0%sr%smo(:, :, :, :) = 0.0_8
       stated0%sr%smq(:, :, :, :) = 0.0_8
       stated0%sr%sna(:, :, :, :) = 0.0_8
       stated0%sr%shedt(:, :, :) = 0.0_8
       stated0%sr%sktdt(:, :, :) = 0.0_8
+      stated0%sr%sztdt(:, :, :) = 0.0_8
       stated0%sr%shidt(:, :, :) = 0.0_8
       stated0%sr%shndt(:, :, :) = 0.0_8
       stated0%sr%schdt(:, :, :) = 0.0_8
@@ -11679,6 +11717,7 @@ CONTAINS
       stated0%srw%shi0(:, :, :) = 0.0_8
       stated0%srw%shn0(:, :, :) = 0.0_8
       stated0%srw%skt0(:, :, :) = 0.0_8
+      stated0%srw%szt0(:, :, :) = 0.0_8
       stated0%srw%smo0(:, :, :, :) = 0.0_8
       stated0%srw%smq0(:, :, :, :) = 0.0_8
       stated0%srw%sna0(:, :, :, :) = 0.0_8
@@ -11706,6 +11745,7 @@ CONTAINS
       stated0%psnl%ti(:, :) = 0.0_8
       stated0%psnl%tn(:, :) = 0.0_8
       stated0%psnl%kt(:, :) = 0.0_8
+      stated0%psnl%zt(:, :) = 0.0_8
       stated0%psnl%ne(:, :) = 0.0_8
       stated0%psnl%ni(:, :, :) = 0.0_8
       stated0%psnl%kinrgy(:, :, :) = 0.0_8
@@ -11715,20 +11755,13 @@ CONTAINS
       stated0%psnc%ti(:, :) = 0.0_8
       stated0%psnc%tn(:, :) = 0.0_8
       stated0%psnc%kt(:, :) = 0.0_8
+      stated0%psnc%zt(:, :) = 0.0_8
       stated0%psnc%ne(:, :) = 0.0_8
       stated0%psnc%ni(:, :, :) = 0.0_8
       stated0%psnc%nn(:, :) = 0.0_8
       stated0%psnc%kinrgy(:, :, :) = 0.0_8
       jdd(:, :, :) = 0.0_8
     ELSE
-      cfvlad0(:, :, :) = 0.0_8
-      cfvsad0(:, :, :) = 0.0_8
-      cfalfd0(:, :) = 0.0_8
-      cfdpad0(:, :, :) = 0.0_8
-      cfsigd0(:, :) = 0.0_8
-      cfdnad0(:, :, :) = 0.0_8
-      cfhced0(:, :) = 0.0_8
-      cfhcid0(:, :, :) = 0.0_8
       IF (ALLOCATED(b2voloncfdd)) b2voloncfdd(:, :, :, :) = 0.0_8
       cfnormdd(:, :, :) = 0.0_8
       IF (ALLOCATED(b2voloncfd0)) b2voloncfd0(:, :, :) = 0.0_8
@@ -11753,6 +11786,14 @@ CONTAINS
       int3ld0(:) = 0.0_8
       int3ldd(:, :) = 0.0_8
       int0ld0(:) = 0.0_8
+      cfvlad0(:, :, :) = 0.0_8
+      cfvsad0(:, :, :) = 0.0_8
+      cfalfd0(:, :) = 0.0_8
+      cfdpad0(:, :, :) = 0.0_8
+      cfsigd0(:, :) = 0.0_8
+      cfdnad0(:, :, :) = 0.0_8
+      cfhced0(:, :) = 0.0_8
+      cfhcid0(:, :, :) = 0.0_8
       saved_fb_actuatordd(:, :, :) = 0.0_8
       fb_targetd0(:, :) = 0.0_8
       fb_prevd0(:, :) = 0.0_8
@@ -11930,11 +11971,13 @@ CONTAINS
       statedd%sr%shi(:, :, :, :) = 0.0_8
       statedd%sr%shn(:, :, :, :) = 0.0_8
       statedd%sr%skt(:, :, :, :) = 0.0_8
+      statedd%sr%szt(:, :, :, :) = 0.0_8
       statedd%sr%smo(:, :, :, :, :) = 0.0_8
       statedd%sr%smq(:, :, :, :, :) = 0.0_8
       statedd%sr%sna(:, :, :, :, :) = 0.0_8
       statedd%sr%shedt(:, :, :, :) = 0.0_8
       statedd%sr%sktdt(:, :, :, :) = 0.0_8
+      statedd%sr%sztdt(:, :, :, :) = 0.0_8
       statedd%sr%shidt(:, :, :, :) = 0.0_8
       statedd%sr%shndt(:, :, :, :) = 0.0_8
       statedd%sr%schdt(:, :, :, :) = 0.0_8
@@ -11945,6 +11988,7 @@ CONTAINS
       statedd%srw%shi0(:, :, :, :) = 0.0_8
       statedd%srw%shn0(:, :, :, :) = 0.0_8
       statedd%srw%skt0(:, :, :, :) = 0.0_8
+      statedd%srw%szt0(:, :, :, :) = 0.0_8
       statedd%srw%smo0(:, :, :, :, :) = 0.0_8
       statedd%srw%smq0(:, :, :, :, :) = 0.0_8
       statedd%srw%sna0(:, :, :, :, :) = 0.0_8
@@ -11972,6 +12016,7 @@ CONTAINS
       statedd%psnl%ti(:, :, :) = 0.0_8
       statedd%psnl%tn(:, :, :) = 0.0_8
       statedd%psnl%kt(:, :, :) = 0.0_8
+      statedd%psnl%zt(:, :, :) = 0.0_8
       statedd%psnl%ne(:, :, :) = 0.0_8
       statedd%psnl%ni(:, :, :, :) = 0.0_8
       statedd%psnl%kinrgy(:, :, :, :) = 0.0_8
@@ -11981,6 +12026,7 @@ CONTAINS
       statedd%psnc%ti(:, :, :) = 0.0_8
       statedd%psnc%tn(:, :, :) = 0.0_8
       statedd%psnc%kt(:, :, :) = 0.0_8
+      statedd%psnc%zt(:, :, :) = 0.0_8
       statedd%psnc%ne(:, :, :) = 0.0_8
       statedd%psnc%ni(:, :, :, :) = 0.0_8
       statedd%psnc%nn(:, :, :) = 0.0_8
@@ -12148,11 +12194,13 @@ CONTAINS
       stated0%sr%shi(:, :, :) = 0.0_8
       stated0%sr%shn(:, :, :) = 0.0_8
       stated0%sr%skt(:, :, :) = 0.0_8
+      stated0%sr%szt(:, :, :) = 0.0_8
       stated0%sr%smo(:, :, :, :) = 0.0_8
       stated0%sr%smq(:, :, :, :) = 0.0_8
       stated0%sr%sna(:, :, :, :) = 0.0_8
       stated0%sr%shedt(:, :, :) = 0.0_8
       stated0%sr%sktdt(:, :, :) = 0.0_8
+      stated0%sr%sztdt(:, :, :) = 0.0_8
       stated0%sr%shidt(:, :, :) = 0.0_8
       stated0%sr%shndt(:, :, :) = 0.0_8
       stated0%sr%schdt(:, :, :) = 0.0_8
@@ -12163,6 +12211,7 @@ CONTAINS
       stated0%srw%shi0(:, :, :) = 0.0_8
       stated0%srw%shn0(:, :, :) = 0.0_8
       stated0%srw%skt0(:, :, :) = 0.0_8
+      stated0%srw%szt0(:, :, :) = 0.0_8
       stated0%srw%smo0(:, :, :, :) = 0.0_8
       stated0%srw%smq0(:, :, :, :) = 0.0_8
       stated0%srw%sna0(:, :, :, :) = 0.0_8
@@ -12190,6 +12239,7 @@ CONTAINS
       stated0%psnl%ti(:, :) = 0.0_8
       stated0%psnl%tn(:, :) = 0.0_8
       stated0%psnl%kt(:, :) = 0.0_8
+      stated0%psnl%zt(:, :) = 0.0_8
       stated0%psnl%ne(:, :) = 0.0_8
       stated0%psnl%ni(:, :, :) = 0.0_8
       stated0%psnl%kinrgy(:, :, :) = 0.0_8
@@ -12199,6 +12249,7 @@ CONTAINS
       stated0%psnc%ti(:, :) = 0.0_8
       stated0%psnc%tn(:, :) = 0.0_8
       stated0%psnc%kt(:, :) = 0.0_8
+      stated0%psnc%zt(:, :) = 0.0_8
       stated0%psnc%ne(:, :) = 0.0_8
       stated0%psnc%ni(:, :, :) = 0.0_8
       stated0%psnc%nn(:, :) = 0.0_8
@@ -12248,6 +12299,8 @@ CONTAINS
 &           , :, :)
           statedd%psnl%kt(nd0, nd, :) = statedd%pl%kt(nd0, nd, :)
           statedd%psnc%kt(nd0, nd, :) = statedd%pl%kt(nd0, nd, :)
+          statedd%psnl%zt(nd0, nd, :) = statedd%pl%zt(nd0, nd, :)
+          statedd%psnc%zt(nd0, nd, :) = statedd%pl%zt(nd0, nd, :)
         END DO
         stated%psnl%na(nd, :, :) = stated%pl%na(nd, :, :)
         stated%psnc%na(nd, :, :) = stated%pl%na(nd, :, :)
@@ -12267,7 +12320,8 @@ CONTAINS
         stated%psnc%kinrgy(nd, :, :) = stated%dv%kinrgy(nd, :, :)
         stated%psnl%kt(nd, :) = stated%pl%kt(nd, :)
         stated%psnc%kt(nd, :) = stated%pl%kt(nd, :)
-        stated%psnc%zt(nd, :) = 0.d0
+        stated%psnl%zt(nd, :) = stated%pl%zt(nd, :)
+        stated%psnc%zt(nd, :) = stated%pl%zt(nd, :)
       END DO
       DO nd0=1,nbdirs0
         stated0%psnl%na(nd0, :, :) = stated0%pl%na(nd0, :, :)
@@ -12288,6 +12342,8 @@ CONTAINS
         stated0%psnc%kinrgy(nd0, :, :) = stated0%dv%kinrgy(nd0, :, :)
         stated0%psnl%kt(nd0, :) = stated0%pl%kt(nd0, :)
         stated0%psnc%kt(nd0, :) = stated0%pl%kt(nd0, :)
+        stated0%psnl%zt(nd0, :) = stated0%pl%zt(nd0, :)
+        stated0%psnc%zt(nd0, :) = stated0%pl%zt(nd0, :)
       END DO
       state%psnl%na = state%pl%na
       state%psnc%na = state%pl%na
@@ -13376,6 +13432,9 @@ CONTAINS
         stated%sr%skt(nd, :, :) = 0.d0
       END DO
       DO nd=1,nbdirsmax
+        stated%sr%szt(nd, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
         stated%sr%smo(nd, :, :, :) = 0.d0
       END DO
       DO nd=1,nbdirsmax
@@ -13389,6 +13448,9 @@ CONTAINS
       END DO
       DO nd=1,nbdirsmax
         stated%sr%sktdt(nd, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        stated%sr%sztdt(nd, :, :) = 0.d0
       END DO
       DO nd=1,nbdirsmax
         stated%sr%shidt(nd, :, :) = 0.d0
@@ -13419,6 +13481,9 @@ CONTAINS
       END DO
       DO nd=1,nbdirsmax
         stated%srw%skt0(nd, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        stated%srw%szt0(nd, :, :) = 0.d0
       END DO
       DO nd=1,nbdirsmax
         stated%srw%smo0(nd, :, :, :) = 0.d0
@@ -13502,6 +13567,9 @@ CONTAINS
         stated%psnl%kt(nd, :) = 0.d0
       END DO
       DO nd=1,nbdirsmax
+        stated%psnl%zt(nd, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
         stated%psnl%ne(nd, :) = 0.d0
       END DO
       DO nd=1,nbdirsmax
@@ -13527,6 +13595,9 @@ CONTAINS
       END DO
       DO nd=1,nbdirsmax
         stated%psnc%kt(nd, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        stated%psnc%zt(nd, :) = 0.d0
       END DO
       DO nd=1,nbdirsmax
         stated%psnc%ne(nd, :) = 0.d0
@@ -13582,7 +13653,8 @@ CONTAINS
         stated%psnc%kinrgy(nd, :, :) = stated%dv%kinrgy(nd, :, :)
         stated%psnl%kt(nd, :) = stated%pl%kt(nd, :)
         stated%psnc%kt(nd, :) = stated%pl%kt(nd, :)
-        stated%psnc%zt(nd, :) = 0.d0
+        stated%psnl%zt(nd, :) = stated%pl%zt(nd, :)
+        stated%psnc%zt(nd, :) = stated%pl%zt(nd, :)
       END DO
       state%psnl%na = state%pl%na
       state%psnc%na = state%pl%na

@@ -34,7 +34,7 @@ SUBROUTINE CALCFLOW_DV(ncv, nfc, nvx, meth, geo, geod, mpg, mpgd, fun, &
 !.end calcflow
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, meth
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -296,7 +296,7 @@ SUBROUTINE CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, fun, flo, con&
 !.end calcflow
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, meth
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), flo(nfc, 0:1), con(nfc, 0:1)

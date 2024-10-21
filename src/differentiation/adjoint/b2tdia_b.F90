@@ -64,7 +64,7 @@ SUBROUTINE B2TDIA_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, pz&
   EXTERNAL B2XVSG
   INTRINSIC ABS
   INTRINSIC MAXVAL
-  REAL(kind=r8), DIMENSION(nfc, 0:1, 0:ns-1) :: abs0
+  REAL(kind=r8), DIMENSION(nfc, 0:1, 0:ns-1) :: dabs0
   LOGICAL, DIMENSION(nfc, 0:1, 0:ns-1) :: mask
   REAL(kind=r8) :: result1
 !-----------------------------------------------------------------------
@@ -153,7 +153,7 @@ SUBROUTINE B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pz, fna, &
   EXTERNAL B2XVSG
   INTRINSIC ABS
   INTRINSIC MAXVAL
-  REAL(kind=r8), DIMENSION(nfc, 0:1, 0:ns-1) :: abs0
+  REAL(kind=r8), DIMENSION(nfc, 0:1, 0:ns-1) :: dabs0
   LOGICAL, DIMENSION(nfc, 0:1, 0:ns-1) :: mask
   REAL(kind=r8) :: result1
 !-----------------------------------------------------------------------
@@ -167,14 +167,14 @@ SUBROUTINE B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pz, fna, &
 !   ..test nCv, nFc, ns
     CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
     CALL XERTST(1 .LE. ns, 'faulty argument ns')
-    mask = uadia .GE. 0.0
+    mask = uadia .GE. 0.
     WHERE (mask) 
-      abs0 = uadia
+      dabs0 = uadia
     ELSEWHERE
-      abs0 = -uadia
+      dabs0 = -uadia
     END WHERE
 !   ..test velocities
-    result1 = MAXVAL(abs0)
+    result1 = MAXVAL(dabs0)
     CALL XERTST(result1 .LT. c, 'Supra-luminal velocities !')
   END IF
   facdriftm = MAXVAL(facdrift)

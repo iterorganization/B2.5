@@ -89,7 +89,7 @@
        call b2xvsg (nCv*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
        call b2xvsg (nCv, kt0, 1, 'kt0', '.ge.')
        call b2xvsg (nCv, zt0, 1, 'zt0', '.ge.')
-       call xertst (maxval(abs(ua0)).lt.c, 'Supra-luminal velocity !')
+       call xertst (maxval(dabs(ua0)).lt.c, 'Supra-luminal velocity !')
 *    ..test current state
        call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
@@ -101,7 +101,7 @@
        call b2xvsg (nCv*ns, kinrgy, 1, 'kinrgy', '.ge.')
        call b2xvsg (nCv, kt, 1, 'kt', '.ge.')
        call b2xvsg (nCv, zt, 1, 'zt', '.ge.')
-       call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocity !')
+       call xertst (maxval(dabs(ua)).lt.c, 'Supra-luminal velocity !')
       endif
 
 * ..include the contributions from dtim
@@ -205,13 +205,13 @@ csw 24feb2014 check for guard cell (SOLPS4)
         sr%sktdt(iCv,1) = 0.0_R8
         sr%sktdt(iCv,2) = 0.0_R8
         sr%sktdt(iCv,3) = -t0
-        sr%sktdt(iCv,:) = sr%skt(iCv,:)+sr%sktdt(iCv,:)
+        sr%skt(iCv,:) = sr%skt(iCv,:)+sr%sktdt(iCv,:)
 
         sr%sztdt(iCv,0) = t0*ni0(iCv,1)*zt0(iCv)
         sr%sztdt(iCv,1) = 0.0_R8
         sr%sztdt(iCv,2) = 0.0_R8
         sr%sztdt(iCv,3) = -t0
-        sr%sztdt(iCv,:) = sr%szt(iCv,:)+sr%sztdt(iCv,:)
+        sr%szt(iCv,:) = sr%szt(iCv,:)+sr%sztdt(iCv,:)
       enddo
 
       do iCv = 1, nCv

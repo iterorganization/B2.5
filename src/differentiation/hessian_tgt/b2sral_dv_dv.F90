@@ -15,23 +15,24 @@
 !                *(std.dv.fna_eir) *(std.dv.kin_frac_hyb) *(std.dv.fluid_frac_hyb)
 !                *(std.dv.kinrgy) *(std.dv.ne) *(std.dv.pa) *(std.sr.sch)
 !                *(std.sr.she) *(std.sr.shi) *(std.sr.shn) *(std.sr.skt)
-!                *(std.sr.smo) *(std.sr.smq) *(std.sr.sna) *(std.srw.sch0)
-!                *(std.srw.she0) *(std.srw.shi0) *(std.srw.shn0)
-!                *(std.srw.skt0) *(std.srw.smo0) *(std.srw.smq0)
-!                *(std.srw.sna0) *(std.rt.rza) *(std.rt.rz2) *(std.rt.rpt)
-!                *(std.rt.rpi) *(std.rtw.rsa) *(std.rtw.rra) *(std.rtw.rqa)
-!                *(std.rtw.rcx) *(std.rtw.rqr) *(std.psnl.na) *(std.psnl.ne)
-!                *(std.psnl.ni) *(std.psnl.kinrgy) *(std.psnc.na)
-!                *(std.psnc.ne) *(std.psnc.ni) *(std.psnc.kinrgy)
-!                *(st.pl.na) *(st.dv.fchvispar) *(st.dv.fchinert)
-!                *(st.dv.fchanml) *(st.dv.fna) *(st.dv.fna_mdf)
-!                *(st.dv.fna_32) *(st.dv.fna_he) *(st.dv.fnapsch)
-!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.kin_frac_hyb)
-!                *(st.dv.fluid_frac_hyb) *(st.dv.kinrgy) *(st.dv.ne)
-!                *(st.dv.ni) *(st.dv.nn) *(st.dv.pa) *(st.sr.sch)
-!                *(st.sr.she) *(st.sr.shi) *(st.sr.shn) *(st.sr.skt)
-!                *(st.sr.smo) *(st.sr.smq) *(st.sr.sna) *(st.srw.sch0)
-!                *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0)
+!                *(std.sr.szt) *(std.sr.smo) *(std.sr.smq) *(std.sr.sna)
+!                *(std.srw.sch0) *(std.srw.she0) *(std.srw.shi0)
+!                *(std.srw.shn0) *(std.srw.skt0) *(std.srw.szt0)
+!                *(std.srw.smo0) *(std.srw.smq0) *(std.srw.sna0)
+!                *(std.rt.rza) *(std.rt.rz2) *(std.rt.rpt) *(std.rt.rpi)
+!                *(std.rtw.rsa) *(std.rtw.rra) *(std.rtw.rqa) *(std.rtw.rcx)
+!                *(std.rtw.rqr) *(std.psnl.na) *(std.psnl.ne) *(std.psnl.ni)
+!                *(std.psnl.kinrgy) *(std.psnc.na) *(std.psnc.ne)
+!                *(std.psnc.ni) *(std.psnc.kinrgy) *(st.pl.na)
+!                *(st.dv.fchvispar) *(st.dv.fchinert) *(st.dv.fchanml)
+!                *(st.dv.fna) *(st.dv.fna_mdf) *(st.dv.fna_32)
+!                *(st.dv.fna_he) *(st.dv.fnapsch) *(st.dv.fna_fcor)
+!                *(st.dv.fna_eir) *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
+!                *(st.dv.kinrgy) *(st.dv.ne) *(st.dv.ni) *(st.dv.nn)
+!                *(st.dv.pa) *(st.sr.sch) *(st.sr.she) *(st.sr.shi)
+!                *(st.sr.shn) *(st.sr.skt) *(st.sr.szt) *(st.sr.smo)
+!                *(st.sr.smq) *(st.sr.sna) *(st.srw.sch0) *(st.srw.she0)
+!                *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0) *(st.srw.szt0)
 !                *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rza)
 !                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
 !                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
@@ -46,25 +47,26 @@
 !                fb_targetd saved_fb_actuator fb_rescale charge_fracd
 !                fb_rescaled *(std.pl.na) *(std.pl.ua) *(std.pl.po)
 !                *(std.pl.te) *(std.pl.ti) *(std.pl.tn) *(std.pl.kt)
-!                *(std.co.csig_an) *(std.co.chce) *(std.co.chci)
-!                *(std.co.cvla) *(std.co.cdna) *(std.co.cdpa) *(std.co.vsaf_cl)
-!                *(std.co.hce0) *(std.co.hci0) *(std.co.hcn0) *(std.co.dpa0)
-!                *(std.co.dna0) *(std.dv.fch) *(std.dv.fch_p) *(std.dv.fchdia)
-!                *(std.dv.fchin) *(std.dv.fchvispar) *(std.dv.fchvisper)
-!                *(std.dv.fchvisq) *(std.dv.fchinert) *(std.dv.fchanml)
-!                *(std.dv.fchviskt) *(std.dv.fna) *(std.dv.fna_mdf)
-!                *(std.dv.fna_32) *(std.dv.fna_he) *(std.dv.fnapsch)
-!                *(std.dv.fna_fcor) *(std.dv.fna_eir) *(std.dv.fhe)
-!                *(std.dv.fhepsch) *(std.dv.fhi) *(std.dv.fhipsch)
-!                *(std.dv.fhm) *(std.dv.fkt) *(std.dv.kin_frac_hyb)
-!                *(std.dv.fluid_frac_hyb) *(std.dv.kinrgy) *(std.dv.pcca)
-!                *(std.dv.ne) *(std.dv.ni) *(std.dv.nn) *(std.dv.pa)
-!                *(std.dv.vadia) *(std.dv.wadia) *(std.dv.vaecrb)
-!                *(std.dv.vedia) *(std.dv.veecrb) *(std.sr.sch)
-!                *(std.sr.she) *(std.sr.shi) *(std.sr.shn) *(std.sr.skt)
-!                *(std.sr.smo) *(std.sr.smq) *(std.sr.sna) *(std.srw.sch0)
-!                *(std.srw.she0) *(std.srw.shi0) *(std.srw.shn0)
-!                *(std.srw.skt0) *(std.srw.smo0) *(std.srw.smq0)
+!                *(std.pl.zt) *(std.co.csig_an) *(std.co.chce)
+!                *(std.co.chci) *(std.co.cvla) *(std.co.cdna) *(std.co.cdpa)
+!                *(std.co.vsaf_cl) *(std.co.hce0) *(std.co.hci0)
+!                *(std.co.hcn0) *(std.co.dpa0) *(std.co.dna0) *(std.dv.fch)
+!                *(std.dv.fch_p) *(std.dv.fchdia) *(std.dv.fchin)
+!                *(std.dv.fchvispar) *(std.dv.fchvisper) *(std.dv.fchvisq)
+!                *(std.dv.fchinert) *(std.dv.fchanml) *(std.dv.fchviskt)
+!                *(std.dv.fna) *(std.dv.fna_mdf) *(std.dv.fna_32)
+!                *(std.dv.fna_he) *(std.dv.fnapsch) *(std.dv.fna_fcor)
+!                *(std.dv.fna_eir) *(std.dv.fhe) *(std.dv.fhepsch)
+!                *(std.dv.fhi) *(std.dv.fhipsch) *(std.dv.fhm)
+!                *(std.dv.fkt) *(std.dv.kin_frac_hyb) *(std.dv.fluid_frac_hyb)
+!                *(std.dv.kinrgy) *(std.dv.pcca) *(std.dv.ne) *(std.dv.ni)
+!                *(std.dv.nn) *(std.dv.pa) *(std.dv.vadia) *(std.dv.wadia)
+!                *(std.dv.vaecrb) *(std.dv.vedia) *(std.dv.veecrb)
+!                *(std.sr.sch) *(std.sr.she) *(std.sr.shi) *(std.sr.shn)
+!                *(std.sr.skt) *(std.sr.szt) *(std.sr.smo) *(std.sr.smq)
+!                *(std.sr.sna) *(std.srw.sch0) *(std.srw.she0)
+!                *(std.srw.shi0) *(std.srw.shn0) *(std.srw.skt0)
+!                *(std.srw.szt0) *(std.srw.smo0) *(std.srw.smq0)
 !                *(std.srw.sna0) *(std.rt.rlcx) *(std.rt.rlqa)
 !                *(std.rt.rlra) *(std.rt.rlsa) *(std.rt.rlza) *(std.rt.rlz2)
 !                *(std.rt.rlpt) *(std.rt.rlpi) *(std.rt.rlqr) *(std.rt.rza)
@@ -72,12 +74,13 @@
 !                *(std.rtw.rra) *(std.rtw.rqa) *(std.rtw.rcx) *(std.rtw.rqr)
 !                *(std.psnl.na) *(std.psnl.ne) *(std.psnl.ni) *(std.psnl.kinrgy)
 !                *(std.psnc.na) *(std.psnc.ne) *(std.psnc.ni) *(std.psnc.kinrgy)
-!                switch.b2tfhi_fflokt *(st.pl.na) *(st.pl.ua) *(st.pl.po)
-!                *(st.pl.te) *(st.pl.ti) *(st.pl.tn) *(st.pl.kt)
-!                *(st.co.csig_an) *(st.co.chce) *(st.co.chci) *(st.co.cvla)
-!                *(st.co.cdna) *(st.co.cdpa) *(st.co.vsaf_cl) *(st.co.hce0)
-!                *(st.co.hci0) *(st.co.hcn0) *(st.co.dpa0) *(st.co.dna0)
-!                *(st.dv.fch) *(st.dv.fch_p) *(st.dv.fchdia) *(st.dv.fchin)
+!                switch.b2tfhi_fflokt switch.b2tfhi_fflozt *(st.pl.na)
+!                *(st.pl.ua) *(st.pl.po) *(st.pl.te) *(st.pl.ti)
+!                *(st.pl.tn) *(st.pl.kt) *(st.pl.zt) *(st.co.csig_an)
+!                *(st.co.chce) *(st.co.chci) *(st.co.cvla) *(st.co.cdna)
+!                *(st.co.cdpa) *(st.co.vsaf_cl) *(st.co.hce0) *(st.co.hci0)
+!                *(st.co.hcn0) *(st.co.dpa0) *(st.co.dna0) *(st.dv.fch)
+!                *(st.dv.fch_p) *(st.dv.fchdia) *(st.dv.fchin)
 !                *(st.dv.fchvispar) *(st.dv.fchvisper) *(st.dv.fchvisq)
 !                *(st.dv.fchinert) *(st.dv.fchanml) *(st.dv.fchviskt)
 !                *(st.dv.fna) *(st.dv.fna_mdf) *(st.dv.fna_32)
@@ -89,37 +92,38 @@
 !                *(st.dv.nn) *(st.dv.pa) *(st.dv.vadia) *(st.dv.wadia)
 !                *(st.dv.vaecrb) *(st.dv.vedia) *(st.dv.veecrb)
 !                *(st.sr.sch) *(st.sr.she) *(st.sr.shi) *(st.sr.shn)
-!                *(st.sr.skt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
-!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
-!                *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
-!                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra) *(st.rt.rlsa)
-!                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
-!                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
-!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
-!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne)
-!                *(st.psnl.ni) *(st.psnl.kinrgy) *(st.psnc.na)
-!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
+!                *(st.sr.skt) *(st.sr.szt) *(st.sr.smo) *(st.sr.smq)
+!                *(st.sr.sna) *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0)
+!                *(st.srw.shn0) *(st.srw.skt0) *(st.srw.szt0) *(st.srw.smo0)
+!                *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rlcx) *(st.rt.rlqa)
+!                *(st.rt.rlra) *(st.rt.rlsa) *(st.rt.rlza) *(st.rt.rlz2)
+!                *(st.rt.rlpt) *(st.rt.rlpi) *(st.rt.rlqr) *(st.rt.rza)
+!                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
+!                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
+!                *(st.psnl.na) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
+!                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
 !   Plus diff mem management of: std.pl.na:in std.pl.ua:in std.pl.po:in
 !                std.pl.te:in std.pl.ti:in std.pl.tn:in std.pl.kt:in
-!                std.co.csig_an:in std.co.chce:in std.co.chci:in
-!                std.co.cvla:in std.co.cdna:in std.co.cdpa:in std.co.vsaf_cl:in
-!                std.co.hce0:in std.co.hci0:in std.co.hcn0:in std.co.dpa0:in
-!                std.co.dna0:in std.dv.fch:in std.dv.fch_p:in std.dv.fchdia:in
-!                std.dv.fchin:in std.dv.fchvispar:in std.dv.fchvisper:in
-!                std.dv.fchvisq:in std.dv.fchinert:in std.dv.fchanml:in
-!                std.dv.fchviskt:in std.dv.fna:in std.dv.fna_mdf:in
-!                std.dv.fna_32:in std.dv.fna_he:in std.dv.fnapsch:in
-!                std.dv.fna_fcor:in std.dv.fna_eir:in std.dv.fhe:in
-!                std.dv.fhepsch:in std.dv.fhi:in std.dv.fhipsch:in
-!                std.dv.fhm:in std.dv.fkt:in std.dv.kin_frac_hyb:in
-!                std.dv.fluid_frac_hyb:in std.dv.kinrgy:in std.dv.pcca:in
-!                std.dv.ne:in std.dv.ni:in std.dv.nn:in std.dv.pa:in
-!                std.dv.vadia:in std.dv.wadia:in std.dv.vaecrb:in
-!                std.dv.vedia:in std.dv.veecrb:in std.sr.sch:in
-!                std.sr.she:in std.sr.shi:in std.sr.shn:in std.sr.skt:in
-!                std.sr.smo:in std.sr.smq:in std.sr.sna:in std.srw.sch0:in
-!                std.srw.she0:in std.srw.shi0:in std.srw.shn0:in
-!                std.srw.skt0:in std.srw.smo0:in std.srw.smq0:in
+!                std.pl.zt:in std.co.csig_an:in std.co.chce:in
+!                std.co.chci:in std.co.cvla:in std.co.cdna:in std.co.cdpa:in
+!                std.co.vsaf_cl:in std.co.hce0:in std.co.hci0:in
+!                std.co.hcn0:in std.co.dpa0:in std.co.dna0:in std.dv.fch:in
+!                std.dv.fch_p:in std.dv.fchdia:in std.dv.fchin:in
+!                std.dv.fchvispar:in std.dv.fchvisper:in std.dv.fchvisq:in
+!                std.dv.fchinert:in std.dv.fchanml:in std.dv.fchviskt:in
+!                std.dv.fna:in std.dv.fna_mdf:in std.dv.fna_32:in
+!                std.dv.fna_he:in std.dv.fnapsch:in std.dv.fna_fcor:in
+!                std.dv.fna_eir:in std.dv.fhe:in std.dv.fhepsch:in
+!                std.dv.fhi:in std.dv.fhipsch:in std.dv.fhm:in
+!                std.dv.fkt:in std.dv.kin_frac_hyb:in std.dv.fluid_frac_hyb:in
+!                std.dv.kinrgy:in std.dv.pcca:in std.dv.ne:in std.dv.ni:in
+!                std.dv.nn:in std.dv.pa:in std.dv.vadia:in std.dv.wadia:in
+!                std.dv.vaecrb:in std.dv.vedia:in std.dv.veecrb:in
+!                std.sr.sch:in std.sr.she:in std.sr.shi:in std.sr.shn:in
+!                std.sr.skt:in std.sr.szt:in std.sr.smo:in std.sr.smq:in
+!                std.sr.sna:in std.srw.sch0:in std.srw.she0:in
+!                std.srw.shi0:in std.srw.shn0:in std.srw.skt0:in
+!                std.srw.szt0:in std.srw.smo0:in std.srw.smq0:in
 !                std.srw.sna0:in std.rt.rlcx:in std.rt.rlqa:in
 !                std.rt.rlra:in std.rt.rlsa:in std.rt.rlza:in std.rt.rlz2:in
 !                std.rt.rlpt:in std.rt.rlpi:in std.rt.rlqr:in std.rt.rza:in
@@ -196,23 +200,25 @@
 !                *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
 !                *(st.dv.kinrgy) *(st.dv.ne) *(st.dv.pa) *(st.sr.sch)
 !                *(st.sr.she) *(st.sr.shi) *(st.sr.shn) *(st.sr.skt)
-!                *(st.sr.smo) *(st.sr.smq) *(st.sr.sna) *(st.srw.sch0)
-!                *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0)
-!                *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rza)
-!                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
-!                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
-!                *(st.psnl.na) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
-!                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
+!                *(st.sr.szt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
+!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
+!                *(st.srw.skt0) *(st.srw.szt0) *(st.srw.smo0) *(st.srw.smq0)
+!                *(st.srw.sna0) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
+!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
+!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne)
+!                *(st.psnl.ni) *(st.psnl.kinrgy) *(st.psnc.na)
+!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar b2recyc userfluxparm int4l int1l
 !                int2l int3l int0l fb_target fb_prev fb_current
 !                fb_const charge_frac saved_fb_actuator fb_rescale
-!                switch.b2tfhi_fflokt *(st.pl.na) *(st.pl.ua) *(st.pl.po)
-!                *(st.pl.te) *(st.pl.ti) *(st.pl.tn) *(st.pl.kt)
-!                *(st.co.csig_an) *(st.co.chce) *(st.co.chci) *(st.co.cvla)
-!                *(st.co.cdna) *(st.co.cdpa) *(st.co.vsaf_cl) *(st.co.hce0)
-!                *(st.co.hci0) *(st.co.hcn0) *(st.co.dpa0) *(st.co.dna0)
-!                *(st.dv.fch) *(st.dv.fch_p) *(st.dv.fchdia) *(st.dv.fchin)
+!                switch.b2tfhi_fflokt switch.b2tfhi_fflozt *(st.pl.na)
+!                *(st.pl.ua) *(st.pl.po) *(st.pl.te) *(st.pl.ti)
+!                *(st.pl.tn) *(st.pl.kt) *(st.pl.zt) *(st.co.csig_an)
+!                *(st.co.chce) *(st.co.chci) *(st.co.cvla) *(st.co.cdna)
+!                *(st.co.cdpa) *(st.co.vsaf_cl) *(st.co.hce0) *(st.co.hci0)
+!                *(st.co.hcn0) *(st.co.dpa0) *(st.co.dna0) *(st.dv.fch)
+!                *(st.dv.fch_p) *(st.dv.fchdia) *(st.dv.fchin)
 !                *(st.dv.fchvispar) *(st.dv.fchvisper) *(st.dv.fchvisq)
 !                *(st.dv.fchinert) *(st.dv.fchanml) *(st.dv.fchviskt)
 !                *(st.dv.fna) *(st.dv.fna_mdf) *(st.dv.fna_32)
@@ -224,16 +230,16 @@
 !                *(st.dv.nn) *(st.dv.pa) *(st.dv.vadia) *(st.dv.wadia)
 !                *(st.dv.vaecrb) *(st.dv.vedia) *(st.dv.veecrb)
 !                *(st.sr.sch) *(st.sr.she) *(st.sr.shi) *(st.sr.shn)
-!                *(st.sr.skt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
-!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
-!                *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
-!                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra) *(st.rt.rlsa)
-!                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
-!                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
-!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
-!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne)
-!                *(st.psnl.ni) *(st.psnl.kinrgy) *(st.psnc.na)
-!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
+!                *(st.sr.skt) *(st.sr.szt) *(st.sr.smo) *(st.sr.smq)
+!                *(st.sr.sna) *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0)
+!                *(st.srw.shn0) *(st.srw.skt0) *(st.srw.szt0) *(st.srw.smo0)
+!                *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rlcx) *(st.rt.rlqa)
+!                *(st.rt.rlra) *(st.rt.rlsa) *(st.rt.rlza) *(st.rt.rlz2)
+!                *(st.rt.rlpt) *(st.rt.rlpi) *(st.rt.rlqr) *(st.rt.rza)
+!                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
+!                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
+!                *(st.psnl.na) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
+!                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
 !   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in-out
 !                mpg.intcellp:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
@@ -528,7 +534,7 @@ SUBROUTINE B2SRAL_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -550,7 +556,7 @@ SUBROUTINE B2SRAL_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -587,7 +593,7 @@ SUBROUTINE B2SRAL_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF
@@ -657,6 +663,7 @@ SUBROUTINE B2SRAL_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
         stdd%sr%shn(nd0, nd, :, :) = stdd%srw%shn0(nd0, nd, :, :)
         stdd%sr%sch(nd0, nd, :, :) = stdd%srw%sch0(nd0, nd, :, :)
         stdd%sr%skt(nd0, nd, :, :) = stdd%srw%skt0(nd0, nd, :, :)
+        stdd%sr%szt(nd0, nd, :, :) = stdd%srw%szt0(nd0, nd, :, :)
       END DO
       std%sr%sna(nd, :, :, :) = std%srw%sna0(nd, :, :, :)
       std%sr%smo(nd, :, :, :) = std%srw%smo0(nd, :, :, :)
@@ -665,6 +672,7 @@ SUBROUTINE B2SRAL_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       std%sr%shn(nd, :, :) = std%srw%shn0(nd, :, :)
       std%sr%sch(nd, :, :) = std%srw%sch0(nd, :, :)
       std%sr%skt(nd, :, :) = std%srw%skt0(nd, :, :)
+      std%sr%szt(nd, :, :) = std%srw%szt0(nd, :, :)
     END DO
     DO nd0=1,nbdirs0
       std0%sr%sna(nd0, :, :, :) = std0%srw%sna0(nd0, :, :, :)
@@ -674,6 +682,7 @@ SUBROUTINE B2SRAL_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       std0%sr%shn(nd0, :, :) = std0%srw%shn0(nd0, :, :)
       std0%sr%sch(nd0, :, :) = std0%srw%sch0(nd0, :, :)
       std0%sr%skt(nd0, :, :) = std0%srw%skt0(nd0, :, :)
+      std0%sr%szt(nd0, :, :) = std0%srw%szt0(nd0, :, :)
     END DO
     st%sr%sna = st%srw%sna0
     st%sr%smo = st%srw%smo0
@@ -1084,23 +1093,25 @@ END SUBROUTINE B2SRAL_DV_DV
 !                *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
 !                *(st.dv.kinrgy) *(st.dv.ne) *(st.dv.pa) *(st.sr.sch)
 !                *(st.sr.she) *(st.sr.shi) *(st.sr.shn) *(st.sr.skt)
-!                *(st.sr.smo) *(st.sr.smq) *(st.sr.sna) *(st.srw.sch0)
-!                *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0)
-!                *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rza)
-!                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
-!                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
-!                *(st.psnl.na) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
-!                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
+!                *(st.sr.szt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
+!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
+!                *(st.srw.skt0) *(st.srw.szt0) *(st.srw.smo0) *(st.srw.smq0)
+!                *(st.srw.sna0) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
+!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
+!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne)
+!                *(st.psnl.ni) *(st.psnl.kinrgy) *(st.psnc.na)
+!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar b2recyc userfluxparm int4l int1l
 !                int2l int3l int0l fb_target fb_prev fb_current
 !                fb_const charge_frac saved_fb_actuator fb_rescale
-!                switch.b2tfhi_fflokt *(st.pl.na) *(st.pl.ua) *(st.pl.po)
-!                *(st.pl.te) *(st.pl.ti) *(st.pl.tn) *(st.pl.kt)
-!                *(st.co.csig_an) *(st.co.chce) *(st.co.chci) *(st.co.cvla)
-!                *(st.co.cdna) *(st.co.cdpa) *(st.co.vsaf_cl) *(st.co.hce0)
-!                *(st.co.hci0) *(st.co.hcn0) *(st.co.dpa0) *(st.co.dna0)
-!                *(st.dv.fch) *(st.dv.fch_p) *(st.dv.fchdia) *(st.dv.fchin)
+!                switch.b2tfhi_fflokt switch.b2tfhi_fflozt *(st.pl.na)
+!                *(st.pl.ua) *(st.pl.po) *(st.pl.te) *(st.pl.ti)
+!                *(st.pl.tn) *(st.pl.kt) *(st.pl.zt) *(st.co.csig_an)
+!                *(st.co.chce) *(st.co.chci) *(st.co.cvla) *(st.co.cdna)
+!                *(st.co.cdpa) *(st.co.vsaf_cl) *(st.co.hce0) *(st.co.hci0)
+!                *(st.co.hcn0) *(st.co.dpa0) *(st.co.dna0) *(st.dv.fch)
+!                *(st.dv.fch_p) *(st.dv.fchdia) *(st.dv.fchin)
 !                *(st.dv.fchvispar) *(st.dv.fchvisper) *(st.dv.fchvisq)
 !                *(st.dv.fchinert) *(st.dv.fchanml) *(st.dv.fchviskt)
 !                *(st.dv.fna) *(st.dv.fna_mdf) *(st.dv.fna_32)
@@ -1112,16 +1123,16 @@ END SUBROUTINE B2SRAL_DV_DV
 !                *(st.dv.nn) *(st.dv.pa) *(st.dv.vadia) *(st.dv.wadia)
 !                *(st.dv.vaecrb) *(st.dv.vedia) *(st.dv.veecrb)
 !                *(st.sr.sch) *(st.sr.she) *(st.sr.shi) *(st.sr.shn)
-!                *(st.sr.skt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
-!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
-!                *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
-!                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra) *(st.rt.rlsa)
-!                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
-!                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
-!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
-!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne)
-!                *(st.psnl.ni) *(st.psnl.kinrgy) *(st.psnc.na)
-!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
+!                *(st.sr.skt) *(st.sr.szt) *(st.sr.smo) *(st.sr.smq)
+!                *(st.sr.sna) *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0)
+!                *(st.srw.shn0) *(st.srw.skt0) *(st.srw.szt0) *(st.srw.smo0)
+!                *(st.srw.smq0) *(st.srw.sna0) *(st.rt.rlcx) *(st.rt.rlqa)
+!                *(st.rt.rlra) *(st.rt.rlsa) *(st.rt.rlza) *(st.rt.rlz2)
+!                *(st.rt.rlpt) *(st.rt.rlpi) *(st.rt.rlqr) *(st.rt.rza)
+!                *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa)
+!                *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr)
+!                *(st.psnl.na) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
+!                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.kinrgy)
 !   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in-out
 !                mpg.intcellp:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
@@ -1395,7 +1406,7 @@ SUBROUTINE B2SRAL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -1417,7 +1428,7 @@ SUBROUTINE B2SRAL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -1454,7 +1465,7 @@ SUBROUTINE B2SRAL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF
@@ -1511,6 +1522,7 @@ SUBROUTINE B2SRAL_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       std%sr%shn(nd, :, :) = std%srw%shn0(nd, :, :)
       std%sr%sch(nd, :, :) = std%srw%sch0(nd, :, :)
       std%sr%skt(nd, :, :) = std%srw%skt0(nd, :, :)
+      std%sr%szt(nd, :, :) = std%srw%szt0(nd, :, :)
     END DO
     st%sr%sna = st%srw%sna0
     st%sr%smo = st%srw%smo0
@@ -2043,7 +2055,7 @@ SUBROUTINE B2SRAL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
     IF (numerics_time_mod .GT. 0.0_R8) THEN
@@ -2065,7 +2077,7 @@ SUBROUTINE B2SRAL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
       IF (numerics_time_mod .GT. 0.0_R8) THEN
         catch_up = MOD(tim, numerics_time_mod) .GE. numerics_time_switch&
@@ -2102,7 +2114,7 @@ SUBROUTINE B2SRAL_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
       CALL READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, switch%nsmin, switch%&
 &                                 nsmax, mpg%nnreg, mpg%&
 &                                 cvonclosedsurface, switch%b2mndt_style&
-&                                )
+&                                 , .false.)
       CALL WRITE_B2MOD_NUMERICS_NAMELIST()
     END IF
   END IF

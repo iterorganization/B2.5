@@ -232,15 +232,16 @@ TAGSLIST += ${SRCB2}/${DIFFDIR}/*.F*
 #TAGSLIST += ${SRCDIR}/differentiated_files${EXT_DIFF}/*.F
 IDSDIFFMODS = ${patsubst %,${SRCDIR}/ids/%,b2mod_cellhelper.F90 b2mod_connectivity.F90 b2mod_constants.F90 b2mod_grid_mapping.F90 b2mod_interp.F90 carre_constants.F90 helper.F90 logging.F90 tradui_constants.F90}
 endif
-ifneq ($(shell `pkg-config --exists petsc`; echo $$?),0)
 ifdef TAO
+ifdef TAO_NEW
+DEFINES += -DTAO_NEW
+endif
 SOLPSINCLUDE += -I${PETSC_DIR}/include
 MODINCLUDE += -I${PETSC_DIR}/include
 ifdef PETSC_ARCH
 ifeq ($(shell [ -d ${PETSC_DIR}/${PETSC_ARCH}/include ] && echo yes || echo no ),yes)
 SOLPSINCLUDE += -I${PETSC_DIR}/${PETSC_ARCH}/include
 MODINCLUDE += -I${PETSC_DIR}/${PETSC_ARCH}/include
-endif
 endif
 endif
 endif
@@ -391,7 +392,7 @@ endif
 PROG_GE = b2pl.exe
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe
 PROG_MN = b2mn.exe b2mnastra.exe
-PROG_AM = b2ar.exe
+PROG_AM = b2ab.exe b2ar.exe
 PROG_XD = b2xd.exe
 PROG_OE = b2ag.exe b2ai.exe b2fu.exe b2ts.exe b2uf.exe b2us.exe b2ye.exe b2yt.exe b2ymb.exe b2yrp.exe b2ydm.exe b2plasmastate_inspect.exe calc_atomic_data.exe
 PROG_CO = b2co.exe
@@ -410,7 +411,7 @@ PROG_MNH = b2mn_hess.exe
 ifdef OPT
 PROG_OPT = b2optim_${OPT}.exe
 endif
-OPTEXCL = b2optim_ipopt.exe b2optim_tao.exe
+OPTEXCL = b2optim_tao.exe
 
 EXCLUDELIST = ${patsubst %.exe, %\\.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_90} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID} ${PROG_TT} ${PROG_MND} ${PROG_MNB} ${OPTEXCL}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_AM} ${PROG_XD} ${PROG_OE} ${PROG_CO} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
@@ -449,6 +450,7 @@ MNDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MND}}
 MNBEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MNB}}
 OPTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OPT}}
 MNHEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MNH}}
+
 CONTEXTAD = ${OBJDIR}/adContext.o
 STACKAD = ${OBJDIR}/adStack.o
 DBGAD = ${OBJDIR}/adDebug.o
@@ -500,7 +502,7 @@ MAIN: VERSION ${MNEXE}
 
 ifdef USE_EIRENE
 VPATH+=${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS-ITER
-MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90 
+MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
 MODLISTF+=${SRCEIR}/modules/*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.f
 MODLISTF90+=${SRCEIR}/modules/*.[fF]90 ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
 MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a ${EIRDIR}/ioflush.o
@@ -1131,7 +1133,7 @@ endif
 	@if [ -f b2mod_mdsplus.${MOD} ] ; then /bin/mv b2mod_mdsplus.${MOD} ${OBJDIR}/ ; fi
 
 ifneq (${MOD},o)
-${OBJDIR}/b2mod_mdsplus.${MOD} : b2mod_mdsplus.F
+${OBJDIR}/b2mod_mdsplus.${MOD}: b2mod_mdsplus.F
 	@- /bin/rm -f ${OBJDIR}/b2mod_mdsplus.f ${OBJDIR}/b2mod_mdsplus.o ${OBJDIR}/b2mod_mdsplus.${MOD}
 ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} ${FPOPTS} -fallow-argument-mismatch ${FFLAGSEXTRA} ${DEFINES} ${DPFINES} ${EQUIVS} ${SOLPSINCLUDE} -c $<
@@ -1205,7 +1207,7 @@ else
 	$(warning Compiler type was redefined: skipping!)
 endif
 else
-	$(warning NETCDF library not present!)
+	$(warning nc2text_simple compilation skipped because netCDF library not present)
 endif
 
 ${NREXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${MAKES}
@@ -1219,7 +1221,7 @@ else
 	$(warning Compiler type was redefined: skipping!)
 endif
 else
-	$(warning NETCDF library not present!)
+	$(warning nc_reduce compilation skipped because netCDF library not present)
 endif
 
 ${MNDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES} ${ADEXTRA}
@@ -1262,11 +1264,7 @@ ifndef COMPILER_REDEF
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.F90
 	${FN} ${FCOPTS} ${FFLAGSEXTRA} -c -o $*.o $*.F90
-else
-	$(warning Compiler type was redefined: skipping!)
 endif
-else
-	$(warning NETCDF library not present!)
 endif
 
 ${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBNDIR}/b2mod_ipmain.${MOD} ${OBNDIR}/b2mod_lwimai.${MOD} ${OBNDIR}/b2mod_lwmain.${MOD} ${OBNDIR}/b2mod_math.${MOD} ${OBNDIR}/b2mod_openmp.${MOD} ${OBNDIR}/b2mod_stack.${MOD} ${OBNDIR}/b2mod_subsys.${MOD} ${OBNDIR}/b2mod_types.${MOD} ${OBNDIR}/b2mod_xerset.${MOD}
@@ -1275,11 +1273,7 @@ ifndef COMPILER_REDEF
 	@-mkdir -p ${NCODIR}
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${SOLPSINCLUDE} $< $*.F90
 	${FN} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODN} -o $*.o $*.F90
-else
-	$(warning Compiler type was redefined: skipping!)
 endif
-else
-	$(warning NETCDF library not present!)
 endif
 
 ${SOLPS4OBJS}: ${OBJDIR}/%.o: ${SOLPS4}/%.F

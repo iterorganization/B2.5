@@ -32,7 +32,7 @@ SUBROUTINE B2XPVE_B(ncv, nfc, ns, switch, geo, geob, mpg, mpgb, qe, rza&
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
   IMPLICIT NONE
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFF) :: geob
@@ -172,7 +172,7 @@ SUBROUTINE B2XPVE_NODIFF(ncv, nfc, ns, switch, geo, mpg, qe, rza, rz2, &
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
   IMPLICIT NONE
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg

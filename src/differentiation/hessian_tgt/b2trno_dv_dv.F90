@@ -148,11 +148,9 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & , pldd, dv, dvd0, dvd, dvdd, rt, rtd0, rtd, rtdd, st_ext, st_extd0, &
 & st_extd, co, cod0, cod, codd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
   USE B2MOD_B2CMPT_DIFFV_DIFFV
-!      use b2mod_neoclassical
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
@@ -185,17 +183,12 @@ SUBROUTINE B2TRNO_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   IMPLICIT NONE
 !
 !-----------------------------------------------------------------------
-!.scribbles
-!
-!!!   Consider to apply a flux limit to the anomalous particle transport.
-!!!   Still must consider how to deal with a non-orthogonal grid.
-!
-!-----------------------------------------------------------------------
 !.end b2trno
 !
 !   ..read data on first call
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES_DIFFV0), INTENT(INOUT) :: switchd0
   TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
@@ -1154,11 +1147,9 @@ SUBROUTINE B2TRNO_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 & ismain, switch, switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, rt, &
 & rtd, st_ext, st_extd, co, cod, nbdirs)
   USE B2MOD_TYPES
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
   USE B2MOD_B2CMPT_DIFFV_DIFFV
-!      use b2mod_neoclassical
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
@@ -1187,17 +1178,12 @@ SUBROUTINE B2TRNO_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   IMPLICIT NONE
 !
 !-----------------------------------------------------------------------
-!.scribbles
-!
-!!!   Consider to apply a flux limit to the anomalous particle transport.
-!!!   Still must consider how to deal with a non-orthogonal grid.
-!
-!-----------------------------------------------------------------------
 !.end b2trno
 !
 !   ..read data on first call
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -1868,11 +1854,9 @@ END SUBROUTINE B2TRNO_DV_NODIFF
 SUBROUTINE B2TRNO_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 & ismain, switch, geo, mpg, pl, dv, rt, st_ext, co)
   USE B2MOD_TYPES
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
   USE B2MOD_B2CMPT_DIFFV_DIFFV
-!      use b2mod_neoclassical
   USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
@@ -1896,17 +1880,12 @@ SUBROUTINE B2TRNO_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   IMPLICIT NONE
 !
 !-----------------------------------------------------------------------
-!.scribbles
-!
-!!!   Consider to apply a flux limit to the anomalous particle transport.
-!!!   Still must consider how to deal with a non-orthogonal grid.
-!
-!-----------------------------------------------------------------------
 !.end b2trno
 !
 !   ..read data on first call
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg

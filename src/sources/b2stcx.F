@@ -89,7 +89,7 @@
        call b2xvsg (nCv, tn, 1, 'tn', '.gt.')
        call b2xvsg (nCv*2, ni, 1, 'ni', '.gt.')
 *    ..test velocities
-       call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocities !')
+       call xertst (maxval(dabs(ua)).lt.c, 'Supra-luminal velocities !')
 *    ..test rate coefficients
        do is = 1, ns-1
         if (.not.lnext(is-1,is)) then

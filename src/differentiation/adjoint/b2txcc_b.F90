@@ -21,7 +21,7 @@ SUBROUTINE B2TXCC_FWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, con)
   USE B2US_MAP_DIFF
   USE B2MOD_SUBSYS
   IMPLICIT NONE
-  INTEGER :: ncv, nfc, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), kap(ncv), con(nfc)
@@ -124,7 +124,7 @@ SUBROUTINE B2TXCC_BWD(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, kapb, &
   USE B2US_MAP_DIFF
   USE B2MOD_SUBSYS
   IMPLICIT NONE
-  INTEGER :: ncv, nfc, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), kap(ncv), con(nfc)
@@ -244,7 +244,7 @@ SUBROUTINE B2TXCC_NODIFF(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, con)
   USE B2US_MAP_DIFF
   USE B2MOD_SUBSYS
   IMPLICIT NONE
-  INTEGER :: ncv, nfc, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), kap(ncv), con(nfc)

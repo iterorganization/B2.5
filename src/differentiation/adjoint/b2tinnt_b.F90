@@ -95,7 +95,7 @@ SUBROUTINE B2TINNT_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, rt&
   EXTERNAL B2XVSG
   INTRINSIC LOG
   INTRINSIC NINT
-  INTRINSIC DABS
+  INTRINSIC ABS
   REAL(kind=r8), DIMENSION(nCv) :: dabs0
   REAL(kind=r8), DIMENSION(nCv) :: dabs1
   REAL(kind=r8), DIMENSION(nCv) :: dabs2
@@ -599,7 +599,7 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
   EXTERNAL B2XVSG
   INTRINSIC LOG
   INTRINSIC NINT
-  INTRINSIC DABS
+  INTRINSIC ABS
   REAL(kind=r8), DIMENSION(nCv) :: dabs0
   REAL(kind=r8), DIMENSION(nCv) :: dabs1
   REAL(kind=r8), DIMENSION(nCv) :: dabs2
