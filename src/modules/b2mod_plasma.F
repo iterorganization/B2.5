@@ -671,6 +671,7 @@
       call cfwure (nwrite, size(fchviskt), fchviskt, 'fchviskt')
       call cfwure (nwrite, size(fchviskt), fchanml, 'fchanml')
       call cfwure (nwrite, size(fna_eir), fna_eir, 'fna_eir')
+      call cfwure (nwrite, size(fch_p), fch_p, 'fch_p')
 
       return
       end subroutine write_b2mod_plasma
