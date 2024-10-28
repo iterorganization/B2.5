@@ -11,7 +11,7 @@
       integer :: list(nmax), nncv, mode
       integer :: ic, ifc, ii, kk
       real(kind=r8) :: p1(2), q1(2), p2(2), q2(2)
-      logical found, intersects, ifail
+      logical found, intersects, ifail, slab_test
       external intersects, xertst
 
 ***
@@ -32,7 +32,14 @@
         p2(2) = geo%vxY(m%fcVx(ifc,1))
         q2(1) = geo%vxX(m%fcVx(ifc,2))
         q2(2) = geo%vxY(m%fcVx(ifc,2))
-        if (intersects(p1,q1,p2,q2)) then
+!! for artificial slab cases it sometimes happens that vxY and vxX are wrong at the cuts, leading to incorrect intersections.
+!! fcHt will be correct though. Therefore we check here if the distance between the vertex points corresponds to the face length. If not, no intersection is counted.
+        slab_test = .true.                                      
+        if (sqrt((p2(1)-q2(1))**2+(p2(2)-q2(2))**2).gt.         
+     &                              geo%fcHt(ifc)*1.1_R8) then 
+          slab_test = .false.
+        endif
+        if (intersects(p1,q1,p2,q2).and.slab_test) then
           do ii=1,2
             ic=m%fcCv(ifc,ii)
             found = .false.
