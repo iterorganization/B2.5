@@ -425,7 +425,8 @@ cwdk                   (original code: simple averaging)
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_mdf(:,1) = co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
-      flo_he(:,0) = geo%fcPbs*wrk0 + fac_he_anom*co%cvla(:,0,isb) +
+      flo_he(:,0) = geo%fcPbs*wrk0 +
+     &  coef*co%cvla(:,0,isb) +
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
       flo_he(:,1)  = coef*co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
@@ -548,11 +549,11 @@ cwdk                   (original code: simple averaging)
      &      (flo2dia(:,1) - flo_mdf(:,1)*wrk3)*nbf - 
      &       co%cdpahz(:,1,isb)*dpb(:,1)
 
-      dv%fna_he(:,0,isb)   = fac_he_anom*fna_mdf0(:,0) +
+      dv%fna_he(:,0,isb)   = fna_mdf0(:,0)*(coef) +
      &  (1.0_R8-drift_hyb)*
      &   dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf +
-     &  (flo_he(:,0) - fac_he_anom*flo_mdf(:,0))*nbf -
-     &  (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
+     &  (flo_he(:,0) - (coef)*flo_mdf(:,0))*nbf -
+     &  (coef)*co%cdpa(:,0,isb)*dpb(:,0)
       dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*coef +
      &  (1.0_R8-drift_hyb)*
      &   dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf +
