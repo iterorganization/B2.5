@@ -27,7 +27,7 @@ CPP = /lib/cpp -C -traditional -ffreestanding
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
-FC = nagfor
+FC ?= nagfor
 
 FCOPTS = -O -x77 -PIC -compatible # -mismatch
 INCMOD = -I

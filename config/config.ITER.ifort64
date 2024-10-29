@@ -34,21 +34,22 @@ DEFINES   += -DNO_OPT
 
 CPP        = /lib/cpp -traditional
 
+MPI_FC    ?= mpiifort
 ifdef USE_MPI
-FC         = mpiifort
+FC         = ${MPI_FC}
 ifndef MPDIR
 MPDIR      = ${EBROOTIMPI}
 LD_MPI    += -Wl,-rpath,${MPDIR}/lib64
 endif
 else
 ifdef USE_IMPGYRO
-FC         = mpiifort
+FC         = ${MPI_FC}
 ifndef MPDIR
 MPDIR      = ${EBROOTIMPI}
 LD_MPI    += -Wl,-rpath,${MPDIR}/lib64
 endif
 else
-FC         = ifort
+FC        ?= ifort
 endif
 endif
 
@@ -57,6 +58,7 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 FCOPTS     = -assume no2underscore -align commons -fPIC
 ifdef SOLPS_DEBUG
 FCOPTS    += -g -C -debug all -traceback -check all -fpe0
+LDOPTS    += -check all
 else
 FCOPTS    += -O2 -march=sandybridge
 ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
