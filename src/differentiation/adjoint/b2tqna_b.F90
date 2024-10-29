@@ -915,6 +915,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   IF (switch%b2tqna_limit_coeff .NE. 0) THEN
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) THEN
+        mask = .FALSE.
         CALL PUSHBOOLEANARRAY(mask, ncv)
         mask = dna0(:, is) .LT. switch%dna_min
         CALL PUSHREAL8ARRAY(dna0(:, is), r8*ncv/8)
@@ -922,6 +923,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
         CALL PUSHREAL8ARRAY(dna0(:, is), r8*ncv/8)
         WHERE (.NOT.mask) dna0(:, is) = dna0(:, is)
         y2 = switch%vsa_min*am(is)*mp*pl%na(:, is)
+        mask0 = .FALSE.
         CALL PUSHBOOLEANARRAY(mask0, ncv)
         mask0 = vsa0(:, is) .LT. y2
         CALL PUSHREAL8ARRAY(vsa0(:, is), r8*ncv/8)
@@ -929,6 +931,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
         CALL PUSHREAL8ARRAY(vsa0(:, is), r8*ncv/8)
         WHERE (.NOT.mask0) vsa0(:, is) = vsa0(:, is)
         mask1 = hcib(:, is) .LT. switch%hci_min*pl%na(:, is)
+        mask2 = .FALSE.
         CALL PUSHBOOLEANARRAY(mask2, ncv)
         mask2 = hcib(:, is) .LT. switch%hci_min*pl%na(:, is)
         CALL PUSHREAL8ARRAY(hcib(:, is), r8*ncv/8)
@@ -2855,6 +2858,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
       CALL GRADC_DIV_R_NODIFF(ncv, nfc, nvx, 1, geo, mpg, wrkc, wrkf, &
 &                       shear)
       IF (switch%transport_keps .EQ. 1) THEN
+        mask0 = .FALSE.
         CALL PUSHBOOLEANARRAY(mask0, ncv)
         mask0 = shear .GE. 0.
         CALL PUSHREAL8ARRAY(dabs2, ncv)
@@ -2872,6 +2876,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
 &         -switch%keps_fac)*dna0(:, is)
         CALL PUSHCONTROL2B(0)
       ELSE IF (switch%transport_keps .EQ. 2) THEN
+        mask1 = .FALSE.
         CALL PUSHBOOLEANARRAY(mask1, ncv)
         mask1 = shear .GE. 0.
         CALL PUSHREAL8ARRAY(dabs3, ncv)
