@@ -2693,11 +2693,11 @@ cxpb size is changed in b2mod_dimensions
       integer, intent(in) :: ispecies   ! Index of B2.5 species (or isonuclear sequence)
       real (kind=R8), intent(in) :: factor    ! factor to multiply the absorbtion coefficient
                                           ! note that recyct is (1.0 - absorbtion coefficient)
-      real (kind=R8) :: t0
-      integer ja, l, jm, k
-      logical set_for_all_sorts
-
-      do l=1, nnlimi + ncns  ! loop over Eirene surfaces
+        real (kind=R8) :: t0
+        integer ja, l, jm, k
+        logical set_for_all_sorts
+        
+      do l=1, nnlimi + nsts  ! loop over Eirene surfaces
         do ja = 1,nnatmi
           if (latmscl(ja).eq.ispecies .or. set_for_all_sorts) then  ! Eirene atom corresponds to B2.5 isonuclear sequence
             if (recyct(ja,l) > 0.0 .and. recyct(ja,l) < 1.0) then   ! this condition is required to not disturb those surfaces where albedo is exactly 1.0
