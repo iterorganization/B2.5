@@ -56,6 +56,13 @@ SUBROUTINE B2TVSKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   REAL(kind=r8) :: fchviskt(nfc, 0:1)
   REAL(kind=r8) :: fchvisktd(nbdirsmax, nfc, 0:1)
 !-----------------------------------------------------------------------
+!.documentation
+!
+!  1. purpose
+!
+!     B2TVSKT computes the current due to RS of kt-model.
+!
+!-----------------------------------------------------------------------
 !.declarations
 !
 !   ..local variables
@@ -235,6 +242,13 @@ SUBROUTINE B2TVSKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
 & vaecrb(nfc, 0:1, 0:ns-1)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: fchviskt(nfc, 0:1)
+!-----------------------------------------------------------------------
+!.documentation
+!
+!  1. purpose
+!
+!     B2TVSKT computes the current due to RS of kt-model.
+!
 !-----------------------------------------------------------------------
 !.declarations
 !

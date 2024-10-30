@@ -37,7 +37,7 @@
 *
 *  1. purpose
 *
-*     B2WDAT is an output routine that writes out B2 arrays into ASCII
+*     B2WDAT is an output routine that writes out B2.5 arrays into ASCII
 *     data files.
 *
 *-----------------------------------------------------------------------

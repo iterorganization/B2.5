@@ -94,7 +94,6 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   INTRINSIC SQRT
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL B2XVSG
-  EXTERNAL XERRAB
   REAL(r8) :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -173,27 +172,36 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
 &              dv%lnlam)
 ! ..compute classical hce, sig, alf
 !   ..compute hcex, sigx, alfx.
-  IF (switch%b2tqce_style_guard_cells .EQ. 0) THEN
-    DO icv=1,ncv
-      t0 = pl%te(icv)/ev
+  CALL SFILL_NODIFF(ncv, 0.0_R8, hce(1, 0), 1)
+! IYS and lk 21.11.2012
+  CALL SFILL_NODIFF(ncv, 0.0_R8, sig(1, 0), 1)
+! IYS and lk 21.11.2012
+  CALL SFILL_NODIFF(ncv, 0.0_R8, alf(1, 0), 1)
+! IYS and lk 21.11.2012
+!
+  DO icv=1,ncv
+    t0 = pl%te(icv)/ev
 !xpb !srv 01.07.09
-      result10 = SQRT(t0)
-      tau(icv) = ctaue/dv%lnlam(icv)*t0*result10/dv%ne2(icv)
-      result10 = PITX(icv)
-      tnp = tau(icv)*dv%ne(icv)*result10**2
-      z = dv%ne2(icv)/dv%ne(icv)
-      IF (switch%b2tqce_model .EQ. 1) THEN
+    result10 = SQRT(t0)
+    tau(icv) = ctaue/dv%lnlam(icv)*t0*result10/dv%ne2(icv)
+    result10 = PITX(icv)
+    tnp = tau(icv)*dv%ne(icv)*result10**2
+    z = dv%ne2(icv)/dv%ne(icv)
+    IF (switch%b2tqce_model .EQ. 1) THEN
 ! SOLPS5.0 model : Balescu fit
-        IF (switch%fch_pte .EQ. 1.0_R8 .AND. switch%fke_zhdanov .EQ. 1) &
-&       THEN
+      IF (switch%fch_pte .EQ. 1.0_R8 .AND. switch%fke_zhdanov .EQ. 1) &
+&     THEN
 !srv 02.12.10
-          result10 = FKE_ZH(z)
-          hce(icv, 0) = pl%te(icv)/me*result10*tnp
-        ELSE
-          result10 = FKE(z)
-          hce(icv, 0) = 2.5_R8*(pl%te(icv)/me)*result10*tnp
-        END IF
+        result10 = FKE_ZH(z)
+        hce(icv, 0) = pl%te(icv)/me*result10*tnp
+      ELSE
+        result10 = FKE(z)
+        hce(icv, 0) = 2.5_R8*(pl%te(icv)/me)*result10*tnp
+      END IF
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+&         %b2tqce_style_guard_cells .EQ. 0) THEN
 !srv 13.01.17 }
+! IYS and lk 21.11.2012
         IF (switch%b2sigp_style .EQ. 2) THEN
 !srv 13.01.17 {
           result10 = FSE_CE1(z)
@@ -207,19 +215,27 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
           result2 = FAL(z)
           alf(icv, 0) = result11*(qe/me)*result2*tnp
         END IF
-      ELSE IF (switch%b2tqce_model .EQ. 2) THEN
+      END IF
+    ELSE IF (switch%b2tqce_model .EQ. 2) THEN
 ! old SOLPS4.0 Braginskii model for hce
-        hce(icv, 0) = ce*(pl%te(icv)/me)*tnp
+      hce(icv, 0) = ce*(pl%te(icv)/me)*tnp
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+&         %b2tqce_style_guard_cells .EQ. 0) THEN
+! IYS and lk 21.11.2012
         result10 = FSE(z)
         sig(icv, 0) = qe**2/me*result10*tnp
         result11 = SQRT(2.5_R8)
         result2 = FAL(z)
         alf(icv, 0) = result11*(qe/me)*result2*tnp
-      ELSE IF (switch%b2tqce_model .EQ. 3) THEN
+      END IF
+    ELSE IF (switch%b2tqce_model .EQ. 3) THEN
 ! Balescu exact 21-moment expressions
-        result10 = D15E(z)
-        result2 = F135E(z)
-        hce(icv, 0) = 2.5_R8*(pl%te(icv)/me)*(result10/result2)*tnp
+      result10 = D15E(z)
+      result2 = F135E(z)
+      hce(icv, 0) = 2.5_R8*(pl%te(icv)/me)*(result10/result2)*tnp
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+&         %b2tqce_style_guard_cells .EQ. 0) THEN
+! IYS and lk 21.11.2012
         result10 = D35E(z)
         result2 = F135E(z)
         sig(icv, 0) = qe**2/me*(result10/result2)*tnp
@@ -228,82 +244,9 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
         result3 = F135E(z)
         alf(icv, 0) = result11*(qe/me)*(-(result2/result3))*tnp
       END IF
-    END DO
-  ELSE IF (switch%b2tqce_style_guard_cells .EQ. 1) THEN
-    CALL SFILL_NODIFF(ncv, 0.0_R8, hce(1, 0), 1)
-! IYS and lk 21.11.2012
-    CALL SFILL_NODIFF(ncv, 0.0_R8, sig(1, 0), 1)
-! IYS and lk 21.11.2012
-    CALL SFILL_NODIFF(ncv, 0.0_R8, alf(1, 0), 1)
-! IYS and lk 21.11.2012
+    END IF
+  END DO
 !
-    DO icv=1,ncv
-      t0 = pl%te(icv)/ev
-!xpb !srv 01.07.09
-      result10 = SQRT(t0)
-      tau(icv) = ctaue/dv%lnlam(icv)*t0*result10/dv%ne2(icv)
-      result10 = PITX(icv)
-      tnp = tau(icv)*dv%ne(icv)*result10**2
-      z = dv%ne2(icv)/dv%ne(icv)
-      IF (switch%b2tqce_model .EQ. 1) THEN
-! SOLPS5.0 model : Balescu fit
-        IF (switch%fch_pte .EQ. 1.0_R8 .AND. switch%fke_zhdanov .EQ. 1) &
-&       THEN
-!srv 02.12.10
-          result10 = FKE_ZH(z)
-          hce(icv, 0) = pl%te(icv)/me*result10*tnp
-        ELSE
-          result10 = FKE(z)
-          hce(icv, 0) = 2.5_R8*(pl%te(icv)/me)*result10*tnp
-        END IF
-        IF (icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) THEN
-!srv 13.01.17 }
-! IYS and lk 21.11.2012
-          IF (switch%b2sigp_style .EQ. 2) THEN
-!srv 13.01.17 {
-            result10 = FSE_CE1(z)
-            sig(icv, 0) = qe**2/me*tnp/result10
-            result10 = FAL_CEN(z)
-            alf(icv, 0) = qe/me*z*result10*tnp
-          ELSE
-            result10 = FSE(z)
-            sig(icv, 0) = qe**2/me*result10*tnp
-            result11 = SQRT(2.5_R8)
-            result2 = FAL(z)
-            alf(icv, 0) = result11*(qe/me)*result2*tnp
-          END IF
-        END IF
-      ELSE IF (switch%b2tqce_model .EQ. 2) THEN
-! old SOLPS4.0 Braginskii model for hce
-        hce(icv, 0) = ce*(pl%te(icv)/me)*tnp
-        IF (icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) THEN
-! IYS and lk 21.11.2012
-          result10 = FSE(z)
-          sig(icv, 0) = qe**2/me*result10*tnp
-          result11 = SQRT(2.5_R8)
-          result2 = FAL(z)
-          alf(icv, 0) = result11*(qe/me)*result2*tnp
-        END IF
-      ELSE IF (switch%b2tqce_model .EQ. 3) THEN
-! Balescu exact 21-moment expressions
-        result10 = D15E(z)
-        result2 = F135E(z)
-        hce(icv, 0) = 2.5_R8*(pl%te(icv)/me)*(result10/result2)*tnp
-        IF (icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) THEN
-! IYS and lk 21.11.2012
-          result10 = D35E(z)
-          result2 = F135E(z)
-          sig(icv, 0) = qe**2/me*(result10/result2)*tnp
-          result11 = SQRT(2.5_R8)
-          result2 = H153E(z)
-          result3 = F135E(z)
-          alf(icv, 0) = result11*(qe/me)*(-(result2/result3))*tnp
-        END IF
-      END IF
-    END DO
-  ELSE
-    CALL XERRAB('B2TQCE - incorrect value of style_guard_cells')
-  END IF
 !   ..compute hcey, sigy, alfy
 !!!   (classical perpendicular transport is set to 0)
   CALL SFILL_NODIFF(ncv, 0.0_R8, hce(1, 1), 1)
@@ -480,7 +423,6 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL SFILL_DV
   EXTERNAL B2XVSG
-  EXTERNAL XERRAB
   REAL(r8) :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -569,71 +511,80 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
 &          pl%ti, pld%ti, dv%ne, dvd%ne, dv%lnlam, dvd%lnlam, nbdirs)
 ! ..compute classical hce, sig, alf
 !   ..compute hcex, sigx, alfx.
-  IF (switch%b2tqce_style_guard_cells .EQ. 0) THEN
-    DO nd=1,nbdirsmax
-      hced(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      alfd(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      sigd(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      taud(nd, :) = 0.D0
-    END DO
-    DO icv=1,ncv
-      t0 = pl%te(icv)/ev
+  CALL SFILL_NODIFF(ncv, 0.0_R8, hce(1, 0), 1)
+! IYS and lk 21.11.2012
+  CALL SFILL_NODIFF(ncv, 0.0_R8, sig(1, 0), 1)
+! IYS and lk 21.11.2012
+  CALL SFILL_NODIFF(ncv, 0.0_R8, alf(1, 0), 1)
+  DO nd=1,nbdirsmax
+    hced(nd, :, :) = 0.D0
+  END DO
+  DO nd=1,nbdirsmax
+    alfd(nd, :, :) = 0.D0
+  END DO
+  DO nd=1,nbdirsmax
+    sigd(nd, :, :) = 0.D0
+  END DO
+  DO nd=1,nbdirsmax
+    taud(nd, :) = 0.D0
+  END DO
+! IYS and lk 21.11.2012
+!
+  DO icv=1,ncv
+    t0 = pl%te(icv)/ev
 !xpb !srv 01.07.09
-      temp = SQRT(t0)
-      DO nd=1,nbdirs
-        t0d(nd) = pld%te(nd, icv)/ev
-        IF (t0 .EQ. 0.D0) THEN
-          result10d(nd) = 0.D0
-        ELSE
-          result10d(nd) = t0d(nd)/(2.0*temp)
-        END IF
-      END DO
-      result10 = temp
-      temp0 = dv%lnlam(icv)*dv%ne2(icv)
-      temp = t0*result10/temp0
-      DO nd=1,nbdirs
-        taud(nd, icv) = ctaue*(result10*t0d(nd)+t0*result10d(nd)-temp*(&
-&         dv%ne2(icv)*dvd%lnlam(nd, icv)+dv%lnlam(icv)*dvd%ne2(nd, icv))&
-&         )/temp0
-      END DO
-      tau(icv) = ctaue*temp
-      result10 = PITX(icv)
-      temp0 = dv%ne2(icv)/dv%ne(icv)
-      DO nd=1,nbdirs
-        tnpd(nd) = result10**2*(dv%ne(icv)*taud(nd, icv)+tau(icv)*dvd%ne&
-&         (nd, icv))
-        zd(nd) = (dvd%ne2(nd, icv)-temp0*dvd%ne(nd, icv))/dv%ne(icv)
-      END DO
-      tnp = tau(icv)*dv%ne(icv)*result10**2
-      z = temp0
-      IF (switch%b2tqce_model .EQ. 1) THEN
+    temp = SQRT(t0)
+    DO nd=1,nbdirs
+      t0d(nd) = pld%te(nd, icv)/ev
+      IF (t0 .EQ. 0.D0) THEN
+        result10d(nd) = 0.D0
+      ELSE
+        result10d(nd) = t0d(nd)/(2.0*temp)
+      END IF
+    END DO
+    result10 = temp
+    temp0 = dv%lnlam(icv)*dv%ne2(icv)
+    temp = t0*result10/temp0
+    DO nd=1,nbdirs
+      taud(nd, icv) = ctaue*(result10*t0d(nd)+t0*result10d(nd)-temp*(dv%&
+&       ne2(icv)*dvd%lnlam(nd, icv)+dv%lnlam(icv)*dvd%ne2(nd, icv)))/&
+&       temp0
+    END DO
+    tau(icv) = ctaue*temp
+    result10 = PITX(icv)
+    temp0 = dv%ne2(icv)/dv%ne(icv)
+    DO nd=1,nbdirs
+      tnpd(nd) = result10**2*(dv%ne(icv)*taud(nd, icv)+tau(icv)*dvd%ne(&
+&       nd, icv))
+      zd(nd) = (dvd%ne2(nd, icv)-temp0*dvd%ne(nd, icv))/dv%ne(icv)
+    END DO
+    tnp = tau(icv)*dv%ne(icv)*result10**2
+    z = temp0
+    IF (switch%b2tqce_model .EQ. 1) THEN
 ! SOLPS5.0 model : Balescu fit
-        IF (switch%fch_pte .EQ. 1.0_R8 .AND. switch%fke_zhdanov .EQ. 1) &
-&       THEN
+      IF (switch%fch_pte .EQ. 1.0_R8 .AND. switch%fke_zhdanov .EQ. 1) &
+&     THEN
 !srv 02.12.10
-          CALL FKE_ZH_DV(z, zd, result10, result10d, nbdirs)
-          temp0 = pl%te(icv)/me
-          DO nd=1,nbdirs
-            hced(nd, icv, 0) = result10*tnp*pld%te(nd, icv)/me + temp0*(&
-&             tnp*result10d(nd)+result10*tnpd(nd))
-          END DO
-          hce(icv, 0) = temp0*(result10*tnp)
-        ELSE
-          CALL FKE_DV(z, zd, result10, result10d, nbdirs)
-          temp0 = pl%te(icv)/me
-          DO nd=1,nbdirs
-            hced(nd, icv, 0) = 2.5_R8*(result10*tnp*pld%te(nd, icv)/me+&
-&             temp0*(tnp*result10d(nd)+result10*tnpd(nd)))
-          END DO
-          hce(icv, 0) = 2.5_R8*(temp0*(result10*tnp))
-        END IF
+        CALL FKE_ZH_DV(z, zd, result10, result10d, nbdirs)
+        temp0 = pl%te(icv)/me
+        DO nd=1,nbdirs
+          hced(nd, icv, 0) = result10*tnp*pld%te(nd, icv)/me + temp0*(&
+&           tnp*result10d(nd)+result10*tnpd(nd))
+        END DO
+        hce(icv, 0) = temp0*(result10*tnp)
+      ELSE
+        CALL FKE_DV(z, zd, result10, result10d, nbdirs)
+        temp0 = pl%te(icv)/me
+        DO nd=1,nbdirs
+          hced(nd, icv, 0) = 2.5_R8*(result10*tnp*pld%te(nd, icv)/me+&
+&           temp0*(tnp*result10d(nd)+result10*tnpd(nd)))
+        END DO
+        hce(icv, 0) = 2.5_R8*(temp0*(result10*tnp))
+      END IF
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+&         %b2tqce_style_guard_cells .EQ. 0) THEN
 !srv 13.01.17 }
+! IYS and lk 21.11.2012
         IF (switch%b2sigp_style .EQ. 2) THEN
 !srv 13.01.17 {
           CALL FSE_CE1_DV(z, zd, result10, result10d, nbdirs)
@@ -662,33 +613,43 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
           sig(icv, 0) = qe**2/me*result10*tnp
           alf(icv, 0) = result11*(qe/me)*result2*tnp
         END IF
-      ELSE IF (switch%b2tqce_model .EQ. 2) THEN
+      END IF
+    ELSE IF (switch%b2tqce_model .EQ. 2) THEN
+! old SOLPS4.0 Braginskii model for hce
+      DO nd=1,nbdirs
+        hced(nd, icv, 0) = ce*(tnp*pld%te(nd, icv)/me+pl%te(icv)*tnpd(nd&
+&         )/me)
+      END DO
+      hce(icv, 0) = ce*(pl%te(icv)/me)*tnp
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+&         %b2tqce_style_guard_cells .EQ. 0) THEN
+! IYS and lk 21.11.2012
         CALL FSE_DV(z, zd, result10, result10d, nbdirs)
         result11 = SQRT(2.5_R8)
         CALL FAL_DV(z, zd, result2, result2d, nbdirs)
         DO nd=1,nbdirs
-! old SOLPS4.0 Braginskii model for hce
-          hced(nd, icv, 0) = ce*(tnp*pld%te(nd, icv)/me+pl%te(icv)*tnpd(&
-&           nd)/me)
           sigd(nd, icv, 0) = qe**2*(tnp*result10d(nd)+result10*tnpd(nd))&
 &           /me
           alfd(nd, icv, 0) = result11*qe*(tnp*result2d(nd)+result2*tnpd(&
 &           nd))/me
         END DO
-        hce(icv, 0) = ce*(pl%te(icv)/me)*tnp
         sig(icv, 0) = qe**2/me*result10*tnp
         alf(icv, 0) = result11*(qe/me)*result2*tnp
-      ELSE IF (switch%b2tqce_model .EQ. 3) THEN
+      END IF
+    ELSE IF (switch%b2tqce_model .EQ. 3) THEN
 ! Balescu exact 21-moment expressions
-        CALL D15E_DV(z, zd, result10, result10d, nbdirs)
-        CALL F135E_DV(z, zd, result2, result2d, nbdirs)
-        temp0 = pl%te(icv)*result10*tnp/(me*result2)
-        DO nd=1,nbdirs
-          hced(nd, icv, 0) = 2.5_R8*(result10*tnp*pld%te(nd, icv)+pl%te(&
-&           icv)*(tnp*result10d(nd)+result10*tnpd(nd))-temp0*me*result2d&
-&           (nd))/(me*result2)
-        END DO
-        hce(icv, 0) = 2.5_R8*temp0
+      CALL D15E_DV(z, zd, result10, result10d, nbdirs)
+      CALL F135E_DV(z, zd, result2, result2d, nbdirs)
+      temp0 = pl%te(icv)*result10*tnp/(me*result2)
+      DO nd=1,nbdirs
+        hced(nd, icv, 0) = 2.5_R8*(result10*tnp*pld%te(nd, icv)+pl%te(&
+&         icv)*(tnp*result10d(nd)+result10*tnpd(nd))-temp0*me*result2d(&
+&         nd))/(me*result2)
+      END DO
+      hce(icv, 0) = 2.5_R8*temp0
+      IF ((icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) .OR. switch&
+&         %b2tqce_style_guard_cells .EQ. 0) THEN
+! IYS and lk 21.11.2012
         CALL D35E_DV(z, zd, result10, result10d, nbdirs)
         CALL F135E_DV(z, zd, result2, result2d, nbdirs)
         temp = result10*tnp/(me*result2)
@@ -707,176 +668,9 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
         END DO
         alf(icv, 0) = -(result11*qe*temp)
       END IF
-    END DO
-  ELSE IF (switch%b2tqce_style_guard_cells .EQ. 1) THEN
-    CALL SFILL_NODIFF(ncv, 0.0_R8, hce(1, 0), 1)
-! IYS and lk 21.11.2012
-    CALL SFILL_NODIFF(ncv, 0.0_R8, sig(1, 0), 1)
-! IYS and lk 21.11.2012
-    CALL SFILL_NODIFF(ncv, 0.0_R8, alf(1, 0), 1)
-    DO nd=1,nbdirsmax
-      hced(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      alfd(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      sigd(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      taud(nd, :) = 0.D0
-    END DO
-! IYS and lk 21.11.2012
+    END IF
+  END DO
 !
-    DO icv=1,ncv
-      t0 = pl%te(icv)/ev
-!xpb !srv 01.07.09
-      temp = SQRT(t0)
-      DO nd=1,nbdirs
-        t0d(nd) = pld%te(nd, icv)/ev
-        IF (t0 .EQ. 0.D0) THEN
-          result10d(nd) = 0.D0
-        ELSE
-          result10d(nd) = t0d(nd)/(2.0*temp)
-        END IF
-      END DO
-      result10 = temp
-      temp0 = dv%lnlam(icv)*dv%ne2(icv)
-      temp = t0*result10/temp0
-      DO nd=1,nbdirs
-        taud(nd, icv) = ctaue*(result10*t0d(nd)+t0*result10d(nd)-temp*(&
-&         dv%ne2(icv)*dvd%lnlam(nd, icv)+dv%lnlam(icv)*dvd%ne2(nd, icv))&
-&         )/temp0
-      END DO
-      tau(icv) = ctaue*temp
-      result10 = PITX(icv)
-      temp0 = dv%ne2(icv)/dv%ne(icv)
-      DO nd=1,nbdirs
-        tnpd(nd) = result10**2*(dv%ne(icv)*taud(nd, icv)+tau(icv)*dvd%ne&
-&         (nd, icv))
-        zd(nd) = (dvd%ne2(nd, icv)-temp0*dvd%ne(nd, icv))/dv%ne(icv)
-      END DO
-      tnp = tau(icv)*dv%ne(icv)*result10**2
-      z = temp0
-      IF (switch%b2tqce_model .EQ. 1) THEN
-! SOLPS5.0 model : Balescu fit
-        IF (switch%fch_pte .EQ. 1.0_R8 .AND. switch%fke_zhdanov .EQ. 1) &
-&       THEN
-!srv 02.12.10
-          CALL FKE_ZH_DV(z, zd, result10, result10d, nbdirs)
-          temp0 = pl%te(icv)/me
-          DO nd=1,nbdirs
-            hced(nd, icv, 0) = result10*tnp*pld%te(nd, icv)/me + temp0*(&
-&             tnp*result10d(nd)+result10*tnpd(nd))
-          END DO
-          hce(icv, 0) = temp0*(result10*tnp)
-        ELSE
-          CALL FKE_DV(z, zd, result10, result10d, nbdirs)
-          temp0 = pl%te(icv)/me
-          DO nd=1,nbdirs
-            hced(nd, icv, 0) = 2.5_R8*(result10*tnp*pld%te(nd, icv)/me+&
-&             temp0*(tnp*result10d(nd)+result10*tnpd(nd)))
-          END DO
-          hce(icv, 0) = 2.5_R8*(temp0*(result10*tnp))
-        END IF
-        IF (icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) THEN
-!srv 13.01.17 }
-! IYS and lk 21.11.2012
-          IF (switch%b2sigp_style .EQ. 2) THEN
-!srv 13.01.17 {
-            CALL FSE_CE1_DV(z, zd, result10, result10d, nbdirs)
-            temp = tnp/(me*result10)
-            DO nd=1,nbdirs
-              sigd(nd, icv, 0) = qe**2*(tnpd(nd)-temp*me*result10d(nd))/&
-&               (me*result10)
-            END DO
-            sig(icv, 0) = qe*qe*temp
-            CALL FAL_CEN_DV(z, zd, result10, result10d, nbdirs)
-            DO nd=1,nbdirs
-              alfd(nd, icv, 0) = qe*(tnp*(result10*zd(nd)+z*result10d(nd&
-&               ))/me+z*result10*tnpd(nd)/me)
-            END DO
-            alf(icv, 0) = qe/me*z*result10*tnp
-          ELSE
-            CALL FSE_DV(z, zd, result10, result10d, nbdirs)
-            result11 = SQRT(2.5_R8)
-            CALL FAL_DV(z, zd, result2, result2d, nbdirs)
-            DO nd=1,nbdirs
-              sigd(nd, icv, 0) = qe**2*(tnp*result10d(nd)+result10*tnpd(&
-&               nd))/me
-              alfd(nd, icv, 0) = result11*qe*(tnp*result2d(nd)+result2*&
-&               tnpd(nd))/me
-            END DO
-            sig(icv, 0) = qe**2/me*result10*tnp
-            alf(icv, 0) = result11*(qe/me)*result2*tnp
-          END IF
-        END IF
-      ELSE IF (switch%b2tqce_model .EQ. 2) THEN
-! old SOLPS4.0 Braginskii model for hce
-        DO nd=1,nbdirs
-          hced(nd, icv, 0) = ce*(tnp*pld%te(nd, icv)/me+pl%te(icv)*tnpd(&
-&           nd)/me)
-        END DO
-        hce(icv, 0) = ce*(pl%te(icv)/me)*tnp
-        IF (icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) THEN
-! IYS and lk 21.11.2012
-          CALL FSE_DV(z, zd, result10, result10d, nbdirs)
-          result11 = SQRT(2.5_R8)
-          CALL FAL_DV(z, zd, result2, result2d, nbdirs)
-          DO nd=1,nbdirs
-            sigd(nd, icv, 0) = qe**2*(tnp*result10d(nd)+result10*tnpd(nd&
-&             ))/me
-            alfd(nd, icv, 0) = result11*qe*(tnp*result2d(nd)+result2*&
-&             tnpd(nd))/me
-          END DO
-          sig(icv, 0) = qe**2/me*result10*tnp
-          alf(icv, 0) = result11*(qe/me)*result2*tnp
-        END IF
-      ELSE IF (switch%b2tqce_model .EQ. 3) THEN
-! Balescu exact 21-moment expressions
-        CALL D15E_DV(z, zd, result10, result10d, nbdirs)
-        CALL F135E_DV(z, zd, result2, result2d, nbdirs)
-        temp0 = pl%te(icv)*result10*tnp/(me*result2)
-        DO nd=1,nbdirs
-          hced(nd, icv, 0) = 2.5_R8*(result10*tnp*pld%te(nd, icv)+pl%te(&
-&           icv)*(tnp*result10d(nd)+result10*tnpd(nd))-temp0*me*result2d&
-&           (nd))/(me*result2)
-        END DO
-        hce(icv, 0) = 2.5_R8*temp0
-        IF (icv .LE. mpg%nci .OR. mpg%cvonclosedsurface(icv)) THEN
-! IYS and lk 21.11.2012
-          CALL D35E_DV(z, zd, result10, result10d, nbdirs)
-          CALL F135E_DV(z, zd, result2, result2d, nbdirs)
-          temp = result10*tnp/(me*result2)
-          DO nd=1,nbdirs
-            sigd(nd, icv, 0) = qe**2*(tnp*result10d(nd)+result10*tnpd(nd&
-&             )-temp*me*result2d(nd))/(me*result2)
-          END DO
-          sig(icv, 0) = qe*qe*temp
-          result11 = SQRT(2.5_R8)
-          CALL H153E_DV(z, zd, result2, result2d, nbdirs)
-          CALL F135E_DV(z, zd, result3, result3d, nbdirs)
-          temp = result2*tnp/(me*result3)
-          DO nd=1,nbdirs
-            alfd(nd, icv, 0) = -(result11*qe*(tnp*result2d(nd)+result2*&
-&             tnpd(nd)-temp*me*result3d(nd))/(me*result3))
-          END DO
-          alf(icv, 0) = -(result11*qe*temp)
-        END IF
-      END IF
-    END DO
-  ELSE
-    CALL XERRAB('B2TQCE - incorrect value of style_guard_cells')
-    DO nd=1,nbdirsmax
-      hced(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      alfd(nd, :, :) = 0.D0
-    END DO
-    DO nd=1,nbdirsmax
-      sigd(nd, :, :) = 0.D0
-    END DO
-  END IF
 !   ..compute hcey, sigy, alfy
 !!!   (classical perpendicular transport is set to 0)
   DO nd=1,nbdirsmax

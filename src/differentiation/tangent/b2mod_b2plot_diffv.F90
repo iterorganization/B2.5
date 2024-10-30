@@ -51,7 +51,7 @@ MODULE B2MOD_B2PLOT_DIFFV
   INTEGER :: wklng
   PARAMETER (wklng=10)
 !
-  CHARACTER(len=16), ALLOCATABLE, SAVE :: textpl(:), textplel(:), &
+  CHARACTER(len=19), ALLOCATABLE, SAVE :: textpl(:), textplel(:), &
 & textplel2(:, :), textsp(:), textwk(:, :), textewk(:, :), textwwk(:, :)&
 & , textbl(:), textni(:), textcomponents(:), text0123(:), textwl(:), &
 & textcorner(:), texttrack(:), texttargsp(:)
@@ -76,12 +76,13 @@ MODULE B2MOD_B2PLOT_DIFFV
   LOGICAL, SAVE :: writing_to_file, color_set, use_compile, &
 & plot_vs_full_psi, plot_vs_norm_psi, plot_vs_root_psi, plot_vs_rmaj, &
 & set_resignore_regions_to_zero, plotting_wall, map_to_midplane, &
-& xparallel, plotting_sep, bold, expline
+& xparallel, plotting_sep, bold, expline, ratio
 !
   CHARACTER(len=256), SAVE :: graphlabel(wklng), eirene_label(wklng), &
 & wall_label(wklng), target_label(wklng)
   CHARACTER(len=256), SAVE :: solpstop, moviename, expfile, wallfile
   CHARACTER(len=80), SAVE :: b2version
+  CHARACTER(len=10), SAVE :: linefmt
 !
   INTEGER, SAVE :: nsw
 !
@@ -172,6 +173,7 @@ CONTAINS
     ALLOCATE(textcorner(0:3))
     ALLOCATE(texttrack(0:ntrack))
     ALLOCATE(texttargsp(ntrack))
+    ratio = .true.
 !
     RETURN
   END SUBROUTINE ALLOC_B2MOD_B2PLOT
