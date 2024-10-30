@@ -64,7 +64,7 @@ SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !
 !  1. purpose
 !
-!     B2TVSPA computes the X and Y components of the parallel viscosity
+!     B2TVSPA computes the poloidal and radial components of the parallel viscosity
 !     current.
 !
 !  8. further comments
@@ -238,7 +238,7 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
 !
 !  1. purpose
 !
-!     B2TVSPA computes the X and Y components of the parallel viscosity
+!     B2TVSPA computes the poloidal and radial components of the parallel viscosity
 !     current.
 !
 !  8. further comments

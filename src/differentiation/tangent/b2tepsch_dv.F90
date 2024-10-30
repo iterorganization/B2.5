@@ -52,7 +52,7 @@ SUBROUTINE B2TEPSCH_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !
 !  1. purpose
 !
-!     B2ETPSCH computes the X and Y components of the Pfirsch-Schlueter
+!     B2ETPSCH computes the poloidal and radial components of the Pfirsch-Schlueter
 !     heat flux.
 !
 !  8. further comments
@@ -258,7 +258,7 @@ SUBROUTINE B2TEPSCH_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, facdrift&
 !
 !  1. purpose
 !
-!     B2ETPSCH computes the X and Y components of the Pfirsch-Schlueter
+!     B2ETPSCH computes the poloidal and radial components of the Pfirsch-Schlueter
 !     heat flux.
 !
 !  8. further comments

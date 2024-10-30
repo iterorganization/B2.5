@@ -52,7 +52,7 @@ SUBROUTINE B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pz&
 !
 !  1. purpose
 !
-!     B2TDIA computes the X and Y components of the divergent part of
+!     B2TDIA computes the poloidal and radial components of the divergent part of
 !     the diamagnetic current.
 !
 !  8. further comments
@@ -179,7 +179,7 @@ SUBROUTINE B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pz, fna, &
 !
 !  1. purpose
 !
-!     B2TDIA computes the X and Y components of the divergent part of
+!     B2TDIA computes the poloidal and radial components of the divergent part of
 !     the diamagnetic current.
 !
 !  8. further comments

@@ -167,8 +167,7 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   CALL SUBINI('b2sikt')
 !   ..set internal parameters on first call
   IF (ncall_b2sikt .EQ. 0) THEN
-    IF (switch%b2sikt_local .NE. 1 .OR. switch%b2sikt_sheath_local .NE. &
-&       1) THEN
+    IF (switch%b2sikt_sheath_local .NE. 1) THEN
       CALL XERTST(nomp .GT. 0, &
 &           'No CVs in omp list, check rzomp in b2.user.parameters')
       CALL XERTST(icsepomp .GT. 0, &
@@ -758,8 +757,7 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
   CALL SUBINI('b2sikt')
 !   ..set internal parameters on first call
   IF (ncall_b2sikt .EQ. 0) THEN
-    IF (switch%b2sikt_local .NE. 1 .OR. switch%b2sikt_sheath_local .NE. &
-&       1) THEN
+    IF (switch%b2sikt_sheath_local .NE. 1) THEN
       CALL XERTST(nomp .GT. 0, &
 &           'No CVs in omp list, check rzomp in b2.user.parameters')
       CALL XERTST(icsepomp .GT. 0, &

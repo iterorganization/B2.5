@@ -53,8 +53,10 @@ MODULE B2US_GEO_DIFFV
 ! Length in third (z) direction
 ! Part of volume of neighboring cell centers associated with the face; for interpolation
 ! Cosine (:,0) and sine (:,1) of gamma
-! Cosine (:,0) and sine (:,1) of alpha
-! Cosine (:,0) and sine (:,1) of beta
+! Cosine (:,0) and sine (:,1) of alpha for positive Bz;
+! Cosine (:,0) and (-1)*sine (:,1) of alpha for negative Bz
+! Cosine (:,0) and sine (:,1) of beta for positive Bz;
+! (-1)*Cosine (:,0) and sine (:,1) of beta for negative Bz
 ! Magnetic contact area
 ! Magnetic contact area * hz (at faces)
 ! Factor for P-S/mdf flows
