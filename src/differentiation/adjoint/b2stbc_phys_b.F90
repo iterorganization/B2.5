@@ -489,7 +489,6 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 ! -- BCCON=4 -- PRESCRIBE THE VALUE OF THE DENSITY, WEAKLY
 !                 A MIXED BOUNDARY CONDITION
 !
-        CALL XERRAB('b2stbc_phys -- BCCON = 4 not adapted for WG')
         IF (ncall_b2stbc_phys .EQ. 0) THEN
           IF (conpar(is, ib, 1) .EQ. 0.0_R8) THEN
             conpar(is, ib, 1) = switch%b2mndr_na_min
@@ -1308,7 +1307,6 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !                 A MIXED BOUNDARY CONDITION
 !
       CASE (4) 
-        CALL XERRAB('b2stbc_phys -- BCMOM = 4 not adapted for WG')
         IF (ncall_b2stbc_phys .EQ. 0) THEN
           WRITE(*, '(a,1p,g14.7,a,a,a,a,i3)') &
 &         'BCMOM =  4 : weak velocity ', mompar(is, ib, 1), ' on ', &
@@ -1674,7 +1672,6 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !                 WEAKLY A MIXED BOUNDARY CONDITION
 !
     CASE (4) 
-      CALL XERRAB('b2stbc_phys -- BCENE = 4 not adapted for WG')
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
 &       'BCENE =  4 : weak electron temperature ', enepar(ib, 1), ' on '&
@@ -2410,7 +2407,6 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !                 A MIXED BOUNDARY CONDITION
 !
     CASE (4) 
-      CALL XERRAB('b2stbc_phys -- BCENI = 4 not adapted for WG')
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         WRITE(*, '(a,1p,g14.7,a,a,a)') &
 &       'BCENI =  4 : weak ion temperature ', enipar(ib, 1), ' on ', &
@@ -3172,7 +3168,6 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
 !                 WEAKLY A MIXED BOUNDARY CONDITION
 !
     CASE (4) 
-      CALL XERRAB('b2stbc_phys -- BCPOT = 4 not adapted for WG')
       IF (ncall_b2stbc_phys .EQ. 0) THEN
         WRITE(*, '(a,1p,g14.7,a,a,a)') 'BCPOT =  4 : weak potential ', &
 &       potpar(ib, 1), ' on ', bcchar(ib), boundary_location(ib)
@@ -3514,12 +3509,12 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
     CASE (14) 
 !
 ! -- BCPOT=14 -- PRESCRIBE THE TOTAL CURRENT WITHOUT IMPOSING A
-!                 SPECIFIC PROFILE
+!                 SPECIFIC PROFILE. FOLLOW PROFILE OF 1st RING INSIDE.
 !wdk    Intended use: core boundary, total PF boundary,...
 !wdk    For testing purposes, use with care!
 !
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, '(a,1p,g14.7,a,a,a)') &
-&                      'BCPOT = 14 : specified radial sheath potential '&
+&                                'BCPOT = 14 : specified total current '&
 &                                   , potpar(ib, 1), ' on ', bcchar(ib)&
 &                                   , boundary_location(ib)
       us = 0.0_R8

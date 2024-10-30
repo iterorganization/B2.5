@@ -49,7 +49,7 @@ SUBROUTINE B2TANML_B(ncv, nfc, ns, switch, geo, geob, mpg, mpgb, csig_an&
 !
 !  1. purpose
 !
-!     B2TANML computes the X and Y components of the anomalous current.
+!     B2TANML computes the poloidal and radial components of the anomalous current.
 !
 !
 !  8. further comments
@@ -132,7 +132,7 @@ SUBROUTINE B2TANML_NODIFF(ncv, nfc, ns, switch, geo, mpg, csig_an, po, &
 !
 !  1. purpose
 !
-!     B2TANML computes the X and Y components of the anomalous current.
+!     B2TANML computes the poloidal and radial components of the anomalous current.
 !
 !
 !  8. further comments

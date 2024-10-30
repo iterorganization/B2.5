@@ -218,8 +218,8 @@ c
       use b2mod_types
       use b2us_map_diff
       use b2us_geo_diff
-      use b2mod_chord_shift
       use b2mod_subsys
+      use b2mod_chord_shift
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -253,7 +253,6 @@ c
      *   x,y,z,r
 
       integer ir,iz
-
       integer ipos,jpos
 
 #ifdef EASY

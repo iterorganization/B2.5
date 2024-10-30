@@ -77,7 +77,7 @@
       parameter (wklng=10)
 
 #ifndef PSR
-      character*16, allocatable, save ::
+      character*19, allocatable, save ::
      *  textpl(:),
      *  textplel(:),
      *  textplel2(:,:),
@@ -94,7 +94,7 @@
      *  texttrack(:),
      *  texttargsp(:)    
 #else
-      character*16, save ::
+      character*19, save ::
      *  textpl(0:DEF_NPLS-1),
      *  textplel(0:DEF_NPLS),
      *  textplel2(0:DEF_NPLS,0:DEF_NPLS),
@@ -137,7 +137,7 @@ cank
      *  writing_to_file,color_set,use_compile,
      *  plot_vs_full_psi,plot_vs_norm_psi,plot_vs_root_psi,plot_vs_rmaj,
      *  set_resignore_regions_to_zero,plotting_wall,map_to_midplane,
-     *  xparallel,plotting_sep,bold,expline
+     *  xparallel,plotting_sep,bold,expline,ratio
 
       character*256, save ::
      *  graphlabel(wklng),
@@ -146,6 +146,8 @@ cank
      *  solpstop,moviename,expfile,wallfile
       character*80, save ::
      *  b2version
+      character*10, save ::
+     *  linefmt
 
       integer, save :: nsw
 
@@ -220,6 +222,7 @@ cank
       call xertst(wklngd.le.wklng,
      . 'increase size of textwk array')
 #endif
+      ratio = .true.
 
       return
       end subroutine alloc_b2mod_b2plot
