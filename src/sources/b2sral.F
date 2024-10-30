@@ -318,7 +318,7 @@
      &             1.0_R8.ge.maxval(fac_ExB),
      &            'faulty argument fac_ExB')
 
-      if(use_eirene.ne.0 .or. save_f31.ne.0) then                        !srv 14.07.10 {
+      if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
        call b2tanml (nx, ny, ns, ismain,                                !srv 20.09.06 }!som 02.11.21
      &               csig_an, po, ne, na, fchanml_a, fchanml)           !srv 08.09.21
