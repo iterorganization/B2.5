@@ -430,6 +430,7 @@ CONTAINS
   END FUNCTION NORM
 
 !
+!
   FUNCTION SINANG(p0x, p0y, p1x, p1y)
     IMPLICIT NONE
     REAL(kind=r8) :: sinang, p0x, p0y, p1x, p1y

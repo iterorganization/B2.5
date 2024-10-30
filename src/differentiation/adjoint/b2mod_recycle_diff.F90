@@ -1575,8 +1575,6 @@ CONTAINS
     REAL(kind=r8) :: abs2b
     REAL(kind=r8) :: min1
     REAL(kind=r8) :: min1b
-    REAL(kind=r8) :: min2
-    REAL(kind=r8) :: min2b
     REAL(kind=r8) :: tempb
     REAL(kind=r8) :: temp
     REAL(kind=r8) :: temp0
@@ -1713,25 +1711,28 @@ CONTAINS
       CALL PUSHCONTROL1B(1)
       re1i = re1i
     END IF
-    IF (rc1i*cs/(-i1l) .GT. recyc0) THEN
+    IF (rc1i*cs/(-i1l) .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      pf = rc1i*cs/(-i1l)
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (pf .GT. recyc0) THEN
       min1 = recyc0
       CALL PUSHCONTROL1B(0)
     ELSE
-      min1 = rc1i*cs/(-i1l)
+      min1 = pf
       CALL PUSHCONTROL1B(1)
     END IF
-!
-!     Calculate fast and thermal recycled parts
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      min2 = recyc0
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
       CALL PUSHCONTROL1B(0)
     ELSE
-      min2 = pf
+      pt = recyc0 - pf
       CALL PUSHCONTROL1B(1)
     END IF
-    pcorf = min2/pf
-    pt = recyc0 - pf + 1.0e-30_R8
 !
     vt = SQRT(2.0_R8*e_fc*ev/mn)
 !     The reflection coefficients below already account for the probability of
@@ -1838,22 +1839,26 @@ CONTAINS
     tempb = recycm*0.5_R8*area*fna_mol_recb
     ptb = ptb + fdni*tempb
     fdnib = fdnib + pt*tempb
-    recyc0b = recyc0b + ptb
-    pfb = -ptb - min2*pcorfb/pf**2
-    min2b = pcorfb/pf
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      recyc0b = recyc0b + min2b
+      pfb = 0.D0
     ELSE
-      pfb = pfb + min2b
+      recyc0b = recyc0b + ptb
+      pfb = -ptb
     END IF
-    min1b = pfb
+    min1b = pcorfb/pf
+    pfb = pfb - min1*pcorfb/pf**2
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       recyc0b = recyc0b + min1b
+    ELSE
+      pfb = pfb + min1b
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
       rc1ib = 0.D0
     ELSE
-      tempb = -(min1b/i1l)
+      tempb = -(pfb/i1l)
       rc1ib = cs*tempb
       csb = csb + rc1i*tempb
       i1lb = i1lb - rc1i*cs*tempb/i1l
@@ -1980,7 +1985,6 @@ CONTAINS
     REAL(kind=r8) :: abs1
     REAL(kind=r8) :: abs2
     REAL(kind=r8) :: min1
-    REAL(kind=r8) :: min2
 !
     CALL SUBINI('CalcRecycledFluxes')
 !     Initialize/calculate some variables
@@ -2089,21 +2093,22 @@ CONTAINS
     ELSE
       re1i = re1i
     END IF
-    IF (rc1i*cs/(-i1l) .GT. recyc0) THEN
+    IF (rc1i*cs/(-i1l) .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+    ELSE
+      pf = rc1i*cs/(-i1l)
+    END IF
+    IF (pf .GT. recyc0) THEN
       min1 = recyc0
     ELSE
-      min1 = rc1i*cs/(-i1l)
+      min1 = pf
     END IF
-!
-!     Calculate fast and thermal recycled parts
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      min2 = recyc0
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
     ELSE
-      min2 = pf
+      pt = recyc0 - pf
     END IF
-    pcorf = min2/pf
-    pt = recyc0 - pf + 1.0e-30_R8
 !
     vt = SQRT(2.0_R8*e_fc*ev/mn)
 !     The reflection coefficients below already account for the probability of
@@ -2239,8 +2244,6 @@ CONTAINS
     REAL(kind=r8) :: abs2b
     REAL(kind=r8) :: min1
     REAL(kind=r8) :: min1b
-    REAL(kind=r8) :: min2
-    REAL(kind=r8) :: min2b
     REAL(r8) :: arg1
     REAL(r8) :: arg1b
     REAL(kind=r8) :: result1
@@ -2507,24 +2510,28 @@ CONTAINS
 !     Calculate incident particle flux density
     fnni_nodrifts = vcx/vtot*(-(i1l*nnf)+dnndz*i2l/vtot)
     x1 = vcx/vtot*(nnf*rc1i*cs+dnndz*rc2i*cs**2/vtot)/fnni_nodrifts
-    IF (x1 .GT. recyc0) THEN
+    IF (x1 .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      pf = x1
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (pf .GT. recyc0) THEN
       min1 = recyc0
       CALL PUSHCONTROL1B(0)
     ELSE
-      min1 = x1
+      min1 = pf
       CALL PUSHCONTROL1B(1)
     END IF
-!     Calculate fast and thermal reflected parts
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      min2 = recyc0
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
       CALL PUSHCONTROL1B(0)
     ELSE
-      min2 = pf
+      pt = recyc0 - pf
       CALL PUSHCONTROL1B(1)
     END IF
-    pcorf = min2/pf
-    pt = recyc0 - pf + 1.0e-30_R8
 !
     vt = SQRT(2.0_R8*e_fc*ev/mn)
 !     The reflection coefficients below already account for the probability of
@@ -2734,22 +2741,26 @@ CONTAINS
       ptb = ptb + fnni_nodrifts*tempb2
       fnni_nodriftsb = fnni_nodriftsb + pt*tempb2
     END IF
-    recyc0b = recyc0b + ptb
-    pfb = -ptb - min2*pcorfb/pf**2
-    min2b = pcorfb/pf
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      recyc0b = recyc0b + min2b
+      pfb = 0.D0
     ELSE
-      pfb = pfb + min2b
+      recyc0b = recyc0b + ptb
+      pfb = -ptb
     END IF
-    min1b = pfb
+    min1b = pcorfb/pf
+    pfb = pfb - min1*pcorfb/pf**2
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       recyc0b = recyc0b + min1b
+    ELSE
+      pfb = pfb + min1b
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
       x1b = 0.D0
     ELSE
-      x1b = min1b
+      x1b = pfb
     END IF
     temp1 = vcx/(vtot*fnni_nodrifts)
     temp = cs*cs/vtot
@@ -2987,7 +2998,6 @@ CONTAINS
     REAL(kind=r8) :: abs1
     REAL(kind=r8) :: abs2
     REAL(kind=r8) :: min1
-    REAL(kind=r8) :: min2
     REAL(r8) :: arg1
     REAL(kind=r8) :: result1
 !
@@ -3188,20 +3198,22 @@ CONTAINS
 !     Calculate incident particle flux density
     fnni_nodrifts = vcx/vtot*(-(i1l*nnf)+dnndz*i2l/vtot)
     x1 = vcx/vtot*(nnf*rc1i*cs+dnndz*rc2i*cs**2/vtot)/fnni_nodrifts
-    IF (x1 .GT. recyc0) THEN
+    IF (x1 .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+    ELSE
+      pf = x1
+    END IF
+    IF (pf .GT. recyc0) THEN
       min1 = recyc0
     ELSE
-      min1 = x1
+      min1 = pf
     END IF
-!     Calculate fast and thermal reflected parts
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      min2 = recyc0
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
     ELSE
-      min2 = pf
+      pt = recyc0 - pf
     END IF
-    pcorf = min2/pf
-    pt = recyc0 - pf + 1.0e-30_R8
 !
     vt = SQRT(2.0_R8*e_fc*ev/mn)
 !     The reflection coefficients below already account for the probability of
@@ -3863,8 +3875,6 @@ CONTAINS
     REAL(kind=r8) :: abs2b
     REAL(kind=r8) :: min1
     REAL(kind=r8) :: min1b
-    REAL(kind=r8) :: min2
-    REAL(kind=r8) :: min2b
     REAL(kind=r8) :: temp
     REAL(kind=r8) :: tempb
     REAL(kind=r8) :: tempb0
@@ -3982,25 +3992,28 @@ CONTAINS
       re1i = re1i
     END IF
     x1 = nnf*rc1i*cs/fnni
-    IF (x1 .GT. recyc0) THEN
+    IF (x1 .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      pf = x1
+      CALL PUSHCONTROL1B(1)
+    END IF
+    IF (pf .GT. recyc0) THEN
       min1 = recyc0
       CALL PUSHCONTROL1B(0)
     ELSE
-      min1 = x1
+      min1 = pf
       CALL PUSHCONTROL1B(1)
     END IF
-!
-!     Calculate fast and thermal reflected parts
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      min2 = recyc0
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
       CALL PUSHCONTROL1B(0)
     ELSE
-      min2 = pf
+      pt = recyc0 - pf
       CALL PUSHCONTROL1B(1)
     END IF
-    pcorf = min2/pf
-    pt = recyc0 - pf + 1.0e-30_R8
     vt = SQRT(2.0_R8*e_fc*ev/mn)
 !     The reflection coefficients below already account for the probability of
 !     fast particle reflection. Like in Eirene, we will only pump fast particles
@@ -4102,22 +4115,26 @@ CONTAINS
     tempb = recycm*0.5_R8*area*fna_mol_reflb
     ptb = ptb + fnni*tempb
     fnnib = fnnib + pt*tempb
-    recyc0b = recyc0b + ptb
-    pfb = -ptb - min2*pcorfb/pf**2
-    min2b = pcorfb/pf
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      recyc0b = recyc0b + min2b
+      pfb = 0.D0
     ELSE
-      pfb = pfb + min2b
+      recyc0b = recyc0b + ptb
+      pfb = -ptb
     END IF
-    min1b = pfb
+    min1b = pcorfb/pf
+    pfb = pfb - min1*pcorfb/pf**2
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       recyc0b = recyc0b + min1b
+    ELSE
+      pfb = pfb + min1b
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
       x1b = 0.D0
     ELSE
-      x1b = min1b
+      x1b = pfb
     END IF
     temp = cs/fnni
     nnfb = nnfb + rc1i*temp*x1b
@@ -4234,7 +4251,6 @@ CONTAINS
     REAL(kind=r8) :: abs1
     REAL(kind=r8) :: abs2
     REAL(kind=r8) :: min1
-    REAL(kind=r8) :: min2
 !
     CALL SUBINI('CalcReflectedFluxesMaxwellian')
 !     Initialize/calculate some variables
@@ -4386,21 +4402,22 @@ CONTAINS
       re2i = re2i
     END IF
     x1 = nnf*rc1i*cs/fnni
-    IF (x1 .GT. recyc0) THEN
+    IF (x1 .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+    ELSE
+      pf = x1
+    END IF
+    IF (pf .GT. recyc0) THEN
       min1 = recyc0
     ELSE
-      min1 = x1
+      min1 = pf
     END IF
-!
-!     Calculate fast and thermal reflected parts
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      min2 = recyc0
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
     ELSE
-      min2 = pf
+      pt = recyc0 - pf
     END IF
-    pcorf = min2/pf
-    pt = recyc0 - pf + 1.0e-30_R8
     vt = SQRT(2.0_R8*e_fc*ev/mn)
 !     The reflection coefficients below already account for the probability of
 !     fast particle reflection. Like in Eirene, we will only pump fast particles

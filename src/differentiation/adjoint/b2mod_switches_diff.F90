@@ -52,7 +52,6 @@ MODULE B2MOD_SWITCHES_DIFF
 !
 !
 ! iout switches
-!      integer :: b2nph9_iout       ! No longer needed for unstructured grids
 !srv 17.06.02
 !srv 13.10.06
 !srv 17.06.02
@@ -73,6 +72,7 @@ MODULE B2MOD_SWITCHES_DIFF
 !
 ! diagnostics switches
 !
+! hard limit velocities
 !
 ! MMS
 !
@@ -121,7 +121,6 @@ MODULE B2MOD_SWITCHES_DIFF
 !
 ! Feedback
 !
-! Med
 !
 ! Optimization
 !
@@ -168,7 +167,6 @@ MODULE B2MOD_SWITCHES_DIFF
       INTEGER :: spatial_hybrid
       INTEGER :: use_auto_spatial_hyb
       INTEGER :: diffusion_bc_safeguard
-      INTEGER :: do_volrec
       INTEGER :: transport_afn
       INTEGER :: afn_bcs_use_coarse
       INTEGER :: afn_vnn
@@ -312,7 +310,6 @@ MODULE B2MOD_SWITCHES_DIFF
       INTEGER :: b2sicf_style
       INTEGER :: b2sigp_style
       INTEGER :: b2sigp_pressure_restriction
-      INTEGER :: b2sihs_style
       INTEGER :: b2sral_style
       INTEGER :: style_visc
       INTEGER :: b2tfnb_style_int_vel
@@ -376,7 +373,6 @@ MODULE B2MOD_SWITCHES_DIFF
       REAL(kind=r8) :: b2treq_phm0
       REAL(kind=r8) :: b2stbc_phm0
       REAL(kind=r8) :: b2stbc_phm1
-      REAL(kind=r8) :: b2stbc_phm2
       REAL(kind=r8) :: b2npco_pcm0
       REAL(kind=r8) :: b2npco_pcm1
       REAL(kind=r8) :: b2npht_pcm0
@@ -407,9 +403,9 @@ MODULE B2MOD_SWITCHES_DIFF
       INTEGER :: b2optim_namelist
       INTEGER :: b2stbc_diagno
       INTEGER :: b2npmo_diagno
-      INTEGER :: ion_vlct_restrict
       INTEGER :: vlct_diagno
       INTEGER :: b2tqna_diagno
+      INTEGER :: ion_vlct_restrict
       REAL(kind=r8) :: ion_vlct_restrict_m
       INTEGER :: set_na_numerical
       INTEGER :: set_ua_numerical
@@ -463,7 +459,6 @@ MODULE B2MOD_SWITCHES_DIFF
       INTEGER :: b2sikt_iout
       INTEGER :: b2sikt_style
       INTEGER :: b2sikt_model
-      INTEGER :: b2sikt_local
       INTEGER :: b2sikt_sheath_local
       INTEGER :: b2sikt_fac_diss_core_mode
       INTEGER :: b2sikt_min_source
@@ -574,7 +569,6 @@ MODULE B2MOD_SWITCHES_DIFF
       REAL(kind=r8) :: b2stbc_bc_ref
       REAL(kind=r8) :: b2stbc_bc_ref_te
       REAL(kind=r8) :: b2stbc_bc_ref_ti
-      REAL(kind=r8) :: b2stbc_corr_flux
       REAL(kind=r8) :: bc_type13_norm
       REAL(kind=r8) :: bc_type13_fac
       REAL(kind=r8) :: nesepm
@@ -586,7 +580,6 @@ MODULE B2MOD_SWITCHES_DIFF
       REAL(kind=r8) :: b2trno_alpha_stoch
       INTEGER :: b2nppo_restrict_po
       INTEGER :: b2stbc_feedback
-      INTEGER :: med_style
       INTEGER :: b2optim_save_states
       INTEGER :: b2optim_reset_iter
       REAL(kind=r8) :: b2optim_reset_drift
@@ -707,7 +700,6 @@ MODULE B2MOD_SWITCHES_DIFF
       REAL(kind=r8) :: b2treq_phm0
       REAL(kind=r8) :: b2stbc_phm0
       REAL(kind=r8) :: b2stbc_phm1
-      REAL(kind=r8) :: b2stbc_phm2
       REAL(kind=r8) :: b2npco_pcm0
       REAL(kind=r8) :: b2npco_pcm1
       REAL(kind=r8) :: b2npht_pcm0
@@ -835,7 +827,6 @@ MODULE B2MOD_SWITCHES_DIFF
       REAL(kind=r8) :: b2stbc_bc_ref
       REAL(kind=r8) :: b2stbc_bc_ref_te
       REAL(kind=r8) :: b2stbc_bc_ref_ti
-      REAL(kind=r8) :: b2stbc_corr_flux
       REAL(kind=r8) :: bc_type13_norm
       REAL(kind=r8) :: bc_type13_fac
       REAL(kind=r8) :: nesepm
@@ -919,7 +910,6 @@ CONTAINS
     s%spatial_hybrid = 0
     s%use_auto_spatial_hyb = 0
     s%diffusion_bc_safeguard = 1
-    s%do_volrec = 1
     s%afn_bcs_use_coarse = 1
     s%afn_vnn = 1
     s%afn_vnn_ndiff = 0
@@ -1019,7 +1009,6 @@ CONTAINS
     s%b2npco_iout = 0
     s%b2npp7_iout = 0
     s%b2nppo_iout = 0
-!      s % b2nph9_iout = 0
     s%b2news_iout = 0
     s%b2nxfx_iout = 0
     s%b2nxfc_iout = 0
@@ -1060,7 +1049,6 @@ CONTAINS
     s%b2sicf_style = 0
     s%b2sigp_style = 2
     s%b2sigp_pressure_restriction = 1
-    s%b2sihs_style = 0
     s%b2sral_style = 2
     s%style_visc = 0
     s%b2tfnb_style_int_vel = 0
@@ -1125,7 +1113,6 @@ CONTAINS
     s%b2treq_phm0 = 1.0_R8
     s%b2stbc_phm0 = 1.0_R8
     s%b2stbc_phm1 = 1.0_R8
-    s%b2stbc_phm2 = 1.0_R8
 !
     IF (s%b2mndt_style .EQ. 2) THEN
       s%b2npco_rxg = HUGE(1.0_R8)
@@ -1172,10 +1159,11 @@ CONTAINS
 !
     s%b2stbc_diagno = 0
     s%b2npmo_diagno = 0
-    s%ion_vlct_restrict = 0
-    s%ion_vlct_restrict_m = 3.0_R8
     s%vlct_diagno = 0
     s%b2tqna_diagno = 0
+!
+    s%ion_vlct_restrict = 0
+    s%ion_vlct_restrict_m = 3.0_R8
 !
     s%set_na_numerical = 0
     s%set_ua_numerical = 0
@@ -1256,7 +1244,6 @@ CONTAINS
     s%b2sikt_iout = 0
     s%b2sikt_style = 0
     s%b2sikt_model = 1
-    s%b2sikt_local = 1
     s%b2sikt_fac_diss_core_mode = 0
     s%b2sikt_sheath_local = 1
     s%b2sikt_min_source = 0
@@ -1409,8 +1396,6 @@ CONTAINS
     s%b2stbc_bc_ref_te = 0.01_R8
 !IYS 07.03.2013 11.04.13
     s%b2stbc_bc_ref_ti = 0.01_R8
-!srv 25.07.05
-    s%b2stbc_corr_flux = 0.0_R8
     s%bc_type13_norm = 1.0e15_R8
     s%bc_type13_fac = 1.0_R8
     s%nesepm = 0.0_R8
@@ -1423,9 +1408,6 @@ CONTAINS
 ! b2trno
 !srv 17.12.13
     s%b2trno_alpha_stoch = 1.0_R8
-!
-! med
-    s%med_style = 0
 !
 ! b2nppo
     s%b2nppo_restrict_po = 0
@@ -1504,7 +1486,6 @@ CONTAINS
     CALL IPGETI('b2stbr_remove_FC_el', s%remove_fc_el)
     CALL IPGETI('b2mn_spatial_hybrid', s%spatial_hybrid)
     CALL IPGETI('use_auto_spatial_hyb', s%use_auto_spatial_hyb)
-    CALL IPGETI('b2mn_do_volrec', s%do_volrec)
     CALL IPGETI('b2tqna_transport_afn', s%transport_afn)
     CALL IPGETI('diffusion_bc_safeguard', s%diffusion_bc_safeguard)
     CALL IPGETI('b2stbr_afn_bcs_use_coarse', s%afn_bcs_use_coarse)
@@ -1618,7 +1599,6 @@ CONTAINS
     CALL IPGETI('b2npco_iout', s%b2npco_iout)
     CALL IPGETI('b2npp7_iout', s%b2npp7_iout)
     CALL IPGETI('b2nppo_iout', s%b2nppo_iout)
-!      call ipgeti ('b2nph9_iout', s % b2nph9_iout)
     CALL IPGETI('b2news_iout', s%b2news_iout)
     CALL IPGETI('b2nxfx_iout', s%b2nxfx_iout)
     CALL IPGETI('b2nxfc_iout', s%b2nxfc_iout)
@@ -1660,7 +1640,6 @@ CONTAINS
     CALL IPGETI('b2sigp_style', s%b2sigp_style)
     CALL IPGETI('b2sigp_pressure_restriction', s%&
 &         b2sigp_pressure_restriction)
-    CALL IPGETI('b2sihs_style', s%b2sihs_style)
     CALL IPGETI('b2sral_style', s%b2sral_style)
     CALL IPGETI('b2sihs_style_visc', s%style_visc)
     CALL IPGETI('b2tfnb_style_int_vel', s%b2tfnb_style_int_vel)
@@ -1730,7 +1709,6 @@ CONTAINS
 !srv 17.01.07
     CALL IPGETR('b2stbc_phm0', s%b2stbc_phm0)
     CALL IPGETR('b2stbc_phm1', s%b2stbc_phm1)
-    CALL IPGETR('b2stbc_phm2', s%b2stbc_phm2)
 !
 ! pcm switches
     CALL IPGETR('b2npco_pcm0', s%b2npco_pcm0)
@@ -1772,10 +1750,12 @@ CONTAINS
 ! diagnostic switches
     CALL IPGETI('b2stbc_diagno', s%b2stbc_diagno)
     CALL IPGETI('b2npmo_diagno', s%b2npmo_diagno)
-    CALL IPGETI('b2npmo_ion_vlct_restrict', s%ion_vlct_restrict)
-    CALL IPGETR('b2npmo_ion_vlct_restrict_M', s%ion_vlct_restrict_m)
     CALL IPGETI('b2npmo_vlct_diagno', s%vlct_diagno)
     CALL IPGETI('b2tqna_diagno', s%b2tqna_diagno)
+!
+! hard limit velocities
+    CALL IPGETI('b2npmo_ion_vlct_restrict', s%ion_vlct_restrict)
+    CALL IPGETR('b2npmo_ion_vlct_restrict_M', s%ion_vlct_restrict_m)
 !
 ! MMS
     CALL IPGETI('b2mndr_set_na_numerical', s%set_na_numerical)
@@ -1847,11 +1827,10 @@ CONTAINS
     CALL IPGETI('b2sikt_iout', s%b2sikt_iout)
     CALL IPGETI('b2sikt_style', s%b2sikt_style)
     CALL IPGETI('b2sikt_model', s%b2sikt_model)
-    CALL IPGETI('b2sikt_keps_local', s%b2sikt_local)
     CALL IPGETI('b2sikt_fac_sheath_local', s%b2sikt_sheath_local)
     CALL IPGETI('b2sikt_min_source', s%b2sikt_min_source)
     CALL IPGETI('b2sikt_kt_source_stab', s%b2sikt_kt_source_stab)
-    CALL IPGETR('b2sikt_aniso', s%b2sikt_fac_aniso)
+    CALL IPGETR('b2sikt_fac_aniso', s%b2sikt_fac_aniso)
     CALL IPGETR('b2sikt_fac_sheath', s%b2sikt_fac_sheath)
     CALL IPGETR('b2sikt_fac_sheath_core', s%b2sikt_fac_sheath_core)
     CALL IPGETR('b2sikt_fac_diss', s%b2sikt_fac_diss)
@@ -2021,8 +2000,6 @@ CONTAINS
     CALL IPGETR('b2stbc_bc_ref', s%b2stbc_bc_ref)
 !srv 11.04.13
     CALL IPGETR('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)
-!srv 25.07.05
-    CALL IPGETR('b2stbc_corr_flux_in_core', s%b2stbc_corr_flux)
     CALL IPGETR('b2stbc_type13_norm', s%bc_type13_norm)
     CALL IPGETR('b2stbc_type13_fac', s%bc_type13_fac)
     CALL IPGETR('b2stbc_nesepm', s%nesepm)
@@ -2038,9 +2015,6 @@ CONTAINS
 !
 ! Feedback
     CALL IPGETI('b2stbc_feedback', s%b2stbc_feedback)
-!
-! Med
-    CALL IPGETI('b2mndr_med_style', s%med_style)
 !
 ! b2nppo
     CALL IPGETI('b2nppo_restrict_po', s%b2nppo_restrict_po)
@@ -2237,9 +2211,6 @@ CONTAINS
     CALL XERTST(0.0_R8 .LE. s%stab_coeff_sheath_ti, &
 &         'faulty parameter b2stbc_stab_coeff_sheath_ti')
 !
-! b2sihs
-    CALL XERTST(0 .LE. s%b2sihs_style, 'faulty parameter b2sihs style')
-!
 ! b2sral
     CALL XERTST(1 .NE. s%b2sral_style, &
 &         'b2sral_style = 1 not yet developed for WG')
@@ -2248,14 +2219,18 @@ CONTAINS
 &         'b2sral_style should be 0, 1 or 2')
 !
 ! b2npco
-    CALL XERTST(0 .LT. s%b2npco_rxg, 'faulty parameter b2npco rxg')
-    CALL XERTST(0 .LE. s%b2npco_pcm0, 'faulty parameter b2npco pcm0')
-    CALL XERTST(0 .LE. s%b2npco_pcm1, 'faulty parameter b2npco pcm1')
+    CALL XERTST(0.0_R8 .LT. s%b2npco_rxg, 'faulty parameter b2npco rxg')
+    CALL XERTST(0.0_R8 .LE. s%b2npco_pcm0, &
+&         'faulty parameter b2npco pcm0')
+    CALL XERTST(0.0_R8 .LE. s%b2npco_pcm1, &
+&         'faulty parameter b2npco pcm1')
 !
 ! b2npht
-    CALL XERTST(0 .LE. s%b2npht_pcm0, 'faulty parameter b2npht pcm0')
-    CALL XERTST(0 .LE. s%b2npht_pcm1, 'faulty parameter b2npht pcm1')
-    CALL XERTST(0 .LT. s%b2npht_rxg, 'faulty parameter b2npht rxg')
+    CALL XERTST(0.0_R8 .LE. s%b2npht_pcm0, &
+&         'faulty parameter b2npht pcm0')
+    CALL XERTST(0.0_R8 .LE. s%b2npht_pcm1, &
+&         'faulty parameter b2npht pcm1')
+    CALL XERTST(0.0_R8 .LT. s%b2npht_rxg, 'faulty parameter b2npht rxg')
 !
 ! b2nxfc
     CALL XERTST(0 .LE. s%b2nxfc_style .AND. s%b2nxfc_style .LT. 2, &
@@ -2455,8 +2430,6 @@ CONTAINS
 &         'b2tfhi_fkt_hie must be .ge. 0.0')
     CALL XERTST(1.0_R8 .LE. s%keps_inc, 'keps_inc must be .ge. 1.0')
     CALL XERTST(0.0_R8 .LE. s%keps_fac, 'keps_fac must be .ge. 0.0')
-    CALL XERTST(0 .LE. s%b2sikt_local .AND. s%b2sikt_local .LE. 1, &
-&         'b2sikt_local must be either 0 or 1')
     CALL XERTST(0 .LE. s%b2sikt_sheath_local .AND. s%b2sikt_sheath_local&
 &         .LE. 1, 'b2sikt_sheath_local must be either 0 or 1')
     CALL XERTST(0 .LE. s%b2sikt_min_source .AND. s%b2sikt_min_source &
@@ -2529,6 +2502,11 @@ CONTAINS
 ! b2tfnb
     CALL XERTST(0.0_R8 .LE. s%b2tfnb_flux_limit_min_ti, &
 &         'faulty internal parameter flux_limit_min_ti')
+! b2tqce
+    IF (.NOT.(s%b2tqce_style_guard_cells .EQ. 0 .OR. s%&
+&       b2tqce_style_guard_cells .EQ. 1)) CALL XERRAB(&
+&                    'b2tqce_style_guard_cells is expected to be 0 or 1'&
+&                                              )
 !
 ! b2mndt
     CALL XERTST(1 .LE. s%nstg(0) .AND. 1 .LE. s%nstg(1) .AND. 1 .LE. s%&
@@ -2556,10 +2534,6 @@ CONTAINS
 ! b2ag
     CALL XERTST(s%geom_match_dist .GT. 0.0_R8, &
 &         'faulty argument geom_match_dist')
-!
-! med
-    CALL XERTST(s%med_style .GE. 0 .AND. s%med_style .LE. 1, &
-&         'faulty parameter b2mndr_med_style')
 !
 ! Optimization
     CALL XERTST(s%b2optim_save_states .GE. 0, &
