@@ -53,8 +53,8 @@ CONTAINS
     ALLOCATE(index(no_of_start_points, no_of_slices, 0:1))
     ptr_index = 0
     dl = in_dl
-    CALL INIT_CHORD_SHIFT
-  RETURN
+    CALL INIT_CHORD_SHIFT()
+    RETURN
   END SUBROUTINE ALLOC_B2MOD_FIRST_FLIGHT
 
 !

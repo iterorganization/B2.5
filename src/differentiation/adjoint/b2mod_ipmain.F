@@ -154,10 +154,13 @@
      &      trim(ipnam(ip)),'Use b2mndr_na_min and b2mndr_na_new'
         case ('b2tfnb_xfrhiehz')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
-     &     trim(ipnam(ip)),'Use b2tfnb_xfrhie instead'
+     &     trim(ipnam(ip)),'Rhie-Chow treated differently in WG'
         case ('b2tfnb_xfrhie_no_drift')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
-     &     trim(ipnam(ip)),'Use b2tfnb_xfrhie instead'
+     &     trim(ipnam(ip)),'Rhie-Chow treated differently in WG'
+        case ('b2tfnb_xfrhie')
+       write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Rhie-Chow treated differently in WG'
         case ('b2news_coriolis')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete'
@@ -193,6 +196,9 @@
         case ('b2tqin_style')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Use b2tqin_csigin_style instead.'
+        case ('b2sikt_aniso')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use b2sikt_fac_aniso instead.'
         case default
           prohib = .false.
         end select
