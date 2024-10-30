@@ -183,8 +183,8 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
 !   ..  compute smbgp
       DO icv=1,mpg%nci
 !srv 18.10.02 10.06.05
-        t0 = geo%cvhz(icv)*geo%cvvol(icv)*geo%cvbb(icv, 0)/geo%cvbb(icv&
-&         , 3)
+        t0 = switch%b2sigp_phm0*geo%cvhz(icv)*geo%cvvol(icv)*geo%cvbb(&
+&         icv, 0)/geo%cvbb(icv, 3)
         temp = wrk1(icv)/ne(icv)
         temp0 = rzb(icv)*nb(icv)
         DO nd=1,nbdirs
@@ -229,8 +229,8 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
       END DO
 !   ..  compute smbgp
       DO icv=1,mpg%nci
-        t0 = geo%cvhz(icv)*geo%cvvol(icv)*geo%cvbb(icv, 0)/geo%cvbb(icv&
-&         , 3)
+        t0 = switch%b2sigp_phm0*geo%cvhz(icv)*geo%cvvol(icv)*geo%cvbb(&
+&         icv, 0)/geo%cvbb(icv, 3)
         temp0 = rzb(icv)*nb(icv)
         DO nd=1,nbdirs
           wrk5d(nd, icv) = -(t0*wrk0d(nd, icv))
@@ -286,7 +286,7 @@ SUBROUTINE B2SIGP_DV(ncv, nfc, nvx, isb, switch, geo, geod, mpg, mpgd, &
   ELSE
 !lk 23.06.17}
 !
-!srv 26.06.18 {
+!!switch%b2sigp_phm0.eq.0.0_R8                                                  !srv 26.06.18 {
     smbgp = 0.0_R8
     wrk5 = 0.0_R8
     wrk6 = 0.0_R8
@@ -458,8 +458,8 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
 !   ..  compute smbgp
       DO icv=1,mpg%nci
 !srv 18.10.02 10.06.05
-        t0 = geo%cvhz(icv)*geo%cvvol(icv)*geo%cvbb(icv, 0)/geo%cvbb(icv&
-&         , 3)
+        t0 = switch%b2sigp_phm0*geo%cvhz(icv)*geo%cvvol(icv)*geo%cvbb(&
+&         icv, 0)/geo%cvbb(icv, 3)
         wrk5(icv) = -(t0*wrk0(icv))
         wrk6(icv) = -(t0*rzb(icv)*(nb(icv)/ne(icv))*wrk1(icv))
         smbgp(icv, 0) = wrk5(icv) + wrk6(icv)
@@ -478,8 +478,8 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
       CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, po, wrkv, wrk1)
 !   ..  compute smbgp
       DO icv=1,mpg%nci
-        t0 = geo%cvhz(icv)*geo%cvvol(icv)*geo%cvbb(icv, 0)/geo%cvbb(icv&
-&         , 3)
+        t0 = switch%b2sigp_phm0*geo%cvhz(icv)*geo%cvvol(icv)*geo%cvbb(&
+&         icv, 0)/geo%cvbb(icv, 3)
         wrk5(icv) = -(t0*wrk0(icv))
         wrk6(icv) = -(t0*qe*rzb(icv)*nb(icv)*wrk1(icv))
         smbgp(icv, 0) = wrk5(icv) + wrk6(icv)
@@ -508,7 +508,7 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
   ELSE
 !lk 23.06.17}
 !
-!srv 26.06.18 {
+!!switch%b2sigp_phm0.eq.0.0_R8                                                  !srv 26.06.18 {
     smbgp = 0.0_R8
     wrk5 = 0.0_R8
     wrk6 = 0.0_R8
