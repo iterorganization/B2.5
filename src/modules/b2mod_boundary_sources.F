@@ -5,6 +5,7 @@
      *  bv_po(:),
      *  bv_te(:),
      *  bv_ti(:),
+     *  bv_tn(:),
      *  bv_ua(:,:),
      *  bv_na(:,:)
 
@@ -17,12 +18,14 @@
       allocate(bv_po(nCv))
       allocate(bv_te(nCv))
       allocate(bv_ti(nCv))
+      allocate(bv_tn(nCv))
       allocate(bv_ua(nCv,0:nsd-1))
       allocate(bv_na(nCv,0:nsd-1))
 
       bv_po = 0.0_R8
       bv_te = 0.0_R8
       bv_ti = 0.0_R8
+      bv_tn = 0.0_R8
       bv_ua = 0.0_R8
       bv_na = 0.0_R8
 
@@ -37,6 +40,7 @@
       deallocate(bv_po)
       deallocate(bv_te)
       deallocate(bv_ti)
+      deallocate(bv_tn)
       deallocate(bv_ua)
       deallocate(bv_na)
 
@@ -159,6 +163,27 @@
         open(70,file=trim(filename))
         read (70,"(1x,e24.16)") (bv_po(iCv),iCv=1,nCv)
         close(70)
+      endif
+
+      if (switch%tn_style.eq.2) then
+        if (any(solveen(0:mpg%nnreg(0)))) then
+          if (switch%use_mms.eq.1) then
+            filename='bv_tn_us.dat'
+            call find_file(filename,lexist)
+            call xertst(lexist,'File '//trim(filename)//' not found')
+            open(70,file=trim(filename))
+            read (70,"(1x,e24.16)") (bv_tn(iCv),iCv=1,nCv)
+            close(70)
+          elseif (switch%use_mms.eq.2) then
+            write (chitim,'(i4.4)') itim
+            filename='bv_tn_us'//chitim//'.dat'
+            call find_file(filename,lexist)
+            call xertst(lexist,'File '//trim(filename)//' not found')
+            open(70,file=trim(filename))
+            read (70,"(1x,e24.16)") (bv_tn(iCv),iCv=1,nCv)
+            close(70)
+          endif
+        endif
       endif
 
       return
