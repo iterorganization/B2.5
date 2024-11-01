@@ -285,6 +285,16 @@ c time-dependent treatment                                              !srv 07.
      &                     dv%fhi_mdf, dv%reshi0)
             endif
           endif
+*       ..neutrals (if using AFNs)
+          if (switch % tn_style.eq.2) then   !! separate neutral energy equation
+            if (any(solvnreg(0:mpg%nnreg(0))).or.
+     &        switch%get_residuals.eq.1) then
+              call b2ursd (nCv, nFc, mpg, dv%nn, pl%tn, shn0, dv%fhn,
+     &          dv%reshn0)
+            endif
+          else
+            dv%reshn = 0.0_R8         !! this is needed because reshn is added to the total energy equation
+          endif
         endif
 *  .. calculate time-dependent source
         call b2shdt (nCv, mpg%nCi, ns, dtim, switch%BoRiS,
@@ -397,6 +407,13 @@ c residuals for separate neutral energy equation
           dv%reshi0 = dv%reshi0 + shei !correct res0 with equipartition
           dv%reshi(1:mpg%nCi) = dv%reshi(1:mpg%nCi) +
      &                          psnl%reshi0(1:mpg%nCi)
+        endif
+        if (switch%tn_style.eq.2) then
+          if (any(solvnreg(0:mpg%nnreg(0))).or.
+     &      switch%get_residuals.eq.1) then
+          dv%reshn(1:mpg%nCi) = dv%reshn(1:mpg%nCi) +
+     &                          psnl%reshn0(1:mpg%nCi)
+          endif
         endif
       endif
 

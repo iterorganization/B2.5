@@ -5,6 +5,7 @@
      *  art_sch(:,:),
      *  art_she(:,:),
      *  art_shi(:,:),
+     *  art_shn(:,:),
      *  art_smo(:,:,:),
      *  art_sna(:,:,:)
 
@@ -17,12 +18,14 @@
        allocate(art_sch(nCv,0:3))
        allocate(art_she(nCv,0:3))
        allocate(art_shi(nCv,0:3))
+       allocate(art_shn(nCv,0:3))
        allocate(art_smo(nCv,0:3,0:nsd-1))
        allocate(art_sna(nCv,0:1,0:nsd-1))
 
        art_sch =0.0_R8
        art_she =0.0_R8
        art_shi =0.0_R8
+       art_shn =0.0_R8
        art_smo =0.0_R8
        art_sna =0.0_R8
 
@@ -37,6 +40,7 @@
        deallocate(art_sch)
        deallocate(art_she)
        deallocate(art_shi)
+       deallocate(art_shn)
        deallocate(art_smo)
        deallocate(art_sna)
 
@@ -180,6 +184,31 @@
          read (70,"(1x,e24.16)")
      &      (art_sch(iCv,0),iCv=1,nCv)
          close(70)
+       endif
+
+       if (switch%tn_style.eq.2) then
+         if (any(solveen(0:mpg%nnreg(0)))) then
+           if (switch%use_mms.eq.1) then
+             filename='art_shn_us.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &          'File '//trim(filename)//' not found')
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &          (art_shn(iCv,0),iCv=1,nCv)
+             close(70)
+           elseif (switch%use_mms.eq.2) then
+             write (chitim,'(i4.4)') tt
+             filename = 'art_shn_us'//chitim//'.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &          'File '//trim(filename)//' not found')
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &          (art_shn(iCv,0),iCv=1,nCv)
+             close(70)
+           endif
+         endif
        endif
 
        return
