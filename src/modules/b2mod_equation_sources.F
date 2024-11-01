@@ -186,6 +186,31 @@
          close(70)
        endif
 
+       if (switch%tn_style.eq.2) then
+         if (any(solveen(0:mpg%nnreg(0)))) then
+           if (switch%use_mms.eq.1) then
+             filename='art_shn_us.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &          'File '//trim(filename)//' not found')
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &          (art_shn(iCv,0),iCv=1,nCv)
+             close(70)
+           elseif (switch%use_mms.eq.2) then
+             write (chitim,'(i4.4)') tt
+             filename = 'art_shn_us'//chitim//'.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &          'File '//trim(filename)//' not found')
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &          (art_shn(iCv,0),iCv=1,nCv)
+             close(70)
+           endif
+         endif
+       endif
+
        return
       end subroutine read_equation_sources
 
