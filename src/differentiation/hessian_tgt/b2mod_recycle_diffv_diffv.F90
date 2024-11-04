@@ -3099,10 +3099,6 @@ CONTAINS
     REAL(kind=r8), DIMENSION(nbdirsmax0) :: min1d0
     REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
     REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: min1dd
-    REAL(kind=r8) :: min2
-    REAL(kind=r8), DIMENSION(nbdirsmax0) :: min2d0
-    REAL(kind=r8), DIMENSION(nbdirsmax) :: min2d
-    REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: min2dd
     REAL(r8) :: arg1
     REAL(r8), DIMENSION(nbdirsmax0) :: arg1d0
     REAL(r8), DIMENSION(nbdirsmax) :: arg1d
@@ -3431,15 +3427,12 @@ CONTAINS
     ELSE
       re1i = re1i
     END IF
-    IF (rc1i*cs/(-i1l) .GT. recyc0) THEN
-      DO nd=1,nbdirs
-        min1d(nd) = recyc0d(nd)
+    IF (rc1i*cs/(-i1l) .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+      DO nd=1,nbdirsmax
+        pfd(nd) = 0.d0
       END DO
-      DO nd0=1,nbdirs0
-        min1d0(nd0) = recyc0d0(nd0)
-      END DO
-      min1 = recyc0
-      min1dd(:, :) = 0.0_8
+      pfd0(:) = 0.0_8
       pfdd(:, :) = 0.0_8
     ELSE
       temp5 = rc1i*cs/i1l
@@ -3448,60 +3441,81 @@ CONTAINS
 &         i1l
       END DO
       temp = temp5
-      min1dd(:, :) = 0.0_8
+      pfdd(:, :) = 0.0_8
       DO nd=1,nbdirs
         temp5 = (cs*rc1id(nd)+rc1i*csd(nd)-temp*i1ld(nd))/i1l
         DO nd0=1,nbdirs0
-          min1dd(nd0, nd) = -((rc1id(nd)*csd0(nd0)+cs*rc1idd(nd0, nd)+&
-&           csd(nd)*rc1id0(nd0)+rc1i*csdd(nd0, nd)-i1ld(nd)*tempd(nd0)-&
-&           temp*i1ldd(nd0, nd)-temp5*i1ld0(nd0))/i1l)
+          pfdd(nd0, nd) = -((rc1id(nd)*csd0(nd0)+cs*rc1idd(nd0, nd)+csd(&
+&           nd)*rc1id0(nd0)+rc1i*csdd(nd0, nd)-i1ld(nd)*tempd(nd0)-temp*&
+&           i1ldd(nd0, nd)-temp5*i1ld0(nd0))/i1l)
         END DO
-        min1d(nd) = -temp5
+        pfd(nd) = -temp5
       END DO
       DO nd0=1,nbdirs0
-        min1d0(nd0) = -tempd(nd0)
+        pfd0(nd0) = -tempd(nd0)
       END DO
-      min1 = -temp
-      pfdd(:, :) = 0.0_8
+      pf = -temp
     END IF
-!
-!     Calculate fast and thermal recycled parts
-    DO nd=1,nbdirs
-      DO nd0=nd,nbdirs0
-        pfdd(nd0, nd) = min1dd(nd0, nd)
-      END DO
-      pfd(nd) = min1d(nd)
-    END DO
-    DO nd0=1,nbdirs0
-      pfd0(nd0) = min1d0(nd0)
-    END DO
-    pf = min1 + 1.0e-30_R8
     IF (pf .GT. recyc0) THEN
       DO nd=1,nbdirs
-        min2d(nd) = recyc0d(nd)
+        min1d(nd) = recyc0d(nd)
       END DO
       DO nd0=1,nbdirs0
-        min2d0(nd0) = recyc0d0(nd0)
+        min1d0(nd0) = recyc0d0(nd0)
       END DO
-      min2 = recyc0
-      min2dd(:, :) = 0.0_8
+      min1 = recyc0
+      pcorfdd(:, :) = 0.0_8
+      min1dd(:, :) = 0.0_8
     ELSE
-      min2dd(:, :) = 0.0_8
+      min1dd(:, :) = 0.0_8
       DO nd=1,nbdirs
         DO nd0=nd,nbdirs0
-          min2dd(nd0, nd) = pfdd(nd0, nd)
+          min1dd(nd0, nd) = pfdd(nd0, nd)
         END DO
-        min2d(nd) = pfd(nd)
+        min1d(nd) = pfd(nd)
       END DO
       DO nd0=1,nbdirs0
-        min2d0(nd0) = pfd0(nd0)
+        min1d0(nd0) = pfd0(nd0)
       END DO
-      min2 = pf
+      min1 = pf
+      pcorfdd(:, :) = 0.0_8
     END IF
-    DO nd0=1,nbdirs0
-      ptd0(nd0) = recyc0d0(nd0) - pfd0(nd0)
+    DO nd=1,nbdirs
+      temp5 = min1/pf
+      temp4 = (min1d(nd)-pfd(nd)*temp5)/pf
+      DO nd0=1,nbdirs0
+        pcorfdd(nd0, nd) = (min1dd(nd0, nd)-temp5*pfdd(nd0, nd)-pfd(nd)*&
+&         (min1d0(nd0)-temp5*pfd0(nd0))/pf-temp4*pfd0(nd0))/pf
+      END DO
+      pcorfd(nd) = temp4
     END DO
-    pt = recyc0 - pf + 1.0e-30_R8
+    DO nd0=1,nbdirs0
+      pcorfd0(nd0) = (min1d0(nd0)-min1*pfd0(nd0)/pf)/pf
+    END DO
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
+      DO nd=1,nbdirsmax
+        ptd(nd) = 0.d0
+      END DO
+      ptdd(:, :) = 0.0_8
+      ptd0(:) = 0.0_8
+    ELSE
+      ptdd(:, :) = 0.0_8
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          ptdd(nd0, nd) = -pfdd(nd0, nd)
+        END DO
+        ptd(nd) = recyc0d(nd) - pfd(nd)
+      END DO
+      DO nd0=1,nbdirs0
+        ptd0(nd0) = recyc0d0(nd0) - pfd0(nd0)
+      END DO
+      pt = recyc0 - pf
+    END IF
+!
+    arg1 = 2.0_R8*e_fc*ev/mn
+    vt = SQRT(arg1)
 !     The reflection coefficients below already account for the probability of
 !     fast particle reflection. Like in Eirene, we will only pump fast particles
 !     once all thermal particles are pumped.
@@ -3510,31 +3524,17 @@ CONTAINS
 !     Calculate the flux emitted as molecules. At the moment, molecules will be
 !     treated kinetically.
     temp = 0.5_R8*recycm*area
-    pcorfdd(:, :) = 0.0_8
     fna_mol_recdd(:, :) = 0.0_8
-    ptdd(:, :) = 0.0_8
     DO nd=1,nbdirs
-      temp5 = min2/pf
-      temp4 = (min2d(nd)-pfd(nd)*temp5)/pf
-      ptd(nd) = recyc0d(nd) - pfd(nd)
-      DO nd0=1,nbdirs0
-        pcorfdd(nd0, nd) = (min2dd(nd0, nd)-temp5*pfdd(nd0, nd)-pfd(nd)*&
-&         (min2d0(nd0)-temp5*pfd0(nd0))/pf-temp4*pfd0(nd0))/pf
-        ptdd(nd0, nd) = -pfdd(nd0, nd)
+      DO nd0=nd,nbdirs0
         fna_mol_recdd(nd0, nd) = temp*(ptd(nd)*fdnid0(nd0)+fdni*ptdd(nd0&
 &         , nd)+fdnid(nd)*ptd0(nd0)+pt*fdnidd(nd0, nd))
       END DO
-      pcorfd(nd) = temp4
       fna_mol_recd(nd) = temp*(fdni*ptd(nd)+pt*fdnid(nd))
     END DO
     DO nd0=1,nbdirs0
-      pcorfd0(nd0) = (min2d0(nd0)-min2*pfd0(nd0)/pf)/pf
       fna_mol_recd0(nd0) = temp*(fdni*ptd0(nd0)+pt*fdnid0(nd0))
     END DO
-    pcorf = min2/pf
-!
-    arg1 = 2.0_R8*e_fc*ev/mn
-    vt = SQRT(arg1)
     fna_mol_rec = temp*(pt*fdni)
     fna_mol(ifc, isn) = fna_mol(ifc, isn) + fna_mol_rec
     IF (0.0_R8 .LT. (recyc0*t0-2.0_R8*fna_mol_rec)*fluid_frac_hyb) THEN
@@ -3947,8 +3947,6 @@ CONTAINS
     REAL(kind=r8), DIMENSION(nbdirsmax) :: abs2d
     REAL(kind=r8) :: min1
     REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
-    REAL(kind=r8) :: min2
-    REAL(kind=r8), DIMENSION(nbdirsmax) :: min2d
     REAL(r8) :: arg1
     REAL(r8), DIMENSION(nbdirsmax) :: arg1d
     INTEGER :: nd
@@ -4130,36 +4128,47 @@ CONTAINS
     ELSE
       re1i = re1i
     END IF
-    IF (rc1i*cs/(-i1l) .GT. recyc0) THEN
+    IF (rc1i*cs/(-i1l) .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+      DO nd=1,nbdirsmax
+        pfd(nd) = 0.d0
+      END DO
+    ELSE
+      temp = rc1i*cs/i1l
+      DO nd=1,nbdirs
+        pfd(nd) = -((cs*rc1id(nd)+rc1i*csd(nd)-temp*i1ld(nd))/i1l)
+      END DO
+      pf = -temp
+    END IF
+    IF (pf .GT. recyc0) THEN
       DO nd=1,nbdirs
         min1d(nd) = recyc0d(nd)
       END DO
       min1 = recyc0
     ELSE
-      temp = rc1i*cs/i1l
       DO nd=1,nbdirs
-        min1d(nd) = -((cs*rc1id(nd)+rc1i*csd(nd)-temp*i1ld(nd))/i1l)
+        min1d(nd) = pfd(nd)
       END DO
-      min1 = -temp
+      min1 = pf
     END IF
-!
-!     Calculate fast and thermal recycled parts
     DO nd=1,nbdirs
-      pfd(nd) = min1d(nd)
+      pcorfd(nd) = (min1d(nd)-min1*pfd(nd)/pf)/pf
     END DO
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      DO nd=1,nbdirs
-        min2d(nd) = recyc0d(nd)
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
+      DO nd=1,nbdirsmax
+        ptd(nd) = 0.d0
       END DO
-      min2 = recyc0
     ELSE
       DO nd=1,nbdirs
-        min2d(nd) = pfd(nd)
+        ptd(nd) = recyc0d(nd) - pfd(nd)
       END DO
-      min2 = pf
+      pt = recyc0 - pf
     END IF
-    pt = recyc0 - pf + 1.0e-30_R8
+!
+    arg1 = 2.0_R8*e_fc*ev/mn
+    vt = SQRT(arg1)
 !     The reflection coefficients below already account for the probability of
 !     fast particle reflection. Like in Eirene, we will only pump fast particles
 !     once all thermal particles are pumped.
@@ -4169,14 +4178,8 @@ CONTAINS
 !     treated kinetically.
     temp = 0.5_R8*recycm*area
     DO nd=1,nbdirs
-      pcorfd(nd) = (min2d(nd)-min2*pfd(nd)/pf)/pf
-      ptd(nd) = recyc0d(nd) - pfd(nd)
       fna_mol_recd(nd) = temp*(fdni*ptd(nd)+pt*fdnid(nd))
     END DO
-    pcorf = min2/pf
-!
-    arg1 = 2.0_R8*e_fc*ev/mn
-    vt = SQRT(arg1)
     fna_mol_rec = temp*(pt*fdni)
     fna_mol(ifc, isn) = fna_mol(ifc, isn) + fna_mol_rec
     IF (0.0_R8 .LT. (recyc0*t0-2.0_R8*fna_mol_rec)*fluid_frac_hyb) THEN
@@ -4344,7 +4347,6 @@ CONTAINS
     REAL(kind=r8) :: abs1
     REAL(kind=r8) :: abs2
     REAL(kind=r8) :: min1
-    REAL(kind=r8) :: min2
     REAL(r8) :: arg1
 !
     CALL SUBINI('CalcRecycledFluxes')
@@ -4455,21 +4457,22 @@ CONTAINS
     ELSE
       re1i = re1i
     END IF
-    IF (rc1i*cs/(-i1l) .GT. recyc0) THEN
+    IF (rc1i*cs/(-i1l) .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+    ELSE
+      pf = rc1i*cs/(-i1l)
+    END IF
+    IF (pf .GT. recyc0) THEN
       min1 = recyc0
     ELSE
-      min1 = rc1i*cs/(-i1l)
+      min1 = pf
     END IF
-!
-!     Calculate fast and thermal recycled parts
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      min2 = recyc0
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
     ELSE
-      min2 = pf
+      pt = recyc0 - pf
     END IF
-    pcorf = min2/pf
-    pt = recyc0 - pf + 1.0e-30_R8
 !
     arg1 = 2.0_R8*e_fc*ev/mn
     vt = SQRT(arg1)
@@ -4658,10 +4661,6 @@ CONTAINS
     REAL(kind=r8), DIMENSION(nbdirsmax0) :: min1d0
     REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
     REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: min1dd
-    REAL(kind=r8) :: min2
-    REAL(kind=r8), DIMENSION(nbdirsmax0) :: min2d0
-    REAL(kind=r8), DIMENSION(nbdirsmax) :: min2d
-    REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: min2dd
     REAL(kind=r8) :: arg1
     REAL(kind=r8), DIMENSION(nbdirsmax0) :: arg1d0
     REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
@@ -5380,7 +5379,27 @@ CONTAINS
       x1d0(nd0) = temp1*temp2d(nd0) + temp2*temp1d(nd0)
     END DO
     x1 = temp2*temp1
-    IF (x1 .GT. recyc0) THEN
+    IF (x1 .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+      DO nd=1,nbdirsmax
+        pfd(nd) = 0.d0
+      END DO
+      pfd0(:) = 0.0_8
+      pfdd(:, :) = 0.0_8
+    ELSE
+      pfdd(:, :) = 0.0_8
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          pfdd(nd0, nd) = x1dd(nd0, nd)
+        END DO
+        pfd(nd) = x1d(nd)
+      END DO
+      DO nd0=1,nbdirs0
+        pfd0(nd0) = x1d0(nd0)
+      END DO
+      pf = x1
+    END IF
+    IF (pf .GT. recyc0) THEN
       DO nd=1,nbdirs
         min1d(nd) = recyc0d(nd)
       END DO
@@ -5388,76 +5407,55 @@ CONTAINS
         min1d0(nd0) = recyc0d0(nd0)
       END DO
       min1 = recyc0
+      pcorfdd(:, :) = 0.0_8
       min1dd(:, :) = 0.0_8
-      pfdd(:, :) = 0.0_8
     ELSE
       min1dd(:, :) = 0.0_8
       DO nd=1,nbdirs
         DO nd0=nd,nbdirs0
-          min1dd(nd0, nd) = x1dd(nd0, nd)
+          min1dd(nd0, nd) = pfdd(nd0, nd)
         END DO
-        min1d(nd) = x1d(nd)
+        min1d(nd) = pfd(nd)
       END DO
       DO nd0=1,nbdirs0
-        min1d0(nd0) = x1d0(nd0)
+        min1d0(nd0) = pfd0(nd0)
       END DO
-      min1 = x1
-      pfdd(:, :) = 0.0_8
-    END IF
-!     Calculate fast and thermal reflected parts
-    DO nd=1,nbdirs
-      DO nd0=nd,nbdirs0
-        pfdd(nd0, nd) = min1dd(nd0, nd)
-      END DO
-      pfd(nd) = min1d(nd)
-    END DO
-    DO nd0=1,nbdirs0
-      pfd0(nd0) = min1d0(nd0)
-    END DO
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      DO nd=1,nbdirs
-        min2d(nd) = recyc0d(nd)
-      END DO
-      DO nd0=1,nbdirs0
-        min2d0(nd0) = recyc0d0(nd0)
-      END DO
-      min2 = recyc0
-      min2dd(:, :) = 0.0_8
+      min1 = pf
       pcorfdd(:, :) = 0.0_8
-      ptdd(:, :) = 0.0_8
-    ELSE
-      min2dd(:, :) = 0.0_8
-      DO nd=1,nbdirs
-        DO nd0=nd,nbdirs0
-          min2dd(nd0, nd) = pfdd(nd0, nd)
-        END DO
-        min2d(nd) = pfd(nd)
-      END DO
-      DO nd0=1,nbdirs0
-        min2d0(nd0) = pfd0(nd0)
-      END DO
-      min2 = pf
-      pcorfdd(:, :) = 0.0_8
-      ptdd(:, :) = 0.0_8
     END IF
     DO nd=1,nbdirs
-      temp15 = min2/pf
-      temp14 = (min2d(nd)-pfd(nd)*temp15)/pf
+      temp15 = min1/pf
+      temp14 = (min1d(nd)-pfd(nd)*temp15)/pf
       DO nd0=1,nbdirs0
-        pcorfdd(nd0, nd) = (min2dd(nd0, nd)-temp15*pfdd(nd0, nd)-pfd(nd)&
-&         *(min2d0(nd0)-temp15*pfd0(nd0))/pf-temp14*pfd0(nd0))/pf
-        ptdd(nd0, nd) = -pfdd(nd0, nd)
+        pcorfdd(nd0, nd) = (min1dd(nd0, nd)-temp15*pfdd(nd0, nd)-pfd(nd)&
+&         *(min1d0(nd0)-temp15*pfd0(nd0))/pf-temp14*pfd0(nd0))/pf
       END DO
       pcorfd(nd) = temp14
-      ptd(nd) = recyc0d(nd) - pfd(nd)
     END DO
     DO nd0=1,nbdirs0
-      pcorfd0(nd0) = (min2d0(nd0)-min2*pfd0(nd0)/pf)/pf
-      ptd0(nd0) = recyc0d0(nd0) - pfd0(nd0)
+      pcorfd0(nd0) = (min1d0(nd0)-min1*pfd0(nd0)/pf)/pf
     END DO
-    pcorf = min2/pf
-    pt = recyc0 - pf + 1.0e-30_R8
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
+      DO nd=1,nbdirsmax
+        ptd(nd) = 0.d0
+      END DO
+      ptdd(:, :) = 0.0_8
+      ptd0(:) = 0.0_8
+    ELSE
+      ptdd(:, :) = 0.0_8
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          ptdd(nd0, nd) = -pfdd(nd0, nd)
+        END DO
+        ptd(nd) = recyc0d(nd) - pfd(nd)
+      END DO
+      DO nd0=1,nbdirs0
+        ptd0(nd0) = recyc0d0(nd0) - pfd0(nd0)
+      END DO
+      pt = recyc0 - pf
+    END IF
 !
     arg10 = 2.0_R8*e_fc*ev/mn
     vt = SQRT(arg10)
@@ -6112,8 +6110,6 @@ CONTAINS
     REAL(kind=r8), DIMENSION(nbdirsmax) :: abs2d
     REAL(kind=r8) :: min1
     REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
-    REAL(kind=r8) :: min2
-    REAL(kind=r8), DIMENSION(nbdirsmax) :: min2d
     REAL(kind=r8) :: arg1
     REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
     REAL(r8) :: arg2
@@ -6471,39 +6467,43 @@ CONTAINS
 &       vtotd(nd)+vtot*fnni_nodriftsd(nd)))/(vtot*fnni_nodrifts)
     END DO
     x1 = temp2*temp1
-    IF (x1 .GT. recyc0) THEN
+    IF (x1 .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+      DO nd=1,nbdirsmax
+        pfd(nd) = 0.d0
+      END DO
+    ELSE
+      DO nd=1,nbdirs
+        pfd(nd) = x1d(nd)
+      END DO
+      pf = x1
+    END IF
+    IF (pf .GT. recyc0) THEN
       DO nd=1,nbdirs
         min1d(nd) = recyc0d(nd)
       END DO
       min1 = recyc0
     ELSE
       DO nd=1,nbdirs
-        min1d(nd) = x1d(nd)
+        min1d(nd) = pfd(nd)
       END DO
-      min1 = x1
+      min1 = pf
     END IF
-!     Calculate fast and thermal reflected parts
     DO nd=1,nbdirs
-      pfd(nd) = min1d(nd)
+      pcorfd(nd) = (min1d(nd)-min1*pfd(nd)/pf)/pf
     END DO
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      DO nd=1,nbdirs
-        min2d(nd) = recyc0d(nd)
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
+      DO nd=1,nbdirsmax
+        ptd(nd) = 0.d0
       END DO
-      min2 = recyc0
     ELSE
       DO nd=1,nbdirs
-        min2d(nd) = pfd(nd)
+        ptd(nd) = recyc0d(nd) - pfd(nd)
       END DO
-      min2 = pf
+      pt = recyc0 - pf
     END IF
-    DO nd=1,nbdirs
-      pcorfd(nd) = (min2d(nd)-min2*pfd(nd)/pf)/pf
-      ptd(nd) = recyc0d(nd) - pfd(nd)
-    END DO
-    pcorf = min2/pf
-    pt = recyc0 - pf + 1.0e-30_R8
 !
     arg10 = 2.0_R8*e_fc*ev/mn
     vt = SQRT(arg10)
@@ -6757,7 +6757,6 @@ CONTAINS
     REAL(kind=r8) :: abs1
     REAL(kind=r8) :: abs2
     REAL(kind=r8) :: min1
-    REAL(kind=r8) :: min2
     REAL(kind=r8) :: arg1
     REAL(r8) :: arg2
     REAL(kind=r8) :: result1
@@ -6964,20 +6963,22 @@ CONTAINS
 !     Calculate incident particle flux density
     fnni_nodrifts = vcx/vtot*(-(i1l*nnf)+dnndz*i2l/vtot)
     x1 = vcx/vtot*(nnf*rc1i*cs+dnndz*rc2i*cs**2/vtot)/fnni_nodrifts
-    IF (x1 .GT. recyc0) THEN
+    IF (x1 .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+    ELSE
+      pf = x1
+    END IF
+    IF (pf .GT. recyc0) THEN
       min1 = recyc0
     ELSE
-      min1 = x1
+      min1 = pf
     END IF
-!     Calculate fast and thermal reflected parts
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      min2 = recyc0
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
     ELSE
-      min2 = pf
+      pt = recyc0 - pf
     END IF
-    pcorf = min2/pf
-    pt = recyc0 - pf + 1.0e-30_R8
 !
     arg10 = 2.0_R8*e_fc*ev/mn
     vt = SQRT(arg10)
@@ -8207,10 +8208,6 @@ CONTAINS
     REAL(kind=r8), DIMENSION(nbdirsmax0) :: min1d0
     REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
     REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: min1dd
-    REAL(kind=r8) :: min2
-    REAL(kind=r8), DIMENSION(nbdirsmax0) :: min2d0
-    REAL(kind=r8), DIMENSION(nbdirsmax) :: min2d
-    REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: min2dd
     REAL(r8) :: arg1
     REAL(r8), DIMENSION(nbdirsmax0) :: arg1d0
     REAL(r8), DIMENSION(nbdirsmax) :: arg1d
@@ -8584,7 +8581,27 @@ CONTAINS
 &       tempd(nd0)
     END DO
     x1 = nnf*rc1i*temp
-    IF (x1 .GT. recyc0) THEN
+    IF (x1 .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+      DO nd=1,nbdirsmax
+        pfd(nd) = 0.d0
+      END DO
+      pfd0(:) = 0.0_8
+      pfdd(:, :) = 0.0_8
+    ELSE
+      pfdd(:, :) = 0.0_8
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          pfdd(nd0, nd) = x1dd(nd0, nd)
+        END DO
+        pfd(nd) = x1d(nd)
+      END DO
+      DO nd0=1,nbdirs0
+        pfd0(nd0) = x1d0(nd0)
+      END DO
+      pf = x1
+    END IF
+    IF (pf .GT. recyc0) THEN
       DO nd=1,nbdirs
         min1d(nd) = recyc0d(nd)
       END DO
@@ -8592,60 +8609,57 @@ CONTAINS
         min1d0(nd0) = recyc0d0(nd0)
       END DO
       min1 = recyc0
+      pcorfdd(:, :) = 0.0_8
       min1dd(:, :) = 0.0_8
-      pfdd(:, :) = 0.0_8
     ELSE
       min1dd(:, :) = 0.0_8
       DO nd=1,nbdirs
         DO nd0=nd,nbdirs0
-          min1dd(nd0, nd) = x1dd(nd0, nd)
+          min1dd(nd0, nd) = pfdd(nd0, nd)
         END DO
-        min1d(nd) = x1d(nd)
+        min1d(nd) = pfd(nd)
       END DO
       DO nd0=1,nbdirs0
-        min1d0(nd0) = x1d0(nd0)
+        min1d0(nd0) = pfd0(nd0)
       END DO
-      min1 = x1
-      pfdd(:, :) = 0.0_8
+      min1 = pf
+      pcorfdd(:, :) = 0.0_8
     END IF
-!
-!     Calculate fast and thermal reflected parts
     DO nd=1,nbdirs
-      DO nd0=nd,nbdirs0
-        pfdd(nd0, nd) = min1dd(nd0, nd)
+      temp5 = min1/pf
+      temp4 = (min1d(nd)-pfd(nd)*temp5)/pf
+      DO nd0=1,nbdirs0
+        pcorfdd(nd0, nd) = (min1dd(nd0, nd)-temp5*pfdd(nd0, nd)-pfd(nd)*&
+&         (min1d0(nd0)-temp5*pfd0(nd0))/pf-temp4*pfd0(nd0))/pf
       END DO
-      pfd(nd) = min1d(nd)
+      pcorfd(nd) = temp4
     END DO
     DO nd0=1,nbdirs0
-      pfd0(nd0) = min1d0(nd0)
+      pcorfd0(nd0) = (min1d0(nd0)-min1*pfd0(nd0)/pf)/pf
     END DO
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      DO nd=1,nbdirs
-        min2d(nd) = recyc0d(nd)
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
+      DO nd=1,nbdirsmax
+        ptd(nd) = 0.d0
       END DO
-      DO nd0=1,nbdirs0
-        min2d0(nd0) = recyc0d0(nd0)
-      END DO
-      min2 = recyc0
-      min2dd(:, :) = 0.0_8
+      ptdd(:, :) = 0.0_8
+      ptd0(:) = 0.0_8
     ELSE
-      min2dd(:, :) = 0.0_8
+      ptdd(:, :) = 0.0_8
       DO nd=1,nbdirs
         DO nd0=nd,nbdirs0
-          min2dd(nd0, nd) = pfdd(nd0, nd)
+          ptdd(nd0, nd) = -pfdd(nd0, nd)
         END DO
-        min2d(nd) = pfd(nd)
+        ptd(nd) = recyc0d(nd) - pfd(nd)
       END DO
       DO nd0=1,nbdirs0
-        min2d0(nd0) = pfd0(nd0)
+        ptd0(nd0) = recyc0d0(nd0) - pfd0(nd0)
       END DO
-      min2 = pf
+      pt = recyc0 - pf
     END IF
-    DO nd0=1,nbdirs0
-      ptd0(nd0) = recyc0d0(nd0) - pfd0(nd0)
-    END DO
-    pt = recyc0 - pf + 1.0e-30_R8
+    arg1 = 2.0_R8*e_fc*ev/mn
+    vt = SQRT(arg1)
 !     The reflection coefficients below already account for the probability of
 !     fast particle reflection. Like in Eirene, we will only pump fast particles
 !     once all thermal particles are pumped.
@@ -8654,30 +8668,17 @@ CONTAINS
 !     Calculate the part of the reflected flux emitted as molecules. At the moment,
 !     the molecules are treated kinetically.
     temp = 0.5_R8*recycm*area
-    pcorfdd(:, :) = 0.0_8
-    ptdd(:, :) = 0.0_8
     fna_mol_refldd(:, :) = 0.0_8
     DO nd=1,nbdirs
-      temp5 = min2/pf
-      temp4 = (min2d(nd)-pfd(nd)*temp5)/pf
-      ptd(nd) = recyc0d(nd) - pfd(nd)
-      DO nd0=1,nbdirs0
-        pcorfdd(nd0, nd) = (min2dd(nd0, nd)-temp5*pfdd(nd0, nd)-pfd(nd)*&
-&         (min2d0(nd0)-temp5*pfd0(nd0))/pf-temp4*pfd0(nd0))/pf
-        ptdd(nd0, nd) = -pfdd(nd0, nd)
+      DO nd0=nd,nbdirs0
         fna_mol_refldd(nd0, nd) = temp*(ptd(nd)*fnnid0(nd0)+fnni*ptdd(&
 &         nd0, nd)+fnnid(nd)*ptd0(nd0)+pt*fnnidd(nd0, nd))
       END DO
-      pcorfd(nd) = temp4
       fna_mol_refld(nd) = temp*(fnni*ptd(nd)+pt*fnnid(nd))
     END DO
     DO nd0=1,nbdirs0
-      pcorfd0(nd0) = (min2d0(nd0)-min2*pfd0(nd0)/pf)/pf
       fna_mol_refld0(nd0) = temp*(fnni*ptd0(nd0)+pt*fnnid0(nd0))
     END DO
-    pcorf = min2/pf
-    arg1 = 2.0_R8*e_fc*ev/mn
-    vt = SQRT(arg1)
     fna_mol_refl = temp*(pt*fnni)
     fna_mol(ifc, isn) = fna_mol(ifc, isn) + fna_mol_refl
     IF (0.0_R8 .LT. (recyc0*fnni*area-2.0_R8*fna_mol_refl)*&
@@ -9068,8 +9069,6 @@ CONTAINS
     REAL(kind=r8), DIMENSION(nbdirsmax) :: abs2d
     REAL(kind=r8) :: min1
     REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
-    REAL(kind=r8) :: min2
-    REAL(kind=r8), DIMENSION(nbdirsmax) :: min2d
     REAL(r8) :: arg1
     REAL(r8), DIMENSION(nbdirsmax) :: arg1d
     INTEGER :: nd
@@ -9293,35 +9292,45 @@ CONTAINS
 &       temp*fnnid(nd))/fnni
     END DO
     x1 = nnf*rc1i*temp
-    IF (x1 .GT. recyc0) THEN
+    IF (x1 .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+      DO nd=1,nbdirsmax
+        pfd(nd) = 0.d0
+      END DO
+    ELSE
+      DO nd=1,nbdirs
+        pfd(nd) = x1d(nd)
+      END DO
+      pf = x1
+    END IF
+    IF (pf .GT. recyc0) THEN
       DO nd=1,nbdirs
         min1d(nd) = recyc0d(nd)
       END DO
       min1 = recyc0
     ELSE
       DO nd=1,nbdirs
-        min1d(nd) = x1d(nd)
+        min1d(nd) = pfd(nd)
       END DO
-      min1 = x1
+      min1 = pf
     END IF
-!
-!     Calculate fast and thermal reflected parts
     DO nd=1,nbdirs
-      pfd(nd) = min1d(nd)
+      pcorfd(nd) = (min1d(nd)-min1*pfd(nd)/pf)/pf
     END DO
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      DO nd=1,nbdirs
-        min2d(nd) = recyc0d(nd)
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
+      DO nd=1,nbdirsmax
+        ptd(nd) = 0.d0
       END DO
-      min2 = recyc0
     ELSE
       DO nd=1,nbdirs
-        min2d(nd) = pfd(nd)
+        ptd(nd) = recyc0d(nd) - pfd(nd)
       END DO
-      min2 = pf
+      pt = recyc0 - pf
     END IF
-    pt = recyc0 - pf + 1.0e-30_R8
+    arg1 = 2.0_R8*e_fc*ev/mn
+    vt = SQRT(arg1)
 !     The reflection coefficients below already account for the probability of
 !     fast particle reflection. Like in Eirene, we will only pump fast particles
 !     once all thermal particles are pumped.
@@ -9331,13 +9340,8 @@ CONTAINS
 !     the molecules are treated kinetically.
     temp = 0.5_R8*recycm*area
     DO nd=1,nbdirs
-      pcorfd(nd) = (min2d(nd)-min2*pfd(nd)/pf)/pf
-      ptd(nd) = recyc0d(nd) - pfd(nd)
       fna_mol_refld(nd) = temp*(fnni*ptd(nd)+pt*fnnid(nd))
     END DO
-    pcorf = min2/pf
-    arg1 = 2.0_R8*e_fc*ev/mn
-    vt = SQRT(arg1)
     fna_mol_refl = temp*(pt*fnni)
     fna_mol(ifc, isn) = fna_mol(ifc, isn) + fna_mol_refl
     IF (0.0_R8 .LT. (recyc0*fnni*area-2.0_R8*fna_mol_refl)*&
@@ -9499,7 +9503,6 @@ CONTAINS
     REAL(kind=r8) :: abs1
     REAL(kind=r8) :: abs2
     REAL(kind=r8) :: min1
-    REAL(kind=r8) :: min2
     REAL(r8) :: arg1
     REAL(kind=r8) :: x1
 !
@@ -9654,21 +9657,22 @@ CONTAINS
       re2i = re2i
     END IF
     x1 = nnf*rc1i*cs/fnni
-    IF (x1 .GT. recyc0) THEN
+    IF (x1 .LT. 1.0e-30_R8) THEN
+      pf = 1.0e-30_R8
+    ELSE
+      pf = x1
+    END IF
+    IF (pf .GT. recyc0) THEN
       min1 = recyc0
     ELSE
-      min1 = x1
+      min1 = pf
     END IF
-!
-!     Calculate fast and thermal reflected parts
-    pf = min1 + 1.0e-30_R8
-    IF (pf .GT. recyc0) THEN
-      min2 = recyc0
+    pcorf = min1/pf
+    IF (recyc0 - pf .LT. 1.0e-30_R8) THEN
+      pt = 1.0e-30_R8
     ELSE
-      min2 = pf
+      pt = recyc0 - pf
     END IF
-    pcorf = min2/pf
-    pt = recyc0 - pf + 1.0e-30_R8
     arg1 = 2.0_R8*e_fc*ev/mn
     vt = SQRT(arg1)
 !     The reflection coefficients below already account for the probability of
