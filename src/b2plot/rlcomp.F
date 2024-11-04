@@ -33,7 +33,7 @@ c======================================================================
 #include "rdload.inc"
       real (kind=R8) :: upi, udpi, ueps
       parameter (upi=pi)
-      parameter (udpi=2.0e0_R8*upi, ueps=1.0e-20_R8)
+      parameter (udpi=2.0_R8*upi, ueps=1.0e-20_R8)
       integer i, j, k
       real (kind=R8) :: x1, x2, y1, y2, angle, anglb, uda, utx, uxx
       intrinsic mod, atan2
@@ -67,8 +67,8 @@ c<<<
         write(lun_s,'(5a)') '# R',tab,'Z',tab,'S'
       end if
 c>>>
-      ttsrc=0.e0_R8
-      radld=0.e0_R8
+      ttsrc=0.0_R8
+      radld=0.0_R8
       do i=1,nsrc
         ssrc=ssrcm(i)
         ttsrc=ttsrc+ssrc
@@ -121,8 +121,8 @@ c
           ddy=yc-yb
           jm=1
           jsc=1
-          sb=0.0e0_R8
-          se=1.0e0_R8
+          sb=0.0_R8
+          se=1.0_R8
 c<<<
           uu_xe=xc
           uu_ye=yc
@@ -145,7 +145,7 @@ c>>>
 c
 c*** At least something is seen. Calculate the load
 c
-            if(sb .le. 0.0e0_R8) then
+            if(sb .le. 0.0_R8) then
               anglb=atan2(yb-ysrc,xb-xsrc)
             else
               x1=xb+ddx*sb
@@ -159,10 +159,10 @@ c
             if(abs(ddy) .gt. ueps) then
               utx=(ysrc-yb)/ddy
               uxx=xb+utx*ddx-xsrc
-              if(uxx .lt. 0.0e0_R8) then
-                if(utx .ge. 0.0e0_R8 .and.  utx .le. 1.0e0_R8) then
-                  if(angle .lt. 0.0e0_R8) uda=uda+udpi
-                  if(anglb .lt. 0.0e0_R8) uda=uda-udpi
+              if(uxx .lt. 0.0_R8) then
+                if(utx .ge. 0.0_R8 .and.  utx .le. 1.0_R8) then
+                  if(angle .lt. 0.0_R8) uda=uda+udpi
+                  if(anglb .lt. 0.0_R8) uda=uda-udpi
                 end if
               end if
             end if
@@ -175,9 +175,9 @@ c            print *, 'xb, yb, ddx, ddy, uxx, utx'
 c            print *, xb, yb, ddx, ddy, uxx, utx
 c>>>
           else
-            uda=0.0e0_R8
-            anglb=0.0e0_R8
-            angle=0.0e0_R8
+            uda=0.0_R8
+            anglb=0.0_R8
+            angle=0.0_R8
           end if
 c<<<
           if(uu_dbg .and. from_b2plot) then
@@ -195,7 +195,7 @@ c>>>
 c
 c*** Calculate the total power coming to the target segments
 c
-      tttrg=0.0e0_R8
+      tttrg=0.0_R8
       do j=1,ntrg
         tttrg=tttrg+radld(j)
       end do

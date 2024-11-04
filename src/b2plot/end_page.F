@@ -1,6 +1,7 @@
 
       subroutine end_page
       use b2mod_types
+      implicit none
 #include <graphics_vars.h>
 
 c     the zoom common

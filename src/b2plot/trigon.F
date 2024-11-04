@@ -4,6 +4,7 @@ c
       implicit none
 #include "graphics_vars.h"
       logical onflag
+
       if(onflag) then
         trig=.not.trig
         write (*,*) 'triangular grid state changed'

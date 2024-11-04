@@ -1,3 +1,7 @@
+#ifdef NO_NAG
+#define ranf g05caf
+#define ranset g05cbf
+#endif
 C     =======================================================================
 C     SUBROUTINES FOR B2PLOT COMMAND TRAJ
 C     =======================================================================
@@ -554,7 +558,7 @@ C      vr,vz reale transformierte (in physical domain) Geschwindigkeiten
       real (kind=R8) ::
      *   vr,vz
       real (kind=R8) ::
-     *   rre,zre, radvance, zadvance
+     *   rre,zre,radvance,zadvance
       real (kind=R8) ::
      *   tdist
       real (kind=R8) ::
@@ -567,14 +571,14 @@ C      vr,vz reale transformierte (in physical domain) Geschwindigkeiten
 C     Initial configuration. Particle time is counted downwards,
 C     therefore is set to be deltaT here.
 
-      vr=0.0_R8
-      vz=0.0_R8
+      vr = 0.0_R8
+      vz = 0.0_R8
       laufende = .false.
       tpart = deltat
-      schritte=0
+      schritte = 0
 
       do while(.not.laufende)
-         schritte=schritte+1
+         schritte = schritte+1
 
 C     The velocities need to be transformed from the computational
 C     to the real domain.
@@ -587,7 +591,8 @@ C      :)
 
          call intersection(wall,tdist,vz,vr,rre,zre,ii,jj,laufende)
          if (laufende .and. b2plot_debug.ge.12) then
-            write(*,*) uutraj(ii,jj,l),vvtraj(ii,jj,l),vr,vz
+            write(*,'(4(1e15.8,2x))')
+     1       uutraj(ii,jj,l),vvtraj(ii,jj,l),vr,vz
          endif
 
 C      We now know through which wall it goes (wall=xy) and how
@@ -645,15 +650,15 @@ CXPB     location of the next computational cell.
          zre = zre + vz*timerun + zadvance
 
          do while(
-     1    .not. inside_rectangle(rre,zre,crx(ii,jj,1),cry(ii,jj,1),
-     2         crx(ii,jj,3),cry(ii,jj,3),crx(ii,jj,2),cry(ii,jj,2),
-     3         crx(ii,jj,0),cry(ii,jj,0)))
+     1    .not.inside_rectangle(rre,zre,crx(ii,jj,1),cry(ii,jj,1),
+     2        crx(ii,jj,3),cry(ii,jj,3),crx(ii,jj,2),cry(ii,jj,2),
+     3        crx(ii,jj,0),cry(ii,jj,0)))
            radvance=radvance*0.5_R8
            zadvance=zadvance*0.5_R8
            if (Max(Abs(radvance),Abs(zadvance)) .lt. 1.0e-20_R8) then
              if (b2plot_debug.ge.1)
-     .        write(*,*)'Particle had to be killed.'
-             if (b2plot_debug.ge.1) write(*,*)'No Problem. (?)'
+     .        write(*,*) 'Particle had to be killed.'
+             if (b2plot_debug.ge.1) write(*,*) 'No Problem. (?)'
              ii=-1
              jj=-1
              goto 1000
@@ -675,8 +680,8 @@ CXPB     location of the next computational cell.
 
 C     Check if particle reached the border.
 
-         if(((jj .gt. ny-1) .or. (jj .lt. 0)) .or.
-     1      ((ii .gt. nx-1) .or. (ii .lt. 0))) then
+         if(((jj .gt. ny-1).or.(jj .lt. 0)) .or.
+     1      ((ii .gt. nx-1).or.(ii .lt. 0))) then
            laufende = .true.
          endif
       enddo
@@ -765,53 +770,53 @@ C     line making up the cell.
 C Now check the corners for those very rare cases when a particle
 C passes through one of them.
 
-       if (r13 .eq. r01) then
-           d = z01 + vz
-           if (((z01 .le. d)  .and.  (z01 .ge. (zre)) ) .or.
-     +         ((z01 .ge. d)  .and.  (z01 .le. (zre)))) then
-              error=.false.
-               wall=11
-               tdist = MAX( ABS(r01-rre)/ABS(vr+1.0e-20_R8),
-     +                      ABS(z01-zre)/ABS(vz+1.0e-20_R8))
-           endif
-       endif
-       if (r32 .eq. r13) then
-          d = z13 + vz
-          if (((z13 .le. d)  .and.  (z13 .ge. (zre)))  .or.
-     +        ((z13 .ge. d)  .and.  (z13 .le. (zre)))) then
-              wall=33
-              error=.false.
-              tdist = MAX( ABS(r32-rre)/ABS(vr+1.0e-20_R8),
-     +                     ABS(z32-zre)/ABS(vz+1.0e-20_R8))
-          endif
-       endif
-       if (r20 .eq. r32) then
-          d = z32 + vz
-          if (((z32 .le. d)  .and.  (z32 .ge. (zre)))  .or.
-     +        ((z32 .ge. d)  .and.  (z32 .le. (zre)))) then
-              wall=22
-              error=.false.
-              tdist = MAX( ABS(r20-rre)/ABS(vr+1.0e-20_R8),
-     +                     ABS(z20-zre)/ABS(vz+1.0e-20_R8))
-          endif
-       endif
-       if (r01 .eq. r20) then
-          d = z20 + vz
-          if (((z20 .le. d)  .and.  (z20 .ge. (zre)))  .or.
-     +        ((z20 .ge. d)  .and.  (z20 .le. (zre)))) then
-              wall=00
-              error=.false.
-              tdist = MAX( ABS(r20-rre)/ABS(vr+1.0e-20_R8),
-     +                     ABS(z20-zre)/ABS(vz+1.0e-20_R8))
-          endif
-       endif
+      if (r13 .eq. r01) then
+        d = z01 + vz
+        if (((z01 .le. d)  .and.  (z01 .ge. (zre)) ) .or.
+     +      ((z01 .ge. d)  .and.  (z01 .le. (zre)))) then
+          error=.false.
+          wall=11
+          tdist = MAX( ABS(r01-rre)/ABS(vr+1.0e-20_R8),
+     +                 ABS(z01-zre)/ABS(vz+1.0e-20_R8))
+        endif
+      endif
+      if (r32 .eq. r13) then
+        d = z13 + vz
+        if (((z13 .le. d)  .and.  (z13 .ge. (zre)))  .or.
+     +      ((z13 .ge. d)  .and.  (z13 .le. (zre)))) then
+          wall=33
+          error=.false.
+          tdist = MAX( ABS(r32-rre)/ABS(vr+1.0e-20_R8),
+     +                 ABS(z32-zre)/ABS(vz+1.0e-20_R8))
+        endif
+      endif
+      if (r20 .eq. r32) then
+        d = z32 + vz
+        if (((z32 .le. d)  .and.  (z32 .ge. (zre)))  .or.
+     +      ((z32 .ge. d)  .and.  (z32 .le. (zre)))) then
+          wall=22
+          error=.false.
+          tdist = MAX( ABS(r20-rre)/ABS(vr+1.0e-20_R8),
+     +                 ABS(z20-zre)/ABS(vz+1.0e-20_R8))
+        endif
+      endif
+      if (r01 .eq. r20) then
+        d = z20 + vz
+        if (((z20 .le. d)  .and.  (z20 .ge. (zre)))  .or.
+     +      ((z20 .ge. d)  .and.  (z20 .le. (zre)))) then
+          wall=00
+          error=.false.
+          tdist = MAX( ABS(r20-rre)/ABS(vr+1.0e-20_R8),
+     +                 ABS(z20-zre)/ABS(vz+1.0e-20_R8))
+        endif
+      endif
 
-       if (error) then
-         if (b2plot_debug.ge.1)
-     .    write(*,*)'Error while looking for a wall to cross'
-         laufende = .true.
-         tdist=0.0_R8
-       endif
+      if (error) then
+        if (b2plot_debug.ge.1)
+     .   write(*,*) 'Error while looking for a wall to cross'
+        laufende = .true.
+        tdist=0.0_R8
+      endif
 
 C      Through one of the walls or corners it has to go! :)
 C
@@ -930,9 +935,9 @@ C Projection of the uutraj upon the axis of the cell (side middle points)
       return
       end subroutine veloctrans
 
-c     --------------------------------------------------------------------------------------
+c     -------------------------------------------------------------------
 c     CALCULATE THE WEIGHT ARRAY FROM THE WEIGHER
-c     --------------------------------------------------------------------------------------
+c     -------------------------------------------------------------------
 
       subroutine weightarray(warr,warr_in,ls_active,ix1,ix2,iy1,iy2,nd)
 
@@ -1032,6 +1037,7 @@ c
      *   g05kaf
 #endif
       logical phase1,inside_rectangle,gefunden
+
       if (b2plot_debug.ge.8)
      . write(*,*) 'Starting allocate_particles: nps, np = ',nps,np
 c initialise integer weight array and cross-index array
@@ -1217,9 +1223,6 @@ c3000 continue
       end subroutine allocate_particles
 c
 #ifdef NO_NAG
-#define ranf g05caf
-#define ranset g05cbf
-
       function ranf (dummy)                       !srv 17.12.07
       use b2mod_types
       implicit none

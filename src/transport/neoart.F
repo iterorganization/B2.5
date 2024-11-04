@@ -7,7 +7,7 @@ c     of neoclassical theory.
 c
 c     input   nsl        : the number of species
 c             ncl        : array(nsdecl+1) that gives the number of
-c                         charge states per species
+c                          charge states per species
 c             nsdecl     : actual (first) dimension of the zsp,den,
 c                          and ds array
 c             nzdecl     : actual (second) dimens. of array
@@ -164,7 +164,6 @@ c     culated then go through the following loop.
       endif
       if (ncof.ne.1) call perr(14)
 
-
       call colxi(nsdecl,nzdecl,nsl,ncl,zsp,den,t,m,ntau,xi)
 
 c     switch off ion - electron collisions?
@@ -280,6 +279,3 @@ c       coeff and clear coeffc
 
       return
       end subroutine neoart
-
-
-

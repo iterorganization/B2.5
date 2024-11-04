@@ -1,10 +1,12 @@
 
       SUBROUTINE COLOR2(N)
       use b2mod_types
+      implicit none
       integer n
       integer i, iw, icnt
       real hues, xhue, red, green, blue
 #include <graphics_vars.h>
+
       do iw=1,nwork
 C BACKGROUND COLOR
 C WHITE
@@ -30,4 +32,4 @@ C Choose other foreground colors spaced equally around the spectrum
         ENDIF
       ENDDO
       RETURN
-      END
+      END SUBROUTINE COLOR2

@@ -4,6 +4,7 @@ c
       implicit none
 #include "graphics_vars.h"
       logical onflag
+
       if(onflag) then
         grid=.not.grid
         write (*,*) 'grid state changed'

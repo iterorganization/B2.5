@@ -26,7 +26,6 @@ c     the line format common
       common /line_format/ linefmt
 
       call subini ('fy')
-c      if(nidim .ne. 2) call line(2)
       iystart=-1
       do while (region(ix,iystart,0).eq.0 .and. iystart.le.ny)
         iystart=iystart+1

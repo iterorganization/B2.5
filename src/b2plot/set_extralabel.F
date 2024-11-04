@@ -5,7 +5,7 @@ C ===================================================================
       use b2mod_types
       use b2mod_b2plot_debug
       use b2mod_subsys
-#ifdef NAGF95
+#ifdef NAGFOR
       use f90_unix           ! IGNORE
       use f90_unix_proc      ! IGNORE
 #endif
@@ -269,9 +269,11 @@ c
 C ===================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      implicit none
 #include <graphics_vars.h>
 #include <COMLAB_local.F>
       character*(*) return_extralabel
+
       return_extralabel=extralabel
       return
       end subroutine get_extralabel
@@ -282,6 +284,7 @@ C ===================================================================
       implicit none
 #include <graphics_vars.h>
       character*(*) locallabel
+
       wallbarlabel=trim(locallabel)
       return
       end subroutine set_wallbarlabel
@@ -292,6 +295,7 @@ C ===================================================================
       implicit none
 #include <graphics_vars.h>
       character*(*) locallabel
+
       targetbarlabel=trim(locallabel)
       return
       end subroutine set_targetbarlabel

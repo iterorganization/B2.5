@@ -165,7 +165,7 @@ c
       real (kind=R8) ::
      *   balance(0:DEF_NATM-1)
       real (kind=R8) ::
-     *   mass,vel,vth,press
+     *   mass, vel, vth, press
       integer ispecies(0:nsd_local-1), ismain, ismain0,
      *   neutrals_namelist, sput_frac_flag, use_eirene
 

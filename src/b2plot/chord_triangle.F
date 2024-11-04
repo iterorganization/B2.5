@@ -32,7 +32,8 @@ c
      * rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
       
-      intrinsic sqrt,sin,cos,abs,atan2
+      intrinsic sqrt
+      intrinsic abs,atan2,cos,sin
       external chord_find, xertst
 
       call subini ('chord_tria_value')

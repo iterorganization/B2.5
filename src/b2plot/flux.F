@@ -10,7 +10,6 @@ c
       real (kind=R8) :: xlod,xhid,ylod,yhid
 
 #ifdef WOS
-
       integer mdim,lpfxdim,lin
       parameter(mdim=256,lpfxdim=4,lin=1)
 
@@ -132,7 +131,6 @@ c
 
       if(wall) call data_copy(0)
       if(main) call additional_elements(nx,ny,.true.)
-
 #else
       write(*,*) 'Not implemented because WOS not defined'
 #endif

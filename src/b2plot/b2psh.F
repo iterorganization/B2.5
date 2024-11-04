@@ -28,6 +28,7 @@ c     SETTING THE WINDOW ID
 c     ----------------------------------------------------------------------
 
       subroutine setwinid(n)
+      implicit none
 
 c     INPUT
       integer n

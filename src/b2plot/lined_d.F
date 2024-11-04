@@ -1,6 +1,7 @@
 
       subroutine lined_d(xa,ya,xb,yb)
       use b2mod_types
+      implicit none
 #include <graphics_vars.h>
       real (kind=R8) :: xa,xb,ya,yb
       real (kind=R4) :: xas,xbs,yas,ybs

@@ -134,8 +134,9 @@ cank
       character*80, save ::
      *  b2version
 
-      integer, save :: nx, ny, ns, nsw, jxa, jxi, jsep, ixref, iyref,
+      integer, save :: nx, ny, ns, jxa, jxi, jsep, ixref, iyref,
      *  nxtr, nxtl
+      integer, save :: nsw
 
       integer, save :: neo_ic
 
@@ -144,7 +145,8 @@ cank
       subroutine alloc_b2mod_b2plot(nxd,nyd,nsd,ns_ext,wklngd,
      1 natmd,nmold,niond,nlim)
       implicit none
-      integer nxd,nyd,nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
+      integer nxd,nyd
+      integer nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
       integer nsw
       external get_jsep, get_nxt, ipgeti, xertst
 
@@ -304,6 +306,7 @@ cank
       subroutine dealloc_b2mod_b2plot_eirene
       implicit none
 
+      if (.not.allocated(eirene_stack)) return
       deallocate(eirene_stack)
       deallocate(triangle_area)
       deallocate(triangle_vol)
@@ -326,6 +329,7 @@ cank
       subroutine dealloc_b2mod_b2plot_wall
       implicit none
 
+      if (.not.allocated(wwrk_hlp)) return
       deallocate(wwrk_hlp)
       deallocate(twrk_hlp)
       deallocate(indt_hlp)

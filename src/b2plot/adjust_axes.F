@@ -1,6 +1,7 @@
 c
       subroutine adjust_axes(onflag)
       use b2mod_types
+      implicit none
 #include "graphics_vars.h"
       logical onflag
       if(onflag) then
@@ -15,6 +16,7 @@ c
 c
       subroutine adjust_bold(onflag)
       use b2mod_types
+      implicit none
 #include "graphics_vars.h"
       logical onflag
       if(onflag) then

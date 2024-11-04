@@ -7,49 +7,51 @@
      *  angle(:)
       integer, allocatable, save :: 
      *     cell(:,:),cellx(:),celly(:)
-      integer, allocatable, save :: table(:,:),index(:,:,:)
+      integer, allocatable, save :: table(:,:), index(:,:,:)
       integer, save :: ptr_table, ptr_index
       real (kind=R8), save :: dl
 
       contains
 
       subroutine alloc_b2mod_first_flight(in_no_of_slices,
-     *     in_size_of_table,in_no_of_start_points,nx,ny,in_dl)
+     *     in_size_of_table, in_no_of_start_points, nx, ny, in_dl)
       use b2mod_constants
       implicit none
       integer in_no_of_slices,in_size_of_table,
-     *     in_no_of_start_points,nx,ny
+     *     in_no_of_start_points, nx, ny
       real (kind=R8) ::
      *     t1,t2, in_dl
       integer ia,ic,ix,iy
+
       no_of_slices=in_no_of_slices
       size_of_table=in_size_of_table
       no_of_start_points=in_no_of_start_points
       allocate(angle(no_of_slices))
       t1=-pi/2.0_R8
       do ia=1,no_of_slices
-         t2=asin(real(ia)/real(no_of_slices)*2+sin(-pi/2.0_R8))
-         angle(ia)=0.5_R8*(t1+t2)
-         t1=t2
-         write(*,*) angle(ia)/pi*180
+        t2=asin(real(ia)/real(no_of_slices)*2+sin(-pi/2.0_R8))
+        angle(ia)=0.5_R8*(t1+t2)
+        t1=t2
+        write(*,*) angle(ia)/pi*180
       enddo
       allocate(cell(-1:nx,-1:ny))
       allocate(cellx((nx+2)*(ny+2)))
       allocate(celly((nx+2)*(ny+2)))
       ic=0
       do ix=-1,nx
-         do iy=-1,ny
-            ic=ic+1
-            cell(ix,iy)=ic
-            cellx(ic)=ix
-            celly(ic)=iy
-         enddo
+        do iy=-1,ny
+          ic=ic+1
+          cell(ix,iy)=ic
+          cellx(ic)=ix
+          celly(ic)=iy
+        enddo
       enddo
       allocate(table(size_of_table,0:1))
       ptr_table=0
       allocate(index(no_of_start_points,no_of_slices,0:1))
       ptr_index=0
       dl=in_dl
+      return
       end subroutine alloc_b2mod_first_flight
 
       subroutine dealloc_b2mod_first_flight
@@ -215,72 +217,72 @@ cxpb  We must also take care that we do not allow the neutrals to travel longer
 cxpb  that the timestep permits. We set the average energy of the launched
 cxpb  neutrals to be eion=shi/sna.
       do ia=1,no_of_slices
-         dist_end=dist_start
-         flown_time=0.0_R8
-         ixend=-2
-         iyend=-2
-         ptr=index(indptr,ia,0)
-         do while (flown_time.lt.flight_time .and. 
-     1     ptr.le.index(indptr,ia,1))
-            ix=cellx(table(ptr,0))
-            iy=celly(table(ptr,0))
-            vcx=0.0_R8
-            vnn=0.0_R8
-            if (k.lt.nscx) then
-              do ision = 0, ns-1
-                rcx=expu(rlcx(ix,iy,0,ision,k)+
-     *           rlcx(ix,iy,1,ision,k)*log(ti(ix,iy)/(am(isneut)*ev)))
-                vcx=vcx+rcx*na(ix,iy,ision)
-              enddo
-            end if
-            rion=expu(rlsa(ix,iy,0,isneut)+
-     *         rlsa(ix,iy,1,isneut)*log(te(ix,iy)/ev))
-            vion=rion*ne(ix,iy)
-            sxb=(expu(rlqa(ix,iy,0,isneut)+
-     *         rlqa(ix,iy,1,isneut)*log(te(ix,iy)/ev)))/
-     *         (rion*rpt(ix,iy,isneut+1))
-            vexc=sxb*vion
-            do ik = 0, nscx-1
-              rnn=2.0e-19_R8*sqrt(ti(ix,iy)/(mp*am(iscx(ik))))
-              vnn=vnn+rnn*na(ix,iy,iscx(ik))
+        dist_end=dist_start
+        flown_time=0.0_R8
+        ixend=-2
+        iyend=-2
+        ptr=index(indptr,ia,0)
+        do while (flown_time.lt.flight_time .and.
+     1   ptr.le.index(indptr,ia,1))
+          ix=cellx(table(ptr,0))
+          iy=celly(table(ptr,0))
+          vcx=0.0_R8
+          vnn=0.0_R8
+          if (k.lt.nscx) then
+            do ision = 0, ns-1
+              rcx=expu(rlcx(ix,iy,0,ision,k)+
+     *         rlcx(ix,iy,1,ision,k)*log(ti(ix,iy)/(am(isneut)*ev)))
+              vcx=vcx+rcx*na(ix,iy,ision)
             enddo
-            thru_time=dl/sqrt(eion/(am(isneut)*mp))*table(ptr,1)
-            if (flown_time+thru_time.lt.flight_time) then
-              dist_deposit=(vcx+vion+vexc+vnn)*dl/
-     *         sqrt(eion/(am(isneut)*mp))*table(ptr,1)
-              dist_deposit=min(dist_end*dist_deposit,dist_end)
-            else
-              thru_time=flight_time-flown_time
-              dist_deposit=dist_end
+          end if
+          rion=expu(rlsa(ix,iy,0,isneut)+
+     *              rlsa(ix,iy,1,isneut)*log(te(ix,iy)/ev))
+          vion=rion*ne(ix,iy)
+          sxb=(expu(rlqa(ix,iy,0,isneut)+
+     *              rlqa(ix,iy,1,isneut)*log(te(ix,iy)/ev)))/
+     *        (rion*rpt(ix,iy,isneut+1))
+          vexc=sxb*vion
+          do ik = 0, nscx-1
+            rnn=2.0e-19_R8*sqrt(ti(ix,iy)/(mp*am(iscx(ik))))
+            vnn=vnn+rnn*na(ix,iy,iscx(ik))
+          enddo
+          thru_time=dl/sqrt(eion/(am(isneut)*mp))*table(ptr,1)
+          if (flown_time+thru_time.lt.flight_time) then
+            dist_deposit=(vcx+vion+vexc+vnn)*dl/
+     *       sqrt(eion/(am(isneut)*mp))*table(ptr,1)
+            dist_deposit=min(dist_end*dist_deposit,dist_end)
+          else
+            thru_time=flight_time-flown_time
+            dist_deposit=dist_end
+          endif
+          flown_time=flown_time+thru_time
+          work(ix,iy,0)=work(ix,iy,0)+dist_deposit*
+     *     (vcx+vnn+vexc)/(vcx+vion+vexc+vnn)
+          work(ix,iy,1)=work(ix,iy,1)+dist_deposit*
+     *     vion/(vcx+vion+vexc+vnn)
+          wrk2(ix,iy)=wrk2(ix,iy)+dist_deposit*eion
+          wrk3(ix,iy)=wrk3(ix,iy)-dist_deposit*
+     *     sxb*rpt(ix,iy,isneut+1)*ev*
+     *     (vion+vexc)/(vcx+vion+vexc+vnn)
+          dist_end=dist_end-dist_deposit
+          if(dist_end.le.0.0_R8) then
+            ixend = ix
+            iyend = iy
+            exit
+          endif
+          ptr = ptr + 1
+        enddo
+        if(dist_end.gt.0.0_R8.and.ixend.ne.-2.and.iyend.ne.-2) then
+          if(iyend.gt.jsep) then
+            mainpuff=mainpuff+dist_end
+          else
+            if(on_closed_surface(ixend,iyend)) then
+              corepuff=corepuff+dist_end
+            else if (nnreg(0).ge.4) then
+              pfrpuff=pfrpuff+dist_end
             endif
-            flown_time=flown_time+thru_time
-            work(ix,iy,0)=work(ix,iy,0)+dist_deposit*
-     *       (vcx+vnn+vexc)/(vcx+vion+vexc+vnn)
-            work(ix,iy,1)=work(ix,iy,1)+dist_deposit*
-     *       vion/(vcx+vion+vexc+vnn)
-            wrk2(ix,iy)=wrk2(ix,iy)+dist_deposit*eion
-            wrk3(ix,iy)=wrk3(ix,iy)-dist_deposit*
-     *       sxb*rpt(ix,iy,isneut+1)*ev*
-     *       (vion+vexc)/(vcx+vion+vexc+vnn) 
-            dist_end=dist_end-dist_deposit
-            if(dist_end.le.0.0_R8) then
-              ixend = ix
-              iyend = iy
-              exit
-            endif
-            ptr = ptr + 1
-         enddo
-         if(dist_end.gt.0.0_R8.and.ixend.ne.-2.and.iyend.ne.-2) then
-            if(iyend.gt.jsep) then
-               mainpuff=mainpuff+dist_end
-            else
-               if(on_closed_surface(ixend,iyend)) then
-                  corepuff=corepuff+dist_end
-               else if (nnreg(0).ge.4) then
-                  pfrpuff=pfrpuff+dist_end
-               endif
-            endif
-         endif
+          endif
+        endif
       enddo
       return
       end subroutine process_b2mod_first_flight
@@ -297,14 +299,14 @@ cxpb  neutrals to be eion=shi/sna.
       integer nwrite
       integer is,ia,ptr
       do is=1,ptr_index
-         write(nwrite,*) 'is = ',is
-         do ia=1,no_of_slices
-            write(nwrite,*) 'index: ',index(is,ia,0),index(is,ia,1)
-            do ptr=index(is,ia,0),index(is,ia,1)
-               write(nwrite,*) '        table: ',table(ptr,:),'  --  ',
-     *              cellx(table(ptr,0)),celly(table(ptr,0))
-            enddo
-         enddo
+        write(nwrite,*) 'is = ',is
+        do ia=1,no_of_slices
+          write(nwrite,*) 'index: ',index(is,ia,0),index(is,ia,1)
+          do ptr=index(is,ia,0),index(is,ia,1)
+            write(nwrite,*) '        table: ',table(ptr,:),'  --  ',
+     *       cellx(table(ptr,0)),celly(table(ptr,0))
+          enddo
+        enddo
       enddo
       return
       end subroutine write_b2mod_first_flight

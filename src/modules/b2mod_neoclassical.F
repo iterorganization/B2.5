@@ -26,7 +26,8 @@ c     max. number of ionisation stages
 
       subroutine alloc_b2mod_neoclassical(nxd,nyd,nsd,mmxd)
       implicit none
-      integer nxd,nyd,nsd,nzd,mmxd
+      integer nxd, nyd, nsd, mmxd
+      integer nzd
 
       nzdecl=nint(maxval(zn(0:nsd-1)))+1
       nzd=nzdecl

@@ -24,6 +24,7 @@ c======================================================================
       implicit none
 #include "graphics_vars.h"
       integer, intent(in) :: trglog
+
       trglinlog=trglog
       return
       end subroutine set_trglinlog
@@ -32,6 +33,7 @@ c======================================================================
       use b2mod_types
       implicit none
 #include "graphics_vars.h"
+
       target=.false.
       return
       end subroutine targetoff
