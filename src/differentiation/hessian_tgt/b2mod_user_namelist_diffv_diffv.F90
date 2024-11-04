@@ -212,7 +212,7 @@ CONTAINS
 ! Define OMP list by finding CVs which are intersected by the rzomp segment
     CALL CV_INTERSECTIONS_NODIFF_NODIFF(geo, m, rzomp, omp, nomp, nromp&
 &                                 , 1, ifail)
-    CALL XERTST(.NOT.ifail, 'Increase nromp in b2.user.parameters')
+    CALL XERTST(.NOT.ifail, 'Increase DEF_NYD in b2mod_dimensions')
 ! Here we need to guarantee ordering of CVs. With classical grids the conversion
 ! is done such that CVs are ordered from left to right and bottom to top wrt
 ! the structured computational domain. With fully unstructured grids this is not guaranteed.
@@ -371,7 +371,7 @@ CONTAINS
     imp = 0
     CALL CV_INTERSECTIONS_NODIFF_NODIFF(geo, m, rzimp, imp, nimp, nromp&
 &                                 , 1, ifail)
-    CALL XERTST(.NOT.ifail, 'Increase nromp in b2.user.parameters')
+    CALL XERTST(.NOT.ifail, 'Increase DEF_NYD in b2mod_dimensions')
     DO ic=2,nimp
       IF (geo%cvx(imp(ic)) .LT. geo%cvx(imp(ic-1))) CALL XERRAB(&
 &                                                  'IMP LIST NOT SORTED'&

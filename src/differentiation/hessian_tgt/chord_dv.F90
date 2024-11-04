@@ -88,7 +88,7 @@ FUNCTION CHORD_VALUE_NODIFF0(ncv, tt, xp, yp, zp, dxp, dyp, dzp, vector)&
   USE B2MOD_TYPES
   USE B2US_DATA_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
-  USE B2MOD_CHORD_SHIFT
+  USE B2MOD_CHORD_SHIFT_DIFFV
   USE B2MOD_SUBSYS
   IMPLICIT NONE
   REAL(kind=r8) :: chord_value
@@ -194,8 +194,8 @@ SUBROUTINE CHORD_FIND_NODIFF0(mpg, geo, xp, yp, zp, found, cvpos)
   USE B2MOD_TYPES
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
-  USE B2MOD_CHORD_SHIFT
   USE B2MOD_SUBSYS
+  USE B2MOD_CHORD_SHIFT_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : covered, rmin, rmax, zmin, zmax, &
@@ -217,7 +217,6 @@ SUBROUTINE CHORD_FIND_NODIFF0(mpg, geo, xp, yp, zp, found, cvpos)
   REAL(kind=r8) :: x, y, z, r
 !
   INTEGER :: ir, iz
-!
   INTEGER :: ipos, jpos
 !
   INTEGER :: ip, ifc

@@ -136,8 +136,8 @@ MODULE B2MOD_PAR_OPT_DIFFV_DIFFV
   LOGICAL, SAVE :: flag_optim=.false.
   LOGICAL, SAVE :: reset_gradient=.false.
   INTEGER :: nnvar
-  REAL(kind=r8) :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx), gu(nvmx), jj(&
-& nvmx*nvmx), par_rescale(nvmx)
+  REAL(kind=r8) :: x0(nvmx), xl(nvmx), xu(nvmx), gl(nvmx), gu(nvmx), &
+& par_rescale(nvmx)
   INTEGER :: jcol(nvmx*nvmx), jrow(nvmx*nvmx)
 ! sc some variables that allows to change optimization parameters, read from b2.optimization.parameters
   CHARACTER(len=256), SAVE :: limited_memory_update_type, &
@@ -199,7 +199,7 @@ CONTAINS
 ! csc local variables
     TYPE(SWITCHES), INTENT(IN) :: sw
     INTEGER :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff, noss&
-&   , ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, jj, imean, curr_ind
+&   , ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, imean, curr_ind
     INTEGER, ALLOCATABLE :: cfreg(:), shiftcfdata(:)
     LOGICAL :: done, optimize
     CHARACTER(len=3) :: ss
@@ -1053,7 +1053,7 @@ CONTAINS
 ! csc local variables
     TYPE(SWITCHES), INTENT(IN) :: sw
     INTEGER :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff, noss&
-&   , ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, jj, imean, curr_ind
+&   , ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, imean, curr_ind
     INTEGER, ALLOCATABLE :: cfreg(:), shiftcfdata(:)
     LOGICAL :: done, optimize
     CHARACTER(len=3) :: ss
@@ -1890,7 +1890,7 @@ CONTAINS
 ! csc local variables
     TYPE(SWITCHES), INTENT(IN) :: sw
     INTEGER :: ii, isigma, ipp, i, numdata, iss, indss, icf, icff, noss&
-&   , ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, jj, imean, curr_ind
+&   , ncffc, incf, idb, ic1, ic2, icv, ifc, ifcc, imean, curr_ind
     INTEGER, ALLOCATABLE :: cfreg(:), shiftcfdata(:)
     LOGICAL :: done, optimize
     CHARACTER(len=3) :: ss

@@ -18,6 +18,7 @@
 MODULE B2MOD_NEOCLASSICAL_DIFFV_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV_DIFFV
+  USE B2MOD_RANGES
   USE B2MOD_VERSION_DIFFV_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -36,6 +37,11 @@ MODULE B2MOD_NEOCLASSICAL_DIFFV_DIFFV
 & , gclass_(:), fm_(:, :), r2i_(:), rho_(:)
   REAL(kind=r8), ALLOCATABLE, SAVE :: dd(:, :, :), vvn(:, :, :), chi(:, &
 & :, :), vwt(:, :, :)
+!
+  REAL(kind=r8), SAVE :: bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, &
+& gclass, r2i
+  REAL(kind=r8), SAVE :: fm(0:nmaxgr-1), cosbl(0:nmaxgr-1), cosb2(0:&
+& nmaxgr-1), sinbl(0:nmaxgr-1), sinb2(0:nmaxgr-1)
 
 CONTAINS
 !

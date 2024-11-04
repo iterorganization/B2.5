@@ -75,7 +75,7 @@ SUBROUTINE B2TINER_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, &
 !
 !  1. purpose
 !
-!     B2TINER computes the X and Y components of the inertial current.
+!     B2TINER computes the poloidal and radial components of the inertial current.
 !
 !  8. further comments
 !
@@ -283,7 +283,7 @@ SUBROUTINE B2TINER_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
 !
 !  1. purpose
 !
-!     B2TINER computes the X and Y components of the inertial current.
+!     B2TINER computes the poloidal and radial components of the inertial current.
 !
 !  8. further comments
 !
@@ -424,7 +424,7 @@ SUBROUTINE B2TINER_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, na&
 !
 !  1. purpose
 !
-!     B2TINER computes the X and Y components of the inertial current.
+!     B2TINER computes the poloidal and radial components of the inertial current.
 !
 !  8. further comments
 !

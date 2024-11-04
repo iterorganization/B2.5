@@ -70,6 +70,9 @@
        use b2mod_types
        use b2mod_constants
        use b2us_plasma_diffv_diffv
+#ifdef LEGACYCOMP
+       use b2mod_math_diffv_diffv
+#endif
        implicit none
        integer nCv, ns
        type (B2Plasma), intent (in) :: pl
@@ -85,9 +88,6 @@
        character*27 filename
 #ifndef LEGACYCOMP
        intrinsic norm2
-#else
-       real (kind=R8) :: norm2
-       external norm2
 #endif
 
        write (chnCv,'(i6.6)') nCv
@@ -212,7 +212,6 @@
 
        close(71)
        return
-
        end subroutine calc_err
 
        subroutine calc_err_transport(nFc, ns)
@@ -236,10 +235,14 @@
 !     &    exact_csigin(nFc,0:1,0:ns-1,0:ns-1),
      &    err(nFc), era(nFc)
 
+      return
       end subroutine calc_err_transport
 
       subroutine calc_err_cc(nCv, nmvar, var, exact_var, scl)
        use b2mod_types
+#ifdef LEGACYCOMP
+       use b2mod_math_diffv_diffv
+#endif
        implicit none
        integer nCv
        character(*) :: nmvar
@@ -252,9 +255,6 @@
        character(32) :: pass
 #ifndef LEGACYCOMP
        intrinsic norm2
-#else
-       real (kind=R8) :: norm2
-       external norm2
 #endif
 
        pass='exact_'//trim(nmvar)//'_us.dat'
@@ -312,22 +312,5 @@
 
        write(71,*)
 
-      end subroutine calc_err_cc                                        !srv 26.02.18 }
-
-#ifdef LEGACYCOMP
-      function norm2(n,vector)
-      use b2mod_types
-      implicit none
-      real (kind=R8) :: norm2
-      integer, intent(in) :: n
-      real (kind=R8), intent(in) :: vector(n)
-      integer i
-
-      norm2 = 0.0_R8
-      do i = 1, n
-        norm2 = norm2 + vector(i)*vector(i)
-      end do
-      norm2 = sqrt(norm2)
       return
-      end function norm2
-#endif
+      end subroutine calc_err_cc                                        !srv 26.02.18 }
