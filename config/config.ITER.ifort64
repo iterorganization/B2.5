@@ -57,9 +57,6 @@ FCOPTS    += -g -C -debug all -traceback -check all -fpe0
 LDOPTS    += -check all
 else
 FCOPTS    += -O2 -march=sandybridge
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS    += -fp-model=precise
-endif
 endif
 ifdef SOLPS_MPI
 FPOPTS    += ${MPI_CPP}
