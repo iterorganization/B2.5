@@ -24,7 +24,7 @@ ifndef SOLPS_CPP
     include ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
     MAKES += ${SOLPSTOP}/SETUP/setup.csh.${HOST_NAME}.${COMPILER} ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
   else
-    $(warning ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} not found.)
+    $(warning ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} not found. Assuming stand-alone compilation.)
   endif
   ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.common.${COMPILER} ] && echo yes || echo no ),yes)
     include ${SOLPSTOP}/SETUP/config.common.${COMPILER}
@@ -850,7 +850,7 @@ endif
 ${NREXE}: ${NCODIR}/%.exe: ${NCODIR}/%.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${MAKES}
 ifdef LD_NETCDF
 ifndef COMPILER_REDEF
-	${LN} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBNDIR}/b2mod_ipmain.o ${OBNDIR}/b2mod_lwimai.o ${OBNDIR}/b2mod_lwmain.o ${OBNDIR}/b2mod_math.o ${OBNDIR}/b2mod_openmp.o ${OBNDIR}/b2mod_subsys.o ${OBNDIR}/b2mod_xerset.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${LD_NETCDF} ${LD_NAG}
+	${LN} ${LDOPTS} ${FFLAGSEXTRA} -o $@ ${NCODIR}/$*.o ${OBNDIR}/b2mod_ipmain.o ${OBNDIR}/b2mod_lwimai.o ${OBNDIR}/b2mod_lwmain.o ${OBNDIR}/b2mod_math.o ${OBNDIR}/b2mod_openmp.o ${OBNDIR}/b2mod_stack.o ${OBNDIR}/b2mod_subsys.o ${OBNDIR}/b2mod_xerset.o ${OBNDIR}/cdf_routines.o ${OBNDIR}/chcase.o ${OBNDIR}/ifill.o ${OBNDIR}/isadigit.o ${OBNDIR}/machsfr.o ${OBNDIR}/nagsubst.o ${OBNDIR}/open_file.o ${OBNDIR}/prgend.o ${OBNDIR}/prgini.o ${OBNDIR}/prvrt.o ${OBNDIR}/prvrti.o ${OBNDIR}/sfill.o ${OBNDIR}/streql.o ${OBNDIR}/sysend.o ${OBNDIR}/sysini.o ${OBNDIR}/xerrab.o ${OBNDIR}/xertst.o ${LD_NETCDF} ${LD_NAG}
 ifndef SOLPS_DEBUG
 	@-ln -sf $@ ${NCXDIR}/$*
 endif
@@ -881,7 +881,7 @@ ifndef COMPILER_REDEF
 endif
 endif
 
-${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBNDIR}/b2mod_ipmain.${MOD} ${OBNDIR}/b2mod_lwimai.${MOD} ${OBNDIR}/b2mod_lwmain.${MOD} ${OBNDIR}/b2mod_math.${MOD} ${OBNDIR}/b2mod_openmp.${MOD} ${OBNDIR}/b2mod_subsys.${MOD} ${OBNDIR}/b2mod_types.${MOD} ${OBNDIR}/b2mod_xerset.${MOD}
+${NCODIR}/nc_reduce.o: ${NCSDIR}/nc_reduce.F90 ${OBNDIR}/b2mod_ipmain.${MOD} ${OBNDIR}/b2mod_lwimai.${MOD} ${OBNDIR}/b2mod_lwmain.${MOD} ${OBNDIR}/b2mod_math.${MOD} ${OBNDIR}/b2mod_openmp.${MOD} ${OBNDIR}/b2mod_stack.${MOD} ${OBNDIR}/b2mod_subsys.${MOD} ${OBNDIR}/b2mod_types.${MOD} ${OBNDIR}/b2mod_xerset.${MOD}
 ifdef LD_NETCDF
 ifndef COMPILER_REDEF
 	@-mkdir -p ${NCODIR}

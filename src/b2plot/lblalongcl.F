@@ -1,8 +1,8 @@
 c
       subroutine lblalongcl(along)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       logical along
 
       if(along) then

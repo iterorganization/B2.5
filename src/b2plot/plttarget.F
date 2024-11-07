@@ -7,8 +7,8 @@ C =====================================================================
       use b2mod_wall
       use b2mod_b2plot
      * , only : target_stack, itwrk
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
 
 #ifndef PLPLOT
       integer nst,nnd

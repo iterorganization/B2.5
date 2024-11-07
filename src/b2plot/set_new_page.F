@@ -1,7 +1,7 @@
       subroutine set_new_page
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
 
       same_page=0
       write(*,*) 'same_page set to ',same_page

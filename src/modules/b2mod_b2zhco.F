@@ -3,7 +3,7 @@
       implicit none
       integer, save :: zhd_corr=1, zhd_corrT=1, zhcscorr=1,
      &  zhcscorr_vq=1, zh_imp_analyt=0, zh_analyt_mdf=0, zh_dist_fun=0
-      character*1, allocatable :: zh_tf_toff(:)
+      character*1, allocatable, save :: zh_tf_toff(:)
       real (kind=R8), save :: zhflcorr=3.0_R8
       real (kind=R8), save :: zhflcorrh=0.4_R8
       real (kind=R8), allocatable, save ::

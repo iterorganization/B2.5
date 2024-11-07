@@ -5,8 +5,8 @@ C =====================================================================
 C =====================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer nx,ny,nbnd,ndepth,igraphs,linlog
       REAL (KIND=R8) :: 
      * targetcr(1:nbnd,1:ndepth,1:2),targetcz(1:nbnd,1:ndepth,1:2),

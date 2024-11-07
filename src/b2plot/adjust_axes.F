@@ -1,8 +1,8 @@
 c
       subroutine adjust_axes(onflag)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       logical onflag
       if(onflag) then
         nice_axes=.not.nice_axes
@@ -16,8 +16,8 @@ c
 c
       subroutine adjust_bold(onflag)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       logical onflag
       if(onflag) then
         bold=.not.bold

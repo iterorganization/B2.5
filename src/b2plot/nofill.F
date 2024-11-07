@@ -1,8 +1,8 @@
 c
       subroutine nofill(filflg)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       logical filflg
 
       colprt=.not.filflg

@@ -4,12 +4,12 @@ C ========== Parse extralabel for customisation =====================
 C ===================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_graphics
       use b2mod_subsys
 #ifdef NAGFOR
       use f90_unix           ! IGNORE
       use f90_unix_proc      ! IGNORE
 #endif
-#include <graphics_vars.h>
 #include <COMLAB_local.F>
       character*(*) locallabel
       character*256 tmp,customlabel
@@ -269,8 +269,8 @@ c
 C ===================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
 #include <COMLAB_local.F>
       character*(*) return_extralabel
 
@@ -281,8 +281,8 @@ c
       subroutine set_wallbarlabel(locallabel)
 C ===================================================================
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
       character*(*) locallabel
 
       wallbarlabel=trim(locallabel)
@@ -292,8 +292,8 @@ c
       subroutine set_targetbarlabel(locallabel)
 C ===================================================================
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
       character*(*) locallabel
 
       targetbarlabel=trim(locallabel)

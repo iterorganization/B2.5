@@ -3,8 +3,8 @@ c
       use b2mod_types
       use b2mod_b2plot_xy
       use b2mod_constants
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
       character*(*) shotinfo
       integer nx,ny
       real (kind=R8) :: xlod,xhid,ylod,yhid

@@ -4,8 +4,8 @@ C =====================================================================
 C =====================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer nx,ny,is,linlog,igraphs
       REAL (KIND=R8) :: CRX(-1:NX,-1:NY,0:3),CRY(-1:NX,-1:NY,0:3),
      1 work(-1:NX,-1:NY),ZLOD,ZHID
@@ -236,8 +236,8 @@ c
      1 dpx,dpy,dqx,dqy,dzmin,dzmax,linlog)
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
 
       integer dimx,dimy,linlog
       real (kind=R8) :: colia(dimx*dimy)
@@ -357,8 +357,8 @@ c
 c
       subroutine specieslblbar(ns,isclvl,lbls)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
 
       integer ns,isclvl(ns)
       character*(*) lbls(ns)

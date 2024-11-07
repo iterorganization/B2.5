@@ -124,7 +124,7 @@ cank
      *  writing_to_file,color_set,use_compile,
      *  plot_vs_full_psi,plot_vs_norm_psi,plot_vs_root_psi,
      *  set_resignore_regions_to_zero,plotting_wall,map_to_midplane,
-     *  xparallel,plotting_sep,bold,expline
+     *  xparallel,plotting_sep,bold,expline,ratio
 
       character*256, save ::
      *  graphlabel(wklng),
@@ -133,6 +133,8 @@ cank
      *  solpstop,moviename,expfile,wallfile
       character*80, save ::
      *  b2version
+      character*10, save ::
+     *  linefmt
 
       integer, save :: nx, ny, ns, jxa, jxi, jsep, ixref, iyref,
      *  nxtr, nxtl
@@ -210,6 +212,7 @@ cank
       call xertst(wklngd.le.wklng,
      . 'increase size of textwk array')
 #endif
+      ratio = .true.
 
       return
       end subroutine alloc_b2mod_b2plot

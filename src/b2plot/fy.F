@@ -21,9 +21,6 @@ c
       integer len_of_digits
       intrinsic min,max
       external xertst, len_of_digits
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
 
       call subini ('fy')
       iystart=-1

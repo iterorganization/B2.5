@@ -7,6 +7,7 @@ c
       use b2mod_types
       use b2mod_geo
       use b2mod_constants
+      use b2mod_chord_shift
       use b2mod_subsys
       implicit none
       
@@ -25,10 +26,6 @@ c
       integer ix,iy
       logical found
 
-      real (kind=R8) ::
-     * rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
-      
       intrinsic sqrt,sin,cos,abs,atan2
       external chord_find, xertst
 
@@ -225,6 +222,7 @@ c
       use b2mod_types
       use b2mod_indirect
       use b2mod_subsys
+      use b2mod_chord_shift
       implicit none
 
       integer lngcov, lngind
@@ -264,10 +262,6 @@ c
       integer next(0:3)
       data next/1,3,0,2/
 #endif
-
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 
       external xerrab
       save ix,iy
@@ -565,15 +559,6 @@ c
      1 (s1.ge.0.and.s2.ge.0.and.s3.ge.0))
       return
       end function inside_triangle
-
-      block data bd_chord_shift
-      use b2mod_types
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
-      data rshift, zshift, r0, z0, a0, b0, tt0
-     1    /0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8/
-      end block data bd_chord_shift
 
 !DIAG      subroutine chord_diagnostics      ! diag
 !DIAG      integer rectangles, triangles, chain      ! diag

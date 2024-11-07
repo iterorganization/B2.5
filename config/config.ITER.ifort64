@@ -1,4 +1,5 @@
 # Test whether necessary variables are set
+OS        ?= $(shell grep -m1 NAME /etc/os-release | cut -d '"' -f 2 | cut -d ' ' -f 1 )
 NODENAME  ?= $(shell echo `hostname`)
 LD_MSCL   ?= `pkg-config mscl --libs`
 ifdef NCARG_ROOT
@@ -8,7 +9,11 @@ GLI_HOME  ?= ${EBROOTGLI}
 endif
 ifeq ($(shell `pkg-config --exists netcdf-fortran`; echo $$?),0)
 NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
+ifeq (,$(findstring CentOS,$(OS)))
+LD_NETCDF  = `pkg-config netcdf-fortran --libs`
+else
 LD_NETCDF ?= `nf-config --flibs`
+endif
 ifndef SOLPS_CPP
 DEFINES   += -DCDF_MOVIE
 INCMODS   += `pkg-config netcdf-fortran --cflags`
@@ -56,7 +61,12 @@ ifdef SOLPS_DEBUG
 FCOPTS    += -g -C -debug all -traceback -check all -fpe0
 LDOPTS    += -check all
 else
-FCOPTS    += -O2 -march=sandybridge
+FCOPTS    += -O2
+ifeq (,$(findstring CentOS,$(OS)))
+FCOPTS    += -xHost
+else
+FCOPTS    += -march=sandybridge
+endif
 endif
 ifdef SOLPS_MPI
 FPOPTS    += ${MPI_CPP}

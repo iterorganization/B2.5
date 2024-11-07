@@ -1,8 +1,8 @@
 
       subroutine clear_extralabel(label)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
       character*(*) label
       extralabel=label
       return
@@ -10,8 +10,8 @@
 
       subroutine clear_xlabel(label)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
       character*(*) label
       xlabel=label
       return
@@ -19,8 +19,8 @@
 
       subroutine clear_ylabel(label)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
       character*(*) label
       ylabel=label
       return

@@ -1,14 +1,8 @@
 
       subroutine end_page
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
-
-c     the zoom common
-      integer winid
-      integer wsnshwin,wsnX11
-      common /zoom_com/ winid,wsnshwin,wsnX11
-
 #ifdef NCAR4
       integer wkid
 #endif

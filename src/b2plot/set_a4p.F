@@ -1,8 +1,8 @@
 
       subroutine set_a4p
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
 
       xwidth=1.0_R4/sqrt(2.0_R4)
       yheight=1.0_R4

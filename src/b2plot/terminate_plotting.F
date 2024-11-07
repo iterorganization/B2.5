@@ -1,8 +1,8 @@
 
       subroutine terminate_plotting
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
 #ifdef NCAR4      
       integer iw
 #endif

@@ -1,11 +1,11 @@
 
       SUBROUTINE COLOR2(N)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       integer n
       integer i, iw, icnt
       real hues, xhue, red, green, blue
-#include <graphics_vars.h>
 
       do iw=1,nwork
 C BACKGROUND COLOR

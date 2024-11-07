@@ -1,8 +1,8 @@
 c
       subroutine linewidth(width)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       real (kind=R8) :: width
 
       lwidth=real(width,R4)
@@ -12,8 +12,8 @@ c
 c
       subroutine axislinewidth(width)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       real (kind=R8) :: width
 
       zwidth=real(width,R4)
@@ -23,8 +23,8 @@ c
 c
       subroutine walllinewidth(width)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       real (kind=R8) :: width
 
       wwidth=real(width,R4)

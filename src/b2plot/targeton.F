@@ -4,8 +4,8 @@ c  version : 23.08.97 11:56
 c
 c======================================================================
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       logical, intent(in) :: onflag
       integer, intent(in) :: trglog
       real (kind=R8), intent(in) :: trgmind,trgmaxd
@@ -21,8 +21,8 @@ c    ,                      onflag,trgmind,trgmaxd,trglog
 c======================================================================
       subroutine set_trglinlog(trglog)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer, intent(in) :: trglog
 
       trglinlog=trglog
@@ -31,8 +31,8 @@ c======================================================================
 c======================================================================
       subroutine targetoff
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
 
       target=.false.
       return

@@ -78,8 +78,6 @@ c     INPUT
 c     the traj common
       integer nplot                     !number of plots
       common /t_com/ nplot              !getting the values
-      logical ratio
-      common /t_ratio/ ratio
 
       real (kind=R8) ::
      1 warr(-1:nx,-1:ny,0:ns-1)         !the stack
@@ -1003,9 +1001,6 @@ c     see file b2plot.F, initialisation of values(...) )
       integer nplot
       common /t_com/ nplot
       data nplot /10/
-      logical ratio
-      common /t_ratio/ ratio
-      data ratio /.true./
       end block data
 c
       subroutine allocate_particles(warr,ipx,ipy,ips,p_r,p_z,nps,np)
