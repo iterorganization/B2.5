@@ -66,7 +66,9 @@ c  Tp = Target surface temperature (K).
       integer, save :: npde, nw, niw
       integer, allocatable, save :: iw(:)
       real (kind=R8), allocatable, save :: U_nag(:,:), w(:)
-      !$OMP THREADPRIVATE(ncall, npde, nw, niw, U_nag, iw, w)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, npde, nw, niw, U_nag, iw, w)
+#endif
       external xertst
 
       call subini('heatdiff1D')
@@ -845,13 +847,17 @@ c  qevap -> Energy lost (Joules / m^2 / s)
 
       call subini ('qevap')
       if (lfirst) then
-        !$OMP CRITICAL (qevap_heatdiff1D)
+#ifdef _OPENMP
+!$OMP CRITICAL (qevap_heatdiff1D)
+#endif
         call ipgetr('b2stbr_therm_evap', therm_evap)
         call xertst(0.0_R8.le.therm_evap.and.
      &              1.0_R8.ge.therm_evap,
      .    'faulty parameter therm_evap')
         lfirst = .false.
-        !$OMP END CRITICAL (qevap_heatdiff1D)
+#ifdef _OPENMP
+!$OMP END CRITICAL (qevap_heatdiff1D)
+#endif
       endif
 
       do is = 0, ns-1

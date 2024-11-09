@@ -1,8 +1,5 @@
       module b2mod_illtern_7
 
-      logical, save :: lfirst
-      data lfirst /.true./
-
       contains
 
       SUBROUTINE ILLTERN_7(N1, N2, N1D, NZ, RHS, SOL)                  !sv 29.05.02 {
@@ -76,8 +73,8 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
       N = N1*N2
       DO I=1,N1
        DO J=1,N2
-        R1(I+(J-1)*N1)=RHS(I,J)
-        S1(I+(J-1)*N1)=0.0e0_R8
+        R1_ysmp(I+(J-1)*N1)=RHS(I,J)
+        S1_ysmp(I+(J-1)*N1)=0.0e0_R8
        enddo
       enddo
 cdpc
@@ -93,7 +90,7 @@ cdpc
           write(*,*) 'Writing 79'                              !sv 11.01.00
           write(79,*) n,' n'
           do i=1,n
-            write(79,*) r1(i)                                  !sv 11.01.00
+            write(79,*) r1_ysmp(i)                             !sv 11.01.00
           enddo
           write(78,*) ' nz =',nz
           do k=1,n+1
@@ -119,7 +116,7 @@ cdpc
          endif
           write(*,*) 'Writing 78'                              !sv 11.01.00
           do i=1,n
-            write(79) r1(i)                                    !sv 11.01.00
+            write(79) r1_ysmp(i)                               !sv 11.01.00
           enddo
           write(78) ' kk =',nz
           do k=1,n+1
@@ -136,7 +133,7 @@ cdpc
         endif
       endif
 
-      if(lfirst) then
+      if(lfirst_sdrv) then
 C
         PATH = 2
 !#ifdef _OPENMP
@@ -169,7 +166,7 @@ C
 !#endif
 C                             Perform symbolyc LDL factorization (SSF)
         CALL SDRV
-     *     (N, NZ, P, IP, IA, JA, A, r1, s1, NSP, ISP, RSP,
+     *     (N, NZ, P, IP, IA, JA, A, r1_ysmp, s1_ysmp, NSP, ISP, RSP,
      *      ESP, PATH, IFLAG)
 C
 !#ifdef _OPENMP
@@ -187,10 +184,10 @@ C
         if(nltrsol.gt.0)                                                !sv 09.07.02
      *   write (*,"(' SDRV (SSF): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
      *       ESP, Iflag, NSP
-          lfirst=.false.
+          lfirst_sdrv=.false.
         endif
 C
-       if(.not.lfirst) then
+       if(.not.lfirst_sdrv) then
 C
         PATH = 3
 !#ifdef _OPENMP
@@ -216,7 +213,7 @@ C
 !#endif
 C                             Perform numerical LDL factorization
          CALL SDRV
-     *     (N, NZ, P, IP, IA, JA, A, r1, s1, NSP, ISP, RSP,
+     *     (N, NZ, P, IP, IA, JA, A, r1_ysmp, s1_ysmp, NSP, ISP, RSP,
      *      ESP, PATH, IFLAG)
 C
 !#ifdef _OPENMP
@@ -243,7 +240,7 @@ C
 !#endif
 C                                 Solve A * X = B
          CALL SDRV
-     *     (N, NZ, P,IP, IA, JA, A, r1, s1, NSP, ISP, RSP,
+     *     (N, NZ, P,IP, IA, JA, A, r1_ysmp, s1_ysmp, NSP, ISP, RSP,
      *      ESP, PATH, IFLAG)
 C
 !#ifdef _OPENMP
@@ -268,7 +265,7 @@ C
       DO 50,K=1,N
         J=(K-1)/N1+1
         I=K-(J-1)*N1
-        SOL(I,J)=S1(K)
+        SOL(I,J)=S1_ysmp(K)
    50 CONTINUE
 
 *  ---------------------------------------------------------------------
@@ -280,12 +277,6 @@ C
       ncall=ncall+1
       RETURN
       END SUBROUTINE ILLTERN_7
-
-      subroutine restart_sdrv_for_7
-      lfirst=.true.
-      write(*,*) ' Restarting sdrv'
-      return
-      end subroutine restart_sdrv_for_7
 
 *=======================================================================
 *//END ILLTERN//

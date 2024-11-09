@@ -118,7 +118,7 @@
 #ifdef WITH_FTIMINGS
       call timer%start("parallel")
 #endif
-#ifndef NO_OPENMP_B2SRST
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
 !$OMP PARALLEL
 !$OMP& default(none)
 !$OMP& private(is, iy, ix, t0)
@@ -153,11 +153,11 @@
         enddo                                                        !srv 27.06.08 }
        endif                                                         !srv 01.07.08 }
       enddo
-#ifndef NO_OPENMP_B2SRST
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
 !$OMP END DO NOWAIT
 #endif
 *   ..modify smo
-#ifndef NO_OPENMP_B2SRST
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
 !$OMP DO
 #endif
       do is = 0, ns-1
@@ -174,11 +174,11 @@
         enddo
        enddo
       enddo
-#ifndef NO_OPENMP_B2SRST
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
 !$OMP END DO NOWAIT
 #endif
 *   ..modify she, shi, sch
-#ifndef NO_OPENMP_B2SRST
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
 !$OMP DO
 #endif
       do iy = -1, ny
@@ -216,11 +216,11 @@
      &   min(sne(ix,iy,1)*ne(ix,iy),-rf3*t0,(1.0_R8+rf3)*t0)
        enddo
       enddo
-#ifndef NO_OPENMP_B2SRST
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
 !$OMP END DO
 #endif
 
-#ifndef NO_OPENMP_B2SRST
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
 !$OMP WORKSHARE
 #endif
 *   ..calculate the source coefficients of numerical stabilisation.
@@ -230,7 +230,7 @@
       shist = shi - shist
       schst = sch - schst
       snest = sne - snest
-#ifndef NO_OPENMP_B2SRST
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
 !$OMP END WORKSHARE
 !$OMP END PARALLEL
 #endif

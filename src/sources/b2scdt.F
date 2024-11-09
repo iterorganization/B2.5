@@ -87,7 +87,7 @@
 #ifdef WITH_FTIMINGS
        call timer%start("parallel")
 #endif
-#ifndef NO_OPENMP_B2SRDT
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
 !$OMP PARALLEL
 !$OMP& default(none)
 !$OMP& private(ix,iy,ttim,t0)
@@ -102,7 +102,7 @@
 * ..include the contributions from dtim
 *   ..modify snadt
 
-#ifndef NO_OPENMP_B2SRDT
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
 !$OMP DO
 #endif
         do iy = -1, ny
@@ -119,11 +119,11 @@ csw 24feb2014 check for guard cell (SOLPS4)
            snadt(ix,iy,1) =-t0                                           !srv 06.01.21
           enddo
         enddo
-#ifndef NO_OPENMP_B2SRDT
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
 !$OMP END DO
 #endif
 
-#ifndef NO_OPENMP_B2SRDT
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
 !$OMP END PARALLEL
 #endif
 #ifdef WITH_FTIMINGS

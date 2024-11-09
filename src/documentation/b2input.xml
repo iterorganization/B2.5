@@ -3752,12 +3752,12 @@
 				</switch>
 				<switch>
 					<name>b2ux9p_mult_nonzero</name>
-					<default>10</default>
+					<default>15</default>
 					<type>integer</type>
 				</switch>
 				<switch>
 					<name>b2ux11p_mult_nonzero</name>
-					<default>10</default>
+					<default>15</default>
 					<type>integer</type>
 				</switch>
 			</switchgroup>
@@ -6770,7 +6770,7 @@
 				<description>
 					Choice for the actuator used for the feedback.
 					0: no action
-					1: gas puff via boundary condition
+					1: gas puff strength, imposed via boundary condition for standalone cases or via EIRENE stratum flux for coupled cases. See NA_FEEDBACK_IB for setting which boundary condition or stratum this applies to.
 					2: rescale na [[Experimental!! Does not guarantee stable code runs]]
 					3: core boundary flux condition
 					4: absorption coefficient in Eirene (for coupled mode only)
@@ -7381,8 +7381,8 @@
 				<default>1.0</default>
 				<type>real array of size (0:NS-1)</type>
 				<description>
-				  Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
-				  See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
+					Pressure correction speed-up parameter &alpha;_a, acting on the density contribution from species a. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
+					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dt below. Does not apply to neutral species.
 				</description>
 			</switch>
 			<switch>
@@ -7390,7 +7390,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-				Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
+					Pressure correction speed-up parameter &alpha;_T, acting on the temperature contributions. Will apply in the core region, except for the nrings outer surfaces. See nrings_for_no_speedup_averaging for details.
 					See Pressure_correction_speed-up.pdf in $SOLPSTOP/doc for a full description. Should be roughly equal to corr_core_dn above.
 				</description>
 			</switch>
@@ -7399,8 +7399,8 @@
 				<default>0.0</default>
 				<type>real array of size (1:NSPECIES)</type>
 				<description>
-				Multiplier to the neutral source differential between puffing (plus sputtering plus core boundary flux plus any external sources) and pumping, which is further added to the ionization source for code speed-up. One multiplier must be provided per isonuclear sequence. Such settings might be relevant for e.g. a mixture of main ion and trace impurity.
-				See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details and keep in mind that in that paper the scheme was described in its original species-unresolved form.
+					Multiplier to the neutral source differential between puffing (plus sputtering plus core boundary flux plus any external sources) and pumping, which is further added to the ionization source for code speed-up. One multiplier must be provided per isonuclear sequence. Such settings might be relevant for e.g. a mixture of main ion and trace impurity.
+					See E. Kaveeva et al., Nucl. Fusion 58 (2018) 126018 for details and keep in mind that in that paper the scheme was described in its original species-unresolved form.
 				</description>
 			</switch>
 			<switch>
@@ -7408,7 +7408,7 @@
 				<default>0.05</default>
 				<type>real array of size (1:NSPECIES)</type>
 				<description>
-				Maximum allowed fraction of ionization source for a given isonuclear sequence from its neutral state (coming from Eirene) to be added or subtracted to the real Eirene source in the method of effective sources for code speed-up.
+					Maximum allowed fraction of ionization source for a given isonuclear sequence from its neutral state (coming from Eirene) to be added or subtracted to the real Eirene source in the method of effective sources for code speed-up.
 				</description>
 			</switch>
 			<switch>
@@ -7416,7 +7416,7 @@
 				<default>.true.</default>
 				<type>logical array of size (1:NSPECIES)</type>
 				<description>
-				Parameter which controls exclusion/inclusion of confined region from/in the method of effective sources for code speed-up for each isonuclear sequence. If .true., then the flux through the core boundary of that species is taken into account during the source correction computation, and the source correction is applied on closed flux surfaces (default behavior). If .false., then the particle imbalance is computed as puffing plus sputtering plus any external sources minus pumping without account of the flux through the core boundary, and no source correction is applied on closed surfaces (such a setting might be helpful if the core flux is much bigger than the puffing rate and the core is isolated from the SOL by a strong transport barrier).
+					Parameter which controls exclusion/inclusion of confined region from/in the method of effective sources for code speed-up for each isonuclear sequence. If .true., then the flux through the core boundary of that species is taken into account during the source correction computation, and the source correction is applied on closed flux surfaces (default behavior). If .false., then the particle imbalance is computed as puffing plus sputtering plus any external sources minus pumping without account of the flux through the core boundary, and no source correction is applied on closed surfaces (such a setting might be helpful if the core flux is much bigger than the puffing rate and the core is isolated from the SOL by a strong transport barrier).
 				</description>
 			</switch>
 			<switch>

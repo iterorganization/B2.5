@@ -124,7 +124,7 @@ cank
      *  writing_to_file,color_set,use_compile,
      *  plot_vs_full_psi,plot_vs_norm_psi,plot_vs_root_psi,
      *  set_resignore_regions_to_zero,plotting_wall,map_to_midplane,
-     *  xparallel,plotting_sep,bold,expline
+     *  xparallel,plotting_sep,bold,expline,ratio
 
       character*256, save ::
      *  graphlabel(wklng),
@@ -133,9 +133,12 @@ cank
      *  solpstop,moviename,expfile,wallfile
       character*80, save ::
      *  b2version
+      character*10, save ::
+     *  linefmt
 
-      integer, save :: nx, ny, ns, nsw, jxa, jxi, jsep, ixref, iyref,
+      integer, save :: nx, ny, ns, jxa, jxi, jsep, ixref, iyref,
      *  nxtr, nxtl
+      integer, save :: nsw
 
       integer, save :: neo_ic
 
@@ -144,7 +147,8 @@ cank
       subroutine alloc_b2mod_b2plot(nxd,nyd,nsd,ns_ext,wklngd,
      1 natmd,nmold,niond,nlim)
       implicit none
-      integer nxd,nyd,nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
+      integer nxd,nyd
+      integer nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
       integer nsw
       external get_jsep, get_nxt, ipgeti, xertst
 
@@ -208,6 +212,7 @@ cank
       call xertst(wklngd.le.wklng,
      . 'increase size of textwk array')
 #endif
+      ratio = .true.
 
       return
       end subroutine alloc_b2mod_b2plot
@@ -304,6 +309,7 @@ cank
       subroutine dealloc_b2mod_b2plot_eirene
       implicit none
 
+      if (.not.allocated(eirene_stack)) return
       deallocate(eirene_stack)
       deallocate(triangle_area)
       deallocate(triangle_vol)
@@ -326,6 +332,7 @@ cank
       subroutine dealloc_b2mod_b2plot_wall
       implicit none
 
+      if (.not.allocated(wwrk_hlp)) return
       deallocate(wwrk_hlp)
       deallocate(twrk_hlp)
       deallocate(indt_hlp)

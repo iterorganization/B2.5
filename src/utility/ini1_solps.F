@@ -7,7 +7,8 @@
       integer n1,n2
 
       write(*,*) 'INIILU: Initialising arrays for solver'
-      call iniilu_w(n_nonzeros,n1,n2,irn,ish,jsh,ijsh,icn,nc0)
+      call iniilu_w(n_nonzeros_5p,n1,n2,
+     .  irn_5p,ish_5p,jsh_5p,ijsh_5p,icn_5p,nc0_5p)
       write(*,*) 'INIILU: Initialised arrays for solver'
       return
       end subroutine iniilu

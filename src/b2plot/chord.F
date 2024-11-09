@@ -7,6 +7,7 @@ c
       use b2mod_types
       use b2mod_geo
       use b2mod_constants
+      use b2mod_chord_shift
       use b2mod_subsys
       implicit none
       
@@ -25,10 +26,6 @@ c
       integer ix,iy
       logical found
 
-      real (kind=R8) ::
-     * rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
-      
       intrinsic sqrt,sin,cos,abs,atan2
       external chord_find, xertst
 
@@ -225,7 +222,15 @@ c
       use b2mod_types
       use b2mod_indirect
       use b2mod_subsys
+      use b2mod_chord_shift
       implicit none
+
+      integer lngcov, lngind
+      parameter(lngcov=200, lngind=500 000)
+      integer, save :: covered(lngcov,lngcov),
+     &  icov(lngind), xcov(lngind), ycov(lngind)
+      real (kind=R8), save :: rmin, rmax, zmin, zmax
+      logical, save :: first = .true.
 
 !DIAG      integer rectangles, triangles, chain      ! diag
 !DIAG      common /chord_diag/ rectangles, triangles, chain      ! diag
@@ -241,35 +246,25 @@ c
       logical inside_rectangle
       integer i,ix,iy,icnt1,icnt2
       real (kind=R8) ::
-     *   x,y,z,r,rmin,rmax,zmin,zmax
+     *   x,y,z,r
 
-      logical first
       integer ir,iz
-      integer lngcov,lngind
-      parameter(lngcov=200,lngind=500 000)
-      integer covered(lngcov,lngcov),
-     1 xcov(lngind),ycov(lngind),icov(lngind),
-     2 ipos,jpos
+      integer ipos,jpos
 
 #ifdef EASY
       integer ir1,ir2,iz1,iz2
 #else
-      integer ip,irmin,irmax,izmin,izmax
-      integer next(0:3),
-     1 xmin(lngcov),xmax(lngcov),ymin,ymax
+      integer ip
+      integer irmin,irmax,izmin,izmax
       real (kind=R8) ::
      *   r1,r2,z1,z2
+      integer xmin(lngcov),xmax(lngcov),ymin,ymax
+      integer next(0:3)
       data next/1,3,0,2/
 #endif
 
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
-
       external xerrab
-      save covered,rmin,rmax,zmin,zmax,first,xcov,ycov,icov,ix,iy
-
-      data first/.true./
+      save ix,iy
 
       call subini ('chord_find')
       if(first) then
@@ -564,15 +559,6 @@ c
      1 (s1.ge.0.and.s2.ge.0.and.s3.ge.0))
       return
       end function inside_triangle
-
-      block data bd_chord_shift
-      use b2mod_types
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
-      data rshift, zshift, r0, z0, a0, b0, tt0
-     1    /0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8/
-      end block data bd_chord_shift
 
 !DIAG      subroutine chord_diagnostics      ! diag
 !DIAG      integer rectangles, triangles, chain      ! diag

@@ -8,6 +8,7 @@ c
       use b2mod_constants
       use b2mod_subsys
       use b2mod_b2plot
+      use b2mod_chord_shift
       implicit none
       
       real (kind=R8) ::
@@ -28,11 +29,8 @@ c
       integer it
       logical found
 
-      real (kind=R8) ::
-     * rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
-      
-      intrinsic sqrt,sin,cos,abs,atan2
+      intrinsic sqrt
+      intrinsic abs,atan2,cos,sin
       external chord_find, xertst
 
       call subini ('chord_tria_value')
@@ -245,6 +243,7 @@ c
 
       use b2mod_types
       use b2mod_indirect
+      use b2mod_chord_shift
       use b2mod_subsys
       implicit none
 
@@ -283,10 +282,6 @@ c
      *   r1,r2,z1,z2
       data next/2,3,1/
 #endif
-
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 
       external xerrab
       save covered,rmin,rmax,zmin,zmax,first,tcov,icov

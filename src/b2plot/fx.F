@@ -14,10 +14,6 @@ c
      *   lmin,lmax,dsep,xmin,xmax,xmult
       integer ix,is,ixstart,ixend,len_of_digits
 
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
-
       intrinsic min,max,mod,sqrt
       external xertst,len_of_digits
 

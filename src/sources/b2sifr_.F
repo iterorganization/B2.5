@@ -74,8 +74,10 @@
       external xertst, xerrab, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
 *   ..initialisation
-      !$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase, zlitest)
-      !$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, styl0, styl1, iout, icase, zlitest)
+!$OMP THREADPRIVATE(phm0, phm1, phm2, phm3, limthii, limthee)
+#endif
       save ncall, styl0, styl1,
      1  phm0, phm1, phm2, phm3, limthii, limthee, zlitest
       data ncall/0/, styl0/0/, styl1/0/, phm0/1.0e0_R8/,
@@ -110,10 +112,14 @@ csw 24sep2013
      &  'faulty internal parameter limthii, limthee')
        call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.02
        if ((iout.ne.0) .and. in_parallel()) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
           write(*,*) 'B2SIFR_ OpenMP warning: no file output in ',
      &               'parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        end if
        call ipgeti ('b2tlnl_ii', icase)
@@ -195,8 +201,8 @@ csw 24sep2013
         am_sqrt = sqrt(am(isb)*am(is)/(am(isb)+am(is)))
         if (styl0.eq.0) then
           do iy = 0, ny-1
-#ifndef LEGACYCOMP
-          !$OMP SIMD
+#if ( defined(_OPENMP) && !defined(LEGACYCOMP) )
+!$OMP SIMD
 #endif
             do ix = 0, nx-1
               coef = phm0*lnlam(ix,iy)*inv_ctaup*rz2(ix,iy,isb)*         !srv 01.07.09
@@ -212,8 +218,8 @@ csw 24sep2013
           enddo
         else if (styl0.eq.1) then
           do iy = 0, ny-1
-#ifndef LEGACYCOMP
-          !$OMP SIMD
+#if ( defined(_OPENMP) && !defined(LEGACYCOMP) )
+!$OMP SIMD
 #endif
             do ix = 0, nx-1
               coef = phm0*lnlam(ix,iy)*inv_ctaup*rz2(ix,iy,isb)*         !srv 01.07.09
@@ -229,8 +235,8 @@ csw 24sep2013
           enddo
         else if (styl0.eq.2) then
           do iy = 0, ny-1
-#ifndef LEGACYCOMP
-          !$OMP SIMD
+#if ( defined(_OPENMP) && !defined(LEGACYCOMP) )
+!$OMP SIMD
 #endif
             do ix = 0, nx-1
               coef = phm0*lnlam(ix,iy)*inv_ctaup*rz2(ix,iy,isb)*         !srv 01.07.09

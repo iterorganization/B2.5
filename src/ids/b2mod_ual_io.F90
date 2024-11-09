@@ -114,6 +114,7 @@ module b2mod_ual_io
      &          VEC_ALIGN_PARALLEL_ID, &
      &          VEC_ALIGN_TOROIDAL_ID
 #endif
+#if GGD_MAJOR_VERSION > 0
 #if ( GGD_MINOR_VERSION < 9 && GGD_MAJOR_VERSION < 2 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_BETWEEN_SEPARATRICES, &
@@ -126,7 +127,6 @@ module b2mod_ual_io
      &          GRID_SUBSET_OUTER_THROAT_INACTIVE, GRID_SUBSET_INNER_THROAT_INACTIVE, &
      &          GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE
 #endif
-#if GGD_MAJOR_VERSION > 0
 #if ( GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
@@ -246,6 +246,7 @@ module b2mod_ual_io
                                     !< 3: Z at dR/dZ = 0 maximum R location
                                     !< 4: GGD grid subset defined by jxa value
   integer, save :: GeometryType !< Geometry identifier number
+#if GGD_MAJOR_VERSION > 0
   integer, save :: iGsCoreBoundary  !< Variable to hold Core grid subset base
             !< index, later found by findGridSubsetByName() routine.
   integer, save :: iGsInnerMidplane !< Variable to hold Inner Midplane grid
@@ -260,6 +261,7 @@ module b2mod_ual_io
             !< subset base index, later found by findGridSubsetByName() routine
   integer, save :: iGsODivertor     !< Variable to hold Outer Divertor grid
             !< subset base index, later found by findGridSubsetByName() routine
+#endif
   logical, parameter :: B2_WRITE_DATA = .true.
   integer, save :: ixpos(4), ifpos(4), iypos(4) !< Target positions
   integer, save :: idir(4), iysep(4), ixmid(4), ixmax(4)
@@ -732,7 +734,6 @@ contains
         integer :: k      !< Iterator
         integer :: ix     !< Iterator
         integer :: iy     !< Iterator
-        integer :: istrai !< Stratum iterator
         integer :: is1    !< First ion of an isonuclear sequence
         integer :: is2    !< Last ion of an isonuclear sequence
         integer :: icnt   !< Boundary cell counter
@@ -762,8 +763,6 @@ contains
         integer :: ixx, iyy
 #endif
         integer :: nscx, iscx(0:nscxmax-1)
-        real(IDS_real),   &
-            &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
         real(IDS_real) :: flxFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1 )
         real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1 )
         real(IDS_real) :: totFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1 )
@@ -772,9 +771,6 @@ contains
         real(IDS_real) :: totCv( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: lnlam( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: pz( -1:ubound( na, 1), -1:ubound( na, 2) )
-        real(IDS_real) :: pb( -1:ubound( na, 1), -1:ubound( na, 2) )
-        real(IDS_real) :: pe( -1:ubound( na, 1), -1:ubound( na, 2) )
-        real(IDS_real) :: ue( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: zeff( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
@@ -791,6 +787,7 @@ contains
         real(IDS_real), allocatable :: un0(:,:,:,:), um0(:,:,:,:)
 #endif
  !< Type of IDS data structure, designed for handling grid geometry data
+#if GGD_MAJOR_VERSION > 0
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
         type(ids_generic_grid_dynamic) :: edge_grid, transport_grid, &
             &  sources_grid
@@ -801,7 +798,13 @@ contains
         type(ids_generic_grid_aos3_root) :: radiation_grid
 #endif
 #endif
-
+        integer :: istrai !< Stratum iterator
+        real(IDS_real),   &
+            &   dimension( -1:ubound( crx, 1 ), -1:ubound( crx, 2), 3, 3) :: e
+        real(IDS_real) :: pb( -1:ubound( na, 1), -1:ubound( na, 2) )
+        real(IDS_real) :: pe( -1:ubound( na, 1), -1:ubound( na, 2) )
+        real(IDS_real) :: ue( -1:ubound( na, 1), -1:ubound( na, 2) )
+#endif
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
         integer, parameter :: nsources = 13
 #else
@@ -1343,7 +1346,7 @@ contains
             &  summary, &
 #endif
             &  edge_profiles, database, &
-#if AL_MAJOR_VERSION > 4
+#if ( AL_MAJOR_VERSION > 4 && GGD_MAJOR_VERSION > 0 )
             &  time_sind, &
 #endif
             &  time_slice_value, .true., new_eq_ggd )
@@ -6991,32 +6994,6 @@ contains
 
         contains
 
-        function separatrix_average( field, weight )
-        ! This function is devoted to obtain the weighted average along the active separatrix
-        ! of a plasma field quantity
-        ! The average is made using face-centered quantities on the cell faces forming the separatrix
-        ! The weighting automatically includes the areas of the cell faces
-        implicit none
-        real(kind=IDS_real) :: separatrix_average
-        real(kind=IDS_real), intent(in) :: field(-1:nx,-1:ny), weight(-1:nx,-1:ny)
-        real(kind=IDS_real) :: sum, area_sum
-
-        separatrix_average = IDS_REAL_INVALID
-        sum = 0.0_IDS_real
-        area_sum = 0.0_IDS_real
-        do ix = -1, nx
-          if (mod(region(ix,jsep,0),4).eq.1) then
-            sum = sum + gs(topix(ix,jsep),topiy(ix,jsep),1) * &
-                & ( field(ix,jsep)*weight(ix,jsep) +          &
-                &   field(topix(ix,jsep),topiy(ix,jsep))*     &
-                &  weight(topix(ix,jsep),topiy(ix,jsep)) )/2.0_IDS_real
-            area_sum = area_sum + gs(topix(ix,jsep),topiy(ix,jsep),1)
-          end if
-        end do
-        if (area_sum.ne.0.0_IDS_real) separatrix_average = sum / area_sum
-
-        return
-        end function separatrix_average
 
 #if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
         subroutine write_timed_integer( ival, ivalue )
@@ -7105,17 +7082,18 @@ contains
         integer :: i, is, js, ks, ion_charge_int, nc
         integer :: batch_index
         real(IDS_real) :: batch_slice_value   !< Time slice value
-        real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
-        real(IDS_real) :: totCv( -1:ubound( na, 1), -1:ubound( na, 2) )
         character(len=13) :: spclabel         !< Species label
         character(len=5) :: hlp_frm
  !< Type of IDS data structure, designed for handling grid geometry data
+#if GGD_MAJOR_VERSION > 0
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
         type(ids_generic_grid_dynamic) :: batch_grid, sources_grid
 #else
         type(ids_generic_grid_aos3_root) :: batch_grid, sources_grid
 #endif
-
+        real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
+        real(IDS_real) :: totCv( -1:ubound( na, 1), -1:ubound( na, 2) )
+#endif
         !! Procedures
         external species, xertst
 
@@ -7225,7 +7203,7 @@ contains
             &  summary, &
 #endif
             &  batch_profiles, database, &
-#if AL_MAJOR_VERSION > 4
+#if ( AL_MAJOR_VERSION > 4 && GGD_MAJOR_VERSION > 0 )
             &  batch_index, &
 #endif
             &  time, do_description, new_eq_ggd )
@@ -7575,7 +7553,7 @@ contains
               call write_cell_vector_component( batch_grid,               &
                   &   vectorComponent = batch_profiles%                   &
                   &   ggd( batch_index )%ion( is )%state( js )%velocity,  &
-                  &   b2CellData = ua(:,:,ks),                            &
+                  &   b2CellData = ua_mean(:,:,ks),                       &
                   &   vectorID = VEC_ALIGN_PARALLEL_ID )
               ks = ks + 1
             end do
@@ -7758,6 +7736,34 @@ contains
         return
     end subroutine B25_av_ids
 
+    function separatrix_average( field, weight )
+    ! This function is devoted to obtain the weighted average along the active separatrix
+    ! of a plasma field quantity
+    ! The average is made using face-centered quantities on the cell faces forming the separatrix
+    ! The weighting automatically includes the areas of the cell faces
+    implicit none
+    real(kind=IDS_real) :: separatrix_average
+    real(kind=IDS_real), intent(in) :: field(-1:nx,-1:ny), weight(-1:nx,-1:ny)
+    real(kind=IDS_real) :: sum, area_sum
+    integer ix
+
+    separatrix_average = IDS_REAL_INVALID
+    sum = 0.0_IDS_real
+    area_sum = 0.0_IDS_real
+    do ix = -1, nx
+      if (mod(region(ix,jsep,0),4).eq.1) then
+        sum = sum + gs(topix(ix,jsep),topiy(ix,jsep),1) * &
+            & ( field(ix,jsep)*weight(ix,jsep) +          &
+            &   field(topix(ix,jsep),topiy(ix,jsep))*     &
+            &  weight(topix(ix,jsep),topiy(ix,jsep)) )/2.0_IDS_real
+        area_sum = area_sum + gs(topix(ix,jsep),topiy(ix,jsep),1)
+      end if
+    end do
+    if (area_sum.ne.0.0_IDS_real) separatrix_average = sum / area_sum
+
+    return
+    end function separatrix_average
+
     subroutine write_ids_properties( properties, homo )
     implicit none
     type(ids_ids_properties), intent(inout) :: properties
@@ -7769,8 +7775,14 @@ contains
     properties%comment = comment
 #if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
     allocate( properties%provenance%node(1) )
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+    allocate( properties%provenance%node(1)%reference(1) )
+    allocate( properties%provenance%node(1)%reference(1)%name(1) )
+    properties%provenance%node(1)%reference(1)%name(1) = source
+#else
     allocate( properties%provenance%node(1)%sources(1) )
     properties%provenance%node(1)%sources(1) = source
+#endif
 #else
     allocate( properties%source(1) )
     properties%source = source
@@ -7969,7 +7981,7 @@ contains
        &  summary, &
 #endif
        &  edgeprof, database, &
-#if AL_MAJOR_VERSION > 4
+#if ( AL_MAJOR_VERSION > 4 && GGD_MAJOR_VERSION > 0 )
        &  time_sind, &
 #endif
        &  time_slice_value, do_summary_data, new_eq_ggd )
@@ -7987,13 +7999,14 @@ contains
     type (ids_edge_profiles) :: edgeprof !< IDS designed to store
             !< edge profiles data
     character(len=24), intent(in) :: database
-#if AL_MAJOR_VERSION > 4
+#if ( AL_MAJOR_VERSION > 4 && GGD_MAJOR_VERSION > 0 )
     integer, intent(in) :: time_sind     !< Corresponding time slice index
                                          !< in edge_profiles IDS
 #endif
     real(IDS_real), intent(in) :: time_slice_value   !< Time slice value
     logical, intent(in) :: do_summary_data
     logical, intent(out) :: new_eq_ggd
+#if GGD_MAJOR_VERSION > 0
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     type(ids_generic_grid_dynamic) :: eq_grid !< Type of IDS
         !< data structure, designed for handling equilibrium grid geometry data
@@ -8001,21 +8014,23 @@ contains
     type(ids_generic_grid_aos3_root) :: eq_grid !< Type of IDS
         !< data structure, designed for handling equilibrium grid geometry data
 #endif
-    integer :: i, ix, iy, icnt, inode
-    integer :: idum(0:3)
-    integer, save :: ncall = 0
-    real(IDS_real) :: parg(0:99)
-    real(IDS_real), save :: pit_rescale = 1.0_IDS_real
-    real(IDS_real) :: b0r0_ref, z_eq
-    real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2) )
-    real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
-    real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
+    integer :: iy
     real(IDS_real) :: er_Vx( -1:ubound( na, 1), -1:ubound( na, 2) )
     real(IDS_real) :: er_Fc( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
     real(IDS_real) :: er_Cv( -1:ubound( na, 1), -1:ubound( na, 2) )
     real(IDS_real) :: ez_Vx( -1:ubound( na, 1), -1:ubound( na, 2) )
     real(IDS_real) :: ez_Fc( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
     real(IDS_real) :: ez_Cv( -1:ubound( na, 1), -1:ubound( na, 2) )
+    real(IDS_real) :: tmpVx( -1:ubound( na, 1), -1:ubound( na, 2) )
+    real(IDS_real) :: tmpFace( -1:ubound( na, 1), -1:ubound( na, 2), 0:1)
+    real(IDS_real) :: tmpCv( -1:ubound( na, 1), -1:ubound( na, 2) )
+#endif
+    integer :: i, ix, icnt, inode
+    integer :: idum(0:3)
+    integer, save :: ncall = 0
+    real(IDS_real) :: parg(0:99)
+    real(IDS_real), save :: pit_rescale = 1.0_IDS_real
+    real(IDS_real) :: b0r0_ref, z_eq
     character*8 id
     character*80 cnamip, cvalip
     character*132 eq_source
@@ -8277,12 +8292,21 @@ contains
             allocate( equilibrium%ids_properties%provenance%node(inode + 1) )
             allocate( &
                & equilibrium%ids_properties%provenance%node(inode+1)%path(1) )
-            allocate( &
-               & equilibrium%ids_properties%provenance%node(inode+1)%sources(1))
             equilibrium%ids_properties%provenance%node(inode+1)%path =        &
                & "grids_ggd"
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+            allocate( &
+               & equilibrium%ids_properties%provenance%node(inode+1)%reference(1) )
+            allocate( &
+               & equilibrium%ids_properties%provenance%node(inode+1)%reference(1)%name(1) )
+            equilibrium%ids_properties%provenance%node(inode+1)%reference(1)%name(1) =  &
+               &  source
+#else
+            allocate( &
+               & equilibrium%ids_properties%provenance%node(inode+1)%sources(1) )
             equilibrium%ids_properties%provenance%node(inode+1)%sources(1) =  &
                &  source
+#endif
 #endif
           end if
           if (.not.associated( equilibrium%time_slice )) then
@@ -9960,6 +9984,20 @@ contains
     case( VEC_ALIGN_TOROIDAL_ID )
       !! Writing toroidal quantity
       !! Make sure the data field is properly allocated
+#if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
+      if ( associated( idsField_vcomp%phi ) ) then
+        if ( .not. all( shape( idsField_vcomp%phi ) ==  &
+                    &   shape(data) )) then
+          deallocate( idsField_vcomp%phi )
+        end if
+      end if
+      !! If required, allocate storage
+      if ( .not. associated( idsField_vcomp%phi ) ) then
+        allocate(idsField_vcomp%phi( size(data, 1) ))
+      end if
+      !! copy toroidal data field
+      idsField_vcomp%phi = data
+#else
       if ( associated( idsField_vcomp%toroidal ) ) then
         if ( .not. all( shape( idsField_vcomp%toroidal ) ==  &
                     &   shape(data) )) then
@@ -9972,6 +10010,7 @@ contains
       end if
       !! copy toroidal data field
       idsField_vcomp%toroidal = data
+#endif
 #if ( IMAS_MINOR_VERSION > 37 || ( IMAS_MINOR_VERSION == 37 && IMAS_MICRO_VERSION > 0 ) || IMAS_MAJOR_VERSION > 3 )
     case( VEC_ALIGN_R_MAJOR_ID )
       !! Writing major radius aligned quantity
@@ -10010,6 +10049,7 @@ contains
     end subroutine B2grid_Write_Data_Vector_Components
 #endif
 
+#if GGD_MAJOR_VERSION > 0
     !> From the B2 grid, compute the coordinate unit vectors
     !> (poloidal, radial, toroidal)
     subroutine compute_Coordinate_Unit_Vectors( crx, cry, e1, e2, e3 )
@@ -10140,6 +10180,7 @@ contains
     unitV = v / sqrt( sum( v**2 ) )
     return
     end function unitVector
+#endif
 
     subroutine write_sourced_value_root( val, value )
     implicit none

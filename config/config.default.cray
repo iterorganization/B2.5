@@ -27,8 +27,8 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-  DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -traditional
@@ -36,16 +36,17 @@ CPPOPTS = -P -I${srcdir} ${EQUIVS}
 
 FC = ftn
 FCOPTS = -e0 -ez
-ifdef USE_OPENMP
-  FCOPTS += -homp
-endif
 ifdef SOLPS_DEBUG
   FCOPTS += -O0 -hfp0 -g -G0 -K trap=divz -K trap=fp -Rb
 else
   FCOPTS += -O2 -hfp2
 endif
+ifdef SOLPS_OPENMP
+  FPOPTS += -homp
+endif
 
 OBJDEST = -ef -em -J${OBJDIR}
+OBNDEST = -ef -em -J${OBNDIR}
 INCMOD = -p
 MOD = mod
 
@@ -55,8 +56,10 @@ GRLIBES =     # graphics libraries
 PLLIBES =     # support libraries for plotting programs
 LDLIBES =     # other libraries
 
-LD = ftn
+LD = ${FC}
+LN = ${FN}
 LDOPTS = -dynamic -hpic
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

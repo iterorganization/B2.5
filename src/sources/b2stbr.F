@@ -57,6 +57,9 @@
 #ifndef ALLOCATE_AND_NAMELIST
       use b2mod_dimensions
 #endif
+#ifdef _OPENMP
+      use omp_lib           !IGNORE
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -182,10 +185,6 @@
       external b2xvsg, b2xvff, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
       intrinsic mod
-#if ( defined(_OPENMP) && defined(CRAY) )
-      real (kind=R8) :: omp_get_wtime
-      external omp_get_wtime
-#endif
 *   ..initialisation
       save ncall, sput_src, sput_frc, sput_phys,
      *     sput_chem_alpha, sput_phys_alpha, first_flight, in_dl,

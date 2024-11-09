@@ -512,7 +512,7 @@ csw 13mar2012
       chci_koeff = 0.0e0_R8
       tt0 = 0.0e0_R8
       tt1 = 0.0e0_R8
-      if(integral_modeling.ne.0) then
+      if(integral_modeling.ne.0.and.ny_astra.gt.1) then
        do iy = 0,mintopcut-1    ! for inner surfaces
         inv_hi_astra(iy) =  -(Ti_astra(iy)-Ti_astra(iy-1))*1.0e3_R8/
      &   (qi_neo_astra(iy)*1.0e6_R8)/(Rmajc_astra(iy)-Rmajc_astra(iy-1))

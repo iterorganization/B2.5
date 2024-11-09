@@ -12,17 +12,14 @@ MDSPLUS_DIR ?= /tokp/work/dpc/SOLPS-ITER/MDSPLUS
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 
-ifdef USE_MPI
-FC       = mpiifort
+MPI_FC  ?= mpiifort
+ifdef SOLPS_MPI
+FC       = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC       = mpiifort
-else
-FC       = ifort
+FC       = ${MPI_FC}
 endif
 endif
-
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
@@ -30,25 +27,8 @@ else
 FCOPTS   = -O2 -xHost
 endif
 
-ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS  += -qopenmp
-LDOPTS  += -qopenmp
-else
-FCOPTS  += -openmp
-LDOPTS  += -openmp
-endif
-endif
-
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
-FCOPTS  += -vec_report0
-LDOPTS  += -i_dynamic
-endif
-
-INCMOD   = -I
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-
 DEFINES += -DNO_OPT
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

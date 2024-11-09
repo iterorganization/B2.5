@@ -77,6 +77,7 @@ c 2002-09-11: logic revised
       use b2mod_interp
       use b2mod_subsys
       use b2mod_dimensions
+      use b2mod_chord_shift
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -85,9 +86,6 @@ c 2002-09-11: logic revised
 c
 c  version : 27.07.96 20:37
 c
-      logical ratio
-      common /t_ratio/ ratio
-
       real (kind=R8) ::
      *   pr(-1:nxd,-1:nyd), ro(-1:nxd,-1:nyd,0:nsd_local-1),
      3   energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
@@ -165,7 +163,7 @@ c
       real (kind=R8) ::
      *   balance(0:DEF_NATM-1)
       real (kind=R8) ::
-     *   mass,vel,vth,press
+     *   mass, vel, vth, press
       integer ispecies(0:nsd_local-1), ismain, ismain0,
      *   neutrals_namelist, sput_frac_flag, use_eirene
 
@@ -190,10 +188,6 @@ c
       character*256 description
       character*24 hlp_frm
       CHARACTER FILNAM*8, H123*4, REAC*9, CRC*3
-c
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 c
       logical ex, cflag, found, eirc_done
       logical open_file, streql, isaletter
@@ -260,7 +254,7 @@ c
       call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
       CALL EIRENE_DEFAULTS_USR
-      filename='input.dat'
+      filename=fort_lc//'1'
       call find_file(filename,ex)
       if (ex.and.use_eirene.ne.0) then
         open(unit=45,file=filename)
@@ -363,6 +357,7 @@ c
 #endif
       lucdf=0
       eirc_done=.false.
+      call init_chord_shift
 c
       ns=max(nsd_local,1)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',ns,'i3)'
@@ -2108,8 +2103,20 @@ c
           description='Molecule dissociation rate (#.s^{-1})'
           if (nmoli.gt.0) then
             nz=nmoli
-            mach(:,:,0:nz-1)=srcml(0:nx+1,0:ny+1,1:nz,1)
-            call copy(mach,-1.0_R8/qe,nz,textmn)
+#ifdef B25_EIRENE
+            if (jvft44.lt.20240627) then
+              do is = 0, nz-1
+                mach(:,:,is)=srcml(0:nx+1,0:ny+1,is+1,1)*vol(:,:)
+              end do
+              call copy(mach,-1.0e6_R8/qe,nz,textmn)
+            else
+              mach(:,:,0:nz-1)=srcml(0:nx+1,0:ny+1,1:nz,1)
+              call copy(mach,-1.0_R8,nz,textmn)
+            end if
+#else
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textmn)
+#endif
           else
             nz=1
             mach(:,:,0:nz-1)=0.0_R8
@@ -2119,8 +2126,20 @@ c
           description='Power to atoms due to molecule dissociation (W)'
           if (nmoli.gt.0) then
             nz=nmoli
-            mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,0)
-            call copy(mach,-1.0_R8,nz,textmn)
+#ifdef B25_EIRENE
+            if (jvft44.lt.20240627) then
+              do is = 0, nz-1
+                mach(:,:,is)=edissml(0:nx+1,0:ny+1,is+1,0)*vol(:,:)
+              end do
+              call copy(mach,-1.0e6_R8,nz,textmn)
+            else
+              mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,0)
+              call copy(mach,-1.0_R8,nz,textmn)
+            end if
+#else
+            mach(:,:,0:nz-1)=0.0_R8
+            call copy(mach,1.0_R8,nz,textmn)
+#endif
           else
             nz=1
             mach(:,:,0:nz-1)=0.0_R8
@@ -5995,6 +6014,7 @@ c
           if(bad_args(stack_req)) return
           call set_color_map(spop(sstack,isstack))
         case('chor')     ! chord file
+          stack_req=(/0,0,1,1,0,0,0/)
           if(bad_args(stack_req)) return
           call process_chords(spop(sstack,isstack))
         case('chpl')     ! plot chords

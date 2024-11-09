@@ -4,8 +4,8 @@ C =====================================================================
 C =====================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer nx,ny,ntrii,nrknot,is,linlog
       integer necke(3,ntrii)
       REAL (KIND=R8) :: XTRIAN(NRKNOT),YTRIAN(NRKNOT),

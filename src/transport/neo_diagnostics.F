@@ -48,7 +48,7 @@
 *
 *     This routine computes the following neoclassical transport
 *     coefficients
-*     
+*
 *     - dn_neo:  particle transport coefficients for grad(na).
 *     - chi_neo: heat conductivity
 *     - vn_neo:  particle pinch velocity
@@ -58,7 +58,7 @@
       integer n2, ix, iy, is, is2, ixref, iyref
       save ixref, iyref
 *   ..local variables for neoclassical transport
-      integer :: istate,ispecies,ishift
+      integer :: istate, ispecies, ishift
       integer :: isorth(0:ns,0:nzdecl-1), nclh(0:ns), nslh
       real (kind=R8) ::
      *   zah(0:ns-1), amh(0:ns-1), t(0:ns),
@@ -88,7 +88,7 @@
      &   tforce(0:ns,0:nzdecl-1,1:2,-1:ny)
 
 *   ..procedures
-      external ipgeti, ipgetr, xertst, b2xvsg, fluxav, sfluxav, 
+      external ipgeti, ipgetr, xertst, b2xvsg, fluxav, sfluxav,
      &         tfluxav, neodv, neochi
 
 *   ..subprogram start-up calls
@@ -302,7 +302,7 @@
         endif
       enddo
       nsl=nslh
-            
+
 *   ..mass
       do ispecies=0,nsl-1
         m(ispecies)=am(isort(ispecies,0))*mp
@@ -497,7 +497,6 @@
 
       enddo
 
-
 *   ..now calculate the neoclassical transport
 
 *   ..loop over flux surfaces
@@ -537,7 +536,6 @@
           tr(nsl-1)=tfluxav(te,bb,hx,vol,nx,ny,iy)/(1.0e3_R8*ev)
           denr(nsl-1,0)=tfluxav(ne,bb,hx,vol,nx,ny,iy)/1.0e19_R8
 
-
 *   ..thermodynamic forces
           do ispecies=0,nsl-1
             do istate=0,ncl(ispecies)-1
@@ -548,7 +546,6 @@
               ds(ispecies,istate,2)=(log(tr(ispecies))-
      &           log(tl(ispecies)))/(hy1(bottomix(ixref,iy),
      &           bottomiy(ixref,iy))+hy1(ixref,iy))
-
 
 *   ..for consistency check
               densav(ispecies,istate,iy)=den(ispecies,istate)
@@ -593,7 +590,7 @@
            enddo
           enddo
 
-         else
+        else
           do ispecies=0,nsl-1
             do istate=0,ncl(ispecies)-1
               dd(ispecies,istate,iy)=0._R8
@@ -780,6 +777,7 @@
 
        enddo
       enddo
+
 *   ..return
       call subend ()
       return

@@ -41,7 +41,9 @@
      *    phm0, phm1
       real (kind=R8) :: wrks(-1:nx,-1:ny)
       save ncall, style, phm0, phm1
-      !$OMP THREADPRIVATE(ncall, style, phm0, phm1, iout)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall, style, phm0, phm1, iout)
+#endif
 *   ..procedures
       external xertst, ipgeti, ipgetr
       external b2xvff, b2xvsg
@@ -63,10 +65,14 @@
      &   'faulty internal parameter style')
        call ipgeti ('b2sicf_iout', iout)
        if ((iout.ne.0) .and. in_parallel()) then
-         !$OMP MASTER
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
          write(*,*) 'B2SICF OpenMP warning: no file output in ',
      &              'parallel mode'
-         !$OMP END MASTER
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
          iout = 0
        end if
       endif
@@ -120,7 +126,9 @@
               smbcf(ix,iy,3) = 0.0e0_R8
               ctcf(ix,iy) = 0.0e0_R8                                    !srv 06.04.07
             endif                                                       !srv 26.11.02
+#ifdef _OPENMP
 !$OMP ATOMIC WRITE
+#endif
             smbcb(ix,iy) =  smbcf(ix,iy,0)
           enddo
         enddo
@@ -160,7 +168,9 @@
               smbcf(ix,iy,3) = 0.0e0_R8
               ctcf(ix,iy) = 0.0e0_R8                                    !srv 06.04.07
             endif
+#ifdef _OPENMP
 !$OMP ATOMIC WRITE
+#endif
             smbcb(ix,iy) =  smbcf(ix,iy,0)
           enddo
         enddo

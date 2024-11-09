@@ -199,7 +199,7 @@
       integer n, incx, incy
       real (kind=R8) ::
      *   sa, sx(0:*), sy(0:*)
-#if ( !defined(NO_OPENMP_MYBLAS) || defined(WITH_FTIMINGS) )
+#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_MYBLAS) ) || defined(WITH_FTIMINGS) )
       logical make_parallel
 #endif
 *     ------------------------------------------------------------------
@@ -212,7 +212,7 @@
       integer i, ix, iy
       external xerrab
 *     ------------------------------------------------------------------
-#if ( !defined(NO_OPENMP_MYBLAS) || defined(WITH_FTIMINGS) )
+#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_MYBLAS) ) || defined(WITH_FTIMINGS) )
       make_parallel =  (.not. in_parallel())
 #endif
 #ifdef WITH_FTIMINGS
@@ -223,7 +223,7 @@
        call xerrab ('b2saxpy--error, incy.eq.0')
       else if (sa.eq.0.0_R8) then
       else if (incx.eq.1.and.incy.eq.1) then
-#ifndef NO_OPENMP_MYBLAS
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_MYBLAS) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& SCHEDULE(static)
 !$OMP& DEFAULT(none)

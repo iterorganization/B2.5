@@ -17,12 +17,12 @@
 *     Undefined if incx.eq.0.
 *     ------------------------------------------------------------------
       integer i, ix
-#if ( !defined(NO_OPENMP_SFILL) || defined(WITH_FTIMINGS) )
+#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_SFILL) ) || defined(WITH_FTIMINGS) )
       logical make_parallel
 #endif
       external xerrab
 *     ------------------------------------------------------------------
-#if ( !defined(NO_OPENMP_SFILL) || defined(WITH_FTIMINGS) )
+#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_SFILL) ) || defined(WITH_FTIMINGS) )
       make_parallel = (.not. in_parallel())
 #endif
 #ifdef WITH_FTIMINGS
@@ -32,7 +32,7 @@
       if (incx.eq.0) then
        call xerrab ('sfill--error, incx.eq.0')
       else if (incx.eq.1) then
-#ifndef NO_OPENMP_SFILL
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_SFILL) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& SCHEDULE(static)
 !$OMP& DEFAULT(none)
@@ -44,7 +44,7 @@
        enddo
       else
        ix = ibase(n,incx)
-#ifndef NO_OPENMP_SFILL
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_SFILL) )
 !$OMP PARALLEL DO IF (make_parallel)
 !$OMP& SCHEDULE(static)
 !$OMP& DEFAULT(none)

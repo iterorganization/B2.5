@@ -197,7 +197,7 @@
      *  use_eirene, neutrals_namelist, numerics_namelist, nsmin, nsmax,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current, idx
-      integer, save :: edition_p=0, plasinc = 1, plasnum = 0
+      integer, save :: edition_p = 0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
      *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
@@ -1409,9 +1409,9 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          call xerrab('b2mndr_cdf_default not in range 1::5')
        endif
 #endif
-       call ipgeti('b2mndr_ids_save', ids_save )
-       call ipgeti('b2mndr_ids_av', ids_av )
-       call xertst( 0.le.ids_av, 'Invalid ids_av value')
+       call ipgeti ('b2mndr_ids_save', ids_save )
+       call ipgeti ('b2mndr_ids_av', ids_av )
+       call xertst ( 0.le.ids_av, 'Invalid ids_av value')
        summary_av =
      &  ids_av.gt.0 .and. ids_save.eq.0 .and. delta_ids_time.eq.0.0_R8
 #ifdef IMAS
@@ -1488,6 +1488,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      .    'Invalid shot number')
          call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
 #endif
+         not_default = not_default.or.(shot.gt.0.and.run.ge.0)
          imasdir = trim(home_dir)//'/public/imasdb/'
      &           //trim(database)//'/'//trim(version)
 #if AL_MAJOR_VERSION < 5
@@ -1819,21 +1820,21 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
       endif
       write(*,"(' Number of midplane cell =',i4)") nmdpl             !srv 22.05.09 }
 *   ..compute length along x-direction                               !srv 13.02.17 {
-      lengthx(:,:) = 0.0e0_R8
-      lengthx(-1,:) = hx(-1,:)*0.5e0_R8
+      lengthx(:,:) = 0.0_R8
+      lengthx(-1,:) = hx(-1,:)*0.5_R8
       do iy = -1, ny
        do ix = 0, nx
         if(on_closed_surface(ix,iy)) then
          if(rightix(ix,iy).ne.nx+1) then
           lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
-     *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+     *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
          else
           lengthx(ix,iy) = hx(ix,iy)*0.5_R8
          endif
         else
          if(leftix(ix,iy).ne.-2) then
           lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
-     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
+     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
          else
           lengthx(ix,iy) = hx(ix,iy)*0.5_R8
          endif
@@ -1841,11 +1842,11 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        enddo
       enddo                                                          !srv 13.02.17 }
 *   ..compute length along y-direction                               !srv 24.04.02 {
-      lengthy(:,-1) = hy(:,-1)*0.5e0_R8
+      lengthy(:,-1) = hy(:,-1)*0.5_R8
       do iy = 0, ny
        do ix = -1, nx
         lengthy(ix,iy) = lengthy(ix,iy-1) +
-     *      (hy(ix,iy)+hy(ix,iy-1))*0.5e0_R8
+     *      (hy(ix,iy)+hy(ix,iy-1))*0.5_R8
        enddo
       enddo                                                          !srv 24.04.02 }
 *
@@ -2089,6 +2090,11 @@ csw 03oct2013 rescaling impurity species specified by zn_rescale
           write (*,*) 'Convergence of bundled rates = ',is,max_delta
         enddo
       endif
+*   ..initialise solver arrays
+      call solver_init_5p(nx, ny)
+      call solver_init_7p(nx, ny)
+      call solver_init_9p(nx, ny)
+      call solver_init_11p(nx, ny)
 *   ..initialise tracing routines
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
@@ -2439,7 +2445,7 @@ c new CDF movie option (1st frame at t=0)
         call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
         if (pot_eq.eq.0) then                                          !srv 13.07.05 {
-          po   =0.0e0_R8
+          po   =0.0_R8
         else if (pot_eq.eq.2) then
           po(:,:)=3.1_R8*te(:,:)/qe
         endif
@@ -3087,9 +3093,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   end if
                   if (process_ids) then
                     time_slice_index = num_time_slices
-                    call B25_process_ids( edge_profiles, edge_sources,
-     &               edge_transport, radiation, description,
-     &               equilibrium,
+                    call B25_process_ids(
+     &               edge_profiles, edge_sources, edge_transport,
+     &               radiation, description, equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &               summary,
 #endif
@@ -3142,8 +3148,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &        (status.ne.0 .or. idx.eq.0)) then
             if (status.ne.0) idx = 0
             if (process_ids) then
-              call B25_process_ids( edge_profiles, edge_sources,
-     &          edge_transport, radiation, description, equilibrium,
+              call B25_process_ids(
+     &          edge_profiles, edge_sources, edge_transport,
+     &          radiation, description, equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
@@ -3176,8 +3183,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      .         "Appending a new time slice at t = ", tim, " s."
               num_time_slices = num_time_slices + 1
               time_slice_index = num_time_slices
-              call B25_process_ids( edge_profiles, edge_sources,
-     &          edge_transport, radiation, description, equilibrium,
+              call B25_process_ids(
+     &          edge_profiles, edge_sources, edge_transport,
+     &          radiation, description, equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
@@ -3448,8 +3456,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 *   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
-         if (balance_average .ne. 0) then
-           call update_average_balance(itim,-1) ! scale quantities by 1/itim if averaged
+        if (balance_average .ne. 0) then
+          call update_average_balance(itim,-1) ! scale quantities by 1/itim if averaged
         endif
         call write_balance(nx,ny,ns)
 #else
@@ -3480,8 +3488,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           write(*,*) "Appending a new time slice at t = ", tim, " s."
           num_time_slices = num_time_slices + 1
           time_slice_index = num_time_slices
-          call B25_process_ids( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description, equilibrium,
+          call B25_process_ids(
+     &      edge_profiles, edge_sources, edge_transport,
+     &      radiation, description, equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
@@ -3711,8 +3720,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   num_time_slices = num_time_slices + 1
                 end if
                 time_slice_index = num_time_slices
-                call B25_process_ids( edge_profiles, edge_sources,
-     &            edge_transport, radiation, description, equilibrium,
+                call B25_process_ids(
+     &            edge_profiles, edge_sources, edge_transport,
+     &            radiation, description, equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &            summary,
 #endif
@@ -3756,8 +3766,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         end if
         if (status.ne.0 .or. idx.eq.0 .or. ids_replace) then
           if (status.ne.0) idx = 0
-          call B25_process_ids( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description, equilibrium,
+          call B25_process_ids(
+     &      edge_profiles, edge_sources, edge_transport,
+     &      radiation, description, equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif

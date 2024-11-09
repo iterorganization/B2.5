@@ -53,7 +53,9 @@
       real (kind=R8) ::
      *   t0, t1
       real (kind=R8), save :: cor_diag = 1.0_R8                         !srv 07.07.21
-      !$OMP THREADPRIVATE(ncall)
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall)
+#endif
 *   ..procedures
       intrinsic abs, sqrt, dim
       external xertst, sfill
@@ -120,9 +122,9 @@
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
-     &   solveet(ireg).neqv.last_solve_5(ireg)
+     &   solveet(ireg).neqv.last_solve_5(ns,ireg)
       end do
-      if (new_matrix) call restart_ma28
+      if (new_matrix.or.in_parallel()) call restart_ma28
 * ..total heat correction equation
       call sfill (n2*5, 0.0_R8, aa5, 1)
 *   ..compute flo0x, con0x
@@ -282,7 +284,7 @@ cxpb
         new_matrix = new_matrix.or.
      &   solveee(ireg).neqv.solveet(ireg)
       end do
-      if (new_matrix) call restart_ma28
+      if (new_matrix.or.in_parallel()) call restart_ma28
       call sfill (n2*5, 0.0_R8, aa5, 1)
 *   ..compute flo0x, con0x
       do iy = -1, ny
@@ -436,7 +438,7 @@ cxpb
         new_matrix = new_matrix.or.
      &   solveei(ireg).neqv.solveee(ireg)
       end do
-      if (new_matrix) call restart_ma28
+      if (new_matrix.or.in_parallel()) call restart_ma28
       call sfill (n2*5, 0.0_R8, aa5, 1)
 *   ..compute flo0x, con0x
       do iy = -1, ny
@@ -584,7 +586,7 @@ cxpb
 *   ..solve the correction equation
       write(*,'(1x,a,a)') 'Calling b2ux5p from ', name//'ti'
       call b2ux5p (nx, ny, aa5, itcnt, reshi, corti, name//'ti')        !srv 18.03.10
-      last_solve_5(0:nnreg(0)) = solveei(0:nnreg(0))
+      last_solve_5(ns,0:nnreg(0)) = solveei(0:nnreg(0))
       do iy = -1, ny
         do ix = -1, nx
           corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))

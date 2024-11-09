@@ -1,4 +1,5 @@
 # Test whether necessary variables are set
+OS        ?= $(shell grep -m1 NAME /etc/os-release | cut -d '"' -f 2 | cut -d ' ' -f 1 )
 LD_MSCL   ?= `pkg-config mscl --libs`
 ifdef NCARG_ROOT
 LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm  -lX11 -lXext `pkg-config cairo --libs` -lfontconfig -lfreetype -lpng -lz -lpthread -lXrender -lbz2 -lgfortran
@@ -11,7 +12,11 @@ LD_NAG    ?= `pkg-config openblas --libs`
 endif
 ifeq ($(shell `pkg-config --exists netcdf-fortran`; echo $$?),0)
 NCDIR     ?= ${EBROOTNETCDFMINFORTRAN}
+ifeq (,$(findstring CentOS,$(OS)))
+LD_NETCDF  = `pkg-config netcdf-fortran --libs`
+else
 LD_NETCDF ?= `nf-config --flibs`
+endif
 ifndef SOLPS_CPP
 DEFINES   += -DCDF_MOVIE
 INCMODS   += `pkg-config netcdf-fortran --cflags`
@@ -29,13 +34,12 @@ endif
 
 CPP = /lib/cpp -traditional
 
-ifdef USE_MPI
-FC = mpif90
+MPI_FC ?= mpif90
+ifdef SOLPS_MPI
+FC      = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC = mpif90
-else
-FC = gfortran
+FC      = ${MPI_FC}
 endif
 endif
 
@@ -44,22 +48,20 @@ GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.
 GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
 GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
 
-ifdef USE_OPENMP
-ifndef USE_EIRENE
+ifndef SOLPS_OPENMP
 FCOPTS  = -fPIC
 LDOPTS  = -fPIC
 endif
-endif
 ifeq ($(shell test ${GFORTRAN_MAJOR_VERSION} -gt 7; echo $$?),0)
-FCOPTS += -march=sandybridge
+FCOPTS += -march=native
 endif
 
 ifdef SOLPS_DEBUG
 FCOPTS += -gdwarf-2
 endif
 
-ifdef USE_MPI
-FCOPTS += ${MPI_CPP}
+ifdef SOLPS_MPI
+FPOPTS += ${MPI_CPP}
 endif
 
 DDBLOPTION =
@@ -71,6 +73,7 @@ GGD_VERSION ?= `pkg-config ggd --modversion`
 else
 GGD_VERSION ?= '0.0.0'
 endif
+
 
 #!!!Local Variables:
 #!!! mode: Makefile
