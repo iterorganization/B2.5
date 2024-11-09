@@ -6,6 +6,7 @@
 #ifdef NCAR4      
       integer iw
 #endif
+
       if(.not.initialised_plotting) return
       if(same_page.ne.0) then
         same_page=0
