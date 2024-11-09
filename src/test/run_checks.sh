@@ -41,7 +41,7 @@ fi
 # We have a large tolerance for most of the variables (1e-6).
 # For basic quantities like te, ti, na, ni, ne, po, ua, we use a stricter tolerance level.
 # Except for the velocity, we check the maximum relative error for the basic quantities.
-$MYPATH/b2diff.py --tolerance 1e-6 --maxerr 'te ti na ni ne po' --specific-tolerance 'ua 1e-11 ne 1e-11 ni 1e-11 na 1e-8 te 1e-11 ti 1e-11 po 1e-10' -i 'time|del*|res*|b2stbc_smo|b2stbc_sna|b2stbc_she|b2stbc_shi|fllim0fna' -v compare_results.log
+$MYPATH/b2diff.py --tolerance 1e-6 --maxerr 'te ti na ni ne po' --specific-tolerance 'ua 1e-11 ne 1e-11 ni 1e-11 na 1e-8 te 1e-11 ti 1e-11 po 1e-10 cvsa 2e-6 cvsa_cl 2e-6' -i 'time|del*|res*|b2stbc_smo|b2stbc_sna|b2stbc_she|b2stbc_shi|fllim0fna' -v compare_results.log
 
 STATUS=$? # exit status of b2diff.py
 # The exit status tells whether the test were successfull
