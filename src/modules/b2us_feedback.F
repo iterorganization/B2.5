@@ -56,7 +56,8 @@
      & fb_current(DEF_NATM) = 0.0_R8, fb_prev(DEF_NATM) = 0.0_R8,
      & fb_rescale(DEF_NATM) = 1.0_R8,
      & fb_current_prev(DEF_NATM) = 0.0_R8,
-     & fb_target_actuator(DEF_NATM) = 0.0_R8
+     & fb_target_actuator(DEF_NATM) = 0.0_R8,
+     & fb_tau(DEF_NATM) = 0.0_R8
 
       integer, save :: fb_reg_par(DEF_NATM,2) = 0, !contains face label to define list of faces for feedback
      & fb_species(DEF_NATM) = 0, fb_ib(DEF_NATM) = -1,
@@ -64,9 +65,7 @@
      & fb_type(DEF_NATM) = 0, fb_rescale_option(DEF_NATM) = 0,
      & fb_actuator(DEF_NATM) = 0, fb_istra(DEF_NATM) = 0,
      & fb_reg(nMxFbReg) = 0, fb_regp(DEF_NATM,2) = 0 !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
-      integer, parameter :: NACT_LEN = 10
-      real (kind=R8) :: actuator_conv(DEF_NATM,NACT_LEN)
-      integer :: actuator_conv_end(DEF_NATM)
+      logical, save :: fb_type_inverse(DEF_NATM) = .false.
 
 ! csc old switches
       integer, save :: fhiycore_kinetic_energy
@@ -118,7 +117,7 @@
      & fb_ib, fb_species, fb_type_ib,
      & fb_puff_min, fb_puff_max,
      & fb_overshoot, fb_reg, fb_regp,
-     & fb_reg_par, fb_istra
+     & fb_reg_par, fb_istra, fb_tau
       data
      & feedback_namelist_used/.false./, feedback_read/.false./,
      & control_read/.false./
@@ -923,9 +922,6 @@ cxpb size is changed in b2mod_dimensions
         end do
       endif
       nfbreg = ifbreg - 1
-
-      actuator_conv_end = 1
-      actuator_conv = 0.0_R8
 
       call subend()
       return
@@ -1962,21 +1958,37 @@ cxpb size is changed in b2mod_dimensions
                 if (switch%use_eirene.eq.0 .and.
      &              switch%use_pump.ge.1) then
 
-                  call calc_puff_pump_b25(switch,
-     &             ns, mpg, nCv, dv, pl, sr,
-     &             is_start, is_end, sna_pump, sna_puff, sna_core)
-                  print *,'pump', sna_pump,'puff',sna_puff
-                  if (sna_pump < -1.0_R8) 
-     >             saved_fb_actuator(ifb) =
-     &              abs(sna_pump)*fb_rescale(ifb) - sna_core
-                elseif (switch%use_eirene.eq.1 .and.
-     &                  switch%use_pump.ge.1) then
+                call calc_puff_pump_b25(switch,
+     &           ns, mpg, nCv, dv, pl, sr,
+     &           is_start, is_end, sna_pump, sna_puff, sna_core)
+                print *,'pump', sna_pump,'puff',sna_puff
+                if (sna_pump <-1e0_R8) then
+                  if (fb_tau(ifb).gt.0.0_R8) then
+                    t0 = abs(sna_pump)*fb_rescale(ifb)-sna_core
+                    saved_fb_actuator(ifb) = 
+     &                  t0*(1-exp(-ddtim/fb_tau(ifb)))+
+     &                  exp(-ddtim/fb_tau(ifb))*saved_fb_actuator(ifb)
+                  else
+                    saved_fb_actuator(ifb) = 
+     &               abs(sna_pump)*fb_rescale(ifb)-sna_core
+                  endif
+                endif
+                elseif (switch%use_eirene.eq.1 .and. 
+     &            switch%use_pump.ge.1) then
 #ifdef B25_EIRENE
-                  call calc_puff_pump(switch, ns, mpg, nCv, dv,
-     &             b2espcr(fb_species(ifb)),
-     &             sna_pump, sna_puff, sna_core)
-                  saved_fb_actuator(ifb) = sna_pump*fb_rescale(ifb) -
-     &             sna_core
+                  call calc_puff_pump(switch, ns, mpg, nCv, dv, 
+     &               b2espcr(fb_species(ifb)),
+     &                sna_pump,sna_puff, sna_core)
+                  if (fb_tau(ifb).gt.0.0_R8) then
+                    t0 = sna_pump*fb_rescale(ifb) - 
+     &                sna_core
+                    saved_fb_actuator(ifb) = 
+     &                  t0*(1-exp(-ddtim/fb_tau(ifb)))+
+     &                  exp(-ddtim/fb_tau(ifb))*saved_fb_actuator(ifb)
+                  else
+                    saved_fb_actuator(ifb) = sna_pump*fb_rescale(ifb) - 
+     &                sna_core
+                  endif
 #endif
                 else
                   saved_fb_actuator(ifb) =
@@ -2249,9 +2261,15 @@ cxpb size is changed in b2mod_dimensions
                   if (sna_pump < -1e0_R8) then
                     print *,"sna_tot is", sna_core+sna_puff
                     if (abs(1-fb_rescale(ifb)).ge.1e-6) then
-                      saved_fb_actuator(ifb) =
-     &                abs((sna_puff+sna_core)/sna_pump)
+                      t0 = abs((sna_puff+sna_core)/sna_pump)
      &                * saved_fb_actuator(ifb)/fb_rescale(ifb)
+                      if (fb_tau(ifb).gt.0.0_R8) then
+                        saved_fb_actuator(ifb) = 
+     &                    t0*(1-exp(-ddtim/fb_tau(ifb)))+
+     &                    exp(-ddtim/fb_tau(ifb))*saved_fb_actuator(ifb)
+                      else
+                        saved_fb_actuator(ifb) = t0
+                      endif
                     endif
                   else
                     print *,"pump bigger then -1!", sna_pump
@@ -2282,30 +2300,15 @@ cxpb size is changed in b2mod_dimensions
               saved_fb_actuator(ifb) =
      &         max(fb_puff_min(ifb),saved_fb_actuator(ifb))
     !           if(fb_puff_max(ifb) .le. 0.0_R8)
-    !  &
-              saved_fb_actuator(ifb) =
-     &         min(fb_puff_max(ifb),saved_fb_actuator(ifb))
-! #ifndef B25_EIRENE
-              if (actuator_conv_end(ifb) <= NACT_LEN) then
-                actuator_conv(ifb,actuator_conv_end(ifb)) =
-     &           saved_fb_actuator(ifb)
-                actuator_conv_end(ifb) = actuator_conv_end(ifb)+1
-              else
-                do k=2,NACT_LEN
-                  actuator_conv(ifb,k-1) = actuator_conv(ifb,k)
-                enddo
-                actuator_conv(ifb,NACT_LEN) = saved_fb_actuator(ifb)
-              endif
-              print *, "actuator_conv", actuator_conv(ifb,:)
-               if (abs(actuator_conv(ifb,NACT_LEN)) > 1e-7_R8) then
-                 saved_fb_actuator(ifb) =
-     &            sum(actuator_conv(ifb,:))/NACT_LEN
-                print *,"set conv val", saved_fb_actuator(ifb)
-              endif
-! #endif
-              if(fb_overshoot(ifb).gt.1.0_R8 .and.
-     &           fb_current(ifb).gt.fb_target(ifb)*fb_overshoot(ifb))
-     >         then
+    !  &          
+                  saved_fb_actuator(ifb) =
+     &            min(fb_puff_max(ifb),
+     &            saved_fb_actuator(ifb))
+
+              if(fb_overshoot(ifb) .gt. 1.0_R8 .and.
+     &           fb_current(ifb) .gt.
+     &           fb_target(ifb) *
+     &           fb_overshoot(ifb)) then
 ! csc Here the idea is to change conpar if fluid neutrals are used, otherwise userfluxparm
 !     This way it is easier to generalize the schemes when hybrid neutrals are used (to be done!)
               else
