@@ -59,9 +59,10 @@ ifdef SOLPS_OPENMP
 else
   FCOPTS += -hnoomp
 endif
-OBJDEST = -ef -em -J${OBJDIR}
-OBNDEST = -ef -em -J${OBNDIR}
+OBJDEST = -J${OBJDIR}
+OBNDEST = -J${OBNDIR}
 INCMOD = -p
+INCMODS += -ef -em
 MOD = mod
 
 BLD = ar rucv
