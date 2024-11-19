@@ -180,6 +180,7 @@
       end if
 
 * ..return
+      flush (nput)
       call subend ()
       return
 

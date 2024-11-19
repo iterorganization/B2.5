@@ -167,18 +167,19 @@
        enddo
       endif
 *   ..make contour plots of (ua) change
-       if (strmas(idout,'cpua')) then
-        do is = 0, ns-1
-         t0 = scal10(0.8_R8*damax(n2,delua(-1,-1,is),1))
-         write (header,fmth2) 'VELOCITY CHANGE (m/s).', is, t0/50.0_R8
-         write (nprt,fmtp) '+cpua', header
-         call b2wgxp (nx, ny, header, xc, xf, yc, yf,
+      if (strmas(idout,'cpua')) then
+       do is = 0, ns-1
+        t0 = scal10(0.8_R8*damax(n2,delua(-1,-1,is),1))
+        write (header,fmth2) 'VELOCITY CHANGE (m/s).', is, t0/50.0_R8
+        write (nprt,fmtp) '+cpua', header
+        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &     delua(-1,-1,is), 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 24,
      &     -t0/10.0_R8, t0/10.0_R8, 10)
-        enddo
-       endif
+       enddo
+      endif
 
 * ..return
+      flush (nprt)
       call subend ()
       return
 

@@ -122,6 +122,7 @@
       call cfwure (nput, 8, cflim, 'cflim')
 
 * ..return
+      flush (nput)
       call subend ()
       return
 
