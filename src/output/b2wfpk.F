@@ -142,6 +142,7 @@
       write (nprt,'()')
 
 * ..return
+      flush (nprt)
       call subend ()
       return
 

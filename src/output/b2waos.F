@@ -509,6 +509,7 @@ ctb       WRITE (NPRT, '(/1PE12.3, 4D11.3, 2X, (T59, 6D11.3))')
       ENDDO
 
       call b2prnti(NPRT, nx, ny, ns)
+      flush (NPRT)
 
 * ..return
       ncall = ncall+1

@@ -165,6 +165,7 @@
       call cfwure (nput, n2*4, floi_noc, 'floi_noc')
 
 * ..return
+      flush (nput)
       call subend ()
       return
 

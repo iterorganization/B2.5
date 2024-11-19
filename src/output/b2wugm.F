@@ -488,6 +488,7 @@ cxpb-end
         call cfwuin (nput, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
       endif
 * ..return
+      flush (nput)
       call subend ()
       return
 
