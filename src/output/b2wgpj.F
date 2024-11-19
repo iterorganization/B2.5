@@ -459,6 +459,7 @@
       enddo
 
 * ..return
+      flush (nprt)
       call subend ()
       return
 
