@@ -490,6 +490,7 @@ cxpb-end
         call cfwure (nput, n2, cell_height, 'cell_height')
       endif
 * ..return
+      flush (nput)
       call subend ()
       return
 
