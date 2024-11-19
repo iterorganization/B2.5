@@ -184,7 +184,7 @@
      >     min(switch%b2upht_tn_max*ev,tn(iCv)+dtn(iCv)))
         if (switch%solve_keps.gt.0.and.solvkreg(ireg))
      >   kt(iCv) = max(switch%b2upht_kt_min*ev,
-     >     min(switch%b2upht_tn_max*ev,kt(iCv)+dkt(iCv)))
+     >     min(switch%b2upht_kt_max*ev,kt(iCv)+dkt(iCv)))
         if (switch%solve_keps.gt.1.and.solvzreg(ireg))
      >   zt(iCv) = max(switch%b2upht_zt_min*ev,
      >     min(switch%b2upht_zt_max*ev,zt(iCv)+dzt(iCv)))
