@@ -400,35 +400,40 @@ program test_b2output
    open(unit=my_unit,file=trim(filename), status='old', action='read', form='FORMATTED', iostat=ierr)
 #endif
    ! Read the header
-   read(my_unit,'(a,a)') label ,version_in
-   if (label/='VERSION') then
-     if (label == '*cf:') then
-       ! No version header, but seems to be a text file
-       label='unknown'
-       version_in = 'version'
-       rewind(my_unit)
-     else
-       ! If it does not match, then it should be a binary file
-       close(my_unit)
+   read(my_unit,'(a,a)',iostat=ierr) label, version_in
+   if (ierr == 0) then
+     if (label/='VERSION') then
+       if (label == '*cf:') then
+         ! No version header, but seems to be a text file
+         label='unknown'
+         version_in = 'version'
+         rewind(my_unit)
+       else
+         ! If it does not match, then it should be a binary file
+         close(my_unit)
        ! reopen in UNFORMATTED mode
 #ifndef LEGACYCOMP
-       open(newunit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
+         open(newunit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
 #else
-       open(unit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
+         open(unit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
 #endif
-       read(my_unit) label ,version_in
-       if (label/='VERSION') then
-         if (label == '*cf:') then
-           ! No version header, but seems to be a valid file
-           label='unknown'
-           version_in = 'version'
-           rewind(my_unit)
-         else
-           write(*,*) 'Error, file should start with VERSION or *cf tag'
-           stop
+         read(my_unit) label, version_in
+         if (label/='VERSION') then
+           if (label == '*cf:') then
+             ! No version header, but seems to be a valid file
+             label='unknown'
+             version_in = 'version'
+             rewind(my_unit)
+           else
+             write(*,*) 'Error, file should start with VERSION or *cf tag'
+             stop
+           endif
          endif
        endif
      endif
+   else
+     write(*,*) 'Error, file '//trim(filename)//' found empty or missing'
+     stop
    endif
    if (ierr == 0) write(*,*) trim(filename),' opened successfully'
    write(*,*) label, ' ', version_in

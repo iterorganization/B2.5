@@ -10,6 +10,7 @@
       write (nprt,101)
       write (nprt,102)
       write (nprt,'()')
+      flush (nprt)
 *$$$  call subend ()
       return
 *     ------------------------------------------------------------------
