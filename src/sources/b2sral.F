@@ -24,6 +24,9 @@
      & , only : b2sral_elm_count, ncall_b2sral
 c ECH
       use b2mod_ech
+c ICH
+      use b2mod_ich
+
 c Artificial losses
       use b2mod_artificialsinks
 #ifndef NAGFOR
@@ -420,6 +423,13 @@ c ECH power
         call b2saxpy (nCv*4, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
       endif
 c end ECH
+
+c ICH power
+      if(switch%use_ich.eq.1) then
+        call CalcICH(nCv,geo,mpg,st%dv,switch,st%srw%shi0)
+        call b2saxpy (nCv*4, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
+      endif
+c end ICH
 
 c Artificial losses for 1D simulations
       if(switch%losses_limiters.eq.1) then
