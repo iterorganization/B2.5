@@ -47,6 +47,7 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER :: nxd, nyd, nncutmax
+    INTRINSIC MAX
 !
     IF (b2mod_indirect_allocated) THEN
       RETURN
@@ -63,7 +64,11 @@ CONTAINS
       ALLOCATE(on_closed_surface(-1:nxd, -1:nyd))
       nnreg = 0
       ALLOCATE(resignore(-1:nxd, -1:nyd, 2))
-      nncutmax = def_ncut
+      IF (1 .LT. def_ncut) THEN
+        nncutmax = def_ncut
+      ELSE
+        nncutmax = 1
+      END IF
       ALLOCATE(leftcut(1:nncutmax))
       ALLOCATE(rightcut(1:nncutmax))
       ALLOCATE(topcut(1:nncutmax))

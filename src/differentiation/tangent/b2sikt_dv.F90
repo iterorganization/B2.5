@@ -135,6 +135,10 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   REAL(kind=r8) :: dabs1
   REAL(kind=r8) :: min1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
+  REAL(kind=r8) :: min2
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: min2d
+  REAL(kind=r8) :: min3
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: min3d
   INTEGER :: arg1
   REAL(kind=r8), DIMENSION(ncv) :: arg10
   REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg10d
@@ -514,21 +518,75 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
           t3d(nd) = 0.D0
         END DO
       END IF
-      DO nd=1,nbdirs
-        she0d(nd, ic, 0) = pl%kt(ic)*t2d(nd) + t2*pld%kt(nd, ic) - t1d(&
-&         nd) + t3d(nd)
-        shi0d(nd, ic, 0) = -t0d(nd)
-      END DO
-      she0(ic, 0) = -t1 + t2*pl%kt(ic) + t3
-      shi0(ic, 0) = -t0
       IF (switch%b2sikt_kt_source_stab .EQ. 0) THEN
         DO nd=1,nbdirs
+          she0d(nd, ic, 0) = pl%kt(ic)*t2d(nd) + t2*pld%kt(nd, ic) - t1d&
+&           (nd) + t3d(nd)
+          shi0d(nd, ic, 0) = -t0d(nd)
           skt0d(nd, ic, 0) = t0d(nd) + t1d(nd) - t3d(nd) - t4d(nd)
           skt0d(nd, ic, 1) = -t2d(nd)
         END DO
+        she0(ic, 0) = -t1 + t2*pl%kt(ic) + t3
+        shi0(ic, 0) = -t0
         skt0(ic, 0) = t0 + t1 - t3 - t4
         skt0(ic, 1) = -t2
       ELSE
+        IF (-t1 + t2*pl%kt(ic) + t3 .LT. 0.0_R8) THEN
+          DO nd=1,nbdirs
+            she0d(nd, ic, 0) = 0.D0
+          END DO
+          she0(ic, 0) = 0.0_R8
+        ELSE
+          DO nd=1,nbdirs
+            she0d(nd, ic, 0) = pl%kt(ic)*t2d(nd) + t2*pld%kt(nd, ic) - &
+&             t1d(nd) + t3d(nd)
+          END DO
+          she0(ic, 0) = -t1 + t2*pl%kt(ic) + t3
+        END IF
+        IF (-t1 + t2*pl%kt(ic) + t3 .GT. 0.0_R8) THEN
+          min1 = 0.0_R8
+          DO nd=1,nbdirsmax
+            min1d(nd) = 0.D0
+          END DO
+        ELSE
+          DO nd=1,nbdirs
+            min1d(nd) = pl%kt(ic)*t2d(nd) + t2*pld%kt(nd, ic) - t1d(nd) &
+&             + t3d(nd)
+          END DO
+          min1 = -t1 + t2*pl%kt(ic) + t3
+        END IF
+        temp7 = min1/pl%te(ic)
+        DO nd=1,nbdirs
+          she0d(nd, ic, 1) = (min1d(nd)-temp7*pld%te(nd, ic))/pl%te(ic)
+        END DO
+        she0(ic, 1) = temp7
+        IF (-t0 .LT. 0.0_R8) THEN
+          DO nd=1,nbdirs
+            shi0d(nd, ic, 0) = 0.D0
+          END DO
+          shi0(ic, 0) = 0.0_R8
+        ELSE
+          DO nd=1,nbdirs
+            shi0d(nd, ic, 0) = -t0d(nd)
+          END DO
+          shi0(ic, 0) = -t0
+        END IF
+        IF (-t0 .GT. 0.0_R8) THEN
+          min2 = 0.0_R8
+          DO nd=1,nbdirsmax
+            min2d(nd) = 0.D0
+          END DO
+        ELSE
+          DO nd=1,nbdirs
+            min2d(nd) = -t0d(nd)
+          END DO
+          min2 = -t0
+        END IF
+        temp7 = min2/pl%ti(ic)
+        DO nd=1,nbdirs
+          shi0d(nd, ic, 1) = (min2d(nd)-temp7*pld%ti(nd, ic))/pl%ti(ic)
+        END DO
+        shi0(ic, 1) = temp7
         IF (t0 + t1 .LT. 0.0_R8) THEN
           DO nd=1,nbdirs
             skt0d(nd, ic, 0) = 0.D0
@@ -541,20 +599,20 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
           skt0(ic, 0) = t0 + t1
         END IF
         IF (t0 + t1 .GT. 0.0_R8) THEN
-          min1 = 0.0_R8
+          min3 = 0.0_R8
           DO nd=1,nbdirsmax
-            min1d(nd) = 0.D0
+            min3d(nd) = 0.D0
           END DO
         ELSE
           DO nd=1,nbdirs
-            min1d(nd) = t0d(nd) + t1d(nd)
+            min3d(nd) = t0d(nd) + t1d(nd)
           END DO
-          min1 = t0 + t1
+          min3 = t0 + t1
         END IF
         temp7 = 1.0e-8_R8*ev + pl%kt(ic)
-        temp8 = (min1-t3-t4)/temp7
+        temp8 = (min3-t3-t4)/temp7
         DO nd=1,nbdirs
-          skt0d(nd, ic, 1) = (min1d(nd)-t3d(nd)-t4d(nd)-temp8*pld%kt(nd&
+          skt0d(nd, ic, 1) = (min3d(nd)-t3d(nd)-t4d(nd)-temp8*pld%kt(nd&
 &           , ic))/temp7 - t2d(nd)
         END DO
         skt0(ic, 1) = temp8 - t2
@@ -739,6 +797,8 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
   REAL(kind=r8), DIMENSION(ncv) :: dabs0
   REAL(kind=r8) :: dabs1
   REAL(kind=r8) :: min1
+  REAL(kind=r8) :: min2
+  REAL(kind=r8) :: min3
   INTEGER :: arg1
   REAL(kind=r8), DIMENSION(ncv) :: arg10
   REAL(r8), DIMENSION(nCv) :: arg11
@@ -919,23 +979,45 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
         t2 = 0.0_R8
         t3 = 0.0_R8
       END IF
-      she0(ic, 0) = -t1 + t2*pl%kt(ic) + t3
-      shi0(ic, 0) = -t0
       IF (switch%b2sikt_kt_source_stab .EQ. 0) THEN
+        she0(ic, 0) = -t1 + t2*pl%kt(ic) + t3
+        shi0(ic, 0) = -t0
         skt0(ic, 0) = t0 + t1 - t3 - t4
         skt0(ic, 1) = -t2
       ELSE
+        IF (-t1 + t2*pl%kt(ic) + t3 .LT. 0.0_R8) THEN
+          she0(ic, 0) = 0.0_R8
+        ELSE
+          she0(ic, 0) = -t1 + t2*pl%kt(ic) + t3
+        END IF
+        IF (-t1 + t2*pl%kt(ic) + t3 .GT. 0.0_R8) THEN
+          min1 = 0.0_R8
+        ELSE
+          min1 = -t1 + t2*pl%kt(ic) + t3
+        END IF
+        she0(ic, 1) = min1/pl%te(ic)
+        IF (-t0 .LT. 0.0_R8) THEN
+          shi0(ic, 0) = 0.0_R8
+        ELSE
+          shi0(ic, 0) = -t0
+        END IF
+        IF (-t0 .GT. 0.0_R8) THEN
+          min2 = 0.0_R8
+        ELSE
+          min2 = -t0
+        END IF
+        shi0(ic, 1) = min2/pl%ti(ic)
         IF (t0 + t1 .LT. 0.0_R8) THEN
           skt0(ic, 0) = 0.0_R8
         ELSE
           skt0(ic, 0) = t0 + t1
         END IF
         IF (t0 + t1 .GT. 0.0_R8) THEN
-          min1 = 0.0_R8
+          min3 = 0.0_R8
         ELSE
-          min1 = t0 + t1
+          min3 = t0 + t1
         END IF
-        skt0(ic, 1) = (min1-t3-t4)/(1.0e-8_R8*ev+pl%kt(ic)) - t2
+        skt0(ic, 1) = (min3-t3-t4)/(1.0e-8_R8*ev+pl%kt(ic)) - t2
       END IF
       skt_prod(ic) = t0 + t1
       skt_diss(ic) = t2*pl%kt(ic) + t3 + t4

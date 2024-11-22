@@ -1297,7 +1297,7 @@ CONTAINS
     s%b2tfhi_fconkt = 0.0_R8
     s%b2tfhi_fflozt = 0.0_R8
     s%b2tfhi_fconzt = 0.0_R8
-    s%b2tfhi_fsigkt = 0.0_R8
+    s%b2tfhi_fsigkt = 0.1_R8
     s%b2tfhi_fkt_hie = 0.0_R8
     s%b2tfhe_vis_kt = 0.0_R8
     s%b2sikt_lpar_ref = 10.0_R8

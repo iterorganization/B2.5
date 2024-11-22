@@ -50,61 +50,61 @@
         call xertst(mpg%isClassicalGrid.eq.1,' Cost function CVs and '//
      &  'FCs ordering  and interpolation in case of unstructured grid'//
      &  ' needs to be revised')
-        do icf = 1, ncf
-          if (cfread(icf)) then
-! WARNING! For now we assume that the data read from the cost function is only radially dependent
-            write (*,*) 'WARNING, b2usr_cost_function assumes data '//
-     &                  'read for CF is only radially dependent'
-            ic1 = mpg%cfRegP(icf,1)
-            ic2 = ic1 + mpg%cfRegP(icf,2) - 1
-            n1 = mpg%cfRegP(icf,2)
-            if (mpg%cfOnCv(icf)) then
-              call calc_dist(geo,mpg%cfReg(ic1:ic2),n1,icsepomp-1, !csc icsep-1 because non-internal cells have been excluded!
-     &          b2rr(icf,1:n1))
-              b2psi(icf,1:n1) = geo%cvFpsi(mpg%cfReg(ic1:ic2))
-            else
-              call calc_dist_f(geo,mpg%cfReg(ic1:ic2),n1,icsepomp-1, !csc icsep-1 because non-internal cells have been excluded!
-     &          b2rr(icf,1:n1))
-              b2psi(icf,1:n1) = geo%fcFpsi(mpg%cfReg(ic1:ic2))
-            endif
-            if (mapToOMP(icf)) then
-              ! For mapping we will go from b2psi -> psi_omp -> b2rr of OMP, but first we need to check 
-              ! if the psi for each CF is actually within the range of OMP psi otherwise we need to
-              ! exclude some cells on the OMP side for this CF
-              ic1 = 2 ! starting point in OMP list of CV that are within the psi domain of cfReg
-              ic2 = nomp-1 ! ending point...
-              if (psi_omp(1)<psi_omp(nomp)) then
-                ! increasing psi
-                do icv = 2, nomp-1
-                  if (psi_omp(icv)<minval(b2psi(icf,1:n1))) ic1 = icv+1
-                end do
-                do icv = nomp-1, 2, -1
-                  if (psi_omp(icv)>maxval(b2psi(icf,1:n1))) ic2 = icv-1
-                end do
-              else
-                ! decreasing psi
-                do icv = 2, nomp-1
-                  if (psi_omp(icv)>maxval(b2psi(icf,1:n1))) ic1 = icv+1
-                end do
-                do icv = nomp-1, 2, -1
-                  if (psi_omp(icv)<minval(b2psi(icf,1:n1))) ic2 = icv-1
-                end do
-              end if
-              ! taking internal cells only
-              call calc_dist(geo,omp(2:nomp-1),nomp-2,icsepomp-1,
-     &          b2rr(icf,1:nomp-2))
-              n1 = ic2 - ic1 + 1
-              ! ompind will thus store the indices of first and last CV
-              ! in OMP list that are within the psi range needed for interpolating
-              ! from cfReg to OMP
-              ompind(icf,1) = ic1
-              ompind(icf,2) = ic2
-              b2rr(icf,1:n1) = b2rr(icf,ic1-1:ic2-1)
-            endif ! mapToOMP
-          endif ! cfread
-        enddo ! icf
         first_call = .false.
       endif
+      do icf = 1, ncf
+        if (cfread(icf)) then
+! WARNING! For now we assume that the data read from the cost function is only radially dependent
+          write (*,*) 'WARNING, b2usr_cost_function assumes data '//
+     &                'read for CF is only radially dependent'
+          ic1 = mpg%cfRegP(icf,1)
+          ic2 = ic1 + mpg%cfRegP(icf,2) - 1
+          n1 = mpg%cfRegP(icf,2)
+          if (mpg%cfOnCv(icf)) then
+            call calc_dist(geo,mpg%cfReg(ic1:ic2),n1,icsepomp-1, !csc icsep-1 because non-internal cells have been excluded!
+     &        b2rr(icf,1:n1))
+            b2psi(icf,1:n1) = geo%cvFpsi(mpg%cfReg(ic1:ic2))
+          else
+            call calc_dist_f(geo,mpg%cfReg(ic1:ic2),n1,icsepomp-1, !csc icsep-1 because non-internal cells have been excluded!
+     &        b2rr(icf,1:n1))
+            b2psi(icf,1:n1) = geo%fcFpsi(mpg%cfReg(ic1:ic2))
+          endif
+          if (mapToOMP(icf)) then
+            ! For mapping we will go from b2psi -> psi_omp -> b2rr of OMP, but first we need to check 
+            ! if the psi for each CF is actually within the range of OMP psi otherwise we need to
+            ! exclude some cells on the OMP side for this CF
+            ic1 = 2 ! starting point in OMP list of CV that are within the psi domain of cfReg
+            ic2 = nomp-1 ! ending point...
+            if (psi_omp(1)<psi_omp(nomp)) then
+              ! increasing psi
+              do icv = 2, nomp-1
+                if (psi_omp(icv)<minval(b2psi(icf,1:n1))) ic1 = icv+1
+              end do
+              do icv = nomp-1, 2, -1
+                if (psi_omp(icv)>maxval(b2psi(icf,1:n1))) ic2 = icv-1
+              end do
+            else
+              ! decreasing psi
+              do icv = 2, nomp-1
+                if (psi_omp(icv)>maxval(b2psi(icf,1:n1))) ic1 = icv+1
+              end do
+              do icv = nomp-1, 2, -1
+                if (psi_omp(icv)<minval(b2psi(icf,1:n1))) ic2 = icv-1
+              end do
+            end if
+            ! taking internal cells only
+            call calc_dist(geo,omp(2:nomp-1),nomp-2,icsepomp-1,
+     &        b2rr(icf,1:nomp-2))
+            n1 = ic2 - ic1 + 1
+            ! ompind will thus store the indices of first and last CV
+            ! in OMP list that are within the psi range needed for interpolating
+            ! from cfReg to OMP
+            ompind(icf,1) = ic1
+            ompind(icf,2) = ic2
+            b2rr(icf,1:n1) = b2rr(icf,ic1-1:ic2-1)
+          endif ! mapToOMP
+        endif ! cfread
+      enddo ! icf
 #endif
 #ifndef TEST_MAP
 ! cf normalization depends on shift now, as some points may eventualy be left out of the B2 domain

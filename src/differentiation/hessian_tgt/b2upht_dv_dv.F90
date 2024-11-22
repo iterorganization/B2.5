@@ -1293,7 +1293,7 @@ SUBROUTINE B2UPHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, mpg&
       END IF
     END IF
     IF (switch%solve_keps .GT. 0 .AND. solvkreg(ireg)) THEN
-      IF (switch%b2upht_tn_max*ev .GT. kt(icv) + dkt(icv)) THEN
+      IF (switch%b2upht_kt_max*ev .GT. kt(icv) + dkt(icv)) THEN
         DO nd=1,nbdirs
           DO nd0=nd,nbdirs0
             y4dd(nd0, nd) = ktdd(nd0, nd, icv) + dktdd(nd0, nd, icv)
@@ -1311,7 +1311,7 @@ SUBROUTINE B2UPHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, geod0, geod, mpg&
           END DO
           y4d(nd) = 0.d0
         END DO
-        y4 = switch%b2upht_tn_max*ev
+        y4 = switch%b2upht_kt_max*ev
         DO nd=1,nbdirsmax
           DO nd0=1,nbdirs0
             y4dd(nd0, nd) = 0.0_8
@@ -2146,7 +2146,7 @@ SUBROUTINE B2UPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
       END IF
     END IF
     IF (switch%solve_keps .GT. 0 .AND. solvkreg(ireg)) THEN
-      IF (switch%b2upht_tn_max*ev .GT. kt(icv) + dkt(icv)) THEN
+      IF (switch%b2upht_kt_max*ev .GT. kt(icv) + dkt(icv)) THEN
         DO nd=1,nbdirs
           y4d(nd) = ktd(nd, icv) + dktd(nd, icv)
         END DO
@@ -2155,7 +2155,7 @@ SUBROUTINE B2UPHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, geod, mpg, &
         DO nd=1,nbdirs
           y4d(nd) = 0.d0
         END DO
-        y4 = switch%b2upht_tn_max*ev
+        y4 = switch%b2upht_kt_max*ev
         DO nd=1,nbdirsmax
           y4d(nd) = 0.d0
         END DO
@@ -2587,10 +2587,10 @@ SUBROUTINE B2UPHT_NODIFF_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, &
       END IF
     END IF
     IF (switch%solve_keps .GT. 0 .AND. solvkreg(ireg)) THEN
-      IF (switch%b2upht_tn_max*ev .GT. kt(icv) + dkt(icv)) THEN
+      IF (switch%b2upht_kt_max*ev .GT. kt(icv) + dkt(icv)) THEN
         y4 = kt(icv) + dkt(icv)
       ELSE
-        y4 = switch%b2upht_tn_max*ev
+        y4 = switch%b2upht_kt_max*ev
       END IF
       IF (switch%b2upht_kt_min*ev .LT. y4) THEN
         kt(icv) = y4
