@@ -40,7 +40,9 @@ c*******************************************************************************
 *     Particle losses are assumed to be of the form n_i/tau, hence only sna0_XXXloss(:,1,:) is
 *     non-zero. The subroutines return sna0_XXXloss(:,1,:) = -1.0/tau, then the multiplication by
 *     n_i is carried out in b2sral.
-*     Energy losses are assumed to be of the form n*T/tau, hence only shY0_XXXloss(:,3) is non-zero.
+*     Energy losses are assumed to be of the form n*T*gamma/tau, hence only shY0_XXXloss(:,3) is non-zero.
+*     In the case of limiter losses, energy losses for electrons are assumed to be of the form
+*     n_a*T_e*gamma/tau, hence only she0_XXXloss(:,1) is non-zero.
 *
 *
 *-----------------------------------------------------------------------
@@ -111,9 +113,9 @@ c Limiter losses computation
       Rp_min = switch%R0 - switch%limiter_width * switch%a0
       Rp_max = switch%R0 + switch%limiter_width * switch%a0
 
-      do iCv = 1, mpg%nCi
-        do is = 0, ns-1
-          if(is_neutral(is)) cycle
+      do is = 0, ns-1
+        if(is_neutral(is)) cycle
+          do iCv = 1, mpg%nCi
             if(geo%cvX(iCv).le.Rp_min.or.geo%cvX(iCv).ge.Rp_max) then
               c_sound2 = sqrt(rt%rza(iCv,is)*pl%te(iCv)/(am(is)*mp)) !! CHECK B2NEWS_.F FOR AUXILIARY  PPZ AND PRZ
               call b2xprz (nCv, ns, mp, am, pl%na, rz, st_ext)
@@ -129,22 +131,23 @@ c Limiter losses computation
                 tmpry = int(floor(is - rt%rza(iCv,is))) !! LOOK INTO B2STBR_PHYS (RECYCLE) TO MODIFY
                 sna0_limloss(iCv,0,tmpry) = pl%na(iCv,is)/
      &                             tauion_lim(iCv,is)*geo%cvVol(iCv)
-!! SINK AT T = TI
+c ap SINK AT T = TI
                 shi0_limloss(iCv,3) = -1.0_R8/(tauion_lim(iCv,is)/
      &                             switch%bohm_gammaD)*geo%cvVol(iCv)
-!! SOURCE AT T = Ta0 (=T_WALL)
+c ap SOURCE AT T = T_wall (=Ta0 in TOMATOR 1D)
                 if (switch%tn_style.eq.2) then
                   shn0_limloss(iCv,0) = 3.0_R8/2.0_R8*pl%na(iCv,is)/
      &                          tauion_lim(iCv,is)*geo%cvVol(iCv)*
-     &                          (0.02587*ev) ! Ta0, has to be generalised
+     &                          (switch%T_wall*ev) ! Ta0, has to be generalised
                 else
                   shi0_limloss(iCv,0) = 3.0_R8/2.0_R8*pl%na(iCv,is)/
      &                          tauion_lim(iCv,is)*geo%cvVol(iCv)*
-     &                          (0.02587*ev) ! Ta0, has to be generalised
+     &                          (switch%T_wall*ev) ! Ta0, has to be generalised
                 endif
-                she0_limloss(iCv,1) = -rt%rza(iCv,is)*pl%na(iCv,is)/
-     &                      (tauion_lim(iCv,is)/switch%bohm_gammaD)*
-     &                        geo%cvVol(iCv)*3.0_R8/2.0_R8
+                she0_limloss(iCv,1) = she0_limloss(iCv,1) -
+     &                                3.0_R8/2.0_R8*rt%rza(iCv,is)*
+     &                                pl%na(iCv,is)/(tauion_lim(iCv,is)/
+     &                                switch%bohm_gammaD)*geo%cvVol(iCv)
               endif
             endif
         enddo
@@ -214,7 +217,7 @@ c Drift losses computation
 *   ..subprogram start-up calls
       call subini('driftloss')
 
-      call sfill(nCv*2*ns, 0.0_R8, sna0_driftloss, 1)
+      call sfill (nCv*2*ns, 0.0_R8, sna0_driftloss, 1)
       call sfill (nCv*ns, 0.0_R8, tauion_drift, 1)
       call sfill (nCv*4, 0.0_R8, shi0_driftloss, 1)
       call sfill (nCv*4, 0.0_R8, she0_driftloss, 1)
@@ -229,9 +232,10 @@ c Drift losses computation
      &                        geo%cvVol(iCv)
             shi0_driftloss(iCv,3) = -1.0_R8/(tauion_drift(iCv,is)/
      &                             switch%bohm_gammaD)*geo%cvVol(iCv)
-            she0_driftloss(iCv,3) = -1.0_R8*rt%rza(iCv,is)/
-     &                      (tauion_drift(iCv,is)/switch%bohm_gammaD)*
-     &                        geo%cvVol(iCv)
+            she0_driftloss(iCv,3) = she0_driftloss(iCv,3) -
+     &                              1.0_R8*rt%rza(iCv,is)/
+     &                              (tauion_drift(iCv,is)/
+     &                              switch%bohm_gammaD)*geo%cvVol(iCv)
           enddo
       enddo
 
@@ -313,9 +317,10 @@ c Poloidal losses computation
      &                               geo%cvVol(iCv)
             shi0_polloss(iCv,3) = -1.0_R8/(tauion_pol(iCv,is)/
      &                            switch%bohm_gammaD)*geo%cvVol(iCv)
-            she0_polloss(iCv,3) = -1.0_R8*rt%rza(iCv,is)/
-     &                         (tauion_pol(iCv,is)/switch%bohm_gammaD)*
-     &                         geo%cvVol(iCv)
+            she0_polloss(iCv,3) = she0_polloss(iCv,3) -
+     &                            1.0_R8*rt%rza(iCv,is)/
+     &                            (tauion_pol(iCv,is)/
+     &                            switch%bohm_gammaD)*geo%cvVol(iCv)
           enddo
       enddo
 
@@ -363,9 +368,12 @@ c Dealloc
         deallocate(shi_losses)
       endif
 
+*   ..return
       return
+
+*-----------------------------------------------------------------------
+*.end dealloc_b2mod_artificialsinks
       end subroutine dealloc_b2mod_artificialsinks
-c End dealloc
 
 *-----------------------------------------------------------------------
 *.end b2mod_artificialsinks

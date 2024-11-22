@@ -438,6 +438,7 @@ c Artificial losses
       integer :: nlimiters
       integer :: artloss_out
       real (kind=R8) :: limiter_width
+      real (kind=R8) :: T_wall
 
 c b2tqna
       real (kind=R8) :: b2tqna_ballooning
@@ -1019,7 +1020,7 @@ c Bohm-like transport model
       s % transport_bohm = 0
       s % bohm_pureDiff = 0
       s % bohm_ExB = 1
-      s % bohm_viscosity = 1
+      s % bohm_viscosity = 0
       s % bohm_average = 0
       s % bohm_iout = 0
       s % bohm_gammaD = 0.0_R8
@@ -1036,6 +1037,7 @@ c Artificial losses
       s % nlimiters = 0
       s % artloss_out = 0
       s % limiter_width = 0.0_R8
+      s % T_wall = 0.02587 ! eV (corresponding to 300K)
 
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
@@ -1639,6 +1641,7 @@ c Artificial losses
       call ipgeti ('b2sral_nlimiters', s%nlimiters)
       call ipgeti ('b2sral_artloss_out', s%artloss_out)
       call ipgetr ('b2sral_limiter_width', s % limiter_width)
+      call ipgetr ('b2sral_Twall', s % T_wall)
 
 c b2tqna
       call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)
@@ -2294,6 +2297,8 @@ c Artificial losses
      1              'Number of limiters must be .gt. 0')
       call xertst (0.0_R8.lt.s%limiter_width.or.s%losses_limiters.eq.0,
      1              'Limiter width must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%T_wall.or.s%losses_limiters.eq.0,
+     1              'T_wall must be .gt. 0.0')
 
 c eirene_mc
       call xertst (0.0_R8.le.s%neutral_sources_rescale,
