@@ -86,7 +86,6 @@ c     Internal variables
       call sfill (nCv, 0.0_R8, chi, 1)
       call sfill (4, 0.0_R8, segment, 1)
       call sfill (nCv, 0.0_R8, segmdist, 1)
-c      inteprof = 0.0_R8
       summation = 0.0_R8
       totaldist = 0.0_R8
       fcCnX1 = 0.0_R8
@@ -94,7 +93,6 @@ c      inteprof = 0.0_R8
       fcCnY1 = 0.0_R8
       fcCnY2 = 0.0_R8
       cntr = 0
-c      normlz = 0.0_R8
 
       select case (switch%ech_coupling)
 
@@ -123,7 +121,7 @@ c      normlz = 0.0_R8
             totaldist = totaldist + segmdist(iCv)
         enddo
         chi(:) = segmdist/totaldist ! (distance of 2 face centers (vxX(fcVx(ifc,1)+vxX(fcVx(ifc,2))/2 for X, same for Y
-        summation = sum(chi(:)*geo%cvVol(:))
+        summation = sum(chi(:)*geo%cvVol(:)) ! normalisation condition
         chi = chi/summation
         do cntr = 1, size(list_ci)
           if(list_ci(cntr).ne.0) then
@@ -133,47 +131,31 @@ c      normlz = 0.0_R8
           endif
         enddo
 
-* -- COUPLING = 1 -- Fixed fraction of launched power is coupled/Gaussian injection.
+* -- COUPLING = 1 -- Fixed fraction of launched power is coupled with a Gaussian-like distribution.
 
       case(1)
-        sx = switch%ech_gaussian_width ! widthech in T1D
+        sx = switch%ech_gaussian_width ! widthech in TOMATOR 1D
         sy = sx ! assumed equal for now for 2D
-        if (switch%ech_gaussian_symmetry.eq.1) then
+        if (switch%ech_gaussian_symmetry.eq.1) then ! symmetry on poloidal direction
           do iCv = 1, mpg%nCi
-            chi(iCv) = geo%cvX(iCv)*expu(-1.0_R8/2.0_R8*
+            chi(iCv) = geo%cvX(iCv)*expu(-
      &            ((geo%cvX(iCv)-switch%ech_Rdep)/sx)**2)+
-     &            1.0E-7*geo%cvX(iCv)*expu(-1.0_R8/2.0_R8*
-     &            ((geo%cvX(iCv)*-switch%ech_Rdep)/switch%a0)**2) ! symmetry on poloidal direction
+     &            1.0E-7*geo%cvX(iCv)*expu(-
+     &            ((geo%cvX(iCv)-switch%ech_Rdep)/switch%a0)**2)
           enddo
 
-c          segment = reshape((/
-c     &       minval(geo%cVx), maxval(geo%cvY)/2.0_R8,
-c     &       maxval(geo%cVx), maxval(geo%cvY)/2.0_R8 /),
-c     &              shape(segment))
-
-c          call cv_intersections (geo, mpg, segment, list_cv, list_ci,
-c     &   list_fc, nncv, nnci, nnfc, nCv, 1, ifail)
-
           summation = sum(chi(:)*geo%cvVol(:))
-
-c          do cntr = 1, size(list_ci)
-c            if(list_ci(cntr).ne.0) then
-c              iCv = list_ci(cntr)
-c              summation = summation + chi(:)*geo%cvVol(:)
-c            endif
-c          enddo
-
           chi = chi/summation
 
         else
           chi = 1.0_R8/(2*pi*sx*sy)*exp(-1.0_R8/2.0_R8*
      &            ((geo%cvX-switch%ech_Rdep)**2/sx**2 +
-     &             (geo%cvY-switch%ech_Zdep)**2/sy**2)) ! ech_Zdep to be defined
+     &             (geo%cvY-switch%ech_Zdep)**2/sy**2))
 
           do iCv = 1, mpg%nCi
-            summation = summation + chi(iCv)*geo%cvVol(iCv) ! normalisation condition to ensure grid independence
+            summation = summation + chi(iCv)*geo%cvVol(iCv) ! normalisation condition
           enddo
-          chi = chi/summation ! normalisation condition to ensure grid independence
+          chi = chi/summation ! normalisation condition
 
         endif
 
