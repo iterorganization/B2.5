@@ -6770,6 +6770,8 @@
             22: Average density of this species at the separatrix
             23: Peak heat flux density at specific boundary. Boundary index should be defined by FB_TYPE_IB. By default it equals 2.
             24: Peak electron temperature at specific boundary. Boundary index should be defined by FB_TYPE_IB. By default it equals 2.
+            25: Peak electron density at specific boundary. Boundary index should be defined by FB_TYPE_IB. By default it equals 2.
+            26: Peak saturation current at specific boundary. Boundary index should be defined by FB_TYPE_IB. By default it equals 2.
 				</description>
 			</switch>
 			<switch>
