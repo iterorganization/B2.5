@@ -126,6 +126,10 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   REAL(kind=r8) :: dabs1
   REAL(kind=r8) :: min1
   REAL(kind=r8) :: min1b
+  REAL(kind=r8) :: min2
+  REAL(kind=r8) :: min2b
+  REAL(kind=r8) :: min3
+  REAL(kind=r8) :: min3b
   INTEGER :: arg1
   LOGICAL, DIMENSION(ncv) :: mask
   REAL(kind=r8) :: result1
@@ -149,6 +153,7 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   REAL(r8), DIMENSION(nCv) :: tempb7
   REAL(kind=r8) :: temp
   REAL(kind=r8) :: tempb8
+  REAL(kind=r8) :: tempb9
   INTEGER*4 :: branch
 !
 ! ..compute heat source terms
@@ -289,18 +294,46 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
       IF (switch%b2sikt_kt_source_stab .EQ. 0) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
+        IF (-t1 + t2*pl%kt(ic) + t3 .LT. 0.0_R8) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHCONTROL1B(1)
+        END IF
+        IF (-t1 + t2*pl%kt(ic) + t3 .GT. 0.0_R8) THEN
+          CALL PUSHREAL8(min1, r8/8)
+          min1 = 0.0_R8
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHREAL8(min1, r8/8)
+          min1 = -t1 + t2*pl%kt(ic) + t3
+          CALL PUSHCONTROL1B(1)
+        END IF
+        IF (-t0 .LT. 0.0_R8) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHCONTROL1B(1)
+        END IF
+        IF (-t0 .GT. 0.0_R8) THEN
+          CALL PUSHREAL8(min2, r8/8)
+          min2 = 0.0_R8
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHREAL8(min2, r8/8)
+          min2 = -t0
+          CALL PUSHCONTROL1B(1)
+        END IF
         IF (t0 + t1 .LT. 0.0_R8) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
           CALL PUSHCONTROL1B(1)
         END IF
         IF (t0 + t1 .GT. 0.0_R8) THEN
-          CALL PUSHREAL8(min1, r8/8)
-          min1 = 0.0_R8
+          CALL PUSHREAL8(min3, r8/8)
+          min3 = 0.0_R8
           CALL PUSHCONTROL1B(0)
         ELSE
-          CALL PUSHREAL8(min1, r8/8)
-          min1 = t0 + t1
+          CALL PUSHREAL8(min3, r8/8)
+          min3 = t0 + t1
           CALL PUSHCONTROL1B(1)
         END IF
         CALL PUSHCONTROL1B(1)
@@ -343,32 +376,35 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
     DO ic=mpg%nci,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        t2b = -skt0b(ic, 1)
+        t2b = pl%kt(ic)*she0b(ic, 0) - skt0b(ic, 1)
         skt0b(ic, 1) = 0.D0
-        t0b = skt0b(ic, 0)
-        t1b = skt0b(ic, 0)
-        t3b = -skt0b(ic, 0)
+        t0b = skt0b(ic, 0) - shi0b(ic, 0)
+        t1b = skt0b(ic, 0) - she0b(ic, 0)
+        t3b = she0b(ic, 0) - skt0b(ic, 0)
         t4b = -skt0b(ic, 0)
         skt0b(ic, 0) = 0.D0
+        shi0b(ic, 0) = 0.D0
+        plb%kt(ic) = plb%kt(ic) + t2*she0b(ic, 0)
+        she0b(ic, 0) = 0.D0
       ELSE
         t4 = wrks(ic)
         temp = 1.0e-8_R8*ev + pl%kt(ic)
-        tempb8 = skt0b(ic, 1)/temp
+        tempb9 = skt0b(ic, 1)/temp
         t2b = -skt0b(ic, 1)
         skt0b(ic, 1) = 0.D0
-        min1b = tempb8
-        t3b = -tempb8
-        t4b = -tempb8
-        plb%kt(ic) = plb%kt(ic) - (min1-t3-t4)*tempb8/temp
+        min3b = tempb9
+        t3b = -tempb9
+        t4b = -tempb9
+        plb%kt(ic) = plb%kt(ic) - (min3-t3-t4)*tempb9/temp
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
-          CALL POPREAL8(min1, r8/8)
+          CALL POPREAL8(min3, r8/8)
           t0b = 0.D0
           t1b = 0.D0
         ELSE
-          CALL POPREAL8(min1, r8/8)
-          t0b = min1b
-          t1b = min1b
+          CALL POPREAL8(min3, r8/8)
+          t0b = min3b
+          t1b = min3b
         END IF
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
@@ -378,14 +414,49 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
           t1b = t1b + skt0b(ic, 0)
           skt0b(ic, 0) = 0.D0
         END IF
+        tempb8 = shi0b(ic, 1)/pl%ti(ic)
+        shi0b(ic, 1) = 0.D0
+        min2b = tempb8
+        plb%ti(ic) = plb%ti(ic) - min2*tempb8/pl%ti(ic)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPREAL8(min2, r8/8)
+        ELSE
+          CALL POPREAL8(min2, r8/8)
+          t0b = t0b - min2b
+        END IF
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          shi0b(ic, 0) = 0.D0
+        ELSE
+          t0b = t0b - shi0b(ic, 0)
+          shi0b(ic, 0) = 0.D0
+        END IF
+        tempb8 = she0b(ic, 1)/pl%te(ic)
+        she0b(ic, 1) = 0.D0
+        min1b = tempb8
+        plb%te(ic) = plb%te(ic) - min1*tempb8/pl%te(ic)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPREAL8(min1, r8/8)
+        ELSE
+          CALL POPREAL8(min1, r8/8)
+          t2b = t2b + pl%kt(ic)*min1b
+          plb%kt(ic) = plb%kt(ic) + t2*min1b
+          t1b = t1b - min1b
+          t3b = t3b + min1b
+        END IF
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          she0b(ic, 0) = 0.D0
+        ELSE
+          t2b = t2b + pl%kt(ic)*she0b(ic, 0)
+          plb%kt(ic) = plb%kt(ic) + t2*she0b(ic, 0)
+          t1b = t1b - she0b(ic, 0)
+          t3b = t3b + she0b(ic, 0)
+          she0b(ic, 0) = 0.D0
+        END IF
       END IF
-      t0b = t0b - shi0b(ic, 0)
-      shi0b(ic, 0) = 0.D0
-      t2b = t2b + pl%kt(ic)*she0b(ic, 0)
-      plb%kt(ic) = plb%kt(ic) + t2*she0b(ic, 0)
-      t1b = t1b - she0b(ic, 0)
-      t3b = t3b + she0b(ic, 0)
-      she0b(ic, 0) = 0.D0
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
         t0b = 0.D0
@@ -671,6 +742,8 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
   REAL(kind=r8), DIMENSION(ncv) :: dabs0
   REAL(kind=r8) :: dabs1
   REAL(kind=r8) :: min1
+  REAL(kind=r8) :: min2
+  REAL(kind=r8) :: min3
   INTEGER :: arg1
   LOGICAL, DIMENSION(ncv) :: mask
   REAL(kind=r8) :: result1
@@ -841,23 +914,45 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
         t2 = 0.0_R8
         t3 = 0.0_R8
       END IF
-      she0(ic, 0) = -t1 + t2*pl%kt(ic) + t3
-      shi0(ic, 0) = -t0
       IF (switch%b2sikt_kt_source_stab .EQ. 0) THEN
+        she0(ic, 0) = -t1 + t2*pl%kt(ic) + t3
+        shi0(ic, 0) = -t0
         skt0(ic, 0) = t0 + t1 - t3 - t4
         skt0(ic, 1) = -t2
       ELSE
+        IF (-t1 + t2*pl%kt(ic) + t3 .LT. 0.0_R8) THEN
+          she0(ic, 0) = 0.0_R8
+        ELSE
+          she0(ic, 0) = -t1 + t2*pl%kt(ic) + t3
+        END IF
+        IF (-t1 + t2*pl%kt(ic) + t3 .GT. 0.0_R8) THEN
+          min1 = 0.0_R8
+        ELSE
+          min1 = -t1 + t2*pl%kt(ic) + t3
+        END IF
+        she0(ic, 1) = min1/pl%te(ic)
+        IF (-t0 .LT. 0.0_R8) THEN
+          shi0(ic, 0) = 0.0_R8
+        ELSE
+          shi0(ic, 0) = -t0
+        END IF
+        IF (-t0 .GT. 0.0_R8) THEN
+          min2 = 0.0_R8
+        ELSE
+          min2 = -t0
+        END IF
+        shi0(ic, 1) = min2/pl%ti(ic)
         IF (t0 + t1 .LT. 0.0_R8) THEN
           skt0(ic, 0) = 0.0_R8
         ELSE
           skt0(ic, 0) = t0 + t1
         END IF
         IF (t0 + t1 .GT. 0.0_R8) THEN
-          min1 = 0.0_R8
+          min3 = 0.0_R8
         ELSE
-          min1 = t0 + t1
+          min3 = t0 + t1
         END IF
-        skt0(ic, 1) = (min1-t3-t4)/(1.0e-8_R8*ev+pl%kt(ic)) - t2
+        skt0(ic, 1) = (min3-t3-t4)/(1.0e-8_R8*ev+pl%kt(ic)) - t2
       END IF
       skt_prod(ic) = t0 + t1
       skt_diss(ic) = t2*pl%kt(ic) + t3 + t4
