@@ -2049,7 +2049,6 @@ cxpb size is changed in b2mod_dimensions
                 call calc_puff_pump_b25(switch,
      &           ns, mpg, nCv, dv, pl, sr,
      &           is_start, is_end, sna_pump, sna_puff, sna_core)
-                print *,'pump', sna_pump,'puff',sna_puff
                 if (sna_pump <-1e0_R8) then
                   if (fb_tau(ifb).gt.0.0_R8) then
                     t0 = abs(sna_pump)*fb_rescale(ifb)-sna_core
@@ -2344,10 +2343,7 @@ cxpb size is changed in b2mod_dimensions
                     call calc_puff_pump_b25(switch,
      &               ns, mpg, nCv, dv, pl, sr,
      &               is_start, is_end, sna_pump, sna_puff, sna_core)
-
-                  print *,'pump', sna_pump,'puff+core',sna_core+sna_puff
                   if (sna_pump < -1e0_R8) then
-                    print *,"sna_tot is", sna_core+sna_puff
                     if (abs(1-fb_rescale(ifb)).ge.1e-6) then
                       t0 = abs((sna_puff+sna_core)/sna_pump)
      &                * saved_fb_actuator(ifb)/fb_rescale(ifb)
@@ -2359,8 +2355,6 @@ cxpb size is changed in b2mod_dimensions
                         saved_fb_actuator(ifb) = t0
                       endif
                     endif
-                  else
-                    print *,"pump bigger then -1!", sna_pump
                   endif
                   else
 #ifdef B25_EIRENE
@@ -2405,8 +2399,6 @@ cxpb size is changed in b2mod_dimensions
      &                fb_species(ifb).gt.1) then
 
                     do istra = 1, nbc
-                      print *,"set puff fluid istra:",
-     &                 istra, bccon(is_start,istra),is_start
                       if (bccon(is_start,istra).eq.10) then
                         do ibc = 1, mpg%bcCvP(istra,2)
                           conpar(is_start,istra,1) =
@@ -2417,7 +2409,6 @@ cxpb size is changed in b2mod_dimensions
                   else
 
                   do istra = 1, nstrai
-                  print *,"istra:", istra, recyc(is_start,istra)
                   if (((1-recyc(is_start,istra)).ge.1e-7_R8) 
      &              .and. (species_start(istra) .eq. is_start)) then
                           b2recyc(is_start,istra) = 
@@ -2715,6 +2706,9 @@ cxpb size is changed in b2mod_dimensions
             endif
           enddo
         endif
+
+        write(*,*) 'pump', sna_pump,
+     &   'puff+core',sna_core+sna_puff
           
         end subroutine calc_puff_pump_b25
 
@@ -2769,6 +2763,9 @@ cxpb size is changed in b2mod_dimensions
         enddo
       enddo
 
+      write(*,*) 'pump', sna_pump,
+     &   'puff+core',sna_core+sna_puff
+
       return
       end subroutine calc_puff_pump
 
@@ -2795,7 +2792,7 @@ cxpb size is changed in b2mod_dimensions
               t0 = 1.0 - factor
               if (t0 > 0.0 .and. t0 < 1.0) recyct(ja,l) = t0        ! again, not to make albedo =1.0 for those surfaces where it was set less than 1.0
     !           if (t0 > 0.0 .and. t0 < 1.0)
-    !  &           print *, "surf:", l,ja, recyct(ja,l)
+    !  &           write(*,*) "surf:", l,ja, recyct(ja,l)
             endif
             do jm = 1,nnmoli                                        ! check whether this atom constitutes a part of the molecule and update the albedo for such molecule in the same manner
               if (mlcmp(ja,jm) .gt. 0) then
@@ -2804,7 +2801,7 @@ cxpb size is changed in b2mod_dimensions
                   t0 = 1.0 - factor
                   if (t0 > 0.0 .and. t0 < 1.0) recyct(jm+nnatmi,l) = t0
     !               if (t0 > 0.0 .and. t0 < 1.0)
-    !  &              print *, "surf:",  l, jm, recyct(jm+nnatmi,l)
+    !  &              write(*,*) "surf:",  l, jm, recyct(jm+nnatmi,l)
                 endif
               endif
             enddo
