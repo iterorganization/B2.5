@@ -110,6 +110,7 @@ c
       integer irncp, icncp, minirn, minicn, irank
       integer idisp(2)
       integer ndrop, maxit, noiter, nsrch, istart
+      integer, save :: maxmsg = 0
       integer ndrop1, nsrch1
       integer nlp
       integer mirncp, micncp, mirank, mirn, micn
@@ -209,7 +210,7 @@ c j1 is position in arrays of first nonzero in row.
           j = icn(jj)
           themax = max(themax,abs(a(jj)))
           if (ikeep(j,2).eq.i) go to 110
-c first time column has ocurred in current row.
+c first time column has occurred in current row.
           ikeep(j,2) = i
           ikeep(j,3) = jj - move - newj1
           if (move.eq.0) go to 120
@@ -222,7 +223,10 @@ c duplicate element.
   110     move = move + 1
           length = length - 1
           jay = ikeep(j,3) + newj1
-          if (mp.ne.0) write (mp,99993) i, j, a(jj)
+          if (mp.ne.0 .and. maxmsg.lt.100) then
+            write (mp,99993) i, j, a(jj)
+            maxmsg = maxmsg + 1
+          end if
           a(jay) = a(jay) + a(jj)
           themax = max(themax,abs(a(jay)))
   120   continue
