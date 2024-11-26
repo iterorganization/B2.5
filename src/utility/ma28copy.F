@@ -109,7 +109,8 @@ c
       integer lp, mp
       integer irncp, icncp, minirn, minicn, irank
       integer idisp(2)
-      integer ndrop, maxit, noiter, nsrch, istart, maxmsg
+      integer ndrop, maxit, noiter, nsrch, istart
+      integer, save :: maxmsg = 0
       integer ndrop1, nsrch1
       integer nlp
       integer mirncp, micncp, mirank, mirn, micn
@@ -141,7 +142,6 @@ c some  initialisation and transfer of information between
 c     common blocks (see earlier comments).
       data zero /0.0e0_R8/
       iflag = 0
-      maxmsg = 0
       aborta = abort1
       abortb = abort2
       abort = abort1
