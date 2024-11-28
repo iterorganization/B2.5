@@ -494,6 +494,7 @@ cwdk  additional set of geometric parameters for extended grids
       call cfwure (nput, n2*2, qas, 'qas')
       call cfwure (nput, n2*3, ebc, 'ebc')
 * ..return
+      flush (nput)
       call subend ()
       return
 
