@@ -280,6 +280,12 @@ module b2mod_ual_io_grid
     !> Vertical vector component ID
     character(len=132), parameter :: VEC_ALIGN_Z_ID = "Z"
 #endif
+#if GGD_MAJOR_VERSION < 2
+    !> Toroidal vector component
+    integer, parameter :: VEC_ALIGN_PHI = 1004
+    !> Toroidal vector component ID
+    character(len=132), parameter :: VEC_ALIGN_PHI_ID = "Phi"
+#endif
 
     !! Subgrid/Grid subset name constants
 
