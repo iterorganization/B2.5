@@ -112,7 +112,17 @@ module b2mod_ual_io
      & , only : VEC_ALIGN_RADIAL_ID,   &
      &          VEC_ALIGN_POLOIDAL_ID, &
      &          VEC_ALIGN_PARALLEL_ID, &
-     &          VEC_ALIGN_TOROIDAL_ID
+     &          VEC_ALIGN_TOROIDAL_ID, &
+     &          VEC_ALIGN_DIAMAGNETIC_ID
+#endif
+#if ( GGD_MAJOR_VERSION < 2 && GGD_MINOR_VERSION < 11 && GGD_MICRO_VERSION < 3 )
+    use b2mod_ual_io_grid &
+     & , only : VEC_ALIGN_R_MAJOR_ID,   &
+     &          VEC_ALIGN_Z_ID
+#endif
+#if GGD_MAJOR_VERSION < 2
+    use b2mod_ual_io_grid &
+     & , only : VEC_ALIGN_PHI_ID
 #endif
 #if GGD_MAJOR_VERSION > 0
 #if ( GGD_MINOR_VERSION < 9 && GGD_MAJOR_VERSION < 2 )
@@ -141,8 +151,7 @@ module b2mod_ual_io
      & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
      &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
-     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2, &
-     &          VEC_ALIGN_R_MAJOR_ID, VEC_ALIGN_Z_ID
+     &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2
 #endif
 #endif
     use ids_schemas &     ! IGNORE
@@ -5258,11 +5267,19 @@ contains
                            &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
                        end do
                      end do
+#if GGD_MAJOR_VERSION < 2
                      call write_cell_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( is )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+#else
+                     call write_cell_vector_component( edge_grid,            &
+                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                       &                     neutral( is )%velocity,         &
+                       &   b2CellData = tmpCv(:,:),                          &
+                       &   vectorID = VEC_ALIGN_PHI_ID )
+#endif
                    end if
                 !! Neutral particle energy flux
                    tmpFace(:,:,:) = 0.0_IDS_real
@@ -5380,11 +5397,19 @@ contains
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = un0(:,:,1,is),                       &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
+#if GGD_MAJOR_VERSION < 2
                      call write_cell_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = un0(:,:,2,is),                       &
                        &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+#else
+                     call write_cell_vector_component( edge_grid,            &
+                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                       &         neutral( js )%state( ks )%velocity,         &
+                       &   b2CellData = un0(:,:,2,is),                       &
+                       &   vectorID = VEC_ALIGN_PHI_ID )
+#endif
                    end if
                    if (drift_style.eq.0) then
                      tmpCv = 0.0_IDS_real
@@ -5568,11 +5593,19 @@ contains
                            &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
                        end do
                      end do
+#if GGD_MAJOR_VERSION < 2
                      call write_cell_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%velocity,         &
                        &   b2CellData = tmpCv(:,:),                          &
                        &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+#else
+                     call write_cell_vector_component( edge_grid,            &
+                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                       &                     neutral( js )%velocity,         &
+                       &   b2CellData = tmpCv(:,:),                          &
+                       &   vectorID = VEC_ALIGN_PHI_ID )
+#endif
                    end if
                  !! Molecular particle energy flux
                    tmpFace(:,:,:) = 0.0_IDS_real
@@ -5692,11 +5725,19 @@ contains
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = um0(:,:,1,is),                       &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
+#if GGD_MAJOR_VERSION < 2
                      call write_cell_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = um0(:,:,2,is),                       &
                        &   vectorID = VEC_ALIGN_TOROIDAL_ID )
+#else
+                     call write_cell_vector_component( edge_grid,            &
+                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
+                       &         neutral( js )%state( ks )%velocity,         &
+                       &   b2CellData = um0(:,:,2,is),                       &
+                       &   vectorID = VEC_ALIGN_PHI_ID )
+#endif
                    end if
                    if (drift_style.eq.0) then
                      tmpCv = 0.0_IDS_real
@@ -9452,11 +9493,12 @@ contains
     !> Write a vector component B2 cell quantity to ids_generic_grid_vector
     !! components
     !! @note Available IDS vector component data fields (vector IDs):
-    !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "diamagnetic" ),
-    !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
-    !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
-    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" ),
+    !!          - VEC_ALIGN_RADIAL_ID ( "Radial" ),
+    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "Diamagnetic" ),
+    !!          - VEC_ALIGN_PARALLEL_ID ( "Parallel" ),
+    !!          - VEC_ALIGN_POLOIDAL_ID ( "Poloidal" ),
+    !!          - VEC_ALIGN_TOROIDAL_ID ( "Toroidal" ),
+    !!          - VEC_ALIGN_PHI_ID ( "Phi" ),
     !!          - VEC_ALIGN_R_MAJOR_ID ( "R" ),
     !!          - VEC_ALIGN_Z_ID ( "Z" )
     subroutine write_cell_vector_component( basegrid, &
@@ -9675,11 +9717,12 @@ contains
     !> Write a vector component B2 face quantity to ids_generic_grid_vector
     !! components
     !! @note Available IDS vector component data fields (vector IDs):
-    !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "diamagnetic" ),
-    !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
-    !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
-    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" ),
+    !!          - VEC_ALIGN_RADIAL_ID ( "Radial" ),
+    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "Diamagnetic" ),
+    !!          - VEC_ALIGN_PARALLEL_ID ( "Parallel" ),
+    !!          - VEC_ALIGN_POLOIDAL_ID ( "Poloidal" ),
+    !!          - VEC_ALIGN_TOROIDAL_ID ( "Toroidal" ),
+    !!          - VEC_ALIGN_PHI_ID ( "Phi" ),
     !!          - VEC_ALIGN_R_MAJOR_ID ( "R" ),
     !!          - VEC_ALIGN_Z_ID ( "Z" )
     subroutine write_face_vector_component( basegrid, &
@@ -10079,11 +10122,12 @@ contains
     !!          allocated, and will deallocate and re-allocate fields as
     !!          necessary.
     !! @note Available IDS vector component data fields:
-    !!          - VEC_ALIGN_RADIAL_ID ( "radial" ),
-    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "diamagnetic" ),
-    !!          - VEC_ALIGN_PARALLEL_ID ( "parallel" ),
-    !!          - VEC_ALIGN_POLOIDAL_ID ( "poloidal" ),
-    !!          - VEC_ALIGN_TOROIDAL_ID ( "toroidal" ),
+    !!          - VEC_ALIGN_RADIAL_ID ( "Radial" ),
+    !!          - VEC_ALIGN_DIAMAGNETIC_ID ( "Diamagnetic" ),
+    !!          - VEC_ALIGN_PARALLEL_ID ( "Parallel" ),
+    !!          - VEC_ALIGN_POLOIDAL_ID ( "Poloidal" ),
+    !!          - VEC_ALIGN_TOROIDAL_ID ( "Toroidal" ),
+    !!          - VEC_ALIGN_PHI_ID ( "Phi" ),
     !!          - VEC_ALIGN_R_MAJOR_ID ( "R" ),
     !!          - VEC_ALIGN_Z_ID ( "Z" )
     subroutine B2grid_Write_Data_Vector_Components( idsField_vcomp, &
@@ -10169,7 +10213,7 @@ contains
       end if
       !! copy poloidal data field
       idsField_vcomp%poloidal = data
-    case( VEC_ALIGN_TOROIDAL_ID )
+    case( VEC_ALIGN_TOROIDAL_ID, VEC_ALIGN_PHI_ID )
       !! Writing toroidal quantity
       !! Make sure the data field is properly allocated
 #if ( IMAS_MINOR_VERSION > 41 || IMAS_MAJOR_VERSION > 3 )
