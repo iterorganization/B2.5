@@ -113,7 +113,7 @@ module b2mod_ual_io
      & , only : VEC_ALIGN_R_MAJOR_ID,   &
      &          VEC_ALIGN_Z_ID
 #endif
-#if GGD_MAJOR_VERSION < 2
+#if ( GGD_MAJOR_VERSION < 2 && GGD_MINOR_VERSION < 13 )
     use b2mod_ual_io_grid &
      & , only : VEC_ALIGN_PHI_ID
 #endif
