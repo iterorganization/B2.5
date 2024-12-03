@@ -120,7 +120,7 @@ module b2mod_ual_io
      & , only : VEC_ALIGN_R_MAJOR_ID,   &
      &          VEC_ALIGN_Z_ID
 #endif
-#if GGD_MAJOR_VERSION < 2
+#if ( GGD_MAJOR_VERSION < 2 && GGD_MINOR_VERSION < 13 )
     use b2mod_ual_io_grid &
      & , only : VEC_ALIGN_PHI_ID
 #endif
@@ -5122,7 +5122,7 @@ contains
                            &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
                        end do
                      end do
-#if GGD_MAJOR_VERSION < 2
+#if ( GGD_MAJOR_VERSION < 2 && GGD_MINOR_VERSION < 13 )
                      call write_cell_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( is )%velocity,         &
@@ -5252,7 +5252,7 @@ contains
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = un0(:,:,1,is),                       &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
-#if GGD_MAJOR_VERSION < 2
+#if ( GGD_MAJOR_VERSION < 2 && GGD_MINOR_VERSION < 13 )
                      call write_cell_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
@@ -5448,7 +5448,7 @@ contains
                            &  tmpCv(ix,iy) = tmpCv(ix,iy) / totCv(ix,iy)
                        end do
                      end do
-#if GGD_MAJOR_VERSION < 2
+#if ( GGD_MAJOR_VERSION < 2 && GGD_MINOR_VERSION < 13 )
                      call write_cell_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%velocity,         &
@@ -5580,7 +5580,7 @@ contains
                        &         neutral( js )%state( ks )%velocity,         &
                        &   b2CellData = um0(:,:,1,is),                       &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
-#if GGD_MAJOR_VERSION < 2
+#if ( GGD_MAJOR_VERSION < 2 && GGD_MINOR_VERSION < 13 )
                      call write_cell_vector_component( edge_grid,            &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &         neutral( js )%state( ks )%velocity,         &
