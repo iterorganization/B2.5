@@ -303,8 +303,10 @@ csw 01oct2012 initialize potential if necessary
      &  st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
      &  st%dv%fchanml_a, st%dv%fchanml)
       call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &  st%pl%ua, st%co%vsaf_cl, st%dv%fac_vis,
-     &  st%dv%fchvispar_a, st%dv%fchvispar)
+     &  st%pl%na, st%pl%ua, st%pl%ti, st%rt%rza, st%co%vsaf_cl,
+     &  st%co%vsaf_drho, st%co_ns%vsaf_uAdp_albe,
+     &  st%co_ns%vsaf_uBdp_al, st%dv%fac_vis, st%dv%fchvispar_a,
+     &  st%dv%fchvispar)
       call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &  st%pl%na, st%pl%ua, st%dv%facdrift,
      &  st%dv%fchinert_a, st%dv%fchinert)
@@ -397,8 +399,10 @@ csw 16oct2012 init ier0
      &  st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
      &  st%dv%fchanml_a, st%dv%fchanml)
       call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &  st%pl%ua, st%co%vsaf_cl, st%dv%fac_vis,
-     &  st%dv%fchvispar_a, st%dv%fchvispar)
+     &  st%pl%na, st%pl%ua, st%pl%ti, st%rt%rza, st%co%vsaf_cl,
+     &  st%co%vsaf_drho, st%co_ns%vsaf_uAdp_albe,
+     &  st%co_ns%vsaf_uBdp_al, st%dv%fac_vis, st%dv%fchvispar_a,
+     &  st%dv%fchvispar)
       call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &  st%pl%na, st%pl%ua, st%dv%facdrift,
      &  st%dv%fchinert_a, st%dv%fchinert)
