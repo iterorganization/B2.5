@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch, !srv 29.01.20 {
-     &  geo, mpg, pl, dv, co, rt, st_ext)
+     &  geo, mpg, pl, dv, co, co_ns, rt, st_ext)
       use b2mod_types
 !      use b2mod_boundary_namelist
       use b2mod_constants
@@ -37,6 +37,7 @@
 *   ..output arguments (unspecified on entry)
 *   ..input/output arguments (unspecified on entry)
       type(B2Coeff), intent (inout) :: co
+      type(B2Coeff_nspecies), intent (inout) :: co_ns
       type(B2Derivatives), intent (inout) :: dv
 *   ..local variables
 *   ..common blocks
@@ -133,8 +134,10 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
      &    dv%fchvisper_a, dv%fchvisper)
 *     ..calculate the parallel viscosity current connected with the heat flux
         call b2tvsq (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &    dv%fac_vis, dv%ne2, rt%rz2, dv%lnlam, pl%te, pl%ti,
-     &    dv%ni(:,1), co%hcix_c, dv%fchvisq_a, dv%fchvisq)
+     &    dv%fac_vis, dv%ne2, rt%rz2, dv%lnlam, pl%te, pl%ti, pl%na,
+     &    dv%ni(:,1), rt%rza, co_ns%vsaf_hAdp_albe, co_ns%vsaf_hBdp_al,
+     &    co%hcix_c, co%hci_a, co_ns%hci_al_ast,
+     &    dv%fchvisq_a, dv%fchvisq)
 *     ..calculate inertia current                                        !srv 07.07.99
         call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &    pl%na, pl%ua, dv%facdrift, dv%fchinert_a, dv%fchinert)
