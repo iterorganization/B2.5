@@ -2,9 +2,11 @@
 *.specification
 
       subroutine b2siav_zh (nCv, nFc, nVx, ns, isb, switch, geo, mpg,
-     & mb, rzb, ub, te, ti, nb, ni, ne2, rz2, lnlam, hci_a, hci_al_ast,
-     & cvsbhz_drho, vsb_drho, smbvh, smbvv, smbvi, rho_rel, avm_u,
-     & wrk0, wrk1, wrk2)                                                !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
+     & mb, rzb, te, ti, na, ua, ni, ne2, rz2, lnlam, hci_a, hci_al_ast,
+     & cvsbhz_cl, cvsbhz_drho, vsbf_drho, vsaf_hAdp_albe, vsaf_hBdp_al,
+     & vsaf_uAdp_albe, vsaf_uBdp_al,
+     & smbvh, smbvv, smbvi, rho_rel, avm_u,
+     & wrk0, wrk1, wrk2)                                         !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -24,9 +26,9 @@
       use b2mod_zhfrtf
      & , only : nal, Z_to_m1_ast, Ia
       use b2mod_b2mrel
-     & , only : amnucl, s2nucl
+     & , only : amnucl, s2nucl, nucl2s, znnucl_int
       use b2mod_b2zhco
-     & , only : zhcscorr, zhcscorr_vq      
+     & , only : zhcscorr, zhcscorr_vq
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -36,22 +38,25 @@
       type (switches), intent (in) :: switch
       real (kind=R8) ::
      & mb, lnlam(nCv),                                                  !srv 01.07.09
-     & ub(nCv),
-     & te(nCv), ti(nCv), nb(nCv), rzb(nCv), ni(nCv), ne2(nCv),
+     & na(nCv,0:ns-1), ua(nCv,0:ns-1),
+     & te(nCv), ti(nCv), rzb(nCv), ni(nCv), ne2(nCv),
      & hci_a(nCv,0:ns-1),
      & hci_al_ast(nCv,0:nspecies-1),
+     & cvsbhz_cl(nFc,0:1),
      & cvsbhz_drho(nFc,0:1),
-     & vsb_drho(nCv),
+     & vsbf_drho(nFc,0:1),
      & rz2(nCv,0:ns-1),                                                 !srv 31.07.02
-     & vsa_hAdp_albe(nCv,0:1,0:nspecies-1,0:nspecies-1),                !som 08.10.21
-     & vsa_hBdp_al(nCv,0:1,0:nspecies-1),                               !som 08.10.21
+     & vsaf_hAdp_albe(nFc,0:1,0:nspecies-1,0:nspecies-1),               !som 08.10.21
+     & vsaf_hBdp_al(nFc,0:1,0:nspecies-1),                              !som 08.10.21
+     & vsaf_uAdp_albe(nFc,0:1,0:nspecies-1,0:nspecies-1),               !som 08.10.21
+     & vsaf_uBdp_al(nFc,0:1,0:nspecies-1),                              !som 08.10.21
      & rho_rel(nCv), avm_u(nCv)                                         !som 13.08.21
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   smbvh(nCv,0:3), smbvv(nCv,0:3), smbvi(nCv,0:3)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   wrk0(nCv), wrk1(nCv), wrk2(nCv), wrkns(nCv,0:nspecies-1)
+     *   wrk0(nCv), wrk1(nCv), wrk2(nCv), wrkns(nFc,0:nspecies-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -66,16 +71,17 @@
 *.declarations
 
 *   ..local variables
-      integer ic, iCv, iFc, iFt, k, inucl
+      integer ic, iCv, iFc, iFt, k, inucl, iz
       integer, save :: nsmooth = 2
       character chns*3, chk*1                                           !srv 17.06.02
       real (kind=R8) ::
      *     t0, ft, ft_h                                                 !srv 16.10.17
       real (kind=R8) ::
      &     wrks(nCv), wrkf(nFc), wrkv(nVx), wght(nFc,2),
+     *     wrkf0(nFc), wrkf1(nFc), wrkf2(nFc), wrkf3(nFc),
      *     tauia(nCv,0:ns-1), qip0(nCv),                                !srv 23.07.99
      *     qip1(nCv), qipgen(nCv), qipgen_al(nCv,0:nspecies-1),         !srv 23.07.99 19.01.05
-     &     gti(nCv,0:1), u_res(nCv)
+     &     gti(nCv,0:1), u_res_b(nCv)
 *   ..procedures
       intrinsic sqrt
 *-----------------------------------------------------------------------
@@ -93,7 +99,7 @@
 
       if(.not.is_neutral(isb)) then                                     !srv 26.10.08
 
-        if (switch%addvis.ne.0.0_R8) then                               !srv 19.01.05 28.03.06 {
+        if (switch%addvis.ne.0.0_R8) then !srv 19.01.05 28.03.06 {
 
           ! init
           qip1   = 0.0e0_R8
@@ -116,7 +122,7 @@
                iCv = mpg%ftCv(ic)
                qip0(iCv) = -2.5e0_R8*geo%cvBb(iCv,3)*geo%cvBb(iCv,2)/
      &           (geo%cvBb(iCv,0)*geo%ftBbav2(iFt))*
-     &           (nb(iCv)*ti(iCv)/(qe*rzb(iCv)))*gti(iCv,1)
+     &           (na(iCv,isb)*ti(iCv)/(qe*rzb(iCv)))*gti(iCv,1)
               enddo
              endif
             enddo
@@ -165,7 +171,7 @@
                qip0(iCv) = -hci_a(iCv,isb)*gti(iCv,0)*
      &           geo%cvBb(iCv,3)/geo%cvBb(iCv,0) - 2.5e0_R8*
      &           geo%cvBb(iCv,2)/(geo%cvBb(iCv,0)*geo%cvBb(iCv,3))*
-     &           (nb(iCv)*ti(iCv)/(qe*rzb(iCv)))*gti(iCv,1)
+     &           (na(iCv,isb)*ti(iCv)/(qe*rzb(iCv)))*gti(iCv,1)
               enddo
              endif
             enddo
@@ -187,7 +193,7 @@
           endif
 
 *       ..compute qip1
-          qip1 = switch%cqip1*nb*ti*sqrt(te+ti)/sqrt(am(isb)*mp)
+          qip1 = switch%cqip1*na(:,isb)*ti*sqrt(te+ti)/sqrt(am(isb)*mp)
 
 *       ..compute qipgen
           qipgen = qip1*datan(qip0/qip1)*sqrt(geo%cvBb(:,3))
@@ -299,19 +305,23 @@
           !wdk modified computation compared to structured code to 
           !wdk facilitate implementation on unstructured grids
           do inucl = 0, nspecies-1
-            call gradc_p(nCv, nFc, nVx, 0, geo, mpg, qipgen_al(:,inucl),
+            call grad_p(nCv, nFc, nVx, 0, geo, mpg, qipgen_al(:,inucl),
      &        wrkv, wrkns(:,inucl))
           enddo
 
-          wrk0 = 0.0_R8
+          wrkf0 = 0.0_R8
           do inucl = 0, nspecies-1
-            wrk0 = wrk0 + wrkns(:,inucl)*
-     &        vsa_hAdp_albe(:,0,s2nucl(isb)-1,inucl)
+            wrkf0 = wrkf0 + wrkns(:,inucl)*
+     &        vsaf_hAdp_albe(:,0,s2nucl(isb)-1,inucl)
           enddo
-          wrk0 = wrk0*nb/nal(:,s2nucl(isb)-1)/
-     &        (geo%cvBb(:,0)*geo%cvBb(:,3))
+
+          wrk0 = na(:,isb)/nal(:,s2nucl(isb)-1)
+          call intface(nCv,nFc,mpg%fcCv,wght,wrk0,wrkf1)
+
+          wrkf0 = wrkf0*wrkf1/(geo%fcBb(:,0)*geo%fcBb(:,3))
 
 *       ..finally calculate the r.h.s. contribution
+          call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf0, wrk0)
           call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk0, wrkv, wrk1)
 
           !zero out spurious contributions outside of separatrix
@@ -333,16 +343,19 @@
           if (zhcscorr.gt.0 .and. zhcscorr_vq.gt.0) then
 
 *         ..gradient qipgen in cell centers   
-            call gradc_p(nCv, nFc, nVx, 0, geo, mpg, qipgen, wrkv, wrk0)
+            call grad_p(nCv, nFc, nVx, 0, geo, mpg, qipgen, wrkv, wrkf0)
 
 *         ..calculate the difference from parallel heat flux of ion
-            wrk0 = nb/nal(:,s2nucl(isb)-1)/
-     &        (geo%cvBb(:,0)*geo%cvBb(:,3))*
-     &        vsa_hBdp_al(:,0,s2nucl(isb)-1)*
-     &        (wrk0/Ia(:,isb) - wrkns(:,s2nucl(isb)-1))
+            wrk0 = na(:,isb)/nal(:,s2nucl(isb)-1)
+            call intface(nCv,nFc,mpg%fcCv,wght,wrk0,wrkf1)
+
+            wrkf0 = wrkf1/(geo%fcBb(:,0)*geo%fcBb(:,3))*
+     &        vsaf_hBdp_al(:,0,s2nucl(isb)-1)*
+     &        (wrkf0/Ia(:,isb) - wrkns(:,s2nucl(isb)-1))
 
 *         ..calculate the r.h.s. contribution to the parallel balance
 *           corresponding to parallel viscosity connected with heat flow
+            call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf0, wrk0)
             call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk0, wrkv, wrk1)
 
             !zero out spurious contributions outside of separatrix
@@ -376,11 +389,16 @@
           call diff_p(nCv, nFc, nVx, 1, geo, mpg, wrk1, wrkv, wrkf)
 
 *       ..compute flow and its divergence
-          wrkf = wrkf*cvsbhz_drho(:,0)/sqrt(geo%fcBb(:,3))
-          call div0(nCv, nFc, mpg, wrkf, wrk0)
+          if (switch%zh_vis_type.eq.2) then
+            wrkf = wrkf*cvsbhz_cl(:,0)/sqrt(geo%fcBb(:,3))
+            call div0(nCv, nFc, mpg, wrkf, wrk0)
+          else
+            wrkf = wrkf*cvsbhz_drho(:,0)/sqrt(geo%fcBb(:,3))
+            call div0(nCv, nFc, mpg, wrkf, wrk0)
+          endif
 
 *       ..add to r.h.s. source
-          if (switch%zh_vis_type.eq.0) then
+          if (switch%zh_vis_type.eq.0.or.switch%zh_vis_type.eq.2) then
             wrk1 = ft*wrk0*wrk2
           elseif (switch%zh_vis_type.eq.1) then
             wrk1 = ft*wrk0*wrk2*rho_rel
@@ -390,7 +408,7 @@
           do iCv = 1, mpg%nCi
             t0 = wrk1(iCv)
             if (t0.gt.0.0e0_R8) then
-              smbvv(iCv,0) = t0*ub(iCv)
+              smbvv(iCv,0) = t0*ua(iCv,isb)
             else
               smbvv(iCv,1) = t0
             endif
@@ -403,16 +421,85 @@
 *         ion velocities
           if (switch%zh_vis_type.eq.1) then
 
-            u_res = avm_u - rho_rel*ub
+            u_res_b = (avm_u - rho_rel*ua(:,isb))*wrk2
 
 *         ..gradient u_res in cell centers   
-            call gradc_p(nCv, nFc, nVx, 0, geo, mpg, u_res, wrkv, wrk0)
+            call grad_p(nCv, nFc, nVx, 0, geo, mpg, u_res_b, wrkv,
+     &        wrkf0)
 
 *         ..calculate the difference from parallel heat flux of ion
-            wrk0 = wrk0*vsb_drho/(geo%cvBb(:,0)*geo%cvBb(:,3))
+            wrkf0 = wrkf0*vsbf_drho(:,0)/(geo%fcBb(:,0)*geo%fcBb(:,3))
 
 *         ..calculate the r.h.s. contribution to the parallel balance
 *           corresponding to parallel viscosity connected with heat flow
+            call intcell(nFc,nCv,mpg, mpg%intcellP, wrkf0,wrk0)
+            call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk0, wrkv, wrk1)
+
+            !calculate the actual source
+            smbvi(:,0) = ft*wrk1*wrk2*geo%cvVol*geo%cvBb(:,0)*geo%cvHz
+
+*         ..zero out in guard cells
+            smbvi(mpg%nCi+1:nCv,0) = 0.0_R8
+
+          elseif (switch%zh_vis_type.eq.2) then
+
+            wrkf = 0.0_R8
+            do inucl=0,nspecies-1
+
+              if(inucl.ne.s2nucl(isb)-1) then
+
+                wrkf0=0.0_R8
+                do iz= 1, znnucl_int(inucl)
+
+                  u_res_b = ua(:,nucl2s(inucl,iz))*wrk2
+                  call grad_p(nCv, nFc, nVx, 0, geo, mpg, u_res_b,
+     &              wrkv, wrkf1)
+
+                  wrk1 = na(:,nucl2s(inucl,iz))*ti
+                  call intface(nCv,nFc,mpg%fcCv,wght,wrk1,wrkf2)
+
+                  wrkf0 = wrkf0 + wrkf1*wrkf2
+
+                enddo
+
+                wrkf = wrkf +
+     &            wrkf0*vsaf_uAdp_albe(:,0,s2nucl(isb)-1,inucl)
+
+              endif
+            enddo
+
+            wrkf0=0.0_R8
+            do iz = 1, znnucl_int(s2nucl(isb)-1)
+              !wdk not clear if Zh-closure applies to bundling;
+              !wdk if yes: need to update if-condition here
+              if(iz.ne.nint(maxval(rzb)).or.
+     &           iz.ne.nint(minval(rzb))) then
+
+                u_res_b = ua(:,nucl2s(s2nucl(isb)-1,iz))*wrk2
+                call grad_p(nCv, nFc, nVx, 0, geo, mpg, u_res_b,
+     &            wrkv, wrkf1)
+
+                wrk1 = na(:,nucl2s(s2nucl(isb)-1,iz))*ti
+                call intface(nCv,nFc,mpg%fcCv,wght,wrk1,wrkf2)
+
+                wrkf0 = wrkf0 + wrkf1*wrkf2
+
+              endif
+            enddo
+
+            wrkf = wrkf + wrkf0*
+     &        (vsaf_uAdp_albe(:,0,s2nucl(isb)-1,s2nucl(isb)-1) - 
+     &         zhcscorr*vsaf_uBdp_al(:,0,s2nucl(isb)-1))
+
+            !wdk common multipliers
+            wrk1 = na(:,isb)/nal(:,s2nucl(isb)-1)
+            call intface(nCv,nFc,mpg%fcCv,wght,wrk1,wrkf1)
+
+            wrkf = wrkf*wrkf1/(geo%fcBb(:,0)*geo%fcBb(:,3))
+
+*         ..calculate the r.h.s. contribution to the parallel balance
+*           corresponding to parallel viscosity connected with heat flow
+            call intcell(nFc,nCv,mpg, mpg%intcellP, wrkf,wrk0)
             call gradc_p(nCv, nFc, nVx, 0, geo, mpg, wrk0, wrkv, wrk1)
 
             !calculate the actual source
@@ -434,11 +521,11 @@
           call my_out_us(70,nCv,0,smbvv(1,k),'b2siav_smovv'//chk//chns)
           call my_out_us(70,nCv,0,smbvh(1,k),'b2siav_smovh'//chk//chns)
         enddo
-        wrks=smbvv(:,0)+smbvv(:,1)*ub+
-     &       smbvv(:,2)*nb*mb+smbvv(:,3)*ub*nb*mb
+        wrks=smbvv(:,0)+smbvv(:,1)*ua(:,isb)+
+     &       smbvv(:,2)*na(:,isb)*mb+smbvv(:,3)*ua(:,isb)*na(:,isb)*mb
         call my_out_us(70,nCv,0,wrks,'b2siav_smovv'//chns)
-        wrks=smbvh(:,0)+smbvh(:,1)*ub+
-     &       smbvh(:,2)*nb*mb+smbvh(:,3)*ub*nb*mb
+        wrks=smbvh(:,0)+smbvh(:,1)*ua(:,isb)+
+     &       smbvh(:,2)*na(:,isb)*mb+smbvh(:,3)*ua(:,isb)*na(:,isb)*mb
         call my_out_us(70,nCv,0,wrks,'b2siav_smovh'//chns)
         call my_out_us(70,nFc,1,cvsbhz_drho(1,0),
      &       'b2siav_cvsbhz_drho_th'//chns)

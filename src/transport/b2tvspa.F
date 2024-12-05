@@ -154,7 +154,7 @@
             enddo
 
             wrk2 = 0.0_R8
-            do iz= 1, znnucl_int(s2nucl(is)-1)
+            do iz = 1, znnucl_int(s2nucl(is)-1)
              !wdk not clear if Zh-closure applies to bundling;
              !wdk if yes: need to update if-condition here
              if(iz.ne.nint(maxval(rza(:,is))).or.
