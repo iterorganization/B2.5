@@ -9,10 +9,15 @@
       use b2mod_b2zhco
      & , only: zhflcorr, zhcscorr, zhcscorr_vq,                         !som 21.03.21
      &         zh_imp_analyt, zh_analyt_mdf,
-     &         zhflcorrh, zh_dist_fun, zh_tf_toff
+     &         zhflcorrh, zh_dist_fun,
+     &         alloc_b2mod_zhco_amfact, amfact,
+     &         amfact_on
       use b2mod_zhfrtf
      & , only: avm_u, w_out, hTdp_out, hwdp_out,
-     &         rTdpgamma_out, rwdpgamma_out
+     &         rTdpgamma_out, rwdpgamma_out,
+     &         piu_out
+      use b2mod_b2mrel
+     & , only : nucl2s, znnucl_int
 !WG_TBD      use b2mod_neoclassical
       use b2mod_switches
       use b2us_geo
@@ -99,7 +104,7 @@
 *.declarations
 
 *   ..local variables
-      integer iFc, is, is0
+      integer iFc, is, is0, iz, inucl
       character(3) chns, chns0                                          !srv 17.06.08
       integer, save :: nnucl, zmaxmax                                   !som 09.02.21
       real (kind=R8), save :: gamma = 1.0_R8                            !som 20.03.21
@@ -112,11 +117,16 @@
      &  cvsahz0_luc(nFc,0:1,0:ns-1),
      &  cvsa0_luc(nFc,0:1,0:ns-1),
      &  chci0_al(nFc,0:1,0:nspecies-1),                                 !som 08.10.21
+     &  chci_al_luc(nFc,0:1,0:nspecies-1),                              !som 08.10.21
      &  chci0_a(nFc,0:1,0:ns-1),                                        !som 08.10.21
      &  cvsa0_hAdp(nFc,0:1,0:nspecies-1,0:nspecies-1),                  !som 20.10.21
      &  cvsa0_hBdp(nFc,0:1,0:nspecies-1),                               !som 20.10.21
      &  cvsahz0_hAdp(nFc,0:1,0:nspecies-1,0:nspecies-1),                !som 08.10.21
      &  cvsahz0_hBdp(nFc,0:1,0:nspecies-1),                             !som 08.10.21
+     &  cvsa_uAdp_fl(nFc,0:1,0:nspecies-1,0:nspecies-1),
+     &  cvsa_uBdp_fl(nFc,0:1,0:nspecies-1),
+     &  cvsahz_uAdp_fl(nFc,0:1,0:nspecies-1,0:nspecies-1),
+     &  cvsahz_uBdp_fl(nFc,0:1,0:nspecies-1),
      &  vsaf0(nFc,0:1,0:ns-1),
      &  vsaf0_luc(nFc,0:1,0:ns-1),
      1  ft,                                                             !srv 16.10.17
@@ -146,6 +156,14 @@
      &     mod(abs(switch%no_solve),2**is).ge.2**(is-1))
         enddo
         call alloc_input_profile(nCv,ns)
+        call alloc_b2mod_zhco_amfact (nspecies)                         !som 21.01.22
+        amfact(0:nspecies-1) = 1.0_R8
+        if (amfact_on.ne.0) then
+         do is=0, nspecies-1
+          write (chns,'(i3.3)') is
+          call ipgetr ('b2tral_amfact_'//chns, amfact(is))
+         enddo
+        endif
       end if
 
 * ..compute transport coefficients
@@ -172,16 +190,30 @@
      &    dv%lnlam)                                                     !srv 01.07.09  20.09.11
         call b2trzh (nCv, nFc, nVx, ns, zmaxmax, switch,
      &    geo, mpg, pl, dv, rt, co, co_ns,
-     &    co_ns%hci_al, co%hci_a,
+     &    co_ns%hci_al_ast, co%hci_a,
      &    chci0_nofl, chci0_fl, chci0_luc,
-     &    chci0_al, co_ns%chci_al, chci0_a, co%chci_a,
+     &    chci0_al, chci_al_luc, chci0_a, co%chci_a,
      &    vsaf0_luc, co%vsaf_drho,
-     &    cvsahz0_nofl, cvsahz0_fl,cvsahz0_luc, co%cvsahz_drho,
+     &    cvsahz0_nofl, cvsahz0_fl, cvsahz0_luc, co%cvsahz_drho,
      &    cvsa0_luc, co%cvsa_drho,
      &    cvsa0_hAdp, cvsa0_hBdp,
      &    co_ns%cvsa_hAdp_albe, co_ns%cvsa_hBdp_al,
      &    cvsahz0_hAdp, cvsahz0_hBdp,
-     &    co_ns%cvsahz_hAdp_albe, co_ns%cvsahz_hBdp_al)                 !som 08.10.21
+     &    co_ns%cvsahz_hAdp_albe, co_ns%cvsahz_hBdp_al,
+     &    cvsa_uAdp_fl, cvsa_uBdp_fl,
+     &    co_ns%cvsa_uAdp_albe ,co_ns%cvsa_uBdp_al,
+     &    cvsahz_uAdp_fl, cvsahz_uBdp_fl,
+     &    co_ns%cvsahz_uAdp_albe, co_ns%cvsahz_uBdp_al)                 !som 08.10.21
+
+*   ..compute ion heat conductivity summed over charge states
+        co_ns%chci_al_ast = 0.0_R8
+        do inucl=0,nspecies-1
+          do iz= 1, znnucl_int(inucl)
+            co_ns%chci_al_ast(:,0,inucl) = 
+     &        co_ns%chci_al_ast(:,0,inucl) +
+     &        co%chci_a(:,0,nucl2s(inucl,iz))
+          enddo
+        enddo
 
         if (switch%Zhdanov_test.eq.0 .and.
      &      switch%Zhdanov_cond.eq.1) then                              !som 10.08.21
@@ -197,7 +229,8 @@
             co%vsaf_cl(:,0:1,0:ns-1) = co%vsaf_drho(:,0:1,0:ns-1)
             co%cvsahz_cl(:,0:1,0:ns-1) = co%cvsahz_drho(:,0:1,0:ns-1)
             co%cvsa_cl(:,0:1,0:ns-1) = co%cvsa_drho(:,0:1,0:ns-1)
-          else if (switch%zh_vis_type.eq.1) then
+          else if (switch%zh_vis_type.eq.1 .or.
+     &             switch%zh_vis_type.eq.2) then
             vsaf0(:,0:1,0:ns-1) = vsaf0_luc(:,0:1,0:ns-1)
             cvsahz0(:,0:1,0:ns-1) = cvsahz0_luc(:,0:1,0:ns-1)
             cvsa0(:,0:1,0:ns-1)= cvsa0_luc(:,0:1,0:ns-1)
@@ -218,7 +251,7 @@
             write (chns,'(i3.3)') is
             call my_out_us(70,nFc,1,chci0_a(1,0,is),
      &       'b2trzh_fllim_chci_a_th'//chns)
-            call my_out_us(70,nFc,1,co_ns%chci_al(1,0,is),
+            call my_out_us(70,nFc,1,co_ns%chci_al_ast(1,0,is),
      &       'b2trzh_luciani_fllim_chci_a_th'//chns)
             call my_out_us(70,nFc,1,cvsahz0_nofl(1,0,is),
      &       'b2trzh_cvsahz_th'//chns)
@@ -234,9 +267,9 @@
           do is = 0, nspecies-1
             write (chns,'(i3.3)') is
             call my_out_us(70,nFc,1,chci0_al(1,0,is),
-     &       'b2trzh_fllim_chci_al_th'//chns)
-            call my_out_us(70,nFc,1,co_ns%chci_al(1,0,is),
-     &       'b2trzh_luciani_fllim_chci_al_th'//chns)
+     &       'b2trzh_fllim_chci_al_ast_th'//chns)
+            call my_out_us(70,nFc,1,co_ns%chci_al_ast(1,0,is),
+     &       'b2trzh_luciani_fllim_chci_al_ast_th'//chns)
             do is0 = 0, nspecies-1
              write (chns0,'(i3.3)') is0
               call my_out_us(70,nFc,1,cvsa0_hAdp(1,0,is,is0),
@@ -278,8 +311,9 @@
           enddo
         endif
       else
-        co%cvsahz_drho=0.0e0_R8
-        co%cvsa_drho=0.0e0_R8
+        co%vsaf_drho   = 0.0_R8
+        co%cvsahz_drho = 0.0_R8
+        co%cvsa_drho   = 0.0_R8
       endif
 
 *   ..add to previous contributions=

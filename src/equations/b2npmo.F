@@ -391,7 +391,7 @@ c time-dependent treatment                                            !srv 07.07
          call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
      &    am(is)*mp, rt%rza(:,is), pl%ua(:,is), pl%te, pl%ti,
      &    pl%na(:,is), dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
-     &    co_ns%hci_al, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
+     &    co_ns%hci_al_ast, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
      &    smbvh, smbvv, smbvi, rho_A_rel(:,is), avm_u, wrk0, wrk1, wrk2)
        elseif (switch%Zhdanov_visu.eq.1 .and.
      &         switch%Zhdanov_vish.eq.0) then
@@ -402,7 +402,7 @@ c time-dependent treatment                                            !srv 07.07
          call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
      &    am(is)*mp, rt%rza(:,is), pl%ua(:,is), pl%te, pl%ti,
      &    pl%na(:,is), dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
-     &    co_ns%hci_al, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
+     &    co_ns%hci_al_ast, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
      &    smbvtmp, smbvv, smbvi, rho_A_rel(:,is), avm_u,
      &    wrk0, wrk1, wrk2)
        elseif (switch%Zhdanov_visu.eq.0 .and.
@@ -414,7 +414,7 @@ c time-dependent treatment                                            !srv 07.07
          call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
      &    am(is)*mp, rt%rza(:,is), pl%ua(:,is), pl%te, pl%ti,
      &    pl%na(:,is), dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
-     &    co_ns%hci_al, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
+     &    co_ns%hci_al_ast, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
      &    smbvh, smbvtmp, smbvi, rho_A_rel(:,is), avm_u,
      &    wrk0, wrk1, wrk2)
          smbvi = 0.0_R8

@@ -8,6 +8,13 @@
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_zhfrtf
+     , , only: avm_u, nal,                                              !som 17.08.21 30.04.24
+     &         b2mod_zhfrtf_avm_u, b2mod_zhfrtf_prep                    !som 18.08.21 30.04.24
+      use b2mod_b2mrel
+     & , only : s2nucl, nucl2s, znnucl_int
+      use b2mod_b2zhco
+     , , only: zh_vis_type, zhcscorr
       use b2mod_switches
       use b2us_geo
       use b2us_map

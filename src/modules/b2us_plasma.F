@@ -167,12 +167,20 @@
       type B2Coeff_nspecies
 
         ! Dedicated coefficients related to Zhdanov closure
-        real(R8), allocatable :: hci_al(:,:),
-     .                           chci_al(:,:,:),
+        real(R8), allocatable :: vsaf_hAdp_albe(:,:,:,:),
+     .                           vsaf_hBdp_al(:,:,:),
+     .                           vsaf_uAdp_albe(:,:,:,:),
+     .                           vsaf_uBdp_al(:,:,:),
+     .                           hci_al_ast(:,:),
+     .                           chci_al_ast(:,:,:),
      .                           cvsa_hAdp_albe(:,:,:,:),
      .                           cvsa_hBdp_al(:,:,:),
+     .                           cvsa_uAdp_albe(:,:,:,:),
+     .                           cvsa_uBdp_al(:,:,:),
      .                           cvsahz_hAdp_albe(:,:,:,:),
-     .                           cvsahz_hBdp_al(:,:,:)
+     .                           cvsahz_hBdp_al(:,:,:),
+     .                           cvsahz_uAdp_albe(:,:,:,:),
+     .                           cvsahz_uBdp_al(:,:,:)
 
       end type B2Coeff_nspecies      
 
@@ -870,36 +878,72 @@
       integer, intent(in) :: nCv, nFc, nspecies
       type(B2Coeff_nspecies), intent(inout) :: coeff_ns
 
-      if (allocated(coeff_ns % hci_al)) return
+      if (allocated(coeff_ns % hci_al_ast)) return
 
 #ifdef F2003
-      allocate( coeff_ns % hci_al( nCv, 0:nspecies-1 ),
+      allocate( coeff_ns % vsaf_hAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ), SOURCE=0._R8 )
+      allocate( coeff_ns % vsaf_hBdp_al( nFc, 0:1, 0:nspecies-1 ),
      .  SOURCE=0._R8 )
-      allocate( coeff_ns % chci_al( nFc, 0:1, 0:nspecies-1 ),
+      allocate( coeff_ns % vsaf_uAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ), SOURCE=0._R8 )
+      allocate( coeff_ns % vsaf_uBdp_al( nFc, 0:1, 0:nspecies-1 ),
+     .  SOURCE=0._R8 )
+      allocate( coeff_ns % hci_al_ast( nCv, 0:nspecies-1 ),
+     .  SOURCE=0._R8 )
+      allocate( coeff_ns % chci_al_ast( nFc, 0:1, 0:nspecies-1 ),
      .  SOURCE=0._R8 )
       allocate( coeff_ns % cvsa_hAdp_albe( nFc, 0:1, 0:nspecies-1,
      .  0:nspecies-1 ), SOURCE=0._R8 )
       allocate( coeff_ns % cvsa_hBdp_al( nFc, 0:1, 0:nspecies-1 ),
      .  SOURCE=0._R8 )
+      allocate( coeff_ns % cvsa_uAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ), SOURCE=0._R8 )
+      allocate( coeff_ns % cvsa_uBdp_al( nFc, 0:1, 0:nspecies-1 ),
+     .  SOURCE=0._R8 )
       allocate( coeff_ns % cvsahz_hAdp_albe( nFc, 0:1, 0:nspecies-1,
      .  0:nspecies-1 ), SOURCE=0._R8 )
       allocate( coeff_ns % cvsahz_hBdp_al( nFc, 0:1, 0:nspecies-1 ),
      .  SOURCE=0._R8 )
+      allocate( coeff_ns % cvsahz_uAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ), SOURCE=0._R8 )
+      allocate( coeff_ns % cvsahz_uBdp_al( nFc, 0:1, 0:nspecies-1 ),
+     .  SOURCE=0._R8 )
 #else
-      allocate( coeff_ns % hci_al( nCv, 0:nspecies-1 ))
-      allocate( coeff_ns % chci_al( nFc, 0:1, 0:nspecies-1 ))
+      allocate( coeff_ns % vsaf_hAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ))
+      allocate( coeff_ns % vsaf_hBdp_al( nFc, 0:1, 0:nspecies-1 ))
+      allocate( coeff_ns % vsaf_uAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ))
+      allocate( coeff_ns % vsaf_uBdp_al( nFc, 0:1, 0:nspecies-1 ))
+      allocate( coeff_ns % hci_al_ast( nCv, 0:nspecies-1 ))
+      allocate( coeff_ns % chci_al_ast( nFc, 0:1, 0:nspecies-1 ))
       allocate( coeff_ns % cvsa_hAdp_albe( nFc, 0:1, 0:nspecies-1,
      .  0:nspecies-1 ))
       allocate( coeff_ns % cvsa_hBdp_al( nFc, 0:1, 0:nspecies-1 ))
+      allocate( coeff_ns % cvsa_uAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ))
+      allocate( coeff_ns % cvsa_uBdp_al( nFc, 0:1, 0:nspecies-1 ))
       allocate( coeff_ns % cvsahz_hAdp_albe( nFc, 0:1, 0:nspecies-1,
      .  0:nspecies-1 ))
       allocate( coeff_ns % cvsahz_hBdp_al( nFc, 0:1, 0:nspecies-1 ))
-      coeff_ns % hci_al = 0.0_R8
-      coeff_ns % chci_al = 0.0_R8
+      allocate( coeff_ns % cvsahz_uAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ))
+      allocate( coeff_ns % cvsahz_uBdp_al( nFc, 0:1, 0:nspecies-1 ))
+      coeff_ns % vsaf_hAdp_albe = 0.0_R8
+      coeff_ns % vsaf_hBdp_al = 0.0_R8
+      coeff_ns % vsaf_uAdp_albe = 0.0_R8
+      coeff_ns % vsaf_uBdp_al = 0.0_R8
+      coeff_ns % hci_al_ast = 0.0_R8
+      coeff_ns % chci_al_ast = 0.0_R8
       coeff_ns % cvsa_hAdp_albe = 0.0_R8
       coeff_ns % cvsa_hBdp_al = 0.0_R8
+      coeff_ns % cvsa_uAdp_albe = 0.0_R8
+      coeff_ns % cvsa_uBdp_al = 0.0_R8
       coeff_ns % cvsahz_hAdp_albe = 0.0_R8
       coeff_ns % cvsahz_hBdp_al = 0.0_R8
+      coeff_ns % cvsahz_uAdp_albe = 0.0_R8
+      coeff_ns % cvsahz_uBdp_al = 0.0_R8
 #endif
 
       return
@@ -909,14 +953,22 @@
       subroutine destroyB2Coeff_nspecies( coeff_ns )
       type(B2Coeff_nspecies), intent(inout) :: coeff_ns
 
-      if (.not.allocated(coeff_ns % hci_al)) return
+      if (.not.allocated(coeff_ns % hci_al_ast)) return
 
-      deallocate( coeff_ns % hci_al )
-      deallocate( coeff_ns % chci_al )
+      deallocate( coeff_ns % vsaf_hAdp_albe)
+      deallocate( coeff_ns % vsaf_hBdp_al)
+      deallocate( coeff_ns % vsaf_uAdp_albe)
+      deallocate( coeff_ns % vsaf_uBdp_al)
+      deallocate( coeff_ns % hci_al_ast )
+      deallocate( coeff_ns % chci_al_ast )
       deallocate( coeff_ns % cvsa_hAdp_albe )
       deallocate( coeff_ns % cvsa_hBdp_al )
+      deallocate( coeff_ns % cvsa_uAdp_albe )
+      deallocate( coeff_ns % cvsa_uBdp_al )
       deallocate( coeff_ns % cvsahz_hAdp_albe )
       deallocate( coeff_ns % cvsahz_hBdp_al )
+      deallocate( coeff_ns % cvsahz_uAdp_albe )
+      deallocate( coeff_ns % cvsahz_uBdp_al )
 
       return
       end subroutine destroyB2Coeff_nspecies

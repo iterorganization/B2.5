@@ -1,9 +1,9 @@
       module b2mod_b2mrel
       use b2mod_types
       implicit none
-      integer, allocatable ::
+      integer, allocatable, save ::
      &  nucl2s(:,:), znnucl_int(:), s2nucl(:)
-      real (kind=R8), allocatable ::
+      real (kind=R8), allocatable, save ::
      &  amnucl(:), znnucl(:),
      &  N2(:,:), N3(:,:),
      &  N4(:,:), N5(:,:),
@@ -15,7 +15,19 @@
      &  N15(:,:), N16(:,:),
      &  mu(:,:), mum(:,:),
      &  rmu(:,:), rmd2(:),
-     &  mdm(:,:)
+     &  mdm(:,:),
+     &  amnucl_mdf(:),
+     &  N2_mdf(:,:), N3_mdf(:,:),
+     &  N4_mdf(:,:), N5_mdf(:,:),
+     &  N6_mdf(:,:), N8_mdf(:,:),
+     &  N9_mdf(:,:),
+     &  N10_mdf(:,:), N11_mdf(:,:),
+     &  N12_mdf(:,:),
+     &  N13_mdf(:,:), N14_mdf(:,:),
+     &  N15_mdf(:,:), N16_mdf(:,:),
+     &  mu_mdf(:,:), mum_mdf(:,:),
+     &  rmu_mdf(:,:), rmd2_mdf(:),
+     &  mdm_mdf(:,:)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -65,9 +77,30 @@
       allocate(rmu(0:nnucl-1,0:nnucl-1))
       allocate(rmd2(0:nnucl-1))
       allocate(mdm(0:nnucl-1,0:nnucl-1))
+      allocate(amnucl_mdf(0:nnucl-1))
+      allocate(N2_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N3_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N4_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N5_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N6_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N8_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N9_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N10_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N11_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N12_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N13_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N14_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N15_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(N16_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(mu_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(mum_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(rmu_mdf(0:nnucl-1,0:nnucl-1))
+      allocate(rmd2_mdf(0:nnucl-1))
+      allocate(mdm_mdf(0:nnucl-1,0:nnucl-1))
       allocate(nucl2s(0:nnucl-1,0:znmax))
       allocate(znnucl_int(0:nnucl-1))
       allocate(s2nucl(0:ns-1))
+      nucl2s = -1
       end subroutine alloc_b2mod_mrel
 
       subroutine dealloc_b2mod_mrel
@@ -93,6 +126,26 @@
       deallocate(rmu)
       deallocate(rmd2)
       deallocate(mdm)
+      deallocate(amnucl_mdf)
+      deallocate(N2_mdf)
+      deallocate(N3_mdf)
+      deallocate(N4_mdf)
+      deallocate(N5_mdf)
+      deallocate(N6_mdf)
+      deallocate(N8_mdf)
+      deallocate(N9_mdf)
+      deallocate(N10_mdf)
+      deallocate(N11_mdf)
+      deallocate(N12_mdf)
+      deallocate(N13_mdf)
+      deallocate(N14_mdf)
+      deallocate(N15_mdf)
+      deallocate(N16_mdf)
+      deallocate(mu_mdf)
+      deallocate(mum_mdf)
+      deallocate(rmu_mdf)
+      deallocate(rmd2_mdf)
+      deallocate(mdm_mdf)
       deallocate(nucl2s)
       deallocate(znnucl_int)
       deallocate(s2nucl)
