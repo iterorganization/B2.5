@@ -80,9 +80,19 @@ c Zhdanov closure switches
       integer :: zh_vis_type
       integer :: impr_form_tf
       integer :: impr_form_fr
-
+      integer :: zhd_corr
+      integer :: zhd_corrT
+      integer :: zhcscorr
+      integer :: zhcscorr_vq
+      integer :: zh_imp_analyt
+      integer :: zh_analyt_mdf
+      integer :: zh_dist_fun
+      integer :: amfact_on
       real (kind=R8) :: mass_multiplicator
       real (kind=R8) :: smbvi_factor
+      real (kind=R8) :: zhflcorr=3.0_R8
+      real (kind=R8) :: zhflcorrh=0.4_R8
+
 
 
       integer :: inert_all_ions
@@ -666,8 +676,19 @@ c Zhdanov closure switches
       s % zh_vis_type = 0
       s % impr_form_tf = 0
       s % impr_form_fr = 0
+      s % zhd_corr = 1
+      s % zhd_corrT = 1
+      s % zhcscorr = 1
+      s % zhcscorr_vq = 1
+      s % zh_imp_analyt = 0
+      s % zh_analyt_mdf = 0
+      s % zh_dist_fun = 0
+      s % amfact_on = 0
       s % mass_multiplicator = 1.0_R8
       s % smbvi_factor = 1.0_R8
+      s % zhflcorr = 3.0_R8
+      s % zhflcorrh = 0.4_R8
+
 
       s % inert_all_ions = 1
       s % visper_all_ions = 1
@@ -1256,6 +1277,7 @@ c Advanced fluid neutral models
 c Zhdanov closure
       call ipgeti ('b2tral_Zhdanov_closure', s % Zhdanov_closure)
       call ipgeti ('b2sifr_Zhdanov_test', s % Zhdanov_test)
+      call ipgeti ('b2tral_Zhdanov_cond', s % Zhdanov_cond)
       call ipgeti ('b2sifr_Zhdanov_tf_fr', s % Zhdanov_tf_fr)
       call ipgeti ('b2tral_Zhdanov_visu', s % Zhdanov_visu)
       call ipgeti ('b2tral_Zhdanov_vish', s % Zhdanov_vish)
@@ -1263,8 +1285,19 @@ c Zhdanov closure
       call ipgeti ('b2tral_zh_vis_type', s % zh_vis_type)
       call ipgeti ('b2npmo_impr_form_tf', s % impr_form_tf)
       call ipgeti ('b2npmo_impr_form_fr', s % impr_form_fr)
+      call ipgeti ('b2tral_zhd_corr', s % zhd_corr)
+      call ipgeti ('b2tral_zhd_corrT', s % zhd_corrT)
+      call ipgeti ('b2tral_zhcscorr', s % zhcscorr)
+      call ipgeti ('b2tral_zhcscorr_vq', s % zhcscorr_vq)
+      call ipgeti ('b2tral_zh_imp_analyt', s % zh_imp_analyt)
+      call ipgeti ('b2tral_zh_analyt_mdf', s % zh_analyt_mdf)
+      call ipgeti ('b2tral_zh_dist_fun', s % zh_dist_fun)
+      call ipgeti ('b2tral_amfact_on', s % amfact_on)
       call ipgetr ('b2npmo_mass_multiplicator', s % mass_multiplicator)
       call ipgetr ('b2npmo_smbvi_factor', s % smbvi_factor)
+      call ipgetr ('b2tral_zhflcorr', s % zhflcorr)
+      call ipgetr ('b2tral_zhflcorrh', s % zhflcorrh)
+
 
       call ipgeti ('b2tvspr_visper_all_ions', s % visper_all_ions)
       call ipgeti ('b2tiner_inert_all_ions', s % inert_all_ions)
@@ -2322,7 +2355,7 @@ c med
      &  'faulty parameter b2mndr_med_style')
 
 c zhdanov
-      call xertst (s%zh_vis_type.ge.0 .and. s%zh_vis_type.le.1,
+      call xertst (s%zh_vis_type.ge.0 .and. s%zh_vis_type.le.2,
      &  'faulty parameter b2tral_zh_vis_type')
 
 c Optimization

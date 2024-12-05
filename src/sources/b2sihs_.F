@@ -12,8 +12,6 @@
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_b2zhco
-     & , only: zhd_corr                                               !som 21.03.21
       use b2mod_zhfrtf
      & , only: avm_u,                                                 !som 21.03.21 16.08.21
      &         b2mod_zhfrtf_avm_u                                     !som 18.08.21
@@ -563,8 +561,8 @@
 *   ..add contribution due to Zhdanov multi-species approach
        if(switch%Zhdanov_closure.eq.1.and.switch%Zhdanov_test.eq.0.and.
      &    switch%Zhdanov_tf_fr.eq.1) then                              !som 01.07.21
-         shifr(:,0) = shifr(:,0)-zhd_corr*avm_u*shefr(:,0)
-         shefr(:,0) = shefr(:,0)-zhd_corr*(avm_u/ue)*shefr(:,0)
+         shifr(:,0) = shifr(:,0)-switch%zhd_corr*avm_u*shefr(:,0)
+         shefr(:,0) = shefr(:,0)-switch%zhd_corr*(avm_u/ue)*shefr(:,0)
        endif
        shefr(:,0) =  ue*shefr(:,0)
 

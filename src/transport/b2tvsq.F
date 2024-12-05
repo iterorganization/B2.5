@@ -20,8 +20,6 @@
      & , only : nal, Z_to_m1_ast, Ia
       use b2mod_b2mrel
      & , only : amnucl, s2nucl
-      use b2mod_b2zhco
-     & , only : zhcscorr, zhcscorr_vq
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, ismain
@@ -482,7 +480,7 @@
             wrkf = wrkf + vsaf_hAdp_albe(:,0,s2nucl(is)-1,inucl)*
      &        gqipgen_al(:,inucl)
           enddo
-          if (zhcscorr.gt.0 .and. zhcscorr_vq.gt.0) then
+          if (switch%zhcscorr.gt.0 .and. switch%zhcscorr_vq.gt.0) then
             wrkf = wrkf + vsaf_hBdp_al(:,0,s2nucl(is)-1)*
      &       (gqipgen/Iaf - gqipgen_al(:,s2nucl(is)-1))
           endif

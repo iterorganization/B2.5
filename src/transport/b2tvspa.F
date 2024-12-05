@@ -14,8 +14,6 @@
      &         b2mod_zhfrtf_avm_u, b2mod_zhfrtf_prep                    !som 18.08.21 30.04.24
       use b2mod_b2mrel
      & , only : s2nucl, nucl2s, znnucl_int
-      use b2mod_b2zhco
-     , , only: zh_vis_type, zhcscorr
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -172,7 +170,7 @@
 
             dvpar = dvpar + wrk0*wrk1*wrk2*
      &       (vsaf_uAdp_albe(:,0,s2nucl(is)-1,s2nucl(is)-1) - 
-     &        zhcscorr*vsaf_uBdp_al(:,0,s2nucl(is)-1))
+     &        switch%zhcscorr*vsaf_uBdp_al(:,0,s2nucl(is)-1))
 
            endif
           else

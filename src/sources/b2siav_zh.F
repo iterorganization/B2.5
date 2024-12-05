@@ -27,8 +27,6 @@
      & , only : nal, Z_to_m1_ast, Ia
       use b2mod_b2mrel
      & , only : amnucl, s2nucl, nucl2s, znnucl_int
-      use b2mod_b2zhco
-     & , only : zhcscorr, zhcscorr_vq
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -340,7 +338,7 @@
           smbvh(mpg%nCi+1:nCv,0) = 0.0_R8
 
 *       ..charge state correction
-          if (zhcscorr.gt.0 .and. zhcscorr_vq.gt.0) then
+          if (switch%zhcscorr.gt.0 .and. switch%zhcscorr_vq.gt.0) then
 
 *         ..gradient qipgen in cell centers   
             call grad_p(nCv, nFc, nVx, 0, geo, mpg, qipgen, wrkv, wrkf0)
@@ -489,7 +487,7 @@
 
             wrkf = wrkf + wrkf0*
      &        (vsaf_uAdp_albe(:,0,s2nucl(isb)-1,s2nucl(isb)-1) - 
-     &         zhcscorr*vsaf_uBdp_al(:,0,s2nucl(isb)-1))
+     &         switch%zhcscorr*vsaf_uBdp_al(:,0,s2nucl(isb)-1))
 
             !wdk common multipliers
             wrk1 = na(:,isb)/nal(:,s2nucl(isb)-1)
