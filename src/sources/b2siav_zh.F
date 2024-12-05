@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2siav_zh (nCv, nFc, nVx, ns, isb, switch, geo, mpg,
-     & mb, rzb, ub, te, ti, nb, ni, ne2, rz2, lnlam, hci_a, hci_al,
+     & mb, rzb, ub, te, ti, nb, ni, ne2, rz2, lnlam, hci_a, hci_al_ast,
      & cvsbhz_drho, vsb_drho, smbvh, smbvv, smbvi, rho_rel, avm_u,
      & wrk0, wrk1, wrk2)                                                !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
       use b2mod_types
@@ -22,7 +22,7 @@
      & , only : ncall_b2ttia
 #endif
       use b2mod_zhfrtf
-     & , only : nal, Z_to_m1, Ia
+     & , only : nal, Z_to_m1_ast, Ia
       use b2mod_b2mrel
      & , only : amnucl, s2nucl
       use b2mod_b2zhco
@@ -39,7 +39,7 @@
      & ub(nCv),
      & te(nCv), ti(nCv), nb(nCv), rzb(nCv), ni(nCv), ne2(nCv),
      & hci_a(nCv,0:ns-1),
-     & hci_al(nCv,0:nspecies-1),
+     & hci_al_ast(nCv,0:nspecies-1),
      & cvsbhz_drho(nFc,0:1),
      & vsb_drho(nCv),
      & rz2(nCv,0:ns-1),                                                 !srv 31.07.02
@@ -208,7 +208,7 @@
                  iCv = mpg%ftCv(ic)
                  qip0(iCv) = -2.5e0_R8*geo%cvBb(iCv,3)*geo%cvBb(iCv,2)/
      &             (geo%cvBb(iCv,0)*geo%ftBbav2(iFt))*
-     &             (nal(iCv,inucl)*ti(iCv)/(qe*Z_to_m1(iCv,inucl)))*
+     &             (nal(iCv,inucl)*ti(iCv)/qe*Z_to_m1_ast(iCv,inucl))*
      &             gti(iCv,1)
                 enddo
                endif
@@ -258,10 +258,10 @@
                 do ic=mpg%ftCvP(iFt,1),
      &                mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
                  iCv = mpg%ftCv(ic)
-                 qip0(iCv) = -hci_al(iCv,inucl)*gti(iCv,0)*
+                 qip0(iCv) = -hci_al_ast(iCv,inucl)*gti(iCv,0)*
      &             geo%cvBb(iCv,3)/geo%cvBb(iCv,0) - 2.5e0_R8*
      &             geo%cvBb(iCv,2)/(geo%cvBb(iCv,0)*geo%cvBb(iCv,3))*
-     &             (nal(iCv,inucl)*ti(iCv)/(qe*Z_to_m1(iCv,inucl)))*
+     &             (nal(iCv,inucl)*ti(iCv)/qe*Z_to_m1_ast(iCv,inucl))*
      &            gti(iCv,1)
                 enddo
                endif
