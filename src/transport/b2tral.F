@@ -194,6 +194,7 @@
      &    chci0_nofl, chci0_fl, chci0_luc,
      &    chci0_al, chci_al_luc, chci0_a, co%chci_a,
      &    vsaf0_luc, co%vsaf_drho,
+     &    co_ns%vsaf_uAdp_albe, co_ns%vsaf_uBdp_al,
      &    cvsahz0_nofl, cvsahz0_fl, cvsahz0_luc, co%cvsahz_drho,
      &    cvsa0_luc, co%cvsa_drho,
      &    cvsa0_hAdp, cvsa0_hBdp,

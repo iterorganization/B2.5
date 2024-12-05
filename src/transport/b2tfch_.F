@@ -127,7 +127,9 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
      &    dv%uadia, dv%facdrift, dv%fchdia)
 *     ..calculate poloidal and radial components of viscosity parallel current
         call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &    pl%ua, co%vsaf_cl, dv%fac_vis, dv%fchvispar_a, dv%fchvispar)
+     &    pl%na, pl%ua, pl%ti, rt%rza, co%vsaf_cl, co%vsaf_drho,
+     &    co_ns%vsaf_uAdp_albe, co_ns%vsaf_uBdp_al, dv%fac_vis,
+     &    dv%fchvispar_a, dv%fchvispar)
 *     ..calculate the contribution of viscosity perpendicular current    !srv 22.11.99
         call b2tvspr(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &    pl%po, pl%ti, pl%na, rt%rza, co%vsa0, dv%fac_vis,

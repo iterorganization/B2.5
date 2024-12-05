@@ -6,7 +6,7 @@
      &  hci0_al_luc, hci0_a_luc,
      &  chci0_nofl, chci0, chci0_luc,
      &  chci0_al, chci0_al_luc, chci0_a, chci0_a_luc,
-     &  vsaf0_luc, vsaf_drho_luc,
+     &  vsaf0_luc, vsaf_drho_luc, vsaf_uAdp_luc, vsaf_uBdp_luc,
      &  cvsahz0_nofl, cvsahz0, cvsahz0_luc, cvsahz_drho_luc,
      &  cvsa0_luc, cvsa_drho_luc,
      &  cvsa_hAdp, cvsa_hBdp, cvsa_hAdp_luc, cvsa_hBdp_luc,
@@ -54,6 +54,8 @@
      &  cvsahz0_nofl(nFc,0:1,0:ns-1),
      &  vsaf0_luc(nFc,0:1,0:ns-1),
      &  vsaf_drho_luc(nFc,0:1,0:ns-1),
+     &  vsaf_uAdp_luc(nFc,0:1,0:nspecies-1,0:nspecies-1),
+     &  vsaf_uBdp_luc(nFc,0:1,0:nspecies-1),
      &  cvsahz0_luc(nFc,0:1,0:ns-1),
      &  cvsahz_drho_luc(nFc,0:1,0:ns-1),
      &  cvsa0_luc(nFc,0:1,0:ns-1),
@@ -773,7 +775,6 @@
         fcVolHz(iFc,2) = geo%fcVol(iFc,2)*geo%cvHz(mpg%fcCv(iFc,2))
       enddo
       if (zh_vis_type.eq.0 .or. zh_vis_type.eq.1) then
-!wdk todo: add necessary vsaf_* arrays
         do is = 0, ns-1
           wrk = eta_cl_fl(:,is)*rho_A_rel(:,is)
           do iFc = 1, nFc
@@ -803,8 +804,15 @@
      &     eta_cl_fl(:,is), cvsa_drho(:,0,is))
         enddo
       elseif (zh_vis_type.eq.2) then
-!wdk todo: add necessary vsaf_* arrays
         do is = 0, ns-1
+          wrk = eta_cl_a_only_fl(:,is)
+          do iFc = 1, nFc
+            vsaf0_luc(iFc,0,is) =
+     &        (geo%fcVol(iFc,1)*wrk(mpg%fcCv(iFc,1))+
+     &         geo%fcVol(iFc,2)*wrk(mpg%fcCv(iFc,2)))/
+     &        (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
+          enddo
+          vsaf0_luc(:,1,is) = 0.0_R8
           call b2txcx (nCv, nFc, mode, geo, mpg, fcVolHz, fcSHz,
      &     eta_cl_a_only_fl(:,is), cvsahz0(:,0,is))
           call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
@@ -817,12 +825,28 @@
 *    ..additional velocity-dependent viscosity on the cell boundary
       do i = 0, nspecies-1
         do j = 0, nspecies-1
+          wrk = eta_uAdp_fl(:,i,j)
+          do iFc = 1, nFc
+            vsaf_uAdp_luc(iFc,0,i,j) =
+     &        (geo%fcVol(iFc,1)*wrk(mpg%fcCv(iFc,1))+
+     &         geo%fcVol(iFc,2)*wrk(mpg%fcCv(iFc,2)))/
+     &        (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
+          enddo
+          vsaf_uAdp_luc(:,1,i,j) = 0.0_R8
           call b2txcx (nCv, nFc, mode, geo, mpg, fcVolHz, fcSHz,
      &     eta_uAdp_fl(:,i,j), cvsahz_uAdp_fl(:,0,i,j))
           call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &     eta_uAdp_fl(:,i,j), cvsa_uAdp_fl(:,0,i,j))
         enddo
 
+        wrk = eta_uBdp_fl(:,i)
+        do iFc = 1, nFc
+          vsaf_uBdp_luc(iFc,0,i) =
+     &      (geo%fcVol(iFc,1)*wrk(mpg%fcCv(iFc,1))+
+     &       geo%fcVol(iFc,2)*wrk(mpg%fcCv(iFc,2)))/
+     &      (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
+        enddo
+        vsaf_uBdp_luc(:,1,i) = 0.0_R8
         call b2txcx (nCv, nFc, mode, geo, mpg, fcVolHz, fcSHz,
      &   eta_uBdp_fl(:,i), cvsahz_uBdp_fl(:,0,i))
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
@@ -878,9 +902,11 @@
 !wdk todo: add flux limit to vsaf_* arrays
       do i = 0, nspecies-1
         do j = 0, nspecies-1
+          vsaf_uAdp_luc(:,0,i,j) = vsaf_uAdp_luc(:,0,i,j)*co%f_luc_et
           cvsahz_uAdp_luc(:,0,i,j) = cvsahz_uAdp_fl(:,0,i,j)*co%f_luc_et
           cvsa_uAdp_luc(:,0,i,j) = cvsa_uAdp_fl(:,0,i,j)*co%f_luc_et
         enddo
+        vsaf_uBdp_luc(:,0,i) = vsaf_uBdp_luc(:,0,i)*co%f_luc_et
         cvsahz_uBdp_luc(:,0,i) = cvsahz_uBdp_fl(:,0,i)*co%f_luc_et
         cvsa_uBdp_luc(:,0,i) = cvsa_uBdp_fl(:,0,i)*co%f_luc_et
       enddo
