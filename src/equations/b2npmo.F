@@ -389,9 +389,12 @@ c time-dependent treatment                                            !srv 07.07
        elseif (switch%Zhdanov_visu.eq.1 .and.
      &         switch%Zhdanov_vish.eq.1) then
          call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
-     &    am(is)*mp, rt%rza(:,is), pl%ua(:,is), pl%te, pl%ti,
-     &    pl%na(:,is), dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
-     &    co_ns%hci_al_ast, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
+     &    am(is)*mp, rt%rza(:,is), pl%te, pl%ti, pl%na, pl%ua,
+     &    dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
+     &    co_ns%hci_al_ast, co%cvsahz_cl(:,:,is),
+     &    co%cvsahz_drho(:,:,is), co%vsaf_drho(:,:,is),
+     &    co_ns%vsaf_hAdp_albe, co_ns%vsaf_hBdp_al,
+     &    co_ns%vsaf_uAdp_albe, co_ns%vsaf_uBdp_al,
      &    smbvh, smbvv, smbvi, rho_A_rel(:,is), avm_u, wrk0, wrk1, wrk2)
        elseif (switch%Zhdanov_visu.eq.1 .and.
      &         switch%Zhdanov_vish.eq.0) then
@@ -400,9 +403,12 @@ c time-dependent treatment                                            !srv 07.07
      &    dv%ne2, rt%rz2, dv%lnlam, co%hcix_c, co%cvsahz_cl(:,:,is),
      &    smbvh, smbvtmp, co%kt_neo, wrk0, wrk1, wrk2)
          call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
-     &    am(is)*mp, rt%rza(:,is), pl%ua(:,is), pl%te, pl%ti,
-     &    pl%na(:,is), dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
-     &    co_ns%hci_al_ast, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
+     &    am(is)*mp, rt%rza(:,is), pl%te, pl%ti, pl%na, pl%ua,
+     &    dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
+     &    co_ns%hci_al_ast, co%cvsahz_cl(:,:,is),
+     &    co%cvsahz_drho(:,:,is), co%vsaf_drho(:,:,is),
+     &    co_ns%vsaf_hAdp_albe, co_ns%vsaf_hBdp_al,
+     &    co_ns%vsaf_uAdp_albe, co_ns%vsaf_uBdp_al,
      &    smbvtmp, smbvv, smbvi, rho_A_rel(:,is), avm_u,
      &    wrk0, wrk1, wrk2)
        elseif (switch%Zhdanov_visu.eq.0 .and.
@@ -412,9 +418,12 @@ c time-dependent treatment                                            !srv 07.07
      &    dv%ne2, rt%rz2, dv%lnlam, co%hcix_c, co%cvsahz_cl(:,:,is),
      &    smbvtmp, smbvv, co%kt_neo, wrk0, wrk1, wrk2)
          call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
-     &    am(is)*mp, rt%rza(:,is), pl%ua(:,is), pl%te, pl%ti,
-     &    pl%na(:,is), dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
-     &    co_ns%hci_al_ast, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
+     &    am(is)*mp, rt%rza(:,is), pl%te, pl%ti, pl%na, pl%ua,
+     &    dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
+     &    co_ns%hci_al_ast, co%cvsahz_cl(:,:,is),
+     &    co%cvsahz_drho(:,:,is), co%vsaf_drho(:,:,is),
+     &    co_ns%vsaf_hAdp_albe, co_ns%vsaf_hBdp_al,
+     &    co_ns%vsaf_uAdp_albe, co_ns%vsaf_uBdp_al,
      &    smbvh, smbvtmp, smbvi, rho_A_rel(:,is), avm_u,
      &    wrk0, wrk1, wrk2)
          smbvi = 0.0_R8
