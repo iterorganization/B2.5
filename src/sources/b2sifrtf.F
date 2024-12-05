@@ -12,8 +12,6 @@
       use b2mod_b2cmpt
       use b2mod_zhfrtf
      & , only: b2mod_zhfrtf_tf, b2mod_zhfrtf_fr
-      use b2mod_b2zhco
-     & , only: zhd_corr, zhd_corrT                                      !som 05.03.21
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -237,7 +235,7 @@
      &    switch%Zhdanov_tf_fr.eq.1) then                               !som 01.07.2021
 *     ..actual use of the Zhdanov closure
         do iCv = 1, mpg%nCi
-          call b2mod_zhfrtf_tf(iCv,isb,na(iCv,isb),
+          call b2mod_zhfrtf_tf(iCv,isb,switch%zhcscorr,na(iCv,isb),
      &      smbtfial(iCv,0),smbtfial_nofl(iCv,0))
         enddo
       else
@@ -248,7 +246,7 @@
      &      switch%Zhdanov_tf_fr.eq.0)) then                            !som 01.07.2021
 *       ..test run of the Zhdanov closure
           do iCv = 1, mpg%nCi
-            call b2mod_zhfrtf_tf(iCv,isb,na(iCv,isb),
+            call b2mod_zhfrtf_tf(iCv,isb,switch%zhcscorr,na(iCv,isb),
      &        smbtfial_test(iCv,0),smbtfial_test_nofl(iCv,0))
           enddo
         endif

@@ -1,16 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trhrtf_an(nspecies, mum, mdm, nz2n,
+      subroutine b2trhrtf_an(nspecies, switch, mum, mdm, nz2n,
      &  c_hwA_an, c_rwA_an, c_hTA_an, c_rTA_an, c_R_TA_an)
       use b2mod_types
       use b2mod_subsys
-      use b2mod_b2zhco
-     , , only: zh_analyt_mdf
       use b2mod_Zzh
+      use b2mod_switches
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nspecies
+      type (switches), intent (in) :: switch
       real (kind=R8) ::
      &  nz2n(0:nspecies-1),
      &  mum(0:nspecies-1,0:nspecies-1), mdm(0:nspecies-1,0:nspecies-1)
@@ -111,7 +111,7 @@
       enddo
 
 *    ..the mdf correction
-      if (zh_analyt_mdf.eq.1) then
+      if (switch%zh_analyt_mdf.eq.1) then
         do j = 0, nspecies-1
           do i = 0, nspecies-1
             if (mdm(i,j).gt.1.0_R8) then

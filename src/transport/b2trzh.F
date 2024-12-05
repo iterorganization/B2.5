@@ -189,7 +189,7 @@
         call alloc_b2mod_mrel(nspecies,znmax,ns)
         call alloc_b2mod_zhco(nspecies, nCv)
         call alloc_b2mod_zhfrtf(nCv, ns)
-        if (zh_dist_fun.eq.1) then
+        if (switch%zh_dist_fun.eq.1) then
           call alloc_b2mod_zhfrtf_df(nCv, ns)
         endif
         cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
@@ -221,7 +221,7 @@
 *   ..calculate the N-coefficients and all mass-related variables
         call b2trcn (nspecies, amnucl, N2, N3, N4, N5, N6, N8, N9,
      &    N10, N11, N12, N13, N14, N15, N16, mu, rmu, rmd2, mum, mdm)   !som 02.08.2021
-        if (amfact_on.ne.0) then
+        if (switch%amfact_on.ne.0) then
 *   ..correct mass if is needed
           amnucl_mdf(0:nspecies-1)=
      &    amnucl(0:nspecies-1)*amfact(0:nspecies-1)
@@ -263,8 +263,8 @@
       call b2mod_zhfrtf_prep(nCv, ns, pl%na, pl%ua)
 
 *   ..calculate temperature gradients
-      call b2mod_zhfrtf_tgta(nCv, nFc, nVx, ns, geo, mpg, pl%na, pl%ua,
-     &  pl%ti)
+      call b2mod_zhfrtf_tgta(nCv, nFc, nVx, ns, switch, geo, mpg,
+     &  pl%na, pl%ua, pl%ti)
 
 *   ..compute zetap
       t1 = (4.0_R8*pi*eps0/qe)/qe
@@ -291,7 +291,7 @@
         call b2trcw(nspecies, mum, mdm, nz2n,
      &    c_pi_uB(0:nspecies-1), c_pi_hB(0:nspecies-1))
 
-        if (zh_imp_analyt.eq.0) then
+        if (switch%zh_imp_analyt.eq.0) then
 *    ..calculate the inverted matrix for the heat flux/R-moment
           call b2trca(nspecies, amti, N5, N6, N9,
      &      N10, N11, N12, nz2n, Ainv)
@@ -306,8 +306,8 @@
           enddo
 
 *    ..flux-limiting coefficient
-          call b2trfl(iCv, mpg, Ainv, zeffne, amti, zetap(iCv), gamma,
-     &      cF_lim, cF_limh, cF_limB, cF_limBh)
+          call b2trfl(iCv, switch, mpg, Ainv, zeffne, amti, zetap(iCv),
+     &      gamma, cF_lim, cF_limh, cF_limB, cF_limBh)
           do i = 0, nspecies-1
             Ainv_fl(i,0:nspecies-1) =
      &        cF_lim(i)*Ainv(i,0:nspecies-1)
@@ -360,7 +360,7 @@
      &        /rmu(0:nspecies-1,j)
           enddo
 *    ..correct the thermal force
-          if (amfact_on.ne.0) then
+          if (switch%amfact_on.ne.0) then
             amti_mdf=amnucl_mdf*mp/pl%ti(iCv)
 
 *    ..calculate the inverted matrix for the heat flux/R-moment
@@ -407,7 +407,7 @@
           endif
 
 *    ..for the distribution function
-          if (zh_dist_fun.eq.1) then
+          if (switch%zh_dist_fun.eq.1) then
             do i = 0, nspecies-1
               kappa_hTA(i,0:nspecies-1) =
      &          2.5_R8*(zetap(iCv)/(zeffne**2*mp))*
@@ -427,7 +427,7 @@
 
         else
 *    ..the analytical thermal force transport coefficient
-          call b2trhrtf_an(nspecies, mum, mdm,nz2n,
+          call b2trhrtf_an(nspecies, switch, mum, mdm,nz2n,
      &      c_hwA(0:nspecies-1,0:nspecies-1),
      &      c_rwA(0:nspecies-1,0:nspecies-1),
      &      c_hTA_an, c_rTA_an, c_R_TA_an_nofl)
@@ -447,7 +447,7 @@
           enddo
 
 *    ..flux-limiting coefficient (analytical)
-          call b2trfl_an(iCv, mpg, c_hTA_an,
+          call b2trfl_an(iCv, switch, mpg, c_hTA_an,
      &      amnucl, amti, zetap(iCv), gamma,
      &      cF_lim, cF_limh, cF_limB, cF_limBh)
           do i = 0, nspecies-1
@@ -486,7 +486,7 @@
           enddo
 
 *    ..for the distribution function
-          if (zh_dist_fun.eq.1) then
+          if (switch%zh_dist_fun.eq.1) then
             kappa_hTA = 0.0_R8
             kappa_rTA = 0.0_R8
             do i = 0, nspecies-1
@@ -506,7 +506,7 @@
             enddo
           endif
 
-          if (amfact_on.ne.0) then
+          if (switch%amfact_on.ne.0) then
             c_hwA_mdf(0:nspecies-1,0:nspecies-1)=
      &      c_hwA(0:nspecies-1,0:nspecies-1)
             c_rwA_mdf(0:nspecies-1,0:nspecies-1)=
@@ -521,7 +521,7 @@
 
 *    ..calculate the friction force transport coefficient
         wrkc = z2n_xy(iCv,0:nspecies-1)
-        call b2trfr(nspecies, mum, rmu, wrkc,
+        call b2trfr(nspecies, switch, mum, rmu, wrkc,
      &    c_hwA(0:nspecies-1,0:nspecies-1),
      &    c_rwA(0:nspecies-1,0:nspecies-1),
      &    wrkcB, wrkcA, wrkcc)
@@ -529,9 +529,9 @@
         c_R_wB(iCv,0:nspecies-1,0:nspecies-1) = wrkcB
         c_R_w (iCv,0:nspecies-1,0:nspecies-1) = wrkcc
 
-        if (amfact_on.ne.0) then
+        if (switch%amfact_on.ne.0) then
           wrkc = z2n_xy(iCv,0:nspecies-1)
-          call b2trfr(nspecies, mum_mdf, rmu_mdf, wrkc,
+          call b2trfr(nspecies, switch, mum_mdf, rmu_mdf, wrkc,
      &     c_hwA_mdf(0:nspecies-1,0:nspecies-1),
      &     c_rwA_mdf(0:nspecies-1,0:nspecies-1),
      &     wrkcB, wrkcA, wrkcc)
@@ -553,7 +553,7 @@
           do iz= 1, znnucl_int(i)
             eta_cl(iCv,nucl2s(i,iz)) =
      &        pl%na(iCv,nucl2s(i,iz))*pl%ti(iCv)*
-     &       (temp+zhcscorr*2.0_R8*c_pi_uB(i)*tau_Zh(i,i)*
+     &       (temp+switch%zhcscorr*2.0_R8*c_pi_uB(i)*tau_Zh(i,i)*
      &       (z2n_xy(iCv,i)/(nal(iCv,i)*iz**2)-1.0_R8))
           enddo
 
@@ -614,7 +614,7 @@
             eta_cl_a_only(iCv,nucl2s(i,iz)) =
      &       pl%na(iCv,nucl2s(i,iz))*pl%ti(iCv)*
      &       pl%na(iCv,nucl2s(i,iz))/nal(iCv,i)*
-     &      (eta_uAdp(iCv,i,i)+zhcscorr*eta_uBdp(iCv,i)*
+     &      (eta_uAdp(iCv,i,i)+switch%zhcscorr*eta_uBdp(iCv,i)*
      &      (1/Ia(iCv,nucl2s(i,iz))-1.0_R8))
 
 *    ..apply flux limiting
@@ -667,10 +667,10 @@
 
 *   ..apply charge state correction for the heat flux
         hci0_nofl(iCv,0) =
-     &    sum(hci0_al_nofl(iCv,0:nspecies-1)+zhcscorr*
+     &    sum(hci0_al_nofl(iCv,0:nspecies-1)+switch%zhcscorr*
      &    hciB_al_nofl(0:nspecies-1)*(I_al(0:nspecies-1)-1.0_R8))
         hci0(iCv,0) =
-     &    sum(hci0_al(iCv,0:nspecies-1)+zhcscorr*
+     &    sum(hci0_al(iCv,0:nspecies-1)+switch%zhcscorr*
      &    hciB_al(0:nspecies-1)*(I_al(0:nspecies-1)-1.0_R8))
 
 *   ..ion heat conductivity for each charge state
@@ -679,7 +679,7 @@
           do iz= 1, znnucl_int(i)
             hci0_a(iCv,nucl2s(i,iz)) =
      &        pl%na(iCv,nucl2s(i,iz))/nal(iCv,i)*
-     &       (hci0_al(iCv,i)+zhcscorr*hciB_al(i)*
+     &       (hci0_al(iCv,i)+switch%zhcscorr*hciB_al(i)*
      &        (z2n_xy(iCv,i)/(nal(iCv,i)*iz**2)-1.0_R8))
           enddo
         enddo
@@ -687,19 +687,19 @@
         c_hw(0:nspecies-1,0:nspecies-1) =
      &    c_hwA(0:nspecies-1,0:nspecies-1)
         do inucl = 0, nspecies-1
-          c_hw(inucl,inucl) = c_hw(inucl,inucl)+zhcscorr*
+          c_hw(inucl,inucl) = c_hw(inucl,inucl)+switch%zhcscorr*
      &      c_hwB(inucl)-sum(c_hwA(0:nspecies-1,inucl))
         enddo
 *   ..save heat flux velocity-dependent part transport coefficient
         c_hw_save(iCv,0:nspecies-1,0:nspecies-1) =
      &    c_hw(0:nspecies-1,0:nspecies-1)
 
-        if (zh_dist_fun.eq.1) then
+        if (switch%zh_dist_fun.eq.1) then
 *   ..apply charge state correction for the R-moment
           c_rw(0:nspecies-1,0:nspecies-1) =
      &      c_rwA(0:nspecies-1,0:nspecies-1)
           do inucl = 0, nspecies-1
-            c_rw(inucl,inucl) = c_rw(inucl,inucl)+zhcscorr*
+            c_rw(inucl,inucl) = c_rw(inucl,inucl)+switch%zhcscorr*
      &        c_rwB(inucl)-sum(c_rwA(0:nspecies-1,inucl))
           enddo
 
@@ -712,7 +712,7 @@
               hTdp_out(iCv,nucl2s(inucl,iz)) =
      &          sum(kappa_hTA(inucl,0:nspecies-1)*
      &              gtalc(iCv,0:nspecies-1))+
-     &          zhcscorr*kappa_hTB(inucl)*
+     &          switch%zhcscorr*kappa_hTB(inucl)*
      &         (pl%na(iCv,nucl2s(inucl,iz))/nal(iCv,inucl)/
      &          Ia(iCv,nucl2s(inucl,iz))*
      &          gt_Ac(iCv,nucl2s(inucl,iz))-
@@ -726,7 +726,7 @@
               rTdpgamma_out(iCv,nucl2s(inucl,iz)) =
      &          sum(kappa_rTA(inucl,0:nspecies-1)*
      &              gtalc(iCv,0:nspecies-1))+
-     &          zhcscorr*kappa_rTB(inucl)*
+     &          switch%zhcscorr*kappa_rTB(inucl)*
      &         (pl%na(iCv,nucl2s(inucl,iz))/nal(iCv,inucl)/
      &          Ia(iCv,nucl2s(inucl,iz))*
      &          gt_Ac(iCv,nucl2s(inucl,iz))-
@@ -774,7 +774,7 @@
         fcVolHz(iFc,1) = geo%fcVol(iFc,1)*geo%cvHz(mpg%fcCv(iFc,1))
         fcVolHz(iFc,2) = geo%fcVol(iFc,2)*geo%cvHz(mpg%fcCv(iFc,2))
       enddo
-      if (zh_vis_type.eq.0 .or. zh_vis_type.eq.1) then
+      if (switch%zh_vis_type.eq.0 .or. switch%zh_vis_type.eq.1) then
         do is = 0, ns-1
           wrk = eta_cl_fl(:,is)*rho_A_rel(:,is)
           do iFc = 1, nFc
@@ -803,7 +803,7 @@
           call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &     eta_cl_fl(:,is), cvsa_drho(:,0,is))
         enddo
-      elseif (zh_vis_type.eq.2) then
+      elseif (switch%zh_vis_type.eq.2) then
         do is = 0, ns-1
           wrk = eta_cl_a_only_fl(:,is)
           do iFc = 1, nFc

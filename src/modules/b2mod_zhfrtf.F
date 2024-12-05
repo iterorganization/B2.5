@@ -222,11 +222,12 @@
       end subroutine b2mod_zhfrtf_avm_u
 
 !...................................................................................
-      subroutine b2mod_zhfrtf_tgta(nCv, nFc, nVx, ns, geo, mpg, na, ua,
-     &  ti)
+      subroutine b2mod_zhfrtf_tgta(nCv, nFc, nVx, ns, switch, geo, mpg,
+     &  na, ua, ti)
       use b2mod_constants
       use b2us_geo
       use b2us_map
+      use b2mod_switches
       implicit none
 
 *.declarations
@@ -234,6 +235,7 @@
       integer nCv, nFc, nVx, ns
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
+      type (switches), intent (in) :: switch
       real (kind=R8) ::
      *  na(nCv,0:ns-1), ua(nCv,0:ns-1), ti(nCv)
 
@@ -279,8 +281,8 @@
 *   ..temperature of each ion charge state
       do is = 0, ns-1
         w_A(:,is) = ua(:,is) - avm_u
-        t_A(:,is) = ti +
-     &    zhd_corr*zhd_corrT*(am(is)*mp*w_A(:,is)**2)/3.0_R8
+        t_A(:,is) = ti + switch%zhd_corr*switch%zhd_corrT*
+     &    (am(is)*mp*w_A(:,is)**2)/3.0_R8
       end do
 
 *   ..temperature gradient of each ion charge state  in the cell center
@@ -352,9 +354,9 @@
       end subroutine b2mod_zhfrtf_fr
 
 !...................................................................................
-      subroutine b2mod_zhfrtf_tf(iCv,is,nais,smtf,smtf_nofl)
+      subroutine b2mod_zhfrtf_tf(iCv,is,zhcscorr,nais,smtf,smtf_nofl)
       implicit none
-      integer :: iCv, is
+      integer :: iCv, is, zhcscorr
       real (kind=R8) :: smtf, smtf_nofl,nais
 *-----------------------------------------------------------------------
 *.documentation
