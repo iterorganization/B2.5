@@ -137,7 +137,7 @@
      .                           fllim0fna(:,:,:)
 
         real(R8), allocatable :: vsaf_cl(:,:,:), vsaf_drho(:,:,:)
-        real(R8), allocatable :: vsa_drho(:,:), hci_a(:,:)
+        real(R8), allocatable :: hci_a(:,:)
 
         real(R8), allocatable, dimension(:) :: sig0, hce0, hci0, hcn0,
      .                                         alf0, dkt0, dzt0,
@@ -514,7 +514,6 @@
       allocate( coeff % fllim0fhi( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % fllimvisc( nFc, 0:ns-1 ), SOURCE=0._R8 )
 
-      allocate( coeff % vsa_drho( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % hci_a( nCv, 0:ns-1 ), SOURCE=0._R8 )
 
 ! moved here from b2coeffwork
@@ -617,7 +616,6 @@
       allocate( coeff % fllim0fhi( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % fllimvisc( nFc, 0:ns-1 ) )
 
-      allocate( coeff % vsa_drho( nCv, 0:ns-1 ) )
       allocate( coeff % hci_a( nCv, 0:ns-1 ) )
 
 ! moved here from b2coeffwork
@@ -719,7 +717,6 @@
       coeff % fllim0fhi = 0._R8
       coeff % fllimvisc = 0._R8
 
-      coeff % vsa_drho = 0._R8
       coeff % hci_a = 0._R8
 
 ! moved here from b2coeffwork
@@ -828,7 +825,6 @@
       deallocate( coeff % fllim0fhi )
       deallocate( coeff % fllimvisc )
 
-      deallocate( coeff % vsa_drho )
       deallocate( coeff % hci_a )
 
       deallocate( coeff % dna0 )
