@@ -2447,7 +2447,7 @@ c k-enstrophy model
 
 
 c Zhdanov closure
-      if (s%Zhdanov_closure.lt.0 .or. s%Zhdanov_closure.gt.2) then
+      if (s%Zhdanov_closure.lt.0 .or. s%Zhdanov_closure.gt.1) then
         call xerrab('wrong value of b2tral_Zhdanov_closure')
       endif
 
