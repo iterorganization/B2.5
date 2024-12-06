@@ -346,10 +346,11 @@
 *         ..calculate the difference from parallel heat flux of ion
             wrk0 = na(:,isb)/nal(:,s2nucl(isb)-1)
             call intface(nCv,nFc,mpg%fcCv,wght,wrk0,wrkf1)
+            call intface(nCv,nFc,mpg%fcCv,wght,Ia(:,isb),wrkf2)
 
             wrkf0 = wrkf1/(geo%fcBb(:,0)*geo%fcBb(:,3))*
      &        vsaf_hBdp_al(:,0,s2nucl(isb)-1)*
-     &        (wrkf0/Ia(:,isb) - wrkns(:,s2nucl(isb)-1))
+     &        (wrkf0/wrkf2 - wrkns(:,s2nucl(isb)-1))
 
 *         ..calculate the r.h.s. contribution to the parallel balance
 *           corresponding to parallel viscosity connected with heat flow
