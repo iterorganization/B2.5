@@ -71,7 +71,8 @@
       integer, save :: fhiycore_kinetic_energy
       integer, save :: coreregno, coreregn2, solregno,
      &                 pfrregno1, pfrregno2,
-     &                 isfeedback, nesepm_istra, iyped
+     &                 isfeedback, nesepm_istra, iyped,
+     &                  fb_style_calc_puff = 0
       real (kind=R8), save ::
      &  fnaycore, fnaycore_alpha,
      1  fheycore, fheycore_alpha,
@@ -421,6 +422,7 @@ cxpb size is changed in b2mod_dimensions
      .   'Simultaneous PFR feedback schemes not allowed!')
       endif
       call ipgeti ('eirene_nesepm_istra', nesepm_istra)
+      call ipgeti ('fb_style_calc_puff', fb_style_calc_puff)
       if(nesepm_istra.gt.0) then
         call xertst (nesepm_istra.le.nstrat,
      1    'faulty internal parameter nesepm_istra')
@@ -2039,6 +2041,18 @@ cxpb size is changed in b2mod_dimensions
      .                 'started with an initial rate of 1e18!'
                 endif
               endif
+              
+              if(ncall.eq.0) then
+                if (fb_style_calc_puff.eq.0 .and. 
+     &                switch%use_pump.gt.0) then
+                  write(*,*)
+     &              "Puff is calced: Puff=fb_rescale*Pump-Gamma_core"
+                elseif(fb_style_calc_puff.eq.1 .and. 
+     &                switch%use_pump.gt.0) then
+                  write(*,*)
+     &              "Puff is calced: Puff=fb_rescale*(Pump-Gamma_core)"
+                endif
+              endif
 
               if (fb_rescale_option(ifb).lt.4 .or.
      &            fb_rescale_option(ifb).eq.7) then
@@ -2066,14 +2080,24 @@ cxpb size is changed in b2mod_dimensions
      &               b2espcr(fb_species(ifb)),
      &                sna_pump,sna_puff, sna_core)
                   if (fb_tau(ifb).gt.0.0_R8) then
-                    t0 = sna_pump*fb_rescale(ifb) - 
-     &                sna_core
+                    if (fb_style_calc_puff.eq.0) then
+                      t0 = sna_pump*fb_rescale(ifb) - 
+     &                 sna_core
+                    elseif (fb_style_calc_puff.eq.1) then
+                      t0 = max(0.0_R8,
+     &                  (sna_pump - sna_core)*fb_rescale(ifb))
+                    endif
                     saved_fb_actuator(ifb) = 
      &                  t0*(1-exp(-ddtim/fb_tau(ifb)))+
      &                  exp(-ddtim/fb_tau(ifb))*saved_fb_actuator(ifb)
                   else
-                    saved_fb_actuator(ifb) = sna_pump*fb_rescale(ifb) - 
-     &                sna_core
+                    if (fb_style_calc_puff.eq.0) then
+                      saved_fb_actuator(ifb) = sna_pump*fb_rescale(ifb) 
+     &                   - sna_core
+                    elseif (fb_style_calc_puff.eq.1) then
+                      saved_fb_actuator(ifb) = max(0.0_R8,
+     &                  (sna_pump - sna_core)*fb_rescale(ifb))
+                    endif
                   endif
 #endif
                 else
