@@ -2381,10 +2381,10 @@ cxpb size is changed in b2mod_dimensions
                   endif
                   else
 #ifdef B25_EIRENE
-                    call calc_puff_pump(switch, ns, mpg, nCv, dv,
-     &               fb_species(ifb), sna_pump, sna_puff, sna_core)
-                    if (mod(ncall,eirene_mod).eq.0 .and.
-     &                  ncall.gt.0) then
+                    call calc_puff_pump(switch, ns, mpg, nCv, dv, 
+     &                  fb_species(ifb), sna_pump, sna_puff, sna_core)
+                    if (mod(ncall,eirene_mod).eq.0 
+     &                  .and. ncall .gt. eirene_mod) then
                       t0 = 1.0_R8/fb_rescale(ifb) * (sna_puff+sna_core)
      &                  / sna_pump
                       saved_fb_actuator(ifb) = saved_fb_actuator(ifb)*t0
