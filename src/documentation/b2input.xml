@@ -1077,6 +1077,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>fb_style_calc_puff</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If fb_style_calc_puff.eq.0, puff in feedback (fb_actuator.eq.1) will be evaluated as fb_rescale*Pump-Gamma_core.
+					If fb_style_calc_puff.eq.1, puff in feedback (fb_actuator.eq.1) will be evaluated as fb_rescale*(Pump-Gamma_core).
+				</description>
+			</switch>
+			<switch>
 				<name>b2stbc_ncallfeedback</name>
 				<default>0</default>
 				<type>integer</type>
