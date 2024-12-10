@@ -105,7 +105,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
       real (kind=R8) ::                                               !srv 03.06.03
      *   t0, dte(nFc), dti(nFc), flomx, connf, epsf
       real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),  !lk 19.09.07
-     &    k2(nCv), collisnumf(mpg%nFc)
+     &    k2(nCv), collisnumf(mpg%nFc), collisnumef(mpg%nFc)
       real (kind=R8) :: inctran
 #ifdef ASTRA
      & , tt0(mpg%nFt), tt1(mpg%nFt)                                   !lk 19.09.07
@@ -597,10 +597,13 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 *   .. save chce(:,0) after applying Luciani
       wrk = chce(:,0)                                                    !srv 13.01.17
 
-      if (switch%min_collisions .gt. 0.0_R8)
-     &   call b2tnci (mpg, geo, switch, nCv, ns, pl%ti, pl%te, rt%rz2,
+      if (switch%min_collisions .gt. 0.0_R8) then
+        call b2tnci (mpg, geo, switch, nCv, ns, pl%ti, pl%te, rt%rz2,
      &   dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, collisnumf, 
      &   wrkc)
+        call b2tnce (mpg, geo, switch, nCv, pl%te, dv%ne2,
+     &  dv%lnlam, collisnumef, wrkc)
+      endif
 
       if(switch%conductive_limit.ne.0) then                              !srv 16.06.08 {
 *   .. pre-compute poloidal differences of te, ti
@@ -614,11 +617,15 @@ c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.
          if(switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
-          flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
-     &                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
-          t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
-     &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
-     &      b2trcl_cutlo)
+          if (collisnumef(iFc) .gt. switch%min_collisions) then
+            flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
+     &                              dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
+            t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
+     &        pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
+     &        b2trcl_cutlo)
+          else
+            t0 = (cflim(0)*max(collisnumef(iFc), 1e-16_R8))**(-1)
+          endif
           co%fllim_ke(iFc)=1.0_R8/(1.0_R8+t0)
           chce(iFc,0)=chce(iFc,0)*co%fllim_ke(iFc)
          endif
