@@ -371,7 +371,7 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
         dumm4 = 0.0_R8
         wrkf = sign(1.5_R8*dv%fni_he,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    wrkf,dumm1,dumm2,fhi_32,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_32,dumm4)
         fhi_32 = sign(fhi_32,dv%fni_he)
         fhi_52 = 0.0_R8
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0_mdf,
@@ -726,19 +726,10 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
-#ifndef FIXED_POINT
-       if (balance.and.(balance_netcdf.ne.0)) then
-         call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
-         call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
-         call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
-         call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
-       else
-         call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
-         call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
-         call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
-         call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
-       endif
-#endif
+       call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
+       call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
+       call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
+       call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
        call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfhi__fchvispar_th')
        call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfhi__fchvispar_r')
        call my_out_us(70,nFc,1,dv%fchvisq(1,0),'b2tfhi__fchvisq_th')
@@ -767,19 +758,10 @@ c neutrals
        call my_out_us(70,nFc,1,dv%fhi_mdf(1,1),'b2tfhi__fhi_mdf_r')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,0),'b2tfhi__fhiPSch_th')
        call my_out_us(70,nFc,1,dv%fhiPSch(1,1),'b2tfhi__fhiPSch_r')
-#ifndef FIXED_POINT
-       if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-         call my_out_us(70,nFc,1,fhi_32(1,0),'b2tfhi__fhi_32_th')
-         call my_out_us(70,nFc,1,fhi_32(1,1),'b2tfhi__fhi_32_r')
-         call my_out_us(70,nFc,1,fhi_52(1,0),'b2tfhi__fhi_52_th')
-         call my_out_us(70,nFc,1,fhi_52(1,1),'b2tfhi__fhi_52_r')
-       else
-         call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
-         call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
-         call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
-         call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
-       endif
-#endif
+       call my_out_us(70,nFc,1,fhi_32_loc(1,0),'b2tfhi__fhi_32_th')
+       call my_out_us(70,nFc,1,fhi_32_loc(1,1),'b2tfhi__fhi_32_r')
+       call my_out_us(70,nFc,1,fhi_52_loc(1,0),'b2tfhi__fhi_52_th')
+       call my_out_us(70,nFc,1,fhi_52_loc(1,1),'b2tfhi__fhi_52_r')
       endif
 
 * ..return
