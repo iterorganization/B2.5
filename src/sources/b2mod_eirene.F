@@ -3529,7 +3529,7 @@ c     *               recyctmp*flux_scale(istrai)
      *                 recyctmp*flux_scale(istrai)/
      *                 dble(ih_end)
                       t3_ipl=
-     *                 sni_av_pipl(i,ifl,istrai)*tflux(istrai)*
+     *                 sni_av_pipl(ic,ifl,istrai)*tflux(istrai)*
      *                 recyctmp*flux_scale(istrai)/
      *                 dble(ih_end)
                       t3_ppl=

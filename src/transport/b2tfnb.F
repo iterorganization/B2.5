@@ -784,11 +784,17 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         wrkf = sign(co%cvla(:,:,isb),flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
      &    wrkf, dumm1, dumm2, fna_pinch(:,:,isb), dumm3)
+        do iFc = 1,nFc !nh limit by sound speed
+          fna_pinch(iFc,:,isb) = wrk4(iFc)*fna_pinch(iFc,:,isb)
+        enddo
         fna_pinch(:,:,isb) = sign(fna_pinch(:,:,isb),co%cvla(:,:,isb))
         dumm4(:,0) = geo%fcPbs*wrk0
         wrkf = sign(dumm4,flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
      &    wrkf, dumm1, dumm2, fna_pll(:,:,isb), dumm3)
+        do iFc = 1,nFc !nh limit by sound speed
+          fna_pll(iFc,:,isb) = wrk4(iFc)*fna_pll(iFc,:,isb)
+        enddo
         fna_pll(:,:,isb) = sign(fna_pll(:,:,isb),dumm4)
         fna_pll(:,0,isb) = fna_pll(:,0,isb) + term
         dumm4(:,0) = drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*
@@ -798,6 +804,9 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         wrkf = sign(dumm4,flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
      &    wrkf, dumm1, dumm2, fna_drift(:,:,isb), dumm3)
+        do iFc = 1,nFc !nh limit by sound speed
+          fna_drift(iFc,:,isb) = wrk4(iFc)*fna_drift(iFc,:,isb)
+        enddo
         fna_drift(:,:,isb) = sign(fna_drift(:,:,isb),dumm4)
         fna_drift(:,0,isb) = fna_drift(:,0,isb) + (1.0_R8-drift_hyb)*
      &    dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf
@@ -815,6 +824,9 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         wrkf = sign(drift_hyb*scur,flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
      &    wrkf, dumm1, dumm2, fna_ch(:,:,isb), dumm3)
+        do iFc = 1,nFc !nh limit by sound speed
+          fna_ch(iFc,:,isb) = wrk4(iFc)*fna_ch(iFc,:,isb)
+        enddo
         fna_ch(:,:,isb) = sign(fna_ch(:,:,isb),drift_hyb*scur)
         fna_ch(:,0,isb) = fna_ch(:,0,isb) + (1.0_R8-drift_hyb)*
      &    scur(:,0)*nbf
@@ -822,6 +834,9 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
      &    scur(:,1)*nbf
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
      &    flo_mdf, co%cdna(:,:,isb), dumm2, dumm3, fna_nanom(:,:,isb))
+        do iFc = 1,nFc !nh limit by sound speed
+          fna_nanom(iFc,:,isb) = wrk4(iFc)*fna_nanom(iFc,:,isb)
+        enddo
         fna_panom(:,:,isb) = -co%cdpa(:,:,isb)*dpb(:,:)
       endif
 #endif
