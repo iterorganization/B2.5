@@ -5,10 +5,10 @@
 !   variations   of useful results: enepar conpar enkpar potpar
 !                mompar enipar b2recyc parm_hce parm_hci parm_vla
 !                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!                *par_opt_phys switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
 !                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
 !                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
@@ -56,6 +56,8 @@ SUBROUTINE SET_PARAMETERS_DV(switch, switchd, nbdirs)
 !     to the input variables actually used by B2.5.
 !-----------------------------------------------------------------------
   INTEGER :: idir, ii, ip
+  INTRINSIC MIN
+  INTRINSIC MAX
   EXTERNAL XERRAB
   INTEGER :: nd
   INTEGER :: nbdirs
@@ -63,6 +65,34 @@ SUBROUTINE SET_PARAMETERS_DV(switch, switchd, nbdirs)
   IF (.NOT.flag_optim) THEN
     RETURN
   ELSE
+!
+    IF (recalc_params) THEN
+      DO ip=1,npar_opt-nsigma_opt-nmean_opt
+        IF (xnew(ip) .GT. xold(ip)) THEN
+          IF (par_opt_phys(ip)*xmult(ip) .GT. xnew(ip)) THEN
+            DO nd=1,nbdirs
+              par_opt_physd0(nd, ip) = 0.D0
+            END DO
+            par_opt_phys(ip) = xnew(ip)
+          ELSE
+            DO nd=1,nbdirs
+              par_opt_physd0(nd, ip) = xmult(ip)*par_opt_physd0(nd, ip)
+            END DO
+            par_opt_phys(ip) = par_opt_phys(ip)*xmult(ip)
+          END IF
+        ELSE IF (par_opt_phys(ip)*xmult(ip) .LT. xnew(ip)) THEN
+          DO nd=1,nbdirs
+            par_opt_physd0(nd, ip) = 0.D0
+          END DO
+          par_opt_phys(ip) = xnew(ip)
+        ELSE
+          DO nd=1,nbdirs
+            par_opt_physd0(nd, ip) = xmult(ip)*par_opt_physd0(nd, ip)
+          END DO
+          par_opt_phys(ip) = par_opt_phys(ip)*xmult(ip)
+        END IF
+      END DO
+    END IF
 !
 !this indicates the different parameters active
     idir = 1
@@ -324,11 +354,29 @@ SUBROUTINE SET_PARAMETERS_NODIFF(switch)
 !     to the input variables actually used by B2.5.
 !-----------------------------------------------------------------------
   INTEGER :: idir, ii, ip
+  INTRINSIC MIN
+  INTRINSIC MAX
   EXTERNAL XERRAB
 !
   IF (.NOT.flag_optim) THEN
     RETURN
   ELSE
+!
+    IF (recalc_params) THEN
+      DO ip=1,npar_opt-nsigma_opt-nmean_opt
+        IF (xnew(ip) .GT. xold(ip)) THEN
+          IF (par_opt_phys(ip)*xmult(ip) .GT. xnew(ip)) THEN
+            par_opt_phys(ip) = xnew(ip)
+          ELSE
+            par_opt_phys(ip) = par_opt_phys(ip)*xmult(ip)
+          END IF
+        ELSE IF (par_opt_phys(ip)*xmult(ip) .LT. xnew(ip)) THEN
+          par_opt_phys(ip) = xnew(ip)
+        ELSE
+          par_opt_phys(ip) = par_opt_phys(ip)*xmult(ip)
+        END IF
+      END DO
+    END IF
 !
 !this indicates the different parameters active
     idir = 1

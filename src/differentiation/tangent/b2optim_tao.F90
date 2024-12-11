@@ -146,7 +146,9 @@
       call b2mn_fin_dv(switch, geo, geod, mpg, mpgd, state, stated,&
 &      state_ext, state_extd, state_avg, state_avgd, npar_opt)
       deallocate(par_opt_phys)
-      deallocate(xsave)
+      deallocate(xold)
+      deallocate(xnew)
+      deallocate(xmult)
       deallocate(par_opt_physd)
       stop 'b2optim'
 
@@ -180,6 +182,7 @@
       do ipar = 1, npar
         call VecSetValue(X,ipar-1,x0(ipar)/par_rescale(ipar),INSERT_VALUES,ierr)
         CHKERRQ(ierr)
+        xold(ipar) = x0(ipar)/par_rescale(ipar)
         if (xl(ipar).lt.-inf_opt) then
           write(*,*) 'TAO: warning, X_L(',ipar,') set to infty'
           call VecSetValue(X_L,ipar-1,PETSC_NINFINITY,INSERT_VALUES,ierr)
@@ -269,13 +272,14 @@
       call VecGetArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
 
-      call reset_drifts(XX)
+      call reset_drifts_params(XX)
 
       do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
-        par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
+        par_opt_phys(ipar) = xold(ipar)*par_rescale(ipar)
+        xnew(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
-        write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
+        write(*,*) 'TAO: eval_F_grad_F with x',trim(str),'= ', xnew(ipar)
       end do
       if (cftype(1) .eq. 6) then
         isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt + 1
@@ -327,6 +331,7 @@
       call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,&
      &   stated, state_ext, state_extd, state_avg, state_avgd, j, jdiff,&
      &   npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
+      xold(1:npar_opt) = x_v(1:npar_opt)
       F = j(1)
 #ifdef TGT
       do ipar = 1, npar_opt
@@ -396,13 +401,14 @@
       call VecGetArrayReadF90(XX,x_v,ierr)
       CHKERRQ(ierr)
 
-      call reset_drifts(XX)
+      call reset_drifts_params(XX)
 
       do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
-        par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
+        par_opt_phys(ipar) = xold(ipar)*par_rescale(ipar)
+        xnew(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
-        write(*,*) 'TAO: eval_F with x',trim(str),'= ', par_opt_phys(ipar)
+        write(*,*) 'TAO: eval_F with x',trim(str),'= ', xnew(ipar)
       end do
       if (cftype(1) .eq. 6)  then
         isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt + 1
@@ -449,6 +455,7 @@
         end do
       endif
       call b2mn_step(switch, geo, mpg, state, state_ext, state_avg, j)
+      xold(1:npar_opt) = x_v(1:npar_opt)
       F = j(1)
       write (*,*) 'TAO COST FUNCTION:', F
       write (*,*) 'TAO PRIMAL ITERATIONS:', primal_iterations
@@ -489,13 +496,14 @@
       call VecGetArrayF90(grad,g_v,ierr)
       CHKERRQ(ierr)
 
-      call reset_drifts(XX)
+      call reset_drifts_params(XX)
 
       do ipar = 1, npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
-        par_opt_phys(ipar) = x_v(ipar)*par_rescale(ipar)
+        par_opt_phys(ipar) = xold(ipar)*par_rescale(ipar)
+        xnew(ipar) = x_v(ipar)*par_rescale(ipar)
         write(str,"(I1)") ipar
         if (ipar.ge.10) write(str,"(I2)") ipar
-        write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', par_opt_phys(ipar)
+        write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', xnew(ipar)
       end do
       if (cftype(1) .eq. 6) then
         isigma = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt + 1
@@ -533,7 +541,7 @@
         icorr = npar_opt - ncorr_opt + 1
         do ipar = 1, ncf
           if (corr_opt(ipar)) then
-            corr_length(ipar) = x_v(icorr)*par_rescale(icorr)
+            corr_length(ipar) = xold(icorr)*par_rescale(icorr)
             write(str,"(I1)") icorr
             if (icorr.ge.10) write(str,"(I2)") icorr
             write(*,*) 'TAO: eval_grad_F with x',trim(str),'= ', corr_length(ipar)
@@ -547,6 +555,7 @@
       call b2mn_step_dv(switch, switchd, geo, geod, mpg, mpgd, state,&
      &   stated, state_ext, state_extd, state_avg, state_avgd, j, jdiff,&
      &   npar_opt-nsigma_opt-nmean_opt-nshift_opt-ncorr_opt)
+      xold(1:npar_opt) = x_v(1:npar_opt)
 #ifdef TGT
       do ipar = 1, npar_opt
         g_v(ipar) = jdiff(ipar,1)*par_rescale(ipar) ! rescale par to get order unity
@@ -634,7 +643,7 @@
       return
       end subroutine FormHessian
 
-      subroutine reset_drifts(XX)
+      subroutine reset_drifts_params(XX)
       use b2mod_facdrift_exb_diffv &
       , only : facdrift_scalar, fac_exb_scalar
       implicit none
@@ -651,16 +660,16 @@
       ! avoid potential crash
       sameX = .true.
       do ipar = 1, npar_opt
-        if (abs(xsave(ipar)-x_v(ipar)).gt.1.0E-4_R8) sameX = .false.
-        xsave(ipar) = x_v(ipar)
+        if (abs(xold(ipar)-x_v(ipar)).gt.1.0E-4_R8) sameX = .false.
       end do
+
       if (.not. sameX .and. (switch%facExB_start.gt.0.0_R8 .or. switch%facdrift_start.gt.0.0_R8)) then
         ! reset drift percentage to b2optim_reset_drift
         fac_exb_scalar = min(switch%b2optim_reset_drift,switch%facExB_start)
         facdrift_scalar = min(switch%b2optim_reset_drift,switch%facdrift_start)
         ! make sure that drifts are increased to 100% in ntim/XX iterations
         ! where XX is b2optim_reset_iter
-        nn = ntim/switch%b2optim_reset_iter
+        nn = ntim/switch%b2optim_reset_drift_iter
         switch%facExB_inc = (1.0_R8/fac_exb_scalar)**(1.0_R8/nn)
         switch%facdrift_inc = (1.0_R8/facdrift_scalar)**(1.0_R8/nn)
         write (*,*) ' b2optim_tao: resetting drifts to', switch%b2optim_reset_drift
@@ -668,7 +677,25 @@
         write (*,*) ' b2optim_tao: drifts back at 100% in ',nint(nn),'iterations'
       endif
 
+!     Gradually increase the value of par_opt_phys when calling
+!     set_parameters in b2mod_driver such that each of them will
+!     get to the desired 'new' value in ntim/b2optim_reset_param_iter
+!     iterations, similar as done with drifts. NOTE: we will not care
+!     about sigma, mean, etc. because they do not affect the plasma state
+      if (.not. sameX .and. switch%b2optim_reset_param_iter .gt. 1) then
+        recalc_params = .true.
+        do ipar = 1, npar_opt
+          nn = ntim/switch%b2optim_reset_param_iter
+          xmult(ipar) = (x_v(ipar)/xold(ipar))**(1.0_R8/nn)
+        end do
+      else
+        ! if not gradually changing, then xold is assigned to par_opt_phys
+        ! for the new optimization step
+        recalc_params = .false.
+        xold(1:npar_opt) = x_v(1:npar_opt)
+      end if
+
       return
-      end subroutine reset_drifts
+      end subroutine reset_drifts_params
 
       end program b2optim_tao
