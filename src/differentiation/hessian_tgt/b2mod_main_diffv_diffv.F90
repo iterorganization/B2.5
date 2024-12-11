@@ -1423,10 +1423,10 @@ CONTAINS
 !   variations   of useful results: enepar conpar enkpar potpar
 !                mompar enipar b2recyc parm_hce parm_hci parm_vla
 !                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!                *par_opt_phys switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
 !                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
 !                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
@@ -1460,16 +1460,16 @@ CONTAINS
 !                parm_hci:in-out parm_vla:in-out parm_vsa:in-out
 !                parm_alf:in-out parm_dpa:in-out parm_sig:in-out
 !                parm_dna:in-out tdata:in-out corr_length:in sigma:in
-!                shift:in *par_opt_phys:in mean:in *rtlsa:in *rtlcx:in
-!                *rtlqa:in *rtlra:in saved_fb_actuatord:(loc) fb_target:(loc)
-!                fb_prev:(loc) fb_current:(loc) fb_prevd:(loc)
-!                fb_currentd:(loc) fb_constd:(loc) fb_const:(loc)
-!                charge_frac:(loc) fb_targetd:(loc) saved_fb_actuator:(loc)
-!                fb_rescale:(loc) charge_fracd:(loc) fb_rescaled:(loc)
-!                j:(loc) geo.vxhz:(loc) geo.vxonedbsq:(loc) *(stated.pl.na):(loc)
-!                *(stated.pl.ua):(loc) *(stated.pl.po):(loc) *(stated.pl.te):(loc)
-!                *(stated.pl.ti):(loc) *(stated.pl.tn):(loc) *(stated.pl.kt):(loc)
-!                *(stated.pl.zt):(loc) *(stated.co.csig):(loc)
+!                shift:in *par_opt_phys:in-out mean:in *rtlsa:in
+!                *rtlcx:in *rtlqa:in *rtlra:in saved_fb_actuatord:(loc)
+!                fb_target:(loc) fb_prev:(loc) fb_current:(loc)
+!                fb_prevd:(loc) fb_currentd:(loc) fb_constd:(loc)
+!                fb_const:(loc) charge_frac:(loc) fb_targetd:(loc)
+!                saved_fb_actuator:(loc) fb_rescale:(loc) charge_fracd:(loc)
+!                fb_rescaled:(loc) j:(loc) geo.vxhz:(loc) geo.vxonedbsq:(loc)
+!                *(stated.pl.na):(loc) *(stated.pl.ua):(loc) *(stated.pl.po):(loc)
+!                *(stated.pl.te):(loc) *(stated.pl.ti):(loc) *(stated.pl.tn):(loc)
+!                *(stated.pl.kt):(loc) *(stated.pl.zt):(loc) *(stated.co.csig):(loc)
 !                *(stated.co.calf):(loc) *(stated.co.csig_an):(loc)
 !                *(stated.co.csigin):(loc) *(stated.co.chce):(loc)
 !                *(stated.co.chce_exb):(loc) *(stated.co.chci):(loc)
@@ -2475,7 +2475,6 @@ CONTAINS
     INTEGER :: nbdirs
     INTEGER :: nbdirs0
 !
-    CALL SET_PARAMETERS_DV(switch, switchd0, nbdirs0)
     CALL B2MNDR_1_DV_DV(nout, ns, switch, switchd0, switchd, geo, geod0&
 &                 , geod, mpg, mpgd, state, stated0, stated, statedd, &
 &                 state_ext, state_extd0, state_extd, state_avg, &
@@ -2919,7 +2918,6 @@ CONTAINS
     REAL(kind=r8) :: jd(nbdirsmax, nncf)
     INTEGER :: nbdirs
 !
-    CALL SET_PARAMETERS_NODIFF(switch)
     CALL B2MNDR_1_DV(nout, ns, switch, switchd, geo, geod, mpg, mpgd, &
 &              state, stated, state_ext, state_extd, state_avg, &
 &              state_avgd, j, jd, nbdirs)
@@ -2948,7 +2946,6 @@ CONTAINS
     TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
     REAL(kind=r8) :: j(nncf)
 !
-    CALL SET_PARAMETERS_NODIFF(switch)
     CALL B2MNDR_1(nout, ns, switch, geo, mpg, state, state_ext, &
 &           state_avg, j)
 !
