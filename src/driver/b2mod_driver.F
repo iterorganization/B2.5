@@ -2114,9 +2114,13 @@ c   --> better way doing this is necessary)
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
         call read_b2mod_par_opt(ns, mpg, switch)
         allocate(par_opt_phys(npar_opt))
-        allocate(xsave(npar_opt))
+        allocate(xold(npar_opt))
+        allocate(xnew(npar_opt))
+        allocate(xmult(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
-        xsave(1:npar_opt) = x0(1:npar_opt)
+        xold(1:npar_opt) = x0(1:npar_opt)
+        xnew(1:npar_opt) = x0(1:npar_opt)
+        xmult = 1.0_R8
       endif
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in b2mod_dimensions and recompile !')
@@ -3902,7 +3906,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       ncall = ncall+1
       if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1)) then
         deallocate(par_opt_phys)
-        deallocate(xsave)
+        deallocate(xold, xnew, xmult)
       endif
       deallocate(old_erosion, old_deposition)
       deallocate(rza0, rz20, rpt0, rpi0)
