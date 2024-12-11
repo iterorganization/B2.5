@@ -548,8 +548,9 @@ c Feedback
 
 c Optimization
       integer :: b2optim_save_states
-      integer :: b2optim_reset_iter
+      integer :: b2optim_reset_drift_iter
       real (kind=R8) :: b2optim_reset_drift
+      integer :: b2optim_reset_param_iter
 
       end type switches
 
@@ -1119,8 +1120,9 @@ c b2nppo
 
 c Optimization
       s % b2optim_save_states = 0
-      s % b2optim_reset_iter = 2
+      s % b2optim_reset_drift_iter = 2
       s % b2optim_reset_drift = 0.4_R8
+      s % b2optim_reset_param_iter = 1
 
       return
       end subroutine set_defaults_switches
@@ -1713,8 +1715,12 @@ c b2nppo
 
 c Optimization
       call ipgeti ('b2optim_save_states', s%b2optim_save_states)
-      call ipgeti ('b2optim_reset_iter', s%b2optim_reset_iter)
-      call ipgetr ('b2optim_reset_drift', s%b2optim_reset_drift)
+      call ipgeti ('b2optim_reset_drift_iter',
+     & s%b2optim_reset_drift_iter)
+      call ipgetr ('b2optim_reset_drift',
+     & s%b2optim_reset_drift)
+      call ipgeti ('b2optim_reset_param_iter',
+     & s%b2optim_reset_param_iter)
 
       return
       end subroutine read_switches
@@ -2249,11 +2255,13 @@ c b2ag
 c Optimization
       call xertst (s%b2optim_save_states.ge.0,
      &  'faulty parameter b2optim_save_states')
-      call xertst (s%b2optim_reset_iter.gt.0,
-     &  'faulty parameter b2optim_reset_iter')
+      call xertst (s%b2optim_reset_drift_iter.gt.0,
+     &  'faulty parameter b2optim_reset_drift_iter')
       call xertst (s%b2optim_reset_drift.gt.0.0 .and.
      &   s%b2optim_reset_drift.le.1.0_R8,
      &  'faulty parameter b2optim_reset_drift')
+      call xertst (s%b2optim_reset_param_iter.gt.0,
+     &  'faulty parameter b2optim_reset_param_iter')
 
       return
       end subroutine check_values_switches
