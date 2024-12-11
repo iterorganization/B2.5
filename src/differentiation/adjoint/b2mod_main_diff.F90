@@ -723,7 +723,6 @@ CONTAINS
 !
     jb = 0.0_R8
     jb(1) = 1.0_R8
-    call set_parameters(switch)
     CALL B2MNDR_1_B(nout, ns, switch, switchb, geo, geob, mpg, mpgb, &
 &             state, stateb, state_ext, state_extb, state_avg, &
 &             state_avgb, j, jb)

@@ -996,7 +996,6 @@ CONTAINS
     REAL(kind=r8) :: jd(nbdirsmax, nncf)
     INTEGER :: nbdirs
 !
-    call set_parameters(switch)
     CALL B2MNDR_1_DV(nout, ns, switch, switchd, geo, geod, mpg, mpgd, &
 &              state, stated, state_ext, state_extd, state_avg, &
 &              state_avgd, j, jd, nbdirs)
@@ -1025,7 +1024,6 @@ CONTAINS
     TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
     REAL(kind=r8) :: j(nncf)
 !
-    call set_parameters(switch)
     CALL B2MNDR_1(nout, ns, switch, geo, mpg, state, state_ext, &
 &           state_avg, j)
 !

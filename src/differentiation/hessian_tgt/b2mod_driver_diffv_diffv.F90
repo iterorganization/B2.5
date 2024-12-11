@@ -4136,9 +4136,13 @@ CONTAINS
       ALLOCATE(par_opt_physd0(nbdirsmax0, npar_opt))
       par_opt_physd0(:, 1:npar_opt) = 0.0_8
       ALLOCATE(par_opt_phys(npar_opt))
-      ALLOCATE(xsave(npar_opt))
+      ALLOCATE(xold(npar_opt))
+      ALLOCATE(xnew(npar_opt))
+      ALLOCATE(xmult(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
-      xsave(1:npar_opt) = x0(1:npar_opt)
+      xold(1:npar_opt) = x0(1:npar_opt)
+      xnew(1:npar_opt) = x0(1:npar_opt)
+      xmult = 1.0_R8
     END IF
     CALL XERTST(natmi .LE. def_natm, &
 &         'Increase DEF_NATM in b2mod_dimensions and recompile !')
@@ -5987,9 +5991,13 @@ CONTAINS
         par_opt_physd(nd, nd) = 1.0_R8
       END DO
       ALLOCATE(par_opt_phys(npar_opt))
-      ALLOCATE(xsave(npar_opt))
+      ALLOCATE(xold(npar_opt))
+      ALLOCATE(xnew(npar_opt))
+      ALLOCATE(xmult(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
-      xsave(1:npar_opt) = x0(1:npar_opt)
+      xold(1:npar_opt) = x0(1:npar_opt)
+      xnew(1:npar_opt) = x0(1:npar_opt)
+      xmult = 1.0_R8
     END IF
     CALL XERTST(natmi .LE. def_natm, &
 &         'Increase DEF_NATM in b2mod_dimensions and recompile !')
@@ -7744,9 +7752,13 @@ CONTAINS
       ALLOCATE(par_opt_physd0(nbdirsmax0, npar_opt))
       par_opt_physd0(:, 1:npar_opt) = 0.0_8
       ALLOCATE(par_opt_phys(npar_opt))
-      ALLOCATE(xsave(npar_opt))
+      ALLOCATE(xold(npar_opt))
+      ALLOCATE(xnew(npar_opt))
+      ALLOCATE(xmult(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
-      xsave(1:npar_opt) = x0(1:npar_opt)
+      xold(1:npar_opt) = x0(1:npar_opt)
+      xnew(1:npar_opt) = x0(1:npar_opt)
+      xmult = 1.0_R8
     END IF
     CALL XERTST(natmi .LE. def_natm, &
 &         'Increase DEF_NATM in b2mod_dimensions and recompile !')
@@ -9337,9 +9349,13 @@ CONTAINS
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
       CALL READ_B2MOD_PAR_OPT(ns, mpg, switch)
       ALLOCATE(par_opt_phys(npar_opt))
-      ALLOCATE(xsave(npar_opt))
+      ALLOCATE(xold(npar_opt))
+      ALLOCATE(xnew(npar_opt))
+      ALLOCATE(xmult(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
-      xsave(1:npar_opt) = x0(1:npar_opt)
+      xold(1:npar_opt) = x0(1:npar_opt)
+      xnew(1:npar_opt) = x0(1:npar_opt)
+      xmult = 1.0_R8
     END IF
     CALL XERTST(natmi .LE. def_natm, &
 &         'Increase DEF_NATM in b2mod_dimensions and recompile !')
@@ -9375,8 +9391,19 @@ CONTAINS
   END SUBROUTINE B2MNDR_0
 
 !  Differentiation of b2mndr_1_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: enepar conpar potpar enipar
-!                b2recyc tdata jd
+!   variations   of useful results: enepar conpar enkpar potpar
+!                mompar enipar b2recyc parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
+!                *par_opt_phys switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
+!                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
+!                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
+!                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
+!                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
+!                jd
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar b2recyc parm_hce parm_hci parm_vla
 !                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
@@ -12411,6 +12438,7 @@ CONTAINS
       ok = .false.
       WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
 &     'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr
+      CALL SET_PARAMETERS_DV(switch, switchd0, nbdirs0)
       CALL B2MNDT_DV_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, state%&
 &                 rt%nscx, state%rt%nscxmax, state%rt%iscx, itim, dtim, &
 &                 ntim, switch, switchd0, switchd, geo, geod0, geod, mpg&
@@ -13709,6 +13737,7 @@ CONTAINS
       ok = .false.
       WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
 &     'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr
+      CALL SET_PARAMETERS_NODIFF(switch)
       CALL B2MNDT_DV_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, &
 &                     state%rt%nscx, state%rt%nscxmax, state%rt%iscx, &
 &                     itim, dtim, ntim, switch, switchd, geo, geod, mpg&
@@ -14070,6 +14099,7 @@ CONTAINS
       ok = .false.
       WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
 &     'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr
+      CALL SET_PARAMETERS_NODIFF(switch)
       CALL B2MNDT_NODIFF_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0&
 &                         , state%rt%nscx, state%rt%nscxmax, state%rt%&
 &                         iscx, itim, dtim, ntim, switch, geo, mpg, &
@@ -14486,7 +14516,9 @@ CONTAINS
         DEALLOCATE(par_opt_physd0)
       END IF
       DEALLOCATE(par_opt_phys)
-      DEALLOCATE(xsave)
+      DEALLOCATE(xold)
+      DEALLOCATE(xnew)
+      DEALLOCATE(xmult)
     END IF
     DEALLOCATE(old_erosion)
     DEALLOCATE(old_deposition)
@@ -14755,7 +14787,9 @@ CONTAINS
         DEALLOCATE(par_opt_physd)
       END IF
       DEALLOCATE(par_opt_phys)
-      DEALLOCATE(xsave)
+      DEALLOCATE(xold)
+      DEALLOCATE(xnew)
+      DEALLOCATE(xmult)
     END IF
     DEALLOCATE(old_erosion)
     DEALLOCATE(old_deposition)
@@ -15009,7 +15043,9 @@ CONTAINS
         DEALLOCATE(par_opt_physd0)
       END IF
       DEALLOCATE(par_opt_phys)
-      DEALLOCATE(xsave)
+      DEALLOCATE(xold)
+      DEALLOCATE(xnew)
+      DEALLOCATE(xmult)
     END IF
     DEALLOCATE(old_erosion)
     DEALLOCATE(old_deposition)
@@ -15241,7 +15277,9 @@ CONTAINS
     ncall = ncall + 1
     IF (.NOT.flag_optim .AND. switch%b2optim_namelist .EQ. 1) THEN
       DEALLOCATE(par_opt_phys)
-      DEALLOCATE(xsave)
+      DEALLOCATE(xold)
+      DEALLOCATE(xnew)
+      DEALLOCATE(xmult)
     END IF
     DEALLOCATE(old_erosion)
     DEALLOCATE(old_deposition)

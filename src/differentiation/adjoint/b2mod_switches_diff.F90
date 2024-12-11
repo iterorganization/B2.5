@@ -581,8 +581,9 @@ MODULE B2MOD_SWITCHES_DIFF
       INTEGER :: b2nppo_restrict_po
       INTEGER :: b2stbc_feedback
       INTEGER :: b2optim_save_states
-      INTEGER :: b2optim_reset_iter
+      INTEGER :: b2optim_reset_drift_iter
       REAL(kind=r8) :: b2optim_reset_drift
+      INTEGER :: b2optim_reset_param_iter
   END TYPE SWITCHES
   TYPE, PUBLIC :: SWITCHES_DIFF
       REAL(kind=r8) :: fhe_vis_per
@@ -1414,8 +1415,9 @@ CONTAINS
 !
 ! Optimization
     s%b2optim_save_states = 0
-    s%b2optim_reset_iter = 2
+    s%b2optim_reset_drift_iter = 2
     s%b2optim_reset_drift = 0.4_R8
+    s%b2optim_reset_param_iter = 1
 !
     RETURN
   END SUBROUTINE SET_DEFAULTS_SWITCHES
@@ -2021,8 +2023,9 @@ CONTAINS
 !
 ! Optimization
     CALL IPGETI('b2optim_save_states', s%b2optim_save_states)
-    CALL IPGETI('b2optim_reset_iter', s%b2optim_reset_iter)
+    CALL IPGETI('b2optim_reset_drift_iter', s%b2optim_reset_drift_iter)
     CALL IPGETR('b2optim_reset_drift', s%b2optim_reset_drift)
+    CALL IPGETI('b2optim_reset_param_iter', s%b2optim_reset_param_iter)
 !
     RETURN
   END SUBROUTINE READ_SWITCHES
@@ -2538,11 +2541,13 @@ CONTAINS
 ! Optimization
     CALL XERTST(s%b2optim_save_states .GE. 0, &
 &         'faulty parameter b2optim_save_states')
-    CALL XERTST(s%b2optim_reset_iter .GT. 0, &
-&         'faulty parameter b2optim_reset_iter')
+    CALL XERTST(s%b2optim_reset_drift_iter .GT. 0, &
+&         'faulty parameter b2optim_reset_drift_iter')
     CALL XERTST(s%b2optim_reset_drift .GT. 0.0 .AND. s%&
 &         b2optim_reset_drift .LE. 1.0_R8, &
 &         'faulty parameter b2optim_reset_drift')
+    CALL XERTST(s%b2optim_reset_param_iter .GT. 0, &
+&         'faulty parameter b2optim_reset_param_iter')
 !
     RETURN
   END SUBROUTINE CHECK_VALUES_SWITCHES

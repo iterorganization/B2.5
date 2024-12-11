@@ -3827,9 +3827,13 @@ CONTAINS
         par_opt_physd(nd, nd) = 1.0_R8
       END DO
       ALLOCATE(par_opt_phys(npar_opt))
-      ALLOCATE(xsave(npar_opt))
+      ALLOCATE(xold(npar_opt))
+      ALLOCATE(xnew(npar_opt))
+      ALLOCATE(xmult(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
-      xsave(1:npar_opt) = x0(1:npar_opt)
+      xold(1:npar_opt) = x0(1:npar_opt)
+      xnew(1:npar_opt) = x0(1:npar_opt)
+      xmult = 1.0_R8
     END IF
     CALL XERTST(natmi .LE. def_natm, &
 &         'Increase DEF_NATM in b2mod_dimensions and recompile !')
@@ -5404,9 +5408,13 @@ CONTAINS
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
       CALL READ_B2MOD_PAR_OPT(ns, mpg, switch)
       ALLOCATE(par_opt_phys(npar_opt))
-      ALLOCATE(xsave(npar_opt))
+      ALLOCATE(xold(npar_opt))
+      ALLOCATE(xnew(npar_opt))
+      ALLOCATE(xmult(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
-      xsave(1:npar_opt) = x0(1:npar_opt)
+      xold(1:npar_opt) = x0(1:npar_opt)
+      xnew(1:npar_opt) = x0(1:npar_opt)
+      xmult = 1.0_R8
     END IF
     CALL XERTST(natmi .LE. def_natm, &
 &         'Increase DEF_NATM in b2mod_dimensions and recompile !')
@@ -6517,6 +6525,7 @@ CONTAINS
       ok = .false.
       WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
 &     'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr
+      call set_parameters(switch)
       CALL B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, state%rt%&
 &              nscx, state%rt%nscxmax, state%rt%iscx, itim, dtim, ntim, &
 &              switch, switchd, geo, geod, mpg, mpgd, state, stated, &
@@ -6871,6 +6880,7 @@ CONTAINS
       ok = .false.
       WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
 &     'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr
+      call set_parameters(switch)
       CALL B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, state&
 &                  %rt%nscx, state%rt%nscxmax, state%rt%iscx, itim, dtim&
 &                  , ntim, switch, geo, mpg, state, state_ext, state_avg&
@@ -7273,7 +7283,9 @@ CONTAINS
         DEALLOCATE(par_opt_physd)
       END IF
       DEALLOCATE(par_opt_phys)
-      DEALLOCATE(xsave)
+      DEALLOCATE(xold)
+      DEALLOCATE(xnew)
+      DEALLOCATE(xmult)
     END IF
     DEALLOCATE(old_erosion)
     DEALLOCATE(old_deposition)
@@ -7517,7 +7529,9 @@ CONTAINS
     ncall = ncall + 1
     IF (.NOT.flag_optim .AND. switch%b2optim_namelist .EQ. 1) THEN
       DEALLOCATE(par_opt_phys)
-      DEALLOCATE(xsave)
+      DEALLOCATE(xold)
+      DEALLOCATE(xnew)
+      DEALLOCATE(xmult)
     END IF
     DEALLOCATE(old_erosion)
     DEALLOCATE(old_deposition)
