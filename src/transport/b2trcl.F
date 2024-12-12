@@ -603,6 +603,9 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &   wrkc)
         call b2tnce (mpg, geo, switch, nCv, pl%te, dv%ne2,
      &  dv%lnlam, collisnumef, wrkc)
+      else
+        collisnumf = 1.0_R8
+        collisnumef = 1.0_R8
       endif
 
       if(switch%conductive_limit.ne.0) then                              !srv 16.06.08 {
