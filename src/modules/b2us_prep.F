@@ -2424,10 +2424,10 @@
 
       implicit none
       integer, intent(in) :: nx, ny
-      integer :: ix, iy, ic, iFc, iVx, iFs, iCv, Cvs(2)
+      integer :: ix, iy, ic, iFc, iVx, iFs, iCv, Cvs(2),  iVx1, iVx2
       real :: wrk
 #ifdef WG_TODO
-      integer :: i, j, idb, iVx1, iVx2
+      integer :: i, j, idb
 #endif
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
@@ -2441,6 +2441,9 @@
      & mod_alpha = 0 
       integer :: fcsb(mpg%nCg), cvsb(mpg%nCg,2), k, ind, ind1, tmp, iFt
       logical :: iscvsb(mpg%nCv)
+      integer :: wrkVx(mpg%nVx), find_loc
+      integer :: calc_vx(2,20)
+      real (kind=R8) :: meanCv(2),meanFc(2)
       call ipgetr('b2stbc_Qalfmin',Qalfmin)
       call ipgetr('b2stbc_Qalfmax',Qalfmax)
       call ipgetr('b2us_prep_Pbs_reduce_fac',pbs_red_fac)
@@ -2675,26 +2678,6 @@
       cvsb(ind,2) = minval(mpg%fcCv(fcsb(mpg%nCg),1:2))
       print *, fcsb(mpg%nCg)
 
-      if (mean_boundary_hc.eq.1) then
-
-        ind=1
-        do ind1=2,mpg%nCg
-          if (mpg%fcLbl(fcsb(ind1)).le.0) cycle
-          if (mpg%cvFt(minval(mpg%fcCv(fcsb(ind1),:))).ne.
-     &        mpg%cvFt(minval(mpg%fcCv(fcsb(ind1-1),:)))) then
-
-              k = ind1-1
-              write (*,*) fcsb(ind:k)
-
-              gm%fcHc(fcsb(ind:k),2)=
-     &        sum(gm%fcHc(fcsb(ind:k),2))/(ind1-ind)
-              gm%fcHc(fcsb(ind:k),1)=
-     &        sum(gm%fcHc(fcsb(ind:k),1))/(ind1-ind)
-
-              ind = ind1
-          endif
-        enddo
-      endif
 
       if (set_beta.eq.1) then
         do iFt=1,mpg%nFt
@@ -2804,6 +2787,92 @@
         iFc = mpg%fsFc(mpg%fsFcP(iFs,1))
         gm%fsPsi(iFs) = gm%vxFpsi(mpg%fcVx(iFc,1))
       end do
+
+      if (mean_boundary_hc.eq.1) then
+
+        write(*,*) "Start changing fcHc for effective cells"
+        ind=1
+        do ind1=2,mpg%nCg
+          iFc = fcsb(ind1)
+          wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
+          if (mpg%fcLbl(iFc).le.0) then
+            ind = ind1
+            cycle
+          endif
+          if (mpg%cvFt(minval(mpg%fcCv(iFc,:))).ne.
+     &        mpg%cvFt(minval(mpg%fcCv(fcsb(ind1-1),:)))
+     &        .or. wrk < Qalfmin ) then
+
+              k = ind1-1
+              if(((ind1-1) .le. ind) .or. 
+     &        (minval(mpg%fcCv(fcsb(ind),1:2))
+     &         .eq.minval(mpg%fcCv(fcsb(k),1:2)))) then  !second condition for cell with two boundary faces
+                ind = ind1
+                cycle
+              endif     
+              write(*,*), "boundary faces of cell:"
+              write (*,*) fcsb(ind:k)
+              if (mpg%fcVx(fcsb(ind),1).ne.mpg%fcVx(fcsb(ind+1),1).and.
+     &          mpg%fcVx(fcsb(ind),1).ne.mpg%fcVx(fcsb(ind+1),2)) then
+                iVx1 = mpg%fcVx(fcsb(ind),1)
+              else
+                iVx1 = mpg%fcVx(fcsb(ind),2)
+              endif
+              if (mpg%fcVx(fcsb(k),1).ne.mpg%fcVx(fcsb(k-1),1).and.
+     &          mpg%fcVx(fcsb(k),1).ne.mpg%fcVx(fcsb(k-1),2)) then
+                iVx2 = mpg%fcVx(fcsb(k),1)
+              else
+                iVx2 = mpg%fcVx(fcsb(k),2)
+              endif
+              write(*,'(a,2i5)')'ends of effective face', iVx1, iVx2
+              meanFc(1) = gm%vxX(iVx1) + gm%vxX(iVx2)
+              meanFc(2) = gm%vxY(iVx1) + gm%vxY(iVx2)
+              meanFc = meanFc/2
+              write (*,'(2es17.6)') meanFc(1), meanFc(2)
+
+              wrkVx = 0
+              calc_vx = 0
+              do k=ind,ind1-1
+                iCv = cvsb(k,2)
+                if (cvsb(k,2).eq.cvsb(k-1,2)) cycle
+                wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
+     &           mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1)) = 
+     &          wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
+     &            mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1)) + 1
+              enddo
+              print *, "ends of effective cell:"
+              meanCv = 0.0_R8
+              tmp = 0
+              do k=1,mpg%nVx
+                if (wrkVx(k).eq.1) then 
+                  print *, k
+                  meanCv(1) = meanCv(1) + gm%vxX(k)
+                  meanCv(2) = meanCv(2) + gm%vxY(k)
+                  tmp = tmp + 1
+                endif
+              enddo
+              meanCv = meanCv/tmp
+              write (*,'(2es17.6)') meanCv(1), meanCv(2)
+
+              wrk = norm(meanFc(1)-meanCv(1), meanFc(2)-meanCv(2))
+              write (*,*), "new fcHc:"
+              write (*,'(1es17.6)') wrk
+              write(*,*) "----------"
+              do k=ind,ind1-1
+                iFc = fcsb(k)
+                if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
+                  gm%fcHc(iFc,1) = 0.99*wrk
+                  gm%fcHc(iFc,2) = 0.01*wrk
+                else
+                  gm%fcHc(iFc,2) = 0.99*wrk
+                  gm%fcHc(iFc,1) = 0.01*wrk
+                endif
+              enddo
+              ind = ind1
+          endif
+        enddo
+      endif
+
 ! calculate connection length
       call calc_conn(mpg, gm)
 
