@@ -119,7 +119,8 @@
       real (kind=R8) ::
      *   width, centroid(0:1), t0, t1
       real (kind=R8) ::
-     *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1)
+     *   ebc(-1:nx,-1:ny,0:1), ebf(-1:nx,-1:ny,0:1),
+     *   wrk(-1:nx,-1:ny)
       integer, save :: qc_style = 1
 *   ..procedures
       real (kind=R8) ::
@@ -233,8 +234,10 @@
         endif
        enddo
       enddo
-      call nancheck(nx, ny, qz(-1:nx,-1:ny,0), 'b2agmt: qz(,,0)')
-      call nancheck(nx, ny, qz(-1:nx,-1:ny,1), 'b2agmt: qz(,,1)')
+      wrk(-1:nx,-1:ny) = qz(-1:nx,-1:ny,0)
+      call nancheck(nx, ny, wrk, 'b2agmt: qz(,,0)')
+      wrk(-1:nx,-1:ny) = qz(-1:nx,-1:ny,1)
+      call nancheck(nx, ny, wrk, 'b2agmt: qz(,,1)')
       call nancheck(nx, ny, qc, 'b2agmt: qc')
       call nancheck(nx, ny, qcb, 'b2agmt: qcb')
 *   ..test sign of qz(,,1) and qc(,)
