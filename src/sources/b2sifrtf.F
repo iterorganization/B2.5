@@ -338,7 +338,8 @@
          endif
         enddo
       endif
-      call nancheck(nx, ny, smbfrial(:,:,0), 'smbfrial(,,0)')
+      wrk(-1:nx,-1:ny) = smbfrial(-1:nx,-1:ny,0)
+      call nancheck(nx, ny, wrk, 'smbfrial(,,0)')
 #ifdef WITH_FTIMINGS
       if (make_parallel) call timer%stop("parallel")
 #endif
@@ -534,7 +535,8 @@ c   .... apply flux limit
          endif
         enddo
       endif
-      call nancheck(nx, ny, smbtfial(:,:,0), 'smbtfial(,,0)')
+      wrk(-1:nx,-1:ny) = smbtfial(-1:nx,-1:ny,0)
+      call nancheck(nx, ny, wrk, 'smbtfial(,,0)')
 #ifdef WITH_FTIMINGS
       if (make_parallel) call timer%stop("parallel")
 #endif
