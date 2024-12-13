@@ -9,6 +9,14 @@ ifneq (${FC},ftn)
 CC = icc
 endif
 endif
+# Use of ifx OpenMP is unsafe at the moment
+ifeq (${FC},ifx)
+  ifdef SOLPS_OPENMP
+    FC = ifort
+    FN = ifort
+    MPI_FC = mpiifort
+  endif
+endif
 EQUIVS   = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 
 CPPOPTS  = -P -I${srcdir} ${EQUIVS}
