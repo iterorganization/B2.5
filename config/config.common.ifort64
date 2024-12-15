@@ -10,11 +10,15 @@ CC = icc
 endif
 endif
 # Use of ifx OpenMP is unsafe at the moment
-ifeq (${FC},ifx)
+ifneq (,$(findstring ifx,${FC}))
   ifdef SOLPS_OPENMP
-    FC = ifort
     FN = ifort
     MPI_FC = mpiifort
+    ifdef SOLPS_MPI
+      FC = ${MPI_FC}
+    else
+      FC = ifort
+    endif
   endif
 endif
 EQUIVS   = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
