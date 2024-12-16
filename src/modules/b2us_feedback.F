@@ -1544,7 +1544,6 @@ cxpb size is changed in b2mod_dimensions
      &           'compute_feedback_type: using ',
      &           'average neutral pressure for sequence',
      &           b2espcr(fb_species(ifb))
-                write(*,*) spfr_cv, epfr_cv
                 write(*,*) pfr_cvs(1:npfr_cvs)
               endif
 
@@ -1677,7 +1676,7 @@ cxpb size is changed in b2mod_dimensions
 #if ( defined(B25_EIRENE) && !defined(SOLPS4_3) )
                   if (allocated(fnmti_b2) .and.
      &                allocated(ewldrp_res)) then
-                    indx = find_loc(fnmti_b2,nstsd+1,iFc)
+                    indx = find_loc(fnmti_b2,nsts+1,iFc)
                     if (indx.gt.0) then
                       t0 = t0-ewldrp_res(indx)
                     endif
