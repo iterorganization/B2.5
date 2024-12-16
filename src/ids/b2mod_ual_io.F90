@@ -163,7 +163,7 @@ module b2mod_ual_io
     use ids_schemas &     ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,     &
      &          ids_radiation, ids_dataset_description, ids_equilibrium,     &
-     &          ids_ids_properties, &
+     &          ids_ids_properties,                                          &
      &          ids_code, ids_signal_int_1d, ids_signal_flt_1d,              &
      &          ids_generic_grid_scalar, ids_generic_grid_vector_components, &
      &          ids_generic_grid_dynamic
@@ -212,6 +212,10 @@ module b2mod_ual_io
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_summary_rz1d_dynamic
+#endif
+#if IMAS_MAJOR_VERSION > 3
+    use ids_schemas &     ! IGNORE
+     & , only : ids_code_constant
 #endif
 #if ( defined(AMNS) && ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 ) )
     use amns_types  ! IGNORE
@@ -1068,7 +1072,7 @@ contains
         call write_ids_code( divertors%code, code_commit, code_description )
 #endif
 #if IMAS_MAJOR_VERSION > 3
-        call write_ids_code( description%code, code_commit, code_description )
+        call write_ids_code_constant( description%code, code_commit, code_description )
 #endif
         allocate( edge_transport%model(1) )
         allocate( edge_transport%model(1)%identifier%name(1) )
@@ -1662,10 +1666,8 @@ contains
             allocate( divertors%divertor(ntrgts) )
             do i = 1, ntrgts
               allocate( divertors%divertor(i)%name(1) )
-              allocate( divertors%divertor(i)%identifier(1) )
               allocate( divertors%divertor(i)%target(1) )
               allocate( divertors%divertor(i)%target(1)%name(1) )
-              allocate( divertors%divertor(i)%target(1)%identifier(1) )
               if (streql(plate_name(i),'W')) then
                 divertors%divertor(i)%name = 'Western divertor'
                 divertors%divertor(i)%target(1)%name = 'Western target'
@@ -1676,8 +1678,17 @@ contains
                 divertors%divertor(i)%name = 'Divertor '//int2str(i)
                 divertors%divertor(i)%target(1)%name = 'Target '//int2str(i)
               end if
+#if IMAS_MAJOR_VERSION > 3
+              allocate( divertors%divertor(i)%description(1) )
+              divertors%divertor(i)%description = plate_name(i)
+              allocate( divertors%divertor(i)%target(1)%description(1) )
+              divertors%divertor(i)%target(1)%description = plate_name(i)
+#else
+              allocate( divertors%divertor(i)%identifier(1) )
               divertors%divertor(i)%identifier = plate_name(i)
+              allocate( divertors%divertor(i)%target(1)%identifier(1) )
               divertors%divertor(i)%target(1)%identifier = plate_name(i)
+#endif
 !! FIXME: Should represent the full extent of the physical divertor
               divertors%divertor(i)%target(1)%extension_r = extension_r(i)
               divertors%divertor(i)%target(1)%extension_z = extension_z(i)
@@ -1830,19 +1841,41 @@ contains
         case ( GEOMETRY_SN, GEOMETRY_STELLARATORISLAND )
           allocate( divertors%divertor(1) )
           allocate( divertors%divertor(1)%name(1) )
-          allocate( divertors%divertor(1)%identifier(1) )
           if (LSN) then
             divertors%divertor(1)%name = 'Lower divertor'
-            divertors%divertor(1)%identifier = 'LSN'
           else
             divertors%divertor(1)%name = 'Upper divertor'
-            divertors%divertor(1)%identifier = 'USN'
           end if
           allocate( divertors%divertor(1)%target(2) )
           allocate( divertors%divertor(1)%target(1)%name(1) )
-          allocate( divertors%divertor(1)%target(1)%identifier(1) )
           allocate( divertors%divertor(1)%target(2)%name(1) )
+#if IMAS_MAJOR_VERSION > 3
+          allocate( divertors%divertor(1)%description(1) )
+          allocate( divertors%divertor(1)%target(1)%description(1) )
+          allocate( divertors%divertor(1)%target(2)%description(1) )
+          if (LSN) then
+            divertors%divertor(1)%description = 'LSN'
+            divertors%divertor(1)%target(1)%description = "ID"
+            divertors%divertor(1)%target(2)%description = "OD"
+          else
+            divertors%divertor(1)%description = 'USN'
+            divertors%divertor(1)%target(1)%description = "OD"
+            divertors%divertor(1)%target(2)%description = "ID"
+          end if
+#else
+          allocate( divertors%divertor(1)%identifier(1) )
+          allocate( divertors%divertor(1)%target(1)%identifier(1) )
           allocate( divertors%divertor(1)%target(2)%identifier(1) )
+          if (LSN) then
+            divertors%divertor(1)%identifier = 'LSN'
+            divertors%divertor(1)%target(1)%identifier = "ID"
+            divertors%divertor(1)%target(2)%identifier = "OD"
+          else
+            divertors%divertor(1)%identifier = 'USN'
+            divertors%divertor(1)%target(1)%identifier = "OD"
+            divertors%divertor(1)%target(2)%identifier = "ID"
+          end if
+#endif
 !! FIXME: Should represent the full extent of the physical divertor
           divertors%divertor(1)%target(1)%extension_r = extension_r(1)
           divertors%divertor(1)%target(1)%extension_z = extension_z(1)
@@ -1850,14 +1883,10 @@ contains
           divertors%divertor(1)%target(2)%extension_z = extension_z(2)
           if (LSN) then
             divertors%divertor(1)%target(1)%name = "Inner target"
-            divertors%divertor(1)%target(1)%identifier = "ID"
             divertors%divertor(1)%target(2)%name = "Outer target"
-            divertors%divertor(1)%target(2)%identifier = "OD"
           else
             divertors%divertor(1)%target(1)%name = "Outer target"
-            divertors%divertor(1)%target(1)%identifier = "OD"
             divertors%divertor(1)%target(2)%name = "Inner target"
-            divertors%divertor(1)%target(2)%identifier = "ID"
           end if
           call write_timed_value( &
             &  divertors%divertor(1)%target(1)%power_flux_peak, &
@@ -1973,46 +2002,73 @@ contains
         &      GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
           allocate( divertors%divertor(2) )
           allocate( divertors%divertor(1)%name(1) )
-          allocate( divertors%divertor(1)%identifier(1) )
           allocate( divertors%divertor(2)%name(1) )
-          allocate( divertors%divertor(2)%identifier(1) )
           allocate( divertors%divertor(1)%target(2) )
           allocate( divertors%divertor(2)%target(2) )
           allocate( divertors%divertor(1)%target(1)%name(1) )
-          allocate( divertors%divertor(1)%target(1)%identifier(1) )
           allocate( divertors%divertor(1)%target(2)%name(1) )
-          allocate( divertors%divertor(1)%target(2)%identifier(1) )
           allocate( divertors%divertor(2)%target(1)%name(1) )
-          allocate( divertors%divertor(2)%target(1)%identifier(1) )
           allocate( divertors%divertor(2)%target(2)%name(1) )
+#if IMAS_MAJOR_VERSION > 3
+          allocate( divertors%divertor(1)%description(1) )
+          allocate( divertors%divertor(2)%description(1) )
+          allocate( divertors%divertor(1)%target(1)%description(1) )
+          allocate( divertors%divertor(1)%target(2)%description(1) )
+          allocate( divertors%divertor(2)%target(1)%description(1) )
+          allocate( divertors%divertor(2)%target(2)%description(1) )
+#else
+          allocate( divertors%divertor(1)%identifier(1) )
+          allocate( divertors%divertor(2)%identifier(1) )
+          allocate( divertors%divertor(1)%target(1)%identifier(1) )
+          allocate( divertors%divertor(1)%target(2)%identifier(1) )
+          allocate( divertors%divertor(2)%target(1)%identifier(1) )
           allocate( divertors%divertor(2)%target(2)%identifier(1) )
+#endif
           if (GeometryType == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
           &   GeometryType == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
             divertors%divertor(1)%name = 'Lower divertor'
-            divertors%divertor(1)%identifier = 'LD'
             divertors%divertor(2)%name = 'Lower SF divertor'
-            divertors%divertor(2)%identifier = 'LSFD'
             divertors%divertor(1)%target(1)%name = "Lower inner target"
-            divertors%divertor(1)%target(1)%identifier = "LID"
             divertors%divertor(1)%target(2)%name = "Lower outer target"
-            divertors%divertor(1)%target(2)%identifier = "LOD"
             divertors%divertor(2)%target(1)%name = "Snowflake lower outer target"
-            divertors%divertor(2)%target(1)%identifier = "LSFOD"
             divertors%divertor(2)%target(2)%name = "Snowflake lower inner target"
+#if IMAS_MAJOR_VERSION > 3
+            divertors%divertor(1)%description = 'LD'
+            divertors%divertor(2)%description = 'LSFD'
+            divertors%divertor(1)%target(1)%description = "LID"
+            divertors%divertor(1)%target(2)%description = "LOD"
+            divertors%divertor(2)%target(1)%description = "LSFOD"
+            divertors%divertor(2)%target(2)%description = "LSFID"
+#else
+            divertors%divertor(1)%identifier = 'LD'
+            divertors%divertor(2)%identifier = 'LSFD'
+            divertors%divertor(1)%target(1)%identifier = "LID"
+            divertors%divertor(1)%target(2)%identifier = "LOD"
+            divertors%divertor(2)%target(1)%identifier = "LSFOD"
             divertors%divertor(2)%target(2)%identifier = "LSFID"
+#endif
           else
             divertors%divertor(1)%name = 'Lower divertor'
-            divertors%divertor(1)%identifier = 'LD'
             divertors%divertor(2)%name = 'Upper divertor'
-            divertors%divertor(2)%identifier = 'UD'
             divertors%divertor(1)%target(1)%name = "Lower inner target"
-            divertors%divertor(1)%target(1)%identifier = "LID"
             divertors%divertor(1)%target(2)%name = "Lower outer target"
-            divertors%divertor(1)%target(2)%identifier = "LOD"
             divertors%divertor(2)%target(1)%name = "Upper inner target"
-            divertors%divertor(2)%target(1)%identifier = "UID"
             divertors%divertor(2)%target(2)%name = "Upper outer target"
+#if IMAS_MAJOR_VERSION > 3
+            divertors%divertor(1)%description = 'LD'
+            divertors%divertor(2)%description = 'UD'
+            divertors%divertor(1)%target(1)%description = "LID"
+            divertors%divertor(1)%target(2)%description = "LOD"
+            divertors%divertor(2)%target(1)%description = "UID"
+            divertors%divertor(2)%target(2)%description = "UOD"
+#else
+            divertors%divertor(1)%identifier = 'LD'
+            divertors%divertor(2)%identifier = 'UD'
+            divertors%divertor(1)%target(1)%identifier = "LID"
+            divertors%divertor(1)%target(2)%identifier = "LOD"
+            divertors%divertor(2)%target(1)%identifier = "UID"
             divertors%divertor(2)%target(2)%identifier = "UOD"
+#endif
           endif
 !! FIXME: Should represent the full extent of the physical divertor
           divertors%divertor(1)%target(1)%extension_r = extension_r(1)
@@ -4818,11 +4874,19 @@ contains
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%z_square_average,               &
                       &   value = rz2(:,:,ispion(is,js)) )
+#if IMAS_MAJOR_VERSION > 3
+                !! Ionization potential
+                  call write_quantity( edge_grid,                           &
+                      &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
+                      &         state( js )%ionization_potential,           &
+                      &   value = rpt(:,:,ispion(is,js)) )
+#else
                 !! Ionisation potential
                   call write_quantity( edge_grid,                           &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%ionisation_potential,           &
                       &   value = rpt(:,:,ispion(is,js)) )
+#endif
                 end do
               else
 #ifdef B25_EIRENE
@@ -7193,7 +7257,7 @@ contains
 #endif
 #if IMAS_MAJOR_VERSION > 3
         if (do_description) &
-          &  call write_ids_code( description%code, code_commit, code_description )
+          &  call write_ids_code_constant( description%code, code_commit, code_description )
 #endif
 
         !! 3. Allocate IDS.time and set it to desired values
@@ -8014,8 +8078,30 @@ contains
     end if
 #endif
     return
-
     end subroutine write_ids_code
+
+#if IMAS_MAJOR_VERSION > 3
+    subroutine write_ids_code_constant( code, commit, description )
+    implicit none
+    type(ids_code_constant), intent(inout) :: code
+                !< Type of IDS data structure, designed for code data handling
+    character(len=ids_string_length), intent(in) :: commit
+    character(len=ids_string_length), intent(in) :: description
+
+    allocate( code%name(1) )
+    code%name = source
+    allocate( code%description(1) )
+    code%description = description
+    allocate( code%version(1) )
+    code%version = newversion
+    allocate( code%commit(1) )
+    code%commit = commit
+    allocate( code%repository(1) )
+    code%repository(1) = "ssh://git.iter.org/bnd/b2.5.git"
+
+    return
+    end subroutine write_ids_code_constant
+#endif
 
     subroutine put_equilibrium_data ( equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -8088,8 +8174,19 @@ contains
     if ( associated( equilibrium%time_slice ) ) then
       if ( size( equilibrium%time_slice ).ge.slice_index ) then
         eq_found = .true.
+#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 33 )
+        if ( associated( equilibrium%ids_properties%provenance%node ) ) then
+          if ( associated( equilibrium%ids_properties%provenance%node(1)%reference ) ) &
+            & eq_source = equilibrium%ids_properties%provenance%node(1)%reference(1)%name(1)
+#if ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION > 33 )
+        else if ( associated( equilibrium%ids_properties%source ) ) then
+          eq_source = equilibrium%ids_properties%source(1)
+#endif
+        end if
+#else
         if ( associated( equilibrium%ids_properties%source ) ) &
            & eq_source = equilibrium%ids_properties%source(1)
+#endif
         r0 = equilibrium%vacuum_toroidal_field%r0
         b0 = equilibrium%vacuum_toroidal_field%b0( slice_index )
         b0r0 = b0 * r0

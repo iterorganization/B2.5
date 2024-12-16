@@ -3149,7 +3149,7 @@ contains
         dynamic_grid%space(i1)%coordinates_type(i2)%name = &
          & aoS3_grid%space(i1)%coordinates_type(i2)%name
         dynamic_grid%space(i1)%coordinates_type(i2)%index = &
-         & aoS3_grid%space(i1)%coordinates_type(i2)index
+         & aoS3_grid%space(i1)%coordinates_type(i2)%index
         allocate( dynamic_grid%space(i1)%coordinates_type(i2)%description(1) )
         dynamic_grid%space(i1)%coordinates_type(i2)%description = &
          & aoS3_grid%space(i1)%coordinates_type(i2)%description
