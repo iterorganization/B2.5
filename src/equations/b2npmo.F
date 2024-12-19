@@ -734,16 +734,27 @@ c     ..compare 9-pt stencil matrices
         endif
       endif
 
-*   ..compute physical time-derivative after correction has been applied
-*   .. m*d(nu)/dt = m*[u*(dn/dt) + n*(du/dt)]
-! to obtain the true physical derivative, we need to divide by ts_factor, which was previously multiplied to smodt
-      do is = 0, ns-1
-        dv%dmodt(:,is) = ( -sr%smodt(:,0,is)                          ! = -ma*mp*V/dt*h_z*n_(i+1)*u_i +ma*mp*V/dt*h_z*u_i*(n_(i+1)-n_i)
-     &    -sr%smodt(:,1,is)*pl%ua(:,is)                             ! = 0
-     &    -sr%smodt(:,2,is)*pl%na(:,is)*mp*am(is)                   ! = 0
-     &    -sr%smodt(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is) )      ! = +ma*mp*V/dt*h_z*n_(i+1)*u_(i+1)
-     &    /ts_factor
-      enddo
+!! do the same but with possibly a lower max M for the core region. For now, no diagnostic output for this one.
+      if( switch%ion_vlct_restrict_core .ne. 0 ) then                
+        do is = 0, ns-1
+          do iCv = 1, nCv
+            if (mpg%cvOnClosedSurface(iCv)) then  
+              if (.not.is_neutral(is).or.switch%tn_style.le.1.or.
+     .           (switch%tn_style.eq.2.and.nint(zn(is)).ne.1)) then
+                cst=sqrt(pz(iCv)/rz(iCv))                              
+              else
+                cst=sqrt(pl%tn(iCv)/(mp*am(is)))
+              endif
+              if( abs(pl%ua(iCv,is)).gt.
+     .         switch%ion_vlct_restrict_core_M*cst ) then
+              pl%ua(iCv,is)= sign(switch%ion_vlct_restrict_core_M*cst,
+     .                              pl%ua(iCv,is))                
+              endif
+            endif
+          enddo
+        enddo
+      endif
+
 *   ..correct pcca
       call b2nxcm (nCv, ns, dv%pccm, dv%pcca)
       if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then  !srv 12.07.02 {
