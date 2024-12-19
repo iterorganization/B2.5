@@ -46,6 +46,17 @@
 !!        !< data on edge plasma transport. Energy terms correspond to the
 !!        !< full kinetic energy equation (i.e. the energy flux takes into
 !!        !< account the energy transported by the particle flux)
+!!      type(ids_plasma_profiles) :: plasma_profiles !< IDS designed to store
+!!        !< data on plasma profiles
+!!      type (ids_plasma_profiles) :: old_plasma_profiles
+!!      type (ids_plasma_sources) :: plasma_sources !< IDS designed to store
+!!        !< data on plasma sources. Energy terms correspond to the full
+!!        !< kinetic energy equation (i.e. the energy flux takes into account
+!!        !< the energy transported by the particle flux)
+!!      type (ids_plasma_transport) :: plasma_transport !< IDS designed to store
+!!        !< data on plasma transport. Energy terms correspond to the
+!!        !< full kinetic energy equation (i.e. the energy flux takes into
+!!        !< account the energy transported by the particle flux)
 !!      type (ids_radiation) :: radiation !< IDS designed to store
 !!        !< data on radiation emitted by the plasma species
 !!      type (ids_dataset_description) :: description !< IDS designed to store
@@ -76,6 +87,11 @@ program b2_ual_write
      &          description, imas_version, ids_end_time, new_eq_ggd, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
      &          batch_profiles, batch_sources
+#if IMAS_MAJOR_VERSION > 3
+    use b2mod_driver &
+     & , only : plasma_profiles, plasma_sources, plasma_transport, &
+     &          old_plasma_profiles, batch_plasma_profiles, batch_plasma_sources
+#endif
     use b2mod_geo
     use b2mod_time
     use b2mod_plasma
@@ -88,21 +104,26 @@ program b2_ual_write
     use b2mod_numerics_namelist
     use b2mod_ual    &
      & , only : put_ids_edge, dealloc_ids_edge, dealloc_batch_edge, &
-     &          b25_process_ids, close_ual, &
-     &          ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
+     &          b25_process_ids, close_ual
+   use ids_schemas   &
+     & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
      &          ids_radiation, ids_dataset_description, ids_equilibrium
     use b2mod_ual_io
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-    use b2mod_ual    &
+    use ids_schemas  &
      & , only : ids_summary
     use b2mod_driver &
      & , only : summary
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
-    use b2mod_ual    &
+    use ids_schemas  &
      & , only : ids_divertors
     use b2mod_driver &
      & , only : divertors
+#endif
+#if IMAS_MAJOR_VERSION > 3
+    use ids_schemas  &
+     & , only : ids_plasma_profiles, ids_plasma_sources, ids_plasma_transport
 #endif
 #if AL_MAJOR_VERSION > 4
     use ids_routines &  ! IGNORE
@@ -383,19 +404,39 @@ program b2_ual_write
     if ( status.eq.0 .and. idx.ne.0 ) then
       write(0,*) "Reading old IMAS data entry: ", trim(database), shot, run
       call ids_get( idx, "equilibrium", equilibrium, status)
+#if IMAS_MAJOR_VERSION > 3
+      call ids_get( idx, "plasma_profiles", old_plasma_profiles, status)
+      if (status.ne.0) &
+        & call ids_get( idx, "edge_profiles", old_edge_profiles, status)
+#else
       call ids_get( idx, "edge_profiles", old_edge_profiles, status)
+#endif
       if ( status.ne.0 ) then
-        write(0,*) 'Error opening old edge_profiles IDS ! Will create a new one.'
+        write(0,*) 'Error opening old profiles IDS ! Will create a new one.'
         idx = 0
         continued = .false.
       else
-        num_time_slices = size(old_edge_profiles%time)
-        if (num_time_slices.gt.0) then
-          ids_end_time = old_edge_profiles%time(num_time_slices)
+#if IMAS_MAJOR_VERSION > 3
+        if (associated(old_plasma_profiles%time)) then
+          num_time_slices = size(old_plasma_profiles%time)
+          if (num_time_slices.gt.0) then
+            ids_end_time = old_plasma_profiles%time(num_time_slices)
+          else
+            ids_end_time = IDS_REAL_INVALID
+          end if
+          call ids_deallocate( old_plasma_profiles )
         else
-          ids_end_time = IDS_REAL_INVALID
+#endif
+          num_time_slices = size(old_edge_profiles%time)
+          if (num_time_slices.gt.0) then
+            ids_end_time = old_edge_profiles%time(num_time_slices)
+          else
+            ids_end_time = IDS_REAL_INVALID
+          end if
+          call ids_deallocate( old_edge_profiles )
+#if IMAS_MAJOR_VERSION > 3
         end if
-        call ids_deallocate( old_edge_profiles )
+#endif
         old_start_time = 0.0_IDS_real
         old_end_time = IDS_REAL_INVALID
         old_imas_version = 'x.xx.x'
@@ -530,6 +571,9 @@ program b2_ual_write
           time_slice_index = num_time_slices
           call B25_process_ids( &
              &  edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+             &  plasma_profiles, plasma_sources, plasma_transport, &
+#endif
              &  radiation, description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
              &  summary, &
@@ -558,6 +602,9 @@ program b2_ual_write
     if ( status.ne.0 .or. idx.eq.0 ) then
       call B25_process_ids( &
          &  edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+         &  plasma_profiles, plasma_sources, plasma_transport, &
+#endif
          &  radiation, description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
          &  summary, &
@@ -576,7 +623,11 @@ program b2_ual_write
 
     !! Create/Write the set data to IDSs
     write(*,*) "START put_ids_edge"
-    call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    call put_ids_edge( &
+        &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+        &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
         &   radiation, description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
@@ -593,7 +644,11 @@ program b2_ual_write
         &   treename, shot, run, username, database, version, &
 #endif
         &   idx, new_eq_ggd )
-    call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    call dealloc_ids_edge( &
+        &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+        &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
@@ -601,7 +656,11 @@ program b2_ual_write
         &   divertors, &
 #endif
         &   radiation )
-    call dealloc_batch_edge( batch_profiles, batch_sources, &
+    call dealloc_batch_edge( &
+        &   batch_profiles, batch_sources, &
+#if IMAS_MAJOR_VERSION > 3
+        &   batch_plasma_profiles, batch_plasma_sources, &
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif

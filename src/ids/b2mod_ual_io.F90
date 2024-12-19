@@ -182,6 +182,10 @@ module b2mod_ual_io
     use ids_schemas &     ! IGNORE
      & , only : ids_numerics
 #endif
+#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
+    use ids_schemas &     ! IGNORE
+     & , only : ids_code_with_timebase
+#endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_divertors
@@ -207,7 +211,7 @@ module b2mod_ual_io
 #endif
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
     use ids_utilities &   ! IGNORE
-     & , only : ids_identifier_static
+     & , only : ids_identifier, ids_identifier_static
 #endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
@@ -215,7 +219,8 @@ module b2mod_ual_io
 #endif
 #if IMAS_MAJOR_VERSION > 3
     use ids_schemas &     ! IGNORE
-     & , only : ids_code_constant
+     & , only : ids_code_constant, &
+     &          ids_plasma_profiles, ids_plasma_sources, ids_plasma_transport
 #endif
 #if ( defined(AMNS) && ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 ) )
     use amns_types  ! IGNORE
@@ -667,6 +672,9 @@ contains
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
     subroutine B25_process_ids( &
             &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+            &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
             &   radiation, description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
@@ -701,6 +709,18 @@ contains
             !< data on edge plasma transport. Energy terms correspond to the
             !< full kinetic energy equation (i.e. the energy flux takes into
             !< account the energy transported by the particle flux)
+#if IMAS_MAJOR_VERSION > 3
+        type (ids_plasma_profiles) :: plasma_profiles !< IDS designed to
+            !< store data on plasma profiles
+        type (ids_plasma_sources) :: plasma_sources !< IDS designed to store
+            !< data on plasma sources. Energy terms correspond to the full
+            !< kinetic energy equation (i.e. the energy flux takes into account
+            !< the energy transported by the particle flux)
+        type (ids_plasma_transport) :: plasma_transport !< IDS designed to store
+            !< data on plasma transport. Energy terms correspond to the
+            !< full kinetic energy equation (i.e. the energy flux takes into
+            !< account the energy transported by the particle flux)
+#endif
         type (ids_radiation) :: radiation !< IDS designed to store
             !< data on radiation emitted by the plasma species
         type (ids_dataset_description) :: description !< IDS designed to store
@@ -824,7 +844,6 @@ contains
         integer, parameter :: nsources = 12
 #endif
         integer, save :: ncall = 0
-        integer, save :: style = 1
         integer, save :: ismain = 1
         integer, save :: ismain0 = 0
         integer, save :: ue_style = 2
@@ -834,6 +853,7 @@ contains
         real(IDS_real), save :: dtim = 1.0_IDS_real
         real(IDS_real), save :: neutral_sources_rescale = 1.0_IDS_real
         real(IDS_real), save :: BoRiS = 0.0_IDS_real
+        real(IDS_real), save :: flux_multiplier
         character*132 radiation_commit
         character*256 filename
         character*5 hlp_frm
@@ -852,11 +872,10 @@ contains
         write(0,*) "Setting data for edge_profiles IDS"
         if (ncall.eq.0) then
           call ipgetr ('b2news_BoRiS', BoRiS)
-          call ipgeti ('b2mndt_style', style)
           call ipgeti ('b2mndr_ismain', ismain)
           call ipgeti ('b2sigp_style', ue_style)
-          call ipgeti ('ids_from_43', ids_from_43)
           call ipgetr ('b2mndr_dtim', dtim)
+          call ipgeti ('ids_from_43', ids_from_43)
           call ipgetr ('b2mndr_rescale_neutrals_sources', &
               &                 neutral_sources_rescale)
           call ipgeti ('balance_netcdf', balance_netcdf)
@@ -1031,6 +1050,14 @@ contains
           &  homogeneous_time )
         call write_ids_properties( edge_sources%ids_properties, &
           &  homogeneous_time )
+#if IMAS_MAJOR_VERSION > 3
+        call write_ids_properties( plasma_profiles%ids_properties, &
+          &  homogeneous_time )
+        call write_ids_properties( plasma_transport%ids_properties, &
+          &  homogeneous_time )
+        call write_ids_properties( plasma_sources%ids_properties, &
+          &  homogeneous_time )
+#endif
         call write_ids_properties( radiation%ids_properties, &
           &  homogeneous_time )
         call write_ids_properties( description%ids_properties, 2 )
@@ -1064,6 +1091,11 @@ contains
         call write_ids_code( edge_profiles%code, code_commit, code_description )
         call write_ids_code( edge_transport%code, code_commit, code_description )
         call write_ids_code( edge_sources%code, code_commit, code_description )
+#if IMAS_MAJOR_VERSION > 3
+        call write_ids_code( plasma_profiles%code, code_commit, code_description )
+        call write_ids_code( plasma_transport%code, code_commit, code_description )
+        call write_ids_code( plasma_sources%code, code_commit, code_description )
+#endif
         call write_ids_code( radiation%code, radiation_commit, code_description )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_code( summary%code, code_commit, code_description )
@@ -1075,44 +1107,25 @@ contains
         call write_ids_code_constant( description%code, code_commit, code_description )
 #endif
         allocate( edge_transport%model(1) )
-        allocate( edge_transport%model(1)%identifier%name(1) )
-        allocate( edge_transport%model(1)%identifier%description(1) )
+        call write_model_identifier( edge_transport%model(1)%identifier )
         if (ids_from_43.eq.0) then
-          if (style.eq.0) then
-            edge_transport%model(1)%identifier%index = -2
-            edge_transport%model(1)%identifier%name(1) = "SOLPS5.0"
-            edge_transport%model(1)%identifier%description(1) = "SOLPS5.0 physics model"
-          else if (style.ge.1) then
-            edge_transport%model(1)%identifier%index = -3
-            edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
-            edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
-          else if (style.eq.-1) then
-            edge_transport%model(1)%identifier%index = -1
-            edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
-            edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
-          end if
-          edge_transport%model(1)%flux_multiplier = 1.5_IDS_real + BoRiS
+          flux_multiplier = 1.5_IDS_real + BoRiS
         else
-          edge_transport%model(1)%identifier%index = -1
-          edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
-          edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
-          edge_transport%model(1)%flux_multiplier = 2.5_IDS_real
+          flux_multiplier = 2.5_IDS_real
         end if
+        edge_transport%model(1)%flux_multiplier = flux_multiplier
+        code_commit = B25_git_version
+        code_description = "Snapshot IDS written by b2mod_ual_io routine"
 #if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
-        allocate( edge_transport%model(1)%code%name(1) )
-        edge_transport%model(1)%code%name = source
-#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-        allocate( edge_transport%model(1)%code%description(1) )
-        edge_transport%model(1)%code%description = &
-            & "Snapshot IDS written by b2mod_ual_io routine"
+        call write_ids_code_timed( edge_transport%model(1)%code, &
+            & code_commit, code_description )
 #endif
-        allocate( edge_transport%model(1)%code%version(1) )
-        edge_transport%model(1)%code%version = newversion
-        allocate( edge_transport%model(1)%code%commit(1) )
-        edge_transport%model(1)%code%commit = B25_git_version
-        allocate( edge_transport%model(1)%code%repository(1) )
-        edge_transport%model(1)%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
-        call write_timed_integer( edge_transport%model(1)%code%output_flag, 0 )
+#if IMAS_MAJOR_VERSION > 3
+        allocate( plasma_transport%model(1) )
+        call write_model_identifier( plasma_transport%model(1)%identifier )
+        plasma_transport%model(1)%flux_multiplier = flux_multiplier
+        call write_ids_code_timed( plasma_transport%model(1)%code, &
+            & code_commit, code_description )
 #endif
 
         !! 3. Allocate IDS.time and set it to desired values
@@ -1125,6 +1138,13 @@ contains
 #if IMAS_MAJOR_VERSION < 4
         allocate( description%time(num_time_slices) )
         description%time(time_sind) = time
+#else
+        allocate( plasma_profiles%time(num_time_slices) )
+        plasma_profiles%time(time_sind) = time
+        allocate( plasma_transport%time(num_time_slices) )
+        plasma_transport%time(time_sind) = time
+        allocate( plasma_sources%time(num_time_slices) )
+        plasma_sources%time(time_sind) = time
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         allocate( summary%time(num_time_slices) )
@@ -1193,98 +1213,69 @@ contains
         allocate( edge_profiles%grid_ggd( num_time_slices ) )
         allocate( edge_transport%grid_ggd( num_time_slices ) )
         allocate( edge_sources%grid_ggd( num_time_slices ) )
+#if IMAS_MAJOR_VERSION > 3
+        allocate( plasma_profiles%ggd( num_time_slices ) )
+        allocate( plasma_profiles%grid_ggd( num_time_slices ) )
+        allocate( plasma_transport%grid_ggd( num_time_slices ) )
+        allocate( plasma_sources%grid_ggd( num_time_slices ) )
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         allocate( radiation%grid_ggd( num_time_slices ) )
 #endif
 #endif
         allocate( edge_transport%model(1)%ggd( num_time_slices ) )
+#if IMAS_MAJOR_VERSION > 3
+        allocate( plasma_transport%model(1)%ggd( num_time_slices ) )
+#endif
         allocate( edge_sources%source(nsources) )
         do is = 1, nsources
           allocate( edge_sources%source(is)%ggd( num_time_slices ) )
-          allocate( edge_sources%source(is)%identifier%name(1) )
-          allocate( edge_sources%source(is)%identifier%description(1) )
+#if ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION < 31 )
+          allocate( edge_sources%source(is)%name(1) )
+          allocate( edge_sources%source(is)%description(1) )
+#endif
         end do
-
 #if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         !! Total sources
-        edge_sources%source(1)%identifier%index = edge_source_identifier%total
-        edge_sources%source(1)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%total )
-        edge_sources%source(1)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%total )
+        call write_source_identifier( &
+          &  edge_sources%source(1)%identifier, edge_source_identifier%total )
         !! Background sources
-        edge_sources%source(2)%identifier%index = edge_source_identifier%background
-        edge_sources%source(2)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%background )
-        edge_sources%source(2)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%background )
+        call write_source_identifier( &
+          &  edge_sources%source(2)%identifier, edge_source_identifier%background )
         !! Prescribed sources
-        edge_sources%source(3)%identifier%index = edge_source_identifier%prescribed
-        edge_sources%source(3)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%prescribed )
-        edge_sources%source(3)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%prescribed )
-        !! Time derivatives
-        edge_sources%source(4)%identifier%index = edge_source_identifier%time_derivative
-        edge_sources%source(4)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%time_derivative )
-        edge_sources%source(4)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%time_derivative )
+        call write_source_identifier( &
+          &  edge_sources%source(3)%identifier, edge_source_identifier%prescribed )
+        !! Time derivative
+        call write_source_identifier( &
+          &  edge_sources%source(4)%identifier, edge_source_identifier%time_derivative )
         !! Atomic ionization
-        edge_sources%source(5)%identifier%index = edge_source_identifier%atomic_ionization
-        edge_sources%source(5)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%atomic_ionization )
-        edge_sources%source(5)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%atomic_ionization )
+        call write_source_identifier( &
+          &  edge_sources%source(5)%identifier, edge_source_identifier%atomic_ionization )
         !! Molecular ionization
-        edge_sources%source(6)%identifier%index = edge_source_identifier%molecular_ionization
-        edge_sources%source(6)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%molecular_ionization )
-        edge_sources%source(6)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%molecular_ionization )
+        call write_source_identifier( &
+          &  edge_sources%source(6)%identifier, edge_source_identifier%molecular_ionization )
         !! Ionization
-        edge_sources%source(7)%identifier%index = edge_source_identifier%ionization
-        edge_sources%source(7)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%ionization )
-        edge_sources%source(7)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%ionization )
+        call write_source_identifier( &
+          &  edge_sources%source(7)%identifier, edge_source_identifier%ionization )
         !! Recombination
-        edge_sources%source(8)%identifier%index = edge_source_identifier%recombination
-        edge_sources%source(8)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%recombination )
-        edge_sources%source(8)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%recombination )
+        call write_source_identifier( &
+          &  edge_sources%source(8)%identifier, edge_source_identifier%recombination )
         !! Charge exchange
-        edge_sources%source(9)%identifier%index = edge_source_identifier%charge_exchange
-        edge_sources%source(9)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%charge_exchange )
-        edge_sources%source(9)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%charge_exchange )
+        call write_source_identifier( &
+          &  edge_sources%source(9)%identifier, edge_source_identifier%charge_exchange )
         !! Collisional equipartition
-        edge_sources%source(10)%identifier%index = edge_source_identifier%collisional_equipartition
-        edge_sources%source(10)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%collisional_equipartition )
-        edge_sources%source(10)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%collisional_equipartition )
+        call write_source_identifier( &
+          &  edge_sources%source(10)%identifier, edge_source_identifier%collisional_equipartition )
         !! Ohmic
-        edge_sources%source(11)%identifier%index = edge_source_identifier%ohmic
-        edge_sources%source(11)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%ohmic )
-        edge_sources%source(11)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%ohmic )
+        call write_source_identifier( &
+          &  edge_sources%source(11)%identifier, edge_source_identifier%ohmic )
         !! Radiation
-        edge_sources%source(12)%identifier%index = edge_source_identifier%radiation
-        edge_sources%source(12)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%radiation )
-        edge_sources%source(12)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%radiation )
+        call write_source_identifier( &
+          &  edge_sources%source(12)%identifier, edge_source_identifier%radiation )
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
         !! Neutrals
-        edge_sources%source(13)%identifier%index = edge_source_identifier%neutrals
-        edge_sources%source(13)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%neutrals )
-        edge_sources%source(13)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%neutrals )
+        call write_source_identifier( &
+          &  edge_sources%source(13)%identifier, edge_source_identifier%neutrals )
 #endif
 #else
         !! Total sources
@@ -1353,6 +1344,53 @@ contains
             & "Total source due to plasma-neutral interactions from "//trim(source)
 #endif
 #endif
+#if IMAS_MAJOR_VERSION > 3
+        allocate( plasma_sources%source(nsources) )
+        do is = 1, nsources
+          allocate( plasma_sources%source(is)%ggd( num_time_slices ) )
+        end do
+        !! Total sources
+        call write_source_identifier( &
+          &  plasma_sources%source(1)%identifier, edge_source_identifier%total )
+        !! Background sources
+        call write_source_identifier( &
+          &  plasma_sources%source(2)%identifier, edge_source_identifier%background )
+        !! Prescribed sources
+        call write_source_identifier( &
+          &  plasma_sources%source(3)%identifier, edge_source_identifier%prescribed )
+        !! Time derivative
+        call write_source_identifier( &
+          &  plasma_sources%source(4)%identifier, edge_source_identifier%time_derivative )
+        !! Atomic ionization
+        call write_source_identifier( &
+          &  plasma_sources%source(5)%identifier, edge_source_identifier%atomic_ionization )
+        !! Molecular ionization
+        call write_source_identifier( &
+          &  plasma_sources%source(6)%identifier, edge_source_identifier%molecular_ionization )
+        !! Ionization
+        call write_source_identifier( &
+          &  plasma_sources%source(7)%identifier, edge_source_identifier%ionization )
+        !! Recombination
+        call write_source_identifier( &
+          &  plasma_sources%source(8)%identifier, edge_source_identifier%recombination )
+        !! Charge exchange
+        call write_source_identifier( &
+          &  plasma_sources%source(9)%identifier, edge_source_identifier%charge_exchange )
+        !! Collisional equipartition
+        call write_source_identifier( &
+          &  plasma_sources%source(10)%identifier, edge_source_identifier%collisional_equipartition )
+        !! Ohmic
+        call write_source_identifier( &
+          &  plasma_sources%source(11)%identifier, edge_source_identifier%ohmic )
+        !! Radiation
+        call write_source_identifier( &
+          &  plasma_sources%source(12)%identifier, edge_source_identifier%radiation )
+#ifdef B25_EIRENE
+        !! Neutrals
+        call write_source_identifier( &
+          &  plasma_sources%source(13)%identifier, edge_source_identifier%neutrals )
+#endif
+#endif
 
         call put_equilibrium_data ( equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -1363,6 +1401,13 @@ contains
             &  time_sind, &
 #endif
             &  time_slice_value, .true., new_eq_ggd )
+#if IMAS_MAJOR_VERSION > 3
+        allocate( plasma_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
+        plasma_profiles%vacuum_toroidal_field%b0( time_sind ) = &
+            &  edge_profiles%vacuum_toroidal_field%b0( time_sind )
+        plasma_profiles%vacuum_toroidal_field%r0 = &
+            &  edge_profiles%vacuum_toroidal_field%r0
+#endif
         allocate( radiation%vacuum_toroidal_field%b0( num_time_slices ) )
         radiation%vacuum_toroidal_field%b0( time_sind ) = &
             &  edge_profiles%vacuum_toroidal_field%b0( time_sind )
@@ -1416,6 +1461,11 @@ contains
         call write_ids_midplane( edge_profiles%midplane, midplane_id )
         call write_ids_midplane( edge_sources%midplane, midplane_id )
         call write_ids_midplane( edge_transport%midplane, midplane_id )
+#if IMAS_MAJOR_VERSION > 3
+        call write_ids_midplane( plasma_profiles%midplane, midplane_id )
+        call write_ids_midplane( plasma_sources%midplane, midplane_id )
+        call write_ids_midplane( plasma_transport%midplane, midplane_id )
+#endif
         call write_ids_midplane( summary%midplane, midplane_id )
 #endif
 
@@ -2345,6 +2395,17 @@ contains
         allocate( radiation%grid_ggd( time_sind )%path(1) )
         radiation%grid_ggd( time_sind )%path = &
             &   "#edge_profiles/grid_ggd("//int2str(time_sind)//")"
+#if IMAS_MAJOR_VERSION > 3
+        allocate( plasma_profiles%grid_ggd( time_sind )%path(1) )
+        plasma_profiles%grid_ggd( time_sind )%path = &
+            &   "#edge_profiles/grid_ggd("//int2str(time_sind)//")"
+        allocate( plasma_transport%grid_ggd( time_sind )%path(1) )
+        plasma_transport%grid_ggd( time_sind )%path = &
+            &   "#edge_profiles/grid_ggd("//int2str(time_sind)//")"
+        allocate( plasma_sources%grid_ggd( time_sind )%path(1) )
+        plasma_sources%grid_ggd( time_sind )%path = &
+            &   "#edge_profiles/grid_ggd("//int2str(time_sind)//")"
+#endif
 #else
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   edge_transport%grid_ggd( time_sind ),                       &
@@ -2378,6 +2439,11 @@ contains
         edge_profiles%grid_ggd( time_sind )%time = time_slice_value
         edge_transport%model(1)%ggd( time_sind )%time = time_slice_value
         edge_sources%grid_ggd( time_sind )%time = time_slice_value
+#if IMAS_MAJOR_VERSION > 3
+        plasma_profiles%grid_ggd( time_sind )%time = time_slice_value
+        plasma_transport%model(1)%ggd( time_sind )%time = time_slice_value
+        plasma_sources%grid_ggd( time_sind )%time = time_slice_value
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         radiation%grid_ggd( time_sind )%time = time_slice_value
 #endif
@@ -2387,6 +2453,13 @@ contains
         do is = 1, nsources
           edge_sources%source(is)%ggd( time_sind )%time = time_slice_value
         end do
+#if IMAS_MAJOR_VERSION > 3
+        plasma_profiles%ggd( time_sind )%time = time_slice_value
+        plasma_transport%model(1)%ggd( time_sind )%time = time_slice_value
+        do is = 1, nsources
+          plasma_sources%source(is)%ggd( time_sind )%time = time_slice_value
+        end do
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         do j = 1, n_process
           allocate( radiation%process(j)%ggd( num_time_slices ) )
@@ -3523,6 +3596,18 @@ contains
             end do
 #endif
         end if
+#if IMAS_MINOR_VERSION > 3
+        allocate( plasma_profiles%ggd( time_sind )%ion( nsion ) )
+        do i = 1, nsources
+          allocate( plasma_sources%source(i)%ggd( time_sind )%ion( nsion ) )
+        end do
+        allocate( plasma_transport%model(1)%ggd( time_sind )%ion( nsion ) )
+        allocate( plasma_profiles%ggd( time_sind )%neutral( nneut ) )
+        do i = 1, nsources
+          allocate( plasma_sources%source(i)%ggd( time_sind )%neutral( nneut ) )
+        end do
+        allocate( plasma_transport%model(1)%ggd( time_sind )%neutral( nneut ) )
+#endif
 
 #if ( defined(B25_EIRENE) && ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 ) )
         if (use_eirene.ne.0) then
@@ -7100,22 +7185,6 @@ contains
         contains
 
 
-#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
-        subroutine write_timed_integer( ival, ivalue )
-            type(ids_signal_int_1d), intent(inout) :: ival
-                !< Type of IDS data structure, designed for integer data handling
-            integer, intent(in) :: ivalue
-
-            allocate( ival%data( num_slices ) )
-            ival%data( slice_index ) = ivalue
-            allocate( ival%time( num_slices ) )
-            ival%time( slice_index ) = time_slice_value
-
-            return
-
-        end subroutine write_timed_integer
-#endif
-
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         subroutine write_timed_value( val, value )
             type(ids_signal_flt_1d), intent(inout) :: val
@@ -7145,6 +7214,9 @@ contains
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
     subroutine B25_av_ids( do_description, &
             &   batch_profiles, batch_sources, &
+#if IMAS_MAJOR_VERSION > 3
+            &   batch_plasma_profiles, batch_plasma_sources, &
+#endif
             &   description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
@@ -7166,6 +7238,14 @@ contains
             !< data on edge plasma sources. Energy terms correspond to the full
             !< kinetic energy equation (i.e. the energy flux takes into account
             !< the energy transported by the particle flux)
+#if IMAS_MAJOR_VERSION > 3
+        type (ids_plasma_profiles) :: batch_plasma_profiles !< IDS designed to
+            !< store data on plasma profiles
+        type (ids_plasma_sources) :: batch_plasma_sources !< IDS designed to
+            !< store data on plasma sources. Energy terms correspond to the full
+            !< kinetic energy equation (i.e. the energy flux takes into account
+            !< the energy transported by the particle flux)
+#endif
         type (ids_dataset_description) :: description !< IDS designed to store
             !< a description of the simulation
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -7239,6 +7319,12 @@ contains
           &  homogeneous_time )
         call write_ids_properties( batch_sources%ids_properties, &
           &  homogeneous_time )
+#if IMAS_MAJOR_VERSION > 3
+        call write_ids_properties( batch_plasma_profiles%ids_properties, &
+          &  homogeneous_time )
+        call write_ids_properties( batch_plasma_sources%ids_properties, &
+          &  homogeneous_time )
+#endif
         if ( do_description ) then
           call write_ids_properties( description%ids_properties, 2 )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -7251,6 +7337,10 @@ contains
         code_description = "Batch-averaged IDS from b2mod_ual_io routine"
         call write_ids_code( batch_profiles%code, code_commit, code_description )
         call write_ids_code( batch_sources%code, code_commit, code_description )
+#if IMAS_MAJOR_VERSION > 3
+        call write_ids_code( batch_plasma_profiles%code, code_commit, code_description )
+        call write_ids_code( batch_plasma_sources%code, code_commit, code_description )
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if (do_description) &
           &  call write_ids_code( summary%code, code_commit, code_description )
@@ -7265,6 +7355,12 @@ contains
         batch_profiles%time(batch_index) = time
         allocate( batch_sources%time(num_batch_slices) )
         batch_sources%time(batch_index) = time
+#if IMAS_MAJOR_VERSION > 3
+        allocate( batch_plasma_profiles%time(num_batch_slices) )
+        batch_plasma_profiles%time(batch_index) = time
+        allocate( batch_plasma_sources%time(num_batch_slices) )
+        batch_plasma_sources%time(batch_index) = time
+#endif
         if (do_description) then
 #if IMAS_MAJOR_VERSION < 4
           allocate( description%time(num_batch_slices) )
@@ -7282,20 +7378,28 @@ contains
         allocate( batch_profiles%grid_ggd( num_batch_slices ) )
         allocate( batch_sources%grid_ggd( num_batch_slices ) )
 #endif
-        allocate (batch_sources%source(1) )
-        allocate (batch_sources%source(1)%ggd( num_batch_slices ) )
+        allocate( batch_sources%source(1) )
+        allocate( batch_sources%source(1)%ggd( num_batch_slices ) )
+#if IMAS_MAJOR_VERSION > 3
+        allocate( batch_plasma_profiles%ggd( num_batch_slices ) )
+        allocate( batch_plasma_profiles%grid_ggd( num_batch_slices ) )
+        allocate( batch_plasma_sources%grid_ggd( num_batch_slices ) )
+        allocate( batch_plasma_sources%source(1) )
+        allocate( batch_plasma_sources%source(1)%ggd( num_batch_slices ) )
+#endif
 #ifdef B25_EIRENE
-        allocate( batch_sources%source(1)%identifier%name(1) )
-        allocate( batch_sources%source(1)%identifier%description(1) )
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
         !! Neutrals
-        batch_sources%source(1)%identifier%index = edge_source_identifier%neutrals
-        batch_sources%source(1)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%neutrals )
-        batch_sources%source(1)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%neutrals )
+        call write_source_identifier( &
+          &  batch_sources%source(1)%identifier, edge_source_identifier%neutrals )
+#if IMAS_MAJOR_VERSION > 3
+        call write_source_identifier( &
+          &  batch_plasma_sources%source(1)%identifier, edge_source_identifier%neutrals )
+#endif
 #else
         !! Total sources due to Eirene species
+        allocate( batch_sources%source(1)%identifier%name(1) )
+        allocate( batch_sources%source(1)%identifier%description(1) )
         batch_sources%source(1)%identifier%index = 0
         batch_sources%source(1)%identifier%name = "Eirene"
         batch_sources%source(1)%identifier%description = &
@@ -7312,6 +7416,13 @@ contains
             &  batch_index, &
 #endif
             &  time, do_description, new_eq_ggd )
+#if IMAS_MAJOR_VERSION > 3
+        allocate( batch_plasma_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
+        batch_plasma_profiles%vacuum_toroidal_field%b0( batch_index ) = &
+            &  batch_profiles%vacuum_toroidal_field%b0( batch_index )
+        batch_plasma_profiles%vacuum_toroidal_field%r0 = &
+            &  batch_profiles%vacuum_toroidal_field%r0
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if (do_description) then
 #if IMAS_MAJOR_VERSION == 3
@@ -7354,6 +7465,10 @@ contains
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_midplane( batch_profiles%midplane, midplane_id )
         call write_ids_midplane( batch_sources%midplane, midplane_id )
+#if IMAS_MAJOR_VERSION > 3
+        call write_ids_midplane( batch_plasma_profiles%midplane, midplane_id )
+        call write_ids_midplane( batch_plasma_sources%midplane, midplane_id )
+#endif
         if (do_description) &
           & call write_ids_midplane( summary%midplane, midplane_id )
 #endif
@@ -7383,7 +7498,13 @@ contains
 #if AL_MAJOR_VERSION > 4
         allocate( batch_sources%grid_ggd( batch_index )%path(1) )
         batch_sources%grid_ggd( batch_index )%path = &
-            &   "#batch_profiles/grid_ggd("//int2str(batch_index)//")"
+            &   "#edge_profiles(1)/grid_ggd("//int2str(batch_index)//")"
+        allocate( batch_plasma_profiles%grid_ggd( batch_index )%path(1) )
+        batch_plasma_profiles%grid_ggd( batch_index )%path = &
+            &   "#edge_profiles(1)/grid_ggd("//int2str(batch_index)//")"
+        allocate( batch_plasma_sources%grid_ggd( batch_index )%path(1) )
+        batch_plasma_sources%grid_ggd( batch_index )%path = &
+            &   "#edge_profiles(1)/grid_ggd("//int2str(batch_index)//")"
 #else
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   batch_sources%grid_ggd( batch_index ),                      &
@@ -7393,6 +7514,11 @@ contains
             &   INCLUDE_GHOST_CELLS, vol, gs, qc )
 #endif
 #endif
+#else
+        if (do_description) then
+          write(0,*) 'Code was compiled without a GGD module'
+          write(0,*) 'Most IDS output is disabled !'
+        end if
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if (do_description) &
@@ -7406,6 +7532,12 @@ contains
 #endif
         batch_profiles%ggd( batch_index )%time = batch_slice_value
         batch_sources%source(1)%ggd( batch_index )%time = batch_slice_value
+#if IMAS_MAJOR_VERSION > 3
+        batch_plasma_profiles%grid_ggd( batch_index )%time = batch_slice_value
+        batch_plasma_sources%grid_ggd( batch_index )%time = batch_slice_value
+        batch_plasma_profiles%ggd( batch_index )%time = batch_slice_value
+        batch_plasma_sources%source(1)%ggd( batch_index )%time = batch_slice_value
+#endif
 
         !! List of species
         !! Careful here: ion in DD means isonuclear sequence !!
@@ -8101,6 +8233,99 @@ contains
 
     return
     end subroutine write_ids_code_constant
+#endif
+
+#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
+    subroutine write_ids_code_timed( code, commit, description )
+    implicit none
+    type(ids_code_with_timebase), intent(inout) :: code
+                !< Type of IDS data structure, designed for code data handling
+    character(len=ids_string_length), intent(in) :: commit
+    character(len=ids_string_length), intent(in) :: description
+
+    allocate( code%name(1) )
+    code%name = source
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+    allocate( code%description(1) )
+    code%description = description
+#endif
+    allocate( code%version(1) )
+    code%version = newversion
+    allocate( code%commit(1) )
+    code%commit = commit
+    allocate( code%repository(1) )
+    code%repository(1) = "ssh://git.iter.org/bnd/b2.5.git"
+    call write_timed_integer( code%output_flag, 0 )
+
+    return
+    end subroutine write_ids_code_timed
+
+    subroutine write_timed_integer( ival, ivalue )
+    type(ids_signal_int_1d), intent(inout) :: ival
+        !< Type of IDS data structure, designed for integer data handling
+    integer, intent(in) :: ivalue
+
+    allocate( ival%data( num_slices ) )
+    ival%data( slice_index ) = ivalue
+    allocate( ival%time( num_slices ) )
+    ival%time( slice_index ) = time_slice_value
+
+    return
+    end subroutine write_timed_integer
+#endif
+
+    subroutine write_model_identifier( model_id )
+    implicit none
+    type(ids_identifier) :: model_id
+    integer, save :: ncall = 0
+    integer, save :: style = 1
+    integer, save :: ids_from_43 = 0
+
+    if (ncall.eq.0) then
+      call ipgeti ('ids_from_43', ids_from_43)
+      call ipgeti ('b2mndt_style', style)
+    endif
+
+    allocate( model_id%name(1) )
+    allocate( model_id%description(1) )
+    if (ids_from_43.eq.0) then
+      if (style.eq.0) then
+        model_id%index = -2
+        model_id%name(1) = "SOLPS5.0"
+        model_id%description(1) = "SOLPS5.0 physics model"
+      else if (style.ge.1) then
+        model_id%index = -3
+        model_id%name(1) = "SOLPS5.2"
+        model_id%description(1) = "SOLPS5.2 physics model"
+      else if (style.eq.-1) then
+        model_id%index = -1
+        model_id%name(1) = "SOLPS4.3"
+        model_id%description(1) = "SOLPS4.3 physics model"
+      end if
+    else
+      model_id%index = -1
+      model_id%name(1) = "SOLPS4.3"
+      model_id%description(1) = "SOLPS4.3 physics model"
+    end if
+
+    ncall = ncall + 1
+    return
+    end subroutine write_model_identifier
+
+#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+    subroutine write_source_identifier( source_id, id_index )
+    implicit none
+    type(ids_identifier) :: source_id
+    integer :: id_index
+
+    allocate( source_id%name(1) )
+    allocate( source_id%description(1) )
+    source_id%index = id_index
+    source_id%name = edge_source_identifier%name( id_index )
+    source_id%description = edge_source_identifier%description( id_index )
+
+    return
+    end subroutine write_source_identifier
 #endif
 
     subroutine put_equilibrium_data ( equilibrium, &

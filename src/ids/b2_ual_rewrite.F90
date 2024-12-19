@@ -38,13 +38,22 @@
 !!      type(ids_edge_profiles) :: edge_profiles !< IDS designed to store data on
 !!        !< edge plasma profiles (includes the scrape-off layer and possibly
 !!        !< part of the confined plasma)
-!!      type (ids_edge_profiles) :: old_edge_profiles
 !!      type (ids_edge_sources) :: edge_sources !< IDS designed to store
 !!        !< data on edge plasma sources. Energy terms correspond to the full
 !!        !< kinetic energy equation (i.e. the energy flux takes into account
 !!        !< the energy transported by the particle flux)
 !!      type (ids_edge_transport) :: edge_transport !< IDS designed to store
 !!        !< data on edge plasma transport. Energy terms correspond to the
+!!        !< full kinetic energy equation (i.e. the energy flux takes into
+!!        !< account the energy transported by the particle flux)
+!!      type(ids_plasma_profiles) :: plasma_profiles !< IDS designed to store
+!!        !< data on plasma profiles
+!!      type (ids_plasma_sources) :: plasma_sources !< IDS designed to store
+!!        !< data on plasma sources. Energy terms correspond to the full
+!!        !< kinetic energy equation (i.e. the energy flux takes into account
+!!        !< the energy transported by the particle flux)
+!!      type (ids_plasma_transport) :: plasma_transport !< IDS designed to store
+!!        !< data on plasma transport. Energy terms correspond to the
 !!        !< full kinetic energy equation (i.e. the energy flux takes into
 !!        !< account the energy transported by the particle flux)
 !!      type (ids_radiation) :: radiation !< IDS designed to store
@@ -74,6 +83,11 @@ program b2_ual_rewrite
      &          description, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
      &          batch_profiles, batch_sources
+#if IMAS_MAJOR_VERSION > 3
+    use b2mod_driver &
+     & , only : plasma_profiles, plasma_sources, plasma_transport, &
+     &          batch_plasma_profiles, batch_plasma_sources
+#endif
     use b2mod_geo
     use b2mod_time
     use b2mod_plasma
@@ -111,6 +125,10 @@ program b2_ual_rewrite
      & , only : ids_divertors
     use b2mod_driver &
      & , only : divertors
+#endif
+#if IMAS_MAJOR_VERSION > 3
+    use ids_schemas &   ! IGNORE
+     & , only : ids_plasma_profiles, ids_plasma_sources, ids_plasma_transport
 #endif
     use ids_routines &  ! IGNORE
      & , only : ids_get, ids_deallocate
@@ -591,6 +609,9 @@ program b2_ual_rewrite
     !! Create/Write the set data to IDSs
     call B25_process_ids( &
       &  edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+      &  plasma_profiles, plasma_sources, plasma_transport, &
+#endif
       &  radiation, description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
       &  summary, &
@@ -607,7 +628,11 @@ program b2_ual_rewrite
       &  tim, dteff, shot, new_run, database, version, new_eq_ggd )
 
     write(*,*) "START new_ids_edge"
-    call new_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    call new_ids_edge( &
+        &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+        &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
         &   radiation, description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
@@ -641,7 +666,11 @@ program b2_ual_rewrite
       call system(systemarg)
 #endif
     end if
-    call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    call dealloc_ids_edge( &
+        &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+        &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
@@ -649,7 +678,11 @@ program b2_ual_rewrite
         &   divertors, &
 #endif
         &   radiation )
-    call dealloc_batch_edge( batch_profiles, batch_sources, &
+    call dealloc_batch_edge( &
+        &   batch_profiles, batch_sources, &
+#if IMAS_MAJOR_VERSION > 3
+        &   batch_plasma_profiles, batch_plasma_sources, &
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif

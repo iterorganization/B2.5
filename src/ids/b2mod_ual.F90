@@ -52,6 +52,10 @@ module b2mod_ual
     use ids_schemas &   ! IGNORE
      & , only : ids_divertors
 #endif
+#if IMAS_MAJOR_VERSION > 3
+    use ids_schemas &   ! IGNORE
+     & , only : ids_plasma_profiles, ids_plasma_sources, ids_plasma_transport
+#endif
 #elif defined(ITM_ENVIRONMENT_LOADED)
     use euITM_schemas   ! IGNORE
     use euITM_routines  ! IGNORE
@@ -85,7 +89,11 @@ contains
 #ifdef IMAS
     !> Subroutine used to put data to edge_profiles, edge_sources and
     !! edge_transport IDSs.
-    subroutine put_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    subroutine put_ids_edge( &
+            &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+            &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
             &   radiation, description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
@@ -111,10 +119,24 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
+            !< designed to store data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
+#if IMAS_MAJOR_VERSION > 3
+        type (ids_plasma_profiles), intent(inout) :: plasma_profiles   !< IDS
+            !< designed to store data on plasma profiles
+        type (ids_plasma_sources), intent(inout) :: plasma_sources     !< IDS
+            !< designed to store data on plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_plasma_transport), intent(inout) :: plasma_transport !< IDS
+            !< designed to store data on plasma transport. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+#endif
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
         type (ids_dataset_description), intent(inout) :: description !< IDS
@@ -161,6 +183,10 @@ contains
         external xertst, xerrab
 
         ids_list = "edge_profiles, edge_sources, edge_transport"
+#if IMAS_MAJOR_VERSION > 3
+        ids_list = trim(ids_list)// &
+          & ", plasma_profiles, plasma_sources, plasma_transport"
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         ids_list = trim(ids_list)//", summary"
 #endif
@@ -215,6 +241,17 @@ contains
           write(*,*) 'Putting edge_transport IDS'
           call ids_put( idx, "edge_transport", edge_transport, status )
           call xertst( status.eq.0, 'Error putting edge_transport IDS !')
+#if IMAS_MAJOR_VERSION > 3
+          write(*,*) 'Putting plasma_profiles IDS'
+          call ids_put( idx, "plasma_profiles", plasma_profiles, status )
+          call xertst( status.eq.0, 'Error putting plasma_profiles IDS !')
+          write(*,*) 'Putting plasma_sources IDS'
+          call ids_put( idx, "plasma_sources", plasma_sources, status )
+          call xertst( status.eq.0, 'Error putting plasma_sources IDS !')
+          write(*,*) 'Putting plasma_transport IDS'
+          call ids_put( idx, "plasma_transport", plasma_transport, status )
+          call xertst( status.eq.0, 'Error putting plasma_transport IDS !')
+#endif
           write(*,*) 'Putting radiation IDS'
           call ids_put( idx, "radiation", radiation, status )
           call xertst( status.eq.0, 'Error putting radiation IDS !')
@@ -256,6 +293,17 @@ contains
           write(*,*) 'Putting edge_transport IDS slice'
           call ids_put_slice( idx, "edge_transport", edge_transport, status )
           call xertst( status.eq.0, 'Error putting slice in edge_transport IDS !')
+#if IMAS_MAJOR_VERSION > 3
+          write(*,*) 'Putting plasma_profiles IDS slice'
+          call ids_put_slice( idx, "plasma_profiles", plasma_profiles, status )
+          call xertst( status.eq.0, 'Error putting slice in plasma_profiles IDS !')
+          write(*,*) 'Putting plasma_sources IDS slice'
+          call ids_put_slice( idx, "plasma_sources", plasma_sources, status )
+          call xertst( status.eq.0, 'Error putting slice in plasma_sources IDS !')
+          write(*,*) 'Putting plasma_transport IDS slice'
+          call ids_put_slice( idx, "plasma_transport", plasma_transport, status )
+          call xertst( status.eq.0, 'Error putting slice in plasma_transport IDS !')
+#endif
           write(*,*) 'Putting radiation IDS slice'
           call ids_put_slice( idx, "radiation", radiation, status )
           call xertst( status.eq.0, 'Error putting slice in radiation IDS !')
@@ -295,7 +343,11 @@ contains
 
     end subroutine put_ids_edge
 
-    subroutine dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    subroutine dealloc_ids_edge( &
+            &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+            &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
             &   numerics, &
 #endif
@@ -313,10 +365,24 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
+            !< designed to store data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
+#if IMAS_MAJOR_VERSION > 3
+        type (ids_plasma_profiles), intent(inout) :: plasma_profiles   !< IDS
+            !< designed to store data on plasma profiles
+        type (ids_plasma_sources), intent(inout) :: plasma_sources     !< IDS
+            !< designed to store data on plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_plasma_transport), intent(inout) :: plasma_transport !< IDS
+            !< designed to store data on plasma transport. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+#endif
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
@@ -331,6 +397,11 @@ contains
         call ids_deallocate( edge_profiles )
         call ids_deallocate( edge_sources )
         call ids_deallocate( edge_transport )
+#if IMAS_MAJOR_VERSION > 3
+        call ids_deallocate( plasma_profiles )
+        call ids_deallocate( plasma_sources )
+        call ids_deallocate( plasma_transport )
+#endif
         call ids_deallocate( radiation )
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAs_MAJOR_VERSION == 3 )
         call ids_deallocate( numerics )
@@ -491,7 +562,11 @@ contains
 
     end subroutine put_batch_edge
 
-    subroutine dealloc_batch_edge( batch_profiles, batch_sources, &
+    subroutine dealloc_batch_edge( &
+            &   batch_profiles, batch_sources, &
+#if IMAS_MAJOR_VERSION > 3
+            &   batch_plasma_profiles, batch_plasma_sources, &
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
@@ -505,6 +580,15 @@ contains
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
+#if IMAS_MAJOR_VERSION > 3
+        type (ids_plasma_profiles), intent(inout) :: batch_plasma_profiles
+            !< IDS designed to store data on plasma profiles
+        type (ids_plasma_sources), intent(inout) :: batch_plasma_sources
+            !< IDS designed to store data on plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+#endif
         type (ids_dataset_description), intent(inout) :: description
             !< IDS designed to store a description of the simulation
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -514,6 +598,10 @@ contains
         if (associated( batch_profiles%ids_properties%comment ) ) then
           call ids_deallocate( batch_profiles )
           call ids_deallocate( batch_sources )
+#if IMAS_MAJOR_VERSION > 3
+          call ids_deallocate( batch_plasma_profiles )
+          call ids_deallocate( batch_plasma_sources )
+#endif
         end if
         if (associated( description%ids_properties%comment ) ) then
           call ids_deallocate( description )
@@ -526,7 +614,11 @@ contains
 
     !> Subroutine used to delete data from edge_profiles, edge_sources and
     !! edge_transport IDSs.
-    subroutine delete_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    subroutine delete_ids_edge( &
+            &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+            &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
             &   radiation, description, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
@@ -547,10 +639,24 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
+            !< designed to store data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
+#if IMAS_MAJOR_VERSION > 3
+        type (ids_plasma_profiles), intent(inout) :: plasma_profiles   !< IDS
+            !< designed to store data on plasma profiles
+        type (ids_plasma_sources), intent(inout) :: plasma_sources     !< IDS
+            !< designed to store data on plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_plasma_transport), intent(inout) :: plasma_transport !< IDS
+            !< designed to store data on plasma transport. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+#endif
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
         type (ids_dataset_description) :: description !< IDS designed to store
@@ -576,6 +682,11 @@ contains
           call ids_delete( idx, "edge_profiles", edge_profiles)
           call ids_delete( idx, "edge_sources", edge_sources)
           call ids_delete( idx, "edge_transport", edge_transport)
+#if IMAS_MAJOR_VERSION > 3
+          call ids_delete( idx, "plasma_profiles", plasma_profiles)
+          call ids_delete( idx, "plasma_sources", plasma_sources)
+          call ids_delete( idx, "plasma_transport", plasma_transport)
+#endif
           call ids_delete( idx, "radiation", radiation)
           call ids_delete( idx, "dataset_description", description)
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -595,7 +706,11 @@ contains
 
     !> Subroutine used to rewrite data to edge_profiles, edge_sources and
     !! edge_transport IDSs.
-    subroutine new_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    subroutine new_ids_edge( &
+            &   edge_profiles, edge_sources, edge_transport, &
+#if IMAS_MAJOR_VERSION > 3
+            &   plasma_profiles, plasma_sources, plasma_transport, &
+#endif
             &   radiation, description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
@@ -619,10 +734,24 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
+            !< designed to store data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
+#if IMAS_MAJOR_VERSION > 3
+        type (ids_plasma_profiles), intent(inout) :: plasma_profiles   !< IDS
+            !< designed to store data on plasma profiles
+        type (ids_plasma_sources), intent(inout) :: plasma_sources     !< IDS
+            !< designed to store data on plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+        type (ids_plasma_transport), intent(inout) :: plasma_transport !< IDS
+            !< designed to store data on edge transport. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+#endif
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
         type (ids_dataset_description) :: description !< IDS designed to store
@@ -654,6 +783,9 @@ contains
 
         !! Set data to edge_profiles IDS
         write(*,'(1x,a)') "Writing edge_profiles, edge_sources, edge_transport, "// &
+#if IMAS_MAJOR_VERSION > 3
+          &  "plasma_profiles, plasma_sources, plasma_transport, "// &
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           &  "summary, "// &
 #endif
@@ -682,6 +814,14 @@ contains
         call xertst( status.eq.0, 'Error putting edge_sources IDS !')
         call ids_put( idx, "edge_transport", edge_transport, status )
         call xertst( status.eq.0, 'Error putting edge_transport IDS !')
+#if IMAS_MAJOR_VERSION > 3
+        call ids_put( idx, "plasma_profiles", plasma_profiles, status )
+        call xertst( status.eq.0, 'Error putting plasma_profiles IDS !')
+        call ids_put( idx, "plasma_sources", plasma_sources, status )
+        call xertst( status.eq.0, 'Error putting plasma_sources IDS !')
+        call ids_put( idx, "plasma_transport", plasma_transport, status )
+        call xertst( status.eq.0, 'Error putting plasma_transport IDS !')
+#endif
         call ids_put( idx, "radiation", radiation, status )
         call xertst( status.eq.0, 'Error putting radiation IDS !')
         call ids_put( idx, "dataset_description", description, status )
@@ -708,7 +848,11 @@ contains
 #if IMAS_MAJOR_VERSION > 3
             &   uri, &
 #endif
-            &   batch_profiles, batch_sources, equilibrium, &
+            &   batch_profiles, batch_sources, &
+#if IMAS_MAJOR_VERSION > 3
+            &   batch_plasma_profiles, batch_plasma_sources, &
+#endif
+            &   equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
@@ -721,6 +865,15 @@ contains
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
+#if IMAS_MAJOR_VERSION > 3
+        type (ids_plasma_profiles), intent(inout) :: batch_plasma_profiles
+            !< IDS designed to store data on plasma profiles
+        type (ids_plasma_sources), intent(inout) :: batch_plasma_sources
+            !< IDS designed to store data on plasma sources. Energy terms
+            !< correspond to the full kinetic energy equation (i.e. the energy
+            !< flux takes into account the energy transported by the particle
+            !< flux)
+#endif
         type (ids_dataset_description) :: description !< IDS
             !< designed to store a description of the simulation
         type (ids_equilibrium) :: equilibrium !< IDS
@@ -743,6 +896,9 @@ contains
         !! Set data to edge_profiles IDS
         if (do_summary) then
           write(*,'(1x,a)') "Writing batch_profiles, batch_sources, "// &
+#if IMAS_MAJOR_VERSION > 3
+            &  "batch_plasma_profiles, batch_plasma_sources, "// &
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &  "summary, "// &
 #endif
@@ -762,6 +918,12 @@ contains
         call xertst( status.eq.0, 'Error putting batch_profiles IDS !')
         call ids_put( idx, "edge_sources/1", batch_sources, status )
         call xertst( status.eq.0, 'Error putting batch_sources IDS !')
+#if IMAS_MAJOR_VERSION > 3
+        call ids_put( idx, "plasma_profiles/1", batch_plasma_profiles, status )
+        call xertst( status.eq.0, 'Error putting batch_plasma_profiles IDS !')
+        call ids_put( idx, "plasma_sources/1", batch_plasma_sources, status )
+        call xertst( status.eq.0, 'Error putting batch_plasma_sources IDS !')
+#endif
         if (do_summary) then
 #if IMAS_MAJOR_VERSION > 3
           allocate( description%uri(1) )
