@@ -3596,7 +3596,7 @@ contains
             end do
 #endif
         end if
-#if IMAS_MINOR_VERSION > 3
+#if IMAS_MAJOR_VERSION > 3
         allocate( plasma_profiles%ggd( time_sind )%ion( nsion ) )
         do i = 1, nsources
           allocate( plasma_sources%source(i)%ggd( time_sind )%ion( nsion ) )
@@ -7499,12 +7499,14 @@ contains
         allocate( batch_sources%grid_ggd( batch_index )%path(1) )
         batch_sources%grid_ggd( batch_index )%path = &
             &   "#edge_profiles(1)/grid_ggd("//int2str(batch_index)//")"
+#if IMAS_MAJOR_VERSION > 3
         allocate( batch_plasma_profiles%grid_ggd( batch_index )%path(1) )
         batch_plasma_profiles%grid_ggd( batch_index )%path = &
             &   "#edge_profiles(1)/grid_ggd("//int2str(batch_index)//")"
         allocate( batch_plasma_sources%grid_ggd( batch_index )%path(1) )
         batch_plasma_sources%grid_ggd( batch_index )%path = &
             &   "#edge_profiles(1)/grid_ggd("//int2str(batch_index)//")"
+#endif
 #else
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   batch_sources%grid_ggd( batch_index ),                      &

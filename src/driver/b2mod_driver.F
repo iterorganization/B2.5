@@ -3251,7 +3251,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               time_slice_index = num_time_slices
               call B25_process_ids(
      &          edge_profiles, edge_sources, edge_transport,
-#if IMAS_MAJOR_VERSION
+#if IMAS_MAJOR_VERSION > 3
      &          plasma_profiles, plasma_sources, plasma_transport,
 #endif
      &          radiation, description, equilibrium,
