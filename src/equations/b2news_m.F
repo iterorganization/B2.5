@@ -110,7 +110,7 @@
      &  rz(nCv),                                                         !iyv 06.02.14
      &  wrk0(nCv),
      &  zero(nCv), zerof(nFc,0:1), wrkf(nFc),
-     &  fni0(nFc,0:1)
+     &  fni0(nFc,0:1), na_min
       logical solvedum(0:CVREGMAX), solvedm2(0:CVREGMAX)
 #ifdef WG_TODO
       logical inverted_ua
@@ -323,8 +323,13 @@ c b2npmo with rxf = 0 and recompute fluxes.
       do is = switch%nsmin, switch%nsmax-1
 *    ..DPC
         do iCv = 1, nCv
+          if (switch%use_min_na_numerics.ne.0) then 
+            na_min = switch%b2mndr_na_min
+          else
+            na_min = min_na(is,mpg%cvReg(iCv))
+          endif
           st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
-     &      switch%b2mndr_na_min),switch%b2mndr_na_max)                 !srv 24.04.09
+     &      na_min),switch%b2mndr_na_max)                 !srv 24.04.09
         enddo
 *    ..compute partial pressure
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
