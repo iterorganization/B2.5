@@ -18,8 +18,8 @@
      *   dtee(:), dtee_ft(:),
      *   dtei(:), dtei_ft(:),
      *   dten(:),
-     *   corr_core_dn(:),                                  ! IYS 19.12.2017
-     *   sna_corr(:), taumax(:)                            ! iyv 20.09.22
+     *   corr_core_dn(:),                                   ! IYS 19.12.2017
+     *   min_na(:,:)
       logical, allocatable, save ::
      *   solveco(:,:),
      *   solvemo(:,:),
@@ -44,8 +44,8 @@
       real (kind=R8), save :: dtei(0:CVREGMAX),
      &  dtei_ft(1:DEF_NYD)
       real (kind=R8), save :: dten(0:CVREGMAX)
-      real (kind=R8), save :: corr_core_dn(0:nsdmax-1)                  ! IYS 19.12.2017
-      real (kind=R8), save :: sna_corr(DEF_NATM), taumax(DEF_NATM)      ! IYS 10.03.2023
+      real (kind=R8), save :: corr_core_dn(0:nsdmax-1)     ! IYS 19.12.2017
+      real (kind=R8), save :: min_na(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solveco(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:CVREGMAX)
       logical, save :: solvemt(0:CVREGMAX)
@@ -81,9 +81,8 @@
      & write_nml_num,
      & numerics_filename, numerics_time_mod, numerics_time_switch,
      & solvekt, solvezt,
-     & corr_core_dn, corr_core_dt, add_te_corr_to_po,      ! IYS 19.12.2017
-     & sna_corr, taumax, do_sna_corr_core,
-     & dtfts, dtee_ft, dtmo_ft, dtco_ft, dtei_ft
+     & corr_core_dn, corr_core_dt, add_te_corr_to_po,       ! IYS 19.12.2017
+     & min_na
 
       contains
 
@@ -124,7 +123,7 @@
       allocate(solvekt(0:nnreg(0)))
       allocate(solvezt(0:nnreg(0)))
       allocate(add_te_corr_to_po(0:nnreg(0)))                      ! IYS 21.09.2018, 21.09.2018
-      allocate(do_sna_corr_core(nspecies))                         !iyv 20.09.22
+      allocate(min_na(0:nsd-1,0:nnreg(0)))
 #else
       call xertst (nsd.le.nsdmax,
      1 'increase DEF_NSD in b2mod_dimensions')
@@ -147,6 +146,7 @@
       time_factor_required=0.1_R8
       core_dt_suppression=1.0_R8
       core_dt_factor=1.0_R8
+      min_na = 1.0e4_R8
       solveco=.true.
       solvemo=.true.
       if (switch%recycle_afn.ne.1) then !! default, use total momentum equation
@@ -199,8 +199,7 @@
       deallocate(dtei_ft)
       deallocate(dten)
       deallocate(corr_core_dn)                                     ! IYS 19.12.2017
-      deallocate(sna_corr)                                         !iyv 20.09.22
-      deallocate(taumax)                                           !iyv 20.09.22
+      deallocate(min_na)
       deallocate(solveco)
       deallocate(solvemo)
       deallocate(solvemt)
@@ -292,16 +291,8 @@
      & 'faulty parameter dtei')
       call xertst (0.0_R8.lt.minval(dten),
      & 'faulty parameter dten')
-      call xertst (0.le.minval(dtfts),
-     & 'faulty parametere dtfts')
-      call xertst (0.0_R8.lt.minval(dtco_ft),
-     & 'faulty parameter dtco_ft')
-      call xertst (0.0_R8.lt.minval(dtmo_ft),
-     & 'faulty parameter dtmo_ft')
-      call xertst (0.0_R8.lt.minval(dtee_ft),
-     & 'faulty parameter dtee_ft')
-      call xertst (0.0_R8.lt.minval(dtei_ft),
-     & 'faulty parameter dtei_ft')
+      call xertst (0.0_R8.lt.minval(min_na),
+     & 'faulty parameter min_na')
 
 c additional time modification factor
       ttf=core_dt_suppression
