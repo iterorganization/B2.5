@@ -52,7 +52,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: flux_limit_to_vsa
       integer :: csig_an_style
       integer :: user_transport
-      integer :: set_transport_iyref
+      integer :: use_min_na_numerics
 
 c Advanced fluid neutral models
       integer :: tn_style
@@ -385,10 +385,12 @@ c diagnostics switches
       integer :: b2npmo_diagno
       integer :: vlct_diagno
       integer :: b2tqna_diagno
+      integer :: ion_vlct_restrict_core
 
 c hard limit velocities
       integer :: ion_vlct_restrict
       real(kind=R8) :: ion_vlct_restrict_M
+      real(kind=R8) :: ion_vlct_restrict_core_M
 
 c MMS
       integer:: set_na_numerical
@@ -711,7 +713,7 @@ c Matrix solver
       s % flux_limit_to_vsa = 1
       s % csig_an_style = 1
       s % user_transport = 0
-      s % set_transport_iyref = 0
+      s % use_min_na_numerics = 0
 
 c Advanced fluid neutral models
       s % tn_style = 0
@@ -1010,6 +1012,8 @@ c Zhdanov closure switches
       s % b2npmo_diagno = 0
       s % vlct_diagno = 0
       s % b2tqna_diagno = 0
+      s % ion_vlct_restrict_core = 0
+      s % ion_vlct_restrict_core_M = 3.0_R8
 
       s % ion_vlct_restrict = 0
       s % ion_vlct_restrict_M = 3.0_R8
@@ -1391,7 +1395,7 @@ c Matrix solver
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)
       call ipgeti ('b2tqna_user_transport', s % user_transport)
-      call ipgeti ('set_transport_iyref', s % set_transport_iyref)
+      call ipgeti ('b2mndr_use_min_na_numerics', s%use_min_na_numerics)
 
 c Advanced fluid neutral models
       call ipgeti ('b2mn_tn_style', s % tn_style)
@@ -1735,6 +1739,10 @@ c diagnostic switches
       call ipgeti ('b2npmo_diagno', s % b2npmo_diagno)
       call ipgeti ('b2npmo_vlct_diagno', s % vlct_diagno)
       call ipgeti ('b2tqna_diagno', s % b2tqna_diagno)
+      call ipgeti ('b2npmo_ion_vlct_restrict_core', 
+     &             s % ion_vlct_restrict_core)
+      call ipgetr ('b2npmo_ion_vlct_restrict_core_M',
+     &             s % ion_vlct_restrict_core_M)
 
 c hard limit velocities
       call ipgeti ('b2npmo_ion_vlct_restrict', s % ion_vlct_restrict)
@@ -2833,6 +2841,17 @@ c Zhdanov closure
 
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
+
+      if(s%b2mndt_style.eq.2 .and. s%b2mndt_rxf.lt.1.0_R8) then
+        call xerrab('time-dependent mode requires rxf = 1.0')
+      endif
+
+c controlling minimum density via b2.numerics
+      if(s%b2srdt_numerics_namelist.eq.0 .and. 
+     &           s%use_min_na_numerics.ne.0) then
+        call xerrab('use_min_na_numerics requires'//
+     &  'reading numerics namelist')
+      endif
 
       return
       end subroutine check_consistency_switches
