@@ -682,6 +682,27 @@ c     ..compare 9-pt stencil matrices
         endif
       endif
 
+!! do the same but with possibly a lower max M for the core region. For now, no diagnostic output for this one.
+      if( switch%ion_vlct_restrict_core .ne. 0 ) then                
+        do is = 0, ns-1
+          do iCv = 1, nCv
+            if (mpg%cvOnClosedSurface(iCv)) then  
+              if (.not.is_neutral(is).or.switch%tn_style.le.1.or.
+     .           (switch%tn_style.eq.2.and.nint(zn(is)).ne.1)) then
+                cst=sqrt(pz(iCv)/rz(iCv))                              
+              else
+                cst=sqrt(pl%tn(iCv)/(mp*am(is)))
+              endif
+              if( abs(pl%ua(iCv,is)).gt.
+     .         switch%ion_vlct_restrict_core_M*cst ) then
+              pl%ua(iCv,is)= sign(switch%ion_vlct_restrict_core_M*cst,
+     .                              pl%ua(iCv,is))                
+              endif
+            endif
+          enddo
+        enddo
+      endif
+
 *   ..correct pcca
       call b2nxcm (nCv, ns, dv%pccm, dv%pcca)
       if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then  !srv 12.07.02 {
