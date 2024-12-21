@@ -8364,8 +8364,13 @@ contains
         eq_found = .true.
 #if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 33 )
         if ( associated( equilibrium%ids_properties%provenance%node ) ) then
+#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 41 )
           if ( associated( equilibrium%ids_properties%provenance%node(1)%reference ) ) &
             & eq_source = equilibrium%ids_properties%provenance%node(1)%reference(1)%name(1)
+#else
+          if ( associated( equilibrium%ids_properties%provenance%node(1)%sources ) ) &
+            & eq_source = equilibrium%ids_properties%provenance%node(1)%sources(1)
+#endif
 #if ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION > 33 )
         else if ( associated( equilibrium%ids_properties%source ) ) then
           eq_source = equilibrium%ids_properties%source(1)
