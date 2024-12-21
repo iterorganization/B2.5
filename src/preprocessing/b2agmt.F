@@ -285,9 +285,9 @@ cwdk     note: qc in left ghosts unchanged
       wrk(-1:nx,-1:ny) = qz(-1:nx,-1:ny,1)
       call nancheck(nx, ny, wrk, 'b2agmt: qz(,,1)')
       wrk(-1:nx,-1:ny) = qc(-1:nx,-1:ny,0)
-      call nancheck(nx, ny, qc(-1:nx,-1:ny,0), 'b2agmt: qc(,,0)')
+      call nancheck(nx, ny, wrk, 'b2agmt: qc(,,0)')
       wrk(-1:nx,-1:ny) = qc(-1:nx,-1:ny,1)
-      call nancheck(nx, ny, qc(-1:nx,-1:ny,1), 'b2agmt: qc(,,1)')
+      call nancheck(nx, ny, wrk, 'b2agmt: qc(,,1)')
 *   ..test sign of qz(,,1) and qc
 *     (A negative entry in qz(,,1) corresponds to a left-handed
 *     orientation of the coordinate system, which is not allowed in
@@ -430,8 +430,10 @@ cwdk to ensure sin^2 + cos^2 = 1, and cos > 0
        enddo
        qs(:,:,:) = sign(sqrt(1.0_R8 - qc(:,:,:)**2), qs(:,:,:))
       endif
-      call nancheck(nx, ny, qs(-1:nx,-1:ny,0), 'b2agmt: qs(,,0)')
-      call nancheck(nx, ny, qs(-1:nx,-1:ny,1), 'b2agmt: qs(,,1)')
+      wrk(-1:nx,-1:ny) = qs(-1:nx,-1:ny,0)
+      call nancheck(nx, ny, wrk, 'b2agmt: qs(,,0)')
+      wrk(-1:nx,-1:ny) = qs(-1:nx,-1:ny,1)
+      call nancheck(nx, ny, wrk, 'b2agmt: qs(,,1)')
 
 * ..return
       call subend ()
