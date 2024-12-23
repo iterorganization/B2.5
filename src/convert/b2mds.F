@@ -1,30 +1,20 @@
-      subroutine b2mds(nxd,nyd,nsd_local,in_jxi,in_jxa,in_jsep,BoRiS)
+      subroutine b2mds(mpg,gm,state,state_ext,nsd_local,switch)
       use b2mod_types
-      use b2mod_geo
-      use b2mod_plasma
-      use b2mod_rates
-      use b2mod_residuals
-      use b2mod_sources
-      use b2mod_transport
-      use b2mod_anomalous_transport
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2plot
      * , only : textpl, textwl, textsp, textbl,
-     *          textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
+     *          textcomponents, text0123,
      *          natmi, nmoli, nioni, nlimi, wklng,
      *          solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_wall
       use b2mod_work
       use b2mod_eirene_globals
+      use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
-!      use b2mod_b2plot_debug
       use b2mod_elements
       use b2mod_sputter
-!      use b2mod_movies
-      use b2mod_external
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -32,17 +22,15 @@
       use b2mod_mdsplus
 #endif
       use b2mod_version
-
       use b2us_map
       use b2us_geo
       use b2us_plasma
       use b2us_prep
       use b2mod_switches
-
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
-     *          nsrfs, n1st, n2nd, n3rd, nreac, ifoff, 
+     *          nsrfs, n1st, n2nd, n3rd, nreac, 
      *          eirene_set_parmmod
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
@@ -52,7 +40,8 @@
       use eirmod_braeir
       use eirmod_eirbra
      * , only : eirene_alloc_eirbra, eirene_dealloc_eirbra
-      use eirmod_extrab25
+      use eirmod_infcop
+      use eirmod_wneutrals
 #else
       use b2mod_braeir
       use b2mod_eirbra
@@ -62,14 +51,13 @@
       use b2mod_b2cmfs
       use b2mod_external
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
 
-#     include <DIMENSIONS.F>
 #ifdef MDSPLUS
 #     include "mdslib.inc"
 #endif
-      integer nxd,nyd,nsd_local,in_jxi,in_jxa,in_jsep
-      real (kind=R8) :: BoRiS
+      integer nsd_local
       character*24 hlp_frm
       integer iflag
       character*256 filename
@@ -79,19 +67,19 @@
       type(mapping) :: mpg
       type(geometry) :: gm
       type(switches) :: switch
-      type(B2Plasma) :: pl
-      type(B2Derivatives) :: dv
+      type(B2State) :: state
+      type(B2StateExt) :: state_ext
 c
 c  version : 27.07.96 20:37
 c
-      real (kind=R8) :: pr(-1:nxd,-1:nyd)
       integer ispecies(0:nsd_local-1)
 
-      integer is,iss,isp,nfla
+      integer is,iss,isp,nfla,ns
 c
       logical ex
 c
-      integer il,imi,ix,iy
+      integer il,imi,iFc
+      real (kind=R8) ::  pr(mpg%nCv)
 #ifdef MDSPLUS
       character*512 textpl_cat, textwl_cat
       character*12 :: textdrift(0:1)
@@ -99,22 +87,25 @@ c
       character :: mds_signal_name*(64), tdi*(172)
       real (kind=R8), allocatable ::
      *   vesl(:,:)
-      integer i, icnt, nsw
+      integer i, j, iCv, icnt, nsw, iVx1, iVx2
+#ifdef WG_TODO
       integer itmp(-1:nxd,-1:nyd)
+#endif
       real (kind=R8) ::
-     *   rdummy, rtmp, temp(-1:nxd,-1:nyd),
-     5   tmp(-1:nxd,-1:nyd,0:nsd_local-1),
-     5   cr_x(0:nxd,-1:nyd), cz_x(0:nxd,-1:nyd),
-     6   cr_y(-1:nxd,0:nyd), cz_y(-1:nxd,0:nyd),
-     7   flux_x(0:nxd,-1:nyd,0:nsd_local-1),
-     7   flux_y(-1:nxd,0:nyd,0:nsd_local-1),
+     *   rdummy, rtmp, temp(mpg%nCv),
+     5   tmp(mpg%nCv,0:nsd_local-1),
+     5   crf(mpg%nFc), czf(mpg%nFc),
+     7   flux_x(mpg%nFc,0:nsd_local-1),
+     7   flux_y(mpg%nFc,0:nsd_local-1),
+#ifdef WG_TODO
      8   dsrad(-1:nxd,-1:nyd),dspol(-1:nxd,-1:nyd),dspar(-1:nxd,-1:nyd),
+#endif
      9   fhesep,fhisep,fnesep,fnisep,
      *   pot(0:nsd_local-1),poti(0:nsd_local-1),
      7   za(0:nsd_local-1)
 #endif
 c
-      integer n2, nCv, nFc
+      integer nCv, nFc, nVx, iCv1, iCv2
       integer ismain, refl_model, sput_phys_model, use_eirene,
      . sput_phys_col, boundary_namelist, neutrals_namelist
       data ismain/1/, refl_model/1/, sput_phys_col/3/, use_eirene/0/,
@@ -141,8 +132,12 @@ c
 c Function to check the correct parameters!
 c
       call subini('b2mds')
+      nCv = mpg%nCv
+      nFc = mpg%nFc
+      nVx = mpg%nVx
       call ipgeti ('b2mndr_eirene', use_eirene)
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,ex)
       if (ex.and.use_eirene.ne.0) then
@@ -194,16 +189,17 @@ c
 #endif
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(nCv,nFc,NFL,NSTRA,ifoff)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(nCv,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nCv,nFc,nsd_local,nstra)
-      call alloc_b2mod_eirbra(nCv,nsd_local,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nCv,nsd_local,natm,nmol,nion,npls,nstra)
 #endif
-      call alloc_b2mod_b2plot(nCv,nFc,nsd_local,ns_ext,wklng,
+      call alloc_b2mod_b2plot(nCv,nFc,nVx,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       solpstop=' '
 #ifndef NO_GETENV
@@ -217,22 +213,12 @@ c
 #endif
 #endif
 #ifdef MDSPLUS
-      cr_x=0.0_R8
-      cz_x=0.0_R8
-      cr_y=0.0_R8
-      cz_y=0.0_R8
-      do iy=-1,ny
-        do ix=0,nx
-          cr_x(ix,iy)=(crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8
-          cz_x(ix,iy)=(cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8
-        enddo
-      enddo
-      do iy=0,ny
-        do ix=-1,nx
-          cr_y(ix,iy)=(crx(ix,iy,0)+crx(ix,iy,1))/2.0_R8
-          cz_y(ix,iy)=(cry(ix,iy,0)+cry(ix,iy,1))/2.0_R8
-        enddo
-      enddo
+      do iFc = 1, nFc
+        iVx1 = mpg%fcVx(iFc,1)
+        iVx2 = mpg%fcVx(iFc,2)
+        crf(iFc) = (gm%vxX(iVx1)+gm%vxX(iVx2))/2.0_R8
+        czf(iFc) = (gm%vxY(iVx1)+gm%vxY(iVx2))/2.0_R8
+      end do
 #endif
 c
       ns=max(nsd_local,1)
@@ -277,9 +263,10 @@ c
 
 cxpb  This call is moved up from 'f31' so that we use the original cell-faced
 cxpb  quantities before their mapping to cell centers
-      n2 = (nx+2)*(ny+2)
-      call b2xpni (n2, ns, na, ni)
-      call b2xppr_st (nx, ny, ns, ne, na, te, ti, pr)
+      call b2xpni (nCv, ns, state%pl%na, state%dv%ni)
+      call b2xppr (nCv, ns,
+     .  state%dv%ne, state%pl%na, state%pl%te, state%pl%ti, state%pl%tn,
+     .  pr, state_ext)
       nfla=0
       do is=0,ns-1
         if(.not.is_neutral(is)) nfla=nfla+1
@@ -287,13 +274,9 @@ cxpb  quantities before their mapping to cell centers
       if(nfla.gt.NFL) then
         write(*,*) 'copy_background not called because nfla.gt.NFL',
      1   nfla,NFL
-      elseif(nx.gt.NXDD.or.ny.gt.NYDD) then
-        write(*,*)
-     1   'copy_background not called because NX>NXDD or NY>NYDD',
-     1   nx,nxdd,ny,nydd
       else
         call copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                       pl, dv)
+     &                       state%pl, state%dv)
       endif
 c
       call initialise_potentials(ns)
@@ -312,39 +295,34 @@ c
      2   potimin(is),potimax(is),potmin(is),potmax(is)
       end do
       call alloc_b2mod_elements(ns, zn, am)
-#ifdef WG_TODO
 c calculate additional fluxes (fhj, fhm, fhp, fht)
-      call b2xpen (nx, ny, ns,
-     1    fna, fne, fch, fhe, fhi, kinrgy, rpt,
-     2    te, ti, po, BoRiS, fhm, fhp, fhj, fht)
-#endif
-      if(allocated(fhi_ext)) fht=fht+fhi_ext
-      do is=0,ns_ext-1
-        do iy=-1,ny
-          do ix=-1,nx
-            if(leftix(ix,iy).ge.-1) then
-              fht(ix,iy,0,0)=fht(ix,iy,0,0)+0.5_R8*fa_ext(ix,iy,0,0,is)*
-     .          (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .          (ua_ext(leftix(ix,iy),leftiy(ix,iy),is)**2+
-     .           ua_ext(ix,iy,is)**2)+
-     .          (ta_ext(leftix(ix,iy),leftiy(ix,iy),is)+
-     .           ta_ext(ix,iy,is)))
-              fht(ix,iy,0,0)=fht(ix,iy,0,0)+0.5_R8*fa_ext(ix,iy,0,0,is)*
-     .         (pt_ext(leftix(ix,iy),leftiy(ix,iy),is)+
-     .          pt_ext(ix,iy,is))*ev
-            endif
-            if(bottomiy(ix,iy).ge.-1) then
-              fht(ix,iy,1,1)=fht(ix,iy,1,1)+0.5_R8*fa_ext(ix,iy,1,1,is)*
-     .         (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .         (ua_ext(bottomix(ix,iy),bottomiy(ix,iy),is)**2+
-     .          ua_ext(ix,iy,is)**2)+
-     .         (ta_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     .          ta_ext(ix,iy,is)))
-              fht(ix,iy,1,1)=fht(ix,iy,1,1)+0.5_R8*fa_ext(ix,iy,1,1,is)*
-     .         (pt_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     .          pt_ext(ix,iy,is))*ev
-            endif
-          enddo
+      call b2xpen (nCv, nFc, ns, mpg,
+     1  state%dv%fna, state%dv%fna_53, state%dv%fne_53, state%dv%fch,
+     1  state%dv%fhe, state%dv%fhi, state%dv%fhn, state%rt%rpt,
+     2  state%pl%te, state%pl%ti, state%pl%tn, state%pl%po,
+     2  switch%BoRiS,
+     2  state%dv%fhm, state%dv%fhp, state%dv%fhj, state%dv%fht)
+      state%dv%fht=state%dv%fht+state_ext%fhi
+      do is=0,state_ext%ns-1
+        do iFc=1,nFc
+          iCv1 = mpg%fcCv(iFc,1)
+          iCv2 = mpg%fcCv(iFc,2)
+          state%dv%fht(iFc,0)=state%dv%fht(iFc,0)+
+     .      0.5_R8*state_ext%fa(iFc,0,is)*
+     .     (1.0_R8-switch%BoRis)*(0.5_R8*state_ext%am(is)*mp*
+     .     (state_ext%ua(iCv1,is)**2+state_ext%ua(iCv2,is)**2)+
+     .     (state_ext%ta(iCv1,is)   +state_ext%ta(iCv2,is)))
+          state%dv%fht(iFc,0)=state%dv%fht(iFc,0)+
+     .      0.5_R8*state_ext%fa(iFc,0,is)*
+     .     (state_ext%pt(iCv1,is)+state_ext%pt(iCv2,is))*ev
+          state%dv%fht(iFc,1)=state%dv%fht(iFc,1)+
+     .      0.5_R8*state_ext%fa(iFc,1,is)*
+     .     (1.0_R8-switch%BoRis)*(0.5_R8*state_ext%am(is)*mp*
+     .     (state_ext%ua(iCv1,is)**2+state_ext%ua(iCv2,is)**2)+
+     .     (state_ext%ta(iCv1,is)   +state_ext%ta(iCv2,is)))
+          state%dv%fht(iFc,1)=state%dv%fht(iFc,1)+
+     .      0.5_R8*state_ext%fa(iFc,1,is)*
+     .     (state_ext%pt(iCv1,is)+state_ext%pt(iCv2,is))*ev
         enddo
       enddo
 c
@@ -381,34 +359,33 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call xertst (0.le.sput_phys_col.and.sput_phys_col.le.9,
      1 'faulty b2stbr_sput_phys_col')
       call ipgeti ('b2stbr_sput_phys_model', sput_phys_model)
-      call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
+      call alloc_b2mod_boundary(1, 1, ns, nbcd, nnisod)
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       if (boundary_namelist.eq.1)
-     > call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
+     > call read_b2mod_boundary_namelist(ns, mpg, .true.)
       call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
       call xertst (nniso.le.nnisod, 'increase DEF_NISO in DIMENSIONS.F')
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call alloc_b2mod_neutrals
-     > (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
+     > (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
-     > call read_neutrals_namelist(nx, ny, ns, .false.)
+     > call read_neutrals_namelist(ns, mpg, switch, .false.)
       call xertst (nstrat.le.nstraid,
      . 'Increase DEF_NSTRA in DIMENSIONS.F')
+#ifdef WG_TODO
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)
       call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
       call alloc_b2mod_wall_init(nx,ny,nncut)
-!!      call alloc_b2mod_wall(ns,natm,nmol,nion)
       call alloc_b2mod_wall(ns)
-#ifdef WG_TODO
       call init_wall(nx,ny)
 #endif
       call read_b2mod_wall_namelist(99,'    ',ex)
       call xertst (ndepth_nml.gt.1.or.plate_model.eq.0,
      .  'Inconsistent values of ndepth_nml and plate_model')
 #ifdef WG_TODO
-      call get_wall_data(nx,ny,ns,BoRiS,ex)
+      call get_wall_data(nx,ny,ns,switch%BoRiS,ex)
 #endif
 #ifdef B25_EIRENE
       filename=fort_lc//'44'
@@ -423,11 +400,11 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         textmn(0)=' ZERO'
         nioni=0
         textin(0)=' ZERO'
-        call eirene_mc_init(nx,ny)
+        call eirene_mc_init(nCv,nFc)
         nlimi=0
       else
         open(unit=44,file=filename)
-        call ngread(mpg,switch,ismain,iflag)
+        call ngread(mpg,gm,ns,switch,ismain,iflag)
         if (natmi.gt.0)
      .   textwl(ns:ns+natmi-1)=textan(0:natmi-1)
         if (nmoli.gt.0)
@@ -438,130 +415,89 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 
 !XXX
       write(*,*) 'b2mds ...'
-      if(in_jxi.ge.-1) jxi=in_jxi
-      if(in_jxa.ge.-1) jxa=in_jxa
-      if(in_jxi.ge.-1) jsep=in_jsep
-      write(*,*) 'jxi, jxa, jsep : ', jxi, jxa, jsep
 
 #ifdef MDSPLUS
       textdrift(0)='Diamagnetic'
       textdrift(1)='Radial'
       nsw=ns+natmi+nmoli+nioni
 
-      call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NX',nx+2)
-      call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NY',ny+2)
+      call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NCV',nCv)
+      call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NFC',nFc)
+      call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NVX',nVx)
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NS',ns)
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NATM',natmi)
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NMOL',nmoli)
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NION',nioni)
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NSW',nsw)
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:NWALL',nbnd)
+#ifdef WG_TODO
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:TARG1',1)
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:TARG2',-1)
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:TARG3',-1)
       call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:TARG4',nx)
-      call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:IMP',jxi+1)
-      call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:OMP',jxa+1)
-      call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:SEP',jsep+1)
+#endif
+      call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:IMP',ifsepimp)
+      call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:OMP',ifsepomp)
+      call mds_put_int('\TOP.SNAPSHOT.DIMENSIONS:SEP',mpg%iFssep)
 
       tdi='build_with_units($,"m")'
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CR'
-      do iy=-1,ny
-        do ix=-1,nx
-          temp(ix,iy)=cr(ix,iy)
-        end do
-      end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
+     * descr2_i1(idtype_double,nCv,0),gm%cvX,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),temp,0)
+     * descr2(idtype_double,nCv,0),gm%cvX,0)
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
       mds_signal_name='\TOP.SNAPSHOT.GRID:CZ'
-      do iy=-1,ny
-        do ix=-1,nx
-          temp(ix,iy)=cz(ix,iy)
-        end do
-      end do
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+2,ny+2,0),temp,0)
+     * descr2_i1(idtype_double,nCv,0),gm%cvY,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),temp,0)
+     * descr2(idtype_double,nCv,0),gm%cvY,0)
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
-      mds_signal_name='\TOP.SNAPSHOT.GRID:CR_X'
+      mds_signal_name='\TOP.SNAPSHOT.GRID:CR_F'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+1,ny+2,0),cr_x,0)
+     * descr2_i1(idtype_double,nFc,0),crf,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+1,ny+2,0),cr_x,0)
+     * descr2(idtype_double,nFc,0),crf,0)
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
-      mds_signal_name='\TOP.SNAPSHOT.GRID:CZ_X'
+      mds_signal_name='\TOP.SNAPSHOT.GRID:CZ_F'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+1,ny+2,0),cz_x,0)
+     * descr2_i1(idtype_double,nFc,0),czf,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+1,ny+2,0),cz_x,0)
-#endif
-      write(*,*) 'mdsput2'
-      call mds_err_msg(status)
-
-      mds_signal_name='\TOP.SNAPSHOT.GRID:CR_Y'
-      write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
-      status=mdsput2(
-     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+2,ny+1,0),cr_y,0)
-#else
-      status=mdsput2(
-     * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+1,0),cr_y,0)
-#endif
-      write(*,*) 'mdsput2'
-      call mds_err_msg(status)
-
-      mds_signal_name='\TOP.SNAPSHOT.GRID:CZ_Y'
-      write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
-#if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
-      status=mdsput2(
-     * trim(mds_signal_name)//char(0),
-     * trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+2,ny+1,0),cz_y,0)
-#else
-      status=mdsput2(
-     * trim(mds_signal_name)//char(0),
-     * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+1,0),cz_y,0)
+     * descr2(idtype_double,nFc,0),czf,0)
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
@@ -572,13 +508,13 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2_i3(idtype_double,nx+2,ny+2,4,0),crx,
+     * descr2_i1(idtype_double,nVx,0),gm%vxX,
      * 0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,4,0),crx,
+     * descr2(idtype_double,nVx,0),gm%vxX,
      * 0)
 #endif
       write(*,*) 'mdsput2'
@@ -590,18 +526,19 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2_i3(idtype_double,nx+2,ny+2,4,0),cry,
+     * descr2_i1(idtype_double,nVx,0),gm%vxY,
      * 0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),
      * trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,4,0),cry,
+     * descr2(idtype_double,nVx,0),gm%vxY,
      * 0)
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
+#ifdef WG_TODO
       do ix=-1,nx
         dsrad(ix,jsep+1)=hy1(ix,jsep+1)/2.0_R8
         do iy=jsep+2,ny
@@ -664,7 +601,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
-
+#endif
 c
       dbsolpsversion=b2fplasma_version
       call mds_put_string('\TOP.IDENT:SOLPSVERSION',dbsolpsversion)
@@ -701,9 +638,14 @@ c     fni_32, fni_52, fne_32, fne_52,
 c     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
 c     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
 c 23: fht definition changed to 5/2 formulation
+c 25: debugged indexing error for eneutrad
 c 26: using total field for computing dspar
+c 27: Added EMOLRAD and EIONRAD arrays
+c 29: Same indexing error was also present in emolrad and eionrad
+c 30: changed quantities to unstructured grid
+c 32: Corrected units for srcml and edissml
 
-      dbversion=23
+      dbversion=32
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -766,7 +708,7 @@ c
         open(99,file=filename,status='old')
         icnt=0
    10   continue
-        read(99,*,end=20) (rdummy,ix=1,4)
+        read(99,*,end=20) (rdummy,j=1,4)
         icnt=icnt+1
         goto 10
    20   continue
@@ -776,7 +718,7 @@ c
           close(99)
           open(99,file='mesh.extra',status='old')
           do i=1,icnt
-            read(99,*) (vesl(ix,i),ix=1,4)
+            read(99,*) (vesl(j,i),j=1,4)
           enddo
           close(99)
           tdi='build_with_units($,"m")'
@@ -802,6 +744,7 @@ c
         write(*,*) 'No mesh.extra file found !'
       endif
 
+#ifdef WG_TODO
       itmp=leftix+1
       call mds_put_int_rz(
      1 '\TOP.SNAPSHOT.GRID:LEFTIX',nx+2,ny+2,itmp)
@@ -826,382 +769,384 @@ c
       itmp=topiy+1
       call mds_put_int_rz(
      1 '\TOP.SNAPSHOT.GRID:TOPIY',nx+2,ny+2,itmp)
-      call mds_put_int_rz(
-     1 '\TOP.SNAPSHOT.GRID:REGVOL',nx+2,ny+2,region(:,:,0))
-      call mds_put_int_rz(
-     1 '\TOP.SNAPSHOT.GRID:REGFLX',nx+2,ny+2,region(:,:,1))
-      call mds_put_int_rz(
-     1 '\TOP.SNAPSHOT.GRID:REGFLY',nx+2,ny+2,region(:,:,2))
+#endif
+      call mds_put_int_us(
+     1 '\TOP.SNAPSHOT.GRID:REGVOL',nCv,mpg%cvReg)
+      call mds_put_int_us(
+     1 '\TOP.SNAPSHOT.GRID:REGFL',nFc,mpg%fcReg)
+#ifdef WG_TODO
       call mds_put_int_rz(
      1 '\TOP.SNAPSHOT.GRID:XYMAP',nx+2,ny+2,xymap)
       call mds_put_int_ns(
      1 '\TOP.SNAPSHOT.GRID:IMAPX',nbnd,imapx)
       call mds_put_int_ns(
      1 '\TOP.SNAPSHOT.GRID:IMAPY',nbnd,imapy)
+#endif
 
-      temp=te/qe
-      call mds_put_double_rz('\TOP.SNAPSHOT:TE','eV',nx+2,ny+2,temp,'')
-      temp=te0/qe
-      call mds_put_double_rz('\TOP.SNAPSHOT:TE0','eV',nx+2,ny+2,temp,'')
-      temp=ti/qe
-      call mds_put_double_rz('\TOP.SNAPSHOT:TI','eV',nx+2,ny+2,temp,'')
-      temp=ti0/qe
-      call mds_put_double_rz('\TOP.SNAPSHOT:TI0','eV',nx+2,ny+2,temp,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:NE','/m^3',nx+2,ny+2,ne,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:NE0','/m^3',
-     &     nx+2,ny+2,ne0,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:PR','Pa',nx+2,ny+2,pr,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:PO','V',nx+2,ny+2,po,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:PO0','V',
-     &     nx+2,ny+2,po0,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:VOL','m^3',nx+2,ny+2,vol,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:HX','m',nx+2,ny+2,hx,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:HY','m',nx+2,ny+2,hy,'')
-      do iy=-1,ny
-       do ix=-1,nx
-        temp(ix,iy)=hy1(ix,iy)
-       end do
+      temp=state%pl%te/qe
+      call mds_put_double_us('\TOP.SNAPSHOT:TE','eV',nCv,temp,'')
+      temp=state%psnl%te/qe
+      call mds_put_double_us('\TOP.SNAPSHOT:TE0','eV',nCv,temp,'')
+      temp=state%pl%ti/qe
+      call mds_put_double_us('\TOP.SNAPSHOT:TI','eV',nCv,temp,'')
+      temp=state%psnl%ti/qe
+      call mds_put_double_us('\TOP.SNAPSHOT:TI0','eV',nCv,temp,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:NE','/m^3',
+     &     nCv,state%dv%ne,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:NE0','/m^3',
+     &     nCv,state%psnl%ne,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:PR','Pa',nCv,pr,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:PO','V',nCv,state%pl%po,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:PO0','V',
+     &     nCv,state%psnl%po,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:VOL','m^3',nCv,gm%cvVol,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:HX','m',nCv,gm%cvHx,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:fllime','',
+     1     nFc,state%dv%fllime,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:fllimi','',
+     1     nFc,state%dv%fllimi,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:ceqp','',
+     1     nCv,state%co%ceqp,'')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RZA','',
+     1     nCv,ns,state%rt%rza,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RZ2','',
+     1     nCv,ns,state%rt%rz2,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RPT','eV',
+     1     nCv,ns,state%rt%rpt,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RPI','eV',
+     1     nCv,ns,state%rt%rpi,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:NA','/m^3',
+     1     nCv,ns,state%pl%na,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:NA0','/m^3',
+     1     nCv,ns,state%psnl%na,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:UA','m/s',
+     1     nCv,ns,state%pl%ua,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:UA0','m/s',
+     1     nCv,ns,state%psnl%ua,'TEXTPL','')
+      call mds_put_double_usdns('\TOP.SNAPSHOT:UADIA','m/s',
+     1     nFc,2,ns,state%dv%uadia,'TEXTDRIFT','TEXTPL','')
+      call mds_put_double_usdns('\TOP.SNAPSHOT:VADIA','m/s',
+     1     nFc,2,ns,state%dv%vadia,'TEXTDRIFT','TEXTPL','')
+      call mds_put_double_usdns('\TOP.SNAPSHOT:WADIA','m/s',
+     1     nFc,2,ns,state%dv%wadia,'TEXTDRIFT','TEXTPL','')
+      call mds_put_double_usdns('\TOP.SNAPSHOT:VAECRB','m/s',
+     1     nFc,2,ns,state%dv%vaecrb,'TEXTDRIFT','TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:VEDIA','m/s',
+     1     nFc,2,state%dv%vedia,'TEXTDRIFT','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:VEECRB','m/s',
+     1     nFc,2,state%dv%veecrb,'TEXTDRIFT','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:KINRGY','J',
+     1     nCv,ns,state%dv%kinrgy,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:B','T',
+     1     nCv,4,gm%cvBb,'TEXTCOMP','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:QZ','',
+     1     nCv,2,gm%cvQgam,'TEXTCOMP','')
+      call mds_put_double_us('\TOP.SNAPSHOT:BRHE','W',
+     1     nCv,state%srw%b2stbr_she,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:BRHI','W',
+     1     nCv,state%srw%b2stbr_shi,'')
+      call mds_put_double_usns('\TOP.SNAPSHOT:BRNA','particles/s',
+     1     nCv,ns,state%srw%b2stbr_sna,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:BRMO','N',
+     1     nCv,ns,state%srw%b2stbr_smo,'TEXTPL','')
+
+      call mds_put_double_usns('\TOP.SNAPSHOT:RQAHE','W',
+     1     nCv,ns,state%srw%rqahe,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RQRAD','W',
+     1     nCv,ns,state%srw%rqrad,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RQBRM','W',
+     1     nCv,ns,state%srw%rqbrm,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RSAHI','W',
+     1     nCv,ns,state%srw%rsahi,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RSANA','/s',
+     1     nCv,ns,state%srw%rsana,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RSAMO','m/s^2',
+     1     nCv,ns,state%srw%rsamo,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RRAHI','W',
+     1     nCv,ns,state%srw%rrahi,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RRANA','/s',
+     1     nCv,ns,state%srw%rrana,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RRAMO','m/s^2',
+     1     nCv,ns,state%srw%rramo,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RCXHI','W',
+     1     nCv,ns,state%srw%rcxhi,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RCXNA','/s',
+     1     nCv,ns,state%srw%rcxna,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RCXMO','m/s^2',
+     1     nCv,ns,state%srw%rcxmo,'TEXTPL','')
+
+      call mds_put_double_usns('\TOP.SNAPSHOT:D','m^2.s^-1',
+     1     nCv,ns,state%co%dna0,'TEXTPL','')
+      do is = 0, ns-1
+        if (is_neutral(is)) then
+          tmp(:,is)=state%co%dpa0(:,is)*state%pl%tn(:)
+        else
+          tmp(:,is)=state%co%dpa0(:,is)*
+     *             (state%rt%rza(:,is)*state%pl%te(:)+state%pl%ti(:))
+        end if
       end do
-      call mds_put_double_rz('\TOP.SNAPSHOT:HY1','m',nx+2,ny+2,temp,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:fllime','',
-     1 nx+2,ny+2,fllime,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:fllimi','',
-     1 nx+2,ny+2,fllimi,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:ceqp','',
-     1 nx+2,ny+2,ceqp,'')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RZA','',
-     1 nx+2,ny+2,ns,rza,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RZ2','',
-     1 nx+2,ny+2,ns,rz2,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RPT','eV',
-     1 nx+2,ny+2,ns,rpt,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RPI','eV',
-     1 nx+2,ny+2,ns,rpi,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:NA','/m^3',
-     1 nx+2,ny+2,ns,na,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:NA0','/m^3',
-     1 nx+2,ny+2,ns,na0,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:UA','m/s',
-     1 nx+2,ny+2,ns,ua,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:UA0','m/s',
-     1 nx+2,ny+2,ns,ua0,'TEXTPL','')
-      call mds_put_double_rzdns('\TOP.SNAPSHOT:UADIA','m/s',
-     1 nx+2,ny+2,2,ns,uadia,'TEXTDRIFT','TEXTPL','')
-      call mds_put_double_rzdns('\TOP.SNAPSHOT:VADIA','m/s',
-     1 nx+2,ny+2,2,ns,vadia,'TEXTDRIFT','TEXTPL','')
-      call mds_put_double_rzdns('\TOP.SNAPSHOT:WADIA','m/s',
-     1 nx+2,ny+2,2,ns,wadia,'TEXTDRIFT','TEXTPL','')
-      call mds_put_double_rzdns('\TOP.SNAPSHOT:VAECRB','m/s',
-     1 nx+2,ny+2,2,ns,vaecrb,'TEXTDRIFT','TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:VEDIA','m/s',
-     1 nx+2,ny+2,2,vedia,'TEXTDRIFT','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:VEECRB','m/s',
-     1 nx+2,ny+2,2,veecrb,'TEXTDRIFT','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:KINRGY','J',
-     1 nx+2,ny+2,ns,kinrgy,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:B','T',
-     1 nx+2,ny+2,4,bb,'TEXTCOMP','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:QZ','',
-     1 nx+2,ny+2,2,qz,'TEXTCOMP','')
-      call mds_put_double_rz('\TOP.SNAPSHOT:BRHE','W',nx+2,ny+2,
-     1 b2stbr_she,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:BRHI','W',nx+2,ny+2,
-     1 b2stbr_shi,'')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:BRNA','particles/s',
-     1 nx+2,ny+2,ns,b2stbr_sna,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:BRMO','N',
-     1 nx+2,ny+2,ns,b2stbr_smo,'TEXTPL','')
+      call mds_put_double_usns('\TOP.SNAPSHOT:DP','m^2.s^-1',
+     1     nCv,ns,tmp,'TEXTPL','')
+      temp=state%co%hce0/state%dv%ne
+      call mds_put_double_us('\TOP.SNAPSHOT:KYE','m^2.s^-1',
+     1     nCv,temp,'')
+      forall (iCv=1:nCv,is=0:ns-1)
+     1 tmp(iCv,is)=state%co%hcib(iCv,is)/state%pl%na(iCv,is)
+      call mds_put_double_usns('\TOP.SNAPSHOT:KYI','m^2.s^-1',
+     1     nCv,ns,tmp,'TEXTPL','')
+      temp=state%co%hci0(:)/state%dv%ni(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:KYI0','m^2.s^-1',
+     1     nCv,temp,'')
+      tmp(:,:)=state%co%vla0(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:VLAX','m.s^-1',
+     1     nCv,ns,tmp,'TEXTPL','')
+      tmp(:,:)=state%co%vla0(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:VLAY','m.s^-1',
+     1     nCv,ns,tmp,'TEXTPL','')
+      forall (iCv=1:nCv,is=0:ns-1)
+     1 tmp(iCv,is)=state%co%vsa0(iCv,is)/(mp*am(is)*state%pl%na(iCv,is))
+      call mds_put_double_usns('\TOP.SNAPSHOT:VISC','m.s^-1',
+     1     nCv,ns,tmp,'TEXTPL','')
+      temp=state%co%sig0/(qe*state%dv%ne)
+      call mds_put_double_us('\TOP.SNAPSHOT:SIG','mho.m^-1',
+     1     nCv,temp,'')
+      temp=state%co%alf0(:)/(state%dv%ne(:)*sqrt(qe/state%pl%te(:)))
+      call mds_put_double_us('\TOP.SNAPSHOT:ALF','mho.m^-1',
+     1     nCv,temp,'')
 
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RQAHE','W',
-     1 nx+2,ny+2,ns,rqahe,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RQRAD','W',
-     1 nx+2,ny+2,ns,rqrad,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RQBRM','W',
-     1 nx+2,ny+2,ns,rqbrm,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RSAHI','W',
-     1 nx+2,ny+2,ns,rsahi,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RSANA','/s',
-     1 nx+2,ny+2,ns,rsana,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RSAMO','m/s^2',
-     1 nx+2,ny+2,ns,rsamo,'TEXTPL','')
-       call mds_put_double_rzns('\TOP.SNAPSHOT:RRAHI','W',
-     1 nx+2,ny+2,ns,rrahi,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RRANA','/s',
-     1 nx+2,ny+2,ns,rrana,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RRAMO','m/s^2',
-     1 nx+2,ny+2,ns,rramo,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RCXHI','W',
-     1 nx+2,ny+2,ns,rcxhi,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RCXNA','/s',
-     1 nx+2,ny+2,ns,rcxna,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RCXMO','m/s^2',
-     1 nx+2,ny+2,ns,rcxmo,'TEXTPL','')
+      flux_x(:,:)=state%dv%fna(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAX','/s',
+     1     nFc,ns,flux_x,'TEXTPL','_F')
+      flux_y(:,:)=state%dv%fna(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAY','/s',
+     1     nFc,ns,flux_y,'TEXTPL','_F')
+      flux_x(:,:)=state%dv%fna_32(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAX_32','/s',
+     1     nFc,ns,flux_x,'TEXTPL','_F')
+      flux_y(:,:)=state%dv%fna_32(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAY_32','/s',
+     1     nFc,ns,flux_y,'TEXTPL','_F')
+      flux_x(:,:)=state%dv%fna_52(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAX_52','/s',
+     1     nFc,ns,flux_x,'TEXTPL','_F')
+      flux_y(:,:)=state%dv%fna_52(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAY_52','/s',
+     1     nFc,ns,flux_y,'TEXTPL','_F')
+      flux_x(:,:)=state%dv%fna_mdf(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAX_MDF','/s',
+     1     nFc,ns,flux_x,'TEXTPL','_F')
+      flux_y(:,:)=state%dv%fna_mdf(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAY_MDF','/s',
+     1     nFc,ns,flux_y,'TEXTPL','_F')
+      flux_x(:,:)=state%dv%fna_fcor(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAX_FCOR','/s',
+     1     nFc,ns,flux_x,'TEXTPL','_F')
+      flux_y(:,:)=state%dv%fna_fcor(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAY_FCOR','/s',
+     1     nFc,ns,flux_y,'TEXTPL','_F')
+      flux_x(:,:)=state%dv%fna_nodrift(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAX_NODRIFT','/s',
+     1     nFc,ns,flux_x,'TEXTPL','_F')
+      flux_y(:,:)=state%dv%fna_nodrift(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAY_NODRIFT','/s',
+     1     nFc,ns,flux_y,'TEXTPL','_F')
+      flux_x(:,:)=state%dv%fna_he(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAX_HE','/s',
+     1     nFc,ns,flux_x,'TEXTPL','_F')
+      flux_y(:,:)=state%dv%fna_he(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAY_HE','/s',
+     1     nFc,ns,flux_y,'TEXTPL','_F')
+      flux_x(:,:)=state%dv%fnaPSch(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAPSCHX','/s',
+     1     nFc,ns,flux_x,'TEXTPL','_F')
+      flux_y(:,:)=state%dv%fnaPSch(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAPSCHY','/s',
+     1     nFc,ns,flux_y,'TEXTPL','_F')
+      flux_x(:,:)=state%dv%fna_eir(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAX_EIR','/s',
+     1     nFc,ns,flux_x,'TEXTPL','_F')
+      flux_y(:,:)=state%dv%fna_eir(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FNAY_EIR','/s',
+     1     nFc,ns,flux_y,'TEXTPL','_F')
+      flux_x(:,:)=state%dv%fmo(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FMOX','N',
+     1     nFc,ns,flux_x,'TEXTPL','_F')
+      flux_y(:,:)=state%dv%fmo(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FMOY','N',
+     1     nFc,ns,flux_y,'TEXTPL','_F')
+      flux_x(:,:)=state%dv%fhm(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FHMX','W',
+     1     nFc,ns,flux_x,'TEXTPL','_F')
+      flux_y(:,:)=state%dv%fhm(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FHMY','W',
+     1     nFc,ns,flux_y,'TEXTPL','_F')
+      flux_x(:,:)=state%dv%fhp(:,0,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FHPX','W',
+     1     nFc,ns,flux_x,'TEXTPL','_F')
+      flux_y(:,:)=state%dv%fhp(:,1,:)
+      call mds_put_double_usns('\TOP.SNAPSHOT:FHPY','W',
+     1     nFc,ns,flux_y,'TEXTPL','_F')
+      flux_x(:,0)=state%dv%fne_eir(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FNEX_EIR','/s',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fne_eir(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FNEY_EIR','/s',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fne_32(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FNEX_32','/s',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fne_32(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FNEY_32','/s',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fne_52(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FNEX_52','/s',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fne_52(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FNEY_52','/s',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fni_32(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FNIX_32','/s',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fni_32(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FNIY_32','/s',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fni_52(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FNIX_52','/s',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fni_52(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FNIY_52','/s',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fhe(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHEX','W',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fhe(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHEY','W',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fhe_mdf(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHEX_MDF','W',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fhe_mdf(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHEY_MDF','W',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fhePSch(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHEPSCHX','W',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fhePSch(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHEPSCHY','W',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fhe_eir(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHEX_EIR','W',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fhe_eir(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHEY_EIR','W',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fhi(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHIX','W',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fhi(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHIY','W',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fhi_mdf(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHIX_MDF','W',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fhi_mdf(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHIY_MDF','W',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fhiPSch(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHIPSCHX','W',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fhiPSch(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHIPSCHY','W',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fhi_eir(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHIX_EIR','W',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fhi_eir(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHIY_EIR','W',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fch(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHX','A',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fch(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHY','A',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fch_32(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHX_32','A',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fch_32(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHY_32','A',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fch_52(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHX_52','A',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fch_52(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHY_52','A',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fch_p(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCH_P','A',
+     1     nFc,flux_x,'_F')
+      flux_x(:,0)=state%dv%fchdia(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHDIAX','A',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fchdia(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHDIAY','A',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fchin(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHINX','A',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fchin(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHINY','A',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fchvispar(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHVISPARX','A',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fchvispar(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHVISPARY','A',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fchvisper(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHVISPERX','A',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fchvisper(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHVISPERY','A',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fchvisq(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHVISQX','A',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fchvisq(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHVISQY','A',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fchinert(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHINERTX','A',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fchinert(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FCHINERTY','A',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fht(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHTX','W',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fht(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHTY','W',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%fhj(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHJX','W',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%fhj(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FHJY','W',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%floe_noc(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FLOEX_NOC','/s',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%floe_noc(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FLOEY_NOC','/s',
+     1     nFc,flux_y,'_F')
+      flux_x(:,0)=state%dv%floi_noc(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:FLOIX_NOC','/s',
+     1     nFc,flux_x,'_F')
+      flux_y(:,0)=state%dv%floi_noc(:,1)
+      call mds_put_double_us('\TOP.SNAPSHOT:FLOIY_NOC','/s',
+     1     nFc,flux_y,'_F')
 
-      call mds_put_double_rzns('\TOP.SNAPSHOT:D','m^2.s^-1',
-     1 nx+2,ny+2,ns,dna0,'TEXTPL','')
-      forall (ix=-1:nx,iy=-1:ny,is=0:ns-1)
-     1 tmp(ix,iy,is)=dpa0(ix,iy,is)*(rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))
-      call mds_put_double_rzns('\TOP.SNAPSHOT:DP','m^2.s^-1',
-     1 nx+2,ny+2,ns,tmp,'TEXTPL','')
-      temp=hce0/ne
-      call mds_put_double_rz('\TOP.SNAPSHOT:KYE','m^2.s^-1',
-     1 nx+2,ny+2,temp,'')
-      forall (ix=-1:nx,iy=-1:ny,is=0:ns-1)
-     1 tmp(ix,iy,is)=hcib(ix,iy,is)/na(ix,iy,is)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:KYI','m^2.s^-1',
-     1 nx+2,ny+2,ns,tmp,'TEXTPL','')
-      temp=hci0(:,:)/ni(:,:,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:KYI0','m^2.s^-1',
-     1 nx+2,ny+2,temp,'')
-      tmp(:,:,:)=vla0(:,:,0,:)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:VLAX','m.s^-1',
-     1 nx+2,ny+2,ns,tmp,'TEXTPL','')
-      tmp(:,:,:)=vla0(:,:,1,:)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:VLAY','m.s^-1',
-     1 nx+2,ny+2,ns,tmp,'TEXTPL','')
-      forall (ix=-1:nx,iy=-1:ny,is=0:ns-1)
-     1 tmp(ix,iy,is)=vsa0(ix,iy,is)/(mp*am(is)*na(ix,iy,is))
-      call mds_put_double_rzns('\TOP.SNAPSHOT:VISC','m.s^-1',
-     1 nx+2,ny+2,ns,tmp,'TEXTPL','')
-      temp=sig0(:,:)/(qe*ne(:,:))
-      call mds_put_double_rz('\TOP.SNAPSHOT:SIG','mho.m^-1',
-     1 nx+2,ny+2,temp,'')
-      temp=alf0(:,:)/(ne(:,:)*sqrt(qe/te(:,:)))
-      call mds_put_double_rz('\TOP.SNAPSHOT:ALF','mho.m^-1',
-     1 nx+2,ny+2,temp,'')
-
-      flux_x(0:nx,-1:ny,0:ns-1)=fna(0:nx,-1:ny,0,0,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX','/s',
-     1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna(-1:nx,0:ny,1,1,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY','/s',
-     1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_32(0:nx,-1:ny,0,0,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_32','/s',
-     1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_32(-1:nx,0:ny,1,1,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_32','/s',
-     1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_52(0:nx,-1:ny,0,0,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_52','/s',
-     1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_52(-1:nx,0:ny,1,1,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_52','/s',
-     1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_mdf(0:nx,-1:ny,0,0,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_MDF','/s',
-     1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_mdf(-1:nx,0:ny,1,1,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_MDF','/s',
-     1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_fcor(0:nx,-1:ny,0,0,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_FCOR','/s',
-     1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_fcor(-1:nx,0:ny,1,1,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_FCOR','/s',
-     1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_nodrift(0:nx,-1:ny,0,0,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_NODRIFT','/s',
-     1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_nodrift(-1:nx,0:ny,1,1,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_NODRIFT','/s',
-     1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_he(0:nx,-1:ny,0,0,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_HE','/s',
-     1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_he(-1:nx,0:ny,1,1,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_HE','/s',
-     1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fnaPSch(0:nx,-1:ny,0,0,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAPSCHX','/s',
-     1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fnaPSch(-1:nx,0:ny,1,1,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAPSCHY','/s',
-     1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_eir(0:nx,-1:ny,0,0,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_EIR','/s',
-     1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_eir(-1:nx,0:ny,1,1,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_EIR','/s',
-     1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fmo(0:nx,-1:ny,0,0,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FMOX','N',
-     1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fmo(-1:nx,0:ny,1,1,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FMOY','N',
-     1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fhm(0:nx,-1:ny,0,0,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FHMX','W',
-     1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fhm(-1:nx,0:ny,1,1,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FHMY','W',
-     1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fhp(0:nx,-1:ny,0,0,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FHPX','W',
-     1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fhp(-1:nx,0:ny,1,1,0:ns-1)
-      call mds_put_double_rzns('\TOP.SNAPSHOT:FHPY','W',
-     1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0)=fne_eir(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FNEX_EIR','/s',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fne_eir(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FNEY_EIR','/s',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fne_32(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FNEX_32','/s',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fne_32(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FNEY_32','/s',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fne_52(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FNEX_52','/s',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fne_52(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FNEY_52','/s',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fni_32(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FNIX_32','/s',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fni_32(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FNIY_32','/s',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fni_52(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FNIX_52','/s',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fni_52(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FNIY_52','/s',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhe(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHEX','W',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhe(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHEY','W',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhe_mdf(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHEX_MDF','W',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhe_mdf(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHEY_MDF','W',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhePSch(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHEPSCHX','W',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhePSch(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHEPSCHY','W',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhe_eir(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHEX_EIR','W',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhe_eir(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHEY_EIR','W',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhi(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHIX','W',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhi(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHIY','W',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhi_mdf(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHIX_MDF','W',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhi_mdf(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHIY_MDF','W',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhiPSch(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHIPSCHX','W',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhiPSch(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHIPSCHY','W',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhi_eir(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHIX_EIR','W',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhi_eir(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHIY_EIR','W',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fch(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHX','A',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fch(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHY','A',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fch_32(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHX_32','A',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fch_32(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHY_32','A',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fch_52(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHX_52','A',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fch_52(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHY_52','A',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fch_p(0:nx,-1:ny,0,0)             !srv 10.06.09
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCH_P','A',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_x(0:nx,-1:ny,0)=fchdia(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHDIAX','A',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fchdia(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHDIAY','A',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fchin(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHINX','A',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fchin(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHINY','A',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fchvispar(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHVISPARX','A',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fchvispar(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHVISPARY','A',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fchvisper(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHVISPERX','A',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fchvisper(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHVISPERY','A',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fchvisq(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHVISQX','A',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fchvisq(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHVISQY','A',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fchinert(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHINERTX','A',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fchinert(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FCHINERTY','A',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fht(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHTX','W',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fht(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHTY','W',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhj(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHJX','W',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhj(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FHJY','W',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=floe_noc(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FLOEX_NOC','/s',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=floe_noc(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FLOEY_NOC','/s',
-     1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=floi_noc(0:nx,-1:ny,0,0)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FLOIX_NOC','/s',
-     1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=floi_noc(-1:nx,0:ny,1,1)
-      call mds_put_double_rz('\TOP.SNAPSHOT:FLOIY_NOC','/s',
-     1 nx+2,ny+1,flux_y,'_Y')
-
+#ifdef WG_TODO
       flux_x(0:nx,-1:ny,0)=gs(0:nx,-1:ny,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:SX','m^2',
      1 nx+1,ny+2,flux_x,'_X')
@@ -1241,219 +1186,231 @@ c
      1 nx+2,ny+2,4,ns,b2npmo_smav,'TEXTLIN','TEXTPL','')
       call mds_put_double_rzns('\TOP.SNAPSHOT:SMFR','N',
      1 nx+2,ny+1,ns,smfr,'TEXTPL','')
-      call mds_put_double_rzdns('\TOP.SNAPSHOT:SMO','N',
-     1 nx+2,ny+2,4,ns,smo,'TEXTLIN','TEXTPL','')
+#endif
+      call mds_put_double_usdns('\TOP.SNAPSHOT:SMO','N',
+     1     nCv,4,ns,state%sr%smo,'TEXTLIN','TEXTPL','')
+#ifdef WG_TODO
       call mds_put_double_rzns('\TOP.SNAPSHOT:SMPR','N',
      1 nx+2,ny+1,ns,smpr,'TEXTPL','')
       call mds_put_double_rzns('\TOP.SNAPSHOT:SMPT','N',
      1 nx+2,ny+1,ns,smpt,'TEXTPL','')
-      call mds_put_double_rzdns('\TOP.SNAPSHOT:SMQ','N',
-     1 nx+2,ny+2,4,ns,smq,'TEXTLIN','TEXTPL','')
+#endif
+      call mds_put_double_usdns('\TOP.SNAPSHOT:SMQ','N',
+     1     nCv,4,ns,state%sr%smq,'TEXTLIN','TEXTPL','')
+#ifdef WG_TODO
       tmp=smpr+smpt
       call mds_put_double_rzns('\TOP.SNAPSHOT:SMTH','N',
      1 nx+2,ny+1,ns,tmp,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RESCO','#/s',
-     1 nx+2,ny+1,ns,resco,'TEXTPL','')
-      call mds_put_double_rz('\TOP.SNAPSHOT:RESHE','W',
-     1 nx+2,ny+2,reshe,'')
-      call mds_put_double_rz('\TOP.SNAPSHOT:RESHI','W',
-     1 nx+2,ny+2,reshi,'')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RESMO','N',
-     1 nx+2,ny+1,ns,resmo,'TEXTPL','')
-      call mds_put_double_rz('\TOP.SNAPSHOT:RESMT','N',
-     1 nx+2,ny+2,resmt,'')
-       call mds_put_double_rz('\TOP.SNAPSHOT:RESPO','V',
-     1 nx+2,ny+2,respo,'')
+#endif
+      call mds_put_double_usns('\TOP.SNAPSHOT:RESCO','#/s',
+     1     nCv,ns,state%dv%resco,'TEXTPL','')
+      call mds_put_double_us('\TOP.SNAPSHOT:RESHE','W',
+     1     nCv,state%dv%reshe,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:RESHI','W',
+     1     nCv,state%dv%reshi,'')
+      call mds_put_double_usns('\TOP.SNAPSHOT:RESMO','N',
+     1     nCv,ns,state%dv%resmo,'TEXTPL','')
+      call mds_put_double_us('\TOP.SNAPSHOT:RESMT','N',
+     1     nCv,state%dv%resmt,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:RESPO','V',
+     1     nCv,state%dv%respo,'')
 
 #ifdef B25_EIRENE
-#ifdef WG_TODO
       if(natmi.gt.0) then
-        forall (ix=-1:nx,iy=-1:ny,is=0:natmi-1)
-     1   tmp(ix,iy,is)=dab2(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:DAB2','/m^3',nx+2,
-     1   ny+2,natmi,tmp,'TEXTAN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:natmi-1)
-     1   tmp(ix,iy,is)=tab2(ix+1,iy+1,is+1,1)/ev
-        call mds_put_double_rzns('\TOP.SNAPSHOT:TAB2','eV',nx+2,
-     1   ny+2,natmi,tmp,'TEXTAN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:natmi-1)
-     1   tmp(ix,iy,is)=rfluxa(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:RFLA','s^-1.m^-2',nx+2,
-     1   ny+2,natmi,tmp,'TEXTAN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:natmi-1)
-     1   tmp(ix,iy,is)=refluxa(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:REFA','W.m^-2',nx+2,
-     1   ny+2,natmi,tmp,'TEXTAN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:natmi-1)
-     1   tmp(ix,iy,is)=pfluxa(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:PFLA','s^-1.m^-2',nx+2,
-     1   ny+2,natmi,tmp,'TEXTAN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:natmi-1)
-     1   tmp(ix,iy,is)=pefluxa(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:PEFA','W.m^-2',nx+2,
-     1   ny+2,natmi,tmp,'TEXTAN','')
-        forall (ix=-1:nx,iy=-1:ny)
-     1   temp(ix,iy)=emiss(ix+1,iy+1,1,1)
-        call mds_put_double_rz('\TOP.SNAPSHOT:EMISS','ph.m^-3.s^-1',
-     1   nx+2,ny+2,temp,'')
-        forall (ix=-1:nx,iy=-1:ny,is=0:natmi-1)
-     1   tmp(ix,iy,is)=eneutrad(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:ENEUTRAD','W',nx+2,
-     1   ny+2,natmi,tmp,'TEXTAN','')
+        forall (iCv=1:nCv,is=0:natmi-1) tmp(iCv,is)=dab2(iCv,is+1,1)
+        call mds_put_double_usns('\TOP.SNAPSHOT:DAB2','/m^3',
+     1       nCv,natmi,tmp,'TEXTAN','')
+        forall (iCv=1:nCv,is=0:natmi-1) tmp(iCv,is)=tab2(iCv,is+1,1)/ev
+        call mds_put_double_usns('\TOP.SNAPSHOT:TAB2','eV',
+     1       nCv,natmi,tmp,'TEXTAN','')
+        forall (iCv=1:nCv,is=0:natmi-1) tmp(iCv,is)=rfluxa(iCv,is+1,1)
+        call mds_put_double_usns('\TOP.SNAPSHOT:RFLA','s^-1.m^-2',
+     1       nCv,natmi,tmp,'TEXTAN','')
+        forall (iCv=1:nCv,is=0:natmi-1) tmp(iCv,is)=refluxa(iCv,is+1,1)
+        call mds_put_double_usns('\TOP.SNAPSHOT:REFA','W.m^-2',
+     1       nCv,natmi,tmp,'TEXTAN','')
+        forall (iCv=1:nCv,is=0:natmi-1) tmp(iCv,is)=pfluxa(iCv,is+1,1)
+        call mds_put_double_usns('\TOP.SNAPSHOT:PFLA','s^-1.m^-2',
+     1       nCv,natmi,tmp,'TEXTAN','')
+        forall (iCv=1:nCv,is=0:natmi-1) tmp(iCv,is)=pefluxa(iCv,is+1,1)
+        call mds_put_double_usns('\TOP.SNAPSHOT:PEFA','W.m^-2',
+     1       nCv,natmi,tmp,'TEXTAN','')
+        temp(:)=emiss(:,1,1)
+        call mds_put_double_us('\TOP.SNAPSHOT:EMISS','ph.m^-3.s^-1',
+     1       nCv,temp,'')
+        forall (iCv=1:nCv,is=0:natmi-1) tmp(iCv,is)=eneutrad(iCv,is+1,0)
+        call mds_put_double_usns('\TOP.SNAPSHOT:ENEUTRAD','W',
+     1       nCv,natmi,tmp,'TEXTAN','')
       endif
       if(nmoli.gt.0) then
-        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=dmb2(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:DMB2','/m^3',nx+2,
-     1   ny+2,nmoli,tmp,'TEXTMN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=tmb2(ix+1,iy+1,is+1,1)/ev
-        call mds_put_double_rzns('\TOP.SNAPSHOT:TMB2','eV',nx+2,
-     1   ny+2,nmoli,tmp,'TEXTMN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=rfluxm(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:RFLM','s^-1.m^-2',nx+2,
-     1   ny+2,nmoli,tmp,'TEXTMN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=refluxm(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:REFM','W.m^-2',nx+2,
-     1   ny+2,nmoli,tmp,'TEXTMN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=pfluxm(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:PFLM','s^-1.m^-2',nx+2,
-     1   ny+2,nmoli,tmp,'TEXTMN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=pefluxm(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:PEFM','W.m^-2',nx+2,
-     1   ny+2,nmoli,tmp,'TEXTMN','')
-        forall (ix=-1:nx,iy=-1:ny)
-     1   temp(ix,iy)=emissmol(ix+1,iy+1,1,1)
-        call mds_put_double_rz('\TOP.SNAPSHOT:EMISSMOL','ph.m^-3.s^-1',
-     1   nx+2,ny+2,temp,'')
-        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=srcml(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:SRCML','A',nx+2,
-     1   ny+2,nmoli,tmp,'TEXTMN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:nmoli-1)
-     1   tmp(ix,iy,is)=edissml(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:EDISSML','W',nx+2,
-     1   ny+2,nmoli,tmp,'TEXTMN','')
+        forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=dmb2(iCv,is+1,1)
+        call mds_put_double_usns('\TOP.SNAPSHOT:DMB2','/m^3',
+     1       nCv,nmoli,tmp,'TEXTMN','')
+        forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=tmb2(iCv,is+1,1)/ev
+        call mds_put_double_usns('\TOP.SNAPSHOT:TMB2','eV',
+     1       nCv,nmoli,tmp,'TEXTMN','')
+        forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=rfluxm(iCv,is+1,1)
+        call mds_put_double_usns('\TOP.SNAPSHOT:RFLM','s^-1.m^-2',
+     1       nCv,nmoli,tmp,'TEXTMN','')
+        forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=refluxm(iCV,is+1,1)
+        call mds_put_double_usns('\TOP.SNAPSHOT:REFM','W.m^-2',
+     1       nCv,nmoli,tmp,'TEXTMN','')
+        forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=pfluxm(iCv,is+1,1)
+        call mds_put_double_usns('\TOP.SNAPSHOT:PFLM','s^-1.m^-2',
+     1       nCv,nmoli,tmp,'TEXTMN','')
+        forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=pefluxm(iCv,is+1,1)
+        call mds_put_double_usns('\TOP.SNAPSHOT:PEFM','W.m^-2',
+     1       nCv,nmoli,tmp,'TEXTMN','')
+        temp(:)=emissmol(:,1,1)
+        call mds_put_double_us('\TOP.SNAPSHOT:EMISSMOL','ph.m^-3.s^-1',
+     1       nCv,temp,'')
+        if (jvft44.lt.20240627) then
+          forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=srcml(iCv,is+1,1)
+     1     *1.0e6_R8*geo%cvVol(iCv)/qe
+        else
+          forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=srcml(iCv,is+1,1)
+        endif
+        call mds_put_double_usns('\TOP.SNAPSHOT:SRCML','s^-1',
+     1       nCv,nmoli,tmp,'TEXTMN','')
+        if (jvft44.lt.20240627) then
+          forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=edissml(iCv,is+1,1)
+     1     *1.0e6_R8*geo%cvVol(iCv)
+        else
+          forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=edissml(iCv,is+1,1)
+        endif
+        call mds_put_double_usns('\TOP.SNAPSHOT:EDISSML','W',
+     1       nCv,nmoli,tmp,'TEXTMN','')
+        forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=emolrad(iCv,is+1,0)
+        call mds_put_double_usns('\TOP.SNAPSHOT:EMOLRAD','W',
+     1       nCv,nmoli,tmp,'TEXTMN','')
       endif
       if(nioni.gt.0) then
-        forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
-     1   tmp(ix,iy,is)=dib2(ix+1,iy+1,is+1,1)
-        call mds_put_double_rzns('\TOP.SNAPSHOT:DIB2','/m^3',nx+2,
-     1   ny+2,nioni,tmp,'TEXTIN','')
-        forall (ix=-1:nx,iy=-1:ny,is=0:nioni-1)
-     1   tmp(ix,iy,is)=tib2(ix+1,iy+1,is+1,1)/ev
-        call mds_put_double_rzns('\TOP.SNAPSHOT:TIB2','eV',nx+2,
-     1   ny+2,nioni,tmp,'TEXTIN','')
+        forall (iCv=1:nCv,is=0:nioni-1) tmp(iCv,is)=dib2(iCv,is+1,1)
+        call mds_put_double_usns('\TOP.SNAPSHOT:DIB2','/m^3',
+     1       nCv,nioni,tmp,'TEXTIN','')
+        forall (iCv=1:nCv,is=0:nioni-1) tmp(iCv,is)=tib2(iCv,is+1,1)/ev
+        call mds_put_double_usns('\TOP.SNAPSHOT:TIB2','eV',
+     1       nCv,nioni,tmp,'TEXTIN','')
+        forall (iCv=1:nCv,is=0:nioni-1) tmp(iCv,is)=eionrad(iCv,is+1,0)
+        call mds_put_double_usns('\TOP.SNAPSHOT:EIONRAD','W',
+     1       nCv,nioni,tmp,'TEXTIN','')
       endif
 #endif
-#endif
 
-      rtmp=(te(jxi,jsep)/qe*vol(jxi,jsep+1)+
-     2 te(jxi,jsep+1)/qe*vol(jxi,jsep))/
-     3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:te','eV',rtmp)
-      dbimpsep_te=rtmp
-      rtmp=(ti(jxi,jsep)/qe*vol(jxi,jsep+1)+
-     2 ti(jxi,jsep+1)/qe*vol(jxi,jsep))/
-     3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:ti','eV',rtmp)
-      dbimpsep_ti=rtmp
-      rtmp=(ne(jxi,jsep)*vol(jxi,jsep+1)+
-     2 ne(jxi,jsep+1)*vol(jxi,jsep))/
-     3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:ne','m^-3',rtmp)
-      dbimpsep_ne=rtmp
-      rtmp=(dna0(jxi,jsep,ismain)*vol(jxi,jsep+1)+
-     2 dna0(jxi,jsep+1,ismain)*vol(jxi,jsep))/
-     3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:d','m^2/s',rtmp)
-      dbimpsep_d=rtmp
-      rtmp=(hce0(jxi,jsep)/ne(jxi,jsep)*vol(jxi,jsep+1)+
-     2 hce0(jxi,jsep+1)/ne(jxi,jsep+1)*vol(jxi,jsep))/
-     3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:kye','m^2/s',rtmp)
-      dbimpsep_kye=rtmp
-      rtmp=(hcib(jxi,jsep,ismain)/na(jxi,jsep,ismain)*vol(jxi,jsep+1)+
-     2 hcib(jxi,jsep+1,ismain)/na(jxi,jsep+1,ismain)*vol(jxi,jsep))/
-     3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:kyi','m^2/s',rtmp)
-      dbimpsep_kyi=rtmp
-      rtmp=(hci0(jxi,jsep)/ni(jxi,jsep,0)*vol(jxi,jsep+1)+
-     2 hci0(jxi,jsep+1)/ni(jxi,jsep+1,0)*vol(jxi,jsep))/
-     3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:kyi0','m^2/s',rtmp)
-      dbimpsep_kyi0=rtmp
-      rtmp=cr_y(jxi,jsep+1)
-      call mds_put_double('\top.ident.impsep:cr','m',rtmp)
-      dbimpsep_cr=rtmp
-      rtmp=cz_y(jxi,jsep+1)
-      call mds_put_double('\top.ident.impsep:cz','m',rtmp)
-      dbimpsep_cz=rtmp
+      if (nimp.gt.0) then
+        iCv1 = mpg%fcCv(ifsepimp,1)
+        iCv2 = mpg%fcCv(ifsepimp,2) 
+        rtmp=(state%pl%te(iCv1)/qe*gm%cvVol(iCv2)+
+     2        state%pl%te(iCv2)/qe*gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.impsep:te','eV',rtmp)
+        dbimpsep_te=rtmp
+        rtmp=(state%pl%ti(iCv1)/qe*gm%cvVol(iCv2)+
+     2        state%pl%ti(iCv2)/qe*gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.impsep:ti','eV',rtmp)
+        dbimpsep_ti=rtmp
+        rtmp=(state%dv%ne(iCv1)*gm%cvVol(iCv2)+
+     2        state%dv%ne(iCv2)*gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.impsep:ne','m^-3',rtmp)
+        dbimpsep_ne=rtmp
+        rtmp=(state%co%dna0(iCv1,ismain)*gm%cvVol(iCv2)+
+     2        state%co%dna0(iCv2,ismain)*gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.impsep:d','m^2/s',rtmp)
+        dbimpsep_d=rtmp
+        rtmp=(state%co%hce0(iCv1)/state%dv%ne(iCv1)*gm%cvVol(iCv2)+
+     2        state%co%hce0(iCv2)/state%dv%ne(iCv2)*gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.impsep:kye','m^2/s',rtmp)
+        dbimpsep_kye=rtmp
+        rtmp=(state%co%hcib(iCv1,ismain)/state%pl%na(iCv1,ismain)*
+     1        gm%cvVol(iCv2)+
+     2        state%co%hcib(iCv2,ismain)/state%pl%na(iCv2,ismain)*
+     2        gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.impsep:kyi','m^2/s',rtmp)
+        dbimpsep_kyi=rtmp
+        rtmp=(state%co%hci0(iCv1)/state%dv%ni(iCv1,0)*gm%cvVol(iCv2)+
+     2        state%co%hci0(iCv2)/state%dv%ni(iCv2,0)*gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.impsep:kyi0','m^2/s',rtmp)
+        dbimpsep_kyi0=rtmp
+        rtmp=crf(ifsepimp)
+        call mds_put_double('\top.ident.impsep:cr','m',rtmp)
+        dbimpsep_cr=rtmp
+        rtmp=czf(ifsepimp)
+        call mds_put_double('\top.ident.impsep:cz','m',rtmp)
+        dbimpsep_cz=rtmp
+      end if
 
-      rtmp=(te(jxa,jsep)/qe*vol(jxa,jsep+1)+
-     2 te(jxa,jsep+1)/qe*vol(jxa,jsep))/
-     3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:te','eV',rtmp)
-      dbompsep_te=rtmp
-      rtmp=(ti(jxa,jsep)/qe*vol(jxa,jsep+1)+
-     2 ti(jxa,jsep+1)/qe*vol(jxa,jsep))/
-     3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:ti','eV',rtmp)
-      dbompsep_ti=rtmp
-      rtmp=(ne(jxa,jsep)*vol(jxa,jsep+1)+
-     2 ne(jxa,jsep+1)*vol(jxa,jsep))/
-     3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:ne','eV',rtmp)
-      dbompsep_ne=rtmp
-      rtmp=(dna0(jxa,jsep,ismain)*vol(jxa,jsep+1)+
-     2 dna0(jxa,jsep+1,ismain)*vol(jxa,jsep))/
-     3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:d','m^2/s',rtmp)
-      dbompsep_d=rtmp
-      rtmp=(hce0(jxa,jsep)/ne(jxa,jsep)*vol(jxa,jsep+1)+
-     2 hce0(jxa,jsep+1)/ne(jxa,jsep+1)*vol(jxa,jsep))/
-     3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:kye','m^2/s',rtmp)
-      dbompsep_kye=rtmp
-      rtmp=(hcib(jxa,jsep,ismain)/na(jxa,jsep,ismain)*vol(jxa,jsep+1)+
-     2 hcib(jxa,jsep+1,ismain)/na(jxa,jsep+1,ismain)*vol(jxa,jsep))/
-     3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:kyi','m^2/s',rtmp)
-      dbompsep_kyi=rtmp
-      rtmp=(hci0(jxa,jsep)/ni(jxa,jsep,0)*vol(jxa,jsep+1)+
-     2 hci0(jxa,jsep+1)/ni(jxa,jsep+1,0)*vol(jxa,jsep))/
-     3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:kyi0','m^2/s',rtmp)
-      dbompsep_kyi0=rtmp
-      rtmp=cr_y(jxa,jsep+1)
-      call mds_put_double('\top.ident.ompsep:cr','m',rtmp)
-      dbompsep_cr=rtmp
-      rtmp=cz_y(jxa,jsep+1)
-      call mds_put_double('\top.ident.ompsep:cz','m',rtmp)
-      dbompsep_cz=rtmp
+      if (nomp.gt.0) then
+        iCv1 = mpg%fcCv(ifsepomp,1)
+        iCv2 = mpg%fcCv(ifsepomp,2) 
+        rtmp=(state%pl%te(iCv1)/qe*gm%cvVol(iCv2)+
+     2        state%pl%te(iCv2)/qe*gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.ompsep:te','eV',rtmp)
+        dbompsep_te=rtmp
+        rtmp=(state%pl%ti(iCv1)/qe*gm%cvVol(iCv2)+
+     2        state%pl%ti(iCv2)/qe*gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.ompsep:ti','eV',rtmp)
+        dbompsep_ti=rtmp
+        rtmp=(state%dv%ne(iCv1)*gm%cvVol(iCv2)+
+     2        state%dv%ne(iCv2)*gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.ompsep:ne','eV',rtmp)
+        dbompsep_ne=rtmp
+        rtmp=(state%co%dna0(iCv1,ismain)*gm%cvVol(iCv2)+
+     2        state%co%dna0(iCv2,ismain)*gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.ompsep:d','m^2/s',rtmp)
+        dbompsep_d=rtmp
+        rtmp=(state%co%hce0(iCv1)/state%dv%ne(iCv1)*gm%cvVol(iCv2)+
+     2        state%co%hce0(iCv2)/state%dv%ne(iCv2)*gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.ompsep:kye','m^2/s',rtmp)
+        dbompsep_kye=rtmp
+        rtmp=(state%co%hcib(iCv1,ismain)/state%pl%na(iCv1,ismain)*
+     1        gm%cvVol(iCv2)+
+     2        state%co%hcib(iCv2,ismain)/state%pl%na(iCv2,ismain)*
+     2        gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.ompsep:kyi','m^2/s',rtmp)
+        dbompsep_kyi=rtmp
+        rtmp=(state%co%hci0(iCv1)/state%dv%ni(iCv1,0)*gm%cvVol(iCv2)+
+     2        state%co%hci0(iCv2)/state%dv%ni(iCv2,0)*gm%cvVol(iCv1))/
+     3       (gm%cvVol(iCv1)+gm%cvVol(iCv2))
+        call mds_put_double('\top.ident.ompsep:kyi0','m^2/s',rtmp)
+        dbompsep_kyi0=rtmp
+        rtmp=crf(ifsepomp)
+        call mds_put_double('\top.ident.ompsep:cr','m',rtmp)
+        dbompsep_cr=rtmp
+        rtmp=czf(ifsepomp)
+        call mds_put_double('\top.ident.ompsep:cz','m',rtmp)
+        dbompsep_cz=rtmp
+      end if
 
       fhesep=0.0_R8
       fhisep=0.0_R8
       fnesep=0.0_R8
       fnisep=0.0_R8
-      do iy=-1,ny
-        do ix=-1,nx
-          if(topix(ix,iy).ge.-1.and.topix(ix,iy).le.nx.and.
-     1     topiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-            if(on_closed_surface(ix,iy).and.
-     1         .not.on_closed_surface(topix(ix,iy),topiy(ix,iy))) then
-              fhesep=fhesep+fhe(topix(ix,iy),topiy(ix,iy),1,1)
-              fhisep=fhisep+fhi(topix(ix,iy),topiy(ix,iy),1,1)
-              fnesep=fnesep+fne(topix(ix,iy),topiy(ix,iy),1,1)
-              fnisep=fnisep+fni(topix(ix,iy),topiy(ix,iy),1,1)
-            endif
+      if (mpg%iFssep.ne.0) then
+        do i = mpg%fsFcP(mpg%iFssep,1),
+     1         mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+          iCv1 = mpg%fcCv(mpg%fsFc(i),1)
+          iCv2 = mpg%fcCv(mpg%fsFc(i),2)
+          if(mpg%cvOnClosedSurface(iCv1).neqv.
+     1       mpg%cvOnClosedSurface(iCv2)) then
+            fhesep=fhesep+state%dv%fhe(mpg%fsFc(i),1)
+            fhisep=fhisep+state%dv%fhi(mpg%fsFc(i),1)
+            fnesep=fnesep+state%dv%fne(mpg%fsFc(i),1)
+            fnisep=fnisep+state%dv%fni(mpg%fsFc(i),1)
           endif
         enddo
-      enddo
+      endif
       call mds_put_double('\top.ident.sep:fhe','W',fhesep)
       dbsep_fhe=fhesep
       call mds_put_double('\top.ident.sep:fhi','W',fhisep)
@@ -1482,7 +1439,9 @@ c
       CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
+      CALL EIRENE_DEALLOC_INFCOP
       CALL EIRENE_EXTRAB25_CLEANUP
+      CALL EIRENE_WNEUTRALS_DEALLOC
 #else
       call dealloc_b2mod_braeir
       call dealloc_b2mod_eirbra

@@ -1,12 +1,12 @@
 c
-      subroutine flux(shotinfo,nx,ny,xlod,xhid,ylod,yhid)
+      subroutine flux(shotinfo,nCv,xlod,xhid,ylod,yhid)
       use b2mod_types
       use b2mod_b2plot_xy
       use b2mod_constants
       implicit none
 #include <graphics_vars.h>
       character*(*) shotinfo
-      integer nx,ny
+      integer nCv
       real (kind=R8) :: xlod,xhid,ylod,yhid
 
 #ifdef WOS
@@ -88,7 +88,7 @@ c
       main=.true.
       goto 200
 
-      entry flux_add(nx,ny)
+      entry flux_add(nCv)
       main=.false.
 
   200 continue
@@ -133,7 +133,7 @@ c
       call cpcnrc(pfm(is,js),mdim+1,nnx,nny,flow,fhgh,finc,1+3,0,-682)
 
       if(wall) call data_copy(0)
-      if(main) call additional_elements(nx,ny,.true.)
+      if(main) call additional_elements(nCv,.true.)
 
 #else
       write(*,*) 'Not implemented because WOS not defined'

@@ -7,12 +7,14 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      ,   , ncv_eir => ncv
+      use eirmod_wneutrals
       use eirmod_extrab25
 #else
       use b2mod_eirdiag
 #endif
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
       integer ncidcdf,istep,nCv,ns
       type (B2State) :: state
@@ -29,6 +31,8 @@
       call subini ('get_from_movie_cdf')
       call xertst (0.lt.ncidcdf, 'faulty input ncidcdf')
       call xertst (0.le.istep, 'faulty input istep')
+      call xertst (1.le.nCv, 'faulty input nCv')
+      call xertst (1.le.ns, 'faulty input ns')
 #ifndef NO_CDF
       start(1)=istep
       count(1)=1

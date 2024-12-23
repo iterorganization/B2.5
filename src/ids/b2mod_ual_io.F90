@@ -34,7 +34,6 @@ module b2mod_ual_io
     use b2mod_version
     use b2mod_switches
 #ifdef IMAS
-#ifdef WG_TODO
     use b2mod_balance &
      & , only : eirene_mc_pael_sne_bal, eirene_mc_pmel_sne_bal, &
      &          eirene_mc_papl_sna_bal, eirene_mc_pmpl_sna_bal, &
@@ -49,11 +48,8 @@ module b2mod_ual_io
      &          b2stel_she_ion_bal, b2stel_shi_ion_bal, b2npht_shei_bal, &
      &          b2stel_she_rec_bal, b2stel_shi_rec_bal, &
      &          read_balance
-#endif
     use b2mod_diag &
      & , only : nfluids, species_list, label
-    use b2mod_b2plot &
-     & , only : nxtl, nxtr
 #endif
 !    use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
@@ -66,7 +62,7 @@ module b2mod_ual_io
      & , only : natmi, nmoli, nioni, nmassa, nchara, nmassm, ncharm, &
      &          nprt, nchrgi, nchari
     use b2mod_b2plot &
-     & , only : triangle_vol, ix_e2b, wklng, alloc_b2mod_b2plot_eirene
+     & , only : triangle_vol, wklng, alloc_b2mod_b2plot_eirene
 #endif
 #elif defined(IMAS)
     use b2mod_b2plot &
@@ -98,7 +94,7 @@ module b2mod_ual_io
     use ids_grid_subgrid  &     ! IGNORE
      & , only : findGridSubsetByName
     use ids_grid_structured &   ! IGNORE
-     & , only : GridWriteData
+     & , only : gridWriteData
     use ids_grid_common , &     ! IGNORE
         &   IDS_COORDTYPE_R => COORDTYPE_R,       &
         &   IDS_COORDTYPE_Z => COORDTYPE_Z,       &
@@ -111,7 +107,7 @@ module b2mod_ual_io
      &          VEC_ALIGN_PARALLEL_ID, &
      &          VEC_ALIGN_TOROIDAL_ID
 #endif
-#if GGD_MINOR_VERSION < 9
+#if ( GGD_MINOR_VERSION < 9 && GGD_MAJOR_VERSION < 2 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_BETWEEN_SEPARATRICES, &
      &          GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
@@ -124,16 +120,16 @@ module b2mod_ual_io
      &          GRID_SUBSET_OUTER_TARGET_INACTIVE, GRID_SUBSET_INNER_TARGET_INACTIVE
 #endif
 #if GGD_MAJOR_VERSION > 0
-#if GGD_MINOR_VERSION < 10
+#if ( GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
      &          GRID_SUBSET_EDGES, GRID_SUBSET_VOLUMES
 #endif
-#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+#if ( ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #endif
-#if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
+#if ( ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 ) ) && GGD_MAJOR_VERSION == 1 )
     use b2mod_ual_io_grid &
      & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
      &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,  &
@@ -252,7 +248,7 @@ module b2mod_ual_io
   character(len=ids_string_length), save :: code_description
   character(len=ids_string_length), save :: configuration
   character(len=ids_string_length), save :: plate_name(4) !< Divertor plate name
-  character*8, save :: imas_version, ual_version, adas_version
+  character*8, save :: imas_version, adas_version
   character*8, save :: date
   character*10, save :: ctime
   character*5, save :: zone
@@ -273,7 +269,7 @@ contains
     type( geometry ), intent(in) :: geo
     integer tvalues(8)
     integer i, iCv, iFc
-    real(kind=R8) :: r_min, r_max, z_min, z_max
+    real(IDS_real) :: r_min, r_max, z_min, z_max
     logical, save :: IDS_initialized = .false.
     character*16 usrnam
     character*32 get_B25_hash
@@ -286,19 +282,11 @@ contains
     write(imas_version,'(i1,a1,i2,a1,i1)')  IMAS_MAJOR_VERSION,'.', &
                                       &     IMAS_MINOR_VERSION,'.', &
                                       &     IMAS_MICRO_VERSION
-    write(ual_version,'(i1,a1,i2,a1,i1)') UAL_MAJOR_VERSION,'.', &
-                                      &   UAL_MINOR_VERSION,'.', &
-                                      &   UAL_MICRO_VERSION
-#else
-#ifdef USE_PXFGETENV
+#elif defined(USE_PXFGETENV)
     CALL PXFGETENV ('IMAS_VERSION', 0, imas_version, lenval, ierror)
-    CALL PXFGETENV ('UAL_VERSION', 0, ual_version, lenval, ierror)
 #else
     call get_environment_variable('IMAS_VERSION',status=ierror,length=lenval)
     if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',value=imas_version)
-    call get_environment_variable('UAL_VERSION',status=ierror,length=lenval)
-    if (ierror.eq.0) call get_environment_variable('UAL_VERSION',value=ual_version)
-#endif
 #endif
     call date_and_time (date, ctime, zone, tvalues)
     create_date = date//' '//ctime//' '//' '//zone
@@ -396,7 +384,10 @@ contains
             &   summary, &
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-            &   numerics, run_start_time_IN, run_end_time_IN, &
+            &   numerics, &
+#endif
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+            &   run_start_time_IN, run_end_time_IN, &
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
@@ -407,8 +398,8 @@ contains
 #ifdef NO_OPT
 !DIR$ NOOPTIMIZE
 #endif
+        use b2mod_dimensions
         implicit none
-#include <DIMENSIONS.F>
         type (geometry), intent(in) :: geo
         type (mapping), intent(inout) :: mpg
         type (B2state), intent(inout) :: state
@@ -439,6 +430,8 @@ contains
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         type (ids_numerics) :: numerics !< IDS designed to store
             !< run numerics data
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
         real(IDS_real), intent(in) :: run_start_time_IN, run_end_time_IN !< Run time bounds
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
@@ -669,6 +662,8 @@ contains
      &   ismain, ismain0, dtim,                              &
      &   switch, geo, mpg, state, state_ext, state_avg, wrong_flow, .false.)
 
+        if (balance_netcdf.ne.0) call read_balance
+
         !! Preparing database for writing
         !! Through practice it was disclosed that there are some mandatory
         !! steps to be done in order to assure for data to be successfully
@@ -719,8 +714,7 @@ contains
           &  homogeneous_time )
         call write_ids_properties( radiation%ids_properties, &
           &  homogeneous_time )
-        call write_ids_properties( description%ids_properties, &
-          &  homogeneous_time )
+        call write_ids_properties( description%ids_properties, 2 )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_properties( summary%ids_properties, &
           &  homogeneous_time )
@@ -753,23 +747,29 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_code( switch, divertors%code, code_commit, code_description )
 #endif
+#if IMAS_MAJOR_VERSION > 3
+        call write_ids_code( switch, description%code, code_commit, code_description )
+#endif
         allocate( edge_transport%model(1) )
-        edge_transport%model(1)%identifier%index = 1
         allocate( edge_transport%model(1)%identifier%name(1) )
         allocate( edge_transport%model(1)%identifier%description(1) )
         if (ids_from_43.eq.0) then
           if (style.eq.0) then
+            edge_transport%model(1)%identifier%index = -2
             edge_transport%model(1)%identifier%name(1) = "SOLPS5.0"
             edge_transport%model(1)%identifier%description(1) = "SOLPS5.0 physics model"
           else if (style.ge.1) then
+            edge_transport%model(1)%identifier%index = -3
             edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
             edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
           else if (style.eq.-1) then
+            edge_transport%model(1)%identifier%index = -1
             edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
             edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
           end if
           edge_transport%model(1)%flux_multiplier = 1.5_IDS_real + switch%BoRiS
         else
+          edge_transport%model(1)%identifier%index = -1
           edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
           edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
           edge_transport%model(1)%flux_multiplier = 2.5_IDS_real
@@ -798,8 +798,10 @@ contains
         edge_transport%time(time_sind) = time
         allocate( edge_sources%time(num_time_slices) )
         edge_sources%time(time_sind) = time
+#if IMAS_MAJOR_VERSION < 4
         allocate( description%time(num_time_slices) )
         description%time(time_sind) = time
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         allocate( summary%time(num_time_slices) )
         summary%time(time_sind) = time
@@ -837,12 +839,12 @@ contains
           allocate( radiation%process(j)%identifier%name(1) )
           allocate( radiation%process(j)%identifier%description(1) )
         end do
+        radiation%process(1)%identifier%index = 2
         radiation%process(1)%identifier%name = 'line_radiation'
         radiation%process(1)%identifier%description = 'Line and rec. rad. from B2.5 species'
+        radiation%process(2)%identifier%index = 8
         radiation%process(2)%identifier%name = 'bremsstrahlung'
         radiation%process(2)%identifier%description = 'Bremsstrahlung from B2.5 species'
-        radiation%process(1)%identifier%index = 2
-        radiation%process(2)%identifier%index = 8
         if (switch%use_eirene.ne.0) then
           radiation%process(3)%identifier%index = 1
           radiation%process(4)%identifier%index = 2
@@ -866,96 +868,72 @@ contains
         allocate( edge_sources%source(nsources) )
         do is = 1, nsources
           allocate( edge_sources%source(is)%ggd( num_time_slices ) )
+          allocate( edge_sources%source(is)%identifier%name(1) )
+          allocate( edge_sources%source(is)%identifier%description(1) )
         end do
 
         !! Total sources
         edge_sources%source(1)%identifier%index = 1
-        allocate( edge_sources%source(1)%identifier%name(1) )
         edge_sources%source(1)%identifier%name = "Total"
-        allocate( edge_sources%source(1)%identifier%description(1) )
         edge_sources%source(1)%identifier%description = "Total source from "//trim(source)
         !! Background sources
         edge_sources%source(2)%identifier%index = 703
-        allocate( edge_sources%source(2)%identifier%name(1) )
         edge_sources%source(2)%identifier%name = "Background"
-        allocate( edge_sources%source(2)%identifier%description(1) )
         edge_sources%source(2)%identifier%description = "External sources from "//trim(source)
         !! Prescribed sources
         edge_sources%source(3)%identifier%index = 705
-        allocate( edge_sources%source(3)%identifier%name(1) )
         edge_sources%source(3)%identifier%name = "Prescribed"
-        allocate( edge_sources%source(3)%identifier%description(1) )
         edge_sources%source(3)%identifier%description = &
             & "Boundary conditions sources from "//trim(source)
         !! Time derivatives
         edge_sources%source(4)%identifier%index = 706
-        allocate( edge_sources%source(4)%identifier%name(1) )
         edge_sources%source(4)%identifier%name = "Time derivative"
-        allocate( edge_sources%source(4)%identifier%description(1) )
         edge_sources%source(4)%identifier%description = &
             & "Time derivative sources from "//trim(source)
         !! Atomic ionization
         edge_sources%source(5)%identifier%index = 707
-        allocate( edge_sources%source(5)%identifier%name(1) )
         edge_sources%source(5)%identifier%name = "Atomic ionization"
-        allocate( edge_sources%source(5)%identifier%description(1) )
         edge_sources%source(5)%identifier%description = &
             & "Atomic ionization sources from "//trim(source)
         !! Molecular ionization
         edge_sources%source(6)%identifier%index = 708
-        allocate( edge_sources%source(6)%identifier%name(1) )
         edge_sources%source(6)%identifier%name = "Molecular ionization"
-        allocate( edge_sources%source(6)%identifier%description(1) )
         edge_sources%source(6)%identifier%description = &
             & "Molecular ionization sources from "//trim(source)
         !! Ionization
         edge_sources%source(7)%identifier%index = 709
-        allocate( edge_sources%source(7)%identifier%name(1) )
         edge_sources%source(7)%identifier%name = "Ionization"
-        allocate( edge_sources%source(7)%identifier%description(1) )
         edge_sources%source(7)%identifier%description = &
             & "Ionization sources from "//trim(source)
         !! Recombination
         edge_sources%source(8)%identifier%index = 710
-        allocate( edge_sources%source(8)%identifier%name(1) )
         edge_sources%source(8)%identifier%name = "Recombination"
-        allocate( edge_sources%source(8)%identifier%description(1) )
         edge_sources%source(8)%identifier%description = &
             & "Recombination sources from "//trim(source)
         !! Charge exchange
         edge_sources%source(9)%identifier%index = 305
-        allocate( edge_sources%source(9)%identifier%name(1) )
         edge_sources%source(9)%identifier%name = "Charge exchange"
-        allocate( edge_sources%source(9)%identifier%description(1) )
         edge_sources%source(9)%identifier%description = &
             & "Charge exchange sources from "//trim(source)
         !! Collisional equipartition
         edge_sources%source(10)%identifier%index = 11
-        allocate( edge_sources%source(10)%identifier%name(1) )
         edge_sources%source(10)%identifier%name = "Equipartition"
-        allocate( edge_sources%source(10)%identifier%description(1) )
         edge_sources%source(10)%identifier%description = &
             & "Collisional equipartition sources from "//trim(source)
         !! Ohmic
         edge_sources%source(11)%identifier%index = 7
-        allocate( edge_sources%source(11)%identifier%name(1) )
         edge_sources%source(11)%identifier%name = "Ohmic"
-        allocate( edge_sources%source(11)%identifier%description(1) )
         edge_sources%source(11)%identifier%description = &
             & "Ohmic (Joule) sources from "//trim(source)
         !! Radiation
         edge_sources%source(12)%identifier%index = 200
-        allocate( edge_sources%source(12)%identifier%name(1) )
         edge_sources%source(12)%identifier%name = "Radiation"
-        allocate( edge_sources%source(12)%identifier%description(1) )
         edge_sources%source(12)%identifier%description = &
             & "Radiation sources from "//trim(source)
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
         !! Neutrals
         edge_sources%source(13)%identifier%index = 701
-        allocate( edge_sources%source(13)%identifier%name(1) )
         edge_sources%source(13)%identifier%name = "Neutrals"
-        allocate( edge_sources%source(13)%identifier%description(1) )
         edge_sources%source(13)%identifier%description = &
             & "Total source due to plasma-neutral interactions from "//trim(source)
 #endif
@@ -971,7 +949,7 @@ contains
             &  edge_profiles%vacuum_toroidal_field%b0( time_sind )
         radiation%vacuum_toroidal_field%r0 = &
             &  edge_profiles%vacuum_toroidal_field%r0
-#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MINOR_VERSION > 21 && IMAS_MAJOR_VERSION == 3 )
         allocate( description%data_entry%user(1) )
         description%data_entry%user = username
         allocate( description%data_entry%machine(1) )
@@ -984,15 +962,27 @@ contains
         description%imas_version = version
         allocate( description%dd_version(1) )
         description%dd_version = imas_version
+#endif
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if ( present( time_step_IN ) ) &
           &  description%simulation%time_step = time_step_IN
         if ( present ( time_IN ) ) &
           &  description%simulation%time_current = time_IN
         allocate( description%simulation%workflow(1) )
         description%simulation%workflow = source
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
         description%simulation%time_begin = run_start_time_IN
         description%simulation%time_end = run_end_time_IN
+#endif
+#if IMAS_MAJOR_VERSION > 3
+        description%type%index = 2
+        allocate( description%type%name(1) )
+        allocate( description%type%description(1) )
+        description%type%name = "simulation"
+        description%type%description = "Simulation results from "//trim(source)
+        allocate( description%machine(1) )
+        description%machine = database
+        description%pulse = shot
 #endif
 
         i=index(B25_git_version,'-')
@@ -1053,6 +1043,14 @@ contains
               u = u - eneutrad(iCv,is,0)
               if (match_found) frac = frac - eneutrad(iCv,is,0)
             end do
+            do is = 1, nmoli
+              u = u - emolrad(iCv,is,0)
+              if (match_found) frac = frac - emolrad(iCv,is,0)
+            end do
+            do is = 1, nioni
+              u = u - eionrad(iCv,is,0)
+              if (match_found) frac = frac - eionrad(iCv,is,0)
+            end do
 #endif
           end do
           if (u.ne.0.0_IDS_real) then
@@ -1079,6 +1077,12 @@ contains
 #ifdef B25_EIRENE
             do is = 1, natmi
               u = u - eneutrad(iCv,is,0)
+            end do
+            do is = 1, nmoli
+              u = u - emolrad(iCv,is,0)
+            end do
+            do is = 1, nioni
+              u = u - eionrad(iCv,is,0)
             end do
 #endif
           end do
@@ -1243,36 +1247,36 @@ contains
                 &  divertors%divertor(i)%target(1)%power_incident_fraction, &
                 &  1.0_IDS_real )
               call write_timed_value( &
-                & divertors%divertor(i)%target(1)%power_conducted, &
-                & power_conducted(i) )
+                &  divertors%divertor(i)%target(1)%power_conducted, &
+                &  power_conducted(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%power_conducted, &
-                & power_conducted(i) )
+                &  divertors%divertor(i)%power_conducted, &
+                &  power_conducted(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%target(1)%power_convected, &
-                & power_convected(i) )
+                &  divertors%divertor(i)%target(1)%power_convected, &
+                &  power_convected(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%power_convected, &
-                & power_convected(i) )
+                &  divertors%divertor(i)%power_convected, &
+                &  power_convected(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%target(1)%power_recombination_plasma, &
-                & power_recombination_plasma(i) )
+                &  divertors%divertor(i)%target(1)%power_recombination_plasma, &
+                &  power_recombination_plasma(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%power_recombination_plasma, &
-                & power_recombination_plasma(i) )
+                &  divertors%divertor(i)%power_recombination_plasma, &
+                &  power_recombination_plasma(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%target(1)%power_currents, &
-                & power_currents(i) )
+                &  divertors%divertor(i)%target(1)%power_currents, &
+                &  power_currents(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%power_currents, &
-                & power_currents(i) )
+                &  divertors%divertor(i)%power_currents, &
+                &  power_currents(i) )
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
               call write_timed_value( &
-                & divertors%divertor(i)%target(1)%current_incident, &
-                & current_incident(i) )
+                &  divertors%divertor(i)%target(1)%current_incident, &
+                &  current_incident(i) )
               call write_timed_value( &
-                & divertors%divertor(i)%current_incident, &
-                & current_incident(i) )
+                &  divertors%divertor(i)%current_incident, &
+                &  current_incident(i) )
 #endif
             end do
           end if
@@ -2795,7 +2799,26 @@ contains
                 &   scalar = edge_sources%source(4)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
-            if (switch%use_eirene.eq.0) then
+            if (switch%use_eirene.ne.0 .and. balance_netcdf.ne.0) then
+                tmpCv = 0.0_IDS_real
+                do istrai = 1, size( eirene_mc_pael_sne_bal, 2)
+                    tmpCv(:) = tmpCv(:) + eirene_mc_pael_sne_bal(:,istrai)
+                end do
+                tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                    &            electrons%particles,                       &
+                    &   b2CellData = tmpCv )
+                tmpCv = 0.0_IDS_real
+                do istrai = 1, size( eirene_mc_pmel_sne_bal, 2)
+                    tmpCv(:) = tmpCv(:) + eirene_mc_pmel_sne_bal(:,istrai)
+                end do
+                tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(6)%ggd( time_sind )%   &
+                    &            electrons%particles,                       &
+                    &   b2CellData = tmpCv )
+            else
                 tmpCv(:) = state%srw%b2stbr_sne(:) / geo%cvVol(:)
                 call write_cell_scalar( sources_grid, mpg,                  &
                     &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
@@ -2984,7 +3007,44 @@ contains
                     &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
                     &            ion( is )%particles,                       &
                     &   b2CellData = totCv )
-                if (switch%use_eirene.eq.0) then
+                if (switch%use_eirene.ne.0 .and. balance_netcdf.ne.0) then
+                  totCv(:) = 0.0_IDS_real
+                  do js = 1, istion(is)
+                    tmpCv = 0.0_IDS_real
+                    do istrai = 1, size( eirene_mc_papl_sna_bal, 3)
+                      tmpCv(:) = tmpCv(:)                                   &
+                         &       + eirene_mc_papl_sna_bal(:,ispion(is,js),istrai)
+                    end do
+                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                    totCv(:) = totCv(:) + tmpCv(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                        &            ion( is )%state( js )%particles,         &
+                        &   b2CellData = tmpCv )
+                  end do
+                  call write_cell_scalar( sources_grid, mpg,                  &
+                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                        &            ion( is )%particles,                     &
+                        &   b2CellData = totCv )
+                  totCv = 0.0_IDS_real
+                  do js = 1, istion(is)
+                    tmpCv = 0.0_IDS_real
+                    do istrai = 1, size( eirene_mc_pmpl_sna_bal, 3)
+                      tmpCv(:) = tmpCv(:)                                     &
+                         &       + eirene_mc_pmpl_sna_bal(:,ispion(is,js),istrai)
+                    end do
+                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                    totCv(:) = totCv(:) + tmpCv(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(6)%ggd( time_sind )% &
+                        &            ion( is )%state( js )%particles,         &
+                        &   b2CellData = tmpCv )
+                  end do
+                  call write_cell_scalar( sources_grid, mpg,                  &
+                      &   scalar = edge_sources%source(6)%ggd( time_sind )%   &
+                      &            ion( is )%particles,                       &
+                      &   b2CellData = totCv )
+                else
                   totCv(:) = 0.0_IDS_real
                   do js = 1, istion(is)
                     tmpCv(:) = state%srw%b2stbr_sna(:,ispion(is,js)) / geo%cvVol(:)
@@ -3042,6 +3102,28 @@ contains
                     &   val = edge_profiles%ggd( time_sind )%               &
                     &         ion(is)%density,                              &
                     &   value = totCv )
+                if (balance_netcdf.ne.0) then
+                  totCv = 0.0_IDS_real
+                  do js = 1, istion(is)
+                    tmpCv = 0.0_IDS_real
+                    do istrai = 1, size(eirene_mc_paio_sna_bal,3)
+                      tmpCv(:) = tmpCv(:)                                   &
+                         &       + eirene_mc_paio_sna_bal(:,ispion(is,js),istrai)      &
+                         &       + eirene_mc_pmio_sna_bal(:,ispion(is,js),istrai)      &
+                         &       + eirene_mc_piio_sna_bal(:,ispion(is,js),istrai)
+                    end do
+                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                    totCv(:) = totCv(:) + tmpCv(:)
+                    call write_cell_scalar( sources_grid, mpg,                &
+                        &   scalar = edge_sources%source(1)%ggd( time_sind )% &
+                        &            ion( is )%state( js )%particles,         &
+                        &   b2CellData = tmpCv )
+                  end do
+                  call write_cell_scalar( sources_grid, mpg,                  &
+                      &   scalar = edge_sources%source(1)%ggd( time_sind )%   &
+                      &            ion( is )%particles,                       &
+                      &   b2CellData = totCv )
+                end if
               end if
             end do
 
@@ -3212,7 +3294,50 @@ contains
                       &                     momentum,                   &
                       &   b2CellData = totCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                if (switch%use_eirene.eq.0) then
+                if (switch%use_eirene.ne.0 .and. balance_netcdf.ne.0) then
+                  totCv = 0.0_IDS_real
+                  do js = 1, istion(is)
+                    tmpCv = 0.0_IDS_real
+                    do istrai = 1, size( eirene_mc_mapl_smo_bal, 3)
+                      tmpCv(:) = tmpCv(:) + &
+                         &  eirene_mc_mapl_smo_bal(:,ispion(is,js),istrai)
+                    end do
+                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                    totCv(:) = totCv(:) + tmpCv(:)
+                    call write_cell_vector_component( sources_grid, mpg,&
+                        &   vectorComponent = edge_sources%source(5)%   &
+                        &            ggd( time_sind )%ion( is )%        &
+                        &            state( js )%momentum,              &
+                        &   b2CellData = tmpCv,                         &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  end do
+                  call write_cell_vector_component( sources_grid, mpg,  &
+                      &   vectorComponent = edge_sources%source(5)%     &
+                      &            ggd( time_sind )%ion( is )%momentum, &
+                      &   b2CellData = totCv,                           &
+                      &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  totCv = 0.0_IDS_real
+                  do js = 1, istion(is)
+                    tmpCv = 0.0_IDS_real
+                    do istrai = 1, size( eirene_mc_mmpl_smo_bal, 3)
+                      tmpCv(:) = tmpCv(:) + &
+                         &  eirene_mc_mmpl_smo_bal(:,ispion(is,js),istrai)
+                    end do
+                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                    totCv(:) = totCv(:) + tmpCv(:)
+                    call write_cell_vector_component( sources_grid, mpg,&
+                        &   vectorComponent = edge_sources%source(6)%   &
+                        &            ggd( time_sind )%ion( is )%        &
+                        &            state( js )%momentum,              &
+                        &   b2CellData = tmpCv,                         &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                  end do
+                  call write_cell_vector_component( sources_grid, mpg,    &
+                        &   vectorComponent = edge_sources%source(6)%     &
+                        &            ggd( time_sind )%ion( is )%momentum, &
+                        &   b2CellData = totCv,                           &
+                        &   vectorID = VEC_ALIGN_PARALLEL_ID )
+                else
                   totCv = 0.0_IDS_real
                   do js = 1, istion(is)
                     tmpCv(:) = state%srw%b2stbr_smo(:,ispion(is,js)) / geo%cvVol(:)
@@ -3346,10 +3471,46 @@ contains
                 &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
                 &            electrons%energy,                          &
                 &   b2CellData = tmpCv )
-            if (switch%use_eirene.eq.0) then
+            if (switch%use_eirene.ne.0 .and. balance_netcdf.ne.0) then
+                tmpCv = 0.0_IDS_real
+                do is = 1, size( eirene_mc_eael_she_bal, 2)
+                    tmpCv(:) = tmpCv(:) + eirene_mc_eael_she_bal(:,is)
+                end do
+                tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+                tmpCv = 0.0_IDS_real
+                do is = 1, size( eirene_mc_emel_she_bal, 2)
+                    tmpCv(:) = tmpCv(:) + eirene_mc_emel_she_bal(:,is)
+                end do
+                tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(6)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+            else
                 tmpCv(:) = state%srw%b2stbr_she(:) / geo%cvVol(:)
                 call write_cell_scalar( sources_grid, mpg,                  &
                     &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+            end if
+            if (balance_netcdf.ne.0) then
+                tmpCv(:) = b2stel_she_ion_bal(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+                tmpCv(:) = b2stel_she_rec_bal(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(8)%ggd( time_sind )%   &
+                    &            electrons%energy,                          &
+                    &   b2CellData = tmpCv )
+                tmpCv(:) = -b2npht_shei_bal(:) / geo%cvVol(:)
+                call write_cell_scalar( sources_grid, mpg,                  &
+                    &   scalar = edge_sources%source(10)%ggd( time_sind )%  &
                     &            electrons%energy,                          &
                     &   b2CellData = tmpCv )
             end if
@@ -3365,6 +3526,12 @@ contains
 #ifdef B25_EIRENE
             do is = 1, natmi
               tmpCv(:) = tmpCv(:) - eneutrad(:,is,0)
+            end do
+            do is = 1, nmoli
+              tmpCv(:) = tmpCv(:) - emolrad(:,is,0)
+            end do
+            do is = 1, nioni
+              tmpCv(:) = tmpCv(:) - eionrad(:,is,0)
             end do
 #endif
             tmpCv(:) = tmpCv(:) / geo%cvVol(:)
@@ -3472,10 +3639,46 @@ contains
                 &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
                 &            total_ion_energy,                          &
                 &   b2CellData = tmpCv )
-            if (switch%use_eirene.eq.0) then
+            if (switch%use_eirene.ne.0 .and. balance_netcdf.ne.0) then
+              tmpCv = 0.0_IDS_real
+              do is = 1, size( eirene_mc_eapl_shi_bal, 2)
+                tmpCv(:) = tmpCv(:) + eirene_mc_eapl_shi_bal(:,is)
+              end do
+              tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                  &
+                  &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+              tmpCv = 0.0_IDS_real
+              do is = 1, size( eirene_mc_empl_shi_bal, 2)
+                tmpCv(:) = tmpCv(:) + eirene_mc_empl_shi_bal(:,is)
+              end do
+              tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                  &
+                  &   scalar = edge_sources%source(6)%ggd( time_sind )%   &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+            else
               tmpCv(:) = state%srw%b2stbr_shi(:) / geo%cvVol(:)
               call write_cell_scalar( sources_grid, mpg,                  &
                   &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+            end if
+            if (balance_netcdf.ne.0) then
+              tmpCv(:) = b2stel_shi_ion_bal(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                  &
+                  &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+              tmpCv(:) = b2stel_shi_rec_bal(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                  &
+                  &   scalar = edge_sources%source(8)%ggd( time_sind )%   &
+                  &            total_ion_energy,                          &
+                  &   b2CellData = tmpCv )
+              tmpCv(:) = b2npht_shei_bal(:) / geo%cvVol(:)
+              call write_cell_scalar( sources_grid, mpg,                  &
+                  &   scalar = edge_sources%source(10)%ggd( time_sind )%  &
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
             end if
@@ -3828,6 +4031,41 @@ contains
                        &                     velocity_exb,                   &
                        &   b2FaceData = flxFace(:,1),                        &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
+                   if (balance_netcdf.ne.0) then
+                     tmpCv = 0.0_IDS_real
+                     do istrai = 1, size(eirene_mc_paat_sna_bal,3)
+                       tmpCv(:) = tmpCv(:)                                 &
+                          &       + eirene_mc_paat_sna_bal(:,is,istrai)    &
+                          &       + eirene_mc_pmat_sna_bal(:,is,istrai)    &
+                          &       + eirene_mc_piat_sna_bal(:,is,istrai)
+                     end do
+                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                     call write_cell_scalar( sources_grid, mpg,              &
+                       &   scalar = edge_sources%source(1)%ggd( time_sind )% &
+                       &            neutral( js )%state( ks )%particles,     &
+                       &   b2CellData = tmpCv )
+                     tmpCv = 0.0_IDS_real
+                     do istrai = 1, size(eirene_mc_paat_sna_bal,3)
+                       tmpCv(:) = tmpCv(:)                                   &
+                          &       + eirene_mc_paat_sna_bal(:,is,istrai)
+                     end do
+                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                     call write_cell_scalar( sources_grid, mpg,              &
+                       &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                       &            neutral( js )%state( ks )%particles,     &
+                       &   b2CellData = tmpCv )
+                     tmpCv = 0.0_IDS_real
+                     do istrai = 1, size(eirene_mc_pmat_sna_bal,3)
+                       tmpCv(:) = tmpCv(:)                                   &
+                          &       + eirene_mc_pmat_sna_bal(:,is,istrai)      &
+                          &       + eirene_mc_piat_sna_bal(:,is,istrai)
+                     end do
+                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                     call write_cell_scalar( sources_grid, mpg,              &
+                       &   scalar = edge_sources%source(6)%ggd( time_sind )% &
+                       &            neutral( js )%state( ks )%particles,     &
+                       &   b2CellData = tmpCv )
+                   end if
                    tmpCv(:) = eneutrad(:,is,0)/ geo%cvVol(:)
                    call write_cell_scalar( sources_grid, mpg,                &
                        &   scalar = edge_sources%source(12)%                 &
@@ -3901,6 +4139,41 @@ contains
                        &                     velocity_exb,                   &
                        &   b2FaceData = tmpFace,                             &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
+                   if (balance_netcdf.ne.0) then
+                     tmpCv = 0.0_IDS_real
+                     do istrai = 1, size(eirene_mc_paml_sna_bal,3)
+                       tmpCv(:) = tmpCv(:)                                   &
+                          &       + eirene_mc_paml_sna_bal(:,is,istrai)      &
+                          &       + eirene_mc_pmml_sna_bal(:,is,istrai)      &
+                          &       + eirene_mc_piml_sna_bal(:,is,istrai)
+                     end do
+                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                     call write_cell_scalar( sources_grid, mpg,              &
+                       &   scalar = edge_sources%source(1)%ggd( time_sind )% &
+                       &            neutral( js )%state( ks )%particles,     &
+                       &   b2CellData = tmpCv )
+                     tmpCv = 0.0_IDS_real
+                     do istrai = 1, size(eirene_mc_paml_sna_bal,3)
+                       tmpCv(:) = tmpCv(:)                                   &
+                          &       + eirene_mc_paml_sna_bal(:,is,istrai)
+                     end do
+                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                     call write_cell_scalar( sources_grid, mpg,              &
+                       &   scalar = edge_sources%source(5)%ggd( time_sind )% &
+                       &            neutral( js )%state( ks )%particles,     &
+                       &   b2CellData = tmpCv )
+                     tmpCv = 0.0_IDS_real
+                     do istrai = 1, size(eirene_mc_pmml_sna_bal,3)
+                       tmpCv(:) = tmpCv(:)                                   &
+                           &      + eirene_mc_pmml_sna_bal(:,is,istrai)      &
+                           &      + eirene_mc_piml_sna_bal(:,is,istrai)
+                     end do
+                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
+                     call write_cell_scalar( sources_grid, mpg,              &
+                       &   scalar = edge_sources%source(6)%ggd( time_sind )% &
+                       &            neutral( js )%state( ks )%particles,     &
+                       &   b2CellData = tmpCv )
+                   end if
                 end do
 #endif
             else
@@ -5106,14 +5379,6 @@ contains
     allocate( properties%provider(1) )
     properties%provider = username
 #endif
-#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-    allocate( properties%version_put%data_dictionary(1) )
-    properties%version_put%data_dictionary = imas_version
-    allocate( properties%version_put%access_layer(1) )
-    properties%version_put%access_layer = ual_version
-    allocate( properties%version_put%access_layer_language(1) )
-    properties%version_put%access_layer_language = 'FORTRAN'
-#endif
     return
 
     end subroutine write_ids_properties
@@ -5304,6 +5569,7 @@ contains
     logical exists
     logical is_comment, streql
     external is_comment, streql
+    external b2agx0, find_file, ipgetr, strip_spaces
 
     eq_found = .false.
     new_eq_ggd = .false.
@@ -5966,30 +6232,50 @@ contains
       case ( 1 ) !< Grid subset consists of nodes
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(        &
                      &   basegrid, iSubset, mpg, tmpVx )
-#if GGD_MINOR_VERSION > 8
-        call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
+        if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+          call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-        call gridWriteData( val( iSubset ), iSubsetID, idsdata )
+          val(iSubset)%grid_index = ggdId
+          call gridWriteData( val( iSubset ), iSubsetID, idsdata )
 #endif
+        else
+          val(iSubset)%grid_index = ggdId
+          val(iSubset)%grid_subset_index = iSubsetID
+        end if
         deallocate( idsdata )
       case ( 2 ) !< Grid subset consists of faces
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(          &
                      &   basegrid, iSubset, mpg, tmpFace )
-#if GGD_MINOR_VERSION > 8
-        call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
+        if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+          call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-        call gridWriteData( val( iSubset ), iSubsetID, idsdata )
+          val(iSubset)%grid_index = ggdId
+          call gridWriteData( val( iSubset ), iSubsetID, idsdata )
 #endif
+        else
+          val(iSubset)%grid_index = ggdId
+          val(iSubset)%grid_subset_index = iSubsetID
+        end if
         deallocate( idsdata )
       case ( 3 ) !< Grid subset consists of cells
         idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Cell(          &
                       &  basegrid, iSubset, mpg, value )
-#if GGD_MINOR_VERSION > 8
-        call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
+        if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+          call gridWriteData( val( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-        call gridWriteData( val( iSubset ), iSubsetID, idsdata )
+          val(iSubset)%grid_index = ggdId
+          call gridWriteData( val( iSubset ), iSubsetID, idsdata )
 #endif
+        else
+          val(iSubset)%grid_index = ggdId
+          val(iSubset)%grid_subset_index = iSubsetID
+        end if
         deallocate( idsdata )
+      case ( 4 ) !< Grid subset consists of volumes
+        call xerrab( 'Case for volumetric grid subsets not yet coded !')
       case default
         call xerrab( 'Unknown grid subset '//int2str(iSubset)// &
             &        ' dimension : '//int2str(ndim) )
@@ -6035,70 +6321,76 @@ contains
 
     do iSubset = 1, nSubsets
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-       ndim = 3
-       iSubsetID = GRID_SUBSET_CELLS
+      ndim = 3
+      iSubsetID = GRID_SUBSET_CELLS
 #else
-       ndim = basegrid%grid_subset(iSubset)%dimension
-       iSubsetID =basegrid%grid_subset(iSubset)%identifier%index
+      ndim = basegrid%grid_subset(iSubset)%dimension
+      iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
 #endif
-       if (ndim.eq.IDS_INT_INVALID) then
-         select case (iSubsetID)
-         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-             & GRID_SUBSET_MAGNETIC_AXIS,               &
-             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_INNER_STRIKEPOINT,           &
-             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
-             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
-             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
-           ndim = 1
-         case( GRID_SUBSET_EDGES, &
-             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
-             & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
-             & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
-             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
-             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
-             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-             & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_SECOND_SEPARATRIX, &
-             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
-             & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
-             & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
-             & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
-             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
-             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
-             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
-           ndim = 2
-         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
-             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
-             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
-             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
-             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
-             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
-           ndim = 3
-         case( GRID_SUBSET_VOLUMES )
-           ndim = 4
-         end select
-       end if
-       if (ndim.ne.3) cycle
+      if (ndim.eq.IDS_INT_INVALID) then
+        select case (iSubsetID)
+        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+            & GRID_SUBSET_MAGNETIC_AXIS,               &
+            & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_INNER_STRIKEPOINT,           &
+            & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+            & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+            & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
+          ndim = 1
+        case( GRID_SUBSET_EDGES, &
+            & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
+            & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+            & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+            & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+            & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+            & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_FULL_WALL, &
+            & GRID_SUBSET_SECOND_SEPARATRIX, &
+            & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+            & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+            & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+            & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+            & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+            & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+            & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
+          ndim = 2
+        case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+            & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
+            & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+            & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+            & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+          ndim = 3
+        case( GRID_SUBSET_VOLUMES )
+          ndim = 4
+        end select
+      end if
+      if (ndim.ne.3) cycle
 
-       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Cell(  &
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Cell(  &
           &   basegrid, iSubset, mpg, b2CellData )
-#if GGD_MINOR_VERSION > 8
-       call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
+      if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+        call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-       call gridWriteData( scalar( iSubset ), iSubsetID, idsdata )
+        scalar(iSubset)%grid_index = ggdId
+        call gridWriteData( scalar( iSubset ), iSubsetID, idsdata )
 #endif
-       deallocate(idsdata)
+      else
+        scalar(iSubset)%grid_index = ggdId
+        scalar(iSubset)%grid_subset_index = iSubsetID
+      end if
+      deallocate(idsdata)
     end do
 
     return
@@ -6210,8 +6502,13 @@ contains
       if (ndim.ne.3) cycle
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Cell(       &
                    &   basegrid, iSubset, mpg, b2CellData )
-      call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
-          &   ggdID, iSubsetID, vectorID, idsdata )
+      if ( size(idsdata) > 0 ) then
+        call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
+            &   ggdID, iSubsetID, vectorID, idsdata )
+      else
+        vectorComponent(iSubset)%grid_index = ggdId
+        vectorComponent(iSubset)%grid_subset_index = iSubsetID
+      end if
       deallocate(idsdata)
     end do
 
@@ -6430,8 +6727,13 @@ contains
       if (ndim.ne.2) cycle
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face( &
                    &   basegrid, iSubset, mpg, b2FaceData )
-      call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
+      if ( size(idsdata) > 0 ) then
+        call B2grid_Write_Data_Vector_Components( vectorComponent(iSubset), &
                    &   ggdID, iSubsetID, vectorID, idsdata )
+      else
+        vectorComponent(iSubset)%grid_index = ggdId
+        vectorComponent(iSubset)%grid_subset_index = iSubsetID
+      end if
       deallocate(idsdata)
     end do
 
@@ -6474,70 +6776,76 @@ contains
 
     do iSubset = 1, nSubsets
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-       ndim = 3
-       iSubsetID = GRID_SUBSET_CELLS
+      ndim = 3
+      iSubsetID = GRID_SUBSET_CELLS
 #else
-       ndim = basegrid%grid_subset(iSubset)%dimension
-       iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
+      ndim = basegrid%grid_subset(iSubset)%dimension
+      iSubsetID = basegrid%grid_subset(iSubset)%identifier%index
 #endif
-       if (ndim.eq.IDS_INT_INVALID) then
-         select case (iSubsetID)
-         case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
-             & GRID_SUBSET_MAGNETIC_AXIS,               &
-             & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
-             & GRID_SUBSET_INNER_STRIKEPOINT,           &
-             & GRID_SUBSET_OUTER_STRIKEPOINT,           &
-             & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
-             & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
-           ndim = 1
-         case( GRID_SUBSET_EDGES, &
-             & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
-             & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
-             & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
-             & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
-             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
-             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
-             & GRID_SUBSET_FULL_WALL, &
-             & GRID_SUBSET_SECOND_SEPARATRIX, &
-             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
-             & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
-             & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
-             & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
-             & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
-             & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
-             & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
-             & GRID_SUBSET_INNER_THROAT_INACTIVE, &
-             & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
-             & GRID_SUBSET_INNER_TARGET_INACTIVE, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
-             & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
-             & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
-           ndim = 2
-         case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
-             & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
-             & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
-             & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
-             & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
-             & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
-           ndim = 3
-         case( GRID_SUBSET_VOLUMES )
-           ndim = 4
-         end select
-       end if
-       if (ndim.ne.1) cycle
+      if (ndim.eq.IDS_INT_INVALID) then
+        select case (iSubsetID)
+        case( GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, &
+            & GRID_SUBSET_MAGNETIC_AXIS,               &
+            & GRID_SUBSET_INNER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_OUTER_MIDPLANE_SEPARATRIX,   &
+            & GRID_SUBSET_INNER_STRIKEPOINT,           &
+            & GRID_SUBSET_OUTER_STRIKEPOINT,           &
+            & GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,  &
+            & GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE )
+          ndim = 1
+        case( GRID_SUBSET_EDGES, &
+            & GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
+            & GRID_SUBSET_CORE_BOUNDARY, GRID_SUBSET_SEPARATRIX, &
+            & GRID_SUBSET_ACTIVE_SEPARATRIX, GRID_SUBSET_MAIN_CHAMBER_WALL, &
+            & GRID_SUBSET_OUTER_BAFFLE, GRID_SUBSET_INNER_BAFFLE, &
+            & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
+            & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
+            & GRID_SUBSET_FULL_WALL, &
+            & GRID_SUBSET_SECOND_SEPARATRIX, &
+            & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
+            & GRID_SUBSET_OUTER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_INNER_PFR_WALL_INACTIVE, &
+            & GRID_SUBSET_CORE_CUT, GRID_SUBSET_PFR_CUT, &
+            & GRID_SUBSET_OUTER_THROAT, GRID_SUBSET_INNER_THROAT, &
+            & GRID_SUBSET_OUTER_TARGET, GRID_SUBSET_INNER_TARGET, &
+            & GRID_SUBSET_CORE_CUT_INACTIVE, GRID_SUBSET_PFR_CUT_INACTIVE, &
+            & GRID_SUBSET_OUTER_THROAT_INACTIVE, &
+            & GRID_SUBSET_INNER_THROAT_INACTIVE, &
+            & GRID_SUBSET_OUTER_TARGET_INACTIVE, &
+            & GRID_SUBSET_INNER_TARGET_INACTIVE, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1, &
+            & GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
+            & GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2)
+          ndim = 2
+        case( GRID_SUBSET_CELLS, GRID_SUBSET_BETWEEN_SEPARATRICES, &
+            & GRID_SUBSET_CORE, GRID_SUBSET_SOL, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
+            & GRID_SUBSET_OUTER_DIVERTOR, GRID_SUBSET_INNER_DIVERTOR, &
+            & GRID_SUBSET_OUTER_DIVERTOR_INACTIVE, &
+            & GRID_SUBSET_INNER_DIVERTOR_INACTIVE )
+          ndim = 3
+        case( GRID_SUBSET_VOLUMES )
+          ndim = 4
+        end select
+      end if
+      if (ndim.ne.1) cycle
 
-       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(  &
+      idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Vertex(  &
           &   basegrid, iSubset, mpg, b2VertexData )
-#if GGD_MINOR_VERSION > 8
-       call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
+      if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+        call gridWriteData( scalar( iSubset ), ggdID, iSubsetID, idsdata )
 #else
-       call gridWriteData( scalar( iSubset ), iSubsetID, idsdata )
+        scalar(iSubset)%grid_index = ggdId
+        call gridWriteData( scalar( iSubset ), iSubsetID, idsdata )
 #endif
-       deallocate(idsdata)
+      else
+        scalar(iSubset)%grid_index = ggdId
+        scalar(iSubset)%grid_subset_index = iSubsetID
+      end if
+      deallocate(idsdata)
     end do
 
     return
@@ -6596,28 +6904,46 @@ contains
       !! Fill in vector component data
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(    &
                &   basegrid, GRID_SUBSET_Y_ALIGNED_EDGES, mpg, b2FaceData)
-#if GGD_MINOR_VERSION > 8
-      call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
+      if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+        call gridWriteData( vector, gridId, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #else
-      call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
+        vector%grid_index = gridId
+        call gridWriteData( vector, GRID_SUBSET_Y_ALIGNED_EDGES, idsdata )
 #endif
+      else
+        vector%grid_index = gridId
+        vector%grid_subset_index = GRID_SUBSET_Y_ALIGNED_EDGES
+      end if
       deallocate(idsdata)
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(    &
                &   basegrid, GRID_SUBSET_X_ALIGNED_EDGES, mpg, b2FaceData)
-#if GGD_MINOR_VERSION > 8
-      call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
+      if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+        call gridWriteData( vector, gridId, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
 #else
-      call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
+        vector%grid_index = gridId
+        call gridWriteData( vector, GRID_SUBSET_X_ALIGNED_EDGES, idsdata )
 #endif
+      else
+        vector%grid_index = gridId
+        vector%grid_subset_index = GRID_SUBSET_X_ALIGNED_EDGES
+      end if
       deallocate(idsdata)
     else
       idsdata => b2_IMAS_Transform_Data_B2_To_IDS_Face(    &
                &   basegrid, gridSubsetInd, mpg, b2FaceData)
-#if GGD_MINOR_VERSION > 8
-      call gridWriteData( vector, gridId, gridSubsetID, idsdata )
+      if ( size( idsdata ) > 0 ) then
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
+        call gridWriteData( vector, gridId, gridSubsetID, idsdata )
 #else
-      call gridWriteData( vector, gridSubsetID, idsdata )
+        vector%grid_index = gridId
+        call gridWriteData( vector, gridSubsetID, idsdata )
 #endif
+      else
+        vector%grid_index = gridId
+        vector%grid_subset_index = gridSubsetID
+      end if
       deallocate(idsdata)
     end if
 
@@ -6870,6 +7196,7 @@ contains
     return
     end subroutine write_sourced_value_root
 
+#if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
     subroutine write_sourced_rz( val, rvalue, zvalue )
     implicit none
     type(ids_summary_rz1d_dynamic) :: val
@@ -6884,6 +7211,7 @@ contains
 
     return
     end subroutine write_sourced_rz
+#endif
 
     subroutine write_errored_value( val, value, error )
     implicit none
@@ -7088,7 +7416,8 @@ contains
       allocate(values(5))
       cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, B2_SUBGRID_CELLS, &
                &  CPOmap, value )
-      call gridWriteData( values(1), B2_SUBGRID_CELLS, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(1), B2_SUBGRID_CELLS, cpodata )
       deallocate(cpodata)
       tmpFace = 0.0_ITM_R8
       do i = TO_SELF, TO_TOP
@@ -7097,21 +7426,25 @@ contains
       call value_on_faces(nx,ny,weight,value,tmpFace)
       cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, &
                & iSgCore, CPOmap, tmpFace )
-      call gridWriteData( values(2), iSgCore, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(2), iSgCore, cpodata )
       deallocate(cpodata)
       tmpVx = interpolateToVertices( CPOmap%b2nx, CPOmap%b2ny, &
                & VX_LOWERLEFT, value )
       cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, &
                & iSgInnerMidplane, CPOmap, tmpVx )
-      call gridWriteData( values(3), iSgInnerMidplane, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(3), iSgInnerMidplane, cpodata )
       deallocate(cpodata)
       cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, &
                & iSgOuterMidplane, CPOmap, tmpVx )
-      call gridWriteData( values(4), iSgOuterMidplane, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(4), iSgOuterMidplane, cpodata )
       deallocate(cpodata)
       cpodata => b2ITMTransformDataB2ToCPOVertex( edgecpo%grid, &
                & B2_SUBGRID_NODES, CPOmap, tmpVx )
-      call gridWriteData( values(5), B2_SUBGRID_NODES, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( values(5), B2_SUBGRID_NODES, cpodata )
       deallocate(cpodata)
       allocate( fluxes(2) )
       call write_CPO_face_vector( fluxes(1), flux )
@@ -7129,7 +7462,8 @@ contains
       allocate(scalar(1))
       cpodata => b2ITMTransformDataB2ToCPO( edgecpo%grid, &
                & B2_SUBGRID_CELLS, CPOmap, b2CellData )
-      call gridWriteData( scalar(1), B2_SUBGRID_CELLS, cpodata )
+      if ( size(cpodata) > 0 ) &
+         & call gridWriteData( scalar(1), B2_SUBGRID_CELLS, cpodata )
       deallocate(cpodata)
     end subroutine write_CPO_cell_scalar
 
@@ -7160,7 +7494,8 @@ contains
       do i = 1, dim
          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, &
                   & B2_SUBGRID_CELLS, CPOmap, vecdata(:,:,i-1))
-         call gridWriteData( vector%comp(i), B2_SUBGRID_CELLS, cpodata )
+         if ( size(cpodata) > 0 ) &
+            & call gridWriteData( vector%comp(i), B2_SUBGRID_CELLS, cpodata )
          deallocate(cpodata)
       end do
 
@@ -7189,11 +7524,13 @@ contains
 !!$          ! Fill in vector component data
 !!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, &
 !!$                   & B2_SUBGRID_EDGES_Y, CPOmap, b2FaceData)
-!!$          call gridWriteData( vector%comp(1), B2_SUBGRID_EDGES_Y, cpodata )
+!!$          if ( size(cpodata) > 0 ) &
+!!$             & call gridWriteData( vector%comp(1), B2_SUBGRID_EDGES_Y, cpodata )
 !!$          deallocate(cpodata)
 !!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, &
 !!$                   & B2_SUBGRID_EDGES_X, CPOmap, b2FaceData)
-!!$          call gridWriteData( vector%comp(2), B2_SUBGRID_EDGES_X, cpodata )
+!!$          if ( size(cpodata) > 0 ) &
+!!$             & call gridWriteData( vector%comp(2), B2_SUBGRID_EDGES_X, cpodata )
 !!$          deallocate(cpodata)
 !!$      else
 !!$          allocate(vector%comp(1))
@@ -7205,7 +7542,8 @@ contains
 !!$
 !!$          cpodata => b2ITMTransformDataB2ToCPO(edgecpo%grid, &
 !!$                   & subgridInd, CPOmap, b2FaceData)
-!!$          call gridWriteData( vector%comp(1), subgridInd, cpodata )
+!!$          if ( size(cpodata) > 0 ) &
+!!$             & call gridWriteData( vector%comp(1), subgridInd, cpodata )
 !!$          deallocate(cpodata)
 !!$      end if
 
@@ -7273,7 +7611,6 @@ contains
 
             e1(ix,iy,:) = e1(ix,iy,:) * dir  !! fix direction
 
-
             !! radial direction
             !! Try to find top neighbour
             dir = 1.0
@@ -7307,12 +7644,10 @@ contains
 
             e2(ix,iy,:) = e2(ix,iy,:) * dir  !! fix direction
 
-
             !! toroidal direction
             e3(ix,iy,1) = 0.0   !! R
             e3(ix,iy,2) = 1.0   !! phi
             e3(ix,iy,3) = 0.0   !! Z
-
 
             !! make unit vectors
             e1(ix,iy,:) = unitVector(e1(ix,iy,:))

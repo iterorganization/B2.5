@@ -1,12 +1,12 @@
 C =====================================================================
-      subroutine plottripatch(nx,ny,ntrii,nrknot,is,
+      subroutine plottripatch(nCv,ntrii,nrknot,is,
      . xtrian,ytrian,necke,work,ZLOD,ZHID,LINLOG)
 C =====================================================================
       use b2mod_types
       use b2mod_b2plot_debug
       implicit none
 #include "graphics_vars.h"
-      integer nx,ny,ntrii,nrknot,is,linlog
+      integer nCv,ntrii,nrknot,is,linlog
       integer necke(3,ntrii)
       REAL (KIND=R8) :: XTRIAN(NRKNOT),YTRIAN(NRKNOT),
      1 work(NTRII),ZLOD,ZHID
@@ -58,7 +58,7 @@ C =====================================================================
 
       IF(NOFECLS.EQ.0) THEN                ! standard contouring
         IF(mod(LINLOG,2).EQ.1) THEN  ! ==> do linear plot <====================
-          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ)
+          CALL NICE(ZLO,ZHI,NOZ,NOZM,FMTZ,NFMTZ,.true.)
           NCONT=NOZ*NOZM
           if(b2plot_debug.ge.10)
      1     write (*,*) 'ncont =',ncont,' noz =',noz,' nozm =',nozm
@@ -97,8 +97,8 @@ C =====================================================================
               call cpseti('PAI - PARAMETER ARRAY INDEX',i)
 #endif
               zval=10.0_R4**((i-1)/3)*zlo
-              if(mod(i-1,3).eq.1) zval=zval*2
-              if(mod(i-1,3).eq.2) zval=zval*5
+              if(mod(i-1,3).eq.1) zval=zval*2.0_R4
+              if(mod(i-1,3).eq.2) zval=zval*5.0_R4
               eclval(i)=zval
             enddo
           else
@@ -204,6 +204,6 @@ C =====================================================================
 #endif
 C Draw Mesh/Separatrix if wanted
       if(wall) call data_copy(is)
-      call additional_elements(nx,ny,.true.)
+      call additional_elements(nCv,.true.)
       return
       end subroutine plottripatch

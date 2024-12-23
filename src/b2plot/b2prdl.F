@@ -19,15 +19,17 @@ c***
 c***  radsrc.b2e   with source data
 c=====================================================
       use b2mod_types
-      use b2mod_geo
-      use b2mod_b2plot
-      use b2mod_sources
+      use b2us_data
+#ifdef B25_EIRENE
+      use eirmod_comusr
+      use eirmod_wneutrals
+#endif
       implicit none
       integer lun
       parameter (lun=96)
 c*** Local variables
 c
-      integer ix,iy,is
+      integer iCv,is
       real (kind=R8) ::
      *   u
 c=====================================================
@@ -35,17 +37,26 @@ c=====================================================
 c*** Write down the radiation data
 c
       open(lun,file='radsrc.b2e')
-      write(lun,'(3x,a6,9x,a2,15x,a2,14x,a4)') 'ix  iy','cr','cz','Wrad'
-      do ix=0,nx-1
-          do iy=0,ny-1
-              u = 0.0_R8
-              do is=0,ns-1
-                  u=u+rqrad(ix,iy,is)+rqbrm(ix,iy,is)
-              end do
-              u=1.e-6_R8*u/vol(ix,iy)
-              write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),u
-  700         format(1x,2i4,3e17.7)
-          end do
+      write(lun,'(3x,a3,9x,a2,15x,a2,14x,a4)') 'iCv','cr','cz','Wrad'
+      do iCv=1,mpg%nCi
+        u = 0.0_R8
+        do is=0,state%ns-1
+          u=u+state%srw%rqrad(iCv,is)+state%srw%rqbrm(iCv,is)
+        end do
+#ifdef B25_EIRENE
+        do is=1,natmi
+          u=u-eneutrad(iCv,is,0)
+        end do
+        do is=1,nmoli
+          u=u-emolrad(iCv,is,0)
+        end do
+        do is=1,nioni
+          u=u-eionrad(iCv,is,0)
+        end do
+#endif
+        u=1.e-6_R8*u/geo%cvVol(iCv)
+        write (lun,700) iCv,geo%cvX(iCv),geo%cvY(iCv),u
+  700   format(1x,i6,3e17.7)
       end do
       print*,'Wrote file radsrc.b2e'
 c

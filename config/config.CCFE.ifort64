@@ -48,7 +48,7 @@ COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut 
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all -fPIC -assume no2underscore
 else
-FCOPTS   = -O2 -fPIC -assume no2underscore -xavx -fp-model=precise
+FCOPTS   = -O2 -xHost -fPIC -assume no2underscore -fp-model=precise
 endif
 
 ifdef USE_OPENMP
@@ -82,11 +82,11 @@ else
   ifdef ITM_ENVIRONMENT_LOADED
     DEFINES += -DGOT_AMNSPROTO
     INCMODS += -I${ITM_ITMTYPES_DIR}/${ITM_ITMTYPES_VERSION}/include/amd64_intel_17 -I${ITM_GGD_HOME}/include/amd64_intel_17 -I${UAL_INCLUDE}/amd64_ifort -I${ITM_ITMCONSTANTS_DIR}/include/amd64_intel_17 -I${ITM_ITMASSERT_DIR}/0.1/include/amd64_intel_17
-    IMASLIBS = ${LD_UAL} -lUALFORTRANInterface_ifort
+    IMASLIBS = ${LD_AL} -lUALFORTRANInterface_ifort
   endif
 endif
 
-LD_UAL += -lxml2 -lstdc++
+LD_AL += -lxml2 -lstdc++
 
 #!!!Local Variables:
 #!!! mode: Makefile

@@ -1,6 +1,7 @@
       module b2mod_optim
       use b2mod_types
-#include "DIMENSIONS.F"
+      use b2mod_dimensions
+      implicit none
 
        integer :: nfunc, istyle
        integer, parameter :: nx = DEF_NXD, ny = DEF_NYD, ns = DEF_NSD
@@ -76,6 +77,5 @@
      &      cy_js_outer_upper(-1:ny), js_outer_upper_mod(-1:ny),
      &       b_js_outer_upper_mod(-1:ny), c_js_outer_upper_mod(-1:ny),
      &       d_js_outer_upper_mod(-1:ny)
-
 
       end module b2mod_optim

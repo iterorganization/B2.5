@@ -127,7 +127,6 @@
      &  snasm(nCv,0:1,0:ns-1),                                           !xpb
      &  smosm(nCv,0:3,0:ns-1),                                           !xpb
      &  shesm(nCv,0:3), shism(nCv,0:3)!WG_TODO,                          !xpb
-
 *   ..procedures
       real (kind=R8) ::
      *  b2sasum, samax
@@ -168,11 +167,9 @@
      &   call read_boundary_sources(nCv, ns, switch, itim, mpg)    !srv 26.02.18 }
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
-
        if (switch%b2mndt_style.eq.2) then
          write(*,*) 'Running in time-dependent mode'
        endif
-
        if (switch%b2stbc_boundary_namelist.ge.1) then
 !WG_TODO         call initialize_b2mod_boundary(ns,mpg,tim)
        else
@@ -250,7 +247,6 @@ cwdk    For unstructured solver, start with simple reading of start-values
       call sfill (nCv*4, 0.0_R8, st%sr%shedt, 1)
       call sfill (nCv*4, 0.0_R8, st%sr%shidt, 1)
       call sfill (nCv*4, 0.0_R8, st%sr%shndt, 1)
-
 
 *   ..compute ni0
       call b2xpni (nCv, ns, st%psnc%na, st%psnc%ni)
@@ -351,7 +347,6 @@ ctmp.dpc
      &      st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni,
      &      st%dv%nn, st%pl%kt, st%pl%zt, st%sr)
 *       (smq is inherently stable.)                                      !srv 07.07.21 }
-
 *     ..include contributions due to timestep
           if (switch%b2mndt_style.ne.2) then
 *     .. contributions due to timestep when style.eq.2 will be done in separate subroutines (b2scdt, b2smdt & b2shdt)

@@ -8,4 +8,4 @@
       call plsori(1)
 #endif
       return
-      end
+      end subroutine set_a4p

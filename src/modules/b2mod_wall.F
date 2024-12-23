@@ -2,6 +2,9 @@
       use b2mod_types
       use b2mod_layer
       use b2mod_subsys
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
 
       integer ndepth, nwall_segments, nsegments, nline
@@ -50,7 +53,6 @@ cxpb Data file material properties
 
       integer, allocatable, save :: track_index(:)
 #else
-#     include "DIMENSIONS.F"
       integer, save ::
      *  imapx(nwall), imapy(nwall)
       integer, save :: plate_model, plate_option
@@ -169,6 +171,7 @@ cxpb Data file material properties
       character*2, save :: track_species_save(ntrack)
       logical, save :: track_chem_sput(ntrack)
 
+      real (kind=R8) :: layer_nrelconstituents(nwall,6+ntrack)
       real (kind=R8), allocatable :: r1(:), r2(:), z1(:), z2(:)
 
       namelist /wall_save/ ndepth_nml, track_species,
@@ -179,7 +182,7 @@ cxpb Data file material properties
      *  backscattering, backscattering_energy, plate_time, plate_area,
      *  monolayer_deposition, monolayer_erosion,
      *  layer_nconstituents, layer_nzconstituents,
-     *  layer_nrelconstituents,
+     *  layer_relconstituents, layer_nrelconstituents,
      *  layer_thermal_contact,
      *  coating_thickness, coating_material_name,
      *  layer_alloys, inertial_cooling
@@ -361,6 +364,7 @@ cxpb Data file material properties
       target_temp = 0.0_R8
       plate_time = 0.0_R8
       layer_thermal_contact = 1.0_R8
+      layer_nrelconstituents = 0.0_R8
 
       call subend()
       return
@@ -502,6 +506,14 @@ cxpb Data file material properties
 #else
         read(nread,wall_save)
 #endif
+cxpb For backward compatibility, NRELCONSTITUENTS --> RELCONSTITUENTS
+        if (maxval(layer_nrelconstituents).gt.0.0_R8) then
+          if (maxval(layer_relconstituents).gt.0.0_R8) then
+            layer_nrelconstituents = 0.0_R8
+          else
+            layer_relconstituents = layer_nrelconstituents
+          end if
+        end if
         write(*,*) 'Read ', trim(filename)
         close(nread)
       else
@@ -736,7 +748,7 @@ cxpb  Use explicit writing of non-default elements only
             if (.not.found) j = j + 1
           enddo
           if (found) todo = todo.or.
-     .        layer_nrelconstituents(ibnd,i).ne.
+     .        layer_relconstituents(ibnd,i).ne.
      .        matsurf_relconstituents(ibnd,j)
         end do
         if (todo) then
@@ -748,8 +760,8 @@ cxpb  Use explicit writing of non-default elements only
      .         'LAYER_NZCONSTITUENTS(',ibnd,',',i,')=  ',
      .          layer_nzconstituents(ibnd,i),','
             write(nwrite,'(a23,i4,a1,i2,a2,1es15.8,a1)')
-     .         'LAYER_NRELCONSTITUENTS(',ibnd,',',i,')=',
-     .          layer_nrelconstituents(ibnd,i),','
+     .         'LAYER_RELCONSTITUENTS(',ibnd,',',i,')=',
+     .          layer_relconstituents(ibnd,i),','
           end do
         end if
         do itrack=1,ntargsp

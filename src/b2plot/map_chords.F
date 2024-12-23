@@ -2,22 +2,21 @@ c
       subroutine map_chords(filename)
 
       use b2mod_types
-      use b2mod_geo
+      use b2us_data
       use b2mod_b2plot
-      use b2mod_indirect
       use b2mod_b2plot_values
       implicit none
 
       character*(*) filename
 
       real (kind=R8) ::
-     *   mach(-1:nx,-1:ny)
+     *   mach(mpg%nCv)
       character*80 dataname,ccol
       logical open_file,found
       real (kind=R8) ::
      *   rcol,r,ro,
      1   x,x1,x2,xo,y,y1,y2,yo,z,z1,z2,zo
-      integer npoints,i,ix,iy
+      integer npoints,i,iCv
       integer lnblnk
       external lnblnk
 
@@ -32,11 +31,7 @@ c
       y=y1
       z=z1
       r=sqrt(x**2+y**2)
-      do ix=-1,nx
-        do iy=-1,ny
-          mach(ix,iy)=0.0_R8
-        enddo
-      enddo
+      mach=0.0_R8
       call init_page(
      1 dataname(1:lnblnk(dataname))//' '//ccol(1:lnblnk(ccol)),
      1 values(5),values(6),values(7),values(8),1,.true.,.true.,.true.)
@@ -45,22 +40,25 @@ c
         yo=y
         zo=z
         ro=r
-        x=x1*real(npoints-i)/real(npoints)+x2*real(i)/real(npoints)
-        y=y1*real(npoints-i)/real(npoints)+y2*real(i)/real(npoints)
-        z=z1*real(npoints-i)/real(npoints)+z2*real(i)/real(npoints)
+        x=x1*real(npoints-i,R8)/real(npoints,R8)
+     .   +x2*real(i,R8)/real(npoints,R8)
+        y=y1*real(npoints-i,R8)/real(npoints,R8)
+     .   +y2*real(i,R8)/real(npoints,R8)
+        z=z1*real(npoints-i,R8)/real(npoints,R8)
+     .   +z2*real(i,R8)/real(npoints,R8)
         r=sqrt(x**2+y**2)
-        call chord_find(nx,ny,crx,cry,
+        call chord_find(mpg,geo,
      1     (x+xo)/2.0_R8,(y+yo)/2.0_R8,(z+zo)/2.0_R8,
-     2     found,ix,iy)
+     2     found,iCv)
         if(found) then
-          mach(ix,iy)=mach(ix,iy)+1.0_R8/real(npoints)
+          mach(iCv)=mach(iCv)+1.0_R8/real(npoints)
         endif
         call lined_d(ro,zo,r,z)
       enddo
-      call plotpatch(nx,ny,0,crx,cry,region,mach,
+      call plotpatch(mpg,geo,0,mach,
      1 0.0_R8,1.0_R8,.true.,linlog,1)
       call data_copy(0)
-      call additional_elements(nx,ny,.true.)
+      call additional_elements(mpg%nCv,.true.)
       call end_page
       goto 10
    30 write(*,*) 'Error in reading ',filename(1:lnblnk(filename))

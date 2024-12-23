@@ -1,12 +1,15 @@
       module b2mod_transport_models
       use b2mod_types
       use b2mod_version
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
+      implicit none
       logical, save :: transport_models_allocated=.false.
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
      *  eta_hce_mult(:)
 #else
-#     include "DIMENSIONS.F"
       real (kind=R8), save :: eta_hce_mult(-1:DEF_NYD)
 #endif
 
@@ -14,16 +17,15 @@
 
       contains
 
-      subroutine alloc_b2mod_transport_models(nxd,nyd,nsd)
+      subroutine alloc_b2mod_transport_models(nFs,nsd)
       implicit none
-      integer nxd,nyd,nsd
+      integer nFs, nsd
       transport_models_allocated=.true.
 #ifdef ALLOCATE_AND_NAMELIST
-      allocate(eta_hce_mult(-1:nyd))
+      allocate(eta_hce_mult(nFs))
 #else
-      call xertst (nxd.le.DEF_NXD, 'Increase DEF_NXD in DIMENSIONS.F')
-      call xertst (nyd.le.DEF_NYD, 'Increase DEF_NYD in DIMENSIONS.F')
-      call xertst (nsd.le.DEF_NSD, 'Increase DEF_NSD in DIMENSIONS.F')
+      call xertst (nsd.le.DEF_NSD,
+     . 'Increase DEF_NSD in b2mod_dimensions')
 #endif
       end subroutine alloc_b2mod_transport_models
 

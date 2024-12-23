@@ -1,15 +1,15 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2scdt (nCv, nCi, isb, dtim,      !srv 07.07.21
+      subroutine b2scdt (nCv, nCi, isb, dtim,                        !srv 07.07.21
      &  cvVol, nap, switch, mpg, snadt)
       use b2mod_types
       use b2mod_indirect
       use b2mod_numerics_namelist
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_balance !djm Jan2017
-     1 , only : b2srdt_sna0to1, balance_netcdf
+!WG_TODO      use b2mod_balance !djm Jan2017
+!WG_TODO     1 , only : b2srdt_sna0to1, balance_netcdf
       use b2mod_switches
       use b2us_map
       use b2mod_subsys
@@ -17,7 +17,6 @@
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
-      logical(1) :: lout                                             !srv 16.07.10
       integer nCv, nCi, isb                                          !srv 01.07.08
       real (kind=R8) ::
      *  dtim, cvVol(nCv), nap(nCv)
@@ -64,6 +63,10 @@
 *    ..test old state
        call b2xvsg (nCv, nap, 1, 'nap', '.gt.')
       endif
+      if (switch%b2srdt_phm0.ne.1.0_R8) then
+        write(*,*)
+     & 'Warning: b2srdt_phm0 should be 1.0 for time-dependent mode'
+      endif
 
 * ..include the contributions from dtim
 *   ..modify snadt
@@ -86,7 +89,7 @@
         write (chns,'(i3.3)') isb
         do k=0,1
          write (chk,'(i1)') k
-         call my_out_us(70,nCv,snadt(:,k),
+         call my_out_us(70,nCv,0,snadt(:,k),
      &                       'b2scdt_snadt'//chk//chns)
         enddo
       endif                                                           !srv 11.09.09 }

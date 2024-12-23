@@ -8,8 +8,8 @@
       use b2mod_numerics_namelist
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_balance !djm Jan2017
-     1 , only : b2srdt_smo0to3, balance_netcdf
+!WG_TODO      use b2mod_balance !djm Jan2017
+!WG_TODO     1 , only : b2srdt_smo0to3, balance_netcdf
       use b2mod_switches
       use b2us_map
       use b2mod_subsys
@@ -45,7 +45,7 @@
       external xertst, ipgetr
       external b2xvsg
 *   ..initialisation
-      data ncall/0/                                       !xpb
+      data ncall/0/                                                  !xpb
 
 *-----------------------------------------------------------------------
 *.computation
@@ -53,13 +53,16 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2smdt')
-
 *   ..test sign of dtim
       call xertst (0.0_R8.lt.dtim, 'faulty argument dtim')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test old state
        call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
+      endif
+      if (switch%b2srdt_phm1.ne.1.0_R8) then
+        write(*,*)
+     & 'Warning: b2srdt_phm1 should be 1.0 for time-dependent mode'
       endif
 
 * ..include the contributions from dtim
@@ -86,10 +89,10 @@ cdjm Store the total change in linearised sources for balance
         write (chns,'(i3.3)') isb
         do k=0,3
          write (chk,'(i1)') k
-         call my_out_us(70,nCv,smodt(:,k,isb),
+         call my_out_us(70,nCv,0,smodt(:,k,isb),
      &                       'b2smdt_smodt'//chk//chns)
         enddo
-      endif                                                           !srv 11.09.09 }
+      endif                                                          !srv 11.09.09 }
 
 * ..return
       ncall = ncall+1

@@ -1,10 +1,7 @@
       subroutine copy_background(nCv, nFc, ns, switch, mpg, gm,
      &                           pl, dv)
       use b2mod_types
-      use b2mod_plasma
-      use b2mod_indirect
       use b2mod_switches
-      use b2mod_geo
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
@@ -61,8 +58,8 @@
      &  vadiac(nCv,0:1,0:ns-1)
       real (kind=R8) :: naf(nFc,0:ns-1), fna_tmp(nFc,0:ns-1),
      &  uuc(nCv,0:ns-1),vvc(nCv,0:ns-1),nafsqalf(nFc,0:1,0:ns-1)
-      integer :: ic, ifc, ian, ien, ntrgdat, ifl, i, istra, ic2,
-     &           iv1, iv2, icp
+      integer :: ic, iFc, ian, ien, ntrgdat, ifl, i, istra, ic2,
+     &           iv1, iv2, iCp
       real (kind=R8) :: evi, ebx, eby, ebn, uu, vv, ww,
      1 pvxs, pvys, puxs, puys
       real (kind=R8) :: wght(nFc,2)
@@ -213,7 +210,7 @@ c Initialization
      .                        nafsqalf(1:nFc,1,is)
           do ic = mpg%nCi+1, nCv   ! loop over all guard cells
             iFc = mpg%cvFc(mpg%cvFcP(ic,1))
-            icp = mpg%fcCv(ifc,1) + mpg%fcCv(iFc,2) - ic  ! index of plasma cell
+            iCp = mpg%fcCv(iFc,1) + mpg%fcCv(iFc,2) - ic  ! index of plasma cell
             fna_tmp(iFc,is) = dv%fna(iFc,1,is)/
      .                       (gm%fcS(iFc)*gm%fcQalf(iFc,1)*
      .                        pl%na(ic,is)+1.E-30_R8)
@@ -431,7 +428,7 @@ c we derive the guard cell value from its neighbouring interior cell
         endif
 
 #ifdef B25_EIRENE
-        call eirene_alloc_target_data(istra,ntrgdat,nflai,ifoff)
+        call eirene_alloc_target_data(istra,ntrgdat,nflai)
 #else
         call alloc_target_data(istra,ntrgdat,nflai)
 #endif
@@ -496,6 +493,7 @@ c we derive the guard cell value from its neighbouring interior cell
             trgt(istra)%vpart(i,ifl) = 0.0_R8
             trgt(istra)%mach(i,ifl) = 1.0_R8
             trgt(istra)%usr(i,ifl) = 0.0_R8
+            trgt(istra)%zit(i,ifl) = zab(ifl)
           end do
         end do
       end do
@@ -590,6 +588,7 @@ c
       use eirmod_parmmod
       use eirmod_braeir
       use eirmod_extrab25
+      use eirmod_wneutrals
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
@@ -683,22 +682,22 @@ c
      .                             ' TARGET DATA #',istra
           write (31,'(a)') '*'
 
-          write (31,'(a1,a6,11a15)') '*','Index','Flux','Ti','ni',
-     .      'Vx','Vy','Vz','fi','fel','vpart','mach','usr'
-          write (31,'(a1,a6,11a15)') '*',' ',' ','(eV)','(1/m^3)',
-     .      'm/s','m/s','m/s',' ',' ',' ',' '
+          write (31,'(a1,a6,12a15)') '*','Index','Flux','Ti','ni',
+     .      'Vx','Vy','Vz','fi','fel','vpart','mach','usr','Zi'
+          write (31,'(a1,a6,12a15)') '*',' ',' ','(eV)','(1/m^3)',
+     .      'm/s','m/s','m/s',' ',' ',' ',' ',' '
 
           write (31,'(3es15.7)') amb(ifl), znb(ifl), zab(ifl)
           write (31,'(i6)') ntrgdat
 
           do i = 1, ntrgdat
-            write (31,'(i7,11es15.7)')
+            write (31,'(i7,12es15.7)')
      .        i,trgt(istra)%flux(i,ifl),trgt(istra)%tit(i),
      .          trgt(istra)%dnit(i,ifl),trgt(istra)%vxt(i,ifl),
      .          trgt(istra)%vyt(i,ifl),trgt(istra)%vzt(i,ifl),
      .          trgt(istra)%fi(i,ifl),trgt(istra)%fel(i,ifl),
      .          trgt(istra)%vpart(i,ifl),trgt(istra)%mach(i,ifl),
-     .          trgt(istra)%usr(i,ifl)
+     .          trgt(istra)%usr(i,ifl),trgt(istra)%zit(i,ifl)
           end do
         end do ! ifl
       end do   ! istra

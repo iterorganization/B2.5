@@ -21,6 +21,8 @@ c
       integer ic
       integer lun,m_hlp,m_hlpa
       parameter (lun=96, m_hlp=9, m_hlpa=1)
+      integer, save :: shot = 0, run = 0
+      character*12 case_number
       integer i,j,k,l,m,n,ix,ixx,isep,lv_hlp,n_hlp
       real (kind=R8) ::
      ,  hlp_pwr_in(2),hlp_rad_div(2),hlp_rad_trg(2),hlp_area(2),
@@ -46,6 +48,7 @@ c
       data hlp_hda / 'Pin' /
 c======================================================================
 
+#ifdef WG_TODO
       n_hlp=2*m_hlp+m_hlpa
       isep=jsep+1
 
@@ -185,20 +188,30 @@ c        print *,'hlp_frh: ',hlp_frh
 
 c*** Extract the case number
 
-      l=index(label,'#')
-      m=index(label,'_')
-      if(m.gt.l+1) then
-        hlp_inp=label(l+1:m-1)
-        read(hlp_inp,'(i8)') lv_hlp
+      call ipgeti('b2mndr_shot_number', shot )
+      call xertst( 0.le.shot.and.shot.le.214748, 'Invalid shot number')
+      call ipgeti('b2mndr_run_number', run )
+      call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
+      if (shot.gt.0) then
+        write(case_number,'(i6,a1,i5.5)') shot,'/',run
       else
         lv_hlp=0
+        l=index(label,'#')
+        m=index(label,'_')
+        if(m.gt.l+1) then
+          hlp_inp=label(l+1:m-1)
+          read(hlp_inp,'(i8)',err=99) lv_hlp
+        end if
+   99   continue
+        write(case_number,'(i4)') lv_hlp
       end if
 
 c*** Write the data
 
-      write(lun,hlp_frm) lv_hlp,(eqa_hlp(j),j=1,m_hlpa),
+      write(lun,hlp_frm) case_number,(eqa_hlp(j),j=1,m_hlpa),
      ,                            ((equ_hlp(i,j),j=1,m_hlp),i=1,2),1234
       close(lun)
+#endif
       return
 c======================================================================
   900 write(0,*) 'b2paspwr: unable to open ',hlp_fn

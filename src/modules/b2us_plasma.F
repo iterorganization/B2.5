@@ -194,7 +194,9 @@ cwdk move to dv
      .                                           rrana, rrahi, rramo,
      .                                           rcxna, rcxhi, rcxmo,
      .                                           rqahe, rqrad, rqbrm
-        real(R8), dimension(:), allocatable :: b2sihs_joule
+        real(R8), dimension(:), allocatable :: b2sihs_joule,
+     .            b2sihs_divue, b2sihs_divua, b2sihs_exbe, b2sihs_exba,
+     .            b2sihs_visa, b2sihs_fraa, b2sihs_str
         real(R8), dimension(:,:), allocatable :: sna0_eir_tot,
      .                                           smo0_eir_tot
         real(R8), dimension(:), allocatable :: sne0_eir_tot,
@@ -360,7 +362,7 @@ cwdk move to dv
       call destroyB2SourceWork( st % srw )
       call destroyB2Rates( st % rt )
       call destroyB2RatesWork( st % rtw )
-      call destroyB2PlasmaSnapshot(  st % psnl )
+      call destroyB2PlasmaSnapshot( st % psnl )
       call destroyB2PlasmaSnapshot( st % psnc )
       call destroyB2Diagnostic( st % diag )
       call destroyB2Update( st % update )
@@ -1583,15 +1585,22 @@ cwdk move to dv
       allocate( srw % rqrad( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( srw % rqbrm( nCv, 0:ns-1 ), SOURCE=0._R8 )
 
-      allocate( srw % b2sihs_joule( nCv ), SOURCE=0._R8)
+      allocate( srw % b2sihs_joule( nCv ), SOURCE=0._R8 )
+      allocate( srw % b2sihs_divue( nCv ), SOURCE=0._R8 )
+      allocate( srw % b2sihs_divua( nCv ), SOURCE=0._R8 )
+      allocate( srw % b2sihs_exbe( nCv ), SOURCE=0._R8 )
+      allocate( srw % b2sihs_exba( nCv ), SOURCE=0._R8 )
+      allocate( srw % b2sihs_visa( nCv ), SOURCE=0._R8 )
+      allocate( srw % b2sihs_fraa( nCv ), SOURCE=0._R8 )
+      allocate( srw % b2sihs_str( nCv ), SOURCE=0._R8 )
 
-      allocate( srw % sna0_eir_tot( nCv, 0:ns-1 ), SOURCE=0._R8)
-      allocate( srw % smo0_eir_tot( nCv, 0:ns-1 ), SOURCE=0._R8)
-      allocate( srw % sne0_eir_tot( nCv ), SOURCE=0._R8)
-      allocate( srw % she0_eir_tot( nCv ), SOURCE=0._R8)
-      allocate( srw % shn0_eir_tot( nCv ), SOURCE=0._R8)
-      allocate( srw % shi0_eir_tot( nCv ), SOURCE=0._R8)
-      allocate( srw % sch0_eir_tot( nCv ), SOURCE=0._R8)
+      allocate( srw % sna0_eir_tot( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % smo0_eir_tot( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % sne0_eir_tot( nCv ), SOURCE=0._R8 )
+      allocate( srw % she0_eir_tot( nCv ), SOURCE=0._R8 )
+      allocate( srw % shn0_eir_tot( nCv ), SOURCE=0._R8 )
+      allocate( srw % shi0_eir_tot( nCv ), SOURCE=0._R8 )
+      allocate( srw % sch0_eir_tot( nCv ), SOURCE=0._R8 )
 #else
       allocate( srw % sch0( nCv, 0:3 ) )
       allocate( srw % she0( nCv, 0:3 ) )
@@ -1646,6 +1655,13 @@ cwdk move to dv
       allocate( srw % rqbrm( nCv, 0:ns-1 ) )
 
       allocate( srw % b2sihs_joule( nCv ) )
+      allocate( srw % b2sihs_divue( nCv ) )
+      allocate( srw % b2sihs_divua( nCv ) )
+      allocate( srw % b2sihs_exbe( nCv ) )
+      allocate( srw % b2sihs_exba( nCv ) )
+      allocate( srw % b2sihs_visa( nCv ) )
+      allocate( srw % b2sihs_fraa( nCv ) )
+      allocate( srw % b2sihs_str( nCv ) )
 
       allocate( srw % sna0_eir_tot( nCv, 0:ns-1 ) )
       allocate( srw % smo0_eir_tot( nCv, 0:ns-1 ) )
@@ -1708,6 +1724,13 @@ cwdk move to dv
       srw % rqbrm = 0.0_R8
 
       srw % b2sihs_joule = 0.0_R8
+      srw % b2sihs_divue = 0.0_R8
+      srw % b2sihs_divua = 0.0_R8
+      srw % b2sihs_exbe = 0.0_R8
+      srw % b2sihs_exba = 0.0_R8
+      srw % b2sihs_visa = 0.0_R8
+      srw % b2sihs_fraa = 0.0_R8
+      srw % b2sihs_str = 0.0_R8
 
       srw % sna0_eir_tot = 0.0_R8
       srw % smo0_eir_tot = 0.0_R8
@@ -1779,6 +1802,13 @@ cwdk move to dv
       deallocate( srw % rqbrm )
 
       deallocate( srw % b2sihs_joule )
+      deallocate( srw % b2sihs_divue )
+      deallocate( srw % b2sihs_divua )
+      deallocate( srw % b2sihs_exbe )
+      deallocate( srw % b2sihs_exba )
+      deallocate( srw % b2sihs_visa )
+      deallocate( srw % b2sihs_fraa )
+      deallocate( srw % b2sihs_str )
 
       deallocate( srw % sna0_eir_tot )
       deallocate( srw % smo0_eir_tot )

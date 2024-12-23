@@ -3,20 +3,19 @@
 
       program b2yv
       use b2mod_types
+      use b2mod_version
       use b2mod_constants
-      use b2mod_geo
-      use b2mod_plasma
-      use b2mod_rates
-      use b2mod_residuals
-      use b2mod_sources
-      use b2mod_transport
-      use b2mod_work
       use b2mod_ma28
-      use b2mod_indirect
       use b2mod_b2cmpa
       use b2mod_b2cmfs
       use b2mod_elements
+      use b2mod_switches
       use b2mod_xerset
+      use b2mod_ipmain
+      use b2us_io
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
 #ifdef WINDOWS
 ! AVDef is the AViz module file
       use AVDef    ! IGNORE
@@ -38,25 +37,33 @@
 
 *   ..common blocks
 
+*   ..main data structures
+      type(mapping)  :: mpg
+      type(geometry) :: geo
+      type(B2State)  :: state
+      type(switches) :: switch
 *   ..local variables
-      integer :: icase, ix, iy, is
-      integer :: lbc, ubc, lbr, ubr
-      real(kind=R4), allocatable :: M(:,:)
+      integer :: icase, iCv, is
+      real(kind=R4), allocatable :: M(:)
+      real(kind=R8), allocatable :: pov(:), gpor(:)
       character(1) :: key
+      character cnamip*80, cvalip*80, line*500
       character lblgm*120
 #ifdef WINDOWS
-      integer :: hv, lbnd(2) = 0
+      integer :: hv, lbnd(1) = 0
       integer status
       character(AV_MAX_LABEL_LEN) :: axis1 = 'X', axis2 = 'Y', axis3
 #else
       character*40 :: axis3
 #endif
 
-      integer ninp(0:5), nout(0:7), nx, ny, ns, ns0, idum(0:9), io
+      integer ninp(0:5), nout(0:7), nCv, nFc, ns, idum(0:9), io
       character lblmn*120, title*64
       character hlp_frm*22
       logical file_open
 *   ..procedures
+      logical is_comment
+      external is_comment
       external prgini, prgend, xertst, xerrab, cfopen, cfruin
 *   ..initialize input/output unit numbers
       data ninp/50,51,52,53,54,55/
@@ -68,6 +75,7 @@
 *   ..program start-up calls
       call prgini ('b2yv')
 *   ..open files
+      call cfopen (ninp(0),'b2mn.dat','old','formatted')
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
       call cfopen (ninp(2),'b2fparam','old','un*formatted')
       call cfopen (ninp(3),'b2fstati','old','un*formatted')
@@ -79,57 +87,78 @@
       call cfverr (ninp(1), b2fgmtry_version)
       call cfverr (ninp(2), b2fparam_version)
       call cfverr (ninp(3), b2fstati_version)                           !srv 18.09.03
-*   ..obtain nx, ny from geometry file
-      call cfruin (ninp(1), 2, idum, 'nx,ny')
-      nx = idum(0)
-      ny = idum(1)
-      call xertst (0.le.nx.and.0.le.ny,
-     &  'faulty input nx, ny from geometry file')
+      call cfverr (ninp(4), b2fplasma_version)
+*   ..obtain nCv, nFc, ns from b2fstate file
+      call cfruin (ninp(3), 3, idum, 'nCv,nFc,ns')
+      nCv = idum(0)
+      nFc = idum(1)
+      ns  = idum(2)
+      call xertst (0.le.nCv.and.0.le.nFc.and.1.le.ns,
+     &  'faulty input nCv, nFc, ns from plasma state file')
+*   ..obtain ns from b2fparam file
+      call cfruin (ninp(2), 1, idum, 'ns')
+      call xertst (idum(0).eq.ns,
+     &  'faulty input ns from physics parameters file')
+*   ..obtain mapping/geometry dimensions from b2fgmtry file
+      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+      mpg%nCi = idum(0)
+      mpg%nCg = idum(1)
+      mpg%nCv = idum(2)
+      mpg%nFc = idum(3)
+      mpg%nVx = idum(4)
+      mpg%nFs = idum(5)
+      mpg%nFt = idum(6)
+      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+      mpg%nCmxVx = idum(0)
+      mpg%nCmxFc = idum(1)
+      mpg%nVmxCv = idum(2)
+      mpg%nVmxFc = idum(3)
+      mpg%nCmxNv = idum(4)
+      call cfruin (ninp(1),1,idum,'isClassicalGrid')
+      mpg%isClassicalGrid = idum(0)
+      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
+      mpg%nx    = idum(0)
+      mpg%ny    = idum(1)
+      mpg%nncut = idum(2)
+      call xertst (mpg%nCv.eq.nCv.and.mpg%nFc.eq.nFc,
+     &  'faulty input nCv, nFc from geometry file')
+*   ..obtain parameters from b2fplasmf file
+      call cfruin (ninp(4),3,idum,'nCv,nFc,ns')
+      call xertst (idum(0).eq.nCv.and.idum(1).eq.nFc.and.idum(2).eq.ns,
+     &  'faulty input nCv, nFc, ns from b2fplasmf file')
 *   ..read header for geometry
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
-*   ..obtain ns from parameters file
-      call cfruin (ninp(2), 1, idum, 'ns')
-      ns = idum(0)
-      call xertst (1.le.ns, 'faulty input ns from parameters file')
-*   ..obtain nx, ny, ns0 from plasma state file
-      call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
-      ns0 = idum(2)
-      call xertst (idum(0).eq.nx.and.idum(1).eq.ny,
-     &  'faulty input nx, ny from plasma state file')
-      call xertst (1.le.ns0.and.ns0.le.ns,
-     &  'faulty input ns from plasma state file')
 *   ..read plasma state file
       call cfruch (ninp(3), 120, lblmn, 'label')
 *   ..read species data
       call b2ruzd (ninp(3), b2fstati_version,
      &  ns, zamin, zamax, zn, am, .true.)
-      lbc = -1
-      lbr = -1
-      ubc = ny
-      ubr = nx
-      allocate (M(lbc:ubc, lbr:ubr))
+      allocate (M(nCv))
 *   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_plasma(nx,ny,ns)
-      call alloc_b2mod_rates(nx,ny,ns)
-      call alloc_b2mod_residuals(nx,ny,ns)
-      call alloc_b2mod_sources(nx,ny,ns)
-      call alloc_b2mod_transport(nx,ny,ns)
-      call alloc_b2mod_work(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                       !srv 25.11.02
+      call alloc_mapping (mpg)
+      call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
+     .  mpg%nFt, mpg%nVmxCv)
+      call createB2State (nCv, nFc, ns, state)
+*   ..read and echo code internal parameters
+    1 continue
+       read (ninp(0),'(a)',end=2,err=91) line
+       if (.not.is_comment(line)) then
+         read (line,*) cnamip, cvalip
+         call ipsetc (cnamip, cvalip)
+       end if
+       goto 1
+    2 continue
+      call read_first_switches(switch)
+      call set_defaults_switches(switch,ns)
+      call read_switches(switch)
+      call check_switches(switch,ns)
 *   ..read geometry and metric
-#ifdef WG_TODO
-      call b2rugm (ninp(1), nx, ny, isymm)
-#endif
+      call read_b2fgmtry (ninp(1), mpg, geo)
+      call init_geometry (mpg, geo, switch)
 *   ..read plasma state
-      call cfverr(ninp(4), b2fplasma_version)
-      call read_b2mod_geo(nx, ny, ninp(4))
-      call read_b2mod_plasma(nx, ny, ns, ninp(4))
-      call read_b2mod_residuals(ninp(4))
-      call read_b2mod_sources(ninp(4))
-      call read_b2mod_transport(nx, ny, ns, ninp(4))
+      call read_b2fplasma(ninp(4), nCv, nFc, ns, state)
       call alloc_b2mod_elements(ns,zn,am)
    10 continue
       write(hlp_frm,'(a,i3,a)') '(a,',ns,'(a2,i1,1x))'
@@ -164,55 +193,38 @@
      &     adjustr(is_codes(icase)),nint(zamin(icase))
         write(axis3,"('Density of ',a2,i1,', [1/m^3]')")
      &     adjustr(is_codes(icase)),nint(zamin(icase))
-        do iy = -1,ny
-          do ix = -1,nx
-            M(iy,ix) = real(na(ix,iy,icase),R4)
-          enddo
-        enddo
+        M(:) = real(state%pl%na(:,icase),R4)
       elseif(ns.le.icase .and. icase.le.ns-1+ns )then
         write(title,"('Parallel velocity of ',a2,i1)")
      &     adjustr(is_codes(icase-ns)),nint(zamin(icase-ns))
         write(axis3,"('Parallel velocity of ',a2,i1,', [m/c]')")
      &     adjustr(is_codes(icase-ns)),nint(zamin(icase-ns))
-        do iy = -1,ny
-          do ix = -1,nx
-            M(iy,ix) = real(ua(ix,iy,icase-ns),R4)
-          enddo
-        enddo
+        M(:) = real(state%pl%ua(:,icase-ns),R4)
       elseif(icase .eq. ns+ns )then
         write(title,"('Temperature of electrons')")
         write(axis3,"('Temperature of electrons',', [eV]')")
-        do iy = -1,ny
-          do ix = -1,nx
-            M(iy,ix) = real(te(ix,iy)/ev,R4)
-          enddo
+        do iCv = 1,nCv
+          M(iCv) = real(state%pl%te(iCv)/ev,R4)
         enddo
       elseif(icase .eq. ns+ns+1 )then
         write(title,"('Temperature of ions')")
         write(axis3,"('Temperature of ions',', [eV]')")
-        do iy = -1,ny
-          do ix = -1,nx
-            M(iy,ix) = real(ti(ix,iy)/ev,R4)
-          enddo
+        do iCv = 1,nCv
+          M(iCv) = real(state%pl%ti(iCv)/ev,R4)
         enddo
       elseif(icase .eq. ns+ns+2 )then
         write(title,"('Electric potential')")
-        do iy = -1,ny
-          do ix = -1,nx
-            M(iy,ix) = real(po(ix,iy),R4)
-          enddo
+        do iCv = 1,nCv
+          M(iCv) = real(state%pl%po(iCv),R4)
         enddo
       elseif(icase .eq. ns+ns+3 )then
         write(title,"('Radial electric field')")
-        M=0.0d0
-        do iy=0,ny
-          do ix=-1,nx
-            M(iy,ix)=real(
-     *      -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
-     *      /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
-     *      *2.0e0_R8,R4)
-          enddo
-        enddo
+        allocate(pov(mpg%nVx))
+        allocate(gpor(mpg%nCv))
+        call gradc_r(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
+     *               state%pl%po, pov, gpor)
+        M(1:nCv)=real(-gpor(1:nCv),R4)
+        deallocate(pov)
       else
         call xerrab ('Wrong icase value')
       endif
@@ -234,7 +246,6 @@
 
 !       call faglShow(M, status)
       call favShowWindow(hv,AV_TRUE, status)
-
 
 !      call faglName(M, trim(title), status)
 
@@ -264,19 +275,18 @@
          if (file_open) close(nout(io))
       enddo
 
-      call dealloc_b2mod_geo
-      call dealloc_b2mod_work
-      call dealloc_b2mod_rates
-      call dealloc_b2mod_plasma
-      call dealloc_b2mod_sources
-      call dealloc_b2mod_elements
-      call dealloc_b2mod_indirect
-      call dealloc_b2mod_residuals
-      call dealloc_b2mod_transport
+      call destroyB2State (state)
+      call dealloc_geometry (geo)
+      call dealloc_mapping (mpg)
       deallocate (M)
 * ..end of computation
       call prgend ()
       stop 'b2yv'
+
+*-----------------------------------------------------------------------
+*.error conditions
+
+   91 call xerrab ('error trying to read internal parameters')
 
 *-----------------------------------------------------------------------
 *.end b2yv

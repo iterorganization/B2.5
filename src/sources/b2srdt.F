@@ -13,9 +13,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
-!WG_TODO     2          b2srdt_shi0to3, balance_netcdf
+      use b2mod_balance !djm Jan2017
+     1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
+     2          b2srdt_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -56,9 +56,6 @@
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) :: t0, ttim
       real (kind=R8) :: wrk0(nCv)
-      real (kind=R8) :: !djm Jan2017
-     &  snatmp(nCv,0:1,0:ns-1), smotmp(nCv,0:3,0:ns-1),
-     &  shetmp(nCv,0:3), shitmp(nCv,0:3)!, shntmp(nCv,0:3)
 *   ..procedures
       external xertst
       external b2xvsg
@@ -83,18 +80,23 @@
        call b2xvsg (nCv, ti0, 1, 'ti0', '.gt.')
        call b2xvsg (nCv, tn0, 1, 'tn0', '.gt.')
        call b2xvsg (nCv, ne0, 1, 'ne0', '.gt.')
+       call b2xvsg (nCv, nn0, 1, 'nn0', '.gt.')
        call b2xvsg (2*nCv, ni0, 1, 'ni0', '.gt.')
        call b2xvsg (nCv*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
        call b2xvsg (nCv, kt0, 1, 'kt0', '.ge.')
        call b2xvsg (nCv, zt0, 1, 'zt0', '.ge.')
+*    ..test current state
+       call b2xvsg (nCv*ns, na, 1, 'na', '.gt.')
+       call b2xvsg (nCv, te, 1, 'te', '.gt.')
+       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
+       call b2xvsg (nCv, tn, 1, 'tn', '.gt.')
+       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
+       call b2xvsg (nCv, nn, 1, 'nn', '.gt.')
+       call b2xvsg (2*nCv, ni, 1, 'ni', '.gt.')
+       call b2xvsg (nCv*ns, kinrgy, 1, 'kinrgy', '.ge.')
+       call b2xvsg (nCv, kt, 1, 'kt', '.ge.')
+       call b2xvsg (nCv, zt, 1, 'zt', '.ge.')
       endif
-
-cdjm Jan2017 Keep sources at the start to calculate total change for balance routines
-      snatmp = sr%sna
-      smotmp = sr%smo
-      shetmp = sr%she
-      shitmp = sr%shi
-!!      shntmp = sr%shn
 
 * ..include the contributions from dtim
 *   ..modify snadt
@@ -234,12 +236,12 @@ cxpb  This treatment added as a fix to get the ExB runs going
       enddo
 
 cdjm Store the total change in linearised sources for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2srdt_sna0to1 = snadt-snatmp
-!WG_TODO        b2srdt_smo0to3 = smodt-smotmp
-!WG_TODO        b2srdt_she0to3 = shedt-shetmp
-!WG_TODO        b2srdt_shi0to3 = shidt-shitmp
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then
+        b2srdt_sna0to1 = sr%snadt
+        b2srdt_smo0to3 = sr%smodt
+        b2srdt_she0to3 = sr%shedt
+        b2srdt_shi0to3 = sr%shidt
+      endif
 
       if ((switch%b2npmo_iout.eq.1.or.
      &                   switch%iout_b2wdat .eq. 4).and.lout) then      !srv 11.09.09 {

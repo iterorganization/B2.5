@@ -1,12 +1,12 @@
 c
-      subroutine trgsurf(igraphs)
+      subroutine trgsurf(nCv,igraphs)
       use b2mod_types
       use b2mod_wall
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       implicit none
-      integer lnblnk,igraphs
+      integer nCv,lnblnk,igraphs
       external lnblnk
 
       if(b2plot_debug.ge.10) 
@@ -24,7 +24,7 @@ c
      1     target_label(itwrk)(1:lnblnk(target_label(itwrk))),
      1     values(24),values(25),values(26),values(27),1,.false.,.true.,
      2     .false.)
-        call plottarget(nx,ny,nbnd,ndepth_nml,
+        call plottarget(nCv,nbnd,ndepth_nml,
      .     targetcr(1:nbnd,1:ndepth_nml,1:2),
      .     targetcz(1:nbnd,1:ndepth_nml,1:2),
      .     target_stack(1:nbnd,1:ndepth_nml,itwrk),
@@ -37,7 +37,7 @@ c
      1     target_label(itwrk)(1:lnblnk(target_label(itwrk))),
      1     values(28),values(29),values(30),values(31),1,.true.,.true.,
      2     .true.)
-        call plottarget(nx,ny,nbnd,ndepth_nml,
+        call plottarget(nCv,nbnd,ndepth_nml,
      2     targetcr(1:nbnd,1:ndepth_nml,1:2),
      .     targetcz(1:nbnd,1:ndepth_nml,1:2),
      3     target_stack(1:nbnd,1:ndepth_nml,itwrk),

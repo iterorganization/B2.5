@@ -66,23 +66,22 @@ c----------------------------------------------------------------------
 
       contains
 
-      subroutine b2blnm(nx,ny,ns)
-      use b2mod_geo
-      use b2mod_rates
-      use b2mod_plasma
-      use b2mod_sources
-      use b2mod_indirect
+      subroutine b2blnm(mpg,ns,state,state_ext)
       use b2mod_constants
-      use b2mod_external
       use b2mod_b2cmpa
       use b2mod_numerics_namelist
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
+      use b2us_map
+      use b2us_plasma
       implicit none
 c
 c
-      integer nx, ny, ns
+      integer ns
+      type(mapping) :: mpg
+      type(B2State) :: state
+      type(B2StateExt) :: state_ext
 c
       real (kind=R8) ::
      *     equdiv(ndivx,nqudiv)
@@ -101,10 +100,13 @@ c
      ,            (equdiv(1,13), rlres)
 c----------------------------------------------------------------------
 c
-      integer i, j, ic, is, ix, iy
+      integer i, j, ic
       real (kind=R8) ::
      *     hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf,
-     *     pr(-1:nx, -1:ny)
+     *     pr(mpg%nCv)
+#ifdef WG_TODO
+      integer, save :: is
+#endif
 c----------------------------------------------------------------------
 c*** To be taken from the common blocks (not used yet):
 c***  lcbs: boundary segments representing the core boundary in B2
@@ -116,7 +118,7 @@ c
      ,  rsfrc, rlptg, rlmup,
      ,  rlmtg, rlfnu, rlfmf,
      ,  rlres,
-     +  i, j, ic, is, ix, iy,
+     +  i, j, ic,
      +  hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf
 c======================================================================
 
@@ -125,128 +127,128 @@ c======================================================================
           equdiv(i,j)=0.0_R8
         end do
       end do
-      if(nncut.ge.1) then !{
+      if(mpg%nStr.ge.1) then !{
 c*** We only need the pressure balance for divertors
 c
 c*** Pressure upstream
 c
-      hlp_pi=0.0_R8
-      hlp_po=0.0_R8
-      hlp_fi=0.0_R8
-      hlp_fo=0.0_R8
-      pr=ne*te
-      do is = 0, ns-1
-        if (is_neutral(is)) cycle
-        pr(-1:nx,-1:ny)=pr(-1:nx,-1:ny)+
-     .   na(-1:nx,-1:ny,is)*ti(-1:nx,-1:ny)
-      end do
-      do is = 0, ns_ext-1
-        if (is_ext_neutral(is)) cycle
-        pr(-1:nx,-1:ny)=pr(-1:nx,-1:ny)+
-     .   na_ext(-1:nx,-1:ny,is)*ta_ext(-1:nx,-1:ny,is)
-      end do
-      do iy = 0, ny-1
-        ix=leftcut(1)-1
-        do is=0,ns-1
-          if (.not.is_neutral(is)) then
-            hlp_fi=hlp_fi+
-     .       fmo(rightix(ix,iy),rightiy(ix,iy),0,0,is)
-          end if
+        hlp_pi=0.0_R8
+        hlp_po=0.0_R8
+        hlp_fi=0.0_R8
+        hlp_fo=0.0_R8
+        call b2xppz(mpg%nCv, ns,
+     .   state%dv%ne, state%pl%na, state%pl%te, state%pl%ti, pr,
+     .   state_ext)
+#ifdef WG_TODO
+        do iy = 0, ny-1
+          ix=leftcut(1)-1
+          do is=0,ns-1
+            if (.not.is_neutral(is)) then
+              hlp_fi=hlp_fi+
+     .         fmo(rightix(ix,iy),rightiy(ix,iy),0,0,is)
+            end if
+          end do
+          hlp_pi=hlp_pi+pr(ix,iy)*sx(ix,iy)*pit(ix,iy)
+          ix=rightcut(1)
+          do is=0,ns-1
+            if (.not.is_neutral(is)) then
+              hlp_fo=hlp_fo+fmo(ix,iy,0,0,is)
+             end if
+          end do
+          hlp_po=hlp_po+
+     .     pr(ix,iy)*sx(leftix(ix,iy),leftiy(ix,iy))*pit(ix,iy)
         end do
-        hlp_pi=hlp_pi+pr(ix,iy)*sx(ix,iy)*pit(ix,iy)
-        ix=rightcut(1)
-        do is=0,ns-1
-          if (.not.is_neutral(is)) then
-            hlp_fo=hlp_fo+fmo(ix,iy,0,0,is)
-           end if
+#endif
+        prsup(1)=hlp_pi
+        prsup(2)=hlp_po
+        flmup(1)=hlp_fi
+        flmup(2)=hlp_fo
+        hlp_pi=0.0_R8
+        hlp_po=0.0_R8
+        hlp_fi=0.0_R8
+        hlp_fo=0.0_R8
+#ifdef WG_TODO
+        do iy = 0, ny-1
+          hlp_pi=hlp_pi+pr(0,iy)*sx(0,iy)*pit(0,iy)
+          hlp_po=hlp_po+pr(nx-1,iy)*sx(nx-1,iy)*pit(nx-1,iy)
+          do is=0,ns-1
+            if (.not.is_neutral(is)) then
+              hlp_fi=hlp_fi+fmo(0,iy,0,0,is)
+              hlp_fo=hlp_fo+fmo(nx,iy,0,0,is)
+            end if
+         end do
         end do
-        hlp_po=hlp_po+
-     .   pr(ix,iy)*sx(leftix(ix,iy),leftiy(ix,iy))*pit(ix,iy)
-      end do
-      prsup(1)=hlp_pi
-      prsup(2)=hlp_po
-      flmup(1)=hlp_fi
-      flmup(2)=hlp_fo
-      hlp_pi=0.0_R8
-      hlp_po=0.0_R8
-      hlp_fi=0.0_R8
-      hlp_fo=0.0_R8
-      do iy = 0, ny-1
-        hlp_pi=hlp_pi+pr(0,iy)*sx(0,iy)*pit(0,iy)
-        hlp_po=hlp_po+pr(nx-1,iy)*sx(nx-1,iy)*pit(nx-1,iy)
-        do is=0,ns-1
-          if (.not.is_neutral(is)) then
-            hlp_fi=hlp_fi+fmo(0,iy,0,0,is)
-            hlp_fo=hlp_fo+fmo(nx,iy,0,0,is)
-          end if
-       end do
-      end do
-      prstg(1)=hlp_pi
-      prstg(2)=hlp_po
-      flmtg(1)=hlp_fi
-      flmtg(2)=hlp_fo
+#endif
+        prstg(1)=hlp_pi
+        prstg(2)=hlp_po
+        flmtg(1)=hlp_fi
+        flmtg(2)=hlp_fo
 c
 c*** Volumetric sources
 c
-      hlp_nu=0.0_R8
-      hlp_mf=0.0_R8
-      do iy=0,ny-1
-        do ix=0,leftcut(1)-1
-          if(resignore(ix,iy,1).ne.0) then
-            hlp_mf=hlp_mf+pit(ix,iy)*pr(ix,iy)*vol(ix,iy)
-          end if
-          if(resignore(ix,iy,2).ne.0) then
-            do is=0,ns-1
-              if (.not.is_neutral(is))
-     >         hlp_nu=hlp_nu+
+        hlp_nu=0.0_R8
+        hlp_mf=0.0_R8
+#ifdef WG_TODO
+        do iy=0,ny-1
+          do ix=0,leftcut(1)-1
+            if(resignore(ix,iy,1).ne.0) then
+              hlp_mf=hlp_mf+pit(ix,iy)*pr(ix,iy)*vol(ix,iy)
+            end if
+            if(resignore(ix,iy,2).ne.0) then
+              do is=0,ns-1
+                if (.not.is_neutral(is))
+     >           hlp_nu=hlp_nu+
      1               smo(ix,iy,0,is)+
      2               smo(ix,iy,1,is)*ua(ix,iy,is)+
      3               smo(ix,iy,2,is)*am(is)*mp*na(ix,iy,is)+
      4               smo(ix,iy,3,is)*am(is)*mp*na(ix,iy,is)*
      5               ua(ix,iy,is)
-            end do
-          end if
+              end do
+            end if
+          end do
         end do
-      end do
-      prsnu(1)=hlp_nu
-      prsmf(1)=hlp_mf
-      hlp_nu=0.0_R8
-      hlp_mf=0.0_R8
-      do iy=0,ny-1
-        do ix=rightcut(1),nx-1
-          if(resignore(ix,iy,1).ne.0) then
-            hlp_mf=hlp_mf+pit(ix,iy)*pr(ix,iy)*vol(ix,iy)
-          end if
-        end do
-        do ix=rightcut(1),nx-1
-          if(resignore(ix,iy,2).ne.0) then
-            do is=0,ns-1
-              if (.not.is_neutral(is))
-     >         hlp_nu=hlp_nu+
+#endif
+        prsnu(1)=hlp_nu
+        prsmf(1)=hlp_mf
+        hlp_nu=0.0_R8
+        hlp_mf=0.0_R8
+#ifdef WG_TODO
+        do iy=0,ny-1
+          do ix=rightcut(1),nx-1
+            if(resignore(ix,iy,1).ne.0) then
+              hlp_mf=hlp_mf+pit(ix,iy)*pr(ix,iy)*vol(ix,iy)
+            end if
+          end do
+          do ix=rightcut(1),nx-1
+            if(resignore(ix,iy,2).ne.0) then
+              do is=0,ns-1
+                if (.not.is_neutral(is))
+     >           hlp_nu=hlp_nu+
      1               smo(ix,iy,0,is)+
      2               smo(ix,iy,1,is)*ua(ix,iy,is)+
      3               smo(ix,iy,2,is)*am(is)*mp*na(ix,iy,is)+
      4               smo(ix,iy,3,is)*am(is)*mp*na(ix,iy,is)*
      5               ua(ix,iy,is)
-            end do
-          end if
+              end do
+            end if
+          end do
         end do
-      end do
-      prsnu(2)=hlp_nu
-      prsmf(2)=hlp_mf
+#endif
+        prsnu(2)=hlp_nu
+        prsmf(2)=hlp_mf
 c
 c*** Totals and relative quantities
 c
-      rsfrc(1)=prstg(1)+flmtg(1)+prsnu(1)+prsmf(1)-prsup(1)-flmup(1)
-      rsfrc(2)=prsup(2)+flmup(2)+prsnu(2)+prsmf(2)-prstg(2)-flmtg(2)
-      do ic=1,2
-        rlptg(ic)=prstg(ic)/prsup(ic)
-        rlmup(ic)=flmup(ic)/prsup(ic)
-        rlmtg(ic)=flmtg(ic)/prsup(ic)
-        rlfnu(ic)=prsnu(ic)/prsup(ic)
-        rlfmf(ic)=prsmf(ic)/prsup(ic)
-        rlres(ic)=rsfrc(ic)/prsup(ic)
-      end do
+        rsfrc(1)=prstg(1)+flmtg(1)+prsnu(1)+prsmf(1)-prsup(1)-flmup(1)
+        rsfrc(2)=prsup(2)+flmup(2)+prsnu(2)+prsmf(2)-prstg(2)-flmtg(2)
+        do ic=1,2
+          rlptg(ic)=prstg(ic)/prsup(ic)
+          rlmup(ic)=flmup(ic)/prsup(ic)
+          rlmtg(ic)=flmtg(ic)/prsup(ic)
+          rlfnu(ic)=prsnu(ic)/prsup(ic)
+          rlfmf(ic)=prsmf(ic)/prsup(ic)
+          rlres(ic)=rsfrc(ic)/prsup(ic)
+        end do
       end if !}
       if(ank_tracing.eq.0) return
       if(filedata(ltrc)) then
@@ -254,7 +256,7 @@ c
 c*** Write the data in a separate file for plotting...
 c
         write(lun,hlp_frm) tim,((equdiv(i,j),j=1,nd_tmp),i=1,ndv_tmp)
-      else if(nncut.ge.1) then !{
+      else if(mpg%nStr.ge.1) then !{
 c
 c*** ... or just print out the data - if not a limiter configuration
 c
@@ -264,6 +266,7 @@ c
       end if !}
       return
 
+#ifdef WG_TODO
       contains
 c----------------------------------------------------------------------
       function sx(ix,iy)
@@ -277,6 +280,7 @@ csw 29sep2014: xpb fix on sx calculation
      .  qc(rightix(ix,iy),rightiy(ix,iy),0))
       return
       end function sx
+#endif
 
       end subroutine b2blnm
 c======================================================================

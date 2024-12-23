@@ -11,13 +11,15 @@ c***  fraction.he   helium fraction in the pumped gas
 c***  pressure.ntr  neutral pressure in PFR
 c----------------------------------------------------------------------
       use b2mod_types
-      use b2mod_geo
       use b2mod_b2plot
-      use b2mod_indirect
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
-      implicit none
-#include <DIMENSIONS.F>
+#ifdef B25_EIRENE
+      use eirmod_wneutrals
+#endif
+      use b2us_data
+      use b2mod_dimensions
+      IMPLICIT NONE
       integer lun
 c
 c*** Local variables
@@ -82,6 +84,7 @@ c
 c*** Western edge (inner target for LSN, outer target for USN, lower inner target for DN)
       hlp_pi=0.0_R8
       hlp_si=0.0_R8
+#ifdef WG_TODO
       if (lpfrb_i.ge.0) then
         m=lpfrb_i
       else
@@ -92,7 +95,6 @@ c*** Western edge (inner target for LSN, outer target for USN, lower inner targe
       else
         n=leftcut(1)+lpfrt_i
       end if
-#ifdef WG_TODO
       do j=m,n
         hlp_s=hlp_s+gs(j,0,1)
         hlp_si=hlp_si+gs(j,0,1)
@@ -119,6 +121,7 @@ c
 c*** Eastern edge (outer target for LSN, inner target for USN, lower outer target for DN)
       hlp_po=0.0_R8
       hlp_so=0.0_R8
+#ifdef WG_TODO
       if (lpfrt_o.ge.0) then
         m=lpfrt_o
       else
@@ -129,7 +132,6 @@ c*** Eastern edge (outer target for LSN, inner target for USN, lower outer targe
       else
         n=nx+lpfrb_o
       endif
-#ifdef WG_TODO
       do j=m,n
         hlp_s=hlp_s+gs(j,0,1)
         hlp_so=hlp_so+gs(j,0,1)

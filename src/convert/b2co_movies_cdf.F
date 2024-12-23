@@ -1,13 +1,16 @@
-      subroutine b2co_movies_cdf(nCv, ns, natm, nmol, tim)
+      subroutine b2co_movies_cdf
+#ifndef NO_CDF
+     . (nCv, ns, natm, nmol, tim)
+#endif
       use b2mod_types
       use b2mod_geo
       use b2mod_movies
       use b2mod_indirect
       use b2mod_subsys
       implicit none
+#ifndef NO_CDF
       integer nCv, ns, natm, nmol
       real (kind=R8) :: tim
-#ifndef NO_CDF
 #     include <netcdf.inc>
 #ifndef NO_GETENV
       integer lenval, ierror

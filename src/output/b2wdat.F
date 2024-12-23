@@ -12,7 +12,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      *   , only : natm, nmol, nstra,  npls
-      use eirmod_extrab25
+      use eirmod_wneutrals
 #endif
       use b2us_geo
       use b2us_map
@@ -47,9 +47,6 @@
 *   ..local variables
       integer nCv, nFc, nVx, iCv, iCv1, iCv2, iFc, ibc, iReg
       integer ncall, iout, is, ic, ib
-#ifdef WG_TODO
-      integer nx, ny                                               !srv 12.07.10
-#endif
       integer use_astra
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
@@ -70,27 +67,24 @@
 !   clength_s(i) is the length along a boundary from the face center of 1st face
 !                to the face center of i-th face
 
-#ifdef WG_TODO
       real (kind=R8) ::                                            !srv
-     *  Total_current(-1:ny), B0out, Total_flux(-1:ny),            !srv 31.08.00 19.02.02
-     *  Total_abscurrent(-1:ny), Total_absflux(-1:ny),
-     *  Total_energy_flux_i(-1:ny), Total_energy_flux_e(-1:ny),    !srv 23.11.00
-#endif
+     *  Total_current(mpg%nFs), B0out, Total_flux(mpg%nFs),        !srv 31.08.00 19.02.02
+     *  Total_abscurrent(mpg%nFs), Total_absflux(mpg%nFs),
+     *  Total_energy_flux_i(mpg%nFs), Total_energy_flux_e(mpg%nFs) !srv 23.11.00
       real (kind=R8) ::                                            !srv
      *  wrk2(mpg%nCv)                                              !srv 23.11.00
+      real (kind=R8) ::                                            !srv
+     *  Total_energy_flux(mpg%nFs), power,                         !srv 23.11.00
+     *  Total_energy_flux_mdf(mpg%nFs),
+     *  Total_energy_flux_i_mdf(mpg%nFs),
+     *  Total_energy_flux_e_mdf(mpg%nFs),
+     *  sfuadia(mpg%nFs,0:ns-1), sfvadia(mpg%nFs,0:ns-1),
+     *  sfvaecrb(mpg%nFs,0:ns-1), sfna(mpg%nFs,0:ns-1),
+     &  sfna_mdf(mpg%nFs,0:ns-1), sfn(mpg%nFs), sfn_mdf(mpg%nFs)
+      real (kind=R8) ::                                            !srv
+     &  pz(mpg%nCv), rz(mpg%nCv),
+     &  pr(mpg%nCv), ro(mpg%nCv), cst(mpg%nCv)                     !srv 30.01.15
 #ifdef WG_TODO
-      real (kind=R8) ::                                            !srv
-     *  Total_energy_flux(-1:ny), power,                           !srv 23.11.00
-     *  Total_energy_flux_mdf(-1:ny),
-     *  Total_energy_flux_i_mdf(-1:ny),
-     *  Total_energy_flux_e_mdf(-1:ny),
-!     *  kintmp,
-     *  sfuadia(-1:ny,0:ns-1), sfvadia(-1:ny,0:ns-1),
-     *  sfvaecrb(-1:ny,0:ns-1), sfna(-1:ny,0:ns-1),
-     &  sfna_mdf(-1:ny,0:ns-1), sfn(-1:ny), sfn_mdf(-1:ny)
-      real (kind=R8) ::                                            !srv
-     &  pz(-1:nx,-1:ny), rz(-1:nx,-1:ny),
-     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cst(-1:nx,-1:ny)         !srv 30.01.15
       real (kind=R8) :: bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
      &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
 #endif

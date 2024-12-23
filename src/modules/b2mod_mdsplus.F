@@ -2,7 +2,7 @@
       use b2mod_types
       use b2mod_constants
 *   ..database quantities
-      integer :: dbsolpsindex=0, dbshot=0, dbnx=0, dbny=0, dbns=0,
+      integer :: dbsolpsindex=0, dbshot=0, dbnCv=0, dbnFc=0, dbns=0,
      &     dbversion=0, dbsvn=0
       real (SELECTED_REAL_KIND (14)) :: dbtime=0.0_R8, 
      &     dbimpsep_te=0.0_R8, dbimpsep_ti=0.0_R8, dbimpsep_ne=0.0_R8,
@@ -291,8 +291,8 @@
      &    'user=''',trim(dbuser),''',',
      &    'host=''',trim(dbhost),''',',
      &    'date=''',trim(dbdate),''',',
-     &    'nx=',dbnx,',',
-     &    'ny=',dbny,',',
+     &    'nCv=',dbnCv,',',
+     &    'nFc=',dbnFc,',',
      &    'ns=',dbns,',',
      &    'species=''',trim(dbspecies),''',',
      &    'impsep_te=',dbimpsep_te,',',
@@ -370,8 +370,8 @@
      &   'user=''',trim(dbuser),''',',
      &   'host=''',trim(dbhost),''',',
      &   'date=''',trim(dbdate),''',',
-     &   'nx=',dbnx,',',
-     &   'ny=',dbny,',',
+     &   'nCv=',dbnCv,',',
+     &   'nFc=',dbnFc,',',
      &   'ns=',dbns,',',
      &   'species=''',trim(dbspecies),''',',
      &   'impsep_te=',dbimpsep_te,',',

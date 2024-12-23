@@ -104,6 +104,7 @@ c
       do is=1,stack_req(1)
         itmp=ipop(istack,iistack)
       enddo
+      return
       end subroutine pop_stack
 
       logical function bad_args(stack_req)
@@ -140,6 +141,21 @@ c
         bad_args= .true.
       endif
       end function bad_args
+
+      logical function check_classical_grid(mpg)
+      use b2us_map
+      implicit none
+      type(mapping), intent(in) :: mpg
+
+      check_classical_grid = mpg%isClassicalGrid.eq.1
+      if (.not.check_classical_grid) then
+        write(*,*)
+     .   'Option only available if the base grid is classical! '//
+     .   'Skipping...'
+        call pop_stack(stack_req)
+      endif
+      return
+      end function check_classical_grid
 
       subroutine alloc_b2mod_b2plot_ank(nwall)
       implicit none

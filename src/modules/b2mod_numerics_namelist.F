@@ -2,6 +2,9 @@
       use b2mod_types
       use b2mod_ad
      & , only : nsdmax, cvregmax
+#ifndef ALLOCATE_AND_NAMELIST
+      use b2mod_dimensions
+#endif
       implicit none
 
 #ifdef ALLOCATE_AND_NAMELIST
@@ -27,7 +30,6 @@
      *   last_solve_9(:),
      *   add_te_corr_to_po(:)                            ! IYS 21.09.2018
 #else
-#     include "DIMENSIONS.F"
       real (kind=R8), save :: dtco(0:nsdmax-1,0:CVREGMAX)
       real (kind=R8), save :: dtmo(0:nsdmax-1,0:CVREGMAX)
       real (kind=R8), save :: dtee(0:CVREGMAX)
@@ -122,7 +124,7 @@
       if (switch%recycle_afn.ne.1) then !! default, use total momentum equation
         solvemt=.true.
       else
-        solvemt=.false.                 !! in case of KUL fluid neutrals, don't use total momentum equation
+        solvemt=.false.                 !! in case of KUL fluid neutrals, do not use total momentum equation
       endif
       solvepo=.true.
       add_te_corr_to_po=.true.                                     ! IYS 21.09.2018
@@ -132,7 +134,7 @@
       solveet=.true.
       solvekt=.true.
       solvezt=.true.
-      if (switch%b2mndt_style.eq.2) then !! don't solve total momentum and energy equation in time-dependent mode
+      if (switch%b2mndt_style.eq.2) then !! do not solve total momentum and energy equation in time-dependent mode
         solveet=.false.
         solvemt=.false.
       endif
@@ -205,13 +207,13 @@
         do ireg = 0, nnreg(0)                                     !srv 22.05.18 {
           solveet(ireg) = (solveee(ireg).and.solveei(ireg))
      &                                  .and.solveet(ireg)
-          if (solveet(ireg).eq..true..and.b2mndt_style.eq.2) then
+          if (solveet(ireg).and.b2mndt_style.eq.2) then
             call xerrab('time-dependent mode requires solveet=false')
           endif
           do is = nsmin, nsmax-1
             solvemt(ireg) = solvemt(ireg).and.solvemo(is,ireg)
           end do
-          if (solvemt(ireg).eq..true..and.b2mndt_style.eq.2) then
+          if (solvemt(ireg).and.b2mndt_style.eq.2) then
             call xerrab('time-dependent mode requires solvemt=false')
           endif
         end do                                                    !srv 22.05.18 }

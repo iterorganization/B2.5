@@ -40,6 +40,7 @@ cank }
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_extrab25
+      use eirmod_wneutrals
       use eirmod_parmmod
      & , only : nlim, nsts, nlimps
 #else
@@ -56,8 +57,8 @@ cank }
 #else
       use b2mod_eirdiag
 #endif
+      use b2mod_dimensions
       implicit none
-#     include "DIMENSIONS.F"
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #endif
@@ -99,7 +100,7 @@ cank }
      *   b2eatcr(:), b2espcr(:), eb2atcr(:), eb2spcr(:),
      *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), micmp(:,:),
-     *   lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
+     *   lcns(:), ktns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
      2   ngpdata(:), time_dep_puff_case(:),
      *   accel_ion(:),
      *   maxw(:),                                 !nh 11.07.18
@@ -179,7 +180,7 @@ cank }
       character*1, save :: HYB_TYPE(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid), micmp(natmid,nionid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
-     ,  lcns(nstsid), ltns(nstsid),
+     ,  lcns(nstsid), ktns(nstsid), ltns(nstsid),
      ,  lsns(nstraid*DEF_NSRFS), ksns(NSTRAID), msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
       real (kind=R8), save :: RCFE(NSTRAID), RCFI(NSTRAID)
@@ -259,13 +260,13 @@ csw 21feb2012
 
       contains
 
-      subroutine alloc_b2mod_neutrals(nxd,nyd,nsd,
+      subroutine alloc_b2mod_neutrals(nsd,
      &  natm_in,nmol_in,nion_in,nstra_in,nsts_in,sput_dst)
       use b2mod_elements
      & , only : is_codes
       use b2mod_b2cmpa
       implicit none
-      integer, intent(in) :: nxd, nyd, nsd,
+      integer, intent(in) :: nsd,
      &  natm_in, nmol_in, nion_in, nstra_in, nsts_in, sput_dst
       integer is, isstart, isend
       integer is0, ispecies
@@ -298,12 +299,12 @@ csw 21feb2012
       allocate(RCFE(NSTRAID))
       allocate(RCFI(NSTRAID))
       allocate(RC_LIST_SIZE(NSTRAID))
-      allocate(RC_LIST_X(2*(NXD+NYD),NSTRAID))
-      allocate(RC_LIST_Y(2*(NXD+NYD),NSTRAID))
-      allocate(RC_LIST_CHAR(2*(NXD+NYD),NSTRAID))
+      allocate(RC_LIST_X(2*(DEF_NXD+DEF_NYD),NSTRAID))
+      allocate(RC_LIST_Y(2*(DEF_NXD+DEF_NYD),NSTRAID))
+      allocate(RC_LIST_CHAR(2*(DEF_NXD+DEF_NYD),NSTRAID))
       allocate(NRCFACES(NSTRAID))
-      allocate(RC_FACES(2*(NXD+NYD),NSTRAID))
-      allocate(RC_FACE_ORI(2*(NXD+NYD),NSTRAID))
+      allocate(RC_FACES(2*(DEF_NXD+DEF_NYD),NSTRAID))
+      allocate(RC_FACE_ORI(2*(DEF_NXD+DEF_NYD),NSTRAID))
       allocate(TARGSP(NSTRAID,ntrack))
       allocate(CHEMSP(NSTRAID))
       allocate(TIME_DEP_PUFF(NSTRAID))
@@ -336,6 +337,7 @@ csw 21feb2012
       allocate(micmp(natm_in,nion_in))
       allocate(lcns(nsts_in))
       allocate(ltns(nsts_in))
+      allocate(ktns(nsts_in))
       allocate(lsns(nstra_in*DEF_NSRFS))
       allocate(ksns(nstra_in))
       allocate(msns(2,nstra_in))
@@ -348,10 +350,6 @@ csw 21feb2012
       allocate(chemical_sputter_yield(0:nlimps))
 #endif
 #else
-#ifdef WG_TODO
-      call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
-      call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
-#endif
       call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
       write (*,*) ' natm_id,natmid ',natm_in, natmid
       call xertst (natm_in.le.NATMID, 'faulty parameter natm_in')
@@ -433,7 +431,7 @@ cmb  Default is to accelerate ions everywhere with sheath potential (target & wa
       issput_chemical=0
 #endif
       eirene_step_cpu=0.0_R8
-      eirene_step_dt=1.0e-3_R8
+      eirene_step_dt=0.0_R8
       eirene_mod=1
       volrecstart(:)=1.0e21_R8
       volrecinc=0.0_R8
@@ -462,6 +460,7 @@ cmb   b2species_start and end are set -100 here to check whether the field was r
       micmp=0
       lcns=0
       ltns=0
+      ktns=0
       ncns=0
       ntns=0
       ksns=0
@@ -602,6 +601,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(micmp)
       deallocate(lcns)
       deallocate(ltns)
+      deallocate(ktns)
       deallocate(lsns)
       deallocate(ksns)
       deallocate(msns)
@@ -682,6 +682,7 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           nstrat=nstrai
 #endif
         endif
+
         allocate(old_style(nstrat))
         do is = 1, nstrat
           if (rc_list_size(is).eq.0) then
@@ -744,10 +745,10 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
 !   If these fields have not been set in the namelist they are made equal to their
 !   variants without 'b2' in the field name.
         if (b2species_start(istra).eq.-100) then
-        b2species_start(istra) = species_start(istra)
+          b2species_start(istra) = species_start(istra)
         endif
         if (b2species_end(istra).eq.-100) then
-        b2species_end(istra) = species_end(istra)
+          b2species_end(istra) = species_end(istra)
         endif
         do is = 0, ns-1
           if (b2recyc(is,istra).lt.0.0_R8) then
@@ -775,7 +776,7 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       call xertst (0.lt.maxpoin, 'faulty input maxpoin')
       call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
-      call xertst (0.0_R8.lt.eirene_step_dt,
+      call xertst (0.0_R8.le.eirene_step_dt,
      . 'faulty input eirene_step_dt')
       call xertst (1.0_R8.lt.neut_scl_lim, 'faulty input neut_scl_lim')
       call xertst (0.0_R8.le.volrecinc, 'faulty input volrecinc')
@@ -941,7 +942,12 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       do is = 1, nnatmi
         call xertst(0.le.eb2atcr(is).and.eb2atcr(is).lt.ns,
      .   'faulty input eb2atcr')
-        call xertst(0.le.latmscl(is), 'faulty input latmscl')
+        if (eb2atcr(is).gt.0) then
+          call xertst(.not.lnext(eb2atcr(is)-1,eb2atcr(is)),
+     .     'eb2atcr must be the first species in sequence !')
+        end if
+        call xertst(0.le.latmscl(is).and.latmscl(is).le.nspecies,
+     .   'faulty input latmscl')
 #ifdef B25_EIRENE
         if (latmscl(is).eq.0) then
           write(6,'(a,i3,a)') 'Atom ',is,
@@ -965,7 +971,8 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
         do i = 1, nnatmi
           call xertst(0.le.mlcmp(i,is), 'faulty input mlcmp')
         enddo
-        call xertst(0.le.lmolscl(is), 'faulty input lmolscl')
+        call xertst(0.le.lmolscl(is).and.lmolscl(is).le.nspecies,
+     .   'faulty input lmolscl')
 #ifdef B25_EIRENE
         if (lmolscl(is).eq.0) then
           write(6,'(a,i3,a)') 'Molecule ',is,
@@ -996,7 +1003,8 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
 #endif
       enddo
       do is = 1, nnioni
-        call xertst(0.le.lionscl(is), 'faulty input lionscl')
+        call xertst(0.le.lionscl(is).and.lionscl(is).le.nspecies,
+     .   'faulty input lionscl')
       end do
       do is = 1, nnstsi
         call xertst (0.le.lcns(is).and.lcns(is).le.nnstsi,
@@ -1325,6 +1333,14 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           rcpos(nstrat)=0
           rcstart(nstrat)=0
           rcend(nstrat)=0
+          if (switch%recycle_afn.ne.0) then
+            do is = 0, ns-1
+              if (nint(zn(is)).eq.1) then
+                erecyc(is,nstrat) = 0.0_R8
+                mrecyc(is,nstrat) = 0.0_R8
+              end if
+            end do
+          end if
 #else
           nstrat=nstrai
 #endif
@@ -1464,7 +1480,7 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       call xertst (0.lt.maxpoin, 'faulty input maxpoin')
       call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
-      call xertst (0.0_R8.lt.eirene_step_dt,
+      call xertst (0.0_R8.le.eirene_step_dt,
      . 'faulty input eirene_step_dt')
       call xertst (1.0_R8.lt.neut_scl_lim, 'faulty input neut_scl_lim')
       call xertst (0.0_R8.le.volrecinc, 'faulty input volrecinc')
@@ -1623,7 +1639,12 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       do is = 1, nnatmi
         call xertst(0.le.eb2atcr(is).and.eb2atcr(is).lt.ns,
      .   'faulty input eb2atcr')
-        call xertst(0.le.latmscl(is), 'faulty input latmscl')
+        if (eb2atcr(is).gt.0) then
+          call xertst(.not.lnext(eb2atcr(is)-1,eb2atcr(is)),
+     .     'eb2atcr must be the first species in sequence !')
+        end if
+        call xertst(0.le.latmscl(is).and.latmscl(is).le.nspecies,
+     .   'faulty input latmscl')
 #ifdef B25_EIRENE
         if (latmscl(is).eq.0) then
           write(6,'(a,i3,a)') 'Atom ',is,
@@ -1647,7 +1668,8 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
         do i = 1, nnatmi
           call xertst(0.le.mlcmp(i,is), 'faulty input mlcmp')
         enddo
-        call xertst(0.le.lmolscl(is), 'faulty input lmolscl')
+        call xertst(0.le.lmolscl(is).and.lmolscl(is).le.nspecies,
+     .   'faulty input lmolscl')
 #ifdef B25_EIRENE
         if (lmolscl(is).eq.0) then
           write(6,'(a,i3,a)') 'Molecule ',is,
@@ -1678,7 +1700,8 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
 #endif
       enddo
       do is = 1, nnioni
-        call xertst(0.le.lionscl(is), 'faulty input lionscl')
+        call xertst(0.le.lionscl(is).and.lionscl(is).le.nspecies,
+     .   'faulty input lionscl')
       end do
       do is = 1, nnstsi
         call xertst (0.le.lcns(is).and.lcns(is).le.nnstsi,
@@ -2322,7 +2345,9 @@ cwdk also need to correct for degenerate faces?
       subroutine rc_to_struct (m)
       type(mapping), intent(inout) :: m
       integer :: istra, instra, istrac, ifc, ic1, ic2
+#ifdef WG_DEBUG
       integer :: iout, ian, ien, i
+#endif
 #ifndef F2003
       integer newunit
       external newunit
@@ -2358,6 +2383,7 @@ cwdk also need to correct for degenerate faces?
           end if
         end do
       end do
+#ifdef WG_DEBUG
 #ifdef F2003
       open (newunit=iout,file='rc.testout')
 #else
@@ -2378,6 +2404,7 @@ cwdk also need to correct for degenerate faces?
         write (iout,'(a,/(10f6.2))') 'rcFcOr  ',(m%rcFcOr(i),i=ian,ien)
       end do
       close (iout)
+#endif
 
       end subroutine rc_to_struct
 
@@ -2385,12 +2412,13 @@ cwdk also need to correct for degenerate faces?
 
       subroutine write_rcparms (ns, m)
       use b2mod_b2cmpa
+      use b2mod_version
       implicit none
       integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
       integer :: istra, iout, is, i
+      integer :: ii(1)
       character(1) :: ap =''''
-      character(10) :: new_neutrals_version = '03.002.000'
 #ifndef F2003
       integer newunit
       external newunit
@@ -2403,7 +2431,7 @@ cwdk also need to correct for degenerate faces?
       open(unit=iout,file='b2us.neutrals.parameters')
 #endif
 
-      call cfverw(iout,new_neutrals_version)
+      call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&NEUTRALS'
       write (iout,'(1x,a,es9.2)') 'EIRENE_STEP_CPU = ',eirene_step_cpu
@@ -2601,8 +2629,16 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,i5,a1)')
      .    'n_spcsrf= ',n_spcsrf,','
       if (n_spcsrf > 0) then
-        write (iout,'(1x,a,(10(i5,a1,1x)))')
-     .    'l_spcsrf= ',(l_spcsrf(i),',',i=1,n_spcsrf)
+        ii=minloc(abs(l_spcsrf))
+        if (ii(1).eq.1) then
+          is = 0
+        else if (l_spcsrf(ii(1)).eq.0) then
+          is = ii(1)-1
+        else
+          is = size(l_spcsrf)
+        end if
+        if (is.gt.0) write (iout,'(1x,a,(10(i5,a1,1x)))')
+     .    'l_spcsrf= ',(l_spcsrf(i),',',i=1,is)
         write (iout,'(1x,a,(10(a1,a,a1,a1,1x)))')
      .    'sps_id= ',(ap,sps_id(i),ap,',',i=1,n_spcsrf)
         write (iout,'(1x,a,(10(i5,a1,1x)))')

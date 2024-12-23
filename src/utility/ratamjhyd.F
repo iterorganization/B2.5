@@ -153,7 +153,6 @@
 
 *   ..local variables
       logical found
-      character id*32
       integer n3, i, j
       real (kind=R8) :: rates(0:nt,0:nn)
       character(420) :: row

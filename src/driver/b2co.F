@@ -8,8 +8,6 @@
       use b2mod_sputter
       use b2mod_diag
       use b2mod_b2plot
-!      use b2mod_external
-!      use b2mod_elements
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_boundary_namelist
@@ -47,8 +45,8 @@
       use b2mod_eirbra
      & , smo_eir => smo
 #endif
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -80,7 +78,7 @@
 #endif
 #endif
 #endif
-      integer ninp(0:5), nout(0:7), nCv, nFc, ns0, idum(0:9), io, is
+      integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, idum(0:9), io, is
       integer iflag
 #if ( !defined(NAGF95) && !defined(NAGFOR) )
       integer iargc
@@ -135,7 +133,6 @@
       call cfopen (nout(0),'b2co.prt','new','formatted')
       call cfopen (nout(1),'b2co.files','new','formatted')
       call cfopen (nout(2),'b2fstate','new','un*formatted')
-c      call cfopen (nout(7),'b2fplasma','new','unformatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers                                           !xpb
@@ -241,17 +238,11 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call cfwuch (nout(2), 120, lblmn, 'label')
       call b2wuzd (nout(2), plasmastate_version, ns,
      &  zamin, zamax, zn, am)
+*   ..write plasma state
       call write_b2fstate (nout(2), mpg%nCv, mpg%nFc, ns, state)
+      write(nout(0),*) 'Converted ',trim(savefile),' to b2fstate'
 *   ..close graphics files
 *     (none)
-*   ..write plasma state
-c      call cfverw(nout(7), plasmastate_version)
-c      idum(0) = nCv
-c      idum(1) = nFc
-c      idum(2) = ns
-c      call cfwuin (nout(7), 3, idum, 'nCv,nFc,ns')
-c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
-      write(nout(0),*) 'Converted ',trim(savefile),' to b2fstate'
 *   ..truncate tracing files
       call ipgeti ('ank_tracing', ank_tracing)
       call ipgeti ('b2mndr_ismain', ismain)
@@ -268,6 +259,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       if (.not.match_found.and.ismain.ne.1) ismain0 = ismain
       call ipgeti ('b2mwti_ismain0', ismain0)
 #ifdef B25_EIRENE
+      CALL EIRENE_DEFAULTS_USR
       filename='input.dat'
       call find_file(filename,file_exists)
       if (file_exists.and.switch%use_eirene.ne.0) then
@@ -315,25 +307,26 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       nioni = nion
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(nCv,nFc,NFL,NSTRA,ifoff)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_BRAEIR(nCv,nFc,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(nCv,NFL,NATM,NMOL,NION,NSTRA)
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
 #else
       call alloc_b2mod_braeir(nCv,nFc,ns,nstra)
-      call alloc_b2mod_eirbra(nCv,ns,natm,npls,nstra)
+      call alloc_b2mod_eirbra(nCv,ns,natm,nmol,nion,npls,nstra)
 #endif
       call alloc_b2mod_elements(ns,zn,am)
 #ifdef WG_TODO
-      call alloc_b2mod_b2plot(nCv,nFc,ns,ns_ext,wklng,
+      call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
 #endif
       call alloc_b2mod_boundary(1, 1, ns, nbcd, nnisod)
       if (switch%b2stbc_boundary_namelist.eq.1)
      > call read_b2mod_boundary_namelist(ns, mpg, .false.)
-      call alloc_b2mod_neutrals(mpg%nCi/2, mpg%nCi/2,
-     .  ns, natm, nmol, nion, nstraid, nsts, sput_dst)
+      call alloc_b2mod_neutrals
+     . (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (switch%b2stbr_neutrals_namelist.eq.1 .or.
      &    switch%use_eirene.ne.0)
      > call read_neutrals_namelist(ns, mpg, switch, .false.)
@@ -358,7 +351,7 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
 #endif
         if (file_exists) then
           open(unit=44,file=filename)
-          call ngread(mpg,switch,ismain,iflag)
+          call ngread(mpg,geo,ns,switch,ismain,iflag)
           nnatmi = natmi
           nnmoli = nmoli
         else
@@ -398,8 +391,11 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
-     .                       tim, .false.)
+          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli
+#ifndef NO_CDF
+     .                     , tim, .false.
+#endif
+     .                      )
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
@@ -411,8 +407,11 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
-     .                       tim, .true.)
+          call b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli
+#ifndef NO_CDF
+     .                     , tim, .true.
+#endif
+     .                      )
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
@@ -424,7 +423,10 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_wall_cdf(tim)
+          call b2co_wall_cdf
+#ifndef NO_CDF
+     .     (tim)
+#endif
           write(*,*) 'Returned from b2co_wall_cdf'
         else
           write(*,*) 'Skipped calling b2co_wall_cdf because '//
@@ -437,7 +439,10 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_tally_cdf(ns, mpg, tim)
+          call b2co_tally_cdf
+#ifndef NO_CDF
+     .     (ns, mpg, tim)
+#endif
           write(*,*) 'Returned from b2co_tally_cdf'
         else
           write(*,*) 'Skipped calling b2co_tally_cdf because '//
@@ -450,7 +455,10 @@ c      call write_b2fplasma (nout(7), nCv, nFc, ns, state)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_movies_cdf(nCv, ns, nnatmi, nnmoli, tim)
+          call b2co_movies_cdf
+#ifndef NO_CDF
+     .     (nCv, ns, nnatmi, nnmoli, tim)
+#endif
           write(*,*) 'Returned from b2co_movies_cdf'
         else
           write(*,*) 'Skipped calling b2co_movies_cdf because '//

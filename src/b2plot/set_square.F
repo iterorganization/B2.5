@@ -5,4 +5,4 @@
       xwidth=1.0
       yheight=1.0
       return
-      end
+      end subroutine set_square
