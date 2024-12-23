@@ -510,9 +510,18 @@
                   shiva(iCv,:) = 0.0_R8
             endif
       enddo
-!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
-!WG_TODO        b2sihs_visa0to3 = shivc+shiva
-!WG_TODO      endif
+
+      if (switch%b2sihs_shivis.eq.0) then
+        do k=1,mpg%nCg
+          iFc = mpg%fcs_wall(k)
+          if (mpg%fcLbl(iFc) .le. 0) cycle
+          iCv = minval(mpg%fcCv(iFc,1:2))
+          shivc(iCv,:) = 0.0_R8
+          shiva(iCv,:) = 0.0_R8
+        enddo
+      endif
+
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_visa0to3 = shivc+shiva
       endif
