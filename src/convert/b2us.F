@@ -15,7 +15,6 @@
       use b2mod_anomalous_transport
       use b2mod_work
       use b2mod_diag
-      use b2mod_b2plot
       use b2mod_indirect
       use b2mod_external
       use b2mod_elements
@@ -53,8 +52,8 @@
 #endif
       use b2mod_ipmain
       use b2mod_xerset
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -96,7 +95,7 @@
       type(B2StateExt), save :: state_ext
       type(B2Average), save :: state_avg
       type(switches), save :: switch
-      integer :: ntm, is, natm_loc
+      integer :: nx, ny, ns, nxtl, nxtr, ntm, is, natm_loc
 *   ..procedures
       logical is_comment
       external is_comment
@@ -354,7 +353,7 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 #ifdef B25_EIRENE
       filename='input.dat'
       call find_file(filename,file_exists)
-      if (file_exists.and.use_eirene.ne.0) then
+      if (file_exists) then
         open(unit=45,file=filename)
         read(45,'(A72)',END=6999) line
         rewind(45)
@@ -398,15 +397,13 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
           if (is_neutral(is)) ntm = ntm+1
         enddo
         natm_loc = max(natm, ntm)
+        call alloc_b2mod_neutrals
+     .   (ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
         if (neutrals_version.lt.'03.002.000') then
-          call alloc_b2mod_neutrals
-     .     (nx, ny, ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(nx, ny, ns, .false.)
           call conv_rcparms (mpg)
           call write_rcparms(ns,mpg)
         else
-          call alloc_b2mod_neutrals (mpg%nCi/2,mpg%nCi/2, ns,
-     .      natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(ns, mpg, switch, .false.)
         end if
         call rc_to_struct(mpg)

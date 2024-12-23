@@ -1,20 +1,10 @@
       module b2mod_driver
       use b2mod_types
       use b2mod_version
-!WG_RM      use b2mod_geo
-!WG_RM      use b2mod_ma28
-!WG_RM      use b2mod_plasma
-!WG_RM      use b2mod_rates
-!WG_RM      use b2mod_residuals
-!WG_RM      use b2mod_sources
-!WG_RM      use b2mod_transport
       use b2mod_tallies
-!WG_RM      use b2mod_indirect
       use b2mod_constants
-!WG_RM      use b2mod_geo_corner
       use b2mod_time
       use b2mod_diag
-!WG_RM      use b2mod_work
       use b2mod_elements
       use b2us_feedback
      & , only : write_b2us_feedback, init_feedback, dealloc_feedback,
@@ -27,26 +17,22 @@
       use b2mod_wall
      & , only : dealloc_b2mod_wall
       use b2mod_neoclassical
+     & , only : dealloc_b2mod_neoclassical
       use b2mod_first_flight
       use b2mod_input_profile
       use b2mod_user_namelist
-!WG_RM      use b2mod_ma28_for_7diag
-!WG_RM      use b2mod_ma28_for_9diag
       use b2mod_ma28_for_us
       use b2mod_transport_models
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
-!WG_RM      use b2mod_anomalous_transport
       use b2mod_transport_disruption
       use b2mod_b2cmfs
-!WG_RM      use b2mod_b2cmgs
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
-!WG_RM      use b2mod_external
       use b2mod_mwti
       use b2mod_file
       use b2mod_batch_average
@@ -58,9 +44,9 @@
      & , only : run_av_init, run_av_get_plasma, run_av_save,
      & run_av_fin
       use b2mod_balance !djm Jan2017
-     & , only : balance_netcdf, alloc_b2mod_balance,!WG_TODO write_balance,
+     & , only : balance_netcdf, alloc_b2mod_balance, write_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
-     &          balance_average!WG_TODO, update_average_balance
+     &          balance_average, update_average_balance
       use b2mod_equation_sources                                        !srv 26.02.18
       use b2mod_boundary_sources                                        !srv 26.02.18
       use b2mod_switches
@@ -75,20 +61,29 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
      * , only : ndx, ndy, nstra, nfl, natm, nmol, nion, npls,
-     *          nsrfs, n1st, n2nd, n3rd, nreac, ifoff,
+     *          nsrfs, n1st, n2nd, n3rd, nreac, 
      *          eirene_set_parmmod
       use eirmod_cinit
      * , only : eirene_init_cinit, fort_lc
       use eirmod_ccoupl
+     , , only : eirene_alloc_ccoupl, eirene_dealloc_ccoupl
       use eirmod_clogau
+     , , only : eirene_alloc_clogau
       use eirmod_ctrcei
+     , , only : eirene_alloc_ctrcei, eirene_dealloc_ctrcei
       use eirmod_comprt
-     , ,only: iunout
+     , , only : iunout
       use eirmod_braeir
+     , , only : eirene_alloc_braeir, eirene_dealloc_braeir
       use eirmod_eirbra
+     , , only : eirene_alloc_eirbra, eirene_dealloc_eirbra
+      use eirmod_infcop
+     , , only : eirene_dealloc_infcop
       use eirmod_extrab25
       use eirmod_wneutrals
+     , , only : eirene_wneutrals_init
       use b2mod_eirene
+     , , only : eirene_mc_final
 #ifdef NAGFOR
       use f90_unix_proc ! IGNORE
 #endif
@@ -97,7 +92,7 @@
       use b2mod_eirbra
 #endif
       use b2mod_b2_to_astra
-     , ,only: write_b2_to_astra
+     , , only : write_b2_to_astra
 #ifdef JET
       use b2mod_ppout
 #endif
@@ -106,36 +101,36 @@
 #endif
 #ifdef IMAS
       use ids_routines  ! IGNORE
-     , ,only: imas_open_env, ids_deallocate, ids_get
+     , , only : imas_open_env, ids_deallocate, ids_get
       use ids_schemas   ! IGNORE
-     , ,only: ids_edge_profiles, ids_edge_sources, ids_edge_transport,
-     ,        ids_radiation, ids_dataset_description, ids_equilibrium
+     , , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,
+     ,          ids_radiation, ids_dataset_description, ids_equilibrium
 #if ( IMAS_MINOR_VERSION > 8 || IMAS_MAJOR_VERSION > 3 )
       use ids_schemas   ! IGNORE
-     , ,only: ids_real, ids_real_invalid
+     , , only : ids_real, ids_real_invalid
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
       use ids_schemas   ! IGNORE
-     , ,only: ids_summary
+     , , only : ids_summary
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
       use ids_schemas   ! IGNORE
-     , ,only: ids_numerics
+     , , only : ids_numerics
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       use ids_schemas   ! IGNORE
-     , ,only: ids_divertors
+     , , only : ids_divertors
 #endif
       use b2mod_ual
-     , ,only: put_ids_edge, new_ids_edge, close_ual,
-     ,        dealloc_ids_edge
+     , , only : put_ids_edge, new_ids_edge, close_ual,
+     ,          dealloc_ids_edge
       use b2mod_ual_io
-     , ,only: b25_process_ids, num_time_slices
+     , , only : b25_process_ids, num_time_slices
 #endif
       use b2mod_subsys
+      use b2mod_dimensions
       implicit none
 *   ..common blocks
-#     include "DIMENSIONS.F"
 *   ..local variables
       integer ncall, ntim, mvinc, mvnum, jsep, jxi, jxa,
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
@@ -168,7 +163,7 @@
       character chns*3                                               !srv 25.01.16
       integer itim, ierr, edition, b2time, coronal,
      *  tally, ismain, ismain0, natmi, no_solve,
-     *  external_species, idx, status
+     *  external_species, idx
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
@@ -188,8 +183,6 @@
 #endif
 #ifdef CATALYST
       logical use_catalyst
-      integer lnblnk
-      external lnblnk
 #endif
 #ifdef JET
       real (kind=R8) ::
@@ -218,11 +211,10 @@
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       type(ids_divertors) :: divertors
 #endif
-      integer :: time_slice_index, batch_index, tmp_run
+      integer :: batch_index
       real (IDS_real) :: old_start_time, old_end_time, ids_end_time
       character username*24, database*24, treename*24, version*24
       character old_imas_version*132, imas_version*132
-      character systemarg*512
       logical new_eq_ggd
 #endif
       real (kind=R8) ::
@@ -358,6 +350,7 @@
       logical streql
       external rratio, smax, streql
 #ifdef IMAS
+      integer lnblnk
       character*16 usrnam
       external usrnam
 #endif
@@ -1433,7 +1426,8 @@ csw 09oct2012
 #endif
       if(switch%use_eirene.ne.0) then
 #ifdef B25_EIRENE
-        IUNOUT=6+IFOFF
+        IUNOUT=6
+        CALL EIRENE_DEFAULTS_USR
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
         CALL EIRENE_SET_PARMMOD(1)
@@ -1464,6 +1458,7 @@ csw 09oct2012
         N3RD=DEF_NPHID
         NREAC=7
         IUNOUT=6
+        CALL EIRENE_DEFAULTS_USR
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
         CALL EIRENE_INIT_CINIT
@@ -1474,10 +1469,11 @@ csw 09oct2012
       endif
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL EIRENE_ALLOC_BRAEIR(NCV,NFC,NFL,ifoff)
-      CALL EIRENE_ALLOC_EIRBRA(NCV,NFL,NATM,NSTRA,ifoff)
+      CALL EIRENE_ALLOC_BRAEIR(NCV,NFC,NFL)
+      CALL EIRENE_ALLOC_EIRBRA(NCV,NFL,NATM,NMOL,NION,NSTRA)
       CALL EIRENE_ALLOC_CCOUPL(1)
-      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_CTRCEI(1)
+      CALL EIRENE_ALLOC_CTRCEI(2)
 #else
       call alloc_b2mod_braeir(nCv,nFc,ns,nstra)
       call createB2SourceEir( nCv, ns, nstra, state % sr_eir )
@@ -1654,9 +1650,9 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
      .    'b2mndr_uadia_th'//chns)
         call my_out_us(70,nCv,0,state%dv%uadia(1,1,is),
      .    'b2mndr_uadia_r'//chns)
-       call my_out_us(70,nFc,1,state%dv%fna(1,0,is),
+        call my_out_us(70,nFc,1,state%dv%fna(1,0,is),
      &    'b2mndr_fna_th'//chns)
-       call my_out_us(70,nFc,1,state%dv%fna(1,1,is),
+        call my_out_us(70,nFc,1,state%dv%fna(1,1,is),
      &    'b2mndr_fna_r'//chns)
        enddo
        call my_out_us(70,nCv,0,state%pl%te,'b2mndr_te')
@@ -1931,7 +1927,7 @@ c   --> better way doing this is necessary)
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
       call alloc_b2mod_neutrals
-     & (mpg%nCi/2,mpg%nCi/2,ns,natm,nmol,nion,nstraid,nsts,sput_dst)
+     & (ns,natm,nmol,nion,nstraid,nsts,sput_dst)
       natmi = 0
       do is = 0, ns-1
         if (is_neutral(is)) natmi = natmi+1
@@ -1973,18 +1969,18 @@ cxpb for neutral fluxes used in b2stbc_phys
       filename=fort_lc//'44'
       call find_file(filename,ex)
       CALL EIRENE_SETCON
-      CALL EIRENE_EXTRAB25_WNEUINIT
+      CALL EIRENE_WNEUTRALS_INIT
       if (ex.or.ids_save.ne.0.or.delta_ids_time.gt.0.0_R8) then
-        call alloc_b2mod_b2plot(nCv,nFc,ns,state_ext%ns,wklng,
+        call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,state_ext%ns,wklng,
      .                          natm,nmol,nion,nlimps)
         if (switch%use_eirene.ne.0.and.ex) then
           open(unit=44,file=filename)
-          call ngread(mpg,switch,ismain,iflag)
+          call ngread(mpg,geo,ns,switch,ismain,iflag)
         endif
       endif
 #else
       if (ids_save.ne.0.or.delta_ids_time.gt.0.0_R8)
-     > call alloc_b2mod_b2plot(nCv,nFc,ns,state_ext%ns,wklng,
+     > call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,state_ext%ns,wklng,
      .                         natm,nmol,nion,nlimps)
 #endif
 c new CDF movie option (1st frame at t=0)
@@ -2082,11 +2078,19 @@ c new CDF movie option (1st frame at t=0)
       real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
       integer i, is, icf, iCv
+#ifdef IMAS
+      integer tmp_run, time_slice_index
+#ifndef NAGFOR
+      integer status
+#endif
+#endif
       character*256 filename, fort31name
+#if ( defined(B25_EIRENE) || defined(IMAS) )
+      character*512 systemarg
+#endif
 #ifdef B25_EIRENE
-      character*256 systemarg
 #ifdef NAGFOR
-      integer ierror
+      integer ierror, status
 #endif
 #endif
       character*1 ss
@@ -2264,11 +2268,9 @@ csw 09oct2012 set default potential already at this point (BCs)
           close(nout(7))
         endif
 !djm Jun2017
-#ifdef WG_TODO
         if((balance_netcdf.ne.0).and.(ntim.gt.0)) then
           call update_average_balance(state,itim,ntim)
         endif
-#endif
 #endif
 *    ..increment
         itim = itim+1
@@ -2387,7 +2389,10 @@ c new CDF movie option
         if(ntim_batch.gt.0) then
           if(mod(itim,ntim_batch).eq.0) lwav = .true.
         endif
-        call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+        call b2mwti(itim,tim,
+#ifndef NO_CDF
+     .         ntim,b2time,ntim_batch,
+#endif
      .         nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
      .         state%pl,state%dv,state%co,state%rt,state%srw,
      .         state_ext,ismain,ismain0,lwti,lwav,.true.)
@@ -2426,7 +2431,7 @@ c new CDF movie option
         if (ank_tracing.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
      >     call b2trace(ns,nxtl,nxtr,ismain,dtim,
-     .                  geo,mpg,state,switch)
+     .                  geo,mpg,state,switch,state_ext)
         endif
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
@@ -2628,11 +2633,12 @@ c new CDF movie option
      .    delta_ids_time.gt.0.0_R8)
         process_ids = write_ids
         if (write_ids) then
-          status = 0
 #ifdef IMAS
+          status = 0
           if (idx.eq.0.and.continued) then
-            write(*,*) "Checking if IMAS data-entry already exists : ",
-     .       trim(database), shot, run
+            write(*,'(2a,2i8)')
+     .       "Checking if IMAS data entry already exists : ",
+     .        trim(database), shot, run
             call imas_open_env(treename, shot, run, idx,
      .       username, database, version, status)
             if (status.ne.0) then
@@ -2654,7 +2660,7 @@ c new CDF movie option
             end if
             !! If this is a time continuation run, append the new data to the IDS
             if (status.eq.0 .and. idx.ne.0) then
-              write(*,*) "Reading old IMAS data-entry: ",
+              write(*,*) "Reading old IMAS data entry: ",
      .         trim(database), shot, run
               call ids_get( idx, "equilibrium", equilibrium, status)
               call ids_get( idx, "edge_profiles", old_edge_profiles,
@@ -2685,12 +2691,14 @@ c new CDF movie option
                 if ( status.ne.0 ) then
                   write(*,*)
      .              'Error opening old dataset_description IDS !'
-                else if (associated(old_description%dd_version)) then
-#if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
+                else if (associated(old_description%ids_properties%
+     &                              version_put%data_dictionary)) then
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
                   old_start_time = description%simulation%time_begin
                   old_end_time = description%simulation%time_end
 #endif
-                  old_imas_version = old_description%dd_version(1)
+                  old_imas_version = old_description%ids_properties%
+     &                               version_put%data_dictionary(1)
                   call ids_deallocate( old_description )
                 end if
                 continued = continued .and.
@@ -2703,7 +2711,7 @@ c new CDF movie option
      &                database.eq.'iter') then
                     if (.not.streql(old_imas_version,imas_version)) then
                       write(*,*)
-     &                 'Old IMAS data-entry was written '//
+     &                 'Old IMAS data entry was written '//
      &                 'using Data Dictionary version '//
      &                  trim(old_imas_version)//'.'
                       write(*,*)
@@ -2713,7 +2721,6 @@ c new CDF movie option
                     if (database.eq.'iter') write(*,*)
      &               'IDS file will be moved to ITER database.'
                     call close_ual(idx)
-                    idx = 0
 cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     tmp_run = run
                     if (database.ne.'iter') tmp_run = run + 1000
@@ -2757,7 +2764,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     end if
                     if (database.eq.'iter') database = 'ITER'
                     call imas_open_env(treename, shot, run, idx,
-     .                username, database, version, status)
+     .               username, database, version, status)
                   end if
                   if (continued) then
                     if (process_ids) then
@@ -2776,7 +2783,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &               summary,
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-     &               numerics, old_start_time, run_end_time,
+     &               numerics,
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &               old_start_time, run_end_time,
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &               divertors,
@@ -2790,7 +2800,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               end if
             else
               write(*,*)
-     .         "No previous IMAS data-entry found, "//
+     .         "No previous IMAS data entry found, "//
      .         "a new one will be created"
               idx = 0
               if (database.eq.'iter') database = 'ITER'
@@ -2808,7 +2818,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &          summary,
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-     &          numerics, run_start_time, run_end_time,
+     &          numerics,
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &          run_start_time, run_end_time,
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &          divertors,
@@ -2830,7 +2843,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &          summary,
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-     &          numerics, old_start_time, run_end_time,
+     &          numerics,
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &          old_start_time, run_end_time,
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &          divertors,
@@ -2935,6 +2951,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
       logical ids_done
 #ifdef IMAS
+      integer tmp_run, time_slice_index, status
+      character*512 systemarg
       logical streql
       external streql
 #endif
@@ -2985,6 +3003,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       filename='b2.wall_save.parameters'
       call find_file(filename,found)
       call wall_final(nx,ny,ns,found)
+
 * ..display and save the result of the calculation
 *   ..write summary of final state
       call b2wfpi (nout(0), idout1, nx, ny, ns, ne, na, ua,
@@ -3084,7 +3103,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 *   ..produce 2d profiles if not yet done
       if(b2time.gt.0) then
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
-          call b2mwti(itim,tim,ntim,b2time,ntim_batch,
+          call b2mwti(itim,tim,
+#ifndef NO_CDF
+     *           ntim,b2time,ntim_batch,
+#endif
      *           nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
      *           state%pl,state%dv,state%co,state%rt,state%srw,
      *           state_ext,ismain,ismain0,.true.,.false.,.false.)
@@ -3097,20 +3119,18 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           call tallies(ns,tim,mpg,geo,state,state_ext,switch)
         endif
       endif
-#ifdef WG_TODO
 *   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
-         if (balance_average .ne. 0) then
-           call update_average_balance(itim,-1) ! scale quantities by 1/itim if averaged
+        if (balance_average .ne. 0) then
+          call update_average_balance(state,itim,-1) ! scale quantities by 1/itim if averaged
         endif
-        call write_balance(nx,ny,ns)
+        call write_balance(nCv,nFc,ns,geo)
 #else
         write(*,*)
      >   'NO_CDF is set at compilation, cannot write balance.nc'
 #endif
       endif
-#endif
 *   ..write out last IDS if not yet done
       ids_done = .false.
       write_ids = .false.
@@ -3128,8 +3148,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       write_ids = write_ids .or. ids_save.lt.0
       write_ids = write_ids .and. ntim.gt.0 .and. .not.ids_done
       if (write_ids) then
-        status = 0
 #ifdef IMAS
+        status = 0
         if (idx.ne.0) then
           write(*,*) "Appending a new time slice at t = ", tim, " s."
           num_time_slices = num_time_slices + 1
@@ -3142,7 +3162,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      summary,
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-     &      numerics, old_start_time, run_end_time,
+     &      numerics,
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &      old_start_time, run_end_time,
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
@@ -3150,7 +3173,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      tim, dtim, shot, run, database, version, new_eq_ggd,
      &      time_slice_index, num_time_slices )
         else if (continued) then
-          write(*,*) "Checking if IMAS data-entry already exists : ",
+          write(*,'(2a,2i8)')
+     .     "Checking if IMAS data entry already exists : ",
      .      trim(database), shot, run
           call imas_open_env(treename, shot, run, idx,
      .      username, database, version, status)
@@ -3173,7 +3197,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           end if
           !! If this is a time continuation run, append the new data to the IDS
           if (status.eq.0 .and. idx.ne.0) then
-            write(*,*) "Reading old IMAS data-entry: ",
+            write(*,*) "Reading old IMAS data entry: ",
      .       trim(database), shot, run
             call ids_get( idx, "equilibrium", equilibrium, status)
             call ids_get( idx, "edge_profiles", old_edge_profiles,
@@ -3198,12 +3222,14 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      .                                old_description, status)
               if ( status.ne.0 ) then
                 write(*,*) 'Error opening old dataset_description IDS !'
-              else if (associated(old_description%dd_version)) then
+              else if (associated(old_description%ids_properties%
+     &                            version_put%data_dictionary)) then
 #if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
                 old_start_time = description%simulation%time_begin
                 old_end_time = description%simulation%time_end
 #endif
-                old_imas_version = old_description%dd_version(1)
+                old_imas_version = old_description%ids_properties%
+     &                             version_put%data_dictionary(1)
                 call ids_deallocate( old_description )
               end if
               continued = continued .and.
@@ -3217,7 +3243,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &              database.eq.'iter') then
                   if (.not.streql(old_imas_version,imas_version)) then
                     write(*,*)
-     &               'Old IMAS data-entry was written '//
+     &               'Old IMAS data entry was written '//
      &               'using Data Dictionary version '//
      &                trim(old_imas_version)//'.'
                     write(*,*)
@@ -3227,7 +3253,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   if (database.eq.'iter') write(*,*)
      &             'IDS file will be moved to ITER database.'
                   call close_ual(idx)
-                  idx = 0
 cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   tmp_run = run
                   if (database.ne.'iter') tmp_run = run + 1000
@@ -3271,7 +3296,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   end if
                   if (database.eq.'iter') database = 'ITER'
                   call imas_open_env(treename, shot, run, idx,
-     .              username, database, version, status)
+     .             username, database, version, status)
                 end if
                 if (continued) then
                   write(*,*)
@@ -3287,7 +3312,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &            summary,
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-     &            numerics, old_start_time, run_end_time,
+     &            numerics,
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &            old_start_time, run_end_time,
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &            divertors,
@@ -3303,13 +3331,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             end if
           else
             write(*,*)
-     .       "No previous IMAS data-entry found, "//
+     .       "No previous IMAS data entry found, "//
      .       "a new one will be created"
             idx = 0
             if (database.eq.'iter') database = 'ITER'
           end if
         else
-          write(*,*) "Creating a new IMAS data-entry"
+          write(*,*) "Creating a new IMAS data entry"
           idx = 0
           if (database.eq.'iter') database = 'ITER'
         end if
@@ -3323,7 +3351,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      summary,
 #endif
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
-     &      numerics, run_start_time, run_end_time,
+     &      numerics,
+#endif
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+     &      run_start_time, run_end_time,
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
@@ -3368,7 +3399,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
      &      radiation )
         call close_ual(idx)
-        idx = 0
 #endif
       end if
 
@@ -3441,6 +3471,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_DEALLOC_CTRCEI
+      CALL EIRENE_DEALLOC_INFCOP
 #else
       call dealloc_b2mod_braeir
       call destroyB2SourceEir( state % sr_eir )

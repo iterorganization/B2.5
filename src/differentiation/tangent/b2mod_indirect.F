@@ -4,8 +4,8 @@
       use tradui_constants
       use b2mod_cellhelper
       use b2mod_connectivity
+      use b2mod_dimensions
       implicit none
-#include "DIMENSIONS.F"
 
       integer, parameter :: NNREGMAX=8
 

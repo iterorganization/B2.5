@@ -1,6 +1,8 @@
 module b2mod_geometry
     use logging &
      & , only: logmsg, LOGDEBUG
+    use b2mod_cellhelper &
+     & , only: LEFT, RIGHT, TOP, BOTTOM, NODIRECTION
 
     implicit none
 
@@ -36,10 +38,16 @@ module b2mod_geometry
     integer, parameter :: REGIONTYPE_YEDGE = 2  !< Third region type
     integer, parameter :: REGIONTYPE_EDGE = 3   !< Undifferentiated edge type
 
+    !! Boundary direction indices
+    integer, parameter :: WEST = LEFT, SOUTH = BOTTOM, EAST = RIGHT, NORTH = TOP
+
     !! Region counts and names
 
     !! Maximum number of regions of each type
     integer, parameter :: REGION_COUNT_MAX = 15
+
+    !! Maximum number of regions over all geometry types
+    integer, parameter :: REGION_NUMBER_MAX = 27
 
     !! Region counts
     !! First dimension: geometry type
@@ -393,7 +401,7 @@ module b2mod_geometry
         &    2,  3,  5,  6,  7,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
         &    9, 11, 12, 13, 14, 15,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
         &    1,  4,  8, 10,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
-        & & ! GEOMETRY_STRUCTURES_SPACES
+        & & ! GEOMETRY_STRUCTURED_SPACES
         &    1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
         &    1,  2,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
         &    3,  4,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, &
@@ -411,6 +419,103 @@ module b2mod_geometry
         & &
         &  /), &
         & (/REGION_COUNT_MAX, REGIONTYPE_COUNT, GEOMETRY_COUNT/) )
+
+   integer, dimension(REGION_NUMBER_MAX, 0:GEOMETRY_COUNT-1) :: boundaryAssignments = &
+        &   reshape( (/                                                       &
+        & & ! GEOMETRY_UNSPECIFIED
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION,                                        &
+        & & ! GEOMETRY_LINEAR
+        &    WEST, EAST, SOUTH, NORTH,                           NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION,                                        &
+        & & ! GEOMETRY_CYLINDER
+        &    NODIRECTION, SOUTH, NORTH,             NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION,                                        &
+        & & ! GEOMETRY_LIMITER
+        &    WEST, EAST, NODIRECTION, SOUTH, NODIRECTION,                     &
+        &    NORTH,       NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION,                                        &
+        & & ! GEOMETRY_SN
+        &    WEST, NODIRECTION, NODIRECTION, EAST, NODIRECTION,               &
+        &    NODIRECTION, SOUTH, SOUTH, SOUTH, NODIRECTION,                   &
+        &    NORTH, NORTH, NORTH,                   NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION,                                        &
+        & & ! GEOMETRY_CDN
+        &    WEST, NODIRECTION, NODIRECTION, EAST, WEST,                      &
+        &    NODIRECTION, NODIRECTION, EAST, NODIRECTION, NODIRECTION,        &
+        &    NODIRECTION, NODIRECTION, SOUTH, SOUTH, SOUTH,                   &
+        &    NODIRECTION, NORTH, NORTH, NORTH, SOUTH,                         &
+        &    SOUTH, SOUTH, NODIRECTION, NORTH, NORTH,                         &
+        &    NORTH,                                              NODIRECTION, &
+        & & ! GEOMETRY_DDN_BOTTOM
+        &    WEST, NODIRECTION, NODIRECTION, EAST, WEST,                      &
+        &    NODIRECTION, NODIRECTION, EAST, NODIRECTION, NODIRECTION,        &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, SOUTH, SOUTH,             &
+        &    SOUTH, NODIRECTION, NORTH, NORTH, NORTH,                         &
+        &    SOUTH, SOUTH, SOUTH, NODIRECTION, NORTH,                         &
+        &    NORTH, NORTH,                                                    &
+        & & ! GEOMETRY_DDN_TOP
+        &    WEST, NODIRECTION, NODIRECTION, EAST, WEST,                      &
+        &    NODIRECTION, NODIRECTION, EAST, NODIRECTION, NODIRECTION,        &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, SOUTH, SOUTH,             &
+        &    SOUTH, NODIRECTION, NORTH, NORTH, NORTH,                         &
+        &    SOUTH, SOUTH, SOUTH, NODIRECTION, NORTH,                         &
+        &    NORTH, NORTH,                                                    &
+        & & ! GEOMETRY_ANNULUS
+        &    NODIRECTION, SOUTH, NORTH,             NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION,                                        &
+        & & ! GEOMETRY_STELLARATORISLAND
+        &    WEST, NODIRECTION, NODIRECTION, EAST, NODIRECTION,               &
+        &    NODIRECTION, NODIRECTION, SOUTH, SOUTH, SOUTH,                   &
+        &    NODIRECTION, NODIRECTION, NORTH,       NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION,                                        &
+        & & ! GEOMETRY_STRUCTURED_SPACES
+        &    WEST, EAST, SOUTH, NORTH,                           NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, NODIRECTION, &
+        &    NODIRECTION, NODIRECTION,                                        &
+        & & ! GEOMETRY_LFS_SNOWFLAKE_MINUS
+        &    WEST, NODIRECTION, NODIRECTION, EAST, WEST,                      &
+        &    NODIRECTION, NODIRECTION, WEST, NODIRECTION, NODIRECTION,        &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, SOUTH, SOUTH,             &
+        &    SOUTH, NODIRECTION, NORTH, NORTH, NORTH,                         &
+        &    SOUTH, SOUTH, SOUTH, NORTH, NORTH,                               &
+        &    NORTH,                                              NODIRECTION, &
+        & & ! GEOMETRY_LFS_SNOWFLAKE_PLUS
+        &    WEST, NODIRECTION, NODIRECTION, EAST, WEST,                      &
+        &    NODIRECTION, NODIRECTION, WEST, NODIRECTION, NODIRECTION,        &
+        &    NODIRECTION, NODIRECTION, NODIRECTION, SOUTH, SOUTH,             &
+        &    SOUTH, NODIRECTION, NORTH, NORTH, NORTH,                         &
+        &    SOUTH, SOUTH, SOUTH, NORTH, NORTH,                               &
+        &    NORTH,                                              NODIRECTION  &
+        & &
+        &  /), &
+        & (/REGION_NUMBER_MAX, GEOMETRY_COUNT/) )
 
 contains
 

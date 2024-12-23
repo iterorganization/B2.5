@@ -12,9 +12,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-!      use b2mod_balance                                                 !djm Jan2017
-!     & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
-!     &          fna_ch, fna_pschused, balance_netcdf
+      use b2mod_balance                                                 !djm Jan2017
+     & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
+     &          fna_ch, fna_pschused, balance_netcdf
       use b2mod_ad
      & , only : ncall_b2tfnb
 #ifndef NAGFOR
@@ -32,7 +32,7 @@
       type (mapping), intent (in) :: mpg
       type(B2Plasma), intent (in) :: pl
       type(B2Rates), intent (in) :: rt
-      logical balance                                                    !djm Jan2017
+      logical balance                                                   !djm Jan2017
 *   ..input/output arguments
       type(B2Coeff), intent (inout) :: co
       type(B2Derivatives), intent (inout) :: dv
@@ -70,9 +70,11 @@
      &   rdiv                                                            !srv 05.03.16
       real (kind=R8) ::
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc),
-     *   wrk5(nFc),wrk6(nFc), wrk7(nFc,0:1), wrk8(nFc),
+     *   wrk6(nFc), wrk8(nFc),
+!    *   wrk5(nFc), wrk7(nFc,0:1),
      *   wrk(nCv), wrkVx(nVx),
-     *   zeros(nFc,0:1), dumm1(nFc,0:1), zeros1(nFc,0:1)
+     *   zeros(nFc,0:1), dumm1(nFc,0:1), dumm2(nFc,0:1), dumm3(nFc,0:1),
+     *   dumm4(nFc,0:1), zeros1(nFc,0:1)
       real (kind=R8) ::
      *   ub2dia(nFc,0:1),
      *   nbcor(nVx),                                                     !srv 01.10.99 !lk 09.06.11
@@ -91,7 +93,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
 *   ..procedures
       external xertst, ipgeti, ipgetr                                    !xpb
       external b2xvsg, b2xvff, intface, diff
-      intrinsic abs, max, sqrt
+      intrinsic abs, max, sqrt, sign
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -770,6 +772,55 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
           endif
         endif
       endif                                                             !srv 05.03.16 }
+
+* ..compute variables for balance.nc
+      if (balance.and.(balance_netcdf.ne.0)) then    !nh 08.01.24
+        dumm1 = 0.0_R8
+        dumm2 = 0.0_R8
+        dumm3 = 0.0_R8
+        dumm4 = 0.0_R8
+        call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
+     &    sign(co%cvla(:,:,isb),flo_mdf), dumm1, dumm2,
+     &    fna_pinch(:,:,isb), dumm3)
+        fna_pinch(:,:,isb) = sign(fna_pinch(:,:,isb),co%cvla(:,:,isb))
+        dumm4(:,0) = geo%fcPbs*wrk0
+        call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
+     &    sign(dumm4,flo_mdf), dumm1, dumm2, fna_pll(:,:,isb), dumm3)
+        fna_pll(:,:,isb) = sign(fna_pll(:,:,isb),dumm4)
+        fna_pll(:,0,isb) = fna_pll(:,0,isb) + term
+        dumm4(:,0) = drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*
+     &    geo%fcQalf(:,0)
+        dumm4(:,1) = drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*
+     &    geo%fcQalf(:,1)
+        call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
+     &     sign(dumm4,flo_mdf), dumm1, dumm2, fna_drift(:,:,isb), dumm3)
+        fna_drift(:,:,isb) = sign(fna_drift(:,:,isb),dumm4)
+        fna_drift(:,0,isb) = fna_drift(:,0,isb) + (1.0_R8-drift_hyb)*
+     &    dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf
+        fna_drift(:,1,isb) = fna_drift(:,1,isb) + (1.0_R8-drift_hyb)*
+     &    dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf
+        if (switch%mdf_fnb.eq.0) then
+          fna_drift(:,0,isb) = fna_drift(:,0,isb) +
+     &      dv%vadia(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf
+          fna_drift(:,1,isb) = fna_drift(:,1,isb) +
+     &      dv%vadia(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf
+          fna_pschused(:,:,isb) = 0.0_R8
+        else
+          fna_pschused(:,:,isb) = -dv%fnaPSch(:,:,isb)
+        endif
+        call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
+     &    sign(drift_hyb*scur,flo_mdf), dumm1, dumm2, fna_ch(:,:,isb),
+     &    dumm3)
+        fna_ch(:,:,isb) = sign(fna_ch(:,:,isb),drift_hyb*scur)
+        fna_ch(:,0,isb) = fna_ch(:,0,isb) + (1.0_R8-drift_hyb)*
+     &    scur(:,0)*nbf
+        fna_ch(:,1,isb) = fna_ch(:,1,isb) + (1.0_R8-drift_hyb)*
+     &    scur(:,1)*nbf
+        call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
+     &    flo_mdf, co%cdna(:,:,isb), dumm2, dumm3, fna_nanom(:,:,isb))
+        fna_panom(:,:,isb) = -co%cdpa(:,:,isb)*dpb(:,:)
+      endif
+
 
       if (switch%iout_b2wdat .eq. 4) then
        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2tfnb_fnb_th'//chns)

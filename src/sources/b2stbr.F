@@ -14,19 +14,21 @@
 !WG_TODO      use b2mod_first_flight
       use b2mod_constants
 !WG_TODO      use b2mod_neutrals_namelist
-!      use b2mod_balance !djm Jan2017
-!     & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
-!     &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
-!     &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
-!     &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
-!     &          b2stbr_first_flight_sna0to1,
-!     &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
-!     &          balance_netcdf
+      use b2mod_balance !djm Jan2017
+     & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
+     &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
+#ifdef WG_TODO
+     &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
+     &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
+     &          b2stbr_first_flight_sna0to1,
+     &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
+#endif
+     &          balance_netcdf
       use b2mod_subsys
 #ifdef B25_EIRENE
       use b2mod_eirene
      ,  , only : eirene_mc
-      use eirmod_extrab25
+      use eirmod_wneutrals
       use b2mod_running_average
      & , only : run_av_get_sources
 #endif
@@ -39,9 +41,7 @@
       use b2mod_b2_to_astra
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 20.02.12 11.06.13
 #endif
-#ifndef ALLOCATE_AND_NAMELIST
-#     include "DIMENSIONS.F"
-#endif
+      use b2mod_dimensions
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -79,12 +79,10 @@
       type (B2Average), intent(in) :: st_avg
       logical main_call
 *   ..local variables
-#ifdef WG_TODO
       real (kind=R8) :: snatmp(nCv,0:1,0:ns-1), !djm Mar2017
      &                  smotmp(nCv,0:3,0:ns-1),
      &                  shetmp(nCv,0:3),
      &                  shitmp(nCv,0:3)
-#endif
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -221,22 +219,18 @@
 #endif
            call alloc_b2mod_first_flight(
      *          in_no_of_angles,in_size_of_table,
-     *          in_no_of_start_points,nx,ny,switch%in_dl)
-           do ix=-1,nx
-             do ib=-1,ny
-               if(leftix(ix,ib).eq.-2 .and. region(ix,ib,0).ne.0)
-     >          call setup_b2mod_first_flight(ix,ib,nx,ny,'W',output)
-               if(rightix(ix,ib).eq.nx+1 .and. region(ix,ib,0).ne.0)
-     >          call setup_b2mod_first_flight(ix,ib,nx,ny,'E',output)
-             enddo
+     *          in_no_of_start_points,switch%in_dl)
+           do iCv=1,nCv
+             if(leftix(ix,ib).eq.-2 .and. region(ix,ib,0).ne.0)
+     >        call setup_b2mod_first_flight(mpg,geo,iCv,'W',output)
+             if(rightix(ix,ib).eq.nx+1 .and. region(ix,ib,0).ne.0)
+     >        call setup_b2mod_first_flight(mpg,geo,iCv,'E',output)
            enddo
-           do ib=-1,nx
-             do iy=-1,ny
-               if(topiy(ib,iy).eq.ny+1 .and. region(ib,iy,0).ne.0)
-     >          call setup_b2mod_first_flight(ib,iy,nx,ny,'N',output)
-               if(bottomiy(ib,iy).eq.-2 .and. region(ib,iy,0).ne.0)
-     >          call setup_b2mod_first_flight(ib,iy,nx,ny,'S',output)
-             enddo
+           do iCv=1,nCv
+             if(topiy(ib,iy).eq.ny+1 .and. region(ib,iy,0).ne.0)
+     >        call setup_b2mod_first_flight(mpg,geo,iCv,'N',output)
+             if(bottomiy(ib,iy).eq.-2 .and. region(ib,iy,0).ne.0)
+     >        call setup_b2mod_first_flight(mpg,geo,iCv,'S',output)
            enddo
 #ifdef _OPENMP
            end_time = omp_get_wtime()
@@ -297,7 +291,7 @@
           call read_neutrals_namelist(nx, ny, ns, .true.)
           new_sputter_namelist=.true.
           call xertst (nstrat.le.nstraid,
-     &     'Increase DEF_NSTRA in DIMENSIONS.F')
+     &     'Increase DEF_NSTRA in b2mod_dimensions')
           call write_b2mod_neutrals_namelist
         endif
 #endif
@@ -399,15 +393,13 @@ c   --> better solution wanted here..
        if (switch%b2stbr_neutrals_namelist.eq.1
      &                          .or. switch%use_eirene.ne.0) then
         if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
-#ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources before hand
-          snatmp=sna0
-          smotmp=smo0
-          shetmp=she0
-          shitmp=shi0
+          snatmp=st%srw%sna0
+          smotmp=st%srw%smo0
+          shetmp=st%srw%she0
+          shitmp=st%srw%shi0
         endif
-#endif
         call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
      &   dtim, switch, geo, mpg,
      &   st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
@@ -415,20 +407,18 @@ c   --> better solution wanted here..
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   sput_src, sput_chem_model, reflection_on, sputter_energy_on,
      &   main_call, new_sputter_namelist, shi0_ff, f_redep)
-#ifdef WG_TODO
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
-          b2stbr_phys_sna0to1=sna0-snatmp
-          b2stbr_phys_smo0to3=smo0-smotmp
-          b2stbr_phys_she0to3=she0-shetmp
-          b2stbr_phys_shi0to3=shi0-shitmp
+          b2stbr_phys_sna0to1=st%srw%sna0-snatmp
+          b2stbr_phys_smo0to3=st%srw%smo0-smotmp
+          b2stbr_phys_she0to3=st%srw%she0-shetmp
+          b2stbr_phys_shi0to3=st%srw%shi0-shitmp
         endif
-#endif
        else
 #ifdef WG_TODO
         if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
         if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
+          !djm Mar2017 save sources beforehand
           snatmp=sna0
           smotmp=smo0
           shetmp=she0
@@ -437,7 +427,7 @@ c   --> better solution wanted here..
         call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, switch%BoRiS,
      &   na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
+     &   sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &   switch%b2stbr_coreregno, coreregn2, output,
      &   switch%neutral_sources_rescale,
@@ -464,7 +454,7 @@ c   --> better solution wanted here..
       if(switch%b2stbr_first_flight.ne.0) then
 #ifdef WG_TODO
         if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources before hand
+          !djm Mar2017 save sources beforehand
           snatmp=sna0
           shetmp=she0
           shitmp=shi0
@@ -480,16 +470,14 @@ c   --> better solution wanted here..
         endif
         do is = 0, nscx-1
           if (output.ge.1) then
-            do iy=-1,ny
-              do ix=-1,nx
-                write(88,*) ix,iy,sna0(ix,iy,0,iscx(is)),
-     .                            shi0(ix,iy,0),she0(ix,iy,0)
-              enddo
-              write(88,'()')
+            do iCv=1,nCv
+              write(88,*) iCv,sna0(iCv,0,iscx(is)),
+     .                        shi0(iCv,0),she0(iCv,0)
             enddo
+            write(88,'()')
           endif
           sum_start=0.0_R8
-          sum_strti=sum(shi0_ff(:,:,is))
+          sum_strti=sum(shi0_ff(:,is))
           pfrpuff=0.0_R8
           mainpuff=0.0_R8
           corepuff=0.0_R8
@@ -497,78 +485,58 @@ c   --> better solution wanted here..
           wrk2=0.0_R8
           wrk3=0.0_R8
           ic=0
-          do ix=-1,nx
-            do ib=-1,ny
-              if((leftix(ix,ib).eq.-2 .or. rightix(ix,ib).eq.nx+1)
-     &          .and. region(ix,ib,0).ne.0) then
-                ic=ic+1
-                call process_b2mod_first_flight
-     *           (ic,ix,ib,nx,ny,ns,nscx,iscx,iscx(is),jsep,
-     *            dtim,sna0(ix,ib,0,iscx(is)),shi0_ff(ix,ib,is),
-     *            work,wrk2,wrk3,
-     *            pfrpuff,mainpuff,corepuff)
-                shi0(ix,ib,0)=shi0(ix,ib,0)-shi0_ff(ix,ib,is)
-                sum_start=sum_start+sna0(ix,ib,0,iscx(is))
-                sna0(ix,ib,0,iscx(is))=0.0_R8
-                shi0_ff(ix,ib,is)=0.0_R8
-              endif
-            enddo
+          do iCv=1,nCv
+!TODO the loop must over all edge cells
+            if((leftix(ix,ib).eq.-2 .or. rightix(ix,ib).eq.nx+1)
+     &        .and. region(ix,ib,0).ne.0) then
+              ic=ic+1
+              call process_b2mod_first_flight
+     *         (mpg,st,ic,iCv,ns,iscx(is),
+     *          dtim,sna0(iCv,0,iscx(is)),shi0_ff(iCv,is),
+     *          work,wrk2,wrk3,
+     *          pfrpuff,mainpuff,corepuff)
+              shi0(iCv,0)=shi0(iCv,0)-shi0_ff(iCv,is)
+              sum_start=sum_start+sna0(iCv,0,iscx(is))
+              sna0(iCv,0,iscx(is))=0.0_R8
+              shi0_ff(iCv,is)=0.0_R8
+            endif
           enddo
-          do ib=-1,nx
-            do iy=-1,ny
-              if((topiy(ib,iy).eq.ny+1 .or. bottomiy(ib,iy).eq.-2)
-     &          .and. region(ib,iy,0).ne.0) then
-                ic=ic+1
-                call process_b2mod_first_flight
-     *           (ic,ib,iy,nx,ny,ns,nscx,iscx,iscx(is),jsep,
-     *            dtim,sna0(ib,iy,0,iscx(is)),shi0_ff(ib,iy,is),
-     *            work,wrk2,wrk3,
-     *            pfrpuff,mainpuff,corepuff)
-                shi0(ib,iy,0)=shi0(ib,iy,0)-shi0_ff(ib,iy,is)
-                sum_start=sum_start+sna0(ib,iy,0,iscx(is))
-                sna0(ib,iy,0,iscx(is))=0.0_R8
-                shi0_ff(ib,iy,is)=0.0_R8
-              endif
-            enddo
-          enddo
-          sum_end=sum(work(:,:,:))
-          sum_ndi=sum(wrk2(:,:))
-          sum_nde=sum(wrk3(:,:))
+          sum_end=sum(work(:,:))
+          sum_ndi=sum(wrk2(:))
+          sum_nde=sum(wrk3(:))
           if(main_call)
      >     write(*,*) 'first_flight: is = ',is,
      *      pfrpuff,mainpuff,corepuff,sum_start,sum_end,
      *      sum_start-(sum_end+pfrpuff+mainpuff+corepuff),
      *      sum_strti,sum_ndi,sum_nde
           if (sum_end.ne.0.0_R8) then
-            sna0(:,:,0,iscx(is))=sna0(:,:,0,iscx(is))
-     .       +work(:,:,0)*sum_start/sum_end
-            sna0(:,:,0,iscx(is)+1)=sna0(:,:,0,iscx(is)+1)
+            sna0(:,0,iscx(is))=sna0(:,0,iscx(is))
+     .       +work(:,0)*sum_start/sum_end
+            sna0(:,0,iscx(is)+1)=sna0(:,0,iscx(is)+1)
      .       +work(:,:,1)*sum_start/sum_end
-            she0(:,:,0)=she0(:,:,0)+wrk3(:,:)*sum_start/sum_end
+            she0(:,0)=she0(:,0)+wrk3(:)*sum_start/sum_end
           endif
           if (sum_ndi.ne.0.0_R8)
-     >     shi0(:,:,0)=shi0(:,:,0)+wrk2(:,:)*sum_strti/sum_ndi
+     >     shi0(:,0)=shi0(:,0)+wrk2(:)*sum_strti/sum_ndi
           if (output.gt.1) then
-            do iy=-1,ny
-              do ix=-1,nx
-                write(89,*) ix,iy,sna0(ix,iy,0,iscx(is))
-     .                           ,shi0(ix,iy,0),she0(ix,iy,0)
-              enddo
-              write(89,'()')
+            do iCv=1,nCv
+              write(89,*) iCv,sna0(iCv,0,iscx(is))
+     .                       ,shi0(iCv,0),she0(iCv,0)
             enddo
+            write(89,'()')
           endif
           if (main_call) then
             write(*,*) 'Total first-flight-source na:', iscx(is),
-     &       sum(sna0(:,:,0,iscx(is)))
+     &       sum(sna0(:,0,iscx(is)))
             write(*,*) 'Total first-flight-source na:', iscx(is)+1,
-     &       sum(sna0(:,:,0,iscx(is)+1))
+     &       sum(sna0(:,0,iscx(is)+1))
           endif
         enddo
         if (main_call) then
           write (*,*)
-     >     'Total first-flight-source ion power=', sum(shi0(:,:,0))
+     >     'Total first-flight-source ion power=', sum(shi0(:,0))
           write (*,*)
-     >     'Total first-flight-source electron power=', sum(she0(:,:,0))
+     >     'Total first-flight-source electron power=', sum(she0(:,0))
         endif
         if (output.ge.1) then
           close(88)
@@ -624,8 +592,9 @@ c   --> better solution wanted here..
 
 *       compute total Eirene sources for averaging
 cwdk only total Eirene source are averaged!
-cwdk note: with new variables sna0_eir_tot, smo0_eir_tot, she0_eir_tot and shi0_eir_tot
-cwdk       now available, might want to avoid recomputation of several wrk0 arrays further
+cwdk note: with new variables sna0_eir_tot, smo0_eir_tot,
+cwdk       she0_eir_tot and shi0_eir_tot now available,
+cwdk       might want to avoid recomputation of several wrk0 arrays further
 cwdk       down in this routine
         do is = 0, ns-1
           st%srw%sna0_eir_tot(:,is) = sna0_eir(:,0,is) +
@@ -692,17 +661,17 @@ cwdk these are now put back into the constant part of the sources (0-component)
             if(is.eq.ismain) then
               wrk0=sna0_eir(:,0,is)+
      &             sna0_eir(:,1,is)*st%pl%na(:,is)
-              call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
+              call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, se)
             endif
           enddo                                                          !srv 28.07.11 20.02.12 }
           wrk0=she0_eir(:,:,0)+
      &     she0_eir(:,:,1)*st%pl%te(:,:)+she0_eir(:,:,2)*st%dv%ne+
      &     she0_eir(:,:,3)*st%dv%ne*st%pl%te
-          call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)             !srv 11.06.13
+          call b2_to_astra_src(mpg, ny, vol, wrk0, svol, seh)             !srv 11.06.13
           wrk0=shi0_eir(:,:,0)+
      &     shi0_eir(:,:,1)*st%pl%ti+shi0_eir(:,:,2)*st%dv%ni(:,:,0)+
      &     shi0_eir(:,:,3)*st%dv%ni(:,:,0)*st%pl%ti
-          call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)             !srv 11.06.13
+          call b2_to_astra_src(mpg, ny, vol, wrk0, svol, sih)             !srv 11.06.13
         endif
 #endif
         do ia = 1, nnatmi
@@ -1145,9 +1114,7 @@ c        write(*,*) 'Called neutr_scl'
       use b2mod_switches
       use b2us_map
       use b2mod_subsys
-#ifndef ALLOCATE_AND_NAMELIST
-#     include "DIMENSIONS.F"
-#endif
+      use b2mod_dimensions
       implicit none
 *   ..input arguments (unchanged on exit)
       integer, intent(in) :: ns
@@ -1247,7 +1214,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
 
       call read_neutrals_namelist(ns, mpg, switch, new_sputter_namelist)
       call xertst (nstrat.le.nstraid,
-     &   'Increase DEF_NSTRA in DIMENSIONS.F')
+     &   'Increase DEF_NSTRA in b2mod_dimensions')
       call alloc_b2mod_neutr_src_scaling(ns,nstrat)
       if(new_sputter_namelist) call write_b2mod_neutrals_namelist
       if(neutrals_time_mod.gt.0.0_R8) then
@@ -1268,7 +1235,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
         call read_neutrals_namelist(ns, mpg, switch, .true.)
         new_sputter_namelist=.true.
         call xertst (nstrat.le.nstraid,
-     &       'Increase DEF_NSTRA in DIMENSIONS.F')
+     &       'Increase DEF_NSTRA in b2mod_dimensions')
         call write_b2mod_neutrals_namelist
         if(neutrals_time_mod.gt.0.0_R8) then
           catch_up=mod(tim,neutrals_time_mod).ge.neutrals_time_switch

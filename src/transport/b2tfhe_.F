@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe_ (nCv, nFc, nVx, ns, switch, geo, mpg, 
+      subroutine b2tfhe_ (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  pl, dv, co, rt, st_ext, balance)                                 !djm Jan2017 !srv 29.01.20
       use b2mod_types
       use b2mod_math
@@ -13,9 +13,9 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-!WG_TODO      use b2mod_balance                                                  !djm Jan2017
-!WG_TODO     & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
-!WG_TODO     &          fhe_strange, fhe_pschused, balance_netcdf
+      use b2mod_balance                                                  !djm Jan2017
+     & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
+     &          fhe_strange, fhe_pschused, balance_netcdf
       use b2mod_transport_fun                                            !srv 13.01.17
       use b2mod_ad
      & , only : ncall_b2tfhe
@@ -32,8 +32,8 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type (B2Plasma), intent (in) :: pl 
-      type (B2Rates), intent (in) :: rt 
+      type (B2Plasma), intent (in) :: pl
+      type (B2Rates), intent (in) :: rt
       type (B2StateExt), intent (in) :: st_ext
       logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
@@ -82,11 +82,13 @@ csw 10oct2012
       real (kind=R8) ::
      *    fledia(nFc,0:1), c071(nFc), c071c(nCv),                        !srv 22.11.99 25.01.02
      &    zeff(nCv)                                                      !srv 13.01.17
-      real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
+      real (kind=R8) :: facdriftm                                        !srv 23.12.19
       real (kind=R8) ::
      *    wrkv(nVx), tef(nFc), nef(nFc), tefh(nFc), wrkf(nFc,0:1),
      *    dte(nFc,0:1), dpo(nFc,0:1), dpe(nFc,0:1), wght(nFc,2),
-     *    fhe0_mdf(nFc,0:1), fhe_32(nFc,0:1), fhe_52(nFc,0:1), pe(nCv)
+     *    fhe0_mdf(nFc,0:1), pe(nCv),
+     *    dumm1(nFc,0:1), dumm2(nFc,0:1), dumm3(nFc,0:1),
+     *    dumm4(nFc,0:1)
 #ifdef WG_TODO
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
@@ -94,7 +96,7 @@ csw 10oct2012
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c      integer, save :: b2_upwind = 0
 c      integer, save :: b2tfhe_hybr2 = 0, flo53 = 0
-c      integer, save :: lim_flux = 0                                      !srv 04.02.03 
+c      integer, save :: lim_flux = 0                                      !srv 04.02.03
 c      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0              !srv 06.07.06
 c      real (kind=R8), save :: drift_hyb = 1.0_R8
 c      integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
@@ -134,12 +136,11 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
 
       wght = 1.0_R8
 
-      facdriftm = maxval(dv%facdrift)
-      fac_ExBm  = maxval(dv%fac_ExB)                                     !srv 23.12.19
+      facdriftm    = maxval(dv%facdrift)
       dv%fhePSch   = 0.0_R8
       fchstoch     = 0.0_R8
       csig_stoch   = 0.0_R8
-      fledia       = 0.0_R8 
+      fledia       = 0.0_R8
       if(facdriftm.ne.0.0e0_R8) then                                     !srv 18.01.07
        do is = 0,ns-1                                                    !srv 12.05.11
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then              !srv 12.05.11
@@ -163,13 +164,13 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
       endif                                                              !srv 16.09.02 }
 #endif
       call b2tepsch(nCv, nFc, nVx, ns, switch, geo, mpg, dv%facdrift,
-     &    co%cddi, pl%te, dv%ne, dv%floe, dv%cone, dv%fhePSch)         !srv 16.10.17
+     &    co%cddi, pl%te, dv%ne, dv%floe, dv%cone, dv%fhePSch)           !srv 16.10.17
 
 * ..compute parallel current
-      call b2xehx (nCv, nFc, nVx, switch, geo, mpg, pl%te, 
-     &                                         pl%po, dv%ne, ehx)      !srv 13.01.17 {
-      call b2xehy (nCv, nFc, nVx, switch, geo, mpg, pl%te, 
-     &                                         pl%po, dv%ne, ehy)      !srv 13.01.17
+      call b2xehx (nCv, nFc, nVx, switch, geo, mpg, pl%te,
+     &                                         pl%po, dv%ne, ehx)        !srv 13.01.17 {
+      call b2xehy (nCv, nFc, nVx, switch, geo, mpg, pl%te,
+     &                                         pl%po, dv%ne, ehy)        !srv 13.01.17
       if(switch%b2sigp_style.eq.2) then
         call b2xzef (nCv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext)
         do iCv = 1, nCv
@@ -177,7 +178,7 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
         end do
         call intface(nCv,nFc,mpg%fcCv,wght,c071c,c071)
       else
-        c071 = 0.71e0_R8                                               !srv 13.01.17
+        c071 = 0.71e0_R8                                                 !srv 13.01.17
       endif
 
 *   ..interpolate ne and te to cell faces
@@ -192,35 +193,35 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
 
 * ..compute fluxes and linearization
        floe0(:,0) = 1.5e0_R8*dv%fne_he(:,0) +
-     &    (co%chve(:,0) + 2.5e0_R8*fledia(:,0))*nef                    !srv 13.09.02 18.01.07 11.01.13  *signmf
-     &    -c071*dv%fch_p(:,0)/qe*switch%fch_pTe                        !srv 30.12.09 13.01.17
-       floe0(:,1) = 1.5e0_R8*dv%fne_he(:,1) +                           
-     &    (co%chve(:,1) + 2.5e0_R8*fledia(:,1))*nef -                  !srv 11.05.99
+     &    (co%chve(:,0) + 2.5e0_R8*fledia(:,0))*nef                      !srv 13.09.02 18.01.07 11.01.13  *signmf
+     &    -c071*dv%fch_p(:,0)/qe*switch%fch_pTe                          !srv 30.12.09 13.01.17
+       floe0(:,1) = 1.5e0_R8*dv%fne_he(:,1) +
+     &    (co%chve(:,1) + 2.5e0_R8*fledia(:,1))*nef -                    !srv 11.05.99
      &    5.0e0_R8/3.0e0_R8*fchstoch/qe
 
-       floe0_mdf(:,0) = 1.5e0_R8*dv%fne_he(:,0) +                      !srv 13.06.06 {
+       floe0_mdf(:,0) = 1.5e0_R8*dv%fne_he(:,0) +                        !srv 13.06.06 {
      &    co%chve(:,0)*nef - c071*dv%fch_p(:,0)/qe*
-     &                                      switch%fch_pTe             !srv 30.12.09 13.01.17
+     &                                      switch%fch_pTe               !srv 30.12.09 13.01.17
        floe0_mdf(:,1) = 1.5e0_R8*dv%fne_he(:,1) +
-     &    co%chve(:,1)*nef - 5.0e0_R8/3.0e0_R8*fchstoch/qe             !srv 11.05.99
+     &    co%chve(:,1)*nef - 5.0e0_R8/3.0e0_R8*fchstoch/qe               !srv 11.05.99
 
 *   ..apply discretization scheme
       call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,
      &  geo,mpg,pl%te,floe0_mdf,
-     &  co%chce,fhe0_mdf,fhe_32,fhe_52)
+     &  co%chce,fhe0_mdf,dumm1,dumm2)
 
 *   ..compute fluxes
       alfe0 = co%calf(:,0)
       tefh  = tef !WG_TODO: harmonic average to faces
 
-      dv%fhe(:,0) = fhe0_mdf(:,0) +  (floe0(:,0) - floe0_mdf(:,0))*tef + 
+      dv%fhe(:,0) = fhe0_mdf(:,0) +  (floe0(:,0) - floe0_mdf(:,0))*tef +
      &  switch%alfTeEh*alfe0*tefh*ehx
-      dv%fhe(:,1) = fhe0_mdf(:,1) +  (floe0(:,1) - floe0_mdf(:,1))*tef + 
+      dv%fhe(:,1) = fhe0_mdf(:,1) +  (floe0(:,1) - floe0_mdf(:,1))*tef +
      &  switch%alfTeEh*co%calf(:,1)*tefh*ehy
 
-      dv%fhe_mdf(:,0)  = fhe0_mdf(:,0) - dv%fhePSch(:,0)  + 
+      dv%fhe_mdf(:,0)  = fhe0_mdf(:,0) - dv%fhePSch(:,0)  +
      &  switch%alfTeEh*alfe0*tefh*ehx
-      dv%fhe_mdf(:,1)  = fhe0_mdf(:,1) - dv%fhePSch(:,1)  + 
+      dv%fhe_mdf(:,1)  = fhe0_mdf(:,1) - dv%fhePSch(:,1)  +
      &  switch%alfTeEh*co%calf(:,1)*tefh*ehy
 
 *   ..compute floe, cone
@@ -231,136 +232,42 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
       dv%floe        = dv%floe + floe0
       dv%cone(:,:,0) = dv%cone(:,:,0) + cone0
 
-#ifdef WG_TODO
-            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-              fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
-     &               (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-              fhe_52(ix,iy,0,0) = 0.0_R8
-              fhe_strange(ix,iy,0,0) = chve(ix,iy,0,0)*
-     &         (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-              if (switch%mdf_fhe.eq.0) then
-                fhe_dia(ix,iy,0,0) = 2.5e0_R8*fledia(ix,iy,0,0)*
-     &           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-                fhe_cond(ix,iy,0,0) = -cone0*tex0
-                fhe_pschused(ix,iy,0,0) = 0.0_R8
-              else
-                fhe_dia(ix,iy,0,0) = 0.0_R8
-                fhe_cond(ix,iy,0,0) = -cone0_mdf*tex0
-                fhe_pschused(ix,iy,0,0) = -fhePSch(ix,iy,0,0)
-              endif
-              fhe_thermj(ix,iy,0,0) = -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*
-     &          fch_pTe*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))
-     &          /2.0_R8 + switch%alfTeEh*alfe0*
-     &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-              fhe_ecrb(ix,iy,0,0) = 0.0_R8
-            endif
-          else
-            fhe(ix,iy,0,0) =
-     &         upwind(floe0,te(leftix(ix,iy),leftiy(ix,iy)) , te(ix,iy))
-     &         -cone0*tex0 + switch%alfTeEh*
-     &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-            fhe_mdf(ix,iy,0,0) =                                         !srv 13.06.06 {
-     &         upwind(floe0_mdf,
-     &                        te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))
-     &         -cone0_mdf*tex0 + switch%alfTeEh*
-     &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-     &        -fhePSch(ix,iy,0,0)                                        !srv 13.06.06 }
-            if (balance.and.
-     &          (balance_netcdf.ne.0).and.
-     &          (switch%mdf_fhe.eq.0)) then !djm Jan2017
-              if(floe0.ge.0.0_R8) then
-                upfac=1.0_R8
-              else
-                upfac=0.0_R8
-              endif
-              fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
-     &                          (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &                           (1.0_R8-upfac)*te(ix,iy))
-              fhe_52(ix,iy,0,0) = 0.0_R8
-              fhe_strange(ix,iy,0,0) = chve(ix,iy,0,0)*
-     &           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &            (1.0_R8-upfac)*te(ix,iy))
-              fhe_dia(ix,iy,0,0) = 2.5e0_R8*fledia(ix,iy,0,0)*
-     &           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &            (1.0_R8-upfac)*te(ix,iy))
-              fhe_thermj(ix,iy,0,0) =
-     &           -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*fch_pTe*
-     &           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &            (1.0_R8-upfac)*te(ix,iy))+
-     &           switch%alfTeEh*alfe0*
-     &           harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-              fhe_ecrb(ix,iy,0,0) = 0.0_R8
-              fhe_cond(ix,iy,0,0) = -cone0*tex0
-              fhe_pschused(ix,iy,0,0) = 0.0_R8
-            endif
-            if (balance.and.
-     &          (balance_netcdf.ne.0).and.
-     &          (switch%mdf_fhe.ne.0)) then !djm Jan2017
-              if(floe0_mdf.ge.0.0_R8) then
-                upfac=1.0_R8
-              else
-                upfac=0.0_R8
-              endif
-              fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
-     &                          (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &                           (1.0_R8-upfac)*te(ix,iy))
-              fhe_52(ix,iy,0,0) = 0.0_R8
-              fhe_strange(ix,iy,0,0) = chve(ix,iy,0,0)*
-     &           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &            (1.0_R8-upfac)*te(ix,iy))
-              fhe_dia(ix,iy,0,0) = 0.0_R8
-              fhe_thermj(ix,iy,0,0) =
-     &           -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*fch_pTe*
-     &           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &            (1.0_R8-upfac)*te(ix,iy))+
-     &           switch%alfTeEh*alfe0*
-     &           harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-              fhe_ecrb(ix,iy,0,0) = 0.0_R8
-              fhe_cond(ix,iy,0,0) = -cone0_mdf*tex0
-              fhe_pschused(ix,iy,0,0) = -fhePSch(ix,iy,0,0)
-            endif
-          endif
-
-
-          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                             .or. iout_b2wdat.eq.4) then           !srv 16.09.02 {
-           if(switch%mdf_fhe.eq.0) then                                         !srv 13.10.06 {
-            w1(ix,iy)=1.5e0_R8*fne_he(ix,iy,0,0)
-     &           *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-            w2(ix,iy)=(chve(ix,iy,0,0)+2.5e0_R8*fledia(ix,iy,0,0))*      !srv 13.09.02 11.01.13 *signmf
-     &      (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8         !srv 13.09.02
-     &          *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-            w3(ix,iy)= -cone0*tex0
-            if(switch%alfTeEh.eq.1.0_R8)
-     &       w4(ix,iy)=
-     *        alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-            if(fch_pTe.eq.1.0_R8)
-     &       w4(ix,iy)=-c071(ix,iy)*fch_p(ix,iy,0,0)/qe*                 !srv 13.01.17
-     *        (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-            w6(ix,iy) = cone0
-           else
-            w1(ix,iy)=1.5e0_R8*fne_he(ix,iy,0,0)
-     &           *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-            w2(ix,iy)= chve(ix,iy,0,0)*                                  !srv 13.09.02
-     &       (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
-     &       *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-            w3(ix,iy)= -cone0_mdf*tex0
-            w4(ix,iy)=
-     *       alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-            w6(ix,iy) = cone0_mdf
-           endif
-           w5(ix,iy) = 2.5e0_R8*fledia(ix,iy,0,0)*                       !srv 13.09.02 11.01.13 *signmf
-     &       (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
-     &          *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-          endif                                                          !srv 16.09.02 }
-
-#endif 
-
+*   ..fluxes for balance.nc file                  !nh  Jan2024
+      if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
+        dumm1 = 0.0_R8
+        dumm2 = 0.0_R8
+        dumm3 = 0.0_R8
+        dumm4 = 0.0_R8
+        call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
+     &    1.5e0_R8*pl%te,sign(dv%fne_he,floe0_mdf),dumm1,dumm2,fhe_32,
+     &    dumm3)
+        fhe_32 = sign(fhe_32,dv%fne_he)
+        fhe_52 = 0.0_R8
+        dumm4(:,0) = -c071*dv%fch_p(:,0)/qe*switch%fch_pTe
+        call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
+     &    pl%te,sign(dumm4,floe0_mdf),dumm1,dumm2,fhe_thermj,dumm3)
+        fhe_thermj = sign(fhe_thermj,dumm4)
+        fhe_thermj(:,0) = fhe_thermj(:,0) +
+     &    switch%alfTeEh*alfe0*tefh*ehx
+        fhe_thermj(:,1) = fhe_thermj(:,1) +
+     &    switch%alfTeEh*co%calf(:,1)*tefh*ehy
+        call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
+     &    pl%te,floe0_mdf,co%chce,dumm1,dumm2,fhe_cond)
+        if (switch%mdf_fhe.eq.0) then
+          fhe_dia(:,0) = 2.5e0_R8*fledia(:,0)*nef*tef
+          fhe_dia(:,1) = 2.5e0_R8*fledia(:,1)*nef*tef
+          fhe_pschused = 0.0_R8
+        else
+          fhe_dia = 0.0_R8
+          fhe_pschused = -dv%fhePSch
+        endif
+        fhe_ecrb = 0.0_R8
+        dumm4(:,0) = co%chve(:,0)*nef
+        dumm4(:,1) = co%chve(:,1)*nef
+        call calcflow(nCv,nFc,nVx,switch%b2tfhe_discr_meth,geo,mpg,
+     &    pl%te,sign(dumm4,floe0_mdf),dumm1,dumm2,fhe_strange,dumm3)
+        fhe_strange = sign(fhe_strange,dumm4)
+      endif
 
 #ifdef WG_TODO
         if(lim_flux.eq.1 .and. conductive_limit.eq.0) then               !srv 04.02.03 17.01.12
@@ -409,63 +316,11 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
      &         -cone0*(te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))
      &         + switch%alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-             if (balance.and.
-     &           (balance_netcdf.ne.0).and.
-     &           (switch%mdf_fhe.eq.0)) then !djm Jan2017
-               if(floe0.ge.0.0_R8) then
-                 upfac=1.0_R8
-               else
-                 upfac=0.0_R8
-               endif
-               fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
-     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &                            (1.0_R8-upfac)*te(ix,iy))
-               fhe_52(ix,iy,0,0) = 0.0_R8
-               fhe_strange(ix,iy,0,0) = chve(ix,iy,0,0)*
-     &             (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &             (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &              (1.0_R8-upfac)*te(ix,iy))
-               fhe_dia(ix,iy,0,0) = 2.5e0_R8*fledia(ix,iy,0,0)*
-     &             (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &             (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &              (1.0_R8-upfac)*te(ix,iy))
-               fhe_thermj(ix,iy,0,0) =
-     &              -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*fch_pTe*
-     &              (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &               (1.0_R8-upfac)*te(ix,iy))+
-     &              switch%alfTeEh*alfe0*
-     &              harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-               fhe_ecrb(ix,iy,0,0) = 0.0_R8
-               fhe_cond(ix,iy,0,0) = -cone0*
-     &                      (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))
-               fhe_pschused(ix,iy,0,0) = 0.0_R8
-             endif
           else
              fhe(ix,iy,0,0) =
      &         floe0*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
      &         -cone0*tex0 + switch%alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-             if (balance.and.
-     &           (balance_netcdf.ne.0).and.
-     &           (switch%mdf_fhe.eq.0)) then !djm Jan2017
-               fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
-     &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-               fhe_52(ix,iy,0,0) = 0.0_R8
-               fhe_strange(ix,iy,0,0) = chve(ix,iy,0,0)*
-     &           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-               fhe_dia(ix,iy,0,0) = 2.5e0_R8*fledia(ix,iy,0,0)*
-     &           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-               fhe_thermj(ix,iy,0,0) = -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*
-     &            fch_pTe*
-     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8+
-     &            switch%alfTeEh*alfe0*
-     &            harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-               fhe_ecrb(ix,iy,0,0) = 0.0_R8
-               fhe_cond(ix,iy,0,0) = -cone0*tex0
-               fhe_pschused(ix,iy,0,0) = 0.0_R8
-             endif
           endif
 
           if(switch%mdf_fhe.eq.0) then                                         !srv 17.06.09 {
@@ -514,77 +369,19 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
      &                te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))
      &         -cone0_mdf*tex0_mdf + switch%alfTeEh*alfe0_mdf*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-              if (balance.and.
-     &           (balance_netcdf.ne.0).and.
-     &           (switch%mdf_fhe.ne.0)) then !djm Jan2017
-                if(floe0_mdf.ge.0.0_R8) then
-                  upfac=1.0_R8
-                else
-                  upfac=0.0_R8
-                endif
-                fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
-     &                          (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &                          (1.0_R8-upfac)*te(ix,iy))
-                fhe_52(ix,iy,0,0) = 0.0_R8
-                fhe_strange(ix,iy,0,0) = chve(ix,iy,0,0)*
-     &             (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &             (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &              (1.0_R8-upfac)*te(ix,iy))
-                fhe_dia(ix,iy,0,0) = 0.0_R8
-                fhe_thermj(ix,iy,0,0) =
-     &             -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*fch_pTe*
-     &             (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &              (1.0_R8-upfac)*te(ix,iy))+
-     &             switch%alfTeEh*alfe0_mdf*
-     &             harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-                fhe_ecrb(ix,iy,0,0) = 0.0_R8
-                fhe_cond(ix,iy,0,0) = -cone0_mdf*tex0_mdf
-                fhe_pschused(ix,iy,0,0) = 0.0_R8
-              endif
             else
               fhe_mdf(ix,iy,0,0) = floe0_mdf*
      &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
      &         -abs(floe0_mdf/2.0_R8)*tex
      &         -cone0_mdf*tex0_mdf + switch%alfTeEh*alfe0_mdf*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-              if (balance.and.
-     &           (balance_netcdf.ne.0).and.
-     &           (switch%mdf_fhe.ne.0)) then !djm Jan2017
-               !djm Jan2017 share the hybrid part according to relative contributions
-                if (floe0_mdf.ge.0.0_R8) then
-                  hybfac=1.0_R8
-                else
-                  hybfac=-1.0_R8
-                endif
-                fhe_32(ix,iy,0,0) = 1.5e0_R8*fne_he(ix,iy,0,0)*
-     &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
-     &            hybfac*1.5e0_R8*fne_he(ix,iy,0,0)/2.0_R8*tex
-                fhe_52(ix,iy,0,0) = 0.0_R8
-                fhe_strange(ix,iy,0,0) = chve(ix,iy,0,0)*
-     &           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5_R8*
-     &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
-     &           hybfac*chve(ix,iy,0,0)*
-     &           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5_R8/
-     &           2.0_R8*tex
-                fhe_dia(ix,iy,0,0) = 0.0_R8
-                fhe_thermj(ix,iy,0,0) =
-     &           -c071(ix,iy)*fch_p(ix,iy,0,0)/qe*fch_pTe*
-     &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8+
-     &           hybfac*c071(ix,iy)*fch_p(ix,iy,0,0)/qe*
-     &           fch_pTe/2.0_R8*tex+
-     &           switch%alfTeEh*alfe0_mdf*
-     &           harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-                fhe_ecrb(ix,iy,0,0) = 0.0_R8
-                fhe_cond(ix,iy,0,0) = -cone0_mdf*tex0_mdf
-                fhe_pschused(ix,iy,0,0) = 0.0_R8
-              endif
             endif
             floe(ix,iy,0,0) = floe0_mdf
             cone(ix,iy,0,0,0) = cone0_mdf/(1.0_R8+t0_mdf)                !srv 02.01.07
           endif                                                          !srv 17.06.09 }
 
-        else !lim_flux 
-#endif 
+        else !lim_flux
+#endif
 
 #ifdef WG_TODO
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
@@ -634,34 +431,6 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
         endif                                                            !srv 16.09.02 }
 #endif
 
-#ifdef WG_TODO
-
-         if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-           fhe_32(ix,iy,1,1) = 1.5e0_R8*fne_he(ix,iy,1,1)*
-     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
-           fhe_52(ix,iy,1,1) = 0.0_R8
-           fhe_strange(ix,iy,1,1) = chve(ix,iy,1,1)*
-     &         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
-           if (mdf_fhe.eq.0) then
-             fhe_cond(ix,iy,1,1) = -cone0*
-     &                (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-             fhe_dia(ix,iy,1,1) = 2.5e0_R8*fledia(ix,iy,1,1)*
-     &         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
-          else
-             fhe_cond(ix,iy,1,1) = -cone0_mdf*
-     &                (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-             fhe_dia(ix,iy,1,1) = 0.0_R8
-           endif
-           fhe_pschused(ix,iy,1,1) = -fhePSch(ix,iy,1,1)
-           fhe_thermj(ix,iy,1,1) = switch%alfTeEh*calf(ix,iy,1,1)*
-     &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
-           fhe_ecrb(ix,iy,1,1) = 0.0_R8
-         endif
-        endif
-#endif
-
 
 #ifdef WG_TODO
 
@@ -675,17 +444,17 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 !       call my_out(70,nx,ny,w5,'b2tfhe__qey5')
        call my_out(70,nx,ny,w5,'b2tfhe__qediay')
        call my_out(70,nx,ny,w6,'b2tfhe__chcey_Pat')
-      endif                                                         !srv 16.09.02 }
+      endif                                                              !srv 16.09.02 }
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                                .or. iout_b2wdat.eq.4) then   !srv 16.09.02 {
+     &                                .or. iout_b2wdat.eq.4) then        !srv 16.09.02 {
        deallocate( w1, w2, w3, w4, w5, w6 )
-      endif                                                         !srv 16.09.02 }
+      endif                                                              !srv 16.09.02 }
 #endif
 
 
       if(switch%b2tfhe_iout.ne.0) then                                   !srv 18.06.08 {
-       call my_out_us(70,nFc,1,fchstoch,'b2tfhe__fchstoch_r')             !lk 31.01.08
+       call my_out_us(70,nFc,1,fchstoch,'b2tfhe__fchstoch_r')            !lk 31.01.08
        call my_out_us(70,nFc,1,dv%fne_he(1,0),'b2tfhe__fne_th')
        call my_out_us(70,nFc,1,dv%fne_he(1,1),'b2tfhe__fne_r')
        call my_out_us(70,nFc,1,dv%floe(1,0),'b2tfhe__floe_th')
@@ -725,11 +494,11 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,fhe_52(1,1),'b2tfhe__fhe_52_r')
        call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
        call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
-       call my_out_us(70,nFc,1,ehx,'b2tfhe__eh_th')                        !srv 13.01.17
-       call my_out_us(70,nFc,1,ehy,'b2tfhe__eh_r')                        !srv 13.01.17
-      endif   
-      
-      if(switch%iout_b2wdat.eq.4) then              
+       call my_out_us(70,nFc,1,ehx,'b2tfhe__eh_th')                      !srv 13.01.17
+       call my_out_us(70,nFc,1,ehy,'b2tfhe__eh_r')                       !srv 13.01.17
+      endif
+
+      if(switch%iout_b2wdat.eq.4) then
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,0),'b2tfhe__fhe_mdf_th')
        call my_out_us(70,nFc,1,dv%fhe_mdf(1,1),'b2tfhe__fhe_mdf_r')
        call my_out_us(70,nFc,1,fhe_32(1,0),'b2tfhe__fhe_32_th')
@@ -739,10 +508,10 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
        call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
       endif
-      
+
 #ifdef WG_TODO
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                          .or. iout_b2wdat.eq.4) then          !srv 11.09.09 {
+     &                          .or. iout_b2wdat.eq.4) then              !srv 11.09.09 {
        call my_out(70,nx,ny,fhe(-1,-1,0,0),'b2tfhe__fhe_no_mdfx')
        call my_out(70,nx,ny,fhe(-1,-1,1,1),'b2tfhe__fhe_no_mdfy')
 !       call my_out(70,nx,ny,fhe_mdf(-1,-1,0,0),'b2tfhe__fhe_mdfx')

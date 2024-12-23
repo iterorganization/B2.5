@@ -31,7 +31,10 @@ module b2mod_mwti
 contains
 
 #ifndef SOLPS4_3
-  subroutine b2mwti (itim, tim, ntim, b2time, ntim_batch, &
+  subroutine b2mwti (itim, tim, &
+#ifndef NO_CDF
+                     ntim, b2time, ntim_batch, &
+#endif
                      nCv, nFc, ns, nncutmax, geo, mpg, switch, &
                      pl, dv, co, rt, srw, ext, &
                      ismain, ismain0, lwti, lwav, luav)
@@ -67,7 +70,7 @@ contains
     use b2mod_switches
 #ifndef SOLPS4_3
 #ifdef B25_EIRENE
-    use eirmod_extrab25
+    use eirmod_wneutrals
 #endif
 #endif
     implicit none
@@ -81,15 +84,15 @@ contains
     type (B2Coeff), intent (in) :: co
     type (B2Rates), intent (in) :: rt
     type (B2StateExt), intent (in) :: ext
-    integer, intent(in) :: itim, ntim, b2time, ntim_batch, &
-                           nCv, nFc, ns, nncutmax, ismain, ismain0
+    integer, intent(in) :: itim, nCv, nFc, ns, nncutmax, ismain, ismain0
     real (kind=R8), intent(in) :: tim
     logical, intent(in) :: lwti, lwav, luav
     !   ..output arguments (unspecified on entry)
     !     (none)
     !   ..common blocks
 #ifndef NO_CDF
-#     include <netcdf.inc>
+    integer, intent(in) :: ntim, b2time, ntim_batch
+#   include <netcdf.inc>
 #endif
     !-----------------------------------------------------------------------
     !.documentation
@@ -212,8 +215,8 @@ contains
       write(*,*) 'target_offset ', target_offset
       call xertst(icsepomp.gt.0,'Invalid icsepomp value, check rzomp in b2.user.parameters')
       nc = max(mpg%nXpt,1)
-      if (nimp.gt.0) call output_ds_cv(geo,nimp,imp,icsepimp-1,'dsi')
-      if (nomp.gt.0) call output_ds_cv(geo,nomp,omp,icsepomp-1,'dsa')
+      if (nimp.gt.0) call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi')
+      if (nomp.gt.0) call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa')
       do i = 1, maxval(mpg%strDiv)
         allocate(fclist(mpg%divFcP(i,2)))
         fclist(1:mpg%divFcp(i,2)) = &
@@ -2328,9 +2331,11 @@ contains
   end subroutine dealloc_b2mod_mwti
 #endif
 !
-  subroutine output_ds_cv(geo,nlist,cvlist,isep,filename)
+  subroutine output_ds_cv(mpg,geo,nlist,cvlist,isep,filename)
     use b2us_geo
+    use b2us_map
     implicit none
+    type (mapping), intent(in) :: mpg
     type (geometry), intent(in) :: geo
     integer nlist,isep
     integer cvlist(nlist)
@@ -2351,6 +2356,9 @@ contains
       do i=1,nlist
         ds(i)=ds(i)-ds_offset
       enddo
+    endif
+    if(.not.mpg%cvOnClosedSurface(cvlist(1))) then ! flip sign
+      ds(1:nlist)=-ds(1:nlist)
     endif
     open(99,file=filename)
     do i=1,nlist

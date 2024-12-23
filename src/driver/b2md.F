@@ -3,20 +3,15 @@
 
       program b2md
       use b2mod_types
-      use b2mod_version
-      use b2mod_geo
-      use b2mod_plasma
-      use b2mod_rates
-      use b2mod_residuals
-      use b2mod_sources
-      use b2mod_transport
-      use b2mod_anomalous_transport
-      use b2mod_work
       use b2mod_ppout
-      use b2mod_indirect
-      use b2mod_neutrals_namelist
-      use b2mod_neutr_src_scaling
+      use b2mod_version
       use b2mod_xerset
+      use b2mod_dimensions
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
+      use b2us_prep
+      use b2us_io
       implicit none
 
 *-----------------------------------------------------------------------
@@ -73,8 +68,13 @@
 
 *   ..common blocks
 
+*   ..main data structures
+      type(mapping), save    :: mpg
+      type(geometry), save   :: geo
+      type(B2State), save    :: state
+      type(B2StateExt), save :: state_ext
 *   ..local variables
-      integer ninp(0:6), nout(0:2), nx, ny, ns, idum(0:9), io
+      integer ninp(0:6), nout(0:2), nCv, nFc, ns, idum(0:9), io
       logical file_open
 *   ..procedures
       external prgini, prgend, xertst, cfopen, cfruin
@@ -128,41 +128,56 @@
       call cfverr (ninp(1), b2fgmtry_version)                            !xpb
       call cfverr (ninp(2), b2fparam_version)                            !xpb
       call cfverr (ninp(3), b2fstate_version)                            !xpb
+      call cfverr (ninp(4), b2fplasma_version)
       call cfverr (ninp(6), b2frates_version)                            !xpb
-*   ..obtain nx, ny, ns
-      call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
-      nx = idum(0)
-      ny = idum(1)
-      ns = idum(2)
-      call xertst (0.le.nx.and.0.le.ny.and.1.le.ns,
-     &  'faulty input nx, ny, ns from plasma state file')
-      call cfruin (ninp(1), 2, idum(0), 'nx,ny')
-      call cfruin (ninp(2), 1, idum(2), 'ns')
-      call xertst (idum(0).eq.nx.and.idum(1).eq.ny,
-     &  'faulty input nx, ny from geometry file')
-      call xertst (idum(2).eq.ns,
+*   ..obtain nCv, nFc, ns from b2fstate file
+      call cfruin (ninp(3), 3, idum, 'nCv,nFc,ns')
+      nCv = idum(0)
+      nFc = idum(1)
+      ns  = idum(2)
+      call xertst (0.le.nCv.and.0.le.nFc.and.1.le.ns,
+     &  'faulty input nCv, nFc, ns from b2fstate file')
+*   ..obtain ns from parameters file
+      call cfruin (ninp(2), 1, idum, 'ns')
+      call xertst (idum(0).eq.ns,
      &  'faulty input ns from physics parameters file')
-*   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_plasma(nx,ny,ns)
-      call alloc_b2mod_rates(nx,ny,ns)
-      call alloc_b2mod_residuals(nx,ny,ns)
-      call alloc_b2mod_sources(nx,ny,ns)
-      call alloc_b2mod_transport(nx,ny,ns)
-      call alloc_b2mod_anomalous_transport(nx,ny,ns)
-      call alloc_b2mod_work(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
+*   ..obtain mapping/geometry dimensions from b2fgmtry file
+      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+      mpg%nCi = idum(0)
+      mpg%nCg = idum(1)
+      mpg%nCv = idum(2)
+      mpg%nFc = idum(3)
+      mpg%nVx = idum(4)
+      mpg%nFs = idum(5)
+      mpg%nFt = idum(6)
+      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+      mpg%nCmxVx = idum(0)
+      mpg%nCmxFc = idum(1)
+      mpg%nVmxCv = idum(2)
+      mpg%nVmxFc = idum(3)
+      mpg%nCmxNv = idum(4)
+      call cfruin (ninp(1),1,idum,'isClassicalGrid')
+      mpg%isClassicalGrid = idum(0)
+      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
+      mpg%nx    = idum(0)
+      mpg%ny    = idum(1)
+      mpg%nncut = idum(2)
+      call xertst (mpg%nCv.eq.nCv.and.mpg%nFc.eq.nFc,
+     &  'faulty input nCv, nFc from geometry file')
+      call alloc_mapping (mpg)
+      call alloc_geometry (geo, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
+     .  mpg%nFt, mpg%nVmxCv)
+      call createB2State (nCv, nFc, ns, state)
+      call createB2StateExt ( mpg%nCv, mpg%nFc, ns, state_ext )
+*   ..obtain parameters from b2fplasmf file
+      call cfruin (ninp(4),3,idum,'nCv,nFc,ns')
+      call xertst (idum(0).eq.nCv.and.idum(1).eq.nFc.and.idum(2).eq.ns,
+     &  'faulty input nCv, nFc, ns from b2fplasmf file')
 *   ..read plasma state
-      call cfverr(ninp(4), b2fplasma_version)
-      call read_b2mod_geo(nx,ny,ninp(4))
-      call read_b2mod_plasma(nx,ny,ns,ninp(4))
-      call read_b2mod_residuals(ninp(4))
-      call read_b2mod_sources(ninp(4))
-      call read_b2mod_transport(nx,ny,ns,ninp(4))
-      call read_b2mod_anomalous_transport(nx,ny,ns,ninp(4))
-      call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrai)
-      call alloc_b2mod_ppout(nx,ny,ns)
-      call b2mddr (ninp, nout, nx, ny, ns)
+      call read_b2fplasma(ninp(4), nCv, nFc, ns, state)
+*   ..call principal driver routine
+      call alloc_b2mod_ppout(DEF_NXD, DEF_NYD, ns)
+      call b2mddr (ninp, nout, ns, mpg, geo, state, state_ext)
 *   ..close files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)
@@ -174,17 +189,11 @@
       enddo
 
 * ..end of computation
-      call dealloc_b2mod_geo
-      call dealloc_b2mod_work
       call dealloc_b2mod_ppout
-      call dealloc_b2mod_rates
-      call dealloc_b2mod_plasma
-      call dealloc_b2mod_sources
-      call dealloc_b2mod_indirect
-      call dealloc_b2mod_residuals
-      call dealloc_b2mod_transport
-      call dealloc_anomalous_transport
-      call dealloc_b2mod_neutr_src_scaling
+      call destroyB2State (state)
+      call destroyB2StateExt (state_ext)
+      call dealloc_geometry (geo)
+      call dealloc_mapping (mpg)
       call prgend ()
       stop 'b2md'
 

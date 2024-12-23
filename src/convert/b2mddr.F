@@ -1,19 +1,9 @@
-      subroutine b2mddr (ninp, nout, nx, ny, ns)
+      subroutine b2mddr (ninp, nout, ns, mpg, geo, state, state_ext)
       use b2mod_types
       use b2mod_version
-      use b2mod_geo
       use b2mod_math
-      use b2mod_work
-      use b2mod_plasma
-      use b2mod_rates
-      use b2mod_residuals
-      use b2mod_sources
-      use b2mod_transport
       use b2mod_ppout
-      use b2mod_indirect
-      use b2mod_constants
       use b2mod_mdsplus
-      use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmrc
       use b2mod_b2cmgs
@@ -21,12 +11,22 @@
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmwg
-      use b2mod_external
       use b2mod_subsys
       use b2mod_ipmain
+      use b2us_geo
+      use b2us_map
+      use b2us_plasma
+      use b2us_io
+      use b2mod_switches
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:6), nout(0:2), nx, ny, ns
+      integer ninp(0:6), nout(0:2), ns
+*   ..main data structures
+      type(mapping)    :: mpg
+      type(geometry)   :: geo
+      type(B2State)    :: state
+      type(B2StateExt) :: state_ext
+      type(switches)   :: switch
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -40,25 +40,18 @@
       logical :: file_exists
 #endif
 *   ..local variables
-      integer k, is, idum(0:9), nscx, iscx(0:nscxmax-1), ismain
+      integer k, is, idum(0:9), ismain
       integer external_species
-      real (kind=R8) :: BoRiS
-#ifdef WG_TODO
-      real (kind=R8) ::
-     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
-     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-     &  rbr(-1:nx,-1:ny,0:ns-1), rcx(-1:nx,-1:ny,0:ns-1)
-#endif
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*256, ligne*256
 *   ..initialisation
-      save BoRiS, ismain, external_species
-      data BoRiS/0.0_R8/, ismain/1/, external_species/0/
+      save ismain, external_species
+      data ismain/1/, external_species/0/
 *   ..procedures
       logical is_comment
       external is_comment
       external xertst, xerrab, cfruch, cfruin
-      external b2rups, b2rugm, b2rucp, b2mds, ipgetr
+      external b2rups, b2rugm, b2rucp, b2mds, ipgeti
       external b2rurc, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps
       external b2xxid, b2rflb, b2rfcp
 *   ..namelist
@@ -77,7 +70,6 @@
      &             1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2),
      &  'faulty argument ninp, nout')
 *   ..test dimensions
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')
 
@@ -105,14 +97,16 @@
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
-      call ipgetr ('b2news_BoRiS', BoRiS)
+      call read_first_switches(switch)
+      call set_defaults_switches(switch,ns)
+      call read_switches(switch)
+      call check_switches(switch,ns)
 *   ..read geometry
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
-#ifdef WG_TODO
-      call b2rugm (ninp(1), nx, ny, isymm)
-#endif
+      call read_b2fgmtry (ninp(1), mpg, geo)
+      call init_geometry (mpg, geo, switch)
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
       call b2rucp (ninp(2), b2fparam_version, ns)
@@ -122,19 +116,9 @@
       call b2ruzd (ninp(3), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
-      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,
-     &  ti, tn, po, kt, zt, fna, fhe, fhi, fhn, fch, fch_32, fch_52,
-     &  fch_p, kinrgy, fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift,
-     &  fna_he, fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir,
-     &  fhi_eir, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     1  b2fstate_version)
+      call read_b2fstate (ninp(3), mpg%nCv, mpg%nFc, ns, state)
 *   ..test plasma state and fluxes
-#ifdef WG_TODO
-      call b2xvps (nx, ny, ns,
-     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-#endif
+      call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
 *   ..read atomic rate data
       call cfruch (ninp(6), 120, lblrc, 'label')
       adpak_used = index(lblrc,'ADPAK').gt.0
@@ -151,53 +135,48 @@
      &   'faulty input rtzn--wrong rate table?')
       enddo
 *   ..compute log-log electron rate coefficients
-#ifdef WG_TODO
-      call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
-     &  rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
+      call b2spel (mpg%nCv, ns, ev, state%pl%te, state%dv%ne, state%rt)
 *   ..compute electron rate coefficients
       call ipgeti ('b2mndr_ismain', ismain)
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
       call xertst (.not.is_neutral(ismain),
      . 'invalid main plasma species ismain; must not be neutral')
-      call b2sqel (nx, ny, ns, ismain, ev, te,
-     &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
-#endif
+      call b2sqel (mpg%nCv, ns, ismain, switch, ev,
+     .  state%pl%te, state%rt, state%rtw)
 *   ..find nscx, iscx
 *     (indices for neutral hydrogen species)
-      nscx = 0
+      state%rt%nscx = 0
       do is = 0, ns-1
         if (is_neutral(is).and.nint(zn(is)).eq.1) then
-          call xertst (nscx.lt.nscxmax,
-     1     'too many neutral hydrogen species')
-          iscx(nscx) = is
-          nscx = nscx+1
-        endif
-      enddo
-      do k = nscx, nscxmax-1
-        iscx(k) = -1
-      enddo
+          call xertst (state%rt%nscx.lt.state%rt%nscxmax,
+     1     'too many neutral hydrogenic species')
+          state%rt%iscx(state%rt%nscx) = is
+          state%rt%nscx = state%rt%nscx+1
+         endif
+       enddo
+       do k = state%rt%nscx, state%rt%nscxmax-1
+         state%rt%iscx(k) = -1
+       enddo
 *    ..compute log-log charge exchange rate coefficients
-#ifdef WG_TODO
-      do k = 0, nscx-1
-        call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne,
-     &   rlcx(-1,-1,0,0,k))
+      do k = 0, state%rt%nscx-1
+        call b2spcx (mpg%nCv, ns, ev, am(state%rt%iscx(k)),
+     &   state%pl%ti, state%dv%ne,
+     &   state%rt%rlcx(1:mpg%nCv,0:1,0:ns-1,k))
       enddo
 *   ..compute charge exchange rate coefficients
-      rcx = 0.0_R8
-      do k = 0, nscx-1
-        call b2sqcx (nx, ns, ev, am(iscx(k)), ti, tn,
-     &   rlcx(-1,-1,0,0,k), rcx)
+      do k = 0, state%rt%nscx-1
+        call b2sqcx (mpg%nCv, ns, ev, switch, am(state%rt%iscx(k)),
+     &   state%pl%ti, state%pl%tn,
+     &   state%rt%rlcx(1:mpg%nCv,0:1,0:ns-1,k), state%rtw%rcx)
       enddo
-#endif
 *   ..obtain external species data if any
       call ipgeti ('b2mndr_external_species', external_species)
+#ifdef WG_TODO
       if (external_species.ne.0) then
         call read_b2mod_external(nx,ny,ns,ismain)
-      else
-        call alloc_b2mod_external_dummy(nx,ny)
       endif
+#endif
 
 *   ..process
       exp='NOT_SET'
@@ -474,10 +453,10 @@ cdpc        endif
       call mds_put_double('\TOP.IDENT:TIME','s',time)
       dbtime=time
 
-      call mds_put_int('\TOP.IDENT:NX',nx+2)
-      dbnx=nx+2
-      call mds_put_int('\TOP.IDENT:NY',ny+2)
-      dbny=ny+2
+      call mds_put_int('\TOP.IDENT:NCV',mpg%nCv)
+      dbnCv=mpg%nCv
+      call mds_put_int('\TOP.IDENT:NFC',mpg%nFc)
+      dbnFc=mpg%nFc
       call mds_put_int('\TOP.IDENT:NS',ns)
       dbns=ns
 
@@ -526,7 +505,7 @@ cdpc        endif
       endif
       if(snapshot) then
         write(*,*) 'Calling b2mds'
-        call b2mds(nx,ny,ns,in_jxi,in_jxa,in_jsep,BoRiS)
+        call b2mds(mpg,geo,state,state_ext,ns,switch)
         write(*,*) 'Returned from b2mds'
       else
         write(*,*) 'Skipped calling b2mds because snapshot=F'
@@ -575,8 +554,6 @@ cdpc        endif
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
       call dealloc_b2mod_b2cmrc
-      call dealloc_b2mod_external
-      call dealloc_b2mod_external_dummy
       call subend ()
       return
 

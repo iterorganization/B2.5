@@ -132,6 +132,13 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2sihs')
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
+*   ..test nx, ny, ns
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     . 'faulty argument ismain')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        nsmin=0
@@ -177,11 +184,6 @@
        call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
        call ipgeti ('b2mndr_eirene', use_eirene)
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny, ns
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-      call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of hx, hy, vol

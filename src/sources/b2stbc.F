@@ -7,9 +7,9 @@
       use b2mod_types
 !      use b2mod_geo_corner
       use b2mod_constants
-!      use b2mod_balance !djm Jan 2017
-!     1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
-!     2          b2stbc_shi0to3,balance_netcdf
+      use b2mod_balance !djm Jan 2017
+     1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
+     2          b2stbc_shi0to3,balance_netcdf
       use b2us_feedback
       use b2mod_b2cmpa
       use b2mod_time
@@ -85,8 +85,7 @@
 *   ..procedures
       intrinsic nint
       external xertst, sfill, b2saxpy, ipgetr, ipgeti
-      external b2xvsg, b2xvff, b2xvps, b2xxgs,
-     1   b2stbc_phys
+      external b2xvsg, b2xvff, b2xvps, b2stbc_phys
 #ifdef WG_TODO
      & , b2stbc_bas, b2ssum                                            !srv 27.06.21
 #endif
@@ -351,7 +350,7 @@
           call b2stbc_bas(nx, ny, ns, ismain,
      1     facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1     fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
-     &     sna0, smo0, she0, shi0, sch0, sne0,
+     &     sna0, smo0, she0, shi0, sch0,
      &     wrong_flow, main_call, diagno,
      &     b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
      &     b2stbc_fchy_dia_coreonly, secmodel, lbndusr,
@@ -365,7 +364,7 @@
         call b2stbc_bas(nx, ny, ns, ismain,
      1   facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1   fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
-     &   sna0, smo0, she0, shi0, sch0, sne0,
+     &   sna0, smo0, she0, shi0, sch0,
      &   wrong_flow, main_call, diagno,
      &   b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
      &   b2stbc_fchy_dia_coreonly, secmodel, lbndusr,
@@ -378,20 +377,6 @@
 !WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
 !WG_RM     &  call b2stbc_fb_post(nCv, nFc, ns, ismain,
 !WG_RM     &    switch, geo, pl, dv, srw, main_call)
-
-* ..compute conditions on the cuts
-*     (no flow)
-!WG_TODO*   ..compute suitable large coefficient
-!WG_TODO      t0 = 1.0e20_R8*b2ssum(nCv,geo%cvVol,1)
-!WG_TODO*     (the dimension of t0 is m**3/s)
-!WG_TODO*   ..loop over species
-!WG_TODO      do is = 0, ns-1
-!WG_TODO*    ..set parallel momentum source
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,0,is), 1)
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,1,is), 1)
-!WG_TODO       call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,2,is), 1)
-!WG_TODO       call b2xxgs (nx, ny, -t0, smo0(-1,-1,3,is), 1)
-!WG_TODO      enddo
 
 #ifdef WG_TODO
 c added 2001.11.26 dpc/xpb
@@ -626,15 +611,14 @@ c      write(*,*) 'Copying sne0 to b2stbc_sne'
      2 srw%sne0(:,1)*dv%ne(:)
 c      write(*,*) 'Copied s..0 to b2stbc_s..'
 
-#ifdef WG_TODO
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
-        b2stbc_sna0to1 = sna0
-        b2stbc_smo0to3 = smo0
-        b2stbc_she0to3 = she0
-        b2stbc_shi0to3 = shi0
+        b2stbc_sna0to1 = srw%sna0
+        b2stbc_smo0to3 = srw%smo0
+        b2stbc_she0to3 = srw%she0
+        b2stbc_shi0to3 = srw%shi0
       endif
-#endif
+
       if(ncall_b2stbc.eq.0 .or. main_call) ncall_b2stbc = ncall_b2stbc+1
       call subend ()
       return

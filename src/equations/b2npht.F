@@ -14,9 +14,9 @@
       use b2us_plasma
       use b2mod_numerics_namelist                                     !srv 07.07.21 {
      & , only : time_factor, dtei, dtee, dten                         !srv 07.07.21 }
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     & , only : b2npht_shei_bal, update_balance_sources_heat,
-!WG_TODO     &          balance_netcdf
+      use b2mod_balance !djm Jan2017
+     & , only : b2npht_shei_bal, update_balance_sources_heat,
+     &          balance_netcdf
       use b2mod_ad
      & , only : ncall_b2npht
 #ifndef NAGFOR
@@ -95,7 +95,7 @@
      6 skt_prod(nCv), skt_diss(nCv)
       character chns*3                                                  !srv 17.07.05
       real (kind=R8), save :: rxg
-      logical :: warning_i, warning_e, warning_n
+      logical :: warning_i, warning_e, warning_n, warning_kt, warning_zt
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgetr, b2saxpy
@@ -126,10 +126,20 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2npht')
-
+*   ..test nCv, nFc
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+*   ..test rxf
+      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..set internal parameters on first call
       if (ncall_b2npht.eq.0) then
         if(switch%b2mndt_style.eq.2) then
+*    ..throw warning for use of time-dependent with new k-eps equations
+          if (switch%solve_keps.gt.0) then
+            write(6,*) 'WARNING: the time-dependent treatment of k-eps',
+     &              'equations was implemented similarly as the energy',
+     &              'equations but lacks theoretical development'
+          endif
+*    ..make sure time-depndent equations are not altered by convergence tricks
           rxg = huge(1.0_R8)
           if (switch%b2npht_pcm0.gt.0.0_R8) then
             call xerrab('b2npht_pcm0 must be 0 for time-dependent mode')
@@ -140,27 +150,38 @@
           warning_e = .false.
           warning_i = .false.
           warning_n = .false.
+          warning_kt = .false.
+          warning_zt = .false.
           do iCv = 1, nCv
-          warning_e = warning_e .or.
-     .      rxf*dtee(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
-          warning_i = warning_i .or.
-     .      rxf*dtei(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
-          warning_n = warning_n .or.
-     .      rxf*dten(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
+            warning_e = warning_e .or.
+     .        rxf*dtee(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
+            warning_i = warning_i .or.
+     .        rxf*dtei(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
+            warning_n = warning_n .or.
+     .        rxf*dten(mpg%cvReg(iCv))*time_factor(iCv).ne.1.0_R8
+            if (switch%solve_keps.gt.0) then
+              warning_kt = warning_kt.or.
+     .        rxf*time_factor(iCv).ne.1.0_R8
+            endif
+            if (switch%solve_keps.gt.1) then
+              warning_zt = warning_zt.or.
+     .        rxf*time_factor(iCv).ne.1.0_R8
+            endif
           enddo
           if (warning_e) write(6,*) 'rxf*dtee*time_factor should be 1 !'
           if (warning_i) write(6,*) 'rxf*dtei*time_factor should be 1 !'
           if (warning_n) write(6,*) 'rxf*dten*time_factor should be 1 !'
+          if (warning_kt.or.warning_zt) then
+            write(6,*) 'rxf*time_factor should be 1 for k-eps !'
+          endif
           if (warning_e .or. warning_i .or. warning_n)
      .   write(6,*) 'Time derivative terms may be inacurrate !'
+          if (warning_kt .or. warning_zt)
+     .   write(6,*) 'Time derivative terms may be inacurrate for k-eps!'
         else
           rxg = 1.0_R8
         endif                                                           !srv 07.07.21 }
       endif
-*   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-*   ..test rxf
-      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
 *   ..extensive tests on first few calls
       if (ncall_b2npht.lt.3) then
 *    ..test sign of transport coefficients
@@ -197,21 +218,43 @@ c make sure fhn is zero when not solving a separate neutral energy equation
 c time-dependent treatment                                              !srv 07.07.21 {
       if(switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.1) then
 *  .. calculate time-dependent source
-        call b2shdt (nCv, mpg%nCi, ns, dtim, switch%BoRiS,
+        call b2shdt (nCv, mpg%nCi, ns, dtim,
      &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
-     &    dv%ne, dv%ni, dv%nn,
-     &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt)
-*  .. add contribution from time-dependent source
+     &    psnl%kt, psnl%zt, dv%ne, dv%ni, dv%nn,
+     &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,
+     &    sr%sktdt, sr%sztdt)
+*  .. add contributions from time-dependent sources
+cc If e.g. d(nT)/dt = n dT/dt + T dn/dt,
+cc then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
+cc while the second contribution corresponds to T dn/dt
         sr%she = sr%she+sr%shedt
         sr%she(:,0)=sr%she(:,0)-1.5_R8*(dv%ne-psnl%ne)*
      &                                  psnl%te/dtim*geo%cvVol
-        sr%shi = sr%shi+sr%shidt
-        sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
+        if (switch%tn_style.eq.0) then     ! default, combined ion-neutral eneregy equation
+          sr%shi = sr%shi+sr%shidt
+          sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
      &                                  psnl%ti/dtim*geo%cvVol
-        if (switch%tn_style.eq.2) then
+        elseif (switch%tn_style.eq.1) then ! pure ion energy equation
+          sr%shi = sr%shi+sr%shidt
+          sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                                  psnl%ti/dtim*geo%cvVol
+        else                               ! separate ion and neutral energy equation
+          sr%shi = sr%shi+sr%shidt
+          sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                                  psnl%ti/dtim*geo%cvVol
           sr%shn = sr%shn+sr%shndt
           sr%shn(:,0)=sr%shn(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))*
      &                                    psnl%tn/dtim*geo%cvVol
+        endif
+        if (switch%solve_keps.gt.0) then
+          sr%skt = sr%skt + sr%sktdt
+          sr%skt(:,0)=sr%skt(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                                    psnl%kt/dtim*geo%cvVol
+        endif
+        if (switch%solve_keps.gt.1) then
+          sr%szt = sr%szt + sr%sztdt
+          sr%szt(:,0)=sr%szt(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                                    psnl%zt/dtim*geo%cvVol
         endif
       endif                                                              !srv 207.07.21 }
       endif
@@ -249,11 +292,11 @@ c time-dependent treatment                                              !srv 07.
         call b2saxpy (nCv, 1.0e0_R8, skt_prod, 1, sr%skt_prod, 1)
         call b2saxpy (nCv, 1.0e0_R8, skt_diss, 1, sr%skt_diss, 1)
       endif
-
-#ifdef WG_TODO
+      
+#ifndef FIXED_POINT
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
-        call update_balance_sources_heat(nx,ny,ne,ni,te,ti)
+        call update_balance_sources_heat(nCv,dv%ne,dv%ni,pl%te,pl%ti,ns)
       endif
 #endif
 !fc This is the new positioning of time-dependent treatment
@@ -372,11 +415,11 @@ c residuals for separate neutral energy equation
       do iCv = mpg%nCi+1, nCv
         shei(iCv) = 0.0_R8
       enddo
-#ifdef WG_TODO
+
       if (balance_netcdf.ne.0) then
-        b2npht_shei_bal(-1:nx,-1:ny) = shei(-1:nx,-1:ny)                !djm Jan2017
+        b2npht_shei_bal = shei                                           !djm Jan2017
       endif
-#endif
+
 *   ..compute final resht, reshe, reshi
 !      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
 !        dv%resht = dv%reshe + dv%reshi
@@ -489,7 +532,8 @@ c residuals for separate neutral energy equation
 *     (at present all errors cause an abort through xerrab)
       ierr = 0
 
-      if (switch % tn_style.le.1) then  !! if we solve a combined ion-neutral (tn_style.eq.0) or pure ion (tn_style.eq.1) energy equation,
+      if (switch % tn_style.le.1) then  !! if we solve a combined ion-neutral (tn_style.eq.0)
+                                        !! or pure ion (tn_style.eq.1) energy equation,
         pl%tn = pl%ti                   !! tn must be exactly equal to ti.
       endif
 
@@ -511,7 +555,6 @@ c residuals for separate neutral energy equation
         call my_out_us(70,nCv,0,pl%te,'b2npht_te')
         call my_out_us(70,nCv,0,pl%ti,'b2npht_ti')
       end if
-
 
 * ..return
       ncall_b2npht = ncall_b2npht+1

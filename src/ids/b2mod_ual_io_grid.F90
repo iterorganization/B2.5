@@ -43,7 +43,7 @@ module b2mod_ual_io_grid
      &          ids_generic_grid_dynamic_space_dimension_object, &
      &          GRID_SUBSET_NODES, GRID_SUBSET_X_POINTS, GRID_SUBSET_CELLS, &
      &          GridObject
-#   if GGD_MINOR_VERSION > 9
+#   if ( GGD_MINOR_VERSION > 9 || GGD_MAJOR_VERSION > 1 )
     use ids_grid_object   & ! IGNORE
      & , only : GRID_SUBSET_X_ALIGNED_EDGES, GRID_SUBSET_Y_ALIGNED_EDGES, &
      &          GRID_SUBSET_EDGES
@@ -53,7 +53,7 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_FACES
 #   endif
     use ids_grid_structured & ! IGNORE
-     & , only : GridWriteData, GridSetupStruct1dSpace
+     & , only : GridSetupStruct1dSpace
     use ids_grid_common     & ! IGNORE
      & , only : COORDTYPE_R, COORDTYPE_Y, COORDTYPE_Z, COORDTYPE_PHI,         &
      &          gridSubsetName, gridSubsetDescription,                        &
@@ -88,15 +88,15 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE,                       &
      &          GRID_SUBSET_OUTER_STRIKEPOINT_INACTIVE,                       &
      &          IDS_GRID_UNDEFINED => GRID_UNDEFINED
-#   if GGD_MINOR_VERSION > 9
+#   if ( GGD_MINOR_VERSION > 9 || GGD_MAJOR_VERSION > 1 )
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_VOLUMES
 #   endif
-#   if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 )
+#   if ( ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) || GGD_MAJOR_VERSION > 1 )
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_MAGNETIC_AXIS, GRID_SUBSET_FULL_WALL
 #   endif
-#   if GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 2 )
+#   if ( ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 2 ) ) || GGD_MAJOR_VERSION > 1 )
     use ids_grid_common     & ! IGNORE
      & , only : GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1,   &
      &          GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_2,   &
@@ -268,7 +268,7 @@ module b2mod_ual_io_grid
     !! IMAS uses GGD grid subset identifier definitions defined in GSL
     !! (in ids_grid_common)
 #ifdef IMAS
-# if GGD_MINOR_VERSION < 9
+# if ( GGD_MINOR_VERSION < 9 && GGD_MAJOR_VERSION == 1 )
     !! IMAS GGD grid subset identifier definitions
     integer, parameter :: GRID_SUBSET_TYPES = 106
 
@@ -459,17 +459,17 @@ module b2mod_ual_io_grid
        &    'Point on non-active separatrix at inner active target                                        '   &
        &   /)
 # endif
-# if GGD_MINOR_VERSION < 10
+# if ( GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION == 1 )
     !> All volumes
     integer, parameter :: GRID_SUBSET_VOLUMES = 43
 # endif
-# if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+# if ( ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) && GGD_MAJOR_VERSION == 1 )
     !> All edges defining walls, baffles, and targets
     integer, parameter :: GRID_SUBSET_FULL_WALL = 44
     !> Point on magnetic axis
     integer, parameter :: GRID_SUBSET_MAGNETIC_AXIS = 100
 # endif
-# if GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 )
+# if ( ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 3 ) ) && GGD_MAJOR_VERSION == 1 )
     !> y-aligned edges defining the SOL entrance to the first snowflake outer leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_LEG_ENTRANCE_1 = 45
     !> y-aligned edges defining the SOL entrance to the third snowflake outer leg
@@ -479,7 +479,7 @@ module b2mod_ual_io_grid
     !> y-aligned edges defining the connection between the outer snowflake first and second leg
     integer, parameter :: GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2 = 48
 # endif
-# if GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION > 0
+# if ( GGD_MINOR_VERSION < 10 && GGD_MAJOR_VERSION == 1 )
     integer, parameter :: GRID_SUBSET_X_ALIGNED_EDGES = GRID_SUBSET_X_ALIGNED_FACES
     integer, parameter :: GRID_SUBSET_Y_ALIGNED_EDGES = GRID_SUBSET_Y_ALIGNED_FACES
     integer, parameter :: GRID_SUBSET_EDGES = GRID_SUBSET_FACES
@@ -581,10 +581,10 @@ contains
 
         geometryType = geometryId( mpg, geo )
 
-        allocate( grid_ggd%identifier%name(1) )
-        grid_ggd%identifier%name = geometryName(geometryType)
         grid_ggd%identifier%index = geometryType
+        allocate( grid_ggd%identifier%name(1) )
         allocate( grid_ggd%identifier%description(1) )
+        grid_ggd%identifier%name = geometryName(geometryType)
         grid_ggd%identifier%description = geometryDescription(geometryType)
 
         allocate( grid_ggd%space( SPACE_COUNT ) )
@@ -621,68 +621,68 @@ contains
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_NODE )%object( mpg%nVx ) )
 #if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_NODE )%    &
+            &   geometry_content%index = 11
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_NODE )%    &
             &   geometry_content%name(1) )
-        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
-            &   objects_per_dimension( IDS_CLASS_NODE )%    &
-            &   geometry_content%name = "node_coordinates_connection"
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_NODE )%    &
             &   geometry_content%description(1) )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_NODE )%    &
+            &   geometry_content%name = "node_coordinates_connection"
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_NODE )%    &
             &   geometry_content%description =              &
             &    "(R, Z) coordinates of nodes + "//         &
             &    "connection length + distance to nearest surface"
-        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
-            &   objects_per_dimension( IDS_CLASS_NODE )%    &
-            &   geometry_content%index = 11
 #endif
         !! 1D faces/edges
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
             &   object( mpg%nFc ) )
 #if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_EDGE )%    &
+            &   geometry_content%index = 21
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
             &   geometry_content%name(1) )
-        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
-            &   objects_per_dimension( IDS_CLASS_EDGE )%    &
-            &   geometry_content%name = "edge_areas"
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
             &   geometry_content%description(1) )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
-            &   geometry_content%description =              &
-            &   "Projected areas of edges: poloidal, radial, total"
+            &   geometry_content%name = "edge_areas"
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
-            &   geometry_content%index = 21
+            &   geometry_content%description =              &
+            &   "Projected areas of edges: poloidal, radial, total"
 #endif
         !! 2D cells
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_CELL )%object( mpg%nCv ) )
 #if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_CELL )%    &
+            &   geometry_content%index = 32
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_CELL )%    &
             &   geometry_content%name(1) )
-        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
-            &   objects_per_dimension( IDS_CLASS_CELL )%    &
-            &   geometry_content%name = "face_indices_volume_connection"
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_CELL )%    &
             &   geometry_content%description(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
+            &   objects_per_dimension( IDS_CLASS_CELL )%    &
+            &   geometry_content%name = "face_indices_volume_connection"
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_CELL )%    &
             &   geometry_content%description =              &
             &    "(ix, iy) indices of B2.5 cell + "//       &
             &    "cell volume + connection length + "//     &
             &    "distance to nearest solid surface"
-        grid_ggd%space( SPACE_POLOIDALPLANE )%              &
-            &   objects_per_dimension( IDS_CLASS_CELL )%    &
-            &   geometry_content%index = 32
 #endif
 
         !! Fill in vertex/node information
@@ -755,7 +755,8 @@ contains
             do i = 1, 2
                 !! Allocate neighbours
                 nn = mpg%vxFcP(mpg%fcVx(iFc,i),2) - 1
-                allocate(grid_ggd%space( SPACE_POLOIDALPLANE )%   &
+                if (nn.gt.0)                                      &
+                  allocate(grid_ggd%space( SPACE_POLOIDALPLANE )% &
                     &   objects_per_dimension( IDS_CLASS_EDGE )%  &
                     &   object( iFc )%boundary(i)%neighbours(nn))
             end do
@@ -892,7 +893,7 @@ contains
           do iy = 0, mpg%ny-1
             do ix = 0, mpg%nx-1
               iCv = mpg%imapCv(ix,iy)
-              if (iCv.gt.mpg%nCi) cycle
+              if (iCv.eq.0.or.iCv.gt.mpg%nCi) cycle
               grid_ggd%space( SPACE_POLOIDALPLANE )%                 &
                   &   objects_per_dimension( IDS_CLASS_CELL )%       &
                   &   object( iCv )%geometry(1) = ix
@@ -908,7 +909,7 @@ contains
 #if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%name(1) )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description(1) )
-          grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%index = 1
+          grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%index = 2
 #endif
           grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%index = 0
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%name(1) )
@@ -961,30 +962,30 @@ contains
                   &   "Toroidal angle, full circle"
             end if
           end if
-#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MINOR_VERSION < 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) )
+#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MAJOR_VERSION > 0 && ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) ) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(1)%geometry_content%name(1) )
-          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
-             &     geometry_content%name = "node_coordinates"
-          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
-             &     geometry_content%index = 1
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(1)%geometry_content%description(1) )
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
-             &     geometry_content%description =   &
+             &     geometry_content%index = 1
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
+             &     geometry_content%name = "node_coordinates"
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
+             &     geometry_content%description = &
              &    "Node coordinates (automatically generated 1D space)"
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(2)%geometry_content%name(1) )
-          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
-             &     geometry_content%name = "unspecified"
-          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
-             &     geometry_content%index = 0
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(2)%geometry_content%description(1) )
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
+             &     geometry_content%index = 0
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
+             &     geometry_content%name = "unspecified"
+          grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
              &     geometry_content%description = &
              &  "Automatically generated 1D space (unused)"
-#  endif
+#endif
         end if
 
         return
@@ -1024,11 +1025,11 @@ contains
 
         !! Re-order here
         i = 1
-        new_node_list(i) = old_node_list(i)
         new_edge_list(i) = old_edge_list(i)
         new_nghb_list(i) = old_nghb_list(i)
         old_edge_list(i) = US_GRID_UNDEFINED
-        do while (i.lt.num_nodes_2D)
+        new_node_list(i) = mpg%fcVx(new_edge_list(i),1)
+        do while (i.lt.num_boundary_2D)
           iFc = new_edge_list(i)
           j = 1
           match_found = .false.
@@ -1095,10 +1096,10 @@ contains
     subroutine fill_In_GridSubset_Desc
         !! Internal variables
         integer, save :: geoId
-#  if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         integer :: iRegion
         integer :: iPrivateB2
-#  endif
+#endif
         integer :: GSubsetCount
         integer :: iType
         integer :: RegionsInSubset(14)
@@ -1123,9 +1124,9 @@ contains
 
         !! Procedures
         external xertst
-#  if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         external xerrab
-#  endif
+#endif
 
         if (ncall.eq.0) then
           geoId = geometryId( mpg, geo )
@@ -1133,11 +1134,11 @@ contains
 
         !! Figure out total number of grid subsets
         !! Do generic + private grid subsets
-#  if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         nGSubset = B2_GENERIC_GSUBSET_COUNT + regionCountTotal(geoId)
-#  else
+#else
         nGSubset = B2_GENERIC_GSUBSET_COUNT
-#  endif
+#endif
         !! Add pre-defined grid subsets (regions + points)
         select case ( geoId )
         case ( GEOMETRY_LINEAR )
@@ -1205,10 +1206,15 @@ contains
             indexList1d(nInd) = i
           end if
         end do
-        call createExplicitObjectListSingleSpace( grid_ggd,            &
+        if ( nInd > 0 ) then
+          call createExplicitObjectListSingleSpace( grid_ggd,          &
             &   grid_ggd%grid_subset( GRID_SUBSET_X_ALIGNED_EDGES ),   &
             &   IDS_CLASS_POLOIDALRADIAL_EDGE, indexList1d(1:nInd),    &
             &   IDS_CLASS_POLOIDALRADIAL_EDGE, SPACE_POLOIDALPLANE )
+        else
+          grid_ggd%grid_subset( GRID_SUBSET_X_ALIGNED_EDGES )%dimension = &
+            &   IDS_CLASS_POLOIDALRADIAL_EDGE
+        end if
 
         !! GRID_SUBSET_Y_ALIGNED_EDGES: y-aligned edges.
         !! One implicit object list, range over y edges
@@ -1241,26 +1247,34 @@ contains
         !! Grid subset of all x-points
         !! (in one poloidal plane at toroidal index 1)
         !! Assemble object descriptor for x-points
-        allocate( xpoints(mpg%nXpt, SPACE_COUNT) )
-        xpoints(:, SPACE_POLOIDALPLANE) = mpg%Xpt(1:mpg%nXpt)
-        xpoints(:, SPACE_TOROIDALANGLE) = 1
+        if ( mpg%nXpt > 0 ) then
+          allocate( xpoints(mpg%nXpt, SPACE_COUNT) )
+          xpoints(:, SPACE_POLOIDALPLANE) = mpg%Xpt(1:mpg%nXpt)
+          xpoints(:, SPACE_TOROIDALANGLE) = 1
+        end if
         !! Create grid subset with one object list
         call createEmptyGridSubset(                                  &
             &   grid_ggd%grid_subset( GRID_SUBSET_X_POINTS ),        &
             &   GRID_SUBSET_X_POINTS, 'x-points',                    &
             &   "All X-points (0D objects) in the domain." )
         !! Initialize explicit object list for edges (class (/1/) )
-        call createExplicitObjectListSingleSpace( grid_ggd,          &
+        if ( mpg%nXpt > 0 ) then
+          call createExplicitObjectListSingleSpace( grid_ggd,        &
                 &   grid_ggd%grid_subset( GRID_SUBSET_X_POINTS ),    &
                 &   IDS_CLASS_NODE, xpoints(:, SPACE_POLOIDALPLANE), &
                 &   IDS_CLASS_NODE, SPACE_POLOIDALPLANE )
+          deallocate(xpoints)
+        else
+          grid_ggd%grid_subset( GRID_SUBSET_X_POINTS )%dimension =   &
+                &   IDS_CLASS_NODE
+        end if
 
         !! Set up specific grid subset by collecting edges for regions
 
         !! Start counting from end of generic grid subset
         GSubsetCount = B2_GENERIC_GSUBSET_COUNT
 
-#  if GGD_MINOR_VERSION > 8
+#if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
         iPrivateB2 = 0
         !! Cell + edge grid subset
         !! These are the "private" B2 regions, so will be given negative
@@ -1313,17 +1327,21 @@ contains
                     &   iType, regionNumber(geoId, iType, iRegion),     &
                     &   indexList2d )
 
+                if ( size(indexList2d,1) > 0 ) then
                 !! Initialize explicit object list for grid subset
-                call createExplicitObjectListSingleSpace( grid_ggd,     &
+                  call createExplicitObjectListSingleSpace( grid_ggd,   &
                     &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
                     &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
                     &   SPACE_POLOIDALPLANE )
+                else
+                  grid_ggd%grid_subset( GSubsetCount )%dimension = sum(cls)
+                end if
 
             end do
         end do
 
         deallocate(indexList2d)
-#  endif
+#endif
 
 !! Do the grid subsets that map directly to B2 regions
         do iSubset = GRID_SUBSET_CORE_CUT, GRID_SUBSET_INNER_STRIKEPOINT_INACTIVE
@@ -1932,13 +1950,13 @@ contains
 
             SubsetName = gridSubsetName( iSubset )
             RegionDescription = gridSubsetDescription( iSubset )
-#  if GGD_MINOR_VERSION == 9 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 )
+#if ( GGD_MAJOR_VERSION == 1 && ( GGD_MINOR_VERSION == 9 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION < 2 ) ) )
             if ( iSubset == GRID_SUBSET_FULL_WALL ) then
               SubsetName = 'FULL_WALL'
               RegionDescription = &
                &  'All edges defining walls, baffles, and targets'
             end if
-#  endif
+#endif
             call logmsg( LOGDEBUG,                                     &
                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
                &   int2str(GSubsetCount)//": "//                       &
@@ -1968,15 +1986,20 @@ contains
                 indextmp2d( isize+1 : isize+size(indexPart2d,1),:) = indexPart2d(:,:)
                 isize = isize + size(indexPart2d,1)
             end do
-            allocate( indexList2d ( isize, SPACE_COUNT ) )
-            indexList2d(1:isize,:) = indextmp2d(1:isize,:)
+            if (isize.gt.0) then
+              allocate( indexList2d ( isize, SPACE_COUNT ) )
+              indexList2d(1:isize,:) = indextmp2d(1:isize,:)
 
             !! Initialize explicit object list for grid subset
-            call createExplicitObjectListSingleSpace( grid_ggd,     &
-               &   grid_ggd%grid_subset( GSubsetCount ), sum(cls),  &
-               &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),    &
-               &   SPACE_POLOIDALPLANE )
-            deallocate(indexList2d,indexPart2d,indextmp2d)
+              call createExplicitObjectListSingleSpace( grid_ggd,      &
+                  &   grid_ggd%grid_subset( GSubsetCount ), sum(cls),  &
+                  &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),    &
+                  &   SPACE_POLOIDALPLANE )
+              deallocate( indexList2d )
+            else
+              grid_ggd%grid_subset( GSubsetCount )%dimension = sum(cls)
+            end if
+            deallocate(indexPart2d,indextmp2d)
 
         end do
 
@@ -2543,8 +2566,21 @@ contains
        & AoS3_grid%space(i1)%geometry_type%description
       i = size( AoS3_grid%space(i1)%coordinates_type )
       allocate( dynamic_grid%space(i1)%coordinates_type( i ) )
+#if IMAS_MAJOR_VERSION < 4
       dynamic_grid%space(i1)%coordinates_type( : ) = &
        & AoS3_grid%space(i1)%coordinates_type( : )
+#else
+      do i2 = 1, i
+        allocate( dynamic_grid%space(i1)%coordinates_type(i2)%name(1) )
+        dynamic_grid%space(i1)%coordinates_type(i2)%name = &
+         & aoS3_grid%space(i1)%coordinates_type(i2)%name
+        dynamic_grid%space(i1)%coordinates_type(i2)%index = &
+         & aoS3_grid%space(i1)%coordinates_type(i2)index
+        allocate( dynamic_grid%space(i1)%coordinates_type(i2)%description(1) )
+        dynamic_grid%space(i1)%coordinates_type(i2)%description = &
+         & aoS3_grid%space(i1)%coordinates_type(i2)%description
+      end do
+#endif
       ndims = size( AoS3_grid%space(i1)%objects_per_dimension )
       allocate( dynamic_grid%space(i1)%objects_per_dimension( ndims ) )
       do i2 = 1, ndims
@@ -2651,7 +2687,7 @@ contains
       dynamic_grid%grid_subset(i1)%dimension = &
        & AoS3_grid%grid_subset(i1)%dimension
       nelems = size( AoS3_grid%grid_subset(i1)%element )
-      allocate( dynamic_grid%grid_subset(i1)%element( nelems ) )
+      if (nelems.gt.0) allocate( dynamic_grid%grid_subset(i1)%element( nelems ) )
       do i2 = 1, nelems
         nobjects = size( AoS3_grid%grid_subset(i1)%element(i2)%object )
         allocate( dynamic_grid%grid_subset(i1)%element(i2)%object( nobjects ) )
@@ -2666,7 +2702,7 @@ contains
       end do
       if ( associated( dynamic_grid%grid_subset(i1)%base ) ) then
         nbase = size( AoS3_grid%grid_subset(i1)%base )
-        allocate( dynamic_grid%grid_subset(i1)%base( nbase ) )
+        if (nbase.gt.0) allocate( dynamic_grid%grid_subset(i1)%base( nbase ) )
         do i2 = 1, nbase
           i = size( AoS3_grid%grid_subset(i1)%base(i2)%jacobian )
           allocate( dynamic_grid%grid_subset(i1)%base(i2)%jacobian( i ) )
@@ -2694,31 +2730,37 @@ contains
       end if
       if ( associated( dynamic_grid%grid_subset(i1)%metric%jacobian ) ) then
         i = size( AoS3_grid%grid_subset(i1)%metric%jacobian )
-        allocate( dynamic_grid%grid_subset(i1)%metric%jacobian( i ) )
-        dynamic_grid%grid_subset(i1)%metric%jacobian( : ) = &
-         & AoS3_grid%grid_subset(i1)%metric%jacobian( : )
+        if (i.gt.0) then
+          allocate( dynamic_grid%grid_subset(i1)%metric%jacobian( i ) )
+          dynamic_grid%grid_subset(i1)%metric%jacobian( : ) = &
+           & AoS3_grid%grid_subset(i1)%metric%jacobian( : )
+        end if
       end if
       if ( associated( dynamic_grid%grid_subset(i1)%metric% &
         &              tensor_covariant ) ) then
         i = size( AoS3_grid%grid_subset(i1)%metric%tensor_covariant, 1 )
         j = size( AoS3_grid%grid_subset(i1)%metric%tensor_covariant, 2 )
         k = size( AoS3_grid%grid_subset(i1)%metric%tensor_covariant, 3 )
-        allocate( dynamic_grid%grid_subset(i1)%metric% &
-           &      tensor_covariant( i, j, k ) )
-        dynamic_grid%grid_subset(i1)%metric%tensor_covariant( : , : , : ) = &
-         & AoS3_grid%grid_subset(i1)%metric%tensor_covariant( : , : , : )
+        if (i.gt.0 .and. j.gt.0 .and. k.gt.0) then
+          allocate( dynamic_grid%grid_subset(i1)%metric% &
+             &      tensor_covariant( i, j, k ) )
+          dynamic_grid%grid_subset(i1)%metric%tensor_covariant( : , : , : ) = &
+           & AoS3_grid%grid_subset(i1)%metric%tensor_covariant( : , : , : )
+        end if
       end if
       if ( associated( dynamic_grid%grid_subset(i1)%metric% &
         &              tensor_contravariant ) ) then
         i = size( AoS3_grid%grid_subset(i1)%metric%tensor_contravariant, 1 )
         j = size( AoS3_grid%grid_subset(i1)%metric%tensor_contravariant, 2 )
         k = size( AoS3_grid%grid_subset(i1)%metric%tensor_contravariant, 3 )
-        allocate( dynamic_grid%grid_subset(i1)%metric% &
-           &      tensor_contravariant( i, j, k ) )
-        dynamic_grid%grid_subset(i1)%metric% &
-           &      tensor_contravariant( : , : , : ) = &
-         & AoS3_grid%grid_subset(i1)%metric% &
-           &      tensor_contravariant( : , : , : )
+        if (i.gt.0 .and. j.gt.0 .and. k.gt.0) then
+          allocate( dynamic_grid%grid_subset(i1)%metric% &
+             &      tensor_contravariant( i, j, k ) )
+          dynamic_grid%grid_subset(i1)%metric% &
+             &      tensor_contravariant( : , : , : ) = &
+           & AoS3_grid%grid_subset(i1)%metric% &
+             &      tensor_contravariant( : , : , : )
+        end if
       end if
     end do
 
@@ -2907,7 +2949,6 @@ contains
           end if
               !if (itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 )
 
-
           case( RIGHT )
               !! start index: 1=start node
               itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(2) % boundary( iFc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERRIGHT )
@@ -2920,7 +2961,6 @@ contains
                   call logmsg(LOGWARNING, "b2ITMFillGD: RIGHT edge at ("//int2str(ix)//","//int2str(iy)//") has no end node")
               end if
           end select
-
 
           !! Neighbour edges of this edge
           !! Bottom neighbour: edge continuing to the bottom of this edge
@@ -2987,7 +3027,6 @@ contains
                 itmgrid % spaces(SPACE_POLOIDALPLANE) % objects(3) % neighbour(iCv, dir+1, 1) = gmap % mapCvI( nix, niy )
              end if
           end do
-
       end do
 
       !! Fill in x-point indices
@@ -3092,6 +3131,7 @@ contains
       call createSubGridForExplicitList( itmgrid,     &
           & itmgrid % subgrids( B2_SUBGRID_XPOINTS ), &
           & CLASS_NODE(1:SPACE_COUNT), xpoints, 'x-points' )
+      deallocate(xpoints)
 
       !! Set up specific subgrids by collecting edges for regions
 

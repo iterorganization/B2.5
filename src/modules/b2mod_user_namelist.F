@@ -1,10 +1,10 @@
       module b2mod_user_namelist
       use b2mod_types
       use b2mod_diag
+      use b2mod_dimensions
       use b2us_geo
       use b2us_map
       implicit none
-#     include "DIMENSIONS.F"
       integer npfrgrpd, nntrgrpd
       parameter (npfrgrpd=6, nntrgrpd=16)
       integer nhetrgtx
@@ -43,6 +43,7 @@
       logical, save :: written = .false.
       logical, save :: write_nml_user = .false.
       logical, save :: user_initialised = .false.
+
       private :: user
       namelist /user/
      ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
@@ -211,7 +212,6 @@ c***  Standard set-up:
      &   call xerrab('OMP LIST NOT SORTED')
       end do
 *   ..Definition of separatrix position in OMP list
-! Separatrix is defined by checking when cvReg changes value inside the OMP list
       icsepomp = 0
       ic = 1
       found = .false.
@@ -363,7 +363,7 @@ c*** Set default values according to current species list
      & 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
       do ic=2,nimp
-        if (geo%cVx(imp(ic)).lt.geo%cVx(imp(ic-1)))
+        if (geo%cvX(imp(ic)).lt.geo%cvX(imp(ic-1)))
      &   call xerrab('IMP LIST NOT SORTED')
       end do
 ! Find position of separatrix in IMP list (same as for OMP)

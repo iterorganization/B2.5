@@ -1,23 +1,27 @@
-      subroutine b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli,
-     & tim, batch_only)
+      subroutine b2co_time_cdf(mpg, geo, ns, ismain, ismain0, nnmoli
+#ifndef NO_CDF
+     & , tim, batch_only
+#endif
+     & )
       use b2mod_types
       use b2mod_mwti
       use b2mod_cdf
       use b2mod_subsys
       use b2us_map
       use b2us_geo
+      use b2mod_b2cmpa
       use b2mod_user_namelist
      , , only : nimp, imp, icsepimp,
      ,          nomp, omp, icsepomp
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
+      real (kind=R8) :: tim
+      logical :: batch_only
 #endif
       type (mapping), intent(in) :: mpg
       type (geometry), intent(in) :: geo
       integer ns, ismain, ismain0, nnmoli
-      real (kind=R8) :: tim
-      logical :: batch_only
       integer :: i
       integer, save :: write_2d = 0, ntim_batch = 500
       integer, allocatable :: fclist(:)
@@ -49,11 +53,20 @@
       call subini ('b2co_time_cdf')
       write(*,*) 'b2co_time_cdf ...'
 
+      call xertst (1.le.ns, 'faulty parameter ns')
+      call xertst (0.le.nnmoli, 'faulty parameter nnmoli')
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     & 'faulty parameter ismain')
+      call xertst (0.le.ismain0.and.ismain0.lt.ns.and.
+     & (is_neutral(ismain0).or.ismain0.eq.ismain),
+     & 'faulty parameter ismain0')
       call ipgetr ('b2mndr_dtim', dtim)
       call ipgeti ('b2mwti_2dwrite', write_2d)
       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
-      if (nimp.gt.0) call output_ds_cv(geo,nimp,imp,icsepimp-1,'dsi')
-      if (nomp.gt.0) call output_ds_cv(geo,nomp,omp,icsepomp-1,'dsa')
+      if (nimp.gt.0)
+     & call output_ds_cv(mpg,geo,nimp,imp,icsepimp-1,'dsi')
+      if (nomp.gt.0)
+     & call output_ds_cv(mpg,geo,nomp,omp,icsepomp-1,'dsa')
       do i = 1, maxval(mpg%strDiv)
         allocate(fclist(mpg%divFcP(i,2)))
         fclist(1:mpg%divFcP(i,2)) =

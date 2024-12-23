@@ -12,9 +12,9 @@
 !WG_TODO     1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
 !WG_TODO     2          smpr, smpt, smfr, smcf
 !WG_TODO: smof -> part of b2mod_sources
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-!WG_TODO     2          balance_netcdf
+      use b2mod_balance !djm Jan2017
+     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
+     2          balance_netcdf, tot_smo0to3, fmo_tot
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -63,7 +63,7 @@
 !            => add again to B2Source?
       real (kind=R8) ::
      *  smcf(nCv,0:ns-1), smpr(nCv,0:ns-1), smpt(nCv,0:ns-1),
-     *  smfr(nCv,0:ns-1)
+     *  smfr(nCv,0:ns-1), ubf(nFc), robf(nFc)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -141,6 +141,14 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2npmo')
+*   ..test nCv, nFc, ns
+      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (1.le.ns, 'faulty argument ns')
+*   ..test itcnt
+      call xertst (0.le.itcnt, 'faulty argument itcnt')
+*   ..test rxf
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
+     . 'faulty argument rxf')
 *   ..set internal parameters on first call
       if (ncall_b2npmo.eq.0) then
         write(*,*) 'nsmin, nsmax = ', switch%nsmin, switch%nsmax
@@ -173,14 +181,6 @@ c time-dependent treatment
         endif
         call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
       endif
-*   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-      call xertst (1.le.ns, 'faulty argument ns')
-*   ..test itcnt
-      call xertst (0.le.itcnt, 'faulty argument itcnt')
-*   ..test rxf
-      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
-     . 'faulty argument rxf')
 *   ..extensive tests on first few calls
       if (ncall_b2npmo.lt.3) then
 *    ..test sign of na, te, ti
@@ -300,9 +300,9 @@ c time-dependent treatment
 *    ..add convective term due to new form of ion viscosity term only
        call b2nxfv (nCv, nFc, nVx, is, switch, geo, mpg,
      &   co%cvsahz_cl(:,:,is), co%cvsahz(:,:,is), flubv)
-!WG_TODO       if (balance_netcdf.ne.0) then
-!WG_TODO         fmo_b2nxfv(:,:,:,:,is)=flubv !djm Jan2017
-!WG_TODO       endif
+       if (balance_netcdf.ne.0) then
+         fmo_b2nxfv(:,:,is)=flubv                                       !djm Jan2017
+       endif
        call b2saxpy (nFc*2, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
 *    ..compute flcb, cvcb
        call b2nxfc (nCv, nFc, nVx, is, switch, geo, mpg, rob,
@@ -336,9 +336,13 @@ c time-dependent treatment
 !WG_TODO       smof(:,:,is) = smb                                       !srv 10.11.02
 
 cdjm Jan2017 update momentum source components for balance
-!WG_TODO       if (balance_netcdf.ne.0) then
-!WG_TODO         call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
-!WG_TODO       endif
+      if (balance_netcdf.ne.0) then
+         tot_smo0to3(:,:,is)=smb !djm Mar2019
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,is),ubf)
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,rob,robf)
+        call update_balance_sources_momentum(nCv,nFc,is,pl%ua(:,is),rob,
+     &    ubf,robf)
+      endif
 
 *    ..time-dependent treatment
 *    ..compute residual without time-stepping sources (needed at next time-step for ckn scheme)
@@ -364,13 +368,17 @@ cdjm Jan2017 update momentum source components for balance
          endif
 
 *    ..compute residual
-       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
+      if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
      &            .or.switch%get_residuals.eq.1) then                  !srv 22.05.18
-         call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is, pl%ua(:,is),
-     &     rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
-     &     dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))       !srv 04.07.08
-       endif                                                            !srv 22.05.18
-
+        call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is, pl%ua(:,is),
+     &    rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
+     &    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))       !srv 04.07.08
+        if(switch%b2mndt_style.eq.2) then                              !srv 10.10.22 {
+          dv%resmo(:,is)=dv%resmo(:,is)+
+     &      (pl%ua(:,is)-psnl%ua(:,is))*
+     &       am(is)*mp*pl%na(:,is)*sr%smodt(:,3,is)
+        endif                                                          !srv 10.10.22 }
+      endif                                                            !srv 22.05.18
 *    ..modify residual for ckn scheme
        if (switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.2) then
          if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
@@ -379,58 +387,62 @@ cdjm Jan2017 update momentum source components for balance
      &       psnl%resmo0(1:mpg%nCi,is)
          endif
        endif
+       
+cdjm Mar2019 output the total momentum flux and source for balance
+      if (balance_netcdf.ne.0) then
+        fmo_tot(:,:,is)=dv%fmo(:,:,is)
+      endif
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
-       if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then !srv 12.07.02 {
-         call my_out_us(70,nCv,0,dv%resmo(1,is),'b2npmo_resmo'//chns)
+      if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then  !srv 12.07.02 {
+        call my_out_us(70,nCv,0,dv%resmo(1,is),'b2npmo_resmo'//chns)
         call my_out_us(70,nFc,1,dv%fmo(1,0,is),'b2npmo_fmo_th'//chns)
         call my_out_us(70,nFc,1,dv%fmo(1,1,is),'b2npmo_fmo_r'//chns)
-         if(.not. is_neutral(is)) then
-            call my_out_us(70,nFc,1,flubv(1,0),'b2npmo_flubv_th'//chns)
-            wrks=smbvv(:,0)+smbvv(:,1)*pl%ua(:,is)+
+        if(.not. is_neutral(is)) then
+          call my_out_us(70,nFc,1,flubv(1,0),'b2npmo_flubv_th'//chns)
+          wrks=smbvv(:,0)+smbvv(:,1)*pl%ua(:,is)+
      &         smbvv(:,2)*pl%na(:,is)*mp*am(is)+
      &         smbvv(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-            call my_out_us(70,nCv,0,wrks,'b2npmo_smovv'//chns)
-            wrks=smbvh(:,0)+smbvh(:,1)*pl%ua(:,is)+
+          call my_out_us(70,nCv,0,wrks,'b2npmo_smovv'//chns)
+          wrks=smbvh(:,0)+smbvh(:,1)*pl%ua(:,is)+
      &         smbvh(:,2)*pl%na(:,is)*mp*am(is)+
      &         smbvh(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-            call my_out_us(70,nCv,0,wrks,'b2npmo_smovh'//chns)
-         endif
-         wrks=smb(:,0)+smb(:,1)*pl%ua(:,is)+
+          call my_out_us(70,nCv,0,wrks,'b2npmo_smovh'//chns)
+        endif
+        wrks=smb(:,0)+smb(:,1)*pl%ua(:,is)+
      &       smb(:,2)*pl%na(:,is)*mp*am(is)+
      &       smb(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-         call my_out_us(70,nCv,0,wrks,'b2npmo_smb'//chns)              !srv 28.02.17
-         wrks=smbcf(:,0)+smbcf(:,1)*pl%ua(:,is)+
+        call my_out_us(70,nCv,0,wrks,'b2npmo_smb'//chns)                !srv 28.02.17
+        wrks=smbcf(:,0)+smbcf(:,1)*pl%ua(:,is)+
      &       smbcf(:,2)*pl%na(:,is)*mp*am(is)+
      &       smbcf(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-         call my_out_us(70,nCv,0,wrks,'b2npmo_smocf'//chns)
-         wrks = geo%cvVol*geo%cvHz*(smbfria(:,0)+
+        call my_out_us(70,nCv,0,wrks,'b2npmo_smocf'//chns)
+        wrks = geo%cvVol*geo%cvHz*(smbfria(:,0)+
      &        smbfria(:,1)*pl%ua(:,is)+      !srv 05.07.17 {
      &        smbfria(:,2)*pl%na(:,is)*mp*am(is)+
      &        smbfria(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is))
-         call my_out_us(70,nCv,0,wrks,'b2npmo_smofria'//chns)
-
-         wrks = geo%cvVol*geo%cvHz*(smbfrea(:,0)+
+        call my_out_us(70,nCv,0,wrks,'b2npmo_smofria'//chns)
+        wrks = geo%cvVol*geo%cvHz*(smbfrea(:,0)+
      &                             smbfrea(:,1)*pl%ua(:,is))
-         call my_out_us(70,nCv,0,wrks,'b2npmo_smofrea'//chns)
-         wrks = geo%cvVol*geo%cvHz*smbtfia(:,0)
-         call my_out_us(70,nCv,0,wrks,'b2npmo_smotfia'//chns)
-         wrks = geo%cvVol*geo%cvHz*smbtfea(:,0)
-         call my_out_us(70,nCv,0,wrks,'b2npmo_smotfea'//chns)
-         call my_out_us(70,nCv,0,dv%ue,'b2npmo_ue')                    !srv 05.07.17 }
-         wrks=smban(:,0)+smban(:,1)*pl%ua(:,is)+
+        call my_out_us(70,nCv,0,wrks,'b2npmo_smofrea'//chns)
+        wrks = geo%cvVol*geo%cvHz*smbtfia(:,0)
+        call my_out_us(70,nCv,0,wrks,'b2npmo_smotfia'//chns)
+        wrks = geo%cvVol*geo%cvHz*smbtfea(:,0)
+        call my_out_us(70,nCv,0,wrks,'b2npmo_smotfea'//chns)
+        call my_out_us(70,nCv,0,dv%ue,'b2npmo_ue')                      !srv 05.07.17 }
+        wrks=smban(:,0)+smban(:,1)*pl%ua(:,is)+
      &       smban(:,2)*pl%na(:,is)*mp*am(is)+
      &       smban(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-         call my_out_us(70,nCv,0,wrks,'b2npmo_smoan'//chns)            !srv 25.09.17
-       endif                                                           !srv 05.07.17
+        call my_out_us(70,nCv,0,wrks,'b2npmo_smoan'//chns)              !srv 25.09.17
+      endif                                                             !srv 05.07.17
 
-       if (switch%b2npmo_iout .ne. 0) then
+      if (switch%b2npmo_iout .ne. 0) then
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua_input'//chns)
         wrks=sr%smo(:,0,is)+sr%smo(:,1,is)*pl%ua(:,is)+
      &       sr%smo(:,2,is)*pl%na(:,is)*mp*am(is)+
      &       sr%smo(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-        call my_out_us(70,nCv,0,wrks,'b2npmo_smo'//chns)               !srv 28.02.17
+        call my_out_us(70,nCv,0,wrks,'b2npmo_smo'//chns)                !srv 28.02.17
         wrks=smbch(:,0)+smbch(:,1)*pl%ua(:,is)+
      &       smbch(:,2)*pl%na(:,is)*mp*am(is)+
      &       smbch(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
@@ -443,9 +455,9 @@ cdjm Jan2017 update momentum source components for balance
      &       smbgp(:,2)*pl%na(:,is)*mp*am(is)+
      &       smbgp(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
         call my_out_us(70,nCv,0,wrks,'b2npmo_smogp'//chns)
-       endif                                                           !srv 12.07.02 }
+       endif                                                            !srv 12.07.02 }
 
-       if (solving.and.any(solvemo(is,0:mpg%nnreg(0)))) then           !srv 06.07.10 22.05.18
+       if (solving.and.any(solvemo(is,0:mpg%nnreg(0)))) then            !srv 06.07.10 22.05.18
          b2npmo_solvedum(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
 c    ..compare matrices
          new_matrix = .false.
@@ -460,7 +472,7 @@ c    ..compare matrices
          call b2usmo (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
      &     b2npmo_solvedum, itcnt, rxg, rob, rob1, pb,
      &     pb1, pl%ua(:,is), smb,
-     &     flcb, cvcb, dv%resmo(:,is),  ctcfb, dv%corua(:,is),
+     &     flcb, cvcb, dv%resmo(:,is), ctcfb, dv%corua(:,is),
      &     dv%pcca(:,:,is), aa, wrk1, 'b2usmo_'//chns)
          last_solve_9(0:mpg%nnreg(0)) = solvemo(is,0:mpg%nnreg(0))
 csw 21feb2014 added this else branch
@@ -470,24 +482,23 @@ csw 21feb2014 added this else branch
          dv%corua(:,is) = 0.0_R8
        endif
 *    ..compute contribution to total residual
-
 csw 21feb2014 and do this only for the solved species, i.e. added next branch
       if((solving.and.any(solvemo(0:ns-1,0:mpg%nnreg(0)))
      &   .and.any(solvemt(0:mpg%nnreg(0))))) then !srv 22.05.18 resmt is non-zero when all equations are solved
 !     &   .and.all(solvemt(0:mpg%nnreg(0)))).or.get_residuals.eq.1) then !srv 22.05.18
         call b2scopy (nCv*4, sr%smo(:,:,is), 1, smb, 1)
-        if(switch%b2sigp_style.eq.2) then                              !srv 13.01.17 {
+        if(switch%b2sigp_style.eq.2) then                               !srv 13.01.17 {
 *       (in this case thermal force and the friction are taken into account)
-         call b2saxpy (nCv*4, 1.0_R8, smbtf, 1, smb, 1)                !srv 08.10.14
+         call b2saxpy (nCv*4, 1.0_R8, smbtf, 1, smb, 1)                 !srv 08.10.14
          call b2saxpy (nCv*4, 1.0_R8, smbch, 1, smb, 1)
         else
 *       (now the friction cancels out)
-        endif                                                          !srv 13.01.17 }
+        endif                                                           !srv 13.01.17 }
         call b2saxpy (nCv*4, 1.0_R8, smbgp, 1, smb, 1)
         call b2saxpy (nCv*4, 1.0_R8, smbvh, 1, smb, 1)
-        call b2saxpy (nCv*4, 1.0_R8, smbvv, 1, smb, 1)                 !srv 03.07.08
-        call b2saxpy (nCv*4, 1.0_R8, smbcf, 1, smb, 1)                 !srv 09.07.01
-        call b2saxpy (nCv*4, 1.0_R8, smban, 1, smb, 1)                 !srv 25.09.17
+        call b2saxpy (nCv*4, 1.0_R8, smbvv, 1, smb, 1)                  !srv 03.07.08
+        call b2saxpy (nCv*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
+        call b2saxpy (nCv*4, 1.0_R8, smban, 1, smb, 1)                  !srv 25.09.17
         call b2urmo (nCv, nFc, nVx, switch, geo, mpg,  is, pl%ua(:,is),
      .     rob, smb, flub, flubv, co%cvsahz(:,:,is), wrk0, wrkf, wrkff,
      .    wrkfff)
@@ -498,13 +509,13 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
 *    ..accumulate transport coefficients
         call b2saxpy (nFc*2, 1.0_R8, flcb, 1, flct, 1)
         call b2saxpy (nFc*2, 1.0_R8, cvcb, 1, cvct, 1)
-        call b2saxpy (nCv, 1.0_R8, ctcfb, 1, ctcft, 1)                 !srv 06.04.07
-       endif                                                           !srv 22.05.18
+        call b2saxpy (nCv, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
+       endif                                                            !srv 22.05.18
       enddo
 
 csw 21feb2014, execute simultaneous corrections always
       if (solving.and.any(solvemo(0:ns-1,0:mpg%nnreg(0)))
-     &                  .and.any(solvemt(0:mpg%nnreg(0)))) then        !srv 06.07.10 22.05.18
+     &                  .and.any(solvemt(0:mpg%nnreg(0)))) then         !srv 06.07.10 22.05.18
 *     ..compute simultaneous correction
         call sfill (nCv, 0.0_R8, wrk0, 1)
 c     ..compare 9-pt stencil matrices
@@ -522,9 +533,9 @@ c     ..compare 9-pt stencil matrices
         last_solve_9(0:mpg%nnreg(0)) = solvemt(0:mpg%nnreg(0))
       else
         dv%pccm  = 0.0_R8
-!        dv%resmt = 0.0_R8            ! it is useful to know resmt     !srv 22.05.18
+!        dv%resmt = 0.0_R8            ! it is useful to know resmt      !srv 22.05.18
         dv%corut = 0.0_R8
-      endif                                                            !srv 06.07.10
+      endif                                                             !srv 06.07.10
 
 *   ..apply correction
       if (rxf.ne.0.0_R8) then
@@ -532,13 +543,13 @@ c     ..compare 9-pt stencil matrices
         do iCv = 1, mpg%nCi ! internal cells
          ireg = mpg%cvReg(iCv)
          if (solvemo(is,ireg)) then
-          if(solvemt(ireg)) then                                       !srv 22.05.18
+          if(solvemt(ireg)) then                                        !srv 22.05.18
             pl%ua(iCv,is) = pl%ua(iCv,is)+
      &        rxf*med(dv%corua(iCv,is),dv%corut(iCv),
      &        dv%corua(iCv,is)+dv%corut(iCv))
-          else                                                         !srv 22.05.18 {
+          else                                                          !srv 22.05.18 {
             pl%ua(iCv,is) = pl%ua(iCv,is) + rxf*dv%corua(iCv,is)
-          endif                                                        !srv 22.05.18 }
+          endif                                                         !srv 22.05.18 }
          endif
         enddo
         do iCv = mpg%nCi+1, nCv ! guard cells
@@ -598,16 +609,16 @@ c     ..compare 9-pt stencil matrices
 
 *   ..correct pcca
       call b2nxcm (nCv, ns, dv%pccm, dv%pcca)
-      if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then !srv 12.07.02 {
+      if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then  !srv 12.07.02 {
        do is = 0, ns-1
-        write (chns,'(i3.3)') is                                       !srv 18.05.02
+        write (chns,'(i3.3)') is                                        !srv 18.05.02
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua'//chns)
        enddo
-      endif                                                            !srv 12.07.02 }
+      endif                                                             !srv 12.07.02 }
       if (switch%b2npmo_iout.ne.0) then
-       call my_out_us(70,nCv,0,dv%pccm(1,0),'b2npmo_pccm_th')          !srv 11.01.13
-       call my_out_us(70,nCv,0,dv%pccm(1,1),'b2npmo_pccm_r')           !srv 11.01.13
-      endif                                                            !srv 12.07.02 }
+       call my_out_us(70,nCv,0,dv%pccm(1,0),'b2npmo_pccm_th')           !srv 11.01.13
+       call my_out_us(70,nCv,0,dv%pccm(1,1),'b2npmo_pccm_r')            !srv 11.01.13
+      endif                                                             !srv 12.07.02 }
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
       ierr = 0
