@@ -17,7 +17,6 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
-      use b2mod_boundary_namelist
       use b2us_plasma
 #ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
@@ -57,7 +56,6 @@
      &  te(nCv), ti(nCv), tn(nCv), po(nCv), ne(nCv), ni(nCv,0:1),   !srv 07.05.08 01.07.09
      &  lnlam(nCv), f_luc_sg(nFc), alfx_c(nCv), sigx_c(nCv),
      &  nn(nCv)
-      integer ib, iCv1, iCv2, ibc
       real (kind=R8) ::
      *  fch(nFc,0:1),
      *  cvsa(nFc,0:1,0:ns-1), cvsahz_eff(nFc,0:1,0:ns-1),
@@ -236,12 +234,11 @@
          srw%b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
       enddo
       if (switch%b2sihs_shedu.eq.0) then
-        do ib = 1, nbc
-          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
-            shedu(iCv2,:) = 0.0_R8
-          enddo
+        do k=1,mpg%nCg
+          iFc = mpg%fcs_wall(k)
+          if (mpg%fcLbl(iFc) .le. 0) cycle
+          iCv = minval(mpg%fcCv(iFc,1:2))
+          shedu(iCv,:) = 0.0_R8
         enddo
       endif
       
@@ -308,13 +305,12 @@
         enddo
       enddo
       if (switch%b2sihs_shidu.eq.0) then
-      do ib = 1, nbc
-            do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
-                  iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-                  iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
-                  shidu(iCv2,:) = 0.0_R8
-            enddo
-      enddo
+        do k=1,mpg%nCg
+          iFc = mpg%fcs_wall(k)
+          if (mpg%fcLbl(iFc) .le. 0) cycle
+          iCv = minval(mpg%fcCv(iFc,1:2))
+          shidu(iCv,:) = 0.0_R8
+        enddo
       endif
 !WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
 !WG_TODO        b2sihs_divua0to3 = shidu
@@ -351,12 +347,11 @@
         srw%b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
       enddo
       if (switch%b2sihs_shedd.eq.0) then
-        do ib = 1, nbc
-          do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
-            shedd(iCv2,:) = 0.0_R8
-          enddo
+        do k=1,mpg%nCg
+          iFc = mpg%fcs_wall(k)
+          if (mpg%fcLbl(iFc) .le. 0) cycle
+          iCv = minval(mpg%fcCv(iFc,1:2))
+          shedd(iCv,:) = 0.0_R8
         enddo
       endif
 #ifndef FIXED_POINT
