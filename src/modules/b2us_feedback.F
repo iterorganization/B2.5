@@ -1593,7 +1593,8 @@ cxpb size is changed in b2mod_dimensions
               fb_current(ifb) = sum(srw%rqbrm)+sum(srw%rqrad)
 #if ( defined(B25_EIRENE) && !defined(SOLPS4_3) )
               fb_current(ifb) = fb_current(ifb) -
-     &          (sum(emolrad)+sum(eneutrad)+sum(eionrad))
+     &          (sum(emolrad(:,:,0))+sum(eneutrad(:,:,0))
+     &          +sum(eionrad(:,:,0)))
 #endif
               case (22) ! average density of this species at the separatrix
 
