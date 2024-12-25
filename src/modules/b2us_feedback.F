@@ -1808,8 +1808,8 @@ cxpb size is changed in b2mod_dimensions
                   t2 = 0.0_R8
                   do is=0,ns-1
                     if (is_neutral(is)) cycle
-                      t2 = t2 + abs(pl%na(iCv1,is)*pl%ua(iCv,is)
-     .                 *rt%rza(iCv1,is)*qe)
+                      t2 = t2 + abs(pl%na(iCv,is)*pl%ua(iCv,is)
+     .                 *rt%rza(iCv,is)*qe)
                   enddo
                   fb_current(ifb) = max(fb_current(ifb),abs(t2))
                 endif
