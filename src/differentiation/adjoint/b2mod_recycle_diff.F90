@@ -409,7 +409,6 @@ CONTAINS
       arg1 = rt%rlcx(icv, 0, ic, iscx0) + rt%rlcx(icv, 1, ic, iscx0)*LOG&
 &       (t_av/(am(isn)*ev))
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8(cutlo, r8/8)
       CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHREAL8(result1, r8/8)
@@ -419,7 +418,6 @@ CONTAINS
     CALL PUSHREAL8(arg1, r8/8)
     arg1 = rt%rlsa(icv, 0, isn) + rt%rlsa(icv, 1, isn)*LOG(tef/ev)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHREAL8(cutlo, r8/8)
     CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHREAL8(result1, r8/8)
@@ -649,7 +647,6 @@ CONTAINS
     CALL POPREAL8(result1, r8/8)
     CALL POPREAL8(cutll, r8/8)
     CALL POPREAL8(cutlo, r8/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
     CALL EXPU_B(arg1, arg1b, result1b)
     CALL POPREAL8(arg1, r8/8)
@@ -662,7 +659,6 @@ CONTAINS
       CALL POPREAL8(result1, r8/8)
       CALL POPREAL8(cutll, r8/8)
       CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
       CALL EXPU_B(arg1, arg1b, result1b)
       t_av = (tif+tnf)/2.0_R8
@@ -895,7 +891,6 @@ CONTAINS
       arg1 = rt%rlcx(icv, 0, ic, iscx0) + rt%rlcx(icv, 1, ic, iscx0)*LOG&
 &       (t_av/(am(isn)*ev))
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8(cutlo, r8/8)
       CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHREAL8(result1, r8/8)
@@ -905,7 +900,6 @@ CONTAINS
     CALL PUSHREAL8(arg1, r8/8)
     arg1 = rt%rlsa(icv, 0, isn) + rt%rlsa(icv, 1, isn)*LOG(tef/ev)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHREAL8(cutlo, r8/8)
     CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHREAL8(result1, r8/8)
@@ -958,7 +952,6 @@ CONTAINS
 &                                 , fmomnim, nnim, nnwwnim, fenenim)
 !! <- '1': = safeguard for diffusion BCs
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8(cutlo, r8/8)
       CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHREAL8(int6r, r8/8)
@@ -1008,7 +1001,6 @@ CONTAINS
       CALL POPREAL8(int6r, r8/8)
       CALL POPREAL8(cutll, r8/8)
       CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
       CALL CALCINCIDENTFLUXESDIFFUSION_B(icv, icn, ifc, isign, isn, &
 &                                  iscx0, isi, istra, phi_app, area, pl&
@@ -1050,7 +1042,6 @@ CONTAINS
     CALL POPREAL8(result1, r8/8)
     CALL POPREAL8(cutll, r8/8)
     CALL POPREAL8(cutlo, r8/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
     CALL EXPU_B(arg1, arg1b, result1b)
     CALL POPREAL8(arg1, r8/8)
@@ -1063,7 +1054,6 @@ CONTAINS
       CALL POPREAL8(result1, r8/8)
       CALL POPREAL8(cutll, r8/8)
       CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
       CALL EXPU_B(arg1, arg1b, result1b)
       t_av = (tif+tnf)/2.0_R8
@@ -2301,7 +2291,6 @@ CONTAINS
       arg1 = rt%rlcx(icv, 0, ic, iscx0) + rt%rlcx(icv, 1, ic, iscx0)*LOG&
 &       (t_av/(am(isn)*ev))
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8(cutlo, r8/8)
       CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHREAL8(result1, r8/8)
@@ -2311,7 +2300,6 @@ CONTAINS
     CALL PUSHREAL8(arg1, r8/8)
     arg1 = rt%rlsa(icv, 0, isn) + rt%rlsa(icv, 1, isn)*LOG(tef/ev)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHREAL8(cutlo, r8/8)
     CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHREAL8(result1, r8/8)
@@ -2916,7 +2904,6 @@ CONTAINS
     CALL POPREAL8(result1, r8/8)
     CALL POPREAL8(cutll, r8/8)
     CALL POPREAL8(cutlo, r8/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
     CALL EXPU_B(arg1, arg1b, result1b)
     CALL POPREAL8(arg1, r8/8)
@@ -2929,7 +2916,6 @@ CONTAINS
       CALL POPREAL8(result1, r8/8)
       CALL POPREAL8(cutll, r8/8)
       CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
       CALL EXPU_B(arg1, arg1b, result1b)
       t_av = (tif+tnf)/2.0_R8
@@ -3366,7 +3352,6 @@ CONTAINS
       arg1 = rt%rlcx(icv, 0, ic, iscx0) + rt%rlcx(icv, 1, ic, iscx0)*LOG&
 &       (t_av/(am(isn)*ev))
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8(cutlo, r8/8)
       CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHREAL8(result1, r8/8)
@@ -3376,7 +3361,6 @@ CONTAINS
     CALL PUSHREAL8(arg1, r8/8)
     arg1 = rt%rlsa(icv, 0, isn) + rt%rlsa(icv, 1, isn)*LOG(tef/ev)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHREAL8(cutlo, r8/8)
     CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHREAL8(result1, r8/8)
@@ -3438,7 +3422,6 @@ CONTAINS
 !
 !! <- '1': = safeguard for diffusion BCs
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8(cutlo, r8/8)
       CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHREAL8(int6r, r8/8)
@@ -3492,7 +3475,6 @@ CONTAINS
       CALL POPREAL8(int6r, r8/8)
       CALL POPREAL8(cutll, r8/8)
       CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
       CALL CALCREFLECTEDFLUXESDIFFUSION_B(icv, icn, nci, ifc, isign, isn&
 &                                   , iscx0, isi, istra, iwall, phi_app&
@@ -3542,7 +3524,6 @@ CONTAINS
     CALL POPREAL8(result1, r8/8)
     CALL POPREAL8(cutll, r8/8)
     CALL POPREAL8(cutlo, r8/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
     CALL EXPU_B(arg1, arg1b, result1b)
     CALL POPREAL8(arg1, r8/8)
@@ -3555,7 +3536,6 @@ CONTAINS
       CALL POPREAL8(result1, r8/8)
       CALL POPREAL8(cutll, r8/8)
       CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
       CALL EXPU_B(arg1, arg1b, result1b)
       t_av = (tif+tnf)/2.0_R8
@@ -4853,7 +4833,6 @@ CONTAINS
       arg1 = rt%rlcx(icv, 0, ic, isn) + rt%rlcx(icv, 1, ic, isn)*LOG(&
 &       t_av/(am(isn)*ev))
       CALL PUSHBOOLEAN(b2mod_math_initialised)
-      CALL PUSHREAL4(small_r4_constant, r4/8)
       CALL PUSHREAL8(cutlo, r8/8)
       CALL PUSHREAL8(cutll, r8/8)
       CALL PUSHREAL8(result1, r8/8)
@@ -4863,7 +4842,6 @@ CONTAINS
     CALL PUSHREAL8(arg1, r8/8)
     arg1 = rt%rlsa(icv, 0, isn) + rt%rlsa(icv, 1, isn)*LOG(te/ev)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHREAL8(cutlo, r8/8)
     CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHREAL8(result1, r8/8)
@@ -4885,7 +4863,6 @@ CONTAINS
     CALL POPREAL8(result1, r8/8)
     CALL POPREAL8(cutll, r8/8)
     CALL POPREAL8(cutlo, r8/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
     CALL EXPU_B(arg1, arg1b, result1b)
     CALL POPREAL8(arg1, r8/8)
@@ -4899,7 +4876,6 @@ CONTAINS
       CALL POPREAL8(result1, r8/8)
       CALL POPREAL8(cutll, r8/8)
       CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
       CALL POPBOOLEAN(b2mod_math_initialised)
       CALL EXPU_B(arg1, arg1b, result1b)
       t_av = (ti+tn)/2.0_R8
@@ -5087,7 +5063,6 @@ CONTAINS
         irc1 = mpg%rccv(mpg%rccvp(istra, 1)+i-1, 1)
 ! the guard face
         CALL PUSHBOOLEAN(b2mod_math_initialised)
-        CALL PUSHREAL4(small_r4_constant, r4/8)
         CALL PUSHREAL8(cutlo, r8/8)
         CALL PUSHREAL8(cutll, r8/8)
         CALL CALCMINKN(irc1, isn, istra, pl, dv, rt, switch%l_macro_afn&
@@ -5153,7 +5128,6 @@ CONTAINS
         mfpb = knb/switch%l_macro_afn
         CALL POPREAL8(cutll, r8/8)
         CALL POPREAL8(cutlo, r8/8)
-        CALL POPREAL4(small_r4_constant, r4/8)
         CALL POPBOOLEAN(b2mod_math_initialised)
         CALL CALCMINKN_B(irc1, isn, istra, pl, plb, dv, dvb, rt, rtb, &
 &                  switch%l_macro_afn, min_kn, kn, mfp, mfpb)

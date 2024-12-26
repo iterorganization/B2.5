@@ -316,10 +316,9 @@ c     Add Bremsstrahlung
      1 nt,nn,rtt,rtn,tmin,tmax,nmin,nmax,rates)
       use b2mod_types
       use b2mod_math
+      use b2mod_eirreac
       use b2mod_constants
-c      use b2mod_b2cmpa
       IMPLICIT NONE
-#     include <eir_reac.F>
 c     Input/output variables
       integer nt,nn
       real (kind=R8) ::

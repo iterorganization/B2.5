@@ -73,10 +73,11 @@ SUBROUTINE B2STCX_NODIFF_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, &
   INTRINSIC ABS
   INTRINSIC MAXVAL
   INTRINSIC NINT
-  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
   LOGICAL :: result1
   INTEGER :: arg1
   REAL(kind=r8) :: result10
+  REAL(kind=r8) :: result11
   CHARACTER(len=10) :: arg10
 !   ..initialisation
 !-----------------------------------------------------------------------
@@ -105,19 +106,19 @@ SUBROUTINE B2STCX_NODIFF_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, &
     CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
-    WHERE (ua .GE. 0.0) 
-      abs0 = ua
+    WHERE (ua .GE. 0.) 
+      dabs0 = ua
     ELSEWHERE
-      abs0 = -ua
+      dabs0 = -ua
     END WHERE
 !    ..test velocities
-    result10 = MAXVAL(abs0)
+    result10 = MAXVAL(dabs0)
     CALL XERTST(result10 .LT. c, 'Supra-luminal velocities !')
 !    ..test rate coefficients
     DO is=1,ns-1
       IF (.NOT.LNEXT(is - 1, is)) THEN
-        result10 = damax(ncv, rcx(1, is), 1)
-        CALL XERTST(result10 .EQ. 0.0_R8, &
+        result11 = damax(ncv, rcx(1, is), 1)
+        CALL XERTST(result11 .EQ. 0.0_R8, &
 &             'faulty argument rcx: nonzero for unrelated species')
       END IF
     END DO
@@ -257,71 +258,71 @@ SUBROUTINE B2STCX_NODIFF_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, &
             smq0(icv, 1, is0) = smq0(icv, 1, is0) - (1.0_R8+rg0)*t2
           ELSE IF (switch%b2stcx_styl0 .EQ. 1) THEN
 !       ..compute parallel momentum source
-            result10 = ROXA(icv, is)
+            result11 = ROXA(icv, is)
             smq0(icv, 2, is) = smq0(icv, 2, is) + rg0*t1*ua(icv, is)/&
-&             result10
-            result10 = ROXA(icv, is)
+&             result11
+            result11 = ROXA(icv, is)
             smq0(icv, 3, is) = smq0(icv, 3, is) - (1.0_R8+rg0)*t1/&
-&             result10
+&             result11
             arg1 = is - 1
-            result10 = ROXA(icv, arg1)
+            result11 = ROXA(icv, arg1)
             smq0(icv, 2, is-1) = smq0(icv, 2, is-1) + t1*(ua(icv, is)+&
-&             rg0*ua(icv, is-1))/result10
+&             rg0*ua(icv, is-1))/result11
             arg1 = is - 1
-            result10 = ROXA(icv, arg1)
-            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result10
+            result11 = ROXA(icv, arg1)
+            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result11
             arg1 = is0 + 1
-            result10 = ROXA(icv, arg1)
+            result11 = ROXA(icv, arg1)
             smq0(icv, 2, is0+1) = smq0(icv, 2, is0+1) + t2*(ua(icv, is0)&
-&             +rg0*ua(icv, is0+1))/result10
+&             +rg0*ua(icv, is0+1))/result11
             arg1 = is0 + 1
-            result10 = ROXA(icv, arg1)
-            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result10
-            result10 = ROXA(icv, is0)
+            result11 = ROXA(icv, arg1)
+            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result11
+            result11 = ROXA(icv, is0)
             smq0(icv, 2, is0) = smq0(icv, 2, is0) + rg0*t2*ua(icv, is0)/&
-&             result10
-            result10 = ROXA(icv, is0)
+&             result11
+            result11 = ROXA(icv, is0)
             smq0(icv, 3, is0) = smq0(icv, 3, is0) - (1.0_R8+rg0)*t2/&
-&             result10
+&             result11
           ELSE IF (switch%b2stcx_styl0 .EQ. 2) THEN
 !       ..compute parallel momentum source
             smq0(icv, 0, is) = smq0(icv, 0, is) + rg0*t1*ua(icv, is)
-            result10 = ROXA(icv, is)
+            result11 = ROXA(icv, is)
             smq0(icv, 3, is) = smq0(icv, 3, is) - (1.0_R8+rg0)*t1/&
-&             result10
+&             result11
             smq0(icv, 0, is-1) = smq0(icv, 0, is-1) + t1*(ua(icv, is)+&
 &             rg0*ua(icv, is-1))
             arg1 = is - 1
-            result10 = ROXA(icv, arg1)
-            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result10
+            result11 = ROXA(icv, arg1)
+            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result11
             smq0(icv, 0, is0+1) = smq0(icv, 0, is0+1) + t2*(ua(icv, is0)&
 &             +rg0*ua(icv, is0+1))
             arg1 = is0 + 1
-            result10 = ROXA(icv, arg1)
-            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result10
+            result11 = ROXA(icv, arg1)
+            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result11
             smq0(icv, 0, is0) = smq0(icv, 0, is0) + rg0*t2*ua(icv, is0)
-            result10 = ROXA(icv, is0)
+            result11 = ROXA(icv, is0)
             smq0(icv, 3, is0) = smq0(icv, 3, is0) - (1.0_R8+rg0)*t2/&
-&             result10
+&             result11
           ELSE IF (switch%b2stcx_styl0 .EQ. 3) THEN
 !       ..compute parallel momentum source
-            result10 = ROXA(icv, is)
+            result11 = ROXA(icv, is)
             smq0(icv, 2, is) = smq0(icv, 2, is) + rg0*t1*ua(icv, is)/&
-&             result10
+&             result11
             smq0(icv, 1, is) = smq0(icv, 1, is) - (1.0_R8+rg0)*t1
             arg1 = is - 1
-            result10 = ROXA(icv, arg1)
+            result11 = ROXA(icv, arg1)
             smq0(icv, 2, is-1) = smq0(icv, 2, is-1) + t1*(ua(icv, is)+&
-&             rg0*ua(icv, is-1))/result10
+&             rg0*ua(icv, is-1))/result11
             smq0(icv, 1, is-1) = smq0(icv, 1, is-1) - rg0*t1
             arg1 = is0 + 1
-            result10 = ROXA(icv, arg1)
+            result11 = ROXA(icv, arg1)
             smq0(icv, 2, is0+1) = smq0(icv, 2, is0+1) + t2*(ua(icv, is0)&
-&             +rg0*ua(icv, is0+1))/result10
+&             +rg0*ua(icv, is0+1))/result11
             smq0(icv, 1, is0+1) = smq0(icv, 1, is0+1) - rg0*t2
-            result10 = ROXA(icv, is0)
+            result11 = ROXA(icv, is0)
             smq0(icv, 2, is0) = smq0(icv, 2, is0) + rg0*t2*ua(icv, is0)/&
-&             result10
+&             result11
             smq0(icv, 1, is0) = smq0(icv, 1, is0) - (1.0_R8+rg0)*t2
           END IF
           rcxmo(icv, is) = rcxmo(icv, is) + t1*ua(icv, is)
@@ -501,11 +502,12 @@ SUBROUTINE B2STCX_DV_NODIFF(ncv, nfc, ns, is0, ismain, switch, switchd, &
   INTRINSIC ABS
   INTRINSIC MAXVAL
   INTRINSIC NINT
-  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
   LOGICAL :: result1
   INTEGER :: arg1
   REAL(kind=r8) :: result10
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: result10d
+  REAL(kind=r8) :: result11
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: result11d
   CHARACTER(len=10) :: arg10
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   INTEGER :: nd
@@ -544,19 +546,19 @@ SUBROUTINE B2STCX_DV_NODIFF(ncv, nfc, ns, is0, ismain, switch, switchd, &
     CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
-    WHERE (ua .GE. 0.0) 
-      abs0 = ua
+    WHERE (ua .GE. 0.) 
+      dabs0 = ua
     ELSEWHERE
-      abs0 = -ua
+      dabs0 = -ua
     END WHERE
 !    ..test velocities
-    result10 = MAXVAL(abs0)
+    result10 = MAXVAL(dabs0)
     CALL XERTST(result10 .LT. c, 'Supra-luminal velocities !')
 !    ..test rate coefficients
     DO is=1,ns-1
       IF (.NOT.LNEXT(is - 1, is)) THEN
-        result10 = damax(ncv, rcx(1, is), 1)
-        CALL XERTST(result10 .EQ. 0.0_R8, &
+        result11 = damax(ncv, rcx(1, is), 1)
+        CALL XERTST(result11 .EQ. 0.0_R8, &
 &             'faulty argument rcx: nonzero for unrelated species')
       END IF
     END DO
@@ -871,81 +873,81 @@ SUBROUTINE B2STCX_DV_NODIFF(ncv, nfc, ns, is0, ismain, switch, switchd, &
             smq0(icv, 1, is0) = smq0(icv, 1, is0) - (1.0_R8+rg0)*t2
           ELSE IF (switch%b2stcx_styl0 .EQ. 1) THEN
 !       ..compute parallel momentum source
-            CALL ROXA_DV(icv, is, result10, result10d, nbdirs)
-            temp1 = t1/result10
+            CALL ROXA_DV(icv, is, result11, result11d, nbdirs)
+            temp1 = t1/result11
             DO nd=1,nbdirs
               smq0d(nd, icv, 2, is) = smq0d(nd, icv, 2, is) + rg0*(temp1&
-&               *uad(nd, icv, is)+ua(icv, is)*(t1d(nd)-temp1*result10d(&
-&               nd))/result10)
+&               *uad(nd, icv, is)+ua(icv, is)*(t1d(nd)-temp1*result11d(&
+&               nd))/result11)
             END DO
             smq0(icv, 2, is) = smq0(icv, 2, is) + rg0*(ua(icv, is)*temp1&
 &             )
-            CALL ROXA_DV(icv, is, result10, result10d, nbdirs)
+            CALL ROXA_DV(icv, is, result11, result11d, nbdirs)
             DO nd=1,nbdirs
               smq0d(nd, icv, 3, is) = smq0d(nd, icv, 3, is) - (rg0+&
-&               1.0_R8)*(t1d(nd)-t1*result10d(nd)/result10)/result10
+&               1.0_R8)*(t1d(nd)-t1*result11d(nd)/result11)/result11
             END DO
             smq0(icv, 3, is) = smq0(icv, 3, is) - (1.0_R8+rg0)*t1/&
-&             result10
+&             result11
             arg1 = is - 1
-            CALL ROXA_DV(icv, arg1, result10, result10d, nbdirs)
-            temp1 = t1/result10
+            CALL ROXA_DV(icv, arg1, result11, result11d, nbdirs)
+            temp1 = t1/result11
             temp0 = ua(icv, is) + rg0*ua(icv, is-1)
             DO nd=1,nbdirs
               smq0d(nd, icv, 2, is-1) = smq0d(nd, icv, 2, is-1) + temp1*&
 &               (uad(nd, icv, is)+rg0*uad(nd, icv, is-1)) + temp0*(t1d(&
-&               nd)-temp1*result10d(nd))/result10
+&               nd)-temp1*result11d(nd))/result11
             END DO
             smq0(icv, 2, is-1) = smq0(icv, 2, is-1) + temp0*temp1
             arg1 = is - 1
-            CALL ROXA_DV(icv, arg1, result10, result10d, nbdirs)
+            CALL ROXA_DV(icv, arg1, result11, result11d, nbdirs)
             DO nd=1,nbdirs
               smq0d(nd, icv, 3, is-1) = smq0d(nd, icv, 3, is-1) - rg0*(&
-&               t1d(nd)-t1*result10d(nd)/result10)/result10
+&               t1d(nd)-t1*result11d(nd)/result11)/result11
             END DO
-            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result10
+            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result11
             arg1 = is0 + 1
-            CALL ROXA_DV(icv, arg1, result10, result10d, nbdirs)
-            temp1 = t2/result10
+            CALL ROXA_DV(icv, arg1, result11, result11d, nbdirs)
+            temp1 = t2/result11
             temp0 = ua(icv, is0) + rg0*ua(icv, is0+1)
             DO nd=1,nbdirs
               smq0d(nd, icv, 2, is0+1) = smq0d(nd, icv, 2, is0+1) + &
 &               temp1*(uad(nd, icv, is0)+rg0*uad(nd, icv, is0+1)) + &
-&               temp0*(t2d(nd)-temp1*result10d(nd))/result10
+&               temp0*(t2d(nd)-temp1*result11d(nd))/result11
             END DO
             smq0(icv, 2, is0+1) = smq0(icv, 2, is0+1) + temp0*temp1
             arg1 = is0 + 1
-            CALL ROXA_DV(icv, arg1, result10, result10d, nbdirs)
+            CALL ROXA_DV(icv, arg1, result11, result11d, nbdirs)
             DO nd=1,nbdirs
               smq0d(nd, icv, 3, is0+1) = smq0d(nd, icv, 3, is0+1) - rg0*&
-&               (t2d(nd)-t2*result10d(nd)/result10)/result10
+&               (t2d(nd)-t2*result11d(nd)/result11)/result11
             END DO
-            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result10
-            CALL ROXA_DV(icv, is0, result10, result10d, nbdirs)
-            temp1 = t2/result10
+            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result11
+            CALL ROXA_DV(icv, is0, result11, result11d, nbdirs)
+            temp1 = t2/result11
             DO nd=1,nbdirs
               smq0d(nd, icv, 2, is0) = smq0d(nd, icv, 2, is0) + rg0*(&
 &               temp1*uad(nd, icv, is0)+ua(icv, is0)*(t2d(nd)-temp1*&
-&               result10d(nd))/result10)
+&               result11d(nd))/result11)
             END DO
             smq0(icv, 2, is0) = smq0(icv, 2, is0) + rg0*(ua(icv, is0)*&
 &             temp1)
-            CALL ROXA_DV(icv, is0, result10, result10d, nbdirs)
+            CALL ROXA_DV(icv, is0, result11, result11d, nbdirs)
             DO nd=1,nbdirs
               smq0d(nd, icv, 3, is0) = smq0d(nd, icv, 3, is0) - (rg0+&
-&               1.0_R8)*(t2d(nd)-t2*result10d(nd)/result10)/result10
+&               1.0_R8)*(t2d(nd)-t2*result11d(nd)/result11)/result11
             END DO
             smq0(icv, 3, is0) = smq0(icv, 3, is0) - (1.0_R8+rg0)*t2/&
-&             result10
+&             result11
           ELSE IF (switch%b2stcx_styl0 .EQ. 2) THEN
-            CALL ROXA_DV(icv, is, result10, result10d, nbdirs)
+            CALL ROXA_DV(icv, is, result11, result11d, nbdirs)
             temp1 = ua(icv, is) + rg0*ua(icv, is-1)
             DO nd=1,nbdirs
 !       ..compute parallel momentum source
               smq0d(nd, icv, 0, is) = smq0d(nd, icv, 0, is) + rg0*(ua(&
 &               icv, is)*t1d(nd)+t1*uad(nd, icv, is))
               smq0d(nd, icv, 3, is) = smq0d(nd, icv, 3, is) - (rg0+&
-&               1.0_R8)*(t1d(nd)-t1*result10d(nd)/result10)/result10
+&               1.0_R8)*(t1d(nd)-t1*result11d(nd)/result11)/result11
               smq0d(nd, icv, 0, is-1) = smq0d(nd, icv, 0, is-1) + temp1*&
 &               t1d(nd) + t1*(uad(nd, icv, is)+rg0*uad(nd, icv, is-1))
               smq0d(nd, icv, 0, is0) = smq0d(nd, icv, 0, is0) + rg0*(ua(&
@@ -953,43 +955,43 @@ SUBROUTINE B2STCX_DV_NODIFF(ncv, nfc, ns, is0, ismain, switch, switchd, &
             END DO
             smq0(icv, 0, is) = smq0(icv, 0, is) + rg0*t1*ua(icv, is)
             smq0(icv, 3, is) = smq0(icv, 3, is) - (1.0_R8+rg0)*t1/&
-&             result10
+&             result11
             smq0(icv, 0, is-1) = smq0(icv, 0, is-1) + t1*temp1
             arg1 = is - 1
-            CALL ROXA_DV(icv, arg1, result10, result10d, nbdirs)
+            CALL ROXA_DV(icv, arg1, result11, result11d, nbdirs)
             temp1 = ua(icv, is0) + rg0*ua(icv, is0+1)
             DO nd=1,nbdirs
               smq0d(nd, icv, 3, is-1) = smq0d(nd, icv, 3, is-1) - rg0*(&
-&               t1d(nd)-t1*result10d(nd)/result10)/result10
+&               t1d(nd)-t1*result11d(nd)/result11)/result11
               smq0d(nd, icv, 0, is0+1) = smq0d(nd, icv, 0, is0+1) + &
 &               temp1*t2d(nd) + t2*(uad(nd, icv, is0)+rg0*uad(nd, icv, &
 &               is0+1))
             END DO
-            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result10
+            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result11
             smq0(icv, 0, is0+1) = smq0(icv, 0, is0+1) + t2*temp1
             arg1 = is0 + 1
-            CALL ROXA_DV(icv, arg1, result10, result10d, nbdirs)
+            CALL ROXA_DV(icv, arg1, result11, result11d, nbdirs)
             DO nd=1,nbdirs
               smq0d(nd, icv, 3, is0+1) = smq0d(nd, icv, 3, is0+1) - rg0*&
-&               (t2d(nd)-t2*result10d(nd)/result10)/result10
+&               (t2d(nd)-t2*result11d(nd)/result11)/result11
             END DO
-            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result10
+            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result11
             smq0(icv, 0, is0) = smq0(icv, 0, is0) + rg0*t2*ua(icv, is0)
-            CALL ROXA_DV(icv, is0, result10, result10d, nbdirs)
+            CALL ROXA_DV(icv, is0, result11, result11d, nbdirs)
             DO nd=1,nbdirs
               smq0d(nd, icv, 3, is0) = smq0d(nd, icv, 3, is0) - (rg0+&
-&               1.0_R8)*(t2d(nd)-t2*result10d(nd)/result10)/result10
+&               1.0_R8)*(t2d(nd)-t2*result11d(nd)/result11)/result11
             END DO
             smq0(icv, 3, is0) = smq0(icv, 3, is0) - (1.0_R8+rg0)*t2/&
-&             result10
+&             result11
           ELSE IF (switch%b2stcx_styl0 .EQ. 3) THEN
 !       ..compute parallel momentum source
-            CALL ROXA_DV(icv, is, result10, result10d, nbdirs)
-            temp1 = t1/result10
+            CALL ROXA_DV(icv, is, result11, result11d, nbdirs)
+            temp1 = t1/result11
             DO nd=1,nbdirs
               smq0d(nd, icv, 2, is) = smq0d(nd, icv, 2, is) + rg0*(temp1&
-&               *uad(nd, icv, is)+ua(icv, is)*(t1d(nd)-temp1*result10d(&
-&               nd))/result10)
+&               *uad(nd, icv, is)+ua(icv, is)*(t1d(nd)-temp1*result11d(&
+&               nd))/result11)
               smq0d(nd, icv, 1, is) = smq0d(nd, icv, 1, is) - (rg0+&
 &               1.0_R8)*t1d(nd)
               smq0d(nd, icv, 1, is-1) = smq0d(nd, icv, 1, is-1) - rg0*&
@@ -1003,33 +1005,33 @@ SUBROUTINE B2STCX_DV_NODIFF(ncv, nfc, ns, is0, ismain, switch, switchd, &
 &             )
             smq0(icv, 1, is) = smq0(icv, 1, is) - (1.0_R8+rg0)*t1
             arg1 = is - 1
-            CALL ROXA_DV(icv, arg1, result10, result10d, nbdirs)
-            temp1 = t1/result10
+            CALL ROXA_DV(icv, arg1, result11, result11d, nbdirs)
+            temp1 = t1/result11
             temp0 = ua(icv, is) + rg0*ua(icv, is-1)
             DO nd=1,nbdirs
               smq0d(nd, icv, 2, is-1) = smq0d(nd, icv, 2, is-1) + temp1*&
 &               (uad(nd, icv, is)+rg0*uad(nd, icv, is-1)) + temp0*(t1d(&
-&               nd)-temp1*result10d(nd))/result10
+&               nd)-temp1*result11d(nd))/result11
             END DO
             smq0(icv, 2, is-1) = smq0(icv, 2, is-1) + temp0*temp1
             smq0(icv, 1, is-1) = smq0(icv, 1, is-1) - rg0*t1
             arg1 = is0 + 1
-            CALL ROXA_DV(icv, arg1, result10, result10d, nbdirs)
-            temp1 = t2/result10
+            CALL ROXA_DV(icv, arg1, result11, result11d, nbdirs)
+            temp1 = t2/result11
             temp0 = ua(icv, is0) + rg0*ua(icv, is0+1)
             DO nd=1,nbdirs
               smq0d(nd, icv, 2, is0+1) = smq0d(nd, icv, 2, is0+1) + &
 &               temp1*(uad(nd, icv, is0)+rg0*uad(nd, icv, is0+1)) + &
-&               temp0*(t2d(nd)-temp1*result10d(nd))/result10
+&               temp0*(t2d(nd)-temp1*result11d(nd))/result11
             END DO
             smq0(icv, 2, is0+1) = smq0(icv, 2, is0+1) + temp0*temp1
             smq0(icv, 1, is0+1) = smq0(icv, 1, is0+1) - rg0*t2
-            CALL ROXA_DV(icv, is0, result10, result10d, nbdirs)
-            temp1 = t2/result10
+            CALL ROXA_DV(icv, is0, result11, result11d, nbdirs)
+            temp1 = t2/result11
             DO nd=1,nbdirs
               smq0d(nd, icv, 2, is0) = smq0d(nd, icv, 2, is0) + rg0*(&
 &               temp1*uad(nd, icv, is0)+ua(icv, is0)*(t2d(nd)-temp1*&
-&               result10d(nd))/result10)
+&               result11d(nd))/result11)
             END DO
             smq0(icv, 2, is0) = smq0(icv, 2, is0) + rg0*(ua(icv, is0)*&
 &             temp1)
@@ -1265,14 +1267,14 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
   INTRINSIC ABS
   INTRINSIC MAXVAL
   INTRINSIC NINT
-  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: abs0
-  REAL(kind=r8), DIMENSION(nbdirsmax0, ncv, 0:ns-1) :: abs0d
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
   LOGICAL :: result1
   INTEGER :: arg1
   REAL(kind=r8) :: result10
-  REAL(kind=r8), DIMENSION(nbdirsmax0) :: result10d0
-  REAL(kind=r8), DIMENSION(nbdirsmax) :: result10d
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: result10dd
+  REAL(kind=r8) :: result11
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: result11d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: result11d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: result11dd
   CHARACTER(len=10) :: arg10
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   INTEGER :: nd
@@ -1325,29 +1327,26 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
     CALL B2XVSG(ncv, tn, 1, 'tn', '.gt.')
     arg1 = ncv*2
     CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
-    abs0d(:, :, :) = 0.0_8
-    DO nd0=1,nbdirs0
-      WHERE (ua .GE. 0.0) abs0d(nd0, :, :) = uad0(nd0, :, :)
-    END DO
-    WHERE (ua .GE. 0.0) abs0 = ua
-    DO nd0=1,nbdirs0
-      WHERE (.NOT.ua .GE. 0.0) abs0d(nd0, :, :) = -uad0(nd0, :, :)
-    END DO
-    WHERE (.NOT.ua .GE. 0.0) abs0 = -ua
+    WHERE (ua .GE. 0.) 
+      dabs0 = ua
+    ELSEWHERE
+      dabs0 = -ua
+    END WHERE
 !    ..test velocities
-    result10 = MAXVAL(abs0)
+    result10 = MAXVAL(dabs0)
     CALL XERTST(result10 .LT. c, 'Supra-luminal velocities !')
+    result11d0(:) = 0.0_8
 !    ..test rate coefficients
     DO is=1,ns-1
       IF (.NOT.LNEXT(is - 1, is)) THEN
-        CALL DAMAX_DV(ncv, rcx(1, is), rcxd0(:, 1, is), 1, result10, &
-&               result10d0, nbdirs0)
-        CALL XERTST(result10 .EQ. 0.0_R8, &
+        CALL DAMAX_DV(ncv, rcx(1, is), rcxd0(:, 1, is), 1, result11, &
+&               result11d0, nbdirs0)
+        CALL XERTST(result11 .EQ. 0.0_R8, &
 &             'faulty argument rcx: nonzero for unrelated species')
       END IF
     END DO
   ELSE
-    result10d0(:) = 0.0_8
+    result11d0(:) = 0.0_8
   END IF
 !
 !tmp.dpc
@@ -1384,9 +1383,9 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
   END DO
   CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd2, shn0, shn0d0, shn0d, &
 &            shn0dd, 1, nbdirs, nbdirs0)
-  result10dd(:, :) = 0.0_8
   du0dd(:, :) = 0.0_8
   t2dd(:, :) = 0.0_8
+  result11dd(:, :) = 0.0_8
   t1ndd(:, :) = 0.0_8
   du1dd(:, :) = 0.0_8
   t0dd(:, :) = 0.0_8
@@ -2089,22 +2088,22 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
             smq0(icv, 1, is0) = smq0(icv, 1, is0) - (1.0_R8+rg0)*t2
           ELSE IF (switch%b2stcx_styl0 .EQ. 1) THEN
 !       ..compute parallel momentum source
-            CALL ROXA_DV_DV(icv, is, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, is, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd0=1,nbdirs0
-              temp1d(nd0) = (t1d0(nd0)-t1*result10d0(nd0)/result10)/&
-&               result10
+              temp1d(nd0) = (t1d0(nd0)-t1*result11d0(nd0)/result11)/&
+&               result11
             END DO
-            temp1 = t1/result10
+            temp1 = t1/result11
             DO nd=1,nbdirs
-              temp8 = t1d(nd) - temp1*result10d(nd)
-              temp7 = ua(icv, is)/result10
+              temp8 = t1d(nd) - temp1*result11d(nd)
+              temp7 = ua(icv, is)/result11
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 2, is) = smq0dd(nd0, nd, icv, 2, is&
 &                 ) + rg0*(uad(nd, icv, is)*temp1d(nd0)+temp1*uadd(nd0, &
 &                 nd, icv, is)+temp8*(uad0(nd0, icv, is)-temp7*&
-&                 result10d0(nd0))/result10+temp7*(t1dd(nd0, nd)-&
-&                 result10d(nd)*temp1d(nd0)-temp1*result10dd(nd0, nd)))
+&                 result11d0(nd0))/result11+temp7*(t1dd(nd0, nd)-&
+&                 result11d(nd)*temp1d(nd0)-temp1*result11dd(nd0, nd)))
               END DO
               smq0d(nd, icv, 2, is) = smq0d(nd, icv, 2, is) + rg0*(temp1&
 &               *uad(nd, icv, is)+temp7*temp8)
@@ -2115,48 +2114,48 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
             END DO
             smq0(icv, 2, is) = smq0(icv, 2, is) + rg0*(ua(icv, is)*temp1&
 &             )
-            CALL ROXA_DV_DV(icv, is, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, is, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd=1,nbdirs
-              temp8 = t1/result10
-              temp7 = (t1d(nd)-result10d(nd)*temp8)/result10
+              temp8 = t1/result11
+              temp7 = (t1d(nd)-result11d(nd)*temp8)/result11
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 3, is) = smq0dd(nd0, nd, icv, 3, is&
-&                 ) - (rg0+1.0_R8)*(t1dd(nd0, nd)-temp8*result10dd(nd0, &
-&                 nd)-result10d(nd)*(t1d0(nd0)-temp8*result10d0(nd0))/&
-&                 result10-temp7*result10d0(nd0))/result10
+&                 ) - (rg0+1.0_R8)*(t1dd(nd0, nd)-temp8*result11dd(nd0, &
+&                 nd)-result11d(nd)*(t1d0(nd0)-temp8*result11d0(nd0))/&
+&                 result11-temp7*result11d0(nd0))/result11
               END DO
               smq0d(nd, icv, 3, is) = smq0d(nd, icv, 3, is) - (rg0+&
 &               1.0_R8)*temp7
             END DO
             DO nd0=1,nbdirs0
               smq0d0(nd0, icv, 3, is) = smq0d0(nd0, icv, 3, is) - (rg0+&
-&               1.0_R8)*(t1d0(nd0)-t1*result10d0(nd0)/result10)/result10
+&               1.0_R8)*(t1d0(nd0)-t1*result11d0(nd0)/result11)/result11
               temp0d(nd0) = uad0(nd0, icv, is) + rg0*uad0(nd0, icv, is-1&
 &               )
             END DO
             smq0(icv, 3, is) = smq0(icv, 3, is) - (1.0_R8+rg0)*t1/&
-&             result10
+&             result11
             arg1 = is - 1
-            CALL ROXA_DV_DV(icv, arg1, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, arg1, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd0=1,nbdirs0
-              temp1d(nd0) = (t1d0(nd0)-t1*result10d0(nd0)/result10)/&
-&               result10
+              temp1d(nd0) = (t1d0(nd0)-t1*result11d0(nd0)/result11)/&
+&               result11
             END DO
-            temp1 = t1/result10
+            temp1 = t1/result11
             temp0 = ua(icv, is) + rg0*ua(icv, is-1)
             DO nd=1,nbdirs
               temp8 = uad(nd, icv, is) + rg0*uad(nd, icv, is-1)
-              temp7 = temp0/result10
-              temp6 = t1d(nd) - temp1*result10d(nd)
+              temp7 = temp0/result11
+              temp6 = t1d(nd) - temp1*result11d(nd)
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 2, is-1) = smq0dd(nd0, nd, icv, 2, &
 &                 is-1) + temp8*temp1d(nd0) + temp1*(uadd(nd0, nd, icv, &
 &                 is)+rg0*uadd(nd0, nd, icv, is-1)) + temp7*(t1dd(nd0, &
-&                 nd)-result10d(nd)*temp1d(nd0)-temp1*result10dd(nd0, nd&
-&                 )) + temp6*(temp0d(nd0)-temp7*result10d0(nd0))/&
-&                 result10
+&                 nd)-result11d(nd)*temp1d(nd0)-temp1*result11dd(nd0, nd&
+&                 )) + temp6*(temp0d(nd0)-temp7*result11d0(nd0))/&
+&                 result11
               END DO
               smq0d(nd, icv, 2, is-1) = smq0d(nd, icv, 2, is-1) + temp1*&
 &               temp8 + temp6*temp7
@@ -2167,47 +2166,47 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
             END DO
             smq0(icv, 2, is-1) = smq0(icv, 2, is-1) + temp0*temp1
             arg1 = is - 1
-            CALL ROXA_DV_DV(icv, arg1, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, arg1, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd=1,nbdirs
-              temp8 = t1/result10
-              temp7 = (t1d(nd)-result10d(nd)*temp8)/result10
+              temp8 = t1/result11
+              temp7 = (t1d(nd)-result11d(nd)*temp8)/result11
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 3, is-1) = smq0dd(nd0, nd, icv, 3, &
-&                 is-1) - rg0*(t1dd(nd0, nd)-temp8*result10dd(nd0, nd)-&
-&                 result10d(nd)*(t1d0(nd0)-temp8*result10d0(nd0))/&
-&                 result10-temp7*result10d0(nd0))/result10
+&                 is-1) - rg0*(t1dd(nd0, nd)-temp8*result11dd(nd0, nd)-&
+&                 result11d(nd)*(t1d0(nd0)-temp8*result11d0(nd0))/&
+&                 result11-temp7*result11d0(nd0))/result11
               END DO
               smq0d(nd, icv, 3, is-1) = smq0d(nd, icv, 3, is-1) - rg0*&
 &               temp7
             END DO
             DO nd0=1,nbdirs0
               smq0d0(nd0, icv, 3, is-1) = smq0d0(nd0, icv, 3, is-1) - &
-&               rg0*(t1d0(nd0)-t1*result10d0(nd0)/result10)/result10
+&               rg0*(t1d0(nd0)-t1*result11d0(nd0)/result11)/result11
               temp0d(nd0) = uad0(nd0, icv, is0) + rg0*uad0(nd0, icv, is0&
 &               +1)
             END DO
-            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result10
+            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result11
             arg1 = is0 + 1
-            CALL ROXA_DV_DV(icv, arg1, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, arg1, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd0=1,nbdirs0
-              temp1d(nd0) = (t2d0(nd0)-t2*result10d0(nd0)/result10)/&
-&               result10
+              temp1d(nd0) = (t2d0(nd0)-t2*result11d0(nd0)/result11)/&
+&               result11
             END DO
-            temp1 = t2/result10
+            temp1 = t2/result11
             temp0 = ua(icv, is0) + rg0*ua(icv, is0+1)
             DO nd=1,nbdirs
               temp8 = uad(nd, icv, is0) + rg0*uad(nd, icv, is0+1)
-              temp7 = temp0/result10
-              temp6 = t2d(nd) - temp1*result10d(nd)
+              temp7 = temp0/result11
+              temp6 = t2d(nd) - temp1*result11d(nd)
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 2, is0+1) = smq0dd(nd0, nd, icv, 2&
 &                 , is0+1) + temp8*temp1d(nd0) + temp1*(uadd(nd0, nd, &
 &                 icv, is0)+rg0*uadd(nd0, nd, icv, is0+1)) + temp7*(t2dd&
-&                 (nd0, nd)-result10d(nd)*temp1d(nd0)-temp1*result10dd(&
-&                 nd0, nd)) + temp6*(temp0d(nd0)-temp7*result10d0(nd0))/&
-&                 result10
+&                 (nd0, nd)-result11d(nd)*temp1d(nd0)-temp1*result11dd(&
+&                 nd0, nd)) + temp6*(temp0d(nd0)-temp7*result11d0(nd0))/&
+&                 result11
               END DO
               smq0d(nd, icv, 2, is0+1) = smq0d(nd, icv, 2, is0+1) + &
 &               temp1*temp8 + temp6*temp7
@@ -2218,41 +2217,41 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
             END DO
             smq0(icv, 2, is0+1) = smq0(icv, 2, is0+1) + temp0*temp1
             arg1 = is0 + 1
-            CALL ROXA_DV_DV(icv, arg1, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, arg1, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd=1,nbdirs
-              temp8 = t2/result10
-              temp7 = (t2d(nd)-result10d(nd)*temp8)/result10
+              temp8 = t2/result11
+              temp7 = (t2d(nd)-result11d(nd)*temp8)/result11
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 3, is0+1) = smq0dd(nd0, nd, icv, 3&
-&                 , is0+1) - rg0*(t2dd(nd0, nd)-temp8*result10dd(nd0, nd&
-&                 )-result10d(nd)*(t2d0(nd0)-temp8*result10d0(nd0))/&
-&                 result10-temp7*result10d0(nd0))/result10
+&                 , is0+1) - rg0*(t2dd(nd0, nd)-temp8*result11dd(nd0, nd&
+&                 )-result11d(nd)*(t2d0(nd0)-temp8*result11d0(nd0))/&
+&                 result11-temp7*result11d0(nd0))/result11
               END DO
               smq0d(nd, icv, 3, is0+1) = smq0d(nd, icv, 3, is0+1) - rg0*&
 &               temp7
             END DO
             DO nd0=1,nbdirs0
               smq0d0(nd0, icv, 3, is0+1) = smq0d0(nd0, icv, 3, is0+1) - &
-&               rg0*(t2d0(nd0)-t2*result10d0(nd0)/result10)/result10
+&               rg0*(t2d0(nd0)-t2*result11d0(nd0)/result11)/result11
             END DO
-            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result10
-            CALL ROXA_DV_DV(icv, is0, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result11
+            CALL ROXA_DV_DV(icv, is0, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd0=1,nbdirs0
-              temp1d(nd0) = (t2d0(nd0)-t2*result10d0(nd0)/result10)/&
-&               result10
+              temp1d(nd0) = (t2d0(nd0)-t2*result11d0(nd0)/result11)/&
+&               result11
             END DO
-            temp1 = t2/result10
+            temp1 = t2/result11
             DO nd=1,nbdirs
-              temp8 = t2d(nd) - temp1*result10d(nd)
-              temp7 = ua(icv, is0)/result10
+              temp8 = t2d(nd) - temp1*result11d(nd)
+              temp7 = ua(icv, is0)/result11
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 2, is0) = smq0dd(nd0, nd, icv, 2, &
 &                 is0) + rg0*(uad(nd, icv, is0)*temp1d(nd0)+temp1*uadd(&
 &                 nd0, nd, icv, is0)+temp8*(uad0(nd0, icv, is0)-temp7*&
-&                 result10d0(nd0))/result10+temp7*(t2dd(nd0, nd)-&
-&                 result10d(nd)*temp1d(nd0)-temp1*result10dd(nd0, nd)))
+&                 result11d0(nd0))/result11+temp7*(t2dd(nd0, nd)-&
+&                 result11d(nd)*temp1d(nd0)-temp1*result11dd(nd0, nd)))
               END DO
               smq0d(nd, icv, 2, is0) = smq0d(nd, icv, 2, is0) + rg0*(&
 &               temp1*uad(nd, icv, is0)+temp7*temp8)
@@ -2263,38 +2262,38 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
             END DO
             smq0(icv, 2, is0) = smq0(icv, 2, is0) + rg0*(ua(icv, is0)*&
 &             temp1)
-            CALL ROXA_DV_DV(icv, is0, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, is0, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd=1,nbdirs
-              temp8 = t2/result10
-              temp7 = (t2d(nd)-result10d(nd)*temp8)/result10
+              temp8 = t2/result11
+              temp7 = (t2d(nd)-result11d(nd)*temp8)/result11
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 3, is0) = smq0dd(nd0, nd, icv, 3, &
-&                 is0) - (rg0+1.0_R8)*(t2dd(nd0, nd)-temp8*result10dd(&
-&                 nd0, nd)-result10d(nd)*(t2d0(nd0)-temp8*result10d0(nd0&
-&                 ))/result10-temp7*result10d0(nd0))/result10
+&                 is0) - (rg0+1.0_R8)*(t2dd(nd0, nd)-temp8*result11dd(&
+&                 nd0, nd)-result11d(nd)*(t2d0(nd0)-temp8*result11d0(nd0&
+&                 ))/result11-temp7*result11d0(nd0))/result11
               END DO
               smq0d(nd, icv, 3, is0) = smq0d(nd, icv, 3, is0) - (rg0+&
 &               1.0_R8)*temp7
             END DO
             DO nd0=1,nbdirs0
               smq0d0(nd0, icv, 3, is0) = smq0d0(nd0, icv, 3, is0) - (rg0&
-&               +1.0_R8)*(t2d0(nd0)-t2*result10d0(nd0)/result10)/&
-&               result10
+&               +1.0_R8)*(t2d0(nd0)-t2*result11d0(nd0)/result11)/&
+&               result11
             END DO
             smq0(icv, 3, is0) = smq0(icv, 3, is0) - (1.0_R8+rg0)*t2/&
-&             result10
+&             result11
           ELSE IF (switch%b2stcx_styl0 .EQ. 2) THEN
-            CALL ROXA_DV_DV(icv, is, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, is, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd0=1,nbdirs0
               temp1d(nd0) = uad0(nd0, icv, is) + rg0*uad0(nd0, icv, is-1&
 &               )
             END DO
             temp1 = ua(icv, is) + rg0*ua(icv, is-1)
             DO nd=1,nbdirs
-              temp8 = t1/result10
-              temp7 = (t1d(nd)-result10d(nd)*temp8)/result10
+              temp8 = t1/result11
+              temp7 = (t1d(nd)-result11d(nd)*temp8)/result11
               DO nd0=1,nbdirs0
 !       ..compute parallel momentum source
                 smq0dd(nd0, nd, icv, 0, is) = smq0dd(nd0, nd, icv, 0, is&
@@ -2302,9 +2301,9 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
 &                 nd0, nd)+uad(nd, icv, is)*t1d0(nd0)+t1*uadd(nd0, nd, &
 &                 icv, is))
                 smq0dd(nd0, nd, icv, 3, is) = smq0dd(nd0, nd, icv, 3, is&
-&                 ) - (rg0+1.0_R8)*(t1dd(nd0, nd)-temp8*result10dd(nd0, &
-&                 nd)-result10d(nd)*(t1d0(nd0)-temp8*result10d0(nd0))/&
-&                 result10-temp7*result10d0(nd0))/result10
+&                 ) - (rg0+1.0_R8)*(t1dd(nd0, nd)-temp8*result11dd(nd0, &
+&                 nd)-result11d(nd)*(t1d0(nd0)-temp8*result11d0(nd0))/&
+&                 result11-temp7*result11d0(nd0))/result11
               END DO
               smq0d(nd, icv, 0, is) = smq0d(nd, icv, 0, is) + rg0*(ua(&
 &               icv, is)*t1d(nd)+t1*uad(nd, icv, is))
@@ -2330,7 +2329,7 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
               smq0d0(nd0, icv, 0, is) = smq0d0(nd0, icv, 0, is) + rg0*(&
 &               ua(icv, is)*t1d0(nd0)+t1*uad0(nd0, icv, is))
               smq0d0(nd0, icv, 3, is) = smq0d0(nd0, icv, 3, is) - (rg0+&
-&               1.0_R8)*(t1d0(nd0)-t1*result10d0(nd0)/result10)/result10
+&               1.0_R8)*(t1d0(nd0)-t1*result11d0(nd0)/result11)/result11
               smq0d0(nd0, icv, 0, is-1) = smq0d0(nd0, icv, 0, is-1) + &
 &               temp1*t1d0(nd0) + t1*temp1d(nd0)
               temp1d(nd0) = uad0(nd0, icv, is0) + rg0*uad0(nd0, icv, is0&
@@ -2338,20 +2337,20 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
             END DO
             smq0(icv, 0, is) = smq0(icv, 0, is) + rg0*t1*ua(icv, is)
             smq0(icv, 3, is) = smq0(icv, 3, is) - (1.0_R8+rg0)*t1/&
-&             result10
+&             result11
             smq0(icv, 0, is-1) = smq0(icv, 0, is-1) + t1*temp1
             arg1 = is - 1
-            CALL ROXA_DV_DV(icv, arg1, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, arg1, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             temp1 = ua(icv, is0) + rg0*ua(icv, is0+1)
             DO nd=1,nbdirs
-              temp8 = t1/result10
-              temp7 = (t1d(nd)-result10d(nd)*temp8)/result10
+              temp8 = t1/result11
+              temp7 = (t1d(nd)-result11d(nd)*temp8)/result11
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 3, is-1) = smq0dd(nd0, nd, icv, 3, &
-&                 is-1) - rg0*(t1dd(nd0, nd)-temp8*result10dd(nd0, nd)-&
-&                 result10d(nd)*(t1d0(nd0)-temp8*result10d0(nd0))/&
-&                 result10-temp7*result10d0(nd0))/result10
+&                 is-1) - rg0*(t1dd(nd0, nd)-temp8*result11dd(nd0, nd)-&
+&                 result11d(nd)*(t1d0(nd0)-temp8*result11d0(nd0))/&
+&                 result11-temp7*result11d0(nd0))/result11
               END DO
               smq0d(nd, icv, 3, is-1) = smq0d(nd, icv, 3, is-1) - rg0*&
 &               temp7
@@ -2367,74 +2366,74 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
             END DO
             DO nd0=1,nbdirs0
               smq0d0(nd0, icv, 3, is-1) = smq0d0(nd0, icv, 3, is-1) - &
-&               rg0*(t1d0(nd0)-t1*result10d0(nd0)/result10)/result10
+&               rg0*(t1d0(nd0)-t1*result11d0(nd0)/result11)/result11
               smq0d0(nd0, icv, 0, is0+1) = smq0d0(nd0, icv, 0, is0+1) + &
 &               temp1*t2d0(nd0) + t2*temp1d(nd0)
             END DO
-            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result10
+            smq0(icv, 3, is-1) = smq0(icv, 3, is-1) - rg0*t1/result11
             smq0(icv, 0, is0+1) = smq0(icv, 0, is0+1) + t2*temp1
             arg1 = is0 + 1
-            CALL ROXA_DV_DV(icv, arg1, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, arg1, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd=1,nbdirs
-              temp8 = t2/result10
-              temp7 = (t2d(nd)-result10d(nd)*temp8)/result10
+              temp8 = t2/result11
+              temp7 = (t2d(nd)-result11d(nd)*temp8)/result11
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 3, is0+1) = smq0dd(nd0, nd, icv, 3&
-&                 , is0+1) - rg0*(t2dd(nd0, nd)-temp8*result10dd(nd0, nd&
-&                 )-result10d(nd)*(t2d0(nd0)-temp8*result10d0(nd0))/&
-&                 result10-temp7*result10d0(nd0))/result10
+&                 , is0+1) - rg0*(t2dd(nd0, nd)-temp8*result11dd(nd0, nd&
+&                 )-result11d(nd)*(t2d0(nd0)-temp8*result11d0(nd0))/&
+&                 result11-temp7*result11d0(nd0))/result11
               END DO
               smq0d(nd, icv, 3, is0+1) = smq0d(nd, icv, 3, is0+1) - rg0*&
 &               temp7
             END DO
             DO nd0=1,nbdirs0
               smq0d0(nd0, icv, 3, is0+1) = smq0d0(nd0, icv, 3, is0+1) - &
-&               rg0*(t2d0(nd0)-t2*result10d0(nd0)/result10)/result10
+&               rg0*(t2d0(nd0)-t2*result11d0(nd0)/result11)/result11
               smq0d0(nd0, icv, 0, is0) = smq0d0(nd0, icv, 0, is0) + rg0*&
 &               (ua(icv, is0)*t2d0(nd0)+t2*uad0(nd0, icv, is0))
             END DO
-            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result10
+            smq0(icv, 3, is0+1) = smq0(icv, 3, is0+1) - rg0*t2/result11
             smq0(icv, 0, is0) = smq0(icv, 0, is0) + rg0*t2*ua(icv, is0)
-            CALL ROXA_DV_DV(icv, is0, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, is0, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd=1,nbdirs
-              temp8 = t2/result10
-              temp7 = (t2d(nd)-result10d(nd)*temp8)/result10
+              temp8 = t2/result11
+              temp7 = (t2d(nd)-result11d(nd)*temp8)/result11
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 3, is0) = smq0dd(nd0, nd, icv, 3, &
-&                 is0) - (rg0+1.0_R8)*(t2dd(nd0, nd)-temp8*result10dd(&
-&                 nd0, nd)-result10d(nd)*(t2d0(nd0)-temp8*result10d0(nd0&
-&                 ))/result10-temp7*result10d0(nd0))/result10
+&                 is0) - (rg0+1.0_R8)*(t2dd(nd0, nd)-temp8*result11dd(&
+&                 nd0, nd)-result11d(nd)*(t2d0(nd0)-temp8*result11d0(nd0&
+&                 ))/result11-temp7*result11d0(nd0))/result11
               END DO
               smq0d(nd, icv, 3, is0) = smq0d(nd, icv, 3, is0) - (rg0+&
 &               1.0_R8)*temp7
             END DO
             DO nd0=1,nbdirs0
               smq0d0(nd0, icv, 3, is0) = smq0d0(nd0, icv, 3, is0) - (rg0&
-&               +1.0_R8)*(t2d0(nd0)-t2*result10d0(nd0)/result10)/&
-&               result10
+&               +1.0_R8)*(t2d0(nd0)-t2*result11d0(nd0)/result11)/&
+&               result11
             END DO
             smq0(icv, 3, is0) = smq0(icv, 3, is0) - (1.0_R8+rg0)*t2/&
-&             result10
+&             result11
           ELSE IF (switch%b2stcx_styl0 .EQ. 3) THEN
 !       ..compute parallel momentum source
-            CALL ROXA_DV_DV(icv, is, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, is, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd0=1,nbdirs0
-              temp1d(nd0) = (t1d0(nd0)-t1*result10d0(nd0)/result10)/&
-&               result10
+              temp1d(nd0) = (t1d0(nd0)-t1*result11d0(nd0)/result11)/&
+&               result11
             END DO
-            temp1 = t1/result10
+            temp1 = t1/result11
             DO nd=1,nbdirs
-              temp8 = t1d(nd) - temp1*result10d(nd)
-              temp7 = ua(icv, is)/result10
+              temp8 = t1d(nd) - temp1*result11d(nd)
+              temp7 = ua(icv, is)/result11
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 2, is) = smq0dd(nd0, nd, icv, 2, is&
 &                 ) + rg0*(uad(nd, icv, is)*temp1d(nd0)+temp1*uadd(nd0, &
 &                 nd, icv, is)+temp8*(uad0(nd0, icv, is)-temp7*&
-&                 result10d0(nd0))/result10+temp7*(t1dd(nd0, nd)-&
-&                 result10d(nd)*temp1d(nd0)-temp1*result10dd(nd0, nd)))
+&                 result11d0(nd0))/result11+temp7*(t1dd(nd0, nd)-&
+&                 result11d(nd)*temp1d(nd0)-temp1*result11dd(nd0, nd)))
                 smq0dd(nd0, nd, icv, 1, is) = smq0dd(nd0, nd, icv, 1, is&
 &                 ) - (rg0+1.0_R8)*t1dd(nd0, nd)
                 smq0dd(nd0, nd, icv, 1, is-1) = smq0dd(nd0, nd, icv, 1, &
@@ -2456,92 +2455,92 @@ SUBROUTINE B2STCX_DV_DV(ncv, nfc, ns, is0, ismain, switch, switchd, geo&
 &               1.0_R8)*t2d(nd)
             END DO
             arg1 = is - 1
-            CALL ROXA_DV_DV(icv, arg1, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, arg1, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd0=1,nbdirs0
               smq0d0(nd0, icv, 2, is) = smq0d0(nd0, icv, 2, is) + rg0*(&
 &               temp1*uad0(nd0, icv, is)+ua(icv, is)*temp1d(nd0))
               smq0d0(nd0, icv, 1, is) = smq0d0(nd0, icv, 1, is) - (rg0+&
 &               1.0_R8)*t1d0(nd0)
-              temp1d(nd0) = (t1d0(nd0)-t1*result10d0(nd0)/result10)/&
-&               result10
+              temp1d(nd0) = (t1d0(nd0)-t1*result11d0(nd0)/result11)/&
+&               result11
               temp0d(nd0) = uad0(nd0, icv, is) + rg0*uad0(nd0, icv, is-1&
 &               )
             END DO
             smq0(icv, 2, is) = smq0(icv, 2, is) + rg0*(ua(icv, is)*temp1&
 &             )
             smq0(icv, 1, is) = smq0(icv, 1, is) - (1.0_R8+rg0)*t1
-            temp1 = t1/result10
+            temp1 = t1/result11
             temp0 = ua(icv, is) + rg0*ua(icv, is-1)
             DO nd=1,nbdirs
               temp8 = uad(nd, icv, is) + rg0*uad(nd, icv, is-1)
-              temp7 = temp0/result10
-              temp6 = t1d(nd) - temp1*result10d(nd)
+              temp7 = temp0/result11
+              temp6 = t1d(nd) - temp1*result11d(nd)
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 2, is-1) = smq0dd(nd0, nd, icv, 2, &
 &                 is-1) + temp8*temp1d(nd0) + temp1*(uadd(nd0, nd, icv, &
 &                 is)+rg0*uadd(nd0, nd, icv, is-1)) + temp7*(t1dd(nd0, &
-&                 nd)-result10d(nd)*temp1d(nd0)-temp1*result10dd(nd0, nd&
-&                 )) + temp6*(temp0d(nd0)-temp7*result10d0(nd0))/&
-&                 result10
+&                 nd)-result11d(nd)*temp1d(nd0)-temp1*result11dd(nd0, nd&
+&                 )) + temp6*(temp0d(nd0)-temp7*result11d0(nd0))/&
+&                 result11
               END DO
               smq0d(nd, icv, 2, is-1) = smq0d(nd, icv, 2, is-1) + temp1*&
 &               temp8 + temp6*temp7
             END DO
             arg1 = is0 + 1
-            CALL ROXA_DV_DV(icv, arg1, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, arg1, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd0=1,nbdirs0
               smq0d0(nd0, icv, 2, is-1) = smq0d0(nd0, icv, 2, is-1) + &
 &               temp1*temp0d(nd0) + temp0*temp1d(nd0)
               smq0d0(nd0, icv, 1, is-1) = smq0d0(nd0, icv, 1, is-1) - &
 &               rg0*t1d0(nd0)
-              temp1d(nd0) = (t2d0(nd0)-t2*result10d0(nd0)/result10)/&
-&               result10
+              temp1d(nd0) = (t2d0(nd0)-t2*result11d0(nd0)/result11)/&
+&               result11
               temp0d(nd0) = uad0(nd0, icv, is0) + rg0*uad0(nd0, icv, is0&
 &               +1)
             END DO
             smq0(icv, 2, is-1) = smq0(icv, 2, is-1) + temp0*temp1
             smq0(icv, 1, is-1) = smq0(icv, 1, is-1) - rg0*t1
-            temp1 = t2/result10
+            temp1 = t2/result11
             temp0 = ua(icv, is0) + rg0*ua(icv, is0+1)
             DO nd=1,nbdirs
               temp8 = uad(nd, icv, is0) + rg0*uad(nd, icv, is0+1)
-              temp7 = temp0/result10
-              temp6 = t2d(nd) - temp1*result10d(nd)
+              temp7 = temp0/result11
+              temp6 = t2d(nd) - temp1*result11d(nd)
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 2, is0+1) = smq0dd(nd0, nd, icv, 2&
 &                 , is0+1) + temp8*temp1d(nd0) + temp1*(uadd(nd0, nd, &
 &                 icv, is0)+rg0*uadd(nd0, nd, icv, is0+1)) + temp7*(t2dd&
-&                 (nd0, nd)-result10d(nd)*temp1d(nd0)-temp1*result10dd(&
-&                 nd0, nd)) + temp6*(temp0d(nd0)-temp7*result10d0(nd0))/&
-&                 result10
+&                 (nd0, nd)-result11d(nd)*temp1d(nd0)-temp1*result11dd(&
+&                 nd0, nd)) + temp6*(temp0d(nd0)-temp7*result11d0(nd0))/&
+&                 result11
               END DO
               smq0d(nd, icv, 2, is0+1) = smq0d(nd, icv, 2, is0+1) + &
 &               temp1*temp8 + temp6*temp7
             END DO
-            CALL ROXA_DV_DV(icv, is0, result10, result10d0, result10d, &
-&                     result10dd, nbdirs, nbdirs0)
+            CALL ROXA_DV_DV(icv, is0, result11, result11d0, result11d, &
+&                     result11dd, nbdirs, nbdirs0)
             DO nd0=1,nbdirs0
               smq0d0(nd0, icv, 2, is0+1) = smq0d0(nd0, icv, 2, is0+1) + &
 &               temp1*temp0d(nd0) + temp0*temp1d(nd0)
               smq0d0(nd0, icv, 1, is0+1) = smq0d0(nd0, icv, 1, is0+1) - &
 &               rg0*t2d0(nd0)
-              temp1d(nd0) = (t2d0(nd0)-t2*result10d0(nd0)/result10)/&
-&               result10
+              temp1d(nd0) = (t2d0(nd0)-t2*result11d0(nd0)/result11)/&
+&               result11
             END DO
             smq0(icv, 2, is0+1) = smq0(icv, 2, is0+1) + temp0*temp1
             smq0(icv, 1, is0+1) = smq0(icv, 1, is0+1) - rg0*t2
-            temp1 = t2/result10
+            temp1 = t2/result11
             DO nd=1,nbdirs
-              temp8 = t2d(nd) - temp1*result10d(nd)
-              temp7 = ua(icv, is0)/result10
+              temp8 = t2d(nd) - temp1*result11d(nd)
+              temp7 = ua(icv, is0)/result11
               DO nd0=1,nbdirs0
                 smq0dd(nd0, nd, icv, 2, is0) = smq0dd(nd0, nd, icv, 2, &
 &                 is0) + rg0*(uad(nd, icv, is0)*temp1d(nd0)+temp1*uadd(&
 &                 nd0, nd, icv, is0)+temp8*(uad0(nd0, icv, is0)-temp7*&
-&                 result10d0(nd0))/result10+temp7*(t2dd(nd0, nd)-&
-&                 result10d(nd)*temp1d(nd0)-temp1*result10dd(nd0, nd)))
+&                 result11d0(nd0))/result11+temp7*(t2dd(nd0, nd)-&
+&                 result11d(nd)*temp1d(nd0)-temp1*result11dd(nd0, nd)))
               END DO
               smq0d(nd, icv, 2, is0) = smq0d(nd, icv, 2, is0) + rg0*(&
 &               temp1*uad(nd, icv, is0)+temp7*temp8)

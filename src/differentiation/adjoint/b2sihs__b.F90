@@ -341,6 +341,17 @@ SUBROUTINE B2SIHS__B(ncv, nfc, nvx, ns, switch, switchb, geo, geob, mpg&
 !srv 11.09.09
   CALL PUSHINTEGER4(arg1)
   arg1 = ncv*4
+  shedu = 0.0_R8
+  shidu = 0.0_R8
+  shidun = 0.0_R8
+  shedd = 0.0_R8
+  shidd = 0.0_R8
+  shivc = 0.0_R8
+  shiva = 0.0_R8
+  shivcn = 0.0_R8
+  shivan = 0.0_R8
+  shefr = 0.0_R8
+  shifr = 0.0_R8
   CALL B2SAXPY_FWD(arg1, 1.0_R8, shedu, 1, she0, she0b, 1)
 !   ..contribution from divergence ua
   DO is=0,ns-1

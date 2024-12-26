@@ -1,7 +1,9 @@
 
       subroutine set_same_page
       use b2mod_types
-#include <graphics_vars.h>
+      use b2mod_graphics
+      implicit none
+
       if(same_page.ne.0) then
         same_page=0
         call end_page

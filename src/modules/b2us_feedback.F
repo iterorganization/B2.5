@@ -2124,7 +2124,6 @@ cxpb size is changed in b2mod_dimensions
                 endif
               else
                 if (switch%use_eirene.eq.0) then
-                  write(*,*) "set fb: ", is_start,fb_ib(ifb)
                   conpar(is_start,fb_ib(ifb),1) = saved_fb_actuator(ifb)
                 else
                   userfluxparm(fb_istra(ifb),1) = saved_fb_actuator(ifb)

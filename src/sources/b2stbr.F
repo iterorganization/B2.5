@@ -180,10 +180,6 @@
       external b2xvsg, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
       intrinsic mod
-#if ( defined(_OPENMP) && defined(CRAY) )
-      real (kind=R8) :: omp_get_wtime
-      external omp_get_wtime
-#endif
 *   ..initialisation
       save sput_src,
 #ifdef WG_TODO

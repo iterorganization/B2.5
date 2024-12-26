@@ -35,7 +35,7 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv
+  INTEGER, INTENT(IN) :: ncv
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -412,7 +412,7 @@ SUBROUTINE B2TQCE_DV(ncv, switch, switchd, geo, geod, mpg, pl, pld, dv, &
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv
+  INTEGER, INTENT(IN) :: ncv
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo

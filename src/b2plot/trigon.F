@@ -1,9 +1,10 @@
 c
       subroutine trigon(onflag)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       logical onflag
+
       if(onflag) then
         trig=.not.trig
         write (*,*) 'triangular grid state changed'

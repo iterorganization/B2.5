@@ -63,7 +63,6 @@ c Advanced fluid neutral models
       integer :: spatial_hybrid
       integer :: use_auto_spatial_hyb
       integer :: diffusion_bc_safeguard
-      integer :: do_volrec
       integer :: transport_afn !! use advanced fluid neutral (afn) transport coefficients
       integer :: afn_bcs_use_coarse
       integer :: afn_vnn
@@ -177,7 +176,6 @@ c iout switches
       integer :: b2npco_iout
       integer :: b2npp7_iout
       integer :: b2nppo_iout
-!      integer :: b2nph9_iout       ! No longer needed for unstructured grids
       integer :: b2news_iout
       integer :: b2nxfx_iout
       integer :: b2nxfc_iout        !srv 17.06.02
@@ -218,7 +216,6 @@ c style switches
       integer :: b2sicf_style
       integer :: b2sigp_style
       integer :: b2sigp_pressure_restriction
-      integer :: b2sihs_style
       integer :: b2sral_style
       integer :: style_visc
       integer :: b2tfnb_style_int_vel
@@ -330,10 +327,11 @@ c namelist switches
 c diagnostics switches
       integer :: b2stbc_diagno
       integer :: b2npmo_diagno
-      integer :: ion_vlct_restrict
       integer :: vlct_diagno
       integer :: b2tqna_diagno
 
+c hard limit velocities
+      integer :: ion_vlct_restrict
       real(kind=R8) :: ion_vlct_restrict_M
 
 c MMS
@@ -396,7 +394,6 @@ c k-enstrophy model
       integer :: b2sikt_iout
       integer :: b2sikt_style
       integer :: b2sikt_model
-      integer :: b2sikt_local
       integer :: b2sikt_sheath_local
       integer :: b2sikt_fac_diss_core_mode
       integer :: b2sikt_min_source
@@ -546,7 +543,6 @@ c b2stbc
       real (kind=R8) :: b2stbc_bc_ref
       real (kind=R8) :: b2stbc_bc_ref_te
       real (kind=R8) :: b2stbc_bc_ref_ti
-      real (kind=R8) :: b2stbc_corr_flux
       real (kind=R8) :: bc_type13_norm
       real (kind=R8) :: bc_type13_fac
       real (kind=R8) :: nesepm
@@ -568,8 +564,6 @@ c b2txcx
 c Feedback
       integer :: b2stbc_feedback, use_pump
 
-c Med
-      integer :: med_style
 
 c Optimization
       integer :: b2optim_save_states
@@ -648,7 +642,6 @@ c Advanced fluid neutral models
       s % spatial_hybrid = 0
       s % use_auto_spatial_hyb = 0
       s % diffusion_bc_safeguard = 1
-      s % do_volrec = 1
       s % afn_bcs_use_coarse = 1
       s % afn_vnn = 1
       s % afn_vnn_ndiff = 0
@@ -749,7 +742,6 @@ c Advanced fluid neutral models
       s % b2npco_iout = 0
       s % b2npp7_iout = 0
       s % b2nppo_iout = 0
-!      s % b2nph9_iout = 0
       s % b2news_iout = 0
       s % b2nxfx_iout = 0
       s % b2nxfc_iout = 0
@@ -789,7 +781,6 @@ c Advanced fluid neutral models
       s % b2sicf_style = 0
       s % b2sigp_style = 2
       s % b2sigp_pressure_restriction = 1
-      s % b2sihs_style = 0
       s % b2sral_style = 2
       s % style_visc = 0
       s % b2tfnb_style_int_vel = 0
@@ -905,10 +896,11 @@ c Advanced fluid neutral models
 
       s % b2stbc_diagno = 0
       s % b2npmo_diagno = 0
-      s % ion_vlct_restrict = 0
-      s % ion_vlct_restrict_M = 3.0_R8
       s % vlct_diagno = 0
       s % b2tqna_diagno = 0
+
+      s % ion_vlct_restrict = 0
+      s % ion_vlct_restrict_M = 3.0_R8
 
       s % set_na_numerical = 0
       s % set_ua_numerical = 0
@@ -990,7 +982,6 @@ c k-enstrophy model
       s % b2sikt_iout = 0
       s % b2sikt_style = 0
       s % b2sikt_model = 1
-      s % b2sikt_local = 1
       s % b2sikt_fac_diss_core_mode = 0
       s % b2sikt_sheath_local = 1
       s % b2sikt_min_source = 0
@@ -1005,7 +996,7 @@ c k-enstrophy model
       s % b2tfhi_fconkt = 0.0_R8
       s % b2tfhi_fflozt = 0.0_R8
       s % b2tfhi_fconzt = 0.0_R8
-      s % b2tfhi_fsigkt = 0.0_R8
+      s % b2tfhi_fsigkt = 0.1_R8
       s % b2tfhi_fkt_hie = 0.0_R8
       s % b2tfhe_vis_kt = 0.0_R8
       s % b2sikt_lpar_ref = 10.0_R8
@@ -1159,7 +1150,6 @@ c b2stbc_phys
       s % b2stbc_bc_ref = 0.01_R8            !srv 14.10.99
       s % b2stbc_bc_ref_te = 0.01_R8         !IYS 07.03.2013 11.04.13
       s % b2stbc_bc_ref_ti = 0.01_R8         !IYS 07.03.2013 11.04.13
-      s % b2stbc_corr_flux = 0.0_R8        !srv 25.07.05
       s % bc_type13_norm = 1.0e15_R8
       s % bc_type13_fac = 1.0_R8
       s % nesepm = 0.0_R8
@@ -1172,8 +1162,8 @@ c b2stbc_phys
 c b2trno
       s % b2trno_alpha_stoch =  1.0_R8       !srv 17.12.13
 
-c med
-      s % med_style = 0
+c b2nppo
+      s % b2nppo_restrict_po = 0
 
 c b2nppo
       s % b2nppo_restrict_po = 0
@@ -1255,7 +1245,6 @@ c Advanced fluid neutral models
       call ipgeti ('b2stbr_remove_FC_el', s % remove_FC_el)
       call ipgeti ('b2mn_spatial_hybrid', s % spatial_hybrid)
       call ipgeti ('use_auto_spatial_hyb', s % use_auto_spatial_hyb)
-      call ipgeti ('b2mn_do_volrec', s % do_volrec)
       call ipgeti ('b2tqna_transport_afn', s % transport_afn)
       call ipgeti ('diffusion_bc_safeguard', s % diffusion_bc_safeguard)
       call ipgeti ('b2stbr_afn_bcs_use_coarse', s % afn_bcs_use_coarse)
@@ -1368,7 +1357,6 @@ c iout switches
       call ipgeti ('b2npco_iout', s % b2npco_iout)
       call ipgeti ('b2npp7_iout', s % b2npp7_iout)
       call ipgeti ('b2nppo_iout', s % b2nppo_iout)
-!      call ipgeti ('b2nph9_iout', s % b2nph9_iout)
       call ipgeti ('b2news_iout', s % b2news_iout)
       call ipgeti ('b2nxfx_iout', s % b2nxfx_iout)
       call ipgeti ('b2nxfc_iout', s % b2nxfc_iout)
@@ -1409,7 +1397,6 @@ c style/mode switches
       call ipgeti ('b2sigp_style', s % b2sigp_style)
       call ipgeti ('b2sigp_pressure_restriction',
      &  s % b2sigp_pressure_restriction)
-      call ipgeti ('b2sihs_style', s % b2sihs_style)
       call ipgeti ('b2sral_style', s % b2sral_style)
       call ipgeti ('b2sihs_style_visc', s % style_visc)
       call ipgeti ('b2tfnb_style_int_vel', s % b2tfnb_style_int_vel)
@@ -1532,10 +1519,12 @@ c namelist switches
 c diagnostic switches
       call ipgeti ('b2stbc_diagno', s % b2stbc_diagno)
       call ipgeti ('b2npmo_diagno', s % b2npmo_diagno)
-      call ipgeti ('b2npmo_ion_vlct_restrict', s % ion_vlct_restrict)
-      call ipgetr ('b2npmo_ion_vlct_restrict_M', s%ion_vlct_restrict_M)
       call ipgeti ('b2npmo_vlct_diagno', s % vlct_diagno)
       call ipgeti ('b2tqna_diagno', s % b2tqna_diagno)
+
+c hard limit velocities
+      call ipgeti ('b2npmo_ion_vlct_restrict', s % ion_vlct_restrict)
+      call ipgetr ('b2npmo_ion_vlct_restrict_M', s%ion_vlct_restrict_M)
 
 c MMS
       call ipgeti ('b2mndr_set_na_numerical', s % set_na_numerical)
@@ -1604,11 +1593,10 @@ c k-enstrophy model
       call ipgeti ('b2sikt_iout', s % b2sikt_iout)
       call ipgeti ('b2sikt_style', s % b2sikt_style)
       call ipgeti ('b2sikt_model', s % b2sikt_model)
-      call ipgeti ('b2sikt_keps_local', s % b2sikt_local)
       call ipgeti ('b2sikt_fac_sheath_local', s % b2sikt_sheath_local)
       call ipgeti ('b2sikt_min_source', s % b2sikt_min_source)
       call ipgeti ('b2sikt_kt_source_stab', s % b2sikt_kt_source_stab)
-      call ipgetr ('b2sikt_aniso', s % b2sikt_fac_aniso)
+      call ipgetr ('b2sikt_fac_aniso', s % b2sikt_fac_aniso)
       call ipgetr ('b2sikt_fac_sheath', s % b2sikt_fac_sheath)
       call ipgetr ('b2sikt_fac_sheath_core', s % b2sikt_fac_sheath_core)
       call ipgetr ('b2sikt_fac_diss', s % b2sikt_fac_diss)
@@ -1839,7 +1827,6 @@ c b2stbc
       call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)           !srv 11.04.13
       call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)
       call ipgetr ('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)           !srv 11.04.13
-      call ipgetr ('b2stbc_corr_flux_in_core', s%b2stbc_corr_flux)   !srv 25.07.05
       call ipgetr ('b2stbc_type13_norm', s%bc_type13_norm)
       call ipgetr ('b2stbc_type13_fac', s%bc_type13_fac)
       call ipgetr ('b2stbc_nesepm', s%nesepm)
@@ -1858,8 +1845,8 @@ c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
       call ipgeti ('b2stbc_use_pump', s%use_pump)
 
-c Med
-      call ipgeti ('b2mndr_med_style', s%med_style)
+c b2nppo
+      call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
 
 c b2nppo
       call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
@@ -2047,10 +2034,6 @@ c b2stbc
        call xertst (0.0_R8.le.s%stab_coeff_sheath_ti,
      &              'faulty parameter b2stbc_stab_coeff_sheath_ti')
 
-c b2sihs
-       call xertst (0.le.s%b2sihs_style,
-     &                        'faulty parameter b2sihs style')
-
 c b2sral
        call xertst (1.ne.s%b2sral_style,
      .  'b2sral_style = 1 not yet developed for WG')
@@ -2059,14 +2042,20 @@ c b2sral
      .  'b2sral_style should be 0, 1 or 2')
 
 c b2npco
-       call xertst (0.lt.s%b2npco_rxg, 'faulty parameter b2npco rxg')
-       call xertst (0.le.s%b2npco_pcm0, 'faulty parameter b2npco pcm0')
-       call xertst (0.le.s%b2npco_pcm1, 'faulty parameter b2npco pcm1')
+       call xertst (0.0_R8.lt.s%b2npco_rxg,
+     .  'faulty parameter b2npco rxg')
+       call xertst (0.0_R8.le.s%b2npco_pcm0,
+     .  'faulty parameter b2npco pcm0')
+       call xertst (0.0_R8.le.s%b2npco_pcm1,
+     .  'faulty parameter b2npco pcm1')
 
 c b2npht
-       call xertst (0.le.s%b2npht_pcm0, 'faulty parameter b2npht pcm0')
-       call xertst (0.le.s%b2npht_pcm1, 'faulty parameter b2npht pcm1')
-       call xertst (0.lt.s%b2npht_rxg, 'faulty parameter b2npht rxg')
+       call xertst (0.0_R8.le.s%b2npht_pcm0,
+     .  'faulty parameter b2npht pcm0')
+       call xertst (0.0_R8.le.s%b2npht_pcm1,
+     .  'faulty parameter b2npht pcm1')
+       call xertst (0.0_R8.lt.s%b2npht_rxg,
+     .  'faulty parameter b2npht rxg')
 
 c b2nxfc
        call xertst (0.le.s%b2nxfc_style.and.s%b2nxfc_style.lt.2,
@@ -2292,8 +2281,6 @@ c k-enstrophy model
      &  'keps_inc must be .ge. 1.0')
       call xertst (0.0_R8.le.s%keps_fac,
      &  'keps_fac must be .ge. 0.0')
-      call xertst (0.le.s%b2sikt_local .and. s%b2sikt_local.le.1,
-     &  'b2sikt_local must be either 0 or 1')
       call xertst (0.le.s%b2sikt_sheath_local .and.
      &  s%b2sikt_sheath_local.le.1,
      &  'b2sikt_sheath_local must be either 0 or 1')
@@ -2368,6 +2355,12 @@ c b2srst
 c b2tfnb
       call xertst (0.0_R8.le.s%b2tfnb_flux_limit_min_ti,
      &  'faulty internal parameter flux_limit_min_ti')
+     
+c b2tqce
+      if (.not.(s%b2tqce_style_guard_cells.eq.0.or.
+     &                           s%b2tqce_style_guard_cells.eq.1)) then
+        call xerrab('b2tqce_style_guard_cells is expected to be 0 or 1')
+      endif
 
 c b2mndt
       call xertst (1.le.s%nstg(0).and.1.le.s%nstg(1).and.1.le.s%nstg(2),
@@ -2394,10 +2387,6 @@ c b2mndr
 c b2ag
       call xertst (s%geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
-
-c med
-      call xertst (s%med_style.ge.0 .and. s%med_style.le.1,
-     &  'faulty parameter b2mndr_med_style')
 
 c Optimization
       call xertst (s%b2optim_save_states.ge.0,

@@ -231,7 +231,7 @@ cc while the second contribution corresponds to T dn/dt
         sr%she = sr%she+sr%shedt
         sr%she(:,0)=sr%she(:,0)-1.5_R8*(dv%ne-psnl%ne)*
      &                                  psnl%te/dtim*geo%cvVol
-        if (switch%tn_style.eq.0) then     ! default, combined ion-neutral eneregy equation
+        if (switch%tn_style.eq.0) then     ! default, combined ion-neutral energy equation
           sr%shi = sr%shi+sr%shidt
           sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
      &                                  psnl%ti/dtim*geo%cvVol
@@ -286,9 +286,11 @@ cc while the second contribution corresponds to T dn/dt
         call b2sikt (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &    pl, dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod,
      &    skt_diss)
+        szt0 = 0.0_R8
         call b2saxpy (nCv*4, 1.0_R8, shekt, 1, she0, 1)
         call b2saxpy (nCv*4, 1.0_R8, shikt, 1, shi0, 1)
         call b2saxpy (nCv*4, 1.0_R8, sr%skt, 1, skt0, 1)
+        call b2saxpy (nCv*4, 1.0_R8, sr%szt, 1, szt0, 1)
         call b2saxpy (nCv, 1.0_R8, skt_prod, 1, sr%skt_prod, 1)
         call b2saxpy (nCv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
       endif

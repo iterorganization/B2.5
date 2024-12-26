@@ -74,11 +74,9 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & switch, switchb, geo, geob, mpg, mpgb, pl, plb, dv, dvb, rt, rtb, &
 & st_ext, st_extb, co, cob)
   USE B2MOD_TYPES
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_B2CMPT_DIFF
-!      use b2mod_neoclassical
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -104,7 +102,8 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   IMPLICIT NONE
 !   ..read data on first call
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES), INTENT(INOUT) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -217,13 +216,12 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !
 ! ..compute transport coefficients
 !   ..compute differential anomalous transport coefficients
+  CALL PUSHBOOLEAN(b2mod_math_initialised)
+  CALL PUSHREAL8(cutlo, r8/8)
+  CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHINTEGER4(ncall_transp_keps)
   CALL PUSHINTEGER4(ncall_b2tqna)
   CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-  CALL PUSHBOOLEAN(b2mod_math_initialised)
-  CALL PUSHREAL4(small_r4_constant, r4/8)
-  CALL PUSHREAL8(cutlo, r8/8)
-  CALL PUSHREAL8(cutll, r8/8)
   CALL PUSHREAL8ARRAY(cflim, r8*8/8)
   CALL PUSHREAL8ARRAY(cfalf, r8*8/8)
   CALL PUSHREAL8ARRAY(cfsig, r8*8/8)
@@ -955,13 +953,12 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL POPREAL8ARRAY(cfsig, r8*8/8)
   CALL POPREAL8ARRAY(cfalf, r8*8/8)
   CALL POPREAL8ARRAY(cflim, r8*8/8)
-  CALL POPREAL8(cutll, r8/8)
-  CALL POPREAL8(cutlo, r8/8)
-  CALL POPREAL4(small_r4_constant, r4/8)
-  CALL POPBOOLEAN(b2mod_math_initialised)
   CALL POPCHARACTERARRAY(my_out_folder, 7)
   CALL POPINTEGER4(ncall_b2tqna)
   CALL POPINTEGER4(ncall_transp_keps)
+  CALL POPREAL8(cutll, r8/8)
+  CALL POPREAL8(cutlo, r8/8)
+  CALL POPBOOLEAN(b2mod_math_initialised)
   dummyzerodiffb = 0.D0
 ! csc the last three arguments of the b2tqna_b call have been added 
 ! manually to save the sensitivity of transport coefficients in each
@@ -994,11 +991,9 @@ END SUBROUTINE B2TRNO_B
 SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 & , switch, geo, mpg, pl, dv, rt, st_ext, co)
   USE B2MOD_TYPES
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_B2CMPT_DIFF
-!      use b2mod_neoclassical
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
@@ -1020,7 +1015,8 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   IMPLICIT NONE
 !   ..read data on first call
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -1506,12 +1502,6 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   ncall_b2trno = ncall_b2trno + 1
   CALL SUBEND()
   RETURN
-!
-!-----------------------------------------------------------------------
-!.scribbles
-!
-!!!   Consider to apply a flux limit to the anomalous particle transport.
-!!!   Still must consider how to deal with a non-orthogonal grid.
 !
 !-----------------------------------------------------------------------
 !.end b2trno

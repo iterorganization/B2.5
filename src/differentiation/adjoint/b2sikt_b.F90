@@ -67,7 +67,7 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 !  Hint: nCv should be the size of dimension 1 of array cvbb
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -98,6 +98,7 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 !
 !-----------------------------------------------------------------------
 !.declarations
+!
 !   ..local variables
   INTEGER :: ic
 !
@@ -116,7 +117,7 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   EXTERNAL XERTST, IPGETI, IPGETR, SFILL_NODIFF
   EXTERNAL SFILL_FWD, SFILL_BWD
   EXTERNAL B2XVSG
-  INTRINSIC DABS
+  INTRINSIC ABS
   INTRINSIC MINVAL
   INTRINSIC LOG
   EXTERNAL XERRAB
@@ -164,7 +165,7 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
   IF (switch%b2sikt_model .EQ. 1) THEN
 !wdk  KU Leuven k model
 !wdk  source : driven by ExB energy flux
-!wdk  sink   : 
+!wdk  sink   :
 !wdk   - ad hoc term, ~1/(connection length), as a proxy for enhanced
 !wdk     parallel transport due to parallel current fluctuations
     CALL B2XPRZ_NODIFF(ncv, ns, mp, am, pl%na, rz, st_ext)
@@ -627,7 +628,7 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 !  Hint: nCv should be the size of dimension 1 of array arg1
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -649,6 +650,7 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 !
 !-----------------------------------------------------------------------
 !.declarations
+!
 !   ..local variables
   INTEGER :: ic
 !
@@ -661,7 +663,7 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
   INTRINSIC MIN, MAX, SQRT
   EXTERNAL XERTST, IPGETI, IPGETR, SFILL_NODIFF
   EXTERNAL B2XVSG
-  INTRINSIC DABS
+  INTRINSIC ABS
   INTRINSIC MINVAL
   INTRINSIC LOG
   EXTERNAL XERRAB
@@ -730,7 +732,7 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
   IF (switch%b2sikt_model .EQ. 1) THEN
 !wdk  KU Leuven k model
 !wdk  source : driven by ExB energy flux
-!wdk  sink   : 
+!wdk  sink   :
 !wdk   - ad hoc term, ~1/(connection length), as a proxy for enhanced
 !wdk     parallel transport due to parallel current fluctuations
     CALL B2XPRZ_NODIFF(ncv, ns, mp, am, pl%na, rz, st_ext)

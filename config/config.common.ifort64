@@ -1,11 +1,25 @@
 ifeq (${FC},f77)
 FC = ifort
 endif
+ifeq (${FN},)
 FN = ifort
+endif
 ifeq (${CC},cc)
 ifneq (${FC},ftn)
 CC = icc
 endif
+endif
+# Use of ifx OpenMP is unsafe at the moment
+ifneq (,$(findstring ifx,${FC}))
+  ifdef SOLPS_OPENMP
+    FN = ifort
+    MPI_FC = mpiifort
+    ifdef SOLPS_MPI
+      FC = ${MPI_FC}
+    else
+      FC = ifort
+    endif
+  endif
 endif
 EQUIVS   = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 
@@ -26,7 +40,7 @@ ifndef COMPILER_REDEF
   FCOPTS += -fp-model=precise
  endif
  ifdef SOLPS_DEBUG
-  FCOPTS  += -diag-disable:10182 -diag-disable:10440
+  FCOPTS  += -diag-disable:10182,10440
   LDOPTS  += -diag-disable:10182
   ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 2023; echo $$?),0)
    FCOPTS += -check nouninit
