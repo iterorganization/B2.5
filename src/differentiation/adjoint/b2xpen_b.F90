@@ -17,21 +17,23 @@
 !
 !
 !
-SUBROUTINE B2XPEN_B(ncv, nfc, ns, mpg, fna, fnab, fna_53, fna_53b, &
-& fne_53, fne_53b, fch, fchb, fhe, fheb, fhi, fhib, fhn, fhnb, rpt, rptb&
-& , te, teb, ti, tib, tn, tnb, po, pob, boris, fhm, fhmb, fhp, fhpb, fhj&
-& , fhjb, fht, fhtb)
+SUBROUTINE B2XPEN_B(ncv, nfc, ns, mpg, switch, fna, fnab, fna_53, &
+& fna_53b, fne_53, fne_53b, fch, fchb, fhe, fheb, fhi, fhib, fhn, fhnb, &
+& rpt, rptb, te, teb, ti, tib, tn, tnb, po, pob, fhm, fhmb, fhp, fhpb, &
+& fhj, fhjb, fht, fhtb)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2US_MAP_DIFF
   USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_SWITCHES_DIFF
   IMPLICIT NONE
   INTEGER :: ncv, nfc, ns
 ! inputs
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(SWITCHES), INTENT(INOUT) :: switch
   REAL(kind=r8) :: fna(nfc, 0:1, 0:ns-1), fna_53(nfc, 0:1, 0:ns-1), &
 & fne_53(nfc, 0:1), fch(nfc, 0:1), fhe(nfc, 0:1), fhi(nfc, 0:1), fhn(nfc&
-& , 0:1), rpt(ncv, 0:ns-1), te(ncv), ti(ncv), tn(ncv), po(ncv), boris
+& , 0:1), rpt(ncv, 0:ns-1), te(ncv), ti(ncv), tn(ncv), po(ncv)
   REAL(kind=r8) :: fnab(nfc, 0:1, 0:ns-1), fna_53b(nfc, 0:1, 0:ns-1), &
 & fne_53b(nfc, 0:1), fchb(nfc, 0:1), fheb(nfc, 0:1), fhib(nfc, 0:1), &
 & fhnb(nfc, 0:1), rptb(ncv, 0:ns-1), teb(ncv), tib(ncv), tnb(ncv), pob(&
@@ -63,14 +65,14 @@ SUBROUTINE B2XPEN_B(ncv, nfc, ns, mpg, fna, fnab, fna_53, fna_53b, &
   END DO
   DO is=ns-1,0,-1
     fhpb(:, :, is) = fhpb(:, :, is) + fhtb
-    fhmb(:, :, is) = fhmb(:, :, is) + (1.0_R8-boris)*fhtb
+    fhmb(:, :, is) = fhmb(:, :, is) + (1.0_R8-switch%boris)*fhtb
   END DO
   fntb = 0.D0
   fheb = fheb + fhtb
   fhib = fhib + fhtb
   fhnb = fhnb + fhtb
   fhjb = fhjb + fhtb
-  fntb = (1.0_R8-boris)*fhtb
+  fntb = (1.0_R8-switch%boris)*fhtb
   DO is=ns-1,0,-1
     DO ifc=nfc,1,-1
       CALL POPCONTROL1B(branch)
@@ -122,19 +124,21 @@ END SUBROUTINE B2XPEN_B
 !
 !
 !
-SUBROUTINE B2XPEN_NODIFF(ncv, nfc, ns, mpg, fna, fna_53, fne_53, fch, &
-& fhe, fhi, fhn, rpt, te, ti, tn, po, boris, fhm, fhp, fhj, fht)
+SUBROUTINE B2XPEN_NODIFF(ncv, nfc, ns, mpg, switch, fna, fna_53, fne_53&
+& , fch, fhe, fhi, fhn, rpt, te, ti, tn, po, fhm, fhp, fhj, fht)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2US_MAP_DIFF
   USE B2MOD_B2CMPA_DIFF
+  USE B2MOD_SWITCHES_DIFF
   IMPLICIT NONE
   INTEGER :: ncv, nfc, ns
 ! inputs
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(SWITCHES), INTENT(INOUT) :: switch
   REAL(kind=r8) :: fna(nfc, 0:1, 0:ns-1), fna_53(nfc, 0:1, 0:ns-1), &
 & fne_53(nfc, 0:1), fch(nfc, 0:1), fhe(nfc, 0:1), fhi(nfc, 0:1), fhn(nfc&
-& , 0:1), rpt(ncv, 0:ns-1), te(ncv), ti(ncv), tn(ncv), po(ncv), boris
+& , 0:1), rpt(ncv, 0:ns-1), te(ncv), ti(ncv), tn(ncv), po(ncv)
 ! outputs
   REAL(kind=r8) :: fhm(nfc, 0:1, 0:ns-1), fhp(nfc, 0:1, 0:ns-1), fhj(nfc&
 & , 0:1), fht(nfc, 0:1)
@@ -171,10 +175,15 @@ SUBROUTINE B2XPEN_NODIFF(ncv, nfc, ns, mpg, fna, fna_53, fne_53, fch, &
     END DO
   END DO
 ! calculate total fluxes (fht)
-  fht = fhe + fhi + fhn + fhj + fnt*(1.0_R8-boris)
+  fht = fhe + fhi + fhn + fhj + fnt*(1.0_R8-switch%boris)
   DO is=0,ns-1
-    fht = fht + fhp(:, :, is) + fhm(:, :, is)*(1.0_R8-boris)
+    fht = fht + fhp(:, :, is) + fhm(:, :, is)*(1.0_R8-switch%boris)
   END DO
+!
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, nfc, 1, fht(1, 0), 'b2xpen_fht_th')
+    CALL MY_OUT_US(70, nfc, 1, fht(1, 1), 'b2xpen_fht_r')
+  END IF
 !$$$  call subend ()
   RETURN
 !     ------------------------------------------------------------------

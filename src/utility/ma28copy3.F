@@ -108,6 +108,7 @@ c
       integer irncp, icncp, minirn, minicn, irank
       integer idisp(2)
       integer ndrop, maxit, noiter, nsrch, istart
+      integer, save :: maxmsg = 0
       integer ndrop1, nsrch1
       integer nlp
       integer mirncp, micncp, mirank, mirn, micn
@@ -215,7 +216,10 @@ c duplicate element.
   110     move = move + 1
           length = length - 1
           jay = ikeep(j,3) + newj1
-          if (mp.ne.0) write (mp,99993) i, j, a(jj)
+          if (mp.ne.0 .and. maxmsg.lt.100) then
+            write (mp,99993) i, j, a(jj)
+            maxmsg = maxmsg + 1
+          end if
           a(jay) = a(jay) + a(jj)
           themax = max(themax,abs(a(jay)))
   120   continue
@@ -772,21 +776,21 @@ c
         do 50 i=1,nz
           nrow = irnorg(i)
           ncol = icnorg(i)
-          qaorg = aorg(i)                                             !srv 16.01.18 {
+          qaorg = aorg(i)                                              !srv 16.01.18 {
           qx    = x(nrow)
-          qr(ncol) = qr(ncol) - qaorg*qx                              !srv 16.01.18 }
+          qr(ncol) = qr(ncol) - qaorg*qx                               !srv 16.01.18 }
    50   continue
         go to 80
 c mtype=1.
    60   do 70 i=1,nz
           nrow = irnorg(i)
           ncol = icnorg(i)
-          qaorg = aorg(i)                                             !srv 16.01.18 {
+          qaorg = aorg(i)                                              !srv 16.01.18 {
           qx    = x(ncol)
-          qr(nrow) = qr(nrow) - qaorg*qx                              !srv 16.01.18 }
+          qr(nrow) = qr(nrow) - qaorg*qx                               !srv 16.01.18 }
    70   continue
-   80   r = real(qr,R8)                                               !srv 16.01.18
-        dres = 0.0_R8                                                 !srv 21.11.00
+   80   r = real(qr,R8)                                                !srv 16.01.18
+        dres = 0.0_R8                                                  !srv 21.11.00
 c
 c  find the max-norm of the residual vector.
 c
@@ -797,7 +801,7 @@ c
 c  stop the calculations if the max-norm of
 c  the residual vector is zero.
 c
-        if (dres.eq.0.0_R8) go to 150                                 !srv 21.11.00
+        if (dres.eq.0.0_R8) go to 150                                  !srv 21.11.00
 c
 c  calculate the correction vector.
 c
@@ -806,7 +810,7 @@ c
 c
 c  find the max-norm of the correction vector.
 c
-        dd = 0.0_R8                                                   !srv 21.11.00
+        dd = 0.0_R8                                                    !srv 21.11.00
         do 100 i=1,n
           dd = max(dd,abs(r(i)))
   100   continue
@@ -814,11 +818,11 @@ c
 c  check the convergence.
 c
         if (dd.gt.d*cgce .and. iterat.ge.2) go to 130
-        if (dxmax*10.0_R8+dd.eq.dxmax*10.0_R8) go to 140              !srv 21.11.00
+        if (dxmax*10.0_R8+dd.eq.dxmax*10.0_R8) go to 140               !srv 21.11.00
 c
 c  attempt to improve the solution.
 c
-        dxmax = 0.0_R8                                                !srv 21.11.00
+        dxmax = 0.0_R8                                                 !srv 21.11.00
         do 110 i=1,n
           x(i) = x(i) + r(i)
           dxmax = max(dxmax,abs(x(i)))

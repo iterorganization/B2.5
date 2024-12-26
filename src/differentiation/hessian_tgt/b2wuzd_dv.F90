@@ -12,7 +12,7 @@
 !
 !
 !
-SUBROUTINE B2WUZD_NODIFF0(nput, version, ns, zamin, zamax, zn, am)
+SUBROUTINE B2WUZD_NODIFF(nput, version, ns, zamin, zamax, zn, am)
   USE B2MOD_TYPES
   USE B2MOD_SUBSYS
   IMPLICIT NONE
@@ -51,5 +51,5 @@ SUBROUTINE B2WUZD_NODIFF0(nput, version, ns, zamin, zamax, zn, am)
 !
   CALL SUBEND()
   RETURN
-END SUBROUTINE B2WUZD_NODIFF0
+END SUBROUTINE B2WUZD_NODIFF
 

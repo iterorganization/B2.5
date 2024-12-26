@@ -27,7 +27,7 @@ SUBROUTINE CALCFLOW_FWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
   USE B2US_MAP_DIFF
   IMPLICIT NONE
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, meth
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), flo(nfc, 0:1), con(nfc, 0:1)
@@ -219,7 +219,7 @@ SUBROUTINE CALCFLOW_BWD(ncv, nfc, nvx, meth, geo, geob, mpg, mpgb, fun, &
   USE B2US_GEO_DIFF
   USE B2US_MAP_DIFF
   IMPLICIT NONE
-  INTEGER :: ncv, nfc, nvx, meth
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFF) :: geob
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -384,7 +384,7 @@ SUBROUTINE CALCFLOW_NODIFF(ncv, nfc, nvx, meth, geo, mpg, fun, flo, con&
   USE B2US_MAP_DIFF
   IMPLICIT NONE
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, meth
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, meth
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), flo(nfc, 0:1), con(nfc, 0:1)

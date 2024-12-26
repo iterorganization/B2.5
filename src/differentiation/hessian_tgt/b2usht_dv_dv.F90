@@ -6,11 +6,11 @@
 !                resktd reshi corttd corte corzt reskt reshn corti
 !                cortn resht resztd cortnd reshtd cortt flond reshnd
 !                corted corkt reshed corktd cortid corztd reszt
-!   with respect to varying inputs: connd conn ti reshid tn ted
-!                ne floe floztd ni floi conktd shnd nnd nn flon
-!                coned conkt ktd reshe resktd reshi corttd corte
-!                tid conztd reskt kt reshn corti ceqpd ztd flozt
-!                cortn resht shed she ned resztd cortnd reshtd
+!   with respect to varying inputs: connd conn ti reshid sztd tn
+!                ted ne floe szt floztd ni floi conktd shnd nnd
+!                nn flon coned conkt ktd reshe resktd reshi corttd
+!                corte tid conztd reskt kt reshn corti ceqpd ztd
+!                flozt cortn resht shed she ned resztd cortnd reshtd
 !                shi conid cortt skt shn flond reshnd shid corted
 !                nid floed flokt reshed corktd ceqp tnd sktd conzt
 !                cortid cone coni corztd floid te reszt floktd
@@ -22,7 +22,7 @@
 !   variations   of useful results: conn flon reshe reshi corte
 !                corzt reskt reshn corti cortn resht cortt corkt
 !                reszt
-!   with respect to varying inputs: conn ti tn ne floe ni floi
+!   with respect to varying inputs: conn ti tn ne floe szt ni floi
 !                nn flon conkt reshe reshi corte reskt kt reshn
 !                corti flozt cortn resht she shi cortt skt shn
 !                flokt ceqp conzt cone coni te reszt zt
@@ -49,15 +49,15 @@ SUBROUTINE B2USHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt&
 & conndd, flokt, floktd0, floktd, floktdd, conkt, conktd0, conktd, &
 & conktdd, flozt, floztd0, floztd, floztdd, conzt, conztd0, conztd, &
 & conztdd, she, shed0, shed, shedd, shi, shid0, shid, shidd, shn, shnd0&
-& , shnd, shndd, skt, sktd0, sktd, sktdd, szt, ceqp, ceqpd0, ceqpd, &
-& ceqpdd, resht, reshtd0, reshtd, reshtdd, reshe, reshed0, reshed, &
-& reshedd, reshi, reshid0, reshid, reshidd, reshn, reshnd0, reshnd, &
-& reshndd, reskt, resktd0, resktd, resktdd, reszt, resztd0, resztd, &
-& resztdd, cortt, corttd0, corttd, corttdd, corte, corted0, corted, &
-& cortedd, corti, cortid0, cortid, cortidd, cortn, cortnd0, cortnd, &
-& cortndd, corkt, corktd0, corktd, corktdd, corzt, corztd0, corztd, &
-& corztdd, flo0, flo0d0, flo0d, flo0dd, con0, con0d0, con0d, con0dd, aa&
-& , aad0, aad, aadd, nbdirs, nbdirs0)
+& , shnd, shndd, skt, sktd0, sktd, sktdd, szt, sztd0, sztd, sztdd, ceqp&
+& , ceqpd0, ceqpd, ceqpdd, resht, reshtd0, reshtd, reshtdd, reshe, &
+& reshed0, reshed, reshedd, reshi, reshid0, reshid, reshidd, reshn, &
+& reshnd0, reshnd, reshndd, reskt, resktd0, resktd, resktdd, reszt, &
+& resztd0, resztd, resztdd, cortt, corttd0, corttd, corttdd, corte, &
+& corted0, corted, cortedd, corti, cortid0, cortid, cortidd, cortn, &
+& cortnd0, cortnd, cortndd, corkt, corktd0, corktd, corktdd, corzt, &
+& corztd0, corztd, corztdd, flo0, flo0d0, flo0d, flo0dd, con0, con0d0, &
+& con0d, con0dd, aa, aad0, aad, aadd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   USE B2MOD_SWITCHES_DIFFV_DIFFV
@@ -118,22 +118,23 @@ SUBROUTINE B2USHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt&
 & , 0:3), szt(ncv, 0:3), ceqp(ncv), resht(ncv), reshe(ncv), reshi(ncv), &
 & reshn(ncv), reskt(ncv), reszt(ncv)
   REAL(kind=r8) :: shed0(nbdirsmax0, ncv, 0:3), shid0(nbdirsmax0, ncv, 0&
-& :3), shnd0(nbdirsmax0, ncv, 0:3), sktd0(nbdirsmax0, ncv, 0:3), ceqpd0(&
-& nbdirsmax0, ncv), reshtd0(nbdirsmax0, ncv), reshed0(nbdirsmax0, ncv), &
-& reshid0(nbdirsmax0, ncv), reshnd0(nbdirsmax0, ncv), resktd0(nbdirsmax0&
-& , ncv), resztd0(nbdirsmax0, ncv)
+& :3), shnd0(nbdirsmax0, ncv, 0:3), sktd0(nbdirsmax0, ncv, 0:3), sztd0(&
+& nbdirsmax0, ncv, 0:3), ceqpd0(nbdirsmax0, ncv), reshtd0(nbdirsmax0, &
+& ncv), reshed0(nbdirsmax0, ncv), reshid0(nbdirsmax0, ncv), reshnd0(&
+& nbdirsmax0, ncv), resktd0(nbdirsmax0, ncv), resztd0(nbdirsmax0, ncv)
   REAL(kind=r8) :: shed(nbdirsmax, ncv, 0:3), shid(nbdirsmax, ncv, 0:3)&
-& , shnd(nbdirsmax, ncv, 0:3), sktd(nbdirsmax, ncv, 0:3), ceqpd(&
-& nbdirsmax, ncv), reshtd(nbdirsmax, ncv), reshed(nbdirsmax, ncv), &
-& reshid(nbdirsmax, ncv), reshnd(nbdirsmax, ncv), resktd(nbdirsmax, ncv)&
-& , resztd(nbdirsmax, ncv)
+& , shnd(nbdirsmax, ncv, 0:3), sktd(nbdirsmax, ncv, 0:3), sztd(nbdirsmax&
+& , ncv, 0:3), ceqpd(nbdirsmax, ncv), reshtd(nbdirsmax, ncv), reshed(&
+& nbdirsmax, ncv), reshid(nbdirsmax, ncv), reshnd(nbdirsmax, ncv), &
+& resktd(nbdirsmax, ncv), resztd(nbdirsmax, ncv)
   REAL(kind=r8) :: shedd(nbdirsmax0, nbdirsmax, ncv, 0:3), shidd(&
 & nbdirsmax0, nbdirsmax, ncv, 0:3), shndd(nbdirsmax0, nbdirsmax, ncv, 0:&
-& 3), sktdd(nbdirsmax0, nbdirsmax, ncv, 0:3), ceqpdd(nbdirsmax0, &
-& nbdirsmax, ncv), reshtdd(nbdirsmax0, nbdirsmax, ncv), reshedd(&
-& nbdirsmax0, nbdirsmax, ncv), reshidd(nbdirsmax0, nbdirsmax, ncv), &
-& reshndd(nbdirsmax0, nbdirsmax, ncv), resktdd(nbdirsmax0, nbdirsmax, &
-& ncv), resztdd(nbdirsmax0, nbdirsmax, ncv)
+& 3), sktdd(nbdirsmax0, nbdirsmax, ncv, 0:3), sztdd(nbdirsmax0, &
+& nbdirsmax, ncv, 0:3), ceqpdd(nbdirsmax0, nbdirsmax, ncv), reshtdd(&
+& nbdirsmax0, nbdirsmax, ncv), reshedd(nbdirsmax0, nbdirsmax, ncv), &
+& reshidd(nbdirsmax0, nbdirsmax, ncv), reshndd(nbdirsmax0, nbdirsmax, &
+& ncv), resktdd(nbdirsmax0, nbdirsmax, ncv), resztdd(nbdirsmax0, &
+& nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: cortt(ncv), corte(ncv), corti(ncv), cortn(ncv), corkt&
 & (ncv), corzt(ncv)
@@ -2749,14 +2750,17 @@ SUBROUTINE B2USHT_DV_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt&
       IF (solvezt(ireg)) THEN
         DO nd=1,nbdirs
           DO nd0=nd,nbdirs0
-            aadd(nd0, nd, mpg%cvnvp(icv, 1)) = -(szt(icv, 3)*nidd(nd0, &
-&             nd, icv, 1))
+            aadd(nd0, nd, mpg%cvnvp(icv, 1)) = -sztdd(nd0, nd, icv, 1) -&
+&             sztd(nd, icv, 3)*nid0(nd0, icv, 1) - ni(icv, 1)*sztdd(nd0&
+&             , nd, icv, 3) - nid(nd, icv, 1)*sztd0(nd0, icv, 3) - szt(&
+&             icv, 3)*nidd(nd0, nd, icv, 1)
           END DO
-          aad(nd, mpg%cvnvp(icv, 1)) = -(szt(icv, 3)*nid(nd, icv, 1))
+          aad(nd, mpg%cvnvp(icv, 1)) = -sztd(nd, icv, 1) - ni(icv, 1)*&
+&           sztd(nd, icv, 3) - szt(icv, 3)*nid(nd, icv, 1)
         END DO
         DO nd0=1,nbdirs0
-          aad0(nd0, mpg%cvnvp(icv, 1)) = -(szt(icv, 3)*nid0(nd0, icv, 1)&
-&           )
+          aad0(nd0, mpg%cvnvp(icv, 1)) = -sztd0(nd0, icv, 1) - ni(icv, 1&
+&           )*sztd0(nd0, icv, 3) - szt(icv, 3)*nid0(nd0, icv, 1)
         END DO
         aa(mpg%cvnvp(icv, 1)) = -szt(icv, 1) - szt(icv, 3)*ni(icv, 1)
         IF (switch%b2mndt_style .LT. 2) THEN
@@ -3135,7 +3139,7 @@ END SUBROUTINE B2USHT_DV_DV
 !   variations   of useful results: conn flon reshe reshi corte
 !                corzt reskt reshn corti cortn resht cortt corkt
 !                reszt
-!   with respect to varying inputs: conn ti tn ne floe ni floi
+!   with respect to varying inputs: conn ti tn ne floe szt ni floi
 !                nn flon conkt reshe reshi corte reskt kt reshn
 !                corti flozt cortn resht she shi cortt skt shn
 !                flokt ceqp conzt cone coni te reszt zt
@@ -3157,11 +3161,11 @@ SUBROUTINE B2USHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, &
 & itcnt, ne, ned, ni, nid, nn, nnd, te, ted, ti, tid, tn, tnd, kt, ktd, &
 & zt, ztd, floe, floed, cone, coned, floi, floid, coni, conid, flon, &
 & flond, conn, connd, flokt, floktd, conkt, conktd, flozt, floztd, conzt&
-& , conztd, she, shed, shi, shid, shn, shnd, skt, sktd, szt, ceqp, ceqpd&
-& , resht, reshtd, reshe, reshed, reshi, reshid, reshn, reshnd, reskt, &
-& resktd, reszt, resztd, cortt, corttd, corte, corted, corti, cortid, &
-& cortn, cortnd, corkt, corktd, corzt, corztd, flo0, flo0d, con0, con0d&
-& , aa, aad, nbdirs)
+& , conztd, she, shed, shi, shid, shn, shnd, skt, sktd, szt, sztd, ceqp&
+& , ceqpd, resht, reshtd, reshe, reshed, reshi, reshid, reshn, reshnd, &
+& reskt, resktd, reszt, resztd, cortt, corttd, corte, corted, corti, &
+& cortid, cortn, cortnd, corkt, corktd, corzt, corztd, flo0, flo0d, con0&
+& , con0d, aa, aad, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   USE B2MOD_SWITCHES_DIFFV_DIFFV
@@ -3202,10 +3206,10 @@ SUBROUTINE B2USHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, &
 & , 0:3), szt(ncv, 0:3), ceqp(ncv), resht(ncv), reshe(ncv), reshi(ncv), &
 & reshn(ncv), reskt(ncv), reszt(ncv)
   REAL(kind=r8) :: shed(nbdirsmax, ncv, 0:3), shid(nbdirsmax, ncv, 0:3)&
-& , shnd(nbdirsmax, ncv, 0:3), sktd(nbdirsmax, ncv, 0:3), ceqpd(&
-& nbdirsmax, ncv), reshtd(nbdirsmax, ncv), reshed(nbdirsmax, ncv), &
-& reshid(nbdirsmax, ncv), reshnd(nbdirsmax, ncv), resktd(nbdirsmax, ncv)&
-& , resztd(nbdirsmax, ncv)
+& , shnd(nbdirsmax, ncv, 0:3), sktd(nbdirsmax, ncv, 0:3), sztd(nbdirsmax&
+& , ncv, 0:3), ceqpd(nbdirsmax, ncv), reshtd(nbdirsmax, ncv), reshed(&
+& nbdirsmax, ncv), reshid(nbdirsmax, ncv), reshnd(nbdirsmax, ncv), &
+& resktd(nbdirsmax, ncv), resztd(nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: cortt(ncv), corte(ncv), corti(ncv), cortn(ncv), corkt&
 & (ncv), corzt(ncv)
@@ -4662,7 +4666,8 @@ SUBROUTINE B2USHT_DV_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, &
       ireg = mpg%cvreg(icv)
       IF (solvezt(ireg)) THEN
         DO nd=1,nbdirs
-          aad(nd, mpg%cvnvp(icv, 1)) = -(szt(icv, 3)*nid(nd, icv, 1))
+          aad(nd, mpg%cvnvp(icv, 1)) = -sztd(nd, icv, 1) - ni(icv, 1)*&
+&           sztd(nd, icv, 3) - szt(icv, 3)*nid(nd, icv, 1)
         END DO
         aa(mpg%cvnvp(icv, 1)) = -szt(icv, 1) - szt(icv, 3)*ni(icv, 1)
         IF (switch%b2mndt_style .LT. 2) THEN

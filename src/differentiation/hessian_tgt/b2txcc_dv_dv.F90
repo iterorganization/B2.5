@@ -32,7 +32,7 @@ SUBROUTINE B2TXCC_DV_DV(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, kapd0&
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), kap(ncv), con(nfc)
@@ -333,7 +333,7 @@ SUBROUTINE B2TXCC_DV_NODIFF(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), kap(ncv), con(nfc)
@@ -493,7 +493,7 @@ SUBROUTINE B2TXCC_NODIFF_NODIFF(ncv, nfc, mode, geo, mpg, fcvol, fcs, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), kap(ncv), con(nfc)

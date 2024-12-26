@@ -20,7 +20,7 @@
 *
 *  1. purpose
 *
-*     B2PL (main program) is a postprocessor for B2. It reads and
+*     B2PL (main program) is a postprocessor for B2.5. It reads and
 *     displays the plasma state. This program calls the driver routine
 *     b2pldr for the actual computation.
 *

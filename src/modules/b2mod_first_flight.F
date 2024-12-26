@@ -14,6 +14,7 @@
       subroutine alloc_b2mod_first_flight(in_no_of_slices,
      *     in_size_of_table, in_no_of_start_points, in_dl)
       use b2mod_constants
+      use b2mod_chord_shift
       implicit none
       integer in_no_of_slices,in_size_of_table,
      *     in_no_of_start_points
@@ -37,6 +38,8 @@
       allocate(index(no_of_start_points,no_of_slices,0:1))
       ptr_index=0
       dl=in_dl
+      call init_chord_shift
+      return
       end subroutine alloc_b2mod_first_flight
 
       subroutine dealloc_b2mod_first_flight
@@ -189,62 +192,62 @@ cxpb  neutrals to be eion=shi/sna.
         iCvend=0
         ptr=index(indptr,ia,0)
         do while (flown_time.lt.flight_time .and.
-     1    ptr.le.index(indptr,ia,1))
-           iCv=table(ptr,0)
-           vcx=0.0_R8
-           vnn=0.0_R8
-           if (k.lt.st%rt%nscx) then
-             do ision = 0, ns-1
-               rcx=expu(st%rt%rlcx(iCv,0,ision,k)+
-     *                  st%rt%rlcx(iCv,1,ision,k)*
-     *              log(st%pl%ti(iCv)/(am(isneut)*ev)))
-               vcx=vcx+rcx*st%pl%na(iCv,ision)
-             enddo
-           end if
-           rion=expu(st%rt%rlsa(iCv,0,isneut)+
-     *               st%rt%rlsa(iCv,1,isneut)*log(st%pl%te(iCv)/ev))
-           vion=rion*st%dv%ne(iCv)
-           sxb=(expu(st%rt%rlqa(iCv,0,isneut)+
-     *               st%rt%rlqa(iCv,1,isneut)*log(st%pl%te(iCv)/ev)))/
-     *         (rion*st%rt%rpt(iCv,isneut+1))
-           vexc=sxb*vion
-           do ik = 0, st%rt%nscx-1
-             rnn=2.0e-19_R8*sqrt(st%pl%tn(iCv)/(mp*am(st%rt%iscx(ik))))
-             vnn=vnn+rnn*st%pl%na(iCv,st%rt%iscx(ik))
-           enddo
-           thru_time=dl/sqrt(eion/(am(isneut)*mp))*table(ptr,1)
-           if (flown_time+thru_time.lt.flight_time) then
-             dist_deposit=(vcx+vion+vexc+vnn)*dl/
-     *        sqrt(eion/(am(isneut)*mp))*table(ptr,1)
-             dist_deposit=min(dist_end*dist_deposit,dist_end)
-           else
-             thru_time=flight_time-flown_time
-             dist_deposit=dist_end
-           endif
-           flown_time=flown_time+thru_time
-           work(iCv,0)=work(iCv,0)+dist_deposit*
-     *      (vcx+vnn+vexc)/(vcx+vion+vexc+vnn)
-           work(iCv,1)=work(iCv,1)+dist_deposit*
-     *      vion/(vcx+vion+vexc+vnn)
-           wrk2(iCv)=wrk2(iCv)+dist_deposit*eion
-           wrk3(iCv)=wrk3(iCv)-dist_deposit*
-     *      sxb*st%rt%rpt(iCv,isneut+1)*ev*
-     *      (vion+vexc)/(vcx+vion+vexc+vnn)
-           dist_end=dist_end-dist_deposit
-           if(dist_end.le.0.0_R8) then
-             iCvend = iCv
-             exit
-           endif
-           ptr = ptr + 1
-         enddo
-         if(dist_end.gt.0.0_R8.and.iCvend.ne.0) then
-           if(mpg%cvOnClosedSurface(iCvend)) then
-             corepuff=corepuff+dist_end
-           elseif(mod(mpg%cvReg(iCvend),4).eq.2) then
-             mainpuff=mainpuff+dist_end
-           else
-             pfrpuff=pfrpuff+dist_end
-           endif
+     1   ptr.le.index(indptr,ia,1))
+          iCv=table(ptr,0)
+          vcx=0.0_R8
+          vnn=0.0_R8
+          if (k.lt.st%rt%nscx) then
+            do ision = 0, ns-1
+              rcx=expu(st%rt%rlcx(iCv,0,ision,k)+
+     *                 st%rt%rlcx(iCv,1,ision,k)*
+     *             log(st%pl%ti(iCv)/(am(isneut)*ev)))
+              vcx=vcx+rcx*st%pl%na(iCv,ision)
+            enddo
+          end if
+          rion=expu(st%rt%rlsa(iCv,0,isneut)+
+     *              st%rt%rlsa(iCv,1,isneut)*log(st%pl%te(iCv)/ev))
+          vion=rion*st%dv%ne(iCv)
+          sxb=(expu(st%rt%rlqa(iCv,0,isneut)+
+     *              st%rt%rlqa(iCv,1,isneut)*log(st%pl%te(iCv)/ev)))/
+     *        (rion*st%rt%rpt(iCv,isneut+1))
+          vexc=sxb*vion
+          do ik = 0, st%rt%nscx-1
+            rnn=2.0e-19_R8*sqrt(st%pl%tn(iCv)/(mp*am(st%rt%iscx(ik))))
+            vnn=vnn+rnn*st%pl%na(iCv,st%rt%iscx(ik))
+          enddo
+          thru_time=dl/sqrt(eion/(am(isneut)*mp))*table(ptr,1)
+          if (flown_time+thru_time.lt.flight_time) then
+            dist_deposit=(vcx+vion+vexc+vnn)*dl/
+     *       sqrt(eion/(am(isneut)*mp))*table(ptr,1)
+            dist_deposit=min(dist_end*dist_deposit,dist_end)
+          else
+            thru_time=flight_time-flown_time
+            dist_deposit=dist_end
+          endif
+          flown_time=flown_time+thru_time
+          work(iCv,0)=work(iCv,0)+dist_deposit*
+     *     (vcx+vnn+vexc)/(vcx+vion+vexc+vnn)
+          work(iCv,1)=work(iCv,1)+dist_deposit*
+     *     vion/(vcx+vion+vexc+vnn)
+          wrk2(iCv)=wrk2(iCv)+dist_deposit*eion
+          wrk3(iCv)=wrk3(iCv)-dist_deposit*
+     *     sxb*st%rt%rpt(iCv,isneut+1)*ev*
+     *     (vion+vexc)/(vcx+vion+vexc+vnn)
+          dist_end=dist_end-dist_deposit
+          if(dist_end.le.0.0_R8) then
+            iCvend = iCv
+            exit
+          endif
+          ptr = ptr + 1
+        enddo
+        if(dist_end.gt.0.0_R8.and.iCvend.ne.0) then
+          if(mpg%cvOnClosedSurface(iCvend)) then
+            corepuff=corepuff+dist_end
+          elseif(mod(mpg%cvReg(iCvend),4).eq.2) then
+            mainpuff=mainpuff+dist_end
+          else
+            pfrpuff=pfrpuff+dist_end
+          endif
         endif
       enddo
       return

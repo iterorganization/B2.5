@@ -2,13 +2,13 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2tqna in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: tdata cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci hce_exb hci0 vsa0 sig0
+!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata hce_exb hci0 vsa0 sig0
 !                alf0 dna_exb hcib hcn0 dna0 dkt0 vla0 hce0 dzt0
 !                dpa0 hci_exb
-!   with respect to varying inputs: tdata cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna hce_exb
+!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
+!                parm_alf parm_dpa parm_sig parm_dna tdata hce_exb
 !                hci0 vsa0 sig0 *(dv.ne) *(dv.ni) *(dv.vaecrb)
 !                alf0 *(rt.rlcx) *(rt.rlsa) *(rt.rza) dna_exb hcib
 !                hcn0 dna0 dkt0 switch.keps_cd switch.keps_heat
@@ -52,10 +52,6 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_B2CMPB_DIFFV
-!      use b2mod_ranges
-!      use b2mod_neoclassical
-!      use b2mod_geo_corner
-!     &                    , only : lengthy, nmdpl                 !srv 26.11.04
   USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -77,7 +73,8 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !.end b2tqna
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -1211,10 +1208,6 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_B2CMPB_DIFFV
-!      use b2mod_ranges
-!      use b2mod_neoclassical
-!      use b2mod_geo_corner
-!     &                    , only : lengthy, nmdpl                 !srv 26.11.04
   USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -1234,7 +1227,8 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !.end b2tqna
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -2401,7 +2395,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -2434,14 +2428,14 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
   EXTERNAL XERRAB
   INTRINSIC NINT
   INTRINSIC MIN
-  REAL(r8), DIMENSION(nCv) :: abs0
-  REAL(r8), DIMENSION(nbdirsmax, nCv) :: abs0d
-  REAL(r8) :: abs1
-  REAL(r8), DIMENSION(nbdirsmax) :: abs1d
-  REAL(kind=r8), DIMENSION(ncv) :: abs2
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: abs2d
-  REAL(kind=r8), DIMENSION(ncv) :: abs3
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: abs3d
+  REAL(kind=r8), DIMENSION(nCv) :: dabs0
+  REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: dabs0d
+  REAL(kind=r8) :: dabs1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: dabs1d
+  REAL(kind=r8), DIMENSION(ncv) :: dabs2
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs2d
+  REAL(kind=r8), DIMENSION(ncv) :: dabs3
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs3d
   REAL(r8), DIMENSION(nCv) :: arg1
   REAL(r8), DIMENSION(nbdirsmax, nCv) :: arg1d
   REAL(kind=r8), DIMENSION(nCv) :: result1
@@ -2489,28 +2483,28 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
     hci_exbd(nd, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
-    abs0d(nd, :) = 0.D0
+    dabs0d(nd, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
-    abs2d(nd, :) = 0.D0
+    dabs2d(nd, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
-    abs3d(nd, :) = 0.D0
+    dabs3d(nd, :) = 0.D0
   END DO
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
       IF (switch%keps_local .EQ. 1) THEN
         DO nd=1,nbdirs
-          WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs0d(nd&
+          WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d(nd&
 &           , :) = qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain)
         END DO
-        WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs0 = rt%&
+        WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0 = rt%&
 &           rza(:, ismain)*qe*geo%cvbb(:, 3)
         DO nd=1,nbdirs
-          WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) &
-&           abs0d(nd, :) = -(qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain))
+          WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) &
+&           dabs0d(nd, :) = -(qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain))
         END DO
-        WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs0&
+        WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0&
 &          = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
         arg1(:) = 2.0_R8*pl%ti/(am(ismain)*mp)
         temp = SQRT(arg1(:))
@@ -2523,24 +2517,24 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
           ELSEWHERE
             result1d(nd, :) = arg1d(nd, :)/(2.0*temp)
           END WHERE
-          rhold(nd, :) = am(ismain)*mp*(result1d(nd, :)-result1*abs0d(&
-&           nd, :)/abs0)/abs0
+          rhold(nd, :) = am(ismain)*mp*(result1d(nd, :)-result1*dabs0d(&
+&           nd, :)/dabs0)/dabs0
         END DO
-        rhol = am(ismain)*mp*result1/abs0
+        rhol = am(ismain)*mp*result1/dabs0
       ELSE
         IF (rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) &
 &           .GE. 0.) THEN
           temp0 = qe*geo%cvbb(omp(icsepomp), 3)
           DO nd=1,nbdirs
-            abs1d(nd) = temp0*rtd%rza(nd, omp(icsepomp), ismain)
+            dabs1d(nd) = temp0*rtd%rza(nd, omp(icsepomp), ismain)
           END DO
-          abs1 = temp0*rt%rza(omp(icsepomp), ismain)
+          dabs1 = temp0*rt%rza(omp(icsepomp), ismain)
         ELSE
           temp0 = qe*geo%cvbb(omp(icsepomp), 3)
           DO nd=1,nbdirs
-            abs1d(nd) = -(temp0*rtd%rza(nd, omp(icsepomp), ismain))
+            dabs1d(nd) = -(temp0*rtd%rza(nd, omp(icsepomp), ismain))
           END DO
-          abs1 = -(temp0*rt%rza(omp(icsepomp), ismain))
+          dabs1 = -(temp0*rt%rza(omp(icsepomp), ismain))
         END IF
         arg10 = 2.0_R8*pl%ti(omp(icsepomp))/(am(ismain)*mp)
         temp1 = SQRT(arg10)
@@ -2552,10 +2546,10 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
           ELSE
             result10d(nd) = arg10d(nd)/(2.0*temp1)
           END IF
-          rhold(nd, :) = am(ismain)*mp*(result10d(nd)-result10*abs1d(nd&
-&           )/abs1)/abs1
+          rhold(nd, :) = am(ismain)*mp*(result10d(nd)-result10*dabs1d(nd&
+&           )/dabs1)/dabs1
         END DO
-        rhol = am(ismain)*mp*result10/abs1
+        rhol = am(ismain)*mp*result10/dabs1
       END IF
 !       ..compute radial shear of diamagnetic ExB velocity
       DO nd=1,nbdirs
@@ -2569,18 +2563,18 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
 &                   , wrkf, wrkfd, shear, sheard, nbdirs)
       IF (switch%transport_keps .EQ. 1) THEN
         DO nd=1,nbdirs
-          WHERE (shear .GE. 0.0) abs2d(nd, :) = sheard(nd, :)
+          WHERE (shear .GE. 0.) dabs2d(nd, :) = sheard(nd, :)
         END DO
-        WHERE (shear .GE. 0.0) abs2 = shear
+        WHERE (shear .GE. 0.) dabs2 = shear
         DO nd=1,nbdirs
-          WHERE (.NOT.shear .GE. 0.0) abs2d(nd, :) = -sheard(nd, :)
+          WHERE (.NOT.shear .GE. 0.) dabs2d(nd, :) = -sheard(nd, :)
         END DO
-        WHERE (.NOT.shear .GE. 0.0) abs2 = -shear
+        WHERE (.NOT.shear .GE. 0.) dabs2 = -shear
         arg11(:) = pl%kt/(am(ismain)*mp)
         temp2 = SQRT(arg11(:))
         result11 = temp2
         temp3 = am(ismain)*mp*(b2tqna_keps_eps+result11/rhol+switch%&
-&         keps_shear*abs2)
+&         keps_shear*dabs2)
         temp4 = switch%keps_cd*pl%kt/temp3
         DO nd=1,nbdirs
 !   ..compute D according to KUL, using kt only
@@ -2594,8 +2588,8 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
           END WHERE
           dna_exbd(nd, :) = (pl%kt*switchd%keps_cd(nd)+switch%keps_cd*&
 &           pld%kt(nd, :)-temp4*am(ismain)*mp*((result11d(nd, :)-&
-&           result11*rhold(nd, :)/rhol)/rhol+abs2*switchd%keps_shear(nd&
-&           )+switch%keps_shear*abs2d(nd, :)))/temp3
+&           result11*rhold(nd, :)/rhol)/rhol+dabs2*switchd%keps_shear(nd&
+&           )+switch%keps_shear*dabs2d(nd, :)))/temp3
           dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
 &           switch%keps_fac)*dna0d(nd, :, is)
         END DO
@@ -2604,18 +2598,18 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
 &         -switch%keps_fac)*dna0(:, is)
       ELSE IF (switch%transport_keps .EQ. 2) THEN
         DO nd=1,nbdirs
-          WHERE (shear .GE. 0.0) abs3d(nd, :) = sheard(nd, :)
+          WHERE (shear .GE. 0.) dabs3d(nd, :) = sheard(nd, :)
         END DO
-        WHERE (shear .GE. 0.0) abs3 = shear
+        WHERE (shear .GE. 0.) dabs3 = shear
         DO nd=1,nbdirs
-          WHERE (.NOT.shear .GE. 0.0) abs3d(nd, :) = -sheard(nd, :)
+          WHERE (.NOT.shear .GE. 0.) dabs3d(nd, :) = -sheard(nd, :)
         END DO
-        WHERE (.NOT.shear .GE. 0.0) abs3 = -shear
+        WHERE (.NOT.shear .GE. 0.) dabs3 = -shear
         arg12(:) = pl%zt/(am(ismain)*mp)
         temp5 = SQRT(arg12(:))
         result12 = temp5
         temp4 = am(ismain)*mp*(b2tqna_keps_eps+result12+switch%&
-&         keps_shear*abs3)
+&         keps_shear*dabs3)
         temp3 = switch%keps_cd*pl%kt/temp4
         DO nd=1,nbdirs
 !   ..compute D according to KUL, using kt and zt
@@ -2626,8 +2620,8 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
             result12d(nd, :) = arg12d(nd, :)/(2.0*temp5)
           END WHERE
           dna_exbd(nd, :) = (pl%kt*switchd%keps_cd(nd)+switch%keps_cd*&
-&           pld%kt(nd, :)-temp3*am(ismain)*mp*(result12d(nd, :)+abs3*&
-&           switchd%keps_shear(nd)+switch%keps_shear*abs3d(nd, :)))/&
+&           pld%kt(nd, :)-temp3*am(ismain)*mp*(result12d(nd, :)+dabs3*&
+&           switchd%keps_shear(nd)+switch%keps_shear*dabs3d(nd, :)))/&
 &           temp4
           dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
 &           switch%keps_fac)*dna0d(nd, :, is)
@@ -2794,7 +2788,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -2813,10 +2807,10 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
   EXTERNAL XERRAB
   INTRINSIC NINT
   INTRINSIC MIN
-  REAL(r8), DIMENSION(nCv) :: abs0
-  REAL(r8) :: abs1
-  REAL(kind=r8), DIMENSION(ncv) :: abs2
-  REAL(kind=r8), DIMENSION(ncv) :: abs3
+  REAL(kind=r8), DIMENSION(nCv) :: dabs0
+  REAL(kind=r8) :: dabs1
+  REAL(kind=r8), DIMENSION(ncv) :: dabs2
+  REAL(kind=r8), DIMENSION(ncv) :: dabs3
   REAL(r8), DIMENSION(nCv) :: arg1
   REAL(kind=r8), DIMENSION(nCv) :: result1
   REAL(r8) :: arg10
@@ -2842,27 +2836,27 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
       IF (switch%keps_local .EQ. 1) THEN
-        WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) 
-          abs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
+        WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) 
+          dabs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
         ELSEWHERE
-          abs0 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
+          dabs0 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
         END WHERE
 !   ..compute local Larmor radius
         arg1(:) = 2.0_R8*pl%ti/(am(ismain)*mp)
         result1 = SQRT(arg1(:))
-        rhol = am(ismain)*mp*result1/abs0
+        rhol = am(ismain)*mp*result1/dabs0
       ELSE
         IF (rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) &
 &           .GE. 0.) THEN
-          abs1 = rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp)&
-&           , 3)
+          dabs1 = rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp&
+&           ), 3)
         ELSE
-          abs1 = -(rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(&
+          dabs1 = -(rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(&
 &           icsepomp), 3))
         END IF
         arg10 = 2.0_R8*pl%ti(omp(icsepomp))/(am(ismain)*mp)
         result10 = SQRT(arg10)
-        rhol = am(ismain)*mp*result10/abs1
+        rhol = am(ismain)*mp*result10/dabs1
       END IF
 !       ..compute radial shear of diamagnetic ExB velocity
       wrkf = dv%vaecrb(:, 0, ismain)*geo%fcbb(:, 3)/geo%fcbb(:, 2)
@@ -2870,10 +2864,10 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
       CALL GRADC_DIV_R_NODIFF(ncv, nfc, nvx, 1, geo, mpg, wrkc, wrkf, &
 &                       shear)
       IF (switch%transport_keps .EQ. 1) THEN
-        WHERE (shear .GE. 0.0) 
-          abs2 = shear
+        WHERE (shear .GE. 0.) 
+          dabs2 = shear
         ELSEWHERE
-          abs2 = -shear
+          dabs2 = -shear
         END WHERE
 !   ..compute D according to KUL, using kt only
 !wdk at the moment: assumption that kt is related to main ion species;
@@ -2881,20 +2875,20 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
         arg11(:) = pl%kt/(am(ismain)*mp)
         result11 = SQRT(arg11(:))
         dna_exb = switch%keps_cd*(pl%kt/(am(ismain)*mp))/(result11/rhol+&
-&         switch%keps_shear*abs2+b2tqna_keps_eps)
+&         switch%keps_shear*dabs2+b2tqna_keps_eps)
         dna0(:, is) = (dna_exb+switch%dna_min)*switch%keps_fac + (1.0_R8&
 &         -switch%keps_fac)*dna0(:, is)
       ELSE IF (switch%transport_keps .EQ. 2) THEN
-        WHERE (shear .GE. 0.0) 
-          abs3 = shear
+        WHERE (shear .GE. 0.) 
+          dabs3 = shear
         ELSEWHERE
-          abs3 = -shear
+          dabs3 = -shear
         END WHERE
 !   ..compute D according to KUL, using kt and zt
         arg12(:) = pl%zt/(am(ismain)*mp)
         result12 = SQRT(arg12(:))
         dna_exb = switch%keps_cd*(pl%kt/(am(ismain)*mp))/(result12+&
-&         switch%keps_shear*abs3+b2tqna_keps_eps)
+&         switch%keps_shear*dabs3+b2tqna_keps_eps)
         dna0(:, is) = (dna_exb+switch%dna_min)*switch%keps_fac + (1.0_R8&
 &         -switch%keps_fac)*dna0(:, is)
       ELSE

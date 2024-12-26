@@ -25,17 +25,18 @@
 !
 !
 !
-SUBROUTINE B2XPEN_DV_DV(ncv, nfc, ns, mpg, fna, fnad0, fnad, fnadd, &
-& fna_53, fna_53d0, fna_53d, fna_53dd, fne_53, fne_53d0, fne_53d, &
-& fne_53dd, fch, fchd0, fchd, fchdd, fhe, fhed0, fhed, fhedd, fhi, fhid0&
-& , fhid, fhidd, fhn, fhnd0, fhnd, fhndd, rpt, rptd0, rptd, rptdd, te, &
-& ted0, ted, tedd, ti, tid0, tid, tidd, tn, tnd0, tnd, tndd, po, pod0, &
-& pod, podd, boris, fhm, fhmd0, fhmd, fhmdd, fhp, fhpd0, fhpd, fhpdd, &
-& fhj, fhjd0, fhjd, fhjdd, fht, fhtd0, fhtd, fhtdd, nbdirs, nbdirs0)
+SUBROUTINE B2XPEN_DV_DV(ncv, nfc, ns, mpg, switch, fna, fnad0, fnad, &
+& fnadd, fna_53, fna_53d0, fna_53d, fna_53dd, fne_53, fne_53d0, fne_53d&
+& , fne_53dd, fch, fchd0, fchd, fchdd, fhe, fhed0, fhed, fhedd, fhi, &
+& fhid0, fhid, fhidd, fhn, fhnd0, fhnd, fhndd, rpt, rptd0, rptd, rptdd, &
+& te, ted0, ted, tedd, ti, tid0, tid, tidd, tn, tnd0, tnd, tndd, po, &
+& pod0, pod, podd, fhm, fhmd0, fhmd, fhmdd, fhp, fhpd0, fhpd, fhpdd, fhj&
+& , fhjd0, fhjd, fhjdd, fht, fhtd0, fhtd, fhtdd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2US_MAP_DIFFV_DIFFV
   USE B2MOD_B2CMPA_DIFFV_DIFFV
+  USE B2MOD_SWITCHES_DIFFV_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
@@ -44,9 +45,10 @@ SUBROUTINE B2XPEN_DV_DV(ncv, nfc, ns, mpg, fna, fnad0, fnad, fnadd, &
   INTEGER :: ncv, nfc, ns
 ! inputs
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(SWITCHES), INTENT(INOUT) :: switch
   REAL(kind=r8) :: fna(nfc, 0:1, 0:ns-1), fna_53(nfc, 0:1, 0:ns-1), &
 & fne_53(nfc, 0:1), fch(nfc, 0:1), fhe(nfc, 0:1), fhi(nfc, 0:1), fhn(nfc&
-& , 0:1), rpt(ncv, 0:ns-1), te(ncv), ti(ncv), tn(ncv), po(ncv), boris
+& , 0:1), rpt(ncv, 0:ns-1), te(ncv), ti(ncv), tn(ncv), po(ncv)
   REAL(kind=r8) :: fnad0(nbdirsmax0, nfc, 0:1, 0:ns-1), fna_53d0(&
 & nbdirsmax0, nfc, 0:1, 0:ns-1), fne_53d0(nbdirsmax0, nfc, 0:1), fchd0(&
 & nbdirsmax0, nfc, 0:1), fhed0(nbdirsmax0, nfc, 0:1), fhid0(nbdirsmax0, &
@@ -227,32 +229,37 @@ SUBROUTINE B2XPEN_DV_DV(ncv, nfc, ns, mpg, fna, fnad0, fnad, fnadd, &
   DO nd=1,nbdirs
     DO nd0=nd,nbdirs0
       fhtdd(nd0, nd, :, :) = fhedd(nd0, nd, :, :) + fhidd(nd0, nd, :, :)&
-&       + fhndd(nd0, nd, :, :) + fhjdd(nd0, nd, :, :) + (1.0_R8-boris)*&
-&       fntdd(nd0, nd, :, :)
+&       + fhndd(nd0, nd, :, :) + fhjdd(nd0, nd, :, :) + (1.0_R8-switch%&
+&       boris)*fntdd(nd0, nd, :, :)
     END DO
     fhtd(nd, :, :) = fhed(nd, :, :) + fhid(nd, :, :) + fhnd(nd, :, :) + &
-&     fhjd(nd, :, :) + (1.0_R8-boris)*fntd(nd, :, :)
+&     fhjd(nd, :, :) + (1.0_R8-switch%boris)*fntd(nd, :, :)
   END DO
   DO nd0=1,nbdirs0
     fhtd0(nd0, :, :) = fhed0(nd0, :, :) + fhid0(nd0, :, :) + fhnd0(nd0, &
-&     :, :) + fhjd0(nd0, :, :) + (1.0_R8-boris)*fntd0(nd0, :, :)
+&     :, :) + fhjd0(nd0, :, :) + (1.0_R8-switch%boris)*fntd0(nd0, :, :)
   END DO
-  fht = fhe + fhi + fhn + fhj + fnt*(1.0_R8-boris)
+  fht = fhe + fhi + fhn + fhj + fnt*(1.0_R8-switch%boris)
   DO is=0,ns-1
     DO nd=1,nbdirs
       DO nd0=nd,nbdirs0
         fhtdd(nd0, nd, :, :) = fhtdd(nd0, nd, :, :) + fhpdd(nd0, nd, :, &
-&         :, is) + (1.0_R8-boris)*fhmdd(nd0, nd, :, :, is)
+&         :, is) + (1.0_R8-switch%boris)*fhmdd(nd0, nd, :, :, is)
       END DO
       fhtd(nd, :, :) = fhtd(nd, :, :) + fhpd(nd, :, :, is) + (1.0_R8-&
-&       boris)*fhmd(nd, :, :, is)
+&       switch%boris)*fhmd(nd, :, :, is)
     END DO
     DO nd0=1,nbdirs0
       fhtd0(nd0, :, :) = fhtd0(nd0, :, :) + fhpd0(nd0, :, :, is) + (&
-&       1.0_R8-boris)*fhmd0(nd0, :, :, is)
+&       1.0_R8-switch%boris)*fhmd0(nd0, :, :, is)
     END DO
-    fht = fht + fhp(:, :, is) + fhm(:, :, is)*(1.0_R8-boris)
+    fht = fht + fhp(:, :, is) + fhm(:, :, is)*(1.0_R8-switch%boris)
   END DO
+!
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, nfc, 1, fht(1, 0), 'b2xpen_fht_th')
+    CALL MY_OUT_US(70, nfc, 1, fht(1, 1), 'b2xpen_fht_r')
+  END IF
 !$$$  call subend ()
   RETURN
 END SUBROUTINE B2XPEN_DV_DV
@@ -275,14 +282,15 @@ END SUBROUTINE B2XPEN_DV_DV
 !
 !
 !
-SUBROUTINE B2XPEN_DV_NODIFF(ncv, nfc, ns, mpg, fna, fnad, fna_53, &
-& fna_53d, fne_53, fne_53d, fch, fchd, fhe, fhed, fhi, fhid, fhn, fhnd, &
-& rpt, rptd, te, ted, ti, tid, tn, tnd, po, pod, boris, fhm, fhmd, fhp, &
-& fhpd, fhj, fhjd, fht, fhtd, nbdirs)
+SUBROUTINE B2XPEN_DV_NODIFF(ncv, nfc, ns, mpg, switch, fna, fnad, fna_53&
+& , fna_53d, fne_53, fne_53d, fch, fchd, fhe, fhed, fhi, fhid, fhn, fhnd&
+& , rpt, rptd, te, ted, ti, tid, tn, tnd, po, pod, fhm, fhmd, fhp, fhpd&
+& , fhj, fhjd, fht, fhtd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2US_MAP_DIFFV_DIFFV
   USE B2MOD_B2CMPA_DIFFV_DIFFV
+  USE B2MOD_SWITCHES_DIFFV_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -290,9 +298,10 @@ SUBROUTINE B2XPEN_DV_NODIFF(ncv, nfc, ns, mpg, fna, fnad, fna_53, &
   INTEGER :: ncv, nfc, ns
 ! inputs
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(SWITCHES), INTENT(INOUT) :: switch
   REAL(kind=r8) :: fna(nfc, 0:1, 0:ns-1), fna_53(nfc, 0:1, 0:ns-1), &
 & fne_53(nfc, 0:1), fch(nfc, 0:1), fhe(nfc, 0:1), fhi(nfc, 0:1), fhn(nfc&
-& , 0:1), rpt(ncv, 0:ns-1), te(ncv), ti(ncv), tn(ncv), po(ncv), boris
+& , 0:1), rpt(ncv, 0:ns-1), te(ncv), ti(ncv), tn(ncv), po(ncv)
   REAL(kind=r8) :: fnad(nbdirsmax, nfc, 0:1, 0:ns-1), fna_53d(nbdirsmax&
 & , nfc, 0:1, 0:ns-1), fne_53d(nbdirsmax, nfc, 0:1), fchd(nbdirsmax, nfc&
 & , 0:1), fhed(nbdirsmax, nfc, 0:1), fhid(nbdirsmax, nfc, 0:1), fhnd(&
@@ -371,16 +380,21 @@ SUBROUTINE B2XPEN_DV_NODIFF(ncv, nfc, ns, mpg, fna, fnad, fna_53, &
 ! calculate total fluxes (fht)
   DO nd=1,nbdirs
     fhtd(nd, :, :) = fhed(nd, :, :) + fhid(nd, :, :) + fhnd(nd, :, :) + &
-&     fhjd(nd, :, :) + (1.0_R8-boris)*fntd(nd, :, :)
+&     fhjd(nd, :, :) + (1.0_R8-switch%boris)*fntd(nd, :, :)
   END DO
-  fht = fhe + fhi + fhn + fhj + fnt*(1.0_R8-boris)
+  fht = fhe + fhi + fhn + fhj + fnt*(1.0_R8-switch%boris)
   DO is=0,ns-1
     DO nd=1,nbdirs
       fhtd(nd, :, :) = fhtd(nd, :, :) + fhpd(nd, :, :, is) + (1.0_R8-&
-&       boris)*fhmd(nd, :, :, is)
+&       switch%boris)*fhmd(nd, :, :, is)
     END DO
-    fht = fht + fhp(:, :, is) + fhm(:, :, is)*(1.0_R8-boris)
+    fht = fht + fhp(:, :, is) + fhm(:, :, is)*(1.0_R8-switch%boris)
   END DO
+!
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, nfc, 1, fht(1, 0), 'b2xpen_fht_th')
+    CALL MY_OUT_US(70, nfc, 1, fht(1, 1), 'b2xpen_fht_r')
+  END IF
 !$$$  call subend ()
   RETURN
 END SUBROUTINE B2XPEN_DV_NODIFF
@@ -396,21 +410,23 @@ END SUBROUTINE B2XPEN_DV_NODIFF
 !
 !
 !
-SUBROUTINE B2XPEN_NODIFF_NODIFF(ncv, nfc, ns, mpg, fna, fna_53, fne_53, &
-& fch, fhe, fhi, fhn, rpt, te, ti, tn, po, boris, fhm, fhp, fhj, fht)
+SUBROUTINE B2XPEN_NODIFF_NODIFF(ncv, nfc, ns, mpg, switch, fna, fna_53, &
+& fne_53, fch, fhe, fhi, fhn, rpt, te, ti, tn, po, fhm, fhp, fhj, fht)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2US_MAP_DIFFV_DIFFV
   USE B2MOD_B2CMPA_DIFFV_DIFFV
+  USE B2MOD_SWITCHES_DIFFV_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
   INTEGER :: ncv, nfc, ns
 ! inputs
   TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(SWITCHES), INTENT(INOUT) :: switch
   REAL(kind=r8) :: fna(nfc, 0:1, 0:ns-1), fna_53(nfc, 0:1, 0:ns-1), &
 & fne_53(nfc, 0:1), fch(nfc, 0:1), fhe(nfc, 0:1), fhi(nfc, 0:1), fhn(nfc&
-& , 0:1), rpt(ncv, 0:ns-1), te(ncv), ti(ncv), tn(ncv), po(ncv), boris
+& , 0:1), rpt(ncv, 0:ns-1), te(ncv), ti(ncv), tn(ncv), po(ncv)
 ! outputs
   REAL(kind=r8) :: fhm(nfc, 0:1, 0:ns-1), fhp(nfc, 0:1, 0:ns-1), fhj(nfc&
 & , 0:1), fht(nfc, 0:1)
@@ -447,10 +463,15 @@ SUBROUTINE B2XPEN_NODIFF_NODIFF(ncv, nfc, ns, mpg, fna, fna_53, fne_53, &
     END DO
   END DO
 ! calculate total fluxes (fht)
-  fht = fhe + fhi + fhn + fhj + fnt*(1.0_R8-boris)
+  fht = fhe + fhi + fhn + fhj + fnt*(1.0_R8-switch%boris)
   DO is=0,ns-1
-    fht = fht + fhp(:, :, is) + fhm(:, :, is)*(1.0_R8-boris)
+    fht = fht + fhp(:, :, is) + fhm(:, :, is)*(1.0_R8-switch%boris)
   END DO
+!
+  IF (switch%iout_b2wdat .EQ. 4) THEN
+    CALL MY_OUT_US(70, nfc, 1, fht(1, 0), 'b2xpen_fht_th')
+    CALL MY_OUT_US(70, nfc, 1, fht(1, 1), 'b2xpen_fht_r')
+  END IF
 !$$$  call subend ()
   RETURN
 END SUBROUTINE B2XPEN_NODIFF_NODIFF

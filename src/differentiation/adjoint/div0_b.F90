@@ -23,7 +23,7 @@ SUBROUTINE DIV0_B(ncv, nfc, mpg, flo, flob, dflo, dflob)
   USE B2US_MAP_DIFF
   IMPLICIT NONE
 !   ..input arguments
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: flo(nfc)
   REAL(kind=r8) :: flob(nfc)
@@ -70,7 +70,7 @@ SUBROUTINE DIV0_NODIFF(ncv, nfc, mpg, flo, dflo)
   USE B2US_MAP_DIFF
   IMPLICIT NONE
 !   ..input arguments
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: flo(nfc)
 !   ..output arguments

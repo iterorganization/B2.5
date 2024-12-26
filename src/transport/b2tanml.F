@@ -27,7 +27,7 @@
 *
 *  1. purpose
 *
-*     B2TANML computes the X and Y components of the anomalous current.
+*     B2TANML computes the poloidal and radial components of the anomalous current.
 *
 *
 *  8. further comments

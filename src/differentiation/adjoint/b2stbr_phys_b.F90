@@ -1066,11 +1066,10 @@ SUBROUTINE B2STBR_PHYS_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
 !nh 30.03.21
     fna_mol = 0.0_R8
 !
-    CALL PUSHCHARACTERARRAY(my_out_folder, 7)
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHREAL8(cutlo, r8/8)
     CALL PUSHREAL8(cutll, r8/8)
+    CALL PUSHCHARACTERARRAY(my_out_folder, 7)
     CALL PRECOMPUTE_KUL_QUANT(ncv, nfc, nvx, switch, geo, mpg, pl, dv, &
 &                       co, rt, dnn)
     CALL PUSHCONTROL1B(1)
@@ -1118,7 +1117,6 @@ SUBROUTINE B2STBR_PHYS_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
 &                     , 2)/8)
         CALL PUSHREAL8ARRAY(shi0_ff, r8*ncv*nscx/8)
         CALL PUSHBOOLEAN(b2mod_math_initialised)
-        CALL PUSHREAL4(small_r4_constant, r4/8)
         CALL PUSHREAL8(cutlo, r8/8)
         CALL PUSHREAL8(cutll, r8/8)
         CALL PUSHREAL8(int6r, r8/8)
@@ -1184,7 +1182,6 @@ SUBROUTINE B2STBR_PHYS_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
         CALL POPREAL8(int6r, r8/8)
         CALL POPREAL8(cutll, r8/8)
         CALL POPREAL8(cutlo, r8/8)
-        CALL POPREAL4(small_r4_constant, r4/8)
         CALL POPBOOLEAN(b2mod_math_initialised)
         CALL POPREAL8ARRAY(shi0_ff, r8*ncv*nscx/8)
         CALL POPREAL8ARRAY(srw%she0, r8*SIZE(srw%she0, 1)*SIZE(srw%she0&
@@ -1213,11 +1210,10 @@ SUBROUTINE B2STBR_PHYS_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim, &
   END DO
   CALL POPCONTROL1B(branch)
   IF (branch .NE. 0) THEN
+    CALL POPCHARACTERARRAY(my_out_folder, 7)
     CALL POPREAL8(cutll, r8/8)
     CALL POPREAL8(cutlo, r8/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
-    CALL POPCHARACTERARRAY(my_out_folder, 7)
     CALL PRECOMPUTE_KUL_QUANT_B(ncv, nfc, nvx, switch, geo, geob, mpg, &
 &                         mpgb, pl, plb, dv, dvb, co, rt, rtb, dnn, dnnb&
 &                        )
@@ -1536,7 +1532,6 @@ CONTAINS
 !
             IF (maxw(istra) .EQ. 0) THEN
               CALL PUSHBOOLEAN(b2mod_math_initialised)
-              CALL PUSHREAL4(small_r4_constant, r4/8)
               CALL PUSHREAL8(cutlo, r8/8)
               CALL PUSHREAL8(cutll, r8/8)
               CALL PUSHREAL8(int6r, r8/8)
@@ -1585,7 +1580,6 @@ CONTAINS
               CALL PUSHCONTROL2B(1)
             ELSE IF (maxw(istra) .EQ. 2) THEN
               CALL PUSHBOOLEAN(b2mod_math_initialised)
-              CALL PUSHREAL4(small_r4_constant, r4/8)
               CALL PUSHREAL8(cutlo, r8/8)
               CALL PUSHREAL8(cutll, r8/8)
               CALL PUSHREAL8(int6r, r8/8)
@@ -1613,7 +1607,6 @@ CONTAINS
               CALL PUSHCONTROL2B(2)
             ELSE
               CALL PUSHBOOLEAN(b2mod_math_initialised)
-              CALL PUSHREAL4(small_r4_constant, r4/8)
               CALL PUSHREAL8(cutlo, r8/8)
               CALL PUSHREAL8(cutll, r8/8)
               CALL PUSHREAL8(int6r, r8/8)
@@ -1648,7 +1641,6 @@ CONTAINS
             IF (.NOT.lcore) THEN
               IF (maxw(istra) .EQ. 0) THEN
                 CALL PUSHBOOLEAN(b2mod_math_initialised)
-                CALL PUSHREAL4(small_r4_constant, r4/8)
                 CALL PUSHREAL8(cutlo, r8/8)
                 CALL PUSHREAL8(cutll, r8/8)
                 CALL PUSHREAL8(int6r, r8/8)
@@ -1708,7 +1700,6 @@ CONTAINS
                 CALL PUSHCONTROL3B(1)
               ELSE IF (maxw(istra) .EQ. 2) THEN
                 CALL PUSHBOOLEAN(b2mod_math_initialised)
-                CALL PUSHREAL4(small_r4_constant, r4/8)
                 CALL PUSHREAL8(cutlo, r8/8)
                 CALL PUSHREAL8(cutll, r8/8)
                 CALL PUSHREAL8(int6r, r8/8)
@@ -1746,7 +1737,6 @@ CONTAINS
                 CALL PUSHCONTROL3B(2)
               ELSE
                 CALL PUSHBOOLEAN(b2mod_math_initialised)
-                CALL PUSHREAL4(small_r4_constant, r4/8)
                 CALL PUSHREAL8(cutlo, r8/8)
                 CALL PUSHREAL8(cutll, r8/8)
                 CALL PUSHREAL8(int6r, r8/8)
@@ -2065,7 +2055,6 @@ CONTAINS
                 CALL POPREAL8(int6r, r8/8)
                 CALL POPREAL8(cutll, r8/8)
                 CALL POPREAL8(cutlo, r8/8)
-                CALL POPREAL4(small_r4_constant, r4/8)
                 CALL POPBOOLEAN(b2mod_math_initialised)
                 CALL CALCREFLECTEDFLUXESDIFFUSION_B(icv, icn, mpg%nci, &
 &                                             ifc, isign, is0, is2, isi&
@@ -2144,7 +2133,6 @@ CONTAINS
               CALL POPREAL8(int6r, r8/8)
               CALL POPREAL8(cutll, r8/8)
               CALL POPREAL8(cutlo, r8/8)
-              CALL POPREAL4(small_r4_constant, r4/8)
               CALL POPBOOLEAN(b2mod_math_initialised)
               CALL CALCREFLECTEDFLUXESKN_B(switch%kn_b1, switch%kn_b2, &
 &                                    icv, icn, mpg%nci, ifc, isign, is0&
@@ -2181,7 +2169,6 @@ CONTAINS
               CALL POPREAL8(int6r, r8/8)
               CALL POPREAL8(cutll, r8/8)
               CALL POPREAL8(cutlo, r8/8)
-              CALL POPREAL4(small_r4_constant, r4/8)
               CALL POPBOOLEAN(b2mod_math_initialised)
               CALL CALCREFLECTEDFLUXESMINKN_B(icv, icn, mpg%nci, ifc, &
 &                                       isign, is0, is2, isi, istra, &
@@ -2224,7 +2211,6 @@ CONTAINS
                 CALL POPREAL8(int6r, r8/8)
                 CALL POPREAL8(cutll, r8/8)
                 CALL POPREAL8(cutlo, r8/8)
-                CALL POPREAL4(small_r4_constant, r4/8)
                 CALL POPBOOLEAN(b2mod_math_initialised)
                 CALL CALCINCIDENTFLUXESDIFFUSION_B(icv, icn, ifc, isign&
 &                                            , is0, is2, isi, istra, &
@@ -2280,7 +2266,6 @@ CONTAINS
               CALL POPREAL8(int6r, r8/8)
               CALL POPREAL8(cutll, r8/8)
               CALL POPREAL8(cutlo, r8/8)
-              CALL POPREAL4(small_r4_constant, r4/8)
               CALL POPBOOLEAN(b2mod_math_initialised)
               CALL CALCINCIDENTFLUXESKN_B(switch%kn_b1, switch%kn_b2, &
 &                                   icv, icn, ifc, isign, is0, is2, isi&
@@ -2310,7 +2295,6 @@ CONTAINS
               CALL POPREAL8(int6r, r8/8)
               CALL POPREAL8(cutll, r8/8)
               CALL POPREAL8(cutlo, r8/8)
-              CALL POPREAL4(small_r4_constant, r4/8)
               CALL POPBOOLEAN(b2mod_math_initialised)
               CALL CALCINCIDENTFLUXESMINKN_B(icv, icn, ifc, isign, is0, &
 &                                      is2, isi, istra, phi_app, farea, &

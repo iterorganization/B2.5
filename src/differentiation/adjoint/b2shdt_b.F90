@@ -2,10 +2,10 @@
 !  Tapenade 3.16 (develop) - 13 Feb 2024 17:09
 !
 !  Differentiation of b2shdt in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: shidt shndt ne ni tep nn nap
-!                ktp tip sktdt kinrgyp shedt tnp
-!   with respect to varying inputs: shidt shndt ne ni tep nn nap
-!                ktp tip sktdt kinrgyp shedt tnp
+!   gradient     of useful results: shidt shndt sztdt ne ni tep
+!                nn nap ktp tip sktdt kinrgyp ztp shedt tnp
+!   with respect to varying inputs: shidt shndt sztdt ne ni tep
+!                nn nap ktp tip sktdt kinrgyp ztp shedt tnp
 !
 !
 !
@@ -21,9 +21,9 @@
 !.specification
 !
 SUBROUTINE B2SHDT_B(ncv, nci, ns, dtim, cvvol, nap, napb, tep, tepb, tip&
-& , tipb, tnp, tnpb, ktp, ktpb, ztp, ne, neb, ni, nib, nn, nnb, kinrgyp&
-& , kinrgypb, switch, mpg, shedt, shedtb, shidt, shidtb, shndt, shndtb, &
-& sktdt, sktdtb, sztdt)
+& , tipb, tnp, tnpb, ktp, ktpb, ztp, ztpb, ne, neb, ni, nib, nn, nnb, &
+& kinrgyp, kinrgypb, switch, mpg, shedt, shedtb, shidt, shidtb, shndt, &
+& shndtb, sktdt, sktdtb, sztdt, sztdtb)
   USE B2MOD_TYPES
   USE B2MOD_INDIRECT_DIFF
   USE B2MOD_NUMERICS_NAMELIST_DIFF
@@ -46,12 +46,13 @@ SUBROUTINE B2SHDT_B(ncv, nci, ns, dtim, cvvol, nap, napb, tep, tepb, tip&
 & ), tnp(ncv), ktp(ncv), ztp(ncv), ne(ncv), ni(ncv, 0:1), nn(ncv), &
 & kinrgyp(ncv, 0:ns-1)
   REAL(kind=r8) :: napb(ncv, 0:ns-1), tepb(ncv), tipb(ncv), tnpb(ncv), &
-& ktpb(ncv), neb(ncv), nib(ncv, 0:1), nnb(ncv), kinrgypb(ncv, 0:ns-1)
+& ktpb(ncv), ztpb(ncv), neb(ncv), nib(ncv, 0:1), nnb(ncv), kinrgypb(ncv&
+& , 0:ns-1)
 !   ..input/output arguments
   REAL(kind=r8) :: shedt(ncv, 0:3), shidt(ncv, 0:3), shndt(ncv, 0:3), &
 & sktdt(ncv, 0:3), sztdt(ncv, 0:3)
   REAL(kind=r8) :: shedtb(ncv, 0:3), shidtb(ncv, 0:3), shndtb(ncv, 0:3)&
-& , sktdtb(ncv, 0:3)
+& , sktdtb(ncv, 0:3), sztdtb(ncv, 0:3)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -123,6 +124,31 @@ SUBROUTINE B2SHDT_B(ncv, nci, ns, dtim, cvvol, nap, napb, tep, tepb, tip&
     DO icv=1,nci
       CALL PUSHREAL8(t0, r8/8)
     END DO
+    CALL PUSHCONTROL1B(0)
+  ELSE
+    CALL PUSHCONTROL1B(1)
+  END IF
+!
+  IF (switch%solve_keps .GT. 1) THEN
+! only internal cells
+    DO icv=1,nci
+      CALL PUSHREAL8(t0, r8/8)
+    END DO
+    DO icv=nci,1,-1
+      sztdtb(icv, 3) = 0.D0
+      sztdtb(icv, 2) = 0.D0
+      sztdtb(icv, 1) = 0.D0
+      ttim = dtim*time_factor(icv)
+      t0 = switch%b2srdt_phm3/ttim*cvvol(icv)
+      tempb0 = t0*1.5_R8*sztdtb(icv, 0)
+      sztdtb(icv, 0) = 0.D0
+      nib(icv, 1) = nib(icv, 1) + ztp(icv)*tempb0
+      ztpb(icv) = ztpb(icv) + ni(icv, 1)*tempb0
+      CALL POPREAL8(t0, r8/8)
+    END DO
+  END IF
+  CALL POPCONTROL1B(branch)
+  IF (branch .EQ. 0) THEN
     DO icv=nci,1,-1
       sktdtb(icv, 3) = 0.D0
       sktdtb(icv, 2) = 0.D0

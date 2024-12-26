@@ -54,12 +54,6 @@
       if (meth .eq. 0) then ! CENTRAL scheme
 
        do iFc = 1, nFc
-         cvs = mpg%fcCv(iFc,:)
-         if (mpg%cvFt(cvs(1)).eq.mpg%cvFt(cvs(2))) then
-           radcoef = 0.0_R8
-         else
-           radcoef = 1.0_R8
-         endif
 *    ..geometric factors for cell and vertex contributions
 *      to differences of cell faces (consistent with diff_p, diff_r)
         t00 = geo%fcQalf(iFc,0)
@@ -79,12 +73,7 @@
        enddo
 
       elseif (meth .eq. 1) then ! UPWIND scheme
-         cvs = mpg%fcCv(iFc,:)
-         if (mpg%cvFt(cvs(1)).eq.mpg%cvFt(cvs(2))) then
-           radcoef = 0.0_R8
-         else
-           radcoef = 1.0_R8
-         endif
+
        do iFc = 1, nFc
 *    ..geometric factors for cell and vertex contributions
 *      to differences of cell faces (consistent with diff_p, diff_r)
@@ -108,12 +97,6 @@
       elseif (meth .eq. 2) then ! SOLPS5 hybrid scheme
 
        do iFc = 1, nFc
-         cvs = mpg%fcCv(iFc,:)
-         if (mpg%cvFt(cvs(1)).eq.mpg%cvFt(cvs(2))) then
-           radcoef = 0.0_R8
-         else
-           radcoef = 1.0_R8
-         endif
 *    ..effective diffusion coefficients
         t0 = hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) -
      &    0.5_R8*abs(flo(iFc,0))

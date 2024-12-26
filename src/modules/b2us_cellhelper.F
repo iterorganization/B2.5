@@ -102,8 +102,8 @@
 
         if (.not.isAligned(iFc,m) ) then ! not aligned - skips aligned radial faces
           cells = m%fcCv(iFc,:)
-          tol = 1e-1_R8*abs( g%vxFpsi(m%fcVx(iFc,1)) -
-     &          g%vxFpsi(m%fcVx(iFc,2)))
+          tol = 1.0e-1_R8*abs( g%vxFpsi(m%fcVx(iFc,1)) -
+     &                         g%vxFpsi(m%fcVx(iFc,2)))
           !all combinations of cells
 
           !two quads

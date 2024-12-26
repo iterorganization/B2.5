@@ -59,10 +59,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_B2CMPB_DIFF
-!      use b2mod_ranges
-!      use b2mod_neoclassical
-!      use b2mod_geo_corner
-!     &                    , only : lengthy, nmdpl                 !srv 26.11.04
   USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -75,7 +71,8 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES), INTENT(INOUT) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -441,7 +438,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
               arg10 = rt%rlcx(icv, 0, ic, k) + rt%rlcx(icv, 1, ic, k)*&
 &               LOG(tav/(am(is)*ev))
               CALL PUSHBOOLEAN(b2mod_math_initialised)
-              CALL PUSHREAL4(small_r4_constant, r4/8)
               CALL PUSHREAL8(cutlo, r8/8)
               CALL PUSHREAL8(cutll, r8/8)
               result1 = EXPU(arg10)
@@ -456,7 +452,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
           arg10 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*LOG(pl%te(&
 &           icv)/ev)
           CALL PUSHBOOLEAN(b2mod_math_initialised)
-          CALL PUSHREAL4(small_r4_constant, r4/8)
           CALL PUSHREAL8(cutlo, r8/8)
           CALL PUSHREAL8(cutll, r8/8)
           CALL PUSHREAL8(dion, r8/8)
@@ -862,7 +857,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !
   IF (switch%transport_afn .NE. 0) THEN
     CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
     CALL PUSHREAL8(cutlo, r8/8)
     CALL PUSHREAL8(cutll, r8/8)
     CALL PUSHREAL8ARRAY(hcib, r8*ncv*ns/8)
@@ -1095,7 +1089,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL POPREAL8ARRAY(hcib, r8*ncv*ns/8)
     CALL POPREAL8(cutll, r8/8)
     CALL POPREAL8(cutlo, r8/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
     CALL POPBOOLEAN(b2mod_math_initialised)
     CALL SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl, &
 &                      plb, dv, dvb, rt, rtb, dna0, dna0b, dpa0, dpa0b, &
@@ -1424,7 +1417,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
           CALL POPREAL8(dion, r8/8)
           CALL POPREAL8(cutll, r8/8)
           CALL POPREAL8(cutlo, r8/8)
-          CALL POPREAL4(small_r4_constant, r4/8)
           CALL POPBOOLEAN(b2mod_math_initialised)
           CALL EXPU_B(arg10, arg10b, dionb)
           CALL POPREAL8(arg10, r8/8)
@@ -1442,7 +1434,6 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
               result1b = pl%na(icv, ic)*vcxb
               CALL POPREAL8(cutll, r8/8)
               CALL POPREAL8(cutlo, r8/8)
-              CALL POPREAL4(small_r4_constant, r4/8)
               CALL POPBOOLEAN(b2mod_math_initialised)
               CALL EXPU_B(arg10, arg10b, result1b)
               temp3 = tav/(am(is)*ev)
@@ -1587,10 +1578,6 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_B2CMPT_DIFF
   USE B2MOD_B2CMPB_DIFF
-!      use b2mod_ranges
-!      use b2mod_neoclassical
-!      use b2mod_geo_corner
-!     &                    , only : lengthy, nmdpl                 !srv 26.11.04
   USE B2MOD_USER_NAMELIST_DIFF, ONLY : omp
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -1603,7 +1590,8 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_SUBSYS
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -2374,7 +2362,6 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
           arg1 = rt%rlcx(icv, 0, ic, k) + rt%rlcx(icv, 1, ic, k)*LOG(&
 &           t_av/(am(is)*ev))
           CALL PUSHBOOLEAN(b2mod_math_initialised)
-          CALL PUSHREAL4(small_r4_constant, r4/8)
           CALL PUSHREAL8(cutlo, r8/8)
           CALL PUSHREAL8(cutll, r8/8)
           CALL PUSHREAL8(result1, r8/8)
@@ -2385,7 +2372,6 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
         arg1 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*LOG(pl%te(icv)/&
 &         ev)
         CALL PUSHBOOLEAN(b2mod_math_initialised)
-        CALL PUSHREAL4(small_r4_constant, r4/8)
         CALL PUSHREAL8(cutlo, r8/8)
         CALL PUSHREAL8(cutll, r8/8)
         CALL PUSHREAL8(dion, r8/8)
@@ -2547,7 +2533,6 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
         CALL POPREAL8(dion, r8/8)
         CALL POPREAL8(cutll, r8/8)
         CALL POPREAL8(cutlo, r8/8)
-        CALL POPREAL4(small_r4_constant, r4/8)
         CALL POPBOOLEAN(b2mod_math_initialised)
         CALL EXPU_B(arg1, arg1b, dionb)
         CALL POPREAL8(arg1, r8/8)
@@ -2561,7 +2546,6 @@ SUBROUTINE SET_TRANSPORT_AFN_B(ncv, ns, nscx, iscx, switch, switchb, pl&
           CALL POPREAL8(result1, r8/8)
           CALL POPREAL8(cutll, r8/8)
           CALL POPREAL8(cutlo, r8/8)
-          CALL POPREAL4(small_r4_constant, r4/8)
           CALL POPBOOLEAN(b2mod_math_initialised)
           CALL EXPU_B(arg1, arg1b, result1b)
           t_av = 0.5_R8*(pl%ti(icv)+pl%tn(icv))
@@ -2774,7 +2758,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
 !  Hint: nCv should be the size of dimension 1 of array temp
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES), INTENT(INOUT) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -2799,7 +2783,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_B(ncv, nfc, nvx, ns, ismain, switch, &
   REAL(kind=r8) :: wrkf(nfc), wrkc(ncv), shear(ncv)
   REAL(kind=r8) :: wrkfb(nfc), wrkcb(ncv), shearb(ncv)
   INTRINSIC SQRT
-  INTRINSIC DABS
+  INTRINSIC ABS
   EXTERNAL XERRAB
   INTRINSIC NINT
   INTRINSIC MIN
@@ -3206,7 +3190,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
 !  Hint: nCv should be the size of dimension 1 of array cvbb
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -3221,7 +3205,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
   INTEGER :: is
   REAL(kind=r8) :: wrkf(nfc), wrkc(ncv), shear(ncv)
   INTRINSIC SQRT
-  INTRINSIC DABS
+  INTRINSIC ABS
   EXTERNAL XERRAB
   INTRINSIC NINT
   INTRINSIC MIN

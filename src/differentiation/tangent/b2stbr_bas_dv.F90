@@ -102,7 +102,6 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
   REAL(kind=r8) :: smax, smin
 !   ..initialisation
   SAVE ncall
-  INTRINSIC DABS
   INTRINSIC MAXVAL
   INTRINSIC NINT
   INTRINSIC MIN

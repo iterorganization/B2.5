@@ -131,7 +131,6 @@ MODULE B2MOD_DRIVER_DIFF
   REAL(kind=r8) :: cputarget, cpuincrement, na_eps, te_eps, ti_eps, &
 & tn_eps, po_eps, ua_eps, kt_eps, zt_eps, sput_frc, sput_phys, delta_min&
 & , dt_change_inc, delta_max, dt_change_dec, dt_min, dt_max, max_delta
-  INTEGER :: ncon, nele_jac
 !     NetCDF-3.
 !
 ! netcdf version 3 fortran interface:
@@ -2216,7 +2215,7 @@ CONTAINS
 &   state_avgb)
     USE B2MOD_AD_DIFF, ONLY : old_erosion, old_deposition
 !  Hint: mpg%nCv should be the size of dimension 1 of array arg1
-!  Hint: ISIZE1OFne should be the size of dimension 1 of array ne
+!  Hint: mpg%nCv should be the size of dimension 1 of array ne
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
     INTEGER :: ninp(0:6), nout(0:10)
@@ -2259,11 +2258,16 @@ CONTAINS
     EXTERNAL XERRAB
     INTRINSIC MAX
     EXTERNAL SET_EXACT_SOLUTION
-    INTRINSIC DABS
+    INTRINSIC ABS
     INTRINSIC MAXVAL
     EXTERNAL CDFMOVIE
     REAL(r8) :: x1
     REAL(r8) :: x1b
+    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
+    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
+    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
+    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%nCv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -2279,6 +2283,16 @@ CONTAINS
     REAL(r8), DIMENSION(mpg%nCv) :: arg14
     REAL(r8), DIMENSION(mpg%nCv) :: arg15
     INTEGER :: arg16
+    LOGICAL, DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: mask
+    LOGICAL, DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: mask0
+    LOGICAL, DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: mask1
+    LOGICAL, DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: mask2
+    LOGICAL, DIMENSION(mpg%nCv) :: mask3
+    REAL(kind=r8) :: result10
+    REAL(kind=r8) :: result20
+    REAL(kind=r8) :: result30
+    REAL(kind=r8) :: result40
+    REAL(kind=r8) :: result50
     REAL(kind=r8), DIMENSION(SIZE(rtlsa, 1), SIZE(rtlsa, 3)) :: tmp
     REAL(kind=r8), DIMENSION(SIZE(rtlra, 1), SIZE(rtlra, 3)) :: tmp0
     REAL(kind=r8), DIMENSION(SIZE(rtlqa, 1), SIZE(rtlqa, 3)) :: tmp1
@@ -3659,13 +3673,43 @@ CONTAINS
 &                    state%rt, state%rtw)
         CALL B2XPNE_NODIFF(ncv, ns, state%rt%rza, state%pl%na, state_ext&
 &                    %ne, state%dv%ne)
-          max_delta = max(&
-     &     maxval(dabs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),&
-     &     maxval(dabs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),&
-     &     maxval(dabs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),&
-     &     maxval(dabs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),&
-     &     maxval(dabs((state%dv%ne - state%psnc%ne)/&
-     &       (state%dv%ne + na_eps))))
+        mask = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.
+        WHERE (mask) 
+          dabs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
+        ELSEWHERE
+          dabs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
+        END WHERE
+        mask0 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.
+        WHERE (mask0) 
+          dabs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
+        ELSEWHERE
+          dabs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
+        END WHERE
+        mask1 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.
+        WHERE (mask1) 
+          dabs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
+        ELSEWHERE
+          dabs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
+        END WHERE
+        mask2 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.
+        WHERE (mask2) 
+          dabs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
+        ELSEWHERE
+          dabs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
+        END WHERE
+        mask3 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.
+        WHERE (mask3) 
+          dabs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
+        ELSEWHERE
+          dabs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
+        END WHERE
+        result10 = MAXVAL(dabs0)
+        result20 = MAXVAL(dabs1)
+        result30 = MAXVAL(dabs2)
+        result40 = MAXVAL(dabs3)
+        result50 = MAXVAL(dabs4)
+        max_delta = MAX(result10, result20, result30, result40, result50&
+&         )
         WRITE(*, *) 'Convergence of bundled rates = ', is, max_delta
       END DO
     END IF
@@ -3743,7 +3787,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT_B(ncon, nele_jac, ns, mpg, mpgb, switch)
+      CALL READ_B2MOD_PAR_OPT_B(ns, mpg, mpgb, switch)
       ALLOCATE(par_opt_physb(npar_opt))
       par_opt_physb = 0.D0
       ALLOCATE(par_opt_phys(npar_opt))
@@ -3789,7 +3833,7 @@ CONTAINS
 &   state_ext, state_avg)
     USE B2MOD_AD_DIFF, ONLY : old_erosion, old_deposition
 !  Hint: mpg%nCv should be the size of dimension 1 of array arg1
-!  Hint: ISIZE1OFne should be the size of dimension 1 of array ne
+!  Hint: mpg%nCv should be the size of dimension 1 of array ne
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
     INTEGER :: ninp(0:6), nout(0:10)
@@ -3825,10 +3869,15 @@ CONTAINS
     EXTERNAL XERRAB
     INTRINSIC MAX
     EXTERNAL SET_EXACT_SOLUTION
-    INTRINSIC DABS
+    INTRINSIC ABS
     INTRINSIC MAXVAL
     EXTERNAL CDFMOVIE
     REAL(r8) :: x1
+    REAL(kind=r8), DIMENSION(SIZE(rza0, 1), SIZE(rza0, 2)) :: dabs0
+    REAL(kind=r8), DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: dabs1
+    REAL(kind=r8), DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: dabs2
+    REAL(kind=r8), DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: dabs3
+    REAL(kind=r8), DIMENSION(mpg%nCv) :: dabs4
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     REAL(kind=r8) :: result3
@@ -3848,6 +3897,12 @@ CONTAINS
     LOGICAL, DIMENSION(SIZE(rz20, 1), SIZE(rz20, 2)) :: mask0
     LOGICAL, DIMENSION(SIZE(rpt0, 1), SIZE(rpt0, 2)) :: mask1
     LOGICAL, DIMENSION(SIZE(rpi0, 1), SIZE(rpi0, 2)) :: mask2
+    LOGICAL, DIMENSION(mpg%nCv) :: mask3
+    REAL(kind=r8) :: result10
+    REAL(kind=r8) :: result20
+    REAL(kind=r8) :: result30
+    REAL(kind=r8) :: result40
+    REAL(kind=r8) :: result50
 !   ..initialisation
     DATA atomic_physics_rescale_flag /0/
 !-----------------------------------------------------------------------
@@ -5205,13 +5260,43 @@ CONTAINS
 &                    state%rt, state%rtw)
         CALL B2XPNE_NODIFF(ncv, ns, state%rt%rza, state%pl%na, state_ext&
 &                    %ne, state%dv%ne)
-          max_delta = max(&
-     &     maxval(dabs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),&
-     &     maxval(dabs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),&
-     &     maxval(dabs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),&
-     &     maxval(dabs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),&
-     &     maxval(dabs((state%dv%ne - state%psnc%ne)/&
-     &       (state%dv%ne + na_eps))))
+        mask = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8) .GE. 0.
+        WHERE (mask) 
+          dabs0 = (state%rt%rza-rza0)/(state%rt%rza+1.0_R8)
+        ELSEWHERE
+          dabs0 = -((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))
+        END WHERE
+        mask0 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8) .GE. 0.
+        WHERE (mask0) 
+          dabs1 = (state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8)
+        ELSEWHERE
+          dabs1 = -((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))
+        END WHERE
+        mask1 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8) .GE. 0.
+        WHERE (mask1) 
+          dabs2 = (state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8)
+        ELSEWHERE
+          dabs2 = -((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))
+        END WHERE
+        mask2 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8) .GE. 0.
+        WHERE (mask2) 
+          dabs3 = (state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8)
+        ELSEWHERE
+          dabs3 = -((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))
+        END WHERE
+        mask3 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps) .GE. 0.
+        WHERE (mask3) 
+          dabs4 = (state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps)
+        ELSEWHERE
+          dabs4 = -((state%dv%ne-state%psnc%ne)/(state%dv%ne+na_eps))
+        END WHERE
+        result10 = MAXVAL(dabs0)
+        result20 = MAXVAL(dabs1)
+        result30 = MAXVAL(dabs2)
+        result40 = MAXVAL(dabs3)
+        result50 = MAXVAL(dabs4)
+        max_delta = MAX(result10, result20, result30, result40, result50&
+&         )
         WRITE(*, *) 'Convergence of bundled rates = ', is, max_delta
       END DO
     END IF
@@ -5289,7 +5374,7 @@ CONTAINS
     ALLOCATE(old_erosion(nwall, ntrack))
     ALLOCATE(old_deposition(nwall, ntrack))
     IF (flag_optim .OR. switch%b2optim_namelist .EQ. 1) THEN
-      CALL READ_B2MOD_PAR_OPT(ncon, nele_jac, ns, mpg, switch)
+      CALL READ_B2MOD_PAR_OPT(ns, mpg, switch)
       ALLOCATE(par_opt_phys(npar_opt))
       ALLOCATE(xsave(npar_opt))
       par_opt_phys(1:npar_opt) = x0(1:npar_opt)
@@ -5511,10 +5596,11 @@ CONTAINS
 !                state.sr.sch:(loc) *(state.sr.sch):(loc) state.sr.she:(loc)
 !                *(state.sr.she):(loc) state.sr.shi:(loc) *(state.sr.shi):(loc)
 !                state.sr.sne:(loc) state.sr.shn:(loc) *(state.sr.shn):(loc)
-!                *(state.sr.skt):(loc) state.sr.smo:(loc) *(state.sr.smo):(loc)
-!                state.sr.smq:(loc) *(state.sr.smq):(loc) state.sr.sna:(loc)
-!                *(state.sr.sna):(loc) state.sr.shedt:(loc) *(state.sr.shedt):(loc)
-!                *(state.sr.sktdt):(loc) state.sr.shidt:(loc) *(state.sr.shidt):(loc)
+!                *(state.sr.skt):(loc) *(state.sr.szt):(loc) state.sr.smo:(loc)
+!                *(state.sr.smo):(loc) state.sr.smq:(loc) *(state.sr.smq):(loc)
+!                state.sr.sna:(loc) *(state.sr.sna):(loc) state.sr.shedt:(loc)
+!                *(state.sr.shedt):(loc) *(state.sr.sktdt):(loc)
+!                *(state.sr.sztdt):(loc) state.sr.shidt:(loc) *(state.sr.shidt):(loc)
 !                state.sr.shndt:(loc) *(state.sr.shndt):(loc) *(state.sr.schdt):(loc)
 !                state.sr.smodt:(loc) *(state.sr.smodt):(loc) state.sr.snadt:(loc)
 !                *(state.sr.snadt):(loc) state.sr.skt_diss:(loc)
@@ -5522,10 +5608,10 @@ CONTAINS
 !                state.srw.she0:(loc) *(state.srw.she0):(loc) state.srw.shi0:(loc)
 !                *(state.srw.shi0):(loc) state.srw.sne0:(loc) state.srw.shn0:(loc)
 !                *(state.srw.shn0):(loc) state.srw.skt0:(loc) *(state.srw.skt0):(loc)
-!                state.srw.szt0:(loc) state.srw.smo0:(loc) *(state.srw.smo0):(loc)
-!                state.srw.smq0:(loc) *(state.srw.smq0):(loc) state.srw.sna0:(loc)
-!                *(state.srw.sna0):(loc) state.srw.smpr:(loc) state.srw.smpt:(loc)
-!                state.srw.smfr:(loc) state.srw.b2stbc_sch:(loc)
+!                state.srw.szt0:(loc) *(state.srw.szt0):(loc) state.srw.smo0:(loc)
+!                *(state.srw.smo0):(loc) state.srw.smq0:(loc) *(state.srw.smq0):(loc)
+!                state.srw.sna0:(loc) *(state.srw.sna0):(loc) state.srw.smpr:(loc)
+!                state.srw.smpt:(loc) state.srw.smfr:(loc) state.srw.b2stbc_sch:(loc)
 !                state.srw.b2stbc_she:(loc) state.srw.b2stbc_shi:(loc)
 !                state.srw.b2stbc_sne:(loc) state.srw.b2stbc_shn:(loc)
 !                state.srw.b2stbc_skt:(loc) state.srw.b2stbc_szt:(loc)
@@ -5565,20 +5651,21 @@ CONTAINS
 !                state.psnl.po:(loc) state.psnl.te:(loc) *(state.psnl.te):(loc)
 !                state.psnl.ti:(loc) *(state.psnl.ti):(loc) state.psnl.tn:(loc)
 !                *(state.psnl.tn):(loc) state.psnl.kt:(loc) *(state.psnl.kt):(loc)
-!                state.psnl.zt:(loc) state.psnl.ne:(loc) *(state.psnl.ne):(loc)
-!                state.psnl.ni:(loc) *(state.psnl.ni):(loc) state.psnl.fch:(loc)
-!                state.psnl.fna:(loc) state.psnl.fhi:(loc) state.psnl.fhe:(loc)
-!                state.psnl.fkt:(loc) state.psnl.fzt:(loc) state.psnl.kinrgy:(loc)
-!                *(state.psnl.kinrgy):(loc) state.psnc.na:(loc)
-!                *(state.psnc.na):(loc) state.psnc.ua:(loc) *(state.psnc.ua):(loc)
-!                state.psnc.po:(loc) state.psnc.te:(loc) *(state.psnc.te):(loc)
-!                state.psnc.ti:(loc) *(state.psnc.ti):(loc) state.psnc.tn:(loc)
-!                *(state.psnc.tn):(loc) state.psnc.kt:(loc) *(state.psnc.kt):(loc)
-!                state.psnc.zt:(loc) state.psnc.ne:(loc) *(state.psnc.ne):(loc)
-!                state.psnc.ni:(loc) *(state.psnc.ni):(loc) state.psnc.nn:(loc)
-!                *(state.psnc.nn):(loc) state.psnc.fch:(loc) state.psnc.fna:(loc)
-!                state.psnc.fhi:(loc) state.psnc.fhe:(loc) state.psnc.fkt:(loc)
-!                state.psnc.fzt:(loc) state.psnc.kinrgy:(loc) *(state.psnc.kinrgy):(loc)
+!                state.psnl.zt:(loc) *(state.psnl.zt):(loc) state.psnl.ne:(loc)
+!                *(state.psnl.ne):(loc) state.psnl.ni:(loc) *(state.psnl.ni):(loc)
+!                state.psnl.fch:(loc) state.psnl.fna:(loc) state.psnl.fhi:(loc)
+!                state.psnl.fhe:(loc) state.psnl.fkt:(loc) state.psnl.fzt:(loc)
+!                state.psnl.kinrgy:(loc) *(state.psnl.kinrgy):(loc)
+!                state.psnc.na:(loc) *(state.psnc.na):(loc) state.psnc.ua:(loc)
+!                *(state.psnc.ua):(loc) state.psnc.po:(loc) state.psnc.te:(loc)
+!                *(state.psnc.te):(loc) state.psnc.ti:(loc) *(state.psnc.ti):(loc)
+!                state.psnc.tn:(loc) *(state.psnc.tn):(loc) state.psnc.kt:(loc)
+!                *(state.psnc.kt):(loc) state.psnc.zt:(loc) *(state.psnc.zt):(loc)
+!                state.psnc.ne:(loc) *(state.psnc.ne):(loc) state.psnc.ni:(loc)
+!                *(state.psnc.ni):(loc) state.psnc.nn:(loc) *(state.psnc.nn):(loc)
+!                state.psnc.fch:(loc) state.psnc.fna:(loc) state.psnc.fhi:(loc)
+!                state.psnc.fhe:(loc) state.psnc.fkt:(loc) state.psnc.fzt:(loc)
+!                state.psnc.kinrgy:(loc) *(state.psnc.kinrgy):(loc)
 !   Plus diff mem management of: par_opt_phys:in rtlsa:in rtlra:in
 !                rtlqa:in rtlcx:in b2data:in b2dataoncf:in b2voloncf:in
 !                mpg.bcfcor:in mpg.rcfcor:in-out mpg.intcellp:in
@@ -6122,6 +6209,9 @@ CONTAINS
     WRITE(*, '(1x,a,i9,1p,g14.7,i9,i3)') &
 &   'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim, dtim, ntim, stack_ptr
     CALL PUSHREAL8ARRAY(charge_frac, r8*def_nsd/8)
+    CALL PUSHBOOLEAN(b2mod_math_initialised)
+    CALL PUSHREAL8(cutlo, r8/8)
+    CALL PUSHREAL8(cutll, r8/8)
     IF (ALLOCATED(b2bremreg)) THEN
       CALL PUSHREAL8ARRAY(b2bremreg, r8*SIZE(b2bremreg, 1)/8)
       CALL PUSHCONTROL1B(1)
@@ -6332,10 +6422,6 @@ CONTAINS
     CALL PUSHINTEGER4(ntstep_b2wall)
     CALL PUSHCHARACTERARRAY(filename_b2w, 256)
     CALL PUSHCHARACTERARRAY(my_out_folder, 7)
-    CALL PUSHBOOLEAN(b2mod_math_initialised)
-    CALL PUSHREAL4(small_r4_constant, r4/8)
-    CALL PUSHREAL8(cutlo, r8/8)
-    CALL PUSHREAL8(cutll, r8/8)
     IF (ALLOCATED(art_sna)) THEN
       CALL PUSHREAL8ARRAY(art_sna, r8*SIZE(art_sna, 1)*SIZE(art_sna, 2)*&
 &                   SIZE(art_sna, 3)/8)
@@ -6371,6 +6457,16 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
+    CALL PUSHINTEGER4(ncall_drift)
+    CALL PUSHREAL8(fac_vis_scalar, r8/8)
+    CALL PUSHREAL8(fac_exb_scalar, r8/8)
+    CALL PUSHREAL8(facdrift_scalar, r8/8)
+    IF (ALLOCATED(last_solve_9)) THEN
+      CALL PUSHBOOLEANARRAY(last_solve_9, SIZE(last_solve_9, 1))
+      CALL PUSHCONTROL1B(1)
+    ELSE
+      CALL PUSHCONTROL1B(0)
+    END IF
     CALL PUSHREAL8(numerics_time_switch, r8/8)
     CALL PUSHREAL8(numerics_time_mod, r8/8)
     IF (ALLOCATED(time_factor)) THEN
@@ -6379,13 +6475,8 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
-    CALL PUSHBOOLEANARRAY(last_solve_9, cvregmax + 1)
     CALL PUSHBOOLEANARRAY(solveet, cvregmax + 1)
     CALL PUSHBOOLEANARRAY(solvemt, cvregmax + 1)
-    CALL PUSHINTEGER4(ncall_drift)
-    CALL PUSHREAL8(fac_vis_scalar, r8/8)
-    CALL PUSHREAL8(fac_exb_scalar, r8/8)
-    CALL PUSHREAL8(facdrift_scalar, r8/8)
     CALL PUSHREAL8ARRAY(cflim, r8*8/8)
     CALL PUSHREAL8ARRAY(cfalf, r8*8/8)
     CALL PUSHREAL8ARRAY(cfsig, r8*8/8)
@@ -6449,13 +6540,6 @@ CONTAINS
     CALL PUSHINTEGER4ARRAY(arcend, nstraid)
     CALL PUSHREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
     CALL PUSHREAL8ARRAY(b2recyc, r8*nsdmax*nstraid/8)
-    CALL PUSHINTEGER4(ank_tracing)
-    CALL PUSHBOOLEAN(user_initialised)
-    CALL PUSHINTEGER4(icsepimp)
-    CALL PUSHINTEGER4ARRAY(imp, nromp)
-    CALL PUSHINTEGER4(nomp)
-    CALL PUSHINTEGER4(icsepomp)
-    CALL PUSHINTEGER4ARRAY(omp, nromp)
     CALL PUSHREAL8(int6r, r8/8)
     CALL PUSHREAL8(int6l, r8/8)
     CALL PUSHREAL8(int5r, r8/8)
@@ -6477,6 +6561,13 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(0)
     END IF
+    CALL PUSHINTEGER4(ank_tracing)
+    CALL PUSHBOOLEAN(user_initialised)
+    CALL PUSHINTEGER4(icsepimp)
+    CALL PUSHINTEGER4ARRAY(imp, nromp)
+    CALL PUSHINTEGER4(nomp)
+    CALL PUSHINTEGER4(icsepomp)
+    CALL PUSHINTEGER4ARRAY(omp, nromp)
     CALL PUSHBOOLEAN(feedback_namelist_used)
     CALL PUSHREAL8ARRAY(fb_rescale, r8*def_natm/8)
     CALL PUSHREAL8ARRAY(fb_prev, r8*def_natm/8)
@@ -7458,11 +7549,13 @@ CONTAINS
     stateb1%sr%shi = 0.D0
     stateb1%sr%shn = 0.D0
     stateb1%sr%skt = 0.D0
+    stateb1%sr%szt = 0.D0
     stateb1%sr%smo = 0.D0
     stateb1%sr%smq = 0.D0
     stateb1%sr%sna = 0.D0
     stateb1%sr%shedt = 0.D0
     stateb1%sr%sktdt = 0.D0
+    stateb1%sr%sztdt = 0.D0
     stateb1%sr%shidt = 0.D0
     stateb1%sr%shndt = 0.D0
     stateb1%sr%schdt = 0.D0
@@ -7473,6 +7566,7 @@ CONTAINS
     stateb1%srw%shi0 = 0.D0
     stateb1%srw%shn0 = 0.D0
     stateb1%srw%skt0 = 0.D0
+    stateb1%srw%szt0 = 0.D0
     stateb1%srw%smo0 = 0.D0
     stateb1%srw%smq0 = 0.D0
     stateb1%srw%sna0 = 0.D0
@@ -7500,6 +7594,7 @@ CONTAINS
     stateb1%psnl%ti = 0.D0
     stateb1%psnl%tn = 0.D0
     stateb1%psnl%kt = 0.D0
+    stateb1%psnl%zt = 0.D0
     stateb1%psnl%ne = 0.D0
     stateb1%psnl%ni = 0.D0
     stateb1%psnl%kinrgy = 0.D0
@@ -7509,6 +7604,7 @@ CONTAINS
     stateb1%psnc%ti = 0.D0
     stateb1%psnc%tn = 0.D0
     stateb1%psnc%kt = 0.D0
+    stateb1%psnc%zt = 0.D0
     stateb1%psnc%ne = 0.D0
     stateb1%psnc%ni = 0.D0
     stateb1%psnc%nn = 0.D0
@@ -8122,6 +8218,13 @@ CONTAINS
       CALL POPREAL8ARRAY(fb_prev, r8*def_natm/8)
       CALL POPREAL8ARRAY(fb_rescale, r8*def_natm/8)
       CALL POPBOOLEAN(feedback_namelist_used)
+      CALL POPINTEGER4ARRAY(omp, nromp)
+      CALL POPINTEGER4(icsepomp)
+      CALL POPINTEGER4(nomp)
+      CALL POPINTEGER4ARRAY(imp, nromp)
+      CALL POPINTEGER4(icsepimp)
+      CALL POPBOOLEAN(user_initialised)
+      CALL POPINTEGER4(ank_tracing)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(fna_mol, r8*SIZE(fna_mol, 1)&
 &                                     *SIZE(fna_mol, 2)/8)
@@ -8139,13 +8242,6 @@ CONTAINS
       CALL POPREAL8(int5r, r8/8)
       CALL POPREAL8(int6l, r8/8)
       CALL POPREAL8(int6r, r8/8)
-      CALL POPINTEGER4ARRAY(omp, nromp)
-      CALL POPINTEGER4(icsepomp)
-      CALL POPINTEGER4(nomp)
-      CALL POPINTEGER4ARRAY(imp, nromp)
-      CALL POPINTEGER4(icsepimp)
-      CALL POPBOOLEAN(user_initialised)
-      CALL POPINTEGER4(ank_tracing)
       CALL POPREAL8ARRAY(b2recyc, r8*nsdmax*nstraid/8)
       CALL POPREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
       CALL POPINTEGER4ARRAY(arcend, nstraid)
@@ -8191,18 +8287,20 @@ CONTAINS
       CALL POPREAL8ARRAY(cfsig, r8*8/8)
       CALL POPREAL8ARRAY(cfalf, r8*8/8)
       CALL POPREAL8ARRAY(cflim, r8*8/8)
-      CALL POPREAL8(facdrift_scalar, r8/8)
-      CALL POPREAL8(fac_exb_scalar, r8/8)
-      CALL POPREAL8(fac_vis_scalar, r8/8)
-      CALL POPINTEGER4(ncall_drift)
       CALL POPBOOLEANARRAY(solvemt, cvregmax + 1)
       CALL POPBOOLEANARRAY(solveet, cvregmax + 1)
-      CALL POPBOOLEANARRAY(last_solve_9, cvregmax + 1)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(time_factor, r8*SIZE(&
 &                                     time_factor, 1)/8)
       CALL POPREAL8(numerics_time_mod, r8/8)
       CALL POPREAL8(numerics_time_switch, r8/8)
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 1) CALL POPBOOLEANARRAY(last_solve_9, SIZE(&
+&                                       last_solve_9, 1))
+      CALL POPREAL8(facdrift_scalar, r8/8)
+      CALL POPREAL8(fac_exb_scalar, r8/8)
+      CALL POPREAL8(fac_vis_scalar, r8/8)
+      CALL POPINTEGER4(ncall_drift)
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_sch, r8*SIZE(art_sch, 1)&
 &                                     *SIZE(art_sch, 2)/8)
@@ -8220,10 +8318,6 @@ CONTAINS
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_sna, r8*SIZE(art_sna, 1)&
 &                                     *SIZE(art_sna, 2)*SIZE(art_sna, 3)&
 &                                     /8)
-      CALL POPREAL8(cutll, r8/8)
-      CALL POPREAL8(cutlo, r8/8)
-      CALL POPREAL4(small_r4_constant, r4/8)
-      CALL POPBOOLEAN(b2mod_math_initialised)
       CALL POPCHARACTERARRAY(my_out_folder, 7)
       CALL POPCHARACTERARRAY(filename_b2w, 256)
       CALL POPINTEGER4(ntstep_b2wall)
@@ -8371,6 +8465,9 @@ CONTAINS
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2bremreg, r8*SIZE(b2bremreg&
 &                                     , 1)/8)
+      CALL POPREAL8(cutll, r8/8)
+      CALL POPREAL8(cutlo, r8/8)
+      CALL POPBOOLEAN(b2mod_math_initialised)
       CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
       switchb%keps_cd = 0.D0
       switchb%keps_heat = 0.D0
@@ -8427,7 +8524,10 @@ CONTAINS
         stateb1%pl%po = 0.D0
       END IF
       CALL POPREAL8ARRAY(state%psnc%zt, r8*SIZE(state%psnc%zt, 1)/8)
+      stateb1%pl%zt = stateb1%pl%zt + stateb1%psnc%zt + stateb1%psnl%zt
+      stateb1%psnc%zt = 0.D0
       CALL POPREAL8ARRAY(state%psnl%zt, r8*SIZE(state%psnl%zt, 1)/8)
+      stateb1%psnl%zt = 0.D0
       CALL POPREAL8ARRAY(state%psnc%kt, r8*SIZE(state%psnc%kt, 1)/8)
       stateb1%pl%kt = stateb1%pl%kt + stateb1%psnc%kt + stateb1%psnl%kt
       stateb1%psnc%kt = 0.D0
@@ -9543,6 +9643,13 @@ CONTAINS
     CALL POPREAL8ARRAY(fb_prev, r8*def_natm/8)
     CALL POPREAL8ARRAY(fb_rescale, r8*def_natm/8)
     CALL POPBOOLEAN(feedback_namelist_used)
+    CALL POPINTEGER4ARRAY(omp, nromp)
+    CALL POPINTEGER4(icsepomp)
+    CALL POPINTEGER4(nomp)
+    CALL POPINTEGER4ARRAY(imp, nromp)
+    CALL POPINTEGER4(icsepimp)
+    CALL POPBOOLEAN(user_initialised)
+    CALL POPINTEGER4(ank_tracing)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(fna_mol, r8*SIZE(fna_mol, 1)*&
 &                                   SIZE(fna_mol, 2)/8)
@@ -9560,13 +9667,6 @@ CONTAINS
     CALL POPREAL8(int5r, r8/8)
     CALL POPREAL8(int6l, r8/8)
     CALL POPREAL8(int6r, r8/8)
-    CALL POPINTEGER4ARRAY(omp, nromp)
-    CALL POPINTEGER4(icsepomp)
-    CALL POPINTEGER4(nomp)
-    CALL POPINTEGER4ARRAY(imp, nromp)
-    CALL POPINTEGER4(icsepimp)
-    CALL POPBOOLEAN(user_initialised)
-    CALL POPINTEGER4(ank_tracing)
     CALL POPREAL8ARRAY(b2recyc, r8*nsdmax*nstraid/8)
     CALL POPREAL8ARRAY(userfluxparm, r8*nstraid*2/8)
     CALL POPINTEGER4ARRAY(arcend, nstraid)
@@ -9612,18 +9712,20 @@ CONTAINS
     CALL POPREAL8ARRAY(cfsig, r8*8/8)
     CALL POPREAL8ARRAY(cfalf, r8*8/8)
     CALL POPREAL8ARRAY(cflim, r8*8/8)
-    CALL POPREAL8(facdrift_scalar, r8/8)
-    CALL POPREAL8(fac_exb_scalar, r8/8)
-    CALL POPREAL8(fac_vis_scalar, r8/8)
-    CALL POPINTEGER4(ncall_drift)
     CALL POPBOOLEANARRAY(solvemt, cvregmax + 1)
     CALL POPBOOLEANARRAY(solveet, cvregmax + 1)
-    CALL POPBOOLEANARRAY(last_solve_9, cvregmax + 1)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(time_factor, r8*SIZE(&
 &                                   time_factor, 1)/8)
     CALL POPREAL8(numerics_time_mod, r8/8)
     CALL POPREAL8(numerics_time_switch, r8/8)
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 1) CALL POPBOOLEANARRAY(last_solve_9, SIZE(&
+&                                     last_solve_9, 1))
+    CALL POPREAL8(facdrift_scalar, r8/8)
+    CALL POPREAL8(fac_exb_scalar, r8/8)
+    CALL POPREAL8(fac_vis_scalar, r8/8)
+    CALL POPINTEGER4(ncall_drift)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_sch, r8*SIZE(art_sch, 1)*&
 &                                   SIZE(art_sch, 2)/8)
@@ -9639,10 +9741,6 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(art_sna, r8*SIZE(art_sna, 1)*&
 &                                   SIZE(art_sna, 2)*SIZE(art_sna, 3)/8)
-    CALL POPREAL8(cutll, r8/8)
-    CALL POPREAL8(cutlo, r8/8)
-    CALL POPREAL4(small_r4_constant, r4/8)
-    CALL POPBOOLEAN(b2mod_math_initialised)
     CALL POPCHARACTERARRAY(my_out_folder, 7)
     CALL POPCHARACTERARRAY(filename_b2w, 256)
     CALL POPINTEGER4(ntstep_b2wall)
@@ -9786,6 +9884,9 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 1) CALL POPREAL8ARRAY(b2bremreg, r8*SIZE(b2bremreg, &
 &                                   1)/8)
+    CALL POPREAL8(cutll, r8/8)
+    CALL POPREAL8(cutlo, r8/8)
+    CALL POPBOOLEAN(b2mod_math_initialised)
     CALL POPREAL8ARRAY(charge_frac, r8*def_nsd/8)
     parm_dnab = 0.D0
     parm_hceb = 0.D0
@@ -9843,7 +9944,10 @@ CONTAINS
       stateb1%pl%po = 0.D0
     END IF
     CALL POPREAL8ARRAY(state%psnc%zt, r8*SIZE(state%psnc%zt, 1)/8)
+    stateb1%pl%zt = stateb1%pl%zt + stateb1%psnc%zt + stateb1%psnl%zt
+    stateb1%psnc%zt = 0.D0
     CALL POPREAL8ARRAY(state%psnl%zt, r8*SIZE(state%psnl%zt, 1)/8)
+    stateb1%psnl%zt = 0.D0
     CALL POPREAL8ARRAY(state%psnc%kt, r8*SIZE(state%psnc%kt, 1)/8)
     stateb1%pl%kt = stateb1%pl%kt + stateb1%psnc%kt + stateb1%psnl%kt
     stateb1%psnc%kt = 0.D0

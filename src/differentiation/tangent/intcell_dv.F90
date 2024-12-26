@@ -17,7 +17,7 @@ SUBROUTINE INTCELL1_NODIFF(nfc, ncv, nz, mpg, wght, face, centre)
   USE B2US_MAP_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER :: ncv, nfc, nz
+  INTEGER, INTENT(IN) :: ncv, nfc, nz
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: wght(mpg%ncmxfc), face(nfc, 0:nz), centre(ncv, 0:nz)
   INTEGER :: is
@@ -38,7 +38,7 @@ SUBROUTINE INTCELL_DV(nfc, ncv, mpg, wght, face, faced, centre, centred&
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: wght(mpg%ncmxfc), face(nfc), centre(ncv)
   REAL(kind=r8) :: faced(nbdirsmax, nfc), centred(nbdirsmax, ncv)
@@ -79,7 +79,7 @@ SUBROUTINE INTCELL_NODIFF(nfc, ncv, mpg, wght, face, centre)
   USE B2US_MAP_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: wght(mpg%ncmxfc), face(nfc), centre(ncv)
   INTEGER :: ifc, icv
