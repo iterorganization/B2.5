@@ -16,7 +16,6 @@
       real (kind=R8) ::
      *   dfunp(nFc)
       integer cvs(2)
-      real (kind=R8) :: radcoef
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -57,7 +56,7 @@
      &   geo%fcQalf(iFc,0) +
      &  (funv(mpg%fcVx(iFc,2)) - funv(mpg%fcVx(iFc,1)))*
      &  (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     &   geo%fcQbet(iFc,1)*radcoef
+     &   geo%fcQbet(iFc,1)
       enddo
 
 *   ..return

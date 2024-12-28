@@ -1164,9 +1164,6 @@ c b2trno
 
 c b2nppo
       s % b2nppo_restrict_po = 0
-
-c b2nppo
-      s % b2nppo_restrict_po = 0
       s % b2txcx_increase_transp_coefs = 0.0_R8
 
 c Optimization
@@ -1844,10 +1841,7 @@ c b2trno
 c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
       call ipgeti ('b2stbc_use_pump', s%use_pump)
-
-c b2nppo
-      call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
-
+      
 c b2nppo
       call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
       call ipgetr ('b2txcx_increase_transp_coefs',
