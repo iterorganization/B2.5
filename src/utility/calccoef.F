@@ -16,7 +16,6 @@
       real (kind=R8) ::
      *   flo0(nFc,0:1), con0(nFc,0:1)
       integer cvs(2)
-      real (kind=R8) :: radcoef
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -64,7 +63,7 @@
 *      to differences of cell faces (consistent with diff_p, diff_r)
         t00 = geo%fcQalf(iFc,0)
         t01 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     &         geo%fcQbet(iFc,1)*radcoef
+     &         geo%fcQbet(iFc,1)
         t10 = geo%fcQalf(iFc,1)
         t11 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &         geo%fcQbet(iFc,0)
@@ -90,7 +89,7 @@
 *      to differences of cell faces (consistent with diff_p, diff_r)
         t00 = geo%fcQalf(iFc,0)
         t01 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     &         geo%fcQbet(iFc,1)*radcoef
+     &         geo%fcQbet(iFc,1)
         t10 = geo%fcQalf(iFc,1)
         t11 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &         geo%fcQbet(iFc,0)
@@ -123,7 +122,7 @@
 *      to differences of cell faces (consistent with diff_p, diff_r)
 !        t00 = geo%fcQalf(iFc,0)
         t01 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     &         geo%fcQbet(iFc,1)/(geo%fcQalf(iFc,0) + eps)*radcoef
+     &         geo%fcQbet(iFc,1)/(geo%fcQalf(iFc,0) + eps)
 !        t10 = geo%fcQalf(iFc,1)
         t11 = (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
      &         geo%fcQbet(iFc,0)/(geo%fcQalf(iFc,1) + eps)

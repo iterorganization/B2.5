@@ -1367,9 +1367,6 @@ c b2stbc_phys
 c b2trno
       s % b2trno_alpha_stoch =  1.0_R8       !srv 17.12.13
 
-c med
-      s % med_style = 0
-
 c b2nppo
       s % b2nppo_restrict_po = 0
       s % b2txcx_increase_transp_coefs = 0.0_R8
@@ -2170,10 +2167,7 @@ c b2trno
 c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
       call ipgeti ('b2stbc_use_pump', s%use_pump)
-
-c Med
-      call ipgeti ('b2mndr_med_style', s%med_style)
-
+      
 c b2nppo
       call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
       call ipgetr ('b2txcx_increase_transp_coefs',
