@@ -274,6 +274,7 @@ csw 26feb2014
       logical, save :: lneustra
       logical, save :: full_history = .false.
       real (kind=R8) :: relax
+      integer, save :: relax_continue = 0
 
 *   ..procedures
       real (kind=R8) :: rratio
@@ -445,6 +446,7 @@ csw 26feb2013
         call ipgeti ('eirene_neutr_avg', neutr_avg)
         call ipgeti ('b2stbr_eir_src_nhist', nhist)
         call ipgeti ('eirene_underrelax', nrelax)
+        call ipgeti ('eirene_underrelax_continue', relax_continue)
         call xertst (.not.(
      .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
      .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
@@ -2324,6 +2326,12 @@ c fixed SMOOTH SOURCES FROM EIRENE, averaging procedure
 cxpb Under-relaxation scheme for smoothing of Eirene sources
        if(main_call.and.mod(ncall,eirene_mod).eq.0) then
         ihist=ihist+1
+cc Read saved sources
+        if (ihist.eq.1.and..not.full_history
+     .               .and.relax_continue.eq.1)then
+          call read_saved_sources(nCv,size(sni,2),NSTRAT)
+          full_history = .true.
+        endif
         if (ihist.eq.nrelax) full_history = .true.
         if (ihist.eq.nrelax+1) ihist = 1
         write(*,*)
@@ -3978,6 +3986,10 @@ csw 26feb2014
          deallocate(sei_av_eppl)
        endif
       endif
+      if(nhist.gt.1 .or. nrelax.gt.1) then
+        call write_saved_sources('eirene_saved_sources',
+     .                           nCv,size(sni,2),NSTRAT)
+      endif
       if(nhist.gt.1) call dealloc_sum_arrays
       if(nrelax.gt.1 .or. nhist.gt.1) call dealloc_hist_arrays
       deallocate(hlp_pff,hlp_stra)
@@ -4556,5 +4568,114 @@ c!###}
       dab2_s = 0.0_R8
       return
       end subroutine clear_sum_arrays                            !IYS 28.03.12 }
+
+      subroutine read_saved_sources(nCv, nfl, nstra)
+
+      implicit none
+c input
+      integer, intent(in) :: nCv, nfl, nstra
+c nfl is the number of species indices for the EIRENE sources sni and smo, =/= ns in B2.5
+c local variables
+      integer :: io, iun, idum(0:2), iex
+      character :: check*10
+      character lbli*120
+      character*10 :: version
+#ifdef LEGACYCOMP
+      integer newunit
+      external newunit
+#endif
+
+      call subini ('read_saved_sources')
+
+
+#ifndef LEGACYCOMP
+      open (newunit=iun,file='eirene_saved_sources',
+     .    access='SEQUENTIAL',form='FORMATTED',status='OLD',iostat=iex)
+#else
+         iun = newunit()
+      open (unit=iun,file='eirene_saved_sources',
+     .    access='SEQUENTIAL',form='FORMATTED',status='OLD',iostat=iex)
+#endif
+
+      io = iex
+      read (iun,'(A10)',iostat=io) check
+*  read saved averaged sources for smooth restart with nrelax.gt.1
+      if (io == 0) then
+        backspace iun
+        call cfverr (iun, version)
+        call cfruin (iun, 3, idum, 'nCv,nfl,nstra')
+        if (idum(0).ne.nCv) call xerrab('nCv not consistent')
+        if (idum(2).ne.nstra) call xerrab('nstra not consistent')
+        call cfruch (iun, 120, lbli, 'label')
+        call cfrure (iun, nCv*nfl*nstra, sni_s, 'sni_s')
+        call cfrure (iun, nCv*nfl*nstra, smo_s, 'smo_s')
+        call cfrure (iun, nCv*nstra,    sei_s, 'sei_s')
+        call cfrure (iun, nCv*nstra,    see_s, 'see_s')
+        write (*,*) ' eirene_saved_sources read succesfully '
+      else
+        call xerrab('NO FILE eirene_saved_sources FOUND')
+      end if
+      close (iun)
+
+
+      call subend ()
+      return
+      end subroutine read_saved_sources
+
+
+      subroutine write_saved_sources (savefile,nCv, nfl, nstrat)
+      implicit none
+      integer, intent(in) :: nCv, nfl, nstrat
+c nfl is the number of species indices for the EIRENE sources sni and smo, =/= ns in B2.5
+      character(*) :: savefile
+c local variables
+      integer :: idum(0:2), iun
+      character lble*120
+      character*10, save ::
+     *   version = '00.000.000'
+#ifdef LEGACYCOMP
+      integer newunit
+      external newunit
+#endif
+      call subini ('write_saved_sources')
+
+
+*  write moving mean of sources
+
+#ifndef LEGACYCOMP
+         open (newunit=iun,file=savefile,access='SEQUENTIAL',
+     .        form='FORMATTED',status='REPLACE')
+#else
+         iun = newunit()
+         open (unit=iun,file=savefile,access='SEQUENTIAL',
+     .        form='FORMATTED',status='REPLACE')
+#endif
+
+*   ..get label
+       call b2xxid ('b2mn', lble(1:60))
+       lble(61:120) =
+     *  '                                                            '
+
+*   ..write header
+       idum(0) = nCv
+       idum(1) = nfl
+       idum(2) = nstra
+       call cfverw (iun, version)
+       call cfwuin (iun, 3, idum, 'nCv,nfl,nstra')
+       call cfwuch (iun, 120, lble, 'label')
+
+*   ..write current moving average of eirene sources
+
+       call cfwure (iun, nCv*nfl*nstrat, sni_s, 'sni_s')
+       call cfwure (iun, nCv*nfl*nstrat, smo_s, 'smo_s')
+       call cfwure (iun, nCv*nstrat, sei_s, 'sei_s')
+       call cfwure (iun, nCv*nstrat, see_s, 'see_s')
+
+      close (iun)
+      write (*,*) ' file ',savefile,' written '
+
+      call subend ()
+      return
+      end subroutine write_saved_sources
 
       end module b2mod_eirene
