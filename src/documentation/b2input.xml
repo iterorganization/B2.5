@@ -1794,14 +1794,6 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2stbr_bas_recycled_neutrals_contr</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					Introduced for nulling recycling energy when it is zero.
-				</description>
-			</switch>
-			<switch>
 				<name>b2tfhe_alfTeEh</name>
 				<default>0.0</default>
 				<type>real</type>

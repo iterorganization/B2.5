@@ -13,8 +13,8 @@
 
 !  cell quantites
         real (kind=R8), allocatable  :: cvBb(:,:)      ! Magnetic field: (nCv,0:3) Bx, By, Bz, |B|
-        real (kind=R8), allocatable  :: cvX(:)         ! X-co of cell center
-        real (kind=R8), allocatable  :: cvY(:)         ! Y-co of cell center
+        real (kind=R8), allocatable  :: cvX(:)         ! X-coordinate of cell center
+        real (kind=R8), allocatable  :: cvY(:)         ! Y-coordinate of cell center
         real (kind=R8), allocatable  :: cvSz(:)        ! Area perp. to third (z) direction
         real (kind=R8), allocatable  :: cvHz(:)        ! Length in third (z) direction
         real (kind=R8), allocatable  :: cvHx(:)        ! Temp: characteristic poloidal length; eventually remove, because meaning unclear in WG context
@@ -48,8 +48,8 @@
 
 !  vertex quantities
         real (kind=R8), allocatable  :: vxBb(:,:)      ! Magnetic field: (nVx,0:3) to be recomputed at vertices (Bx,By,Bz,|B|)
-        real (kind=R8), allocatable  :: vxX(:)         ! X-co of vertex
-        real (kind=R8), allocatable  :: vxY(:)         ! Y-co of vertex
+        real (kind=R8), allocatable  :: vxX(:)         ! X-coordinate of vertex
+        real (kind=R8), allocatable  :: vxY(:)         ! Y-coordinate of vertex
         real (kind=R8), allocatable  :: vxHz(:)        ! Length in third (z) direction
         real (kind=R8), allocatable  :: vxVol(:)       ! Part of volume of surrounding cell centers associated with the vertex; for interpolation
         real (kind=R8), allocatable  :: vxFfbz(:)      !
