@@ -94,12 +94,13 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *.computation
 
 * ..preliminaries
-      icv1 = 1 !csc needed for correct initialization in adjoint AD
-      icv2 = 1
+      iCv1 = 1 !csc needed for correct initialization in adjoint AD
+      iCv2 = 1
 *   ..subprogram start-up calls
       call subini ('b2usht')
-*   ..test nCv, nFc, ns
-      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, nVx, ns
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     .  'faulty argument nCv, nFc, nVx')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test itcnt, rxg
       call xertst (0.le.itcnt, 'faulty argument itcnt')

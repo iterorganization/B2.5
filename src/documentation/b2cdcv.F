@@ -232,208 +232,213 @@
 *     The unstructured finite volume solver in the WG version of SOLPS makes uses of a series
 *     of mapping variables to correctly link the cells, faces, and vertices to each other.
 *
-*     cvFcP - (1:nCv,1:2) integer array  
-*     Pointer array to find the cell faces numbers that belong to the cell iCv.          
+*     cvFcP - (1:nCv,1:2) integer array
+*     Pointer array to find the cell faces numbers that belong to the cell iCv.
 *     cvFcP(iCv,1) points for cell iCv to the index of the cvFc array where the first face
 *     number is found.
-*     cvFcP(iCv,2) gives the number of faces belonging to cell iCv. 
+*     cvFcP(iCv,2) gives the number of faces belonging to cell iCv.
 *     Consequently, the last face number is found in cvFc(cvFcP(iCv,1)+cvFcP(iCv,2)-1).
 *
-*     cvFc - (1:nCmxFc) integer array 
-*     cvFc lists for every cell the corresponding face numbers, 
-*     with help of the cvFcP pointer array. 
-*     nCmxFc is the maximum number of entries in the cvFc array. 
+*     cvFc - (1:nCmxFc) integer array
+*     cvFc lists for every cell the corresponding face numbers,
+*     with help of the cvFcP pointer array.
+*     nCmxFc is the maximum number of entries in the cvFc array.
 *     nCmxFc is non-trivial for an unstructured grid. See code for details.
 *
 *     Example: we want to find the numbers of the faces surrouding the cell with iCv = 51.
-*     If cvFcP(51,1) = 251 and cvFcP(51,2) = 5, the cell has 5 faces, 
-*     and the face numbers are given in 
+*     If cvFcP(51,1) = 251 and cvFcP(51,2) = 5, the cell has 5 faces,
+*     and the face numbers are given in
 *     cvFc(251), cvFc(252), cvFc(253), cvFc(254) and cvFc(255).
 *
-*     fcCv = (1:nFc,1:2) integer array  
+*     fcCv = (1:nFc,1:2) integer array
 *     fcCv gives for every face iFc the two corresponding cells.
 *
-*     fcVx = (1:nFc,1:2) integer array   
+*     fcVx = (1:nFc,1:2) integer array
 *     fcVx gives for each face the two corresponding vertices.
 *
-*     cvVxP -(1:nCv,1:2) integer array        
-*     Pointer array to find the vertex numbers that belong to the cell iCv.          
+*     cvVxP -(1:nCv,1:2) integer array
+*     Pointer array to find the vertex numbers that belong to the cell iCv.
 *     cvVxP(iCv,1) points for cell iCv to the index of the cvVx array
 *     where the first vertex number is found.
-*     cvVxP(iCv,2) gives the number of vertices belonging to cell iCv. 
-*     Consequently, the last vertex number is found in cvVx(cvVxP(iCv,1)+cvVxP(iCv,2)-1). 
+*     cvVxP(iCv,2) gives the number of vertices belonging to cell iCv.
+*     Consequently, the last vertex number is found in cvVx(cvVxP(iCv,1)+cvVxP(iCv,2)-1).
 *
-*     cvVx - (1:nCmxVx) integer array 
-*     cvVx lists for every cell the corresponding vertex numbers, 
-*     with help of the cvVxP pointer array. 
-*     nCmxVx is the maximum number of entries in the cvVx array. 
+*     cvVx - (1:nCmxVx) integer array
+*     cvVx lists for every cell the corresponding vertex numbers,
+*     with help of the cvVxP pointer array.
+*     nCmxVx is the maximum number of entries in the cvVx array.
 *     nCmxVx is nontrivial for an unstructured grid. See code for details.
 *
-*     vxFcP -(1:nVx,1:2) integer array        
-*     Pointer array to find the numbers of the faces connected to vertex iVx.         
+*     vxFcP -(1:nVx,1:2) integer array
+*     Pointer array to find the numbers of the faces connected to vertex iVx.
 *     vxFcP(iVx,1) points for vertex iVx to the index of the vxFc array
 *     where the first face number is found.
-*     vxFcP(iVx,2) gives the number of faces connected to vertex iVx. 
+*     vxFcP(iVx,2) gives the number of faces connected to vertex iVx.
 *     Consequently, the last face number is found in vxFc(vxFcP(iVx,1)+vxFcP(iVx,2)-1).
 *
-*     vxFc - (1:nVmxFc) integer array 
-*     vxFc lists for every vertex the numbers of the faces connected to it, 
-*     with help of the vxFcP pointer array. 
+*     vxFc - (1:nVmxFc) integer array
+*     vxFc lists for every vertex the numbers of the faces connected to it,
+*     with help of the vxFcP pointer array.
 *     nVmxFc is the maximum number of entries in the vxFc array. See code for details.
 *
-*     vxCvP -(1:nVx,1:2) integer array        
-*     Pointer array to find the numbers of the cells connected to vertex iVx.         
-*     vxCvP(iVx,1) points for vertex iVx to the index of the vxCv array 
+*     vxCvP -(1:nVx,1:2) integer array
+*     Pointer array to find the numbers of the cells connected to vertex iVx.
+*     vxCvP(iVx,1) points for vertex iVx to the index of the vxCv array
 *     where the first cell number is found.
-*     vxCvP(iVx,2) gives the number of cells connected to vertex iVx. 
+*     vxCvP(iVx,2) gives the number of cells connected to vertex iVx.
 *     Consequently, the last cell number is found in vxCv(vxCvP(iVx,1)+vxCvP(iVx,2)-1).
 *
-*     vxCv - (1:nVmxCv) integer array 
-*     vxCv lists for every vertex the numbers of the cells connected to it, 
-*     with help of the vxCvP pointer array. 
+*     vxCv - (1:nVmxCv) integer array
+*     vxCv lists for every vertex the numbers of the cells connected to it,
+*     with help of the vxCvP pointer array.
 *     nVmxCv is the maximum number of entries in the vxCv array. See code for details.
 *
-*     ftCvP -(1:nFt,1:2) integer array        
-*     Pointer array to find the numbers of the cells belonging to flux tube iFt.         
-*     ftCvP(iFt,1) points for flux tube iFt to the index of the ftCv array 
+*     ftCvP -(1:nFt,1:2) integer array
+*     Pointer array to find the numbers of the cells belonging to flux tube iFt.
+*     ftCvP(iFt,1) points for flux tube iFt to the index of the ftCv array
 *     where the first cell number is found.
-*     ftCvP(iFt,2) gives the number of cells in flux tube iFt. 
+*     ftCvP(iFt,2) gives the number of cells in flux tube iFt.
 *     Consequently, the last cell number is found in ftCv(ftCvP(iFt,1)+ftCvP(iFt,2)-1).
 *
-*     ftCv - (1:nCv) integer array 
-*     ftCv lists for every flux tube the numbers of the cells belonging to it, 
-*     with help of the ftCvP pointer array. 
+*     ftCv - (1:nCv) integer array
+*     ftCv lists for every flux tube the numbers of the cells belonging to it,
+*     with help of the ftCvP pointer array.
 *
-*     ftFcP -(1:nFt,1:2) integer array        
-*     Pointer array to find the numbers of the faces belonging to flux tube iFt. 
-*     These are the faces between the cells in the flux tube, 
-*     not the flux-aligned faces separating the flux tube from adjacent flux tubes.   
-*     ftFcP(iFt,1) points for flux tube iFt to the index of the ftFc array 
+*     ftFcP -(1:nFt,1:2) integer array
+*     Pointer array to find the numbers of the faces belonging to flux tube iFt.
+*     These are the faces between the cells in the flux tube,
+*     not the flux-aligned faces separating the flux tube from adjacent flux tubes.
+*     ftFcP(iFt,1) points for flux tube iFt to the index of the ftFc array
 *     where the first face number is found.
-*     ftFcP(iFt,2) gives the number of faces in flux tube iFt. 
+*     ftFcP(iFt,2) gives the number of faces in flux tube iFt.
 *     Consequently, the last face number is found in ftFc(ftFcP(iFt,1)+ftFcP(iFt,2)-1).
 *
-*     ftFc - (1:nFc) integer array 
-*     ftFc lists for every flux tube the numbers of the faces belonging to it, 
-*     with help of the ftFcP pointer array. 
+*     ftFc - (1:nFc) integer array
+*     ftFc lists for every flux tube the numbers of the faces belonging to it,
+*     with help of the ftFcP pointer array.
 *
-*     cvFt - (1:nCv) integer array 
+*     cvFt - (1:nCv) integer array
 *     cvFt lists for every cell the number of the flux tube to which it belongs.
 *
-*     fsFcP -(1:nFs,1:2) integer array        
-*     Pointer array to find the numbers of the faces belonging to flux surface iFs.  
-*     fsFcP(iFs,1) points for flux surface iFs to the index of the fsFc array 
+*     fsFcP -(1:nFs,1:2) integer array
+*     Pointer array to find the numbers of the faces belonging to flux surface iFs.
+*     fsFcP(iFs,1) points for flux surface iFs to the index of the fsFc array
 *     where the first face number is found.
-*     fsFcP(iFs,2) gives the number of faces in flux surface iFs. 
+*     fsFcP(iFs,2) gives the number of faces in flux surface iFs.
 *     Consequently, the last face number is found in fsFc(fsFcP(iFs,1)+fsFcP(iFs,2)-1).
 *
-*     fsFc - (1:nFc) integer array 
-*     fsFc lists for every flux surface the numbers of the faces belonging to it, 
+*     fsFc - (1:nFc) integer array
+*     fsFc lists for every flux surface the numbers of the faces belonging to it,
 *     with help of the fsFcP pointer array.
 *
-*     fcFs - (1:nFc) integer array 
+*     fcFs - (1:nFc) integer array
 *     fcFs lists for every face the corresponding flux surface number, if any.
 *
-*     fcReg - (1:nFc) integer array 
+*     fcReg - (1:nFc) integer array
 *     Region numbers of the cell faces.
 *
-*     cvReg - (1:nCv) integer array 
+*     cvReg - (1:nCv) integer array
 *     Region numbers of the cells.
 *
-*     ftReg - (1:nFt) integer array 
+*     ftReg - (1:nFt) integer array
 *     Region numbers of the flux tubes.
 *
-*     fcAligned - (1:nFc) integer array 
+*     fcAligned - (1:nFc) integer array
 *     Integer to indicate whether a face is aligned with the magnetic field.
 *
-*     cvOnClosedSurface - (1:nCv) integer array 
+*     cvOnClosedSurface - (1:nCv) integer array
 *     Logical to indicate whether a cell is on a closed flux surface.
 *
-*     bcCvP -(1:nBc,1:2) integer array        
-*     Pointer array to find the numbers of the guard cells belonging to boundary condition iBc.         
-*     bcCvP(iBc,1) points for boundary condition iBc to the index of the bcCv array 
+*     bcCvP -(1:nBc,1:2) integer array
+*     Pointer array to find the numbers of the guard cells belonging to boundary condition iBc.
+*     bcCvP(iBc,1) points for boundary condition iBc to the index of the bcCv array
 *     where the first guard cell number is found.
-*     bcCvP(iBc,2) gives the number of guard cells belonging to boundary condition iBc. 
+*     bcCvP(iBc,2) gives the number of guard cells belonging to boundary condition iBc.
 *     Consequently, the last guard cell number is found in bcCv(bcCvP(iBc,1)+bcCvP(iBc,2)-1).
 *
-*     bcCv - (1:mxnBc) integer array 
+*     bcCv - (1:mxnBc) integer array
 *     bcCv lists for every boundary condition the numbers of the guard cells belonging to it,
-*     with help of the bcCvP pointer array. 
+*     with help of the bcCvP pointer array.
 *
-*     bcFcP -(1:nBc,1:2) integer array        
-*     Pointer array to find the numbers of the guard cell faces belonging to boundary condition iBc.         
-*     bcFcP(iBc,1) points for boundary condition iBc to the index of the bcFc array 
+*     bcFcP -(1:nBc,1:2) integer array
+*     Pointer array to find the numbers of the guard cell faces belonging to boundary condition iBc.
+*     bcFcP(iBc,1) points for boundary condition iBc to the index of the bcFc array
 *     where the first cell face number is found.
-*     bcFcP(iBc,2) gives the number of guard cell faces belonging to boundary condition iBc. 
+*     bcFcP(iBc,2) gives the number of guard cell faces belonging to boundary condition iBc.
 *     Consequently, the last guard cell face number is found in bcFc(bcFcP(iBc,1)+bcFcP(iBc,2)-1).
 *
-*     bcFc - (1:mxnBc) integer array 
-*     bcFc lists for every boundary condition the numbers of the guard cell faces belonging to it, 
-*     with help of the bcFcP pointer array. 
+*     bcFc - (1:mxnBc) integer array
+*     bcFc lists for every boundary condition the numbers of the guard cell faces belonging to it,
+*     with help of the bcFcP pointer array.
 *
-*     bcFcOr - (1:mxnBc) real*8 array 
+*     bcFcOr - (1:mxnBc) real*8 array
 *     bcFcOr is a multiplier to indicate whether the outward normal of the boundary
 *     coincides with the face normal (1.0_R8) or not (-1.0_R8).
 *
-*     rcCvP -(1:nRc,1:2) integer array        
-*     Pointer array to find the numbers of the guard cells belonging to stratum iRc.         
-*     rcCvP(iRc,1) points for stratum iRc to the index of the rcCv array 
+*     fcBc - (1:nFc) integer array
+*     fcBc lists, for every face, the boundary face index it matches (if any)
+*     as fcBc(iFc,1) and the boundary index it belongs to (if any)
+*     as fcBc(iFc,2)
+*
+*     rcCvP -(1:nRc,1:2) integer array
+*     Pointer array to find the numbers of the guard cells belonging to stratum iRc.
+*     rcCvP(iRc,1) points for stratum iRc to the index of the rcCv array
 *     where the first cell number is found.
-*     rcCvP(iRc,2) gives the number of guard cells belonging to stratum iRc. 
+*     rcCvP(iRc,2) gives the number of guard cells belonging to stratum iRc.
 *     Consequently, the last guard cell number is found in rcCv(rcCvP(iRc,1)+rcCvP(iRc,2)-1).
 *
-*     rcCv - (1:mxnRc) integer array 
-*     rcCv lists for every stratum the numbers of the guard cells belonging to it, 
-*     with help of the rcCvP pointer array. 
+*     rcCv - (1:mxnRc) integer array
+*     rcCv lists for every stratum the numbers of the guard cells belonging to it,
+*     with help of the rcCvP pointer array.
 *
-*     rcFcP -(1:nRc,1:2) integer array        
-*     Pointer array to find the numbers of the guard cell faces belonging to stratum iRc.         
-*     rcFcP(iRc,1) points for stratum iRc to the index of the rcFc array 
+*     rcFcP -(1:nRc,1:2) integer array
+*     Pointer array to find the numbers of the guard cell faces belonging to stratum iRc.
+*     rcFcP(iRc,1) points for stratum iRc to the index of the rcFc array
 *     where the first cell face number is found.
-*     rcFcP(iRc,2) gives the number of guard cell faces belonging to stratum iRc. 
+*     rcFcP(iRc,2) gives the number of guard cell faces belonging to stratum iRc.
 *     Consequently, the last guard cell face number is found in rcFc(rcFcP(iRc,1)+rcFcP(iRc,2)-1).
 *
-*     rcFc - (1:mxnRc) integer array 
+*     rcFc - (1:mxnRc) integer array
 *     rcFc lists for every stratum the numbers of the guard cell faces belonging to it,
-*     with help of the rcFcP pointer array. 
+*     with help of the rcFcP pointer array.
 *
-*     rcFcOr - (1:mxnRc) real*8 array 
-*     rcFcOr is a multiplier to indicate whether the outward normal of the stratum 
+*     rcFcOr - (1:mxnRc) real*8 array
+*     rcFcOr is a multiplier to indicate whether the outward normal of the stratum
 *     coincides with the face normal (1.0_R8) or not (-1.0_R8).
 *
-*     fsVxP -(1:nFs,1:2) integer array        
-*     Pointer array to find the numbers of the vertices belonging to flux surface iFs.  
-*     fsVxP(iFs,1) points for flux surface iFs to the index of the fsVx array 
+*     fsVxP -(1:nFs,1:2) integer array
+*     Pointer array to find the numbers of the vertices belonging to flux surface iFs.
+*     fsVxP(iFs,1) points for flux surface iFs to the index of the fsVx array
 *     where the first vertex number is found.
-*     fsVxP(iFs,2) gives the number of vertices on flux surface iFs. 
+*     fsVxP(iFs,2) gives the number of vertices on flux surface iFs.
 *     Consequently, the last vertex number is found in fsVx(fsVxP(iFs,1)+fsVxP(iFs,2)-1).
 *
-*     fsVx - (1:nVx) integer array 
-*     fsFx lists for every flux surface the numbers of the vertices belonging to it, 
+*     fsVx - (1:nVx) integer array
+*     fsFx lists for every flux surface the numbers of the vertices belonging to it,
 *     with help of the fsVxP pointer array.
 *
-*     VxFs - (1:nVx) integer array 
+*     VxFs - (1:nVx) integer array
 *     VxFs lists for every vertex the corresponding flux surface number, if any.
 *
 *     isClassicalGrid - integer
-*     Indicates whether the grid is derived from a structured grid. 
-*     If isClassicalGrid.eq.1, then nx = number of poloidal cells in original grid, 
+*     Indicates whether the grid is derived from a structured grid.
+*     If isClassicalGrid.eq.1, then nx = number of poloidal cells in original grid,
 *     ny = number of radial cells in original grid, nncut = number of cuts in original grid,
-*     imapCv(:,:) is the back projection of the iCv indices 
-*     to the (ix,iy) indices of the original structured grid, 
-*     imapFcX(:,:) is the back projection of the iFc indices 
-*     to the (ix,iy) indices for x-faces of the original structured grid, 
-*     imapFcY(:,:) is the back projection of the iFc indices 
-*     to the (ix,iy) indices for y-faces of the original structured grid, 
+*     imapCv(:,:) is the back projection of the iCv indices
+*     to the (ix,iy) indices of the original structured grid,
+*     imapFcX(:,:) is the back projection of the iFc indices
+*     to the (ix,iy) indices for x-faces of the original structured grid,
+*     imapFcY(:,:) is the back projection of the iFc indices
+*     to the (ix,iy) indices for y-faces of the original structured grid,
 *     and imapVx(:,:) is the back projection of iVx indices to structured grid.
 *
-*     fcLbl = (1:nFc) integer array 
+*     fcLbl = (1:nFc) integer array
 *     fcLbl indicates for each face the corresponding face label.
 *
-*     ftLbl = (1:nFt) integer array 
+*     ftLbl = (1:nFt) integer array
 *     ftLbl indicates for each flux tube the corresponding label.
 *
-*     cvLbl = (1:nCv) integer array 
+*     cvLbl = (1:nCv) integer array
 *     cvLbl indicates for each control volume the corresponding label.
 *
 *     /b2cmfs/ - common block.
@@ -1176,8 +1181,8 @@
 *
 *     /b2cmpb/ - common block.
 *     Old method for specifying boundary conditions. This old option no longer
-*     works for the WG code. However, for now, the code is not removed because 
-*     parts of it are still needed to technically run the code. 
+*     works for the WG code. However, for now, the code is not removed because
+*     parts of it are still needed to technically run the code.
 *     /b2cmpb/ specifies physics parameters for boundary conditions.
 *     For this purpose the boundary is divided up into regions, and for
 *     each region a set of coefficients defines the local conditions.
@@ -1671,7 +1676,7 @@
 *     For (iFc) in (1:nFc), calf(iFc,1) specifies the radial thermo-
 *     electric coefficient on the (iFc) face.
 *
-*     csigin - (1:nFc,0:1,0:ns-1,0:ns-1) real*8 array.		 !xpb
+*     csigin - (1:nFc,0:1,0:ns-1,0:ns-1) real*8 array.
 *     For (iFc,is,is0) in (1:nFc,0:ns-1,0:ns-1),
 *     csigin(iFc,0,is,is0) specifies the poloidal ion-neutral
 *     conductivity on the (iFc) face, where

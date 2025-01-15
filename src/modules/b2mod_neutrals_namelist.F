@@ -1367,7 +1367,7 @@ cwvu    for (advanced) spatially hybrid, might need even more.
         open (newunit=idb,file='debug_neutrals.out')
 #else
         idb = newunit()
-        open (unit=idb,file='deug_neutrals.out')
+        open (unit=idb,file='debug_neutrals.out')
 #endif
         instra = 0
         do istra = 1, nstrai
