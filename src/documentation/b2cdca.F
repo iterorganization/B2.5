@@ -103,7 +103,7 @@
 *     The code can be distributed using do-enddo syntax or using
 *     labelled do loops, and with or without use of include statements.
 *   ..At present, the code mainly uses Fortran 90, 95 and 2003.
-*     Some users HPC systems may not yet support 2003, although this is becoming 
+*     Some users HPC systems may not yet support 2003, although this is becoming
 *     an exception. The -DLEGACYCOMP preprocessor pragma deals with this.
 *
 *   ..Scientific libraries.
