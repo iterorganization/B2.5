@@ -693,33 +693,33 @@ cdpc
       end subroutine b2tqna
 
       subroutine modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
-     & inner_sol_loc,core_coef, bar_coef,inner_sol_coef,
-     & outer_sol_coef,iCv,dna0)
+     & inner_sol_loc,bar_coef,inner_sol_coef,
+     & outer_sol_coef, div_coef, iCv, dna0)
 
-      use b2mod_types
-      use b2us_map
-      implicit none
-      type (mapping), intent (in) :: mpg
-      real (kind=R8) :: dna0, core_coef, bar_coef,inner_sol_coef,
-     &     outer_sol_coef
-      integer flux_surf(2),iCv,sep_loc,inner_bar_loc,inner_sol_loc
-      integer findloc
-
-      flux_surf = findloc(mpg%imapCv,iCv)-2
-      if (mpg%cvOnClosedSurface(iCv)) then
-        if ((flux_surf(2) >= inner_bar_loc).and.
-     &      (flux_surf(2) <= sep_loc)) then
-          dna0 = bar_coef*dna0
-        elseif(flux_surf(2) < inner_bar_loc) then
-          dna0 = core_coef*dna0
-        endif
-      elseif(flux_surf(2) < inner_sol_loc) then
-        dna0 = inner_sol_coef*dna0
-      else
-        dna0 = outer_sol_coef*dna0
-      endif
-
-      return
+        use b2mod_types
+        use b2us_map
+        implicit none
+        type (mapping), intent (in) :: mpg
+        real (kind=R8) :: dna0,  bar_coef,inner_sol_coef,
+     &     outer_sol_coef, div_coef
+        integer flux_surf(2),iCv,sep_loc,inner_bar_loc,inner_sol_loc
+        flux_surf = findloc(mpg%imapCv,iCv)-2
+        if (mpg%cvOnClosedSurface(iCv)) then
+          if((flux_surf(2)>=inner_bar_loc).and.
+     &          (flux_surf(2)<=sep_loc)) then
+            dna0 = bar_coef*dna0
+          elseif(flux_surf(2)<inner_bar_loc) then
+            ! dna0 = core_coef*dna0
+          endif
+        elseif ((div_coef .ne. 0.0_R8) .and. 
+     &      (mod(mpg%cvReg(iCv),4).eq.3 .or. 
+     &       mod(mpg%cvReg(iCv),4).eq.0)) then
+          dna0 = div_coef*dna0
+        elseif(flux_surf(2)<inner_sol_loc) then
+          dna0 = inner_sol_coef*dna0
+        else
+          dna0 = outer_sol_coef*dna0
+        endif  
       end subroutine modify_tram_coefs
 
       subroutine set_transport_srv(geo,mpg,ns,nCv,switch,dna0,hcib,
