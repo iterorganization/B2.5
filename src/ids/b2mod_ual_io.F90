@@ -1726,7 +1726,7 @@ contains
         !! Allocate and set time slice value
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         edge_profiles%grid_ggd( time_sind )%time = time_slice_value
-        edge_transport%model(1)%ggd( time_sind )%time = time_slice_value
+        edge_transport%grid_ggd( time_sind )%time = time_slice_value
         edge_sources%grid_ggd( time_sind )%time = time_slice_value
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         radiation%grid_ggd( time_sind )%time = time_slice_value
@@ -4480,7 +4480,7 @@ contains
                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
                    call write_cell_scalar( sources_grid, mpg,                &
                        &   scalar = edge_sources%source(12)%ggd( time_sind )%&
-                       &            neutral( is )%particles,                 &
+                       &            neutral( is )%energy,                    &
                        &   b2CellData = tmpCv )
                 end do
                 do is = 1, natmi
@@ -4564,7 +4564,7 @@ contains
                    call write_cell_scalar( sources_grid, mpg,                &
                        &   scalar = edge_sources%source(12)%                 &
                        &            ggd( time_sind )%neutral( js )%          &
-                       &            state( ks )%particles,                   &
+                       &            state( ks )%energy,                      &
                        &   b2CellData = tmpCv )
                 end do
 
@@ -5028,7 +5028,7 @@ contains
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                     call write_cell_vector_component( sources_grid, mpg,      &
                         &   vectorComponent = edge_sources%source(8)%         &
-                        &                     ggd( time_sind )%neutral( is )% &
+                        &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum,              &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
