@@ -15,7 +15,7 @@
 SUBROUTINE B2TXFX_NODIFF(nx, ny, ns, mode, vol, gs, hx, qz, kapx, conx)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -32,7 +32,7 @@ SUBROUTINE B2TXFX_NODIFF(nx, ny, ns, mode, vol, gs, hx, qz, kapx, conx)
   REAL(kind=r8) :: t0, t1, kaps, kapsn
   INTRINSIC MAX, SQRT
   EXTERNAL XERTST, smin, smax
-  EXTERNAL B2XVSG_NODIFF, B2XXGS, HARM
+  EXTERNAL B2XVSG, B2XXGS, HARM
   REAL(kind=r8) :: HARM, smin, smax
   REAL(r8) :: y1
   REAL(r8) :: max1
@@ -51,8 +51,8 @@ SUBROUTINE B2TXFX_NODIFF(nx, ny, ns, mode, vol, gs, hx, qz, kapx, conx)
   CALL XERTST(-1 .LE. mode .AND. mode .LE. 2, &
 &       'b2txfx--faulty argument mode')
 !   ..test sign of vol, hx
-  CALL B2XVSG_NODIFF(n2, vol, 1, 'vol', '.gt.')
-  CALL B2XVSG_NODIFF(n2, hx, 1, 'hx', '.gt.')
+  CALL B2XVSG(n2, vol, 1, 'vol', '.gt.')
+  CALL B2XVSG(n2, hx, 1, 'hx', '.gt.')
 !   ..test range of qz
   result1 = smin(n2, qz(-1, -1, 0), 1)
   result2 = smax(n2, qz(-1, -1, 0), 1)

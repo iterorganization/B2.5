@@ -9,34 +9,27 @@ c***
 c*** Output files:
 c***
 c***  gm_sep.dat first separatrix
-c***  gm_sep_i.dat inner second separatrix for DDN
-c***  gm_sep_o.dat outer second separatrix for DDN
-c***  gm_SOL.dat magnetic surfaces in first SOL
-c***  gm_SOL_i.dat magnetic surfaces in inner second SOL for DDN
-c***  gm_SOL_o.dat magnetic surfaces in outer second SOL for DDN
-c***  gm_PFR.dat magnetic surfaces in lower PFR
-c***  gm_PFR_u.dat magnetic surfaces in upper PFR for DN
+c***  gm_SOL.dat magnetic surfaces in SOL
+c***  gm_PFR.dat magnetic surfaces in PFR
 c***  gm_core.dat magnetic surfaces in the core part of the grid
 c***
-c*** For CDN, no gm_sep.dat or gm_SOL.dat is created.
 c=======================================================================
+      use b2mod_types
       use b2us_data
       use b2mod_diag
-      use b2mod_b2plot
       implicit none
       integer lun
 
 c*** Local variables
 
-      integer i,j,l,i1,i2
+      integer i,j,k,l,iCv,iVx
+      integer, allocatable :: fcList(:), vxList(:,:)
       character hlp_frmr*100, tab, ofile*12
 c=======================================================================
 
       tab=char(9)
 
-      if(mpg%nXpt.eq.1) then !{                      === single null ===
-#ifdef WG_TODO
-        k=jsep
+      if(mpg%iFssep.ne.0) then !{
 
         ofile='gm_sep.dat'
         open(lun,file=ofile,err=999)
@@ -44,10 +37,32 @@ c=======================================================================
         write(lun,' (a)',err=998) '# Separatrix shape'
         write(lun,'(2a)',err=998) '# ',trim(label)
         write(lun,'(3a)',err=998) '# R',tab,'Z'
-        do i=0,nx !{
-          write(lun,'(1p,e15.7,a,e15.7)',err=998) crx(i,k,2),tab,
-     ,                                                        cry(i,k,2)
+        allocate(fcList(mpg%fsFcP(mpg%iFssep,2)))
+        call sort_faces(
+     ,   mpg%fsFcP(mpg%iFssep,2),fcList,mpg%nFc,mpg%fcFs,mpg%iFssep,mpg)
+        do i=1,mpg%fsFcP(mpg%iFssep,2) !{
+          iVx = mpg%fcVx(fcList(i),1)
+          write(lun,'(1p,e15.7,a,e15.7)',err=998) geo%cvX(iVx),tab,
+     ,                                                    geo%cvY(iVx)
         end do !}
+        iVx = mpg%fcVx(fcList(mpg%fsFcP(mpg%iFssep,2)),2)
+        write(lun,'(1p,e15.7,a,e15.7)',err=998) geo%cvX(iVx),tab,
+     ,                                                    geo%cvY(iVx)
+        deallocate(fcList)
+        if (mpg%iFssep2.gt.0) then
+          call sort_faces(
+     ,     mpg%fsFcP(mpg%iFssep2,2),fcList,mpg%nFc,mpg%fcFs,
+     ,     mpg%iFssep2,mpg)
+          do i=1,mpg%fsFcP(mpg%iFssep2,2) !{
+            iVx = mpg%fcVx(fcList(i),1)
+            write(lun,'(1p,e15.7,a,e15.7)',err=998) geo%cvX(iVx),tab,
+     ,                                                    geo%cvY(iVx)
+          end do !}
+          iVx = mpg%fcVx(fcList(mpg%fsFcP(mpg%iFssep2,2)),2)
+          write(lun,'(1p,e15.7,a,e15.7)',err=998) geo%cvX(iVx),tab,
+     ,                                                    geo%cvY(iVx)
+          deallocate(fcList)
+        end if
         close(lun)
 
         ofile='gm_SOL.dat'
@@ -55,13 +70,47 @@ c=======================================================================
         rewind(lun)
         write(lun,' (a)',err=998) '# SOL magnetic surfaces'
         write(lun,'(2a)',err=998) '# ',trim(label)
-        write(hlp_frmr,'(a,i3,a)')
-     ,    '(a,4x,',ny-k,'(a1,i2.2,13x,a1,i2.2,13x))'
-        write(lun,hlp_frmr,err=998) '#',('R',i,'Z',i,i=k,ny-1)
-        write(hlp_frmr,'(a,i3,a)') '(1p,',2*(ny-k),'(e14.7,2x))'
-        do i=0,nx !{
-          write(lun,hlp_frmr,err=998) (crx(i,j,2),cry(i,j,2),j=k,ny-1)
-        end do !}
+        k=0
+        l=0
+        do i=1,mpg%nFs
+          if (i.eq.mpg%iFssep.or.i.eq.mpg%iFssep2) cycle
+          if (geo%fsPsi(i).lt.geo%fsPsi(mpg%iFssep).and.
+     &        geo%psi_increasing) cycle
+          if (geo%fsPsi(i).gt.geo%fsPsi(mpg%iFssep).and.
+     &        .not.geo%psi_increasing) cycle
+          k=k+1
+          l=max(l,mpg%fsFcP(i,2))
+        end do
+        if (k.gt.0) then !{
+          write(hlp_frmr,'(a,i3,a)')
+     .     '(a,4x,',k,'(a1,i2.2,13x,a1,i2.2,13x))'
+          write(lun,hlp_frmr,err=998) '#',('R',i,'Z',i,i=1,k)
+          write(hlp_frmr,'(a,i3,a)') '(1p,',2*k,'(e14.7,2x))'
+          allocate(vxList(l+1,k))
+          vxList=-999.0_R8
+          k=0
+          do i=1,mpg%nFs !{
+            if (i.eq.mpg%iFssep.or.i.eq.mpg%iFssep2) cycle
+            if (geo%fsPsi(i).lt.geo%fsPsi(mpg%iFssep).and.
+     &          geo%psi_increasing) cycle
+            if (geo%fsPsi(i).gt.geo%fsPsi(mpg%iFssep).and.
+     &          .not.geo%psi_increasing) cycle
+            k=k+1
+            allocate(fcList(mpg%fsFcP(i,2)))
+            call sort_faces(
+     .       mpg%fsFcP(i,2),fcList,mpg%nFc,mpg%fcFs,i,mpg)
+            vxList(1:mpg%fsFcP(i,2),k)=
+     .       mpg%fcVx(fcList(1:mpg%fsFcP(i,2)),1)
+            vxList(mpg%fsFcP(i,2)+1,k)=
+     .       mpg%fcVx(fcList(mpg%fsFcP(i,2)),2)
+            deallocate(fcList)
+          end do !}
+          do i=1,l+1 !{
+            write(lun,hlp_frmr,err=998) (geo%cvX(vxList(i,j)),
+     .                                   geo%cvY(vxList(i,j)),j=1,k)
+          end do !}
+          deallocate(vxList)
+        end if !}
         close(lun)
 
         ofile='gm_PFR.dat'
@@ -69,20 +118,53 @@ c=======================================================================
         rewind(lun)
         write(lun,' (a)',err=998) '# PFR magnetic surfaces'
         write(lun,'(2a)',err=998) '# ',trim(label)
-        write(hlp_frmr,'(a,i3,a)')
-     ,   '(a,4x,',k+1,'(a1,i2.2,13x,a1,i2.2,13x))'
-        write(lun,hlp_frmr,err=998) '#',('R',i,'Z',i,i=0,k)
-        write(hlp_frmr,'(a,i3,a)') '(1p,',2*(k+1),'(e14.7,2x))'
-        i1=0
-        i2=leftcut(1)-1
-        do l=1,2 !{
-          do i=i1,i2 !{
-            write(lun,hlp_frmr,err=998) (crx(i,j,2),cry(i,j,2),j=0,k)
+        k=0
+        l=0
+        do i=1,mpg%nFs
+          if (i.eq.mpg%iFssep.or.i.eq.mpg%iFssep2) cycle
+          if (geo%fsPsi(i).gt.geo%fsPsi(mpg%iFssep).and.
+     &        geo%psi_increasing) cycle
+          if (geo%fsPsi(i).lt.geo%fsPsi(mpg%iFssep).and.
+     &        .not.geo%psi_increasing) cycle
+          iCv = min(mpg%fcCv(mpg%fsFc(mpg%fsFcP(i,1)),1),
+     &              mpg%fcCv(mpg%fsFc(mpg%fsFcP(i,1)),2))
+          if (mpg%cvOnClosedSurface(iCv)) cycle
+          k=k+1
+          l=max(l,mpg%fsFcP(i,2))
+        end do
+        if (k.gt.0) then !{
+          write(hlp_frmr,'(a,i3,a)')
+     ,     '(a,4x,',k,'(a1,i2.2,13x,a1,i2.2,13x))'
+          write(lun,hlp_frmr,err=998) '#',('R',i,'Z',i,i=1,k)
+          write(hlp_frmr,'(a,i3,a)') '(1p,',2*k,'(e14.7,2x))'
+          allocate(vxList(l+1,k))
+          vxList=-999.0_R8
+          k=0
+          do i=1,mpg%nFs !{
+            if (i.eq.mpg%iFssep.or.i.eq.mpg%iFssep2) cycle
+            if (geo%fsPsi(i).gt.geo%fsPsi(mpg%iFssep).and.
+     &          geo%psi_increasing) cycle
+            if (geo%fsPsi(i).lt.geo%fsPsi(mpg%iFssep).and.
+     &          .not.geo%psi_increasing) cycle
+            iCv = min(mpg%fcCv(mpg%fsFc(mpg%fsFcP(i,1)),1),
+     &                mpg%fcCv(mpg%fsFc(mpg%fsFcP(i,1)),2))
+            if (mpg%cvOnClosedSurface(iCv)) cycle
+            k=k+1
+            allocate(fcList(mpg%fsFcP(i,2)))
+            call sort_faces(
+     .       mpg%fsFcP(i,2),fcList,mpg%nFc,mpg%fcFs,i,mpg)
+            vxList(1:mpg%fsFcP(i,2),k)=
+     .       mpg%fcVx(fcList(1:mpg%fsFcP(i,2)),1)
+            vxList(mpg%fsFcP(i,2)+1,k)=
+     .       mpg%fcVx(fcList(mpg%fsFcP(i,2)),2)
+            deallocate(fcList)
           end do !}
-          write(lun,hlp_frmr,err=998) (crx(i2,j,3),cry(i2,j,3),j=0,k)
-          i1=rightcut(1)
-          i2=nx-1
-        end do !}
+          do i=1,l+1 !{
+            write(lun,hlp_frmr,err=998) (geo%cvX(vxList(i,j)),
+     .                                   geo%cvY(vxList(i,j)),j=1,k)
+          end do !}
+          deallocate(vxList)
+        end if !}
         close(lun)
 
         ofile='gm_core.dat'
@@ -90,28 +172,55 @@ c=======================================================================
         rewind(lun)
         write(lun,' (a)',err=998) '# Core magnetic surfaces'
         write(lun,'(2a)',err=998) '# ',trim(label)
-        write(hlp_frmr,'(a,i3,a)')
-     ,    '(a,4x,',k+1,'(a1,i2.2,13x,a1,i2.2,13x))'
-        write(lun,hlp_frmr,err=998) '#',('R',i,'Z',i,i=0,k)
-        write(hlp_frmr,'(a,i3,a)') '(1p,',2*(k+1),'(e14.7,2x))'
-        i1=leftcut(1)
-        i2=rightcut(1)-1
-        do i=i1,i2 !{
-          write(lun,hlp_frmr,err=998) (crx(i,j,2),cry(i,j,2),j=0,k)
-        end do !}
-        write(lun,hlp_frmr,err=998) (crx(i2,j,3),cry(i2,j,3),j=0,k)
-
+        k=0
+        l=0
+        do i=1,mpg%nFs
+          if (i.eq.mpg%iFssep.or.i.eq.mpg%iFssep2) cycle
+          if (geo%fsPsi(i).gt.geo%fsPsi(mpg%iFssep).and.
+     &        geo%psi_increasing) cycle
+          if (geo%fsPsi(i).lt.geo%fsPsi(mpg%iFssep).and.
+     &        .not.geo%psi_increasing) cycle
+          iCv = min(mpg%fcCv(mpg%fsFc(mpg%fsFcP(i,1)),1),
+     &              mpg%fcCv(mpg%fsFc(mpg%fsFcP(i,1)),2))
+          if (.not.mpg%cvOnClosedSurface(iCv)) cycle
+          k=k+1
+          l=max(l,mpg%fsFcP(i,2))
+        end do
+        if (k.gt.0) then !{
+          write(hlp_frmr,'(a,i3,a)')
+     ,     '(a,4x,',k,'(a1,i2.2,13x,a1,i2.2,13x))'
+          write(lun,hlp_frmr,err=998) '#',('R',i,'Z',i,i=1,k)
+          write(hlp_frmr,'(a,i3,a)') '(1p,',2*k,'(e14.7,2x))'
+          allocate(vxList(l,k))
+          vxList=-999.0_R8
+          k=0
+          do i=1,mpg%nFs !{
+            if (i.eq.mpg%iFssep.or.i.eq.mpg%iFssep2) cycle
+            if (geo%fsPsi(i).gt.geo%fsPsi(mpg%iFssep).and.
+     &          geo%psi_increasing) cycle
+            if (geo%fsPsi(i).lt.geo%fsPsi(mpg%iFssep).and.
+     &          .not.geo%psi_increasing) cycle
+            iCv = min(mpg%fcCv(mpg%fsFc(mpg%fsFcP(i,1)),1),
+     &                mpg%fcCv(mpg%fsFc(mpg%fsFcP(i,1)),2))
+            if (.not.mpg%cvOnClosedSurface(iCv)) cycle
+            k=k+1
+            allocate(fcList(mpg%fsFcP(i,2)))
+            call sort_faces(
+     .       mpg%fsFcP(i,2),fcList,mpg%nFc,mpg%fcFs,i,mpg)
+            vxList(1:mpg%fsFcP(i,2),k)=
+     .       mpg%fcVx(fcList(1:mpg%fsFcP(i,2)),1)
+            deallocate(fcList)
+          end do !}
+          do i=1,l !{
+            write(lun,hlp_frmr,err=998) (geo%cvX(vxList(i,j)),
+     .                                   geo%cvY(vxList(i,j)),j=1,k)
+          end do !}
+          deallocate(vxList)
+        end if !}
         close (lun)
-#endif
-      else if(mpg%nXpt.eq.2) then !}{ === double null ===
-
-        write(0,*) 'b2pgeom: double null configuration yet to be ',
-     ,                                                    'implemented'
-        return
 
       else !}{
-        write(0,*) 'b2pgeom: wrong value of nXpt (must be 1 or 2) ',
-     ,             mpg%nXpt
+        write(0,*) 'b2pgeom: no separatrix flux surface declared! '
         return
       end if !}
 

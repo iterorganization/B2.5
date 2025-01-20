@@ -276,7 +276,7 @@ cxpb  quantities before their mapping to cell centers
      1   nfla,NFL
       else
         call copy_background(nCv, nFc, ns, switch, mpg, gm,
-     &                       state%pl, state%dv)
+     &                       state%pl, state%dv, state_ext)
       endif
 c
       call initialise_potentials(ns)
@@ -296,11 +296,10 @@ c
       end do
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
-      call b2xpen (nCv, nFc, ns, mpg,
+      call b2xpen (nCv, nFc, ns, mpg, switch,
      1  state%dv%fna, state%dv%fna_53, state%dv%fne_53, state%dv%fch,
      1  state%dv%fhe, state%dv%fhi, state%dv%fhn, state%rt%rpt,
      2  state%pl%te, state%pl%ti, state%pl%tn, state%pl%po,
-     2  switch%BoRiS,
      2  state%dv%fhm, state%dv%fhp, state%dv%fhj, state%dv%fht)
       state%dv%fht=state%dv%fht+state_ext%fhi
       do is=0,state_ext%ns-1
@@ -1266,17 +1265,18 @@ c
      1       nCv,temp,'')
         if (jvft44.lt.20240627) then
           forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=srcml(iCv,is+1,1)
-     1     *1.0e6_R8*geo%cvVol(iCv)/qe
+     1     *1.0e6_R8*gm%cvVol(iCv)/qe
         else
           forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=srcml(iCv,is+1,1)
         endif
         call mds_put_double_usns('\TOP.SNAPSHOT:SRCML','s^-1',
      1       nCv,nmoli,tmp,'TEXTMN','')
         if (jvft44.lt.20240627) then
-          forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=edissml(iCv,is+1,1)
-     1     *1.0e6_R8*geo%cvVol(iCv)
+          forall (iCv=1:nCv,is=0:nmoli-1)
+     1       tmp(iCv,is)=edissml(iCv,is+1,1)*1.0e6_R8*gm%cvVol(iCv)
         else
-          forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=edissml(iCv,is+1,1)
+          forall (iCv=1:nCv,is=0:nmoli-1)
+     1       tmp(iCv,is)=edissml(iCv,is+1,1)
         endif
         call mds_put_double_usns('\TOP.SNAPSHOT:EDISSML','W',
      1       nCv,nmoli,tmp,'TEXTMN','')
@@ -1400,6 +1400,20 @@ c
       if (mpg%iFssep.ne.0) then
         do i = mpg%fsFcP(mpg%iFssep,1),
      1         mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+          iCv1 = mpg%fcCv(mpg%fsFc(i),1)
+          iCv2 = mpg%fcCv(mpg%fsFc(i),2)
+          if(mpg%cvOnClosedSurface(iCv1).neqv.
+     1       mpg%cvOnClosedSurface(iCv2)) then
+            fhesep=fhesep+state%dv%fhe(mpg%fsFc(i),1)
+            fhisep=fhisep+state%dv%fhi(mpg%fsFc(i),1)
+            fnesep=fnesep+state%dv%fne(mpg%fsFc(i),1)
+            fnisep=fnisep+state%dv%fni(mpg%fsFc(i),1)
+          endif
+        enddo
+      endif
+      if (mpg%iFssep2.ne.0) then
+        do i = mpg%fsFcP(mpg%iFssep2,1),
+     1         mpg%fsFcP(mpg%iFssep2,1) + mpg%fsFcP(mpg%iFssep2,2) - 1
           iCv1 = mpg%fcCv(mpg%fsFc(i),1)
           iCv2 = mpg%fcCv(mpg%fsFc(i),2)
           if(mpg%cvOnClosedSurface(iCv1).neqv.

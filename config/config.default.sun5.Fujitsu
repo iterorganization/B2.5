@@ -12,14 +12,14 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 # DEFINES += -DNO_CDF
 
 ifndef SOLPS_CPP
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
-    IMAS_PKG_LIST = fundamental_constants
+    IMAS_PKG_LIST = fundamental-constants
   endif
   ifdef TAO
     ifeq ($(shell `pkg-config --exists petsc`; echo $$?),0)
@@ -33,8 +33,8 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /usr/ccs/lib/cpp
@@ -43,11 +43,12 @@ SED = sed s:\#PREC\#:d:g
 SED = 
 
 FC = /afs/ipp/@sys/soft/fuji_f90/FSUNf90/bin/f90
+FN = ${FC}
 ifdef SOLPS_DEBUG
-FCOPTS = -g -Am -X9 -Hasu
+  FCOPTS = -g -Am -X9 -Hasu
 else
-FCOPTS = -O3 -Am -X9 -Kfast,gs,V8PLUS,GREG,eval -x-
-FCOPTS = -O3 -Am -X9 -Kfast,gs,V8PLUS,GREG,eval
+  FCOPTS = -O3 -Am -X9 -Kfast,gs,V8PLUS,GREG,eval -x-
+  FCOPTS = -O3 -Am -X9 -Kfast,gs,V8PLUS,GREG,eval
 endif
 DBLFC = ${FC}
 DBLOPTION = -Ad # ???
@@ -63,15 +64,17 @@ PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
-LD = /afs/ipp/@sys/soft/fuji_f90/FSUNf90/bin/f90
+LD = ${FC}
+LN = ${FN}
 LDOPTS = -Bstatic
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

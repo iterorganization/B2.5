@@ -12,7 +12,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, ns
+      integer, intent (in) :: nCv, nFc, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -27,7 +27,7 @@
 *
 *  1. purpose
 *
-*     B2TANML computes the X and Y components of the anomalous current.
+*     B2TANML computes the poloidal and radial components of the anomalous current.
 *
 *
 *  8. further comments
@@ -41,7 +41,7 @@
       real (kind=R8) :: dpo(nFc,0:1), pov(mpg%nVx)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx, diff_r
+      external b2xvsg, diff_r
 *-----------------------------------------------------------------------
 *.computation
 
@@ -49,12 +49,12 @@
 *   ..subprogram start-up calls
       call subini ('b2tanml')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 
       if(switch%no_current.ne.0.or.
-     &   switch%fch_anomalous.eq.0.0e0_R8) then                         !srv 27.02.13
-        fchanml = 0.0e0_R8
+     &   switch%fch_anomalous.eq.0.0_R8) then                           !srv 27.02.13
+        fchanml = 0.0_R8
       else                                                              !srv 27.02.13
 
 *   ..compute differences of po

@@ -46,8 +46,8 @@
       use b2mod_ipmain
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1), 
-     &  ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns, nscx, nscxmax,
+     &                        iscx(0:nscxmax-1), ismain
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -112,7 +112,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tral')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall_b2tral.eq.0) then
@@ -122,7 +122,7 @@
      &    (switch%no_solve.lt.0.and.
      &     mod(abs(switch%no_solve),2**is).ge.2**(is-1))
         enddo
-        call alloc_input_profile(nCV,ns)
+        call alloc_input_profile(nCv,ns)
       end if
 
 * ..compute transport coefficients
@@ -136,7 +136,7 @@
      4  co%csigin, co%cthe, co%cthi, co%vsaf_cl, co%cvsa_cl, 
      5  co%cvsahz_cl, co%fllimvisc, co%csig_cl, co%calf_cl)
 *   ..add to previous contributions=
-      ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17 {
+      ft = 4.0_R8/3.0_R8                                          !srv 16.10.17 {
       do is = 0, ns-1
        if (.not.is_neutral(is)) then
         co%cvsa(:,0,is)   = ft*co%cvsa_cl(:,0,is)   + co%cvsa(:,0,is)
@@ -322,7 +322,7 @@ cwdk combined check for poloidal or radial diffusion
       if(switch%b2npp7_iout.ne.0 .or. switch%b2nppo_iout.ne.0) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-        do is0=0,ns-1
+        do is0 = 0, ns-1
          write (chns0,'(i3.3)') is0
          if(is0.ne.is .and. .not.is_neutral(is)) then
           call my_out_us(70,nFc,1,co%csigin(1,0,is,is0),

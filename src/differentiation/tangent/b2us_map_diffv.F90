@@ -20,24 +20,28 @@ MODULE B2US_MAP_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
+!*********************************************************************
+!
+!
   PRIVATE 
   PUBLIC :: alloc_mapping, dealloc_mapping, alloc_mapping_bc, &
 & dealloc_mapping_bc, alloc_mapping_rc, dealloc_mapping_rc, &
 & alloc_mapping_cf, dealloc_mapping_cf, read_mapping, write_mapping, &
-& init_mapping, get_version
+& init_mapping, get_version, calc_add_connectivity
   PUBLIC :: alloc_mapping_dv, dealloc_mapping_dv, alloc_mapping_bc_dv, &
-& dealloc_mapping_bc_dv, alloc_mapping_rc_dv, dealloc_mapping_rc_dv, &
-& alloc_mapping_cf_dv, dealloc_mapping_cf_dv, read_mapping_dv
+& dealloc_mapping_bc_dv, alloc_mapping_rc_dv0, alloc_mapping_rc_dv, &
+& dealloc_mapping_rc_dv, alloc_mapping_cf_dv, dealloc_mapping_cf_dv, &
+& read_mapping_dv, init_mapping_dv
 !
 ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
-!         listing for every cell the corresponding face numbers 
+!         listing for every cell the corresponding face numbers
 ! (nFc,2) listing for every face the two corresponding cells
 ! (nFc,2) listing for every face the two corresponding vertices
-! (nCv,2) pointing for every cell to the first index number in the cvVx list and its number of vertices 
-!         listing for every cell the corresponding vertex numbers        
-! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces  
+! (nCv,2) pointing for every cell to the first index number in the cvVx list and its number of vertices
+!         listing for every cell the corresponding vertex numbers
+! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces
 !         listing for every vertex the corresponding face numbers
-! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells   
+! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells
 !         listing for every vertex the corresponding cell numbers
 ! (nFt,2) pointing for every flux tube to the first index number in the ftCv list and its number of cells
 !         listing for every flux tube the corresponding cell numbers
@@ -46,9 +50,12 @@ MODULE B2US_MAP_DIFFV
 !         listing for every cell the corresponding flux tube
 ! (nFs,2) pointing for every flux surface to the first index number in the fsFc list and its number of cell faces
 !         listing for every flux surface the corresponding cell face numbers
-! Region numbers of the cell faces 
+! for every cell face the corresponding flux surface number, if any
+!
+! Region numbers of the cell faces
 ! Region numbers of the cells
 ! Region numbers of the flux tubes
+! Integer to indicate whether a face is aligned with the magnetic field
 ! Logical to indicate whether a cell is on a closed flux surface
 !
 ! (nBc,2) pointing for each boundary condition to the first index in the bcCv list, and its number of guard cells
@@ -78,13 +85,29 @@ MODULE B2US_MAP_DIFFV
 !(nCv,2): pointing for each cell to the start in cvNv array, and the number of points in its stencil
 !         listing for each cell the numbers of the cells in its stencil
 !
+!(nFs,2): for each flux surface, starting point of its list of vertices in fsVx array [(,1) component], and the number of vertice
+!s on the flux surface [(,2) component]
+! list of vertices belonging to the flux surfaces
+! for each vertex, the flux surface it belongs to
+!
+! vertex numbers for the X-points
+!(nXpt,2): for each Xpt, the list of associated strike point vertices, and their number
+! list of vertex numbers for the strike points
+! list of vertex numbers for the tangency points
+! For every strike point, the index of the divertor target on which it is located
+! The divertor targets are labelled from 1 to 4 starting travelling from West to East in the computational domain
+! For each divertor target, the list of associated divertor faces, and their number
+! ORDERED list of faces forming the divertor targets
+! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
+! List index of the face immediately outside the strike point
+! Index of the active strike-point vertex on the divertor target
 !
 ! indicates whether grid is derived from an "original", structured grid
 ! some parameters related to the original grid
 ! back projection of cv indices to structured grid
 ! back projection of fc indices for x-faces to structured grid
 ! back projection of fc indices for y-faces to structured grid
-! back projection of Vx indices to structured grid 
+! back projection of Vx indices to structured grid
 !
 ! corner indices; to be used in converting target information
 ! indices of central cuts; to be used in converting triangle information
@@ -92,10 +115,12 @@ MODULE B2US_MAP_DIFFV
 ! (nFc) indicates for each face the corresponding face label
 ! (nFt) indicates for each flux tube the corresponding label
 ! (nCv) indicates for each control volume the corresponding label
+!
   TYPE, PUBLIC :: MAPPING
       INTEGER :: ncv, nfc, nvx, ncg, nci, ncmxvx, ncmxfc, nvmxcv, nvmxfc&
-&     , nfs, nft, nbc, mxnbc, nrc, mxnrc, ncmxnv, ncf, mxncf, mxstencil
-      INTEGER :: nnreg(0:1)
+&     , nfs, nft, nbc, mxnbc, nrc, mxnrc, ncmxnv, ncf, mxncf, mxstencil&
+&     , nfsvxmx, nxpt, nstr, ntgc
+      INTEGER :: nnreg(0:1), periodic_bc, ifssep, ifssep2
       INTEGER, ALLOCATABLE :: cvfcp(:, :)
       INTEGER, ALLOCATABLE :: cvfc(:)
       INTEGER, ALLOCATABLE :: fccv(:, :)
@@ -113,9 +138,11 @@ MODULE B2US_MAP_DIFFV
       INTEGER, ALLOCATABLE :: cvft(:)
       INTEGER, ALLOCATABLE :: fsfcp(:, :)
       INTEGER, ALLOCATABLE :: fsfc(:)
+      INTEGER, ALLOCATABLE :: fcfs(:)
       INTEGER, ALLOCATABLE :: fcreg(:)
       INTEGER, ALLOCATABLE :: cvreg(:)
       INTEGER, ALLOCATABLE :: ftreg(:)
+      INTEGER, ALLOCATABLE :: fcaligned(:)
       LOGICAL, ALLOCATABLE :: cvonclosedsurface(:)
       INTEGER, ALLOCATABLE :: bccvp(:, :)
       INTEGER, ALLOCATABLE :: bccv(:, :)
@@ -135,6 +162,19 @@ MODULE B2US_MAP_DIFFV
       REAL(kind=r8), ALLOCATABLE :: intcellr(:)
       INTEGER, ALLOCATABLE :: cvnvp(:, :)
       INTEGER, ALLOCATABLE :: cvnv(:)
+      INTEGER, ALLOCATABLE :: fsvxp(:, :)
+      INTEGER, ALLOCATABLE :: fsvx(:)
+      INTEGER, ALLOCATABLE :: vxfs(:)
+      INTEGER, ALLOCATABLE :: xpt(:)
+      INTEGER, ALLOCATABLE :: strvxp(:, :)
+      INTEGER, ALLOCATABLE :: strvx(:)
+      INTEGER, ALLOCATABLE :: tgvx(:)
+      INTEGER, ALLOCATABLE :: strdiv(:)
+      INTEGER, ALLOCATABLE :: divfcp(:, :)
+      INTEGER, ALLOCATABLE :: divfc(:)
+      REAL(kind=r8), ALLOCATABLE :: divfcor(:)
+      INTEGER, ALLOCATABLE :: ifdiv(:)
+      INTEGER, ALLOCATABLE :: ivdiv(:)
       INTEGER :: isclassicalgrid
       INTEGER :: nx, ny, nncut, nctcnt
       INTEGER, ALLOCATABLE :: imapcv(:, :)
@@ -165,9 +205,11 @@ MODULE B2US_MAP_DIFFV
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: cvft
       INTEGER, DIMENSION(:, :, :), ALLOCATABLE :: fsfcp
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: fsfc
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: fcfs
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: fcreg
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: cvreg
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: ftreg
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: fcaligned
       LOGICAL, DIMENSION(:, :), ALLOCATABLE :: cvonclosedsurface
       INTEGER, DIMENSION(:, :, :), ALLOCATABLE :: bccvp
       INTEGER, DIMENSION(:, :, :), ALLOCATABLE :: bccv
@@ -187,11 +229,25 @@ MODULE B2US_MAP_DIFFV
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: intcellr
       INTEGER, DIMENSION(:, :, :), ALLOCATABLE :: cvnvp
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: cvnv
+      INTEGER, DIMENSION(:, :, :), ALLOCATABLE :: fsvxp
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: fsvx
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: vxfs
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: xpt
+      INTEGER, DIMENSION(:, :, :), ALLOCATABLE :: strvxp
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: strvx
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: tgvx
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: strdiv
+      INTEGER, DIMENSION(:, :, :), ALLOCATABLE :: divfcp
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: divfc
+      REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: divfcor
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: ifdiv
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: ivdiv
       INTEGER, DIMENSION(:, :, :), ALLOCATABLE :: imapcv
       INTEGER, DIMENSION(:, :, :), ALLOCATABLE :: imapfcx
       INTEGER, DIMENSION(:, :, :), ALLOCATABLE :: imapfcy
       INTEGER, DIMENSION(:, :, :), ALLOCATABLE :: imapvx
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: icornvx
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: ictcntrl
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: fclbl
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: ftlbl
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: cvlbl
@@ -307,6 +363,11 @@ CONTAINS
         md0%fsfcp(nd, 1:m%nfs, 1:2) = 0
       END DO
       ALLOCATE(m%fsfcp(m%nfs, 2))
+      ALLOCATE(md0%fcfs(nbdirsmax, m%nfc))
+      DO nd=1,nbdirsmax
+        md0%fcfs(nd, 1:m%nfc) = 0
+      END DO
+      ALLOCATE(m%fcfs(m%nfc))
       ALLOCATE(md0%fcreg(nbdirsmax, m%nfc))
       DO nd=1,nbdirsmax
         md0%fcreg(nd, 1:m%nfc) = 0
@@ -322,11 +383,17 @@ CONTAINS
         md0%ftreg(nd, 1:m%nft) = 0
       END DO
       ALLOCATE(m%ftreg(m%nft))
+      ALLOCATE(md0%fcaligned(nbdirsmax, m%nfc))
+      DO nd=1,nbdirsmax
+        md0%fcaligned(nd, 1:m%nfc) = 0
+      END DO
+      ALLOCATE(m%fcaligned(m%nfc))
       ALLOCATE(md0%cvonclosedsurface(nbdirsmax, m%ncv))
       DO nd=1,nbdirsmax
         md0%cvonclosedsurface(nd, 1:m%ncv) = .true.
       END DO
       ALLOCATE(m%cvonclosedsurface(m%ncv))
+!
 !      allocate (m%intfaceV(m%nFc,2))
 !      allocate (m%intvertexV(m%nCmxVx * m%nCv))
       ALLOCATE(md0%intcellp(nbdirsmax, m%ncmxfc))
@@ -340,16 +407,19 @@ CONTAINS
       END DO
       ALLOCATE(m%intcellr(m%ncmxfc))
 !
-      ALLOCATE(md0%cvnvp(nbdirsmax, m%ncv, 2))
+!      allocate (m%cvNvP(m%nCv,2))
+!      allocate (m%cvNv(m%nCmxNv))
+!
+      ALLOCATE(md0%fsvxp(nbdirsmax, m%nfs, 2))
       DO nd=1,nbdirsmax
-        md0%cvnvp(nd, 1:m%ncv, 1:2) = 0
+        md0%fsvxp(nd, 1:m%nfs, 1:2) = 0
       END DO
-      ALLOCATE(m%cvnvp(m%ncv, 2))
-      ALLOCATE(md0%cvnv(nbdirsmax, m%ncmxnv))
+      ALLOCATE(m%fsvxp(m%nfs, 2))
+      ALLOCATE(md0%vxfs(nbdirsmax, m%nvx))
       DO nd=1,nbdirsmax
-        md0%cvnv(nd, 1:m%ncmxnv) = 0
+        md0%vxfs(nd, 1:m%nvx) = 0
       END DO
-      ALLOCATE(m%cvnv(m%ncmxnv))
+      ALLOCATE(m%vxfs(m%nvx))
 !
       IF (m%isclassicalgrid .EQ. 1) THEN
         ALLOCATE(md0%imapcv(nbdirsmax, -1:m%nx, -1:m%ny))
@@ -425,9 +495,9 @@ CONTAINS
 !
       WRITE(*, *) '=================================='
       WRITE(*, *) 'Mapping allocated'
-      WRITE(*, *) 'nCv, nCi, nCg', m%ncv, m%nci, m%ncg
-      WRITE(*, *) 'nFc, nVx, nFt', m%nfc, m%nvx, m%nft
-      WRITE(*, *) 'nFs', m%nfs
+      WRITE(*, *) 'nCv, nCi, nCg ', m%ncv, m%nci, m%ncg
+      WRITE(*, *) 'nFc, nVx, nFt ', m%nfc, m%nvx, m%nft
+      WRITE(*, *) 'nFs           ', m%nfs
       WRITE(*, *) 'nCmxVx, nCmxFc', m%ncmxvx, m%ncmxfc
       WRITE(*, *) 'nVmxCv, nVmxFc', m%nvmxcv, m%nvmxfc
       WRITE(*, *) '=================================='
@@ -467,17 +537,23 @@ CONTAINS
       ALLOCATE(m%cvft(m%ncv))
       ALLOCATE(m%fsfc(m%nfc))
       ALLOCATE(m%fsfcp(m%nfs, 2))
+      ALLOCATE(m%fcfs(m%nfc))
       ALLOCATE(m%fcreg(m%nfc))
       ALLOCATE(m%cvreg(m%ncv))
       ALLOCATE(m%ftreg(m%nft))
+      ALLOCATE(m%fcaligned(m%nfc))
       ALLOCATE(m%cvonclosedsurface(m%ncv))
+!
 !      allocate (m%intfaceV(m%nFc,2))
 !      allocate (m%intvertexV(m%nCmxVx * m%nCv))
       ALLOCATE(m%intcellp(m%ncmxfc))
       ALLOCATE(m%intcellr(m%ncmxfc))
 !
-      ALLOCATE(m%cvnvp(m%ncv, 2))
-      ALLOCATE(m%cvnv(m%ncmxnv))
+!      allocate (m%cvNvP(m%nCv,2))
+!      allocate (m%cvNv(m%nCmxNv))
+!
+      ALLOCATE(m%fsvxp(m%nfs, 2))
+      ALLOCATE(m%vxfs(m%nvx))
 !
       IF (m%isclassicalgrid .EQ. 1) THEN
         ALLOCATE(m%imapcv(-1:m%nx, -1:m%ny))
@@ -501,9 +577,9 @@ CONTAINS
 !
       WRITE(*, *) '=================================='
       WRITE(*, *) 'Mapping allocated'
-      WRITE(*, *) 'nCv, nCi, nCg', m%ncv, m%nci, m%ncg
-      WRITE(*, *) 'nFc, nVx, nFt', m%nfc, m%nvx, m%nft
-      WRITE(*, *) 'nFs', m%nfs
+      WRITE(*, *) 'nCv, nCi, nCg ', m%ncv, m%nci, m%ncg
+      WRITE(*, *) 'nFc, nVx, nFt ', m%nfc, m%nvx, m%nft
+      WRITE(*, *) 'nFs           ', m%nfs
       WRITE(*, *) 'nCmxVx, nCmxFc', m%ncmxvx, m%ncmxfc
       WRITE(*, *) 'nVmxCv, nVmxFc', m%nvmxcv, m%nvmxfc
       WRITE(*, *) '=================================='
@@ -512,6 +588,7 @@ CONTAINS
     END IF
   END SUBROUTINE ALLOC_MAPPING
 
+!
 !*********************************************************************
 !
   SUBROUTINE INITIALIZE_MAPPING(m)
@@ -534,17 +611,25 @@ CONTAINS
     m%ftfc = 0
     m%ftfcp = 0
     m%cvft = 0
+    m%fsfc = 0
+    m%fsfcp = 0
+    m%fcfs = 0
     m%fcreg = 0
     m%cvreg = 0
     m%ftreg = 0
+    m%fcaligned = 0
     m%cvonclosedsurface = .false.
+!
 !      m%intfaceV = 0._R8
 !      m%intvertexV = 0._R8
     m%intcellp = 0._R8
     m%intcellr = 0_R8
 !
-    m%cvnvp = 0
-    m%cvnv = 0
+!      m%cvNvP = 0
+!      m%cvNv = 0
+!
+    m%fsvxp = 0
+    m%vxfs = 0
 !
     IF (m%isclassicalgrid .EQ. 1) THEN
       m%imapcv = 0
@@ -558,6 +643,9 @@ CONTAINS
     m%ftlbl = 0
     m%cvlbl = 0
 !
+    m%ifssep = 0
+    m%ifssep2 = 0
+!
     WRITE(*, *) '=================================='
     WRITE(*, *) 'Mapping initialized'
     WRITE(*, *) '=================================='
@@ -567,7 +655,7 @@ CONTAINS
 
 !  Differentiation of dealloc_mapping as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: m.bcfcor:out m.rcfcor:out m.cffcor:out
-!                m.intcellp:out m.intcellr:out
+!                m.intcellp:out m.intcellr:out m.divfcor:out
 !
 !*********************************************************************
 !
@@ -648,6 +736,18 @@ CONTAINS
         DEALLOCATE(md0%cvft)
       END IF
       DEALLOCATE(m%cvft)
+      IF (ALLOCATED(md0%fsfc)) THEN
+        DEALLOCATE(md0%fsfc)
+      END IF
+      DEALLOCATE(m%fsfc)
+      IF (ALLOCATED(md0%fsfcp)) THEN
+        DEALLOCATE(md0%fsfcp)
+      END IF
+      DEALLOCATE(m%fsfcp)
+      IF (ALLOCATED(md0%fcfs)) THEN
+        DEALLOCATE(md0%fcfs)
+      END IF
+      DEALLOCATE(m%fcfs)
       IF (ALLOCATED(md0%fcreg)) THEN
         DEALLOCATE(md0%fcreg)
       END IF
@@ -660,13 +760,17 @@ CONTAINS
         DEALLOCATE(md0%ftreg)
       END IF
       DEALLOCATE(m%ftreg)
+      IF (ALLOCATED(md0%fcaligned)) THEN
+        DEALLOCATE(md0%fcaligned)
+      END IF
+      DEALLOCATE(m%fcaligned)
       IF (ALLOCATED(md0%cvonclosedsurface)) THEN
         DEALLOCATE(md0%cvonclosedsurface)
       END IF
       DEALLOCATE(m%cvonclosedsurface)
 !
-!      deallocate (m%intfaceV) 
-!      deallocate (m%intvertexV) 
+!      deallocate (m%intfaceV)
+!      deallocate (m%intvertexV)
       IF (ALLOCATED(md0%intcellp)) THEN
         DEALLOCATE(md0%intcellp)
       END IF
@@ -676,14 +780,95 @@ CONTAINS
       END IF
       DEALLOCATE(m%intcellr)
 !
-      IF (ALLOCATED(md0%cvnvp)) THEN
-        DEALLOCATE(md0%cvnvp)
+      IF (ALLOCATED(m%cvnvp)) THEN
+        IF (ALLOCATED(md0%cvnvp)) THEN
+          DEALLOCATE(md0%cvnvp)
+        END IF
+        DEALLOCATE(m%cvnvp)
       END IF
-      DEALLOCATE(m%cvnvp)
-      IF (ALLOCATED(md0%cvnv)) THEN
-        DEALLOCATE(md0%cvnv)
+      IF (ALLOCATED(m%cvnv)) THEN
+        IF (ALLOCATED(md0%cvnv)) THEN
+          DEALLOCATE(md0%cvnv)
+        END IF
+        DEALLOCATE(m%cvnv)
       END IF
-      DEALLOCATE(m%cvnv)
+!
+      IF (ALLOCATED(md0%fsvxp)) THEN
+        DEALLOCATE(md0%fsvxp)
+      END IF
+      DEALLOCATE(m%fsvxp)
+      IF (ALLOCATED(m%fsvx)) THEN
+        IF (ALLOCATED(md0%fsvx)) THEN
+          DEALLOCATE(md0%fsvx)
+        END IF
+        DEALLOCATE(m%fsvx)
+      END IF
+      IF (ALLOCATED(md0%vxfs)) THEN
+        DEALLOCATE(md0%vxfs)
+      END IF
+      DEALLOCATE(m%vxfs)
+!
+      IF (ALLOCATED(m%xpt)) THEN
+        IF (ALLOCATED(md0%xpt)) THEN
+          DEALLOCATE(md0%xpt)
+        END IF
+        DEALLOCATE(m%xpt)
+      END IF
+      IF (ALLOCATED(m%strvxp)) THEN
+        IF (ALLOCATED(md0%strvxp)) THEN
+          DEALLOCATE(md0%strvxp)
+        END IF
+        DEALLOCATE(m%strvxp)
+      END IF
+      IF (ALLOCATED(m%strvx)) THEN
+        IF (ALLOCATED(md0%strvx)) THEN
+          DEALLOCATE(md0%strvx)
+        END IF
+        DEALLOCATE(m%strvx)
+      END IF
+      IF (ALLOCATED(m%tgvx)) THEN
+        IF (ALLOCATED(md0%tgvx)) THEN
+          DEALLOCATE(md0%tgvx)
+        END IF
+        DEALLOCATE(m%tgvx)
+      END IF
+      IF (ALLOCATED(m%strdiv)) THEN
+        IF (ALLOCATED(md0%strdiv)) THEN
+          DEALLOCATE(md0%strdiv)
+        END IF
+        DEALLOCATE(m%strdiv)
+      END IF
+      IF (ALLOCATED(m%divfcp)) THEN
+        IF (ALLOCATED(md0%divfcp)) THEN
+          DEALLOCATE(md0%divfcp)
+        END IF
+        DEALLOCATE(m%divfcp)
+      END IF
+      IF (ALLOCATED(m%divfc)) THEN
+        IF (ALLOCATED(md0%divfc)) THEN
+          DEALLOCATE(md0%divfc)
+        END IF
+        DEALLOCATE(m%divfc)
+      END IF
+      IF (ALLOCATED(m%divfcor)) THEN
+        IF (ALLOCATED(md0%divfcor)) THEN
+          DEALLOCATE(md0%divfcor)
+        END IF
+        DEALLOCATE(m%divfcor)
+      END IF
+      IF (ALLOCATED(m%ifdiv)) THEN
+        IF (ALLOCATED(md0%ifdiv)) THEN
+          DEALLOCATE(md0%ifdiv)
+        END IF
+        DEALLOCATE(m%ifdiv)
+      END IF
+      IF (ALLOCATED(m%ivdiv)) THEN
+        IF (ALLOCATED(md0%ivdiv)) THEN
+          DEALLOCATE(md0%ivdiv)
+        END IF
+        DEALLOCATE(m%ivdiv)
+      END IF
+!
       IF (ALLOCATED(md0%imapcv)) THEN
         DEALLOCATE(md0%imapcv)
       END IF
@@ -705,6 +890,9 @@ CONTAINS
       END IF
       DEALLOCATE(m%icornvx)
       IF (ALLOCATED(m%ictcntrl)) THEN
+        IF (ALLOCATED(md0%ictcntrl)) THEN
+          DEALLOCATE(md0%ictcntrl)
+        END IF
         DEALLOCATE(m%ictcntrl)
       END IF
 !
@@ -720,6 +908,7 @@ CONTAINS
         DEALLOCATE(md0%cvlbl)
       END IF
       DEALLOCATE(m%cvlbl)
+!
       RETURN
     END IF
   END SUBROUTINE DEALLOC_MAPPING_DV
@@ -756,18 +945,64 @@ CONTAINS
       DEALLOCATE(m%ftfc)
       DEALLOCATE(m%ftfcp)
       DEALLOCATE(m%cvft)
+      DEALLOCATE(m%fsfc)
+      DEALLOCATE(m%fsfcp)
+      DEALLOCATE(m%fcfs)
       DEALLOCATE(m%fcreg)
       DEALLOCATE(m%cvreg)
       DEALLOCATE(m%ftreg)
+      DEALLOCATE(m%fcaligned)
       DEALLOCATE(m%cvonclosedsurface)
 !
-!      deallocate (m%intfaceV) 
-!      deallocate (m%intvertexV) 
+!      deallocate (m%intfaceV)
+!      deallocate (m%intvertexV)
       DEALLOCATE(m%intcellp)
       DEALLOCATE(m%intcellr)
 !
-      DEALLOCATE(m%cvnvp)
-      DEALLOCATE(m%cvnv)
+      IF (ALLOCATED(m%cvnvp)) THEN
+        DEALLOCATE(m%cvnvp)
+      END IF
+      IF (ALLOCATED(m%cvnv)) THEN
+        DEALLOCATE(m%cvnv)
+      END IF
+!
+      DEALLOCATE(m%fsvxp)
+      IF (ALLOCATED(m%fsvx)) THEN
+        DEALLOCATE(m%fsvx)
+      END IF
+      DEALLOCATE(m%vxfs)
+!
+      IF (ALLOCATED(m%xpt)) THEN
+        DEALLOCATE(m%xpt)
+      END IF
+      IF (ALLOCATED(m%strvxp)) THEN
+        DEALLOCATE(m%strvxp)
+      END IF
+      IF (ALLOCATED(m%strvx)) THEN
+        DEALLOCATE(m%strvx)
+      END IF
+      IF (ALLOCATED(m%tgvx)) THEN
+        DEALLOCATE(m%tgvx)
+      END IF
+      IF (ALLOCATED(m%strdiv)) THEN
+        DEALLOCATE(m%strdiv)
+      END IF
+      IF (ALLOCATED(m%divfcp)) THEN
+        DEALLOCATE(m%divfcp)
+      END IF
+      IF (ALLOCATED(m%divfc)) THEN
+        DEALLOCATE(m%divfc)
+      END IF
+      IF (ALLOCATED(m%divfcor)) THEN
+        DEALLOCATE(m%divfcor)
+      END IF
+      IF (ALLOCATED(m%ifdiv)) THEN
+        DEALLOCATE(m%ifdiv)
+      END IF
+      IF (ALLOCATED(m%ivdiv)) THEN
+        DEALLOCATE(m%ivdiv)
+      END IF
+!
       DEALLOCATE(m%imapcv)
       DEALLOCATE(m%imapfcx)
       DEALLOCATE(m%imapfcy)
@@ -780,6 +1015,7 @@ CONTAINS
       DEALLOCATE(m%fclbl)
       DEALLOCATE(m%ftlbl)
       DEALLOCATE(m%cvlbl)
+!
       RETURN
     END IF
   END SUBROUTINE DEALLOC_MAPPING
@@ -906,6 +1142,7 @@ CONTAINS
         DEALLOCATE(md0%bcfcor)
       END IF
       DEALLOCATE(m%bcfcor)
+!
       RETURN
     END IF
   END SUBROUTINE DEALLOC_MAPPING_BC_DV
@@ -928,9 +1165,49 @@ CONTAINS
       DEALLOCATE(m%bcfcp)
       DEALLOCATE(m%bcfc)
       DEALLOCATE(m%bcfcor)
+!
       RETURN
     END IF
   END SUBROUTINE DEALLOC_MAPPING_BC
+
+!  Differentiation of alloc_mapping_rc in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: m.rcfcor:in-out
+!
+!*********************************************************************
+!
+  SUBROUTINE ALLOC_MAPPING_RC_DV0(m, md0, nbdirs)
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    TYPE(MAPPING), INTENT(INOUT) :: m
+    TYPE(MAPPING_DIFFV), INTENT(INOUT) :: md0
+    INTRINSIC ALLOCATED
+    INTEGER :: nbdirs
+!
+    IF (ALLOCATED(m%rccvp)) THEN
+      RETURN
+    ELSE
+!
+      ALLOCATE(md0%rccvp(nbdirsmax, m%nrc, 2))
+      ALLOCATE(m%rccvp(m%nrc, 2))
+      ALLOCATE(md0%rccv(nbdirsmax, m%mxnrc, 2))
+      ALLOCATE(m%rccv(m%mxnrc, 2))
+      ALLOCATE(md0%rcfcp(nbdirsmax, m%nrc, 2))
+      ALLOCATE(m%rcfcp(m%nrc, 2))
+      ALLOCATE(md0%rcfc(nbdirsmax, m%mxnrc))
+      ALLOCATE(m%rcfc(m%mxnrc))
+      ALLOCATE(md0%rcfcor(nbdirsmax, m%mxnrc))
+      ALLOCATE(m%rcfcor(m%mxnrc))
+!
+      m%rccvp = 0
+      m%rccv = 0
+      m%rcfcp = 0
+      m%rcfc = 0
+      m%rcfcor = 0._R8
+!
+      RETURN
+    END IF
+  END SUBROUTINE ALLOC_MAPPING_RC_DV0
 
 !  Differentiation of alloc_mapping_rc as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: m.rcfcor:in-out
@@ -1192,6 +1469,7 @@ CONTAINS
         DEALLOCATE(md0%cffcor)
       END IF
       DEALLOCATE(m%cffcor)
+!
       RETURN
     END IF
   END SUBROUTINE DEALLOC_MAPPING_CF_DV
@@ -1213,15 +1491,16 @@ CONTAINS
       DEALLOCATE(m%cfreg)
       DEALLOCATE(m%cfoncv)
       DEALLOCATE(m%cffcor)
+!
       RETURN
     END IF
   END SUBROUTINE DEALLOC_MAPPING_CF
 
 !  Differentiation of read_mapping as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: mpg.intcellp:in-out mpg.intcellr:in-out
+!                mpg.divfcor:in-out
 !
 !*********************************************************************
-!
 !
   SUBROUTINE READ_MAPPING_DV(iun, mpg, mpgd, nbdirs)
   USE B2MOD_DIFFSIZES
@@ -1231,6 +1510,8 @@ CONTAINS
     INTEGER :: n2, nx
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(MAPPING_DIFFV), INTENT(INOUT) :: mpgd
+    EXTERNAL CFRUIN, CFRURE
+    EXTERNAL CFRUIN_DV, CFRURE_DV
     INTEGER :: nbdirs
 !
 !
@@ -1275,7 +1556,7 @@ CONTAINS
     CALL CFRUIN(iun, mpg%nft, mpg%ftlbl, 'ftLbl')
 !
 !
-    CALL INIT_MAPPING(mpg)
+    CALL INIT_MAPPING_DV(mpg, mpgd, nbdirs)
 !
     RETURN
   END SUBROUTINE READ_MAPPING_DV
@@ -1283,13 +1564,13 @@ CONTAINS
 !
 !*********************************************************************
 !
-!
   SUBROUTINE READ_MAPPING(iun, mpg)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: iun
     INTEGER :: n2, nx
     TYPE(MAPPING), INTENT(INOUT) :: mpg
+    EXTERNAL CFRUIN, CFRURE
 !
 !
     CALL ALLOC_MAPPING(mpg)
@@ -1347,6 +1628,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: nout
     INTEGER :: idum(0:9), n2
     TYPE(MAPPING), INTENT(IN) :: mpg
+    EXTERNAL CFWUIN, CFWURE
 !
     CALL CFWUIN(nout, mpg%ncv*2, mpg%cvfcp, 'cvFcP')
     CALL CFWUIN(nout, mpg%ncmxfc, mpg%cvfc, 'cvFc')
@@ -1393,41 +1675,47 @@ CONTAINS
     RETURN
   END SUBROUTINE WRITE_MAPPING
 
+!  Differentiation of init_mapping as a context to call tangent code (with options multiDirectional context noISIZE r8):
+!   Plus diff mem management of: m.divfcor:in-out
 !
 !*********************************************************************
 !
-  SUBROUTINE INIT_MAPPING(m)
+  SUBROUTINE INIT_MAPPING_DV(m, md0, nbdirs)
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(MAPPING), INTENT(INOUT) :: m
-    INTEGER :: i, icv, ivx, ivx1, inv, inv1, inv2, invmx
-    INTEGER, ALLOCATABLE :: indcv(:)
+    TYPE(MAPPING_DIFFV), INTENT(INOUT) :: md0
+    INTEGER :: i, j, k, l, indd
+    INTEGER :: icv, icv1, icv2, ifc, ifcc, ifs, iva, ivb, inv, inv1, &
+&   inv2, ivx, ivx1, ivx2, invmx, inew
+    INTEGER :: totalcount, fscount, iactive, icount, fccount
+    INTEGER, ALLOCATABLE :: indcv(:), indfsvx(:), indxpt(:), indfc(:), &
+&   cvnvloc(:), freg(:), old_face_list(:), new_face_list(:)
+    LOGICAL :: duplicate, left_match_found, right_match_found
+    EXTERNAL IPGETI, XERRAB
     INTRINSIC MAXVAL
-    EXTERNAL XERRAB
-    INTRINSIC MOD
+    INTRINSIC ALLOCATED
+    INTEGER :: nd
+    INTEGER :: nbdirs
 !wdk  This initialization routine precomputes a number of arrays
-!wdk  in the mapping that are not stored in the b2fgmtry file, but 
+!wdk  in the mapping that are not stored in the b2fgmtry file, but
 !wdk  can be derived directly from data in that file
 !
 !   ..regions
     m%nnreg(0) = MAXVAL(m%cvreg)
     m%nnreg(1) = MAXVAL(m%fcreg)
 !
-!   ..identify cells on closed surfaces
-    IF (m%nnreg(0) .EQ. 1) THEN
-      CALL XERRAB('periodic_bc not yet supported for nnreg(0)=1.')
-!WG_TODO        m%cvOnClosedSurface = periodic_bc.eq.1
-    ELSE IF (((m%nnreg(0) .EQ. 2 .OR. m%nnreg(0) .EQ. 4) .OR. m%nnreg(0)&
-&       .EQ. 5) .OR. m%nnreg(0) .EQ. 8) THEN
-      m%cvonclosedsurface = MOD(m%cvreg, 4) .EQ. 1
-    ELSE
-      CALL XERRAB('Unknown number of regions!')
-    END IF
-!
 !   ..set up connectivity information for the matrix stencil
-!
-    ALLOCATE(indcv(4*4+4+1))
-! max 4 vertices per cell, max 8 cells for each vertex (very conservative)
+    ALLOCATE(md0%cvnvp(nbdirsmax, m%ncv, 2))
+    DO nd=1,nbdirsmax
+      md0%cvnvp(nd, 1:m%ncv, 1:2) = 0
+    END DO
+    ALLOCATE(m%cvnvp(m%ncv, 2))
+    ALLOCATE(cvnvloc(10*m%ncv))
+! initial overestimate of size cvNv array
+    ALLOCATE(indcv(100))
+! (over)estimate of max number number of neighbors an individual cell could have
 !
     inv = 1
     DO icv=1,m%ncv
@@ -1446,28 +1734,901 @@ CONTAINS
         invmx = invmx + m%vxcvp(ivx1, 2)
       END DO
 ! remove duplicates
-      m%cvnv(m%cvnvp(icv, 1)) = indcv(1)
+      cvnvloc(m%cvnvp(icv, 1)) = indcv(1)
       i = 1
 ! TODO: sort by cell number, keeping first cell fixed (main diagonal)
       DO 100 inv1=2,invmx
         DO inv2=1,i
-          IF (m%cvnv(m%cvnvp(icv, 1)+inv2-1) .EQ. indcv(inv1)) GOTO 100
+          IF (cvnvloc(m%cvnvp(icv, 1)+inv2-1) .EQ. indcv(inv1)) GOTO 100
         END DO
 ! duplicate element
 ! new element found
         i = i + 1
-        m%cvnv(m%cvnvp(icv, 1)+i-1) = indcv(inv1)
+        cvnvloc(m%cvnvp(icv, 1)+i-1) = indcv(inv1)
  100  CONTINUE
       m%cvnvp(icv, 2) = i
       inv = inv + i
     END DO
+! allocate and fill m%cvNv
+!
+    m%ncmxnv = inv - 1
+    ALLOCATE(md0%cvnv(nbdirsmax, m%ncmxnv))
+    DO nd=1,nbdirsmax
+      md0%cvnv(nd, 1:m%ncmxnv) = 0
+    END DO
+    ALLOCATE(m%cvnv(m%ncmxnv))
+    m%cvnv = cvnvloc(1:m%ncmxnv)
 !
 !csc this is only needed for adjoint AD in b2usco, b2usmo, etc.
+! clean up
     m%mxstencil = MAXVAL(m%cvnvp(1:m%ncv, 2))
 !
+    DEALLOCATE(cvnvloc)
     DEALLOCATE(indcv)
 !
+    ALLOCATE(indfsvx(m%nvx))
+    m%fcfs = 0
+    indfsvx = 0
+    totalcount = 0
+    DO ifs=1,m%nfs
+      fscount = 0
+      DO i=m%fsfcp(ifs, 1),m%fsfcp(ifs, 1)+m%fsfcp(ifs, 2)-1
+        ifc = m%fsfc(i)
+        m%fcfs(ifc) = ifs
+        ivx1 = m%fcvx(ifc, 1)
+        ivx2 = m%fcvx(ifc, 2)
+        IF (m%vxfs(ivx1) .EQ. 0) THEN
+          m%vxfs(ivx1) = ifs
+          m%nfsvxmx = m%nfsvxmx + 1
+          fscount = fscount + 1
+          totalcount = totalcount + 1
+          indfsvx(totalcount) = ivx1
+        END IF
+        IF (m%vxfs(ivx2) .EQ. 0) THEN
+          m%vxfs(ivx2) = ifs
+          m%nfsvxmx = m%nfsvxmx + 1
+          fscount = fscount + 1
+          totalcount = totalcount + 1
+          indfsvx(totalcount) = ivx2
+        END IF
+      END DO
+      IF (fscount .GT. 0) THEN
+        m%fsvxp(ifs, 1) = totalcount - fscount + 1
+        m%fsvxp(ifs, 2) = fscount
+      END IF
+    END DO
+    m%nfsvxmx = totalcount
+    ALLOCATE(md0%fsvx(nbdirsmax, m%nfsvxmx))
+    DO nd=1,nbdirsmax
+      md0%fsvx(nd, 1:m%nfsvxmx) = 0
+    END DO
+    ALLOCATE(m%fsvx(m%nfsvxmx))
+    m%fsvx(1:m%nfsvxmx) = indfsvx(1:m%nfsvxmx)
+    DEALLOCATE(indfsvx)
 !
+    ALLOCATE(indxpt(m%nvx))
+    indxpt = 0
+    m%nxpt = 0
+    iactive = 0
+    DO ivx=1,m%nvx
+      IF (m%vxfcp(ivx, 2) .GE. 4) THEN
+        fccount = 0
+        DO i=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+          ifc = m%vxfc(i)
+          IF (m%fcfs(ifc) .NE. 0) fccount = fccount + 1
+        END DO
+        IF (fccount .EQ. 4) THEN
+          m%nxpt = m%nxpt + 1
+          indxpt(m%nxpt) = ivx
+          IF (iactive .EQ. 0) THEN
+            DO i=m%vxcvp(ivx, 1),m%vxcvp(ivx, 1)+m%vxcvp(ivx, 2)-1
+              IF (iactive .EQ. 0) THEN
+                icv = m%vxcv(i)
+                IF (m%cvreg(icv) .EQ. 1) iactive = m%nxpt
+              END IF
+            END DO
+          END IF
+        END IF
+      END IF
+    END DO
+!
+    m%nstr = 0
+    m%ntgc = 0
+    IF (m%nxpt .GT. 0) THEN
+      ALLOCATE(md0%xpt(nbdirsmax, m%nxpt))
+      DO nd=1,nbdirsmax
+        md0%xpt(nd, 1:m%nxpt) = 0
+      END DO
+      ALLOCATE(m%xpt(m%nxpt))
+      m%xpt(1:m%nxpt) = indxpt(1:m%nxpt)
+      IF (iactive .NE. 0) THEN
+        DO i=1,m%vxfcp(m%xpt(iactive), 2)
+          ifs = m%fcfs(m%vxfc(m%vxfcp(m%xpt(iactive), 1)+i-1))
+          IF (ifs .NE. 0) THEN
+            IF (m%ifssep .EQ. 0) m%ifssep = ifs
+            IF (m%ifssep2 .EQ. 0 .AND. ifs .NE. m%ifssep) m%ifssep2 = &
+&               ifs
+          END IF
+        END DO
+      END IF
+      indxpt = 0
+      icount = 0
+      ALLOCATE(md0%strvxp(nbdirsmax, m%nxpt, 2))
+      DO nd=1,nbdirsmax
+        md0%strvxp(nd, 1:m%nxpt, 1:2) = 0
+      END DO
+      ALLOCATE(m%strvxp(m%nxpt, 2))
+      m%strvxp = 0
+      m%strvxp(1, 1) = 1
+      DO i=1,m%nxpt
+        IF (i .GT. 1) m%strvxp(i, 1) = m%strvxp(i-1, 1) + m%strvxp(i-1, &
+&           2)
+        ifs = m%ifssep
+        DO j=m%fsfcp(ifs, 1),m%fsfcp(ifs, 1)+m%fsfcp(ifs, 2)-1
+          ifc = m%fsfc(j)
+          DO k=1,2
+            ivx = m%fcvx(ifc, k)
+            fccount = 0
+            DO l=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+              IF (m%fcfs(m%vxfc(l)) .EQ. ifs) fccount = fccount + 1
+            END DO
+            IF (fccount .EQ. 1) THEN
+              icount = icount + 1
+              m%strvxp(i, 2) = m%strvxp(i, 2) + 1
+              indxpt(icount) = ivx
+            END IF
+          END DO
+        END DO
+        IF (m%ifssep2 .GT. 0) THEN
+          ifs = m%ifssep2
+          DO j=m%fsfcp(ifs, 1),m%fsfcp(ifs, 1)+m%fsfcp(ifs, 2)-1
+            ifc = m%fsfc(j)
+            DO k=1,2
+              ivx = m%fcvx(ifc, k)
+              fccount = 0
+              DO l=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+                IF (m%fcfs(m%vxfc(l)) .EQ. ifs) fccount = fccount + 1
+              END DO
+              IF (fccount .EQ. 1) THEN
+                icount = icount + 1
+                m%strvxp(i, 2) = m%strvxp(i, 2) + 1
+                indxpt(icount) = ivx
+              END IF
+            END DO
+          END DO
+        END IF
+      END DO
+      m%nstr = icount
+      ALLOCATE(md0%strvx(nbdirsmax, m%nstr))
+      DO nd=1,nbdirsmax
+        md0%strvx(nd, 1:m%nstr) = 0
+      END DO
+      ALLOCATE(m%strvx(m%nstr))
+      m%strvx(1:m%nstr) = indxpt(1:m%nstr)
+      ALLOCATE(md0%strdiv(nbdirsmax, m%nstr))
+      DO nd=1,nbdirsmax
+        md0%strdiv(nd, 1:m%nstr) = 0
+      END DO
+      ALLOCATE(m%strdiv(m%nstr))
+      ALLOCATE(freg(m%nstr))
+      m%strdiv = 0
+      freg = 0
+      DO i=1,m%nstr
+        ivx = m%strvx(i)
+        DO j=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+          IF (m%strdiv(i) .EQ. 0) THEN
+            ifc = m%vxfc(j)
+            IF (m%fcreg(ifc) .EQ. 1) THEN
+              m%strdiv(i) = 1
+              freg(i) = 1
+            ELSE IF (m%fcreg(ifc) .EQ. 4) THEN
+              m%strdiv(i) = 2
+              freg(i) = 4
+            ELSE IF (m%fcreg(ifc) .EQ. 5) THEN
+              IF (m%nxpt .EQ. 1) THEN
+                m%strdiv(i) = 1
+              ELSE
+                m%strdiv(i) = 3
+              END IF
+              freg(i) = 5
+            ELSE IF (m%fcreg(ifc) .EQ. 8) THEN
+              IF (m%nxpt .EQ. 1) THEN
+                m%strdiv(i) = 2
+              ELSE
+                m%strdiv(i) = 4
+              END IF
+              freg(i) = 8
+            END IF
+          END IF
+        END DO
+      END DO
+    ELSE IF (m%nnreg(0) .EQ. 2) THEN
+      ALLOCATE(freg(2))
+      ifc = 1
+      icount = 0
+      DO WHILE (m%ifssep .EQ. 0 .AND. ifc .LE. m%nfc)
+        icv1 = m%fccv(ifc, 1)
+        icv2 = m%fccv(ifc, 2)
+        IF (m%cvreg(icv1) .NE. m%cvreg(icv2) .AND. m%cvreg(icv1) .NE. 0 &
+&           .AND. m%cvreg(icv2) .NE. 0) m%ifssep = m%fcfs(ifc)
+        IF (m%ifssep .EQ. 0) ifc = ifc + 1
+      END DO
+      DO i=m%fsfcp(m%ifssep, 1),m%fsfcp(m%ifssep, 1)+m%fsfcp(m%ifssep, 2&
+&         )-1
+        ifc = m%fsfc(i)
+        DO k=1,2
+          ivx = m%fcvx(ifc, k)
+          DO j=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+            ifcc = m%vxfc(j)
+            IF (m%fclbl(ifcc) .NE. 0) THEN
+              duplicate = .false.
+              DO l=1,icount
+                IF (indxpt(l) .EQ. ivx) duplicate = .true.
+              END DO
+              IF (.NOT.duplicate) THEN
+                icount = icount + 1
+                indxpt(icount) = ivx
+              END IF
+            END IF
+          END DO
+        END DO
+      END DO
+      m%ntgc = icount
+      ALLOCATE(md0%tgvx(nbdirsmax, m%ntgc))
+      DO nd=1,nbdirsmax
+        md0%tgvx(nd, 1:m%ntgc) = 0
+      END DO
+      ALLOCATE(m%tgvx(m%ntgc))
+      m%tgvx(1:m%ntgc) = indxpt(1:m%ntgc)
+      ALLOCATE(md0%strdiv(nbdirsmax, 2))
+      DO nd=1,nbdirsmax
+        md0%strdiv(nd, 1:2) = 0
+      END DO
+      ALLOCATE(m%strdiv(2))
+      m%strdiv(1) = 1
+      m%strdiv(2) = 2
+      freg(1) = 1
+      freg(2) = 2
+    ELSE IF (m%nnreg(0) .EQ. 1) THEN
+      CALL IPGETI('b2mwti_jsep', m%ifssep)
+      ALLOCATE(freg(2))
+      freg(1) = 1
+      freg(2) = 2
+      IF (m%ifssep .GT. 0) THEN
+        indxpt = 0
+        icount = 0
+        ALLOCATE(md0%strvxp(nbdirsmax, 1, 2))
+        DO nd=1,nbdirsmax
+          md0%strvxp(nd, 1:1, 1:2) = 0
+        END DO
+        ALLOCATE(m%strvxp(1, 2))
+        m%strvxp(1, 1) = 1
+        m%strvxp(1, 2) = 2
+        DO j=m%fsfcp(m%ifssep, 1),m%fsfcp(m%ifssep, 1)+m%fsfcp(m%ifssep&
+&           , 2)-1
+          ifc = m%fsfc(j)
+          DO k=1,2
+            ivx = m%fcvx(ifc, k)
+            fccount = 0
+            DO l=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+              IF (m%fcfs(m%vxfc(l)) .EQ. m%ifssep) fccount = fccount + 1
+            END DO
+            IF (fccount .EQ. 1) THEN
+              icount = icount + 1
+              indxpt(icount) = ivx
+            END IF
+          END DO
+        END DO
+        m%nstr = icount
+        IF (m%nstr .GT. 0) THEN
+          ALLOCATE(md0%strvx(nbdirsmax, m%nstr))
+          DO nd=1,nbdirsmax
+            md0%strvx(nd, 1:m%nstr) = 0
+          END DO
+          ALLOCATE(m%strvx(m%nstr))
+          m%strvx(1:m%nstr) = indxpt(1:m%nstr)
+          ALLOCATE(md0%strdiv(nbdirsmax, m%nstr))
+          DO nd=1,nbdirsmax
+            md0%strdiv(nd, 1:m%nstr) = 0
+          END DO
+          ALLOCATE(m%strdiv(m%nstr))
+          m%strdiv = 0
+          DO i=1,m%nstr
+            ivx = m%strvx(i)
+            DO j=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+              IF (m%strdiv(i) .EQ. 0) THEN
+                ifc = m%vxfc(j)
+                IF (m%fcreg(ifc) .EQ. 1) THEN
+                  m%strdiv(i) = 1
+                ELSE IF (m%fcreg(ifc) .EQ. 2) THEN
+                  m%strdiv(i) = 2
+                END IF
+              END IF
+            END DO
+          END DO
+        END IF
+      END IF
+    END IF
+    DEALLOCATE(indxpt)
+!
+    IF (ALLOCATED(m%strdiv)) THEN
+      indd = MAXVAL(m%strdiv)
+      IF (indd .GT. 0) THEN
+        ALLOCATE(md0%ifdiv(nbdirsmax, MAXVAL(m%strdiv)))
+        DO nd=1,nbdirsmax
+          md0%ifdiv(nd, 1:MAXVAL(m%strdiv)) = 0
+        END DO
+        ALLOCATE(m%ifdiv(MAXVAL(m%strdiv)))
+        ALLOCATE(md0%ivdiv(nbdirsmax, MAXVAL(m%strdiv)))
+        DO nd=1,nbdirsmax
+          md0%ivdiv(nd, 1:MAXVAL(m%strdiv)) = 0
+        END DO
+        ALLOCATE(m%ivdiv(MAXVAL(m%strdiv)))
+        ALLOCATE(md0%divfcp(nbdirsmax, MAXVAL(m%strdiv), 2))
+        DO nd=1,nbdirsmax
+          md0%divfcp(nd, 1:MAXVAL(m%strdiv), 1:2) = 0
+        END DO
+        ALLOCATE(m%divfcp(MAXVAL(m%strdiv), 2))
+        ALLOCATE(indfc(m%nfc))
+        icount = 0
+        m%ifdiv = 0
+        m%ivdiv = 0
+        m%divfcp(1, 1) = 1
+        m%divfcp(:, 2) = 0
+! first assemble all the faces
+        DO i=1,indd
+          IF (i .GT. 1) m%divfcp(i, 1) = m%divfcp(i-1, 1) + m%divfcp(i-1&
+&             , 2)
+          DO ifc=1,m%nfc
+            IF (m%fcreg(ifc) .EQ. freg(i)) THEN
+              icount = icount + 1
+              m%divfcp(i, 2) = m%divfcp(i, 2) + 1
+              indfc(icount) = ifc
+            END IF
+          END DO
+        END DO
+        ALLOCATE(md0%divfc(nbdirsmax, icount))
+        DO nd=1,nbdirsmax
+          md0%divfc(nd, 1:icount) = 0
+        END DO
+        ALLOCATE(m%divfc(icount))
+        ALLOCATE(md0%divfcor(nbdirsmax, icount))
+        DO nd=1,nbdirsmax
+          md0%divfcor(nd, 1:icount) = 0.D0
+        END DO
+        ALLOCATE(m%divfcor(icount))
+        m%divfcor = 0.0_R8
+        m%divfc(1:icount) = indfc(1:icount)
+! now re-order them
+        DO i=1,indd
+          ALLOCATE(old_face_list(m%divfcp(i, 2)))
+          ALLOCATE(new_face_list(m%divfcp(i, 2)))
+          old_face_list(1:m%divfcp(i, 2)) = m%divfc(m%divfcp(i, 1):m%&
+&           divfcp(i, 1)+m%divfcp(i, 2)-1)
+          new_face_list(:) = 0
+          new_face_list(1) = m%divfc(m%divfcp(i, 1))
+          old_face_list(1) = 0
+          iva = m%fcvx(m%divfc(m%divfcp(i, 1)), 1)
+          ivb = m%fcvx(m%divfc(m%divfcp(i, 1)), 2)
+          inew = 1
+          DO WHILE (inew .LT. m%divfcp(i, 2))
+            left_match_found = .false.
+            DO j=1,m%divfcp(i, 2)
+              IF (.NOT.left_match_found) THEN
+                IF (old_face_list(j) .NE. 0) THEN
+                  IF (iva .EQ. m%fcvx(old_face_list(j), 1)) THEN
+                    left_match_found = .true.
+                    iva = m%fcvx(old_face_list(j), 2)
+                  ELSE IF (iva .EQ. m%fcvx(old_face_list(j), 2)) THEN
+                    left_match_found = .true.
+                    iva = m%fcvx(old_face_list(j), 1)
+                  END IF
+                  IF (left_match_found) THEN
+                    indfc(1:inew) = new_face_list(1:inew)
+                    new_face_list(1) = old_face_list(j)
+                    new_face_list(2:inew+1) = indfc(1:inew)
+                    old_face_list(j) = 0
+                    inew = inew + 1
+                  END IF
+                END IF
+              END IF
+            END DO
+            right_match_found = .false.
+            DO j=1,m%divfcp(i, 2)
+              IF (.NOT.right_match_found) THEN
+                IF (old_face_list(j) .NE. 0) THEN
+                  IF (ivb .EQ. m%fcvx(old_face_list(j), 1)) THEN
+                    right_match_found = .true.
+                    ivb = m%fcvx(old_face_list(j), 2)
+                  ELSE IF (ivb .EQ. m%fcvx(old_face_list(j), 2)) THEN
+                    right_match_found = .true.
+                    ivb = m%fcvx(old_face_list(j), 1)
+                  END IF
+                  IF (right_match_found) THEN
+                    new_face_list(inew+1) = old_face_list(j)
+                    old_face_list(j) = 0
+                    inew = inew + 1
+                  END IF
+                END IF
+              END IF
+            END DO
+            IF (.NOT.(left_match_found .OR. right_match_found) .AND. &
+&               inew .LT. m%divfcp(i, 2)) THEN
+              DO j=1,inew
+                ifc = new_face_list(j)
+                iva = m%fcvx(ifc, 1)
+                ivb = m%fcvx(ifc, 2)
+                WRITE(6, '(a,4i6)') &
+&               'Chain of faces and vertices in new list ', j, ifc, iva&
+&               , ivb
+              END DO
+              DO j=1,m%divfcp(i, 2)
+                IF (old_face_list(j) .NE. 0) THEN
+                  ifc = m%divfc(m%divfcp(i, 1)+j-1)
+                  iva = m%fcvx(ifc, 1)
+                  ivb = m%fcvx(ifc, 2)
+                  WRITE(6, '(a,4i6)') &
+&                 'Left over faces and vertices in old list', j, ifc, &
+&                 iva, ivb
+                END IF
+              END DO
+              CALL XERRAB('Broken face chain along target')
+            END IF
+          END DO
+          m%divfc(m%divfcp(i, 1):m%divfcp(i, 1)+m%divfcp(i, 2)-1) = &
+&           new_face_list(1:m%divfcp(i, 2))
+          DEALLOCATE(old_face_list)
+          DEALLOCATE(new_face_list)
+        END DO
+        DEALLOCATE(indfc)
+      END IF
+    END IF
+    DEALLOCATE(freg)
+!
+    WRITE(*, *) 'nXpt, nStr, nTgc ', m%nxpt, m%nstr, m%ntgc
+    WRITE(*, *) 'nFsVxmx          ', m%nfsvxmx
+!
+    RETURN
+  END SUBROUTINE INIT_MAPPING_DV
+
+!
+!*********************************************************************
+!
+  SUBROUTINE INIT_MAPPING(m)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    TYPE(MAPPING), INTENT(INOUT) :: m
+    INTEGER :: i, j, k, l, indd
+    INTEGER :: icv, icv1, icv2, ifc, ifcc, ifs, iva, ivb, inv, inv1, &
+&   inv2, ivx, ivx1, ivx2, invmx, inew
+    INTEGER :: totalcount, fscount, iactive, icount, fccount
+    INTEGER, ALLOCATABLE :: indcv(:), indfsvx(:), indxpt(:), indfc(:), &
+&   cvnvloc(:), freg(:), old_face_list(:), new_face_list(:)
+    LOGICAL :: duplicate, left_match_found, right_match_found
+    EXTERNAL IPGETI, XERRAB
+    INTRINSIC MAXVAL
+    INTRINSIC ALLOCATED
+!wdk  This initialization routine precomputes a number of arrays
+!wdk  in the mapping that are not stored in the b2fgmtry file, but
+!wdk  can be derived directly from data in that file
+!
+!   ..regions
+    m%nnreg(0) = MAXVAL(m%cvreg)
+    m%nnreg(1) = MAXVAL(m%fcreg)
+!
+!   ..set up connectivity information for the matrix stencil
+    ALLOCATE(m%cvnvp(m%ncv, 2))
+    ALLOCATE(cvnvloc(10*m%ncv))
+! initial overestimate of size cvNv array
+    ALLOCATE(indcv(100))
+! (over)estimate of max number number of neighbors an individual cell could have
+!
+    inv = 1
+    DO icv=1,m%ncv
+! init: each cell appears in its own stencil
+      m%cvnvp(icv, 1) = inv
+      indcv = icv
+! list all cells surrounding cell iCv, by listing the
+! cells connecting to all vertices of cell iCv
+      invmx = 1
+      DO ivx=1,m%cvvxp(icv, 2)
+! the number in the vertex list
+        ivx1 = m%cvvx(m%cvvxp(icv, 1)+ivx-1)
+! all cells connecting to this vertex
+        indcv(invmx+1:invmx+m%vxcvp(ivx1, 2)) = m%vxcv(m%vxcvp(ivx1, 1):&
+&         m%vxcvp(ivx1, 1)+m%vxcvp(ivx1, 2)-1)
+        invmx = invmx + m%vxcvp(ivx1, 2)
+      END DO
+! remove duplicates
+      cvnvloc(m%cvnvp(icv, 1)) = indcv(1)
+      i = 1
+! TODO: sort by cell number, keeping first cell fixed (main diagonal)
+      DO 100 inv1=2,invmx
+        DO inv2=1,i
+          IF (cvnvloc(m%cvnvp(icv, 1)+inv2-1) .EQ. indcv(inv1)) GOTO 100
+        END DO
+! duplicate element
+! new element found
+        i = i + 1
+        cvnvloc(m%cvnvp(icv, 1)+i-1) = indcv(inv1)
+ 100  CONTINUE
+      m%cvnvp(icv, 2) = i
+      inv = inv + i
+    END DO
+! allocate and fill m%cvNv
+!
+    m%ncmxnv = inv - 1
+    ALLOCATE(m%cvnv(m%ncmxnv))
+    m%cvnv = cvnvloc(1:m%ncmxnv)
+!
+!csc this is only needed for adjoint AD in b2usco, b2usmo, etc.
+! clean up
+    m%mxstencil = MAXVAL(m%cvnvp(1:m%ncv, 2))
+!
+    DEALLOCATE(cvnvloc)
+    DEALLOCATE(indcv)
+!
+    ALLOCATE(indfsvx(m%nvx))
+    m%fcfs = 0
+    indfsvx = 0
+    totalcount = 0
+    DO ifs=1,m%nfs
+      fscount = 0
+      DO i=m%fsfcp(ifs, 1),m%fsfcp(ifs, 1)+m%fsfcp(ifs, 2)-1
+        ifc = m%fsfc(i)
+        m%fcfs(ifc) = ifs
+        ivx1 = m%fcvx(ifc, 1)
+        ivx2 = m%fcvx(ifc, 2)
+        IF (m%vxfs(ivx1) .EQ. 0) THEN
+          m%vxfs(ivx1) = ifs
+          m%nfsvxmx = m%nfsvxmx + 1
+          fscount = fscount + 1
+          totalcount = totalcount + 1
+          indfsvx(totalcount) = ivx1
+        END IF
+        IF (m%vxfs(ivx2) .EQ. 0) THEN
+          m%vxfs(ivx2) = ifs
+          m%nfsvxmx = m%nfsvxmx + 1
+          fscount = fscount + 1
+          totalcount = totalcount + 1
+          indfsvx(totalcount) = ivx2
+        END IF
+      END DO
+      IF (fscount .GT. 0) THEN
+        m%fsvxp(ifs, 1) = totalcount - fscount + 1
+        m%fsvxp(ifs, 2) = fscount
+      END IF
+    END DO
+    m%nfsvxmx = totalcount
+    ALLOCATE(m%fsvx(m%nfsvxmx))
+    m%fsvx(1:m%nfsvxmx) = indfsvx(1:m%nfsvxmx)
+    DEALLOCATE(indfsvx)
+!
+    ALLOCATE(indxpt(m%nvx))
+    indxpt = 0
+    m%nxpt = 0
+    iactive = 0
+    DO ivx=1,m%nvx
+      IF (m%vxfcp(ivx, 2) .GE. 4) THEN
+        fccount = 0
+        DO i=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+          ifc = m%vxfc(i)
+          IF (m%fcfs(ifc) .NE. 0) fccount = fccount + 1
+        END DO
+        IF (fccount .EQ. 4) THEN
+          m%nxpt = m%nxpt + 1
+          indxpt(m%nxpt) = ivx
+          IF (iactive .EQ. 0) THEN
+            DO i=m%vxcvp(ivx, 1),m%vxcvp(ivx, 1)+m%vxcvp(ivx, 2)-1
+              IF (iactive .EQ. 0) THEN
+                icv = m%vxcv(i)
+                IF (m%cvreg(icv) .EQ. 1) iactive = m%nxpt
+              END IF
+            END DO
+          END IF
+        END IF
+      END IF
+    END DO
+!
+    m%nstr = 0
+    m%ntgc = 0
+    IF (m%nxpt .GT. 0) THEN
+      ALLOCATE(m%xpt(m%nxpt))
+      m%xpt(1:m%nxpt) = indxpt(1:m%nxpt)
+      IF (iactive .NE. 0) THEN
+        DO i=1,m%vxfcp(m%xpt(iactive), 2)
+          ifs = m%fcfs(m%vxfc(m%vxfcp(m%xpt(iactive), 1)+i-1))
+          IF (ifs .NE. 0) THEN
+            IF (m%ifssep .EQ. 0) m%ifssep = ifs
+            IF (m%ifssep2 .EQ. 0 .AND. ifs .NE. m%ifssep) m%ifssep2 = &
+&               ifs
+          END IF
+        END DO
+      END IF
+      indxpt = 0
+      icount = 0
+      ALLOCATE(m%strvxp(m%nxpt, 2))
+      m%strvxp = 0
+      m%strvxp(1, 1) = 1
+      DO i=1,m%nxpt
+        IF (i .GT. 1) m%strvxp(i, 1) = m%strvxp(i-1, 1) + m%strvxp(i-1, &
+&           2)
+        ifs = m%ifssep
+        DO j=m%fsfcp(ifs, 1),m%fsfcp(ifs, 1)+m%fsfcp(ifs, 2)-1
+          ifc = m%fsfc(j)
+          DO k=1,2
+            ivx = m%fcvx(ifc, k)
+            fccount = 0
+            DO l=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+              IF (m%fcfs(m%vxfc(l)) .EQ. ifs) fccount = fccount + 1
+            END DO
+            IF (fccount .EQ. 1) THEN
+              icount = icount + 1
+              m%strvxp(i, 2) = m%strvxp(i, 2) + 1
+              indxpt(icount) = ivx
+            END IF
+          END DO
+        END DO
+        IF (m%ifssep2 .GT. 0) THEN
+          ifs = m%ifssep2
+          DO j=m%fsfcp(ifs, 1),m%fsfcp(ifs, 1)+m%fsfcp(ifs, 2)-1
+            ifc = m%fsfc(j)
+            DO k=1,2
+              ivx = m%fcvx(ifc, k)
+              fccount = 0
+              DO l=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+                IF (m%fcfs(m%vxfc(l)) .EQ. ifs) fccount = fccount + 1
+              END DO
+              IF (fccount .EQ. 1) THEN
+                icount = icount + 1
+                m%strvxp(i, 2) = m%strvxp(i, 2) + 1
+                indxpt(icount) = ivx
+              END IF
+            END DO
+          END DO
+        END IF
+      END DO
+      m%nstr = icount
+      ALLOCATE(m%strvx(m%nstr))
+      m%strvx(1:m%nstr) = indxpt(1:m%nstr)
+      ALLOCATE(m%strdiv(m%nstr))
+      ALLOCATE(freg(m%nstr))
+      m%strdiv = 0
+      freg = 0
+      DO i=1,m%nstr
+        ivx = m%strvx(i)
+        DO j=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+          IF (m%strdiv(i) .EQ. 0) THEN
+            ifc = m%vxfc(j)
+            IF (m%fcreg(ifc) .EQ. 1) THEN
+              m%strdiv(i) = 1
+              freg(i) = 1
+            ELSE IF (m%fcreg(ifc) .EQ. 4) THEN
+              m%strdiv(i) = 2
+              freg(i) = 4
+            ELSE IF (m%fcreg(ifc) .EQ. 5) THEN
+              IF (m%nxpt .EQ. 1) THEN
+                m%strdiv(i) = 1
+              ELSE
+                m%strdiv(i) = 3
+              END IF
+              freg(i) = 5
+            ELSE IF (m%fcreg(ifc) .EQ. 8) THEN
+              IF (m%nxpt .EQ. 1) THEN
+                m%strdiv(i) = 2
+              ELSE
+                m%strdiv(i) = 4
+              END IF
+              freg(i) = 8
+            END IF
+          END IF
+        END DO
+      END DO
+    ELSE IF (m%nnreg(0) .EQ. 2) THEN
+      ALLOCATE(freg(2))
+      ifc = 1
+      icount = 0
+      DO WHILE (m%ifssep .EQ. 0 .AND. ifc .LE. m%nfc)
+        icv1 = m%fccv(ifc, 1)
+        icv2 = m%fccv(ifc, 2)
+        IF (m%cvreg(icv1) .NE. m%cvreg(icv2) .AND. m%cvreg(icv1) .NE. 0 &
+&           .AND. m%cvreg(icv2) .NE. 0) m%ifssep = m%fcfs(ifc)
+        IF (m%ifssep .EQ. 0) ifc = ifc + 1
+      END DO
+      DO i=m%fsfcp(m%ifssep, 1),m%fsfcp(m%ifssep, 1)+m%fsfcp(m%ifssep, 2&
+&         )-1
+        ifc = m%fsfc(i)
+        DO k=1,2
+          ivx = m%fcvx(ifc, k)
+          DO j=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+            ifcc = m%vxfc(j)
+            IF (m%fclbl(ifcc) .NE. 0) THEN
+              duplicate = .false.
+              DO l=1,icount
+                IF (indxpt(l) .EQ. ivx) duplicate = .true.
+              END DO
+              IF (.NOT.duplicate) THEN
+                icount = icount + 1
+                indxpt(icount) = ivx
+              END IF
+            END IF
+          END DO
+        END DO
+      END DO
+      m%ntgc = icount
+      ALLOCATE(m%tgvx(m%ntgc))
+      m%tgvx(1:m%ntgc) = indxpt(1:m%ntgc)
+      ALLOCATE(m%strdiv(2))
+      m%strdiv(1) = 1
+      m%strdiv(2) = 2
+      freg(1) = 1
+      freg(2) = 2
+    ELSE IF (m%nnreg(0) .EQ. 1) THEN
+      CALL IPGETI('b2mwti_jsep', m%ifssep)
+      ALLOCATE(freg(2))
+      freg(1) = 1
+      freg(2) = 2
+      IF (m%ifssep .GT. 0) THEN
+        indxpt = 0
+        icount = 0
+        ALLOCATE(m%strvxp(1, 2))
+        m%strvxp(1, 1) = 1
+        m%strvxp(1, 2) = 2
+        DO j=m%fsfcp(m%ifssep, 1),m%fsfcp(m%ifssep, 1)+m%fsfcp(m%ifssep&
+&           , 2)-1
+          ifc = m%fsfc(j)
+          DO k=1,2
+            ivx = m%fcvx(ifc, k)
+            fccount = 0
+            DO l=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+              IF (m%fcfs(m%vxfc(l)) .EQ. m%ifssep) fccount = fccount + 1
+            END DO
+            IF (fccount .EQ. 1) THEN
+              icount = icount + 1
+              indxpt(icount) = ivx
+            END IF
+          END DO
+        END DO
+        m%nstr = icount
+        IF (m%nstr .GT. 0) THEN
+          ALLOCATE(m%strvx(m%nstr))
+          m%strvx(1:m%nstr) = indxpt(1:m%nstr)
+          ALLOCATE(m%strdiv(m%nstr))
+          m%strdiv = 0
+          DO i=1,m%nstr
+            ivx = m%strvx(i)
+            DO j=m%vxfcp(ivx, 1),m%vxfcp(ivx, 1)+m%vxfcp(ivx, 2)-1
+              IF (m%strdiv(i) .EQ. 0) THEN
+                ifc = m%vxfc(j)
+                IF (m%fcreg(ifc) .EQ. 1) THEN
+                  m%strdiv(i) = 1
+                ELSE IF (m%fcreg(ifc) .EQ. 2) THEN
+                  m%strdiv(i) = 2
+                END IF
+              END IF
+            END DO
+          END DO
+        END IF
+      END IF
+    END IF
+    DEALLOCATE(indxpt)
+!
+    IF (ALLOCATED(m%strdiv)) THEN
+      indd = MAXVAL(m%strdiv)
+      IF (indd .GT. 0) THEN
+        ALLOCATE(m%ifdiv(MAXVAL(m%strdiv)))
+        ALLOCATE(m%ivdiv(MAXVAL(m%strdiv)))
+        ALLOCATE(m%divfcp(MAXVAL(m%strdiv), 2))
+        ALLOCATE(indfc(m%nfc))
+        icount = 0
+        m%ifdiv = 0
+        m%ivdiv = 0
+        m%divfcp(1, 1) = 1
+        m%divfcp(:, 2) = 0
+! first assemble all the faces
+        DO i=1,indd
+          IF (i .GT. 1) m%divfcp(i, 1) = m%divfcp(i-1, 1) + m%divfcp(i-1&
+&             , 2)
+          DO ifc=1,m%nfc
+            IF (m%fcreg(ifc) .EQ. freg(i)) THEN
+              icount = icount + 1
+              m%divfcp(i, 2) = m%divfcp(i, 2) + 1
+              indfc(icount) = ifc
+            END IF
+          END DO
+        END DO
+        ALLOCATE(m%divfc(icount))
+        ALLOCATE(m%divfcor(icount))
+        m%divfcor = 0.0_R8
+        m%divfc(1:icount) = indfc(1:icount)
+! now re-order them
+        DO i=1,indd
+          ALLOCATE(old_face_list(m%divfcp(i, 2)))
+          ALLOCATE(new_face_list(m%divfcp(i, 2)))
+          old_face_list(1:m%divfcp(i, 2)) = m%divfc(m%divfcp(i, 1):m%&
+&           divfcp(i, 1)+m%divfcp(i, 2)-1)
+          new_face_list(:) = 0
+          new_face_list(1) = m%divfc(m%divfcp(i, 1))
+          old_face_list(1) = 0
+          iva = m%fcvx(m%divfc(m%divfcp(i, 1)), 1)
+          ivb = m%fcvx(m%divfc(m%divfcp(i, 1)), 2)
+          inew = 1
+          DO WHILE (inew .LT. m%divfcp(i, 2))
+            left_match_found = .false.
+            DO j=1,m%divfcp(i, 2)
+              IF (.NOT.left_match_found) THEN
+                IF (old_face_list(j) .NE. 0) THEN
+                  IF (iva .EQ. m%fcvx(old_face_list(j), 1)) THEN
+                    left_match_found = .true.
+                    iva = m%fcvx(old_face_list(j), 2)
+                  ELSE IF (iva .EQ. m%fcvx(old_face_list(j), 2)) THEN
+                    left_match_found = .true.
+                    iva = m%fcvx(old_face_list(j), 1)
+                  END IF
+                  IF (left_match_found) THEN
+                    indfc(1:inew) = new_face_list(1:inew)
+                    new_face_list(1) = old_face_list(j)
+                    new_face_list(2:inew+1) = indfc(1:inew)
+                    old_face_list(j) = 0
+                    inew = inew + 1
+                  END IF
+                END IF
+              END IF
+            END DO
+            right_match_found = .false.
+            DO j=1,m%divfcp(i, 2)
+              IF (.NOT.right_match_found) THEN
+                IF (old_face_list(j) .NE. 0) THEN
+                  IF (ivb .EQ. m%fcvx(old_face_list(j), 1)) THEN
+                    right_match_found = .true.
+                    ivb = m%fcvx(old_face_list(j), 2)
+                  ELSE IF (ivb .EQ. m%fcvx(old_face_list(j), 2)) THEN
+                    right_match_found = .true.
+                    ivb = m%fcvx(old_face_list(j), 1)
+                  END IF
+                  IF (right_match_found) THEN
+                    new_face_list(inew+1) = old_face_list(j)
+                    old_face_list(j) = 0
+                    inew = inew + 1
+                  END IF
+                END IF
+              END IF
+            END DO
+            IF (.NOT.(left_match_found .OR. right_match_found) .AND. &
+&               inew .LT. m%divfcp(i, 2)) THEN
+              DO j=1,inew
+                ifc = new_face_list(j)
+                iva = m%fcvx(ifc, 1)
+                ivb = m%fcvx(ifc, 2)
+                WRITE(6, '(a,4i6)') &
+&               'Chain of faces and vertices in new list ', j, ifc, iva&
+&               , ivb
+              END DO
+              DO j=1,m%divfcp(i, 2)
+                IF (old_face_list(j) .NE. 0) THEN
+                  ifc = m%divfc(m%divfcp(i, 1)+j-1)
+                  iva = m%fcvx(ifc, 1)
+                  ivb = m%fcvx(ifc, 2)
+                  WRITE(6, '(a,4i6)') &
+&                 'Left over faces and vertices in old list', j, ifc, &
+&                 iva, ivb
+                END IF
+              END DO
+              CALL XERRAB('Broken face chain along target')
+            END IF
+          END DO
+          m%divfc(m%divfcp(i, 1):m%divfcp(i, 1)+m%divfcp(i, 2)-1) = &
+&           new_face_list(1:m%divfcp(i, 2))
+          DEALLOCATE(old_face_list)
+          DEALLOCATE(new_face_list)
+        END DO
+        DEALLOCATE(indfc)
+      END IF
+    END IF
+    DEALLOCATE(freg)
+!
+    WRITE(*, *) 'nXpt, nStr, nTgc ', m%nxpt, m%nstr, m%ntgc
+    WRITE(*, *) 'nFsVxmx          ', m%nfsvxmx
 !
     RETURN
   END SUBROUTINE INIT_MAPPING
@@ -1482,9 +2643,9 @@ CONTAINS
     CHARACTER(len=260) :: boundary_filename
     CHARACTER(len=10) :: version
     CHARACTER(len=260) :: filename
+    EXTERNAL FIND_FILE, XERRAB
     INTRINSIC TRIM
-    EXTERNAL FIND_FILE
-    EXTERNAL XERRAB
+!
     filename = TRIM(boundary_filename)
     CALL FIND_FILE(filename, file_ok)
     IF (file_ok) THEN
@@ -1494,7 +2655,102 @@ CONTAINS
     ELSE
       CALL XERRAB('No '//TRIM(filename))
     END IF
+    RETURN
   END SUBROUTINE GET_VERSION
+
+!
+!*********************************************************************
+!
+!> Computes additional connectivity data based
+!! on the connectivity data of the traduitoutb2us file
+  SUBROUTINE CALC_ADD_CONNECTIVITY(m)
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!!.. arguments
+!
+!!.. local variables
+    TYPE(MAPPING) :: m
+!
+    INTEGER :: i, ic, ivx, ifc, n, vxfc_end, vxcv_end
+    INTEGER, ALLOCATABLE :: indfc(:), indcv(:), fh(:), ch(:), fch(:), &
+&   indcvfc(:)
+    INTRINSIC PACK, COUNT
+!!Read out fcVx, cvFc, cvFcP, cvVx and cvVxP
+!!Construct vxCv, vxCvP, vxFcP, fcCv !(because of ghostcell, every face has two cells)
+!Construct vxFcP
+    EXTERNAL XERRAB
+!
+!
+    ALLOCATE(indfc(2*m%nfc))
+    indfc(1:m%nfc) = (/(i, i=1,m%nfc)/)
+    indfc(m%nfc+1:2*m%nfc) = (/(i, i=1,m%nfc)/)
+!
+    ALLOCATE(fh(2*m%nfc))
+    fh(1:m%nfc) = m%fcvx(1:m%nfc, 1)
+    fh(m%nfc+1:2*m%nfc) = m%fcvx(1:m%nfc, 2)
+!
+    ALLOCATE(indcv(m%ncmxvx))
+    DO ic=1,m%ncv
+      indcv(m%cvvxp(ic, 1):m%cvvxp(ic, 1)+m%cvvxp(ic, 2)-1) = ic
+    END DO
+!
+    ALLOCATE(ch(m%ncmxvx))
+    ch(1:m%ncmxvx) = m%cvvx(1:m%ncmxvx)
+!
+    m%vxfcp(1, 1) = 1
+    m%vxcvp(1, 1) = 1
+    DO ivx=1,m%nvx-1
+      m%vxfcp(ivx, 2) = COUNT(fh .EQ. ivx)
+      m%vxfcp(ivx+1, 1) = m%vxfcp(ivx, 1) + m%vxfcp(ivx, 2)
+      IF (m%vxfcp(ivx, 2) .GT. 0) m%vxfc(m%vxfcp(ivx, 1):m%vxfcp(ivx+1, &
+&       1)-1) = PACK(indfc, fh .EQ. ivx)
+!
+      m%vxcvp(ivx, 2) = COUNT(ch .EQ. ivx)
+      m%vxcvp(ivx+1, 1) = m%vxcvp(ivx, 1) + m%vxcvp(ivx, 2)
+      IF (m%vxcvp(ivx, 2) .GT. 0) m%vxcv(m%vxcvp(ivx, 1):m%vxcvp(ivx+1, &
+&       1)-1) = PACK(indcv, ch .EQ. ivx)
+    END DO
+!
+    ivx = m%nvx
+    m%vxfcp(ivx, 2) = COUNT(fh .EQ. ivx)
+    vxfc_end = m%vxfcp(ivx, 1) + m%vxfcp(ivx, 2) - 1
+    IF (m%vxfcp(ivx, 2) .GT. 0) m%vxfc(m%vxfcp(ivx, 1):vxfc_end) = PACK(&
+&       indfc, fh .EQ. ivx)
+    m%vxcvp(ivx, 2) = COUNT(ch .EQ. ivx)
+    vxcv_end = m%vxcvp(ivx, 1) + m%vxcvp(ivx, 2) - 1
+!Try analog for fcCv(nFc,2), similar to vxCv - check this in debugger
+    IF (m%vxcvp(ivx, 2) .GT. 0) m%vxcv(m%vxcvp(ivx, 1):vxcv_end) = PACK(&
+&       indcv, ch .EQ. ivx)
+!
+!
+    ALLOCATE(indcvfc(m%ncmxfc))
+    DO ic=1,m%ncv
+      indcvfc(m%cvfcp(ic, 1):m%cvfcp(ic, 1)+m%cvfcp(ic, 2)-1) = ic
+    END DO
+!
+    ALLOCATE(fch(m%ncmxfc))
+!here loop over the faces
+    fch(1:m%ncmxfc) = m%cvfc(1:m%ncmxfc)
+!
+!
+    DO ifc=1,m%nfc
+      n = COUNT(fch .EQ. ifc)
+      IF (n .EQ. 2) THEN
+        m%fccv(ifc, 1:2) = PACK(indcvfc, fch .EQ. ifc)
+      ELSE
+        CALL XERRAB('calc_add_connectivity: Wrong # of cells per face')
+      END IF
+    END DO
+!
+    DEALLOCATE(indfc)
+    DEALLOCATE(indcv)
+    DEALLOCATE(indcvfc)
+    DEALLOCATE(fh)
+    DEALLOCATE(ch)
+    DEALLOCATE(fch)
+!
+    RETURN
+  END SUBROUTINE CALC_ADD_CONNECTIVITY
 
 END MODULE B2US_MAP_DIFFV
 

@@ -29,7 +29,7 @@ SUBROUTINE DIV0_DV(ncv, nfc, mpg, flo, flod, dflo, dflod, nbdirs)
 !.end div
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: flo(nfc)
   REAL(kind=r8) :: flod(nbdirsmax, nfc)
@@ -98,7 +98,7 @@ SUBROUTINE DIV0_NODIFF(ncv, nfc, mpg, flo, dflo)
 !.end div
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: flo(nfc)
 !   ..output arguments

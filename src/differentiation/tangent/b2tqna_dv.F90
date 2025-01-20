@@ -20,9 +20,8 @@
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.vaecrb:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fcvol:in
-!                geo.fcqalf:in st_ext.ni:in rt.rlcx:in rt.rlsa:in
-!                rt.rza:in pl.na:in pl.te:in pl.ti:in pl.tn:in
-!                pl.kt:in pl.zt:in
+!                geo.fcqalf:in rt.rlcx:in rt.rlsa:in rt.rza:in
+!                pl.na:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
 !
 !
 !
@@ -39,11 +38,10 @@
 !
 SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 & switch, switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, rt, rtd, &
-& st_ext, st_extd, dna0, dna0d, dpa0, dpa0d, vla0, vla0d, vma0, vma0d, &
-& vsa0, vsa0d, hci0, hci0d, hcn0, hcn0d, hcib, hcibd, hce0, hce0d, sig0&
-& , sig0d, alf0, alf0d, hvi0, hvi0d, hve0, hve0d, dkt0, dkt0d, dzt0, &
-& dzt0d, dna_exb, dna_exbd, hce_exb, hce_exbd, hci_exb, hci_exbd, nbdirs&
-&)
+& st_ext, dna0, dna0d, dpa0, dpa0d, vla0, vla0d, vma0, vma0d, vsa0, &
+& vsa0d, hci0, hci0d, hcn0, hcn0d, hcib, hcibd, hce0, hce0d, sig0, sig0d&
+& , alf0, alf0d, hvi0, hvi0d, hve0, hve0d, dkt0, dkt0d, dzt0, dzt0d, &
+& dna_exb, dna_exbd, hce_exb, hce_exbd, hci_exb, hci_exbd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
   USE B2MOD_TRANSPORT_NAMELIST_DIFFV
@@ -54,19 +52,15 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_B2CMPB_DIFFV
-!      use b2mod_ranges
-!      use b2mod_neoclassical
-!      use b2mod_geo_corner
-!     &                    , only : lengthy, nmdpl                 !srv 26.11.04
   USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tqna
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2tqna, &
-& ncall_transp_keps
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_transp_keps
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nCv should be the size of dimension 1 of array arg1
@@ -79,7 +73,8 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !.end b2tqna
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -93,7 +88,6 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
-  TYPE(B2STATEEXT_DIFFV), INTENT(IN) :: st_extd
 !   ..output arguments (unspecified on entry)
 !srv 15.12.05
   REAL(kind=r8) :: dna0(ncv, 0:ns-1), dpa0(ncv, 0:ns-1), vla0(ncv, 0:1, &
@@ -186,11 +180,13 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   INTRINSIC INT
   INTRINSIC MOD
   INTRINSIC SUM
+  INTRINSIC REAL
   INTRINSIC TRIM
+  EXTERNAL B2XVSG
+  INTRINSIC NINT
   INTRINSIC LOG
   INTRINSIC MIN
   INTRINSIC MAX
-  INTRINSIC ABS
   EXTERNAL XERRAB
   REAL(kind=r8) :: y1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: y1d
@@ -206,17 +202,8 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   REAL(r8), DIMENSION(nbdirsmax) :: max4d
   REAL(r8) :: max5
   REAL(r8), DIMENSION(nbdirsmax) :: max5d
-  REAL(kind=r8) :: abs0
-  REAL(kind=r8) :: abs1
-  REAL(kind=r8) :: abs2
-  REAL(kind=r8) :: abs3
   REAL(kind=r8), DIMENSION(ncv) :: max6
   REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: max6d
-  REAL(kind=r8) :: abs4
-  REAL(kind=r8) :: abs5
-  REAL(kind=r8) :: abs6
-  REAL(kind=r8) :: abs7
-  REAL(kind=r8) :: abs8
   REAL(kind=r8) :: arg1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
   REAL(kind=r8), DIMENSION(nCv) :: arg10
@@ -232,6 +219,7 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CHARACTER(len=14) :: arg14
   CHARACTER(len=17) :: arg15
   CHARACTER(len=16) :: arg16
+  REAL(kind=r8) :: pwx1
   REAL(kind=r8) :: pwr1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: pwr1d
   CHARACTER(len=11) :: arg17
@@ -303,7 +291,10 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     IF (switch%b2tqna_ballooning .NE. 0.0_R8 .AND. switch%b2tqna_bb_ref &
 &       .EQ. 0.0_R8) THEN
       arg10(:) = geo%cvbb(:, 3)
-      switch%b2tqna_bb_ref = SUM(arg10(:))/ncv
+      DO nd=1,nbdirs
+        switchd%b2tqna_bb_ref(nd) = 0.D0
+      END DO
+      switch%b2tqna_bb_ref = SUM(arg10(:))/REAL(ncv, r8)
       WRITE(*, *) 'b2tqna: bb_ref set to ', switch%b2tqna_bb_ref
     END IF
   ELSE IF (switch%b2tqna_transport_namelist .EQ. 1) THEN
@@ -333,21 +324,21 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     END IF
   END IF
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2tqna .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%fcbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(nfc, geo%fcbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test state
     arg11 = ncv*ns
-    CALL B2XVSG_NODIFF(arg11, pl%na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(arg11, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
     arg11 = ncv*2
-    CALL B2XVSG_NODIFF(arg11, dv%ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(arg11, dv%ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, dv%ne2, 1, 'ne2', '.gt.')
   END IF
   arg12(:) = pl%ti/mp
   temp = SQRT(arg12(:))
@@ -367,23 +358,23 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
       IF (.NOT.is_neutral(is)) THEN
 ! dna
         CALL TRANSFORM_TRANSPORT_DV(flag_dna, parm_dna(is), parm_dnad(:&
-&                             , is), cfdna(0, is), cfdnad(1:nbdirs, 0, is), &
+&                             , is), cfdna(:, is), cfdnad(:, :, is), &
 &                             nbdirs)
 ! dpa
         CALL TRANSFORM_TRANSPORT_DV(flag_dpa, parm_dpa(is), parm_dpad(:&
-&                             , is), cfdpa(0, is), cfdpad(1:nbdirs, 0, is), &
+&                             , is), cfdpa(:, is), cfdpad(:, :, is), &
 &                             nbdirs)
 ! vla
         CALL TRANSFORM_TRANSPORT_DV(flag_vla, parm_vla(is), parm_vlad(:&
-&                             , is), cfvla(0, is), cfvlad(1:nbdirs, 0, is), &
+&                             , is), cfvla(:, is), cfvlad(:, :, is), &
 &                             nbdirs)
 ! vsa
         CALL TRANSFORM_TRANSPORT_DV(flag_vsa, parm_vsa(is), parm_vsad(:&
-&                             , is), cfvsa(0, is), cfvsad(1:nbdirs, 0, is), &
+&                             , is), cfvsa(:, is), cfvsad(:, :, is), &
 &                             nbdirs)
 ! hci
         CALL TRANSFORM_TRANSPORT_DV(flag_hci, parm_hci(is), parm_hcid(:&
-&                             , is), cfhci(0, is), cfhcid(1:nbdirs, 0, is), &
+&                             , is), cfhci(:, is), cfhcid(:, :, is), &
 &                             nbdirs)
       END IF
     END DO
@@ -478,7 +469,7 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     k = -1
     max_df0_tmp = 0.0_R8
     min_df0_tmp = 1.0e30_R8
-    IF (is_neutral(is) .AND. zn(is) .EQ. 1.0_R8) THEN
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
       k = 0
       DO WHILE (iscx(k) .NE. is .AND. k .LT. nscx)
         k = k + 1
@@ -589,7 +580,7 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !-wrong(Bonnin,Owen)                dnn=1.0_R8/na(iCv,is)/2.0e-19_R8
 !$$$                dnn=(wrk0(iCv)/sqrt(am(is)))/
 !$$$     1           (na(iCv,is)/switch%neutral_sources_rescale)/2.0e-19_R8
-!xpb Corrected for dimensionality 
+!xpb Corrected for dimensionality
           temp2 = switch%neutral_sources_rescale/(2.0e-19_R8*pl%na(icv, &
 &           is))
           DO nd=1,nbdirs
@@ -657,22 +648,18 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
           max1d(nd) = 0.D0
         END DO
       END IF
-      IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-        abs4 = geo%cvbb(icv, 3)
-      ELSE
-        abs4 = -geo%cvbb(icv, 3)
-      END IF
 !      ..compute dna0, dpa0, vla0, vma0
 ! dpc changed na(iCv,is) to ne(iCv)
       temp2 = cfdna(1, is)/max1
+      temp1 = ev*geo%cvbb(icv, 3)
       DO nd=1,nbdirs
         dna0d(nd, icv, is) = cfdnad(nd, 0, is) + 1.0e20_R8*(cfdnad(nd, 1&
 &         , is)-temp2*max1d(nd))/max1 + df0*cfdnad(nd, 2, is) + cfdna(2&
 &         , is)*df0d(nd) + 6.25e-2_R8*(pl%te(icv)*cfdnad(nd, 3, is)+&
-&         cfdna(3, is)*pld%te(nd, icv))/(ev*abs4)
+&         cfdna(3, is)*pld%te(nd, icv))/temp1
       END DO
       dna0(icv, is) = cfdna(0, is) + 1.0e20_R8*temp2 + cfdna(2, is)*df0 &
-&       + 6.25e-2_R8*(cfdna(3, is)*pl%te(icv)/(ev*abs4))
+&       + 6.25e-2_R8*(cfdna(3, is)*pl%te(icv)/temp1)
 !WG_TODO*
       IF (cfdna(7, is) .NE. 0.0_R8) dna0(icv, is) = dna0(icv, is)
       IF (1.0e-50_R8 .LT. dv%ne(icv)) THEN
@@ -686,25 +673,21 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
           max2d(nd) = 0.D0
         END DO
       END IF
-      IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-        abs5 = geo%cvbb(icv, 3)
-      ELSE
-        abs5 = -geo%cvbb(icv, 3)
-      END IF
 !WG_TODO     &        cfdna(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
 ! dpc changed na(iCv,is) to ne(iCv)
       temp3 = rt%rza(icv, is)*pl%te(icv) + pl%ti(icv)
       temp2 = cfdpa(1, is)/max2
-      temp1 = (cfdpa(0, is)+1.0e20_R8*temp2+cfdpa(2, is)*df0+6.25e-2_R8*&
-&       cfdpa(3, is)*pl%te(icv)/(ev*abs5))/temp3
+      temp1 = ev*geo%cvbb(icv, 3)
+      temp0 = (cfdpa(0, is)+1.0e20_R8*temp2+cfdpa(2, is)*df0+6.25e-2_R8*&
+&       cfdpa(3, is)*pl%te(icv)/temp1)/temp3
       DO nd=1,nbdirs
         dpa0d(nd, icv, is) = (cfdpad(nd, 0, is)+1.0e20_R8*(cfdpad(nd, 1&
 &         , is)-temp2*max2d(nd))/max2+df0*cfdpad(nd, 2, is)+cfdpa(2, is)&
 &         *df0d(nd)+6.25e-2_R8*(pl%te(icv)*cfdpad(nd, 3, is)+cfdpa(3, is&
-&         )*pld%te(nd, icv))/(ev*abs5)-temp1*(pl%te(icv)*rtd%rza(nd, icv&
-&         , is)+rt%rza(icv, is)*pld%te(nd, icv)+pld%ti(nd, icv)))/temp3
+&         )*pld%te(nd, icv))/temp1-temp0*(pl%te(icv)*rtd%rza(nd, icv, is&
+&         )+rt%rza(icv, is)*pld%te(nd, icv)+pld%ti(nd, icv)))/temp3
       END DO
-      dpa0(icv, is) = temp1
+      dpa0(icv, is) = temp0
 !WG_TODO*
       IF (cfdpa(7, is) .NE. 0.0_R8) dpa0(icv, is) = dpa0(icv, is)
 !WG_TODO     &        cfdpa(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
@@ -723,21 +706,17 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
           max3d(nd) = 0.D0
         END DO
       END IF
-      IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-        abs6 = geo%cvbb(icv, 3)
-      ELSE
-        abs6 = -geo%cvbb(icv, 3)
-      END IF
 ! dpc changed na(iCv,is) to ne(iCv)
       temp2 = cfvla(1, is)/max3
+      temp1 = ev*geo%cvbb(icv, 3)
       DO nd=1,nbdirs
         vla0d(nd, icv, 1, is) = cfvlad(nd, 0, is) + 1.0e20_R8*(cfvlad(nd&
 &         , 1, is)-temp2*max3d(nd))/max3 + df0*cfvlad(nd, 2, is) + cfvla&
 &         (2, is)*df0d(nd) + 6.25e-2_R8*(pl%te(icv)*cfvlad(nd, 3, is)+&
-&         cfvla(3, is)*pld%te(nd, icv))/(ev*abs6)
+&         cfvla(3, is)*pld%te(nd, icv))/temp1
       END DO
       vla0(icv, 1, is) = cfvla(0, is) + 1.0e20_R8*temp2 + cfvla(2, is)*&
-&       df0 + 6.25e-2_R8*(cfvla(3, is)*pl%te(icv)/(ev*abs6))
+&       df0 + 6.25e-2_R8*(cfvla(3, is)*pl%te(icv)/temp1)
 !WG_TODO*
       IF (cfvla(7, is) .NE. 0.0_R8) vla0(icv, 1, is) = vla0(icv, 1, is)
 !WG_TODO     &        cfvla(7,is)*hy1(iCv)/hy1(switch%b2tqna_ixref,iy)
@@ -762,25 +741,21 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
           max4d(nd) = 0.D0
         END DO
       END IF
-      IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-        abs7 = geo%cvbb(icv, 3)
-      ELSE
-        abs7 = -geo%cvbb(icv, 3)
-      END IF
 !      ..compute dfvsb and dfhcb
 !        (dfvsb and dfhcb specify effective diffusivities, of
 !         dimension m**2/s, for the anomalous transport coefficients
 !         vsa0 and hci0)
 ! dpc changed na(iCv,is) to ne(iCv)
       temp2 = cfvsa(1, is)/max4
+      temp1 = ev*geo%cvbb(icv, 3)
       DO nd=1,nbdirs
         dfvsbd(nd) = cfvsad(nd, 0, is) + 1.0e20_R8*(cfvsad(nd, 1, is)-&
 &         temp2*max4d(nd))/max4 + df0*cfvsad(nd, 2, is) + cfvsa(2, is)*&
 &         df0d(nd) + 6.25e-2_R8*(pl%te(icv)*cfvsad(nd, 3, is)+cfvsa(3, &
-&         is)*pld%te(nd, icv))/(ev*abs7)
+&         is)*pld%te(nd, icv))/temp1
       END DO
       dfvsb = cfvsa(0, is) + 1.0e20_R8*temp2 + cfvsa(2, is)*df0 + &
-&       6.25e-2_R8*(cfvsa(3, is)*pl%te(icv)/(ev*abs7))
+&       6.25e-2_R8*(cfvsa(3, is)*pl%te(icv)/temp1)
 !WG_TODO*cfvsa(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
       IF (cfvsa(7, is) .NE. 0.0_R8) dfvsb = dfvsb
       IF (1.0e-50_R8 .LT. dv%ne(icv)) THEN
@@ -794,21 +769,17 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
           max5d(nd) = 0.D0
         END DO
       END IF
-      IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-        abs8 = geo%cvbb(icv, 3)
-      ELSE
-        abs8 = -geo%cvbb(icv, 3)
-      END IF
 ! dpc changed na(iCv,is) to ne(iCv)
       temp2 = cfhci(1, is)/max5
+      temp1 = ev*geo%cvbb(icv, 3)
       DO nd=1,nbdirs
         dfhcbd(nd) = cfhcid(nd, 0, is) + 1.0e20_R8*(cfhcid(nd, 1, is)-&
 &         temp2*max5d(nd))/max5 + df0*cfhcid(nd, 2, is) + cfhci(2, is)*&
 &         df0d(nd) + 6.25e-2_R8*(pl%te(icv)*cfhcid(nd, 3, is)+cfhci(3, &
-&         is)*pld%te(nd, icv))/(ev*abs8)
+&         is)*pld%te(nd, icv))/temp1
       END DO
       dfhcb = cfhci(0, is) + 1.0e20_R8*temp2 + cfhci(2, is)*df0 + &
-&       6.25e-2_R8*(cfhci(3, is)*pl%te(icv)/(ev*abs8))
+&       6.25e-2_R8*(cfhci(3, is)*pl%te(icv)/temp1)
 !WG_TODO*cfhci(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
       IF (cfhci(7, is) .NE. 0.0_R8) dfhcb = dfhcb
       DO nd=1,nbdirs
@@ -843,14 +814,14 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
         END DO
         hci0 = hci0 + hcib(:, is)
       END IF
-    ELSE IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
       DO nd=1,nbdirs
         hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
       END DO
       hci0 = hci0 + hcib(:, is)
     END IF
 !     ..compute hcn0
-    IF (is_neutral(is) .AND. zn(is) .EQ. 1) THEN
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
       DO nd=1,nbdirs
         hcn0d(nd, :) = hcn0d(nd, :) + hcibd(nd, :, is)
       END DO
@@ -859,55 +830,43 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   END DO
 !   ..compute hce0, sig0, alf0
   DO icv=1,ncv
-    IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-      abs0 = geo%cvbb(icv, 3)
-    ELSE
-      abs0 = -geo%cvbb(icv, 3)
-    END IF
 !     ..compute dfhce, dfsig, dfalf
 !       (dfhce, dfsig, and dfalf specify effective diffusivity,
 !        dimension m**2/s, for the anomalous transport coefficients
 !        hce0, sig0, and alf0)
     temp2 = cfhce(1)/dv%ne(icv)
+    temp1 = ev*geo%cvbb(icv, 3)
     DO nd=1,nbdirs
       dfhced(nd) = cfhced(nd, 0) + 1.0e20_R8*(cfhced(nd, 1)-temp2*dvd%ne&
 &       (nd, icv))/dv%ne(icv) + 6.25e-2_R8*(pl%te(icv)*cfhced(nd, 3)+&
-&       cfhce(3)*pld%te(nd, icv))/(ev*abs0)
+&       cfhce(3)*pld%te(nd, icv))/temp1
     END DO
     dfhce = cfhce(0) + 1.0e20_R8*temp2 + 6.25e-2_R8*(cfhce(3)*pl%te(icv)&
-&     /(ev*abs0))
+&     /temp1)
 !WG_TODO*cfhce(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
     IF (cfhce(7) .NE. 0.0_R8) dfhce = dfhce
-    IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-      abs1 = geo%cvbb(icv, 3)
-    ELSE
-      abs1 = -geo%cvbb(icv, 3)
-    END IF
 !WG_TODO+
     temp2 = cfsig(1)/dv%ne(icv)
+    temp1 = ev*geo%cvbb(icv, 3)
     DO nd=1,nbdirs
       dfsigd(nd) = cfsigd(nd, 0) + 1.0e20_R8*(cfsigd(nd, 1)-temp2*dvd%ne&
 &       (nd, icv))/dv%ne(icv) + 6.25e-2_R8*(pl%te(icv)*cfsigd(nd, 3)+&
-&       cfsig(3)*pld%te(nd, icv))/(ev*abs1)
+&       cfsig(3)*pld%te(nd, icv))/temp1
     END DO
     dfsig = cfsig(0) + 1.0e20_R8*temp2 + 6.25e-2_R8*(cfsig(3)*pl%te(icv)&
-&     /(ev*abs1))
+&     /temp1)
 !WG_TODO     2    cfsig(4)*exp(-cfsig(5)*(lengthy(iCv)/lengthy(ix,ny))**2) !srv 26.11.04
 !WG_TODO*cfsig(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
     IF (cfsig(7) .NE. 0.0_R8) dfsig = dfsig
-    IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-      abs2 = geo%cvbb(icv, 3)
-    ELSE
-      abs2 = -geo%cvbb(icv, 3)
-    END IF
     temp2 = cfalf(1)/dv%ne(icv)
+    temp1 = ev*geo%cvbb(icv, 3)
     DO nd=1,nbdirs
       dfalfd(nd) = cfalfd(nd, 0) + 1.0e20_R8*(cfalfd(nd, 1)-temp2*dvd%ne&
 &       (nd, icv))/dv%ne(icv) + 6.25e-2_R8*(pl%te(icv)*cfalfd(nd, 3)+&
-&       cfalf(3)*pld%te(nd, icv))/(ev*abs2)
+&       cfalf(3)*pld%te(nd, icv))/temp1
     END DO
     dfalf = cfalf(0) + 1.0e20_R8*temp2 + 6.25e-2_R8*(cfalf(3)*pl%te(icv)&
-&     /(ev*abs2))
+&     /temp1)
 !WG_TODO*cfalf(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
     IF (cfalf(7) .NE. 0.0_R8) dfalf = dfalf
 !     ..compute hce0, sig0, alf0
@@ -952,11 +911,10 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   END DO
 !
   IF (switch%b2tqna_transport_inputfile .EQ. 1) THEN
-    CALL TRANSPORT_INPUT_DV(ncv, nfc, ns, geo, geod, mpg, mpgd, pl, pld&
-&                     , dv, dvd, rt, rtd, hcib, hcibd, dna0, dna0d, dpa0&
-&                     , dpa0d, vla0, vla0d, vsa0, vsa0d, hci0, hce0, &
-&                     hce0d, sig0, sig0d, alf0, alf0d, ncall_b2tqna, &
-&                     nbdirs)
+    CALL TRANSPORT_INPUT_DV(ncv, nfc, ns, geo, geod, mpg, pl, pld, dv, &
+&                     dvd, rt, rtd, hcib, hcibd, dna0, dna0d, dpa0, &
+&                     dpa0d, vla0, vla0d, vsa0, vsa0d, hci0, hce0, hce0d&
+&                     , sig0, sig0d, alf0, alf0d, ncall_b2tqna, nbdirs)
 !     ..recompute hci0, hcn0
     hci0 = 0.0_R8
     hcn0 = 0.0_R8
@@ -981,14 +939,14 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
           END DO
           hci0 = hci0 + hcib(:, is)
         END IF
-      ELSE IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+      ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
         DO nd=1,nbdirs
           hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
         END DO
         hci0 = hci0 + hcib(:, is)
       END IF
 !       ..re-compute hcn0
-      IF (is_neutral(is) .AND. zn(is) .EQ. 1) THEN
+      IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
         DO nd=1,nbdirs
           hcn0d(nd, :) = hcn0d(nd, :) + hcibd(nd, :, is)
         END DO
@@ -1057,34 +1015,29 @@ SUBROUTINE B2TQNA_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                                                        hci_exbd, &
 &                                                        nbdirs)
 !
-  IF (switch%transport_afn .NE. 0) CALL SET_TRANSPORT_AFN_DV(ncv, nfc, &
-&                                                      nvx, ns, nscx, &
-&                                                      iscx, switch, geo&
-&                                                      , mpg, pl, pld, &
-&                                                      dv, dvd, rt, rtd&
-&                                                      , st_ext, dna0, &
-&                                                      dpa0, dpa0d, vla0&
-&                                                      , vma0, vsa0, &
-&                                                      vsa0d, hci0, &
-&                                                      hci0d, hcn0, &
-&                                                      hcn0d, hcib, &
+  IF (switch%transport_afn .NE. 0) CALL SET_TRANSPORT_AFN_DV(ncv, ns, &
+&                                                      nscx, iscx, &
+&                                                      switch, switchd, &
+&                                                      pl, pld, dv, dvd&
+&                                                      , rt, rtd, dna0, &
+&                                                      dna0d, dpa0, &
+&                                                      dpa0d, vla0, vma0&
+&                                                      , vsa0, vsa0d, &
+&                                                      hci0, hci0d, hcn0&
+&                                                      , hcn0d, hcib, &
 &                                                      hcibd, nbdirs)
 !
 !dpc
   IF (switch%b2tqna_ballooning .NE. 0.0_R8) THEN
     DO icv=1,ncv
-      IF (switch%b2tqna_bb_ref/geo%cvbb(icv, 3) .GE. 0.) THEN
-        abs3 = switch%b2tqna_bb_ref/geo%cvbb(icv, 3)
-      ELSE
-        abs3 = -(switch%b2tqna_bb_ref/geo%cvbb(icv, 3))
-      END IF
-      temp2 = abs3**switch%b2tqna_ballooning
+      pwx1 = switch%b2tqna_bb_ref/geo%cvbb(icv, 3)
+      temp2 = pwx1**switch%b2tqna_ballooning
       pwr1 = temp2
       DO nd=1,nbdirs
-        IF (abs3 .LE. 0.D0) THEN
+        IF (pwx1 .LE. 0.D0) THEN
           pwr1d(nd) = 0.D0
         ELSE
-          pwr1d(nd) = temp2*LOG(abs3)*switchd%b2tqna_ballooning(nd)
+          pwr1d(nd) = temp2*LOG(pwx1)*switchd%b2tqna_ballooning(nd)
         END IF
         poloidal_scale_factord(nd) = switch%b2tqna_ballooning_rescale*&
 &         pwr1d(nd) + pwr1*switchd%b2tqna_ballooning_rescale(nd)
@@ -1255,19 +1208,15 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_B2CMPB_DIFFV
-!      use b2mod_ranges
-!      use b2mod_neoclassical
-!      use b2mod_geo_corner
-!     &                    , only : lengthy, nmdpl                 !srv 26.11.04
   USE B2MOD_USER_NAMELIST_DIFFV, ONLY : omp
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tqna
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2tqna, &
-& ncall_transp_keps
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_transp_keps
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nCv should be the size of dimension 1 of array arg1
@@ -1278,7 +1227,8 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !.end b2tqna
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:&
+& nscxmax-1), ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -1365,11 +1315,13 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   INTRINSIC INT
   INTRINSIC MOD
   INTRINSIC SUM
+  INTRINSIC REAL
   INTRINSIC TRIM
+  EXTERNAL B2XVSG
+  INTRINSIC NINT
   INTRINSIC LOG
   INTRINSIC MIN
   INTRINSIC MAX
-  INTRINSIC ABS
   EXTERNAL XERRAB
   REAL(kind=r8) :: y1
   REAL(kind=r8), DIMENSION(ncv) :: y2
@@ -1378,16 +1330,7 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   REAL(r8) :: max3
   REAL(r8) :: max4
   REAL(r8) :: max5
-  REAL(kind=r8) :: abs0
-  REAL(kind=r8) :: abs1
-  REAL(kind=r8) :: abs2
-  REAL(kind=r8) :: abs3
   REAL(kind=r8), DIMENSION(ncv) :: max6
-  REAL(kind=r8) :: abs4
-  REAL(kind=r8) :: abs5
-  REAL(kind=r8) :: abs6
-  REAL(kind=r8) :: abs7
-  REAL(kind=r8) :: abs8
   REAL(kind=r8) :: arg1
   REAL(kind=r8), DIMENSION(nCv) :: arg10
   INTEGER :: arg11
@@ -1398,6 +1341,7 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   CHARACTER(len=14) :: arg14
   CHARACTER(len=17) :: arg15
   CHARACTER(len=16) :: arg16
+  REAL(kind=r8) :: pwx1
   REAL(kind=r8) :: pwr1
   CHARACTER(len=11) :: arg17
   CHARACTER(len=12) :: arg18
@@ -1446,7 +1390,7 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     IF (switch%b2tqna_ballooning .NE. 0.0_R8 .AND. switch%b2tqna_bb_ref &
 &       .EQ. 0.0_R8) THEN
       arg10(:) = geo%cvbb(:, 3)
-      switch%b2tqna_bb_ref = SUM(arg10(:))/ncv
+      switch%b2tqna_bb_ref = SUM(arg10(:))/REAL(ncv, r8)
       WRITE(*, *) 'b2tqna: bb_ref set to ', switch%b2tqna_bb_ref
     END IF
   ELSE IF (switch%b2tqna_transport_namelist .EQ. 1) THEN
@@ -1476,21 +1420,21 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     END IF
   END IF
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2tqna .LT. 3) THEN
 !    ..test bb
-    CALL B2XVSG_NODIFF(ncv, geo%fcbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(nfc, geo%fcbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test state
     arg11 = ncv*ns
-    CALL B2XVSG_NODIFF(arg11, pl%na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(arg11, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
     arg11 = ncv*2
-    CALL B2XVSG_NODIFF(arg11, dv%ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne2, 1, 'ne2', '.gt.')
+    CALL B2XVSG(arg11, dv%ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, dv%ne2, 1, 'ne2', '.gt.')
   END IF
 !
 !   ..compute auxiliary wrk0
@@ -1500,15 +1444,15 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) THEN
 ! dna
-        CALL TRANSFORM_TRANSPORT(flag_dna, parm_dna(is), cfdna(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_dna, parm_dna(is), cfdna(:, is))
 ! dpa
-        CALL TRANSFORM_TRANSPORT(flag_dpa, parm_dpa(is), cfdpa(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_dpa, parm_dpa(is), cfdpa(:, is))
 ! vla
-        CALL TRANSFORM_TRANSPORT(flag_vla, parm_vla(is), cfvla(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_vla, parm_vla(is), cfvla(:, is))
 ! vsa
-        CALL TRANSFORM_TRANSPORT(flag_vsa, parm_vsa(is), cfvsa(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_vsa, parm_vsa(is), cfvsa(:, is))
 ! hci
-        CALL TRANSFORM_TRANSPORT(flag_hci, parm_hci(is), cfhci(0, is))
+        CALL TRANSFORM_TRANSPORT(flag_hci, parm_hci(is), cfhci(:, is))
       END IF
     END DO
 ! hce
@@ -1551,7 +1495,7 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     k = -1
     max_df0_tmp = 0.0_R8
     min_df0_tmp = 1.0e30_R8
-    IF (is_neutral(is) .AND. zn(is) .EQ. 1.0_R8) THEN
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
       k = 0
       DO WHILE (iscx(k) .NE. is .AND. k .LT. nscx)
         k = k + 1
@@ -1614,7 +1558,7 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !-wrong(Bonnin,Owen)                dnn=1.0_R8/na(iCv,is)/2.0e-19_R8
 !$$$                dnn=(wrk0(iCv)/sqrt(am(is)))/
 !$$$     1           (na(iCv,is)/switch%neutral_sources_rescale)/2.0e-19_R8
-!xpb Corrected for dimensionality 
+!xpb Corrected for dimensionality
           dnn = 1.0_R8/(pl%na(icv, is)/switch%neutral_sources_rescale)/&
 &           2.0e-19_R8
           IF (switch%b2tqna_diagno .GT. 1) THEN
@@ -1660,15 +1604,11 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       ELSE
         max1 = 1.0e-50_R8
       END IF
-      IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-        abs4 = geo%cvbb(icv, 3)
-      ELSE
-        abs4 = -geo%cvbb(icv, 3)
-      END IF
 !      ..compute dna0, dpa0, vla0, vma0
 ! dpc changed na(iCv,is) to ne(iCv)
       dna0(icv, is) = cfdna(0, is) + cfdna(1, is)/(max1/1.0e20_R8) + &
-&       cfdna(2, is)*df0 + cfdna(3, is)*6.25e-2_R8*pl%te(icv)/ev/abs4
+&       cfdna(2, is)*df0 + cfdna(3, is)*6.25e-2_R8*pl%te(icv)/ev/geo%&
+&       cvbb(icv, 3)
 !WG_TODO*
       IF (cfdna(7, is) .NE. 0.0_R8) dna0(icv, is) = dna0(icv, is)
       IF (1.0e-50_R8 .LT. dv%ne(icv)) THEN
@@ -1676,16 +1616,11 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       ELSE
         max2 = 1.0e-50_R8
       END IF
-      IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-        abs5 = geo%cvbb(icv, 3)
-      ELSE
-        abs5 = -geo%cvbb(icv, 3)
-      END IF
 !WG_TODO     &        cfdna(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
 ! dpc changed na(iCv,is) to ne(iCv)
       dpa0(icv, is) = 1.0_R8/(rt%rza(icv, is)*pl%te(icv)+pl%ti(icv))*(&
 &       cfdpa(0, is)+cfdpa(1, is)/(max2/1.0e20_R8)+cfdpa(2, is)*df0+&
-&       cfdpa(3, is)*6.25e-2_R8*pl%te(icv)/ev/abs5)
+&       cfdpa(3, is)*6.25e-2_R8*pl%te(icv)/ev/geo%cvbb(icv, 3))
 !WG_TODO*
       IF (cfdpa(7, is) .NE. 0.0_R8) dpa0(icv, is) = dpa0(icv, is)
 !WG_TODO     &        cfdpa(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
@@ -1695,14 +1630,10 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       ELSE
         max3 = 1.0e-50_R8
       END IF
-      IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-        abs6 = geo%cvbb(icv, 3)
-      ELSE
-        abs6 = -geo%cvbb(icv, 3)
-      END IF
 ! dpc changed na(iCv,is) to ne(iCv)
       vla0(icv, 1, is) = cfvla(0, is) + cfvla(1, is)/(max3/1.0e20_R8) + &
-&       cfvla(2, is)*df0 + cfvla(3, is)*6.25e-2_R8*pl%te(icv)/ev/abs6
+&       cfvla(2, is)*df0 + cfvla(3, is)*6.25e-2_R8*pl%te(icv)/ev/geo%&
+&       cvbb(icv, 3)
 !WG_TODO*
       IF (cfvla(7, is) .NE. 0.0_R8) vla0(icv, 1, is) = vla0(icv, 1, is)
 !WG_TODO     &        cfvla(7,is)*hy1(iCv)/hy1(switch%b2tqna_ixref,iy)
@@ -1721,18 +1652,13 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       ELSE
         max4 = 1.0e-50_R8
       END IF
-      IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-        abs7 = geo%cvbb(icv, 3)
-      ELSE
-        abs7 = -geo%cvbb(icv, 3)
-      END IF
 !      ..compute dfvsb and dfhcb
 !        (dfvsb and dfhcb specify effective diffusivities, of
 !         dimension m**2/s, for the anomalous transport coefficients
 !         vsa0 and hci0)
 ! dpc changed na(iCv,is) to ne(iCv)
       dfvsb = cfvsa(0, is) + cfvsa(1, is)/(max4/1.0e20_R8) + cfvsa(2, is&
-&       )*df0 + cfvsa(3, is)*6.25e-2_R8*pl%te(icv)/ev/abs7
+&       )*df0 + cfvsa(3, is)*6.25e-2_R8*pl%te(icv)/ev/geo%cvbb(icv, 3)
 !WG_TODO*cfvsa(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
       IF (cfvsa(7, is) .NE. 0.0_R8) dfvsb = dfvsb
       IF (1.0e-50_R8 .LT. dv%ne(icv)) THEN
@@ -1740,14 +1666,9 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       ELSE
         max5 = 1.0e-50_R8
       END IF
-      IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-        abs8 = geo%cvbb(icv, 3)
-      ELSE
-        abs8 = -geo%cvbb(icv, 3)
-      END IF
 ! dpc changed na(iCv,is) to ne(iCv)
       dfhcb = cfhci(0, is) + cfhci(1, is)/(max5/1.0e20_R8) + cfhci(2, is&
-&       )*df0 + cfhci(3, is)*6.25e-2_R8*pl%te(icv)/ev/abs8
+&       )*df0 + cfhci(3, is)*6.25e-2_R8*pl%te(icv)/ev/geo%cvbb(icv, 3)
 !WG_TODO*cfhci(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
       IF (cfhci(7, is) .NE. 0.0_R8) dfhcb = dfhcb
 !      ..compute vsa0, hcib
@@ -1768,45 +1689,31 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
       hci0 = hci0 + hcib(:, is)
     ELSE IF (switch%tn_style .EQ. 1) THEN
       IF (.NOT.is_neutral(is)) hci0 = hci0 + hcib(:, is)
-    ELSE IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
       hci0 = hci0 + hcib(:, is)
     END IF
 !     ..compute hcn0
-    IF (is_neutral(is) .AND. zn(is) .EQ. 1) hcn0 = hcn0 + hcib(:, is)
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) hcn0 = hcn0 + hcib(:, &
+&       is)
   END DO
 !   ..compute hce0, sig0, alf0
   DO icv=1,ncv
-    IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-      abs0 = geo%cvbb(icv, 3)
-    ELSE
-      abs0 = -geo%cvbb(icv, 3)
-    END IF
 !     ..compute dfhce, dfsig, dfalf
 !       (dfhce, dfsig, and dfalf specify effective diffusivity,
 !        dimension m**2/s, for the anomalous transport coefficients
 !        hce0, sig0, and alf0)
     dfhce = cfhce(0) + cfhce(1)/(dv%ne(icv)/1.0e20_R8) + cfhce(3)*&
-&     6.25e-2_R8*pl%te(icv)/ev/abs0
+&     6.25e-2_R8*pl%te(icv)/ev/geo%cvbb(icv, 3)
 !WG_TODO*cfhce(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
     IF (cfhce(7) .NE. 0.0_R8) dfhce = dfhce
-    IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-      abs1 = geo%cvbb(icv, 3)
-    ELSE
-      abs1 = -geo%cvbb(icv, 3)
-    END IF
 !WG_TODO+
     dfsig = cfsig(0) + cfsig(1)/(dv%ne(icv)/1.0e20_R8) + cfsig(3)*&
-&     6.25e-2_R8*pl%te(icv)/ev/abs1
+&     6.25e-2_R8*pl%te(icv)/ev/geo%cvbb(icv, 3)
 !WG_TODO     2    cfsig(4)*exp(-cfsig(5)*(lengthy(iCv)/lengthy(ix,ny))**2) !srv 26.11.04
 !WG_TODO*cfsig(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
     IF (cfsig(7) .NE. 0.0_R8) dfsig = dfsig
-    IF (geo%cvbb(icv, 3) .GE. 0.) THEN
-      abs2 = geo%cvbb(icv, 3)
-    ELSE
-      abs2 = -geo%cvbb(icv, 3)
-    END IF
     dfalf = cfalf(0) + cfalf(1)/(dv%ne(icv)/1.0e20_R8) + cfalf(3)*&
-&     6.25e-2_R8*pl%te(icv)/ev/abs2
+&     6.25e-2_R8*pl%te(icv)/ev/geo%cvbb(icv, 3)
 !WG_TODO*cfalf(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
     IF (cfalf(7) .NE. 0.0_R8) dfalf = dfalf
 !     ..compute hce0, sig0, alf0
@@ -1839,11 +1746,12 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
         hci0 = hci0 + hcib(:, is)
       ELSE IF (switch%tn_style .EQ. 1) THEN
         IF (.NOT.is_neutral(is)) hci0 = hci0 + hcib(:, is)
-      ELSE IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+      ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
         hci0 = hci0 + hcib(:, is)
       END IF
 !       ..re-compute hcn0
-      IF (is_neutral(is) .AND. zn(is) .EQ. 1) hcn0 = hcn0 + hcib(:, is)
+      IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) hcn0 = hcn0 + hcib(:&
+&         , is)
     END DO
   END IF
 !srv 10.11.09 }
@@ -1899,26 +1807,20 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 &                                                            hce_exb, &
 &                                                            hci_exb)
 !
-  IF (switch%transport_afn .NE. 0) CALL SET_TRANSPORT_AFN_NODIFF(ncv, &
-&                                                          nfc, nvx, ns&
+  IF (switch%transport_afn .NE. 0) CALL SET_TRANSPORT_AFN_NODIFF(ncv, ns&
 &                                                          , nscx, iscx&
-&                                                          , switch, geo&
-&                                                          , mpg, pl, dv&
-&                                                          , rt, st_ext&
-&                                                          , dna0, dpa0&
-&                                                          , vla0, vma0&
-&                                                          , vsa0, hci0&
-&                                                          , hcn0, hcib)
+&                                                          , switch, pl&
+&                                                          , dv, rt, &
+&                                                          dna0, dpa0, &
+&                                                          vla0, vma0, &
+&                                                          vsa0, hci0, &
+&                                                          hcn0, hcib)
 !
 !dpc
   IF (switch%b2tqna_ballooning .NE. 0.0_R8) THEN
     DO icv=1,ncv
-      IF (switch%b2tqna_bb_ref/geo%cvbb(icv, 3) .GE. 0.) THEN
-        abs3 = switch%b2tqna_bb_ref/geo%cvbb(icv, 3)
-      ELSE
-        abs3 = -(switch%b2tqna_bb_ref/geo%cvbb(icv, 3))
-      END IF
-      pwr1 = abs3**switch%b2tqna_ballooning
+      pwx1 = switch%b2tqna_bb_ref/geo%cvbb(icv, 3)
+      pwr1 = pwx1**switch%b2tqna_ballooning
       poloidal_scale_factor = pwr1*switch%b2tqna_ballooning_rescale
       DO is=0,ns-1
         IF (.NOT.is_neutral(is)) THEN
@@ -2004,9 +1906,10 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 END SUBROUTINE B2TQNA_NODIFF
 
 !  Differentiation of set_transport_afn in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: hci0 vsa0 hcib hcn0 dpa0
+!   variations   of useful results: hci0 vsa0 hcib hcn0 dna0 dpa0
 !   with respect to varying inputs: vsa0 *(dv.ne) *(rt.rlcx) *(rt.rlsa)
-!                hcib *(pl.na) *(pl.te) *(pl.ti) *(pl.tn) dpa0
+!                hcib dna0 *(pl.na) *(pl.te) *(pl.ti) *(pl.tn)
+!                dpa0
 !   Plus diff mem management of: dv.ne:in rt.rlcx:in rt.rlsa:in
 !                pl.na:in pl.te:in pl.ti:in pl.tn:in
 !
@@ -2014,20 +1917,18 @@ END SUBROUTINE B2TQNA_NODIFF
 !**************************************************************************************
 !*****************     New KU Leuven transport model for neutrals *********************
 !**************************************************************************************
-SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, nfc, nvx, ns, nscx, iscx, switch, &
-& geo, mpg, pl, pld, dv, dvd, rt, rtd, st_ext, dna0, dpa0, dpa0d, vla0, &
-& vma0, vsa0, vsa0d, hci0, hci0d, hcn0, hcn0d, hcib, hcibd, nbdirs)
+SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, ns, nscx, iscx, switch, switchd, pl&
+& , pld, dv, dvd, rt, rtd, dna0, dna0d, dpa0, dpa0d, vla0, vma0, vsa0, &
+& vsa0d, hci0, hci0d, hcn0, hcn0d, hcib, hcibd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_RATES
   USE B2MOD_TRANSPORT_NAMELIST_DIFFV
   USE B2MOD_SWITCHES_DIFFV
-  USE B2US_GEO_DIFFV
-  USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array arg1
@@ -2037,17 +1938,15 @@ SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, nfc, nvx, ns, nscx, iscx, switch, &
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, iscx(0:nscxmax-1)
+  INTEGER :: ncv, ns, nscx, iscx(0:nscxmax-1)
   TYPE(SWITCHES), INTENT(IN) :: switch
-  TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
-  TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   REAL(kind=r8) :: t_av, df0
   REAL(kind=r8), DIMENSION(nbdirsmax) :: t_avd, df0d
 !   ..input/output arguments
@@ -2059,13 +1958,14 @@ SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, nfc, nvx, ns, nscx, iscx, switch, &
 !srv 15.12.05
   REAL(kind=r8) :: dna0(ncv, 0:ns-1), dpa0(ncv, 0:ns-1), vla0(ncv, 0:1, &
 & 0:ns-1), vsa0(ncv, 0:ns-1), vma0(ncv, 0:1, 0:ns-1)
-  REAL(kind=r8) :: dpa0d(nbdirsmax, ncv, 0:ns-1), vsa0d(nbdirsmax, ncv, &
-& 0:ns-1)
+  REAL(kind=r8) :: dna0d(nbdirsmax, ncv, 0:ns-1), dpa0d(nbdirsmax, ncv, &
+& 0:ns-1), vsa0d(nbdirsmax, ncv, 0:ns-1)
 !   ..workspace arguments (unspecified on entry and on exit)
-  REAL(kind=r8) :: wrk0(ncv), vcx, dion
+  REAL(kind=r8) :: wrk0(ncv), vcx, dion, vnn
   REAL(kind=r8) :: wrk0d(nbdirsmax, ncv), vcxd(nbdirsmax), diond(&
-& nbdirsmax)
+& nbdirsmax), vnnd(nbdirsmax)
   INTEGER :: is, k, ic, icv
+  INTRINSIC NINT
   INTRINSIC SQRT
   INTRINSIC LOG
   INTRINSIC MIN
@@ -2088,12 +1988,13 @@ SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, nfc, nvx, ns, nscx, iscx, switch, &
   REAL(kind=r8) :: temp0
   REAL(r8) :: temp1
   REAL(kind=r8) :: temp2
+  REAL(kind=r8) :: temp3
   INTEGER :: nbdirs
 !
 !   ..subprogram start-up calls
   CALL SUBINI('set_transport_afn')
   DO is=0,ns-1
-    IF (is_neutral(is) .AND. zn(is) .EQ. 1.0_R8) THEN
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
 ! only for hydrogenic species
 !
       k = 0
@@ -2146,14 +2047,30 @@ SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, nfc, nvx, ns, nscx, iscx, switch, &
         END DO
         arg2 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*temp1
         CALL EXPU_DV(arg2, arg2d, dion, diond, nbdirs)
-!         ..For now, no neutral-neutral collisions inlcuded
+        IF (switch%afn_vnn .EQ. 1) THEN
+!         ..Collision time for n-n collisions (D-D), based on Kotov 2007
+          temp1 = (pl%tn(icv)/kbolt)**0.25_R8
+          DO nd=1,nbdirs
+            vnnd(nd) = 5.2958e-11_R8*1.0e-6_R8*(pl%na(icv, is)*0.25_R8*(&
+&             pl%tn(icv)/kbolt)**(-0.75)*pld%tn(nd, icv)/kbolt+temp1*pld&
+&             %na(nd, icv, is))
+          END DO
+          vnn = 5.2958e-11_R8*1.0e-6_R8*(temp1*pl%na(icv, is))
+        ELSE
+          vnn = 0.0_R8
+          DO nd=1,nbdirsmax
+            vnnd(nd) = 0.D0
+          END DO
+        END IF
+!         ..Total coefficients
 ! limit df0
         result1 = SQRT(am(is))
-        temp0 = result1*result1*(vcx+dion*dv%ne(icv))
+        temp0 = result1*result1*(vcx+dion*dv%ne(icv)+vnn)
         temp2 = wrk0(icv)*wrk0(icv)/temp0
         DO nd=1,nbdirs
           df0d(nd) = (2*wrk0(icv)*wrk0d(nd, icv)-temp2*result1**2*(vcxd(&
-&           nd)+dv%ne(icv)*diond(nd)+dion*dvd%ne(nd, icv)))/temp0
+&           nd)+dv%ne(icv)*diond(nd)+dion*dvd%ne(nd, icv)+vnnd(nd)))/&
+&           temp0
         END DO
         df0 = temp2
         IF (switch%b2tqna_max_df0 .GT. df0) THEN
@@ -2178,17 +2095,44 @@ SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, nfc, nvx, ns, nscx, iscx, switch, &
             df0d(nd) = 0.D0
           END DO
         END IF
-!
-        temp2 = df0/pl%tn(icv)
+        IF (switch%afn_vnn_ndiff .EQ. 1) THEN
+! assign fraction to density diffusion (nn-collisions)
+! based on ratio of ion/neutral collision frequency
+          temp2 = vcx + dion*dv%ne(icv) + vnn
+          temp0 = df0*vnn/temp2
+          DO nd=1,nbdirs
+            dna0d(nd, icv, is) = (vnn*df0d(nd)+df0*vnnd(nd)-temp0*(vcxd(&
+&             nd)+dv%ne(icv)*diond(nd)+dion*dvd%ne(nd, icv)+vnnd(nd)))/&
+&             temp2
+          END DO
+          dna0(icv, is) = temp0
+!     &          pl%na(iCv,is)/(pl%na(iCv,is)+dv%ne(iCv))
+          temp2 = vcx + dion*dv%ne(icv) + vnn
+          temp1 = pl%tn(icv)*temp2
+          temp0 = vcx + dion*dv%ne(icv)
+          temp3 = df0*temp0/temp1
+          DO nd=1,nbdirs
+            dpa0d(nd, icv, is) = (temp0*df0d(nd)+df0*(vcxd(nd)+dv%ne(icv&
+&             )*diond(nd)+dion*dvd%ne(nd, icv))-temp3*(temp2*pld%tn(nd, &
+&             icv)+pl%tn(icv)*(vcxd(nd)+dv%ne(icv)*diond(nd)+dion*dvd%ne&
+&             (nd, icv)+vnnd(nd))))/temp1
+          END DO
+          dpa0(icv, is) = temp3
+!     &          pl%ne(iCv)/(pl%na(iCv,is)+dv%ne(iCv))
+        ELSE
+          temp3 = df0/pl%tn(icv)
+          DO nd=1,nbdirs
+            dpa0d(nd, icv, is) = (df0d(nd)-temp3*pld%tn(nd, icv))/pl%tn(&
+&             icv)
+          END DO
+          dpa0(icv, is) = temp3
+        END IF
         DO nd=1,nbdirs
-          dpa0d(nd, icv, is) = (df0d(nd)-temp2*pld%tn(nd, icv))/pl%tn(&
-&           icv)
           vsa0d(nd, icv, is) = mp*am(is)*(df0*pld%na(nd, icv, is)+pl%na(&
 &           icv, is)*df0d(nd))
           hcibd(nd, icv, is) = 2.5_R8*(df0*pld%na(nd, icv, is)+pl%na(icv&
 &           , is)*df0d(nd))
         END DO
-        dpa0(icv, is) = temp2
         vsa0(icv, is) = mp*am(is)*pl%na(icv, is)*df0
         hcib(icv, is) = 2.5_R8*pl%na(icv, is)*df0
       END DO
@@ -2196,15 +2140,17 @@ SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, nfc, nvx, ns, nscx, iscx, switch, &
 !! end loop over cells
 !
 !   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
-      IF (ANY(dna0(:, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                  'dna0 is not zero for neutrals'//&
-&                                  'Recommended choice is zero!'
-      IF (ANY(vla0(:, :, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                     'vla0 is not zero for neutrals'//&
-&                                     'Recommended choice is zero!'
-      IF (ANY(vma0(:, :, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                     'vma0 is not zero for neutrals'//&
-&                                     'Recommended choice is zero!'
+      IF (ANY(dna0(:, is) .NE. 0.0_R8) .AND. switch%afn_vnn_ndiff .NE. 1&
+&     ) WRITE(*, *) 'Warning: '//'dna0 is not zero for neutrals'//&
+&       'Recommended choice is zero!'
+      IF (ANY(vla0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vla0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
+      IF (ANY(vma0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vma0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
     END IF
   END DO
 !! end loop over species
@@ -2232,14 +2178,14 @@ SUBROUTINE SET_TRANSPORT_AFN_DV(ncv, nfc, nvx, ns, nscx, iscx, switch, &
         END DO
         hci0 = hci0 + hcib(:, is)
       END IF
-    ELSE IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
       DO nd=1,nbdirs
         hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
       END DO
       hci0 = hci0 + hcib(:, is)
     END IF
 !     ..compute hcn0
-    IF (is_neutral(is) .AND. zn(is) .EQ. 1) THEN
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
       DO nd=1,nbdirs
         hcn0d(nd, :) = hcn0d(nd, :) + hcibd(nd, :, is)
       END DO
@@ -2257,20 +2203,17 @@ END SUBROUTINE SET_TRANSPORT_AFN_DV
 !**************************************************************************************
 !*****************     New KU Leuven transport model for neutrals *********************
 !**************************************************************************************
-SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, &
-& switch, geo, mpg, pl, dv, rt, st_ext, dna0, dpa0, vla0, vma0, vsa0, &
-& hci0, hcn0, hcib)
+SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, ns, nscx, iscx, switch, pl, dv&
+& , rt, dna0, dpa0, vla0, vma0, vsa0, hci0, hcn0, hcib)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_B2CMPT_DIFFV
   USE B2MOD_RATES
   USE B2MOD_TRANSPORT_NAMELIST_DIFFV
   USE B2MOD_SWITCHES_DIFFV
-  USE B2US_GEO_DIFFV
-  USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array arg1
@@ -2278,14 +2221,11 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, &
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, iscx(0:nscxmax-1)
+  INTEGER :: ncv, ns, nscx, iscx(0:nscxmax-1)
   TYPE(SWITCHES), INTENT(IN) :: switch
-  TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2PLASMA), INTENT(IN) :: pl
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2RATES), INTENT(IN) :: rt
-  TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   REAL(kind=r8) :: t_av, df0
 !   ..input/output arguments
   REAL(kind=r8), INTENT(INOUT) :: hci0(ncv), hcn0(ncv), hcib(ncv, 0:ns-1&
@@ -2295,8 +2235,9 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, &
   REAL(kind=r8) :: dna0(ncv, 0:ns-1), dpa0(ncv, 0:ns-1), vla0(ncv, 0:1, &
 & 0:ns-1), vsa0(ncv, 0:ns-1), vma0(ncv, 0:1, 0:ns-1)
 !   ..workspace arguments (unspecified on entry and on exit)
-  REAL(kind=r8) :: wrk0(ncv), vcx, dion
+  REAL(kind=r8) :: wrk0(ncv), vcx, dion, vnn
   INTEGER :: is, k, ic, icv
+  INTRINSIC NINT
   INTRINSIC SQRT
   INTRINSIC LOG
   INTRINSIC MIN
@@ -2312,7 +2253,7 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, &
 !   ..subprogram start-up calls
   CALL SUBINI('set_transport_afn')
   DO is=0,ns-1
-    IF (is_neutral(is) .AND. zn(is) .EQ. 1.0_R8) THEN
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
 ! only for hydrogenic species
 !
       k = 0
@@ -2336,10 +2277,17 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, &
         arg11 = pl%te(icv)/ev
         arg2 = rt%rlsa(icv, 0, is) + rt%rlsa(icv, 1, is)*LOG(arg11)
         dion = EXPU(arg2)
-!         ..For now, no neutral-neutral collisions inlcuded
+        IF (switch%afn_vnn .EQ. 1) THEN
+!         ..Collision time for n-n collisions (D-D), based on Kotov 2007
+          vnn = 1.0e-6_R8*5.2958e-11_R8*(pl%tn(icv)/kbolt)**0.25_R8*pl%&
+&           na(icv, is)
+        ELSE
+          vnn = 0.0_R8
+        END IF
+!         ..Total coefficients
 ! limit df0
         result1 = SQRT(am(is))
-        df0 = (wrk0(icv)/result1)**2/(vcx+dion*dv%ne(icv))
+        df0 = (wrk0(icv)/result1)**2/(vcx+dion*dv%ne(icv)+vnn)
         IF (switch%b2tqna_max_df0 .GT. df0) THEN
           y1 = df0
         ELSE
@@ -2350,8 +2298,17 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, &
         ELSE
           df0 = switch%b2tqna_min_df0
         END IF
-!
-        dpa0(icv, is) = 1.0_R8/pl%tn(icv)*df0
+        IF (switch%afn_vnn_ndiff .EQ. 1) THEN
+! assign fraction to density diffusion (nn-collisions)
+! based on ratio of ion/neutral collision frequency
+          dna0(icv, is) = df0*vnn/(vcx+dion*dv%ne(icv)+vnn)
+!     &          pl%na(iCv,is)/(pl%na(iCv,is)+dv%ne(iCv))
+          dpa0(icv, is) = 1.0_R8/pl%tn(icv)*df0*(vcx+dion*dv%ne(icv))/(&
+&           vcx+dion*dv%ne(icv)+vnn)
+!     &          pl%ne(iCv)/(pl%na(iCv,is)+dv%ne(iCv))
+        ELSE
+          dpa0(icv, is) = 1.0_R8/pl%tn(icv)*df0
+        END IF
         vsa0(icv, is) = mp*am(is)*pl%na(icv, is)*df0
         hcib(icv, is) = 2.5_R8*pl%na(icv, is)*df0
       END DO
@@ -2359,15 +2316,17 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, &
 !! end loop over cells
 !
 !   ..Check whether dna0, vla0 and vma0 are zero for neutrals or print warning
-      IF (ANY(dna0(:, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                  'dna0 is not zero for neutrals'//&
-&                                  'Recommended choice is zero!'
-      IF (ANY(vla0(:, :, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                     'vla0 is not zero for neutrals'//&
-&                                     'Recommended choice is zero!'
-      IF (ANY(vma0(:, :, is) .NE. 0)) WRITE(*, *) 'Warning: '//&
-&                                     'vma0 is not zero for neutrals'//&
-&                                     'Recommended choice is zero!'
+      IF (ANY(dna0(:, is) .NE. 0.0_R8) .AND. switch%afn_vnn_ndiff .NE. 1&
+&     ) WRITE(*, *) 'Warning: '//'dna0 is not zero for neutrals'//&
+&       'Recommended choice is zero!'
+      IF (ANY(vla0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vla0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
+      IF (ANY(vma0(:, :, is) .NE. 0.0_R8)) WRITE(*, *) 'Warning: '//&
+&                                        'vma0 is not zero for neutrals'&
+&                                          //&
+&                                          'Recommended choice is zero!'
     END IF
   END DO
 !! end loop over species
@@ -2381,11 +2340,12 @@ SUBROUTINE SET_TRANSPORT_AFN_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, &
       hci0 = hci0 + hcib(:, is)
     ELSE IF (switch%tn_style .EQ. 1) THEN
       IF (.NOT.is_neutral(is)) hci0 = hci0 + hcib(:, is)
-    ELSE IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
       hci0 = hci0 + hcib(:, is)
     END IF
 !     ..compute hcn0
-    IF (is_neutral(is) .AND. zn(is) .EQ. 1) hcn0 = hcn0 + hcib(:, is)
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) hcn0 = hcn0 + hcib(:, &
+&       is)
   END DO
 !
 !   ..return
@@ -2424,17 +2384,18 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : b2tqna_keps_eps, ncall_transp_keps
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
-!  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nCv should be the size of dimension 1 of array arg1
 !  Hint: nCv should be the size of dimension 1 of array result1
+!  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nCv should be the size of dimension 1 of array temp
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -2465,15 +2426,16 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
   INTRINSIC SQRT
   INTRINSIC ABS
   EXTERNAL XERRAB
+  INTRINSIC NINT
   INTRINSIC MIN
-  REAL(r8), DIMENSION(nCv) :: abs0
-  REAL(r8), DIMENSION(nbdirsmax, nCv) :: abs0d
-  REAL(r8) :: abs1
-  REAL(r8), DIMENSION(nbdirsmax) :: abs1d
-  REAL(kind=r8), DIMENSION(ncv) :: abs2
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: abs2d
-  REAL(kind=r8), DIMENSION(ncv) :: abs3
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: abs3d
+  REAL(kind=r8), DIMENSION(nCv) :: dabs0
+  REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: dabs0d
+  REAL(kind=r8) :: dabs1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: dabs1d
+  REAL(kind=r8), DIMENSION(ncv) :: dabs2
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs2d
+  REAL(kind=r8), DIMENSION(ncv) :: dabs3
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dabs3d
   REAL(r8), DIMENSION(nCv) :: arg1
   REAL(r8), DIMENSION(nbdirsmax, nCv) :: arg1d
   REAL(kind=r8), DIMENSION(nCv) :: result1
@@ -2521,58 +2483,58 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
     hci_exbd(nd, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
-    abs0d(nd, :) = 0.D0
+    dabs0d(nd, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
-    abs2d(nd, :) = 0.D0
+    dabs2d(nd, :) = 0.D0
   END DO
   DO nd=1,nbdirsmax
-    abs3d(nd, :) = 0.D0
+    dabs3d(nd, :) = 0.D0
   END DO
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
       IF (switch%keps_local .EQ. 1) THEN
         DO nd=1,nbdirs
-          WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs0d(nd&
+          WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0d(nd&
 &           , :) = qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain)
         END DO
-        WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs0 = rt%&
+        WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0 = rt%&
 &           rza(:, ismain)*qe*geo%cvbb(:, 3)
         DO nd=1,nbdirs
-          WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) &
-&           abs0d(nd, :) = -(qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain))
+          WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) &
+&           dabs0d(nd, :) = -(qe*geo%cvbb(:, 3)*rtd%rza(nd, :, ismain))
         END DO
-        WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) abs0&
+        WHERE (.NOT.rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) dabs0&
 &          = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
         arg1(:) = 2.0_R8*pl%ti/(am(ismain)*mp)
         temp = SQRT(arg1(:))
         result1 = temp
         DO nd=1,nbdirs
-!   ..compute local larmor radius
+!   ..compute local Larmor radius
           arg1d(nd, :) = 2.0_R8*pld%ti(nd, :)/(am(ismain)*mp)
           WHERE (arg1(:) .EQ. 0.D0) 
             result1d(nd, :) = 0.D0
           ELSEWHERE
             result1d(nd, :) = arg1d(nd, :)/(2.0*temp)
           END WHERE
-          rhold(nd, :) = am(ismain)*mp*(result1d(nd, :)-result1*abs0d(nd&
-&           , :)/abs0)/abs0
+          rhold(nd, :) = am(ismain)*mp*(result1d(nd, :)-result1*dabs0d(&
+&           nd, :)/dabs0)/dabs0
         END DO
-        rhol = am(ismain)*mp*result1/abs0
+        rhol = am(ismain)*mp*result1/dabs0
       ELSE
         IF (rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) &
 &           .GE. 0.) THEN
           temp0 = qe*geo%cvbb(omp(icsepomp), 3)
           DO nd=1,nbdirs
-            abs1d(nd) = temp0*rtd%rza(nd, omp(icsepomp), ismain)
+            dabs1d(nd) = temp0*rtd%rza(nd, omp(icsepomp), ismain)
           END DO
-          abs1 = temp0*rt%rza(omp(icsepomp), ismain)
+          dabs1 = temp0*rt%rza(omp(icsepomp), ismain)
         ELSE
           temp0 = qe*geo%cvbb(omp(icsepomp), 3)
           DO nd=1,nbdirs
-            abs1d(nd) = -(temp0*rtd%rza(nd, omp(icsepomp), ismain))
+            dabs1d(nd) = -(temp0*rtd%rza(nd, omp(icsepomp), ismain))
           END DO
-          abs1 = -(temp0*rt%rza(omp(icsepomp), ismain))
+          dabs1 = -(temp0*rt%rza(omp(icsepomp), ismain))
         END IF
         arg10 = 2.0_R8*pl%ti(omp(icsepomp))/(am(ismain)*mp)
         temp1 = SQRT(arg10)
@@ -2584,10 +2546,10 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
           ELSE
             result10d(nd) = arg10d(nd)/(2.0*temp1)
           END IF
-          rhold(nd, :) = am(ismain)*mp*(result10d(nd)-result10*abs1d(nd)&
-&           /abs1)/abs1
+          rhold(nd, :) = am(ismain)*mp*(result10d(nd)-result10*dabs1d(nd&
+&           )/dabs1)/dabs1
         END DO
-        rhol = am(ismain)*mp*result10/abs1
+        rhol = am(ismain)*mp*result10/dabs1
       END IF
 !       ..compute radial shear of diamagnetic ExB velocity
       DO nd=1,nbdirs
@@ -2601,18 +2563,18 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
 &                   , wrkf, wrkfd, shear, sheard, nbdirs)
       IF (switch%transport_keps .EQ. 1) THEN
         DO nd=1,nbdirs
-          WHERE (shear .GE. 0.0) abs2d(nd, :) = sheard(nd, :)
+          WHERE (shear .GE. 0.) dabs2d(nd, :) = sheard(nd, :)
         END DO
-        WHERE (shear .GE. 0.0) abs2 = shear
+        WHERE (shear .GE. 0.) dabs2 = shear
         DO nd=1,nbdirs
-          WHERE (.NOT.shear .GE. 0.0) abs2d(nd, :) = -sheard(nd, :)
+          WHERE (.NOT.shear .GE. 0.) dabs2d(nd, :) = -sheard(nd, :)
         END DO
-        WHERE (.NOT.shear .GE. 0.0) abs2 = -shear
+        WHERE (.NOT.shear .GE. 0.) dabs2 = -shear
         arg11(:) = pl%kt/(am(ismain)*mp)
         temp2 = SQRT(arg11(:))
         result11 = temp2
         temp3 = am(ismain)*mp*(b2tqna_keps_eps+result11/rhol+switch%&
-&         keps_shear*abs2)
+&         keps_shear*dabs2)
         temp4 = switch%keps_cd*pl%kt/temp3
         DO nd=1,nbdirs
 !   ..compute D according to KUL, using kt only
@@ -2626,8 +2588,8 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
           END WHERE
           dna_exbd(nd, :) = (pl%kt*switchd%keps_cd(nd)+switch%keps_cd*&
 &           pld%kt(nd, :)-temp4*am(ismain)*mp*((result11d(nd, :)-&
-&           result11*rhold(nd, :)/rhol)/rhol+abs2*switchd%keps_shear(nd)&
-&           +switch%keps_shear*abs2d(nd, :)))/temp3
+&           result11*rhold(nd, :)/rhol)/rhol+dabs2*switchd%keps_shear(nd&
+&           )+switch%keps_shear*dabs2d(nd, :)))/temp3
           dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
 &           switch%keps_fac)*dna0d(nd, :, is)
         END DO
@@ -2636,18 +2598,18 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
 &         -switch%keps_fac)*dna0(:, is)
       ELSE IF (switch%transport_keps .EQ. 2) THEN
         DO nd=1,nbdirs
-          WHERE (shear .GE. 0.0) abs3d(nd, :) = sheard(nd, :)
+          WHERE (shear .GE. 0.) dabs3d(nd, :) = sheard(nd, :)
         END DO
-        WHERE (shear .GE. 0.0) abs3 = shear
+        WHERE (shear .GE. 0.) dabs3 = shear
         DO nd=1,nbdirs
-          WHERE (.NOT.shear .GE. 0.0) abs3d(nd, :) = -sheard(nd, :)
+          WHERE (.NOT.shear .GE. 0.) dabs3d(nd, :) = -sheard(nd, :)
         END DO
-        WHERE (.NOT.shear .GE. 0.0) abs3 = -shear
+        WHERE (.NOT.shear .GE. 0.) dabs3 = -shear
         arg12(:) = pl%zt/(am(ismain)*mp)
         temp5 = SQRT(arg12(:))
         result12 = temp5
         temp4 = am(ismain)*mp*(b2tqna_keps_eps+result12+switch%&
-&         keps_shear*abs3)
+&         keps_shear*dabs3)
         temp3 = switch%keps_cd*pl%kt/temp4
         DO nd=1,nbdirs
 !   ..compute D according to KUL, using kt and zt
@@ -2658,8 +2620,8 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
             result12d(nd, :) = arg12d(nd, :)/(2.0*temp5)
           END WHERE
           dna_exbd(nd, :) = (pl%kt*switchd%keps_cd(nd)+switch%keps_cd*&
-&           pld%kt(nd, :)-temp3*am(ismain)*mp*(result12d(nd, :)+abs3*&
-&           switchd%keps_shear(nd)+switch%keps_shear*abs3d(nd, :)))/&
+&           pld%kt(nd, :)-temp3*am(ismain)*mp*(result12d(nd, :)+dabs3*&
+&           switchd%keps_shear(nd)+switch%keps_shear*dabs3d(nd, :)))/&
 &           temp4
           dna0d(nd, :, is) = switch%keps_fac*dna_exbd(nd, :) + (1.0_R8-&
 &           switch%keps_fac)*dna0d(nd, :, is)
@@ -2736,10 +2698,10 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
 &           temp7*dna_exbd(nd, :)+(switch%dna_min+dna_exb)*dvd%ne(nd, &
 &           omp(icsepomp)))+(switch%dna_min+dna_exb)*temp7*(result13*&
 &           switchd%keps_alf(nd)+switch%keps_alf*result13d(nd, :))) + (&
-&           1.0_R8-switch%keps_fac)*sig0d(nd, :)
+&           1.0_R8-switch%keps_fac)*alf0d(nd, :)
         END DO
         alf0 = switch%keps_fac*((switch%dna_min+dna_exb)*temp7*(switch%&
-&         keps_alf*result13)) + (1.0_R8-switch%keps_fac)*sig0
+&         keps_alf*result13)) + (1.0_R8-switch%keps_fac)*alf0
       END IF
       DO nd=1,nbdirs
         dkt0d(nd, :) = pl%na(:, ismain)*(dna0(:, ismain)*switchd%&
@@ -2771,7 +2733,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
         END DO
         hci0 = hci0 + hcib(:, is)
       END IF
-    ELSE IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
       DO nd=1,nbdirs
         hci0d(nd, :) = hci0d(nd, :) + hcibd(nd, :, is)
       END DO
@@ -2779,8 +2741,14 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
     END IF
   END DO
   IF (switch%keps_fac*switch%keps_inc .GT. 1.0_R8) THEN
+    DO nd=1,nbdirs
+      switchd%keps_fac(nd) = 0.D0
+    END DO
     switch%keps_fac = 1.0_R8
   ELSE
+    DO nd=1,nbdirs
+      switchd%keps_fac(nd) = 0.D0
+    END DO
     switch%keps_fac = switch%keps_fac*switch%keps_inc
   END IF
   IF (switch%keps_inc .GT. 1.0_R8) WRITE(*, *) 'b2tqna_keps_fac = ', &
@@ -2796,7 +2764,6 @@ SUBROUTINE SET_TRANSPORT_KEPS_DV(ncv, nfc, nvx, ns, ismain, switch, &
   CALL SUBEND()
   RETURN
 END SUBROUTINE SET_TRANSPORT_KEPS_DV
-!
 
 !
 SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
@@ -2813,15 +2780,15 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : b2tqna_keps_eps, ncall_transp_keps
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
-!  Hint: nCv should be the size of dimension 1 of array cvbb
 !  Hint: nCv should be the size of dimension 1 of array arg1
 !  Hint: nCv should be the size of dimension 1 of array result1
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -2838,11 +2805,12 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
   INTRINSIC SQRT
   INTRINSIC ABS
   EXTERNAL XERRAB
+  INTRINSIC NINT
   INTRINSIC MIN
-  REAL(r8), DIMENSION(nCv) :: abs0
-  REAL(r8) :: abs1
-  REAL(kind=r8), DIMENSION(ncv) :: abs2
-  REAL(kind=r8), DIMENSION(ncv) :: abs3
+  REAL(kind=r8), DIMENSION(nCv) :: dabs0
+  REAL(kind=r8) :: dabs1
+  REAL(kind=r8), DIMENSION(ncv) :: dabs2
+  REAL(kind=r8), DIMENSION(ncv) :: dabs3
   REAL(r8), DIMENSION(nCv) :: arg1
   REAL(kind=r8), DIMENSION(nCv) :: result1
   REAL(r8) :: arg10
@@ -2868,27 +2836,27 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
   DO is=0,ns-1
     IF (.NOT.is_neutral(is)) THEN
       IF (switch%keps_local .EQ. 1) THEN
-        WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) 
-          abs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
+        WHERE (rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) 
+          dabs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
         ELSEWHERE
-          abs0 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
+          dabs0 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
         END WHERE
-!   ..compute local larmor radius
+!   ..compute local Larmor radius
         arg1(:) = 2.0_R8*pl%ti/(am(ismain)*mp)
         result1 = SQRT(arg1(:))
-        rhol = am(ismain)*mp*result1/abs0
+        rhol = am(ismain)*mp*result1/dabs0
       ELSE
         IF (rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) &
 &           .GE. 0.) THEN
-          abs1 = rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp)&
-&           , 3)
+          dabs1 = rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp&
+&           ), 3)
         ELSE
-          abs1 = -(rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(&
+          dabs1 = -(rt%rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(&
 &           icsepomp), 3))
         END IF
         arg10 = 2.0_R8*pl%ti(omp(icsepomp))/(am(ismain)*mp)
         result10 = SQRT(arg10)
-        rhol = am(ismain)*mp*result10/abs1
+        rhol = am(ismain)*mp*result10/dabs1
       END IF
 !       ..compute radial shear of diamagnetic ExB velocity
       wrkf = dv%vaecrb(:, 0, ismain)*geo%fcbb(:, 3)/geo%fcbb(:, 2)
@@ -2896,10 +2864,10 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
       CALL GRADC_DIV_R_NODIFF(ncv, nfc, nvx, 1, geo, mpg, wrkc, wrkf, &
 &                       shear)
       IF (switch%transport_keps .EQ. 1) THEN
-        WHERE (shear .GE. 0.0) 
-          abs2 = shear
+        WHERE (shear .GE. 0.) 
+          dabs2 = shear
         ELSEWHERE
-          abs2 = -shear
+          dabs2 = -shear
         END WHERE
 !   ..compute D according to KUL, using kt only
 !wdk at the moment: assumption that kt is related to main ion species;
@@ -2907,20 +2875,20 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
         arg11(:) = pl%kt/(am(ismain)*mp)
         result11 = SQRT(arg11(:))
         dna_exb = switch%keps_cd*(pl%kt/(am(ismain)*mp))/(result11/rhol+&
-&         switch%keps_shear*abs2+b2tqna_keps_eps)
+&         switch%keps_shear*dabs2+b2tqna_keps_eps)
         dna0(:, is) = (dna_exb+switch%dna_min)*switch%keps_fac + (1.0_R8&
 &         -switch%keps_fac)*dna0(:, is)
       ELSE IF (switch%transport_keps .EQ. 2) THEN
-        WHERE (shear .GE. 0.0) 
-          abs3 = shear
+        WHERE (shear .GE. 0.) 
+          dabs3 = shear
         ELSEWHERE
-          abs3 = -shear
+          dabs3 = -shear
         END WHERE
 !   ..compute D according to KUL, using kt and zt
         arg12(:) = pl%zt/(am(ismain)*mp)
         result12 = SQRT(arg12(:))
         dna_exb = switch%keps_cd*(pl%kt/(am(ismain)*mp))/(result12+&
-&         switch%keps_shear*abs3+b2tqna_keps_eps)
+&         switch%keps_shear*dabs3+b2tqna_keps_eps)
         dna0(:, is) = (dna_exb+switch%dna_min)*switch%keps_fac + (1.0_R8&
 &         -switch%keps_fac)*dna0(:, is)
       ELSE
@@ -2947,7 +2915,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
         result13 = SQRT(arg13(:))
         alf0 = switch%keps_alf*(dna_exb+switch%dna_min)*dv%ne(omp(&
 &         icsepomp))*result13*switch%keps_fac + (1.0_R8-switch%keps_fac)&
-&         *sig0
+&         *alf0
       END IF
       dkt0 = switch%keps_dkt*dna0(:, ismain)*pl%na(:, ismain)
       dzt0 = switch%keps_dzt*dna0(:, ismain)*pl%na(:, ismain)
@@ -2960,7 +2928,7 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
       hci0 = hci0 + hcib(:, is)
     ELSE IF (switch%tn_style .EQ. 1) THEN
       IF (.NOT.is_neutral(is)) hci0 = hci0 + hcib(:, is)
-    ELSE IF ((.NOT.is_neutral(is)) .OR. zn(is) .NE. 1) THEN
+    ELSE IF ((.NOT.is_neutral(is)) .OR. NINT(zn(is)) .NE. 1) THEN
       hci0 = hci0 + hcib(:, is)
     END IF
   END DO
@@ -2982,5 +2950,4 @@ SUBROUTINE SET_TRANSPORT_KEPS_NODIFF(ncv, nfc, nvx, ns, ismain, switch, &
   CALL SUBEND()
   RETURN
 END SUBROUTINE SET_TRANSPORT_KEPS_NODIFF
-!
 

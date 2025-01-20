@@ -34,6 +34,7 @@ SUBROUTINE B2XPFN_DV(nfc, ns, fna, fnad, fnn, fnnd, nbdirs)
   INTEGER :: is
   EXTERNAL SFILL_NODIFF, B2SAXPY_NODIFF
   EXTERNAL SFILL_DV, B2SAXPY_DV
+  INTRINSIC NINT
   INTEGER :: arg1
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd
   INTEGER :: nd
@@ -46,7 +47,7 @@ SUBROUTINE B2XPFN_DV(nfc, ns, fna, fnad, fnn, fnnd, nbdirs)
   END DO
   CALL SFILL_DV(arg1, 0.0_R8, dummyzerodiffd, fnn, fnnd, 1, nbdirs)
   DO is=0,ns-1
-    IF (is_neutral(is) .AND. zn(is) .EQ. 1) THEN
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
       arg1 = nfc*2
       CALL B2SAXPY_DV(arg1, 1.0_R8, fna(1, 0, is), fnad(:, 1, 0, is), 1&
 &               , fnn, fnnd, 1, nbdirs)
@@ -82,13 +83,14 @@ SUBROUTINE B2XPFN_NODIFF(nfc, ns, fna, fnn)
 !     ------------------------------------------------------------------
   INTEGER :: is
   EXTERNAL SFILL_NODIFF, B2SAXPY_NODIFF
+  INTRINSIC NINT
   INTEGER :: arg1
 !     ------------------------------------------------------------------
 !$$$  call subini ('b2xpfn')
   arg1 = nfc*2
   CALL SFILL_NODIFF(arg1, 0.0_R8, fnn, 1)
   DO is=0,ns-1
-    IF (is_neutral(is) .AND. zn(is) .EQ. 1) THEN
+    IF (is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
       arg1 = nfc*2
       CALL B2SAXPY_NODIFF(arg1, 1.0_R8, fna(1, 0, is), 1, fnn, 1)
     END IF

@@ -13,9 +13,11 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
      2          b2srsm_shi0to3, balance_netcdf
+#endif
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -76,7 +78,7 @@
 *   ..subprogram start-up calls
       call subini ('b2srsm')
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test dtim
       call xertst (0.lt.dtim, 'faulty argument dtim')
@@ -91,7 +93,7 @@
       call b2xvsg (nCv, ne, 1, 'ne', '.gt.')
       call b2xvsg (nCv, te, 1, 'te', '.gt.')
       call b2xvsg (nCv, ti, 1, 'ti', '.gt.')
-      call xertst (maxval(abs(ua)).lt.c, 'Supra-luminal velocities !')
+      call xertst (maxval(dabs(ua)).lt.c, 'Supra-luminal velocities !')
 *   ..obtain input
       if (ncall_b2srsm.eq.0) then
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -322,6 +324,7 @@ c check electron particle number
 #endif
       endif
 
+#ifndef FIXED_POINT
 cdjm Store the total change in linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2srsm_sna0to1 = sr%sna-snatmp
@@ -329,6 +332,7 @@ cdjm Store the total change in linearised sources for balance
         b2srsm_she0to3 = sr%she-shetmp
         b2srsm_shi0to3 = sr%shi-shitmp
       endif
+#endif
 
 #ifdef WG_TODO
       if (switch%b2npmo_iout.eq.1) then                                     !srv 11.09.09 {
@@ -348,7 +352,7 @@ cdjm Store the total change in linearised sources for balance
 !     &             sr%sna(:,:,1,is)*na(:,:,is),'b2srsm_snasm'//chns)
         enddo
       endif
-      if (switch%b2nph9_iout.eq.1 .or. switch%b2npht_iout.eq.1) then
+      if (switch%b2npht_iout.eq.1) then
 !        call my_out(70,nCv,sr%she(:,:,0)+sr%she(:,:,1)*te+            !srv 07.10.09
 !     &   sr%she(:,:,2)*ne + sr%she(:,:,3)*te*ne,'b2srsm_shesm')
 !        call my_out(70,nCv,sr%shi(:,:,0)+sr%shi(:,:,1)*ti+

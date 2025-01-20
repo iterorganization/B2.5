@@ -8,9 +8,11 @@
       use b2mod_b2cmpa
       use b2mod_switches
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
      2          b2srst_shi0to3, balance_netcdf
+#endif
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -60,7 +62,7 @@
       call subini ('b2srst')
 *   ..set internal parameters on first call
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test sign of na, ni, ne, te, ti
       if(ncall_b2srst.lt.3) then
@@ -224,6 +226,7 @@
       sktst = sr%skt - sktst
       sztst = sr%szt - sztst
 
+#ifndef FIXED_POINT
 cdjm Jan2017 Store for balance
       if (balance_netcdf.ne.0) then
         b2srst_sna0to1 = snast
@@ -231,6 +234,7 @@ cdjm Jan2017 Store for balance
         b2srst_she0to3 = shest
         b2srst_shi0to3 = shist
       endif
+#endif
 
 !      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
 !       do is = 0, ns-1

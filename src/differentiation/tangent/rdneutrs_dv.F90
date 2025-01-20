@@ -27,65 +27,37 @@
 !=======================================================================
 !//DECLARATIONS//
 !
-SUBROUTINE RDNEUTRS_NODIFF(kard, dummy, ldmf)
+SUBROUTINE RDNEUTRS_NODIFF(kard, dummy, ldmf, extra_time)
 !
 !*** reads the surface data
 !
   USE B2MOD_TYPES
   USE B2MOD_B2PLOT_DIFFV
+  USE B2MOD_DIMENSIONS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !=======================================================================
 !//END RDNEUTRS//
 !  version : 28.12.96 21:39
 !
-!  Common dimensions
 !
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
-!
-!     COUPLING-DEFINITION COMMON (KOPPLDIM)
+!     COUPLING DEFINITION COMMON (KOPPLDIM)
 !
 !
 !  -- PRINCIPAL DIMENSIONS -- SHOULD MATCH EIRENE DECLARATIONS!!!
   INTEGER :: nxdd, nydd, nstra, nfl
-  PARAMETER (nxdd=200+4*5, nydd=100, nstra=(5*4/2+2)*6+1, nfl=42)
+  PARAMETER (nxdd=def_nxd+def_ncut*5, nydd=def_nyd, nstra=def_nstra, nfl&
+& = def_nfl)
   INTEGER :: natm, nmol, nion, npls, nspz
-  PARAMETER (natm=6, nmol=3, nion=3, npls=42-6+(6+3)*(6+3), nspz=6+3+3+(&
-&   42-6)+(6+3)*(6+3))
+  PARAMETER (natm=def_natm, nmol=def_nmol, nion=def_nion, npls=def_npls&
+& , nspz=def_natm+def_nmol+def_nion+def_npls)
   INTEGER :: nlim, nsts, nsrfs, nsgmx
-  PARAMETER (nlim=300, nsts=50, nsrfs=4)
-  PARAMETER (nsgmx=300+max(2, 4)*100)
+  PARAMETER (nlim=def_nlim, nsts=def_nsts, nsrfs=def_nsrfs)
+  PARAMETER (nsgmx=def_nlim+max(2, def_ncut)*def_nyd)
 !
   INTEGER :: n1st, n2nd, n3rd
-  PARAMETER (n1st=100+1, n2nd=200+1+4+(4/2-1)*(1+0), n3rd=1)
+  PARAMETER (n1st=def_nyd+1, n2nd=def_nxd+1+def_ncut+(def_ncut/2-1)*(1+&
+&   def_isoextra), n3rd=1)
   INTEGER :: n1f, n2f, n3f
   PARAMETER (n1f=1-1/n1st, n2f=1-1/n2nd, n3f=1-1/n3rd)
   INTEGER :: ngitt, ngittp
@@ -96,13 +68,20 @@ SUBROUTINE RDNEUTRS_NODIFF(kard, dummy, ldmf)
   INTEGER :: ndxp, ndyp, nlimps
   PARAMETER (ndxp=nxdd+1, ndyp=nydd+1, nlimps=nlim+nsts)
   INTEGER :: ngtsft, nlmpgs
-  PARAMETER (ngtsft=1*ngitt)
+  PARAMETER (ngtsft=def_ngstal*ngitt)
   PARAMETER (nlmpgs=nlim+(ngtsft+1)*nsts)
 !
-  INTEGER :: kard, ldmf, is, ifl
+  INTEGER, INTENT(IN) :: kard, ldmf
+  INTEGER :: is, ifl
   REAL(kind=r8) :: dummy(nlimps, *)
+! If extra_time is present and true, there is an extra field
+! for a superfluous time horizon non-standard surface,
+! not to be read
+  LOGICAL, INTENT(IN), OPTIONAL :: extra_time
   LOGICAL :: end_of_file
   SAVE end_of_file
+  INTRINSIC PRESENT
+  INTRINSIC MOD
   DATA end_of_file /.false./
 !
   IF (end_of_file) THEN
@@ -113,6 +92,11 @@ SUBROUTINE RDNEUTRS_NODIFF(kard, dummy, ldmf)
 &                       nlimi)
       IF (nstsi .GT. 0) READ(kard, 910, end=10) (dummy(is+nlim, ifl), is&
 &                      =1,nstsi)
+      IF (PRESENT(extra_time)) THEN
+        IF (extra_time) THEN
+          IF (MOD(nstsi, 5) .EQ. 0) READ(kard, '()', end=10) 
+        END IF
+      END IF
       GOTO 100
  10   end_of_file = .true.
       WRITE(*, *) 'End of file seen in rdneutrs'
@@ -127,30 +111,29 @@ END SUBROUTINE RDNEUTRS_NODIFF
 SUBROUTINE WRNEUTRS_NODIFF(kard, dummy, ldmf)
   USE B2MOD_TYPES
   USE B2MOD_B2PLOT_DIFFV
+  USE B2MOD_DIMENSIONS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !  version : 28.12.96 21:39
 !
-!  Common dimensions
 !
-!  version : 01.12.98 21:42
-!
-!
-!     COUPLING-DEFINITION COMMON (KOPPLDIM)
+!     COUPLING DEFINITION COMMON (KOPPLDIM)
 !
 !
 !  -- PRINCIPAL DIMENSIONS -- SHOULD MATCH EIRENE DECLARATIONS!!!
   INTEGER :: nxdd, nydd, nstra, nfl
-  PARAMETER (nxdd=200+4*5, nydd=100, nstra=(5*4/2+2)*6+1, nfl=42)
+  PARAMETER (nxdd=def_nxd+def_ncut*5, nydd=def_nyd, nstra=def_nstra, nfl&
+& = def_nfl)
   INTEGER :: natm, nmol, nion, npls, nspz
-  PARAMETER (natm=6, nmol=3, nion=3, npls=42-6+(6+3)*(6+3), nspz=6+3+3+(&
-&   42-6)+(6+3)*(6+3))
+  PARAMETER (natm=def_natm, nmol=def_nmol, nion=def_nion, npls=def_npls&
+& , nspz=def_natm+def_nmol+def_nion+def_npls)
   INTEGER :: nlim, nsts, nsrfs, nsgmx
-  PARAMETER (nlim=300, nsts=50, nsrfs=4)
-  PARAMETER (nsgmx=300+max(2, 4)*100)
+  PARAMETER (nlim=def_nlim, nsts=def_nsts, nsrfs=def_nsrfs)
+  PARAMETER (nsgmx=def_nlim+max(2, def_ncut)*def_nyd)
 !
   INTEGER :: n1st, n2nd, n3rd
-  PARAMETER (n1st=100+1, n2nd=200+1+4+(4/2-1)*(1+0), n3rd=1)
+  PARAMETER (n1st=def_nyd+1, n2nd=def_nxd+1+def_ncut+(def_ncut/2-1)*(1+&
+&   def_isoextra), n3rd=1)
   INTEGER :: n1f, n2f, n3f
   PARAMETER (n1f=1-1/n1st, n2f=1-1/n2nd, n3f=1-1/n3rd)
   INTEGER :: ngitt, ngittp
@@ -161,7 +144,7 @@ SUBROUTINE WRNEUTRS_NODIFF(kard, dummy, ldmf)
   INTEGER :: ndxp, ndyp, nlimps
   PARAMETER (ndxp=nxdd+1, ndyp=nydd+1, nlimps=nlim+nsts)
   INTEGER :: ngtsft, nlmpgs
-  PARAMETER (ngtsft=1*ngitt)
+  PARAMETER (ngtsft=def_ngstal*ngitt)
   PARAMETER (nlmpgs=nlim+(ngtsft+1)*nsts)
 !
   INTEGER :: kard, ldmf, is, iif

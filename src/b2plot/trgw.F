@@ -11,12 +11,7 @@ c
       character*256 tmpstring, titlestring
       real (kind=R8) ::
      *   lmin,lmax,xmin,xmax
-      integer ibnd,iseg,lnblnk
-      external lnblnk
-
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
+      integer ibnd,iseg
 
       intrinsic min,max,mod
       external xertst
@@ -74,15 +69,13 @@ c      if(nidim .ne. 1) call line(1)
         end if
         if(trglinlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
         if(trglinlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
-        tmpstring=
-     1     target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
-     2     izstring
+        tmpstring=trim(target_label(itwrk))//izstring
         call customise_label(tmpstring,titlestring)
         call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      2     trglinlog,.false.,.false.,.true.)
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+          write(nwtf,'(''# '',a)') trim(titlestring)
           do ibnd=1,nbnd
             write(nwtf,*) wwrk(ibnd),target_stack(ibnd,i,itwrk)
           enddo
@@ -167,7 +160,7 @@ c      if(nidim .ne. 1) call line(1)
      1     values(24),values(25),lmin,lmax,
      3     trglinlog,.false.,.false.,.false.)
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
+          write(nwtf,'(''# '',a)') trim(titlestring)
           do ibnd=1,nbnd
             write(nwtf,*) wwrk(ibnd),target_stack(ibnd,i,itwrk)
           enddo

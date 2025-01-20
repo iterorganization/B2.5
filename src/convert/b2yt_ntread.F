@@ -469,14 +469,14 @@ C
             triangle_vol(i)=triangle_area(i)*width
           end do
         else if (isymm.eq.1 .or. isymm.eq.2) then
-*    ..case of rotational symmetry about crx=0 axis
+*    ..case of rotational symmetry about r=0 axis
           do i=1,ntrii
             triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
      .       (xtrian(necke(1,i))+xtrian(necke(2,i))+xtrian(necke(3,i)))/
      .        3.0_R8
           end do
         else if (isymm.eq.3 .or. isymm.eq.4) then
-*    ..case of rotational symmetry about cry=0 axis
+*    ..case of rotational symmetry about z=0 axis
           do i=1,ntrii
             triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
      .       (ytrian(necke(1,i))+ytrian(necke(2,i))+ytrian(necke(3,i)))/

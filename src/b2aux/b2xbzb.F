@@ -17,8 +17,8 @@
 *     ------------------------------------------------------------------
 *$$$  call subini ('b2xbzb')
 
-      bbsum  = 0.0e0_R8
-      volsum = 0.0e0_R8
+      bbsum  = 0.0_R8
+      volsum = 0.0_R8
       do iCv = 1, nCv
         if(mpg%cvOnClosedSurface(iCv)) then      ! for CORE
           bbsum  = bbsum  + bb(iCv,3)**2*vol(iCv)

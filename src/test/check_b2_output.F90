@@ -216,7 +216,7 @@ module b2_file_io
       !> Buffers to store real, integer or character data
       real(kind=R8), dimension(:), allocatable, intent(out) :: refun
       integer, dimension(:), allocatable, intent(out) :: infun
-#ifdef F2003
+#ifndef LEGACYCOMP
       character(len=:), allocatable, intent(out) :: chfun
 #else
       integer, parameter :: strmax = 512
@@ -255,7 +255,7 @@ module b2_file_io
           endif
         case ('char')
           n = n1
-#ifdef F2003
+#ifndef LEGACYCOMP
           allocate(character(len=n) :: chfun)
 #else
           call xertst(n.le.strmax, 'increase size of strmax in check_b2_output')
@@ -285,7 +285,7 @@ program test_b2output
   integer :: u1, u2, idx
   real (kind=R8), dimension(:), allocatable :: r1, r2
   integer, dimension(:), allocatable :: i1, i2
-#ifdef F2003
+#ifndef LEGACYCOMP
   character(len=:), allocatable :: ch1, ch2
 #else
   integer, parameter :: strmax = 512
@@ -388,47 +388,52 @@ program test_b2output
    character(len=10) :: version_in
    character(len=7) :: label
    integer :: ierr
-#ifndef F2003
+#ifdef LEGACYCOMP
    integer newunit
    external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
    open(newunit=my_unit,file=trim(filename), status='old', action='read', form='FORMATTED', iostat=ierr)
 #else
    my_unit=newunit()
    open(unit=my_unit,file=trim(filename), status='old', action='read', form='FORMATTED', iostat=ierr)
 #endif
    ! Read the header
-   read(my_unit,'(a,a)') label ,version_in
-   if (label/='VERSION') then
-     if (label == '*cf:') then
-       ! No version header, but seems to be a text file
-       label='unknown'
-       version_in = 'version'
-       rewind(my_unit)
-     else
-       ! If it does not match, then it should be a binary file
-       close(my_unit)
+   read(my_unit,'(a,a)',iostat=ierr) label, version_in
+   if (ierr == 0) then
+     if (label/='VERSION') then
+       if (label == '*cf:') then
+         ! No version header, but seems to be a text file
+         label='unknown'
+         version_in = 'version'
+         rewind(my_unit)
+       else
+         ! If it does not match, then it should be a binary file
+         close(my_unit)
        ! reopen in UNFORMATTED mode
-#ifdef F2003
-       open(newunit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
+#ifndef LEGACYCOMP
+         open(newunit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
 #else
-       open(unit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
+         open(unit=my_unit,file=trim(filename), status='old', action='read', form='UNFORMATTED', iostat=ierr)
 #endif
-       read(my_unit) label ,version_in
-       if (label/='VERSION') then
-         if (label == '*cf:') then
-           ! No version header, but seems to be a valid file
-           label='unknown'
-           version_in = 'version'
-           rewind(my_unit)
-         else
-           write(*,*) 'Error, file should start with VERSION or *cf tag'
-           stop
+         read(my_unit) label, version_in
+         if (label/='VERSION') then
+           if (label == '*cf:') then
+             ! No version header, but seems to be a valid file
+             label='unknown'
+             version_in = 'version'
+             rewind(my_unit)
+           else
+             write(*,*) 'Error, file should start with VERSION or *cf tag'
+             stop
+           endif
          endif
        endif
      endif
+   else
+     write(*,*) 'Error, file '//trim(filename)//' found empty or missing'
+     stop
    endif
    if (ierr == 0) write(*,*) trim(filename),' opened successfully'
    write(*,*) label, ' ', version_in

@@ -23,6 +23,7 @@
       use b2mod_batch_average
      & , only : batch_av_all
       use b2mod_switches
+      use b2mod_facdrift_ExB
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -43,7 +44,8 @@
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
-     &          rsamoreg
+     &          rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue,
+     &          b2divua, b2exbe
       use b2us_feedback
      & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
@@ -55,7 +57,12 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:10), nCv, nFc, nVx, ns, ismain,
+#ifdef JET
+      integer nout(0:11)
+#else
+      integer nout(0:10)
+#endif
+      integer nCv, nFc, nVx, ns, ismain,
      *  ismain0, nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
       integer, save :: ibatch_av_all = 0
@@ -108,9 +115,8 @@
 *.declarations
 
 *   ..local variables
-      integer :: ramp_slow, ier0, iCv
+      integer :: ier0, iCv
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
-      save ramp_slow                                                     !xpb
       logical domoqt, wrong_flow                                         !xpb
       logical quit_residual, main_call
       integer istg(0:2), is, k
@@ -118,9 +124,9 @@
       real (kind=R8) ::
      &  rz(nCv), wrk0(nCv), wrkf(nFc)                                    !iyv 06.02.14
 #ifdef WG_TODO
-      logical domoit, ramp_call
+      logical domoit
 #endif
-      logical solving(4)
+      logical solving(4), ramp_call
 !WG_TODO: add some sources locally here, until a module/data-type for WG
 !WG_TODO: is available
       real (kind=R8) ::                                                  !xpb
@@ -129,13 +135,11 @@
      &  shesm(nCv,0:3), shism(nCv,0:3)!WG_TODO,                          !xpb
 *   ..procedures
       real (kind=R8) ::
-     *  b2sasum, samax
-      external xertst, ipgeti, ipgetr, b2sasum, samax
+     *  b2sasum, damax
+      external xertst, ipgeti, ipgetr, b2sasum, damax
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpnn,
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
-*   ..initialisation
-      data ramp_slow/0/
 *
 
 *-----------------------------------------------------------------------
@@ -151,7 +155,6 @@
          switch%nstg(1) = 1
          switch%nstg(2) = 0
        end if
-       call ipgeti ('b2news_ramp_slow', ramp_slow)
        if (switch%no_solve.eq.1) switch%nstg(0:2)=1
        test_residual=switch%nstg_areshe.gt.0.0_R8.or.
      &               switch%nstg_areshi.gt.0.0_R8.or.
@@ -189,7 +192,7 @@
      &    call read_boundary_sources(nCv, ns, switch, itim, mpg)
       endif
 *   ..test nCv, nFc, ns, ismain
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
@@ -223,14 +226,8 @@
 c the main initialisation is in b2news --- unfortunately a few routines
 c that need an initial value get called before the first call to b2news
 c therefore initialise here
-cwdk    For unstructured solver, start with simple reading of start-values
-        st%dv%fac_ExB  = switch%facExB_start
-        st%dv%facdrift = switch%facdrift_start
-        st%dv%fac_vis  = switch%facvis_start
-
-#ifdef WG_TODO
-        call b2news_facdrift_fac_ExB_init(nx,ny,ramp_slow)
-#endif
+        call b2news_facdrift_fac_ExB_init(nFc, st%dv%fac_ExB,
+     &    st%dv%facdrift, st%dv%fac_vis, switch)
       endif
 *   ..initialise error parameter
       ierr = 0
@@ -278,16 +275,16 @@ cwdk    For unstructured solver, start with simple reading of start-values
         enddo
 ctmp.dpc
         if (nscx.ge.1) then
-          write(*,*) 'DPC: b2mndt: rlcx'
-          do k = 0, nscx-1
-            do is=0, ns-1
-              write(*,'(a,2i4,1p,2g14.7)') 'is0,is,rlcx_0,rlcx_1 ',
-     1            k,is,samax(nCv,st%rt%rlcx(1,0,is,k),1),
-     2                 samax(nCv,st%rt%rlcx(1,1,is,k),1)
-            enddo
-          enddo
+         write(*,*) 'DPC: b2mndt: rlcx'
+         do k = 0, nscx-1
+           do is=0, ns-1
+             write(*,'(a,2i4,1p,2g14.7)') 'is0,is,rlcx_0,rlcx_1 ',
+     1            k,is,damax(nCv,st%rt%rlcx(1,0,is,k),1),
+     2                 damax(nCv,st%rt%rlcx(1,1,is,k),1)
+           enddo
+         enddo
         else
-          write(*,*) 'DPC: b2mndt: no CX reactions'
+         write(*,*) 'DPC: b2mndt: no CX reactions'
         endif
 ctmp.dpc
 *    ..intermediate iteration
@@ -383,17 +380,16 @@ ctmp.dpc
           istg(2) = 0
     3     if (istg(2).lt.switch%nstg(2) .and. .not.quit_residual) then
 *      ..basic iterative step
-#ifdef WG_TODO
-            ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
-#endif
+            ramp_call = switch%ramp_slow.eq.0.or.
+     &                  (istg(0)+istg(1)+istg(2)).eq.0
             if (switch%b2mndt_style.eq.1) then
               call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
-     &         geo, mpg, st, st_ext, st_avg, ier0)
+     &         geo, mpg, st, st_ext, st_avg, ier0, ramp_call)
             elseif (switch%b2mndt_style.eq.2) then
               call b2news_m(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
-     &         geo, mpg, st, st_ext, st_avg, ier0)
+     &         geo, mpg, st, st_ext, st_avg, ier0, ramp_call)
             else
               call xerrab('b2mndt_style should be 1 or 2')
             endif
@@ -467,11 +463,11 @@ ctmp.dpc
 *      ..write the tracing data
             if (ank_tracing.ne.0) then
               if (ncall_b2mndt.eq.0.and.istg(2).eq.0) then
-                call alloc_b2mod_user(geo,mpg,ns,nlim,nnmoli)
+                call alloc_b2mod_user(geo,mpg,ns,nlim,nnmoli,switch)
                 call b2filei(ns,mpg%nnreg(0),switch)
               end if
               if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >         call b2filew(istg(2),mpg%nnreg(0))
+     >         call b2filew(istg(2),mpg%nnreg(0),st%diag)
             endif
 *      ..update iteration counter
             b2mndt_itcnt = b2mndt_itcnt+1
@@ -501,10 +497,10 @@ ctmp.dpc
      &       st%dv%facdrift, st%dv%fac_ExB, st%dv%ne, st%pl%te,
      &       st%pl%po, st%dv%vedia, st%dv%veecrb)
 *      ..compute other fluxes
-            call b2xpen (nCv, nFc, ns, mpg,
+            call b2xpen (nCv, nFc, ns, mpg, switch,
      &       st%dv%fna, st%dv%fna_53, st%dv%fne_53,
      &       st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt%rpt,
-     &       st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, switch%BoRiS,
+     &       st%pl%te, st%pl%ti, st%pl%tn, st%pl%po,
      &       st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
             if (switch%b2sigp_style.eq.2) then

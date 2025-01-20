@@ -39,7 +39,7 @@
      *   flo(nFc,0:1), con(nFc,0:1), flo0(nFc,0:1), con0(nFc,0:1)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, diff, intface
+      external b2xvsg, diff, intface
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -49,7 +49,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tfcc')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..extensive tests on first few calls
       if (ncall_b2tfcc.lt.3) then
@@ -230,6 +230,17 @@ c the logic statements could be simplified but for now this is not done to impro
        endif
 
       enddo !! end loop over species
+
+      if (switch%b2npht_iout.ne.0) then
+        call my_out_us(70,nFc,1,dv%floe(1,0),'b2tfcc_floex')
+        call my_out_us(70,nFc,1,dv%floe(1,1),'b2tfcc_floey')
+        call my_out_us(70,nFc,1,dv%cone(1,0,0),'b2tfcc_conex')
+        call my_out_us(70,nFc,1,dv%cone(1,1,0),'b2tfcc_coney')
+        call my_out_us(70,nFc,1,dv%cone(1,0,1),'b2tfcc_conex1')
+        call my_out_us(70,nFc,1,dv%cone(1,1,1),'b2tfcc_coney1')
+        call my_out_us(70,nFc,1,dv%cone(1,0,2),'b2tfcc_conex2')
+        call my_out_us(70,nFc,1,dv%cone(1,1,2),'b2tfcc_coney2')
+      endif
 
 * ..return
       ncall_b2tfcc = ncall_b2tfcc+1

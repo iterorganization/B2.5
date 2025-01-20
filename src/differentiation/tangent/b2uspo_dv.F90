@@ -20,8 +20,8 @@
 !
 !srv 18.03.10
 SUBROUTINE B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
-& geo, mpg, mpgd, ne, ned, te, conc, concd, sch, schd, respo, respod, &
-& corpo, corpod, aa, aad, name, nbdirs)
+& geo, mpg, mpgd, ne, ned, te, ted, conc, concd, sch, schd, respo, &
+& respod, corpo, corpod, aa, aad, name, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -49,8 +49,9 @@ SUBROUTINE B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   REAL(kind=r8) :: ne(ncv), te(ncv), conc(nfc, 0:1), sch(ncv, 0:3), &
 & respo(ncv)
-  REAL(kind=r8) :: ned(nbdirsmax, ncv), concd(nbdirsmax, nfc, 0:1), schd&
-& (nbdirsmax, ncv, 0:3), respod(nbdirsmax, ncv)
+  REAL(kind=r8) :: ned(nbdirsmax, ncv), ted(nbdirsmax, ncv), concd(&
+& nbdirsmax, nfc, 0:1), schd(nbdirsmax, ncv, 0:3), respod(nbdirsmax, ncv&
+& )
   LOGICAL :: solvereg(0:nregionv)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: corpo(ncv)
@@ -78,7 +79,7 @@ SUBROUTINE B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
   LOGICAL :: lnonzero
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2UX5P
+  EXTERNAL B2XVSG, B2UX5P
   INTRINSIC TRIM
   CHARACTER(len=10) :: arg1
   INTEGER :: nd
@@ -91,16 +92,16 @@ SUBROUTINE B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2uspo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test itcnt
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
 !   ..extensive tests on first few calls
   IF (ncall_b2uspo .LT. 3) THEN
 !    ..test sign of ne, te, conc, sch
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, sch(1, 1), 1, 'sch1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sch(1, 3), 1, 'sch3', '.le.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, sch(1, 1), 1, 'sch1', '.le.')
+    CALL B2XVSG(ncv, sch(1, 3), 1, 'sch3', '.le.')
   END IF
 !
 ! ..compute the correction
@@ -371,7 +372,7 @@ SUBROUTINE B2USPO_NODIFF(ncv, nfc, nvx, nregionv, solvereg, itcnt, &
   LOGICAL :: lnonzero
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2UX5P
+  EXTERNAL B2XVSG, B2UX5P
   INTRINSIC TRIM
   CHARACTER(len=10) :: arg1
 !
@@ -382,16 +383,16 @@ SUBROUTINE B2USPO_NODIFF(ncv, nfc, nvx, nregionv, solvereg, itcnt, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2uspo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test itcnt
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
 !   ..extensive tests on first few calls
   IF (ncall_b2uspo .LT. 3) THEN
 !    ..test sign of ne, te, conc, sch
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, sch(1, 1), 1, 'sch1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sch(1, 3), 1, 'sch3', '.le.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, sch(1, 1), 1, 'sch1', '.le.')
+    CALL B2XVSG(ncv, sch(1, 3), 1, 'sch3', '.le.')
   END IF
 !
 ! ..compute the correction

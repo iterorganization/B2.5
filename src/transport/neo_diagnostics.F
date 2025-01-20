@@ -37,12 +37,6 @@
 *     nints=number of intervals for integration
       integer nints
       parameter (nints=10)
-      real (kind=R8) ::
-     *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,
-     &   fm(0:nmaxgr-1), r2i, cosbl(0:nmaxgr-1),
-     &   cosb2(0:nmaxgr-1), sinbl(0:nmaxgr-1), sinb2(0:nmaxgr-1)
-      common /b2ngeom/ bav,b2av,bi2a,rbt,bgradp,dpsidr,rnq,fc,
-     *                 gclass,fm,r2i,cosbl,cosb2,sinbl,sinb2
 
 *-----------------------------------------------------------------------
 *.documentation

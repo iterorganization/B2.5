@@ -1,8 +1,8 @@
 c
       subroutine additional_elements(nCv,physical)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer nCv
       logical physical
 

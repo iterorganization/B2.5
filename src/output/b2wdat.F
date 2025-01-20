@@ -37,7 +37,7 @@
 *
 *  1. purpose
 *
-*     B2WDAT is an output routine that writes out B2 arrays into ASCII
+*     B2WDAT is an output routine that writes out B2.5 arrays into ASCII
 *     data files.
 *
 *-----------------------------------------------------------------------
@@ -62,7 +62,7 @@
       integer, allocatable :: regFaces(:)
       real (kind=R8), save :: shift = 0.0_R8                       !srv
       real (kind=R8), allocatable :: clength_r(:), clength_s(:)
-!   clength_r(i) is the length from the cell center of 1th cell 
+!   clength_r(i) is the length from the cell center of 1st cell
 !                to the cell center of i-th cell in "radial direction"
 !   clength_s(i) is the length along a boundary from the face center of 1st face
 !                to the face center of i-th face
@@ -160,7 +160,7 @@
            endif
           endif
          enddo
-         if (ilast_closed_surface.eq.-2) 
+         if (ilast_closed_surface.eq.-2)
      &    call xerrab('Problem identifying last closed surface')
 *      ..find the number of the first open surface in SOL
          ifirst_open_surface = ilast_closed_surface
@@ -173,9 +173,9 @@
            endif
           endif
          enddo
-         if (ifirst_open_surface.eq.ilast_closed_surface) 
+         if (ifirst_open_surface.eq.ilast_closed_surface)
      &    call xerrab('Problem identifying first open surface')
-      
+
 *      ..find the poloidal number of midplane cell as a number of cell with min abs(Bz)
 *        and inner midplane as cell with max abs(Bz)
          iy=ilast_closed_surface
@@ -187,11 +187,11 @@
                 nmdpl = ix
                 nmdpl_i = ix
                 first = .false.
-            endif         
-            if(abs(geo%cvBb(mpg%imapCv(ix,iy),2)) .lt. 
-     &         abs(geo%cvBb(mpg%imapCv(nmdpl,iy),2))) nmdpl = ix
-            if(abs(geo%cvBb(mpg%imapCv(ix,iy),2)) .gt. 
-     &         abs(geo%cvBb(mpg%imapCv(nmdpl_i,iy),2))) nmdpl_i = ix
+            endif
+            if(geo%cvBb(mpg%imapCv(ix,iy),2) .lt.
+     &         geo%cvBb(mpg%imapCv(nmdpl,iy),2)) nmdpl = ix
+            if(geo%cvBb(mpg%imapCv(ix,iy),2) .gt.
+     &         geo%cvBb(mpg%imapCv(nmdpl_i,iy),2)) nmdpl_i = ix
            endif
           endif
          enddo
@@ -258,22 +258,22 @@
               iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
               iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
               wrk2(iCv1)=state%pl%na(iCv1,is)
-            enddo          
+            enddo
             call my_out_us(70,nCv,0,wrk2,'na_'//chis//'_bnd_'//chib)
         enddo
-       
+
         do ib = 1, nbc
           write (chib,'(i2.2)') ib
           wrk2=0.0_R8
             do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
               iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
               wrk2(iCv1)=state%dv%ne(iCv1)
-            enddo          
+            enddo
           call my_out_us(70,nCv,0,wrk2,'ne_bnd_'//chib)
         enddo
-      
-      endif              !srv   endif for iout=1   
-          
+
+      endif              !srv   endif for iout=1
+
       if (iout.eq.2) then                                               !srv begin for iout=2
 *    .. iout = 2 for outputting profiles of ne, te and ti at the plates and midplane
         if (mpg%isClassicalGrid.eq.1) then
@@ -298,7 +298,7 @@
           ! sort faces into continuous surface
           call sort_faces(nRFc,regFaces,nFc,mpg%fcReg,iReg,mpg)
 
-!          write (*,*) 'Inner target faces, nRFc = ', nRFc, 
+!          write (*,*) 'Inner target faces, nRFc = ', nRFc,
 !     &     ', indices = ', regFaces(1:nRFC)
 
           ! compute distance along inner target
@@ -309,12 +309,12 @@
            iFc  = regFaces(iRFc)
            iCv1 = max(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))        ! number of guard cell
 !         write (*,*) 'iFc, iCv1 = ', iFc, iCv1
-           if (iCv1.le.mpg%nCi) 
+           if (iCv1.le.mpg%nCi)
      &       call xerrab('Problem identifying guard cell')
            write(70,"(6es14.6)")  clength_s(iRFc)- shift,
      &           state%dv%ne(iCv1), state%pl%te(iCv1)/ev,
      &           state%pl%ti(iCv1)/ev
-          enddo          
+          enddo
           deallocate (clength_s)
           deallocate (regFaces)
           close(70)
@@ -338,7 +338,7 @@
           ! sort faces into continuous surface
           call sort_faces(nRFc,regFaces,nFc,mpg%fcReg,iReg,mpg)
 
-!          write (*,*) 'Outer target faces, nRFc = ', nRFc, 
+!          write (*,*) 'Outer target faces, nRFc = ', nRFc,
 !     &     ', indices = ', regFaces(1:nRFC)
 
           ! compute distance along outer target
@@ -349,12 +349,12 @@
            iFc  = regFaces(iRFc)
            iCv1 = max(mpg%fcCv(iFc,1), mpg%fcCv(iFc,2))        ! number of guard cell
 !         write (*,*) 'iFc, iCv1 = ', iFc, iCv1
-           if (iCv1.le.mpg%nCi) 
+           if (iCv1.le.mpg%nCi)
      &       call xerrab('Problem identifying guard cell')
            write(70,"(6es14.6)")  clength_s(iRFc)- shift,
      &           state%dv%ne(iCv1), state%pl%te(iCv1)/ev,
      &           state%pl%ti(iCv1)/ev
-          enddo          
+          enddo
           deallocate (clength_s)
           deallocate (regFaces)
           close(70)
@@ -368,7 +368,7 @@
           do icell = 1, nomp
             iCv = omp(icell)
             write(70,"(4es14.6)") clength_r(icell)-shift,
-     &            state%dv%ne(iCv), state%pl%te(iCv)/ev, 
+     &            state%dv%ne(iCv), state%pl%te(iCv)/ev,
      &            state%pl%ti(iCv)/ev
           enddo
           deallocate (clength_r)
@@ -383,15 +383,15 @@
           do icell = 1, nimp
             iCv = imp(icell)
             write(70,"(4es14.6)") clength_r(icell)-shift,
-     &            state%dv%ne(iCv), state%pl%te(iCv)/ev, 
+     &            state%dv%ne(iCv), state%pl%te(iCv)/ev,
      &            state%pl%ti(iCv)/ev
           enddo
           deallocate (clength_r)
           close(70)
 
-        endif   
-      endif                                                             !srv   end for iout=2   
-      
+        endif
+      endif                                                             !srv   end for iout=2
+
       if(iout.eq.3 .or. iout.eq.4 .or. iout.eq.1) then                  !srv begin for iout=3
 *    .. iout = 3 for outputting geometry files
 
@@ -409,7 +409,7 @@
        call my_out_us(70,nCv,0,geo%cvOnedBsq,'Cv.OnedBsq')
        call my_out_us(70,nCv,0,geo%cvBzB,'Cv.BzB')
        call my_out_us(70,nCv,0,geo%cvX,'Cv.cRc')                       ! R-coordinate of the (ix,iy) cell centre
-       call my_out_us(70,nCv,0,geo%cvY,'Cv.cZc')                       ! Z-coordinate of the (ix,iy) cell centre 
+       call my_out_us(70,nCv,0,geo%cvY,'Cv.cZc')                       ! Z-coordinate of the (ix,iy) cell centre
        call my_outi_us(70,nCv,0,mpg%cvReg,'Cv.reg')                    !lkw 20.09.2022
          open(70,file=trim(folder)//'czc.dat')                         !srv 26.09.17
          write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
@@ -419,7 +419,7 @@
          write(hlp_frm,"(a1,i4,a9)") '(',10,'es24.16))'                !srv 07.08.15
          write(70,hlp_frm) (geo%cvX(ic),ic=1,nCv)
          close(70)
-       
+
 #ifdef WG_DEBUG
        if (mpg%isClassicalGrid.eq.1) then
          open(70,file=trim(folder)//'info.dat')
@@ -441,17 +441,17 @@
         enddo
 *     ..restore the geometry of guard cells (should be redone for DN case)
         ix=-1
-        fun_st(ix,:)=fun_st(ix+1,:)/1.0e+2_R8 ! for west 
+        fun_st(ix,:)=fun_st(ix+1,:)/1.0e+2_R8 ! for west
         iy=-1
         fun_st(:,iy)=fun_st(:,iy+1)           ! for south
         iy=ny
         fun_st(:,iy)=fun_st(:,iy-1)           ! for north
         call my_out(70, nx, ny, fun_st, 'hx_st')
-       
+
         do iy = -1, ny_st
          do ix = -1, nx_st
            if(imapFcy(ix,iy) /= 0) then                        ! radial faces
-             fun_st(ix,iy) = 2.0_R8*geo%fcHc(imapFcy(ix,iy),2) ! get hy  in cell centre 
+             fun_st(ix,iy) = 2.0_R8*geo%fcHc(imapFcy(ix,iy),2) ! get hy  in cell centre
            endif
          enddo
         enddo
@@ -459,11 +459,11 @@
         iy=-1
         fun_st(:,iy)=fun_st(:,iy+1)/1.0e+2_R8   ! for south
         ix=-1
-        fun_st(ix,:)=fun_st(ix+1,:)             ! for west 
+        fun_st(ix,:)=fun_st(ix+1,:)             ! for west
         ix=nx
-        fun_st(ix,:)=fun_st(ix-1,:)             ! for east 
+        fun_st(ix,:)=fun_st(ix-1,:)             ! for east
         call my_out(70, nx, ny, fun_st, 'hy_st')
-        
+
         do iy = -1, ny_st
          do ix = -1, nx_st
            if(imapCv(ix,iy) /= 0) then
@@ -472,9 +472,9 @@
          enddo
         enddo
         call my_out(70, nx, ny, fun_st, 'hy1_st')
-       endif 
+       endif
 #endif
-      
+
 ! output of values corresponding to cell faces
        call my_out_us(70,nFc,1,geo%fcHt,'Fc.ht')
        call my_out_us(70,nFc,1,geo%fcPbs,'Fc.pbs')

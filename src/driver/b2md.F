@@ -20,8 +20,8 @@
 *  1. purpose
 *
 *     B2MD (main program) is a postprocessor for B2. It reads and
-*     displays the plasma state. This program calls the driver routine
-*     b2mddr for the actual computation.
+*     archives the plasma state to an MDSplus database.
+*     This program calls the driver routine b2mddr for the actual computation.
 *
 *
 *  2. specification
@@ -135,7 +135,7 @@
       nCv = idum(0)
       nFc = idum(1)
       ns  = idum(2)
-      call xertst (0.le.nCv.and.0.le.nFc.and.1.le.ns,
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.1.le.ns,
      &  'faulty input nCv, nFc, ns from b2fstate file')
 *   ..obtain ns from parameters file
       call cfruin (ninp(2), 1, idum, 'ns')

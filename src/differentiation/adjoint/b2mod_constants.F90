@@ -30,7 +30,7 @@ include 'codata_2018.f90'              ! IGNORE
   real (kind=R8) :: const_h
   parameter (const_h=Planck_constant)
 #else
-  parameter (pi=3.141592653589793238462643383280e0_R8)
+  parameter (pi=3.141592653589793238462643383280_R8)
   parameter (c=2.99792458e8_R8, me=9.1093837015e-31_R8,    &
  &  mp=1.67262192369e-27_R8, ev=1.602176634e-19_R8, qe=ev, &
  &  mu0=1.25663706212e-6_R8, eps0=8.8541878128e-12_R8,     &

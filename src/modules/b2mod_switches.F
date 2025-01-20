@@ -63,9 +63,10 @@ c Advanced fluid neutral models
       integer :: spatial_hybrid
       integer :: use_auto_spatial_hyb
       integer :: diffusion_bc_safeguard
-      integer :: do_volrec
       integer :: transport_afn !! use advanced fluid neutral (afn) transport coefficients
       integer :: afn_bcs_use_coarse
+      integer :: afn_vnn
+      integer :: afn_vnn_ndiff
 
       real (kind=R8) :: fhe_vis_per  !srv 06.07.00
       real (kind=R8) :: fhe_vis_par  !srv 22.03.02
@@ -86,8 +87,21 @@ c Advanced fluid neutral models
       real (kind=R8) :: integral_current
       real (kind=R8) :: b2stbc_fchy_dia
       real (kind=R8) :: b2mndr_na_min
+      real (kind=R8) :: b2mndr_na_max
       real (kind=R8) :: b2mndr_ua_max !! in absolute sense: abs(ua) < ua_max
       real (kind=R8) :: b2mndr_na_new
+      real (kind=R8) :: b2npht_stab_shei
+      real (kind=R8) :: b2upht_te_min
+      real (kind=R8) :: b2upht_rte_min
+      real (kind=R8) :: b2upht_te_max
+      real (kind=R8) :: b2upht_ti_min
+      real (kind=R8) :: b2upht_ti_max
+      real (kind=R8) :: b2upht_tn_min
+      real (kind=R8) :: b2upht_tn_max
+      real (kind=R8) :: b2upht_kt_min
+      real (kind=R8) :: b2upht_kt_max
+      real (kind=R8) :: b2upht_zt_min
+      real (kind=R8) :: b2upht_zt_max
       real (kind=R8) :: cfc0
       real (kind=R8) :: prl_cur
       real (kind=R8) :: dia_cur
@@ -126,6 +140,21 @@ c Advanced fluid neutral models
       real (kind=R8) :: L_macro_AFN
       real (kind=R8) :: neutral_sources_rescale
 
+c switches for far-sol flux limiting options
+      integer :: b2tlhe_far_sol
+      integer :: b2tlhi_far_sol
+      integer :: b2tlmv_far_sol
+
+      real (kind=R8) :: b2tlhe_ne_min
+      real (kind=R8) :: b2tlhe_ne_max
+      real (kind=R8) :: b2tlhe_cflme_min
+      real (kind=R8) :: b2tlhi_ni_min
+      real (kind=R8) :: b2tlhi_ni_max
+      real (kind=R8) :: b2tlhi_cflmi_min
+      real (kind=R8) :: b2tlmv_ni_min
+      real (kind=R8) :: b2tlmv_ni_max
+      real (kind=R8) :: b2tlmv_cflmv_min
+
 c iout switches
       integer :: iout_b2wdat
       integer :: b2sian_iout
@@ -145,7 +174,6 @@ c iout switches
       integer :: b2npco_iout
       integer :: b2npp7_iout
       integer :: b2nppo_iout
-!      integer :: b2nph9_iout       ! No longer needed for unstructured grids
       integer :: b2news_iout
       integer :: b2nxfx_iout
       integer :: b2nxfc_iout        !srv 17.06.02
@@ -186,7 +214,6 @@ c style switches
       integer :: b2sicf_style
       integer :: b2sigp_style
       integer :: b2sigp_pressure_restriction
-      integer :: b2sihs_style
       integer :: b2sral_style
       integer :: style_visc
       integer :: b2tfnb_style_int_vel
@@ -252,7 +279,6 @@ c phm switches
       real (kind=R8) :: b2treq_phm0
       real (kind=R8) :: b2stbc_phm0
       real (kind=R8) :: b2stbc_phm1
-      real (kind=R8) :: b2stbc_phm2
 
 c pcm switches
       real (kind=R8) :: b2npco_pcm0
@@ -293,10 +319,11 @@ c namelist switches
 c diagnostics switches
       integer :: b2stbc_diagno
       integer :: b2npmo_diagno
-      integer :: ion_vlct_restrict
       integer :: vlct_diagno
       integer :: b2tqna_diagno
 
+c hard limit velocities
+      integer :: ion_vlct_restrict
       real(kind=R8) :: ion_vlct_restrict_M
 
 c MMS
@@ -337,6 +364,7 @@ c Eirene coupling
       real (kind=R8) :: eir_ne_max
       real (kind=R8) :: eir_ua_min
       real (kind=R8) :: eir_ua_max
+      real (kind=R8) :: eir_M_max
 
 c k-enstrophy model
       integer :: transport_keps
@@ -358,7 +386,6 @@ c k-enstrophy model
       integer :: b2sikt_iout
       integer :: b2sikt_style
       integer :: b2sikt_model
-      integer :: b2sikt_local
       integer :: b2sikt_sheath_local
       integer :: b2sikt_fac_diss_core_mode
       integer :: b2sikt_min_source
@@ -376,6 +403,7 @@ c k-enstrophy model
       real (kind=R8) :: b2tfhi_fsigkt
       real (kind=R8) :: b2tfhi_fkt_hie
       real (kind=R8) :: b2tfhe_vis_kt
+      real (kind=R8) :: b2sikt_lpar_ref
 
 c b2tqna
       real (kind=R8) :: b2tqna_ballooning
@@ -432,6 +460,21 @@ c b2sihs_
 
 c b2news_
       integer :: b2news_ncallout
+      real (kind=R8) :: facvis_start
+      real (kind=R8) :: facvis_inc
+      real (kind=R8) :: facvis_dec
+      real (kind=R8) :: facvis_target
+      real (kind=R8) :: facdrift_start
+      real (kind=R8) :: facdrift_inc
+      real (kind=R8) :: facdrift_dec
+      real (kind=R8) :: facdrift_target
+      real (kind=R8) :: facExB_start
+      real (kind=R8) :: facExB_inc
+      real (kind=R8) :: facExB_dec
+      real (kind=R8) :: facExB_target
+      integer :: ramp_slow
+      real (kind=R8) :: b2news_ExB
+      real (kind=R8) :: b2news_vis
 
 c b2srst
       real (kind=R8) :: b2srst_rf0
@@ -456,9 +499,6 @@ c b2mndt
       real (kind=R8) :: nstg_areshi
       real (kind=R8) :: BoRiS
       real (kind=R8) :: b2mndt_rxf
-      real (kind=R8) :: facvis_start
-      real (kind=R8) :: facdrift_start
-      real (kind=R8) :: facExB_start
       integer :: b2mndt_style
       integer :: b2mndt_temp0
       integer :: b2mndt_ckn
@@ -495,20 +535,29 @@ c b2stbc
       real (kind=R8) :: b2stbc_bc_ref
       real (kind=R8) :: b2stbc_bc_ref_te
       real (kind=R8) :: b2stbc_bc_ref_ti
-      real (kind=R8) :: b2stbc_corr_flux
       real (kind=R8) :: bc_type13_norm
       real (kind=R8) :: bc_type13_fac
       real (kind=R8) :: nesepm
       real (kind=R8) :: ndes_sol
       real (kind=R8) :: nesepm_overshoot
+      real (kind=R8) :: b2stbc_cor9
+      real (kind=R8) :: stab_coeff_sheath_te
+      real (kind=R8) :: stab_coeff_sheath_ti
 
 c b2trno
       real (kind=R8) :: b2trno_alpha_stoch
+
+c b2nppo
+      integer :: b2nppo_restrict_po
+
 c Feedback
       integer :: b2stbc_feedback
 
-c Med
-      integer :: med_style
+
+c Optimization
+      integer :: b2optim_save_states
+      integer :: b2optim_reset_iter
+      real (kind=R8) :: b2optim_reset_drift
 
       end type switches
 
@@ -582,45 +631,59 @@ c Advanced fluid neutral models
       s % spatial_hybrid = 0
       s % use_auto_spatial_hyb = 0
       s % diffusion_bc_safeguard = 1
-      s % do_volrec = 1
       s % afn_bcs_use_coarse = 1
+      s % afn_vnn = 1
+      s % afn_vnn_ndiff = 0
 
-      s % fhe_vis_per = 0.0e0_R8
-      s % fhe_vis_par = 0.0e0_R8
-      s % fnb_vis_per = 0.0e0_R8
-      s % fnb_vis_q   = 1.0e0_R8
-      s % fhe_vis_q   = 1.0e0_R8
-      s % PSch        = 1.0e0_R8
-      s % fhePSch        = 1.0e0_R8
-      s % fhiPSch        = 1.0e0_R8
-      s % b2tfnb_xcur        = 0.0e0_R8
-      s % b2tfnb_ycur        = 1.0e0_R8
-      s % fch_ion_neutral = 0.0e0_R8
-      s % art_rad = 0.0e0_R8
+      s % fhe_vis_per = 0.0_R8
+      s % fhe_vis_par = 0.0_R8
+      s % fnb_vis_per = 0.0_R8
+      s % fnb_vis_q   = 1.0_R8
+      s % fhe_vis_q   = 1.0_R8
+      s % PSch        = 1.0_R8
+      s % fhePSch     = 1.0_R8
+      s % fhiPSch     = 1.0_R8
+      s % b2tfnb_xcur = 0.0_R8
+      s % b2tfnb_ycur = 1.0_R8
+      s % fch_ion_neutral = 0.0_R8
+      s % art_rad = 0.0_R8
       s % sna0ep = 1.0e-36_R8
       s % she0ep = 1.0e-36_R8
       s % shi0ep = 1.0e-36_R8
-      s % b2stbc_neoclassical = 0.0e0_R8
-      s % integral_current = 0.0e0_R8
-      s % b2stbc_fchy_dia = 0.0e0_R8
+      s % b2stbc_neoclassical = 0.0_R8
+      s % integral_current = 0.0_R8
+      s % b2stbc_fchy_dia = 0.0_R8
       s % b2mndr_na_min = 1.0e4_R8
+      s % b2mndr_na_max = 1.0e30_R8
       s % b2mndr_ua_max = 1.0e6_R8
       s % b2mndr_na_new = 1.0e14_R8
-      s % cfc0 = 1.0e0_R8
-      s % prl_cur = 1.0e0_R8
-      s % dia_cur = 1.0e0_R8
-      s % fch_pTe = 1.0e0_R8
+      s % b2npht_stab_shei = 0.0_R8
+      s % b2upht_te_min = 0.1_R8
+      s % b2upht_rte_min = 0.0_R8
+      s % b2upht_te_max = 1.0e30_R8
+      s % b2upht_ti_min = 0.1_R8
+      s % b2upht_ti_max = 1.0e30_R8
+      s % b2upht_tn_min = 0.1_R8
+      s % b2upht_tn_max = 1.0e30_R8
+      s % b2upht_kt_min = 1.0e-5_R8
+      s % b2upht_kt_max = 1.0e30_R8
+      s % b2upht_zt_min = 1.0e-8_R8
+      s % b2upht_zt_max = 1.0e30_R8
+      s % cfc0 = 1.0_R8
+      s % prl_cur = 1.0_R8
+      s % dia_cur = 1.0_R8
+      s % fch_pTe = 1.0_R8
       s % alfTeEh = 0.0_R8
-      s % fhe_vdia_par = 1.0e0_R8
-      s % fhi_vdia_par = 1.0e0_R8
-      s % xvecrb = 1.0e0_R8
-      s % xwdia = 1.0e0_R8
-      s % fnb_drift_hyb = 1.0e0_R8
-      s % xfac = 1.0e0_R8
-      s % fch_inert = 1.0e0_R8
+      s % fhe_vdia_par = 1.0_R8
+      s % fhi_vdia_par = 1.0_R8
+      s % xvecrb = 1.0_R8
+      s % xwdia = 1.0_R8
+      s % fnb_drift_hyb = 1.0_R8
+      s % xfac = 1.0_R8
+      s % fch_inert = 1.0_R8
       s % cthiv = 2.65_R8
-      s % cthev = 0.0e0_R8
-      s % b2trcl_lambda = -5.0e0_R8
+      s % cthev = 0.0_R8
+      s % b2trcl_lambda = -5.0_R8
       s % poleldr = 1.0_R8
       s % radeldr = 1.0_R8
       s % poldidr = 1.0_R8
@@ -641,9 +704,9 @@ c Advanced fluid neutral models
       s % b2tfnb_gamma = 2.0_R8
       s % fch_stochastic = 0.0_R8
       s % Qalfmin        = 1.0e-3_R8
-      s % delpo          = 3.1e0_R8
-      s % Kn_b1         = 0.01e0_R8
-      s % Kn_b2         = 0.10e0_R8
+      s % delpo          = 3.1_R8
+      s % Kn_b1         = 0.01_R8
+      s % Kn_b2         = 0.10_R8
       s % pol_anom_scale = 1.0_R8
       s % auto_spatial_hyb_Kn_1 = 0.0_R8
       s % auto_spatial_hyb_Kn_2 = 100.0_R8
@@ -667,7 +730,6 @@ c Advanced fluid neutral models
       s % b2npco_iout = 0
       s % b2npp7_iout = 0
       s % b2nppo_iout = 0
-!      s % b2nph9_iout = 0
       s % b2news_iout = 0
       s % b2nxfx_iout = 0
       s % b2nxfc_iout = 0
@@ -707,7 +769,6 @@ c Advanced fluid neutral models
       s % b2sicf_style = 0
       s % b2sigp_style = 2
       s % b2sigp_pressure_restriction = 1
-      s % b2sihs_style = 0
       s % b2sral_style = 2
       s % style_visc = 0
       s % b2tfnb_style_int_vel = 0
@@ -737,73 +798,72 @@ c Advanced fluid neutral models
       s % b2sifr_styl0 = 0
       s % b2tqin_csigin_style = 0
 
-      s % b2sian_phm0 = 1.0e0_R8
-      s % b2sicf_phm0 = 1.0e0_R8
-      s % b2sicf_phm1 = 1.0e0_R8
-      s % b2sigp_phm0 = 1.0e0_R8
-      s % b2sihs_phm0 = 1.0e0_R8
-      s % b2sihs_phm1 = 1.0e0_R8
-      s % b2sihs_phm2 = 1.0e0_R8
-      s % b2sihs_phm3 = 1.0e0_R8
-      s % b2sihs_phm4 = 1.0e0_R8
-      s % b2sihs_phm5 = 1.0e0_R8
-      s % b2sihs_phm6 = 1.0e0_R8
-      s % b2sihs_phm7 = 0.0e0_R8
-      s % b2sihs_phm8 = 1.0e0_R8
-      s % b2sqcx_phm0 = 1.0e0_R8
-      s % b2sqel_phm0 = 1.0e0_R8
-      s % b2sqel_phm1 = 1.0e0_R8
-      s % b2sqel_phm2 = 1.0e0_R8
-      s % b2stel_phm0 = 1.0e0_R8
-      s % b2srdt_phm0 = 1.0e0_R8
-      s % b2srdt_phm1 = 1.0e0_R8
-      s % b2srdt_phm3 = 1.0e0_R8
-      s % b2srdt_phm4 = 0.0e0_R8
-      s % b2srdt_phm5 = 1.0e0_R8
-      s % b2nxfv_phm0 = 1.0e0_R8
-      s % b2nxfv_phm1 = 1.0e0_R8
-      s % b2sifr_limthii = 0.3e0_R8
-      s % b2sifr_limthee = 0.3e0_R8
-      s % b2sifr_phm0 = 1.0e0_R8
-      s % b2sifr_phm1 = 1.0e0_R8
-      s % b2sifr_phm2 = 1.0e0_R8
-      s % b2sifr_phm3 = 1.0e0_R8
-      s % b2tqca_phm0 = 1.0e0_R8
-      s % b2treq_phm0 = 1.0e0_R8
-      s % b2stbc_phm0 = 1.0e0_R8
-      s % b2stbc_phm1 = 1.0e0_R8
-      s % b2stbc_phm2 = 1.0e0_R8
+      s % b2sian_phm0 = 1.0_R8
+      s % b2sicf_phm0 = 1.0_R8
+      s % b2sicf_phm1 = 1.0_R8
+      s % b2sigp_phm0 = 1.0_R8
+      s % b2sihs_phm0 = 1.0_R8
+      s % b2sihs_phm1 = 1.0_R8
+      s % b2sihs_phm2 = 1.0_R8
+      s % b2sihs_phm3 = 1.0_R8
+      s % b2sihs_phm4 = 1.0_R8
+      s % b2sihs_phm5 = 1.0_R8
+      s % b2sihs_phm6 = 1.0_R8
+      s % b2sihs_phm7 = 0.0_R8
+      s % b2sihs_phm8 = 1.0_R8
+      s % b2sqcx_phm0 = 1.0_R8
+      s % b2sqel_phm0 = 1.0_R8
+      s % b2sqel_phm1 = 1.0_R8
+      s % b2sqel_phm2 = 1.0_R8
+      s % b2stel_phm0 = 1.0_R8
+      s % b2srdt_phm0 = 1.0_R8
+      s % b2srdt_phm1 = 1.0_R8
+      s % b2srdt_phm3 = 1.0_R8
+      s % b2srdt_phm4 = 0.0_R8
+      s % b2srdt_phm5 = 1.0_R8
+      s % b2nxfv_phm0 = 1.0_R8
+      s % b2nxfv_phm1 = 1.0_R8
+      s % b2sifr_limthii = 0.3_R8
+      s % b2sifr_limthee = 0.3_R8
+      s % b2sifr_phm0 = 1.0_R8
+      s % b2sifr_phm1 = 1.0_R8
+      s % b2sifr_phm2 = 1.0_R8
+      s % b2sifr_phm3 = 1.0_R8
+      s % b2tqca_phm0 = 1.0_R8
+      s % b2treq_phm0 = 1.0_R8
+      s % b2stbc_phm0 = 1.0_R8
+      s % b2stbc_phm1 = 1.0_R8
 
       if ( s % b2mndt_style.eq.2 ) then
-        s % b2npco_rxg =  huge(1.0e0_R8)
-        s % b2npht_rxg =  huge(1.0e0_R8)
-        s % b2npmo_rxg =  huge(1.0e0_R8)
-        s % b2npco_pcm0 = 0.0e0_R8
-        s % b2npco_pcm1 = 0.0e0_R8
-        s % b2npht_pcm0 = 0.0e0_R8
-        s % b2npht_pcm1 = 0.0e0_R8
+        s % b2npco_rxg =  huge(1.0_R8)
+        s % b2npht_rxg =  huge(1.0_R8)
+        s % b2npmo_rxg =  huge(1.0_R8)
+        s % b2npco_pcm0 = 0.0_R8
+        s % b2npco_pcm1 = 0.0_R8
+        s % b2npht_pcm0 = 0.0_R8
+        s % b2npht_pcm1 = 0.0_R8
       else
-        s % b2npco_rxg =  1.0e0_R8
-        s % b2npht_rxg =  1.0e0_R8
+        s % b2npco_rxg =  1.0_R8
+        s % b2npht_rxg =  1.0_R8
         s % b2npmo_rxg =  1.0e6_R8 !! 10^6 !!
-        s % b2npco_pcm0 = 1.0e0_R8
-        s % b2npco_pcm1 = 1.0e0_R8
-        s % b2npht_pcm0 = 1.0e0_R8
-        s % b2npht_pcm1 = 1.0e0_R8
+        s % b2npco_pcm0 = 1.0_R8
+        s % b2npco_pcm1 = 1.0_R8
+        s % b2npht_pcm0 = 1.0_R8
+        s % b2npht_pcm1 = 1.0_R8
       end if
 
-      s % xfm0       =  1.0e0_R8
-      s % xfm1       =  1.0e0_R8
-      s % xfm2       =  1.0e0_R8
-      s % xfm3       =  1.0e0_R8
-      s % b2stcx_rg0 =  1.0e0_R8
-      s % b2stel_rxm0 = 0.0e0_R8
-      s % b2stel_rxm1 = 0.0e0_R8
-      s % b2stel_rxm2 = 0.0e0_R8
-      s % b2stel_rxm3 = 0.0e0_R8
-      s % b2stel_rxm4 = 0.0e0_R8
-      s % b2stel_rg0 =  1.0e0_R8
-      s % b2stel_rg1 =  1.0e0_R8
+      s % xfm0       =  1.0_R8
+      s % xfm1       =  1.0_R8
+      s % xfm2       =  1.0_R8
+      s % xfm3       =  1.0_R8
+      s % b2stcx_rg0 =  1.0_R8
+      s % b2stel_rxm0 = 0.0_R8
+      s % b2stel_rxm1 = 0.0_R8
+      s % b2stel_rxm2 = 0.0_R8
+      s % b2stel_rxm3 = 0.0_R8
+      s % b2stel_rxm4 = 0.0_R8
+      s % b2stel_rg0 =  1.0_R8
+      s % b2stel_rg1 =  1.0_R8
 
       s % b2npmo_discr_meth = 2
       s % b2tfhe_discr_meth = 2
@@ -818,16 +878,33 @@ c Advanced fluid neutral models
 
       s % b2stbc_diagno = 0
       s % b2npmo_diagno = 0
-      s % ion_vlct_restrict = 0
-      s % ion_vlct_restrict_M = 3.0_R8
       s % vlct_diagno = 0
       s % b2tqna_diagno = 0
+
+      s % ion_vlct_restrict = 0
+      s % ion_vlct_restrict_M = 3.0_R8
 
       s % set_na_numerical = 0
       s % set_ua_numerical = 0
       s % set_te_numerical = 0
       s % set_ti_numerical = 0
       s % set_po_numerical = 0
+
+
+c far-sol flux limiting options
+      s % b2tlhe_far_sol = 0
+      s % b2tlhi_far_sol = 0
+      s % b2tlmv_far_sol = 0
+
+      s % b2tlhe_ne_min = 1.0e17_R8
+      s % b2tlhe_ne_max = 1.0e18_R8
+      s % b2tlhe_cflme_min = 0.2e0_R8
+      s % b2tlhi_ni_min = 1.0e17_R8
+      s % b2tlhi_ni_max = 1.0e18_R8
+      s % b2tlhi_cflmi_min = 1.0e1_R8
+      s % b2tlmv_ni_min = 1.0e17_R8
+      s % b2tlmv_ni_max = 1.0e18_R8
+      s % b2tlmv_cflmv_min = 0.5e0_R8
 
 c geometry
       s % fcHz_style = 1
@@ -850,16 +927,17 @@ c eirene coupling
       s % ionising_core = 0
       s % ank_mods = 0
 
-      s % eir_te_min = 0.0e0_R8
+      s % eir_te_min = 0.0_R8
       s % eir_te_max = 1.0e30_R8
-      s % eir_ti_min = 0.0e0_R8
+      s % eir_ti_min = 0.0_R8
       s % eir_ti_max = 1.0e30_R8
-      s % eir_na_min = 0.0e0_R8
+      s % eir_na_min = 0.0_R8
       s % eir_na_max = 1.0e30_R8
-      s % eir_ne_min = 0.0e0_R8
+      s % eir_ne_min = 0.0_R8
       s % eir_ne_max = 1.0e30_R8
       s % eir_ua_min = -c
       s % eir_ua_max = c
+      s % eir_M_max = 1.0e30_R8
       s % neutral_sources_rescale = 1.0_R8
 
 c k-enstrophy model
@@ -885,7 +963,6 @@ c k-enstrophy model
       s % b2sikt_iout = 0
       s % b2sikt_style = 0
       s % b2sikt_model = 1
-      s % b2sikt_local = 1
       s % b2sikt_fac_diss_core_mode = 0
       s % b2sikt_sheath_local = 1
       s % b2sikt_min_source = 0
@@ -900,9 +977,10 @@ c k-enstrophy model
       s % b2tfhi_fconkt = 0.0_R8
       s % b2tfhi_fflozt = 0.0_R8
       s % b2tfhi_fconzt = 0.0_R8
-      s % b2tfhi_fsigkt = 0.0_R8
+      s % b2tfhi_fsigkt = 0.1_R8
       s % b2tfhi_fkt_hie = 0.0_R8
-      s % b2tfhe_vis_kt = 0.0e0_R8
+      s % b2tfhe_vis_kt = 0.0_R8
+      s % b2sikt_lpar_ref = 10.0_R8
 
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
@@ -912,7 +990,7 @@ c b2tqna
       s % b2tqna_divsol_rescale = 1.0_R8
       s % b2tqna_min_df0 = 0.0_R8
       s % b2tqna_max_df0 = 1.0e30_R8
-      s % b2tqna_cfvma = 0.0e0_R8                   !srv 15.12.05
+      s % b2tqna_cfvma = 0.0_R8                   !srv 15.12.05
       s % b2tqna_new_df0 = 0
       s % b2tqna_ixref = 1
       s % b2tqna_transport_inputfile = 0
@@ -920,7 +998,7 @@ c b2tqna
       s % b2tqna_limit_coeff = 0
 
 c fch_anomalous
-      s % fch_anomalous = 1.0e0_R8
+      s % fch_anomalous = 1.0_R8
 
 c b2stbm
       s % b2stbm_impgyro_mod = 0
@@ -959,6 +1037,21 @@ c b2sihs_
 
 c b2news_
       s % b2news_ncallout = -1
+      s % facvis_start = 0.0_R8
+      s % facvis_inc = 1.0_R8
+      s % facvis_dec = 0.0_R8
+      s % facvis_target = 0.0_R8
+      s % facdrift_start = 0.0_R8
+      s % facdrift_inc = 1.0_R8
+      s % facdrift_dec = 0.0_R8
+      s % facdrift_target = 0.0_R8
+      s % facExB_start = 0.0_R8
+      s % facExB_inc = 1.0_R8
+      s % facExB_dec = 0.0_R8
+      s % facExB_target = 0.0_R8
+      s % ramp_slow = 0
+      s % b2news_ExB = 0.0_R8
+      s % b2news_vis = 0.0_R8
 
 c b2sihs_
       s % b2srst_rf0 = 1.0_R8
@@ -989,9 +1082,6 @@ c b2mndt
       else
         s % b2mndt_rxf = 0.5_R8
       end if
-      s % facvis_start = 0.0_R8
-      s % facdrift_start = 0.0_R8
-      s % facExB_start = 0.0_R8
       s % b2mndt_style = 1
       s % b2mndt_temp0 = 1
       s % b2mndt_ckn = 1
@@ -1025,22 +1115,29 @@ c b2stbc_phys
       s % bcene_16_style = 0
       s % bceni_16_style = 0
 
-      s % b2stbc_cbc = 1.0e0_R8              !srv 14.10.99
+      s % b2stbc_cbc = 1.0_R8                !srv 14.10.99
       s % b2stbc_bc_ref = 0.01_R8            !srv 14.10.99
-      s % b2stbc_bc_ref_te = 0.01         !IYS 07.03.2013 11.04.13
-      s % b2stbc_bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
-      s % b2stbc_corr_flux   = 0.0e0_R8                    !srv 25.07.05
+      s % b2stbc_bc_ref_te = 0.01_R8         !IYS 07.03.2013 11.04.13
+      s % b2stbc_bc_ref_ti = 0.01_R8         !IYS 07.03.2013 11.04.13
       s % bc_type13_norm = 1.0e15_R8
       s % bc_type13_fac = 1.0_R8
       s % nesepm = 0.0_R8
       s % nesepm_overshoot = 0.0_R8
       s % ndes_sol = 0.0_R8
+      s % b2stbc_cor9 = 0.0_R8
+      s % stab_coeff_sheath_te = 0.0_R8
+      s % stab_coeff_sheath_ti = 0.0_R8
 
 c b2trno
-      s % b2trno_alpha_stoch =  1.0e0_R8                  !srv 17.12.13
+      s % b2trno_alpha_stoch =  1.0_R8       !srv 17.12.13
 
-c med
-      s % med_style = 0
+c b2nppo
+      s % b2nppo_restrict_po = 0
+
+c Optimization
+      s % b2optim_save_states = 0
+      s % b2optim_reset_iter = 2
+      s % b2optim_reset_drift = 0.4_R8
 
       return
       end subroutine set_defaults_switches
@@ -1113,10 +1210,11 @@ c Advanced fluid neutral models
       call ipgeti ('b2stbr_remove_FC_el', s % remove_FC_el)
       call ipgeti ('b2mn_spatial_hybrid', s % spatial_hybrid)
       call ipgeti ('use_auto_spatial_hyb', s % use_auto_spatial_hyb)
-      call ipgeti ('b2mn_do_volrec', s % do_volrec)
       call ipgeti ('b2tqna_transport_afn', s % transport_afn)
       call ipgeti ('diffusion_bc_safeguard', s % diffusion_bc_safeguard)
       call ipgeti ('b2stbr_afn_bcs_use_coarse', s % afn_bcs_use_coarse)
+      call ipgeti ('b2tqna_afn_vnn', s % afn_vnn)
+      call ipgeti ('b2tqna_afn_vnn_ndiff', s % afn_vnn_ndiff)
 
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)
@@ -1137,8 +1235,21 @@ c Advanced fluid neutral models
       call ipgetr ('b2stbc_integral_current', s % integral_current)
       call ipgetr ('b2stbc_fchy_dia', s % b2stbc_fchy_dia)
       call ipgetr ('b2mndr_na_min', s%b2mndr_na_min)
+      call ipgetr ('b2mndr_na_max', s%b2mndr_na_max)
       call ipgetr ('b2mndr_ua_max', s%b2mndr_ua_max)
       call ipgetr ('b2mndr_na_new', s%b2mndr_na_new)
+      call ipgetr ('b2npht_stab_shei', s%b2npht_stab_shei)
+      call ipgetr ('b2upht_te_min', s%b2upht_te_min)
+      call ipgetr ('b2upht_rte_min', s%b2upht_rte_min)
+      call ipgetr ('b2upht_te_max', s%b2upht_te_max)
+      call ipgetr ('b2upht_ti_min', s%b2upht_ti_min)
+      call ipgetr ('b2upht_ti_max', s%b2upht_ti_max)
+      call ipgetr ('b2upht_tn_min', s%b2upht_tn_min)
+      call ipgetr ('b2upht_tn_max', s%b2upht_tn_max)
+      call ipgetr ('b2upht_kt_min', s%b2upht_kt_min)
+      call ipgetr ('b2upht_kt_max', s%b2upht_kt_max)
+      call ipgetr ('b2upht_zt_min', s%b2upht_zt_min)
+      call ipgetr ('b2upht_zt_max', s%b2upht_zt_max)
       call ipgetr ('b2usmo_cfc0', s % cfc0)
       call ipgetr ('b2tfhe_prl_cur', s % prl_cur)
       call ipgetr ('b2tfhe_dia_cur', s % dia_cur)
@@ -1176,6 +1287,21 @@ c Advanced fluid neutral models
       call ipgetr ('auto_spatial_hyb_Kn_2', s % auto_spatial_hyb_Kn_2)
       call ipgetr ('L_macro_AFN', s % L_macro_AFN)
 
+c far sol flux limiting
+      call ipgeti ('b2tlhe_far_sol', s % b2tlhe_far_sol)
+      call ipgeti ('b2tlhi_far_sol', s % b2tlhi_far_sol)
+      call ipgeti ('b2tlmv_far_sol', s % b2tlmv_far_sol)
+
+      call ipgetr ('b2tlhe_ne_min', s % b2tlhe_ne_min)
+      call ipgetr ('b2tlhe_ne_max', s % b2tlhe_ne_max)
+      call ipgetr ('b2tlhe_cflme_min', s % b2tlhe_cflme_min)
+      call ipgetr ('b2tlhi_ni_min', s % b2tlhi_ni_min)
+      call ipgetr ('b2tlhi_ni_max', s % b2tlhi_ni_max)
+      call ipgetr ('b2tlhi_cflmi_min', s % b2tlhi_cflmi_min)
+      call ipgetr ('b2tlmv_ni_min', s % b2tlmv_ni_min)
+      call ipgetr ('b2tlmv_ni_max', s % b2tlmv_ni_max)
+      call ipgetr ('b2tlmv_cflmv_min', s % b2tlmv_cflmv_min)
+
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
       call ipgeti ('b2sian_iout', s % b2sian_iout)
@@ -1195,7 +1321,6 @@ c iout switches
       call ipgeti ('b2npco_iout', s % b2npco_iout)
       call ipgeti ('b2npp7_iout', s % b2npp7_iout)
       call ipgeti ('b2nppo_iout', s % b2nppo_iout)
-!      call ipgeti ('b2nph9_iout', s % b2nph9_iout)
       call ipgeti ('b2news_iout', s % b2news_iout)
       call ipgeti ('b2nxfx_iout', s % b2nxfx_iout)
       call ipgeti ('b2nxfc_iout', s % b2nxfc_iout)
@@ -1222,9 +1347,9 @@ c iout switches
       call ipgeti ('b2stbc_iout', s % b2stbc_iout)
       call ipgeti ('b2trno_iout', s % b2trno_iout)
       call ipgeti ('b2stbr_phys_iout', s % b2stbr_phys_iout)
-      call ipgeti('b2wdat_append', s % b2wdat_append)
+      call ipgeti ('b2wdat_append', s % b2wdat_append)
       call ipgeti ('b2stbr_AFN_out',s % AFN_out)
-      call ipgeti('copy_background_iout', s%copy_background_iout)   !srv 14.07.10
+      call ipgeti ('copy_background_iout', s%copy_background_iout)   !srv 14.07.10
       call ipgeti ('eirene_mc_iout', s % eirene_mc_iout)
       call ipgeti ('b2mndr_iout', s % b2mndr_iout)
       call ipgeti ('b2scdt_iout', s % b2scdt_iout)
@@ -1236,7 +1361,6 @@ c style/mode switches
       call ipgeti ('b2sigp_style', s % b2sigp_style)
       call ipgeti ('b2sigp_pressure_restriction',
      &  s % b2sigp_pressure_restriction)
-      call ipgeti ('b2sihs_style', s % b2sihs_style)
       call ipgeti ('b2sral_style', s % b2sral_style)
       call ipgeti ('b2sihs_style_visc', s % style_visc)
       call ipgeti ('b2tfnb_style_int_vel', s % b2tfnb_style_int_vel)
@@ -1249,14 +1373,14 @@ c style/mode switches
       call ipgeti ('b2nxdv_style', s % b2nxdv_style)
       call ipgeti ('b2nxfx_style', s % b2nxfx_style)
       call ipgeti ('b2nxfc_style', s % b2nxfc_style)
-      call ipgeti ('b2tfhe_mode_ehy',s% mode_ehy)
-      call ipgeti ('b2tfhe_mode_ehx',s% mode_ehx)
-      call ipgeti ('b2tlmv_style', s% b2tlmv_style)
-      call ipgeti ('b2tqca_model', s% b2tqca_model)
-      call ipgeti ('b2tqce_model', s% b2tqce_model)
+      call ipgeti ('b2tfhe_mode_ehy', s % mode_ehy)
+      call ipgeti ('b2tfhe_mode_ehx', s % mode_ehx)
+      call ipgeti ('b2tlmv_style', s % b2tlmv_style)
+      call ipgeti ('b2tqca_model', s % b2tqca_model)
+      call ipgeti ('b2tqce_model', s % b2tqce_model)
       call ipgeti ('b2tqce_style_guard_cells',
-     &                                    s%b2tqce_style_guard_cells)
-      call ipgeti ('b2tral_mode',s% b2tral_mode)
+     &                                  s % b2tqce_style_guard_cells)
+      call ipgeti ('b2tral_mode', s % b2tral_mode)
       call ipgeti ('b2tlv0_style', s % b2tlv0_style)
       call ipgeti ('b2tlh0_style', s % b2tlh0_style)
       call ipgeti ('b2tlc0_style', s % b2tlc0_style)
@@ -1304,7 +1428,6 @@ c phm switches
       call ipgetr ('b2treq_phm0', s % b2treq_phm0)
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
-      call ipgetr ('b2stbc_phm2', s % b2stbc_phm2)
 
 c pcm switches
       call ipgetr ('b2npco_pcm0', s% b2npco_pcm0)
@@ -1347,10 +1470,12 @@ c namelist switches
 c diagnostic switches
       call ipgeti ('b2stbc_diagno', s % b2stbc_diagno)
       call ipgeti ('b2npmo_diagno', s % b2npmo_diagno)
-      call ipgeti ('b2npmo_ion_vlct_restrict', s % ion_vlct_restrict)
-      call ipgetr ('b2npmo_ion_vlct_restrict_M', s%ion_vlct_restrict_M)
       call ipgeti ('b2npmo_vlct_diagno', s % vlct_diagno)
       call ipgeti ('b2tqna_diagno', s % b2tqna_diagno)
+
+c hard limit velocities
+      call ipgeti ('b2npmo_ion_vlct_restrict', s % ion_vlct_restrict)
+      call ipgetr ('b2npmo_ion_vlct_restrict_M', s%ion_vlct_restrict_M)
 
 c MMS
       call ipgeti ('b2mndr_set_na_numerical', s % set_na_numerical)
@@ -1392,6 +1517,7 @@ c Eirene coupling
       call ipgetr ('eirene_ne_max', s % eir_ne_max)
       call ipgetr ('eirene_ua_min', s % eir_ua_min)
       call ipgetr ('eirene_ua_max', s % eir_ua_max)
+      call ipgetr ('eirene_M_max', s % eir_M_max)
       call ipgetr ('b2mndr_rescale_neutrals_sources',
      &                s % neutral_sources_rescale)
 
@@ -1418,11 +1544,10 @@ c k-enstrophy model
       call ipgeti ('b2sikt_iout', s % b2sikt_iout)
       call ipgeti ('b2sikt_style', s % b2sikt_style)
       call ipgeti ('b2sikt_model', s % b2sikt_model)
-      call ipgeti ('b2sikt_keps_local', s % b2sikt_local)
       call ipgeti ('b2sikt_fac_sheath_local', s % b2sikt_sheath_local)
       call ipgeti ('b2sikt_min_source', s % b2sikt_min_source)
       call ipgeti ('b2sikt_kt_source_stab', s % b2sikt_kt_source_stab)
-      call ipgetr ('b2sikt_aniso', s % b2sikt_fac_aniso)
+      call ipgetr ('b2sikt_fac_aniso', s % b2sikt_fac_aniso)
       call ipgetr ('b2sikt_fac_sheath', s % b2sikt_fac_sheath)
       call ipgetr ('b2sikt_fac_sheath_core', s % b2sikt_fac_sheath_core)
       call ipgetr ('b2sikt_fac_diss', s % b2sikt_fac_diss)
@@ -1437,6 +1562,7 @@ c k-enstrophy model
       call ipgetr ('b2tfhi_fsigkt', s % b2tfhi_fsigkt)
       call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
       call ipgetr ('b2tfhe_vis_kt', s % b2tfhe_vis_kt)
+      call ipgetr ('b2sikt_fac_diss_lpar', s % b2sikt_lpar_ref)
 
 c b2tqna
       call ipgeti ('b2tqna_new_df0', s%b2tqna_new_df0)
@@ -1452,7 +1578,7 @@ c b2tqna
       call ipgeti ('b2tqna_limit_coeff', s%b2tqna_limit_coeff)
       call ipgetr ('b2tqna_pfr_rescale', s%b2tqna_pfr_rescale)
       call ipgetr ('b2tqna_divsol_rescale', s%b2tqna_divsol_rescale)
-      call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)                !srv 15.12.05
+      call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)
 
 c fch anomalous
       call ipgetr ('b2tfhe_anomalous', s%fch_anomalous)
@@ -1511,6 +1637,21 @@ c b2sihs_
 
 c b2news_
       call ipgeti ('b2news_ncallout', s%b2news_ncallout)
+      call ipgetr ('b2news_facExB_start',   s%facExB_start)
+      call ipgetr ('b2news_facExB_inc',   s%facExB_inc)
+      call ipgetr ('b2news_facExB_dec',   s%facExB_dec)
+      call ipgetr ('b2news_facExB_target',   s%facExB_target)
+      call ipgetr ('b2news_facdrift_start', s%facdrift_start)
+      call ipgetr ('b2news_facdrift_inc',   s%facdrift_inc)
+      call ipgetr ('b2news_facdrift_dec',   s%facdrift_dec)
+      call ipgetr ('b2news_facdrift_target',   s%facdrift_target)
+      call ipgetr ('b2news_facvis_start',   s%facvis_start)
+      call ipgetr ('b2news_facvis_inc',   s%facvis_inc)
+      call ipgetr ('b2news_facvis_dec',   s%facvis_dec)
+      call ipgetr ('b2news_facvis_target',   s%facvis_target)
+      call ipgeti ('b2news_ramp_slow', s%ramp_slow)
+      call ipgetr ('b2news_ExB', s%b2news_ExB)
+      call ipgetr ('b2news_vis', s%b2news_vis)
 
 c b2srst
       call ipgetr ('b2srst_rf0', s%b2srst_rf0)
@@ -1539,9 +1680,6 @@ c b2mndt
       call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
       call ipgetr ('b2news_BoRiS', s%BoRiS)
       call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
-      call ipgetr ('b2news_facExB_start',   s%facExB_start)
-      call ipgetr ('b2news_facdrift_start', s%facdrift_start)
-      call ipgetr ('b2news_facvis_start',   s%facvis_start)
       call ipgeti ('b2mndt_style',s%b2mndt_style)
       call ipgeti ('b2mndt_temp0',s%b2mndt_temp0)
       call ipgeti ('b2mndt_ckn',s%b2mndt_ckn)
@@ -1579,12 +1717,16 @@ c b2stbc
       call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)           !srv 11.04.13
       call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)
       call ipgetr ('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)           !srv 11.04.13
-      call ipgetr ('b2stbc_corr_flux_in_core', s%b2stbc_corr_flux)   !srv 25.07.05
       call ipgetr ('b2stbc_type13_norm', s%bc_type13_norm)
       call ipgetr ('b2stbc_type13_fac', s%bc_type13_fac)
       call ipgetr ('b2stbc_nesepm', s%nesepm)
       call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
       call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
+      call ipgetr ('b2stbc_BC2_cor9', s%b2stbc_cor9)
+      call ipgetr ('b2stbc_stab_coeff_sheath_te',
+     &                                s%stab_coeff_sheath_te)
+      call ipgetr ('b2stbc_stab_coeff_sheath_ti',
+     &                                s%stab_coeff_sheath_ti)
 
 c b2trno
       call ipgetr ('b2trno_con_e_stochastic', s%b2trno_alpha_stoch)  !lk 31.01.08
@@ -1592,8 +1734,13 @@ c b2trno
 c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
 
-c Med
-      call ipgeti ('b2mndr_med_style', s%med_style)
+c b2nppo
+      call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
+
+c Optimization
+      call ipgeti ('b2optim_save_states', s%b2optim_save_states)
+      call ipgeti ('b2optim_reset_iter', s%b2optim_reset_iter)
+      call ipgetr ('b2optim_reset_drift', s%b2optim_reset_drift)
 
       return
       end subroutine read_switches
@@ -1761,15 +1908,15 @@ c b2stbc
      .  'faulty parameter b2stbc: shi0ep')
        call xertst (0.0_R8.le.s%b2stbc_neoclassical .and.
      &              s%b2stbc_neoclassical.le.1.0_R8,
-     1              'faulty iparameter b2stbc_neoclassical')
+     1              'faulty parameter b2stbc_neoclassical')
 
        call xertst (0.0_R8.le.s%b2stbc_fchy_dia .and.
      &              s%b2stbc_fchy_dia.le.1.0_R8,
      1              'faulty internal parameter b2stbc_fchy_dia')
-
-c b2sihs
-       call xertst (0.le.s%b2sihs_style,
-     &                        'faulty parameter b2sihs style')
+       call xertst (0.0_R8.le.s%stab_coeff_sheath_te,
+     &              'faulty parameter b2stbc_stab_coeff_sheath_te')
+       call xertst (0.0_R8.le.s%stab_coeff_sheath_ti,
+     &              'faulty parameter b2stbc_stab_coeff_sheath_ti')
 
 c b2sral
        call xertst (1.ne.s%b2sral_style,
@@ -1779,14 +1926,20 @@ c b2sral
      .  'b2sral_style should be 0, 1 or 2')
 
 c b2npco
-       call xertst (0.lt.s%b2npco_rxg, 'faulty parameter b2npco rxg')
-       call xertst (0.le.s%b2npco_pcm0, 'faulty parameter b2npco pcm0')
-       call xertst (0.le.s%b2npco_pcm1, 'faulty parameter b2npco pcm1')
+       call xertst (0.0_R8.lt.s%b2npco_rxg,
+     .  'faulty parameter b2npco rxg')
+       call xertst (0.0_R8.le.s%b2npco_pcm0,
+     .  'faulty parameter b2npco pcm0')
+       call xertst (0.0_R8.le.s%b2npco_pcm1,
+     .  'faulty parameter b2npco pcm1')
 
 c b2npht
-       call xertst (0.le.s%b2npht_pcm0, 'faulty parameter b2npht pcm0')
-       call xertst (0.le.s%b2npht_pcm1, 'faulty parameter b2npht pcm1')
-       call xertst (0.lt.s%b2npht_rxg, 'faulty parameter b2npht rxg')
+       call xertst (0.0_R8.le.s%b2npht_pcm0,
+     .  'faulty parameter b2npht pcm0')
+       call xertst (0.0_R8.le.s%b2npht_pcm1,
+     .  'faulty parameter b2npht pcm1')
+       call xertst (0.0_R8.lt.s%b2npht_rxg,
+     .  'faulty parameter b2npht rxg')
 
 c b2nxfc
        call xertst (0.le.s%b2nxfc_style.and.s%b2nxfc_style.lt.2,
@@ -1820,11 +1973,48 @@ c b2news
      &              'faulty input b2tlnl_ei')
 
        call xertst (s%b2mndr_na_min.gt.0.0_R8,
-     &  'faulty parameter b2mndr na_min')
+     &  'faulty parameter b2mndr_na_min')
+       call xertst (s%b2mndr_na_max.gt.0.0_R8,
+     &  'faulty parameter b2mndr_na_max')
        call xertst (s%b2mndr_na_new.gt.0.0_R8,
-     &  'faulty parameter b2mndr na_new')
+     &  'faulty parameter b2mndr_na_new')
+       call xertst (s%b2mndr_na_max.gt.s%b2mndr_na_min,
+     &  'na_max must be larger than na_min!')
        call xertst (s%b2mndr_na_new.gt.s%b2mndr_na_min,
      &  'na_new must be larger than na_min!')
+       call xertst (s%b2mndr_na_new.lt.s%b2mndr_na_max,
+     &  'na_new must be smaller than na_max!')
+       call xertst (s%b2upht_te_min.gt.0.0_R8,
+     &  'faulty parameter b2upht_te_min')
+       call xertst (s%b2upht_te_max.gt.0.0_R8,
+     &  'faulty parameter b2upht_te_max')
+       call xertst (s%b2upht_ti_min.gt.0.0_R8,
+     &  'faulty parameter b2upht_ti_min')
+       call xertst (s%b2upht_ti_max.gt.0.0_R8,
+     &  'faulty parameter b2upht_ti_max')
+       call xertst (s%b2upht_tn_min.gt.0.0_R8,
+     &  'faulty parameter b2upht_tn_min')
+       call xertst (s%b2upht_tn_max.gt.0.0_R8,
+     &  'faulty parameter b2upht_tn_max')
+       call xertst (s%b2upht_kt_min.gt.0.0_R8,
+     &  'faulty parameter b2upht_kt_min')
+       call xertst (s%b2upht_kt_max.gt.0.0_R8,
+     &  'faulty parameter b2upht_kt_max')
+       call xertst (s%b2upht_zt_min.gt.0.0_R8,
+     &  'faulty parameter b2upht_zt_min')
+       call xertst (s%b2upht_zt_max.gt.0.0_R8,
+     &  'faulty parameter b2upht_zt_max')
+
+       call xertst (s%b2upht_te_min.lt.s%b2upht_te_max,
+     &  'b2upht_te_min should be smaller than b2upht_te_max')
+       call xertst (s%b2upht_ti_min.lt.s%b2upht_ti_max,
+     &  'b2upht_ti_min should be smaller than b2upht_ti_max')
+       call xertst (s%b2upht_tn_min.lt.s%b2upht_tn_max,
+     &  'b2upht_tn_min should be smaller than b2upht_tn_max')
+       call xertst (s%b2upht_kt_min.lt.s%b2upht_kt_max,
+     &  'b2upht_kt_min should be smaller than b2upht_kt_max')
+       call xertst (s%b2upht_zt_min.lt.s%b2upht_zt_max,
+     &  'b2upht_zt_min should be smaller than b2upht_zt_max')
 
        call xertst (0.le.s%stylec, 'faulty parameter stylec')
 
@@ -1839,6 +2029,44 @@ c b2news
 
        call xertst (-15.le.s%no_solve.and.s%no_solve.le.1,
      &   'faulty input no_solve')
+
+       call xertst (0.0_R8.le.s%facdrift_start .and.
+     &              1.0_R8.ge.s%facdrift_start,
+     &   'faulty argument facdrift_start')
+       call xertst (0.0_R8.le.s%facdrift_target .and.
+     &              1.0_R8.ge.s%facdrift_target,
+     &   'faulty argument facdrift_target')
+       call xertst (1.0_R8.le.s%facdrift_inc,
+     &   'faulty argument facdrift_inc')
+       call xertst (0.0_R8.le.s%facdrift_dec .and.
+     &              1.0_R8.ge.s%facdrift_dec,
+     &   'faulty argument facdrift_dec')
+       call xertst (0.0_R8.le.s%facExB_start .and.
+     &              1.0_R8.ge.s%facExB_start,
+     &   'faulty argument facExB_start')
+       call xertst (0.0_R8.le.s%facExB_target .and.
+     &              1.0_R8.ge.s%facExB_target,
+     &   'faulty argument facExB_target')
+       call xertst (1.0_R8.le.s%facExB_inc,
+     &   'faulty argument facExB_inc')
+       call xertst (0.0_R8.le.s%facExB_dec .and. 1.0_R8.ge.s%facExB_dec,
+     &   'faulty argument facExB_dec')
+       call xertst (0.0_R8.le.s%b2news_ExB .and.
+     &              1.0_R8.ge.s%b2news_ExB,
+     &  'faulty parameter b2news_ExB')
+       call xertst (0.0_R8.le.s%facvis_start .and.
+     &              1.0_R8.ge.s%facvis_start,
+     &   'faulty argument facvis_start')
+       call xertst (0.0_R8.le.s%facvis_target .and.
+     &              1.0_R8.ge.s%facvis_target,
+     &   'faulty argument facvis_target')
+       call xertst (1.0_R8.le.s%facvis_inc,
+     &   'faulty argument facvis_inc')
+       call xertst (0.0_R8.le.s%facvis_dec .and. 1.0_R8.ge.s%facvis_dec,
+     &   'faulty argument facvis_dec')
+       call xertst (0.0_R8.le.s%b2news_vis .and.
+     &              1.0_R8.ge.s%b2news_vis,
+     &  'faulty parameter b2news_vis')
 
 c b2usmo
        call xertst (0.0_R8.le.s%cfc0, 'faulty parameter cfc0')
@@ -1933,12 +2161,10 @@ c k-enstrophy model
      &  'b2tfhi_fsigkt must be .ge. 0.0')
       call xertst (0.0_R8.le.s%b2tfhi_fkt_hie,
      &  'b2tfhi_fkt_hie must be .ge. 0.0')
-      call xertst (0.0_R8.le.s%keps_inc,
-     &  'keps_inc must be .ge. 0.0')
+      call xertst (1.0_R8.le.s%keps_inc,
+     &  'keps_inc must be .ge. 1.0')
       call xertst (0.0_R8.le.s%keps_fac,
      &  'keps_fac must be .ge. 0.0')
-      call xertst (0.le.s%b2sikt_local .and. s%b2sikt_local.le.1,
-     &  'b2sikt_local must be either 0 or 1')
       call xertst (0.le.s%b2sikt_sheath_local .and.
      &  s%b2sikt_sheath_local.le.1,
      &  'b2sikt_sheath_local must be either 0 or 1')
@@ -2013,6 +2239,12 @@ c b2srst
 c b2tfnb
       call xertst (0.0_R8.le.s%b2tfnb_flux_limit_min_ti,
      &  'faulty internal parameter flux_limit_min_ti')
+     
+c b2tqce
+      if (.not.(s%b2tqce_style_guard_cells.eq.0.or.
+     &                           s%b2tqce_style_guard_cells.eq.1)) then
+        call xerrab('b2tqce_style_guard_cells is expected to be 0 or 1')
+      endif
 
 c b2mndt
       call xertst (1.le.s%nstg(0).and.1.le.s%nstg(1).and.1.le.s%nstg(2),
@@ -2046,9 +2278,14 @@ c b2ag
       call xertst (s%geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
 
-c med
-      call xertst (s%med_style.ge.0 .and. s%med_style.le.1,
-     &  'faulty parameter b2mndr_med_style')
+c Optimization
+      call xertst (s%b2optim_save_states.ge.0,
+     &  'faulty parameter b2optim_save_states')
+      call xertst (s%b2optim_reset_iter.gt.0,
+     &  'faulty parameter b2optim_reset_iter')
+      call xertst (s%b2optim_reset_drift.gt.0.0 .and.
+     &   s%b2optim_reset_drift.le.1.0_R8,
+     &  'faulty parameter b2optim_reset_drift')
 
       return
       end subroutine check_values_switches
@@ -2082,17 +2319,17 @@ c check the inter-consistency of different switches (e.g. certain combinations o
      &   'b2tfnb_alpha and b2tlc0_alpha cannot be both different '//
      &   'from zero ')
 
-      if (s%pot_eq .eq. 1) call xertst(s%prl_cur .gt. 0.0e0_R8,
+      if (s%pot_eq .eq. 1) call xertst(s%prl_cur.gt.0.0_R8,
      &  'No parallel current!')
 
       if (s%pot_eq .eq. 1) then
-       call xertst(s%fch_ion_neutral .gt. 0.0e0_R8 .or.
-     *             s%fch_anomalous .gt. 0.0e0_R8 .or.
+       call xertst(s%fch_ion_neutral .gt. 0.0_R8 .or.
+     *             s%fch_anomalous .gt. 0.0_R8 .or.
      *             s%fhe_vis_q .gt. 0.0_R8 .or.  !fnb/fhe?
      *             s%fch_inert .gt. 0.0_R8 .or.
      *             s%fhe_vis_per .gt. 0.0_R8 .or. !fnb/fhe?
      *             s%fch_stochastic .gt. 0.0_R8 .or.
-     *             s%dia_cur .gt. 0.0e0_R8 .or.
+     *             s%dia_cur .gt. 0.0_R8 .or.
      *             s%fhe_vis_par .gt. 0.0_R8,
      *             'No radial current terms!')
       endif

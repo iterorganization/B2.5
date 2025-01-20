@@ -14,11 +14,13 @@
       use b2us_plasma
       use b2mod_numerics_namelist                                     !srv 07.07.21 {
      & , only : time_factor, dtei, dtee, dten                         !srv 07.07.21 }
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
      &          balance_netcdf
+#endif
       use b2mod_ad
-     & , only : ncall_b2npht
+     & , only : ncall_b2npht, rxg_npht
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -94,12 +96,11 @@
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
      6 skt_prod(nCv), skt_diss(nCv)
       character chns*3                                                  !srv 17.07.05
-      real (kind=R8), save :: rxg
       logical :: warning_i, warning_e, warning_n, warning_kt, warning_zt
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgetr, b2saxpy
-      external b2xvsg, b2xvff, b2xvfx, b2ursd, b2usht, b2upht           !srv 02.01.07
+      external b2xvsg, b2ursd, b2usht, b2upht                           !srv 02.01.07
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -127,9 +128,10 @@
 *   ..subprogram start-up calls
       call subini ('b2npht')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test rxf
-      call xertst (0.le.rxf.and.rxf.le.1, 'faulty argument rxf')
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
+     . 'faulty argument rxf')
 *   ..set internal parameters on first call
       if (ncall_b2npht.eq.0) then
         if(switch%b2mndt_style.eq.2) then
@@ -140,7 +142,7 @@
      &              'equations but lacks theoretical development'
           endif
 *    ..make sure time-depndent equations are not altered by convergence tricks
-          rxg = huge(1.0_R8)
+          rxg_npht = huge(1.0_R8)
           if (switch%b2npht_pcm0.gt.0.0_R8) then
             call xerrab('b2npht_pcm0 must be 0 for time-dependent mode')
           endif
@@ -179,8 +181,10 @@
           if (warning_kt .or. warning_zt)
      .   write(6,*) 'Time derivative terms may be inacurrate for k-eps!'
         else
-          rxg = 1.0_R8
+          rxg_npht = 1.0_R8
         endif                                                           !srv 07.07.21 }
+        call xertst (0.0_R8.lt.rxg_npht,
+     &   'faulty internal parameter rxg')
       endif
 *   ..extensive tests on first few calls
       if (ncall_b2npht.lt.3) then
@@ -230,7 +234,7 @@ cc while the second contribution corresponds to T dn/dt
         sr%she = sr%she+sr%shedt
         sr%she(:,0)=sr%she(:,0)-1.5_R8*(dv%ne-psnl%ne)*
      &                                  psnl%te/dtim*geo%cvVol
-        if (switch%tn_style.eq.0) then     ! default, combined ion-neutral eneregy equation
+        if (switch%tn_style.eq.0) then     ! default, combined ion-neutral energy equation
           sr%shi = sr%shi+sr%shidt
           sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
      &                                  psnl%ti/dtim*geo%cvVol
@@ -275,9 +279,9 @@ cc while the second contribution corresponds to T dn/dt
      &  co%cvsa, co%cvsahz_eff, co%f_luc_sg, co%alfx_c, co%sigx_c,
      &  rt%rza, rt%rz2, st_ext, she0, shi0, shn0, srw)
       endif
-      call b2saxpy (nCv*4, 1.0e0_R8, sr%she, 1, she0, 1)
-      call b2saxpy (nCv*4, 1.0e0_R8, sr%shi, 1, shi0, 1)
-      call b2saxpy (nCv*4, 1.0e0_R8, sr%shn, 1, shn0, 1)
+      call b2saxpy (nCv*4, 1.0_R8, sr%she, 1, she0, 1)
+      call b2saxpy (nCv*4, 1.0_R8, sr%shi, 1, shi0, 1)
+      call b2saxpy (nCv*4, 1.0_R8, sr%shn, 1, shn0, 1)
 
 *   ..sources due to k-eps model
       sr%skt_prod = 0.0_R8
@@ -286,11 +290,13 @@ cc while the second contribution corresponds to T dn/dt
         call b2sikt (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &    pl, dv, rt%rza, co, st_ext, shekt, shikt, skt0, skt_prod,
      &    skt_diss)
-        call b2saxpy (nCv*4, 1.0e0_R8, shekt, 1, she0, 1)
-        call b2saxpy (nCv*4, 1.0e0_R8, shikt, 1, shi0, 1)
-        call b2saxpy (nCv*4, 1.0e0_R8, sr%skt, 1, skt0, 1)
-        call b2saxpy (nCv, 1.0e0_R8, skt_prod, 1, sr%skt_prod, 1)
-        call b2saxpy (nCv, 1.0e0_R8, skt_diss, 1, sr%skt_diss, 1)
+        szt0 = 0.0_R8
+        call b2saxpy (nCv*4, 1.0_R8, shekt, 1, she0, 1)
+        call b2saxpy (nCv*4, 1.0_R8, shikt, 1, shi0, 1)
+        call b2saxpy (nCv*4, 1.0_R8, sr%skt, 1, skt0, 1)
+        call b2saxpy (nCv*4, 1.0_R8, sr%szt, 1, szt0, 1)
+        call b2saxpy (nCv, 1.0_R8, skt_prod, 1, sr%skt_prod, 1)
+        call b2saxpy (nCv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
       endif
       
 #ifndef FIXED_POINT
@@ -340,21 +346,43 @@ c time-dependent treatment                                              !srv 07.
           endif
         endif
 *  .. calculate time-dependent source
-        call b2shdt (nCv, mpg%nCi, ns, dtim, switch%BoRiS,
+        call b2shdt (nCv, mpg%nCi, ns, dtim,
      &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
-     &    dv%ne, dv%ni, dv%nn,
-     &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt)
+     &    psnl%kt, psnl%zt, dv%ne, dv%ni, dv%nn,
+     &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,
+     &    sr%sktdt, sr%sztdt)
 *  .. add contribution from time-dependent source
+cc If e.g. d(nT)/dt = n dT/dt + T dn/dt,
+cc then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
+cc while the second contribution corresponds to T dn/dt
         she0 = she0+sr%shedt
         she0(:,0)=she0(:,0)-1.5_R8*(dv%ne-psnl%ne)
      &                *switch%b2mndt_ckn*psnl%te/dtim*geo%cvVol
-        shi0 = shi0+sr%shidt
-        shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
-     &                *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol
-        if (switch%tn_style.eq.2) then
+        if (switch%tn_style.eq.0) then       ! default, combined ion-neutral energy equation
+          shi0 = shi0+sr%shidt
+          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
+     &                  *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol
+        elseif (switch%tn_style.eq.1) then   ! pure ion energy equation
+          shi0 = shi0+sr%shidt
+          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                  *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol          
+        else                                 ! separate ion and neutral energy equation
+          shi0 = shi0+sr%shidt
+          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                  *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol
           shn0 = shn0+sr%shndt
           shn0(:,0)=shn0(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))
      &                  *switch%b2mndt_ckn*psnl%tn/dtim*geo%cvVol
+        endif
+        if (switch%solve_keps.gt.0) then
+          skt0 = skt0 + sr%sktdt
+          skt0(:,0)=skt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                                    psnl%kt/dtim*geo%cvVol
+        endif
+        if (switch%solve_keps.gt.1) then
+          szt0 = szt0 + sr%sztdt
+          szt0(:,0)=szt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                                    psnl%zt/dtim*geo%cvVol
         endif
       endif                                                              !srv 207.07.21 }
       endif
@@ -411,14 +439,30 @@ c residuals for separate neutral energy equation
       do iCv = 1, mpg%nCi
         shei(iCv) = co%ceqp(iCv)*dv%ne(iCv)*dv%ni(iCv,0)/
      &     (pl%te(iCv)*sqrt(pl%te(iCv)))*(pl%te(iCv)-pl%ti(iCv))
+        shi0(iCv,0) = shi0(iCv,0) + switch%b2npht_stab_shei*             !lkw 29.03.2024{
+     &     co%ceqp(iCv)*
+     &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))*
+     &     pl%ti(iCv)
+        shi0(iCv,1) = shi0(iCv,1) - switch%b2npht_stab_shei*
+     &    co%ceqp(iCv)*
+     &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))
+        she0(iCv,0) = she0(iCv,0) + switch%b2npht_stab_shei
+     &    *co%ceqp(iCv)*
+     &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))*
+     &     pl%te(iCv)
+        she0(iCv,1) = she0(iCv,1) - switch%b2npht_stab_shei
+     &    *co%ceqp(iCv)*
+     &     dv%ne(iCv)*dv%ni(iCv,0)/(pl%te(iCv)*sqrt(pl%te(iCv)))         !lkw 29.03.2024}
       enddo
       do iCv = mpg%nCi+1, nCv
         shei(iCv) = 0.0_R8
       enddo
 
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then
         b2npht_shei_bal = shei                                           !djm Jan2017
       endif
+#endif
 
 *   ..compute final resht, reshe, reshi
 !      if (solving(4).or.get_residuals.eq.1) then                        !srv 22.05.18
@@ -554,6 +598,7 @@ c residuals for separate neutral energy equation
       elseif (switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nCv,0,pl%te,'b2npht_te')
         call my_out_us(70,nCv,0,pl%ti,'b2npht_ti')
+        call my_out_us(70,nCv,0,pl%tn,'b2npht_tn')
       end if
 
 * ..return

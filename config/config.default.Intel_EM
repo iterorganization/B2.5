@@ -16,14 +16,14 @@ endif
 
 # The version relying on Intel Fortran
 
-EQUIVS   = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -Dsamax=damax
+EQUIVS   = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri
 DEFINES += -DUSE_CDF_B2STIME -DNO_LONG_LINES # -DNO_CDF
 
 ifndef SOLPS_CPP
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
-    IMAS_PKG_LIST = fundamental_constants
+    IMAS_PKG_LIST = fundamental-constants
   endif
   ifdef TAO
     ifeq ($(shell `pkg-config --exists petsc`; echo $$?),0)
@@ -37,21 +37,22 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 FC       = ifort
+FN       = ${FC}
 CPP      = /lib/cpp -C -traditional
 CPPOPTS  = -P -I${srcdir} ${EQUIVS}
 
-#FCOPTS   = -Ad -Am -X9 -fw -Kfast,eval -x- -O -M${OBJDIR}
-#FCOPTS   = -r8 -O0 -check -g -traceback -save -fpconstant -ftz
-#FCOPTS   = -r8 -O -g -traceback -save -fpconstant -ftz
+#FCOPTS  = -Ad -Am -X9 -fw -Kfast,eval -x- -O -M${OBJDIR}
+#FCOPTS  = -r8 -O0 -check -g -traceback -save -fpconstant -ftz
+#FCOPTS  = -r8 -O -g -traceback -save -fpconstant -ftz
 ifdef SOLPS_DEBUG
-FCOPTS   = -C -g -check -traceback -fpconstant -save -ftz -vec-report0
+  FCOPTS = -C -g -check -traceback -fpconstant -save -ftz -vec-report0
 else
-FCOPTS   = -O -xavx -traceback -fpconstant -save -ftz -vec-report0
+  FCOPTS = -O -xavx -traceback -fpconstant -save -ftz -vec-report0
 endif
 
 DBLFC    = ${FC}
@@ -66,22 +67,24 @@ PLLIBES  = ${LD_MSCL}
 LDLIBES  = ${LD_NAG} ${LD_NETCDF}
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+  LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD       = ${FC}
-#LDFLAGS = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lsonnet -lnetcdf -lnag /usr/lib/libstdc++.so.2.9 # -lw -lnsl /usr/lib/libC.so.5 ${SOLPS_LIBS}
-LDFLAGS  = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lsonnet -lnetcdf -lnag -lstdc++
+LN       = ${FN}
+#LDFLAGS = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lnetcdf -lnag /usr/lib/libstdc++.so.2.9 # -lw -lnsl /usr/lib/libC.so.5 ${SOLPS_LIBS}
+LDFLAGS  = -lslap -lma28 -lmach -lblas -lxersla -lmscl -lnetcdf -lnag -lstdc++
 LDOPTSend= -Wl,-Map,${OBJDIR}/loadmap
-LDEXTRA  = -lblas -lsonnet -lstdc++
+LDEXTRA  = -lblas -lstdc++
 
 INCMOD   = -I
 MOD      = mod
 OBJDEST  = -o ${OBJDIR}/$*.o
+OBNDEST  = -o ${OBNDIR}/$*.o
 
 #!!!Local Variables:
 #!!! mode: Makefile

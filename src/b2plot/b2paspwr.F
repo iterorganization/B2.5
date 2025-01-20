@@ -23,6 +23,9 @@ c
       parameter (lun=96, m_hlp=9, m_hlpa=1)
       integer, save :: shot = 0, run = 0
       character*12 case_number
+      character*16 username
+      character*24 database,version
+      character*256 filename,path,imasdir,home_dir,zeile
       integer i,j,k,l,m,n,ix,ixx,isep,lv_hlp,n_hlp
       real (kind=R8) ::
      ,  hlp_pwr_in(2),hlp_rad_div(2),hlp_rad_trg(2),hlp_area(2),
@@ -38,7 +41,7 @@ c
      ,  (hlp_spwr,equ_hlp(1,5)),    (hlp_spwt,equ_hlp(1,6)),
      ,  (hlp_rdfr,equ_hlp(1,7)),    (hlp_rad_tot,equ_hlp(1,8)),
      ,  (hlp_area_t,equ_hlp(1,9))
-      logical ex
+      logical ex,not_default
       character hlp_fn*24,hlp_c(2),hlp_u,hlp_frm*256,hlp_frh*256,
      ,  hlp_hdr(m_hlp)*4,hlp_hda(m_hlpa)*4,hlp_inp*8
       data hlp_fn / 'spec_pwr.dat' /
@@ -46,6 +49,16 @@ c
       data hlp_hdr / 'Pin_','Pdv_','Ptg_','Sdv_','Psw_',
      ,               'Pst_','RdF_','Prd_','Sdt_' /
       data hlp_hda / 'Pin' /
+      logical streql
+      character*16 usrnam
+      character*24 device_env
+      external streql,usrnam
+#ifndef NO_GETENV
+      integer lenval,ierror
+#ifndef USE_PXFGETENV
+      intrinsic get_environment_variable
+#endif
+#endif
 c======================================================================
 
 #ifdef WG_TODO
@@ -188,22 +201,139 @@ c        print *,'hlp_frh: ',hlp_frh
 
 c*** Extract the case number
 
-      call ipgeti('b2mndr_shot_number', shot )
-      call xertst( 0.le.shot.and.shot.le.214748, 'Invalid shot number')
+      call ipgeti('b2mndr_pulse_number', shot )
+      if(shot.eq.0) call ipgeti('b2mndr_shot_number', shot )
       call ipgeti('b2mndr_run_number', run )
+#if AL_MAJOR_VERSION > 4
+      call xertst( 0.le.shot, 'Invalid pulse number')
+      call xertst( 0.le.run, 'Invalid run number')
+#else
+      call xertst( 0.le.shot.and.shot.le.214748, 'Invalid shot number')
       call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
+#endif
+      not_default = shot.gt.0.and.run.ge.0
       if (shot.gt.0) then
         write(case_number,'(i6,a1,i5.5)') shot,'/',run
       else
-        lv_hlp=0
-        l=index(label,'#')
-        m=index(label,'_')
-        if(m.gt.l+1) then
-          hlp_inp=label(l+1:m-1)
-          read(hlp_inp,'(i8)',err=99) lv_hlp
+        path = ' '
+#if AL_MAJOR_VERSION > 4
+        call ipgetc('b2mndr_ids_path', path )
+#endif
+        call strip_spaces(path)
+        not_default = not_default.or..not.streql(path,' ')
+        filename='shotnumber.history'
+        call find_file(filename,ex)
+        if (ex) then
+          open(99,file=filename)
+   11     continue
+          read(99,'(a)',end=12) zeile
+          goto 11
+        else
+          zeile = ' '
         end if
-   99   continue
-        write(case_number,'(i4)') lv_hlp
+   12   continue
+        if (ex) close(99)
+        call strip_spaces(zeile)
+        if (.not.streql(zeile,' ').or..not.streql(path,' ')) then
+          username = usrnam()
+          call ipgetc('b2mndr_user', username )
+          call xertst( .not.streql(username,' '),
+     .     'User name not defined !')
+          not_default = not_default.or..not.streql(username,usrnam())
+          home_dir = '/home/'//trim(username)
+          database = 'solps-iter'
+#ifdef IMAS
+          write(version,'(i1)') IMAS_MAJOR_VERSION
+#else
+          version = '0'
+#endif
+          device_env = ' '
+#ifndef NO_GETENV
+#ifdef USE_PXFGETENV
+          CALL PXFGETENV ('HOME', 0, home_dir, lenval, ierror)
+          CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
+#else
+          call get_environment_variable('HOME', status=ierror,
+     .                                          length=lenval)
+          if (ierror.eq.0) call get_environment_variable('HOME',
+     .                                          value=home_dir)
+          call get_environment_variable('DEVICE', status=ierror,
+     .                                          length=lenval)
+          if (ierror.eq.0) call get_environment_variable('DEVICE',
+     .                                          value=device_env)
+#endif
+          if (.not.streql(device_env,' ')) database = device_env
+          if (streql(database,'iter')) database = 'ITER'
+#endif
+          call ipgetc('b2mndr_device', database )
+          call ipgetc('b2mndr_database', database )
+          call xertst( .not.streql(database,' '),
+     .     'Database not defined !')
+          not_default = not_default.or.
+     &                 (.not.streql(database, device_env).and.
+     &                  .not.streql(database,'solps-iter'))
+          imasdir = trim(home_dir)//'/public/imasdb/'
+     &            //trim(database)//'/'//trim(version)
+#if AL_MAJOR_VERSION < 5
+     &            //'/'//int2str(run/10000)
+#endif
+#ifndef NO_GETENV
+#ifdef USE_PXFGETENV
+          CALL PXFGETENV ('IMASDIR', 0, imasdir, lenval, ierror)
+#else
+          call get_environment_variable('IMASDIR',
+     .     status=ierror, length=lenval)
+          if (ierror.eq.0)
+     >     call get_environment_variable('IMASDIR',value=imasdir)
+#endif
+#endif
+          if (.not.not_default) path = trim(zeile)
+          if (streql(path,' ')) path = trim(imasdir)
+          l=index(path,'$HOME')
+          if (l.gt.0) then
+            path = trim(home_dir)//trim(path(l+5:256))
+          end if
+          l=index(path,'$SOLPSTOP')
+          if (l.gt.0) then
+            path = trim(solpstop())//trim(path(l+9:256))
+          end if
+          l=index(path,'$IMASDIR')
+          if (l.gt.0) then
+            path = trim(imasdir)//trim(path(l+8:256))
+          end if
+          do while (path(len_trim(path):len_trim(path)).eq.'/')
+            path(len_trim(path):len_trim(path))=' '
+          end do
+          l=index(path,trim(imasdir))
+#if AL_MAJOR_VERSION > 4
+          if (l.gt.0) then
+            m=index(path(l+len_trim(imasdir):256),'/')
+            case_number =
+     .       trim(path(m+l+len_trim(imasdir):m+l+len_trim(imasdir)+11))
+          else
+#endif
+            l=index(path,'/')
+            m=index(path(l+1:len_trim(path)),'/')
+            do while (m.ne.0)
+              l=l+m
+              m=index(path(l+1:len_trim(path)),'/')
+            end do
+            case_number = path(l+1:l+12)
+#if AL_MAJOR_VERSION > 4
+          end if
+#endif
+        end if
+        if (streql(case_number,' ')) then
+          lv_hlp=0
+          l=index(label,'#')
+          m=index(label,'_')
+          if(m.gt.l+1) then
+            hlp_inp=label(l+1:m-1)
+            read(hlp_inp,'(i8)',err=99) lv_hlp
+          end if
+   99     continue
+          write(case_number,'(i4)') lv_hlp
+        end if
       end if
 
 c*** Write the data

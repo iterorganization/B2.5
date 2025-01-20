@@ -5,6 +5,7 @@
       use b2mod_cellhelper
       use b2mod_connectivity
       use b2mod_dimensions
+      use b2mod_math
       implicit none
 
       integer, parameter :: NNREGMAX=8
@@ -35,6 +36,8 @@
 
       contains
 
+*----------------------------------------------------------------------
+
       subroutine alloc_b2mod_indirect(nxd,nyd,nncutmax)
       implicit none
       integer nxd,nyd,nncutmax
@@ -52,7 +55,7 @@
       allocate(on_closed_surface(-1:nxd,-1:nyd))
       nnreg=0
       allocate(resignore(-1:nxd,-1:nyd,2))
-      nncutmax=DEF_NCUT
+      nncutmax=max(1,DEF_NCUT)
       allocate(leftcut(1:nncutmax))
       allocate(rightcut(1:nncutmax))
       allocate(topcut(1:nncutmax))
@@ -73,7 +76,7 @@
       subroutine dealloc_b2mod_indirect
       implicit none
 
-      if(b2mod_indirect_allocated) then
+      if (b2mod_indirect_allocated) then
         deallocate(leftix)
         deallocate(leftiy)
         deallocate(rightix)
@@ -96,6 +99,7 @@
       return
       end subroutine dealloc_b2mod_indirect
 
+*----------------------------------------------------------------------
 ! For the ghost cell at position (ix,iy), get the face index
 ! on which the neighbour internal cell is connected
       integer function ghostGetBndFace(nx, ny, ix, iy)
@@ -384,60 +388,5 @@
       FindLeftCell = ix
       return
       end function FindLeftCell
-
-  !> Area of quadrangle given by vertex coordinates
-  !> The vertices must be in sequence!
-      function quadArea( x0, y0, x1, y1, x2, y2, x3, y3 )
-      use b2mod_math
-      implicit none
-      real (kind=R8) :: quadArea
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-
-      quadArea = TriangleArea(x0, y0, x1, y1, x2, y2) +
-     .           TriangleArea(x2, y2, x3, y3, x0, y0)
-
-      end function quadArea
-
-  !> Coordinates of centroid of a quadrangle given by vertex coordinates
-  !> Corners are numbered in the B2 convention 2-3
-  !>                                           0-1
-      function quadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
-      use b2mod_math
-      implicit none
-      real (kind=R8) :: quadCentroid(0:1)
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-
-      quadCentroid = ( triangleCentroid(x0,y0,x1,y1,x3,y3) 
-     &   * triangleArea(x0,y0,x1,y1,x3,y3) 
-     &   + triangleCentroid(x0,y0,x2,y2,x3,y3) 
-     &   * triangleArea(x0,y0,x2,y2,x3,y3) ) 
-     &   / ( triangleArea(x0,y0,x1,y1,x3,y3) 
-     &   + triangleArea(x0,y0,x2,y2,x3,y3) )
-      return
-      end function quadCentroid
-
-  !> Average of a quantity given on the vertices of
-  !> an arbitrary quadrangular cell
-  !> Corners are numbered in the B2 convention 2-3
-  !>                                           0-1
-      function averageVertex( f0, x0, y0, f1, x1, y1, 
-     &                        f2, x2, y2, f3, x3, y3 )
-      use b2mod_math
-      implicit none
-      real (kind=R8) :: averageVertex
-      real (kind=R8) :: f0, f1, f2, f3
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-      real (kind=R8) :: a0, a1, a2, a3
-  
-      a0 = TriangleArea( x2, y2, x0, y0, x1, y1 )
-      a1 = TriangleArea( x0, y0, x1, y1, x3, y3 )
-      a2 = TriangleArea( x0, y0, x2, y2, x3, y3 )
-      a3 = TriangleArea( x2, y2, x3, y3, x1, y1 )
- 
-      averageVertex = (f0*a0 + f1*a1 + f2*a2 + f3*a3) /  
-     &                (a0 + a1 + a2 + a3)
- 
-      return
-      end function averageVertex
 
       end module b2mod_indirect

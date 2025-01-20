@@ -5,7 +5,7 @@
       character *(*) first_name
 
       character *64 filename                              !srv 05.10.09
-      character(24) hlp_frm                               !srv 11.03.13
+      character(26) hlp_frm                               !srv 11.03.13
       integer ix, iy
       integer, save :: ncall = 0
       integer, save :: iappend = 0
@@ -49,11 +49,12 @@
         else
           open (nwrite,file=filename,position='append')
         end if
-        write(hlp_frm,"(a4,i4,a1,i2,a9)")
-     .     '(5x,',nx+2,'(',ndigits,'x,i3,5x))'
+        write(hlp_frm,"(a4,i4,a1,i2,a5,i2,a3)")
+     .     '(5x,',nx+2,
+     .     '(',6+ndigits-(ndigits+6)/2,'x,i3,',(ndigits+6)/2,'x))'
         write (nwrite,hlp_frm) (ix,ix=-1,nx)
-        write(hlp_frm,"(a10,i4,a3,i2.2,a1,i2.2,a2)")
-     .    '(1x,i3,1x,',nx+2,'(es',ndigits+8,'.',ndigits,'))'
+        write(hlp_frm,"(a10,i4,a3,i2.2,a1,i2.2,a4)")
+     .    '(1x,i3,1x,',nx+2,'(es',ndigits+9,'.',ndigits,'e3))'
         do iy=ny,-1,-1
           write(nwrite,hlp_frm) iy, (fun(ix,iy), ix = -1, nx)
         enddo

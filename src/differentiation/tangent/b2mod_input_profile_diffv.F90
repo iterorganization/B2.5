@@ -13,20 +13,14 @@
 !
 !
 MODULE B2MOD_INPUT_PROFILE_DIFFV
-!      use b2mod_types
+  USE B2MOD_TYPES
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
   USE B2MOD_TIME
-!WG_TODO      use b2mod_sources
-!WG_TODO     &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     &     , only: ext_sna0to1, ext_smo0to3, ext_she0to3, ext_shi0to3,
-!WG_TODO     &             balance_netcdf
-!WG_TODO      use b2mod_geo_corner
-!WG_TODO     &     , only: nmdpl
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_SUBSYS
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -35,38 +29,7 @@ MODULE B2MOD_INPUT_PROFILE_DIFFV
   INTEGER, PARAMETER :: nkind_source=4, nkind_data=2, nscale=10
   INTEGER, PARAMETER :: nkind_coeff=9
   INTEGER, SAVE :: csig_an_style=1
-  PARAMETER (nrr=100+2, nxx=200+2, nss=42)
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
+  PARAMETER (nrr=def_nyd+2, nxx=def_nxd+2, nss=def_nsd)
   INTEGER, SAVE :: nsdata(nkind_data, nkind_source, 0:nss)
   INTEGER, SAVE :: nxdata(nkind_data, nkind_source, 0:nss)
   REAL(kind=r8), SAVE :: sdata(2, nrr, nkind_source, 0:nss)
@@ -107,8 +70,8 @@ CONTAINS
     IMPLICIT NONE
     INTEGER :: ncv, ns
 !
-!      call xertst (nCv.le.200, 'faulty input nx')
-    CALL XERTST(ns .LE. 42, 'faulty input ns')
+    CALL XERTST(ncv .GT. 0, 'faulty input nCv')
+    CALL XERTST(ns .LE. def_nsd, 'faulty input ns')
 !
     RETURN
   END SUBROUTINE ALLOC_INPUT_PROFILE
@@ -134,10 +97,10 @@ CONTAINS
 !
 !-----------------------------------------------------------------------
 !
-  SUBROUTINE TRANSPORT_INPUT_DV(ncv, nfc, ns, geo, geod, mpg, mpgd, pl, &
-&   pld, dv, dvd, rt, rtd, hcib, hcibd, dna0, dna0d, dpa0, dpa0d, vla0, &
-&   vla0d, vsa0, vsa0d, hci0, hce0, hce0d, sig0, sig0d, alf0, alf0d, &
-&   ncall, nbdirs)
+  SUBROUTINE TRANSPORT_INPUT_DV(ncv, nfc, ns, geo, geod, mpg, pl, pld, &
+&   dv, dvd, rt, rtd, hcib, hcibd, dna0, dna0d, dpa0, dpa0d, vla0, vla0d&
+&   , vsa0, vsa0d, hci0, hce0, hce0d, sig0, sig0d, alf0, alf0d, ncall, &
+&   nbdirs)
 !
 !**************************************************************************
 !*     subroutine for reading in experimental transport coefficients from *
@@ -153,11 +116,10 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
-    INTEGER :: ncv, nfc, ns
+    INTEGER, INTENT(IN) :: ncv, nfc, ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
-    TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
     TYPE(B2PLASMA), INTENT(IN) :: pl
     TYPE(B2PLASMA_DIFFV), INTENT(IN) :: pld
     TYPE(B2DERIVATIVES), INTENT(IN) :: dv
@@ -173,8 +135,8 @@ CONTAINS
     REAL(kind=r8) :: hce0(ncv), sig0(ncv), alf0(ncv)
     REAL(kind=r8) :: hce0d(nbdirsmax, ncv), sig0d(nbdirsmax, ncv), alf0d&
 &   (nbdirsmax, ncv)
-    INTEGER :: iy, i, ifail, spec, nspec, iir, ift, icv, ndim, is, nsp(&
-&   ns+1), iloop, ncall, ndat, kind_coeff, kind_data, ic, lbl
+    INTEGER :: iy, iy2, i, ifail, spec, nspec, iir, ift, icv, ndim, is, &
+&   nsp(ns+1), iloop, ncall, ndat, kind_coeff, kind_data, ic, lbl
     REAL(kind=r8) :: f(nrr), r(nrr), pr(nrr), pf(nrr), d(nrr), pelm(nrr)&
 &   , felm(nrr), delm(nrr), prof(nrr)
     REAL(kind=r8) :: fd(nbdirsmax, nrr), rd(nbdirsmax, nrr), pfd(&
@@ -247,6 +209,8 @@ CONTAINS
       IF (ANY(poloidal_scaling)) CALL XERRAB(&
 &                                'Poloidal scaling not yet coded for WG'&
 &                                     )
+      CALL XERTST(no_div .OR. mpg%isclassicalgrid .EQ. 1, &
+&           'no_div should be true for non-classical vessel mode grids')
     ELSE
       IF (transport_ip_time_mod .GT. 0.0_R8) THEN
         arg1 = tim/transport_ip_time_mod
@@ -316,7 +280,7 @@ CONTAINS
           ndat = ndata(kind_data, kind_coeff, spec)
           IF (ndat .NE. 0) THEN
             CALL XERTST(ndat .LE. nrr, &
-&                'Increase NYD in DIMENSIONS.F to match size of profile'&
+&            'Increase NYD in b2mod_dimensions to match size of profile'&
 &                )
             nspec = 1
             nsp(1) = spec
@@ -345,7 +309,7 @@ CONTAINS
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
 !
-            CALL CALC_DIST_NODIFF(mpg, geo, omp, nomp, icsepomp, pr)
+            CALL CALC_DIST_NODIFF(geo, omp, nomp, icsepomp, pr)
 !
             CALL E01BEF_DV(ndat, r, rd, f, fd, d, dd, ifail, nbdirs)
             IF (elm_data) CALL E01BEF_DV(ndat, r, rd, felm, felmd, delm&
@@ -359,6 +323,7 @@ CONTAINS
             IF (elm_data) CALL E01BFF_DV(ndat, r, rd, felm, felmd, delm&
 &                                  , delmd, ndim, pr, pelm, pelmd, ifail&
 &                                  , nbdirs)
+!
             IF (tr_ip_new_files) THEN
 !
               IF (elm_data) THEN
@@ -381,7 +346,12 @@ CONTAINS
             END IF
 !
             DO is=1,nspec
-              DO iy=1,ndim
+              DO 120 iy=1,ndim
+                IF (mpg%isclassicalgrid .EQ. 0) THEN
+! skip guard cells
+                  IF (iy .EQ. 1 .OR. iy .EQ. ndim) GOTO 120
+                END IF
+                iy2 = iy
                 iir = mpg%cvreg(omp(iy))
                 IF (iir .LE. 0 .OR. iir .GT. cvregmax) THEN
                   WRITE(*, *) 'transport_input: out of bounds ', &
@@ -389,151 +359,323 @@ CONTAINS
                   iir = cvregmax
                 END IF
                 lbl = mpg%ftlbl(mpg%cvft(omp(iy)))
-                DO ift=1,mpg%nft
-                  IF (mpg%ftlbl(ift) .EQ. lbl) THEN
-                    DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(&
-&                       ift, 2)-1
-                      icv = mpg%ftcv(ic)
-                      iir = mpg%cvreg(icv)
-                      lpflux = mpg%ftreg(mpg%cvft(icv)) .EQ. 3
-                      ldiv = MOD(iir - 1, 4) + 1 .GE. 3
-                      poloidal_scale_factor = 1.0_R8
-                      elm_region = .false.
-                      IF (.NOT.(((.NOT.region_flags(iir, kind_coeff)) &
-&                         .OR. (lpflux .AND. no_pflux)) .OR. (ldiv .AND.&
-&                         no_div))) THEN
-!
-                        IF (elm_region) THEN
-                          DO nd=1,nbdirs
-                            profd(nd, 1:ndim) = pelmd(nd, 1:ndim)
-                          END DO
-                          prof(1:ndim) = pelm(1:ndim)
-                        ELSE
-                          DO nd=1,nbdirs
-                            profd(nd, 1:ndim) = pfd(nd, 1:ndim)
-                          END DO
-                          prof(1:ndim) = pf(1:ndim)
-                        END IF
-!
-                        IF (kind_coeff .EQ. 1) THEN
-                          DO nd=1,nbdirs
-                            dna0d(nd, icv, nsp(is)) = &
-&                             poloidal_scale_factor*profd(nd, iy)
-                          END DO
-                          dna0(icv, nsp(is)) = prof(iy)*&
-&                           poloidal_scale_factor
-!
-                        ELSE IF (kind_coeff .EQ. 2) THEN
-                          temp = rt%rza(icv, nsp(is))*pl%te(icv) + pl%ti&
-&                           (icv)
-                          temp0 = prof(iy)/temp
-                          DO nd=1,nbdirs
-                            dpa0d(nd, icv, nsp(is)) = &
-&                             poloidal_scale_factor*(profd(nd, iy)-temp0&
-&                             *(pl%te(icv)*rtd%rza(nd, icv, nsp(is))+rt%&
-&                             rza(icv, nsp(is))*pld%te(nd, icv)+pld%ti(&
-&                             nd, icv)))/temp
-                          END DO
-                          dpa0(icv, nsp(is)) = poloidal_scale_factor*&
-&                           temp0
-!
-                        ELSE IF (kind_coeff .EQ. 3) THEN
-                          DO nd=1,nbdirs
-                            hcibd(nd, icv, nsp(is)) = &
-&                             poloidal_scale_factor*(pl%na(icv, nsp(is))&
-&                             *profd(nd, iy)+prof(iy)*pld%na(nd, icv, &
-&                             nsp(is)))
-                          END DO
-                          hcib(icv, nsp(is)) = poloidal_scale_factor*&
-&                           prof(iy)*pl%na(icv, nsp(is))
-!
-                        ELSE IF (kind_coeff .EQ. 4) THEN
-                          DO nd=1,nbdirs
-                            hce0d(nd, icv) = poloidal_scale_factor*(dv%&
-&                             ne(icv)*profd(nd, iy)+prof(iy)*dvd%ne(nd, &
-&                             icv))
-                          END DO
-                          hce0(icv) = prof(iy)*dv%ne(icv)*&
-&                           poloidal_scale_factor
-!
-                        ELSE IF (kind_coeff .EQ. 5) THEN
-                          DO nd=1,nbdirs
-                            vla0d(nd, icv, 0, nsp(is)) = &
-&                             poloidal_scale_factor*profd(nd, iy)
-                          END DO
-                          vla0(icv, 0, nsp(is)) = prof(iy)*&
-&                           poloidal_scale_factor
-!
-                        ELSE IF (kind_coeff .EQ. 6) THEN
-                          DO nd=1,nbdirs
-                            vla0d(nd, icv, 1, nsp(is)) = &
-&                             poloidal_scale_factor*profd(nd, iy)
-                          END DO
-                          vla0(icv, 1, nsp(is)) = prof(iy)*&
-&                           poloidal_scale_factor
-!
-                        ELSE IF (kind_coeff .EQ. 7) THEN
-                          temp0 = poloidal_scale_factor*mp*am(nsp(is))
-                          DO nd=1,nbdirs
-                            vsa0d(nd, icv, nsp(is)) = temp0*(pl%na(icv, &
-&                             nsp(is))*profd(nd, iy)+prof(iy)*pld%na(nd&
-&                             , icv, nsp(is)))
-                          END DO
-                          vsa0(icv, nsp(is)) = temp0*(prof(iy)*pl%na(icv&
-&                           , nsp(is)))
-!
-                        ELSE IF (kind_coeff .EQ. 8) THEN
-!
-                          IF (csig_an_style .EQ. 0) THEN
-                            DO nd=1,nbdirs
-                              sig0d(nd, icv) = qe*poloidal_scale_factor*&
-&                               (dv%ne(icv)*profd(nd, iy)+prof(iy)*dvd%&
-&                               ne(nd, icv))
-                            END DO
-                            sig0(icv) = prof(iy)*qe*dv%ne(icv)*&
-&                             poloidal_scale_factor
-                          ELSE IF (csig_an_style .EQ. 1) THEN
-                            CALL XERRAB(&
-&                                 'csig_an_style=1 not yet coded for WG'&
-&                                )
-                          END IF
-                        ELSE IF (kind_coeff .EQ. 9) THEN
-!
-                          temp0 = qe/pl%te(icv)
-                          DO nd=1,nbdirs
-                            arg1d(nd) = -(temp0*pld%te(nd, icv)/pl%te(&
-&                             icv))
-                          END DO
-                          arg1 = temp0
-                          temp0 = SQRT(arg1)
-                          result1 = temp0
-                          DO nd=1,nbdirs
-                            IF (arg1 .EQ. 0.D0) THEN
-                              result1d(nd) = 0.D0
-                            ELSE
-                              result1d(nd) = arg1d(nd)/(2.0*temp0)
-                            END IF
-                            alf0d(nd, icv) = poloidal_scale_factor*(dv%&
-&                             ne(icv)*(result1*profd(nd, iy)+prof(iy)*&
-&                             result1d(nd))+prof(iy)*result1*dvd%ne(nd, &
-&                             icv))
-                          END DO
-                          alf0(icv) = poloidal_scale_factor*prof(iy)*dv%&
-&                           ne(icv)*result1
-!
-                        ELSE
-                          WRITE(*, *) 'Option', kind_coeff, &
-&                         'not yet implemented'
-                        END IF
-                      END IF
-                    END DO
+                DO 110 ift=1,mpg%nft
+                  IF (mpg%isclassicalgrid .EQ. 1) THEN
+                    IF (mpg%ftlbl(ift) .NE. lbl) THEN
+                      GOTO 110
+                    ELSE
+                      iy2 = iy
+                    END IF
+                  ELSE IF (ift .NE. mpg%cvft(omp(iy))) THEN
+                    IF (ift .LE. mpg%cvft(omp(ndim-1)) .OR. ift .GE. mpg&
+&                       %cvft(omp(2))) THEN
+                      GOTO 110
+                    ELSE
+!nh flux tube outside OMP ==> take last OMP flux tube
+                      iy2 = ndim
+                    END IF
+                  ELSE
+                    iy2 = iy
                   END IF
-                END DO
-              END DO
-            END DO
+!
+                  DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(&
+&                     ift, 2)-1
+                    icv = mpg%ftcv(ic)
+                    iir = mpg%cvreg(icv)
+                    lpflux = mpg%ftreg(mpg%cvft(icv)) .EQ. 3
+                    ldiv = MOD(iir - 1, 4) + 1 .GE. 3
+                    poloidal_scale_factor = 1.0_R8
+                    elm_region = .false.
+                    IF (.NOT.(((.NOT.region_flags(iir, kind_coeff)) .OR.&
+&                       (lpflux .AND. no_pflux)) .OR. (ldiv .AND. no_div&
+&                       ))) THEN
+!
+                      IF (elm_region) THEN
+                        DO nd=1,nbdirs
+                          profd(nd, 1:ndim) = pelmd(nd, 1:ndim)
+                        END DO
+                        prof(1:ndim) = pelm(1:ndim)
+                      ELSE
+                        DO nd=1,nbdirs
+                          profd(nd, 1:ndim) = pfd(nd, 1:ndim)
+                        END DO
+                        prof(1:ndim) = pf(1:ndim)
+                      END IF
+!
+                      IF (kind_coeff .EQ. 1) THEN
+                        DO nd=1,nbdirs
+                          dna0d(nd, icv, nsp(is)) = &
+&                           poloidal_scale_factor*profd(nd, iy2)
+                        END DO
+                        dna0(icv, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 2) THEN
+                        temp = rt%rza(icv, nsp(is))*pl%te(icv) + pl%ti(&
+&                         icv)
+                        temp0 = prof(iy2)/temp
+                        DO nd=1,nbdirs
+                          dpa0d(nd, icv, nsp(is)) = &
+&                           poloidal_scale_factor*(profd(nd, iy2)-temp0*&
+&                           (pl%te(icv)*rtd%rza(nd, icv, nsp(is))+rt%rza&
+&                           (icv, nsp(is))*pld%te(nd, icv)+pld%ti(nd, &
+&                           icv)))/temp
+                        END DO
+                        dpa0(icv, nsp(is)) = poloidal_scale_factor*temp0
+!
+                      ELSE IF (kind_coeff .EQ. 3) THEN
+                        DO nd=1,nbdirs
+                          hcibd(nd, icv, nsp(is)) = &
+&                           poloidal_scale_factor*(pl%na(icv, nsp(is))*&
+&                           profd(nd, iy2)+prof(iy2)*pld%na(nd, icv, nsp&
+&                           (is)))
+                        END DO
+                        hcib(icv, nsp(is)) = poloidal_scale_factor*prof(&
+&                         iy2)*pl%na(icv, nsp(is))
+!
+                      ELSE IF (kind_coeff .EQ. 4) THEN
+                        DO nd=1,nbdirs
+                          hce0d(nd, icv) = poloidal_scale_factor*(dv%ne(&
+&                           icv)*profd(nd, iy2)+prof(iy2)*dvd%ne(nd, icv&
+&                           ))
+                        END DO
+                        hce0(icv) = prof(iy2)*dv%ne(icv)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 5) THEN
+                        DO nd=1,nbdirs
+                          vla0d(nd, icv, 0, nsp(is)) = &
+&                           poloidal_scale_factor*profd(nd, iy2)
+                        END DO
+                        vla0(icv, 0, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 6) THEN
+                        DO nd=1,nbdirs
+                          vla0d(nd, icv, 1, nsp(is)) = &
+&                           poloidal_scale_factor*profd(nd, iy2)
+                        END DO
+                        vla0(icv, 1, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 7) THEN
+                        temp0 = poloidal_scale_factor*mp*am(nsp(is))
+                        DO nd=1,nbdirs
+                          vsa0d(nd, icv, nsp(is)) = temp0*(pl%na(icv, &
+&                           nsp(is))*profd(nd, iy2)+prof(iy2)*pld%na(nd&
+&                           , icv, nsp(is)))
+                        END DO
+                        vsa0(icv, nsp(is)) = temp0*(prof(iy2)*pl%na(icv&
+&                         , nsp(is)))
+!
+                      ELSE IF (kind_coeff .EQ. 8) THEN
+                        IF (csig_an_style .EQ. 0) THEN
+                          DO nd=1,nbdirs
+                            sig0d(nd, icv) = qe*poloidal_scale_factor*(&
+&                             dv%ne(icv)*profd(nd, iy2)+prof(iy2)*dvd%ne&
+&                             (nd, icv))
+                          END DO
+                          sig0(icv) = prof(iy2)*qe*dv%ne(icv)*&
+&                           poloidal_scale_factor
+                        ELSE IF (csig_an_style .EQ. 1 .AND. nomp .GT. 0&
+&                       ) THEN
+                          DO nd=1,nbdirs
+                            sig0d(nd, icv) = qe*poloidal_scale_factor*(&
+&                             dv%ne(omp(1))*profd(nd, iy2)+prof(iy2)*dvd&
+&                             %ne(nd, omp(1)))
+                          END DO
+                          sig0(icv) = prof(iy2)*qe*dv%ne(omp(1))*&
+&                           poloidal_scale_factor
+                        END IF
+                      ELSE IF (kind_coeff .EQ. 9) THEN
+!
+                        temp0 = qe/pl%te(icv)
+                        DO nd=1,nbdirs
+                          arg1d(nd) = -(temp0*pld%te(nd, icv)/pl%te(icv)&
+&                           )
+                        END DO
+                        arg1 = temp0
+                        temp0 = SQRT(arg1)
+                        result1 = temp0
+                        DO nd=1,nbdirs
+                          IF (arg1 .EQ. 0.D0) THEN
+                            result1d(nd) = 0.D0
+                          ELSE
+                            result1d(nd) = arg1d(nd)/(2.0*temp0)
+                          END IF
+                          alf0d(nd, icv) = poloidal_scale_factor*(dv%ne(&
+&                           icv)*(result1*profd(nd, iy2)+prof(iy2)*&
+&                           result1d(nd))+prof(iy2)*result1*dvd%ne(nd, &
+&                           icv))
+                        END DO
+                        alf0(icv) = poloidal_scale_factor*prof(iy2)*dv%&
+&                         ne(icv)*result1
+!
+                      ELSE
+                        WRITE(*, *) 'Option', kind_coeff, &
+&                       'not yet implemented'
+                      END IF
+                    END IF
+                  END DO
+ 110            CONTINUE
+ 120          CONTINUE
+!
 !ic
 !ift=1,mpg%nFt
 !iy=1,ndim
+              IF (mpg%isclassicalgrid .EQ. 0) THEN
+! treatment of guard cells
+                DO 130 icv=1,ncv
+                  IF (mpg%cvfcp(icv, 2) .EQ. 1) THEN
+                    iir = mpg%cvreg(icv)
+                    IF (iir .EQ. 1 .OR. iir .EQ. 5) THEN
+! core boundary
+                      iy2 = 1
+                    ELSE IF (iir .EQ. 2 .OR. iir .EQ. 6) THEN
+! SOL boundary
+                      iy2 = ndim
+                    ELSE
+                      GOTO 130
+                    END IF
+                    lpflux = mpg%ftreg(mpg%cvft(icv)) .EQ. 3
+                    ldiv = MOD(iir - 1, 4) + 1 .GE. 3
+                    poloidal_scale_factor = 1.0_R8
+                    elm_region = .false.
+                    IF (.NOT.(((.NOT.region_flags(iir, kind_coeff)) .OR.&
+&                       (lpflux .AND. no_pflux)) .OR. (ldiv .AND. no_div&
+&                       ))) THEN
+!
+                      IF (elm_region) THEN
+                        DO nd=1,nbdirs
+                          profd(nd, 1:ndim) = pelmd(nd, 1:ndim)
+                        END DO
+                        prof(1:ndim) = pelm(1:ndim)
+                      ELSE
+                        DO nd=1,nbdirs
+                          profd(nd, 1:ndim) = pfd(nd, 1:ndim)
+                        END DO
+                        prof(1:ndim) = pf(1:ndim)
+                      END IF
+!
+                      IF (kind_coeff .EQ. 1) THEN
+                        DO nd=1,nbdirs
+                          dna0d(nd, icv, nsp(is)) = &
+&                           poloidal_scale_factor*profd(nd, iy2)
+                        END DO
+                        dna0(icv, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 2) THEN
+                        temp = rt%rza(icv, nsp(is))*pl%te(icv) + pl%ti(&
+&                         icv)
+                        temp0 = prof(iy2)/temp
+                        DO nd=1,nbdirs
+                          dpa0d(nd, icv, nsp(is)) = &
+&                           poloidal_scale_factor*(profd(nd, iy2)-temp0*&
+&                           (pl%te(icv)*rtd%rza(nd, icv, nsp(is))+rt%rza&
+&                           (icv, nsp(is))*pld%te(nd, icv)+pld%ti(nd, &
+&                           icv)))/temp
+                        END DO
+                        dpa0(icv, nsp(is)) = poloidal_scale_factor*temp0
+!
+                      ELSE IF (kind_coeff .EQ. 3) THEN
+                        DO nd=1,nbdirs
+                          hcibd(nd, icv, nsp(is)) = &
+&                           poloidal_scale_factor*(pl%na(icv, nsp(is))*&
+&                           profd(nd, iy2)+prof(iy2)*pld%na(nd, icv, nsp&
+&                           (is)))
+                        END DO
+                        hcib(icv, nsp(is)) = poloidal_scale_factor*prof(&
+&                         iy2)*pl%na(icv, nsp(is))
+!
+                      ELSE IF (kind_coeff .EQ. 4) THEN
+                        DO nd=1,nbdirs
+                          hce0d(nd, icv) = poloidal_scale_factor*(dv%ne(&
+&                           icv)*profd(nd, iy2)+prof(iy2)*dvd%ne(nd, icv&
+&                           ))
+                        END DO
+                        hce0(icv) = prof(iy2)*dv%ne(icv)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 5) THEN
+                        DO nd=1,nbdirs
+                          vla0d(nd, icv, 0, nsp(is)) = &
+&                           poloidal_scale_factor*profd(nd, iy2)
+                        END DO
+                        vla0(icv, 0, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 6) THEN
+                        DO nd=1,nbdirs
+                          vla0d(nd, icv, 1, nsp(is)) = &
+&                           poloidal_scale_factor*profd(nd, iy2)
+                        END DO
+                        vla0(icv, 1, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 7) THEN
+                        temp0 = poloidal_scale_factor*mp*am(nsp(is))
+                        DO nd=1,nbdirs
+                          vsa0d(nd, icv, nsp(is)) = temp0*(pl%na(icv, &
+&                           nsp(is))*profd(nd, iy2)+prof(iy2)*pld%na(nd&
+&                           , icv, nsp(is)))
+                        END DO
+                        vsa0(icv, nsp(is)) = temp0*(prof(iy2)*pl%na(icv&
+&                         , nsp(is)))
+!
+                      ELSE IF (kind_coeff .EQ. 8) THEN
+                        IF (csig_an_style .EQ. 0) THEN
+                          DO nd=1,nbdirs
+                            sig0d(nd, icv) = qe*poloidal_scale_factor*(&
+&                             dv%ne(icv)*profd(nd, iy2)+prof(iy2)*dvd%ne&
+&                             (nd, icv))
+                          END DO
+                          sig0(icv) = prof(iy2)*qe*dv%ne(icv)*&
+&                           poloidal_scale_factor
+                        ELSE IF (csig_an_style .EQ. 1 .AND. nomp .GT. 0&
+&                       ) THEN
+                          DO nd=1,nbdirs
+                            sig0d(nd, icv) = qe*poloidal_scale_factor*(&
+&                             dv%ne(omp(1))*profd(nd, iy2)+prof(iy2)*dvd&
+&                             %ne(nd, omp(1)))
+                          END DO
+                          sig0(icv) = prof(iy2)*qe*dv%ne(omp(1))*&
+&                           poloidal_scale_factor
+                        END IF
+                      ELSE IF (kind_coeff .EQ. 9) THEN
+!
+                        temp0 = qe/pl%te(icv)
+                        DO nd=1,nbdirs
+                          arg1d(nd) = -(temp0*pld%te(nd, icv)/pl%te(icv)&
+&                           )
+                        END DO
+                        arg1 = temp0
+                        temp0 = SQRT(arg1)
+                        result1 = temp0
+                        DO nd=1,nbdirs
+                          IF (arg1 .EQ. 0.D0) THEN
+                            result1d(nd) = 0.D0
+                          ELSE
+                            result1d(nd) = arg1d(nd)/(2.0*temp0)
+                          END IF
+                          alf0d(nd, icv) = poloidal_scale_factor*(dv%ne(&
+&                           icv)*(result1*profd(nd, iy2)+prof(iy2)*&
+&                           result1d(nd))+prof(iy2)*result1*dvd%ne(nd, &
+&                           icv))
+                        END DO
+                        alf0(icv) = poloidal_scale_factor*prof(iy2)*dv%&
+&                         ne(icv)*result1
+!
+                      ELSE
+                        WRITE(*, *) 'Option', kind_coeff, &
+&                       'not yet implemented'
+                      END IF
+                    END IF
+                  END IF
+ 130            CONTINUE
+              END IF
+            END DO
+!
 !is=1,nspec
             IF (ncall .EQ. 0) THEN
               IF (elm_data) THEN
@@ -650,7 +792,7 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
-    INTEGER :: ncv, nfc, ns
+    INTEGER, INTENT(IN) :: ncv, nfc, ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(B2PLASMA), INTENT(IN) :: pl
@@ -660,8 +802,8 @@ CONTAINS
     REAL(kind=r8) :: dna0(ncv, 0:ns-1), dpa0(ncv, 0:ns-1), vla0(ncv, 0:1&
 &   , 0:ns-1), vsa0(ncv, 0:ns-1), hci0(ncv), hcib(ncv, 0:ns-1)
     REAL(kind=r8) :: hce0(ncv), sig0(ncv), alf0(ncv)
-    INTEGER :: iy, i, ifail, spec, nspec, iir, ift, icv, ndim, is, nsp(&
-&   ns+1), iloop, ncall, ndat, kind_coeff, kind_data, ic, lbl
+    INTEGER :: iy, iy2, i, ifail, spec, nspec, iir, ift, icv, ndim, is, &
+&   nsp(ns+1), iloop, ncall, ndat, kind_coeff, kind_data, ic, lbl
     REAL(kind=r8) :: f(nrr), r(nrr), pr(nrr), pf(nrr), d(nrr), pelm(nrr)&
 &   , felm(nrr), delm(nrr), prof(nrr)
     REAL(kind=r8) :: poloidal_scale_factor
@@ -718,6 +860,8 @@ CONTAINS
       IF (ANY(poloidal_scaling)) CALL XERRAB(&
 &                                'Poloidal scaling not yet coded for WG'&
 &                                     )
+      CALL XERTST(no_div .OR. mpg%isclassicalgrid .EQ. 1, &
+&           'no_div should be true for non-classical vessel mode grids')
     ELSE
       IF (transport_ip_time_mod .GT. 0.0_R8) THEN
         arg1 = tim/transport_ip_time_mod
@@ -761,7 +905,7 @@ CONTAINS
           ndat = ndata(kind_data, kind_coeff, spec)
           IF (ndat .NE. 0) THEN
             CALL XERTST(ndat .LE. nrr, &
-&                'Increase NYD in DIMENSIONS.F to match size of profile'&
+&            'Increase NYD in b2mod_dimensions to match size of profile'&
 &                )
             nspec = 1
             nsp(1) = spec
@@ -781,7 +925,7 @@ CONTAINS
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
 !
-            CALL CALC_DIST_NODIFF(mpg, geo, omp, nomp, icsepomp, pr)
+            CALL CALC_DIST_NODIFF(geo, omp, nomp, icsepomp, pr)
 !
             CALL E01BEF(ndat, r, f, d, ifail)
             IF (elm_data) CALL E01BEF(ndat, r, felm, delm, ifail)
@@ -792,6 +936,7 @@ CONTAINS
 !           if (iloop.eq.0) print *,'PF=',pf(1:ndim)
             IF (elm_data) CALL E01BFF(ndat, r, felm, delm, ndim, pr, &
 &                               pelm, ifail)
+!
             IF (tr_ip_new_files) THEN
 !
               IF (elm_data) THEN
@@ -814,7 +959,12 @@ CONTAINS
             END IF
 !
             DO is=1,nspec
-              DO iy=1,ndim
+              DO 120 iy=1,ndim
+                IF (mpg%isclassicalgrid .EQ. 0) THEN
+! skip guard cells
+                  IF (iy .EQ. 1 .OR. iy .EQ. ndim) GOTO 120
+                END IF
+                iy2 = iy
                 iir = mpg%cvreg(omp(iy))
                 IF (iir .LE. 0 .OR. iir .GT. cvregmax) THEN
                   WRITE(*, *) 'transport_input: out of bounds ', &
@@ -822,85 +972,183 @@ CONTAINS
                   iir = cvregmax
                 END IF
                 lbl = mpg%ftlbl(mpg%cvft(omp(iy)))
-                DO ift=1,mpg%nft
-                  IF (mpg%ftlbl(ift) .EQ. lbl) THEN
-                    DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(&
-&                       ift, 2)-1
-                      icv = mpg%ftcv(ic)
-                      iir = mpg%cvreg(icv)
-                      lpflux = mpg%ftreg(mpg%cvft(icv)) .EQ. 3
-                      ldiv = MOD(iir - 1, 4) + 1 .GE. 3
-                      poloidal_scale_factor = 1.0_R8
-                      elm_region = .false.
-                      IF (.NOT.(((.NOT.region_flags(iir, kind_coeff)) &
-&                         .OR. (lpflux .AND. no_pflux)) .OR. (ldiv .AND.&
-&                         no_div))) THEN
-!
-                        IF (elm_region) THEN
-                          prof(1:ndim) = pelm(1:ndim)
-                        ELSE
-                          prof(1:ndim) = pf(1:ndim)
-                        END IF
-!
-                        IF (kind_coeff .EQ. 1) THEN
-                          dna0(icv, nsp(is)) = prof(iy)*&
-&                           poloidal_scale_factor
-!
-                        ELSE IF (kind_coeff .EQ. 2) THEN
-                          dpa0(icv, nsp(is)) = prof(iy)*&
-&                           poloidal_scale_factor/(rt%rza(icv, nsp(is))*&
-&                           pl%te(icv)+pl%ti(icv))
-!
-                        ELSE IF (kind_coeff .EQ. 3) THEN
-                          hcib(icv, nsp(is)) = poloidal_scale_factor*&
-&                           prof(iy)*pl%na(icv, nsp(is))
-!
-                        ELSE IF (kind_coeff .EQ. 4) THEN
-                          hce0(icv) = prof(iy)*dv%ne(icv)*&
-&                           poloidal_scale_factor
-!
-                        ELSE IF (kind_coeff .EQ. 5) THEN
-                          vla0(icv, 0, nsp(is)) = prof(iy)*&
-&                           poloidal_scale_factor
-!
-                        ELSE IF (kind_coeff .EQ. 6) THEN
-                          vla0(icv, 1, nsp(is)) = prof(iy)*&
-&                           poloidal_scale_factor
-!
-                        ELSE IF (kind_coeff .EQ. 7) THEN
-                          vsa0(icv, nsp(is)) = poloidal_scale_factor*&
-&                           prof(iy)*mp*am(nsp(is))*pl%na(icv, nsp(is))
-!
-                        ELSE IF (kind_coeff .EQ. 8) THEN
-!
-                          IF (csig_an_style .EQ. 0) THEN
-                            sig0(icv) = prof(iy)*qe*dv%ne(icv)*&
-&                             poloidal_scale_factor
-                          ELSE IF (csig_an_style .EQ. 1) THEN
-                            CALL XERRAB(&
-&                                 'csig_an_style=1 not yet coded for WG'&
-&                                )
-                          END IF
-                        ELSE IF (kind_coeff .EQ. 9) THEN
-!
-                          arg1 = qe/pl%te(icv)
-                          result1 = SQRT(arg1)
-                          alf0(icv) = poloidal_scale_factor*prof(iy)*dv%&
-&                           ne(icv)*result1
-!
-                        ELSE
-                          WRITE(*, *) 'Option', kind_coeff, &
-&                         'not yet implemented'
-                        END IF
-                      END IF
-                    END DO
+                DO 110 ift=1,mpg%nft
+                  IF (mpg%isclassicalgrid .EQ. 1) THEN
+                    IF (mpg%ftlbl(ift) .NE. lbl) THEN
+                      GOTO 110
+                    ELSE
+                      iy2 = iy
+                    END IF
+                  ELSE IF (ift .NE. mpg%cvft(omp(iy))) THEN
+                    IF (ift .LE. mpg%cvft(omp(ndim-1)) .OR. ift .GE. mpg&
+&                       %cvft(omp(2))) THEN
+                      GOTO 110
+                    ELSE
+!nh flux tube outside OMP ==> take last OMP flux tube
+                      iy2 = ndim
+                    END IF
+                  ELSE
+                    iy2 = iy
                   END IF
-                END DO
-              END DO
-            END DO
+!
+                  DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(&
+&                     ift, 2)-1
+                    icv = mpg%ftcv(ic)
+                    iir = mpg%cvreg(icv)
+                    lpflux = mpg%ftreg(mpg%cvft(icv)) .EQ. 3
+                    ldiv = MOD(iir - 1, 4) + 1 .GE. 3
+                    poloidal_scale_factor = 1.0_R8
+                    elm_region = .false.
+                    IF (.NOT.(((.NOT.region_flags(iir, kind_coeff)) .OR.&
+&                       (lpflux .AND. no_pflux)) .OR. (ldiv .AND. no_div&
+&                       ))) THEN
+!
+                      IF (elm_region) THEN
+                        prof(1:ndim) = pelm(1:ndim)
+                      ELSE
+                        prof(1:ndim) = pf(1:ndim)
+                      END IF
+!
+                      IF (kind_coeff .EQ. 1) THEN
+                        dna0(icv, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 2) THEN
+                        dpa0(icv, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor/(rt%rza(icv, nsp(is))*pl&
+&                         %te(icv)+pl%ti(icv))
+!
+                      ELSE IF (kind_coeff .EQ. 3) THEN
+                        hcib(icv, nsp(is)) = poloidal_scale_factor*prof(&
+&                         iy2)*pl%na(icv, nsp(is))
+!
+                      ELSE IF (kind_coeff .EQ. 4) THEN
+                        hce0(icv) = prof(iy2)*dv%ne(icv)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 5) THEN
+                        vla0(icv, 0, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 6) THEN
+                        vla0(icv, 1, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 7) THEN
+                        vsa0(icv, nsp(is)) = poloidal_scale_factor*prof(&
+&                         iy2)*mp*am(nsp(is))*pl%na(icv, nsp(is))
+!
+                      ELSE IF (kind_coeff .EQ. 8) THEN
+                        IF (csig_an_style .EQ. 0) THEN
+                          sig0(icv) = prof(iy2)*qe*dv%ne(icv)*&
+&                           poloidal_scale_factor
+                        ELSE IF (csig_an_style .EQ. 1 .AND. nomp .GT. 0&
+&                       ) THEN
+                          sig0(icv) = prof(iy2)*qe*dv%ne(omp(1))*&
+&                           poloidal_scale_factor
+                        END IF
+                      ELSE IF (kind_coeff .EQ. 9) THEN
+!
+                        arg1 = qe/pl%te(icv)
+                        result1 = SQRT(arg1)
+                        alf0(icv) = poloidal_scale_factor*prof(iy2)*dv%&
+&                         ne(icv)*result1
+!
+                      ELSE
+                        WRITE(*, *) 'Option', kind_coeff, &
+&                       'not yet implemented'
+                      END IF
+                    END IF
+                  END DO
+ 110            CONTINUE
+ 120          CONTINUE
+!
 !ic
 !ift=1,mpg%nFt
 !iy=1,ndim
+              IF (mpg%isclassicalgrid .EQ. 0) THEN
+! treatment of guard cells
+                DO 130 icv=1,ncv
+                  IF (mpg%cvfcp(icv, 2) .EQ. 1) THEN
+                    iir = mpg%cvreg(icv)
+                    IF (iir .EQ. 1 .OR. iir .EQ. 5) THEN
+! core boundary
+                      iy2 = 1
+                    ELSE IF (iir .EQ. 2 .OR. iir .EQ. 6) THEN
+! SOL boundary
+                      iy2 = ndim
+                    ELSE
+                      GOTO 130
+                    END IF
+                    lpflux = mpg%ftreg(mpg%cvft(icv)) .EQ. 3
+                    ldiv = MOD(iir - 1, 4) + 1 .GE. 3
+                    poloidal_scale_factor = 1.0_R8
+                    elm_region = .false.
+                    IF (.NOT.(((.NOT.region_flags(iir, kind_coeff)) .OR.&
+&                       (lpflux .AND. no_pflux)) .OR. (ldiv .AND. no_div&
+&                       ))) THEN
+!
+                      IF (elm_region) THEN
+                        prof(1:ndim) = pelm(1:ndim)
+                      ELSE
+                        prof(1:ndim) = pf(1:ndim)
+                      END IF
+!
+                      IF (kind_coeff .EQ. 1) THEN
+                        dna0(icv, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 2) THEN
+                        dpa0(icv, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor/(rt%rza(icv, nsp(is))*pl&
+&                         %te(icv)+pl%ti(icv))
+!
+                      ELSE IF (kind_coeff .EQ. 3) THEN
+                        hcib(icv, nsp(is)) = poloidal_scale_factor*prof(&
+&                         iy2)*pl%na(icv, nsp(is))
+!
+                      ELSE IF (kind_coeff .EQ. 4) THEN
+                        hce0(icv) = prof(iy2)*dv%ne(icv)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 5) THEN
+                        vla0(icv, 0, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 6) THEN
+                        vla0(icv, 1, nsp(is)) = prof(iy2)*&
+&                         poloidal_scale_factor
+!
+                      ELSE IF (kind_coeff .EQ. 7) THEN
+                        vsa0(icv, nsp(is)) = poloidal_scale_factor*prof(&
+&                         iy2)*mp*am(nsp(is))*pl%na(icv, nsp(is))
+!
+                      ELSE IF (kind_coeff .EQ. 8) THEN
+                        IF (csig_an_style .EQ. 0) THEN
+                          sig0(icv) = prof(iy2)*qe*dv%ne(icv)*&
+&                           poloidal_scale_factor
+                        ELSE IF (csig_an_style .EQ. 1 .AND. nomp .GT. 0&
+&                       ) THEN
+                          sig0(icv) = prof(iy2)*qe*dv%ne(omp(1))*&
+&                           poloidal_scale_factor
+                        END IF
+                      ELSE IF (kind_coeff .EQ. 9) THEN
+!
+                        arg1 = qe/pl%te(icv)
+                        result1 = SQRT(arg1)
+                        alf0(icv) = poloidal_scale_factor*prof(iy2)*dv%&
+&                         ne(icv)*result1
+!
+                      ELSE
+                        WRITE(*, *) 'Option', kind_coeff, &
+&                       'not yet implemented'
+                      END IF
+                    END IF
+                  END IF
+ 130            CONTINUE
+              END IF
+            END DO
+!
 !is=1,nspec
             IF (ncall .EQ. 0) THEN
               IF (elm_data) THEN
@@ -1045,44 +1293,39 @@ CONTAINS
 !
 !-----------------------------------------------------------------------
 !
-  SUBROUTINE REGION_PROFILE(kind_data, ndat, r, ndim, pr, nx, ny, ifa, &
-&   nfitanf)
+  SUBROUTINE REGION_PROFILE(mpg, geo, kind_data, ndat, r, ndim, pr, ifa&
+&   , nfitanf)
 !
-    USE B2MOD_INDIRECT
-    USE B2MOD_GEO_DIFFV
-    USE B2MOD_MWTI, ONLY : output_ds
+    USE B2MOD_INDIRECT_DIFFV
+    USE B2MOD_USER_NAMELIST_DIFFV, ONLY : nomp, omp, icsepomp
+    USE B2US_GEO_DIFFV
+    USE B2US_MAP_DIFFV
+    USE B2MOD_MWTI, ONLY : output_ds_cv
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    INTEGER :: i, nx, ny, ifa
+    TYPE(MAPPING), INTENT(IN) :: mpg
+    TYPE(GEOMETRY), INTENT(IN) :: geo
+    INTEGER :: i, ifa
     INTEGER :: nfitanf, nfitend, ndim, ndat, kind_data
-    REAL(kind=r8) :: pra(ny+2), prdsa(ny+2), r(nrr), pr(nrr), prtmp
-    INTEGER :: jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
-    INTEGER :: ixref, iyref
+    REAL(kind=r8) :: r(nrr), pr(nrr), prtmp
+    REAL(kind=r8), ALLOCATABLE :: pra(:), prdsa(:)
+    INTEGER :: ncall, nya
     CHARACTER(len=256) :: filenamer
     LOGICAL :: exist
     EXTERNAL IPGETR
-    EXTERNAL GET_JSEP
-    SAVE jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
+    SAVE ncall
     EXTERNAL FIND_FILE
+    INTEGER :: arg1
     DATA ncall /0/
 !
     CALL SUBINI('region_profile')
     IF (ncall .EQ. 0) THEN
-      CALL GET_JSEP(nx, ny, jxi, jxa, jsep)
-      CALL XERTST(-1 .LE. jsep .AND. jsep .LE. ny, &
-&           'faulty parameter jsep')
-      CALL IPGETI('b2mwti_jxa', jxa)
-      CALL XERTST(-1 .LE. jxa .AND. jxa .LE. nx, &
-&           'faulty internal parameter jxa')
-      ixref = jxa
-      iyref = jsep
-      CALL IPGETI('set_transport_ixref', ixref)
-      CALL XERTST(-1 .LE. ixref .AND. ixref .LE. nx, &
-&           'faulty argument set_transport_ixref')
-      CALL IPGETI('set_transport_iyref', iyref)
-      CALL XERTST(-1 .LE. iyref .AND. iyref .LE. ny, &
-&           'faulty argument set_transport_iyref')
-      CALL OUTPUT_DS(ny, ixref, 0, iyref, iyastrt, iyaend, 'dsp')
+      IF (nomp .GT. 0) THEN
+        ALLOCATE(pra(nomp))
+        ALLOCATE(prdsa(nomp))
+        arg1 = icsepomp - 1
+        CALL OUTPUT_DS_CV(mpg, geo, nomp, omp, arg1, 'dsp')
+      END IF
       CALL IPGETI('b2trno_csig_an_style', csig_an_style)
     END IF
 !
@@ -1096,7 +1339,7 @@ CONTAINS
       READ(91, *, end=92, err=97) prtmp
       prdsa(i) = prtmp
       nya = i
-      IF (i .LT. ny + 2) GOTO 91
+      IF (i .LT. nomp) GOTO 91
  92   nfitanf = 1
       ifa = 0
       DO i=1,nya
@@ -1117,7 +1360,6 @@ CONTAINS
           END IF
         END IF
       END DO
-!
 !
  100  IF (nfitend .GT. nfitanf) THEN
 !
@@ -1148,7 +1390,7 @@ CONTAINS
   SUBROUTINE AXIAL_PROFILE(kind_data, ndat, x, ndim, pr, nx, ny, ifa, &
 &   nfitanf, nfitend)
 !
-    USE B2MOD_INDIRECT
+    USE B2MOD_INDIRECT_DIFFV
     USE B2MOD_GEO_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE

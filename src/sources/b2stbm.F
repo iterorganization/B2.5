@@ -9,7 +9,9 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_external
+#ifdef USE_IMPGYRO
       use b2mod_impgyro
+#endif
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
 #ifdef WG_RM
@@ -17,10 +19,12 @@
      1 , only : b2stbm_sna,b2stbm_smo,b2stbm_she,b2stbm_shi,b2stbm_sch,
      2          b2stbm_sne
 #endif
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      1 , only : balance_netcdf
      2        , b2stbm_sna0to1, b2stbm_smo0to3, b2stbm_she0to3,
      3          b2stbm_shi0to3
+#endif
 #ifdef B25_EIRENE
       use eirmod_wneutrals
 #endif
@@ -87,8 +91,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2stbm')
-*   ..test nCv, nFc, ns, ismain
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, nVx, ns, ismain
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     & 'faulty argument nCv, nFc, nVx')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      & 'faulty argument ismain')
@@ -192,8 +197,8 @@ cxpb Must convert fluxes to flux densities
             na_tot(iCv) = na_tot(iCv) + n0_tmp
             na0(iCv,is) = pl%na(iCv,is) + n0_tmp
             ti0(iCv) = ti0(iCv) + nt_tmp
-            ua0(iCv,is) = (pl%ua(iCv,is)*pl%na(icV,is)*
-     .         sign(1.0_R8,geo%cvBb(iCv,0)) + ua_tmp*n0_tmp)/na0(iCv,is)
+            ua0(iCv,is) = (pl%ua(iCv,is)*pl%na(icV,is)+ua_tmp*n0_tmp)
+     /                    /na0(iCv,is)
           end do
           do iFc = 1, nFc
             fna0(iFc,0,is) = 
@@ -204,7 +209,7 @@ cxpb Must convert fluxes to flux densities
           end do
         else
           na0(:,is) = pl%na(:,is)
-          ua0(:,is) = pl%ua(:,is)*sign(1.0_R8,geo%cvBb(:,0))
+          ua0(:,is) = pl%ua(:,is)
           fna0(:,0,is) = dv%fna(:,0,is)/geo%fcS(:)/geo%fcQgam(iFc,0)
           fna0(:,1,is) = dv%fna(:,1,is)/geo%fcS(:)
         end if
@@ -375,8 +380,7 @@ cxpb
 *  ...parallel momentum sources
             vthe=sqrt(pl%te(iCv)/me)
             vthe=vthe/sqrt(am(is)*mp/me)
-            t0 = st_ext%smo(iCv,is)*
-     .         sign(1.0_R8,geo%cvBb(iCv,0))
+            t0 = st_ext%smo(iCv,is)
             srw%smo0(iCv,0,is) = srw%smo0(iCv,0,is)+
      .         t0+switch%b2stbm_linearisation*abs(t0)*pl%ua(iCv,is)/vthe
             srw%smo0(iCv,1,is) = srw%smo0(iCv,1,is)-
@@ -434,8 +438,7 @@ cxpb
 *  ...raw sources: no linearisation
           srw%sne0(iCv,0) = st_ext%sne(iCv)
           srw%sna0(iCv,0,0:ns-1) = st_ext%sna(iCv,0:ns-1)
-          srw%smo0(iCv,0,0:ns-1) = st_ext%smo(iCv,0:ns-1)*
-     .         sign(1.0_R8,geo%cvBb(iCv,0))
+          srw%smo0(iCv,0,0:ns-1) = st_ext%smo(iCv,0:ns-1)
           srw%she0(iCv,0) = st_ext%she(iCv)
           srw%sch0(iCv,0) = st_ext%sch(iCv)
           srw%shi0(iCv,0) = st_ext%shi(iCv)
@@ -465,6 +468,7 @@ cxpb
       srw%b2stbm_shi(:)=srw%shi0(:,0)+srw%shi0(:,1)*pl%ti(:)
       srw%b2stbm_sch(:)=srw%sch0(:,0)+srw%sch0(:,1)*pl%po(:)
 
+#ifndef FIXED_POINT
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2stbm_sna0to1 = srw%sna0
@@ -472,6 +476,7 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stbm_she0to3 = srw%she0
         b2stbm_shi0to3 = srw%shi0
       endif
+#endif
 
 * ..return
   999 if (main_call.or.ncall.eq.0) ncall = ncall+1

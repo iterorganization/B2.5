@@ -3,10 +3,10 @@
 !
 !  Differentiation of b2srst in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(sr.sch) *(sr.she) *(sr.shi)
-!                *(sr.shn) *(sr.skt) *(sr.smo) *(sr.sna)
+!                *(sr.shn) *(sr.skt) *(sr.szt) *(sr.smo) *(sr.sna)
 !   with respect to varying inputs: ti tn na ua kt *(sr.sch) *(sr.she)
-!                *(sr.shi) *(sr.shn) *(sr.skt) *(sr.smo) *(sr.sna)
-!                po te
+!                *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt) *(sr.smo)
+!                *(sr.sna) po te zt
 !   Plus diff mem management of: sr.sch:in sr.she:in sr.shi:in
 !                sr.sne:in sr.shn:in sr.skt:in sr.szt:in sr.smo:in
 !                sr.sna:in
@@ -25,17 +25,14 @@
 !.specification
 !
 !srv 01.07.08
-SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
-& , tid, tn, tnd, po, pod, ne, ni, nn, kt, ktd, zt, sr, srd, nbdirs)
+SUBROUTINE B2SRST_DV(ncv, ns, switch, na, nad, ua, uad, te, ted, ti, tid&
+& , tn, tnd, po, pod, ne, ned, ni, nid, nn, nnd, kt, ktd, zt, ztd, sr, &
+& srd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
-  USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
-!WG_TODO     2          b2srst_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2srst, b2srst_kt_eps, b2srst_zt_eps
@@ -51,12 +48,12 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
 !srv 01.07.08
   INTEGER :: ncv, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
-  TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), ti(ncv), &
 & tn(ncv), po(ncv), ne(ncv), ni(ncv, 0:1), nn(ncv), kt(ncv), zt(ncv)
   REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
 & -1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv), tnd(nbdirsmax, ncv), &
-& pod(nbdirsmax, ncv), ktd(nbdirsmax, ncv)
+& pod(nbdirsmax, ncv), ned(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), &
+& nnd(nbdirsmax, ncv), ktd(nbdirsmax, ncv), ztd(nbdirsmax, ncv)
 !   ..input/output arguments
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
@@ -84,7 +81,7 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
   REAL(kind=r8), DIMENSION(nbdirsmax) :: t0d
 !   ..procedures
   INTRINSIC MIN, MAX
-  EXTERNAL XERTST, IPGETR, B2XVSG_NODIFF
+  EXTERNAL XERTST, IPGETR, B2XVSG
   REAL(r8) :: min1
   REAL(r8), DIMENSION(nbdirsmax) :: min1d
   REAL(r8) :: max1
@@ -108,7 +105,9 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
   REAL(r8) :: min9
   REAL(r8), DIMENSION(nbdirsmax) :: min9d
   REAL(r8) :: min10
+  REAL(r8), DIMENSION(nbdirsmax) :: min10d
   REAL(r8) :: min11
+  REAL(r8), DIMENSION(nbdirsmax) :: min11d
   REAL(r8) :: max3
   REAL(r8), DIMENSION(nbdirsmax) :: max3d
   REAL(r8) :: max4
@@ -128,19 +127,20 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
   CALL SUBINI('b2srst')
 !   ..set internal parameters on first call
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test sign of na, ni, ne, te, ti
   IF (ncall_b2srst .LT. 3) THEN
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, kt, 1, 'kt', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, zt, 1, 'zt', '.ge.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
   END IF
 !
 !  .. save sources
@@ -740,18 +740,29 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
     DO nd=1,nbdirs
       srd%skt(nd, icv, 3) = (min9d(nd)-temp*ktd(nd, icv))/(b2srst_kt_eps&
 &       +kt(icv))
+!     ..modify szt(,0:1)
+      t0d(nd) = srd%szt(nd, icv, 0) + zt(icv)*srd%szt(nd, icv, 1) + sr%&
+&       szt(icv, 1)*ztd(nd, icv)
     END DO
     sr%skt(icv, 3) = temp
-!     ..modify szt(,0:1)
     t0 = sr%szt(icv, 0) + sr%szt(icv, 1)*zt(icv)
     IF (sr%szt(icv, 0) .LT. (1.0_R8+switch%b2srst_rf2)*t0) THEN
       IF ((1.0_R8+switch%b2srst_rf2)*t0 .LT. -(switch%b2srst_rf2*t0)) &
 &     THEN
+        DO nd=1,nbdirs
+          srd%szt(nd, icv, 0) = -(switch%b2srst_rf2*t0d(nd))
+        END DO
         sr%szt(icv, 0) = -(switch%b2srst_rf2*t0)
       ELSE
+        DO nd=1,nbdirs
+          srd%szt(nd, icv, 0) = (switch%b2srst_rf2+1.0_R8)*t0d(nd)
+        END DO
         sr%szt(icv, 0) = (1.0_R8+switch%b2srst_rf2)*t0
       END IF
     ELSE IF (sr%szt(icv, 0) .LT. -(switch%b2srst_rf2*t0)) THEN
+      DO nd=1,nbdirs
+        srd%szt(nd, icv, 0) = -(switch%b2srst_rf2*t0d(nd))
+      END DO
       sr%szt(icv, 0) = -(switch%b2srst_rf2*t0)
     ELSE
       sr%szt(icv, 0) = sr%szt(icv, 0)
@@ -759,27 +770,56 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
     IF (sr%szt(icv, 1)*zt(icv) .GT. -(switch%b2srst_rf2*t0)) THEN
       IF (-(switch%b2srst_rf2*t0) .GT. (1.0_R8+switch%b2srst_rf2)*t0) &
 &     THEN
+        DO nd=1,nbdirs
+          min10d(nd) = (switch%b2srst_rf2+1.0_R8)*t0d(nd)
+        END DO
         min10 = (1.0_R8+switch%b2srst_rf2)*t0
       ELSE
+        DO nd=1,nbdirs
+          min10d(nd) = -(switch%b2srst_rf2*t0d(nd))
+        END DO
         min10 = -(switch%b2srst_rf2*t0)
       END IF
     ELSE IF (sr%szt(icv, 1)*zt(icv) .GT. (1.0_R8+switch%b2srst_rf2)*t0) &
 &   THEN
+      DO nd=1,nbdirs
+        min10d(nd) = (switch%b2srst_rf2+1.0_R8)*t0d(nd)
+      END DO
       min10 = (1.0_R8+switch%b2srst_rf2)*t0
     ELSE
+      DO nd=1,nbdirs
+        min10d(nd) = zt(icv)*srd%szt(nd, icv, 1) + sr%szt(icv, 1)*ztd(nd&
+&         , icv)
+      END DO
       min10 = sr%szt(icv, 1)*zt(icv)
     END IF
-    sr%szt(icv, 1) = 1.0_R8/(zt(icv)+b2srst_zt_eps)*min10
+    temp = min10/(b2srst_zt_eps+zt(icv))
+    sr%szt(icv, 1) = temp
+    DO nd=1,nbdirs
+      srd%szt(nd, icv, 1) = (min10d(nd)-temp*ztd(nd, icv))/(&
+&       b2srst_zt_eps+zt(icv))
 !     ..modify szt(,2:3)
+      t0d(nd) = srd%szt(nd, icv, 2) + zt(icv)*srd%szt(nd, icv, 3) + sr%&
+&       szt(icv, 3)*ztd(nd, icv)
+    END DO
     t0 = sr%szt(icv, 2) + sr%szt(icv, 3)*zt(icv)
     IF (sr%szt(icv, 2) .LT. (1.0_R8+switch%b2srst_rf2)*t0) THEN
       IF ((1.0_R8+switch%b2srst_rf2)*t0 .LT. -(switch%b2srst_rf2*t0)) &
 &     THEN
+        DO nd=1,nbdirs
+          srd%szt(nd, icv, 2) = -(switch%b2srst_rf2*t0d(nd))
+        END DO
         sr%szt(icv, 2) = -(switch%b2srst_rf2*t0)
       ELSE
+        DO nd=1,nbdirs
+          srd%szt(nd, icv, 2) = (switch%b2srst_rf2+1.0_R8)*t0d(nd)
+        END DO
         sr%szt(icv, 2) = (1.0_R8+switch%b2srst_rf2)*t0
       END IF
     ELSE IF (sr%szt(icv, 2) .LT. -(switch%b2srst_rf2*t0)) THEN
+      DO nd=1,nbdirs
+        srd%szt(nd, icv, 2) = -(switch%b2srst_rf2*t0d(nd))
+      END DO
       sr%szt(icv, 2) = -(switch%b2srst_rf2*t0)
     ELSE
       sr%szt(icv, 2) = sr%szt(icv, 2)
@@ -787,17 +827,35 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
     IF (sr%szt(icv, 3)*zt(icv) .GT. -(switch%b2srst_rf2*t0)) THEN
       IF (-(switch%b2srst_rf2*t0) .GT. (1.0_R8+switch%b2srst_rf2)*t0) &
 &     THEN
+        DO nd=1,nbdirs
+          min11d(nd) = (switch%b2srst_rf2+1.0_R8)*t0d(nd)
+        END DO
         min11 = (1.0_R8+switch%b2srst_rf2)*t0
       ELSE
+        DO nd=1,nbdirs
+          min11d(nd) = -(switch%b2srst_rf2*t0d(nd))
+        END DO
         min11 = -(switch%b2srst_rf2*t0)
       END IF
     ELSE IF (sr%szt(icv, 3)*zt(icv) .GT. (1.0_R8+switch%b2srst_rf2)*t0) &
 &   THEN
+      DO nd=1,nbdirs
+        min11d(nd) = (switch%b2srst_rf2+1.0_R8)*t0d(nd)
+      END DO
       min11 = (1.0_R8+switch%b2srst_rf2)*t0
     ELSE
+      DO nd=1,nbdirs
+        min11d(nd) = zt(icv)*srd%szt(nd, icv, 3) + sr%szt(icv, 3)*ztd(nd&
+&         , icv)
+      END DO
       min11 = sr%szt(icv, 3)*zt(icv)
     END IF
-    sr%szt(icv, 3) = 1.0_R8/(zt(icv)+b2srst_zt_eps)*min11
+    temp = min11/(b2srst_zt_eps+zt(icv))
+    DO nd=1,nbdirs
+      srd%szt(nd, icv, 3) = (min11d(nd)-temp*ztd(nd, icv))/(&
+&       b2srst_zt_eps+zt(icv))
+    END DO
+    sr%szt(icv, 3) = temp
     IF (0.0_R8 .LT. sr%sch(icv, 1)) THEN
       DO nd=1,nbdirs
         max3d(nd) = srd%sch(nd, icv, 1)
@@ -890,13 +948,6 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, mpg, na, nad, ua, uad, te, ted, ti&
   sktst = sr%skt - sktst
   sztst = sr%szt - sztst
 !
-!djm Jan2017 Store for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2srst_sna0to1 = snast
-!WG_TODO        b2srst_smo0to3 = smost
-!WG_TODO        b2srst_she0to3 = shest
-!WG_TODO        b2srst_shi0to3 = shist
-!WG_TODO      endif
 !
 !      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
 !       do is = 0, ns-1
@@ -979,17 +1030,13 @@ END SUBROUTINE B2SRST_DV
 !.specification
 !
 !srv 01.07.08
-SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, mpg, na, ua, te, ti, tn, po, &
-& ne, ni, nn, kt, zt, sr)
+SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, na, ua, te, ti, tn, po, ne, ni&
+& , nn, kt, zt, sr)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SWITCHES_DIFFV
-  USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
-!WG_TODO      use b2mod_balance !djm Jan2017
-!WG_TODO     1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
-!WG_TODO     2          b2srst_shi0to3, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2srst, b2srst_kt_eps, b2srst_zt_eps
@@ -1004,7 +1051,6 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, mpg, na, ua, te, ti, tn, po, &
 !srv 01.07.08
   INTEGER :: ncv, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
-  TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), te(ncv), ti(ncv), &
 & tn(ncv), po(ncv), ne(ncv), ni(ncv, 0:1), nn(ncv), kt(ncv), zt(ncv)
 !   ..input/output arguments
@@ -1032,7 +1078,7 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, mpg, na, ua, te, ti, tn, po, &
   REAL(kind=r8) :: t0
 !   ..procedures
   INTRINSIC MIN, MAX
-  EXTERNAL XERTST, IPGETR, B2XVSG_NODIFF
+  EXTERNAL XERTST, IPGETR, B2XVSG
   REAL(r8) :: min1
   REAL(r8) :: max1
   REAL(r8) :: max2
@@ -1060,19 +1106,20 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, mpg, na, ua, te, ti, tn, po, &
   CALL SUBINI('b2srst')
 !   ..set internal parameters on first call
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test sign of na, ni, ne, te, ti
   IF (ncall_b2srst .LT. 3) THEN
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, kt, 1, 'kt', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, zt, 1, 'zt', '.ge.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, zt, 1, 'zt', '.ge.')
   END IF
 !
 !  .. save sources
@@ -1511,13 +1558,6 @@ SUBROUTINE B2SRST_NODIFF(ncv, ns, switch, mpg, na, ua, te, ti, tn, po, &
   sktst = sr%skt - sktst
   sztst = sr%szt - sztst
 !
-!djm Jan2017 Store for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        b2srst_sna0to1 = snast
-!WG_TODO        b2srst_smo0to3 = smost
-!WG_TODO        b2srst_she0to3 = shest
-!WG_TODO        b2srst_shi0to3 = shist
-!WG_TODO      endif
 !
 !      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
 !       do is = 0, ns-1

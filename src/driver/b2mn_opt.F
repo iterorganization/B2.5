@@ -69,6 +69,7 @@
 *     ninp(3): un*formatted; provides the initial state.
 *     ninp(4): un*formatted; provides atomic rate data.
 *     ninp(5): un*formatted; provides source term data.
+*     ninp(6): un*formatted; provides the initial differentiated state.
 *
 *     The output units are:
 *     nout(0): formatted; provides summary print output.
@@ -80,7 +81,9 @@
 *     nout(6): un*formatted; save file for restart
 *     nout(7): un*formatted; full plasma description with derived quantities
 *     nout(8): un*formatted; ASTRA coupling data file
-*     nout(9): formatted; postprocessor output. [JET]
+*     nout(9): un*formatted; provides the final differentiated state.
+*     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+*     nout(11): formatted; postprocessor output. [JET]
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -134,9 +137,9 @@
 *   ..local variables
       integer ix, iy, ic
 #ifdef JET
-      integer ninp(0:6), nout(0:9), nCv, nFc, ns, ns0, idum(0:9), io   !srv 02.05.07
+      integer ninp(0:6), nout(0:11), nCv, nFc, ns, ns0, idum(0:9), io   !srv 02.05.07
 #else
-      integer ninp(0:6), nout(0:8), nCv, nFc, ns, ns0, idum(0:9), io   !srv 02.05.07
+      integer ninp(0:6), nout(0:10), nCv, nFc, ns, ns0, idum(0:9), io   !srv 02.05.07
 #endif
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
@@ -152,9 +155,9 @@
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                                !srv 02.05.07
 #ifdef JET
-      data nout/60,61,62,63,64,65,66,67,68,69/
+      data nout/60,61,62,63,64,65,66,67,68,69,70,71/
 #else
-      data nout/60,61,62,63,64,65,66,67,68/
+      data nout/60,61,62,63,64,65,66,67,68,69,70/
 #endif
 *-----------------------------------------------------------------------
 *.computation
@@ -216,7 +219,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       nCv = idum(0)
       nFc = idum(1)
       ns  = idum(2)
-      call xertst (0.le.nCv.and.0.le.nFc.and.1.le.ns,
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.1.le.ns,
      &  'faulty input nCv, nFc, ns from plasma state file')
 *   ..obtain mapping/geometry dimensions from b2fgmtry file
       call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
@@ -273,10 +276,10 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #endif
 #ifdef JET
 *   ..set and write ppout
-      call cfopen (nout(9),'tran','new','unformatted')
+      call cfopen (nout(11),'tran','new','unformatted')
       call set_b2mod_ppout
-      call write_b2mod_ppout(nout(9))
-      close (nout(9))
+      call write_b2mod_ppout(nout(11))
+      close (nout(11))
 #endif
 *   ..close files
       do io=0,size(ninp)-1

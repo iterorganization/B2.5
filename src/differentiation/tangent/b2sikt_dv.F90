@@ -70,7 +70,7 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 !.end b2sikt
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -102,6 +102,7 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 !
 !-----------------------------------------------------------------------
 !.declarations
+!
 !   ..local variables
   INTEGER :: ic
 !
@@ -120,18 +121,18 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 & dtecd(nbdirsmax, ncv, 0:1), dticd(nbdirsmax, ncv, 0:1), dktcd(&
 & nbdirsmax, ncv), fac_dissd(nbdirsmax), fac_sheathd(nbdirsmax), csfsd(&
 & nbdirsmax, ncv)
-  REAL(kind=r8), SAVE :: lpar_ref=10.0_R8
 !   ..procedures
   INTRINSIC MIN, MAX, SQRT
   EXTERNAL XERTST, IPGETI, IPGETR, SFILL_NODIFF
   EXTERNAL SFILL_DV
+  EXTERNAL B2XVSG
   INTRINSIC ABS
   INTRINSIC MINVAL
   INTRINSIC LOG
   EXTERNAL XERRAB
   INTRINSIC MOD
-  REAL(kind=r8), DIMENSION(ncv) :: abs0
-  REAL(kind=r8) :: abs1
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
+  REAL(kind=r8) :: dabs1
   REAL(kind=r8) :: min1
   REAL(kind=r8), DIMENSION(nbdirsmax) :: min1d
   INTEGER :: arg1
@@ -173,50 +174,48 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
       CALL XERTST(icsepomp .GT. 0, &
 &           'Invalid icsepomp value, check rzomp in b2.user.parameters')
     END IF
-    CALL IPGETR('b2sikt_fac_diss_lpar', lpar_ref)
   END IF
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2sikt .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
 !    ..test sign of na, te, ti, ne, ni
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%kt, 1, 'kt', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, dv%ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(arg1, dv%ni, 1, 'ni', '.gt.')
   END IF
 !
 ! ..compute heat source terms
 !   ..initialize sources to zero
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, she0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, she0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shi0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shi0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, skt0, 1)
-  CALL SFILL_NODIFF(ncv, 0.0e0_R8, skt_prod, 1)
-  CALL SFILL_NODIFF(ncv, 0.0e0_R8, skt_diss, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, skt0, 1)
+  CALL SFILL_NODIFF(ncv, 0.0_R8, skt_prod, 1)
+  CALL SFILL_NODIFF(ncv, 0.0_R8, skt_diss, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dnac, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dnac, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dlbc, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dlbc, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dtec, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dtec, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dtic, 1)
-  arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dktc, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dtic, 1)
+  CALL SFILL_NODIFF(ncv, 0.0_R8, dktc, 1)
   IF (switch%b2sikt_model .EQ. 1) THEN
 !wdk  KU Leuven k model
 !wdk  source : driven by ExB energy flux
-!wdk  sink   : 
+!wdk  sink   :
 !wdk   - ad hoc term, ~1/(connection length), as a proxy for enhanced
 !wdk     parallel transport due to parallel current fluctuations
     CALL B2XPRZ_DV(ncv, ns, mp, am, pl%na, pld%na, rz, rzd, st_ext, &
@@ -240,14 +239,14 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
       END DO
       csfs = cs
       connfs = geo%cvconn
-      WHERE (rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) 
-        abs0 = rza(:, ismain)*qe*geo%cvbb(:, 3)
+      WHERE (rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) 
+        dabs0 = rza(:, ismain)*qe*geo%cvbb(:, 3)
       ELSEWHERE
-        abs0 = -(rza(:, ismain)*qe*geo%cvbb(:, 3))
+        dabs0 = -(rza(:, ismain)*qe*geo%cvbb(:, 3))
       END WHERE
       arg11(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
       result1 = SQRT(arg11(:))
-      rhol = result1/abs0
+      rhol = result1/dabs0
     ELSE
       DO nd=1,nbdirs
         csfsd(nd, :) = csd(nd, omp(icsepomp))
@@ -256,14 +255,14 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
       connfs = geo%cvconn(omp(icsepomp))
       IF (rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) .GE. &
 &         0.) THEN
-        abs1 = rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3)
+        dabs1 = rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3)
       ELSE
-        abs1 = -(rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3&
-&         ))
+        dabs1 = -(rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), &
+&         3))
       END IF
       arg12 = 2.0_R8*pl%ti(omp(icsepomp))*(am(ismain)*mp)
       result10 = SQRT(arg12)
-      rhol = result10/abs1
+      rhol = result10/dabs1
     END IF
     result11 = MINVAL(connfs(1:mpg%nci))
     CALL XERTST(result11 .GT. 0.0_R8, ' connfs in b2sikt <=0!!')
@@ -396,7 +395,8 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
         END DO
       ELSE IF (switch%b2sikt_fac_diss_core_mode .EQ. 1) THEN
         temp5 = geo%cvvol*(geo%cvbb(:, 3)*geo%cvbb(:, 3))
-        temp4 = geo%cvbb(:, 0)*geo%cvbb(:, 0)*(lpar_ref*lpar_ref)
+        temp4 = geo%cvbb(:, 0)*geo%cvbb(:, 0)*(switch%b2sikt_lpar_ref*&
+&         switch%b2sikt_lpar_ref)
         DO nd=1,nbdirs
           wrk3d(nd, :) = temp5*(pl%kt*cod%sigx_kt(nd, :)+co%sigx_kt*pld%&
 &           kt(nd, :))/temp4
@@ -647,8 +647,6 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
   CALL SUBEND()
   RETURN
 END SUBROUTINE B2SIKT_DV
-!
-!
 
 !
 !
@@ -699,7 +697,7 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 !.end b2sikt
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, ismain
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, ismain
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -721,6 +719,7 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 !
 !-----------------------------------------------------------------------
 !.declarations
+!
 !   ..local variables
   INTEGER :: ic
 !
@@ -729,17 +728,17 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 & , wrkg0(ncv, 0:1), wrkg1(ncv, 0:1), wrkg2(ncv, 0:1), dnac(ncv, 0:1), &
 & dlbc(ncv, 0:1), dtec(ncv, 0:1), dtic(ncv, 0:1), dktc(ncv), fac_diss, &
 & fac_sheath, csfs(ncv), connfs(ncv), rhol(ncv)
-  REAL(kind=r8), SAVE :: lpar_ref=10.0_R8
 !   ..procedures
   INTRINSIC MIN, MAX, SQRT
   EXTERNAL XERTST, IPGETI, IPGETR, SFILL_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC ABS
   INTRINSIC MINVAL
   INTRINSIC LOG
   EXTERNAL XERRAB
   INTRINSIC MOD
-  REAL(kind=r8), DIMENSION(ncv) :: abs0
-  REAL(kind=r8) :: abs1
+  REAL(kind=r8), DIMENSION(ncv) :: dabs0
+  REAL(kind=r8) :: dabs1
   REAL(kind=r8) :: min1
   INTEGER :: arg1
   REAL(kind=r8), DIMENSION(ncv) :: arg10
@@ -766,50 +765,48 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
       CALL XERTST(icsepomp .GT. 0, &
 &           'Invalid icsepomp value, check rzomp in b2.user.parameters')
     END IF
-    CALL IPGETR('b2sikt_fac_diss_lpar', lpar_ref)
   END IF
 !   ..test nCv, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..extensive tests on first few calls
   IF (ncall_b2sikt .LT. 3) THEN
 !    ..test sign of vol
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
 !    ..test sign of na, te, ti, ne, ni
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%kt, 1, 'kt', '.ge.')
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(ncv, pl%kt, 1, 'kt', '.ge.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
     arg1 = ncv*2
-    CALL B2XVSG_NODIFF(arg1, dv%ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(arg1, dv%ni, 1, 'ni', '.gt.')
   END IF
 !
 ! ..compute heat source terms
 !   ..initialize sources to zero
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, she0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, she0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, shi0, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, shi0, 1)
   arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, skt0, 1)
-  CALL SFILL_NODIFF(ncv, 0.0e0_R8, skt_prod, 1)
-  CALL SFILL_NODIFF(ncv, 0.0e0_R8, skt_diss, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, skt0, 1)
+  CALL SFILL_NODIFF(ncv, 0.0_R8, skt_prod, 1)
+  CALL SFILL_NODIFF(ncv, 0.0_R8, skt_diss, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dnac, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dnac, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dlbc, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dlbc, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dtec, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dtec, 1)
   arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dtic, 1)
-  arg1 = ncv*2
-  CALL SFILL_NODIFF(arg1, 0.0e0_R8, dktc, 1)
+  CALL SFILL_NODIFF(arg1, 0.0_R8, dtic, 1)
+  CALL SFILL_NODIFF(ncv, 0.0_R8, dktc, 1)
   IF (switch%b2sikt_model .EQ. 1) THEN
 !wdk  KU Leuven k model
 !wdk  source : driven by ExB energy flux
-!wdk  sink   : 
+!wdk  sink   :
 !wdk   - ad hoc term, ~1/(connection length), as a proxy for enhanced
 !wdk     parallel transport due to parallel current fluctuations
     CALL B2XPRZ_NODIFF(ncv, ns, mp, am, pl%na, rz, st_ext)
@@ -819,27 +816,27 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
     IF (switch%b2sikt_sheath_local .EQ. 1) THEN
       csfs = cs
       connfs = geo%cvconn
-      WHERE (rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0) 
-        abs0 = rza(:, ismain)*qe*geo%cvbb(:, 3)
+      WHERE (rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.) 
+        dabs0 = rza(:, ismain)*qe*geo%cvbb(:, 3)
       ELSEWHERE
-        abs0 = -(rza(:, ismain)*qe*geo%cvbb(:, 3))
+        dabs0 = -(rza(:, ismain)*qe*geo%cvbb(:, 3))
       END WHERE
       arg11(:) = 2.0_R8*pl%ti*(am(ismain)*mp)
       result1 = SQRT(arg11(:))
-      rhol = result1/abs0
+      rhol = result1/dabs0
     ELSE
       csfs = cs(omp(icsepomp))
       connfs = geo%cvconn(omp(icsepomp))
       IF (rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3) .GE. &
 &         0.) THEN
-        abs1 = rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3)
+        dabs1 = rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3)
       ELSE
-        abs1 = -(rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), 3&
-&         ))
+        dabs1 = -(rza(omp(icsepomp), ismain)*qe*geo%cvbb(omp(icsepomp), &
+&         3))
       END IF
       arg12 = 2.0_R8*pl%ti(omp(icsepomp))*(am(ismain)*mp)
       result10 = SQRT(arg12)
-      rhol = result10/abs1
+      rhol = result10/dabs1
     END IF
     result11 = MINVAL(connfs(1:mpg%nci))
     CALL XERTST(result11 .GT. 0.0_R8, ' connfs in b2sikt <=0!!')
@@ -891,7 +888,7 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 &         )*geo%cvconn))**2
       ELSE IF (switch%b2sikt_fac_diss_core_mode .EQ. 1) THEN
         wrk3 = co%sigx_kt*geo%cvvol*pl%kt*(geo%cvbb(:, 3)/(geo%cvbb(:, 0&
-&         )*lpar_ref))**2
+&         )*switch%b2sikt_lpar_ref))**2
       ELSE
         result12 = SQRT(pl%kt)
         CALL GRADC_P_NODIFF(ncv, nfc, nvx, 0, geo, mpg, result12, wrkv, &
@@ -1018,6 +1015,4 @@ SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
   CALL SUBEND()
   RETURN
 END SUBROUTINE B2SIKT_NODIFF
-!
-!
 

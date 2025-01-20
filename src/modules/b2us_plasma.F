@@ -176,6 +176,7 @@ cwdk move to dv
         real(R8), dimension(:,:), allocatable :: sch0, she0, shi0, sne0,
      .                                           shn0, skt0, szt0
         real(R8), dimension(:,:,:), allocatable :: smo0, smq0, sna0
+        real(R8), dimension(:,:), allocatable :: smcf, smpr, smpt, smfr
         real(R8), dimension(:), allocatable ::
      .            b2stbc_sch, b2stbc_she, b2stbc_shi, b2stbc_sne,
      .            b2stbc_shn, b2stbc_skt, b2stbc_szt
@@ -190,6 +191,8 @@ cwdk move to dv
      .            b2stbr_shn, b2stbr_skt, b2stbr_szt
         real(R8), dimension(:,:), allocatable ::
      .            b2stbr_smo, b2stbr_sna
+        real(R8), dimension(:,:,:), allocatable ::
+     .            b2npmo_smaf, b2npmo_smag, b2npmo_smav
         real(R8), dimension(:,:), allocatable :: rsana, rsahi, rsamo,
      .                                           rrana, rrahi, rramo,
      .                                           rcxna, rcxhi, rcxmo,
@@ -426,7 +429,7 @@ cwdk move to dv
 
       if (allocated(coeff % calf)) return
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( coeff % calf( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % calf_cl( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % calf_an( nFc, 0:1 ), SOURCE=0._R8 )
@@ -803,7 +806,7 @@ cwdk move to dv
       type(B2Derivatives), intent(inout) :: dv
 
       if (allocated(dv % fch)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
 ! fluxes
       allocate( dv % fch( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fch_32( nFc, 0:1 ), SOURCE=0._R8 )
@@ -1207,7 +1210,7 @@ cwdk move to dv
       dv % corkt = 0.0_R8
       dv % corzt = 0.0_R8
 ! coupling coefficients
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( dv % pcca( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % pccm( nCv, 0:1 ), SOURCE=0._R8 )
 #else
@@ -1375,7 +1378,7 @@ cwdk move to dv
       type(B2Source), intent(inout) :: sr
 
       if (allocated(sr % sch)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( sr % sch( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( sr % she( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( sr % shi( nCv, 0:3 ), SOURCE=0._R8 )
@@ -1481,7 +1484,7 @@ cwdk move to dv
       type(B2SourceEir), intent(inout) :: sr_eir
 
       if (allocated(sr_eir % sch)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( sr_eir % sch( nCv, nstra), SOURCE=0._R8 )
       allocate( sr_eir % she( nCv, nstra), SOURCE=0._R8 )
       allocate( sr_eir % shi( nCv, nstra), SOURCE=0._R8 )
@@ -1532,7 +1535,7 @@ cwdk move to dv
       type(B2SourceWork), intent(inout) :: srw
 
       if (allocated(srw % sch0)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( srw % sch0( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( srw % she0( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( srw % shi0( nCv, 0:3 ), SOURCE=0._R8 )
@@ -1543,6 +1546,11 @@ cwdk move to dv
       allocate( srw % smq0( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
       allocate( srw % sna0( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( srw % sne0( nCv, 0:1 ), SOURCE=0._R8 )
+
+      allocate( srw % smcf( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % smpr( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % smpt( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % smfr( nCv, 0:ns-1 ), SOURCE=0._R8 )
 
       allocate( srw % b2stbc_sch( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbc_she( nCv ), SOURCE=0._R8 )
@@ -1563,6 +1571,10 @@ cwdk move to dv
       allocate( srw % b2stbr_shn( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbr_skt( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbr_szt( nCv ), SOURCE=0._R8 )
+
+      allocate( srw % b2npmo_smaf( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % b2npmo_smag( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( srw % b2npmo_smav( nCv, 0:3, 0:ns-1 ), SOURCE=0._R8 )
 
       allocate( srw % b2stbm_sch( nCv ), SOURCE=0._R8 )
       allocate( srw % b2stbm_she( nCv ), SOURCE=0._R8 )
@@ -1613,6 +1625,11 @@ cwdk move to dv
       allocate( srw % sna0( nCv, 0:1, 0:ns-1 ) )
       allocate( srw % sne0( nCv, 0:1 ) )
 
+      allocate( srw % smcf( nCv, 0:ns-1 ) )
+      allocate( srw % smpr( nCv, 0:ns-1 ) )
+      allocate( srw % smpt( nCv, 0:ns-1 ) )
+      allocate( srw % smfr( nCv, 0:ns-1 ) )
+
       allocate( srw % b2stbm_sch( nCv ) )
       allocate( srw % b2stbm_she( nCv ) )
       allocate( srw % b2stbm_shi( nCv ) )
@@ -1640,6 +1657,10 @@ cwdk move to dv
       allocate( srw % b2stbr_szt( nCv ) )
       allocate( srw % b2stbr_skt( nCv ) )
       allocate( srw % b2stbr_shn( nCv ) )
+
+      allocate( srw % b2npmo_smaf( nCv, 0:3, 0:ns-1 ) )
+      allocate( srw % b2npmo_smag( nCv, 0:3, 0:ns-1 ) )
+      allocate( srw % b2npmo_smav( nCv, 0:3, 0:ns-1 ) )
 
       allocate( srw % rsana( nCv, 0:ns-1 ) )
       allocate( srw % rsamo( nCv, 0:ns-1 ) )
@@ -1682,6 +1703,11 @@ cwdk move to dv
       srw % sna0 = 0._R8
       srw % sne0 = 0._R8
 
+      srw % smcf = 0._R8
+      srw % smpr = 0._R8
+      srw % smpt = 0._R8
+      srw % smfr = 0._R8
+
       srw % b2stbm_sch = 0._R8
       srw % b2stbm_she = 0._R8
       srw % b2stbm_shi = 0._R8
@@ -1709,6 +1735,10 @@ cwdk move to dv
       srw % b2stbr_shn = 0._R8
       srw % b2stbr_skt = 0._R8
       srw % b2stbr_szt = 0._R8
+
+      srw % b2npmo_smaf = 0._R8
+      srw % b2npmo_smag = 0._R8
+      srw % b2npmo_smav = 0._R8
 
       srw % rsana = 0.0_R8
       srw % rsamo = 0.0_R8
@@ -1760,6 +1790,11 @@ cwdk move to dv
       deallocate( srw % sna0 )
       deallocate( srw % sne0 )
 
+      deallocate( srw % smpr )
+      deallocate( srw % smpt )
+      deallocate( srw % smfr )
+      deallocate( srw % smcf )
+
       deallocate( srw % b2stbc_sch )
       deallocate( srw % b2stbc_she )
       deallocate( srw % b2stbc_shi )
@@ -1787,6 +1822,10 @@ cwdk move to dv
       deallocate( srw % b2stbm_smq )
       deallocate( srw % b2stbm_sna )
       deallocate( srw % b2stbm_sne )
+
+      deallocate( srw % b2npmo_smaf )
+      deallocate( srw % b2npmo_smag )
+      deallocate( srw % b2npmo_smav )
 
       deallocate( srw % rsana )
       deallocate( srw % rsamo )
@@ -1829,7 +1868,7 @@ cwdk move to dv
       type(B2Rates), intent(inout) :: rt
 
       if (allocated(rt % iscx)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate (rt % iscx( 0:rt%nscxmax-1 ), SOURCE=0 )
 
       allocate( rt % rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1),
@@ -1926,7 +1965,7 @@ cwdk move to dv
       type(B2RatesWork), intent(inout) :: rtw
 
       if (allocated(rtw % rsa)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( rtw % rsa( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( rtw % rra( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( rtw % rqa( nCv, 0:ns-1 ), SOURCE=0._R8 )
@@ -1974,7 +2013,7 @@ cwdk move to dv
       type(B2PlasmaSnapshot), intent(inout) :: snap
 
       if (allocated(snap % na)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( snap % na( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( snap % ua( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( snap % po( nCv ), SOURCE=0._R8 )
@@ -2109,7 +2148,7 @@ cwdk move to dv
       type(B2Diagnostic), intent(inout) :: diag
 
       if (allocated(diag % srcna)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( diag % srcna( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( diag % srcmo( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( diag % srcpo( nCv ), SOURCE=0._R8 )
@@ -2200,7 +2239,7 @@ cwdk move to dv
       if (allocated(update % pa)) return
 
 ! corrections
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( update % pa( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( update % ua( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( update % na( nCv, 0:ns-1 ), SOURCE=0._R8 )
@@ -2249,7 +2288,6 @@ cwdk move to dv
 
       return
       end subroutine destroyB2Update
-
 
 
 ! External plasma

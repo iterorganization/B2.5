@@ -41,15 +41,11 @@
       integer :: status
       integer :: strlen
       character*18 hlp_frm
-#ifdef F2003
+#ifndef LEGACYCOMP
       character(len=:), allocatable :: str1(:)
 #else
       integer, parameter :: strmax = 1024
       character(len=strmax+1), allocatable :: str1(:)
-#endif
-#ifndef GFORTRAN
-      integer lnblnk
-      external lnblnk
 #endif
 
       write(hlp_frm,'(a,i3,a)') '(a,a,a,',ns,'(a,a),a)'
@@ -57,9 +53,9 @@
      1 ' of "',(' ',trim(string(is)),is=1,ns),'"'
       strlen=0
       do is=1,ns
-        strlen = max(strlen,lnblnk(string(is)))
+        strlen = max(strlen,len_trim(string(is)))
       enddo
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate(character(len=strlen+1) :: str1(ns))
 #else
       call xertst(strlen.le.strmax,

@@ -5,8 +5,8 @@ C =====================================================================
 C =====================================================================
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer nCv,nbnd,ndepth,igraphs,linlog
       REAL (KIND=R8) :: 
      * targetcr(1:nbnd,1:ndepth,1:2),targetcz(1:nbnd,1:ndepth,1:2),
@@ -27,8 +27,8 @@ C =====================================================================
      1 zlo,zhi,zval,clv,zinc,rlo,rhi
       integer ibnd,i,icol,ici,n,ic,
      2 no_available_colors,noz,nozm,nfmtz
-      real floor,ceil
-      external floor,ceil
+      real (kind=R4) :: sfloor,ceil
+      external sfloor,ceil
 
       zlo=real(zlod,R4)
       zhi=real(zhid,R4)
@@ -84,9 +84,9 @@ C =====================================================================
           endif
           if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
           ZHI=10.0_R4**CEIL(LOG10(ZHI))
-          ZLO=max(10.0_R4**FLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
+          ZLO=max(10.0_R4**SFLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           if(b2plot_debug.ge.10) write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
+          NCONT=INT(CEIL(LOG10(ZHI))-SFLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(0)) then
             ncont=ncont*3

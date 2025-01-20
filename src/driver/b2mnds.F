@@ -20,7 +20,12 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:6), nout(0:10), nCv, nFc, ns, ns0
+      integer ninp(0:6), nCv, nFc, ns, ns0
+#ifdef JET
+      integer nout(0:11)
+#else
+      integer nout(0:10)
+#endif
       type (switches), intent (inout) :: switch
 *   ..output arguments (unspecified on entry)
 *     (none)
@@ -67,7 +72,7 @@
 *     nCv, nFc - integer, input.
 *     nCv and nFc specify the number of cells and faces in the
 *     unstructured data format.
-*     It will hold that 0.le.nCv and 0.le.nFc.
+*     It will hold that 0.lt.nCv and 0.lt.nFc.
 *
 *     ns - integer, input.
 *     ns specifies the number of atomic species in the calculation.
@@ -151,7 +156,7 @@
      &             1.le.nout(9).and.1.le.nout(10),
      &    'faulty argument ninp, nout')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')
 

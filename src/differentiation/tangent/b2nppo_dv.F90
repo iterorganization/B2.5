@@ -4,7 +4,7 @@
 !  Differentiation of b2nppo in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(dv.respo) *(dv.corpo) *(pl.po)
 !   with respect to varying inputs: *(dv.fch) *(dv.conc) *(dv.respo)
-!                *(dv.corpo) *(dv.ne) *(sr.sch) *(pl.po)
+!                *(dv.corpo) *(dv.ne) *(sr.sch) *(pl.po) *(pl.te)
 !   Plus diff mem management of: dv.fch:in dv.conc:in dv.respo:in
 !                dv.corpo:in dv.ne:in geo.vxvol:in sr.sch:in pl.po:in
 !                pl.te:in
@@ -24,8 +24,8 @@
 !
 !srv 22.05.18
 SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
-& rxf, switch, geo, geod, mpg, mpgd, pl, pld, dv, dvd, sr, srd, ierr, &
-& nbdirs)
+& rxf, switch, switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, sr, srd&
+& , ierr, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -33,10 +33,10 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2nppo
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2nppo, ncall_b2uppo, ncall_b2uspo, &
-& my_out_folder, ncall_b2ursd
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2uspo, my_out_folder, ncall_b2ursd
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -48,6 +48,7 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, nregionv, itcnt
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -91,14 +92,23 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
 !.declarations
 !
 !   ..local variables
-  REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv)
+  INTEGER :: icv
+  REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv), wrk
   REAL(kind=r8) :: aad(nbdirsmax, mpg%ncmxnv)
+  REAL(kind=r8), SAVE :: b2nppo_restr_po=0.0_R8
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, &
-&     B2UPPO_NODIFF
+  EXTERNAL B2XVSG, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
   EXTERNAL B2URSD_DV, B2USPO_DV, B2UPPO_DV
   INTRINSIC ANY
+  INTRINSIC ABS
+  INTRINSIC SIGN
+  REAL(kind=r8) :: abs0
+  REAL(kind=r8) :: abs1
+  REAL(kind=r8) :: abs2
+  REAL(kind=r8) :: arg1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
+  INTEGER :: nd
   INTEGER :: nbdirs
 !   ..initialisation
 !
@@ -109,18 +119,21 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2nppo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test rxf
   CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
 &       'faulty argument rxf')
+!   ..read switches
+  IF (ncall_b2nppo .EQ. 0) CALL IPGETR('b2nppo_restr_po', &
+&                                b2nppo_restr_po)
 !   ..extensive tests on first few calls
   IF (ncall_b2nppo .LT. 3) THEN
 !    ..test sign of ne, te
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
 !    ..test sign of sch
-    CALL B2XVSG_NODIFF(ncv, sr%sch(1, 1), 1, 'sch1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%sch(1, 3), 1, 'sch3', '.le.')
+    CALL B2XVSG(ncv, sr%sch(1, 1), 1, 'sch1', '.le.')
+    CALL B2XVSG(ncv, sr%sch(1, 3), 1, 'sch3', '.le.')
   END IF
 !srv 22.05.18
 !
@@ -129,8 +142,8 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   IF ((solving .AND. ANY(solvereg(0:nregionv))) .OR. switch%&
 &     get_residuals .EQ. 1) THEN
 !srv 22.05.18
-    CALL B2URSD_DV(ncv, nfc, geo, mpg, dv%ne, dvd%ne, pl%po, pld%po, sr%&
-&            sch, srd%sch, dv%fch, dvd%fch, dv%respo, dvd%respo, nbdirs)
+    CALL B2URSD_DV(ncv, nfc, mpg, dv%ne, dvd%ne, pl%po, pld%po, sr%sch, &
+&            srd%sch, dv%fch, dvd%fch, dv%respo, dvd%respo, nbdirs)
   END IF
 !srv 22.05.18
 !-rfs      write(6,*) 'ix=20, iy=-1, po ',po(20,-1), po(21,-1)
@@ -147,11 +160,58 @@ SUBROUTINE B2NPPO_DV(ncv, nfc, nvx, nregionv, solving, solvereg, itcnt, &
   IF (solving .AND. ANY(solvereg(0:nregionv))) THEN
 !srv 22.05.18
     CALL B2USPO_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, geo&
-&            , mpg, mpgd, dv%ne, dvd%ne, pl%te, dv%conc, dvd%conc, sr%&
-&            sch, srd%sch, dv%respo, dvd%respo, dv%corpo, dvd%corpo, aa&
-&            , aad, 'b2nppo', nbdirs)
+&            , mpg, mpgd, dv%ne, dvd%ne, pl%te, pld%te, dv%conc, dvd%&
+&            conc, sr%sch, srd%sch, dv%respo, dvd%respo, dv%corpo, dvd%&
+&            corpo, aa, aad, 'b2nppo', nbdirs)
 !   ..apply correction
     CALL B2UPPO_DV(ncv, rxf, dv%corpo, dvd%corpo, pl%po, pld%po, nbdirs)
+    IF (b2nppo_restr_po .NE. 0.0_R8) THEN
+      DO icv=1,mpg%ncv
+        IF (.NOT.mpg%cvonclosedsurface(icv)) THEN
+          IF (b2nppo_restr_po .GT. 0.0_R8) THEN
+            IF (qe*pl%po(icv) .GE. 0.) THEN
+              abs0 = qe*pl%po(icv)
+            ELSE
+              abs0 = -(qe*pl%po(icv))
+            END IF
+            IF (abs0/pl%te(icv) .GT. b2nppo_restr_po) THEN
+              wrk = pl%po(icv)
+              arg1 = b2nppo_restr_po*pl%te(icv)/qe
+              DO nd=1,nbdirs
+                arg1d(nd) = b2nppo_restr_po*pld%te(nd, icv)/qe
+                pld%po(nd, icv) = SIGN(1.d0, arg1*pl%po(icv))*arg1d(nd)
+              END DO
+              pl%po(icv) = SIGN(arg1, pl%po(icv))
+              WRITE(*, *) 'Applied po/Te ratio limit', icv, wrk, pl%po(&
+&             icv)
+            END IF
+          ELSE
+            IF (qe*pl%po(icv) .GE. 0.) THEN
+              abs1 = qe*pl%po(icv)
+            ELSE
+              abs1 = -(qe*pl%po(icv))
+            END IF
+            IF (b2nppo_restr_po .GE. 0.) THEN
+              abs2 = b2nppo_restr_po
+            ELSE
+              abs2 = -b2nppo_restr_po
+            END IF
+            IF (abs1/pl%te(icv) .GT. abs2 .AND. pl%po(icv) .LT. 0.0_R8) &
+&           THEN
+              wrk = pl%po(icv)
+              arg1 = b2nppo_restr_po*pl%te(icv)/qe
+              DO nd=1,nbdirs
+                arg1d(nd) = b2nppo_restr_po*pld%te(nd, icv)/qe
+                pld%po(nd, icv) = SIGN(1.d0, arg1*pl%po(icv))*arg1d(nd)
+              END DO
+              pl%po(icv) = SIGN(arg1, pl%po(icv))
+              WRITE(*, *) 'Applied po/Te ratio limit', icv, wrk, pl%po(&
+&             icv)
+            END IF
+          END IF
+        END IF
+      END DO
+    END IF
   END IF
 !srv 11.09.09 }
 !
@@ -205,10 +265,10 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2nppo
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : ncall_b2nppo, ncall_b2uppo, ncall_b2uspo, &
-& my_out_folder, ncall_b2ursd
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2uspo, my_out_folder, ncall_b2ursd
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -257,12 +317,19 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
 !.declarations
 !
 !   ..local variables
-  REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv)
+  INTEGER :: icv
+  REAL(kind=r8) :: aa(mpg%ncmxnv), wrk0(ncv), wrk
+  REAL(kind=r8), SAVE :: b2nppo_restr_po=0.0_R8
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2URSD_NODIFF, B2USPO_NODIFF, &
-&     B2UPPO_NODIFF
+  EXTERNAL B2XVSG, B2URSD_NODIFF, B2USPO_NODIFF, B2UPPO
   INTRINSIC ANY
+  INTRINSIC ABS
+  INTRINSIC SIGN
+  REAL(kind=r8) :: abs0
+  REAL(kind=r8) :: abs1
+  REAL(kind=r8) :: abs2
+  REAL(kind=r8) :: arg1
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -272,18 +339,21 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2nppo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..test rxf
   CALL XERTST(0.0_R8 .LE. rxf .AND. rxf .LE. 1.0_R8, &
 &       'faulty argument rxf')
+!   ..read switches
+  IF (ncall_b2nppo .EQ. 0) CALL IPGETR('b2nppo_restr_po', &
+&                                b2nppo_restr_po)
 !   ..extensive tests on first few calls
   IF (ncall_b2nppo .LT. 3) THEN
 !    ..test sign of ne, te
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
 !    ..test sign of sch
-    CALL B2XVSG_NODIFF(ncv, sr%sch(1, 1), 1, 'sch1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, sr%sch(1, 3), 1, 'sch3', '.le.')
+    CALL B2XVSG(ncv, sr%sch(1, 1), 1, 'sch1', '.le.')
+    CALL B2XVSG(ncv, sr%sch(1, 3), 1, 'sch3', '.le.')
   END IF
 !srv 22.05.18
 !
@@ -292,8 +362,8 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
   IF ((solving .AND. ANY(solvereg(0:nregionv))) .OR. switch%&
 &     get_residuals .EQ. 1) THEN
 !srv 22.05.18
-    CALL B2URSD_NODIFF(ncv, nfc, geo, mpg, dv%ne, pl%po, sr%sch, dv%fch&
-&                , dv%respo)
+    CALL B2URSD_NODIFF(ncv, nfc, mpg, dv%ne, pl%po, sr%sch, dv%fch, dv%&
+&                respo)
   END IF
 !srv 22.05.18
 !-rfs      write(6,*) 'ix=20, iy=-1, po ',po(20,-1), po(21,-1)
@@ -313,7 +383,46 @@ SUBROUTINE B2NPPO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
 &                , geo, mpg, dv%ne, pl%te, dv%conc, sr%sch, dv%respo, dv&
 &                %corpo, aa, 'b2nppo')
 !   ..apply correction
-    CALL B2UPPO_NODIFF(ncv, rxf, dv%corpo, pl%po)
+    CALL B2UPPO(ncv, rxf, dv%corpo, pl%po)
+    IF (b2nppo_restr_po .NE. 0.0_R8) THEN
+      DO icv=1,mpg%ncv
+        IF (.NOT.mpg%cvonclosedsurface(icv)) THEN
+          IF (b2nppo_restr_po .GT. 0.0_R8) THEN
+            IF (qe*pl%po(icv) .GE. 0.) THEN
+              abs0 = qe*pl%po(icv)
+            ELSE
+              abs0 = -(qe*pl%po(icv))
+            END IF
+            IF (abs0/pl%te(icv) .GT. b2nppo_restr_po) THEN
+              wrk = pl%po(icv)
+              arg1 = b2nppo_restr_po*pl%te(icv)/qe
+              pl%po(icv) = SIGN(arg1, pl%po(icv))
+              WRITE(*, *) 'Applied po/Te ratio limit', icv, wrk, pl%po(&
+&             icv)
+            END IF
+          ELSE
+            IF (qe*pl%po(icv) .GE. 0.) THEN
+              abs1 = qe*pl%po(icv)
+            ELSE
+              abs1 = -(qe*pl%po(icv))
+            END IF
+            IF (b2nppo_restr_po .GE. 0.) THEN
+              abs2 = b2nppo_restr_po
+            ELSE
+              abs2 = -b2nppo_restr_po
+            END IF
+            IF (abs1/pl%te(icv) .GT. abs2 .AND. pl%po(icv) .LT. 0.0_R8) &
+&           THEN
+              wrk = pl%po(icv)
+              arg1 = b2nppo_restr_po*pl%te(icv)/qe
+              pl%po(icv) = SIGN(arg1, pl%po(icv))
+              WRITE(*, *) 'Applied po/Te ratio limit', icv, wrk, pl%po(&
+&             icv)
+            END IF
+          END IF
+        END IF
+      END DO
+    END IF
   END IF
 !srv 11.09.09 }
 !

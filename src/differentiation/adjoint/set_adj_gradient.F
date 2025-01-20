@@ -11,17 +11,17 @@
       real(kind=R8) :: grad(npar)
       type(switches), intent(inout) :: switchdiff
 *-----------------------------------------------------------------------
-*     set_adj_gradient is used in b2optim_tao and b2optim_ipopt
+*     set_adj_gradient is used in b2optim_tao
 *     to correctly set and pass the gradient from adjoint AD to the
 *     optimization routines
 *-----------------------------------------------------------------------
-      integer :: idir, ii, ip, isigma
+      integer :: idir, ii, ip, ipar
       character*3 ss1
       character*3 ss2
       character*70 key
       grad = 0.0_R8
       idir = 1 !this indicates the different directions of adjoint mode
-      do ip = 1, nnvar - nsigma_opt
+      do ip = 1, nnvar - nsigma_opt - nmean_opt ! not subtracting nshift_opt and ncorr_opt because they are not part of nnvar!
         if (spatial_dep(ip)) then
 !         spatially dependent coefficient
           select case (partype(ip))
@@ -53,7 +53,7 @@
               write(ss1,"(I3)") paris(ip)
               write (key, *) "parm_alf, species ", ss1
             case default
-              write(*,*) partype(ip)
+              write(*,*) 'partype = ',partype(ip)
               call xerrab ('partype incompatible with spatial points')
           end select
           do ii = 1, spatial_points(ip)
@@ -83,7 +83,7 @@
             grad(idir) = parm_hceb
             write(ss1,"(I3)") paris(ip)
             write (key, *) "parm_hce, species ", ss1
-          case (5)
+          case (6)
             grad(idir) = parm_vlab(paris(ip))
             write(ss1,"(I3)") paris(ip)
             write (key, *) "parm_vla, species ", ss1
@@ -128,6 +128,7 @@
             write (key, *) "enkpar, boundary ",ss2
           ! recycling
           case (16)
+            grad(idir) = b2recycb(paris(ip),parib(ip))
             write(ss1,"(I3)") paris(ip)
             write(ss2,"(I3)") parib(ip)
             write (key, *) "b2recyc, species ",ss1,", stratum ",ss2
@@ -203,7 +204,7 @@
             grad(idir) = switchdiff%b2tfhe_vis_kt
             write (key, *) "b2tfhe_vis_kt"
           case default
-            write(*,*) partype(ip)
+            write(*,*) 'partype = ',partype(ip)
             call xerrab ('partype out of bounds')
           end select
           grad(idir) = grad(idir) + par_opt_physb(idir)
@@ -212,6 +213,7 @@
           idir = idir + 1
         endif
       end do
+
       if (nsigma_opt.gt.0) then
         do ip = 1, nsigma
 !         only if sigma is being optimized!
@@ -219,6 +221,48 @@
             grad(idir) = sigmab(ip)
             write(ss2,"(I3)") ip
             write (key, *) "sigma",ss2
+            write (*,*) '  Cost function gradient 1: ',
+     &        grad(idir),'wrt',trim(key)
+            idir = idir + 1
+          endif
+        end do
+      endif
+
+      if (nmean_opt.gt.0) then
+        do ip = 1, nmean
+!         only if mean is being optimized!
+          if (mean_opt(ip)) then
+            grad(idir) = meanb(ip)
+            write(ss2,"(I3)") ip
+            write (key, *) "mean",ss2
+            write (*,*) '  Cost function gradient 1: ',
+     &        grad(idir),'wrt',trim(key)
+            idir = idir + 1
+          endif
+        end do
+      endif
+
+      if (nshift_opt.gt.0) then
+        do ip = 1, nshift
+!         only if shift is being optimized!
+          if (shiftopt(ip)) then
+            grad(idir) = shiftb(ip)
+            write(ss2,"(I3)") ip
+            write (key, *) "shift",ss2
+            write (*,*) '  Cost function gradient 1: ',
+     &        grad(idir),'wrt',trim(key)
+            idir = idir + 1
+          endif
+        end do
+      endif
+
+      if (ncorr_opt.gt.0) then
+        do ip = 1, ncf
+!         only if corr is being optimized!
+          if (corr_opt(ip)) then
+            grad(idir) = corr_lengthb(ip)
+            write(ss2,"(I3)") ip
+            write (key, *) "corr_length",ss2
             write (*,*) '  Cost function gradient 1: ',
      &        grad(idir),'wrt',trim(key)
             idir = idir + 1

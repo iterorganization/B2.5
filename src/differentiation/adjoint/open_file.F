@@ -22,9 +22,9 @@ c
       character*(*) filename,area
 c
       character*256 solpstop,filenamecat,localarea,copyarea
-      integer lnblnk, iend
+      integer iend
       logical streql
-      external lnblnk, streql
+      external streql
       logical first
 c
       save first, solpstop
@@ -46,30 +46,26 @@ c
           write(*,'(a)') 'open_file: no SOLPSTOP set '
         else
           write(*,'(a,a)') 'open_file: SOLPSTOP = : ',
-     1     solpstop(1:lnblnk(solpstop))
+     1     trim(solpstop)
         endif
         first=.false.
       endif
       open_file=.true.
       close(lu)
-      write(*,'(a,a)') 'Trying ',filename(1:lnblnk(filename))
-      open(lu,file=filename(1:lnblnk(filename)),
-     1 status='old',err=10,recl=1000010)
+      write(*,'(a,a)') 'Trying ',trim(filename)
+      open(lu,file=trim(filename),status='old',err=10,recl=1000010)
       return
    10 continue
       close(lu)
-      filenamecat='../'//filename(1:lnblnk(filename))
-      write(*,'(a,a)') 'Trying ',filenamecat(1:lnblnk(filenamecat))
-      open(lu,file=filenamecat(1:lnblnk(filenamecat)),
-     2 status='old',err=12,recl=1000010)             !srv 12.05.08 {
+      filenamecat='../'//trim(filename)
+      write(*,'(a,a)') 'Trying ',trim(filenamecat)
+      open(lu,file=trim(filenamecat),status='old',err=12,recl=1000010)   !srv 12.05.08 {
       return
    12 continue
       close(lu)
-      filenamecat=solpstop(1:lnblnk(solpstop))//
-     1 '/'//filename(1:lnblnk(filename))
-      write(*,'(a,a)') 'Trying ',filenamecat(1:lnblnk(filenamecat))
-      open(lu,file=filenamecat(1:lnblnk(filenamecat)),
-     3 status='old',err=13)
+      filenamecat=trim(solpstop)//'/'//trim(filename)
+      write(*,'(a,a)') 'Trying ',trim(filenamecat)
+      open(lu,file=trim(filenamecat),status='old',err=13)
       return
    13 continue
       close(lu)
@@ -83,20 +79,16 @@ c
           copyarea(1:256-iend)=copyarea(iend+1:256)
           copyarea(256-iend+1:256)=repeat(' ',iend)
         endif
-        filenamecat=solpstop(1:lnblnk(solpstop))//
-     1   '/'//
-     2   localarea(1:lnblnk(localarea))//
-     3   '/'//
-     4   filename(1:lnblnk(filename))
-        write(*,'(a,a)') 'Trying ',filenamecat(1:lnblnk(filenamecat))
-        open(lu,file=filenamecat(1:lnblnk(filenamecat)),
-     4   status='old',err=20)
+        filenamecat=
+     1   trim(solpstop)//'/'//trim(localarea)//'/'//trim(filename)
+        write(*,'(a,a)') 'Trying ',trim(filenamecat)
+        open(lu,file=trim(filenamecat),status='old',err=20)
         return
    20   continue
         close(lu)
         if(iend.gt.0) goto 17
       endif
-      write(*,'(a,a)') 'Error in opening ',filename(1:lnblnk(filename))
+      write(*,'(a,a)') 'Error in opening ',trim(filename)
       open_file=.false.
       return
 c
@@ -126,7 +118,7 @@ c
       character*(*) filename,area
 c
       character*256 solpstop,filenamecat,localarea,copyarea
-      integer lnblnk, iend
+      integer iend
       logical first, streql
       external streql
 c
@@ -149,27 +141,23 @@ c
       endif
       silent_open=.true.
       close(lu)
-      open(lu,file=filename(1:lnblnk(filename)),
-     1 status='old',err=10,recl=1000010)
-      filenamecat=filename(1:lnblnk(filename))
+      open(lu,file=trim(filename),status='old',err=10,recl=1000010)
+      filenamecat=trim(filename)
       return
    10 continue
       close(lu)
-      filenamecat='../'//filename(1:lnblnk(filename))
-      open(lu,file=filenamecat(1:lnblnk(filenamecat)),
-     1 status='old',err=12,recl=1000010)
+      filenamecat='../'//trim(filename)
+      open(lu,file=trim(filenamecat),status='old',err=12,recl=1000010)
       return
    12 continue
       close(lu)
-      filenamecat='../baserun/'//filename(1:lnblnk(filename))
-      open(lu,file=filenamecat(1:lnblnk(filenamecat)),
-     1 status='old',err=14,recl=1000010)
+      filenamecat='../baserun/'//trim(filename)
+      open(lu,file=trim(filenamecat),status='old',err=14,recl=1000010)
       return
    14 continue
       close(lu)
-      filenamecat='../../baserun/'//filename(1:lnblnk(filename))
-      open(lu,file=filenamecat(1:lnblnk(filenamecat)),
-     1 status='old',err=16,recl=1000010)
+      filenamecat='../../baserun/'//trim(filename)
+      open(lu,file=trim(filenamecat),status='old',err=16,recl=1000010)
       return
    16 continue
       copyarea=area
@@ -181,27 +169,21 @@ c
          copyarea(1:256)=copyarea(iend+1:256)
       endif
       close(lu)
-      if (lnblnk(localarea).gt.0) then
-        filenamecat=solpstop(1:lnblnk(solpstop))//
-     1   '/'//
-     2   localarea(1:lnblnk(localarea))//
-     3   '/'//
-     4   filename(1:lnblnk(filename))
+      if (.not.streql(localarea,' ')) then
+        filenamecat=
+     1   trim(solpstop)//'/'//trim(localarea)//'/'//trim(filename)
       else
-        filenamecat=solpstop(1:lnblnk(solpstop))//
-     1   '/'//
-     2   filename(1:lnblnk(filename))
+        filenamecat=
+     1   trim(solpstop)//'/'//trim(filename)
       endif
-      open(lu,file=filenamecat(1:lnblnk(filenamecat)),
-     3 status='old',err=20)
+      open(lu,file=trim(filenamecat),status='old',err=20)
       return
    20 continue
       if(iend.gt.0) goto 17
       silent_open=.false.
-      write(*,'(a,a)') 'Failed opening ', filename(1:lnblnk(filename))
-      write(*,'(a,a)') 'SOLPSTOP = ', solpstop(1:lnblnk(solpstop))
-      if(.not.streql(area,''))
-     > write(*,'(a,a)') 'area = ', area(1:lnblnk(area))
+      write(*,'(a,a)') 'Failed opening ', trim(filename)
+      write(*,'(a,a)') 'SOLPSTOP = ', trim(solpstop)
+      if(.not.streql(area,'')) write(*,'(a,a)') 'area = ', trim(area)
       filenamecat=''
       return
 c
@@ -215,29 +197,31 @@ c
 ! level up) and returns a new filename if found, and exist set to true
 ! if the file is found
 
-      integer lnblnk
       character(len=*) filename
+      character(len=256) filenamecat
       logical exist
-      external lnblnk
 
       inquire(file=filename, exist=exist)
       if(exist) return
 
-      inquire(file='../'//filename, exist=exist)
+      filenamecat='../'//trim(filename)
+      inquire(file=trim(filenamecat), exist=exist)
       if(exist) then
-         filename='../'//filename(1:lnblnk(filename))
+         filename=trim(filenamecat)
          return
       endif
 
-      inquire(file='../baserun/'//filename, exist=exist)
+      filenamecat='../baserun/'//trim(filename)
+      inquire(file=trim(filenamecat), exist=exist)
       if(exist) then
-         filename='../baserun/'//filename(1:lnblnk(filename))
+         filename=trim(filenamecat)
          return
       endif
 
-      inquire(file='../../baserun/'//filename, exist=exist)
+      filenamecat='../../baserun/'//trim(filename)
+      inquire(file=trim(filenamecat), exist=exist)
       if(exist) then
-         filename='../../baserun/'//filename(1:lnblnk(filename))
+         filename=trim(filenamecat)
          return
       endif
 

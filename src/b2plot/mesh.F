@@ -7,16 +7,15 @@ c
       use b2mod_b2plot_values
       use b2mod_boundary_namelist
       implicit none
-      integer lnblnk,iFc
+      integer iFc
       character*500 plotlabel
-      external lnblnk
 
       if(b2plot_debug.ge.7) write(*,*) 'typeofplot = ',typeofplot
 
       if(typeofplot .ge. 2 .and. mpg%isClassicalGrid .eq. 1) then
         if(b2plot_debug.ge.7) write(*,*) 'computational domain'
         plotlabel='Computational mesh'
-        call init_page(plotlabel(1:lnblnk(plotlabel)),
+        call init_page(trim(plotlabel),
      1   values(1),values(2),values(3),values(4),1,.false.,.false.,
      2   .false.)
         if(mcol .gt. 1) then
@@ -52,7 +51,7 @@ c
       if(mod(typeofplot,2) .eq. 1) then
         if(b2plot_debug.ge.7) write(*,*) 'physical domain'
         plotlabel='Physical mesh'
-        call init_page(plotlabel(1:lnblnk(plotlabel)),
+        call init_page(trim(plotlabel),
      1   values(5),values(6),values(7),values(8),1,.true.,.false.,
      2   .true.)
         if(mcol .gt. 1) then

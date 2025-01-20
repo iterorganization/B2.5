@@ -25,7 +25,7 @@ SUBROUTINE B2TXSY_DV(ncv, nfc, geo, mpg, fcvol, fcs, fun, fund, funsy, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), fun(ncv), funsy(nfc)
@@ -37,7 +37,6 @@ SUBROUTINE B2TXSY_DV(ncv, nfc, geo, mpg, fcvol, fcs, fun, fund, funsy, &
 !     of a non-orthogonal grid.)
 !     ------------------------------------------------------------------
   INTEGER :: ifc
-  EXTERNAL B2XXGS
   INTEGER :: nd
   REAL(kind=r8) :: temp
   REAL(kind=r8) :: temp0
@@ -55,8 +54,6 @@ SUBROUTINE B2TXSY_DV(ncv, nfc, geo, mpg, fcvol, fcs, fun, fund, funsy, &
     funsy(ifc) = temp*((fcvol(ifc, 2)*fun(mpg%fccv(ifc, 1))+fcvol(ifc, 1&
 &     )*fun(mpg%fccv(ifc, 2)))/temp0)
   END DO
-!   ..reset null regions
-!      call b2xxgs (nx, ny, 0.0_R8, funsy, 2)
 !   ..return
   CALL SUBEND()
   RETURN
@@ -81,7 +78,7 @@ SUBROUTINE B2TXSY_NODIFF(ncv, nfc, geo, mpg, fcvol, fcs, fun, funsy)
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc
+  INTEGER, INTENT(IN) :: ncv, nfc
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), fun(ncv), funsy(nfc)
@@ -92,7 +89,6 @@ SUBROUTINE B2TXSY_NODIFF(ncv, nfc, geo, mpg, fcvol, fcs, fun, funsy)
 !     of a non-orthogonal grid.)
 !     ------------------------------------------------------------------
   INTEGER :: ifc
-  EXTERNAL B2XXGS
 !     ------------------------------------------------------------------
   CALL SUBINI('b2txsy')
 !   ..compute funsy
@@ -101,8 +97,6 @@ SUBROUTINE B2TXSY_NODIFF(ncv, nfc, geo, mpg, fcvol, fcs, fun, funsy)
 &     (ifc, 1))+fcvol(ifc, 1)*fun(mpg%fccv(ifc, 2)))/(fcvol(ifc, 1)+&
 &     fcvol(ifc, 2))
   END DO
-!   ..reset null regions
-!      call b2xxgs (nx, ny, 0.0_R8, funsy, 2)
 !   ..return
   CALL SUBEND()
   RETURN

@@ -38,7 +38,7 @@
       integer iCv, is
 *   ..procedures
       external xertst, sfill
-      external b2xvsg, b2xvfx
+      external b2xvsg
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -48,7 +48,7 @@
 *   ..subprogram start-up calls
       call subini ('b2nxdu')
 *   ..test nCv
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
 *   ..extensive tests on first few calls
       if (ncall_b2nxdu.lt.3) then
 *    ..test sign of smq

@@ -30,7 +30,7 @@ SUBROUTINE GRAD_P_DV(ncv, nfc, nvx, mode, geo, mpg, mpgd, fun, fund, &
 !.end grad_p
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
@@ -119,7 +119,7 @@ SUBROUTINE GRAD_P_NODIFF(ncv, nfc, nvx, mode, geo, mpg, fun, funv, gfunp&
 !.end grad_p
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), funv(nvx)

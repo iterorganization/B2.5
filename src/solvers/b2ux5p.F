@@ -5,10 +5,10 @@
       use b2mod_types
       use b2mod_ma28
       use b2mod_indirect
-      use b2mod_subsys
 #ifdef _OPENMP
       use b2mod_openmp
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
@@ -18,7 +18,6 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(-1:nx,-1:ny)
-*   ..common blocks
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -73,9 +72,9 @@
 #endif
       real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8), allocatable, save ::
-     1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
+     1 aaf(:), wrk0(:), wrk1(:), wrk2(:)
       integer, allocatable, save :: iwrk(:)
-      integer mult_nonzero, mult_solvdim, mult_solvdim1
+      integer, save :: mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min, cpu_time
       external xertst, ipgeti, ipgetr, slv5pt, iluter

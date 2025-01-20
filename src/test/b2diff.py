@@ -132,7 +132,7 @@ else:
         print("Error opening file", args.filename, err.strerror)
         exit(2)
     
-# We collect the results form check_b2_outptut into a dictionary, where the key
+# We collect the results form check_b2_output into a dictionary, where the key
 # is the variable name, and the value is a list of
 # [Max_relative_err, max_absolute_err, avg_relative_err, avg_array_value, maxerr/avgval]
 properties = ['Max absolute error in ', 'Average relative error in',

@@ -40,10 +40,14 @@
       public :: cr, cz, hy1, sy
 
       contains
+      
+***********************************************************************
 
       subroutine alloc_b2mod_geo(nxd,nyd)
       implicit none
       integer, intent(in) :: nxd, nyd
+
+      if (b2mod_geo_allocated) return
 
       allocate(bb(-1:nxd,-1:nyd,0:3))
       allocate(crx(-1:nxd,-1:nyd,0:3))
@@ -115,6 +119,8 @@
 
       return
       end subroutine dealloc_b2mod_geo
+
+***********************************************************************
 
       subroutine read_b2mod_geo(nx,ny,nread)
       use b2mod_math
@@ -219,6 +225,8 @@ c conn
 
       return
       end subroutine read_b2mod_geo
+
+***********************************************************************
 
       subroutine write_b2mod_geo(nwrite)
       implicit none

@@ -57,13 +57,13 @@ cank }
 #else
       use b2mod_eirdiag
 #endif
+#ifndef SOLPS4_3
+      use b2mod_eirsrt
+#endif
       use b2mod_dimensions
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#endif
-#ifndef SOLPS4_3
-#     include "COUPLE/EIRSRT.F"
 #endif
       integer nstraid, natmid, nmolid, nionid, nstsid, nlimpsd
       parameter (NSTRAID=DEF_NSTRA)
@@ -348,6 +348,9 @@ csw 21feb2012
       if (nion_in.gt.0) allocate(textin(0:nion_in-1))
 #ifndef NO_B2_CHEM_SPUT
       allocate(chemical_sputter_yield(0:nlimps))
+#else
+      call xertst (nlimps.le.DEF_NLIM+DEF_NSTS,
+     . 'Increase DEF_NLIM and/or DEF_NSTS in b2mod_dimensions !')
 #endif
 #else
       call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
@@ -1291,9 +1294,10 @@ c.. Test consistency with physical edges within the computational domain
 #ifdef WG_TODO
       logical, allocatable :: old_style(:)
 #endif
+      character*3 ss
       character*16 hlp_frm
       character*260 filename
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -1359,11 +1363,11 @@ cwvu    for (advanced) spatially hybrid, might need even more.
         call alloc_mapping_rc (m)
         m%rcFcP = 0
 
-#ifdef F2003
+#ifndef LEGACYCOMP
         open (newunit=idb,file='debug_neutrals.out')
 #else
         idb = newunit()
-        open (unit=idb,file='deug_neutrals.out')
+        open (unit=idb,file='debug_neutrals.out')
 #endif
         instra = 0
         do istra = 1, nstrai
@@ -1378,6 +1382,9 @@ cwvu    for (advanced) spatially hybrid, might need even more.
               call find_faces (indss, instra, nrcl,
      >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
             end do              ! iss
+            write(ss,'(i3)') istra
+            call xertst(nrcl.gt.0, 
+     &       'No faces found for neutrals stratum = '//ss)
             m%rcFcP(istra,2) = nrcl
          elseif ((crcstra(istra) /= 'T') .and. (crcstra(istra) /= 'V')
      >     .and. (crcstra(istra) /= 'C')) then
@@ -1386,6 +1393,10 @@ cwvu    for (advanced) spatially hybrid, might need even more.
         end do
         close(idb)
       end if
+
+      ! now check that all boundary faces are assigned to a stratum
+      call check_boundary_labels(m, nstrai, rcstart(1:nstrai),
+     & rcend(1:nstrai), .false.)
 
       if (any(rc_list_size > 0))
      .  call xerrab
@@ -2164,8 +2175,9 @@ c.. Test consistency with physical edges within the computational domain
       integer :: rcs(nstrat), rce(nstrat), rcl(nstrat)
       integer :: minlbl(nstrat), maxlbl(nstrat)
       character(1) :: lchar(nstrat)
+      character*3 ss
       type (mapping), intent (inout) :: m
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -2232,7 +2244,7 @@ cwdk also need to correct for degenerate faces?
       enddo
 
       call alloc_mapping_rc (m)
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=idb,file='recyc.out')
 #else
       idb = newunit()
@@ -2313,6 +2325,9 @@ cwdk also need to correct for degenerate faces?
             call find_faces (indss, instra, rcl(istra),
      >                       m%mxnrc,m%rcFc, m%rcFcOr, m, idb)
           end do  ! iss
+          write(ss,'(i3)') istra
+          call xertst(rcl(istra).gt.0, 
+     &      'No faces found for neutrals stratum = '//ss)
           m%rcFcP(istra,2) = rcl(istra)
           rcfe(istra) = 0.5_R8
           rcfi(istra) = 3.0_R8
@@ -2333,6 +2348,10 @@ cwdk also need to correct for degenerate faces?
       arcstart(1:nstrai) = minlbl(1:nstrai)
       arcend(1:nstrai) = maxlbl(1:nstrai)
 
+      ! now check that all boundary faces are assigned to a stratum
+      call check_boundary_labels(m, nstrai, arcstart(1:nstrai),
+     & arcend(1:nstrai), .false.)
+
       if (crcstra(nstrai) == 'T') then
         arcstart(nstrai) = 0
         arcend(nstrai) = 0
@@ -2348,7 +2367,7 @@ cwdk also need to correct for degenerate faces?
 #ifdef WG_DEBUG
       integer :: iout, ian, ien, i
 #endif
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -2384,7 +2403,7 @@ cwdk also need to correct for degenerate faces?
         end do
       end do
 #ifdef WG_DEBUG
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iout,file='rc.testout')
 #else
       iout = newunit()
@@ -2419,12 +2438,12 @@ cwdk also need to correct for degenerate faces?
       integer :: istra, iout, is, i
       integer :: ii(1)
       character(1) :: ap =''''
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open(newunit=iout,file='b2us.neutrals.parameters')
 #else
       iout = newunit()
@@ -2434,11 +2453,14 @@ cwdk also need to correct for degenerate faces?
       call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&NEUTRALS'
-      write (iout,'(1x,a,es9.2)') 'EIRENE_STEP_CPU = ',eirene_step_cpu
-      write (iout,'(1x,a,es9.2)') 'EIRENE_STEP_DT  = ',eirene_step_dt
-      write (iout,'(1x,a,i0)') 'EIRENE_MOD = ',eirene_mod
+      write (iout,'(1x,a,es9.2,a1)')
+     .       'EIRENE_STEP_CPU = ',eirene_step_cpu,','
+      write (iout,'(1x,a,es9.2,a1)')
+     .       'EIRENE_STEP_DT  = ',eirene_step_dt,','
+      write (iout,'(1x,a,i3,a1)')
+     .       'EIRENE_MOD = ',eirene_mod,','
 
-      write (iout,'(1x,a,i0)') 'NSTRAI     = ',m%nRc
+      write (iout,'(1x,a,i3,a1)') 'NSTRAI     = ',m%nRc,','
       write (iout,'(1x,a,(1x,T14,10(2x,4a1)))')
      .       'CRCSTRA = ',(ap,arcstra(istra),ap,',',istra=1,m%nRc)
 
@@ -2480,14 +2502,14 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,es10.2,a1)') 'volrecwt= ',volrecwt,','
 
       write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
-     .   'lsns= ',(abs(lsns(is)),',',is =1,max(1,sum(ksns(1:nstrai))))
+     .   'lsns= ',(abs(lsns(is)),',',is=1,max(1,sum(ksns(1:nstrai))))
       write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
-     .   'ksns= ',(ksns(is),',',is =1,nstrai)
+     .   'ksns= ',(ksns(is),',',is=1,nstrai)
       if (nnstsi > 0) then
         write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
-     .   'lcns= ',(lcns(is),',',is =1,nnstsi)
+     .   'lcns= ',(lcns(is),',',is=1,nnstsi)
         write (iout,'(1x,a,(1x,T7,10(i5,a1,1x)))')
-     .   'ltns= ',(ltns(is),',',is =1,nnstsi)
+     .   'ltns= ',(ltns(is),',',is=1,nnstsi)
       end if
 
       write (iout,'(1x,a,(1x,T14,10(2x,a1,a2,a1,a1)))')
@@ -2629,7 +2651,7 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,i5,a1)')
      .    'n_spcsrf= ',n_spcsrf,','
       if (n_spcsrf > 0) then
-        ii=minloc(abs(l_spcsrf))
+        ii=minloc(iabs(l_spcsrf))
         if (ii(1).eq.1) then
           is = 0
         else if (l_spcsrf(ii(1)).eq.0) then

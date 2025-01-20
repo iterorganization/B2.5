@@ -50,7 +50,7 @@
       logical lnonzero
 *   ..procedures
       external xertst, sfill
-      external b2xvsg, b2xvff, b2ux5p
+      external b2xvsg, b2ux5p
 
 *-----------------------------------------------------------------------
 *.computation
@@ -58,8 +58,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2uspo')
-*   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, nVx
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     . 'faulty argument nCv, nFc, nVx')
 *   ..test itcnt
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..extensive tests on first few calls

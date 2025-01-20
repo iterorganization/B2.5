@@ -24,7 +24,7 @@
 *
 *  1. purpose
 *
-*     B2TDIA computes the X and Y components of the divergent part of
+*     B2TDIA computes the poloidal and radial components of the divergent part of
 *     the diamagnetic current.
 *
 *  8. further comments
@@ -38,7 +38,7 @@
      &  facdriftm, wght(nFc,2), gOnedBsq(nFc,0:1), pzf(nFc)
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx
+      external b2xvsg
 *-----------------------------------------------------------------------
 *.computation
 
@@ -48,15 +48,15 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *   ..test nCv, nFc, ns
-       call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
        call xertst (1.le.ns, 'faulty argument ns')
 *   ..test velocities
-       call xertst (maxval(abs(uadia)).lt.c,
-     &  'Supra-luminal velocities!')
+       call xertst (maxval(dabs(uadia)).lt.c,
+     &  'Supra-luminal velocities !')
       endif
       
       facdriftm = maxval(facdrift)
-      if (facdriftm.ne.0.0_R8 .and. switch%dia_cur.ne.0.0e0_R8           !srv 16.10.17
+      if (facdriftm.ne.0.0_R8 .and. switch%dia_cur.ne.0.0_R8             !srv 16.10.17
      &                        .and. switch%no_current.eq.0) then
 
 *     ..interpolate to faces

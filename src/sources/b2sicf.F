@@ -8,8 +8,10 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2sicf_smo0to3, balance_netcdf
+#endif
       use b2mod_ad
      & , only : ncall_b2sicf
       use b2mod_subsys
@@ -44,7 +46,7 @@
       real (kind=R8) :: wrks(nCv)
 *   ..procedures
       external xertst
-      external b2xvff, b2xvsg
+      external b2xvsg
 
 *-----------------------------------------------------------------------
 *.computation
@@ -54,7 +56,7 @@
       call subini ('b2sicf')
 *   ..set internal parameters on first call
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test mb
       call xertst (0.le.mb, 'faulty argument mb')
 *   ..extensive tests on first few calls
@@ -64,8 +66,8 @@
       endif
 
 * ..compute centrifugal force
-      smbcf = 0.0e0_R8
-      ctcf = 0.0e0_R8                                                   !srv 06.04.07
+      smbcf = 0.0_R8
+      ctcf = 0.0_R8                                                     !srv 06.04.07
       if (switch%b2sicf_style.eq.0) then
         call gradc_p(nCv,nFc,nVx,1,geo,mpg,geo%cvHz,geo%vxHz,wrk0)
 
@@ -76,7 +78,7 @@
      &      *nb(iCv)*wrk0(iCv)
           ctcf(iCv) = switch%b2sicf_phm0*switch%b2sicf_phm1*
      &                                        geo%cvVol(iCv)*           !srv 06.04.07 {
-     &     (geo%cvBb(iCv,0)/geo%cvBb(iCv,3))*mb*2.0e0_R8*ub(iCv)
+     &     (geo%cvBb(iCv,0)/geo%cvBb(iCv,3))*mb*2.0_R8*ub(iCv)
      &      *nb(iCv)*wrk0(iCv)                                          !srv 06.04.07 }
         enddo
 
@@ -86,7 +88,7 @@
         do iy = 0, ny-1
           do ix = 0, nx
             if(leftix(ix,iy).eq.-2) then
-              wrk0(ix,iy) = 0.0e0_R8
+              wrk0(ix,iy) = 0.0_R8
             else
               wrk0(ix,iy) = hz(ix,iy)-hz(leftix(ix,iy),leftiy(ix,iy))
             endif
@@ -99,22 +101,22 @@
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 22.07.05 {
               smbcf(ix,iy,0) = phm0*vol(ix,iy)*                         !srv factor hz/hz=1
      &         (bb(ix,iy,0)/bb(ix,iy,3))/hx(ix,iy)*mb*ub(ix,iy)**2
-     &         *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
+     &         *nb(ix,iy)*0.5_R8*(wrk0(ix,iy)+
      &                            wrk0(rightix(ix,iy),leftiy(ix,iy)))   !srv 22.07.05 {
-              smbcf(ix,iy,1) = 0.0e0_R8
-              smbcf(ix,iy,2) = 0.0e0_R8
-              smbcf(ix,iy,3) = 0.0e0_R8
+              smbcf(ix,iy,1) = 0.0_R8
+              smbcf(ix,iy,2) = 0.0_R8
+              smbcf(ix,iy,3) = 0.0_R8
               ctcf(ix,iy) = phm0*phm1*vol(ix,iy)*                       !srv 06.04.07 {
-     &         (bb(ix,iy,0)/bb(ix,iy,3))/hx(ix,iy)*mb*2.0e0_R8*ub(ix,iy)
-     &          *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
-     &                            wrk0(rightix(ix,iy),leftiy(ix,iy)))   !srv 06.04.07 }
+     &         (bb(ix,iy,0)/bb(ix,iy,3))/hx(ix,iy)*mb*2.0_R8*ub(ix,iy)
+     &          *nb(ix,iy)*0.5_R8*(wrk0(ix,iy)+
+     &                             wrk0(rightix(ix,iy),leftiy(ix,iy)))  !srv 06.04.07 }
 
             else                                                        !srv 26.11.02 }
-              smbcf(ix,iy,0) = 0.0e0_R8
-              smbcf(ix,iy,1) = 0.0e0_R8
-              smbcf(ix,iy,2) = 0.0e0_R8
-              smbcf(ix,iy,3) = 0.0e0_R8
-              ctcf(ix,iy) = 0.0e0_R8                                    !srv 06.04.07
+              smbcf(ix,iy,0) = 0.0_R8
+              smbcf(ix,iy,1) = 0.0_R8
+              smbcf(ix,iy,2) = 0.0_R8
+              smbcf(ix,iy,3) = 0.0_R8
+              ctcf(ix,iy) = 0.0_R8                                      !srv 06.04.07
             endif
             smbcb(ix,iy) =  smbcf(ix,iy,0)
           enddo
@@ -122,10 +124,12 @@
 #endif
       endif
 
+#ifndef FIXED_POINT
 cdjm Store linearised source for balance
       if (balance_netcdf.ne.0) then
         b2sicf_smo0to3(1:nCv,0:3,isb)=smbcf
       endif
+#endif
 
       if (switch%b2sicf_iout.ne.0) then                                 !srv 17.06.02 {
         write (chns,'(i3.3)') isb

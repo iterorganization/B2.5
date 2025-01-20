@@ -23,8 +23,8 @@ MODULE B2MOD_MAIN_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_NEUTR_SRC_SCALING_DIFFV
   USE B2MOD_PPOUT_DIFFV
-!WG_TODO      use b2mod_b2_to_astra
-!WG_TODO      use b2mod_astra_to_b2
+  USE B2MOD_B2_TO_ASTRA
+  USE B2MOD_ASTRA_TO_B2
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
@@ -146,33 +146,44 @@ MODULE B2MOD_MAIN_DIFFV
   CHARACTER(len=32) :: b25_git_version
   LOGICAL :: file_open
   EXTERNAL GET_B25_HASH
-  EXTERNAL GET_B25_HASH_DV
 !   ..procedures
   CHARACTER(len=32) :: GET_B25_HASH
   EXTERNAL PRGINI, PRGEND, CFOPEN, CFRUIN
-  EXTERNAL PRGINI_DV
 !   ..initialise input/output unit numbers
   DATA ninp /50, 51, 52, 53, 54, 55, 56/
   DATA nout /60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70/
 
 CONTAINS
 !  Differentiation of b2mn_init as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtlsa:out rtlcx:out rtlqa:out
-!                rtlra:out b2voloncf:in-out b2data:in-out b2dataoncf:in-out
-!                par_opt_phys:in-out mpg.bcfcor:in-out mpg.rcfcor:in-out
+!   Plus diff mem management of: b2voloncf:in-out b2data:in-out
+!                b2dataoncf:in-out par_opt_phys:in-out rtlsa:out
+!                rtlcx:out rtlqa:out rtlra:out state_avg.na_mean:in-out
+!                state_avg.ua_mean:in-out state_avg.te_mean:in-out
+!                state_avg.ti_mean:in-out state_avg.po_mean:in-out
+!                state_avg.kt_mean:in-out state_avg.zt_mean:in-out
+!                state_avg.sna_mean:in-out state_avg.smo_mean:in-out
+!                state_avg.she_mean:in-out state_avg.shi_mean:in-out
+!                state_avg.shn_mean:in-out state_avg.e_na:in-out
+!                state_avg.e_ua:in-out state_avg.e_te:in-out state_avg.e_ti:in-out
+!                state_avg.e_po:in-out state_avg.e_kt:in-out state_avg.e_zt:in-out
+!                state_avg.e_sna:in-out state_avg.e_smo:in-out
+!                state_avg.e_she:in-out state_avg.e_shi:in-out
+!                state_avg.e_shn:in-out mpg.bcfcor:in-out mpg.rcfcor:in-out
 !                mpg.cffcor:in-out mpg.intcellp:in-out mpg.intcellr:in-out
-!                geo.cvbb:in-out geo.cvx:in-out geo.cvy:in-out
-!                geo.cvsz:in-out geo.cvhz:in-out geo.cvhx:in-out
-!                geo.cvqgam:in-out geo.cvvol:in-out geo.cvonedbsq:in-out
-!                geo.cvbzb:in-out geo.cveb:in-out geo.fcbb:in-out
-!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
-!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
-!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
-!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
+!                mpg.divfcor:in-out geo.cvbb:in-out geo.cvx:in-out
+!                geo.cvy:in-out geo.cvsz:in-out geo.cvhz:in-out
+!                geo.cvhx:in-out geo.cvqgam:in-out geo.cvvol:in-out
+!                geo.cvonedbsq:in-out geo.cvbzb:in-out geo.cveb:in-out
+!                geo.cvfpsi:in-out geo.fcbb:in-out geo.fcs:in-out
+!                geo.fchc:in-out geo.fcht:in-out geo.fchz:in-out
+!                geo.fcvol:in-out geo.fcqgam:in-out geo.fcqalf:in-out
+!                geo.fcqbet:in-out geo.fcpbs:in-out geo.fcpbshz:in-out
+!                geo.fcbzb:in-out geo.fceb:in-out geo.fcfpsi:in-out
 !                geo.vxbb:in-out geo.vxx:in-out geo.vxy:in-out
 !                geo.vxhz:in-out geo.vxvol:in-out geo.vxffbz:in-out
 !                geo.vxfpsi:in-out geo.vxonedbsq:in-out geo.vxbzb:in-out
-!                geo.cvconn:in-out geo.ftconn:in-out geo.fteps:in-out
+!                geo.vxeb:in-out geo.cvconn:in-out geo.vxconn:in-out
+!                geo.ftconn:in-out geo.fsconn:in-out geo.fteps:in-out
 !                geo.ftbbav2:in-out geo.fspsi:in-out state_ext.zn:in-out
 !                state_ext.am:in-out state_ext.ne:in-out state_ext.ne2:in-out
 !                state_ext.ue:in-out state_ext.za:in-out state_ext.za2:in-out
@@ -234,11 +245,12 @@ CONTAINS
 !                state.dv.fhe_exb:in-out state.dv.fhi:in-out state.dv.fhi_mdf:in-out
 !                state.dv.fhit:in-out state.dv.fhipsch:in-out state.dv.fhi_eir:in-out
 !                state.dv.fhi_exb:in-out state.dv.fnn:in-out state.dv.fnn_32:in-out
-!                state.dv.fnn_52:in-out state.dv.fhn:in-out state.dv.fhm:in-out
-!                state.dv.fhp:in-out state.dv.fhj:in-out state.dv.fht:in-out
-!                state.dv.fkt:in-out state.dv.fzt:in-out state.dv.kinrgy:in-out
-!                state.dv.conc:in-out state.dv.flob:in-out state.dv.floe:in-out
-!                state.dv.floi:in-out state.dv.floe_noc:in-out
+!                state.dv.fnn_52:in-out state.dv.fhn:in-out state.dv.fnn_inc:in-out
+!                state.dv.fhm:in-out state.dv.fhp:in-out state.dv.fhj:in-out
+!                state.dv.fht:in-out state.dv.fkt:in-out state.dv.fzt:in-out
+!                state.dv.kin_frac_hyb:in-out state.dv.fluid_frac_hyb:in-out
+!                state.dv.kinrgy:in-out state.dv.conc:in-out state.dv.flob:in-out
+!                state.dv.floe:in-out state.dv.floi:in-out state.dv.floe_noc:in-out
 !                state.dv.floi_noc:in-out state.dv.flon:in-out
 !                state.dv.flokt:in-out state.dv.flozt:in-out state.dv.conn:in-out
 !                state.dv.conkt:in-out state.dv.conzt:in-out state.dv.conb:in-out
@@ -260,58 +272,87 @@ CONTAINS
 !                state.sr.sch:in-out state.sr.she:in-out state.sr.shi:in-out
 !                state.sr.sne:in-out state.sr.shn:in-out state.sr.skt:in-out
 !                state.sr.szt:in-out state.sr.smo:in-out state.sr.smq:in-out
-!                state.sr.sna:in-out state.sr.skt_diss:in-out state.sr.skt_prod:in-out
-!                state.sr_eir.sch:in-out state.sr_eir.she:in-out
-!                state.sr_eir.shi:in-out state.sr_eir.sne:in-out
-!                state.sr_eir.smo:in-out state.sr_eir.smq:in-out
-!                state.sr_eir.sna:in-out state.srw.sch0:in-out
-!                state.srw.she0:in-out state.srw.shi0:in-out state.srw.sne0:in-out
-!                state.srw.shn0:in-out state.srw.skt0:in-out state.srw.szt0:in-out
-!                state.srw.smo0:in-out state.srw.smq0:in-out state.srw.sna0:in-out
+!                state.sr.sna:in-out state.sr.shedt:in-out state.sr.sktdt:in-out
+!                state.sr.sztdt:in-out state.sr.snedt:in-out state.sr.shidt:in-out
+!                state.sr.shndt:in-out state.sr.schdt:in-out state.sr.smodt:in-out
+!                state.sr.snadt:in-out state.sr.skt_diss:in-out
+!                state.sr.skt_prod:in-out state.sr_eir.sch:in-out
+!                state.sr_eir.she:in-out state.sr_eir.shi:in-out
+!                state.sr_eir.sne:in-out state.sr_eir.smo:in-out
+!                state.sr_eir.smq:in-out state.sr_eir.sna:in-out
+!                state.srw.sch0:in-out state.srw.she0:in-out state.srw.shi0:in-out
+!                state.srw.sne0:in-out state.srw.shn0:in-out state.srw.skt0:in-out
+!                state.srw.szt0:in-out state.srw.smo0:in-out state.srw.smq0:in-out
+!                state.srw.sna0:in-out state.srw.smcf:in-out state.srw.smpr:in-out
+!                state.srw.smpt:in-out state.srw.smfr:in-out state.srw.b2stbc_sch:in-out
+!                state.srw.b2stbc_she:in-out state.srw.b2stbc_shi:in-out
+!                state.srw.b2stbc_sne:in-out state.srw.b2stbc_shn:in-out
+!                state.srw.b2stbc_skt:in-out state.srw.b2stbc_szt:in-out
+!                state.srw.b2stbc_smo:in-out state.srw.b2stbc_sna:in-out
 !                state.srw.b2stbm_sch:in-out state.srw.b2stbm_she:in-out
 !                state.srw.b2stbm_shi:in-out state.srw.b2stbm_sne:in-out
 !                state.srw.b2stbm_smo:in-out state.srw.b2stbm_smq:in-out
-!                state.srw.b2stbm_sna:in-out state.rt.rlcx:in-out
-!                state.rt.rlqa:in-out state.rt.rlrd:in-out state.rt.rlbr:in-out
-!                state.rt.rlra:in-out state.rt.rlsa:in-out state.rt.rlza:in-out
-!                state.rt.rlz2:in-out state.rt.rlpt:in-out state.rt.rlpi:in-out
-!                state.rt.rlqr:in-out state.rt.rza:in-out state.rt.rz2:in-out
-!                state.rt.rpt:in-out state.rt.rpi:in-out state.rtw.rsa:in-out
-!                state.rtw.rra:in-out state.rtw.rqa:in-out state.rtw.rrd:in-out
-!                state.rtw.rbr:in-out state.rtw.rcx:in-out state.rtw.rqr:in-out
-!                state.psnl.na:in-out state.psnl.ua:in-out state.psnl.po:in-out
-!                state.psnl.te:in-out state.psnl.ti:in-out state.psnl.tn:in-out
-!                state.psnl.kt:in-out state.psnl.zt:in-out state.psnl.ne:in-out
-!                state.psnl.ni:in-out state.psnl.nn:in-out state.psnl.fch:in-out
-!                state.psnl.fna:in-out state.psnl.fhi:in-out state.psnl.fhe:in-out
-!                state.psnl.fhn:in-out state.psnl.fkt:in-out state.psnl.fzt:in-out
-!                state.psnl.kinrgy:in-out state.psnc.na:in-out
-!                state.psnc.ua:in-out state.psnc.po:in-out state.psnc.te:in-out
-!                state.psnc.ti:in-out state.psnc.tn:in-out state.psnc.kt:in-out
-!                state.psnc.zt:in-out state.psnc.ne:in-out state.psnc.ni:in-out
-!                state.psnc.nn:in-out state.psnc.fch:in-out state.psnc.fna:in-out
-!                state.psnc.fhi:in-out state.psnc.fhe:in-out state.psnc.fhn:in-out
-!                state.psnc.fkt:in-out state.psnc.fzt:in-out state.psnc.kinrgy:in-out
-!                state.diag.srcna:in-out state.diag.srcmo:in-out
-!                state.diag.srcpo:in-out state.diag.srche:in-out
-!                state.diag.srchi:in-out state.diag.srcmt:in-out
-!                state.diag.aresco:in-out state.diag.aresmo:in-out
-!                state.diag.acorpa:in-out state.diag.acorua:in-out
-!                state.diag.rescoreg:in-out state.diag.resmoreg:in-out
-!                state.diag.reshereg:in-out state.diag.reshireg:in-out
-!                state.update.ua:in-out state.update.na:in-out
-!                state.update.pa:in-out state.update.po:in-out
-!                state.update.te:in-out state.update.ti:in-out
-!                state.update.kt:in-out state.update.zt:in-out
-!                (global)na_mean:in-out
+!                state.srw.b2stbm_sna:in-out state.srw.b2stbr_sch:in-out
+!                state.srw.b2stbr_she:in-out state.srw.b2stbr_shi:in-out
+!                state.srw.b2stbr_sne:in-out state.srw.b2stbr_shn:in-out
+!                state.srw.b2stbr_skt:in-out state.srw.b2stbr_szt:in-out
+!                state.srw.b2stbr_smo:in-out state.srw.b2stbr_sna:in-out
+!                state.srw.b2npmo_smaf:in-out state.srw.b2npmo_smag:in-out
+!                state.srw.b2npmo_smav:in-out state.srw.rsana:in-out
+!                state.srw.rsahi:in-out state.srw.rsamo:in-out
+!                state.srw.rrana:in-out state.srw.rrahi:in-out
+!                state.srw.rramo:in-out state.srw.rcxna:in-out
+!                state.srw.rcxhi:in-out state.srw.rcxmo:in-out
+!                state.srw.rqahe:in-out state.srw.rqrad:in-out
+!                state.srw.rqbrm:in-out state.srw.b2sihs_joule:in-out
+!                state.srw.b2sihs_divue:in-out state.srw.b2sihs_divua:in-out
+!                state.srw.b2sihs_exbe:in-out state.srw.b2sihs_exba:in-out
+!                state.srw.b2sihs_visa:in-out state.srw.b2sihs_fraa:in-out
+!                state.srw.b2sihs_str:in-out state.srw.sna0_eir_tot:in-out
+!                state.srw.smo0_eir_tot:in-out state.srw.sne0_eir_tot:in-out
+!                state.srw.she0_eir_tot:in-out state.srw.shi0_eir_tot:in-out
+!                state.srw.shn0_eir_tot:in-out state.srw.sch0_eir_tot:in-out
+!                state.rt.rlcx:in-out state.rt.rlqa:in-out state.rt.rlrd:in-out
+!                state.rt.rlbr:in-out state.rt.rlra:in-out state.rt.rlsa:in-out
+!                state.rt.rlza:in-out state.rt.rlz2:in-out state.rt.rlpt:in-out
+!                state.rt.rlpi:in-out state.rt.rlqr:in-out state.rt.rza:in-out
+!                state.rt.rz2:in-out state.rt.rpt:in-out state.rt.rpi:in-out
+!                state.rtw.rsa:in-out state.rtw.rra:in-out state.rtw.rqa:in-out
+!                state.rtw.rrd:in-out state.rtw.rbr:in-out state.rtw.rcx:in-out
+!                state.rtw.rqr:in-out state.psnl.na:in-out state.psnl.ua:in-out
+!                state.psnl.po:in-out state.psnl.te:in-out state.psnl.ti:in-out
+!                state.psnl.tn:in-out state.psnl.kt:in-out state.psnl.zt:in-out
+!                state.psnl.ne:in-out state.psnl.ni:in-out state.psnl.nn:in-out
+!                state.psnl.fch:in-out state.psnl.fna:in-out state.psnl.fhi:in-out
+!                state.psnl.fhe:in-out state.psnl.fhn:in-out state.psnl.fkt:in-out
+!                state.psnl.fzt:in-out state.psnl.kinrgy:in-out
+!                state.psnc.na:in-out state.psnc.ua:in-out state.psnc.po:in-out
+!                state.psnc.te:in-out state.psnc.ti:in-out state.psnc.tn:in-out
+!                state.psnc.kt:in-out state.psnc.zt:in-out state.psnc.ne:in-out
+!                state.psnc.ni:in-out state.psnc.nn:in-out state.psnc.fch:in-out
+!                state.psnc.fna:in-out state.psnc.fhi:in-out state.psnc.fhe:in-out
+!                state.psnc.fhn:in-out state.psnc.fkt:in-out state.psnc.fzt:in-out
+!                state.psnc.kinrgy:in-out state.diag.srcna:in-out
+!                state.diag.srcmo:in-out state.diag.srcpo:in-out
+!                state.diag.srche:in-out state.diag.srchi:in-out
+!                state.diag.srcmt:in-out state.diag.aresco:in-out
+!                state.diag.aresmo:in-out state.diag.acorpa:in-out
+!                state.diag.acorua:in-out state.diag.rescoreg:in-out
+!                state.diag.resmoreg:in-out state.diag.reshereg:in-out
+!                state.diag.reshireg:in-out state.update.ua:in-out
+!                state.update.na:in-out state.update.pa:in-out
+!                state.update.po:in-out state.update.te:in-out
+!                state.update.ti:in-out state.update.kt:in-out
+!                state.update.zt:in-out
 !
 !
-  SUBROUTINE B2MN_INIT_DV(switch, geo, geod, mpg, mpgd, state, stated, &
-&   state_ext, state_extd, nbdirs)
+  SUBROUTINE B2MN_INIT_DV(switch, switchd, geo, geod, mpg, mpgd, state, &
+&   stated, state_ext, state_extd, state_avg, state_avgd, nbdirs)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
     TYPE(SWITCHES), INTENT(INOUT) :: switch
+    TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
     TYPE(MAPPING), INTENT(INOUT) :: mpg
     TYPE(MAPPING_DIFFV), INTENT(INOUT) :: mpgd
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
@@ -320,13 +361,13 @@ CONTAINS
     TYPE(B2STATE_DIFFV), INTENT(INOUT) :: stated
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
+    TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
+    TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: state_avgd
     INTEGER :: idum(0:9)
     EXTERNAL PRGINI
     EXTERNAL GET_B25_HASH
-    EXTERNAL GET_B25_HASH_DV
     INTRINSIC TRIM
     EXTERNAL XERRAB
-    EXTERNAL XERRAB_DV
     INTEGER :: nbdirs
     CHARACTER(len=32) :: GET_B25_HASH
 !
@@ -405,21 +446,22 @@ CONTAINS
     CALL CREATEB2STATEEXT_DV(mpg%ncv, mpg%nfc, ns, state_ext, state_extd&
 &                      , nbdirs)
 !   ..call principal driver routine
-    CALL ALLOC_B2MOD_PPOUT(1, 1, ns)
+    CALL ALLOC_B2MOD_PPOUT(def_nxd, def_nyd, ns)
     CALL ALLOC_B2MOD_RECYCLE(mpg%nfc, ns)
 !nh 30.03.21
-!WG_TODO      call alloc_b2mod_astra_to_b2(nx, ny)
-!WG_TODO      call alloc_b2mod_b2_to_astra(nx, ny, ns)
+    CALL ALLOC_B2MOD_ASTRA_TO_B2(mpg, def_nxd, def_nyd)
+    CALL ALLOC_B2MOD_B2_TO_ASTRA(mpg, def_nyd, ns)
 !
-    CALL B2MNDR_0_DV(ninp, nout, ns, nsd, ns0, switch, geo, geod, mpg, &
-&              mpgd, state, stated, state_ext, nbdirs)
+    CALL B2MNDR_0_DV(ninp, nout, ns, nsd, ns0, switch, switchd, geo, &
+&              geod, mpg, mpgd, state, stated, state_ext, state_extd, &
+&              state_avg, state_avgd, nbdirs)
 !
     RETURN
   END SUBROUTINE B2MN_INIT_DV
 
 !
 !
-  SUBROUTINE B2MN_INIT(switch, geo, mpg, state, state_ext)
+  SUBROUTINE B2MN_INIT(switch, geo, mpg, state, state_ext, state_avg)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(INOUT) :: switch
@@ -427,6 +469,7 @@ CONTAINS
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
     TYPE(B2STATE), INTENT(INOUT) :: state
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
+    TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
     INTEGER :: idum(0:9)
     EXTERNAL PRGINI
     EXTERNAL GET_B25_HASH
@@ -506,48 +549,54 @@ CONTAINS
     CALL CREATEB2STATE(mpg%ncv, mpg%nfc, ns, state)
     CALL CREATEB2STATEEXT(mpg%ncv, mpg%nfc, ns, state_ext)
 !   ..call principal driver routine
-    CALL ALLOC_B2MOD_PPOUT(1, 1, ns)
+    CALL ALLOC_B2MOD_PPOUT(def_nxd, def_nyd, ns)
     CALL ALLOC_B2MOD_RECYCLE(mpg%nfc, ns)
 !nh 30.03.21
-!WG_TODO      call alloc_b2mod_astra_to_b2(nx, ny)
-!WG_TODO      call alloc_b2mod_b2_to_astra(nx, ny, ns)
+    CALL ALLOC_B2MOD_ASTRA_TO_B2(mpg, def_nxd, def_nyd)
+    CALL ALLOC_B2MOD_B2_TO_ASTRA(mpg, def_nyd, ns)
 !
     CALL B2MNDR_0(ninp, nout, ns, ns0, switch, geo, mpg, state, &
-&           state_ext)
+&           state_ext, state_avg)
 !
     RETURN
   END SUBROUTINE B2MN_INIT
 
 !  Differentiation of b2mn_step in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar potpar enipar
-!                tdata j
-!   with respect to varying inputs: *rtlsa *rtlcx *rtlqa *rtlra
-!                enepar conpar enkpar potpar mompar enipar b2recyc
-!                sigma *par_opt_phys parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
-!                switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!                b2recyc tdata j
+!   with respect to varying inputs: enepar conpar enkpar potpar
+!                mompar enipar b2recyc tdata parm_hce parm_hci
+!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
+!                corr_length sigma shift *par_opt_phys mean *rtlsa
+!                *rtlcx *rtlqa *rtlra switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
 !                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
 !                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
 !                switch.b2tfhi_fsigkt switch.b2tfhi_fkt_hie switch.b2tfhe_vis_kt
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
-!   RW status of diff variables: *rtlsa:in *rtlcx:in *rtlqa:in
-!                *rtlra:in cutlo:(loc) *b2voloncf:(loc) *b2data:(loc)
+!   RW status of diff variables: cutlo:(loc) *b2voloncf:(loc) *b2data:(loc)
 !                *b2dataoncf:(loc) enepar:in-out conpar:in-out
 !                enkpar:in potpar:in-out mompar:in enipar:in-out
-!                b2recyc:in userfluxparm:(loc) sigma:in *par_opt_phys:in
+!                b2recyc:in-out userfluxparm:(loc) tdata:in-out
 !                cfvla:(loc) cfvsa:(loc) cfalf:(loc) cfdpa:(loc)
 !                cfsig:(loc) cfdna:(loc) cfhce:(loc) cfhci:(loc)
 !                parm_hce:in parm_hci:in parm_vla:in parm_vsa:in
 !                parm_alf:in parm_dpa:in parm_sig:in parm_dna:in
-!                tdata:in-out int4l:(loc) int1l:(loc) int2l:(loc)
-!                int3l:(loc) int0l:(loc) fb_target:(loc) fb_prev:(loc)
-!                fb_current:(loc) fb_const:(loc) charge_frac:(loc)
-!                saved_fb_actuator:(loc) fb_rescale:(loc) j:out
-!                geo.cvbb:(loc) switch.keps_cd:in switch.keps_heat:in
+!                corr_length:in sigma:in shift:in *par_opt_phys:in
+!                mean:in int4l:(loc) int1l:(loc) int2l:(loc) int3l:(loc)
+!                int0l:(loc) *rtlsa:in *rtlcx:in *rtlqa:in *rtlra:in
+!                fb_target:(loc) fb_prev:(loc) fb_current:(loc)
+!                fb_const:(loc) charge_frac:(loc) saved_fb_actuator:(loc)
+!                fb_rescale:(loc) j:out state_avg.na_mean:(loc)
+!                state_avg.te_mean:(loc) state_avg.ti_mean:(loc)
+!                state_avg.kt_mean:(loc) state_avg.zt_mean:(loc)
+!                mpg.rccvp:(loc) mpg.rccv:(loc) mpg.rcfcp:(loc)
+!                mpg.rcfc:(loc) mpg.rcfcor:(loc) geo.cvbb:(loc)
+!                geo.cvvol:(loc) geo.fcbb:(loc) geo.vxhz:(loc)
+!                geo.vxonedbsq:(loc) switch.keps_cd:in switch.keps_heat:in
 !                switch.keps_heat_i:in switch.keps_sig:in switch.keps_alf:in
 !                switch.keps_visc:in switch.keps_dkt:in switch.keps_dzt:in
 !                switch.keps_shear:in switch.b2sikt_fac_sheath:in
@@ -634,130 +683,161 @@ CONTAINS
 !                *(state.dv.fni_he):(loc) state.dv.fna:(loc) *(state.dv.fna):(loc)
 !                state.dv.fna_mdf:(loc) *(state.dv.fna_mdf):(loc)
 !                state.dv.fna_52:(loc) state.dv.fna_32:(loc) *(state.dv.fna_32):(loc)
-!                state.dv.fna_53:(loc) state.dv.fna_52nd:(loc)
-!                state.dv.fna_32nd:(loc) state.dv.fna_nodrift:(loc)
-!                state.dv.fna_he:(loc) *(state.dv.fna_he):(loc)
-!                state.dv.fnapsch:(loc) *(state.dv.fnapsch):(loc)
-!                state.dv.fna_fcor:(loc) *(state.dv.fna_fcor):(loc)
-!                state.dv.fna_eir:(loc) *(state.dv.fna_eir):(loc)
-!                state.dv.fna_exb:(loc) *(state.dv.fna_exb):(loc)
-!                state.dv.fmo:(loc) *(state.dv.fmo):(loc) state.dv.fne:(loc)
-!                *(state.dv.fne):(loc) state.dv.fne_he:(loc) *(state.dv.fne_he):(loc)
+!                state.dv.fna_53:(loc) *(state.dv.fna_53):(loc)
+!                state.dv.fna_52nd:(loc) state.dv.fna_32nd:(loc)
+!                state.dv.fna_nodrift:(loc) state.dv.fna_he:(loc)
+!                *(state.dv.fna_he):(loc) state.dv.fnapsch:(loc)
+!                *(state.dv.fnapsch):(loc) state.dv.fna_fcor:(loc)
+!                *(state.dv.fna_fcor):(loc) state.dv.fna_eir:(loc)
+!                *(state.dv.fna_eir):(loc) state.dv.fna_exb:(loc)
+!                *(state.dv.fna_exb):(loc) state.dv.fmo:(loc) *(state.dv.fmo):(loc)
+!                state.dv.fne:(loc) state.dv.fne_he:(loc) *(state.dv.fne_he):(loc)
 !                state.dv.fne_32:(loc) state.dv.fne_52:(loc) state.dv.fne_eir:(loc)
-!                state.dv.fne_53:(loc) state.dv.fhe:(loc) *(state.dv.fhe):(loc)
-!                state.dv.fhe_mdf:(loc) *(state.dv.fhe_mdf):(loc)
-!                state.dv.fhepsch:(loc) *(state.dv.fhepsch):(loc)
-!                state.dv.fhe_eir:(loc) state.dv.fhe_exb:(loc)
-!                *(state.dv.fhe_exb):(loc) state.dv.fhi:(loc) *(state.dv.fhi):(loc)
-!                state.dv.fhi_mdf:(loc) *(state.dv.fhi_mdf):(loc)
-!                state.dv.fhipsch:(loc) *(state.dv.fhipsch):(loc)
-!                state.dv.fhi_eir:(loc) state.dv.fhi_exb:(loc)
-!                *(state.dv.fhi_exb):(loc) state.dv.fnn:(loc) *(state.dv.fnn):(loc)
-!                state.dv.fnn_32:(loc) state.dv.fnn_52:(loc) state.dv.fhn:(loc)
-!                *(state.dv.fhn):(loc) state.dv.fhm:(loc) *(state.dv.fhm):(loc)
-!                state.dv.fhp:(loc) state.dv.fhj:(loc) state.dv.fht:(loc)
+!                state.dv.fne_53:(loc) *(state.dv.fne_53):(loc)
+!                state.dv.fhe:(loc) *(state.dv.fhe):(loc) state.dv.fhe_mdf:(loc)
+!                *(state.dv.fhe_mdf):(loc) state.dv.fhepsch:(loc)
+!                *(state.dv.fhepsch):(loc) state.dv.fhe_eir:(loc)
+!                state.dv.fhe_exb:(loc) *(state.dv.fhe_exb):(loc)
+!                state.dv.fhi:(loc) *(state.dv.fhi):(loc) state.dv.fhi_mdf:(loc)
+!                *(state.dv.fhi_mdf):(loc) state.dv.fhipsch:(loc)
+!                *(state.dv.fhipsch):(loc) state.dv.fhi_eir:(loc)
+!                state.dv.fhi_exb:(loc) *(state.dv.fhi_exb):(loc)
+!                state.dv.fnn:(loc) *(state.dv.fnn):(loc) state.dv.fnn_32:(loc)
+!                state.dv.fnn_52:(loc) state.dv.fhn:(loc) *(state.dv.fhn):(loc)
+!                state.dv.fnn_inc:(loc) state.dv.fhm:(loc) *(state.dv.fhm):(loc)
+!                state.dv.fhp:(loc) *(state.dv.fhp):(loc) state.dv.fhj:(loc)
+!                *(state.dv.fhj):(loc) state.dv.fht:(loc) *(state.dv.fht):(loc)
 !                state.dv.fkt:(loc) *(state.dv.fkt):(loc) state.dv.fzt:(loc)
-!                *(state.dv.fzt):(loc) state.dv.kinrgy:(loc) *(state.dv.kinrgy):(loc)
-!                state.dv.conc:(loc) *(state.dv.conc):(loc) state.dv.flob:(loc)
-!                *(state.dv.flob):(loc) state.dv.floe:(loc) *(state.dv.floe):(loc)
-!                state.dv.floi:(loc) *(state.dv.floi):(loc) state.dv.floe_noc:(loc)
-!                state.dv.floi_noc:(loc) state.dv.flon:(loc) *(state.dv.flon):(loc)
-!                state.dv.flokt:(loc) *(state.dv.flokt):(loc) state.dv.flozt:(loc)
-!                *(state.dv.flozt):(loc) state.dv.conn:(loc) *(state.dv.conn):(loc)
-!                state.dv.conkt:(loc) *(state.dv.conkt):(loc) state.dv.conzt:(loc)
-!                *(state.dv.conzt):(loc) state.dv.conb:(loc) *(state.dv.conb):(loc)
-!                state.dv.cone:(loc) *(state.dv.cone):(loc) state.dv.coni:(loc)
-!                *(state.dv.coni):(loc) state.dv.resmo:(loc) *(state.dv.resmo):(loc)
-!                state.dv.resco:(loc) *(state.dv.resco):(loc) state.dv.respo:(loc)
-!                *(state.dv.respo):(loc) state.dv.reshe:(loc) *(state.dv.reshe):(loc)
-!                state.dv.reshi:(loc) *(state.dv.reshi):(loc) state.dv.resht:(loc)
-!                *(state.dv.resht):(loc) state.dv.resmt:(loc) *(state.dv.resmt):(loc)
-!                state.dv.reshn:(loc) *(state.dv.reshn):(loc) state.dv.reskt:(loc)
-!                *(state.dv.reskt):(loc) state.dv.reszt:(loc) *(state.dv.reszt):(loc)
-!                state.dv.corua:(loc) *(state.dv.corua):(loc) state.dv.corpa:(loc)
-!                *(state.dv.corpa):(loc) state.dv.corut:(loc) *(state.dv.corut):(loc)
-!                state.dv.corpo:(loc) *(state.dv.corpo):(loc) state.dv.cortt:(loc)
-!                *(state.dv.cortt):(loc) state.dv.corte:(loc) *(state.dv.corte):(loc)
-!                state.dv.corti:(loc) *(state.dv.corti):(loc) state.dv.cortn:(loc)
-!                *(state.dv.cortn):(loc) state.dv.corkt:(loc) *(state.dv.corkt):(loc)
-!                state.dv.corzt:(loc) *(state.dv.corzt):(loc) state.dv.pcca:(loc)
-!                *(state.dv.pcca):(loc) state.dv.pccm:(loc) *(state.dv.pccm):(loc)
-!                state.dv.ne:(loc) *(state.dv.ne):(loc) state.dv.ni:(loc)
-!                *(state.dv.ni):(loc) state.dv.nn:(loc) *(state.dv.nn):(loc)
-!                state.dv.ue:(loc) *(state.dv.ue):(loc) state.dv.ne2:(loc)
-!                *(state.dv.ne2):(loc) state.dv.pa:(loc) *(state.dv.pa):(loc)
-!                state.dv.pz:(loc) *(state.dv.pz):(loc) state.dv.lnlam:(loc)
-!                *(state.dv.lnlam):(loc) state.dv.uadia:(loc) state.dv.vadia:(loc)
-!                *(state.dv.vadia):(loc) state.dv.wadia:(loc) *(state.dv.wadia):(loc)
-!                state.dv.vaecrb:(loc) *(state.dv.vaecrb):(loc)
-!                state.dv.vedia:(loc) *(state.dv.vedia):(loc) state.dv.wedia:(loc)
-!                state.dv.veecrb:(loc) *(state.dv.veecrb):(loc)
-!                state.dv.facdrift:(loc) state.dv.fac_exb:(loc)
-!                state.dv.fac_vis:(loc) state.sr.sch:(loc) *(state.sr.sch):(loc)
-!                state.sr.she:(loc) *(state.sr.she):(loc) state.sr.shi:(loc)
-!                *(state.sr.shi):(loc) state.sr.sne:(loc) state.sr.shn:(loc)
-!                *(state.sr.shn):(loc) state.sr.skt:(loc) *(state.sr.skt):(loc)
-!                state.sr.szt:(loc) state.sr.smo:(loc) *(state.sr.smo):(loc)
+!                *(state.dv.fzt):(loc) state.dv.kin_frac_hyb:(loc)
+!                *(state.dv.kin_frac_hyb):(loc) state.dv.fluid_frac_hyb:(loc)
+!                *(state.dv.fluid_frac_hyb):(loc) state.dv.kinrgy:(loc)
+!                *(state.dv.kinrgy):(loc) state.dv.conc:(loc) *(state.dv.conc):(loc)
+!                state.dv.flob:(loc) *(state.dv.flob):(loc) state.dv.floe:(loc)
+!                *(state.dv.floe):(loc) state.dv.floi:(loc) *(state.dv.floi):(loc)
+!                state.dv.floe_noc:(loc) state.dv.floi_noc:(loc)
+!                state.dv.flon:(loc) *(state.dv.flon):(loc) state.dv.flokt:(loc)
+!                *(state.dv.flokt):(loc) state.dv.flozt:(loc) *(state.dv.flozt):(loc)
+!                state.dv.conn:(loc) *(state.dv.conn):(loc) state.dv.conkt:(loc)
+!                *(state.dv.conkt):(loc) state.dv.conzt:(loc) *(state.dv.conzt):(loc)
+!                state.dv.conb:(loc) *(state.dv.conb):(loc) state.dv.cone:(loc)
+!                *(state.dv.cone):(loc) state.dv.coni:(loc) *(state.dv.coni):(loc)
+!                state.dv.resmo:(loc) *(state.dv.resmo):(loc) state.dv.resco:(loc)
+!                *(state.dv.resco):(loc) state.dv.respo:(loc) *(state.dv.respo):(loc)
+!                state.dv.reshe:(loc) *(state.dv.reshe):(loc) state.dv.reshi:(loc)
+!                *(state.dv.reshi):(loc) state.dv.resht:(loc) *(state.dv.resht):(loc)
+!                state.dv.resmt:(loc) *(state.dv.resmt):(loc) state.dv.reshn:(loc)
+!                *(state.dv.reshn):(loc) state.dv.reskt:(loc) *(state.dv.reskt):(loc)
+!                state.dv.reszt:(loc) *(state.dv.reszt):(loc) state.dv.corua:(loc)
+!                *(state.dv.corua):(loc) state.dv.corpa:(loc) *(state.dv.corpa):(loc)
+!                state.dv.corut:(loc) *(state.dv.corut):(loc) state.dv.corpo:(loc)
+!                *(state.dv.corpo):(loc) state.dv.cortt:(loc) *(state.dv.cortt):(loc)
+!                state.dv.corte:(loc) *(state.dv.corte):(loc) state.dv.corti:(loc)
+!                *(state.dv.corti):(loc) state.dv.cortn:(loc) *(state.dv.cortn):(loc)
+!                state.dv.corkt:(loc) *(state.dv.corkt):(loc) state.dv.corzt:(loc)
+!                *(state.dv.corzt):(loc) state.dv.pcca:(loc) *(state.dv.pcca):(loc)
+!                state.dv.pccm:(loc) *(state.dv.pccm):(loc) state.dv.ne:(loc)
+!                *(state.dv.ne):(loc) state.dv.ni:(loc) *(state.dv.ni):(loc)
+!                state.dv.nn:(loc) *(state.dv.nn):(loc) state.dv.ue:(loc)
+!                *(state.dv.ue):(loc) state.dv.ne2:(loc) *(state.dv.ne2):(loc)
+!                state.dv.pa:(loc) *(state.dv.pa):(loc) state.dv.pz:(loc)
+!                *(state.dv.pz):(loc) state.dv.lnlam:(loc) *(state.dv.lnlam):(loc)
+!                state.dv.uadia:(loc) state.dv.vadia:(loc) *(state.dv.vadia):(loc)
+!                state.dv.wadia:(loc) *(state.dv.wadia):(loc) state.dv.vaecrb:(loc)
+!                *(state.dv.vaecrb):(loc) state.dv.vedia:(loc)
+!                *(state.dv.vedia):(loc) state.dv.wedia:(loc) state.dv.veecrb:(loc)
+!                *(state.dv.veecrb):(loc) state.dv.facdrift:(loc)
+!                state.dv.fac_exb:(loc) state.dv.fac_vis:(loc)
+!                state.sr.sch:(loc) *(state.sr.sch):(loc) state.sr.she:(loc)
+!                *(state.sr.she):(loc) state.sr.shi:(loc) *(state.sr.shi):(loc)
+!                state.sr.sne:(loc) state.sr.shn:(loc) *(state.sr.shn):(loc)
+!                state.sr.skt:(loc) *(state.sr.skt):(loc) state.sr.szt:(loc)
+!                *(state.sr.szt):(loc) state.sr.smo:(loc) *(state.sr.smo):(loc)
 !                state.sr.smq:(loc) *(state.sr.smq):(loc) state.sr.sna:(loc)
-!                *(state.sr.sna):(loc) state.sr.skt_diss:(loc)
-!                state.sr.skt_prod:(loc) state.srw.sch0:(loc) *(state.srw.sch0):(loc)
-!                state.srw.she0:(loc) *(state.srw.she0):(loc) state.srw.shi0:(loc)
-!                *(state.srw.shi0):(loc) state.srw.sne0:(loc) state.srw.shn0:(loc)
-!                *(state.srw.shn0):(loc) state.srw.skt0:(loc) *(state.srw.skt0):(loc)
-!                state.srw.szt0:(loc) state.srw.smo0:(loc) *(state.srw.smo0):(loc)
+!                *(state.sr.sna):(loc) state.sr.shedt:(loc) *(state.sr.shedt):(loc)
+!                state.sr.sktdt:(loc) *(state.sr.sktdt):(loc) state.sr.sztdt:(loc)
+!                *(state.sr.sztdt):(loc) state.sr.snedt:(loc) state.sr.shidt:(loc)
+!                *(state.sr.shidt):(loc) state.sr.shndt:(loc) *(state.sr.shndt):(loc)
+!                state.sr.schdt:(loc) *(state.sr.schdt):(loc) state.sr.smodt:(loc)
+!                *(state.sr.smodt):(loc) state.sr.snadt:(loc) *(state.sr.snadt):(loc)
+!                state.sr.skt_diss:(loc) state.sr.skt_prod:(loc)
+!                state.srw.sch0:(loc) *(state.srw.sch0):(loc) state.srw.she0:(loc)
+!                *(state.srw.she0):(loc) state.srw.shi0:(loc) *(state.srw.shi0):(loc)
+!                state.srw.sne0:(loc) state.srw.shn0:(loc) *(state.srw.shn0):(loc)
+!                state.srw.skt0:(loc) *(state.srw.skt0):(loc) state.srw.szt0:(loc)
+!                *(state.srw.szt0):(loc) state.srw.smo0:(loc) *(state.srw.smo0):(loc)
 !                state.srw.smq0:(loc) *(state.srw.smq0):(loc) state.srw.sna0:(loc)
-!                *(state.srw.sna0):(loc) state.srw.b2stbm_sch:(loc)
-!                state.srw.b2stbm_she:(loc) state.srw.b2stbm_shi:(loc)
-!                state.srw.b2stbm_sne:(loc) state.srw.b2stbm_smo:(loc)
-!                state.srw.b2stbm_sna:(loc) state.rt.rlcx:(loc)
-!                *(state.rt.rlcx):(loc) state.rt.rlqa:(loc) *(state.rt.rlqa):(loc)
-!                state.rt.rlrd:(loc) *(state.rt.rlrd):(loc) state.rt.rlbr:(loc)
-!                *(state.rt.rlbr):(loc) state.rt.rlra:(loc) *(state.rt.rlra):(loc)
-!                state.rt.rlsa:(loc) *(state.rt.rlsa):(loc) state.rt.rlza:(loc)
-!                *(state.rt.rlza):(loc) state.rt.rlz2:(loc) *(state.rt.rlz2):(loc)
-!                state.rt.rlpt:(loc) *(state.rt.rlpt):(loc) state.rt.rlpi:(loc)
-!                *(state.rt.rlpi):(loc) state.rt.rlqr:(loc) *(state.rt.rlqr):(loc)
-!                state.rt.rza:(loc) *(state.rt.rza):(loc) state.rt.rz2:(loc)
-!                *(state.rt.rz2):(loc) state.rt.rpt:(loc) *(state.rt.rpt):(loc)
-!                state.rt.rpi:(loc) *(state.rt.rpi):(loc) state.rtw.rsa:(loc)
-!                *(state.rtw.rsa):(loc) state.rtw.rra:(loc) *(state.rtw.rra):(loc)
-!                state.rtw.rqa:(loc) *(state.rtw.rqa):(loc) state.rtw.rrd:(loc)
-!                state.rtw.rbr:(loc) state.rtw.rcx:(loc) *(state.rtw.rcx):(loc)
-!                state.rtw.rqr:(loc) *(state.rtw.rqr):(loc) state.psnl.na:(loc)
-!                state.psnl.ua:(loc) state.psnl.po:(loc) state.psnl.te:(loc)
-!                state.psnl.ti:(loc) state.psnl.tn:(loc) state.psnl.kt:(loc)
-!                state.psnl.zt:(loc) state.psnl.ne:(loc) state.psnl.ni:(loc)
-!                state.psnl.fch:(loc) state.psnl.fna:(loc) state.psnl.fhi:(loc)
-!                state.psnl.fhe:(loc) state.psnl.fkt:(loc) state.psnl.fzt:(loc)
-!                state.psnl.kinrgy:(loc) state.psnc.na:(loc) *(state.psnc.na):(loc)
-!                state.psnc.ua:(loc) *(state.psnc.ua):(loc) state.psnc.po:(loc)
-!                *(state.psnc.po):(loc) state.psnc.te:(loc) *(state.psnc.te):(loc)
-!                state.psnc.ti:(loc) *(state.psnc.ti):(loc) state.psnc.tn:(loc)
-!                *(state.psnc.tn):(loc) state.psnc.kt:(loc) *(state.psnc.kt):(loc)
-!                state.psnc.zt:(loc) *(state.psnc.zt):(loc) state.psnc.ne:(loc)
-!                *(state.psnc.ne):(loc) state.psnc.ni:(loc) *(state.psnc.ni):(loc)
-!                state.psnc.nn:(loc) *(state.psnc.nn):(loc) state.psnc.fch:(loc)
-!                *(state.psnc.fch):(loc) state.psnc.fna:(loc) *(state.psnc.fna):(loc)
-!                state.psnc.fhi:(loc) *(state.psnc.fhi):(loc) state.psnc.fhe:(loc)
-!                *(state.psnc.fhe):(loc) state.psnc.fkt:(loc) *(state.psnc.fkt):(loc)
-!                state.psnc.fzt:(loc) *(state.psnc.fzt):(loc) state.psnc.kinrgy:(loc)
-!                *(state.psnc.kinrgy):(loc) state.diag.aresco:(loc)
-!                state.diag.aresmo:(loc) state.diag.acorpa:(loc)
-!                state.diag.acorua:(loc) state.diag.rescoreg:(loc)
-!                state.diag.resmoreg:(loc) state.diag.reshereg:(loc)
-!                state.diag.reshireg:(loc) (global)cfnorm[1:nncf]:(loc)
-!                (global)vold[1:nncf]:(loc)
-!   Plus diff mem management of: rtlsa:in rtlcx:in rtlqa:in rtlra:in
-!                b2voloncf:in b2data:in b2dataoncf:in par_opt_phys:in
-!                mpg.bcfcor:in mpg.rcfcor:in mpg.cffcor:in mpg.intcellp:in
+!                *(state.srw.sna0):(loc) state.srw.smpr:(loc) state.srw.smpt:(loc)
+!                state.srw.smfr:(loc) state.srw.b2stbc_sch:(loc)
+!                state.srw.b2stbc_she:(loc) state.srw.b2stbc_shi:(loc)
+!                state.srw.b2stbc_sne:(loc) state.srw.b2stbc_shn:(loc)
+!                state.srw.b2stbc_skt:(loc) state.srw.b2stbc_szt:(loc)
+!                state.srw.b2stbc_smo:(loc) state.srw.b2stbc_sna:(loc)
+!                state.srw.b2stbm_sch:(loc) state.srw.b2stbm_she:(loc)
+!                state.srw.b2stbm_shi:(loc) state.srw.b2stbm_sne:(loc)
+!                state.srw.b2stbm_smo:(loc) state.srw.b2stbm_sna:(loc)
+!                state.srw.b2stbr_sch:(loc) state.srw.b2stbr_she:(loc)
+!                state.srw.b2stbr_shi:(loc) state.srw.b2stbr_sne:(loc)
+!                state.srw.b2stbr_shn:(loc) state.srw.b2stbr_skt:(loc)
+!                state.srw.b2stbr_szt:(loc) state.srw.b2stbr_smo:(loc)
+!                state.srw.b2stbr_sna:(loc) state.srw.b2npmo_smaf:(loc)
+!                state.srw.b2npmo_smag:(loc) state.srw.b2npmo_smav:(loc)
+!                state.srw.rsana:(loc) state.srw.rsahi:(loc) state.srw.rsamo:(loc)
+!                state.srw.rrana:(loc) state.srw.rrahi:(loc) state.srw.rramo:(loc)
+!                state.srw.rcxna:(loc) state.srw.rcxhi:(loc) state.srw.rcxmo:(loc)
+!                state.srw.rqahe:(loc) state.srw.rqrad:(loc) state.srw.rqbrm:(loc)
+!                state.srw.b2sihs_joule:(loc) state.srw.b2sihs_divue:(loc)
+!                state.srw.b2sihs_divua:(loc) state.srw.b2sihs_exbe:(loc)
+!                state.srw.b2sihs_exba:(loc) state.srw.b2sihs_visa:(loc)
+!                state.srw.b2sihs_fraa:(loc) state.srw.b2sihs_str:(loc)
+!                state.rt.rlcx:(loc) *(state.rt.rlcx):(loc) state.rt.rlqa:(loc)
+!                *(state.rt.rlqa):(loc) state.rt.rlrd:(loc) *(state.rt.rlrd):(loc)
+!                state.rt.rlbr:(loc) *(state.rt.rlbr):(loc) state.rt.rlra:(loc)
+!                *(state.rt.rlra):(loc) state.rt.rlsa:(loc) *(state.rt.rlsa):(loc)
+!                state.rt.rlza:(loc) *(state.rt.rlza):(loc) state.rt.rlz2:(loc)
+!                *(state.rt.rlz2):(loc) state.rt.rlpt:(loc) *(state.rt.rlpt):(loc)
+!                state.rt.rlpi:(loc) *(state.rt.rlpi):(loc) state.rt.rlqr:(loc)
+!                *(state.rt.rlqr):(loc) state.rt.rza:(loc) *(state.rt.rza):(loc)
+!                state.rt.rz2:(loc) *(state.rt.rz2):(loc) state.rt.rpt:(loc)
+!                *(state.rt.rpt):(loc) state.rt.rpi:(loc) *(state.rt.rpi):(loc)
+!                state.rtw.rsa:(loc) *(state.rtw.rsa):(loc) state.rtw.rra:(loc)
+!                *(state.rtw.rra):(loc) state.rtw.rqa:(loc) *(state.rtw.rqa):(loc)
+!                state.rtw.rrd:(loc) state.rtw.rbr:(loc) state.rtw.rcx:(loc)
+!                *(state.rtw.rcx):(loc) state.rtw.rqr:(loc) *(state.rtw.rqr):(loc)
+!                state.psnl.na:(loc) *(state.psnl.na):(loc) state.psnl.ua:(loc)
+!                *(state.psnl.ua):(loc) state.psnl.po:(loc) state.psnl.te:(loc)
+!                *(state.psnl.te):(loc) state.psnl.ti:(loc) *(state.psnl.ti):(loc)
+!                state.psnl.tn:(loc) *(state.psnl.tn):(loc) state.psnl.kt:(loc)
+!                *(state.psnl.kt):(loc) state.psnl.zt:(loc) *(state.psnl.zt):(loc)
+!                state.psnl.ne:(loc) *(state.psnl.ne):(loc) state.psnl.ni:(loc)
+!                *(state.psnl.ni):(loc) state.psnl.fch:(loc) state.psnl.fna:(loc)
+!                state.psnl.fhi:(loc) state.psnl.fhe:(loc) state.psnl.fkt:(loc)
+!                state.psnl.fzt:(loc) state.psnl.kinrgy:(loc) *(state.psnl.kinrgy):(loc)
+!                state.psnc.na:(loc) *(state.psnc.na):(loc) state.psnc.ua:(loc)
+!                *(state.psnc.ua):(loc) state.psnc.po:(loc) state.psnc.te:(loc)
+!                *(state.psnc.te):(loc) state.psnc.ti:(loc) *(state.psnc.ti):(loc)
+!                state.psnc.tn:(loc) *(state.psnc.tn):(loc) state.psnc.kt:(loc)
+!                *(state.psnc.kt):(loc) state.psnc.zt:(loc) *(state.psnc.zt):(loc)
+!                state.psnc.ne:(loc) *(state.psnc.ne):(loc) state.psnc.ni:(loc)
+!                *(state.psnc.ni):(loc) state.psnc.nn:(loc) *(state.psnc.nn):(loc)
+!                state.psnc.fch:(loc) state.psnc.fna:(loc) state.psnc.fhi:(loc)
+!                state.psnc.fhe:(loc) state.psnc.fkt:(loc) state.psnc.fzt:(loc)
+!                state.psnc.kinrgy:(loc) *(state.psnc.kinrgy):(loc)
+!                state.diag.aresco:(loc) state.diag.aresmo:(loc)
+!                state.diag.acorpa:(loc) state.diag.acorua:(loc)
+!                state.diag.rescoreg:(loc) state.diag.resmoreg:(loc)
+!                state.diag.reshereg:(loc) state.diag.reshireg:(loc)
+!                (global)cfnorm[1:nncf]:(loc) (global)vold[1:nncf]:(loc)
+!   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
+!                par_opt_phys:in rtlsa:in rtlcx:in rtlqa:in rtlra:in
+!                mpg.bcfcor:in mpg.rcfcor:in-out mpg.intcellp:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
 !                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
-!                geo.cvonedbsq:in geo.cveb:in geo.fcbb:in geo.fcs:in
+!                geo.cvonedbsq:in geo.cvfpsi:in geo.fcbb:in geo.fcs:in
 !                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
 !                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.fcpbshz:in geo.fcbzb:in geo.fceb:in geo.vxbb:in
-!                geo.vxx:in geo.vxy:in geo.vxhz:in geo.vxvol:in
-!                geo.vxonedbsq:in geo.cvconn:in geo.ftconn:in geo.fteps:in
+!                geo.fcpbshz:in geo.fcbzb:in geo.vxbb:in geo.vxx:in
+!                geo.vxy:in geo.vxhz:in geo.vxvol:in geo.vxonedbsq:in
+!                geo.cvconn:in geo.ftconn:in geo.fsconn:in geo.fteps:in
 !                geo.ftbbav2:in state_ext.am:in state_ext.ne:in
 !                state_ext.ne2:in state_ext.ue:in state_ext.za:in
 !                state_ext.za2:in state_ext.pt:in state_ext.na:in
@@ -808,72 +888,95 @@ CONTAINS
 !                state.dv.fhe_exb:in state.dv.fhi:in state.dv.fhi_mdf:in
 !                state.dv.fhipsch:in state.dv.fhi_eir:in state.dv.fhi_exb:in
 !                state.dv.fnn:in state.dv.fnn_32:in state.dv.fnn_52:in
-!                state.dv.fhn:in state.dv.fhm:in state.dv.fhp:in
-!                state.dv.fhj:in state.dv.fht:in state.dv.fkt:in
-!                state.dv.fzt:in state.dv.kinrgy:in state.dv.conc:in
-!                state.dv.flob:in state.dv.floe:in state.dv.floi:in
-!                state.dv.floe_noc:in state.dv.floi_noc:in state.dv.flon:in
-!                state.dv.flokt:in state.dv.flozt:in state.dv.conn:in
-!                state.dv.conkt:in state.dv.conzt:in state.dv.conb:in
-!                state.dv.cone:in state.dv.coni:in state.dv.fllime:in
-!                state.dv.fllimi:in state.dv.resmo:in state.dv.resco:in
-!                state.dv.respo:in state.dv.reshe:in state.dv.reshi:in
-!                state.dv.resht:in state.dv.resmt:in state.dv.reshn:in
-!                state.dv.reskt:in state.dv.reszt:in state.dv.corua:in
-!                state.dv.corpa:in state.dv.corut:in state.dv.corpo:in
-!                state.dv.cortt:in state.dv.corte:in state.dv.corti:in
-!                state.dv.cortn:in state.dv.corkt:in state.dv.corzt:in
-!                state.dv.pcca:in state.dv.pccm:in state.dv.ne:in
-!                state.dv.ni:in-out state.dv.nn:in-out state.dv.ue:in
-!                state.dv.ne2:in state.dv.pa:in state.dv.pz:in
-!                state.dv.lnlam:in state.dv.uadia:in state.dv.vadia:in
-!                state.dv.wadia:in state.dv.vaecrb:in state.dv.vedia:in
-!                state.dv.wedia:in state.dv.veecrb:in state.dv.facdrift:in
-!                state.dv.fac_exb:in state.dv.fac_vis:in state.sr.sch:in
-!                state.sr.she:in state.sr.shi:in state.sr.sne:in
-!                state.sr.shn:in state.sr.skt:in state.sr.szt:in
-!                state.sr.smo:in state.sr.smq:in state.sr.sna:in
-!                state.sr.skt_diss:in state.sr.skt_prod:in state.srw.sch0:in
-!                state.srw.she0:in state.srw.shi0:in state.srw.sne0:in
-!                state.srw.shn0:in state.srw.skt0:in state.srw.szt0:in
-!                state.srw.smo0:in state.srw.smq0:in state.srw.sna0:in
-!                state.srw.b2stbm_sch:in state.srw.b2stbm_she:in
-!                state.srw.b2stbm_shi:in state.srw.b2stbm_sne:in
-!                state.srw.b2stbm_smo:in state.srw.b2stbm_sna:in
-!                state.rt.rlcx:in state.rt.rlqa:in state.rt.rlrd:in
-!                state.rt.rlbr:in state.rt.rlra:in state.rt.rlsa:in
-!                state.rt.rlza:in state.rt.rlz2:in state.rt.rlpt:in
-!                state.rt.rlpi:in state.rt.rlqr:in state.rt.rza:in
-!                state.rt.rz2:in state.rt.rpt:in state.rt.rpi:in
-!                state.rtw.rsa:in state.rtw.rra:in state.rtw.rqa:in
-!                state.rtw.rrd:in state.rtw.rbr:in state.rtw.rcx:in
-!                state.rtw.rqr:in state.psnl.na:in state.psnl.ua:in
-!                state.psnl.po:in state.psnl.te:in state.psnl.ti:in
+!                state.dv.fhn:in state.dv.fnn_inc:in state.dv.fhm:in
+!                state.dv.fhp:in state.dv.fhj:in state.dv.fht:in
+!                state.dv.fkt:in state.dv.fzt:in state.dv.kin_frac_hyb:in
+!                state.dv.fluid_frac_hyb:in state.dv.kinrgy:in
+!                state.dv.conc:in state.dv.flob:in state.dv.floe:in
+!                state.dv.floi:in state.dv.floe_noc:in state.dv.floi_noc:in
+!                state.dv.flon:in state.dv.flokt:in state.dv.flozt:in
+!                state.dv.conn:in state.dv.conkt:in state.dv.conzt:in
+!                state.dv.conb:in state.dv.cone:in state.dv.coni:in
+!                state.dv.resmo:in state.dv.resco:in state.dv.respo:in
+!                state.dv.reshe:in state.dv.reshi:in state.dv.resht:in
+!                state.dv.resmt:in state.dv.reshn:in state.dv.reskt:in
+!                state.dv.reszt:in state.dv.corua:in state.dv.corpa:in
+!                state.dv.corut:in state.dv.corpo:in state.dv.cortt:in
+!                state.dv.corte:in state.dv.corti:in state.dv.cortn:in
+!                state.dv.corkt:in state.dv.corzt:in state.dv.pcca:in
+!                state.dv.pccm:in state.dv.ne:in state.dv.ni:in-out
+!                state.dv.nn:in-out state.dv.ue:in state.dv.ne2:in
+!                state.dv.pa:in state.dv.pz:in state.dv.lnlam:in
+!                state.dv.uadia:in state.dv.vadia:in state.dv.wadia:in
+!                state.dv.vaecrb:in state.dv.vedia:in state.dv.wedia:in
+!                state.dv.veecrb:in state.dv.facdrift:in state.dv.fac_exb:in
+!                state.dv.fac_vis:in state.sr.sch:in state.sr.she:in
+!                state.sr.shi:in state.sr.sne:in state.sr.shn:in
+!                state.sr.skt:in state.sr.szt:in state.sr.smo:in
+!                state.sr.smq:in state.sr.sna:in state.sr.shedt:in
+!                state.sr.sktdt:in state.sr.sztdt:in state.sr.snedt:in
+!                state.sr.shidt:in state.sr.shndt:in state.sr.schdt:in
+!                state.sr.smodt:in state.sr.snadt:in state.sr.skt_diss:in
+!                state.sr.skt_prod:in state.srw.sch0:in state.srw.she0:in
+!                state.srw.shi0:in state.srw.sne0:in state.srw.shn0:in
+!                state.srw.skt0:in state.srw.szt0:in state.srw.smo0:in
+!                state.srw.smq0:in state.srw.sna0:in state.srw.smcf:in
+!                state.srw.smpr:in state.srw.smpt:in state.srw.smfr:in
+!                state.srw.b2stbc_sch:in state.srw.b2stbc_she:in
+!                state.srw.b2stbc_shi:in state.srw.b2stbc_sne:in
+!                state.srw.b2stbc_shn:in state.srw.b2stbc_skt:in
+!                state.srw.b2stbc_szt:in state.srw.b2stbc_smo:in
+!                state.srw.b2stbc_sna:in state.srw.b2stbm_sch:in
+!                state.srw.b2stbm_she:in state.srw.b2stbm_shi:in
+!                state.srw.b2stbm_sne:in state.srw.b2stbm_smo:in
+!                state.srw.b2stbm_sna:in state.srw.b2stbr_sch:in
+!                state.srw.b2stbr_she:in state.srw.b2stbr_shi:in
+!                state.srw.b2stbr_sne:in state.srw.b2stbr_shn:in
+!                state.srw.b2stbr_skt:in state.srw.b2stbr_szt:in
+!                state.srw.b2stbr_smo:in state.srw.b2stbr_sna:in
+!                state.srw.b2npmo_smaf:in state.srw.b2npmo_smag:in
+!                state.srw.b2npmo_smav:in state.srw.rsana:in state.srw.rsahi:in
+!                state.srw.rsamo:in state.srw.rrana:in state.srw.rrahi:in
+!                state.srw.rramo:in state.srw.rcxna:in state.srw.rcxhi:in
+!                state.srw.rcxmo:in state.srw.rqahe:in state.srw.rqrad:in
+!                state.srw.rqbrm:in state.srw.b2sihs_joule:in state.srw.b2sihs_divue:in
+!                state.srw.b2sihs_divua:in state.srw.b2sihs_exbe:in
+!                state.srw.b2sihs_exba:in state.srw.b2sihs_visa:in
+!                state.srw.b2sihs_fraa:in state.srw.b2sihs_str:in
+!                state.srw.sna0_eir_tot:in state.srw.smo0_eir_tot:in
+!                state.srw.she0_eir_tot:in state.srw.shi0_eir_tot:in
+!                state.srw.shn0_eir_tot:in state.rt.rlcx:in state.rt.rlqa:in
+!                state.rt.rlrd:in state.rt.rlbr:in state.rt.rlra:in
+!                state.rt.rlsa:in state.rt.rlza:in state.rt.rlz2:in
+!                state.rt.rlpt:in state.rt.rlpi:in state.rt.rlqr:in
+!                state.rt.rza:in state.rt.rz2:in state.rt.rpt:in
+!                state.rt.rpi:in state.rtw.rsa:in state.rtw.rra:in
+!                state.rtw.rqa:in state.rtw.rrd:in state.rtw.rbr:in
+!                state.rtw.rcx:in state.rtw.rqr:in state.psnl.na:in
+!                state.psnl.ua:in state.psnl.te:in state.psnl.ti:in
 !                state.psnl.tn:in state.psnl.kt:in state.psnl.zt:in
-!                state.psnl.ne:in state.psnl.ni:in state.psnl.fch:in
-!                state.psnl.fna:in state.psnl.fhi:in state.psnl.fhe:in
-!                state.psnl.fkt:in state.psnl.fzt:in state.psnl.kinrgy:in
-!                state.psnc.na:in state.psnc.ua:in state.psnc.po:in
-!                state.psnc.te:in state.psnc.ti:in state.psnc.tn:in
-!                state.psnc.kt:in state.psnc.zt:in state.psnc.ne:in
-!                state.psnc.ni:in state.psnc.nn:in state.psnc.fch:in
-!                state.psnc.fna:in state.psnc.fhi:in state.psnc.fhe:in
-!                state.psnc.fkt:in state.psnc.fzt:in state.psnc.kinrgy:in
-!                state.diag.aresco:in state.diag.aresmo:in state.diag.acorpa:in
-!                state.diag.acorua:in state.diag.rescoreg:in state.diag.resmoreg:in
+!                state.psnl.ne:in state.psnl.ni:in state.psnl.nn:in
+!                state.psnl.fna:in state.psnl.kinrgy:in state.psnc.na:in
+!                state.psnc.ua:in state.psnc.te:in state.psnc.ti:in
+!                state.psnc.tn:in state.psnc.kt:in state.psnc.zt:in
+!                state.psnc.ne:in state.psnc.ni:in state.psnc.nn:in
+!                state.psnc.fna:in state.psnc.kinrgy:in state.diag.aresco:in
+!                state.diag.aresmo:in state.diag.acorpa:in state.diag.acorua:in
+!                state.diag.rescoreg:in state.diag.resmoreg:in
 !                state.diag.reshereg:in state.diag.reshireg:in
 !
   SUBROUTINE B2MN_STEP_DV(switch, switchd, geo, geod, mpg, mpgd, state, &
-&   stated, state_ext, state_extd, j, jd, nbdirs)
+&   stated, state_ext, state_extd, state_avg, state_avgd, j, jd, nbdirs)
     USE B2MOD_TYPES
     USE B2MOD_B2CMPT_DIFFV
     USE B2MOD_B2CMRC_DIFFV
     USE B2MOD_BOUNDARY_NAMELIST_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV
     USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : tdata, tdatad
-    USE B2MOD_AD_DIFFV, ONLY : nncf
     USE B2MOD_PAR_OPT_DIFFV, ONLY : par_opt_phys, par_opt_physd, &
-&   npar_opt, sigma, sigmad, nsigma
+&   npar_opt, sigma, sigmad, nsigma, mean, meand, nmean, shift, shiftd, &
+&   nshift, nshift_opt
+    USE B2MOD_AD_DIFFV, ONLY : nncf
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -887,28 +990,31 @@ CONTAINS
     TYPE(B2STATE_DIFFV), INTENT(INOUT) :: stated
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
+    TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
+    TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: state_avgd
     REAL(kind=r8) :: j(nncf)
     REAL(kind=r8) :: jd(nbdirsmax, nncf)
     INTEGER :: nbdirs
 !
     call set_parameters(switch)
     CALL B2MNDR_1_DV(nout, ns, switch, switchd, geo, geod, mpg, mpgd, &
-&              state, stated, state_ext, state_extd, j, jd, nbdirs)
+&              state, stated, state_ext, state_extd, state_avg, &
+&              state_avgd, j, jd, nbdirs)
 !
     RETURN
   END SUBROUTINE B2MN_STEP_DV
 
 !
-  SUBROUTINE B2MN_STEP(switch, geo, mpg, state, state_ext, j)
+  SUBROUTINE B2MN_STEP(switch, geo, mpg, state, state_ext, state_avg, j)
     USE B2MOD_TYPES
     USE B2MOD_B2CMPT_DIFFV
     USE B2MOD_B2CMRC_DIFFV
     USE B2MOD_BOUNDARY_NAMELIST_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV
     USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : tdata
-    USE B2MOD_AD_DIFFV, ONLY : nncf
     USE B2MOD_PAR_OPT_DIFFV, ONLY : par_opt_phys, npar_opt, sigma, &
-&   nsigma
+&   nsigma, mean, nmean, shift, nshift, nshift_opt
+    USE B2MOD_AD_DIFFV, ONLY : nncf
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(INOUT) :: switch
@@ -916,165 +1022,187 @@ CONTAINS
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
     TYPE(B2STATE), INTENT(INOUT) :: state
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
+    TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
     REAL(kind=r8) :: j(nncf)
 !
     call set_parameters(switch)
-    CALL B2MNDR_1(nout, ns, switch, geo, mpg, state, state_ext, j)
+    CALL B2MNDR_1(nout, ns, switch, geo, mpg, state, state_ext, &
+&           state_avg, j)
 !
     RETURN
   END SUBROUTINE B2MN_STEP
 
 !  Differentiation of b2mn_fin as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: rtlsa:out rtlcx:out rtlqa:out
-!                rtlra:out b2voloncf:out b2data:out b2dataoncf:out
-!                par_opt_phys:out mpg.bcfcor:in-out mpg.rcfcor:in-out
-!                mpg.cffcor:in-out mpg.intcellp:in-out mpg.intcellr:in-out
-!                geo.cvbb:in-out geo.cvx:in-out geo.cvy:in-out
-!                geo.cvsz:in-out geo.cvhz:in-out geo.cvhx:in-out
-!                geo.cvqgam:in-out geo.cvvol:in-out geo.cvonedbsq:in-out
-!                geo.cvbzb:in-out geo.cveb:in-out geo.fcbb:in-out
-!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
-!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
-!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
-!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
-!                geo.vxbb:in-out geo.vxx:in-out geo.vxy:in-out
-!                geo.vxhz:in-out geo.vxvol:in-out geo.vxffbz:in-out
-!                geo.vxfpsi:in-out geo.vxonedbsq:in-out geo.vxbzb:in-out
-!                geo.cvconn:in-out geo.ftconn:in-out geo.fteps:in-out
-!                geo.ftbbav2:in-out geo.fspsi:in-out state_ext.zn:in-out
-!                state_ext.am:in-out state_ext.ne:in-out state_ext.ne2:in-out
-!                state_ext.ue:in-out state_ext.za:in-out state_ext.za2:in-out
-!                state_ext.pt:in-out state_ext.na:in-out state_ext.ni:in-out
-!                state_ext.ua:in-out state_ext.ta:in-out state_ext.fhi:in-out
-!                state_ext.fa:in-out state_ext.sne:in-out state_ext.she:in-out
-!                state_ext.shi:in-out state_ext.sch:in-out state_ext.sna:in-out
-!                state_ext.smo:in-out state.pl.na:in-out state.pl.ua:in-out
-!                state.pl.po:in-out state.pl.te:in-out state.pl.ti:in-out
-!                state.pl.tn:in-out state.pl.kt:in-out state.pl.zt:in-out
-!                state.co.csig:in-out state.co.calf:in-out state.co.csig_an:in-out
-!                state.co.calf_an:in-out state.co.csig_cl:in-out
-!                state.co.calf_cl:in-out state.co.csigin:in-out
-!                state.co.chve:in-out state.co.chce:in-out state.co.chce_exb:in-out
-!                state.co.chvi:in-out state.co.chci:in-out state.co.chci_exb:in-out
-!                state.co.chcn:in-out state.co.cdkt:in-out state.co.cdzt:in-out
-!                state.co.chvemx:in-out state.co.chvimx:in-out
-!                state.co.cvla:in-out state.co.cdna:in-out state.co.cdna_exb:in-out
-!                state.co.cdpa:in-out state.co.cvsa:in-out state.co.cvlahz:in-out
-!                state.co.cdnahz:in-out state.co.cdpahz:in-out
-!                state.co.cvsahz:in-out state.co.cddi:in-out state.co.cvsahz_cl:in-out
-!                state.co.chcb:in-out state.co.cvsa_an:in-out state.co.cvmahz:in-out
-!                state.co.cvsahz_eff:in-out state.co.cthe:in-out
-!                state.co.cthi:in-out state.co.cvsa_cl:in-out state.co.ceqp:in-out
-!                state.co.fllim0fhi:in-out state.co.fllimvisc:in-out
-!                state.co.fllim0fna:in-out state.co.vsaf_cl:in-out
-!                state.co.sig0:in-out state.co.hce0:in-out state.co.hci0:in-out
-!                state.co.hcn0:in-out state.co.alf0:in-out state.co.dkt0:in-out
-!                state.co.dzt0:in-out state.co.dna_exb:in-out state.co.hce_exb:in-out
-!                state.co.hci_exb:in-out state.co.dpa0:in-out state.co.dna0:in-out
-!                state.co.vsa0:in-out state.co.hcib:in-out state.co.vla0:in-out
-!                state.co.vma0:in-out state.co.kt_neo:in-out state.co.alfx_c:in-out
-!                state.co.sigx_c:in-out state.co.sigx_kt:in-out
-!                state.co.hcix_c:in-out state.co.fllim_ki:in-out
-!                state.co.fllim_ke:in-out state.co.fllim_al:in-out
-!                state.co.fllim_al_c:in-out state.co.fllim_ki_c:in-out
-!                state.co.f_luc_ke:in-out state.co.f_luc_ki:in-out
-!                state.co.f_luc_et:in-out state.co.f_luc_sg:in-out
-!                state.co.f_luc_al:in-out state.co.cssb:in-out
-!                state.dv.fch:in-out state.dv.fch_32:in-out state.dv.fch_52:in-out
-!                state.dv.fch_p:in-out state.dv.fchdia:in-out state.dv.fchin:in-out
-!                state.dv.fchvispar:in-out state.dv.fchvisper:in-out
-!                state.dv.fchvisq:in-out state.dv.fchinert:in-out
-!                state.dv.fchanml:in-out state.dv.fchviskt:in-out
-!                state.dv.fch_pi_c:in-out state.dv.fch_pi_f:in-out
-!                state.dv.fni_32:in-out state.dv.fni_52:in-out
-!                state.dv.fni:in-out state.dv.fni_he:in-out state.dv.fna:in-out
-!                state.dv.fna_mdf:in-out state.dv.fna_52:in-out
-!                state.dv.fna_32:in-out state.dv.fna_53:in-out
-!                state.dv.fna_52nd:in-out state.dv.fna_32nd:in-out
-!                state.dv.fna_nodrift:in-out state.dv.fna_he:in-out
-!                state.dv.fnapsch:in-out state.dv.fna_fcor:in-out
-!                state.dv.fna_eir:in-out state.dv.fna_exb:in-out
-!                state.dv.fmo:in-out state.dv.fne:in-out state.dv.fne_he:in-out
-!                state.dv.fne_32:in-out state.dv.fne_52:in-out
-!                state.dv.fne_eir:in-out state.dv.fne_53:in-out
-!                state.dv.fhe:in-out state.dv.fhe_mdf:in-out state.dv.fhet:in-out
-!                state.dv.fhepsch:in-out state.dv.fhe_eir:in-out
-!                state.dv.fhe_exb:in-out state.dv.fhi:in-out state.dv.fhi_mdf:in-out
-!                state.dv.fhit:in-out state.dv.fhipsch:in-out state.dv.fhi_eir:in-out
-!                state.dv.fhi_exb:in-out state.dv.fnn:in-out state.dv.fnn_32:in-out
-!                state.dv.fnn_52:in-out state.dv.fhn:in-out state.dv.fhm:in-out
-!                state.dv.fhp:in-out state.dv.fhj:in-out state.dv.fht:in-out
-!                state.dv.fkt:in-out state.dv.fzt:in-out state.dv.kinrgy:in-out
-!                state.dv.conc:in-out state.dv.flob:in-out state.dv.floe:in-out
-!                state.dv.floi:in-out state.dv.floe_noc:in-out
-!                state.dv.floi_noc:in-out state.dv.flon:in-out
-!                state.dv.flokt:in-out state.dv.flozt:in-out state.dv.conn:in-out
-!                state.dv.conkt:in-out state.dv.conzt:in-out state.dv.conb:in-out
-!                state.dv.cone:in-out state.dv.coni:in-out state.dv.fllime:in-out
-!                state.dv.fllimi:in-out state.dv.resmo:in-out state.dv.resco:in-out
-!                state.dv.respo:in-out state.dv.reshe:in-out state.dv.reshi:in-out
-!                state.dv.resht:in-out state.dv.resmt:in-out state.dv.reshn:in-out
-!                state.dv.reskt:in-out state.dv.reszt:in-out state.dv.corua:in-out
-!                state.dv.corpa:in-out state.dv.corut:in-out state.dv.corpo:in-out
-!                state.dv.cortt:in-out state.dv.corte:in-out state.dv.corti:in-out
-!                state.dv.cortn:in-out state.dv.corkt:in-out state.dv.corzt:in-out
-!                state.dv.pcca:in-out state.dv.pccm:in-out state.dv.ne:in-out
-!                state.dv.ni:in-out state.dv.nn:in-out state.dv.ue:in-out
-!                state.dv.ne2:in-out state.dv.pa:in-out state.dv.pz:in-out
-!                state.dv.lnlam:in-out state.dv.uadia:in-out state.dv.vadia:in-out
-!                state.dv.wadia:in-out state.dv.vaecrb:in-out state.dv.vedia:in-out
-!                state.dv.wedia:in-out state.dv.veecrb:in-out state.dv.facdrift:in-out
-!                state.dv.fac_exb:in-out state.dv.fac_vis:in-out
-!                state.sr.sch:in-out state.sr.she:in-out state.sr.shi:in-out
-!                state.sr.sne:in-out state.sr.shn:in-out state.sr.skt:in-out
-!                state.sr.szt:in-out state.sr.smo:in-out state.sr.smq:in-out
-!                state.sr.sna:in-out state.sr.skt_diss:in-out state.sr.skt_prod:in-out
-!                state.sr_eir.sch:in-out state.sr_eir.she:in-out
-!                state.sr_eir.shi:in-out state.sr_eir.sne:in-out
-!                state.sr_eir.smo:in-out state.sr_eir.smq:in-out
-!                state.sr_eir.sna:in-out state.srw.sch0:in-out
-!                state.srw.she0:in-out state.srw.shi0:in-out state.srw.sne0:in-out
-!                state.srw.shn0:in-out state.srw.skt0:in-out state.srw.szt0:in-out
-!                state.srw.smo0:in-out state.srw.smq0:in-out state.srw.sna0:in-out
-!                state.srw.b2stbm_sch:in-out state.srw.b2stbm_she:in-out
-!                state.srw.b2stbm_shi:in-out state.srw.b2stbm_sne:in-out
-!                state.srw.b2stbm_smo:in-out state.srw.b2stbm_smq:in-out
-!                state.srw.b2stbm_sna:in-out state.rt.rlcx:in-out
-!                state.rt.rlqa:in-out state.rt.rlrd:in-out state.rt.rlbr:in-out
-!                state.rt.rlra:in-out state.rt.rlsa:in-out state.rt.rlza:in-out
-!                state.rt.rlz2:in-out state.rt.rlpt:in-out state.rt.rlpi:in-out
-!                state.rt.rlqr:in-out state.rt.rza:in-out state.rt.rz2:in-out
-!                state.rt.rpt:in-out state.rt.rpi:in-out state.rtw.rsa:in-out
-!                state.rtw.rra:in-out state.rtw.rqa:in-out state.rtw.rrd:in-out
-!                state.rtw.rbr:in-out state.rtw.rcx:in-out state.rtw.rqr:in-out
-!                state.psnl.na:in-out state.psnl.ua:in-out state.psnl.po:in-out
-!                state.psnl.te:in-out state.psnl.ti:in-out state.psnl.tn:in-out
-!                state.psnl.kt:in-out state.psnl.zt:in-out state.psnl.ne:in-out
-!                state.psnl.ni:in-out state.psnl.nn:in-out state.psnl.fch:in-out
-!                state.psnl.fna:in-out state.psnl.fhi:in-out state.psnl.fhe:in-out
-!                state.psnl.fhn:in-out state.psnl.fkt:in-out state.psnl.fzt:in-out
-!                state.psnl.kinrgy:in-out state.psnc.na:in-out
-!                state.psnc.ua:in-out state.psnc.po:in-out state.psnc.te:in-out
-!                state.psnc.ti:in-out state.psnc.tn:in-out state.psnc.kt:in-out
-!                state.psnc.zt:in-out state.psnc.ne:in-out state.psnc.ni:in-out
-!                state.psnc.nn:in-out state.psnc.fch:in-out state.psnc.fna:in-out
-!                state.psnc.fhi:in-out state.psnc.fhe:in-out state.psnc.fhn:in-out
-!                state.psnc.fkt:in-out state.psnc.fzt:in-out state.psnc.kinrgy:in-out
-!                state.diag.srcna:in-out state.diag.srcmo:in-out
-!                state.diag.srcpo:in-out state.diag.srche:in-out
-!                state.diag.srchi:in-out state.diag.srcmt:in-out
-!                state.diag.aresco:in-out state.diag.aresmo:in-out
-!                state.diag.acorpa:in-out state.diag.acorua:in-out
-!                state.diag.rescoreg:in-out state.diag.resmoreg:in-out
-!                state.diag.reshereg:in-out state.diag.reshireg:in-out
-!                state.update.ua:in-out state.update.na:in-out
-!                state.update.pa:in-out state.update.po:in-out
-!                state.update.te:in-out state.update.ti:in-out
-!                state.update.kt:in-out state.update.zt:in-out
-!                (global)na_mean:out
+!   Plus diff mem management of: b2voloncf:out b2data:out b2dataoncf:out
+!                par_opt_phys:out rtlsa:out rtlcx:out rtzmax:out
+!                rtlqa:out rtzn:out rtlra:out rtzmin:out rpi0:out
+!                rz20:out rpt0:out rza0:out state_avg.na_mean:out
+!                state_avg.ua_mean:out state_avg.te_mean:out state_avg.ti_mean:out
+!                state_avg.po_mean:out state_avg.kt_mean:out state_avg.zt_mean:out
+!                state_avg.sna_mean:out state_avg.smo_mean:out
+!                state_avg.she_mean:out state_avg.shi_mean:out
+!                state_avg.shn_mean:out state_avg.e_na:out state_avg.e_ua:out
+!                state_avg.e_te:out state_avg.e_ti:out state_avg.e_po:out
+!                state_avg.e_kt:out state_avg.e_zt:out state_avg.e_sna:out
+!                state_avg.e_smo:out state_avg.e_she:out state_avg.e_shi:out
+!                state_avg.e_shn:out mpg.bcfcor:out mpg.rcfcor:out
+!                mpg.cffcor:out mpg.intcellp:out mpg.intcellr:out
+!                mpg.divfcor:out geo.cvbb:out geo.cvx:out geo.cvy:out
+!                geo.cvsz:out geo.cvhz:out geo.cvhx:out geo.cvqgam:out
+!                geo.cvvol:out geo.cvonedbsq:out geo.cvbzb:out
+!                geo.cveb:out geo.cvfpsi:out geo.fcbb:out geo.fcs:out
+!                geo.fchc:out geo.fcht:out geo.fchz:out geo.fcvol:out
+!                geo.fcqgam:out geo.fcqalf:out geo.fcqbet:out geo.fcpbs:out
+!                geo.fcpbshz:out geo.fcbzb:out geo.fceb:out geo.fcfpsi:out
+!                geo.vxbb:out geo.vxx:out geo.vxy:out geo.vxhz:out
+!                geo.vxvol:out geo.vxffbz:out geo.vxfpsi:out geo.vxonedbsq:out
+!                geo.vxbzb:out geo.vxeb:out geo.cvconn:out geo.vxconn:out
+!                geo.ftconn:out geo.fsconn:out geo.fteps:out geo.ftbbav2:out
+!                geo.fspsi:out state_ext.zn:out state_ext.am:out
+!                state_ext.ne:out state_ext.ne2:out state_ext.ue:out
+!                state_ext.za:out state_ext.za2:out state_ext.pt:out
+!                state_ext.na:out state_ext.ni:out state_ext.ua:out
+!                state_ext.ta:out state_ext.fhi:out state_ext.fa:out
+!                state_ext.sne:out state_ext.she:out state_ext.shi:out
+!                state_ext.sch:out state_ext.sna:out state_ext.smo:out
+!                state.pl.na:out state.pl.ua:out state.pl.po:out
+!                state.pl.te:out state.pl.ti:out state.pl.tn:out
+!                state.pl.kt:out state.pl.zt:out state.co.csig:out
+!                state.co.calf:out state.co.csig_an:out state.co.calf_an:out
+!                state.co.csig_cl:out state.co.csigin:out state.co.chve:out
+!                state.co.chce:out state.co.chce_exb:out state.co.chvi:out
+!                state.co.chci:out state.co.chci_exb:out state.co.chcn:out
+!                state.co.cdkt:out state.co.cdzt:out state.co.chvemx:out
+!                state.co.chvimx:out state.co.cvla:out state.co.cdna:out
+!                state.co.cdna_exb:out state.co.cdpa:out state.co.cvsa:out
+!                state.co.cvlahz:out state.co.cdnahz:out state.co.cdpahz:out
+!                state.co.cvsahz:out state.co.cddi:out state.co.cvsahz_cl:out
+!                state.co.chcb:out state.co.cvsa_an:out state.co.cvmahz:out
+!                state.co.cvsahz_eff:out state.co.cthe:out state.co.cthi:out
+!                state.co.cvsa_cl:out state.co.ceqp:out state.co.fllim0fhi:out
+!                state.co.fllimvisc:out state.co.fllim0fna:out
+!                state.co.vsaf_cl:out state.co.sig0:out state.co.hce0:out
+!                state.co.hci0:out state.co.hcn0:out state.co.alf0:out
+!                state.co.dkt0:out state.co.dzt0:out state.co.dna_exb:out
+!                state.co.hce_exb:out state.co.hci_exb:out state.co.dpa0:out
+!                state.co.dna0:out state.co.vsa0:out state.co.hcib:out
+!                state.co.vla0:out state.co.vma0:out state.co.kt_neo:out
+!                state.co.alfx_c:out state.co.sigx_c:out state.co.sigx_kt:out
+!                state.co.hcix_c:out state.co.fllim_ki:out state.co.fllim_ke:out
+!                state.co.fllim_al:out state.co.fllim_al_c:out
+!                state.co.fllim_ki_c:out state.co.f_luc_ke:out
+!                state.co.f_luc_ki:out state.co.f_luc_et:out state.co.f_luc_sg:out
+!                state.co.f_luc_al:out state.co.cssb:out state.dv.fch:out
+!                state.dv.fch_32:out state.dv.fch_52:out state.dv.fch_p:out
+!                state.dv.fchdia:out state.dv.fchin:out state.dv.fchvispar:out
+!                state.dv.fchvisper:out state.dv.fchvisq:out state.dv.fchinert:out
+!                state.dv.fchanml:out state.dv.fchviskt:out state.dv.fch_pi_c:out
+!                state.dv.fch_pi_f:out state.dv.fni_32:out state.dv.fni_52:out
+!                state.dv.fni:out state.dv.fni_he:out state.dv.fna:out
+!                state.dv.fna_mdf:out state.dv.fna_52:out state.dv.fna_32:out
+!                state.dv.fna_53:out state.dv.fna_52nd:out state.dv.fna_32nd:out
+!                state.dv.fna_nodrift:out state.dv.fna_he:out state.dv.fnapsch:out
+!                state.dv.fna_fcor:out state.dv.fna_eir:out state.dv.fna_exb:out
+!                state.dv.fmo:out state.dv.fne:out state.dv.fne_he:out
+!                state.dv.fne_32:out state.dv.fne_52:out state.dv.fne_eir:out
+!                state.dv.fne_53:out state.dv.fhe:out state.dv.fhe_mdf:out
+!                state.dv.fhet:out state.dv.fhepsch:out state.dv.fhe_eir:out
+!                state.dv.fhe_exb:out state.dv.fhi:out state.dv.fhi_mdf:out
+!                state.dv.fhit:out state.dv.fhipsch:out state.dv.fhi_eir:out
+!                state.dv.fhi_exb:out state.dv.fnn:out state.dv.fnn_32:out
+!                state.dv.fnn_52:out state.dv.fhn:out state.dv.fnn_inc:out
+!                state.dv.fhm:out state.dv.fhp:out state.dv.fhj:out
+!                state.dv.fht:out state.dv.fkt:out state.dv.fzt:out
+!                state.dv.kin_frac_hyb:out state.dv.fluid_frac_hyb:out
+!                state.dv.kinrgy:out state.dv.conc:out state.dv.flob:out
+!                state.dv.floe:out state.dv.floi:out state.dv.floe_noc:out
+!                state.dv.floi_noc:out state.dv.flon:out state.dv.flokt:out
+!                state.dv.flozt:out state.dv.conn:out state.dv.conkt:out
+!                state.dv.conzt:out state.dv.conb:out state.dv.cone:out
+!                state.dv.coni:out state.dv.fllime:out state.dv.fllimi:out
+!                state.dv.resmo:out state.dv.resco:out state.dv.respo:out
+!                state.dv.reshe:out state.dv.reshi:out state.dv.resht:out
+!                state.dv.resmt:out state.dv.reshn:out state.dv.reskt:out
+!                state.dv.reszt:out state.dv.corua:out state.dv.corpa:out
+!                state.dv.corut:out state.dv.corpo:out state.dv.cortt:out
+!                state.dv.corte:out state.dv.corti:out state.dv.cortn:out
+!                state.dv.corkt:out state.dv.corzt:out state.dv.pcca:out
+!                state.dv.pccm:out state.dv.ne:out state.dv.ni:out
+!                state.dv.nn:out state.dv.ue:out state.dv.ne2:out
+!                state.dv.pa:out state.dv.pz:out state.dv.lnlam:out
+!                state.dv.uadia:out state.dv.vadia:out state.dv.wadia:out
+!                state.dv.vaecrb:out state.dv.vedia:out state.dv.wedia:out
+!                state.dv.veecrb:out state.dv.facdrift:out state.dv.fac_exb:out
+!                state.dv.fac_vis:out state.sr.sch:out state.sr.she:out
+!                state.sr.shi:out state.sr.sne:out state.sr.shn:out
+!                state.sr.skt:out state.sr.szt:out state.sr.smo:out
+!                state.sr.smq:out state.sr.sna:out state.sr.shedt:out
+!                state.sr.sktdt:out state.sr.sztdt:out state.sr.snedt:out
+!                state.sr.shidt:out state.sr.shndt:out state.sr.schdt:out
+!                state.sr.smodt:out state.sr.snadt:out state.sr.skt_diss:out
+!                state.sr.skt_prod:out state.sr_eir.sch:out state.sr_eir.she:out
+!                state.sr_eir.shi:out state.sr_eir.sne:out state.sr_eir.smo:out
+!                state.sr_eir.smq:out state.sr_eir.sna:out state.srw.sch0:out
+!                state.srw.she0:out state.srw.shi0:out state.srw.sne0:out
+!                state.srw.shn0:out state.srw.skt0:out state.srw.szt0:out
+!                state.srw.smo0:out state.srw.smq0:out state.srw.sna0:out
+!                state.srw.smcf:out state.srw.smpr:out state.srw.smpt:out
+!                state.srw.smfr:out state.srw.b2stbc_sch:out state.srw.b2stbc_she:out
+!                state.srw.b2stbc_shi:out state.srw.b2stbc_sne:out
+!                state.srw.b2stbc_shn:out state.srw.b2stbc_skt:out
+!                state.srw.b2stbc_szt:out state.srw.b2stbc_smo:out
+!                state.srw.b2stbc_sna:out state.srw.b2stbm_sch:out
+!                state.srw.b2stbm_she:out state.srw.b2stbm_shi:out
+!                state.srw.b2stbm_sne:out state.srw.b2stbm_smo:out
+!                state.srw.b2stbm_smq:out state.srw.b2stbm_sna:out
+!                state.srw.b2stbr_sch:out state.srw.b2stbr_she:out
+!                state.srw.b2stbr_shi:out state.srw.b2stbr_sne:out
+!                state.srw.b2stbr_shn:out state.srw.b2stbr_skt:out
+!                state.srw.b2stbr_szt:out state.srw.b2stbr_smo:out
+!                state.srw.b2stbr_sna:out state.srw.b2npmo_smaf:out
+!                state.srw.b2npmo_smag:out state.srw.b2npmo_smav:out
+!                state.srw.rsana:out state.srw.rsahi:out state.srw.rsamo:out
+!                state.srw.rrana:out state.srw.rrahi:out state.srw.rramo:out
+!                state.srw.rcxna:out state.srw.rcxhi:out state.srw.rcxmo:out
+!                state.srw.rqahe:out state.srw.rqrad:out state.srw.rqbrm:out
+!                state.srw.b2sihs_joule:out state.srw.b2sihs_divue:out
+!                state.srw.b2sihs_divua:out state.srw.b2sihs_exbe:out
+!                state.srw.b2sihs_exba:out state.srw.b2sihs_visa:out
+!                state.srw.b2sihs_fraa:out state.srw.b2sihs_str:out
+!                state.srw.sna0_eir_tot:out state.srw.smo0_eir_tot:out
+!                state.srw.sne0_eir_tot:out state.srw.she0_eir_tot:out
+!                state.srw.shi0_eir_tot:out state.srw.shn0_eir_tot:out
+!                state.srw.sch0_eir_tot:out state.rt.rlcx:out state.rt.rlqa:out
+!                state.rt.rlrd:out state.rt.rlbr:out state.rt.rlra:out
+!                state.rt.rlsa:out state.rt.rlza:out state.rt.rlz2:out
+!                state.rt.rlpt:out state.rt.rlpi:out state.rt.rlqr:out
+!                state.rt.rza:out state.rt.rz2:out state.rt.rpt:out
+!                state.rt.rpi:out state.rtw.rsa:out state.rtw.rra:out
+!                state.rtw.rqa:out state.rtw.rrd:out state.rtw.rbr:out
+!                state.rtw.rcx:out state.rtw.rqr:out state.psnl.na:out
+!                state.psnl.ua:out state.psnl.po:out state.psnl.te:out
+!                state.psnl.ti:out state.psnl.tn:out state.psnl.kt:out
+!                state.psnl.zt:out state.psnl.ne:out state.psnl.ni:out
+!                state.psnl.nn:out state.psnl.fch:out state.psnl.fna:out
+!                state.psnl.fhi:out state.psnl.fhe:out state.psnl.fhn:out
+!                state.psnl.fkt:out state.psnl.fzt:out state.psnl.kinrgy:out
+!                state.psnc.na:out state.psnc.ua:out state.psnc.po:out
+!                state.psnc.te:out state.psnc.ti:out state.psnc.tn:out
+!                state.psnc.kt:out state.psnc.zt:out state.psnc.ne:out
+!                state.psnc.ni:out state.psnc.nn:out state.psnc.fch:out
+!                state.psnc.fna:out state.psnc.fhi:out state.psnc.fhe:out
+!                state.psnc.fhn:out state.psnc.fkt:out state.psnc.fzt:out
+!                state.psnc.kinrgy:out state.diag.srcna:out state.diag.srcmo:out
+!                state.diag.srcpo:out state.diag.srche:out state.diag.srchi:out
+!                state.diag.srcmt:out state.diag.aresco:out state.diag.aresmo:out
+!                state.diag.acorpa:out state.diag.acorua:out state.diag.rescoreg:out
+!                state.diag.resmoreg:out state.diag.reshereg:out
+!                state.diag.reshireg:out state.update.ua:out state.update.na:out
+!                state.update.pa:out state.update.po:out state.update.te:out
+!                state.update.ti:out state.update.kt:out state.update.zt:out
 !
   SUBROUTINE B2MN_FIN_DV(switch, geo, geod, mpg, mpgd, state, stated, &
-&   state_ext, state_extd, nbdirs)
+&   state_ext, state_extd, state_avg, state_avgd, nbdirs)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -1087,12 +1215,14 @@ CONTAINS
     TYPE(B2STATE_DIFFV), INTENT(INOUT) :: stated
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
+    TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
+    TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: state_avgd
     INTEGER :: io
     INTRINSIC SIZE
     INTEGER :: nbdirs
 !
-    CALL B2MNDR_2_DV(nout, ns, switch, geo, geod, mpg, mpgd, state, &
-&              stated, state_ext, state_extd, nbdirs)
+    CALL B2MNDR_2_DV(nout, ns, switch, geo, mpg, state, stated, &
+&              state_ext, state_avg, state_avgd, nbdirs)
 !   ..close files
     DO io=0,SIZE(ninp)-1
       INQUIRE(unit=ninp(io), opened=file_open) 
@@ -1120,7 +1250,7 @@ CONTAINS
   END SUBROUTINE B2MN_FIN_DV
 
 !
-  SUBROUTINE B2MN_FIN(switch, geo, mpg, state, state_ext)
+  SUBROUTINE B2MN_FIN(switch, geo, mpg, state, state_ext, state_avg)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     TYPE(SWITCHES), INTENT(INOUT) :: switch
@@ -1128,10 +1258,12 @@ CONTAINS
     TYPE(GEOMETRY), INTENT(INOUT) :: geo
     TYPE(B2STATE), INTENT(INOUT) :: state
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
+    TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
     INTEGER :: io
     INTRINSIC SIZE
 !
-    CALL B2MNDR_2(nout, ns, switch, geo, mpg, state, state_ext)
+    CALL B2MNDR_2(nout, ns, switch, geo, mpg, state, state_ext, &
+&           state_avg)
 !   ..close files
     DO io=0,SIZE(ninp)-1
       INQUIRE(unit=ninp(io), opened=file_open) 

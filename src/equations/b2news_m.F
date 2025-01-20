@@ -3,7 +3,7 @@
 
       subroutine b2news_m (nCv, nFc, nVx, ns, nscx, iscx,
      &  nscxmax, ismain, ismain0, dtim, switch, geo, mpg,
-     &  st, st_ext, st_avg, ierr)
+     &  st, st_ext, st_avg, ierr, ramp_call)
       use b2mod_types
       use b2mod_constants
       use b2mod_numerics_namelist
@@ -15,16 +15,18 @@
       use b2us_plasma
       use b2mod_ma28_for_us
      & , only : restart_ma28_for_us
+      use b2mod_facdrift_ExB
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
-     &          rsamoreg
+     &          rsamoreg, b2divue, b2divua, b2exbe, b2exba, b2visa,
+     &          b2joule, b2fraa
       use b2mod_eirdiag
      & , only : tmb2, dib2, tab2, tib2, pefluxa, rfluxa, pfluxa,
-     &          dmb2, lkindp, lkindm, lkindi, refluxa, dab2
+     &          dmb2, lkindp, lkindm, lkindi, refluxa, dab2, tfluxa
       use b2mod_transport_namelist
      & , only : parm_hce, parm_hci, parm_dna, parm_dpa, parm_vla,
      &          parm_vsa, parm_alf, parm_sig
@@ -35,7 +37,11 @@
      & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar,
      &          lfeedback
       use b2mod_neutrals_namelist
-     & , only : maxw_eff, nstraid, userfluxparm
+     & , only : maxw_eff, nstraid, userfluxparm, b2recyc, arcend,
+     &          targsp, b2species_start, b2species_end, lstrascl, lsns,
+     &          msns, gpfc, nstrai, nstrat, debug_flags, neutrals_count,
+     &          neutrals_time_mod, neutrals_time_switch, neut_scl_lim,
+     &          natmid, ntrack
       use b2mod_b2cmpt
      & , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna,
      &          cfhce, cfhci
@@ -50,6 +56,8 @@
      &          feedback_namelist_used
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+      use b2mod_wall
+     & , only : track_species
 #endif
       use b2mod_ad
       use b2mod_subsys
@@ -67,7 +75,7 @@
       type (B2Average), intent (in) :: st_avg
 *   ..output arguments                                                    !xpb
       integer ierr
-      logical wrong_flow
+      logical wrong_flow, ramp_call
 *   ..common blocks
 
 *-----------------------------------------------------------------------
@@ -128,18 +136,14 @@
       integer, save :: no_neutr_scl = 0
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c     ingeger, save :: nstg2 = 0
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      real (kind=R8) ::                                                 !srv 04.06.99
 !     *   fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1)                        !srv 04.06.99
-!     2 ,facdrift/0.0e0_R8/, facdrift_target/0.0e0_R8/, facdrift_start/0.0e0_R8/, !srv 09.07.99
-!     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                 !srv 09.07.99
 !     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                    !xpb
 !     1  sne0(-1:nx,-1:ny,0:1),                                           !xpb
 !     2  shi0(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),                    !xpb
 !     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      integer, save :: re_compute_pb = 1                                !srv 15.02.10
 *
 *-----------------------------------------------------------------------
@@ -221,15 +225,10 @@ c     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
 c     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
 c     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
 c     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
-!       call ipgetr ('b2news_facdrift_target', facdrift_target)          !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_start', facdrift_start)            !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_inc', facdrift_inc)                !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_dec', facdrift_dec)                !srv 09.07.99
-!       facdrift=facdrift_start                                          !srv 09.07.99
 !       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
       endif
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFv')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFv')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
@@ -266,18 +265,29 @@ c     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
 *     iteration; hence the different setting of rxf2.
       rxf0 = switch%b2mndt_rxf*switch%xfm0
       rxf1 = switch%b2mndt_rxf*switch%xfm1
-      rxf2 = 1.0e0_R8 ! (rxf*xfm2)**0.2e0_R8                             !srv 15.01.03
-      if (switch%b2mndt_rxf .eq. 0.0e0_R8) rxf2 = 0.0e0_R8
+      rxf2 = 1.0_R8 ! (rxf*xfm2)**0.2_R8                                 !srv 15.01.03
+      if (switch%b2mndt_rxf .eq. 0.0_R8) rxf2 = 0.0_R8
       rxf3 = switch%b2mndt_rxf*switch%xfm3
 
       zero  = 0.0_R8
       zerof = 0.0_R8
 csw 01oct2012 initialize potential if necessary
       if (switch%pot_eq.eq.0) then                                       !srv 13.07.05 {
-        st%pl%po = 0.0e0_R8
+        st%pl%po = 0.0_R8
       else if (switch%pot_eq.eq.2) then
         st%pl%po = 3.1_R8*st%pl%te/qe
       endif
+
+      if (ramp_call .or. ncall_b2news_.eq.0)
+     &  call b2news_facdrift_fac_ExB_inc(nFc, st%dv%fac_ExB,
+     &    st%dv%facdrift, st%dv%fac_vis, switch)
+*   ..test facdrift, fac_ExB, fac_vis
+      call xertst (0.0_R8.le.minval(st%dv%facdrift) .and.
+     &    1.0_R8.ge.maxval(st%dv%facdrift), 'faulty argument facdrift')
+      call xertst (0.0_R8.le.minval(st%dv%fac_ExB) .and.
+     &    1.0_R8.ge.maxval(st%dv%fac_ExB), 'faulty argument fac_ExB')
+      call xertst (0.0_R8.le.minval(st%dv%fac_vis) .and.
+     &    1.0_R8.ge.maxval(st%dv%fac_vis), 'faulty argument fac_ExB')
 
 * ..main computation
 *   ..compute ni, nn, ne, ne2
@@ -315,12 +325,13 @@ c b2npmo with rxf = 0 and recompute fluxes.
       call b2npmo (nCv, nFc, nVx, ns, ismain,
      &    switch, geo, mpg,
      &    ncall_b2news_, b2news_solving(1), 0.0_R8, dtim,
-     &    st%pl, st%dv, st%rt, st%co, st%sr,
+     &    st%pl, st%dv, st%rt, st%co, st%sr, st%srw,
      &    st%psnc, st%psnl, st_ext, ier0)
       do is = switch%nsmin, switch%nsmax-1
 *    ..DPC
         do iCv = 1, nCv
-          st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min) !srv 24.04.09
+          st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
+     &      switch%b2mndr_na_min),switch%b2mndr_na_max)                 !srv 24.04.09
         enddo
 *    ..compute partial pressure
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
@@ -347,7 +358,8 @@ csw 16oct2012 init ier0
         last_solve_9(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
 
         do iCv = 1, nCv
-          st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)    !srv 24.04.09
+          st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
+     &      switch%b2mndr_na_min),switch%b2mndr_na_max)                 !srv 24.04.09
         enddo
 *    ..re-compute particle flux
         call b2tfnb (nCv, nFc, nVx, is, ismain,
@@ -490,11 +502,11 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       call b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
      &  ncall_b2news_, b2news_solving(1), rxf1, dtim,
-     &  st%pl, st%dv, st%rt, st%co, st%sr,
+     &  st%pl, st%dv, st%rt, st%co, st%sr, st%srw,
      &  st%psnc, st%psnl, st_ext, ier0)
       call xertst (ier0.eq.0, 'error return from b2npmo')
       if (switch%pot_eq.eq.0) then                                       !srv 13.07.05 {
-        st%pl%po        = 0.0e0_R8
+        st%pl%po        = 0.0_R8
         !wdk call b2tfch_ to ensure all currents are properly set to 0
         call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
      &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
@@ -518,7 +530,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
         if (b2news_solving(3)) then
 *   ..solve the potential equation
-          if (switch%fhe_vis_per.eq.0.0e0_R8.or..true.) then             !srv 06.07.00
+          if (switch%fhe_vis_per.eq.0.0_R8.or..true.) then               !srv 06.07.00
             new_matrix = .false.
             do ireg = 0, mpg%nnreg(0)
               new_matrix = new_matrix.or.
@@ -629,14 +641,13 @@ c      with diamagnetic drift part                                       !srv 13
      &  st%pl, st%dv, st%co, st%rt, st_ext, .true.)                      !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,          !srv 13.10.06
-     &  st%pl, st%dv, st%co, .true.)                              !djm Jan2017
-      st%dv%floi_noc = st%dv%floi                                       !srv 24.10.02
-      st%dv%floe_noc = st%dv%floe                                       !srv 24.10.02
-
-      call b2xpen (nCv, nFc, ns, mpg,
+     &  st%pl, st%dv, st%co, .true.)                                     !djm Jan2017
+      st%dv%floi_noc = st%dv%floi                                        !srv 24.10.02
+      st%dv%floe_noc = st%dv%floe                                        !srv 24.10.02
+      call b2xpen (nCv, nFc, ns, mpg, switch,
      &  st%dv%fna, st%dv%fna_53, st%dv%fne_53,
      &  st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt%rpt, st%pl%te,
-     &  st%pl%ti, st%pl%tn, st%pl%po, switch%BoRiS,
+     &  st%pl%ti, st%pl%tn, st%pl%po,
      &  st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
 
 #ifdef WG_TODO
@@ -677,7 +688,8 @@ c   recompute particle fluxes
         do is=0,ns-1                                                     !srv 01.10.99
 *    ..DPC
           do iCv = 1, nCv
-            st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)  !srv 24.04.09
+            st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
+     &        switch%b2mndr_na_min),switch%b2mndr_na_max)                !srv 24.04.09
           enddo
 *    ..compute partial pressure
           call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
@@ -713,7 +725,8 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      &                                      switch%use_eirene.ne.0) then  !srv 28.06.13 {
         do is=0,ns-1
           do iCv = 1, nCv
-            st%pl%na(iCv,is)=max(st%pl%na(iCv,is),switch%b2mndr_na_min)  !srv 24.04.09
+            st%pl%na(iCv,is)=min(max(st%pl%na(iCv,is),
+     &        switch%b2mndr_na_min),switch%b2mndr_na_max)                !srv 24.04.09
           enddo
 *    ..compute partial pressure
           call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,   !srv 01.10.99

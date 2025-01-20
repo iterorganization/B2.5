@@ -80,7 +80,7 @@
       integer :: boundary_namelist=0, neutrals_namelist = 0
       integer :: write_b2fgmtry_us=1, write_b2fstati_us=1
       integer :: tria_mode=0
-      real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 09.01.01 09.06.08
+      real (kind=R8), save :: fac_hz = 1.0_R8                        !srv 09.01.01 09.06.08
       real (kind=R8) :: hzconst                                      !srv 30.01.10
       real (kind=R8) :: zpdum(0:nsdecl-1,4)
       character lblgm*120, lblmn*120, lblcp*120, lblps*120
@@ -120,42 +120,149 @@
       call cfopen (nout(2),'b2fstati_us','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers                                           !xpb
-      call cfverr (ninp(1), b2fgmtry_version)                          !xpb
-      call cfverr (ninp(2), b2fparam_version)                          !xpb
-      call cfverr (ninp(3), b2fstati_version)                          !xpb
-*   ..obtain nx, ny from geometry file
-      call cfruin (ninp(1), 2, idum, 'nx,ny')
-      nx = idum(0)
-      ny = idum(1)
-      call xertst (0.le.nx.and.0.le.ny,
-     &  'faulty input nx, ny from geometry file')
-*   ..obtain ns from parameters file
-      call cfruin (ninp(2), 1, idum, 'ns')
-      ns = idum(0)
-      call xertst (1.le.ns, 'faulty input ns from parameters file')
-*   ..obtain nx, ny, ns0 from plasma state file
-      call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
-      ns0 = idum(2)
-      call xertst (idum(0).eq.nx.and.idum(1).eq.ny,
-     &  'faulty input nx, ny from plasma state file')
-      call xertst (1.le.ns0.and.ns0.le.ns,
-     &  'faulty input ns from plasma state file')
-*   ..call principal driver routine
-      call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_plasma(nx,ny,ns)
-      call alloc_b2mod_rates(nx,ny,ns)
-      call alloc_b2mod_residuals(nx,ny,ns)
-      call alloc_b2mod_sources(nx,ny,ns)
-!WG_TODO      call alloc_b2mod_sputter(nx,ny,ns)
-      call alloc_b2mod_transport(nx,ny,ns)
-      call alloc_b2mod_anomalous_transport(nx,ny,ns)
-      call alloc_b2mod_work(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                         !xpb
 *   ..obtain lblmn
       call b2xxid ('b2mn', lblmn(1:60))
       call b2rflb (ninp(0), lblmn(61:120))
       label = lblmn
+*   ..obtain version numbers                                           !xpb
+      call cfverr (ninp(1), b2fgmtry_version)                          !xpb
+      call cfverr (ninp(2), b2fparam_version)                          !xpb
+      call cfverr (ninp(3), b2fstati_version)                          !xpb
+
+*   ..reading/converting the b2fgmtry file
+      if (b2fgmtry_version.lt.'03.002.000') then
+
+        ! b2fgmtry in structured format => convert
+        write (*,*) 'Found structured b2fgmtry. Converting...'
+
+*     ..obtain nx, ny from geometry file
+        call cfruin (ninp(1), 2, idum, 'nx,ny')
+        nx = idum(0)
+        ny = idum(1)
+        call xertst (0.le.nx.and.0.le.ny,
+     &    'faulty input nx, ny from geometry file')
+*     ..allocations
+        call alloc_b2mod_geo(nx,ny)
+        call alloc_b2mod_indirect(nx,ny,nncutmax)                         !xpb
+*     ..read header for geometry
+        call cfruch (ninp(1), 120, lblgm, 'label')
+        call cfruin (ninp(1), 1, idum, 'isymm')
+        isymm = idum(0)
+*       (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
+*     ..read geometry and metric
+        call b2rugm (ninp(1), nx, ny, isymm)
+        call get_nxt(nx, nxtl, nxtr)
+*     ..geometry preparation
+        call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
+        call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
+     &    'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
+*     ..compute hz                                                         !srv 09.01.01  09.06.08 {
+!WG_TODO probably should always write correct hz here,
+!WG_TODO and overwrite with value 1.0 in b2mn if b2mndr_hz = 0.0
+c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
+!      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)              !srv 09.01.01
+        hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
+        hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
+        hzconst = 1.0_R8                                                   !srv 30.01.10
+        hz = hzconst*(1.0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
+
+*     ..conversion to new, unstructured data-types
+        call calc_mapping (nx, ny, mpg)
+        write (*,*) 'Mapping created'
+
+        call prep_geometry (nx, ny, gm, mpg)
+        write (*,*) 'Geometry created'
+
+*     ..write the converted b2fgmtry_us-file
+        if (write_b2fgmtry_us.eq.1) then
+
+*       ..write header for gmtry file
+          call cfverw (nout(1), newversion)
+          idum(0) = mpg%nCi
+          idum(1) = mpg%nCg
+          idum(2) = mpg%nCv
+          idum(3) = mpg%nFc
+          idum(4) = mpg%nVx
+          idum(5) = mpg%nFs
+          idum(6) = mpg%nFt
+          call cfwuin (nout(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+          idum(0) = mpg%nCmxVx
+          idum(1) = mpg%nCmxFc
+          idum(2) = mpg%nVmxCv
+          idum(3) = mpg%nVmxFc
+          idum(4) = mpg%nCmxNv
+          call cfwuin (nout(1),5,idum,
+     .               'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+          idum(0) = mpg%isClassicalGrid
+          call cfwuin (nout(1),1,idum,'isClassicalGrid')
+          if (mpg%isClassicalGrid == 1) then
+            idum(0) = mpg%nx
+            idum(1) = mpg%ny
+            idum(2) = mpg%nncut
+          else
+            ! dummy values for unstructured grid
+            idum(0) = -1
+            idum(1) = -1
+            idum(2) = -1
+          endif
+          call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
+          call cfwuch (nout(1), 120, lblgm, 'label')
+          idum(0) = isymm
+          call cfwuin (nout(1), 1, idum, 'isymm')
+          idum(0) = mpg%nCv
+          idum(1) = mpg%nFc
+
+*       ..write actual geometry info
+          call write_b2fgmtry (nout(1), mpg, gm)
+
+        endif
+      
+      else
+
+        ! b2fgmtry already in unstructured format => simply read
+        write (*,*) 'Reading unstructured b2fgmtry...'
+
+*     ..obtain mapping/geometry dimensions from file
+        call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
+        mpg%nCi = idum(0)
+        mpg%nCg = idum(1)
+        mpg%nCv = idum(2)
+        mpg%nFc = idum(3)
+        mpg%nVx = idum(4)
+        mpg%nFs = idum(5)
+        mpg%nFt = idum(6)
+        call cfruin (ninp(1),5,idum,
+     .    'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
+        mpg%nCmxVx = idum(0)
+        mpg%nCmxFc = idum(1)
+        mpg%nVmxCv = idum(2)
+        mpg%nVmxFc = idum(3)
+        mpg%nCmxNv = idum(4)
+        call cfruin (ninp(1),1,idum,'isClassicalGrid')
+        mpg%isClassicalGrid = idum(0)
+        call cfruin (ninp(1),3,idum,'nx,ny,nncut')
+        mpg%nx    = idum(0)
+        mpg%ny    = idum(1)
+        mpg%nncut = idum(2)
+*     ..read header for geometry
+        call cfruch (ninp(1), 120, lblgm, 'label')
+        call cfruin (ninp(1), 1, idum, 'isymm')
+        isymm = idum(0)
+*     ..allocate mapping and geometry
+        call alloc_mapping (mpg)
+        call alloc_geometry (gm, mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs,
+     .    mpg%nFt, mpg%nVmxCv)
+*     ..read geometry and metric
+        call read_b2fgmtry (ninp(1), mpg, gm)
+        switch%use_9pt_stencil = 1
+        call ipgeti ('b2mndr_use_9pt_stencil', switch%use_9pt_stencil)
+        call init_geometry (mpg, gm, switch)
+      endif
+
+*   ..obtain ns from parameters file b2fpardf
+      call cfruin (ninp(2), 1, idum, 'ns')
+      ns = idum(0)
+      call xertst (1.le.ns, 'faulty input ns from parameters file')
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
       call b2rucp (ninp(2), b2fparam_version, ns)
@@ -178,156 +285,116 @@
        end if
        goto 1
     2 continue
-*   ..read header for geometry
-      call cfruch (ninp(1), 120, lblgm, 'label')
-      call cfruin (ninp(1), 1, idum, 'isymm')
-      isymm = idum(0)
-*     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
-*   ..read geometry and metric
-      call b2rugm (ninp(1), nx, ny, isymm)
-      call get_nxt(nx, nxtl, nxtr)
 
-      call ipgeti ('b2mndr_eirene', use_eirene)
-      call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
-      call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
-     &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
-*   ..compute hz                                                         !srv 09.01.01  09.06.08 {
-!WG_TODO probably should always write correct hz here,
-!WG_TODO and overwrite with value 1.0 in b2mn if b2mndr_hz = 0.0
-c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
-!      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)              !srv 09.01.01
-      hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
-      hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
-      hzconst = 1.0_R8                                                   !srv 30.01.10
-      hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
-*   ..read initial state
-      call cfruch (ninp(3), 120, lblps, 'label')
-      call b2ruzd (ninp(3), b2fstati_version, ns0,
-     & zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
-      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,   !xpb
-     &  po, kt, zt, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p,
-     &  kinrgy,
-     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
-     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     1  b2fstati_version)
-*   ..obtain external species data if any
-      call ipgeti ('b2mndr_external_species', external_species)
-      if (external_species.ne.0) then
-        call read_b2mod_external(nx,ny,ns,ismain)
-      else
-        call alloc_b2mod_external_dummy(nx,ny)
-      endif
+*   ..reading/converting the b2fstati file
+      if (b2fstati_version.lt.'03.002.000') then
 
-*   conversion to new, unstructured data-types
-      call calc_mapping (nx, ny, mpg)
+        ! b2fstati in structured format => convert
+        write (*,*) 'Found structured b2fstati. Converting...'
 
-      write (*,*) 'Mapping created'
-
-      call prep_geometry (nx, ny, gm, mpg)
-      write (*,*) 'Geometry created'
-
-      call prep_plasma (nx, ny, ns, mpg, state)
-      write (*,*) 'State created'
-
-      call prep_plasma_ext(nx, ny, ns, mpg%nCv, mpg%nFc, state_ext)
-      write (*,*) 'State_ext created'
-
-*   ..test plasma state and fluxes
-!      call b2xvps (nx, ny, ns,
-!     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-      call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
-
-*   ..write unstructured geometry
-
-      call ipgeti('b2us_write_b2fgmtry_us', write_b2fgmtry_us)
-
-      if (write_b2fgmtry_us.eq.1) then
-
-*   ..write header for gmtry file
-
-        call cfverw (nout(1), newversion)
-        idum(0) = mpg%nCi
-        idum(1) = mpg%nCg
-        idum(2) = mpg%nCv
-        idum(3) = mpg%nFc
-        idum(4) = mpg%nVx
-        idum(5) = mpg%nFs
-        idum(6) = mpg%nFt
-        call cfwuin (nout(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-        idum(0) = mpg%nCmxVx
-        idum(1) = mpg%nCmxFc
-        idum(2) = mpg%nVmxCv
-        idum(3) = mpg%nVmxFc
-        idum(4) = mpg%nCmxNv
-        call cfwuin (nout(1),5,idum,
-     .               'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-        idum(0) = mpg%isClassicalGrid
-        call cfwuin (nout(1),1,idum,'isClassicalGrid')
+*     ..set (structured) grid size from geometry
         if (mpg%isClassicalGrid == 1) then
-          idum(0) = mpg%nx
-          idum(1) = mpg%ny
-          idum(2) = mpg%nncut
+          nx = mpg%nx
+          ny = mpg%ny
         else
-          ! dummy values for unstructured grid
-          idum(0) = -1
-          idum(1) = -1
-          idum(2) = -1
+          call xerrab 
+     .      ('Found structured b2fstati but unstructured b2fgmtry')
         endif
-        call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
-        call cfwuch (nout(1), 120, lblgm, 'label')
-        idum(0) = isymm
-        call cfwuin (nout(1), 1, idum, 'isymm')
-        idum(0) = mpg%nCv
-        idum(1) = mpg%nFc
-        idum(2) = ns
+*     ..obtain nx, ny, ns0 from plasma state file
+        call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
+        ns0 = idum(2)
+        call xertst (idum(0).eq.nx.and.idum(1).eq.ny,
+     &    'faulty input nx, ny from plasma state file')
+        call xertst (1.le.ns0.and.ns0.le.ns,
+     &    'faulty input ns from plasma state file')
+*     ..allocations
+        call alloc_b2mod_geo(nx,ny)
+        call alloc_b2mod_indirect(nx,ny,nncutmax)
+        call alloc_b2mod_plasma(nx,ny,ns)
+        call alloc_b2mod_rates(nx,ny,ns)
+        call alloc_b2mod_residuals(nx,ny,ns)
+        call alloc_b2mod_sources(nx,ny,ns)
+!WG_TODO        call alloc_b2mod_sputter(nx,ny,ns)
+        call alloc_b2mod_transport(nx,ny,ns)
+        call alloc_b2mod_anomalous_transport(nx,ny,ns)
+        call alloc_b2mod_work(nx,ny,ns)
+*     ..read initial state
+        call cfruch (ninp(3), 120, lblps, 'label')
+        call b2ruzd (ninp(3), b2fstati_version, ns0,
+     &   zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
+        call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te, ti, tn,   !xpb
+     &    po, kt, zt, fna, fhe, fhi, fhn, fch, fch_32, fch_52, fch_p,
+     &    kinrgy,
+     &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &    fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &    fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &    fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &    vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
+     1    b2fstati_version)
+*     ..test plasma state and fluxes
+        call b2xvps_st (nx, ny, ns,
+     &    ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+*     ..obtain external species data if any
+        call ipgeti ('b2mndr_external_species', external_species)
+        if (external_species.ne.0) then
+          call read_b2mod_external(nx,ny,ns,ismain)
+        else
+          call alloc_b2mod_external_dummy(nx,ny)
+        endif
 
-*   ..write actual geometry info
+*     ..convert to unstructured format
+        call prep_plasma (nx, ny, ns, mpg, state)
+        write (*,*) 'State created'
 
-        call write_b2fgmtry (nout(1), mpg, gm)
+        call prep_plasma_ext(nx, ny, ns, mpg%nCv, mpg%nFc, state_ext)
+        write (*,*) 'State_ext created'
+
+*     ..test plasma state and fluxes
+        call b2xvps (mpg%nCv, mpg%nFc, ns, state%pl, state%dv)
+
+*     ..write the converted b2fstati_us file
+        if (write_b2fstati_us.eq.1) then
+
+*       ..write header for stati file
+          call cfverw (nout(2), newversion)
+          idum(0) = mpg%nCv
+          idum(1) = mpg%nFc
+          call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
+          call cfwuch (nout(2), 120, lblps, 'label')
+          call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
+
+*       ..write actual state info
+          call write_b2fstate (nout(2), mpg%nCv, mpg%nFc, ns, state)
+
+*       ..also handle the averaged source file
+          call find_file('b2faveri', file_exists)
+          if (file_exists) then
+            call read_b2faveri_st ( nx, ny, ns)
+            call run_av_init ( 0, mpg%nCv, ns, .false., .false.,
+     .                         state_avg)
+            call prep_average ( nx, ny, ns, mpg, state_avg)
+            call run_av_save ('b2faveri_us', mpg%nCv, ns,
+     .                         .true., .true., state_avg)
+            call run_av_fin( state_avg )
+            call dealloc_avg_st
+          end if
+
+        endif
+
+      else
+
+        ! b2fstati already in unstructured format => no need to read/convert
+        write (*,*) 
+     .   'Found unstructured b2fstati. Not reading/converting...'
 
       endif
 
-*   ..write unstructured state
-
-      call ipgeti('b2us_write_b2fstati_us', write_b2fstati_us)
-
-      if (write_b2fstati_us.eq.1) then
-
-*   ..write header for stati file
-
-        call cfverw (nout(2), newversion)
-        call cfwuin (nout(2), 3, idum, 'nCv,nFc,ns')
-        call cfwuch (nout(2), 120, lblps, 'label')
-        call b2wuzd (nout(2), newversion, ns, zamin, zamax, zn, am)
-
-*   ..write actual state info
-
-        call write_b2fstate (nout(2), mpg%nCv, mpg%nFc, ns, state)
-
-*   ..also handle the averaged source file
-
-        call find_file('b2faveri', file_exists)
-        if (file_exists) then
-          call read_b2faveri_st ( nx, ny, ns)
-          call run_av_init ( 0, mpg%nCv, ns, .false., .false.,
-     .                       state_avg)
-          call prep_average ( nx, ny, ns, mpg, state_avg)
-          call run_av_save ('b2faveri_us', mpg%nCv, ns, .true., .true.,
-     .                       state_avg)
-          call run_av_fin( state_avg )
-          call dealloc_avg_st
-        end if
-
-      endif
-
+*   ..handling of boundary conditions and recycling strata
+      call ipgeti ('b2mndr_eirene', use_eirene)
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
-      call alloc_b2mod_elements(ns,zn,am)
-
       call ipgeti ('b2us_tria_mode', tria_mode)
+      call alloc_b2mod_elements(ns,zn,am)
 
       if (boundary_namelist.eq.1) then
         bcp_filename=repeat(' ',260)
@@ -336,6 +403,11 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         if (boundary_version.lt.'03.002.000') then
           write (*,*) 'Found b2.boundary.parameters in structured '//
      &                'format. '
+          if (b2fgmtry_version.ge.'03.002.000') then
+            call xerrab 
+     .        ('Structured b2fgmtry needed to convert structured '//
+     .         'b2.boundary.parameters file')
+          endif
           call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
           call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
           call conv_bcparms (ns, mpg)
@@ -400,6 +472,13 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         call alloc_b2mod_neutrals
      .   (ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
         if (neutrals_version.lt.'03.002.000') then
+          if (b2fgmtry_version.ge.'03.002.000') then
+            call xerrab 
+     .        ('Structured b2fgmtry needed to convert structured '//
+     .         'b2.neutrals.parameters file')
+          endif
+          call alloc_b2mod_neutrals
+     .     (ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
           call read_neutrals_namelist(nx, ny, ns, .false.)
           call conv_rcparms (mpg)
           call write_rcparms(ns,mpg)
@@ -409,15 +488,25 @@ c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
         call rc_to_struct(mpg)
       end if
 
-      call prep_triangles(nout(0),mpg, gm, nx, ny, tria_mode)
+*   ..build/convert the triangle mesh
+      call prep_triangles(nout(0),mpg, gm, tria_mode)
 
 *   ..convert feedback schemes (if present!)
       filename='b2.feedback_control.parameters'
       call find_file(filename,file_exists)
       if (file_exists) then
-        call read_b2mod_feedback_control(99)
-        call conv_fbparms (mpg)
-        call write_fbparms
+        if (b2fgmtry_version.lt.'03.002.000') then
+          call read_b2mod_feedback_control(99)
+          call conv_fbparms (mpg)
+          call write_fbparms
+        else
+          !TODO add version number to b2.feedback_control_parameters,
+          !TODO and determine need for conversion based on that
+          !TODO (cf. b2.boundary.parameters & b2.neutrals.parameters)
+          write (*,*) 
+     .      'Structured b2fgmtry needed to convert structured '//
+     .      'b2.feedback_control.parameters file. Skipping conversion.'
+        endif
       endif
       call ipgetr ('b2stbc_fnaycore', fnaycore)
       call ipgetr ('b2stbc_fheycore', fheycore)

@@ -100,81 +100,84 @@
         write (nprt,fmt0) is,zamin(is),zamax(is),zn(is),am(is)
        enddo
 *   ..write heading for /b2cmpb/
-       write (nprt,'(a)')
-     &  '*b2cmpb         boundary conditions'
-*   ..write region specs
-       write (nprt,'(a)')
-     &  '*cbregs    nr    breakpoints'
-       write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
-     &  '''south''', cbnrso, (cbrbrk(ireg),ireg=cbirso,cbirso+cbnrso-1)
-       write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
-     &  '''north''', cbnrno, (cbrbrk(ireg),ireg=cbirno,cbirno+cbnrno-1)
-       write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
-     &  '''west''', cbnrwe, (cbrbrk(ireg),ireg=cbirwe,cbirwe+cbnrwe-1)
-       write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
-     &  '''east''', cbnrea, (cbrbrk(ireg),ireg=cbirea,cbirea+cbnrea-1)
-*   ..loop over regions
-       do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
-        if (cbirso.le.ireg.and.ireg.lt.cbirso+cbnrso) then
-         write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''south'''
-        else if (cbirno.le.ireg.and.ireg.lt.cbirno+cbnrno) then
-         write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''north'''
-        else if (cbirwe.le.ireg.and.ireg.lt.cbirwe+cbnrwe) then
-         write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''west'''
-        else if (cbirea.le.ireg.and.ireg.lt.cbirea+cbnrea) then
-         write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''east'''
-        endif
+       if (cbnrso.gt.0.and.cbnrno.gt.0.and.
+     &     cbnrwe.gt.0.and.cbnrea.gt.0) then
+        write (nprt,'(a)')
+     &   '*b2cmpb         boundary conditions'
+*    ..write region specs
+        write (nprt,'(a)')
+     &   '*cbregs    nr    breakpoints'
+        write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
+     &   '''south''', cbnrso, (cbrbrk(ireg),ireg=cbirso,cbirso+cbnrso-1)
+        write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
+     &   '''north''', cbnrno, (cbrbrk(ireg),ireg=cbirno,cbirno+cbnrno-1)
+        write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
+     &   '''west''', cbnrwe, (cbrbrk(ireg),ireg=cbirwe,cbirwe+cbnrwe-1)
+        write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
+     &   '''east''', cbnrea, (cbrbrk(ireg),ireg=cbirea,cbirea+cbnrea-1)
+*    ..loop over regions
+        do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
+         if (cbirso.le.ireg.and.ireg.lt.cbirso+cbnrso) then
+          write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''south'''
+         else if (cbirno.le.ireg.and.ireg.lt.cbirno+cbnrno) then
+          write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''north'''
+         else if (cbirwe.le.ireg.and.ireg.lt.cbirwe+cbnrwe) then
+          write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''west'''
+         else if (cbirea.le.ireg.and.ireg.lt.cbirea+cbnrea) then
+          write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''east'''
+         endif
 *    ..write cbsna
-        write (nprt,'(a)')
-     &   '*cbsna    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        do is = 0, ns-1
-         write (nprt,fmt1) is,(cbsna(i,is,ireg),i=0,7)
-        enddo
+         write (nprt,'(a)')
+     &    '*cbsna    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         do is = 0, ns-1
+          write (nprt,fmt1) is,(cbsna(i,is,ireg),i=0,7)
+         enddo
 *    ..write cbsmo
-        write (nprt,'(a)')
-     &   '*cbsmo    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        do is = 0, ns-1
-         write (nprt,fmt1) is,(cbsmo(i,is,ireg),i=0,7)
-        enddo
+         write (nprt,'(a)')
+     &    '*cbsmo    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         do is = 0, ns-1
+          write (nprt,fmt1) is,(cbsmo(i,is,ireg),i=0,7)
+         enddo
 *    ..write cbshi
-        write (nprt,'(a)')
-     &   '*cbshi    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        do is = 0, ns-1
-         write (nprt,fmt1) is,(cbshi(i,is,ireg),i=0,7)
-        enddo
+         write (nprt,'(a)')
+     &    '*cbshi    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         do is = 0, ns-1
+          write (nprt,fmt1) is,(cbshi(i,is,ireg),i=0,7)
+         enddo
 *    ..write cbshe
-        write (nprt,'(a)')
-     &   '*cbshe    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        write (nprt,fmt1) -1, (cbshe(i,ireg),i=0,7)
+         write (nprt,'(a)')
+     &    '*cbshe    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         write (nprt,fmt1) -1, (cbshe(i,ireg),i=0,7)
 *    ..write cbsch
-        write (nprt,'(a)')
-     &   '*cbsch    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        write (nprt,fmt1) -1, (cbsch(i,ireg),i=0,7)
+         write (nprt,'(a)')
+     &    '*cbsch    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         write (nprt,fmt1) -1, (cbsch(i,ireg),i=0,7)
 *    ..write cbrec
-        write (nprt,'(a)')
-     &   '*cbrec    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        do is = 0, ns-1
-         write (nprt,fmt1) is,(cbrec(i,is,ireg),i=0,7)
-        enddo
+         write (nprt,'(a)')
+     &    '*cbrec    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         do is = 0, ns-1
+          write (nprt,fmt1) is,(cbrec(i,is,ireg),i=0,7)
+         enddo
 *    ..write cbmsa
-        write (nprt,'(a)')
-     &   '*cbmsa    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        write (nprt,fmt1) -1, (cbmsa(i,ireg),i=0,7)
+         write (nprt,'(a)')
+     &    '*cbmsa    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         write (nprt,fmt1) -1, (cbmsa(i,ireg),i=0,7)
 *    ..write cbmsb
-        write (nprt,'(a)')
-     &   '*cbmsb    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        do is = 0, ns-1
-         write (nprt,fmt1) is,(cbmsb(i,is,ireg),i=0,7)
+         write (nprt,'(a)')
+     &    '*cbmsb    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         do is = 0, ns-1
+          write (nprt,fmt1) is,(cbmsb(i,is,ireg),i=0,7)
+         enddo
         enddo
-       enddo
+       endif
 *   ..write heading for /b2cmpt/
        write (nprt,'(a)')
      &  '*b2cmpt         transport coefficients'
@@ -252,78 +255,81 @@
 *   ..write blank line
        write (nprt,'()')
 *   ..write region specs
-       write (nprt,'(a)')
-     &  '*cbregs    nr    breakpoints'
-       write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
-     &  '''south''', cbnrso, (cbrbrk(ireg),ireg=cbirso,cbirso+cbnrso-1)
-       write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
-     &  '''north''', cbnrno, (cbrbrk(ireg),ireg=cbirno,cbirno+cbnrno-1)
-       write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
-     &  '''west''', cbnrwe, (cbrbrk(ireg),ireg=cbirwe,cbirwe+cbnrwe-1)
-       write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
-     &  '''east''', cbnrea, (cbrbrk(ireg),ireg=cbirea,cbirea+cbnrea-1)
+       if (cbnrso.gt.0.and.cbnrno.gt.0.and.
+     &     cbnrwe.gt.0.and.cbnrea.gt.0) then
+        write (nprt,'(a)')
+     &   '*cbregs    nr    breakpoints'
+        write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
+     &   '''south''', cbnrso, (cbrbrk(ireg),ireg=cbirso,cbirso+cbnrso-1)
+        write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
+     &   '''north''', cbnrno, (cbrbrk(ireg),ireg=cbirno,cbirno+cbnrno-1)
+        write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
+     &   '''west''', cbnrwe, (cbrbrk(ireg),ireg=cbirwe,cbirwe+cbnrwe-1)
+        write (nprt,'(1x,a,t12,i2,(t17,7f9.3))')
+     &   '''east''', cbnrea, (cbrbrk(ireg),ireg=cbirea,cbirea+cbnrea-1)
 *   ..loop over regions
-       do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
-        if (cbirso.le.ireg.and.ireg.lt.cbirso+cbnrso) then
-         write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''south'''
-        else if (cbirno.le.ireg.and.ireg.lt.cbirno+cbnrno) then
-         write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''north'''
-        else if (cbirwe.le.ireg.and.ireg.lt.cbirwe+cbnrwe) then
-         write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''west'''
-        else if (cbirea.le.ireg.and.ireg.lt.cbirea+cbnrea) then
-         write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''east'''
-        endif
+        do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
+         if (cbirso.le.ireg.and.ireg.lt.cbirso+cbnrso) then
+          write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''south'''
+         else if (cbirno.le.ireg.and.ireg.lt.cbirno+cbnrno) then
+          write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''north'''
+         else if (cbirwe.le.ireg.and.ireg.lt.cbirwe+cbnrwe) then
+          write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''west'''
+         else if (cbirea.le.ireg.and.ireg.lt.cbirea+cbnrea) then
+          write (nprt,'(a/2x,i2,2x,a)') '*region', ireg, '''east'''
+         endif
 *    ..write cbsna
-        write (nprt,'(a)')
-     &   '*cbsna    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        do is = 0, ns-1
-         write (nprt,fmt1) is,(cbsna(i,is,ireg),i=0,7)
-        enddo
+         write (nprt,'(a)')
+     &    '*cbsna    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         do is = 0, ns-1
+          write (nprt,fmt1) is,(cbsna(i,is,ireg),i=0,7)
+         enddo
 *    ..write cbsmo
-        write (nprt,'(a)')
-     &   '*cbsmo    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        do is = 0, ns-1
-         write (nprt,fmt1) is,(cbsmo(i,is,ireg),i=0,7)
-        enddo
+         write (nprt,'(a)')
+     &    '*cbsmo    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         do is = 0, ns-1
+          write (nprt,fmt1) is,(cbsmo(i,is,ireg),i=0,7)
+         enddo
 *    ..write cbshi
-        write (nprt,'(a)')
-     &   '*cbshi    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        do is = 0, ns-1
-         write (nprt,fmt1) is,(cbshi(i,is,ireg),i=0,7)
-        enddo
+         write (nprt,'(a)')
+     &    '*cbshi    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         do is = 0, ns-1
+          write (nprt,fmt1) is,(cbshi(i,is,ireg),i=0,7)
+         enddo
 *    ..write cbshe
-        write (nprt,'(a)')
-     &   '*cbshe    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        write (nprt,fmt1) -1, (cbshe(i,ireg),i=0,7)
+         write (nprt,'(a)')
+     &    '*cbshe    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         write (nprt,fmt1) -1, (cbshe(i,ireg),i=0,7)
 *    ..write cbsch
-        write (nprt,'(a)')
-     &   '*cbsch    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        write (nprt,fmt1) -1, (cbsch(i,ireg),i=0,7)
+         write (nprt,'(a)')
+     &    '*cbsch    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         write (nprt,fmt1) -1, (cbsch(i,ireg),i=0,7)
 *    ..write cbrec
-        write (nprt,'(a)')
-     &   '*cbrec    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        do is = 0, ns-1
-         write (nprt,fmt1) is,(cbrec(i,is,ireg),i=0,7)
-        enddo
+         write (nprt,'(a)')
+     &    '*cbrec    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         do is = 0, ns-1
+          write (nprt,fmt1) is,(cbrec(i,is,ireg),i=0,7)
+         enddo
 *    ..write cbmsa
-        write (nprt,'(a)')
-     &   '*cbmsa    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        write (nprt,fmt1) -1, (cbmsa(i,ireg),i=0,7)
+         write (nprt,'(a)')
+     &    '*cbmsa    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         write (nprt,fmt1) -1, (cbmsa(i,ireg),i=0,7)
 *    ..write cbmsb
-        write (nprt,'(a)')
-     &   '*cbmsb    (0)       (1)       (2)       (3)       (4)'//
-     &      '       (5)       (6)       (7)'
-        do is = 0, ns-1
-         write (nprt,fmt1) is,(cbmsb(i,is,ireg),i=0,7)
+         write (nprt,'(a)')
+     &    '*cbmsb    (0)       (1)       (2)       (3)       (4)'//
+     &       '       (5)       (6)       (7)'
+         do is = 0, ns-1
+          write (nprt,fmt1) is,(cbmsb(i,is,ireg),i=0,7)
+         enddo
         enddo
-       enddo
+       endif
 *   ..write transport coefficients
        do is = 0, ns-1
         write (nprt,110) is,(cfdf0(i,is),i=0,7)
@@ -352,6 +358,7 @@
       endif
 
 * ..return
+      flush (nprt)
       call subend ()
       return
 
