@@ -99,7 +99,7 @@ SUBROUTINE B2NXFX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, qe, ne&
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxfx')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !srv 16.07.12
   IF (switch%pot_eq .EQ. 0 .OR. switch%pot_eq .EQ. 2) THEN
 !srv 16.07.12 27.02.13
@@ -239,7 +239,7 @@ SUBROUTINE B2NXFX_NODIFF(ncv, nfc, nvx, switch, geo, mpg, qe, ne, te, po&
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxfx')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !srv 16.07.12
   IF (switch%pot_eq .EQ. 0 .OR. switch%pot_eq .EQ. 2) THEN
 !srv 16.07.12 27.02.13

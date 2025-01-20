@@ -49,7 +49,6 @@
 
       subroutine read_boundary_sources(nCv, ns, switch, itim, mpg)
       use b2mod_types
-      use b2mod_boundary_namelist
       use b2mod_switches
       use b2mod_numerics_namelist
       use b2us_map
@@ -72,7 +71,7 @@
        enddo
        call read_b2mod_numerics_namelist(nCv,ns,
      &      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
-     &      switch%b2mndt_style)
+     &      switch%b2mndt_style, .false.)
 
 !      Read MMS inputs
 

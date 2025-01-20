@@ -108,6 +108,7 @@ c
       integer irncp, icncp, minirn, minicn, irank
       integer idisp(2)
       integer ndrop, maxit, noiter, nsrch, istart
+      integer, save :: maxmsg = 0
       integer ndrop1, nsrch1
       integer nlp
       integer mirncp, micncp, mirank, mirn, micn
@@ -134,7 +135,7 @@ c
 c
 c some  initialisation and transfer of information between
 c     common blocks (see earlier comments).
-      data zero /0.0e0_R8/
+      data zero /0.0_R8/
       iflag = 0
       aborta = abort1
       abortb = abort2
@@ -204,7 +205,7 @@ c j1 is position in arrays of first nonzero in row.
           j = icn(jj)
           themax = max(themax,abs(a(jj)))
           if (ikeep(j,2).eq.i) go to 110
-c first time column has ocurred in current row.
+c first time column has occurred in current row.
           ikeep(j,2) = i
           ikeep(j,3) = jj - move - newj1
           if (move.eq.0) go to 120
@@ -217,7 +218,10 @@ c duplicate element.
   110     move = move + 1
           length = length - 1
           jay = ikeep(j,3) + newj1
-          if (mp.ne.0) write (mp,99993) i, j, a(jj)
+          if (mp.ne.0 .and. maxmsg.lt.100) then
+            write (mp,99993) i, j, a(jj)
+            maxmsg = maxmsg + 1
+          end if
           a(jay) = a(jay) + a(jj)
           themax = max(themax,abs(a(jay)))
   120   continue
@@ -538,7 +542,7 @@ c
       integer ii, i, jj, j1, j2, iold, inew, jnew, jold,
      * idisp2, iblock, jcomp, idummy, jdummy, midpt
 c
-      data zero /0.0e0_R8/
+      data zero /0.0_R8/
       blockl = lenoff(1).ge.0
 c iw1(i,3)  is set to the block in which row i lies and the
 c     inverse permutations to ip and iq are set in iw1(.,1) and
@@ -730,7 +734,7 @@ c
 c
       integer i, iterat, nrow, ncol
 c
-      data zero /0.0e0_R8/
+      data zero /0.0_R8/
 c
 c   initialisation of noiter, errmax and iflag.
 c
@@ -758,7 +762,7 @@ c
 c
 c  calculate the max-norm of the first solution.
 c
-      dd = 0.0e0_R8                                                   !srv 21.11.00
+      dd = 0.0_R8                                                      !srv 21.11.00
       do 30 i=1,n
         dd = max(dd,abs(x(i)))
    30 continue
@@ -792,7 +796,7 @@ c mtype=1.
           qr(nrow) = qr(nrow) - qaorg*qx                               !srv 16.01.18 }
    70   continue
    80   r = real(qr,R8)                                                !srv 16.01.18
-        dres = 0.0e0_R8                                                !srv 21.11.00
+        dres = 0.0_R8                                                  !srv 21.11.00
 c
 c  find the max-norm of the residual vector.
 c
@@ -803,7 +807,7 @@ c
 c  stop the calculations if the max-norm of
 c  the residual vector is zero.
 c
-        if (dres.eq.0.0e0_R8) go to 150                               !srv 21.11.00
+        if (dres.eq.0.0_R8) go to 150                                  !srv 21.11.00
 c
 c  calculate the correction vector.
 c
@@ -812,7 +816,7 @@ c
 c
 c  find the max-norm of the correction vector.
 c
-        dd = 0.0e0_R8                                                 !srv 21.11.00
+        dd = 0.0_R8                                                    !srv 21.11.00
         do 100 i=1,n
           dd = max(dd,abs(r(i)))
   100   continue
@@ -820,11 +824,11 @@ c
 c  check the convergence.
 c
         if (dd.gt.d*cgce .and. iterat.ge.2) go to 130
-        if (dxmax*10.0e0_R8+dd.eq.dxmax*10.0e0_R8) go to 140          !srv 21.11.00
+        if (dxmax*10.0_R8+dd.eq.dxmax*10.0_R8) go to 140               !srv 21.11.00
 c
 c  attempt to improve the solution.
 c
-        dxmax = 0.0e0_R8                                              !srv 21.11.00
+        dxmax = 0.0_R8                                                 !srv 21.11.00
         do 110 i=1,n
           x(i) = x(i) + r(i)
           dxmax = max(dxmax,abs(x(i)))
@@ -1059,8 +1063,8 @@ c
       real (kind=R8) :: product
 #endif
 c
-      data umax/.999999999e0_R8/
-      data zero /0.0e0_R8/
+      data umax /0.999999999_R8/
+      data zero /0.0_R8/
       msrch = nsrch
       ndrop = 0
       do 1272 kk=1,10
@@ -2116,7 +2120,7 @@ c
       real (kind=R8) :: product
 #endif
 c
-      data zero /0.0e0_R8/, one /1.0e0_R8/
+      data zero /0.0_R8/, one /1.0_R8/
       stab = eps.le.one
       rmin = eps
       ising = 0
@@ -2336,7 +2340,7 @@ c
       real (kind=R8) :: product
 #endif
 c
-      data zero /0.0e0_R8/
+      data zero /0.0_R8/
 c
 c the final value of resid is the maximum residual for an inconsistent
 c     set of equations.
@@ -3319,7 +3323,7 @@ c######alias mc24ad
      *   a(licn),w(n),amaxl,wrowl,amaxu,zero
       integer icn(licn),lenr(n),lenrl(n)
       integer i, j, j0, j1, j2, jj
-      data zero/0.0e0_R8/
+      data zero/0.0_R8/
       amaxl=zero
       do 10 i=1,n
       w(i)=zero
@@ -3490,7 +3494,7 @@ c     common /ma28gd/ idisp(2)
       common /ma28hd/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
       !$OMP THREADPRIVATE(/ma28ed/,/ma28fd/,/ma28hd/)
-      data eps /1.0e-4_R8/, tol /0.0e0_R8/, cgce /0.5e0_R8/
+      data eps /1.0e-4_R8/, tol /0.0_R8/, cgce /0.5_R8/
       data maxit /16/
       data lp /6/, mp /6/, nsrch /32768/, istart /0/
       data abort1 /.true./, abort2 /.true./
@@ -3643,7 +3647,7 @@ c
       common /ma30gd/ eps, rmin
       common /ma30id/ tol, big, ndrop, nsrch, lbig
       !$OMP THREADPRIVATE(/ma30ed/,/ma30gd/,/ma30id/)
-      data eps /1.0e-4_R8/, tol /0.0e0_R8/, big /0.0e0_R8/
+      data eps /1.0e-4_R8/, tol /0.0_R8/, big /0.0_R8/
       data lp /6/, nsrch /32768/
       data lbig /.false./
       data abort1 /.true./, abort2 /.true./, abort3 /.false./

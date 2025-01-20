@@ -4,18 +4,14 @@ c
       use b2us_data
       use b2mod_b2plot
       use b2mod_b2plot_values
+      use b2mod_chord_shift
       implicit none
       character*(*) filename
       character*80 dataname
       logical open_file,lcol
       real (kind=R8) ::
      1  rcol,x,y,x1,y1,z1,x2,y2,z2,r,z,ro,zo
-      integer icol,npoints,npointsl,i,lnblnk
-      external lnblnk
-
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
+      integer icol,npoints,npointsl,i
 
       if(.not.open_file(90,filename,
      1 'data.local/chords|data/chords')) return
@@ -23,7 +19,7 @@ c
       lcol=npoints .lt. 0
       npoints=abs(npoints)
 
-      call init_page(dataname(1:lnblnk(dataname)),
+      call init_page(trim(dataname),
      1 values(5),values(6),values(7),values(8),1,.true.,.true.,.true.)
       call additional_elements(mpg%nCv,.true.)
 
@@ -74,7 +70,7 @@ c
         endif
       endif
       goto 10
-   30 write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+   30 write(*,*) 'Error in reading ',trim(filename)
       return
    40 continue
       close(90)

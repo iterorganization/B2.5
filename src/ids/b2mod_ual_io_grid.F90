@@ -103,6 +103,31 @@ module b2mod_ual_io_grid
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_1, &
      &          GRID_SUBSET_OUTER_SF_PFR_CONNECTION_2
 #   endif
+#   if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+#    if AL_MAJOR_VERSION < 5
+    use imas_ggd_identifier &          ! IGNORE
+     & , only : ggd_identifier
+    use imas_ggd_space_identifier &    ! IGNORE
+     & , only : ggd_space_identifier
+    use imas_ggd_subset_identifier &   ! IGNORE
+     & , only : ggd_subset_identifier
+#     if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
+    use imas_ggd_geometry_content_identifier &   ! IGNORE
+     & , only : ggd_geometry_content_identifier
+#     endif
+#    else
+    use al_ggd_identifier &            ! IGNORE
+     & , only : ggd_identifier
+    use al_ggd_space_identifier &      ! IGNORE
+     & , only : ggd_space_identifier
+    use al_ggd_subset_identifier &     ! IGNORE
+     & , only : ggd_subset_identifier
+#     if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
+    use al_ggd_geometry_content_identifier &   ! IGNORE
+     & , only : ggd_geometry_content_identifier
+#     endif
+#    endif
+#   endif
 #  endif
 # endif
 # if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
@@ -254,6 +279,12 @@ module b2mod_ual_io_grid
     integer, parameter :: VEC_ALIGN_Z = 1007
     !> Vertical vector component ID
     character(len=132), parameter :: VEC_ALIGN_Z_ID = "Z"
+#endif
+#if ( GGD_MAJOR_VERSION < 2 && GGD_MINOR_VERSION < 13 )
+    !> Toroidal vector component
+    integer, parameter :: VEC_ALIGN_PHI = 1004
+    !> Toroidal vector component ID
+    character(len=132), parameter :: VEC_ALIGN_PHI_ID = "Phi"
 #endif
 
     !! Subgrid/Grid subset name constants
@@ -584,17 +615,30 @@ contains
         grid_ggd%identifier%index = geometryType
         allocate( grid_ggd%identifier%name(1) )
         allocate( grid_ggd%identifier%description(1) )
+#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+        grid_ggd%identifier%name = ggd_identifier%name( geometryType )
+        grid_ggd%identifier%description = ggd_identifier%description( geometryType )
+#else
         grid_ggd%identifier%name = geometryName(geometryType)
         grid_ggd%identifier%description = geometryDescription(geometryType)
-
+#endif
         allocate( grid_ggd%space( SPACE_COUNT ) )
 
 #if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%name(1) )
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%description(1) )
+#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%index = &
+          & ggd_space_identifier%primary_standard
+        grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%name = &
+          & ggd_space_identifier%name( ggd_space_identifier%primary_standard )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%description = &
+          & ggd_space_identifier%description( ggd_space_identifier%primary_standard )
+#else
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%name = "Standard grid"
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%index = 1
         grid_ggd%space( SPACE_POLOIDALPLANE )%identifier%description = labgeo
+#endif
 #endif
 
         !! Coordinate types
@@ -609,8 +653,21 @@ contains
 
         !! Set the space coordinates, also defining the dimension of the space
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type( NDIM ) )
+#if IMAS_MAJOR_VERSION < 4
         grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1) = COORDTYPE_R
         grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2) = COORDTYPE_Z
+#else
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1)%name(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1)%name = 'r'
+        grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1)%index = COORDTYPE_R
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1)%description(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(1)%description = 'Major radius'
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2)%name(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2)%name = 'z'
+        grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2)%index = COORDTYPE_Z
+        allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2)%description(1) )
+        grid_ggd%space( SPACE_POLOIDALPLANE )%coordinates_type(2)%description = 'Vertical coordinate z'
+#endif
 
         !! Three types of objects: 0D vertices/nodes, 1D faces/edges, 2D cells
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
@@ -623,7 +680,8 @@ contains
 #if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_NODE )%    &
-            &   geometry_content%index = 11
+            &   geometry_content%index =                    &
+            &   ggd_geometry_content_identifier%node_coordinates_connection
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_NODE )%    &
             &   geometry_content%name(1) )
@@ -632,12 +690,14 @@ contains
             &   geometry_content%description(1) )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_NODE )%    &
-            &   geometry_content%name = "node_coordinates_connection"
+            &   geometry_content%name =                     &
+            &   ggd_geometry_content_identifier%name(           &
+            &   ggd_geometry_content_identifier%node_coordinates_connection )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_NODE )%    &
             &   geometry_content%description =              &
-            &    "(R, Z) coordinates of nodes + "//         &
-            &    "connection length + distance to nearest surface"
+            &   ggd_geometry_content_identifier%description(    &
+            &   ggd_geometry_content_identifier%node_coordinates_connection )
 #endif
         !! 1D faces/edges
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
@@ -646,7 +706,8 @@ contains
 #if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
-            &   geometry_content%index = 21
+            &   geometry_content%index =                    &
+            &   ggd_geometry_content_identifier%edge_areas
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
             &   geometry_content%name(1) )
@@ -655,11 +716,14 @@ contains
             &   geometry_content%description(1) )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
-            &   geometry_content%name = "edge_areas"
+            &   geometry_content%name =                     &
+            &   ggd_geometry_content_identifier%name(       &
+            &   ggd_geometry_content_identifier%edge_areas )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_EDGE )%    &
             &   geometry_content%description =              &
-            &   "Projected areas of edges: poloidal, radial, total"
+            &   ggd_geometry_content_identifier%description(    &
+            &   ggd_geometry_content_identifier%edge_areas )
 #endif
         !! 2D cells
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
@@ -667,7 +731,8 @@ contains
 #if ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_CELL )%    &
-            &   geometry_content%index = 32
+            &   geometry_content%index =                    &
+            &   ggd_geometry_content_identifier%face_indices_volume_connection
         allocate( grid_ggd%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension( IDS_CLASS_CELL )%    &
             &   geometry_content%name(1) )
@@ -676,13 +741,14 @@ contains
             &   geometry_content%description(1) )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_CELL )%    &
-            &   geometry_content%name = "face_indices_volume_connection"
+            &   geometry_content%name =                     &
+            &   ggd_geometry_content_identifier%name(       &
+            &   ggd_geometry_content_identifier%face_indices_volume_connection )
         grid_ggd%space( SPACE_POLOIDALPLANE )%              &
             &   objects_per_dimension( IDS_CLASS_CELL )%    &
             &   geometry_content%description =              &
-            &    "(ix, iy) indices of B2.5 cell + "//       &
-            &    "cell volume + connection length + "//     &
-            &    "distance to nearest solid surface"
+            &   ggd_geometry_content_identifier%description(       &
+            &   ggd_geometry_content_identifier%face_indices_volume_connection )
 #endif
 
         !! Fill in vertex/node information
@@ -909,7 +975,16 @@ contains
 #if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%name(1) )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description(1) )
+#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%index = &
+            &  ggd_space_identifier%secondary_structured
+          grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%name = &
+          & ggd_space_identifier%name( ggd_space_identifier%secondary_structured )
+          grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description =    &
+          & ggd_space_identifier%description( ggd_space_identifier%secondary_structured )
+#else
           grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%index = 2
+#endif
 #endif
           grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%index = 0
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%name(1) )
@@ -921,7 +996,7 @@ contains
                 &   ( ( width/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )     &
                 &   /),                                                       &
                 &   .false. ) !! periodic = .false.
-#if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MINOR_VERSION > 19 && IMAS_MINOR_VERSION < 31 && IMAS_MAJOR_VERSION == 3 )
             grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%name = "Z-direction"
             grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description =    &
                 &   "Cylindrical symmetry"
@@ -930,7 +1005,7 @@ contains
             grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%description = &
                 &   "Length along cylindrical direction"
           else
-#if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MINOR_VERSION > 19 && IMAS_MINOR_VERSION < 31 && IMAS_MAJOR_VERSION == 3 )
             grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%name = "Toroidal direction"
 #endif
             grid_ggd%space( SPACE_TOROIDALANGLE )%geometry_type%name = "Toroidal angle"
@@ -941,7 +1016,7 @@ contains
                   &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL-1 ) &
                   &   /),                                                       &
                   &   .true. ) !! periodic = .true.
-#if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MINOR_VERSION > 19 && IMAS_MINOR_VERSION < 31 && IMAS_MAJOR_VERSION == 3 )
               grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description =    &
                   &   "Toroidally symmetric and periodic"
 #endif
@@ -954,7 +1029,7 @@ contains
                   &   ( ( 2*B2_PI/NNODES_TOROIDAL )*i, i=0, NNODES_TOROIDAL )   &
                   &   /),                                                       &
                   &   .false. ) !! periodic = .false.
-#if ( IMAS_MINOR_VERSION > 19 || IMAS_MAJOR_VERSION > 3 )
+#if ( IMAS_MINOR_VERSION > 19 && IMAS_MINOR_VERSION < 31 && IMAS_MAJOR_VERSION == 3 )
               grid_ggd%space( SPACE_TOROIDALANGLE )%identifier%description =    &
                   &   "Toroidally symmetric"
 #endif
@@ -962,29 +1037,31 @@ contains
                   &   "Toroidal angle, full circle"
             end if
           end if
-#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MAJOR_VERSION > 0 && ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) ) )
+#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MAJOR_VERSION > 1 || ( GGD_MAJOR_VERSION == 1 && ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) ) ) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(1)%geometry_content%name(1) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(1)%geometry_content%description(1) )
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
-             &     geometry_content%index = 1
+             &     geometry_content%index = ggd_geometry_content_identifier%node_coordinates
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
-             &     geometry_content%name = "node_coordinates"
+             &     geometry_content%name = ggd_geometry_content_identifier%name( &
+             &     ggd_geometry_content_identifier%node_coordinates )
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(1)% &
-             &     geometry_content%description = &
-             &    "Node coordinates (automatically generated 1D space)"
+             &     geometry_content%description = ggd_geometry_content_identifier%description( &
+             &     ggd_geometry_content_identifier%node_coordinates )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(2)%geometry_content%name(1) )
           allocate( grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(2)%geometry_content%description(1) )
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
-             &     geometry_content%index = 0
+             &     geometry_content%index = ggd_geometry_content_identifier%unspecified
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
-             &     geometry_content%name = "unspecified"
+             &     geometry_content%name = ggd_geometry_content_identifier%name( &
+             &     ggd_geometry_content_identifier%unspecified )
           grid_ggd%space( SPACE_TOROIDALANGLE )%objects_per_dimension(2)% &
-             &     geometry_content%description = &
-             &  "Automatically generated 1D space (unused)"
+             &     geometry_content%description = ggd_geometry_content_identifier%description( &
+             &     ggd_geometry_content_identifier%unspecified )
 #endif
         end if
 
@@ -995,7 +1072,7 @@ contains
     !> Set connectivity array for cells by defining nodes that form each cell
     !> Nodes and bounding faces are ordered to circle around the cell
     subroutine set_Cells_Conn_Array_Nodes(object)
-        type (ids_generic_grid_dynamic_space_dimension_object) :: object
+        type(ids_generic_grid_dynamic_space_dimension_object) :: object
         integer :: num_nodes_2D     !< Total number of nodes forming one cell
         integer :: num_boundary_2D  !< Total number of boundary edges forming
             !< one cell
@@ -2107,7 +2184,7 @@ contains
 
                 end if
             end do
-        case ( GEOMETRY_SN, GEOMETRY_CDN, &
+        case ( GEOMETRY_SN, &
              & GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
             iType = REGIONTYPE_YEDGE
             cls = CLASS_POLOIDALRADIAL_EDGE
@@ -2133,6 +2210,57 @@ contains
                 indexList2d( iInd-mpg%fsFcP(mpg%iFssep,1)+1, &
                     &        SPACE_POLOIDALPLANE ) = ind
             end do
+
+            !! Initialize explicit object list for grid subset
+            call createExplicitObjectListSingleSpace( grid_ggd,     &
+                &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                &   SPACE_POLOIDALPLANE )
+            deallocate(IndexList2d)
+
+        case ( GEOMETRY_CDN )
+            iType = REGIONTYPE_YEDGE
+            cls = CLASS_POLOIDALRADIAL_EDGE
+            iSubset = GRID_SUBSET_SEPARATRIX
+            GSubsetCount = GSubsetCount + 1
+
+            call logmsg( LOGDEBUG,                                      &
+                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
+                &   int2str(GSubsetCount)//": "//                       &
+                &   gridSubsetName ( iSubset ) )
+
+            !! Create grid subset with one object list
+            call createEmptyGridSubset(                     &
+                &   grid_ggd%grid_subset( GSubsetCount ),   &
+                &   iSubset, gridSubsetName ( iSubset ),    &
+                &   gridSubsetDescription ( iSubset ) )
+
+            if (mpg%iFssep2.eq.0) then
+              allocate( indexList2d(mpg%fsFcP(mpg%iFssep,2), SPACE_COUNT) )
+              indexList2d(:,SPACE_TOROIDALANGLE) = 1
+              do iInd = mpg%fsFcP(mpg%iFssep,1), &
+                      & mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+                  ind = mpg%fsFc(iInd)
+                  indexList2d( iInd-mpg%fsFcP(mpg%iFssep,1)+1, &
+                      &        SPACE_POLOIDALPLANE ) = ind
+              end do
+            else
+              allocate( indexList2d(mpg%fsFcP(mpg%iFssep,2)+mpg%fsFcP(mpg%iFssep2,2), &
+                      &        SPACE_COUNT) )
+              indexList2d(:,SPACE_TOROIDALANGLE) = 1
+              do iInd = mpg%fsFcP(mpg%iFssep,1), &
+                      & mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+                  ind = mpg%fsFc(iInd)
+                  indexList2d( iInd-mpg%fsFcP(mpg%iFssep,1)+1, &
+                      &        SPACE_POLOIDALPLANE ) = ind
+              end do
+              do iInd = mpg%fsFcP(mpg%iFssep2,1), &
+                      & mpg%fsFcP(mpg%iFssep2,1) + mpg%fsFcP(mpg%iFssep2,2) - 1
+                  ind = mpg%fsFc(iInd)
+                  indexList2d( mpg%fsFcP(mpg%iFssep,2)+iInd-mpg%fsFcP(mpg%iFssep2,1)+1, &
+                      &        SPACE_POLOIDALPLANE ) = ind
+              end do
+            end if
 
             !! Initialize explicit object list for grid subset
             call createExplicitObjectListSingleSpace( grid_ggd,     &
@@ -2283,7 +2411,8 @@ contains
         !! Outer strikepoint
           iVx = US_GRID_UNDEFINED
           do i = 1, mpg%nStr
-            if (mpg%nnreg(0).le.7 .or. geoId.eq.GEOMETRY_DDN_TOP) then
+            if ( mpg%nnreg(0).le.7 .or. geoId.eq.GEOMETRY_DDN_TOP .or. &
+              & (mpg%nnreg(0).eq.8 .and. geoId.eq.GEOMETRY_SN) ) then
               if (mpg%strDiv(i).eq.2) iVx = mpg%strVx(i)
             else if (geoId.eq.GEOMETRY_CDN .or. geoId.eq.GEOMETRY_DDN_BOTTOM) then
               if (mpg%strDiv(i).eq.4) iVx = mpg%strVx(i)
@@ -2575,7 +2704,7 @@ contains
         dynamic_grid%space(i1)%coordinates_type(i2)%name = &
          & aoS3_grid%space(i1)%coordinates_type(i2)%name
         dynamic_grid%space(i1)%coordinates_type(i2)%index = &
-         & aoS3_grid%space(i1)%coordinates_type(i2)index
+         & aoS3_grid%space(i1)%coordinates_type(i2)%index
         allocate( dynamic_grid%space(i1)%coordinates_type(i2)%description(1) )
         dynamic_grid%space(i1)%coordinates_type(i2)%description = &
          & aoS3_grid%space(i1)%coordinates_type(i2)%description

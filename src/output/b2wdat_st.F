@@ -608,8 +608,8 @@
      &                .or. iout.eq.3 .or. iout.eq.4) then                       !srv 19.04.13
 !______________________________________________________________________________ !iyv 15.10.09 {
 ! target energy fluxes
-        wrk0=0.0e0_R8
-        wrk1=0.0e0_R8
+        wrk0=0.0_R8
+        wrk1=0.0_R8
 
         if(nncut.eq.2) then            !iyv 04.02.11
           ix1=nxtl    !inner upper
@@ -648,13 +648,13 @@
 ! qe West
           phi_app = get_phi_applied(boundary_namelist,-1,iy)
           wrk0(-1,iy)=hy1(-1,iy)/hy(-1,iy)*abs(bb(-1,iy,0)/bb(-1,iy,3))*    !srv 19.04. 13
-     &     ( te(-1,iy)*(2.0e0_R8)+qe*po(-1,iy)*(1.0_R8-gammae) )*
+     &     ( te(-1,iy)*2.0_R8+qe*po(-1,iy)*(1.0_R8-gammae) )*
      &     ( ne(-1,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(-1,iy)/me)*
      &     expu2(max(-50.0_R8, -qe*(po(-1,iy)-phi_app)/te(-1,iy))) )
 ! qe East
           phi_app = get_phi_applied(boundary_namelist,nx,iy)
           wrk0(0,iy)=hy1(nx,iy)/hy(nx,iy)*abs(bb(nx,iy,0)/bb(nx,iy,3))*    !srv 19.04. 13
-     &     ( te(nx,iy)*(2.0e0_R8)+qe*po(nx,iy)*(1.0_R8-gammae) )*
+     &     ( te(nx,iy)*2.0_R8+qe*po(nx,iy)*(1.0_R8-gammae) )*
      &     ( ne(nx,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(nx,iy)/me)*
      &     expu2(max(-50.0_R8, -qe*(po(nx,iy)-phi_app)/te(nx,iy))) )
 
@@ -665,7 +665,7 @@
            endif
          enddo
 ! qi West
-         wrk0(3,iy)=2.5e0_R8*
+         wrk0(3,iy)=2.5_R8*
      &               hy1(-1,iy)/hy(-1,iy)*abs(bb(-1,iy,0)/bb(-1,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(-1,iy)*wrk0(1,iy)*sqrt(wrk1(-1,iy)/wrk1(1,iy))
 !  IYS added the heat flux carried by recycling neutrals
@@ -675,7 +675,7 @@
 !  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
 
 ! qi East
-         wrk0(4,iy)=2.5e0_R8*
+         wrk0(4,iy)=2.5_R8*
      &               hy1(nx,iy)/hy(nx,iy)*abs(bb(nx,iy,0)/bb(nx,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(nx,iy)*wrk0(2,iy)*sqrt(wrk1(0,iy)/wrk1(2,iy))
 !  IYS added the heat flux carried by recycling neutrals
@@ -690,14 +690,14 @@
            phi_app = get_phi_applied(boundary_namelist,ix1,iy)
            wrk0(7,iy)=hy1(ix1,iy)/hy(ix1,iy)*                             !srv 19.04. 13
      &        abs(bb(ix1,iy,0)/bb(ix1,iy,3))*
-     &      ( te(ix1,iy)*(2.0e0_R8)+qe*po(ix1,iy)*(1.0_R8-gammae) )*
+     &      ( te(ix1,iy)*2.0_R8+qe*po(ix1,iy)*(1.0_R8-gammae) )*
      &      ( ne(ix1,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(ix1,iy)/me)*
      &       expu2(max(-50.0_R8, -qe*(po(ix1,iy)-phi_app)/te(ix1,iy))) )
 ! qe outer upper
            phi_app = get_phi_applied(boundary_namelist,ix2,iy)
            wrk0(8,iy)=hy1(ix2,iy)/hy(ix2,iy)*                             !srv 19.04. 13
      &        abs(bb(ix2,iy,0)/bb(ix2,iy,3))*
-     &      ( te(ix2,iy)*(2.0e0_R8)+qe*po(ix2,iy)*(1.0_R8-gammae) )*
+     &      ( te(ix2,iy)*2.0_R8+qe*po(ix2,iy)*(1.0_R8-gammae) )*
      &      ( ne(ix2,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(ix2,iy)/me)*
      &       expu2(max(-50.0_R8, -qe*(po(ix2,iy)-phi_app)/te(ix2,iy))) )
 
@@ -708,7 +708,7 @@
              endif
            enddo
 ! qi inner upper
-           wrk0(11,iy)=2.5e0_R8*
+           wrk0(11,iy)=2.5_R8*
      &           hy1(ix1,iy)/hy(ix1,iy)*abs(bb(ix1,iy,0)/bb(ix1,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(ix1,iy)*wrk0(9,iy)*sqrt(wrk1(3,iy)/wrk1(5,iy))
 !  IYS added the heat flux carried by recycling neutrals
@@ -718,7 +718,7 @@
 !  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
 
 ! qi outer upper
-           wrk0(12,iy)=2.5e0_R8*
+           wrk0(12,iy)=2.5_R8*
      &           hy1(ix2,iy)/hy(ix2,iy)*abs(bb(ix2,iy,0)/bb(ix2,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(ix2,iy)*wrk0(10,iy)*sqrt(wrk1(4,iy)/wrk1(6,iy))
 !  IYS added the heat flux carried by recycling neutrals
@@ -1077,7 +1077,7 @@
          write(70,"(1x,2es14.6)")
      *    crdy_surf(ix,iy),
      *     -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))/
-     *     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8
+     *     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0_R8
        enddo
        close(70)
 
@@ -1253,63 +1253,63 @@
 
        call my_out(70,nx,ny,po,'po')                                !srv
 
-       wrk0=0.0e0_R8
+       wrk0=0.0_R8
        do iy=0,ny
          do ix=-1,nx
            wrk0(ix,iy)=
      *         -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))/
      *          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))    !srv 08.05.07
-     *          *2.0e0_R8
+     *          *2.0_R8
          enddo
        enddo
        call my_out(70,nx,ny,wrk0,'Eyf')                              !srv 15.06.04 }
-       wrk0=0.0e0_R8                                                 !iyv 15.10.09 {
+       wrk0=0.0_R8                                                   !iyv 15.10.09 {
        do iy=0,ny
          do ix=-1,nx
            if(topiy(ix,iy).ne.ny+1) then
              wrk0(ix,iy)=
      *        -(po(topix(ix,iy),topiy(ix,iy))-
      *          po(bottomix(ix,iy),bottomiy(ix,iy)))/
-     *         (hy1(ix,iy)+0.5e0_R8*
+     *         (hy1(ix,iy)+0.5_R8*
      *         (hy1(bottomix(ix,iy),bottomiy(ix,iy))) +
      *          hy1(topix(ix,iy),topiy(ix,iy)))
            else
              wrk0(ix,iy)=
      *        -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))/
      *         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy))) !
-     *        *2.0e0_R8
+     *        *2.0_R8
            endif
          enddo
        enddo
        call my_out(70,nx,ny,wrk0,'Eyc')
 
 *     calculate shear
-       wrk1=0.0e0_R8
+       wrk1=0.0_R8
        do iy=-1,ny
          do ix=-1,nx
            wrk1(ix,iy)= wrk0(ix,iy)/(hz(ix,iy)*bb(ix,iy,0))
          enddo
        enddo
 
-       wrk0=0.0e0_R8
+       wrk0=0.0_R8
        do iy=-1,ny
          do ix=-1,nx
            if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
      *       wrk0(ix,iy)=abs(hz(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)*
      *              (wrk1(topix(ix,iy),topiy(ix,iy))-
      *               wrk1(bottomix(ix,iy),bottomiy(ix,iy)))/
-     *                (hy1(ix,iy)+0.5e0_R8*
+     *                (hy1(ix,iy)+0.5_R8*
      *                (hy1(bottomix(ix,iy),bottomiy(ix,iy))) +
      *                 hy1(topix(ix,iy),topiy(ix,iy))))
          enddo
        enddo
        call my_out(70,nx,ny,wrk0,'Wsh')                              !iyv 15.10.09 }
 
-       uvbtot=0.0e0_R8
-       voltot=0.0e0_R8
-       wrk0=0.0e0_R8
-       wrk1=0.0e0_R8
-       wrk2=0.0e0_R8
+       uvbtot=0.0_R8
+       voltot=0.0_R8
+       wrk0=0.0_R8
+       wrk1=0.0_R8
+       wrk2=0.0_R8
        do iy = 0,mintopcut-1
          do ix = 0,nx
            if(on_closed_surface(ix,iy)) then
@@ -1463,7 +1463,7 @@
         ssna(is) = 0.0_R8
 
         do ib=1, nbc
-         boundary_flux(ib,is)=0.0e0_R8
+         boundary_flux(ib,is)=0.0_R8
          IF(BCCHAR(IB).EQ.'S') THEN
            DO IX = 1, BC_LIST_SIZE(IB)
              boundary_flux(ib,is) = boundary_flux(ib,is) +
@@ -1550,7 +1550,7 @@
          ssna(is) = 0.0_R8
 
          do ib=1, nbc
-          boundary_flux(ib,is)=0.0e0_R8
+          boundary_flux(ib,is)=0.0_R8
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
               boundary_flux(ib,is) = boundary_flux(ib,is) +

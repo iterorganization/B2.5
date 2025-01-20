@@ -43,12 +43,6 @@ c     conversion of constants to CGS units
       real (kind=R8) :: eV_cgs, e_cgs, c_cgs
       parameter (eV_cgs=ev*erg,
      &           e_cgs=qe*c*10._R8, c_cgs=c*cm)
-      real (kind=R8) ::
-     *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,
-     &   fm(0:nmaxgr-1), r2i, cosbl(0:nmaxgr-1),
-     &   cosb2(0:nmaxgr-1), sinbl(0:nmaxgr-1), sinb2(0:nmaxgr-1)
-      common /b2ngeom/ bav,b2av,bi2a,rbt,bgradp,dpsidr,rnq,fc,
-     *                 gclass,fm,r2i,cosbl,cosb2,sinbl,sinb2
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -299,7 +293,7 @@ c     conversion of constants to CGS units
 *      measure for the density perturbation in a collision dominated
 *      regime
           if (iFt.gt.0)
-     >     deltapar(iCv,is)=(1.-fc_(iFt))**4*nustar(iCv,is)*
+     >     deltapar(iCv,is)=(1.0_R8-fc_(iFt))**4*nustar(iCv,is)*
      &      wb(iCv,is)*rmaj_(iFt)*nua(iCv,is)/(minlnlt**2*
      &      omega(iCv,is))
          endif
@@ -317,7 +311,7 @@ c     conversion of constants to CGS units
         deltal(iCv,ns)=rhol(iCv,ns)/minlnlt
 *      width of Banana orbit
         if (iFt.gt.0)
-     >   wb(iCv,ns)=me*gramm*c_cgs*(1.-fc_(iFt))*
+     >   wb(iCv,ns)=me*gramm*c_cgs*(1.0_R8-fc_(iFt))*
      &    vtha(iCv,ns)/(e_cgs*geo%cvBb(iCv,0)*gauss*cm)
 *      ratio of Banana orbit to minimum gradient length
         deltaw(iCv,ns)=wb(iCv,ns)/minlnlt
@@ -488,18 +482,3 @@ c     conversion of constants to CGS units
       call subend ()
       return
       end subroutine chang_hinton
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

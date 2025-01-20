@@ -623,7 +623,14 @@ contains
 
     if (mpg%nnreg(0) == 8) then
 
-        if (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
+        if (mpg%nXpt.eq.1) then !nh only 1 X-point for vessel mode grids
+            geometryID = GEOMETRY_SN
+            if (first) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_SN")
+                first = .false.
+            end if
+            return
+        elseif (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
             geometryId = GEOMETRY_CDN
             if (first) then
                 call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_CDN")
@@ -634,7 +641,7 @@ contains
           active = .false.
           do i = mpg%vxCvP(mpg%Xpt(1),1), mpg%vxCvP(mpg%Xpt(1),1) + &
                                         & mpg%vxCvP(mpg%Xpt(1),2) - 1
-            iCv = mpg%vxCV(i)
+            iCv = mpg%vxCv(i)
             if (mpg%cvReg(iCv).eq.1) active = .true.
           end do
           if ((geo%vxY(mpg%Xpt(1)) < geo%vxY(mpg%Xpt(2)).and.active).or. &

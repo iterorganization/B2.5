@@ -2,8 +2,10 @@
       use b2mod_types
       use b2mod_switches
       use b2us_map
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2nxdv_smo0to3, balance_netcdf
+#endif
       use b2mod_subsys
       implicit none
       integer nCv, isb
@@ -23,7 +25,7 @@
 *     ------------------------------------------------------------------
       call subini ('b2nxdv')
 *   ..test nCv
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
 
 cdjm Jan2017 Keep source at the start to calculate total change for balance routines
       smbtmp = smb
@@ -38,10 +40,12 @@ cdjm Jan2017 Keep source at the start to calculate total change for balance rout
         enddo
       endif
 
+#ifndef FIXED_POINT
 cdjm Store the total change in linearised source for balance
       if (balance_netcdf.ne.0) then
         b2nxdv_smo0to3(1:nCv,0:3,isb) = smb-smbtmp
       endif
+#endif
 
       call subend ()
       return

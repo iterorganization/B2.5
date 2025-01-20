@@ -16,7 +16,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2uppo, ncall_b2uspo,
+     & , only : ncall_b2uspo,
      &          my_out_folder,
 #ifdef WG_DEBUG
      &          my_out_sf,                                               !srv 27.06.21
@@ -66,11 +66,13 @@
 *.declarations
 
 *   ..local variables
+      integer :: iCv
       real (kind=R8) ::
-     *  aa(mpg%nCmxNv), wrk0(nCv)
+     *  aa(mpg%nCmxNv), wrk0(nCv), wrk
+      real (kind=R8), save :: b2nppo_restr_po = 0.0_R8
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2ursd, b2uspo, b2uppo
+      external b2xvsg, b2ursd, b2uspo, b2uppo
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -80,10 +82,14 @@
 *   ..subprogram start-up calls
       call subini ('b2nppo')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test rxf
       call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      . 'faulty argument rxf')
+*   ..read switches
+      if (ncall_b2nppo.eq.0) then
+        call ipgetr ('b2nppo_restr_po', b2nppo_restr_po)
+      endif
 *   ..extensive tests on first few calls
       if (ncall_b2nppo.lt.3) then
 *    ..test sign of ne, te
@@ -118,6 +124,31 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
      &  'b2nppo')
 *   ..apply correction
         call b2uppo (nCv, rxf, dv%corpo, pl%po)
+        if (b2nppo_restr_po.ne.0.0_R8) then
+          do iCv=1,mpg%nCv
+            if (mpg%cvOnClosedSurface(iCv)) cycle
+            if (b2nppo_restr_po.gt.0.0_R8) then
+              if (abs(qe*pl%po(iCv))/pl%te(iCv)
+     &                   .gt. b2nppo_restr_po ) then
+                wrk = pl%po(iCv)
+                pl%po(iCv) = sign(b2nppo_restr_po*pl%te(iCv)/qe,
+     &           pl%po(iCv))
+                write(*,*) "Applied po/Te ratio limit",
+     &           iCv,wrk,pl%po(iCv)
+              endif
+            else
+              if (abs(qe*pl%po(iCv))/pl%te(iCv)
+     &                   .gt. abs(b2nppo_restr_po) .and.
+     &             pl%po(iCv).lt.0.0_R8) then
+                wrk = pl%po(iCv)
+                pl%po(iCv) = sign(b2nppo_restr_po*pl%te(iCv)/qe,
+     &           pl%po(iCv))
+                write(*,*) "Applied po/Te ratio limit",
+     &           iCv,wrk,pl%po(iCv)
+              endif
+            endif
+          enddo
+        endif
       endif                                                         !srv 22.05.18
 
       if(switch%b2nppo_iout .eq. 1 .or. switch%iout_b2wdat.eq.4) then    !srv 11.09.09 {

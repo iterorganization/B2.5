@@ -71,7 +71,7 @@ c      integer, save :: iadd_9 = 1                                     !srv 13.1
 *   ..procedures
       intrinsic abs
       external xertst, ipgetr, sfill
-      external b2xvsg, b2xvff, b2xvfx                                 !srv 02.01.07
+      external b2xvsg                                                  !srv 02.01.07
 
 *-----------------------------------------------------------------------
 *.computation
@@ -85,8 +85,9 @@ c       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
 c       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
 c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10.06
       endif                                                           !srv 06.07.06 }
-*   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, nVx
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     .  'faulty argument nCv, nFc, nVx')
 *   ..test itcnt, rxg
       call xertst (0.le.itcnt, 'faulty argument itcnt')
       call xertst (0.lt.rxg, 'faulty argument rxg')
@@ -100,7 +101,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
       endif
 
 *   ..initialize matrix
-      aa = 0.0e0_R8
+      aa = 0.0_R8
 
 *   ..compute the matrix
 ! $AD II-LOOP
@@ -266,7 +267,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
       real(kind=R8) :: rscal, t0
 ! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
       rscal = t0                                                  !srv 13.10.06
-!      rscal = 1.0e0_R8                                           !srv 13.10.06
+!      rscal = 1.0_R8                                             !srv 13.10.06
       return
       end function rscal
 

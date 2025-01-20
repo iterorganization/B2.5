@@ -12,6 +12,8 @@
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
      &          feedback_namelist_used
       use b2mod_sputter
+     & , only : sput_dst, dealloc_sputter_data, dealloc_b2mod_sputter
+      use b2mod_solpstop
       use b2mod_ysmp_sdrv
      & , only : dealloc_b2mod_ysmp_sdrv
       use b2mod_wall
@@ -27,6 +29,7 @@
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
       use b2mod_transport_disruption
+     & , only : dealloc_b2mod_transport_disruption
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -43,10 +46,12 @@
       use b2mod_running_average
      & , only : run_av_init, run_av_get_plasma, run_av_save,
      & run_av_fin
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : balance_netcdf, alloc_b2mod_balance, write_balance,
      &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
      &          balance_average, update_average_balance
+#endif
       use b2mod_equation_sources                                        !srv 26.02.18
       use b2mod_boundary_sources                                        !srv 26.02.18
       use b2mod_switches
@@ -100,8 +105,16 @@
       use b2mod_impgyro !yamoto
 #endif
 #ifdef IMAS
+#if AL_MAJOR_VERSION > 4
       use ids_routines  ! IGNORE
-     , , only : imas_open_env, ids_deallocate, ids_get
+     , , only : imas_open, al_build_uri_from_legacy_parameters,
+     ,          OPEN_PULSE, STRMAXLEN, MDSPLUS_BACKEND
+#else
+      use ids_routines  ! IGNORE
+     , , only : imas_open_env
+#endif
+      use ids_routines  ! IGNORE
+     , , only : ids_deallocate, ids_get
       use ids_schemas   ! IGNORE
      , , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,
      ,          ids_radiation, ids_dataset_description, ids_equilibrium
@@ -123,9 +136,10 @@
 #endif
       use b2mod_ual
      , , only : put_ids_edge, new_ids_edge, close_ual,
-     ,          dealloc_ids_edge
+     ,          dealloc_ids_edge, dealloc_batch_edge
       use b2mod_ual_io
-     , , only : b25_process_ids, num_time_slices
+     , , only : b25_process_ids, b25_av_ids,
+     ,          num_time_slices, num_batch_slices
 #endif
       use b2mod_subsys
       use b2mod_dimensions
@@ -141,14 +155,14 @@
       integer, save :: b2mndr_redef_pbs = 0
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
-      integer, save :: shot = 0, run = 0, ids_save = 0
+      integer, save :: shot = 0, run = 0, ids_save = 0, ids_av = 0
 #ifdef _OPENMP
       real (kind=R8) :: cpuval, cpustart, cpuinit
 #else
       real (kind=R4) :: cpuval, cpustart, cpuinit
 #endif
       real (kind=R8) ::
-     *  na_min, na_new, dtim, etim,
+     *  dtim, etim,
      &  b2mndr_cpu,
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
      &  density_rescale, ne_wanted,
@@ -164,7 +178,7 @@
       integer itim, ierr, edition, b2time, coronal,
      *  tally, ismain, ismain0, natmi, no_solve,
      *  external_species, idx
-      integer, save :: edition_p=0, plasinc = 1, plasnum = 0
+      integer, save :: edition_p = 0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
      *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
      *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
@@ -176,7 +190,6 @@
      2  sput_frc, sput_phys,
      3  delta_min, dt_change_inc, delta_max, dt_change_dec,
      4  dt_min, dt_max, max_delta
-      integer :: ncon, nele_jac
 #ifndef NO_CDF
 #     include <netcdf.inc>
       integer ncid
@@ -213,8 +226,12 @@
 #endif
       integer :: batch_index
       real (IDS_real) :: old_start_time, old_end_time, ids_end_time
-      character username*24, database*24, treename*24, version*24
+#if AL_MAJOR_VERSION < 5
+      character treename*24
+#endif
+      character username*24, database*24, version*24
       character old_imas_version*132, imas_version*132
+      character ids_path*256
       logical new_eq_ggd
 #endif
       real (kind=R8) ::
@@ -226,8 +243,9 @@
       real (kind=R8) ::
      *  te_hot, ne_hot_frac
       logical quitexist, quit, quitexist_
-      logical write_save, write_ids
-      logical process_ids
+      logical write_save, write_ids, write_av
+      logical process_ids, process_av
+      logical, save :: summary_av = .false.
       real (kind=R8) ::
      *  stack_dtim(20)
       integer stack_ntim(20)
@@ -239,7 +257,7 @@
 
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, etim, idout0, idout1,
-     1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
+     1  b2mndr_cpu, edition, cputarget, cpuincrement,
      2  ismain, ismain0, savefilestatus, b2time, coronal,
      3  natmi, tally,
      4  density_rescale,
@@ -259,7 +277,7 @@
      1     etim/0.0_R8/, ismain/1/, ismain0/0/,
      2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/
       data idout0/'pgnl;pgmm;pzmm'/, idout1/'pzmm'/
-      data na_new/1.0e14_R8/, na_min/1.0e4_R8/, b2mndr_cpu/0.0_R8/,
+      data b2mndr_cpu/0.0_R8/,
      &     b2mndr_elapsed/0.0_R8/
       data savefile/'plasmastate.xxxx'/,
      1     cpuincrement/3600.0_R8/, savefilestatus/'new'/, b2time/1/,
@@ -332,7 +350,10 @@
       character*256 filename
       logical ex, found
 #ifdef IMAS
+      integer l, m
+      character(len=256) :: home_dir, imasdir, zeile, path
       character(len=24) :: device_env
+      logical absolute_path, not_default
 #ifndef NO_GETENV
       integer lenval, ierror
 #ifndef USE_PXFGETENV
@@ -350,9 +371,9 @@
       logical streql
       external rratio, smax, streql
 #ifdef IMAS
-      integer lnblnk
       character*16 usrnam
       external usrnam
+      intrinsic index
 #endif
 *-----------------------------------------------------------------------
 *.documentation
@@ -385,7 +406,7 @@
 *
 *  5. parameters (see also routine b2cdcv)
 *
-*     ninp - (0:5) integer array, input.
+*     ninp - (0:6) integer array, input.
 *     ninp specifies the input unit numbers, as follows.
 *     ninp(0): formatted; provides physics and numerics parameters.
 *     ninp(1): un*formatted; provides the geometry.
@@ -395,7 +416,7 @@
 *     ninp(5): un*formatted; provides source term data.
 *     ninp(6): un*formatted; provides the initial differentiated state.
 *
-*     nout - (0:5) integer array, input.
+*     nout - (0:11) integer array, input.
 *     nout specifies the output unit numbers, as follows.
 *     nout(0): formatted; provides summary print output.
 *     nout(1): un*formatted; provides actual physics parameters.
@@ -405,6 +426,7 @@
 *     nout(5): un*formatted; may provide detailed convergence data.
 *     nout(9): un*formatted; provides the final differentiated state.
 *     nout(10): un*formatted; provides data on the numerical evolution of differentiated quantities.
+*     nout(11): formatted; postprocessor output. [JET]
 *
 *     nx, ny - integer, input.
 *     nx and ny specify the number of interior cells along the first
@@ -808,8 +830,8 @@
 *     vol - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
 *     the (ix,iy) cell. (In the case of toroidal symmetry this volume
-*     includes a factor 2*pi*crx, while in the case of cylindrical
-*     symmetry it includes a factor 2*pi*cry.)
+*     includes a factor 2*pi*R, while in the case of cylindrical
+*     symmetry it includes a factor 2*pi*Z.)
 *     It will hold that 0.lt.vol(,).
 *
 *     hx, hy - (-1:nx,-1:ny) real*8 array.
@@ -999,11 +1021,13 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
+#ifndef FIXED_POINT
        balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
        call ipgeti ('balance_netcdf', balance_netcdf)                   !djm Jan2017
        call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
+#endif
        if(switch%boundary_sources.ne.0)
      &    call alloc_b2mod_boundary_sources(nCv,ns)
        if(switch%equation_sources.ne.0)
@@ -1068,14 +1092,6 @@
      &   'faulty internal parameter plasinc,plasnum')
        call ipgetc ('b2mndr_idout0', idout0)
        call ipgetc ('b2mndr_idout1', idout1)
-       call ipgetr ('b2mndr_na_min', na_min)
-       call ipgetr ('b2mndr_na_new', na_new)
-       call xertst (na_min.gt.0.0_R8,
-     &  'faulty internal parameter na_min')
-       call xertst (na_new.gt.0.0_R8,
-     &  'faulty internal parameter na_new')
-       call xertst (na_new.gt.na_min,
-     &  'na_new must be larger than na_min!')
        call ipgetr ('b2mndr_cpu', b2mndr_cpu)
        call xertst (b2mndr_cpu.ge.0.0_R8,
      1  'faulty internal parameter cpu')
@@ -1096,7 +1112,7 @@
      > 'from run directory - Catalyst will not start.'
        if (use_catalyst .eqv. .true.) then
           call coprocessorinitializewithpython
-     >     (filename,lnblnk(filename))
+     >     (filename,len_trim(filename))
        endif
 #endif
 
@@ -1340,7 +1356,7 @@ cwdk for now, dummy external state is created in b2mod_main
      .      (nint(zamin(is)).eq.1.and.nint(zamax(is)).eq.1)) k = k + 1
        end do
        call xertst (k.eq.1.or.(switch%b2tfnb_xcur.eq.0.0_R8 .and.
-     &                                switch%b2tfnb_ycur.eq.0.0_R8),
+     &                         switch%b2tfnb_ycur.eq.0.0_R8),
      .  'Currents assignment to ions only supported for single '//
      .  'hydrogenic species!')
 *
@@ -1359,6 +1375,10 @@ csw 09oct2012
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
        call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
        call ipgeti ('b2mndr_ids_save', ids_save )
+       call ipgeti ('b2mndr_ids_av', ids_av )
+       call xertst ( 0.le.ids_av, 'Invalid ids_av value')
+       summary_av =
+     &  ids_av.gt.0 .and. ids_save.eq.0 .and. delta_ids_time.eq.0.0_R8
 #ifdef IMAS
        if (ids_save.eq.1) then
          write(*,*) 'Writing IDS every iteration'
@@ -1367,18 +1387,25 @@ csw 09oct2012
        else if (ids_save.lt.0) then
          write(*,*) 'Writing IDS at the end of the run'
        end if
-       if (ids_save.ne.0 .or. delta_ids_time.gt.0.0_R8) then
-         call ipgeti('b2mndr_shot_number', shot )
-         call xertst( 0.le.shot.and.shot.le.214748,
-     .    'Invalid shot number')
-         call ipgeti('b2mndr_run_number', run )
-         call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
+       if (ids_av.eq.1 .and. ntim_batch.gt.0) then
+         write(*,*) 'Writing IDS for every averaged solution'
+       else if (ids_av.gt.1 .and. ntim_batch.gt.0) then
+         write(*,*) 'Writing IDS every ',ids_av,' averaged solutions'
+       else if (ids_av.gt.0 .and. ntim_batch.eq.0) then
+         ids_av = 0
+         write(*,*) 'No batch averaging frequency provided'
+         write(*,*) 'Cannot write averaged solution IDS'
+       end if
+       if (ids_save.ne.0 .or. ids_av.gt.0 .or. delta_ids_time.gt.0.0_R8)
+     .  then
+         path = ' '
          username = usrnam()
          call ipgetc('b2mndr_user', username )
          call xertst( .not.streql(username,' '),
      .    'User name not defined !')
+         not_default = .not.streql(username, usrnam())
+         home_dir = '/home/'//trim(username)
          database = 'solps-iter'
-         treename = 'ids'
          write(version,'(i1)') IMAS_MAJOR_VERSION
 #ifdef NO_GETENV
          device_env = ' '
@@ -1387,18 +1414,23 @@ csw 09oct2012
      .                                          IMAS_MICRO_VERSION
 #else
 #ifdef USE_PXFGETENV
+         CALL PXFGETENV ('HOME', 0, home_dir, lenval, ierror)
          CALL PXFGETENV ('DEVICE', 0, device_env, lenval, ierror)
          CALL PXFGETENV ('IMAS_VERSION', 0,
      .                              imas_version, lenval, ierror)
 #else
+         call get_environment_variable('HOME', status=ierror,
+     .                                         length=lenval)
+         if (ierror.eq.0) call get_environment_variable('HOME',
+     .                                         value=home_dir)
          call get_environment_variable('DEVICE', status=ierror,
-     .                                           length=lenval)
+     .                                         length=lenval)
          if (ierror.eq.0) call get_environment_variable('DEVICE',
-     .                                           value=device_env)
+     .                                         value=device_env)
          call get_environment_variable('IMAS_VERSION', status=ierror,
-     .                                           length=lenval)
+     .                                         length=lenval)
          if (ierror.eq.0) call get_environment_variable('IMAS_VERSION',
-     .                                           value=imas_version)
+     .                                         value=imas_version)
 #endif
          if (.not.streql(device_env,' ')) database = device_env
          if (streql(database,'iter')) database = 'ITER'
@@ -1407,9 +1439,133 @@ csw 09oct2012
          call ipgetc('b2mndr_database', database )
          call xertst( .not.streql(database,' '),
      .    'Database not defined !')
+         not_default = not_default.or.
+     &                (.not.streql(database, device_env).and.
+     &                 .not.streql(database,'solps-iter'))
+         call ipgeti('b2mndr_pulse_number', shot )
+         if (shot.eq.0) call ipgeti('b2mndr_shot_number', shot )
+         call ipgeti('b2mndr_run_number', run )
+#if AL_MAJOR_VERSION > 4
+         call xertst( 0.le.shot, 'Invalid pulse number')
+         call xertst( 0.le.run, 'Invalid run number')
+#else
+         call xertst( 0.lt.shot.and.shot.le.214748,
+     .    'Invalid shot number')
+         call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
+#endif
+         not_default = not_default.or.(shot.gt.0.and.run.ge.0)
+         imasdir = trim(home_dir)//'/public/imasdb/'
+     &           //trim(database)//'/'//trim(version)
+#if AL_MAJOR_VERSION < 5
+     &           //'/0'
+#endif
+#ifndef NO_GETENV
+#ifdef USE_PXFGETENV
+         CALL PXFGETENV ('IMASDIR', 0, imasdir, lenval, ierror)
+#else
+         call get_environment_variable('IMASDIR',
+     .    status=ierror, length=lenval)
+         if (ierror.eq.0)
+     >    call get_environment_variable('IMASDIR',value=imasdir)
+#endif
+#endif
+         if (index(imasdir,'imasdb/'//trim(database)).eq.0) then
+           l=index(imasdir,'imasdb/')
+           m=index(imasdir(l+7:256),'/')
+           write(imasdir,'(a)')
+     >      imasdir(1:l+6)//trim(database)//trim(imasdir(m+l+6:256))
+         end if
+#if AL_MAJOR_VERSION < 5
+         if (run.ge.10000) then
+           m=len_trim(imasdir)
+           write(imasdir,'(a)') imasdir(1:m-3)//trim(version)
+     &       //'/'//int2str(run/10000)
+         end if
+#endif
+#if AL_MAJOR_VERSION > 4
+         call ipgetc('b2mndr_ids_path', path )
+         not_default = not_default.or..not.streql(path,' ')
+#else
+         treename = 'ids'
+#endif
+         call strip_spaces(path)
+         filename='shotnumber.history'
+         call find_file(filename,ex)
+         if (ex) then
+           open(99,file=filename)
+   11      continue
+           read(99,'(a)',end=12) zeile
+           goto 11
+         else
+           zeile = ' '
+         end if
+   12    continue
+         if (ex) close(99)
+         call strip_spaces(zeile)
+         if (.not.streql(zeile,' ').or..not.streql(path,' ')) then
+           if (.not.not_default) path = trim(zeile)
+           if (streql(path,' ')) path = trim(imasdir)
+           l=index(path,'$HOME')
+           if (l.gt.0) then
+             ids_path = trim(home_dir)//trim(path(l+5:256))
+             path = ids_path
+           end if
+           l=index(path,'$SOLPSTOP')
+           if (l.gt.0) then
+             ids_path = trim(solpstop())//trim(path(l+9:256))
+             path = ids_path
+           end if
+           l=index(path,'$IMASDIR')
+           if (l.gt.0) then
+             ids_path = trim(imasdir)//trim(path(l+8:256))
+             path = ids_path
+           end if
+           l=index(path,trim(imasdir))
+           if (l.eq.0) then
+             m=index(path,'/')
+           else
+             m=index(path(l+len_trim(imasdir):256),'/')
+           end if
+           absolute_path = l.eq.1.or.(l.eq.0.and.m.eq.1)
+           if (absolute_path) then
+             ids_path = path
+           else if (l.eq.0) then
+             ids_path = trim(imasdir)//'/'//trim(path)
+             path = ids_path
+           end if
+         end if
+         if (streql(path,' ').or.streql(path,imasdir)) then
+#if AL_MAJOR_VERSION > 4
+           call xertst( 0.lt.shot, 'Invalid pulse number !')
+           ids_path = trim(imasdir)//'/'//int2str(shot)//
+     &                               '/'//int2str(run)
+#else
+           ids_path = imasdir
+#endif
+         end if
+         if (.not.streql(zeile,' ').and..not.not_default) then
+           write(*,'(a)')
+     &      'IMAS data entry path is '//trim(ids_path)//
+     &      ' (from shotnumber.history file)'
+         else if (not_default) then
+           write(*,'(a)')
+     &      'IMAS data entry path is '//trim(ids_path)//
+     &      ' (from b2mn.dat file settings)'
+         else
+           write(*,'(a)')
+     &      'IMAS data entry path is '//trim(ids_path)//
+     &      ' (from default path settings)'
+         end if
+         if (.not.streql(ids_path,' ')) then
+           filename='shotnumber.history'
+           call find_file(filename,ex)
+           open(99,file=filename,position='append')
+           write(99,'(a)') trim(ids_path)
+           close(99)
+         end if
        end if
 #else
-       if (ids_save.ne.0 .or. delta_ids_time.gt.0.0_R8)
+       if (ids_save.ne.0 .or. ids_av.gt.0 .or. delta_ids_time.gt.0.0_R8)
      >  write(*,*)
      1   'Not compiled with IMAS option, IDS will not be written.'
 #endif
@@ -1549,21 +1705,21 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       endif
       write(*,"(' Number of midplane cell =',i4)") nmdpl             !srv 22.05.09 }
 *   ..compute length along x-direction                               !srv 13.02.17 {
-      lengthx(:,:) = 0.0e0_R8
-      lengthx(-1,:) = hx(-1,:)*0.5e0_R8
+      lengthx(:,:) = 0.0_R8
+      lengthx(-1,:) = hx(-1,:)*0.5_R8
       do iy = -1, ny
        do ix = 0, nx
         if(on_closed_surface(ix,iy)) then
          if(rightix(ix,iy).ne.nx+1) then
           lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
-     *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+     *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
          else
           lengthx(ix,iy) = hx(ix,iy)*0.5_R8
          endif
         else
          if(leftix(ix,iy).ne.-2) then
           lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
-     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
+     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
          else
           lengthx(ix,iy) = hx(ix,iy)*0.5_R8
          endif
@@ -1571,11 +1727,11 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
        enddo
       enddo                                                          !srv 13.02.17 }
 *   ..compute length along y-direction                               !srv 24.04.02 {
-      lengthy(:,-1) = hy(:,-1)*0.5e0_R8
+      lengthy(:,-1) = hy(:,-1)*0.5_R8
       do iy = 0, ny
        do ix = -1, nx
         lengthy(ix,iy) = lengthy(ix,iy-1) +
-     *      (hy(ix,iy)+hy(ix,iy-1))*0.5e0_R8
+     *      (hy(ix,iy)+hy(ix,iy-1))*0.5_R8
        enddo
       enddo                                                          !srv 24.04.02 }
 *
@@ -1688,7 +1844,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       endif                                                          !srv 25.01.16 }
       do is = 0,ns-1                                                 !srv 25.01.16 {
         do iCv=1,nCv
-          state % pl % na(iCv,is) = max(state % pl % na(iCv,is),na_min)
+          state % pl % na(iCv,is) = min(max(state % pl % na(iCv,is),
+     &      switch % b2mndr_na_min),switch % b2mndr_na_max)
         enddo
       enddo                                                          !srv 25.01.16 }
 *   ..reset initial state if using exact solution
@@ -1704,7 +1861,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
      .  state%rtw)
 *   ..extend initial state to species (ns0:ns-1)
       if (ns0.lt.ns) then
-       call sfill (nCv*(ns-ns0), na_new, state % pl % na(1,ns0), 1)
+       call sfill (nCv*(ns-ns0), switch % b2mndr_na_new, 
+     .   state % pl % na(1,ns0), 1)
        call sfill (nCv*(ns-ns0), 0.0_R8, state % pl % ua(1,ns0), 1)
        call sfill (nCv*(ns-ns0), 0.0_R8, state % dv % kinrgy(1,ns0), 1)  !xpb
        call sfill (nFc*2*(ns-ns0), 0.0_R8, state%dv%uadia(1,0,ns0), 1)   !xpb
@@ -1856,11 +2014,11 @@ c   --> better way doing this is necessary)
           call b2xpne (nCv, ns, state%rt%rza, state%pl%na,
      .       state_ext%ne, state%dv%ne)
           max_delta = max(
-     1     maxval(abs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),
-     2     maxval(abs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),
-     3     maxval(abs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),
-     4     maxval(abs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),
-     5     maxval(abs((state%dv%ne - state%psnc%ne)/
+     1     maxval(dabs((state%rt%rza-rza0)/(state%rt%rza+1.0_R8))),
+     2     maxval(dabs((state%rt%rz2-rz20)/(state%rt%rz2+1.0_R8))),
+     3     maxval(dabs((state%rt%rpt-rpt0)/(state%rt%rpt+1.0_R8))),
+     4     maxval(dabs((state%rt%rpi-rpi0)/(state%rt%rpi+1.0_R8))),
+     5     maxval(dabs((state%dv%ne - state%psnc%ne)/
      6       (state%dv%ne + na_eps))))
           write (*,*) 'Convergence of bundled rates = ',is,max_delta
         enddo
@@ -1933,10 +2091,7 @@ c   --> better way doing this is necessary)
         if (is_neutral(is)) natmi = natmi+1
       enddo
       call read_neutrals_namelist(ns, mpg, switch, .true.)
-      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol)
-      if (any(cftype.eq.6)) call xertst(
-     & flag_optim.or.(switch%b2optim_namelist .eq. 1),
-     & 'cftype=6 requires b2.optimization.namelist')
+      call alloc_b2mod_user(geo,mpg,ns,nlim,nmol,switch)
       if(switch%b2tqna_transport_namelist.eq.1) then
         call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
@@ -1949,12 +2104,14 @@ c   --> better way doing this is necessary)
       allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       if (flag_optim .or. switch%b2optim_namelist .eq. 1) then
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
+        call read_b2mod_par_opt(ns, mpg, switch)
         allocate(par_opt_phys(npar_opt))
+        allocate(xsave(npar_opt))
         par_opt_phys(1:npar_opt) = x0(1:npar_opt)
+        xsave(1:npar_opt) = x0(1:npar_opt)
       endif
       call xertst (natmi.le.DEF_NATM,
-     .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+     .  'Increase DEF_NATM in b2mod_dimensions and recompile !')
       call alloc_b2mod_diag(nCv,nFc,ns,mpg%nnreg(0),nstra,natm,switch)
 cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (ns, switch, mpg)
@@ -1969,8 +2126,9 @@ cxpb for neutral fluxes used in b2stbc_phys
       filename=fort_lc//'44'
       call find_file(filename,ex)
       CALL EIRENE_SETCON
-      CALL EIRENE_WNEUTRALS_INIT
-      if (ex.or.ids_save.ne.0.or.delta_ids_time.gt.0.0_R8) then
+      if (switch%use_eirene.ne.0) CALL EIRENE_WNEUTRALS_INIT
+      if (ex.or.ids_save.ne.0.or.ids_av.gt.0.or.
+     &    delta_ids_time.gt.0.0_R8) then
         call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,state_ext%ns,wklng,
      .                          natm,nmol,nion,nlimps)
         if (switch%use_eirene.ne.0.and.ex) then
@@ -1979,7 +2137,7 @@ cxpb for neutral fluxes used in b2stbc_phys
         endif
       endif
 #else
-      if (ids_save.ne.0.or.delta_ids_time.gt.0.0_R8)
+      if (ids_save.ne.0.or.ids_av.gt.0.or.delta_ids_time.gt.0.0_R8)
      > call alloc_b2mod_b2plot(nCv,nFc,nVx,ns,state_ext%ns,wklng,
      .                         natm,nmol,nion,nlimps)
 #endif
@@ -2052,7 +2210,14 @@ c new CDF movie option (1st frame at t=0)
      &          told, fna_mol
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+      use b2mod_facdrift_ExB
+     & , only : ncall_drift, facdrift_scalar, fac_exb_scalar,
+     &          fac_vis_scalar
+#endif
       use b2mod_ad
+#ifdef IMAS
+      use b2mod_ual
+     , , only : new_batch_edge, put_batch_edge
 #endif
       implicit none
 #ifdef JET
@@ -2072,16 +2237,18 @@ c new CDF movie option (1st frame at t=0)
       type(B2StateExt), intent (inout) :: state_ext
       type(B2Average), intent (inout)  :: state_avg
       type(switches), intent (inout)   :: switch
-#ifdef FIXED_POINT
-      type(B2State) :: state0
-#endif
       real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
       integer i, is, icf, iCv
 #ifdef IMAS
-      integer tmp_run, time_slice_index
+      integer l, tmp_run, time_slice_index, num_batch_slices
 #ifndef NAGFOR
       integer status
+#endif
+#if AL_MAJOR_VERSION > 4
+      character(len=:), allocatable :: message
+      character(len=STRMAXLEN) :: uri, uri_source, uri_dest
+      character(len=256) :: olddir
 #endif
 #endif
       character*256 filename, fort31name
@@ -2093,7 +2260,7 @@ c new CDF movie option (1st frame at t=0)
       integer ierror, status
 #endif
 #endif
-      character*1 ss
+      character*2 ss
       logical ok, found
 *   ..procedures
       real(kind=R8) :: epoch_seconds
@@ -2101,6 +2268,7 @@ c new CDF movie option (1st frame at t=0)
 #ifdef IMAS
       logical streql
       external streql
+      intrinsic index
 #endif
 #if ( defined(CRAY) && defined(_OPENMP) )
       real(kind=R8) :: omp_get_wtime
@@ -2137,15 +2305,15 @@ cwdk  set some integers
 
       write (*,*) 'b2mndr_1, start: nCv = ',nCv
 #ifdef FIXED_POINT
-! The 'FIXED_POINT' compilation option here and below transforms the time-stepping loop into
+! The FIXED POINT compilation option here and below transforms the time-stepping loop into
 ! a fixed-point type of iterator such that Tapenade can apply the two-phase checkpointing strategy
 ! and save only the final converged primal state instead of all the intermediate states. The AD pragma
 ! below tells Tapenade that a fixed-point loop is next and which variable is the 'state' variable.
-! Note that when compiling the FIXED_POINT version some parts of the standard time-stepping are
+! Note that when compiling the 'FIXED_POINT' version some parts of the standard time-stepping are 
 ! eliminated, otherwise Tapenade does not recognize it as a real fixed-point loop.
-      state0 = state
 ! $AD FP-LOOP "state"
-      do while ((res_max.ge.res_quit) .and. (itim.lt.ntim))
+      do while ((res_max.ge.res_quit) .and. (itim.lt.ntim) .and.
+     &          (.not.quit))
 #else
     1 continue
 #endif
@@ -2202,7 +2370,7 @@ c      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc
         call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
         if (switch%pot_eq.eq.0) then                           !srv 13.07.05 {
-          state%pl%po   =0.0e0_R8
+          state%pl%po=0.0_R8
         else if (switch%pot_eq.eq.2) then
           state%pl%po=3.1_R8*state%pl%te/qe
         endif
@@ -2238,6 +2406,7 @@ csw 09oct2012 set default potential already at this point (BCs)
      &    state_ext, switch%BoRiS, J)
         do icf = 1, ncf
           write (ss,'(I1)') icf
+          if (icf.gt.9) write (ss,'(I2)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)
         end do
 *    ..produce data for movie
@@ -2268,9 +2437,11 @@ csw 09oct2012 set default potential already at this point (BCs)
           close(nout(7))
         endif
 !djm Jun2017
+#ifndef FIXED_POINT
         if((balance_netcdf.ne.0).and.(ntim.gt.0)) then
           call update_average_balance(state,itim,ntim)
         endif
+#endif
 #endif
 *    ..increment
         itim = itim+1
@@ -2281,41 +2452,41 @@ csw 09oct2012 set default potential already at this point (BCs)
         write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
      &    ' TIME ',tim,' NTIM ',ntim,' DTIM ',dtim
 #ifndef FIXED_POINT
-        write(*,*) 'delta na ',maxval(abs((state%pl%na-state%psnc%na)/
+        write(*,*) 'delta na ',maxval(dabs((state%pl%na-state%psnc%na)/
      &    (state%pl%na+na_eps)))
-        write(*,*) 'delta te ',maxval(abs((state%pl%te-state%psnc%te)/
+        write(*,*) 'delta te ',maxval(dabs((state%pl%te-state%psnc%te)/
      &    (state%pl%te+te_eps*ev)))
-        write(*,*) 'delta ti ',maxval(abs((state%pl%ti-state%psnc%ti)/
+        write(*,*) 'delta ti ',maxval(dabs((state%pl%ti-state%psnc%ti)/
      &    (state%pl%ti+ti_eps*ev)))
-        write(*,*) 'delta tn ',maxval(abs((state%pl%tn-state%psnc%tn)/
+        write(*,*) 'delta tn ',maxval(dabs((state%pl%tn-state%psnc%tn)/
      &    (state%pl%tn+tn_eps*ev)))
-        write(*,*) 'delta po ',maxval(abs((state%pl%po-state%psnc%po)/
-     &    (abs(state%pl%po)+po_eps)))
-        write(*,*) 'delta kt ',maxval(abs((state%pl%kt-state%psnc%kt)/
-     &    (abs(state%pl%kt)+kt_eps*ev)))
-        write(*,*) 'delta zt ',maxval(abs((state%pl%zt-state%psnc%zt)/
-     &    (abs(state%pl%zt)+zt_eps*ev)))
+        write(*,*) 'delta po ',maxval(dabs((state%pl%po-state%psnc%po)/
+     &    (dabs(state%pl%po)+po_eps)))
+        write(*,*) 'delta kt ',maxval(dabs((state%pl%kt-state%psnc%kt)/
+     &    (dabs(state%pl%kt)+kt_eps*ev)))
+        write(*,*) 'delta zt ',maxval(dabs((state%pl%zt-state%psnc%zt)/
+     &    (dabs(state%pl%zt)+zt_eps*ev)))
         write(*,*) 'delta ua ',
-     *   maxval(abs((state%pl%na*state%pl%ua-
+     *   maxval(dabs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
      &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps)))
         if(delta_min.gt.0.0_R8.and.delta_max.gt.0.0_R8) then
           max_delta=max(
-     &     maxval(abs((state%pl%na-state%psnc%na)/
+     &     maxval(dabs((state%pl%na-state%psnc%na)/
      &    (state%pl%na+na_eps))),
-     &     maxval(abs((state%pl%te-state%psnc%te)/
+     &     maxval(dabs((state%pl%te-state%psnc%te)/
      &    (state%pl%te+te_eps*ev))),
-     &     maxval(abs((state%pl%ti-state%psnc%ti)/
+     &     maxval(dabs((state%pl%ti-state%psnc%ti)/
      &    (state%pl%ti+ti_eps*ev))),
-     &     maxval(abs((state%pl%tn-state%psnc%tn)/
+     &     maxval(dabs((state%pl%tn-state%psnc%tn)/
      &    (state%pl%tn+tn_eps*ev))),
-     &     maxval(abs((state%pl%po-state%psnc%po)/
+     &     maxval(dabs((state%pl%po-state%psnc%po)/
      &    (abs(state%pl%po)+po_eps))),
-     &     maxval(abs((state%pl%kt-state%psnc%kt)/
+     &     maxval(dabs((state%pl%kt-state%psnc%kt)/
      &    (state%pl%kt+kt_eps*ev))),
-     &     maxval(abs((state%pl%zt-state%psnc%zt)/
+     &     maxval(dabs((state%pl%zt-state%psnc%zt)/
      &    (state%pl%zt+zt_eps*ev))),
-     &     maxval(abs((state%pl%na*state%pl%ua-
+     &     maxval(dabs((state%pl%na*state%pl%ua-
      &    state%psnc%na*state%psnc%ua)/
      &   (abs(state%pl%na*state%pl%ua)+na_eps*ua_eps))))
           if(max_delta.gt.delta_max) then
@@ -2348,7 +2519,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
           call copy_background(nCv, nFc, ns, switch, mpg, geo,
-     .                         state%pl, state%dv)
+     .                         state%pl, state%dv, state_ext)
           call write_f31(mpg)
           close(31)
         end if
@@ -2360,10 +2531,10 @@ csw 09oct2012 set default potential already at this point (BCs)
           if(tran_num.le.99) then
             write(tran_file_name,'(a4,i2)') 'tran',tran_num
             if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-            call cfopen (nout(9),tran_file_name,'new','unformatted')
+            call cfopen (nout(11),tran_file_name,'new','unformatted')
             call set_b2mod_ppout
-            call write_b2mod_ppout(nout(9))
-            close(nout(9))
+            call write_b2mod_ppout(nout(11))
+            close(nout(11))
             write(*,*) 'Saved ',tran_file_name
           else
             write(*,*) 'More than 99 tran files --- no more saved'
@@ -2381,6 +2552,7 @@ c new CDF movie option
 #endif
           save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
         endif
+#endif
         lwti = .false.
         lwav = .false.
         if(b2time.gt.0) then
@@ -2391,11 +2563,11 @@ c new CDF movie option
         endif
         call b2mwti(itim,tim,
 #ifndef NO_CDF
-     .         ntim,b2time,ntim_batch,
+     .              ntim,b2time,ntim_batch,
 #endif
-     .         nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
-     .         state%pl,state%dv,state%co,state%rt,state%srw,
-     .         state_ext,ismain,ismain0,lwti,lwav,.true.)
+     .              nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
+     .              state%pl,state%dv,state%co,state%rt,state%srw,
+     .              state_ext,ismain,ismain0,lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
           write (batch_name,'(a18,i4.4)')
@@ -2415,6 +2587,7 @@ c new CDF movie option
              write(*,*) 'Saved ',run_av_name
           end if
         end if
+#ifndef FIXED_POINT
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
@@ -2434,6 +2607,7 @@ c new CDF movie option
      .                  geo,mpg,state,switch,state_ext)
         endif
 *    ..loop
+#endif
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
 #ifdef _OPENMP
@@ -2466,7 +2640,6 @@ c new CDF movie option
      &     ' estimated remaining elapsed time (s) =',
      &                 (ntim-itim)*(elapsedval-elapsedstart)
         end if
-#endif
         res_max = 0.0_R8
         do is = 0, ns-1
           if (any(solveco(is,:)))
@@ -2496,10 +2669,13 @@ c new CDF movie option
      &        (state%diag%aresco(ismain)*
      &                           min_aresco).le.(min_aresco*min_aresco)  !jwk
         endif                                                            !jwk
-        quit=quitexist_.or.quitexist.or.quit_residual.or.                !jwk !srv 13.04.11
+#endif
+        quit=quitexist_.or.quitexist.or.                                 !jwk !srv 13.04.11
      1      (cpuval-cpuinit.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8).or.
      1      (elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
-     &       b2mndr_elapsed.gt.0.0_R8).or.
+     &       b2mndr_elapsed.gt.0.0_R8)
+#ifndef FIXED_POINT
+     &      .or. quit_residual.or.
      2      (etim.gt.switch%b2mndr_stim.and.tim.ge.etim.and.
      &       etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
@@ -2561,6 +2737,7 @@ c new CDF movie option
           if (found) call write_b2mod_transport_models(99,
      >     savefile(13:16))
           if (ank_tracing.ne.0) call b2filef
+
 #ifdef B25_EIRENE
           if (switch%use_eirene.ne.0) then
             call write_f44(savefile(13:16))
@@ -2632,29 +2809,59 @@ c new CDF movie option
      .   (tim.ge.(save_ids_time-dtim/2.0_R8).and.
      .    delta_ids_time.gt.0.0_R8)
         process_ids = write_ids
-        if (write_ids) then
+        write_av = ids_av.gt.0 .and. ntim.gt.0 .and. ntim_batch.gt.0
+        if (write_av) write_av = mod(itim,ids_av*ntim_batch).eq.0
+        process_av = write_av
+        if (write_ids .or. write_av) then
 #ifdef IMAS
           status = 0
           if (idx.eq.0.and.continued) then
+#if AL_MAJOR_VERSION > 4
+            uri =
+     .       'imas:mdsplus?path='//trim(ids_path)
+            write(*,'(2a)')
+     .        "Checking if IMAS data entry already exists : ",
+     .         trim(ids_path)
+            call imas_open( uri, OPEN_PULSE, idx, status, message )
+#else
             write(*,'(2a,2i8)')
      .       "Checking if IMAS data entry already exists : ",
      .        trim(database), shot, run
             call imas_open_env(treename, shot, run, idx,
      .       username, database, version, status)
+#endif
             if (status.ne.0) then
-              if (database.eq.'ITER') then
+              if (database.eq.'ITER'.or.
+     .            index(ids_path,'imasdb/ITER').gt.0) then
                 write(*,*) "Did not find ITER database IDS file."
                 write(*,*) "Checking if old ''iter'' case exists."
+#if AL_MAJOR_VERSION > 4
+                l=index(ids_path,'imasdb/ITER')
+                write(olddir,'(a)')
+     .           ids_path(1:l-1)//'imasdb/iter'//ids_path(l+11:256)
+                uri = 'imas:mdsplus?path='//trim(olddir)
+                call imas_open( uri, OPEN_PULSE, idx, status, message )
+#else
                 call imas_open_env(treename, shot, run, idx,
      .           username, 'iter', version, status)
+#endif
                 if (status.eq.0) then
                   database = 'iter'
                   write(*,*) "Old database case found."
                   write(*,*) "Will be rewritten in new location."
                 end if
-              else if (database.eq.'iter') then
+              else if (database.eq.'iter'.or.
+     .                 index(ids_path,'imasdb/iter').gt.0) then
+#if AL_MAJOR_VERSION > 4
+                l=index(ids_path,'imasdb/iter')
+                write(olddir,'(a)')
+     .           ids_path(1:l-1)//'imasdb/ITER'//ids_path(l+11:256)
+                uri = 'imas:mdsplus?path='//trim(olddir)
+                call imas_open( uri, OPEN_PULSE, idx, status, message )
+#else
                 call imas_open_env(treename, shot, run, idx,
      .           username, 'ITER', version, status)
+#endif
                 database = 'ITER'
               end if
             end if
@@ -2680,7 +2887,10 @@ c new CDF movie option
                 call ids_deallocate( old_edge_profiles )
                 call ids_get( idx, "edge_profiles/1",
      .            old_batch_profiles, status)
-                if (status.eq.0) then
+                if (status.ne.0) then
+                  num_batch_slices = 0
+                else
+                  num_batch_slices = size(old_batch_profiles%time)
                   call ids_deallocate( old_batch_profiles )
                 end if
                 old_start_time = 0.0_IDS_real
@@ -2706,9 +2916,11 @@ c new CDF movie option
      &            ids_end_time.ne.IDS_REAL_INVALID)
                 continued = continued .or.
      &            run_start_time.ge.ids_end_time
-                if (continued.or.database.eq.'iter') then
+                if (continued.or.database.eq.'iter'.or.
+     &              index(ids_path,'imasdb/iter').gt.0) then
                   if (.not.streql(old_imas_version,imas_version).or.
-     &                database.eq.'iter') then
+     &                database.eq.'iter'.or.
+     &                index(ids_path,'imasdb/iter').gt.0) then
                     if (.not.streql(old_imas_version,imas_version)) then
                       write(*,*)
      &                 'Old IMAS data entry was written '//
@@ -2718,32 +2930,74 @@ c new CDF movie option
      &                 'Recreating using Data Dictionary version '//
      &                  trim(imas_version)//'.'
                     end if
-                    if (database.eq.'iter') write(*,*)
+                    if (database.eq.'iter'.or.
+     &                  index(ids_path,'imasdb/iter').gt.0) write(*,*)
      &               'IDS file will be moved to ITER database.'
                     call close_ual(idx)
 cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     tmp_run = run
-                    if (database.ne.'iter') tmp_run = run + 1000
+                    if (database.ne.'iter'.and.
+     &                  index(ids_path,'imasdb/iter').eq.0)
+     &               tmp_run = run + 1000
+#if AL_MAJOR_VERSION > 4
+                    call al_build_uri_from_legacy_parameters
+     &               ( MDSPLUS_BACKEND, shot, run, trim(username),
+     &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                 uri_source, status )
+                    if (database.eq.'iter'.or.
+     &                  index(ids_path,'imasdb/iter').gt.0) then
+                      call al_build_uri_from_legacy_parameters
+     &                 ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &                   'ITER', int2str(IMAS_MAJOR_VERSION), '',
+     &                   uri_dest, status )
+                    else
+                      call al_build_uri_from_legacy_parameters
+     &                 ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                   uri_dest, status )
+                    end if
+                    write(systemarg,'(a,a,a,a)')
+     &                'idscp --setDatasetVersion'//
+     &                     ' -s ',trim(uri_source),
+     &                     ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &                 'idscp --setDatasetVersion'//
-     &                      ' -si ',shot,' -ri ',run,
-     &                      ' -so ',shot,' -ro ',tmp_run,
-     &                      ' -d ',trim(database),' -u ',trim(username)
+     &                'idscp --setDatasetVersion'//
+     &                     ' -si ',shot,' -ri ',run,
+     &                     ' -so ',shot,' -ro ',tmp_run,
+     &                     ' -d ',trim(database),' -u ',trim(username)
 #else
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &                 'idscp -si ',shot,' -ri ',run,
-     &                      ' -so ',shot,' -ro ',tmp_run,
-     &                      ' -d ',trim(database),' -u ',trim(username)
+     &                'idscp -si ',shot,' -ri ',run,
+     &                     ' -so ',shot,' -ro ',tmp_run,
+     &                     ' -d ',trim(database),' -u ',trim(username)
 #endif
-                    if (database.eq.'iter')
+                    if (database.eq.'iter'.or.
+     &                  index(ids_path,'imasdb/iter').gt.0)
      &               systemarg = trim(systemarg)//' -do ITER'
+#endif
 #ifdef NAGFOR
                     call system(systemarg, status, ierror)
 #else
                     call system(systemarg)
 #endif
-                    if (database.ne.'iter') then
+                    if (database.ne.'iter'.and.
+     &                  index(ids_path,'imasdb/iter').eq.0) then
+#if AL_MAJOR_VERSION > 4
+                      call al_build_uri_from_legacy_parameters
+     &                 ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                   uri_source, status )
+                      call al_build_uri_from_legacy_parameters
+     &                 ( MDSPLUS_BACKEND, shot, run, trim(username),
+     &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                   uri_dest, status )
+                      write(systemarg,'(a,a,a,a)')
+     &                  'idscp --setDatasetVersion'//
+     &                     ' -s ',trim(uri_source),
+     &                     ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                       write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
      &                 'idscp --setDatasetVersion'//
@@ -2756,6 +3010,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                    ' -so ',shot,' -ro ',run,
      &                    ' -d ',trim(database),' -u ',trim(username)
 #endif
+#endif
 #ifdef NAGFOR
                       call system(systemarg, status, ierror)
 #else
@@ -2763,14 +3018,30 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
                     end if
                     if (database.eq.'iter') database = 'ITER'
+                    if (index(ids_path,'imasdb/iter').gt.0) then
+                      l=index(ids_path,'imasdb/iter')
+                      write(ids_path(l+7:l+10),'(a4)') 'ITER'
+                    end if
+#if AL_MAJOR_VERSION > 4
+                    uri = 'imas:mdsplus?path='//trim(ids_path)
+                    call imas_open( uri, OPEN_PULSE,
+     .               idx, status, message )
+#else
                     call imas_open_env(treename, shot, run, idx,
      .               username, database, version, status)
+#endif
                   end if
                   if (continued) then
                     if (process_ids) then
                       write(*,*)
      .                 "Appending a new time slice at t = ", tim, " s."
                       num_time_slices = num_time_slices + 1
+                    end if
+                    if (process_av) then
+                      write(*,*)
+     .                 "Appending a new averaged time slice at t = ",
+     .                  tim, " s."
+                      num_batch_slices = num_batch_slices + 1
                     end if
                   end if
                   if (process_ids) then
@@ -2796,6 +3067,24 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &               time_slice_index, num_time_slices )
                     process_ids = .false.
                   end if
+                  if (process_av) then
+                    batch_index = num_batch_slices
+                    call B25_av_ids( summary_av,
+     &               geo, mpg, state, state_ext, state_avg, switch,
+     &               batch_profiles, batch_sources,
+     &               description, equilibrium,
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+     &               summary,
+#endif
+     &               tim, shot, run, database, version, new_eq_ggd,
+     &               batch_index, num_batch_slices )
+                    process_av = .false.
+                  end if
+                else
+                  write(*,*)
+     .             'Not a time continuation, edge IDS components '//
+     .             'will be replaced !'
+                  ids_replace = .true.
                 end if
               end if
             else
@@ -2804,16 +3093,20 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      .         "a new one will be created"
               idx = 0
               if (database.eq.'iter') database = 'ITER'
+              if (index(ids_path,'imasdb/iter').gt.0) then
+                l=index(ids_path,'imasdb/iter')
+                write(ids_path(l+7:l+10),'(a4)') 'ITER'
+              end if
             end if
           end if
-          if ( process_ids .and.
+          if ((process_ids .or. process_av) .and.
      &        (status.ne.0 .or. idx.eq.0)) then
             if (status.ne.0) idx = 0
             if (process_ids) then
               call B25_process_ids(
      &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
-     &           radiation, description, equilibrium,
+     &          radiation, description, equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
@@ -2830,12 +3123,24 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               old_start_time = run_start_time
               process_ids = .false.
             end if
-          else if (process_ids) then
-            write(*,*)
-     .        "Appending a new time slice at t = ", tim, " s."
-            num_time_slices = num_time_slices + 1
-            time_slice_index = num_time_slices
-            call B25_process_ids(
+            if (process_av) then
+              call B25_av_ids( summary_av,
+     &         geo, mpg, state, state_ext, state_avg, switch,
+     &         batch_profiles, batch_sources,
+     &         description, equilibrium,
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+     &         summary,
+#endif
+     &         tim, shot, run, database, version, new_eq_ggd )
+              process_av = .false.
+            end if
+          else if (process_ids .or. process_av) then
+            if (process_ids) then
+              write(*,*)
+     .         "Appending a new time slice at t = ", tim, " s."
+              num_time_slices = num_time_slices + 1
+              time_slice_index = num_time_slices
+              call B25_process_ids(
      &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
      &          radiation, description, equilibrium,
@@ -2853,7 +3158,25 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
      &          tim, dtim, shot, run, database, version, new_eq_ggd,
      &          time_slice_index, num_time_slices )
-            process_ids = .false.
+              process_ids = .false.
+            end if
+            if (process_av) then
+              write(*,*)
+     .         "Appending a new averaged time slice at t = ",
+     .          tim, " s."
+              num_batch_slices = num_batch_slices + 1
+              batch_index = num_batch_slices
+              call B25_av_ids( summary_av,
+     &          geo, mpg, state, state_ext, state_avg, switch,
+     &          batch_profiles, batch_sources,
+     &          description, equilibrium,
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+     &          summary,
+#endif
+     &          tim, shot, run, database, version, new_eq_ggd,
+     &          batch_index, num_batch_slices )
+              process_av = .false.
+            end if
           end if
           if (ids_replace) then
             if (write_ids)
@@ -2868,8 +3191,21 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &        divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &        uri,
+#endif
      &        idx, new_eq_ggd )
             new_eq_ggd = new_eq_ggd .and. .not.write_ids
+            if (write_av)
+     &       call new_batch_edge( idx,
+#if IMAS_MAJOR_VERSION > 3
+     &        uri,
+#endif
+     &        batch_profiles, batch_sources, equilibrium,
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+     &        summary,
+#endif
+     &        description, summary_av, new_eq_ggd )
           else
             if (database.eq.'iter') database = 'ITER'
             if (write_ids)
@@ -2884,9 +3220,25 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &        divertors,
 #endif
-     &        treename, shot, run, idx, username, database, version,
-     &        new_eq_ggd )
+#if AL_MAJOR_VERSION > 4
+     &        ids_path,
+#else
+     &        treename, shot, run, username, database, version,
+#endif
+     &        idx, new_eq_ggd )
             new_eq_ggd = new_eq_ggd .and. .not.write_ids
+            if (write_av)
+     &       call put_batch_edge(
+#if AL_MAJOR_VERSION > 4
+     &        ids_path,
+#else
+     &        treename, shot, run, username, database, version,
+#endif
+     &        idx, batch_profiles, batch_sources, equilibrium,
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+     &        summary,
+#endif
+     &        description, summary_av, new_eq_ggd )
           end if
 #endif
           if (.not.continued) continued = .true.
@@ -2903,9 +3255,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
 #endif
 #ifdef FIXED_POINT
-        call calc_res_fp(ns, state, state0, res_max)
         write(*,*) 'MAX RESIDUAL ',res_max
-        state0 = state
+        primal_iterations = itim
 *   ..end loop
       end do
 *   ..call cost function
@@ -2913,12 +3264,14 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &    state_ext, switch%BoRiS, J)
       do icf = 1, ncf
         write (ss,'(I1)') icf
+        if (icf.gt.9) write (ss,'(I2)') icf
         write(*,*) 'Cost function value '//ss//': ',J(icf)
       end do
 #else
         goto 1
 *   ..end loop
       endif  !}
+      primal_iterations = itim
 #endif
       call subend ()
       return
@@ -2944,17 +3297,26 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
       type(B2Average), intent (inout)  :: state_avg
-      integer nCv, nFc, is                                               !srv 29.11.18
+      integer nCv, nFc, is                                          !srv 29.11.18
+#ifndef NO_CDF
+      integer nVx
+#endif
 #ifdef WG_TODO
       character*256 filename
       logical found
 #endif
       logical ids_done
 #ifdef IMAS
-      integer tmp_run, time_slice_index, status
+      integer l, tmp_run, time_slice_index, status
       character*512 systemarg
+#if AL_MAJOR_VERSION > 4
+      character(len=:), allocatable :: message
+      character(len=STRMAXLEN) :: uri, uri_source, uri_dest
+      character(len=256) :: olddir
+#endif
       logical streql
       external streql
+      intrinsic index
 #endif
 
       call subini ('b2mndr_2')
@@ -2987,6 +3349,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 
       nCv = mpg%nCv
       nFc = mpg%nFc
+#ifndef NO_CDF
+      nVx = mpg%nVx
+#endif
 
 #ifdef USE_IMPGYRO
 * finalise impgyro !yamoto
@@ -3062,7 +3427,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         write(*,*) 'Saving '//trim(fort_lc)//'31 at end of run'
         open(31,file=trim(fort_lc)//'31')
         call copy_background(nCv, nFc, ns, switch, mpg, geo,
-     &                       state%pl, state%dv)
+     &                       state%pl, state%dv, state_ext)
         call write_f31(mpg)
         close(31)
        end if
@@ -3080,10 +3445,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if(tran_num.le.99) then
           write(tran_file_name,'(a4,i2)') 'tran',tran_num
           if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-          call cfopen (nout(10),tran_file_name,'new','unformatted')
+          call cfopen (nout(11),tran_file_name,'new','unformatted')
           call set_b2mod_ppout
-          call write_b2mod_ppout(nout(10))
-          close(nout(10))
+          call write_b2mod_ppout(nout(11))
+          close(nout(11))
           write(*,*) 'Saved ',tran_file_name
         else
           write(*,*) 'More than 99 tran files --- no more saved'
@@ -3105,11 +3470,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
           call b2mwti(itim,tim,
 #ifndef NO_CDF
-     *           ntim,b2time,ntim_batch,
+     *                ntim,b2time,ntim_batch,
 #endif
-     *           nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
-     *           state%pl,state%dv,state%co,state%rt,state%srw,
-     *           state_ext,ismain,ismain0,.true.,.false.,.false.)
+     *                nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
+     *                state%pl,state%dv,state%co,state%rt,state%srw,
+     *                state_ext,ismain,ismain0,.true.,.false.,.false.)
         endif
         call dealloc_b2mod_mwti
       endif
@@ -3119,18 +3484,20 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           call tallies(ns,tim,mpg,geo,state,state_ext,switch)
         endif
       endif
+#ifndef FIXED_POINT
 *   ..create NetCDF file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
         if (balance_average .ne. 0) then
           call update_average_balance(state,itim,-1) ! scale quantities by 1/itim if averaged
         endif
-        call write_balance(nCv,nFc,ns,geo)
+        call write_balance(nCv,nFc,nVx,ns,geo,mpg)
 #else
         write(*,*)
      >   'NO_CDF is set at compilation, cannot write balance.nc'
 #endif
       endif
+#endif
 *   ..write out last IDS if not yet done
       ids_done = .false.
       write_ids = .false.
@@ -3173,25 +3540,53 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      tim, dtim, shot, run, database, version, new_eq_ggd,
      &      time_slice_index, num_time_slices )
         else if (continued) then
+#if AL_MAJOR_VERSION > 4
+          uri = 'imas:mdsplus?path='//trim(ids_path)
+          write(*,'(2a)')
+     .     "Checking if IMAS data entry already exists : ",
+     .      trim(ids_path)
+          call imas_open( uri, OPEN_PULSE, idx, status, message )
+#else
           write(*,'(2a,2i8)')
      .     "Checking if IMAS data entry already exists : ",
      .      trim(database), shot, run
           call imas_open_env(treename, shot, run, idx,
      .      username, database, version, status)
+#endif
           if (status.ne.0) then
-            if (database.eq.'ITER') then
+            if (database.eq.'ITER'.or.
+     .          index(ids_path,'imasdb/ITER').gt.0) then
               write(*,*) "Did not find ITER database IDS file."
               write(*,*) "Checking if old ''iter'' case exists."
+#if AL_MAJOR_VERSION > 4
+              l=index(ids_path,'imasdb/ITER')
+              write(olddir,'(a)')
+     .         ids_path(1:l-1)//'imasdb/iter'//ids_path(l+11:256)
+              ids_path = trim(olddir)
+              uri = 'imas:mdsplus?path='//trim(ids_path)
+              call imas_open( uri, OPEN_PULSE, idx, status, message )
+#else
               call imas_open_env(treename, shot, run, idx,
      .         username, 'iter', version, status)
+#endif
               if (status.eq.0) then
                 database = 'iter'
                 write(*,*) "Old database case found."
                 write(*,*) "Will be rewritten in new location."
               end if
-            else if (database.eq.'iter') then
+            else if (database.eq.'iter'.or.
+     .               index(ids_path,'imasdb/iter').gt.0) then
+#if AL_MAJOR_VERSION > 4
+              l=index(ids_path,'imasdb/ITER')
+              write(olddir,'(a)')
+     .         ids_path(1:l-1)//'imasdb/iter'//ids_path(l+11:256)
+              ids_path = trim(olddir)
+              uri = 'imas:mdsplus?path='//trim(ids_path)
+              call imas_open( uri, OPEN_PULSE, idx, status, message )
+#else
               call imas_open_env(treename, shot, run, idx,
      .         username, 'ITER', version, status)
+#endif
               database = 'ITER'
             end if
           end if
@@ -3238,9 +3633,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               continued = continued .or.
      &         (run_start_time.ge.ids_end_time .and.
      &          ids_end_time.ne.IDS_REAL_INVALID)
-              if (continued.or.database.eq.'iter') then
+              if (continued.or.database.eq.'iter'.or.
+     &            index(ids_path,'imasdb/iter').gt.0) then
                 if (.not.streql(old_imas_version,imas_version).or.
-     &              database.eq.'iter') then
+     &              database.eq.'iter'.or.
+     &              index(ids_path,'imasdb/iter').gt.0) then
                   if (.not.streql(old_imas_version,imas_version)) then
                     write(*,*)
      &               'Old IMAS data entry was written '//
@@ -3250,32 +3647,74 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &               'Recreating using Data Dictionary version '//
      &                trim(imas_version)//'.'
                   end if
-                  if (database.eq.'iter') write(*,*)
+                  if (database.eq.'iter'.or.
+     &                index(ids_path,'imasdb/iter').gt.0) write(*,*)
      &             'IDS file will be moved to ITER database.'
                   call close_ual(idx)
 cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   tmp_run = run
-                  if (database.ne.'iter') tmp_run = run + 1000
+                  if (database.ne.'iter'.and.
+     &                index(ids_path,'imasdb/iter').eq.0)
+     &             tmp_run = run + 1000
+#if AL_MAJOR_VERSION > 4
+                  call al_build_uri_from_legacy_parameters
+     &             ( MDSPLUS_BACKEND, shot, run, trim(username),
+     &               trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &               uri_source, status )
+                  if (database.eq.'iter'.or.
+     &                index(ids_path,'imasdb/iter').gt.0) then
+                    call al_build_uri_from_legacy_parameters
+     &               ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &                 'ITER', int2str(IMAS_MAJOR_VERSION), '',
+     &                 uri_dest, status )
+                  else
+                    call al_build_uri_from_legacy_parameters
+     &               ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                 uri_dest, status )
+                  end if
+                  write(systemarg,'(a,a,a,a)')
+     &              'idscp --setDatasetVersion'//
+     &                   ' -s ',trim(uri_source),
+     &                   ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &               'idscp --setDatasetVersion'//
-     &                    ' -si ',shot,' -ri ',run,
-     &                    ' -so ',shot,' -ro ',tmp_run,
-     &                    ' -d ',trim(database),' -u ',trim(username)
+     &              'idscp --setDatasetVersion'//
+     &                   ' -si ',shot,' -ri ',run,
+     &                   ' -so ',shot,' -ro ',tmp_run,
+     &                   ' -d ',trim(database),' -u ',trim(username)
 #else
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
-     &               'idscp -si ',shot,' -ri ',run,
-     &                    ' -so ',shot,' -ro ',tmp_run,
-     &                    ' -d ',trim(database),' -u ',trim(username)
+     &              'idscp -si ',shot,' -ri ',run,
+     &                   ' -so ',shot,' -ro ',tmp_run,
+     &                   ' -d ',trim(database),' -u ',trim(username)
 #endif
-                  if (database.eq.'iter')
+                  if (database.eq.'iter'.or.
+     &                index(ids_path,'imasdb/iter').gt.0)
      &             systemarg = trim(systemarg)//' -do ITER'
+#endif
 #ifdef NAGFOR
                   call system(systemarg, status, ierror)
 #else
                   call system(systemarg)
 #endif
-                  if (database.ne.'iter') then
+                  if (database.ne.'iter'.and.
+     &                index(ids_path,'imasdb/iter').eq.0) then
+#if AL_MAJOR_VERSION > 4
+                    call al_build_uri_from_legacy_parameters
+     &               ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),
+     &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                 uri_source, status )
+                    call al_build_uri_from_legacy_parameters
+     &               ( MDSPLUS_BACKEND, shot, run, trim(username),
+     &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
+     &                 uri_dest, status )
+                    write(systemarg,'(a,a,a,a)')
+     &               'idscp --setDatasetVersion'//
+     &                  ' -s ',trim(uri_source),
+     &                  ' -d ',trim(uri_dest)
+#else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
      &               'idscp --setDatasetVersion'//
@@ -3288,6 +3727,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                  ' -so ',shot,' -ro ',run,
      &                  ' -d ',trim(database),' -u ',trim(username)
 #endif
+#endif
 #ifdef NAGFOR
                     call system(systemarg, status, ierror)
 #else
@@ -3295,8 +3735,18 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
                   end if
                   if (database.eq.'iter') database = 'ITER'
+                  if (index(ids_path,'imasdb/iter').gt.0) then
+                    l=index(ids_path,'imasdb/iter')
+                    write(ids_path(l+7:l+10),'(a4)') 'ITER'
+                  end if
+#if AL_MAJOR_VERSION > 4
+                  uri = 'imas:mdsplus?path='//trim(ids_path)
+                  call imas_open( uri, OPEN_PULSE,
+     .             idx, status, message )
+#else
                   call imas_open_env(treename, shot, run, idx,
      .             username, database, version, status)
+#endif
                 end if
                 if (continued) then
                   write(*,*)
@@ -3335,11 +3785,19 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      .       "a new one will be created"
             idx = 0
             if (database.eq.'iter') database = 'ITER'
+            if (index(ids_path,'imasdb/iter').gt.0) then
+              l=index(ids_path,'imasdb/iter')
+              write(ids_path(l+7:l+10),'(a4)') 'ITER'
+            end if
           end if
         else
           write(*,*) "Creating a new IMAS data entry"
           idx = 0
           if (database.eq.'iter') database = 'ITER'
+          if (index(ids_path,'imasdb/iter').gt.0) then
+            l=index(ids_path,'imasdb/iter')
+            write(ids_path(l+7:l+10),'(a4)') 'ITER'
+          end if
         end if
         if (status.ne.0 .or. idx.eq.0 .or. ids_replace) then
           if (status.ne.0) idx = 0
@@ -3373,6 +3831,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &      uri,
+#endif
      &      idx, new_eq_ggd )
         else
           call put_ids_edge( edge_profiles, edge_sources,
@@ -3386,8 +3847,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
-     &      treename, shot, run, idx, username, database, version,
-     &      new_eq_ggd )
+#if AL_MAJOR_VERSION > 4
+     &      ids_path,
+#else
+     &      treename, shot, run, username, database, version,
+#endif
+     &      idx, new_eq_ggd )
         end if
         call dealloc_ids_edge(
      &      edge_profiles, edge_sources, edge_transport,
@@ -3398,6 +3863,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      divertors,
 #endif
      &      radiation )
+        call dealloc_batch_edge( batch_profiles, batch_sources,
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+     &      summary,
+#endif
+     &      description )
         call close_ual(idx)
 #endif
       end if
@@ -3409,7 +3879,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 * finalise eirene_mc
       if(switch%use_eirene.ne.0.and.itim.gt.0) then
 #ifdef B25_EIRENE
-         call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,state)
+         call eirene_mc_final(nCv,nFc,ns,switch,mpg,geo,state,state_ext)
 #else
          call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif
@@ -3427,8 +3897,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 
 * ..return
       ncall = ncall+1
-      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1))
-     &  deallocate(par_opt_phys)
+      if ((.not.flag_optim).and.(switch%b2optim_namelist.eq.1)) then
+        deallocate(par_opt_phys)
+        deallocate(xsave)
+      endif
       deallocate(old_erosion, old_deposition)
       deallocate(rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag
@@ -3439,7 +3911,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
       call dealloc_b2mod_tallies
+#ifndef FIXED_POINT
       call dealloc_b2mod_balance
+#endif
       call dealloc_input_profile
       call dealloc_b2mod_elements
       call dealloc_b2mod_boundary
@@ -3457,7 +3931,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 !WG_RM      call dealloc_b2mod_ma28_for_7diag
 !WG_RM      call dealloc_b2mod_ma28_for_9diag
       call dealloc_b2mod_ma28_for_us
+#ifndef FIXED_POINT
       call dealloc_b2mod_eirene_sources
+#endif
 !WG_TODO      call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
       call dealloc_b2mod_transport_disruption

@@ -75,7 +75,7 @@ c
 #ifdef B25_EIRENE
 #ifdef WG_TODO
       INTEGER NNX, NNY, IX, IY, istra, istra1
-      integer i, j, k, ncl, jvftnew, nstra1, n2
+      integer i, j, k, ncl, jvftnew, jvft44_in, nstra1, n2
       real (kind=R8) :: wrk0(-1:nx,-1:ny1), field(0:nx+1,0:ny+1)
       real (kind=R8), allocatable :: dab1(:,:,:), tab1(:,:,:)
       real (kind=R8), allocatable :: dmb1(:,:,:), tmb1(:,:,:)
@@ -126,6 +126,16 @@ c
 #endif
       EXTERNAL GFSUB2
       external ipgeti
+
+      interface
+        subroutine rdneutrs(kard,dummy,ldmf,extra_time)
+        use b2mod_types
+        use eirmod_parmmod
+        integer, intent(in) :: kard, ldmf
+        real(kind=R8) :: dummy(nlimps,*)
+        logical, intent(in), optional :: extra_time
+        end subroutine rdneutrs
+      end interface
 #endif
 
 *=======================================================================
@@ -151,27 +161,27 @@ C
       write(*,*) 'Writing '//trim(filename)
 C
 #ifdef WG_TODO
-      READ (44,'(I4,2X,I4,2X,I8)',END=99,ERR=99) nnx,nny,jvft44
+      READ (44,'(I4,2X,I4,2X,I8)',END=99,ERR=99) nnx,nny,jvft44_in
       if((streql(solps_version,'5.0').or.streql(solps_version,'5.2'))
      &   .and.
      &   (streql(eirene_format,'old').or.streql(eirene_format,'new')))
      & then
-        jvftnew = min(jvft44,961228)
+        jvftnew = min(jvft44_in,961228)
       else if (streql(solps_version,'4.3')) then
-        jvftnew = min(jvft44,20080706)
+        jvftnew = min(jvft44_in,20080706)
       else if (streql(solps_version,'5.1')) then
-        jvftnew = min(jvft44,20130210)
+        jvftnew = min(jvft44_in,20130210)
       else
-        jvftnew = max(jvft44,20240627)
+        jvftnew = max(jvft44_in,20240627)
       endif
       WRITE(45,'(I4,2X,I4,2X,I8,2X,a32)') nx1,ny1,jvftnew,get_Eir_hash()
       READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(45,'(I4,2X,I4,2X,i4)')               natm1,nmol1,nion1
-      write(*,'(3a,5i4)')
-     . ' Dimensions in ',fort_lc,'44 =   ',nnx,nny,natmi,nmoli,nioni
-      write(*,'(3a,5i4)')
-     . ' Dimensions in ',fort_lc,'44.2 = ',nx1,ny1,natm1,nmol1,nion1
-      write(*,'(a,2i4)') ' Array inner dimensions = ', ndx , ndy
+      write(*,'(3a,5i5)') ' Dimensions in ',fort_lc,'44 =   ',
+     . nnx,nny,natmi,nmoli,nioni
+      write(*,'(3a,5i5)') ' Dimensions in ',fort_lc,'44.2 = ',
+     . nx1,ny1,natm1,nmol1,nion1
+      write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
@@ -606,13 +616,13 @@ C
 
       allocate (srcml1(0:nx1+1,0:ny1+1,nmol1))
       allocate (edissml1(0:nx1+1,0:ny1+1,nmol1,0:nstra+1))
-      if(jvft44 .ge. 960511) then
+      if(jvft44_in .ge. 960511) then
         do is=1,nmoli
           call gfsub2(44,ndx,ndy,nnx,nny,srcml(:,:,is,1))
         end do
         do is = 1, nmoli
           if (imol1(is).ne.0) then
-            if (jvft44.lt.20240627) then
+            if (jvft44_in.lt.20240627) then
               field(0:nx+1,0:ny+1) = srcml(0:nx+1,0:ny+1,is,1)
      .         *1.0e6_R8*vol(0:nx+1,0:ny+1)/qe
             else
@@ -633,7 +643,7 @@ C
         end do
         do is = 1, nmoli
           if (imol1(is).ne.0) then
-            if (jvft44.lt.20240627) then
+            if (jvft44_in.lt.20240627) then
               field(0:nx+1,0:ny+1) = edissml(0:nx+1,0:ny+1,is,1)
      .         *1.0e6_R8*vol(0:nx+1,0:ny+1)
             else
@@ -665,7 +675,7 @@ C
      &    .and.
      &    (streql(eirene_format,'old').or.streql(eirene_format,'new')))
      & then
-        if (jvft44 .ge. 20130210) then
+        if (jvft44_in .ge. 20130210) then
           call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,1,0))
           write(6,'(4a)') 'In this ',fort_lc,'44 version,',
      .                    ' the eneutrad data is summed over species!'
@@ -675,7 +685,7 @@ C
         end if
       end if
 
-      if(jvft44 .ge. 960513) then
+      if(jvft44_in .ge. 960513) then
         nlim1 = nlimi
         read (44,'(3i6)') nlimi,nstsi,nstrai
         if (nlim1.ne.nlimi) then
@@ -741,7 +751,7 @@ c*** read the wall geometry
       end if
 cank
 cank-960727
-      if(jvft44 .ge. 960623) then
+      if(jvft44_in .ge. 960623) then
         print *,'natmi,nmoli,nioni,nplsi=',
      .           natmi,nmoli,nioni,nplsi
         call rdneutrs(44,wldra,natmi)
@@ -759,7 +769,7 @@ cank-960727
         call write_title(45,'wldrm(0)',nlimps*nmol1)
         call wrneutrs(45,wldrm1,nmol1)
       end if
-      if(jvft44 .ge. 960727) then
+      if(jvft44_in .ge. 960727) then
         if(nstrai .gt. 1) then
           do istra=1,nstrai
             call rdneutrs(44,wldnek(1,istra),1)
@@ -812,7 +822,7 @@ cank-960727
         deallocate(ewlda1,ewldm1)
         deallocate(wldra1,wldrm1)
       end if
-      if(jvft44 .ge. 961228) then
+      if(jvft44_in .ge. 961228) then
         if (streql(solps_version,'5.1')) then
           call rdneutrs(44,wldpp,nfla)
         else
@@ -822,7 +832,7 @@ cank-960727
         call rdneutrs(44,wldpm,nmoli)
         call rdneutrs(44,wldpeb,1)
         call rdneutrs(44,wldspt,1)
-        if (jvft44 .ge. 20170328) then
+        if (jvft44_in .ge. 20170328) then
           call rdneutrs(44,wldspta,natmi)
           call rdneutrs(44,wldsptm,nmoli)
         end if
@@ -887,7 +897,7 @@ cank-960727
             call rdneutrs(44,wldpeb(1,istra),1)
             call rdneutrs(44,wldspt(1,istra),1)
             if (no_sputtering) wldspt(:,istra) = 0.0_R8
-            if (jvft44 .ge. 20170328) then
+            if (jvft44_in .ge. 20170328) then
               call rdneutrs(44,wldspta(:,:,istra),natmi)
               call rdneutrs(44,wldsptm(:,:,istra),nmoli)
             end if
@@ -945,7 +955,7 @@ cank-960727
       end if
 cank
       if(jvftnew.le.961228) goto 99
-      if(jvft44 .ge. 20000727) then
+      if(jvft44_in .ge. 20000727) then
         call read_title(44)
         read (44,'(18i4)') (isrftype(i),i=1,nlimi)
         read (44,'(18i4)') (isrftype(nlim+i),i=1,nstsi)
@@ -956,7 +966,7 @@ cank
       if (NLWRMSH .and. (streql(solps_version,'4.3') .or.
      &                   streql(solps_version,'5.1') .or.
      &                   streql(solps_version,'iter'))) then
-        if(jvft44 .ge. 20051115) then
+        if(jvft44_in .ge. 20051115) then
           call read_title(44)
           read (44,'(6e13.5)') (wlarea(i),i=1,nlimi)
           read (44,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
@@ -964,7 +974,7 @@ cank
           write(45,'(1p,6e13.5)') (wlarea(i),i=1,nlim1)
           write(45,'(1p,6e13.5)') (wlarea(nlim+i),i=1,nstsi)
         end if
-        if(jvft44 .ge. 20060206) then
+        if(jvft44_in .ge. 20060206) then
           k=0
           call read_title(44)
           read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
@@ -989,12 +999,13 @@ cank
             read (44,'(6a13)') (eirtxt(j+k),j=1,nfla)
             read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nfla),i=1,nlimi)
             read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nfla),
-     ,                          i=1,nstsi)
+     ,                                                      i=1,nstsi)
           else
             read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-            read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
+            read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),
+     ,                                                      i=1,nlimi)
             read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
-     ,                          i=1,nstsi)
+     ,                                                      i=1,nstsi)
           endif
 
           allocate (eirtxt1(natm1+nmol1+nion1+npls1))
@@ -1071,7 +1082,7 @@ cank
           deallocate (wlabsrp1)
         end if
 
-        if(jvft44 .ge. 20170328) then
+        if(jvft44_in .ge. 20170328) then
           k=0
           call read_title(44)
           read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
@@ -1095,7 +1106,7 @@ cank
           read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
           read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
-     ,                          i=1,nstsi)
+     ,                                                       i=1,nstsi)
 
           allocate (wlpump1(natm1+nmol1+nion1+npls1,nlim+nstsi))
           do k = 1, natmi
@@ -1156,7 +1167,7 @@ cank
           deallocate (wlpump1)
         end if
 
-        if (jvft44 .ge. 20071209) then
+        if (jvft44_in .ge. 20071209) then
           if (streql(solps_version,'4.3').or.
      &        streql(solps_version,'5.1').or.
      &        streql(eirene_format,'facelift')) then
@@ -1191,7 +1202,7 @@ cank
           deallocate(eneutrad1)
         end if
 
-        if (jvft44 .ge. 20180323 .and. jvft44.ne.20200402) then
+        if (jvft44_in .ge. 20180323) then
           do is = 1, nmoli
             call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
           end do
@@ -1241,13 +1252,13 @@ cank
         end if
 
 !! FIXME: When changing grid size, NCL may vary and thus arrays below need re-mapping
-        if(jvft44 .ge. 20080706) then
+        if(jvft44_in .ge. 20080706) then
           call read_title(44)
           READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
-          call write_title(45,'eirdiag', nstsi+1)
+          call write_title(45,'eirdiag',nstsi+1)
           WRITE(45,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)
 
-          NCL=eirdiag_nds_ind(nstsi+1)
+          NCL=eirdiag_nds_ind(nstsi+1)-1
           IF(NCL.GT.0) THEN
             IF(.NOT.ALLOCATED(fnmti_b2)) ALLOCATE(fnmti_b2(NCL))
             call read_title(44)
@@ -1280,11 +1291,11 @@ cank
             READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
             call read_title(44)
             READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL)
-            if (jvft44.ge.20170228) then
+            if (jvft44_in.ge.20170228) then
               call read_title(44)
               READ (44,'(6e15.7)') (wldspt_res(i),i=1,NCL)
             end if
-            if (jvft44.ge.20170328) then
+            if (jvft44_in.ge.20170328) then
               call read_title(44)
               READ (44,'(6e15.7)')
      .              ((wldspta_res(j,i),j=1,natmi),i=1,NCL)
@@ -1312,15 +1323,15 @@ cank
               read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi),
      ,                                i=1,NCL)
             end if
-            if (jvft44.ge.20201006) then
+            if (jvft44_in.ge.20201006) then
               call read_title(44)
               READ (44,'(6e15.7)') (ewldt_res(i),i=1,NCL)
             end if
             allocate(wldna1res(natm1,NCL), ewlda1res(natm1,NCL),
-     .               ewldea1res(natm1,NCL), wldspta1res(natm1,NCL))
+     .               ewldea1res(natm1,NCL))
             allocate(wldnm1res(nmol1,NCL), ewldm1res(nmol1,NCL),
-     .               ewldem1res(nmol1,NCL), wldsptm1res(nmol1,NCL),
-     .               ewldmr1res(nmol1,NCL))
+     .               ewldem1res(nmol1,NCL), ewldmr1res(nmol1,NCL))
+            allocate(wldspta1res(natm1,NCL),wldsptm1res(nmol1,NCL))
             do is = 1, natmi
               if (iatm1(is).ne.0) then
                 wldna1res(iatm1(is),1:NCL) = wldna_res(is,1:NCL)
@@ -1362,7 +1373,7 @@ cank
             WRITE(45,'(6e15.7)') ((ewldem1res(j,i),j=1,nmol1),i=1,NCL)
             call write_title(45,'ewldrp_res',ncl)
             WRITE(45,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
-            call write_title(45,'ewldmr1res',ncl*nmol1)
+            call write_title(45,'ewldmr_res',ncl*nmol1)
             WRITE(45,'(6e15.7)') ((ewldmr1res(j,i),j=1,nmol1),i=1,NCL)
             if (jvftnew.ge.20170228) then
               call write_title(45,'wldspt_res',ncl)
@@ -1375,7 +1386,7 @@ cank
               call write_title(45,'wldsptm_res',ncl*nmol1)
               WRITE(45,'(6e15.7)')
      .              ((wldsptm1res(j,i),j=1,nmol1),i=1,NCL)
-              allocate (wlpump1res(NCL,natm1+nmol1+nioni+npls1))
+              allocate (wlpump1res(natm1+nmol1+nioni+npls1,NCL))
               do k = 1, natmi
                 if (iatm1(k).ne.0)
      >           wlpump1res(iatm1(k),:) = wlpump_res(k,:)
@@ -1431,14 +1442,14 @@ cank
      >       deallocate(wldspta1res,wldsptm1res)
           ELSE
             IS = 9
-            if (jvft44.ge.20170228) IS = IS + 1
-            if (jvft44.ge.20170328) IS = IS + 2
+            if (jvft44_in.ge.20170228) IS = IS + 1
+            if (jvft44_in.ge.20170328) IS = IS + 2
             DO I = 1, IS
               call read_title(44)
               READ (44,1028)
               WRITE(45,1028)
             END DO
-            if (jvft44.ge.20170328) THEN
+            if (jvft44_in.ge.20170328) THEN
               k=0
               call read_title(44)
               read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
@@ -1464,7 +1475,7 @@ cank
               READ (44,1028)
               WRITE(45,1028)
             END IF
-            IF (jvft44.ge.20201006) THEN
+            IF (jvft44_in.ge.20201006) THEN
               call read_title(44)
               READ (44,1028)
               WRITE(45,1028)
@@ -1475,7 +1486,7 @@ cank
         end if
 
         if(streql(solps_version,'4.3')) goto 99
-        if(jvft44 .ge. 20081111) then
+        if(jvft44_in .ge. 20081111) then
           call read_title(44)
           READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
           call read_title(44)
@@ -1583,7 +1594,7 @@ cank
         end if
       else  ! NLWRMSH
         if(streql(solps_version,'5.1')) then
-          if (jvft44.ge.20130210) then
+          if (jvft44_in.ge.20130210) then
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,1,0))
             write(6,'(4a)') 'In this ',fort_lc,'44 version,',
      .                      ' the eneutrad data is summed over species!'
@@ -1610,7 +1621,7 @@ cank
             deallocate(eneutrad1)
           end if
         elseif(streql(solps_version,'4.3')) then
-          if (jvft44.ge.20071209) then
+          if (jvft44_in.ge.20071209) then
             do is = 1, natmi
               call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
             end do
@@ -1634,7 +1645,7 @@ cank
             deallocate(eneutrad1)
           end if
         end if
-        if(jvft44.ge.20180323) then
+        if(jvft44_in.ge.20180323) then
           do is = 1, nmoli
             call gfsub2(44,ndx,ndy,nnx,nny,emolrad(:,:,is,0))
           end do
@@ -1683,7 +1694,7 @@ cank
           end if
         end if
       end if
-      if(jvft44.ge.960513) nlimi = nlim1
+      if(jvft44_in.ge.960513) nlimi = nlim1
 
    99 CONTINUE
  1028 format()

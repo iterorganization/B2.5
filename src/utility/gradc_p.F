@@ -8,7 +8,7 @@
       use b2us_map
       implicit none
 *   ..input arguments
-      integer nCv, nFc, nVx, mode
+      integer, intent (in) :: nCv, nFc, nVx, mode
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
@@ -45,7 +45,7 @@
       call grad_p(nCv, nFc, nVx, 1, geo, mpg, fun, funv, gfunpf)
 
 *   ..interpolate to centers
-      call intcell(nFc, nCv, mpg, mpg%intcellP, gfunpf,gfunp)
+      call intcell(nFc, nCv, mpg, mpg%intcellP, gfunpf, gfunp)
 
 *   ..return
       return

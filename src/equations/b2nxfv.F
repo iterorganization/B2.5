@@ -37,7 +37,7 @@
       real (kind=R8) ::
      *   ft, dloghz(nFc,0:1), logCvHz(nCv), logVxHz(nVx)                !srv 16.10.17
       external xertst
-      external b2xvff, b2xvfx, b2xvfv, b2xvsg
+      external b2xvfv, b2xvsg
 *   ..initialization
 
 *-----------------------------------------------------------------------
@@ -52,7 +52,7 @@
 *   ..subprogram start-up calls
       call subini ('b2nxfv')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 
 * ..compute convection term
       ft = 4.0_R8/3.0_R8

@@ -14,29 +14,28 @@
 !
 ! Description
 !============
-! Subroutine to compute relative distance between a set of cell 
-! centers (Euclidean). The distance is computed between each 
+! Subroutine to compute relative distance between a set of cell
+! centers (Euclidean). The distance is computed between each
 ! set of consecutive cells (i.e. x(iCv+1) - x(iCv) in 1D), but no
-! check is made whether the cells are ordened in a 'logical' way. 
+! check is made whether the cells are ordered in a 'logical' way.
 ! Initialize
-!===========      
+!===========
 ! Modules
-SUBROUTINE CALC_DIST_NODIFF(mpg, geo, clist, nc, iref, ds)
+SUBROUTINE CALC_DIST_NODIFF(geo, clist, nc, iref, ds)
 !
   USE B2MOD_TYPES
   USE B2US_GEO_DIFFV
-  USE B2US_MAP_DIFFV
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 ! Input variables
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(MAPPING), INTENT(IN) :: mpg
 ! Output variables
   INTEGER, INTENT(IN) :: nc, iref, clist(nc)
 !
 ! Intermediate variables
   REAL(kind=r8), INTENT(OUT) :: ds(nc)
+!
   REAL(kind=r8) :: dsref
 ! External functions
   INTEGER :: icv
@@ -53,7 +52,7 @@ SUBROUTINE CALC_DIST_NODIFF(mpg, geo, clist, nc, iref, ds)
 ! csc added safety for possible reference not within list number
   CALL XERTST(iref .GE. 0 .AND. iref .LE. nc, &
 &       'calc_dist: iref out of range')
-! Compute the initial length as the distance of the first cell to 
+! Compute the initial length as the distance of the first cell to
 ! the first boundary face
 !
 ! Loop over number of cells
@@ -76,6 +75,7 @@ SUBROUTINE CALC_DIST_NODIFF(mpg, geo, clist, nc, iref, ds)
 !
     ds = ds - dsref
   END IF
+!
   CALL SUBEND()
   RETURN
 END SUBROUTINE CALC_DIST_NODIFF

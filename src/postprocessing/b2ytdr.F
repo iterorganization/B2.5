@@ -187,19 +187,19 @@ c 2002-09-11: logic revised
       integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, iyped
       integer mw_jxa1, mw_jsep1, iyped1
       integer jsep, jxi, jxa, nxtl, nxtr
-      integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch
+      integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch, pulse, shot
       integer indx, indy, indx1, indy1
-      integer coriolis, lhalpha
+      integer lhalpha
       integer nncut1, nnreg1(0:2), periodic_bc1
       integer ndim, ndm2, nfitanf, nfitend, ifail
-      integer invert_bpol, invert_btor, b2ux7p_style
-      integer naver, ntotdt
-      integer ncon, nele_jac
+      integer invert_bpol, invert_btor, b2ux7p_style, csigin_style
+      integer naver, ntotdt, ntfts
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
       character id0*8
       character*4 solps_version
       data solps_version / 'iter' /
       data invert_bpol/0/, invert_btor/0/, b2ux7p_style/2/
+      data csigin_style/0/
       character*10 :: b2fgmtry_oldversion, b2fgmtry_newversion
       data b2fgmtry_oldversion / '00.000.000' /
       character tab
@@ -276,7 +276,8 @@ c 2002-09-11: logic revised
      4 na_feedback_alpha1(:), na_feedback_beta1(:),
      5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
-     7 na_feedback_time1(:), gpdata1(:,:,:)
+     7 na_feedback_time1(:), gpdata1(:,:,:),
+     8 sna_corr1(:), taumax1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
       integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns
@@ -479,13 +480,14 @@ c 2002-09-11: logic revised
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch, ycur,
      .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,
-     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
+     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert, fac_aniso,
      .  sources_time_mod, sources_time_switch, fch_ion_neutral,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      4  rescale_ra(0:nsdecl-1), rescale_sa(0:nsdecl-1),
      5  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
-     6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
+     6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1),
+     7  b2stbr_sna_corr, b2stbr_taumax
       real (kind=R8) :: recyceir1(nstraid), volrecstart1(nstraid),
      &  userfluxparm1(nstraid,2)
       character cnamip*80, cnbmip*80, cvalip*80
@@ -527,11 +529,13 @@ c 2002-09-11: logic revised
 #endif
       character*13, allocatable :: species_name(:)
       logical found, ex, l_chem_sput, is_core_boundary
+      logical new_namelist
       logical chemsp1(nstraid), savestratum(0:nstraid)
       logical :: time_dep_puff1(nstraid), time_dep_puff_func1(nstraid)
       integer :: time_dep_puff_case1(nstraid)
       real(kind=R8) :: time_dep_puff_param1(10,NSTRAID)
       logical, allocatable :: is_neutral1(:)
+      logical, allocatable :: do_sna_corr_core1(:)
 #ifdef B25_EIRENE
       logical ldum(0:60)
       logical LMULPL, LRDMLTI, LRDMLV
@@ -564,7 +568,7 @@ c 2002-09-11: logic revised
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
-      integer lnblnk, len_of_digits, trace_convert
+      integer len_of_digits, trace_convert
 #ifdef B25_EIRENE
       integer transform_tally, b2idez, convert_eirene
       logical isaletter, silent_open
@@ -580,7 +584,7 @@ c 2002-09-11: logic revised
       logical open_file, streql, isadigit, is_valid
       logical is_comment, end_comment, only_comments
       external xertst, xerrab, cfruch, cfrure, cfwuin, cfwuch, cfwure,
-     &  ipgeti, lnblnk, len_of_digits, only_comments, is_valid,
+     &  ipgeti, len_of_digits, only_comments, is_valid,
      &  open_file, get_jsep, conformal_convert, end_comment, isadigit,
      &  streql, get_nxt, b2yt_nxt, b2yt_ngread, b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
@@ -591,7 +595,7 @@ c 2002-09-11: logic revised
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/
       data boundary_namelist/0/, neutrals_namelist/0/
-      data use_eirene/0/, style_b2mndt/1/
+      data use_eirene/0/, style_b2mndt/1/, pulse/0/, shot/0/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
       data atomic_physics_rescale_flag/0/
@@ -604,8 +608,9 @@ c 2002-09-11: logic revised
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
       data BoRiS/0.0_R8/, na0eps/0.0_R8/, na_min/1.0e4_R8/
-      data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
+      data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/
       data xfrhie_no_drift/1.0_R8/, ycur/1.0_R8/
+      data b2stbr_sna_corr/0.0_R8/, b2stbr_taumax/0.05_R8/
       data fch_ion_neutral/0.0_R8/
       data b2tfhe_vis_par/1.0_R8/, b2tvspa_vis_par/1.0_R8/
 *  ..namelists
@@ -1415,6 +1420,8 @@ c 2002-09-11: logic revised
       call xertst (ns.gt.sput_dst, 'faulty input sput_dst')
       call ipgeti ('b2stbr_sput_dst2', sput_dst2)
       call ipgeti ('b2stbr_sput_dst3', sput_dst3)
+      call ipgetr ('b2stbr_sna_corr', b2stbr_sna_corr)
+      call ipgetr ('b2stbr_taumax', b2stbr_taumax)
       call xertst (sput_dst2.lt.ns, 'faulty b2stbr_sput_dst2')
       call xertst (sput_dst3.lt.ns, 'faulty b2stbr_sput_dst3')
       call ipgeti ('b2news_iy_nocoreExB', iy_nocoreExB)
@@ -1441,20 +1448,23 @@ c 2002-09-11: logic revised
       call ipgeti ('b2tqna_mw_jsep', mw_jsep)
       call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
      .                     istyle_cur_contr_on_S_and_N)
-      call ipgeti ('b2news_coriolis', coriolis)
       call ipgetr ('b2tfnb_xfrhie', xfrhie)
       call ipgetr ('b2tfnb_xfrhiehz', xfrhiehz)
       call ipgetr ('b2tfnb_xfrhie_no_drift', xfrhie_no_drift)
       call ipgetr ('b2tfhe_inert', b2tfhe_inert)
+      call ipgetr ('b2sikt_aniso', fac_aniso)
       call ipgetr ('b2tfhe_vis_par', b2tfhe_vis_par)
       call ipgetr ('b2tvspa_vis_par', b2tvspa_vis_par)
       call ipgeti ('b2ux7p_style', b2ux7p_style)
       if (b2ux7p_style.eq.3) b2ux7p_style = 2
+      call ipgeti ('b2tqin_csigin_style', csigin_style)
       call ipgetr ('b2tfnb_ycur', ycur)
       if (.not.hydrogen) ycur = 0.0_R8
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
       call ipgeti ('b2mndt_style', style_b2mndt)
+      call ipgeti ('b2mndr_pulse_number', pulse)
+      call ipgeti ('b2mndr_shot_number', shot)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1703,23 +1713,25 @@ c 2002-09-11: logic revised
       mw_ix2 = conformal_convert
      .   (non_commensurate,1,mw_ix2,mw_jsep,nx,ny,nx1,ny1,3)
       if (mw_jxa.ge.0) then
-        mw_jxa1= conformal_convert(non_commensurate,1,mw_jxa,mw_jsep,
-     .   nx,ny,nx1,ny1,4)
+        mw_jxa1 =
+     .   conformal_convert(non_commensurate,1,mw_jxa,mw_jsep,
+     .    nx,ny,nx1,ny1,4)
       else
-        mw_jxa1=jxa1
+        mw_jxa1 = jxa1
       endif
       if (mw_jsep.ge.0) then
-        mw_jsep1= conformal_convert(non_commensurate,2,mw_jxa,mw_jsep,
-     .   nx,ny,nx1,ny1,2)
+        mw_jsep1 =
+     .   conformal_convert(non_commensurate,2,mw_jxa,mw_jsep,
+     .    nx,ny,nx1,ny1,2)
       else
-        mw_jsep1=jsep1
+        mw_jsep1 = jsep1
       endif
       if (jxa.ne.-2) then
-        jxa1=conformal_convert(non_commensurate,1,jxa,jsep,
+        jxa1 = conformal_convert(non_commensurate,1,jxa,jsep,
      .   nx,ny,nx1,ny1,4)
       endif
       if (jxi.ne.-2) then
-        jxi1=conformal_convert(non_commensurate,1,jxi,jsep,
+        jxi1 = conformal_convert(non_commensurate,1,jxi,jsep,
      .   nx,ny,nx1,ny1,4)
       endif
       tab = char(9)
@@ -1830,13 +1842,17 @@ c 2002-09-11: logic revised
         case('b2trcl_conductive limit')
           cnamip = 'b2trcl_conductive_limit'
           todo = .false.
-        case('b2news_coriolis','b2npht_style_shei',
-     &                         'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
+        case('b2tqin_style')
+          cnamip = 'b2tqin_csigin_style'
+          todo = csigin_style.eq.0
+        case('b2news_coriolis', 'b2npht_style_shei',
+     &                          'b2nph9_style_shei')  ! Now obsolete, needs to be removed from the list
           todo = .false.
           wait = .true.
-        case('eirene_fixmap','b2tfnb_fnb_nodrift_style',  ! No longer needed
+        case('eirene_fixmap', 'b2tfnb_fnb_nodrift_style',  ! No longer needed
      &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib',
-     &       'b2stel_fix_recomb_energy','b2mndr_redef_pbs')
+     &       'b2stel_fix_recomb_energy', 'b2mndr_redef_pbs',
+     &       'b2news_guard_flows', 'b2npmo_b2sifr_', 'b2sifr_styl1')
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
@@ -1871,6 +1887,11 @@ c 2002-09-11: logic revised
               read (ninp(2),'(a)') add_comment(i)
             end do
           end if
+        case('b2mndr_shot_number')  ! Replacing with superseding switch b2mndr_pulse_number
+          todo = pulse.eq.0.and.shot.ne.0
+          wait = .true.
+          cnamip = 'b2mndr_pulse_number'
+          if (todo) iswitch = shot
         case default ISWITCHES
           todo = .false.
       end select ISWITCHES
@@ -1894,29 +1915,17 @@ c 2002-09-11: logic revised
             cnamip = 'b2mndr_na_new'
           end if
           todo = .false.
-        case('b2tfnb_xfrhie')  ! Needs to be replaced by xfrhiehz value if coriolis=1
-          todo = coriolis.ne.0
-          if (todo) rswitch = xfrhiehz
-        case('b2tfnb_xfrhiehz') ! Needs to be rewritten as xfrhie if coriolis=1
-          todo = coriolis.ne.0
-          if (todo) then
-            rswitch = xfrhiehz
-            cnamip = 'b2tfnb_xfrhie'
-          else
-            wait = .true.
-          endif
-        case ('b2tfnb_xfrhie_no_drift') ! Needs to be rewritten as xfrhie
-          todo = xfrhie_no_drift.ne.xfrhie .and.
-     &           xfrhie_no_drift.ne.1.0_R8
-          if (todo) then
-            rswitch = xfrhie_no_drift
-            cnamip = 'b2tfnb_xfrhie'
-          else
-            wait = .true.
-          endif
+        case('b2tfnb_xfrhie', 'b2tfnb_xfrhiehz',
+     &       'b2tfnb_xfrhie_no_drift')  ! Now obsolete, removed from list
+          todo = .false.
+          wait = .true.
         case ('b2tfhe_inert') ! needs to be rewritten as b2tiner_inert
           rswitch = b2tfhe_inert
           cnamip = 'b2tiner_inert'
+        case ('b2sikt_aniso') ! needs to be rewritten as b2sikt_fac_aniso
+          todo = fac_aniso.ne.1.0_R8
+          rswitch = fac_aniso
+          cnamip = 'b2sikt_fac_aniso'
         case ('b2tvspa_vis_par') ! obsolete, superseded by b2tfhe_vis_par
           todo = b2tvspa_vis_par.ne.1.0_R8 .and.
      &           b2tfhe_vis_par .eq.1.0_R8
@@ -1939,6 +1948,9 @@ c 2002-09-11: logic revised
           ycur_done = .true.
         case ('b2tfhe_neutral')
           rswitch = fch_ion_neutral
+        case ('b2stbr_sna_corr', 'b2stbr_taumax') ! Converted to a species-resolved scheme
+          todo = .false.
+          wait = .true.
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
@@ -2450,8 +2462,7 @@ c 2002-09-11: logic revised
        if (.not.streql(boundary_filename,'b2.boundary.parameters'))
      >  then
          first_pass = .false.
-         new_filename =
-     .     boundary_filename(1:lnblnk(boundary_filename))//'.2'
+         new_filename = trim(boundary_filename)//'.2'
          filename = boundary_filename
          call find_file(filename,todo)
          call find_file(new_filename,found)
@@ -2616,8 +2627,7 @@ c 2002-09-11: logic revised
         if (.not.streql(transport_filename,'b2.transport.parameters'))
      >   then
           first_pass = .false.
-          new_filename =
-     .     transport_filename(1:lnblnk(transport_filename))//'.2'
+          new_filename = trim(transport_filename)//'.2'
           filename=transport_filename
           call find_file(filename,todo)
           call find_file(new_filename,found)
@@ -2878,8 +2888,7 @@ cxpb We must ensure we have not already listed this additional species
         if (.not.streql(transport_filename,'b2.transport.inputfile'))
      >   then
           first_pass = .false.
-          new_filename =
-     .     transport_filename(1:lnblnk(transport_filename))//'.2'
+          new_filename = trim(transport_filename)//'.2'
           filename=transport_filename
           call find_file(filename,todo)
           call find_file(new_filename,found)
@@ -3488,8 +3497,7 @@ cxpb This will need to be checked !!!
        if (.not.streql(sources_filename,'b2.sources.profile'))
      >  then
          first_pass = .false.
-         new_filename =
-     .    sources_filename(1:lnblnk(sources_filename))//'.2'
+         new_filename = trim(sources_filename)//'.2'
          filename = sources_filename
          call find_file(filename,todo)
          call find_file(new_filename,found)
@@ -3513,10 +3521,16 @@ cxpb This will need to be checked !!!
       new_filename = 'b2.numerics.parameters.2'
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
+      new_namelist = (b2stbr_sna_corr.ne.0.0_R8 .or.
+     &                b2stbr_taumax.ne.0.05_R8) .and.
+     &                numerics_namelist.eq.0
+      todo = todo.or.b2stbr_sna_corr.ne.0.0_R8 .or.
+     &               b2stbr_taumax.ne.0.05_R8
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
         call read_b2mod_numerics_namelist(nCv,ns,nsmin,nsmax,
-     >    nnreg,mpg%cvOnClosedSurface,style_b2mndt)
-        if (same_bundling) then
+     >   nnreg,mpg%cvOnClosedSurface,style_b2mndt,new_namelist)
+        if (same_bundling.and.b2stbr_sna_corr.eq.0.0_R8
+     &                   .and.b2stbr_taumax.eq.0.05_R8) then
           if (first_pass) then
             write(nout(5),'(a)') 'b2.numerics.parameters'
             write(*,*) 'No changes needed in b2.numerics.parameters'
@@ -3563,6 +3577,24 @@ cxpb This will need to be checked !!!
           if(minval(dtei(0:nnreg(0))).ne.1.0_R8 .or.
      &       maxval(dtei(0:nnreg(0))).ne.1.0_R8) write(99,hlp_frm)
      .     'DTEI=',(dtei(ireg),ireg=0,nnreg(0))
+          if(minval(dten(0:nnreg(0))).ne.1.0_R8 .or.
+     &       maxval(dten(0:nnreg(0))).ne.1.0_R8) write(99,hlp_frm)
+     .     'DTEN=',(dten(ireg),ireg=0,nnreg(0))
+          ntfts = minloc(dtfts,1)-1
+          if (ntfts.gt.0) then
+            write(hlp_frm,'(a,i3,a)') '(1x,a,',ntfts,'(i3,'',''))'
+            write(99,hlp_frm) 'DTFTS=',(dtfts(ireg),ireg=1,ntfts)
+            write(hlp_frm,'(a,i3,a)')
+     .       '(1x,a,1p,',ntfts,'(1x,g10.3,'',''))'
+            if(minval(dtco_ft).ne.1.0_R8.or.maxval(dtco_ft).ne.1.0_R8)
+     .       write(99,hlp_frm) 'DTCO_FT=',(dtco_ft(ireg),ireg=1,ntfts)
+            if(minval(dtmo_ft).ne.1.0_R8.or.maxval(dtmo_ft).ne.1.0_R8)
+     .       write(99,hlp_frm) 'DTMO_FT=',(dtmo_ft(ireg),ireg=1,ntfts)
+            if(minval(dtee_ft).ne.1.0_R8.or.maxval(dtee_ft).ne.1.0_R8)
+     .       write(99,hlp_frm) 'DTEE_FT=',(dtee_ft(ireg),ireg=1,ntfts)
+            if(minval(dtei_ft).ne.1.0_R8.or.maxval(dtei_ft).ne.1.0_R8)
+     .       write(99,hlp_frm) 'DTEI_FT=',(dtei_ft(ireg),ireg=1,ntfts)
+          endif
           write(hlp_frm,'(a,i3,a)') '(1x,a,i2,a,',ns1,'l1,a)'
           do ireg = 0, nnreg(0)
             todo = .false.
@@ -3615,10 +3647,28 @@ cxpb This will need to be checked !!!
      .     'SOLVEEI=',(solveei(ireg),ireg=0,nnreg(0)),','
           todo = .false.
           do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solveen(ireg)
+          enddo
+          if (todo) write(99,hlp_frm)
+     .     'SOLVEEN=',(solveen(ireg),ireg=0,nnreg(0)),','
+          todo = .false.
+          do ireg = 0, nnreg(0)
             todo = todo .or. .not.solveet(ireg)
           enddo
           if (todo) write(99,hlp_frm)
      .     'SOLVEET=',(solveet(ireg),ireg=0,nnreg(0)),','
+          todo = .false.
+          do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solvekt(ireg)
+          enddo
+          if (todo) write(99,hlp_frm)
+     .     'SOLVEKT=',(solvekt(ireg),ireg=0,nnreg(0)),','
+          todo = .false.
+          do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solvezt(ireg)
+          enddo
+          if (todo) write(99,hlp_frm)
+     .     'SOLVEZT=',(solvezt(ireg),ireg=0,nnreg(0)),','
           if(numerics_time_mod.gt.0.0_R8)
      .     write(99,'(1x,a,1p,1g10.3,a)')
      .       'NUMERICS_TIME_MOD=',numerics_time_mod,','
@@ -3647,6 +3697,58 @@ cxpb This will need to be checked !!!
           if(time_factor_required.ne.0.1_R8)
      .     write(99,'(1x,a,1p,1g10.3,a)')
      .     'TIME_FACTOR_REQUIRED=',time_factor_required,','
+          write(hlp_frm,'(a,i2,a)')
+     .     '(1x,a,',nspecies1,'(1x,f10.7,'',''))'
+          if (maxval(sna_corr).gt.0.0_R8.or.b2stbr_sna_corr.ne.0.0_R8)
+     >     then
+            allocate(sna_corr1(1:nspecies1))
+            if (maxval(sna_corr).eq.0.0_R8.and.
+     >          b2stbr_sna_corr.ne.0.0_R8) then
+              sna_corr1(1:nspecies1) = b2stbr_sna_corr
+            else
+              do is = 1, nspecies
+                if (ispecies1(is).ne.-1) then
+                  sna_corr1(ispecies1(is)) = sna_corr(is)
+                end if
+              end do
+            end if
+            write(99, hlp_frm)
+     .       'SNA_CORR=',(sna_corr1(is),is=1,nspecies1)
+            deallocate(sna_corr1)
+          end if
+          if (maxval(taumax).ne.0.05_R8 .or. minval(taumax).ne.0.05_R8
+     &      .or. b2stbr_taumax.ne.0.05_R8) then
+            allocate(taumax1(1:nspecies1))
+            if (maxval(taumax).eq.0.05_R8 .and.
+     &          minval(taumax).eq.0.05_R8 .and.
+     &           b2stbr_taumax.ne.0.05_R8) then
+              taumax1(1:nspecies1) = b2stbr_taumax
+            else
+              do is = 1, nspecies
+                if (ispecies1(is).ne.-1) then
+                  taumax1(ispecies1(is)) = taumax(is)
+                end if
+              end do
+            end if
+            write(99, hlp_frm)
+     .       'TAUMAX=',(taumax1(is),is=1,nspecies1)
+            deallocate(taumax1)
+          end if
+          if (.not.(any(do_sna_corr_core(1:nspecies)))) then
+            allocate(do_sna_corr_core1(1:nspecies1))
+            do is = 1, nspecies
+              if (ispecies1(is).ne.-1) then
+                do_sna_corr_core1(ispecies1(is)) = do_sna_corr_core(is)
+              end if
+            end do
+            if (.not.(any(do_sna_corr_core1(1:nspecies1)))) then
+              write(hlp_frm,'(a,i2,a)')
+     .         '(1x,a,',nspecies1,'l1,'','')'
+              write(99, hlp_frm) 'DO_SNA_CORR_CORE=',
+     .         (do_sna_corr_core1(is),is=1,nspecies1)
+            end if
+            deallocate(do_sna_corr_core1)
+          end if
           if (.not.write_nml_num) write(99, '(a,l1,a)')
      >     'WRITE_NML_NUM=',write_nml_num,','
           write(99,'(a1)') '/'
@@ -3656,8 +3758,7 @@ cxpb This will need to be checked !!!
      >   then
           first_pass = .false.
           filename=numerics_filename
-          new_filename =
-     .     numerics_filename(1:lnblnk(numerics_filename))//'.2'
+          new_filename = trim(numerics_filename)//'.2'
           call find_file(filename,todo)
           call find_file(new_filename,found)
           if (found) write(6,*) trim(new_filename), ' already present!'
@@ -4824,7 +4925,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             IANF=VERIFY(REAC2,' ')
             IANF=MAX(1,IANF) !VK
             I=INDEX(REAC2(IANF:),' ')-1
-            IF (I.LT.0) I=lnblnk(REAC2(IANF:))
+            IF (I.LT.0) I=len_trim(REAC2(IANF:))
             REACSTR(2:I+1)=REAC2(IANF:I+IANF-1)
 !  READ CRC
             IANF=IEND+VERIFY(REACZEILE(IEND+1:),' ')
@@ -6938,7 +7039,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             IANF=VERIFY(REAC2,' ')
             IANF=MAX(1,IANF) !VK
             K=INDEX(REAC2(IANF:),' ')-1
-            IF (K.LT.0) K=lnblnk(REAC2(IANF:))
+            IF (K.LT.0) K=len_trim(REAC2(IANF:))
             REACSTR(2:K+1)=REAC2(IANF:K+IANF-1)
           END IF
           IF (streql(FILNAM,'CONST')) THEN
@@ -8015,7 +8116,7 @@ cxpb check for "OPTIONAL" input cards
               GOTO 615
             ENDIF
           ELSE
-            READ (ZEILE(7:lnblnk(ZEILE)),'(A74)') PATH
+            READ (ZEILE(7:len_trim(ZEILE)),'(A74)') PATH
             I=INDEX(PATH,ACHAR(13)) !VK
             IF(I.GT.0.AND.I.LE.LEN_TRIM(PATH)) PATH(I:I)=' ' !VK TO REMOVE \r
             PATH=ADJUSTL(PATH)
@@ -9007,7 +9108,7 @@ cxpb Read first, transform and rewrite
             GOTO 1041
           ELSE
             READ (ZEILEN(ILINE+1),'(A72)') CHRTAL
-            L = lnblnk(CHRTAL)
+            L = len_trim(CHRTAL)
             J = INDEX(CHRTAL,',')
             DO WHILE (J.GT.0)
               I = INDEX(CHRTAL,'<')
@@ -9132,7 +9233,7 @@ cxpb Read first, transform and rewrite
             GOTO 1061
           ELSE
             READ (ZEILEN(ILINE+1),'(A72)') CHRTAL
-            L = lnblnk(CHRTAL)
+            L = len_trim(CHRTAL)
             J = INDEX(CHRTAL,',')
             DO WHILE (J.GT.0)
               I = INDEX(CHRTAL,'<')
@@ -9641,7 +9742,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
      .           'increase size of ZEILEN in b2ytdr!')
                 JLINE = ILINE + 1
                 READ (IUNIN,'(A80)') ZEILEN(JLINE)
-                READ (ZEILEN(JLINE),'(3I6,1X,A6)')
+                READ (ZEILEN(JLINE),'(3I6)')
      .                               ISL, ITP, IRATIO
                 IF (IRATIO.GT.0) THEN
                   JLINE = JLINE + 1
@@ -9672,16 +9773,16 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
                     IRC1 = 0
                   END IF
                   IF (ITP.EQ.1) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IATM1(ISL), ITP, IRATIO
                   ELSE IF (ITP.EQ.2) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IMOL1(ISL), ITP, IRATIO
                   ELSE IF (ITP.EQ.3) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IION1(ISL), ITP, IRATIO
                   ELSE IF (ITP.EQ.4) THEN
-                    WRITE(ZEILEN(ILINE+1),'(3I6,1X,A6)')
+                    WRITE(ZEILEN(ILINE+1),'(3I6)')
      .               IPLS1(ISL), ITP, IRATIO
                   END IF
                   ILINE = JLINE
@@ -11125,9 +11226,9 @@ cxpb as they no longer necessarily point to the same species
             do k = 1, 8
               if (sps_id(ib)(k:k).eq.char(0)) sps_id(ib)(k:k)=' '
             end do
-            if(lnblnk(sps_id(ib)).lt.8)
-     .       sps_id(ib)=sps_id(ib)(1:lnblnk(sps_id(ib)))//
-     .                  repeat(' ',8-lnblnk(sps_id(ib)))
+            if(len_trim(sps_id(ib)).lt.8)
+     .       sps_id(ib)=trim(sps_id(ib))//
+     .                  repeat(' ',8-len_trim(sps_id(ib)))
             line = line(1:len)//''''//sps_id(ib)//''','
             len=len+1+8+2
           end do
@@ -11221,8 +11322,7 @@ cxpb as they no longer necessarily point to the same species
      >  then
          first_pass = .false.
          filename = neutrals_filename
-         new_filename =
-     .     neutrals_filename(1:lnblnk(neutrals_filename))//'.2'
+         new_filename = trim(neutrals_filename)//'.2'
          call find_file(filename,todo)
          call read_neutrals_namelist(nx, ny, ns, .false.)
          call xertst (nstrai.le.nstraid,
@@ -11670,7 +11770,7 @@ cxpb as they no longer necessarily point to the same species
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
-        call read_b2mod_par_opt(ncon, nele_jac, ns, mpg)
+        call read_b2mod_par_opt(ns, mpg, switch)
         write(99,'(a5)') '&OPTIMIZATION'
         if (ncf.gt.0) then
           write(99,'(1x,a,i3,a)') 'NCF=',ncf,','
@@ -11747,20 +11847,6 @@ cxpb as they no longer necessarily point to the same species
         if (.not.streql(limited_memory_update_type,'bfgs'))
      >   write(99,'(1x,a,a,a)') 'LIMITED_MEMORY_UPDATE_TYPE=''',
      >                      trim(limited_memory_update_type),''','
-        if (nncon.gt.0) then
-          write(99,'(1x,a,i3,a)') 'NNCON=',nncon,','
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nncon,'(1x,g11.4,'',''))'
-          write(99,hlp_frm) 'GL=',(gl(i),i=1,nncon)
-          write(99,hlp_frm) 'GU=',(gu(i),i=1,nncon)
-        end if
-        if (nnjac.gt.0) then
-          write(99,'(1x,a,i3,a)') 'NNJAC=',nnjac,','
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnjac,'(1x,i6,'',''))'
-          write(99,hlp_frm) 'JCOL=',(jcol(i),i=1,nnjac)
-          write(99,hlp_frm) 'JROW=',(jrow(i),i=1,nnjac)
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnjac,'(1x,g11.4,'',''))'
-          write(99,hlp_frm) 'JJ=',(jj(i),i=1,nnjac)
-        end if
         write(99,'(a1)') '/'
         close(99)
       else if (todo) then
@@ -11779,7 +11865,7 @@ cxpb as they no longer necessarily point to the same species
         if(.not.allocated(iz))
      >   call alloc_b2mod_diag(nCv,nFc,ns,nnreg(0),nstrat,natm,switch)
         if(.not.user_initialised)
-     >   call alloc_b2mod_user(geo,mpg,ns,nnlimi,nnmoli)
+     >   call alloc_b2mod_user(geo,mpg,ns,nnlimi,nnmoli,switch)
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
@@ -12107,7 +12193,7 @@ cxpb as they no longer necessarily point to the same species
 
 *   ..we now do b2ai.dat, using the data computed for b2ah.dat
 *   ..we read to check if the initial densities must be changed
-      call b2aix0 (ninp(7:6:-1), idum(0), idum(1), idum(2))
+      call b2aix0 (ninp(7:6:-1), idum(0), idum(1), idum(2), mpg)
       call xertst (idum(2).eq.ns,
      .   'incorrect species number in b2ai.dat')
       call b2rflb (ninp(6), lblps(61:120))

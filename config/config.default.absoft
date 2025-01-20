@@ -11,22 +11,19 @@ endif
 ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
-ifndef LD_SONNET
-  $(error LD_SONNET not defined)
-endif
 
-EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 DEFINES += -DNO_CDF
 
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 ifndef SOLPS_CPP
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
-    IMAS_PKG_LIST = fundamental_constants
+    IMAS_PKG_LIST = fundamental-constants
   endif
   ifdef TAO
     ifeq ($(shell `pkg-config --exists petsc`; echo $$?),0)
@@ -43,9 +40,10 @@ endif
 CPP = /lib/cpp -C -traditional
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED =
-LINK_MOD = 
+LINK_MOD =
 
 FC = f95
+FN = ${FC}
 
 ifdef SOLPS_DEBUG
 FCOPTS = -g -YEXT_NAMES=LCS -YEXT_SFX='_' -YCOM_NAMES=LCS -YCOM_SFX='_'
@@ -55,11 +53,12 @@ endif
 
 DBLFC = ${FC}
 DDBLOPTION = -Ad # ???
-DBLSED = 
+DBLSED =
 
 INCMOD = -p
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
+OBNDEST = -o ${OBNDIR}/$*.o
 
 BLD = ar rucv
 
@@ -75,7 +74,8 @@ ifdef USE_EIRENE
 LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
-LD = f95
+LD = ${FC}
+LN = ${FN}
 LDOPTS = -lU77
 LDOPTSend = -lU77
 

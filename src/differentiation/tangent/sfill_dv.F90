@@ -50,10 +50,9 @@ SUBROUTINE SFILL_DV(n, sa, sad, sx, sxd, incx, nbdirs)
     ix = IBASE(n, incx)
     DO i=0,n-1
       DO nd=1,nbdirs
-        sxd(nd, ix) = 0.D0
+        sxd(nd, ix+i*incx) = 0.D0
       END DO
-      sx(ix) = sa
-      ix = ix + incx
+      sx(ix+i*incx) = sa
     END DO
   END IF
   RETURN
@@ -97,8 +96,7 @@ SUBROUTINE SFILL_NODIFF(n, sa, sx, incx)
   ELSE
     ix = IBASE(n, incx)
     DO i=0,n-1
-      sx(ix) = sa
-      ix = ix + incx
+      sx(ix+i*incx) = sa
     END DO
   END IF
   RETURN

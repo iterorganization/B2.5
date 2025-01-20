@@ -1,22 +1,21 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ux11p (nx, ny, aa11, itcnt, resfun, corfun, name)  !srv 11.01.00
+      subroutine b2ux11p (nx, ny, aa11, itcnt, resfun, corfun, name)    !srv 11.01.00
       use b2mod_types
       use b2mod_ma28_for_11diag
       use b2mod_ysmp_sdrv
-!      use b2mod_ma28
       use b2mod_indirect
-      use b2mod_subsys
 #ifdef _OPENMP
       use b2mod_openmp
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
       real (kind=R8) ::
-     *   aa11(-1:nx,-1:ny,-5:5), resfun(-1:nx,-1:ny)                  !srv 11.01.00
-      character*(*) name                                              !srv 18.05.02
+     *   aa11(-1:nx,-1:ny,-5:5), resfun(-1:nx,-1:ny)                    !srv 11.01.00
+      character*(*) name                                                !srv 18.05.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(-1:nx,-1:ny)
@@ -47,8 +46,8 @@
 *     nx, ny - integer, input.
 *     See the calling routine for description.
 *
-*     aa11 - (-1:nx,-1:ny,-5:5) real*8 array, input.            !sv 11.01.00
-*     aa11 contains the eleven-point matrix.                    !sv 11.01.00
+*     aa11 - (-1:nx,-1:ny,-5:5) real*8 array, input.
+*     aa11 contains the eleven-point matrix.
 *
 *     itcnt - integer, input.
 *     itcnt specifies the iteration counter in the calling routine.
@@ -66,7 +65,7 @@
 
 *   ..local variables
       integer ncall, style, n2, itmax, iters, itpar, cpu
-      integer, save :: nz                                      !srv 29.05.02
+      integer, save :: nz
       parameter (itmax=100)
 #ifdef _OPENMP
       real (kind=R8) :: cpu_start, cpu_end
@@ -75,7 +74,7 @@
 #endif
       real (kind=R8) :: acpar, nrmc(0:itmax-1)
       real (kind=R8), allocatable, save ::
-     1 aaf(:),wrk0(:),wrk1(:),wrk2(:)
+     1 aaf(:), wrk0(:), wrk1(:), wrk2(:)
       integer, allocatable, save :: iwrk(:)
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
@@ -87,7 +86,7 @@
 #endif
 *   ..initialisation
       save ncall, style, acpar, cpu
-      data ncall/0/, style/3/, acpar/8.0e0_R8/, cpu/0/
+      data ncall/0/, style/3/, acpar/8.0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -264,7 +263,7 @@
             i=i+1
 *   ..Case of left neighbor
             jak = 2+leftix(ix,iy)+(2+leftiy(ix,iy)-1)*nxp2
-            if( jak.gt.i .and. aa11(ix,iy,-1) .ne. 0.0e0_R8 ) then
+            if( jak.gt.i .and. aa11(ix,iy,-1) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,-1)
               indexes(1,k)=ix
@@ -274,7 +273,7 @@
               ner = ner+1
             endif
 *   ..Case (ix,iy)
-            if( aa11(ix,iy,0) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,0) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,0)
               indexes(1,k)=ix
@@ -285,7 +284,7 @@
             endif
 *   ..Case of right neighbor
             jak = 2+rightix(ix,iy)+(2+rightiy(ix,iy)-1)*nxp2
-            if( jak.gt.i .and. aa11(ix,iy,1) .ne. 0.0e0_R8 ) then
+            if( jak.gt.i .and. aa11(ix,iy,1) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,1)
               indexes(1,k)=ix
@@ -294,16 +293,16 @@
               ja(k) = jak
               ner = ner+1
             endif
-            if( aa11(ix,iy,2) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,2) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,2)
               indexes(1,k)=ix
               indexes(2,k)=iy
               indexes(3,k)=2
-              ja(k) =2+topix(ix,iy)+(2+topiy(ix,iy)-1)*nxp2
+              ja(k) = 2+topix(ix,iy)+(2+topiy(ix,iy)-1)*nxp2
               ner = ner+1
             endif
-            if( aa11(ix,iy,3) .ne. 0.0e0_R8 ) then
+            if( aa11(ix,iy,3) .ne. 0.0_R8 ) then
               k = k+1
               a(k) = aa11(ix,iy,3)
               indexes(1,k)=ix
@@ -311,7 +310,7 @@
               indexes(3,k)=3
               iw = topix(ix,iy)
               jw = topiy(ix,iy)
-              ja(k) =2+topix(iw,jw)+(2+topiy(iw,jw)-1)*nxp2
+              ja(k) = 2+topix(iw,jw)+(2+topiy(iw,jw)-1)*nxp2
               ner = ner+1
             endif
             ip(i+1)=ip(i) + ner
@@ -353,4 +352,4 @@
       endif
 
       return
-      end subroutine                                                        !sv 29.05.02
+      end subroutine storage_11                                       !sv 29.05.02

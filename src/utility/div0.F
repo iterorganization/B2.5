@@ -6,7 +6,7 @@
       use b2us_map
       implicit none
 *   ..input arguments
-      integer nCv, nFc
+      integer, intent (in) :: nCv, nFc
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   flo(nFc)

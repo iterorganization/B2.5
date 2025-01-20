@@ -6,6 +6,7 @@ c======================================================================
 c*** b2pnwl: neutral wall load (temporary solution)
 c***
 c======================================================================
+      use b2us_data
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2cmfs
@@ -30,8 +31,8 @@ c*** scale. enrctff and pwrctff do the same for the particle energy
 c*** and for the power flux.
       real (kind=R8) ::
      *   flxctff,enrctff,pwrctff
-      parameter (flxctff=0.1e0_R8, enrctff=1.e-8_R8, pwrctff=1.e-8_R8)
-      integer il,is,i,ii,ia,ib,idir,j,js,k,ic,ias,iss
+      parameter (flxctff=0.1_R8, enrctff=1.0e-8_R8, pwrctff=1.0e-8_R8)
+      integer il,is,i,ii,ia,ib,j,js,k,ic,ias,iend,istart,iFc
       character*74 hlp_frm
       real (kind=R8) ::
      *   x,distance,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,wwy(4),
@@ -56,8 +57,8 @@ c*** Set the default values
 c*** Read the data from dg files
       iret=0
       call b2pinp(iret)
-      if (iret.eq.1) goto 999
       call b2pwlprp
+      if (iret.eq.1) goto 999
 c*** ... and produce the output file
       do i=1,natmi
         text_an(i)=textan(i-1)(2:8)
@@ -152,8 +153,8 @@ c
             else if (isymm.eq.3 .or. isymm.eq.4) then
               a=pi*(pp1(2,ib)+pp2(2,ib))*distance
             end if
-            aa=1.e-6_R8/a
-            distance=0.5e0_R8*distance
+            aa=1.0e-6_R8/a
+            distance=0.5_R8*distance
             x=x+h+distance
             if(is.gt.0 .and. is.le.nlimi) then
               hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
@@ -188,23 +189,21 @@ c*** Calculate the net and gross erosion
                 wwyg=flxctff
               end if
             else if (ib.gt.lppp) then
-              j=(ib-lppp-1)/nytg+1
-              js=(ib-lppp)-(j-1)*nytg
-              ias=0
-              do iss=1,nsts
-                if (isrftype(nlim+iss).ne.1) cycle
-                if (iss.ne.ltns(j)) cycle
-                if (mod(j,2).eq.1) then
-                  idir = -1
-                else
-                  idir = 1
-                end if
-                if (idir.eq.1) then
-                  ias=eirdiag_nds_ind(iss)+js
-                else
-                  ias=eirdiag_nds_ind(iss)+(nytg-js+1)
+              iend = lppp
+              j = 0
+              js = 0
+              do ii = 1, ntrgts
+                if (itrg(ii).eq.0) cycle
+                if (j.gt.0.and.js.gt.0) cycle
+                istart = iend+1
+                iend = iend+mpg%divFcP(itrg(ii),2)
+                if (ib.ge.istart.and.ib.le.iend) then
+                  j = ii
+                  js = ib-istart+1
                 end if
               end do
+              iFc = mpg%divFc(mpg%divFcP(itrg(j),1)+js-1)
+              ias = b2_fnmti(iFc)
               wwk=0.0_R8
               wwp=0.0_R8
               k=0
@@ -249,7 +248,7 @@ c*** Calculate the net and gross erosion
               wwt=pwrctff
               k=natmi+nmoli
               do ii=1,k
-                wwj(ii)=0.1e0_R8*flxctff
+                wwj(ii)=0.1_R8*flxctff
                 wwe(ii)=enrctff
               end do
             end if
@@ -273,8 +272,8 @@ c*** Calculate the net and gross erosion
 c
 c      if(natmi .gt. 1  .and.  npumplis .gt. 0) then
 cc*** calculate the helium concentration at the pump
-c        a=0.e0_R8
-c        aa=0.e0_R8
+c        a=0.0_R8
+c        aa=0.0_R8
 c        do il=1,npumplis
 c          is=lpumplis(il)
 c          if(is .le. 0  .or.  is .gt. nlimi) then

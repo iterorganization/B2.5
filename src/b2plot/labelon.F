@@ -1,8 +1,10 @@
 c
       subroutine labelon(onflag)
       use b2mod_types
-#include "graphics_vars.h"
+      use b2mod_graphics
+      implicit none
       logical onflag
+
       labels=onflag
       if(labels) then
         lalong=.true.

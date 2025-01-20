@@ -247,12 +247,6 @@
       call cfverr (ninp(1), b2frates_version)
       call cfverr (ninp(2), b2fparam_version)
       call cfverr (ninp(3), b2fgmtry_version)
-*   ..obtain nx, ny from geometry file
-      call cfruin (ninp(3), 2, idum, 'nx,ny')
-      nx = idum(0)
-      ny = idum(1)
-      call xertst (0.le.nx.and.0.le.ny,
-     &  'faulty input nx, ny from geometry file')
 *   ..obtain ns from parameters file
       call cfruin (ninp(2), 1, idum, 'ns')
       ns = idum(0)

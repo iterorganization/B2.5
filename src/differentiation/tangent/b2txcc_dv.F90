@@ -25,7 +25,7 @@ SUBROUTINE B2TXCC_DV(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, kapd, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), kap(ncv), con(nfc)
@@ -39,7 +39,6 @@ SUBROUTINE B2TXCC_DV(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, kapd, &
   REAL(kind=r8), DIMENSION(nbdirsmax) :: t0d, t1d
   INTRINSIC MAX, SQRT
   EXTERNAL XERTST
-  EXTERNAL B2XXGS
   REAL(r8) :: y1
   REAL(r8), DIMENSION(nbdirsmax) :: y1d
   REAL(r8) :: max1
@@ -161,9 +160,6 @@ SUBROUTINE B2TXCC_DV(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, kapd, &
 &       fcvol(ifc, 2)*kap(mpg%fccv(ifc, 2)))/temp1)
     END DO
   END IF
-!   ..reset null regions
-!      call b2xxgs (nx, ny, 0.0_R8, con(-1,-1,0), 1)
-!      call b2xxgs (nx, ny, 0.0_R8, con(-1,-1,1), 2)
 !   ..return
   CALL SUBEND()
   RETURN
@@ -188,7 +184,7 @@ SUBROUTINE B2TXCC_NODIFF(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, con)
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fcvol(nfc, 2), fcs(nfc), kap(ncv), con(nfc)
@@ -200,7 +196,6 @@ SUBROUTINE B2TXCC_NODIFF(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, con)
   REAL(kind=r8) :: t0, t1
   INTRINSIC MAX, SQRT
   EXTERNAL XERTST
-  EXTERNAL B2XXGS
   REAL(r8) :: y1
   REAL(r8) :: max1
   REAL(r8) :: result1
@@ -260,9 +255,6 @@ SUBROUTINE B2TXCC_NODIFF(ncv, nfc, mode, geo, mpg, fcvol, fcs, kap, con)
 &       , 2))
     END DO
   END IF
-!   ..reset null regions
-!      call b2xxgs (nx, ny, 0.0_R8, con(-1,-1,0), 1)
-!      call b2xxgs (nx, ny, 0.0_R8, con(-1,-1,1), 2)
 !   ..return
   CALL SUBEND()
   RETURN

@@ -63,7 +63,7 @@ SUBROUTINE B2NXDU_DV(ncv, ns, na, nad, ua, uad, smq, smqd, smqdu, smqdud&
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
   EXTERNAL SFILL_DV
-  EXTERNAL B2XVSG_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: nd
   REAL(kind=r8), DIMENSION(ncv) :: temp
   REAL(kind=r8) :: temp0
@@ -77,13 +77,13 @@ SUBROUTINE B2NXDU_DV(ncv, ns, na, nad, ua, uad, smq, smqd, smqdu, smqdud&
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxdu')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxdu .LT. 3) THEN
 !    ..test sign of smq
     DO is=0,ns-1
-      CALL B2XVSG_NODIFF(ncv, smq(1, 1, is), 1, 'smq1', '.le.')
-      CALL B2XVSG_NODIFF(ncv, smq(1, 3, is), 1, 'smq3', '.le.')
+      CALL B2XVSG(ncv, smq(1, 1, is), 1, 'smq1', '.le.')
+      CALL B2XVSG(ncv, smq(1, 3, is), 1, 'smq3', '.le.')
     END DO
   END IF
 !
@@ -190,7 +190,7 @@ SUBROUTINE B2NXDU_NODIFF(ncv, ns, na, ua, smq, smqdu, wrk0, wrk1)
   INTEGER :: icv, is
 !   ..procedures
   EXTERNAL XERTST, SFILL_NODIFF
-  EXTERNAL B2XVSG_NODIFF, B2XVFX_NODIFF
+  EXTERNAL B2XVSG
 !   ..initialisation
 !
 !-----------------------------------------------------------------------
@@ -200,13 +200,13 @@ SUBROUTINE B2NXDU_NODIFF(ncv, ns, na, ua, smq, smqdu, wrk0, wrk1)
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxdu')
 !   ..test nCv
-  CALL XERTST(0 .LE. ncv, 'faulty argument nCv')
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxdu .LT. 3) THEN
 !    ..test sign of smq
     DO is=0,ns-1
-      CALL B2XVSG_NODIFF(ncv, smq(1, 1, is), 1, 'smq1', '.le.')
-      CALL B2XVSG_NODIFF(ncv, smq(1, 3, is), 1, 'smq3', '.le.')
+      CALL B2XVSG(ncv, smq(1, 1, is), 1, 'smq1', '.le.')
+      CALL B2XVSG(ncv, smq(1, 3, is), 1, 'smq3', '.le.')
     END DO
   END IF
 !

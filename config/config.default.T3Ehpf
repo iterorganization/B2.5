@@ -12,14 +12,14 @@ ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
 
-EQUIVS = -Dx02ajf=x02aje -Dx02amf=x02ame -Dx05aaf=x05aae -Dx05abf=x05abe -Df07adf=f07ade -Df06qff=f06qfe -Dd07ajf=d07aje -Dx05baf=x05bae -Dsamax=damax
+EQUIVS = -Dx02ajf=x02aje -Dx02amf=x02ame -Dx05aaf=x05aae -Dx05abf=x05abe -Df07adf=f07ade -Df06qff=f06qfe -Dd07ajf=d07aje -Dx05baf=x05bae
 DEFINES += -DUSE_PXFGETENV -DNO_CDF
 
 ifndef SOLPS_CPP
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
     SOLPSINCLUDE += `pkg-config fundamental-constants --cflags`
-    IMAS_PKG_LIST = fundamental_constants
+    IMAS_PKG_LIST = fundamental-constants
   endif
   ifdef TAO
     ifeq ($(shell `pkg-config --exists petsc`; echo $$?),0)
@@ -33,19 +33,20 @@ ifdef IMAS_PKG_LIST
   INCMODS += `pkg-config ${IMAS_PKG_LIST} --cflags`
 endif
 
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /opt/ctl/cf90/cf90/lib/ftpp -F
 CPPOPTS = -C -P -N -I$(srcdir) $(EQUIVS)
 
 FC = pghpf
+FN = ${FC}
 ifdef SOLPS_DEBUG
-FCOPTS = -v -g
+  FCOPTS = -v -g
 else
-FCOPTS = -O3 -v -Ounroll2 -eA -X1
-FCOPTS = -Mf90
+  FCOPTS = -O3 -v -Ounroll2 -eA -X1
+  FCOPTS = -Mf90
 endif
 INCMOD = -I
 MOD = mod
@@ -57,14 +58,15 @@ PLLIBES = $(LD_MSCL)
 LDLIBES = $(LD_NAG)
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
-LD = f90 -lapp
-LD = pghpf -Mf90
+LD = ${FC} -Mf90
+LN = ${FN} -Mf90
 
 LDOPTS = -l /usr/local/pat/libpat.a /usr/local/pat/pat.cld
 LDOPTS = 
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

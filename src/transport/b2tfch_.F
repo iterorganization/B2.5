@@ -22,7 +22,7 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2tiner, ncall_b2ttia
+     &          ncall_b2ttia, nsmooth_tvsq
 #endif
       use b2mod_subsys
       implicit none
@@ -31,7 +31,7 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type(B2Plasma), intent (in) :: pl 
+      type(B2Plasma), intent (in) :: pl
       type(B2Rates), intent (in) :: rt
       type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)
@@ -54,18 +54,18 @@
 *   ..local variables
       integer is, is0
       character(3) :: charns, charns0
-      real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08 
+      real (kind=R8) :: csig_stoch(nFc), fchstoch(nFc)                   !lk 31.01.08
       real (kind=R8) ::
      &    ehx(nFc)                                    !srv 17.05.99
       real (kind=R8) :: facdriftm, fac_ExBm                              !srv 23.12.19
       real (kind=R8) ::
      *    wrk(nFc,0:1), dumm0(nFc,0:1), dumm1(nFc,0:1), zeff(nCv)
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-c       real (kind=R8), save :: drift_hyb = 1.0_R8, fch_inert = 1.0e0_R8
-c      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 
+c       real (kind=R8), save :: drift_hyb = 1.0_R8, fch_inert = 1.0_R8
+c      real (kind=R8), save :: fch_stochastic = 0.0_R8                   !lk 31.01.08
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
+      external b2xvsg, b2ttia                                            !srv 11.07.99
 *   ..initialization
 
 *-----------------------------------------------------------------------
@@ -80,7 +80,7 @@ c       call ipgetr ('b2tfhe_drift_hyb',drift_hyb)
 c       call ipgetr ('b2tiner_inert', fch_inert)                          !srv 07.07.99
 c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31.01.08
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..extensive tests on first few calls
       if (ncall_b2tfch.lt.3) then
 *    ..test sign of ne, te, csig, chce
@@ -117,11 +117,11 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
         dv%conc      = 0.0_R8
       else
 *     ..calculate the contribution of ion-neutral current                !srv 11.02.04 {
-        call b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt, 
+        call b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt,
      &    dv%facdrift, dv%fac_ExB, ismain, ismain0, pl,
      &    dv%fna, co%csigin, dv%fchin)                     !srv 11.05.09
 *     ..compute x,y-components of divergent part of diamagnetic current
-        call b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv%pz, dv%fna, 
+        call b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv%pz, dv%fna,
      &    dv%uadia, dv%facdrift, dv%fchdia)
 *     ..calculate x,y-components of viscosity parallel current
         call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%ua,
@@ -153,15 +153,15 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
      &    pl%po, pl%na, pl%kt, dv%vaecrb, co%dna_ExB, dv%fchviskt)
 
 *     ..compute total currents
-        dv%fch = dv%fch_p + dv%fchin + dv%fchdia + dv%fchvispar + 
+        dv%fch = dv%fch_p + dv%fchin + dv%fchdia + dv%fchvispar +
      &    dv%fchvisq + dv%fchinert + dv%fchanml + dv%fchviskt +
      &    dv%fchvisper
         dv%fch(:,1) = dv%fch(:,1) + fchstoch
 
 *     ..compute conc
-        dumm0 = 0.0e0_R8
+        dumm0 = 0.0_R8
         wrk   = co%csig
-        if(switch%fch_ion_neutral.ne.0.0e0_R8 .and.
+        if(switch%fch_ion_neutral.ne.0.0_R8 .and.
      &    (facdriftm.gt.0.0_R8 .or. fac_ExBm.gt.0.0_R8)) then            !srv 23.12.19
          do is = 0, ns-1
           if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
@@ -176,7 +176,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
          enddo
         endif
 #ifdef WG_TODO
-        if(fch_stochastic.ne.0.0e0_R8 ) then                             !lk 31.01.08 {
+        if(fch_stochastic.ne.0.0_R8 ) then                               !lk 31.01.08 {
           wrk(:,1) = wrk(:,1) + csig_stoch
         endif                                                            !lk 31.01.08 }
 #endif

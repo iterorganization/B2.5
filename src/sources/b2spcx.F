@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_b2cmrc
       use b2mod_subsys
+      use b2mod_math
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -59,12 +60,8 @@
      *   rlt0, rln0, fxt0, fxn0, t0, t1, tt
 *   ..procedures
       intrinsic min, max, log
-      real (kind=R8) ::
-     *   trimg
       external xertst
-      external b2xvsg, trimg
-*     (trimg will be used to trim the logarithmic gradients to avoid
-*     some pathetic behaviour near the underflow limit.)
+      external b2xvsg
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -74,7 +71,7 @@
 *   ..subprogram start-up calls
       call subini ('b2spcx')
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test ev, amh0
       call xertst (0.lt.ev, 'faulty argument ev')

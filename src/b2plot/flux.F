@@ -3,20 +3,17 @@ c
       use b2mod_types
       use b2mod_b2plot_xy
       use b2mod_constants
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
       character*(*) shotinfo
       integer nCv
       real (kind=R8) :: xlod,xhid,ylod,yhid
 
 #ifdef WOS
-
       integer mdim,lpfxdim,lin
       parameter(mdim=256,lpfxdim=4,lin=1)
 
       integer m,n,ierr,nshot,nedit,lpfx
-      integer lnblnk
-      external lnblnk
       real (kind=R4) :: tshot
       character*4 expnam
       character*3 dianam
@@ -38,7 +35,7 @@ c
       endif
 
       call init_page(
-     1 'Flux surfaces for '//shotinfo(1:lnblnk(shotinfo))//' (Wb/rad)',
+     1 'Flux surfaces for '//trim(shotinfo)//' (Wb/rad)',
      1 xlod,xhid,ylod,yhid,1,.true.,.false.,.true.)
 
       read(shotinfo,*,err=10,end=10) nshot,tshot,dianam,expnam,nedit
@@ -134,7 +131,6 @@ c
 
       if(wall) call data_copy(0)
       if(main) call additional_elements(nCv,.true.)
-
 #else
       write(*,*) 'Not implemented because WOS not defined'
 #endif

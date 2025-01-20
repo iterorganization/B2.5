@@ -6,9 +6,10 @@ endif
 LD_NAG    ?= `pkg-config openblas --libs`
 LD_NETCDF ?=
 
-EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
 ifndef SOLPS_CPP
+  NO_MPI ?= true
   DEFINES += -DNAGFOR -DNO_CDF -DNO_F01AAF
   ifeq ($(shell `pkg-config --exists fundamental-constants`; echo $$?),0)
     DEFINES += -DCONSTANTS_PROVIDED
@@ -24,8 +25,8 @@ ifndef SOLPS_CPP
   endif
 endif
 
-ifdef USE_MPI
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+ifdef SOLPS_MPI
+  DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 CPP = /lib/cpp -C -traditional -ffreestanding
@@ -33,15 +34,17 @@ CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 
 FC = nagfor
+FN = ${FC}
 
-FCOPTS = -O -x77 -PIC -compatible # -mismatch
+FCOPTS = -O -x77 -PIC -compatible -dusty # -mismatch
 INCMOD = -I
 MOD = mod
 OBJDEST = -mdir ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST = -mdir ${OBNDIR} -o ${OBNDIR}/$*.o
 
-ifdef USE_OPENMP
-FCOPTS += -openmp
-LDOPTS += -openmp
+ifdef SOLPS_OPENMP
+  FPOPTS += -openmp
+  LPOPTS += -openmp
 endif
 
 BLD = ar rucv
@@ -50,13 +53,13 @@ GRLIBES = ${LD_NCARG}
 PLLIBES = ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
-ifdef USE_MPI
-SOLPSINCLUDE += -I${EBROOTOPENMPI}/include
-INCMODS += -I${EBROOTOPENMPI}/include
+ifdef SOLPS_MPI
+  SOLPSINCLUDE += -I${EBROOTOPENMPI}/include
+  INCMODS += -I${EBROOTOPENMPI}/include
 endif
 
 ifdef LD_CATALYST
-CXXFLAGS = -std=c++11
+  CXXFLAGS = -std=c++11
 endif
 
 ifdef IMAS_PKG_LIST
@@ -64,8 +67,8 @@ ifdef IMAS_PKG_LIST
   IMASLIBS = ${LD_AL}
 endif
 
-LD = nagfor
-LDOPTS =
+LD = ${FC}
+LN = ${FN}
 DBLFC = ${FC}
 DBLOPTS = -r8
 DBLSED = sed -e s:\#PREC\#:d:g

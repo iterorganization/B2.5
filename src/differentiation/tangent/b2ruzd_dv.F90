@@ -83,6 +83,7 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: is, js
+    INTRINSIC NINT
     INTRINSIC ABS
     REAL(kind=r8) :: abs0
     IF (am(is) - am(js) .GE. 0.) THEN
@@ -90,8 +91,8 @@ CONTAINS
     ELSE
       abs0 = -(am(is)-am(js))
     END IF
-    lnext = zamax(is) .LT. zamin(js) .AND. zn(is) .EQ. zn(js) .AND. abs0&
-&     .LT. amtol
+    lnext = zamax(is) .LT. zamin(js) .AND. NINT(zn(is)) .EQ. NINT(zn(js)&
+&     ) .AND. abs0 .LT. amtol
     RETURN
   END FUNCTION LNEXT
 

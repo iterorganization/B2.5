@@ -8,6 +8,7 @@ c*** rdl(i,1,:) corresponds to the West and rdl(i,2,:) to the East target
 c*** Last index 0 is a sum over all species
 c*** Power is in W/m**2 (previously, MW/m**2)
 c======================================================================
+      use b2us_data
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_b2plot
@@ -15,8 +16,11 @@ c======================================================================
       use b2mod_dimensions
       implicit none
       real (kind=R8) ::
-     *   rdl(0:DEF_NYD-1,ntrgsx,0:DEF_NATM)
-      integer i,j,k,l,m,n
+     *   rdl(1:DEF_NYD,ntrgsx,0:DEF_NATM)
+      integer i,j,k,m,n
+#ifdef DBG
+      integer istart,iend
+#endif
 c======================================================================
 c*** If the load is already calculated, just fill in the output array
 c
@@ -31,59 +35,41 @@ c
 c<<<
 #ifdef DBG
         print *,' !!!!!!!!!'
-        print '(a/7a10/1p,l10,5i10,e10.2)','After b2pwinp',
-     ,   'l2pwinp','lppp','nwldprt','lytg','nytg','nadsrc','add_rad',
-     ,    l2pwinp , lppp , nwldprt , lytg , nytg , nadsrc , add_rad
+        print '(a/5a10/1p,l10,3i10,e10.2)','After b2pwinp',
+     ,   'l2pwinp','lppp','nwldprt','nadsrc','add_rad',
+     ,    l2pwinp , lppp , nwldprt , nadsrc , add_rad
         if (nwldlis(1).gt.0) then !{
           print '(a/(16i5))','Shadowing structure',
      ,                                   (lwldlis(i,1),i=1,nwldlis(1))
+          iend=lppp
           do j=1,ntrgts !{
+            if (itrg(j).eq.0) cycle
+            istart=iend+1
+            iend=iend+mpg%divFcP(itrg(j),2)
             print '(a,i2/(5(2f8.3,1x)))','Target',j,
-     ,     (pp1(1,lppp+(j-1)*nytg+i),pp1(2,lppp+(j-1)*nytg+i),i=1,nytg),
-     ,      pp2(1,lppp+j*nytg),pp2(2,lppp+j*nytg)
+     ,       (pp1(1,i),pp1(2,i),i=istart,iend),
+     ,        pp2(1,iend),pp2(2,iend)
           end do !}
         else !}{
-          print *,' No shadowing structure found !'
+          print *,' No shadowing structure found!'
         end if !}
+#else
+        if (nwldlis(1).eq.0) write(*,*) 'No shadowing structure found!'
 #endif
 c>>>
         if(.not.l2pwinp) then !{
           write(*,*) '**** b2ptrdl: error detected in the input data ',
      ,                            '==> no radiation load calculated!!!'
-#ifdef WG_TODO
-          do j=1,ntrgsx !{
-            do i=0,ny-1 !{
-              do k=0,DEF_NATM !{
+          do k=0,DEF_NATM !{
+            do j=1,ntrgsx !{
+              do i=1,maxval(mpg%divFcP(:,2)) !{
                 rdl(i,j,k)=0.0_R8
               end do !}
             end do !}
           end do !}
-#endif
           return
         end if !}
 c----------------------------------------------------------------------
-c*** Fill in the input arrays for b2pwrdld
-c
-        nwldrad=0
-#ifdef WG_TODO
-        do j=1,ntrgts !{
-          do i=1,nytg !{
-            lwldrad(nwldrad+i)=lppp+nwldrad+i
-          end do !}
-          nwldrad=nwldrad+nytg
-        end do !}
-#ifdef DBG
-        print *,'%% b2ptrdl: nwldrad,nytg / lwldrad',nwldrad,nytg
-        k=0
-        do j=1,ntrgts !{
-          print '(20i4)',(lwldrad(k+i),i=1,nytg)
-          k=k+nytg
-        end do !}
-        print '(1x,a,i5/(20i4))','nwldlis / lwldlis',nwldlis(1),
-     ,                             (lwldlis(i,1),i=1,nwldlis(1))
-#endif
-#endif
-
 c*** Calculate the load
 
         call b2pwrdld
@@ -98,13 +84,15 @@ c*** Calculate the load
         print *,'after b2pwrdld: lrdlsp=',lrdlsp !###
 #endif
         l2rdldt=.true.
-#ifdef WG_TODO
 #ifdef DBG
+        iend=lppp
         do j=1,ntrgts !{
+          if (itrg(j).eq.0) cycle
+          istart=iend+1
+          iend=iend+mpg%divFcP(itrg(j),2)
           print '(a,i2,a/(1p,5e17.4))','Target',j,': load',
-     ,     (wldrdld(lppp+(j-1)*ny+i+1),i=0,ny-1)
+     ,     (wldrdld(i),i=istart,iend)
         end do !}
-#endif
 #endif
       end if !}
 c----------------------------------------------------------------------
@@ -115,28 +103,22 @@ c*** Arrange the output data
 #else
       n=nspecies
 #endif
-#ifdef WG_TODO
-      k=nytg
-      l=1
-      do j=1,max(1,ntrgts/2) !{
-        do i=lytg,ny-1 !{
-          rdl(i,l,0)=wldrdld(lppp+k-i+lytg)
-          rdl(i,l+1,0)=wldrdld(lppp+k+1+i-lytg)
+      k=0
+      do j=1,ntrgts !{
+        if (itrg(j).eq.0) cycle
+        do i=1,mpg%divFcP(itrg(j),2) !{
+          k=k+1
+          rdl(i,itrg(j),0)=wldrdld(lwldrad(k))
           if(lrdlsp) then !{
             do m=1,n !{
-              rdl(i,l,m)=wldrdlsp(lppp+k-i+lytg,m)
-              rdl(i,l+1,m)=wldrdlsp(lppp+k+1+i-lytg,m)
+              rdl(i,itrg(j),m)=wldrdlsp(lwldrad(k),m)
             end do !}
           end if !}
           if(lrdlcr) then !{
-            rdl(i,l,1)=wldrdlsp(lppp+k+1-i+lytg-1,1)
-            rdl(i,l+1,1)=wldrdlsp(lppp+k+i-lytg+1,1)
+            rdl(i,itrg(j),1)=wldrdlsp(lwldrad(k),1)
           end if !}
         end do !}
-        k=3*nytg
-        l=3
       end do !}
-#endif
 c======================================================================
       return
       end subroutine b2ptrdl

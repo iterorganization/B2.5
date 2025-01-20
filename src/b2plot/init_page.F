@@ -2,34 +2,28 @@
       subroutine init_page(title,xlod,xhid,ylod,yhid,linlog,
      1 aspect,colorbar,physical)
       use b2mod_types
+      use b2mod_b2plot
+     , , only : linefmt
       use b2mod_b2plot_debug
+      use b2mod_graphics
       use b2mod_wall
       implicit none
-#include <graphics_vars.h>
-
-c     the zoom common
-      integer winid
-      integer wsnshwin,wsnX11
-      common /zoom_com/ winid,wsnshwin,wsnX11
-
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
 
       character*(*) title
       character*20 fmtx,fmty
       real (kind=R8) :: xlod,xhid,ylod,yhid
       logical aspect,colorbar, physical
       integer linlog
-      real range,xmid,ymid,ceil,txtwdth,yframe,
+      real (kind=R4) :: range,xmid,ymid,ceil,txtwdth,yframe,
      1 reserve_bottom,reserve_top,reserve_left,reserve_right,
      2 test,test1
-      integer ix,iy,n_page,itxtwdth,lnblnk,offset,
+      integer ix,iy,n_page,itxtwdth,offset,
      1 nox,noxm,nfmtx,nnox,
      2 noy,noym,nfmty,nnoy
       real (kind=R8) :: rratio
+      real (kind=R4) :: sfloor
       logical streql
-      external lnblnk, streql, rratio
+      external streql, rratio, sfloor
 
       if(b2plot_debug.ge.8) write(*,*) xwidth,yheight
 
@@ -87,19 +81,19 @@ c     the line format common
 #else
       if(aspect.and.want_aspect) then
         range=max((xhi-xlo)*nx_page/xwidth,(yhi-ylo)*ny_page/yheight)
-        xmid=(xhi+xlo)/2.0
-        xlo=xmid-range/2.0/nx_page*xwidth
-        xhi=xmid+range/2.0/nx_page*xwidth
-        ymid=(yhi+ylo)/2.0
-        ylo=ymid-range/2.0/ny_page*yheight
-        yhi=ymid+range/2.0/ny_page*yheight
+        xmid=(xhi+xlo)/2.0_R4
+        xlo=xmid-range/2.0_R4/nx_page*xwidth
+        xhi=xmid+range/2.0_R4/nx_page*xwidth
+        ymid=(yhi+ylo)/2.0_R4
+        ylo=ymid-range/2.0_R4/ny_page*yheight
+        yhi=ymid+range/2.0_R4/ny_page*yheight
       endif
       yframe=yheight
       if(.not.streql(globalheader,' ')) then
-        yframe=yframe*(1.00-0.02*glsz)
+        yframe=yframe*(1.00_R4-0.02_R4*glsz)
       endif
-      xsize=xwidth/real(nx_page)
-      ysize=yframe/real(ny_page)
+      xsize=xwidth/real(nx_page,R4)
+      ysize=yframe/real(ny_page,R4)
       xpos=(ix_page-1)*xsize
       ypos=(ny_page-iy_page)*ysize
 
@@ -112,22 +106,22 @@ c     the line format common
           call nice(xlo,xhi,nox,noxm,fmtx,nfmtx,nice_axes)
         else
           logx=.true.
-          if(xhi.le.0.0) then
+          if(xhi.le.0.0_R4) then
             write(*,*) 'xhi <= 0 and logarithmic axes chosen'
-            xhi=1.0
+            xhi=1.0_R4
           endif
-          xlo=max(xlo,10.0**(-ndec)*xhi)
-          xlo=10.0**floor(log10(xlo))
-          xhi=10.0**ceil(log10(xhi))
+          xlo=max(xlo,10.0_R4**(-ndec)*xhi)
+          xlo=10.0_R4**sfloor(log10(xlo))
+          xhi=10.0_R4**ceil(log10(xhi))
           nox=1
           fmtx='(1pg8.2)'
           nfmtx=8
           noxm=1
         endif
-        if(lbsz.gt.1.0.and.nox.gt.5) then
-          nnox=nint(ceil(nox/2.0))
+        if(lbsz.gt.1.0_R4.and.nox.gt.5) then
+          nnox=nint(ceil(real(nox,R4)/2.0_R4))
           noxm=noxm*2
-          xhi=xlo+(xhi-xlo)*real(nnox)*2.0/real(nox)
+          xhi=xlo+(xhi-xlo)*real(nnox,R4)*2.0_R4/real(nox,R4)
           nox=nnox
           ix=ix+1
         endif
@@ -137,23 +131,23 @@ c     the line format common
           call nice(ylo,yhi,noy,noym,fmty,nfmty,nice_axes)
         else
           logy=.true.
-          if(yhi.le.0.0) then
+          if(yhi.le.0.0_R4) then
             write(*,*) 'yhi <= 0 and logarithmic axes chosen'
-            yhi=1.0
+            yhi=1.0_R4
           endif
           yhi=max(yhi,-ylo)
-          ylo=max(ylo,10.0**(-ndec)*yhi)
-          ylo=10.0**floor(log10(ylo))
-          yhi=10.0**ceil(log10(yhi))
+          ylo=max(ylo,10.0_R4**(-ndec)*yhi)
+          ylo=10.0_R4**sfloor(log10(ylo))
+          yhi=10.0_R4**ceil(log10(yhi))
           noy=1
           fmty='(1pg8.2)'
           nfmty=8
           noym=1
         endif
-        if(lbsz.gt.1.0.and.noy.gt.5) then
-          nnoy=nint(ceil(noy/2.0))
+        if(lbsz.gt.1.0_R4.and.noy.gt.5) then
+          nnoy=nint(ceil(real(noy,R4)/2.0_R4))
           noym=noym*2
-          yhi=ylo+(yhi-ylo)*real(nnoy)*2.0/real(noy)
+          yhi=ylo+(yhi-ylo)*real(nnoy,R4)*2.0_R4/real(noy,R4)
           noy=nnoy
           iy=iy+1
         endif
@@ -172,64 +166,66 @@ c     the line format common
         reserve_bottom=txtwdth*5/ysize
         reserve_top=txtwdth*(4+2*offset)/ysize
         reserve_left=txtwdth*(nfmty+3)/xsize
-        reserve_right=0.0
+        reserve_right=0.0_R4
         if(target.and.physical) then
-          targetbar_right=1.0-reserve_right
-          reserve_right=reserve_right+0.08*0.2+0.08*0.8*lbsz
-          targetbar_left=1.0-reserve_right
-          reserve_right=reserve_right+0.02
+          targetbar_right=1.0_R4-reserve_right
+          reserve_right=reserve_right+0.08_R4*0.2_R4+0.08_R4*0.8_R4*lbsz
+          targetbar_left=1.0_R4-reserve_right
+          reserve_right=reserve_right+0.02_R4
         endif
         if(wall) then
-          wallbar_right=1.0-reserve_right
-          reserve_right=reserve_right+0.08*0.2+0.08*0.8*lbsz
-          wallbar_left=1.0-reserve_right
-          reserve_right=reserve_right+0.02
+          wallbar_right=1.0_R4-reserve_right
+          reserve_right=reserve_right+0.08_R4*0.2_R4+0.08_R4*0.8_R4*lbsz
+          wallbar_left=1.0_R4-reserve_right
+          reserve_right=reserve_right+0.02_R4
         endif
         if(colorbar) then
-          colorbar_right=1.0-reserve_right
-          reserve_right=reserve_right+0.08*0.2+0.08*0.8*lbsz
-          colorbar_left=1.0-reserve_right
-          reserve_right=reserve_right+0.02
+          colorbar_right=1.0_R4-reserve_right
+          reserve_right=reserve_right+0.08_R4*0.2_R4+0.08_R4*0.8_R4*lbsz
+          colorbar_left=1.0_R4-reserve_right
+          reserve_right=reserve_right+0.02_R4
         endif
         if(.not.streql(extralabel,' ')) reserve_top=reserve_top+
      .    txtwdth*2*(1+offset+nx_page/5)/ysize
-        if(reserve_right.eq.0.0) reserve_right=0.05*lbsz
+        if(reserve_right.eq.0.0_R4) reserve_right=0.05_R4*lbsz
         if(.not.streql(xlabel,' ')) reserve_bottom =
      .   reserve_bottom+txtwdth*2*n_page
         if(.not.streql(ylabel,' ')) reserve_left =
      .   reserve_left+txtwdth*2*n_page
       else
-        reserve_bottom=0.0
-        reserve_top=0.0
-        reserve_left=0.0
-        reserve_right=0.0
+        reserve_bottom=0.0_R4
+        reserve_top=0.0_R4
+        reserve_left=0.0_R4
+        reserve_right=0.0_R4
       endif
 
       if(aspect.and.want_aspect.and.linlog.eq.1) then
    10   test=(yhi-ylo)/(xhi-xlo)*
-     1   (xwidth*(1.0-(reserve_left+reserve_right))/real(nx_page))/
-     2   (yheight*(1.0-(reserve_bottom+reserve_top))/real(ny_page))
+     1   (xwidth*
+     .    (1.0_R4-(reserve_left+reserve_right))/real(nx_page,R4))/
+     2   (yheight*
+     .    (1.0_R4-(reserve_bottom+reserve_top))/real(ny_page,R4))
         if(b2plot_debug.ge.9) write(*,*) test
         if(noax.gt.0) then
-          if(test.gt.1.0) then
-            test1=test*real(nox)/real(nox+1)
-            if(abs(1.0-test).gt.abs(1.0-test1)) then
+          if(test.gt.1.0_R4) then
+            test1=test*real(nox,R4)/real(nox+1,R4)
+            if(abs(1.0_R4-test).gt.abs(1.0_R4-test1)) then
               if(mod(ix,2).eq.0) then
-                xhi=xlo+(xhi-xlo)*real(nox+1)/real(nox)
+                xhi=xlo+(xhi-xlo)*real(nox+1,R4)/real(nox,R4)
               else
-                xlo=xhi-(xhi-xlo)*real(nox+1)/real(nox)
+                xlo=xhi-(xhi-xlo)*real(nox+1,R4)/real(nox,R4)
               endif
               ix=ix+1
               nox=nox+1
               goto 10
             endif
           else
-            test1=test*real(noy+1)/real(noy)
-            if(abs(1.0-test).gt.abs(1.0-test1)) then
+            test1=test*real(noy+1,R4)/real(noy,R4)
+            if(abs(1.0_R4-test).gt.abs(1.0_R4-test1)) then
               if(mod(iy,2).eq.0) then
-                yhi=ylo+(yhi-ylo)*real(noy+1)/real(noy)
+                yhi=ylo+(yhi-ylo)*real(noy+1,R4)/real(noy,R4)
               else
-                ylo=yhi-(yhi-ylo)*real(noy+1)/real(noy)
+                ylo=yhi-(yhi-ylo)*real(noy+1,R4)/real(noy,R4)
               endif
               iy=iy+1
               noy=noy+1
@@ -245,14 +241,15 @@ c     the line format common
         new_page=.false.
         if(.not.streql(globalheader,' ')) then
           if(hcol.gt.1) call gsplci(hcol)
-          CALL SET(0.0*XWIDTH,1.0*XWIDTH,
-     1     0.0*YHEIGHT,1.0*YHEIGHT,
-     2     0.0,1.0,0.0,1.0,1)
+          CALL SET(0.0_R4*XWIDTH,1.0_R4*XWIDTH,
+     1     0.0_R4*YHEIGHT,1.0_R4*YHEIGHT,
+     2     0.0_R4,1.0_R4,0.0_R4,1.0_R4,1)
           if(noax.gt.0)
-     1     CALL PLCHHQ(0.5,1.0-0.01*glsz,
-     1     GLOBALHEADER(1:LNBLNK(GLOBALHEADER)),
-     1     1.0/real(max(50,lnblnk(globalheader)))*xwidth/1.25*glsz,
-     1     0.0,0.0)
+     1     CALL PLCHHQ(0.5_R4,1.0_R4-0.01_R4*glsz,
+     1     trim(GLOBALHEADER),
+     1     1.0_R4/real(max(50,len_trim(globalheader)),R4)*
+     .      xwidth/1.25_R4*glsz,
+     1     0.0_R4,0.0_R4)
           call gsplci(1)
         endif
       endif
@@ -272,46 +269,47 @@ c     the line format common
         call pcseti('FN',30)
       end if
 
-      CALL SET(0.0*XSIZE+XPOS,1.0*XSIZE+XPOS,
-     1 0.0*YSIZE+YPOS,1.0*YSIZE+YPOS,
-     2 0.0,1.0,0.0,1.0,1)
+      CALL SET(0.0_R4*XSIZE+XPOS,1.0_R4*XSIZE+XPOS,
+     1 0.0_R4*YSIZE+YPOS,1.0_R4*YSIZE+YPOS,
+     2 0.0_R4,1.0_R4,0.0_R4,1.0_R4,1)
       dirty_graph=.true.
 
-      if(b2plot_debug.ge.6) write(*,*) 'title ',title(1:lnblnk(title))
+      if(b2plot_debug.ge.6) write(*,*) 'title ',trim(title)
       if(noax.gt.0) then
         if(gcol.gt.1) call gsplci(gcol)
-        CALL PLCHHQ(0.5,(1.0-txtwdth*2*n_page),
-     1   TITLE(1:LNBLNK(TITLE)),
-     1   1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        CALL PLCHHQ(0.5_R4,(1.0_R4-txtwdth*2*n_page),
+     1   trim(TITLE),
+     1   1.0_R4/100.0_R4/N_PAGE*lbsz,0.0_R4,0.0_R4)
         call gsplci(1)
         if(bcol.gt.1) call gsplci(bcol)
         if(wall)
-     &   CALL PLCHHQ(wallbar_right,1.0-txtwdth*2*n_page,
-     1   WALLBARLABEL(1:LNBLNK(WALLBARLABEL)),
-     1   1.0/100.0/N_PAGE*lbsz,0.0,1.0)
+     &   CALL PLCHHQ(wallbar_right,1.0_R4-txtwdth*2*n_page,
+     1   trim(WALLBARLABEL),
+     1   1.0_R4/100.0_R4/N_PAGE*lbsz,0.0_R4,1.0_R4)
         if(target.and.physical)
-     &   CALL PLCHHQ(targetbar_right,1.0-txtwdth*2*n_page,
-     1   TARGETBARLABEL(1:LNBLNK(TARGETBARLABEL)),
-     1   1.0/100.0/N_PAGE*lbsz,0.0,1.0)
+     &   CALL PLCHHQ(targetbar_right,1.0_R4-txtwdth*2*n_page,
+     1   trim(TARGETBARLABEL),
+     1   1.0_R4/100.0_R4/N_PAGE*lbsz,0.0_R4,1.0_R4)
         call gsplci(1)
       endif
       if(.not.streql(extralabel,' ')) then
         if(xcol.gt.1) call gsplci(xcol)
         if(noax.gt.0) then
-          CALL PLCHHQ(0.5,
-     1     1.0-txtwdth*(5-(offset-(nx_page/ny_page)/5))*n_page,
-     1     EXTRALABEL(1:LNBLNK(EXTRALABEL)),
-     1     1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+          CALL PLCHHQ(0.5_R4,
+     1     1.0_R4-txtwdth*(5-(offset-(nx_page/ny_page)/5))*n_page,
+     1     trim(EXTRALABEL),
+     1     1.0_R4/100.0_R4/N_PAGE*lbsz,0.0_R4,0.0_R4)
         endif
         call gsplci(1)
       endif
       if(.not.streql(xlabel,' ')) then
         if(xcol.gt.1) call gsplci(xcol)
         if(noax.gt.0) then
-         CALL PLCHHQ(reserve_left+(1.0-reserve_right-reserve_left)/2.0,
+         CALL PLCHHQ(
+     1        reserve_left+(1.0_R4-reserve_right-reserve_left)/2.0_R4,
      1        txtwdth*1*n_page,
-     1        XLABEL(1:LNBLNK(YLABEL)),
-     1        1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+     1        trim(XLABEL),
+     1        1.0_R4/100.0_R4/N_PAGE*lbsz,0.0_R4,0.0_R4)
         endif
         call gsplci(1)
       endif
@@ -319,22 +317,22 @@ c     the line format common
         if(xcol.gt.1) call gsplci(xcol)
         if(noax.gt.0) then
          CALL PLCHHQ(txtwdth*1*n_page,
-     1        reserve_bottom+(1.0-reserve_top-reserve_bottom)/2.0,
-     1        YLABEL(1:LNBLNK(YLABEL)),
-     1        1.0/100.0/N_PAGE*lbsz,90.0,0.0)
+     1        reserve_bottom+(1.0_R4-reserve_top-reserve_bottom)/2.0_R4,
+     1        trim(YLABEL),
+     1        1.0_R4/100.0_R4/N_PAGE*lbsz,90.0_R4,0.0_R4)
         endif
         call gsplci(1)
       endif
 
       if(b2plot_debug.ge.6) write(*,*) 'SET: ',
      1   reserve_left*XSIZE+XPOS,
-     2   (1.0-reserve_right)*XSIZE+XPOS,
+     2   (1.0_R4-reserve_right)*XSIZE+XPOS,
      3   reserve_bottom*YSIZE+YPOS,
-     4   (1.0-reserve_top)*YSIZE+YPOS
+     4   (1.0_R4-reserve_top)*YSIZE+YPOS
       CALL SET(reserve_left*XSIZE+XPOS,
-     1   (1.0-reserve_right)*XSIZE+XPOS,
+     1   (1.0_R4-reserve_right)*XSIZE+XPOS,
      1   reserve_bottom*YSIZE+YPOS,
-     2   (1.0-reserve_top)*YSIZE+YPOS,
+     2   (1.0_R4-reserve_top)*YSIZE+YPOS,
      2   XLO,XHI,YLO,YHI,LINLOG)
       if(noax.gt.0) then
         CALL GASETI('LTY',1) ! ====> use PLCHHQ for drawing labels
@@ -355,11 +353,11 @@ c     the line format common
         call gsln(3)
         call dashdc('$$$$''''''''',8,0)
         if(b2plot_debug.ge.9) write(*,*) 'zwidth = ',zwidth
-        if(xlo.lt.0.0.and.xhi.gt.0.0) then
-          call lined(0.0,ylo,0.0,yhi)
+        if(xlo.lt.0.0_R4.and.xhi.gt.0.0_R4) then
+          call lined(0.0_R4,ylo,0.0_R4,yhi)
         endif
-        if(ylo.lt.0.0.and.yhi.gt.0.0) then
-          call lined(xlo,0.0,xhi,0.0)
+        if(ylo.lt.0.0_R4.and.yhi.gt.0.0_R4) then
+          call lined(xlo,0.0_R4,xhi,0.0_R4)
         endif
         if (label_same_lines.and.same_page.ne.0) then
           call dashdc(linefmt,8,lfsz)

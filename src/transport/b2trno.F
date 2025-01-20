@@ -4,11 +4,9 @@
       subroutine b2trno (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
      &  switch, geo, mpg, pl, dv, rt, st_ext, co)
       use b2mod_types
-!      use b2mod_anomalous_transport
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-!      use b2mod_neoclassical
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -39,8 +37,8 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
-     *  ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns,
+     *                        nscx, nscxmax, iscx(0:nscxmax-1), ismain
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -119,7 +117,7 @@
 *   ..subprogram start-up calls
       call subini ('b2trno')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall_b2trno.eq.0) then
@@ -172,9 +170,9 @@
      &   co%dpa0(1:nCv,is), co%cdpa(1:nFc,1,is))
         call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%dpa0(1:nCv,is), cdpa0(1:nFc,is))
-        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
+        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vla0(1:nCv,0,is), co%cvla(1:nFc,0,is))
-        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
+        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vla0(1:nCv,1,is), co%cvla(1:nFc,1,is))
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vsa0(1:nCv,is), co%cvsa(1:nFc,0,is))
@@ -223,21 +221,19 @@
      &   co%vsa0(1:nCv,is), co%cvsahz(1:nFc,1,is))                    !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
 
-
 *   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
-      if (switch%transport_afn.eq.1) then 
+      if (switch%transport_afn.eq.1) then
        do is = 0, ns-1
          if (is_neutral(is).and.nint(zn(is)).eq.1) then
-           wrkc =  co%dpa0(:,is)*(geo%cvbb(:,2)/geo%cvbb(:,3))**2
+           wrkc =  co%dpa0(:,is)*(geo%cvBb(:,2)/geo%cvBb(:,3))**2
            call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &                 wrkc, co%cdpa(1:nFc,0,is))   
+     &                 wrkc, co%cdpa(1:nFc,0,is))
            call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &                 wrkc, co%cdpahz(1:nFc,0,is))
          endif
        enddo
       endif
-
 
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       co%cvsa_an = co%cvsa                                            !srv 04.10.99
@@ -283,22 +279,22 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
 
 *   ..set csigx = 0 and calfx = 0
       if (switch%csig_an_style.eq.1) then
-        call sfill (nFc, 0.0e0_R8, co%csig(1,0), 1)
-        call sfill (nFc, 0.0e0_R8, co%calf(1,0), 1)
+        call sfill (nFc, 0.0_R8, co%csig(1,0), 1)
+        call sfill (nFc, 0.0_R8, co%calf(1,0), 1)
       end if
 *   ..set strange velocities chve, chvi
 c      call sfill (nFc*2, 0.0_R8, co%chve, 1)
 c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
 *   ..add stochastic part of the electron heat conductivity
       chce_stoch = 0.0_R8                                                 !srv 20.09.17
-      if(switch%fch_stochastic.ne.0.0e0_R8)then                            !lk 31.01.08 { !srv 17.12.13
+      if(switch%fch_stochastic.ne.0.0_R8) then                            !lk 31.01.08 { !srv 17.12.13
       call xerrab('b2trno -- option to be adapted for WG')
 #ifdef WG_TODO
         call b2tstch (nx, ny, po, te, ne, csig_stoch, fchstoch)
         do iy = -1, ny                                                    !srv 20.09.17
           do ix = -1, nx
            if(bottomiy(ix,iy).ne.-2) then
-            chce_stoch(ix,iy)=switch%b2trno_alpha_stoch*1.6e0_R8*
+            chce_stoch(ix,iy)=switch%b2trno_alpha_stoch*1.6_R8*
      &      csig_stoch(ix,iy)/
      &      qe/qe*(te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
            endif                                                          !srv 20.09.17
@@ -332,7 +328,7 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
 
       if(switch%flux_limit_to_dpa .ne. 0) then                            !srv 15.06.08 {
 *   .. apply flux limit to neutrals contribution to cdpa and cdpahz
-        call b2tlc0 (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%te, 
+        call b2tlc0 (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%te,
      &    pl%ti, pl%tn, rt%rza, cdpa0, co%cdpa, co%cdpahz, flc)
       endif                                                               !srv 15.06.08 }
 
@@ -363,7 +359,7 @@ c the logic statements below could be simplfied but for now we go for readabilit
         if (is_neutral(is).and.nint(zn(is)).eq.1) then             !! hcn for hydrogenic atoms
          co%chcn = co%chcn + co%chcb(:,:,is)
         endif
-      enddo 
+      enddo
 
 *   ..test sign of chce, chci
       wrk(:) = co%chce(:,0)*geo%fcQalf(:,0)
@@ -383,7 +379,7 @@ c the logic statements below could be simplfied but for now we go for readabilit
       wrk(:) = co%cdkt(:,1)*geo%fcQalf(:,1)
       call b2xvsg (nFc, wrk, 1, 'cdkt', '.ge.')
 
-      if(switch%b2npco_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then                  !srv 19.05.10 {
+      if(switch%b2npco_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then      !srv 19.05.10 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         if (is_neutral(is) ) then
@@ -491,12 +487,6 @@ c the logic statements below could be simplfied but for now we go for readabilit
       ncall_b2trno = ncall_b2trno+1
       call subend ()
       return
-
-*-----------------------------------------------------------------------
-*.scribbles
-
-*!!   Consider to apply a flux limit to the anomalous particle transport.
-*!!   Still must consider how to deal with a non-orthogonal grid.
 
 *-----------------------------------------------------------------------
 *.end b2trno

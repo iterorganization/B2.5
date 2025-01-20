@@ -4,20 +4,16 @@
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
-
-c     the zoom common
-      integer winid
-      integer wsnshwin,wsnX11
-      common /zoom_com/ winid,wsnshwin,wsnX11
-
+#ifdef NCAR4
       character*256 devenv
       integer iw
 #ifndef NO_GETENV
       integer lenval, ierror
 #ifndef USE_PXFGETENV
       intrinsic get_environment_variable
+#endif
 #endif
 #endif
 *!!   (We avoid to declare, as external or intrinsic, the subroutine
@@ -125,9 +121,9 @@ c      call plinit()
 c
       subroutine initialise_plotting_flags(time)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       real (kind=R8), intent(in) :: time
-#include <graphics_vars.h>
 c
       extralabel=' '
       globalheader=' '
@@ -150,19 +146,17 @@ c
 
       subroutine set_color_map(sval)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       character*(*), intent(in) :: sval
-#include <graphics_vars.h>
-      integer lnblnk
       logical streql
-      external streql, lnblnk
+      external streql
 c
       color_file=sval
       if (streql(color_file,' ')) then
         write(*,*) 'Setting default color table'
       else
-        write(*,*) 'Setting color table ',
-     .                      color_file(1:lnblnk(color_file))
+        write(*,*) 'Setting color table ', trim(color_file)
       endif
       color_map_loaded=.false.
       if (nwork.gt.0) call new_color_map
@@ -171,9 +165,9 @@ c
 
       subroutine set_fill_option(iopt_fill)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       integer, intent(in) :: iopt_fill
-#include <graphics_vars.h>
 c
       fill_option=iopt_fill
       return
@@ -181,8 +175,8 @@ c
 
       subroutine initialise_plotting_0
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
 c
       dirty_page=.false.
       new_page=.true.
@@ -194,9 +188,9 @@ c
 
       subroutine set_glsz(rval)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       real (kind=R8), intent(in) :: rval
-#include <graphics_vars.h>
 c
       glsz=real(rval,R4)
       return
@@ -204,9 +198,9 @@ c
 
       subroutine set_lbsz(rval)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       real (kind=R8), intent(in) :: rval
-#include <graphics_vars.h>
 c
       lbsz=real(rval,R4)
       return
@@ -214,9 +208,9 @@ c
 
       subroutine set_ndec(iopt)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       integer, intent(in) :: iopt
-#include <graphics_vars.h>
 c
       ndec=iopt
       return
@@ -224,9 +218,9 @@ c
 
       subroutine get_ndec(iopt)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       integer, intent(out) :: iopt
-#include <graphics_vars.h>
 c
       iopt=ndec
       return
@@ -234,8 +228,8 @@ c
 
       subroutine set_noax
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
 c
       noax=-noax
       return
@@ -243,8 +237,8 @@ c
 
       subroutine swap_aspect
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
 c
       want_aspect=.not.want_aspect
       write(*,*) 'want_aspect switched to ',want_aspect
@@ -253,8 +247,8 @@ c
 
       subroutine set_zero
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
 c
       lzero=.not.lzero
       write(*,*) 'lzero switched to ',lzero
@@ -263,8 +257,8 @@ c
 
       subroutine toggle_label_lines
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
 c
       label_same_lines=.not.label_same_lines
       return
@@ -272,9 +266,9 @@ c
 
       subroutine set_device(devnam)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       character*256, intent(in) :: devnam
-#include <graphics_vars.h>
 c
       device=devnam
       return
@@ -282,9 +276,9 @@ c
 
       subroutine set_line_font_size(iopt)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       integer, intent(in) :: iopt
-#include <graphics_vars.h>
 c
       lfsz=iopt
       return
@@ -292,9 +286,9 @@ c
 
       subroutine set_axes_color(iopt)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       integer, intent(in) :: iopt
-#include <graphics_vars.h>
 c
       zcol=iopt
       return
@@ -302,9 +296,9 @@ c
 
       subroutine set_header_color(iopt)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       integer, intent(in) :: iopt
-#include <graphics_vars.h>
 c
       hcol=iopt
       return
@@ -312,9 +306,9 @@ c
 
       subroutine set_title_color(iopt)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       integer, intent(in) :: iopt
-#include <graphics_vars.h>
 c
       gcol=iopt
       return
@@ -322,9 +316,9 @@ c
 
       subroutine set_frame_color(iopt)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       integer, intent(in) :: iopt
-#include <graphics_vars.h>
 c
       fcol=iopt
       return
@@ -332,9 +326,9 @@ c
 
       subroutine set_barlabel_color(iopt)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       integer, intent(in) :: iopt
-#include <graphics_vars.h>
 c
       bcol=iopt
       return
@@ -342,9 +336,9 @@ c
 
       subroutine set_extralabel_color(iopt)
       use b2mod_types
+      use b2mod_graphics
       implicit none
       integer, intent(in) :: iopt
-#include <graphics_vars.h>
 c
       xcol=iopt
       return
@@ -353,17 +347,16 @@ c
       subroutine new_color_map
       use b2mod_types
       use b2mod_b2plot_debug
+      use b2mod_graphics
       implicit none
-#include <graphics_vars.h>
       real red, green, blue
       integer iw
       logical open_file, streql
-      integer lnblnk
-      external lnblnk, open_file, streql
+      external open_file, streql
 
       if(color_map_loaded) return
       if(.not.streql(color_file,' ')) then
-        write(*,*) 'Using ',color_file(1:lnblnk(color_file))
+        write(*,*) 'Using ',trim(color_file)
         if(.not.open_file(99,color_file,
      1   'data.local/palettes|scripts.local/palettes|scripts/palettes'))
      >   then
@@ -380,16 +373,14 @@ c
         enddo
         ncol=ncol+1
         goto 10
-   30   write(*,*) 'Error in reading ',
-     1   color_file(1:lnblnk(color_file)),
-     2   ' on line ',ncol+1
+   30   write(*,*) 'Error in reading ',trim(color_file),
+     1   ' on line ',ncol+1
         call color
         goto 50
    40   close(99)
         ncol=ncol-2
         if(ncol.le.0) then
-          write(*,*) 'Too few colors in ',
-     1     color_file(1:lnblnk(color_file))
+          write(*,*) 'Too few colors in ',trim(color_file)
           call color
           goto 50
         endif

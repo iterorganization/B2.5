@@ -2,6 +2,7 @@ CBJB  ADPAK courtesy of Russel Hulse, PPPL.  Some trivial changes by
 CBJB  B.J. Braams, indicated by the letters CBJB at left.
       SUBROUTINE ADCE
       use b2mod_types
+      use b2mod_adpak
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
 C
 C     REV: 10/10/82 FOR NEW AD PACKAGE
@@ -12,31 +13,9 @@ C     RECOMBINATION, AND RADIATION RATES
 C     STORED IN THE APPROPRIATE ARRAYS BY PREVIOUS CALLS
 C     TO ADSET, ADERC, AND ADBCXR.
 C
-      integer JSPC, NUCZ, NSPC, NVALNC(100)
-      REAL (kind=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      REAL (kind=R8) :: RCLION(100), RRAREC(100), RDIREC(100),
-     &                  CIZLOS(100), RADRRC(100), RADDRC(100),
-     &                  RADCLX(100), RADBRM(100)
-      REAL (kind=R8) :: RCXREC(100), RADBCX(100)
-      REAL (kind=R8) :: CEFRAC(100), CEAVGZ, CERAD
+      integer JSPC
       REAL (kind=R8) :: ZFRCMX, ZPSUM
       INTEGER II, J, IPASS, ICNTR, JQ, IQFRAC 
-
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
-C
-      COMMON / ADELEC / RCLION, RRAREC, RDIREC,
-     &                  CIZLOS, RADRRC, RADDRC,
-     &                  RADCLX, RADBRM
-C
-      COMMON / ADNEUT / RCXREC, RADBCX
-C
-      COMMON / ADCEQ / CEFRAC, CEAVGZ, CERAD
 C
       REAL (kind=R8) :: ZIONT(100), ZRECT(100), ZRADT(100)
       REAL (kind=R8) :: ZI(1), ZRE(1), ZRA(1)
@@ -78,9 +57,9 @@ C
 C     INITIALISE CEFRAC ARRAY
 C
    25 DO 26 JQ = 1,NSPC
-      CEFRAC(JQ) = 0.e0_R8
+      CEFRAC(JQ) = 0.0_R8
    26 CONTINUE
-      CEFRAC(ICNTR) = 1.e0_R8
+      CEFRAC(ICNTR) = 1.0_R8
 C
 C     IF ICNTR IS FULLY STRIPPED WORK DOWN IN IONIZ ONLY
 C
@@ -112,7 +91,7 @@ C
 C     END OF FIRST PASS - FIND NEW MAX SPECIES AND ITERATE
 C
       IPASS = 2
-      ZFRCMX = 0.e0_R8
+      ZFRCMX = 0.0_R8
       DO 45 JQ = 1, NSPC
       IF(CEFRAC(JQ).LT.ZFRCMX)GO TO 45
       ZFRCMX = CEFRAC(JQ)
@@ -123,7 +102,7 @@ C
 C
 C
 C
-   49 ZPSUM = 0.e0_R8
+   49 ZPSUM = 0.0_R8
       DO 50 JQ = 1, NSPC
       ZPSUM = ZPSUM + CEFRAC(JQ)
    50 CONTINUE
@@ -131,17 +110,17 @@ C
 C     NORMALISE SPECIES FRACTIONS AND COMPUTE RADIATION RATE
 C
 C
-      CERAD = 0.e0_R8
+      CERAD = 0.0_R8
 C
       DO 60 JQ = 1, NSPC
       CEFRAC(JQ) = CEFRAC(JQ) / ZPSUM
-      IF(ZRADT(JQ) .LE. 0.e0_R8) GO TO 60
+      IF(ZRADT(JQ) .LE. 0.0_R8) GO TO 60
 C
    60 CONTINUE
 C
 C     COMPUTE <Z>
 C
-      CEAVGZ = 0.e0_R8
+      CEAVGZ = 0.0_R8
       DO 70 JQ = 2,NSPC
       CEAVGZ = CEAVGZ + REAL(JQ-1) * CEFRAC(JQ)
    70 CONTINUE
@@ -151,6 +130,7 @@ C
       END SUBROUTINE ADCE
       SUBROUTINE ADSET(KNUCZ)
       use b2mod_types
+      use b2mod_adpak
       use b2mod_subsys
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
       INTEGER KNUCZ
@@ -160,20 +140,7 @@ C
 C     SET UP BASIC ATOMIC STRUCTURE DATA FOR CHOSEN ELEMENT
 C     (SHELL POPULATIONS, ENERGIES, ETC.)
 C
-      REAL (kind=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      INTEGER           LADEN, LADTIP, LTIPOK, LECI, LECIOK, 
-     &                  NUCZ, NSPC, NVALNC(100)
       external xertst
-C
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
-C
-      COMMON / ADPARM / LADEN, LADTIP, LTIPOK, LECI, LECIOK
 C
       call subini ('adset')
       NUCZ = KNUCZ
@@ -197,6 +164,7 @@ C
       END SUBROUTINE ADSET
       SUBROUTINE ADAPN
       use b2mod_types
+      use b2mod_adpak
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
 C
 C     REV: 10/9/82 FOR NEW AD PACKAGE
@@ -218,17 +186,6 @@ C
 C     NOTE: FOR THE FULLY IONISED SPECIES NVALNC IS DEFAULTED TO 1.
 C     ALSO: NSPC = NUCZ + 1 IS SET BY THIS ROUTINE
 C
-      REAL (kind=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      INTEGER NUCZ, NSPC, NVALNC(100)
-C
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
-
       INTEGER JQ, JN, ICOUNT, IFULL, ISHELL
 C
 C     SET MAXIMUM SPECIES INDEX NSPC = NUCZ + 1
@@ -263,6 +220,7 @@ C
       END SUBROUTINE ADAPN
       SUBROUTINE ADMORE
       use b2mod_types
+      use b2mod_adpak
       use b2mod_constants
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
 #     include "emissivity.constants"
@@ -331,16 +289,6 @@ C
 C
       REAL (kind=R8) :: ZSEN(10), ZBETOT(100), ZDUM(10), rydbrg
 C
-      REAL (kind=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      INTEGER NUCZ, NSPC, NVALNC(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
-
       INTEGER JQ, JJQ, IVALNC, IHOLE, IEXCIT
       INTEGER JN, JM, IIJM, IIJN
       REAL (kind=R8) :: ZBEIZ, ZBEEX, ZBEREC
@@ -431,6 +379,7 @@ C---------------------------------------------------------------
 C
       SUBROUTINE ADSHEN(KQ, KHOLE, KEXCIT, PSEN, PBETOT)
       use b2mod_types
+      use b2mod_adpak
       use b2mod_constants
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
 #include "emissivity.constants"
@@ -456,16 +405,6 @@ C     PSEN = OUTPUT ARRAY OF SHELL ENERGIES (KEV) (DEFINED POSITIVE)
 C     PBETOT = OUTPUT TOTAL ION ENERGY (DEFINED POSITIVE)
 C
       REAL (KIND=R8) :: PSEN(10), ZAPN(10), ZQ(10), ZEN0(10), rydbrg
-C
-      REAL (KIND=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      INTEGER NUCZ, NSPC, NVALNC(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
 C
       REAL (kind=R8) :: SIGMOR(10,10), PBETOT
       INTEGER JN, JM, JNP1, JNM1, KQ, KHOLE, KEXCIT
@@ -553,6 +492,7 @@ C
       END SUBROUTINE ADSHEN
       SUBROUTINE ADMAYR
       use b2mod_types
+      use b2mod_adpak
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
 C
 C     REV: 10/10/82 FOR NEW AD PACKAGE
@@ -609,17 +549,6 @@ C     NOTE: THERE ARE DISCREPANCIES BETWEEN THESE REFERENCES FOR A FEW
 C           SHIELDING CONSTANT VALUES.
 C
 C
-      INTEGER NUCZ, NSPC, NVALNC(100)
-      REAL (kind=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
-C
-C
       REAL (kind=R8) :: SIGMAY(10,10), ZJN, ZQN, ZQNM, ZQNN
       INTEGER IM, IN, JN, JM, JQ, IIJM, IVALNC
       REAL (kind=R8) :: ADPALI
@@ -665,7 +594,7 @@ C
       ZQN = ZQN - SIGMAY(JN,JM) * APN(JQ,JM)
    20 CONTINUE
 C
-      ZQN = ZQN + APN(JQ,JN) * SIGMAY(JN,JN) / (2.e0_R8 * ZJN**2)
+      ZQN = ZQN + APN(JQ,JN) * SIGMAY(JN,JN) / (2.0_R8 * ZJN**2)
 C
       QN(JQ,JN) = ZQN
       IN = JN
@@ -677,9 +606,9 @@ C     CLEAR ARRAYS THEN COMPUTE EIN AND ENM
 C
 C
       DO 45 JN = 1 , 5
-      EIN(JQ,JN) = 0.e0_R8
+      EIN(JQ,JN) = 0.0_R8
       DO 40 JM = 1 , 10
-      ENM(JQ,JN,JM) = 0.e0_R8
+      ENM(JQ,JN,JM) = 0.0_R8
    40 CONTINUE
    45 CONTINUE
 C
@@ -706,7 +635,7 @@ C     JM WITH ONE ELECTRON REMOVED FROM SHELL JN.
 C
       IIJM = IVALNC
       IF(JN .EQ. IVALNC .OR.
-     &         AQN(JQ,IVALNC) .EQ. 0.e0_R8) IIJM = IVALNC + 1
+     &         AQN(JQ,IVALNC) .EQ. 0.0_R8) IIJM = IVALNC + 1
 C
       DO 60 JM = IIJM , 10
 C
@@ -765,6 +694,7 @@ C
       END FUNCTION ADPALI
       SUBROUTINE ADTIP(KTIPOK)
       use b2mod_types
+      use b2mod_adpak
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
 C
 C     SUBSTITUTE TABULATED IONISATION POTENTIALS FOR THOSE
@@ -772,16 +702,6 @@ C     CALCULATED BY SHIELDING CONSTANTS IN SETENM.  NOTE THAT THE
 C     'NUMBER OF EQUIVALENT ELECTRONS' IS NOT CORRECTLY RE-DEFINED
 C     TO ACCOMPANY THIS PROCEDURE, BUT THE APPROXIMATION IS STILL
 C     AN IMPROVEMENT FOR NEAR-NEUTRAL SPECIES.
-C
-      INTEGER NUCZ, NSPC, NVALNC(100)
-      REAL (kind=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
 C
       REAL (kind=R8) :: ZTIP(100)
       INTEGER JSPC, JSPCP1, KTIPOK, IVALNC
@@ -995,6 +915,7 @@ C
       END SUBROUTINE ADTIP
       SUBROUTINE ADFNM
       use b2mod_types
+      use b2mod_adpak
       use b2mod_constants
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
 #include "emissivity.constants"
@@ -1040,17 +961,6 @@ C     5) MERTS ET AL., THE CALCULATED POWER OUTPUT FROM
 C        A THIN IRON-SEEDED PLASMA, LOS ALAMOS REPORT LA-6220-MS
 C     6) XSNQ FORTRAN LISTING
 C
-C
-C
-      INTEGER           NUCZ, NSPC, NVALNC(100)
-      REAL (kind=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
 C
       REAL (kind=R8) :: ZANN(60), ZBNN(60), ZEPSNN(60), ZALPNN(60),
      &          ZY0(10), ZY1(10), ZY2(10), rydbrg, 
@@ -1291,6 +1201,7 @@ C
       END SUBROUTINE ADERC
       SUBROUTINE ADECI(PTE, PNE)
       use b2mod_types
+      use b2mod_adpak
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
       REAL (kind=R8) :: PTE, PNE
 C
@@ -1299,26 +1210,6 @@ C     THE FORMULAS SELECTED BY THE LECI SWITCH.  LECIOK RETURNS
 C     THE RATE FORMULAS ACTUALLY USED, WHICH MAY DIFFER FROM
 C     LECI IF LECI WAS SET INAPPROPRIATELY FOR THE GIVEN ELEMENT.
 C
-      INTEGER           NUCZ, NSPC, NVALNC(100)
-      REAL (kind=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
-C
-      REAL (kind=R8) :: RCLION(100), RRAREC(100), RDIREC(100),
-     &                  CIZLOS(100), RADRRC(100), RADDRC(100),
-     &                  RADCLX(100), RADBRM(100)
-      COMMON / ADELEC / RCLION, RRAREC, RDIREC,
-     &                  CIZLOS, RADRRC, RADDRC,
-     &                  RADCLX, RADBRM
-C
-      INTEGER           LADEN, LADTIP, LTIPOK, LECI, LECIOK
-      COMMON / ADPARM / LADEN, LADTIP, LTIPOK, LECI, LECIOK
-
       INTEGER IFLAG
 C
 C     CHECK FOR VALID LECI; RETURN LECI = 1 OPTION IF NOT VALID
@@ -1364,6 +1255,7 @@ C
       END SUBROUTINE ADECI
       SUBROUTINE ADXECI(PTE, PNE)
       use b2mod_types
+      use b2mod_adpak
       use b2mod_constants
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
       REAL (kind=R8) :: PTE, PNE
@@ -1401,25 +1293,6 @@ C        (WITH CORRECTIONS).
 C     3) XSNQ FORTRAN LISTING
 C
 C
-C
-C
-      INTEGER           NUCZ, NSPC, NVALNC(100)
-      REAL (kind=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
-C
-      REAL (kind=R8) :: RCLION(100), RRAREC(100), RDIREC(100),
-     &                  CIZLOS(100), RADRRC(100), RADDRC(100),
-     &                  RADCLX(100), RADBRM(100)
-      COMMON / ADELEC / RCLION, RRAREC, RDIREC,
-     &                  CIZLOS, RADRRC, RADDRC,
-     &                  RADCLX, RADBRM
-C
       REAL (kind=R8) :: ZJLKEV, ZTE, ZCHG, ZISUM, ZESUM, 
      &                  ZJN, ZXN, ZY, ZFY, ZGAUNT, ZITEMP 
       INTEGER JQ, JN, IVALNC
@@ -1428,15 +1301,12 @@ C
 C
       ZJLKEV = ev*1000.0_R8
 C
-C
       ZTE = PTE
 C
       DO 100 JQ = 1 , NUCZ
 C
       ZCHG = REAL(JQ - 1)
       IVALNC = NVALNC(JQ)
-C
-C
 C
 C     ******************** IONISATION RATE ********************
 C
@@ -1927,6 +1797,7 @@ C
       END FUNCTION FCHI
       SUBROUTINE ADRREC(PTE, PNE)
       use b2mod_types
+      use b2mod_adpak
       use b2mod_constants
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
       REAL (kind=R8) :: PTE, PNE
@@ -1974,25 +1845,6 @@ C     5) GRASBERGER, XSNQ - TOKAMAK MEMORANDUM #1, 2/11/76
 C     6) XSNQ FORTRAN LISTING
 C
 C
-C
-C
-      INTEGER           NUCZ, NSPC, NVALNC(100)
-      REAL (KIND=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
-C
-      REAL (KIND=R8) :: RCLION(100), RRAREC(100), RDIREC(100),
-     &                  CIZLOS(100), RADRRC(100), RADDRC(100),
-     &                  RADCLX(100), RADBRM(100)
-      COMMON / ADELEC / RCLION, RRAREC, RDIREC,
-     &                  CIZLOS, RADRRC, RADDRC,
-     &                  RADCLX, RADBRM
-
       REAL (KIND=R8) :: ZJLKEV, ZXN, ZTE, ZRSUM, ZRSUMC, ZRSUML,
      &                  ZRTEMP, ZRTMPC, ZRTMPL
       INTEGER JQ, JN, IVALNC, IVJQM1
@@ -2000,8 +1852,6 @@ C
       EXTERNAL EXPE1
 C
       ZJLKEV = ev*1000.0_R8
-C
-C
 C
       ZTE = PTE
 C
@@ -2014,8 +1864,6 @@ C
 C
       IVALNC = NVALNC(JQ)
       IVJQM1 = NVALNC(JQ - 1)
-C
-C
 C
 C     CALCULATE RADIATIVE RECOMBINATION RATES PER SHELL AND SUM THEM
 C     (SUMS (FRACTIONAL VACANCY OF SHELL) * (ALPHAN) ; ALPHAN
@@ -2064,6 +1912,7 @@ C
       END SUBROUTINE ADRREC
       SUBROUTINE ADDREC(PTE, PNE)
       use b2mod_types
+      use b2mod_adpak
       use b2mod_constants
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
       REAL (kind=R8) :: PTE, PNE
@@ -2121,33 +1970,6 @@ C        FROM A THIN IRON-SEEDED PLASMA, LOS ALAMOS REPORT LA-6220-MS
 C     7) XSNQ FORTRAN LISTING
 C     8) ANSARI, ELWERT AND MUCKLICH, ON DIELECTRONIC RECOMBINATION,
 C        ZEITSCHRIFT NATURFORSCHUNG 25A, 1781 (1970).
-C
-C
-C
-C
-      INTEGER           NUCZ, NSPC, NVALNC(100)
-      REAL (KIND=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
-C
-      REAL (KIND=R8) :: RCLION(100), RRAREC(100), RDIREC(100),
-     &                  CIZLOS(100), RADRRC(100), RADDRC(100),
-     &                  RADCLX(100), RADBRM(100)
-      COMMON / ADELEC / RCLION, RRAREC, RDIREC,
-     &                  CIZLOS, RADRRC, RADDRC,
-     &                  RADCLX, RADBRM
-C
-CBJB  Moved LDRMLT from before yhnna to the end of the common block.
-      REAL (KIND=R8) :: CDNN(100), CDNM(100), YHNNA, YHNNB, YHNNC,
-     &                  YHNMA, YHNMB, YHNMC
-      INTEGER           LDRMLT
-      COMMON /ADDIEL/   CDNN, CDNM, YHNNA, YHNNB, YHNNC,
-     &                  YHNMA, YHNMB, YHNMC, LDRMLT
 C
       REAL (KIND=R8) :: rydbrg
       REAL (KIND=R8) :: ZJLKEV, ZTE, ZNE, ZCHG, ZQ, ZQP1, ZBQ, ZNT, 
@@ -2256,15 +2078,13 @@ C
      &              CDNM(JQ) * (ZIQ * ZDNMRT + ZZZNM * ZDSUMR)
       RADDRC(JQ) = PNE * ZJLKEV * ZTEMP
 C
-C
-C
   100 CONTINUE
-C
 C
       RETURN
       END SUBROUTINE ADDREC
       SUBROUTINE ADDRCC
       use b2mod_types
+      use b2mod_adpak
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
 C
 C     REV: 10/10/82 FOR NEW AD PACKAGE
@@ -2276,23 +2096,6 @@ C
 C     LDRMLT = 0     USE CDNN, CDNM ARRAYS AS GIVEN
 C     LDRMLT = 1     CDNN, CDNM ARRAYS SET TO 1.0_R8
 C     LDRMLT = 2     USE Y. HAHN FACTORS TO SET UP CDNN, CDNM
-C
-      INTEGER           NUCZ, NSPC, NVALNC(100)
-      REAL (KIND=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
-C
-CBJB  Moved LDRMLT from before yhnna to the end of the common block.
-      REAL (KIND=R8) :: CDNN(100), CDNM(100), YHNNA, YHNNB, YHNNC,
-     &                  YHNMA, YHNMB, YHNMC
-      INTEGER           LDRMLT
-      COMMON /ADDIEL/   CDNN, CDNM, YHNNA, YHNNB, YHNNC,
-     &                  YHNMA, YHNMB, YHNMC, LDRMLT
 C
       INTEGER JSPC
       REAL (KIND=R8) :: ZNELEC
@@ -2322,6 +2125,7 @@ C
       END SUBROUTINE ADDRCC
       SUBROUTINE ADECEX(PTE, PNE)
       use b2mod_types
+      use b2mod_adpak
       use b2mod_constants
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
       REAL (kind=R8) :: PTE, PNE
@@ -2338,23 +2142,6 @@ C
 C     REFERENCES:
 C     1) POST ET AL. PPPL-1352 (CORRECTED)
 C
-C
-      INTEGER           NUCZ, NSPC, NVALNC(100)
-      REAL (KIND=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
-C
-      REAL (KIND=R8) :: RCLION(100), RRAREC(100), RDIREC(100),
-     &                  CIZLOS(100), RADRRC(100), RADDRC(100),
-     &                  RADCLX(100), RADBRM(100)
-      COMMON / ADELEC / RCLION, RRAREC, RDIREC,
-     &                  CIZLOS, RADRRC, RADDRC,
-     &                  RADCLX, RADBRM
 C
       REAL (KIND=R8) :: ZDNN(28), ZGAMNN(28)
       SAVE ZDNN, ZGAMNN
@@ -2454,6 +2241,7 @@ C
       END SUBROUTINE ADECEX
       SUBROUTINE ADBREM(PTE, PNE)
       use b2mod_types
+      use b2mod_adpak
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
       REAL (KIND=R8) :: PTE, PNE
 C
@@ -2472,23 +2260,6 @@ C     1) POST ET AL. PPPL-1352 (CORRECTED)
 C     2) KARZAS AND LATTER
 C     3) TUCKER
 C
-C
-      INTEGER           NUCZ, NSPC, NVALNC(100)
-      REAL (KIND=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10), FNN(100), ENN(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM, FNN, ENN
-C
-      REAL (KIND=R8) :: RCLION(100), RRAREC(100), RDIREC(100),
-     &                  CIZLOS(100), RADRRC(100), RADDRC(100),
-     &                  RADCLX(100), RADBRM(100)
-      COMMON / ADELEC / RCLION, RRAREC, RDIREC,
-     &                  CIZLOS, RADRRC, RADDRC,
-     &                  RADCLX, RADBRM
 C
       REAL (KIND=R8) :: ZTE, ZGFF, ZCHG
       INTEGER JQ
@@ -2567,6 +2338,7 @@ C
       END FUNCTION EXPUND
       SUBROUTINE ADBCXR(PNNEUT, PVNEUT, KNCXB, KCXOPT, KERR, KVUNIT)
       use b2mod_types
+      use b2mod_adpak
       use b2mod_constants
       IMPLICIT REAL (kind=R8) (A-H,O-Z)
 CBJB  DIMENSION PNNEUT(1), PVNEUT(1)
@@ -2596,19 +2368,6 @@ C          KERR = ERROR FLAG FROM ADCXXS ROUTINE (0 = O.K.)
 C          RADBCX = RADIATION RATE DUE TO CASCADE AFTER
 C                   CHARGE EXCHANGE TO EXCITED LEVEL (WATTS / ION)
 C
-C
-      INTEGER           NUCZ, NSPC, NVALNC(100)
-      REAL (KIND=R8) :: APN(100,10), AQN(100,10),
-     &                  SIGMA(10,10), QN(100,10),
-     &                  EN(100,10), EIN(100,5), ENM(100,5,10),
-     &                  FNM(100,5,10),FNN(100),ENN(100)
-      COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
-     &                  NVALNC, SIGMA, QN,
-     &                  EN, EIN, ENM,
-     &                  FNM,FNN,ENN
-C
-      REAL (KIND=R8) :: RCXREC(100), RADBCX(100)
-      COMMON / ADNEUT / RCXREC, RADBCX
 C
       REAL (KIND=R8) :: ZSIGMA(100)
       REAL (KIND=R8) :: ZJLKEV, ZNFLUX, ZVCMS

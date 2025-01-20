@@ -1,4 +1,4 @@
-      subroutine b2tlc0 (nCv, nFc, nVx, ns, switch, geo, mpg, na, te, 
+      subroutine b2tlc0 (nCv, nFc, nVx, ns, switch, geo, mpg, na, te,
      &  ti, tn, rza, cdpa0, cdpa, cdpahz, flc)
       use b2mod_types
       use b2mod_constants
@@ -10,10 +10,14 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : b2tlc0_cutlo
+#ifndef NAGFOR
+      use b2mod_ad
+     & , only : my_out_folder
+#endif
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns
+      integer, intent (in) :: nCv, nFc, nVx, ns
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -43,7 +47,7 @@
 *   ..subprogram start-up calls
       call subini ('b2tlc0')
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv .and. 0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
 
       call sfill(nFc*2*ns, 1.0_R8, flc, 1)
@@ -69,7 +73,7 @@
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
      &            *geo%fcS(iFc)*abs(geo%fcQalf(iFc,0))
             t2 = 1.0_R8/(1.0_R8 +
-     &        (dpb/(alpha*vbar/4.0e0_R8*t1 + b2tlc0_cutlo))**gamma)
+     &        (dpb/(alpha*vbar/4.0_R8*t1 + b2tlc0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
             cdpa(iFc,0,is) = cdpa(iFc,0,is)*t2
             cdpahz(iFc,0,is) = cdpahz(iFc,0,is)*t2
@@ -80,7 +84,7 @@
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
      &        *geo%fcS(iFc)*abs(geo%fcQalf(iFc,1))
             t2 = 1.0_R8/(1.0_R8 +
-     &        (dpb/(alpha*vbar/4.0e0_R8*t1 + b2tlc0_cutlo))**gamma)
+     &        (dpb/(alpha*vbar/4.0_R8*t1 + b2tlc0_cutlo))**gamma)
      &                                                 **(1.0_R8/gamma)
             cdpa(iFc,1,is)   = cdpa(iFc,1,is)*t2
             cdpahz(iFc,1,is) = cdpahz(iFc,1,is)*t2
@@ -108,8 +112,8 @@ cwdk    or radial contributions, since neutral transport is isotropic
             dpb = cdpa0(iFc,is)*sqrt(dpbf(iFc,0)**2 + dpbf(iFc,1)**2)
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
      &           *geo%fcS(iFc)
-            t2 = 1.0_R8/(1.0_R8 + 
-     &        (dpb/(alpha*vbar/4.0e0_R8*t1 + b2tlc0_cutlo))**gamma)
+            t2 = 1.0_R8/(1.0_R8 +
+     &        (dpb/(alpha*vbar/4.0_R8*t1 + b2tlc0_cutlo))**gamma)
      &                                                  **(1.0_R8/gamma)
 *    ..poloidal
             cdpa(iFc,0,is)   = cdpa(iFc,0,is)*t2
@@ -130,15 +134,15 @@ cwdk    or radial contributions, since neutral transport is isotropic
 !      write(*,'(1x,a,1p,2e10.2)') 'b2tlc0: maxfluxlimit = ',maxfluxlimit
 
        if (switch%b2tlc0_iout.ne.0) then
-         do is=0,ns-1          
-           if (is_neutral(is)) then                            
+         do is = 0, ns-1
+           if (is_neutral(is)) then
              write (charns,'(i3.3)') is
              call my_out_us(70,nFc,1, flc(1,0,is),
      &               'fl_fn_th'//charns)
              call my_out_us(70,nFc,1, flc(1,1,is),
      &               'fl_fn_r'//charns)
            endif
-         enddo                                            
+         enddo
        endif
 
 *   ..return

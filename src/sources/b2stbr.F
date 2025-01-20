@@ -5,25 +5,26 @@
      &  nscx, nscxmax, iscx, ismain, dtim,
      &  switch, geo, mpg, st, st_ext, st_avg, main_call)
       use b2mod_types
+      use b2mod_openmp
 !WG_TODO      use b2mod_wall
       use b2mod_diag
       use b2mod_time
 !WG_TODO      use b2mod_layer
 !WG_TODO      use b2mod_elements
 !WG_TODO      use b2mod_sputter
-!WG_TODO      use b2mod_first_flight
+      use b2mod_first_flight
       use b2mod_constants
-!WG_TODO      use b2mod_neutrals_namelist
+      use b2mod_neutrals_namelist
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
      &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
 #ifdef WG_TODO
-     &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
-     &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
      &          b2stbr_first_flight_sna0to1,
      &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
 #endif
      &          balance_netcdf
+#endif
       use b2mod_subsys
 #ifdef B25_EIRENE
       use b2mod_eirene
@@ -34,6 +35,7 @@
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
+      use b2mod_numerics_namelist
 #ifndef NO_CDF
       use b2mod_tallies
 #endif
@@ -47,7 +49,9 @@
       use b2us_map
       use b2us_plasma
       use b2mod_ad
-     & , only : ncall_b2stbr, old_deposition, old_erosion
+     & , only : ncall_b2stbr, old_deposition, old_erosion,
+     &          in_no_of_start_points, in_no_of_angles,
+     &          in_size_of_table
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -98,7 +102,7 @@
 *.declarations
 
 *   ..local variables
-      integer is, k
+      integer iCv, iFc, is, k
 #ifdef WG_TODO
       integer ib, ic, ibnd, itrack
       integer, save :: jxi, jxa, jsep
@@ -108,6 +112,9 @@
       integer, save :: ncall_iout = -1
 #ifdef B25_EIRENE
       integer ia, im
+#ifdef ASTRA
+      integer, save :: use_astra = 0
+#endif
       character ch3*3
 #endif
       character chns*3, chk*1                                        !srv 11.09.09 } 23.03.12
@@ -125,11 +132,16 @@
 #ifdef B25_EIRENE
      &, fatm_eir(nFc,0:1,nnatmi),                                    !srv 29.04.10 }
      &  fmol_eir(nFc,0:1,nnmoli),                                    !IYS 27.01.17
-     &  flxtmp(nCv)
+     &  flxtmp(nCv),
+     &  sna_puff(nspecies),  !sna_eir_tot(nspecies),
+     &  sna_core(nspecies), sna_pump(nspecies), sna_sptt(nspecies),  !iyv 07.03.18
+     &  t(nspecies), t01(nspecies), ext_sna_tot(nspecies),
+     &  sna_eir(nspecies)
+      real (kind=R8), allocatable, save :: t1(:)
+      integer ip, j, nplsi
 #endif
       integer sput_src,
 #ifdef WG_TODO
-     *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  coreregn2,
 #endif
      2  sput_chem_model, reflection_on, sputter_energy_on
@@ -142,11 +154,15 @@
 #endif
      *  shi0_ff(nCv,0:nscx-1), wrk0(nCv),
      *  f_redep(nCv,0:ns-1)
-#ifdef WG_TODO
+#ifdef _OPENMP
+      real (kind=R8) :: start_time, end_time
+#else
       real (kind=R4) :: start_time, end_time
+#endif
+#ifdef WG_TODO
       logical equilibrium(ntrack), over_erosion
 #endif
-      logical new_sputter_namelist
+      logical new_sputter_namelist, catch_up
 #ifndef NO_CDF
 #include <netcdf.inc>
       integer :: status, ncid, ndims, nvars, natts, unlimid
@@ -157,26 +173,17 @@
 #endif
 *   ..procedures
       external xertst, xerrab, sfill, ipgetr, ipgeti
-      external b2xvsg, b2xvff, smax, smin, get_jsep
+      external b2xvsg, smax, smin, get_jsep
       real (kind=R8) :: smax, smin
-#ifdef WG_TODO
       intrinsic mod
-#endif
-#if ( defined(_OPENMP) && defined(CRAY) )
-      real (kind=R8) :: omp_get_wtime
-      external omp_get_wtime
-#endif
 *   ..initialisation
       save sput_src,
 #ifdef WG_TODO
-     *     in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1     coreregn2,
 #endif
      5     sput_chem_model, reflection_on, sputter_energy_on
       data sput_src/1/,
 #ifdef WG_TODO
-     *     in_no_of_angles/9/,
-     *     in_size_of_table/200000/,
      1     coreregn2/4/,
 #endif
      7     sput_chem_model/0/,
@@ -198,50 +205,43 @@
       if (ncall_b2stbr.eq.0) then
 !WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
         if (switch%use_eirene.ne.0) out_tfiles=0
+#if ( defined(B25_EIRENE) && defined(ASTRA) )
+        call ipgeti ('b2mndr_astra', use_astra)
+#endif
         call ipgeti ('b2stbr_out_tfiles', out_tfiles)                !srv 07.04.09
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
         if(switch%b2stbr_first_flight.ne.0) then
-        call xerrab ('b2stbr -- first flight options not av. for WG')
-#ifdef WG_TODO
-           call ipgeti ('b2stbr_first_flight_no_of_flights',
-     *          in_no_of_angles)
-           call ipgeti ('b2stbr_first_flight_table_size',
-     *          in_size_of_table)
-           in_no_of_start_points = 2*(nx+2)+2*max(nncut,1)*(ny+2)
-           call ipgeti ('b2stbr_first_flight_no_of_start_points',
-     *       in_no_of_start_points)
-           call xertst (0.lt.in_no_of_start_points,
-     *      'faulty input first_flight_no_of_start_points')
+          call ipgeti ('b2stbr_first_flight_no_of_flights',
+     *      in_no_of_angles)
+          call ipgeti ('b2stbr_first_flight_table_size',
+     *      in_size_of_table)
+          in_no_of_start_points = nCv - mpg%nCi
+          call ipgeti ('b2stbr_first_flight_no_of_start_points',
+     *      in_no_of_start_points)
+          call xertst (0.lt.in_no_of_start_points,
+     *     'faulty input first_flight_no_of_start_points')
 #ifdef _OPENMP
-           start_time = omp_get_wtime()
+          start_time = omp_get_wtime()
 #else
-           call cpu_time(start_time)
+          call cpu_time(start_time)
 #endif
-           call alloc_b2mod_first_flight(
-     *          in_no_of_angles,in_size_of_table,
-     *          in_no_of_start_points,switch%in_dl)
-           do iCv=1,nCv
-             if(leftix(ix,ib).eq.-2 .and. region(ix,ib,0).ne.0)
-     >        call setup_b2mod_first_flight(mpg,geo,iCv,'W',output)
-             if(rightix(ix,ib).eq.nx+1 .and. region(ix,ib,0).ne.0)
-     >        call setup_b2mod_first_flight(mpg,geo,iCv,'E',output)
-           enddo
-           do iCv=1,nCv
-             if(topiy(ib,iy).eq.ny+1 .and. region(ib,iy,0).ne.0)
-     >        call setup_b2mod_first_flight(mpg,geo,iCv,'N',output)
-             if(bottomiy(ib,iy).eq.-2 .and. region(ib,iy,0).ne.0)
-     >        call setup_b2mod_first_flight(mpg,geo,iCv,'S',output)
-           enddo
+          call alloc_b2mod_first_flight(
+     *      in_no_of_angles,in_size_of_table,
+     *      in_no_of_start_points,switch%b2stbr_in_dl)
+          do iCv=mpg%nCi+1,nCv
+            iFc=mpg%cvFc(mpg%cvFcP(iCv,1))
+            call setup_b2mod_first_flight(mpg,geo,iCv,iFc,
+     *       switch%b2stbr_output)
+          enddo
 #ifdef _OPENMP
-           end_time = omp_get_wtime()
+          end_time = omp_get_wtime()
 #else
-           call cpu_time(end_time)
+          call cpu_time(end_time)
 #endif
-           write(*,'(a,i8,a,i8,a,g10.3,a,g12.5,a)')
-     *          'Used ',ptr_table,' out of ',size_of_table,
-     *          ' (',real(ptr_table)/real(size_of_table)*100,'%)',
-     *          end_time-start_time,' cpu-seconds'
-#endif
+          write(*,'(a,i8,a,i8,a,g10.3,a,g12.5,a)')
+     *     'Used ',ptr_table,' out of ',size_of_table,
+     *     ' (',real(ptr_table)/real(size_of_table)*100,'%)',
+     *      end_time-start_time,' cpu-seconds'
         endif
         call ipgeti ('b2stbr_sput_src', sput_src)
         call ipgeti ('b2stbr_sput_chem_model', sput_chem_model)
@@ -255,10 +255,10 @@
         call ipgeti ('b2stbr_sputter_energy_on', sputter_energy_on)
         if(switch%use_eirene.eq.0) switch%neutral_rescale=1.0_R8
         if(switch%use_eirene.eq.0) switch%neutral_sources_rescale=1.0_R8
+#ifdef WG_TODO
         call xertst (cbirso.le.switch%b2stbr_coreregno.and.
      1   switch%b2stbr_coreregno.le.cbirso+cbnrso-1,
      2   'faulty internal parameter coreregno')
-#ifdef WG_TODO
         if (nncut.ge.2) then
           call ipgeti ('b2stbc_coreregn2', coreregn2)
           call xertst (cbirso.le.coreregn2.and.
@@ -268,7 +268,6 @@
 #endif
         call ipgeti ('b2stbr_no_b2stbr_phys_call', no_b2stbr_phys_call)
       else
-#ifdef WG_TODO
         if(neutrals_time_mod.gt.0.0_R8) then
           write(*,*) 'NEUTRALS: ',tim,mod(tim,neutrals_time_mod),
      1     neutrals_time_switch,int(tim/neutrals_time_mod),
@@ -288,16 +287,15 @@
         if(catch_up) then
           if(neutrals_time_mod.gt.0.0_R8)
      >     neutrals_count=int(tim/neutrals_time_mod)
-          call read_neutrals_namelist(nx, ny, ns, .true.)
+          call read_neutrals_namelist(ns, mpg, switch, .true.)
           new_sputter_namelist=.true.
           call xertst (nstrat.le.nstraid,
      &     'Increase DEF_NSTRA in b2mod_dimensions')
           call write_b2mod_neutrals_namelist
         endif
-#endif
       endif
 *   ..test nCv, nFc, ns
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      & 'faulty argument ismain')
@@ -354,7 +352,12 @@
       tresn=0.0_R8
       trfle=0.0_R8
       trfln=0.0_R8
-
+#ifdef B25_EIRENE
+      if( sum(sna_corr).gt.0.0_R8 .and. .not.allocated(t1)) then
+        allocate(t1(1:nspecies))
+        t1=0.0_R8
+      endif
+#endif
       if (main_call) then
         old_erosion(1:nbnd,1:ntargsp)=erosion(1:nbnd,1:ntargsp)
         old_deposition(1:nbnd,1:ntargsp)=deposition(1:nbnd,1:ntargsp)
@@ -390,75 +393,44 @@ c   --> better solution wanted here..
         enddo
 #endif
        endif
-       if (switch%b2stbr_neutrals_namelist.eq.1
-     &                          .or. switch%use_eirene.ne.0) then
-        if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
-        if (balance_netcdf.ne.0) then
+       if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
+#ifndef FIXED_POINT
+       if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources before hand
-          snatmp=st%srw%sna0
-          smotmp=st%srw%smo0
-          shetmp=st%srw%she0
-          shitmp=st%srw%shi0
-        endif
-        call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
+         snatmp=st%srw%sna0
+         smotmp=st%srw%smo0
+         shetmp=st%srw%she0
+         shitmp=st%srw%shi0
+       endif
+#endif
+       call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
      &   dtim, switch, geo, mpg,
      &   st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
      &   tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   sput_src, sput_chem_model, reflection_on, sputter_energy_on,
      &   main_call, new_sputter_namelist, shi0_ff, f_redep)
-        if (balance_netcdf.ne.0) then
-          !djm Mar2017 store source contributions
-          b2stbr_phys_sna0to1=st%srw%sna0-snatmp
-          b2stbr_phys_smo0to3=st%srw%smo0-smotmp
-          b2stbr_phys_she0to3=st%srw%she0-shetmp
-          b2stbr_phys_shi0to3=st%srw%shi0-shitmp
-        endif
-       else
-#ifdef WG_TODO
-        if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
-        if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources beforehand
-          snatmp=sna0
-          smotmp=smo0
-          shetmp=she0
-          shitmp=shi0
-        endif
-        call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, switch%BoRiS,
-     &   na, ua, kinrgy,
-     &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &   sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
-     &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
-     &   switch%b2stbr_coreregno, coreregn2, output,
-     &   switch%neutral_sources_rescale,
-     &   switch%b2stbr_core_sources_rescale,
-     &   sput_src, switch%b2stbr_sput_frc, switch%b2stbr_sput_phys,
-     &   switch%b2stbr_sput_chem_alpha, switch%sput_phys_alpha,
-     &   switch%b2stbr_alpha, sput_chem_model, switch%b2stbr_therm_evap,
-     &   switch%b2stbr_sput_res, reflection_on, sputter_energy_on,
-     &   main_call, switch%b2stbr_sput_chem_cutoff_alpha,
-     &   switch%b2stbr_sput_chem_cutoff_beta, shi0_ff,
-     &   f_redep, switch%b2stbr_potential_at_guard_cell,
-     &   switch%recycled_neutrals_contr)
-        if (balance_netcdf.ne.0) then
-          !djm Mar2017 store source contributions
-          b2stbr_bas_sna0to1=sna0-snatmp
-          b2stbr_bas_smo0to3=smo0-smotmp
-          b2stbr_bas_she0to3=she0-shetmp
-          b2stbr_bas_shi0to3=shi0-shitmp
-        endif
-#endif
+#ifndef FIXED_POINT
+       if (balance_netcdf.ne.0) then
+         !djm Mar2017 store source contributions
+         b2stbr_phys_sna0to1=st%srw%sna0-snatmp
+         b2stbr_phys_smo0to3=st%srw%smo0-smotmp
+         b2stbr_phys_she0to3=st%srw%she0-shetmp
+         b2stbr_phys_shi0to3=st%srw%shi0-shitmp
        endif
+#endif
       endif
 
       if(switch%b2stbr_first_flight.ne.0) then
 #ifdef WG_TODO
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources beforehand
           snatmp=sna0
           shetmp=she0
           shitmp=shi0
         endif
+#endif
 #ifdef _OPENMP
         start_time = omp_get_wtime()
 #else
@@ -549,12 +521,14 @@ c   --> better solution wanted here..
 #endif
         if(main_call)
      >   write(*,*) end_time-start_time,' cpu-seconds'
+#ifndef FIXED_POINT
         if (balance_netcdf.ne.0) then
           !djm Mar2017 store source contributions
           b2stbr_first_flight_sna0to1=sna0-snatmp
           b2stbr_first_flight_she0to3=she0-shetmp
           b2stbr_first_flight_shi0to3=shi0-shitmp
         endif
+#endif
 #endif
       endif
 
@@ -575,7 +549,124 @@ c   --> better solution wanted here..
 #ifdef B25_EIRENE
         call eirene_mc(nCv, nFc, ns, dtim,                          !srv 29.04.10 {
      &                 sna0_eir, smo0_eir, she0_eir, shi0_eir, shn0_eir,
-     &                 main_call, switch, geo, mpg, st)
+     &                 main_call, switch, geo, mpg, st, st_ext)
+
+*   ..main part of implementation of method of effective sources (ES)
+        if (sum(sna_corr).gt.0.0_R8) then                           !iyv 07.03.18 {
+          ! if ( iout .ne. 0 )
+          write(*,*) '******* sna_eir correction calculations *******'
+          sna_core = 0.0_R8
+          do is=0,st%pl%ns-1
+            k = b2espcr(is)
+            if (is_neutral(is).or.(.not.do_sna_corr_core(k))) cycle
+            do iCv=mpg%nCi+1,nCv
+              if(mpg%cvOnClosedSurface(iCv)) then
+                iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+                if (switch%mdf_fnb.ne.0) then
+                  sna_core(k) = sna_core(k) + st%dv%fna_mdf(iFc,1,is)
+                else
+                  sna_core(k) = sna_core(k) + st%dv%fna(iFc,1,is)
+                end if
+              endif
+            enddo
+          enddo
+
+          sna_eir = 0.0_R8
+          ext_sna_tot = 0.0_R8
+          write(*,*) "max sna0_eir", maxval(abs(sna0_eir)),
+     &     size(sna0_eir,1), size(sna0_eir,2), size(sna0_eir,3)
+          do is=0,st%pl%ns-1
+            if(is_neutral(is)) cycle
+            k = b2espcr(is)
+            do iCv=1,nCv
+              sna_eir(k) = sna_eir(k) +
+     &         sna0_eir(iCv,0,is) + sna0_eir(iCv,1,is)*st%pl%na(iCv,is)
+              ext_sna_tot(k) = ext_sna_tot(k) + st_ext%sna(iCv,is)
+            enddo
+          enddo
+
+          sna_puff =0.0_R8
+          do is=1,nstrat
+            if(crcstra(is).eq.'C') then
+              do ia=1,nnatmi
+                if(latmscl(ia).eq.0) cycle
+                if(gpfc(ia,is).ne.0.0_R8) sna_puff(latmscl(ia)) =
+     &           sna_puff(latmscl(ia)) + userfluxparm(is,1)*gpfc(ia,is) !*recyctmp
+              end do
+            end if
+          enddo
+
+          sna_pump = 0.0_R8
+          sna_sptt = 0.0_R8
+          do ia = 1, nnatmi
+            k = latmscl(ia)
+            if (k.eq.0) cycle
+            sna_sptt(latmscl(ia)) = sna_sptt(latmscl(ia)) + eirspta(ia)
+            sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) + eirpump(ia)
+            do im = 1, nnmoli
+              if (mlcmp(ia,im).gt.0) then
+                sna_pump(latmscl(ia)) = sna_pump(latmscl(ia)) +
+     &             mlcmp(ia,im) * eirpump(nnatmi+im)
+                sna_sptt(latmscl(ia)) = sna_sptt(latmscl(ia)) +
+     &             mlcmp(ia,im) * eirsptm(im)
+              endif
+            enddo
+          end do
+          do ip = 1, nnplsi
+            is = latmscl(lkindp(ip))
+            if (is.eq.0) cycle
+            sna_pump(is) = sna_pump(is) +
+     &         eirpump(nnatmi+nnmoli+nnioni+ip)
+          enddo
+
+!           if ( iout .ne. 0 ) then
+          write(*,'(a5,7a16)') 'ia', 'sna_core', 'sna_eir',
+     &     'sna_puff', 'sna_pump', 'sna_sptt', 'sna_ext', 't1'
+          do k = 1, nspecies
+            write(*, '(i5, 7es16.7)') k, sna_core(k),  sna_eir(k),
+     &       sna_puff(k), sna_pump(k), sna_sptt(k), ext_sna_tot(k),
+     &       t1(k)
+          enddo
+
+          write(*,'(a3,3a17)') 'ia','dG/sna_eir','t1(ia)','t(ia)'
+!           endif
+
+          do k = 1, nspecies
+            if (sna_eir(k).ne.0.0_R8) then
+              t01(k) =  sna_corr(k)*( sna_puff(k) + sna_core(k) +
+     &            sna_sptt(k) - sna_pump(k) + ext_sna_tot(k) ) /
+     &            sna_eir(k)
+            else
+              t01(k) = 0.0_R8
+            end if
+            t1(k) = t01(k)* ( 1.0_R8 - exp(-0.02_R8) ) + !c_pumpavr
+     &                     exp(-0.02_R8)*t1(k) !c_pumpavr
+ !           t1(k) = t01(k)
+            t(k) = 1.0_R8 +
+     &              max( min( taumax(k),t1(k) ), -taumax(k) )
+            !if ( iout .ne. 0 )
+            write(*,'(i3,3es17.4)') k, t01(k), t1(k), t(k)
+!            sna_eir(k) = sna_eir(k)*t(k)
+          enddo
+
+          sna_eir = 0.0_R8
+          do is = 0, ns-1
+            k = b2espcr(is)
+            if(is_neutral(is)) cycle
+!            if(eirspta(k).eq.0.0_R8) then  ! not for sputtered particles yet
+            do iCv=1,nCv
+              if (do_sna_corr_core(k) .or.
+     &                (.not.mpg%cvOnClosedSurface(iCv))) then
+                sna0_eir(iCv,0,is) = sna0_eir(iCv,0,is)*t(k)
+                sna0_eir(iCv,1,is) = sna0_eir(iCv,1,is)*t(k)
+              end if
+              sna_eir(k) = sna_eir(k) +
+     &           sna0_eir(iCv,0,is) +
+     &           sna0_eir(iCv,1,is)*st%pl%na(iCv,is)
+            enddo
+          end do
+
+        end if ! if b2stbr_sna_corr ...                                   !iyv 07.03.18 }
 
         if(ncall_b2stbr.le.999. and. ncall_b2stbr.le.ncall_iout) then
          do is = 0, ns-1
@@ -610,7 +701,7 @@ cwdk       down in this routine
      &    shi0_eir(:,2)*st%dv%ni(:,0) +
      &    shi0_eir(:,3)*st%dv%ni(:,0)*st%pl%ti
         st%srw%shn0_eir_tot = shn0_eir(:,0) + shn0_eir(:,1)*st%pl%tn +
-     1    shn0_eir(:,2)*st%dv%nn + 
+     1    shn0_eir(:,2)*st%dv%nn +
      1    shn0_eir(:,3)*st%pl%tn*st%dv%nn
 
 *       get averaged sources
@@ -646,13 +737,13 @@ cwdk these are now put back into the constant part of the sources (0-component)
         st%srw%she0 = st%srw%she0 + she0_eir
         st%srw%shi0 = st%srw%shi0 + shi0_eir
         if (switch%tn_style.eq.0) then     !! default, combined ion-neutral energy equation
-          st%srw%shi0 = st%srw%shi0 + shn0_eir 
+          st%srw%shi0 = st%srw%shi0 + shn0_eir
         elseif (switch%tn_style.eq.1) then !! pure ion energy equation
           !! combination of condensation reactions (leading to non-zero shn from eirene) and tn_style = 1 is not allowed.
           call xertst (SUM(shn0_eir).eq.0,
      &     'shn_eir.ne.0 is not allowed for tn_style = 1')
         else                               !! separate neutral energy equation
-          st%srw%shn0 = st%srw%shn0 + shn0_eir 
+          st%srw%shn0 = st%srw%shn0 + shn0_eir
         endif
 
 #ifdef ASTRA
@@ -661,17 +752,17 @@ cwdk these are now put back into the constant part of the sources (0-component)
             if(is.eq.ismain) then
               wrk0=sna0_eir(:,0,is)+
      &             sna0_eir(:,1,is)*st%pl%na(:,is)
-              call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, se)
+              call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, se)
             endif
           enddo                                                          !srv 28.07.11 20.02.12 }
           wrk0=she0_eir(:,:,0)+
      &     she0_eir(:,:,1)*st%pl%te(:,:)+she0_eir(:,:,2)*st%dv%ne+
      &     she0_eir(:,:,3)*st%dv%ne*st%pl%te
-          call b2_to_astra_src(mpg, ny, vol, wrk0, svol, seh)             !srv 11.06.13
+          call b2_to_astra_src(mpg, nx, ny, vol, wrk0, svol, seh)             !srv 11.06.13
           wrk0=shi0_eir(:,:,0)+
      &     shi0_eir(:,:,1)*st%pl%ti+shi0_eir(:,:,2)*st%dv%ni(:,:,0)+
      &     shi0_eir(:,:,3)*st%dv%ni(:,:,0)*st%pl%ti
-          call b2_to_astra_src(mpg, ny, vol, wrk0, svol, sih)             !srv 11.06.13
+          call b2_to_astra_src(mpg, nx, ny, vol, wrk0, svol, sih)             !srv 11.06.13
         endif
 #endif
         do ia = 1, nnatmi
@@ -1081,8 +1172,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 
       call subini ('b2stbr_neutr_scl')
       if (ncall_b2stbr_neutr_scl.eq.0) then
-        call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
-        call xertst(1.le.ns, 'faulty argument ns')
+        call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+        call xertst (1.le.ns, 'faulty argument ns')
       endif
       if(use_eirene.ne.0.and.ank_mods.ne.0) then
 #ifdef B25_EIRENE
@@ -1108,6 +1199,7 @@ c        write(*,*) 'Called neutr_scl'
       use b2mod_wall
       use b2mod_b2cmpa
       use b2mod_sputter
+     , , only : sput_dst, sput_dst2, sput_dst3
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_recycle

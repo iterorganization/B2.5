@@ -9,9 +9,13 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tlmv
+#ifndef NAGFOR
+      use b2mod_ad
+     & , only : my_out_folder
+#endif
       use b2mod_subsys
       implicit none
-      integer nCv, nFc, nVx, isb
+      integer, intent (in) ::  nCv, nFc, nVx, isb
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -24,7 +28,7 @@
       integer iFc
       character charns*3                                             !srv 12.04.04
       real (kind=R8) ::
-     *   qcl, qfl, tfl, ubv(nVx), dub(nFc)
+     *   qcl, qfl, tfl, ubv(nVx), dub(nFc), cflmv_loc(nFc), nbf(nFc)
       intrinsic abs
       external xertst
       external b2xvsg
@@ -32,7 +36,7 @@
 *     ------------------------------------------------------------------
       call subini ('b2tlmv')
 *   ..test nCv, nFc
-      call xertst (0.le.nCv.and.0.le.nFc, 'faulty argument nCv, nFc')
+      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
 *   ..test cflmv
       call xertst (0.0_R8.le.cflmv, 'faulty argument cflmv')
 *   ..extensive tests on first few calls
@@ -41,6 +45,28 @@
        call b2xvsg (nCv, nb, 1, 'nb', '.gt.')
        call b2xvsg (nCv, tb, 1, 'tb', '.gt.')
       endif
+
+      ! Init local flux limit to constant value
+      cflmv_loc = cflmv
+
+      ! Enhanced flux limit for low-density regions
+      if (switch%b2tlmv_far_sol .eq. 1) then
+        ! Attempt enhanced flux limit for low-density regions
+        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,nb,nbf)
+        do iFc = 1, nFc
+          if (nbf(iFc) .le. switch%b2tlmv_ni_min) then
+           ! Set at min value
+           cflmv_loc(iFc) = switch%b2tlmv_cflmv_min
+          elseif (nbf(iFc) .lt. switch%b2tlmv_ni_max ) then
+           ! Interpolate for smooth transition
+           cflmv_loc(iFc) = 
+     .      (cflmv*(nbf(iFc) - switch%b2tlmv_ni_min) + 
+     .       switch%b2tlmv_cflmv_min*(switch%b2tlmv_ni_max - nbf(iFc)))/
+     .      (switch%b2tlmv_ni_max - switch%b2tlmv_ni_min)
+          endif
+        enddo
+      endif
+
 *   ..compute differences of ub at faces
       call diff_p(nCv, nFc, nVx, 0, geo, mpg, ub, ubv, dub)
 
@@ -48,7 +74,7 @@
       if(switch%b2tlmv_style.eq.0) then                              !srv 30.05.08
        do iFc = 1, nFc
           qcl = -cvsbx(iFc)*dub(iFc)
-          qfl = cflmv*abs(geo%fcPbs(iFc))*                           !srv 11.01.13
+          qfl = cflmv_loc(iFc)*abs(geo%fcPbs(iFc))*                  !srv 11.01.13
      &     (nb(mpg%fcCv(iFc,1))*tb(mpg%fcCv(iFc,1))+
      &      nb(mpg%fcCv(iFc,2))*tb(mpg%fcCv(iFc,2)))/2.0_R8  
           if (qfl.gt.0.0_R8) then 
@@ -71,7 +97,7 @@ c       fl = 1.0_R8
      &              mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &              mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then    !srv 12.04.08
            qcl = -cvsbx(iFc)*dub(iFc)
-           qfl = cflmv*abs(geo%fcPbs(iFc))*                          !srv 11.01.13
+           qfl = cflmv_loc(iFc)*abs(geo%fcPbs(iFc))*                 !srv 11.01.13
      &          (nb(mpg%fcCv(iFc,1))*tb(mpg%fcCv(iFc,1))+
      &           nb(mpg%fcCv(iFc,2))*tb(mpg%fcCv(iFc,2)))/2.0_R8
            if (qfl.gt.0.0_R8) then

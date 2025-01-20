@@ -5,24 +5,21 @@ MSCL_ROOT   ?= /tokp/work/dpc/SOLPS-ITER/mscl
 LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
 GLI_HOME    ?= /tokp/work/dpc/SOLPS-ITER/gks
 NCARG_ROOT  ?= /tokp/work/dpc/SOLPS-ITER/NCARG
-LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/tokp/work/software/TOK_2019/software/cairo/1.16.0/lib -lcairo -L/tokp/work/software/TOK_2019/software/freetype/2.11.1/lib -lfreetype -L/usr/X11R6/lib64 -lX11 -lm
+LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/tokp/work/software/TOK_2019/software/cairo/1.16.0/lib -lcairo -L/tokp/work/software/TOK_2019/software/freetype/2.11.1/lib -lfreetype -L/usr/lib64 -lX11 -lm
 NAGDIR      ?= /tokp/work/dpc/SOLPS-ITER/nag
 LD_NAG      ?= -L${NAGDIR} -lnag
 MDSPLUS_DIR ?= /tokp/work/dpc/SOLPS-ITER/MDSPLUS
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 
-ifdef USE_MPI
-FC       = mpiifort
+MPI_FC  ?= mpiifort
+ifdef SOLPS_MPI
+FC       = ${MPI_FC}
 else
 ifdef USE_IMPGYRO
-FC       = mpiifort
-else
-FC       = ifort
+FC       = ${MPI_FC}
 endif
 endif
-
-COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d ' ' -f 2 )
 
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
@@ -30,29 +27,12 @@ else
 FCOPTS   = -O2 -xHost
 endif
 
-ifdef USE_OPENMP
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
-FCOPTS  += -qopenmp
-LDOPTS  += -qopenmp
-else
-FCOPTS  += -openmp
-LDOPTS  += -openmp
-endif
-endif
-
-ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -le 12; echo $$?),0)
-FCOPTS  += -vec_report0
-LDOPTS  += -i_dynamic
-endif
-
-INCMOD   = -I
-OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
-
 DEFINES += -DNO_OPT
 
 LDOPTSend += -shared-intel
 
 MAKETAGS = etags -o
+
 
 #!!!Local Variables:
 #!!! mode: Makefile

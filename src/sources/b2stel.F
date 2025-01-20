@@ -4,13 +4,12 @@
       subroutine b2stel (nCv, nFc, ns, ismain,
      &  switch, geo, mpg, pl, dv, rt, rtw, srw)
       use b2mod_types
-!      use b2mod_diag
       use b2mod_tallies
       use b2mod_constants
-!      use b2mod_sources
       use b2mod_eirene_globals
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
      &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
@@ -18,6 +17,7 @@
      &          b2stel_she_ion0to3, b2stel_she_rec0to3,
      &          b2stel_shi_ion0to3, b2stel_shi_rec0to3,
      &          balance_netcdf
+#endif
 #ifdef ASTRA
       use b2mod_b2_to_astra
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 11.06.13
@@ -72,8 +72,8 @@
      &  shi0_ion(nCv,0:3),        shi0_rec(nCv,0:3),
      &  shn0_ion(nCv,0:3),        shn0_rec(nCv,0:3)
 *   ..procedures
-      real (kind=R8) :: samax
-      external xertst, ipgeti, ipgetr, samax, sfill
+      real (kind=R8) :: damax
+      external xertst, ipgeti, ipgetr, damax, sfill
       external b2xvsg
 *   ..initialisation
 
@@ -94,7 +94,7 @@
 !WG_TODO         end if !}
 !WG_TODO       end do !}
 *   ..test nCv, ns
-      call xertst (0.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      * 'faulty argument ismain')
@@ -119,9 +119,9 @@
 *    ..test rate coefficients
        do is = 0, ns-2
         if (.not.lnext(is,is+1)) then
-         call xertst (samax(nCv,rtw%rsa(1,is),1).eq.0.0_R8,
+         call xertst (damax(nCv,rtw%rsa(1,is),1).eq.0.0_R8,
      &     'faulty argument rsa: nonzero for unrelated species')
-         call xertst (samax(nCv,rtw%rra(1,is+1),1).eq.0.0_R8,
+         call xertst (damax(nCv,rtw%rra(1,is+1),1).eq.0.0_R8,
      &     'faulty argument rra: nonzero for unrelated species')
         endif
        enddo
@@ -409,11 +409,13 @@ c accounted for)
           srw%she0(iCv,0) = srw%she0(iCv,0)+rf0*t0
           srw%she0(iCv,3) = srw%she0(iCv,3)-
      &     (1.0_R8+rf0)*t0/(dv%ne(iCv)*pl%te(iCv))
+#ifndef FIXED_POINT
           if (balance_netcdf.ne.0) then
             b2stel_she0to3(iCv,0,is) = rf0*t0
             b2stel_she0to3(iCv,3,is) =
      &           -(1.0_R8+rf0)*t0/(dv%ne(iCv)*pl%te(iCv))
           endif
+#endif
           srw%rqahe(iCv,is) = srw%rqahe(iCv,is) + t0
           rqahereg(mpg%cvReg(iCv),is)=rqahereg(mpg%cvReg(iCv),is)+t0
 *      ..compute line radiation rate for is->any
@@ -452,26 +454,26 @@ c accounted for)
       do is = 0, ns-1                                                 !srv 28.07.11 {
         if(is.eq.ismain) then
           wrk0=sna0_ion(:,0,is)+sna0_ion(:,1,is)*pl%na(:,is)
-          call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, se)
+          call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, se)
           wrk0=sna0_rec(:,:,0,is)+sna0_rec(:,1,is)*pl%na(:,is)
-          call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, se)
+          call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, se)
         endif
       enddo                                                           !srv 28.07.11 }
 
       wrk0=srw%she0(:,0)+
      &     srw%she0(:,1)*pl%te(:)+srw%she0(:,2)*dv%ne+
      &     srw%she0(:,3)*dv%ne*pl%te
-      call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, seh)              !srv 11.06.13
+      call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, seh)              !srv 11.06.13
 
       wrk0=shi0_ion(:,0)+
      &     shi0_ion(:,1)*pl%ti+shi0_ion(:,2)*dv%ni(:,0)+
      &     shi0_ion(:,3)*dv%ni(:,0)*pl%ti
-      call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, sih)              !srv 11.06.13
+      call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, sih)              !srv 11.06.13
 
       wrk0=shi0_rec(:,0)+
      &     shi0_rec(:,1)*pl%ti+shi0_rec(:,2)*dv%ni(:,0)+
      &     shi0_rec(:,3)*dv%ni(:,0)*pl%ti
-      call b2_to_astra_src(mpg, ny, geo%cvVol, wrk0, svol, sih)              !srv 11.06.13
+      call b2_to_astra_src(mpg, nx, ny, geo%cvVol, wrk0, svol, sih)              !srv 11.06.13
 #endif
 
       if (switch%b2stel_iout.eq.1 .or. switch%b2npmo_iout.eq.1 .or.
@@ -542,6 +544,7 @@ c accounted for)
         enddo                                                        !srv 03.02.12 }
       endif                                                          !srv 30.06.08 11.09.09 }
 
+#ifndef FIXED_POINT
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
         b2stel_sna_ion0to1 = sna0_ion
@@ -553,6 +556,7 @@ cdjm Jan2017 Keep linearised sources for balance
         b2stel_shi_ion0to3 = shi0_ion
         b2stel_shi_rec0to3 = shi0_rec
       endif
+#endif
 
 * ..return
       ncall_b2stel = ncall_b2stel+1

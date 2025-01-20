@@ -6,11 +6,11 @@ C =====================================================================
       use b2mod_b2plot_debug
       use b2mod_wall
       use b2mod_b2plot
-     * ,only : target_stack, itwrk
+     * , only : target_stack, itwrk
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
 
-#ifndef PLPLOT      
+#ifndef PLPLOT
       integer nst,nnd
       parameter(nst=16,nnd=24)
       integer ind(nnd)
@@ -23,15 +23,15 @@ C =====================================================================
       INTEGER LFIN(100),choose_color
       CHARACTER*20 LBLS(100)
       CHARACTER*20 FMTZ
-      real (kind=R4) :: ceil
+      real (kind=R4) :: ceil, sfloor
       integer  no_available_colors
-      external no_available_colors, ceil
+      external no_available_colors, ceil, sfloor
 
-      if(b2plot_debug.ge.10) 
+      if(b2plot_debug.ge.10)
      > write(*,*) 'plttarget: nbnd, ndepth_nml = ',nbnd, ndepth_nml
       zlod=trgmin
       zhid=trgmax
-      if(b2plot_debug.ge.10) 
+      if(b2plot_debug.ge.10)
      > write(*,*) 'plttarget: zlo, zhi = ',zlod,zhid
       if(zlod.eq.zhid.and.zlod.eq.0.0) then
         zlod=target_stack(1,1,itwrk)
@@ -84,9 +84,9 @@ C =====================================================================
           endif
           if(zlo.le.0.0_R4) zlo=10.0_R4**(-ndec)*zhi
           ZHI=10.0_R4**CEIL(LOG10(ZHI))
-          ZLO=max(10.0_R4**FLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
+          ZLO=max(10.0_R4**SFLOOR(LOG10(ZLO)),10.0_R4**(-ndec)*zhi)
           write (*,*) 'zlo =',zlo,' zhi =',zhi
-          NCONT=INT(CEIL(LOG10(ZHI))-FLOOR(LOG10(ZLO)))
+          NCONT=INT(CEIL(LOG10(ZHI))-SFLOOR(LOG10(ZLO)))
           FMTZ='(1PG7.1)'
           if(ncont*3+3.lt.no_available_colors(1)) then
             ncont=ncont*3
@@ -113,7 +113,7 @@ C =====================================================================
       ELSE                                ! customised target contouring
         NCONT=NOFTCLS-1
         DO I=1,NCONT+1
-          write (*,*) 
+          write (*,*)
      .     'target contour level',i,'=',tclval(i),' in color',i
         ENDDO
       ENDIF

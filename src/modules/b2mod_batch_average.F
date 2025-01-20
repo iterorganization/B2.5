@@ -163,12 +163,12 @@ ctb..as the mean of the product does not equal the product of the means etc.
       character(*), intent(in) :: batch_name
       integer :: idum(0:1), iun
       character lble*120
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iun,file=batch_name,access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
 #else

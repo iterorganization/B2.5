@@ -1,9 +1,13 @@
-EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -Dsamax=damax
+ifeq (${FC},f77)
+FC = pgf90
+endif
+ifeq (${FN},)
+FN = pgf90
+endif
+EQUIVS = -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 LINK_MOD = 
-
-FC = pgf90
 
 ifndef SOLPS_CPP
 DEFINES += -DPGF90 -DNOQUAD
@@ -13,6 +17,7 @@ endif
 COMPILER_MAJOR_VERSION = $(shell ${FC} -V | grep "pgf90" | awk 'match($$0,/[0-9]+\.[0-9]+\-[0-9]+/){print substr($$0, RSTART, RLENGTH)}' | cut -d '.' -f 1 )
 DEFINES += -DCOMPILER_MAJOR_VERSION=${COMPILER_MAJOR_VERSION}
 OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+OBNDEST  = -module ${OBNDIR} -o ${OBNDIR}/$*.o
 INCMOD   = -I
 DBLOPTION =
 FCOPTS  += -Mbackslash
@@ -29,15 +34,15 @@ ifndef ADJ
 FCOPTS  += -fast -Mvect=nofuse
 endif
 endif
-ifdef USE_OPENMP
-FCOPTS += -mp=nonuma
-LDOPTS += -mp=nonuma
+ifdef SOLPS_OPENMP
+FPOPTS += -mp=nonuma
+LPOPTS += -mp=nonuma
 endif
-ifdef USE_MPI
-FCOPTS  += -Mmpi=mpich
+ifdef SOLPS_MPI
+FPOPTS  += -Mmpi=mpich
 INCMODS += ${MPI_CPP}
-LDOPTS  += ${LD_MPI}
-DEFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
+LPOPTS  += ${LD_MPI}
+DPFINES += -DMPI_VERSION=${MPI_VERSION} -DMPI_MOD=${MPI_MOD}
 endif
 
 ifndef SOLPS_CPP
@@ -68,8 +73,17 @@ ifndef SOLPS_CPP
     GGD_MAJOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f1 )
     GGD_MINOR_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f2 )
     GGD_MICRO_VERSION ?= $(shell echo ${GGD_VERSION} | cut -d '.' -f3 | cut -d '-' -f1 )
-    ifeq ($(shell test ${AL_MAJOR_VERSION} -lt 5; echo $$?),0)
+    ifeq ($(shell test ${AL_MAJOR_VERSION} -ge 5; echo $$?),0)
+      IMAS_PKG_LIST += al-fortran al-identifiers-fortran
+    else
       IMAS_PKG_LIST += imas-pgi
+      ifeq ($(shell test ${IMAS_MAJOR_VERSION} -ge 4; echo $$?),0)
+        IMAS_PKG_LIST += imas-identifiers-pgi
+      else
+        ifeq ($(shell test ${IMAS_MINOR_VERSION} -ge 31; echo $$?),0)
+          IMAS_PKG_LIST += imas-identifiers-pgi
+        endif
+      endif
     endif
     ifdef AMNS_PREFIX
       DEFINE += -DAMNS
@@ -93,7 +107,7 @@ ifndef SOLPS_CPP
       endif
     endif
     LD_AL := `pkg-config ${IMAS_PKG_LIST} --libs`
-    ifdef LD_GDD
+    ifdef LD_GGD
       LD_AL += ${LD_GGD}
     endif
     DEFINES += -DIMAS -DAL_MAJOR_VERSION=${AL_MAJOR_VERSION} -DAL_MINOR_VERSION=${AL_MINOR_VERSION} -DAL_MICRO_VERSION=${AL_MICRO_VERSION} -DIMAS_MAJOR_VERSION=${IMAS_MAJOR_VERSION} -DIMAS_MINOR_VERSION=${IMAS_MINOR_VERSION} -DIMAS_MICRO_VERSION=${IMAS_MICRO_VERSION} -DGGD_MAJOR_VERSION=${GGD_MAJOR_VERSION} -DGGD_MINOR_VERSION=${GGD_MINOR_VERSION} -DGGD_MICRO_VERSION=${GGD_MICRO_VERSION}
@@ -120,8 +134,8 @@ CXXFLAGS = -std=c++11
 endif
 
 LD = ${FC}
+LN = ${FN}
 
-LCPP = ${LD_SONNET}
 
 #!!!Local Variables:
 #!!! mode: Makefile
