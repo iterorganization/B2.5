@@ -4330,7 +4330,7 @@ cxpb  Start reading input.dat file
                                        ! NSMSTRA,NSTORAM,NGSTAL,NRTAL1
           WRITE(IUNOT,'(A80)') ZEILE
           READ (IUNIN,'(A80)') ZEILE
-          call fix_logical_input(zeile,19)
+          call fix_logical_input(zeile,20)
           IF (streql(eirene_format,'facelift')) then
             READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
@@ -4348,10 +4348,10 @@ cxpb  Start reading input.dat file
                                          ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,
                                          ! NLTRIMESH
           ELSE
-            READ (ZEILE,6665) ldum(0:18) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+            READ (ZEILE,6665) ldum(0:19) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
                                          ! NLRANMAR,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
-                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE
+                                         ! NLTRIMESH,NLSPCSCL,NLSPCSCL_ON,NLSOLEDGE,NLSPCSPT
           ENDIF
         ENDIF
         IF (streql(eirene_format,'facelift')) then
@@ -4373,7 +4373,7 @@ cxpb  Start reading input.dat file
         inquire(file=filename,exist=NLWRMSH)
         ldum(13)=NLWRMSH
         NLTRIMESH = ldum(15)
-        WRITE(IUNOT,6665) ldum(0:18) ! NLTRIMESH now moved to block 14
+        WRITE(IUNOT,6665) ldum(0:19) ! NLTRIMESH now moved to block 14
         READ (IUNIN,'(A80)') ZEILE
         I1 = INDEX(ZEILE,'CFILE')
         IF (I1.EQ.0) THEN
