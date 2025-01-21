@@ -370,6 +370,7 @@ SUBROUTINE B2WFCP_NODIFF(nprt, istyl, ns)
   END IF
 !
 ! ..return
+  FLUSH(nprt) 
   CALL SUBEND()
   RETURN
 !
