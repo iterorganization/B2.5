@@ -49,6 +49,9 @@
         integer, allocatable :: bcFcP(:,:)             ! (nBc,2) pointing for each boundary condition to the first index in the bcFc list, and its number of boundary faces
         integer, allocatable :: bcFc(:)                !         listing for each boundary condition the boundary faces
         real (kind=R8), allocatable :: bcFcOr(:)       ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
+        integer, allocatable :: fcBc(:,:)              ! (nFc,2) Correspondence array with BCs
+                                                       ! fcBc(iFc,1) contains the boundary face index corresponding to iFc
+                                                       ! fcBc(iFc,2) contains the boundary condition to which the face belongs
 
         integer, allocatable :: rcCvP(:,:)             ! (nRc,2) pointing for each stratum to the first index in the rcCv list, and its number of guard cells
         integer, allocatable :: rcCv(:,:)              !         listing for each stratum the guard cells, and the corresponding domain cells
@@ -362,12 +365,14 @@
       allocate (m%bcFcP  ( m % nBc,   2 ) )
       allocate (m%bcFc   ( m % mxnBc    ) )
       allocate (m%bcFcOr ( m % mxnBc    ) )
+      allocate (m%fcBc   ( m % nFc,   2 ) )
 
       m%bcCvP = 0
       m%bcCv = 0
       m%bcFcP = 0
       m%bcFc = 0
-      m%bcFcOr = 0._R8
+      m%bcFcOr = 0.0_R8
+      m%fcBc = 0
 
       return
       end subroutine alloc_mapping_bc
@@ -386,6 +391,7 @@
       deallocate ( m % bcFcP  )
       deallocate ( m % bcFc   )
       deallocate ( m % bcFcOr )
+      deallocate ( m % fcBc   )
 
       return
       end subroutine dealloc_mapping_bc

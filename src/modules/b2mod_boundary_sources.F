@@ -45,7 +45,6 @@
 
       subroutine read_boundary_sources(nCv, ns)
       use b2mod_types
-      use b2mod_boundary_namelist
       implicit none
       integer nCv, ns
 
