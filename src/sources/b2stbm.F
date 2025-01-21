@@ -91,8 +91,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2stbm')
-*   ..test nCv, nFc, ns, ismain
-      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, nVx, ns, ismain
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     & 'faulty argument nCv, nFc, nVx')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns,
      & 'faulty argument ismain')
