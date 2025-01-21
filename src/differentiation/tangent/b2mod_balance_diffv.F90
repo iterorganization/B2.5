@@ -2294,8 +2294,10 @@ CONTAINS
   END SUBROUTINE UPDATE_AVERAGE_BALANCE
 
 !
-  SUBROUTINE WRITE_BALANCE(ncv, nfc, nsd, geo)
+  SUBROUTINE WRITE_BALANCE(ncv, nfc, nvx, nsd, geo, mpg)
     USE B2US_GEO_DIFFV
+    USE B2US_MAP_DIFFV
+    USE B2MOD_USER_NAMELIST_DIFFV, ONLY : nimp, imp, nomp, omp
     USE B2MOD_B2CMPA_DIFFV, ONLY : zamin, zamax
     USE B2MOD_B2CMPA_DIFFV, ONLY : am
     USE B2MOD_CONSTANTS, ONLY : mp, ev
@@ -2303,8 +2305,9 @@ CONTAINS
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-    INTEGER :: ncv, nfc, nsd
+    INTEGER :: ncv, nfc, nvx, nsd
     TYPE(GEOMETRY), INTENT(IN) :: geo
+    TYPE(MAPPING), INTENT(IN) :: mpg
 !     NetCDF-3.
 !
 ! netcdf version 3 fortran interface:
@@ -4118,8 +4121,9 @@ CONTAINS
 !   ..local variables
     INTEGER :: nstrad
     INTEGER :: status
-    INTEGER :: ncid, ncvpid, nfcid, n1id, n2id, n3id, n4id, nsid, &
-&   nstraid, specid, eirncvid, eirnatmid, eirnmolid, eirnionid
+    INTEGER :: ncid, ncvpid, ncviid, nfcid, nvxid, ncmxfcid, ncmxvxid, &
+&   n1id, n2id, n3id, n4id, nsid, nstraid, specid, eirncvid, eirnatmid, &
+&   eirnmolid, eirnionid, nxptid, nimpid, nompid, nftid
     INTEGER :: vdims(4), idum(1)
     INTEGER :: is
     CHARACTER(len=13), ALLOCATABLE :: species_name(:)
@@ -4144,7 +4148,17 @@ CONTAINS
 !   ..define all of the dimensions that will be used
     status = NF_DEF_DIM(ncid, 'nCv', ncv, ncvpid)
     CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, 'nCi', mpg%nci, ncviid)
+    CALL CHECK_CDF_STATUS(status)
     status = NF_DEF_DIM(ncid, 'nFc', nfc, nfcid)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, 'nVx', nvx, nvxid)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, 'nCmxFc', mpg%ncmxfc, ncmxfcid)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, 'nCmxVx', mpg%ncmxvx, ncmxvxid)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, 'nFt', mpg%nft, nftid)
     CALL CHECK_CDF_STATUS(status)
     status = NF_DEF_DIM(ncid, '1', 1, n1id)
     CALL CHECK_CDF_STATUS(status)
@@ -4155,6 +4169,12 @@ CONTAINS
     status = NF_DEF_DIM(ncid, '4', 4, n4id)
     CALL CHECK_CDF_STATUS(status)
     status = NF_DEF_DIM(ncid, 'ns', nsd, nsid)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, 'nXpt', mpg%nxpt, nxptid)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, 'nimp', nimp, nimpid)
+    CALL CHECK_CDF_STATUS(status)
+    status = NF_DEF_DIM(ncid, 'nomp', nomp, nompid)
     CALL CHECK_CDF_STATUS(status)
     IF (ALLOCATED(eirene_mc_papl_sna_bal)) THEN
       nstrad = SIZE(eirene_mc_papl_sna_bal, 3)
@@ -4181,25 +4201,66 @@ CONTAINS
     status = NF_ENDDEF(ncid)
     CALL CHECK_CDF_STATUS(status)
 !
-!   ..cvX, cvY:
+!   ..cvX, cvY, vxX, vxY:
     vdims(1) = ncvpid
-    vdims(2) = n4id
     CALL WRITE_CDF_DOUBLE(ncid, 'cvX', geo%cvx, vdims, 1)
     CALL WRITE_CDF_DOUBLE(ncid, 'cvY', geo%cvy, vdims, 1)
-!   ..cvBb, cvHz, cvVol, fcS, am:
+    vdims(1) = nvxid
+    CALL WRITE_CDF_DOUBLE(ncid, 'vxX', geo%vxx, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'vxY', geo%vxy, vdims, 1)
+!   ..cvFc,cvFcP,cvVx,cvVxP,fcVx,fcCv
+    vdims(1) = ncvpid
+    vdims(2) = n2id
+    CALL WRITE_CDF_INT(ncid, 'cvFcP', mpg%cvfcp, vdims, 2)
+    CALL WRITE_CDF_INT(ncid, 'cvVxP', mpg%cvvxp, vdims, 2)
+    vdims(1) = ncmxfcid
+    CALL WRITE_CDF_INT(ncid, 'cvFc', mpg%cvfc, vdims, 1)
+    vdims(1) = ncmxvxid
+    CALL WRITE_CDF_INT(ncid, 'cvVx', mpg%cvvx, vdims, 1)
+    vdims(1) = nfcid
+    CALL WRITE_CDF_INT(ncid, 'fcVx', mpg%fcvx, vdims, 2)
+    CALL WRITE_CDF_INT(ncid, 'fcCv', mpg%fccv, vdims, 2)
+!   ..cvBb, cvEb, cvHx, cvHz, cvVol, fcS, fcHz, fcLbl, fcQalf, fcBb, am:
+    vdims(1) = ncvpid
+    vdims(2) = n4id
     CALL WRITE_CDF_DOUBLE(ncid, 'cvBb', geo%cvbb, vdims, 2)
+    vdims(2) = n3id
+    CALL WRITE_CDF_DOUBLE(ncid, 'cvEb', geo%cveb, vdims, 2)
+    CALL WRITE_CDF_DOUBLE(ncid, 'cvHx', geo%cvhx, vdims, 1)
     CALL WRITE_CDF_DOUBLE(ncid, 'cvHz', geo%cvhz, vdims, 1)
     CALL WRITE_CDF_DOUBLE(ncid, 'cvVol', geo%cvvol, vdims, 1)
     vdims(1) = nfcid
+    vdims(2) = n2id
     CALL WRITE_CDF_DOUBLE(ncid, 'fcS', geo%fcs, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fcHz', geo%fchz, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'fcQalf', geo%fcqalf, vdims, 2)
+    CALL WRITE_CDF_INT(ncid, 'fcLbl', mpg%fclbl, vdims, 1)
+    vdims(2) = n4id
+    CALL WRITE_CDF_DOUBLE(ncid, 'fcBb', geo%fcbb, vdims, 2)
     vdims(1) = nsid
     CALL WRITE_CDF_DOUBLE(ncid, 'am', am, vdims, 1)
+!   ..vxFpsi
+    vdims(1) = nvxid
+    CALL WRITE_CDF_DOUBLE(ncid, 'vxFpsi', geo%vxfpsi, vdims, 1)
 !   ..mp, ev:
     vdims(1) = n1id
     rdum(1) = mp
     CALL WRITE_CDF_DOUBLE_SINGLE(ncid, 'mp', rdum, vdims(1))
     rdum(1) = ev
     CALL WRITE_CDF_DOUBLE_SINGLE(ncid, 'ev', rdum, vdims(1))
+!   ..cvReg, cvFt, ftCv, ftCvP, imp, omp:
+    vdims(1) = ncvpid
+    CALL WRITE_CDF_INT(ncid, 'cvReg', mpg%cvreg, vdims, 1)
+    CALL WRITE_CDF_INT(ncid, 'cvFt', mpg%cvft, vdims, 1)
+    vdims(1) = nftid
+    vdims(2) = n2id
+    CALL WRITE_CDF_INT(ncid, 'ftCvP', mpg%ftcvp, vdims, 2)
+    vdims(1) = ncvpid
+    CALL WRITE_CDF_INT(ncid, 'ftCv', mpg%ftcv, vdims, 1)
+    vdims(1) = nimpid
+    CALL WRITE_CDF_INT(ncid, 'imp', imp(1:nimp), vdims, 1)
+    vdims(1) = nompid
+    CALL WRITE_CDF_INT(ncid, 'omp', omp(1:nomp), vdims, 1)
 !   ..species string:
     vdims(1) = specid
     vdims(2) = nsid

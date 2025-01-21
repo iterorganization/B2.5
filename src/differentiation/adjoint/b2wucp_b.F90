@@ -149,6 +149,7 @@ SUBROUTINE B2WUCP_NODIFF(nput, version, ns)
   CALL CFWURE(nput, 8, cflim, 'cflim')
 !
 ! ..return
+  FLUSH(nput) 
   CALL SUBEND()
   RETURN
 !

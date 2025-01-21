@@ -7110,7 +7110,7 @@ CONTAINS
     TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
     TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: state_avgd
 !srv 29.11.18
-    INTEGER :: ncv, nfc, is
+    INTEGER :: ncv, nfc, nvx, is
     LOGICAL :: ids_done
     EXTERNAL CALC_ERR
     EXTERNAL B2WDAT
@@ -7158,6 +7158,7 @@ CONTAINS
 !
     ncv = mpg%ncv
     nfc = mpg%nfc
+    nvx = mpg%nvx
 !
 ! finalise feedback
     CALL WRITE_B2US_FEEDBACK(99, '    ')
@@ -7360,7 +7361,7 @@ CONTAINS
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
 !srv 29.11.18
-    INTEGER :: ncv, nfc, is
+    INTEGER :: ncv, nfc, nvx, is
     LOGICAL :: ids_done
     EXTERNAL CALC_ERR
     EXTERNAL B2WDAT
@@ -7407,6 +7408,7 @@ CONTAINS
 !
     ncv = mpg%ncv
     nfc = mpg%nfc
+    nvx = mpg%nvx
 !
 ! finalise feedback
     CALL WRITE_B2US_FEEDBACK(99, '    ')

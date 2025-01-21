@@ -147,7 +147,7 @@ CONTAINS
       END IF
 !all combinations of cells
 !two quads
-      tol = 1e-1_R8*abs0
+      tol = 1.0e-1_R8*abs0
 !
       IF (m%cvfcp(cells(1), 2) .EQ. 4 .AND. m%cvfcp(cells(2), 2) .EQ. 4&
 &     ) THEN
