@@ -858,7 +858,7 @@ c          end if !}
         end if !}
       end do !}
 
-      write(hlp_frm,'(a,i2,a)') '(a,1p,',nstrat,'(1x,1e14.7))'
+      write(hlp_frm,'(a,i3,a)') '(a,1p,',nstrat,'(1x,1e14.7))'
       if(main_call.or.ncall.eq.0.or.output_style.gt.1) then !{
         write(*,hlp_frm) 'tflux: ',tflux
         write(*,hlp_frm) 'flux_scale: ',flux_scale
