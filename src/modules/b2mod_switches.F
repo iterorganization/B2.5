@@ -500,11 +500,13 @@ c b2mndt
       real (kind=R8) :: BoRiS
       real (kind=R8) :: b2mndt_rxf
       integer :: b2mndt_style
-      integer :: b2mndt_temp0
       integer :: b2mndt_ckn
       integer :: b2mndt_dummy
       integer :: ntim_step_out
       integer :: calc_err_step_out
+      integer :: b2mndt_temp0
+      integer :: b2mndt_temp1
+      integer :: b2mndt_temp2
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -1083,11 +1085,13 @@ c b2mndt
         s % b2mndt_rxf = 0.5_R8
       end if
       s % b2mndt_style = 1
-      s % b2mndt_temp0 = 1
       s % b2mndt_ckn = 1
       s % b2mndt_dummy = 0
       s % ntim_step_out = 1
       s % calc_err_step_out = 1
+      s % b2mndt_temp0 = 1
+      s % b2mndt_temp1 = 1
+      s % b2mndt_temp2 = 1
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1681,11 +1685,13 @@ c b2mndt
       call ipgetr ('b2news_BoRiS', s%BoRiS)
       call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
       call ipgeti ('b2mndt_style',s%b2mndt_style)
-      call ipgeti ('b2mndt_temp0',s%b2mndt_temp0)
       call ipgeti ('b2mndt_ckn',s%b2mndt_ckn)
       call ipgeti ('b2mndt_dummy',s%b2mndt_dummy)
       call ipgeti ('b2mndt_ntim_step_out',s%ntim_step_out)
       call ipgeti ('b2mndt_calc_err_step_out',s%calc_err_step_out)
+      call ipgeti ('b2mndt_temp0',s%b2mndt_temp0)
+      call ipgeti ('b2mndt_temp1',s%b2mndt_temp1)
+      call ipgeti ('b2mndt_temp2',s%b2mndt_temp2)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
@@ -2368,8 +2374,10 @@ c k-enstrophy model
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
 
-      if(s%b2mndt_style.eq.2 .and. s%b2mndt_rxf.lt.1.0_R8) then
-        call xerrab('time-dependent mode requires rxf = 1.0')
+      if (s%b2mndt_temp1.eq.1) then
+        if(s%b2mndt_style.eq.2 .and. s%b2mndt_rxf.lt.1.0_R8) then
+          call xerrab('time-dependent mode requires rxf = 1.0')
+        endif
       endif
 
       return
