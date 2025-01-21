@@ -300,7 +300,7 @@
 *     B2RUPS reads the state of the plasma from an un*formatted file. Not converted for WG.
 *
 *     B2RURC reads a table of atomic rate data from an un*formatted
-*     file. 
+*     file.
 *
 *     B2RUSR reads a table of source term data from an un*formatted
 *     file. Not converted for WG.
@@ -441,7 +441,7 @@
 *
 *     B2TINNT computes the ion-neutral current.
 *
-*     B2TLC0 computes the neutral diffusion flux limit.       
+*     B2TLC0 computes the neutral diffusion flux limit.
 *
 *     B2TLHE applies a flux limit to the electron heat and charge
 *     transport coefficients.
@@ -453,7 +453,7 @@
 *
 *     B2TLMV applies a flux limit to the viscosity.
 *
-*     B2TLNL computes the Coulomb logarithm according to Braginskii or 
+*     B2TLNL computes the Coulomb logarithm according to Braginskii or
 *     Wesson formulas.
 *
 *     B2TLV0 computes the neutral viscosity flux limit.
@@ -496,7 +496,7 @@
 *     B2TVSQ computes the poloidal and radial components of the heat viscosity
 *     current.
 *
-*     B2TXCC computes normal conductances between neighbouring cells, 
+*     B2TXCC computes normal conductances between neighbouring cells,
 *     given the conductivities.
 *
 *     B2TXCV computes viscous conductances between neighbouring
@@ -654,7 +654,7 @@
 *     plasma state. Not converted for WG.
 *
 *     B2WUCP writes to an un*formatted file the parameters in the
-*     physics common blocks. 
+*     physics common blocks.
 *
 *     B2WUGM writes to an un*formatted file the geometry and magnetic
 *     field. Not converted for WG.
