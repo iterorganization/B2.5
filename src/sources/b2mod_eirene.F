@@ -2329,7 +2329,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
 cc Read saved sources
         if (ihist.eq.1.and..not.full_history
      .               .and.relax_continue.eq.1)then
-          call read_saved_sources(nCv,size(sni,2),NSTRAT)
+          call read_saved_sources(size(sni,1),size(sni,2),size(sni,3))
           full_history = .true.
         endif
         if (ihist.eq.nrelax) full_history = .true.
@@ -3988,7 +3988,7 @@ csw 26feb2014
       endif
       if(nhist.gt.1 .or. nrelax.gt.1) then
         call write_saved_sources('eirene_saved_sources',
-     .                           nCv,size(sni,2),NSTRAT)
+     .                 size(sni,1),size(sni,2),size(sni,3))
       endif
       if(nhist.gt.1) call dealloc_sum_arrays
       if(nrelax.gt.1 .or. nhist.gt.1) call dealloc_hist_arrays
@@ -4609,7 +4609,7 @@ c local variables
         call cfruch (iun, 120, lbli, 'label')
         call cfrure (iun, nCv*nfl*nstra, sni_s, 'sni_s')
         call cfrure (iun, nCv*nfl*nstra, smo_s, 'smo_s')
-        call cfrure (iun, nCv*nstra,    sei_s, 'sei_s')
+        call cfrure (iun, nCv*nfl*nstra, sei_s, 'sei_s')
         call cfrure (iun, nCv*nstra,    see_s, 'see_s')
         write (*,*) ' eirene_saved_sources read succesfully '
       else
@@ -4659,7 +4659,7 @@ c local variables
 *   ..write header
        idum(0) = nCv
        idum(1) = nfl
-       idum(2) = nstra
+       idum(2) = nstrat
        call cfverw (iun, version)
        call cfwuin (iun, 3, idum, 'nCv,nfl,nstra')
        call cfwuch (iun, 120, lble, 'label')
@@ -4668,7 +4668,7 @@ c local variables
 
        call cfwure (iun, nCv*nfl*nstrat, sni_s, 'sni_s')
        call cfwure (iun, nCv*nfl*nstrat, smo_s, 'smo_s')
-       call cfwure (iun, nCv*nstrat, sei_s, 'sei_s')
+       call cfwure (iun, nCv*nfl*nstrat, sei_s, 'sei_s')
        call cfwure (iun, nCv*nstrat, see_s, 'see_s')
 
       close (iun)
