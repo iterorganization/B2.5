@@ -346,7 +346,7 @@ cdjm Jan2017 update momentum source components for balance
 
 *    ..time-dependent treatment
 *    ..compute residual without time-stepping sources (needed at next time-step for ckn scheme)
-         if (switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.2) then
+         if (switch%b2mndt_ckn.eq.2) then
            if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
      &            .or.switch%get_residuals.eq.1) then
              call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is,
@@ -375,7 +375,7 @@ cdjm Jan2017 update momentum source components for balance
      &    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))       !srv 04.07.08
       endif                                                            !srv 22.05.18
 *    ..modify residual for ckn scheme
-       if (switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.2) then
+       if (switch%b2mndt_ckn.eq.2) then
          if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
      &      .or.switch%get_residuals.eq.1) then
            dv%resmo(1:mpg%nCi,is) = dv%resmo(1:mpg%nCi,is) +

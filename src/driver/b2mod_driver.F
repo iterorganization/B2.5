@@ -2157,8 +2157,7 @@ c new CDF movie option (1st frame at t=0)
       write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
 
       !Initialize residual if using Crank-Nicolson scheme
-      if (switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.2
-     &       .and.itim.eq.0) then
+      if (switch%b2mndt_ckn.eq.2.and.itim.eq.0) then
         !Dummy call to b2mndt
         !Temporarily set dummy switch to 1
         switch%b2mndt_dummy = 1

@@ -308,8 +308,6 @@ cdjm Jan2017 update particle source components for balance
 !fc This is the new positioning of time-dependent treatment
 !fc It had to be moved here to allow for the use of Crank-Nicolson
       if(switch%b2mndt_temp0.eq.1) then !temp0=1 new default
-c time-dependent treatment                                              !srv 07.07.21 {
-      if(switch%b2mndt_style.eq.2) then
 *    ..compute residual without time-stepping sources (needed at next time-step for ckn scheme)
         if (switch%b2mndt_ckn.eq.2) then
 *       ..electrons
@@ -345,6 +343,8 @@ c time-dependent treatment                                              !srv 07.
             dv%reshn = 0.0_R8         !! this is needed because reshn is added to the total energy equation
           endif
         endif
+c time-dependent treatment                                              !srv 07.07.21 {
+      if(switch%b2mndt_style.eq.2) then
 *  .. calculate time-dependent source
         call b2shdt (nCv, mpg%nCi, ns, dtim,
      &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
@@ -482,7 +482,7 @@ c residuals for separate neutral energy equation
      &   dv%resht = dv%reshe + dv%reshi + dv%reshn                       !srv 22.05.18 }
 
 *    ..modify residual for ckn scheme
-      if (switch%b2mndt_style.eq.2.and.switch%b2mndt_ckn.eq.2) then
+      if (switch%b2mndt_ckn.eq.2) then
         if ((solving(4).and.any(solvereg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then
           dv%reshe0 = dv%reshe0 - shei !correct res0 with equipartition
