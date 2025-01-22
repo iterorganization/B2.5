@@ -1831,6 +1831,22 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tfnb_facdna_start</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					b2tfnb_facdna_start is a multiplier to the diffusion contributions in the energy equations.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfnb_facvla_start</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					b2tfnb_facvla_start is a multiplier to the convection contributions in the energy equations.
+				</description>
+			</switch>
+			<switch>
 				<name>b2tqce_fke_Zhdanov</name>
 				<default>1</default>
 				<type>integer</type>
@@ -2580,9 +2596,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Compute transport coefficients based on a Bohm-like diffusion model. 
-					If '0': transport coefficients not computed based on Bohm diffusion model.
-        				If '1': transport coefficients computed using Bohm diffusion model. Warning: under development!
+					Main switch to turn on the Bohm-like transport model.
 				</description>
 			</switch>
                         <switch>
@@ -2590,7 +2604,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If 0, SOLPS will use a pure diffusion Bohm-like anomalous transport (ref. T. Wauter et al. 2020, RF plasma simulation), otherwise a convection-diffusion model will be used. For the convection velocity, see switch b2tqna_bohm_ExB.
+					If 0, SOLPS will use a pure diffusion Bohm-like transport (ref. T. Wauter et al. 2020, Plasma Phys. Control. Fusion 62 105010, 2020), otherwise a convection-diffusion model will be used. For the convection velocity, see switch b2tqna_bohm_ExB.
 				</description>
 			</switch>
                         <switch>
@@ -2598,17 +2612,17 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If 0, formula 9 T. Wauter et al. 2020 (RF plasma simulation) in is used to evaluate the convection velocity.
+					If 0, formula 9 from T. Wauter et al. 2020 is used to evaluate the convection velocity.
                                         If 1, formula 8 is instead used to evaluate the electric field and the convection velocity is E/B.
 				</description>
 			</switch>
                         <switch>
 				<name>b2tqna_bohm_viscosity</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
 					If 0, no viscosity will be computed in a Bohm-like way.
-                                        If 1, viscosity effects will be included.
+                                        If 1, viscosity effects will be included. (to be tested!)
 				</description>
 			</switch>
                         <switch>
@@ -2616,7 +2630,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-                                        If 1, average of diffusion coefficients and convection velocities is performed.
+                                        If 1, the density average of transport coefficients is calculated and the results assigned to all species.
 				</description>
 			</switch>
                         <switch>
@@ -2624,7 +2638,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Output for the Bohm transport model.
+					If 1, writes the output for the Bohm transport model.
 				</description>
 			</switch>
                         <switch>
@@ -2632,7 +2646,7 @@
 				<default>0.00</default>
 				<type>real</type>
 				<description>
-					Sets the correction for energy transport since the energy confinement is poorer compared to the particle confinement.
+					Sets the correction for energy transport (the energy confinement is poorer compared to the particle confinement).
 				</description>
 			</switch>
                         <switch>
@@ -2640,7 +2654,7 @@
 				<default>0.00</default>
 				<type>real</type>
 				<description>
-					Sets the correction for the diffusion coefficient.
+					Sets the tuning factor for the diffusion coefficient.
 				</description>
 			</switch>
                         <switch>
@@ -2648,12 +2662,12 @@
 				<default>0.00</default>
 				<type>real</type>
 				<description>
-					Sets the correction for the convection velocity.
+					Sets the tuning factor for the convection velocity.
 				</description>
 			</switch>
                         <switch>
 				<name>b2tqna_major_radius</name>
-				<default>1.0</default>
+				<default>0.0</default>
 				<type>real</type>
 				<description>
 					Major radius of the machine.
@@ -2661,7 +2675,7 @@
 			</switch>
                         <switch>
 				<name>b2tqna_minor_radius</name>
-				<default>0.5</default>
+				<default>0.0</default>
 				<type>real</type>
 				<description>
 					Minor radius of the machine.
@@ -2669,10 +2683,10 @@
 			</switch>
                         <switch>
 				<name>b2tqna_vessel_half_height</name>
-				<default>0.1</default>
+				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Minor radius from center to wall.
+					Half-height of the vessel.
 				</description>
 			</switch>
                         <switch>
@@ -2680,7 +2694,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Turns on the ECH model for power deposition.
+					Main switch to turn on the ECH model for power Electron Cyclotron power deposition.
 				</description>
 			</switch>
                         <switch>
@@ -2688,12 +2702,12 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Output for the ECH model.
+					If 1, writes the output for the ECH model.
 				</description>
 			</switch>
                         <switch>
 				<name>b2sral_ECH_harmonics</name>
-				<default>2</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
 					Sets the harmonic at which ECH power is injected.
@@ -2704,10 +2718,8 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Coupling = 0 -- Fixed power distributed as a Dirac's delta in volumes intersected at given radial position.
-                                        Coupling = 1 -- Fixed fraction of launched power is coupled/Gaussian injection.
-                                        Coupling = 2 -- TOMAS - deposition on ECR (Budden analysis). To be coded.
-                                        Coupling = 3 -- Ray-tracing with TORAY. To be coded.
+					Coupling = 0 -- Fixed fraction of the power is injected as a Dirac's delta in volumes intersected at given radial position.
+                                        Coupling = 1 -- Fixed fraction of the power is injected with a Gaussial(-like) distribution.
 				</description>
 			</switch>
                         <switch>
@@ -2715,7 +2727,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Sets the amount of injected ECH power.
+					Sets the amount of injected ECH power [in W].
 				</description>
 			</switch>
                         <switch>
@@ -2731,7 +2743,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Sets the position at which ECH power is injected.
+					Sets the radial position at which ECH power is injected.
 				</description>
 			</switch>
                         <switch>
@@ -2739,15 +2751,31 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Sets the harmonic frequency for power injection.
+					Sets the frequency for power injection (without the 2*pi multiplier!).
 				</description>
 			</switch>
+                        <switch>
+				<name>b2sral_ECH_gauss_symm</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If 1, a poloidally-symmetric Gaussian(-like) distribution is used. This switch is used for 1D radial simulations only.
+				</description>
+			</switch>
+                        <switch>
+                                <name>b2sral_ECH_gauss_width</name>
+                                <default>0.0</default>
+                                <type>real</type>
+                                <description>
+                                       Sets the width (i.e. the standard deviation) for the Gaussian(-like) distribution of the ECH power. 
+                                </description>
+                        </switch>
                         <switch>
 				<name>b2sral_losses_poloidal</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Turns on the artificial losses due to motion in the poloidal direction.
+					Turns on the imposed losses due to motion in the poloidal direction.
 				</description>
 			</switch>
                         <switch>
@@ -2755,7 +2783,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Turns on the artificial losses due to limiters.
+					Turns on the imposed losses due to limiter presence.
 				</description>
 			</switch>
                         <switch>
@@ -2763,7 +2791,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Turns on the artificial losses due to drifts.
+					Turns on the imposed losses due to drifts.
 				</description>
 			</switch>
                         <switch>
@@ -2779,7 +2807,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Output for the Artificial Losses model.
+					If 1, writes the output for the Artificial Losses model.
 				</description>
 			</switch>
                         <switch>
@@ -2787,7 +2815,15 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Sets the limiter width.
+					Sets the fraction of the limiters' width. Limiters will 'extend' into the domain from R0-a0 to R0-lim_width*a0 and from R0+lim_width*a0 to R0+a0.
+				</description>
+			</switch>
+                        <switch>
+				<name>b2sral_Twall</name>
+				<default>0.02587</default>
+				<type>real</type>
+				<description>
+					Sets the wall temperature at which neutral atoms from the limiters come back into the domain. Default value is set to be equal to 300K.
 				</description>
 			</switch>
 			<switch>
