@@ -2051,18 +2051,23 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
 !
 !sw 09oct2012 SOLPS4: explicitly avoid b2stbr call here
 !   --> better solution wanted here..
-  IF (no_b2stbr_phys_call .EQ. 0) THEN
-    IF (switch%b2stbr_neutrals_namelist .EQ. 1 .OR. switch%use_eirene &
-&       .NE. 0) CALL B2STBR_PHYS_B(ncv, nfc, nvx, ns, nscx, nscxmax, &
-&                            iscx, dtim, switch, switchb, geo, geob, mpg&
-&                            , mpgb, st%pl, stb%pl, st%dv, stb%dv, st%co&
-&                            , st%rt, stb%rt, st%rtw, st_ext, st%srw, &
-&                            stb%srw, tchem, tchee, tphys, tphye, thevp&
-&                            , thvpe, trese, tresn, trfln, trfle, &
-&                            sput_src, sput_chem_model, reflection_on, &
-&                            sputter_energy_on, main_call, &
-&                            new_sputter_namelist, shi0_ff, f_redep)
-  END IF
+  IF (no_b2stbr_phys_call .EQ. 0) CALL B2STBR_PHYS_B(ncv, nfc, nvx, ns, &
+&                                              nscx, nscxmax, iscx, dtim&
+&                                              , switch, switchb, geo, &
+&                                              geob, mpg, mpgb, st%pl, &
+&                                              stb%pl, st%dv, stb%dv, st&
+&                                              %co, st%rt, stb%rt, st%&
+&                                              rtw, st_ext, st%srw, stb%&
+&                                              srw, tchem, tchee, tphys&
+&                                              , tphye, thevp, thvpe, &
+&                                              trese, tresn, trfln, &
+&                                              trfle, sput_src, &
+&                                              sput_chem_model, &
+&                                              reflection_on, &
+&                                              sputter_energy_on, &
+&                                              main_call, &
+&                                              new_sputter_namelist, &
+&                                              shi0_ff, f_redep)
   arg1 = ncv*4
   CALL SFILL_BWD(arg1, 0.0_R8, dummydiffb4, st%srw%sch0, stb%srw%sch0, 1&
 &         )
@@ -4197,17 +4202,14 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     ELSE
       CALL XERRAB('WG - redep_alpha .ne. 0')
     END IF
-    IF (switch%b2stbr_neutrals_namelist .EQ. 1 .OR. switch%use_eirene &
-&       .NE. 0) THEN
-      IF (ncall_b2stbr .EQ. 0) WRITE(*, *) 'b2stbr: using b2stbr_phys'
-      CALL B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
-&                       dtim, switch, geo, mpg, st%pl, st%dv, st%co, st%&
-&                       rt, st%rtw, st_ext, st%srw, tchem, tchee, tphys&
-&                       , tphye, thevp, thvpe, trese, tresn, trfln, &
-&                       trfle, sput_src, sput_chem_model, reflection_on&
-&                       , sputter_energy_on, main_call, &
-&                       new_sputter_namelist, shi0_ff, f_redep)
-    END IF
+    IF (ncall_b2stbr .EQ. 0) WRITE(*, *) 'b2stbr: using b2stbr_phys'
+    CALL B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim&
+&                     , switch, geo, mpg, st%pl, st%dv, st%co, st%rt, st&
+&                     %rtw, st_ext, st%srw, tchem, tchee, tphys, tphye, &
+&                     thevp, thvpe, trese, tresn, trfln, trfle, sput_src&
+&                     , sput_chem_model, reflection_on, &
+&                     sputter_energy_on, main_call, new_sputter_namelist&
+&                     , shi0_ff, f_redep)
   END IF
 ! xpb
 !
