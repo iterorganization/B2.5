@@ -89,7 +89,7 @@ SUBROUTINE B2USPO_B(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch, &
 !
 ! ..preliminaries
 !   ..subprogram start-up calls
-!   ..test nCv, nFc
+!   ..test nCv, nFc, nVx
 !   ..test itcnt
 !   ..extensive tests on first few calls
   INTEGER*4 :: branch
@@ -451,8 +451,9 @@ SUBROUTINE B2USPO_NODIFF(ncv, nfc, nvx, nregionv, solvereg, itcnt, &
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2uspo')
-!   ..test nCv, nFc
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
 !   ..test itcnt
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
 !   ..extensive tests on first few calls

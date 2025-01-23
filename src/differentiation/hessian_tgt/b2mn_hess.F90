@@ -607,7 +607,6 @@ PROGRAM B2MN_DV_DV
 !-----------------------------------------------------------------------
 !.computation
 !
-!  nbdirs=3
   CALL B2MN_INIT_DV_DV(switch, switchd, geo, geod0, geod, mpg, mpgd, &
 &                state, stated0, stated, statedd, state_ext, state_extd0&
 &                , state_extd, state_avg, state_avgd, npar_opt, npar_opt)
@@ -954,117 +953,12 @@ SUBROUTINE B2MN_DV_NODIFF()
 !-----------------------------------------------------------------------
 !.computation
 !
-!  nbdirs=3
   CALL B2MN_INIT_DV(switch, switchd, geo, geod, mpg, mpgd, state, stated&
 &             , state_ext, state_extd, state_avg, state_avgd, npar_opt)
   CALL XERTST(npar_opt .LE. nbdirsmax, &
 &       'Increase size of nbdirsmax in b2mod_diffsizes.F')
   CALL XERTST(switch%b2optim_namelist .EQ. 1, &
 &       'Sensitivity calculation needs b2optim_namelist=1!')
-! default case, valid for any species mix
-! the first dimension of these variables refers to the number of directions "nbdirs"
-!  parm_hcid(3,1) = 1.0_R8
-!  parm_hced(2) = 1.0_R8
-!  parm_dnad(1,1) = 1.0_R8
-!  nbdirs=7 !example multispecies case D D+ He He+ He++
-!  parm_dnad(1,1) = 1.0_R8
-!  parm_dnad(2,3) = 1.0_R8
-!  parm_hced(3) = 1.0_R8
-!  parm_hcid(4,1) = 1.0_R8
-!  parm_hcid(5,4) = 1.0_R8
-!  conpard(6,1,1,1) = 1.0_R8
-!  conpard(7,3,1,1) = 1.0_R8
-!  nbdirs=8 !example with radially varying transport coefficients
-!  tdatad(1,2,2,1,1) = 1.0_R8 !D_perp
-!  tdatad(2,2,4,1,1) = 1.0_R8 !D_perp
-!  tdatad(3,2,1,3,1) = 1.0_R8 !Xi_perp
-!  tdatad(4,2,6,3,1) = 1.0_R8 !Xi_perp
-!  tdatad(5,2,3,4,1) = 1.0_R8 !Xe_perp
-!  tdatad(6,2,5,4,1) = 1.0_R8 !Xe_perp
-!  switchd%b2tqna_ballooning(7) = 1.0_R8
-!  switchd%b2tqna_ballooning_rescale(8) = 1.0_R8
-!  nbdirs=9 !example with k-model
-!  enkpard(1,1,1) = 1.0_R8
-!  switchd%keps_cd(2) = 1.0_R8
-!  switchd%keps_heat(3) = 1.0_R8
-!  switchd%keps_heat_i(4) = 1.0_R8
-!  switchd%b2sikt_fac_sheath(5) = 1.0_R8
-!  switchd%b2sikt_fac_sheath_core(6) = 1.0_R8
-!  switchd%b2sikt_fac_diss(7) = 1.0_R8
-!  switchd%b2sikt_fac_diss_core(8) = 1.0_R8
-!  switchd%b2tfhi_fsigkt(9) = 1.0_R8
-!  nbdirs = 5 !example with reaction rates
-!  rtlsad(1,135,240,0) = 1.0_R8
-!  rtlrad(2,135,240,1) = 1.0_R8
-!  rtlcxd(3,135,240,1) = 1.0_R8
-!  rtlqad(4,135,240,0) = 1.0_R8
-!  rtlqad(5,135,240,1) = 1.0_R8
-!  example set with transport+recycling coefficient (D0,D+)
-!  nbdirs=16
-!  parm_dnad(1,1) = 1.0_R8
-!  parm_hced(2) = 1.0_R8
-!  parm_hcid(3,1) = 1.0_R8
-!  parm_vsad(4,1) = 1.0_R8
-!  parm_sigd(5) = 1.0_R8
-!  parm_alfd(6) = 1.0_R8
-!  b2recycd(7,0,1) = 1.0_R8
-!  b2recycd(8,0,2) = 1.0_R8
-!  b2recycd(9,0,3) = 1.0_R8
-!  b2recycd(10,0,4) = 1.0_R8
-!  b2recycd(11,0,5) = 1.0_R8
-!  b2recycd(12,1,1) = 1.0_R8
-!  b2recycd(13,1,2) = 1.0_R8
-!  b2recycd(14,1,3) = 1.0_R8
-!  b2recycd(15,1,4) = 1.0_R8
-!  b2recycd(16,1,5) = 1.0_R8
-!  example set with continuity BCs (D0,D+)
-!  nbdirs=12
-!  conpard(1,0,1,1) = 1.0_R8
-!  conpard(2,0,2,1) = 1.0_R8
-!  conpard(3,0,3,1) = 1.0_R8
-!  conpard(4,0,4,1) = 1.0_R8
-!  conpard(5,0,5,1) = 1.0_R8
-!  conpard(6,0,6,1) = 1.0_R8
-!  conpard(7,1,1,1) = 1.0_R8
-!  conpard(8,1,2,1) = 1.0_R8
-!  conpard(9,1,3,1) = 1.0_R8
-!  conpard(10,1,4,1) = 1.0_R8
-!  conpard(11,1,5,1) = 1.0_R8
-!  conpard(12,1,6,1) = 1.0_R8
-!  example set with momentum BCs (D0,D+)
-!  nbdirs=12
-!  mompard(1,0,1,1) = 1.0_R8
-!  mompard(2,0,2,1) = 1.0_R8
-!  mompard(3,0,3,1) = 1.0_R8
-!  mompard(4,0,4,1) = 1.0_R8
-!  mompard(5,0,5,1) = 1.0_R8
-!  mompard(6,0,6,1) = 1.0_R8
-!  mompard(7,1,1,1) = 1.0_R8
-!  mompard(8,1,2,1) = 1.0_R8
-!  mompard(9,1,3,1) = 1.0_R8
-!  mompard(10,1,4,1) = 1.0_R8
-!  mompard(11,1,5,1) = 1.0_R8
-!  mompard(12,1,6,1) = 1.0_R8
-!  example set with energy and potential BCs
-!  nbdirs=18
-!  enepard(1,1,1) = 1.0_R8
-!  enepard(2,2,2) = 1.0_R8
-!  enepard(3,3,2) = 1.0_R8
-!  enepard(4,4,1) = 1.0_R8
-!  enepard(5,5,1) = 1.0_R8
-!  enepard(6,6,1) = 1.0_R8
-!  enipard(7,1,1) = 1.0_R8
-!  enipard(8,2,1) = 1.0_R8
-!  enipard(9,3,1) = 1.0_R8
-!  enipard(10,4,1) = 1.0_R8
-!  enipard(11,5,1) = 1.0_R8
-!  enipard(12,6,1) = 1.0_R8
-!  potpard(13,1,1) = 1.0_R8
-!  potpard(14,2,2) = 1.0_R8
-!  potpard(15,3,2) = 1.0_R8
-!  potpard(16,4,1) = 1.0_R8
-!  potpard(17,5,1) = 1.0_R8
-!  potpard(18,6,1) = 1.0_R8
   arg1 = npar_opt - nsigma_opt - nmean_opt - nshift_opt - ncorr_opt
   CALL B2MN_STEP_DV(switch, switchd, geo, geod, mpg, mpgd, state, stated&
 &             , state_ext, state_extd, state_avg, state_avgd, j, jd, &

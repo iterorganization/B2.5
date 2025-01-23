@@ -44,10 +44,16 @@ MODULE B2MOD_USER_NAMELIST_DIFFV_DIFFV
 ! - rz[o1]mp: R-Z coordinates of a segment whose intersection with the
 !             plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordinates
 !             of first and second point of the segment, rzomp(2,1:2) holds Z-coordinates
+! - psi_[oi]mp: psi value of midplane cells
+! - fs_ds_[oi]mp: distance
+!
   INTEGER, PARAMETER :: nromp=def_nyd*4
   INTEGER, SAVE :: omp(nromp), icsepomp, ifsepomp, nomp, imp(nromp), &
 & icsepimp, ifsepimp, nimp
-  REAL(kind=r8) :: rzomp(2, 2), rzimp(2, 2), psi_omp(nromp)
+  REAL(kind=r8) :: rzomp(2, 2), rzimp(2, 2)
+  REAL(kind=r8) :: psi_omp(nromp), psi_imp(nromp)
+  REAL(kind=r8), ALLOCATABLE :: fs_ds_imp(:), fs_ds_omp(:)
+  REAL(kind=r8), ALLOCATABLE :: ft_ds_imp(:), ft_ds_omp(:)
   REAL(kind=r8) :: fusion_power, spmp_he_to_d, spmp_nom
   INTEGER :: lpfrb_i, lpfrb_o, lpfrt_i, lpfrt_o, j_he_at, j_h_at(3), &
 & j_ne_at, lpfrs_pmp, npfrgrp, ipfrgrp(npfrgrpd), jpfrgrp(npfrgrpd), &
@@ -114,6 +120,10 @@ CONTAINS
     IF (user_initialised) THEN
       RETURN
     ELSE
+      ALLOCATE(fs_ds_imp(m%nfs))
+      ALLOCATE(fs_ds_omp(m%nfs))
+      ALLOCATE(ft_ds_imp(m%nft))
+      ALLOCATE(ft_ds_omp(m%nft))
 !
 !*** PFR specification - for He enrichment and neutral pressure
 !***  Standard set-up:
@@ -146,6 +156,10 @@ CONTAINS
       print_isat = .false.
       rzomp = 0.0_R8
       rzimp = 0.0_R8
+      fs_ds_imp = -999.0_R8
+      fs_ds_omp = -999.0_R8
+      ft_ds_imp = -999.0_R8
+      ft_ds_omp = -999.0_R8
       user_filename = 'b2.user.parameters'
       CALL READ_B2MOD_USER_NAMELIST(ns, geo, m, sw)
       user_initialised = .true.
@@ -158,8 +172,17 @@ CONTAINS
   SUBROUTINE DEALLOC_B2MOD_USER()
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-    user_initialised = .false.
-    RETURN
+!
+    IF (.NOT.user_initialised) THEN
+      RETURN
+    ELSE
+      DEALLOCATE(fs_ds_omp)
+      DEALLOCATE(fs_ds_imp)
+      DEALLOCATE(ft_ds_omp)
+      DEALLOCATE(ft_ds_imp)
+      user_initialised = .false.
+      RETURN
+    END IF
   END SUBROUTINE DEALLOC_B2MOD_USER
 
 !
@@ -172,7 +195,9 @@ CONTAINS
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(INOUT) :: m
     TYPE(SWITCHES), INTENT(IN) :: sw
-    INTEGER :: ic, ifc
+    INTEGER :: ic, ifc, ifs, ifs1, ifs2, ift, ivx1, ivx2
+    REAL(kind=r8) :: distint, dsep, xv1, xv2, yv1, yv2, xm1, xm2, ym1, &
+&   ym2, xint, yint
 !
     LOGICAL :: file_ok
     CHARACTER(len=260) :: filename
@@ -184,8 +209,10 @@ CONTAINS
     EXTERNAL IPGETI, FIND_FILE, XERTST
     INTRINSIC TRIM
     EXTERNAL XERRAB
+    INTRINSIC SQRT
     INTRINSIC MAXVAL
     INTRINSIC NINT
+    REAL(kind=r8) :: arg1
     REAL(kind=r8) :: result1
 !
     CALL SUBINI('readuser')
@@ -243,6 +270,66 @@ CONTAINS
     psi_omp = 0.0_R8
     DO ic=1,nomp
       psi_omp(ic) = geo%cvfpsi(omp(ic))
+    END DO
+! xpb build the distance along the OMP for each flux surface
+    xm1 = rzomp(1, 1)
+    xm2 = rzomp(1, 2)
+    ym1 = rzomp(2, 1)
+    ym2 = rzomp(2, 2)
+    DO ic=1,nomp
+      DO i=m%cvfcp(omp(ic), 1),m%cvfcp(omp(ic), 1)+m%cvfcp(omp(ic), 2)-1
+        ifc = m%cvfc(i)
+        ifs = m%fcfs(ifc)
+! Does the flux-aligned face intersect the OMP?
+        IF (ifs .NE. 0) THEN
+          ivx1 = m%fcvx(ifc, 1)
+! Find the intersection point of the two lines
+          ivx2 = m%fcvx(ifc, 2)
+          xv1 = geo%vxx(ivx1)
+          xv2 = geo%vxx(ivx2)
+          yv1 = geo%vxy(ivx1)
+          yv2 = geo%vxy(ivx2)
+          yint = (xm1*ym2-xm2*ym1-(xv1*yv2-xv2*yv1)/(yv2-yv1)*(ym2-ym1))&
+&           /((xv1-xv2)/(yv2-yv1)*(ym2-ym1)+(xm1-xm2))
+! Is the intersection point part of the cell face?
+          xint = (xv1*yv2-xv2*yv1-yint*(xv1-xv2))/(yv2-yv1)
+          distint = (xint-xv1)*(xint-xv2) + (yint-yv1)*(yint-yv2)
+          IF (distint .LE. 0.0_R8) THEN
+            arg1 = (xint-xm1)**2 + (yint-ym1)**2
+            fs_ds_omp(ifs) = SQRT(arg1)
+          END IF
+        END IF
+      END DO
+    END DO
+    dsep = fs_ds_omp(m%fcfs(ifsepomp))
+    DO ifs=1,m%nfs
+      IF (fs_ds_omp(ifs) .NE. -999.0_R8) THEN
+        IF (xm1 .LT. xm2) THEN
+          fs_ds_omp(ifs) = fs_ds_omp(ifs) - dsep
+        ELSE
+          fs_ds_omp(ifs) = dsep - fs_ds_omp(ifs)
+        END IF
+      END IF
+    END DO
+    DO ic=1,nomp
+      ifs1 = 0
+      ifs2 = 0
+      ift = m%cvft(omp(ic))
+      IF (ift .NE. 0) THEN
+        DO i=m%cvvxp(omp(ic), 1),m%cvvxp(omp(ic), 1)+m%cvvxp(omp(ic), 2)&
+&           -1
+          ifs = m%vxfs(m%cvvx(i))
+          IF (ifs .NE. 0) THEN
+            IF (ifs1 .EQ. 0) THEN
+              ifs1 = ifs
+            ELSE IF (ifs2 .EQ. 0) THEN
+              ifs2 = ifs
+            END IF
+          END IF
+        END DO
+        IF (ifs1 .NE. 0 .AND. ifs2 .NE. 0) ft_ds_omp(ift) = 0.5_R8*(&
+&           fs_ds_omp(ifs1)+fs_ds_omp(ifs2))
+      END IF
     END DO
 !
 !xpb convert old-style j_h_at and l_h_mol to deal with isotope mixes
@@ -392,6 +479,73 @@ CONTAINS
         END IF
       END DO
       ic = ic + 1
+    END DO
+! csc get psi for each OMP cell
+    psi_imp = 0.0_R8
+    DO ic=1,nimp
+      psi_imp(ic) = geo%cvfpsi(imp(ic))
+    END DO
+! xpb build the distance along the OMP for each flux surface
+    IF (nimp .GT. 0) THEN
+      xm1 = rzimp(1, 1)
+      xm2 = rzimp(1, 2)
+      ym1 = rzimp(2, 1)
+      ym2 = rzimp(2, 2)
+    END IF
+    DO ic=1,nimp
+      DO i=m%cvfcp(imp(ic), 1),m%cvfcp(imp(ic), 1)+m%cvfcp(imp(ic), 2)-1
+        ifc = m%cvfc(i)
+        ifs = m%fcfs(ifc)
+! Does the flux-aligned face intersect the IMP?
+        IF (ifs .NE. 0) THEN
+          ivx1 = m%fcvx(ifc, 1)
+! Find the intersection point of the two lines
+          ivx2 = m%fcvx(ifc, 2)
+          xv1 = geo%vxx(ivx1)
+          xv2 = geo%vxx(ivx2)
+          yv1 = geo%vxy(ivx1)
+          yv2 = geo%vxy(ivx2)
+          yint = (xm1*ym2-xm2*ym1-(xv1*yv2-xv2*yv1)/(yv2-yv1)*(ym2-ym1))&
+&           /((xv1-xv2)/(yv2-yv1)*(ym2-ym1)+(xm1-xm2))
+! Is the intersection point part of the cell face?
+          xint = (xv1*yv2-xv2*yv1-yint*(xv1-xv2))/(yv2-yv1)
+          distint = (xint-xv1)*(xint-xv2) + (yint-yv1)*(yint-yv2)
+          IF (distint .LE. 0.0_R8) THEN
+            arg1 = (xint-xm1)**2 + (yint-ym1)**2
+            fs_ds_imp(ifs) = SQRT(arg1)
+          END IF
+        END IF
+      END DO
+    END DO
+    IF (ifsepimp .GT. 0) dsep = fs_ds_imp(m%fcfs(ifsepimp))
+    DO ifs=1,m%nfs
+      IF (fs_ds_imp(ifs) .NE. -999.0_R8) THEN
+        IF (xm1 .GT. xm2) THEN
+          fs_ds_imp(ifs) = fs_ds_imp(ifs) - dsep
+        ELSE
+          fs_ds_imp(ifs) = dsep - fs_ds_imp(ifs)
+        END IF
+      END IF
+    END DO
+    DO ic=1,nimp
+      ifs1 = 0
+      ifs2 = 0
+      ift = m%cvft(imp(ic))
+      IF (ift .NE. 0) THEN
+        DO i=m%cvvxp(imp(ic), 1),m%cvvxp(imp(ic), 1)+m%cvvxp(imp(ic), 2)&
+&           -1
+          ifs = m%vxfs(m%cvvx(i))
+          IF (ifs .NE. 0) THEN
+            IF (ifs1 .EQ. 0) THEN
+              ifs1 = ifs
+            ELSE IF (ifs2 .EQ. 0) THEN
+              ifs2 = ifs
+            END IF
+          END IF
+        END DO
+        IF (ifs1 .NE. 0 .AND. ifs2 .NE. 0) ft_ds_imp(ift) = 0.5_R8*(&
+&           fs_ds_imp(ifs1)+fs_ds_imp(ifs2))
+      END IF
     END DO
     IF (.NOT.found) WRITE(*, '(a/a/a)') &
 &         'Warning: did not find separatrix location in IMP definition,'&

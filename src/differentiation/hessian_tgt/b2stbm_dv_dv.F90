@@ -195,8 +195,9 @@ SUBROUTINE B2STBM_DV_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2stbm')
-!   ..test nCv, nFc, ns, ismain
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx, ns, ismain
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'faulty argument ismain')
@@ -1217,8 +1218,9 @@ SUBROUTINE B2STBM_DV_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo&
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2stbm')
-!   ..test nCv, nFc, ns, ismain
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx, ns, ismain
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'faulty argument ismain')
@@ -1832,8 +1834,9 @@ SUBROUTINE B2STBM_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch&
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2stbm')
-!   ..test nCv, nFc, ns, ismain
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx, ns, ismain
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'faulty argument ismain')

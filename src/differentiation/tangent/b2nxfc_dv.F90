@@ -100,8 +100,9 @@ SUBROUTINE B2NXFC_DV(ncv, nfc, nvx, isb, switch, geo, mpg, rob, robd, ub&
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxfc')
 !   ..set internal parameters on first call
-!   ..test nCv, nFc
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxfc .LT. 3) THEN
     IF (ncall_b2nxfc .EQ. switch%b2news_ncallout) THEN
@@ -266,8 +267,9 @@ SUBROUTINE B2NXFC_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rob, ub, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2nxfc')
 !   ..set internal parameters on first call
-!   ..test nCv, nFc
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
 !   ..extensive tests on first few calls
   IF (ncall_b2nxfc .LT. 3) THEN
     IF (ncall_b2nxfc .EQ. switch%b2news_ncallout) THEN

@@ -58,6 +58,9 @@ MODULE B2US_MAP_DIFF
 ! (nBc,2) pointing for each boundary condition to the first index in the bcFc list, and its number of boundary faces
 !         listing for each boundary condition the boundary faces
 ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
+! (nFc,2) Correspondence array with BCs
+! fcBc(iFc,1) contains the boundary face index corresponding to iFc
+! fcBc(iFc,2) contains the boundary condition to which the face belongs
 !
 ! (nRc,2) pointing for each stratum to the first index in the rcCv list, and its number of guard cells
 !         listing for each stratum the guard cells, and the corresponding domain cells
@@ -144,6 +147,7 @@ MODULE B2US_MAP_DIFF
       INTEGER, ALLOCATABLE :: bcfcp(:, :)
       INTEGER, ALLOCATABLE :: bcfc(:)
       REAL(kind=r8), ALLOCATABLE :: bcfcor(:)
+      INTEGER, ALLOCATABLE :: fcbc(:, :)
       INTEGER, ALLOCATABLE :: rccvp(:, :)
       INTEGER, ALLOCATABLE :: rccv(:, :)
       INTEGER, ALLOCATABLE :: rcfcp(:, :)
@@ -211,6 +215,7 @@ MODULE B2US_MAP_DIFF
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: bcfcp
       INTEGER, DIMENSION(:), ALLOCATABLE :: bcfc
       REAL(kind=r8), DIMENSION(:), ALLOCATABLE :: bcfcor
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: fcbc
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: rccvp
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: rccv
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: rcfcp
@@ -945,12 +950,16 @@ CONTAINS
       ALLOCATE(mb%bcfcor(m%mxnbc))
       mb%bcfcor = 0.D0
       ALLOCATE(m%bcfcor(m%mxnbc))
+      ALLOCATE(mb%fcbc(m%nfc, 2))
+      mb%fcbc = 0
+      ALLOCATE(m%fcbc(m%nfc, 2))
 !
       m%bccvp = 0
       m%bccv = 0
       m%bcfcp = 0
       m%bcfc = 0
-      m%bcfcor = 0._R8
+      m%bcfcor = 0.0_R8
+      m%fcbc = 0
 !
       RETURN
     END IF
@@ -973,12 +982,14 @@ CONTAINS
       ALLOCATE(m%bcfcp(m%nbc, 2))
       ALLOCATE(m%bcfc(m%mxnbc))
       ALLOCATE(m%bcfcor(m%mxnbc))
+      ALLOCATE(m%fcbc(m%nfc, 2))
 !
       m%bccvp = 0
       m%bccv = 0
       m%bcfcp = 0
       m%bcfc = 0
-      m%bcfcor = 0._R8
+      m%bcfcor = 0.0_R8
+      m%fcbc = 0
 !
       RETURN
     END IF
@@ -1019,6 +1030,10 @@ CONTAINS
         DEALLOCATE(mb%bcfcor)
       END IF
       DEALLOCATE(m%bcfcor)
+      IF (ALLOCATED(mb%fcbc)) THEN
+        DEALLOCATE(mb%fcbc)
+      END IF
+      DEALLOCATE(m%fcbc)
 !
       RETURN
     END IF
@@ -1041,6 +1056,7 @@ CONTAINS
       DEALLOCATE(m%bcfcp)
       DEALLOCATE(m%bcfc)
       DEALLOCATE(m%bcfcor)
+      DEALLOCATE(m%fcbc)
 !
       RETURN
     END IF

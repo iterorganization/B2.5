@@ -19,14 +19,14 @@ c
      ,  jedge(2*ntrgsx), ltrgpos(ntrgsx),
      ,  lseppos(ntrgsx), lpfrpos(ntrgsx),
      ,  ntrgts, ntrgs,
-     ,  nadsrc, nwldrad, npumplis, ntrgsa, lnumboff, nskipel, lytg, nytg
+     ,  nadsrc, nwldrad, npumplis, ntrgsa, lnumboff, nskipel
       integer itrg(ntrgsx)
       integer, allocatable :: indwll(:), lewrk(:), luwrk(:), lwldrad(:),
      ,  lwldlis(:,:), leirlis(:,:), lpumplis(:)
       integer lelmind(mskipel), lskipel(mskipel), lcspwll(mskipel),
      ,        lpspwll(mskipel), lpsptrg(ntrgsx), lcsptrg(ntrgsx),
      ,        ltrgedge(2,ntrgsx), mtrgedge(2,ntrgsx)
-      real (kind=R8) wpk_tt(0:ntrgsx) ! iyv 11.04.22
+      real (kind=R8) :: wpk_tt(0:ntrgsx) ! iyv 11.04.22
       logical lvdg20
       logical, save :: l2pwinp = .false.
       logical, save :: l2rdldw = .false., l2rdldt = .false.

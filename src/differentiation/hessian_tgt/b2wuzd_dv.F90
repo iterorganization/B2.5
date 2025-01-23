@@ -49,6 +49,7 @@ SUBROUTINE B2WUZD_NODIFF(nput, version, ns, zamin, zamax, zn, am)
     CALL CFWURE_NODIFF(nput, ns, am, 'am')
   END IF
 !
+  FLUSH(nput) 
   CALL SUBEND()
   RETURN
 END SUBROUTINE B2WUZD_NODIFF

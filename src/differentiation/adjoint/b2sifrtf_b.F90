@@ -121,8 +121,9 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
     CALL IPGETI('b2wdat_iout', iout_b2wdat)
     CALL IPGETI('b2npmo_iout', iout_b2npmo)
   END IF
-!   ..test nCv, nFc
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
 !   ..extensive tests on first few calls
   IF (ncall_b2sifrtf .LT. 3) THEN
 !    ..test sign of vol

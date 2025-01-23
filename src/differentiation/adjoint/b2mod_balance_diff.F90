@@ -27,8 +27,7 @@ MODULE B2MOD_BALANCE_DIFF
 & (:, :, :), fna_pschused(:, :, :), fna_tot(:, :, :)
 !     Sources
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2stbr_phys_sna0to1(:, :, :), &
-& b2stbr_phys_sna_bal(:, :), b2stbr_bas_sna0to1(:, :, :), &
-& b2stbr_bas_sna_bal(:, :), b2stbr_first_flight_sna0to1(:, :, :), &
+& b2stbr_phys_sna_bal(:, :), b2stbr_first_flight_sna0to1(:, :, :), &
 & b2stbr_first_flight_sna_bal(:, :), b2stbc_sna0to1(:, :, :), &
 & b2stbc_sna_bal(:, :), eirene_mc_pael_sne0to1(:, :, :), &
 & eirene_mc_papl_sna0to1(:, :, :, :), eirene_mc_pmel_sne0to1(:, :, :), &
@@ -53,19 +52,18 @@ MODULE B2MOD_BALANCE_DIFF
   REAL(kind=r8), ALLOCATABLE, SAVE :: fna_pinch_av(:, :, :), fna_pll_av(&
 & :, :, :), fna_drift_av(:, :, :), fna_ch_av(:, :, :), fna_nanom_av(:, :&
 & , :), fna_panom_av(:, :, :), fna_pschused_av(:, :, :), fna_tot_av(:, :&
-& , :), b2stbr_phys_sna_bal_av(:, :), b2stbr_bas_sna_bal_av(:, :), &
-& b2stbr_first_flight_sna_bal_av(:, :), b2stbc_sna_bal_av(:, :), &
-& eirene_mc_pael_sne_bal_av(:, :), eirene_mc_papl_sna_bal_av(:, :, :), &
-& eirene_mc_pmel_sne_bal_av(:, :), eirene_mc_pmpl_sna_bal_av(:, :, :), &
-& eirene_mc_pipl_sna_bal_av(:, :, :), eirene_mc_pppl_sna_bal_av(:, :, :)&
-& , eirene_mc_paat_sna_bal_av(:, :, :), eirene_mc_pmat_sna_bal_av(:, :, &
-& :), eirene_mc_piat_sna_bal_av(:, :, :), eirene_mc_paml_sna_bal_av(:, :&
-& , :), eirene_mc_pmml_sna_bal_av(:, :, :), eirene_mc_piml_sna_bal_av(:&
-& , :, :), eirene_mc_paio_sna_bal_av(:, :, :), eirene_mc_pmio_sna_bal_av&
-& (:, :, :), eirene_mc_piio_sna_bal_av(:, :, :), &
-& eirene_mc_core_sna_bal_av(:, :), b2stbm_sna_bal_av(:, :), &
-& ext_sna_bal_av(:, :), b2stel_sna_ion_bal_av(:, :), &
-& b2stel_sna_rec_bal_av(:, :), b2stcx_sna_bal_av(:, :), &
+& , :), b2stbr_phys_sna_bal_av(:, :), b2stbr_first_flight_sna_bal_av(:, &
+& :), b2stbc_sna_bal_av(:, :), eirene_mc_pael_sne_bal_av(:, :), &
+& eirene_mc_papl_sna_bal_av(:, :, :), eirene_mc_pmel_sne_bal_av(:, :), &
+& eirene_mc_pmpl_sna_bal_av(:, :, :), eirene_mc_pipl_sna_bal_av(:, :, :)&
+& , eirene_mc_pppl_sna_bal_av(:, :, :), eirene_mc_paat_sna_bal_av(:, :, &
+& :), eirene_mc_pmat_sna_bal_av(:, :, :), eirene_mc_piat_sna_bal_av(:, :&
+& , :), eirene_mc_paml_sna_bal_av(:, :, :), eirene_mc_pmml_sna_bal_av(:&
+& , :, :), eirene_mc_piml_sna_bal_av(:, :, :), eirene_mc_paio_sna_bal_av&
+& (:, :, :), eirene_mc_pmio_sna_bal_av(:, :, :), &
+& eirene_mc_piio_sna_bal_av(:, :, :), eirene_mc_core_sna_bal_av(:, :), &
+& b2stbm_sna_bal_av(:, :), ext_sna_bal_av(:, :), b2stel_sna_ion_bal_av(:&
+& , :), b2stel_sna_rec_bal_av(:, :), b2stcx_sna_bal_av(:, :), &
 & b2srsm_sna_bal_av(:, :), b2srdt_sna_bal_av(:, :), b2srst_sna_bal_av(:&
 & , :), tot_sna_bal_av(:, :), resco_av(:, :)
 !   ..Arrays for momentum balance:
@@ -78,9 +76,8 @@ MODULE B2MOD_BALANCE_DIFF
 !srv 25.09.17
 !srv 25.09.17
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2stbr_phys_smo0to3(:, :, :), &
-& b2stbr_phys_smo_bal(:, :), b2stbr_bas_smo0to3(:, :, :), &
-& b2stbr_bas_smo_bal(:, :), b2stbc_smo0to3(:, :, :), b2stbc_smo_bal(:, :&
-& ), eirene_mc_mapl_smo0to3(:, :, :, :), eirene_mc_mmpl_smo0to3(:, :, :&
+& b2stbr_phys_smo_bal(:, :), b2stbc_smo0to3(:, :, :), b2stbc_smo_bal(:, &
+& :), eirene_mc_mapl_smo0to3(:, :, :, :), eirene_mc_mmpl_smo0to3(:, :, :&
 & , :), eirene_mc_mipl_smo0to3(:, :, :, :), eirene_mc_cppv_smo0to3(:, :&
 & , :, :), eirene_mc_mapl_smo_bal(:, :, :), eirene_mc_mmpl_smo_bal(:, :&
 & , :), eirene_mc_mipl_smo_bal(:, :, :), eirene_mc_cppv_smo_bal(:, :, :)&
@@ -113,24 +110,23 @@ MODULE B2MOD_BALANCE_DIFF
 !srv 25.07.17
   REAL(kind=r8), ALLOCATABLE, SAVE :: fmo_flua_av(:, :, :), fmo_cvsa_av(&
 & :, :, :), fmo_hybr_av(:, :, :), fmo_b2nxfv_av(:, :, :), fmo_tot_av(:, &
-& :, :), b2stbr_phys_smo_bal_av(:, :), b2stbr_bas_smo_bal_av(:, :), &
-& b2stbc_smo_bal_av(:, :), eirene_mc_mapl_smo_bal_av(:, :, :), &
-& eirene_mc_mmpl_smo_bal_av(:, :, :), eirene_mc_mipl_smo_bal_av(:, :, :)&
-& , eirene_mc_cppv_smo_bal_av(:, :, :), b2stbm_smo_bal_av(:, :), &
-& ext_smo_bal_av(:, :), b2stel_smq_ion_bal_av(:, :), &
-& b2stel_smq_rec_bal_av(:, :), b2stcx_smq_bal_av(:, :), &
-& b2srsm_smo_bal_av(:, :), b2srdt_smo_bal_av(:, :), b2srst_smo_bal_av(:&
-& , :), b2sifr_smoch_bal_av(:, :), b2sifr_smotf_ehxp_bal_av(:, :), &
-& b2sifr_smotf_cthe_bal_av(:, :), b2sifr_smotf_cthi_bal_av(:, :), &
-& b2sifr_smofrea_bal_av(:, :), b2sifr_smofria_bal_av(:, :), &
-& b2sifr_smotfea_bal_av(:, :), b2sifr_smotfia_bal_av(:, :), &
-& b2siav_smovh_bal_av(:, :), b2siav_smovv_bal_av(:, :), &
-& b2siav_smovi_bal_av(:, :), b2sicf_smo_bal_av(:, :), b2sian_smo_bal_av(&
-& :, :), b2nxdv_smo_bal_av(:, :), b2sigp_smogp_bal_av(:, :), &
-& b2sigp_smogpi_bal_av(:, :), b2sigp_smogpe_bal_av(:, :), &
-& b2sigp_smogpgr_bal_av(:, :), b2sigp_pstat_bal_av(:, :), &
-& b2sigp_pstati_bal_av(:, :), b2sigp_pstate_bal_av(:), tot_smo_bal_av(:&
-& , :), resmo_av(:, :)
+& :, :), b2stbr_phys_smo_bal_av(:, :), b2stbc_smo_bal_av(:, :), &
+& eirene_mc_mapl_smo_bal_av(:, :, :), eirene_mc_mmpl_smo_bal_av(:, :, :)&
+& , eirene_mc_mipl_smo_bal_av(:, :, :), eirene_mc_cppv_smo_bal_av(:, :, &
+& :), b2stbm_smo_bal_av(:, :), ext_smo_bal_av(:, :), &
+& b2stel_smq_ion_bal_av(:, :), b2stel_smq_rec_bal_av(:, :), &
+& b2stcx_smq_bal_av(:, :), b2srsm_smo_bal_av(:, :), b2srdt_smo_bal_av(:&
+& , :), b2srst_smo_bal_av(:, :), b2sifr_smoch_bal_av(:, :), &
+& b2sifr_smotf_ehxp_bal_av(:, :), b2sifr_smotf_cthe_bal_av(:, :), &
+& b2sifr_smotf_cthi_bal_av(:, :), b2sifr_smofrea_bal_av(:, :), &
+& b2sifr_smofria_bal_av(:, :), b2sifr_smotfea_bal_av(:, :), &
+& b2sifr_smotfia_bal_av(:, :), b2siav_smovh_bal_av(:, :), &
+& b2siav_smovv_bal_av(:, :), b2siav_smovi_bal_av(:, :), &
+& b2sicf_smo_bal_av(:, :), b2sian_smo_bal_av(:, :), b2nxdv_smo_bal_av(:&
+& , :), b2sigp_smogp_bal_av(:, :), b2sigp_smogpi_bal_av(:, :), &
+& b2sigp_smogpe_bal_av(:, :), b2sigp_smogpgr_bal_av(:, :), &
+& b2sigp_pstat_bal_av(:, :), b2sigp_pstati_bal_av(:, :), &
+& b2sigp_pstate_bal_av(:), tot_smo_bal_av(:, :), resmo_av(:, :)
 !   ..Arrays for electron heat balance:
 !     Fluxes
   REAL(kind=r8), ALLOCATABLE, SAVE :: fhe_32(:, :), fhe_52(:, :), &
@@ -139,32 +135,31 @@ MODULE B2MOD_BALANCE_DIFF
 !     Sources
 !djm equipartition is not linearised
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2stbr_phys_she0to3(:, :), &
-& b2stbr_phys_she_bal(:), b2stbr_bas_she0to3(:, :), b2stbr_bas_she_bal(:&
-& ), b2stbr_first_flight_she0to3(:, :), b2stbr_first_flight_she_bal(:), &
-& b2stbc_she0to3(:, :), b2stbc_she_bal(:), eirene_mc_eael_she0to3(:, :, &
-& :), eirene_mc_emel_she0to3(:, :, :), eirene_mc_eiel_she0to3(:, :, :), &
-& eirene_mc_epel_she0to3(:, :, :), eirene_mc_eael_she_bal(:, :), &
-& eirene_mc_emel_she_bal(:, :), eirene_mc_eiel_she_bal(:, :), &
-& eirene_mc_epel_she_bal(:, :), b2stbm_she0to3(:, :), b2stbm_she_bal(:)&
-& , ext_she0to3(:, :), ext_she_bal(:), b2stel_she0to3(:, :, :), &
-& b2stel_she_bal(:, :), b2srsm_she0to3(:, :), b2srsm_she_bal(:), &
-& b2srdt_she0to3(:, :), b2srdt_she_bal(:), b2srst_she0to3(:, :), &
-& b2srst_she_bal(:), b2sihs_diae0to3(:, :), b2sihs_diae_bal(:), &
-& b2sihs_divue0to3(:, :), b2sihs_divue_bal(:), b2sihs_exbe0to3(:, :), &
-& b2sihs_exbe_bal(:), b2sihs_joule0to3(:, :), b2sihs_joule_bal(:), &
-& b2npht_shei_bal(:)
+& b2stbr_phys_she_bal(:), b2stbr_first_flight_she0to3(:, :), &
+& b2stbr_first_flight_she_bal(:), b2stbc_she0to3(:, :), b2stbc_she_bal(:&
+& ), eirene_mc_eael_she0to3(:, :, :), eirene_mc_emel_she0to3(:, :, :), &
+& eirene_mc_eiel_she0to3(:, :, :), eirene_mc_epel_she0to3(:, :, :), &
+& eirene_mc_eael_she_bal(:, :), eirene_mc_emel_she_bal(:, :), &
+& eirene_mc_eiel_she_bal(:, :), eirene_mc_epel_she_bal(:, :), &
+& b2stbm_she0to3(:, :), b2stbm_she_bal(:), ext_she0to3(:, :), &
+& ext_she_bal(:), b2stel_she0to3(:, :, :), b2stel_she_bal(:, :), &
+& b2srsm_she0to3(:, :), b2srsm_she_bal(:), b2srdt_she0to3(:, :), &
+& b2srdt_she_bal(:), b2srst_she0to3(:, :), b2srst_she_bal(:), &
+& b2sihs_diae0to3(:, :), b2sihs_diae_bal(:), b2sihs_divue0to3(:, :), &
+& b2sihs_divue_bal(:), b2sihs_exbe0to3(:, :), b2sihs_exbe_bal(:), &
+& b2sihs_joule0to3(:, :), b2sihs_joule_bal(:), b2npht_shei_bal(:)
 !     Time-averaged quantities
   REAL(kind=r8), ALLOCATABLE, SAVE :: fhe_32_av(:, :), fhe_52_av(:, :), &
 & fhe_thermj_av(:, :), fhe_cond_av(:, :), fhe_dia_av(:, :), fhe_ecrb_av(&
 & :, :), fhe_strange_av(:, :), fhe_pschused_av(:, :), &
-& b2stbr_phys_she_bal_av(:), b2stbr_bas_she_bal_av(:), &
-& b2stbr_first_flight_she_bal_av(:), b2stbc_she_bal_av(:), &
-& eirene_mc_eael_she_bal_av(:, :), eirene_mc_emel_she_bal_av(:, :), &
-& eirene_mc_eiel_she_bal_av(:, :), eirene_mc_epel_she_bal_av(:, :), &
-& b2stbm_she_bal_av(:), ext_she_bal_av(:), b2stel_she_bal_av(:, :), &
-& b2srsm_she_bal_av(:), b2srdt_she_bal_av(:), b2srst_she_bal_av(:), &
-& b2sihs_diae_bal_av(:), b2sihs_divue_bal_av(:), b2sihs_exbe_bal_av(:), &
-& b2sihs_joule_bal_av(:), b2npht_shei_bal_av(:), reshe_av(:)
+& b2stbr_phys_she_bal_av(:), b2stbr_first_flight_she_bal_av(:), &
+& b2stbc_she_bal_av(:), eirene_mc_eael_she_bal_av(:, :), &
+& eirene_mc_emel_she_bal_av(:, :), eirene_mc_eiel_she_bal_av(:, :), &
+& eirene_mc_epel_she_bal_av(:, :), b2stbm_she_bal_av(:), ext_she_bal_av(&
+& :), b2stel_she_bal_av(:, :), b2srsm_she_bal_av(:), b2srdt_she_bal_av(:&
+& ), b2srst_she_bal_av(:), b2sihs_diae_bal_av(:), b2sihs_divue_bal_av(:)&
+& , b2sihs_exbe_bal_av(:), b2sihs_joule_bal_av(:), b2npht_shei_bal_av(:)&
+& , reshe_av(:)
 !   ..Arrays for ion heat balance:
 !     Fluxes
   REAL(kind=r8), ALLOCATABLE, SAVE :: fhi_32(:, :), fhi_52(:, :), &
@@ -173,18 +168,18 @@ MODULE B2MOD_BALANCE_DIFF
 & ), fhi_visq(:, :), fhi_anml(:, :), fhi_kevis(:, :)
 !     Source
   REAL(kind=r8), ALLOCATABLE, SAVE :: b2stbr_phys_shi0to3(:, :), &
-& b2stbr_phys_shi_bal(:), b2stbr_bas_shi0to3(:, :), b2stbr_bas_shi_bal(:&
-& ), b2stbr_first_flight_shi0to3(:, :), b2stbr_first_flight_shi_bal(:), &
-& b2stbc_shi0to3(:, :), b2stbc_shi_bal(:), eirene_mc_eapl_shi0to3(:, :, &
-& :), eirene_mc_empl_shi0to3(:, :, :), eirene_mc_eipl_shi0to3(:, :, :), &
-& eirene_mc_eppl_shi0to3(:, :, :), eirene_mc_eapl_shi_bal(:, :), &
-& eirene_mc_empl_shi_bal(:, :), eirene_mc_eipl_shi_bal(:, :), &
-& eirene_mc_eppl_shi_bal(:, :), b2stbm_shi0to3(:, :), b2stbm_shi_bal(:)&
-& , ext_shi0to3(:, :), ext_shi_bal(:), b2stel_she_ion0to3(:, :), &
-& b2stel_she_ion_bal(:), b2stel_she_rec0to3(:, :), b2stel_she_rec_bal(:)&
-& , b2stel_shi_ion0to3(:, :), b2stel_shi_ion_bal(:), b2stel_shi_rec0to3(&
-& :, :), b2stel_shi_rec_bal(:), b2stcx_shi0to3(:, :), b2stcx_shi_bal(:)&
-& , b2srsm_shi0to3(:, :), b2srsm_shi_bal(:), b2srdt_shi0to3(:, :), &
+& b2stbr_phys_shi_bal(:), b2stbr_first_flight_shi0to3(:, :), &
+& b2stbr_first_flight_shi_bal(:), b2stbc_shi0to3(:, :), b2stbc_shi_bal(:&
+& ), eirene_mc_eapl_shi0to3(:, :, :), eirene_mc_empl_shi0to3(:, :, :), &
+& eirene_mc_eipl_shi0to3(:, :, :), eirene_mc_eppl_shi0to3(:, :, :), &
+& eirene_mc_eapl_shi_bal(:, :), eirene_mc_empl_shi_bal(:, :), &
+& eirene_mc_eipl_shi_bal(:, :), eirene_mc_eppl_shi_bal(:, :), &
+& b2stbm_shi0to3(:, :), b2stbm_shi_bal(:), ext_shi0to3(:, :), &
+& ext_shi_bal(:), b2stel_she_ion0to3(:, :), b2stel_she_ion_bal(:), &
+& b2stel_she_rec0to3(:, :), b2stel_she_rec_bal(:), b2stel_shi_ion0to3(:&
+& , :), b2stel_shi_ion_bal(:), b2stel_shi_rec0to3(:, :), &
+& b2stel_shi_rec_bal(:), b2stcx_shi0to3(:, :), b2stcx_shi_bal(:), &
+& b2srsm_shi0to3(:, :), b2srsm_shi_bal(:), b2srdt_shi0to3(:, :), &
 & b2srdt_shi_bal(:), b2srst_shi0to3(:, :), b2srst_shi_bal(:), &
 & b2sihs_diaa0to3(:, :), b2sihs_diaa_bal(:), b2sihs_divua0to3(:, :), &
 & b2sihs_divua_bal(:), b2sihs_exba0to3(:, :), b2sihs_exba_bal(:), &
@@ -195,8 +190,8 @@ MODULE B2MOD_BALANCE_DIFF
 & fhi_cond_av(:, :), fhi_dia_av(:, :), fhi_ecrb_av(:, :), fhi_strange_av&
 & (:, :), fhi_pschused_av(:, :), fhi_inert_av(:, :), fhi_vispar_av(:, :)&
 & , fhi_visper_av(:, :), fhi_visq_av(:, :), fhi_anml_av(:, :), &
-& fhi_kevis_av(:, :), b2stbr_phys_shi_bal_av(:), b2stbr_bas_shi_bal_av(:&
-& ), b2stbr_first_flight_shi_bal_av(:), b2stbc_shi_bal_av(:), &
+& fhi_kevis_av(:, :), b2stbr_phys_shi_bal_av(:), &
+& b2stbr_first_flight_shi_bal_av(:), b2stbc_shi_bal_av(:), &
 & eirene_mc_eapl_shi_bal_av(:, :), eirene_mc_empl_shi_bal_av(:, :), &
 & eirene_mc_eipl_shi_bal_av(:, :), eirene_mc_eppl_shi_bal_av(:, :), &
 & b2stbm_shi_bal_av(:), ext_shi_bal_av(:), b2stel_she_ion_bal_av(:), &
@@ -242,8 +237,6 @@ CONTAINS
 !     Sources
     ALLOCATE(b2stbr_phys_sna0to1(ncv, 0:1, 0:nsd-1))
     ALLOCATE(b2stbr_phys_sna_bal(ncv, 0:nsd-1))
-    ALLOCATE(b2stbr_bas_sna0to1(ncv, 0:1, 0:nsd-1))
-    ALLOCATE(b2stbr_bas_sna_bal(ncv, 0:nsd-1))
     ALLOCATE(b2stbr_first_flight_sna0to1(ncv, 0:1, 0:nsd-1))
     ALLOCATE(b2stbr_first_flight_sna_bal(ncv, 0:nsd-1))
     ALLOCATE(b2stbc_sna0to1(ncv, 0:1, 0:nsd-1))
@@ -268,8 +261,6 @@ CONTAINS
     ALLOCATE(tot_sna_bal(ncv, 0:nsd-1))
     b2stbr_phys_sna0to1 = 0.0_R8
     b2stbr_phys_sna_bal = 0.0_R8
-    b2stbr_bas_sna0to1 = 0.0_R8
-    b2stbr_bas_sna_bal = 0.0_R8
     b2stbr_first_flight_sna0to1 = 0.0_R8
     b2stbr_first_flight_sna_bal = 0.0_R8
     b2stbc_sna0to1 = 0.0_R8
@@ -302,7 +293,6 @@ CONTAINS
     ALLOCATE(fna_pschused_av(nfc, 0:1, 0:nsd-1))
     ALLOCATE(fna_tot_av(nfc, 0:1, 0:nsd-1))
     ALLOCATE(b2stbr_phys_sna_bal_av(ncv, 0:nsd-1))
-    ALLOCATE(b2stbr_bas_sna_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2stbr_first_flight_sna_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2stbc_sna_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2stbm_sna_bal_av(ncv, 0:nsd-1))
@@ -325,8 +315,6 @@ CONTAINS
 !     Sources
     ALLOCATE(b2stbr_phys_smo0to3(ncv, 0:3, 0:nsd-1))
     ALLOCATE(b2stbr_phys_smo_bal(ncv, 0:nsd-1))
-    ALLOCATE(b2stbr_bas_smo0to3(ncv, 0:3, 0:nsd-1))
-    ALLOCATE(b2stbr_bas_smo_bal(ncv, 0:nsd-1))
     ALLOCATE(b2stbc_smo0to3(ncv, 0:3, 0:nsd-1))
     ALLOCATE(b2stbc_smo_bal(ncv, 0:nsd-1))
     ALLOCATE(b2stbm_smo0to3(ncv, 0:3, 0:nsd-1))
@@ -395,8 +383,6 @@ CONTAINS
     ALLOCATE(tot_smo_bal(ncv, 0:nsd-1))
     b2stbr_phys_smo0to3 = 0.0_R8
     b2stbr_phys_smo_bal = 0.0_R8
-    b2stbr_bas_smo0to3 = 0.0_R8
-    b2stbr_bas_smo_bal = 0.0_R8
     b2stbc_smo0to3 = 0.0_R8
     b2stbc_smo_bal = 0.0_R8
     b2stbm_smo0to3 = 0.0_R8
@@ -470,7 +456,6 @@ CONTAINS
     ALLOCATE(fmo_b2nxfv_av(nfc, 0:1, 0:nsd-1))
     ALLOCATE(fmo_tot_av(nfc, 0:1, 0:nsd-1))
     ALLOCATE(b2stbr_phys_smo_bal_av(ncv, 0:nsd-1))
-    ALLOCATE(b2stbr_bas_smo_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2stbc_smo_bal_av(ncv, 0:nsd-1))
     ALLOCATE(b2stbm_smo_bal_av(ncv, 0:nsd-1))
     ALLOCATE(ext_smo_bal_av(ncv, 0:nsd-1))
@@ -518,8 +503,6 @@ CONTAINS
 !     Sources
     ALLOCATE(b2stbr_phys_she0to3(ncv, 0:3))
     ALLOCATE(b2stbr_phys_she_bal(ncv))
-    ALLOCATE(b2stbr_bas_she0to3(ncv, 0:3))
-    ALLOCATE(b2stbr_bas_she_bal(ncv))
     ALLOCATE(b2stbr_first_flight_she0to3(ncv, 0:3))
     ALLOCATE(b2stbr_first_flight_she_bal(ncv))
     ALLOCATE(b2stbc_she0to3(ncv, 0:3))
@@ -547,8 +530,6 @@ CONTAINS
     ALLOCATE(b2npht_shei_bal(ncv))
     b2stbr_phys_she0to3 = 0.0_R8
     b2stbr_phys_she_bal = 0.0_R8
-    b2stbr_bas_she0to3 = 0.0_R8
-    b2stbr_bas_she_bal = 0.0_R8
     b2stbr_first_flight_she0to3 = 0.0_R8
     b2stbr_first_flight_she_bal = 0.0_R8
     b2stbc_she0to3 = 0.0_R8
@@ -584,7 +565,6 @@ CONTAINS
     ALLOCATE(fhe_strange_av(nfc, 0:1))
     ALLOCATE(fhe_pschused_av(nfc, 0:1))
     ALLOCATE(b2stbr_phys_she_bal_av(ncv))
-    ALLOCATE(b2stbr_bas_she_bal_av(ncv))
     ALLOCATE(b2stbr_first_flight_she_bal_av(ncv))
     ALLOCATE(b2stbc_she_bal_av(ncv))
     ALLOCATE(b2stbm_she_bal_av(ncv))
@@ -617,8 +597,6 @@ CONTAINS
 !     Sources
     ALLOCATE(b2stbr_phys_shi0to3(ncv, 0:3))
     ALLOCATE(b2stbr_phys_shi_bal(ncv))
-    ALLOCATE(b2stbr_bas_shi0to3(ncv, 0:3))
-    ALLOCATE(b2stbr_bas_shi_bal(ncv))
     ALLOCATE(b2stbr_first_flight_shi0to3(ncv, 0:3))
     ALLOCATE(b2stbr_first_flight_shi_bal(ncv))
     ALLOCATE(b2stbc_shi0to3(ncv, 0:3))
@@ -655,8 +633,6 @@ CONTAINS
     ALLOCATE(b2sihs_fraa_bal(ncv))
     b2stbr_phys_shi0to3 = 0.0_R8
     b2stbr_phys_shi_bal = 0.0_R8
-    b2stbr_bas_shi0to3 = 0.0_R8
-    b2stbr_bas_shi_bal = 0.0_R8
     b2stbr_first_flight_shi0to3 = 0.0_R8
     b2stbr_first_flight_shi_bal = 0.0_R8
     b2stbc_shi0to3 = 0.0_R8
@@ -706,7 +682,6 @@ CONTAINS
     ALLOCATE(fhi_anml_av(nfc, 0:1))
     ALLOCATE(fhi_kevis_av(nfc, 0:1))
     ALLOCATE(b2stbr_phys_shi_bal_av(ncv))
-    ALLOCATE(b2stbr_bas_shi_bal_av(ncv))
     ALLOCATE(b2stbr_first_flight_shi_bal_av(ncv))
     ALLOCATE(b2stbc_shi_bal_av(ncv))
     ALLOCATE(b2stbm_shi_bal_av(ncv))
@@ -761,8 +736,6 @@ CONTAINS
 !     Sources
       DEALLOCATE(b2stbr_phys_sna0to1)
       DEALLOCATE(b2stbr_phys_sna_bal)
-      DEALLOCATE(b2stbr_bas_sna0to1)
-      DEALLOCATE(b2stbr_bas_sna_bal)
       DEALLOCATE(b2stbr_first_flight_sna0to1)
       DEALLOCATE(b2stbr_first_flight_sna_bal)
       DEALLOCATE(b2stbc_sna0to1)
@@ -795,7 +768,6 @@ CONTAINS
       DEALLOCATE(fna_pschused_av)
       DEALLOCATE(fna_tot_av)
       DEALLOCATE(b2stbr_phys_sna_bal_av)
-      DEALLOCATE(b2stbr_bas_sna_bal_av)
       DEALLOCATE(b2stbr_first_flight_sna_bal_av)
       DEALLOCATE(b2stbc_sna_bal_av)
       DEALLOCATE(b2stbm_sna_bal_av)
@@ -818,8 +790,6 @@ CONTAINS
 !     Sources
       DEALLOCATE(b2stbr_phys_smo0to3)
       DEALLOCATE(b2stbr_phys_smo_bal)
-      DEALLOCATE(b2stbr_bas_smo0to3)
-      DEALLOCATE(b2stbr_bas_smo_bal)
       DEALLOCATE(b2stbc_smo0to3)
       DEALLOCATE(b2stbc_smo_bal)
       DEALLOCATE(b2stbm_smo0to3)
@@ -893,7 +863,6 @@ CONTAINS
       DEALLOCATE(fmo_b2nxfv_av)
       DEALLOCATE(fmo_tot_av)
       DEALLOCATE(b2stbr_phys_smo_bal_av)
-      DEALLOCATE(b2stbr_bas_smo_bal_av)
       DEALLOCATE(b2stbc_smo_bal_av)
       DEALLOCATE(b2stbm_smo_bal_av)
       DEALLOCATE(ext_smo_bal_av)
@@ -941,8 +910,6 @@ CONTAINS
 !     Sources
       DEALLOCATE(b2stbr_phys_she0to3)
       DEALLOCATE(b2stbr_phys_she_bal)
-      DEALLOCATE(b2stbr_bas_she0to3)
-      DEALLOCATE(b2stbr_bas_she_bal)
       DEALLOCATE(b2stbr_first_flight_she0to3)
       DEALLOCATE(b2stbr_first_flight_she_bal)
       DEALLOCATE(b2stbc_she0to3)
@@ -978,7 +945,6 @@ CONTAINS
       DEALLOCATE(fhe_strange_av)
       DEALLOCATE(fhe_pschused_av)
       DEALLOCATE(b2stbr_phys_she_bal_av)
-      DEALLOCATE(b2stbr_bas_she_bal_av)
       DEALLOCATE(b2stbr_first_flight_she_bal_av)
       DEALLOCATE(b2stbc_she_bal_av)
       DEALLOCATE(b2stbm_she_bal_av)
@@ -1011,8 +977,6 @@ CONTAINS
 !     Sources
       DEALLOCATE(b2stbr_phys_shi0to3)
       DEALLOCATE(b2stbr_phys_shi_bal)
-      DEALLOCATE(b2stbr_bas_shi0to3)
-      DEALLOCATE(b2stbr_bas_shi_bal)
       DEALLOCATE(b2stbr_first_flight_shi0to3)
       DEALLOCATE(b2stbr_first_flight_shi_bal)
       DEALLOCATE(b2stbc_shi0to3)
@@ -1062,7 +1026,6 @@ CONTAINS
       DEALLOCATE(fhi_anml_av)
       DEALLOCATE(fhi_kevis_av)
       DEALLOCATE(b2stbr_phys_shi_bal_av)
-      DEALLOCATE(b2stbr_bas_shi_bal_av)
       DEALLOCATE(b2stbr_first_flight_shi_bal_av)
       DEALLOCATE(b2stbc_shi_bal_av)
       DEALLOCATE(b2stbm_shi_bal_av)
@@ -1416,8 +1379,6 @@ CONTAINS
     DO icv=1,ncv
       b2stbr_phys_sna_bal(icv, isb) = b2stbr_phys_sna0to1(icv, 0, isb) +&
 &       b2stbr_phys_sna0to1(icv, 1, isb)*nb(icv)
-      b2stbr_bas_sna_bal(icv, isb) = b2stbr_bas_sna0to1(icv, 0, isb) + &
-&       b2stbr_bas_sna0to1(icv, 1, isb)*nb(icv)
       b2stbr_first_flight_sna_bal(icv, isb) = &
 &       b2stbr_first_flight_sna0to1(icv, 0, isb) + &
 &       b2stbr_first_flight_sna0to1(icv, 1, isb)*nb(icv)
@@ -1484,10 +1445,6 @@ CONTAINS
 &       b2stbr_phys_smo0to3(icv, 1, isb)*ub(icv) + b2stbr_phys_smo0to3(&
 &       icv, 2, isb)*rob(icv) + b2stbr_phys_smo0to3(icv, 3, isb)*rob(icv&
 &       )*ub(icv)
-      b2stbr_bas_smo_bal(icv, isb) = b2stbr_bas_smo0to3(icv, 0, isb) + &
-&       b2stbr_bas_smo0to3(icv, 1, isb)*ub(icv) + b2stbr_bas_smo0to3(icv&
-&       , 2, isb)*rob(icv) + b2stbr_bas_smo0to3(icv, 3, isb)*rob(icv)*ub&
-&       (icv)
       b2stbc_smo_bal(icv, isb) = b2stbc_smo0to3(icv, 0, isb) + &
 &       b2stbc_smo0to3(icv, 1, isb)*ub(icv) + b2stbc_smo0to3(icv, 2, isb&
 &       )*rob(icv) + b2stbc_smo0to3(icv, 3, isb)*rob(icv)*ub(icv)
@@ -1647,9 +1604,6 @@ CONTAINS
       b2stbr_phys_she_bal(icv) = b2stbr_phys_she0to3(icv, 0) + &
 &       b2stbr_phys_she0to3(icv, 1)*te(icv) + b2stbr_phys_she0to3(icv, 2&
 &       )*ne(icv) + b2stbr_phys_she0to3(icv, 3)*ne(icv)*te(icv)
-      b2stbr_bas_she_bal(icv) = b2stbr_bas_she0to3(icv, 0) + &
-&       b2stbr_bas_she0to3(icv, 1)*te(icv) + b2stbr_bas_she0to3(icv, 2)*&
-&       ne(icv) + b2stbr_bas_she0to3(icv, 3)*ne(icv)*te(icv)
       b2stbr_first_flight_she_bal(icv) = b2stbr_first_flight_she0to3(icv&
 &       , 0) + b2stbr_first_flight_she0to3(icv, 1)*te(icv) + &
 &       b2stbr_first_flight_she0to3(icv, 2)*ne(icv) + &
@@ -1721,9 +1675,6 @@ CONTAINS
       b2stbr_phys_shi_bal(icv) = b2stbr_phys_shi0to3(icv, 0) + &
 &       b2stbr_phys_shi0to3(icv, 1)*ti(icv) + b2stbr_phys_shi0to3(icv, 2&
 &       )*ni(icv) + b2stbr_phys_shi0to3(icv, 3)*ni(icv)*ti(icv)
-      b2stbr_bas_shi_bal(icv) = b2stbr_bas_shi0to3(icv, 0) + &
-&       b2stbr_bas_shi0to3(icv, 1)*ti(icv) + b2stbr_bas_shi0to3(icv, 2)*&
-&       ni(icv) + b2stbr_bas_shi0to3(icv, 3)*ni(icv)*ti(icv)
       b2stbr_first_flight_shi_bal(icv) = b2stbr_first_flight_shi0to3(icv&
 &       , 0) + b2stbr_first_flight_shi0to3(icv, 1)*ti(icv) + &
 &       b2stbr_first_flight_shi0to3(icv, 2)*ni(icv) + &
@@ -1826,7 +1777,6 @@ CONTAINS
       fna_pschused_av = 0.0_R8
       fna_tot_av = 0.0_R8
       b2stbr_phys_sna_bal_av = 0.0_R8
-      b2stbr_bas_sna_bal_av = 0.0_R8
       b2stbr_first_flight_sna_bal_av = 0.0_R8
       b2stbc_sna_bal_av = 0.0_R8
       b2stbm_sna_bal_av = 0.0_R8
@@ -1864,7 +1814,6 @@ CONTAINS
       fmo_b2nxfv_av = 0.0_R8
       fmo_tot_av = 0.0_R8
       b2stbr_phys_smo_bal_av = 0.0_R8
-      b2stbr_bas_smo_bal_av = 0.0_R8
       b2stbc_smo_bal_av = 0.0_R8
       IF (ALLOCATED(eirene_mc_mapl_smo_bal)) THEN
         eirene_mc_mapl_smo_bal_av = 0.0_R8
@@ -1915,7 +1864,6 @@ CONTAINS
       fhe_strange_av = 0.0_R8
       fhe_pschused_av = 0.0_R8
       b2stbr_phys_she_bal_av = 0.0_R8
-      b2stbr_bas_she_bal_av = 0.0_R8
       b2stbr_first_flight_she_bal_av = 0.0_R8
       b2stbc_she_bal_av = 0.0_R8
       IF (ALLOCATED(eirene_mc_eael_she_bal)) THEN
@@ -1951,7 +1899,6 @@ CONTAINS
       fhi_anml_av = 0.0_R8
       fhi_kevis_av = 0.0_R8
       b2stbr_phys_shi_bal_av = 0.0_R8
-      b2stbr_bas_shi_bal_av = 0.0_R8
       b2stbr_first_flight_shi_bal_av = 0.0_R8
       b2stbc_shi_bal_av = 0.0_R8
       IF (ALLOCATED(eirene_mc_eapl_shi_bal)) THEN
@@ -2028,8 +1975,6 @@ CONTAINS
     fna_tot_av = avmlt*fna_tot_av + curmlt*fna_tot
     b2stbr_phys_sna_bal_av = avmlt*b2stbr_phys_sna_bal_av + curmlt*&
 &     b2stbr_phys_sna_bal
-    b2stbr_bas_sna_bal_av = avmlt*b2stbr_bas_sna_bal_av + curmlt*&
-&     b2stbr_bas_sna_bal
     b2stbr_first_flight_sna_bal_av = avmlt*&
 &     b2stbr_first_flight_sna_bal_av + curmlt*&
 &     b2stbr_first_flight_sna_bal
@@ -2088,8 +2033,6 @@ CONTAINS
     fmo_tot_av = avmlt*fmo_tot_av + curmlt*fmo_tot
     b2stbr_phys_smo_bal_av = avmlt*b2stbr_phys_smo_bal_av + curmlt*&
 &     b2stbr_phys_smo_bal
-    b2stbr_bas_smo_bal_av = avmlt*b2stbr_bas_smo_bal_av + curmlt*&
-&     b2stbr_bas_smo_bal
     b2stbc_smo_bal_av = avmlt*b2stbc_smo_bal_av + curmlt*b2stbc_smo_bal
     IF (ALLOCATED(eirene_mc_mapl_smo_bal)) THEN
       eirene_mc_mapl_smo_bal_av = avmlt*eirene_mc_mapl_smo_bal_av + &
@@ -2165,8 +2108,6 @@ CONTAINS
     fhe_pschused_av = avmlt*fhe_pschused_av + curmlt*fhe_pschused
     b2stbr_phys_she_bal_av = avmlt*b2stbr_phys_she_bal_av + curmlt*&
 &     b2stbr_phys_she_bal
-    b2stbr_bas_she_bal_av = avmlt*b2stbr_bas_she_bal_av + curmlt*&
-&     b2stbr_bas_she_bal
     b2stbr_first_flight_she_bal_av = avmlt*&
 &     b2stbr_first_flight_she_bal_av + curmlt*&
 &     b2stbr_first_flight_she_bal
@@ -2214,8 +2155,6 @@ CONTAINS
     fhi_kevis_av = avmlt*fhi_kevis_av + curmlt*fhi_kevis
     b2stbr_phys_shi_bal_av = avmlt*b2stbr_phys_shi_bal_av + curmlt*&
 &     b2stbr_phys_shi_bal
-    b2stbr_bas_shi_bal_av = avmlt*b2stbr_bas_shi_bal_av + curmlt*&
-&     b2stbr_bas_shi_bal
     b2stbr_first_flight_shi_bal_av = avmlt*&
 &     b2stbr_first_flight_shi_bal_av + curmlt*&
 &     b2stbr_first_flight_shi_bal
@@ -4293,8 +4232,6 @@ CONTAINS
     vdims(2) = nsid
     CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_phys_sna_bal', &
 &                   b2stbr_phys_sna_bal_av, vdims, 2)
-    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_bas_sna_bal', &
-&                   b2stbr_bas_sna_bal_av, vdims, 2)
     CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_first_flight_sna_bal', &
 &                   b2stbr_first_flight_sna_bal_av, vdims, 2)
     CALL WRITE_CDF_DOUBLE(ncid, 'b2stbc_sna_bal', b2stbc_sna_bal_av, &
@@ -4332,8 +4269,6 @@ CONTAINS
     vdims(2) = nsid
     CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_phys_smo_bal', &
 &                   b2stbr_phys_smo_bal_av, vdims, 2)
-    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_bas_smo_bal', &
-&                   b2stbr_bas_smo_bal_av, vdims, 2)
     CALL WRITE_CDF_DOUBLE(ncid, 'b2stbc_smo_bal', b2stbc_smo_bal_av, &
 &                   vdims, 2)
     CALL WRITE_CDF_DOUBLE(ncid, 'b2stbm_smo_bal', b2stbm_smo_bal_av, &
@@ -4417,8 +4352,6 @@ CONTAINS
     vdims(1) = ncvpid
     CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_phys_she_bal', &
 &                   b2stbr_phys_she_bal_av, vdims, 1)
-    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_bas_she_bal', &
-&                   b2stbr_bas_she_bal_av, vdims, 1)
     CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_first_flight_she_bal', &
 &                   b2stbr_first_flight_she_bal_av, vdims, 1)
     CALL WRITE_CDF_DOUBLE(ncid, 'b2stbc_she_bal', b2stbc_she_bal_av, &
@@ -4469,8 +4402,6 @@ CONTAINS
     vdims(1) = ncvpid
     CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_phys_shi_bal', &
 &                   b2stbr_phys_shi_bal_av, vdims, 1)
-    CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_bas_shi_bal', &
-&                   b2stbr_bas_shi_bal_av, vdims, 1)
     CALL WRITE_CDF_DOUBLE(ncid, 'b2stbr_first_flight_shi_bal', &
 &                   b2stbr_first_flight_shi_bal_av, vdims, 1)
     CALL WRITE_CDF_DOUBLE(ncid, 'b2stbc_shi_bal', b2stbc_shi_bal_av, &

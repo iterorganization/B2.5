@@ -114,8 +114,9 @@ SUBROUTINE B2USPO_DV_DV(ncv, nfc, nvx, nregionv, solvereg, itcnt, switch&
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2uspo')
-!   ..test nCv, nFc
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
 !   ..test itcnt
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
 !   ..extensive tests on first few calls
@@ -573,8 +574,9 @@ SUBROUTINE B2USPO_DV_NODIFF(ncv, nfc, nvx, nregionv, solvereg, itcnt, &
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2uspo')
-!   ..test nCv, nFc
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
 !   ..test itcnt
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
 !   ..extensive tests on first few calls
@@ -864,8 +866,9 @@ SUBROUTINE B2USPO_NODIFF_NODIFF(ncv, nfc, nvx, nregionv, solvereg, itcnt&
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2uspo')
-!   ..test nCv, nFc
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
 !   ..test itcnt
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
 !   ..extensive tests on first few calls

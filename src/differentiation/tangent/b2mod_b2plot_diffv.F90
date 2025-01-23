@@ -33,7 +33,7 @@ MODULE B2MOD_B2PLOT_DIFFV
   REAL(kind=r8), SAVE :: pp1(2, def_nlim+2*def_nyd), pp2(2, def_nlim+2*&
 & def_nyd)
 !
-  INTEGER, ALLOCATABLE, SAVE :: ind_hlp(:), indt_hlp(:)
+  INTEGER, ALLOCATABLE, SAVE :: ind_hlp(:), indt_hlp(:), b2_fnmti(:)
 !
   INTEGER, ALLOCATABLE, SAVE :: cvix(:), cviy(:), fcxix(:), fcxiy(:), &
 & fcyix(:), fcyiy(:), vxix(:), vxiy(:)
@@ -152,6 +152,7 @@ CONTAINS
     ALLOCATE(fcyiy(1:nfc))
     ALLOCATE(vxix(1:nvx))
     ALLOCATE(vxiy(1:nvx))
+    ALLOCATE(b2_fnmti(1:nfc))
     ALLOCATE(ic_active(1:ncv))
     ALLOCATE(textpl(0:nsd-1))
     ALLOCATE(textplel(0:nsd))
@@ -321,6 +322,7 @@ CONTAINS
       DEALLOCATE(fcyiy)
       DEALLOCATE(vxix)
       DEALLOCATE(vxiy)
+      DEALLOCATE(b2_fnmti)
       DEALLOCATE(ic_active)
       DEALLOCATE(textpl)
       DEALLOCATE(textplel)

@@ -510,7 +510,6 @@ CONTAINS
 &          )
     END DO
     DEALLOCATE(done)
-!WG      endif
     IF ((.NOT.file_ok) .OR. (.NOT.dotest)) THEN
       IF (.NOT.file_ok) WRITE(*, *) 'No ', TRIM(filename)
       WRITE(*, *) 'Testing skipped!'
@@ -870,7 +869,7 @@ CONTAINS
     TYPE(MAPPING), INTENT(INOUT) :: m
     TYPE(MAPPING_DIFF), INTENT(INOUT) :: mb
     LOGICAL, INTENT(IN) :: dotest
-    INTEGER :: is, ib, ic, noss, iss, indss, idb, nbcfc, inbc
+    INTEGER :: is, ib, ic, ifc, noss, iss, indss, idb, nbcfc, inbc
     INTEGER :: ian, ien
     CHARACTER(len=3) :: ss
 !
@@ -1011,6 +1010,14 @@ CONTAINS
       END DO
       DEALLOCATE(done)
     END IF
+!   ..build reverse face correspondence array
+    DO ib=1,nbc
+      DO ic=1,m%bcfcp(ib, 2)
+        ifc = m%bcfc(m%bcfcp(ib, 1)+ic-1)
+        m%fcbc(ifc, 1) = m%bcfcp(ib, 1) + ic - 1
+        m%fcbc(ifc, 2) = ib
+      END DO
+    END DO
     IF ((.NOT.file_ok) .OR. (.NOT.dotest)) THEN
       IF (.NOT.file_ok) WRITE(*, *) 'No ', TRIM(filename)
       WRITE(*, *) 'Testing skipped!'
@@ -1055,7 +1062,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: ns
     TYPE(MAPPING), INTENT(INOUT) :: m
     LOGICAL, INTENT(IN) :: dotest
-    INTEGER :: is, ib, ic, noss, iss, indss, idb, nbcfc, inbc
+    INTEGER :: is, ib, ic, ifc, noss, iss, indss, idb, nbcfc, inbc
     INTEGER :: ian, ien
     CHARACTER(len=3) :: ss
 !
@@ -1196,6 +1203,14 @@ CONTAINS
       END DO
       DEALLOCATE(done)
     END IF
+!   ..build reverse face correspondence array
+    DO ib=1,nbc
+      DO ic=1,m%bcfcp(ib, 2)
+        ifc = m%bcfc(m%bcfcp(ib, 1)+ic-1)
+        m%fcbc(ifc, 1) = m%bcfcp(ib, 1) + ic - 1
+        m%fcbc(ifc, 2) = ib
+      END DO
+    END DO
     IF ((.NOT.file_ok) .OR. (.NOT.dotest)) THEN
       IF (.NOT.file_ok) WRITE(*, *) 'No ', TRIM(filename)
       WRITE(*, *) 'Testing skipped!'
@@ -1241,26 +1256,29 @@ CONTAINS
   END SUBROUTINE WRITE_B2MOD_BOUNDARY_NAMELIST
 
 !
-  FUNCTION GET_PHI_APPLIED(boundary_namelist, ix, iy)
+  FUNCTION GET_PHI_APPLIED(boundary_namelist, mpg, ifc)
     USE B2MOD_TYPES
     USE B2MOD_PLASMA_DIFF
+    USE B2MOD_BOUNDARY_SOURCES
     IMPLICIT NONE
     REAL(kind=r8) :: get_phi_applied
-    INTEGER, INTENT(IN) :: boundary_namelist, ix, iy
-    INTEGER :: i, ib
+    TYPE(MAPPING), INTENT(IN) :: mpg
+    INTEGER, INTENT(IN) :: boundary_namelist, ifc
+    INTEGER :: i, ib, icv
     LOGICAL :: found
+    INTRINSIC MIN
 !
     get_phi_applied = 0.0_R8
     IF (boundary_namelist .EQ. 1) THEN
       ib = 1
       found = .false.
       DO WHILE (ib .LE. nbc .AND. (.NOT.found))
-        IF (((bcchar(ib) .EQ. 'S' .OR. bcchar(ib) .EQ. 'N') .OR. bcchar(&
-&           ib) .EQ. 'E') .OR. bcchar(ib) .EQ. 'W') THEN
+        IF ((((bcchar(ib) .EQ. 'S' .OR. bcchar(ib) .EQ. 'N') .OR. bcchar&
+&           (ib) .EQ. 'E') .OR. bcchar(ib) .EQ. 'W') .OR. bcchar(ib) &
+&           .EQ. 'A') THEN
           i = 1
-          DO WHILE (i .LE. bc_list_size(ib) .AND. (.NOT.found))
-            found = bc_list_x(i, ib) .EQ. ix .AND. bc_list_y(i, ib) .EQ.&
-&             iy
+          DO WHILE (i .LE. mpg%bcfcp(ib, 2) .AND. (.NOT.found))
+            found = mpg%bcfc(mpg%bcfcp(ib, 1)+i-1) .EQ. ifc
             i = i + 1
           END DO
         END IF
@@ -1268,10 +1286,17 @@ CONTAINS
       END DO
       IF (found) THEN
         SELECT CASE  (bcpot(ib)) 
-        CASE (1, 4) 
+        CASE (1, 4, 21, 22) 
           get_phi_applied = potpar(ib, 1)
-        CASE (3) 
+        CASE (3, 11) 
           get_phi_applied = potpar(ib, 2)
+        CASE (7) 
+          IF (mpg%fccv(ifc, 1) .GT. mpg%fccv(ifc, 2)) THEN
+            icv = mpg%fccv(ifc, 2)
+          ELSE
+            icv = mpg%fccv(ifc, 1)
+          END IF
+          get_phi_applied = bv_po(icv)
         END SELECT
       END IF
     END IF
@@ -1287,6 +1312,7 @@ CONTAINS
 & )
     USE B2MOD_TYPES
     USE B2US_MAP_DIFF
+    USE B2MOD_BOUNDARY_SOURCES
     IMPLICIT NONE
     REAL(kind=r8) :: getphiapplied
     REAL(kind=r8) :: getphiappliedb
@@ -1322,9 +1348,9 @@ CONTAINS
       CALL PUSHINTEGER4(ad_count)
       IF (found) THEN
         SELECT CASE  (bcpot(ib)) 
-        CASE (1, 4) 
+        CASE (1, 4, 21, 22) 
           potparb(ib, 1) = potparb(ib, 1) + getphiappliedb
-        CASE (3) 
+        CASE (3, 11) 
           potparb(ib, 2) = potparb(ib, 2) + getphiappliedb
         END SELECT
       END IF
@@ -1339,6 +1365,7 @@ CONTAINS
   FUNCTION GETPHIAPPLIED(boundary_namelist, mpg, icv)
     USE B2MOD_TYPES
     USE B2US_MAP_DIFF
+    USE B2MOD_BOUNDARY_SOURCES
     IMPLICIT NONE
     REAL(kind=r8) :: getphiapplied
     INTEGER :: boundary_namelist, icv
@@ -1363,10 +1390,12 @@ CONTAINS
       END DO
       IF (found) THEN
         SELECT CASE  (bcpot(ib)) 
-        CASE (1, 4) 
+        CASE (1, 4, 21, 22) 
           getphiapplied = potpar(ib, 1)
-        CASE (3) 
+        CASE (3, 11) 
           getphiapplied = potpar(ib, 2)
+        CASE (7) 
+          getphiapplied = bv_po(icv)
         END SELECT
       END IF
     END IF

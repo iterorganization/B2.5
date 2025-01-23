@@ -93,52 +93,26 @@ SUBROUTINE B2STBC_SPB_NODIFF_NODIFF(nx, ny, ns, facdrift, na, ua, uadia&
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ncall, n2, ix, iy, is, ireg
-  LOGICAL :: wrong_flow
-! cstm1                                         !sv 14.10.99
-!, v0                !sv 09.01.01 18.07.03 28.01.05
-  REAL(kind=r8) :: sna0ep, she0ep, shi0ep, tpz, trz, csb, cst, vte, s0, &
-& s1, fche, fchi, t0, csbm, cstm, s0hz, s1hz, vwest, veast, vminus, &
-& vplus
-!sv 18.01.02
-  REAL(kind=r8) :: pz(-1:nx, -1:ny)
+  INTEGER :: ncall, n2, is
+  INTEGER, SAVE :: iout=0
   INTEGER, SAVE :: boundary_namelist=0
-!sv 08.08.02 14.02.05
-  INTEGER, SAVE :: istyle_average_pr=0
-  INTEGER, SAVE :: istyle_fchi=0
 !sv 02.03.05
   INTEGER, SAVE :: idrifts_to_the_wall=0
-!sv 24.03.05
-  INTEGER, SAVE :: ivminus=1
-  INTEGER, SAVE :: ivplus=1
-!sv 25.07.05 25.04.08
-  INTEGER, SAVE :: iform_corr_dia=0
-  INTEGER, SAVE :: istyle_cs=0
 !sv 03.10.06
   INTEGER, SAVE :: mdf_fnb=0
   INTEGER, SAVE :: mdf_fhe=0
   INTEGER, SAVE :: mdf_fhi=0
-!sv 26.11.02
-  INTEGER :: num_inner
-!sv 24.03.99 18.01.02
-!sv 07.04.00 15.02.02
-!sv 15.02.02
-!sv 15.12.00 25.01.02
-!sv 22.01.02 18.10.04
-  REAL(kind=r8) :: facdriftm, pzaverage, pzsum, volsum, ua2sum, &
-& ua2average(0:ns-1), uasum, uaaverage(0:ns-1), nesum, tisum, tiaverage&
-& , tesum, nasum, naaverage(0:ns-1), bbsum, bbaverage
-!lk 20.11.07
-  REAL(kind=r8) :: bzhzsum, bzhzaverage
-!sv 07.04.00
-  REAL(kind=r8) :: fchy_inertia
-!sv 31.08.00
-  REAL(kind=r8) :: fchy_biasing_cur
-!sv
-  REAL(kind=r8) :: fchy_dia
-!sv 25.04.00
-  REAL(kind=r8), SAVE :: y_dia=1.0_R8
-  REAL(kind=r8), SAVE :: y_inertia=1.0_R8
+!sv 25.07.05 25.04.08
+  INTEGER, SAVE :: iform_corr_dia=0
+  INTEGER, SAVE :: istyle_cs=0
+!sv 08.08.02 14.02.05
+  INTEGER, SAVE :: istyle_average_pr=0
+  INTEGER, SAVE :: istyle_fchi=0
+!sv 24.03.05
+  INTEGER, SAVE :: ivminus=1
+  INTEGER, SAVE :: ivplus=1
+  LOGICAL :: wrong_flow
+  REAL(kind=r8) :: sna0ep, she0ep, shi0ep
 !sv 31.08.00
   REAL(kind=r8), SAVE :: biasing_cur=0.0_R8
 !sv 09.07.99
@@ -171,22 +145,13 @@ SUBROUTINE B2STBC_SPB_NODIFF_NODIFF(nx, ny, ns, facdrift, na, ua, uadia&
   REAL(kind=r8), SAVE :: phm1=1.0_R8
   REAL(kind=r8), SAVE :: phm2=1.0_R8
   REAL(kind=r8), SAVE :: ubig0=0.0_R8
-!sv 11.07.05
-  CHARACTER :: chns*3, chk*1
-!sv 11.07.05
-  INTEGER, SAVE :: iout=0, k
-  SAVE ncall, sna0ep, she0ep, shi0ep
-!   ..procedures
-  INTRINSIC MIN, MAX, ABS, SQRT
-  EXTERNAL XERTST, SFILL_NODIFF_NODIFF, B2SSUM_NODIFF_NODIFF, &
-&     B2SAXPY_NODIFF_NODIFF
-  REAL(kind=r8) :: B2SSUM_NODIFF_NODIFF
-!sv 18.01.02
-  EXTERNAL B2XVSG, B2XVFF_NODIFF0, B2XVPS_NODIFF_NODIFF, B2XXGS, &
-&     B2XPPZ_NODIFF_NODIFF
-  INTRINSIC MAXVAL
-  INTEGER :: arg1
+!sv 25.04.00
+  REAL(kind=r8), SAVE :: y_dia=1.0_R8
+  REAL(kind=r8), SAVE :: y_inertia=1.0_R8
 !   ..initialization
+  SAVE ncall, sna0ep, she0ep, shi0ep
+  EXTERNAL B2XVSG
+  INTEGER :: arg1
   DATA ncall /0/
   DATA sna0ep /1.0e-36_R8/
   DATA she0ep /1.0e-36_R8/
@@ -302,8 +267,6 @@ SUBROUTINE B2STBC_SPB_NODIFF_NODIFF(nx, ny, ns, facdrift, na, ua, uadia&
   CALL SFILL_NODIFF_NODIFF(arg1, 0.0_R8, shi0, 1)
   arg1 = n2*4
   CALL SFILL_NODIFF_NODIFF(arg1, 0.0_R8, sch0, 1)
-!srv 29.07.08
-  facdriftm = MAXVAL(facdrift)
 !
 ! ..compute standard form volume sources
 !   (This code placed here for want of a better location)
