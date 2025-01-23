@@ -7110,7 +7110,8 @@ CONTAINS
     TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
     TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: state_avgd
 !srv 29.11.18
-    INTEGER :: ncv, nfc, nvx, is
+    INTEGER :: ncv, nfc, is
+    INTEGER :: nvx
     LOGICAL :: ids_done
     EXTERNAL CALC_ERR
     EXTERNAL B2WDAT
@@ -7361,7 +7362,8 @@ CONTAINS
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
 !srv 29.11.18
-    INTEGER :: ncv, nfc, nvx, is
+    INTEGER :: ncv, nfc, is
+    INTEGER :: nvx
     LOGICAL :: ids_done
     EXTERNAL CALC_ERR
     EXTERNAL B2WDAT

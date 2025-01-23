@@ -170,8 +170,9 @@ SUBROUTINE B2USHT_DV(ncv, nfc, nvx, ns, switch, geo, mpg, mpgd, itcnt, &
   icv2 = 1
 !   ..subprogram start-up calls
   CALL SUBINI('b2usht')
-!   ..test nCv, nFc, ns
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx, ns
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test itcnt, rxg
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
@@ -1858,8 +1859,9 @@ SUBROUTINE B2USHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, ne&
   icv2 = 1
 !   ..subprogram start-up calls
   CALL SUBINI('b2usht')
-!   ..test nCv, nFc, ns
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx, ns
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !   ..test itcnt, rxg
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')

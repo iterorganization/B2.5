@@ -229,6 +229,7 @@ SUBROUTINE B2WUPS_NODIFF_NODIFF(nput, nx, ny, ns, ne, na, ua, uadia, te&
   CALL CFWURE_NODIFF(nput, arg1, floi_noc, 'floi_noc')
 !
 ! ..return
+  FLUSH(nput) 
   CALL SUBEND()
   RETURN
 END SUBROUTINE B2WUPS_NODIFF_NODIFF

@@ -57,7 +57,6 @@ SUBROUTINE SET_PARAMETERS_DV(switch, switchd, nbdirs)
 !-----------------------------------------------------------------------
   INTEGER :: idir, ii, ip
   INTRINSIC MIN
-  INTRINSIC MAX
   EXTERNAL XERRAB
   INTEGER :: nd
   INTEGER :: nbdirs
@@ -355,7 +354,6 @@ SUBROUTINE SET_PARAMETERS_NODIFF(switch)
 !-----------------------------------------------------------------------
   INTEGER :: idir, ii, ip
   INTRINSIC MIN
-  INTRINSIC MAX
   EXTERNAL XERRAB
 !
   IF (.NOT.flag_optim) THEN

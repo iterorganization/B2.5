@@ -125,7 +125,7 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
 !
 ! ..preliminaries
 !   ..subprogram start-up calls
-!   ..test nCv, nFc, ns, ismain
+!   ..test nCv, nFc, nVx, ns, ismain
 !   ..extensive tests on first few calls
   REAL(kind=r8) :: tempb
   REAL(r8) :: temp
@@ -670,8 +670,9 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2stbm')
-!   ..test nCv, nFc, ns, ismain
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx, ns, ismain
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'faulty argument ismain')

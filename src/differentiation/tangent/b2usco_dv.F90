@@ -102,8 +102,9 @@ SUBROUTINE B2USCO_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, nregionv&
 !       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
 !       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
 !       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10.06
-!   ..test nCv, nFc
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
 !   ..test itcnt, rxg
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
   CALL XERTST(0 .LT. rxg, 'faulty argument rxg')
@@ -421,8 +422,9 @@ SUBROUTINE B2USCO_DV(ncv, nfc, nvx, isb, switch, geo, mpg, mpgd, &
 !       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
 !       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
 !       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10.06
-!   ..test nCv, nFc
-  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
+!   ..test nCv, nFc, nVx
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc .AND. 0 .LT. nvx, &
+&       'faulty argument nCv, nFc, nVx')
 !   ..test itcnt, rxg
   CALL XERTST(0 .LE. itcnt, 'faulty argument itcnt')
   CALL XERTST(0 .LT. rxg, 'faulty argument rxg')

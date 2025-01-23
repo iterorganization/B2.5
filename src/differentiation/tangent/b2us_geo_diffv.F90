@@ -30,8 +30,8 @@ MODULE B2US_GEO_DIFFV
 !
 !  cell quantites
 ! Magnetic field: (nCv,0:3) Bx, By, Bz, |B|
-! X-co of cell center
-! Y-co of cell center
+! X-coordinate of cell center
+! Y-coordinate of cell center
 ! Area perp. to third (z) direction
 ! Length in third (z) direction
 ! Temp: characteristic poloidal length; eventually remove, because meaning unclear in WG context
@@ -65,8 +65,8 @@ MODULE B2US_GEO_DIFFV
 !
 !  vertex quantities
 ! Magnetic field: (nVx,0:3) to be recomputed at vertices (Bx,By,Bz,|B|)
-! X-co of vertex
-! Y-co of vertex
+! X-coordinate of vertex
+! Y-coordinate of vertex
 ! Length in third (z) direction
 ! Part of volume of surrounding cell centers associated with the vertex; for interpolation
 !
