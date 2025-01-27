@@ -26,7 +26,7 @@
 ! - rz[o1]mp: R-Z coordinates of a segment whose intersection with the
 !             plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordinates
 !             of first and second point of the segment, rzomp(2,1:2) holds Z-coordinates
-      integer, parameter :: nromp=DEF_NYD*4
+      integer, parameter :: nromp=DEF_NYD*5
       integer, save :: omp(nromp), icsepomp, ifsepomp, nomp,
      ,                 imp(nromp), icsepimp, ifsepimp, nimp
       real (kind=R8) :: rzomp(2,2), rzimp(2,2)
@@ -150,6 +150,7 @@ c***  Standard set-up:
       subroutine read_b2mod_user_namelist(ns,geo,m)
       use b2mod_b2cmpa
       use b2mod_subsys
+      use b2mod_types
       implicit none
       integer, intent(in) :: ns
       type (geometry), intent (in) :: geo
@@ -163,6 +164,7 @@ c***  Standard set-up:
       integer, save :: use_eirene, neutrals_namelist
       integer :: omp_ci(m%nCi), imp_ci(m%nCi), omp_fc(m%nFc),
      &           imp_fc(m%nFc), nomp_ci, nimp_ci, nomp_fc, nimp_fc
+      real (kind=R8) :: XI(m%nFc), YI(m%nFc) !ap used for improved cv_inters
       integer j, k, is, im
       logical old_style
       logical, save :: hydrogen, helium, neon
@@ -200,7 +202,7 @@ c***  Standard set-up:
       omp = 0 !Need to add check for monotonicity in list
 ! Define OMP list by finding CVs which are intersected by the rzomp segment
       call cv_intersections (geo, m, rzomp, omp, omp_ci, omp_fc, nomp,
-     & nomp_ci, nomp_fc, nromp, 1, ifail)
+     & nomp_ci, nomp_fc, nromp, XI, YI, 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
 ! Here we need to guarantee ordering of CVs. With classical grids the conversion
 ! is done such that CVs are ordered from left to right and bottom to top wrt
@@ -361,7 +363,7 @@ c*** Set default values according to current species list
       nimp = 0
       imp = 0
       call cv_intersections (geo, m, rzimp, imp, imp_ci, imp_fc, nimp,
-     & nimp_ci, nimp_fc, nromp, 1, ifail)
+     & nimp_ci, nimp_fc, nromp, XI, YI, 1, ifail)
       call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
       do ic=2,nimp
         if (geo%cvX(imp(ic)).lt.geo%cvX(imp(ic-1)))
