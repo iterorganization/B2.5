@@ -593,12 +593,10 @@ c b2mndt
       real (kind=R8) :: BoRiS
       real (kind=R8) :: b2mndt_rxf
       integer :: b2mndt_style
-      integer :: b2mndt_ckn
-      integer :: b2mndt_bdf
-      integer :: b2mndt_dummy
-      integer :: b2mndt_startup
-      integer :: ntim_step_out
-      integer :: calc_err_step_out
+      integer :: b2mndt_var_style
+      real (kind=R8) :: b2mndt_var_te_min
+      real (kind=R8) :: b2mndt_var_te_max
+      real (kind=R8) :: b2mndt_var_mult
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -1272,13 +1270,10 @@ c b2mndt
       else
         s % b2mndt_rxf = 0.5_R8
       end if
-      s % b2mndt_style = 1
-      s % b2mndt_ckn = 1
-      s % b2mndt_bdf = 1
-      s % b2mndt_dummy = 0
-      s % b2mndt_startup = 1
-      s % ntim_step_out = 1
-      s % calc_err_step_out = 1
+      s % b2mndt_var_style = 0
+      s % b2mndt_var_te_min = 0.0_R8
+      s % b2mndt_var_te_max = 1e30_R8
+      s % b2mndt_var_mult = 1.0_R8
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1968,25 +1963,21 @@ c b2srsm
       call ipgeti ('b2srsm_enable', s % b2srsm_enable)
 
 c b2mndt
-      call ipgeti ('b2mndt_density_control', s % density_control)
-      call ipgeti ('b2mndt_nstg0', s % nstg(0))
-      call ipgeti ('b2mndt_nstg1', s % nstg(1))
-      call ipgeti ('b2mndt_nstg2', s % nstg(2))
-      call ipgeti ('b2mndt_moqtlv', s % b2mndt_moqtlv)
-      call ipgeti ('b2mndt_moitlv', s % b2mndt_moitlv)
-      call ipgetr ('b2mndt_nstg_areshe', s % nstg_areshe)
-      call ipgetr ('b2mndt_nstg_areshi', s % nstg_areshi)
-      call ipgetr ('b2mndt_nstg_aresco', s % nstg_aresco)
-      call ipgetr ('b2mndt_nstg_aresmo', s % nstg_aresmo)
-      call ipgetr ('b2news_BoRiS', s % BoRiS)
-      call ipgetr ('b2mndt_rxf', s % b2mndt_rxf)
-      call ipgeti ('b2mndt_style', s % b2mndt_style)
-      call ipgeti ('b2mndt_ckn', s % b2mndt_ckn)
-      call ipgeti ('b2mndt_bdf', s % b2mndt_bdf)
-      call ipgeti ('b2mndt_dummy', s % b2mndt_dummy)
-      call ipgeti ('b2mndt_startup', s % b2mndt_startup)
-      call ipgeti ('b2mndt_ntim_step_out', s % ntim_step_out)
-      call ipgeti ('b2mndt_calc_err_step_out', s % calc_err_step_out)
+      call ipgeti ('b2mndt_density_control',s%density_control)
+      call ipgeti ('b2mndt_nstg0', s%nstg(0))
+      call ipgeti ('b2mndt_nstg1', s%nstg(1))
+      call ipgeti ('b2mndt_nstg2', s%nstg(2))
+      call ipgeti ('b2mndt_moqtlv', s%b2mndt_moqtlv)
+      call ipgeti ('b2mndt_moitlv', s%b2mndt_moitlv)
+      call ipgetr ('b2mndt_nstg_areshe', s%nstg_areshe)
+      call ipgetr ('b2mndt_nstg_areshi', s%nstg_areshi)
+      call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
+      call ipgetr ('b2news_BoRiS', s%BoRiS)
+      call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
+      call ipgeti ('b2mndt_var_style', s%b2mndt_var_style)
+      call ipgetr ('b2mndt_var_te_min', s%b2mndt_var_te_min)
+      call ipgetr ('b2mndt_var_te_max', s%b2mndt_var_te_max)
+      call ipgetr ('b2mndt_var_mult', s%b2mndt_var_mult)
 
 c b2mndr
       call ipgetr ('b2mndr_hz', s % b2mndr_hz)                       !srv 09.01.01 09.06.08
@@ -2852,6 +2843,14 @@ c controlling minimum density via b2.numerics
         call xerrab('use_min_na_numerics requires'//
      &  'reading numerics namelist')
       endif
+
+c Variable local timestepping
+      if(s%b2mndt_style.eq.2 .and. 
+     &           s%b2mndt_var_style.ne.0) then
+        call xerrab('Variable local timestepping'//
+     &  'not yet allowed for transient simulations')
+      endif
+
 
       return
       end subroutine check_consistency_switches

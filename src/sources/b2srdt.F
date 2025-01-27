@@ -57,9 +57,7 @@
       integer iCv, is, k, iFt, iFc
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) :: t0, ttim
-      real (kind=R8) :: wrk0(nCv)
-      real (kind=R8) :: dtee_fts(mpg%nFt), dtei_fts(mpg%nFt),
-     &                  dtco_fts(mpg%nFt), dtmo_fts(mpg%nFt)
+      real (kind=R8) :: wrk0(nCv), mult_dt(nCv)
 *   ..procedures
       external xertst
       external b2xvsg
@@ -104,6 +102,12 @@
        call xertst (maxval(dabs(ua)).lt.c, 'Supra-luminal velocity !')
       endif
 
+* ..Optionally, calculate a local (cell-based) multiplier to the timestep.
+*   mult_dt will be 1.0 if b2mndt_var_style = 0 (default). 
+      call get_mult_dt(switch%b2mndt_var_style, nCv,te,
+     &     switch%b2mndt_var_te_min, switch%b2mndt_var_te_max, 
+     &     switch%b2mndt_var_mult, mult_dt)
+
 * ..include the contributions from dtim
 *   ..modify snadt
       k = 1
@@ -126,22 +130,13 @@ csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO     &        (is_neutral(is) .and. use_eirene.ne.0)) .and.
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
 !WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
-          ttim=dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)
-          iFt = mpg%cvFt(iCv)
-          if (iFt.eq.0 .and. iCv.gt.mpg%nCi) then
-            iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
-            iFt = mpg%cvFt(minval(mpg%fcCv(iFc,:)))
-          endif
-          if (iFt.ne.0) then
-            if (dtco_fts(iFt).gt.0.0_R8) then
-              ttim=dtim*dtco_fts(iFt)*time_factor(iCv)
-            endif
-          endif
-          t0=(switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*ts_factor    !fc 11.03.24
-          sr%snadt(iCv,0,is) = t0*na0(iCv,is)
-          sr%snadt(iCv,1,is) = -t0
-          if (.not.lout)
-     &     sr%sna(iCv,:,is) = sr%sna(iCv,:,is)+sr%snadt(iCv,:,is)
+          ttim=dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)*
+     &         mult_dt(iCv)
+          sr%snadt(iCv,0,is) =
+     &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*na0(iCv,is)
+          sr%snadt(iCv,1,is) = -
+     &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)
+          sr%sna(iCv,:,is) = sr%sna(iCv,:,is)+sr%snadt(iCv,:,is)
         enddo
       enddo
 
@@ -151,19 +146,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO            if(iftimbound(ix,iy) .ne. 0) cycle
 
-          ttim=dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)
-          iFt = mpg%cvFt(iCv)
-          if (iFt.eq.0 .and. iCv.gt.mpg%nCi) then
-            iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
-            iFt = mpg%cvFt(minval(mpg%fcCv(iFc,:)))
-          endif
-          if (iFt.ne.0) then
-            if (dtmo_fts(iFt).gt.0.0_R8) then
-              ttim=dtim*dtmo_fts(iFt)*time_factor(iCv)
-            endif
-          endif
-          t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)  !srv 09.01.01
-     &         *ts_factor
+          ttim=dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)*
+     &         mult_dt(iCv)
+          t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)   !srv 09.01.01
           sr%smodt(iCv,0,is) = t0*am(is)*mp*ua0(iCv,is)*na0(iCv,is)
           sr%smodt(iCv,1,is) = 0.0_R8
           sr%smodt(iCv,2,is) = 0.0_R8
@@ -178,18 +163,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
-        ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
-        iFt = mpg%cvFt(iCv)
-        if (iFt.eq.0 .and. iCv.gt.mpg%nCi) then
-          iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
-          iFt = mpg%cvFt(minval(mpg%fcCv(iFc,:)))
-       endif
-        if (iFt.ne.0) then
-          if (dtee_fts(iFt).gt.0.0_R8) then
-            ttim=dtim*dtee_fts(iFt)*time_factor(iCv)
-          endif
-        endif
-        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*ts_factor
+        ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)*
+     &         mult_dt(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
         sr%shedt(iCv,0) = 1.5_R8*t0*ne0(iCv)*te0(iCv)
         sr%shedt(iCv,1) = 0.0_R8
         sr%shedt(iCv,2) = 0.0_R8
@@ -197,13 +173,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
         if (.not.lout)
      &   sr%she(iCv,:) = sr%she(iCv,:)+sr%shedt(iCv,:)
 
-        ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
-        if (iFt.ne.0) then
-          if (dtei_fts(iFt) .gt. 0.0_R8) then
-            ttim=dtim*dtei_fts(iFt)*time_factor(iCv)
-          endif
-        endif
-        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*ts_factor
+        ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)*
+     &         mult_dt(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
         sr%sktdt(iCv,0) = t0*ni0(iCv,1)*kt0(iCv)
         sr%sktdt(iCv,1) = 0.0_R8
         sr%sktdt(iCv,2) = 0.0_R8
@@ -223,8 +195,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
-        ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
-        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*ts_factor
+        ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)*
+     &         mult_dt(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
 
         if (switch%tn_style.eq.0) then
 
