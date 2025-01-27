@@ -163,7 +163,8 @@ c ECH model
       real (kind=R8) :: ech_Rdep
       real (kind=R8) :: ech_Zdep
       real (kind=R8) :: ech_RFfreq
-      real (kind=R8) :: ech_gaussian_width
+      real (kind=R8) :: ech_gaussian_width_x
+      real (kind=R8) :: ech_gaussian_width_y
 
 c iout switches
       integer :: iout_b2wdat
@@ -1014,7 +1015,8 @@ c ECH model
       s % ech_Rdep = 0.0_R8
       s % ech_Zdep = 0.0_R8
       s % ech_RFfreq = 0.0_R8
-      s % ech_gaussian_width = 0.0_R8
+      s % ech_gaussian_width_x = 0.0_R8
+      s % ech_gaussian_width_y = 0.0_R8
 
 c Bohm-like transport model
       s % transport_bohm = 0
@@ -1354,7 +1356,8 @@ c ECH model
       call ipgetr ('b2sral_ECH_absorption_frac', s % ech_absfract)
       call ipgetr ('b2sral_ECH_Zdep', s % ech_Zdep)
       call ipgetr ('b2sral_ECH_RFfrequency', s % ech_RFfreq)
-      call ipgetr ('b2sral_ECH_gauss_width', s % ech_gaussian_width)
+      call ipgetr ('b2sral_ECH_gauss_width_x', s % ech_gaussian_width_x)
+      call ipgetr ('b2sral_ECH_gauss_width_y', s % ech_gaussian_width_y)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
@@ -2242,12 +2245,16 @@ c k-enstrophy model
 c ECH model
       call xertst (0.le.s%use_ech.le.1,
      1              'b2sral_use_ECH value not coded')
-      call xertst (0.le.s%ech_coupling.le.8,
+      call xertst (0.le.s%ech_coupling.le.8.or.s%use_ech.eq.0,
      1              'b2sral_ECH_coupling value not coded')
       call xertst (0.0_R8.lt.s%ech_RFfreq.or.s%use_ech.eq.0,
      1              'b2sral_ECH_RFfrequency must be .gt. 0.0')
-      call xertst (0.0.lt.s%ech_gaussian_width.or.s%use_ech.eq.0,
-     1              'b2sral_ECH_gauss_width must be .gt. 0.0')
+      call xertst (0.le.s%ech_gaussian_symmetry.le.1,
+     1              'b2sral_ECH_gauss_symm value not coded')
+      call xertst (0.0.lt.s%ech_gaussian_width_x.or.s%ech_coupling.ne.1,
+     1              'b2sral_ECH_gauss_width_x must be .gt. 0.0')
+      call xertst (0.0.lt.s%ech_gaussian_width_y.or.s%ech_coupling.ne.1,
+     2              'b2sral_ECH_gauss_width_y must be .gt. 0.0')
       call xertst (1.lt.s%ech_harmonics.or.s%use_ech.eq.0,
      1              'b2sral_ECH_harmonics must be .ge. 1')
       call xertst (0.0_R8.lt.s%ech_power.or.s%use_ech.eq.0,
