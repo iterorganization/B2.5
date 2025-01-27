@@ -524,6 +524,10 @@ c b2mndt
       real (kind=R8) :: BoRiS
       real (kind=R8) :: b2mndt_rxf
       integer :: b2mndt_style
+      integer :: b2mndt_var_style
+      real (kind=R8) :: b2mndt_var_te_min
+      real (kind=R8) :: b2mndt_var_te_max
+      real (kind=R8) :: b2mndt_var_mult
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -1113,6 +1117,10 @@ c b2mndt
       else
         s % b2mndt_rxf = 0.5_R8
       end if
+      s % b2mndt_var_style = 0
+      s % b2mndt_var_te_min = 0.0_R8
+      s % b2mndt_var_te_max = 1e30_R8
+      s % b2mndt_var_mult = 1.0_R8
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1719,6 +1727,10 @@ c b2mndt
       call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
       call ipgetr ('b2news_BoRiS', s%BoRiS)
       call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
+      call ipgeti ('b2mndt_var_style', s%b2mndt_var_style)
+      call ipgetr ('b2mndt_var_te_min', s%b2mndt_var_te_min)
+      call ipgetr ('b2mndt_var_te_max', s%b2mndt_var_te_max)
+      call ipgetr ('b2mndt_var_mult', s%b2mndt_var_mult)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
@@ -2396,6 +2408,14 @@ c controlling minimum density via b2.numerics
         call xerrab('use_min_na_numerics requires'//
      &  'reading numerics namelist')
       endif
+
+c Variable local timestepping
+      if(s%b2mndt_style.eq.2 .and. 
+     &           s%b2mndt_var_style.ne.0) then
+        call xerrab('Variable local timestepping'//
+     &  'not yet allowed for transient simulations')
+      endif
+
 
       return
       end subroutine check_consistency_switches
