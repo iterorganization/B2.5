@@ -77,8 +77,8 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !  Hint: nCv should be the size of dimension 1 of array temp
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, ismain
-  INTEGER :: iscx(0:nscx-1)
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, ismain
+  INTEGER, INTENT(IN) :: iscx(0:nscx-1)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES) :: switchb
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -196,8 +196,8 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs4
   REAL(kind=r8) :: abs4b
-  REAL(r8), DIMENSION(nCv) :: abs5
-  REAL(r8), DIMENSION(nCv) :: abs5b
+  REAL(kind=r8), DIMENSION(nCv) :: dabs0
+  REAL(kind=r8), DIMENSION(nCv) :: dabs0b
   REAL(r8) :: max1
   REAL(r8) :: max1b
   REAL(r8) :: max2
@@ -285,7 +285,6 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   CALL B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
 !xpb
   CALL PUSHBOOLEAN(b2mod_math_initialised)
-  CALL PUSHREAL4(small_r4_constant, r4/8)
   CALL PUSHREAL8(cutlo, r8/8)
   CALL PUSHREAL8(cutll, r8/8)
   CALL B2TQIN_NODIFF(ncv, ns, nscx, iscx, switch, geo, pl, rt, sigin)
@@ -601,9 +600,9 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     CALL PUSHCONTROL2B(1)
   ELSE IF (switch%lluciani .EQ. 3) THEN
 ! new formulation
-!   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
+!   .. plateau and banana correction for ion heat conduction          !lk 19.09.07 {
     CALL B2TTIA_NODIFF(ncv, ns, pl%ti, rt%rz2, dv%ne2, dv%lnlam, tauia)
-!   .. calculate collisionality parameter nu_star   
+!   .. calculate collisionality parameter nu_star
 !lk 12.05.11{
     nu1 = 0.0_R8
     k1 = 0.58_R8
@@ -1085,15 +1084,15 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &                (:, is), pl%ti, pl%ua(:, is), vsaf_cl(:, 0, is), cvsa(:&
 &                , 0, is), cvsahz(:, 0, is), fllimvisc(:, is))
   END DO
-  mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0
+  mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.
   WHERE (mask) 
-    abs5 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
+    dabs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
   ELSEWHERE
-    abs5 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
+    dabs0 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
   END WHERE
 !   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
-  wrkc = SQRT(2.0_R8*pl%ti*(am(ismain)*mp))/abs5
+  wrkc = SQRT(2.0_R8*pl%ti*(am(ismain)*mp))/dabs0
   CALL PUSHREAL8ARRAY(wrkc, r8*ncv/8)
   wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)
   CALL B2TXCX_FWD(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc, &
@@ -1215,20 +1214,20 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   CALL B2TXCX_BWD(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc, &
 &           wrkcb, cdkt(:, 0), cdktb(:, 0))
   CALL POPREAL8ARRAY(wrkc, r8*ncv/8)
-  tempb8 = geo%cvbb(:, 3)**2*wrkcb/(am(ismain)*mp)
-  wrkcb = 2*wrkc*co%sigx_c*tempb8
-  cob%sigx_c = cob%sigx_c + wrkc**2*tempb8
-  abs7b = 0.D0
+  tempb9 = geo%cvbb(:, 3)**2*wrkcb/(am(ismain)*mp)
+  wrkcb = 2*wrkc*co%sigx_c*tempb9
+  cob%sigx_c = cob%sigx_c + wrkc**2*tempb9
+  dabs0b = 0.D0
   temp12 = 2.0_R8*am(ismain)*pl%ti*mp
   temp13 = SQRT(temp12)
   WHERE (.NOT.temp12 .EQ. 0.D0) plb%ti = plb%ti + am(ismain)*mp*2.0_R8*&
-&     wrkcb/(2.0*temp13*abs5)
-  abs5b = -(temp13*wrkcb/abs5**2)
+&     wrkcb/(2.0*temp13*dabs0)
+  dabs0b = -(temp13*wrkcb/dabs0**2)
   WHERE (.NOT.mask) 
-    rtb%rza(:, ismain) = rtb%rza(:, ismain) - qe*geo%cvbb(:, 3)*abs5b
-    abs5b = 0.D0
+    rtb%rza(:, ismain) = rtb%rza(:, ismain) - qe*geo%cvbb(:, 3)*dabs0b
+    dabs0b = 0.D0
   ELSEWHERE
-    rtb%rza(:, ismain) = rtb%rza(:, ismain) + qe*geo%cvbb(:, 3)*abs5b
+    rtb%rza(:, ismain) = rtb%rza(:, ismain) + qe*geo%cvbb(:, 3)*dabs0b
   END WHERE
   DO is=ns-1,0,-1
     CALL POPREAL8ARRAY(vsaf_cl(:, 0, is), r8*nfc/8)
@@ -2089,7 +2088,6 @@ SUBROUTINE B2TRCL_B(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   arg1 = ncv*ns
   CALL POPREAL8(cutll, r8/8)
   CALL POPREAL8(cutlo, r8/8)
-  CALL POPREAL4(small_r4_constant, r4/8)
   CALL POPBOOLEAN(b2mod_math_initialised)
   CALL B2TQIN_B(ncv, ns, nscx, iscx, switch, geo, geob, pl, plb, rt, rtb&
 &         , sigin, siginb)
@@ -2145,8 +2143,8 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !  Hint: nCv should be the size of dimension 1 of array cvbb
   IMPLICIT NONE
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nscx, ismain
-  INTEGER :: iscx(0:nscx-1)
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns, nscx, ismain
+  INTEGER, INTENT(IN) :: iscx(0:nscx-1)
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -2235,7 +2233,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: abs2
   REAL(kind=r8) :: abs3
   REAL(kind=r8) :: abs4
-  REAL(r8), DIMENSION(nCv) :: abs5
+  REAL(kind=r8), DIMENSION(nCv) :: dabs0
   REAL(r8) :: max1
   REAL(r8) :: max2
   REAL(r8) :: max3
@@ -2535,9 +2533,9 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
     END DO
   ELSE IF (switch%lluciani .EQ. 3) THEN
 ! new formulation
-!   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
+!   .. plateau and banana correction for ion heat conduction          !lk 19.09.07 {
     CALL B2TTIA_NODIFF(ncv, ns, pl%ti, rt%rz2, dv%ne2, dv%lnlam, tauia)
-!   .. calculate collisionality parameter nu_star   
+!   .. calculate collisionality parameter nu_star
 !lk 12.05.11{
     nu1 = 0.0_R8
     k1 = 0.58_R8
@@ -2752,7 +2750,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
           co%fllim_ki(ifc) = 1.0_R8/(1.0_R8+t0)
           chci(ifc, 0) = chci(ifc, 0)*co%fllim_ki(ifc)
         END IF
-!wdk pragmatic approximation for cell center flux limits: based on interpolation 
+!wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
 
       END DO
@@ -2788,7 +2786,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 !srv 13.01.17
           calf(ifc, 0) = calf(ifc, 0)*co%fllim_al(ifc)
         END IF
-!wdk pragmatic approximation for cell center flux limits: based on interpolation 
+!wdk pragmatic approximation for cell center flux limits: based on interpolation
 !wdk of face flux limit
 
       END DO
@@ -2848,15 +2846,15 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
 &                (:, is), pl%ti, pl%ua(:, is), vsaf_cl(:, 0, is), cvsa(:&
 &                , 0, is), cvsahz(:, 0, is), fllimvisc(:, is))
   END DO
-  mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.0
+  mask = rt%rza(:, ismain)*qe*geo%cvbb(:, 3) .GE. 0.
   WHERE (mask) 
-    abs5 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
+    dabs0 = rt%rza(:, ismain)*qe*geo%cvbb(:, 3)
   ELSEWHERE
-    abs5 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
+    dabs0 = -(rt%rza(:, ismain)*qe*geo%cvbb(:, 3))
   END WHERE
 !   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
-  wrkc = SQRT(2.0_R8*pl%ti*(am(ismain)*mp))/abs7
+  wrkc = SQRT(2.0_R8*pl%ti*(am(ismain)*mp))/dabs0
   wrkc = co%sigx_c*wrkc**2*geo%cvbb(:, 3)**2/(am(ismain)*mp)
   CALL B2TXCX_NODIFF(ncv, nfc, mode, geo, mpg, geo%fcvol, geo%fcs, wrkc&
 &              , cdkt(:, 0))
@@ -2949,11 +2947,6 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   ncall_b2trcl = ncall_b2trcl + 1
   CALL SUBEND()
   RETURN
-!
-!-----------------------------------------------------------------------
-!.scribbles
-!
-!!!   Still must consider how to deal with a non-orthogonal grid.
 !
 !-----------------------------------------------------------------------
 !.end b2trcl

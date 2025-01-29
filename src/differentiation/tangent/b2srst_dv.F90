@@ -3,10 +3,10 @@
 !
 !  Differentiation of b2srst in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(sr.sch) *(sr.she) *(sr.shi)
-!                *(sr.shn) *(sr.skt) *(sr.smo) *(sr.sna)
+!                *(sr.shn) *(sr.skt) *(sr.szt) *(sr.smo) *(sr.sna)
 !   with respect to varying inputs: ti tn na ua kt *(sr.sch) *(sr.she)
-!                *(sr.shi) *(sr.shn) *(sr.skt) *(sr.smo) *(sr.sna)
-!                po te
+!                *(sr.shi) *(sr.shn) *(sr.skt) *(sr.szt) *(sr.smo)
+!                *(sr.sna) po te zt
 !   Plus diff mem management of: sr.sch:in sr.she:in sr.shi:in
 !                sr.sne:in sr.shn:in sr.skt:in sr.szt:in sr.smo:in
 !                sr.sna:in
@@ -105,7 +105,9 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, na, nad, ua, uad, te, ted, ti, tid&
   REAL(r8) :: min9
   REAL(r8), DIMENSION(nbdirsmax) :: min9d
   REAL(r8) :: min10
+  REAL(r8), DIMENSION(nbdirsmax) :: min10d
   REAL(r8) :: min11
+  REAL(r8), DIMENSION(nbdirsmax) :: min11d
   REAL(r8) :: max3
   REAL(r8), DIMENSION(nbdirsmax) :: max3d
   REAL(r8) :: max4
@@ -738,18 +740,29 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, na, nad, ua, uad, te, ted, ti, tid&
     DO nd=1,nbdirs
       srd%skt(nd, icv, 3) = (min9d(nd)-temp*ktd(nd, icv))/(b2srst_kt_eps&
 &       +kt(icv))
+!     ..modify szt(,0:1)
+      t0d(nd) = srd%szt(nd, icv, 0) + zt(icv)*srd%szt(nd, icv, 1) + sr%&
+&       szt(icv, 1)*ztd(nd, icv)
     END DO
     sr%skt(icv, 3) = temp
-!     ..modify szt(,0:1)
     t0 = sr%szt(icv, 0) + sr%szt(icv, 1)*zt(icv)
     IF (sr%szt(icv, 0) .LT. (1.0_R8+switch%b2srst_rf2)*t0) THEN
       IF ((1.0_R8+switch%b2srst_rf2)*t0 .LT. -(switch%b2srst_rf2*t0)) &
 &     THEN
+        DO nd=1,nbdirs
+          srd%szt(nd, icv, 0) = -(switch%b2srst_rf2*t0d(nd))
+        END DO
         sr%szt(icv, 0) = -(switch%b2srst_rf2*t0)
       ELSE
+        DO nd=1,nbdirs
+          srd%szt(nd, icv, 0) = (switch%b2srst_rf2+1.0_R8)*t0d(nd)
+        END DO
         sr%szt(icv, 0) = (1.0_R8+switch%b2srst_rf2)*t0
       END IF
     ELSE IF (sr%szt(icv, 0) .LT. -(switch%b2srst_rf2*t0)) THEN
+      DO nd=1,nbdirs
+        srd%szt(nd, icv, 0) = -(switch%b2srst_rf2*t0d(nd))
+      END DO
       sr%szt(icv, 0) = -(switch%b2srst_rf2*t0)
     ELSE
       sr%szt(icv, 0) = sr%szt(icv, 0)
@@ -757,27 +770,56 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, na, nad, ua, uad, te, ted, ti, tid&
     IF (sr%szt(icv, 1)*zt(icv) .GT. -(switch%b2srst_rf2*t0)) THEN
       IF (-(switch%b2srst_rf2*t0) .GT. (1.0_R8+switch%b2srst_rf2)*t0) &
 &     THEN
+        DO nd=1,nbdirs
+          min10d(nd) = (switch%b2srst_rf2+1.0_R8)*t0d(nd)
+        END DO
         min10 = (1.0_R8+switch%b2srst_rf2)*t0
       ELSE
+        DO nd=1,nbdirs
+          min10d(nd) = -(switch%b2srst_rf2*t0d(nd))
+        END DO
         min10 = -(switch%b2srst_rf2*t0)
       END IF
     ELSE IF (sr%szt(icv, 1)*zt(icv) .GT. (1.0_R8+switch%b2srst_rf2)*t0) &
 &   THEN
+      DO nd=1,nbdirs
+        min10d(nd) = (switch%b2srst_rf2+1.0_R8)*t0d(nd)
+      END DO
       min10 = (1.0_R8+switch%b2srst_rf2)*t0
     ELSE
+      DO nd=1,nbdirs
+        min10d(nd) = zt(icv)*srd%szt(nd, icv, 1) + sr%szt(icv, 1)*ztd(nd&
+&         , icv)
+      END DO
       min10 = sr%szt(icv, 1)*zt(icv)
     END IF
-    sr%szt(icv, 1) = 1.0_R8/(zt(icv)+b2srst_zt_eps)*min10
+    temp = min10/(b2srst_zt_eps+zt(icv))
+    sr%szt(icv, 1) = temp
+    DO nd=1,nbdirs
+      srd%szt(nd, icv, 1) = (min10d(nd)-temp*ztd(nd, icv))/(&
+&       b2srst_zt_eps+zt(icv))
 !     ..modify szt(,2:3)
+      t0d(nd) = srd%szt(nd, icv, 2) + zt(icv)*srd%szt(nd, icv, 3) + sr%&
+&       szt(icv, 3)*ztd(nd, icv)
+    END DO
     t0 = sr%szt(icv, 2) + sr%szt(icv, 3)*zt(icv)
     IF (sr%szt(icv, 2) .LT. (1.0_R8+switch%b2srst_rf2)*t0) THEN
       IF ((1.0_R8+switch%b2srst_rf2)*t0 .LT. -(switch%b2srst_rf2*t0)) &
 &     THEN
+        DO nd=1,nbdirs
+          srd%szt(nd, icv, 2) = -(switch%b2srst_rf2*t0d(nd))
+        END DO
         sr%szt(icv, 2) = -(switch%b2srst_rf2*t0)
       ELSE
+        DO nd=1,nbdirs
+          srd%szt(nd, icv, 2) = (switch%b2srst_rf2+1.0_R8)*t0d(nd)
+        END DO
         sr%szt(icv, 2) = (1.0_R8+switch%b2srst_rf2)*t0
       END IF
     ELSE IF (sr%szt(icv, 2) .LT. -(switch%b2srst_rf2*t0)) THEN
+      DO nd=1,nbdirs
+        srd%szt(nd, icv, 2) = -(switch%b2srst_rf2*t0d(nd))
+      END DO
       sr%szt(icv, 2) = -(switch%b2srst_rf2*t0)
     ELSE
       sr%szt(icv, 2) = sr%szt(icv, 2)
@@ -785,17 +827,35 @@ SUBROUTINE B2SRST_DV(ncv, ns, switch, na, nad, ua, uad, te, ted, ti, tid&
     IF (sr%szt(icv, 3)*zt(icv) .GT. -(switch%b2srst_rf2*t0)) THEN
       IF (-(switch%b2srst_rf2*t0) .GT. (1.0_R8+switch%b2srst_rf2)*t0) &
 &     THEN
+        DO nd=1,nbdirs
+          min11d(nd) = (switch%b2srst_rf2+1.0_R8)*t0d(nd)
+        END DO
         min11 = (1.0_R8+switch%b2srst_rf2)*t0
       ELSE
+        DO nd=1,nbdirs
+          min11d(nd) = -(switch%b2srst_rf2*t0d(nd))
+        END DO
         min11 = -(switch%b2srst_rf2*t0)
       END IF
     ELSE IF (sr%szt(icv, 3)*zt(icv) .GT. (1.0_R8+switch%b2srst_rf2)*t0) &
 &   THEN
+      DO nd=1,nbdirs
+        min11d(nd) = (switch%b2srst_rf2+1.0_R8)*t0d(nd)
+      END DO
       min11 = (1.0_R8+switch%b2srst_rf2)*t0
     ELSE
+      DO nd=1,nbdirs
+        min11d(nd) = zt(icv)*srd%szt(nd, icv, 3) + sr%szt(icv, 3)*ztd(nd&
+&         , icv)
+      END DO
       min11 = sr%szt(icv, 3)*zt(icv)
     END IF
-    sr%szt(icv, 3) = 1.0_R8/(zt(icv)+b2srst_zt_eps)*min11
+    temp = min11/(b2srst_zt_eps+zt(icv))
+    DO nd=1,nbdirs
+      srd%szt(nd, icv, 3) = (min11d(nd)-temp*ztd(nd, icv))/(&
+&       b2srst_zt_eps+zt(icv))
+    END DO
+    sr%szt(icv, 3) = temp
     IF (0.0_R8 .LT. sr%sch(icv, 1)) THEN
       DO nd=1,nbdirs
         max3d(nd) = srd%sch(nd, icv, 1)

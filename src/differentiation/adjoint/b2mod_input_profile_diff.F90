@@ -108,7 +108,7 @@ CONTAINS
     USE B2MOD_B2CMPA_DIFF
     USE B2MOD_USER_NAMELIST_DIFF, ONLY : nomp, omp, icsepomp
     IMPLICIT NONE
-    INTEGER :: ncv, nfc, ns
+    INTEGER, INTENT(IN) :: ncv, nfc, ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(GEOMETRY_DIFF) :: geob
     TYPE(MAPPING), INTENT(IN) :: mpg
@@ -843,7 +843,7 @@ CONTAINS
     USE B2MOD_B2CMPA_DIFF
     USE B2MOD_USER_NAMELIST_DIFF, ONLY : nomp, omp, icsepomp
     IMPLICIT NONE
-    INTEGER :: ncv, nfc, ns
+    INTEGER, INTENT(IN) :: ncv, nfc, ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(B2PLASMA), INTENT(IN) :: pl

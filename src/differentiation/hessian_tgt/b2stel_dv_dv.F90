@@ -1713,17 +1713,16 @@ END SUBROUTINE B2STEL_DV_NODIFF
 !                *(pl.ti) *(pl.tn)
 !   Plus diff mem management of: srwd.she0:in srwd.shi0:in srwd.shn0:in
 !                srwd.smq0:in srwd.sna0:in dv.ne:in dv.ni:in dv.nn:in
-!                dv.facdrift:in dv.fac_exb:in rtwd.rsa:in rtwd.rra:in
-!                rtwd.rqa:in rtwd.rqr:in rtd.rlqa:in rtd.rlra:in
-!                rtd.rlsa:in rtd.rpi:in rt.rlqa:in rt.rlra:in rt.rlsa:in
-!                rt.rpi:in dvd.ne:in dvd.ni:in dvd.nn:in srw.she0:in
-!                srw.shi0:in srw.shn0:in srw.smq0:in srw.sna0:in
-!                srw.rsana:in srw.rsahi:in srw.rsamo:in srw.rrana:in
-!                srw.rrahi:in srw.rramo:in srw.rqahe:in srw.rqrad:in
-!                srw.rqbrm:in rtw.rsa:in rtw.rra:in rtw.rqa:in
-!                rtw.rqr:in pld.na:in pld.ua:in pld.te:in pld.ti:in
-!                pld.tn:in pl.na:in pl.ua:in pl.te:in pl.ti:in
-!                pl.tn:in
+!                rtwd.rsa:in rtwd.rra:in rtwd.rqa:in rtwd.rqr:in
+!                rtd.rlqa:in rtd.rlra:in rtd.rlsa:in rtd.rpi:in
+!                rt.rlqa:in rt.rlra:in rt.rlsa:in rt.rpi:in dvd.ne:in
+!                dvd.ni:in dvd.nn:in srw.she0:in srw.shi0:in srw.shn0:in
+!                srw.smq0:in srw.sna0:in srw.rsana:in srw.rsahi:in
+!                srw.rsamo:in srw.rrana:in srw.rrahi:in srw.rramo:in
+!                srw.rqahe:in srw.rqrad:in srw.rqbrm:in rtw.rsa:in
+!                rtw.rra:in rtw.rqa:in rtw.rqr:in pld.na:in pld.ua:in
+!                pld.te:in pld.ti:in pld.tn:in pl.na:in pl.ua:in
+!                pl.te:in pl.ti:in pl.tn:in
 !  Differentiation of b2stel in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: *(srw.she0) *(srw.shi0) *(srw.shn0)
 !                *(srw.smq0) *(srw.sna0)

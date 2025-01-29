@@ -30,7 +30,7 @@
 *  1. purpose
 *
 *     B2WGRC displays a table of atomic rate coefficients that has been
-*     prepared for B2.
+*     prepared for B2.5.
 *
 *
 *  3. description
@@ -706,6 +706,7 @@ c$$$      parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''')
 
 * ..return
       deallocate(wn,wt)
+      flush (nprt)
       call subend ()
       return
 

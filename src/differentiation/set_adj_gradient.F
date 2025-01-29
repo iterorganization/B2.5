@@ -11,7 +11,7 @@
       real(kind=R8) :: grad(npar)
       type(switches), intent(inout) :: switchdiff
 *-----------------------------------------------------------------------
-*     set_adj_gradient is used in b2optim_tao and b2optim_ipopt
+*     set_adj_gradient is used in b2optim_tao
 *     to correctly set and pass the gradient from adjoint AD to the
 *     optimization routines
 *-----------------------------------------------------------------------

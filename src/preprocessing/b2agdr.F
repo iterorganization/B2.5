@@ -114,15 +114,15 @@
 *
 *     cvBb - (1:nCv,0:3) real*8 array.
 *     cvBb(iCv,0:3) specifies the magnetic field at the center of
-*     the cell iCv. cvBb(iCv,0:2) are the magnitudes of the 
-*     (poloidal,radial,toroidal)-components and cvBb(iVx,3) is the 
+*     the cell iCv. cvBb(iCv,0:2) are the magnitudes of the
+*     (poloidal,radial,toroidal)-components and cvBb(iCv,3) is the
 *     absolute magnetic field strength.
 *     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,2)**2)
 *     It will hold that 0.le.cvBb(,0:3), because the direction of the
 *     magnetic field follows from cvEb (see below).
 *
 *     cvEb - (1:nCv,0:2) real*8 array.
-*     cvEb(iCv,0:2) specifies the direction of the magnetic field at 
+*     cvEb(iCv,0:2) specifies the direction of the magnetic field at
 *     the center of the cell iCv in the (R,Z,toroidal) axis system.
 *     (sqrt(cvEb(iCv,0)**2+cvEb(iCv,1)**2+cvEb(iCv,2)**2)=1)
 *

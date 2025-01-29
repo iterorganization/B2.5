@@ -55,7 +55,7 @@
       allocate(on_closed_surface(-1:nxd,-1:nyd))
       nnreg=0
       allocate(resignore(-1:nxd,-1:nyd,2))
-      nncutmax=DEF_NCUT
+      nncutmax=max(1,DEF_NCUT)
       allocate(leftcut(1:nncutmax))
       allocate(rightcut(1:nncutmax))
       allocate(topcut(1:nncutmax))

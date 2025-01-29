@@ -111,8 +111,9 @@
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
-*   ..test nCv, nFc
-      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, nVx
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     . 'faulty argument nCv, nFc, nVx')
 *   ..extensive tests on first few calls
       if (ncall_b2sifrtf.lt.3) then
 *    ..test sign of vol
