@@ -121,6 +121,9 @@ MODULE B2MOD_SWITCHES_DIFFV
 !
 !
 ! b2trno
+!
+! b2nppo
+!
 ! Feedback
 !
 ! Med
@@ -197,7 +200,9 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8) :: b2mndr_na_max
       REAL(kind=r8) :: b2mndr_ua_max
       REAL(kind=r8) :: b2mndr_na_new
+      REAL(kind=r8) :: b2npht_stab_shei
       REAL(kind=r8) :: b2upht_te_min
+      REAL(kind=r8) :: b2upht_rte_min
       REAL(kind=r8) :: b2upht_te_max
       REAL(kind=r8) :: b2upht_ti_min
       REAL(kind=r8) :: b2upht_ti_max
@@ -584,6 +589,7 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8) :: stab_coeff_sheath_te
       REAL(kind=r8) :: stab_coeff_sheath_ti
       REAL(kind=r8) :: b2trno_alpha_stoch
+      INTEGER :: b2nppo_restrict_po
       INTEGER :: b2stbc_feedback
       INTEGER :: med_style
       INTEGER :: b2optim_save_states
@@ -613,7 +619,9 @@ MODULE B2MOD_SWITCHES_DIFFV
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndr_na_max
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndr_ua_max
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2mndr_na_new
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2npht_stab_shei
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2upht_te_min
+      REAL(kind=r8), DIMENSION(nbdirsmax) :: b2upht_rte_min
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2upht_te_max
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2upht_ti_min
       REAL(kind=r8), DIMENSION(nbdirsmax) :: b2upht_ti_max
@@ -948,7 +956,9 @@ CONTAINS
     s%b2mndr_na_max = 1.0e30_R8
     s%b2mndr_ua_max = 1.0e6_R8
     s%b2mndr_na_new = 1.0e14_R8
+    s%b2npht_stab_shei = 0.0_R8
     s%b2upht_te_min = 0.1_R8
+    s%b2upht_rte_min = 0.0_R8
     s%b2upht_te_max = 1.0e30_R8
     s%b2upht_ti_min = 0.1_R8
     s%b2upht_ti_max = 1.0e30_R8
@@ -1427,6 +1437,9 @@ CONTAINS
 ! med
     s%med_style = 0
 !
+! b2nppo
+    s%b2nppo_restrict_po = 0
+!
 ! Optimization
     s%b2optim_save_states = 0
     s%b2optim_reset_iter = 2
@@ -1532,7 +1545,9 @@ CONTAINS
     CALL IPGETR('b2mndr_na_max', s%b2mndr_na_max)
     CALL IPGETR('b2mndr_ua_max', s%b2mndr_ua_max)
     CALL IPGETR('b2mndr_na_new', s%b2mndr_na_new)
+    CALL IPGETR('b2npht_stab_shei', s%b2npht_stab_shei)
     CALL IPGETR('b2upht_te_min', s%b2upht_te_min)
+    CALL IPGETR('b2upht_rte_min', s%b2upht_rte_min)
     CALL IPGETR('b2upht_te_max', s%b2upht_te_max)
     CALL IPGETR('b2upht_ti_min', s%b2upht_ti_min)
     CALL IPGETR('b2upht_ti_max', s%b2upht_ti_max)
@@ -1880,7 +1895,6 @@ CONTAINS
     CALL IPGETR('b2tqna_pfr_rescale', s%b2tqna_pfr_rescale)
     CALL IPGETR('b2tqna_divsol_rescale', s%b2tqna_divsol_rescale)
     CALL IPGETR('b2tqna_cfvma', s%b2tqna_cfvma)
-!srv 15.12.05
 !
 ! fch anomalous
     CALL IPGETR('b2tfhe_anomalous', s%fch_anomalous)
@@ -2039,6 +2053,9 @@ CONTAINS
 !
 ! Med
     CALL IPGETI('b2mndr_med_style', s%med_style)
+!
+! b2nppo
+    CALL IPGETI('b2nppo_restrict_po', s%b2nppo_restrict_po)
 !
 ! Optimization
     CALL IPGETI('b2optim_save_states', s%b2optim_save_states)

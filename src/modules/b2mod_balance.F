@@ -21,8 +21,6 @@
       real (kind=R8), allocatable, save ::
      *  b2stbr_phys_sna0to1(:,:,:),
      *  b2stbr_phys_sna_bal(:,:),
-     *  b2stbr_bas_sna0to1(:,:,:),
-     *  b2stbr_bas_sna_bal(:,:),
      *  b2stbr_first_flight_sna0to1(:,:,:),
      *  b2stbr_first_flight_sna_bal(:,:),
      *  b2stbc_sna0to1(:,:,:),
@@ -79,7 +77,6 @@
      *  fna_pschused_av(:,:,:),
      *  fna_tot_av(:,:,:),
      *  b2stbr_phys_sna_bal_av(:,:),
-     *  b2stbr_bas_sna_bal_av(:,:),
      *  b2stbr_first_flight_sna_bal_av(:,:),
      *  b2stbc_sna_bal_av(:,:),
      *  eirene_mc_pael_sne_bal_av(:,:),
@@ -120,8 +117,6 @@
       real (kind=R8), allocatable, save ::
      *  b2stbr_phys_smo0to3(:,:,:),
      *  b2stbr_phys_smo_bal(:,:),
-     *  b2stbr_bas_smo0to3(:,:,:),
-     *  b2stbr_bas_smo_bal(:,:),
      *  b2stbc_smo0to3(:,:,:),
      *  b2stbc_smo_bal(:,:),
      *  eirene_mc_mapl_smo0to3(:,:,:,:),
@@ -200,7 +195,6 @@
      *  fmo_b2nxfv_av(:,:,:),
      *  fmo_tot_av(:,:,:),
      *  b2stbr_phys_smo_bal_av(:,:),
-     *  b2stbr_bas_smo_bal_av(:,:),
      *  b2stbc_smo_bal_av(:,:),
      *  eirene_mc_mapl_smo_bal_av(:,:,:),
      *  eirene_mc_mmpl_smo_bal_av(:,:,:),
@@ -252,8 +246,6 @@
       real (kind=R8), allocatable, save ::
      *  b2stbr_phys_she0to3(:,:),
      *  b2stbr_phys_she_bal(:),
-     *  b2stbr_bas_she0to3(:,:),
-     *  b2stbr_bas_she_bal(:),
      *  b2stbr_first_flight_she0to3(:,:),
      *  b2stbr_first_flight_she_bal(:),
      *  b2stbc_she0to3(:,:),
@@ -298,7 +290,6 @@
      *  fhe_strange_av(:,:),
      *  fhe_pschused_av(:,:),
      *  b2stbr_phys_she_bal_av(:),
-     *  b2stbr_bas_she_bal_av(:),
      *  b2stbr_first_flight_she_bal_av(:),
      *  b2stbc_she_bal_av(:),
      *  eirene_mc_eael_she_bal_av(:,:),
@@ -337,8 +328,6 @@
       real (kind=R8), allocatable, save ::
      *  b2stbr_phys_shi0to3(:,:),
      *  b2stbr_phys_shi_bal(:),
-     *  b2stbr_bas_shi0to3(:,:),
-     *  b2stbr_bas_shi_bal(:),
      *  b2stbr_first_flight_shi0to3(:,:),
      *  b2stbr_first_flight_shi_bal(:),
      *  b2stbc_shi0to3(:,:),
@@ -397,7 +386,6 @@
      *  fhi_anml_av(:,:),
      *  fhi_kevis_av(:,:),
      *  b2stbr_phys_shi_bal_av(:),
-     *  b2stbr_bas_shi_bal_av(:),
      *  b2stbr_first_flight_shi_bal_av(:),
      *  b2stbc_shi_bal_av(:),
      *  eirene_mc_eapl_shi_bal_av(:,:),
@@ -472,8 +460,6 @@
 *     Sources
       allocate(b2stbr_phys_sna0to1(nCv,0:1,0:nsd-1))
       allocate(b2stbr_phys_sna_bal(nCv,0:nsd-1))
-      allocate(b2stbr_bas_sna0to1(nCv,0:1,0:nsd-1))
-      allocate(b2stbr_bas_sna_bal(nCv,0:nsd-1))
       allocate(b2stbr_first_flight_sna0to1(nCv,0:1,0:nsd-1))
       allocate(b2stbr_first_flight_sna_bal(nCv,0:nsd-1))
       allocate(b2stbc_sna0to1(nCv,0:1,0:nsd-1))
@@ -498,8 +484,6 @@
       allocate(tot_sna_bal(nCv,0:nsd-1))
       b2stbr_phys_sna0to1=0.0_R8
       b2stbr_phys_sna_bal=0.0_R8
-      b2stbr_bas_sna0to1=0.0_R8
-      b2stbr_bas_sna_bal=0.0_R8
       b2stbr_first_flight_sna0to1=0.0_R8
       b2stbr_first_flight_sna_bal=0.0_R8
       b2stbc_sna0to1=0.0_R8
@@ -532,7 +516,6 @@
       allocate(fna_pschused_av(nFc,0:1,0:nsd-1))
       allocate(fna_tot_av(nFc,0:1,0:nsd-1))
       allocate(b2stbr_phys_sna_bal_av(nCv,0:nsd-1))
-      allocate(b2stbr_bas_sna_bal_av(nCv,0:nsd-1))
       allocate(b2stbr_first_flight_sna_bal_av(nCv,0:nsd-1))
       allocate(b2stbc_sna_bal_av(nCv,0:nsd-1))
       allocate(b2stbm_sna_bal_av(nCv,0:nsd-1))
@@ -555,8 +538,6 @@
 *     Sources
       allocate(b2stbr_phys_smo0to3(nCv,0:3,0:nsd-1))
       allocate(b2stbr_phys_smo_bal(nCv,0:nsd-1))
-      allocate(b2stbr_bas_smo0to3(nCv,0:3,0:nsd-1))
-      allocate(b2stbr_bas_smo_bal(nCv,0:nsd-1))
       allocate(b2stbc_smo0to3(nCv,0:3,0:nsd-1))
       allocate(b2stbc_smo_bal(nCv,0:nsd-1))      
       allocate(b2stbm_smo0to3(nCv,0:3,0:nsd-1))
@@ -621,8 +602,6 @@
       allocate(tot_smo_bal(nCv,0:nsd-1))
       b2stbr_phys_smo0to3=0.0_R8
       b2stbr_phys_smo_bal=0.0_R8
-      b2stbr_bas_smo0to3=0.0_R8
-      b2stbr_bas_smo_bal=0.0_R8
       b2stbc_smo0to3=0.0_R8
       b2stbc_smo_bal=0.0_R8
       b2stbm_smo0to3=0.0_R8
@@ -692,7 +671,6 @@
       allocate(fmo_b2nxfv_av(nFc,0:1,0:nsd-1))
       allocate(fmo_tot_av(nFc,0:1,0:nsd-1))
       allocate(b2stbr_phys_smo_bal_av(nCv,0:nsd-1))
-      allocate(b2stbr_bas_smo_bal_av(nCv,0:nsd-1))
       allocate(b2stbc_smo_bal_av(nCv,0:nsd-1))
       allocate(b2stbm_smo_bal_av(nCv,0:nsd-1))
       allocate(ext_smo_bal_av(nCv,0:nsd-1))
@@ -738,8 +716,6 @@
 *     Sources
       allocate(b2stbr_phys_she0to3(nCv,0:3))
       allocate(b2stbr_phys_she_bal(nCv))
-      allocate(b2stbr_bas_she0to3(nCv,0:3))
-      allocate(b2stbr_bas_she_bal(nCv))
       allocate(b2stbr_first_flight_she0to3(nCv,0:3))
       allocate(b2stbr_first_flight_she_bal(nCv))
       allocate(b2stbc_she0to3(nCv,0:3))
@@ -767,8 +743,6 @@
       allocate(b2npht_shei_bal(nCv))
       b2stbr_phys_she0to3=0.0_R8
       b2stbr_phys_she_bal=0.0_R8
-      b2stbr_bas_she0to3=0.0_R8
-      b2stbr_bas_she_bal=0.0_R8
       b2stbr_first_flight_she0to3=0.0_R8
       b2stbr_first_flight_she_bal=0.0_R8
       b2stbc_she0to3=0.0_R8
@@ -804,7 +778,6 @@
       allocate(fhe_strange_av(nFc,0:1))
       allocate(fhe_pschused_av(nFc,0:1))
       allocate(b2stbr_phys_she_bal_av(nCv))
-      allocate(b2stbr_bas_she_bal_av(nCv))
       allocate(b2stbr_first_flight_she_bal_av(nCv))
       allocate(b2stbc_she_bal_av(nCv))
       allocate(b2stbm_she_bal_av(nCv))
@@ -837,8 +810,6 @@
 *     Sources
       allocate(b2stbr_phys_shi0to3(nCv,0:3))
       allocate(b2stbr_phys_shi_bal(nCv))
-      allocate(b2stbr_bas_shi0to3(nCv,0:3))
-      allocate(b2stbr_bas_shi_bal(nCv))
       allocate(b2stbr_first_flight_shi0to3(nCv,0:3))
       allocate(b2stbr_first_flight_shi_bal(nCv))
       allocate(b2stbc_shi0to3(nCv,0:3))
@@ -875,8 +846,6 @@
       allocate(b2sihs_fraa_bal(nCv))
       b2stbr_phys_shi0to3=0.0_R8
       b2stbr_phys_shi_bal=0.0_R8
-      b2stbr_bas_shi0to3=0.0_R8
-      b2stbr_bas_shi_bal=0.0_R8
       b2stbr_first_flight_shi0to3=0.0_R8
       b2stbr_first_flight_shi_bal=0.0_R8
       b2stbc_shi0to3=0.0_R8
@@ -926,7 +895,6 @@
       allocate(fhi_anml_av(nFc,0:1))
       allocate(fhi_kevis_av(nFc,0:1))
       allocate(b2stbr_phys_shi_bal_av(nCv))
-      allocate(b2stbr_bas_shi_bal_av(nCv))
       allocate(b2stbr_first_flight_shi_bal_av(nCv))
       allocate(b2stbc_shi_bal_av(nCv))
       allocate(b2stbm_shi_bal_av(nCv))
@@ -977,8 +945,6 @@ cdjm Jan2017 Flux arrays:
 *     Sources
       deallocate(b2stbr_phys_sna0to1)
       deallocate(b2stbr_phys_sna_bal)
-      deallocate(b2stbr_bas_sna0to1)
-      deallocate(b2stbr_bas_sna_bal)
       deallocate(b2stbr_first_flight_sna0to1)
       deallocate(b2stbr_first_flight_sna_bal)
       deallocate(b2stbc_sna0to1)
@@ -1011,7 +977,6 @@ cdjm Jan2017 Flux arrays:
       deallocate(fna_pschused_av)
       deallocate(fna_tot_av)
       deallocate(b2stbr_phys_sna_bal_av)
-      deallocate(b2stbr_bas_sna_bal_av)
       deallocate(b2stbr_first_flight_sna_bal_av)
       deallocate(b2stbc_sna_bal_av)
       deallocate(b2stbm_sna_bal_av)
@@ -1034,8 +999,6 @@ cdjm Jan2017 Flux arrays:
 *     Sources
       deallocate(b2stbr_phys_smo0to3)
       deallocate(b2stbr_phys_smo_bal)
-      deallocate(b2stbr_bas_smo0to3)
-      deallocate(b2stbr_bas_smo_bal)
       deallocate(b2stbc_smo0to3)
       deallocate(b2stbc_smo_bal)      
       deallocate(b2stbm_smo0to3)
@@ -1105,7 +1068,6 @@ cdjm Jan2017 Flux arrays:
       deallocate(fmo_b2nxfv_av)
       deallocate(fmo_tot_av)
       deallocate(b2stbr_phys_smo_bal_av)
-      deallocate(b2stbr_bas_smo_bal_av)
       deallocate(b2stbc_smo_bal_av)
       deallocate(b2stbm_smo_bal_av)
       deallocate(ext_smo_bal_av)
@@ -1151,8 +1113,6 @@ cdjm Jan2017 Flux arrays:
 *     Sources
       deallocate(b2stbr_phys_she0to3)
       deallocate(b2stbr_phys_she_bal)
-      deallocate(b2stbr_bas_she0to3)
-      deallocate(b2stbr_bas_she_bal)
       deallocate(b2stbr_first_flight_she0to3)
       deallocate(b2stbr_first_flight_she_bal)
       deallocate(b2stbc_she0to3)
@@ -1188,7 +1148,6 @@ cdjm Jan2017 Flux arrays:
       deallocate(fhe_strange_av)
       deallocate(fhe_pschused_av)
       deallocate(b2stbr_phys_she_bal_av)
-      deallocate(b2stbr_bas_she_bal_av)
       deallocate(b2stbr_first_flight_she_bal_av)
       deallocate(b2stbc_she_bal_av)
       deallocate(b2stbm_she_bal_av)
@@ -1221,8 +1180,6 @@ cdjm Jan2017 Flux arrays:
 *     Sources
       deallocate(b2stbr_phys_shi0to3)
       deallocate(b2stbr_phys_shi_bal)
-      deallocate(b2stbr_bas_shi0to3)
-      deallocate(b2stbr_bas_shi_bal)
       deallocate(b2stbr_first_flight_shi0to3)
       deallocate(b2stbr_first_flight_shi_bal)
       deallocate(b2stbc_shi0to3)
@@ -1272,7 +1229,6 @@ cdjm Jan2017 Flux arrays:
       deallocate(fhi_anml_av)
       deallocate(fhi_kevis_av)
       deallocate(b2stbr_phys_shi_bal_av)
-      deallocate(b2stbr_bas_shi_bal_av)
       deallocate(b2stbr_first_flight_shi_bal_av)
       deallocate(b2stbc_shi_bal_av)
       deallocate(b2stbm_shi_bal_av)
@@ -1653,9 +1609,6 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
           b2stbr_phys_sna_bal(iCv,isb)=
      &                b2stbr_phys_sna0to1(iCv,0,isb)+
      &                b2stbr_phys_sna0to1(iCv,1,isb)*nb(iCv)
-          b2stbr_bas_sna_bal(iCv,isb)=
-     &                b2stbr_bas_sna0to1(iCv,0,isb)+
-     &                b2stbr_bas_sna0to1(iCv,1,isb)*nb(iCv)
           b2stbr_first_flight_sna_bal(iCv,isb)=
      &                b2stbr_first_flight_sna0to1(iCv,0,isb)+
      &                b2stbr_first_flight_sna0to1(iCv,1,isb)*nb(iCv)
@@ -1721,11 +1674,6 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
      &            b2stbr_phys_smo0to3(iCv,1,isb)*ub(iCv)+
      &            b2stbr_phys_smo0to3(iCv,2,isb)*rob(iCv)+
      &            b2stbr_phys_smo0to3(iCv,3,isb)*rob(iCv)*ub(iCv)
-          b2stbr_bas_smo_bal(iCv,isb)=
-     &            b2stbr_bas_smo0to3(iCv,0,isb)+
-     &            b2stbr_bas_smo0to3(iCv,1,isb)*ub(iCv)+
-     &            b2stbr_bas_smo0to3(iCv,2,isb)*rob(iCv)+
-     &            b2stbr_bas_smo0to3(iCv,3,isb)*rob(iCv)*ub(iCv)
           b2stbc_smo_bal(iCv,isb)=b2stbc_smo0to3(iCv,0,isb)+
      &            b2stbc_smo0to3(iCv,1,isb)*ub(iCv)+
      &            b2stbc_smo0to3(iCv,2,isb)*rob(iCv)+
@@ -1912,11 +1860,6 @@ cxpb We also treat the electron particle sources
      &     b2stbr_phys_she0to3(iCv,1)*te(iCv)+
      &     b2stbr_phys_she0to3(iCv,2)*ne(iCv)+
      &     b2stbr_phys_she0to3(iCv,3)*ne(iCv)*te(iCv)
-          b2stbr_bas_she_bal(iCv)=
-     &     b2stbr_bas_she0to3(iCv,0)+
-     &     b2stbr_bas_she0to3(iCv,1)*te(iCv)+
-     &     b2stbr_bas_she0to3(iCv,2)*ne(iCv)+
-     &     b2stbr_bas_she0to3(iCv,3)*ne(iCv)*te(iCv)
           b2stbr_first_flight_she_bal(iCv)=
      &     b2stbr_first_flight_she0to3(iCv,0)+
      &     b2stbr_first_flight_she0to3(iCv,1)*te(iCv)+
@@ -2021,11 +1964,6 @@ cdjm Update ion heat sources
      &     b2stbr_phys_shi0to3(iCv,1)*ti(iCv)+
      &     b2stbr_phys_shi0to3(iCv,2)*ni(iCv)+
      &     b2stbr_phys_shi0to3(iCv,3)*ni(iCv)*ti(iCv)
-          b2stbr_bas_shi_bal(iCv)=
-     &     b2stbr_bas_shi0to3(iCv,0)+
-     &     b2stbr_bas_shi0to3(iCv,1)*ti(iCv)+
-     &     b2stbr_bas_shi0to3(iCv,2)*ni(iCv)+
-     &     b2stbr_bas_shi0to3(iCv,3)*ni(iCv)*ti(iCv)
           b2stbr_first_flight_shi_bal(iCv)=
      &     b2stbr_first_flight_shi0to3(iCv,0)+
      &     b2stbr_first_flight_shi0to3(iCv,1)*ti(iCv)+
@@ -2175,7 +2113,6 @@ cdjm Update ion heat sources
         fna_pschused_av=0.0_R8
         fna_tot_av=0.0_R8
         b2stbr_phys_sna_bal_av=0.0_R8
-        b2stbr_bas_sna_bal_av=0.0_R8
         b2stbr_first_flight_sna_bal_av=0.0_R8
         b2stbc_sna_bal_av=0.0_R8
         b2stbm_sna_bal_av=0.0_R8
@@ -2213,7 +2150,6 @@ cdjm Update ion heat sources
         fmo_b2nxfv_av=0.0_R8
         fmo_tot_av=0.0_R8
         b2stbr_phys_smo_bal_av=0.0_R8
-        b2stbr_bas_smo_bal_av=0.0_R8
         b2stbc_smo_bal_av=0.0_R8
         if (allocated(eirene_mc_mapl_smo_bal)) then
           eirene_mc_mapl_smo_bal_av=0.0_R8
@@ -2262,7 +2198,6 @@ cdjm Update ion heat sources
         fhe_strange_av=0.0_R8
         fhe_pschused_av=0.0_R8
         b2stbr_phys_she_bal_av=0.0_R8
-        b2stbr_bas_she_bal_av=0.0_R8
         b2stbr_first_flight_she_bal_av=0.0_R8
         b2stbc_she_bal_av=0.0_R8
         if (allocated(eirene_mc_eael_she_bal)) then
@@ -2298,7 +2233,6 @@ cdjm Update ion heat sources
         fhi_anml_av=0.0_R8
         fhi_kevis_av=0.0_R8
         b2stbr_phys_shi_bal_av=0.0_R8
-        b2stbr_bas_shi_bal_av=0.0_R8
         b2stbr_first_flight_shi_bal_av=0.0_R8
         b2stbc_shi_bal_av=0.0_R8
         if (allocated(eirene_mc_eapl_shi_bal)) then
@@ -2383,8 +2317,6 @@ cdjm Update ion heat sources
      &                  curmlt*fna_tot
       b2stbr_phys_sna_bal_av = avmlt*b2stbr_phys_sna_bal_av +
      &                         curmlt*b2stbr_phys_sna_bal
-      b2stbr_bas_sna_bal_av = avmlt*b2stbr_bas_sna_bal_av +
-     &                        curmlt*b2stbr_bas_sna_bal
       b2stbr_first_flight_sna_bal_av =
      &                  avmlt*b2stbr_first_flight_sna_bal_av +
      &                  curmlt*b2stbr_first_flight_sna_bal
@@ -2457,8 +2389,6 @@ cdjm Update ion heat sources
      &                curmlt*fmo_tot
       b2stbr_phys_smo_bal_av = avmlt*b2stbr_phys_smo_bal_av +
      &                         curmlt*b2stbr_phys_smo_bal
-      b2stbr_bas_smo_bal_av = avmlt*b2stbr_bas_smo_bal_av +
-     &                        curmlt*b2stbr_bas_smo_bal
       b2stbc_smo_bal_av = avmlt*b2stbc_smo_bal_av +
      &                    curmlt*b2stbc_smo_bal
       if (allocated(eirene_mc_mapl_smo_bal)) then
@@ -2552,8 +2482,6 @@ cdjm Update ion heat sources
      &                  curmlt*fhe_pschused
       b2stbr_phys_she_bal_av = avmlt*b2stbr_phys_she_bal_av +
      &                         curmlt*b2stbr_phys_she_bal
-      b2stbr_bas_she_bal_av = avmlt*b2stbr_bas_she_bal_av +
-     &                        curmlt*b2stbr_bas_she_bal
       b2stbr_first_flight_she_bal_av = 
      &            avmlt*b2stbr_first_flight_she_bal_av +
      &            curmlt*b2stbr_first_flight_she_bal
@@ -2622,8 +2550,6 @@ cdjm Update ion heat sources
      &               curmlt*fhi_kevis
       b2stbr_phys_shi_bal_av = avmlt*b2stbr_phys_shi_bal_av +
      &                         curmlt*b2stbr_phys_shi_bal
-      b2stbr_bas_shi_bal_av = avmlt*b2stbr_bas_shi_bal_av +
-     &                        curmlt*b2stbr_bas_shi_bal
       b2stbr_first_flight_shi_bal_av = 
      &            avmlt*b2stbr_first_flight_shi_bal_av +
      &            curmlt*b2stbr_first_flight_shi_bal
@@ -2700,9 +2626,12 @@ cdjm Update ion heat sources
 
       end subroutine update_average_balance
 
-      subroutine write_balance(nCv,nFc,nsd,geo)
+      subroutine write_balance(nCv,nFc,nVx,nsd,geo,mpg)
       use b2us_geo
+      use b2us_map
 #ifndef NO_CDF
+      use b2mod_user_namelist
+     & , only : nimp,imp,nomp,omp
       use b2mod_b2cmpa
      & , only : zamin,zamax
       use b2mod_b2cmpa
@@ -2713,15 +2642,18 @@ cdjm Update ion heat sources
       use b2mod_dimensions
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv,nFc,nsd
+      integer nCv,nFc,nVx,nsd
       type(geometry), intent (in) :: geo
+      type(mapping), intent (in) :: mpg
 #ifndef NO_CDF
 #include <netcdf.inc>
 *   ..local variables
       integer nstrad
       integer status
-      integer ncid,nCvpid,nFcid,n1id,n2id,n3id,n4id,nsid,nstraid,specid,
-     .        eirnCvid,eirnatmid,eirnmolid,eirnionid
+      integer ncid,nCvpid,nCviid,nFcid,nVxid,nCmxFcid,nCmxVxid,
+     .        n1id,n2id,n3id,n4id,nsid,
+     .        nstraid,specid,eirnCvid,eirnatmid,eirnmolid,eirnionid,
+     .        nXptid,nimpid,nompid,nFtid
       integer vdims(4),idum(1)
       integer is
       character*13, allocatable :: species_name(:)
@@ -2742,7 +2674,17 @@ cdjm Update ion heat sources
 *   ..define all of the dimensions that will be used
       status=nf_def_dim(ncid,'nCv',nCv,nCvpid)
       call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nCi',mpg%nCi,nCviid)
+      call check_cdf_status(status)
       status=nf_def_dim(ncid,'nFc',nFc,nFcid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nVx',nVx,nVxid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nCmxFc',mpg%nCmxFc,nCmxFcid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nCmxVx',mpg%nCmxVx,nCmxVxid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nFt',mpg%nFt,nFtid)
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'1',1,n1id)
       call check_cdf_status(status)
@@ -2753,6 +2695,12 @@ cdjm Update ion heat sources
       status=nf_def_dim(ncid,'4',4,n4id)
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'ns',nsd,nsid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nXpt',mpg%nXpt,nXptid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nimp',nimp,nimpid)
+      call check_cdf_status(status)
+      status=nf_def_dim(ncid,'nomp',nomp,nompid)
       call check_cdf_status(status)
       if (allocated(eirene_mc_papl_sna_bal)) then
         nstrad=size(eirene_mc_papl_sna_bal,3)
@@ -2779,25 +2727,66 @@ cdjm Update ion heat sources
       status=nf_enddef(ncid)
       call check_cdf_status(status)
 
-*   ..cvX, cvY:
+*   ..cvX, cvY, vxX, vxY:
       vdims(1)=nCvpid
-      vdims(2)=n4id
       call write_cdf_double(ncid,'cvX',geo%cvX,vdims,1)
       call write_cdf_double(ncid,'cvY',geo%cvY,vdims,1)
-*   ..cvBb, cvHz, cvVol, fcS, am:
+      vdims(1)=nVxid
+      call write_cdf_double(ncid,'vxX',geo%vxX,vdims,1)
+      call write_cdf_double(ncid,'vxY',geo%vxY,vdims,1)
+*   ..cvFc,cvFcP,cvVx,cvVxP,fcVx,fcCv
+      vdims(1)=nCvpid
+      vdims(2)=n2id
+      call write_cdf_int(ncid,'cvFcP',mpg%cvFcP,vdims,2)
+      call write_cdf_int(ncid,'cvVxP',mpg%cvVxP,vdims,2)
+      vdims(1)=nCmxFcid
+      call write_cdf_int(ncid,'cvFc',mpg%cvFc,vdims,1)
+      vdims(1)=nCmxVxid
+      call write_cdf_int(ncid,'cvVx',mpg%cvVx,vdims,1)
+      vdims(1)=nFcid
+      call write_cdf_int(ncid,'fcVx',mpg%fcVx,vdims,2)
+      call write_cdf_int(ncid,'fcCv',mpg%fcCv,vdims,2)
+*   ..cvBb, cvEb, cvHx, cvHz, cvVol, fcS, fcHz, fcLbl, fcQalf, fcBb, am:
+      vdims(1)=nCvpid
+      vdims(2)=n4id
       call write_cdf_double(ncid,'cvBb',geo%cvBb,vdims,2)
+      vdims(2)=n3id
+      call write_cdf_double(ncid,'cvEb',geo%cvEb,vdims,2)
+      call write_cdf_double(ncid,'cvHx',geo%cvHx,vdims,1)
       call write_cdf_double(ncid,'cvHz',geo%cvHz,vdims,1)
       call write_cdf_double(ncid,'cvVol',geo%cvVol,vdims,1)
       vdims(1)=nFcid
+      vdims(2)=n2id
       call write_cdf_double(ncid,'fcS',geo%fcS,vdims,1)
+      call write_cdf_double(ncid,'fcHz',geo%fcHz,vdims,1)
+      call write_cdf_double(ncid,'fcQalf',geo%fcQalf,vdims,2)
+      call write_cdf_int(ncid,'fcLbl',mpg%fcLbl,vdims,1)
+      vdims(2)=n4id
+      call write_cdf_double(ncid,'fcBb',geo%fcBb,vdims,2)
       vdims(1)=nsid
       call write_cdf_double(ncid,'am',am,vdims,1)
+*   ..vxFpsi
+      vdims(1)=nVxid
+      call write_cdf_double(ncid,'vxFpsi',geo%vxFpsi,vdims,1)
 *   ..mp, ev:
       vdims(1)=n1id
       rdum(1)=mp
       call write_cdf_double_single(ncid,'mp',rdum,vdims(1))
       rdum(1)=ev
       call write_cdf_double_single(ncid,'ev',rdum,vdims(1))
+*   ..cvReg, cvFt, ftCv, ftCvP, imp, omp:
+      vdims(1)=nCvpid
+      call write_cdf_int(ncid,'cvReg',mpg%cvReg,vdims,1)
+      call write_cdf_int(ncid,'cvFt',mpg%cvFt,vdims,1)
+      vdims(1)=nFtid
+      vdims(2)=n2id
+      call write_cdf_int(ncid,'ftCvP',mpg%ftCvP,vdims,2)
+      vdims(1)=nCvpid
+      call write_cdf_int(ncid,'ftCv',mpg%ftCv,vdims,1)
+      vdims(1)=nimpid
+      call write_cdf_int(ncid,'imp',imp(1:nimp),vdims,1)
+      vdims(1)=nompid
+      call write_cdf_int(ncid,'omp',omp(1:nomp),vdims,1)
 *   ..species string:
       vdims(1)=specid
       vdims(2)=nsid
@@ -2848,8 +2837,6 @@ cdjm Update ion heat sources
       vdims(2)=nsid
       call write_cdf_double(ncid,'b2stbr_phys_sna_bal',
      &                   b2stbr_phys_sna_bal_av,vdims,2)
-      call write_cdf_double(ncid,'b2stbr_bas_sna_bal',
-     &                   b2stbr_bas_sna_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stbr_first_flight_sna_bal',
      &                   b2stbr_first_flight_sna_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stbc_sna_bal',
@@ -2889,8 +2876,6 @@ cdjm Update ion heat sources
       vdims(2)=nsid
       call write_cdf_double(ncid,'b2stbr_phys_smo_bal',
      &                   b2stbr_phys_smo_bal_av,vdims,2)
-      call write_cdf_double(ncid,'b2stbr_bas_smo_bal',
-     &                   b2stbr_bas_smo_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stbc_smo_bal',
      &                   b2stbc_smo_bal_av,vdims,2)
       call write_cdf_double(ncid,'b2stbm_smo_bal',
@@ -2981,8 +2966,6 @@ cdjm Update ion heat sources
       vdims(1)=nCvpid
       call write_cdf_double(ncid,'b2stbr_phys_she_bal',
      &                   b2stbr_phys_she_bal_av,vdims,1)
-      call write_cdf_double(ncid,'b2stbr_bas_she_bal',
-     &                   b2stbr_bas_she_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stbr_first_flight_she_bal',
      &                   b2stbr_first_flight_she_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stbc_she_bal',
@@ -3046,8 +3029,6 @@ cdjm Update ion heat sources
       vdims(1)=nCvpid
       call write_cdf_double(ncid,'b2stbr_phys_shi_bal',
      &                      b2stbr_phys_shi_bal_av,vdims,1)
-      call write_cdf_double(ncid,'b2stbr_bas_shi_bal',
-     &                      b2stbr_bas_shi_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stbr_first_flight_shi_bal',
      &                      b2stbr_first_flight_shi_bal_av,vdims,1)
       call write_cdf_double(ncid,'b2stbc_shi_bal',
@@ -3193,6 +3174,7 @@ cdjm Update ion heat sources
 
       call xertst (1.le.nCv, 'faulty parameter nCv')
       call xertst (1.le.nFc, 'faulty parameter nFc')
+      call xertst (1.le.nVx, 'faulty parameter nVx')
       call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
       write(*,*) 'Compilation with NO_CDF: balance.nc file not written'
 #endif

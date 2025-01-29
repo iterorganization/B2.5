@@ -28,6 +28,7 @@ CONTAINS
   SUBROUTINE ALLOC_B2MOD_FIRST_FLIGHT(in_no_of_slices, in_size_of_table&
 &   , in_no_of_start_points, in_dl)
     USE B2MOD_CONSTANTS
+    USE B2MOD_CHORD_SHIFT
     IMPLICIT NONE
     INTEGER :: in_no_of_slices, in_size_of_table, in_no_of_start_points
     REAL(kind=r8) :: t1, t2, in_dl
@@ -52,6 +53,8 @@ CONTAINS
     ALLOCATE(index(no_of_start_points, no_of_slices, 0:1))
     ptr_index = 0
     dl = in_dl
+    CALL INIT_CHORD_SHIFT
+  RETURN
   END SUBROUTINE ALLOC_B2MOD_FIRST_FLIGHT
 
 !

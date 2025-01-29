@@ -64,25 +64,44 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, ireg
+      integer ncall, n2, is
+      integer, save :: iout = 0
+      integer, save :: boundary_namelist = 0
+      integer, save :: idrifts_to_the_wall = 0                        !sv 02.03.05
+      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0          !sv 03.10.06
+      integer, save :: iform_corr_dia = 0, istyle_cs = 0              !sv 25.07.05 25.04.08
+      integer, save :: istyle_average_pr = 0, istyle_fchi = 0         !sv 08.08.02 14.02.05
+      integer, save :: ivminus = 1, ivplus = 1                        !sv 24.03.05
       logical wrong_flow
       real (kind=R8) ::
-     *  sna0ep, she0ep, shi0ep,
+     *  sna0ep, she0ep, shi0ep
+      real (kind=R8), save :: biasing_cur = 0.0_R8                    !sv 31.08.00
+      real (kind=R8), save :: fchy_dia_at_PR = 0.0_R8,                !sv 09.07.99
+     &    fchy_in_at_PR = 0.0_R8, fchy_vispar_at_PR = 0.0_R8,         !sv 21.10.02
+     &    fchy_visq_at_PR = 0.0_R8, fchy_visper_at_PR = 0.0_R8,       !sv 21.10.02
+     &    fchy_inert_at_PR = 0.0_R8                                   !sv 21.10.02
+      real (kind=R8), save :: fchy_dia_at_north = 0.0_R8,             !sv 09.07.99
+     &                        fchy_in_at_north = 0.0_R8,              !sv 21.10.02
+     &                        fchy_vispar_at_north = 0.0_R8,          !sv 21.10.02
+     &                        fchy_visq_at_north = 0.0_R8,            !sv 21.10.02
+     &                        fchy_visper_at_north = 0.0_R8,          !sv 21.10.02
+     &                        fchy_inert_at_north = 0.0_R8            !sv 21.10.02
+      real (kind=R8), save :: po_in_lower = 0.0_R8,
+     &                        po_in_upper = 0.0_R8                    !sv 16.11.04
+      real (kind=R8), save :: phm0 = 1.0_R8, phm1 = 1.0_R8,
+     &                        phm2 = 1.0_R8, ubig0 = 0.0_R8           !iyv 22.04.08
+      real (kind=R8), save :: y_dia = 1.0_R8, y_inertia = 1.0_R8      !sv 25.04.00
+#ifdef WG_TODO
+      integer :: ix, iy, ireg, k
+      real (kind=R8) :: facdriftm,
      1  tpz, trz, csb, cst, vte, s0, s1, fche, fchi, t0,
      4  csbm, cstm,   ! cstm1                                         !sv 14.10.99
      6  s0hz, s1hz, vwest, veast, vminus, vplus  !, v0                !sv 09.01.01 18.07.03 28.01.05
       real (kind=R8) ::
      *  pz(-1:nx,-1:ny)                                               !sv 18.01.02
-      integer, save :: boundary_namelist = 0
-      integer, save :: istyle_average_pr = 0, istyle_fchi = 0         !sv 08.08.02 14.02.05
-      integer, save :: idrifts_to_the_wall = 0                        !sv 02.03.05
-      integer, save :: ivminus = 1, ivplus = 1                        !sv 24.03.05
-      integer, save :: iform_corr_dia = 0, istyle_cs = 0              !sv 25.07.05 25.04.08
-      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0          !sv 03.10.06
       integer       :: num_inner                                      !sv 26.11.02
       real (kind=R8) ::
-     1   facdriftm
-     &  ,pzaverage, pzsum, volsum                                     !sv 24.03.99 18.01.02
+     &   pzaverage, pzsum, volsum                                     !sv 24.03.99 18.01.02
      &  ,ua2sum, ua2average(0:ns-1)                                   !sv 07.04.00 15.02.02
      &  ,uasum, uaaverage(0:ns-1)                                     !sv 15.02.02
      &  ,nesum, tisum, tiaverage, tesum                               !sv 15.12.00 25.01.02
@@ -91,31 +110,15 @@
       real (kind=R8) :: fchy_inertia                                  !sv 07.04.00
       real (kind=R8) :: fchy_biasing_cur                              !sv 31.08.00
       real (kind=R8) :: fchy_dia                                      !sv
-      real (kind=R8) , save :: y_dia = 1.0_R8, y_inertia = 1.0_R8     !sv 25.04.00
-      real (kind=R8) , save :: biasing_cur = 0.0_R8                   !sv 31.08.00
-      real (kind=R8) , save :: fchy_dia_at_PR = 0.0_R8,               !sv 09.07.99
-     &    fchy_in_at_PR = 0.0_R8, fchy_vispar_at_PR = 0.0_R8,         !sv 21.10.02
-     &    fchy_visq_at_PR = 0.0_R8, fchy_visper_at_PR = 0.0_R8,       !sv 21.10.02
-     &    fchy_inert_at_PR = 0.0_R8                                   !sv 21.10.02
-      real (kind=R8) , save :: fchy_dia_at_north = 0.0_R8,            !sv 09.07.99
-     &                         fchy_in_at_north = 0.0_R8,             !sv 21.10.02
-     &                         fchy_vispar_at_north = 0.0_R8,         !sv 21.10.02
-     &                         fchy_visq_at_north = 0.0_R8,           !sv 21.10.02
-     &                         fchy_visper_at_north = 0.0_R8,         !sv 21.10.02
-     &                         fchy_inert_at_north = 0.0_R8           !sv 21.10.02
-      real (kind=R8) , save :: po_in_lower = 0.0_R8,
-     &                         po_in_upper = 0.0_R8                   !sv 16.11.04
-      real (kind=R8) , save :: phm0 = 1.0_R8, phm1 = 1.0_R8,
-     &                         phm2 = 1.0_R8, ubig0 = 0.0_R8          !iyv 22.04.08
       character chns*3, chk*1                                         !sv 11.07.05
-      integer, save :: iout = 0, k                                    !sv 11.07.05
-      save ncall, sna0ep, she0ep, shi0ep
 *   ..procedures
-      intrinsic min, max, abs, sqrt
+      intrinsic min, max, sqrt
       real (kind=R8) :: b2ssum
       external xertst, sfill, b2ssum, b2saxpy
       external b2xvsg, b2xvff, b2xvps, b2xxgs, b2xppz                 !sv 18.01.02
+#endif
 *   ..initialization
+      save ncall, sna0ep, she0ep, shi0ep
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
      1 shi0ep/1.0e-36_R8/
 
@@ -197,7 +200,6 @@
       call sfill (n2*4, 0.0_R8, she0, 1)
       call sfill (n2*4, 0.0_R8, shi0, 1)
       call sfill (n2*4, 0.0_R8, sch0, 1)
-      facdriftm=maxval(facdrift)                                      !srv 29.07.08
 
 * ..compute standard form volume sources
 *   (This code placed here for want of a better location)
@@ -207,10 +209,10 @@
       enddo
       call b2saxpy (n2, she0ep, vol, 1, she0(-1,-1,0), 1)
       call b2saxpy (n2, shi0ep, vol, 1, shi0(-1,-1,0), 1)
-
+#ifdef WG_TODO
+      facdriftm=maxval(facdrift)                                      !srv 29.07.08
       if(boundary_namelist.eq.0) then
        write(*,*) 'Doing spb B2.5-style bc'
-
 * ..compute conditions at south boundary
 *   ..initialize ireg
        ireg = cbirso
@@ -1138,6 +1140,7 @@ c         sna0(nx,iy,1,1) = -1.0e60_R8
        enddo
       endif                                                           !sv 11.07.05 }
 
+#endif
 * ..return
       ncall = ncall+1
       call subend ()

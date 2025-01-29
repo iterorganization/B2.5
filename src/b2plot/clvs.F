@@ -1,8 +1,8 @@
 c
       subroutine clvs(ncls,rstack,irstack)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer :: ncls, irstack, iclv
       real (kind=R8) :: rstack(irstack)
       nofcls=ncls
@@ -22,8 +22,8 @@ c
 c
       subroutine eclvs(ncls,rstack,irstack)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer :: ncls, irstack, iclv
       real (kind=R8) :: rstack(irstack)
       nofecls=ncls
@@ -43,8 +43,8 @@ c
 c
       subroutine wclvs(ncls,rstack,irstack)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer :: ncls, irstack, iclv
       real (kind=R8) :: rstack(irstack)
       nofwcls=ncls
@@ -64,8 +64,8 @@ c
 c
       subroutine tclvs(ncls,rstack,irstack)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer :: ncls, irstack, iclv
       real (kind=R8) :: rstack(irstack)
       noftcls=ncls

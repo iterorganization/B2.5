@@ -348,6 +348,9 @@ csw 21feb2012
       if (nion_in.gt.0) allocate(textin(0:nion_in-1))
 #ifndef NO_B2_CHEM_SPUT
       allocate(chemical_sputter_yield(0:nlimps))
+#else
+      call xertst (nlimps.le.DEF_NLIM+DEF_NSTS,
+     . 'Increase DEF_NLIM and/or DEF_NSTS in b2mod_dimensions !')
 #endif
 #else
       call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
@@ -1364,7 +1367,7 @@ cwvu    for (advanced) spatially hybrid, might need even more.
         open (newunit=idb,file='debug_neutrals.out')
 #else
         idb = newunit()
-        open (unit=idb,file='deug_neutrals.out')
+        open (unit=idb,file='debug_neutrals.out')
 #endif
         instra = 0
         do istra = 1, nstrai

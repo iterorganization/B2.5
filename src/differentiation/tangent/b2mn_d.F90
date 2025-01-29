@@ -326,7 +326,7 @@ PROGRAM B2MN_DV
 !  nbdirs=3
   CALL B2MN_INIT_DV(switch, switchd, geo, geod, mpg, mpgd, state, stated&
 &             , state_ext, state_extd, state_avg, state_avgd, npar_opt)
-  call xertst(npar_opt.le.nbdirsmax, 'Increase size of nbdirsmax in diffsizes.F')
+  call xertst(npar_opt.le.nbdirsmax, 'Increase size of nbdirsmax in b2mod_diffsizes.F')
   call xertst(switch%b2optim_namelist.eq.1, 'Sensitivity calculation needs b2optim_namelist=1!')
   call set_tgt_perturbation(switchd)
 ! default case, valid for any species mix

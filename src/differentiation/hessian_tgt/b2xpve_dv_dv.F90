@@ -50,7 +50,7 @@ SUBROUTINE B2XPVE_DV_DV(ncv, nfc, ns, switch, geo, geod0, geod, mpg, &
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
@@ -329,7 +329,7 @@ SUBROUTINE B2XPVE_DV_NODIFF(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
@@ -473,7 +473,7 @@ SUBROUTINE B2XPVE_NODIFF_NODIFF(ncv, nfc, ns, switch, geo, mpg, qe, rza&
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg

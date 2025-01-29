@@ -7,6 +7,7 @@ c
       use b2mod_types
       use b2us_data_diff
       use b2mod_constants
+      use b2mod_chord_shift
       use b2mod_subsys
       implicit none
       
@@ -25,10 +26,6 @@ c
       integer iCv
       logical found
 
-      real (kind=R8) ::
-     * rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
-      
       intrinsic sqrt,sin,cos,abs,atan2
       external chord_find, xertst
 
@@ -221,13 +218,24 @@ c
       use b2mod_types
       use b2us_map_diff
       use b2us_geo_diff
+      use b2mod_chord_shift
       use b2mod_subsys
+#ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad_diff
      & , only : covered, rmin, rmax, zmin, zmax, first, cvcov, icov,
      &          iCvsv, lngind, lngcov
       implicit none
+#else
+      implicit none
+      integer lngcov, lngind
+      parameter(lngcov=200, lngind=500 000)
+      integer, save :: covered(lngcov,lngcov), cvcov(lngind),
+     &  icov(lngind), iCvsv
+      real (kind=R8), save :: rmin, rmax, zmin, zmax
+      logical, save :: first = .true.
+#endif
 
 !DIAG      integer rectangles, triangles, chain      ! diag
 !DIAG      common /chord_diag/ rectangles, triangles, chain      ! diag
@@ -257,10 +265,6 @@ c
      *   r1,r2,z1,z2
       integer xmin(lngcov),xmax(lngcov),ymin,ymax
 #endif
-
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 
       external xerrab
 
@@ -608,15 +612,6 @@ c
      1 (s1.ge.0.and.s2.ge.0.and.s3.ge.0))
       return
       end function inside_triangle
-
-      block data bd_chord_shift
-      use b2mod_types
-      real (kind=R8) ::
-     *   rshift, zshift, r0, z0, a0, b0, tt0
-      common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
-      data rshift, zshift, r0, z0, a0, b0, tt0
-     1    /0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8, 0.0_R8/
-      end block data bd_chord_shift
 
 !DIAG      subroutine chord_diagnostics      ! diag
 !DIAG      integer rectangles, triangles, chain      ! diag

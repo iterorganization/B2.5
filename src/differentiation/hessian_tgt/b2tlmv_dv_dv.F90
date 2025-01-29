@@ -48,7 +48,7 @@ SUBROUTINE B2TLMV_DV_DV(ncv, nfc, nvx, isb, cflmv, switch, switchd, geo&
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc, nvx, isb
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -590,7 +590,7 @@ SUBROUTINE B2TLMV_DV_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, switchd, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc, nvx, isb
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
@@ -871,7 +871,7 @@ SUBROUTINE B2TLMV_NODIFF_NODIFF(ncv, nfc, nvx, isb, cflmv, switch, geo, &
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !     ------------------------------------------------------------------
-  INTEGER :: ncv, nfc, nvx, isb
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, isb
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg

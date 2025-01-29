@@ -66,6 +66,7 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
   USE B2MOD_SUBSYS
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_B2CMPB_DIFF
+  USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_TALLIES
   USE B2MOD_DIMENSIONS
   USE B2MOD_SWITCHES_DIFF
@@ -2048,7 +2049,6 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
 !srv 29.04.10 {
 !
 !
-!
 !sw 09oct2012 SOLPS4: explicitly avoid b2stbr call here
 !   --> better solution wanted here..
   IF (no_b2stbr_phys_call .EQ. 0) THEN
@@ -2126,6 +2126,7 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   USE B2MOD_SUBSYS
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_B2CMPB_DIFF
+  USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_TALLIES
   USE B2MOD_DIMENSIONS
   USE B2MOD_SWITCHES_DIFF
@@ -4183,7 +4184,6 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   tresn = 0.0_R8
   trfle = 0.0_R8
   trfln = 0.0_R8
-!
   IF (main_call) THEN
     old_erosion(1:nbnd, 1:ntargsp) = erosion(1:nbnd, 1:ntargsp)
     old_deposition(1:nbnd, 1:ntargsp) = deposition(1:nbnd, 1:ntargsp)

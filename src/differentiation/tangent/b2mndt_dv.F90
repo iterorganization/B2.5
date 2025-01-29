@@ -3,8 +3,8 @@
 !
 !  Differentiation of b2mndt in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar potpar enipar
-!                b2recyc userfluxparm tdata cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci int4l int1l int2l int3l
+!                b2recyc userfluxparm cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata int4l int1l int2l int3l
 !                int0l fb_target fb_prev fb_current fb_const charge_frac
 !                saved_fb_actuator fb_rescale *(st.pl.na) *(st.pl.ua)
 !                *(st.pl.po) *(st.pl.te) *(st.pl.ti) *(st.pl.tn)
@@ -52,24 +52,24 @@
 !                *(st.dv.ne2) *(st.dv.pa) *(st.dv.pz) *(st.dv.lnlam)
 !                *(st.dv.vadia) *(st.dv.wadia) *(st.dv.vaecrb)
 !                *(st.dv.vedia) *(st.dv.veecrb) *(st.sr.sch) *(st.sr.she)
-!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.smo)
-!                *(st.sr.smq) *(st.sr.sna) *(st.sr.shedt) *(st.sr.sktdt)
-!                *(st.sr.shidt) *(st.sr.shndt) *(st.sr.schdt) *(st.sr.smodt)
-!                *(st.sr.snadt) *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0)
-!                *(st.srw.shn0) *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0)
-!                *(st.srw.sna0) *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra)
-!                *(st.rt.rlsa) *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt)
-!                *(st.rt.rlpi) *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2)
-!                *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra)
-!                *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na)
-!                *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
-!                *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.nn)
-!                *(st.psnc.kinrgy)
+!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.szt)
+!                *(st.sr.smo) *(st.sr.smq) *(st.sr.sna) *(st.sr.shedt)
+!                *(st.sr.sktdt) *(st.sr.sztdt) *(st.sr.shidt) *(st.sr.shndt)
+!                *(st.sr.schdt) *(st.sr.smodt) *(st.sr.snadt) *(st.srw.sch0)
+!                *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0)
+!                *(st.srw.szt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
+!                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra) *(st.rt.rlsa)
+!                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
+!                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
+!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
+!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne)
+!                *(st.psnl.ni) *(st.psnl.kinrgy) *(st.psnc.na)
+!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.kinrgy)
 !   with respect to varying inputs: enepar conpar enkpar potpar
-!                mompar enipar b2recyc userfluxparm tdata cfvla
-!                cfvsa cfalf cfdpa cfsig cfdna cfhce cfhci parm_hce
-!                parm_hci parm_vla parm_vsa parm_alf parm_dpa parm_sig
-!                parm_dna int4l int1l int2l int3l int0l fb_target
+!                mompar enipar b2recyc userfluxparm cfvla cfvsa
+!                cfalf cfdpa cfsig cfdna cfhce cfhci parm_hce parm_hci
+!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
+!                tdata int4l int1l int2l int3l int0l fb_target
 !                fb_prev fb_current fb_const charge_frac saved_fb_actuator
 !                fb_rescale switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
@@ -126,23 +126,24 @@
 !                *(st.dv.ne2) *(st.dv.pa) *(st.dv.pz) *(st.dv.lnlam)
 !                *(st.dv.vadia) *(st.dv.wadia) *(st.dv.vaecrb)
 !                *(st.dv.vedia) *(st.dv.veecrb) *(st.sr.sch) *(st.sr.she)
-!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.smo)
-!                *(st.sr.smq) *(st.sr.sna) *(st.sr.shedt) *(st.sr.sktdt)
-!                *(st.sr.shidt) *(st.sr.shndt) *(st.sr.schdt) *(st.sr.smodt)
-!                *(st.sr.snadt) *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0)
-!                *(st.srw.shn0) *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0)
-!                *(st.srw.sna0) *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra)
-!                *(st.rt.rlsa) *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt)
-!                *(st.rt.rlpi) *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2)
-!                *(st.rt.rpt) *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra)
-!                *(st.rtw.rqa) *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na)
-!                *(st.psnl.ua) *(st.psnl.te) *(st.psnl.ti) *(st.psnl.tn)
-!                *(st.psnl.kt) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
+!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.szt)
+!                *(st.sr.smo) *(st.sr.smq) *(st.sr.sna) *(st.sr.shedt)
+!                *(st.sr.sktdt) *(st.sr.sztdt) *(st.sr.shidt) *(st.sr.shndt)
+!                *(st.sr.schdt) *(st.sr.smodt) *(st.sr.snadt) *(st.srw.sch0)
+!                *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0)
+!                *(st.srw.szt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
+!                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra) *(st.rt.rlsa)
+!                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
+!                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
+!                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
+!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ua)
+!                *(st.psnl.te) *(st.psnl.ti) *(st.psnl.tn) *(st.psnl.kt)
+!                *(st.psnl.zt) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
 !                *(st.psnc.na) *(st.psnc.ua) *(st.psnc.te) *(st.psnc.ti)
-!                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.ne) *(st.psnc.ni)
-!                *(st.psnc.nn) *(st.psnc.kinrgy) (global)*rtlsa[_:_,_:_,_:_]
-!                (global)*rtlcx[_:_,_:_,_:_] (global)*rtlqa[_:_,_:_,_:_]
-!                (global)*rtlra[_:_,_:_,_:_]
+!                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.zt) *(st.psnc.ne)
+!                *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.kinrgy)
+!                (global)*rtlsa[_:_,_:_,_:_] (global)*rtlcx[_:_,_:_,_:_]
+!                (global)*rtlqa[_:_,_:_,_:_] (global)*rtlra[_:_,_:_,_:_]
 !   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in-out
 !                mpg.intcellp:in mpg.intcellr:in geo.cvbb:in geo.cvx:in
 !                geo.cvy:in geo.cvhz:in geo.cvhx:in geo.cvqgam:in
@@ -448,10 +449,9 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd2
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd3
   REAL(kind=r8) :: temp
-  REAL(r8), DIMENSION(nbdirsmax, SIZE(st%psnc%zt, 1)) :: dummyzerodiffd4
   REAL(r8), DIMENSION(ncv) :: temp0
   REAL(r8), DIMENSION(nCv) :: temp1
-  REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd5
+  REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd4
   INTEGER :: nbdirs
 !
 !-----------------------------------------------------------------------
@@ -721,20 +721,17 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 !     ..include contributions due to timestep
       IF (switch%b2mndt_style .NE. 2) THEN
 !     .. contributions due to timestep when style.eq.2 will be done in separate subroutines (b2scdt, b2smdt & b2shdt)
-        DO nd=1,nbdirsmax
-          dummyzerodiffd4(nd, :) = 0.D0
-        END DO
         CALL B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, st%psnc%na, std%&
 &                psnc%na, st%psnc%ua, std%psnc%ua, st%psnc%te, std%psnc%&
 &                te, st%psnc%ti, std%psnc%ti, st%psnc%tn, std%psnc%tn, &
 &                st%psnc%ne, std%psnc%ne, st%psnc%ni, std%psnc%ni, st%&
 &                psnc%nn, std%psnc%nn, st%psnc%kinrgy, std%psnc%kinrgy, &
-&                st%psnc%kt, std%psnc%kt, st%psnc%zt, dummyzerodiffd4, &
-&                st%pl%na, std%pl%na, st%pl%ua, st%pl%te, std%pl%te, st%&
-&                pl%ti, std%pl%ti, st%pl%tn, std%pl%tn, st%dv%ne, std%dv&
-&                %ne, st%dv%ni, std%dv%ni, st%dv%nn, std%dv%nn, st%dv%&
-&                kinrgy, std%dv%kinrgy, st%pl%kt, std%pl%kt, st%pl%zt, &
-&                std%pl%zt, st%sr, std%sr, .false., nbdirs)
+&                st%psnc%kt, std%psnc%kt, st%psnc%zt, std%psnc%zt, st%pl&
+&                %na, std%pl%na, st%pl%ua, st%pl%te, std%pl%te, st%pl%ti&
+&                , std%pl%ti, st%pl%tn, std%pl%tn, st%dv%ne, std%dv%ne, &
+&                st%dv%ni, std%dv%ni, st%dv%nn, std%dv%nn, st%dv%kinrgy&
+&                , std%dv%kinrgy, st%pl%kt, std%pl%kt, st%pl%zt, std%pl%&
+&                zt, st%sr, std%sr, .false., nbdirs)
 !   ..add to previous contributions
 !$$$  No longer needed as it is already done inside b2srdt
 !$$$            call b2saxpy (nCv*2*ns, 1.0_R8, st%sr%snadt,1, st%sr%sna,1)
@@ -849,7 +846,7 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
             CALL B2FILEI(ns, mpg%nnreg(0), switch)
           END IF
           IF (MOD(itim, ank_tracing) .EQ. 1 .OR. ank_tracing .EQ. 1) &
-&           CALL B2FILEW(istg(2), mpg%nnreg(0))
+&           CALL B2FILEW(istg(2), mpg%nnreg(0), st%diag)
         END IF
 !      ..update iteration counter
         b2mndt_itcnt = b2mndt_itcnt + 1
@@ -908,14 +905,14 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                te, std%pl%te, st%pl%po, std%pl%po, st%dv%vedia, std%dv&
 &                %vedia, st%dv%veecrb, std%dv%veecrb, nbdirs)
 !      ..compute other fluxes
-        CALL B2XPEN_DV(ncv, nfc, ns, mpg, st%dv%fna, std%dv%fna, st%dv%&
-&                fna_53, std%dv%fna_53, st%dv%fne_53, std%dv%fne_53, st%&
-&                dv%fch, std%dv%fch, st%dv%fhe, std%dv%fhe, st%dv%fhi, &
-&                std%dv%fhi, st%dv%fhn, std%dv%fhn, st%rt%rpt, std%rt%&
-&                rpt, st%pl%te, std%pl%te, st%pl%ti, std%pl%ti, st%pl%tn&
-&                , std%pl%tn, st%pl%po, std%pl%po, switch%boris, st%dv%&
-&                fhm, std%dv%fhm, st%dv%fhp, std%dv%fhp, st%dv%fhj, std%&
-&                dv%fhj, st%dv%fht, std%dv%fht, nbdirs)
+        CALL B2XPEN_DV(ncv, nfc, ns, mpg, switch, st%dv%fna, std%dv%fna&
+&                , st%dv%fna_53, std%dv%fna_53, st%dv%fne_53, std%dv%&
+&                fne_53, st%dv%fch, std%dv%fch, st%dv%fhe, std%dv%fhe, &
+&                st%dv%fhi, std%dv%fhi, st%dv%fhn, std%dv%fhn, st%rt%rpt&
+&                , std%rt%rpt, st%pl%te, std%pl%te, st%pl%ti, std%pl%ti&
+&                , st%pl%tn, std%pl%tn, st%pl%po, std%pl%po, st%dv%fhm, &
+&                std%dv%fhm, st%dv%fhp, std%dv%fhp, st%dv%fhj, std%dv%&
+&                fhj, st%dv%fht, std%dv%fht, nbdirs)
 !   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
         IF (switch%b2sigp_style .EQ. 2) THEN
           CALL B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, qe&
@@ -954,9 +951,9 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
         CALL B2XPNM_DV(ncv, ns, st%rt%rz2, std%rt%rz2, am, st%pl%na, std&
 &                %pl%na, wrk0, wrk0d, nbdirs)
         DO nd=1,nbdirsmax
-          dummyzerodiffd5(nd, :) = 0.D0
+          dummyzerodiffd4(nd, :) = 0.D0
         END DO
-        CALL B2TREQ_DV(ncv, switch, switchd, geo%cvvol, dummyzerodiffd5&
+        CALL B2TREQ_DV(ncv, switch, switchd, geo%cvvol, dummyzerodiffd4&
 &                , st%pl%te, std%pl%te, st%pl%ti, std%pl%ti, st%dv%ne, &
 &                std%dv%ne, st%dv%ni, std%dv%ni, wrk0, wrk0d, st%dv%&
 &                lnlam, std%dv%lnlam, st_ext, st%co%ceqp, std%co%ceqp, &
@@ -1466,7 +1463,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
             CALL B2FILEI(ns, mpg%nnreg(0), switch)
           END IF
           IF (MOD(itim, ank_tracing) .EQ. 1 .OR. ank_tracing .EQ. 1) &
-&           CALL B2FILEW(istg(2), mpg%nnreg(0))
+&           CALL B2FILEW(istg(2), mpg%nnreg(0), st%diag)
         END IF
 !      ..update iteration counter
         b2mndt_itcnt = b2mndt_itcnt + 1
@@ -1506,11 +1503,11 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 &                      facdrift, st%dv%fac_exb, st%dv%ne, st%pl%te, st%&
 &                      pl%po, st%dv%vedia, st%dv%veecrb)
 !      ..compute other fluxes
-          CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, st%dv%fna, st%dv%fna_53&
-&                      , st%dv%fne_53, st%dv%fch, st%dv%fhe, st%dv%fhi, &
-&                      st%dv%fhn, st%rt%rpt, st%pl%te, st%pl%ti, st%pl%&
-&                      tn, st%pl%po, switch%boris, st%dv%fhm, st%dv%fhp&
-&                      , st%dv%fhj, st%dv%fht)
+          CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, switch, st%dv%fna, st%dv&
+&                      %fna_53, st%dv%fne_53, st%dv%fch, st%dv%fhe, st%&
+&                      dv%fhi, st%dv%fhn, st%rt%rpt, st%pl%te, st%pl%ti&
+&                      , st%pl%tn, st%pl%po, st%dv%fhm, st%dv%fhp, st%dv&
+&                      %fhj, st%dv%fht)
 !   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
           IF (switch%b2sigp_style .EQ. 2) THEN
             CALL B2XPVE_NODIFF(ncv, nfc, ns, switch, geo, mpg, qe, st%rt&

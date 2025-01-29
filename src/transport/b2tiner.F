@@ -28,8 +28,8 @@
 *
 *  1. purpose
 *
-*     B2TINER computes the poloidal and radial components of the inertial
-*     current.
+*     B2TINER computes the poloidal and radial components of the
+*     inertial current.
 *
 *  8. further comments
 *
