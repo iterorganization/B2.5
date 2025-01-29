@@ -280,6 +280,12 @@ module b2mod_ual_io_grid
     !> Vertical vector component ID
     character(len=132), parameter :: VEC_ALIGN_Z_ID = "Z"
 #endif
+#if ( GGD_MAJOR_VERSION < 2 && GGD_MINOR_VERSION < 13 )
+    !> Toroidal vector component
+    integer, parameter :: VEC_ALIGN_PHI = 1004
+    !> Toroidal vector component ID
+    character(len=132), parameter :: VEC_ALIGN_PHI_ID = "Phi"
+#endif
 
     !! Subgrid/Grid subset name constants
 
@@ -1031,7 +1037,7 @@ contains
                   &   "Toroidal angle, full circle"
             end if
           end if
-#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MAJOR_VERSION > 0 && ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) ) )
+#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MAJOR_VERSION > 1 || ( GGD_MAJOR_VERSION == 1 && ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) ) ) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(1)%geometry_content%name(1) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
@@ -2698,7 +2704,7 @@ contains
         dynamic_grid%space(i1)%coordinates_type(i2)%name = &
          & aoS3_grid%space(i1)%coordinates_type(i2)%name
         dynamic_grid%space(i1)%coordinates_type(i2)%index = &
-         & aoS3_grid%space(i1)%coordinates_type(i2)index
+         & aoS3_grid%space(i1)%coordinates_type(i2)%index
         allocate( dynamic_grid%space(i1)%coordinates_type(i2)%description(1) )
         dynamic_grid%space(i1)%coordinates_type(i2)%description = &
          & aoS3_grid%space(i1)%coordinates_type(i2)%description

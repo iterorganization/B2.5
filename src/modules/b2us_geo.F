@@ -13,8 +13,8 @@
 
 !  cell quantites
         real (kind=R8), allocatable  :: cvBb(:,:)      ! Magnetic field: (nCv,0:3) Bx, By, Bz, |B|
-        real (kind=R8), allocatable  :: cvX(:)         ! X-co of cell center
-        real (kind=R8), allocatable  :: cvY(:)         ! Y-co of cell center
+        real (kind=R8), allocatable  :: cvX(:)         ! X-coordinate of cell center
+        real (kind=R8), allocatable  :: cvY(:)         ! Y-coordinate of cell center
         real (kind=R8), allocatable  :: cvSz(:)        ! Area perp. to third (z) direction
         real (kind=R8), allocatable  :: cvHz(:)        ! Length in third (z) direction
         real (kind=R8), allocatable  :: cvHx(:)        ! Temp: characteristic poloidal length; eventually remove, because meaning unclear in WG context
@@ -33,8 +33,10 @@
         real (kind=R8), allocatable  :: fcHz(:)        ! Length in third (z) direction
         real (kind=R8), allocatable  :: fcVol(:,:)     ! Part of volume of neighboring cell centers associated with the face; for interpolation
         real (kind=R8), allocatable  :: fcQgam(:,:)    ! Cosine (:,0) and sine (:,1) of gamma
-        real (kind=R8), allocatable  :: fcQalf(:,:)    ! Cosine (:,0) and sine (:,1) of alpha
-        real (kind=R8), allocatable  :: fcQbet(:,:)    ! Cosine (:,0) and sine (:,1) of beta
+        real (kind=R8), allocatable  :: fcQalf(:,:)    ! Cosine (:,0) and sine (:,1) of alpha for positive Bz;
+                                                       ! Cosine (:,0) and (-1)*sine (:,1) of alpha for negative Bz
+        real (kind=R8), allocatable  :: fcQbet(:,:)    ! Cosine (:,0) and sine (:,1) of beta for positive Bz;
+                                                       ! (-1)*Cosine (:,0) and sine (:,1) of beta for negative Bz
         real (kind=R8), allocatable  :: fcPbs(:)       ! Magnetic contact area
         real (kind=R8), allocatable  :: fcPbshz(:)     ! Magnetic contact area * hz (at faces)
         real (kind=R8), allocatable  :: fcBzb(:)       ! Factor for P-S/mdf flows
@@ -43,8 +45,8 @@
 
 !  vertex quantities
         real (kind=R8), allocatable  :: vxBb(:,:)      ! Magnetic field: (nVx,0:3) to be recomputed at vertices (Bx,By,Bz,|B|)
-        real (kind=R8), allocatable  :: vxX(:)         ! X-co of vertex
-        real (kind=R8), allocatable  :: vxY(:)         ! Y-co of vertex
+        real (kind=R8), allocatable  :: vxX(:)         ! X-coordinate of vertex
+        real (kind=R8), allocatable  :: vxY(:)         ! Y-coordinate of vertex
         real (kind=R8), allocatable  :: vxHz(:)        ! Length in third (z) direction
         real (kind=R8), allocatable  :: vxVol(:)       ! Part of volume of surrounding cell centers associated with the vertex; for interpolation
         real (kind=R8), allocatable  :: vxFfbz(:)      !
@@ -976,7 +978,7 @@
             end if
             gm%psi_increasing = gm%fsPsi(mpg%vxFs(iVx)).lt.
      &                          gm%fsPsi(mpg%vxFs(mpg%tgVx(1))).or.
-     &                          maxval(abs(gm%fsPsi)).eq.0.0_R8
+     &                          maxval(dabs(gm%fsPsi)).eq.0.0_R8
           end if
         end do
       else if (mpg%nnreg(0).eq.4) then

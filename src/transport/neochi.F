@@ -113,7 +113,6 @@ c       only normalized temperature gradient for i,j
         dsl(i,j,1) = 1.
         dsl(i,j,2) = 1.
 
-
         call neoart(nsl,ncl,nsdecl,nzdecl,zsp,m,t,den,dsl,rho,epsn,
      +              nreg,sigma,nleg,nenergy,ncof,
      +              neogeo,neofrc,ic,eparn,coeff)

@@ -18,6 +18,7 @@
 MODULE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_AD_DIFFV_DIFFV, ONLY : nsdmax, cvregmax
+  USE B2MOD_B2CMPA_DIFFV_DIFFV, ONLY : nspecies
   USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -25,13 +26,16 @@ MODULE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   IMPLICIT NONE
 !
 !
-  REAL(kind=r8), SAVE :: dtco(0:nsdmax-1, 0:cvregmax)
-  REAL(kind=r8), SAVE :: dtmo(0:nsdmax-1, 0:cvregmax)
-  REAL(kind=r8), SAVE :: dtee(0:cvregmax)
-  REAL(kind=r8), SAVE :: dtei(0:cvregmax)
+  INTEGER, SAVE :: dtfts(def_nyd)
+  REAL(kind=r8), SAVE :: dtco(0:nsdmax-1, 0:cvregmax), dtco_ft(def_nyd)
+  REAL(kind=r8), SAVE :: dtmo(0:nsdmax-1, 0:cvregmax), dtmo_ft(def_nyd)
+  REAL(kind=r8), SAVE :: dtee(0:cvregmax), dtee_ft(def_nyd)
+  REAL(kind=r8), SAVE :: dtei(0:cvregmax), dtei_ft(def_nyd)
   REAL(kind=r8), SAVE :: dten(0:cvregmax)
 ! IYS 19.12.2017
   REAL(kind=r8), SAVE :: corr_core_dn(0:nsdmax-1)
+! IYS 10.03.2023
+  REAL(kind=r8), SAVE :: sna_corr(def_natm), taumax(def_natm)
   LOGICAL, SAVE :: solveco(0:nsdmax-1, 0:cvregmax)
   LOGICAL, SAVE :: solvemo(0:nsdmax-1, 0:cvregmax)
   LOGICAL, SAVE :: solvemt(0:cvregmax)
@@ -42,10 +46,10 @@ MODULE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   LOGICAL, SAVE :: solveet(0:cvregmax)
   LOGICAL, SAVE :: solvekt(0:cvregmax)
   LOGICAL, SAVE :: solvezt(0:cvregmax)
-  LOGICAL, SAVE :: last_solve_5(0:cvregmax)
-  LOGICAL, SAVE :: last_solve_9(0:cvregmax)
 ! IYS 21.09.2018
   LOGICAL, SAVE :: add_te_corr_to_po(0:cvregmax)
+! IYS 10.03.2023
+  LOGICAL, SAVE :: do_sna_corr_core(def_natm)
 ! IYS 19.12.2017
   REAL(kind=r8), SAVE :: corr_core_dt
   REAL(kind=r8), SAVE :: time_factor_required, core_dt_suppression, &
@@ -56,6 +60,7 @@ MODULE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   REAL(kind=r8), SAVE :: numerics_time_switch
   LOGICAL :: first_time_step
   LOGICAL, SAVE :: b2mod_numerics_allocated=.false.
+  LOGICAL, ALLOCATABLE, SAVE :: last_solve_5(:), last_solve_9(:)
 !
   PRIVATE :: numerics
   LOGICAL, SAVE :: write_nml_num=.true.
@@ -65,7 +70,9 @@ MODULE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
 &     , core_dt_suppression, core_dt_factor, solveco, solvemo, solvemt, &
 &     solvepo, solveee, solveei, solveen, solveet, write_nml_num, &
 &     numerics_filename, numerics_time_mod, numerics_time_switch, &
-&     solvekt, solvezt, corr_core_dn, corr_core_dt, add_te_corr_to_po
+&     solvekt, solvezt, corr_core_dn, corr_core_dt, add_te_corr_to_po, &
+&     sna_corr, taumax, do_sna_corr_core, dtfts, dtee_ft, dtmo_ft, &
+&     dtco_ft, dtei_ft
 
 CONTAINS
 !
@@ -76,27 +83,37 @@ CONTAINS
     IMPLICIT NONE
     INTEGER :: ncv, nsd, nnreg(0:1)
     TYPE(SWITCHES), INTENT(IN) :: switch
-    INTRINSIC ALLOCATED
 !
-    IF (ALLOCATED(time_factor)) THEN
+    IF (b2mod_numerics_allocated) THEN
       RETURN
     ELSE
 !srv 25.02.06 11.06.08
       WRITE(*, *) 'Allocating space for b2mod_numerics'
 !
       ALLOCATE(time_factor(ncv))
+      ALLOCATE(last_solve_5(0:nnreg(0)))
+      ALLOCATE(last_solve_9(0:nnreg(0)))
       CALL XERTST(nsd .LE. nsdmax, &
 &           'increase DEF_NSD in b2mod_dimensions')
       CALL XERTST(nnreg(0) .LE. cvregmax, 'increase CVREGMAX')
+      dtfts = 0
       dtco = 1.0_R8
       dtmo = 1.0_R8
       dtee = 1.0_R8
       dtei = 1.0_R8
       dten = 1.0_R8
+      dtco_ft = 1.0_R8
+      dtmo_ft = 1.0_R8
+      dtee_ft = 1.0_R8
+      dtei_ft = 1.0_R8
 ! IYS 19.12.2017
       corr_core_dn = 1.0_R8
 ! IYS 19.12.2017
       corr_core_dt = 1.0_R8
+!iyv 20.09.22
+      sna_corr = 0.0_R8
+!iyv 20.09.22
+      taumax = 0.05_R8
       time_factor_required = 0.1_R8
       core_dt_suppression = 1.0_R8
       core_dt_factor = 1.0_R8
@@ -112,6 +129,8 @@ CONTAINS
       solvepo = .true.
 ! IYS 21.09.2018
       add_te_corr_to_po = .true.
+!iyv 20.09.22
+      do_sna_corr_core = .true.
       solveee = .true.
       solveei = .true.
       solveen = .true.
@@ -146,6 +165,8 @@ CONTAINS
       RETURN
     ELSE
       DEALLOCATE(time_factor)
+      DEALLOCATE(last_solve_5)
+      DEALLOCATE(last_solve_9)
       b2mod_numerics_allocated = .false.
       RETURN
     END IF
@@ -153,11 +174,12 @@ CONTAINS
 
 !
   SUBROUTINE READ_B2MOD_NUMERICS_NAMELIST(ncv, ns, nsmin, nsmax, nnreg, &
-&   cvonclosedsurface, b2mndt_style)
+&   cvonclosedsurface, b2mndt_style, new)
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 !
     INTEGER :: ncv, ns, nsmin, nsmax, nnreg(0:1)
+    LOGICAL :: new
     LOGICAL :: file_ok, cvonclosedsurface(ncv)
     INTEGER :: icv, is, ireg, b2mndt_style
     REAL(kind=r8) :: ttf
@@ -168,33 +190,32 @@ CONTAINS
     INTRINSIC MINVAL
     INTRINSIC MIN
     REAL(kind=r8) :: result1
+    REAL(kind=r8) :: result10
 !
     filename = numerics_filename
     numerics_time_mod = 0.0_R8
     numerics_time_switch = 0.0_R8
     CALL FIND_FILE(filename, file_ok)
-    IF (file_ok) THEN
+    IF (file_ok .AND. (.NOT.new)) THEN
       OPEN(99, file=filename) 
       WRITE(*, *) 'Reading namelist numerics from ', TRIM(filename)
       READ(99, numerics) 
       CLOSE(99) 
       WRITE(*, *) 'Read namelist numerics from ', TRIM(filename)
-!srv 22.05.18 {
       DO ireg=0,nnreg(0)
         solveet(ireg) = solveee(ireg) .AND. solveei(ireg) .AND. solveet(&
 &         ireg)
-        IF (solveet(ireg) .AND. b2mndt_style .EQ. 2) CALL XERRAB(&
-&                           'time-dependent mode requires solveet=false'&
-&                                                         )
+        CALL XERTST(b2mndt_style .LE. 1 .OR. (.NOT.solveet(ireg)), &
+&             'Time-dependent mode requires SOLVEET = .false.!')
         DO is=nsmin,nsmax-1
           solvemt(ireg) = solvemt(ireg) .AND. solvemo(is, ireg)
         END DO
-        IF (solvemt(ireg) .AND. b2mndt_style .EQ. 2) CALL XERRAB(&
-&                           'time-dependent mode requires solvemt=false'&
-&                                                         )
+        CALL XERTST(b2mndt_style .LE. 1 .OR. (.NOT.solvemt(ireg)), &
+&             'Time-dependent mode requires SOLVEMT = .false.!')
       END DO
-    ELSE
-!srv 22.05.18 }
+    ELSE IF (file_ok .AND. new) THEN
+      CALL XERRAB('Found unexpected '//TRIM(filename))
+    ELSE IF (.NOT.new) THEN
       CALL XERRAB('No '//TRIM(filename))
     END IF
 !
@@ -212,6 +233,10 @@ CONTAINS
       CALL XERTST(0.0_R8 .LT. corr_core_dn(is), &
 &           'faulty parameter corr_core_dn')
     END DO
+    DO is=1,nspecies
+      CALL XERTST(0.0_R8 .LE. sna_corr(is), 'faulty parameter sna_corr')
+      CALL XERTST(0.0_R8 .LT. taumax(is), 'faulty parameter taumax')
+    END DO
     CALL XERTST(0.0_R8 .LE. time_factor_required, &
 &         'faulty parameter time_factor_required')
     result1 = MINVAL(dtco)
@@ -224,6 +249,16 @@ CONTAINS
     CALL XERTST(0.0_R8 .LT. result1, 'faulty parameter dtei')
     result1 = MINVAL(dten)
     CALL XERTST(0.0_R8 .LT. result1, 'faulty parameter dten')
+    result10 = MINVAL(dtfts)
+    CALL XERTST(0 .LE. result10, 'faulty parametere dtfts')
+    result1 = MINVAL(dtco_ft)
+    CALL XERTST(0.0_R8 .LT. result1, 'faulty parameter dtco_ft')
+    result1 = MINVAL(dtmo_ft)
+    CALL XERTST(0.0_R8 .LT. result1, 'faulty parameter dtmo_ft')
+    result1 = MINVAL(dtee_ft)
+    CALL XERTST(0.0_R8 .LT. result1, 'faulty parameter dtee_ft')
+    result1 = MINVAL(dtei_ft)
+    CALL XERTST(0.0_R8 .LT. result1, 'faulty parameter dtei_ft')
 !
 ! additional time modification factor
     ttf = core_dt_suppression

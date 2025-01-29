@@ -30,7 +30,7 @@ SUBROUTINE GRADC_DIV_PAR_NODIFF_NODIFF(ncv, nfc, nvx, mode, geo, mpg, &
 !.end gradc_div_par
 !
 !   ..input arguments
-  INTEGER :: ncv, nfc, nvx, mode
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, mode
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: fun(ncv), funf(nfc)

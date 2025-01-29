@@ -352,7 +352,7 @@ cdjm Store the total change in linearised sources for balance
 !     &             sr%sna(:,:,1,is)*na(:,:,is),'b2srsm_snasm'//chns)
         enddo
       endif
-      if (switch%b2nph9_iout.eq.1 .or. switch%b2npht_iout.eq.1) then
+      if (switch%b2npht_iout.eq.1) then
 !        call my_out(70,nCv,sr%she(:,:,0)+sr%she(:,:,1)*te+            !srv 07.10.09
 !     &   sr%she(:,:,2)*ne + sr%she(:,:,3)*te*ne,'b2srsm_shesm')
 !        call my_out(70,nCv,sr%shi(:,:,0)+sr%shi(:,:,1)*ti+

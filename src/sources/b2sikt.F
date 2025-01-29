@@ -76,8 +76,7 @@ c      use b2mod_keps
       call subini ('b2sikt')
 *   ..set internal parameters on first call
       if (ncall_b2sikt.eq.0) then
-       if ((switch%b2sikt_local.ne.1).or.
-     &     (switch%b2sikt_sheath_local.ne.1)) then
+       if (switch%b2sikt_sheath_local.ne.1) then
         call xertst(nomp.gt.0,
      &    'No CVs in omp list, check rzomp in b2.user.parameters')
         call xertst(icsepomp.gt.0,
@@ -216,12 +215,16 @@ cwdk     parallel transport due to parallel current fluctuations
            t2 = 0.0_R8
            t3 = 0.0_R8
          endif
-         she0(ic,0)   = -t1 + t2*pl%kt(ic) + t3
-         shi0(ic,0)   = -t0
          if (switch%b2sikt_kt_source_stab.eq.0) then
+           she0(ic,0)   = -t1 + t2*pl%kt(ic) + t3
+           shi0(ic,0)   = -t0
            skt0(ic,0)   =  t0 + t1 - t3 - t4
            skt0(ic,1)   = -t2
          else
+           she0(ic,0)   = max(-t1 + t2*pl%kt(ic) + t3,0.0_R8)
+           she0(ic,1)   = min(-t1 + t2*pl%kt(ic) + t3,0.0_R8)/pl%te(ic)
+           shi0(ic,0)   = max(-t0,0.0_R8)
+           shi0(ic,1)   = min(-t0,0.0_R8)/pl%ti(ic)
            skt0(ic,0)   =  max(t0 + t1,0.0_R8)
            skt0(ic,1)   = (min(t0 + t1,0.0_R8) - t3 - t4)/
      &       (1.0e-8_R8*ev + pl%kt(ic)) - t2

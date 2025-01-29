@@ -28,6 +28,14 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      3   fchviskt_a(nFc,0:1,0:ns-1), fchviskt(nFc,0:1)
+     
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2TVSKT computes the current due to RS of kt-model.
+*
 *-----------------------------------------------------------------------
 *.declarations
 

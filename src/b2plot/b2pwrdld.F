@@ -10,6 +10,7 @@ c======================================================================
       use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2plot
+      use b2mod_rdload
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
       use b2us_data
@@ -18,7 +19,6 @@ c======================================================================
       use eirmod_wneutrals
 #endif
       implicit none
-#     include "rdload.inc"
       integer iatm,imol,iion
       integer i,j,k,l,m,is,iCv,n_hlperr,
      ,        l_errt(nsgmx),l_errs(nsgmx)
@@ -87,21 +87,21 @@ c
       end do
       ntrg=k
 #ifdef DBG
-       print *,'Shadowing structure: ',
-     ,          nplgs,nbndry,nwldlis(1),lwldlis(1,1)
-       print '(20i4)',(lbnd(i),i=1,nplgs)
-       print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
-       print '(a,12i5)','Radiation target ',ntrg,
-     ,        (nwldlis(i),i=2,nwldprt)
-       print '(20i4)',(ltrg(i),i=1,ntrg)
+      print *,'Shadowing structure: ',
+     ,         nplgs,nbndry,nwldlis(1),lwldlis(1,1)
+      print '(20i4)',(lbnd(i),i=1,nplgs)
+      print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
+      print '(a,12i5)','Radiation target ',ntrg,
+     ,       (nwldlis(i),i=2,nwldprt)
+      print '(20i4)',(ltrg(i),i=1,ntrg)
 
-       open(lun_w,file='layout-w.dat')
-       write(lun_w,'(2a)') '# Wall layout : ',trim(label)
-       write(lun_w,'(3a)') '# R',tab,'Z'
-       do i=1,nplgs
-         write(lun_w,'(1p,2(1x,e15.8))') xp(i),yp(i)
-       end do
-       close(lun_w)
+      open(lun_w,file='layout-w.dat')
+      write(lun_w,'(2a)') '# Wall layout : ',trim(label)
+      write(lun_w,'(3a)') '# R',tab,'Z'
+      do i=1,nplgs
+        write(lun_w,'(1p,2(1x,e15.8))') xp(i),yp(i)
+      end do
+      close(lun_w)
 #endif
 c
 c*** Now specify the radiation sources - in W (remember, the additional
@@ -172,7 +172,7 @@ c      write(*,*) 'b2pwrdld: after rlcomp'
       end if !}
 c----------------------------------------------------------------------
 c*** Extract the data and put them in the output module.
-c*** After rlcomp, the radiation loads are stored in radld (rdload.inc)
+c*** After rlcomp, the radiation loads are stored in radld (b2mod_rdload)
 c*** in the first ntrg elements, in the order given by the ltrg array.
 c*** We need them put in wldrdld (b2mod_b2plot_wall_loading.F) in the
 c*** positions just after lppp, in the following order:

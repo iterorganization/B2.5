@@ -8,32 +8,33 @@
 !                fb_prevd fb_currentd fb_constd fb_const charge_frac
 !                fb_targetd saved_fb_actuator fb_rescale charge_fracd
 !                fb_rescaled *(srwd.sch0) *(srwd.she0) *(srwd.shi0)
-!                *(srwd.shn0) *(srwd.skt0) *(srwd.smo0) *(srwd.sna0)
-!                *(psnc.na) *(psnc.ne) *(psnc.ni) *(psnc.kinrgy)
-!                *(dv.fna) *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he)
-!                *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_eir) *(dv.kinrgy)
-!                *(dv.ne) *(dv.ni) *(dv.nn) *(psnl.na) *(psnl.ne)
-!                *(psnl.ni) *(psnl.kinrgy) *(dvd.fna) *(dvd.fna_mdf)
-!                *(dvd.fna_32) *(dvd.fna_he) *(dvd.fnapsch) *(dvd.fna_fcor)
-!                *(dvd.fna_eir) *(dvd.kinrgy) *(dvd.ne) *(srw.sch0)
-!                *(srw.she0) *(srw.shi0) *(srw.shn0) *(srw.skt0)
-!                *(srw.smo0) *(srw.sna0) *(psnld.na) *(psnld.ne)
-!                *(psnld.ni) *(psnld.kinrgy) *(pld.na) *(pl.na)
-!                *(psncd.na) *(psncd.ne) *(psncd.ni) *(psncd.kinrgy)
+!                *(srwd.shn0) *(srwd.skt0) *(srwd.szt0) *(srwd.smo0)
+!                *(srwd.sna0) *(psnc.na) *(psnc.ne) *(psnc.ni)
+!                *(psnc.kinrgy) *(dv.fna) *(dv.fna_mdf) *(dv.fna_32)
+!                *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor) *(dv.fna_eir)
+!                *(dv.kinrgy) *(dv.ne) *(dv.ni) *(dv.nn) *(psnl.na)
+!                *(psnl.ne) *(psnl.ni) *(psnl.kinrgy) *(dvd.fna)
+!                *(dvd.fna_mdf) *(dvd.fna_32) *(dvd.fna_he) *(dvd.fnapsch)
+!                *(dvd.fna_fcor) *(dvd.fna_eir) *(dvd.kinrgy) *(dvd.ne)
+!                *(srw.sch0) *(srw.she0) *(srw.shi0) *(srw.shn0)
+!                *(srw.skt0) *(srw.szt0) *(srw.smo0) *(srw.sna0)
+!                *(psnld.na) *(psnld.ne) *(psnld.ni) *(psnld.kinrgy)
+!                *(pld.na) *(pl.na) *(psncd.na) *(psncd.ne) *(psncd.ni)
+!                *(psncd.kinrgy)
 !   with respect to varying inputs: potpard enepar conpard enipard
 !                enepard conpar enkpar potpar mompar enipar userfluxparm
 !                userfluxparmd saved_fb_actuatord fb_target fb_prev
 !                fb_current fb_prevd fb_currentd fb_constd fb_const
 !                charge_frac fb_targetd saved_fb_actuator fb_rescale
 !                charge_fracd fb_rescaled *(srwd.sch0) *(srwd.she0)
-!                *(srwd.shi0) *(srwd.shn0) *(srwd.skt0) *(srwd.smo0)
-!                *(srwd.sna0) *(psnc.na) *(psnc.ne) *(psnc.ni)
-!                *(psnc.kinrgy) *(dv.fch) *(dv.fch_p) *(dv.fchdia)
-!                *(dv.fchin) *(dv.fchvispar) *(dv.fchvisper) *(dv.fchvisq)
-!                *(dv.fchinert) *(dv.fchviskt) *(dv.fna) *(dv.fna_mdf)
-!                *(dv.fna_32) *(dv.fna_he) *(dv.fnapsch) *(dv.fna_fcor)
-!                *(dv.fna_eir) *(dv.fhe) *(dv.fhepsch) *(dv.fhi)
-!                *(dv.fhipsch) *(dv.fhm) *(dv.fkt) *(dv.kinrgy)
+!                *(srwd.shi0) *(srwd.shn0) *(srwd.skt0) *(srwd.szt0)
+!                *(srwd.smo0) *(srwd.sna0) *(psnc.na) *(psnc.ne)
+!                *(psnc.ni) *(psnc.kinrgy) *(dv.fch) *(dv.fch_p)
+!                *(dv.fchdia) *(dv.fchin) *(dv.fchvispar) *(dv.fchvisper)
+!                *(dv.fchvisq) *(dv.fchinert) *(dv.fchviskt) *(dv.fna)
+!                *(dv.fna_mdf) *(dv.fna_32) *(dv.fna_he) *(dv.fnapsch)
+!                *(dv.fna_fcor) *(dv.fna_eir) *(dv.fhe) *(dv.fhepsch)
+!                *(dv.fhi) *(dv.fhipsch) *(dv.fhm) *(dv.fkt) *(dv.kinrgy)
 !                *(dv.ne) *(dv.ni) *(dv.nn) *(dv.vadia) *(dv.vaecrb)
 !                *(dv.vedia) *(dv.veecrb) *(psnl.na) *(psnl.ne)
 !                *(psnl.ni) *(psnl.kinrgy) *(rtd.rza) *(rt.rza)
@@ -45,55 +46,55 @@
 !                *(dvd.fhipsch) *(dvd.fhm) *(dvd.fkt) *(dvd.kinrgy)
 !                *(dvd.ne) *(dvd.ni) *(dvd.vadia) *(dvd.vaecrb)
 !                *(dvd.vedia) *(dvd.veecrb) *(srw.sch0) *(srw.she0)
-!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.smo0)
-!                *(srw.sna0) switch.b2tfhi_fflokt *(psnld.na) *(psnld.ne)
-!                *(psnld.ni) *(psnld.kinrgy) *(cod.chce) *(cod.chci)
-!                *(cod.cdna) *(cod.hce0) *(cod.hci0) *(cod.hcn0)
-!                *(cod.dpa0) *(cod.dna0) *(co.chce) *(co.chci)
-!                *(co.cdna) *(co.hce0) *(co.hci0) *(co.hcn0) *(co.dpa0)
-!                *(co.dna0) *(pld.na) *(pld.ua) *(pld.po) *(pld.te)
-!                *(pld.ti) *(pld.kt) *(pl.na) *(pl.ua) *(pl.po)
-!                *(pl.te) *(pl.ti) *(pl.kt) *(psncd.na) *(psncd.ne)
-!                *(psncd.ni) *(psncd.kinrgy)
+!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.szt0)
+!                *(srw.smo0) *(srw.sna0) switch.b2tfhi_fflokt switch.b2tfhi_fflozt
+!                *(psnld.na) *(psnld.ne) *(psnld.ni) *(psnld.kinrgy)
+!                *(cod.chce) *(cod.chci) *(cod.cdna) *(cod.hce0)
+!                *(cod.hci0) *(cod.hcn0) *(cod.dpa0) *(cod.dna0)
+!                *(co.chce) *(co.chci) *(co.cdna) *(co.hce0) *(co.hci0)
+!                *(co.hcn0) *(co.dpa0) *(co.dna0) *(pld.na) *(pld.ua)
+!                *(pld.po) *(pld.te) *(pld.ti) *(pld.kt) *(pld.zt)
+!                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti) *(pl.kt)
+!                *(pl.zt) *(psncd.na) *(psncd.ne) *(psncd.ni) *(psncd.kinrgy)
 !   Plus diff mem management of: srwd.sch0:in srwd.she0:in srwd.shi0:in
-!                srwd.shn0:in srwd.skt0:in srwd.smo0:in srwd.sna0:in
-!                psnc.na:in psnc.ne:in psnc.ni:in psnc.fna:in psnc.kinrgy:in
-!                dv.fch:in dv.fch_p:in dv.fchdia:in dv.fchin:in
-!                dv.fchvispar:in dv.fchvisper:in dv.fchvisq:in
-!                dv.fchinert:in dv.fchviskt:in dv.fna:in dv.fna_mdf:in
-!                dv.fna_52:in dv.fna_32:in dv.fna_nodrift:in dv.fna_he:in
-!                dv.fnapsch:in dv.fna_fcor:in dv.fna_eir:in dv.fhe:in
-!                dv.fhepsch:in dv.fhi:in dv.fhipsch:in dv.fhm:in
-!                dv.fkt:in dv.kinrgy:in dv.ne:in dv.ni:in dv.nn:in
-!                dv.vadia:in dv.vaecrb:in dv.vedia:in dv.veecrb:in
-!                dv.facdrift:in psnl.na:in psnl.ne:in psnl.ni:in
-!                psnl.fna:in psnl.kinrgy:in geo.cvbb:in geo.cvvol:in
-!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
-!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in
-!                geo.vxvol:in geo.vxonedbsq:in st_ext.am:in st_ext.na:in
-!                st_ext.ta:in rtd.rza:in rt.rza:in dvd.fch:in dvd.fch_p:in
-!                dvd.fchdia:in dvd.fchin:in dvd.fchvispar:in dvd.fchvisper:in
-!                dvd.fchvisq:in dvd.fchinert:in dvd.fchviskt:in
-!                dvd.fna:in dvd.fna_mdf:in dvd.fna_32:in dvd.fna_he:in
-!                dvd.fnapsch:in dvd.fna_fcor:in dvd.fna_eir:in
-!                dvd.fhe:in dvd.fhepsch:in dvd.fhi:in dvd.fhipsch:in
-!                dvd.fhm:in dvd.fkt:in dvd.kinrgy:in dvd.ne:in
-!                dvd.ni:in dvd.vadia:in dvd.vaecrb:in dvd.vedia:in
-!                dvd.veecrb:in srw.sch0:in srw.she0:in srw.shi0:in
-!                srw.sne0:in srw.shn0:in srw.skt0:in srw.szt0:in
-!                srw.smo0:in srw.sna0:in srw.b2stbc_sch:in srw.b2stbc_she:in
-!                srw.b2stbc_shi:in srw.b2stbc_sne:in srw.b2stbc_shn:in
-!                srw.b2stbc_skt:in srw.b2stbc_szt:in srw.b2stbc_smo:in
-!                srw.b2stbc_sna:in psnld.na:in psnld.ne:in psnld.ni:in
-!                psnld.kinrgy:in cod.chce:in cod.chci:in cod.cdna:in
-!                cod.hce0:in cod.hci0:in cod.hcn0:in cod.dpa0:in
-!                cod.dna0:in co.chce:in co.chci:in co.cdna:in co.hce0:in
-!                co.hci0:in co.hcn0:in co.dpa0:in co.dna0:in pld.na:in
-!                pld.ua:in pld.po:in pld.te:in pld.ti:in pld.kt:in
-!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
-!                pl.kt:in pl.zt:in psncd.na:in psncd.ne:in psncd.ni:in
-!                psncd.kinrgy:in
+!                srwd.shn0:in srwd.skt0:in srwd.szt0:in srwd.smo0:in
+!                srwd.sna0:in psnc.na:in psnc.ne:in psnc.ni:in
+!                psnc.fna:in psnc.kinrgy:in dv.fch:in dv.fch_p:in
+!                dv.fchdia:in dv.fchin:in dv.fchvispar:in dv.fchvisper:in
+!                dv.fchvisq:in dv.fchinert:in dv.fchviskt:in dv.fna:in
+!                dv.fna_mdf:in dv.fna_52:in dv.fna_32:in dv.fna_nodrift:in
+!                dv.fna_he:in dv.fnapsch:in dv.fna_fcor:in dv.fna_eir:in
+!                dv.fhe:in dv.fhepsch:in dv.fhi:in dv.fhipsch:in
+!                dv.fhm:in dv.fkt:in dv.kinrgy:in dv.ne:in dv.ni:in
+!                dv.nn:in dv.vadia:in dv.vaecrb:in dv.vedia:in
+!                dv.veecrb:in dv.facdrift:in psnl.na:in psnl.ne:in
+!                psnl.ni:in psnl.fna:in psnl.kinrgy:in geo.cvbb:in
+!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.fcpbshz:in geo.vxvol:in geo.vxonedbsq:in st_ext.am:in
+!                st_ext.na:in st_ext.ta:in rtd.rza:in rt.rza:in
+!                dvd.fch:in dvd.fch_p:in dvd.fchdia:in dvd.fchin:in
+!                dvd.fchvispar:in dvd.fchvisper:in dvd.fchvisq:in
+!                dvd.fchinert:in dvd.fchviskt:in dvd.fna:in dvd.fna_mdf:in
+!                dvd.fna_32:in dvd.fna_he:in dvd.fnapsch:in dvd.fna_fcor:in
+!                dvd.fna_eir:in dvd.fhe:in dvd.fhepsch:in dvd.fhi:in
+!                dvd.fhipsch:in dvd.fhm:in dvd.fkt:in dvd.kinrgy:in
+!                dvd.ne:in dvd.ni:in dvd.vadia:in dvd.vaecrb:in
+!                dvd.vedia:in dvd.veecrb:in srw.sch0:in srw.she0:in
+!                srw.shi0:in srw.sne0:in srw.shn0:in srw.skt0:in
+!                srw.szt0:in srw.smo0:in srw.sna0:in srw.b2stbc_sch:in
+!                srw.b2stbc_she:in srw.b2stbc_shi:in srw.b2stbc_sne:in
+!                srw.b2stbc_shn:in srw.b2stbc_skt:in srw.b2stbc_szt:in
+!                srw.b2stbc_smo:in srw.b2stbc_sna:in psnld.na:in
+!                psnld.ne:in psnld.ni:in psnld.kinrgy:in cod.chce:in
+!                cod.chci:in cod.cdna:in cod.hce0:in cod.hci0:in
+!                cod.hcn0:in cod.dpa0:in cod.dna0:in co.chce:in
+!                co.chci:in co.cdna:in co.hce0:in co.hci0:in co.hcn0:in
+!                co.dpa0:in co.dna0:in pld.na:in pld.ua:in pld.po:in
+!                pld.te:in pld.ti:in pld.kt:in pld.zt:in pl.na:in
+!                pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in pl.kt:in
+!                pl.zt:in psncd.na:in psncd.ne:in psncd.ni:in psncd.kinrgy:in
 !        Generated by TAPENADE     (INRIA, Ecuador team)
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
@@ -106,7 +107,8 @@
 !                *(dv.fna_fcor) *(dv.fna_eir) *(dv.kinrgy) *(dv.ne)
 !                *(psnl.na) *(psnl.ne) *(psnl.ni) *(psnl.kinrgy)
 !                *(srw.sch0) *(srw.she0) *(srw.shi0) *(srw.shn0)
-!                *(srw.skt0) *(srw.smo0) *(srw.sna0) *(pl.na)
+!                *(srw.skt0) *(srw.szt0) *(srw.smo0) *(srw.sna0)
+!                *(pl.na)
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar userfluxparm fb_target fb_prev fb_current
 !                fb_const charge_frac saved_fb_actuator fb_rescale
@@ -120,11 +122,11 @@
 !                *(dv.ne) *(dv.ni) *(dv.vadia) *(dv.vaecrb) *(dv.vedia)
 !                *(dv.veecrb) *(psnl.na) *(psnl.ne) *(psnl.ni)
 !                *(psnl.kinrgy) *(rt.rza) *(srw.sch0) *(srw.she0)
-!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.smo0)
-!                *(srw.sna0) switch.b2tfhi_fflokt *(co.chce) *(co.chci)
-!                *(co.cdna) *(co.hce0) *(co.hci0) *(co.hcn0) *(co.dpa0)
-!                *(co.dna0) *(pl.na) *(pl.ua) *(pl.po) *(pl.te)
-!                *(pl.ti) *(pl.kt)
+!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.szt0)
+!                *(srw.smo0) *(srw.sna0) switch.b2tfhi_fflokt switch.b2tfhi_fflozt
+!                *(co.chce) *(co.chci) *(co.cdna) *(co.hce0) *(co.hci0)
+!                *(co.hcn0) *(co.dpa0) *(co.dna0) *(pl.na) *(pl.ua)
+!                *(pl.po) *(pl.te) *(pl.ti) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: psnc.na:in psnc.ne:in psnc.ni:in
 !                psnc.fna:in psnc.kinrgy:in dv.fch:in dv.fch_p:in
 !                dv.fchdia:in dv.fchin:in dv.fchvispar:in dv.fchvisper:in
@@ -286,19 +288,20 @@ SUBROUTINE B2STBC_DV_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd3
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd4
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd5
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dummyzerodiffd6
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: &
-& dummyzerodiffd6d
+  REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd6
   REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dummyzerodiffd7
   REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: &
 & dummyzerodiffd7d
   REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dummyzerodiffd8
   REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: &
 & dummyzerodiffd8d
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dummyzerodiffd9
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax, ncv) :: &
+& dummyzerodiffd9d
   INTEGER :: nbdirs
-  REAL(kind=r8), DIMENSION(nbdirsmax0, nCv) :: dummyzerodiffd9
   REAL(kind=r8), DIMENSION(nbdirsmax0, nCv) :: dummyzerodiffd10
   REAL(kind=r8), DIMENSION(nbdirsmax0, nCv) :: dummyzerodiffd11
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nCv) :: dummyzerodiffd12
   INTEGER :: nbdirs0
 !   ..initialisation
 !-----------------------------------------------------------------------
@@ -419,38 +422,42 @@ SUBROUTINE B2STBC_DV_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd5, srw%skt0, srwd0%skt0, &
 &            srwd%skt0, srwdd%skt0, 1, nbdirs, nbdirs0)
   arg1 = ncv*4
-  CALL SFILL_NODIFF_NODIFF(arg1, 0.0_R8, srw%szt0, 1)
+  DO nd=1,nbdirsmax
+    dummyzerodiffd6(nd) = 0.d0
+  END DO
+  CALL SFILL_DV_DV(arg1, 0.0_R8, dummyzerodiffd6, srw%szt0, srwd0%szt0, &
+&            srwd%szt0, srwdd%szt0, 1, nbdirs, nbdirs0)
 !
 ! ..compute standard form volume sources
 !   (This code placed here for want of a better location)
 !   ..low-level particle source
   DO is=0,ns-1
     DO nd=1,nbdirsmax
-      dummyzerodiffd6(nd, :) = 0.d0
+      dummyzerodiffd7(nd, :) = 0.d0
     END DO
-    dummyzerodiffd6d(:, :, :) = 0.0_8
-    dummyzerodiffd9(:, :) = 0.0_8
-    CALL B2SAXPY_DV_DV(ncv, switch%sna0ep, geo%cvvol, dummyzerodiffd9, &
-&                dummyzerodiffd6, dummyzerodiffd6d, 1, srw%sna0(1, 0, is&
+    dummyzerodiffd7d(:, :, :) = 0.0_8
+    dummyzerodiffd10(:, :) = 0.0_8
+    CALL B2SAXPY_DV_DV(ncv, switch%sna0ep, geo%cvvol, dummyzerodiffd10, &
+&                dummyzerodiffd7, dummyzerodiffd7d, 1, srw%sna0(1, 0, is&
 &                ), srwd0%sna0(:, 1, 0, is), srwd%sna0(:, 1, 0, is), &
 &                srwdd%sna0(:, :, 1, 0, is), 1, nbdirs, nbdirs0)
   END DO
-  DO nd=1,nbdirsmax
-    dummyzerodiffd7(nd, :) = 0.d0
-  END DO
-  dummyzerodiffd7d(:, :, :) = 0.0_8
-  dummyzerodiffd10(:, :) = 0.0_8
-  CALL B2SAXPY_DV_DV(ncv, switch%she0ep, geo%cvvol, dummyzerodiffd10, &
-&              dummyzerodiffd7, dummyzerodiffd7d, 1, srw%she0(1, 0), &
-&              srwd0%she0(:, 1, 0), srwd%she0(:, 1, 0), srwdd%she0(:, :&
-&              , 1, 0), 1, nbdirs, nbdirs0)
   DO nd=1,nbdirsmax
     dummyzerodiffd8(nd, :) = 0.d0
   END DO
   dummyzerodiffd8d(:, :, :) = 0.0_8
   dummyzerodiffd11(:, :) = 0.0_8
-  CALL B2SAXPY_DV_DV(ncv, switch%shi0ep, geo%cvvol, dummyzerodiffd11, &
-&              dummyzerodiffd8, dummyzerodiffd8d, 1, srw%shi0(1, 0), &
+  CALL B2SAXPY_DV_DV(ncv, switch%she0ep, geo%cvvol, dummyzerodiffd11, &
+&              dummyzerodiffd8, dummyzerodiffd8d, 1, srw%she0(1, 0), &
+&              srwd0%she0(:, 1, 0), srwd%she0(:, 1, 0), srwdd%she0(:, :&
+&              , 1, 0), 1, nbdirs, nbdirs0)
+  DO nd=1,nbdirsmax
+    dummyzerodiffd9(nd, :) = 0.d0
+  END DO
+  dummyzerodiffd9d(:, :, :) = 0.0_8
+  dummyzerodiffd12(:, :) = 0.0_8
+  CALL B2SAXPY_DV_DV(ncv, switch%shi0ep, geo%cvvol, dummyzerodiffd12, &
+&              dummyzerodiffd9, dummyzerodiffd9d, 1, srw%shi0(1, 0), &
 &              srwd0%shi0(:, 1, 0), srwd%shi0(:, 1, 0), srwdd%shi0(:, :&
 &              , 1, 0), 1, nbdirs, nbdirs0)
 !
@@ -526,7 +533,8 @@ END SUBROUTINE B2STBC_DV_DV
 !                *(dv.fna_fcor) *(dv.fna_eir) *(dv.kinrgy) *(dv.ne)
 !                *(psnl.na) *(psnl.ne) *(psnl.ni) *(psnl.kinrgy)
 !                *(srw.sch0) *(srw.she0) *(srw.shi0) *(srw.shn0)
-!                *(srw.skt0) *(srw.smo0) *(srw.sna0) *(pl.na)
+!                *(srw.skt0) *(srw.szt0) *(srw.smo0) *(srw.sna0)
+!                *(pl.na)
 !   with respect to varying inputs: enepar conpar enkpar potpar
 !                mompar enipar userfluxparm fb_target fb_prev fb_current
 !                fb_const charge_frac saved_fb_actuator fb_rescale
@@ -540,11 +548,11 @@ END SUBROUTINE B2STBC_DV_DV
 !                *(dv.ne) *(dv.ni) *(dv.vadia) *(dv.vaecrb) *(dv.vedia)
 !                *(dv.veecrb) *(psnl.na) *(psnl.ne) *(psnl.ni)
 !                *(psnl.kinrgy) *(rt.rza) *(srw.sch0) *(srw.she0)
-!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.smo0)
-!                *(srw.sna0) switch.b2tfhi_fflokt *(co.chce) *(co.chci)
-!                *(co.cdna) *(co.hce0) *(co.hci0) *(co.hcn0) *(co.dpa0)
-!                *(co.dna0) *(pl.na) *(pl.ua) *(pl.po) *(pl.te)
-!                *(pl.ti) *(pl.kt)
+!                *(srw.shi0) *(srw.shn0) *(srw.skt0) *(srw.szt0)
+!                *(srw.smo0) *(srw.sna0) switch.b2tfhi_fflokt switch.b2tfhi_fflozt
+!                *(co.chce) *(co.chci) *(co.cdna) *(co.hce0) *(co.hci0)
+!                *(co.hcn0) *(co.dpa0) *(co.dna0) *(pl.na) *(pl.ua)
+!                *(pl.po) *(pl.te) *(pl.ti) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: psnc.na:in psnc.ne:in psnc.ni:in
 !                psnc.fna:in psnc.kinrgy:in dv.fch:in dv.fch_p:in
 !                dv.fchdia:in dv.fchin:in dv.fchvispar:in dv.fchvisper:in
@@ -682,9 +690,10 @@ SUBROUTINE B2STBC_DV_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd3
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd4
   REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd5
-  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dummyzerodiffd6
+  REAL(r8), DIMENSION(nbdirsmax) :: dummyzerodiffd6
   REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dummyzerodiffd7
   REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dummyzerodiffd8
+  REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: dummyzerodiffd9
   INTEGER :: nbdirs
 !   ..initialisation
 !-----------------------------------------------------------------------
@@ -805,28 +814,32 @@ SUBROUTINE B2STBC_DV_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   CALL SFILL_DV_NODIFF(arg1, 0.0_R8, dummyzerodiffd5, srw%skt0, srwd%&
 &                skt0, 1, nbdirs)
   arg1 = ncv*4
-  CALL SFILL_NODIFF_NODIFF(arg1, 0.0_R8, srw%szt0, 1)
+  DO nd=1,nbdirsmax
+    dummyzerodiffd6(nd) = 0.d0
+  END DO
+  CALL SFILL_DV_NODIFF(arg1, 0.0_R8, dummyzerodiffd6, srw%szt0, srwd%&
+&                szt0, 1, nbdirs)
 !
 ! ..compute standard form volume sources
 !   (This code placed here for want of a better location)
 !   ..low-level particle source
   DO is=0,ns-1
     DO nd=1,nbdirsmax
-      dummyzerodiffd6(nd, :) = 0.d0
+      dummyzerodiffd7(nd, :) = 0.d0
     END DO
     CALL B2SAXPY_DV_NODIFF(ncv, switch%sna0ep, geo%cvvol, &
-&                    dummyzerodiffd6, 1, srw%sna0(1, 0, is), srwd%sna0(:&
+&                    dummyzerodiffd7, 1, srw%sna0(1, 0, is), srwd%sna0(:&
 &                    , 1, 0, is), 1, nbdirs)
   END DO
   DO nd=1,nbdirsmax
-    dummyzerodiffd7(nd, :) = 0.d0
-  END DO
-  CALL B2SAXPY_DV_NODIFF(ncv, switch%she0ep, geo%cvvol, dummyzerodiffd7&
-&                  , 1, srw%she0(1, 0), srwd%she0(:, 1, 0), 1, nbdirs)
-  DO nd=1,nbdirsmax
     dummyzerodiffd8(nd, :) = 0.d0
   END DO
-  CALL B2SAXPY_DV_NODIFF(ncv, switch%shi0ep, geo%cvvol, dummyzerodiffd8&
+  CALL B2SAXPY_DV_NODIFF(ncv, switch%she0ep, geo%cvvol, dummyzerodiffd8&
+&                  , 1, srw%she0(1, 0), srwd%she0(:, 1, 0), 1, nbdirs)
+  DO nd=1,nbdirsmax
+    dummyzerodiffd9(nd, :) = 0.d0
+  END DO
+  CALL B2SAXPY_DV_NODIFF(ncv, switch%shi0ep, geo%cvvol, dummyzerodiffd9&
 &                  , 1, srw%shi0(1, 0), srwd%shi0(:, 1, 0), 1, nbdirs)
 !
   IF (switch%b2stbc_boundary_namelist .GE. 1) THEN

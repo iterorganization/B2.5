@@ -2,9 +2,9 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2shdt in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: shidt shndt sktdt shedt
-!   with respect to varying inputs: shidt shndt ne ni tep nn nap
-!                ktp tip sktdt kinrgyp shedt tnp
+!   variations   of useful results: shidt shndt sztdt sktdt shedt
+!   with respect to varying inputs: shidt shndt sztdt ne ni tep
+!                nn nap ktp tip sktdt kinrgyp ztp shedt tnp
 !
 !
 !
@@ -20,9 +20,9 @@
 !.specification
 !
 SUBROUTINE B2SHDT_DV(ncv, nci, ns, dtim, cvvol, nap, napd, tep, tepd, &
-& tip, tipd, tnp, tnpd, ktp, ktpd, ztp, ne, ned, ni, nid, nn, nnd, &
-& kinrgyp, kinrgypd, switch, mpg, shedt, shedtd, shidt, shidtd, shndt, &
-& shndtd, sktdt, sktdtd, sztdt, nbdirs)
+& tip, tipd, tnp, tnpd, ktp, ktpd, ztp, ztpd, ne, ned, ni, nid, nn, nnd&
+& , kinrgyp, kinrgypd, switch, mpg, shedt, shedtd, shidt, shidtd, shndt&
+& , shndtd, sktdt, sktdtd, sztdt, sztdtd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
@@ -51,14 +51,15 @@ SUBROUTINE B2SHDT_DV(ncv, nci, ns, dtim, cvvol, nap, napd, tep, tepd, &
 & ), tnp(ncv), ktp(ncv), ztp(ncv), ne(ncv), ni(ncv, 0:1), nn(ncv), &
 & kinrgyp(ncv, 0:ns-1)
   REAL(kind=r8) :: napd(nbdirsmax, ncv, 0:ns-1), tepd(nbdirsmax, ncv), &
-& tipd(nbdirsmax, ncv), tnpd(nbdirsmax, ncv), ktpd(nbdirsmax, ncv), ned(&
-& nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), nnd(nbdirsmax, ncv), &
-& kinrgypd(nbdirsmax, ncv, 0:ns-1)
+& tipd(nbdirsmax, ncv), tnpd(nbdirsmax, ncv), ktpd(nbdirsmax, ncv), ztpd&
+& (nbdirsmax, ncv), ned(nbdirsmax, ncv), nid(nbdirsmax, ncv, 0:1), nnd(&
+& nbdirsmax, ncv), kinrgypd(nbdirsmax, ncv, 0:ns-1)
 !   ..input/output arguments
   REAL(kind=r8) :: shedt(ncv, 0:3), shidt(ncv, 0:3), shndt(ncv, 0:3), &
 & sktdt(ncv, 0:3), sztdt(ncv, 0:3)
   REAL(kind=r8) :: shedtd(nbdirsmax, ncv, 0:3), shidtd(nbdirsmax, ncv, 0&
-& :3), shndtd(nbdirsmax, ncv, 0:3), sktdtd(nbdirsmax, ncv, 0:3)
+& :3), shndtd(nbdirsmax, ncv, 0:3), sktdtd(nbdirsmax, ncv, 0:3), sztdtd(&
+& nbdirsmax, ncv, 0:3)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -238,6 +239,13 @@ SUBROUTINE B2SHDT_DV(ncv, nci, ns, dtim, cvvol, nap, napd, tep, tepd, &
     DO icv=1,nci
       ttim = dtim*time_factor(icv)
       t0 = switch%b2srdt_phm3/ttim*cvvol(icv)
+      DO nd=1,nbdirs
+        sztdtd(nd, icv, 0) = t0*1.5_R8*(ztp(icv)*nid(nd, icv, 1)+ni(icv&
+&         , 1)*ztpd(nd, icv))
+        sztdtd(nd, icv, 1) = 0.D0
+        sztdtd(nd, icv, 2) = 0.D0
+        sztdtd(nd, icv, 3) = 0.D0
+      END DO
       sztdt(icv, 0) = 1.5_R8*t0*ni(icv, 1)*ztp(icv)
       sztdt(icv, 1) = 0.0_R8
       sztdt(icv, 2) = 0.0_R8

@@ -45,7 +45,7 @@ SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !
 !   ..input arguments (unchanged on exit)
 !lkw 20.06.2022
-  INTEGER :: ncv, nfc, nvx, ns, ifc
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
@@ -75,7 +75,7 @@ SUBROUTINE B2TVSPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !   ..global named constants
 !
 !   ..local variables
-  INTEGER :: is
+  INTEGER :: is, ifc
   REAL(kind=r8) :: dvpar(nfc), wrk(ncv), wrk0(nfc), wrk1(nfc), wrkvx(nvx&
 & ), gonedbsq(nfc, 0:1)
   REAL(kind=r8) :: dvpard(nbdirsmax, nfc), wrkd(nbdirsmax, ncv), wrk1d(&
@@ -224,7 +224,7 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
 !
 !   ..input arguments (unchanged on exit)
 !lkw 20.06.2022
-  INTEGER :: ncv, nfc, nvx, ns, ifc
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -249,7 +249,7 @@ SUBROUTINE B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ua, &
 !   ..global named constants
 !
 !   ..local variables
-  INTEGER :: is
+  INTEGER :: is, ifc
   REAL(kind=r8) :: dvpar(nfc), wrk(ncv), wrk0(nfc), wrk1(nfc), wrkvx(nvx&
 & ), gonedbsq(nfc, 0:1)
 !   ..procedures
