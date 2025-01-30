@@ -519,7 +519,6 @@ c         and from x-point to targets
             end if
             iCn=iCv
             iCb=iCv
-            iCp=0
             lcnnt(iy,itrg(j))=0.0_R8
             lcnnx(iy,itrg(j))=0.0_R8
             do while (.not.(iCx.ne.0.and.iCm.ne.0))

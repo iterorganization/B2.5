@@ -110,4 +110,3 @@
 *.end b2txvspr
 
       end subroutine b2txvspr                                            !srv 10.10.17
-

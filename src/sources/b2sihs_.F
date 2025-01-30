@@ -3,11 +3,10 @@
 
       subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ni, nn,
-     &  fna_fcor, fne, fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c,
+     &  fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c,
      &  rza, rz2, st_ext, she0, shi0, shn0, srw)
       use b2mod_types
       use b2mod_tallies
-!      use b2mod_anomalous_transport
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
@@ -49,7 +48,7 @@
      &  lnlam(nCv), f_luc_sg(nFc), alfx_c(nCv), sigx_c(nCv),
      &  nn(nCv)
       real (kind=R8) ::
-     *  fna_fcor(nFc,0:1,0:ns-1), fne(nFc,0:1), fch(nFc,0:1),
+     *  fch(nFc,0:1),
      *  cvsa(nFc,0:1,0:ns-1), cvsahz_eff(nFc,0:1,0:ns-1),
      *  rza(nCv,0:ns-1), rz2(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
@@ -359,8 +358,8 @@
         if (switch%style_visc.eq.0) then
          call diff(nCv, nFc, nVx, 0, geo, mpg, ua(:,is), wrkv, wrkf)
          wrkf = cvsa(:,:,is)/(geo%fcQalf+eps)*wrkf**2
-         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(:,0),visc(:,0))
-         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(:,1),visc(:,1))
+         call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf(:,0), visc(:,0))
+         call intcell(nFc, nCv, mpg, mpg%intcellR, wrkf(:,1), visc(:,1))
         else
          !wdk use effective viscous momentum terms from the hybrid scheme
          !wdk avoids excessive heating in convection-dominated regions
@@ -369,8 +368,8 @@
          wrkf = cvsahz_eff(:,:,is)/(geo%fcQalf+eps)*wrkf**2
          wrkf(:,0) = wrkf(:,0)/geo%fcHz
          wrkf(:,1) = wrkf(:,1)/geo%fcHz
-         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(:,0),visc(:,0))
-         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(:,1),visc(:,1))
+         call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf(:,0), visc(:,0))
+         call intcell(nFc, nCv, mpg, mpg%intcellR, wrkf(:,1), visc(:,1))
         endif
         do iCv = 1, mpg%nCi
           t0 = switch%b2sihs_phm2*(1.0_R8-switch%BoRiS)*visc(iCv,0)
@@ -536,14 +535,14 @@
      &    ((geo%fcS(iFc)*geo%fcQalf(iFc,0) + eps)*
      &     (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))))
        enddo
-       call intcell(nFc,nCv,mpg, mpg%intcellP, wrkf(:,0),wrkc)
+       call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf(:,0), wrkc)
        if (switch%istyle_Joule_heating.eq.0) then
         do iFc = 1, nFc
           wrkf(iFc,1) = fch(iFc,1)*ehy(iFc)/
      &     ((geo%fcS(iFc)*geo%fcQalf(iFc,1) + eps)*
      &      (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))))
         enddo
-        call intcell(nFc,nCv,mpg, mpg%intcellR, wrkf(:,1),wrkc1)
+        call intcell(nFc, nCv, mpg, mpg%intcellR, wrkf(:,1), wrkc1)
         wrkc = wrkc + wrkc1
        endif
        do iCv = 1, mpg%nCi

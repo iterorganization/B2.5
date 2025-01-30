@@ -757,7 +757,7 @@ SUBROUTINE B2TQNA_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
     CALL PUSHREAL8ARRAY(dpa0, r8*ncv*ns/8)
     CALL PUSHREAL8ARRAY(dna0, r8*ncv*ns/8)
     CALL PUSHREAL8ARRAY(hcib, r8*ncv*ns/8)
-    CALL TRANSPORT_INPUT(ncv, nfc, ns, geo, mpg, pl, dv, rt, hcib, dna0&
+    CALL TRANSPORT_INPUT(ncv, ns, geo, mpg, pl, dv, rt, hcib, dna0&
 &                  , dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, &
 &                  ncall_b2tqna)
 !     ..recompute hci0, hcn0
@@ -2081,7 +2081,7 @@ SUBROUTINE B2TQNA_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   END DO
 !
   IF (switch%b2tqna_transport_inputfile .EQ. 1) THEN
-    CALL TRANSPORT_INPUT(ncv, nfc, ns, geo, mpg, pl, dv, rt, hcib, dna0&
+    CALL TRANSPORT_INPUT(ncv, ns, geo, mpg, pl, dv, rt, hcib, dna0&
 &                  , dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, &
 &                  ncall_b2tqna)
 !     ..recompute hci0, hcn0

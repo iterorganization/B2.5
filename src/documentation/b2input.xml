@@ -257,6 +257,7 @@
 					Double-null        : jxa=(rightcut(1)+rightcut(2))/2, i.e. halfway between the two outer cuts.
 					Limiter geometry   : jxa=nx/2
 					Straight geometry  : jxa=nx/2
+					Superseded by the RZOMP definition from b2.user.parameters.
 				</description>
 			</switch>
 			<switch>
@@ -271,6 +272,7 @@
 					Double-null        : jxi=(leftcut(1)+leftcut(2))/2, i.e. halfway between the two inner cuts.
 					Limiter geometry   : jxi=nx/4
 					Straight geometry  : jxi=nx/4
+					Superseded by the RZIMP definition from b2.user.parameters.
 				</description>
 			</switch>
 			<switch>
@@ -1374,14 +1376,14 @@
 					The core boundaries are identified by the coreregno and coreregn2 switches (see Geometry section). These switches need to be manually adjusted for WG cases as now they indicate the boundary where the feedback is applied. For switches like b2stbc_xxxycore or private_gas\_puff the user has to specify in b2.feedback_control.parameters} where the feedback is calculated (see b2us.regions.parameters produced at conversion), while coreregno still indicates where it is applied. pfrregno and solregno lose meaning in kinetic cases if the actuator is the gas puff. Coreregn2 and pfrregno2 are not yet converted/used.
 					The other seven switches are density feedback switches: nesepm is the outer midplane separatrix electron density. (See rzomp switch in b2.user.parameters for setting of midplane position). This is controlled through particle input of main plasma species isfeedback through the core boundary (See Geometry section for the core boundary indices coreregno and coreregn2).
 					nesepm_sol is the outer midplane separatrix electron density, but this time controlled through a gas puff outside the SOL region. (See b2mwti_jxa switch in Geometry section for setting of midplane position). This is done through particle input of neutrals species isfeedback through the SOL North boundary (See Geometry section for the SOL North boundary index solregno). If nesepm_overshoot.gt.1.0, the gas puff is turned off when the midplane separatrix density reaches nesepm*nesepm_overshoot. Minimum and maximum values of the feedback gas puff can be set using b2stbc_nesepm_minpuff and b2stbc_nesepm_maxpuff. It will apply fb_type=3, fb_rescale=1, fb_actuator=1 on region defined by solregno.
-					nepedm_sol is similar to nesepm_sol but the feedback is exerted on the electron density at the top of the pedestal, along the outer midplane, at radial position b2stbc_iyped. It will apply fb_type=16, fb_rescale=1, fb_actuator=1 on region defined by solregno
+					nepedm_sol is similar to nesepm_sol but the feedback is exerted on the electron density at the top of the pedestal, along the outer midplane, at the icped-th ring (where icped=iyped+2) counting from the inner core boundary. It will apply fb_type=16, fb_rescale=1, fb_actuator=1 on region defined by solregno.
 					ndes_sol is the total particle content from the isonuclear sequence of species 'isfeedback' over the entire simulation domain. It is governed, like nesepm_sol, by nesepm_overshoot and nesepm_alpha and corresponds to a SOL boundary feedback. Will apply fb_type=14, fb_rescale=1, fb_actuator=1 on region defined by solregno. WARNING: in the structured code this switch was asking for BCCON=12, so density BC for fluid neutrals feedback but then it switches to gas  puff for kinetic neutrals. Now it is ONLY gaspuff.
 					volrec_sol is the total particle source due to volume recombination coming from Eirene. Its feedback is governed by volrec_overshoot and volrec_alpha and volrec_beta parameters (See Numerics section for the latter two). Will apply fb_type=15, fb_rescale=1, fb_actuator=1 on region defined by pfrregno1. WARNING: not available yet for fluid neutrals.
 					nesepm_pfr is the outer midplane separatrix electron density, but this time controlled through a gas puff outside the PFR region. (See b2mwti_jxa switch in Geometry section for setting of midplane position). This is done through particle input of neutrals species isfeedback through the private flux boundaries (See Geometry section for the PFR South boundary indices pfrregno1 and pfrregno2). will apply fb_type=3, fb_rescale=1, fb_actuator=1 on region defined pfrregno1
 					ndes is the total particle (neutrals + ions) content of the species whose neutral species has index isfeedback. This is controlled through particle input of neutrals species isfeedback through the	private flux boundaries (See Geometry section for the private flux region boundary indices pfrregno1 and pfrregno2). will apply fb_type=14, fb_rescale=1, fb_actuator=1 on region defined by pfrregno1. WARNING: in the structured code this switch was asking for BCCON=12, so density BC for fluid neutrals feedback but then it switches to gas puff for kinetic neutrals. Now it is ONLY gas puff.
 					private_flux_puff NOT YET CONVERTED TO WG CODE! is the particle flow of species isfeedback through the private flux region boundary. This is controlled through particle input of neutrals species isfeedback through the private flux boundaries (See Geometry section for the private flux region boundary indices pfrregno1 and pfrregno2).
 					All but the first of these feedback schemes ("nesepm") can also be run though an Eirene neutral gas puff. In that case, one should set an appropriate gas puffing stratum in the Eirene input file input.dat, as well as in the b2.neutrals.parameters file. The code will assume, unless told otherwise through the use of "eirene_nesepm_istra", that the first stratum of type 'C' found in b2.neutrals.parameters is the stratum used for the feedback. If "eirene_nesepm_istra" is set to a positive number, the code will consider the feedback stratum to be the stratum in the "eirene_nesepm_istra"-th position in b2.neutrals.parameters.
-					b2stbc_iyped is the index in the OMP CV list (defined with rzomp in b2.user.parameters) of the pedestal cell (defaults to icsepomp/2)
+					b2stbc_iyped is the index in the OMP CV list (defined with RZOMP in b2.user.parameters) of the pedestal cell (defaults to icsepomp/2).
 				</description>
 				<switch>
 					<name>b2stbc_fheycore</name>
@@ -1864,43 +1866,10 @@
 					When set to '1', the electrical conductivity (sig) and the thermo-electric coefficient (alf) are not calculated in the guard cells that lie on open flux surfaces.
 				</description>
 			</switch>
-			<switch>
-				<name>b2tqna_ixref</name>
-				<default>See description (integer)</default>
-				<type>integer</type>
-				<description>
-					Poloidal index (on the basis mesh) of the reference surface for the flux-scaled transport model. The default value is the outer midplane, computed as such (see b2mwti_jxa in Geometry section or set_transport_ixref below):
-					Lower Single-null  : ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
-					Upper Single-null  : ixref=leftcut(1)+(rightcut(1)-leftcut(1))/4
-					Stellarator island : ixref=leftcut(1)+(rightcut(1)-leftcut(1))/2
-					Double-null        : ixref=(rightcut(1)+rightcut(2))/2
-					Limiter geometry   : ixref=nx/2
-					Straight geometry  : ixref=nx/2
-					The flux-scaled transport model is used in conjunction with scaling factors listed in column (7) of the transport coefficients description in input files b2ah.dat and b2mn.dat.
-				</description>
-			</switch>
 			<switchgroup>
 				<name>b2tqna_user_transport...</name>
 				<description>
-					The last switch is subservient to b2tqna_user_transport, and only used if user_transport.ne.0. When this is the case, the electron perpendicular heat diffusivity and anomalous perpendicular particle transport coefficient are scaled so as to maintain the required_te_gradient (in units of eV/m), at the location (ixref,iyref) on the basis mesh. The default position of the reference cell is on the outer midplane, sligthly inside the separatrix, as follows:
-					|Configuration|     ixref                    |     iyref
-					--------------+------------------------------+----------------------
-					|Single-null  | rightcut(1)-                 | 2*topcut(1)/3
-					| (lower)     | (rightcut(1)-leftcut(1))/4   |
-					|             |                              |
-					|Single-null  | leftcut(1)+                  | 2*topcut(1)/3
-					| (upper)     | (rightcut(1)-leftcut(1))/4   |
-					|             |                              |
-					|Stellarator  | leftcut(1)+                  | 2*topcut(1)/3
-					| island      | (rightcut(1)-leftcut(1))/2   |
-					|             |                              |
-					|Double-null  | (rightcut(1)+rightcut(2))/2  | 2*min(topcut(1),
-					|             |                              |       topcut(2))/3
-					|             |                              |
-					|Limiter      | nx/2                         | 2*topcut(1)/3
-					|             |                              |
-					|Straight     | nx/2                         | ny/2
-
+					The last switch is subservient to b2tqna_user_transport, and only used if user_transport.ne.0. When this is the case, the electron perpendicular heat diffusivity and anomalous perpendicular particle transport coefficient are scaled so as to maintain the required_te_gradient (in units of eV/m), at the iyref-th radial ring along the outer midplane. By default, this is the ring immediately inside the separatrix.
 					The transport_eta switches are activated when user_transport.eq.3 and allow modifications of the electron heat conductivity according to a constant eta (Grad Te / Grad Ne) model. See routine set_transport_eta code for details.
 					A model for disruption transport coefficients is available with user_transport.eq.7. See routine set_transport_disruption code for details. Not yet available for WG.
 					The value user_transport.eq.8 activates the neoclassical model for computation of the transport coefficients in the core. See routine set_transport_neo and subroutines called for details. Implemented from the NEOART package.
@@ -1929,11 +1898,6 @@
 					<name>set_transport_eta_ceiling</name>
 					<default>10.0</default>
 					<type>real</type>
-				</switch>
-				<switch>
-					<name>set_transport_ixref</name>
-					<default>See description (integer)</default>
-					<type>integer</type>
 				</switch>
 				<switch>
 					<name>set_transport_iyref</name>
@@ -2344,7 +2308,7 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '0' or '2', the code calls the standard b2stbc routine, which uses the particle flux with drift terms included in the expression of the electron particle flux (fne). When set to '1', the code calls the b2stbc_spb routine instead, which uses the particle flux without drift terms in fne. It is recommended '2'.
+					When set to '0' or '2', the code calls the standard b2stbc routine, which uses the particle flux with drift terms included in the expression of the electron particle flux (fne). Option '1' is obsolete. It is recommended '2'.
 				</description>
 			</switch>
 			<switchgroup>
@@ -4442,17 +4406,13 @@
 			<switchgroup>
 				<name>b2news_fac*</name>
 				<description>
-					Parameters for spatial variation of the diamagnetic, ExB and viscosity drift term multipliers. These are allowed to have tanh profiles centered at tanh_a and of width tanh_b, where both quantities are in metres and measured along the radial coordinate for the cell column ix.eq.fac_ref (default value is jxa, see Geometry section for its computation). The maximum value of facdrift and fac_ExB is controlled by their respective _start and _target switches, see Run section for details. NOTE: none of them have been converted to WG!
+					Parameters for spatial variation of the diamagnetic, ExB and viscosity drift term multipliers. These are allowed to have tanh profiles centered at tanh_a and of width tanh_b, where both quantities are in metres and measured along the outer midplane. The maximum value of facdrift and fac_ExB is controlled by their respective _start and _target switches, see Run section for details. NOTE: none of them have been converted to WG!
 					For consistency with the naming convention of related variables:
 					b2news_facExB_tanh_a is an alias for b2news_fac_ExB_tanh_a,
 					b2news_facExB_tanh_b is an alias for b2news_fac_ExB_tanh_b,
-					b2news_facvis_tanh_a is an alias for b2news_fac_vis_tanh_a, and b2news_facvis_tanh_b is an alias for b2news_fac_vis_tanh_b. Additionally, for all core cell rows where iy.le.iy_nocoreExB, fac_ExB(ix,iy) is set to zero. This means that ExB contributions and flows will be zeroed out in those cells.
-					For consistency with the boundary condition treatment, the value iy_nocoreExB.eq.-1 is NOT recommended!
+					b2news_facvis_tanh_a is an alias for b2news_fac_vis_tanh_a, and b2news_facvis_tanh_b is an alias for b2news_fac_vis_tanh_b. Additionally, for all deep core cell rings up to and including the iy_nocoreExB-th, fac_ExB(ix,iy) is set to zero. This means that ExB contributions and flows will be zeroed out in those cells.
+					For consistency with the boundary condition treatment, the value iy_nocoreExB.eq.1 is NOT recommended!
 				</description>
-				<switch>
-					<name>b2news_fac_ref</name>
-					<default>See description (integer)</default>
-				</switch>
 				<switch>
 					<name>b2news_facdrift_tanh_a</name>
 					<default>0.0</default>
@@ -4485,7 +4445,7 @@
 				</switch>
 				<switch>
 					<name>b2news_iy_nocoreExB</name>
-					<default>-2</default>
+					<default>0</default>
 					<type>integer</type>
 				</switch>
 			</switchgroup>
@@ -6911,7 +6871,7 @@
 				<default>.false.</default>
 				<type>logical</type>
 				<description>
-					If .true. will also call b2stbc_bas boundary condition routine after the end of the physics boundary condition routine (governed by the data from b2ah.dat and b2mn.dat).
+					Obsolete.
 				</description>
 			</switch>
 			<switch>

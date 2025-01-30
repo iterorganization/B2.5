@@ -6,7 +6,7 @@
      &  rcx, sna0, smq0, shi0, shn0, rcxna, rcxmo, rcxhi)
       use b2mod_types
       use b2mod_constants
-!      use b2mod_tallies
+      use b2mod_tallies
 !      use b2mod_sources
       use b2mod_b2cmpa
 #ifdef ASTRA
@@ -138,10 +138,10 @@ ctmp.dpc
      1       t0*na(iCv,is0)*na(iCv,is)
             rcxna(iCv,is0)=rcxna(iCv,is0)-
      1       t0*na(iCv,is0)*na(iCv,is)
-!WG_TODO            rcxnareg(mpg%cvReg(iCv),is)=
-!WG_TODO     1       rcxnareg(mpg%cvReg(iCv),is)+t0*na(iCv,is0)*na(iCv,is)
-!WG_TODO            rcxnareg(mpg%cvReg(iCv),is0)=
-!WG_TODO     1       rcxnareg(mpg%cvReg(iCv),is0)-t0*na(iCv,is0)*na(iCv,is)
+            rcxnareg(mpg%cvReg(iCv),is)=
+     1       rcxnareg(mpg%cvReg(iCv),is)+t0*na(iCv,is0)*na(iCv,is)
+            rcxnareg(mpg%cvReg(iCv),is0)=
+     1       rcxnareg(mpg%cvReg(iCv),is0)-t0*na(iCv,is0)*na(iCv,is)
            endif
          enddo
         endif
@@ -208,7 +208,7 @@ ctmp.dpc
              shn0(iCv,0) = shn0(iCv,0)+t1n
            endif
            rcxhi(iCv,is)=rcxhi(iCv,is)+t1
-!WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
+           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
           endif
         enddo
 *     ..parallel momentum source
@@ -296,10 +296,10 @@ ctmp.dpc
             endif
             rcxmo(iCv,is)=rcxmo(iCv,is)+t1*ua(iCv,is)
             rcxmo(iCv,is0)=rcxmo(iCv,is0)-t2*ua(iCv,is)
-!WG_TODO            rcxmoreg(mpg%cvReg(iCv),is)=
-!WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is)+t1*ua(iCv,is)
-!WG_TODO            rcxmoreg(mpg%cvReg(iCv),is0)=
-!WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is0)-t2*ua(iCv,is0)
+            rcxmoreg(mpg%cvReg(iCv),is)=
+     1       rcxmoreg(mpg%cvReg(iCv),is)+t1*ua(iCv,is)
+            rcxmoreg(mpg%cvReg(iCv),is0)=
+     1       rcxmoreg(mpg%cvReg(iCv),is0)-t2*ua(iCv,is0)
           endif
         enddo
        endif
