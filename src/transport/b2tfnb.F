@@ -90,8 +90,6 @@
      *   cddb(nFc,0:1), cdpb(nFc,0:1)
       real (kind=R8) :: weight(nFc,2)                                    !lk
       integer :: xcount
-c The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
-c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 *   ..procedures
       external xertst, ipgeti, ipgetr                                    !xpb
       external b2xvsg, intface, diff
@@ -122,9 +120,6 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
        call b2xvsg (nFc, wrk0, 1, 'cdpa0','.ge.')
        wrk1(:) = co%cdpa(:,1,isb)*geo%fcQalf(:,1)
        call b2xvsg (nFc, wrk1, 1, 'cdna1','.ge.')
-c The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
-c        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
-c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
       endif
 
       meth = switch%b2tfnb_discr_meth
@@ -1015,4 +1010,3 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
 *.end b2tfnb
 
       end subroutine b2tfnb
-

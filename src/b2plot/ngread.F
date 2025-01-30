@@ -748,14 +748,14 @@ cank
      &       (boundaryAssignments(mpg%fcReg(iFc),geometryType).eq.EAST)
      &       then
               ke = ke+1
-              if (nncut.eq.0) then
+              if (mpg%nncut.eq.0) then
                 if (target_west) then
                   ktns(i) = 2
                 else
                   ktns(i) = 1
                 end if
               else
-                ktns(i) = (3-ke)*nncut
+                ktns(i) = (3-ke)*mpg%nncut
               end if
             end if
           end do

@@ -492,4 +492,3 @@ c the logic statements below could be simplfied but for now we go for readabilit
 *.end b2trno
 
       end subroutine b2trno
-

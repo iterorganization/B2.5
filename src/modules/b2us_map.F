@@ -626,7 +626,7 @@ cwdk  can be derived directly from data in that file
 
 *   ..set up connectivity information for the matrix stencil
       allocate (m%cvNvP(m%nCv,2))
-      allocate (cvNvLoc(10*m%nCv)) ! initial overestimate of size cvNv array
+      allocate (cvNvLoc(20*m%nCv)) ! initial overestimate of size cvNv array
       allocate (indCv(100))        ! (over)estimate of max number number of neighbors an individual cell could have
 
       iNv = 1
@@ -1019,7 +1019,12 @@ cwdk  can be derived directly from data in that file
         deallocate(indFc)
        end if
       end if
-      deallocate(freg)
+      if (allocated(freg)) then
+        deallocate(freg)
+      else
+        write(*,*) 'Targetless topology detected :'
+        write(*,*) 'Strike point data not defined'
+      end if
 
       write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc
       write (*,*) 'nFsVxmx          ', m%nFsVxmx

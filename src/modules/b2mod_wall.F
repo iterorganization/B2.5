@@ -239,7 +239,7 @@ cxpb  Geometric information
       implicit none
       integer ns
 #ifdef WG_TODO
-      integer  natm, nmol, nion
+      integer natm, nmol, nion
 #endif
       external xertst
 

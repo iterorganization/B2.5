@@ -719,7 +719,7 @@ c*** Power loading:
 c*** Plasma and neutrals
 
 c            print *,'Starting target power. ntrgts=',ntrgts   !###
-            do j=1,2*max(1,nncut) !{ Do not use ntrgts here to allow for sign flips
+            do j=1,2*max(1,mpg%nncut) !{ Do not use ntrgts here to allow for sign flips
               if (itrg(j).gt.0) then !{
                 do iy=1,mpg%divFcP(itrg(j),2) !{
                   iFc = mpg%divFc(mpg%divFcP(itrg(j),1) + iy - 1)
@@ -908,7 +908,7 @@ c*** Particle fluxes and energies
             do is=1,n_sfpr_s !{
               i1=eb2spcr(is)+1
               i2=eb2spcr(is)+nfluids(is)
-              do j=1,2*max(1,nncut) !{ Do not use ntrgts here to allow for sign flips
+              do j=1,2*max(1,mpg%nncut) !{ Do not use ntrgts here to allow for sign flips
                 if (itrg(j).gt.0) then !{
 c!###{
 c                  print '(a,7i6)','is,j,i1,i2,k,ib=',
@@ -957,7 +957,7 @@ c              write(*,'(1p,12e10.2)') (wi(itrg(i)),i=1,ntrgts)
 
 c*** Atomic fluxes and energies
             do iatm=1,nclm_na !{
-              do j=1,2*max(1,nncut) !{ Do not use ntrgts here to allow for sign flips
+              do j=1,2*max(1,mpg%nncut) !{ Do not use ntrgts here to allow for sign flips
                 if (itrg(j).gt.0) then !{
                   if (ft44) then
 c!###{
@@ -1053,7 +1053,7 @@ c              write(*,'(1p,12e10.2)') (wwi(itrg(i)),i=1,ntrgts)
 
 c*** Molecules fluxes and energies
             do imol=1,nmoli !{
-              do j=1,2*max(1,nncut) !{ Do not use ntrgts here to allow for sign flips
+              do j=1,2*max(1,mpg%nncut) !{ Do not use ntrgts here to allow for sign flips
                 if (itrg(j).gt.0) then !{
                   if (ft44) then !{
                     do iy=1,mpg%divFcP(itrg(j),2) !{

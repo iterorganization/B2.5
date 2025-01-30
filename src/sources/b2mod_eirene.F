@@ -1,8 +1,5 @@
       module b2mod_eirene
       use b2mod_types
-      use b2mod_plasma
-      use b2mod_indirect
-      use b2mod_geo
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
@@ -10,12 +7,10 @@
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_tallies
-      use b2mod_indirect
       use b2mod_neutr_src_scaling
       use b2us_feedback
       use b2mod_diag
       use b2mod_time
-      use b2mod_rates
       use b2mod_trace
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -147,7 +142,7 @@
      * sna0(nCv,0:1,0:ns-1), smo0(nCv,0:3,0:ns-1),
      & she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3)
       logical main_call                                           !dpc
-      type (switches), intent (in) :: switch
+      type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (inout) :: mpg
       type (B2State), intent (inout) :: st
@@ -874,7 +869,7 @@ c          end if !}
         end if !}
       end do !}
 
-      write(hlp_frm,'(a,i2,a)') '(a,1p,',nstrat,'(1x,1e14.7))'
+      write(hlp_frm,'(a,i3,a)') '(a,1p,',nstrat,'(1x,1e14.7))'
       if(main_call.or.ncall.eq.0.or.output_style.gt.1) then !{
         write(*,hlp_frm) 'tflux: ',tflux
         write(*,hlp_frm) 'flux_scale: ',flux_scale
@@ -1211,7 +1206,7 @@ c*** Print the particle fluxes for each stratum and species
             end do !}
 
             do ic=1,nCv !{
-!WG_TODO              if(resignore(ix-1,iy-1,1).ne.0) then !{
+!WG_TODO              if(resignore(ic,1).ne.0) then !{
                 do is=0,ns-1 !{
                   if(.not.is_neutral(is).or.lneustra) then !{
                      hlp_s(b2eatcr(is))=hlp_s(b2eatcr(is))+
@@ -1377,7 +1372,7 @@ c!###}
                     endif
 #endif
                   end if !}
-!WG_TODO                  if(resignore(ix-1,iy-1,1).ne.0) then !{
+!WG_TODO                  if(resignore(ic,1).ne.0) then !{
                   hlp_s(ls)=hlp_s(ls)+
      .                   sni(ic,fluids_list(is),istrai)
 !WG_TODO                  end if !}
@@ -1650,7 +1645,7 @@ c*** Here only the second pass of correction
             end do !}
 
             do ic=1,nCv !{
-!WG_TODO              if(resignore(ix-1,iy-1,1).ne.0) then !{
+!WG_TODO              if(resignore(ic,1).ne.0) then !{
                 do is=0,ns-1 !{
                   if(.not.is_neutral(is).or.lneustra) then !{
                     ls=b2eatcr(is)
@@ -1965,7 +1960,7 @@ c*** Print the particle fluxes for each stratum and species
             end do !}
 
             do ic=1,nCv !{
-!WG_TODO              if(resignore(ix-1,iy-1,1).ne.0) then !{
+!WG_TODO              if(resignore(ic,1).ne.0) then !{
                 do is=0,ns-1 !{
                   if(.not.is_neutral(is)) then !{
                     hlp_s(b2eatcr(is))=hlp_s(b2eatcr(is))+
@@ -2515,7 +2510,7 @@ c***  sclbase : the plasma sources
                 recyctmp=recyc(is,istrai)
               endif
               do ic=1,nCv !{
-!WG_TODO                  if(resignore(ix-1,iy-1,1).ne.0) then !{
+!WG_TODO                  if(resignore(ic,1).ne.0) then !{
                 s=sni(ic,fluids_list(is),istrai)*tflux(istrai)*
      *               recyctmp*flux_scale(istrai)
                 if(crcstra(istrai).eq.'V' .and. s.lt.0.0_R8) then !{
@@ -4120,40 +4115,38 @@ c*** Evaluate the new volumetric sources cell by cell
 c*** Here, the calculation of t0 and s must be consistent with
 c*** SNIC and SNIV evaluation above
 
-        do iy=0,ny-1 !{
-          do ix=0,nx-1 !{
-            if(resignore(ix,iy,1).ne.0) then !{
-              do istrai=1, nstrat !{
-                do is=0,ns-1 !{
-                  if(use_recyceir.gt.0) then
-                    recyctmp=recyceir(istrai)
-                  else
-                    recyctmp=recyc(is,istrai)
-                  endif
-                  if(.not.is_neutral(is).or.lneustra) then !{
-                    j=b2eatcr(is)
-                    t0=sni(ic,fluids_list(is),istrai)*recyctmp*
-     *               tflux(istrai)*flux_scale(istrai)
-c                s=t0+rf0*abs(t0)*(1.0_R8-st%pl%na(ic,is)/na0(ic,is))
-                    if(t0.ge.0.0_R8) then !{
-                      s=t0
-                    else !}{
-                      s=t0*na(ix,iy,is)/na0(ix,iy,is)
-                    end if !}
-                    if(crcstra(istrai).eq.'V' .and. t0.lt.0.0_R8) then !{
-                      sclstra(j,istrai)=sclstra(j,istrai)-s
-c                  sclstra(0,istrai)=sclstra(0,istrai)-s
-                    else !}{
-                      sclrtio(j,istrai)=sclrtio(j,istrai)+
-     +                 s*sclalph(j,istrai)
-                      sclrtio(0,istrai)=sclrtio(0,istrai)+
-     +                 s*sclalph(j,istrai)
-                    end if !}
+        do ic=1,mpg%nCi !{
+!WG_TODO          if(resignore(ic,1).ne.0) then !{
+            do istrai=1, nstrat !{
+              do is=0,ns-1 !{
+                if(use_recyceir.gt.0) then
+                  recyctmp=recyceir(istrai)
+                else
+                  recyctmp=recyc(is,istrai)
+                endif
+                if(.not.is_neutral(is).or.lneustra) then !{
+                  j=b2eatcr(is)
+                  t0=sni(ic,fluids_list(is),istrai)*recyctmp*
+     *             tflux(istrai)*flux_scale(istrai)
+c                s=t0+rf0*abs(t0)*(1.0_R8-st%pl%na(ic,is)/st%psnl%na(ic,is))
+                  if(t0.ge.0.0_R8) then !{
+                    s=t0
+                  else !}{
+                    s=t0*st%pl%na(ic,is)/st%psnl*na(ic,is)
                   end if !}
-                end do !}
+                  if(crcstra(istrai).eq.'V' .and. t0.lt.0.0_R8) then !{
+                    sclstra(j,istrai)=sclstra(j,istrai)-s
+c                  sclstra(0,istrai)=sclstra(0,istrai)-s
+                  else !}{
+                    sclrtio(j,istrai)=sclrtio(j,istrai)+
+     +               s*sclalph(j,istrai)
+                    sclrtio(0,istrai)=sclrtio(0,istrai)+
+     +               s*sclalph(j,istrai)
+                  end if !}
+                end if !}
               end do !}
-            end if !}
-          end do !}
+            end do !}
+!WG_TODO          end if !}
         end do !}
 
 c*** Calculate the new neutral sources for each stratum. Only the
@@ -4161,7 +4154,7 @@ c*** surface sources should be counted here - the volumetric
 c*** recombination is already evaluated above.
 
         hlp_pff=.true.
-        do istrai=1, nstrat !{
+        do istrai=1,nstrat !{
           do is=0,ns-1 !{
             if(.not.is_neutral(is).or.lneustra) then !{
               j=b2eatcr(is)
@@ -4171,39 +4164,11 @@ c*** recombination is already evaluated above.
                 recyctmp=recyc(is,istrai)
               endif
               hlp_st=0.0_R8
-              if(crcstra(istrai).eq.'W') then !{
-                do iy=1,rc_list_size(istrai) !{
-                  hlp_st=hlp_st-
-     .   fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
-     .       rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,0,is)-
-     .   fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
-     .       rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,1,is)
-                end do !}
-              else if(crcstra(istrai).eq.'E') then !}{
-                do iy=1,rc_list_size(istrai) !{
-                  hlp_st=hlp_st+
-     .            fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,0,is)+
-     .            fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,1,is)
-                end do !}
-              else if(crcstra(istrai).eq.'N') then !}{
-                do ix=1,rc_list_size(istrai) !{
-                  hlp_st=hlp_st+
-     .                 fna(rc_list_x(ix,istrai),
-     .                     rc_list_y(ix,istrai),1,0,is)+
-     .                 fna(rc_list_x(ix,istrai),
-     .                     rc_list_y(ix,istrai),1,1,is)
-                end do !}
-              else if(crcstra(istrai).eq.'S') then !}{
-                do ix=1,rc_list_size(istrai) !{
-                  hlp_st=hlp_st-
-     .                 fna(topix(rc_list_x(ix,istrai),
-     .                           rc_list_y(ix,istrai)),
-     .                     topiy(rc_list_x(ix,istrai),
-     .                           rc_list_y(ix,istrai)),1,0,is)-
-     .                 fna(topix(rc_list_x(ix,istrai),
-     .                           rc_list_y(ix,istrai)),
-     .                     topiy(rc_list_x(ix,istrai),
-     .                           rc_list_y(ix,istrai)),1,1,is)
+              if(crcstra(istrai).eq.'A') then !{
+                do iy=1,mpg%rcFcP(istrai,2) !{
+                  iFc=mpg%rcFc(mpg%rcFcP(istrai,1)+iy-1)
+                  hlp_st=hlp_st+mpg%rcFcOr(mpg%rcFcP(istrai,1)+iy-1)*
+     .             (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
                 end do !}
               else if(crcstra(istrai).eq.'C') then !}{
                 if(hlp_pff(j,istrai)) then !{

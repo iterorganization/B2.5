@@ -48,7 +48,7 @@
 *   ..local variables
       integer ncall
 #ifdef WG_TODO
-      integer iout, is, ix, iy, ib, iw, iout_iout_ASTRA           !srv 05.10.01 03.04.13 19.04.13
+      integer iout, is, ix, iy, ib, iw, iout_iout_ASTRA            !srv 05.10.01 03.04.13 19.04.13
       integer jsep, jxi, jxa, ndat, k, mintopcut, ixx,             !srv 12.07.10
      *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra
