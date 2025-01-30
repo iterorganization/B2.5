@@ -2,7 +2,6 @@
       subroutine iniilu_7(n1,n2)                                   !sv 11.01.00
       use b2mod_types
       use b2mod_ma28_for_7diag
-      use b2mod_indirect
       implicit none
       integer n1,n2
 
@@ -16,8 +15,8 @@
 
       subroutine iniilu_7_w(n_nonzeros,n1,n2,irn,ish,jsh,ijsh,icn,nc0)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_subsys
+      use b2mod_indirect
       implicit none
 c here: counting of indices from 1 to nx+2 and from 1 to ny+2
 c main code : indices from -1 to nx and from -1 to ny

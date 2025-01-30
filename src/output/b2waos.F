@@ -813,4 +813,3 @@ C 202 FORMAT (6X,'|')
 CC201 FORMAT (/,' IX =',34I4,/,' IY',/)
 C
       END SUBROUTINE IPRI
-
