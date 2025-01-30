@@ -138,6 +138,8 @@ csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
 c*** Particle balance in old style by Andrei Kukushkin
       if(filedata(ntrc_bln)) call b2blnc(ns,geo,mpg,st,switch,dtim)
       if(filedata(ntrc_srt)) call b2wrsrt(ns,geo,mpg,st)
+c*** Parallel momentum balance
+      if(filedata(ntrc_blm)) call b2blnm(mpg,geo,ns,st,st_ext)
 c*** Additional integrals
       if(filedata(ntrc_int)) call b2wrint(mpg,geo,st,st_ext,ns)
 c*** Separatrix data
@@ -145,8 +147,6 @@ c*** Separatrix data
 #ifdef WG_TODO
 c*** Power balance
       if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,switch%BoRiS)
-c*** Parallel momentum balance
-      if(filedata(ntrc_blm)) call b2blnm(mpg,geo,ns,st,st_ext)
 c*** User-specific data
       if(filedata(ntrc_usr))
      . call b2usrtrc(nx,ny,ns,nxtl,nxtr,switch%BoRiS)
@@ -168,12 +168,12 @@ c*** Initialisation call
 c*** Initialise tracing routines
       if(ank_tracing.eq.0) return
       if(filedata(ntrc_bln)) call b2blnci(switch)
+      if(filedata(ntrc_blm)) call b2blnmi(switch)
       if(filedata(ntrc_srt)) call b2wrsrti(mpg%nnreg(0),switch)
       if(filedata(ntrc_int)) call b2wrinti(mpg%nnreg(0),switch)
       if(filedata(ntrc_sep)) call b2wrsepi(mpg,geo,ns,switch)
 #ifdef WG_TODO
       if(filedata(ntrc_ble)) call b2blnei(ny,switch)
-      if(filedata(ntrc_blm)) call b2blnmi(switch)
       if(filedata(ntrc_usr)) call b2usrtri(nx,ny,ns,switch)
 #endif
       tracing_initialised = .true.

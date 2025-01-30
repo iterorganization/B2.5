@@ -101,7 +101,7 @@ c
      ,            (equdiv(1,13), rlres)
 c----------------------------------------------------------------------
 c
-      integer i, j, ic, iCv, iFc
+      integer i, j, ic, it, iy, iCb, iCn, iCp, iCv, iCx, iFc, iFp, iFn
       real (kind=R8) ::
      *     hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf,
      *     pr(mpg%nCv)
@@ -138,26 +138,60 @@ c
         call b2xppz(mpg%nCv, ns,
      .   state%dv%ne, state%pl%na, state%pl%te, state%pl%ti, pr,
      .   state_ext)
-#ifdef WG_TODO
-        do iy = 0, ny-1
-          ix=leftcut(1)-1
-          do is=0,ns-1
-            if (.not.is_neutral(is)) then
-              hlp_fi=hlp_fi+
-     .         fmo(rightix(ix,iy),rightiy(ix,iy),0,0,is)
-            end if
+        do ic=1,2
+          if (ic.eq.1) then
+            it=1
+          else
+            it=maxval(mpg%strDiv)
+          end if
+          do iy = 1, mpg%divFcP(it,2)
+            iFc = mpg%divFc(mpg%divFcP(it,1)+iy-1)
+            iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            iCx = 0
+            iCn = iCv
+            iCb = iCv
+            do while (iCx.eq.0)
+              iCp = 0
+              do i = mpg%cvFcP(iCn,1),
+     .               mpg%cvFcP(iCn,1) + mpg%cvFcP(iCn,2) - 1
+                if (iCp.ne.0) cycle
+                iFn = mpg%cvFc(i)
+                if (mpg%fcFs(iFn).ne.0) cycle
+                if (mpg%fcCv(iFn,1).gt.mpg%nCi .or.
+     .              mpg%fcCv(iFn,2).gt.mpg%nCi) cycle
+                if (mpg%fcCv(iFn,1).eq.iCn .and. mpg%fcCv(iFn,2).ne.iCb)
+     >           then
+                  iCp = mpg%fcCv(iFn,2)
+                  iFp = iFn
+                end if
+                if (mpg%fcCv(iFn,2).eq.iCn .and. mpg%fcCv(iFn,1).ne.iCb)
+     >           then
+                  iCp = mpg%fcCv(iFn,1)
+                  iFp = iFn
+                end if
+              end do
+              iCb = iCn
+              iCn = iCp
+              if (mpg%cvReg(iCb).ne.mpg%cvReg(iCn)) then
+                iCx = iCn
+                do is=0,ns-1
+                  if (.not.is_neutral(is)) then
+                    if (ic.eq.1) then
+                      hlp_fi=hlp_fi+state%dv%fmo(iFp,0,is)
+                    else
+                      hlp_fo=hlp_fo+state%dv%fmo(iFp,0,is)
+                    end if
+                  end if
+                end do
+                if (ic.eq.1) then
+                  hlp_pi=hlp_pi+pr(iCx)*geo%fcS(iFp)*pitch(geo,iCx)
+                else
+                  hlp_po=hlp_po+pr(iCx)*geo%fcS(iFp)*pitch(geo,iCx)
+                end if
+              end if
+            end do
           end do
-          hlp_pi=hlp_pi+pr(ix,iy)*sx(ix,iy)*pit(ix,iy)
-          ix=rightcut(1)
-          do is=0,ns-1
-            if (.not.is_neutral(is)) then
-              hlp_fo=hlp_fo+fmo(ix,iy,0,0,is)
-             end if
-          end do
-          hlp_po=hlp_po+
-     .     pr(ix,iy)*sx(leftix(ix,iy),leftiy(ix,iy))*pit(ix,iy)
         end do
-#endif
         prsup(1)=hlp_pi
         prsup(2)=hlp_po
         flmup(1)=hlp_fi
@@ -197,7 +231,7 @@ c*** Volumetric sources
 c
         hlp_nu=0.0_R8
         hlp_mf=0.0_R8
-        do iCv=1,mpg%nCv
+        do iCv=1,mpg%nCi
           if (mpg%cvReg(iCv).eq.3) then
 !WG_TODO          if(resignore(iCv,1).ne.0) then
             hlp_mf=hlp_mf+pitch(geo,iCv)*pr(iCv)*geo%cvVol(iCv)
@@ -218,7 +252,7 @@ c
         prsmf(1)=hlp_mf
         hlp_nu=0.0_R8
         hlp_mf=0.0_R8
-        do iCv=1,mpg%nCv
+        do iCv=1,mpg%nCi
           if (mpg%cvReg(iCv).eq.mpg%nnreg(0)) then
 !WG_TODO            if(resignore(iCv,1).ne.0) then
             hlp_mf=hlp_mf+pitch(geo,iCv)*pr(iCv)*geo%cvVol(iCv)

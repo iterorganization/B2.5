@@ -528,7 +528,7 @@ c         and from x-point to targets
                 if (iCp.ne.0) cycle
                 iFn = mpg%cvFc(i)
                 if (mpg%fcFs(iFn).ne.0) cycle
-                if (mpg%fcCv(iFn,1).gt.mpg%nCi.or.
+                if (mpg%fcCv(iFn,1).gt.mpg%nCi .or.
      .              mpg%fcCv(iFn,2).gt.mpg%nCi) cycle
                 if (mpg%fcCv(iFn,1).eq.iCn .and. mpg%fcCv(iFn,2).ne.iCb)
      >           then
