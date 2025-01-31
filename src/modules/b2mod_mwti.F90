@@ -38,16 +38,7 @@ contains
                      nCv, nFc, ns, nncutmax, geo, mpg, switch, &
                      pl, dv, co, rt, srw, ext, &
                      ismain, ismain0, lwti, lwav, luav)
-!    use b2mod_geo
-!    use b2mod_plasma
-!    use b2mod_rates
-!    use b2mod_residuals
-!    use b2mod_sources
-!    use b2mod_transport
-!    use b2mod_anomalous_transport
     use b2mod_neutrals_namelist
-!    use b2mod_work
-!    use b2mod_indirect
     use b2mod_constants
 !    use b2mod_tallies
 !    use b2mod_wall
