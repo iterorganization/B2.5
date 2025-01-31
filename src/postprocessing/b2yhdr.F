@@ -6,7 +6,6 @@
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_subsys
       implicit none
@@ -93,67 +92,6 @@
 *     with charged species.
 *     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is) 
 *     are undefined.
-*
-*     /b2cmpb/ specifies physics parameters for boundary conditions.
-*     For this purpose the boundary is divided up into regions, and for
-*     each region a set of coefficients defines the local conditions.
-*     For detailed description of /b2cmpb/ see the code, especially the
-*     routine b2stbc.
-*      cbnrmx - integer constant.
-*     cbnrmx is an upper bound for the number of boundary regions nreg,
-*     (nreg.eq.cbnrso+cbnrno+cbnrwe+cbnrea) and is used in dimension
-*     specifications.
-*      cbirso, cbirno, cbirwe, cbirea - integer.
-*     cbirso(-no,-we,-ea) is the index of the first region on the
-*     south (north, west, east) boundary.
-*      cbnrso, cbnrno, cbnrwe, cbnrea - integer.
-*     cbnrso(-no,-we,-ea) is the number of regions on the south
-*     (north, west, east) boundary.
-*     It will hold that 1.le.cbnrso, 1.le.cbnrno, 1.le.cbnrwe, and
-*     1.le.cbnrea; and 0.eq.cbirso, cbirso+cbnrso.eq.cbirno,
-*     cbirno+cbnrno.eq.cbirwe, cbirwe+cbnrwe.eq.cbirea.
-*      cbrbrk - (0:cbnrmx-1) real*8 array.
-*     cbrbrk defines the boundaries between the boundary regions.
-*      cbsna - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbsna(0:7,is,ireg) specify standard form boundary conditions for
-*     the continuity equation for species (is) on the (ireg) boundary
-*     region.
-*      cbsmo - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbsmo(0:7,is,ireg) specify standard form boundary conditions for
-*     the parallel momentum balance equation for species (is) on the
-*     (ireg) boundary region.
-*      cbshi - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbshi(0:7,is,ireg) specify standard form boundary conditions for
-*     the contribution to that atom heat equation by species (is) on
-*     the (ireg) boundary region.
-*      cbshe - (0:7,0:cbnrmx-1) real*8 array.
-*     For 0.le.ireg.lt.nreg, the eight coefficients cbshe(0:7,ireg)
-*     specify standard form boundary conditions for the electron heat
-*     equation on the (ireg) boundary region.
-*      cbsch - (0:7,0:cbnrmx-1) real*8 array.
-*     For 0.le.ireg.lt.nreg, the eight coefficients cbsch(0:7,ireg)
-*     specify standard form boundary conditions for the electric
-*     potential equation on the (ireg) boundary region.
-*      cbrec - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbrec(0:7,is,ireg) specify the recycling process for species (is)
-*     on the boundary region ireg. The exact interpretation of these
-*     coefficients is defined by the routine that computes the source
-*     terms due to the recycling process (b2stbr). Routine b2stbr is
-*     problem dependent.
-*      cbmsa - (0:7,0:cbnrmx-1) real*8 array.
-*      cbmsc - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.ireg.lt.nreg, the eight coefficients cbmsa(0:7,ireg)
-*     specify miscellaneous processes on the boundary region ireg.
-*     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbmsc(0:7,is,ireg) specify miscellaneous processes for species
-*     (is) on the boundary region ireg. The interpretation of these
-*     coefficients is defined by the routine that computes the source
-*     terms due to miscellaneous processes (b2stbm). Routine b2stbm is
-*     application dependent.
 *
 *   ..transport coefficients, parameters
 *

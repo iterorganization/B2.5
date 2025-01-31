@@ -6,7 +6,6 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_external
 #ifdef USE_IMPGYRO
       use b2mod_impgyro

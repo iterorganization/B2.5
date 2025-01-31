@@ -141,10 +141,6 @@
 #endif
 *   ..procedures
       intrinsic abs, sqrt
-#ifdef WG_TODO
-      real (kind=R8) :: bcint
-      external bcint
-#endif
       real (kind=R8) ::
      *  sy, intvertex_s                                                 !srv 24.08.08
       external xertst, ipgeti, eseec0
@@ -10123,5 +10119,104 @@ cwdk    Todo: corrections for BCCON.ne.14
 
       return
       end function pit
+
+*-----------------------------------------------------------------------
+*.specification
+      function bcint(fun,nx,ny,il,ib)
+      use b2mod_types
+      use b2mod_geo
+      use b2mod_indirect
+      use b2mod_boundary_namelist
+      implicit none
+*   ..output result (undefined upon entry)
+      real (kind=R8) :: bcint
+*   ..input arguments (unchanged on exit)
+      integer nx, ny, il, ib
+      real (kind=R8) :: fun(-1:nx,-1:ny)
+
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     BCINT provides interpolated face-centred values for cell-centred
+*     quantities (array fun), for use in boundary conditions.
+*     The interpolation is done according to distance away from the
+*     cell face. The boundary index is ib, and the cell index along
+*     the boundary is il.
+*
+*
+*-----------------------------------------------------------------------
+*.declarations
+
+*   ..procedures
+      external xertst, xerrab
+
+*-----------------------------------------------------------------------
+*.computation
+
+* ..preliminaries
+*  ..test input parameters
+      call xertst (0.le.nx.and.0.le.ny, 'faulty parameter nx, ny')
+      call xertst (0.lt.ib.and.nbc.ge.ib, 'faulty parameter ib')
+      call xertst (1.le.il.and.bc_list_size(ib).ge.il,
+     .  'faulty parameter il')
+
+* ..main computation
+      if (bcchar(ib).eq.'S') then
+        bcint =
+     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
+     .    hy1(topix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        topiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
+     .    fun(topix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        topiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
+     .    hy1(bc_list_x(il,ib),bc_list_y(il,ib)))
+     .  /(hy1(bc_list_x(il,ib),bc_list_y(il,ib))+
+     .    hy1(topix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        topiy(bc_list_x(il,ib),bc_list_y(il,ib))))
+      elseif (bcchar(ib).eq.'N') then
+        bcint =
+     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
+     .    hy1(bottomix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        bottomiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
+     .    fun(bottomix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        bottomiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
+     .    hy1(bc_list_x(il,ib),bc_list_y(il,ib)))
+     .  /(hy1(bc_list_x(il,ib),bc_list_y(il,ib))+
+     .    hy1(bottomix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        bottomiy(bc_list_x(il,ib),bc_list_y(il,ib))))
+      elseif (bcchar(ib).eq.'E') then
+        bcint =
+     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
+     .    hx(leftix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .       leftiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
+     .    fun(leftix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        leftiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
+     .    hx(bc_list_x(il,ib),bc_list_y(il,ib)))
+     .  /(hx(bc_list_x(il,ib),bc_list_y(il,ib))+
+     .    hx(leftix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .       leftiy(bc_list_x(il,ib),bc_list_y(il,ib))))
+      elseif (bcchar(ib).eq.'W') then
+        bcint =
+     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
+     .    hx(rightix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .       rightiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
+     .    fun(rightix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        rightiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
+     .    hx(bc_list_x(il,ib),bc_list_y(il,ib)))
+     .  /(hx(bc_list_x(il,ib),bc_list_y(il,ib))+
+     .    hx(rightix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .       rightiy(bc_list_x(il,ib),bc_list_y(il,ib))))
+      else
+        call xerrab ('bcint : Unknown orientation!')
+      endif
+
+* ..return
+      return
+
+*-----------------------------------------------------------------------
+*.end bcint
+
+      end function bcint
 
       end subroutine b2stbc_phys

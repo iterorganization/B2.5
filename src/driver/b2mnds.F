@@ -7,9 +7,7 @@
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmfs
-      use b2mod_b2cmgs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_ipmain

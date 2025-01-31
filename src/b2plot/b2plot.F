@@ -35,7 +35,6 @@ c 2002-09-11: logic revised
       use b2mod_neoclassical
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_ranges
       use b2us_plasma
       use b2us_data

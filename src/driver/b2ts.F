@@ -4,7 +4,6 @@
       program b2ts
       use b2mod_types
       use b2mod_version
-      use b2mod_work
       use b2mod_xerset
       use b2us_map
       use b2us_geo
