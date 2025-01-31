@@ -3,7 +3,7 @@
 !
 !  Differentiation of calc_loglikelihood in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: lll
-!   with respect to varying inputs: sigma ff
+!   with respect to varying inputs: corr_length sigma mean ff
 !
 !
 !
@@ -15,19 +15,22 @@
 !
 !
 !
-SUBROUTINE CALC_LOGLIKELIHOOD_DV(nn, ff, ffd, yy, ss, lll, llld, isigma&
-& , nbdirs)
+SUBROUTINE CALC_LOGLIKELIHOOD_DV(nn, ff, ffd, xx, yy, ss, lll, llld, &
+& isigma, imean, icf, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_PAR_OPT_DIFFV, ONLY : sigma, sigmad, scale_sigma
+  USE B2MOD_PAR_OPT_DIFFV, ONLY : sigma, sigmad, scale_sigma, mean, &
+& meand, nmean, corr_model, corr_length, corr_lengthd, corr_cutoff
   USE B2MOD_CONSTANTS
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER, INTENT(IN) :: nn, isigma
+  INTEGER, INTENT(IN) :: nn, isigma, imean, icf
 !SOLPS results
   REAL(kind=r8), INTENT(IN) :: ff(nn)
   REAL(kind=r8), INTENT(IN) :: ffd(nbdirsmax, nn)
+!Spatial points
+  REAL(kind=r8), INTENT(IN) :: xx(nn)
 !Data
   REAL(kind=r8), INTENT(IN) :: yy(nn)
 !Standard deviation
@@ -35,23 +38,33 @@ SUBROUTINE CALC_LOGLIKELIHOOD_DV(nn, ff, ffd, yy, ss, lll, llld, isigma&
 !loglikelihood
   REAL(kind=r8), INTENT(INOUT) :: lll
   REAL(kind=r8), DIMENSION(nbdirsmax), INTENT(INOUT) :: llld
-  INTEGER :: ii
-  REAL(kind=r8) :: zz(nn), rr(nn), invc_z(nn)
+  INTEGER :: ii, jj, ind
+  REAL(kind=r8) :: zz(nn), rr(nn), invc_z(nn), cc(nn*(nn+1)/2), val, &
+& ldetc, uu(nn*(nn+1)/2)
   REAL(kind=r8) :: zzd(nbdirsmax, nn), rrd(nbdirsmax, nn), invc_zd(&
-& nbdirsmax, nn)
+& nbdirsmax, nn), ccd(nbdirsmax, nn*(nn+1)/2), vald(nbdirsmax), ldetcd(&
+& nbdirsmax)
   INTRINSIC SQRT, LOG
+  INTRINSIC ANY
   INTRINSIC SUM
-  REAL(r8) :: arg1
-  REAL(r8), DIMENSION(nn) :: arg2
-  REAL(r8), DIMENSION(nbdirsmax, nn) :: arg2d
+  INTRINSIC ABS
+  INTRINSIC EXP
+  EXTERNAL XERRAB
+  REAL(kind=r8) :: abs0
+  REAL(kind=r8), DIMENSION(nn) :: arg1
+  REAL(kind=r8), DIMENSION(nbdirsmax, nn) :: arg1d
+  REAL(kind=r8) :: arg10
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg10d
+  REAL(kind=r8) :: result1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: result1d
+  REAL(r8) :: arg11
   INTEGER :: nd
   REAL(kind=r8) :: temp
-  REAL(kind=r8), DIMENSION(nn) :: temp0
   INTEGER :: nbdirs
+!
 ! sc  Routine based on R. De Wolf et al 2021 Nucl. Fusion 61 046048
   CALL SUBINI('calc_loglikelihood')
-! sc  TO BE DONE: proper covariance matrix should be built here
-!     for the moment no correlation => only diagonal elements
+!
   IF (scale_sigma(isigma)) THEN
 ! diagonal elements
     DO nd=1,nbdirs
@@ -64,42 +77,131 @@ SUBROUTINE CALC_LOGLIKELIHOOD_DV(nn, ff, ffd, yy, ss, lll, llld, isigma&
     END DO
     rr = (sigma(isigma)+ss)**2
   END IF
-! FIXME in principle also -mu
+! FIXME add some lower threshold? 
+  CALL XERTST(ANY(rr .GT. 0.0_R8), &
+&       'calc_loglikelihood: zero or negative variances not allowed!')
   DO nd=1,nbdirs
     zzd(nd, :) = ffd(nd, :)
   END DO
   zz = ff - yy
-  DO nd=1,nbdirsmax
-    invc_zd(nd, :) = 0.D0
-  END DO
-!     solution of quadratic problem for DIAGONAL matrix
-! FIXME in principle invC_z = Cov\zz = SIGMA^-1*zz
-  DO ii=1,nn
-    temp = zz(ii)*zz(ii)/rr(ii)
+  IF (nmean .GT. 0) THEN
     DO nd=1,nbdirs
-      invc_zd(nd, ii) = (2*zz(ii)*zzd(nd, ii)-temp*rrd(nd, ii))/rr(ii)
+      zzd(nd, :) = zzd(nd, :) - meand(nd, imean)
     END DO
-    invc_z(ii) = temp
-  END DO
-!     rest = Z'*invCov_z
+    zz = zz - mean(imean)
+  END IF
+!
+!     solution of quadratic problem z'*C^-1*z
+  SELECT CASE  (corr_model(icf)) 
+  CASE (0) 
+    DO nd=1,nbdirsmax
+      invc_zd(nd, :) = 0.D0
+    END DO
+!
+! simple diagonal covariance matrix
+    DO ii=1,nn
+      temp = zz(ii)*zz(ii)/rr(ii)
+      DO nd=1,nbdirs
+        invc_zd(nd, ii) = (2*zz(ii)*zzd(nd, ii)-temp*rrd(nd, ii))/rr(ii)
+      END DO
+      invc_z(ii) = temp
+    END DO
+    DO nd=1,nbdirs
+      arg1d(nd, :) = rrd(nd, :)/rr
+      ldetcd(nd) = SUM(arg1d(nd, :))
+    END DO
+    arg1(:) = LOG(rr)
+    ldetc = SUM(arg1(:))
+  CASE (1) 
+!
+! we have a covariance matrix C
+! create covariance C packed columnwise in a linear array. 
+! The j-th column of C is stored in the array as follows
+! if UPLO = 'U', AP(i + (j-1)*j/2) = A(i,j) for 1<=i<=j;
+! Two-dimensional storage of the symmetric matrix A when N = 4, UPLO = 'U':
+!     a11 a12 a13 a14
+!         a22 a23 a24
+!             a33 a34     (aij = conjg(aji))
+!                 a44
+!  Packed storage of the upper triangle of A:
+!  AP = [ a11, a12, a22, a13, a23, a33, a14, a24, a34, a44 ]
+! start from the end and go backwards is easier
+    cc = 0.0_R8
+    ind = nn*(nn+1)/2
+    DO nd=1,nbdirsmax
+      ccd(nd, :) = 0.D0
+    END DO
+!main diagonal element
+    DO ii=nn,1,-1
+      DO nd=1,nbdirs
+        ccd(nd, ind) = rrd(nd, ii)
+      END DO
+      cc(ind) = rr(ii)
+! off diagonal elements
+      ind = ind - 1
+      DO jj=ii-1,1,-1
+        IF (xx(ii) - xx(jj) .GE. 0.) THEN
+          abs0 = xx(ii) - xx(jj)
+        ELSE
+          abs0 = -(xx(ii)-xx(jj))
+        END IF
+!corr length is in [mm]!
+        temp = 1.0e3_R8*abs0/corr_length(icf)
+        arg10 = -temp
+        DO nd=1,nbdirs
+          arg10d(nd) = temp*corr_lengthd(nd, icf)/corr_length(icf)
+          vald(nd) = EXP(arg10)*arg10d(nd)
+        END DO
+        val = EXP(arg10)
+        IF (val .LT. corr_cutoff) THEN
+          val = 0.0_R8
+          DO nd=1,nbdirsmax
+            vald(nd) = 0.D0
+          END DO
+        END IF
+        arg10 = rr(ii)*rr(jj)
+        temp = SQRT(arg10)
+        result1 = temp
+        DO nd=1,nbdirs
+          arg10d(nd) = rr(jj)*rrd(nd, ii) + rr(ii)*rrd(nd, jj)
+          IF (arg10 .EQ. 0.D0) THEN
+            result1d(nd) = 0.D0
+          ELSE
+            result1d(nd) = arg10d(nd)/(2.0*temp)
+          END IF
+          ccd(nd, ind) = result1*vald(nd) + val*result1d(nd)
+        END DO
+        cc(ind) = val*result1
+        ind = ind - 1
+      END DO
+    END DO
+! solve C*invC_z = zz and get log-determinant
+    CALL SOLVE_COVARIANCE_DV(nn, zz, zzd, cc, ccd, invc_z, invc_zd, &
+&                      ldetc, ldetcd, uu, icf, nbdirs)
+! multiply invC_z = z'*invC_z
+    DO nd=1,nbdirs
+      invc_zd(nd, :) = zz*invc_zd(nd, :) + invc_z*zzd(nd, :)
+    END DO
+    invc_z = invc_z*zz
+  CASE DEFAULT
+!
+    WRITE(*, *) 'icf, corr_model', icf, corr_model(icf)
+    CALL XERRAB('corr_model out of bounds')
+    DO nd=1,nbdirsmax
+      invc_zd(nd, :) = 0.D0
+    END DO
+    DO nd=1,nbdirsmax
+      ldetcd(nd) = 0.D0
+    END DO
+  END SELECT
+!
 !     Calculate log-likelihood
-! FIXME, should go away when real cholezky factorization is there
-  temp0 = SQRT(rr)
+  arg11 = 2.0_R8*pi
   DO nd=1,nbdirs
-    WHERE (rr .EQ. 0.D0) 
-      rrd(nd, :) = 0.D0
-    ELSEWHERE
-      rrd(nd, :) = rrd(nd, :)/(2.0*temp0)
-    END WHERE
+    llld(nd) = -(0.5_R8*(ldetcd(nd)+SUM(invc_zd(nd, :))))
   END DO
-  rr = temp0
-  arg1 = 2.0_R8*pi
-  DO nd=1,nbdirs
-    arg2d(nd, :) = 2.0_R8*rrd(nd, :)/rr
-    llld(nd) = -(0.5_R8*(SUM(arg2d(nd, :))+SUM(invc_zd(nd, :))))
-  END DO
-  arg2(:) = 2.0_R8*LOG(rr)
-  lll = -(0.5_R8*(nn*LOG(arg1)+SUM(arg2(:))+SUM(invc_z)))
+  lll = -(0.5_R8*(nn*LOG(arg11)+ldetc+SUM(invc_z)))
+!
   CALL SUBEND()
   RETURN
 END SUBROUTINE CALC_LOGLIKELIHOOD_DV
@@ -115,52 +217,117 @@ END SUBROUTINE CALC_LOGLIKELIHOOD_DV
 !
 !
 !
-SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, yy, ss, lll, isigma)
+SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF(nn, ff, xx, yy, ss, lll, isigma, &
+& imean, icf)
   USE B2MOD_TYPES
-  USE B2MOD_PAR_OPT_DIFFV, ONLY : sigma, scale_sigma
+  USE B2MOD_PAR_OPT_DIFFV, ONLY : sigma, scale_sigma, mean, nmean, &
+& corr_model, corr_length, corr_cutoff
   USE B2MOD_CONSTANTS
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-  INTEGER, INTENT(IN) :: nn, isigma
+  INTEGER, INTENT(IN) :: nn, isigma, imean, icf
 !SOLPS results
   REAL(kind=r8), INTENT(IN) :: ff(nn)
+!Spatial points
+  REAL(kind=r8), INTENT(IN) :: xx(nn)
 !Data
   REAL(kind=r8), INTENT(IN) :: yy(nn)
 !Standard deviation
   REAL(kind=r8), INTENT(IN) :: ss(nn)
 !loglikelihood
   REAL(kind=r8), INTENT(INOUT) :: lll
-  INTEGER :: ii
-  REAL(kind=r8) :: zz(nn), rr(nn), invc_z(nn)
+  INTEGER :: ii, jj, ind
+  REAL(kind=r8) :: zz(nn), rr(nn), invc_z(nn), cc(nn*(nn+1)/2), val, &
+& ldetc, uu(nn*(nn+1)/2)
   INTRINSIC SQRT, LOG
+  INTRINSIC ANY
   INTRINSIC SUM
-  REAL(r8) :: arg1
-  REAL(r8), DIMENSION(nn) :: arg2
+  INTRINSIC ABS
+  INTRINSIC EXP
+  EXTERNAL XERRAB
+  REAL(kind=r8) :: abs0
+  REAL(kind=r8), DIMENSION(nn) :: arg1
+  REAL(kind=r8) :: arg10
+  REAL(kind=r8) :: result1
+  REAL(r8) :: arg11
+!
 ! sc  Routine based on R. De Wolf et al 2021 Nucl. Fusion 61 046048
   CALL SUBINI('calc_loglikelihood')
-! sc  TO BE DONE: proper covariance matrix should be built here
-!     for the moment no correlation => only diagonal elements
+!
   IF (scale_sigma(isigma)) THEN
 ! diagonal elements
     rr = (yy*sigma(isigma)+ss)**2
   ELSE
     rr = (sigma(isigma)+ss)**2
   END IF
-! FIXME in principle also -mu
+! FIXME add some lower threshold? 
+  CALL XERTST(ANY(rr .GT. 0.0_R8), &
+&       'calc_loglikelihood: zero or negative variances not allowed!')
   zz = ff - yy
-!     solution of quadratic problem for DIAGONAL matrix
-! FIXME in principle invC_z = Cov\zz = SIGMA^-1*zz
-  DO ii=1,nn
-    invc_z(ii) = zz(ii)**2/rr(ii)
-  END DO
-!     rest = Z'*invCov_z
+  IF (nmean .GT. 0) zz = zz - mean(imean)
+!
+!     solution of quadratic problem z'*C^-1*z
+  SELECT CASE  (corr_model(icf)) 
+  CASE (0) 
+!
+! simple diagonal covariance matrix
+    DO ii=1,nn
+      invc_z(ii) = zz(ii)**2/rr(ii)
+    END DO
+    arg1(:) = LOG(rr)
+    ldetc = SUM(arg1(:))
+  CASE (1) 
+!
+! we have a covariance matrix C
+! create covariance C packed columnwise in a linear array. 
+! The j-th column of C is stored in the array as follows
+! if UPLO = 'U', AP(i + (j-1)*j/2) = A(i,j) for 1<=i<=j;
+! Two-dimensional storage of the symmetric matrix A when N = 4, UPLO = 'U':
+!     a11 a12 a13 a14
+!         a22 a23 a24
+!             a33 a34     (aij = conjg(aji))
+!                 a44
+!  Packed storage of the upper triangle of A:
+!  AP = [ a11, a12, a22, a13, a23, a33, a14, a24, a34, a44 ]
+! start from the end and go backwards is easier
+    cc = 0.0_R8
+    ind = nn*(nn+1)/2
+!main diagonal element
+    DO ii=nn,1,-1
+      cc(ind) = rr(ii)
+! off diagonal elements
+      ind = ind - 1
+      DO jj=ii-1,1,-1
+        IF (xx(ii) - xx(jj) .GE. 0.) THEN
+          abs0 = xx(ii) - xx(jj)
+        ELSE
+          abs0 = -(xx(ii)-xx(jj))
+        END IF
+!corr length is in [mm]!
+        arg10 = -(abs0/corr_length(icf)*1.0e3_R8)
+        val = EXP(arg10)
+        IF (val .LT. corr_cutoff) val = 0.0_R8
+        arg10 = rr(ii)*rr(jj)
+        result1 = SQRT(arg10)
+        cc(ind) = val*result1
+        ind = ind - 1
+      END DO
+    END DO
+! solve C*invC_z = zz and get log-determinant
+    CALL SOLVE_COVARIANCE(nn, zz, cc, invc_z, ldetc, uu, icf)
+! multiply invC_z = z'*invC_z
+    invc_z = invc_z*zz
+  CASE DEFAULT
+!
+    WRITE(*, *) 'icf, corr_model', icf, corr_model(icf)
+    CALL XERRAB('corr_model out of bounds')
+  END SELECT
+!
 !     Calculate log-likelihood
-! FIXME, should go away when real cholezky factorization is there
-  rr = SQRT(rr)
-  arg1 = 2.0_R8*pi
-  arg2(:) = 2.0_R8*LOG(rr)
-  lll = -(0.5_R8*(nn*LOG(arg1)+SUM(arg2(:))+SUM(invc_z)))
+  arg11 = 2.0_R8*pi
+  lll = -(0.5_R8*(nn*LOG(arg11)+ldetc+SUM(invc_z)))
+!
   CALL SUBEND()
   RETURN
 END SUBROUTINE CALC_LOGLIKELIHOOD_NODIFF

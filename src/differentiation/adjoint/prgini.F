@@ -1,9 +1,9 @@
       subroutine prgini (prname)
       use b2mod_types
+      use b2mod_stack
       use b2mod_subsys
       implicit none
       character prname*(*)
-#     include "stackw.h"
 *     ------------------------------------------------------------------
 *     PRGINI performs any tasks required at the start of program
 *     execution.

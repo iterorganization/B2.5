@@ -88,7 +88,7 @@
            ! not sure always correct but only the sign of cvBb
            ! is important here -ISSUE
            !g%cvBb(iCv,0) = ( g%vxFpsi(vx4(2)) - g%vxFpsi(vx4(0))
-           !&      +  g%vxFpsi(vx4(3)) -  g%vxFpsi(vx4(1)) )
+           !&              +  g%vxFpsi(vx4(3)) - g%vxFpsi(vx4(1)) )
 
            !babs = 0.25_R8*(
            !&      sqrt( g%vxBb(vx4(0),0)**2 + g%vxBb(vx4(0),1)**2 ) +

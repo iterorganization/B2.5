@@ -19,7 +19,7 @@
 !                dv.fchin:in dv.fchvispar:in dv.fchvisper:in dv.fchvisq:in
 !                dv.fchinert:in dv.fchanml:in dv.fchviskt:in dv.fch_pi_c:in
 !                dv.fch_pi_f:in dv.fna:in dv.conc:in dv.ne:in dv.ni:in
-!                dv.ne2:in dv.pz:in dv.lnlam:in mpg.intcellp:in
+!                dv.ne2:in dv.pz:in dv.lnlam:in dv.uadia:in mpg.intcellp:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvvol:in geo.cvonedbsq:in
 !                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
 !                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
@@ -56,10 +56,11 @@ SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfch
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2tfch, ncall_b2xehx, &
-& ncall_b2tcpa, ncall_b2tiner, ncall_b2ttia
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2xehx, ncall_b2tcpa, &
+& ncall_b2ttia, nsmooth_tvsq
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -104,7 +105,7 @@ SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !   ..local variables
   INTEGER :: is, is0
   CHARACTER(len=3) :: charns, charns0
-!lk 31.01.08 
+!lk 31.01.08
   REAL(kind=r8) :: csig_stoch(nfc), fchstoch(nfc)
 !srv 17.05.99
   REAL(kind=r8) :: ehx(nfc)
@@ -116,12 +117,12 @@ SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   REAL(kind=r8) :: wrkd(nbdirsmax, nfc, 0:1), dumm0d(nbdirsmax, nfc, 0:1&
 & ), dumm1d(nbdirsmax, nfc, 0:1), zeffd(nbdirsmax, ncv)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-!       real (kind=R8), save :: drift_hyb = 1.0_R8, fch_inert = 1.0e0_R8
-!      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 
+!       real (kind=R8), save :: drift_hyb = 1.0_R8, fch_inert = 1.0_R8
+!      real (kind=R8), save :: fch_stochastic = 0.0_R8                   !lk 31.01.08
 !   ..procedures
   EXTERNAL XERTST
 !srv 11.07.99
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF, B2TTIA_NODIFF
+  EXTERNAL B2XVSG, B2TTIA_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC NINT
   CHARACTER(len=10) :: arg1
@@ -143,20 +144,26 @@ SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !       call ipgetr ('b2tiner_inert', fch_inert)                          !srv 07.07.99
 !       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31.01.08
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2tfch .LT. 3) THEN
 !    ..test sign of ne, te, csig, chce
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+    DO nd=1,nbdirs
+      wrkd(nd, :, 0) = 0.D0
+      wrkd(nd, :, 1) = 0.D0
+      wrkd(nd, :, 0) = 0.D0
+      wrkd(nd, :, 1) = 0.D0
+    END DO
     wrk(:, 0) = co%csig(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrk(:, 0), 1, 'csig0', '.ge.')
+    CALL B2XVSG(nfc, wrk(:, 0), 1, 'csig0', '.ge.')
     wrk(:, 1) = co%csig(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrk(:, 1), 1, 'csig1', '.ge.')
+    CALL B2XVSG(nfc, wrk(:, 1), 1, 'csig1', '.ge.')
     wrk(:, 0) = co%chce(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrk(:, 0), 1, 'chce0', '.ge.')
+    CALL B2XVSG(nfc, wrk(:, 0), 1, 'chce0', '.ge.')
     wrk(:, 1) = co%chce(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrk(:, 1), 1, 'chce1', '.ge.')
+    CALL B2XVSG(nfc, wrk(:, 1), 1, 'chce1', '.ge.')
   END IF
 !
   facdriftm = MAXVAL(dv%facdrift)
@@ -196,9 +203,9 @@ SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   ELSE
 !     ..calculate the contribution of ion-neutral current                !srv 11.02.04 {
     CALL B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, rt&
-&             , rtd, dv%facdrift, dv%fac_exb, ismain, ismain0, pl%te, pl&
-&             %po, pld%po, pl%ti, pld%ti, pl%na, pld%na, dv%fna, dvd%fna&
-&             , co%csigin, cod%csigin, dv%fchin, dvd%fchin, nbdirs)
+&             , rtd, dv%facdrift, dv%fac_exb, ismain, ismain0, pl, pld, &
+&             dv%fna, dvd%fna, co%csigin, cod%csigin, dv%fchin, dvd%&
+&             fchin, nbdirs)
 !srv 11.05.09
 !     ..compute x,y-components of divergent part of diamagnetic current
     CALL B2TDIA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, dv%&
@@ -228,12 +235,12 @@ SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &             csig_an, cod%csig_an, pl%po, pld%po, dv%fchanml, dvd%&
 &             fchanml, nbdirs)
 !     ..calculate the parallel current
-    CALL B2TCPA_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl%&
-&            te, pld%te, pl%po, pld%po, dv%ne, dvd%ne, pl%na, pld%na, pl&
-&            %ua, pld%ua, rt%rza, rtd%rza, rt%rz2, rtd%rz2, zeff, zeffd&
-&            , co%csig, cod%csig, co%calf, cod%calf, ehx, ehxd, st_ext, &
-&            st_extd, dv%fch_p, dvd%fch_p, dv%fch_pi_c, dvd%fch_pi_c, dv&
-&            %fch_pi_f, dvd%fch_pi_f, nbdirs)
+    CALL B2TCPA_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg, &
+&            mpgd, pl%te, pld%te, pl%po, pld%po, dv%ne, dvd%ne, pl%na, &
+&            pld%na, pl%ua, pld%ua, rt%rza, rtd%rza, rt%rz2, rtd%rz2, &
+&            zeff, zeffd, co%csig, cod%csig, co%calf, cod%calf, ehx, &
+&            ehxd, st_ext, st_extd, dv%fch_p, dvd%fch_p, dv%fch_pi_c, &
+&            dvd%fch_pi_c, dv%fch_pi_f, dvd%fch_pi_f, nbdirs)
 !srv 13.01.17
 !     ..compute current due to RS of kt-model
     CALL B2TVSKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
@@ -254,10 +261,10 @@ SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
     dv%fch(:, 1) = dv%fch(:, 1) + fchstoch
 !
 !     ..compute conc
-    dumm0 = 0.0e0_R8
+    dumm0 = 0.0_R8
     wrk = co%csig
-    IF (switch%fch_ion_neutral .NE. 0.0e0_R8 .AND. (facdriftm .GT. &
-&       0.0_R8 .OR. fac_exbm .GT. 0.0_R8)) THEN
+    IF (switch%fch_ion_neutral .NE. 0.0_R8 .AND. (facdriftm .GT. 0.0_R8 &
+&       .OR. fac_exbm .GT. 0.0_R8)) THEN
 !srv 23.12.19
       DO is=0,ns-1
         IF (.NOT.is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
@@ -283,8 +290,8 @@ SUBROUTINE B2TFCH__DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
     DO nd=1,nbdirsmax
       dumm0d(nd, :, :) = 0.D0
     END DO
-    CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, mpg, dumm0, dumm0d, wrk, &
-&              wrkd, dumm1, dumm1d, dv%conc, dvd%conc, nbdirs)
+    CALL CALCCOEF_DV(ncv, nfc, nvx, 0, geo, dumm0, dumm0d, wrk, wrkd, &
+&              dumm1, dumm1d, dv%conc, dvd%conc, nbdirs)
 !
   END IF
 !srv 18.06.08 }
@@ -429,10 +436,11 @@ SUBROUTINE B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
+  USE B2MOD_AD_DIFFV, ONLY : ncall_b2tfch
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2tfch, ncall_b2xehx, &
-& ncall_b2tcpa, ncall_b2tiner, ncall_b2ttia
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder, ncall_b2xehx, ncall_b2tcpa, &
+& ncall_b2ttia, nsmooth_tvsq
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -468,7 +476,7 @@ SUBROUTINE B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !   ..local variables
   INTEGER :: is, is0
   CHARACTER(len=3) :: charns, charns0
-!lk 31.01.08 
+!lk 31.01.08
   REAL(kind=r8) :: csig_stoch(nfc), fchstoch(nfc)
 !srv 17.05.99
   REAL(kind=r8) :: ehx(nfc)
@@ -477,12 +485,12 @@ SUBROUTINE B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   REAL(kind=r8) :: wrk(nfc, 0:1), dumm0(nfc, 0:1), dumm1(nfc, 0:1), zeff&
 & (ncv)
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-!       real (kind=R8), save :: drift_hyb = 1.0_R8, fch_inert = 1.0e0_R8
-!      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 
+!       real (kind=R8), save :: drift_hyb = 1.0_R8, fch_inert = 1.0_R8
+!      real (kind=R8), save :: fch_stochastic = 0.0_R8                   !lk 31.01.08
 !   ..procedures
   EXTERNAL XERTST
 !srv 11.07.99
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, B2XVFX_NODIFF, B2TTIA_NODIFF
+  EXTERNAL B2XVSG, B2TTIA_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC NINT
   CHARACTER(len=10) :: arg1
@@ -502,20 +510,20 @@ SUBROUTINE B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 !       call ipgetr ('b2tiner_inert', fch_inert)                          !srv 07.07.99
 !       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31.01.08
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2tfch .LT. 3) THEN
 !    ..test sign of ne, te, csig, chce
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
     wrk(:, 0) = co%csig(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrk(:, 0), 1, 'csig0', '.ge.')
+    CALL B2XVSG(nfc, wrk(:, 0), 1, 'csig0', '.ge.')
     wrk(:, 1) = co%csig(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrk(:, 1), 1, 'csig1', '.ge.')
+    CALL B2XVSG(nfc, wrk(:, 1), 1, 'csig1', '.ge.')
     wrk(:, 0) = co%chce(:, 0)*geo%fcqalf(:, 0)
-    CALL B2XVSG_NODIFF(nfc, wrk(:, 0), 1, 'chce0', '.ge.')
+    CALL B2XVSG(nfc, wrk(:, 0), 1, 'chce0', '.ge.')
     wrk(:, 1) = co%chce(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrk(:, 1), 1, 'chce1', '.ge.')
+    CALL B2XVSG(nfc, wrk(:, 1), 1, 'chce1', '.ge.')
   END IF
 !
   facdriftm = MAXVAL(dv%facdrift)
@@ -542,8 +550,8 @@ SUBROUTINE B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
   ELSE
 !     ..calculate the contribution of ion-neutral current                !srv 11.02.04 {
     CALL B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, dv%&
-&                 facdrift, dv%fac_exb, ismain, ismain0, pl%te, pl%po, &
-&                 pl%ti, pl%na, dv%fna, co%csigin, dv%fchin)
+&                 facdrift, dv%fac_exb, ismain, ismain0, pl, dv%fna, co%&
+&                 csigin, dv%fchin)
 !srv 11.05.09
 !     ..compute x,y-components of divergent part of diamagnetic current
     CALL B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, dv%pz, dv%&
@@ -580,10 +588,10 @@ SUBROUTINE B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
     dv%fch(:, 1) = dv%fch(:, 1) + fchstoch
 !
 !     ..compute conc
-    dumm0 = 0.0e0_R8
+    dumm0 = 0.0_R8
     wrk = co%csig
-    IF (switch%fch_ion_neutral .NE. 0.0e0_R8 .AND. (facdriftm .GT. &
-&       0.0_R8 .OR. fac_exbm .GT. 0.0_R8)) THEN
+    IF (switch%fch_ion_neutral .NE. 0.0_R8 .AND. (facdriftm .GT. 0.0_R8 &
+&       .OR. fac_exbm .GT. 0.0_R8)) THEN
 !srv 23.12.19
       DO is=0,ns-1
         IF (.NOT.is_neutral(is) .AND. NINT(zn(is)) .EQ. 1) THEN
@@ -597,8 +605,8 @@ SUBROUTINE B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         END IF
       END DO
     END IF
-    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, mpg, dumm0, wrk, dumm1, &
-&                  dv%conc)
+    CALL CALCCOEF_NODIFF(ncv, nfc, nvx, 0, geo, dumm0, wrk, dumm1, dv%&
+&                  conc)
 !
   END IF
 !srv 18.06.08 }

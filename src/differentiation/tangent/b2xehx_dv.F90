@@ -76,7 +76,7 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
 & nbdirsmax, ncv)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC LOG
   REAL(kind=r8), DIMENSION(ncv) :: arg1
   REAL(kind=r8), DIMENSION(nbdirsmax, ncv) :: arg1d
@@ -91,12 +91,12 @@ SUBROUTINE B2XEHX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, te, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2xehx')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2xehx .LT. 3) THEN
 !    ..test sign of ne, te, csig
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   END IF
 !srv 29.01.20 }
 !
@@ -278,7 +278,7 @@ SUBROUTINE B2XEHX_NODIFF(ncv, nfc, nvx, switch, geo, mpg, te, po, ne, &
 & , nete(ncv), ones(nfc, 2)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTRINSIC LOG
   REAL(kind=r8), DIMENSION(ncv) :: arg1
 !   ..initialization
@@ -289,12 +289,12 @@ SUBROUTINE B2XEHX_NODIFF(ncv, nfc, nvx, switch, geo, mpg, te, po, ne, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2xehx')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2xehx .LT. 3) THEN
 !    ..test sign of ne, te, csig
-    CALL B2XVSG_NODIFF(ncv, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, te, 1, 'te', '.gt.')
+    CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
   END IF
 !srv 29.01.20 }
 !

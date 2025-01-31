@@ -1,14 +1,11 @@
 
       subroutine end_page
       use b2mod_types
-#include <graphics_vars.h>
-
-c     the zoom common
-      integer winid
-      integer wsnshwin,wsnX11
-      common /zoom_com/ winid,wsnshwin,wsnX11
-
+      use b2mod_graphics
+      implicit none
+#ifdef NCAR4
       integer wkid
+#endif
 
       if(same_page.ne.0) then
         same_page=1
@@ -50,4 +47,4 @@ cxpb        write(*,*)'end_page: read values!'
       endif
       dirty_graph=.false.
       return
-      end
+      end subroutine end_page

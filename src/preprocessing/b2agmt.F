@@ -221,6 +221,7 @@
             g%cvVol(iCv) = g%cvSz(iCv)*width
             call calc_psi_cellcenter(g,m,iCv,psic,isymm)
             cvFpsi(iCv) = psic
+
           elseif (isymm.eq.1 .or. isymm.eq.2) then ! rotational symmetry about x=0 axis
             if (volhmk.eq.0) then
               g%cvX(iCv) = sum(g%vxX(verts)) / real(nv,R8)
@@ -233,11 +234,12 @@
             endif
             ! volume is area times circumference of circle with radius equal to the x-coordinate of centroid
             g%cvVol(iCv) = g%cvSz(iCv)*2.0_R8*pi*centroid(iCv,0)
+
           elseif (isymm.eq.3 .or. isymm.eq.4) then ! rotational symmetry about y=0
             if (volhmk.eq.0) then
-              g%cvX(iCv) = sum(g%vxX(verts)) / nv
-              g%cvY(iCv) = sum(g%vxY(verts)) / nv
-              cvFpsi(iCv) = sum(g%vxFpsi(verts)) / nv
+              g%cvX(iCv) = sum(g%vxX(verts)) / real(nv,R8)
+              g%cvY(iCv) = sum(g%vxY(verts)) / real(nv,R8)
+              cvFpsi(iCv) = sum(g%vxFpsi(verts)) / real(nv,R8)
             else
               ! Calculate the cell center similar to the method for the triangle cell center
               call calc_psi_cellcenter(g,m,iCv,psic,isymm)

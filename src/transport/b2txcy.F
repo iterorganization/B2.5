@@ -1,12 +1,12 @@
 ! $AD NOCHECKPOINT
-      subroutine b2txcy (nCv, nFc, mode, geo, mpg, fcVol, fcS, kapy, 
+      subroutine b2txcy (nCv, nFc, mode, geo, mpg, fcVol, fcS, kapy,
      .  cony)
       use b2mod_types
       use b2us_geo
       use b2us_map
       use b2mod_subsys
       implicit none
-      integer nCv, nFc, mode
+      integer, intent (in) :: nCv, nFc, mode
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::

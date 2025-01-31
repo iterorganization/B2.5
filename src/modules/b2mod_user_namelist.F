@@ -4,6 +4,8 @@
       use b2mod_dimensions
       use b2us_geo
       use b2us_map
+      use b2mod_switches
+      use b2mod_dimensions
       implicit none
       integer npfrgrpd, nntrgrpd
       parameter (npfrgrpd=6, nntrgrpd=16)
@@ -20,16 +22,25 @@
 ! - [oi]mp: list of CVs belonging to the [OI]MP, defined through the segment rz[oi]mp
 !           it should be built as an ordered list from core to SOL.
 ! - nromp: pre-defined maximum size for these lists
-! - icsep[oi]mp: location of the separatrix position in the [oi]mp list
+! - icsep[oi]mp: location of the first cell outside the separatrix in the [oi]mp list
 ! - ifsep[oi]mp: the face index of the separatrix intersection with the [oi]mp
 ! - n[oi]mp: number of CVs in the [oi]mp list
 ! - rz[o1]mp: R-Z coordinates of a segment whose intersection with the
 !             plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordinates
 !             of first and second point of the segment, rzomp(2,1:2) holds Z-coordinates
-      integer, parameter :: nromp=DEF_NYD*5
+! - psi_[oi]mp: psi value of midplane cells
+! - fs_ds_[oi]mp: distance along midplane of intersection with flux surface
+! - ft_ds_[oi]mp: distance along midplane of flux tube cell center
+! - ft_[oi]mp: index in list of flux tube cell intersection
+
+      integer, parameter :: nromp=DEF_NYD*4
       integer, save :: omp(nromp), icsepomp, ifsepomp, nomp,
      ,                 imp(nromp), icsepimp, ifsepimp, nimp
+      integer, allocatable :: ft_imp(:), ft_omp(:)
       real (kind=R8) :: rzomp(2,2), rzimp(2,2)
+      real (kind=R8) :: psi_omp(nromp), psi_imp(nromp)
+      real (kind=R8), allocatable :: fs_ds_imp(:), fs_ds_omp(:)
+      real (kind=R8), allocatable :: ft_ds_imp(:), ft_ds_omp(:)
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
       integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
@@ -86,11 +97,12 @@ c----------------------------------------------------------------------
 
       contains
 
-      subroutine alloc_b2mod_user(geo,m,ns,nlim,nmol)
+      subroutine alloc_b2mod_user(geo,m,ns,nlim,nmol,sw)
       implicit none
       integer, intent(in) :: ns, nlim, nmol
       type (geometry), intent (in) :: geo
       type(mapping), intent(inout) :: m
+      type (switches), intent (inout) :: sw
 
       call xertst(1.le.ns, 'faulty argument ns')
       call xertst(0.le.nlim, 'faulty argument nlim')
@@ -101,6 +113,9 @@ c----------------------------------------------------------------------
       allocate(lhetrgts(nhetrgtx),lpfrgrp(nlim),lntrgrp(nlim))
       allocate(l_h_mol(nmol,3))
 #endif
+      allocate(fs_ds_imp(m%nFs), fs_ds_omp(m%nFs))
+      allocate(ft_ds_imp(m%nFt), ft_ds_omp(m%nFt))
+      allocate(ft_imp(0:m%nFt), ft_omp(0:m%nFt))
 
 c*** PFR specification - for He enrichment and neutral pressure
 c***  Standard set-up:
@@ -130,8 +145,14 @@ c***  Standard set-up:
       print_isat=.false.
       rzomp = 0.0_R8
       rzimp = 0.0_R8
+      ft_imp = 0
+      ft_omp = 0
+      fs_ds_imp = -999.0_R8
+      fs_ds_omp = -999.0_R8
+      ft_ds_imp = -999.0_R8
+      ft_ds_omp = -999.0_R8
       user_filename='b2.user.parameters'
-      call read_b2mod_user_namelist(ns,geo,m)
+      call read_b2mod_user_namelist(ns,geo,m,sw)
       user_initialised = .true.
 
       return
@@ -139,29 +160,35 @@ c***  Standard set-up:
 
       subroutine dealloc_b2mod_user
       implicit none
+
+      if (.not.user_initialised) return
 #ifdef ALLOCATE_AND_NAMELIST
       deallocate(lhetrgts,lpfrgrp,lntrgrp)
       deallocate(l_h_mol)
 #endif
+      deallocate(fs_ds_omp,fs_ds_imp)
+      deallocate(ft_ds_omp,ft_ds_imp)
+      deallocate(ft_omp,ft_imp)
       user_initialised = .false.
       return
       end subroutine dealloc_b2mod_user
 
-      subroutine read_b2mod_user_namelist(ns,geo,m)
+      subroutine read_b2mod_user_namelist(ns,geo,m,sw)
       use b2mod_b2cmpa
       use b2mod_subsys
-      use b2mod_types
       implicit none
       integer, intent(in) :: ns
       type (geometry), intent (in) :: geo
       type(mapping), intent(inout) :: m
-      integer ic, iFc
+      type (switches), intent (inout) :: sw
+      integer ic, iFc, iFs, iFs1, iFs2, iFt, iVx1, iVx2
+      real (kind=R8) :: distint, dsep,
+     . Xv1, Xv2, Yv1, Yv2, Xm1, Xm2, Ym1, Ym2, Xint, Yint
 
       logical :: file_ok
       character*260 filename
       integer i
       logical done, ifail, found
-      integer, save :: use_eirene, neutrals_namelist
       integer :: omp_ci(m%nCi), imp_ci(m%nCi), omp_fc(m%nFc),
      &           imp_fc(m%nFc), nomp_ci, nimp_ci, nomp_fc, nimp_fc
       real (kind=R8) :: XI(m%nFc), YI(m%nFc) !ap used for improved cv_inters
@@ -169,14 +196,8 @@ c***  Standard set-up:
       logical old_style
       logical, save :: hydrogen, helium, neon
       external ipgeti, find_file, xertst
-#ifndef F2003
-      integer newunit
-      external newunit
-#endif
 
       call subini ('readuser')
-      call ipgeti ('b2mndr_eirene', use_eirene)
-      call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
 
 *  -- USER --
       filename=user_filename
@@ -201,9 +222,9 @@ c***  Standard set-up:
       nomp = 0
       omp = 0 !Need to add check for monotonicity in list
 ! Define OMP list by finding CVs which are intersected by the rzomp segment
-      call cv_intersections (geo, m, rzomp, omp, omp_ci, omp_fc, nomp,
-     & nomp_ci, nomp_fc, nromp, XI, YI, 1, ifail)
-      call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
+       call cv_intersections (geo, m, rzomp, omp, omp_ci, omp_fc, nomp,
+     & nomp_ci, nomp_fc, nromp, XI, YI, 1, ifail)      
+       call xertst(.not.ifail, 'Increase DEF_NYD in b2mod_dimensions')
 ! Here we need to guarantee ordering of CVs. With classical grids the conversion
 ! is done such that CVs are ordered from left to right and bottom to top wrt
 ! the structured computational domain. With fully unstructured grids this is not guaranteed.
@@ -230,6 +251,77 @@ c***  Standard set-up:
         end do
         ic = ic + 1
       end do
+! csc get psi for each OMP cell
+      psi_omp = 0.0_R8
+      do ic = 1, nomp
+        psi_omp(ic) = geo%cvFpsi(omp(ic))
+      end do
+! xpb build the distance along the OMP for each flux surface
+      Xm1 = rzomp(1,1)
+      Xm2 = rzomp(1,2)
+      Ym1 = rzomp(2,1)
+      Ym2 = rzomp(2,2)
+      do ic = 1, nomp
+        do i = m%cvFcP(omp(ic),1),
+     &         m%cvFcP(omp(ic),1) + m%cvFcP(omp(ic),2) - 1
+          iFc = m%cvFc(i)
+          iFs = m%fcFs(iFc)
+          if (iFs.eq.0) cycle
+          ! Does the flux-aligned face intersect the OMP?
+          iVx1 = m%fcVx(iFc,1)
+          iVx2 = m%fcVx(iFc,2)
+          ! Find the intersection point of the two lines
+          Xv1 = geo%vxX(iVx1)
+          Xv2 = geo%vxX(iVx2)
+          Yv1 = geo%vxY(iVx1)
+          Yv2 = geo%vxY(iVx2)
+          Yint =
+     .     ((Xm1*Ym2)-(Xm2*Ym1)-
+     .      (((Xv1*Yv2)-(Xv2*Yv1))/(Yv2-Yv1))*(Ym2-Ym1))/
+     .     (((Xv1-Xv2)/(Yv2-Yv1))*(Ym2-Ym1)+(Xm1-Xm2))
+          Xint = (((Xv1*YV2)-(Xv2*Yv1))-Yint*(Xv1-Xv2))/(Yv2-Yv1)
+          ! Is the intersection point part of the cell face?
+          distint = (Xint-Xv1)*(Xint-Xv2)+(Yint-Yv1)*(Yint-Yv2)
+          if (distint.le.0.0_R8) then
+            fs_ds_omp(iFs) = sqrt((Xint-Xm1)**2+(Yint-Ym1)**2)
+          end if
+        end do
+      end do
+      dsep = fs_ds_omp(m%fcFs(ifsepomp))
+      do iFs = 1, m%nFs
+        if (fs_ds_omp(iFs).eq.-999.0_R8) cycle
+        if (Xm1.lt.Xm2) then
+          fs_ds_omp(iFs) = fs_ds_omp(iFs) - dsep
+        else
+          fs_ds_omp(iFs) = dsep - fs_ds_omp(iFs)
+        end if
+      end do
+      do ic = 1, nomp
+        iFs1 = 0
+        iFs2 = 0
+        iFt = m%cvFt(omp(ic))
+        if (iFt.eq.0) cycle
+        ft_omp(iFt) = ic
+        do i = m%cvVxP(omp(ic),1),
+     &         m%cvVxP(omp(ic),1) + m%cvVxP(omp(ic),2) - 1
+          iFs = m%vxFs(m%cvVx(i))
+          if (iFs.eq.0) cycle
+          if (iFs1.eq.0) then
+            iFs1 = iFs
+          else if (iFs2.eq.0) then
+            iFs2 = iFs
+          end if
+        end do
+        if (iFs1.ne.0.and.iFs2.ne.0)
+     >   ft_ds_omp(iFt) = 0.5_R8*(fs_ds_omp(iFs1)+fs_ds_omp(iFs2))
+      end do
+cxpb set default switches depending on midplane location
+      if (sw%set_transport_iyref.eq.0) then
+        sw%set_transport_iyref = icsepomp-1
+      end if
+      call xertst (1.le.sw%set_transport_iyref.and.
+     .             sw%set_transport_iyref.le.nomp,
+     .            'Invalid switch setting for set_transport_iyref')
 
 cxpb convert old-style j_h_at and l_h_mol to deal with isotope mixes
       old_style = maxval(j_h_at).eq.0
@@ -336,7 +428,7 @@ c*** Set default values according to current species list
           end if
         end do
       end do
-      if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
+      if (sw%b2stbr_neutrals_namelist.eq.1 .or. sw%use_eirene.ne.0) then
         do i = 1,3
           if (j_h_at(i).eq.0) cycle
           if (user_namelist_used) then
@@ -364,7 +456,7 @@ c*** Set default values according to current species list
       imp = 0
       call cv_intersections (geo, m, rzimp, imp, imp_ci, imp_fc, nimp,
      & nimp_ci, nimp_fc, nromp, XI, YI, 1, ifail)
-      call xertst(.not.ifail,'Increase nromp in b2.user.parameters')
+      call xertst(.not.ifail, 'Increase DEF_NYD in b2mod_dimensions')
       do ic=2,nimp
         if (geo%cvX(imp(ic)).lt.geo%cvX(imp(ic-1)))
      &   call xerrab('IMP LIST NOT SORTED')
@@ -385,6 +477,72 @@ c*** Set default values according to current species list
           end if
         end do
         ic = ic + 1
+      end do
+! csc get psi for each OMP cell
+      psi_imp = 0.0_R8
+      do ic = 1, nimp
+        psi_imp(ic) = geo%cvFpsi(imp(ic))
+      end do
+! xpb build the distance along the OMP for each flux surface
+      if (nimp.gt.0) then
+        Xm1 = rzimp(1,1)
+        Xm2 = rzimp(1,2)
+        Ym1 = rzimp(2,1)
+        Ym2 = rzimp(2,2)
+      end if
+      do ic = 1, nimp
+        do i = m%cvFcP(imp(ic),1),
+     &         m%cvFcP(imp(ic),1) + m%cvFcP(imp(ic),2) - 1
+          iFc = m%cvFc(i)
+          iFs = m%fcFs(iFc)
+          if (iFs.eq.0) cycle
+          ! Does the flux-aligned face intersect the IMP?
+          iVx1 = m%fcVx(iFc,1)
+          iVx2 = m%fcVx(iFc,2)
+          ! Find the intersection point of the two lines
+          Xv1 = geo%vxX(iVx1)
+          Xv2 = geo%vxX(iVx2)
+          Yv1 = geo%vxY(iVx1)
+          Yv2 = geo%vxY(iVx2)
+          Yint =
+     .     ((Xm1*Ym2)-(Xm2*Ym1)-
+     .      (((Xv1*Yv2)-(Xv2*Yv1))/(Yv2-Yv1))*(Ym2-Ym1))/
+     .     (((Xv1-Xv2)/(Yv2-Yv1))*(Ym2-Ym1)+(Xm1-Xm2))
+          Xint = (((Xv1*YV2)-(Xv2*Yv1))-Yint*(Xv1-Xv2))/(Yv2-Yv1)
+          ! Is the intersection point part of the cell face?
+          distint = (Xint-Xv1)*(Xint-Xv2)+(Yint-Yv1)*(Yint-Yv2)
+          if (distint.le.0.0_R8) then
+            fs_ds_imp(iFs) = sqrt((Xint-Xm1)**2+(Yint-Ym1)**2)
+          end if
+        end do
+      end do
+      if (ifsepimp.gt.0) dsep = fs_ds_imp(m%fcFs(ifsepimp))
+      do iFs = 1, m%nFs
+        if (fs_ds_imp(iFs).eq.-999.0_R8) cycle
+        if (Xm1.gt.Xm2) then
+          fs_ds_imp(iFs) = fs_ds_imp(iFs) - dsep
+        else
+          fs_ds_imp(iFs) = dsep - fs_ds_imp(iFs)
+        end if
+      end do
+      do ic = 1, nimp
+        iFs1 = 0
+        iFs2 = 0
+        iFt = m%cvFt(imp(ic))
+        if (iFt.eq.0) cycle
+        ft_imp(iFt) = ic
+        do i = m%cvVxP(imp(ic),1),
+     &         m%cvVxP(imp(ic),1) + m%cvVxP(imp(ic),2) - 1
+          iFs = m%vxFs(m%cvVx(i))
+          if (iFs.eq.0) cycle
+          if (iFs1.eq.0) then
+            iFs1 = iFs
+          else if (iFs2.eq.0) then
+            iFs2 = iFs
+          end if
+        end do
+        if (iFs1.ne.0.and.iFs2.ne.0)
+     >   ft_ds_imp(iFt) = 0.5_R8*(fs_ds_imp(iFs1)+fs_ds_imp(iFs2))
       end do
       if (.not.found) write(*,'(a/a/a)')
      &  'Warning: did not find separatrix location in IMP definition,',

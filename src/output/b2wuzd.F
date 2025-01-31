@@ -38,6 +38,7 @@
         call cfwure (nput, ns, am, 'am')
       end if
 
+      flush (nput)
       call subend ()
       return
       end subroutine b2wuzd

@@ -44,7 +44,8 @@
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
-     &          rsamoreg
+     &          rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue,
+     &          b2divua, b2exbe
       use b2us_feedback
      & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
@@ -56,7 +57,12 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:10), nCv, nFc, nVx, ns, ismain,
+#ifdef JET
+      integer nout(0:11)
+#else
+      integer nout(0:10)
+#endif
+      integer nCv, nFc, nVx, ns, ismain,
      *  ismain0, nscx, nscxmax, iscx(0:nscxmax-1), itim, ntim
       integer, save :: ntim_batch = 500
       integer, save :: ibatch_av_all = 0
@@ -109,7 +115,7 @@
 *.declarations
 
 *   ..local variables
-      integer :: ier0, iCv
+      integer :: iCv
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       integer, save :: boundary_sources=0, equation_sources=0            !srv 26.02.18
@@ -119,16 +125,8 @@
       real (kind=R8) :: nasum, na0sum
       real (kind=R8) ::
      &  rz(nCv), wrk0(nCv), wrkf(nFc)                                    !iyv 06.02.14
-#ifdef WG_TODO
       logical domoit
-#endif
       logical solving(4), ramp_call
-!WG_TODO: add some sources locally here, until a module/data-type for WG
-!WG_TODO: is available
-      real (kind=R8) ::                                                  !xpb
-     &  snasm(nCv,0:1,0:ns-1),                                           !xpb
-     &  smosm(nCv,0:3,0:ns-1),                                           !xpb
-     &  shesm(nCv,0:3), shism(nCv,0:3)!WG_TODO,                          !xpb
 *   ..procedures
       real (kind=R8) ::
      *  b2sasum, damax
@@ -217,7 +215,7 @@
 c the main initialisation is in b2news --- unfortunately a few routines
 c that need an initial value get called before the first call to b2news
 c therefore initialise here
-        call b2news_facdrift_fac_ExB_init(nFc, st%dv%fac_ExB,
+        call b2news_facdrift_fac_ExB_init(nFc, mpg, st%dv%fac_ExB,
      &    st%dv%facdrift, st%dv%fac_vis, switch)
       endif
 *   ..initialise error parameter
@@ -226,10 +224,6 @@ c therefore initialise here
 
 * ..initialisation
 *   ..initialise sources to 0
-      call sfill (nCv*2*ns, 0.0_R8, snasm, 1)                        !srv 11.09.09 {
-      call sfill (nCv*4*ns, 0.0_R8, smosm, 1)
-      call sfill (nCv*4, 0.0_R8, shesm, 1)
-      call sfill (nCv*4, 0.0_R8, shism, 1)
       call sfill (nCv*2*ns, 0.0_R8, st%sr%snadt, 1)
       call sfill (nCv*4*ns, 0.0_R8, st%sr%smodt, 1)
       call sfill (nCv*4, 0.0_R8, st%sr%shedt, 1)
@@ -326,12 +320,12 @@ ctmp.dpc
           if(wrong_flow) write(*,*)
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources
-!WG_TODO          call b2srsm (nx, ny, ns,
-!WG_TODO     &     dtim, vol, na, ua, te, ti, ne, ni,
-!WG_TODO     &     sna, smo, she, shi, sne, .true.)                              !srv 11.09.09 {
+          call b2srsm (nCv, ns, dtim, switch, geo, mpg,
+     &     st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%dv%ne, st%dv%ni,
+     &     st%dv%nn, st%sr, .true.)                                      !srv 11.09.09 {
 *     ..stabilise the source coefficients                                !srv 07.07.21 {
           if(switch%b2mndt_style.eq.2 .and. use_b2srst.eq.1)
-     &     call b2srst (nCv, ns, switch, st%pl%na, st%pl%ua,            !srv 01.07.08
+     &     call b2srst (nCv, ns, switch, st%pl%na, st%pl%ua,             !srv 01.07.08
      &      st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni,
      &      st%dv%nn, st%pl%kt, st%pl%zt, st%sr)
 *       (smq is inherently stable.)                                      !srv 07.07.21 }
@@ -345,13 +339,6 @@ ctmp.dpc
      &       st%psnc%kt, st%psnc%zt, st%pl%na, st%pl%ua, st%pl%te,
      &       st%pl%ti, st%pl%tn, st%dv%ne, st%dv%ni, st%dv%nn,
      &       st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
-*   ..add to previous contributions
-c$$$  No longer needed as it is already done inside b2srdt
-c$$$            call b2saxpy (nCv*2*ns, 1.0_R8, st%sr%snadt,1, st%sr%sna,1)
-c$$$            call b2saxpy (nCv*4*ns, 1.0_R8, st%sr%smodt,1, st%sr%smo,1)
-c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shedt,1, st%sr%she,1)
-c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shidt,1, st%sr%shi,1)
-c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
           endif
           if(equation_sources.ne.0) then                                 !srv 26.02.18 {
             do iCv = 1,nCv
@@ -382,25 +369,15 @@ c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
             if (switch%b2mndt_style.eq.1) then
               call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
-     &         geo, mpg, st, st_ext, st_avg, ier0, ramp_call)
+     &         geo, mpg, st, st_ext, st_avg, ramp_call)
             elseif (switch%b2mndt_style.eq.2) then
               call b2news_m(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
-     &         geo, mpg, st, st_ext, st_avg, ier0, ramp_call)
+     &         geo, mpg, st, st_ext, st_avg, ramp_call)
             else
               call xerrab('b2mndt_style should be 1 or 2')
             endif
             flush(6)
-#ifdef WG_TODO
-! ier0 seems not appearing anymore in b2news. Additionally, irreducible loops should be avoided for Adjoint AD
-            if(ier0.eq.10) then
-             ierr=ier0
-             goto 99999
-            endif
-#endif
-            call xertst (ier0.eq.0, 'error return from b2news')
-*!!      (should develop other error handling)
-            ierr = ier0
 *      ..re-compute ne, ne2, ni
             call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne,
      .       st%dv%ne)
@@ -433,12 +410,10 @@ c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
      &       (1.le.switch%b2mndt_moqtlv.or.istg(0).eq.0).and.
      &       (2.le.switch%b2mndt_moqtlv.or.istg(1).eq.0).and.
      &       (3.le.switch%b2mndt_moqtlv.or.istg(2).eq.0)
-#ifdef WG_TODO
             domoit = 0.le.switch%b2mndt_moitlv.and.
      &       (1.le.switch%b2mndt_moitlv.or.istg(0).eq.0).and.
      &       (2.le.switch%b2mndt_moitlv.or.istg(1).eq.0).and.
      &       (3.le.switch%b2mndt_moitlv.or.istg(2).eq.0)
-#endif
 *      ..maybe write quick trace
             if (domoqt) then
               if (mod(ncall_b2mndt,ntim_step_out) .eq. 0) then             !srv 31.01.07
@@ -447,24 +422,19 @@ c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
                 flush(nout(4))
               endif
             endif
-#ifdef WG_TODO
 *      ..maybe detailed monitor
             if (domoit) then
-              call b2mwit (nout(5), nx, ny, ns, itim, b2mndt_itcnt,
-     &         resco, resmo, resmt, reshe, reshi, respo,
-     &         corpa, corua, corut, corte, corti,
-     &         corpo)
+              call b2mwit (nout(5), nCv, ns, itim, b2mndt_itcnt, st%dv)
               flush(nout(5))
             endif
-#endif
 *      ..write the tracing data
             if (ank_tracing.ne.0) then
               if (ncall_b2mndt.eq.0.and.istg(2).eq.0) then
-                call alloc_b2mod_user(geo,mpg,ns,nlim,nnmoli)
+                call alloc_b2mod_user(geo,mpg,ns,nlim,nnmoli,switch)
                 call b2filei(ns,mpg%nnreg(0),switch)
               end if
               if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >         call b2filew(istg(2),mpg%nnreg(0))
+     >         call b2filew(istg(2),mpg%nnreg(0),st%diag)
             endif
 *      ..update iteration counter
             b2mndt_itcnt = b2mndt_itcnt+1
@@ -494,10 +464,10 @@ c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
      &       st%dv%facdrift, st%dv%fac_ExB, st%dv%ne, st%pl%te,
      &       st%pl%po, st%dv%vedia, st%dv%veecrb)
 *      ..compute other fluxes
-            call b2xpen (nCv, nFc, ns, mpg,
+            call b2xpen (nCv, nFc, ns, mpg, switch,
      &       st%dv%fna, st%dv%fna_53, st%dv%fne_53,
      &       st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt%rpt,
-     &       st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, switch%BoRiS,
+     &       st%pl%te, st%pl%ti, st%pl%tn, st%pl%po,
      &       st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
             if (switch%b2sigp_style.eq.2) then
@@ -527,8 +497,7 @@ c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
      &       ncall_b2news_, ismain, solving, solveee, solveei,           !srv 22.05.18
      &       solveen, solveet, solvepo, solvemo, solvekt, solvezt,
      &       switch%b2mndt_rxf, dtim,
-     &       st%pl, st%dv, st%co, st%rt, st%sr, st%srw,
-     &       st%psnc, st%psnl, st_ext, ier0)
+     &       st%pl, st%dv, st%co, st%rt, st%sr, st%srw, st%psnl, st_ext)
           endif
 *     ..end intermediate iteration
           istg(1) = istg(1)+1
@@ -541,12 +510,10 @@ c$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
 
       if (switch%iav_run > 0)
      . call running_average(nCv,ns,st%pl,st%srw,st_avg)
-      if (ibatch_av_all > 0) call batch_av_all(itim,ntim_batch,nCv,ns)
+      if (ibatch_av_all > 0)
+     . call batch_av_all(itim,ntim_batch,nCv,st%pl,ns)
 
 * ..return
-#ifdef WG_TODO
-99999 continue !remove if ierr=10 not supported anymore
-#endif
       ncall_b2mndt = ncall_b2mndt+1
       call subend ()
       return

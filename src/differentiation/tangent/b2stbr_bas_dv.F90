@@ -17,14 +17,13 @@
 !
 SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
 & , kinrgy, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni, sna0, smo0&
-& , she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye, thevp, thvpe, &
-& trese, tresn, trfln, trfle, boundary_namelist, coreregno, coreregn2, &
-& output, neutral_sources_rescale, core_sources_rescale, sput_src, &
-& sput_frc, sput_phys, sput_chem_alpha, sput_phys_alpha, alpha, &
-& sput_chem_model, therm_evap, sput_res, reflection_on, &
-& sputter_energy_on, main_call, sput_chem_cutoff_alpha, &
-& sput_chem_cutoff_beta, shi0_ff, f_redep, potential_at_guard_cell, &
-& recycled_neutrals_contr)
+& , she0, shi0, sch0, tchem, tchee, tphys, tphye, thevp, thvpe, trese, &
+& tresn, trfln, trfle, boundary_namelist, coreregno, coreregn2, output, &
+& neutral_sources_rescale, core_sources_rescale, sput_src, sput_frc, &
+& sput_phys, sput_chem_alpha, sput_phys_alpha, alpha, sput_chem_model, &
+& therm_evap, sput_res, reflection_on, sputter_energy_on, main_call, &
+& sput_chem_cutoff_alpha, sput_chem_cutoff_beta, shi0_ff, f_redep, &
+& potential_at_guard_cell, recycled_neutrals_contr)
 !
   USE B2MOD_TYPES
   USE B2MOD_GEO_DIFFV
@@ -32,7 +31,7 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
   USE B2MOD_SPUTTER_DIFFV
   USE B2MOD_TALLIES_DIFFV
   USE B2MOD_ELEMENTS_DIFFV
-  USE B2MOD_INDIRECT
+  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV
   USE B2MOD_WALL_DIFFV
@@ -68,10 +67,9 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: sna0(-1:nx, -1:ny, 0:1, 0:ns-1), smo0(-1:nx, -1:ny, 0&
 & :3, 0:ns-1), she0(-1:nx, -1:ny, 0:3), shi0(-1:nx, -1:ny, 0:3), sch0(-1&
-& :nx, -1:ny, 0:3), sne0(-1:nx, -1:ny, 0:1), shi0_ff(-1:nx, -1:ny, 0:&
-& nscx-1), tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1), tphye(0:ns-1), &
-& thevp(0:ns-1), thvpe(0:ns-1), trese(0:ns-1), tresn(0:ns-1), trfln(0:ns&
-& -1), trfle(0:ns-1)
+& :nx, -1:ny, 0:3), shi0_ff(-1:nx, -1:ny, 0:nscx-1), tchem(0:ns-1), &
+& tchee(0:ns-1), tphys(0:ns-1), tphye(0:ns-1), thevp(0:ns-1), thvpe(0:ns&
+& -1), trese(0:ns-1), tresn(0:ns-1), trfln(0:ns-1), trfle(0:ns-1)
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -100,10 +98,11 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
 !   ..procedures
   INTRINSIC ABS, MAX, EXP
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, smin, smax
+  EXTERNAL B2XVSG, B2XVFF, smin, smax
   REAL(kind=r8) :: smax, smin
 !   ..initialisation
   SAVE ncall
+  INTRINSIC MAXVAL
   INTRINSIC NINT
   INTRINSIC MIN
   INTEGER :: y1
@@ -114,6 +113,7 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
   INTEGER :: y6
   INTEGER :: y7
   INTEGER :: y8
+  REAL(kind=r8), DIMENSION(-1:nx, -1:ny, 0:ns-1) :: dabs0
   INTEGER :: min1
   INTEGER :: min2
   INTEGER :: min3
@@ -121,6 +121,7 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: arg1
+  REAL(kind=r8) :: result10
   REAL(kind=r8) :: arg10
   CHARACTER(len=10) :: arg11
   DATA ncall /0/
@@ -165,9 +166,9 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
 !   ..extensive tests on first few calls
   IF (ncall .LT. 3) THEN
 !    ..test sign of vol, hx, hy
-    CALL B2XVSG_NODIFF(n2, vol, 1, 'vol', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hx, 1, 'hx', '.gt.')
-    CALL B2XVSG_NODIFF(n2, hy, 1, 'hy', '.gt.')
+    CALL B2XVSG(n2, vol, 1, 'vol', '.gt.')
+    CALL B2XVSG(n2, hx, 1, 'hx', '.gt.')
+    CALL B2XVSG(n2, hy, 1, 'hy', '.gt.')
 !    ..test range of qz
     result1 = smin(n2, qz(-1, -1, 0), 1)
     result2 = smax(n2, qz(-1, -1, 0), 1)
@@ -180,26 +181,34 @@ SUBROUTINE B2STBR_BAS_NODIFF(nx, ny, ns, nscx, iscx, dtim, boris, na, ua&
 !    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')         !srv 11.01.13
 !    ..test edge values of pbs
-    CALL B2XVFX_NODIFF(nx, ny, pbs(-1, -1, 0), 'pbs')
-    CALL B2XVFY(nx, ny, pbs(-1, -1, 1), 'pbs')
+    CALL B2XVFX(nx, ny, pbs(-1, -1, 0), 'pbs')
+    CALL B2XVFY_NODIFF(nx, ny, pbs(-1, -1, 1), 'pbs')
 !    ..test sign of na, ni, ne, te, ti
     arg1 = n2*ns
-    CALL B2XVSG_NODIFF(arg1, na, 1, 'na', '.gt.')
+    CALL B2XVSG(arg1, na, 1, 'na', '.gt.')
     arg1 = n2*2
-    CALL B2XVSG_NODIFF(arg1, ni, 1, 'ni', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ne, 1, 'ne', '.gt.')
-    CALL B2XVSG_NODIFF(n2, te, 1, 'te', '.gt.')
-    CALL B2XVSG_NODIFF(n2, ti, 1, 'ti', '.gt.')
+    CALL B2XVSG(arg1, ni, 1, 'ni', '.gt.')
+    CALL B2XVSG(n2, ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(n2, te, 1, 'te', '.gt.')
+    CALL B2XVSG(n2, ti, 1, 'ti', '.gt.')
+    WHERE (ua .GE. 0.) 
+      dabs0 = ua
+    ELSEWHERE
+      dabs0 = -ua
+    END WHERE
+!    ..test velocities
+    result10 = MAXVAL(dabs0)
+    CALL XERTST(result10 .LT. c, 'Supra-luminal velocities !')
   END IF
 !   ..test edge values of fluxes
   DO is=0,ns-1
-    CALL B2XVFF_NODIFF(nx, ny, fna(-1, -1, 0, 0, is), 'fna')
+    CALL B2XVFF(nx, ny, fna(-1, -1, 0, 0, is), 'fna')
   END DO
-  CALL B2XVFF_NODIFF(nx, ny, fhe, 'fhe')
-  CALL B2XVFF_NODIFF(nx, ny, fhi, 'fhi')
-  CALL B2XVFF_NODIFF(nx, ny, fch, 'fch')
-  CALL B2XVFF_NODIFF(nx, ny, fne, 'fne')
-  CALL B2XVFF_NODIFF(nx, ny, fni, 'fni')
+  CALL B2XVFF(nx, ny, fhe, 'fhe')
+  CALL B2XVFF(nx, ny, fhi, 'fhi')
+  CALL B2XVFF(nx, ny, fch, 'fch')
+  CALL B2XVFF(nx, ny, fne, 'fne')
+  CALL B2XVFF(nx, ny, fni, 'fni')
 !
   redep_max = 0.0_R8
   yself_max = 0.0_R8
@@ -549,9 +558,9 @@ CONTAINS
     REAL(kind=r8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf
     INTRINSIC MAX
     EXTERNAL XERRAB
+    INTRINSIC NINT
     INTRINSIC ABS
     INTRINSIC SQRT
-    INTRINSIC NINT
     INTRINSIC EXP
     REAL(r8) :: y9
     REAL(r8) :: y10
@@ -575,7 +584,7 @@ CONTAINS
     REAL(kind=r8) :: pwx1
     REAL(kind=r8) :: pwr1
     INTEGER :: arg14
-    REAL(kind=r8) :: result10
+    REAL(kind=r8) :: result11
 !
     iwall = xymap(ix, iy)
     tef = (te(ix, iy)*hhn+te(ixn, iyn)*hh)/(hhn+hh)
@@ -659,7 +668,7 @@ CONTAINS
       ELSE
         abs0 = -(am(is0)-am(is))
       END IF
-      IF (zn(is0) .NE. zn(is) .OR. amtol .LT. abs0) is0 = is
+      IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs0) is0 = is
 !dpc
       IF (is_neutral(is)) is1 = is
       IF (am(is1) - am(is) .GE. 0.) THEN
@@ -667,9 +676,11 @@ CONTAINS
       ELSE
         abs1 = -(am(is1)-am(is))
       END IF
-      IF (zn(is1) .NE. zn(is) .OR. amtol .LT. abs1) WRITE(*, *) &
+      IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs1) WRITE(*&
+&                                                               , *) &
 &                                        'b2stbr problem: is, is0, is1 '&
-&                                                   , is, is0, is1
+&                                                               , is, &
+&                                                               is0, is1
       IF (is0 .NE. is1) THEN
         IF (ncall .EQ. 0) WRITE(*, *) 'b2stbr: setting is0 to is1 ', is0&
 &                         , is1
@@ -800,8 +811,8 @@ CONTAINS
           END IF
           arg14 = sput_dst + 1
           arg2 = (pof-phi_app)*zaf(sput_dst+1)*ev
-          result10 = SPUTTER(arg14, zaf(sput_dst+1), sput_dst, arg2)
-          redep_self_sputter = result10*(sput_phys+cbrec(3, sput_dst+1, &
+          result11 = SPUTTER(arg14, zaf(sput_dst+1), sput_dst, arg2)
+          redep_self_sputter = result11*(sput_phys+cbrec(3, sput_dst+1, &
 &           ireg))
           IF (f_redep(ixn, iyn, sput_dst) .GT. 0.0_R8 .AND. &
 &             redep_self_sputter .GT. 0.0_R8 .AND. ((output .GT. 2 .OR. &
@@ -816,15 +827,15 @@ CONTAINS
             yself_max = yself_max
           END IF
           arg12 = einc*ev
-          result10 = SPUTTER(is, zaf(is), sput_dst, arg12)
-          t1 = t0*result10*(sput_phys+cbrec(3, is, ireg))*(1.0_R8-&
+          result11 = SPUTTER(is, zaf(is), sput_dst, arg12)
+          t1 = t0*result11*(sput_phys+cbrec(3, is, ireg))*(1.0_R8-&
 &           f_redep(ixn, iyn, sput_dst))/(1.0_R8-f_redep(ixn, iyn, &
 &           sput_dst)*redep_self_sputter)
 ! the two lines above are the reduction of sputtering due to prompt redeposition
 ! and then the multiplication due to self-sputtering of the redeposited particles
           arg12 = einc*ev
-          result10 = SPUTTER(is, zaf(is), sput_dst, arg12)
-          physical_sputtering(iwall, is) = result10*(sput_phys+cbrec(3, &
+          result11 = SPUTTER(is, zaf(is), sput_dst, arg12)
+          physical_sputtering(iwall, is) = result11*(sput_phys+cbrec(3, &
 &           is, ireg))*(1.0_R8-f_redep(ixn, iyn, sput_dst))/(1.0_R8-&
 &           f_redep(ixn, iyn, sput_dst)*redep_self_sputter)
           IF (ncall .NE. 0 .OR. sputter_namelist_used) t1 = (&
@@ -850,29 +861,29 @@ CONTAINS
           IF (sputter_energy_on .NE. 0) THEN
             arg14 = sput_dst + 1
             arg2 = (pof-phi_app)*zaf(sput_dst+1)*ev
-            result10 = SPUTTER2(arg14, sput_dst, arg2)
-            redep_self_energy = result10*(sput_phys+cbrec(3, sput_dst+1&
+            result11 = SPUTTER2(arg14, sput_dst, arg2)
+            redep_self_energy = result11*(sput_phys+cbrec(3, sput_dst+1&
 &             , ireg))
             arg12 = einc*ev
-            result10 = SPUTTER2(is, sput_dst, arg12)
-            t2 = t0*result10*(sput_phys+cbrec(3, is, ireg))*einc*ev*(&
+            result11 = SPUTTER2(is, sput_dst, arg12)
+            t2 = t0*result11*(sput_phys+cbrec(3, is, ireg))*einc*ev*(&
 &             1.0_R8-f_redep(ixn, iyn, sput_dst))
 !xpb  We now must remove the energy lost in ionizing the promptly redeposited material
 !xpb  but from the electrons!
             arg12 = einc*ev
-            result10 = SPUTTER(is, zaf(is), sput_dst, arg12)
-            t3 = -(t0*ev*result10*(sput_phys+cbrec(3, is, ireg))*rpi(ixn&
+            result11 = SPUTTER(is, zaf(is), sput_dst, arg12)
+            t3 = -(t0*ev*result11*(sput_phys+cbrec(3, is, ireg))*rpi(ixn&
 &             , iyn, sput_dst+1)*f_redep(ixn, iyn, sput_dst)/(1.0_R8-&
 &             f_redep(ixn, iyn, sput_dst)*redep_self_sputter))
 !xpb  We must now add the energy brought back in by the self-sputtered material
             arg12 = einc*ev
-            result10 = SPUTTER(is, zaf(is), sput_dst, arg12)
-            t2 = t2 + t0*result10*(sput_phys+cbrec(3, is, ireg))*f_redep&
+            result11 = SPUTTER(is, zaf(is), sput_dst, arg12)
+            t2 = t2 + t0*result11*(sput_phys+cbrec(3, is, ireg))*f_redep&
 &             (ixn, iyn, sput_dst)*redep_self_energy*(pof-phi_app)*ev/(&
 &             1.0_R8-f_redep(ixn, iyn, sput_dst)*redep_self_sputter)
             arg12 = einc*ev
-            result10 = SPUTTER2(is, sput_dst, arg12)
-            physical_sputtering_energy(iwall, is) = result10*(sput_phys+&
+            result11 = SPUTTER2(is, sput_dst, arg12)
+            physical_sputtering_energy(iwall, is) = result11*(sput_phys+&
 &             cbrec(3, is, ireg))
             IF (ncall .NE. 0 .OR. sputter_namelist_used) t2 = (&
 &               sputter_yield2(ix, iy, is, 2)+sput_phys_alpha*t2)/(1+&
@@ -942,11 +953,11 @@ CONTAINS
 &           0) THEN
 ! use reflection model
           arg12 = einc*ev
-          result10 = REFLECT(is, arg12, iwall)
-          t1 = t0*result10
+          result11 = REFLECT(is, arg12, iwall)
+          t1 = t0*result11
           arg12 = einc*ev
-          result10 = REFLECT2(is, arg12, iwall)
-          t2 = t0*result10*einc*ev
+          result11 = REFLECT2(is, arg12, iwall)
+          t2 = t0*result11*einc*ev
           itrack = track_index(is0)
           IF (itrack .GT. 0 .AND. itrack .LE. ntrack .AND. iwall .GT. 0 &
 &             .AND. main_call) deposition(iwall, itrack) = deposition(&
@@ -988,17 +999,21 @@ CONTAINS
         ELSE
           abs2 = -(am(is0)-am(is))
         END IF
-        IF (zn(is0) .NE. zn(is) .OR. amtol .LT. abs2) is0 = is
+        IF (NINT(zn(is0)) .NE. NINT(zn(is)) .OR. amtol .LT. abs2) is0 = &
+&           is
 !xpb
-        IF (zamax(is) .EQ. zn(is)) is1 = is
+        IF (NINT(zamax(is)) .EQ. NINT(zn(is))) is1 = is
         IF (am(is1) - am(is) .GE. 0.) THEN
           abs3 = am(is1) - am(is)
         ELSE
           abs3 = -(am(is1)-am(is))
         END IF
-        IF (zn(is1) .NE. zn(is) .OR. amtol .LT. abs3) WRITE(*, *) &
+        IF (NINT(zn(is1)) .NE. NINT(zn(is)) .OR. amtol .LT. abs3) WRITE(&
+&                                                                 *, *) &
 &                                        'b2stbr problem: is, is0, is1 '&
-&                                                     , is, is0, is1
+&                                                                 , is, &
+&                                                                 is0, &
+&                                                                 is1
         IF (is0 .NE. is1) THEN
           IF (ncall .EQ. 0) WRITE(*, *) 'b2stbr: setting is0 to is1 ', &
 &                           is0, is1

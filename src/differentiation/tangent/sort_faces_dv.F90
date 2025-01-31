@@ -25,7 +25,6 @@
 SUBROUTINE SORT_FACES_NODIFF(nfclist, fclist, nfclbl, fclbl, ilbl, m)
   USE B2MOD_TYPES
   USE B2US_MAP_DIFFV
-  USE B2US_GEO_DIFFV
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: nfclist, nfclbl, ilbl
@@ -73,9 +72,15 @@ SUBROUTINE SORT_FACES_NODIFF(nfclist, fclist, nfclbl, fclbl, ilbl, m)
       NULLIFY(face%prev)
       NULLIFY(face%next)
       face%fcno = fcss(istart)
+! orientation such that right-hand normal points
+! outwards in case of boundary faces
       lout(istart) = .true.
       face%vx1 = m%fcvx(face%fcno, 1)
       face%vx2 = m%fcvx(face%fcno, 2)
+      IF (m%fccv(face%fcno, 1) .GT. m%nci) THEN
+        face%vx1 = m%fcvx(face%fcno, 2)
+        face%vx2 = m%fcvx(face%fcno, 1)
+      END IF
       head => face
       tail => face
 !

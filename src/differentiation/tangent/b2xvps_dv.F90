@@ -57,7 +57,7 @@ SUBROUTINE B2XVPS_NODIFF(ncv, nfc, ns, pl, dv)
 !
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF
+  EXTERNAL B2XVSG
   INTEGER :: arg1
 !
 !-----------------------------------------------------------------------
@@ -67,19 +67,19 @@ SUBROUTINE B2XVPS_NODIFF(ncv, nfc, ns, pl, dv)
 !   ..subprogram start-up calls
   CALL SUBINI('b2xvps')
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
 !
 ! ..test state
 !   ..test sign of ne, na, te, ti, tn
-  CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
+  CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
   arg1 = ncv*ns
-  CALL B2XVSG_NODIFF(arg1, pl%na, 1, 'na', '.gt.')
-  CALL B2XVSG_NODIFF(ncv, pl%te, 1, 'te', '.gt.')
-  CALL B2XVSG_NODIFF(ncv, pl%ti, 1, 'ti', '.gt.')
-  CALL B2XVSG_NODIFF(ncv, pl%tn, 1, 'tn', '.ge.')
+  CALL B2XVSG(arg1, pl%na, 1, 'na', '.gt.')
+  CALL B2XVSG(ncv, pl%te, 1, 'te', '.gt.')
+  CALL B2XVSG(ncv, pl%ti, 1, 'ti', '.gt.')
+  CALL B2XVSG(ncv, pl%tn, 1, 'tn', '.ge.')
   arg1 = ncv*ns
-  CALL B2XVSG_NODIFF(arg1, dv%kinrgy, 1, 'kinrgy', '.ge.')
+  CALL B2XVSG(arg1, dv%kinrgy, 1, 'kinrgy', '.ge.')
 !
 ! ..return
   CALL SUBEND()

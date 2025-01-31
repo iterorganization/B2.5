@@ -9,9 +9,13 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : ncall_b2tlmv
+#ifndef NAGFOR
+      use b2mod_ad
+     & , only : my_out_folder
+#endif
       use b2mod_subsys
       implicit none
-      integer nCv, nFc, nVx, isb
+      integer, intent (in) ::  nCv, nFc, nVx, isb
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -52,7 +56,7 @@
         do iFc = 1, nFc
           if (nbf(iFc) .le. switch%b2tlmv_ni_min) then
            ! Set at min value
-           cflmv_loc(iFc) = switch%b2tlmv_ni_min
+           cflmv_loc(iFc) = switch%b2tlmv_cflmv_min
           elseif (nbf(iFc) .lt. switch%b2tlmv_ni_max ) then
            ! Interpolate for smooth transition
            cflmv_loc(iFc) = 

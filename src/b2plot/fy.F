@@ -16,17 +16,14 @@ c
      *   lmin,lmax,xmin,xmax,psign,poffset,pnorm,x1,x2
 #ifdef WG_TODO
       integer ixc
-      real (kind=R8) :: y_transform
 #endif
+      real (kind=R8) :: y_transform
       real (kind=R8), allocatable :: ds(:), wd(:), wrk(:)
       integer, allocatable :: cvlist(:)
       integer i,j,iyl,iyr,iy,is,isep,iCv,iCn,iFc,iVx,nlist
       integer iystart,iyend
       integer len_of_digits
       external xertst, len_of_digits
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
 
       call subini ('fy')
       if(mpg%isClassicalGrid.eq.0) return
@@ -147,26 +144,24 @@ c     the line format common
       allocate(wrk(iystart:iyend))
       do is=0,ndim(2,iwrk)-1
         tmpstring1=textwk(is,iwrk)
-        iCv=mpg%imapCv(ix,iystart)
+        iCv=cvlist(1)
         lmin=work(iCv,is,iwrk)
         lmax=work(iCv,is,iwrk)
         if(y_transform_l .ne. 0) then
-#ifdef WG_TODO
-          do iy=iystart,jsep
-            iCv=mpg%imapCv(ix,iy)
-            wrk(iy)=y_transform(cr(ixc,iy),cz(ixc,iy))
-            write(*,*) wrk(iy),cz(ixc,iy)
+          do iy=1,icsepomp-1
+            iCv=cvlist(iy)
+            wrk(iy)=y_transform(geo%cvX(iCv),geo%cvY(iCv))
+            write(*,*) wrk(iy),geo%cvY(iCv)
             lmin=min(lmin,work(iCv,is,iwrk))
             lmax=max(lmax,work(iCv,is,iwrk))
           enddo
-          do iy=jsep+1,iyend
-            iCv=mpg%imapCv(ix,iy)
-            wrk(iy)=y_transform(cr(ixx,iy),cz(ixx,iy))
-            write(*,*) wrk(iy),cz(ixx,iy)
+          do iy=icsepomp,nlist
+            iCv=cvlist(iy)
+            wrk(iy)=y_transform(geo%cvX(iCv),geo%cvY(iCv))
+            write(*,*) wrk(iy),geo%cvY(iCv)
             lmin=min(lmin,work(iCv,is,iwrk))
             lmax=max(lmax,work(iCv,is,iwrk))
           enddo
-#endif
         else if (plot_vs_norm_psi.or.plot_vs_full_psi.or.
      &           plot_vs_root_psi) then
           xmin = geo%vxFpsi(mpg%cvVx(mpg%cvVxP(cvlist(1),1)))
@@ -538,9 +533,6 @@ c
       real (kind=R8), allocatable :: wrk(:)
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
 
       if (nimp.eq.0) return
       if (b2plot_debug.ge.5)
@@ -830,9 +822,6 @@ c
       real (kind=R8), allocatable :: wrk(:)
       character*44 tmpstring1,tmpstring2
       character*256 tmpstring,titlestring
-c     the line format common
-      character*10 linefmt
-      common /line_format/ linefmt
 
       if (nomp.eq.0) return
       if (b2plot_debug.ge.5)

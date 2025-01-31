@@ -29,11 +29,10 @@ SUBROUTINE B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, isb, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!WG_TODO      use b2mod_balance                                                 !djm Jan2017
-!WG_TODO     & , only : fmo_flua, fmo_cvsa, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2urmo
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
@@ -105,10 +104,10 @@ SUBROUTINE B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, isb, &
 & , wrkd(nbdirsmax, ncv), wrkfd(nbdirsmax, nfc, 0:1), wrkvd(nbdirsmax, &
 & nvx)
   REAL(kind=r8), PARAMETER :: eps=1.0e-60_R8
+  REAL(kind=r8) :: ubv(nvx), dub(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, CALCFLOW_NODIFF, &
-&     CALCCOEF_NODIFF
+  EXTERNAL B2XVSG, CALCFLOW_NODIFF, CALCCOEF_NODIFF
   EXTERNAL CALCFLOW_DV
   CHARACTER(len=23) :: arg1
   CHARACTER(len=22) :: arg10
@@ -123,13 +122,13 @@ SUBROUTINE B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, isb, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2urmo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2urmo .LT. 3) THEN
 !    ..test sign of rob, smb1, smb3
-    CALL B2XVSG_NODIFF(ncv, rob, 1, 'rob', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, smb(1, 1), 1, 'smb1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, smb(1, 3), 1, 'smb3', '.le.')
+    CALL B2XVSG(ncv, rob, 1, 'rob', '.gt.')
+    CALL B2XVSG(ncv, smb(1, 1), 1, 'smb1', '.le.')
+    CALL B2XVSG(ncv, smb(1, 3), 1, 'smb3', '.le.')
 !    ..test sign of cvsb
     DO nd=1,nbdirsmax
       wrkfd(nd, :, :) = 0.D0
@@ -140,8 +139,8 @@ SUBROUTINE B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, isb, &
     END DO
     wrkf(:, 0) = cvsb(:, 0)*geo%fcqalf(:, 0)
     wrkf(:, 1) = cvsb(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 0), 1, 'cvsb0', '.ge.')
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 1), 1, 'cvsb1', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 0), 1, 'cvsb0', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 1), 1, 'cvsb1', '.ge.')
   ELSE
     DO nd=1,nbdirsmax
       wrkfd(nd, :, :) = 0.D0
@@ -173,10 +172,6 @@ SUBROUTINE B2URMO_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, isb, &
 ! - consistency in case of drifts (in particular: fna_cor?)
 ! - should contribution from flubv be in here?
 !
-!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
-!WG_TODO        fmo_cvsa(:,:,isb)=flv
-!WG_TODO        fmo_flua(:,:,isb)=flf
-!WG_TODO      endif
 !
   IF (switch%b2npmo_iout .EQ. 1 .OR. switch%iout_b2wdat .EQ. 4) THEN
     WRITE(chns, '(i3.3)') isb
@@ -251,11 +246,10 @@ SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
   USE B2US_MAP_DIFFV
-!WG_TODO      use b2mod_balance                                                 !djm Jan2017
-!WG_TODO     & , only : fmo_flua, fmo_cvsa, balance_netcdf
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_AD_DIFFV, ONLY : ncall_b2urmo
+  USE B2MOD_AD_DIFFV, ONLY : my_out_folder
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -316,10 +310,10 @@ SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
   REAL(kind=r8) :: flf(nfc, 0:1), flv(nfc, 0:1), wrk(ncv), wrkf(nfc, 0:1&
 & ), wrkv(nvx)
   REAL(kind=r8), PARAMETER :: eps=1.0e-60_R8
+  REAL(kind=r8) :: ubv(nvx), dub(nfc, 0:1)
 !   ..procedures
   EXTERNAL XERTST
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, CALCFLOW_NODIFF, &
-&     CALCCOEF_NODIFF
+  EXTERNAL B2XVSG, CALCFLOW_NODIFF, CALCCOEF_NODIFF
   CHARACTER(len=23) :: arg1
   CHARACTER(len=22) :: arg10
 !   ..initialisation
@@ -331,18 +325,18 @@ SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
 !   ..subprogram start-up calls
   CALL SUBINI('b2urmo')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..extensive tests on first few calls
   IF (ncall_b2urmo .LT. 3) THEN
 !    ..test sign of rob, smb1, smb3
-    CALL B2XVSG_NODIFF(ncv, rob, 1, 'rob', '.gt.')
-    CALL B2XVSG_NODIFF(ncv, smb(1, 1), 1, 'smb1', '.le.')
-    CALL B2XVSG_NODIFF(ncv, smb(1, 3), 1, 'smb3', '.le.')
+    CALL B2XVSG(ncv, rob, 1, 'rob', '.gt.')
+    CALL B2XVSG(ncv, smb(1, 1), 1, 'smb1', '.le.')
+    CALL B2XVSG(ncv, smb(1, 3), 1, 'smb3', '.le.')
 !    ..test sign of cvsb
     wrkf(:, 0) = cvsb(:, 0)*geo%fcqalf(:, 0)
     wrkf(:, 1) = cvsb(:, 1)*geo%fcqalf(:, 1)
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 0), 1, 'cvsb0', '.ge.')
-    CALL B2XVSG_NODIFF(nfc, wrkf(:, 1), 1, 'cvsb1', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 0), 1, 'cvsb0', '.ge.')
+    CALL B2XVSG(nfc, wrkf(:, 1), 1, 'cvsb1', '.ge.')
   END IF
 !
 ! ..compute flux
@@ -358,10 +352,6 @@ SUBROUTINE B2URMO_NODIFF(ncv, nfc, nvx, switch, geo, mpg, isb, ub, rob, &
 ! - consistency in case of drifts (in particular: fna_cor?)
 ! - should contribution from flubv be in here?
 !
-!WG_TODO      if (balance_netcdf.ne.0) then !djm Jan2017
-!WG_TODO        fmo_cvsa(:,:,isb)=flv
-!WG_TODO        fmo_flua(:,:,isb)=flf
-!WG_TODO      endif
 !
   IF (switch%b2npmo_iout .EQ. 1 .OR. switch%iout_b2wdat .EQ. 4) THEN
     WRITE(chns, '(i3.3)') isb

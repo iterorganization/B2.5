@@ -16,42 +16,12 @@ MODULE B2MOD_FEEDBACK_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_AD_DIFFV, ONLY : nsdmax
+  USE B2MOD_DIMENSIONS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
 !
   INTEGER, PARAMETER :: nvac=4, nvacreg=4
-!  Common dimensions
-!
-!  version : 01.12.98 21:42
-!
-!
-!
-! parameters that are common to Eirene and B2
-!
-!
-! NOTE: DEF_NXD should not include the additional cells to handle the cuts
-!*** Max. number of groups of Eirene surfaces for which the data can
-!*** be transferred from B2 (DG specification "Surface special")
-!
-! new! [2002.04.22]
-! new! [2002.06.14]
-!
-!
-! parameters that are unique to B2
-!
-!
-!
-!
-! parameters that are unique to Eirene
-!
-!
-!
-!
-! parameters needed by uinp
-!
-!
-!
 !
 !   ..variables
   REAL(kind=r8), SAVE :: cum_volrec
@@ -62,18 +32,20 @@ MODULE B2MOD_FEEDBACK_DIFFV
   INTEGER, SAVE :: vacuum_communication, vacuum_communication_nreg(nvac)&
 & , vacuum_communication_method(nvac), vacuum_communication_iy(nvacreg, &
 & nvac), vacuum_communication_ix1(nvacreg, nvac), &
-& vacuum_communication_ix2(nvacreg, nvac), na_feedback_choice(0:6-1), &
-& na_feedback_option(0:6-1), na_feedback_actuator(0:6-1), &
-& na_feedback_ix1(0:6-1), na_feedback_ix2(0:6-1), na_feedback_iy1(0:6-1)&
-& , na_feedback_iy2(0:6-1), na_feedback_ib(0:6-1)
+& vacuum_communication_ix2(nvacreg, nvac), na_feedback_choice(0:def_natm&
+& -1), na_feedback_option(0:def_natm-1), na_feedback_actuator(0:def_natm&
+& -1), na_feedback_ix1(0:def_natm-1), na_feedback_ix2(0:def_natm-1), &
+& na_feedback_iy1(0:def_natm-1), na_feedback_iy2(0:def_natm-1), &
+& na_feedback_ib(0:def_natm-1)
   REAL(kind=r8), SAVE :: saved_cbshe_core, saved_cbshi_core, &
 & saved_cbsna_core, saved_cbsch_core, saved_cbsna_pfr1, saved_cbsna_pfr2&
 & , saved_cbsna_sol, vacuum_communication_alpha(0:nsdmax-1, nvac), &
-& vacuum_communication_beta(0:nsdmax-1, nvac), na_feedback_target(0:6-1)&
-& , na_feedback_time(0:6-1), saved_na_feedback_actuator(0:6-1), &
-& na_feedback_alpha(0:6-1), na_feedback_beta(0:6-1), na_feedback_const(0&
-& :6-1), na_feedback_puff_min(0:6-1), na_feedback_puff_max(0:6-1), &
-& na_feedback_overshoot(0:6-1)
+& vacuum_communication_beta(0:nsdmax-1, nvac), na_feedback_target(0:&
+& def_natm-1), na_feedback_time(0:def_natm-1), &
+& saved_na_feedback_actuator(0:def_natm-1), na_feedback_alpha(0:def_natm&
+& -1), na_feedback_beta(0:def_natm-1), na_feedback_const(0:def_natm-1), &
+& na_feedback_puff_min(0:def_natm-1), na_feedback_puff_max(0:def_natm-1)&
+& , na_feedback_overshoot(0:def_natm-1)
   NAMELIST /feedback/ saved_cbshe_core, saved_cbshi_core, &
 &     saved_cbsna_core, saved_cbsch_core, saved_cbsna_pfr1, &
 &     saved_cbsna_pfr2, saved_cbsna_sol, saved_na_feedback_actuator
@@ -98,23 +70,23 @@ MODULE B2MOD_FEEDBACK_DIFFV
   DATA saved_cbsna_pfr1 /0.0_R8/
   DATA saved_cbsna_pfr2 /0.0_R8/
   DATA cum_volrec /0.0_R8/
-  DATA saved_na_feedback_actuator /6*0.0_R8/
-  DATA na_feedback_target /6*0.0_R8/
-  DATA na_feedback_time /6*0.0_R8/
-  DATA na_feedback_choice /6*0/
-  DATA na_feedback_option /6*0/
-  DATA na_feedback_actuator /6*0/
-  DATA na_feedback_ix1 /6*-2/
-  DATA na_feedback_ix2 /6*-2/
-  DATA na_feedback_iy1 /6*-2/
-  DATA na_feedback_iy2 /6*-2/
-  DATA na_feedback_ib /6*-1/
-  DATA na_feedback_alpha /6*0.001_R8/
-  DATA na_feedback_beta /6*1.0_R8/
-  DATA na_feedback_const /6*0.0_R8/
-  DATA na_feedback_puff_min /6*0.0_R8/
-  DATA na_feedback_puff_max /6*0.0_R8/
-  DATA na_feedback_overshoot /6*0.0_R8/
+  DATA saved_na_feedback_actuator /def_natm*0.0_R8/
+  DATA na_feedback_target /def_natm*0.0_R8/
+  DATA na_feedback_time /def_natm*0.0_R8/
+  DATA na_feedback_choice /def_natm*0/
+  DATA na_feedback_option /def_natm*0/
+  DATA na_feedback_actuator /def_natm*0/
+  DATA na_feedback_ix1 /def_natm*-2/
+  DATA na_feedback_ix2 /def_natm*-2/
+  DATA na_feedback_iy1 /def_natm*-2/
+  DATA na_feedback_iy2 /def_natm*-2/
+  DATA na_feedback_ib /def_natm*-1/
+  DATA na_feedback_alpha /def_natm*0.001_R8/
+  DATA na_feedback_beta /def_natm*1.0_R8/
+  DATA na_feedback_const /def_natm*0.0_R8/
+  DATA na_feedback_puff_min /def_natm*0.0_R8/
+  DATA na_feedback_puff_max /def_natm*0.0_R8/
+  DATA na_feedback_overshoot /def_natm*0.0_R8/
 
 CONTAINS
 !
@@ -173,7 +145,7 @@ CONTAINS
     INTRINSIC ABS
     INTRINSIC MAXVAL
     INTRINSIC TRIM
-    REAL(kind=r8), DIMENSION(0:6-1) :: abs0
+    REAL(kind=r8), DIMENSION(0:def_natm-1) :: dabs0
     REAL(kind=r8) :: result1
 !
     IF (edition .EQ. '    ') THEN
@@ -183,7 +155,7 @@ CONTAINS
       filename = 'b2.feedback_save.parameters.'//edition
     END IF
 !xpb We do the write explicitly to avoid array overflows when the problem
-!xpb size is changed in DIMENSIONS.F
+!xpb size is changed in b2mod_dimensions
     OPEN(nwrite, file=trim(filename)) 
     WRITE(nwrite, '(a9)') '&FEEDBACK'
     IF (saved_cbshe_core .NE. 0.0_R8) WRITE(nwrite, *) &
@@ -208,12 +180,12 @@ CONTAINS
 &                                    'SAVED_CBSNA_SOL= ', &
 &                                    saved_cbsna_sol, ','
     WRITE(hlp_frm, '(a,i2,a)') '(a,1p,', nspecies, '(1x,1e15.8,'',''))'
-    WHERE (saved_na_feedback_actuator .GE. 0.0) 
-      abs0 = saved_na_feedback_actuator
+    WHERE (saved_na_feedback_actuator .GE. 0.) 
+      dabs0 = saved_na_feedback_actuator
     ELSEWHERE
-      abs0 = -saved_na_feedback_actuator
+      dabs0 = -saved_na_feedback_actuator
     END WHERE
-    result1 = MAXVAL(abs0)
+    result1 = MAXVAL(dabs0)
     IF (result1 .GT. 0.0_R8) WRITE(nwrite, hlp_frm) &
 &                            'SAVED_NA_FEEDBACK_ACTUATOR=', (&
 &                            saved_na_feedback_actuator(is), is=0,&
