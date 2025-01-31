@@ -472,7 +472,6 @@ c b2sihs_
       real (kind=R8) :: b2sihs__rf2
       real (kind=R8) :: b2sihs__rf3
       real (kind=R8) :: b2sihs__rf4
-      real (kind=R8) :: b2sihs_ne_min
 
 c b2news_
       integer :: b2news_ncallout
@@ -1073,7 +1072,6 @@ c b2sihs_
       s % b2sihs__rf2 = 1.0_R8
       s % b2sihs__rf3 = 1.0_R8
       s % b2sihs__rf4 = 1.0_R8
-      s % b2sihs_ne_min = 1.0e18_R8
 
 c b2news_
       s % b2news_ncallout = -1
@@ -1750,7 +1748,6 @@ c b2sihs_
       call ipgetr ('b2sihs_rf2', s%b2sihs__rf2)
       call ipgetr ('b2sihs_rf3', s%b2sihs__rf3)
       call ipgetr ('b2sihs_rf4', s%b2sihs__rf4)
-      call ipgetr ('b2sihs_ne_min', s%b2sihs_ne_min)
 
 c b2news_
       call ipgeti ('b2news_ncallout', s%b2news_ncallout)
