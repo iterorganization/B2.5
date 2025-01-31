@@ -4,7 +4,6 @@
       program b2mnastra
       use b2mod_types
       use b2mod_version
-      use b2mod_work
       use b2mod_ma28
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling

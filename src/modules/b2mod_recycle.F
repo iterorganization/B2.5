@@ -269,7 +269,6 @@ c main reference:
 c   Horsten, Niels, Giovanni Samaey, and M. Baelmans.
 c  "Development and assessment of 2D fluid neutral models that include atomic databases and a microscopic reflection model."
 c   Nuclear Fusion 57.11 (2017): 116043.
-      use b2mod_rates
       use b2mod_b2cmpa
       use b2us_geo
       use b2us_plasma
@@ -413,7 +412,6 @@ c if incident flux is negative (this can happen if the diffusion approximation i
      &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine is an interface to CalcIncidentFluxesMaxwellian and CalcIncidentFluxesDiffusion
 c     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
-      use b2mod_rates
       use b2mod_b2cmpa
       use b2us_geo
       use b2us_plasma
@@ -507,7 +505,6 @@ c     It will decide which one to use based on the minimum Knudsen of the neutra
 c     If the choice is based on Kn at each boundary face (as is done in CalcIncidentFluxesKn), additional convergence problems may arise.
 c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest Kn of that "stratum".
 c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
-      use b2mod_rates
       use b2mod_b2cmpa
       use b2us_geo
       use b2us_plasma
@@ -638,7 +635,6 @@ c     Convert energy flux densities in net energy flux contributions
 !mb   17.07.17
 c     This routine calculates the recycled neutral particle, momentum and energy fluxes based
 c     on the diffusion approximation (see papers of Niels Horsten).
-      use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_neutrals_namelist , only:E_fc, accel_ion
       use b2us_geo
@@ -811,7 +807,6 @@ c     Convert energy flux densities in energy fluxes
 !mb   17.07.17
 c     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the diffusion approximation (see papers of Niels Horsten).
       use b2mod_b2cmpa
-      use b2mod_rates
       use b2mod_neutrals_namelist , only:E_fc
       use b2us_geo
       use b2us_plasma
@@ -1059,7 +1054,6 @@ c if incident flux is negative (this can happen if the diffusion approximation i
 c     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
 c     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
       use b2mod_b2cmpa
-      use b2mod_rates
       use b2us_geo
       use b2us_plasma
       use b2us_map
@@ -1163,7 +1157,6 @@ c     If the choice is based on the Kn at each boundary face (as is done in Calc
 c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest Kn of that "stratum".
 c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
       use b2mod_b2cmpa
-      use b2mod_rates
       use b2us_geo
       use b2us_plasma
       use b2us_map
@@ -1532,7 +1525,6 @@ c      Kn1----Kn------Kn2
       subroutine CalcMinKn(iCv,isn,istra,
      &            pl,dv,rt,L,min_Kn,Kn,mfp)
 c     This routine calculates the minimum mean free path for a certain stratum
-      use b2mod_rates
       use b2mod_b2cmpa
       use b2us_plasma
       use b2mod_neutrals_namelist

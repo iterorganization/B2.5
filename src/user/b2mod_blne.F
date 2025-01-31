@@ -178,8 +178,7 @@ c*** Values by species
       logical ltarg_hlp(ntrgs_tmp)
 c-----------------------------------------------------------------------
 
-      integer i, j, k, n, ic, is, ix, iy, iCv, iFc,
-     .        ixr, iyr, ixf, iyf
+      integer i, j, k, n, ic, is, iCv, iFc
       real (kind=R8) :: hlp_h, hlp_p
       logical lcross_hlp, lbound_hlp, lcore_hlp
       real (kind=R8) :: intface_s
@@ -201,7 +200,7 @@ c
      ,     pwtnu_tmp, pwtio_tmp,
      ,     pwtds_tmp,
      +  ltarg_hlp,
-     +  i, j, k, ic, is, ix, iy,
+     +  i, j, k, ic, is,
      +  hlp_h, hlp_p,
      +  lcross_hlp, lbound_hlp, lcore_hlp
 c=======================================================================

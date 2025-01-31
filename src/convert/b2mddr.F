@@ -6,11 +6,8 @@
       use b2mod_mdsplus
       use b2mod_b2cmfs
       use b2mod_b2cmrc
-      use b2mod_b2cmgs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
-      use b2mod_b2cmwg
       use b2mod_subsys
       use b2mod_ipmain
       use b2us_geo

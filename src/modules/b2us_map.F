@@ -27,7 +27,7 @@
         integer, allocatable :: cvVx(:)                !         listing for every cell the corresponding vertex numbers
         integer, allocatable :: vxFcP(:,:)             ! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces
         integer, allocatable :: vxFc(:)                !         listing for every vertex the corresponding face numbers
-        integer, allocatable :: vxCvP(:,:)             ! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells
+        integer, allocatable :: vxCvP(:,:)             ! (nVx,2) pointing for every vertex to the first index number in the vxCv list and its number of cells
         integer, allocatable :: vxCv(:)                !         listing for every vertex the corresponding cell numbers
         integer, allocatable :: ftCvP(:,:)             ! (nFt,2) pointing for every flux tube to the first index number in the ftCv list and its number of cells
         integer, allocatable :: ftCv(:)                !         listing for every flux tube the corresponding cell numbers
