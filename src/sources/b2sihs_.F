@@ -3,9 +3,8 @@
 
       subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ne2,
-     &  ni, nn, fch, cvsa, cvsa_cl, cvsa_drho, cvsahz_eff,
-     &  f_luc_sg, alfx_c, sigx_c, rza, rz2, st_ext,
-     &  she0, shi0, shn0, srw)
+     &  ni, nn, fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c,
+     &  rza, rz2, st_ext, she0, shi0, shn0, srw)
       use b2mod_types
       use b2mod_tallies
       use b2mod_constants
@@ -55,7 +54,7 @@
      *  fac_ExB(nFc), na(nCv,0:ns-1), ua(nCv,0:ns-1), ue(nCv),        !srv 05.03.11
      &  te(nCv), ti(nCv), tn(nCv), po(nCv), ne(nCv), ni(nCv,0:1),   !srv 07.05.08 01.07.09
      &  lnlam(nCv), f_luc_sg(nFc), alfx_c(nCv), sigx_c(nCv),
-     &  nn(nCv)
+     &  nn(nCv), ne2(nCv)
       real (kind=R8) ::
      *  fch(nFc,0:1),
      *  cvsa(nFc,0:1,0:ns-1), cvsahz_eff(nFc,0:1,0:ns-1),
@@ -107,10 +106,7 @@
      4  ce2(nCv), cimp1(nCv,0:ns-1), cimp2(nCv,0:ns-1),
      5  zetap(nCv), zetae(nCv),
      6  gti(nCv), gte(nCv),
-     7  zmc(nCv), z11(nCv),                                             !som 13.11.20
-     8  z12(nCv), z22(nCv),
-     9  zf1(nCv), zf2(nCv),
-     1  smbch(nCv,0:3), smbtf(nCv,0:3),
+     7  smbch(nCv,0:3), smbtf(nCv,0:3),
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)                              !srv 13.01.17 05.07.17 }
       character chk*1                                                   !srv 11.09.09 } !srv 05.07.17
@@ -408,8 +404,13 @@
       endif
       b2visa=0.0_R8
       srw%b2sihs_visa=0.0_R8
-
-
+      if (switch%min_collisions .gt. 0.0_R8) then
+        call b2tnci (mpg, geo, switch, nCv, ns, ti, te, rz2,
+     &   ne, ne2, na, lnlam, ismain, st_ext, wrkf, 
+     &   wrkc)
+      else
+        wrkc = 1.0_R8
+      endif
       do is = 0, ns-1
        if(.not.is_neutral(is).or.switch%use_eirene.eq.0.or.           !srv 29.08.02
      &                           switch%spatial_hybrid.eq.1) then
@@ -450,6 +451,7 @@
          visc(:,0) = visc(:,0) + wrkc
         endif
         do iCv = 1, mpg%nCi
+          if (wrkc(iCv) .le. switch%min_collisions) cycle
           t0 = switch%b2sihs_phm2*(1.0_R8-switch%BoRiS)*visc(iCv,0)
           t1 = switch%b2sihs_phm8*(1.0_R8-switch%BoRiS)*visc(iCv,1)
           if (switch%tn_style.eq.0) then
@@ -499,12 +501,6 @@
        endif                                                           !srv 29.08.02
       enddo
 
-      do iCv=1, mpg%nCv
-            if (ne(iCv) < switch%b2sihs_ne_min) then
-                  shivc(iCv,:) = 0.0_R8
-                  shiva(iCv,:) = 0.0_R8
-            endif
-      enddo
 
       if (switch%b2sihs_shivis.eq.0) then
         do k=1,mpg%nCg
@@ -533,8 +529,9 @@
 
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
 *     in case of small impurity amount see below for b2sigp_style.ne.2
-      if(switch%b2sigp_style.eq.2) then                                !srv 05.07.17
-       call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)                !srv 13.01.17 {
+      if(switch%b2sigp_style.eq.2) then                                      !srv 05.07.17
+       call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)                    !srv 13.01.17 {
+       call b2xzmf (nCv, ns, ismain, rz2, na, zmff)
        do iCv = 1, nCv
          ce1(iCv)=fce1(zeff(iCv))
          ce2(iCv)=fce2(zeff(iCv))
