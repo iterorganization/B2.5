@@ -107,7 +107,7 @@
      *  smin, smax
       external xertst, sfill, smin, smax
       external ipgetr, ipgeti
-      external b2tqna, b2txcx, b2txcy, b2txcv, b2txsx, b2txsy
+      external b2tqna, b2txcx, b2txcy, b2txsx, b2txsy
 *   ..initialisation
 
 *-----------------------------------------------------------------------
