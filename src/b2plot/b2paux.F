@@ -299,9 +299,10 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
 c*** Write the CII sources in the plasma for DIVIMP
         found=.false.
-        do k=0,ns-1
+        do is=0,ns-1
           if (found) cycle
-          found = nint(zn(k)).eq.6 .and. nint(zamin(k)).eq.1
+          found = nint(zn(is)).eq.6 .and. nint(zamin(is)).eq.1
+          if (found) k=is
         end do
         if(.not.found) then !{
           write(*,*) 'b2paux (-5): no CII species found'
