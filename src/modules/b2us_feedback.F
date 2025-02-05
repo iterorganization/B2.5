@@ -1832,10 +1832,12 @@ cxpb size is changed in b2mod_dimensions
                   t2 = 0.0_R8
                   do is=0,ns-1
                     if (is_neutral(is)) cycle
-                    t2 = t2 + pl%na(iCv,is)*pl%ua(iCv,is)
-     .               *rt%rza(iCv,is)*qe
+                    t2 = t2 + t1*(dv%fna(iFc,0,is)+dv%fna(iFc,1,is))*
+     .                 rt%rza(iCv,is)*qe/geo%fcS(iFc)/
+     .                 (geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/
+     .                 geo%fcBb(iFc,3))
                   enddo
-                  fb_current(ifb) = max(fb_current(ifb),abs(t2))
+                  fb_current(ifb) = max(fb_current(ifb),t2)
                 endif
               enddo
               if (fb_type_inverse(ifb))
