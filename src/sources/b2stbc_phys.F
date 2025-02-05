@@ -3447,7 +3447,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +                 !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
      &         mompar(is,ib,1)*vbnd
-            srw%smo0(iCv1,1,IS) = srw%smo0(iCv1,1,IS) -
+            srw%smo0(iCv1,1,is) = srw%smo0(iCv1,1,is) -
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)      !srv 07.05.09 }
             ! Avoid setting to sound speed at very shallow incidence
             ! Set mom. flux to leakage instead
@@ -6714,43 +6714,45 @@ cxpb          endif
           t1 = 0.0_R8
           t2 = 0.0_R8
           if (bceni_15_style == 0) then
-           do is = 0, ns-1
-            if(.not.is_neutral(is)) then
-              t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
-              if (conpar(is,ib,2).gt.0.0_R8)
-     &         t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*pl%na(iCv1,is)
-            endif
-           enddo
-           srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -                        !srv 11.03.09 {
-     &      (enipar(ib,1)+switch%stab_coeff_sheath_ti)*t0*cs*
+            do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+                t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
+                if (conpar(is,ib,2).gt.0.0_R8)
+     &           t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)
+     &            *pl%na(iCv1,is)
+              endif
+            enddo
+            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
+     &       (enipar(ib,1)+switch%stab_coeff_sheath_ti)*t0*cs*
      &       abs(geo%fcPbs(iFc)) -
-     &       enipar(ib,2)*t1*geo%fcS(iFc)                               !srv 19.04.13
-           srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +                        !srv 11.03.09 {
+     &       enipar(ib,2)*t1*geo%fcS(iFc)
+            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &       switch%stab_coeff_sheath_ti*t0*cs*abs(geo%fcPbs(iFc))
           else
-           !wdk sheath transmission factor consistent with truncated
-           !    Maxwellian distribution on Eirene side (NEMODS=7)
-           !    See eirene manual for details.
-           do is = 0, ns-1
-            if(.not.is_neutral(is)) then
-             vt = sqrt(2.0_R8*pl%ti(iCv1)/(am(is)*mp))
-             t3 = pit(iCv1)*abs(geo%fcQalf(iFc,0))*cs/vt
-             t4 = sqrt((pit(iCv1)*abs(geo%fcQalf(iFc,1))*cs/vt)**2 +
-     &                 (geo%cvBb(iCv1,2)/geo%cvBb(iCv1,3)*cs/vt)**2)    !WG_TODO correct for drift contributions!
-             dsh = 1.0_R8 + t3**2 + t4**2 +                             !corrected for factor 3/2 in parallel convection
-     &         0.5_R8*(sheath_g(t3) - 1.0_R8)/sheath_g(t3)
-             t0 = t0 + dsh*conpar(is,ib,1)*pl%na(iCv1,is)
-             if (conpar(is,ib,2).gt.0.0_R8)
-     &        t1 = t1 + enipar(ib,2)*co%dna0(iCv1,is)/conpar(is,ib,2)*
-     &          pl%na(iCv1,is)
-             t2 = t2 + dv%fhm(iFc,0,is) + dv%fhm(iFc,1,is)
-            endif
-           enddo
-           srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
-     &      (1.0_R8+switch%stab_coeff_sheath_ti)*t0*cs*
-     &      abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
-     &      t2*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
-           srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+          !wdk sheath transmission factor consistent with truncated
+          !    Maxwellian distribution on Eirene side (NEMODS=7)
+          !    See Eirene manual for details.
+            do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+                vt = sqrt(2.0_R8*pl%ti(iCv1)/(am(is)*mp))
+                t3 = pit(iCv1)*abs(geo%fcQalf(iFc,0))*cs/vt
+                t4 = sqrt((pit(iCv1)*abs(geo%fcQalf(iFc,1))*cs/vt)**2 +
+     &                    (geo%cvBb(iCv1,2)/geo%cvBb(iCv1,3)*cs/vt)**2)    !WG_TODO correct for drift contributions!
+                dsh = 1.0_R8 + t3**2 + t4**2 +                             !corrected for factor 3/2 in parallel convection
+     &           0.5_R8*(sheath_g(t3) - 1.0_R8)/sheath_g(t3)
+                t0 = t0 + dsh*conpar(is,ib,1)*pl%na(iCv1,is)
+                if (conpar(is,ib,2).gt.0.0_R8)
+     &           t1 = t1 +
+     &            enipar(ib,2)*co%dna0(iCv1,is)/conpar(is,ib,2)*
+     &            pl%na(iCv1,is)
+                t2 = t2 + dv%fhm(iFc,0,is) + dv%fhm(iFc,1,is)
+              endif
+            enddo
+            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
+     &       (1.0_R8+switch%stab_coeff_sheath_ti)*t0*cs*
+     &       abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
+     &       t2*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &      switch%stab_coeff_sheath_ti*t0*cs*abs(geo%fcPbs(iFc))
           endif
           if(switch%mdf_fhi.ne.0) then

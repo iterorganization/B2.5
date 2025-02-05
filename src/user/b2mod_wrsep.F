@@ -167,6 +167,10 @@ c
       hlp_n=0.0_R8
       hlp_p=0.0_R8
       hlp_v=0.0_R8
+      hlp_nesp = 0.0_R8
+      hlp_qesp = 0.0_R8
+      hlp_qisp = 0.0_R8
+      hlp_qtsp = 0.0_R8
 c
 c*** Compute the data
 c

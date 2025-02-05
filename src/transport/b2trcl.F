@@ -218,35 +218,35 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 *   ..incorporate geometry
       call sfill (nFc*2*ns*ns, 0.0_R8, csigin, 1)
       do is = 0, ns-1
-       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   vsa(:,0,is), cvsa(:,0,is))
+       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, vsa(:,0,is), cvsa(:,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   vsa(:,1,is), cvsa(:,1,is))
        do k = 0, nscx-1
          is0 = iscx(k)
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
-           call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,   !sv
-     &       sigin(:,0,is,k), csigin(:,0,is,is0))                       !sv 01.07.99
+           call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,            !sv
+     &       geo%fcS, sigin(:,0,is,k), csigin(:,0,is,is0))              !sv 01.07.99
            call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,   !sv
      &       sigin(:,1,is,k), csigin(:,1,is,is0))                       !sv
         endif
        enddo
       enddo
 
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hce(:,0), chce(:,0))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &  geo%fcS, hce(:,0), chce(:,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  hce(:,1), chce(:,1))
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hci(:,0), chci(:,0))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &  geo%fcS, hci(:,0), chci(:,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  hci(:,1), chci(:,1))
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  sig(:,0), csig(:,0))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &  geo%fcS, sig(:,0), csig(:,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  sig(:,1), csig(:,1))
-      call b2txcx (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
-     &  alf(:,0), calf(:,0))
+      call b2txcx (nCv, nFc,   -1, geo, mpg, geo%fcVol,
+     &  geo%fcS, alf(:,0), calf(:,0))
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
      &  alf(:,1), calf(:,1))
 
@@ -703,8 +703,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       do is = 0, ns-1
        call b2tlmv (nCv, nFc, nVx, is, cflmv, switch, geo, mpg,
      &   pl%na(:,is),
-     &   pl%ti, pl%ua(:,is), vsaf_cl(:,0,is), cvsa(:,0,is),
-     &   cvsahz(:,0,is), fllimvisc(:,is))
+     &   pl%ti, pl%ua(:,is), vsaf_cl(:,0,is),
+     &   cvsa(:,0,is), cvsahz(:,0,is), fllimvisc(:,is))
       enddo
 *   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)

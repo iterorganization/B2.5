@@ -410,7 +410,7 @@ cdjm Mar2019 output the total momentum flux and source for balance
         call my_out_us(70,nCv,0,wrks,'b2npmo_smoan'//chns)              !srv 25.09.17
       endif                                                             !srv 05.07.17
 
-      if (switch%b2npmo_iout .ne. 0) then
+      if (switch%b2npmo_iout .ne. 0 .or. switch%iout_b2wdat .eq. 4) then
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua_input'//chns)
         wrks=sr%smo(:,0,is)+sr%smo(:,1,is)*pl%ua(:,is)+
      &       sr%smo(:,2,is)*pl%na(:,is)*mp*am(is)+
