@@ -604,7 +604,7 @@
 *     For 0.le.is.lt.ns, cfdna(,is) are the coefficients in the
 *     local expression
 *       difna(,,is) = cfdna(0,is)+cfdna(1,is)/(ne(,)/1.0e20)+
-*         cfdna(2,is)*df0(,)+
+*         cfdna(2,is)*df0(,,is)+
 *         cfdna(3,is)*te(,)/ev/abs(bb(,,3))/16
 *     that specifies the anomalous diffusivity with respect to
 *     grad.na; the transport equation for species (is) contains a term
@@ -3058,7 +3058,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                   uri_dest, status )
                     end if
                     write(systemarg,'(a,a,a,a)')
-     &                'idscp --setDatasetVersion'//
+     &                'idscp --set-dataset-version'//
      &                     ' -s ',trim(uri_source),
      &                     ' -d ',trim(uri_dest)
 #else
@@ -3095,7 +3095,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                   uri_dest, status )
                       write(systemarg,'(a,a,a,a)')
-     &                  'idscp --setDatasetVersion'//
+     &                  'idscp --set-dataset-version'//
      &                     ' -s ',trim(uri_source),
      &                     ' -d ',trim(uri_dest)
 #else
@@ -3727,7 +3727,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                 uri_dest, status )
                   end if
                   write(systemarg,'(a,a,a,a)')
-     &              'idscp --setDatasetVersion'//
+     &              'idscp --set-dataset-version'//
      &                   ' -s ',trim(uri_source),
      &                   ' -d ',trim(uri_dest)
 #else
@@ -3764,7 +3764,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                 uri_dest, status )
                     write(systemarg,'(a,a,a,a)')
-     &               'idscp --setDatasetVersion'//
+     &               'idscp --set-dataset-version'//
      &                  ' -s ',trim(uri_source),
      &                  ' -d ',trim(uri_dest)
 #else
