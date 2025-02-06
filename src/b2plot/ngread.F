@@ -62,8 +62,9 @@ c
       EXTERNAL GFSUB2
       external ipgeti, xertst
 #ifdef B25_EIRENE
+      integer lines_for_format
       logical streql
-      external streql
+      external streql, lines_for_format
 
       interface
         subroutine rdneutrs(kard,dummy,ldmf,extra_time)
@@ -1039,9 +1040,14 @@ C
 
 #ifdef B25_EIRENE
  948  call xerrab (fort_lc//'44_aver file found empty!')
+#endif
 
-      contains
+*=======================================================================
+*//END NGREAD//
 
+      END SUBROUTINE NGREAD
+
+#ifdef B25_EIRENE
       integer function lines_for_format( nfields_per_line, ndata )
       integer, intent(in) :: nfields_per_line, ndata
 
@@ -1058,11 +1064,3 @@ C
       return
       end function lines_for_format
 #endif
-
-*=======================================================================
-*//END NGREAD//
-
-      END SUBROUTINE NGREAD
-
-
-
