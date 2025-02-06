@@ -452,7 +452,7 @@ program b2_ual_write
                 &   uri_dest, status )
             end if
             write(systemarg,'(a,a,a,a)')                      &
-              & 'idscp --setDatasetVersion'//                 &
+              & 'idscp --set-dataset-version'//               &
               &      ' -s ',trim(uri_source),                 &
               &      ' -d ',trim(uri_dest)
 #else
@@ -487,7 +487,7 @@ program b2_ual_write
                 &   trim(database), int2str(IMAS_MAJOR_VERSION), '', &
                 &   uri_dest, status )
               write(systemarg,'(a,a,a,a)')                     &
-                & 'idscp --setDatasetVersion'//                &
+                & 'idscp --set-dataset-version'//              &
                 &      ' -s ',trim(uri_source),                &
                 &      ' -d ',trim(uri_dest)
 #else
