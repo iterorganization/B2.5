@@ -20,8 +20,6 @@
      & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
      &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
 #ifdef WG_TODO
-     &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
-     &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
      &          b2stbr_first_flight_sna0to1,
      &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
 #endif
@@ -207,7 +205,6 @@
       call subini ('b2stbr')
       new_sputter_namelist=.false.
       if (ncall_b2stbr.eq.0) then
-!WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
         if (switch%use_eirene.ne.0) out_tfiles=0
 #if ( defined(B25_EIRENE) && defined(ASTRA) )
         call ipgeti ('b2mndr_astra', use_astra)
@@ -397,73 +394,32 @@ c   --> better solution wanted here..
         enddo
 #endif
        endif
-       if (switch%b2stbr_neutrals_namelist.eq.1
-     &                          .or. switch%use_eirene.ne.0) then
-        if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
+       if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
 #ifndef FIXED_POINT
-        if (balance_netcdf.ne.0) then
+       if (balance_netcdf.ne.0) then
           !djm Mar2017 save sources before hand
-          snatmp=st%srw%sna0
-          smotmp=st%srw%smo0
-          shetmp=st%srw%she0
-          shitmp=st%srw%shi0
-        endif
+         snatmp=st%srw%sna0
+         smotmp=st%srw%smo0
+         shetmp=st%srw%she0
+         shitmp=st%srw%shi0
+       endif
 #endif
-        call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
+       call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
      &   dtim, switch, geo, mpg,
-     &   st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
+     &   st%pl, st%dv, st%co, st%rt, st_ext, st%srw,
      &   tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   sput_src, sput_chem_model, reflection_on, sputter_energy_on,
      &   main_call, new_sputter_namelist, shi0_ff, f_redep)
 #ifndef FIXED_POINT
-        if (balance_netcdf.ne.0) then
-          !djm Mar2017 store source contributions
-          b2stbr_phys_sna0to1=st%srw%sna0-snatmp
-          b2stbr_phys_smo0to3=st%srw%smo0-smotmp
-          b2stbr_phys_she0to3=st%srw%she0-shetmp
-          b2stbr_phys_shi0to3=st%srw%shi0-shitmp
-        endif
-#endif
-       else
-#ifdef WG_TODO
-        if(ncall_b2stbr.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
-#ifndef FIXED_POINT
-        if (balance_netcdf.ne.0) then
-          !djm Mar2017 save sources beforehand
-          snatmp=sna0
-          smotmp=smo0
-          shetmp=she0
-          shitmp=shi0
-        endif
-#endif
-        call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, switch%BoRiS,
-     &   na, ua, kinrgy,
-     &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &   sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
-     &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
-     &   switch%b2stbr_coreregno, coreregn2, output,
-     &   switch%neutral_sources_rescale,
-     &   switch%b2stbr_core_sources_rescale,
-     &   sput_src, switch%b2stbr_sput_frc, switch%b2stbr_sput_phys,
-     &   switch%b2stbr_sput_chem_alpha, switch%sput_phys_alpha,
-     &   switch%b2stbr_alpha, sput_chem_model, switch%b2stbr_therm_evap,
-     &   switch%b2stbr_sput_res, reflection_on, sputter_energy_on,
-     &   main_call, switch%b2stbr_sput_chem_cutoff_alpha,
-     &   switch%b2stbr_sput_chem_cutoff_beta, shi0_ff,
-     &   f_redep, switch%b2stbr_potential_at_guard_cell,
-     &   switch%recycled_neutrals_contr)
-#ifndef FIXED_POINT
-        if (balance_netcdf.ne.0) then
-          !djm Mar2017 store source contributions
-          b2stbr_bas_sna0to1=sna0-snatmp
-          b2stbr_bas_smo0to3=smo0-smotmp
-          b2stbr_bas_she0to3=she0-shetmp
-          b2stbr_bas_shi0to3=shi0-shitmp
-        endif
-#endif
-#endif
+       if (balance_netcdf.ne.0) then
+         !djm Mar2017 store source contributions
+         b2stbr_phys_sna0to1=st%srw%sna0-snatmp
+         b2stbr_phys_smo0to3=st%srw%smo0-smotmp
+         b2stbr_phys_she0to3=st%srw%she0-shetmp
+         b2stbr_phys_shi0to3=st%srw%shi0-shitmp
        endif
+#endif
       endif
 
       if(switch%b2stbr_first_flight.ne.0) then

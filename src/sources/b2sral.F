@@ -11,7 +11,6 @@
       use b2mod_numerics_namelist
 !      use b2mod_boundary_namelist
       use b2mod_time
-!      use b2mod_anomalous_transport
       use b2mod_b2cmpa
       use b2mod_b2cmfs
 !      use b2mod_external
@@ -265,25 +264,8 @@
        if(wrong_flow) write(*,*)
      &  'b2sral [1]: wrong_flow returned from b2stbc'
 
-#ifdef WG_TODO
-      elseif(switch%b2sral_style.eq.1) then
-!! FIXME : Need to add sne in argument list here ???
-       if(ncall_b2sral.eq.0) then
-         write(*,*) ' style=',switch%b2sral_style,' b2stbc_spb called'
-       endif
-       call b2stbc_spb (nx, ny, ns, facdrift,                           !srv 09.01.01
-     &  na, ua, uadia, vaecrb, vadia, te, ti, po, ne, ni,               !srv 14.10.99 12.05.00 09.01.01 28.10.02
-     1  floe_noc, floi_noc, fna, fna_fcor, fnaPSch, fhe, fhi,           !srv 13.10.06
-     &  fhePSch, fhiPSch, fne, fni, fch,                                !srv 25.02.00 21.10.02
-     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
-     &  sna, smo, she, shi, sch, wrong_flow)                            !srv 09.07.99 01.07.05
-       if(wrong_flow) write(*,*)
-     &  'b2sral [2]: wrong_flow returned from b2stbc_spb'
-#endif
       else
-       call xertst (0.le.switch%b2sral_style.and.
-     .                                        switch%b2sral_style.le.2, !srv 03.11.17
-     .  'invalid switch b2sral_style')
+       call xerrab ('invalid switch b2sral_style')
       endif                                                             !srv 28.07.08 }
 #ifdef WG_TODO
       if (switch%use_astra.ne.0) then
@@ -340,7 +322,7 @@
      > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
 *   ..compute more special contributions
       call b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
-     &  geo, mpg, st%pl, st%dv, st_ext, st%sr, st%srw, main_call)
+     &  geo, mpg, st%pl, st%dv, st_ext, st%srw, main_call)
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
         call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))
@@ -359,11 +341,11 @@
       call b2saxpy (nCv*4, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
       call b2saxpy (nCv*4, 1.0_R8, st%srw%shn0, 1, st%sr%shn, 1)
       call b2saxpy (nCv*4, 1.0_R8, st%srw%sch0, 1, st%sr%sch, 1)
-#ifdef WG_TODO
 *   ..compute sources by inputfiles (heating,...)
       if (sources_inputfile.eq.1) then
-        call source_input(nx,ny,ns,
-     &   sna0,smo0,she0,shi0,sch0,sne0,vol,ncall_b2sral)
+        call source_input(mpg,geo,switch,st_ext,ns,
+     &   st%srw%sna0,st%srw%smo0,st%srw%she0,st%srw%shi0,st%srw%sch0,
+     &   st%srw%sne0,ncall_b2sral)
 *   ..zero out contributions in dead cells and core boundary
         do is = 0, ns-1
           call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))
@@ -381,7 +363,6 @@
         call b2saxpy (nCv*4, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
         call b2saxpy (nCv*4, 1.0_R8, st%srw%sch0, 1, st%sr%sch, 1)
       endif
-#endif
 
 *   ..compute sources due to electron-atom processes
 *     (parallel momentum source must be pure friction)

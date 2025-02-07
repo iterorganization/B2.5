@@ -7,8 +7,6 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
-C      use b2mod_plasma
-C     * , only : fac_vis
       use b2mod_b2cmpa
       use b2mod_subsys
       implicit none

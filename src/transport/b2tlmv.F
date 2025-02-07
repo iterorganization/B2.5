@@ -94,21 +94,21 @@ c       fl = 1.0_R8
       else                                                           !srv 30.05.08
         do iFc = 1, nFc
           if(.not.(.not.is_neutral(isb) .and.
-     &               mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
-     &               mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then   !srv 12.04.08
+     &             mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &             mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then     !srv 12.04.08
             if (collisnumf(iFc) .gt. switch%min_collisions) then
               qcl = -cvsbx(iFc)*dub(iFc)
-              qfl = cflmv_loc(iFc)*abs(geo%fcPbs(iFc))*                !srv 11.01.13
-     &            (nb(mpg%fcCv(iFc,1))*tb(mpg%fcCv(iFc,1))+
-     &             nb(mpg%fcCv(iFc,2))*tb(mpg%fcCv(iFc,2)))/2.0_R8
+              qfl = cflmv_loc(iFc)*abs(geo%fcPbs(iFc))*              !srv 11.01.13
+     &          (nb(mpg%fcCv(iFc,1))*tb(mpg%fcCv(iFc,1))+
+     &           nb(mpg%fcCv(iFc,2))*tb(mpg%fcCv(iFc,2)))/2.0_R8
               if (qfl.gt.0.0_R8) then
                 tfl = 1.0_R8 + abs(qcl/qfl)
               else
                 tfl = 1.0_R8
               endif
             else
-              tfl = 1+(cflmv_loc(iFc)*
-     &          max(collisnumf(iFc), 1e-16_R8))**(-1)
+              tfl = 1.0_R8
+     &         +1.0_R8/(cflmv_loc(iFc)*max(collisnumf(iFc),1.0e-16_R8))
             endif
             cvsbx(iFc) = cvsbx(iFc)/tfl
             cvsbxhz(iFc) = cvsbxhz(iFc)/tfl

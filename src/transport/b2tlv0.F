@@ -1,5 +1,5 @@
       subroutine b2tlv0 (nCv, nFc, nVx, ns, switch, geo, mpg,
-     &  na, ua, te,  tn, rza, cvsa0, cvsa, cvsahz, flv)
+     &  na, ua, te, tn, rza, cvsa0, cvsa, cvsahz, flv)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa

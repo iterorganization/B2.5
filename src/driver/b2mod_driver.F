@@ -20,6 +20,8 @@
      & , only : dealloc_b2mod_wall
       use b2mod_neoclassical
      & , only : dealloc_b2mod_neoclassical
+      use b2mod_facdrift_exb
+     & , only : dealloc_b2mod_facdrift_exb
       use b2mod_first_flight
       use b2mod_input_profile
       use b2mod_user_namelist
@@ -32,7 +34,6 @@
      & , only : dealloc_b2mod_transport_disruption
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
@@ -105,6 +106,7 @@
       use b2mod_impgyro !yamoto
 #endif
 #ifdef IMAS
+      use helper
 #if AL_MAJOR_VERSION > 4
       use ids_routines  ! IGNORE
      , , only : imas_open, al_build_uri_from_legacy_parameters,
@@ -146,13 +148,12 @@
       implicit none
 *   ..common blocks
 *   ..local variables
-      integer ncall, ntim, mvinc, mvnum, jsep, jxi, jxa,
+      integer ncall, ntim, mvinc, mvnum, jsep,
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
      &  nxtl, nxtr
       save isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
-      integer, save :: b2mndr_redef_pbs = 0
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
       integer, save :: shot = 0, run = 0, ids_save = 0, ids_av = 0
@@ -464,29 +465,6 @@
 *     The following common blocks have their outermost declaration in
 *     this routine; they need not be preserved between calls.
 *
-*     /b2cmgs/ specifies the singular regions in the geometry.
-*      nlrmx - integer constant.
-*     nlrmx is an upper bound for nlreg, and is used in dimension
-*     specifications.
-*      nlreg - integer.
-*     nlreg specifies the number of singular regions. It will hold that
-*     0.le.nlreg.le.nlrmx.
-*      nlxlo, nlxhi, nlylo, nlyhi - (0:nlrmx-1) integer array.
-*     For 0.le.i.lt.nlreg, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i) are
-*     the bounds of the i-th singular region. Mesh locations (ix,iy)
-*     in (nlxlo(i):nlxhi(i),nlylo(i):nlyhi(i)) make up the region, which
-*     will be included in (-1:nx,-1:ny).
-*     For nlreg.le.i.lt.nlrmx, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i)
-*     are unspecified.
-*      nlloc - (0:nlrmx-1) integer array.
-*     For 0.le.i.lt.4, nlloc(i) specifies the class of quantities for
-*     which the i-th region is special, as follows:
-*       nlloc(i) = 0: cell centers, indices (-1:nx,-1:ny).
-*       nlloc(i) = 1: cell x-faces, indices (0:nx,-1:ny).
-*       nlloc(i) = 2: cell y-faces, indices (-1:nx,0:ny).
-*       nlloc(i) = 3: cell corners, indices (0:nx,0:ny).
-*     For nlreg.le.i.lt.nlrmx, nlloc(i) is unspecified.
-*
 *     /b2cmpa/ specifies basic physics parameters.
 *      me, mp, ev, qe, eps0, mu0 - real*8 constant.
 *     These parameters are included with /b2cmpa/.
@@ -509,189 +487,128 @@
 *     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
 *     undefined.
 *
-*     /b2cmpb/ specifies physics parameters for boundary conditions.
-*     For this purpose the boundary is divided up into regions, and for
-*     each region a set of coefficients defines the local conditions.
-*     For detailed description of /b2cmpb/ see the code, especially the
-*     routine b2stbc.
-*      cbnrmx - integer constant.
-*     cbnrmx is an upper bound for the number of boundary regions nreg,
-*     (nreg.eq.cbnrso+cbnrno+cbnrwe+cbnrea) and is used in dimension
-*     specifications.
-*      cbirso, cbirno, cbirwe, cbirea - integer.
-*     cbirso(-no,-we,-ea) is the index of the first region on the
-*     south (north, west, east) boundary.
-*      cbnrso, cbnrno, cbnrwe, cbnrea - integer.
-*     cbnrso(-no,-we,-ea) is the number of regions on the south
-*     (north, west, east) boundary.
-*     It will hold that 1.le.cbnrso, 1.le.cbnrno, 1.le.cbnrwe, and
-*     1.le.cbnrea; and 0.eq.cbirso, cbirso+cbnrso.eq.cbirno,
-*     cbirno+cbnrno.eq.cbirwe, cbirwe+cbnrwe.eq.cbirea.
-*      cbrbrk - (0:cbnrmx-1) real*8 array.
-*     cbrbrk defines the boundaries between the boundary regions.
-*      cbsna - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbsna(0:7,is,ireg) specify standard form boundary conditions for
-*     the continuity equation for species (is) on the (ireg) boundary
-*     region.
-*      cbsmo - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbsmo(0:7,is,ireg) specify standard form boundary conditions for
-*     the parallel momentum balance equation for species (is) on the
-*     (ireg) boundary region.
-*      cbshi - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbshi(0:7,is,ireg) specify standard form boundary conditions for
-*     the contribution to that atom heat equation by species (is) on
-*     the (ireg) boundary region.
-*      cbshe - (0:7,0:cbnrmx-1) real*8 array.
-*     For 0.le.ireg.lt.nreg, the eight coefficients cbshe(0:7,ireg)
-*     specify standard form boundary conditions for the electron heat
-*     equation on the (ireg) boundary region.
-*      cbsch - (0:7,0:cbnrmx-1) real*8 array.
-*     For 0.le.ireg.lt.nreg, the eight coefficients cbsch(0:7,ireg)
-*     specify standard form boundary conditions for the electric
-*     potential equation on the (ireg) boundary region.
-*      cbrec - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbrec(0:7,is,ireg) specify the recycling process for species (is)
-*     on the boundary region ireg. The exact interpretation of these
-*     coefficients is defined by the routine that computes the source
-*     terms due to the recycling process (b2stbr). Routine b2stbr is
-*     problem dependent.
-*      cbmsa - (0:7,0:cbnrmx-1) real*8 array.
-*      cbmsc - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-*     For 0.le.ireg.lt.nreg, the eight coefficients cbmsa(0:7,ireg)
-*     specify miscellaneous processes on the boundary region ireg.
-*     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-*     cbmsc(0:7,is,ireg) specify miscellaneous processes for species
-*     (is) on the boundary region ireg. The interpretation of these
-*     coefficients is defined by the routine that computes the source
-*     terms due to miscellaneous processes (b2stbm). Routine b2stbm is
-*     application dependent.
-*
 *   ..transport coefficients, parameters
 *
 *     /b2cmpt/ - common block.
 *     (Note: the integer constant nsdecl, which comes with /b2cmpa/,
 *     is used instead of (ns) in dimension specifications.)
 *      cfdf0 - (0:7,0:ns-1) real*8 array.
-*     cfdf0 contains some auxiliary coefficients.  For 0.le.is.lt.ns,
+*     cfdf0 contains some auxiliary coefficients. For 0.le.is.lt.ns,
 *     the local expression
-*       df0(,,is) = cfdf0(0,is)+cfdf0(1,is)/(ni(,,0)/1.0e20)+
-*         cfdf0(2,is)*sqrt(ti(,)/(am(is)*mp))/
-*          (cfdf0(3,is)*ni(,,0)+cfdf0(4,is)*ne(,))
+*       df0(,is) = cfdf0(0,is)+cfdf0(1,is)/(ni(,0)/1.0e20)+
+*         cfdf0(2,is)*sqrt(ti()/(am(is)*mp))/
+*          (cfdf0(3,is)*ni(,0)+cfdf0(4,is)*ne())
 *     is used in the definition of the anomalous transport coefficients.
-*     df0 is meant to represent a diffusivity.  If cfdf0(2,is).eq.0 then
+*     df0 is meant to represent a diffusivity. If cfdf0(2,is).eq.0 then
 *     the corresponding term in df0 is understood as 0 independent of
 *     cfdf0(3:4,is).
 *      cfdna - (0:7,0:ns-1) real*8 array.
 *     For 0.le.is.lt.ns, cfdna(,is) are the coefficients in the
 *     local expression
-*       difna(,,is) = cfdna(0,is)+cfdna(1,is)/(ne(,)/1.0e20)+
-*         cfdna(2,is)*df0(,)+
-*         cfdna(3,is)*te(,)/ev/abs(bb(,,3))/16
+*       difna(,is) = cfdna(0,is)+cfdna(1,is)/(ne()/1.0e20)+
+*         cfdna(2,is)*df0(,is)+
+*         cfdna(3,is)*te()/ev/abs(bb(,3))/16
 *     that specifies the anomalous diffusivity with respect to
 *     grad.na; the transport equation for species (is) contains a term
-*     difna(,,is)*'grad.na'.
+*     difna(,is)*'grad.na'.
 *     If cfdna(7,is) is not zero, the dna0 array is flux-scaled with
-*     a scaling factor of cfdna(7,is)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfdna(7,is)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfdna(4:6,) are not used in the default version of the code.
 *      cfdpa - (0:7,0:ns-1) real*8 array.
 *     For 0.le.is.lt.ns, cfdpa(,is) are the coefficients in the
 *     local expression
-*       difpa(,,is) = cfdpa(0,is)+cfdpa(1,is)/(ne(,)/1.0e20)+
-*         cfdpa(2,is)*df0(,,is)+
-*         cfdpa(3,is)*te(,)/ev/abs(bb(,,3))/16
+*       difpa(,is) = cfdpa(0,is)+cfdpa(1,is)/(ne()/1.0e20)+
+*         cfdpa(2,is)*df0(,is)+
+*         cfdpa(3,is)*te()/ev/abs(bb(,3))/16
 *     that specifies the anomalous diffusivity with respect to
 *     grad.pa; the transport equation for species (is) contains a term
-*     (1/(rza(,,is)*te(,)+ti(,)))*difpa(,,is)*'grad.pa'.
+*     (1/(rza(,is)*te()+ti()))*difpa(,is)*'grad.pa'.
 *     If cfdpa(7,is) is not zero, the dpa0 array is flux-scaled with
-*     a scaling factor of cfdpa(7,is)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfdpa(7,is)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfdpa(4:6,) are not used in the default version of the code.
 *      cfvla - (0:7,0:ns-1) real*8 array.
 *     For 0.le.is.lt.ns, cfvla(,is) are the coefficients in the
 *     local expression
-*       vlay(,,is) = cfvla(0,is)+cfvla(1,is)/(ne(,)/1.0e20)+
-*         cfvla(2,is)*df0(,,is)+
-*         cfvla(3,is)*te(,)/ev/abs(bb(,,3))/16
+*       vlay(,is) = cfvla(0,is)+cfvla(1,is)/(ne()/1.0e20)+
+*         cfvla(2,is)*df0(,is)+
+*         cfvla(3,is)*te()/ev/abs(bb(,3))/16
 *     that specifies the anomalous y-velocity of species (is); the
 *     transport equation for species (is) contains a term
-*     vlay(,,is)*na(,,is).
+*     vlay(,is)*na(,is).
 *     If cfvla(7,is) is not zero, the vla0 array is flux-scaled with
-*     a scaling factor of cfvla(7,is)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfvla(7,is)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfvla(4:6,) are not used in the default version of the code.
 *      cfvsa - (0:7,0:ns-1) real*8 array.
 *     For 0.le.is.lt.ns, cfvsa(,is) are the coefficients in the
 *     local expression
-*       dfvsa(,,is) = cfvsa(0,is)+cfvsa(1,is)/(ne(,)/1.0e20)+
-*         cfvsa(2,is)*df0(,,is)+
-*         cfvsa(3,is)*te(,)/ev/abs(bb(,,3))/16
+*       dfvsa(,is) = cfvsa(0,is)+cfvsa(1,is)/(ne()/1.0e20)+
+*         cfvsa(2,is)*df0(,is)+
+*         cfvsa(3,is)*te()/ev/abs(bb(,3))/16
 *     that specifies the diffusivity corresponding to the anomalous
 *     transverse viscosity, so that this viscosity is
-*       vsa(,,is) = mp*am(is)*na(,,is)*dfvsa
+*       vsa(,is) = mp*am(is)*na(,is)*dfvsa
 *     If cfvsa(7,is) is not zero, the vsa0 array is flux-scaled with
-*     a scaling factor of cfvsa(7,is)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfvsa(7,is)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfvsa(4:6,) are not used in the default version of the code.
 *      cfhci - (0:7,0:ns-1) real*8 array.
 *     For 0.le.is.lt.ns, cfhci(,is) are the coefficients in the
 *     local expression
-*       dfhca(,,is) = cfhci(0,is)+cfhci(1,is)/(ne(,)/1.0e20)+
-*         cfhci(2,is)*df0(,,is)+
-*         cfhci(3,is)*te(,)/ev/abs(bb(,,3))/16
+*       dfhca(,is) = cfhci(0,is)+cfhci(1,is)/(ne()/1.0e20)+
+*         cfhci(2,is)*df0(,is)+
+*         cfhci(3,is)*te()/ev/abs(bb(,3))/16
 *     that specifies the anomalous atom heat conductivity associated
 *     with species (is), so that the atom heat conduction coefficient
-*     contains a term dfhca(,,is)*na(,,is).
+*     contains a term dfhca(,is)*na(,is).
 *     If cfhci(7,is) is not zero, the hci arrays are flux-scaled with
-*     a scaling factor of cfhci(7,is)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfhci(7,is)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfhci(4:6,) are not used in the default version of the code.
 *      cfhce - (0:7) real*8 array.
 *     cfhce() are the coefficients in the local expression
-*       dfhce(,) = cfhce(0)+cfhce(1)/(ne(,)/1.0e20)+
-*         cfhce(3)*te(,)/ev/abs(bb(,,3))/16
+*       dfhce() = cfhce(0)+cfhce(1)/(ne()/1.0e20)+
+*         cfhce(3)*te()/ev/abs(bb(,3))/16
 *     that specifies the anomalous electron heat conductivity, so that
-*     the electron heat conduction coefficient is dfhce(,)*ne(,).
+*     the electron heat conduction coefficient is dfhce()*ne().
 *     If cfhce(7) is not zero, the hce0 array is flux-scaled with
-*     a scaling factor of cfhce(7)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfhce(7)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfhce(2) and (4:6) are not used in the default version of the code.
 *      cfsig - (0:7) real*8 array.
 *     cfsig() are the coefficients in the local expression
-*       dfsig(,) = cfsig(0)+cfsig(1)/(ne(,)/1.0e20)+
-*         cfsig(3)*te(,)/ev/abs(bb(,,3))/16+
+*       dfsig() = cfsig(0)+cfsig(1)/(ne()/1.0e20)+
+*         cfsig(3)*te()/ev/abs(bb(,3))/16+
 *         cfsig(4)*exp(-cfsig(5)*(y/L)**2)
 *     that specifies the diffusivity corresponding to the anomalous
 *     electrical conductivity, which is
-*       sig(,) = qe*ne(,)*dfsig(,).
+*       sig() = qe*ne()*dfsig().
 *     L is the local radial width of the plasma and
 *     y is the radial distance from the inner (South) boundary.
 *     If cfsig(7) is not zero, the sig0 array is flux-scaled with
-*     a scaling factor of cfsig(7)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfsig(7)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfsig(2) and (6) are not used in the default version of the code.
 *      cfalf - (0:7) real*8 array.
 *     cfalf() are the coefficients in the local expression
-*       dfalf(,) = cfalf(0)+cfalf(1)/(ne(,)/1.0e20)+
-*         cfalf(3)*te(,)/ev/abs(bb(,,3))/16
+*       dfalf() = cfalf(0)+cfalf(1)/(ne()/1.0e20)+
+*         cfalf(3)*te()/ev/abs(bb(,3))/16
 *     that specifies the diffusivity corresponding to the anomalous
 *     thermo-electric coefficient, which is
-*       alf(,) = ne(,)*sqrt(qe/te(,))*dfalf(,).
+*       alf() = ne()*sqrt(qe/te())*dfalf().
 *     If cfalf(7) is not zero, the alf0 array is flux-scaled with
-*     a scaling factor of cfalf(7)*(hy1(,)/hy1(ixref,))**2
-*     where hy1 is the radial width of the cell and ixref is a reference
-*     poloidal position (usually the outer midplane or 'jxa').
+*     a scaling factor of cfalf(7)*(hy1()/hy1(omp))**2
+*     where hy1 is the radial width of the cell and omp refers
+*     to the cell from the sam flux tube intersecting the outer midplane.
 *     cfalf(2) and (4:6) are not used in the default version of the code.
 *      cflim - (0:7) real*8 array.
 *     cflim contains coefficients for flux limiting. cflim(0)=cflme
@@ -807,144 +724,145 @@
 *
 *     Description of some local variables (including arrays in w(0:*)):
 *
-*     crx, cry - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), crx(ix,iy,0:3) specify the
-*     horizontal coordinates and cry(ix,iy,0:3) specify the vertical
-*     coordinates (in the physical plane) of the four corners of the
-*     (ix,iy) cell, mapped as follows:
-*     (,,0): lower left corner,  (,,1): lower right corner,
-*     (,,2): upper left corner,  (,,3): upper right corner.
-*     One expects the following identities to hold away from the
-*     boundaries:
-*     crx(ix,iy,0)=crx(ix-1,iy,1)=crx(ix,iy-1,2)=crx(ix-1,iy-1,3),
-*     cry(ix,iy,0)=cry(ix-1,iy,1)=cry(ix,iy-1,2)=cry(ix-1,iy-1,3),
-*     However, there may be cuts in the geometry, in which case these
-*     identities need not hold.
+*     cvX, cvY - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvX(iCv) specifies the
+*     Cartesian X-coordinate of the center of the cell and cvX(iCv) specifies
+*     the Cartesian Y-coordinate of the center of the cell.
 *
-*     bb - (-1:nx,-1:ny,0:3) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), bb(ix,iy,0:3) specifies the
-*     magnetic field at the center of the (ix,iy) cell.
-*     bb(ix,iy,0:2) are the (x,y,z)-components and bb(ix,iy,3) is
+*     vxX, vxY - (1:nVx) real*8 array.
+*     vxX(iVx) specify the horizontal coordinate and vxY(iVx)
+*     specify the vertical coordinates (in the physical plane) of
+*     the vertex with number iVx.
+*
+*     cvBb - (1:nCv,0:3) real*8 array.
+*     For (iCv) in (1:nCv), cvBb(iCv,0:3) specifies the
+*     magnetic field at the center of the (iCv) cell.
+*     cvBb(iCv,0:2) are the (x,y,z)-components and cvBb(iCv,3) is
 *     the absolute magnetic field strength.
-*     (bb(,,3)=sqrt(bb(,,0)**2+bb(,,1)**2+bb(,,2)**2.)
-*     It will hold that 0.lt.bb(,,3).
+*     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,,2)**2.)
+*     It will hold that 0.le.cvBb(,0:3), because the direction of the
+*     magnetic field follows from cvEb (see below).
 *
-*     vol - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
-*     the (ix,iy) cell. (In the case of toroidal symmetry this volume
+*     cvEb - (1:nCv,0:2) real*8 array.
+*     cvEb(iCv,0:2) specifies the direction of the magnetic field at
+*     the center of the cell iCv in the (R,Z,toroidal) axis system.
+*     (sqrt(cvEb(iCv,0)**2+cvEb(iCv,1)**2+cvEb(iCv,2)**2)=1)
+*
+*     cvVol - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvVol(iCv) specifies the volume of
+*     the (iCv) cell. (In the case of toroidal symmetry this volume
 *     includes a factor 2*pi*R, while in the case of cylindrical
 *     symmetry it includes a factor 2*pi*Z.)
-*     It will hold that 0.lt.vol(,).
+*     It will hold that 0.lt.cvVol().
 *
-*     hx, hy - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
-*     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
-*     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
+*     cvHz - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvHz(iCv) specifies the length of
+*     the (iCv) cell in the z-direction, measured at the cell center.
 *
-*     qz - (-1:nx,-1:ny,0:1) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
-*     qz(ix,iy,1) specifies cos(t), where t is the complementary angle
-*     between the x-direction and the y-direction on the (ix,iy) cell.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. (qz(ix,iy,0) is the inner product of the x and y unit
-*     vectors.)
-*     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
+*     cvSz - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), cvSz(iCv) specifies the area of
+*     the (iCv) cell perpendicular to the z-direction.
 *
-*     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
-*     t is the complementary angle between the x-direction of the
-*     (ix,iy) cell and its left face.
-*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry.
-*     It will hold that 0.lt.qc(,).le.1.
+*     fcQgam - (1:nFc,0:1) real*8 array.
+*     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and
+*     fcQgam(iFc,1) specifies sin(t), where t is the included angle
+*     between the cell-connector vector and the normal vector
+*     of face iFc. It will hold that 0.lt.fcQgam(,).le.1.
 *
-*     gs - (-1:nx,-1:ny,0:2) real*8 array.
-*     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
-*     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
-*     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
-*     gsx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), gsy(ix,iy) specifies the area of the
-*     face between the (ix,iy) cell and its bottom neighbor. For iy.eq.-1,
-*     gsy(-1:nx,iy) will hold 0.
-*     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
-*     (ix,iy) cell normal to the third (ignorable) coordinate.
+*     fcQalf - (1:nFc,0:1) real*8 array.
+*     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
+*     fcQalf(iFc,1) specifies sin(t), where t is the included angle
+*     between the magnetic field vector and the face normal.
+*     If Bz is negative, fcQalf(iFc,1) is modified to be -sin(t).
 *
-*     pbs - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
-*     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic
-*     field pitch)*(surface area), namely the parallel contact area,
-*     on the (ix,iy) cell left and bottom faces respectively.
-*     In the case where the grid covers the full vacuum vessel,
-*     pbsy also contains a contribution from the narrowing of the
-*     flux tube when impacting the wall structures.
-*     See routine b2xgbs for the form of interpolation employed.
+*     fcQbet - (1:nFc,0:1) real*8 array.
+*     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
+*     fcQbet(iFc,1) specifies sin(t), where t is the included angle
+*     between the cell-connector and the magnetic field vector.
+*     If Bz is negative, fcQbet(iFc,0) is modified to be -cos(t).
 *
-*     na - (-1:nx,-1:ny,0:ns-1) real*8 array.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), na(ix,iy,is) specifies
-*     the density of atomic species (is) on the (ix,iy) cell.
-*     It will hold that 0.lt.na(,,).
+*     fcPbs - (1:nFc) real*8 array.
+*     For iFc in (1:nFc), fcPbs(iFc) specifies the product
+*     (fcBx/fcBb)*sx or (magnetic field pitch)*(surface area),
+*     namely the parallel contact area.
 *
-*     ua - (-1:nx,-1:ny,0:ns-1) real*8 array.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), ua(ix,iy,is) specifies
-*     the parallel velocity of atomic species (is) on the (ix,iy) cell.
+*     fcPbshz - (1:nFc) real*8 array.
+*     For iFc in (1:nFc), fcPbshz(iFc) specifies the product
+*     (fcBx/fcBb)*sx*hz or (magnetic field pitch)*(surface area)*(hz).
+*
+*     fcS - (1:nFc,1:2) real*8 array.
+*     For iFc in (1:nFc), fcHc(iFc,:) specifies the total area of face iFc.
+*
+*     na - (1:nCv,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:ns-1), na(iCv,is) specifies
+*     the density of atomic species (is) on the (iCv) cell.
+*     It will hold that 0.lt.na(:).
+*
+*     ua - (1:nCv,0:ns-1) real*8 array.
+*     For (iCv,is) in (1:nCv,0:ns-1), ua(iCv,is) specifies
+*     the parallel velocity of atomic species (is) on the (iCv) cell.
 *     The sign of the parallel velocity indicates whether it is flowing
 *     in the same direction as the local poloidal magnetic field.
 *
-*     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
-*     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
-*     uadia(ix,iy,1,is) the radial drift velocity.
+*     te - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), te(iCv) specifies the electron
+*     temperature on the (iCv) cell. It will hold that 0.lt.te(:).
 *
-*     te - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
-*     temperature on the (ix,iy) cell. It will hold that 0.lt.te(,).
+*     ti - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), ti(iCv) specifies the all atom
+*     temperature on the (iCv) cell. It will hold that 0.lt.ti(:).
 *
-*     ti - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), ti(ix,iy) specifies the all atom
-*     temperature on the (ix,iy) cell. It will hold that 0.lt.ti(,).
+*     tn - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), tn(iCv) specifies temperature of the
+*     hydrogenic neutrals on the (iCv) cell. It will hold that 0.lt.tn(:).
+*     When no separate fluid neutral energy equation is solved, tn = ti.
 *
-*     po - (-1:nx,-1:ny) real*8 array.
-*     For (ix,iy) in (-1:nx,-1:ny), po(ix,iy) specifies the electric
-*     potential on the (ix,iy) cell.
+*     po - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), po(iCv) specifies the electric
+*     potential on the (iCv) cell.
 *
-*     fna - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-*     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
-*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax(ix,iy,is) specifies
-*     the flux of atoms of species (is) through the face between the
-*     (ix,iy) cell and its left neighbor.
-*     For ix.eq.-1, fnax(ix,-1:ny,0:ns-1) will hold 0.
-*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay(ix,iy,is) specifies
-*     the flux of atoms of species (is) through the face between the
-*     (ix,iy) cell and its bottom neighbor.
-*     For iy.eq.-1, fnay(-1:nx,iy,0:ns-1) will hold 0.
+*     kt - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), kt(iCv) specifies the turbulent kinetic
+*     energy on the (iCv) cell.
 *
-*     fhe - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fhex(ix,iy) specifies the electron
-*     heat flux through the face between the (ix,iy) cell and its
-*     left neighbor. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fhey(ix,iy) specifies the electron
-*     heat flux through the face between the (ix,iy) cell and its
-*     bottom neighbor. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
+*     zt - (1:nCv) real*8 array.
+*     For (iCv) in (1:nCv), kt(iCv) specifies the enstrophy
+*     on the (iCv) cell.
 *
-*     fhi - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fhix(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix,iy) cell and its left
-*     neighbor. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix,iy) cell and its
-*     bottom neighbor. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
+*     For all the fluxes below, the sign convention is as follows.
+*     Fluxes are positive when they flow in the local x-direction,
+*     where x is the connector line from C1 to C2.
 *
-*     fch - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchx(,)=fch(,,0) and fchy(,)=fch(,,1).)
-*     For (ix,iy) in (0:nx,-1:ny), fchx(ix,iy) specifies the electric
-*     current through the face between the (ix,iy) cell and its left
-*     neighbor. For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
-*     For (ix,iy) in (-1:nx,0:ny), fchy(ix,iy) specifies the electric
-*     current through the face between the (ix,iy) cell and its bottom
-*     neighbor. For iy.eq.-1, fchy(-1:nx,iy) will hold 0.
+*     fna - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), fna(iFc,0,is) specifies
+*     the poloidal component and fna(iFc,1,is) specifies
+*     the radial component of the flux of atoms of species (is) through the
+*     face iFc.
+*
+*     fhe - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fhe(iFc,0) specifies the poloidal component and
+*     fhe(iFc,1) specifies the radial component of the electron heat flux
+*     through the face iFc.
+*
+*     fhi - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fhi(iFc,0) specifies the poloidal component and
+*     fhi(iFc,1) specifies the radial component of the all atom heat flux
+*     through the face iFc.
+*
+*     fch - (1:nFc,0:1) real*8 array.
+*     For (iFc) in (1:nFc), fch(iFc,0) specifies the poloidal component and
+*     fch(iFc,1) specifies the radial component of the electric
+*     current through the face iFc.
+*
+*     uadia - (1:nFc,0:1,0:ns-1) real*8 array.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,0,is) specifies
+*     the total effective drift velocity of species (is) on the (iFc) face
+*     in the diamagnetic direction (i.e. within the flux surface but
+*     perpendicular to the magnetic field), but projected onto the
+*     poloidal direction.
+*     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,1,is) specifies
+*     the total effective drift velocity of species (is) on the (iFc) face
+*     in the radial direction.
 *
 *     na0, ua0, te0, ti0, po0, fna0, fhe0, fhi0, fch0 - real*8 array.
 *     state of the plasma at the start of the present timestep.
@@ -1645,20 +1563,6 @@ csw 09oct2012
       call read_b2fgmtry (ninp(1), mpg, geo)
       call init_geometry (mpg, geo, switch)
 
-      call ipgeti ('b2mndr_redef_pbs', b2mndr_redef_pbs)
-      if (b2mndr_redef_pbs.ne.0) then
-        if (redef_gmtry.eq.1) then
-          write(6,*)
-     &     'Magnetic flux correction of pbsx already done in b2ag.'
-        else
-          write(6,*)
-     &     'Magnetic flux correction must now be done in b2ag.'
-          write(6,*)
-     &     'Please set b2agdr_redef_gmtry to 1 in b2ag.dat ',
-     &     'and re-run b2ag.'
-          call xerrab ('Obsolete switch b2mndr_redef_pbs!')
-        endif
-      endif
 #ifdef WG_TODO
 ! can only be calculated after the indirect arrays have been read
       ix1=int(ixfb)
@@ -2126,7 +2030,7 @@ cxpb initialize the data necessary for boundary conditions
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
       if(switch%b2stbc_feedback.eq.1.or.lfeedback) then
-        call init_feedback(nFc, ns, switch, mpg)
+        call init_feedback(nFc, ns, switch, mpg, geo)
       endif
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
       nlimi = 0
@@ -2412,18 +2316,16 @@ csw 09oct2012 set default potential already at this point (BCs)
         enddo
 *    ..call cost function
         call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state,
-     &    state_ext, switch%BoRiS, J)
+     &    state_ext, switch, J)
         do icf = 1, ncf
           write (ss,'(I1)') icf
           if (icf.gt.9) write (ss,'(I2)') icf
           write(*,*) 'Cost function value '//ss//': ',J(icf)
         end do
 *    ..produce data for movie
-#ifdef WG_TODO
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
-          call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
+          call b2mwmv (nout(3), nCv, state, itim, tim, dtim)
         endif
-#endif
 *    ..extra writes of b2fplasmf.xxxx
         if (mod(itim_plas,plasinc).eq.0.and.nwrit_plas.le.plasnum
      &    .and.plasnum.gt.0.and.plasinc.gt.0) then
@@ -2966,7 +2868,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                   uri_dest, status )
                     end if
                     write(systemarg,'(a,a,a,a)')
-     &                'idscp --setDatasetVersion'//
+     &                'idscp --set-dataset-version'//
      &                     ' -s ',trim(uri_source),
      &                     ' -d ',trim(uri_dest)
 #else
@@ -3003,7 +2905,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                   uri_dest, status )
                       write(systemarg,'(a,a,a,a)')
-     &                  'idscp --setDatasetVersion'//
+     &                  'idscp --set-dataset-version'//
      &                     ' -s ',trim(uri_source),
      &                     ' -d ',trim(uri_dest)
 #else
@@ -3270,7 +3172,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       end do
 *   ..call cost function
       call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state,
-     &    state_ext, switch%BoRiS, J)
+     &    state_ext, switch, J)
       do icf = 1, ncf
         write (ss,'(I1)') icf
         if (icf.gt.9) write (ss,'(I2)') icf
@@ -3306,7 +3208,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       type(B2State), intent (inout)    :: state
       type(B2StateExt), intent (inout) :: state_ext
       type(B2Average), intent (inout)  :: state_avg
-      integer nCv, nFc, nVx, is                                          !srv 29.11.18
+      integer nCv, nFc, is                                          !srv 29.11.18
+#ifndef NO_CDF
+      integer nVx
+#endif
 #ifdef WG_TODO
       character*256 filename
       logical found
@@ -3355,7 +3260,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 
       nCv = mpg%nCv
       nFc = mpg%nFc
+#ifndef NO_CDF
       nVx = mpg%nVx
+#endif
 
 #ifdef USE_IMPGYRO
 * finalise impgyro !yamoto
@@ -3379,11 +3286,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &  te, ti, po, fna, fhe, fhi, fch)
       if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns,              !pb 29.07.16
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-*   ..test plasma state
-      call b2xvps (nx, ny, ns,
-     .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
-      call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 #endif
+*   ..test plasma state
+      call b2xvps (nCv, nFc, ns, state%pl, state%dv)
+      call b2xvsg (nCv*ns, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
 *   ..save final state
       call write_b2fstate (nout(2), nCv, nFc, ns, state)
 *   ..write plasma state
@@ -3436,11 +3342,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         close(31)
        end if
       end if
-#ifdef WG_TODO
 *   ..produce data for last frame in movie if not yet done
       if (mod(itim,mvinc).ne.0.and.(itim/mvinc+1).le.mvnum) then
-        call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
+        call b2mwmv (nout(3), nCv, state, itim, tim, dtim)
       endif
+#ifdef WG_TODO
 *   ..produce last time-dependent file if not yet done
 #ifdef JET
       if(tim.gt.save_tran_time-delta_tran_time+dtim.and.
@@ -3678,7 +3584,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                 uri_dest, status )
                   end if
                   write(systemarg,'(a,a,a,a)')
-     &              'idscp --setDatasetVersion'//
+     &              'idscp --set-dataset-version'//
      &                   ' -s ',trim(uri_source),
      &                   ' -d ',trim(uri_dest)
 #else
@@ -3715,7 +3621,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                 uri_dest, status )
                     write(systemarg,'(a,a,a,a)')
-     &               'idscp --setDatasetVersion'//
+     &               'idscp --set-dataset-version'//
      &                  ' -s ',trim(uri_source),
      &                  ' -d ',trim(uri_dest)
 #else
@@ -3929,6 +3835,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 !WG_RM      call dealloc_b2mod_external
       call dealloc_b2mod_wall_init
       call dealloc_b2mod_ysmp_sdrv
+      call dealloc_b2mod_facdrift_ExB
       call dealloc_transport_namelist
       call dealloc_b2mod_first_flight
       call dealloc_b2mod_neoclassical

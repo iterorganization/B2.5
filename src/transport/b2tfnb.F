@@ -57,7 +57,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv1, iCv2, iFc, meth, iFt1, iFt2                          !srv 13.10.06
+      integer iCv1, iCv2, iFc, meth                                      !srv 13.10.06
       character chns*3                                                   !srv 16.09.02
       real (kind=R8) :: drift_hyb
       real (kind=R8) ::
@@ -89,10 +89,7 @@
      *   fna_mdf0(nFc,0:1), flo_factor(nFc,0:1),
      *   cddb(nFc,0:1), cdpb(nFc,0:1)
       real (kind=R8) :: weight(nFc,2)                                    !lk
-      integer, save :: corr_ExB = 0
       integer :: xcount
-c The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
-c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 *   ..procedures
       external xertst, ipgeti, ipgetr                                    !xpb
       external b2xvsg, intface, diff
@@ -123,9 +120,6 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
        call b2xvsg (nFc, wrk0, 1, 'cdpa0','.ge.')
        wrk1(:) = co%cdpa(:,1,isb)*geo%fcQalf(:,1)
        call b2xvsg (nFc, wrk1, 1, 'cdna1','.ge.')
-c The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
-c        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
-c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
       endif
 
       meth = switch%b2tfnb_discr_meth
@@ -1011,4 +1005,3 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
 *.end b2tfnb
 
       end subroutine b2tfnb
-

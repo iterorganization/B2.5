@@ -172,7 +172,7 @@
      &                 hy(ixref(iseg(ix,iy),iy),iy)
           end if
           wrk = wbbl(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy,0)
-          if ((abs(wrk).lt.abs(pol_flux)) .and. 
+          if ((abs(wrk).lt.abs(pol_flux)) .and.
      &        isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) ) cycle
           if (leftix(ix,iy).ne.-2) then ! do not adjust pbs if leftix=-2
                                         ! since there is no western face
@@ -188,9 +188,9 @@
      &       sqrt(wbbl(ix,iy,0)**2+wbbl(ix,iy,1)**2+wbbl(ix,iy,2)**2)
           end if
           wrk = pol_flux /
-     .               (hz(ix,iy)*qz(ix,iy,1)*bb(ix,iy,0))
+     .         (hz(ix,iy)*qz(ix,iy,1)*bb(ix,iy,0))
           if (wrk .lt. 0.0_R8) then
-            write(*,'(a,i2,a,i2,a)') "For cell (ix,iy) (", ix,",", iy, 
+            write(*,'(a,i2,a,i2,a)') "For cell (ix,iy) (", ix,",", iy,
      &        ") redefined hy < 0!"
             cycle
           endif
@@ -210,4 +210,3 @@
       call subend ()
       return
       end subroutine b2agbs
-

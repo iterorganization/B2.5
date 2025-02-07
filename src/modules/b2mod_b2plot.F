@@ -49,7 +49,7 @@
      *  pp2(2,DEF_NLIM+2*DEF_NYD)
 
       integer, allocatable, save ::
-     *  ind_hlp(:), indt_hlp(:)
+     *  ind_hlp(:), indt_hlp(:), b2_fnmti(:)
 
       integer, allocatable, save ::
      *  cvIx(:), cvIy(:), fcxIx(:), fcxIy(:), fcyIx(:), fcyIy(:),
@@ -161,9 +161,6 @@ cank
       integer nCv,nFc,nVx
       integer nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
       integer nsw
-#ifdef WG_TODO
-      external get_jsep, get_nxt, ipgeti, xertst
-#endif
 
       nsw=max(nsd+3,(nsd+1)*(nsd+1)-1,ns_ext)
 
@@ -193,6 +190,7 @@ cank
       allocate(fcyIy(1:nFc))
       allocate(vxIx(1:nVx))
       allocate(vxIy(1:nVx))
+      allocate(b2_fnmti(1:nFc))
       allocate(ic_active(1:nCv))
 #ifndef PSR
       allocate(textpl(0:nsd-1))
@@ -305,6 +303,7 @@ cank
       deallocate(fcyIy)
       deallocate(vxIx)
       deallocate(vxIy)
+      deallocate(b2_fnmti)
       deallocate(ic_active)
 #ifndef PSR
       deallocate(textpl)

@@ -2424,7 +2424,7 @@
 
       implicit none
       integer, intent(in) :: nx, ny
-      integer :: ix, iy, ic, iFc, iVx, iFs, iCv, Cvs(2),  iVx1, iVx2
+      integer :: ix, iy, ic, iFc, iVx, iFs, iCv, Cvs(2), iVx1, iVx2
       real :: wrk
 #ifdef WG_TODO
       integer :: i, j, idb
@@ -2435,15 +2435,15 @@
       integer newunit
       external newunit
 #endif
-      real (kind=R8), save :: Qalfmin = 1e-3_R8,Qalfmax=1e-2_R8,
-     & pbs_red_fac=1e-2_R8
-      integer, save :: mod_hc = 0, mean_boundary_hc = 0, set_beta=0,
-     & mod_alpha = 0 
+      real (kind=R8), save :: Qalfmin = 1.0e-3_R8, Qalfmax=1.0e-2_R8,
+     & pbs_red_fac=1.0e-2_R8
+      integer, save :: mod_hc = 0, mean_boundary_hc = 0, set_beta = 0,
+     & mod_alpha = 0
       integer :: fcsb(mpg%nCg), cvsb(mpg%nCg,2), k, ind, ind1, tmp, iFt
       logical :: iscvsb(mpg%nCv)
-      integer :: wrkVx(mpg%nVx), find_loc
-      integer :: calc_vx(2,20)
+      integer :: wrkVx(mpg%nVx)
       real (kind=R8) :: meanCv(2),meanFc(2)
+
       call ipgetr('b2stbc_Qalfmin',Qalfmin)
       call ipgetr('b2stbc_Qalfmax',Qalfmax)
       call ipgetr('b2us_prep_Pbs_reduce_fac',pbs_red_fac)
@@ -2474,6 +2474,7 @@
             gm%cvSz(ic) = gs(ix,iy,2)
             gm%cvHz(ic) = hz(ix,iy)
             gm%cvHx(ic) = hx(ix,iy)
+            gm%cvHy(ic) = hy1(ix,iy)
             gm%cvQgam(ic,0) = qz(ix,iy,1)    ! cos
             gm%cvQgam(ic,1) = -qz(ix,iy,0)   ! sin
             gm%cvVol(ic) = vol(ix,iy)
@@ -2497,13 +2498,13 @@
             else
               Cvs = mpg%fcCv(iFc,1:2)
               wrk = sqrt((gm%cvX(Cvs(1))-gm%cvX(Cvs(2)))**2+
-     &          (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
+     &                   (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
               if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
-                gm%fcHc(iFc,1) = 0.01*wrk
-                gm%fcHc(iFc,2) = 0.99*wrk
+                gm%fcHc(iFc,1) = 0.01_R8*wrk
+                gm%fcHc(iFc,2) = 0.99_R8*wrk
               elseif (mpg%fcCv(iFc,2).gt.mpg%nCi) then
-                gm%fcHc(iFc,2) = 0.01*wrk
-                gm%fcHc(iFc,1) = 0.99*wrk
+                gm%fcHc(iFc,2) = 0.01_R8*wrk
+                gm%fcHc(iFc,1) = 0.99_R8*wrk
               endif
             endif
             gm%fcHt(iFc)   = ht(ix,iy,0)
@@ -2526,39 +2527,39 @@
             gm%fcPbshz(iFc) = pbshz(ix,iy,0)
             wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
             if (wrk >= Qalfmin .and. wrk < Qalfmax .and.
-     .        mpg%fcLbl(iFc) > 0) then
+     .          mpg%fcLbl(iFc) > 0) then
               gm%fcPbs(iFc) = Qalfmax*gm%fcS(iFc)*
-     .        sign(1.0,gm%fcPbs(iFc))
+     .         sign(1.0_R8,gm%fcPbs(iFc))
               gm%fcPbshz(iFc) = Qalfmax*gm%fcS(iFc)*gm%fcHz(iFc)*
-     .          sign(1.0,gm%fcPbshz(iFc))
+     .         sign(1.0_R8,gm%fcPbshz(iFc))
               if (mod_alpha.eq.1) then
                 gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)
      .           /gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
                 gm%fcQalf(iFc,1) = sign(gm%fcQalf(iFc,1),
-     .            sqrt(1-gm%fcQalf(iFc,0)**2))
-                if (gm%fcQbet(iFc,0) < 0.0_R8) then 
+     .           sqrt(1.0_R8-gm%fcQalf(iFc,0)**2))
+                if (gm%fcQbet(iFc,0) < 0.0_R8) then
                   gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
                   gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)
-                elseif (gm%fcQbet(iFc,0) >= 0.0_R8) then 
+                elseif (gm%fcQbet(iFc,0) >= 0.0_R8) then
                   gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
-                  gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1) 
+                  gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)
                 endif
               endif
-              write (*,*)'pbs and pbshz were modified for iFc=',iFc
+              write(*,*) 'pbs and pbshz were modified for iFc=',iFc
             elseif (wrk < Qalfmin .and. mpg%fcLbl(iFc) > 0) then
               gm%fcPbs(iFc) = pbs_red_fac*gm%fcPbs(iFc)
               gm%fcPbshz(iFc) = pbs_red_fac*gm%fcPbshz(iFc)
               if (mod_alpha.eq.1) then
                 gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)/
-     .            gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+     .           gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
                 gm%fcQalf(iFc,1) = sign(gm%fcQalf(iFc,1),
-     .            sqrt(1-gm%fcQalf(iFc,0)**2))
+     .           sqrt(1.0_R8-gm%fcQalf(iFc,0)**2))
                 gm%fcQbet(iFc,0) = gm%fcQgam(iFc,0)*gm%fcQalf(iFc,0) +
-     .            gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)
+     .           gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)
                 gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
-     .            gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)
+     .           gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)
               endif
-              write (*,*)'pbs and pbshz were reduced for iFc=',iFc
+              write(*,*) 'pbs and pbshz were reduced for iFc=',iFc
             endif
           end if
         end do
@@ -2573,14 +2574,13 @@
             ! wdk sign of field now included in angles
             gm%fcBb(iFc,0:3) = abs(wbbv(ix,iy,0:3))
             gm%fcS(iFc) = gs(ix,iy,1)
-
             if (iCv.le.mpg%nCi .or. mod_hc.eq.0) then
-              gm%fcHc(iFc,2) = hc(ix,iy,1)
               gm%fcHc(iFc,1) = hc(bottomix(ix,iy),bottomiy(ix,iy),3)
+              gm%fcHc(iFc,2) = hc(ix,iy,1)
             else
               Cvs = mpg%fcCv(iFc,1:2)
               wrk = sqrt((gm%cvX(Cvs(1))-gm%cvX(Cvs(2)))**2+
-     &          (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
+     &                   (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
               if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
                 gm%fcHc(iFc,1) = 0.01_R8*wrk
                 gm%fcHc(iFc,2) = 0.99_R8*wrk
@@ -2610,39 +2610,39 @@
             gm%fcPbshz(iFc) = pbshz(ix,iy,1)
             wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
             if (wrk >= Qalfmin .and. wrk < Qalfmax .and.
-     .        mpg%fcLbl(iFc) > 0 ) then
+     .          mpg%fcLbl(iFc) > 0 ) then
               gm%fcPbs(iFc) = Qalfmax*gm%fcS(iFc)*
-     .        sign(1.0,gm%fcPbs(iFc))
+     .         sign(1.0_R8,gm%fcPbs(iFc))
               gm%fcPbshz(iFc) = Qalfmax*gm%fcS(iFc)*gm%fcHz(iFc)*
-     .          sign(1.0,gm%fcPbshz(iFc))
+     .         sign(1.0_R8,gm%fcPbshz(iFc))
               if (mod_alpha.eq.1) then
                 gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)
-     .            /gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+     .           /gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
                 gm%fcQalf(iFc,1) = sign(gm%fcQalf(iFc,1),
-     .            sqrt(1-gm%fcQalf(iFc,0)**2))
-                if (gm%fcQbet(iFc,0) < 0.0_R8) then 
+     .           sqrt(1.0_R8-gm%fcQalf(iFc,0)**2))
+                if (gm%fcQbet(iFc,0) < 0.0_R8) then
                   gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
                   gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)
-                elseif (gm%fcQbet(iFc,0) >= 0.0_R8) then 
+                elseif (gm%fcQbet(iFc,0) >= 0.0_R8) then
                   gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
-                  gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1) 
+                  gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)
                 endif
               endif
-              write (*,*)'pbs and pbshz were modified for iFc=',iFc
+              write(*,*) 'pbs and pbshz were modified for iFc=',iFc
             elseif (wrk < Qalfmin .and. mpg%fcLbl(iFc) > 0) then
               gm%fcPbs(iFc) = pbs_red_fac*gm%fcPbs(iFc)
               gm%fcPbshz(iFc) = pbs_red_fac*gm%fcPbshz(iFc)
               if (mod_alpha.eq.1) then
                 gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)/
-     .            gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+     .           gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
                 gm%fcQalf(iFc,1) = sign(gm%fcQalf(iFc,1),
-     .            sqrt(1-gm%fcQalf(iFc,0)**2))
+     .           sqrt(1.0_R8-gm%fcQalf(iFc,0)**2))
                 gm%fcQbet(iFc,0) = gm%fcQgam(iFc,0)*gm%fcQalf(iFc,0) +
-     .            gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)
+     .           gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)
                 gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
-     .            gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)
+     .           gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)
               endif
-              write (*,*)'pbs and pbshz were reduced for iFc=',iFc
+              write(*,*) 'pbs and pbshz were reduced for iFc=',iFc
             endif
           end if
         end do
@@ -2678,26 +2678,26 @@
       cvsb(ind,2) = minval(mpg%fcCv(fcsb(mpg%nCg),1:2))
       print *, fcsb(mpg%nCg)
 
-
       if (set_beta.eq.1) then
         do iFt=1,mpg%nFt
           do k=mpg%ftFcP(iFt,1),mpg%ftFcP(iFt,1)+mpg%ftFcP(iFt,2)-1
             iFc = mpg%ftFc(k)
-            if (.not.iscvsb(mpg%fcCv(iFc,1))
-     &        .and. .not.iscvsb(mpg%fcCv(iFc,2))) cycle
-            if (gm%fcQbet(iFc,0) < 0.0_R8) then 
+            if (.not.iscvsb(mpg%fcCv(iFc,1)) .and.
+     &          .not.iscvsb(mpg%fcCv(iFc,2))) cycle
+            if (gm%fcQbet(iFc,0) < 0.0_R8) then
               gm%fcQbet(iFc,0) = -1.0_R8
               gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
               gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)
-            elseif (gm%fcQbet(iFc,0) >= 0.0_R8) then 
-              gm%fcQbet(iFc,0) =  1.0_R8
+            elseif (gm%fcQbet(iFc,0) >= 0.0_R8) then
+              gm%fcQbet(iFc,0) = 1.0_R8
               gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
-              gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1) 
+              gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)
             endif
-            gm%fcQbet(iFc,1) =  0.0_R8
+            gm%fcQbet(iFc,1) = 0.0_R8
           enddo
         enddo
       endif
+
 ! vertices
       gm%vxX = 0._R8
       gm%vxY = 0._R8
@@ -2714,7 +2714,7 @@
         end do
       end do
 
-#ifdef WG_TODO
+#ifdef WG_DEBUG
 #ifndef LEGACYCOMP
       open (newunit=idb,file='debug.out')
 #else
@@ -2803,72 +2803,71 @@
      &        mpg%cvFt(minval(mpg%fcCv(fcsb(ind1-1),:)))
      &        .or. wrk < Qalfmin ) then
 
-              k = ind1-1
-              if(((ind1-1) .le. ind) .or. 
-     &        (minval(mpg%fcCv(fcsb(ind),1:2))
-     &         .eq.minval(mpg%fcCv(fcsb(k),1:2)))) then  !second condition for cell with two boundary faces
-                ind = ind1
-                cycle
-              endif     
-              write(*,*), "boundary faces of cell:"
-              write (*,*) fcsb(ind:k)
-              if (mpg%fcVx(fcsb(ind),1).ne.mpg%fcVx(fcsb(ind+1),1).and.
-     &          mpg%fcVx(fcsb(ind),1).ne.mpg%fcVx(fcsb(ind+1),2)) then
-                iVx1 = mpg%fcVx(fcsb(ind),1)
-              else
-                iVx1 = mpg%fcVx(fcsb(ind),2)
-              endif
-              if (mpg%fcVx(fcsb(k),1).ne.mpg%fcVx(fcsb(k-1),1).and.
-     &          mpg%fcVx(fcsb(k),1).ne.mpg%fcVx(fcsb(k-1),2)) then
-                iVx2 = mpg%fcVx(fcsb(k),1)
-              else
-                iVx2 = mpg%fcVx(fcsb(k),2)
-              endif
-              write(*,'(a,2i5)')'ends of effective face', iVx1, iVx2
-              meanFc(1) = gm%vxX(iVx1) + gm%vxX(iVx2)
-              meanFc(2) = gm%vxY(iVx1) + gm%vxY(iVx2)
-              meanFc = meanFc/2
-              write (*,'(2es17.6)') meanFc(1), meanFc(2)
-
-              wrkVx = 0
-              calc_vx = 0
-              do k=ind,ind1-1
-                iCv = cvsb(k,2)
-                if (cvsb(k,2).eq.cvsb(k-1,2)) cycle
-                wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
-     &           mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1)) = 
-     &          wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
-     &            mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1)) + 1
-              enddo
-              print *, "ends of effective cell:"
-              meanCv = 0.0_R8
-              tmp = 0
-              do k=1,mpg%nVx
-                if (wrkVx(k).eq.1) then 
-                  print *, k
-                  meanCv(1) = meanCv(1) + gm%vxX(k)
-                  meanCv(2) = meanCv(2) + gm%vxY(k)
-                  tmp = tmp + 1
-                endif
-              enddo
-              meanCv = meanCv/tmp
-              write (*,'(2es17.6)') meanCv(1), meanCv(2)
-
-              wrk = norm(meanFc(1)-meanCv(1), meanFc(2)-meanCv(2))
-              write (*,*), "new fcHc:"
-              write (*,'(1es17.6)') wrk
-              write(*,*) "----------"
-              do k=ind,ind1-1
-                iFc = fcsb(k)
-                if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
-                  gm%fcHc(iFc,1) = 0.99*wrk
-                  gm%fcHc(iFc,2) = 0.01*wrk
-                else
-                  gm%fcHc(iFc,2) = 0.99*wrk
-                  gm%fcHc(iFc,1) = 0.01*wrk
-                endif
-              enddo
+            k = ind1-1
+            if(((ind1-1) .le. ind) .or.
+     &          (minval(mpg%fcCv(fcsb(ind),1:2))
+     &       .eq.minval(mpg%fcCv(fcsb(k),1:2)))) then  !second condition for cell with two boundary faces
               ind = ind1
+              cycle
+            endif
+            write(*,*) "boundary faces of cell:"
+            write (*,*) fcsb(ind:k)
+            if (mpg%fcVx(fcsb(ind),1).ne.mpg%fcVx(fcsb(ind+1),1).and.
+     &          mpg%fcVx(fcsb(ind),1).ne.mpg%fcVx(fcsb(ind+1),2)) then
+              iVx1 = mpg%fcVx(fcsb(ind),1)
+            else
+              iVx1 = mpg%fcVx(fcsb(ind),2)
+            endif
+            if (mpg%fcVx(fcsb(k),1).ne.mpg%fcVx(fcsb(k-1),1).and.
+     &          mpg%fcVx(fcsb(k),1).ne.mpg%fcVx(fcsb(k-1),2)) then
+              iVx2 = mpg%fcVx(fcsb(k),1)
+            else
+              iVx2 = mpg%fcVx(fcsb(k),2)
+            endif
+            write(*,'(a,2i5)') 'ends of effective face', iVx1, iVx2
+            meanFc(1) = gm%vxX(iVx1) + gm%vxX(iVx2)
+            meanFc(2) = gm%vxY(iVx1) + gm%vxY(iVx2)
+            meanFc = meanFc/2.0_R8
+            write (*,'(2es17.6)') meanFc(1), meanFc(2)
+
+            wrkVx = 0
+            do k=ind,ind1-1
+              iCv = cvsb(k,2)
+              if (cvsb(k,2).eq.cvsb(k-1,2)) cycle
+              wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
+     &                       mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1)) =
+     &         wrkVx(mpg%cvVx(mpg%cvVxP(iCv,1):
+     &                        mpg%cvVxP(iCv,1)+mpg%cvVxP(iCv,2)-1))+1
+            enddo
+            print *, "ends of effective cell:"
+            meanCv = 0.0_R8
+            tmp = 0
+            do k=1,mpg%nVx
+              if (wrkVx(k).eq.1) then
+                print *, k
+                meanCv(1) = meanCv(1) + gm%vxX(k)
+                meanCv(2) = meanCv(2) + gm%vxY(k)
+                tmp = tmp + 1
+              endif
+            enddo
+            meanCv = meanCv/real(tmp,R8)
+            write (*,'(2es17.6)') meanCv(1), meanCv(2)
+
+            wrk = norm(meanFc(1)-meanCv(1), meanFc(2)-meanCv(2))
+            write (*,*) "new fcHc:"
+            write (*,'(1es17.6)') wrk
+            write(*,*) "----------"
+            do k=ind,ind1-1
+              iFc = fcsb(k)
+              if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
+                gm%fcHc(iFc,1) = 0.99_R8*wrk
+                gm%fcHc(iFc,2) = 0.01_R8*wrk
+              else
+                gm%fcHc(iFc,2) = 0.99_R8*wrk
+                gm%fcHc(iFc,1) = 0.01_R8*wrk
+              endif
+            enddo
+            ind = ind1
           endif
         enddo
       endif
@@ -5260,4 +5259,3 @@
 ******************************************************************************
 
       end module b2us_prep
-

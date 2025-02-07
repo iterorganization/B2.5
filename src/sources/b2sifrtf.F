@@ -107,8 +107,9 @@
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
-*   ..test nCv, nFc
-      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, nVx
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     . 'faulty argument nCv, nFc, nVx')
 *   ..extensive tests on first few calls
       if (ncall_b2sifrtf.lt.3) then
 *    ..test sign of vol
@@ -321,7 +322,6 @@ c      .. apply flux limit
 
         call my_out_us(70,nCv,0,ua(:,isb),'b2sifrtf_ua'//chns)
       endif
-
 
 * ..return
       ncall_b2sifrtf = ncall_b2sifrtf+1

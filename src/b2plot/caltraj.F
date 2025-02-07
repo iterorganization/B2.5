@@ -134,8 +134,7 @@ c     the traj common
       real (kind=R8) ::
      1   starttime, tstepn(1), dumarr(1)
       real (kind=R8) ::
-     *   flux_density(1:mpg%nFc,0:state%ns-1),
-     *   cv_flux(1:mpg%nCv,0:state%ns-1)
+     *   wrkc2s(1:mpg%nCv,0:1,0:state%ns-1)
 #endif
 
       oocol=-1
@@ -332,20 +331,12 @@ c                         particles than at beginning, it is destroyed.
             call rwcdf(rw,ncid,'ua',imap,state%pl%ua,iret)
             call rwcdf(rw,ncid,'fna',imap,state%dv%fna,iret)
             call rwcdf(rw,ncid,'na',imap,lwarr,iret)
+            call intflux1(mpg%nFc,mpg%nCv,state%ns,mpg,geo,
+     .       state%dv%fna,state%pl%na,wrkc2s)
             do is=0,state%ns-1
-              do iFc = 1, mpg%nFc
-                if (geo%fcQalf(iFc,1).ne.0.0_R8) then
-                  flux_density(iFc,is)=state%dv%fna(iFc,1,is)
-     .             /(geo%fcS(iFc)*geo%fcQalf(iFc,1))
-                else
-                  flux_density(iFc,is)=0.0_R8
-                end if
-              end do
-              call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .         flux_density(1,is),cv_flux(1,is))
               do iCv=1,mpg%nCv
                 uutraj(iCv,is)=state%pl%ua(iCv,is)
-                vvtraj(iCv,is)=cv_flux(iCv,is)/state%pl%na(iCv,is)
+                vvtraj(iCv,is)=wrkc2s(iCv,1,is)/state%pl%na(iCv,is)
               end do
             end do
           endif
@@ -437,20 +428,12 @@ c     TRAJECTORIES:
             call rwcdf(rw,ncid,'ua',imap,state%pl%ua,iret)
             call rwcdf(rw,ncid,'na',imap,state%pl%na,iret)
             call rwcdf(rw,ncid,'fna',imap,state%dv%fna,iret)
+            call intflux1(mpg%nFc,mpg%nCv,state%ns,mpg,geo,
+     .       state%dv%fna,state%pl%na,wrkc2s)
             do is=0,state%ns-1
-              do iFc = 1, mpg%nFc
-                if (geo%fcQalf(iFc,1).ne.0.0_R8) then
-                  flux_density(iFc,is)=state%dv%fna(iFc,1,is)
-     .             /(geo%fcS(iFc)*geo%fcQalf(iFc,1))
-                else
-                  flux_density(iFc,is)=0.0_R8
-                end if
-              end do
-              call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellR,
-     .         flux_density(1,is),cv_flux(1,is))
               do iCv=1,mpg%nCv
                 uutraj(iCv,is)=state%pl%ua(iCv,is)
-                vvtraj(iCv,is)=cv_flux(iCv,is)/state%pl%na(iCv,is)
+                vvtraj(iCv,is)=wrkc2s(iCv,1,is)/state%pl%na(iCv,is)
               end do
             end do
           endif

@@ -85,8 +85,9 @@ c       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
 c       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
 c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10.06
       endif                                                           !srv 06.07.06 }
-*   ..test nCv, nFc
-      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, nVx
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     .  'faulty argument nCv, nFc, nVx')
 *   ..test itcnt, rxg
       call xertst (0.le.itcnt, 'faulty argument itcnt')
       call xertst (0.lt.rxg, 'faulty argument rxg')
@@ -249,7 +250,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10
         call my_out_us(70,nCv,0,corpb,name//'_corpb'//chns)
         call my_out_us(70,nCv,0,rescb,name//'_rescb'//chns)
         call my_out_us(70,nCv,0,nb,name//'_na'//chns)
-      endif                                                            !srv 17.06.02 }
+      endif                                                             !srv 17.06.02 }
 
 * ..return
       ncall_b2usco = ncall_b2usco+1

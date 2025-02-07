@@ -15,7 +15,6 @@
 *   ..output arguments
       real (kind=R8) ::
      *   gfunp(nFc)
-      integer cvs(2)
 *-----------------------------------------------------------------------
 *.documentation
 *
