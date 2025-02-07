@@ -52,7 +52,7 @@ c
      1   (dummy(is+nlim,ifl),is=1,nstsi)
         if(present(extra_time)) then
           if(extra_time) then
-            if(mod(nstsi,5).eq.0) read(kard,'()',end=10)
+            if(mod(nstsi,5).eq.1) read(kard,'()',end=10)
           end if
         end if
       enddo

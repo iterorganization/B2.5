@@ -87,21 +87,21 @@ c
       end do
       ntrg=k
 #ifdef DBG
-       print *,'Shadowing structure: ',
-     ,          nplgs,nbndry,nwldlis(1),lwldlis(1,1)
-       print '(20i4)',(lbnd(i),i=1,nplgs)
-       print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
-       print '(a,12i5)','Radiation target ',ntrg,
-     ,        (nwldlis(i),i=2,nwldprt)
-       print '(20i4)',(ltrg(i),i=1,ntrg)
+      print *,'Shadowing structure: ',
+     ,         nplgs,nbndry,nwldlis(1),lwldlis(1,1)
+      print '(20i4)',(lbnd(i),i=1,nplgs)
+      print '(5(1x,2f9.4))',(xp(i),yp(i),i=1,nplgs)
+      print '(a,12i5)','Radiation target ',ntrg,
+     ,       (nwldlis(i),i=2,nwldprt)
+      print '(20i4)',(ltrg(i),i=1,ntrg)
 
-       open(lun_w,file='layout-w.dat')
-       write(lun_w,'(2a)') '# Wall layout : ',trim(label)
-       write(lun_w,'(3a)') '# R',tab,'Z'
-       do i=1,nplgs
-         write(lun_w,'(1p,2(1x,e15.8))') xp(i),yp(i)
-       end do
-       close(lun_w)
+      open(lun_w,file='layout-w.dat')
+      write(lun_w,'(2a)') '# Wall layout : ',trim(label)
+      write(lun_w,'(3a)') '# R',tab,'Z'
+      do i=1,nplgs
+        write(lun_w,'(1p,2(1x,e15.8))') xp(i),yp(i)
+      end do
+      close(lun_w)
 #endif
 c
 c*** Now specify the radiation sources - in W (remember, the additional

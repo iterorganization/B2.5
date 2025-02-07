@@ -52,6 +52,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: flux_limit_to_vsa
       integer :: csig_an_style
       integer :: user_transport
+      integer :: set_transport_iyref
 
 c Advanced fluid neutral models
       integer :: tn_style
@@ -626,6 +627,7 @@ c Optimization
       s % flux_limit_to_vsa = 1
       s % csig_an_style = 1
       s % user_transport = 0
+      s % set_transport_iyref = 0
 
 c Advanced fluid neutral models
       s % tn_style = 0
@@ -714,11 +716,11 @@ c Advanced fluid neutral models
       s % b2tfnb_alpha = 0.0_R8
       s % b2tfnb_gamma = 2.0_R8
       s % fch_stochastic = 0.0_R8
-      s % Qalfmin        = 1.0e-3_R8
-      s % Qalfmax        = 1.0e-3_R8
-      s % delpo          = 3.1_R8
-      s % Kn_b1         = 0.01_R8
-      s % Kn_b2         = 0.10_R8
+      s % Qalfmin = 1.0e-3_R8
+      s % Qalfmax = 1.0e-3_R8
+      s % delpo = 3.1_R8
+      s % Kn_b1 = 0.01_R8
+      s % Kn_b2 = 0.10_R8
       s % pol_anom_scale = 1.0_R8
       s % auto_spatial_hyb_Kn_1 = 0.0_R8
       s % auto_spatial_hyb_Kn_2 = 100.0_R8
@@ -851,7 +853,7 @@ c Advanced fluid neutral models
       s % b2sihs_shedd = 1
       s % b2sihs_shivis = 1
       s % b2sihs_shi = 1
-      
+
       if ( s % b2mndt_style.eq.2 ) then
         s % b2npco_rxg =  huge(1.0_R8)
         s % b2npht_rxg =  huge(1.0_R8)
@@ -1233,6 +1235,7 @@ c Optimization
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)
       call ipgeti ('b2tqna_user_transport', s % user_transport)
+      call ipgeti ('set_transport_iyref', s % set_transport_iyref)
 
 c Advanced fluid neutral models
       call ipgeti ('b2mn_tn_style', s % tn_style)
@@ -1334,7 +1337,8 @@ c far sol flux limiting
       call ipgetr ('b2tlmv_ni_min', s % b2tlmv_ni_min)
       call ipgetr ('b2tlmv_ni_max', s % b2tlmv_ni_max)
       call ipgetr ('b2tlmv_cflmv_min', s % b2tlmv_cflmv_min)
-      call ipgetr ('b2trcl_min_collisions',s % min_collisions)
+      call ipgetr ('b2trcl_min_collisions', s % min_collisions)
+
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
       call ipgeti ('b2sian_iout', s % b2sian_iout)
@@ -1461,6 +1465,7 @@ c phm switches
       call ipgetr ('b2treq_phm0', s % b2treq_phm0)
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
+      call ipgetr ('b2stbc_phm2', s % b2stbc_phm2)
       call ipgeti ('b2sihs_shi', s % b2sihs_shi)
       if (s % b2sihs_shi .eq. 0) then
         s % b2sihs_shidu = 0
@@ -1472,8 +1477,6 @@ c phm switches
       call ipgeti ('b2sihs_shedu', s % b2sihs_shedu)
       call ipgeti ('b2sihs_shedd', s % b2sihs_shedd)
       call ipgeti ('b2sihs_shivis', s % b2sihs_shivis)
-
-      call ipgetr ('b2stbc_phm2', s % b2stbc_phm2)
 
 c pcm switches
       call ipgetr ('b2npco_pcm0', s% b2npco_pcm0)
@@ -1841,7 +1844,7 @@ c b2trno
 c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
       call ipgeti ('b2stbc_use_pump', s%use_pump)
-      
+
 c b2nppo
       call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
       call ipgetr ('b2txcx_increase_transp_coefs',

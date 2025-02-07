@@ -98,7 +98,7 @@
 #endif
      &  chce_stoch(nFc)                                               !srv 20.09.17
       real (kind=R8) ::
-     *  wrk(nFc), wrk1(nFc,2), wrkc(nCv),wrk0,
+     *  wrk(nFc), wrk1(nFc,2), wrkc(nCv), wrk0,
      1  hvi0(nCv,0:1), hve0(nCv,0:1),
      2  flc(nFc,0:1,0:ns-1),
      3  flv(nFc,0:1,0:ns-1),
@@ -109,7 +109,7 @@
      *  smin, smax
       external xertst, sfill, smin, smax
       external ipgetr, ipgeti
-      external b2tqna, b2txcx, b2txcy, b2txcv, b2txsx, b2txsy
+      external b2tqna, b2txcx, b2txcy, b2txsx, b2txsy
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -234,7 +234,7 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
            call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
      &                  geo%fcS, wrkc, co%cdpa(1:nFc,0,is))
            call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, wrk1, wrk,
-     &                 wrkc, co%cdpahz(1:nFc,0,is))
+     &                  wrkc, co%cdpahz(1:nFc,0,is))
          endif
        enddo
       endif
@@ -296,13 +296,13 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
         do iFc=1,mpg%nFc
           cvs = mpg%fcCv(iFc,1:2)
           if (mpg%islongbound(cvs(1)).and.
-     &          mpg%islongbound(cvs(2))) then
+     &        mpg%islongbound(cvs(2))) then
             co%chcb(iFc,1,:) = 0.0_R8
             co%chce(iFc,1) = 0.0_R8
             do is = 0, ns-1
               if (co%cdna(iFc,0,is)*geo%fcQalf(iFc,0) + 
      .            co%cdpa(iFc,0,is)*geo%fcQalf(iFc,0) +
-     .            co%cdpa(iFc,1,is)*geo%fcQalf(iFc,1) .gt. 0.0_R8) then
+     .            co%cdpa(iFc,1,is)*geo%fcQalf(iFc,1).gt.0.0_R8) then
                 co%cdna(iFc,1,is) = 0.0_R8
               else
                 co%cdna(iFc,1,is) = co%cdna(iFc,1,is)/inctran
@@ -534,4 +534,3 @@ c the logic statements below could be simplfied but for now we go for readabilit
 *.end b2trno
 
       end subroutine b2trno
-

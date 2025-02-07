@@ -5,7 +5,6 @@
      &  switch, geo, mpg, pl, dv, co, rt, st_ext, sr, srw,
      &  psnc, psnl, wrong_flow, main_call)
       use b2mod_types
-!      use b2mod_geo_corner
       use b2mod_constants
 #ifndef FIXED_POINT
       use b2mod_balance !djm Jan 2017
@@ -68,30 +67,24 @@
 *.declarations
 
 *   ..local variables
-      integer is
+      integer i, j, is, iCv, iFc, iFt
       real (kind=R8) :: praverage(2)
       real (kind=R8) :: wrk(nFc)
-#ifdef WG_TODO
-      integer regcnt, ixx
       real (kind=R8) ::
-     *   t0, testqe, testqi,
      &   prsum(2), gssum(2), tesum(2), tisum(2),
      1   nasum(0:ns-1,2),
      1   nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
      x   nxf, taf, zxf,
-     1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
-     1   sum_sch0, sum_vol
-      integer element_done(-1:nx)
-      real (kind=R8) ::
-     *   b2ssum
+     1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2)
+#ifdef WG_TODO
+      integer ixx, regcnt, element_done(-1:nx)
+      real (kind=R8) :: t0, testqe, testqi, sum_sch0, sum_vol
 #endif
+      real (kind=R8) :: intface_s
 *   ..procedures
       intrinsic nint
-      external xertst, sfill, b2saxpy, ipgetr, ipgeti
+      external xertst, sfill, b2saxpy, ipgetr, ipgeti, intface_s
       external b2xvsg, b2xvps, b2stbc_phys
-#ifdef WG_TODO
-     & , b2stbc_bas, b2ssum                                            !srv 27.06.21
-#endif
 *   ..initialisation
 *-----------------------------------------------------------------------
 *.computation
@@ -175,9 +168,8 @@
       call b2saxpy (nCv, switch%she0ep, geo%cvVol, 1, srw%she0(1,0), 1)
       call b2saxpy (nCv, switch%shi0ep, geo%cvVol, 1, srw%shi0(1,0), 1)
 
-#ifdef WG_TODO
 *   ..find the average pressure for inner flux surface           !sv 24.03.99
-      iy = -1                                                    !sv 24.03.99
+      iFt = mpg%cvFt(omp(1))                                     !sv 24.03.99
       tesum(1)=0.0_R8
       tisum(1)=0.0_R8
       nasum(:,1)=0.0_R8
@@ -186,69 +178,66 @@
       qisum(1)=0.0_R8
       gssum(1)=0.0_R8                                                    !xpb
       volsum(1)=0.0_R8
-      do ix = -1, nx                                                     !xpb
-        if(on_closed_surface(ix,iy)) then                                !xpb
-          tef = (te(ix,iy)*hy1(topix(ix,iy),topiy(ix,iy))+
-     &           te(topix(ix,iy),topiy(ix,iy))*hy1(ix,iy))/
-     &          (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
-          tif = (ti(ix,iy)*hy1(topix(ix,iy),topiy(ix,iy))+
-     &           ti(topix(ix,iy),topiy(ix,iy))*hy1(ix,iy))/
-     &          (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
-          nef = (ne(ix,iy)*hy1(topix(ix,iy),topiy(ix,iy))+
-     &           ne(topix(ix,iy),topiy(ix,iy))*hy1(ix,iy))/
-     &          (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
-          nif = (ni(ix,iy,1)*hy1(topix(ix,iy),topiy(ix,iy))+
-     &           ni(topix(ix,iy),topiy(ix,iy),1)*hy1(ix,iy))/
-     &          (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
-          naf(:) = (na(ix,iy,:)*hy1(topix(ix,iy),topiy(ix,iy))+
-     &           na(topix(ix,iy),topiy(ix,iy),:)*hy1(ix,iy))/
-     &          (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
-          zaf(:) = (rza(ix,iy,:)*hy1(topix(ix,iy),topiy(ix,iy))+
-     &           rza(topix(ix,iy),topiy(ix,iy),:)*hy1(ix,iy))/
-     &          (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
-          tesum(1)=tesum(1) + tef*gs(topix(ix,iy),topiy(ix,iy),1)
-          tisum(1)=tisum(1) + tif*gs(topix(ix,iy),topiy(ix,iy),1)
-          nasum(:,1)=nasum(:,1) + naf(:)*gs(topix(ix,iy),topiy(ix,iy),1)
-          prsum(1)=prsum(1) +
-     1     (nef*tef+nif*tif)*vol(ix,iy)
-     2     *wbbv(topix(ix,iy),topiy(ix,iy),2)*vol(ix,iy)/gs(ix,iy,2)
-          qesum(1)=qesum(1)+2.5_R8*vol(ix,iy)/gs(ix,iy,2)*
-     1     nef*tef**2*wbbv(topix(ix,iy),topiy(ix,iy),2)/qe*
-     2     gs(topix(ix,iy),topiy(ix,iy),1)
-          do is = 0, ns-1
-            if (.not.is_neutral(is)) then
-              qisum(1)=qisum(1)-2.5_R8*vol(ix,iy)/gs(ix,iy,2)*
-     3         naf(is)*tif**2*wbbv(topix(ix,iy),topiy(ix,iy),2)/
-     5         (qe*zaf(is))*gs(topix(ix,iy),topiy(ix,iy),1)
-            endif
+      do i = 1, mpg%ftCvP(iFt,2)                                         !xpb
+        iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
+        if(mpg%cvOnClosedSurface(iCv)) then                              !xpb
+          do j = 1, mpg%cvFcP(iCv,2)
+            iFc = mpg%cvFc(mpg%cvFcP(iCv,1)+j-1)
+            if ((mpg%fcCv(iFc,1).eq.iCv.and.mpg%fcCv(iFc,2).gt.mpg%nCi)
+     &          .or.
+     &          (mpg%fcCv(iFc,2).eq.iCv.and.mpg%fcCv(iFc,1).gt.mpg%nCi))
+     >       then
+              tef = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,pl%te)
+              tif = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,pl%ti)
+              nef = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,dv%ne)
+              nif = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,dv%ni(1,1))
+              do is = 0, ns-1
+                naf(is) =
+     &           intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,pl%na(1,is))
+                zaf(is) =
+     &           intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,rt%rza(1,is))
+              end do
+              tesum(1)=tesum(1) + tef*geo%fcS(iFc)
+              tisum(1)=tisum(1) + tif*geo%fcS(iFc)
+              nasum(:,1)=nasum(:,1) + naf(:)*geo%fcS(iFc)
+              prsum(1)=prsum(1) +
+     1         (nef*tef+nif*tif)*geo%cvVol(iCv)*
+     2          geo%fcBb(iFc,2)*geo%fcHz(iFc)
+              qesum(1)=qesum(1)+2.5_R8*geo%fcHz(iFc)*
+     1          nef*tef**2*geo%fcBb(iFc,2)/qe*geo%fcS(iFc)
+              do is = 0, ns-1
+                if (.not.is_neutral(is)) then
+                  qisum(1)=qisum(1)-2.5_R8*geo%fcHz(iFc)*
+     3              naf(is)*tif**2*geo%fcBb(iFc,2)/
+     5             (qe*zaf(is))*geo%fcS(iFc)
+                endif
+              enddo
+              do is = 0, st_ext%ns-1
+                nxf = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,
+     &           st_ext%na(1,is))
+                taf = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,
+     &           st_ext%ta(1,is))
+                prsum(1)=prsum(1) + nxf*taf*geo%cvVol(iCv)*
+     2           geo%fcBb(iFc,2)*geo%cvHz(iCv)
+                if (.not.st_ext%is_neutral(is)) then
+                  zxf = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,
+     &             st_ext%za(1,is))
+                  qisum(1)=qisum(1)-2.5_R8*geo%cvHz(iFc)*
+     3             nxf*taf**2*geo%fcBb(iFc,2)/(qe*zxf)*geo%fcS(iFc)
+                endif
+              enddo
+              gssum(1)=gssum(1) + geo%fcS(iFc)                           !xpb
+              volsum(1)=volsum(1) + geo%cvVol(iCv)
+            endif                                                        !xpb
           enddo
-          do is = 0, ns_ext-1
-            nxf = (na_ext(ix,iy,is)*hy1(topix(ix,iy),topiy(ix,iy))+
-     &             na_ext(topix(ix,iy),topiy(ix,iy),is)*hy1(ix,iy))/
-     &            (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
-            taf = (ta_ext(ix,iy,is)*hy1(topix(ix,iy),topiy(ix,iy))+
-     &             ta_ext(topix(ix,iy),topiy(ix,iy),is)*hy1(ix,iy))/
-     &            (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
-            prsum(1)=prsum(1) + nxf*taf*vol(ix,iy)
-     2        *wbbv(topix(ix,iy),topiy(ix,iy),2)*vol(ix,iy)/gs(ix,iy,2)
-            if (.not.is_ext_neutral(is)) then
-              zxf = (za_ext(ix,iy,is)*hy1(topix(ix,iy),topiy(ix,iy))+
-     &               za_ext(topix(ix,iy),topiy(ix,iy),is)*hy1(ix,iy))/
-     &              (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
-              qisum(1)=qisum(1)-2.5_R8*vol(ix,iy)/gs(ix,iy,2)*
-     3         nxf*taf**2*wbbv(topix(ix,iy),topiy(ix,iy),2)/
-     5         (qe*zxf)*gs(topix(ix,iy),topiy(ix,iy),1)
-            endif
-          enddo
-          gssum(1)=gssum(1) + gs(topix(ix,iy),topiy(ix,iy),1)            !xpb
-          volsum(1)=volsum(1) + vol(ix,iy)
-        endif                                                            !xpb
+        endif
       enddo                                                      !sv 24.03.99
       if (volsum(1).gt.0.0_R8) praverage(1)=prsum(1)/volsum(1)           !xpb
       if (gssum(1).gt.0.0_R8) then
         qeaverage(1)=qesum(1)/gssum(1)
         qiaverage(1)=qisum(1)/gssum(1)
       end if
+#ifdef WG_TODO
 *   ..find the average pressure for island center flux surface           !xpb
       iy = ny                                                            !xpb
       tesum(2)=0.0_R8
@@ -333,7 +322,6 @@
         qeaverage(2)=qesum(2)/gssum(2)                                   !xpb
         qiaverage(2)=qisum(2)/gssum(2)                                   !xpb
       endif
-      if (ncall_b2stbc.eq.0) lbndusr=.false.                             !xpb
 #endif
       if(switch%b2stbc_boundary_namelist.ge.1) then
         if(lfeedback.or.switch%b2stbc_feedback.ne.0)
@@ -347,34 +335,6 @@
      &   wrong_flow, main_call, praverage)
         if(wrong_flow) write(*,*)
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
-#ifdef WG_TODO
-        if(lbndusr) then
-          if(ncall_b2stbc.eq.0) write(*,*) 'BNDUSR called'
-          call b2stbc_bas(nx, ny, ns, ismain,
-     1     facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
-     1     fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
-     &     sna0, smo0, she0, shi0, sch0,
-     &     wrong_flow, main_call, diagno,
-     &     b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &     b2stbc_fchy_dia_coreonly, secmodel, lbndusr,
-     &     area_fix, sheath_drift_fix)
-          if(wrong_flow) write(*,*)
-     &           'b2stbc: wrong_flow returned from b2stbc_bas'
-        endif      !lbndusr
-#endif
-      else      !boundary_namelist.ge.1
-#ifdef WG_TODO
-        call b2stbc_bas(nx, ny, ns, ismain,
-     1   facdrift, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
-     1   fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
-     &   sna0, smo0, she0, shi0, sch0,
-     &   wrong_flow, main_call, diagno,
-     &   b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &   b2stbc_fchy_dia_coreonly, secmodel, lbndusr,
-     &   area_fix, sheath_drift_fix)
-        if(wrong_flow) write(*,*)
-     &       'b2stbc: wrong_flow returned from b2stbc_bas'
-#endif
       endif
 
 !WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
@@ -632,102 +592,3 @@ cdjm Jan2017 Keep linearised sources for balance
 *.end b2stbc
 
       end subroutine b2stbc
-
-*-----------------------------------------------------------------------
-*.specification
-      function bcint(fun,nx,ny,il,ib)
-      use b2mod_types
-      use b2mod_geo
-      use b2mod_indirect
-      use b2mod_boundary_namelist
-      implicit none
-*   ..output result (undefined upon entry)
-      real (kind=R8) :: bcint
-*   ..input arguments (unchanged on exit)
-      integer nx, ny, il, ib
-      real (kind=R8) :: fun(-1:nx,-1:ny)
-
-*-----------------------------------------------------------------------
-*.documentation
-*
-*  1. purpose
-*
-*     BCINT provides interpolated face-centred values for cell-centred
-*     quantities (array fun), for use in boundary conditions.
-*     The interpolation is done according to distance away from the
-*     cell face. The boundary index is ib, and the cell index along
-*     the boundary is il.
-*
-*
-*-----------------------------------------------------------------------
-*.declarations
-
-*   ..procedures
-      external xertst, xerrab
-
-*-----------------------------------------------------------------------
-*.computation
-
-* ..preliminaries
-*  ..test input parameters
-      call xertst (0.le.nx.and.0.le.ny, 'faulty parameter nx, ny')
-      call xertst (0.lt.ib.and.nbc.ge.ib, 'faulty parameter ib')
-      call xertst (1.le.il.and.bc_list_size(ib).ge.il,
-     .  'faulty parameter il')
-
-* ..main computation
-      if (bcchar(ib).eq.'S') then
-        bcint =
-     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
-     .    hy1(topix(bc_list_x(il,ib),bc_list_y(il,ib)),
-     .        topiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
-     .    fun(topix(bc_list_x(il,ib),bc_list_y(il,ib)),
-     .        topiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
-     .    hy1(bc_list_x(il,ib),bc_list_y(il,ib)))
-     .  /(hy1(bc_list_x(il,ib),bc_list_y(il,ib))+
-     .    hy1(topix(bc_list_x(il,ib),bc_list_y(il,ib)),
-     .        topiy(bc_list_x(il,ib),bc_list_y(il,ib))))
-      elseif (bcchar(ib).eq.'N') then
-        bcint =
-     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
-     .    hy1(bottomix(bc_list_x(il,ib),bc_list_y(il,ib)),
-     .        bottomiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
-     .    fun(bottomix(bc_list_x(il,ib),bc_list_y(il,ib)),
-     .        bottomiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
-     .    hy1(bc_list_x(il,ib),bc_list_y(il,ib)))
-     .  /(hy1(bc_list_x(il,ib),bc_list_y(il,ib))+
-     .    hy1(bottomix(bc_list_x(il,ib),bc_list_y(il,ib)),
-     .        bottomiy(bc_list_x(il,ib),bc_list_y(il,ib))))
-      elseif (bcchar(ib).eq.'E') then
-        bcint =
-     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
-     .    hx(leftix(bc_list_x(il,ib),bc_list_y(il,ib)),
-     .       leftiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
-     .    fun(leftix(bc_list_x(il,ib),bc_list_y(il,ib)),
-     .        leftiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
-     .    hx(bc_list_x(il,ib),bc_list_y(il,ib)))
-     .  /(hx(bc_list_x(il,ib),bc_list_y(il,ib))+
-     .    hx(leftix(bc_list_x(il,ib),bc_list_y(il,ib)),
-     .       leftiy(bc_list_x(il,ib),bc_list_y(il,ib))))
-      elseif (bcchar(ib).eq.'W') then
-        bcint =
-     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
-     .    hx(rightix(bc_list_x(il,ib),bc_list_y(il,ib)),
-     .       rightiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
-     .    fun(rightix(bc_list_x(il,ib),bc_list_y(il,ib)),
-     .        rightiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
-     .    hx(bc_list_x(il,ib),bc_list_y(il,ib)))
-     .  /(hx(bc_list_x(il,ib),bc_list_y(il,ib))+
-     .    hx(rightix(bc_list_x(il,ib),bc_list_y(il,ib)),
-     .       rightiy(bc_list_x(il,ib),bc_list_y(il,ib))))
-      else
-        call xerrab ('bcint : Unknown orientation!')
-      endif
-
-* ..return
-      return
-
-*-----------------------------------------------------------------------
-*.end bcint
-
-      end function bcint

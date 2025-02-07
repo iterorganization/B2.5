@@ -1,6 +1,5 @@
       module b2mod_boundary_namelist
       use b2mod_types
-      use b2mod_indirect
       use b2mod_version
       use b2us_map
       use b2us_geo
@@ -90,13 +89,8 @@ cank }
       integer, save :: BC_FACES(2*(DEF_NXD+DEF_NYD),NBCD)
       real (kind=R8), save :: BC_FACE_ORI(2*(DEF_NXD+DEF_NYD),NBCD)
 #endif
-#ifdef WG_OUT
 csw 18feb2014 added for correct implementation of boundary conditions
-      integer, save :: l_fbound=0, l_enebound=0, l_timbound=0
-      integer, allocatable, save ::
-     .  iffboundx(:,:), iffboundy(:,:),
-     .  ifenebound(:,:), iftimbound(:,:)
-#endif
+!WG_TODO     integer, allocatable, save :: iftimbound(:)
 
       integer, save :: NBC, NNISO, ncbs
       real (kind=R8) , save :: gammai, gammae, TEISO, TIISO, PHIISO
@@ -176,54 +170,18 @@ csw 18feb2014 added for correct implementation of boundary conditions
         endif
       enddo
 #ifdef WG_TODO
-      if(nniso.gt.0) then
-         done=.true.
-         do ib = 1, nniso
-            do ix = nxiso1(ib), nxiso2(ib)
-               do iy = nyiso1(ib), nyiso2(ib)
-                  if(region(ix,iy,0).ne.0) then
-                     done=.false.
-                     region(ix,iy,0) = 0
-                     resignore(ix,iy,1)=0
-                     resignore(ix,iy,2)=0
-                     write(*,*)
-     .                    'REGION set to zero for dead cell ',ix,iy
-                  endif
-               enddo
-            enddo
-         enddo
-         if(.not.done) then
-            write(*,*) 'Isolated region was unknown from geometry'
-            do ib = 1, nniso
-               do ix = nxiso1(ib), nxiso2(ib)
-                  bottomiy(ix,nyiso1(ib))=nyiso2(ib)
-                  write(*,*) 'ix,iy,iyb',ix,nyiso1(ib),nyiso2(ib)
-                  topiy(ix,nyiso2(ib))=nyiso1(ib)
-                  write(*,*) 'ix,iy,iyt',ix,nyiso2(ib),nyiso1(ib)
-               enddo
-               do iy = nyiso1(ib),nyiso2(ib)
-                  leftix(nxiso1(ib),iy)=nxiso2(ib)
-                  write(*,*) 'ix,iy,ixl',nxiso1(ib),iy,nxiso2(ib)
-                  rightix(nxiso2(ib),iy)=nxiso1(ib)
-                  write(*,*) 'ix,iy,ixr',nxiso2(ib),iy,nxiso1(ib)
-               enddo
-            enddo
-         endif
-      endif
-#endif
-#ifdef WG_TODO
       do ib = 1, nbc
-         do is = 0, ns-1
-            if (bccon(is,ib).ne.0)
-     >           resignore(bc_list_x(1:bc_list_size(ib),ib),
-     .           bc_list_y(1:bc_list_size(ib),ib),1) = 0
-            if (bcmom(is,ib).ne.0)
-     >           resignore(bc_list_x(1:bc_list_size(ib),ib),
-     .           bc_list_y(1:bc_list_size(ib),ib),2) = 0
-         end do
-         if (bcene(ib).ne.0 .or. bceni(ib).ne.0)
-     >        resignore(bc_list_x(1:bc_list_size(ib),ib),
-     .        bc_list_y(1:bc_list_size(ib),ib),1) = 0
+        do is = 0, ns-1
+          if (bccon(is,ib).ne.0)
+     >     resignore(mpg%bcCv(mpg%bcCvP(ib,1):
+     .                        mpg%bcCvP(ib,1)+mpg%bcCvP(ib,2)-1),1)=0
+          if (bcmom(is,ib).ne.0)
+     >     resignore(mpg%bcCv(mpg%bcCvP(ib,1):
+     .                        mpg%bcCvP(ib,1)+mpg%bcCvP(ib,2)-1),2)=0
+        end do
+        if (bcene(ib).ne.0 .or. bceni(ib).ne.0)
+     >   resignore(mpg%bcCv(mpg%bcCvP(ib,1):
+     .                        mpg%bcCvP(ib,1)+mpg%bcCvP(ib,2)-1),1)=0
       enddo
 #endif
 
@@ -407,6 +365,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
       end subroutine dealloc_b2mod_boundary
 
       subroutine read_b2mod_boundary_namelist_st(nx, ny, ns, dotest)
+      use b2mod_indirect
       implicit none
       integer, intent(in) :: nx, ny, ns
       logical, intent(in) :: dotest
@@ -509,95 +468,94 @@ csw 18feb2014 added for correct implementation of boundary conditions
       end do
 
 c.. Make a list of core boundaries
-        todo=maxval(lcbs).gt.0
-        if (.not.todo) then
-          ncbs=0
-        else
-          ncbs=1
-          do while (lcbs(ncbs+1).gt.0 .and. ncbs.lt.nbc)
-            ncbs=ncbs+1
-          end do
-        end if
-        allocate(done(nbc))
-        done=.false.
-        do ib=1,nbc
-          if(bcchar(ib).eq.'S' .or. bcchar(ib).eq.'A') then
-            if(old_style(ib)) then
-              if(on_closed_surface(bcstart(ib),bcpos(ib)) .and.
-     .           on_closed_surface(bcend(ib),bcpos(ib))) then
-                if (.not.todo) then
-                  ncbs=ncbs+1
-                  lcbs(ncbs)=ib
-                  done(ncbs)=.true.
-                else
-                  ic = 1
-                  assigned = .false.
-                  do while (ic.le.ncbs)
-                    if (lcbs(ic).eq.ib) then
-                      call xertst(.not.done(ic),
-     .                 'Core boundary already done!')
-                      assigned = .true.
-                      done(ic) = .true.
-                    end if
-                    ic = ic + 1
-                  end do
-                  if (.not.assigned) then
-                    ncbs = ncbs + 1
-                    done(ncbs) = .true.
-                    lcbs(ncbs) = ib
-                    write(*,*) 'Added boundary ',ib,
-     .               ' to list of core boundaries'
+      todo=maxval(lcbs).gt.0
+      if (.not.todo) then
+        ncbs=0
+      else
+        ncbs=1
+        do while (lcbs(ncbs+1).gt.0 .and. ncbs.lt.nbc)
+          ncbs=ncbs+1
+        end do
+      end if
+      allocate(done(nbc))
+      done=.false.
+      do ib=1,nbc
+        if(bcchar(ib).eq.'S' .or. bcchar(ib).eq.'A') then
+          if(old_style(ib)) then
+            if(on_closed_surface(bcstart(ib),bcpos(ib)) .and.
+     .         on_closed_surface(bcend(ib),bcpos(ib))) then
+              if (.not.todo) then
+                ncbs=ncbs+1
+                lcbs(ncbs)=ib
+                done(ncbs)=.true.
+              else
+                ic = 1
+                assigned = .false.
+                do while (ic.le.ncbs)
+                  if (lcbs(ic).eq.ib) then
+                    call xertst(.not.done(ic),
+     .               'Core boundary already done!')
+                    assigned = .true.
+                    done(ic) = .true.
                   end if
+                  ic = ic + 1
+                end do
+                if (.not.assigned) then
+                  ncbs = ncbs + 1
+                  done(ncbs) = .true.
+                  lcbs(ncbs) = ib
+                  write(*,*) 'Added boundary ',ib,
+     .             ' to list of core boundaries'
                 end if
-              endif
-            else
-              found = .true.
-              do ix = 1, bc_list_size(ib)
-                found = found .and.
-     .           on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib))
-              end do
-              if (found) then
-                if (.not.todo) then
-                  ncbs=ncbs+1
-                  lcbs(ncbs)=ib
-                  done(ncbs)=.true.
-                else
-                  ic = 1
-                  assigned = .false.
-                  do while (ic.le.ncbs)
-                    if (lcbs(ic).eq.ib) then
-                      call xertst(.not.done(ic),
-     .                 'Core boundary already done!')
-                      assigned = .true.
-                      done(ic) = .true.
-                    end if
-                    ic = ic + 1
-                  end do
-                  if (.not.assigned) then
-                    ncbs = ncbs + 1
-                    done(ncbs) = .true.
-                    lcbs(ncbs) = ib
-                    write(*,*) 'Added boundary ',ib,
-     .               ' to list of core boundaries'
+              end if
+            endif
+          else
+            found = .true.
+            do ix = 1, bc_list_size(ib)
+              found = found .and.
+     .         on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib))
+            end do
+            if (found) then
+              if (.not.todo) then
+                ncbs=ncbs+1
+                lcbs(ncbs)=ib
+                done(ncbs)=.true.
+              else
+                ic = 1
+                assigned = .false.
+                do while (ic.le.ncbs)
+                  if (lcbs(ic).eq.ib) then
+                    call xertst(.not.done(ic),
+     .               'Core boundary already done!')
+                    assigned = .true.
+                    done(ic) = .true.
                   end if
-                endif
+                  ic = ic + 1
+                end do
+                if (.not.assigned) then
+                  ncbs = ncbs + 1
+                  done(ncbs) = .true.
+                  lcbs(ncbs) = ib
+                  write(*,*) 'Added boundary ',ib,
+     .             ' to list of core boundaries'
+                end if
               endif
             endif
           endif
-        enddo
-        if (ny.gt.1) then
-          if (nnreg(0).gt.1 .or. periodic_bc.eq.1) then
-            call xertst(1.le.ncbs, 'faulty parameters ncbs')
-          end if
+        endif
+      enddo
+      if (ny.gt.1) then
+        if (nnreg(0).gt.1 .or. periodic_bc.eq.1) then
+          call xertst(1.le.ncbs, 'faulty parameters ncbs')
         end if
-        do ib = 1, ncbs
-          call xertst (1.le.lcbs(ib).and.lcbs(ib).le.nbc,
-     .     'faulty parameter lcbs')
-          call xertst (done(ib),
-     .     'Did not find all declared core boundaries!')
-        enddo
-        deallocate(done)
-!WG      endif
+      end if
+      do ib = 1, ncbs
+        call xertst (1.le.lcbs(ib).and.lcbs(ib).le.nbc,
+     .   'faulty parameter lcbs')
+        call xertst (done(ib),
+     .   'Did not find all declared core boundaries!')
+      enddo
+      deallocate(done)
       if ((.not.file_ok).or.(.not.dotest)) then
         if (.not.file_ok) write(*,*) 'No ',trim(filename)
         write(*,*) 'Testing skipped!'
@@ -971,18 +929,9 @@ c.. Test consistency with region boundaries
       integer, intent(in) :: ns
       type(mapping), intent(inout) :: m
       logical, intent(in) :: dotest
-      integer is, ib, ic, noss, iss, indss, idb, nbcfc, inbc
+      integer is, ib, ic, iFc, noss, iss, indss, idb, nbcfc, inbc
       integer :: ian, ien
       character*3 ss
-#ifdef WG_OUT
-      logical covered, corner, guard_cell, found
-#else
-#ifdef WG_TODO
-      integer ix, iy, ixx, iyy
-      logical found
-      logical, allocatable :: old_style(:)
-#endif
-#endif
 
       logical file_ok, todo, assigned
       logical, allocatable :: done(:)
@@ -1040,7 +989,7 @@ c.. Test consistency with region boundaries
               write (*,*) ' surface index ',indss
 ! find all faces belonging to surface structure INDSS
               call find_faces (indss, inbc, nbcfc,
-     >             m%mxnbc,m%bcFc, m%bcFcOr, m, idb)
+     >             m%mxnbc, m%bcFc, m%bcFcOr, m, idb)
             end do              ! iss
             write(ss,'(i3)') ib
             call xertst(nbcfc.gt.0, 
@@ -1065,30 +1014,6 @@ c.. Test consistency with region boundaries
       call bc_to_struct(m)
 
       if (nbc.gt.0) then
-#ifdef WG_TODO
-        allocate(old_style(nbc))
-        do ib = 1, nbc
-          if (bc_list_size(ib).eq.0) then
-            old_style(ib) = .true.
-            bc_list_size(ib) = bcend(ib) - bcstart(ib) + 1
-            if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S' .or.
-     &          bcchar(ib).eq.'X') then
-              do ix = bcstart(ib), bcend(ib)
-                bc_list_x(ix-bcstart(ib)+1,ib) =  ix
-              end do
-              bc_list_y(1:bc_list_size(ib),ib) = bcpos(ib)
-            else if (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W' .or.
-     &               bcchar(ib).eq.'Y') then
-              bc_list_x(1:bc_list_size(ib),ib) = bcpos(ib)
-              do iy = bcstart(ib), bcend(ib)
-                bc_list_y(iy-bcstart(ib)+1,ib) =  iy
-              end do
-            endif
-          else
-            old_style(ib) = .false.
-          end if
-        end do
-#endif
 c.. Make a list of core boundaries
         todo=maxval(lcbs).gt.0
         if (.not.todo) then
@@ -1105,8 +1030,8 @@ c.. Make a list of core boundaries
           if(bcchar(ib).eq.'S' .or. bcchar(ib).eq.'A') then
             ian = m%bcCvP(ib,1)
             ien = m%bcCvP(ib,1) + m%bcCvP(ib,2) - 1
-            if (m%cvonClosedSurface(m%bcCv(ian,2)) .and.
-     .          m%cvonClosedSurface(m%bcCv(ien,2))) then
+            if (m%cvOnClosedSurface(m%bcCv(ian,2)) .and.
+     .          m%cvOnClosedSurface(m%bcCv(ien,2))) then
               if (.not.todo) then
                 ncbs=ncbs+1
                 lcbs(ncbs)=ib
@@ -1132,42 +1057,6 @@ c.. Make a list of core boundaries
                 end if
               end if
             end if
-#ifdef WG_TODO
-            if(old_style(ib)) then
-            else
-              found = .true.
-              do ix = 1, bc_list_size(ib)
-                found = found .and.
-     .           on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib))
-              end do
-              if (found) then
-                if (.not.todo) then
-                  ncbs=ncbs+1
-                  lcbs(ncbs)=ib
-                  done(ncbs)=.true.
-                else
-                  ic = 1
-                  assigned = .false.
-                  do while (ic.le.ncbs)
-                    if (lcbs(ic).eq.ib) then
-                      call xertst(.not.done(ic),
-     .                 'Core boundary already done!')
-                      assigned = .true.
-                      done(ic) = .true.
-                    end if
-                    ic = ic + 1
-                  end do
-                  if (.not.assigned) then
-                    ncbs = ncbs + 1
-                    done(ncbs) = .true.
-                    lcbs(ncbs) = ib
-                    write(*,*) 'Added boundary ',ib,
-     .               ' to list of core boundaries'
-                  end if
-                endif
-              endif
-            endif
-#endif
           endif
         enddo
         if (maxval(m%fsVxP(:,2)).gt.2) then
@@ -1183,6 +1072,14 @@ c.. Make a list of core boundaries
         enddo
         deallocate(done)
       endif
+*   ..build reverse face correspondence array
+      do ib = 1, nbc
+        do ic = 1, m%bcFcP(ib,2)
+          iFc = m%bcFc(m%bcFcP(ib,1)+ic-1)
+          m%fcBc(iFc,1) = m%bcFcP(ib,1)+ic-1
+          m%fcBc(iFc,2) = ib
+        end do
+      enddo
       if ((.not.file_ok).or.(.not.dotest)) then
         if (.not.file_ok) write(*,*) 'No ',trim(filename)
         write(*,*) 'Testing skipped!'
@@ -1204,117 +1101,6 @@ c.. Make a list of core boundaries
         call xertst (0.0_R8.lt.niiso(is), 'faulty input niiso')
       enddo
       do ib = 1, nbc
-#ifdef WG_TODO
-        if (bcchar(ib).eq.'N') then
-          if(old_style(ib)) then
-            call xertst (1.le.bcpos(ib).and.bcpos(ib).le.ny+1,
-     .       'faulty input bcpos (North)')
-            call xertst (-1.le.bcstart(ib).and.bcstart(ib).le.nx+1,
-     .       'faulty input bcstart (North)')
-            call xertst (-1.le.bcend(ib).and.bcend(ib).le.nx+1,
-     .       'faulty input bcend (North)')
-          else
-            do ic = 1, bc_list_size(ib)
-              call xertst (1.le.bc_list_y(ic,ib).and.
-     .                     bc_list_y(ic,ib).le.ny+1,
-     .                     'faulty input bc_list_y (North)')
-              call xertst (-1.le.bc_list_x(ic,ib).and.
-     .                     bc_list_x(ic,ib).le.nx+1,
-     .                     'faulty input bc_list_x (North)')
-            end do
-          endif
-        else if (bcchar(ib).eq.'S') then
-          if(old_style(ib)) then
-            call xertst (-1.le.bcpos(ib).and.bcpos(ib).le.ny-1,
-     .       'faulty input bcpos (South)')
-            call xertst (-1.le.bcstart(ib).and.bcstart(ib).le.nx+1,
-     .       'faulty input bcstart (South)')
-            call xertst (-1.le.bcend(ib).and.bcend(ib).le.nx+1,
-     .       'faulty input bcend (South)')
-          else
-            do ic = 1, bc_list_size(ib)
-              call xertst (-1.le.bc_list_y(ic,ib).and.
-     .                     bc_list_y(ic,ib).le.ny-1,
-     .                     'faulty input bc_list_y (South)')
-              call xertst (-1.le.bc_list_x(ic,ib).and.
-     .                     bc_list_x(ic,ib).le.nx+1,
-     .                     'faulty input bc_list_x (South)')
-            end do
-          endif
-        else if (bcchar(ib).eq.'E') then
-          if(old_style(ib)) then
-            call xertst (1.le.bcpos(ib).and.bcpos(ib).le.nx+1,
-     .       'faulty input bcpos (East)')
-            call xertst (-1.le.bcstart(ib).and.bcstart(ib).le.ny+1,
-     .       'faulty input bcstart (East)')
-            call xertst (-1.le.bcend(ib).and.bcend(ib).le.ny+1,
-     .       'faulty input bcend (East)')
-          else
-            do ic = 1, bc_list_size(ib)
-              call xertst (-1.le.bc_list_y(ic,ib).and.
-     .                     bc_list_y(ic,ib).le.ny+1,
-     .                     'faulty input bc_list_y (East)')
-              call xertst (1.le.bc_list_x(ic,ib).and.
-     .                     bc_list_x(ic,ib).le.nx+1,
-     .                     'faulty input bc_list_x (East)')
-            end do
-          endif
-        else if (bcchar(ib).eq.'W') then
-          if(old_style(ib)) then
-            call xertst (-1.le.bcpos(ib).and.bcpos(ib).le.nx-1,
-     .       'faulty input bcpos (West)')
-            call xertst (-1.le.bcstart(ib).and.bcstart(ib).le.ny+1,
-     .       'faulty input bcstart (West)')
-            call xertst (-1.le.bcend(ib).and.bcend(ib).le.ny+1,
-     .       'faulty input bcend (West)')
-          else
-            do ic = 1, bc_list_size(ib)
-              call xertst (-1.le.bc_list_y(ic,ib).and.
-     .                     bc_list_y(ic,ib).le.ny+1,
-     .                     'faulty input bc_list_y (West)')
-              call xertst (-1.le.bc_list_x(ic,ib).and.
-     .                     bc_list_x(ic,ib).le.nx-1,
-     .                     'faulty input bc_list_x (West)')
-            end do
-          endif
-        else if (bcchar(ib).eq.'X') then
-          if(old_style(ib)) then
-            call xertst (0.le.bcpos(ib).and.bcpos(ib).le.ny,
-     .       'faulty input bcpos (X)')
-            call xertst (-1.le.bcstart(ib).and.bcstart(ib).le.nx+1,
-     .       'faulty input bcstart (X)')
-            call xertst (-1.le.bcend(ib).and.bcend(ib).le.nx+1,
-     .       'faulty input bcend (X)')
-          else
-            do ic = 1, bc_list_size(ib)
-              call xertst (0.le.bc_list_y(ic,ib).and.
-     .                     bc_list_y(ic,ib).le.ny,
-     .                     'faulty input bc_list_y (X)')
-              call xertst (-1.le.bc_list_x(ic,ib).and.
-     .                     bc_list_x(ic,ib).le.nx+1,
-     .                     'faulty input bc_list_x (X)')
-            end do
-          endif
-        else if (bcchar(ib).eq.'Y') then
-          if(old_style(ib)) then
-            call xertst (0.le.bcpos(ib).and.bcpos(ib).le.nx,
-     .       'faulty input bcpos (Y)')
-            call xertst (-1.le.bcstart(ib).and.bcstart(ib).le.ny+1,
-     .       'faulty input bcstart (Y)')
-            call xertst (-1.le.bcend(ib).and.bcend(ib).le.ny+1,
-     .       'faulty input bcend (Y)')
-          else
-            do ic = 1, bc_list_size(ib)
-              call xertst (-1.le.bc_list_y(ic,ib).and.
-     .                     bc_list_y(ic,ib).le.ny+1,
-     .                     'faulty input bc_list_y (Y)')
-              call xertst (0.le.bc_list_x(ic,ib).and.
-     .                     bc_list_x(ic,ib).le.nx,
-     .                     'faulty input bc_list_x (Y)')
-            end do
-          endif
-        endif
-#endif
         call xertst (bcstart(ib).le.bcend(ib),
      .   'faulty inputs bcstart > bcend')
         do is = 0, ns-1
@@ -1327,228 +1113,6 @@ c.. Make a list of core boundaries
         call xertst (0.le.bcenk(ib), 'faulty input bcenk')
         call xertst (0.le.bcenz(ib), 'faulty input bcenz')
       enddo
-#ifdef WG_OUT
-      do ib = 1, nniso
-        call xertst (-1.le.nxiso1(ib).and.nxiso1(ib).le.nx,
-     .   'faulty input nxiso1')
-        call xertst (-1.le.nxiso2(ib).and.nxiso2(ib).le.nx,
-     .   'faulty input nxiso2')
-        call xertst (-1.le.nyiso1(ib).and.nyiso1(ib).le.ny,
-     .   'faulty input nyiso1')
-        call xertst (-1.le.nyiso2(ib).and.nyiso2(ib).le.ny,
-     .   'faulty input nyiso2')
-        do ix = nxiso1(ib), nxiso2(ib)
-          do iy = nyiso1(ib), nyiso2(ib)
-            region(ix,iy,0) = 0
-            resignore(ix,iy,1)=0
-            resignore(ix,iy,2)=0
-          enddo
-        enddo
-      enddo
-      do ib = 1, nniso
-        do ix = nxiso1(ib), nxiso2(ib)
-          do iy = nyiso1(ib), nyiso2(ib)
-            do ixx = -1, nx
-              do iyy = -1, ny
-                if(region(ixx, iyy, 0) .ne. 0) then
-                  if(leftix(ixx, iyy) .eq. ix .and.
-     &               leftiy(ixx, iyy) .eq. iy) then
-                    write(*,*) 'updated left neighbour of ', ixx, iyy
-                    leftix(ixx, iyy) = -2
-                    leftiy(ixx, iyy) = -2
-                  endif
-                  if(rightix(ixx, iyy) .eq. ix .and.
-     &               rightiy(ixx, iyy) .eq. iy) then
-                    write(*,*) 'updated right neighbour of ', ixx, iyy
-                    rightix(ixx, iyy) = nx+1
-                    rightiy(ixx, iyy) = ny+1
-                  endif
-                  if(bottomix(ixx, iyy) .eq. ix .and.
-     &               bottomiy(ixx, iyy) .eq. iy) then
-                    write(*,*) 'updated bottom neighbour of ', ixx, iyy
-                    bottomix(ixx, iyy) = -2
-                    bottomiy(ixx, iyy) = -2
-                  endif
-                  if(topix(ixx, iyy) .eq. ix .and.
-     &               topiy(ixx, iyy) .eq. iy) then
-                    write(*,*) 'updated top neighbour of ', ixx, iyy
-                    topix(ixx, iyy) = nx+1
-                    topiy(ixx, iyy) = ny+1
-                  endif
-                endif
-              enddo
-            enddo
-          enddo
-        enddo
-      enddo
-c..  test that all boundary cells to the real domain are covered at least once
-c..  we exclude corners from this test
-      do ix = -1, nx
-        do iy = -1, ny
-          guard_cell = region(ix,iy,0).ne.0 .and.
-     &     (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
-     &      bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)
-          corner =
-     &     (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) .and.
-     &     (bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)
-          covered = .false.
-          do ib = 1, nbc
-            if (old_style(ib)) then
-              if (bcchar(ib).eq.'N' .or. bcchar(ib).eq.'S')
-     >         covered = covered .or. (iy.eq.bcpos(ib) .and.
-     &         ix.ge.bcstart(ib) .and. ix.le.bcend(ib))
-              if (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W')
-     >         covered = covered .or. (ix.eq.bcpos(ib) .and.
-     &         iy.ge.bcstart(ib) .and. iy.le.bcend(ib))
-            else
-              do ic = 1, bc_list_size(ib)
-                covered = covered .or. (iy.eq.bc_list_y(ic,ib) .and.
-     &           ix.eq.bc_list_x(ic,ib))
-              end do
-            endif
-          enddo
-          if (guard_cell .and. .not.covered .and. .not.corner) then
-            write(*,'(a,i4,a,i4,a)') 'Guard cell (',ix,',',iy,
-     &       ') not included in b2.boundary.parameters!'
-            call xerrab('Incomplete boundary definition')
-          endif
-        enddo
-      enddo
-c..  test that boundary cells are guard cells
-      do ib = 1, nbc
-        if (bcchar(ib).eq.'N') then
-          if (old_style(ib)) then
-            do ix = bcstart(ib), bcend(ib)
-              call xertst(topiy(ix,bcpos(ib)).eq.ny+1,
-     &         'inconsistent North boundary!')
-            enddo
-          else
-            do ic = 1, bc_list_size(ib)
-              call xertst(
-     .         topiy(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.ny+1,
-     &         'inconsistent North boundary!')
-            end do
-          endif
-        endif
-        if (bcchar(ib).eq.'S') then
-          if (old_style(ib)) then
-            do ix = bcstart(ib), bcend(ib)
-              call xertst(bottomiy(ix,bcpos(ib)).eq.-2,
-     &         'inconsistent South boundary!')
-            enddo
-          else
-            do ic = 1, bc_list_size(ib)
-              call xertst(
-     .         bottomiy(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.-2,
-     &         'inconsistent South boundary!')
-            end do
-          endif
-        endif
-        if (bcchar(ib).eq.'E') then
-          if (old_style(ib)) then
-            do iy = bcstart(ib), bcend(ib)
-              call xertst(rightix(bcpos(ib),iy).eq.nx+1,
-     &         'inconsistent East boundary!')
-            enddo
-          else
-            do ic = 1, bc_list_size(ib)
-              call xertst(
-     .         rightix(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.nx+1,
-     &         'inconsistent East boundary!')
-            end do
-          endif
-        endif
-        if (bcchar(ib).eq.'W') then
-          if (old_style(ib)) then
-            do iy = bcstart(ib), bcend(ib)
-              call xertst(leftix(bcpos(ib),iy).eq.-2,
-     &         'inconsistent West boundary!')
-            enddo
-          else
-            do ic = 1, bc_list_size(ib)
-              call xertst(
-     .         leftix(bc_list_x(ic,ib),bc_list_y(ic,ib)).eq.-2,
-     &         'inconsistent West boundary!')
-            end do
-          endif
-        endif
-      enddo
-c.. Test consistency with region boundaries
-      do ic = 1, nncut
-        found = .false.
-        ib = 0
-        do while (ib.lt.nbc .and. .not.found)
-          ib = ib + 1
-          if (old_style(ib)) then
-            found = bcend(ib).eq.leftcut(ic)-1 .and.
-     &              bcchar(ib).eq.'S'
-          else
-            ix = 1
-            do while (.not.found .and. ix.le.bc_list_size(ib))
-              found = bc_list_x(ix,ib).eq.leftcut(ic)-1 .and.
-     .                bc_list_y(ix,ib).le.topcut(ic)
-              ix = ix + 1
-            end do
-          end if
-        end do
-        call xertst (found,
-     .   'Mismatch (1) with region boundaries (South) !')
-        found = .false.
-        ib = 0
-        do while (ib.lt.nbc .and. .not.found)
-          ib = ib + 1
-          if (old_style(ib)) then
-            found = bcstart(ib).eq.leftcut(ic) .and.
-     &              bcchar(ib).eq.'S'
-          else
-            ix = 1
-            do while (.not.found .and. ix.le.bc_list_size(ib))
-              found = bc_list_x(ix,ib).eq.leftcut(ic) .and.
-     .                bc_list_y(ix,ib).le.topcut(ic)
-              ix = ix + 1
-            end do
-          end if
-        end do
-        call xertst (found,
-     .   'Mismatch (2) with region boundaries (South) !')
-        found = .false.
-        ib = 0
-        do while (ib.lt.nbc .and. .not.found)
-          ib = ib + 1
-          if (old_style(ib)) then
-            found = bcend(ib).eq.rightcut(ic)-1 .and.
-     &              bcchar(ib).eq.'S'
-          else
-            ix = 1
-            do while (.not.found .and. ix.le.bc_list_size(ib))
-              found = bc_list_x(ix,ib).eq.rightcut(ic)-1 .and.
-     .                bc_list_y(ix,ib).le.topcut(ic)
-              ix = ix + 1
-            end do
-          end if
-        end do
-        call xertst (found,
-     .   'Mismatch (3) with region boundaries (South) !')
-        found = .false.
-        ib = 0
-        do while (ib.lt.nbc .and. .not.found)
-          ib = ib + 1
-          if (old_style(ib)) then
-            found = bcstart(ib).eq.rightcut(ic) .and.
-     &              bcchar(ib).eq.'S'
-          else
-            ix = 1
-            do while (.not.found .and. ix.le.bc_list_size(ib))
-              found = bc_list_x(ix,ib).eq.rightcut(ic) .and.
-     .                bc_list_y(ix,ib).le.topcut(ic)
-              ix = ix + 1
-            end do
-          end if
-        end do
-        call xertst (found,
-     .   'Mismatch (4) with region boundaries (South) !')
-      end do
-#endif
       return
 
 #ifdef USE_MPI
@@ -1561,13 +1125,14 @@ c.. Test consistency with region boundaries
       if (write_nml_bnd) write(*,boundary)
       end subroutine write_b2mod_boundary_namelist
 
-      function get_phi_applied(boundary_namelist,ix,iy)
+      function get_phi_applied(boundary_namelist,mpg,iFc)
       use b2mod_types
-      use b2mod_plasma
+      use b2mod_boundary_sources
       implicit none
       real (kind=R8) :: get_phi_applied
-      integer, intent(in) :: boundary_namelist, ix, iy
-      integer i, ib
+      type(mapping), intent(in) :: mpg
+      integer, intent(in) :: boundary_namelist, iFc
+      integer i, ib, iCv
       logical found
 
       get_phi_applied = 0.0_R8
@@ -1576,11 +1141,11 @@ c.. Test consistency with region boundaries
         found = .false.
         do while (ib.le.nbc .and. .not.found)
           if (bcchar(ib).eq.'S' .or. bcchar(ib).eq.'N' .or.
-     .        bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W') then
+     .        bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W' .or.
+     .        bcchar(ib).eq.'A') then
             i = 1
-            do while (i.le.bc_list_size(ib) .and. .not.found)
-              found = bc_list_x(i,ib).eq.ix .and.
-     &                bc_list_y(i,ib).eq.iy
+            do while (i.le.mpg%bcFcP(ib,2) .and. .not.found)
+              found = mpg%bcFc(mpg%bcFcP(ib,1)+i-1).eq.iFc
               i = i + 1
             end do
           endif
@@ -1588,10 +1153,13 @@ c.. Test consistency with region boundaries
         enddo
         if (found) then
           select case(bcpot(ib))
-          case(1,4)
+          case(1,4,21,22)
             get_phi_applied = POTPAR(ib,1)
-          case(3)
+          case(3,11)
             get_phi_applied = POTPAR(ib,2)
+          case(7)
+            iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            get_phi_applied = bv_po(iCv)
           end select
         endif
       endif
@@ -1602,6 +1170,7 @@ c.. Test consistency with region boundaries
       function getPhiApplied(boundary_namelist,mpg,iCv)
       use b2mod_types
       use b2us_map
+      use b2mod_boundary_sources
       implicit none
       real (kind=R8) :: getPhiApplied
       integer boundary_namelist, iCv
@@ -1626,10 +1195,12 @@ c.. Test consistency with region boundaries
         enddo
         if (found) then
           select case(bcpot(ib))
-          case(1,4)
+          case(1,4,21,22)
             getPhiApplied = POTPAR(ib,1)
-          case(3)
+          case(3,11)
             getPhiApplied = POTPAR(ib,2)
+          case(7)
+            getPhiApplied = bv_po(iCv)
           end select
         endif
       endif
@@ -1640,6 +1211,7 @@ c.. Test consistency with region boundaries
 ***********************************************************************
 
       subroutine conv_bcparms (ns, m)
+      use b2mod_geo
       implicit none
       integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
@@ -1654,7 +1226,6 @@ c.. Test consistency with region boundaries
       integer newunit
       external newunit
 #endif
-      intrinsic huge
 
       m%nBc   = nbc     ! number of boundary conditions
       m%mxnBc = 0       ! number of cells with imposed BC
@@ -1928,7 +1499,6 @@ cwdk also need to correct for degenerate faces?
 
       write (iout,'(1x,a,f10.7,a1)') 'GAMMAI=',gammai,','
       write (iout,'(1x,a,f10.7,a1)') 'GAMMAE=',gammae,','
-      write (iout,'(1x,a,l1,a1)') 'LBNDUSR=',lbndusr,','
       write (iout,'(1x,a,l1,a1)') 'LFEEDBACK=',lfeedback,','
 
       write (iout,'(1x,a,i2,a1)') 'NNISO = ',nniso,','
@@ -2027,7 +1597,7 @@ cc BCPOT
       type(mapping), intent(inout) :: m
       integer :: ib, inbc, ibc, iFc, ic1, ic2
       integer :: i, j, k, indd
-#ifdef WG_DEBUG
+#ifdef DBG
       integer :: iout, ian, ien
 #endif
 #ifdef LEGACYCOMP
@@ -2075,7 +1645,7 @@ cc BCPOT
           end do
         end do
       end if
-#ifdef WG_DEBUG
+#ifdef DBG
 #ifndef LEGACYCOMP
       open (newunit=iout,file='bc.testout')
 #else

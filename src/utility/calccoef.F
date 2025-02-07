@@ -15,7 +15,6 @@
 *   ..output arguments
       real (kind=R8) ::
      *   flo0(nFc,0:1), con0(nFc,0:1)
-      integer cvs(2)
 *-----------------------------------------------------------------------
 *.documentation
 *

@@ -136,8 +136,6 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
 *   ..test nCv, nFc, ns
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
-      if (ncall_b2trcl.eq.0) then
-      endif
 *   ..set internal parameters on first call
 c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 c        call ipgetr ('b2tfhe_vis_par',vis_par)
@@ -222,7 +220,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       call sfill (nFc*2*ns*ns, 0.0_R8, csigin, 1)
       do is = 0, ns-1
        call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &    geo%fcS, vsa(:,0,is), cvsa(:,0,is))
+     &   geo%fcS, vsa(:,0,is), cvsa(:,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   vsa(:,1,is), cvsa(:,1,is))
        do k = 0, nscx-1
@@ -237,19 +235,19 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       enddo
       inctran = switch%b2txcx_increase_transp_coefs
       call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, hce(:,0), chce(:,0))
+     &  geo%fcS, hce(:,0), chce(:,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  hce(:,1), chce(:,1))
       call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, hci(:,0), chci(:,0))
+     &  geo%fcS, hci(:,0), chci(:,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  hci(:,1), chci(:,1))
       call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, sig(:,0), csig(:,0))
+     &  geo%fcS, sig(:,0), csig(:,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  sig(:,1), csig(:,1))
       call b2txcx (nCv, nFc, 0.0_R8,   -1, geo, mpg, geo%fcVol,
-     &   geo%fcS, alf(:,0), calf(:,0))
+     &  geo%fcS, alf(:,0), calf(:,0))
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
      &  alf(:,1), calf(:,1))
 
@@ -602,7 +600,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &   dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, collisnumf, 
      &   wrkc)
         call b2tnce (mpg, geo, switch, nCv, pl%te, dv%ne2,
-     &  dv%lnlam, collisnumef, wrkc)
+     &   dv%lnlam, collisnumef, wrkc)
       else
         collisnumf = 1.0_R8
         collisnumef = 1.0_R8
@@ -621,13 +619,13 @@ c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
           if (collisnumef(iFc) .gt. switch%min_collisions) then
-            flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
-     &                              dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
-            t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
-     &        pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
-     &        b2trcl_cutlo)
+           flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
+     &                             dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
+           t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
+     &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
+     &      b2trcl_cutlo)
           else
-            t0 = (cflim(0)*max(collisnumef(iFc), 1e-16_R8))**(-1)
+           t0 = (cflim(0)*max(collisnumef(iFc), 1e-16_R8))**(-1)
           endif
           co%fllim_ke(iFc)=1.0_R8/(1.0_R8+t0)
           chce(iFc,0)=chce(iFc,0)*co%fllim_ke(iFc)
@@ -639,17 +637,17 @@ c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.
         do iFc = 1,nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c          if(.not.on_closed_surface(ix,iy)) then                           !lk 06.05.07
-        if((switch%core_cond_limit.ne.0.or.
+         if(switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
-     &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))))) then
+     &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
           if (collisnumf(iFc) .gt. switch%min_collisions) then
-            flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
-     &                             +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
-            t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
-     &        pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) +
-     &        b2trcl_cutlo)
+           flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
+     &                            +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
+           t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
+     &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) +
+     &      b2trcl_cutlo)
           else 
-            t0 = (cflim(1)*max(collisnumf(iFc), 1e-16_R8))**(-1)
+           t0 = (cflim(1)*max(collisnumf(iFc), 1e-16_R8))**(-1)
           endif
           co%fllim_ki(iFc) = 1.0_R8/(1.0_R8+t0)
           chci(iFc,0)=chci(iFc,0)*co%fllim_ki(iFc)
@@ -725,7 +723,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       do is = 0, ns-1
        call b2tlmv (nCv, nFc, nVx, is, cflmv, switch, geo, mpg,
      &   pl%na(:,is),
-     &   pl%ti, pl%ua(:,is), collisnumf, vsaf_cl(:,0,is), 
+     &   pl%ti, pl%ua(:,is), collisnumf, vsaf_cl(:,0,is),
      &   cvsa(:,0,is), cvsahz(:,0,is), fllimvisc(:,is))
       enddo
 *   ..computation conductivity of kt due to classical parallel current
@@ -768,7 +766,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_fllim_chciy')
       endif
 
-      if(switch%b2trcl_iout.ne.0) then                                !srv 17.06.08 {
+      if(switch%b2trcl_iout.ne.0) then                                   !srv 17.06.08 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         call my_out_us(70,nFc,1,cvsa(1,0,is),'cl_cvsa_th'//chns)
