@@ -30,6 +30,8 @@
 #else
       use eirdiag          ! IGNORE
 #endif
+#else
+      use b2mod_eirdiag
 #endif
       use b2mod_dimensions
       implicit none
@@ -989,10 +991,12 @@ cxpb size is changed in b2mod_dimensions
       logical main_call
 *   ..local variables
       integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
-     & is_end, iss, iCv1, iCv2, ibc, ib, istra, indx, k, find_loc
-#ifdef B25_EIRENE
-      integer :: i, j, l
+     & is_end, iss, iCv1, iCv2, ibc, istra, i, j, k, l, ic, iFs,
+     & iatm, imol, indx
+#ifdef COMPLICATED
+      integer :: ib
 #endif
+      integer :: find_loc
       real(kind=r8) :: sna_pump, sna_puff, sna_core
       integer, save :: ncall = 0
       real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s,
@@ -1530,7 +1534,6 @@ cxpb size is changed in b2mod_dimensions
               if (fb_current(ifb).eq.0.0_R8)
      &          fb_current(ifb) = fb_target(ifb)
 
-#if ( defined(B25_EIRENE) && !defined(SOLPS4_3) )
             case (20) !  neutral pressure in PFR
 
               if(ncall.eq.0) then
@@ -1551,19 +1554,30 @@ cxpb size is changed in b2mod_dimensions
                 endif
               enddo
 
-              do k = 1,npfr_cvs 
+#ifndef SOLPS4_3
+              do k = 1,npfr_cvs
                 iCv = pfr_cvs(k)
-                t0 =
-     &            dab2(iCv,fb_species(ifb),1)*
-     &            tab2(iCv,fb_species(ifb),1) +
-     &            dmb2(iCv,fb_species(ifb),1)*
-     &            tmb2(iCv,fb_species(ifb),1)
+                if (switch%use_eirene.ne.0) then
+                  do iatm=1,nnatmi
+                    if (latmscl(iatm).eq.fb_species(ifb)) then
+                      t0 = dab2(iCv,iatm,1)*tab2(iCv,iatm,1)
+                    end if
+                  end do
+                  do imol=1,nnmoli
+                    if (lmolscl(imol).eq.fb_species(ifb)) then
+                      t0 = t0 + dmb2(iCv,imol,1)*tmb2(iCv,imol,1)
+                    end if
+                  end do
+                else
+                  t0 = pl%na(iCv,fb_species(ifb))*pl%ti(iCv)
+                end if
                 fb_current(ifb) = fb_current(ifb) + t0*geo%cvVol(iCv)
               end do
-              fb_current(ifb) = fb_current(ifb)/
-     &         sum(geo%cvVol(pfr_cvs))
 #endif
-            case (21) !  ion radiation looses
+              fb_current(ifb) = fb_current(ifb)/
+     &         sum(geo%cvVol(pfr_cvs(1:npfr_cvs)))
+
+            case (21) !  ion radiation losses
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
@@ -1583,12 +1597,14 @@ cxpb size is changed in b2mod_dimensions
                 endif
               enddo
               fb_current(ifb) = sum(srw%rqbrm)+sum(srw%rqrad)
-#if ( defined(B25_EIRENE) && !defined(SOLPS4_3) )
-              fb_current(ifb) = fb_current(ifb) -
+#ifndef SOLPS4_3
+              if (switch%use_eirene.ne.0)
+     >         fb_current(ifb) = fb_current(ifb) -
      &          (sum(emolrad(:,:,0))+sum(eneutrad(:,:,0))
      &          +sum(eionrad(:,:,0)))
 #endif
-              case (22) ! average density of this species at the separatrix
+
+            case (22) ! average density of this species at the separatrix
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
@@ -1668,9 +1684,10 @@ cxpb size is changed in b2mod_dimensions
                 if (mpg%fcLbl(iFc).eq.fb_type_ib(ifb)) then
                   t0 = dv%fht(iFc,0)+dv%fht(iFc,1)
                   t0 = t1*t0/geo%fcS(iFc)
-#if ( defined(B25_EIRENE) && !defined(SOLPS4_3) )
+#ifndef SOLPS4_3
                   if (allocated(fnmti_b2) .and.
-     &                allocated(ewldrp_res)) then
+     &                allocated(ewldrp_res) .and.
+     &                switch%use_eirene.ne.0) then
                     indx = find_loc(fnmti_b2,nsts+1,iFc)
                     if (indx.gt.0) then
                       t0 = t0-ewldrp_res(indx)
