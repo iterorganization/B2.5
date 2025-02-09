@@ -21,7 +21,7 @@
       type (switches), intent (in) :: switch
       real (kind=R8) :: wrk1(mpg%nFc,2), tauf(mpg%nFc),
      *   vte(mpg%nFc), collisnum(mpg%nFt),
-     *   tau(nCv), t0, t1, ctaue
+     *   tau(nCv), t0, t1, ctaue, wrkc(mpg%nCv)
       integer :: iFt, k, iFc, iCv
 *   ..output arguments (unspecified on entry)
       real (kind=R8) :: collisnumf(mpg%nFc),
@@ -41,7 +41,8 @@
 
       wrk1 = 1.0_R8
       call intface(nCv,mpg%nFc,mpg%fcCv,wrk1,tau,tauf)
-      call intface(nCv,mpg%nFc,mpg%fcCv,wrk1,sqrt(te/me),vte)
+      wrkc = te/me
+      call intface(nCv,mpg%nFc,mpg%fcCv,wrk1,wrkc,vte)
       collisnum = 0.0_R8
       do iFt=1,mpg%nFt
         do k=mpg%ftFcP(iFt,1),mpg%ftFcP(iFt,1)
@@ -73,4 +74,6 @@
         call my_out_us(70,mpg%nFc,1,collisnumf,'b2tnce_numcolef')
         call my_out_us(70,mpg%nCv,1,collisnumc,'b2tnce_numcolec')
       endif
-      end subroutine
+
+      return
+      end subroutine b2tnce

@@ -1195,7 +1195,7 @@ c Optimization
 
       implicit none
       type (switches), intent (inout) :: s
-      external ipgeti, ipgetr
+      external ipgeti, ipgetr, xertst
 
       call alloc_switches (s)
 
