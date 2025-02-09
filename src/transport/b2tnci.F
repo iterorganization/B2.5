@@ -22,7 +22,7 @@
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
       type (switches), intent (in) :: switch
-      real (kind=R8) ::
+      real (kind=R8) :: wrkc(nCv),
      *   tauia(nCv,0:ns-1), rz(nCv), pz(nCv), wrk1(mpg%nFc,2), 
      *   tauiaf(mpg%nFc), csf(mpg%nFc), collisnum(mpg%nFt)
       integer :: iFt, k, iFc, iCv
@@ -35,7 +35,8 @@
       call b2xppz (nCv, ns,  ne, na, te, ti, pz, st_ext)
       wrk1 = 1.0_R8
       call intface(nCv,mpg%nFc,mpg%fcCv,wrk1,tauia(:,ismain),tauiaf)
-      call intface(nCv,mpg%nFc,mpg%fcCv,wrk1,sqrt(pz/rz),csf)
+      wrkc = sqrt(pz/rz)
+      call intface(nCv,mpg%nFc,mpg%fcCv,wrk1,wrkc,csf)
       collisnum = 0.0_R8
       do iFt=1,mpg%nFt
         do k=mpg%ftFcP(iFt,1),mpg%ftFcP(iFt,1)
@@ -66,4 +67,6 @@
         call my_out_us(70,mpg%nFc,1,collisnumf,'b2tnci_numcolif')
         call my_out_us(70,mpg%nCv,1,collisnumc,'b2tnci_numcolic')
       endif
-      end subroutine
+
+      return
+      end subroutine b2tnci
