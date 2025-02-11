@@ -443,7 +443,8 @@ c     ,                                i,wldnm(l,i,0),mlcmp(ia,i) !###
           nrsr_tmp(k)=0.0_R8
         end do !}
       end if !}
-#endif
+      nrsri_tmp = nisp_tmp/sum(nisp_tmp)
+      
       if(ank_tracing.eq.0) return
       if(filedata(ltrc)) then !{
 
