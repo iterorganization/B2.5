@@ -300,36 +300,16 @@ c*** The plasma flows across the boundaries
 c<<<
         do ic=1,mpg%nbc
           hlp_pls(ic,ls)=0.0_R8
-          if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).eq.0 .and.
-     .        bcchar(ic).eq.'A') then
-            kst_hlp=ic
-          elseif (
-     .     boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
-     .     geometryType).ne.NODIRECTION) then
-            kst_hlp=ic
-          end if
+          if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).eq.0) cycle
+          if (boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .         geometryType).ne.NODIRECTION) kst_hlp=ic
         end do
 c>>>
         do is=1,nfluids(ls)
           ks=ks+1
           do 1100 ic = 1, mpg%nbc
-            if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).eq.0) then
-              iFc = mpg%bcFc(mpg%bcFcP(ic,1))
-              iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-              do i = 1, mpg%bcFcP(ic,2)
-                iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
-                hlpiw=hlpiw-
-     .            (st%dv%fna(iFc,0,ions_list(ks))+
-     .             st%dv%fna(iFc,1,ions_list(ks)))*
-     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-c<<<
-                hlp_pls(ic,ls)=hlp_pls(ic,ls)-
-     .           (st%dv%fna(iFc,0,ions_list(ks))+
-     .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-c>>>
-              end do
-            else if (boundaryAssignments(
+            if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).eq.0) cycle
+            if (boundaryAssignments(
      .           mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
      .           geometryType).eq.SOUTH) then
               do j = 1, ncbs
