@@ -1,10 +1,7 @@
       subroutine b2xddr (ninp, nout, ns, mpg, geo, state)
       use b2mod_types
-      use b2mod_b2cmgs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
-      use b2mod_b2cmwg
       use b2mod_subsys
       use b2mod_version
       use b2us_io

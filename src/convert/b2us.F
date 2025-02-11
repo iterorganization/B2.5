@@ -571,4 +571,3 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
 *.end b2us
 
       end program b2us
-

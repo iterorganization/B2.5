@@ -385,7 +385,6 @@ c        .. apply flux limit
         call my_out_us(70,nCv,0,ua(:,isb),'b2sifrtf_ua'//chns)
       endif
 
-
 * ..return
       ncall_b2sifrtf = ncall_b2sifrtf+1
       call subend ()

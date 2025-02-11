@@ -66,9 +66,9 @@
         wrkf = fchanml_b(:,1)/(geo%fcS*geo%fcQalf(:,1) + b2sian_eps)
         call intcell(nFc,nCv,mpg,mpg%intcellR,wrkf,wrk)
         do iCv = 1, mpg%nCi
-            smban(iCv,0) = -switch%b2sian_phm0*
-     &          geo%cvHz(iCv)*geo%cvVol(iCv)*
-     &          geo%cvBb(iCv,0)/geo%cvBb(iCv,2)*geo%cvBb(iCv,3)*wrk(iCv)
+          smban(iCv,0) = -switch%b2sian_phm0*
+     &     geo%cvHz(iCv)*geo%cvVol(iCv)*
+     &     geo%cvBb(iCv,0)/geo%cvBb(iCv,2)*geo%cvBb(iCv,3)*wrk(iCv)
         enddo
       endif
 #ifndef FIXED_POINT

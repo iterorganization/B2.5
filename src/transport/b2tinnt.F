@@ -14,6 +14,8 @@
       use b2us_map
       use b2us_plasma
 #ifdef B25_EIRENE
+      use eirmod_parmmod
+     & , only : natm, nmol
       use eirmod_wneutrals
      & , only : dab2, rfluxa, pfluxa, tfluxa
 #else
@@ -48,32 +50,23 @@
 
 *   ..local variables
       integer is, is0, iCv
-#ifdef WG_TODO
-      integer iamain
 #ifdef B25_EIRENE
       integer ia, im
       character chns*3
 #endif
-#endif
       integer, save :: ncall = 0
       real (kind=R8), parameter :: eps = 1.0e-60_R8
       real (kind=R8) ::
-     &   fnac(nCv,0:1,0:ns-1), vntrc(nCv,0:1),                            !srv 08.07.09
+     &   fnac(nCv,0:1,0:ns-1), vntrc(nCv,0:1),                           !srv 08.07.09
      &   vntrc_fluid(nCv,0:1), vntrc_kin(nCv,0:1),
      &   na_fluid(nCv,0:ns-1), na_kin(nCv,0:ns-1), na_tot(nCv,0:ns-1),
      &   vntrf(nFc,0:1), tif(nFc), naf(nFc,0:ns-1), dpo(nFc,0:1),
-     &   fnan(nFc,0:1,0:ns-1),!WG_TODO work(-1:nx,-1:ny,0:1,0:ns-1),
+     &   fnan(nFc,0:1,0:ns-1),
      &   wrk(nCv), wrk0(nFc,0:1,0:ns-1), wrk1(nFc,0:1), wrk2(nFc),
      &   wrkVx(nVx), pit(nCv), pit2(nCv), vntrc_par(nCv)
       real (kind=R8) ::
-#ifdef WG_TODO
-     &   sigia(nCv), sec(nCv), csigia(nFc,0:1), sigi(nCv),               !srv 15.02.11
-#endif
      &   facdriftm, fac_ExBm                                             !srv 20.10.17
-c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-c      integer, save :: mode = 1
-c      integer, save :: iout = 0
-c      integer, save :: fchin_in_core = 0                                !srv 16.11.17
+      integer, save :: iout = 0
 *   ..procedures
 *   ..initialisation
 *-----------------------------------------------------------------------
@@ -84,10 +77,7 @@ c      integer, save :: fchin_in_core = 0                                !srv 16
       call subini ('b2tinnt')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-c The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-c        call ipgeti ('b2tinnt_iout', iout)
-c        call ipgeti ('b2tral_mode', mode)
-c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16.11.17
+        call ipgeti ('b2tinnt_iout', iout)
       endif
 *   ..test input
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
@@ -235,42 +225,28 @@ c        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16
       endif  !! end conditions to calculated i-n current
 
 #ifdef B25_EIRENE
-#ifdef WG_TODO
       if(iout.ne.0.and.switch%use_eirene.ne.0) then
        do ia = 1,natm
         write (chns,'(i3.3)') ia
-        call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,ia,1),
+        call my_out(70,nCv,1,rfluxa(1,ia,1),
      &                'b2tinnt_rfluxa_eir'//chns)
-        call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,ia,1),
+        call my_out(70,nCv,1,pfluxa(1,ia,1),
      &                'b2tinnt_pfluxa_eir'//chns)
-        call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,ia,1),
+        call my_out(70,nCv,1,dab2(1,ia,1),
      &                'b2tinnt_dab2_eir'//chns)
        enddo
        do im = 1,nmol
         write (chns,'(i3.3)') im
-        call my_out(70,nx,ny,rfluxm(0:nx+1,0:ny+1,im,1),
+        call my_out(70,nCv,1,rfluxm(1,im,1),
      &              'b2tinnt_rfluxm_eir'//chns)
-        call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,im,1),
+        call my_out(70,nCv,1,pfluxm(1,im,1),
      &              'b2tinnt_pfluxm_eir'//chns)
-        call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,im,1),
+        call my_out(70,nCv,1,dmb2(1,im,1),
      &              'b2tinnt_dmb2_eir'//chns)
        enddo
-!       call my_out(70,nx,ny,dab2_,'b2tinnt_dab2_01')
-       call my_out(70,nx,ny,sigia,'b2tinnt_sigia')
-       call my_out(70,nx,ny,csigia(-1,-1,0,0),'b2tinnt_csigiax')
-       call my_out(70,nx,ny,csigia(-1,-1,1,1),'b2tinnt_csigiay')
-       call my_out(70,nx,ny,csigin(-1,-1,0,0,ismain,ismain0),
-     &                                      'b2tinnt_csiginx')
-       call my_out(70,nx,ny,csigin(-1,-1,1,1,ismain,ismain0),
-     &                                      'b2tinnt_csiginy')
-       call my_out(70,nx,ny,fnan(-1,-1,0,0,ismain0),'b2tinnt_fnanx')
-       call my_out(70,nx,ny,fnan(-1,-1,1,1,ismain0),'b2tinnt_fnany')
-       call my_out(70,nx,ny,fchin(-1,-1,0,0),'b2tinnt_fchinx')
-       call my_out(70,nx,ny,fchin(-1,-1,1,1),'b2tinnt_fchiny')
-!       call my_out(70,nx,ny,vntrc(-1,-1,0),'b2tinnt_vntrcx')
-!       call my_out(70,nx,ny,vntrc(-1,-1,1),'b2tinnt_vntrcy')
+       call my_out(70,nFc,1,fchin(1,0),'b2tinnt_fchin_th')
+       call my_out(70,nFc,1,fchin(1,1),'b2tinnt_fchin_r')
       endif
-#endif
 #endif
 
 * ..return

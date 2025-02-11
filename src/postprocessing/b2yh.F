@@ -3,14 +3,8 @@
 
       program b2yh
       use b2mod_types
-      use b2mod_geo
-      use b2mod_plasma
-      use b2mod_rates
-      use b2mod_residuals
-      use b2mod_sources
-      use b2mod_transport
-      use b2mod_indirect
       use b2mod_xerset
+      use b2mod_version
       implicit none
 
 *-----------------------------------------------------------------------
@@ -65,15 +59,14 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:2), nout(0:0), nx, ny, ns, idum(0:9), io
-      character*120 lblgm
+      integer ninp(0:1), nout(0:0), ns, idum(0:9), io
       logical ex
       logical file_open
 *   ..procedures
       external prgini, prgend, xertst, cfopen, cfruin, cfruch
-      external b2yhdr, b2rugm
+      external b2yhdr
 *   ..initialise input/output units
-      data ninp/50,51,52/
+      data ninp/50,51/
       data nout/60/
 
 *-----------------------------------------------------------------------
@@ -108,34 +101,18 @@
       else
         call cfopen (ninp(1),'b2fpardf','old','un*formatted')
       endif
-      call cfopen (ninp(2),'b2fgmtry','old','un*formatted')
       call cfopen (nout(0),'b2yh.prt','new','formatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers                                             !xpb
       call cfverr (ninp(1), b2fparam_version)                            !xpb
-      call cfverr (ninp(2), b2fgmtry_version)                            !xpb
-*   ..obtain nx, ny from geometry file
-      call cfruin (ninp(2), 2, idum, 'nx,ny')
-      nx = idum(0)
-      ny = idum(1)
-      call xertst (0.le.nx.and.0.le.ny,
-     &  'faulty input nx, ny from geometry file')
 *   ..obtain ns
       call cfruin (ninp(1), 1, idum, 'ns')
       ns = idum(0)
       call xertst (1.le.ns,
      &  'faulty input ns from physics parameters file')
-*   ..read geometry and metric
-      call alloc_b2mod_geo(nx,ny)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)
-      call cfruch (ninp(2), 120, lblgm, 'label')
-      call cfruin (ninp(2), 1, idum, 'isymm')
-#ifdef WG_TODO
-      call b2rugm (ninp(2), nx, ny, isymm)
-#endif
 *   ..call principal driver routine
-      call b2yhdr (ninp, nout, nx, ns)
+      call b2yhdr (ninp, nout, ns)
 *   ..close graphics files
 *     (none)
 *   ..close other files
@@ -149,8 +126,6 @@
       enddo
 
 * ..end of computation
-      call dealloc_b2mod_geo
-      call dealloc_b2mod_indirect
       call prgend ()
       stop 'b2yh'
 

@@ -38,16 +38,7 @@ contains
                      nCv, nFc, ns, nncutmax, geo, mpg, switch, &
                      pl, dv, co, rt, srw, ext, &
                      ismain, ismain0, lwti, lwav, luav)
-!    use b2mod_geo
-!    use b2mod_plasma
-!    use b2mod_rates
-!    use b2mod_residuals
-!    use b2mod_sources
-!    use b2mod_transport
-!    use b2mod_anomalous_transport
     use b2mod_neutrals_namelist
-!    use b2mod_work
-!    use b2mod_indirect
     use b2mod_constants
 !    use b2mod_tallies
 !    use b2mod_wall
@@ -171,13 +162,11 @@ contains
          kisepm(nncutmax), vxsepm(nncutmax), vysepm(nncutmax), &
          vssepm(nncutmax), tpsepi(nncutmax), tpsepa(nncutmax), &
          ktsepm(nncutmax), ktsepi(nncutmax), ktsepa(nncutmax)
-#ifdef WG_TODO
     real (kind=R8) :: &
          tmhacore(1), tmhasol(1), tmhadiv(1)
-#endif
     real (kind=R8) :: &
          timesa(1), batchsa(1), tstepn(1)
-    real (kind=R8), allocatable :: slice(:)
+    real (kind=R8), allocatable :: slice(:), wrkc(:)
     logical ex
     character*5 rw
     character*256, save :: filename, filename_av
@@ -1505,30 +1494,22 @@ contains
     tmti(1)=tmti(1)/ev
 
 #ifndef NO_CDF
-#ifdef WG_TODO
     tmhacore(1)=0.0_R8
     tmhasol(1)=0.0_R8
     tmhadiv(1)=0.0_R8
 #ifdef B25_EIRENE
-    ! note no emission in guard cells and offset of array by 1
-    do iy=-1,ny
-      do ix=-1,nx
-        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and. bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 ) then
-          if(on_closed_surface(ix,iy)) then
-            tmhacore(1)=tmhacore(1)+(emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
-          elseif((region(ix,iy,0).eq.5 .or. region(ix,iy,0).eq.6) .and. nnreg(0).eq.7) then
-            tmhadiv(1)=tmhadiv(1) + (emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
-          elseif(mod(region(ix,iy,0),4).eq.3 .or.(mod(region(ix,iy,0),4).eq.0 .and. region(ix,iy,0).ne.0)) then
-            tmhadiv(1)=tmhadiv(1) + (emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
-          elseif(mod(region(ix,iy,0),4).eq.2 .or. nnreg(0).eq.1) then
-            tmhasol(1)=tmhasol(1)+ (emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
-          elseif(region(ix,iy,0).ne.0) then
-            write(*,*) 'b2mwti: unknown region @ ', ix,iy,region(ix,iy,0)
-          endif
-        endif
-      enddo
+    ! note no emission in guard cells
+    do iCv = 1,mpg%nCi
+      if(mpg%cvOnClosedSurface(iCv)) then
+        tmhacore(1)=tmhacore(1)+(emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
+      elseif((mpg%cvReg(iCv).eq.5 .or. mpg%cvReg(iCv).eq.6) .and. mpg%nnreg(0).eq.7) then
+        tmhadiv(1)=tmhadiv(1) + (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
+      elseif(mod(mpg%cvReg(iCv),4).eq.3 .or.(mod(mpg%cvReg(iCv),4).eq.0 .and. mpg%cvReg(iCv).ne.0)) then
+        tmhadiv(1)=tmhadiv(1) + (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
+      elseif(mod(mpg%cvReg(iCv),4).eq.2 .or. mpg%nnreg(0).eq.1) then
+        tmhasol(1)=tmhasol(1)+ (emiss(iCv,1,1)+emissmol(iCv,1,1))*geo%cvVol(iCv)
+      endif
     enddo
-#endif
 #endif
 !wdk update batch averages
     if (luav) then
@@ -1672,11 +1653,9 @@ contains
       call rwcdf(rw,ncid,'tmne',imap,tmne,iret)
       call rwcdf(rw,ncid,'tmte',imap,tmte,iret)
       call rwcdf(rw,ncid,'tmti',imap,tmti,iret)
-#ifdef WG_TODO
       call rwcdf(rw,ncid,'tmhacore',imap,tmhacore,iret)
       call rwcdf(rw,ncid,'tmhasol',imap,tmhasol,iret)
       call rwcdf(rw,ncid,'tmhadiv',imap,tmhadiv,iret)
-#endif
 
       imap(1)=1
       imap(2)=1
@@ -2122,16 +2101,34 @@ contains
         call rwcdf(rw,ncid,'vs3da',imap,slice,iret)
         deallocate(slice)
       end if
-#ifdef WG_TODO
-      slice(-1:ny)=fllim0fhi(jxi,-1:ny,1,1,ismain0)
-      call rwcdf(rw,ncid,'lh3di',imap,slice,iret)
-      slice(-1:ny)=fllim0fhi(jxa,-1:ny,1,1,ismain0)
-      call rwcdf(rw,ncid,'lh3da',imap,slice,iret)
-      slice(-1:ny)=fllim0fna(jxi,-1:ny,1,1,ismain0)
-      call rwcdf(rw,ncid,'ln3di',imap,slice,iret)
-      slice(-1:ny)=fllim0fna(jxa,-1:ny,1,1,ismain0)
-      call rwcdf(rw,ncid,'ln3da',imap,slice,iret)
-#endif
+      allocate(wrkc(nCv))
+      call intcell(nFc,nCv,mpg,mpg%intcellR,co%fllim0fhi(1,1,ismain0),wrkc)
+      if (nimp.gt.0) then
+        allocate(slice(nimp))
+        slice(1:nimp)=wrkc(imp(1:nimp))
+        call rwcdf(rw,ncid,'lh3di',imap,slice,iret)
+        deallocate(slice)
+      end if
+      if (nomp.gt.0) then
+        allocate(slice(nomp))
+        slice(1:nomp)=wrkc(omp(1:nomp))
+        call rwcdf(rw,ncid,'lh3da',imap,slice,iret)
+        deallocate(slice)
+      end if
+      call intcell(nFc,nCv,mpg,mpg%intcellR,co%fllim0fna(1,1,ismain0),wrkc)
+      if (nimp.gt.0) then
+        allocate(slice(nimp))
+        slice(1:nimp)=wrkc(imp(1:nimp))
+        call rwcdf(rw,ncid,'ln3di',imap,slice,iret)
+        deallocate(slice)
+      end if
+      if (nomp.gt.0) then
+        allocate(slice(nomp))
+        slice(1:nomp)=wrkc(omp(1:nomp))
+        call rwcdf(rw,ncid,'ln3da',imap,slice,iret)
+        deallocate(slice)
+      end if
+      deallocate(wrkc)
     !
 #ifdef WG_TODO
       imap(1)=1
@@ -2408,82 +2405,6 @@ contains
     close(99)
     return
   end subroutine output_ds_fc
-
-#ifdef WG_TODO
-  subroutine calc_fet(ix,iy,side,fac_flux,nx,ny,ns,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)
-    use b2mod_plasma   , only : ti, te, fna, fne, fhe, fhi, fch, fhm, fhp
-    use b2mod_indirect , only : rightix, rightiy, bottomix, bottomiy, topix, topiy, leftix, leftiy
-    use b2mod_external , only : fhi_ext, pt_ext, ta_ext, ua_ext, am_ext, ns_ext, fa_ext
-    use b2mod_constants , only : ev, mp
-    use b2mod_geo , only : hx, hy, qz, gs
-    implicit none
-    integer, intent(in) :: ix, iy
-    integer, intent(in) :: ismain, nx, ny, ns
-    real(kind=R8), intent(in) :: BoRiS, fac_flux
-    real(kind=R8), intent(out) :: fet
-    real(kind=R8), intent(out), Optional :: fni0, fee0, fei0, fch0, pwr
-    character(len=1) :: side
-    ! Local vars
-    integer :: ix_adj, iy_adj, is, ix_flux, iy_flux, idir
-    real(kind=R8) :: kintmp, rpttmp, tif, tef, taf
-    real(kind=R8) :: h(-1:nx,-1:ny)
-    ! Procedures
-    external xerrab
-
-    ! Computation
-    select case (side)
-    case ('l','L')
-      ix_flux = rightix(ix,iy) ! Index to cell with flux entering cell
-      iy_flux = rightiy(ix,iy)
-      ix_adj  = rightix(ix,iy) ! Index to cell adjacent
-      iy_adj  = rightiy(ix,iy)
-      idir = 0                 ! Index in flux variables (x vs y direction)
-      h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
-    case ('r','R')
-      ix_flux = ix
-      iy_flux = iy
-      ix_adj = leftix(ix,iy)
-      iy_adj = leftiy(ix,iy)
-      idir = 0
-      h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
-    case ('t','T')
-      ix_flux = ix
-      iy_flux = iy
-      ix_adj = bottomix(ix,iy)
-      iy_adj = bottomiy(ix,iy)
-      idir = 1
-      h(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
-    case ('b','B')
-      ix_flux = topix(ix,iy)
-      iy_flux = topiy(ix,iy)
-      ix_adj = topix(ix,iy)
-      iy_adj = topiy(ix,iy)
-      idir = 1
-      h(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
-    case default
-      call xerrab('Unknown side in calc_fet')
-    end select
-    if (present(fni0)) fni0 = fac_flux*fna(ix_flux,iy_flux,idir,idir,ismain)
-    if (present(fee0)) fee0 = fac_flux*fhe(ix_flux,iy_flux,idir,idir)
-    if (present(fei0)) fei0 = fac_flux*fhi(ix_flux,iy_flux,idir,idir)
-    if (present(fch0)) fch0 = fac_flux*fch(ix_flux,iy_flux,idir,idir)
-    fet = fac_flux*(fhe(ix_flux,iy_flux,idir,idir) + fhi(ix_flux,iy_flux,idir,idir) + fhi_ext(ix_flux,iy_flux,idir,idir))
-    tef = (te(ix_adj,iy_adj)*h(ix,iy)+te(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
-    tif = (ti(ix_adj,iy_adj)*h(ix,iy)+ti(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
-    fet = fet + fac_flux*fne(ix_flux,iy_flux,idir,idir)*tef*(1.0_R8-BoRiS)
-    do is=0,ns-1
-      fet = fet + fac_flux*(fhm(ix_flux,iy_flux,idir,idir,is)+tif)*(1.0_R8-BoRiS) + fac_flux*fhp(ix_flux,iy_flux,idir,idir,is)
-    enddo
-    do is=0,ns_ext-1
-      kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+  &
-           ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
-      rpttmp = (pt_ext(ix,iy,is)*h(ix_adj,iy_adj)+pt_ext(ix_adj,iy_adj,is)*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
-      taf = (ta_ext(ix_adj,iy_adj,is)*h(ix,iy)+ta_ext(ix,iy,is)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
-      fet = fet + fac_flux*(rpttmp*ev + (kintmp+taf)*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,idir,idir,is)
-    enddo
-    if (present(pwr)) pwr = Abs(fet)/gs(ix_flux,iy_flux,idir)
-  end subroutine calc_fet
-#endif
 
 end module b2mod_mwti
 

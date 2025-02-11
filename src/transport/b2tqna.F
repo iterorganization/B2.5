@@ -11,12 +11,11 @@
       use b2mod_input_profile
       use b2mod_constants
       use b2mod_time
-!      use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2cmpt
       use b2mod_b2cmpb
       use b2mod_user_namelist
-     , , only : omp
+     , , only : omp, ft_omp
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -58,7 +57,6 @@
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  wrk0(nCv)
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -113,10 +111,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, is, ic, k
-#ifdef WG_TODO
-     * , jsep, jxi, jxa
-#endif
+      integer iCv, iFt, is, ic, k
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  df0, dfvsb, dfhcb, dfhce, dfsig, dfalf,
@@ -125,9 +120,6 @@
       real (kind=R8) ::
      *  min_df0_tmp, max_df0_tmp, tav
       integer elm_count
-#ifdef WG_TODO
-      save jxi, jxa, jsep
-#endif
       logical catch_up
 *   ..procedures
       intrinsic sqrt
@@ -140,10 +132,6 @@
       call subini ('b2tqna')
 *   ..set internal parameters on first call
       if (ncall_b2tqna.eq.0) then
-!WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
-!WG_TODO        switch%b2tqna_ixref=jxa
-!WG_TODO        call xertst (-1.le.switch%b2tqna_ixref.and.switch%b2tqna_ixref.le.nx,
-!WG_TODO     1   'faulty argument b2tqna_ixref')
         if(switch%b2tqna_transport_namelist.eq.1) then
           call write_b2mod_transport_namelist
           if(transport_time_mod.gt.0.0_R8) then
@@ -282,128 +270,131 @@
           call xertst (k.lt.nscx, 'CX species index not found!')
         endif
         do iCv = 1, nCv
+          iFt = mpg%cvFt(iCv)
 *      ..compute auxiliary quantity df0
-            if (cfdf0(2,is).eq.0.0_R8) then
-              df0 = cfdf0(0,is)+cfdf0(1,is)/
-     &         ((dv%ni(iCv,0)+st_ext%ni(iCv,0))/1.0e20_R8)
-            else
-              df0 = cfdf0(0,is)+cfdf0(1,is)/
-     &         ((dv%ni(iCv,0)+st_ext%ni(iCv,0))/1.0e20_R8)+
-     &         (cfdf0(2,is)/sqrt(am(is)))*wrk0(iCv)/
-     &         (cfdf0(3,is)*(dv%ni(iCv,0)+st_ext%ni(iCv,0))+
-     &          cfdf0(4,is)*dv%ne(iCv))
-            endif
-            if(switch%b2tqna_new_df0.eq.1) then
-              if(is_neutral(is)) then
-                dcx=0.0_R8
-                vcx=0.0_R8
-                lcx=1.0e30_R8
-                if (k.ge.0) then
-                  tav = (pl%ti(iCv)+pl%tn(iCv))/2.0_R8
-                  do ic = 0, ns-1
-                    dcx = dcx + expu(rt%rlcx(iCv,0,ic,k) +
-     &               rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
-                    vcx = vcx +
-     &               pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,k) +
-     &               rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
-                  enddo
-                  lcx=wrk0(iCv)/sqrt(am(is))/vcx
-                end if
-                dion=expu(
-     2           rt%rlsa(iCv,0,is)+
-     3           rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
-                if (dion.gt.0.0_R8) then
-                  lion=wrk0(iCv)/sqrt(am(is))/dv%ne(iCv)/dion
-                else
-                  lion=1.0e30_R8
-                endif
-                if (vcx.eq.0.0_R8 .and. dion.eq.0.0_R8) then
-                  din=1.0e30_R8
-                else
-                  din=(wrk0(iCv)/sqrt(am(is)))**2/
-     1             (vcx+dion*dv%ne(iCv))
-                endif
-c               if(lcx.gt.lion) then
-c                 din=lion*wrk0(iCv)/sqrt(am(is))
-c               else
-c                 din=sqrt(lcx*lion)*wrk0(iCv)/sqrt(am(is))
-c               endif
-c-wrong(Bonnin,Owen)                dnn=1.0_R8/na(iCv,is)/2.0e-19_R8
-c$$$                dnn=(wrk0(iCv)/sqrt(am(is)))/
-c$$$     1           (na(iCv,is)/switch%neutral_sources_rescale)/2.0e-19_R8
-cxpb Corrected for dimensionality
-                dnn=1.0_R8/(pl%na(iCv,is)/
-     &            switch%neutral_sources_rescale)/2.0e-19_R8
-                if (switch%b2tqna_diagno.gt.1) then
-                  write(*,*) 'new_df0',
-     1             iCv,is,lcx,lion,din,dnn,addup(din,dnn),df0
-                else if (addup(din,dnn)/df0.gt.100.0_R8
-     &           .and. switch%b2tqna_diagno.eq.1) then
-                  write(*,*) 'new_df0:problem',
-     1             iCv,is,lcx,lion,din,dnn,addup(din,dnn),df0
-                endif
-                df0=addup(din,dnn)
+          if (cfdf0(2,is).eq.0.0_R8) then
+            df0 = cfdf0(0,is)+cfdf0(1,is)/
+     &       ((dv%ni(iCv,0)+st_ext%ni(iCv,0))/1.0e20_R8)
+          else
+            df0 = cfdf0(0,is)+cfdf0(1,is)/
+     &       ((dv%ni(iCv,0)+st_ext%ni(iCv,0))/1.0e20_R8)+
+     &       (cfdf0(2,is)/sqrt(am(is)))*wrk0(iCv)/
+     &       (cfdf0(3,is)*(dv%ni(iCv,0)+st_ext%ni(iCv,0))+
+     &        cfdf0(4,is)*dv%ne(iCv))
+          endif
+          if(switch%b2tqna_new_df0.eq.1) then
+            if(is_neutral(is)) then
+              dcx=0.0_R8
+              vcx=0.0_R8
+              lcx=1.0e30_R8
+              if (k.ge.0) then
+                tav = (pl%ti(iCv)+pl%tn(iCv))/2.0_R8
+                do ic = 0, ns-1
+                  dcx = dcx + expu(rt%rlcx(iCv,0,ic,k) +
+     &             rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
+                  vcx = vcx +
+     &             pl%na(iCv,ic) * expu(rt%rlcx(iCv,0,ic,k) +
+     &             rt%rlcx(iCv,1,ic,k)*log(tav/(am(is)*ev)))
+                enddo
+                lcx=wrk0(iCv)/sqrt(am(is))/vcx
+              end if
+              dion=expu(
+     2         rt%rlsa(iCv,0,is)+
+     3         rt%rlsa(iCv,1,is)*log(pl%te(iCv)/ev))
+              if (dion.gt.0.0_R8) then
+                lion=wrk0(iCv)/sqrt(am(is))/dv%ne(iCv)/dion
+              else
+                lion=1.0e30_R8
               endif
+              if (vcx.eq.0.0_R8 .and. dion.eq.0.0_R8) then
+                din=1.0e30_R8
+              else
+                din=(wrk0(iCv)/sqrt(am(is)))**2/
+     1           (vcx+dion*dv%ne(iCv))
+              endif
+c             if(lcx.gt.lion) then
+c               din=lion*wrk0(iCv)/sqrt(am(is))
+c             else
+c               din=sqrt(lcx*lion)*wrk0(iCv)/sqrt(am(is))
+c             endif
+c-wrong(Bonnin,Owen)                dnn=1.0_R8/na(iCv,is)/2.0e-19_R8
+c$$$              dnn=(wrk0(iCv)/sqrt(am(is)))/
+c$$$     1         (na(iCv,is)/switch%neutral_sources_rescale)/2.0e-19_R8
+cxpb Corrected for dimensionality
+              dnn=1.0_R8/(pl%na(iCv,is)/
+     &          switch%neutral_sources_rescale)/2.0e-19_R8
+              if (switch%b2tqna_diagno.gt.1) then
+                write(*,*) 'new_df0',
+     1           iCv,is,lcx,lion,din,dnn,addup(din,dnn),df0
+              else if (addup(din,dnn)/df0.gt.100.0_R8
+     &         .and. switch%b2tqna_diagno.eq.1) then
+                write(*,*) 'new_df0:problem',
+     1           iCv,is,lcx,lion,din,dnn,addup(din,dnn),df0
+              endif
+              df0=addup(din,dnn)
             endif
-            min_df0_tmp=min(min_df0_tmp,df0)
-            max_df0_tmp=max(max_df0_tmp,df0)
-            if(is_neutral(is)) df0=max(switch%b2tqna_min_df0,
-     &                             min(switch%b2tqna_max_df0,df0))
+          endif
+          min_df0_tmp=min(min_df0_tmp,df0)
+          max_df0_tmp=max(max_df0_tmp,df0)
+          if(is_neutral(is)) df0=max(switch%b2tqna_min_df0,
+     &                           min(switch%b2tqna_max_df0,df0))
 *      ..compute dna0, dpa0, vla0, vma0
-            dna0(iCv,is) = cfdna(0,is)+
-     &       cfdna(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
-     &       cfdna(2,is)*df0+
-     &       cfdna(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
-            if(cfdna(7,is).ne.0.0_R8)
-     &       dna0(iCv,is) = dna0(iCv,is)!WG_TODO*
-!WG_TODO     &        cfdna(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
-            dpa0(iCv,is) =
-     &       (1.0_R8/(rt%rza(iCv,is)*pl%te(iCv)+pl%ti(iCv)))*
-     &       (cfdpa(0,is)+cfdpa(1,is)/
-     &       (max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
-     &        cfdpa(2,is)*df0+
-     &        cfdpa(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3))
-            if(cfdpa(7,is).ne.0.0_R8)
-     &       dpa0(iCv,is) = dpa0(iCv,is)!WG_TODO*
-!WG_TODO     &        cfdpa(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
-            vla0(iCv,0,is) = 0.0_R8
-            vla0(iCv,1,is) = cfvla(0,is)+
-     &       cfvla(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
-     &       cfvla(2,is)*df0+
-     &       cfvla(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
-            if(cfvla(7,is).ne.0.0_R8)
-     &       vla0(iCv,1,is) = vla0(iCv,1,is)!WG_TODO*
-!WG_TODO     &        cfvla(7,is)*hy1(iCv)/hy1(switch%b2tqna_ixref,iy)
-            if(.not.is_neutral(is)) then                             !srv 15.12.05 {
-              vma0(iCv,0,is) = 0.0_R8
-              vma0(iCv,1,is) = 0.0_R8
-            else
-              vma0(iCv,0,is) = 0.0_R8
-!             vma0(iCv,1,is) = cfvma(0,is)
-              vma0(iCv,1,is) = switch%b2tqna_cfvma                   !srv 15.12.05 }
-            endif
+          dna0(iCv,is) = cfdna(0,is)+
+     &     cfdna(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
+     &     cfdna(2,is)*df0+
+     &     cfdna(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
+          if(cfdna(7,is).ne.0.0_R8.and.ft_omp(iFt).ne.0)
+     &     dna0(iCv,is) = dna0(iCv,is)*
+     &      cfdna(7,is)*(geo%cvHy(iCv)/geo%cvHy(omp(ft_omp(iFt))))**2
+          dpa0(iCv,is) =
+     &     (1.0_R8/(rt%rza(iCv,is)*pl%te(iCv)+pl%ti(iCv)))*
+     &     (cfdpa(0,is)+cfdpa(1,is)/
+     &     (max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
+     &      cfdpa(2,is)*df0+
+     &      cfdpa(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3))
+          if(cfdpa(7,is).ne.0.0_R8.and.ft_omp(iFt).ne.0)
+     &     dpa0(iCv,is) = dpa0(iCv,is)*
+     &      cfdpa(7,is)*(geo%cvHy(iCv)/geo%cvHy(omp(ft_omp(iFt))))**2
+          vla0(iCv,0,is) = 0.0_R8
+          vla0(iCv,1,is) = cfvla(0,is)+
+     &     cfvla(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
+     &     cfvla(2,is)*df0+
+     &     cfvla(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
+          if(cfvla(7,is).ne.0.0_R8.and.ft_omp(iFt).ne.0)
+     &     vla0(iCv,1,is) = vla0(iCv,1,is)*
+     &      cfvla(7,is)*geo%cvHy(iCv)/geo%cvHy(omp(ft_omp(iFt)))
+          if(.not.is_neutral(is)) then                             !srv 15.12.05 {
+            vma0(iCv,0,is) = 0.0_R8
+            vma0(iCv,1,is) = 0.0_R8
+          else
+            vma0(iCv,0,is) = 0.0_R8
+!           vma0(iCv,1,is) = cfvma(0,is)
+            vma0(iCv,1,is) = switch%b2tqna_cfvma                   !srv 15.12.05 }
+          endif
 *      ..compute dfvsb and dfhcb
 *        (dfvsb and dfhcb specify effective diffusivities, of
 *         dimension m**2/s, for the anomalous transport coefficients
 *         vsa0 and hci0)
-            dfvsb = cfvsa(0,is)+
-     &       cfvsa(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
-     &       cfvsa(2,is)*df0+
-     &       cfvsa(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
-            if(cfvsa(7,is).ne.0.0_R8)
-     &       dfvsb = dfvsb!WG_TODO*cfvsa(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
-            dfhcb = cfhci(0,is)+
-     &       cfhci(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
-     &       cfhci(2,is)*df0+
-     &       cfhci(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
-            if(cfhci(7,is).ne.0.0_R8)
-     &       dfhcb = dfhcb!WG_TODO*cfhci(7,is)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
+          dfvsb = cfvsa(0,is)+
+     &     cfvsa(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
+     &     cfvsa(2,is)*df0+
+     &     cfvsa(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
+          if(cfvsa(7,is).ne.0.0_R8.and.ft_omp(iFt).ne.0)
+     &     dfvsb = dfvsb*
+     &      cfvsa(7,is)*(geo%cvHy(iCv)/geo%cvHy(omp(ft_omp(iFt))))**2
+          dfhcb = cfhci(0,is)+
+     &     cfhci(1,is)/(max(1.0e-50_R8,dv%ne(iCv))/1.0e20_R8)+    ! dpc changed na(iCv,is) to ne(iCv)
+     &     cfhci(2,is)*df0+
+     &     cfhci(3,is)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
+          if(cfhci(7,is).ne.0.0_R8.and.ft_omp(iFt).ne.0)
+     &     dfhcb = dfhcb*
+     &      cfhci(7,is)*(geo%cvHy(iCv)/geo%cvHy(omp(ft_omp(iFt))))**2
 *      ..compute vsa0, hcib
-            vsa0(iCv,is) = dfvsb*mp*am(is)*pl%na(iCv,is)
-            hcib(iCv,is) = dfhcb*pl%na(iCv,is)
+          vsa0(iCv,is) = dfvsb*mp*am(is)*pl%na(iCv,is)
+          hcib(iCv,is) = dfhcb*pl%na(iCv,is)
 *      ..compute hvi0
-            hvi0(iCv,0) = 0.0_R8
-            hvi0(iCv,1) = 0.0_R8
+          hvi0(iCv,0) = 0.0_R8
+          hvi0(iCv,1) = 0.0_R8
         enddo
         write(*,'(a,i3,1p,2g14.7)') 'is,min_df0,max_df0 ',
      .   is, min_df0_tmp, max_df0_tmp
@@ -429,36 +420,40 @@ cxpb Corrected for dimensionality
       enddo
 *   ..compute hce0, sig0, alf0
       do iCv = 1, nCv
+        iFt = mpg%cvFt(iCv)
 *     ..compute dfhce, dfsig, dfalf
 *       (dfhce, dfsig, and dfalf specify effective diffusivity,
 *        dimension m**2/s, for the anomalous transport coefficients
 *        hce0, sig0, and alf0)
-         dfhce = cfhce(0)+cfhce(1)/(dv%ne(iCv)/1.0e20_R8)+
-     1    cfhce(3)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
-         if(cfhce(7).ne.0.0_R8)
-     &    dfhce=dfhce!WG_TODO*cfhce(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
-         dfsig = cfsig(0)+cfsig(1)/(dv%ne(iCv)/1.0e20_R8)+
-     1    cfsig(3)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3) !WG_TODO+
+        dfhce = cfhce(0)+cfhce(1)/(dv%ne(iCv)/1.0e20_R8)+
+     1   cfhce(3)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
+        if(cfhce(7).ne.0.0_R8.and.ft_omp(iFt).ne.0)
+     &   dfhce=dfhce*
+     &    cfhce(7)*(geo%cvhy(iCv)/geo%cvHy(omp(ft_omp(iFt))))**2
+        dfsig = cfsig(0)+cfsig(1)/(dv%ne(iCv)/1.0e20_R8)+
+     1   cfsig(3)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3) !WG_TODO+
 !WG_TODO     2    cfsig(4)*exp(-cfsig(5)*(lengthy(iCv)/lengthy(ix,ny))**2) !srv 26.11.04
-         if(cfsig(7).ne.0.0_R8)
-     &    dfsig=dfsig!WG_TODO*cfsig(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
-         dfalf = cfalf(0)+cfalf(1)/(dv%ne(iCv)/1.0e20_R8)+
-     1    cfalf(3)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
-         if(cfalf(7).ne.0.0_R8)
-     &    dfalf=dfalf!WG_TODO*cfalf(7)*(hy1(iCv)/hy1(switch%b2tqna_ixref,iy))**2
+        if(cfsig(7).ne.0.0_R8.and.ft_omp(iFt).ne.0)
+     &   dfsig=dfsig*
+     &    cfsig(7)*(geo%cvHy(iCv)/geo%cvHy(omp(ft_omp(iFt))))**2
+        dfalf = cfalf(0)+cfalf(1)/(dv%ne(iCv)/1.0e20_R8)+
+     1   cfalf(3)*6.25e-2_R8*pl%te(iCv)/ev/geo%cvBb(iCv,3)
+        if(cfalf(7).ne.0.0_R8.and.ft_omp(iFt).ne.0)
+     &   dfalf=dfalf*
+     &    cfalf(7)*(geo%cvHy(iCv)/geo%cvHy(omp(ft_omp(iFt))))**2
 *     ..compute hce0, sig0, alf0
-         hce0(iCv) = dfhce*dv%ne(iCv)
-         if(switch%model_sig.eq.0) then                !srv 02.12.04 {
-           sig0(iCv) = dfsig*qe*dv%ne(iCv)
-         else
-!          sig0(iCv) = dfsig*qe*(cbsna(0,1,1)/abs(cbsna(1,1,1))) ! use constant density as core region
-           sig0(iCv) = dfsig*qe*dv%ne(omp(1))  !srv 10.06.09 ! use constant density as core region
-         endif                                  !srv 02.12.04 }
-         alf0(iCv) = dfalf*dv%ne(iCv)*sqrt(qe/pl%te(iCv))
+        hce0(iCv) = dfhce*dv%ne(iCv)
+        if(switch%model_sig.eq.0) then                !srv 02.12.04 {
+          sig0(iCv) = dfsig*qe*dv%ne(iCv)
+        else
+!         sig0(iCv) = dfsig*qe*(cbsna(0,1,1)/abs(cbsna(1,1,1))) ! use constant density as core region
+          sig0(iCv) = dfsig*qe*dv%ne(omp(1))  !srv 10.06.09 ! use constant density as core region
+        endif                                  !srv 02.12.04 }
+        alf0(iCv) = dfalf*dv%ne(iCv)*sqrt(qe/pl%te(iCv))
       enddo
 
       if(switch%b2tqna_transport_inputfile.eq.1) then
-        call transport_input(nCv, nFc, ns, geo, mpg, pl, dv, rt, hcib,
+        call transport_input(nCv, ns, geo, mpg, pl, dv, rt, hcib,
      &   dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall_b2tqna)
 *     ..recompute hci0, hcn0
         hci0 = 0.0_R8
@@ -488,18 +483,16 @@ cxpb Corrected for dimensionality
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,dna0(1,is),'b2tqna_in_dna0'//chns)
           call my_out_us(70,nCv,0,dpa0(1,is),'b2tqna_in_dpa0'//chns)
-!          wrk0=vsa0(:,is)/(mp*am(is)*pl%na(:,is))
           wrk0=vsa0(:,is)
           call my_out_us(70,nCv,0,wrk0,'b2tqna_in_vsa0'//chns)
           call my_out_us(70,nCv,0,vla0(1,0,is),
      &                                 'b2tqna_in_vla0_th'//chns)
-          call my_out_us(70,nCv,0,vla0(1,1,is),'b2tqna_in_vla0_r'//chns)
-!          wrk0=hcib(:,is)/pl%na(:,is)
+          call my_out_us(70,nCv,0,vla0(1,1,is),
+     &                                 'b2tqna_in_vla0_r'//chns)
           wrk0=hcib(:,is)
           call my_out_us(70,nCv,0,wrk0,'b2tqna_in_hcib'//chns)
         enddo
-       call my_out_us(70,nCv,0,hci0,'b2tqna_in_hci0')
-!        wrk0=hce0/dv%ne
+        call my_out_us(70,nCv,0,hci0,'b2tqna_in_hci0')
         wrk0=hce0
         call my_out_us(70,nCv,0,wrk0,'b2tqna_in_hce0')
         call my_out_us(70,nCv,0,sig0,'b2tqna_in_sig0')
@@ -579,26 +572,26 @@ c sc  implementation of turbulence closure models 29.11.2018-23/9/2020
 cdpc
       if(switch%b2tqna_ballooning.ne.0.0_R8) then
         do iCv = 1, nCv
-            poloidal_scale_factor=
-     1      (switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
-     1       switch%b2tqna_ballooning*
-     1       switch%b2tqna_ballooning_rescale
-            do is = 0, ns-1
-              if(.not.is_neutral(is)) then
-                dna0(iCv,is)=dna0(iCv,is)*poloidal_scale_factor
-                dpa0(iCv,is)=dpa0(iCv,is)*poloidal_scale_factor
-                vla0(iCv,:,is)=vla0(iCv,:,is)*poloidal_scale_factor
-                vsa0(iCv,is)=vsa0(iCv,is)*poloidal_scale_factor
-                hci0(iCv)=hci0(iCv)+
-     1           hcib(iCv,is)*(poloidal_scale_factor-1.0_R8)
-                hcib(iCv,is)=hcib(iCv,is)*poloidal_scale_factor
-              endif
-            enddo
-            hce0(iCv)=hce0(iCv)*poloidal_scale_factor
-            if (switch%b2tqna_ballooning_sig.ne.0)  then
-              sig0(iCv)=sig0(iCv)*poloidal_scale_factor
-              alf0(iCv)=alf0(iCv)*poloidal_scale_factor
+          poloidal_scale_factor=
+     1     (switch%b2tqna_bb_ref/geo%cvBb(iCv,3))**
+     1      switch%b2tqna_ballooning*
+     1      switch%b2tqna_ballooning_rescale
+          do is = 0, ns-1
+            if(.not.is_neutral(is)) then
+              dna0(iCv,is)=dna0(iCv,is)*poloidal_scale_factor
+              dpa0(iCv,is)=dpa0(iCv,is)*poloidal_scale_factor
+              vla0(iCv,:,is)=vla0(iCv,:,is)*poloidal_scale_factor
+              vsa0(iCv,is)=vsa0(iCv,is)*poloidal_scale_factor
+              hci0(iCv)=hci0(iCv)+
+     1         hcib(iCv,is)*(poloidal_scale_factor-1.0_R8)
+              hcib(iCv,is)=hcib(iCv,is)*poloidal_scale_factor
             endif
+          enddo
+          hce0(iCv)=hce0(iCv)*poloidal_scale_factor
+          if (switch%b2tqna_ballooning_sig.ne.0)  then
+            sig0(iCv)=sig0(iCv)*poloidal_scale_factor
+            alf0(iCv)=alf0(iCv)*poloidal_scale_factor
+          endif
         enddo
       endif
 #ifdef WG_TODO
@@ -771,11 +764,12 @@ cdpc
           ixref=nx/2
           iyref=ny/2
         endif
+        iyref = icsepomp-1
         call ipgeti ('set_transport_ixref', ixref)
         call xertst (-1.le.ixref.and.ixref.le.nx,
      1   'faulty argument set_transport_ixref')
         call ipgeti ('set_transport_iyref', iyref)
-        call xertst (-1.le.iyref.and.iyref.le.ny,
+        call xertst (1.le.iyref.and.iyref.le.nomp,
      1   'faulty argument set_transport_iyref')
         d_old=hce0(ixref,iyref)/ne(ixref,iyref)
         ratio=dna0(ixref,iyref,1)/d_old
@@ -1862,11 +1856,12 @@ c
           ixref=nx/2
           iyref=ny/2
         endif
+        iyref = icsepomp-1
         call ipgeti ('set_transport_ixref', ixref)
         call xertst (-1.le.ixref.and.ixref.le.nx,
      1   'faulty argument set_transport_ixref')
         call ipgeti ('set_transport_iyref', iyref)
-        call xertst (-1.le.iyref.and.iyref.le.ny,
+        call xertst (1.le.iyref.and.iyref.le.nomp,
      1   'faulty argument set_transport_iyref')
         write(*,*) 'set_transport_eta: ixref, iyref = ',ixref, iyref
         call ipgetr ('set_transport_eta',
@@ -2622,11 +2617,12 @@ c*** We only apply this in the outer SOL region
           ixref=nx/2
           iyref=ny/2
         endif
+        iyref = icsepomp-1
         call ipgeti ('set_transport_ixref', ixref)
         call xertst (-1.le.ixref.and.ixref.le.nx,
      1   'faulty argument set_transport_ixref')
         call ipgeti ('set_transport_iyref', iyref)
-        call xertst (-1.le.iyref.and.iyref.le.ny,
+        call xertst (1.le.iyref.and.iyref.le.nomp,
      1   'faulty argument set_transport_iyref')
 
         quenching = 0
@@ -2818,11 +2814,12 @@ c*** We only apply this in the outer SOL region
           ixref=nx/2
           iyref=ny/2
         endif
+        iyref = icsepomp-1
         call ipgeti ('set_transport_ixref', ixref)
         call xertst (-1.le.ixref.and.ixref.le.nx,
      1   'faulty argument set_transport_ixref')
         call ipgeti ('set_transport_iyref', iyref)
-        call xertst (-1.le.iyref.and.iyref.le.ny,
+        call xertst (1.le.iyref.and.iyref.le.nomp,
      1   'faulty argument set_transport_iyref')
         call ipgeti ('neoclassical_ic', ic)
         call xertst(0.le.ic .and. ic.le.4,

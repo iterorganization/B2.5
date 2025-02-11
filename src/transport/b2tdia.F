@@ -1,11 +1,11 @@
-      subroutine b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg,
-     &   pz, fna, uadia, facdrift, fchdia)       !srv 16.19.17 {
+      subroutine b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv)
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_constants
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2us_plasma
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -13,19 +13,15 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      real (kind=R8) ::
-     &  pz(nCv), facdrift(nFc), fna(nFc,0:1,0:ns-1),
-     &  uadia(nFc,0:1,0:ns-1)
-*   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
-     &  fchdia(nFc,0:1)
+*   ..input/output arguments
+      type (B2Derivatives), intent (inout) :: dv
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2TDIA computes the poloidal and radial components of the divergent part of
-*     the diamagnetic current.
+*     B2TDIA computes the poloidal and radial components of the
+*     divergent part of the diamagnetic current.
 *
 *  8. further comments
 *
@@ -50,31 +46,28 @@
 *   ..test nCv, nFc, ns
        call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
        call xertst (1.le.ns, 'faulty argument ns')
-*   ..test velocities
-       call xertst (maxval(dabs(uadia)).lt.c,
-     &  'Supra-luminal velocities !')
       endif
       
-      facdriftm = maxval(facdrift)
+      facdriftm = maxval(dv%facdrift)
       if (facdriftm.ne.0.0_R8 .and. switch%dia_cur.ne.0.0_R8             !srv 16.10.17
      &                        .and. switch%no_current.eq.0) then
 
 *     ..interpolate to faces
         wght = 1.0_R8
-        call intface(nCv,nFc,mpg%fcCv,wght,pz,pzf)
+        call intface(nCv,nFc,mpg%fcCv,wght,dv%pz,pzf)
 
 *     ..compute gradients of OnedBsq on cell faces
         call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
      &    geo%vxOnedBsq, gOnedBsq)
 
 *     ..DIVERGENT PART OF DIAMAGNETIC CURRENT
-        fchdia(:,0) =  switch%dia_cur*facdrift*pzf*
+        dv%fchdia(:,0) =  switch%dia_cur*dv%facdrift*pzf*
      &    gOnedBsq(:,1)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,0)
-        fchdia(:,1) = -switch%dia_cur*facdrift*pzf*
+        dv%fchdia(:,1) = -switch%dia_cur*dv%facdrift*pzf*
      &    gOnedBsq(:,0)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,1)
 
       else
-        fchdia = 0.0_R8
+        dv%fchdia = 0.0_R8
       endif
 
 * ..return

@@ -4,7 +4,7 @@
       subroutine b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,           !srv 05.07.17
      &  itcnt, ismain, solving, solvereg, solvireg, solvnreg, solvtreg, !srv 22.05.18
      &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, dtim,
-     &  pl, dv, co, rt, sr, srw, psnc, psnl, st_ext, ierr)
+     &  pl, dv, co, rt, sr, srw, psnl, st_ext)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -42,7 +42,7 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
+      type (B2PlasmaSnapshot), intent (inout) :: psnl
       real (kind=R8) :: rxf, dtim
       logical solving(4),
      *  solvereg(0:mpg%nnreg(0)), solvireg(0:mpg%nnreg(0)),
@@ -57,8 +57,6 @@
       type (B2SourceWork), intent (inout) :: srw
       type (B2Rates), intent (in) :: rt
       type (B2StateExt), intent (in) :: st_ext
-*   ..output arguments (unspecified on entry)
-      integer ierr
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -92,7 +90,6 @@
      1 wrkc(nFc,0:1,0:2),                                               !srv 02.01.07
      2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                                            !srv 18.09.09
-     4 shef(nCv,0:3), shif(nCv,0:3),                                    !srv 10.11.02
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
      6 skt_prod(nCv), skt_diss(nCv)
       character chns*3                                                  !srv 17.07.05
@@ -262,16 +259,10 @@ cc while the second contribution corresponds to T dn/dt
 *   ..compute final heat sources
       if(switch%b2npht_style.eq.0) then
        call xerrab('b2npht -- style 0 not available for WG')
-#ifdef WG_TODO
-       call b2sihs (nCv, nFc, nVx, ns, geo, mpg, switch%BoRiS, ismain,
-     &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%po,
-     &  dv%ne, dv%ni, dv%fch, co%cvsa, dv%fchdia, dv%uadia, dv%wadia,
-     &  dv%vaecrb, she0, shi0)
-#endif
       else
        call b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg, ismain,
      &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%tn,
-     &  pl%po, dv%ne, dv%ni, dv%nn, dv%fna_fcor, dv%fne, dv%fch,
+     &  pl%po, dv%ne, dv%ni, dv%nn, dv%fch,
      &  co%cvsa, co%cvsa_cl, co%cvsa_drho, co%cvsahz_eff,
      &  co%f_luc_sg, co%alfx_c, co%sigx_c, rt%rza, rt%rz2, st_ext,
      &  she0, shi0, shn0, srw)
@@ -305,10 +296,6 @@ cdjm Jan2017 update particle source components for balance
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
-*   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
-      shef = she0
-*   ..save final ion heat source ignoring equipartition
-      shif = shi0                                                       !srv 10.11.02 }
       if ((solving(4).and.any(solvereg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then                              !srv 22.05.18
         if (switch%mdf_fhe.eq.0) then
@@ -466,7 +453,6 @@ c residuals for separate neutral energy equation
       endif
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)
-      ierr = 0
 
       if (switch % tn_style.le.1) then  !! if we solve a combined ion-neutral (tn_style.eq.0)
                                         !! or pure ion (tn_style.eq.1) energy equation,

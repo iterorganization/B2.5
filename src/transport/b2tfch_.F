@@ -123,8 +123,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
      &    dv%facdrift, dv%fac_ExB, pl,
      &    dv%fna, co%csigin, dv%fchin)                                   !srv 11.05.09
 *     ..compute poloidal and radial components of divergent part of diamagnetic current
-        call b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv%pz, dv%fna, 
-     &    dv%uadia, dv%facdrift, dv%fchdia)
+        call b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv)
 *     ..calculate poloidal and radial components of viscosity parallel current
         call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &    pl%na, pl%ua, pl%ti, rt%rza, co%vsaf_cl, co%vsaf_drho,

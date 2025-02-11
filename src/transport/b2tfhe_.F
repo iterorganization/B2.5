@@ -517,22 +517,15 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
          call my_out_us(70,nFc,1,fhe_52_loc(1,1),'b2tfhe__fhe_52_r')
        endif
 #endif
-       call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
-       call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
       endif
 
-#ifdef WG_TODO
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
-     &                          .or. iout_b2wdat.eq.4) then              !srv 11.09.09 {
-       call my_out(70,nx,ny,fhe(-1,-1,0,0),'b2tfhe__fhe_no_mdfx')
-       call my_out(70,nx,ny,fhe(-1,-1,1,1),'b2tfhe__fhe_no_mdfy')
-!       call my_out(70,nx,ny,fhe_mdf(-1,-1,0,0),'b2tfhe__fhe_mdfx')
-!       call my_out(70,nx,ny,fhe_mdf(-1,-1,1,1),'b2tfhe__fhe_mdfy')
-       call my_out(70,nx,ny,fhePSch(-1,-1,0,0),'b2tfhe__fhePSchx')
-       call my_out(70,nx,ny,fhePSch(-1,-1,1,1),'b2tfhe__fhePSchy')
+      if(switch%b2npht_iout.ne.0.or.switch%iout_b2wdat.eq.4) then        !srv 11.09.09 {
+       call my_out(70,nFc,1,dv%fhe(1,0),'b2tfhe__fhe_no_mdf_th')
+       call my_out(70,nFc,1,dv%fhe(1,1),'b2tfhe__fhe_no_mdf_r')
+       call my_out(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
+       call my_out(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
       endif
 
-#endif
 * ..return
       ncall_b2tfhe = ncall_b2tfhe+1
       call subend ()

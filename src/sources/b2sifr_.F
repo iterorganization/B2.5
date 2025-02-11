@@ -5,10 +5,7 @@
      &   na, ua, te, ti, ni, ne, ne2, rza, rz2, ehxp, lnlam, cthe, cthi,
      &   st_ext, smbch, smbtf, smprb, smptb, smfrb, vti32, gti, gte)
       use b2mod_types
-!WG_RM      use b2mod_rates
-!WG_RM      use b2mod_indirect
       use b2mod_constants
-!WG_RM      use b2mod_external
       use b2mod_b2cmpa
 #ifndef FIXED_POINT
       use b2mod_balance                                                 !djm Jan2017

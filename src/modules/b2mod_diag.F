@@ -1,7 +1,6 @@
       module b2mod_diag
       use b2mod_types
       use b2mod_elements
-      use b2mod_residuals
       use b2mod_eirene_globals
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist

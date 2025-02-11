@@ -328,7 +328,7 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
         dumm4 = 0.0_R8
         wrkf = sign(1.5_R8*dv%fni_he,floi0_mdf)
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
-     &    wrkf,dumm1,dumm2,fhi_32,dumm3)
+     &    wrkf,dumm1,dumm2,fhi_32,dumm4)
         fhi_32 = sign(fhi_32,dv%fni_he)
         fhi_52 = 0.0_R8
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi0_mdf,
