@@ -703,8 +703,3 @@
 
       
       end subroutine propagate
-
-
-
-
-

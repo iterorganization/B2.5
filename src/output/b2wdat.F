@@ -4,9 +4,7 @@
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
       use b2mod_elements
-      use b2mod_b2cmgs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
 #ifdef B25_EIRENE
@@ -85,10 +83,6 @@
       real (kind=R8) ::                                            !srv
      &  pz(mpg%nCv), rz(mpg%nCv),
      &  pr(mpg%nCv), ro(mpg%nCv), cst(mpg%nCv)                     !srv 30.01.15
-#ifdef WG_TODO
-      real (kind=R8) :: bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
-     &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
-#endif
       character chis*3, chib*2                                     !srv 27.04.01
       character*32 hlp_frm                                         !srv 03.04.13
       character(7), save :: folder                                 !srv 26.09.17
@@ -404,7 +398,8 @@
        call my_out_us(70,nCv,0,geo%cvEb(1,0),'Cv.b_R_cyl')
        call my_out_us(70,nCv,0,geo%cvEb(1,1),'Cv.b_Z_cyl')
        call my_out_us(70,nCv,0,geo%cvEb(1,2),'Cv.b_phi_cyl')
-       call my_out_us(70,nCv,0,geo%cvHx,'Cv.lenght_pol')
+       call my_out_us(70,nCv,0,geo%cvHx,'Cv.length_pol')
+       call my_out_us(70,nCv,0,geo%cvHy,'Cv.width_rad')
        call my_out_us(70,nCv,0,geo%cvHz,'Cv.hz')
        call my_out_us(70,nCv,0,geo%cvVol,'Cv.vol')
        call my_out_us(70,nCv,0,geo%cvSz,'Cv.Sz')

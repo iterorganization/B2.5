@@ -136,14 +136,9 @@ c***  fraction.he and pressure.ntr for summary plots;
 c***  oleg.dat with the data for Oleg
 c=======================================================================
       use b2mod_types
-      use b2mod_geo
       use b2mod_diag
-      use b2mod_rates
       use b2mod_b2plot
       use b2mod_b2cmpa
-      use b2mod_plasma
-      use b2mod_sources
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2plot_ank
       use b2mod_user_namelist
@@ -176,7 +171,7 @@ c
       integer lun
       parameter (lun=96)
       integer indsrf(stacklen)
-      integer i, j, im, in, is, iy, iCv, k, n, nindsrf
+      integer i, j, im, in, is, iCv, iFc, k, n, nindsrf
       logical found
       character frm*128, filename*256, extralabel*256
 c=======================================================================
@@ -205,12 +200,17 @@ c-----------------------------------------------------------------------
         end do
         do is=0,st%ns-1
           k=b2espcr(is)
-#ifdef WG_TODO
-          do iy=0,ny-1
-            hlp_pi(k)=hlp_pi(k)-fna(0,iy,0,0,is)
-            hlp_po(k)=hlp_po(k)+fna(nx,iy,0,0,is)
+          do i=1,mpg%divFcP(1,2)
+            iFc=mpg%divFc(mpg%divFcP(1,1)+i-1)
+            hlp_pi(k)=hlp_pi(k)+mpg%divFcOr(mpg%divFcP(1,1)+i-1)*
+     .       (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
           end do
-#endif
+          do i=1,mpg%divFcP(maxval(mpg%strDiv),2)
+            iFc=mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
+            hlp_po(k)=hlp_po(k)+
+     .        mpg%divFcOr(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)*
+     .       (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
+          end do
         end do
         n=nspecies+2*(natmi+nmoli)+1
         open(lun,file='particle.flx')
@@ -271,7 +271,7 @@ c-----------------------------------------------------------------------
         trg_lbl = 'outer'
         if (.not.gm%LSN) trg_lbl = 'inner'
         do k=1,ntns
-          if (ktns(k).ne.2*max(1,nncut)) cycle
+          if (ktns(k).ne.2*max(1,mpg%nncut)) cycle
           do i=1,natmi
             hlp_na(i,2)=hlp_na(i,2)+wldna(nlim+ltns(k),i,0)
             hlp_at(i,2)=hlp_at(i,2)+wldra(nlim+ltns(k),i,0)+
@@ -309,9 +309,10 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
 c*** Write the CII sources in the plasma for DIVIMP
         found=.false.
-        do k=0,st%ns-1
+        do is=0,st%ns-1
           if (found) cycle
-          found = nint(zn(k)).eq.6 .and. nint(zamin(k)).eq.1
+          found = nint(zn(is)).eq.6 .and. nint(zamin(is)).eq.1
+          if (found) k=is
         end do
         if(.not.found) then !{
           write(*,*) 'b2paux (-5): no CII species found'
@@ -319,7 +320,7 @@ c*** Write the CII sources in the plasma for DIVIMP
         end if !}
         open(lun,file='CII_source.dvi')
         write(lun,*) 'CII source from B2-Eirene [1/m**3/s]'
-        write(lun,*) 'nCv,nncut: ',mpg%nCv,nncut
+        write(lun,*) 'nCv,nncut: ',mpg%nCv,mpg%nncut
         write(lun,*) (st%srw%b2stbr_sna(iCv,k)/gm%cvVol(iCv),
      .                                                  iCv=1,mpg%nCv)
         close(lun)

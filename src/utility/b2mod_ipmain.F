@@ -184,6 +184,9 @@
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Deprecated, '//
      &     're-run b2ar using "b2ardr_fix_recomb"'
+        case ('b2news_fac_ref')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now obsolete.'
         case ('b2news_guard_flows')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete.'
@@ -199,6 +202,12 @@
         case ('b2sikt_aniso')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Use b2sikt_fac_aniso instead.'
+        case ('b2tqna_ixref')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now obsolete.'
+        case ('set_transport_ixref')
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now obsolete.'
         case default
           prohib = .false.
         end select

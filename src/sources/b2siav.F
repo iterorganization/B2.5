@@ -122,7 +122,7 @@
             wght = 1.0_R8
             do k = 1, nsmooth_siav
              call intface(nCv,nFc,mpg%fcCv,wght,qip0,wrkf)
-             call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf,qip0)
+             call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,qip0)
              !copy value of qip0 across separatrix
              !wdk todo: rationalize this when separatrix-structure is introduced?
              do iFc = 1, nFc

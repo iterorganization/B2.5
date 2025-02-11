@@ -25,7 +25,7 @@
 ! Quantities derived from plasma state
       type B2Derivatives
         ! fluxes/flux densities
-        ! dimensions: fc, direction (, species)
+        ! dimensions: nFc, direction (, species)
         real(R8), allocatable :: fch(:,:), fch_32(:,:),
      .                           fch_52(:,:), fch_p(:,:),
      .                           fchdia(:,:), fchin(:,:),
@@ -61,7 +61,7 @@
         real(R8), allocatable :: kin_frac_hyb(:), fluid_frac_hyb(:)
 
         ! kinetic energy
-        ! dimensions: cv, species
+        ! dimensions: nCv, species
         real(R8), allocatable :: kinrgy(:,:)
 
         ! numerical coefficients (maybe move to separate object)
@@ -103,8 +103,6 @@
      .                           wadia(:,:,:), vaecrb(:,:,:),
      .                           vedia(:,:), wedia(:,:), veecrb(:,:),
      .                           facdrift(:), fac_ExB(:), fac_vis(:)
-
-
       end type B2Derivatives
 
 ! Transport coefficients (velocities, diffusivities...)
@@ -161,7 +159,6 @@
      .                           f_luc_ke_c, f_luc_ki_c
 
         real(R8), allocatable, dimension(:) :: cssb
-
       end type B2Coeff
 
       type B2Coeff_nspecies
@@ -238,9 +235,8 @@
 
 ! b2mod_rates
       type B2Rates
-
         integer :: nscx, nscxmax = 3
-        integer,allocatable :: iscx(:)
+        integer, allocatable :: iscx(:)
 
         ! nCv, dir, ns, 0:nscxmax-1
         real(R8), allocatable :: rlcx(:,:,:,:)
@@ -277,7 +273,7 @@
      .                                         srcmt
 
         ! b2mod_residuals
-        real(R8), allocatable ::  aresco(:), aresmo(:)
+        real(R8), allocatable :: aresco(:), aresmo(:)
         real(R8) :: aresmt, areshe, areshi, arespo, areshn, areskt,
      .              areszt
 
@@ -287,8 +283,8 @@
      .              acorzt
 
         ! b2mod_diag
-        real (R8), allocatable ::  rescoreg(:,:) , resmoreg(:,:),
-     .                             reshereg(:), reshireg(:)
+        real (R8), allocatable :: rescoreg(:,:) , resmoreg(:,:),
+     .                            reshereg(:), reshireg(:)
       end type B2Diagnostic
 
       type B2Update
@@ -320,7 +316,6 @@
 ! A simplified type containg all data on possible external species
 ! To be considered: move to a separate module b2us_plasma_ext?
       type B2StateExt
-
         character*13, allocatable :: text(:)
         integer :: ns
         logical, allocatable :: is_neutral(:)
@@ -336,12 +331,10 @@
 
         real(R8), dimension(:), allocatable :: sne, she, shi, sch
         real(R8), dimension(:,:), allocatable :: sna, smo
-
       end type B2StateExt
 
 ! Averaged plasma state
       type B2Average
-
         real(R8), dimension(:,:), allocatable :: na_mean, ua_mean
         real(R8), dimension(:), allocatable :: te_mean, ti_mean,
      .                                         po_mean,
@@ -354,7 +347,6 @@
      .                                         e_kt, e_zt
         real(R8), dimension(:,:), allocatable :: e_sna, e_smo
         real(R8), dimension(:), allocatable :: e_she, e_shi, e_shn
-
       end type B2Average
 
       contains
@@ -366,7 +358,7 @@
 
       st%ns = ns
       call createB2Plasma( nCv, ns, st % pl )
-      call createB2Coeff( nCv, nFC, ns, st % co )
+      call createB2Coeff( nCv, nFc, ns, st % co )
       call createB2Derivatives( nCv, nFc, ns, st % dv )
       call createB2Source( nCv, ns, st % sr )
       call createB2SourceWork( nCv, ns, st % srw )

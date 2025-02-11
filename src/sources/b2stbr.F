@@ -203,7 +203,6 @@
       call subini ('b2stbr')
       new_sputter_namelist=.false.
       if (ncall_b2stbr.eq.0) then
-!WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
         if (switch%use_eirene.ne.0) out_tfiles=0
 #if ( defined(B25_EIRENE) && defined(ASTRA) )
         call ipgeti ('b2mndr_astra', use_astra)
@@ -405,7 +404,7 @@ c   --> better solution wanted here..
 #endif
        call b2stbr_phys (nCv, nFc, nVx, ns, nscx, nscxmax, iscx,
      &   dtim, switch, geo, mpg,
-     &   st%pl, st%dv, st%co, st%rt, st%rtw, st_ext, st%srw,
+     &   st%pl, st%dv, st%co, st%rt, st_ext, st%srw,
      &   tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle,
      &   sput_src, sput_chem_model, reflection_on, sputter_energy_on,
