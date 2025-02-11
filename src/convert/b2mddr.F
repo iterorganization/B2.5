@@ -6,11 +6,8 @@
       use b2mod_mdsplus
       use b2mod_b2cmfs
       use b2mod_b2cmrc
-      use b2mod_b2cmgs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
-      use b2mod_b2cmwg
       use b2mod_subsys
       use b2mod_ipmain
       use b2us_geo
@@ -34,7 +31,7 @@
 #     include "mdslib.inc"
       character :: tcl*80, shottmp*12, caseline*32
       integer :: status, shotnumber, status2, pos_index,
-     1 in_jxi, in_jxa, in_jsep, retlen, svn_revision
+     1 in_jsep, retlen, svn_revision
       character :: mds_server*(128)
       character*256 filename
       logical :: file_exists
@@ -413,10 +410,11 @@ cdpc        endif
             write(nout(0),'(a,a)') '   B2FRATESID : ',trim(line)
             dbb2fratesid=trim(line)
           case('jxijxajsep')
-            in_jxi=-2
-            in_jxa=-2
             in_jsep=-2
-            read(line,*,err=10,end=20) in_jxi,in_jxa,in_jsep
+            read(line,*,err=10,end=20) idum(0:1),in_jsep
+          case('jsep')
+            in_jsep=-2
+            read(line,*,err=10,end=20) in_jsep
           case('Revision')
             read(line,*,err=10,end=20) svn_revision
             call mds_put_int('\TOP.IDENT.VERSION:SVN',svn_revision)
@@ -567,4 +565,3 @@ cdpc        endif
 *.end b2mddr
 
       end subroutine b2mddr
-

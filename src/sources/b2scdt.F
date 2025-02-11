@@ -4,7 +4,6 @@
       subroutine b2scdt (nCv, nCi, isb, dtim,                        !srv 07.07.21
      &  cvVol, nap, switch, mpg, snadt)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_numerics_namelist
       use b2mod_constants
       use b2mod_b2cmpa
@@ -77,7 +76,6 @@
         snadt(iCv,0) = t0*nap(iCv)                                  !srv 06.01.21
         snadt(iCv,1) =-t0                                           !srv 06.01.21
       enddo
-
 
 !WG_TODO cdjm Store the total change in linearised sources for balance
 !WG_TODO      if (balance_netcdf.ne.0) then

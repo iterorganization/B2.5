@@ -159,8 +159,8 @@ cank
       integer nCv,nFc,nVx
       integer nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
       integer nsw
-#ifdef WG_TODO
-      external get_jsep, get_nxt, ipgeti, xertst
+#ifdef PSR
+      external xertst
 #endif
 
       nsw=max(nsd+3,(nsd+1)*(nsd+1)-1,ns_ext)

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2sigp (nCv, nFc, nVx, isb, switch, geo, mpg, rzb,
-     &  nb, ti, tn, ne, te, po, smbgp, wrk0, wrk1, wrk2)
+     &  nb, ti, tn, ne, te, po, smbgp, wrk0, wrk1)
       use b2mod_types
       use b2mod_constants                                         !srv 23.03.10
       use b2mod_switches
@@ -35,7 +35,7 @@
      *   smbgp(nCv,0:3)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     * wrk0(nCv), wrk1(nCv), wrk2(nCv), wrk3(nCv),
+     * wrk0(nCv), wrk1(nCv), wrk3(nCv),
 #ifdef WG_TODO
      * wrk4(nCv),                                  !djm Jan2017
 #endif
@@ -103,142 +103,6 @@
 *   ..compute smbgp
         if(switch%b2sigp_style.eq.0) then                              !srv 02.07.08
           call xerrab('b2sigp_style=0 not available for WG')
-#ifdef WG_TODO
-          do iy = -1, ny
-           do ix = -1, nx
-            if(leftix(ix,iy).eq.-2) then
-             wrk0(ix,iy) = 0.0_R8
-             wrk1(ix,iy) = 0.0_R8
-             wrk2(ix,iy) = rzb(ix,iy)*nb(ix,iy)/ne(ix,iy)
-            else
-             wrk0(ix,iy) = nb(ix,iy)*tb(ix,iy)-
-     &        nb(leftix(ix,iy),leftiy(ix,iy))*
-     &        tb(leftix(ix,iy),leftiy(ix,iy))
-             wrk1(ix,iy) = ne(ix,iy)*te(ix,iy)-
-     &        ne(leftix(ix,iy),leftiy(ix,iy))*
-     &        te(leftix(ix,iy),leftiy(ix,iy))
-             wrk2(ix,iy) = ((rzb(ix,iy)*nb(ix,iy)/ne(ix,iy))*
-     &                  vol(leftix(ix,iy),leftiy(ix,iy))+
-     &                  (rzb(leftix(ix,iy),leftiy(ix,iy))*
-     &                   nb(leftix(ix,iy),leftiy(ix,iy))/
-     &                   ne(leftix(ix,iy),leftiy(ix,iy)))*vol(ix,iy))/
-     &                 (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-            endif
-            wrk3(ix,iy) = nb(ix,iy)*tb(ix,iy)                          !djm Jan2017
-            wrk4(ix,iy) = ne(ix,iy)*te(ix,iy)*wrk2(ix,iy)
-           enddo
-          enddo
-          call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
-          call b2xxgs (nx, ny, 0.0_R8, wrk1, 1)
-          call b2xxgs (nx, ny, 0.0_R8, wrk2, 1)
-*   ..  compute smbgp
-          do iy = -1, ny
-            do ix = -1, nx
-              if(leftix(ix,iy).eq.-2) then
-                wrk5(ix,iy) = -hz(ix,iy)*
-     &           (vol(ix,iy)/hx(ix,iy))*
-     &            bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                   !srv 11.01.13
-     &           (wrk0(rightix(ix,iy),rightiy(ix,iy)))/
-     &           (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
-                  wrk6(ix,iy) = -hz(ix,iy)*
-     &           (vol(ix,iy)/hx(ix,iy))*
-     &            bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                   !srv 11.01.13
-     &            wrk1(rightix(ix,iy),rightiy(ix,iy))*
-     &            wrk2(rightix(ix,iy),rightiy(ix,iy))/
-     &           (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
-                smbgp(ix,iy,0) = wrk5(ix,iy) + wrk6(ix,iy)
-                smbgp(ix,iy,1) = 0.0_R8
-                smbgp(ix,iy,2) = 0.0_R8
-                smbgp(ix,iy,3) = 0.0_R8
-#ifndef FIXED_POINT
-                if (balance_netcdf.ne.0) then !djm Jan2017
-!     djm Mar2017 NB - THE FOLLOWING DOES NOT GIVE EXACT BALANCE! FOR EXACT PRESSURE BALANCE IN
-!                      THIS REGION, USE B2SIGP_STYLE = 1
-                  if (ncall_b2sigp.lt.3) then
-                   write(*,'(a,i4,a,i4,a)') 'warning, '//
-     &              'tot. press. balance will not be exact in cell (',
-     &               ix,',',iy,')'
-                  end if
-                  b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
-     &            (vol(ix,iy)/hx(ix,iy))*
-     &            bb(ix,iy,0)/bb(ix,iy,3)*
-     &            (wrk3(ix,iy)+wrk4(ix,iy))
-                  b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-                  b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-                  b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
-                endif
-#endif
-              elseif(rightix(ix,iy).eq.nx+1) then
-                wrk5(ix,iy) = -hz(ix,iy)*
-     &           (vol(ix,iy)/hx(ix,iy))*
-     &           bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
-     &           wrk0(ix,iy)/
-     &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-                wrk6(ix,iy) = -hz(ix,iy)*
-     &           (vol(ix,iy)/hx(ix,iy))*
-     &           bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
-     &           wrk1(ix,iy)*wrk2(ix,iy)/
-     &           (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-                smbgp(ix,iy,0) = wrk5(ix,iy) + wrk6(ix,iy)
-                smbgp(ix,iy,1) = 0.0_R8
-                smbgp(ix,iy,2) = 0.0_R8
-                smbgp(ix,iy,3) = 0.0_R8
-#ifndef FIXED_POINT
-                if (balance_netcdf.ne.0) then !djm Jan2017
-                  b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
-     &             (vol(ix,iy)/hx(ix,iy))*
-     &             bb(ix,iy,0)/bb(ix,iy,3)*
-     &             ((wrk3(leftix(ix,iy),leftiy(ix,iy))+
-     &              wrk4(leftix(ix,iy),leftiy(ix,iy)))*vol(ix,iy)+
-     &              (wrk3(ix,iy)+
-     &               wrk4(ix,iy))*vol(leftix(ix,iy),leftiy(ix,iy)))/
-     &             (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-                  b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-                  b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-                  b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
-                endif
-#endif
-              else
-                wrk5(ix,iy) = -hz(ix,iy)*(vol(ix,iy)/hx(ix,iy))*        !srv 16.06.09
-     &           bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
-     &          (wrk0(ix,iy)/
-     &           (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &          wrk0(rightix(ix,iy),rightiy(ix,iy))/
-     &           (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy))))
-                wrk6(ix,iy) = -hz(ix,iy)*(vol(ix,iy)/hx(ix,iy))*        !srv 16.06.09
-     &           bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
-     &          (wrk1(ix,iy)*wrk2(ix,iy)/
-     &           (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &           wrk1(rightix(ix,iy),rightiy(ix,iy))*
-     &           wrk2(rightix(ix,iy),rightiy(ix,iy))/
-     &          (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy))))
-                smbgp(ix,iy,0) = wrk5(ix,iy) + wrk6(ix,iy)
-                smbgp(ix,iy,1) = 0.0_R8
-                smbgp(ix,iy,2) = 0.0_R8
-                smbgp(ix,iy,3) = 0.0_R8
-#ifndef FIXED_POINT
-                if (balance_netcdf.ne.0) then !djm Jan2017
-                  b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
-     &             (vol(ix,iy)/hx(ix,iy))*
-     &             bb(ix,iy,0)/bb(ix,iy,3)*
-     &             ((wrk3(leftix(ix,iy),leftiy(ix,iy))+
-     &              wrk4(leftix(ix,iy),leftiy(ix,iy)))*vol(ix,iy)+
-     &             (wrk3(ix,iy)+
-     &              wrk4(ix,iy))*vol(leftix(ix,iy),leftiy(ix,iy)))/
-     &             (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-                  b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-                  b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-                  b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
-                endif
-#endif
-              endif
-            enddo
-          enddo
-#ifndef FIXED_POINT
-          if (balance_netcdf.ne.0.and.ncall_b2sigp.lt.3)
-     >     write(*,*) 'Use b2sigp_style.eq.1 or 2'
-#endif
-#endif
         elseif(switch%b2sigp_style.eq.1) then                           !srv 02.07.08 {
 *   ..  compute gradients in cell centers
           wrk3 = nb*tb

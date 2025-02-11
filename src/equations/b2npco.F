@@ -3,7 +3,7 @@
 
       subroutine b2npco (nCv, nFc, nVx, nregionv, solving,               !srv 22.05.18
      &  solvcreg, ua_solve, solvmreg, itcnt, isb, rxf, dtim, switch,
-     &  geo, mpg, pl, dv, sr, psnc, psnl, ierr)
+     &  geo, mpg, pl, dv, sr, psnl)
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_switches
@@ -37,7 +37,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Source), intent (inout) :: sr
-      type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
+      type (B2PlasmaSnapshot), intent (inout) :: psnl
       real (kind=R8) ::
      *  rxf, dtim
       logical solving, solvcreg(0:nregionv), ua_solve,                   !srv 22.05.18
@@ -45,8 +45,6 @@
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
-*   ..output arguments (unspecified on entry)
-      integer ierr
 *   ..common blocks
 
 *-----------------------------------------------------------------------
@@ -220,10 +218,6 @@ cdjm Jan2017 update particle source components for balance
         call my_out_us(70,nFc,1,dv%fna_mdf(1,1,isb),
      .    'b2npco_fna_mdf_r'//chns)
       endif
-
-*   ..set error parameter
-*     (at present all errors cause an abort through xerrab)
-      ierr = 0
 
 * ..return
       ncall_b2npco = ncall_b2npco+1

@@ -180,7 +180,7 @@ c 2002-09-11: logic revised
       integer nsmin, nsmax, ns1min, ns1max
       integer sput_phys_col, sput_phys_model, refl_model
       integer iy_nocoreExB, bc_type16_ref, bc_type20_ref
-      integer ixref, iyref, ixref1, iyref1
+      integer iyref, iyref1
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
       integer elm_ix1, elm_ix2
@@ -602,7 +602,7 @@ c 2002-09-11: logic revised
       data itrack1/-1/, itrack2/-1/, itrack3/-1/
       data ismain/1/, ismain0/0/, isfeedback/0/, b2stbc_feedback/0/
       data sput_phys_col/3/, sput_phys_model/1/, refl_model/1/
-      data iy_nocoreExB/-2/
+      data iy_nocoreExB/0/
       data bc_type16_ref/1/, bc_type20_ref/1/
       data mw_jxa/-1/, mw_jsep/-1/
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
@@ -1428,12 +1428,10 @@ c 2002-09-11: logic revised
       call ipgeti ('b2stbc_type16_ref', bc_type16_ref)
       call ipgeti ('b2stbc_type20_ref', bc_type20_ref)
       call ipgeti ('b2stbc_isfeedback', isfeedback)
-      iyped = jsep/2
+      iyped = icsepomp/2
       call ipgeti ('b2stbc_iyped', iyped)
       call ipgeti ('b2mwti_jxi', jxi)
       call ipgeti ('b2mwti_jxa', jxa)
-      call ipgeti ('b2tqna_ixref', ixref)
-      call ipgeti ('set_transport_ixref', ixref)
       call ipgeti ('set_transport_iyref', iyref)
       call ipgeti ('eirene_lhalpha', lhalpha)
       call ipgeti ('b2tqna_iy1', iy1)
@@ -1676,21 +1674,17 @@ c 2002-09-11: logic revised
       if (nnreg(0).eq.1 .and. jsep.ne.ny/2 .and. jsep1.eq.ny1/2)
      .  jsep1 = conformal_convert(non_commensurate,2,
      .                            jxa,jsep,nx,ny,nx1,ny1,2)
-      if (iy_nocoreExB.gt.-2) iy_nocoreExB = conformal_convert
+      if (iy_nocoreExB.eq.-2) iy_nocoreExB = 0
+      if (iy_nocoreExB.eq.-1) iy_nocoreExB = 1
+      if (iy_nocoreExB.gt.0) iy_nocoreExB = conformal_convert
      .  (non_commensurate,2,jxa,iy_nocoreExB,nx,ny,nx1,ny1,2)
       bc_type16_ref = 2 + conformal_convert
      .  (non_commensurate,2,jxa,bc_type16_ref-2,nx,ny,nx1,ny1,2)
       bc_type20_ref = 2 + conformal_convert
      .  (non_commensurate,2,jxa,bc_type20_ref-2,nx,ny,nx1,ny1,2)
-      if (ixref.ge.0) then
-        ixref1 = conformal_convert
-     .   (non_commensurate,1,ixref,iyref,nx,ny,nx1,ny1,4)
-      else
-        ixref1 = jxa1
-      endif
       if (iyref.ge.0) then
         iyref1 = conformal_convert
-     .   (non_commensurate,2,ixref,iyref,nx,ny,nx1,ny1,4)
+     .   (non_commensurate,2,jxa,iyref,nx,ny,nx1,ny1,4)
       else
         iyref1 = jsep1
       endif
@@ -1799,8 +1793,6 @@ c 2002-09-11: logic revised
           iswitch = bc_type16_ref
         case('b2stbc_type20_ref')
           iswitch = bc_type20_ref
-        case('b2tqna_ixref','set_transport_ixref')
-          iswitch = ixref1
         case('set_transport_iyref')
           iswitch = iyref1
         case('b2tqna_iy1')
@@ -1852,7 +1844,9 @@ c 2002-09-11: logic revised
         case('eirene_fixmap', 'b2tfnb_fnb_nodrift_style',  ! No longer needed
      &       'b2npp7_style' ,'eirene_lhalpha', 'eirene_lvib',
      &       'b2stel_fix_recomb_energy', 'b2mndr_redef_pbs',
-     &       'b2news_guard_flows', 'b2npmo_b2sifr_', 'b2sifr_styl1')
+     &       'b2news_guard_flows', 'b2news_fac_ref',
+     &       'b2tqna_ixref', 'set_transport_ixref',
+     &       'b2npmo_b2sifr_', 'b2sifr_styl1')
           todo = .false.
           wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
@@ -2425,8 +2419,8 @@ c 2002-09-11: logic revised
         end do
         write(99,'(1x,a,f10.7,a,f10.7,a)')
      .   'GAMMAI=',gammai,', GAMMAE=',gammae,','
-        write(99,'(1x,a,l1,a,l1,a)')
-     .   'LBNDUSR=',lbndusr,', LFEEDBACK=',lfeedback,','
+        write(99,'(1x,a,l1,a)')
+     .   'LFEEDBACK=',lfeedback,','
         write(99,'(1x,a,i2,a)') 'NNISO=',NNISO,','
         if (nniso.gt.0) then
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nniso,'(1x,i2,'',''))'
@@ -3168,16 +3162,14 @@ cxpb Calculate radial locations of combined profile spr(1:ndim)
                       if (.not.prdone) then
                         allocate(prdsa(1:ny1+2),pra(1:ny1+2))
                         allocate(r(1:ny+2),f(1:ny+2))
-                        prdsa(1)=sqrt((cr1(ixref1,-1)-
-     1                   0.5_R8*(crx1(ixref1,-1,0)+
-     .                           crx1(ixref1,-1,1)))**2+
-     2                    (cz1(ixref1,-1)-
-     3                   0.5_R8*(cry1(ixref1,-1,0)+
-     .                           cry1(ixref1,-1,1)))**2)
+                        prdsa(1)=sqrt((cr1(jxa1,-1)-
+     1                   0.5_R8*(crx1(jxa1,-1,0)+crx1(jxa1,-1,1)))**2+
+     2                    (cz1(jxa1,-1)-
+     3                   0.5_R8*(cry1(jxa1,-1,0)+cry1(jxa1,-1,1)))**2)
                         do iy = 0, ny1
                           prdsa(iy+2)=prdsa(iy+1)+
-     1                     sqrt((cr1(ixref1,iy)-cr1(ixref1,iy-1))**2+
-     2                          (cz1(ixref1,iy)-cz1(ixref1,iy-1))**2)
+     1                     sqrt((cr1(jxa1,iy)-cr1(jxa1,iy-1))**2+
+     2                          (cz1(jxa1,iy)-cz1(jxa1,iy-1))**2)
                         enddo
                         ds_offset=
      .                   (prdsa(iyref1+2)+prdsa(iyref1+3))/2.0_R8
@@ -3388,7 +3380,7 @@ cxpb This will need to be checked !!!
                         allocate(l_conn(-1:nx1))
                         allocate(fx(1:nx+2))
                         allocate(dx(1:nx+2))
-                        ireg = mod(region1(ixref1,iyref1,0),4)
+                        ireg = mod(region1(jxa1,iyref1,0),4)
                         if (ikind.eq.1) then
                           l_total = 0.0_R8
                           pxa(-1) = 0.0_R8
@@ -3402,7 +3394,7 @@ cxpb This will need to be checked !!!
                             l_total = l_total + l_conn(i)
                           end do
                           pxa(nx1) = pxa(nx1-1) + 0.5_R8*l_conn(nx1-1)
-                          l_ref = pxa(ixref1)
+                          l_ref = pxa(jxa1)
                           if (ireg.eq.1 .and. nnreg(0).ge.4) then
                             do i = -1, nx1
                               if (mod(region1(i,iyref1,0),4).eq.ireg)

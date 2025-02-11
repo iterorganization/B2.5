@@ -818,7 +818,7 @@ cxpb size is changed in b2mod_dimensions
      &        bccon(fb_species(ifb),fb_ib(ifb)) .eq. 28)))
         end if
       end do
-      consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
+      consistent = consistent .or. b2sral_style.eq.1 .or.
      & switch%b2stbc_boundary_namelist.lt.1
       do ifb = 1, nFb
         if (fb_ib(ifb).ge.0) cycle
@@ -907,6 +907,7 @@ cxpb size is changed in b2mod_dimensions
         end do
       endif
       nfbreg = ifbreg - 1
+
       call subend()
       return
       end subroutine init_feedback

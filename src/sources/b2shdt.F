@@ -5,7 +5,6 @@
      &  cvVol, nap, tep, tip, tnp, ktp, ztp, ne, ni, nn, kinrgyp,
      &  switch, mpg, shedt, shidt, shndt, sktdt, sztdt)
       use b2mod_types
-      use b2mod_indirect
       use b2mod_numerics_namelist
       use b2mod_constants
       use b2mod_b2cmpa

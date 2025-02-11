@@ -2453,6 +2453,7 @@
             gm%cvSz(ic) = gs(ix,iy,2)
             gm%cvHz(ic) = hz(ix,iy)
             gm%cvHx(ic) = hx(ix,iy)
+            gm%cvHy(ic) = hy1(ix,iy)
             gm%cvQgam(ic,0) = qz(ix,iy,1)    ! cos
             gm%cvQgam(ic,1) = -qz(ix,iy,0)   ! sin
             gm%cvVol(ic) = vol(ix,iy)
@@ -2543,7 +2544,7 @@
         end do
       end do
 
-#ifdef WG_TODO
+#ifdef WG_DEBUG
 #ifndef LEGACYCOMP
       open (newunit=idb,file='debug.out')
 #else
@@ -5010,4 +5011,3 @@
 ******************************************************************************
 
       end module b2us_prep
-
