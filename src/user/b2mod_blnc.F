@@ -299,6 +299,7 @@ c*** The plasma flows across the boundaries
 c<<<
         do ic=1,mpg%nbc
           hlp_pls(ic,ls)=0.0_R8
+          if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).eq.0) cycle
           if (boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
      .         geometryType).ne.NODIRECTION) kst_hlp=ic
         end do
@@ -306,6 +307,7 @@ c>>>
         do is=1,nfluids(ls)
           ks=ks+1
           do 1100 ic = 1, mpg%nbc
+            if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).eq.0) cycle
             if (boundaryAssignments(
      .           mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
      .           geometryType).eq.SOUTH) then
