@@ -41,7 +41,7 @@
 
       wrk1 = 1.0_R8
       call intface(nCv,mpg%nFc,mpg%fcCv,wrk1,tau,tauf)
-      wrkc = te/me
+      wrkc = sqrt(te/me)
       call intface(nCv,mpg%nFc,mpg%fcCv,wrk1,wrkc,vte)
       collisnum = 0.0_R8
       do iFt=1,mpg%nFt
