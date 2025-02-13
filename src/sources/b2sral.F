@@ -38,6 +38,9 @@
      &          feedback_namelist_used
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+      use b2mod_zhfrtf
+     & , only : z2n_xy, nal, ia, av_ualpha, avm_u, rho_a_rel,
+     &          z_to_m1_ast
 #ifndef B25_EIRENE
       use b2mod_eirdiag
      & , only : dab2, lkindi, lkindm, lkindp, pfluxa, rfluxa, tfluxa
