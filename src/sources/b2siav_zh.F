@@ -21,7 +21,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2ttia
+     & , only : ncall_b2ttia, nsmooth_siav_zh
 #endif
       use b2mod_zhfrtf
      & , only : nal, Z_to_m1_ast, Ia
@@ -70,7 +70,6 @@
 
 *   ..local variables
       integer ic, iCv, iFc, iFt, k, inucl, iz
-      integer, save :: nsmooth = 2
       character chns*3, chk*1                                           !srv 17.06.02
       real (kind=R8) ::
      *     t0, ft, ft_h                                                 !srv 16.10.17
@@ -141,7 +140,7 @@
 
             !smoothing: interpolate to faces and back to cell centers
             wght = 1.0_R8
-            do k = 1, nsmooth
+            do k = 1, nsmooth_siav_zh
              call intface(nCv,nFc,mpg%fcCv,wght,qip0,wrkf)
              call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf,qip0)
              !copy value of qip0 across separatrix
@@ -234,7 +233,7 @@
 
               !smoothing: interpolate to faces and back to cell centers
               wght = 1.0_R8
-              do k = 1, nsmooth
+              do k = 1, nsmooth_siav_zh
                call intface(nCv,nFc,mpg%fcCv,wght,qip0,wrkf)
                call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf,qip0)
                !copy value of qip0 across separatrix

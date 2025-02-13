@@ -36,6 +36,8 @@
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          my_out_folder, ncall_b2sifrtf
+      use b2mod_zhfrtf
+     & , only : rho_a_rel
 #endif
       use b2mod_subsys
       implicit none
@@ -491,7 +493,9 @@
          call b2xz22 (nCv, ns, ismain, rz2, na, am1, z22)
          if (switch%impr_form_fr.eq.0) then
            do iCv = 1, nCv
-             cimp1(iCv,0:ns-1)=fce1(zmff(iCv))
+             do is = 0, ns-1
+               cimp1(iCv,is)=fce1(zmff(iCv))
+             end do
            enddo
          else
            do is = 0, ns-1
@@ -503,7 +507,9 @@
          endif
          if (switch%impr_form_tf.eq.0) then
            do iCv = 1, nCv
-             cimp2(iCv,0:ns-1)=fce2(zmff(iCv))
+             do is = 0, ns-1
+               cimp2(iCv,is)=fce2(zmff(iCv))
+             end do
            enddo
          else
            do is = 0, ns-1
