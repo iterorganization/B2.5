@@ -72,10 +72,8 @@
 *   ..local variables
 #ifndef NO_GETENV
       integer lenval, ierror
-#ifdef WG_TODO
 #ifndef USE_PXFGETENV
       intrinsic get_environment_variable
-#endif
 #endif
 #endif
       integer ninp(0:5), nout(0:7), nCv, nFc, ns, ns0, is
@@ -490,4 +488,3 @@
 *.end b2co
 
       end program b2co
-

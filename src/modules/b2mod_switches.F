@@ -52,6 +52,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: flux_limit_to_vsa
       integer :: csig_an_style
       integer :: user_transport
+      integer :: set_transport_iyref
 
 c Advanced fluid neutral models
       integer :: tn_style
@@ -608,6 +609,7 @@ c Optimization
       s % flux_limit_to_vsa = 1
       s % csig_an_style = 1
       s % user_transport = 0
+      s % set_transport_iyref = 0
 
 c Advanced fluid neutral models
       s % tn_style = 0
@@ -696,10 +698,10 @@ c Advanced fluid neutral models
       s % b2tfnb_alpha = 0.0_R8
       s % b2tfnb_gamma = 2.0_R8
       s % fch_stochastic = 0.0_R8
-      s % Qalfmin        = 1.0e-3_R8
-      s % delpo          = 3.1_R8
-      s % Kn_b1         = 0.01_R8
-      s % Kn_b2         = 0.10_R8
+      s % Qalfmin = 1.0e-3_R8
+      s % delpo = 3.1_R8
+      s % Kn_b1 = 0.01_R8
+      s % Kn_b2 = 0.10_R8
       s % pol_anom_scale = 1.0_R8
       s % auto_spatial_hyb_Kn_1 = 0.0_R8
       s % auto_spatial_hyb_Kn_2 = 100.0_R8
@@ -1186,6 +1188,7 @@ c Optimization
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)
       call ipgeti ('b2tqna_user_transport', s % user_transport)
+      call ipgeti ('set_transport_iyref', s % set_transport_iyref)
 
 c Advanced fluid neutral models
       call ipgeti ('b2mn_tn_style', s % tn_style)

@@ -187,7 +187,7 @@ module b2mod_ual_io_grid
         !< If periodic, the last node is connected to the first by an edge.
         !< If not periodic, an additional node at 2 pi is added
 
-    integer :: jxi, jxa !< B2.5 Inner and Outer midplane default locations
+    integer :: jxa !< B2.5 Outer midplane default location
 
     !! Object class tuples (ITM class definition)
     integer, dimension( SPACE_COUNT_MAX ), parameter :: CLASS_NODE =        &

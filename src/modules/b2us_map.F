@@ -27,7 +27,7 @@
         integer, allocatable :: cvVx(:)                !         listing for every cell the corresponding vertex numbers
         integer, allocatable :: vxFcP(:,:)             ! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces
         integer, allocatable :: vxFc(:)                !         listing for every vertex the corresponding face numbers
-        integer, allocatable :: vxCvP(:,:)             ! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells
+        integer, allocatable :: vxCvP(:,:)             ! (nVx,2) pointing for every vertex to the first index number in the vxCv list and its number of cells
         integer, allocatable :: vxCv(:)                !         listing for every vertex the corresponding cell numbers
         integer, allocatable :: ftCvP(:,:)             ! (nFt,2) pointing for every flux tube to the first index number in the ftCv list and its number of cells
         integer, allocatable :: ftCv(:)                !         listing for every flux tube the corresponding cell numbers
@@ -626,7 +626,7 @@ cwdk  can be derived directly from data in that file
 
 *   ..set up connectivity information for the matrix stencil
       allocate (m%cvNvP(m%nCv,2))
-      allocate (cvNvLoc(10*m%nCv)) ! initial overestimate of size cvNv array
+      allocate (cvNvLoc(20*m%nCv)) ! initial overestimate of size cvNv array
       allocate (indCv(100))        ! (over)estimate of max number number of neighbors an individual cell could have
 
       iNv = 1
@@ -1019,7 +1019,12 @@ cwdk  can be derived directly from data in that file
         deallocate(indFc)
        end if
       end if
-      deallocate(freg)
+      if (allocated(freg)) then
+        deallocate(freg)
+      else
+        write(*,*) 'Targetless topology detected :'
+        write(*,*) 'Strike point data not defined'
+      end if
 
       write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc
       write (*,*) 'nFsVxmx          ', m%nFsVxmx

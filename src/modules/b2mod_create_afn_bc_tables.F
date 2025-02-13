@@ -1215,7 +1215,7 @@ c   i, k: loop variables
 c   nthetai: number of elements in thetai
 c   j, l: loop variables
 c   iv: helper index to find v from vin
-c   nvl: lenght of v
+c   nvl: length of v
 c   vmin: minimum velocity of an incident particle (if it was only accelerated by sheath)
 c   phi: discretization of azimuth angle
 c   dphi: distance between points of phi

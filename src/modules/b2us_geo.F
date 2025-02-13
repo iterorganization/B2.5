@@ -18,6 +18,7 @@
         real (kind=R8), allocatable  :: cvSz(:)        ! Area perp. to third (z) direction
         real (kind=R8), allocatable  :: cvHz(:)        ! Length in third (z) direction
         real (kind=R8), allocatable  :: cvHx(:)        ! Temp: characteristic poloidal length; eventually remove, because meaning unclear in WG context
+        real (kind=R8), allocatable  :: cvHy(:)        ! Estimate of the radial width of a cell
         real (kind=R8), allocatable  :: cvQgam(:,:)    ! Temp: complementary angle between poloidal and radial directions; remove?
         real (kind=R8), allocatable  :: cvVol(:)       ! Cell volume
         real (kind=R8), allocatable  :: cvOnedBsq(:)   ! 1/B**2 in cell centers
@@ -92,6 +93,7 @@
       allocate (g%cvSz(nCv))
       allocate (g%cvHz(nCv))
       allocate (g%cvHx(nCv))
+      allocate (g%cvHy(nCv))
       allocate (g%cvQgam(nCv,0:1))
       allocate (g%cvVol(nCv))
       allocate (g%cvOnedBsq(nCv))
@@ -157,6 +159,7 @@
       g%cvSz = 0._R8
       g%cvHz = 0._R8
       g%cvHx = 0._R8
+      g%cvHy = 0._R8
       g%cvQgam = 0._R8
       g%cvVol = 0._R8
       g%cvOnedBsq = 0._R8
@@ -225,6 +228,7 @@
       deallocate (g%cvSz)
       deallocate (g%cvHz)
       deallocate (g%cvHx)
+      deallocate (g%cvHy)
       deallocate (g%cvQgam)
       deallocate (g%cvVol)
       deallocate (g%cvOnedBsq)
@@ -896,6 +900,18 @@
 
 !WG_TODO: Need to provide a calculation for gm%vxEb
 
+*   ..estimate the radial width of cells: cvHy
+      do iCv = 1, nCv
+        do i = 1, mpg%cvFcP(iCv,2)
+          iFc = mpg%cvFc(mpg%cvFcP(iCv,1)+i-1)
+          gm%cvHy(iCv) = gm%cvHy(iCv)+
+     .                   gm%fcHt(iFc)*abs(gm%fcQalf(iFc,0))
+        enddo
+      enddo
+      do iCv = 1, mpg%nCi
+        gm%cvHy(iCv) = 0.5_R8*gm%cvHy(iCv)
+      enddo
+
 *   ..compute cvHz
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
       hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
@@ -1303,7 +1319,7 @@
         else
          ! SOL/PF: effective distance to targets/boundaries
          ! implicit assumption that cells in ftCv are listed starting
-         ! at one  of the targets
+         ! at one of the targets
          do ic = mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
           iCv = mpg%ftCv(ic)
           L1 = 0.5_R8*wrk0(iCv)

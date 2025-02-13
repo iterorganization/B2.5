@@ -3,13 +3,8 @@
 
       subroutine b2abdr (ninpab, noutab)
       use b2mod_types
-      use b2mod_rates
-      use b2mod_geo
       use b2mod_math
       use b2mod_time
-      use b2mod_work
-      use b2mod_plasma
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
@@ -73,7 +68,6 @@
       character line*500, ligne*500
       logical is_comment
       external xertst, xerrab, sfill, streql, cfwuch, cfwuin, is_comment
-*  ..initialisation
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -120,14 +114,12 @@
      &  'faulty input id instead of *specs, id='//id)
 *   ..read incident species
       read (ninpab(1),*) incident
-
 *   ..read wall material
       read (ninpab(1),'(a10)') id
       call xertst (streql(id,'*material'),
      &  'faulty input id instead of *specs, id='//id)
 *   ..read wall material
       read (ninpab(1),*) material
-
 
       write (noutab(1),'(/2x,a)') 'non-default internal parameters:'
     1 continue
@@ -162,7 +154,6 @@
       call ipgetr('b2abdr_Shmax', Shmax_in)
       call ipgetr('b2abdr_Eomin', Eomin_in)
 
-
       call SetInput(nT_in, nM_in, nSh_in, ntp_in, nv_in,
      &              ntheta_in, nphi_in, Tmin_in, Tmax_in, Mmin_in,
      &              Mmax_in, Shmin_in, Shmax_in, Eomin_in)
@@ -183,14 +174,11 @@
       call subend ()
       return
 
-
 *-----------------------------------------------------------------------
 *.error conditions
 
    93 call xerrab
      1 ('error trying to read non-default internal parameters')
-
-*-----------------------------------------------------------------------
 
 *-----------------------------------------------------------------------
 *.end b2abdr

@@ -163,7 +163,7 @@ cxpb Recall iCv is the guard cell
       if (abs(src).lt.cutlo) return  ! jump over zero sources
       dist_start=src/no_of_slices
       eion=sri/src
-      flight_time=dtim*dtco(isneut,mpg%cvReg(iCv0))*time_factor(iCv0) !WG_TODO!
+      flight_time=dtim*dtco(isneut,mpg%cvReg(iCv0))*time_factor(iCv0)
       if (eion.eq.0.0_R8) eion=1.0_R8 ! recover the old default value of 1.0 eV
       k=0
       do while (st%rt%iscx(k).ne.isneut .and. k.lt.st%rt%nscx)
