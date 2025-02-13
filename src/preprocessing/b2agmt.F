@@ -620,8 +620,8 @@
       enddo
 
       ! Give vxBb the correct magnetic field value, till now it was
-      ! g%vxBb(:,0) = dpsi/dy
-      ! g%vxBb(:,1) = -dpsi/dx, for directional purposes
+      ! g%vxBb(:,0) = dpsi/dx
+      ! g%vxBb(:,1) = dpsi/dy, for directional purposes
 
       do iVx = 1,m%nVx
         if (isymm.eq.0) then
