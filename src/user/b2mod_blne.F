@@ -260,12 +260,15 @@ c*** Belongs to the target j?
   100   continue !}
 c
 c*** Across or along the field?
-        if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).ne.0)
-     >   lcross_hlp =
-     .    boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
-     .                        geometryType).eq.SOUTH .or.
-     .    boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
-     .                        geometryType).eq.NORTH
+        if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).ne.0) then
+          lcross_hlp =
+     .     boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .                         geometryType).eq.SOUTH .or.
+     .     boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .                         geometryType).eq.NORTH
+        else ! assume a floating structure in SOL or PFR
+          lcross_hlp = .true.
+        end if
         lbound_hlp = bcchar(ic).eq.'S' .or. bcchar(ic).eq.'N' .or.
      .               bcchar(ic).eq.'E' .or. bcchar(ic).eq.'W' .or.
      .               bcchar(ic).eq.'A'
