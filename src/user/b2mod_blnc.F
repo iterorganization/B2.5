@@ -308,8 +308,39 @@ c>>>
         do is=1,nfluids(ls)
           ks=ks+1
           do 1100 ic = 1, mpg%nbc
-            if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).eq.0) cycle
-            if (boundaryAssignments(
+            if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).eq.0) then
+              iFc = mpg%bcFc(mpg%bcFcP(ic,1))
+              iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+              if (mod(mpg%cvReg(iCv),4).eq.2) then ! Floating surface in SOL
+                do i = 1, mpg%bcFcP(ic,2)
+                  iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
+                  hlpiw=hlpiw
+     .             -(st%dv%fna(iFc,0,ions_list(ks))+
+     .               st%dv%fna(iFc,1,ions_list(ks)))*
+     .              mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+c<<<
+                  hlp_pls(ic,ls)=hlp_pls(ic,ls)-
+     .             (st%dv%fna(iFc,0,ions_list(ks))+
+     .              st%dv%fna(iFc,1,ions_list(ks)))*
+     .              mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+c>>>
+                end do
+              else
+                do i = 1, mpg%bcFcP(ic,2)
+                  iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
+                  hlpiw=hlpiw+
+     .             (st%dv%fna(iFc,0,ions_list(ks))+
+     .              st%dv%fna(iFc,1,ions_list(ks)))*
+     .              mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+c<<<
+                  hlp_pls(ic,ls)=hlp_pls(ic,ls)+
+     .             (st%dv%fna(iFc,0,ions_list(ks))+
+     .              st%dv%fna(iFc,1,ions_list(ks)))*
+     .              mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+c>>>
+              end do
+              end if
+            else if (boundaryAssignments(
      .           mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
      .           geometryType).eq.SOUTH) then
               do j = 1, ncbs
@@ -317,15 +348,15 @@ c>>>
 c***     core boundary
                   do i = 1, mpg%bcFcP(ic,2)
                     iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
-                    hlpic=hlpic-
+                    hlpic=hlpic+
      .               (st%dv%fna(iFc,0,ions_list(ks))+
      .                st%dv%fna(iFc,1,ions_list(ks)))*
-     .               mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+     .                mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c<<<
-                    hlp_pls(ic,ls)=hlp_pls(ic,ls)-
+                    hlp_pls(ic,ls)=hlp_pls(ic,ls)+
      .               (st%dv%fna(iFc,0,ions_list(ks))+
      .                st%dv%fna(iFc,1,ions_list(ks)))*
-     .               mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+     .                mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c>>>
                   end do
                   go to 1100
@@ -334,15 +365,15 @@ c>>>
 c***     wall in PFR
               do i = 1, mpg%bcFcP(ic,2)
                 iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
-                hlpiw=hlpiw-
+                hlpiw=hlpiw+
      .           (st%dv%fna(iFc,0,ions_list(ks))+
      .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .           mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-c<<<`<
-                hlp_pls(ic,ls)=hlp_pls(ic,ls)-
+     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+c<<<
+                hlp_pls(ic,ls)=hlp_pls(ic,ls)+
      .           (st%dv%fna(iFc,0,ions_list(ks))+
      .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .           mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c>>>
               end do
             else if (boundaryAssignments(
@@ -351,39 +382,57 @@ c>>>
 c***     outer wall
               do i = 1, mpg%bcFcP(ic,2)
                 iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
-                hlpiw=hlpiw-
-     .            (st%dv%fna(iFc,0,ions_list(ks))+
+                hlpiw=hlpiw
+     .           -(st%dv%fna(iFc,0,ions_list(ks))+
      .             st%dv%fna(iFc,1,ions_list(ks)))*
+     .             mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+c<<<
+                hlp_pls(ic,ls)=hlp_pls(ic,ls)-
+     .           (st%dv%fna(iFc,0,ions_list(ks))+
+     .            st%dv%fna(iFc,1,ions_list(ks)))*
+     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+c>>>
+              end do
+            else if (boundaryAssignments(
+     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .                geometryType).eq.WEST) then
+c***     left target
+              do i = 1, mpg%bcFcp(ic,2)
+                iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
+                hlpit=hlpit+
+     .           (st%dv%fna(iFc,0,ions_list(ks))+
+     .            st%dv%fna(iFc,1,ions_list(ks)))*
+     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+                hlpit_lp(ls)=hlpit_lp(ls)+
+     .           (st%dv%fna(iFc,0,ions_list(ks))+
+     .            st%dv%fna(iFc,1,ions_list(ks)))*
+     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+c<<<
+                hlp_pls(ic,ls)=hlp_pls(ic,ls)+
+     .           (st%dv%fna(iFc,0,ions_list(ks))+
+     .            st%dv%fna(iFc,1,ions_list(ks)))*
+     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+c>>>
+              end do
+            else if (boundaryAssignments(
+     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .                geometryType).eq.EAST) then
+c***     right target
+              do i = 1, mpg%bcFcP(ic,2)
+                iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
+                hlpit=hlpit-
+     .           (st%dv%fna(iFc,0,ions_list(ks))+
+     .            st%dv%fna(iFc,1,ions_list(ks)))*
+     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+                hlpit_rp(ls)=hlpit_rp(ls)-
+     .           (st%dv%fna(iFc,0,ions_list(ks))+
+     .            st%dv%fna(iFc,1,ions_list(ks)))*
      .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)-
      .           (st%dv%fna(iFc,0,ions_list(ks))+
      .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .           mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-c>>>
-              end do
-            else if (boundaryAssignments(
-     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
-     .                geometryType).eq.WEST .or.
-     .               boundaryAssignments(
-     .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
-     .                geometryType).eq.EAST) then
-c***     targets
-              do i = 1, mpg%bcFcp(ic,2)
-                iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
-                hlpit=hlpit-
-     .           (st%dv%fna(iFc,0,ions_list(ks))+
-     .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .           mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-                hlpit_lp(ls)=hlpit_lp(ls)-
-     .           (st%dv%fna(iFc,0,ions_list(ks))+
-     .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .           mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-c<<<
-                hlp_pls(ic,ls)=hlp_pls(ic,ls)-
-     .           (st%dv%fna(iFc,0,ions_list(ks))+
-     .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .           mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c>>>
               end do
             end if
