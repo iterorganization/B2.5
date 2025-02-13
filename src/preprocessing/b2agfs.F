@@ -364,7 +364,7 @@
                   case(1)  ! guard
                     cvBp(iCv) = g%cvBb(iCv,0)
                     cvBt(iCv) = g%cvBb(iCv,2)
-                  case(3) ! internal and boundary triangels
+                  case(3) ! internal and boundary triangles
                     if (abs(abs(cvBp(iCv)) - abs(g%cvBb(iCv,0)))
      $                    > 1e-7 .or.
      $                  abs(abs(cvBt(iCv)) - abs(g%cvBb(iCv,2)))
@@ -372,7 +372,7 @@
                        write(*,*) "b2agfs: not matching carre bb at ",
      &                  iCv , " because it is a triangle"
                     endif
-                  case(4,5) ! internal and boundary triangels
+                  case(4,5) ! internal and boundary triangles
                     if (abs(abs(cvBp(iCv)) - abs(g%cvBb(iCv,0)))
      $                    > 1e-7 .or.
      $                  abs(abs(cvBt(iCv)) - abs(g%cvBb(iCv,2)))
@@ -477,6 +477,14 @@
           m%nx = idum(0)
           m%ny = idum(1)
           m%nncut = idum(2)
+        endif
+
+        if (m%isClassicalGrid.eq.1) then
+          m%nCornVx = m%nx
+        else
+          idum = 0
+          call cfruin_opt (nrid,1,idum,'nCornVx')
+          m%nCornVx = 0
         endif
 
 !        ! read Xpoint information

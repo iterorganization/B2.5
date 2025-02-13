@@ -113,7 +113,7 @@
       enddo
 
       !  ..loop over faces to immediately compute magnetic field on the face centers
-      !  ..trying analog computations as in b2agbf
+      !  ..trying analogous computations as in b2agbf
 
       do iFc = 1,m%nFc
 

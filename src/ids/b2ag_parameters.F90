@@ -199,6 +199,13 @@ contains
              m%ny = idum(1)
              nncut = idum(2)
            end if
+           if (m%isClassicalGrid.eq.1) then
+             m%nCornVx = m%nx
+           else
+             idum = 0
+             call cfruin_opt (lun,1,idum,'nCornVx')
+             m%nCornVx = 0
+           endif
          end if
        end if
      end if
