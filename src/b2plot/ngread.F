@@ -717,6 +717,7 @@ cank
             target_east = .false.
             target_west = .false.
             do i = 1, nbc
+              if(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))).eq.0) cycle
               if(boundaryAssignments(
      &  mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),geometryType).eq.EAST) then
                 target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
@@ -740,6 +741,7 @@ cank
           do i = 1, ntns
             if (ltns(i).eq.0) cycle
             iFc = fnmti_b2(eirdiag_nds_ind(ltns(i))+1)
+            if (mpg%fcReg(iFc).eq.0) cycle
             if
      &       (boundaryAssignments(mpg%fcReg(iFc),geometryType).eq.WEST)
      &       then
