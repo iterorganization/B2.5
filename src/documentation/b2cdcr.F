@@ -499,9 +499,6 @@
 *     B2TXCC computes normal conductances between neighbouring cells,
 *     given the conductivities.
 *
-*     B2TXCV computes viscous conductances between neighbouring
-*     staggered cells, given the viscosities (not used anymore).
-*
 *     B2TXCX computes conductances between neighbouring cells in the
 *     poloidal direction, given the conductivities.
 *

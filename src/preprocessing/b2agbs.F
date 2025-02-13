@@ -194,4 +194,3 @@
       call subend ()
       return
       end subroutine b2agbs
-

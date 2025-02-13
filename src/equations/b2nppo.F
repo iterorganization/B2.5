@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2nppo (nCv, nFc, nVx, nregionv, solving, solvereg,     !srv 22.05.18
-     &  itcnt, rxf, switch, geo, mpg, pl, dv, sr, ierr)
+     &  itcnt, rxf, switch, geo, mpg, pl, dv, sr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -37,8 +37,6 @@
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Source), intent (inout) :: sr
-*   ..output arguments (unspecified on entry)
-      integer ierr
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -167,9 +165,6 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
         call my_out_us(70,nCv,0,wrk0,'b2nppo_sch')
       endif                                                       !srv 11.09.09 }
 
-*   ..set error parameter and return
-*     (at present all errors cause an abort through xertst)
-      ierr = 0
 * ..return
       ncall_b2nppo = ncall_b2nppo+1
       call subend ()

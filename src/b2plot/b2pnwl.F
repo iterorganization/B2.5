@@ -10,7 +10,6 @@ c======================================================================
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2cmfs
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
@@ -404,9 +403,9 @@ c***  nwldlis : the list lengths
 c***  lwldlis : the lists themselves (DG numbering)
 c***  leirlis : the lists themselves (Eirene numbering)
 c
+      use b2us_data
       use b2mod_types
       use b2mod_b2plot
-      use b2mod_indirect
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -438,7 +437,7 @@ c----------------------------------------------------------------------
 c
 cc%%%
 c      print *,'b2pwsrt',nwldprt
-c      if (nnreg(0).lt.7) then
+c      if (mpg%nnreg(0).lt.7) then
 c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
 c      else
 c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
@@ -555,7 +554,7 @@ c*** No connection found
      .                 j.eq.jedge(3).or.j.eq.jedge(4).or.
      .               ((j.eq.jedge(5).or.j.eq.jedge(6).or.
      .                 j.eq.jedge(7).or.j.eq.jedge(8)).and.
-     .                 nnreg(0).ge.7)) then
+     .                 mpg%nnreg(0).ge.7)) then
                 k = 1
                 found = .false.
                 do while (.not.found .and. k.le.nlim)

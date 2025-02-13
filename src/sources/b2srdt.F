@@ -141,7 +141,8 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*na0(iCv,is)
           sr%snadt(iCv,1,is) = -
      &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)
-          sr%sna(iCv,:,is) = sr%sna(iCv,:,is)+sr%snadt(iCv,:,is)
+          if (.not.lout)
+     &     sr%sna(iCv,:,is) = sr%sna(iCv,:,is)+sr%snadt(iCv,:,is)
         enddo
       enddo
 
@@ -167,7 +168,8 @@ csw 24feb2014 check for guard cell (SOLPS4)
           sr%smodt(iCv,1,is) = 0.0_R8
           sr%smodt(iCv,2,is) = 0.0_R8
           sr%smodt(iCv,3,is) = -t0
-          sr%smo(iCv,:,is) = sr%smo(iCv,:,is)+sr%smodt(iCv,:,is)
+          if (.not.lout)
+     &     sr%smo(iCv,:,is) = sr%smo(iCv,:,is)+sr%smodt(iCv,:,is)
         enddo
       enddo
 
@@ -192,7 +194,8 @@ csw 24feb2014 check for guard cell (SOLPS4)
         sr%shedt(iCv,1) = 0.0_R8
         sr%shedt(iCv,2) = 0.0_R8
         sr%shedt(iCv,3) = -1.5_R8*t0
-        sr%she(iCv,:) = sr%she(iCv,:)+sr%shedt(iCv,:)
+        if (.not.lout)
+     &   sr%she(iCv,:) = sr%she(iCv,:)+sr%shedt(iCv,:)
 
         ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
         if (iFt.ne.0) then
@@ -205,13 +208,15 @@ csw 24feb2014 check for guard cell (SOLPS4)
         sr%sktdt(iCv,1) = 0.0_R8
         sr%sktdt(iCv,2) = 0.0_R8
         sr%sktdt(iCv,3) = -t0
-        sr%skt(iCv,:) = sr%skt(iCv,:)+sr%sktdt(iCv,:)
+        if (.not.lout)
+     &   sr%skt(iCv,:) = sr%skt(iCv,:)+sr%sktdt(iCv,:)
 
         sr%sztdt(iCv,0) = t0*ni0(iCv,1)*zt0(iCv)
         sr%sztdt(iCv,1) = 0.0_R8
         sr%sztdt(iCv,2) = 0.0_R8
         sr%sztdt(iCv,3) = -t0
-        sr%szt(iCv,:) = sr%szt(iCv,:)+sr%sztdt(iCv,:)
+        if (.not.lout)
+     &   sr%szt(iCv,:) = sr%szt(iCv,:)+sr%sztdt(iCv,:)
       enddo
 
       do iCv = 1, nCv
@@ -255,17 +260,17 @@ csw 24feb2014 check for guard cell (SOLPS4)
           sr%shndt(iCv,1) = 0.0_R8
           sr%shndt(iCv,2) = 0.0_R8
           sr%shndt(iCv,3) = -1.5_R8*t0
-          sr%shn(iCv,:) = sr%shn(iCv,:)+sr%shndt(iCv,:)
+          if (.not.lout)
+     &     sr%shn(iCv,:) = sr%shn(iCv,:)+sr%shndt(iCv,:)
         endif
 
-        sr%shi(iCv,:) = sr%shi(iCv,:)+sr%shidt(iCv,:)
+        if (.not.lout)
+     &   sr%shi(iCv,:) = sr%shi(iCv,:)+sr%shidt(iCv,:)
       enddo
 
       do iCv = 1, nCv
 csw 24feb2014 check for guard cell (SOLPS4)
-!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
-
-
+!WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
         t0 = (switch%b2srdt_phm4/dtim)
@@ -274,16 +279,18 @@ cxpb  This treatment added as a fix to get the ExB runs going
         sr%schdt(iCv,1) = 0.0_R8
         sr%schdt(iCv,2) = 0.0_R8
         sr%schdt(iCv,3) = -t0                                           !xpb
-        sr%sch(iCv,:) = sr%sch(iCv,:)+sr%schdt(iCv,:)
+        if (.not.lout)
+     &   sr%sch(iCv,:) = sr%sch(iCv,:)+sr%schdt(iCv,:)
       enddo
 
       do iCv = 1, nCv
-!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
+!WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
         t0 = (switch%b2srdt_phm5/dtim)*geo%cvVol(iCv)
      &                                  *time_factor(iCv)               !xpb
         sr%snedt(iCv,0) = t0*ne0(iCv)
         sr%snedt(iCv,1) = -t0
-        sr%sne(iCv,:) = sr%sne(iCv,:)+sr%snedt(iCv,:)
+        if (.not.lout)
+     &   sr%sne(iCv,:) = sr%sne(iCv,:)+sr%snedt(iCv,:)
       enddo
 
 #ifndef FIXED_POINT
