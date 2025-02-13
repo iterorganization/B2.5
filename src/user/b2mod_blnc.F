@@ -91,9 +91,6 @@ c*** Column headers:
 
       subroutine b2blnc(ns,geo,mpg,st,switch,dtim)
       use b2mod_geo
-      use b2mod_plasma
-      use b2mod_sources
-      use b2mod_indirect
       use b2mod_numerics_namelist
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist

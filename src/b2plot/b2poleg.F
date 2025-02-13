@@ -1,11 +1,11 @@
-      subroutine b2poleg(lun,ig)
+      subroutine b2poleg(lun,iFt)
 c
 c----------------------------------------------------------------------
 c***
 c***  Produces a file with plasma parameters (density, temperature,
 c***  parallel flow velocity, parallel heat flux) against the
-c***  distance along the magnetic field along field line index
-c***  ig - for Oleg
+c***  distance along the magnetic field along field tube index
+c***  iFt - for Oleg
 c***
 c*** Output files:
 c***
@@ -15,22 +15,19 @@ c----------------------------------------------------------------------
       use b2mod_b2plot
       use b2mod_constants
       use b2us_data
-      use b2mod_dimensions
       implicit none
-      integer ig
+      integer iFt
       integer lun
 c
 c*** Local variables
 c
-#ifdef WG_TODO
-      integer ix, k
+      integer i, j, iCn, iCp, iCv, iFc, iFn, iFt1, iFt2, k
       real (kind=R8) :: x, y, z, hlp_je, hlp_q, hlp_qp, hlp_si
-#endif
 c----------------------------------------------------------------------
 c*** Check the ig value
 c
-      if(ig.lt.0 .or. ig.gt.DEF_NYD) then
-        print *,'*** b2poleg: wrong value of ig = ',ig
+      if(iFt.le.0 .or. iFt.gt.mpg%nFt) then
+        print *,'*** b2poleg: wrong value of iFt = ',iFt
         return
       end if
 c
@@ -42,35 +39,58 @@ c
   710 format(6x,a1,9x,a4,9x,a2,10x,a2,8x,a6,6x,a6,
      ,       6x,a5,8x,a4,7x,a6/)
 c
-#ifdef WG_TODO
       x=0.0_R8
       z=0.0_R8
-      do ix=0,nx-1
-        x=x+0.5_R8*hx(ix,ig)
-        y=0.5_R8*hx(ix,ig)/pit(ix,ig)
+      i=1
+      iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+      iCp=iCv
+      do while (i.le.mpg%ftCvP(iFt,2))
+        iCn=0
+        do j=1,mpg%cvFcP(iCv,2)
+          iFc=mpg%cvFc(mpg%cvFcP(iCv,1)+j-1)
+          iFt1=mpg%cvFt(mpg%fcCv(iFc,1))
+          iFt2=mpg%cvFt(mpg%fcCv(iFc,2))
+          if (iFt1.eq.iFt.and.iFt2.eq.iFt) then
+            if (mpg%fcCv(iFc,1).eq.iCv.and.
+     &          mpg%fcCv(iFc,2).ne.iCp) then
+              iCn=mpg%fcCv(iFc,2)
+              iFn=iFc
+              iCp=iCv
+            else if (mpg%fcCv(iFc,2).eq.iCv.and.
+     &          mpg%fcCv(iFc,1).ne.iCp) then
+              iCn=mpg%fcCv(iFc,1)
+              iFn=iFc
+              iCp=iCv
+            end if
+          end if
+        end do
+        i=i+1
+        iCv=iCn
+        if (iCn.gt.mpg%nCi.or.iCn.eq.0) cycle
+        x=x+0.5_R8*geo%cvHx(iCn)
+        y=0.5_R8*geo%cvHx(iCn)/pitch(geo,iCn)
         z=z+y
-        hlp_q=fhe(ix,ig,0,0)/area(ix,ig)
-        hlp_qp=hlp_q/pit(ix,ig)
+        hlp_q=state%dv%fhe(iFn,0)/area(iFn)
+        hlp_qp=hlp_q/pitch(geo,iCn)
         hlp_si=0.0_R8
         hlp_je=0.0_R8
-        do k=0,ns-1
-          hlp_je=hlp_je+fna(ix,ig,0,0,k)*rza(ix,ig,k)
-          hlp_si=hlp_si+b2stbr_sna(ix,ig,k)
+        do k=0,state%ns-1
+          hlp_je=hlp_je+state%dv%fna(iFn,0,k)*state%rt%rza(iCn,k)
+          hlp_si=hlp_si+state%srw%b2stbr_sna(iCn,k)
         end do
-        do k=0,ns_ext-1
-          hlp_je=hlp_je+fa_ext(ix,ig,0,0,k)*za_ext(ix,ig,k)
+        do k=0,state_ext%ns-1
+          hlp_je=hlp_je+state_ext%fa(iFn,0,k)*state%rt%rza(iCn,k)
         end do
-        hlp_je=hlp_je/(area(ix,ig)*pit(ix,ig))
-        hlp_si=hlp_si/vol(ix,ig)
+        hlp_je=hlp_je/(area(iFn)*pitch(geo,iCn))
+        hlp_si=hlp_si/geo%cvVol(iCn)
 c
-        write(lun,700) z,x,ne(ix,ig),te(ix,ig)/ev,hlp_q,hlp_qp,hlp_si,
-     ,                                             zeff(ix,ig),hlp_je
-        x=x+0.5_R8*hx(ix,ig)
+        write(lun,700) z,x,state%dv%ne(iCn),state%pl%te(iCn)/ev,
+     ,    hlp_q,hlp_qp,hlp_si,zeff(iCn),hlp_je
+        x=x+0.5_R8*geo%cvHx(iCn)
         z=z+y
   700   format(1p,48e12.4)
       end do
       close (lun)
-#endif
       return
 c
       contains

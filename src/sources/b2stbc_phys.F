@@ -141,10 +141,6 @@
 #endif
 *   ..procedures
       intrinsic abs, sqrt
-#ifdef WG_TODO
-      real (kind=R8) :: bcint
-      external bcint
-#endif
       real (kind=R8) ::
      *  sy, intvertex_s                                                 !srv 24.08.08
       external xertst, ipgeti, eseec0
@@ -3451,7 +3447,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +                 !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
      &         mompar(is,ib,1)*vbnd
-            srw%smo0(iCv1,1,IS) = srw%smo0(iCv1,1,IS) -
+            srw%smo0(iCv1,1,is) = srw%smo0(iCv1,1,is) -
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*abs(s1hz)      !srv 07.05.09 }
             ! Avoid setting to sound speed at very shallow incidence
             ! Set mom. flux to leakage instead
@@ -6718,43 +6714,45 @@ cxpb          endif
           t1 = 0.0_R8
           t2 = 0.0_R8
           if (bceni_15_style == 0) then
-           do is = 0, ns-1
-            if(.not.is_neutral(is)) then
-              t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
-              if (conpar(is,ib,2).gt.0.0_R8)
-     &         t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*pl%na(iCv1,is)
-            endif
-           enddo
-           srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -                        !srv 11.03.09 {
-     &      (enipar(ib,1)+switch%stab_coeff_sheath_ti)*t0*cs*
+            do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+                t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
+                if (conpar(is,ib,2).gt.0.0_R8)
+     &           t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)
+     &            *pl%na(iCv1,is)
+              endif
+            enddo
+            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
+     &       (enipar(ib,1)+switch%stab_coeff_sheath_ti)*t0*cs*
      &       abs(geo%fcPbs(iFc)) -
-     &       enipar(ib,2)*t1*geo%fcS(iFc)                               !srv 19.04.13
-           srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +                        !srv 11.03.09 {
+     &       enipar(ib,2)*t1*geo%fcS(iFc)
+            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &       switch%stab_coeff_sheath_ti*t0*cs*abs(geo%fcPbs(iFc))
           else
-           !wdk sheath transmission factor consistent with truncated
-           !    Maxwellian distribution on Eirene side (NEMODS=7)
-           !    See eirene manual for details.
-           do is = 0, ns-1
-            if(.not.is_neutral(is)) then
-             vt = sqrt(2.0_R8*pl%ti(iCv1)/(am(is)*mp))
-             t3 = pit(iCv1)*abs(geo%fcQalf(iFc,0))*cs/vt
-             t4 = sqrt((pit(iCv1)*abs(geo%fcQalf(iFc,1))*cs/vt)**2 +
-     &                 (geo%cvBb(iCv1,2)/geo%cvBb(iCv1,3)*cs/vt)**2)    !WG_TODO correct for drift contributions!
-             dsh = 1.0_R8 + t3**2 + t4**2 +                             !corrected for factor 3/2 in parallel convection
-     &         0.5_R8*(sheath_g(t3) - 1.0_R8)/sheath_g(t3)
-             t0 = t0 + dsh*conpar(is,ib,1)*pl%na(iCv1,is)
-             if (conpar(is,ib,2).gt.0.0_R8)
-     &        t1 = t1 + enipar(ib,2)*co%dna0(iCv1,is)/conpar(is,ib,2)*
-     &          pl%na(iCv1,is)
-             t2 = t2 + dv%fhm(iFc,0,is) + dv%fhm(iFc,1,is)
-            endif
-           enddo
-           srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
-     &      (1.0_R8+switch%stab_coeff_sheath_ti)*t0*cs*
-     &      abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
-     &      t2*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
-           srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
+          !wdk sheath transmission factor consistent with truncated
+          !    Maxwellian distribution on Eirene side (NEMODS=7)
+          !    See Eirene manual for details.
+            do is = 0, ns-1
+              if(.not.is_neutral(is)) then
+                vt = sqrt(2.0_R8*pl%ti(iCv1)/(am(is)*mp))
+                t3 = pit(iCv1)*abs(geo%fcQalf(iFc,0))*cs/vt
+                t4 = sqrt((pit(iCv1)*abs(geo%fcQalf(iFc,1))*cs/vt)**2 +
+     &                    (geo%cvBb(iCv1,2)/geo%cvBb(iCv1,3)*cs/vt)**2)    !WG_TODO correct for drift contributions!
+                dsh = 1.0_R8 + t3**2 + t4**2 +                             !corrected for factor 3/2 in parallel convection
+     &           0.5_R8*(sheath_g(t3) - 1.0_R8)/sheath_g(t3)
+                t0 = t0 + dsh*conpar(is,ib,1)*pl%na(iCv1,is)
+                if (conpar(is,ib,2).gt.0.0_R8)
+     &           t1 = t1 +
+     &            enipar(ib,2)*co%dna0(iCv1,is)/conpar(is,ib,2)*
+     &            pl%na(iCv1,is)
+                t2 = t2 + dv%fhm(iFc,0,is) + dv%fhm(iFc,1,is)
+              endif
+            enddo
+            srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
+     &       (1.0_R8+switch%stab_coeff_sheath_ti)*t0*cs*
+     &       abs(geo%fcPbs(iFc)) - t1*geo%fcS(iFc) +
+     &       t2*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+            srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
      &      switch%stab_coeff_sheath_ti*t0*cs*abs(geo%fcPbs(iFc))
           endif
           if(switch%mdf_fhi.ne.0) then
@@ -10123,5 +10121,104 @@ cwdk    Todo: corrections for BCCON.ne.14
 
       return
       end function pit
+
+*-----------------------------------------------------------------------
+*.specification
+      function bcint(fun,nx,ny,il,ib)
+      use b2mod_types
+      use b2mod_geo
+      use b2mod_indirect
+      use b2mod_boundary_namelist
+      implicit none
+*   ..output result (undefined upon entry)
+      real (kind=R8) :: bcint
+*   ..input arguments (unchanged on exit)
+      integer nx, ny, il, ib
+      real (kind=R8) :: fun(-1:nx,-1:ny)
+
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     BCINT provides interpolated face-centred values for cell-centred
+*     quantities (array fun), for use in boundary conditions.
+*     The interpolation is done according to distance away from the
+*     cell face. The boundary index is ib, and the cell index along
+*     the boundary is il.
+*
+*
+*-----------------------------------------------------------------------
+*.declarations
+
+*   ..procedures
+      external xertst, xerrab
+
+*-----------------------------------------------------------------------
+*.computation
+
+* ..preliminaries
+*  ..test input parameters
+      call xertst (0.le.nx.and.0.le.ny, 'faulty parameter nx, ny')
+      call xertst (0.lt.ib.and.nbc.ge.ib, 'faulty parameter ib')
+      call xertst (1.le.il.and.bc_list_size(ib).ge.il,
+     .  'faulty parameter il')
+
+* ..main computation
+      if (bcchar(ib).eq.'S') then
+        bcint =
+     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
+     .    hy1(topix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        topiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
+     .    fun(topix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        topiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
+     .    hy1(bc_list_x(il,ib),bc_list_y(il,ib)))
+     .  /(hy1(bc_list_x(il,ib),bc_list_y(il,ib))+
+     .    hy1(topix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        topiy(bc_list_x(il,ib),bc_list_y(il,ib))))
+      elseif (bcchar(ib).eq.'N') then
+        bcint =
+     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
+     .    hy1(bottomix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        bottomiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
+     .    fun(bottomix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        bottomiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
+     .    hy1(bc_list_x(il,ib),bc_list_y(il,ib)))
+     .  /(hy1(bc_list_x(il,ib),bc_list_y(il,ib))+
+     .    hy1(bottomix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        bottomiy(bc_list_x(il,ib),bc_list_y(il,ib))))
+      elseif (bcchar(ib).eq.'E') then
+        bcint =
+     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
+     .    hx(leftix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .       leftiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
+     .    fun(leftix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        leftiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
+     .    hx(bc_list_x(il,ib),bc_list_y(il,ib)))
+     .  /(hx(bc_list_x(il,ib),bc_list_y(il,ib))+
+     .    hx(leftix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .       leftiy(bc_list_x(il,ib),bc_list_y(il,ib))))
+      elseif (bcchar(ib).eq.'W') then
+        bcint =
+     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
+     .    hx(rightix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .       rightiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
+     .    fun(rightix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        rightiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
+     .    hx(bc_list_x(il,ib),bc_list_y(il,ib)))
+     .  /(hx(bc_list_x(il,ib),bc_list_y(il,ib))+
+     .    hx(rightix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .       rightiy(bc_list_x(il,ib),bc_list_y(il,ib))))
+      else
+        call xerrab ('bcint : Unknown orientation!')
+      endif
+
+* ..return
+      return
+
+*-----------------------------------------------------------------------
+*.end bcint
+
+      end function bcint
 
       end subroutine b2stbc_phys

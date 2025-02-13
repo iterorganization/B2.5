@@ -242,7 +242,6 @@ c
      1 xp,yp,zp,found,itpos)
 
       use b2mod_types
-      use b2mod_indirect
       use b2mod_chord_shift
       use b2mod_subsys
       implicit none

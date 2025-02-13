@@ -271,9 +271,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       close(nout(7))
 *   ..write data for optimization
-#ifdef WG_TODO
-      call write_results(nx, ny)
-#endif
+      call write_results(nCv)
 #ifdef JET
 *   ..set and write ppout
       call cfopen (nout(11),'tran','new','unformatted')
@@ -316,4 +314,3 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 *.end b2mn_opt
 
       end program b2mn_opt
-

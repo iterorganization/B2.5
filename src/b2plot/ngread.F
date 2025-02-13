@@ -71,8 +71,9 @@ c
       EXTERNAL GFSUB2
       external ipgeti, xertst
 #ifdef B25_EIRENE
+      integer lines_for_format
       logical streql
-      external streql
+      external streql, lines_for_format
 
       interface
         subroutine rdneutrs(kard,dummy,ldmf,extra_time)
@@ -748,14 +749,14 @@ cank
      &       (boundaryAssignments(mpg%fcReg(iFc),geometryType).eq.EAST)
      &       then
               ke = ke+1
-              if (nncut.eq.0) then
+              if (mpg%nncut.eq.0) then
                 if (target_west) then
                   ktns(i) = 2
                 else
                   ktns(i) = 1
                 end if
               else
-                ktns(i) = (3-ke)*nncut
+                ktns(i) = (3-ke)*mpg%nncut
               end if
             end if
           end do
@@ -952,8 +953,15 @@ C
       RETURN
 
 #ifdef B25_EIRENE
-      contains
+ 948  call xerrab (fort_lc//'44_aver file found empty!')
+#endif
 
+*=======================================================================
+*//END NGREAD//
+
+      END SUBROUTINE NGREAD
+
+#ifdef B25_EIRENE
       integer function lines_for_format( nfields_per_line, ndata )
       integer, intent(in) :: nfields_per_line, ndata
 
@@ -970,11 +978,3 @@ C
       return
       end function lines_for_format
 #endif
-
-*=======================================================================
-*//END NGREAD//
-
-      END SUBROUTINE NGREAD
-
-
-

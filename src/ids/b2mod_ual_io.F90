@@ -58,9 +58,16 @@ module b2mod_ual_io
 #ifdef IMAS
     use eirmod_cinit &
      & , only : fort_lc
+    use eirmod_ctrig &
+     & , only : ntrii, ixtri
     use eirmod_comusr &
      & , only : natmi, nmoli, nioni, nmassa, nchara, nmassm, ncharm, &
      &          nprt, nchrgi, nchari
+    use eirmod_cestim &
+     & , only : pdena, pdenm, &
+     &          vxdena, vydena, vzdena, vxdenm, vydenm, vzdenm
+    use eirmod_braeir &
+     & , only : pux, puy, pvx, pvy
     use b2mod_b2plot &
      & , only : triangle_vol, wklng, alloc_b2mod_b2plot_eirene
 #endif
@@ -554,9 +561,7 @@ contains
         logical :: found
 #endif
 #ifdef B25_EIRENE
-#ifdef WG_TODO
         real(IDS_real), allocatable :: un0(:,:,:), um0(:,:,:)
-#endif
 #endif
  !< Type of IDS data structure, designed for handling grid geometry data
 #if GGD_MAJOR_VERSION > 0
@@ -3091,7 +3096,6 @@ contains
 #endif
 
 #ifdef B25_EIRENE
-#ifdef WG_TODO
 !! Obtain the neutral velocities
 !! Recall that P[XYZ]DEN[AM] are momentum densities in CGS units!
 !! P[UV][XY] will only exist if fort.46 file was written with format 20170930 or later
@@ -3103,63 +3107,50 @@ contains
           DO IS = 1, NATMI
             totCv = 0.0_IDS_real
             do I = 1, NTRII
-              IX = IXTRI(I)
-              IY = IYTRI(I)
-              IF (B2_CELL(IX,IY)) THEN
-                IXX = ix_e2b(IX)
-                IYY = IY-1
-                UN0(IXX,IYY,0,IS) = UN0(IXX,IYY,0,IS) + &
+              IF (IXTRI(I).GT.0) THEN
+                UN0(IXTRI(I),0,IS) = UN0(IXTRI(I),0,IS) + &
                    &  TRIANGLE_VOL(I)*( &
                    &   VXDENA(IS,I)*PUX(I) + VYDENA(IS,I)*PUY(I) )
-                UN0(IXX,IYY,1,IS) = UN0(IXX,IYY,1,IS) + &
+                UN0(IXTRI(I),1,IS) = UN0(IXTRI(I),1,IS) + &
                    &  TRIANGLE_VOL(I)*( &
                    &   VXDENA(IS,I)*PVX(I) + VYDENA(IS,I)*PVY(I) )
-                UN0(IXX,IYY,2,IS) = UN0(IXX,IYY,2,IS) + &
+                UN0(IXTRI(I),2,IS) = UN0(IXTRI(I),2,IS) + &
                    &  TRIANGLE_VOL(I)*VZDENA(IS,I)
-                totCv(IXX,IYY) = totCv(IXX,IYY) + &
+                totCv(IXTRI(I)) = totCv(IXTRI(I)) + &
                    &  TRIANGLE_VOL(I)*PDENA(IS,I)
               END IF
             end do
-            do iy = -1, ny
-              do ix = -1, nx
-                if (totCv(ix,iy).gt.0.0_IDS_real) then
-                  un0(ix,iy,:,is) = un0(ix,iy,:,is) / totCv(ix,iy) &
-                     &  / (nmassa(is)*mp*1000.0_R8) / 100.0_R8
-                end if
-              end do
+            do iCv = 1, mpg%nCv
+              if (totCv(iCv).gt.0.0_IDS_real) then
+                un0(iCv,:,is) = un0(iCv,:,is) / totCv(iCv) &
+                  &  / (nmassa(is)*mp*1000.0_R8) / 100.0_R8
+              end if
             end do
           END DO
           DO IS = 1, NMOLI
             totCv = 0.0_IDS_real
             do I = 1, NTRII
-              IX = IXTRI(I)
-              IY = IYTRI(I)
-              IF (B2_CELL(IX,IY)) THEN
-                IXX = ix_e2b(IX)
-                IYY = IY-1
-                UM0(IXX,IYY,0,IS) = UM0(IXX,IYY,0,IS) + &
+              IF (IXTRI(I).GT.0) THEN
+                UM0(IXTRI(I),0,IS) = UM0(IXTRI(I),0,IS) + &
                    &  TRIANGLE_VOL(I)*( &
                    &   VXDENM(IS,I)*PUX(I) + VYDENM(IS,I)*PUY(I) )
-                UM0(IXX,IYY,1,IS) = UM0(IXX,IYY,1,IS) + &
+                UM0(IXTRI(I),1,IS) = UM0(IXTRI(I),1,IS) + &
                    &  TRIANGLE_VOL(I)*( &
                    &   VXDENM(IS,I)*PVX(I) + VYDENM(IS,I)*PVY(I) )
-                UM0(IXX,IYY,2,IS) = UM0(IXX,IYY,2,IS) + &
+                UM0(IXTRI(I),2,IS) = UM0(IXTRI(I),2,IS) + &
                    &  TRIANGLE_VOL(I)*VZDENM(IS,I)
-                totCv(IXX,IYY) = totCv(IXX,IYY) + &
+                totCv(IXTRI(I)) = totCv(IXTRI(I)) + &
                    &  TRIANGLE_VOL(I)*PDENM(IS,I)
               END IF
             end do
-            do iy = -1, ny
-              do ix = -1, nx
-                if (totCv(ix,iy).gt.0.0_IDS_real) then
-                  um0(ix,iy,:,is) = um0(ix,iy,:,is) / totCv(ix,iy) &
-                     &  / (nmassm(is)*mp*1000.0_R8) / 100.0_R8
-                end if
-              end do
+            do iCv = 1, mpg%nCv
+              if (totCv(iCv).gt.0.0_IDS_real) then
+                um0(iCv,:,is) = um0(iCv,:,is) / totCv(iCv) &
+                  &  / (nmassm(is)*mp*1000.0_R8) / 100.0_R8
+              end if
             end do
           END DO
         end if
-#endif
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call write_sourced_string( summary%configuration, configuration )
@@ -7257,14 +7248,10 @@ contains
             call write_face_scalar( eq_grid, mpg,                             &
                 &   val = equilibrium%time_slice( slice_index )%ggd(1)%psi,   &
                 &   value = tmpFace )
-#ifdef WG_TODO
-            tmpCv(:,:) = (fpsi(:,:,0) + fpsi(:,:,1) +                         &
-                &         fpsi(:,:,2) + fpsi(:,:,3) )/4.0_IDS_real
             call write_cell_scalar( eq_grid, mpg,                             &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &            psi,   &
-                &   b2CellData = tmpCv )
-#endif
+                &   b2CellData = geo%cvFpsi )
           end if
           if (maxval(abs(geo%vxFfbz)).ne.0.0_IDS_real .and. .not.associated(        &
             &  equilibrium%time_slice( slice_index )%ggd(1)%phi ) ) then
