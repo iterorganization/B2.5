@@ -24,6 +24,8 @@
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
+      use b2mod_zhfrtf
+     & , only : rho_a_rel, avm_u
       use b2mod_numerics_namelist
      & , only : last_solve_9
       use b2mod_ad

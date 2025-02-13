@@ -24,6 +24,8 @@
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
      & , only : b2tfhi_cutlo, my_out_folder
+      use b2mod_zhfrtf
+     & , only : z2n_xy, nal, ia, av_ualpha, z_to_m1_ast
 #endif
       use b2mod_subsys
       implicit none
