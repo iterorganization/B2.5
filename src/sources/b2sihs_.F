@@ -403,7 +403,8 @@
          call intcell(nFc, nCv, mpg, mpg%intcellR, wrkf(:,1), visc(:,1))
         endif
         do iCv = 1, mpg%nCi
-          if (wrkc(iCv) .le. switch%min_collisions) cycle
+          if (wrkc(iCv) .le. switch%min_collisions .and.
+     &     .not.mpg%cvOnClosedSurface(iCv)) cycle
           t0 = switch%b2sihs_phm2*(1.0_R8-switch%BoRiS)*visc(iCv,0)
           t1 = switch%b2sihs_phm8*(1.0_R8-switch%BoRiS)*visc(iCv,1)
           if (switch%tn_style.eq.0) then
