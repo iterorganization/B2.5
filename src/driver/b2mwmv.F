@@ -106,9 +106,11 @@
       endif
 *   ..compute change in plasma state
       call b2scopy (nCv*state%ns, state%pl%na, 1, delna, 1)
-      call b2saxpy (nCv*state%ns, -1.0_R8, state%psnl%na, 1, delna, 1)
+      call b2saxpy (nCv*state%ns, -1.0_R8, state%psnl%na, 1,
+     &  delna, 1)
       call b2scopy (nCv*state%ns, state%pl%ua, 1, delua, 1)
-      call b2saxpy (nCv*state%ns, -1.0_R8, state%psnl%ua, 1, delua, 1)
+      call b2saxpy (nCv*state%ns, -1.0_R8, state%psnl%ua, 1,
+     &  delua, 1)
       call b2scopy (nCv, state%pl%te, 1, delte, 1)
       call b2saxpy (nCv, -1.0_R8, state%psnl%te, 1, delte, 1)
       call b2scopy (nCv, state%pl%ti, 1, delti, 1)

@@ -53,6 +53,9 @@
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_wall
      & , only : track_species
+      use b2mod_input_profile
+     & , only : sources_time_mod, sources_time_switch, sources_filename,
+     &          sr_ip_elm_count, new_files, nsdata, nxdata
 #endif
       use b2mod_ad
       use b2mod_subsys
