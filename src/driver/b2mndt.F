@@ -40,12 +40,15 @@
      & , only : ndata, no_pflux, tr_ip_new_files, region_flags, tdata,
      &          tr_ip_elm_count, no_div, addspec, nss, nrr, nkind_coeff,
      &          nkind_data, poloidal_scaling, transport_ip_filename,
-     &          nscale, transport_ip_time_switch, transport_ip_time_mod
+     &          nscale, transport_ip_time_switch, transport_ip_time_mod,
+     &          sources_time_mod, sources_time_switch, sources_filename,
+     &          sr_ip_elm_count, new_files, nsdata, nxdata, divheat,
+     &          sdata, xdata, nxx, nkind_source
       use b2mod_tallies
      & , only : rrahireg, rranareg, rsahireg, rqradreg, rsanareg,
      &          b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg,
      &          rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue,
-     &          b2divua, b2exbe
+     &          b2divua, b2exbe, rcxnareg, rcxhireg, rcxmoreg
       use b2us_feedback
      & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,

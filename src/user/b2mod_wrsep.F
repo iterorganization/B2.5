@@ -174,8 +174,8 @@ c
 c
 c*** Compute the data
 c
-      call b2xzef(mpg%nCv,ns,state%rt%rz2,state%pl%na,state%dv%ne,
-     .  zeff, state_ext)
+      call b2xzef(mpg%nCv, ns, state%rt%rz2, state%pl%na,
+     .  state%dv%ne, zeff, state_ext)
       do ic=1,2
        if (ic.eq.2.and.geometryType.ne.GEOMETRY_CDN) cycle
        if (ic.eq.1) then

@@ -478,10 +478,10 @@ c 2002-09-11: logic revised
       integer jatm, jmol
 #endif
       real (kind=R8) ::
-     *  neutral_rescale, BoRiS, divheat, rswitch, ycur,
+     *  neutral_rescale, BoRiS, divheat_ip, rswitch, ycur,
      .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,
      .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert, fac_aniso,
-     .  sources_time_mod, sources_time_switch, fch_ion_neutral,
+     .  sources_time_mod_ip, sources_time_switch_ip, fch_ion_neutral,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      4  rescale_ra(0:nsdecl-1), rescale_sa(0:nsdecl-1),
@@ -491,7 +491,7 @@ c 2002-09-11: logic revised
       real (kind=R8) :: recyceir1(nstraid), volrecstart1(nstraid),
      &  userfluxparm1(nstraid,2)
       character cnamip*80, cnbmip*80, cvalip*80
-      character*256 sources_filename, new_filename, filename
+      character*256 sources_filename_ip, new_filename, filename
       character*1 crcstra1(nstraid)
       character*36 hlp_frm, hlp_frp, hlp_frb
       character*42 fmt0
@@ -614,8 +614,8 @@ c 2002-09-11: logic revised
       data fch_ion_neutral/0.0_R8/
       data b2tfhe_vis_par/1.0_R8/, b2tvspa_vis_par/1.0_R8/
 *  ..namelists
-      namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
-     . sources_time_mod, sources_time_switch, sources_filename
+      namelist /profile/ nsdata, nxdata, sdata, xdata, divheat_ip,
+     . sources_time_mod_ip, sources_time_switch_ip, sources_filename_ip
       namelist /transport/ ndata, tdata, addspec,
      1   transport_ip_filename, transport_ip_time_mod,
      2   transport_ip_time_switch, scaling_ix_begin, scaling_ix_end,
@@ -2966,10 +2966,10 @@ cxpb We must ensure we have not already listed this additional species
       sdata(:,:,:,:)=0.0_R8
       nxdata(:,:,:)=0
       xdata(:,:,:,:)=0.0_R8
-      divheat=0.0_R8
-      sources_filename='b2.sources.profile'
-      sources_time_mod=0.0_R8
-      sources_time_switch=0.0_R8
+      divheat_ip=0.0_R8
+      sources_filename_ip='b2.sources.profile'
+      sources_time_mod_ip=0.0_R8
+      sources_time_switch_ip=0.0_R8
       allocate(ns1data(1:nkind_data,1:nkind_source,0:nsm-1))
       allocate(s1data(2,1:DEF_NYD+2,1:nkind_source,0:nsm-1))
       allocate(nx1data(1:nkind_data,1:nkind_source,0:nsm-1))
@@ -2986,7 +2986,7 @@ cxpb We must ensure we have not already listed this additional species
       call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((sources_inputfile.eq.1.or.todo).and..not.found)
-       filename = sources_filename
+       filename = sources_filename_ip
        call find_file(filename,ex)
        open(92,file=trim(filename))
        read(92,profile,err=999)
@@ -2996,10 +2996,10 @@ cxpb We must ensure we have not already listed this additional species
          write(nout(5),'(a)') 'b2.sources.profile'
          write(*,*) 'No changes needed in b2.sources.profile'
         endif
-        if (.not.streql(sources_filename,'b2.sources.profile'))
+        if (.not.streql(sources_filename_ip,'b2.sources.profile'))
      >   then
-          write(nout(5),'(a)') trim(sources_filename)
-          write(*,*) 'No changes needed in ',trim(sources_filename)
+          write(nout(5),'(a)') trim(sources_filename_ip)
+          write(*,*) 'No changes needed in ',trim(sources_filename_ip)
         endif
        else
         write(*,*) 'Writing ',trim(new_filename)
@@ -3472,25 +3472,25 @@ cxpb This will need to be checked !!!
             enddo
           enddo
         enddo
-        if (divheat.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
-     .   'DIVHEAT=',divheat,','
-        if(sources_time_mod.gt.0.0_R8)
+        if (divheat_ip.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .   'DIVHEAT=',divheat_ip,','
+        if(sources_time_mod_ip.gt.0.0_R8)
      .   write(99,'(1x,a,1p,1g10.3,a)')
-     .     'SOURCES_TIME_MOD=',sources_time_mod,','
-        if(sources_time_switch.ne.0.0_R8)
+     .     'SOURCES_TIME_MOD=',sources_time_mod_ip,','
+        if(sources_time_switch_ip.ne.0.0_R8)
      .   write(99,'(1x,a,1p,1g10.3,a)')
-     .     'SOURCES_TIME_SWITCH=',sources_time_switch,','
-        if(.not.streql(sources_filename,'b2.sources.profile')
+     .     'SOURCES_TIME_SWITCH=',sources_time_switch_ip,','
+        if(.not.streql(sources_filename_ip,'b2.sources.profile')
      ^     .or..not.first_pass) write(99,'(1x,a,a,a)')
-     .     'SOURCES_FILENAME=''',trim(sources_filename),''','
+     .     'SOURCES_FILENAME=''',trim(sources_filename_ip),''','
         write(99,'(a1)') '/'
         close(99)
        end if
-       if (.not.streql(sources_filename,'b2.sources.profile'))
+       if (.not.streql(sources_filename_ip,'b2.sources.profile'))
      >  then
          first_pass = .false.
-         new_filename = trim(sources_filename)//'.2'
-         filename = sources_filename
+         new_filename = trim(sources_filename_ip)//'.2'
+         filename = sources_filename_ip
          call find_file(filename,todo)
          call find_file(new_filename,found)
          if (found) write(6,*) trim(new_filename), ' already present!'

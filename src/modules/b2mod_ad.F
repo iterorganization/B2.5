@@ -61,6 +61,8 @@
       integer, save :: in_no_of_start_points = 0, in_no_of_angles = 9,
      & in_size_of_table = 200000
       integer, save :: icase_sifr = 0
+      integer, save :: sources_inputfile = 0
+      integer, save :: diagno_srsm = 0
 
 ! some variables for chord_find
       integer lngcov, lngind
@@ -113,7 +115,8 @@
      & ncall_b2usco = 0, ncall_b2usht = 0, ncall_b2usmo = 0,
      & ncall_b2uspo = 0,
 ! ncall variables from other routines
-     & ncall_b2xehx = 0, ncall_b2xehy = 0, ncall_b2mndt = 0
+     & ncall_b2xehx = 0, ncall_b2xehy = 0, ncall_b2mndt = 0,
+     & ncall_b2mwit = 0
 
       integer, save :: gradient_iterations = 0, primal_iterations = 0
       real (kind=R8), save :: primal_res=0.0_R8, gradient_res=0.0_R8

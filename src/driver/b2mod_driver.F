@@ -2099,6 +2099,15 @@ c new CDF movie option (1st frame at t=0)
       use b2mod_facdrift_ExB
      & , only : ncall_drift, facdrift_scalar, fac_exb_scalar,
      &          fac_vis_scalar
+      use b2mod_input_profile
+     & , only : sources_time_mod, sources_time_switch, sources_filename,
+     &          sr_ip_elm_count, new_files, nsdata, nxdata, divheat,
+     &          sdata, xdata
+      use b2mod_facdrift_exb
+     & , only : iy_nocoreexb, facdrift_tanh_a, facdrift_tanh_b,
+     &          facexb_tanh_a, facexb_tanh_b, facvis_tanh_a,
+     &          facvis_tanh_b, fac_exb_profile, facdrift_profile,
+     &          fac_vis_profile
 #endif
       use b2mod_ad
 #ifdef IMAS
@@ -2320,7 +2329,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         enddo
 *    ..call cost function
         call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state,
-     &    state_ext, switch, J)
+     &    state_ext, J)
         do icf = 1, ncf
           write (ss,'(I1)') icf
           if (icf.gt.9) write (ss,'(I2)') icf
@@ -2483,6 +2492,7 @@ c new CDF movie option
      .              nCv,nFc,ns,max(1,mpg%nXpt),geo,mpg,switch,
      .              state%pl,state%dv,state%co,state%rt,state%srw,
      .              state_ext,ismain,ismain0,lwti,lwav,.true.)
+#ifndef FIXED_POINT
         if ((ibatch_av_all > 0) .and. lwav) then
           edition_batch = edition_batch + 1
           write (batch_name,'(a18,i4.4)')
@@ -2502,7 +2512,6 @@ c new CDF movie option
              write(*,*) 'Saved ',run_av_name
           end if
         end if
-#ifndef FIXED_POINT
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
@@ -3176,7 +3185,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       end do
 *   ..call cost function
       call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state,
-     &    state_ext, switch, J)
+     &    state_ext, J)
       do icf = 1, ncf
         write (ss,'(I1)') icf
         if (icf.gt.9) write (ss,'(I2)') icf
