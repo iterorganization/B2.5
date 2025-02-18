@@ -43,7 +43,7 @@
      & , only : dab2, lkindi, lkindm, lkindp, pfluxa, rfluxa, tfluxa
 #endif
       use b2mod_ad
-     & , only : my_out_folder, in_no_of_start_points,
+     & , only : my_out_folder, in_no_of_start_points, sources_inputfile,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
@@ -83,7 +83,7 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, k, is, sources_inputfile
+      integer iCv, k, is
       integer, save :: no_fluid_neutral_sources = 0
       character chns*3, chk*1                                           !srv 30.06.08
       real (kind=R8) ::
@@ -96,15 +96,12 @@
      &  shi0_cx(:,:)
       logical catch_up
       character*32 hlp_frm
-      save sources_inputfile
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
       external xertst, sfill, b2saxpy, smin, smax
       external b2xvsg, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
      &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
-*   ..initialisation
-      data sources_inputfile/0/
 *-----------------------------------------------------------------------
 *.computation
 
