@@ -2,7 +2,7 @@
 *.specification
 
       subroutine get_mult_dt(style, nCv, te, te_min, te_max, 
-     &                       mult_max,mult_dt)
+     &                       mult_max, mult_dt)
       use b2mod_types
       use b2mod_constants
       implicit none

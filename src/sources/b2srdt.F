@@ -102,7 +102,7 @@
 
 * ..Optionally, calculate a local (cell-based) multiplier to the timestep.
 *   mult_dt will be 1.0 if b2mndt_var_style = 0 (default). 
-      call get_mult_dt(switch%b2mndt_var_style, nCv,te,
+      call get_mult_dt(switch%b2mndt_var_style, nCv, te,
      &     switch%b2mndt_var_te_min, switch%b2mndt_var_te_max, 
      &     switch%b2mndt_var_mult, mult_dt)
 
