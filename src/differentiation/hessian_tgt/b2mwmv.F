@@ -76,8 +76,7 @@
       real (kind=R8) ::
      *   rdum(0:9)
 *   ..procedures
-      external xertst, b2scopy_nodiff, b2saxpy_nodiff, cfwuin,
-     * cfwure_nodiff
+      external xertst, b2scopy_nodiff_nodiff, b2saxpy_nodiff_nodiff, cfwuin, cfwure_nodiff
       external b2xvsg
 *   ..initialisation
       data ncall/0/

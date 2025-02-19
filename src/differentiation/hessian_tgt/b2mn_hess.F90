@@ -4,9 +4,11 @@
 !  Differentiation of b2mn_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: b2voloncfd:in-out b2voloncf:in-out
 !                b2data:in-out b2dataoncfd:in-out b2datad:in-out
-!                b2dataoncf:in-out geo.cvbb:in-out geo.cvx:in-out
-!                geo.cvy:in-out geo.cvsz:in-out geo.cvhz:in-out
-!                geo.cvhx:in-out geo.cvqgam:in-out geo.cvvol:in-out
+!                b2dataoncf:in-out state_extd.she:in-out state_extd.shi:in-out
+!                state_extd.sch:in-out state_extd.sna:in-out state_extd.smo:in-out
+!                geo.cvbb:in-out geo.cvx:in-out geo.cvy:in-out
+!                geo.cvsz:in-out geo.cvhz:in-out geo.cvhx:in-out
+!                geo.cvhy:in-out geo.cvqgam:in-out geo.cvvol:in-out
 !                geo.cvonedbsq:in-out geo.cvbzb:in-out geo.cveb:in-out
 !                geo.cvfpsi:in-out geo.fcbb:in-out geo.fcs:in-out
 !                geo.fchc:in-out geo.fcht:in-out geo.fchz:in-out
