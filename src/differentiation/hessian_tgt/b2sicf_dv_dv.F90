@@ -36,8 +36,8 @@
 !srv 06.04.07
 SUBROUTINE B2SICF_DV_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod0, geod&
 & , mpg, mpgd, nb, nbd0, nbd, nbdd, ub, ubd0, ubd, ubdd, smbcf, smbcfd0&
-& , smbcfd, smbcfdd, smbcb, ctcf, ctcfd0, ctcfd, ctcfdd, wrk0, wrk0d0, &
-& wrk0d, wrk0dd, nbdirs, nbdirs0)
+& , smbcfd, smbcfdd, ctcf, ctcfd0, ctcfd, ctcfdd, wrk0, wrk0d0, wrk0d, &
+& wrk0dd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV_DIFFV
@@ -69,7 +69,7 @@ SUBROUTINE B2SICF_DV_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod0, geod&
 & nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
 !srv 06.04.07
-  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv), smbcb(ncv)
+  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv)
   REAL(kind=r8) :: smbcfd0(nbdirsmax0, ncv, 0:3), ctcfd0(nbdirsmax0, ncv&
 & )
   REAL(kind=r8) :: smbcfd(nbdirsmax, ncv, 0:3), ctcfd(nbdirsmax, ncv)
@@ -287,8 +287,8 @@ END SUBROUTINE B2SICF_DV_DV
 !srv 09.07.01 28.01.02 22.07.05
 !srv 06.04.07
 SUBROUTINE B2SICF_DV_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, geod, &
-& mpg, mpgd, nb, nbd, ub, ubd, smbcf, smbcfd, smbcb, ctcf, ctcfd, wrk0, &
-& wrk0d, nbdirs)
+& mpg, mpgd, nb, nbd, ub, ubd, smbcf, smbcfd, ctcf, ctcfd, wrk0, wrk0d, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV_DIFFV
@@ -315,7 +315,7 @@ SUBROUTINE B2SICF_DV_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, geod, &
   REAL(kind=r8) :: nbd(nbdirsmax, ncv), ubd(nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
 !srv 06.04.07
-  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv), smbcb(ncv)
+  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv)
   REAL(kind=r8) :: smbcfd(nbdirsmax, ncv, 0:3), ctcfd(nbdirsmax, ncv)
 !   ..workspace
   REAL(kind=r8) :: wrk0(ncv)
@@ -461,7 +461,7 @@ END SUBROUTINE B2SICF_DV_NODIFF
 !srv 09.07.01 28.01.02 22.07.05
 !srv 06.04.07
 SUBROUTINE B2SICF_NODIFF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg&
-& , nb, ub, smbcf, smbcb, ctcf, wrk0)
+& , nb, ub, smbcf, ctcf, wrk0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV_DIFFV
@@ -484,7 +484,7 @@ SUBROUTINE B2SICF_NODIFF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg&
   REAL(kind=r8) :: mb, nb(ncv), ub(ncv)
 !   ..output arguments (unspecified on entry)
 !srv 06.04.07
-  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv), smbcb(ncv)
+  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv)
 !   ..workspace
   REAL(kind=r8) :: wrk0(ncv)
 !-----------------------------------------------------------------------

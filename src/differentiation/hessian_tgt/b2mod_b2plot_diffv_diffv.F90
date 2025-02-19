@@ -71,7 +71,7 @@ MODULE B2MOD_B2PLOT_DIFFV_DIFFV
 & ntrfrm, typeofplot, iwrk, iewrk, iwwrk, itwrk, movie_skip, average, &
 & ixref, iyref
 !ank 960511
-  INTEGER, SAVE :: nlimi, nstsi, natmi, nmoli, nioni, nlim1
+  INTEGER, SAVE :: nlimi, nstsi, natmi, nmoli, nioni, nlim1, nsts1
 !ank
   INTEGER, SAVE :: mcol, scol, vcol, ocol, ecol, fcol, acol, zcol, &
 & y_transform_l, dcol, wcol, tcol, hcol, gcol, bcol, xcol, lfsz, &

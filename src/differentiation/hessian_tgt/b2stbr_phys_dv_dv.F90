@@ -19,8 +19,8 @@
 !.specification
 !
 SUBROUTINE B2STBR_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, &
-& iscx, dtim, switch, geo, mpg, pl, dv, co, rt, rtw, st_ext, srw, tchem&
-& , tchee, tphys, tphye, thevp, thvpe, trese, tresn, trfln, trfle, &
+& iscx, dtim, switch, geo, mpg, pl, dv, co, rt, st_ext, srw, tchem, &
+& tchee, tphys, tphye, thevp, thvpe, trese, tresn, trfln, trfle, &
 & sput_src, sput_chem_model, reflection_on, sputter_energy_on, main_call&
 & , new_sputter_namelist, shi0_ff, f_redep)
   USE B2MOD_TYPES
@@ -59,7 +59,6 @@ SUBROUTINE B2STBR_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, &
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2COEFF), INTENT(INOUT) :: co
   TYPE(B2RATES), INTENT(IN) :: rt
-  TYPE(B2RATESWORK), INTENT(IN) :: rtw
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
   INTEGER :: sput_src, sput_chem_model, reflection_on, sputter_energy_on
@@ -85,11 +84,12 @@ SUBROUTINE B2STBR_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: i, irc1, irc2, ifc, is, istra
+  INTEGER :: i, irc1, irc2, icv, ifc, is, istra
 !     integer k
 !, chk*1                                        !srv 11.07.05
   CHARACTER :: chns*3
   CHARACTER(len=15) :: hlp_frm
+  REAL(kind=r8) :: b2stbr_phys_sna(0:ns-1)
   REAL(kind=r8) :: wrk0(ncv)
   REAL(kind=r8) :: qin, qel, surface_temp, einc, pflx, vbar, phi_app
   LOGICAL :: lcore
@@ -204,6 +204,17 @@ SUBROUTINE B2STBR_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, &
     END DO
   END IF
 !
+  b2stbr_phys_sna = 0.0_R8
+  DO is=0,ns-1
+    DO icv=1,ncv
+      b2stbr_phys_sna(is) = b2stbr_phys_sna(is) + srw%sna0(icv, 0, is) +&
+&       srw%sna0(icv, 1, is)*pl%na(icv, is)
+    END DO
+  END DO
+  IF ((main_call .AND. switch%b2stbr_output .GE. 1) .OR. switch%&
+&     b2stbr_output .GT. 1) WRITE(*, *) 'b2stbr_phys_sna(start): ', &
+&                           b2stbr_phys_sna
+!
 ! pre-computations for KUL fluid neutrals
   dnn = 0.0_R8
 !! end pre-computations KUL fluid neutrals
@@ -225,7 +236,20 @@ SUBROUTINE B2STBR_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, &
   END IF
 !
   DO istra=1,nstrat
+!
+    b2stbr_phys_sna = 0.0_R8
+    DO is=0,ns-1
+      DO icv=1,ncv
+        b2stbr_phys_sna(is) = b2stbr_phys_sna(is) + srw%sna0(icv, 0, is)&
+&         + srw%sna0(icv, 1, is)*pl%na(icv, is)
+      END DO
+    END DO
+    IF ((main_call .AND. switch%b2stbr_output .GE. 1) .OR. switch%&
+&       b2stbr_output .GT. 1) WRITE(*, *) &
+&                             'stratum,b2stbr_phys_sna(begin): ', istra&
+&                             , b2stbr_phys_sna
 ! crcstra(istra)
+!
 ! ..recycling model at south boundary
     IF (crcstra(istra) .EQ. 'A') THEN
 !
@@ -256,11 +280,34 @@ SUBROUTINE B2STBR_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, &
 &              phi_app, lcore, dnndy, dnndz)
       END DO
     END IF
-  END DO
 ! end loop over boundary cells
 !
 !
+    b2stbr_phys_sna = 0.0_R8
+    DO is=0,ns-1
+      DO icv=1,ncv
+        b2stbr_phys_sna(is) = b2stbr_phys_sna(is) + srw%sna0(icv, 0, is)&
+&         + srw%sna0(icv, 1, is)*pl%na(icv, is)
+      END DO
+    END DO
+    IF ((main_call .AND. switch%b2stbr_output .GE. 1) .OR. switch%&
+&       b2stbr_output .GT. 1) WRITE(*, *) &
+&                             'stratum,b2stbr_phys_sna(end): ', istra, &
+&                             b2stbr_phys_sna
+  END DO
+!
 ! istra
+!
+  b2stbr_phys_sna = 0.0_R8
+  DO is=0,ns-1
+    DO icv=1,ncv
+      b2stbr_phys_sna(is) = b2stbr_phys_sna(is) + srw%sna0(icv, 0, is) +&
+&       srw%sna0(icv, 1, is)*pl%na(icv, is)
+    END DO
+  END DO
+  IF ((main_call .AND. switch%b2stbr_output .GE. 1) .OR. switch%&
+&     b2stbr_output .GT. 1) WRITE(*, *) 'b2stbr_phys_sna(end): ', &
+&                           b2stbr_phys_sna
 !
   IF (switch%b2stbr_phys_iout .EQ. 1 .OR. switch%b2npmo_iout .EQ. 1) &
 & THEN
@@ -935,10 +982,10 @@ END SUBROUTINE B2STBR_PHYS_NODIFF_NODIFF
 !
 SUBROUTINE B2STBR_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx&
 & , dtim, switch, switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, co, &
-& rt, rtd, rtw, st_ext, srw, srwd, tchem, tchee, tphys, tphye, thevp, &
-& thvpe, trese, tresn, trfln, trfle, sput_src, sput_chem_model, &
-& reflection_on, sputter_energy_on, main_call, new_sputter_namelist, &
-& shi0_ff, f_redep, nbdirs)
+& rt, rtd, st_ext, srw, srwd, tchem, tchee, tphys, tphye, thevp, thvpe, &
+& trese, tresn, trfln, trfle, sput_src, sput_chem_model, reflection_on, &
+& sputter_energy_on, main_call, new_sputter_namelist, shi0_ff, f_redep, &
+& nbdirs)
   USE B2MOD_TYPES
 !WG_TODO      use b2mod_sputter
   USE B2MOD_TALLIES_DIFFV_DIFFV
@@ -982,7 +1029,6 @@ SUBROUTINE B2STBR_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx&
   TYPE(B2COEFF), INTENT(INOUT) :: co
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
-  TYPE(B2RATESWORK), INTENT(IN) :: rtw
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
   INTEGER :: sput_src, sput_chem_model, reflection_on, sputter_energy_on
@@ -1009,11 +1055,12 @@ SUBROUTINE B2STBR_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx&
 !.declarations
 !
 !   ..local variables
-  INTEGER :: i, irc1, irc2, ifc, is, istra
+  INTEGER :: i, irc1, irc2, icv, ifc, is, istra
 !     integer k
 !, chk*1                                        !srv 11.07.05
   CHARACTER :: chns*3
   CHARACTER(len=15) :: hlp_frm
+  REAL(kind=r8) :: b2stbr_phys_sna(0:ns-1)
   REAL(kind=r8) :: wrk0(ncv)
   REAL(kind=r8) :: qin, qel, surface_temp, einc, pflx, vbar, phi_app
   REAL(kind=r8), DIMENSION(nbdirsmax) :: eincd, phi_appd
@@ -1134,6 +1181,17 @@ SUBROUTINE B2STBR_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx&
     END DO
   END IF
 !
+  b2stbr_phys_sna = 0.0_R8
+  DO is=0,ns-1
+    DO icv=1,ncv
+      b2stbr_phys_sna(is) = b2stbr_phys_sna(is) + srw%sna0(icv, 0, is) +&
+&       srw%sna0(icv, 1, is)*pl%na(icv, is)
+    END DO
+  END DO
+  IF ((main_call .AND. switch%b2stbr_output .GE. 1) .OR. switch%&
+&     b2stbr_output .GT. 1) WRITE(*, *) 'b2stbr_phys_sna(start): ', &
+&                           b2stbr_phys_sna
+!
 ! pre-computations for KUL fluid neutrals
   dnn = 0.0_R8
 !! end pre-computations KUL fluid neutrals
@@ -1160,7 +1218,20 @@ SUBROUTINE B2STBR_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx&
   END IF
 !
   DO istra=1,nstrat
+!
+    b2stbr_phys_sna = 0.0_R8
+    DO is=0,ns-1
+      DO icv=1,ncv
+        b2stbr_phys_sna(is) = b2stbr_phys_sna(is) + srw%sna0(icv, 0, is)&
+&         + srw%sna0(icv, 1, is)*pl%na(icv, is)
+      END DO
+    END DO
+    IF ((main_call .AND. switch%b2stbr_output .GE. 1) .OR. switch%&
+&       b2stbr_output .GT. 1) WRITE(*, *) &
+&                             'stratum,b2stbr_phys_sna(begin): ', istra&
+&                             , b2stbr_phys_sna
 ! crcstra(istra)
+!
 ! ..recycling model at south boundary
     IF (crcstra(istra) .EQ. 'A') THEN
 !
@@ -1200,11 +1271,34 @@ SUBROUTINE B2STBR_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx&
 &                 , dnndzd, nbdirs)
       END DO
     END IF
-  END DO
 ! end loop over boundary cells
 !
 !
+    b2stbr_phys_sna = 0.0_R8
+    DO is=0,ns-1
+      DO icv=1,ncv
+        b2stbr_phys_sna(is) = b2stbr_phys_sna(is) + srw%sna0(icv, 0, is)&
+&         + srw%sna0(icv, 1, is)*pl%na(icv, is)
+      END DO
+    END DO
+    IF ((main_call .AND. switch%b2stbr_output .GE. 1) .OR. switch%&
+&       b2stbr_output .GT. 1) WRITE(*, *) &
+&                             'stratum,b2stbr_phys_sna(end): ', istra, &
+&                             b2stbr_phys_sna
+  END DO
+!
 ! istra
+!
+  b2stbr_phys_sna = 0.0_R8
+  DO is=0,ns-1
+    DO icv=1,ncv
+      b2stbr_phys_sna(is) = b2stbr_phys_sna(is) + srw%sna0(icv, 0, is) +&
+&       srw%sna0(icv, 1, is)*pl%na(icv, is)
+    END DO
+  END DO
+  IF ((main_call .AND. switch%b2stbr_output .GE. 1) .OR. switch%&
+&     b2stbr_output .GT. 1) WRITE(*, *) 'b2stbr_phys_sna(end): ', &
+&                           b2stbr_phys_sna
 !
   IF (switch%b2stbr_phys_iout .EQ. 1 .OR. switch%b2npmo_iout .EQ. 1) &
 & THEN
@@ -2807,9 +2901,9 @@ END SUBROUTINE B2STBR_PHYS_DV_NODIFF
 !
 SUBROUTINE B2STBR_PHYS_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 & dtim, switch, switchd, geo, geod0, geod, mpg, mpgd, pl, pld0, pld, &
-& pldd, dv, dvd0, dvd, dvdd, co, rt, rtd0, rtd, rtdd, rtw, st_ext, srw, &
-& srwd0, srwd, srwdd, tchem, tchee, tphys, tphye, thevp, thvpe, trese, &
-& tresn, trfln, trfle, sput_src, sput_chem_model, reflection_on, &
+& pldd, dv, dvd0, dvd, dvdd, co, rt, rtd0, rtd, rtdd, st_ext, srw, srwd0&
+& , srwd, srwdd, tchem, tchee, tphys, tphye, thevp, thvpe, trese, tresn&
+& , trfln, trfle, sput_src, sput_chem_model, reflection_on, &
 & sputter_energy_on, main_call, new_sputter_namelist, shi0_ff, f_redep, &
 & nbdirs, nbdirs0)
   USE B2MOD_TYPES
@@ -2863,7 +2957,6 @@ SUBROUTINE B2STBR_PHYS_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   TYPE(B2RATES_DIFFV0), INTENT(IN) :: rtd0
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
   TYPE(B2RATES_DIFFV_DIFFV), INTENT(IN) :: rtdd
-  TYPE(B2RATESWORK), INTENT(IN) :: rtw
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   INTEGER :: ncv, nfc, nvx, ns, nscx, nscxmax, iscx(0:nscxmax-1)
   INTEGER :: sput_src, sput_chem_model, reflection_on, sputter_energy_on
@@ -2892,11 +2985,12 @@ SUBROUTINE B2STBR_PHYS_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: i, irc1, irc2, ifc, is, istra
+  INTEGER :: i, irc1, irc2, icv, ifc, is, istra
 !     integer k
 !, chk*1                                        !srv 11.07.05
   CHARACTER :: chns*3
   CHARACTER(len=15) :: hlp_frm
+  REAL(kind=r8) :: b2stbr_phys_sna(0:ns-1)
   REAL(kind=r8) :: wrk0(ncv)
   REAL(kind=r8) :: qin, qel, surface_temp, einc, pflx, vbar, phi_app
   REAL(kind=r8), DIMENSION(nbdirsmax0) :: eincd0, phi_appd0
@@ -3025,6 +3119,17 @@ SUBROUTINE B2STBR_PHYS_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
     END DO
   END IF
 !
+  b2stbr_phys_sna = 0.0_R8
+  DO is=0,ns-1
+    DO icv=1,ncv
+      b2stbr_phys_sna(is) = b2stbr_phys_sna(is) + srw%sna0(icv, 0, is) +&
+&       srw%sna0(icv, 1, is)*pl%na(icv, is)
+    END DO
+  END DO
+  IF ((main_call .AND. switch%b2stbr_output .GE. 1) .OR. switch%&
+&     b2stbr_output .GT. 1) WRITE(*, *) 'b2stbr_phys_sna(start): ', &
+&                           b2stbr_phys_sna
+!
 ! pre-computations for KUL fluid neutrals
   dnn = 0.0_R8
 !! end pre-computations KUL fluid neutrals
@@ -3062,7 +3167,20 @@ SUBROUTINE B2STBR_PHYS_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   END IF
 !
   DO istra=1,nstrat
+!
+    b2stbr_phys_sna = 0.0_R8
+    DO is=0,ns-1
+      DO icv=1,ncv
+        b2stbr_phys_sna(is) = b2stbr_phys_sna(is) + srw%sna0(icv, 0, is)&
+&         + srw%sna0(icv, 1, is)*pl%na(icv, is)
+      END DO
+    END DO
+    IF ((main_call .AND. switch%b2stbr_output .GE. 1) .OR. switch%&
+&       b2stbr_output .GT. 1) WRITE(*, *) &
+&                             'stratum,b2stbr_phys_sna(begin): ', istra&
+&                             , b2stbr_phys_sna
 ! crcstra(istra)
+!
 ! ..recycling model at south boundary
     IF (crcstra(istra) .EQ. 'A') THEN
 !
@@ -3116,11 +3234,34 @@ SUBROUTINE B2STBR_PHYS_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &                    dnndzd0, dnndzd, dnndzdd, nbdirs, nbdirs0)
       END DO
     END IF
-  END DO
 ! end loop over boundary cells
 !
 !
+    b2stbr_phys_sna = 0.0_R8
+    DO is=0,ns-1
+      DO icv=1,ncv
+        b2stbr_phys_sna(is) = b2stbr_phys_sna(is) + srw%sna0(icv, 0, is)&
+&         + srw%sna0(icv, 1, is)*pl%na(icv, is)
+      END DO
+    END DO
+    IF ((main_call .AND. switch%b2stbr_output .GE. 1) .OR. switch%&
+&       b2stbr_output .GT. 1) WRITE(*, *) &
+&                             'stratum,b2stbr_phys_sna(end): ', istra, &
+&                             b2stbr_phys_sna
+  END DO
+!
 ! istra
+!
+  b2stbr_phys_sna = 0.0_R8
+  DO is=0,ns-1
+    DO icv=1,ncv
+      b2stbr_phys_sna(is) = b2stbr_phys_sna(is) + srw%sna0(icv, 0, is) +&
+&       srw%sna0(icv, 1, is)*pl%na(icv, is)
+    END DO
+  END DO
+  IF ((main_call .AND. switch%b2stbr_output .GE. 1) .OR. switch%&
+&     b2stbr_output .GT. 1) WRITE(*, *) 'b2stbr_phys_sna(end): ', &
+&                           b2stbr_phys_sna
 !
   IF (switch%b2stbr_phys_iout .EQ. 1 .OR. switch%b2npmo_iout .EQ. 1) &
 & THEN

@@ -2,15 +2,18 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2stbm in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: *(srw.sch0) *(srw.she0) *(srw.shi0)
-!                *(srw.smo0) *(srw.sna0)
-!   with respect to varying inputs: *(srw.sch0) *(srw.she0) *(srw.shi0)
-!                *(srw.smo0) *(srw.sna0) *(pl.na) *(pl.ua) *(pl.po)
-!                *(pl.te) *(pl.ti)
+!   variations   of useful results: *(st_ext.she) *(st_ext.shi)
+!                *(st_ext.sch) *(st_ext.sna) *(st_ext.smo) *(srw.sch0)
+!                *(srw.she0) *(srw.shi0) *(srw.smo0) *(srw.sna0)
+!   with respect to varying inputs: *(st_ext.she) *(st_ext.shi)
+!                *(st_ext.sch) *(st_ext.sna) *(st_ext.smo) *(srw.sch0)
+!                *(srw.she0) *(srw.shi0) *(srw.smo0) *(srw.sna0)
+!                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti)
 !   Plus diff mem management of: dv.fch:in dv.fna:in dv.fhe:in
 !                dv.fhi:in dv.kinrgy:in dv.ne:in dv.ni:in geo.cvhx:in
 !                geo.cvqgam:in geo.cvvol:in geo.fcht:in geo.fcvol:in
-!                geo.fcqgam:in st_ext.na:in st_ext.ua:in st_ext.ta:in
+!                geo.fcqgam:in st_ext.ne:in st_ext.ne2:in st_ext.ue:in
+!                st_ext.na:in st_ext.ni:in st_ext.ua:in st_ext.ta:in
 !                st_ext.sne:in st_ext.she:in st_ext.shi:in st_ext.sch:in
 !                st_ext.sna:in st_ext.smo:in srw.sch0:in srw.she0:in
 !                srw.shi0:in srw.sne0:in srw.smo0:in srw.sna0:in
@@ -32,13 +35,11 @@
 !.specification
 !
 SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
-& , mpg, pl, pld, dv, dvd, st_ext, st_extd, sr, srw, srwd, main_call, &
-& nbdirs)
+& , mpg, pl, pld, dv, dvd, st_ext, st_extd, srw, srwd, main_call, nbdirs&
+&)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
-  USE B2MOD_B2CMPB_DIFFV
   USE B2MOD_EXTERNAL_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
@@ -69,7 +70,6 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
 !   ..input/output arguments 
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
-  TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
   TYPE(B2SOURCEWORK_DIFFV), INTENT(INOUT) :: srwd
 !   ..common blocks
@@ -106,17 +106,25 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
   REAL(kind=r8) :: abs2
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs2d
   REAL(kind=r8) :: abs3
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs3d
   REAL(kind=r8) :: abs4
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs4d
   REAL(kind=r8) :: abs5
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs5d
   REAL(kind=r8) :: abs6
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs6d
   REAL(kind=r8) :: abs7
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs7d
   REAL(kind=r8) :: abs8
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs8d
   REAL(kind=r8) :: abs9
   REAL(kind=r8), DIMENSION(nbdirsmax) :: abs9d
   REAL(kind=r8) :: abs10
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs10d
   REAL(kind=r8) :: abs11
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: abs11d
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -128,6 +136,9 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
   REAL(r8) :: temp0
   REAL(kind=r8) :: temp1
   REAL(kind=r8) :: temp2
+  REAL(kind=r8) :: temp3
+  REAL(kind=r8) :: temp4
+  REAL(kind=r8) :: temp5
   INTEGER :: nbdirs
 !
 !-----------------------------------------------------------------------
@@ -175,8 +186,6 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
 &         'faulty argument range fcQgam(,0)')
 !    ..test state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, pl, dv)
-!
-!   ..test edge values of fluxes
   END IF
   DO nd=1,nbdirs
 !
@@ -310,6 +319,7 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
 !
     IF (ncall .EQ. 0 .OR. (main_call .AND. MOD(ncall, switch%&
 &       b2stbm_impgyro_mod) .EQ. 0)) THEN
+      DO nd=1,nbdirs
 !xpb The call below obtains the following quantities from IMPGYRO
 !xpb Main W data: na_ext, ua_ext, ta_ext
 !xpb Sources due to W: sne_ext, smo_ext, she_ext, shi_ext
@@ -320,6 +330,12 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
 !xpb na_ext, fa_ext, ta_ext, fhi_ext
 !xpb And then derive: ua_ext
 !
+        st_extd%sna(nd, :, :) = 0.D0
+        st_extd%smo(nd, :, :) = 0.D0
+        st_extd%she(nd, :) = 0.D0
+        st_extd%shi(nd, :) = 0.D0
+        st_extd%sch(nd, :) = 0.D0
+      END DO
       st_ext%sna = 0.0_R8
       st_ext%sne = 0.0_R8
       st_ext%smo = 0.0_R8
@@ -330,6 +346,18 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
       st_ext%ua = 0.0_R8
       st_ext%ta = 0.0_R8
 !
+      st_ext%ne = 0.0_R8
+      st_ext%ni = 0.0_R8
+      st_ext%ue = 0.0_R8
+      st_ext%ne2 = 0.0_R8
+      DO is=0,st_ext%ns-1
+        st_ext%ne(:) = st_ext%ne(:) + st_ext%za(:, is)*st_ext%na(:, is)
+        st_ext%ne2(:) = st_ext%ne2(:) + st_ext%za2(:, is)*st_ext%na(:, &
+&         is)
+        st_ext%ni(:, 0) = st_ext%ni(:, 0) + st_ext%na(:, is)
+        IF (.NOT.st_ext%is_neutral(is)) st_ext%ni(:, 1) = st_ext%ni(:, 1&
+&           ) + st_ext%na(:, is)
+      END DO
     END IF
 !
 ! ..linearise external sources
@@ -359,40 +387,60 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
 &         b2stbm_linearisation*abs1/dv%ne(icv)
         DO is=0,ns-1
 !  ...heavy particles sources
+          DO nd=1,nbdirs
+            t0d(nd) = st_extd%sna(nd, icv, is)
+          END DO
           t0 = st_ext%sna(icv, is)
           IF (t0 .GE. 0.0_R8) THEN
             DO nd=1,nbdirs
-              srwd%sna0(nd, icv, 0, is) = 0.D0
+              srwd%sna0(nd, icv, 0, is) = t0d(nd)
             END DO
             srw%sna0(icv, 0, is) = t0
           ELSE
             temp = t0/pl%na(icv, is)
             DO nd=1,nbdirs
-              srwd%sna0(nd, icv, 1, is) = -(temp*pld%na(nd, icv, is)/pl%&
-&               na(icv, is))
+              srwd%sna0(nd, icv, 1, is) = (t0d(nd)-temp*pld%na(nd, icv, &
+&               is))/pl%na(icv, is)
             END DO
             srw%sna0(icv, 1, is) = temp
           END IF
           IF (t0 .GE. 0.) THEN
+            DO nd=1,nbdirs
+              abs2d(nd) = t0d(nd)
+            END DO
             abs2 = t0
           ELSE
+            DO nd=1,nbdirs
+              abs2d(nd) = -t0d(nd)
+            END DO
             abs2 = -t0
           END IF
+          DO nd=1,nbdirs
+            srwd%sna0(nd, icv, 0, is) = srwd%sna0(nd, icv, 0, is) + &
+&             switch%b2stbm_linearisation*abs2d(nd)
+          END DO
           srw%sna0(icv, 0, is) = srw%sna0(icv, 0, is) + switch%&
 &           b2stbm_linearisation*abs2
           IF (t0 .GE. 0.) THEN
+            DO nd=1,nbdirs
+              abs3d(nd) = t0d(nd)
+            END DO
             abs3 = t0
           ELSE
+            DO nd=1,nbdirs
+              abs3d(nd) = -t0d(nd)
+            END DO
             abs3 = -t0
           END IF
-          temp = switch%b2stbm_linearisation*abs3/pl%na(icv, is)
+          temp = abs3/pl%na(icv, is)
           arg10 = pl%te(icv)/me
           temp0 = SQRT(arg10)
           arg11 = am(is)*mp/me
           result1 = SQRT(arg11)
           DO nd=1,nbdirs
-            srwd%sna0(nd, icv, 1, is) = srwd%sna0(nd, icv, 1, is) + temp&
-&             *pld%na(nd, icv, is)/pl%na(icv, is)
+            srwd%sna0(nd, icv, 1, is) = srwd%sna0(nd, icv, 1, is) - &
+&             switch%b2stbm_linearisation*(abs3d(nd)-temp*pld%na(nd, icv&
+&             , is))/pl%na(icv, is)
 !  ...parallel momentum sources
             arg10d(nd) = pld%te(nd, icv)/me
             IF (arg10 .EQ. 0.D0) THEN
@@ -401,107 +449,143 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
               vthed(nd) = arg10d(nd)/(2.0*temp0)
             END IF
             vthed(nd) = vthed(nd)/result1
+            t0d(nd) = st_extd%smo(nd, icv, is)
           END DO
-          srw%sna0(icv, 1, is) = srw%sna0(icv, 1, is) - temp
+          srw%sna0(icv, 1, is) = srw%sna0(icv, 1, is) - switch%&
+&           b2stbm_linearisation*temp
           vthe = temp0
           vthe = vthe/result1
           t0 = st_ext%smo(icv, is)
           IF (t0 .GE. 0.) THEN
+            DO nd=1,nbdirs
+              abs4d(nd) = t0d(nd)
+            END DO
             abs4 = t0
           ELSE
+            DO nd=1,nbdirs
+              abs4d(nd) = -t0d(nd)
+            END DO
             abs4 = -t0
           END IF
-          temp0 = pl%ua(icv, is)/vthe
+          temp = abs4/vthe
           DO nd=1,nbdirs
-            srwd%smo0(nd, icv, 0, is) = srwd%smo0(nd, icv, 0, is) + &
-&             switch%b2stbm_linearisation*abs4*(pld%ua(nd, icv, is)-&
-&             temp0*vthed(nd))/vthe
+            srwd%smo0(nd, icv, 0, is) = srwd%smo0(nd, icv, 0, is) + t0d(&
+&             nd) + switch%b2stbm_linearisation*(temp*pld%ua(nd, icv, is&
+&             )+pl%ua(icv, is)*(abs4d(nd)-temp*vthed(nd))/vthe)
           END DO
-          srw%smo0(icv, 0, is) = t0 + srw%smo0(icv, 0, is) + switch%&
-&           b2stbm_linearisation*abs4*temp0
+          srw%smo0(icv, 0, is) = srw%smo0(icv, 0, is) + t0 + switch%&
+&           b2stbm_linearisation*(pl%ua(icv, is)*temp)
           IF (t0 .GE. 0.) THEN
+            DO nd=1,nbdirs
+              abs5d(nd) = t0d(nd)
+            END DO
             abs5 = t0
           ELSE
+            DO nd=1,nbdirs
+              abs5d(nd) = -t0d(nd)
+            END DO
             abs5 = -t0
           END IF
-          temp = switch%b2stbm_linearisation*abs5/vthe
           DO nd=1,nbdirs
-            srwd%smo0(nd, icv, 1, is) = srwd%smo0(nd, icv, 1, is) + temp&
-&             *vthed(nd)/vthe
+            srwd%smo0(nd, icv, 1, is) = srwd%smo0(nd, icv, 1, is) - &
+&             switch%b2stbm_linearisation*(abs5d(nd)-abs5*vthed(nd)/vthe&
+&             )/vthe
           END DO
-          srw%smo0(icv, 1, is) = srw%smo0(icv, 1, is) - temp
+          srw%smo0(icv, 1, is) = srw%smo0(icv, 1, is) - switch%&
+&           b2stbm_linearisation*abs5/vthe
         END DO
 !  ...electron energy source
+        DO nd=1,nbdirs
+          t0d(nd) = st_extd%she(nd, icv)
+        END DO
         t0 = st_ext%she(icv)
         IF (t0 .GE. 0.0_R8) THEN
           DO nd=1,nbdirs
-            srwd%she0(nd, icv, 0) = 0.D0
+            srwd%she0(nd, icv, 0) = t0d(nd)
           END DO
           srw%she0(icv, 0) = t0
         ELSE
           temp = t0/pl%te(icv)
           DO nd=1,nbdirs
-            srwd%she0(nd, icv, 1) = -(temp*pld%te(nd, icv)/pl%te(icv))
+            srwd%she0(nd, icv, 1) = (t0d(nd)-temp*pld%te(nd, icv))/pl%te&
+&             (icv)
           END DO
           srw%she0(icv, 1) = temp
         END IF
         IF (t0 .GE. 0.) THEN
+          DO nd=1,nbdirs
+            abs6d(nd) = t0d(nd)
+          END DO
           abs6 = t0
         ELSE
+          DO nd=1,nbdirs
+            abs6d(nd) = -t0d(nd)
+          END DO
           abs6 = -t0
         END IF
+        DO nd=1,nbdirs
+          srwd%she0(nd, icv, 0) = srwd%she0(nd, icv, 0) + switch%&
+&           b2stbm_linearisation*abs6d(nd)
+        END DO
         srw%she0(icv, 0) = srw%she0(icv, 0) + switch%&
 &         b2stbm_linearisation*abs6
         IF (t0 .GE. 0.) THEN
+          DO nd=1,nbdirs
+            abs7d(nd) = t0d(nd)
+          END DO
           abs7 = t0
         ELSE
+          DO nd=1,nbdirs
+            abs7d(nd) = -t0d(nd)
+          END DO
           abs7 = -t0
         END IF
-        temp = switch%b2stbm_linearisation*abs7/pl%te(icv)
+        temp = abs7/pl%te(icv)
         DO nd=1,nbdirs
-          srwd%she0(nd, icv, 1) = srwd%she0(nd, icv, 1) + temp*pld%te(nd&
-&           , icv)/pl%te(icv)
-        END DO
-        srw%she0(icv, 1) = srw%she0(icv, 1) - temp
+          srwd%she0(nd, icv, 1) = srwd%she0(nd, icv, 1) - switch%&
+&           b2stbm_linearisation*(abs7d(nd)-temp*pld%te(nd, icv))/pl%te(&
+&           icv)
 !  ...ion energy source
+          t0d(nd) = st_extd%shi(nd, icv)
+        END DO
+        srw%she0(icv, 1) = srw%she0(icv, 1) - switch%&
+&         b2stbm_linearisation*temp
         t0 = st_ext%shi(icv)
         IF (switch%b2stbm_internal_energy_sources .EQ. 0) THEN
-          DO nd=1,nbdirsmax
-            t0d(nd) = 0.D0
-          END DO
           DO is=0,ns-1
             IF (.NOT.(st_ext%smo(icv, is) .EQ. 0.0_R8 .AND. st_ext%sna(&
 &               icv, is) .EQ. 0.0_R8)) THEN
-              temp0 = st_ext%sna(icv, is)*dtim*dtco(is, ireg) + na0(icv&
-&               , is)
-              temp = (dtim*dtmo(is, ireg)*st_ext%smo(icv, is)/(am(is)*mp&
-&               )+ua0(icv, is)*na0(icv, is))/temp0
+              temp = dtim*dtco(is, ireg)
+              temp1 = na0(icv, is) + temp*st_ext%sna(icv, is)
+              temp2 = dtim*dtmo(is, ireg)
+              temp3 = (ua0(icv, is)*na0(icv, is)+temp2*st_ext%smo(icv, &
+&               is)/(am(is)*mp))/temp1
               DO nd=1,nbdirs
-                ua_tmpd(nd) = (na0(icv, is)*ua0d(nd, icv, is)+(ua0(icv, &
-&                 is)-temp)*na0d(nd, icv, is))/temp0
+                ua_tmpd(nd) = (na0(icv, is)*ua0d(nd, icv, is)+ua0(icv, &
+&                 is)*na0d(nd, icv, is)+temp2*st_extd%smo(nd, icv, is)/(&
+&                 am(is)*mp)-temp3*(na0d(nd, icv, is)+temp*st_extd%sna(&
+&                 nd, icv, is)))/temp1
                 duad(nd) = ua_tmpd(nd) - ua0d(nd, icv, is)
               END DO
-              ua_tmp = temp
+              ua_tmp = temp3
               dua = ua_tmp - ua0(icv, is)
-              temp = 0.5_R8*am(is)*mp
+              temp3 = 0.5_R8*am(is)*mp
+              temp2 = ua0(icv, is)*ua0(icv, is)
               temp1 = 0.5_R8*am(is)*mp
-              temp2 = dua*dua/(dtim*dtei(ireg))
-              temp0 = st_ext%sna(icv, is)*dtim*dtco(is, ireg) + na0(icv&
-&               , is)
+              temp = dua*dua/(dtim*dtei(ireg))
+              temp4 = dtim*dtco(is, ireg)
+              temp5 = na0(icv, is) + temp4*st_ext%sna(icv, is)
               DO nd=1,nbdirs
-                t0d(nd) = t0d(nd) - (st_ext%smo(icv, is)-temp*st_ext%sna&
-&                 (icv, is)*2*ua0(icv, is))*ua0d(nd, icv, is) - temp1*(&
-&                 temp2*na0d(nd, icv, is)+temp0*2*dua*duad(nd)/(dtim*&
-&                 dtei(ireg)))
+                t0d(nd) = t0d(nd) - st_ext%smo(icv, is)*ua0d(nd, icv, is&
+&                 ) - ua0(icv, is)*st_extd%smo(nd, icv, is) + temp3*(&
+&                 st_ext%sna(icv, is)*2*ua0(icv, is)*ua0d(nd, icv, is)+&
+&                 temp2*st_extd%sna(nd, icv, is)) - temp1*(temp*(na0d(nd&
+&                 , icv, is)+temp4*st_extd%sna(nd, icv, is))+temp5*2*dua&
+&                 *duad(nd)/(dtim*dtei(ireg)))
               END DO
-              t0 = t0 - st_ext%smo(icv, is)*ua0(icv, is) + temp*(st_ext%&
-&               sna(icv, is)*(ua0(icv, is)*ua0(icv, is))) - temp1*(temp0&
-&               *temp2)
+              t0 = t0 - ua0(icv, is)*st_ext%smo(icv, is) + temp3*(temp2*&
+&               st_ext%sna(icv, is)) - temp1*(temp5*temp)
             END IF
-          END DO
-        ELSE
-          DO nd=1,nbdirsmax
-            t0d(nd) = 0.D0
           END DO
         END IF
         IF (t0 .GE. 0.0_R8) THEN
@@ -510,12 +594,12 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
           END DO
           srw%shi0(icv, 0) = t0
         ELSE
-          temp2 = t0/pl%ti(icv)
+          temp5 = t0/pl%ti(icv)
           DO nd=1,nbdirs
-            srwd%shi0(nd, icv, 1) = (t0d(nd)-temp2*pld%ti(nd, icv))/pl%&
+            srwd%shi0(nd, icv, 1) = (t0d(nd)-temp5*pld%ti(nd, icv))/pl%&
 &             ti(icv)
           END DO
-          srw%shi0(icv, 1) = temp2
+          srw%shi0(icv, 1) = temp5
         END IF
         IF (t0 .GE. 0.) THEN
           DO nd=1,nbdirs
@@ -545,55 +629,75 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
           END DO
           abs9 = -t0
         END IF
-        temp2 = abs9/pl%ti(icv)
+        temp5 = abs9/pl%ti(icv)
         DO nd=1,nbdirs
           srwd%shi0(nd, icv, 1) = srwd%shi0(nd, icv, 1) - switch%&
-&           b2stbm_linearisation*(abs9d(nd)-temp2*pld%ti(nd, icv))/pl%ti&
+&           b2stbm_linearisation*(abs9d(nd)-temp5*pld%ti(nd, icv))/pl%ti&
 &           (icv)
+!  ...electric charge source
+          t0d(nd) = st_extd%sch(nd, icv)
         END DO
         srw%shi0(icv, 1) = srw%shi0(icv, 1) - switch%&
-&         b2stbm_linearisation*temp2
-!  ...electric charge source
+&         b2stbm_linearisation*temp5
         t0 = st_ext%sch(icv)
         IF (t0 .GE. 0.0_R8) THEN
           DO nd=1,nbdirs
-            srwd%sch0(nd, icv, 0) = 0.D0
+            srwd%sch0(nd, icv, 0) = t0d(nd)
           END DO
           srw%sch0(icv, 0) = t0
         ELSE
-          temp2 = t0/pl%po(icv)
+          temp5 = t0/pl%po(icv)
           DO nd=1,nbdirs
-            srwd%sch0(nd, icv, 1) = -(temp2*pld%po(nd, icv)/pl%po(icv))
+            srwd%sch0(nd, icv, 1) = (t0d(nd)-temp5*pld%po(nd, icv))/pl%&
+&             po(icv)
           END DO
-          srw%sch0(icv, 1) = temp2
+          srw%sch0(icv, 1) = temp5
         END IF
         IF (t0 .GE. 0.) THEN
+          DO nd=1,nbdirs
+            abs10d(nd) = t0d(nd)
+          END DO
           abs10 = t0
         ELSE
+          DO nd=1,nbdirs
+            abs10d(nd) = -t0d(nd)
+          END DO
           abs10 = -t0
         END IF
+        DO nd=1,nbdirs
+          srwd%sch0(nd, icv, 0) = srwd%sch0(nd, icv, 0) + switch%&
+&           b2stbm_linearisation*abs10d(nd)
+        END DO
         srw%sch0(icv, 0) = srw%sch0(icv, 0) + switch%&
 &         b2stbm_linearisation*abs10
         IF (t0 .GE. 0.) THEN
+          DO nd=1,nbdirs
+            abs11d(nd) = t0d(nd)
+          END DO
           abs11 = t0
         ELSE
+          DO nd=1,nbdirs
+            abs11d(nd) = -t0d(nd)
+          END DO
           abs11 = -t0
         END IF
-        temp2 = switch%b2stbm_linearisation*abs11/pl%po(icv)
+        temp5 = abs11/pl%po(icv)
         DO nd=1,nbdirs
-          srwd%sch0(nd, icv, 1) = srwd%sch0(nd, icv, 1) + temp2*pld%po(&
-&           nd, icv)/pl%po(icv)
+          srwd%sch0(nd, icv, 1) = srwd%sch0(nd, icv, 1) - switch%&
+&           b2stbm_linearisation*(abs11d(nd)-temp5*pld%po(nd, icv))/pl%&
+&           po(icv)
         END DO
-        srw%sch0(icv, 1) = srw%sch0(icv, 1) - temp2
+        srw%sch0(icv, 1) = srw%sch0(icv, 1) - switch%&
+&         b2stbm_linearisation*temp5
       ELSE
 !  ...raw sources: no linearisation
         srw%sne0(icv, 0) = st_ext%sne(icv)
         DO nd=1,nbdirs
-          srwd%sna0(nd, icv, 0, 0:ns-1) = 0.D0
-          srwd%smo0(nd, icv, 0, 0:ns-1) = 0.D0
-          srwd%she0(nd, icv, 0) = 0.D0
-          srwd%sch0(nd, icv, 0) = 0.D0
-          srwd%shi0(nd, icv, 0) = 0.D0
+          srwd%sna0(nd, icv, 0, 0:ns-1) = st_extd%sna(nd, icv, 0:ns-1)
+          srwd%smo0(nd, icv, 0, 0:ns-1) = st_extd%smo(nd, icv, 0:ns-1)
+          srwd%she0(nd, icv, 0) = st_extd%she(nd, icv)
+          srwd%sch0(nd, icv, 0) = st_extd%sch(nd, icv)
+          srwd%shi0(nd, icv, 0) = st_extd%shi(nd, icv)
         END DO
         srw%sna0(icv, 0, 0:ns-1) = st_ext%sna(icv, 0:ns-1)
         srw%smo0(icv, 0, 0:ns-1) = st_ext%smo(icv, 0:ns-1)
@@ -604,31 +708,38 @@ SUBROUTINE B2STBM_DV(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geod&
           DO is=0,ns-1
             IF (.NOT.(st_ext%smo(icv, is) .EQ. 0.0_R8 .AND. st_ext%sna(&
 &               icv, is) .EQ. 0.0_R8)) THEN
-              temp0 = st_ext%sna(icv, is)*dtim*dtco(is, ireg) + na0(icv&
-&               , is)
-              temp2 = (dtim*dtmo(is, ireg)*st_ext%smo(icv, is)/(am(is)*&
-&               mp)+ua0(icv, is)*na0(icv, is))/temp0
+              temp5 = dtim*dtco(is, ireg)
+              temp4 = na0(icv, is) + temp5*st_ext%sna(icv, is)
+              temp3 = dtim*dtmo(is, ireg)
+              temp2 = (ua0(icv, is)*na0(icv, is)+temp3*st_ext%smo(icv, &
+&               is)/(am(is)*mp))/temp4
               DO nd=1,nbdirs
-                ua_tmpd(nd) = (na0(icv, is)*ua0d(nd, icv, is)+(ua0(icv, &
-&                 is)-temp2)*na0d(nd, icv, is))/temp0
+                ua_tmpd(nd) = (na0(icv, is)*ua0d(nd, icv, is)+ua0(icv, &
+&                 is)*na0d(nd, icv, is)+temp3*st_extd%smo(nd, icv, is)/(&
+&                 am(is)*mp)-temp2*(na0d(nd, icv, is)+temp5*st_extd%sna(&
+&                 nd, icv, is)))/temp4
                 duad(nd) = ua_tmpd(nd) - ua0d(nd, icv, is)
               END DO
               ua_tmp = temp2
               dua = ua_tmp - ua0(icv, is)
-              temp2 = 0.5_R8*am(is)*mp
-              temp1 = 0.5_R8*am(is)*mp
-              temp = dua*dua/(dtim*dtei(ireg))
-              temp0 = st_ext%sna(icv, is)*dtim*dtco(is, ireg) + na0(icv&
-&               , is)
+              temp5 = 0.5_R8*am(is)*mp
+              temp4 = ua0(icv, is)*ua0(icv, is)
+              temp3 = 0.5_R8*am(is)*mp
+              temp2 = dua*dua/(dtim*dtei(ireg))
+              temp1 = dtim*dtco(is, ireg)
+              temp = na0(icv, is) + temp1*st_ext%sna(icv, is)
               DO nd=1,nbdirs
-                srwd%shi0(nd, icv, 0) = srwd%shi0(nd, icv, 0) - (st_ext%&
-&                 smo(icv, is)-temp2*st_ext%sna(icv, is)*2*ua0(icv, is))&
-&                 *ua0d(nd, icv, is) - temp1*(temp*na0d(nd, icv, is)+&
-&                 temp0*2*dua*duad(nd)/(dtim*dtei(ireg)))
+                srwd%shi0(nd, icv, 0) = srwd%shi0(nd, icv, 0) - st_ext%&
+&                 smo(icv, is)*ua0d(nd, icv, is) - ua0(icv, is)*st_extd%&
+&                 smo(nd, icv, is) + temp5*(st_ext%sna(icv, is)*2*ua0(&
+&                 icv, is)*ua0d(nd, icv, is)+temp4*st_extd%sna(nd, icv, &
+&                 is)) - temp3*(temp2*(na0d(nd, icv, is)+temp1*st_extd%&
+&                 sna(nd, icv, is))+temp*2*dua*duad(nd)/(dtim*dtei(ireg)&
+&                 ))
               END DO
-              srw%shi0(icv, 0) = srw%shi0(icv, 0) - st_ext%smo(icv, is)*&
-&               ua0(icv, is) + temp2*(st_ext%sna(icv, is)*(ua0(icv, is)*&
-&               ua0(icv, is))) - temp1*(temp0*temp)
+              srw%shi0(icv, 0) = srw%shi0(icv, 0) - ua0(icv, is)*st_ext%&
+&               smo(icv, is) + temp5*(temp4*st_ext%sna(icv, is)) - temp3&
+&               *(temp*temp2)
             END IF
           END DO
         END IF
@@ -667,12 +778,10 @@ END SUBROUTINE B2STBM_DV
 !.specification
 !
 SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
-& mpg, pl, dv, st_ext, sr, srw, main_call)
+& mpg, pl, dv, st_ext, srw, main_call)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
-  USE B2MOD_B2CMPB_DIFFV
   USE B2MOD_EXTERNAL_DIFFV
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
@@ -698,7 +807,6 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
   TYPE(B2STATEEXT), INTENT(INOUT) :: st_ext
 !   ..input/output arguments 
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
-  TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
 !   ..common blocks
 !-----------------------------------------------------------------------
@@ -791,8 +899,6 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
 &         'faulty argument range fcQgam(,0)')
 !    ..test state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, pl, dv)
-!
-!   ..test edge values of fluxes
   END IF
 !
 !   ..initialise sources to 0
@@ -922,6 +1028,18 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
       st_ext%ua = 0.0_R8
       st_ext%ta = 0.0_R8
 !
+      st_ext%ne = 0.0_R8
+      st_ext%ni = 0.0_R8
+      st_ext%ue = 0.0_R8
+      st_ext%ne2 = 0.0_R8
+      DO is=0,st_ext%ns-1
+        st_ext%ne(:) = st_ext%ne(:) + st_ext%za(:, is)*st_ext%na(:, is)
+        st_ext%ne2(:) = st_ext%ne2(:) + st_ext%za2(:, is)*st_ext%na(:, &
+&         is)
+        st_ext%ni(:, 0) = st_ext%ni(:, 0) + st_ext%na(:, is)
+        IF (.NOT.st_ext%is_neutral(is)) st_ext%ni(:, 1) = st_ext%ni(:, 1&
+&           ) + st_ext%na(:, is)
+      END DO
     END IF
 !
 ! ..linearise external sources

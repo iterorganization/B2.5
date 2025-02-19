@@ -254,16 +254,17 @@ SUBROUTINE B2TQCE_NODIFF(ncv, switch, geo, mpg, pl, dv, hce, sig, alf)
     CALL MY_OUT_US(70, ncv, 0, sig(1, 1), 'sig_r')
     CALL MY_OUT_US(70, ncv, 0, alf(1, 0), 'alf_th')
     CALL MY_OUT_US(70, ncv, 0, alf(1, 1), 'alf_r')
-!WG_TODO        open (70,file='b2tqce_fke.dat')                         
-!WG_TODO        open (71,file='b2tqce_fke_Zh.dat')                         
-!WG_TODO        write(hlp_frm,"(a10,i4,a9)") '(1x,3x,1x,',nx+2,'(es14.6))'       !srv 11.03.13
-!WG_TODO        do iy = -1, ny
-!WG_TODO          z = ne2(iCv)/ne(iCv)
-!WG_TODO          write(70,hlp_frm) (fke(z), ix = -1, nx)                        !srv 11.03.13
-!WG_TODO          write(71,hlp_frm) (fke_Zh(z), ix = -1, nx)                     !srv 11.03.13
-!WG_TODO        enddo
-!WG_TODO        close(71)
-!WG_TODO        close(70)
+    OPEN(70, file='b2tqce_fke.dat') 
+    OPEN(71, file='b2tqce_fke_Zh.dat') 
+    DO icv=1,ncv
+      z = dv%ne2(icv)/dv%ne(icv)
+      result1 = FKE(z)
+      WRITE(70, '(1x,i5,1x,1es14.6)') icv, result1
+      result1 = FKE_ZH(z)
+      WRITE(70, '(1x,i5,1x,1es14.6)') icv, result1
+    END DO
+    CLOSE(71) 
+    CLOSE(70) 
   END IF
   IF (switch%b2npht_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) CALL &
 &   MY_OUT_US(70, ncv, 0, tau, 'b2tqce_taue')

@@ -22,7 +22,6 @@
 SUBROUTINE B2SCDT_B(ncv, nci, isb, dtim, cvvol, nap, napb, switch, mpg, &
 & snadt, snadtb)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFF
   USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFF
@@ -103,7 +102,6 @@ END SUBROUTINE B2SCDT_B
 SUBROUTINE B2SCDT_NODIFF(ncv, nci, isb, dtim, cvvol, nap, switch, mpg, &
 & snadt)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFF
   USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFF
@@ -178,7 +176,6 @@ SUBROUTINE B2SCDT_NODIFF(ncv, nci, isb, dtim, cvvol, nap, switch, mpg, &
     snadt(icv, 1) = -t0
   END DO
 !srv 11.09.09 }
-!
 !
 !WG_TODO cdjm Store the total change in linearised sources for balance
 !WG_TODO      if (balance_netcdf.ne.0) then

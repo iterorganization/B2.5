@@ -19,9 +19,7 @@ SUBROUTINE B2WDAT_NODIFF(ns, mpg, geo, state)
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV_DIFFV
   USE B2MOD_ELEMENTS_DIFFV_DIFFV
-  USE B2MOD_B2CMGS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
-  USE B2MOD_B2CMPB_DIFFV_DIFFV
   USE B2MOD_B2CMPT_DIFFV_DIFFV
   USE B2MOD_B2CMRC_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
@@ -369,7 +367,8 @@ SUBROUTINE B2WDAT_NODIFF(ns, mpg, geo, state)
     CALL MY_OUT_US(70, ncv, 0, geo%cveb(1, 0), 'Cv.b_R_cyl')
     CALL MY_OUT_US(70, ncv, 0, geo%cveb(1, 1), 'Cv.b_Z_cyl')
     CALL MY_OUT_US(70, ncv, 0, geo%cveb(1, 2), 'Cv.b_phi_cyl')
-    CALL MY_OUT_US(70, ncv, 0, geo%cvhx, 'Cv.lenght_pol')
+    CALL MY_OUT_US(70, ncv, 0, geo%cvhx, 'Cv.length_pol')
+    CALL MY_OUT_US(70, ncv, 0, geo%cvhy, 'Cv.width_rad')
     CALL MY_OUT_US(70, ncv, 0, geo%cvhz, 'Cv.hz')
     CALL MY_OUT_US(70, ncv, 0, geo%cvvol, 'Cv.vol')
     CALL MY_OUT_US(70, ncv, 0, geo%cvsz, 'Cv.Sz')

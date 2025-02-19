@@ -3,7 +3,6 @@
       use b2mod_diag_diff
       use b2mod_time
       use b2mod_b2cmpa_diff
-      use b2mod_indirect_diff
       use b2mod_user_namelist_diff
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -165,6 +164,7 @@ c*** Column headers:
       use b2mod_rates
       use b2mod_plasma_diff
       use b2mod_external_diff
+      use b2mod_indirect_diff
       use b2mod_constants
       use b2mod_boundary_namelist_diff
       use b2mod_numerics_namelist_diff
@@ -1681,6 +1681,7 @@ c=======================================================================
 c======================================================================
 c
       subroutine b2usrtrcc(nx,nxtl,nxtr,iline)
+      use b2mod_indirect_diff
       implicit none
       integer, intent(in) :: nx, nxtl, nxtr
       integer, intent(out) :: iline

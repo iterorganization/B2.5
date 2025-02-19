@@ -77,7 +77,6 @@ c-----------------------------------------------------------------------
       use b2us_map_diff
       use b2us_geo_diff
       use b2us_plasma_diff
-      use b2mod_indirect_diff
       implicit none
 c
       integer, intent(in) :: ns
@@ -86,9 +85,9 @@ c
       type(B2state), intent(in) :: st
 c
 c*** Values by regions
-      real (kind=R8) :: tesum(NNREGMAX)
+      real (kind=R8) :: tesum(2*DEF_NCUT)
 
-      real (kind=R8) :: equr_tmp(NNREGMAX,nrgn_tmp)
+      real (kind=R8) :: equr_tmp(2*DEF_NCUT,nrgn_tmp)
       equivalence (equr_tmp(1,1), tesum)
 c
 c*** Values by species
@@ -97,9 +96,9 @@ c*** Values by species
       equivalence (equs_tmp(1,1), Natm_tmp)
 
 c*** Values by species and regions
-      real (kind=R8) :: equa_tmp(DEF_NATM,NNREGMAX,nsar_tmp)
+      real (kind=R8) :: equa_tmp(DEF_NATM,2*DEF_NCUT,nsar_tmp)
       real (kind=R8) ::
-     *     nasum(DEF_NATM,NNREGMAX), nisum(DEF_NATM,NNREGMAX)  ! IYS 29.09.2017 added total number of neutrals
+     *     nasum(DEF_NATM,2*DEF_NCUT), nisum(DEF_NATM,2*DEF_NCUT)     ! IYS 29.09.2017 added total number of neutrals
       equivalence (equa_tmp(1,1,1), nisum), (equa_tmp(1,1,2), nasum)  ! IYS 29.09.2017
 c-----------------------------------------------------------------------
 c*** Local variables of general use

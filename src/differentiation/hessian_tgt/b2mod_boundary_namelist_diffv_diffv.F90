@@ -17,7 +17,6 @@
 !
 MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV_DIFFV
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFFV_DIFFV
   USE B2MOD_VERSION_DIFFV_DIFFV
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_GEO_DIFFV_DIFFV
@@ -87,6 +86,8 @@ MODULE B2MOD_BOUNDARY_NAMELIST_DIFFV_DIFFV
   INTEGER, SAVE :: nbcfaces(nbcd)
   INTEGER, SAVE :: bc_faces(2*(def_nxd+def_nyd), nbcd)
   REAL(kind=r8), SAVE :: bc_face_ori(2*(def_nxd+def_nyd), nbcd)
+!sw 18feb2014 added for correct implementation of boundary conditions
+!WG_TODO     integer, allocatable, save :: iftimbound(:)
 !
   INTEGER, SAVE :: nbc, nniso, ncbs
   REAL(kind=r8), SAVE :: gammai, gammae, teiso, tiiso, phiiso
@@ -356,6 +357,7 @@ CONTAINS
 
 !
   SUBROUTINE READ_B2MOD_BOUNDARY_NAMELIST_ST(nx, ny, ns, dotest)
+    USE B2MOD_INDIRECT_DIFFV_DIFFV
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: nx, ny, ns
@@ -1302,7 +1304,6 @@ CONTAINS
 !
   FUNCTION GET_PHI_APPLIED(boundary_namelist, mpg, ifc)
     USE B2MOD_TYPES
-    USE B2MOD_PLASMA_DIFFV_DIFFV
     USE B2MOD_BOUNDARY_SOURCES_DIFFV_DIFFV
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -1577,6 +1578,7 @@ CONTAINS
 !**********************************************************************
 !
   SUBROUTINE CONV_BCPARMS(ns, m)
+    USE B2MOD_GEO_DIFFV_DIFFV
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ns
@@ -1587,7 +1589,6 @@ CONTAINS
     INTEGER, ALLOCATABLE :: ifchit(:)
     CHARACTER(len=1) :: lchar(nbc)
     CHARACTER(len=3) :: ss
-    INTRINSIC HUGE
     INTRINSIC COUNT
     EXTERNAL XERRAB
     INTRINSIC MIN
@@ -1885,7 +1886,6 @@ CONTAINS
 !
     WRITE(iout, '(1x,a,f10.7,a1)') 'GAMMAI=', gammai, ','
     WRITE(iout, '(1x,a,f10.7,a1)') 'GAMMAE=', gammae, ','
-    WRITE(iout, '(1x,a,l1,a1)') 'LBNDUSR=', lbndusr, ','
     WRITE(iout, '(1x,a,l1,a1)') 'LFEEDBACK=', lfeedback, ','
 !
     WRITE(iout, '(1x,a,i2,a1)') 'NNISO = ', nniso, ','

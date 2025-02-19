@@ -37,9 +37,47 @@ MODULE B2MOD_RUNNING_AVERAGE_DIFF
 !
 
 CONTAINS
+!  Differentiation of running_average in reverse (adjoint) mode (with options context noISIZE r8):
+!   Plus diff mem management of: srw.sna0_eir_tot:in srw.smo0_eir_tot:in
+!                srw.she0_eir_tot:in srw.shi0_eir_tot:in srw.shn0_eir_tot:in
+!                avg.na_mean:out avg.ua_mean:out avg.te_mean:out
+!                avg.ti_mean:out avg.po_mean:out avg.kt_mean:out
+!                avg.zt_mean:out avg.sna_mean:out avg.smo_mean:out
+!                avg.she_mean:out avg.shi_mean:out avg.shn_mean:out
+!                avg.e_na:out avg.e_ua:out avg.e_te:out avg.e_ti:out
+!                avg.e_po:out avg.e_kt:out avg.e_zt:out avg.e_sna:out
+!                avg.e_smo:out avg.e_she:out avg.e_shi:out avg.e_shn:out
+!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.kt:in
+!                pl.zt:in
+!
+  SUBROUTINE RUNNING_AVERAGE_B(ncv, ns, pl, plb, srw, srwb, avg, avgb)
+    IMPLICIT NONE
+! input
+    INTEGER, INTENT(IN) :: ncv, ns
+    TYPE(B2PLASMA), INTENT(IN) :: pl
+    TYPE(B2PLASMA_DIFF) :: plb
+    TYPE(B2SOURCEWORK), INTENT(IN) :: srw
+    TYPE(B2SOURCEWORK) :: srwb
+    TYPE(B2AVERAGE), INTENT(INOUT) :: avg
+    TYPE(B2AVERAGE), INTENT(INOUT) :: avgb
+! local
+    INTEGER :: itp
+    EXTERNAL BATCH_AVERAGE, BATCH_AVERAGE_SQ
+    INTEGER :: arg1
+!
+!
+!
+!
+!  calculate averaged plasma profiles and sources
+!
+!
+!  calculate squared averaged plasma profiles
+!
+!
+  END SUBROUTINE RUNNING_AVERAGE_B
+
 !
   SUBROUTINE RUNNING_AVERAGE(ncv, ns, pl, srw, avg)
-    USE B2MOD_PLASMA_DIFF
     IMPLICIT NONE
 ! input
     INTEGER, INTENT(IN) :: ncv, ns

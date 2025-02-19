@@ -33,7 +33,7 @@
 !srv 22.05.18
 SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
 & , solvmreg, itcnt, isb, rxf, dtim, switch, switchb, geo, geob, mpg, &
-& mpgb, pl, plb, dv, dvb, sr, srb, psnc, psnl, psnlb, ierr)
+& mpgb, pl, plb, dv, dvb, sr, srb, psnl, psnlb)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_SWITCHES_DIFF
@@ -61,7 +61,7 @@ SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
   TYPE(MAPPING_DIFF) :: mpgb
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCE), INTENT(INOUT) :: srb
-  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnlb
   REAL(kind=r8) :: rxf, dtim
 !srv 22.05.18
@@ -72,8 +72,6 @@ SUBROUTINE B2NPCO_B(ncv, nfc, nvx, nregionv, solving, solvcreg, ua_solve&
   TYPE(B2PLASMA_DIFF), INTENT(INOUT) :: plb
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dvb
-!   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
 !   ..common blocks
 !
 !-----------------------------------------------------------------------
@@ -342,7 +340,7 @@ END SUBROUTINE B2NPCO_B
 !srv 22.05.18
 SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 & ua_solve, solvmreg, itcnt, isb, rxf, dtim, switch, geo, mpg, pl, dv, &
-& sr, psnc, psnl, ierr)
+& sr, psnl)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_SWITCHES_DIFF
@@ -366,7 +364,7 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
-  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   REAL(kind=r8) :: rxf, dtim
 !srv 22.05.18
   LOGICAL :: solving, solvcreg(0:nregionv), ua_solve, solvmreg(0:&
@@ -374,8 +372,6 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 !   ..input/output arguments
   TYPE(B2PLASMA), INTENT(INOUT) :: pl
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
-!   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
 !   ..common blocks
 !
 !-----------------------------------------------------------------------
@@ -576,10 +572,6 @@ SUBROUTINE B2NPCO_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
     arg16 = 'b2npco_fna_mdf_r'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 1, isb), arg16)
   END IF
-!
-!   ..set error parameter
-!     (at present all errors cause an abort through xerrab)
-  ierr = 0
 !
 ! ..return
   ncall_b2npco = ncall_b2npco + 1

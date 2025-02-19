@@ -6,13 +6,15 @@
 !                b2recyc userfluxparm cfvla cfvsa cfalf cfdpa cfsig
 !                cfdna cfhce cfhci tdata int4l int1l int2l int3l
 !                int0l fb_target fb_prev fb_current fb_const charge_frac
-!                saved_fb_actuator fb_rescale *(st.pl.na) *(st.pl.ua)
-!                *(st.pl.po) *(st.pl.te) *(st.pl.ti) *(st.pl.tn)
-!                *(st.pl.kt) *(st.pl.zt) *(st.co.csig) *(st.co.calf)
-!                *(st.co.csig_an) *(st.co.csigin) *(st.co.chce)
-!                *(st.co.chce_exb) *(st.co.chci) *(st.co.chci_exb)
-!                *(st.co.chcn) *(st.co.cdkt) *(st.co.cdzt) *(st.co.chvemx)
-!                *(st.co.chvimx) *(st.co.cvla) *(st.co.cdna) *(st.co.cdna_exb)
+!                saved_fb_actuator fb_rescale *(st_ext.she) *(st_ext.shi)
+!                *(st_ext.sch) *(st_ext.sna) *(st_ext.smo) *(st.pl.na)
+!                *(st.pl.ua) *(st.pl.po) *(st.pl.te) *(st.pl.ti)
+!                *(st.pl.tn) *(st.pl.kt) *(st.pl.zt) *(st.co.csig)
+!                *(st.co.calf) *(st.co.csig_an) *(st.co.csigin)
+!                *(st.co.chce) *(st.co.chce_exb) *(st.co.chci)
+!                *(st.co.chci_exb) *(st.co.chcn) *(st.co.cdkt)
+!                *(st.co.cdzt) *(st.co.chvemx) *(st.co.chvimx)
+!                *(st.co.cvla) *(st.co.cdna) *(st.co.cdna_exb)
 !                *(st.co.cdpa) *(st.co.cvsa) *(st.co.cvlahz) *(st.co.cdpahz)
 !                *(st.co.cvsahz) *(st.co.cddi) *(st.co.cvsahz_cl)
 !                *(st.co.chcb) *(st.co.cvsahz_eff) *(st.co.cvsa_cl)
@@ -71,10 +73,11 @@
 !                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
 !                tdata int4l int1l int2l int3l int0l fb_target
 !                fb_prev fb_current fb_const charge_frac saved_fb_actuator
-!                fb_rescale switch.keps_cd switch.keps_heat switch.keps_heat_i
-!                switch.keps_sig switch.keps_alf switch.keps_visc
-!                switch.keps_dkt switch.keps_dzt switch.keps_shear
-!                switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
+!                fb_rescale *(st_ext.she) *(st_ext.shi) *(st_ext.sch)
+!                *(st_ext.sna) *(st_ext.smo) switch.keps_cd switch.keps_heat
+!                switch.keps_heat_i switch.keps_sig switch.keps_alf
+!                switch.keps_visc switch.keps_dkt switch.keps_dzt
+!                switch.keps_shear switch.b2sikt_fac_sheath switch.b2sikt_fac_sheath_core
 !                switch.b2sikt_fac_diss switch.b2sikt_fac_diss_core
 !                switch.b2sikt_fac_vis_rs switch.b2tfhi_fflokt
 !                switch.b2tfhi_fconkt switch.b2tfhi_fflozt switch.b2tfhi_fconzt
@@ -146,26 +149,35 @@
 !                (global)*rtlqa[_:_,_:_,_:_] (global)*rtlra[_:_,_:_,_:_]
 !   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in-out
 !                mpg.intcellp:in mpg.intcellr:in geo.cvbb:in geo.cvx:in
-!                geo.cvy:in geo.cvhz:in geo.cvhx:in geo.cvqgam:in
-!                geo.cvvol:in geo.cvonedbsq:in geo.cvfpsi:in geo.fcbb:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.fcpbs:in geo.fcpbshz:in geo.fcbzb:in geo.vxbb:in
-!                geo.vxx:in geo.vxy:in geo.vxhz:in geo.vxvol:in
-!                geo.vxonedbsq:in geo.cvconn:in geo.ftconn:in geo.fsconn:in
-!                geo.fteps:in geo.ftbbav2:in st_ext.am:in st_ext.ne:in
-!                st_ext.ne2:in st_ext.ue:in st_ext.za:in st_ext.za2:in
-!                st_ext.pt:in st_ext.na:in st_ext.ni:in st_ext.ua:in
-!                st_ext.ta:in st_ext.fhi:in st_ext.fa:in st_ext.sne:in
-!                st_ext.she:in st_ext.shi:in st_ext.sch:in st_ext.sna:in
-!                st_ext.smo:in st.pl.na:in st.pl.ua:in st.pl.po:in
-!                st.pl.te:in st.pl.ti:in st.pl.tn:in st.pl.kt:in
-!                st.pl.zt:in st.co.csig:in st.co.calf:in st.co.csig_an:in
-!                st.co.calf_an:in st.co.csig_cl:in st.co.calf_cl:in
-!                st.co.csigin:in st.co.chve:in st.co.chce:in st.co.chce_exb:in
-!                st.co.chvi:in st.co.chci:in st.co.chci_exb:in
-!                st.co.chcn:in st.co.cdkt:in st.co.cdzt:in st.co.chvemx:in
-!                st.co.chvimx:in st.co.cvla:in st.co.cdna:in st.co.cdna_exb:in
+!                geo.cvy:in geo.cvhz:in geo.cvhx:in geo.cvhy:in
+!                geo.cvqgam:in geo.cvvol:in geo.cvonedbsq:in geo.cvfpsi:in
+!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
+!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in geo.fcbzb:in
+!                geo.vxbb:in geo.vxx:in geo.vxy:in geo.vxhz:in
+!                geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in geo.ftconn:in
+!                geo.fsconn:in geo.fteps:in geo.ftbbav2:in st_avg.na_mean:out
+!                st_avg.ua_mean:out st_avg.te_mean:out st_avg.ti_mean:out
+!                st_avg.po_mean:out st_avg.kt_mean:out st_avg.zt_mean:out
+!                st_avg.sna_mean:out st_avg.smo_mean:out st_avg.she_mean:out
+!                st_avg.shi_mean:out st_avg.shn_mean:out st_avg.e_na:out
+!                st_avg.e_ua:out st_avg.e_te:out st_avg.e_ti:out
+!                st_avg.e_po:out st_avg.e_kt:out st_avg.e_zt:out
+!                st_avg.e_sna:out st_avg.e_smo:out st_avg.e_she:out
+!                st_avg.e_shi:out st_avg.e_shn:out st_ext.am:in
+!                st_ext.ne:in st_ext.ne2:in st_ext.ue:in st_ext.za:in
+!                st_ext.za2:in st_ext.pt:in st_ext.na:in st_ext.ni:in
+!                st_ext.ua:in st_ext.ta:in st_ext.fhi:in st_ext.fa:in
+!                st_ext.sne:in st_ext.she:in st_ext.shi:in st_ext.sch:in
+!                st_ext.sna:in st_ext.smo:in st.pl.na:in st.pl.ua:in
+!                st.pl.po:in st.pl.te:in st.pl.ti:in st.pl.tn:in
+!                st.pl.kt:in st.pl.zt:in st.co.csig:in st.co.calf:in
+!                st.co.csig_an:in st.co.calf_an:in st.co.csig_cl:in
+!                st.co.calf_cl:in st.co.csigin:in st.co.chve:in
+!                st.co.chce:in st.co.chce_exb:in st.co.chvi:in
+!                st.co.chci:in st.co.chci_exb:in st.co.chcn:in
+!                st.co.cdkt:in st.co.cdzt:in st.co.chvemx:in st.co.chvimx:in
+!                st.co.cvla:in st.co.cdna:in st.co.cdna_exb:in
 !                st.co.cdpa:in st.co.cvsa:in st.co.cvlahz:in st.co.cdnahz:in
 !                st.co.cdpahz:in st.co.cvsahz:in st.co.cddi:in
 !                st.co.cvsahz_cl:in st.co.chcb:in st.co.cvsa_an:in
@@ -223,21 +235,21 @@
 !                st.sr.skt_diss:in st.sr.skt_prod:in st.srw.sch0:in
 !                st.srw.she0:in st.srw.shi0:in st.srw.sne0:in st.srw.shn0:in
 !                st.srw.skt0:in st.srw.szt0:in st.srw.smo0:in st.srw.smq0:in
-!                st.srw.sna0:in st.srw.smcf:in st.srw.smpr:in st.srw.smpt:in
-!                st.srw.smfr:in st.srw.b2stbc_sch:in st.srw.b2stbc_she:in
-!                st.srw.b2stbc_shi:in st.srw.b2stbc_sne:in st.srw.b2stbc_shn:in
-!                st.srw.b2stbc_skt:in st.srw.b2stbc_szt:in st.srw.b2stbc_smo:in
-!                st.srw.b2stbc_sna:in st.srw.b2stbm_sch:in st.srw.b2stbm_she:in
-!                st.srw.b2stbm_shi:in st.srw.b2stbm_sne:in st.srw.b2stbm_smo:in
-!                st.srw.b2stbm_sna:in st.srw.b2stbr_sch:in st.srw.b2stbr_she:in
-!                st.srw.b2stbr_shi:in st.srw.b2stbr_sne:in st.srw.b2stbr_shn:in
-!                st.srw.b2stbr_skt:in st.srw.b2stbr_szt:in st.srw.b2stbr_smo:in
-!                st.srw.b2stbr_sna:in st.srw.b2npmo_smaf:in st.srw.b2npmo_smag:in
-!                st.srw.b2npmo_smav:in st.srw.rsana:in st.srw.rsahi:in
-!                st.srw.rsamo:in st.srw.rrana:in st.srw.rrahi:in
-!                st.srw.rramo:in st.srw.rcxna:in st.srw.rcxhi:in
-!                st.srw.rcxmo:in st.srw.rqahe:in st.srw.rqrad:in
-!                st.srw.rqbrm:in st.srw.b2sihs_joule:in st.srw.b2sihs_divue:in
+!                st.srw.sna0:in st.srw.smpr:in st.srw.smpt:in st.srw.smfr:in
+!                st.srw.b2stbc_sch:in st.srw.b2stbc_she:in st.srw.b2stbc_shi:in
+!                st.srw.b2stbc_sne:in st.srw.b2stbc_shn:in st.srw.b2stbc_skt:in
+!                st.srw.b2stbc_szt:in st.srw.b2stbc_smo:in st.srw.b2stbc_sna:in
+!                st.srw.b2stbm_sch:in st.srw.b2stbm_she:in st.srw.b2stbm_shi:in
+!                st.srw.b2stbm_sne:in st.srw.b2stbm_smo:in st.srw.b2stbm_sna:in
+!                st.srw.b2stbr_sch:in st.srw.b2stbr_she:in st.srw.b2stbr_shi:in
+!                st.srw.b2stbr_sne:in st.srw.b2stbr_shn:in st.srw.b2stbr_skt:in
+!                st.srw.b2stbr_szt:in st.srw.b2stbr_smo:in st.srw.b2stbr_sna:in
+!                st.srw.b2npmo_smaf:in st.srw.b2npmo_smag:in st.srw.b2npmo_smav:in
+!                st.srw.rsana:in st.srw.rsahi:in st.srw.rsamo:in
+!                st.srw.rrana:in st.srw.rrahi:in st.srw.rramo:in
+!                st.srw.rcxna:in st.srw.rcxhi:in st.srw.rcxmo:in
+!                st.srw.rqahe:in st.srw.rqrad:in st.srw.rqbrm:in
+!                st.srw.b2sihs_joule:in st.srw.b2sihs_divue:in
 !                st.srw.b2sihs_divua:in st.srw.b2sihs_exbe:in st.srw.b2sihs_exba:in
 !                st.srw.b2sihs_visa:in st.srw.b2sihs_fraa:in st.srw.b2sihs_str:in
 !                st.srw.sna0_eir_tot:in st.srw.smo0_eir_tot:in
@@ -310,10 +322,14 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : ndata, no_pflux, tr_ip_new_files&
 & , region_flags, tdata, tdatad, tr_ip_elm_count, no_div, addspec, nss, &
 & nrr, nkind_coeff, nkind_data, poloidal_scaling, transport_ip_filename,&
-& nscale, transport_ip_time_switch, transport_ip_time_mod
+& nscale, transport_ip_time_switch, transport_ip_time_mod, &
+& sources_time_mod, sources_time_switch, sources_filename, &
+& sr_ip_elm_count, new_files, nsdata, nxdata, divheat, sdata, xdata, nxx&
+& , nkind_source
   USE B2MOD_TALLIES_DIFFV, ONLY : rrahireg, rranareg, rsahireg, rqradreg&
 & , rsanareg, b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg, &
-& rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue, b2divua, b2exbe
+& rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue, b2divua, b2exbe, &
+& rcxnareg, rcxhireg, rcxmoreg
   USE B2US_FEEDBACK_DIFFV, ONLY : fb_target, fb_targetd, fb_prev, &
 & fb_prevd, fb_current, fb_currentd, cum_volrec, fb_const, fb_constd, &
 & charge_frac, charge_fracd, saved_fb_actuator, saved_fb_actuatord, &
@@ -391,7 +407,7 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ier0, icv
+  INTEGER :: icv
 !srv 31.10.07
   INTEGER, SAVE :: ntim_step_out=1
 !srv 13.07.12
@@ -409,15 +425,8 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   REAL(kind=r8) :: rz(ncv), wrk0(ncv), wrkf(nfc)
   REAL(kind=r8) :: rzd(nbdirsmax, ncv), wrk0d(nbdirsmax, ncv), wrkfd(&
 & nbdirsmax, nfc)
+  LOGICAL :: domoit
   LOGICAL :: solving(4), ramp_call
-!WG_TODO: add some sources locally here, until a module/data-type for WG
-!WG_TODO: is available
-!xpb
-!xpb
-!xpb
-!WG_TODO,                          !xpb
-  REAL(kind=r8) :: snasm(ncv, 0:1, 0:ns-1), smosm(ncv, 0:3, 0:ns-1), &
-& shesm(ncv, 0:3), shism(ncv, 0:3)
   EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, damax
   EXTERNAL B2SASUM_DV
 !   ..procedures
@@ -425,9 +434,10 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
 &     B2XPNN_NODIFF, B2SPEL_NODIFF, B2SPCX_NODIFF, B2SRAL_NODIFF, &
 &     B2SRDT_NODIFF, B2SRST_NODIFF, B2MXZR_NODIFF, B2MXAR_NODIFF, &
-&     B2MXAC_NODIFF, B2MWQT_NODIFF, B2MWIT, B2TRAL_NODIFF, B2SRSM_NODIFF
+&     B2MXAC_NODIFF, B2MWQT_NODIFF, B2MWIT_NODIFF, B2TRAL_NODIFF, &
+&     B2SRSM_NODIFF
   EXTERNAL B2XPNE_DV, B2XPNI_DV, B2XPNN_DV, B2SPEL_DV, B2SPCX_DV, &
-&     B2SRAL_DV, B2SRDT_DV, B2SRST_DV, B2MXZR_DV, B2TRAL_DV
+&     B2SRAL_DV, B2SRDT_DV, B2SRST_DV, B2MXZR_DV, B2TRAL_DV, B2SRSM_DV
   EXTERNAL XERRAB
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -452,6 +462,8 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
   REAL(r8), DIMENSION(ncv) :: temp0
   REAL(r8), DIMENSION(nCv) :: temp1
   REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd4
+  TYPE(B2SOURCEWORK_DIFFV) :: dummyzerodiffd5
+  TYPE(B2PLASMA_DIFFV) :: dummyzerodiffd6
   INTEGER :: nbdirs
 !
 !-----------------------------------------------------------------------
@@ -538,8 +550,8 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 ! the main initialisation is in b2news --- unfortunately a few routines
 ! that need an initial value get called before the first call to b2news
 ! therefore initialise here
-    CALL B2NEWS_FACDRIFT_FAC_EXB_INIT(nfc, st%dv%fac_exb, st%dv%facdrift&
-&                               , st%dv%fac_vis, switch)
+    CALL B2NEWS_FACDRIFT_FAC_EXB_INIT(nfc, mpg, st%dv%fac_exb, st%dv%&
+&                               facdrift, st%dv%fac_vis, switch)
   END IF
 !   ..initialise error parameter
   ierr = 0
@@ -547,15 +559,6 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 !
 ! ..initialisation
 !   ..initialise sources to 0
-  arg1 = ncv*2*ns
-  CALL SFILL_NODIFF(arg1, 0.0_R8, snasm, 1)
-!srv 11.09.09 {
-  arg1 = ncv*4*ns
-  CALL SFILL_NODIFF(arg1, 0.0_R8, smosm, 1)
-  arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0_R8, shesm, 1)
-  arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0_R8, shism, 1)
   arg1 = ncv*2*ns
   DO nd=1,nbdirsmax
     dummyzerodiffd(nd) = 0.D0
@@ -706,9 +709,11 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
       IF (wrong_flow) WRITE(*, *) &
 &                     'b2mndt: wrong_flow returned from b2sral'
 !     ..smooth out sources
-!WG_TODO          call b2srsm (nx, ny, ns,
-!WG_TODO     &     dtim, vol, na, ua, te, ti, ne, ni,
-!WG_TODO     &     sna, smo, she, shi, sne, .true.)                              !srv 11.09.09 {
+      CALL B2SRSM_DV(ncv, ns, dtim, switch, geo, mpg, st%pl%na, std%pl%&
+&              na, st%pl%ua, std%pl%ua, st%pl%te, std%pl%te, st%pl%ti, &
+&              std%pl%ti, st%dv%ne, std%dv%ne, st%dv%ni, std%dv%ni, st%&
+&              dv%nn, std%dv%nn, st%sr, std%sr, .true., nbdirs)
+!srv 11.09.09 {
 !     ..stabilise the source coefficients                                !srv 07.07.21 {
 !srv 01.07.08
       IF (switch%b2mndt_style .EQ. 2 .AND. use_b2srst .EQ. 1) CALL &
@@ -732,13 +737,6 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                st%dv%ni, std%dv%ni, st%dv%nn, std%dv%nn, st%dv%kinrgy&
 &                , std%dv%kinrgy, st%pl%kt, std%pl%kt, st%pl%zt, std%pl%&
 &                zt, st%sr, std%sr, .false., nbdirs)
-!   ..add to previous contributions
-!$$$  No longer needed as it is already done inside b2srdt
-!$$$            call b2saxpy (nCv*2*ns, 1.0_R8, st%sr%snadt,1, st%sr%sna,1)
-!$$$            call b2saxpy (nCv*4*ns, 1.0_R8, st%sr%smodt,1, st%sr%smo,1)
-!$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shedt,1, st%sr%she,1)
-!$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shidt,1, st%sr%shi,1)
-!$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
       END IF
 !srv 26.02.18 }
       IF (equation_sources .NE. 0) THEN
@@ -774,20 +772,17 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
         IF (switch%b2mndt_style .EQ. 1) THEN
           CALL B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
 &                   , ismain0, dtim, switch, switchd, geo, geod, mpg, &
-&                   mpgd, st, std, st_ext, st_extd, st_avg, ier0, &
-&                   ramp_call, nbdirs)
+&                   mpgd, st, std, st_ext, st_extd, st_avg, ramp_call, &
+&                   nbdirs)
         ELSE IF (switch%b2mndt_style .EQ. 2) THEN
           CALL B2NEWS_M_DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 &                    ismain, ismain0, dtim, switch, switchd, geo, geod, &
-&                    mpg, mpgd, st, std, st_ext, st_extd, st_avg, ier0, &
+&                    mpg, mpgd, st, std, st_ext, st_extd, st_avg, &
 &                    ramp_call, nbdirs)
         ELSE
           CALL XERRAB('b2mndt_style should be 1 or 2')
         END IF
         FLUSH(6) 
-        CALL XERTST(ier0 .EQ. 0, 'error return from b2news')
-!!!      (should develop other error handling)
-        ierr = ier0
 !      ..re-compute ne, ne2, ni
         CALL B2XPNE_DV(ncv, ns, st%rt%rza, std%rt%rza, st%pl%na, std%pl%&
 &                na, st_ext%ne, st%dv%ne, std%dv%ne, nbdirs)
@@ -817,7 +812,7 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 !      ..compute norms of the corrections
         CALL B2MXAC_NODIFF(ncv, ns, st%dv, st%diag)
 !*      ..compute norms of the differentiated residuals
-          CALL B2MXAR_DIFFv(nCv, ns, nnreg(0), switch%BoRiS, switch, geo, mpg, &
+          CALL B2MXAR_DIFFv(nCv, ns, mpg%nnreg(0), switch%BoRiS, switch, geo, mpg, &
 &                      std%pl, std%dv, std%diag)
 !*      ..compute norms of the differentiated corrections
           CALL B2MXAC_DIFFv(ncv, ns, std%dv, std%diag)
@@ -826,6 +821,10 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &         b2mndt_moqtlv .OR. istg(0) .EQ. 0) .AND. (2 .LE. switch%&
 &         b2mndt_moqtlv .OR. istg(1) .EQ. 0) .AND. (3 .LE. switch%&
 &         b2mndt_moqtlv .OR. istg(2) .EQ. 0)
+        domoit = 0 .LE. switch%b2mndt_moitlv .AND. (1 .LE. switch%&
+&         b2mndt_moitlv .OR. istg(0) .EQ. 0) .AND. (2 .LE. switch%&
+&         b2mndt_moitlv .OR. istg(1) .EQ. 0) .AND. (3 .LE. switch%&
+&         b2mndt_moitlv .OR. istg(2) .EQ. 0)
 !      ..maybe write quick trace
         IF (domoqt) THEN
           IF (MOD(ncall_b2mndt, ntim_step_out) .EQ. 0) THEN
@@ -838,6 +837,12 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                        switch, geo, st%pl, st%dv, st%diag)
             FLUSH(nout(4)) 
           END IF
+        END IF
+!      ..maybe detailed monitor
+        IF (domoit) THEN
+          CALL B2MWIT_NODIFF(nout(5), ncv, ns, itim, b2mndt_itcnt, st%dv&
+&                     )
+          FLUSH(nout(5)) 
         END IF
 !      ..write the tracing data
         IF (ank_tracing .NE. 0) THEN
@@ -968,8 +973,8 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
 &                solveei, solveen, solveet, solvepo, solvemo, solvekt, &
 &                solvezt, switch%b2mndt_rxf, dtim, st%pl, std%pl, st%dv&
 &                , std%dv, st%co, std%co, st%rt, std%rt, st%sr, std%sr, &
-&                st%srw, std%srw, st%psnc, st%psnl, std%psnl, st_ext, &
-&                st_extd, ier0, nbdirs)
+&                st%srw, std%srw, st%psnl, std%psnl, st_ext, st_extd, &
+&                nbdirs)
       END IF
 !     ..end intermediate iteration
       istg(1) = istg(1) + 1
@@ -980,9 +985,89 @@ SUBROUTINE B2MNDT_DV(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx, &
     GOTO 1
   END IF
 !
-  IF (switch%iav_run .GT. 0) CALL RUNNING_AVERAGE(ncv, ns, st%pl, st%srw&
-&                                           , st_avg)
-  IF (ibatch_av_all .GT. 0) CALL BATCH_AV_ALL(itim, ntim_batch, ncv, ns)
+  IF (switch%iav_run .GT. 0) THEN
+    dummyzerodiffd6%na = 0.0_R8
+    dummyzerodiffd6%ua = 0.0_R8
+    dummyzerodiffd6%po = 0.0_R8
+    dummyzerodiffd6%te = 0.0_R8
+    dummyzerodiffd6%ti = 0.0_R8
+    dummyzerodiffd6%tn = 0.0_R8
+    dummyzerodiffd6%kt = 0.0_R8
+    dummyzerodiffd6%zt = 0.0_R8
+    dummyzerodiffd5%sch0 = 0.0_R8
+    dummyzerodiffd5%she0 = 0.0_R8
+    dummyzerodiffd5%shi0 = 0.0_R8
+    dummyzerodiffd5%sne0 = 0.0_R8
+    dummyzerodiffd5%shn0 = 0.0_R8
+    dummyzerodiffd5%skt0 = 0.0_R8
+    dummyzerodiffd5%szt0 = 0.0_R8
+    dummyzerodiffd5%smo0 = 0.0_R8
+    dummyzerodiffd5%smq0 = 0.0_R8
+    dummyzerodiffd5%sna0 = 0.0_R8
+    dummyzerodiffd5%smcf = 0.0_R8
+    dummyzerodiffd5%smpr = 0.0_R8
+    dummyzerodiffd5%smpt = 0.0_R8
+    dummyzerodiffd5%smfr = 0.0_R8
+    dummyzerodiffd5%b2stbc_sch = 0.0_R8
+    dummyzerodiffd5%b2stbc_she = 0.0_R8
+    dummyzerodiffd5%b2stbc_shi = 0.0_R8
+    dummyzerodiffd5%b2stbc_sne = 0.0_R8
+    dummyzerodiffd5%b2stbc_shn = 0.0_R8
+    dummyzerodiffd5%b2stbc_skt = 0.0_R8
+    dummyzerodiffd5%b2stbc_szt = 0.0_R8
+    dummyzerodiffd5%b2stbc_smo = 0.0_R8
+    dummyzerodiffd5%b2stbc_sna = 0.0_R8
+    dummyzerodiffd5%b2stbm_sch = 0.0_R8
+    dummyzerodiffd5%b2stbm_she = 0.0_R8
+    dummyzerodiffd5%b2stbm_shi = 0.0_R8
+    dummyzerodiffd5%b2stbm_sne = 0.0_R8
+    dummyzerodiffd5%b2stbm_smo = 0.0_R8
+    dummyzerodiffd5%b2stbm_smq = 0.0_R8
+    dummyzerodiffd5%b2stbm_sna = 0.0_R8
+    dummyzerodiffd5%b2stbr_sch = 0.0_R8
+    dummyzerodiffd5%b2stbr_she = 0.0_R8
+    dummyzerodiffd5%b2stbr_shi = 0.0_R8
+    dummyzerodiffd5%b2stbr_sne = 0.0_R8
+    dummyzerodiffd5%b2stbr_shn = 0.0_R8
+    dummyzerodiffd5%b2stbr_skt = 0.0_R8
+    dummyzerodiffd5%b2stbr_szt = 0.0_R8
+    dummyzerodiffd5%b2stbr_smo = 0.0_R8
+    dummyzerodiffd5%b2stbr_sna = 0.0_R8
+    dummyzerodiffd5%b2npmo_smaf = 0.0_R8
+    dummyzerodiffd5%b2npmo_smag = 0.0_R8
+    dummyzerodiffd5%b2npmo_smav = 0.0_R8
+    dummyzerodiffd5%rsana = 0.0_R8
+    dummyzerodiffd5%rsahi = 0.0_R8
+    dummyzerodiffd5%rsamo = 0.0_R8
+    dummyzerodiffd5%rrana = 0.0_R8
+    dummyzerodiffd5%rrahi = 0.0_R8
+    dummyzerodiffd5%rramo = 0.0_R8
+    dummyzerodiffd5%rcxna = 0.0_R8
+    dummyzerodiffd5%rcxhi = 0.0_R8
+    dummyzerodiffd5%rcxmo = 0.0_R8
+    dummyzerodiffd5%rqahe = 0.0_R8
+    dummyzerodiffd5%rqrad = 0.0_R8
+    dummyzerodiffd5%rqbrm = 0.0_R8
+    dummyzerodiffd5%b2sihs_joule = 0.0_R8
+    dummyzerodiffd5%b2sihs_divue = 0.0_R8
+    dummyzerodiffd5%b2sihs_divua = 0.0_R8
+    dummyzerodiffd5%b2sihs_exbe = 0.0_R8
+    dummyzerodiffd5%b2sihs_exba = 0.0_R8
+    dummyzerodiffd5%b2sihs_visa = 0.0_R8
+    dummyzerodiffd5%b2sihs_fraa = 0.0_R8
+    dummyzerodiffd5%b2sihs_str = 0.0_R8
+    dummyzerodiffd5%sna0_eir_tot = 0.0_R8
+    dummyzerodiffd5%smo0_eir_tot = 0.0_R8
+    dummyzerodiffd5%sne0_eir_tot = 0.0_R8
+    dummyzerodiffd5%she0_eir_tot = 0.0_R8
+    dummyzerodiffd5%shi0_eir_tot = 0.0_R8
+    dummyzerodiffd5%shn0_eir_tot = 0.0_R8
+    dummyzerodiffd5%sch0_eir_tot = 0.0_R8
+    CALL RUNNING_AVERAGE_DV(ncv, ns, st%pl, dummyzerodiffd6, st%srw, &
+&                     dummyzerodiffd5, st_avg, st_avgd, nbdirs)
+  END IF
+  IF (ibatch_av_all .GT. 0) CALL BATCH_AV_ALL(itim, ntim_batch, ncv, st%&
+&                                       pl, ns)
 !
 ! ..return
   ncall_b2mndt = ncall_b2mndt + 1
@@ -1038,10 +1123,14 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
   USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : ndata, no_pflux, tr_ip_new_files&
 & , region_flags, tdata, tr_ip_elm_count, no_div, addspec, nss, nrr, &
 & nkind_coeff, nkind_data, poloidal_scaling, transport_ip_filename, &
-& nscale, transport_ip_time_switch, transport_ip_time_mod
+& nscale, transport_ip_time_switch, transport_ip_time_mod, &
+& sources_time_mod, sources_time_switch, sources_filename, &
+& sr_ip_elm_count, new_files, nsdata, nxdata, divheat, sdata, xdata, nxx&
+& , nkind_source
   USE B2MOD_TALLIES_DIFFV, ONLY : rrahireg, rranareg, rsahireg, rqradreg&
 & , rsanareg, b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg, &
-& rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue, b2divua, b2exbe
+& rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue, b2divua, b2exbe, &
+& rcxnareg, rcxhireg, rcxmoreg
   USE B2US_FEEDBACK_DIFFV, ONLY : fb_target, fb_prev, fb_current, &
 & cum_volrec, fb_const, charge_frac, saved_fb_actuator, fb_rescale, &
 & dt_prev, feedback_namelist_used
@@ -1109,7 +1198,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 !.declarations
 !
 !   ..local variables
-  INTEGER :: ier0, icv
+  INTEGER :: icv
 !srv 31.10.07
   INTEGER, SAVE :: ntim_step_out=1
 !srv 13.07.12
@@ -1124,22 +1213,16 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
   REAL(kind=r8) :: nasum, na0sum
 !iyv 06.02.14
   REAL(kind=r8) :: rz(ncv), wrk0(ncv), wrkf(nfc)
+  LOGICAL :: domoit
   LOGICAL :: solving(4), ramp_call
-!WG_TODO: add some sources locally here, until a module/data-type for WG
-!WG_TODO: is available
-!xpb
-!xpb
-!xpb
-!WG_TODO,                          !xpb
-  REAL(kind=r8) :: snasm(ncv, 0:1, 0:ns-1), smosm(ncv, 0:3, 0:ns-1), &
-& shesm(ncv, 0:3), shism(ncv, 0:3)
   EXTERNAL XERTST, IPGETI, IPGETR, B2SASUM_NODIFF, damax
 !   ..procedures
   REAL(kind=r8) :: B2SASUM_NODIFF, damax
   EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
 &     B2XPNN_NODIFF, B2SPEL_NODIFF, B2SPCX_NODIFF, B2SRAL_NODIFF, &
 &     B2SRDT_NODIFF, B2SRST_NODIFF, B2MXZR_NODIFF, B2MXAR_NODIFF, &
-&     B2MXAC_NODIFF, B2MWQT_NODIFF, B2MWIT, B2TRAL_NODIFF, B2SRSM_NODIFF
+&     B2MXAC_NODIFF, B2MWQT_NODIFF, B2MWIT_NODIFF, B2TRAL_NODIFF, &
+&     B2SRSM_NODIFF
   EXTERNAL XERRAB
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
@@ -1237,8 +1320,8 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 ! the main initialisation is in b2news --- unfortunately a few routines
 ! that need an initial value get called before the first call to b2news
 ! therefore initialise here
-    CALL B2NEWS_FACDRIFT_FAC_EXB_INIT(nfc, st%dv%fac_exb, st%dv%facdrift&
-&                               , st%dv%fac_vis, switch)
+    CALL B2NEWS_FACDRIFT_FAC_EXB_INIT(nfc, mpg, st%dv%fac_exb, st%dv%&
+&                               facdrift, st%dv%fac_vis, switch)
   END IF
 !   ..initialise error parameter
   ierr = 0
@@ -1246,15 +1329,6 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 !
 ! ..initialisation
 !   ..initialise sources to 0
-  arg1 = ncv*2*ns
-  CALL SFILL_NODIFF(arg1, 0.0_R8, snasm, 1)
-!srv 11.09.09 {
-  arg1 = ncv*4*ns
-  CALL SFILL_NODIFF(arg1, 0.0_R8, smosm, 1)
-  arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0_R8, shesm, 1)
-  arg1 = ncv*4
-  CALL SFILL_NODIFF(arg1, 0.0_R8, shism, 1)
   arg1 = ncv*2*ns
   CALL SFILL_NODIFF(arg1, 0.0_R8, st%sr%snadt, 1)
   arg1 = ncv*4*ns
@@ -1347,9 +1421,10 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
       IF (wrong_flow) WRITE(*, *) &
 &                     'b2mndt: wrong_flow returned from b2sral'
 !     ..smooth out sources
-!WG_TODO          call b2srsm (nx, ny, ns,
-!WG_TODO     &     dtim, vol, na, ua, te, ti, ne, ni,
-!WG_TODO     &     sna, smo, she, shi, sne, .true.)                              !srv 11.09.09 {
+      CALL B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, st%pl%na, st%&
+&                  pl%ua, st%pl%te, st%pl%ti, st%dv%ne, st%dv%ni, st%dv%&
+&                  nn, st%sr, .true.)
+!srv 11.09.09 {
 !     ..stabilise the source coefficients                                !srv 07.07.21 {
 !srv 01.07.08
       IF (switch%b2mndt_style .EQ. 2 .AND. use_b2srst .EQ. 1) CALL &
@@ -1366,13 +1441,6 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 &                    %psnc%kt, st%psnc%zt, st%pl%na, st%pl%ua, st%pl%te&
 &                    , st%pl%ti, st%pl%tn, st%dv%ne, st%dv%ni, st%dv%nn&
 &                    , st%dv%kinrgy, st%pl%kt, st%pl%zt, st%sr, .false.)
-!   ..add to previous contributions
-!$$$  No longer needed as it is already done inside b2srdt
-!$$$            call b2saxpy (nCv*2*ns, 1.0_R8, st%sr%snadt,1, st%sr%sna,1)
-!$$$            call b2saxpy (nCv*4*ns, 1.0_R8, st%sr%smodt,1, st%sr%smo,1)
-!$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shedt,1, st%sr%she,1)
-!$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shidt,1, st%sr%shi,1)
-!$$$            call b2saxpy (nCv*4, 1.0_R8, st%sr%shndt,1, st%sr%shn,1)
       END IF
 !srv 26.02.18 }
       IF (equation_sources .NE. 0) THEN
@@ -1406,18 +1474,15 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
         IF (switch%b2mndt_style .EQ. 1) THEN
           CALL B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 &                       ismain, ismain0, dtim, switch, geo, mpg, st, &
-&                       st_ext, st_avg, ier0, ramp_call)
+&                       st_ext, st_avg, ramp_call)
         ELSE IF (switch%b2mndt_style .EQ. 2) THEN
           CALL B2NEWS_M_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, &
 &                        ismain, ismain0, dtim, switch, geo, mpg, st, &
-&                        st_ext, st_avg, ier0, ramp_call)
+&                        st_ext, st_avg, ramp_call)
         ELSE
           CALL XERRAB('b2mndt_style should be 1 or 2')
         END IF
         FLUSH(6) 
-        CALL XERTST(ier0 .EQ. 0, 'error return from b2news')
-!!!      (should develop other error handling)
-        ierr = ier0
 !      ..re-compute ne, ne2, ni
         CALL B2XPNE_NODIFF(ncv, ns, st%rt%rza, st%pl%na, st_ext%ne, st%&
 &                    dv%ne)
@@ -1447,6 +1512,10 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 &         b2mndt_moqtlv .OR. istg(0) .EQ. 0) .AND. (2 .LE. switch%&
 &         b2mndt_moqtlv .OR. istg(1) .EQ. 0) .AND. (3 .LE. switch%&
 &         b2mndt_moqtlv .OR. istg(2) .EQ. 0)
+        domoit = 0 .LE. switch%b2mndt_moitlv .AND. (1 .LE. switch%&
+&         b2mndt_moitlv .OR. istg(0) .EQ. 0) .AND. (2 .LE. switch%&
+&         b2mndt_moitlv .OR. istg(1) .EQ. 0) .AND. (3 .LE. switch%&
+&         b2mndt_moitlv .OR. istg(2) .EQ. 0)
 !      ..maybe write quick trace
         IF (domoqt) THEN
           IF (MOD(ncall_b2mndt, ntim_step_out) .EQ. 0) THEN
@@ -1455,6 +1524,12 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 &                        switch, geo, st%pl, st%dv, st%diag)
             FLUSH(nout(4)) 
           END IF
+        END IF
+!      ..maybe detailed monitor
+        IF (domoit) THEN
+          CALL B2MWIT_NODIFF(nout(5), ncv, ns, itim, b2mndt_itcnt, st%dv&
+&                     )
+          FLUSH(nout(5)) 
         END IF
 !      ..write the tracing data
         IF (ank_tracing .NE. 0) THEN
@@ -1540,8 +1615,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
 &                      ncall_b2news_, ismain, solving, solveee, solveei&
 &                      , solveen, solveet, solvepo, solvemo, solvekt, &
 &                      solvezt, switch%b2mndt_rxf, dtim, st%pl, st%dv, &
-&                      st%co, st%rt, st%sr, st%srw, st%psnc, st%psnl, &
-&                      st_ext, ier0)
+&                      st%co, st%rt, st%sr, st%srw, st%psnl, st_ext)
         END IF
 !     ..end intermediate iteration
         istg(1) = istg(1) + 1
@@ -1557,7 +1631,7 @@ SUBROUTINE B2MNDT_NODIFF(nout, ncv, nfc, nvx, ns, ismain, ismain0, nscx&
     IF (switch%iav_run .GT. 0) CALL RUNNING_AVERAGE(ncv, ns, st%pl, st%&
 &                                             srw, st_avg)
     IF (ibatch_av_all .GT. 0) CALL BATCH_AV_ALL(itim, ntim_batch, ncv, &
-&                                         ns)
+&                                         st%pl, ns)
 !
 ! ..return
     ncall_b2mndt = ncall_b2mndt + 1

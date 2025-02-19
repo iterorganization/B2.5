@@ -363,7 +363,6 @@ SUBROUTINE B2SIFRTF_NODIFF(ncv, nfc, nvx, ns, isb, ismain, switch, geo, &
     CALL MY_OUT_US(70, ncv, 0, ua(:, isb), arg14(:))
   END IF
 !
-!
 ! ..return
   ncall_b2sifrtf = ncall_b2sifrtf + 1
   CALL SUBEND()
@@ -1059,7 +1058,6 @@ SUBROUTINE B2SIFRTF_DV(ncv, nfc, nvx, ns, isb, ismain, switch, geo, geod&
     arg14(:) = 'b2sifrtf_ua'//chns
     CALL MY_OUT_US(70, ncv, 0, ua(:, isb), arg14(:))
   END IF
-!
 !
 ! ..return
   ncall_b2sifrtf = ncall_b2sifrtf + 1

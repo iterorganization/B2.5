@@ -30,34 +30,33 @@
 !                *(co.sigx_c) *(co.sigx_kt) *(co.f_luc_sg) *(pl.na)
 !                *(pl.ua) *(pl.po) *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt)
 !                *(pl.zt)
-!   Plus diff mem management of: dv.fch:in dv.fna_fcor:in dv.fne:in
-!                dv.fhe:in dv.fhe_mdf:in dv.fhi:in dv.fhi_mdf:in
-!                dv.fhn:in dv.fkt:in dv.fzt:in dv.floe:in dv.floi:in
-!                dv.flon:in dv.flokt:in dv.flozt:in dv.conn:in
-!                dv.conkt:in dv.conzt:in dv.cone:in dv.coni:in
-!                dv.reshe:in dv.reshi:in dv.resht:in dv.reshn:in
-!                dv.reskt:in dv.reszt:in dv.cortt:in dv.corte:in
-!                dv.corti:in dv.cortn:in dv.corkt:in dv.corzt:in
-!                dv.pccm:in dv.ne:in dv.ni:in dv.nn:in dv.ue:in
-!                dv.lnlam:in dv.vaecrb:in dv.fac_exb:in mpg.intcellp:in
-!                mpg.intcellr:in psnl.na:in psnl.te:in psnl.ti:in
-!                psnl.tn:in psnl.kt:in psnl.zt:in psnl.ne:in psnl.ni:in
-!                psnl.kinrgy:in geo.cvbb:in geo.cvhz:in geo.cvvol:in
-!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
-!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.vxvol:in
-!                geo.vxonedbsq:in geo.cvconn:in st_ext.am:in st_ext.ne2:in
-!                st_ext.za2:in st_ext.na:in st_ext.ta:in rt.rz2:in
-!                srw.b2sihs_joule:in srw.b2sihs_divue:in srw.b2sihs_divua:in
-!                srw.b2sihs_exbe:in srw.b2sihs_exba:in srw.b2sihs_visa:in
-!                srw.b2sihs_fraa:in srw.b2sihs_str:in sr.she:in
-!                sr.shi:in sr.shn:in sr.skt:in sr.szt:in sr.shedt:in
-!                sr.sktdt:in sr.sztdt:in sr.shidt:in sr.shndt:in
-!                sr.skt_diss:in sr.skt_prod:in co.cvsa:in co.cvsahz_eff:in
-!                co.ceqp:in co.dna_exb:in co.hce_exb:in co.hci_exb:in
-!                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.f_luc_sg:in
-!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
-!                pl.kt:in pl.zt:in
+!   Plus diff mem management of: dv.fch:in dv.fhe:in dv.fhe_mdf:in
+!                dv.fhi:in dv.fhi_mdf:in dv.fhn:in dv.fkt:in dv.fzt:in
+!                dv.floe:in dv.floi:in dv.flon:in dv.flokt:in dv.flozt:in
+!                dv.conn:in dv.conkt:in dv.conzt:in dv.cone:in
+!                dv.coni:in dv.reshe:in dv.reshi:in dv.resht:in
+!                dv.reshn:in dv.reskt:in dv.reszt:in dv.cortt:in
+!                dv.corte:in dv.corti:in dv.cortn:in dv.corkt:in
+!                dv.corzt:in dv.pccm:in dv.ne:in dv.ni:in dv.nn:in
+!                dv.ue:in dv.lnlam:in dv.vaecrb:in dv.fac_exb:in
+!                mpg.intcellp:in mpg.intcellr:in psnl.na:in psnl.te:in
+!                psnl.ti:in psnl.tn:in psnl.kt:in psnl.zt:in psnl.ne:in
+!                psnl.ni:in psnl.kinrgy:in geo.cvbb:in geo.cvhz:in
+!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in st_ext.am:in
+!                st_ext.ne2:in st_ext.za2:in st_ext.na:in st_ext.ta:in
+!                rt.rz2:in srw.b2sihs_joule:in srw.b2sihs_divue:in
+!                srw.b2sihs_divua:in srw.b2sihs_exbe:in srw.b2sihs_exba:in
+!                srw.b2sihs_visa:in srw.b2sihs_fraa:in srw.b2sihs_str:in
+!                sr.she:in sr.shi:in sr.shn:in sr.skt:in sr.szt:in
+!                sr.shedt:in sr.sktdt:in sr.sztdt:in sr.shidt:in
+!                sr.shndt:in sr.skt_diss:in sr.skt_prod:in co.cvsa:in
+!                co.cvsahz_eff:in co.ceqp:in co.dna_exb:in co.hce_exb:in
+!                co.hci_exb:in co.alfx_c:in co.sigx_c:in co.sigx_kt:in
+!                co.f_luc_sg:in pl.na:in pl.ua:in pl.po:in pl.te:in
+!                pl.ti:in pl.tn:in pl.kt:in pl.zt:in
 !
 !
 !
@@ -77,8 +76,8 @@
 SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 & , mpgd, itcnt, ismain, solving, solvereg, solvireg, solvnreg, solvtreg&
 & , solvpreg, solvmreg, solvkreg, solvzreg, rxf, dtim, pl, pld, dv, dvd&
-& , co, cod, rt, rtd, sr, srd, srw, srwd, psnc, psnl, psnld, st_ext, &
-& st_extd, ierr, nbdirs)
+& , co, cod, rt, rtd, sr, srd, srw, srwd, psnl, psnld, st_ext, st_extd, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -114,7 +113,7 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
-  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   TYPE(B2PLASMASNAPSHOT_DIFFV), INTENT(INOUT) :: psnld
   REAL(kind=r8) :: rxf, dtim
 !srv 22.05.18
@@ -137,8 +136,6 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   TYPE(B2RATES_DIFFV), INTENT(IN) :: rtd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   TYPE(B2STATEEXT_DIFFV), INTENT(IN) :: st_extd
-!   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -170,11 +167,10 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 !srv 02.01.07
 !srv 02.01.07
 !srv 18.09.09
-!srv 10.11.02
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrkf(nfc, 0:1), wrkc(nfc, 0:1, 0:2), &
 & she0(ncv, 0:3), shi0(ncv, 0:3), shn0(ncv, 0:3), wrk0(ncv), shei(ncv), &
-& shef(ncv, 0:3), shif(ncv, 0:3), shekt(ncv, 0:3), shikt(ncv, 0:3), skt0&
-& (ncv, 0:3), szt0(ncv, 0:3), skt_prod(ncv), skt_diss(ncv)
+& shekt(ncv, 0:3), shikt(ncv, 0:3), skt0(ncv, 0:3), szt0(ncv, 0:3), &
+& skt_prod(ncv), skt_diss(ncv)
   REAL(kind=r8) :: aad(nbdirsmax, mpg%ncmxnv), wrkfd(nbdirsmax, nfc, 0:1&
 & ), wrkcd(nbdirsmax, nfc, 0:1, 0:2), she0d(nbdirsmax, ncv, 0:3), shi0d(&
 & nbdirsmax, ncv, 0:3), shn0d(nbdirsmax, ncv, 0:3), sheid(nbdirsmax, ncv&
@@ -426,11 +422,11 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &             mpgd, ismain, dv%fac_exb, dv%lnlam, dvd%lnlam, pl%na, pld%&
 &             na, pl%ua, pld%ua, dv%ue, dvd%ue, pl%te, pld%te, pl%ti, &
 &             pld%ti, pl%tn, pld%tn, pl%po, pld%po, dv%ne, dvd%ne, dv%ni&
-&             , dvd%ni, dv%nn, dvd%nn, dv%fna_fcor, dv%fne, dv%fch, dvd%&
-&             fch, co%cvsa, cod%cvsa, co%cvsahz_eff, cod%cvsahz_eff, co%&
-&             f_luc_sg, cod%f_luc_sg, co%alfx_c, cod%alfx_c, co%sigx_c, &
-&             cod%sigx_c, rt%rza, rt%rz2, rtd%rz2, st_ext, st_extd, she0&
-&             , she0d, shi0, shi0d, shn0, shn0d, srw, srwd, nbdirs)
+&             , dvd%ni, dv%nn, dvd%nn, dv%fch, dvd%fch, co%cvsa, cod%&
+&             cvsa, co%cvsahz_eff, cod%cvsahz_eff, co%f_luc_sg, cod%&
+&             f_luc_sg, co%alfx_c, cod%alfx_c, co%sigx_c, cod%sigx_c, rt&
+&             %rza, rt%rz2, rtd%rz2, st_ext, st_extd, she0, she0d, shi0&
+&             , shi0d, shn0, shn0d, srw, srwd, nbdirs)
   END IF
   arg1 = ncv*4
   CALL B2SAXPY_DV(arg1, 1.0_R8, sr%she, srd%she, 1, she0, she0d, 1, &
@@ -479,16 +475,11 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
       szt0d(nd, :, :) = 0.D0
     END DO
   END IF
+!srv 22.05.18
 !
 !
 !   ..compute provisional reshe, reshi
 !     (first ignore equipartition)
-!   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
-  shef = she0
-!   ..save final ion heat source ignoring equipartition
-!srv 10.11.02 }
-  shif = shi0
-!srv 22.05.18
   IF ((solving(4) .AND. ANY(solvereg(0:mpg%nnreg(0)))) .OR. switch%&
 &     get_residuals .EQ. 1) THEN
 !srv 22.05.18
@@ -790,7 +781,6 @@ SUBROUTINE B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
   END IF
 !   ..set error parameter and return
 !     (at present all errors cause an abort through xerrab)
-  ierr = 0
 !
   IF (switch%tn_style .LE. 1) THEN
 !! if we solve a combined ion-neutral (tn_style.eq.0)
@@ -848,8 +838,8 @@ END SUBROUTINE B2NPHT_DV
 !srv 22.05.18
 SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 & ismain, solving, solvereg, solvireg, solvnreg, solvtreg, solvpreg, &
-& solvmreg, solvkreg, solvzreg, rxf, dtim, pl, dv, co, rt, sr, srw, psnc&
-& , psnl, st_ext, ierr)
+& solvmreg, solvkreg, solvzreg, rxf, dtim, pl, dv, co, rt, sr, srw, psnl&
+& , st_ext)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -881,7 +871,7 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   REAL(kind=r8) :: rxf, dtim
 !srv 22.05.18
   LOGICAL :: solving(4), solvereg(0:mpg%nnreg(0)), solvireg(0:mpg%nnreg(&
@@ -896,8 +886,6 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
-!   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -929,11 +917,10 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 !srv 02.01.07
 !srv 02.01.07
 !srv 18.09.09
-!srv 10.11.02
   REAL(kind=r8) :: aa(mpg%ncmxnv), wrkf(nfc, 0:1), wrkc(nfc, 0:1, 0:2), &
 & she0(ncv, 0:3), shi0(ncv, 0:3), shn0(ncv, 0:3), wrk0(ncv), shei(ncv), &
-& shef(ncv, 0:3), shif(ncv, 0:3), shekt(ncv, 0:3), shikt(ncv, 0:3), skt0&
-& (ncv, 0:3), szt0(ncv, 0:3), skt_prod(ncv), skt_diss(ncv)
+& shekt(ncv, 0:3), shikt(ncv, 0:3), skt0(ncv, 0:3), szt0(ncv, 0:3), &
+& skt_prod(ncv), skt_diss(ncv)
 !srv 17.07.05
   CHARACTER :: chns*3
   LOGICAL :: warning_i, warning_e, warning_n, warning_kt, warning_zt
@@ -1110,10 +1097,9 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   ELSE
     CALL B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, dv%&
 &                 fac_exb, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, &
-&                 pl%tn, pl%po, dv%ne, dv%ni, dv%nn, dv%fna_fcor, dv%fne&
-&                 , dv%fch, co%cvsa, co%cvsahz_eff, co%f_luc_sg, co%&
-&                 alfx_c, co%sigx_c, rt%rza, rt%rz2, st_ext, she0, shi0&
-&                 , shn0, srw)
+&                 pl%tn, pl%po, dv%ne, dv%ni, dv%nn, dv%fch, co%cvsa, co&
+&                 %cvsahz_eff, co%f_luc_sg, co%alfx_c, co%sigx_c, rt%rza&
+&                 , rt%rz2, st_ext, she0, shi0, shn0, srw)
   END IF
   arg1 = ncv*4
   CALL B2SAXPY_NODIFF(arg1, 1.0_R8, sr%she, 1, she0, 1)
@@ -1141,16 +1127,11 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
     CALL B2SAXPY_NODIFF(ncv, 1.0_R8, skt_prod, 1, sr%skt_prod, 1)
     CALL B2SAXPY_NODIFF(ncv, 1.0_R8, skt_diss, 1, sr%skt_diss, 1)
   END IF
+!srv 22.05.18
 !
 !
 !   ..compute provisional reshe, reshi
 !     (first ignore equipartition)
-!   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
-  shef = she0
-!   ..save final ion heat source ignoring equipartition
-!srv 10.11.02 }
-  shif = shi0
-!srv 22.05.18
   IF ((solving(4) .AND. ANY(solvereg(0:mpg%nnreg(0)))) .OR. switch%&
 &     get_residuals .EQ. 1) THEN
 !srv 22.05.18
@@ -1318,7 +1299,6 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
   END IF
 !   ..set error parameter and return
 !     (at present all errors cause an abort through xerrab)
-  ierr = 0
 !
   IF (switch%tn_style .LE. 1) THEN
 !! if we solve a combined ion-neutral (tn_style.eq.0)

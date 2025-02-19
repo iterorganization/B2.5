@@ -23,8 +23,6 @@ SUBROUTINE B2USP7_NODIFF(nx, ny, nregionv, solvereg, itcnt, ne, te, conc&
   USE B2MOD_TYPES
   USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_CONSTANTS
-!      use b2mod_plasma
-!     * , only : fac_vis
   USE B2MOD_B2CMPA_DIFFV
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES

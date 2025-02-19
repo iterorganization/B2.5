@@ -24,7 +24,6 @@ SUBROUTINE B2SHDT_DV(ncv, nci, ns, dtim, cvvol, nap, napd, tep, tepd, &
 & , kinrgyp, kinrgypd, switch, mpg, shedt, shedtd, shidt, shidtd, shndt&
 & , shndtd, sktdt, sktdtd, sztdt, sztdtd, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV
@@ -302,7 +301,6 @@ SUBROUTINE B2SHDT_NODIFF(ncv, nci, ns, dtim, cvvol, nap, tep, tip, tnp, &
 & ktp, ztp, ne, ni, nn, kinrgyp, switch, mpg, shedt, shidt, shndt, sktdt&
 & , sztdt)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV

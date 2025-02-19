@@ -17,6 +17,7 @@
 !
 MODULE B2MOD_INPUT_PROFILE_DIFFV_DIFFV
   USE B2MOD_TYPES
+  USE B2MOD_USER_NAMELIST_DIFFV_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   USE B2MOD_TIME
   USE B2US_GEO_DIFFV_DIFFV
@@ -28,6 +29,8 @@ MODULE B2MOD_INPUT_PROFILE_DIFFV_DIFFV
   USE B2MOD_DIFFSIZES
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
   IMPLICIT NONE
+!
+!-----------------------------------------------------------------------
 !
   INTEGER :: nrr, nxx, nss
   INTEGER, PARAMETER :: nkind_source=4, nkind_data=2, nscale=10
@@ -55,6 +58,11 @@ MODULE B2MOD_INPUT_PROFILE_DIFFV_DIFFV
   INTEGER, SAVE :: elm_ix_begin, elm_ix_end
   INTEGER, SAVE :: tr_ip_elm_count
   LOGICAL, SAVE :: tr_ip_new_files
+  REAL(kind=r8), SAVE :: sources_time_mod, sources_time_switch
+  CHARACTER(len=256), SAVE :: sources_filename
+  INTEGER, SAVE :: sr_ip_elm_count
+  LOGICAL, SAVE :: new_files
+  REAL(kind=r8), SAVE :: divheat
   NAMELIST /transport/ ndata, tdata, addspec, transport_ip_filename, &
 &     transport_ip_time_mod, transport_ip_time_switch, scaling_ix_begin&
 &     , scaling_ix_end, scaling_strength, region_flags, no_pflux, &
@@ -90,6 +98,1603 @@ CONTAINS
     RETURN
   END SUBROUTINE DEALLOC_INPUT_PROFILE
 
+!  Differentiation of source_input_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: *(state_extd.she) *(state_extd.shi)
+!                *(state_extd.sch) *(state_extd.sna) *(state_extd.smo)
+!                smo0 shi0 she0d sna0d sna0 *(state_ext.she) *(state_ext.shi)
+!                *(state_ext.sch) *(state_ext.sna) *(state_ext.smo)
+!                sch0d shi0d sch0 she0 smo0d
+!   with respect to varying inputs: *(state_extd.she) *(state_extd.shi)
+!                *(state_extd.sch) *(state_extd.sna) *(state_extd.smo)
+!                smo0 shi0 she0d sna0d sna0 *(state_ext.she) *(state_ext.shi)
+!                *(state_ext.sch) *(state_ext.sna) *(state_ext.smo)
+!                sch0d shi0d sch0 she0 smo0d
+!   Plus diff mem management of: state_extd.she:in state_extd.shi:in
+!                state_extd.sch:in state_extd.sna:in state_extd.smo:in
+!                geo.cvbb:in geo.cvx:in geo.cvy:in geo.cvvol:in
+!                geo.fchc:in geo.ftconn:in state_ext.sne:in state_ext.she:in
+!                state_ext.shi:in state_ext.sch:in state_ext.sna:in
+!                state_ext.smo:in
+!  Differentiation of source_input in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: smo0 shi0 sna0 *(state_ext.she)
+!                *(state_ext.shi) *(state_ext.sch) *(state_ext.sna)
+!                *(state_ext.smo) sch0 she0
+!   with respect to varying inputs: smo0 shi0 sna0 *(state_ext.she)
+!                *(state_ext.shi) *(state_ext.sch) *(state_ext.sna)
+!                *(state_ext.smo) sch0 she0
+!   Plus diff mem management of: geo.cvbb:in geo.cvx:in geo.cvy:in
+!                geo.cvvol:in geo.fchc:in geo.ftconn:in state_ext.sne:in
+!                state_ext.she:in state_ext.shi:in state_ext.sch:in
+!                state_ext.sna:in state_ext.smo:in
+!
+  SUBROUTINE SOURCE_INPUT_DV_DV(mpg, mpgd, geo, geod0, geod, switch, &
+&   switchd, state_ext, state_extd0, state_extd, state_extdd, ns, sna0, &
+&   sna0d0, sna0d, sna0dd, smo0, smo0d0, smo0d, smo0dd, she0, she0d0, &
+&   she0d, she0dd, shi0, shi0d0, shi0d, shi0dd, sch0, sch0d0, sch0d, &
+&   sch0dd, sne0, sne0d, nc, nbdirs, nbdirs0)
+!**************************************************************************
+!*     subroutine for reading in source-profiles of density, parallel     *
+!*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
+!*     Inputfile: b2.sources.profile                                      *
+!**************************************************************************
+    USE B2MOD_BALANCE_DIFFV_DIFFV
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+    USE B2MOD_DIFFSIZES
+!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
+    IMPLICIT NONE
+!
+    TYPE(MAPPING), INTENT(IN) :: mpg
+    TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
+    TYPE(GEOMETRY), INTENT(IN) :: geo
+    TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
+    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
+    TYPE(SWITCHES), INTENT(IN) :: switch
+    TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
+    TYPE(B2STATEEXT) :: state_ext
+    TYPE(B2STATEEXT_DIFFV0) :: state_extd0
+    TYPE(B2STATEEXT_DIFFV) :: state_extd
+    TYPE(B2STATEEXT_DIFFV_DIFFV) :: state_extdd
+    INTEGER, INTENT(IN) :: ns, nc
+    INTEGER :: i, j, ix, ixx, iy, ifc, ift, icv, icv1, icv2, icvanf, &
+&   icvend, ireg
+    INTEGER :: ndim, nxdim, ifail, is, ndat, nxdat, kind_data
+    INTEGER :: nfitanf, nfitref, nfitend
+    INTEGER :: kind_source, spec
+    REAL(kind=r8), INTENT(OUT) :: she0(mpg%ncv, 0:3), shi0(mpg%ncv, 0:3)&
+&   , sch0(mpg%ncv, 0:3)
+    REAL(kind=r8), INTENT(OUT) :: she0d0(nbdirsmax0, mpg%ncv, 0:3), &
+&   shi0d0(nbdirsmax0, mpg%ncv, 0:3), sch0d0(nbdirsmax0, mpg%ncv, 0:3)
+    REAL(kind=r8), INTENT(OUT) :: she0d(nbdirsmax, mpg%ncv, 0:3), shi0d(&
+&   nbdirsmax, mpg%ncv, 0:3), sch0d(nbdirsmax, mpg%ncv, 0:3)
+    REAL(kind=r8), INTENT(OUT) :: she0dd(nbdirsmax0, nbdirsmax, mpg%ncv&
+&   , 0:3), shi0dd(nbdirsmax0, nbdirsmax, mpg%ncv, 0:3), sch0dd(&
+&   nbdirsmax0, nbdirsmax, mpg%ncv, 0:3)
+    REAL(kind=r8), INTENT(OUT) :: sna0(mpg%ncv, 0:1, 0:ns-1)
+    REAL(kind=r8), INTENT(OUT) :: sna0d0(nbdirsmax0, mpg%ncv, 0:1, 0:ns-&
+&   1)
+    REAL(kind=r8), INTENT(OUT) :: sna0d(nbdirsmax, mpg%ncv, 0:1, 0:ns-1)
+    REAL(kind=r8), INTENT(OUT) :: sna0dd(nbdirsmax0, nbdirsmax, mpg%ncv&
+&   , 0:1, 0:ns-1)
+    REAL(kind=r8), INTENT(OUT) :: sne0(mpg%ncv, 0:1)
+    REAL(kind=r8), INTENT(OUT) :: sne0d(nbdirsmax, mpg%ncv, 0:1)
+    REAL(kind=r8), INTENT(OUT) :: smo0(mpg%ncv, 0:3, 0:ns-1)
+    REAL(kind=r8), INTENT(OUT) :: smo0d0(nbdirsmax0, mpg%ncv, 0:3, 0:ns-&
+&   1)
+    REAL(kind=r8), INTENT(OUT) :: smo0d(nbdirsmax, mpg%ncv, 0:3, 0:ns-1)
+    REAL(kind=r8), INTENT(OUT) :: smo0dd(nbdirsmax0, nbdirsmax, mpg%ncv&
+&   , 0:3, 0:ns-1)
+    REAL(kind=r8) :: totpower, totna(0:ns-1)
+    REAL(kind=r8) :: f(nrr), r(nrr), pr(nrr), pf(nrr), d(nrr)
+    REAL(kind=r8) :: wrk0(mpg%ncv), wrk1(mpg%ncv)
+    REAL(kind=r8) :: dhtot, dtot, dref
+    REAL(kind=r8), ALLOCATABLE :: fx(:), x(:), xr(:), xf(:), dx(:)
+    REAL(kind=r8), ALLOCATABLE :: fxd(:, :), xd(:, :), xfd(:, :), dxd(:&
+&   , :)
+    LOGICAL, SAVE :: catch_up
+    LOGICAL, PARAMETER :: debug=.false.
+    INTRINSIC INT, MOD
+    INTRINSIC TRIM
+    INTRINSIC MAXVAL
+    REAL(kind=r8) :: arg1
+    INTEGER :: result1
+    INTEGER :: nd
+    INTEGER :: nbdirs
+    INTRINSIC ALLOCATED
+    INTEGER :: nd0
+    INTEGER :: nbdirs0
+!
+! initialise sources and data to zero
+    IF (nc .EQ. 0) THEN
+      nsdata(:, :, :) = 0
+      sdata(:, :, :, :) = 0.0_R8
+      nxdata(:, :, :) = 0
+      xdata(:, :, :, :) = 0.0_R8
+      sna0(:, :, :) = 0.0_R8
+      sne0(:, :) = 0.0_R8
+      smo0(:, :, :) = 0.0_R8
+      she0(:, :) = 0.0_R8
+      shi0(:, :) = 0.0_R8
+      sch0(:, :) = 0.0_R8
+      divheat = 0.0_R8
+      sources_filename = 'b2.sources.profile'
+      sources_time_mod = 0.0_R8
+      sources_time_switch = 0.0_R8
+! read profile
+      CALL READ_SOURCE_PROFILE()
+      new_files = .true.
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
+          smo0dd(nd0, nd, :, :, :) = 0.0_8
+        END DO
+        smo0d(nd, :, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
+          shi0dd(nd0, nd, :, :) = 0.0_8
+        END DO
+        shi0d(nd, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
+          sna0dd(nd0, nd, :, :, :) = 0.0_8
+        END DO
+        sna0d(nd, :, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
+          sch0dd(nd0, nd, :, :) = 0.0_8
+        END DO
+        sch0d(nd, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
+          she0dd(nd0, nd, :, :) = 0.0_8
+        END DO
+        she0d(nd, :, :) = 0.d0
+      END DO
+      smo0d0(:, :, :, :) = 0.0_8
+      shi0d0(:, :, :) = 0.0_8
+      sna0d0(:, :, :, :) = 0.0_8
+      sch0d0(:, :, :) = 0.0_8
+      she0d0(:, :, :) = 0.0_8
+    END IF
+!
+    IF (nc .EQ. 0) THEN
+      IF (sources_time_mod .GT. 0.0_R8) THEN
+        arg1 = tim/sources_time_mod
+        sr_ip_elm_count = INT(arg1)
+      ELSE
+        sr_ip_elm_count = 0
+      END IF
+      IF (sources_time_mod .GT. 0.0_R8) THEN
+        catch_up = MOD(tim, sources_time_mod) .GE. sources_time_switch &
+&         .AND. sources_time_switch .GT. 0.0_R8
+      ELSE IF (sources_time_switch .GT. 0.0_R8) THEN
+        catch_up = tim .GE. sources_time_switch
+      ELSE
+        catch_up = .false.
+      END IF
+      DO WHILE (catch_up)
+        WRITE(*, *) 'sources: catching up...'
+        CALL READ_SOURCE_PROFILE()
+        IF (sources_time_mod .GT. 0.0_R8) THEN
+          catch_up = MOD(tim, sources_time_mod) .GE. sources_time_switch&
+&           .AND. sources_time_switch .GT. 0.0_R8
+        ELSE IF (sources_time_switch .GT. 0.0_R8) THEN
+          catch_up = tim .GE. sources_time_switch
+        ELSE
+          catch_up = .false.
+        END IF
+      END DO
+    ELSE
+      IF (sources_time_mod .GT. 0.0_R8) THEN
+        arg1 = tim/sources_time_mod
+        WRITE(*, '(a,1p,3e12.4,2i6)') 'SOURCES: ', tim, MOD(tim, &
+&       sources_time_mod), sources_time_switch, INT(arg1), &
+&       sr_ip_elm_count
+        arg1 = tim/sources_time_mod
+        catch_up = (MOD(tim, sources_time_mod) .GE. sources_time_switch &
+&         .AND. sources_time_switch .GT. 0.0_R8) .OR. INT(arg1) .GT. &
+&         sr_ip_elm_count
+      ELSE IF (sources_time_switch .GT. 0.0_R8) THEN
+        catch_up = tim .GE. sources_time_switch
+        IF (catch_up) WRITE(*, '(a,a)') &
+&                     'Switching to next sources profile datafile ', &
+&                     TRIM(sources_filename)
+      ELSE
+        catch_up = .false.
+      END IF
+      IF (catch_up) THEN
+        IF (sources_time_mod .GT. 0.0_R8) THEN
+          arg1 = tim/sources_time_mod
+          sr_ip_elm_count = INT(arg1)
+        END IF
+        CALL READ_SOURCE_PROFILE()
+        new_files = .true.
+      END IF
+    END IF
+!
+    IF (new_files) THEN
+      result1 = MAXVAL(nxdata)
+      IF (result1 .GT. 0) OPEN(96, file='dx2') 
+      result1 = MAXVAL(nxdata)
+      IF (result1 .GT. 0) OPEN(95, file='dx1') 
+      result1 = MAXVAL(nsdata)
+      IF (result1 .GT. 0) OPEN(94, file='da1') 
+      result1 = MAXVAL(nsdata)
+      IF (result1 .GT. 0) OPEN(93, file='da2') 
+    END IF
+!
+    DO kind_source=1,nkind_source
+      DO spec=0,ns-1
+        kind_data = 0
+        ndat = 0
+        DO i=1,nkind_data
+          IF (nsdata(i, kind_source, spec) .NE. 0 .AND. kind_data .EQ. 0&
+&         ) THEN
+            kind_data = i
+            ndat = nsdata(kind_data, kind_source, spec)
+          ELSE IF (nsdata(i, kind_source, spec) .NE. 0) THEN
+            WRITE(*, *) 'Conflicting data types:'
+            WRITE(*, *) 'Both KIND_DATA = 1 and 2 are declared for '
+            WRITE(*, *) 'source poloidal profile. '
+            WRITE(*, *) 'KIND_DATA = 2 ignored.'
+            WRITE(*, '(a,i2,a,i3)') 'KIND_SOURCE = ', kind_source, &
+&           ' Species = ', spec
+          END IF
+        END DO
+        IF (ndat .NE. 0) THEN
+          CALL XERTST(ndat .LE. def_nyd, &
+&        'Increase DEF_NYD in b2mod_dimensions to match size of profile'&
+&              )
+          DO i=1,ndat
+            r(i) = sdata(1, i, kind_source, spec)
+            f(i) = sdata(2, i, kind_source, spec)
+            IF (new_files) WRITE(93, *) r(i), f(i)
+          END DO
+!          write(*,*) 'vor region_profile'
+          ndim = nomp
+          CALL CALC_DIST_NODIFF_NODIFF(geo, omp, nomp, icsepomp, pr)
+!          allocate (pf(1:ndim))
+          CALL E01BEF(ndat, r, f, d, ifail)
+!          write(*,*) 'zwischen,ifail=',ifail
+          CALL E01BFF(ndat, r, f, d, ndim, pr, pf, ifail)
+!       obtain axial profile
+          nxdat = 0
+          kind_data = 0
+          DO i=1,nkind_data
+            IF (nxdata(i, kind_source, spec) .NE. 0 .AND. kind_data .EQ.&
+&               0) THEN
+              kind_data = i
+              nxdat = nxdata(kind_data, kind_source, spec)
+            ELSE IF (nxdata(i, kind_source, spec) .NE. 0) THEN
+              WRITE(*, *) 'Conflicting data types:'
+              WRITE(*, *) 'Both KIND_DATA = 1 and 2 are declared for '
+              WRITE(*, *) 'source axial profile. '
+              WRITE(*, *) 'KIND_DATA = 1 ignored.'
+              WRITE(*, '(a,i2,a,i3)') 'KIND_SOURCE = ', kind_source, &
+&             ' Species = ', spec
+            END IF
+          END DO
+          CALL XERTST(nxdat .LE. def_nxd, &
+&        'Increase DEF_NXD in b2mod_dimensions to match size of profile'&
+&              )
+          ALLOCATE(xfd(nbdirsmax, 0:nxdat+1))
+          ALLOCATE(xf(0:nxdat+1))
+          xf(0) = 0.0_R8
+          xf(1:nxdat) = 1.0_R8
+          xf(nxdat+1) = 0.0_R8
+          IF (nxdat .GT. 0) THEN
+            ALLOCATE(fxd(nbdirsmax, 1:nxdat))
+            ALLOCATE(fx(1:nxdat))
+            ALLOCATE(xd(nbdirsmax, 1:nxdat))
+            ALLOCATE(x(1:nxdat))
+            ALLOCATE(xr(0:nxdat+1))
+            ALLOCATE(dxd(nbdirsmax, 1:nxdat))
+            ALLOCATE(dx(1:nxdat))
+            DO i=1,nxdat
+              x(i) = xdata(1, i, kind_source, spec)
+              fx(i) = xdata(2, i, kind_source, spec)
+              IF (new_files) WRITE(95, *) x(i), fx(i)
+            END DO
+            IF (nxdat .EQ. 1) THEN
+              GOTO 98
+            ELSE
+              CALL E01BEF(nxdat, x, fx, dx, ifail)
+            END IF
+          END IF
+!
+          DO iy=1,ndim
+            ift = mpg%cvft(omp(iy))
+            ALLOCATE(xr(mpg%ftcvp(ift, 2)))
+            ALLOCATE(xfd(nbdirsmax, mpg%ftcvp(ift, 2)))
+            ALLOCATE(xf(mpg%ftcvp(ift, 2)))
+            nfitanf = mpg%ftcvp(ift, 2) + 1
+            nfitend = 0
+            nfitref = 0
+            icvanf = 0
+            icvend = 0
+            DO ix=1,mpg%ftcvp(ift, 2)
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              IF (icv .EQ. omp(iy)) nfitref = ix
+              IF (icv .LE. mpg%nci) THEN
+                ireg = mpg%cvreg(icv)
+                IF (MOD(ireg, 4) .EQ. 3) THEN
+                  xr(ix) = 0.0_R8
+                ELSE IF (MOD(ireg, 4) .EQ. 0) THEN
+                  xr(ix) = 1.0_R8
+                ELSE
+                  IF (ix .LT. nfitanf) THEN
+                    nfitanf = ix
+                    icvanf = icv
+                  END IF
+                  IF (ix .GT. nfitend) THEN
+                    nfitend = ix
+                    icvend = icv
+                  END IF
+                END IF
+              END IF
+            END DO
+            nxdim = nfitend - nfitanf + 1
+            wrk1 = 0.0_R8
+            DO j=mpg%ftfcp(ift, 1),mpg%ftfcp(ift, 1)+mpg%ftfcp(ift, 2)-1
+              ifc = mpg%ftfc(j)
+              icv1 = mpg%fccv(ifc, 1)
+              icv2 = mpg%fccv(ifc, 2)
+              wrk1(icv1) = wrk1(icv1) + geo%fchc(ifc, 1)
+              wrk1(icv2) = wrk1(icv2) + geo%fchc(ifc, 2)
+            END DO
+            wrk0 = 0.0_R8
+            DO ix=nfitanf,nfitend
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              wrk0(icv) = wrk1(icv)*geo%cvbb(icv, 3)/geo%cvbb(icv, 0)
+            END DO
+            DO ix=nfitanf,nfitend
+              DO ixx=nfitanf,ix
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                xr(ix) = xr(ix) + wrk0(icv)
+              END DO
+            END DO
+            dref = xr(nfitref)
+            dtot = xr(nfitend) + 0.5_R8*wrk1(icvend) - (xr(nfitanf)+&
+&             0.5_R8*wrk1(icvanf))
+            DO ix=nfitanf,nfitend
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              IF (mpg%cvonclosedsurface(icv)) THEN
+                xr(ix) = (xr(ix)-dref)/geo%ftconn(ift)
+              ELSE
+                xr(ix) = (xr(ix)-dref)/dtot
+              END IF
+            END DO
+            CALL E01BFF(nxdat, x, fx, dx, nxdim, xr(nfitanf:nfitend), xf&
+&                 (nfitanf:nfitend), ifail)
+            DO ix=1,mpg%ftcvp(ift, 2)
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              ireg = mpg%cvreg(icv)
+              IF (icv .LE. mpg%nci .AND. (MOD(ireg, 4) .EQ. 1 .OR. MOD(&
+&                 ireg, 4) .EQ. 2)) THEN
+                IF (kind_source .EQ. 1) THEN
+                  DO nd=1,nbdirs
+                    DO nd0=nd,nbdirs0
+                      sna0dd(nd0, nd, icv, 0, spec) = 0.0_8
+                    END DO
+                    sna0d(nd, icv, 0, spec) = 0.d0
+                  END DO
+                  DO nd0=1,nbdirs0
+                    sna0d0(nd0, icv, 0, spec) = 0.0_8
+                  END DO
+                  sna0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 2) THEN
+                  DO nd=1,nbdirs
+                    DO nd0=nd,nbdirs0
+                      smo0dd(nd0, nd, icv, 0, spec) = 0.0_8
+                    END DO
+                    smo0d(nd, icv, 0, spec) = 0.d0
+                  END DO
+                  DO nd0=1,nbdirs0
+                    smo0d0(nd0, icv, 0, spec) = 0.0_8
+                  END DO
+                  smo0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 3) THEN
+                  DO nd=1,nbdirs
+                    DO nd0=nd,nbdirs0
+                      she0dd(nd0, nd, icv, 0) = 0.0_8
+                    END DO
+                    she0d(nd, icv, 0) = 0.d0
+                  END DO
+                  DO nd0=1,nbdirs0
+                    she0d0(nd0, icv, 0) = 0.0_8
+                  END DO
+                  she0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 4) THEN
+                  DO nd=1,nbdirs
+                    DO nd0=nd,nbdirs0
+                      shi0dd(nd0, nd, icv, 0) = 0.0_8
+                    END DO
+                    shi0d(nd, icv, 0) = 0.d0
+                  END DO
+                  DO nd0=1,nbdirs0
+                    shi0d0(nd0, icv, 0) = 0.0_8
+                  END DO
+                  shi0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 5) THEN
+                  DO nd=1,nbdirs
+                    DO nd0=nd,nbdirs0
+                      sch0dd(nd0, nd, icv, 0) = 0.0_8
+                    END DO
+                    sch0d(nd, icv, 0) = 0.d0
+                  END DO
+                  DO nd0=1,nbdirs0
+                    sch0d0(nd0, icv, 0) = 0.0_8
+                  END DO
+                  sch0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 6) THEN
+                  sne0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                END IF
+              END IF
+              IF ((nc .EQ. 0 .AND. iy .EQ. 1) .OR. debug) THEN
+                IF (nxdat .GT. 0) THEN
+                  IF (kind_source .EQ. 1) WRITE(*, &
+&                                         '(a,i2,1p,2(1x,e14.7))') &
+&                                         'AXIAL-SOURCES: sna ', spec, &
+&                                         xr(ix), xf(ix)
+                  IF (kind_source .EQ. 2) WRITE(*, &
+&                                         '(a,i2,1p,2(1x,e14.7))') &
+&                                         'AXIAL-SOURCES: smo ', spec, &
+&                                         xr(ix), xf(ix)
+                  IF (kind_source .EQ. 3) WRITE(*, '(a,1p,2(1x,e14.7))')&
+&                                         'AXIAL-SOURCES: she ', xr(ix)&
+&                                         , xf(ix)
+                  IF (kind_source .EQ. 4) WRITE(*, '(a,1p,2(1x,e14.7))')&
+&                                         'AXIAL-SOURCES: shi ', xr(ix)&
+&                                         , xf(ix)
+                  IF (kind_source .EQ. 5) WRITE(*, '(a,1p,2(1x,e14.7))')&
+&                                         'AXIAL-SOURCES: sch ', xr(ix)&
+&                                         , xf(ix)
+                  IF (kind_source .EQ. 6) WRITE(*, '(a,1p,2(1x,e14.7))')&
+&                                         'AXIAL-SOURCES: sne ', xr(ix)&
+&                                         , xf(ix)
+                  IF (new_files) WRITE(96, *) xr(ix), xf(ix)
+                END IF
+              END IF
+            END DO
+            IF (nc .EQ. 0 .OR. debug) THEN
+              IF (ndat .GT. 0) THEN
+                IF (kind_source .EQ. 1) WRITE(*, '(a,i2,1p,2(1x,e14.7))'&
+&                                      ) 'PROFILE-SOURCES: sna ', spec, &
+&                                       pr(iy), pf(iy)
+                IF (kind_source .EQ. 2) WRITE(*, '(a,i2,1p,2(1x,e14.7))'&
+&                                      ) 'PROFILE-SOURCES: smo ', spec, &
+&                                       pr(iy), pf(iy)
+                IF (kind_source .EQ. 3) WRITE(*, '(a,1p,2(1x,e14.7))') &
+&                                       'PROFILE-SOURCES: she ', pr(iy)&
+&                                       , pf(iy)
+                IF (kind_source .EQ. 4) WRITE(*, '(a,1p,2(1x,e14.7))') &
+&                                       'PROFILE-SOURCES: shi ', pr(iy)&
+&                                       , pf(iy)
+                IF (kind_source .EQ. 5) WRITE(*, '(a,1p,2(1x,e14.7))') &
+&                                       'PROFILE-SOURCES: sch ', pr(iy)&
+&                                       , pf(iy)
+                IF (kind_source .EQ. 6) WRITE(*, '(a,1p,2(1x,e14.7))') &
+&                                       'PROFILE-SOURCES: sne ', pr(iy)&
+&                                       , pf(iy)
+                IF (new_files) WRITE(94, *) pr(iy), pf(iy)
+              END IF
+            END IF
+            DEALLOCATE(xr)
+            IF (ALLOCATED(xfd)) THEN
+              DEALLOCATE(xfd)
+            END IF
+            DEALLOCATE(xf)
+          END DO
+        END IF
+      END DO
+    END DO
+! Calculation of the total power input
+    IF (nc .EQ. 0 .OR. debug) THEN
+      totpower = 0.0_R8
+      totna(:) = 0.0_R8
+      DO icv=1,mpg%nci
+        totpower = totpower + she0(icv, 0) + shi0(icv, 0)
+        DO is=0,ns-1
+          totna(is) = totna(is) + sna0(icv, 0, is)
+        END DO
+      END DO
+      WRITE(*, *) 'Total profile-source Power=', totpower
+      DO is=0,ns-1
+        WRITE(*, *) 'Total profile-source na:', is, totna(is)
+      END DO
+    END IF
+!
+    IF (divheat .GT. 0.0_R8) THEN
+      dhtot = 0.0_R8
+      DO icv=1,mpg%nci
+        IF (MOD(mpg%cvreg(icv), 4) .EQ. 3 .OR. MOD(mpg%cvreg(icv), 4) &
+&           .EQ. 0) THEN
+          shi0(icv, 0) = shi0(icv, 0) + divheat*geo%cvvol(icv)
+          dhtot = dhtot + divheat*geo%cvvol(icv)
+        END IF
+      END DO
+      WRITE(*, *) 'DIVHEAT=', dhtot, divheat
+    END IF
+    GOTO 100
+!
+ 98 WRITE(*, *) 'Error in computing axial profile'
+!
+!   ..zero out contributions in dead cells and core boundary
+ 100 DO is=0,ns-1
+      CALL B2XZDD_DV_DV(mpg%ncv, 1, switch, mpg, sna0(1, 0, is), sna0d0(&
+&                 :, 1, 0, is), sna0d(:, 1, 0, is), sna0dd(:, :, 1, 0, &
+&                 is), nbdirs, nbdirs0)
+      CALL B2XZDD_DV_DV(mpg%ncv, 3, switch, mpg, smo0(1, 0, is), smo0d0(&
+&                 :, 1, 0, is), smo0d(:, 1, 0, is), smo0dd(:, :, 1, 0, &
+&                 is), nbdirs, nbdirs0)
+    END DO
+    CALL B2XZDD_NODIFF_NODIFF(mpg%ncv, 1, switch, mpg, sne0)
+    CALL B2XZDD_DV_DV(mpg%ncv, 3, switch, mpg, she0, she0d0, she0d, &
+&               she0dd, nbdirs, nbdirs0)
+    CALL B2XZDD_DV_DV(mpg%ncv, 3, switch, mpg, shi0, shi0d0, shi0d, &
+&               shi0dd, nbdirs, nbdirs0)
+    CALL B2XZDD_DV_DV(mpg%ncv, 3, switch, mpg, sch0, sch0d0, sch0d, &
+&               sch0dd, nbdirs, nbdirs0)
+    DO nd=1,nbdirs
+      DO nd0=nd,nbdirs0
+!
+        state_extdd%sna(nd0, nd, :, :) = sna0dd(nd0, nd, :, 0, :)
+        state_extdd%smo(nd0, nd, :, :) = smo0dd(nd0, nd, :, 0, :)
+        state_extdd%she(nd0, nd, :) = she0dd(nd0, nd, :, 0)
+        state_extdd%shi(nd0, nd, :) = shi0dd(nd0, nd, :, 0)
+        state_extdd%sch(nd0, nd, :) = sch0dd(nd0, nd, :, 0)
+      END DO
+      state_extd%sna(nd, :, :) = sna0d(nd, :, 0, :)
+      state_extd%smo(nd, :, :) = smo0d(nd, :, 0, :)
+      state_extd%she(nd, :) = she0d(nd, :, 0)
+      state_extd%shi(nd, :) = shi0d(nd, :, 0)
+      state_extd%sch(nd, :) = sch0d(nd, :, 0)
+    END DO
+    DO nd0=1,nbdirs0
+      state_extd0%sna(nd0, :, :) = sna0d0(nd0, :, 0, :)
+      state_extd0%smo(nd0, :, :) = smo0d0(nd0, :, 0, :)
+      state_extd0%she(nd0, :) = she0d0(nd0, :, 0)
+      state_extd0%shi(nd0, :) = shi0d0(nd0, :, 0)
+      state_extd0%sch(nd0, :) = sch0d0(nd0, :, 0)
+    END DO
+    state_ext%sna(:, :) = sna0(:, 0, :)
+    state_ext%smo(:, :) = smo0(:, 0, :)
+    state_ext%sne(:) = sne0(:, 0)
+    state_ext%she(:) = she0(:, 0)
+    state_ext%shi(:) = shi0(:, 0)
+    state_ext%sch(:) = sch0(:, 0)
+!
+!djm Jan2017 Keep linearised sources for balance
+    IF (balance_netcdf .NE. 0) THEN
+      ext_sna0to1 = sna0
+      ext_smo0to3 = smo0
+      ext_she0to3 = she0
+      ext_shi0to3 = shi0
+    END IF
+!
+    IF (new_files) THEN
+      result1 = MAXVAL(nsdata)
+      IF (result1 .GT. 0) CLOSE(93) 
+      result1 = MAXVAL(nsdata)
+      IF (result1 .GT. 0) CLOSE(94) 
+      result1 = MAXVAL(nxdata)
+      IF (result1 .GT. 0) CLOSE(95) 
+      result1 = MAXVAL(nxdata)
+      IF (result1 .GT. 0) CLOSE(96) 
+      new_files = .false.
+    END IF
+!
+    RETURN
+
+  CONTAINS
+!
+!
+    SUBROUTINE READ_SOURCE_PROFILE()
+      USE B2MOD_DIFFSIZES
+      IMPLICIT NONE
+!
+      CHARACTER(len=260) :: filenames
+      LOGICAL :: file_ok
+!
+      NAMELIST /profile/ nsdata, nxdata, sdata, xdata, divheat, &
+&         sources_time_mod, sources_time_switch, sources_filename
+      EXTERNAL FIND_FILE
+      INTRINSIC TRIM
+      EXTERNAL XERRAB
+!
+!  read the profile data
+      filenames = sources_filename
+      sources_time_mod = 0.0_R8
+      sources_time_switch = 0.0_R8
+      CALL FIND_FILE(filenames, file_ok)
+      IF (file_ok) THEN
+        OPEN(92, file=filenames) 
+        WRITE(*, *) 'Reading sources profile namelist from ', TRIM(&
+&       filenames)
+        READ(92, profile) 
+        WRITE(*, *) 'Read sources profile namelist from ', TRIM(&
+&       filenames)
+        CLOSE(92) 
+      ELSE
+        CALL XERRAB('No '//TRIM(filenames))
+      END IF
+!     write(*,profile)
+      RETURN
+    END SUBROUTINE READ_SOURCE_PROFILE
+
+  END SUBROUTINE SOURCE_INPUT_DV_DV
+
+!  Differentiation of source_input in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: smo0 shi0 sna0 *(state_ext.she)
+!                *(state_ext.shi) *(state_ext.sch) *(state_ext.sna)
+!                *(state_ext.smo) sch0 she0
+!   with respect to varying inputs: smo0 shi0 sna0 *(state_ext.she)
+!                *(state_ext.shi) *(state_ext.sch) *(state_ext.sna)
+!                *(state_ext.smo) sch0 she0
+!   Plus diff mem management of: geo.cvbb:in geo.cvx:in geo.cvy:in
+!                geo.cvvol:in geo.fchc:in geo.ftconn:in state_ext.sne:in
+!                state_ext.she:in state_ext.shi:in state_ext.sch:in
+!                state_ext.sna:in state_ext.smo:in
+!
+  SUBROUTINE SOURCE_INPUT_DV(mpg, mpgd, geo, geod, switch, switchd, &
+&   state_ext, state_extd, ns, sna0, sna0d, smo0, smo0d, she0, she0d, &
+&   shi0, shi0d, sch0, sch0d, sne0, sne0d, nc, nbdirs)
+!**************************************************************************
+!*     subroutine for reading in source-profiles of density, parallel     *
+!*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
+!*     Inputfile: b2.sources.profile                                      *
+!**************************************************************************
+    USE B2MOD_BALANCE_DIFFV_DIFFV
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+    USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!
+    TYPE(MAPPING), INTENT(IN) :: mpg
+    TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
+    TYPE(GEOMETRY), INTENT(IN) :: geo
+    TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
+    TYPE(SWITCHES), INTENT(IN) :: switch
+    TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
+    TYPE(B2STATEEXT) :: state_ext
+    TYPE(B2STATEEXT_DIFFV) :: state_extd
+    INTEGER, INTENT(IN) :: ns, nc
+    INTEGER :: i, j, ix, ixx, iy, ifc, ift, icv, icv1, icv2, icvanf, &
+&   icvend, ireg
+    INTEGER :: ndim, nxdim, ifail, is, ndat, nxdat, kind_data
+    INTEGER :: nfitanf, nfitref, nfitend
+    INTEGER :: kind_source, spec
+    REAL(kind=r8), INTENT(OUT) :: she0(mpg%ncv, 0:3), shi0(mpg%ncv, 0:3)&
+&   , sch0(mpg%ncv, 0:3)
+    REAL(kind=r8), INTENT(OUT) :: she0d(nbdirsmax, mpg%ncv, 0:3), shi0d(&
+&   nbdirsmax, mpg%ncv, 0:3), sch0d(nbdirsmax, mpg%ncv, 0:3)
+    REAL(kind=r8), INTENT(OUT) :: sna0(mpg%ncv, 0:1, 0:ns-1)
+    REAL(kind=r8), INTENT(OUT) :: sna0d(nbdirsmax, mpg%ncv, 0:1, 0:ns-1)
+    REAL(kind=r8), INTENT(OUT) :: sne0(mpg%ncv, 0:1)
+    REAL(kind=r8), INTENT(OUT) :: sne0d(nbdirsmax, mpg%ncv, 0:1)
+    REAL(kind=r8), INTENT(OUT) :: smo0(mpg%ncv, 0:3, 0:ns-1)
+    REAL(kind=r8), INTENT(OUT) :: smo0d(nbdirsmax, mpg%ncv, 0:3, 0:ns-1)
+    REAL(kind=r8) :: totpower, totna(0:ns-1)
+    REAL(kind=r8) :: f(nrr), r(nrr), pr(nrr), pf(nrr), d(nrr)
+    REAL(kind=r8) :: wrk0(mpg%ncv), wrk1(mpg%ncv)
+    REAL(kind=r8) :: dhtot, dtot, dref
+    REAL(kind=r8), ALLOCATABLE :: fx(:), x(:), xr(:), xf(:), dx(:)
+    REAL(kind=r8), ALLOCATABLE :: fxd(:, :), xd(:, :), xfd(:, :), dxd(:&
+&   , :)
+    LOGICAL, SAVE :: catch_up
+    LOGICAL, PARAMETER :: debug=.false.
+    INTRINSIC INT, MOD
+    INTRINSIC TRIM
+    INTRINSIC MAXVAL
+    REAL(kind=r8) :: arg1
+    INTEGER :: result1
+    INTEGER :: nd
+    INTEGER :: nbdirs
+    INTRINSIC ALLOCATED
+!
+! initialise sources and data to zero
+    IF (nc .EQ. 0) THEN
+      nsdata(:, :, :) = 0
+      sdata(:, :, :, :) = 0.0_R8
+      nxdata(:, :, :) = 0
+      xdata(:, :, :, :) = 0.0_R8
+      sna0(:, :, :) = 0.0_R8
+      sne0(:, :) = 0.0_R8
+      smo0(:, :, :) = 0.0_R8
+      she0(:, :) = 0.0_R8
+      shi0(:, :) = 0.0_R8
+      sch0(:, :) = 0.0_R8
+      divheat = 0.0_R8
+      sources_filename = 'b2.sources.profile'
+      sources_time_mod = 0.0_R8
+      sources_time_switch = 0.0_R8
+! read profile
+      CALL READ_SOURCE_PROFILE()
+      new_files = .true.
+      DO nd=1,nbdirsmax
+        smo0d(nd, :, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        shi0d(nd, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        sna0d(nd, :, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        sch0d(nd, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        she0d(nd, :, :) = 0.d0
+        sne0d(nd, :, :) = 0.d0
+      END DO
+    END IF
+!
+    IF (nc .EQ. 0) THEN
+      IF (sources_time_mod .GT. 0.0_R8) THEN
+        arg1 = tim/sources_time_mod
+        sr_ip_elm_count = INT(arg1)
+      ELSE
+        sr_ip_elm_count = 0
+      END IF
+      IF (sources_time_mod .GT. 0.0_R8) THEN
+        catch_up = MOD(tim, sources_time_mod) .GE. sources_time_switch &
+&         .AND. sources_time_switch .GT. 0.0_R8
+      ELSE IF (sources_time_switch .GT. 0.0_R8) THEN
+        catch_up = tim .GE. sources_time_switch
+      ELSE
+        catch_up = .false.
+      END IF
+      DO WHILE (catch_up)
+        WRITE(*, *) 'sources: catching up...'
+        CALL READ_SOURCE_PROFILE()
+        IF (sources_time_mod .GT. 0.0_R8) THEN
+          catch_up = MOD(tim, sources_time_mod) .GE. sources_time_switch&
+&           .AND. sources_time_switch .GT. 0.0_R8
+        ELSE IF (sources_time_switch .GT. 0.0_R8) THEN
+          catch_up = tim .GE. sources_time_switch
+        ELSE
+          catch_up = .false.
+        END IF
+      END DO
+    ELSE
+      IF (sources_time_mod .GT. 0.0_R8) THEN
+        arg1 = tim/sources_time_mod
+        WRITE(*, '(a,1p,3e12.4,2i6)') 'SOURCES: ', tim, MOD(tim, &
+&       sources_time_mod), sources_time_switch, INT(arg1), &
+&       sr_ip_elm_count
+        arg1 = tim/sources_time_mod
+        catch_up = (MOD(tim, sources_time_mod) .GE. sources_time_switch &
+&         .AND. sources_time_switch .GT. 0.0_R8) .OR. INT(arg1) .GT. &
+&         sr_ip_elm_count
+      ELSE IF (sources_time_switch .GT. 0.0_R8) THEN
+        catch_up = tim .GE. sources_time_switch
+        IF (catch_up) WRITE(*, '(a,a)') &
+&                     'Switching to next sources profile datafile ', &
+&                     TRIM(sources_filename)
+      ELSE
+        catch_up = .false.
+      END IF
+      IF (catch_up) THEN
+        IF (sources_time_mod .GT. 0.0_R8) THEN
+          arg1 = tim/sources_time_mod
+          sr_ip_elm_count = INT(arg1)
+        END IF
+        CALL READ_SOURCE_PROFILE()
+        new_files = .true.
+      END IF
+    END IF
+!
+    IF (new_files) THEN
+      result1 = MAXVAL(nxdata)
+      IF (result1 .GT. 0) OPEN(96, file='dx2') 
+      result1 = MAXVAL(nxdata)
+      IF (result1 .GT. 0) OPEN(95, file='dx1') 
+      result1 = MAXVAL(nsdata)
+      IF (result1 .GT. 0) OPEN(94, file='da1') 
+      result1 = MAXVAL(nsdata)
+      IF (result1 .GT. 0) OPEN(93, file='da2') 
+    END IF
+!
+    DO kind_source=1,nkind_source
+      DO spec=0,ns-1
+        kind_data = 0
+        ndat = 0
+        DO i=1,nkind_data
+          IF (nsdata(i, kind_source, spec) .NE. 0 .AND. kind_data .EQ. 0&
+&         ) THEN
+            kind_data = i
+            ndat = nsdata(kind_data, kind_source, spec)
+          ELSE IF (nsdata(i, kind_source, spec) .NE. 0) THEN
+            WRITE(*, *) 'Conflicting data types:'
+            WRITE(*, *) 'Both KIND_DATA = 1 and 2 are declared for '
+            WRITE(*, *) 'source poloidal profile. '
+            WRITE(*, *) 'KIND_DATA = 2 ignored.'
+            WRITE(*, '(a,i2,a,i3)') 'KIND_SOURCE = ', kind_source, &
+&           ' Species = ', spec
+          END IF
+        END DO
+        IF (ndat .NE. 0) THEN
+          CALL XERTST(ndat .LE. def_nyd, &
+&        'Increase DEF_NYD in b2mod_dimensions to match size of profile'&
+&              )
+          DO i=1,ndat
+            r(i) = sdata(1, i, kind_source, spec)
+            f(i) = sdata(2, i, kind_source, spec)
+            IF (new_files) WRITE(93, *) r(i), f(i)
+          END DO
+!          write(*,*) 'vor region_profile'
+          ndim = nomp
+          CALL CALC_DIST_NODIFF_NODIFF(geo, omp, nomp, icsepomp, pr)
+!          allocate (pf(1:ndim))
+          CALL E01BEF(ndat, r, f, d, ifail)
+!          write(*,*) 'zwischen,ifail=',ifail
+          CALL E01BFF(ndat, r, f, d, ndim, pr, pf, ifail)
+!       obtain axial profile
+          nxdat = 0
+          kind_data = 0
+          DO i=1,nkind_data
+            IF (nxdata(i, kind_source, spec) .NE. 0 .AND. kind_data .EQ.&
+&               0) THEN
+              kind_data = i
+              nxdat = nxdata(kind_data, kind_source, spec)
+            ELSE IF (nxdata(i, kind_source, spec) .NE. 0) THEN
+              WRITE(*, *) 'Conflicting data types:'
+              WRITE(*, *) 'Both KIND_DATA = 1 and 2 are declared for '
+              WRITE(*, *) 'source axial profile. '
+              WRITE(*, *) 'KIND_DATA = 1 ignored.'
+              WRITE(*, '(a,i2,a,i3)') 'KIND_SOURCE = ', kind_source, &
+&             ' Species = ', spec
+            END IF
+          END DO
+          CALL XERTST(nxdat .LE. def_nxd, &
+&        'Increase DEF_NXD in b2mod_dimensions to match size of profile'&
+&              )
+          ALLOCATE(xfd(nbdirsmax, 0:nxdat+1))
+          ALLOCATE(xf(0:nxdat+1))
+          xf(0) = 0.0_R8
+          xf(1:nxdat) = 1.0_R8
+          xf(nxdat+1) = 0.0_R8
+          IF (nxdat .GT. 0) THEN
+            ALLOCATE(fxd(nbdirsmax, 1:nxdat))
+            ALLOCATE(fx(1:nxdat))
+            ALLOCATE(xd(nbdirsmax, 1:nxdat))
+            ALLOCATE(x(1:nxdat))
+            ALLOCATE(xr(0:nxdat+1))
+            ALLOCATE(dxd(nbdirsmax, 1:nxdat))
+            ALLOCATE(dx(1:nxdat))
+            DO i=1,nxdat
+              x(i) = xdata(1, i, kind_source, spec)
+              fx(i) = xdata(2, i, kind_source, spec)
+              IF (new_files) WRITE(95, *) x(i), fx(i)
+            END DO
+            IF (nxdat .EQ. 1) THEN
+!
+              WRITE(*, *) 'Error in computing axial profile'
+              GOTO 100
+            ELSE
+              CALL E01BEF(nxdat, x, fx, dx, ifail)
+            END IF
+          END IF
+!
+          DO iy=1,ndim
+            ift = mpg%cvft(omp(iy))
+            ALLOCATE(xr(mpg%ftcvp(ift, 2)))
+            ALLOCATE(xfd(nbdirsmax, mpg%ftcvp(ift, 2)))
+            ALLOCATE(xf(mpg%ftcvp(ift, 2)))
+            nfitanf = mpg%ftcvp(ift, 2) + 1
+            nfitend = 0
+            nfitref = 0
+            icvanf = 0
+            icvend = 0
+            DO ix=1,mpg%ftcvp(ift, 2)
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              IF (icv .EQ. omp(iy)) nfitref = ix
+              IF (icv .LE. mpg%nci) THEN
+                ireg = mpg%cvreg(icv)
+                IF (MOD(ireg, 4) .EQ. 3) THEN
+                  xr(ix) = 0.0_R8
+                ELSE IF (MOD(ireg, 4) .EQ. 0) THEN
+                  xr(ix) = 1.0_R8
+                ELSE
+                  IF (ix .LT. nfitanf) THEN
+                    nfitanf = ix
+                    icvanf = icv
+                  END IF
+                  IF (ix .GT. nfitend) THEN
+                    nfitend = ix
+                    icvend = icv
+                  END IF
+                END IF
+              END IF
+            END DO
+            nxdim = nfitend - nfitanf + 1
+            wrk1 = 0.0_R8
+            DO j=mpg%ftfcp(ift, 1),mpg%ftfcp(ift, 1)+mpg%ftfcp(ift, 2)-1
+              ifc = mpg%ftfc(j)
+              icv1 = mpg%fccv(ifc, 1)
+              icv2 = mpg%fccv(ifc, 2)
+              wrk1(icv1) = wrk1(icv1) + geo%fchc(ifc, 1)
+              wrk1(icv2) = wrk1(icv2) + geo%fchc(ifc, 2)
+            END DO
+            wrk0 = 0.0_R8
+            DO ix=nfitanf,nfitend
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              wrk0(icv) = wrk1(icv)*geo%cvbb(icv, 3)/geo%cvbb(icv, 0)
+            END DO
+            DO ix=nfitanf,nfitend
+              DO ixx=nfitanf,ix
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                xr(ix) = xr(ix) + wrk0(icv)
+              END DO
+            END DO
+            dref = xr(nfitref)
+            dtot = xr(nfitend) + 0.5_R8*wrk1(icvend) - (xr(nfitanf)+&
+&             0.5_R8*wrk1(icvanf))
+            DO ix=nfitanf,nfitend
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              IF (mpg%cvonclosedsurface(icv)) THEN
+                xr(ix) = (xr(ix)-dref)/geo%ftconn(ift)
+              ELSE
+                xr(ix) = (xr(ix)-dref)/dtot
+              END IF
+            END DO
+            CALL E01BFF(nxdat, x, fx, dx, nxdim, xr(nfitanf:nfitend), xf&
+&                 (nfitanf:nfitend), ifail)
+            DO ix=1,mpg%ftcvp(ift, 2)
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              ireg = mpg%cvreg(icv)
+              IF (icv .LE. mpg%nci .AND. (MOD(ireg, 4) .EQ. 1 .OR. MOD(&
+&                 ireg, 4) .EQ. 2)) THEN
+                IF (kind_source .EQ. 1) THEN
+                  DO nd=1,nbdirs
+                    sna0d(nd, icv, 0, spec) = 0.d0
+                  END DO
+                  sna0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 2) THEN
+                  DO nd=1,nbdirs
+                    smo0d(nd, icv, 0, spec) = 0.d0
+                  END DO
+                  smo0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 3) THEN
+                  DO nd=1,nbdirs
+                    she0d(nd, icv, 0) = 0.d0
+                  END DO
+                  she0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 4) THEN
+                  DO nd=1,nbdirs
+                    shi0d(nd, icv, 0) = 0.d0
+                  END DO
+                  shi0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 5) THEN
+                  DO nd=1,nbdirs
+                    sch0d(nd, icv, 0) = 0.d0
+                  END DO
+                  sch0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 6) THEN
+                  sne0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                END IF
+              END IF
+              IF ((nc .EQ. 0 .AND. iy .EQ. 1) .OR. debug) THEN
+                IF (nxdat .GT. 0) THEN
+                  IF (kind_source .EQ. 1) WRITE(*, &
+&                                         '(a,i2,1p,2(1x,e14.7))') &
+&                                         'AXIAL-SOURCES: sna ', spec, &
+&                                         xr(ix), xf(ix)
+                  IF (kind_source .EQ. 2) WRITE(*, &
+&                                         '(a,i2,1p,2(1x,e14.7))') &
+&                                         'AXIAL-SOURCES: smo ', spec, &
+&                                         xr(ix), xf(ix)
+                  IF (kind_source .EQ. 3) WRITE(*, '(a,1p,2(1x,e14.7))')&
+&                                         'AXIAL-SOURCES: she ', xr(ix)&
+&                                         , xf(ix)
+                  IF (kind_source .EQ. 4) WRITE(*, '(a,1p,2(1x,e14.7))')&
+&                                         'AXIAL-SOURCES: shi ', xr(ix)&
+&                                         , xf(ix)
+                  IF (kind_source .EQ. 5) WRITE(*, '(a,1p,2(1x,e14.7))')&
+&                                         'AXIAL-SOURCES: sch ', xr(ix)&
+&                                         , xf(ix)
+                  IF (kind_source .EQ. 6) WRITE(*, '(a,1p,2(1x,e14.7))')&
+&                                         'AXIAL-SOURCES: sne ', xr(ix)&
+&                                         , xf(ix)
+                  IF (new_files) WRITE(96, *) xr(ix), xf(ix)
+                END IF
+              END IF
+            END DO
+            IF (nc .EQ. 0 .OR. debug) THEN
+              IF (ndat .GT. 0) THEN
+                IF (kind_source .EQ. 1) WRITE(*, '(a,i2,1p,2(1x,e14.7))'&
+&                                      ) 'PROFILE-SOURCES: sna ', spec, &
+&                                       pr(iy), pf(iy)
+                IF (kind_source .EQ. 2) WRITE(*, '(a,i2,1p,2(1x,e14.7))'&
+&                                      ) 'PROFILE-SOURCES: smo ', spec, &
+&                                       pr(iy), pf(iy)
+                IF (kind_source .EQ. 3) WRITE(*, '(a,1p,2(1x,e14.7))') &
+&                                       'PROFILE-SOURCES: she ', pr(iy)&
+&                                       , pf(iy)
+                IF (kind_source .EQ. 4) WRITE(*, '(a,1p,2(1x,e14.7))') &
+&                                       'PROFILE-SOURCES: shi ', pr(iy)&
+&                                       , pf(iy)
+                IF (kind_source .EQ. 5) WRITE(*, '(a,1p,2(1x,e14.7))') &
+&                                       'PROFILE-SOURCES: sch ', pr(iy)&
+&                                       , pf(iy)
+                IF (kind_source .EQ. 6) WRITE(*, '(a,1p,2(1x,e14.7))') &
+&                                       'PROFILE-SOURCES: sne ', pr(iy)&
+&                                       , pf(iy)
+                IF (new_files) WRITE(94, *) pr(iy), pf(iy)
+              END IF
+            END IF
+            DEALLOCATE(xr)
+            IF (ALLOCATED(xfd)) THEN
+              DEALLOCATE(xfd)
+            END IF
+            DEALLOCATE(xf)
+          END DO
+        END IF
+      END DO
+    END DO
+! Calculation of the total power input
+    IF (nc .EQ. 0 .OR. debug) THEN
+      totpower = 0.0_R8
+      totna(:) = 0.0_R8
+      DO icv=1,mpg%nci
+        totpower = totpower + she0(icv, 0) + shi0(icv, 0)
+        DO is=0,ns-1
+          totna(is) = totna(is) + sna0(icv, 0, is)
+        END DO
+      END DO
+      WRITE(*, *) 'Total profile-source Power=', totpower
+      DO is=0,ns-1
+        WRITE(*, *) 'Total profile-source na:', is, totna(is)
+      END DO
+    END IF
+!
+    IF (divheat .GT. 0.0_R8) THEN
+      dhtot = 0.0_R8
+      DO icv=1,mpg%nci
+        IF (MOD(mpg%cvreg(icv), 4) .EQ. 3 .OR. MOD(mpg%cvreg(icv), 4) &
+&           .EQ. 0) THEN
+          shi0(icv, 0) = shi0(icv, 0) + divheat*geo%cvvol(icv)
+          dhtot = dhtot + divheat*geo%cvvol(icv)
+        END IF
+      END DO
+      WRITE(*, *) 'DIVHEAT=', dhtot, divheat
+    END IF
+ 100 CONTINUE
+!
+!   ..zero out contributions in dead cells and core boundary
+    DO is=0,ns-1
+      CALL B2XZDD_DV_NODIFF(mpg%ncv, 1, switch, mpg, sna0(1, 0, is), &
+&                     sna0d(:, 1, 0, is), nbdirs)
+      CALL B2XZDD_DV_NODIFF(mpg%ncv, 3, switch, mpg, smo0(1, 0, is), &
+&                     smo0d(:, 1, 0, is), nbdirs)
+    END DO
+    CALL B2XZDD_NODIFF_NODIFF(mpg%ncv, 1, switch, mpg, sne0)
+    CALL B2XZDD_DV_NODIFF(mpg%ncv, 3, switch, mpg, she0, she0d, nbdirs)
+    CALL B2XZDD_DV_NODIFF(mpg%ncv, 3, switch, mpg, shi0, shi0d, nbdirs)
+    CALL B2XZDD_DV_NODIFF(mpg%ncv, 3, switch, mpg, sch0, sch0d, nbdirs)
+    DO nd=1,nbdirs
+!
+      state_extd%sna(nd, :, :) = sna0d(nd, :, 0, :)
+      state_extd%smo(nd, :, :) = smo0d(nd, :, 0, :)
+      state_extd%she(nd, :) = she0d(nd, :, 0)
+      state_extd%shi(nd, :) = shi0d(nd, :, 0)
+      state_extd%sch(nd, :) = sch0d(nd, :, 0)
+    END DO
+    state_ext%sna(:, :) = sna0(:, 0, :)
+    state_ext%smo(:, :) = smo0(:, 0, :)
+    state_ext%sne(:) = sne0(:, 0)
+    state_ext%she(:) = she0(:, 0)
+    state_ext%shi(:) = shi0(:, 0)
+    state_ext%sch(:) = sch0(:, 0)
+!
+!djm Jan2017 Keep linearised sources for balance
+    IF (balance_netcdf .NE. 0) THEN
+      ext_sna0to1 = sna0
+      ext_smo0to3 = smo0
+      ext_she0to3 = she0
+      ext_shi0to3 = shi0
+    END IF
+!
+    IF (new_files) THEN
+      result1 = MAXVAL(nsdata)
+      IF (result1 .GT. 0) CLOSE(93) 
+      result1 = MAXVAL(nsdata)
+      IF (result1 .GT. 0) CLOSE(94) 
+      result1 = MAXVAL(nxdata)
+      IF (result1 .GT. 0) CLOSE(95) 
+      result1 = MAXVAL(nxdata)
+      IF (result1 .GT. 0) CLOSE(96) 
+      new_files = .false.
+    END IF
+!
+    RETURN
+
+  CONTAINS
+!
+!
+    SUBROUTINE READ_SOURCE_PROFILE()
+      USE B2MOD_DIFFSIZES
+      IMPLICIT NONE
+!
+      CHARACTER(len=260) :: filenames
+      LOGICAL :: file_ok
+!
+      NAMELIST /profile/ nsdata, nxdata, sdata, xdata, divheat, &
+&         sources_time_mod, sources_time_switch, sources_filename
+      EXTERNAL FIND_FILE
+      INTRINSIC TRIM
+      EXTERNAL XERRAB
+!
+!  read the profile data
+      filenames = sources_filename
+      sources_time_mod = 0.0_R8
+      sources_time_switch = 0.0_R8
+      CALL FIND_FILE(filenames, file_ok)
+      IF (file_ok) THEN
+        OPEN(92, file=filenames) 
+        WRITE(*, *) 'Reading sources profile namelist from ', TRIM(&
+&       filenames)
+        READ(92, profile) 
+        WRITE(*, *) 'Read sources profile namelist from ', TRIM(&
+&       filenames)
+        CLOSE(92) 
+      ELSE
+        CALL XERRAB('No '//TRIM(filenames))
+      END IF
+!     write(*,profile)
+      RETURN
+    END SUBROUTINE READ_SOURCE_PROFILE
+
+  END SUBROUTINE SOURCE_INPUT_DV
+
+!
+  SUBROUTINE SOURCE_INPUT(mpg, geo, switch, state_ext, ns, sna0, smo0, &
+&   she0, shi0, sch0, sne0, nc)
+!**************************************************************************
+!*     subroutine for reading in source-profiles of density, parallel     *
+!*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
+!*     Inputfile: b2.sources.profile                                      *
+!**************************************************************************
+    USE B2MOD_BALANCE_DIFFV_DIFFV
+    USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!
+    TYPE(MAPPING), INTENT(IN) :: mpg
+    TYPE(GEOMETRY), INTENT(IN) :: geo
+    TYPE(SWITCHES), INTENT(IN) :: switch
+    TYPE(B2STATEEXT) :: state_ext
+    INTEGER, INTENT(IN) :: ns, nc
+    INTEGER :: i, j, ix, ixx, iy, ifc, ift, icv, icv1, icv2, icvanf, &
+&   icvend, ireg
+    INTEGER :: ndim, nxdim, ifail, is, ndat, nxdat, kind_data
+    INTEGER :: nfitanf, nfitref, nfitend
+    INTEGER :: kind_source, spec
+    REAL(kind=r8), INTENT(OUT) :: she0(mpg%ncv, 0:3), shi0(mpg%ncv, 0:3)&
+&   , sch0(mpg%ncv, 0:3)
+    REAL(kind=r8), INTENT(OUT) :: sna0(mpg%ncv, 0:1, 0:ns-1)
+    REAL(kind=r8), INTENT(OUT) :: sne0(mpg%ncv, 0:1)
+    REAL(kind=r8), INTENT(OUT) :: smo0(mpg%ncv, 0:3, 0:ns-1)
+    REAL(kind=r8) :: totpower, totna(0:ns-1)
+    REAL(kind=r8) :: f(nrr), r(nrr), pr(nrr), pf(nrr), d(nrr)
+    REAL(kind=r8) :: wrk0(mpg%ncv), wrk1(mpg%ncv)
+    REAL(kind=r8) :: dhtot, dtot, dref
+    REAL(kind=r8), ALLOCATABLE :: fx(:), x(:), xr(:), xf(:), dx(:)
+    LOGICAL, SAVE :: catch_up
+    LOGICAL, PARAMETER :: debug=.false.
+    INTRINSIC INT, MOD
+    INTRINSIC TRIM
+    INTRINSIC MAXVAL
+    REAL(kind=r8) :: arg1
+    INTEGER :: result1
+!
+! initialise sources and data to zero
+    IF (nc .EQ. 0) THEN
+      nsdata(:, :, :) = 0
+      sdata(:, :, :, :) = 0.0_R8
+      nxdata(:, :, :) = 0
+      xdata(:, :, :, :) = 0.0_R8
+      sna0(:, :, :) = 0.0_R8
+      sne0(:, :) = 0.0_R8
+      smo0(:, :, :) = 0.0_R8
+      she0(:, :) = 0.0_R8
+      shi0(:, :) = 0.0_R8
+      sch0(:, :) = 0.0_R8
+      divheat = 0.0_R8
+      sources_filename = 'b2.sources.profile'
+      sources_time_mod = 0.0_R8
+      sources_time_switch = 0.0_R8
+! read profile
+      CALL READ_SOURCE_PROFILE()
+      new_files = .true.
+    END IF
+!
+    IF (nc .EQ. 0) THEN
+      IF (sources_time_mod .GT. 0.0_R8) THEN
+        arg1 = tim/sources_time_mod
+        sr_ip_elm_count = INT(arg1)
+      ELSE
+        sr_ip_elm_count = 0
+      END IF
+      IF (sources_time_mod .GT. 0.0_R8) THEN
+        catch_up = MOD(tim, sources_time_mod) .GE. sources_time_switch &
+&         .AND. sources_time_switch .GT. 0.0_R8
+      ELSE IF (sources_time_switch .GT. 0.0_R8) THEN
+        catch_up = tim .GE. sources_time_switch
+      ELSE
+        catch_up = .false.
+      END IF
+      DO WHILE (catch_up)
+        WRITE(*, *) 'sources: catching up...'
+        CALL READ_SOURCE_PROFILE()
+        IF (sources_time_mod .GT. 0.0_R8) THEN
+          catch_up = MOD(tim, sources_time_mod) .GE. sources_time_switch&
+&           .AND. sources_time_switch .GT. 0.0_R8
+        ELSE IF (sources_time_switch .GT. 0.0_R8) THEN
+          catch_up = tim .GE. sources_time_switch
+        ELSE
+          catch_up = .false.
+        END IF
+      END DO
+    ELSE
+      IF (sources_time_mod .GT. 0.0_R8) THEN
+        arg1 = tim/sources_time_mod
+        WRITE(*, '(a,1p,3e12.4,2i6)') 'SOURCES: ', tim, MOD(tim, &
+&       sources_time_mod), sources_time_switch, INT(arg1), &
+&       sr_ip_elm_count
+        arg1 = tim/sources_time_mod
+        catch_up = (MOD(tim, sources_time_mod) .GE. sources_time_switch &
+&         .AND. sources_time_switch .GT. 0.0_R8) .OR. INT(arg1) .GT. &
+&         sr_ip_elm_count
+      ELSE IF (sources_time_switch .GT. 0.0_R8) THEN
+        catch_up = tim .GE. sources_time_switch
+        IF (catch_up) WRITE(*, '(a,a)') &
+&                     'Switching to next sources profile datafile ', &
+&                     TRIM(sources_filename)
+      ELSE
+        catch_up = .false.
+      END IF
+      IF (catch_up) THEN
+        IF (sources_time_mod .GT. 0.0_R8) THEN
+          arg1 = tim/sources_time_mod
+          sr_ip_elm_count = INT(arg1)
+        END IF
+        CALL READ_SOURCE_PROFILE()
+        new_files = .true.
+      END IF
+    END IF
+!
+    IF (new_files) THEN
+      result1 = MAXVAL(nxdata)
+      IF (result1 .GT. 0) OPEN(96, file='dx2') 
+      result1 = MAXVAL(nxdata)
+      IF (result1 .GT. 0) OPEN(95, file='dx1') 
+      result1 = MAXVAL(nsdata)
+      IF (result1 .GT. 0) OPEN(94, file='da1') 
+      result1 = MAXVAL(nsdata)
+      IF (result1 .GT. 0) OPEN(93, file='da2') 
+    END IF
+!
+    DO kind_source=1,nkind_source
+      DO spec=0,ns-1
+        kind_data = 0
+        ndat = 0
+        DO i=1,nkind_data
+          IF (nsdata(i, kind_source, spec) .NE. 0 .AND. kind_data .EQ. 0&
+&         ) THEN
+            kind_data = i
+            ndat = nsdata(kind_data, kind_source, spec)
+          ELSE IF (nsdata(i, kind_source, spec) .NE. 0) THEN
+            WRITE(*, *) 'Conflicting data types:'
+            WRITE(*, *) 'Both KIND_DATA = 1 and 2 are declared for '
+            WRITE(*, *) 'source poloidal profile. '
+            WRITE(*, *) 'KIND_DATA = 2 ignored.'
+            WRITE(*, '(a,i2,a,i3)') 'KIND_SOURCE = ', kind_source, &
+&           ' Species = ', spec
+          END IF
+        END DO
+        IF (ndat .NE. 0) THEN
+          CALL XERTST(ndat .LE. def_nyd, &
+&        'Increase DEF_NYD in b2mod_dimensions to match size of profile'&
+&              )
+          DO i=1,ndat
+            r(i) = sdata(1, i, kind_source, spec)
+            f(i) = sdata(2, i, kind_source, spec)
+            IF (new_files) WRITE(93, *) r(i), f(i)
+          END DO
+!          write(*,*) 'vor region_profile'
+          ndim = nomp
+          CALL CALC_DIST_NODIFF_NODIFF(geo, omp, nomp, icsepomp, pr)
+!          allocate (pf(1:ndim))
+          CALL E01BEF(ndat, r, f, d, ifail)
+!          write(*,*) 'zwischen,ifail=',ifail
+          CALL E01BFF(ndat, r, f, d, ndim, pr, pf, ifail)
+!       obtain axial profile
+          nxdat = 0
+          kind_data = 0
+          DO i=1,nkind_data
+            IF (nxdata(i, kind_source, spec) .NE. 0 .AND. kind_data .EQ.&
+&               0) THEN
+              kind_data = i
+              nxdat = nxdata(kind_data, kind_source, spec)
+            ELSE IF (nxdata(i, kind_source, spec) .NE. 0) THEN
+              WRITE(*, *) 'Conflicting data types:'
+              WRITE(*, *) 'Both KIND_DATA = 1 and 2 are declared for '
+              WRITE(*, *) 'source axial profile. '
+              WRITE(*, *) 'KIND_DATA = 1 ignored.'
+              WRITE(*, '(a,i2,a,i3)') 'KIND_SOURCE = ', kind_source, &
+&             ' Species = ', spec
+            END IF
+          END DO
+          CALL XERTST(nxdat .LE. def_nxd, &
+&        'Increase DEF_NXD in b2mod_dimensions to match size of profile'&
+&              )
+          ALLOCATE(xf(0:nxdat+1))
+          xf(0) = 0.0_R8
+          xf(1:nxdat) = 1.0_R8
+          xf(nxdat+1) = 0.0_R8
+          IF (nxdat .GT. 0) THEN
+            ALLOCATE(fx(1:nxdat))
+            ALLOCATE(x(1:nxdat))
+            ALLOCATE(xr(0:nxdat+1))
+            ALLOCATE(dx(1:nxdat))
+            DO i=1,nxdat
+              x(i) = xdata(1, i, kind_source, spec)
+              fx(i) = xdata(2, i, kind_source, spec)
+              IF (new_files) WRITE(95, *) x(i), fx(i)
+            END DO
+            IF (nxdat .EQ. 1) THEN
+!
+              WRITE(*, *) 'Error in computing axial profile'
+              GOTO 100
+            ELSE
+              CALL E01BEF(nxdat, x, fx, dx, ifail)
+            END IF
+          END IF
+!
+          DO iy=1,ndim
+            ift = mpg%cvft(omp(iy))
+            ALLOCATE(xr(mpg%ftcvp(ift, 2)))
+            ALLOCATE(xf(mpg%ftcvp(ift, 2)))
+            nfitanf = mpg%ftcvp(ift, 2) + 1
+            nfitend = 0
+            nfitref = 0
+            icvanf = 0
+            icvend = 0
+            DO ix=1,mpg%ftcvp(ift, 2)
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              IF (icv .EQ. omp(iy)) nfitref = ix
+              IF (icv .LE. mpg%nci) THEN
+                ireg = mpg%cvreg(icv)
+                IF (MOD(ireg, 4) .EQ. 3) THEN
+                  xr(ix) = 0.0_R8
+                ELSE IF (MOD(ireg, 4) .EQ. 0) THEN
+                  xr(ix) = 1.0_R8
+                ELSE
+                  IF (ix .LT. nfitanf) THEN
+                    nfitanf = ix
+                    icvanf = icv
+                  END IF
+                  IF (ix .GT. nfitend) THEN
+                    nfitend = ix
+                    icvend = icv
+                  END IF
+                END IF
+              END IF
+            END DO
+            nxdim = nfitend - nfitanf + 1
+            wrk1 = 0.0_R8
+            DO j=mpg%ftfcp(ift, 1),mpg%ftfcp(ift, 1)+mpg%ftfcp(ift, 2)-1
+              ifc = mpg%ftfc(j)
+              icv1 = mpg%fccv(ifc, 1)
+              icv2 = mpg%fccv(ifc, 2)
+              wrk1(icv1) = wrk1(icv1) + geo%fchc(ifc, 1)
+              wrk1(icv2) = wrk1(icv2) + geo%fchc(ifc, 2)
+            END DO
+            wrk0 = 0.0_R8
+            DO ix=nfitanf,nfitend
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              wrk0(icv) = wrk1(icv)*geo%cvbb(icv, 3)/geo%cvbb(icv, 0)
+            END DO
+            DO ix=nfitanf,nfitend
+              DO ixx=nfitanf,ix
+                icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+                xr(ix) = xr(ix) + wrk0(icv)
+              END DO
+            END DO
+            dref = xr(nfitref)
+            dtot = xr(nfitend) + 0.5_R8*wrk1(icvend) - (xr(nfitanf)+&
+&             0.5_R8*wrk1(icvanf))
+            DO ix=nfitanf,nfitend
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              IF (mpg%cvonclosedsurface(icv)) THEN
+                xr(ix) = (xr(ix)-dref)/geo%ftconn(ift)
+              ELSE
+                xr(ix) = (xr(ix)-dref)/dtot
+              END IF
+            END DO
+            CALL E01BFF(nxdat, x, fx, dx, nxdim, xr(nfitanf:nfitend), xf&
+&                 (nfitanf:nfitend), ifail)
+            DO ix=1,mpg%ftcvp(ift, 2)
+              icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+              ireg = mpg%cvreg(icv)
+              IF (icv .LE. mpg%nci .AND. (MOD(ireg, 4) .EQ. 1 .OR. MOD(&
+&                 ireg, 4) .EQ. 2)) THEN
+                IF (kind_source .EQ. 1) THEN
+                  sna0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 2) THEN
+                  smo0(icv, 0, spec) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 3) THEN
+                  she0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 4) THEN
+                  shi0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 5) THEN
+                  sch0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                ELSE IF (kind_source .EQ. 6) THEN
+                  sne0(icv, 0) = pf(iy)*xf(ix)*geo%cvvol(icv)
+                END IF
+              END IF
+              IF ((nc .EQ. 0 .AND. iy .EQ. 1) .OR. debug) THEN
+                IF (nxdat .GT. 0) THEN
+                  IF (kind_source .EQ. 1) WRITE(*, &
+&                                         '(a,i2,1p,2(1x,e14.7))') &
+&                                         'AXIAL-SOURCES: sna ', spec, &
+&                                         xr(ix), xf(ix)
+                  IF (kind_source .EQ. 2) WRITE(*, &
+&                                         '(a,i2,1p,2(1x,e14.7))') &
+&                                         'AXIAL-SOURCES: smo ', spec, &
+&                                         xr(ix), xf(ix)
+                  IF (kind_source .EQ. 3) WRITE(*, '(a,1p,2(1x,e14.7))')&
+&                                         'AXIAL-SOURCES: she ', xr(ix)&
+&                                         , xf(ix)
+                  IF (kind_source .EQ. 4) WRITE(*, '(a,1p,2(1x,e14.7))')&
+&                                         'AXIAL-SOURCES: shi ', xr(ix)&
+&                                         , xf(ix)
+                  IF (kind_source .EQ. 5) WRITE(*, '(a,1p,2(1x,e14.7))')&
+&                                         'AXIAL-SOURCES: sch ', xr(ix)&
+&                                         , xf(ix)
+                  IF (kind_source .EQ. 6) WRITE(*, '(a,1p,2(1x,e14.7))')&
+&                                         'AXIAL-SOURCES: sne ', xr(ix)&
+&                                         , xf(ix)
+                  IF (new_files) WRITE(96, *) xr(ix), xf(ix)
+                END IF
+              END IF
+            END DO
+            IF (nc .EQ. 0 .OR. debug) THEN
+              IF (ndat .GT. 0) THEN
+                IF (kind_source .EQ. 1) WRITE(*, '(a,i2,1p,2(1x,e14.7))'&
+&                                      ) 'PROFILE-SOURCES: sna ', spec, &
+&                                       pr(iy), pf(iy)
+                IF (kind_source .EQ. 2) WRITE(*, '(a,i2,1p,2(1x,e14.7))'&
+&                                      ) 'PROFILE-SOURCES: smo ', spec, &
+&                                       pr(iy), pf(iy)
+                IF (kind_source .EQ. 3) WRITE(*, '(a,1p,2(1x,e14.7))') &
+&                                       'PROFILE-SOURCES: she ', pr(iy)&
+&                                       , pf(iy)
+                IF (kind_source .EQ. 4) WRITE(*, '(a,1p,2(1x,e14.7))') &
+&                                       'PROFILE-SOURCES: shi ', pr(iy)&
+&                                       , pf(iy)
+                IF (kind_source .EQ. 5) WRITE(*, '(a,1p,2(1x,e14.7))') &
+&                                       'PROFILE-SOURCES: sch ', pr(iy)&
+&                                       , pf(iy)
+                IF (kind_source .EQ. 6) WRITE(*, '(a,1p,2(1x,e14.7))') &
+&                                       'PROFILE-SOURCES: sne ', pr(iy)&
+&                                       , pf(iy)
+                IF (new_files) WRITE(94, *) pr(iy), pf(iy)
+              END IF
+            END IF
+            DEALLOCATE(xr)
+            DEALLOCATE(xf)
+          END DO
+        END IF
+      END DO
+    END DO
+! Calculation of the total power input
+    IF (nc .EQ. 0 .OR. debug) THEN
+      totpower = 0.0_R8
+      totna(:) = 0.0_R8
+      DO icv=1,mpg%nci
+        totpower = totpower + she0(icv, 0) + shi0(icv, 0)
+        DO is=0,ns-1
+          totna(is) = totna(is) + sna0(icv, 0, is)
+        END DO
+      END DO
+      WRITE(*, *) 'Total profile-source Power=', totpower
+      DO is=0,ns-1
+        WRITE(*, *) 'Total profile-source na:', is, totna(is)
+      END DO
+    END IF
+!
+    IF (divheat .GT. 0.0_R8) THEN
+      dhtot = 0.0_R8
+      DO icv=1,mpg%nci
+        IF (MOD(mpg%cvreg(icv), 4) .EQ. 3 .OR. MOD(mpg%cvreg(icv), 4) &
+&           .EQ. 0) THEN
+          shi0(icv, 0) = shi0(icv, 0) + divheat*geo%cvvol(icv)
+          dhtot = dhtot + divheat*geo%cvvol(icv)
+        END IF
+      END DO
+      WRITE(*, *) 'DIVHEAT=', dhtot, divheat
+    END IF
+ 100 CONTINUE
+!
+!   ..zero out contributions in dead cells and core boundary
+    DO is=0,ns-1
+      CALL B2XZDD_NODIFF_NODIFF(mpg%ncv, 1, switch, mpg, sna0(1, 0, is))
+      CALL B2XZDD_NODIFF_NODIFF(mpg%ncv, 3, switch, mpg, smo0(1, 0, is))
+    END DO
+    CALL B2XZDD_NODIFF_NODIFF(mpg%ncv, 1, switch, mpg, sne0)
+    CALL B2XZDD_NODIFF_NODIFF(mpg%ncv, 3, switch, mpg, she0)
+    CALL B2XZDD_NODIFF_NODIFF(mpg%ncv, 3, switch, mpg, shi0)
+    CALL B2XZDD_NODIFF_NODIFF(mpg%ncv, 3, switch, mpg, sch0)
+!
+    state_ext%sna(:, :) = sna0(:, 0, :)
+    state_ext%smo(:, :) = smo0(:, 0, :)
+    state_ext%sne(:) = sne0(:, 0)
+    state_ext%she(:) = she0(:, 0)
+    state_ext%shi(:) = shi0(:, 0)
+    state_ext%sch(:) = sch0(:, 0)
+!
+!djm Jan2017 Keep linearised sources for balance
+    IF (balance_netcdf .NE. 0) THEN
+      ext_sna0to1 = sna0
+      ext_smo0to3 = smo0
+      ext_she0to3 = she0
+      ext_shi0to3 = shi0
+    END IF
+!
+    IF (new_files) THEN
+      result1 = MAXVAL(nsdata)
+      IF (result1 .GT. 0) CLOSE(93) 
+      result1 = MAXVAL(nsdata)
+      IF (result1 .GT. 0) CLOSE(94) 
+      result1 = MAXVAL(nxdata)
+      IF (result1 .GT. 0) CLOSE(95) 
+      result1 = MAXVAL(nxdata)
+      IF (result1 .GT. 0) CLOSE(96) 
+      new_files = .false.
+    END IF
+!
+    RETURN
+
+  CONTAINS
+!
+!
+    SUBROUTINE READ_SOURCE_PROFILE()
+      USE B2MOD_DIFFSIZES
+      IMPLICIT NONE
+!
+      CHARACTER(len=260) :: filenames
+      LOGICAL :: file_ok
+!
+      NAMELIST /profile/ nsdata, nxdata, sdata, xdata, divheat, &
+&         sources_time_mod, sources_time_switch, sources_filename
+      EXTERNAL FIND_FILE
+      INTRINSIC TRIM
+      EXTERNAL XERRAB
+!
+!  read the profile data
+      filenames = sources_filename
+      sources_time_mod = 0.0_R8
+      sources_time_switch = 0.0_R8
+      CALL FIND_FILE(filenames, file_ok)
+      IF (file_ok) THEN
+        OPEN(92, file=filenames) 
+        WRITE(*, *) 'Reading sources profile namelist from ', TRIM(&
+&       filenames)
+        READ(92, profile) 
+        WRITE(*, *) 'Read sources profile namelist from ', TRIM(&
+&       filenames)
+        CLOSE(92) 
+      ELSE
+        CALL XERRAB('No '//TRIM(filenames))
+      END IF
+!     write(*,profile)
+      RETURN
+    END SUBROUTINE READ_SOURCE_PROFILE
+
+  END SUBROUTINE SOURCE_INPUT
+
 !  Differentiation of transport_input_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: tdata vsa0 sig0 vla0d dna0d
 !                alf0 hcibd sig0d hce0d vsa0d hcib dna0 alf0d vla0
@@ -111,12 +1716,11 @@ CONTAINS
 !   Plus diff mem management of: dv.ne:in geo.cvx:in geo.cvy:in
 !                rt.rza:in pl.na:in pl.te:in pl.ti:in
 !
-!
 !-----------------------------------------------------------------------
 !
-  SUBROUTINE TRANSPORT_INPUT_DV_DV(ncv, nfc, ns, geo, geod0, geod, mpg, &
-&   pl, pld0, pld, pldd, dv, dvd0, dvd, dvdd, rt, rtd0, rtd, rtdd, hcib&
-&   , hcibd0, hcibd, hcibdd, dna0, dna0d0, dna0d, dna0dd, dpa0, dpa0d0, &
+  SUBROUTINE TRANSPORT_INPUT_DV_DV(ncv, ns, geo, geod0, geod, mpg, pl, &
+&   pld0, pld, pldd, dv, dvd0, dvd, dvdd, rt, rtd0, rtd, rtdd, hcib, &
+&   hcibd0, hcibd, hcibdd, dna0, dna0d0, dna0d, dna0dd, dpa0, dpa0d0, &
 &   dpa0d, dpa0dd, vla0, vla0d0, vla0d, vla0dd, vsa0, vsa0d0, vsa0d, &
 &   vsa0dd, hci0, hce0, hce0d0, hce0d, hce0dd, sig0, sig0d0, sig0d, &
 &   sig0dd, alf0, alf0d0, alf0d, alf0dd, ncall, nbdirs, nbdirs0)
@@ -135,8 +1739,7 @@ CONTAINS
     USE B2MOD_DIFFSIZES
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
     IMPLICIT NONE
-!
-    INTEGER, INTENT(IN) :: ncv, nfc, ns
+    INTEGER, INTENT(IN) :: ncv, ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(GEOMETRY_DIFFV0), INTENT(IN) :: geod0
     TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
@@ -430,10 +2033,10 @@ CONTAINS
             END IF
 !
             DO is=1,nspec
-              DO 120 iy=1,ndim
+              DO 110 iy=1,ndim
                 IF (mpg%isclassicalgrid .EQ. 0) THEN
 ! skip guard cells
-                  IF (iy .EQ. 1 .OR. iy .EQ. ndim) GOTO 120
+                  IF (iy .EQ. 1 .OR. iy .EQ. ndim) GOTO 110
                 END IF
                 iy2 = iy
                 iir = mpg%cvreg(omp(iy))
@@ -443,17 +2046,17 @@ CONTAINS
                   iir = cvregmax
                 END IF
                 lbl = mpg%ftlbl(mpg%cvft(omp(iy)))
-                DO 110 ift=1,mpg%nft
+                DO 100 ift=1,mpg%nft
                   IF (mpg%isclassicalgrid .EQ. 1) THEN
                     IF (mpg%ftlbl(ift) .NE. lbl) THEN
-                      GOTO 110
+                      GOTO 100
                     ELSE
                       iy2 = iy
                     END IF
                   ELSE IF (ift .NE. mpg%cvft(omp(iy))) THEN
                     IF (ift .LE. mpg%cvft(omp(ndim-1)) .OR. ift .GE. mpg&
 &                       %cvft(omp(2))) THEN
-                      GOTO 110
+                      GOTO 100
                     ELSE
 !nh flux tube outside OMP ==> take last OMP flux tube
                       iy2 = ndim
@@ -770,15 +2373,15 @@ CONTAINS
                       END IF
                     END IF
                   END DO
- 110            CONTINUE
- 120          CONTINUE
+ 100            CONTINUE
+ 110          CONTINUE
 !
 !ic
 !ift=1,mpg%nFt
 !iy=1,ndim
               IF (mpg%isclassicalgrid .EQ. 0) THEN
 ! treatment of guard cells
-                DO 130 icv=1,ncv
+                DO 120 icv=1,ncv
                   IF (mpg%cvfcp(icv, 2) .EQ. 1) THEN
                     iir = mpg%cvreg(icv)
                     IF (iir .EQ. 1 .OR. iir .EQ. 5) THEN
@@ -788,7 +2391,7 @@ CONTAINS
 ! SOL boundary
                       iy2 = ndim
                     ELSE
-                      GOTO 130
+                      GOTO 120
                     END IF
                     lpflux = mpg%ftreg(mpg%cvft(icv)) .EQ. 3
                     ldiv = MOD(iir - 1, 4) + 1 .GE. 3
@@ -1094,7 +2697,7 @@ CONTAINS
                       END IF
                     END IF
                   END IF
- 130            CONTINUE
+ 120            CONTINUE
               END IF
             END DO
 !
@@ -1184,7 +2787,6 @@ CONTAINS
 !spec=0,ns-1
 !kind_coeff
 !
-!
     IF (tr_ip_new_files) THEN
       CLOSE(93) 
       CLOSE(94) 
@@ -1203,12 +2805,11 @@ CONTAINS
 !   Plus diff mem management of: dv.ne:in geo.cvx:in geo.cvy:in
 !                rt.rza:in pl.na:in pl.te:in pl.ti:in
 !
-!
 !-----------------------------------------------------------------------
 !
-  SUBROUTINE TRANSPORT_INPUT_DV(ncv, nfc, ns, geo, geod, mpg, pl, pld, &
-&   dv, dvd, rt, rtd, hcib, hcibd, dna0, dna0d, dpa0, dpa0d, vla0, vla0d&
-&   , vsa0, vsa0d, hci0, hce0, hce0d, sig0, sig0d, alf0, alf0d, ncall, &
+  SUBROUTINE TRANSPORT_INPUT_DV(ncv, ns, geo, geod, mpg, pl, pld, dv, &
+&   dvd, rt, rtd, hcib, hcibd, dna0, dna0d, dpa0, dpa0d, vla0, vla0d, &
+&   vsa0, vsa0d, hci0, hce0, hce0d, sig0, sig0d, alf0, alf0d, ncall, &
 &   nbdirs)
 !
 !**************************************************************************
@@ -1224,8 +2825,7 @@ CONTAINS
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-!
-    INTEGER, INTENT(IN) :: ncv, nfc, ns
+    INTEGER, INTENT(IN) :: ncv, ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
     TYPE(MAPPING), INTENT(IN) :: mpg
@@ -1454,7 +3054,7 @@ CONTAINS
               DO iy=1,ndim
                 IF (mpg%isclassicalgrid .EQ. 0) THEN
 ! skip guard cells
-                  IF (iy .EQ. 1 .OR. iy .EQ. ndim) GOTO 120
+                  IF (iy .EQ. 1 .OR. iy .EQ. ndim) GOTO 110
                 END IF
                 iy2 = iy
                 iir = mpg%cvreg(omp(iy))
@@ -1467,14 +3067,14 @@ CONTAINS
                 DO ift=1,mpg%nft
                   IF (mpg%isclassicalgrid .EQ. 1) THEN
                     IF (mpg%ftlbl(ift) .NE. lbl) THEN
-                      GOTO 110
+                      GOTO 100
                     ELSE
                       iy2 = iy
                     END IF
                   ELSE IF (ift .NE. mpg%cvft(omp(iy))) THEN
                     IF (ift .LE. mpg%cvft(omp(ndim-1)) .OR. ift .GE. mpg&
 &                       %cvft(omp(2))) THEN
-                      GOTO 110
+                      GOTO 100
                     ELSE
 !nh flux tube outside OMP ==> take last OMP flux tube
                       iy2 = ndim
@@ -1622,9 +3222,9 @@ CONTAINS
                       END IF
                     END IF
                   END DO
- 110              CONTINUE
+ 100              CONTINUE
                 END DO
- 120            CONTINUE
+ 110            CONTINUE
               END DO
 !
 !ic
@@ -1642,7 +3242,7 @@ CONTAINS
 ! SOL boundary
                       iy2 = ndim
                     ELSE
-                      GOTO 130
+                      GOTO 120
                     END IF
                     lpflux = mpg%ftreg(mpg%cvft(icv)) .EQ. 3
                     ldiv = MOD(iir - 1, 4) + 1 .GE. 3
@@ -1779,7 +3379,7 @@ CONTAINS
                       END IF
                     END IF
                   END IF
- 130              CONTINUE
+ 120              CONTINUE
                 END DO
               END IF
             END DO
@@ -1870,7 +3470,6 @@ CONTAINS
 !spec=0,ns-1
 !kind_coeff
 !
-!
     IF (tr_ip_new_files) THEN
       CLOSE(93) 
       CLOSE(94) 
@@ -1881,11 +3480,10 @@ CONTAINS
   END SUBROUTINE TRANSPORT_INPUT_DV
 
 !
-!
 !-----------------------------------------------------------------------
 !
-  SUBROUTINE TRANSPORT_INPUT(ncv, nfc, ns, geo, mpg, pl, dv, rt, hcib, &
-&   dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall)
+  SUBROUTINE TRANSPORT_INPUT(ncv, ns, geo, mpg, pl, dv, rt, hcib, dna0, &
+&   dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall)
 !
 !**************************************************************************
 !*     subroutine for reading in experimental transport coefficients from *
@@ -1899,8 +3497,7 @@ CONTAINS
     USE B2MOD_USER_NAMELIST_DIFFV_DIFFV, ONLY : nomp, omp, icsepomp
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-!
-    INTEGER, INTENT(IN) :: ncv, nfc, ns
+    INTEGER, INTENT(IN) :: ncv, ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(IN) :: mpg
     TYPE(B2PLASMA), INTENT(IN) :: pl
@@ -2070,7 +3667,7 @@ CONTAINS
               DO iy=1,ndim
                 IF (mpg%isclassicalgrid .EQ. 0) THEN
 ! skip guard cells
-                  IF (iy .EQ. 1 .OR. iy .EQ. ndim) GOTO 120
+                  IF (iy .EQ. 1 .OR. iy .EQ. ndim) GOTO 110
                 END IF
                 iy2 = iy
                 iir = mpg%cvreg(omp(iy))
@@ -2083,14 +3680,14 @@ CONTAINS
                 DO ift=1,mpg%nft
                   IF (mpg%isclassicalgrid .EQ. 1) THEN
                     IF (mpg%ftlbl(ift) .NE. lbl) THEN
-                      GOTO 110
+                      GOTO 100
                     ELSE
                       iy2 = iy
                     END IF
                   ELSE IF (ift .NE. mpg%cvft(omp(iy))) THEN
                     IF (ift .LE. mpg%cvft(omp(ndim-1)) .OR. ift .GE. mpg&
 &                       %cvft(omp(2))) THEN
-                      GOTO 110
+                      GOTO 100
                     ELSE
 !nh flux tube outside OMP ==> take last OMP flux tube
                       iy2 = ndim
@@ -2168,9 +3765,9 @@ CONTAINS
                       END IF
                     END IF
                   END DO
- 110              CONTINUE
+ 100              CONTINUE
                 END DO
- 120            CONTINUE
+ 110            CONTINUE
               END DO
 !
 !ic
@@ -2188,7 +3785,7 @@ CONTAINS
 ! SOL boundary
                       iy2 = ndim
                     ELSE
-                      GOTO 130
+                      GOTO 120
                     END IF
                     lpflux = mpg%ftreg(mpg%cvft(icv)) .EQ. 3
                     ldiv = MOD(iir - 1, 4) + 1 .GE. 3
@@ -2255,7 +3852,7 @@ CONTAINS
                       END IF
                     END IF
                   END IF
- 130              CONTINUE
+ 120              CONTINUE
                 END DO
               END IF
             END DO
@@ -2345,7 +3942,6 @@ CONTAINS
 !kind_data
 !spec=0,ns-1
 !kind_coeff
-!
 !
     IF (tr_ip_new_files) THEN
       CLOSE(93) 
@@ -2495,118 +4091,5 @@ CONTAINS
     END IF
   END SUBROUTINE REGION_PROFILE
 
-!
-!-----------------------------------------------------------------------
-!
-  SUBROUTINE AXIAL_PROFILE(kind_data, ndat, x, ndim, pr, nx, ny, ifa, &
-&   nfitanf, nfitend)
-!
-    USE B2MOD_INDIRECT_DIFFV_DIFFV
-    USE B2MOD_GEO_DIFFV_DIFFV
-    USE B2MOD_DIFFSIZES
-    IMPLICIT NONE
-    INTEGER :: i, nx, ny, ifa
-    INTEGER :: nfitanf, nfitend, ndim, ndat, kind_data
-    REAL(kind=r8) :: x(ndat), pr(-1:nxx-2)
-    REAL(kind=r8) :: l_conn(-1:nx), l_total, l_ref
-    INTEGER :: jxi, jxa, jsep, ncall
-    INTEGER :: ixref, iyref
-    INTEGER :: ireg
-    EXTERNAL IPGETR
-    EXTERNAL GET_JSEP
-    SAVE jxi, jxa, jsep, ixref, iyref, ncall
-    INTRINSIC MOD
-    INTRINSIC SQRT
-    INTRINSIC REAL
-    REAL(kind=r8) :: arg1
-    REAL(kind=r8) :: result1
-    DATA ncall /0/
-!
-    CALL SUBINI('axial_profile')
-    IF (ncall .EQ. 0) THEN
-      CALL GET_JSEP(nx, ny, jxi, jxa, jsep)
-      CALL IPGETI('b2mwti_jxa', jxa)
-      CALL XERTST(-1 .LE. jxa .AND. jxa .LE. nx, &
-&           'faulty internal parameter jxa')
-      ixref = jxa
-      iyref = jsep
-      CALL IPGETI('set_transport_ixref', ixref)
-      CALL XERTST(-1 .LE. ixref .AND. ixref .LE. nx, &
-&           'faulty argument set_transport_ixref')
-      CALL IPGETI('set_transport_iyref', iyref)
-      CALL XERTST(-1 .LE. iyref .AND. iyref .LE. ny, &
-&           'faulty argument set_transport_iyref')
-    END IF
-!
-    IF (kind_data .EQ. 1) THEN
-! Establish relative profile in relative connection length
-! For closed field lines, zero point sits at ix = ixref
-! Reference connection length computed along iy = iyref
-      ireg = MOD(region(ixref, iyref, 0), 4)
-      l_total = 0.0_R8
-      pr(-1) = 0.0_R8
-      l_conn(-1) = 0.0_R8
-      DO i=0,nx-1
-        arg1 = bb(i, iyref, 0)**2 + bb(i, iyref, 1)**2
-        result1 = SQRT(arg1)
-        l_conn(i) = hx(i, iyref)/(result1/bb(i, iyref, 3))
-        pr(i) = pr(i-1) + 0.5_R8*(l_conn(i)+l_conn(i-1))
-        l_total = l_total + l_conn(i)
-      END DO
-      pr(nx) = pr(nx-1) + 0.5_R8*l_conn(nx-1)
-      l_ref = pr(ixref)
-      IF (l_total .LE. 0.0_R8) THEN
-        GOTO 97
-      ELSE IF (ireg .EQ. 1 .AND. nnreg(0) .GE. 4) THEN
-        DO i=-1,nx
-          IF (MOD(region(i, iyref, 0), 4) .EQ. ireg) THEN
-            pr(i) = (pr(i)-l_ref)/l_total
-            IF (pr(i) .LT. 0.0_R8) pr(i) = pr(i) + 1.0_R8
-          ELSE
-            pr(i) = 0.0_R8
-          END IF
-        END DO
-      ELSE
-        DO i=-1,nx
-          pr(i) = pr(i)/l_total
-        END DO
-      END IF
-    ELSE IF (kind_data .EQ. 2) THEN
-! Establish profile in computational space
-      pr(-1) = 0.0_R8
-      DO i=0,nx-1
-        pr(i) = (i+0.5_R8)/REAL(nx)
-      END DO
-      pr(nx) = 1.0_R8
-    END IF
-    ifa = 0
-!
-    nfitanf = -1
-    DO i=0,nx
-      IF (pr(i) .LT. x(1)) nfitanf = nfitanf + 1
-      nfitend = i - 1
-      IF (pr(i) .GT. x(ndat)) THEN
-        GOTO 100
-      ELSE
-        nfitend = i
-      END IF
-    END DO
-!     write (*,*) nfitanf,nfitend
- 100 IF (nfitend .GT. nfitanf) THEN
-!
-      ndim = nfitend + 1 - nfitanf
-      GOTO 108
-    END IF
-!     write (*,*) 'ndim=',ndim
-!     allocate (pr(1:ndim))
-!
- 97 ifa = 1
-!
- 108 ncall = ncall + 1
-    CALL SUBEND()
-    RETURN
-  END SUBROUTINE AXIAL_PROFILE
-
 END MODULE B2MOD_INPUT_PROFILE_DIFFV_DIFFV
-!
 

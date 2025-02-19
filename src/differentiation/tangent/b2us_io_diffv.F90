@@ -34,20 +34,20 @@ MODULE B2US_IO_DIFFV
 CONTAINS
 !  Differentiation of read_b2fgmtry as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: gm.cvbb:in-out gm.cvx:in-out gm.cvy:in-out
-!                gm.cvsz:in-out gm.cvhz:in-out gm.cvhx:in-out gm.cvqgam:in-out
-!                gm.cvvol:in-out gm.cvonedbsq:in-out gm.cvbzb:in-out
-!                gm.cveb:in-out gm.cvfpsi:in-out gm.fcbb:in-out
-!                gm.fcs:in-out gm.fchc:in-out gm.fcht:in-out gm.fchz:in-out
-!                gm.fcvol:in-out gm.fcqgam:in-out gm.fcqalf:in-out
-!                gm.fcqbet:in-out gm.fcpbs:in-out gm.fcpbshz:in-out
-!                gm.fcbzb:in-out gm.fceb:in-out gm.fcfpsi:in-out
-!                gm.vxbb:in-out gm.vxx:in-out gm.vxy:in-out gm.vxhz:in-out
-!                gm.vxvol:in-out gm.vxffbz:in-out gm.vxfpsi:in-out
-!                gm.vxonedbsq:in-out gm.vxbzb:in-out gm.vxeb:in-out
-!                gm.cvconn:in-out gm.vxconn:in-out gm.ftconn:in-out
-!                gm.fsconn:in-out gm.fteps:in-out gm.ftbbav2:in-out
-!                gm.fspsi:in-out mpg.intcellp:in-out mpg.intcellr:in-out
-!                mpg.divfcor:in-out
+!                gm.cvsz:in-out gm.cvhz:in-out gm.cvhx:in-out gm.cvhy:in-out
+!                gm.cvqgam:in-out gm.cvvol:in-out gm.cvonedbsq:in-out
+!                gm.cvbzb:in-out gm.cveb:in-out gm.cvfpsi:in-out
+!                gm.fcbb:in-out gm.fcs:in-out gm.fchc:in-out gm.fcht:in-out
+!                gm.fchz:in-out gm.fcvol:in-out gm.fcqgam:in-out
+!                gm.fcqalf:in-out gm.fcqbet:in-out gm.fcpbs:in-out
+!                gm.fcpbshz:in-out gm.fcbzb:in-out gm.fceb:in-out
+!                gm.fcfpsi:in-out gm.vxbb:in-out gm.vxx:in-out
+!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:in-out
+!                gm.vxfpsi:in-out gm.vxonedbsq:in-out gm.vxbzb:in-out
+!                gm.vxeb:in-out gm.cvconn:in-out gm.vxconn:in-out
+!                gm.ftconn:in-out gm.fsconn:in-out gm.fteps:in-out
+!                gm.ftbbav2:in-out gm.fspsi:in-out mpg.intcellp:in-out
+!                mpg.intcellr:in-out mpg.divfcor:in-out
 !
 !
 !**********************************************************************
@@ -160,9 +160,9 @@ CONTAINS
 !                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
 !                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
 !                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
-!                st.dv.fhet:out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhet:in-out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
 !                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
-!                st.dv.fhit:out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhit:in-out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
 !                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
 !                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
 !                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
@@ -173,7 +173,7 @@ CONTAINS
 !                st.dv.floi_noc:in-out st.dv.flon:in-out st.dv.flokt:in-out
 !                st.dv.flozt:in-out st.dv.conn:in-out st.dv.conkt:in-out
 !                st.dv.conzt:in-out st.dv.conb:in-out st.dv.cone:in-out
-!                st.dv.coni:in-out st.dv.fllime:out st.dv.fllimi:out
+!                st.dv.coni:in-out st.dv.fllime:in-out st.dv.fllimi:in-out
 !                st.dv.resmo:in-out st.dv.resco:in-out st.dv.respo:in-out
 !                st.dv.reshe:in-out st.dv.reshi:in-out st.dv.resht:in-out
 !                st.dv.resmt:in-out st.dv.reshn:in-out st.dv.reskt:in-out
@@ -206,7 +206,7 @@ CONTAINS
 !                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
 !                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
 !                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:out st.srw.b2stbm_sna:in-out
+!                st.srw.b2stbm_smq:in-out st.srw.b2stbm_sna:in-out
 !                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
 !                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
 !                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
@@ -222,9 +222,9 @@ CONTAINS
 !                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
 !                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
 !                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:out st.srw.she0_eir_tot:in-out
+!                st.srw.sne0_eir_tot:in-out st.srw.she0_eir_tot:in-out
 !                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:out st.rt.rlcx:in-out st.rt.rlqa:in-out
+!                st.srw.sch0_eir_tot:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
 !                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
 !                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
 !                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
@@ -232,21 +232,21 @@ CONTAINS
 !                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
 !                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
 !                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:out st.psnl.te:in-out
+!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
 !                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
 !                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:out st.psnl.fna:in-out
-!                st.psnl.fhi:out st.psnl.fhe:out st.psnl.fhn:out
-!                st.psnl.fkt:out st.psnl.fzt:out st.psnl.kinrgy:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:out
+!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
+!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:in-out
+!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
+!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
 !                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
 !                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:out
-!                st.psnc.fna:in-out st.psnc.fhi:out st.psnc.fhe:out
-!                st.psnc.fhn:out st.psnc.fkt:out st.psnc.fzt:out
-!                st.psnc.kinrgy:in-out st.update.ua:out st.update.na:out
-!                st.update.pa:out st.update.po:out st.update.te:out
-!                st.update.ti:out st.update.kt:out st.update.zt:out
+!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
+!                st.psnc.fna:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
+!                st.psnc.fhn:in-out st.psnc.fkt:in-out st.psnc.fzt:in-out
+!                st.psnc.kinrgy:in-out st.update.ua:in-out st.update.na:in-out
+!                st.update.pa:in-out st.update.po:in-out st.update.te:in-out
+!                st.update.ti:in-out st.update.kt:in-out st.update.zt:in-out
 !
 !**********************************************************************
 !

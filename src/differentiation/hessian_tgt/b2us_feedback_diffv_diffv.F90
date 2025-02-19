@@ -903,8 +903,8 @@ CONTAINS
 !     Can be arbitrarily expanded to allow applying feedback to any already existent BC
       END IF
     END DO
-    consistent = ((consistent .OR. lbndusr) .OR. b2sral_style .EQ. 1) &
-&     .OR. switch%b2stbc_boundary_namelist .LT. 1
+    consistent = (consistent .OR. b2sral_style .EQ. 1) .OR. switch%&
+&     b2stbc_boundary_namelist .LT. 1
     DO ifb=1,nfb
       IF (fb_ib(ifb) .LT. 0) consistent = consistent .AND. (.NOT.(&
 &         fb_actuator(ifb) .EQ. 1 .OR. fb_actuator(ifb) .EQ. 3)) .AND. (&
@@ -997,6 +997,7 @@ CONTAINS
       END DO
     END IF
     nfbreg = ifbreg - 1
+!
     CALL SUBEND()
     RETURN
   END SUBROUTINE INIT_FEEDBACK

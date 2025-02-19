@@ -25,7 +25,7 @@
 !
 SUBROUTINE B2SIGP_B(ncv, nfc, nvx, isb, switch, geo, geob, mpg, mpgb, &
 & rzb, rzbb, nb, nbb, ti, tib, tn, tnb, ne, neb, te, teb, po, pob, smbgp&
-& , smbgpb, wrk0, wrk0b, wrk1, wrk1b, wrk2)
+& , smbgpb, wrk0, wrk0b, wrk1, wrk1b)
   USE B2MOD_TYPES
 !srv 23.03.10
   USE B2MOD_CONSTANTS
@@ -55,8 +55,8 @@ SUBROUTINE B2SIGP_B(ncv, nfc, nvx, isb, switch, geo, geob, mpg, mpgb, &
 !   ..workspace arguments (unspecified on entry and on exit)
 !srv 28.03.17
 !djm Jul2018
-  REAL(kind=r8) :: wrk0(ncv), wrk1(ncv), wrk2(ncv), wrk3(ncv), wrk5(ncv)&
-& , wrk6(ncv), tb(ncv), nete(ncv), smbgp_b4gr(ncv, 0:3)
+  REAL(kind=r8) :: wrk0(ncv), wrk1(ncv), wrk3(ncv), wrk5(ncv), wrk6(ncv)&
+& , tb(ncv), nete(ncv), smbgp_b4gr(ncv, 0:3)
   REAL(kind=r8) :: wrk0b(ncv), wrk1b(ncv), wrk3b(ncv), wrk5b(ncv), wrk6b&
 & (ncv), tbb(ncv), neteb(ncv)
 !-----------------------------------------------------------------------
@@ -318,7 +318,7 @@ END SUBROUTINE B2SIGP_B
 !.specification
 !
 SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
-& ti, tn, ne, te, po, smbgp, wrk0, wrk1, wrk2)
+& ti, tn, ne, te, po, smbgp, wrk0, wrk1)
   USE B2MOD_TYPES
 !srv 23.03.10
   USE B2MOD_CONSTANTS
@@ -343,8 +343,8 @@ SUBROUTINE B2SIGP_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, rzb, nb, &
 !   ..workspace arguments (unspecified on entry and on exit)
 !srv 28.03.17
 !djm Jul2018
-  REAL(kind=r8) :: wrk0(ncv), wrk1(ncv), wrk2(ncv), wrk3(ncv), wrk5(ncv)&
-& , wrk6(ncv), tb(ncv), nete(ncv), smbgp_b4gr(ncv, 0:3)
+  REAL(kind=r8) :: wrk0(ncv), wrk1(ncv), wrk3(ncv), wrk5(ncv), wrk6(ncv)&
+& , tb(ncv), nete(ncv), smbgp_b4gr(ncv, 0:3)
 !-----------------------------------------------------------------------
 !.documentation
 !

@@ -148,5 +148,4 @@ SUBROUTINE B2TXVSPR_NODIFF(nx, ny, ns, fac_vis, avisper, bvisper, &
 !
 END SUBROUTINE B2TXVSPR_NODIFF
 !srv 10.10.17
-!
 

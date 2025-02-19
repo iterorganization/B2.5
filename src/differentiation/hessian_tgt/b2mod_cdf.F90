@@ -44,9 +44,7 @@ contains
          nemxipid, temxipid, timxipid, nemxapid, temxapid, timxapid, &
          fniyipid, feeyipid, feiyipid, fniyapid, feeyapid, feiyapid, &
          pwmxipid, pwmxapid, tmneid, tmteid, tmtiid, &
-#ifdef WG_TODO
          tmhacoreid, tmhasolid, tmhadivid, &
-#endif
          fnisipid, feesipid, feisipid, fnisapid, &
          feesapid, feisapid, fnisippid, feesippid, feisippid, fnisappid, &
          feesappid, feisappid, ne3dlid, te3dlid, ti3dlid, an3dlid, mn3dlid, &
@@ -398,14 +396,12 @@ contains
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'tmti', NCDOUBLE, 1, dims, tmtiid)
       call check_cdf_status(iret)
-#ifdef WG_TODO
       iret = nf_def_var(ncid, 'tmhacore', NCDOUBLE, 1, dims, tmhacoreid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'tmhasol', NCDOUBLE, 1, dims, tmhasolid)
       call check_cdf_status(iret)
       iret = nf_def_var(ncid, 'tmhadiv', NCDOUBLE, 1, dims, tmhadivid)
       call check_cdf_status(iret)
-#endif
       dims(1) = ncdim
       dims(2) = timedim
       iret = nf_def_var(ncid, 'fnisip', NCDOUBLE, 2, dims, fnisipid)
@@ -620,12 +616,10 @@ contains
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'dp3di', NCDOUBLE, 2, dims, dp3diid)
         call check_cdf_status(iret)
-#ifdef WG_TODO
         iret = nf_def_var(ncid, 'lh3di', NCDOUBLE, 2, dims, lh3diid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ln3di', NCDOUBLE, 2, dims, ln3diid)
         call check_cdf_status(iret)
-#endif
         iret = nf_def_var(ncid, 'ke3di', NCDOUBLE, 2, dims, ke3diid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ki3di', NCDOUBLE, 2, dims, ki3diid)
@@ -660,12 +654,10 @@ contains
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'dp3da', NCDOUBLE, 2, dims, dp3daid)
         call check_cdf_status(iret)
-#ifdef WG_TODO
         iret = nf_def_var(ncid, 'lh3da', NCDOUBLE, 2, dims, lh3daid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ln3da', NCDOUBLE, 2, dims, ln3daid)
         call check_cdf_status(iret)
-#endif
         iret = nf_def_var(ncid, 'ke3da', NCDOUBLE, 2, dims, ke3daid)
         call check_cdf_status(iret)
         iret = nf_def_var(ncid, 'ki3da', NCDOUBLE, 2, dims, ki3daid)
@@ -1039,7 +1031,6 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tmtiid, 'units', 2, 'eV')
       call check_cdf_status(iret)
-#ifdef WG_TODO
       iret = nf_put_att_text(ncid, tmhacoreid, 'long_name', 24, 'H-alpha emissivity, core')
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tmhacoreid, 'units', 19, 'photons.m^-2.sr^-1?')
@@ -1052,7 +1043,6 @@ contains
       call check_cdf_status(iret)
       iret = nf_put_att_text(ncid, tmhadivid, 'units', 19, 'photons.m^-2.sr^-1?')
       call check_cdf_status(iret)
-#endif
 
       ! internal flux quantities
       iret = nf_put_att_text(ncid, fnisipid, 'long_name', 54, 'poloidal particle flux, into Western separatrix throat')

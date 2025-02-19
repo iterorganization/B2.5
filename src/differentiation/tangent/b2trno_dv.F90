@@ -2,8 +2,8 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2trno in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: tdata cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci *(co.csig) *(co.calf)
+!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata *(co.csig) *(co.calf)
 !                *(co.csig_an) *(co.chce) *(co.chce_exb) *(co.chci)
 !                *(co.chci_exb) *(co.chcn) *(co.cdkt) *(co.cdzt)
 !                *(co.cvla) *(co.cdna) *(co.cdna_exb) *(co.cdpa)
@@ -12,9 +12,9 @@
 !                *(co.alf0) *(co.dkt0) *(co.dzt0) *(co.dna_exb)
 !                *(co.hce_exb) *(co.hci_exb) *(co.dpa0) *(co.dna0)
 !                *(co.vsa0) *(co.hcib) *(co.vla0)
-!   with respect to varying inputs: tdata cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
+!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
+!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
 !                *(dv.ni) *(dv.vaecrb) *(rt.rlcx) *(rt.rlsa) *(rt.rza)
 !                switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
@@ -32,11 +32,11 @@
 !                *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.vaecrb:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhz:in geo.cvqgam:in geo.cvvol:in geo.fcbb:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.vxvol:in st_ext.ni:in rt.rlcx:in rt.rlsa:in
-!                rt.rza:in co.csig:in co.calf:in co.csig_an:in
+!                geo.cvhz:in geo.cvhy:in geo.cvqgam:in geo.cvvol:in
+!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
+!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxvol:in st_ext.ni:in rt.rlcx:in
+!                rt.rlsa:in rt.rza:in co.csig:in co.calf:in co.csig_an:in
 !                co.calf_an:in co.chve:in co.chce:in co.chce_exb:in
 !                co.chvi:in co.chci:in co.chci_exb:in co.chcn:in
 !                co.cdkt:in co.cdzt:in co.cvla:in co.cdna:in co.cdna_exb:in
@@ -178,8 +178,8 @@ SUBROUTINE B2TRNO_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !   ..procedures
   REAL(kind=r8) :: smin, smax
   EXTERNAL IPGETR, IPGETI
-  EXTERNAL B2TQNA_NODIFF, B2TXCX_NODIFF, B2TXCY_NODIFF, B2TXCV_NODIFF, &
-&     B2TXSX_NODIFF, B2TXSY_NODIFF
+  EXTERNAL B2TQNA_NODIFF, B2TXCX_NODIFF, B2TXCY_NODIFF, B2TXSX_NODIFF, &
+&     B2TXSY_NODIFF
   EXTERNAL B2TQNA_DV, B2TXCX_DV, B2TXCY_DV, B2TXSX_DV, B2TXSY_DV
   EXTERNAL B2XVSG
   INTRINSIC NINT
@@ -736,7 +736,6 @@ SUBROUTINE B2TRNO_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL SUBEND()
   RETURN
 END SUBROUTINE B2TRNO_DV
-!
 
 !
 !
@@ -848,8 +847,8 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !   ..procedures
   REAL(kind=r8) :: smin, smax
   EXTERNAL IPGETR, IPGETI
-  EXTERNAL B2TQNA_NODIFF, B2TXCX_NODIFF, B2TXCY_NODIFF, B2TXCV_NODIFF, &
-&     B2TXSX_NODIFF, B2TXSY_NODIFF
+  EXTERNAL B2TQNA_NODIFF, B2TXCX_NODIFF, B2TXCY_NODIFF, B2TXSX_NODIFF, &
+&     B2TXSY_NODIFF
   EXTERNAL B2XVSG
   INTRINSIC NINT
   EXTERNAL XERRAB
@@ -1273,5 +1272,4 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   CALL SUBEND()
   RETURN
 END SUBROUTINE B2TRNO_NODIFF
-!
 

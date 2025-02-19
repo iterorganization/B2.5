@@ -76,44 +76,44 @@
 !                *(pl.tn) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
 !                dv.vaecrb:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhz:in geo.cvqgam:in geo.cvvol:in geo.fcbb:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.fcpbs:in geo.fcbzb:in geo.vxvol:in geo.ftconn:in
-!                geo.fsconn:in geo.fteps:in st_ext.am:in st_ext.za2:in
-!                st_ext.na:in st_ext.ni:in rtd.rlcx:in rtd.rlsa:in
-!                rtd.rza:in rtd.rz2:in rt.rlcx:in rt.rlsa:in rt.rza:in
-!                rt.rz2:in dvd.ne:in dvd.ni:in dvd.ne2:in dvd.lnlam:in
-!                dvd.vaecrb:in cod.csig:in cod.calf:in cod.csig_an:in
-!                cod.csigin:in cod.chce:in cod.chce_exb:in cod.chci:in
-!                cod.chci_exb:in cod.chcn:in cod.cdkt:in cod.cdzt:in
-!                cod.chvemx:in cod.chvimx:in cod.cvla:in cod.cdna:in
-!                cod.cdna_exb:in cod.cdpa:in cod.cvsa:in cod.cvlahz:in
-!                cod.cdpahz:in cod.cvsahz:in cod.cddi:in cod.cvsahz_cl:in
-!                cod.chcb:in cod.cvsa_cl:in cod.vsaf_cl:in cod.sig0:in
-!                cod.hce0:in cod.hci0:in cod.hcn0:in cod.alf0:in
-!                cod.dkt0:in cod.dzt0:in cod.dna_exb:in cod.hce_exb:in
-!                cod.hci_exb:in cod.dpa0:in cod.dna0:in cod.vsa0:in
-!                cod.hcib:in cod.vla0:in cod.alfx_c:in cod.sigx_c:in
-!                cod.sigx_kt:in cod.hcix_c:in cod.fllim_ki:in cod.fllim_ke:in
-!                cod.fllim_al:in cod.fllim_al_c:in cod.fllim_ki_c:in
-!                cod.f_luc_ke:in cod.f_luc_ki:in cod.f_luc_et:in
-!                cod.f_luc_sg:in cod.f_luc_al:in co.csig:in co.calf:in
-!                co.csig_an:in co.calf_an:in co.csig_cl:in co.calf_cl:in
-!                co.csigin:in co.chve:in co.chce:in co.chce_exb:in
-!                co.chvi:in co.chci:in co.chci_exb:in co.chcn:in
-!                co.cdkt:in co.cdzt:in co.chvemx:in co.chvimx:in
-!                co.cvla:in co.cdna:in co.cdna_exb:in co.cdpa:in
-!                co.cvsa:in co.cvlahz:in co.cdnahz:in co.cdpahz:in
-!                co.cvsahz:in co.cddi:in co.cvsahz_cl:in co.chcb:in
-!                co.cvsa_an:in co.cvmahz:in co.cthe:in co.cthi:in
-!                co.cvsa_cl:in co.fllim0fhi:in co.fllimvisc:in
-!                co.vsaf_cl:in co.sig0:in co.hce0:in co.hci0:in
-!                co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in co.dna_exb:in
-!                co.hce_exb:in co.hci_exb:in co.dpa0:in co.dna0:in
-!                co.vsa0:in co.hcib:in co.vla0:in co.vma0:in co.alfx_c:in
-!                co.sigx_c:in co.sigx_kt:in co.hcix_c:in co.fllim_ki:in
-!                co.fllim_ke:in co.fllim_al:in co.fllim_al_c:in
+!                geo.cvhz:in geo.cvhy:in geo.cvqgam:in geo.cvvol:in
+!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
+!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.fcpbs:in geo.fcbzb:in geo.vxvol:in
+!                geo.ftconn:in geo.fsconn:in geo.fteps:in st_ext.am:in
+!                st_ext.za2:in st_ext.na:in st_ext.ni:in rtd.rlcx:in
+!                rtd.rlsa:in rtd.rza:in rtd.rz2:in rt.rlcx:in rt.rlsa:in
+!                rt.rza:in rt.rz2:in dvd.ne:in dvd.ni:in dvd.ne2:in
+!                dvd.lnlam:in dvd.vaecrb:in cod.csig:in cod.calf:in
+!                cod.csig_an:in cod.csigin:in cod.chce:in cod.chce_exb:in
+!                cod.chci:in cod.chci_exb:in cod.chcn:in cod.cdkt:in
+!                cod.cdzt:in cod.chvemx:in cod.chvimx:in cod.cvla:in
+!                cod.cdna:in cod.cdna_exb:in cod.cdpa:in cod.cvsa:in
+!                cod.cvlahz:in cod.cdpahz:in cod.cvsahz:in cod.cddi:in
+!                cod.cvsahz_cl:in cod.chcb:in cod.cvsa_cl:in cod.vsaf_cl:in
+!                cod.sig0:in cod.hce0:in cod.hci0:in cod.hcn0:in
+!                cod.alf0:in cod.dkt0:in cod.dzt0:in cod.dna_exb:in
+!                cod.hce_exb:in cod.hci_exb:in cod.dpa0:in cod.dna0:in
+!                cod.vsa0:in cod.hcib:in cod.vla0:in cod.alfx_c:in
+!                cod.sigx_c:in cod.sigx_kt:in cod.hcix_c:in cod.fllim_ki:in
+!                cod.fllim_ke:in cod.fllim_al:in cod.fllim_al_c:in
+!                cod.fllim_ki_c:in cod.f_luc_ke:in cod.f_luc_ki:in
+!                cod.f_luc_et:in cod.f_luc_sg:in cod.f_luc_al:in
+!                co.csig:in co.calf:in co.csig_an:in co.calf_an:in
+!                co.csig_cl:in co.calf_cl:in co.csigin:in co.chve:in
+!                co.chce:in co.chce_exb:in co.chvi:in co.chci:in
+!                co.chci_exb:in co.chcn:in co.cdkt:in co.cdzt:in
+!                co.chvemx:in co.chvimx:in co.cvla:in co.cdna:in
+!                co.cdna_exb:in co.cdpa:in co.cvsa:in co.cvlahz:in
+!                co.cdnahz:in co.cdpahz:in co.cvsahz:in co.cddi:in
+!                co.cvsahz_cl:in co.chcb:in co.cvsa_an:in co.cvmahz:in
+!                co.cthe:in co.cthi:in co.cvsa_cl:in co.fllim0fhi:in
+!                co.fllimvisc:in co.vsaf_cl:in co.sig0:in co.hce0:in
+!                co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in
+!                co.dna_exb:in co.hce_exb:in co.hci_exb:in co.dpa0:in
+!                co.dna0:in co.vsa0:in co.hcib:in co.vla0:in co.vma0:in
+!                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.hcix_c:in
+!                co.fllim_ki:in co.fllim_ke:in co.fllim_al:in co.fllim_al_c:in
 !                co.fllim_ki_c:in co.f_luc_ke:in co.f_luc_ki:in
 !                co.f_luc_et:in co.f_luc_sg:in co.f_luc_al:in pld.na:in
 !                pld.ua:in pld.te:in pld.ti:in pld.tn:in pld.kt:in
@@ -123,8 +123,8 @@
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2tral in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: tdata cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci *(dv.lnlam) *(co.csig)
+!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata *(dv.lnlam) *(co.csig)
 !                *(co.calf) *(co.csig_an) *(co.csigin) *(co.chce)
 !                *(co.chce_exb) *(co.chci) *(co.chci_exb) *(co.chcn)
 !                *(co.cdkt) *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
@@ -138,9 +138,9 @@
 !                *(co.fllim_ke) *(co.fllim_al) *(co.fllim_al_c)
 !                *(co.fllim_ki_c) *(co.f_luc_ke) *(co.f_luc_ki)
 !                *(co.f_luc_et) *(co.f_luc_sg) *(co.f_luc_al)
-!   with respect to varying inputs: tdata cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
+!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
+!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
 !                *(dv.ni) *(dv.ne2) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx)
 !                *(rt.rlsa) *(rt.rza) *(rt.rz2) switch.keps_cd
 !                switch.keps_heat switch.keps_heat_i switch.keps_sig
@@ -165,28 +165,28 @@
 !                *(pl.tn) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
 !                dv.vaecrb:in mpg.intcellp:in mpg.intcellr:in geo.cvbb:in
-!                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvqgam:in
-!                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fchc:in
-!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcbzb:in
-!                geo.vxvol:in geo.ftconn:in geo.fsconn:in geo.fteps:in
-!                st_ext.am:in st_ext.za2:in st_ext.na:in st_ext.ni:in
-!                rt.rlcx:in rt.rlsa:in rt.rza:in rt.rz2:in co.csig:in
-!                co.calf:in co.csig_an:in co.calf_an:in co.csig_cl:in
-!                co.calf_cl:in co.csigin:in co.chve:in co.chce:in
-!                co.chce_exb:in co.chvi:in co.chci:in co.chci_exb:in
-!                co.chcn:in co.cdkt:in co.cdzt:in co.chvemx:in
-!                co.chvimx:in co.cvla:in co.cdna:in co.cdna_exb:in
-!                co.cdpa:in co.cvsa:in co.cvlahz:in co.cdnahz:in
-!                co.cdpahz:in co.cvsahz:in co.cddi:in co.cvsahz_cl:in
-!                co.chcb:in co.cvsa_an:in co.cvmahz:in co.cthe:in
-!                co.cthi:in co.cvsa_cl:in co.fllim0fhi:in co.fllimvisc:in
-!                co.vsaf_cl:in co.sig0:in co.hce0:in co.hci0:in
-!                co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in co.dna_exb:in
-!                co.hce_exb:in co.hci_exb:in co.dpa0:in co.dna0:in
-!                co.vsa0:in co.hcib:in co.vla0:in co.vma0:in co.alfx_c:in
-!                co.sigx_c:in co.sigx_kt:in co.hcix_c:in co.fllim_ki:in
-!                co.fllim_ke:in co.fllim_al:in co.fllim_al_c:in
+!                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvhy:in
+!                geo.cvqgam:in geo.cvvol:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.fcbzb:in geo.vxvol:in geo.ftconn:in geo.fsconn:in
+!                geo.fteps:in st_ext.am:in st_ext.za2:in st_ext.na:in
+!                st_ext.ni:in rt.rlcx:in rt.rlsa:in rt.rza:in rt.rz2:in
+!                co.csig:in co.calf:in co.csig_an:in co.calf_an:in
+!                co.csig_cl:in co.calf_cl:in co.csigin:in co.chve:in
+!                co.chce:in co.chce_exb:in co.chvi:in co.chci:in
+!                co.chci_exb:in co.chcn:in co.cdkt:in co.cdzt:in
+!                co.chvemx:in co.chvimx:in co.cvla:in co.cdna:in
+!                co.cdna_exb:in co.cdpa:in co.cvsa:in co.cvlahz:in
+!                co.cdnahz:in co.cdpahz:in co.cvsahz:in co.cddi:in
+!                co.cvsahz_cl:in co.chcb:in co.cvsa_an:in co.cvmahz:in
+!                co.cthe:in co.cthi:in co.cvsa_cl:in co.fllim0fhi:in
+!                co.fllimvisc:in co.vsaf_cl:in co.sig0:in co.hce0:in
+!                co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in
+!                co.dna_exb:in co.hce_exb:in co.hci_exb:in co.dpa0:in
+!                co.dna0:in co.vsa0:in co.hcib:in co.vla0:in co.vma0:in
+!                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.hcix_c:in
+!                co.fllim_ki:in co.fllim_ke:in co.fllim_al:in co.fllim_al_c:in
 !                co.fllim_ki_c:in co.f_luc_ke:in co.f_luc_ki:in
 !                co.f_luc_et:in co.f_luc_sg:in co.f_luc_al:in pl.na:in
 !                pl.ua:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
@@ -875,8 +875,8 @@ END SUBROUTINE B2TRAL_DV_DV
 !  Tapenade 3.16 (feature_llhTests) - 27 May 2021 14:23
 !
 !  Differentiation of b2tral in forward (tangent) mode (with options multiDirectional context noISIZE r8):
-!   variations   of useful results: tdata cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci *(dv.lnlam) *(co.csig)
+!   variations   of useful results: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci tdata *(dv.lnlam) *(co.csig)
 !                *(co.calf) *(co.csig_an) *(co.csigin) *(co.chce)
 !                *(co.chce_exb) *(co.chci) *(co.chci_exb) *(co.chcn)
 !                *(co.cdkt) *(co.cdzt) *(co.cvla) *(co.cdna) *(co.cdna_exb)
@@ -890,9 +890,9 @@ END SUBROUTINE B2TRAL_DV_DV
 !                *(co.fllim_ke) *(co.fllim_al) *(co.fllim_al_c)
 !                *(co.fllim_ki_c) *(co.f_luc_ke) *(co.f_luc_ki)
 !                *(co.f_luc_et) *(co.f_luc_sg) *(co.f_luc_al)
-!   with respect to varying inputs: tdata cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna *(dv.ne)
+!   with respect to varying inputs: cfvla cfvsa cfalf cfdpa cfsig
+!                cfdna cfhce cfhci parm_hce parm_hci parm_vla parm_vsa
+!                parm_alf parm_dpa parm_sig parm_dna tdata *(dv.ne)
 !                *(dv.ni) *(dv.ne2) *(dv.lnlam) *(dv.vaecrb) *(rt.rlcx)
 !                *(rt.rlsa) *(rt.rza) *(rt.rz2) switch.keps_cd
 !                switch.keps_heat switch.keps_heat_i switch.keps_sig
@@ -917,28 +917,28 @@ END SUBROUTINE B2TRAL_DV_DV
 !                *(pl.tn) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
 !                dv.vaecrb:in mpg.intcellp:in mpg.intcellr:in geo.cvbb:in
-!                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvqgam:in
-!                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fchc:in
-!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcbzb:in
-!                geo.vxvol:in geo.ftconn:in geo.fsconn:in geo.fteps:in
-!                st_ext.am:in st_ext.za2:in st_ext.na:in st_ext.ni:in
-!                rt.rlcx:in rt.rlsa:in rt.rza:in rt.rz2:in co.csig:in
-!                co.calf:in co.csig_an:in co.calf_an:in co.csig_cl:in
-!                co.calf_cl:in co.csigin:in co.chve:in co.chce:in
-!                co.chce_exb:in co.chvi:in co.chci:in co.chci_exb:in
-!                co.chcn:in co.cdkt:in co.cdzt:in co.chvemx:in
-!                co.chvimx:in co.cvla:in co.cdna:in co.cdna_exb:in
-!                co.cdpa:in co.cvsa:in co.cvlahz:in co.cdnahz:in
-!                co.cdpahz:in co.cvsahz:in co.cddi:in co.cvsahz_cl:in
-!                co.chcb:in co.cvsa_an:in co.cvmahz:in co.cthe:in
-!                co.cthi:in co.cvsa_cl:in co.fllim0fhi:in co.fllimvisc:in
-!                co.vsaf_cl:in co.sig0:in co.hce0:in co.hci0:in
-!                co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in co.dna_exb:in
-!                co.hce_exb:in co.hci_exb:in co.dpa0:in co.dna0:in
-!                co.vsa0:in co.hcib:in co.vla0:in co.vma0:in co.alfx_c:in
-!                co.sigx_c:in co.sigx_kt:in co.hcix_c:in co.fllim_ki:in
-!                co.fllim_ke:in co.fllim_al:in co.fllim_al_c:in
+!                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvhy:in
+!                geo.cvqgam:in geo.cvvol:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.fcbzb:in geo.vxvol:in geo.ftconn:in geo.fsconn:in
+!                geo.fteps:in st_ext.am:in st_ext.za2:in st_ext.na:in
+!                st_ext.ni:in rt.rlcx:in rt.rlsa:in rt.rza:in rt.rz2:in
+!                co.csig:in co.calf:in co.csig_an:in co.calf_an:in
+!                co.csig_cl:in co.calf_cl:in co.csigin:in co.chve:in
+!                co.chce:in co.chce_exb:in co.chvi:in co.chci:in
+!                co.chci_exb:in co.chcn:in co.cdkt:in co.cdzt:in
+!                co.chvemx:in co.chvimx:in co.cvla:in co.cdna:in
+!                co.cdna_exb:in co.cdpa:in co.cvsa:in co.cvlahz:in
+!                co.cdnahz:in co.cdpahz:in co.cvsahz:in co.cddi:in
+!                co.cvsahz_cl:in co.chcb:in co.cvsa_an:in co.cvmahz:in
+!                co.cthe:in co.cthi:in co.cvsa_cl:in co.fllim0fhi:in
+!                co.fllimvisc:in co.vsaf_cl:in co.sig0:in co.hce0:in
+!                co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in
+!                co.dna_exb:in co.hce_exb:in co.hci_exb:in co.dpa0:in
+!                co.dna0:in co.vsa0:in co.hcib:in co.vla0:in co.vma0:in
+!                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.hcix_c:in
+!                co.fllim_ki:in co.fllim_ke:in co.fllim_al:in co.fllim_al_c:in
 !                co.fllim_ki_c:in co.f_luc_ke:in co.f_luc_ki:in
 !                co.f_luc_et:in co.f_luc_sg:in co.f_luc_al:in pl.na:in
 !                pl.ua:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in

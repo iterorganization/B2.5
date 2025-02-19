@@ -18,26 +18,29 @@
 MODULE B2MOD_FACDRIFT_EXB_DIFFV_DIFFV
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV_DIFFV
+  USE B2MOD_USER_NAMELIST_DIFFV_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
   IMPLICIT NONE
 !
+  REAL(kind=r8), ALLOCATABLE :: fac_exb_profile(:), facdrift_profile(:)&
+& , fac_vis_profile(:)
   REAL(kind=r8) :: facdrift_scalar, fac_exb_scalar, fac_vis_scalar, &
 & facdrift_tanh_a, facdrift_tanh_b, facexb_tanh_a, facexb_tanh_b, &
 & facvis_tanh_a, facvis_tanh_b
   REAL(kind=r8), DIMENSION(nbdirsmax) :: fac_exb_scalard, &
 & fac_vis_scalard
-  INTEGER :: ncall_drift, iy_nocoreexb, fac_ref
+  INTEGER :: ncall_drift, iy_nocoreexb
   SAVE facdrift_scalar, fac_exb_scalar, ncall_drift, iy_nocoreexb, &
 &     facdrift_tanh_a, facdrift_tanh_b, facexb_tanh_a, facexb_tanh_b, &
-&     fac_ref, fac_vis_scalar, facvis_tanh_a, facvis_tanh_b
+&     fac_vis_scalar, facvis_tanh_a, facvis_tanh_b
   SAVE fac_exb_scalard, fac_vis_scalard
   DATA facdrift_scalar /0.0_R8/
   DATA fac_exb_scalar /0.0_R8/
   DATA fac_vis_scalar /0.0_R8/
   DATA ncall_drift /0/
-  DATA iy_nocoreexb /-2/
+  DATA iy_nocoreexb /0/
   DATA facdrift_tanh_a /0.0_R8/
   DATA facdrift_tanh_b /0.0_R8/
   DATA facexb_tanh_a /0.0_R8/
@@ -47,17 +50,20 @@ MODULE B2MOD_FACDRIFT_EXB_DIFFV_DIFFV
 
 CONTAINS
 !
-  SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_INIT(nfc, fac_exb, facdrift, &
+!
+  SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_INIT(nfc, mpg, fac_exb, facdrift, &
 &   fac_vis, sw)
+    USE B2US_MAP_DIFFV_DIFFV
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
-!
-    INTEGER :: nfc
+    INTEGER, INTENT(IN) :: nfc
+    TYPE(MAPPING), INTENT(IN) :: mpg
     REAL(kind=r8), INTENT(INOUT) :: fac_exb(nfc), facdrift(nfc), fac_vis&
 &   (nfc)
     TYPE(SWITCHES), INTENT(INOUT) :: sw
-!      integer ix, iy, jxi, jxa, jsep
-!      real (kind=R8) :: dssep
+    INTEGER :: i, ix, iy, icv, ifc, ifs, ift
+    INTRINSIC TANH
+    REAL(kind=r8) :: arg1
 !
     IF (ncall_drift .EQ. 0) THEN
       facdrift_scalar = sw%facdrift_start
@@ -132,6 +138,116 @@ CONTAINS
       ELSE
         WRITE(*, *) 'No vis'
       END IF
+!
+      ALLOCATE(fac_exb_profile(1:nfc))
+      ALLOCATE(facdrift_profile(1:nfc))
+      ALLOCATE(fac_vis_profile(1:nfc))
+      fac_exb_profile = 1.0_R8
+      facdrift_profile = 1.0_R8
+      fac_vis_profile = 1.0_R8
+      CALL IPGETI('b2news_iy_nocoreExB', iy_nocoreexb)
+!xpb
+!xpb
+      CALL XERTST(0 .LE. iy_nocoreexb .AND. nomp .GE. iy_nocoreexb, &
+&           'faulty parameter iy_nocoreExB')
+!xpb
+      DO iy=1,iy_nocoreexb
+        ift = mpg%cvft(omp(iy))
+        DO ix=1,mpg%ftcvp(ift, 2)
+          icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+          IF (mpg%cvonclosedsurface(icv)) THEN
+            DO i=1,mpg%cvfcp(icv, 2)
+              ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
+              fac_exb_profile(ifc) = 0.0_R8
+            END DO
+          END IF
+        END DO
+      END DO
+      CALL IPGETR('b2news_facdrift_tanh_a', facdrift_tanh_a)
+      CALL IPGETR('b2news_facdrift_tanh_b', facdrift_tanh_b)
+      IF (facdrift_tanh_b .NE. 0.0_R8) THEN
+        DO iy=1,nomp
+          ift = mpg%cvft(omp(iy))
+          DO ix=1,mpg%ftcvp(ift, 2)
+            icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+            IF (mpg%cvonclosedsurface(icv)) THEN
+              DO i=1,mpg%cvfcp(icv, 2)
+                ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
+                ifs = mpg%fcfs(ifc)
+                IF (ifs .EQ. 0) THEN
+                  arg1 = (ft_ds_omp(ift)-facdrift_tanh_a)/&
+&                   facdrift_tanh_b
+                  facdrift_profile(ifc) = facdrift_profile(ifc)*0.5_R8*(&
+&                   1.0_R8+TANH(arg1))
+                ELSE
+                  arg1 = (fs_ds_omp(ifs)-facdrift_tanh_a)/&
+&                   facdrift_tanh_b
+                  facdrift_profile(ifc) = facdrift_profile(ifc)*0.5_R8*(&
+&                   1.0_R8+TANH(arg1))
+                END IF
+              END DO
+            END IF
+          END DO
+        END DO
+      END IF
+      CALL IPGETR('b2news_fac_ExB_tanh_a', facexb_tanh_a)
+      IF (facexb_tanh_a .EQ. 0.0_R8) CALL IPGETR('b2news_facExB_tanh_a'&
+&                                          , facexb_tanh_a)
+      CALL IPGETR('b2news_fac_ExB_tanh_b', facexb_tanh_b)
+      IF (facexb_tanh_b .EQ. 0.0_R8) CALL IPGETR('b2news_facExB_tanh_b'&
+&                                          , facexb_tanh_b)
+      IF (facexb_tanh_b .NE. 0.0_R8) THEN
+        DO iy=1,nomp
+          ift = mpg%cvft(omp(iy))
+          DO ix=1,mpg%ftcvp(ift, 2)
+            icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+            IF (mpg%cvonclosedsurface(icv)) THEN
+              DO i=1,mpg%cvfcp(icv, 2)
+                ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
+                ifs = mpg%fcfs(ifc)
+                IF (ifs .EQ. 0) THEN
+                  arg1 = (ft_ds_omp(ift)-facexb_tanh_a)/facexb_tanh_b
+                  fac_exb_profile(ifc) = fac_exb_profile(ifc)*0.5_R8*(&
+&                   1.0_R8+TANH(arg1))
+                ELSE
+                  arg1 = (fs_ds_omp(ifs)-facexb_tanh_a)/facexb_tanh_b
+                  fac_exb_profile(ifc) = fac_exb_profile(ifc)*0.5_R8*(&
+&                   1.0_R8+TANH(arg1))
+                END IF
+              END DO
+            END IF
+          END DO
+        END DO
+      END IF
+      CALL IPGETR('b2news_fac_vis_tanh_a', facvis_tanh_a)
+      IF (facvis_tanh_a .EQ. 0.0_R8) CALL IPGETR('b2news_facvis_tanh_a'&
+&                                          , facvis_tanh_a)
+      CALL IPGETR('b2news_fac_vis_tanh_b', facvis_tanh_b)
+      IF (facvis_tanh_b .EQ. 0.0_R8) CALL IPGETR('b2news_facvis_tanh_b'&
+&                                          , facvis_tanh_b)
+      IF (facvis_tanh_b .NE. 0.0_R8) THEN
+        DO iy=1,nomp
+          ift = mpg%cvft(omp(iy))
+          DO ix=1,mpg%ftcvp(ift, 2)
+            icv = mpg%ftcv(mpg%ftcvp(ift, 1)+ix-1)
+            IF (mpg%cvonclosedsurface(icv)) THEN
+              DO i=1,mpg%cvfcp(icv, 2)
+                ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
+                ifs = mpg%fcfs(ifc)
+                IF (ifs .EQ. 0) THEN
+                  arg1 = (ft_ds_omp(ift)-facvis_tanh_a)/facvis_tanh_b
+                  fac_vis_profile(ifc) = fac_vis_profile(ifc)*0.5_R8*(&
+&                   1.0_R8+TANH(arg1))
+                ELSE
+                  arg1 = (fs_ds_omp(ifs)-facvis_tanh_a)/facvis_tanh_b
+                  fac_vis_profile(ifc) = fac_vis_profile(ifc)*0.5_R8*(&
+&                   1.0_R8+TANH(arg1))
+                END IF
+              END DO
+            END IF
+          END DO
+        END DO
+      END IF
     END IF
 !
     CALL B2NEWS_FACDRIFT_FAC_EXB_UPDATE(nfc, fac_exb, facdrift, fac_vis)
@@ -148,6 +264,7 @@ CONTAINS
 &   (nfc)
     TYPE(SWITCHES), INTENT(IN) :: sw
     INTRINSIC MIN
+!
     CALL XERTST(0 .LT. ncall_drift, &
 &         'b2news_facdrift_fac_ExB_inc called before initialisation')
     IF (facdrift_scalar*sw%facdrift_inc .GT. sw%facdrift_target) THEN
@@ -166,6 +283,7 @@ CONTAINS
       fac_vis_scalar = fac_vis_scalar*sw%facvis_inc
     END IF
     CALL B2NEWS_FACDRIFT_FAC_EXB_UPDATE(nfc, fac_exb, facdrift, fac_vis)
+!
     RETURN
   END SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_INC
 
@@ -179,6 +297,7 @@ CONTAINS
 &   (nfc)
     TYPE(SWITCHES), INTENT(IN) :: sw
     INTRINSIC MAX
+!
     CALL XERTST(0 .LT. ncall_drift, &
 &         'b2news_facdrift_fac_ExB_dec called before initialisation')
     IF (facdrift_scalar*sw%facdrift_dec .LT. sw%facdrift_start) THEN
@@ -197,6 +316,7 @@ CONTAINS
       fac_vis_scalar = fac_vis_scalar*sw%facvis_dec
     END IF
     CALL B2NEWS_FACDRIFT_FAC_EXB_UPDATE(nfc, fac_exb, facdrift, fac_vis)
+!
     RETURN
   END SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_DEC
 
@@ -208,7 +328,6 @@ CONTAINS
     INTEGER :: nfc
     REAL(kind=r8), INTENT(INOUT) :: fac_exb(nfc), facdrift(nfc), fac_vis&
 &   (nfc)
-    REAL(kind=r8) :: facdrift_profile, fac_exb_profile, fac_vis_profile
     INTRINSIC MINVAL
     INTRINSIC MAXVAL
     REAL(kind=r8) :: result1
@@ -217,9 +336,7 @@ CONTAINS
     REAL(kind=r8) :: result4
     REAL(kind=r8) :: result5
     REAL(kind=r8) :: result6
-    fac_exb_profile = 1.0_R8
-    facdrift_profile = 1.0_R8
-    fac_vis_profile = 1.0_R8
+!
     facdrift = facdrift_scalar*facdrift_profile
     fac_exb = fac_exb_scalar*fac_exb_profile
     fac_vis = fac_vis_scalar*fac_vis_profile
@@ -232,8 +349,24 @@ CONTAINS
     WRITE(*, '(1x,a,1p,6g12.5)') 'facdrift, fac_ExB, fac_vis', result1, &
 &   result2, result3, result4, result5, result6
     ncall_drift = ncall_drift + 1
+!
     RETURN
   END SUBROUTINE B2NEWS_FACDRIFT_FAC_EXB_UPDATE
+
+!
+  SUBROUTINE DEALLOC_B2MOD_FACDRIFT_EXB()
+    USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    INTRINSIC ALLOCATED
+!
+    IF (ALLOCATED(facdrift_profile)) THEN
+      DEALLOCATE(facdrift_profile)
+      DEALLOCATE(fac_exb_profile)
+      DEALLOCATE(fac_vis_profile)
+    END IF
+!
+    RETURN
+  END SUBROUTINE DEALLOC_B2MOD_FACDRIFT_EXB
 
 END MODULE B2MOD_FACDRIFT_EXB_DIFFV_DIFFV
 

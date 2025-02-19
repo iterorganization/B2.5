@@ -21,7 +21,7 @@
 !
 !
 SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, mpg, st, stb, &
-& st_ext, boris, j, jb)
+& st_ext, j, jb)
   USE B2MOD_TYPES
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
@@ -42,7 +42,7 @@ SUBROUTINE B2USR_COST_FUNCTION_B(ncv, nfc, nvx, ns, geo, mpg, st, stb, &
   TYPE(B2STATE), INTENT(IN) :: st
   TYPE(B2STATE_DIFF) :: stb
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
-  REAL(kind=r8) :: boris, j(nncf)
+  REAL(kind=r8) :: j(nncf)
   REAL(kind=r8) :: jb(nncf)
   INTEGER :: ncv, nfc, nvx, ns
   INTEGER :: icf, ic1, ic2, icv, n1, n2, ifc
@@ -793,7 +793,7 @@ END SUBROUTINE B2USR_COST_FUNCTION_B
 !
 !
 SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
-& st_ext, boris, j)
+& st_ext, j)
   USE B2MOD_TYPES
   USE B2US_MAP_DIFF
   USE B2US_PLASMA_DIFF
@@ -812,7 +812,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(B2STATE), INTENT(IN) :: st
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
-  REAL(kind=r8) :: boris, j(nncf)
+  REAL(kind=r8) :: j(nncf)
   INTEGER :: ncv, nfc, nvx, ns
   INTEGER :: icf, ic1, ic2, icv, n1, n2, ifc
   LOGICAL, SAVE :: first_call=.true.

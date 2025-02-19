@@ -49,20 +49,20 @@
 !                dv.nn:in-out dv.vadia:in dv.vaecrb:in dv.vedia:in
 !                dv.veecrb:in dv.facdrift:in mpg.bcfcor:in psnl.na:in
 !                psnl.ne:in psnl.ni:in psnl.fna:in psnl.kinrgy:in
-!                geo.cvbb:in geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.fcpbs:in geo.fcpbshz:in geo.vxvol:in geo.vxonedbsq:in
-!                st_ext.am:in st_ext.na:in st_ext.ta:in rt.rza:in
-!                srw.sch0:in srw.she0:in srw.shi0:in srw.sne0:in
-!                srw.shn0:in srw.skt0:in srw.szt0:in srw.smo0:in
-!                srw.sna0:in srw.b2stbc_sch:in srw.b2stbc_she:in
-!                srw.b2stbc_shi:in srw.b2stbc_sne:in srw.b2stbc_shn:in
-!                srw.b2stbc_skt:in srw.b2stbc_szt:in srw.b2stbc_smo:in
-!                srw.b2stbc_sna:in co.chce:in co.chci:in co.cdna:in
-!                co.hce0:in co.hci0:in co.hcn0:in co.dpa0:in co.dna0:in
-!                pl.na:in pl.ua:in pl.po:in pl.te:in pl.ti:in pl.tn:in
-!                pl.kt:in pl.zt:in
+!                geo.cvbb:in geo.cvhz:in geo.cvvol:in geo.cvonedbsq:in
+!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
+!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in geo.vxvol:in
+!                geo.vxonedbsq:in st_ext.am:in st_ext.za:in st_ext.na:in
+!                st_ext.ta:in rt.rza:in srw.sch0:in srw.she0:in
+!                srw.shi0:in srw.sne0:in srw.shn0:in srw.skt0:in
+!                srw.szt0:in srw.smo0:in srw.sna0:in srw.b2stbc_sch:in
+!                srw.b2stbc_she:in srw.b2stbc_shi:in srw.b2stbc_sne:in
+!                srw.b2stbc_shn:in srw.b2stbc_skt:in srw.b2stbc_szt:in
+!                srw.b2stbc_smo:in srw.b2stbc_sna:in co.chce:in
+!                co.chci:in co.cdna:in co.hce0:in co.hci0:in co.hcn0:in
+!                co.dpa0:in co.dna0:in pl.na:in pl.ua:in pl.po:in
+!                pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in
 !
 !
 !
@@ -81,7 +81,6 @@ SUBROUTINE B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb&
 & , geo, geob, mpg, mpgb, pl, plb, dv, dvb, co, cob, rt, rtb, st_ext, &
 & st_extb, srw, srwb, psnc, psncb, psnl, psnlb, wrong_flow, main_call)
   USE B2MOD_TYPES
-!      use b2mod_geo_corner
   USE B2MOD_CONSTANTS
   USE B2US_FEEDBACK_DIFF
   USE B2MOD_B2CMPA_DIFF
@@ -143,14 +142,19 @@ SUBROUTINE B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb&
 !.declarations
 !
 !   ..local variables
-  INTEGER :: is
+  INTEGER :: i, j, is, icv, ifc, ift
   REAL(kind=r8) :: praverage(2)
   REAL(kind=r8) :: wrk(nfc)
   REAL(kind=r8) :: wrkb(nfc)
+  REAL(kind=r8) :: prsum(2), gssum(2), tesum(2), tisum(2), nasum(0:ns-1&
+& , 2), nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1), nxf, taf, zxf, &
+& volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2)
+  EXTERNAL XERTST, SFILL_NODIFF, B2SAXPY_NODIFF, IPGETR, IPGETI, &
+&     INTFACE_S
+  EXTERNAL SFILL_FWD, SFILL_BWD, B2SAXPY_FWD, B2SAXPY_BWD
+  REAL(kind=r8) :: INTFACE_S
 !   ..procedures
   INTRINSIC NINT
-  EXTERNAL XERTST, SFILL_NODIFF, B2SAXPY_NODIFF, IPGETR, IPGETI
-  EXTERNAL SFILL_FWD, SFILL_BWD, B2SAXPY_FWD, B2SAXPY_BWD
   EXTERNAL B2XVSG, B2XVPS_NODIFF, B2STBC_PHYS_NODIFF
   EXTERNAL B2STBC_PHYS_B
   INTRINSIC MAXVAL
@@ -212,6 +216,10 @@ SUBROUTINE B2STBC_B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb&
   CALL B2SAXPY_FWD(ncv, switch%shi0ep, geo%cvvol, 1, srw%shi0(1, 0), &
 &            srwb%shi0(1, 0), 1)
 !
+!   ..find the average pressure for inner flux surface           !sv 24.03.99
+!sv 24.03.99
+!xpb
+!xpb
   IF (switch%b2stbc_boundary_namelist .GE. 1) THEN
     IF (lfeedback .OR. switch%b2stbc_feedback .NE. 0) THEN
       CALL PUSHREAL8ARRAY(charge_frac, r8*def_nsd/8)
@@ -375,7 +383,6 @@ END SUBROUTINE B2STBC_B
 SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 & , mpg, pl, dv, co, rt, st_ext, srw, psnc, psnl, wrong_flow, main_call)
   USE B2MOD_TYPES
-!      use b2mod_geo_corner
   USE B2MOD_CONSTANTS
   USE B2US_FEEDBACK_DIFF
   USE B2MOD_B2CMPA_DIFF
@@ -425,12 +432,17 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !.declarations
 !
 !   ..local variables
-  INTEGER :: is
+  INTEGER :: i, j, is, icv, ifc, ift
   REAL(kind=r8) :: praverage(2)
   REAL(kind=r8) :: wrk(nfc)
+  REAL(kind=r8) :: prsum(2), gssum(2), tesum(2), tisum(2), nasum(0:ns-1&
+& , 2), nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1), nxf, taf, zxf, &
+& volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2)
+  EXTERNAL XERTST, SFILL_NODIFF, B2SAXPY_NODIFF, IPGETR, IPGETI, &
+&     INTFACE_S
+  REAL(kind=r8) :: INTFACE_S
 !   ..procedures
   INTRINSIC NINT
-  EXTERNAL XERTST, SFILL_NODIFF, B2SAXPY_NODIFF, IPGETR, IPGETI
   EXTERNAL B2XVSG, B2XVPS_NODIFF, B2STBC_PHYS_NODIFF
   INTRINSIC MAXVAL
   INTRINSIC MINVAL
@@ -536,6 +548,82 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
   CALL B2SAXPY_NODIFF(ncv, switch%shi0ep, geo%cvvol, 1, srw%shi0(1, 0), &
 &               1)
 !
+!   ..find the average pressure for inner flux surface           !sv 24.03.99
+!sv 24.03.99
+  ift = mpg%cvft(omp(1))
+  tesum(1) = 0.0_R8
+  tisum(1) = 0.0_R8
+  nasum(:, 1) = 0.0_R8
+!xpb
+  prsum(1) = 0.0_R8
+  qesum(1) = 0.0_R8
+  qisum(1) = 0.0_R8
+!xpb
+  gssum(1) = 0.0_R8
+  volsum(1) = 0.0_R8
+!xpb
+  DO i=1,mpg%ftcvp(ift, 2)
+    icv = mpg%ftcv(mpg%ftcvp(ift, 1)+i-1)
+    IF (mpg%cvonclosedsurface(icv)) THEN
+!xpb
+      DO j=1,mpg%cvfcp(icv, 2)
+        ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+j-1)
+!xpb
+        IF ((mpg%fccv(ifc, 1) .EQ. icv .AND. mpg%fccv(ifc, 2) .GT. mpg%&
+&           nci) .OR. (mpg%fccv(ifc, 2) .EQ. icv .AND. mpg%fccv(ifc, 1) &
+&           .GT. mpg%nci)) THEN
+          tef = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, pl%te)
+          tif = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, pl%ti)
+          nef = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, dv%ne)
+          nif = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, dv%ni(1, 1&
+&           ))
+          DO is=0,ns-1
+            naf(is) = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, pl%&
+&             na(1, is))
+            zaf(is) = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, rt%&
+&             rza(1, is))
+          END DO
+          tesum(1) = tesum(1) + tef*geo%fcs(ifc)
+          tisum(1) = tisum(1) + tif*geo%fcs(ifc)
+          nasum(:, 1) = nasum(:, 1) + naf(:)*geo%fcs(ifc)
+          prsum(1) = prsum(1) + (nef*tef+nif*tif)*geo%cvvol(icv)*geo%&
+&           fcbb(ifc, 2)*geo%fchz(ifc)
+          qesum(1) = qesum(1) + 2.5_R8*geo%fchz(ifc)*nef*tef**2*geo%fcbb&
+&           (ifc, 2)/qe*geo%fcs(ifc)
+          DO is=0,ns-1
+            IF (.NOT.is_neutral(is)) qisum(1) = qisum(1) - 2.5_R8*geo%&
+&               fchz(ifc)*naf(is)*tif**2*geo%fcbb(ifc, 2)/(qe*zaf(is))*&
+&               geo%fcs(ifc)
+          END DO
+          DO is=0,st_ext%ns-1
+            nxf = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, st_ext%&
+&             na(1, is))
+            taf = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, st_ext%&
+&             ta(1, is))
+            prsum(1) = prsum(1) + nxf*taf*geo%cvvol(icv)*geo%fcbb(ifc, 2&
+&             )*geo%cvhz(icv)
+            IF (.NOT.st_ext%is_neutral(is)) THEN
+              zxf = INTFACE_S(ifc, ncv, nfc, mpg%fccv, geo%fcvol, st_ext&
+&               %za(1, is))
+              qisum(1) = qisum(1) - 2.5_R8*geo%cvhz(ifc)*nxf*taf**2*geo%&
+&               fcbb(ifc, 2)/(qe*zxf)*geo%fcs(ifc)
+            END IF
+          END DO
+!xpb
+          gssum(1) = gssum(1) + geo%fcs(ifc)
+          volsum(1) = volsum(1) + geo%cvvol(icv)
+        END IF
+      END DO
+    END IF
+!sv 24.03.99
+
+  END DO
+!xpb
+  IF (volsum(1) .GT. 0.0_R8) praverage(1) = prsum(1)/volsum(1)
+  IF (gssum(1) .GT. 0.0_R8) THEN
+    qeaverage(1) = qesum(1)/gssum(1)
+    qiaverage(1) = qisum(1)/gssum(1)
+  END IF
   IF (switch%b2stbc_boundary_namelist .GE. 1) THEN
     IF (lfeedback .OR. switch%b2stbc_feedback .NE. 0) CALL &
 &     COMPUTE_FEEDBACK(ncv, nfc, ns, ismain, switch, geo, mpg, pl, dv, &
@@ -548,7 +636,6 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
     IF (wrong_flow) WRITE(*, *) &
 &                   'b2stbc: wrong_flow returned from b2stbc_phys'
   END IF
-!boundary_namelist.ge.1
 !
 !WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
 !WG_RM     &  call b2stbc_fb_post(nCv, nFc, ns, ismain,
@@ -593,100 +680,4 @@ SUBROUTINE B2STBC_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 !.end b2stbc
 !
 END SUBROUTINE B2STBC_NODIFF
-
-!
-!-----------------------------------------------------------------------
-!.specification
-FUNCTION BCINT_NODIFF(fun, nx, ny, il, ib) RESULT (bcint)
-  USE B2MOD_TYPES
-  USE B2MOD_GEO_DIFF
-  USE B2MOD_INDIRECT_DIFF
-  USE B2MOD_BOUNDARY_NAMELIST_DIFF
-  IMPLICIT NONE
-!   ..output result (undefined upon entry)
-  REAL(kind=r8) :: bcint
-!   ..input arguments (unchanged on exit)
-  INTEGER :: nx, ny, il, ib
-  REAL(kind=r8) :: fun(-1:nx, -1:ny)
-!
-!-----------------------------------------------------------------------
-!.documentation
-!
-!  1. purpose
-!
-!     BCINT provides interpolated face-centred values for cell-centred
-!     quantities (array fun), for use in boundary conditions.
-!     The interpolation is done according to distance away from the
-!     cell face. The boundary index is ib, and the cell index along
-!     the boundary is il.
-!
-!
-!-----------------------------------------------------------------------
-!.declarations
-!
-!   ..procedures
-  EXTERNAL XERTST, XERRAB
-  REAL(kind=r8) :: result1
-  REAL(kind=r8) :: result2
-  REAL(kind=r8) :: result3
-  REAL(kind=r8) :: result4
-!
-!-----------------------------------------------------------------------
-!.computation
-!
-! ..preliminaries
-!  ..test input parameters
-  CALL XERTST(0 .LE. nx .AND. 0 .LE. ny, 'faulty parameter nx, ny')
-  CALL XERTST(0 .LT. ib .AND. nbc .GE. ib, 'faulty parameter ib')
-  CALL XERTST(1 .LE. il .AND. bc_list_size(ib) .GE. il, &
-&       'faulty parameter il')
-!
-! ..main computation
-  IF (bcchar(ib) .EQ. 'S') THEN
-    result1 = HY1(topix(bc_list_x(il, ib), bc_list_y(il, ib)), topiy(&
-&     bc_list_x(il, ib), bc_list_y(il, ib)))
-    result2 = HY1(bc_list_x(il, ib), bc_list_y(il, ib))
-    result3 = HY1(bc_list_x(il, ib), bc_list_y(il, ib))
-    result4 = HY1(topix(bc_list_x(il, ib), bc_list_y(il, ib)), topiy(&
-&     bc_list_x(il, ib), bc_list_y(il, ib)))
-    bcint = (fun(bc_list_x(il, ib), bc_list_y(il, ib))*result1+fun(topix&
-&     (bc_list_x(il, ib), bc_list_y(il, ib)), topiy(bc_list_x(il, ib), &
-&     bc_list_y(il, ib)))*result2)/(result3+result4)
-  ELSE IF (bcchar(ib) .EQ. 'N') THEN
-    result1 = HY1(bottomix(bc_list_x(il, ib), bc_list_y(il, ib)), &
-&     bottomiy(bc_list_x(il, ib), bc_list_y(il, ib)))
-    result2 = HY1(bc_list_x(il, ib), bc_list_y(il, ib))
-    result3 = HY1(bc_list_x(il, ib), bc_list_y(il, ib))
-    result4 = HY1(bottomix(bc_list_x(il, ib), bc_list_y(il, ib)), &
-&     bottomiy(bc_list_x(il, ib), bc_list_y(il, ib)))
-    bcint = (fun(bc_list_x(il, ib), bc_list_y(il, ib))*result1+fun(&
-&     bottomix(bc_list_x(il, ib), bc_list_y(il, ib)), bottomiy(bc_list_x&
-&     (il, ib), bc_list_y(il, ib)))*result2)/(result3+result4)
-  ELSE IF (bcchar(ib) .EQ. 'E') THEN
-    bcint = (fun(bc_list_x(il, ib), bc_list_y(il, ib))*hx(leftix(&
-&     bc_list_x(il, ib), bc_list_y(il, ib)), leftiy(bc_list_x(il, ib), &
-&     bc_list_y(il, ib)))+fun(leftix(bc_list_x(il, ib), bc_list_y(il, ib&
-&     )), leftiy(bc_list_x(il, ib), bc_list_y(il, ib)))*hx(bc_list_x(il&
-&     , ib), bc_list_y(il, ib)))/(hx(bc_list_x(il, ib), bc_list_y(il, ib&
-&     ))+hx(leftix(bc_list_x(il, ib), bc_list_y(il, ib)), leftiy(&
-&     bc_list_x(il, ib), bc_list_y(il, ib))))
-  ELSE IF (bcchar(ib) .EQ. 'W') THEN
-    bcint = (fun(bc_list_x(il, ib), bc_list_y(il, ib))*hx(rightix(&
-&     bc_list_x(il, ib), bc_list_y(il, ib)), rightiy(bc_list_x(il, ib), &
-&     bc_list_y(il, ib)))+fun(rightix(bc_list_x(il, ib), bc_list_y(il, &
-&     ib)), rightiy(bc_list_x(il, ib), bc_list_y(il, ib)))*hx(bc_list_x(&
-&     il, ib), bc_list_y(il, ib)))/(hx(bc_list_x(il, ib), bc_list_y(il, &
-&     ib))+hx(rightix(bc_list_x(il, ib), bc_list_y(il, ib)), rightiy(&
-&     bc_list_x(il, ib), bc_list_y(il, ib))))
-  ELSE
-    CALL XERRAB('bcint : Unknown orientation!')
-  END IF
-!
-! ..return
-  RETURN
-!
-!-----------------------------------------------------------------------
-!.end bcint
-!
-END FUNCTION BCINT_NODIFF
 

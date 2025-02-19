@@ -22,7 +22,7 @@
 !.specification
 !
 SUBROUTINE B2NXFX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, qe, ne&
-& , ned, te, ted, po, pod, ehxp, ehxpd, wrk0, wrk1, nbdirs)
+& , ned, te, ted, po, pod, ehxp, ehxpd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -46,7 +46,7 @@ SUBROUTINE B2NXFX_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, qe, ne&
   REAL(kind=r8) :: ned(nbdirsmax, ncv), ted(nbdirsmax, ncv), pod(&
 & nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: ehxp(ncv), wrk0(nfc), wrk1(nfc)
+  REAL(kind=r8) :: ehxp(ncv)
   REAL(kind=r8) :: ehxpd(nbdirsmax, ncv)
 !
 !-----------------------------------------------------------------------
@@ -172,7 +172,7 @@ END SUBROUTINE B2NXFX_DV
 !.specification
 !
 SUBROUTINE B2NXFX_NODIFF(ncv, nfc, nvx, switch, geo, mpg, qe, ne, te, po&
-& , ehxp, wrk0, wrk1)
+& , ehxp)
   USE B2MOD_TYPES
   USE B2MOD_SWITCHES_DIFFV
   USE B2US_GEO_DIFFV
@@ -191,7 +191,7 @@ SUBROUTINE B2NXFX_NODIFF(ncv, nfc, nvx, switch, geo, mpg, qe, ne, te, po&
   TYPE(MAPPING), INTENT(IN) :: mpg
   REAL(kind=r8) :: qe, ne(ncv), te(ncv), po(ncv)
 !   ..output arguments (unspecified on entry)
-  REAL(kind=r8) :: ehxp(ncv), wrk0(nfc), wrk1(nfc)
+  REAL(kind=r8) :: ehxp(ncv)
 !
 !-----------------------------------------------------------------------
 !.documentation

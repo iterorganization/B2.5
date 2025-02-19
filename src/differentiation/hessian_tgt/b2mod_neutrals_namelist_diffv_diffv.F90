@@ -1196,7 +1196,7 @@ CONTAINS
 !
     CALL RC_TO_STRUCT_DV(m, md0, nbdirs)
 !
-    IF (nstrai .LE. 0) nstrat = 0
+    IF (nstrai .EQ. 0) nstrat = 0
 !
     arcstra = crcstra
     arcstart = rcstart
@@ -1476,11 +1476,9 @@ CONTAINS
     END DO
     WRITE(hlp_frm, '(a,i2,a)') '(1x,a,', ntrack, '(a2,1x))'
     WRITE(*, hlp_frm) 'track_species : Bulk ', track_species(1:ntrack)
-!.. Test consistency with region boundaries
     IF (.NOT.dotest) THEN
       RETURN
     ELSE
-!.. Test consistency with physical edges within the computational domain
       CALL MAP_ION_COMPONENTS()
       RETURN
     END IF
@@ -1611,7 +1609,7 @@ CONTAINS
 !
     CALL RC_TO_STRUCT_DV(m, md0, nbdirs)
 !
-    IF (nstrai .LE. 0) nstrat = 0
+    IF (nstrai .EQ. 0) nstrat = 0
 !
     arcstra = crcstra
     arcstart = rcstart
@@ -1887,11 +1885,9 @@ CONTAINS
     END DO
     WRITE(hlp_frm, '(a,i2,a)') '(1x,a,', ntrack, '(a2,1x))'
     WRITE(*, hlp_frm) 'track_species : Bulk ', track_species(1:ntrack)
-!.. Test consistency with region boundaries
     IF (.NOT.dotest) THEN
       RETURN
     ELSE
-!.. Test consistency with physical edges within the computational domain
       CALL MAP_ION_COMPONENTS()
       RETURN
     END IF
@@ -2015,7 +2011,7 @@ CONTAINS
 !
     CALL RC_TO_STRUCT(m)
 !
-    IF (nstrai .LE. 0) nstrat = 0
+    IF (nstrai .EQ. 0) nstrat = 0
 !
     arcstra = crcstra
     arcstart = rcstart
@@ -2291,11 +2287,9 @@ CONTAINS
     END DO
     WRITE(hlp_frm, '(a,i2,a)') '(1x,a,', ntrack, '(a2,1x))'
     WRITE(*, hlp_frm) 'track_species : Bulk ', track_species(1:ntrack)
-!.. Test consistency with region boundaries
     IF (.NOT.dotest) THEN
       RETURN
     ELSE
-!.. Test consistency with physical edges within the computational domain
       CALL MAP_ION_COMPONENTS()
       RETURN
     END IF

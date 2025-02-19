@@ -93,12 +93,16 @@ SUBROUTINE RDNEUTRS_NODIFF_NODIFF(kard, dummy, ldmf, extra_time)
     DO 110 ifl=1,ldmf
       IF (nlimi .GT. 0) READ(kard, 910, end=10) (dummy(is, ifl), is=1,&
 &                       nlimi)
-      IF (nstsi .GT. 0) READ(kard, 910, end=10) (dummy(is+nlim, ifl), is&
-&                      =1,nstsi)
       IF (PRESENT(extra_time)) THEN
         IF (extra_time) THEN
-          IF (MOD(nstsi, 5) .EQ. 0) READ(kard, '()', end=10) 
+          IF (nstsi .GT. 0) READ(kard, 910, end=10) (dummy(is+nlim, ifl)&
+&                          , is=1,nstsi-1)
+          IF (MOD(nstsi, 5) .EQ. 1) READ(kard, '()', end=10) 
+        ELSE IF (nstsi .GT. 0) THEN
+          READ(kard, 910, end=10) (dummy(is+nlim, ifl), is=1,nstsi)
         END IF
+      ELSE IF (nstsi .GT. 0) THEN
+        READ(kard, 910, end=10) (dummy(is+nlim, ifl), is=1,nstsi)
       END IF
       GOTO 110
  10   end_of_file = .true.
@@ -156,7 +160,7 @@ SUBROUTINE WRNEUTRS_NODIFF_NODIFF(kard, dummy, ldmf)
     IF (nlimi .GT. 0) WRITE(kard, '(5(e16.8))') (dummy(is, iif), is=1,&
 &                      nlim1)
     IF (nstsi .GT. 0) WRITE(kard, '(5(e16.8))') (dummy(is+nlim, iif), is&
-&                     =1,nstsi)
+&                     =1,nsts1)
   END DO
 END SUBROUTINE WRNEUTRS_NODIFF_NODIFF
 !

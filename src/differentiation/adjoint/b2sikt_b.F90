@@ -40,15 +40,6 @@ SUBROUTINE B2SIKT_B(ncv, nfc, nvx, ns, ismain, switch, switchb, geo, &
 & , she0b, shi0, shi0b, skt0, skt0b, skt_prod, skt_prodb, skt_diss, &
 & skt_dissb)
   USE B2MOD_TYPES
-!      use b2mod_indirect
-!      use b2mod_geo_corner
-!      use b2mod_geo
-!     & , only : crx
-!      use b2mod_sources
-!     & , only : skt_prod, skt_diss
-!      use b2mod_rates
-!     & , only : rza
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
   USE B2MOD_B2CMPA_DIFF
@@ -674,15 +665,6 @@ END SUBROUTINE B2SIKT_B
 SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 & , dv, rza, co, st_ext, she0, shi0, skt0, skt_prod, skt_diss)
   USE B2MOD_TYPES
-!      use b2mod_indirect
-!      use b2mod_geo_corner
-!      use b2mod_geo
-!     & , only : crx
-!      use b2mod_sources
-!     & , only : skt_prod, skt_diss
-!      use b2mod_rates
-!     & , only : rza
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
   USE B2MOD_B2CMPA_DIFF
