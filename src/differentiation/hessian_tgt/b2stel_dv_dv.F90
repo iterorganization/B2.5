@@ -80,7 +80,6 @@ SUBROUTINE B2STEL_NODIFF_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, &
   REAL(kind=r8) :: damax
   EXTERNAL B2XVSG
   INTRINSIC MINVAL
-  INTRINSIC MAXVAL
   INTRINSIC NINT
   REAL(r8) :: max1
   REAL(r8) :: max2
@@ -749,7 +748,6 @@ SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, geod, mpg&
   REAL(kind=r8) :: damax
   EXTERNAL B2XVSG
   INTRINSIC MINVAL
-  INTRINSIC MAXVAL
   INTRINSIC NINT
   REAL(r8) :: max1
   REAL(r8), DIMENSION(nbdirsmax) :: max1d
@@ -1861,7 +1859,6 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
   REAL(kind=r8) :: damax
   EXTERNAL B2XVSG
   INTRINSIC MINVAL
-  INTRINSIC MAXVAL
   INTRINSIC NINT
   REAL(r8) :: max1
   REAL(r8), DIMENSION(nbdirsmax0) :: max1d0

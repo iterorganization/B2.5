@@ -192,6 +192,7 @@ CONTAINS
       END DO
       DO nd=1,nbdirsmax
         she0d(nd, :, :) = 0.D0
+        sne0d(ns, :, :) = 0.D0
       END DO
     END IF
 !
