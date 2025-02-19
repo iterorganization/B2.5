@@ -212,12 +212,16 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
       DO nd=1,nbdirs
         srd%snadt(nd, icv, 0, is) = temp*na0d(nd, icv, is)/ttim
         srd%snadt(nd, icv, 1, is) = 0.D0
-        srd%sna(nd, icv, :, is) = srd%sna(nd, icv, :, is) + srd%snadt(nd&
-&         , icv, :, is)
       END DO
       sr%snadt(icv, 0, is) = temp*(na0(icv, is)/ttim)
       sr%snadt(icv, 1, is) = -(switch%b2srdt_phm0/ttim*geo%cvvol(icv))
-      sr%sna(icv, :, is) = sr%sna(icv, :, is) + sr%snadt(icv, :, is)
+      IF (.NOT.lout) THEN
+        DO nd=1,nbdirs
+          srd%sna(nd, icv, :, is) = srd%sna(nd, icv, :, is) + srd%snadt(&
+&           nd, icv, :, is)
+        END DO
+        sr%sna(icv, :, is) = sr%sna(icv, :, is) + sr%snadt(icv, :, is)
+      END IF
     END DO
   END DO
 !
@@ -247,14 +251,18 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
         srd%smodt(nd, icv, 1, is) = 0.D0
         srd%smodt(nd, icv, 2, is) = 0.D0
         srd%smodt(nd, icv, 3, is) = 0.D0
-        srd%smo(nd, icv, :, is) = srd%smo(nd, icv, :, is) + srd%smodt(nd&
-&         , icv, :, is)
       END DO
       sr%smodt(icv, 0, is) = temp*(ua0(icv, is)*na0(icv, is))
       sr%smodt(icv, 1, is) = 0.0_R8
       sr%smodt(icv, 2, is) = 0.0_R8
       sr%smodt(icv, 3, is) = -t0
-      sr%smo(icv, :, is) = sr%smo(icv, :, is) + sr%smodt(icv, :, is)
+      IF (.NOT.lout) THEN
+        DO nd=1,nbdirs
+          srd%smo(nd, icv, :, is) = srd%smo(nd, icv, :, is) + srd%smodt(&
+&           nd, icv, :, is)
+        END DO
+        sr%smo(icv, :, is) = sr%smo(icv, :, is) + sr%smodt(icv, :, is)
+      END IF
     END DO
   END DO
 !
@@ -281,13 +289,18 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
       srd%shedt(nd, icv, 1) = 0.D0
       srd%shedt(nd, icv, 2) = 0.D0
       srd%shedt(nd, icv, 3) = 0.D0
-      srd%she(nd, icv, :) = srd%she(nd, icv, :) + srd%shedt(nd, icv, :)
     END DO
     sr%shedt(icv, 0) = 1.5_R8*t0*ne0(icv)*te0(icv)
     sr%shedt(icv, 1) = 0.0_R8
     sr%shedt(icv, 2) = 0.0_R8
     sr%shedt(icv, 3) = -(1.5_R8*t0)
-    sr%she(icv, :) = sr%she(icv, :) + sr%shedt(icv, :)
+    IF (.NOT.lout) THEN
+      DO nd=1,nbdirs
+        srd%she(nd, icv, :) = srd%she(nd, icv, :) + srd%shedt(nd, icv, :&
+&         )
+      END DO
+      sr%she(icv, :) = sr%she(icv, :) + sr%shedt(icv, :)
+    END IF
 !
     ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
     IF (ift .NE. 0) THEN
@@ -301,25 +314,37 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
       srd%sktdt(nd, icv, 1) = 0.D0
       srd%sktdt(nd, icv, 2) = 0.D0
       srd%sktdt(nd, icv, 3) = 0.D0
-      srd%skt(nd, icv, :) = srd%skt(nd, icv, :) + srd%sktdt(nd, icv, :)
+    END DO
+    sr%sktdt(icv, 0) = t0*ni0(icv, 1)*kt0(icv)
+    sr%sktdt(icv, 1) = 0.0_R8
+    sr%sktdt(icv, 2) = 0.0_R8
+    sr%sktdt(icv, 3) = -t0
+    IF (.NOT.lout) THEN
+      DO nd=1,nbdirs
+        srd%skt(nd, icv, :) = srd%skt(nd, icv, :) + srd%sktdt(nd, icv, :&
+&         )
+      END DO
+      sr%skt(icv, :) = sr%skt(icv, :) + sr%sktdt(icv, :)
+    END IF
+    DO nd=1,nbdirs
 !
       srd%sztdt(nd, icv, 0) = t0*(zt0(icv)*ni0d(nd, icv, 1)+ni0(icv, 1)*&
 &       zt0d(nd, icv))
       srd%sztdt(nd, icv, 1) = 0.D0
       srd%sztdt(nd, icv, 2) = 0.D0
       srd%sztdt(nd, icv, 3) = 0.D0
-      srd%szt(nd, icv, :) = srd%szt(nd, icv, :) + srd%sztdt(nd, icv, :)
     END DO
-    sr%sktdt(icv, 0) = t0*ni0(icv, 1)*kt0(icv)
-    sr%sktdt(icv, 1) = 0.0_R8
-    sr%sktdt(icv, 2) = 0.0_R8
-    sr%sktdt(icv, 3) = -t0
-    sr%skt(icv, :) = sr%skt(icv, :) + sr%sktdt(icv, :)
     sr%sztdt(icv, 0) = t0*ni0(icv, 1)*zt0(icv)
     sr%sztdt(icv, 1) = 0.0_R8
     sr%sztdt(icv, 2) = 0.0_R8
     sr%sztdt(icv, 3) = -t0
-    sr%szt(icv, :) = sr%szt(icv, :) + sr%sztdt(icv, :)
+    IF (.NOT.lout) THEN
+      DO nd=1,nbdirs
+        srd%szt(nd, icv, :) = srd%szt(nd, icv, :) + srd%sztdt(nd, icv, :&
+&         )
+      END DO
+      sr%szt(icv, :) = sr%szt(icv, :) + sr%sztdt(icv, :)
+    END IF
   END DO
 !
   DO icv=1,ncv
@@ -387,8 +412,6 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
         srd%shndt(nd, icv, 1) = 0.D0
         srd%shndt(nd, icv, 2) = 0.D0
         srd%shndt(nd, icv, 3) = 0.D0
-        srd%shn(nd, icv, :) = srd%shn(nd, icv, :) + srd%shndt(nd, icv, :&
-&         )
       END DO
       sr%shidt(icv, 0) = 1.5_R8*t0*ni0(icv, 0)*ti0(icv)
       sr%shidt(icv, 1) = 0.0_R8
@@ -398,20 +421,27 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
       sr%shndt(icv, 1) = 0.0_R8
       sr%shndt(icv, 2) = 0.0_R8
       sr%shndt(icv, 3) = -(1.5_R8*t0)
-      sr%shn(icv, :) = sr%shn(icv, :) + sr%shndt(icv, :)
+      IF (.NOT.lout) THEN
+        DO nd=1,nbdirs
+          srd%shn(nd, icv, :) = srd%shn(nd, icv, :) + srd%shndt(nd, icv&
+&           , :)
+        END DO
+        sr%shn(icv, :) = sr%shn(icv, :) + sr%shndt(icv, :)
+      END IF
     END IF
 !
-    DO nd=1,nbdirs
-      srd%shi(nd, icv, :) = srd%shi(nd, icv, :) + srd%shidt(nd, icv, :)
-    END DO
-    sr%shi(icv, :) = sr%shi(icv, :) + sr%shidt(icv, :)
+    IF (.NOT.lout) THEN
+      DO nd=1,nbdirs
+        srd%shi(nd, icv, :) = srd%shi(nd, icv, :) + srd%shidt(nd, icv, :&
+&         )
+      END DO
+      sr%shi(icv, :) = sr%shi(icv, :) + sr%shidt(icv, :)
+    END IF
   END DO
 !
   DO icv=1,ncv
 !sw 24feb2014 check for guard cell (SOLPS4)
-!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
-!
-!
+!WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
 !xpb  SCH should normally remain unchanged (phm4.eq.0.0)
 !xpb  This treatment added as a fix to get the ExB runs going
 !xpb
@@ -423,22 +453,27 @@ SUBROUTINE B2SRDT_DV(ncv, ns, dtim, switch, geo, mpg, na0, na0d, ua0, &
       srd%schdt(nd, icv, 2) = 0.D0
 !xpb
       srd%schdt(nd, icv, 3) = 0.D0
-      srd%sch(nd, icv, :) = srd%sch(nd, icv, :) + srd%schdt(nd, icv, :)
     END DO
     sr%schdt(icv, 0) = t0*(ni0(icv, 0)-ne0(icv))
     sr%schdt(icv, 1) = 0.0_R8
     sr%schdt(icv, 2) = 0.0_R8
     sr%schdt(icv, 3) = -t0
-    sr%sch(icv, :) = sr%sch(icv, :) + sr%schdt(icv, :)
+    IF (.NOT.lout) THEN
+      DO nd=1,nbdirs
+        srd%sch(nd, icv, :) = srd%sch(nd, icv, :) + srd%schdt(nd, icv, :&
+&         )
+      END DO
+      sr%sch(icv, :) = sr%sch(icv, :) + sr%schdt(icv, :)
+    END IF
   END DO
 !
   DO icv=1,ncv
-!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
+!WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
 !xpb
     t0 = switch%b2srdt_phm5/dtim*geo%cvvol(icv)*time_factor(icv)
     sr%snedt(icv, 0) = t0*ne0(icv)
     sr%snedt(icv, 1) = -t0
-    sr%sne(icv, :) = sr%sne(icv, :) + sr%snedt(icv, :)
+    IF (.NOT.lout) sr%sne(icv, :) = sr%sne(icv, :) + sr%snedt(icv, :)
   END DO
 !
 !
@@ -693,7 +728,8 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
       sr%snadt(icv, 0, is) = switch%b2srdt_phm0/ttim*geo%cvvol(icv)*na0(&
 &       icv, is)
       sr%snadt(icv, 1, is) = -(switch%b2srdt_phm0/ttim*geo%cvvol(icv))
-      sr%sna(icv, :, is) = sr%sna(icv, :, is) + sr%snadt(icv, :, is)
+      IF (.NOT.lout) sr%sna(icv, :, is) = sr%sna(icv, :, is) + sr%snadt(&
+&         icv, :, is)
     END DO
   END DO
 !
@@ -720,7 +756,8 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
       sr%smodt(icv, 1, is) = 0.0_R8
       sr%smodt(icv, 2, is) = 0.0_R8
       sr%smodt(icv, 3, is) = -t0
-      sr%smo(icv, :, is) = sr%smo(icv, :, is) + sr%smodt(icv, :, is)
+      IF (.NOT.lout) sr%smo(icv, :, is) = sr%smo(icv, :, is) + sr%smodt(&
+&         icv, :, is)
     END DO
   END DO
 !
@@ -745,7 +782,7 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     sr%shedt(icv, 1) = 0.0_R8
     sr%shedt(icv, 2) = 0.0_R8
     sr%shedt(icv, 3) = -(1.5_R8*t0)
-    sr%she(icv, :) = sr%she(icv, :) + sr%shedt(icv, :)
+    IF (.NOT.lout) sr%she(icv, :) = sr%she(icv, :) + sr%shedt(icv, :)
 !
     ttim = dtim*dtei(mpg%cvreg(icv))*time_factor(icv)
     IF (ift .NE. 0) THEN
@@ -757,13 +794,13 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     sr%sktdt(icv, 1) = 0.0_R8
     sr%sktdt(icv, 2) = 0.0_R8
     sr%sktdt(icv, 3) = -t0
-    sr%skt(icv, :) = sr%skt(icv, :) + sr%sktdt(icv, :)
+    IF (.NOT.lout) sr%skt(icv, :) = sr%skt(icv, :) + sr%sktdt(icv, :)
 !
     sr%sztdt(icv, 0) = t0*ni0(icv, 1)*zt0(icv)
     sr%sztdt(icv, 1) = 0.0_R8
     sr%sztdt(icv, 2) = 0.0_R8
     sr%sztdt(icv, 3) = -t0
-    sr%szt(icv, :) = sr%szt(icv, :) + sr%sztdt(icv, :)
+    IF (.NOT.lout) sr%szt(icv, :) = sr%szt(icv, :) + sr%sztdt(icv, :)
   END DO
 !
   DO icv=1,ncv
@@ -806,17 +843,15 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
       sr%shndt(icv, 1) = 0.0_R8
       sr%shndt(icv, 2) = 0.0_R8
       sr%shndt(icv, 3) = -(1.5_R8*t0)
-      sr%shn(icv, :) = sr%shn(icv, :) + sr%shndt(icv, :)
+      IF (.NOT.lout) sr%shn(icv, :) = sr%shn(icv, :) + sr%shndt(icv, :)
     END IF
 !
-    sr%shi(icv, :) = sr%shi(icv, :) + sr%shidt(icv, :)
+    IF (.NOT.lout) sr%shi(icv, :) = sr%shi(icv, :) + sr%shidt(icv, :)
   END DO
 !
   DO icv=1,ncv
 !sw 24feb2014 check for guard cell (SOLPS4)
-!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
-!
-!
+!WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
 !xpb  SCH should normally remain unchanged (phm4.eq.0.0)
 !xpb  This treatment added as a fix to get the ExB runs going
 !xpb
@@ -827,16 +862,16 @@ SUBROUTINE B2SRDT_NODIFF(ncv, ns, dtim, switch, geo, mpg, na0, ua0, te0&
     sr%schdt(icv, 2) = 0.0_R8
 !xpb
     sr%schdt(icv, 3) = -t0
-    sr%sch(icv, :) = sr%sch(icv, :) + sr%schdt(icv, :)
+    IF (.NOT.lout) sr%sch(icv, :) = sr%sch(icv, :) + sr%schdt(icv, :)
   END DO
 !
   DO icv=1,ncv
-!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
+!WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
 !xpb
     t0 = switch%b2srdt_phm5/dtim*geo%cvvol(icv)*time_factor(icv)
     sr%snedt(icv, 0) = t0*ne0(icv)
     sr%snedt(icv, 1) = -t0
-    sr%sne(icv, :) = sr%sne(icv, :) + sr%snedt(icv, :)
+    IF (.NOT.lout) sr%sne(icv, :) = sr%sne(icv, :) + sr%snedt(icv, :)
   END DO
 !
 !

@@ -2056,10 +2056,10 @@ SUBROUTINE B2STBR_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, dtim&
 &                                              , switch, switchb, geo, &
 &                                              geob, mpg, mpgb, st%pl, &
 &                                              stb%pl, st%dv, stb%dv, st&
-&                                              %co, st%rt, stb%rt, st%&
-&                                              rtw, st_ext, st%srw, stb%&
-&                                              srw, tchem, tchee, tphys&
-&                                              , tphye, thevp, thvpe, &
+&                                              %co, st%rt, stb%rt, &
+&                                              st_ext, st%srw, stb%srw, &
+&                                              tchem, tchee, tphys, &
+&                                              tphye, thevp, thvpe, &
 &                                              trese, tresn, trfln, &
 &                                              trfle, sput_src, &
 &                                              sput_chem_model, &
@@ -4052,7 +4052,6 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
   CALL SUBINI('b2stbr')
   new_sputter_namelist = .false.
   IF (ncall_b2stbr .EQ. 0) THEN
-!WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
     IF (switch%use_eirene .NE. 0) out_tfiles = 0
 !srv 07.04.09
     CALL IPGETI('b2stbr_out_tfiles', out_tfiles)
@@ -4204,12 +4203,12 @@ SUBROUTINE B2STBR_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
     END IF
     IF (ncall_b2stbr .EQ. 0) WRITE(*, *) 'b2stbr: using b2stbr_phys'
     CALL B2STBR_PHYS_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, dtim&
-&                     , switch, geo, mpg, st%pl, st%dv, st%co, st%rt, st&
-&                     %rtw, st_ext, st%srw, tchem, tchee, tphys, tphye, &
-&                     thevp, thvpe, trese, tresn, trfln, trfle, sput_src&
-&                     , sput_chem_model, reflection_on, &
-&                     sputter_energy_on, main_call, new_sputter_namelist&
-&                     , shi0_ff, f_redep)
+&                     , switch, geo, mpg, st%pl, st%dv, st%co, st%rt, &
+&                     st_ext, st%srw, tchem, tchee, tphys, tphye, thevp&
+&                     , thvpe, trese, tresn, trfln, trfle, sput_src, &
+&                     sput_chem_model, reflection_on, sputter_energy_on&
+&                     , main_call, new_sputter_namelist, shi0_ff, &
+&                     f_redep)
   END IF
 ! xpb
 !

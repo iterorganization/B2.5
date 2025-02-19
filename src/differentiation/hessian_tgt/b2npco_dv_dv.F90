@@ -55,7 +55,7 @@
 SUBROUTINE B2NPCO_DV_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 & ua_solve, solvmreg, itcnt, isb, rxf, dtim, switch, switchd, geo, geod0&
 & , geod, mpg, mpgd, pl, pld0, pld, pldd, dv, dvd0, dvd, dvdd, sr, srd0&
-& , srd, srdd, psnc, psnl, psnld0, psnld, psnldd, ierr, nbdirs, nbdirs0)
+& , srd, srdd, psnl, psnld0, psnld, psnldd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV_DIFFV
   USE B2MOD_SWITCHES_DIFFV_DIFFV
@@ -93,7 +93,7 @@ SUBROUTINE B2NPCO_DV_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   TYPE(B2SOURCE_DIFFV0), INTENT(INOUT) :: srd0
   TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
   TYPE(B2SOURCE_DIFFV_DIFFV), INTENT(INOUT) :: srdd
-  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   TYPE(B2PLASMASNAPSHOT_DIFFV0), INTENT(INOUT) :: psnld0
   TYPE(B2PLASMASNAPSHOT_DIFFV), INTENT(INOUT) :: psnld
   TYPE(B2PLASMASNAPSHOT_DIFFV_DIFFV), INTENT(INOUT) :: psnldd
@@ -110,8 +110,6 @@ SUBROUTINE B2NPCO_DV_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   TYPE(B2DERIVATIVES_DIFFV0), INTENT(INOUT) :: dvd0
   TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
   TYPE(B2DERIVATIVES_DIFFV_DIFFV), INTENT(INOUT) :: dvdd
-!   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
 !   ..common blocks
 !
 !-----------------------------------------------------------------------
@@ -365,10 +363,6 @@ SUBROUTINE B2NPCO_DV_DV(ncv, nfc, nvx, nregionv, solving, solvcreg, &
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 1, isb), arg16(:))
   END IF
 !
-!   ..set error parameter
-!     (at present all errors cause an abort through xerrab)
-  ierr = 0
-!
 ! ..return
   ncall_b2npco = ncall_b2npco + 1
   CALL SUBEND()
@@ -408,8 +402,7 @@ END SUBROUTINE B2NPCO_DV_DV
 !srv 22.05.18
 SUBROUTINE B2NPCO_DV_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
 & ua_solve, solvmreg, itcnt, isb, rxf, dtim, switch, switchd, geo, geod&
-& , mpg, mpgd, pl, pld, dv, dvd, sr, srd, psnc, psnl, psnld, ierr, &
-& nbdirs)
+& , mpg, mpgd, pl, pld, dv, dvd, sr, srd, psnl, psnld, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV_DIFFV
   USE B2MOD_SWITCHES_DIFFV_DIFFV
@@ -443,7 +436,7 @@ SUBROUTINE B2NPCO_DV_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
-  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   TYPE(B2PLASMASNAPSHOT_DIFFV), INTENT(INOUT) :: psnld
   REAL(kind=r8) :: rxf, dtim
 !srv 22.05.18
@@ -454,8 +447,6 @@ SUBROUTINE B2NPCO_DV_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
   TYPE(B2PLASMA_DIFFV), INTENT(INOUT) :: pld
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
-!   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
 !   ..common blocks
 !
 !-----------------------------------------------------------------------
@@ -677,10 +668,6 @@ SUBROUTINE B2NPCO_DV_NODIFF(ncv, nfc, nvx, nregionv, solving, solvcreg, &
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 1, isb), arg16(:))
   END IF
 !
-!   ..set error parameter
-!     (at present all errors cause an abort through xerrab)
-  ierr = 0
-!
 ! ..return
   ncall_b2npco = ncall_b2npco + 1
   CALL SUBEND()
@@ -704,7 +691,7 @@ END SUBROUTINE B2NPCO_DV_NODIFF
 !srv 22.05.18
 SUBROUTINE B2NPCO_NODIFF_NODIFF(ncv, nfc, nvx, nregionv, solving, &
 & solvcreg, ua_solve, solvmreg, itcnt, isb, rxf, dtim, switch, geo, mpg&
-& , pl, dv, sr, psnc, psnl, ierr)
+& , pl, dv, sr, psnl)
   USE B2MOD_TYPES
   USE B2MOD_B2CMPA_DIFFV_DIFFV
   USE B2MOD_SWITCHES_DIFFV_DIFFV
@@ -733,7 +720,7 @@ SUBROUTINE B2NPCO_NODIFF_NODIFF(ncv, nfc, nvx, nregionv, solving, &
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
-  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   REAL(kind=r8) :: rxf, dtim
 !srv 22.05.18
   LOGICAL :: solving, solvcreg(0:nregionv), ua_solve, solvmreg(0:&
@@ -741,8 +728,6 @@ SUBROUTINE B2NPCO_NODIFF_NODIFF(ncv, nfc, nvx, nregionv, solving, &
 !   ..input/output arguments
   TYPE(B2PLASMA), INTENT(INOUT) :: pl
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
-!   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
 !   ..common blocks
 !
 !-----------------------------------------------------------------------
@@ -946,10 +931,6 @@ SUBROUTINE B2NPCO_NODIFF_NODIFF(ncv, nfc, nvx, nregionv, solving, &
     arg16(:) = 'b2npco_fna_mdf_r'//chns
     CALL MY_OUT_US(70, nfc, 1, dv%fna_mdf(1, 1, isb), arg16(:))
   END IF
-!
-!   ..set error parameter
-!     (at present all errors cause an abort through xerrab)
-  ierr = 0
 !
 ! ..return
   ncall_b2npco = ncall_b2npco + 1

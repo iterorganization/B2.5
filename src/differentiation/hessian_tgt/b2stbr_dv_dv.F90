@@ -2061,7 +2061,6 @@ SUBROUTINE B2STBR_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
   CALL SUBINI('b2stbr')
   new_sputter_namelist = .false.
   IF (ncall_b2stbr .EQ. 0) THEN
-!WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
     IF (switch%use_eirene .NE. 0) out_tfiles = 0
     CALL IPGETI('b2stbr_out_tfiles', out_tfiles)
 !srv 07.04.09
@@ -2254,12 +2253,12 @@ SUBROUTINE B2STBR_DV_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &                    , switch, switchd, geo, geod0, geod, mpg, mpgd, st%&
 &                    pl, std0%pl, std%pl, stdd%pl, st%dv, std0%dv, std%&
 &                    dv, stdd%dv, st%co, st%rt, std0%rt, std%rt, stdd%rt&
-&                    , st%rtw, st_ext, st%srw, std0%srw, std%srw, stdd%&
-&                    srw, tchem, tchee, tphys, tphye, thevp, thvpe, &
-&                    trese, tresn, trfln, trfle, sput_src, &
-&                    sput_chem_model, reflection_on, sputter_energy_on, &
-&                    main_call, new_sputter_namelist, shi0_ff, f_redep, &
-&                    nbdirs, nbdirs0)
+&                    , st_ext, st%srw, std0%srw, std%srw, stdd%srw, &
+&                    tchem, tchee, tphys, tphye, thevp, thvpe, trese, &
+&                    tresn, trfln, trfle, sput_src, sput_chem_model, &
+&                    reflection_on, sputter_energy_on, main_call, &
+&                    new_sputter_namelist, shi0_ff, f_redep, nbdirs, &
+&                    nbdirs0)
   END IF
 ! xpb
 !
@@ -4508,7 +4507,6 @@ SUBROUTINE B2STBR_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   CALL SUBINI('b2stbr')
   new_sputter_namelist = .false.
   IF (ncall_b2stbr .EQ. 0) THEN
-!WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
     IF (switch%use_eirene .NE. 0) out_tfiles = 0
     CALL IPGETI('b2stbr_out_tfiles', out_tfiles)
 !srv 07.04.09
@@ -4700,9 +4698,9 @@ SUBROUTINE B2STBR_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
     CALL B2STBR_PHYS_DV_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
 &                        dtim, switch, switchd, geo, geod, mpg, mpgd, st&
 &                        %pl, std%pl, st%dv, std%dv, st%co, st%rt, std%&
-&                        rt, st%rtw, st_ext, st%srw, std%srw, tchem, &
-&                        tchee, tphys, tphye, thevp, thvpe, trese, tresn&
-&                        , trfln, trfle, sput_src, sput_chem_model, &
+&                        rt, st_ext, st%srw, std%srw, tchem, tchee, &
+&                        tphys, tphye, thevp, thvpe, trese, tresn, trfln&
+&                        , trfle, sput_src, sput_chem_model, &
 &                        reflection_on, sputter_energy_on, main_call, &
 &                        new_sputter_namelist, shi0_ff, f_redep, nbdirs)
   END IF
@@ -6903,7 +6901,6 @@ SUBROUTINE B2STBR_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
   CALL SUBINI('b2stbr')
   new_sputter_namelist = .false.
   IF (ncall_b2stbr .EQ. 0) THEN
-!WG_TODO        call get_jsep(nx,ny,jxi,jxa,jsep)
     IF (switch%use_eirene .NE. 0) out_tfiles = 0
     CALL IPGETI('b2stbr_out_tfiles', out_tfiles)
 !srv 07.04.09
@@ -7060,9 +7057,9 @@ SUBROUTINE B2STBR_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, &
     IF (ncall_b2stbr .EQ. 0) WRITE(*, *) 'b2stbr: using b2stbr_phys'
     CALL B2STBR_PHYS_NODIFF_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, &
 &                            iscx, dtim, switch, geo, mpg, st%pl, st%dv&
-&                            , st%co, st%rt, st%rtw, st_ext, st%srw, &
-&                            tchem, tchee, tphys, tphye, thevp, thvpe, &
-&                            trese, tresn, trfln, trfle, sput_src, &
+&                            , st%co, st%rt, st_ext, st%srw, tchem, &
+&                            tchee, tphys, tphye, thevp, thvpe, trese, &
+&                            tresn, trfln, trfle, sput_src, &
 &                            sput_chem_model, reflection_on, &
 &                            sputter_energy_on, main_call, &
 &                            new_sputter_namelist, shi0_ff, f_redep)

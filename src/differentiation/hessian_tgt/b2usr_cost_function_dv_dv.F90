@@ -43,8 +43,8 @@
 !
 !
 SUBROUTINE B2USR_COST_FUNCTION_DV_DV(ncv, nfc, nvx, ns, geo, geod0, mpg&
-& , st, std0, std, stdd, st_ext, st_extd, boris, j, jd0, jd, jdd, nbdirs&
-& , nbdirs0)
+& , st, std0, std, stdd, st_ext, st_extd, j, jd0, jd, jdd, nbdirs, &
+& nbdirs0)
   USE B2MOD_TYPES
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_PLASMA_DIFFV_DIFFV
@@ -75,7 +75,7 @@ SUBROUTINE B2USR_COST_FUNCTION_DV_DV(ncv, nfc, nvx, ns, geo, geod0, mpg&
   TYPE(B2STATE_DIFFV_DIFFV), INTENT(IN) :: stdd
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   TYPE(B2STATEEXT_DIFFV0), INTENT(IN) :: st_extd
-  REAL(kind=r8) :: boris, j(nncf)
+  REAL(kind=r8) :: j(nncf)
   REAL(kind=r8) :: jd0(nbdirsmax0, nncf)
   REAL(kind=r8) :: jd(nbdirsmax, nncf)
   REAL(kind=r8) :: jdd(nbdirsmax0, nbdirsmax, nncf)
@@ -921,7 +921,7 @@ END SUBROUTINE B2USR_COST_FUNCTION_DV_DV
 !
 !
 SUBROUTINE B2USR_COST_FUNCTION_DV_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st&
-& , std, st_ext, boris, j, jd, nbdirs)
+& , std, st_ext, j, jd, nbdirs)
   USE B2MOD_TYPES
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_PLASMA_DIFFV_DIFFV
@@ -946,7 +946,7 @@ SUBROUTINE B2USR_COST_FUNCTION_DV_NODIFF(ncv, nfc, nvx, ns, geo, mpg, st&
   TYPE(B2STATE), INTENT(IN) :: st
   TYPE(B2STATE_DIFFV), INTENT(IN) :: std
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
-  REAL(kind=r8) :: boris, j(nncf)
+  REAL(kind=r8) :: j(nncf)
   REAL(kind=r8) :: jd(nbdirsmax, nncf)
   INTEGER :: ncv, nfc, nvx, ns
   INTEGER :: icf, ic1, ic2, icv, n1, n2, ifc
@@ -1444,7 +1444,7 @@ END SUBROUTINE B2USR_COST_FUNCTION_DV_NODIFF
 !
 !
 SUBROUTINE B2USR_COST_FUNCTION_NODIFF_NODIFF(ncv, nfc, nvx, ns, geo, mpg&
-& , st, st_ext, boris, j)
+& , st, st_ext, j)
   USE B2MOD_TYPES
   USE B2US_MAP_DIFFV_DIFFV
   USE B2US_PLASMA_DIFFV_DIFFV
@@ -1466,7 +1466,7 @@ SUBROUTINE B2USR_COST_FUNCTION_NODIFF_NODIFF(ncv, nfc, nvx, ns, geo, mpg&
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(B2STATE), INTENT(IN) :: st
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
-  REAL(kind=r8) :: boris, j(nncf)
+  REAL(kind=r8) :: j(nncf)
   INTEGER :: ncv, nfc, nvx, ns
   INTEGER :: icf, ic1, ic2, icv, n1, n2, ifc
   LOGICAL, SAVE :: first_call=.true.

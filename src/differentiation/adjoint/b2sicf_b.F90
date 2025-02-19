@@ -24,7 +24,7 @@
 !srv 09.07.01 28.01.02 22.07.05
 !srv 06.04.07
 SUBROUTINE B2SICF_B(ncv, nfc, nvx, isb, mb, switch, geo, geob, mpg, mpgb&
-& , nb, nbb, ub, ubb, smbcf, smbcfb, smbcb, ctcf, ctcfb, wrk0, wrk0b)
+& , nb, nbb, ub, ubb, smbcf, smbcfb, ctcf, ctcfb, wrk0, wrk0b)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFF
@@ -45,7 +45,7 @@ SUBROUTINE B2SICF_B(ncv, nfc, nvx, isb, mb, switch, geo, geob, mpg, mpgb&
   REAL(kind=r8) :: nbb(ncv), ubb(ncv)
 !   ..output arguments (unspecified on entry)
 !srv 06.04.07
-  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv), smbcb(ncv)
+  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv)
   REAL(kind=r8) :: smbcfb(ncv, 0:3), ctcfb(ncv)
 !   ..workspace
   REAL(kind=r8) :: wrk0(ncv)
@@ -121,7 +121,7 @@ END SUBROUTINE B2SICF_B
 !srv 09.07.01 28.01.02 22.07.05
 !srv 06.04.07
 SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
-& ub, smbcf, smbcb, ctcf, wrk0)
+& ub, smbcf, ctcf, wrk0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFF
@@ -139,7 +139,7 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
   REAL(kind=r8) :: mb, nb(ncv), ub(ncv)
 !   ..output arguments (unspecified on entry)
 !srv 06.04.07
-  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv), smbcb(ncv)
+  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv)
 !   ..workspace
   REAL(kind=r8) :: wrk0(ncv)
 !-----------------------------------------------------------------------

@@ -2,16 +2,19 @@
 !  Tapenade 3.16 (develop) - 13 Feb 2024 17:09
 !
 !  Differentiation of b2stbm in reverse (adjoint) mode (with options context noISIZE r8):
-!   gradient     of useful results: *(srw.sch0) *(srw.she0) *(srw.shi0)
-!                *(srw.smo0) *(srw.sna0) *(pl.na) *(pl.ua) *(pl.po)
-!                *(pl.te) *(pl.ti)
-!   with respect to varying inputs: *(srw.sch0) *(srw.she0) *(srw.shi0)
-!                *(srw.smo0) *(srw.sna0) *(pl.na) *(pl.ua) *(pl.po)
-!                *(pl.te) *(pl.ti)
+!   gradient     of useful results: *(st_ext.she) *(st_ext.shi)
+!                *(st_ext.sch) *(st_ext.sna) *(st_ext.smo) *(srw.sch0)
+!                *(srw.she0) *(srw.shi0) *(srw.smo0) *(srw.sna0)
+!                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti)
+!   with respect to varying inputs: *(st_ext.she) *(st_ext.shi)
+!                *(st_ext.sch) *(st_ext.sna) *(st_ext.smo) *(srw.sch0)
+!                *(srw.she0) *(srw.shi0) *(srw.smo0) *(srw.sna0)
+!                *(pl.na) *(pl.ua) *(pl.po) *(pl.te) *(pl.ti)
 !   Plus diff mem management of: dv.fch:in dv.fna:in dv.fhe:in
 !                dv.fhi:in dv.kinrgy:in dv.ne:in dv.ni:in geo.cvhx:in
 !                geo.cvqgam:in geo.cvvol:in geo.fcht:in geo.fcvol:in
-!                geo.fcqgam:in st_ext.na:in st_ext.ua:in st_ext.ta:in
+!                geo.fcqgam:in st_ext.ne:in st_ext.ne2:in st_ext.ue:in
+!                st_ext.na:in st_ext.ni:in st_ext.ua:in st_ext.ta:in
 !                st_ext.sne:in st_ext.she:in st_ext.shi:in st_ext.sch:in
 !                st_ext.sna:in st_ext.smo:in srw.sch0:in srw.she0:in
 !                srw.shi0:in srw.sne0:in srw.smo0:in srw.sna0:in
@@ -33,12 +36,10 @@
 !.specification
 !
 SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
-& mpg, pl, plb, dv, dvb, st_ext, st_extb, sr, srw, srwb, main_call)
+& mpg, pl, plb, dv, dvb, st_ext, st_extb, srw, srwb, main_call)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFF
-  USE B2MOD_B2CMPB_DIFF
   USE B2MOD_EXTERNAL_DIFF
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
   USE B2MOD_NUMERICS_NAMELIST_DIFF
@@ -63,7 +64,6 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
 !   ..input/output arguments 
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dvb
-  TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srwb
 !   ..common blocks
@@ -99,17 +99,25 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
   REAL(kind=r8) :: abs0
   REAL(kind=r8) :: abs1
   REAL(kind=r8) :: abs2
+  REAL(kind=r8) :: abs2b
   REAL(kind=r8) :: abs3
+  REAL(kind=r8) :: abs3b
   REAL(kind=r8) :: abs4
+  REAL(kind=r8) :: abs4b
   REAL(kind=r8) :: abs5
+  REAL(kind=r8) :: abs5b
   REAL(kind=r8) :: abs6
+  REAL(kind=r8) :: abs6b
   REAL(kind=r8) :: abs7
+  REAL(kind=r8) :: abs7b
   REAL(kind=r8) :: abs8
   REAL(kind=r8) :: abs8b
   REAL(kind=r8) :: abs9
   REAL(kind=r8) :: abs9b
   REAL(kind=r8) :: abs10
+  REAL(kind=r8) :: abs10b
   REAL(kind=r8) :: abs11
+  REAL(kind=r8) :: abs11b
   INTEGER :: arg1
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
@@ -127,9 +135,14 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
 !   ..subprogram start-up calls
 !   ..test nCv, nFc, nVx, ns, ismain
 !   ..extensive tests on first few calls
+  REAL(kind=r8) :: temp
   REAL(kind=r8) :: tempb
-  REAL(r8) :: temp
-  REAL(r8) :: tempb0
+  REAL(kind=r8) :: temp0
+  REAL(kind=r8) :: temp1
+  REAL(kind=r8) :: tempb0
+  REAL(kind=r8) :: temp2
+  REAL(kind=r8) :: tempb1
+  REAL(kind=r8) :: tempb2
   INTEGER*4 :: branch
 !
 !   ..initialise sources to 0
@@ -209,6 +222,9 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
       st_ext%shi = 0.0_R8
       st_ext%sch = 0.0_R8
 !
+      CALL PUSHCONTROL1B(1)
+    ELSE
+      CALL PUSHCONTROL1B(0)
     END IF
 !
 ! ..linearise external sources
@@ -223,6 +239,11 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
+          END IF
+          IF (t0 .GE. 0.) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHCONTROL1B(1)
           END IF
           IF (t0 .GE. 0.) THEN
             CALL PUSHREAL8(abs3, r8/8)
@@ -263,6 +284,11 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
           CALL PUSHCONTROL1B(1)
         ELSE
           CALL PUSHCONTROL1B(0)
+        END IF
+        IF (t0 .GE. 0.) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHCONTROL1B(1)
         END IF
         IF (t0 .GE. 0.) THEN
           CALL PUSHREAL8(abs7, r8/8)
@@ -326,6 +352,11 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
           CALL PUSHCONTROL1B(0)
         END IF
         IF (t0 .GE. 0.) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHCONTROL1B(1)
+        END IF
+        IF (t0 .GE. 0.) THEN
           CALL PUSHREAL8(abs11, r8/8)
           abs11 = t0
           CALL PUSHCONTROL1B(0)
@@ -365,47 +396,71 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
           DO is=ns-1,0,-1
             CALL POPCONTROL1B(branch)
             IF (branch .NE. 0) THEN
+              temp = dtim*dtco(is, ireg)
+              tempb2 = am(is)*mp*0.5_R8*srwb%shi0(icv, 0)
               tempb0 = -(am(is)*mp*0.5_R8*srwb%shi0(icv, 0))
-              duab = 2*dua*(st_ext%sna(icv, is)*(dtim*dtco(is, ireg))+&
-&               na0(icv, is))*tempb0/(dtim*dtei(ireg))
-              ua_tmpb = duab
-              temp = st_ext%sna(icv, is)*dtim*dtco(is, ireg) + na0(icv, &
-&               is)
-              tempb = ua_tmpb/temp
-              ua0b(icv, is) = ua0b(icv, is) + (2*ua0(icv, is)*st_ext%sna&
-&               (icv, is)*am(is)*mp*0.5_R8-st_ext%smo(icv, is))*srwb%&
-&               shi0(icv, 0) + na0(icv, is)*tempb - duab
-              na0b(icv, is) = na0b(icv, is) + dua**2*tempb0/(dtim*dtei(&
-&               ireg)) + (ua0(icv, is)-(dtim*dtmo(is, ireg)*(st_ext%smo(&
-&               icv, is)/(am(is)*mp))+ua0(icv, is)*na0(icv, is))/temp)*&
-&               tempb
+              tempb1 = dua**2*tempb0/(dtim*dtei(ireg))
+              duab = 2*dua*(na0(icv, is)+temp*st_ext%sna(icv, is))*&
+&               tempb0/(dtim*dtei(ireg))
+              na0b(icv, is) = na0b(icv, is) + tempb1
+              st_extb%sna(icv, is) = st_extb%sna(icv, is) + temp*tempb1
               CALL POPREAL8(dua, r8/8)
+              ua_tmpb = duab
               CALL POPREAL8(ua_tmp, r8/8)
+              temp2 = dtim*dtco(is, ireg)
+              temp1 = na0(icv, is) + temp2*st_ext%sna(icv, is)
+              temp = dtim*dtmo(is, ireg)
+              tempb1 = ua_tmpb/temp1
+              ua0b(icv, is) = ua0b(icv, is) + 2*ua0(icv, is)*st_ext%sna(&
+&               icv, is)*tempb2 - st_ext%smo(icv, is)*srwb%shi0(icv, 0) &
+&               + na0(icv, is)*tempb1 - duab
+              st_extb%smo(icv, is) = st_extb%smo(icv, is) + temp*tempb1/&
+&               (am(is)*mp) - ua0(icv, is)*srwb%shi0(icv, 0)
+              tempb0 = -((ua0(icv, is)*na0(icv, is)+temp*(st_ext%smo(icv&
+&               , is)/(am(is)*mp)))*tempb1/temp1)
+              st_extb%sna(icv, is) = st_extb%sna(icv, is) + ua0(icv, is)&
+&               **2*tempb2 + temp2*tempb0
+              na0b(icv, is) = na0b(icv, is) + ua0(icv, is)*tempb1 + &
+&               tempb0
             END IF
           END DO
         ELSE
-          plb%po(icv) = plb%po(icv) + switch%b2stbm_linearisation*abs11*&
-&           srwb%sch0(icv, 1)/pl%po(icv)**2
+          tempb2 = -(switch%b2stbm_linearisation*srwb%sch0(icv, 1)/pl%po&
+&           (icv))
+          abs11b = tempb2
+          plb%po(icv) = plb%po(icv) - abs11*tempb2/pl%po(icv)
           t0 = st_ext%sch(icv)
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
             CALL POPREAL8(abs11, r8/8)
+            t0b = abs11b
           ELSE
             CALL POPREAL8(abs11, r8/8)
+            t0b = -abs11b
+          END IF
+          abs10b = switch%b2stbm_linearisation*srwb%sch0(icv, 0)
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            t0b = t0b + abs10b
+          ELSE
+            t0b = t0b - abs10b
           END IF
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            plb%po(icv) = plb%po(icv) - t0*srwb%sch0(icv, 1)/pl%po(icv)&
-&             **2
+            tempb2 = srwb%sch0(icv, 1)/pl%po(icv)
             srwb%sch0(icv, 1) = 0.D0
+            t0b = t0b + tempb2
+            plb%po(icv) = plb%po(icv) - t0*tempb2/pl%po(icv)
           ELSE
+            t0b = t0b + srwb%sch0(icv, 0)
             srwb%sch0(icv, 0) = 0.D0
           END IF
           CALL POPREAL8(t0, r8/8)
-          tempb = -(switch%b2stbm_linearisation*srwb%shi0(icv, 1)/pl%ti(&
-&           icv))
-          abs9b = tempb
-          plb%ti(icv) = plb%ti(icv) - abs9*tempb/pl%ti(icv)
+          st_extb%sch(icv) = st_extb%sch(icv) + t0b
+          tempb2 = -(switch%b2stbm_linearisation*srwb%shi0(icv, 1)/pl%ti&
+&           (icv))
+          abs9b = tempb2
+          plb%ti(icv) = plb%ti(icv) - abs9*tempb2/pl%ti(icv)
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
             CALL POPREAL8(abs9, r8/8)
@@ -423,10 +478,10 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
           END IF
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            tempb = srwb%shi0(icv, 1)/pl%ti(icv)
+            tempb2 = srwb%shi0(icv, 1)/pl%ti(icv)
             srwb%shi0(icv, 1) = 0.D0
-            t0b = t0b + tempb
-            plb%ti(icv) = plb%ti(icv) - t0*tempb/pl%ti(icv)
+            t0b = t0b + tempb2
+            plb%ti(icv) = plb%ti(icv) - t0*tempb2/pl%ti(icv)
           ELSE
             t0b = t0b + srwb%shi0(icv, 0)
             srwb%shi0(icv, 0) = 0.D0
@@ -437,94 +492,160 @@ SUBROUTINE B2STBM_B(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, geob, &
             DO is=ns-1,0,-1
               CALL POPCONTROL1B(branch)
               IF (branch .NE. 0) THEN
+                temp = dtim*dtco(is, ireg)
+                tempb2 = am(is)*mp*0.5_R8*t0b
                 tempb0 = -(am(is)*mp*0.5_R8*t0b)
-                duab = 2*dua*(st_ext%sna(icv, is)*(dtim*dtco(is, ireg))+&
-&                 na0(icv, is))*tempb0/(dtim*dtei(ireg))
-                ua_tmpb = duab
-                temp = st_ext%sna(icv, is)*dtim*dtco(is, ireg) + na0(icv&
-&                 , is)
-                tempb = ua_tmpb/temp
-                ua0b(icv, is) = ua0b(icv, is) + (2*ua0(icv, is)*st_ext%&
-&                 sna(icv, is)*am(is)*mp*0.5_R8-st_ext%smo(icv, is))*t0b&
-&                 + na0(icv, is)*tempb - duab
-                na0b(icv, is) = na0b(icv, is) + dua**2*tempb0/(dtim*dtei&
-&                 (ireg)) + (ua0(icv, is)-(dtim*dtmo(is, ireg)*(st_ext%&
-&                 smo(icv, is)/(am(is)*mp))+ua0(icv, is)*na0(icv, is))/&
-&                 temp)*tempb
+                tempb1 = dua**2*tempb0/(dtim*dtei(ireg))
+                duab = 2*dua*(na0(icv, is)+temp*st_ext%sna(icv, is))*&
+&                 tempb0/(dtim*dtei(ireg))
+                na0b(icv, is) = na0b(icv, is) + tempb1
+                st_extb%sna(icv, is) = st_extb%sna(icv, is) + temp*&
+&                 tempb1
                 CALL POPREAL8(dua, r8/8)
+                ua_tmpb = duab
                 CALL POPREAL8(ua_tmp, r8/8)
+                temp = dtim*dtco(is, ireg)
+                temp0 = na0(icv, is) + temp*st_ext%sna(icv, is)
+                temp2 = dtim*dtmo(is, ireg)
+                tempb0 = ua_tmpb/temp0
+                ua0b(icv, is) = ua0b(icv, is) + 2*ua0(icv, is)*st_ext%&
+&                 sna(icv, is)*tempb2 - st_ext%smo(icv, is)*t0b + na0(&
+&                 icv, is)*tempb0 - duab
+                st_extb%smo(icv, is) = st_extb%smo(icv, is) + temp2*&
+&                 tempb0/(am(is)*mp) - ua0(icv, is)*t0b
+                tempb1 = -((ua0(icv, is)*na0(icv, is)+temp2*(st_ext%smo(&
+&                 icv, is)/(am(is)*mp)))*tempb0/temp0)
+                st_extb%sna(icv, is) = st_extb%sna(icv, is) + ua0(icv, &
+&                 is)**2*tempb2 + temp*tempb1
+                na0b(icv, is) = na0b(icv, is) + ua0(icv, is)*tempb0 + &
+&                 tempb1
               END IF
             END DO
           END IF
-          plb%te(icv) = plb%te(icv) + switch%b2stbm_linearisation*abs7*&
-&           srwb%she0(icv, 1)/pl%te(icv)**2
+          st_extb%shi(icv) = st_extb%shi(icv) + t0b
+          tempb = -(switch%b2stbm_linearisation*srwb%she0(icv, 1)/pl%te(&
+&           icv))
+          abs7b = tempb
+          plb%te(icv) = plb%te(icv) - abs7*tempb/pl%te(icv)
           t0 = st_ext%she(icv)
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
             CALL POPREAL8(abs7, r8/8)
+            t0b = abs7b
           ELSE
             CALL POPREAL8(abs7, r8/8)
+            t0b = -abs7b
+          END IF
+          abs6b = switch%b2stbm_linearisation*srwb%she0(icv, 0)
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            t0b = t0b + abs6b
+          ELSE
+            t0b = t0b - abs6b
           END IF
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            plb%te(icv) = plb%te(icv) - t0*srwb%she0(icv, 1)/pl%te(icv)&
-&             **2
+            tempb = srwb%she0(icv, 1)/pl%te(icv)
             srwb%she0(icv, 1) = 0.D0
+            t0b = t0b + tempb
+            plb%te(icv) = plb%te(icv) - t0*tempb/pl%te(icv)
           ELSE
+            t0b = t0b + srwb%she0(icv, 0)
             srwb%she0(icv, 0) = 0.D0
           END IF
+          st_extb%she(icv) = st_extb%she(icv) + t0b
           DO is=ns-1,0,-1
-            vtheb = switch%b2stbm_linearisation*abs5*srwb%smo0(icv, 1, &
-&             is)/vthe**2
+            tempb = -(switch%b2stbm_linearisation*srwb%smo0(icv, 1, is)/&
+&             vthe)
+            abs5b = tempb
+            vtheb = -(abs5*tempb/vthe)
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
               CALL POPREAL8(abs5, r8/8)
+              t0b = abs5b
             ELSE
               CALL POPREAL8(abs5, r8/8)
+              t0b = -abs5b
             END IF
-            tempb0 = switch%b2stbm_linearisation*abs4*srwb%smo0(icv, 0, &
-&             is)/vthe
-            plb%ua(icv, is) = plb%ua(icv, is) + tempb0
-            vtheb = vtheb - pl%ua(icv, is)*tempb0/vthe
+            t0b = t0b + srwb%smo0(icv, 0, is)
+            plb%ua(icv, is) = plb%ua(icv, is) + abs4*switch%&
+&             b2stbm_linearisation*srwb%smo0(icv, 0, is)/vthe
+            tempb = pl%ua(icv, is)*switch%b2stbm_linearisation*srwb%smo0&
+&             (icv, 0, is)/vthe
+            abs4b = tempb
+            vtheb = vtheb - abs4*tempb/vthe
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
               CALL POPREAL8(abs4, r8/8)
+              t0b = t0b + abs4b
             ELSE
               CALL POPREAL8(abs4, r8/8)
+              t0b = t0b - abs4b
             END IF
+            st_extb%smo(icv, is) = st_extb%smo(icv, is) + t0b
             vtheb = vtheb/SQRT(am(is)*(mp/me))
             CALL POPREAL8(vthe, r8/8)
             IF (.NOT.pl%te(icv)/me .EQ. 0.D0) plb%te(icv) = plb%te(icv) &
 &               + vtheb/(me*2.0*SQRT(pl%te(icv)/me))
-            plb%na(icv, is) = plb%na(icv, is) + switch%&
-&             b2stbm_linearisation*abs3*srwb%sna0(icv, 1, is)/pl%na(icv&
-&             , is)**2
+            tempb = -(switch%b2stbm_linearisation*srwb%sna0(icv, 1, is)/&
+&             pl%na(icv, is))
+            abs3b = tempb
+            plb%na(icv, is) = plb%na(icv, is) - abs3*tempb/pl%na(icv, is&
+&             )
             t0 = st_ext%sna(icv, is)
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
               CALL POPREAL8(abs3, r8/8)
+              t0b = abs3b
             ELSE
               CALL POPREAL8(abs3, r8/8)
+              t0b = -abs3b
+            END IF
+            abs2b = switch%b2stbm_linearisation*srwb%sna0(icv, 0, is)
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              t0b = t0b + abs2b
+            ELSE
+              t0b = t0b - abs2b
             END IF
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              plb%na(icv, is) = plb%na(icv, is) - t0*srwb%sna0(icv, 1, &
-&               is)/pl%na(icv, is)**2
+              tempb = srwb%sna0(icv, 1, is)/pl%na(icv, is)
               srwb%sna0(icv, 1, is) = 0.D0
+              t0b = t0b + tempb
+              plb%na(icv, is) = plb%na(icv, is) - t0*tempb/pl%na(icv, is&
+&               )
             ELSE
+              t0b = t0b + srwb%sna0(icv, 0, is)
               srwb%sna0(icv, 0, is) = 0.D0
             END IF
+            st_extb%sna(icv, is) = st_extb%sna(icv, is) + t0b
           END DO
           GOTO 100
         END IF
       END IF
+      st_extb%shi(icv) = st_extb%shi(icv) + srwb%shi0(icv, 0)
       srwb%shi0(icv, 0) = 0.D0
+      st_extb%sch(icv) = st_extb%sch(icv) + srwb%sch0(icv, 0)
       srwb%sch0(icv, 0) = 0.D0
+      st_extb%she(icv) = st_extb%she(icv) + srwb%she0(icv, 0)
       srwb%she0(icv, 0) = 0.D0
+      st_extb%smo(icv, 0:ns-1) = st_extb%smo(icv, 0:ns-1) + srwb%smo0(&
+&       icv, 0, 0:ns-1)
       srwb%smo0(icv, 0, 0:ns-1) = 0.D0
+      st_extb%sna(icv, 0:ns-1) = st_extb%sna(icv, 0:ns-1) + srwb%sna0(&
+&       icv, 0, 0:ns-1)
       srwb%sna0(icv, 0, 0:ns-1) = 0.D0
  100  CALL POPINTEGER4(ireg)
     END DO
+    CALL POPCONTROL1B(branch)
+    IF (branch .NE. 0) THEN
+      st_extb%sch = 0.D0
+      st_extb%shi = 0.D0
+      st_extb%she = 0.D0
+      st_extb%smo = 0.D0
+      st_extb%sna = 0.D0
+    END IF
     DO is=ns-1,0,-1
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
@@ -586,12 +707,10 @@ END SUBROUTINE B2STBM_B
 !.specification
 !
 SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
-& mpg, pl, dv, st_ext, sr, srw, main_call)
+& mpg, pl, dv, st_ext, srw, main_call)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFF
-  USE B2MOD_B2CMPB_DIFF
   USE B2MOD_EXTERNAL_DIFF
   USE B2MOD_NEUTRALS_NAMELIST_DIFF
   USE B2MOD_NUMERICS_NAMELIST_DIFF
@@ -612,7 +731,6 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
   TYPE(B2STATEEXT), INTENT(INOUT) :: st_ext
 !   ..input/output arguments 
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
-  TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
 !   ..common blocks
 !-----------------------------------------------------------------------
@@ -703,8 +821,6 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
 &         'faulty argument range fcQgam(,0)')
 !    ..test state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, pl, dv)
-!
-!   ..test edge values of fluxes
   END IF
 !
 !   ..initialise sources to 0
@@ -834,6 +950,18 @@ SUBROUTINE B2STBM_NODIFF(ncv, nfc, nvx, ns, ismain, dtim, switch, geo, &
       st_ext%ua = 0.0_R8
       st_ext%ta = 0.0_R8
 !
+      st_ext%ne = 0.0_R8
+      st_ext%ni = 0.0_R8
+      st_ext%ue = 0.0_R8
+      st_ext%ne2 = 0.0_R8
+      DO is=0,st_ext%ns-1
+        st_ext%ne(:) = st_ext%ne(:) + st_ext%za(:, is)*st_ext%na(:, is)
+        st_ext%ne2(:) = st_ext%ne2(:) + st_ext%za2(:, is)*st_ext%na(:, &
+&         is)
+        st_ext%ni(:, 0) = st_ext%ni(:, 0) + st_ext%na(:, is)
+        IF (.NOT.st_ext%is_neutral(is)) st_ext%ni(:, 1) = st_ext%ni(:, 1&
+&           ) + st_ext%na(:, is)
+      END DO
     END IF
 !
 ! ..linearise external sources

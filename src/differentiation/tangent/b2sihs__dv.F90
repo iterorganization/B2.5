@@ -31,13 +31,12 @@
 !
 SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 & , mpgd, ismain, fac_exb, lnlam, lnlamd, na, nad, ua, uad, ue, ued, te&
-& , ted, ti, tid, tn, tnd, po, pod, ne, ned, ni, nid, nn, nnd, fna_fcor&
-& , fne, fch, fchd, cvsa, cvsad, cvsahz_eff, cvsahz_effd, f_luc_sg, &
-& f_luc_sgd, alfx_c, alfx_cd, sigx_c, sigx_cd, rza, rz2, rz2d, st_ext, &
-& st_extd, she0, she0d, shi0, shi0d, shn0, shn0d, srw, srwd, nbdirs)
+& , ted, ti, tid, tn, tnd, po, pod, ne, ned, ni, nid, nn, nnd, fch, fchd&
+& , cvsa, cvsad, cvsahz_eff, cvsahz_effd, f_luc_sg, f_luc_sgd, alfx_c, &
+& alfx_cd, sigx_c, sigx_cd, rza, rz2, rz2d, st_ext, st_extd, she0, she0d&
+& , shi0, shi0d, shn0, shn0d, srw, srwd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_TALLIES_DIFFV
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
   USE B2MOD_B2CMPA_DIFFV
@@ -83,9 +82,8 @@ SUBROUTINE B2SIHS__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 & nbdirsmax, ncv, 0:1), lnlamd(nbdirsmax, ncv), f_luc_sgd(nbdirsmax, nfc&
 & ), alfx_cd(nbdirsmax, ncv), sigx_cd(nbdirsmax, ncv), nnd(nbdirsmax, &
 & ncv)
-  REAL(kind=r8) :: fna_fcor(nfc, 0:1, 0:ns-1), fne(nfc, 0:1), fch(nfc, 0&
-& :1), cvsa(nfc, 0:1, 0:ns-1), cvsahz_eff(nfc, 0:1, 0:ns-1), rza(ncv, 0:&
-& ns-1), rz2(ncv, 0:ns-1)
+  REAL(kind=r8) :: fch(nfc, 0:1), cvsa(nfc, 0:1, 0:ns-1), cvsahz_eff(nfc&
+& , 0:1, 0:ns-1), rza(ncv, 0:ns-1), rz2(ncv, 0:ns-1)
   REAL(kind=r8) :: fchd(nbdirsmax, nfc, 0:1), cvsad(nbdirsmax, nfc, 0:1&
 & , 0:ns-1), cvsahz_effd(nbdirsmax, nfc, 0:1, 0:ns-1), rz2d(nbdirsmax, &
 & ncv, 0:ns-1)
@@ -1740,12 +1738,11 @@ END SUBROUTINE B2SIHS__DV
 !.specification
 !
 SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
-& fac_exb, lnlam, na, ua, ue, te, ti, tn, po, ne, ni, nn, fna_fcor, fne&
-& , fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c, rza, rz2, st_ext, &
-& she0, shi0, shn0, srw)
+& fac_exb, lnlam, na, ua, ue, te, ti, tn, po, ne, ni, nn, fch, cvsa, &
+& cvsahz_eff, f_luc_sg, alfx_c, sigx_c, rza, rz2, st_ext, she0, shi0, &
+& shn0, srw)
   USE B2MOD_TYPES
   USE B2MOD_TALLIES_DIFFV
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
   USE B2MOD_B2CMPA_DIFFV
@@ -1779,9 +1776,8 @@ SUBROUTINE B2SIHS__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ismain, &
   REAL(kind=r8) :: fac_exb(nfc), na(ncv, 0:ns-1), ua(ncv, 0:ns-1), ue(&
 & ncv), te(ncv), ti(ncv), tn(ncv), po(ncv), ne(ncv), ni(ncv, 0:1), lnlam&
 & (ncv), f_luc_sg(nfc), alfx_c(ncv), sigx_c(ncv), nn(ncv)
-  REAL(kind=r8) :: fna_fcor(nfc, 0:1, 0:ns-1), fne(nfc, 0:1), fch(nfc, 0&
-& :1), cvsa(nfc, 0:1, 0:ns-1), cvsahz_eff(nfc, 0:1, 0:ns-1), rza(ncv, 0:&
-& ns-1), rz2(ncv, 0:ns-1)
+  REAL(kind=r8) :: fch(nfc, 0:1), cvsa(nfc, 0:1, 0:ns-1), cvsahz_eff(nfc&
+& , 0:1, 0:ns-1), rza(ncv, 0:ns-1), rz2(ncv, 0:ns-1)
 !   ..output arguments (unspecified on entry)
   REAL(kind=r8) :: she0(ncv, 0:3), shi0(ncv, 0:3), shn0(ncv, 0:3)
 !-----------------------------------------------------------------------

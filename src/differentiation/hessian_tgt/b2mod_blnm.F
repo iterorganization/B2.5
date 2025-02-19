@@ -66,20 +66,21 @@ c----------------------------------------------------------------------
 
       contains
 
-      subroutine b2blnm(mpg,ns,state,state_ext)
+      subroutine b2blnm(mpg,geo,ns,state,state_ext)
       use b2mod_constants
       use b2mod_b2cmpa_diffv_diffv
       use b2mod_numerics_namelist_diffv_diffv
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
+      use b2us_geo_diffv_diffv
       use b2us_map_diffv_diffv
       use b2us_plasma_diffv_diffv
       implicit none
 c
-c
       integer ns
       type(mapping) :: mpg
+      type(geometry) :: geo
       type(B2State) :: state
       type(B2StateExt) :: state_ext
 c
@@ -100,13 +101,11 @@ c
      ,            (equdiv(1,13), rlres)
 c----------------------------------------------------------------------
 c
-      integer i, j, ic
+      integer i, j, ic, it, iy, iCb, iCn, iCp, iCv, iCx, iFc, iFp, iFn
       real (kind=R8) ::
      *     hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf,
      *     pr(mpg%nCv)
-#ifdef WG_TODO
       integer, save :: is
-#endif
 c----------------------------------------------------------------------
 c*** To be taken from the common blocks (not used yet):
 c***  lcbs: boundary segments representing the core boundary in B2
@@ -139,26 +138,60 @@ c
         call b2xppz_nodiff_nodiff(mpg%nCv, ns,
      .   state%dv%ne, state%pl%na, state%pl%te, state%pl%ti, pr,
      .   state_ext)
-#ifdef WG_TODO
-        do iy = 0, ny-1
-          ix=leftcut(1)-1
-          do is=0,ns-1
-            if (.not.is_neutral(is)) then
-              hlp_fi=hlp_fi+
-     .         fmo(rightix(ix,iy),rightiy(ix,iy),0,0,is)
-            end if
+        do ic=1,2
+          if (ic.eq.1) then
+            it=1
+          else
+            it=maxval(mpg%strDiv)
+          end if
+          do iy = 1, mpg%divFcP(it,2)
+            iFc = mpg%divFc(mpg%divFcP(it,1)+iy-1)
+            iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            iCx = 0
+            iCn = iCv
+            iCb = iCv
+            do while (iCx.eq.0)
+              iCp = 0
+              do i = mpg%cvFcP(iCn,1),
+     .               mpg%cvFcP(iCn,1) + mpg%cvFcP(iCn,2) - 1
+                if (iCp.ne.0) cycle
+                iFn = mpg%cvFc(i)
+                if (mpg%fcFs(iFn).ne.0) cycle
+                if (mpg%fcCv(iFn,1).gt.mpg%nCi .or.
+     .              mpg%fcCv(iFn,2).gt.mpg%nCi) cycle
+                if (mpg%fcCv(iFn,1).eq.iCn .and. mpg%fcCv(iFn,2).ne.iCb)
+     >           then
+                  iCp = mpg%fcCv(iFn,2)
+                  iFp = iFn
+                end if
+                if (mpg%fcCv(iFn,2).eq.iCn .and. mpg%fcCv(iFn,1).ne.iCb)
+     >           then
+                  iCp = mpg%fcCv(iFn,1)
+                  iFp = iFn
+                end if
+              end do
+              iCb = iCn
+              iCn = iCp
+              if (mpg%cvReg(iCb).ne.mpg%cvReg(iCn)) then
+                iCx = iCn
+                do is=0,ns-1
+                  if (.not.is_neutral(is)) then
+                    if (ic.eq.1) then
+                      hlp_fi=hlp_fi+state%dv%fmo(iFp,0,is)
+                    else
+                      hlp_fo=hlp_fo+state%dv%fmo(iFp,0,is)
+                    end if
+                  end if
+                end do
+                if (ic.eq.1) then
+                  hlp_pi=hlp_pi+pr(iCx)*geo%fcS(iFp)*pitch(geo,iCx)
+                else
+                  hlp_po=hlp_po+pr(iCx)*geo%fcS(iFp)*pitch(geo,iCx)
+                end if
+              end if
+            end do
           end do
-          hlp_pi=hlp_pi+pr(ix,iy)*sx(ix,iy)*pit(ix,iy)
-          ix=rightcut(1)
-          do is=0,ns-1
-            if (.not.is_neutral(is)) then
-              hlp_fo=hlp_fo+fmo(ix,iy,0,0,is)
-             end if
-          end do
-          hlp_po=hlp_po+
-     .     pr(ix,iy)*sx(leftix(ix,iy),leftiy(ix,iy))*pit(ix,iy)
         end do
-#endif
         prsup(1)=hlp_pi
         prsup(2)=hlp_po
         flmup(1)=hlp_fi
@@ -167,18 +200,28 @@ c
         hlp_po=0.0_R8
         hlp_fi=0.0_R8
         hlp_fo=0.0_R8
-#ifdef WG_TODO
-        do iy = 0, ny-1
-          hlp_pi=hlp_pi+pr(0,iy)*sx(0,iy)*pit(0,iy)
-          hlp_po=hlp_po+pr(nx-1,iy)*sx(nx-1,iy)*pit(nx-1,iy)
+        do i = 1, mpg%divFcP(1,2)
+          iFc = mpg%divFc(mpg%divFcP(1,1)+i-1)
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          hlp_pi=hlp_pi+pr(iCv)*geo%fcS(iFc)*pitch(geo,iCv)
           do is=0,ns-1
-            if (.not.is_neutral(is)) then
-              hlp_fi=hlp_fi+fmo(0,iy,0,0,is)
-              hlp_fo=hlp_fo+fmo(nx,iy,0,0,is)
-            end if
-         end do
+            if (.not.is_neutral(is))
+     >       hlp_fi=hlp_fi+
+     .        (state%dv%fmo(iFc,0,is)+state%dv%fmo(iFc,1,is))*
+     .         mpg%divFcOr(mpg%divFcP(1,1)+i-1)
+          end do
         end do
-#endif
+        do i = 1, mpg%divFcP(maxval(mpg%strDiv),2)
+          iFc = mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          hlp_po=hlp_po+pr(iCv)*geo%fcS(iFc)*pitch(geo,iCv)
+          do is=0,ns-1
+            if (.not.is_neutral(is))
+     >       hlp_fo=hlp_fo+
+     .        (state%dv%fmo(iFc,0,is)+state%dv%fmo(iFc,1,is))*
+     .         mpg%divFcOr(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
+          end do
+        end do
         prstg(1)=hlp_pi
         prstg(2)=hlp_po
         flmtg(1)=hlp_fi
@@ -188,52 +231,43 @@ c*** Volumetric sources
 c
         hlp_nu=0.0_R8
         hlp_mf=0.0_R8
-#ifdef WG_TODO
-        do iy=0,ny-1
-          do ix=0,leftcut(1)-1
-            if(resignore(ix,iy,1).ne.0) then
-              hlp_mf=hlp_mf+pit(ix,iy)*pr(ix,iy)*vol(ix,iy)
-            end if
-            if(resignore(ix,iy,2).ne.0) then
-              do is=0,ns-1
-                if (.not.is_neutral(is))
-     >           hlp_nu=hlp_nu+
-     1               smo(ix,iy,0,is)+
-     2               smo(ix,iy,1,is)*ua(ix,iy,is)+
-     3               smo(ix,iy,2,is)*am(is)*mp*na(ix,iy,is)+
-     4               smo(ix,iy,3,is)*am(is)*mp*na(ix,iy,is)*
-     5               ua(ix,iy,is)
-              end do
-            end if
-          end do
+        do iCv=1,mpg%nCi
+          if (mpg%cvReg(iCv).eq.3) then
+!WG_TODO          if(resignore(iCv,1).ne.0) then
+            hlp_mf=hlp_mf+pitch(geo,iCv)*pr(iCv)*geo%cvVol(iCv)
+!WG_TODO          end if
+!WG_TODO          if(resignore(iCv,2).ne.0) then
+            do is=0,ns-1
+              if (.not.is_neutral(is))
+     >         hlp_nu=hlp_nu+
+     1          state%sr%smo(iCv,0,is)+
+     2          state%sr%smo(iCv,1,is)*state%pl%ua(iCv,is)+
+     3          state%sr%smo(iCv,2,is)*am(is)*mp*state%pl%na(iCv,is)+
+     4          state%sr%smo(iCv,3,is)*am(is)*mp*state%pl%na(iCv,is)*
+     5          state%pl%ua(iCv,is)
+            end do
+          end if
         end do
-#endif
         prsnu(1)=hlp_nu
         prsmf(1)=hlp_mf
         hlp_nu=0.0_R8
         hlp_mf=0.0_R8
-#ifdef WG_TODO
-        do iy=0,ny-1
-          do ix=rightcut(1),nx-1
-            if(resignore(ix,iy,1).ne.0) then
-              hlp_mf=hlp_mf+pit(ix,iy)*pr(ix,iy)*vol(ix,iy)
-            end if
-          end do
-          do ix=rightcut(1),nx-1
-            if(resignore(ix,iy,2).ne.0) then
-              do is=0,ns-1
-                if (.not.is_neutral(is))
-     >           hlp_nu=hlp_nu+
-     1               smo(ix,iy,0,is)+
-     2               smo(ix,iy,1,is)*ua(ix,iy,is)+
-     3               smo(ix,iy,2,is)*am(is)*mp*na(ix,iy,is)+
-     4               smo(ix,iy,3,is)*am(is)*mp*na(ix,iy,is)*
-     5               ua(ix,iy,is)
-              end do
-            end if
-          end do
+        do iCv=1,mpg%nCi
+          if (mpg%cvReg(iCv).eq.mpg%nnreg(0)) then
+!WG_TODO            if(resignore(iCv,1).ne.0) then
+            hlp_mf=hlp_mf+pitch(geo,iCv)*pr(iCv)*geo%cvVol(iCv)
+!WG_TODO            if(resignore(iCv,2).ne.0) then
+            do is=0,ns-1
+              if (.not.is_neutral(is))
+     >         hlp_nu=hlp_nu+
+     1          state%sr%smo(iCv,0,is)+
+     2          state%sr%smo(iCv,1,is)*state%pl%ua(iCv,is)+
+     3          state%sr%smo(iCv,2,is)*am(is)*mp*state%pl%na(iCv,is)+
+     4          state%sr%smo(iCv,3,is)*am(is)*mp*state%pl%na(iCv,is)*
+     5          state%pl%ua(iCv,is)
+            end do
+          end if
         end do
-#endif
         prsnu(2)=hlp_nu
         prsmf(2)=hlp_mf
 c
@@ -264,24 +298,8 @@ c
         write(*,hlp_frf) 'div',(hlp_hdv(i),i=1,nqudiv)
         write(*,hlp_frm) (hlp_div(i),(equdiv(i,j),j=1,nqudiv),i=1,ndiv)
       end if !}
-      return
 
-#ifdef WG_TODO
-      contains
-c----------------------------------------------------------------------
-      function sx(ix,iy)
-      implicit none
-      integer, intent(in) :: ix, iy
-      real (kind=R8) ::
-     *     sx
-csw 29sep2014: xpb fix on sx calculation
-      sx=0.5_R8*(gs(ix,iy,0)*qc(ix,iy,0)+
-     .  gs(rightix(ix,iy),rightiy(ix,iy),0)*
-     .  qc(rightix(ix,iy),rightiy(ix,iy),0))
       return
-      end function sx
-#endif
-
       end subroutine b2blnm
 c======================================================================
 c

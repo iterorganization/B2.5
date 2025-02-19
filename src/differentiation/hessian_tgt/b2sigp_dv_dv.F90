@@ -38,7 +38,7 @@ SUBROUTINE B2SIGP_DV_DV(ncv, nfc, nvx, isb, switch, geo, geod0, geod, &
 & mpg, mpgd, rzb, rzbd0, rzbd, rzbdd, nb, nbd0, nbd, nbdd, ti, tid0, tid&
 & , tidd, tn, tnd0, tnd, tndd, ne, ned0, ned, nedd, te, ted0, ted, tedd&
 & , po, pod0, pod, podd, smbgp, smbgpd0, smbgpd, smbgpdd, wrk0, wrk0d0, &
-& wrk0d, wrk0dd, wrk1, wrk1d0, wrk1d, wrk1dd, wrk2, nbdirs, nbdirs0)
+& wrk0d, wrk0dd, wrk1, wrk1d0, wrk1d, wrk1dd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
 !srv 23.03.10
   USE B2MOD_CONSTANTS
@@ -86,8 +86,8 @@ SUBROUTINE B2SIGP_DV_DV(ncv, nfc, nvx, isb, switch, geo, geod0, geod, &
 !   ..workspace arguments (unspecified on entry and on exit)
 !srv 28.03.17
 !djm Jul2018
-  REAL(kind=r8) :: wrk0(ncv), wrk1(ncv), wrk2(ncv), wrk3(ncv), wrk5(ncv)&
-& , wrk6(ncv), tb(ncv), nete(ncv), smbgp_b4gr(ncv, 0:3)
+  REAL(kind=r8) :: wrk0(ncv), wrk1(ncv), wrk3(ncv), wrk5(ncv), wrk6(ncv)&
+& , tb(ncv), nete(ncv), smbgp_b4gr(ncv, 0:3)
   REAL(kind=r8) :: wrk0d0(nbdirsmax0, ncv), wrk1d0(nbdirsmax0, ncv), &
 & wrk3d0(nbdirsmax0, ncv), wrk5d0(nbdirsmax0, ncv), wrk6d0(nbdirsmax0, &
 & ncv), tbd0(nbdirsmax0, ncv), neted0(nbdirsmax0, ncv)
@@ -538,7 +538,7 @@ END SUBROUTINE B2SIGP_DV_DV
 !
 SUBROUTINE B2SIGP_DV_NODIFF(ncv, nfc, nvx, isb, switch, geo, geod, mpg, &
 & mpgd, rzb, rzbd, nb, nbd, ti, tid, tn, tnd, ne, ned, te, ted, po, pod&
-& , smbgp, smbgpd, wrk0, wrk0d, wrk1, wrk1d, wrk2, nbdirs)
+& , smbgp, smbgpd, wrk0, wrk0d, wrk1, wrk1d, nbdirs)
   USE B2MOD_TYPES
 !srv 23.03.10
   USE B2MOD_CONSTANTS
@@ -575,8 +575,8 @@ SUBROUTINE B2SIGP_DV_NODIFF(ncv, nfc, nvx, isb, switch, geo, geod, mpg, &
 !   ..workspace arguments (unspecified on entry and on exit)
 !srv 28.03.17
 !djm Jul2018
-  REAL(kind=r8) :: wrk0(ncv), wrk1(ncv), wrk2(ncv), wrk3(ncv), wrk5(ncv)&
-& , wrk6(ncv), tb(ncv), nete(ncv), smbgp_b4gr(ncv, 0:3)
+  REAL(kind=r8) :: wrk0(ncv), wrk1(ncv), wrk3(ncv), wrk5(ncv), wrk6(ncv)&
+& , tb(ncv), nete(ncv), smbgp_b4gr(ncv, 0:3)
   REAL(kind=r8) :: wrk0d(nbdirsmax, ncv), wrk1d(nbdirsmax, ncv), wrk3d(&
 & nbdirsmax, ncv), wrk5d(nbdirsmax, ncv), wrk6d(nbdirsmax, ncv), tbd(&
 & nbdirsmax, ncv), neted(nbdirsmax, ncv)
@@ -853,7 +853,7 @@ END SUBROUTINE B2SIGP_DV_NODIFF
 !.specification
 !
 SUBROUTINE B2SIGP_NODIFF_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, &
-& rzb, nb, ti, tn, ne, te, po, smbgp, wrk0, wrk1, wrk2)
+& rzb, nb, ti, tn, ne, te, po, smbgp, wrk0, wrk1)
   USE B2MOD_TYPES
 !srv 23.03.10
   USE B2MOD_CONSTANTS
@@ -883,8 +883,8 @@ SUBROUTINE B2SIGP_NODIFF_NODIFF(ncv, nfc, nvx, isb, switch, geo, mpg, &
 !   ..workspace arguments (unspecified on entry and on exit)
 !srv 28.03.17
 !djm Jul2018
-  REAL(kind=r8) :: wrk0(ncv), wrk1(ncv), wrk2(ncv), wrk3(ncv), wrk5(ncv)&
-& , wrk6(ncv), tb(ncv), nete(ncv), smbgp_b4gr(ncv, 0:3)
+  REAL(kind=r8) :: wrk0(ncv), wrk1(ncv), wrk3(ncv), wrk5(ncv), wrk6(ncv)&
+& , tb(ncv), nete(ncv), smbgp_b4gr(ncv, 0:3)
 !-----------------------------------------------------------------------
 !.documentation
 !

@@ -47,7 +47,6 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 !-----------------------------------------------------------------------
 !.end b2tinnt
 !
-!   ..set internal parameters on first call
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0
   REAL(kind=r8) :: facdrift(nfc), fac_exb(nfc), fna(nfc, 0:1, 0:ns-1), &
@@ -82,7 +81,6 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   INTEGER, SAVE :: ncall=0
   REAL(kind=r8), PARAMETER :: eps=1.0e-60_R8
 !srv 08.07.09
-!WG_TODO work(-1:nx,-1:ny,0:1,0:ns-1),
   REAL(kind=r8) :: fnac(ncv, 0:1, 0:ns-1), vntrc(ncv, 0:1), vntrc_fluid(&
 & ncv, 0:1), vntrc_kin(ncv, 0:1), na_fluid(ncv, 0:ns-1), na_kin(ncv, 0:&
 & ns-1), na_tot(ncv, 0:ns-1), vntrf(nfc, 0:1), tif(nfc), naf(nfc, 0:ns-1&
@@ -98,6 +96,7 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 & nfc, 0:1), wrk2d(nbdirsmax, nfc), wrkvxd(nbdirsmax, nvx)
 !srv 20.10.17
   REAL(kind=r8) :: facdriftm, fac_exbm
+  INTEGER, SAVE :: iout=0
   INTRINSIC MAXVAL
   EXTERNAL B2XVSG
   INTRINSIC LOG
@@ -115,10 +114,6 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
   REAL(kind=r8), DIMENSION(nfc) :: temp3
   REAL(kind=r8), DIMENSION(nfc) :: temp4
   INTEGER :: nbdirs
-! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-!      integer, save :: mode = 1
-!      integer, save :: iout = 0
-!      integer, save :: fchin_in_core = 0                                !srv 16.11.17
 !   ..procedures
 !   ..initialisation
 !-----------------------------------------------------------------------
@@ -127,10 +122,8 @@ SUBROUTINE B2TINNT_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, &
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2tinnt')
-! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-!        call ipgeti ('b2tinnt_iout', iout)
-!        call ipgeti ('b2tral_mode', mode)
-!        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16.11.17
+!   ..set internal parameters on first call
+  IF (ncall .EQ. 0) CALL IPGETI('b2tinnt_iout', iout)
 !   ..test input
   CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
@@ -547,7 +540,6 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
 !-----------------------------------------------------------------------
 !.end b2tinnt
 !
-!   ..set internal parameters on first call
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, nfc, nvx, ns, ismain, ismain0
   REAL(kind=r8) :: facdrift(nfc), fac_exb(nfc), fna(nfc, 0:1, 0:ns-1), &
@@ -575,7 +567,6 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
   INTEGER, SAVE :: ncall=0
   REAL(kind=r8), PARAMETER :: eps=1.0e-60_R8
 !srv 08.07.09
-!WG_TODO work(-1:nx,-1:ny,0:1,0:ns-1),
   REAL(kind=r8) :: fnac(ncv, 0:1, 0:ns-1), vntrc(ncv, 0:1), vntrc_fluid(&
 & ncv, 0:1), vntrc_kin(ncv, 0:1), na_fluid(ncv, 0:ns-1), na_kin(ncv, 0:&
 & ns-1), na_tot(ncv, 0:ns-1), vntrf(nfc, 0:1), tif(nfc), naf(nfc, 0:ns-1&
@@ -584,6 +575,7 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
 & vntrc_par(ncv)
 !srv 20.10.17
   REAL(kind=r8) :: facdriftm, fac_exbm
+  INTEGER, SAVE :: iout=0
   INTRINSIC MAXVAL
   EXTERNAL B2XVSG
   INTRINSIC LOG
@@ -593,10 +585,6 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
   REAL(kind=r8), DIMENSION(nCv) :: dabs1
   REAL(kind=r8), DIMENSION(nCv) :: dabs2
   REAL(kind=r8), DIMENSION(nCv) :: dabs3
-! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-!      integer, save :: mode = 1
-!      integer, save :: iout = 0
-!      integer, save :: fchin_in_core = 0                                !srv 16.11.17
 !   ..procedures
 !   ..initialisation
 !-----------------------------------------------------------------------
@@ -605,10 +593,8 @@ SUBROUTINE B2TINNT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, rt, &
 ! ..preliminaries
 !   ..subprogram start-up calls
   CALL SUBINI('b2tinnt')
-! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-!        call ipgeti ('b2tinnt_iout', iout)
-!        call ipgeti ('b2tral_mode', mode)
-!        call ipgeti ('b2tinnt_fchin_in_core', fchin_in_core)            !srv 16.11.17
+!   ..set internal parameters on first call
+  IF (ncall .EQ. 0) CALL IPGETI('b2tinnt_iout', iout)
 !   ..test input
   CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')

@@ -24,8 +24,8 @@
 !srv 09.07.01 28.01.02 22.07.05
 !srv 06.04.07
 SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
-& mpgd, nb, nbd, ub, ubd, smbcf, smbcfd, smbcb, ctcf, ctcfd, wrk0, wrk0d&
-& , nbdirs)
+& mpgd, nb, nbd, ub, ubd, smbcf, smbcfd, ctcf, ctcfd, wrk0, wrk0d, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV
@@ -52,7 +52,7 @@ SUBROUTINE B2SICF_DV(ncv, nfc, nvx, isb, mb, switch, geo, geod, mpg, &
   REAL(kind=r8) :: nbd(nbdirsmax, ncv), ubd(nbdirsmax, ncv)
 !   ..output arguments (unspecified on entry)
 !srv 06.04.07
-  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv), smbcb(ncv)
+  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv)
   REAL(kind=r8) :: smbcfd(nbdirsmax, ncv, 0:3), ctcfd(nbdirsmax, ncv)
 !   ..workspace
   REAL(kind=r8) :: wrk0(ncv)
@@ -198,7 +198,7 @@ END SUBROUTINE B2SICF_DV
 !srv 09.07.01 28.01.02 22.07.05
 !srv 06.04.07
 SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
-& ub, smbcf, smbcb, ctcf, wrk0)
+& ub, smbcf, ctcf, wrk0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_SWITCHES_DIFFV
@@ -221,7 +221,7 @@ SUBROUTINE B2SICF_NODIFF(ncv, nfc, nvx, isb, mb, switch, geo, mpg, nb, &
   REAL(kind=r8) :: mb, nb(ncv), ub(ncv)
 !   ..output arguments (unspecified on entry)
 !srv 06.04.07
-  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv), smbcb(ncv)
+  REAL(kind=r8) :: smbcf(ncv, 0:3), ctcf(ncv)
 !   ..workspace
   REAL(kind=r8) :: wrk0(ncv)
 !-----------------------------------------------------------------------

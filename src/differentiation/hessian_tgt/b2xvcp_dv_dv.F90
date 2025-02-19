@@ -145,7 +145,6 @@ SUBROUTINE B2XVCP_NODIFF_NODIFF(ns)
     END DO
     CALL XERTST(1.0_R8 .LT. cbrbrk(cbirea+cbnrea-1), &
 &         'faulty argument cbrbrk, east, endpoint')
-!    ..test boundary cross-consistency in /b2cmpb/
 !    ..test parameters in /b2cmpb/
     DO ireg=0,cbnrso+cbnrno+cbnrwe+cbnrea-1
 !     ..test cbsna, cbsmo, cbshi

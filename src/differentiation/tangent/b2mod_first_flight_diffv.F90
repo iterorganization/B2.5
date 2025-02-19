@@ -216,7 +216,6 @@ CONTAINS
       ELSE
         dist_start = src/no_of_slices
         eion = sri/src
-!WG_TODO!
         flight_time = dtim*dtco(isneut, mpg%cvreg(icv0))*time_factor(&
 &         icv0)
 ! recover the old default value of 1.0 eV

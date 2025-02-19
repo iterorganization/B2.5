@@ -158,6 +158,7 @@ MODULE B2MOD_SWITCHES_DIFF
       INTEGER :: flux_limit_to_vsa
       INTEGER :: csig_an_style
       INTEGER :: user_transport
+      INTEGER :: set_transport_iyref
       INTEGER :: tn_style
       INTEGER :: afn
       INTEGER :: recycle_afn
@@ -895,6 +896,7 @@ CONTAINS
     s%flux_limit_to_vsa = 1
     s%csig_an_style = 1
     s%user_transport = 0
+    s%set_transport_iyref = 0
 !
 ! Advanced fluid neutral models
     s%tn_style = 0
@@ -1479,6 +1481,7 @@ CONTAINS
     CALL IPGETI('b2trno_flux_limit_to_vsa', s%flux_limit_to_vsa)
     CALL IPGETI('b2trno_csig_an_style', s%csig_an_style)
     CALL IPGETI('b2tqna_user_transport', s%user_transport)
+    CALL IPGETI('set_transport_iyref', s%set_transport_iyref)
 !
 ! Advanced fluid neutral models
     CALL IPGETI('b2mn_tn_style', s%tn_style)

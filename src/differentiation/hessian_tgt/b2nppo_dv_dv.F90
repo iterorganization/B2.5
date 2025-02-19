@@ -39,8 +39,7 @@
 !srv 22.05.18
 SUBROUTINE B2NPPO_DV_DV(ncv, nfc, nvx, nregionv, solving, solvereg, &
 & itcnt, rxf, switch, switchd, geo, geod0, geod, mpg, mpgd, pl, pld0, &
-& pld, pldd, dv, dvd0, dvd, dvdd, sr, srd0, srd, srdd, ierr, nbdirs, &
-& nbdirs0)
+& pld, pldd, dv, dvd0, dvd, dvdd, sr, srd0, srd, srdd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
@@ -87,8 +86,6 @@ SUBROUTINE B2NPPO_DV_DV(ncv, nfc, nvx, nregionv, solving, solvereg, &
   TYPE(B2SOURCE_DIFFV0), INTENT(INOUT) :: srd0
   TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
   TYPE(B2SOURCE_DIFFV_DIFFV), INTENT(INOUT) :: srdd
-!   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -301,9 +298,6 @@ SUBROUTINE B2NPPO_DV_DV(ncv, nfc, nvx, nregionv, solving, solvereg, &
     CALL MY_OUT_US(70, ncv, 0, wrk0, 'b2nppo_sch')
   END IF
 !
-!   ..set error parameter and return
-!     (at present all errors cause an abort through xertst)
-  ierr = 0
 ! ..return
   ncall_b2nppo = ncall_b2nppo + 1
   CALL SUBEND()
@@ -337,7 +331,7 @@ END SUBROUTINE B2NPPO_DV_DV
 !srv 22.05.18
 SUBROUTINE B2NPPO_DV_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
 & itcnt, rxf, switch, switchd, geo, geod, mpg, mpgd, pl, pld, dv, dvd, &
-& sr, srd, ierr, nbdirs)
+& sr, srd, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
@@ -376,8 +370,6 @@ SUBROUTINE B2NPPO_DV_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
   TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
-!   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -550,9 +542,6 @@ SUBROUTINE B2NPPO_DV_NODIFF(ncv, nfc, nvx, nregionv, solving, solvereg, &
     CALL MY_OUT_US(70, ncv, 0, wrk0, 'b2nppo_sch')
   END IF
 !
-!   ..set error parameter and return
-!     (at present all errors cause an abort through xertst)
-  ierr = 0
 ! ..return
   ncall_b2nppo = ncall_b2nppo + 1
   CALL SUBEND()
@@ -575,7 +564,7 @@ END SUBROUTINE B2NPPO_DV_NODIFF
 !
 !srv 22.05.18
 SUBROUTINE B2NPPO_NODIFF_NODIFF(ncv, nfc, nvx, nregionv, solving, &
-& solvereg, itcnt, rxf, switch, geo, mpg, pl, dv, sr, ierr)
+& solvereg, itcnt, rxf, switch, geo, mpg, pl, dv, sr)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
@@ -607,8 +596,6 @@ SUBROUTINE B2NPPO_NODIFF_NODIFF(ncv, nfc, nvx, nregionv, solving, &
   TYPE(B2PLASMA), INTENT(INOUT) :: pl
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
-!   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
 !   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
@@ -762,9 +749,6 @@ SUBROUTINE B2NPPO_NODIFF_NODIFF(ncv, nfc, nvx, nregionv, solving, &
     CALL MY_OUT_US(70, ncv, 0, wrk0, 'b2nppo_sch')
   END IF
 !
-!   ..set error parameter and return
-!     (at present all errors cause an abort through xertst)
-  ierr = 0
 ! ..return
   ncall_b2nppo = ncall_b2nppo + 1
   CALL SUBEND()

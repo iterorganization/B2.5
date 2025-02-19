@@ -35,15 +35,6 @@ SUBROUTINE B2SIKT_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, &
 & , she0d, shi0, shi0d, skt0, skt0d, skt_prod, skt_prodd, skt_diss, &
 & skt_dissd, nbdirs)
   USE B2MOD_TYPES
-!      use b2mod_indirect
-!      use b2mod_geo_corner
-!      use b2mod_geo
-!     & , only : crx
-!      use b2mod_sources
-!     & , only : skt_prod, skt_diss
-!      use b2mod_rates
-!     & , only : rza
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
   USE B2MOD_B2CMPA_DIFFV
@@ -722,15 +713,6 @@ END SUBROUTINE B2SIKT_DV
 SUBROUTINE B2SIKT_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, pl&
 & , dv, rza, co, st_ext, she0, shi0, skt0, skt_prod, skt_diss)
   USE B2MOD_TYPES
-!      use b2mod_indirect
-!      use b2mod_geo_corner
-!      use b2mod_geo
-!     & , only : crx
-!      use b2mod_sources
-!     & , only : skt_prod, skt_diss
-!      use b2mod_rates
-!     & , only : rza
-!      use b2mod_anomalous_transport
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMFS
   USE B2MOD_B2CMPA_DIFFV

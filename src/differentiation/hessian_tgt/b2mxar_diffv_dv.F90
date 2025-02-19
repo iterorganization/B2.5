@@ -132,9 +132,9 @@ SUBROUTINE B2MXAR_DIFFV_NODIFF(ncv, ns, nregionv, boris, switch, geo, &
       END IF
       movi = movi + abs1
     END DO
-!WG_TODO         if (resignore(ix,iy,1).ne.0)
+!WG_TODO         if (resignore(iCv,1).ne.0)
 !WG_TODO     >    navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
-!WG_TODO         if (resignore(ix,iy,2).ne.0)
+!WG_TODO         if (resignore(iCv,2).ne.0)
 !WG_TODO     >    movi = movi+geo%cvVol(iCv)*
 !WG_TODO     &     pl%na(iCv,is)*sqrt(pl%ti(iCv)*am(is)*mp)
     mtvi = mtvi + movi
@@ -196,7 +196,7 @@ SUBROUTINE B2MXAR_DIFFV_NODIFF(ncv, ns, nregionv, boris, switch, geo, &
     ELSE
       abs5 = -(geo%cvvol(icv)*dv%ne(1, icv))
     END IF
-!WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
+!WG_TODO        if (resignore(iCv,1).eq.0) cycle
     nevi = nevi + abs5
     IF (geo%cvvol(icv)*dv%ne(1, icv)*pl%te(1, icv) .GE. 0.) THEN
       abs6 = geo%cvvol(icv)*dv%ne(1, icv)*pl%te(1, icv)
@@ -380,7 +380,7 @@ SUBROUTINE B2MXAR_DIFFV_NODIFF(ncv, ns, nregionv, boris, switch, geo, &
     ELSE
       abs19 = -(geo%cvvol(icv)*dv%ne(1, icv)*pl%te(1, icv))
     END IF
-!WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
+!WG_TODO        if (resignore(iCv,1).eq.0) cycle
     prvi = prvi + abs19
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) THEN

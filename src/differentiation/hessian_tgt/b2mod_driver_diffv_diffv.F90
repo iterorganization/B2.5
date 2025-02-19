@@ -39,6 +39,7 @@ MODULE B2MOD_DRIVER_DIFFV_DIFFV
   USE B2MOD_YSMP_SDRV_DIFFV_DIFFV, ONLY : dealloc_b2mod_ysmp_sdrv
   USE B2MOD_WALL_DIFFV_DIFFV, ONLY : dealloc_b2mod_wall
   USE B2MOD_NEOCLASSICAL_DIFFV_DIFFV, ONLY : dealloc_b2mod_neoclassical
+  USE B2MOD_FACDRIFT_EXB_DIFFV_DIFFV, ONLY : dealloc_b2mod_facdrift_exb
   USE B2MOD_FIRST_FLIGHT_DIFFV_DIFFV
   USE B2MOD_INPUT_PROFILE_DIFFV_DIFFV
   USE B2MOD_USER_NAMELIST_DIFFV_DIFFV
@@ -51,15 +52,13 @@ MODULE B2MOD_DRIVER_DIFFV_DIFFV
 & dealloc_b2mod_transport_disruption
   USE B2MOD_B2CMFS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
-  USE B2MOD_B2CMPB_DIFFV_DIFFV
   USE B2MOD_B2CMPT_DIFFV_DIFFV
   USE B2MOD_B2CMRC_DIFFV_DIFFV
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV_DIFFV
   USE B2MOD_MWTI
   USE B2MOD_FILE
   USE B2MOD_BATCH_AVERAGE_DIFFV_DIFFV, ONLY : batch_av_all_init, &
-& batch_av_all_save, &
-& batch_av_all_fin
+& batch_av_all_save, batch_av_all_fin
   USE B2MOD_TRACE
   USE B2MOD_IPMAIN
   USE B2MOD_OPENMP
@@ -92,13 +91,12 @@ MODULE B2MOD_DRIVER_DIFFV_DIFFV
 !
 !   ..common blocks
 !   ..local variables
-  INTEGER :: ncall, ntim, mvinc, mvnum, jsep, jxi, jxa, isfb, ix1, ix2, &
-& ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5, nxtl, nxtr
+  INTEGER :: ncall, ntim, mvinc, mvnum, jsep, isfb, ix1, ix2, ix3, ix4, &
+& ix5, iy1, iy2, iy3, iy4, iy5, nxtl, nxtr
   SAVE isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
 !srv 11.01.13 25.01.16
   INTEGER, SAVE :: inverse_ua=0
   INTEGER, SAVE :: iout=0
-  INTEGER, SAVE :: b2mndr_redef_pbs=0
 !pb 29.07.16
   INTEGER, SAVE :: old_style=0
   INTEGER, SAVE :: ird_aver=0
@@ -2045,23 +2043,23 @@ CONTAINS
 !                b2dataoncf:in-out par_opt_phys:in-out rtlsa:out
 !                rtlcx:out rtlqa:out rtlra:out geo.cvbb:in-out
 !                geo.cvx:in-out geo.cvy:in-out geo.cvsz:in-out
-!                geo.cvhz:in-out geo.cvhx:in-out geo.cvqgam:in-out
-!                geo.cvvol:in-out geo.cvonedbsq:in-out geo.cvbzb:in-out
-!                geo.cveb:in-out geo.cvfpsi:in-out geo.fcbb:in-out
-!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
-!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
-!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
-!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
-!                geo.fcfpsi:in-out geo.vxbb:in-out geo.vxx:in-out
-!                geo.vxy:in-out geo.vxhz:in-out geo.vxvol:in-out
-!                geo.vxffbz:in-out geo.vxfpsi:in-out geo.vxonedbsq:in-out
-!                geo.vxbzb:in-out geo.vxeb:in-out geo.cvconn:in-out
-!                geo.vxconn:in-out geo.ftconn:in-out geo.fsconn:in-out
-!                geo.fteps:in-out geo.ftbbav2:in-out geo.fspsi:in-out
-!                stated.pl.na:in-out stated.pl.ua:in-out stated.pl.po:in-out
-!                stated.pl.te:in-out stated.pl.ti:in-out stated.pl.tn:in-out
-!                stated.pl.kt:in-out stated.pl.zt:in-out stated.co.csig:in-out
-!                stated.co.calf:in-out stated.co.csig_an:in-out
+!                geo.cvhz:in-out geo.cvhx:in-out geo.cvhy:in-out
+!                geo.cvqgam:in-out geo.cvvol:in-out geo.cvonedbsq:in-out
+!                geo.cvbzb:in-out geo.cveb:in-out geo.cvfpsi:in-out
+!                geo.fcbb:in-out geo.fcs:in-out geo.fchc:in-out
+!                geo.fcht:in-out geo.fchz:in-out geo.fcvol:in-out
+!                geo.fcqgam:in-out geo.fcqalf:in-out geo.fcqbet:in-out
+!                geo.fcpbs:in-out geo.fcpbshz:in-out geo.fcbzb:in-out
+!                geo.fceb:in-out geo.fcfpsi:in-out geo.vxbb:in-out
+!                geo.vxx:in-out geo.vxy:in-out geo.vxhz:in-out
+!                geo.vxvol:in-out geo.vxffbz:in-out geo.vxfpsi:in-out
+!                geo.vxonedbsq:in-out geo.vxbzb:in-out geo.vxeb:in-out
+!                geo.cvconn:in-out geo.vxconn:in-out geo.ftconn:in-out
+!                geo.fsconn:in-out geo.fteps:in-out geo.ftbbav2:in-out
+!                geo.fspsi:in-out stated.pl.na:in-out stated.pl.ua:in-out
+!                stated.pl.po:in-out stated.pl.te:in-out stated.pl.ti:in-out
+!                stated.pl.tn:in-out stated.pl.kt:in-out stated.pl.zt:in-out
+!                stated.co.csig:in-out stated.co.calf:in-out stated.co.csig_an:in-out
 !                stated.co.csigin:in-out stated.co.chce:in-out
 !                stated.co.chce_exb:in-out stated.co.chci:in-out
 !                stated.co.chci_exb:in-out stated.co.chcn:in-out
@@ -2328,23 +2326,23 @@ CONTAINS
 !                mpg.cffcor:in-out mpg.intcellp:in-out mpg.intcellr:in-out
 !                mpg.divfcor:in-out geo.cvbb:in-out geo.cvx:in-out
 !                geo.cvy:in-out geo.cvsz:in-out geo.cvhz:in-out
-!                geo.cvhx:in-out geo.cvqgam:in-out geo.cvvol:in-out
-!                geo.cvonedbsq:in-out geo.cvbzb:in-out geo.cveb:in-out
-!                geo.cvfpsi:in-out geo.fcbb:in-out geo.fcs:in-out
-!                geo.fchc:in-out geo.fcht:in-out geo.fchz:in-out
-!                geo.fcvol:in-out geo.fcqgam:in-out geo.fcqalf:in-out
-!                geo.fcqbet:in-out geo.fcpbs:in-out geo.fcpbshz:in-out
-!                geo.fcbzb:in-out geo.fceb:in-out geo.fcfpsi:in-out
-!                geo.vxbb:in-out geo.vxx:in-out geo.vxy:in-out
-!                geo.vxhz:in-out geo.vxvol:in-out geo.vxffbz:in-out
-!                geo.vxfpsi:in-out geo.vxonedbsq:in-out geo.vxbzb:in-out
-!                geo.vxeb:in-out geo.cvconn:in-out geo.vxconn:in-out
-!                geo.ftconn:in-out geo.fsconn:in-out geo.fteps:in-out
-!                geo.ftbbav2:in-out geo.fspsi:in-out state.pl.na:in-out
-!                state.pl.ua:in-out state.pl.po:in-out state.pl.te:in-out
-!                state.pl.ti:in-out state.pl.tn:in-out state.pl.kt:in-out
-!                state.pl.zt:in-out state.co.csig:in-out state.co.calf:in-out
-!                state.co.csig_an:in-out state.co.calf_an:in-out
+!                geo.cvhx:in-out geo.cvhy:in-out geo.cvqgam:in-out
+!                geo.cvvol:in-out geo.cvonedbsq:in-out geo.cvbzb:in-out
+!                geo.cveb:in-out geo.cvfpsi:in-out geo.fcbb:in-out
+!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
+!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
+!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
+!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
+!                geo.fcfpsi:in-out geo.vxbb:in-out geo.vxx:in-out
+!                geo.vxy:in-out geo.vxhz:in-out geo.vxvol:in-out
+!                geo.vxffbz:in-out geo.vxfpsi:in-out geo.vxonedbsq:in-out
+!                geo.vxbzb:in-out geo.vxeb:in-out geo.cvconn:in-out
+!                geo.vxconn:in-out geo.ftconn:in-out geo.fsconn:in-out
+!                geo.fteps:in-out geo.ftbbav2:in-out geo.fspsi:in-out
+!                state.pl.na:in-out state.pl.ua:in-out state.pl.po:in-out
+!                state.pl.te:in-out state.pl.ti:in-out state.pl.tn:in-out
+!                state.pl.kt:in-out state.pl.zt:in-out state.co.csig:in-out
+!                state.co.calf:in-out state.co.csig_an:in-out state.co.calf_an:in-out
 !                state.co.csig_cl:in-out state.co.calf_cl:in-out
 !                state.co.csigin:in-out state.co.chve:in-out state.co.chce:in-out
 !                state.co.chce_exb:in-out state.co.chvi:in-out
@@ -2674,29 +2672,6 @@ CONTAINS
 !     The following common blocks have their outermost declaration in
 !     this routine; they need not be preserved between calls.
 !
-!     /b2cmgs/ specifies the singular regions in the geometry.
-!      nlrmx - integer constant.
-!     nlrmx is an upper bound for nlreg, and is used in dimension
-!     specifications.
-!      nlreg - integer.
-!     nlreg specifies the number of singular regions. It will hold that
-!     0.le.nlreg.le.nlrmx.
-!      nlxlo, nlxhi, nlylo, nlyhi - (0:nlrmx-1) integer array.
-!     For 0.le.i.lt.nlreg, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i) are
-!     the bounds of the i-th singular region. Mesh locations (ix,iy)
-!     in (nlxlo(i):nlxhi(i),nlylo(i):nlyhi(i)) make up the region, which
-!     will be included in (-1:nx,-1:ny).
-!     For nlreg.le.i.lt.nlrmx, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i)
-!     are unspecified.
-!      nlloc - (0:nlrmx-1) integer array.
-!     For 0.le.i.lt.4, nlloc(i) specifies the class of quantities for
-!     which the i-th region is special, as follows:
-!       nlloc(i) = 0: cell centers, indices (-1:nx,-1:ny).
-!       nlloc(i) = 1: cell x-faces, indices (0:nx,-1:ny).
-!       nlloc(i) = 2: cell y-faces, indices (-1:nx,0:ny).
-!       nlloc(i) = 3: cell corners, indices (0:nx,0:ny).
-!     For nlreg.le.i.lt.nlrmx, nlloc(i) is unspecified.
-!
 !     /b2cmpa/ specifies basic physics parameters.
 !      me, mp, ev, qe, eps0, mu0 - real*8 constant.
 !     These parameters are included with /b2cmpa/.
@@ -2719,189 +2694,128 @@ CONTAINS
 !     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
 !     undefined.
 !
-!     /b2cmpb/ specifies physics parameters for boundary conditions.
-!     For this purpose the boundary is divided up into regions, and for
-!     each region a set of coefficients defines the local conditions.
-!     For detailed description of /b2cmpb/ see the code, especially the
-!     routine b2stbc.
-!      cbnrmx - integer constant.
-!     cbnrmx is an upper bound for the number of boundary regions nreg,
-!     (nreg.eq.cbnrso+cbnrno+cbnrwe+cbnrea) and is used in dimension
-!     specifications.
-!      cbirso, cbirno, cbirwe, cbirea - integer.
-!     cbirso(-no,-we,-ea) is the index of the first region on the
-!     south (north, west, east) boundary.
-!      cbnrso, cbnrno, cbnrwe, cbnrea - integer.
-!     cbnrso(-no,-we,-ea) is the number of regions on the south
-!     (north, west, east) boundary.
-!     It will hold that 1.le.cbnrso, 1.le.cbnrno, 1.le.cbnrwe, and
-!     1.le.cbnrea; and 0.eq.cbirso, cbirso+cbnrso.eq.cbirno,
-!     cbirno+cbnrno.eq.cbirwe, cbirwe+cbnrwe.eq.cbirea.
-!      cbrbrk - (0:cbnrmx-1) real*8 array.
-!     cbrbrk defines the boundaries between the boundary regions.
-!      cbsna - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbsna(0:7,is,ireg) specify standard form boundary conditions for
-!     the continuity equation for species (is) on the (ireg) boundary
-!     region.
-!      cbsmo - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbsmo(0:7,is,ireg) specify standard form boundary conditions for
-!     the parallel momentum balance equation for species (is) on the
-!     (ireg) boundary region.
-!      cbshi - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbshi(0:7,is,ireg) specify standard form boundary conditions for
-!     the contribution to that atom heat equation by species (is) on
-!     the (ireg) boundary region.
-!      cbshe - (0:7,0:cbnrmx-1) real*8 array.
-!     For 0.le.ireg.lt.nreg, the eight coefficients cbshe(0:7,ireg)
-!     specify standard form boundary conditions for the electron heat
-!     equation on the (ireg) boundary region.
-!      cbsch - (0:7,0:cbnrmx-1) real*8 array.
-!     For 0.le.ireg.lt.nreg, the eight coefficients cbsch(0:7,ireg)
-!     specify standard form boundary conditions for the electric
-!     potential equation on the (ireg) boundary region.
-!      cbrec - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbrec(0:7,is,ireg) specify the recycling process for species (is)
-!     on the boundary region ireg. The exact interpretation of these
-!     coefficients is defined by the routine that computes the source
-!     terms due to the recycling process (b2stbr). Routine b2stbr is
-!     problem dependent.
-!      cbmsa - (0:7,0:cbnrmx-1) real*8 array.
-!      cbmsc - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.ireg.lt.nreg, the eight coefficients cbmsa(0:7,ireg)
-!     specify miscellaneous processes on the boundary region ireg.
-!     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbmsc(0:7,is,ireg) specify miscellaneous processes for species
-!     (is) on the boundary region ireg. The interpretation of these
-!     coefficients is defined by the routine that computes the source
-!     terms due to miscellaneous processes (b2stbm). Routine b2stbm is
-!     application dependent.
-!
 !   ..transport coefficients, parameters
 !
 !     /b2cmpt/ - common block.
 !     (Note: the integer constant nsdecl, which comes with /b2cmpa/,
 !     is used instead of (ns) in dimension specifications.)
 !      cfdf0 - (0:7,0:ns-1) real*8 array.
-!     cfdf0 contains some auxiliary coefficients.  For 0.le.is.lt.ns,
+!     cfdf0 contains some auxiliary coefficients. For 0.le.is.lt.ns,
 !     the local expression
-!       df0(,,is) = cfdf0(0,is)+cfdf0(1,is)/(ni(,,0)/1.0e20)+
-!         cfdf0(2,is)*sqrt(ti(,)/(am(is)*mp))/
-!          (cfdf0(3,is)*ni(,,0)+cfdf0(4,is)*ne(,))
+!       df0(,is) = cfdf0(0,is)+cfdf0(1,is)/(ni(,0)/1.0e20)+
+!         cfdf0(2,is)*sqrt(ti()/(am(is)*mp))/
+!          (cfdf0(3,is)*ni(,0)+cfdf0(4,is)*ne())
 !     is used in the definition of the anomalous transport coefficients.
-!     df0 is meant to represent a diffusivity.  If cfdf0(2,is).eq.0 then
+!     df0 is meant to represent a diffusivity. If cfdf0(2,is).eq.0 then
 !     the corresponding term in df0 is understood as 0 independent of
 !     cfdf0(3:4,is).
 !      cfdna - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfdna(,is) are the coefficients in the
 !     local expression
-!       difna(,,is) = cfdna(0,is)+cfdna(1,is)/(ne(,)/1.0e20)+
-!         cfdna(2,is)*df0(,)+
-!         cfdna(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       difna(,is) = cfdna(0,is)+cfdna(1,is)/(ne()/1.0e20)+
+!         cfdna(2,is)*df0(,is)+
+!         cfdna(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous diffusivity with respect to
 !     grad.na; the transport equation for species (is) contains a term
-!     difna(,,is)*'grad.na'.
+!     difna(,is)*'grad.na'.
 !     If cfdna(7,is) is not zero, the dna0 array is flux-scaled with
-!     a scaling factor of cfdna(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfdna(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfdna(4:6,) are not used in the default version of the code.
 !      cfdpa - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfdpa(,is) are the coefficients in the
 !     local expression
-!       difpa(,,is) = cfdpa(0,is)+cfdpa(1,is)/(ne(,)/1.0e20)+
-!         cfdpa(2,is)*df0(,,is)+
-!         cfdpa(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       difpa(,is) = cfdpa(0,is)+cfdpa(1,is)/(ne()/1.0e20)+
+!         cfdpa(2,is)*df0(,is)+
+!         cfdpa(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous diffusivity with respect to
 !     grad.pa; the transport equation for species (is) contains a term
-!     (1/(rza(,,is)*te(,)+ti(,)))*difpa(,,is)*'grad.pa'.
+!     (1/(rza(,is)*te()+ti()))*difpa(,is)*'grad.pa'.
 !     If cfdpa(7,is) is not zero, the dpa0 array is flux-scaled with
-!     a scaling factor of cfdpa(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfdpa(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfdpa(4:6,) are not used in the default version of the code.
 !      cfvla - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfvla(,is) are the coefficients in the
 !     local expression
-!       vlay(,,is) = cfvla(0,is)+cfvla(1,is)/(ne(,)/1.0e20)+
-!         cfvla(2,is)*df0(,,is)+
-!         cfvla(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       vlay(,is) = cfvla(0,is)+cfvla(1,is)/(ne()/1.0e20)+
+!         cfvla(2,is)*df0(,is)+
+!         cfvla(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous y-velocity of species (is); the
 !     transport equation for species (is) contains a term
-!     vlay(,,is)*na(,,is).
+!     vlay(,is)*na(,is).
 !     If cfvla(7,is) is not zero, the vla0 array is flux-scaled with
-!     a scaling factor of cfvla(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfvla(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfvla(4:6,) are not used in the default version of the code.
 !      cfvsa - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfvsa(,is) are the coefficients in the
 !     local expression
-!       dfvsa(,,is) = cfvsa(0,is)+cfvsa(1,is)/(ne(,)/1.0e20)+
-!         cfvsa(2,is)*df0(,,is)+
-!         cfvsa(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       dfvsa(,is) = cfvsa(0,is)+cfvsa(1,is)/(ne()/1.0e20)+
+!         cfvsa(2,is)*df0(,is)+
+!         cfvsa(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the diffusivity corresponding to the anomalous
 !     transverse viscosity, so that this viscosity is
-!       vsa(,,is) = mp*am(is)*na(,,is)*dfvsa
+!       vsa(,is) = mp*am(is)*na(,is)*dfvsa
 !     If cfvsa(7,is) is not zero, the vsa0 array is flux-scaled with
-!     a scaling factor of cfvsa(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfvsa(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfvsa(4:6,) are not used in the default version of the code.
 !      cfhci - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfhci(,is) are the coefficients in the
 !     local expression
-!       dfhca(,,is) = cfhci(0,is)+cfhci(1,is)/(ne(,)/1.0e20)+
-!         cfhci(2,is)*df0(,,is)+
-!         cfhci(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       dfhca(,is) = cfhci(0,is)+cfhci(1,is)/(ne()/1.0e20)+
+!         cfhci(2,is)*df0(,is)+
+!         cfhci(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous atom heat conductivity associated
 !     with species (is), so that the atom heat conduction coefficient
-!     contains a term dfhca(,,is)*na(,,is).
+!     contains a term dfhca(,is)*na(,is).
 !     If cfhci(7,is) is not zero, the hci arrays are flux-scaled with
-!     a scaling factor of cfhci(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfhci(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfhci(4:6,) are not used in the default version of the code.
 !      cfhce - (0:7) real*8 array.
 !     cfhce() are the coefficients in the local expression
-!       dfhce(,) = cfhce(0)+cfhce(1)/(ne(,)/1.0e20)+
-!         cfhce(3)*te(,)/ev/abs(bb(,,3))/16
+!       dfhce() = cfhce(0)+cfhce(1)/(ne()/1.0e20)+
+!         cfhce(3)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous electron heat conductivity, so that
-!     the electron heat conduction coefficient is dfhce(,)*ne(,).
+!     the electron heat conduction coefficient is dfhce()*ne().
 !     If cfhce(7) is not zero, the hce0 array is flux-scaled with
-!     a scaling factor of cfhce(7)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfhce(7)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfhce(2) and (4:6) are not used in the default version of the code.
 !      cfsig - (0:7) real*8 array.
 !     cfsig() are the coefficients in the local expression
-!       dfsig(,) = cfsig(0)+cfsig(1)/(ne(,)/1.0e20)+
-!         cfsig(3)*te(,)/ev/abs(bb(,,3))/16+
+!       dfsig() = cfsig(0)+cfsig(1)/(ne()/1.0e20)+
+!         cfsig(3)*te()/ev/abs(bb(,3))/16+
 !         cfsig(4)*exp(-cfsig(5)*(y/L)**2)
 !     that specifies the diffusivity corresponding to the anomalous
 !     electrical conductivity, which is
-!       sig(,) = qe*ne(,)*dfsig(,).
+!       sig() = qe*ne()*dfsig().
 !     L is the local radial width of the plasma and
 !     y is the radial distance from the inner (South) boundary.
 !     If cfsig(7) is not zero, the sig0 array is flux-scaled with
-!     a scaling factor of cfsig(7)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfsig(7)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfsig(2) and (6) are not used in the default version of the code.
 !      cfalf - (0:7) real*8 array.
 !     cfalf() are the coefficients in the local expression
-!       dfalf(,) = cfalf(0)+cfalf(1)/(ne(,)/1.0e20)+
-!         cfalf(3)*te(,)/ev/abs(bb(,,3))/16
+!       dfalf() = cfalf(0)+cfalf(1)/(ne()/1.0e20)+
+!         cfalf(3)*te()/ev/abs(bb(,3))/16
 !     that specifies the diffusivity corresponding to the anomalous
 !     thermo-electric coefficient, which is
-!       alf(,) = ne(,)*sqrt(qe/te(,))*dfalf(,).
+!       alf() = ne()*sqrt(qe/te())*dfalf().
 !     If cfalf(7) is not zero, the alf0 array is flux-scaled with
-!     a scaling factor of cfalf(7)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfalf(7)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfalf(2) and (4:6) are not used in the default version of the code.
 !      cflim - (0:7) real*8 array.
 !     cflim contains coefficients for flux limiting. cflim(0)=cflme
@@ -3017,144 +2931,145 @@ CONTAINS
 !
 !     Description of some local variables (including arrays in w(0:*)):
 !
-!     crx, cry - (-1:nx,-1:ny,0:3) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), crx(ix,iy,0:3) specify the
-!     horizontal coordinates and cry(ix,iy,0:3) specify the vertical
-!     coordinates (in the physical plane) of the four corners of the
-!     (ix,iy) cell, mapped as follows:
-!     (,,0): lower left corner,  (,,1): lower right corner,
-!     (,,2): upper left corner,  (,,3): upper right corner.
-!     One expects the following identities to hold away from the
-!     boundaries:
-!     crx(ix,iy,0)=crx(ix-1,iy,1)=crx(ix,iy-1,2)=crx(ix-1,iy-1,3),
-!     cry(ix,iy,0)=cry(ix-1,iy,1)=cry(ix,iy-1,2)=cry(ix-1,iy-1,3),
-!     However, there may be cuts in the geometry, in which case these
-!     identities need not hold.
+!     cvX, cvY - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvX(iCv) specifies the
+!     Cartesian X-coordinate of the center of the cell and cvX(iCv) specifies
+!     the Cartesian Y-coordinate of the center of the cell.
 !
-!     bb - (-1:nx,-1:ny,0:3) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), bb(ix,iy,0:3) specifies the
-!     magnetic field at the center of the (ix,iy) cell.
-!     bb(ix,iy,0:2) are the (x,y,z)-components and bb(ix,iy,3) is
+!     vxX, vxY - (1:nVx) real*8 array.
+!     vxX(iVx) specify the horizontal coordinate and vxY(iVx)
+!     specify the vertical coordinates (in the physical plane) of
+!     the vertex with number iVx.
+!
+!     cvBb - (1:nCv,0:3) real*8 array.
+!     For (iCv) in (1:nCv), cvBb(iCv,0:3) specifies the
+!     magnetic field at the center of the (iCv) cell.
+!     cvBb(iCv,0:2) are the (x,y,z)-components and cvBb(iCv,3) is
 !     the absolute magnetic field strength.
-!     (bb(,,3)=sqrt(bb(,,0)**2+bb(,,1)**2+bb(,,2)**2.)
-!     It will hold that 0.lt.bb(,,3).
+!     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,,2)**2.)
+!     It will hold that 0.le.cvBb(,0:3), because the direction of the
+!     magnetic field follows from cvEb (see below).
 !
-!     vol - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
-!     the (ix,iy) cell. (In the case of toroidal symmetry this volume
+!     cvEb - (1:nCv,0:2) real*8 array.
+!     cvEb(iCv,0:2) specifies the direction of the magnetic field at
+!     the center of the cell iCv in the (R,Z,toroidal) axis system.
+!     (sqrt(cvEb(iCv,0)**2+cvEb(iCv,1)**2+cvEb(iCv,2)**2)=1)
+!
+!     cvVol - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvVol(iCv) specifies the volume of
+!     the (iCv) cell. (In the case of toroidal symmetry this volume
 !     includes a factor 2*pi*R, while in the case of cylindrical
 !     symmetry it includes a factor 2*pi*Z.)
-!     It will hold that 0.lt.vol(,).
+!     It will hold that 0.lt.cvVol().
 !
-!     hx, hy - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
-!     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
-!     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
+!     cvHz - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvHz(iCv) specifies the length of
+!     the (iCv) cell in the z-direction, measured at the cell center.
 !
-!     qz - (-1:nx,-1:ny,0:1) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
-!     qz(ix,iy,1) specifies cos(t), where t is the complementary angle
-!     between the x-direction and the y-direction on the (ix,iy) cell.
-!     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-!     geometry. (qz(ix,iy,0) is the inner product of the x and y unit
-!     vectors.)
-!     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
+!     cvSz - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvSz(iCv) specifies the area of
+!     the (iCv) cell perpendicular to the z-direction.
 !
-!     qc - (-1:nx,-1:ny) real*8 array, output.
-!     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
-!     t is the complementary angle between the x-direction of the
-!     (ix,iy) cell and its left face.
-!     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-!     geometry.
-!     It will hold that 0.lt.qc(,).le.1.
+!     fcQgam - (1:nFc,0:1) real*8 array.
+!     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and
+!     fcQgam(iFc,1) specifies sin(t), where t is the included angle
+!     between the cell-connector vector and the normal vector
+!     of face iFc. It will hold that 0.lt.fcQgam(,).le.1.
 !
-!     gs - (-1:nx,-1:ny,0:2) real*8 array.
-!     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
-!     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
-!     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
-!     gsx(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), gsy(ix,iy) specifies the area of the
-!     face between the (ix,iy) cell and its bottom neighbor. For iy.eq.-1,
-!     gsy(-1:nx,iy) will hold 0.
-!     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
-!     (ix,iy) cell normal to the third (ignorable) coordinate.
+!     fcQalf - (1:nFc,0:1) real*8 array.
+!     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
+!     fcQalf(iFc,1) specifies sin(t), where t is the included angle
+!     between the magnetic field vector and the face normal.
+!     If Bz is negative, fcQalf(iFc,1) is modified to be -sin(t).
 !
-!     pbs - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
-!     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-!     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic
-!     field pitch)*(surface area), namely the parallel contact area,
-!     on the (ix,iy) cell left and bottom faces respectively.
-!     In the case where the grid covers the full vacuum vessel,
-!     pbsy also contains a contribution from the narrowing of the
-!     flux tube when impacting the wall structures.
-!     See routine b2xgbs for the form of interpolation employed.
+!     fcQbet - (1:nFc,0:1) real*8 array.
+!     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
+!     fcQbet(iFc,1) specifies sin(t), where t is the included angle
+!     between the cell-connector and the magnetic field vector.
+!     If Bz is negative, fcQbet(iFc,0) is modified to be -cos(t).
 !
-!     na - (-1:nx,-1:ny,0:ns-1) real*8 array.
-!     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), na(ix,iy,is) specifies
-!     the density of atomic species (is) on the (ix,iy) cell.
-!     It will hold that 0.lt.na(,,).
+!     fcPbs - (1:nFc) real*8 array.
+!     For iFc in (1:nFc), fcPbs(iFc) specifies the product
+!     (fcBx/fcBb)*sx or (magnetic field pitch)*(surface area),
+!     namely the parallel contact area.
 !
-!     ua - (-1:nx,-1:ny,0:ns-1) real*8 array.
-!     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), ua(ix,iy,is) specifies
-!     the parallel velocity of atomic species (is) on the (ix,iy) cell.
+!     fcPbshz - (1:nFc) real*8 array.
+!     For iFc in (1:nFc), fcPbshz(iFc) specifies the product
+!     (fcBx/fcBb)*sx*hz or (magnetic field pitch)*(surface area)*(hz).
+!
+!     fcS - (1:nFc,1:2) real*8 array.
+!     For iFc in (1:nFc), fcHc(iFc,:) specifies the total area of face iFc.
+!
+!     na - (1:nCv,0:ns-1) real*8 array.
+!     For (iCv,is) in (1:nCv,0:ns-1), na(iCv,is) specifies
+!     the density of atomic species (is) on the (iCv) cell.
+!     It will hold that 0.lt.na(:).
+!
+!     ua - (1:nCv,0:ns-1) real*8 array.
+!     For (iCv,is) in (1:nCv,0:ns-1), ua(iCv,is) specifies
+!     the parallel velocity of atomic species (is) on the (iCv) cell.
 !     The sign of the parallel velocity indicates whether it is flowing
 !     in the same direction as the local poloidal magnetic field.
 !
-!     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-!     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
-!     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
-!     uadia(ix,iy,1,is) the radial drift velocity.
+!     te - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), te(iCv) specifies the electron
+!     temperature on the (iCv) cell. It will hold that 0.lt.te(:).
 !
-!     te - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
-!     temperature on the (ix,iy) cell. It will hold that 0.lt.te(,).
+!     ti - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), ti(iCv) specifies the all atom
+!     temperature on the (iCv) cell. It will hold that 0.lt.ti(:).
 !
-!     ti - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), ti(ix,iy) specifies the all atom
-!     temperature on the (ix,iy) cell. It will hold that 0.lt.ti(,).
+!     tn - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), tn(iCv) specifies temperature of the
+!     hydrogenic neutrals on the (iCv) cell. It will hold that 0.lt.tn(:).
+!     When no separate fluid neutral energy equation is solved, tn = ti.
 !
-!     po - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), po(ix,iy) specifies the electric
-!     potential on the (ix,iy) cell.
+!     po - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), po(iCv) specifies the electric
+!     potential on the (iCv) cell.
 !
-!     fna - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-!     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
-!     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax(ix,iy,is) specifies
-!     the flux of atoms of species (is) through the face between the
-!     (ix,iy) cell and its left neighbor.
-!     For ix.eq.-1, fnax(ix,-1:ny,0:ns-1) will hold 0.
-!     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay(ix,iy,is) specifies
-!     the flux of atoms of species (is) through the face between the
-!     (ix,iy) cell and its bottom neighbor.
-!     For iy.eq.-1, fnay(-1:nx,iy,0:ns-1) will hold 0.
+!     kt - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), kt(iCv) specifies the turbulent kinetic
+!     energy on the (iCv) cell.
 !
-!     fhe - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)
-!     For (ix,iy) in (0:nx,-1:ny), fhex(ix,iy) specifies the electron
-!     heat flux through the face between the (ix,iy) cell and its
-!     left neighbor. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), fhey(ix,iy) specifies the electron
-!     heat flux through the face between the (ix,iy) cell and its
-!     bottom neighbor. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
+!     zt - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), kt(iCv) specifies the enstrophy
+!     on the (iCv) cell.
 !
-!     fhi - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
-!     For (ix,iy) in (0:nx,-1:ny), fhix(ix,iy) specifies the all atom
-!     heat flux through the face between the (ix,iy) cell and its left
-!     neighbor. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
-!     heat flux through the face between the (ix,iy) cell and its
-!     bottom neighbor. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
+!     For all the fluxes below, the sign convention is as follows.
+!     Fluxes are positive when they flow in the local x-direction,
+!     where x is the connector line from C1 to C2.
 !
-!     fch - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let fchx(,)=fch(,,0) and fchy(,)=fch(,,1).)
-!     For (ix,iy) in (0:nx,-1:ny), fchx(ix,iy) specifies the electric
-!     current through the face between the (ix,iy) cell and its left
-!     neighbor. For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), fchy(ix,iy) specifies the electric
-!     current through the face between the (ix,iy) cell and its bottom
-!     neighbor. For iy.eq.-1, fchy(-1:nx,iy) will hold 0.
+!     fna - (1:nFc,0:1,0:ns-1) real*8 array.
+!     For (iFc,is) in (1:nFc,0:1,0:ns-1), fna(iFc,0,is) specifies
+!     the poloidal component and fna(iFc,1,is) specifies
+!     the radial component of the flux of atoms of species (is) through the
+!     face iFc.
+!
+!     fhe - (1:nFc,0:1) real*8 array.
+!     For (iFc) in (1:nFc), fhe(iFc,0) specifies the poloidal component and
+!     fhe(iFc,1) specifies the radial component of the electron heat flux
+!     through the face iFc.
+!
+!     fhi - (1:nFc,0:1) real*8 array.
+!     For (iFc) in (1:nFc), fhi(iFc,0) specifies the poloidal component and
+!     fhi(iFc,1) specifies the radial component of the all atom heat flux
+!     through the face iFc.
+!
+!     fch - (1:nFc,0:1) real*8 array.
+!     For (iFc) in (1:nFc), fch(iFc,0) specifies the poloidal component and
+!     fch(iFc,1) specifies the radial component of the electric
+!     current through the face iFc.
+!
+!     uadia - (1:nFc,0:1,0:ns-1) real*8 array.
+!     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,0,is) specifies
+!     the total effective drift velocity of species (is) on the (iFc) face
+!     in the diamagnetic direction (i.e. within the flux surface but
+!     perpendicular to the magnetic field), but projected onto the
+!     poloidal direction.
+!     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,1,is) specifies
+!     the total effective drift velocity of species (is) on the (iFc) face
+!     in the radial direction.
 !
 !     na0, ua0, te0, ti0, po0, fna0, fhe0, fhi0, fch0 - real*8 array.
 !     state of the plasma at the start of the present timestep.
@@ -3631,18 +3546,6 @@ CONTAINS
 &                      nbdirs, nbdirs0)
     CALL INIT_GEOMETRY(mpg, geo, switch)
 !
-    CALL IPGETI('b2mndr_redef_pbs', b2mndr_redef_pbs)
-    IF (b2mndr_redef_pbs .NE. 0) THEN
-      IF (redef_gmtry .EQ. 1) THEN
-        WRITE(6, *) &
-&       'Magnetic flux correction of pbsx already done in b2ag.'
-      ELSE
-        WRITE(6, *) 'Magnetic flux correction must now be done in b2ag.'
-        WRITE(6, *) 'Please set b2agdr_redef_gmtry to 1 in b2ag.dat ', &
-&       'and re-run b2ag.'
-        CALL XERRAB('Obsolete switch b2mndr_redef_pbs!')
-      END IF
-    END IF
 !
     CALL ALLOC_B2MOD_TALLIES(mpg%nnreg, ns)
 !
@@ -4196,23 +4099,23 @@ CONTAINS
 !                mpg.cffcor:in-out mpg.intcellp:in-out mpg.intcellr:in-out
 !                mpg.divfcor:in-out geo.cvbb:in-out geo.cvx:in-out
 !                geo.cvy:in-out geo.cvsz:in-out geo.cvhz:in-out
-!                geo.cvhx:in-out geo.cvqgam:in-out geo.cvvol:in-out
-!                geo.cvonedbsq:in-out geo.cvbzb:in-out geo.cveb:in-out
-!                geo.cvfpsi:in-out geo.fcbb:in-out geo.fcs:in-out
-!                geo.fchc:in-out geo.fcht:in-out geo.fchz:in-out
-!                geo.fcvol:in-out geo.fcqgam:in-out geo.fcqalf:in-out
-!                geo.fcqbet:in-out geo.fcpbs:in-out geo.fcpbshz:in-out
-!                geo.fcbzb:in-out geo.fceb:in-out geo.fcfpsi:in-out
-!                geo.vxbb:in-out geo.vxx:in-out geo.vxy:in-out
-!                geo.vxhz:in-out geo.vxvol:in-out geo.vxffbz:in-out
-!                geo.vxfpsi:in-out geo.vxonedbsq:in-out geo.vxbzb:in-out
-!                geo.vxeb:in-out geo.cvconn:in-out geo.vxconn:in-out
-!                geo.ftconn:in-out geo.fsconn:in-out geo.fteps:in-out
-!                geo.ftbbav2:in-out geo.fspsi:in-out state.pl.na:in-out
-!                state.pl.ua:in-out state.pl.po:in-out state.pl.te:in-out
-!                state.pl.ti:in-out state.pl.tn:in-out state.pl.kt:in-out
-!                state.pl.zt:in-out state.co.csig:in-out state.co.calf:in-out
-!                state.co.csig_an:in-out state.co.calf_an:in-out
+!                geo.cvhx:in-out geo.cvhy:in-out geo.cvqgam:in-out
+!                geo.cvvol:in-out geo.cvonedbsq:in-out geo.cvbzb:in-out
+!                geo.cveb:in-out geo.cvfpsi:in-out geo.fcbb:in-out
+!                geo.fcs:in-out geo.fchc:in-out geo.fcht:in-out
+!                geo.fchz:in-out geo.fcvol:in-out geo.fcqgam:in-out
+!                geo.fcqalf:in-out geo.fcqbet:in-out geo.fcpbs:in-out
+!                geo.fcpbshz:in-out geo.fcbzb:in-out geo.fceb:in-out
+!                geo.fcfpsi:in-out geo.vxbb:in-out geo.vxx:in-out
+!                geo.vxy:in-out geo.vxhz:in-out geo.vxvol:in-out
+!                geo.vxffbz:in-out geo.vxfpsi:in-out geo.vxonedbsq:in-out
+!                geo.vxbzb:in-out geo.vxeb:in-out geo.cvconn:in-out
+!                geo.vxconn:in-out geo.ftconn:in-out geo.fsconn:in-out
+!                geo.fteps:in-out geo.ftbbav2:in-out geo.fspsi:in-out
+!                state.pl.na:in-out state.pl.ua:in-out state.pl.po:in-out
+!                state.pl.te:in-out state.pl.ti:in-out state.pl.tn:in-out
+!                state.pl.kt:in-out state.pl.zt:in-out state.co.csig:in-out
+!                state.co.calf:in-out state.co.csig_an:in-out state.co.calf_an:in-out
 !                state.co.csig_cl:in-out state.co.calf_cl:in-out
 !                state.co.csigin:in-out state.co.chve:in-out state.co.chce:in-out
 !                state.co.chce_exb:in-out state.co.chvi:in-out
@@ -4534,29 +4437,6 @@ CONTAINS
 !     The following common blocks have their outermost declaration in
 !     this routine; they need not be preserved between calls.
 !
-!     /b2cmgs/ specifies the singular regions in the geometry.
-!      nlrmx - integer constant.
-!     nlrmx is an upper bound for nlreg, and is used in dimension
-!     specifications.
-!      nlreg - integer.
-!     nlreg specifies the number of singular regions. It will hold that
-!     0.le.nlreg.le.nlrmx.
-!      nlxlo, nlxhi, nlylo, nlyhi - (0:nlrmx-1) integer array.
-!     For 0.le.i.lt.nlreg, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i) are
-!     the bounds of the i-th singular region. Mesh locations (ix,iy)
-!     in (nlxlo(i):nlxhi(i),nlylo(i):nlyhi(i)) make up the region, which
-!     will be included in (-1:nx,-1:ny).
-!     For nlreg.le.i.lt.nlrmx, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i)
-!     are unspecified.
-!      nlloc - (0:nlrmx-1) integer array.
-!     For 0.le.i.lt.4, nlloc(i) specifies the class of quantities for
-!     which the i-th region is special, as follows:
-!       nlloc(i) = 0: cell centers, indices (-1:nx,-1:ny).
-!       nlloc(i) = 1: cell x-faces, indices (0:nx,-1:ny).
-!       nlloc(i) = 2: cell y-faces, indices (-1:nx,0:ny).
-!       nlloc(i) = 3: cell corners, indices (0:nx,0:ny).
-!     For nlreg.le.i.lt.nlrmx, nlloc(i) is unspecified.
-!
 !     /b2cmpa/ specifies basic physics parameters.
 !      me, mp, ev, qe, eps0, mu0 - real*8 constant.
 !     These parameters are included with /b2cmpa/.
@@ -4579,189 +4459,128 @@ CONTAINS
 !     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
 !     undefined.
 !
-!     /b2cmpb/ specifies physics parameters for boundary conditions.
-!     For this purpose the boundary is divided up into regions, and for
-!     each region a set of coefficients defines the local conditions.
-!     For detailed description of /b2cmpb/ see the code, especially the
-!     routine b2stbc.
-!      cbnrmx - integer constant.
-!     cbnrmx is an upper bound for the number of boundary regions nreg,
-!     (nreg.eq.cbnrso+cbnrno+cbnrwe+cbnrea) and is used in dimension
-!     specifications.
-!      cbirso, cbirno, cbirwe, cbirea - integer.
-!     cbirso(-no,-we,-ea) is the index of the first region on the
-!     south (north, west, east) boundary.
-!      cbnrso, cbnrno, cbnrwe, cbnrea - integer.
-!     cbnrso(-no,-we,-ea) is the number of regions on the south
-!     (north, west, east) boundary.
-!     It will hold that 1.le.cbnrso, 1.le.cbnrno, 1.le.cbnrwe, and
-!     1.le.cbnrea; and 0.eq.cbirso, cbirso+cbnrso.eq.cbirno,
-!     cbirno+cbnrno.eq.cbirwe, cbirwe+cbnrwe.eq.cbirea.
-!      cbrbrk - (0:cbnrmx-1) real*8 array.
-!     cbrbrk defines the boundaries between the boundary regions.
-!      cbsna - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbsna(0:7,is,ireg) specify standard form boundary conditions for
-!     the continuity equation for species (is) on the (ireg) boundary
-!     region.
-!      cbsmo - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbsmo(0:7,is,ireg) specify standard form boundary conditions for
-!     the parallel momentum balance equation for species (is) on the
-!     (ireg) boundary region.
-!      cbshi - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbshi(0:7,is,ireg) specify standard form boundary conditions for
-!     the contribution to that atom heat equation by species (is) on
-!     the (ireg) boundary region.
-!      cbshe - (0:7,0:cbnrmx-1) real*8 array.
-!     For 0.le.ireg.lt.nreg, the eight coefficients cbshe(0:7,ireg)
-!     specify standard form boundary conditions for the electron heat
-!     equation on the (ireg) boundary region.
-!      cbsch - (0:7,0:cbnrmx-1) real*8 array.
-!     For 0.le.ireg.lt.nreg, the eight coefficients cbsch(0:7,ireg)
-!     specify standard form boundary conditions for the electric
-!     potential equation on the (ireg) boundary region.
-!      cbrec - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbrec(0:7,is,ireg) specify the recycling process for species (is)
-!     on the boundary region ireg. The exact interpretation of these
-!     coefficients is defined by the routine that computes the source
-!     terms due to the recycling process (b2stbr). Routine b2stbr is
-!     problem dependent.
-!      cbmsa - (0:7,0:cbnrmx-1) real*8 array.
-!      cbmsc - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.ireg.lt.nreg, the eight coefficients cbmsa(0:7,ireg)
-!     specify miscellaneous processes on the boundary region ireg.
-!     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbmsc(0:7,is,ireg) specify miscellaneous processes for species
-!     (is) on the boundary region ireg. The interpretation of these
-!     coefficients is defined by the routine that computes the source
-!     terms due to miscellaneous processes (b2stbm). Routine b2stbm is
-!     application dependent.
-!
 !   ..transport coefficients, parameters
 !
 !     /b2cmpt/ - common block.
 !     (Note: the integer constant nsdecl, which comes with /b2cmpa/,
 !     is used instead of (ns) in dimension specifications.)
 !      cfdf0 - (0:7,0:ns-1) real*8 array.
-!     cfdf0 contains some auxiliary coefficients.  For 0.le.is.lt.ns,
+!     cfdf0 contains some auxiliary coefficients. For 0.le.is.lt.ns,
 !     the local expression
-!       df0(,,is) = cfdf0(0,is)+cfdf0(1,is)/(ni(,,0)/1.0e20)+
-!         cfdf0(2,is)*sqrt(ti(,)/(am(is)*mp))/
-!          (cfdf0(3,is)*ni(,,0)+cfdf0(4,is)*ne(,))
+!       df0(,is) = cfdf0(0,is)+cfdf0(1,is)/(ni(,0)/1.0e20)+
+!         cfdf0(2,is)*sqrt(ti()/(am(is)*mp))/
+!          (cfdf0(3,is)*ni(,0)+cfdf0(4,is)*ne())
 !     is used in the definition of the anomalous transport coefficients.
-!     df0 is meant to represent a diffusivity.  If cfdf0(2,is).eq.0 then
+!     df0 is meant to represent a diffusivity. If cfdf0(2,is).eq.0 then
 !     the corresponding term in df0 is understood as 0 independent of
 !     cfdf0(3:4,is).
 !      cfdna - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfdna(,is) are the coefficients in the
 !     local expression
-!       difna(,,is) = cfdna(0,is)+cfdna(1,is)/(ne(,)/1.0e20)+
-!         cfdna(2,is)*df0(,)+
-!         cfdna(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       difna(,is) = cfdna(0,is)+cfdna(1,is)/(ne()/1.0e20)+
+!         cfdna(2,is)*df0(,is)+
+!         cfdna(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous diffusivity with respect to
 !     grad.na; the transport equation for species (is) contains a term
-!     difna(,,is)*'grad.na'.
+!     difna(,is)*'grad.na'.
 !     If cfdna(7,is) is not zero, the dna0 array is flux-scaled with
-!     a scaling factor of cfdna(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfdna(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfdna(4:6,) are not used in the default version of the code.
 !      cfdpa - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfdpa(,is) are the coefficients in the
 !     local expression
-!       difpa(,,is) = cfdpa(0,is)+cfdpa(1,is)/(ne(,)/1.0e20)+
-!         cfdpa(2,is)*df0(,,is)+
-!         cfdpa(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       difpa(,is) = cfdpa(0,is)+cfdpa(1,is)/(ne()/1.0e20)+
+!         cfdpa(2,is)*df0(,is)+
+!         cfdpa(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous diffusivity with respect to
 !     grad.pa; the transport equation for species (is) contains a term
-!     (1/(rza(,,is)*te(,)+ti(,)))*difpa(,,is)*'grad.pa'.
+!     (1/(rza(,is)*te()+ti()))*difpa(,is)*'grad.pa'.
 !     If cfdpa(7,is) is not zero, the dpa0 array is flux-scaled with
-!     a scaling factor of cfdpa(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfdpa(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfdpa(4:6,) are not used in the default version of the code.
 !      cfvla - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfvla(,is) are the coefficients in the
 !     local expression
-!       vlay(,,is) = cfvla(0,is)+cfvla(1,is)/(ne(,)/1.0e20)+
-!         cfvla(2,is)*df0(,,is)+
-!         cfvla(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       vlay(,is) = cfvla(0,is)+cfvla(1,is)/(ne()/1.0e20)+
+!         cfvla(2,is)*df0(,is)+
+!         cfvla(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous y-velocity of species (is); the
 !     transport equation for species (is) contains a term
-!     vlay(,,is)*na(,,is).
+!     vlay(,is)*na(,is).
 !     If cfvla(7,is) is not zero, the vla0 array is flux-scaled with
-!     a scaling factor of cfvla(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfvla(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfvla(4:6,) are not used in the default version of the code.
 !      cfvsa - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfvsa(,is) are the coefficients in the
 !     local expression
-!       dfvsa(,,is) = cfvsa(0,is)+cfvsa(1,is)/(ne(,)/1.0e20)+
-!         cfvsa(2,is)*df0(,,is)+
-!         cfvsa(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       dfvsa(,is) = cfvsa(0,is)+cfvsa(1,is)/(ne()/1.0e20)+
+!         cfvsa(2,is)*df0(,is)+
+!         cfvsa(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the diffusivity corresponding to the anomalous
 !     transverse viscosity, so that this viscosity is
-!       vsa(,,is) = mp*am(is)*na(,,is)*dfvsa
+!       vsa(,is) = mp*am(is)*na(,is)*dfvsa
 !     If cfvsa(7,is) is not zero, the vsa0 array is flux-scaled with
-!     a scaling factor of cfvsa(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfvsa(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfvsa(4:6,) are not used in the default version of the code.
 !      cfhci - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfhci(,is) are the coefficients in the
 !     local expression
-!       dfhca(,,is) = cfhci(0,is)+cfhci(1,is)/(ne(,)/1.0e20)+
-!         cfhci(2,is)*df0(,,is)+
-!         cfhci(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       dfhca(,is) = cfhci(0,is)+cfhci(1,is)/(ne()/1.0e20)+
+!         cfhci(2,is)*df0(,is)+
+!         cfhci(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous atom heat conductivity associated
 !     with species (is), so that the atom heat conduction coefficient
-!     contains a term dfhca(,,is)*na(,,is).
+!     contains a term dfhca(,is)*na(,is).
 !     If cfhci(7,is) is not zero, the hci arrays are flux-scaled with
-!     a scaling factor of cfhci(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfhci(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfhci(4:6,) are not used in the default version of the code.
 !      cfhce - (0:7) real*8 array.
 !     cfhce() are the coefficients in the local expression
-!       dfhce(,) = cfhce(0)+cfhce(1)/(ne(,)/1.0e20)+
-!         cfhce(3)*te(,)/ev/abs(bb(,,3))/16
+!       dfhce() = cfhce(0)+cfhce(1)/(ne()/1.0e20)+
+!         cfhce(3)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous electron heat conductivity, so that
-!     the electron heat conduction coefficient is dfhce(,)*ne(,).
+!     the electron heat conduction coefficient is dfhce()*ne().
 !     If cfhce(7) is not zero, the hce0 array is flux-scaled with
-!     a scaling factor of cfhce(7)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfhce(7)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfhce(2) and (4:6) are not used in the default version of the code.
 !      cfsig - (0:7) real*8 array.
 !     cfsig() are the coefficients in the local expression
-!       dfsig(,) = cfsig(0)+cfsig(1)/(ne(,)/1.0e20)+
-!         cfsig(3)*te(,)/ev/abs(bb(,,3))/16+
+!       dfsig() = cfsig(0)+cfsig(1)/(ne()/1.0e20)+
+!         cfsig(3)*te()/ev/abs(bb(,3))/16+
 !         cfsig(4)*exp(-cfsig(5)*(y/L)**2)
 !     that specifies the diffusivity corresponding to the anomalous
 !     electrical conductivity, which is
-!       sig(,) = qe*ne(,)*dfsig(,).
+!       sig() = qe*ne()*dfsig().
 !     L is the local radial width of the plasma and
 !     y is the radial distance from the inner (South) boundary.
 !     If cfsig(7) is not zero, the sig0 array is flux-scaled with
-!     a scaling factor of cfsig(7)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfsig(7)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfsig(2) and (6) are not used in the default version of the code.
 !      cfalf - (0:7) real*8 array.
 !     cfalf() are the coefficients in the local expression
-!       dfalf(,) = cfalf(0)+cfalf(1)/(ne(,)/1.0e20)+
-!         cfalf(3)*te(,)/ev/abs(bb(,,3))/16
+!       dfalf() = cfalf(0)+cfalf(1)/(ne()/1.0e20)+
+!         cfalf(3)*te()/ev/abs(bb(,3))/16
 !     that specifies the diffusivity corresponding to the anomalous
 !     thermo-electric coefficient, which is
-!       alf(,) = ne(,)*sqrt(qe/te(,))*dfalf(,).
+!       alf() = ne()*sqrt(qe/te())*dfalf().
 !     If cfalf(7) is not zero, the alf0 array is flux-scaled with
-!     a scaling factor of cfalf(7)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfalf(7)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfalf(2) and (4:6) are not used in the default version of the code.
 !      cflim - (0:7) real*8 array.
 !     cflim contains coefficients for flux limiting. cflim(0)=cflme
@@ -4877,144 +4696,145 @@ CONTAINS
 !
 !     Description of some local variables (including arrays in w(0:*)):
 !
-!     crx, cry - (-1:nx,-1:ny,0:3) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), crx(ix,iy,0:3) specify the
-!     horizontal coordinates and cry(ix,iy,0:3) specify the vertical
-!     coordinates (in the physical plane) of the four corners of the
-!     (ix,iy) cell, mapped as follows:
-!     (,,0): lower left corner,  (,,1): lower right corner,
-!     (,,2): upper left corner,  (,,3): upper right corner.
-!     One expects the following identities to hold away from the
-!     boundaries:
-!     crx(ix,iy,0)=crx(ix-1,iy,1)=crx(ix,iy-1,2)=crx(ix-1,iy-1,3),
-!     cry(ix,iy,0)=cry(ix-1,iy,1)=cry(ix,iy-1,2)=cry(ix-1,iy-1,3),
-!     However, there may be cuts in the geometry, in which case these
-!     identities need not hold.
+!     cvX, cvY - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvX(iCv) specifies the
+!     Cartesian X-coordinate of the center of the cell and cvX(iCv) specifies
+!     the Cartesian Y-coordinate of the center of the cell.
 !
-!     bb - (-1:nx,-1:ny,0:3) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), bb(ix,iy,0:3) specifies the
-!     magnetic field at the center of the (ix,iy) cell.
-!     bb(ix,iy,0:2) are the (x,y,z)-components and bb(ix,iy,3) is
+!     vxX, vxY - (1:nVx) real*8 array.
+!     vxX(iVx) specify the horizontal coordinate and vxY(iVx)
+!     specify the vertical coordinates (in the physical plane) of
+!     the vertex with number iVx.
+!
+!     cvBb - (1:nCv,0:3) real*8 array.
+!     For (iCv) in (1:nCv), cvBb(iCv,0:3) specifies the
+!     magnetic field at the center of the (iCv) cell.
+!     cvBb(iCv,0:2) are the (x,y,z)-components and cvBb(iCv,3) is
 !     the absolute magnetic field strength.
-!     (bb(,,3)=sqrt(bb(,,0)**2+bb(,,1)**2+bb(,,2)**2.)
-!     It will hold that 0.lt.bb(,,3).
+!     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,,2)**2.)
+!     It will hold that 0.le.cvBb(,0:3), because the direction of the
+!     magnetic field follows from cvEb (see below).
 !
-!     vol - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
-!     the (ix,iy) cell. (In the case of toroidal symmetry this volume
+!     cvEb - (1:nCv,0:2) real*8 array.
+!     cvEb(iCv,0:2) specifies the direction of the magnetic field at
+!     the center of the cell iCv in the (R,Z,toroidal) axis system.
+!     (sqrt(cvEb(iCv,0)**2+cvEb(iCv,1)**2+cvEb(iCv,2)**2)=1)
+!
+!     cvVol - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvVol(iCv) specifies the volume of
+!     the (iCv) cell. (In the case of toroidal symmetry this volume
 !     includes a factor 2*pi*R, while in the case of cylindrical
 !     symmetry it includes a factor 2*pi*Z.)
-!     It will hold that 0.lt.vol(,).
+!     It will hold that 0.lt.cvVol().
 !
-!     hx, hy - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
-!     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
-!     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
+!     cvHz - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvHz(iCv) specifies the length of
+!     the (iCv) cell in the z-direction, measured at the cell center.
 !
-!     qz - (-1:nx,-1:ny,0:1) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
-!     qz(ix,iy,1) specifies cos(t), where t is the complementary angle
-!     between the x-direction and the y-direction on the (ix,iy) cell.
-!     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-!     geometry. (qz(ix,iy,0) is the inner product of the x and y unit
-!     vectors.)
-!     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
+!     cvSz - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvSz(iCv) specifies the area of
+!     the (iCv) cell perpendicular to the z-direction.
 !
-!     qc - (-1:nx,-1:ny) real*8 array, output.
-!     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
-!     t is the complementary angle between the x-direction of the
-!     (ix,iy) cell and its left face.
-!     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-!     geometry.
-!     It will hold that 0.lt.qc(,).le.1.
+!     fcQgam - (1:nFc,0:1) real*8 array.
+!     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and
+!     fcQgam(iFc,1) specifies sin(t), where t is the included angle
+!     between the cell-connector vector and the normal vector
+!     of face iFc. It will hold that 0.lt.fcQgam(,).le.1.
 !
-!     gs - (-1:nx,-1:ny,0:2) real*8 array.
-!     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
-!     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
-!     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
-!     gsx(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), gsy(ix,iy) specifies the area of the
-!     face between the (ix,iy) cell and its bottom neighbor. For iy.eq.-1,
-!     gsy(-1:nx,iy) will hold 0.
-!     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
-!     (ix,iy) cell normal to the third (ignorable) coordinate.
+!     fcQalf - (1:nFc,0:1) real*8 array.
+!     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
+!     fcQalf(iFc,1) specifies sin(t), where t is the included angle
+!     between the magnetic field vector and the face normal.
+!     If Bz is negative, fcQalf(iFc,1) is modified to be -sin(t).
 !
-!     pbs - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
-!     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-!     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic
-!     field pitch)*(surface area), namely the parallel contact area,
-!     on the (ix,iy) cell left and bottom faces respectively.
-!     In the case where the grid covers the full vacuum vessel,
-!     pbsy also contains a contribution from the narrowing of the
-!     flux tube when impacting the wall structures.
-!     See routine b2xgbs for the form of interpolation employed.
+!     fcQbet - (1:nFc,0:1) real*8 array.
+!     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
+!     fcQbet(iFc,1) specifies sin(t), where t is the included angle
+!     between the cell-connector and the magnetic field vector.
+!     If Bz is negative, fcQbet(iFc,0) is modified to be -cos(t).
 !
-!     na - (-1:nx,-1:ny,0:ns-1) real*8 array.
-!     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), na(ix,iy,is) specifies
-!     the density of atomic species (is) on the (ix,iy) cell.
-!     It will hold that 0.lt.na(,,).
+!     fcPbs - (1:nFc) real*8 array.
+!     For iFc in (1:nFc), fcPbs(iFc) specifies the product
+!     (fcBx/fcBb)*sx or (magnetic field pitch)*(surface area),
+!     namely the parallel contact area.
 !
-!     ua - (-1:nx,-1:ny,0:ns-1) real*8 array.
-!     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), ua(ix,iy,is) specifies
-!     the parallel velocity of atomic species (is) on the (ix,iy) cell.
+!     fcPbshz - (1:nFc) real*8 array.
+!     For iFc in (1:nFc), fcPbshz(iFc) specifies the product
+!     (fcBx/fcBb)*sx*hz or (magnetic field pitch)*(surface area)*(hz).
+!
+!     fcS - (1:nFc,1:2) real*8 array.
+!     For iFc in (1:nFc), fcHc(iFc,:) specifies the total area of face iFc.
+!
+!     na - (1:nCv,0:ns-1) real*8 array.
+!     For (iCv,is) in (1:nCv,0:ns-1), na(iCv,is) specifies
+!     the density of atomic species (is) on the (iCv) cell.
+!     It will hold that 0.lt.na(:).
+!
+!     ua - (1:nCv,0:ns-1) real*8 array.
+!     For (iCv,is) in (1:nCv,0:ns-1), ua(iCv,is) specifies
+!     the parallel velocity of atomic species (is) on the (iCv) cell.
 !     The sign of the parallel velocity indicates whether it is flowing
 !     in the same direction as the local poloidal magnetic field.
 !
-!     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-!     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
-!     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
-!     uadia(ix,iy,1,is) the radial drift velocity.
+!     te - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), te(iCv) specifies the electron
+!     temperature on the (iCv) cell. It will hold that 0.lt.te(:).
 !
-!     te - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
-!     temperature on the (ix,iy) cell. It will hold that 0.lt.te(,).
+!     ti - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), ti(iCv) specifies the all atom
+!     temperature on the (iCv) cell. It will hold that 0.lt.ti(:).
 !
-!     ti - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), ti(ix,iy) specifies the all atom
-!     temperature on the (ix,iy) cell. It will hold that 0.lt.ti(,).
+!     tn - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), tn(iCv) specifies temperature of the
+!     hydrogenic neutrals on the (iCv) cell. It will hold that 0.lt.tn(:).
+!     When no separate fluid neutral energy equation is solved, tn = ti.
 !
-!     po - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), po(ix,iy) specifies the electric
-!     potential on the (ix,iy) cell.
+!     po - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), po(iCv) specifies the electric
+!     potential on the (iCv) cell.
 !
-!     fna - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-!     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
-!     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax(ix,iy,is) specifies
-!     the flux of atoms of species (is) through the face between the
-!     (ix,iy) cell and its left neighbor.
-!     For ix.eq.-1, fnax(ix,-1:ny,0:ns-1) will hold 0.
-!     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay(ix,iy,is) specifies
-!     the flux of atoms of species (is) through the face between the
-!     (ix,iy) cell and its bottom neighbor.
-!     For iy.eq.-1, fnay(-1:nx,iy,0:ns-1) will hold 0.
+!     kt - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), kt(iCv) specifies the turbulent kinetic
+!     energy on the (iCv) cell.
 !
-!     fhe - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)
-!     For (ix,iy) in (0:nx,-1:ny), fhex(ix,iy) specifies the electron
-!     heat flux through the face between the (ix,iy) cell and its
-!     left neighbor. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), fhey(ix,iy) specifies the electron
-!     heat flux through the face between the (ix,iy) cell and its
-!     bottom neighbor. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
+!     zt - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), kt(iCv) specifies the enstrophy
+!     on the (iCv) cell.
 !
-!     fhi - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
-!     For (ix,iy) in (0:nx,-1:ny), fhix(ix,iy) specifies the all atom
-!     heat flux through the face between the (ix,iy) cell and its left
-!     neighbor. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
-!     heat flux through the face between the (ix,iy) cell and its
-!     bottom neighbor. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
+!     For all the fluxes below, the sign convention is as follows.
+!     Fluxes are positive when they flow in the local x-direction,
+!     where x is the connector line from C1 to C2.
 !
-!     fch - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let fchx(,)=fch(,,0) and fchy(,)=fch(,,1).)
-!     For (ix,iy) in (0:nx,-1:ny), fchx(ix,iy) specifies the electric
-!     current through the face between the (ix,iy) cell and its left
-!     neighbor. For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), fchy(ix,iy) specifies the electric
-!     current through the face between the (ix,iy) cell and its bottom
-!     neighbor. For iy.eq.-1, fchy(-1:nx,iy) will hold 0.
+!     fna - (1:nFc,0:1,0:ns-1) real*8 array.
+!     For (iFc,is) in (1:nFc,0:1,0:ns-1), fna(iFc,0,is) specifies
+!     the poloidal component and fna(iFc,1,is) specifies
+!     the radial component of the flux of atoms of species (is) through the
+!     face iFc.
+!
+!     fhe - (1:nFc,0:1) real*8 array.
+!     For (iFc) in (1:nFc), fhe(iFc,0) specifies the poloidal component and
+!     fhe(iFc,1) specifies the radial component of the electron heat flux
+!     through the face iFc.
+!
+!     fhi - (1:nFc,0:1) real*8 array.
+!     For (iFc) in (1:nFc), fhi(iFc,0) specifies the poloidal component and
+!     fhi(iFc,1) specifies the radial component of the all atom heat flux
+!     through the face iFc.
+!
+!     fch - (1:nFc,0:1) real*8 array.
+!     For (iFc) in (1:nFc), fch(iFc,0) specifies the poloidal component and
+!     fch(iFc,1) specifies the radial component of the electric
+!     current through the face iFc.
+!
+!     uadia - (1:nFc,0:1,0:ns-1) real*8 array.
+!     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,0,is) specifies
+!     the total effective drift velocity of species (is) on the (iFc) face
+!     in the diamagnetic direction (i.e. within the flux surface but
+!     perpendicular to the magnetic field), but projected onto the
+!     poloidal direction.
+!     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,1,is) specifies
+!     the total effective drift velocity of species (is) on the (iFc) face
+!     in the radial direction.
 !
 !     na0, ua0, te0, ti0, po0, fna0, fhe0, fhi0, fch0 - real*8 array.
 !     state of the plasma at the start of the present timestep.
@@ -5490,18 +5310,6 @@ CONTAINS
     CALL READ_B2FGMTRY_DV(ninp(1), mpg, mpgd, geo, geod, nbdirs)
     CALL INIT_GEOMETRY(mpg, geo, switch)
 !
-    CALL IPGETI('b2mndr_redef_pbs', b2mndr_redef_pbs)
-    IF (b2mndr_redef_pbs .NE. 0) THEN
-      IF (redef_gmtry .EQ. 1) THEN
-        WRITE(6, *) &
-&       'Magnetic flux correction of pbsx already done in b2ag.'
-      ELSE
-        WRITE(6, *) 'Magnetic flux correction must now be done in b2ag.'
-        WRITE(6, *) 'Please set b2agdr_redef_gmtry to 1 in b2ag.dat ', &
-&       'and re-run b2ag.'
-        CALL XERRAB('Obsolete switch b2mndr_redef_pbs!')
-      END IF
-    END IF
 !
     CALL ALLOC_B2MOD_TALLIES(mpg%nnreg, ns)
 !
@@ -6351,29 +6159,6 @@ CONTAINS
 !     The following common blocks have their outermost declaration in
 !     this routine; they need not be preserved between calls.
 !
-!     /b2cmgs/ specifies the singular regions in the geometry.
-!      nlrmx - integer constant.
-!     nlrmx is an upper bound for nlreg, and is used in dimension
-!     specifications.
-!      nlreg - integer.
-!     nlreg specifies the number of singular regions. It will hold that
-!     0.le.nlreg.le.nlrmx.
-!      nlxlo, nlxhi, nlylo, nlyhi - (0:nlrmx-1) integer array.
-!     For 0.le.i.lt.nlreg, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i) are
-!     the bounds of the i-th singular region. Mesh locations (ix,iy)
-!     in (nlxlo(i):nlxhi(i),nlylo(i):nlyhi(i)) make up the region, which
-!     will be included in (-1:nx,-1:ny).
-!     For nlreg.le.i.lt.nlrmx, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i)
-!     are unspecified.
-!      nlloc - (0:nlrmx-1) integer array.
-!     For 0.le.i.lt.4, nlloc(i) specifies the class of quantities for
-!     which the i-th region is special, as follows:
-!       nlloc(i) = 0: cell centers, indices (-1:nx,-1:ny).
-!       nlloc(i) = 1: cell x-faces, indices (0:nx,-1:ny).
-!       nlloc(i) = 2: cell y-faces, indices (-1:nx,0:ny).
-!       nlloc(i) = 3: cell corners, indices (0:nx,0:ny).
-!     For nlreg.le.i.lt.nlrmx, nlloc(i) is unspecified.
-!
 !     /b2cmpa/ specifies basic physics parameters.
 !      me, mp, ev, qe, eps0, mu0 - real*8 constant.
 !     These parameters are included with /b2cmpa/.
@@ -6396,189 +6181,128 @@ CONTAINS
 !     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
 !     undefined.
 !
-!     /b2cmpb/ specifies physics parameters for boundary conditions.
-!     For this purpose the boundary is divided up into regions, and for
-!     each region a set of coefficients defines the local conditions.
-!     For detailed description of /b2cmpb/ see the code, especially the
-!     routine b2stbc.
-!      cbnrmx - integer constant.
-!     cbnrmx is an upper bound for the number of boundary regions nreg,
-!     (nreg.eq.cbnrso+cbnrno+cbnrwe+cbnrea) and is used in dimension
-!     specifications.
-!      cbirso, cbirno, cbirwe, cbirea - integer.
-!     cbirso(-no,-we,-ea) is the index of the first region on the
-!     south (north, west, east) boundary.
-!      cbnrso, cbnrno, cbnrwe, cbnrea - integer.
-!     cbnrso(-no,-we,-ea) is the number of regions on the south
-!     (north, west, east) boundary.
-!     It will hold that 1.le.cbnrso, 1.le.cbnrno, 1.le.cbnrwe, and
-!     1.le.cbnrea; and 0.eq.cbirso, cbirso+cbnrso.eq.cbirno,
-!     cbirno+cbnrno.eq.cbirwe, cbirwe+cbnrwe.eq.cbirea.
-!      cbrbrk - (0:cbnrmx-1) real*8 array.
-!     cbrbrk defines the boundaries between the boundary regions.
-!      cbsna - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbsna(0:7,is,ireg) specify standard form boundary conditions for
-!     the continuity equation for species (is) on the (ireg) boundary
-!     region.
-!      cbsmo - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbsmo(0:7,is,ireg) specify standard form boundary conditions for
-!     the parallel momentum balance equation for species (is) on the
-!     (ireg) boundary region.
-!      cbshi - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbshi(0:7,is,ireg) specify standard form boundary conditions for
-!     the contribution to that atom heat equation by species (is) on
-!     the (ireg) boundary region.
-!      cbshe - (0:7,0:cbnrmx-1) real*8 array.
-!     For 0.le.ireg.lt.nreg, the eight coefficients cbshe(0:7,ireg)
-!     specify standard form boundary conditions for the electron heat
-!     equation on the (ireg) boundary region.
-!      cbsch - (0:7,0:cbnrmx-1) real*8 array.
-!     For 0.le.ireg.lt.nreg, the eight coefficients cbsch(0:7,ireg)
-!     specify standard form boundary conditions for the electric
-!     potential equation on the (ireg) boundary region.
-!      cbrec - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbrec(0:7,is,ireg) specify the recycling process for species (is)
-!     on the boundary region ireg. The exact interpretation of these
-!     coefficients is defined by the routine that computes the source
-!     terms due to the recycling process (b2stbr). Routine b2stbr is
-!     problem dependent.
-!      cbmsa - (0:7,0:cbnrmx-1) real*8 array.
-!      cbmsc - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.ireg.lt.nreg, the eight coefficients cbmsa(0:7,ireg)
-!     specify miscellaneous processes on the boundary region ireg.
-!     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbmsc(0:7,is,ireg) specify miscellaneous processes for species
-!     (is) on the boundary region ireg. The interpretation of these
-!     coefficients is defined by the routine that computes the source
-!     terms due to miscellaneous processes (b2stbm). Routine b2stbm is
-!     application dependent.
-!
 !   ..transport coefficients, parameters
 !
 !     /b2cmpt/ - common block.
 !     (Note: the integer constant nsdecl, which comes with /b2cmpa/,
 !     is used instead of (ns) in dimension specifications.)
 !      cfdf0 - (0:7,0:ns-1) real*8 array.
-!     cfdf0 contains some auxiliary coefficients.  For 0.le.is.lt.ns,
+!     cfdf0 contains some auxiliary coefficients. For 0.le.is.lt.ns,
 !     the local expression
-!       df0(,,is) = cfdf0(0,is)+cfdf0(1,is)/(ni(,,0)/1.0e20)+
-!         cfdf0(2,is)*sqrt(ti(,)/(am(is)*mp))/
-!          (cfdf0(3,is)*ni(,,0)+cfdf0(4,is)*ne(,))
+!       df0(,is) = cfdf0(0,is)+cfdf0(1,is)/(ni(,0)/1.0e20)+
+!         cfdf0(2,is)*sqrt(ti()/(am(is)*mp))/
+!          (cfdf0(3,is)*ni(,0)+cfdf0(4,is)*ne())
 !     is used in the definition of the anomalous transport coefficients.
-!     df0 is meant to represent a diffusivity.  If cfdf0(2,is).eq.0 then
+!     df0 is meant to represent a diffusivity. If cfdf0(2,is).eq.0 then
 !     the corresponding term in df0 is understood as 0 independent of
 !     cfdf0(3:4,is).
 !      cfdna - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfdna(,is) are the coefficients in the
 !     local expression
-!       difna(,,is) = cfdna(0,is)+cfdna(1,is)/(ne(,)/1.0e20)+
-!         cfdna(2,is)*df0(,)+
-!         cfdna(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       difna(,is) = cfdna(0,is)+cfdna(1,is)/(ne()/1.0e20)+
+!         cfdna(2,is)*df0(,is)+
+!         cfdna(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous diffusivity with respect to
 !     grad.na; the transport equation for species (is) contains a term
-!     difna(,,is)*'grad.na'.
+!     difna(,is)*'grad.na'.
 !     If cfdna(7,is) is not zero, the dna0 array is flux-scaled with
-!     a scaling factor of cfdna(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfdna(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfdna(4:6,) are not used in the default version of the code.
 !      cfdpa - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfdpa(,is) are the coefficients in the
 !     local expression
-!       difpa(,,is) = cfdpa(0,is)+cfdpa(1,is)/(ne(,)/1.0e20)+
-!         cfdpa(2,is)*df0(,,is)+
-!         cfdpa(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       difpa(,is) = cfdpa(0,is)+cfdpa(1,is)/(ne()/1.0e20)+
+!         cfdpa(2,is)*df0(,is)+
+!         cfdpa(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous diffusivity with respect to
 !     grad.pa; the transport equation for species (is) contains a term
-!     (1/(rza(,,is)*te(,)+ti(,)))*difpa(,,is)*'grad.pa'.
+!     (1/(rza(,is)*te()+ti()))*difpa(,is)*'grad.pa'.
 !     If cfdpa(7,is) is not zero, the dpa0 array is flux-scaled with
-!     a scaling factor of cfdpa(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfdpa(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfdpa(4:6,) are not used in the default version of the code.
 !      cfvla - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfvla(,is) are the coefficients in the
 !     local expression
-!       vlay(,,is) = cfvla(0,is)+cfvla(1,is)/(ne(,)/1.0e20)+
-!         cfvla(2,is)*df0(,,is)+
-!         cfvla(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       vlay(,is) = cfvla(0,is)+cfvla(1,is)/(ne()/1.0e20)+
+!         cfvla(2,is)*df0(,is)+
+!         cfvla(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous y-velocity of species (is); the
 !     transport equation for species (is) contains a term
-!     vlay(,,is)*na(,,is).
+!     vlay(,is)*na(,is).
 !     If cfvla(7,is) is not zero, the vla0 array is flux-scaled with
-!     a scaling factor of cfvla(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfvla(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfvla(4:6,) are not used in the default version of the code.
 !      cfvsa - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfvsa(,is) are the coefficients in the
 !     local expression
-!       dfvsa(,,is) = cfvsa(0,is)+cfvsa(1,is)/(ne(,)/1.0e20)+
-!         cfvsa(2,is)*df0(,,is)+
-!         cfvsa(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       dfvsa(,is) = cfvsa(0,is)+cfvsa(1,is)/(ne()/1.0e20)+
+!         cfvsa(2,is)*df0(,is)+
+!         cfvsa(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the diffusivity corresponding to the anomalous
 !     transverse viscosity, so that this viscosity is
-!       vsa(,,is) = mp*am(is)*na(,,is)*dfvsa
+!       vsa(,is) = mp*am(is)*na(,is)*dfvsa
 !     If cfvsa(7,is) is not zero, the vsa0 array is flux-scaled with
-!     a scaling factor of cfvsa(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfvsa(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfvsa(4:6,) are not used in the default version of the code.
 !      cfhci - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfhci(,is) are the coefficients in the
 !     local expression
-!       dfhca(,,is) = cfhci(0,is)+cfhci(1,is)/(ne(,)/1.0e20)+
-!         cfhci(2,is)*df0(,,is)+
-!         cfhci(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       dfhca(,is) = cfhci(0,is)+cfhci(1,is)/(ne()/1.0e20)+
+!         cfhci(2,is)*df0(,is)+
+!         cfhci(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous atom heat conductivity associated
 !     with species (is), so that the atom heat conduction coefficient
-!     contains a term dfhca(,,is)*na(,,is).
+!     contains a term dfhca(,is)*na(,is).
 !     If cfhci(7,is) is not zero, the hci arrays are flux-scaled with
-!     a scaling factor of cfhci(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfhci(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfhci(4:6,) are not used in the default version of the code.
 !      cfhce - (0:7) real*8 array.
 !     cfhce() are the coefficients in the local expression
-!       dfhce(,) = cfhce(0)+cfhce(1)/(ne(,)/1.0e20)+
-!         cfhce(3)*te(,)/ev/abs(bb(,,3))/16
+!       dfhce() = cfhce(0)+cfhce(1)/(ne()/1.0e20)+
+!         cfhce(3)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous electron heat conductivity, so that
-!     the electron heat conduction coefficient is dfhce(,)*ne(,).
+!     the electron heat conduction coefficient is dfhce()*ne().
 !     If cfhce(7) is not zero, the hce0 array is flux-scaled with
-!     a scaling factor of cfhce(7)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfhce(7)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfhce(2) and (4:6) are not used in the default version of the code.
 !      cfsig - (0:7) real*8 array.
 !     cfsig() are the coefficients in the local expression
-!       dfsig(,) = cfsig(0)+cfsig(1)/(ne(,)/1.0e20)+
-!         cfsig(3)*te(,)/ev/abs(bb(,,3))/16+
+!       dfsig() = cfsig(0)+cfsig(1)/(ne()/1.0e20)+
+!         cfsig(3)*te()/ev/abs(bb(,3))/16+
 !         cfsig(4)*exp(-cfsig(5)*(y/L)**2)
 !     that specifies the diffusivity corresponding to the anomalous
 !     electrical conductivity, which is
-!       sig(,) = qe*ne(,)*dfsig(,).
+!       sig() = qe*ne()*dfsig().
 !     L is the local radial width of the plasma and
 !     y is the radial distance from the inner (South) boundary.
 !     If cfsig(7) is not zero, the sig0 array is flux-scaled with
-!     a scaling factor of cfsig(7)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfsig(7)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfsig(2) and (6) are not used in the default version of the code.
 !      cfalf - (0:7) real*8 array.
 !     cfalf() are the coefficients in the local expression
-!       dfalf(,) = cfalf(0)+cfalf(1)/(ne(,)/1.0e20)+
-!         cfalf(3)*te(,)/ev/abs(bb(,,3))/16
+!       dfalf() = cfalf(0)+cfalf(1)/(ne()/1.0e20)+
+!         cfalf(3)*te()/ev/abs(bb(,3))/16
 !     that specifies the diffusivity corresponding to the anomalous
 !     thermo-electric coefficient, which is
-!       alf(,) = ne(,)*sqrt(qe/te(,))*dfalf(,).
+!       alf() = ne()*sqrt(qe/te())*dfalf().
 !     If cfalf(7) is not zero, the alf0 array is flux-scaled with
-!     a scaling factor of cfalf(7)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfalf(7)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfalf(2) and (4:6) are not used in the default version of the code.
 !      cflim - (0:7) real*8 array.
 !     cflim contains coefficients for flux limiting. cflim(0)=cflme
@@ -6694,144 +6418,145 @@ CONTAINS
 !
 !     Description of some local variables (including arrays in w(0:*)):
 !
-!     crx, cry - (-1:nx,-1:ny,0:3) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), crx(ix,iy,0:3) specify the
-!     horizontal coordinates and cry(ix,iy,0:3) specify the vertical
-!     coordinates (in the physical plane) of the four corners of the
-!     (ix,iy) cell, mapped as follows:
-!     (,,0): lower left corner,  (,,1): lower right corner,
-!     (,,2): upper left corner,  (,,3): upper right corner.
-!     One expects the following identities to hold away from the
-!     boundaries:
-!     crx(ix,iy,0)=crx(ix-1,iy,1)=crx(ix,iy-1,2)=crx(ix-1,iy-1,3),
-!     cry(ix,iy,0)=cry(ix-1,iy,1)=cry(ix,iy-1,2)=cry(ix-1,iy-1,3),
-!     However, there may be cuts in the geometry, in which case these
-!     identities need not hold.
+!     cvX, cvY - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvX(iCv) specifies the
+!     Cartesian X-coordinate of the center of the cell and cvX(iCv) specifies
+!     the Cartesian Y-coordinate of the center of the cell.
 !
-!     bb - (-1:nx,-1:ny,0:3) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), bb(ix,iy,0:3) specifies the
-!     magnetic field at the center of the (ix,iy) cell.
-!     bb(ix,iy,0:2) are the (x,y,z)-components and bb(ix,iy,3) is
+!     vxX, vxY - (1:nVx) real*8 array.
+!     vxX(iVx) specify the horizontal coordinate and vxY(iVx)
+!     specify the vertical coordinates (in the physical plane) of
+!     the vertex with number iVx.
+!
+!     cvBb - (1:nCv,0:3) real*8 array.
+!     For (iCv) in (1:nCv), cvBb(iCv,0:3) specifies the
+!     magnetic field at the center of the (iCv) cell.
+!     cvBb(iCv,0:2) are the (x,y,z)-components and cvBb(iCv,3) is
 !     the absolute magnetic field strength.
-!     (bb(,,3)=sqrt(bb(,,0)**2+bb(,,1)**2+bb(,,2)**2.)
-!     It will hold that 0.lt.bb(,,3).
+!     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,,2)**2.)
+!     It will hold that 0.le.cvBb(,0:3), because the direction of the
+!     magnetic field follows from cvEb (see below).
 !
-!     vol - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
-!     the (ix,iy) cell. (In the case of toroidal symmetry this volume
+!     cvEb - (1:nCv,0:2) real*8 array.
+!     cvEb(iCv,0:2) specifies the direction of the magnetic field at
+!     the center of the cell iCv in the (R,Z,toroidal) axis system.
+!     (sqrt(cvEb(iCv,0)**2+cvEb(iCv,1)**2+cvEb(iCv,2)**2)=1)
+!
+!     cvVol - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvVol(iCv) specifies the volume of
+!     the (iCv) cell. (In the case of toroidal symmetry this volume
 !     includes a factor 2*pi*R, while in the case of cylindrical
 !     symmetry it includes a factor 2*pi*Z.)
-!     It will hold that 0.lt.vol(,).
+!     It will hold that 0.lt.cvVol().
 !
-!     hx, hy - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
-!     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
-!     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
+!     cvHz - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvHz(iCv) specifies the length of
+!     the (iCv) cell in the z-direction, measured at the cell center.
 !
-!     qz - (-1:nx,-1:ny,0:1) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
-!     qz(ix,iy,1) specifies cos(t), where t is the complementary angle
-!     between the x-direction and the y-direction on the (ix,iy) cell.
-!     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-!     geometry. (qz(ix,iy,0) is the inner product of the x and y unit
-!     vectors.)
-!     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
+!     cvSz - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvSz(iCv) specifies the area of
+!     the (iCv) cell perpendicular to the z-direction.
 !
-!     qc - (-1:nx,-1:ny) real*8 array, output.
-!     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
-!     t is the complementary angle between the x-direction of the
-!     (ix,iy) cell and its left face.
-!     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-!     geometry.
-!     It will hold that 0.lt.qc(,).le.1.
+!     fcQgam - (1:nFc,0:1) real*8 array.
+!     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and
+!     fcQgam(iFc,1) specifies sin(t), where t is the included angle
+!     between the cell-connector vector and the normal vector
+!     of face iFc. It will hold that 0.lt.fcQgam(,).le.1.
 !
-!     gs - (-1:nx,-1:ny,0:2) real*8 array.
-!     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
-!     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
-!     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
-!     gsx(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), gsy(ix,iy) specifies the area of the
-!     face between the (ix,iy) cell and its bottom neighbor. For iy.eq.-1,
-!     gsy(-1:nx,iy) will hold 0.
-!     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
-!     (ix,iy) cell normal to the third (ignorable) coordinate.
+!     fcQalf - (1:nFc,0:1) real*8 array.
+!     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
+!     fcQalf(iFc,1) specifies sin(t), where t is the included angle
+!     between the magnetic field vector and the face normal.
+!     If Bz is negative, fcQalf(iFc,1) is modified to be -sin(t).
 !
-!     pbs - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
-!     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-!     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic
-!     field pitch)*(surface area), namely the parallel contact area,
-!     on the (ix,iy) cell left and bottom faces respectively.
-!     In the case where the grid covers the full vacuum vessel,
-!     pbsy also contains a contribution from the narrowing of the
-!     flux tube when impacting the wall structures.
-!     See routine b2xgbs for the form of interpolation employed.
+!     fcQbet - (1:nFc,0:1) real*8 array.
+!     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
+!     fcQbet(iFc,1) specifies sin(t), where t is the included angle
+!     between the cell-connector and the magnetic field vector.
+!     If Bz is negative, fcQbet(iFc,0) is modified to be -cos(t).
 !
-!     na - (-1:nx,-1:ny,0:ns-1) real*8 array.
-!     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), na(ix,iy,is) specifies
-!     the density of atomic species (is) on the (ix,iy) cell.
-!     It will hold that 0.lt.na(,,).
+!     fcPbs - (1:nFc) real*8 array.
+!     For iFc in (1:nFc), fcPbs(iFc) specifies the product
+!     (fcBx/fcBb)*sx or (magnetic field pitch)*(surface area),
+!     namely the parallel contact area.
 !
-!     ua - (-1:nx,-1:ny,0:ns-1) real*8 array.
-!     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), ua(ix,iy,is) specifies
-!     the parallel velocity of atomic species (is) on the (ix,iy) cell.
+!     fcPbshz - (1:nFc) real*8 array.
+!     For iFc in (1:nFc), fcPbshz(iFc) specifies the product
+!     (fcBx/fcBb)*sx*hz or (magnetic field pitch)*(surface area)*(hz).
+!
+!     fcS - (1:nFc,1:2) real*8 array.
+!     For iFc in (1:nFc), fcHc(iFc,:) specifies the total area of face iFc.
+!
+!     na - (1:nCv,0:ns-1) real*8 array.
+!     For (iCv,is) in (1:nCv,0:ns-1), na(iCv,is) specifies
+!     the density of atomic species (is) on the (iCv) cell.
+!     It will hold that 0.lt.na(:).
+!
+!     ua - (1:nCv,0:ns-1) real*8 array.
+!     For (iCv,is) in (1:nCv,0:ns-1), ua(iCv,is) specifies
+!     the parallel velocity of atomic species (is) on the (iCv) cell.
 !     The sign of the parallel velocity indicates whether it is flowing
 !     in the same direction as the local poloidal magnetic field.
 !
-!     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-!     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
-!     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
-!     uadia(ix,iy,1,is) the radial drift velocity.
+!     te - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), te(iCv) specifies the electron
+!     temperature on the (iCv) cell. It will hold that 0.lt.te(:).
 !
-!     te - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
-!     temperature on the (ix,iy) cell. It will hold that 0.lt.te(,).
+!     ti - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), ti(iCv) specifies the all atom
+!     temperature on the (iCv) cell. It will hold that 0.lt.ti(:).
 !
-!     ti - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), ti(ix,iy) specifies the all atom
-!     temperature on the (ix,iy) cell. It will hold that 0.lt.ti(,).
+!     tn - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), tn(iCv) specifies temperature of the
+!     hydrogenic neutrals on the (iCv) cell. It will hold that 0.lt.tn(:).
+!     When no separate fluid neutral energy equation is solved, tn = ti.
 !
-!     po - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), po(ix,iy) specifies the electric
-!     potential on the (ix,iy) cell.
+!     po - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), po(iCv) specifies the electric
+!     potential on the (iCv) cell.
 !
-!     fna - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-!     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
-!     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax(ix,iy,is) specifies
-!     the flux of atoms of species (is) through the face between the
-!     (ix,iy) cell and its left neighbor.
-!     For ix.eq.-1, fnax(ix,-1:ny,0:ns-1) will hold 0.
-!     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay(ix,iy,is) specifies
-!     the flux of atoms of species (is) through the face between the
-!     (ix,iy) cell and its bottom neighbor.
-!     For iy.eq.-1, fnay(-1:nx,iy,0:ns-1) will hold 0.
+!     kt - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), kt(iCv) specifies the turbulent kinetic
+!     energy on the (iCv) cell.
 !
-!     fhe - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)
-!     For (ix,iy) in (0:nx,-1:ny), fhex(ix,iy) specifies the electron
-!     heat flux through the face between the (ix,iy) cell and its
-!     left neighbor. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), fhey(ix,iy) specifies the electron
-!     heat flux through the face between the (ix,iy) cell and its
-!     bottom neighbor. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
+!     zt - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), kt(iCv) specifies the enstrophy
+!     on the (iCv) cell.
 !
-!     fhi - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
-!     For (ix,iy) in (0:nx,-1:ny), fhix(ix,iy) specifies the all atom
-!     heat flux through the face between the (ix,iy) cell and its left
-!     neighbor. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
-!     heat flux through the face between the (ix,iy) cell and its
-!     bottom neighbor. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
+!     For all the fluxes below, the sign convention is as follows.
+!     Fluxes are positive when they flow in the local x-direction,
+!     where x is the connector line from C1 to C2.
 !
-!     fch - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let fchx(,)=fch(,,0) and fchy(,)=fch(,,1).)
-!     For (ix,iy) in (0:nx,-1:ny), fchx(ix,iy) specifies the electric
-!     current through the face between the (ix,iy) cell and its left
-!     neighbor. For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), fchy(ix,iy) specifies the electric
-!     current through the face between the (ix,iy) cell and its bottom
-!     neighbor. For iy.eq.-1, fchy(-1:nx,iy) will hold 0.
+!     fna - (1:nFc,0:1,0:ns-1) real*8 array.
+!     For (iFc,is) in (1:nFc,0:1,0:ns-1), fna(iFc,0,is) specifies
+!     the poloidal component and fna(iFc,1,is) specifies
+!     the radial component of the flux of atoms of species (is) through the
+!     face iFc.
+!
+!     fhe - (1:nFc,0:1) real*8 array.
+!     For (iFc) in (1:nFc), fhe(iFc,0) specifies the poloidal component and
+!     fhe(iFc,1) specifies the radial component of the electron heat flux
+!     through the face iFc.
+!
+!     fhi - (1:nFc,0:1) real*8 array.
+!     For (iFc) in (1:nFc), fhi(iFc,0) specifies the poloidal component and
+!     fhi(iFc,1) specifies the radial component of the all atom heat flux
+!     through the face iFc.
+!
+!     fch - (1:nFc,0:1) real*8 array.
+!     For (iFc) in (1:nFc), fch(iFc,0) specifies the poloidal component and
+!     fch(iFc,1) specifies the radial component of the electric
+!     current through the face iFc.
+!
+!     uadia - (1:nFc,0:1,0:ns-1) real*8 array.
+!     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,0,is) specifies
+!     the total effective drift velocity of species (is) on the (iFc) face
+!     in the diamagnetic direction (i.e. within the flux surface but
+!     perpendicular to the magnetic field), but projected onto the
+!     poloidal direction.
+!     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,1,is) specifies
+!     the total effective drift velocity of species (is) on the (iFc) face
+!     in the radial direction.
 !
 !     na0, ua0, te0, ti0, po0, fna0, fhe0, fhi0, fch0 - real*8 array.
 !     state of the plasma at the start of the present timestep.
@@ -7290,18 +7015,6 @@ CONTAINS
     CALL READ_B2FGMTRY(ninp(1), mpg, geo)
     CALL INIT_GEOMETRY(mpg, geo, switch)
 !
-    CALL IPGETI('b2mndr_redef_pbs', b2mndr_redef_pbs)
-    IF (b2mndr_redef_pbs .NE. 0) THEN
-      IF (redef_gmtry .EQ. 1) THEN
-        WRITE(6, *) &
-&       'Magnetic flux correction of pbsx already done in b2ag.'
-      ELSE
-        WRITE(6, *) 'Magnetic flux correction must now be done in b2ag.'
-        WRITE(6, *) 'Please set b2agdr_redef_gmtry to 1 in b2ag.dat ', &
-&       'and re-run b2ag.'
-        CALL XERRAB('Obsolete switch b2mndr_redef_pbs!')
-      END IF
-    END IF
 !
     CALL ALLOC_B2MOD_TALLIES(mpg%nnreg, ns)
 !
@@ -7953,29 +7666,6 @@ CONTAINS
 !     The following common blocks have their outermost declaration in
 !     this routine; they need not be preserved between calls.
 !
-!     /b2cmgs/ specifies the singular regions in the geometry.
-!      nlrmx - integer constant.
-!     nlrmx is an upper bound for nlreg, and is used in dimension
-!     specifications.
-!      nlreg - integer.
-!     nlreg specifies the number of singular regions. It will hold that
-!     0.le.nlreg.le.nlrmx.
-!      nlxlo, nlxhi, nlylo, nlyhi - (0:nlrmx-1) integer array.
-!     For 0.le.i.lt.nlreg, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i) are
-!     the bounds of the i-th singular region. Mesh locations (ix,iy)
-!     in (nlxlo(i):nlxhi(i),nlylo(i):nlyhi(i)) make up the region, which
-!     will be included in (-1:nx,-1:ny).
-!     For nlreg.le.i.lt.nlrmx, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i)
-!     are unspecified.
-!      nlloc - (0:nlrmx-1) integer array.
-!     For 0.le.i.lt.4, nlloc(i) specifies the class of quantities for
-!     which the i-th region is special, as follows:
-!       nlloc(i) = 0: cell centers, indices (-1:nx,-1:ny).
-!       nlloc(i) = 1: cell x-faces, indices (0:nx,-1:ny).
-!       nlloc(i) = 2: cell y-faces, indices (-1:nx,0:ny).
-!       nlloc(i) = 3: cell corners, indices (0:nx,0:ny).
-!     For nlreg.le.i.lt.nlrmx, nlloc(i) is unspecified.
-!
 !     /b2cmpa/ specifies basic physics parameters.
 !      me, mp, ev, qe, eps0, mu0 - real*8 constant.
 !     These parameters are included with /b2cmpa/.
@@ -7998,189 +7688,128 @@ CONTAINS
 !     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
 !     undefined.
 !
-!     /b2cmpb/ specifies physics parameters for boundary conditions.
-!     For this purpose the boundary is divided up into regions, and for
-!     each region a set of coefficients defines the local conditions.
-!     For detailed description of /b2cmpb/ see the code, especially the
-!     routine b2stbc.
-!      cbnrmx - integer constant.
-!     cbnrmx is an upper bound for the number of boundary regions nreg,
-!     (nreg.eq.cbnrso+cbnrno+cbnrwe+cbnrea) and is used in dimension
-!     specifications.
-!      cbirso, cbirno, cbirwe, cbirea - integer.
-!     cbirso(-no,-we,-ea) is the index of the first region on the
-!     south (north, west, east) boundary.
-!      cbnrso, cbnrno, cbnrwe, cbnrea - integer.
-!     cbnrso(-no,-we,-ea) is the number of regions on the south
-!     (north, west, east) boundary.
-!     It will hold that 1.le.cbnrso, 1.le.cbnrno, 1.le.cbnrwe, and
-!     1.le.cbnrea; and 0.eq.cbirso, cbirso+cbnrso.eq.cbirno,
-!     cbirno+cbnrno.eq.cbirwe, cbirwe+cbnrwe.eq.cbirea.
-!      cbrbrk - (0:cbnrmx-1) real*8 array.
-!     cbrbrk defines the boundaries between the boundary regions.
-!      cbsna - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbsna(0:7,is,ireg) specify standard form boundary conditions for
-!     the continuity equation for species (is) on the (ireg) boundary
-!     region.
-!      cbsmo - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbsmo(0:7,is,ireg) specify standard form boundary conditions for
-!     the parallel momentum balance equation for species (is) on the
-!     (ireg) boundary region.
-!      cbshi - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbshi(0:7,is,ireg) specify standard form boundary conditions for
-!     the contribution to that atom heat equation by species (is) on
-!     the (ireg) boundary region.
-!      cbshe - (0:7,0:cbnrmx-1) real*8 array.
-!     For 0.le.ireg.lt.nreg, the eight coefficients cbshe(0:7,ireg)
-!     specify standard form boundary conditions for the electron heat
-!     equation on the (ireg) boundary region.
-!      cbsch - (0:7,0:cbnrmx-1) real*8 array.
-!     For 0.le.ireg.lt.nreg, the eight coefficients cbsch(0:7,ireg)
-!     specify standard form boundary conditions for the electric
-!     potential equation on the (ireg) boundary region.
-!      cbrec - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbrec(0:7,is,ireg) specify the recycling process for species (is)
-!     on the boundary region ireg. The exact interpretation of these
-!     coefficients is defined by the routine that computes the source
-!     terms due to the recycling process (b2stbr). Routine b2stbr is
-!     problem dependent.
-!      cbmsa - (0:7,0:cbnrmx-1) real*8 array.
-!      cbmsc - (0:7,0:nsdecl-1,0:cbnrmx-1) real*8 array.
-!     For 0.le.ireg.lt.nreg, the eight coefficients cbmsa(0:7,ireg)
-!     specify miscellaneous processes on the boundary region ireg.
-!     For 0.le.is.lt.ns-1 and 0.le.ireg.lt.nreg, the eight coefficients
-!     cbmsc(0:7,is,ireg) specify miscellaneous processes for species
-!     (is) on the boundary region ireg. The interpretation of these
-!     coefficients is defined by the routine that computes the source
-!     terms due to miscellaneous processes (b2stbm). Routine b2stbm is
-!     application dependent.
-!
 !   ..transport coefficients, parameters
 !
 !     /b2cmpt/ - common block.
 !     (Note: the integer constant nsdecl, which comes with /b2cmpa/,
 !     is used instead of (ns) in dimension specifications.)
 !      cfdf0 - (0:7,0:ns-1) real*8 array.
-!     cfdf0 contains some auxiliary coefficients.  For 0.le.is.lt.ns,
+!     cfdf0 contains some auxiliary coefficients. For 0.le.is.lt.ns,
 !     the local expression
-!       df0(,,is) = cfdf0(0,is)+cfdf0(1,is)/(ni(,,0)/1.0e20)+
-!         cfdf0(2,is)*sqrt(ti(,)/(am(is)*mp))/
-!          (cfdf0(3,is)*ni(,,0)+cfdf0(4,is)*ne(,))
+!       df0(,is) = cfdf0(0,is)+cfdf0(1,is)/(ni(,0)/1.0e20)+
+!         cfdf0(2,is)*sqrt(ti()/(am(is)*mp))/
+!          (cfdf0(3,is)*ni(,0)+cfdf0(4,is)*ne())
 !     is used in the definition of the anomalous transport coefficients.
-!     df0 is meant to represent a diffusivity.  If cfdf0(2,is).eq.0 then
+!     df0 is meant to represent a diffusivity. If cfdf0(2,is).eq.0 then
 !     the corresponding term in df0 is understood as 0 independent of
 !     cfdf0(3:4,is).
 !      cfdna - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfdna(,is) are the coefficients in the
 !     local expression
-!       difna(,,is) = cfdna(0,is)+cfdna(1,is)/(ne(,)/1.0e20)+
-!         cfdna(2,is)*df0(,)+
-!         cfdna(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       difna(,is) = cfdna(0,is)+cfdna(1,is)/(ne()/1.0e20)+
+!         cfdna(2,is)*df0(,is)+
+!         cfdna(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous diffusivity with respect to
 !     grad.na; the transport equation for species (is) contains a term
-!     difna(,,is)*'grad.na'.
+!     difna(,is)*'grad.na'.
 !     If cfdna(7,is) is not zero, the dna0 array is flux-scaled with
-!     a scaling factor of cfdna(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfdna(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfdna(4:6,) are not used in the default version of the code.
 !      cfdpa - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfdpa(,is) are the coefficients in the
 !     local expression
-!       difpa(,,is) = cfdpa(0,is)+cfdpa(1,is)/(ne(,)/1.0e20)+
-!         cfdpa(2,is)*df0(,,is)+
-!         cfdpa(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       difpa(,is) = cfdpa(0,is)+cfdpa(1,is)/(ne()/1.0e20)+
+!         cfdpa(2,is)*df0(,is)+
+!         cfdpa(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous diffusivity with respect to
 !     grad.pa; the transport equation for species (is) contains a term
-!     (1/(rza(,,is)*te(,)+ti(,)))*difpa(,,is)*'grad.pa'.
+!     (1/(rza(,is)*te()+ti()))*difpa(,is)*'grad.pa'.
 !     If cfdpa(7,is) is not zero, the dpa0 array is flux-scaled with
-!     a scaling factor of cfdpa(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfdpa(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfdpa(4:6,) are not used in the default version of the code.
 !      cfvla - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfvla(,is) are the coefficients in the
 !     local expression
-!       vlay(,,is) = cfvla(0,is)+cfvla(1,is)/(ne(,)/1.0e20)+
-!         cfvla(2,is)*df0(,,is)+
-!         cfvla(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       vlay(,is) = cfvla(0,is)+cfvla(1,is)/(ne()/1.0e20)+
+!         cfvla(2,is)*df0(,is)+
+!         cfvla(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous y-velocity of species (is); the
 !     transport equation for species (is) contains a term
-!     vlay(,,is)*na(,,is).
+!     vlay(,is)*na(,is).
 !     If cfvla(7,is) is not zero, the vla0 array is flux-scaled with
-!     a scaling factor of cfvla(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfvla(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfvla(4:6,) are not used in the default version of the code.
 !      cfvsa - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfvsa(,is) are the coefficients in the
 !     local expression
-!       dfvsa(,,is) = cfvsa(0,is)+cfvsa(1,is)/(ne(,)/1.0e20)+
-!         cfvsa(2,is)*df0(,,is)+
-!         cfvsa(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       dfvsa(,is) = cfvsa(0,is)+cfvsa(1,is)/(ne()/1.0e20)+
+!         cfvsa(2,is)*df0(,is)+
+!         cfvsa(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the diffusivity corresponding to the anomalous
 !     transverse viscosity, so that this viscosity is
-!       vsa(,,is) = mp*am(is)*na(,,is)*dfvsa
+!       vsa(,is) = mp*am(is)*na(,is)*dfvsa
 !     If cfvsa(7,is) is not zero, the vsa0 array is flux-scaled with
-!     a scaling factor of cfvsa(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfvsa(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfvsa(4:6,) are not used in the default version of the code.
 !      cfhci - (0:7,0:ns-1) real*8 array.
 !     For 0.le.is.lt.ns, cfhci(,is) are the coefficients in the
 !     local expression
-!       dfhca(,,is) = cfhci(0,is)+cfhci(1,is)/(ne(,)/1.0e20)+
-!         cfhci(2,is)*df0(,,is)+
-!         cfhci(3,is)*te(,)/ev/abs(bb(,,3))/16
+!       dfhca(,is) = cfhci(0,is)+cfhci(1,is)/(ne()/1.0e20)+
+!         cfhci(2,is)*df0(,is)+
+!         cfhci(3,is)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous atom heat conductivity associated
 !     with species (is), so that the atom heat conduction coefficient
-!     contains a term dfhca(,,is)*na(,,is).
+!     contains a term dfhca(,is)*na(,is).
 !     If cfhci(7,is) is not zero, the hci arrays are flux-scaled with
-!     a scaling factor of cfhci(7,is)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfhci(7,is)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfhci(4:6,) are not used in the default version of the code.
 !      cfhce - (0:7) real*8 array.
 !     cfhce() are the coefficients in the local expression
-!       dfhce(,) = cfhce(0)+cfhce(1)/(ne(,)/1.0e20)+
-!         cfhce(3)*te(,)/ev/abs(bb(,,3))/16
+!       dfhce() = cfhce(0)+cfhce(1)/(ne()/1.0e20)+
+!         cfhce(3)*te()/ev/abs(bb(,3))/16
 !     that specifies the anomalous electron heat conductivity, so that
-!     the electron heat conduction coefficient is dfhce(,)*ne(,).
+!     the electron heat conduction coefficient is dfhce()*ne().
 !     If cfhce(7) is not zero, the hce0 array is flux-scaled with
-!     a scaling factor of cfhce(7)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfhce(7)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfhce(2) and (4:6) are not used in the default version of the code.
 !      cfsig - (0:7) real*8 array.
 !     cfsig() are the coefficients in the local expression
-!       dfsig(,) = cfsig(0)+cfsig(1)/(ne(,)/1.0e20)+
-!         cfsig(3)*te(,)/ev/abs(bb(,,3))/16+
+!       dfsig() = cfsig(0)+cfsig(1)/(ne()/1.0e20)+
+!         cfsig(3)*te()/ev/abs(bb(,3))/16+
 !         cfsig(4)*exp(-cfsig(5)*(y/L)**2)
 !     that specifies the diffusivity corresponding to the anomalous
 !     electrical conductivity, which is
-!       sig(,) = qe*ne(,)*dfsig(,).
+!       sig() = qe*ne()*dfsig().
 !     L is the local radial width of the plasma and
 !     y is the radial distance from the inner (South) boundary.
 !     If cfsig(7) is not zero, the sig0 array is flux-scaled with
-!     a scaling factor of cfsig(7)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfsig(7)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfsig(2) and (6) are not used in the default version of the code.
 !      cfalf - (0:7) real*8 array.
 !     cfalf() are the coefficients in the local expression
-!       dfalf(,) = cfalf(0)+cfalf(1)/(ne(,)/1.0e20)+
-!         cfalf(3)*te(,)/ev/abs(bb(,,3))/16
+!       dfalf() = cfalf(0)+cfalf(1)/(ne()/1.0e20)+
+!         cfalf(3)*te()/ev/abs(bb(,3))/16
 !     that specifies the diffusivity corresponding to the anomalous
 !     thermo-electric coefficient, which is
-!       alf(,) = ne(,)*sqrt(qe/te(,))*dfalf(,).
+!       alf() = ne()*sqrt(qe/te())*dfalf().
 !     If cfalf(7) is not zero, the alf0 array is flux-scaled with
-!     a scaling factor of cfalf(7)*(hy1(,)/hy1(ixref,))**2
-!     where hy1 is the radial width of the cell and ixref is a reference
-!     poloidal position (usually the outer midplane or 'jxa').
+!     a scaling factor of cfalf(7)*(hy1()/hy1(omp))**2
+!     where hy1 is the radial width of the cell and omp refers
+!     to the cell from the sam flux tube intersecting the outer midplane.
 !     cfalf(2) and (4:6) are not used in the default version of the code.
 !      cflim - (0:7) real*8 array.
 !     cflim contains coefficients for flux limiting. cflim(0)=cflme
@@ -8296,144 +7925,145 @@ CONTAINS
 !
 !     Description of some local variables (including arrays in w(0:*)):
 !
-!     crx, cry - (-1:nx,-1:ny,0:3) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), crx(ix,iy,0:3) specify the
-!     horizontal coordinates and cry(ix,iy,0:3) specify the vertical
-!     coordinates (in the physical plane) of the four corners of the
-!     (ix,iy) cell, mapped as follows:
-!     (,,0): lower left corner,  (,,1): lower right corner,
-!     (,,2): upper left corner,  (,,3): upper right corner.
-!     One expects the following identities to hold away from the
-!     boundaries:
-!     crx(ix,iy,0)=crx(ix-1,iy,1)=crx(ix,iy-1,2)=crx(ix-1,iy-1,3),
-!     cry(ix,iy,0)=cry(ix-1,iy,1)=cry(ix,iy-1,2)=cry(ix-1,iy-1,3),
-!     However, there may be cuts in the geometry, in which case these
-!     identities need not hold.
+!     cvX, cvY - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvX(iCv) specifies the
+!     Cartesian X-coordinate of the center of the cell and cvX(iCv) specifies
+!     the Cartesian Y-coordinate of the center of the cell.
 !
-!     bb - (-1:nx,-1:ny,0:3) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), bb(ix,iy,0:3) specifies the
-!     magnetic field at the center of the (ix,iy) cell.
-!     bb(ix,iy,0:2) are the (x,y,z)-components and bb(ix,iy,3) is
+!     vxX, vxY - (1:nVx) real*8 array.
+!     vxX(iVx) specify the horizontal coordinate and vxY(iVx)
+!     specify the vertical coordinates (in the physical plane) of
+!     the vertex with number iVx.
+!
+!     cvBb - (1:nCv,0:3) real*8 array.
+!     For (iCv) in (1:nCv), cvBb(iCv,0:3) specifies the
+!     magnetic field at the center of the (iCv) cell.
+!     cvBb(iCv,0:2) are the (x,y,z)-components and cvBb(iCv,3) is
 !     the absolute magnetic field strength.
-!     (bb(,,3)=sqrt(bb(,,0)**2+bb(,,1)**2+bb(,,2)**2.)
-!     It will hold that 0.lt.bb(,,3).
+!     (cvBb(,3)=sqrt(cvBb(,0)**2+cvBb(,1)**2+cvBb(,,2)**2.)
+!     It will hold that 0.le.cvBb(,0:3), because the direction of the
+!     magnetic field follows from cvEb (see below).
 !
-!     vol - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), vol(ix,iy) specifies the volume of
-!     the (ix,iy) cell. (In the case of toroidal symmetry this volume
+!     cvEb - (1:nCv,0:2) real*8 array.
+!     cvEb(iCv,0:2) specifies the direction of the magnetic field at
+!     the center of the cell iCv in the (R,Z,toroidal) axis system.
+!     (sqrt(cvEb(iCv,0)**2+cvEb(iCv,1)**2+cvEb(iCv,2)**2)=1)
+!
+!     cvVol - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvVol(iCv) specifies the volume of
+!     the (iCv) cell. (In the case of toroidal symmetry this volume
 !     includes a factor 2*pi*R, while in the case of cylindrical
 !     symmetry it includes a factor 2*pi*Z.)
-!     It will hold that 0.lt.vol(,).
+!     It will hold that 0.lt.cvVol().
 !
-!     hx, hy - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
-!     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
-!     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
+!     cvHz - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvHz(iCv) specifies the length of
+!     the (iCv) cell in the z-direction, measured at the cell center.
 !
-!     qz - (-1:nx,-1:ny,0:1) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
-!     qz(ix,iy,1) specifies cos(t), where t is the complementary angle
-!     between the x-direction and the y-direction on the (ix,iy) cell.
-!     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-!     geometry. (qz(ix,iy,0) is the inner product of the x and y unit
-!     vectors.)
-!     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
+!     cvSz - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), cvSz(iCv) specifies the area of
+!     the (iCv) cell perpendicular to the z-direction.
 !
-!     qc - (-1:nx,-1:ny) real*8 array, output.
-!     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
-!     t is the complementary angle between the x-direction of the
-!     (ix,iy) cell and its left face.
-!     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-!     geometry.
-!     It will hold that 0.lt.qc(,).le.1.
+!     fcQgam - (1:nFc,0:1) real*8 array.
+!     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and
+!     fcQgam(iFc,1) specifies sin(t), where t is the included angle
+!     between the cell-connector vector and the normal vector
+!     of face iFc. It will hold that 0.lt.fcQgam(,).le.1.
 !
-!     gs - (-1:nx,-1:ny,0:2) real*8 array.
-!     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
-!     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
-!     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
-!     gsx(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), gsy(ix,iy) specifies the area of the
-!     face between the (ix,iy) cell and its bottom neighbor. For iy.eq.-1,
-!     gsy(-1:nx,iy) will hold 0.
-!     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
-!     (ix,iy) cell normal to the third (ignorable) coordinate.
+!     fcQalf - (1:nFc,0:1) real*8 array.
+!     For iFc in (1:nFc), fcQalf(iFc,0) specifies cos(t) and
+!     fcQalf(iFc,1) specifies sin(t), where t is the included angle
+!     between the magnetic field vector and the face normal.
+!     If Bz is negative, fcQalf(iFc,1) is modified to be -sin(t).
 !
-!     pbs - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
-!     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-!     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic
-!     field pitch)*(surface area), namely the parallel contact area,
-!     on the (ix,iy) cell left and bottom faces respectively.
-!     In the case where the grid covers the full vacuum vessel,
-!     pbsy also contains a contribution from the narrowing of the
-!     flux tube when impacting the wall structures.
-!     See routine b2xgbs for the form of interpolation employed.
+!     fcQbet - (1:nFc,0:1) real*8 array.
+!     For iFc in (1:nFc), fcQbet(iFc,0) specifies cos(t) and
+!     fcQbet(iFc,1) specifies sin(t), where t is the included angle
+!     between the cell-connector and the magnetic field vector.
+!     If Bz is negative, fcQbet(iFc,0) is modified to be -cos(t).
 !
-!     na - (-1:nx,-1:ny,0:ns-1) real*8 array.
-!     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), na(ix,iy,is) specifies
-!     the density of atomic species (is) on the (ix,iy) cell.
-!     It will hold that 0.lt.na(,,).
+!     fcPbs - (1:nFc) real*8 array.
+!     For iFc in (1:nFc), fcPbs(iFc) specifies the product
+!     (fcBx/fcBb)*sx or (magnetic field pitch)*(surface area),
+!     namely the parallel contact area.
 !
-!     ua - (-1:nx,-1:ny,0:ns-1) real*8 array.
-!     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), ua(ix,iy,is) specifies
-!     the parallel velocity of atomic species (is) on the (ix,iy) cell.
+!     fcPbshz - (1:nFc) real*8 array.
+!     For iFc in (1:nFc), fcPbshz(iFc) specifies the product
+!     (fcBx/fcBb)*sx*hz or (magnetic field pitch)*(surface area)*(hz).
+!
+!     fcS - (1:nFc,1:2) real*8 array.
+!     For iFc in (1:nFc), fcHc(iFc,:) specifies the total area of face iFc.
+!
+!     na - (1:nCv,0:ns-1) real*8 array.
+!     For (iCv,is) in (1:nCv,0:ns-1), na(iCv,is) specifies
+!     the density of atomic species (is) on the (iCv) cell.
+!     It will hold that 0.lt.na(:).
+!
+!     ua - (1:nCv,0:ns-1) real*8 array.
+!     For (iCv,is) in (1:nCv,0:ns-1), ua(iCv,is) specifies
+!     the parallel velocity of atomic species (is) on the (iCv) cell.
 !     The sign of the parallel velocity indicates whether it is flowing
 !     in the same direction as the local poloidal magnetic field.
 !
-!     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-!     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
-!     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
-!     uadia(ix,iy,1,is) the radial drift velocity.
+!     te - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), te(iCv) specifies the electron
+!     temperature on the (iCv) cell. It will hold that 0.lt.te(:).
 !
-!     te - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
-!     temperature on the (ix,iy) cell. It will hold that 0.lt.te(,).
+!     ti - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), ti(iCv) specifies the all atom
+!     temperature on the (iCv) cell. It will hold that 0.lt.ti(:).
 !
-!     ti - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), ti(ix,iy) specifies the all atom
-!     temperature on the (ix,iy) cell. It will hold that 0.lt.ti(,).
+!     tn - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), tn(iCv) specifies temperature of the
+!     hydrogenic neutrals on the (iCv) cell. It will hold that 0.lt.tn(:).
+!     When no separate fluid neutral energy equation is solved, tn = ti.
 !
-!     po - (-1:nx,-1:ny) real*8 array.
-!     For (ix,iy) in (-1:nx,-1:ny), po(ix,iy) specifies the electric
-!     potential on the (ix,iy) cell.
+!     po - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), po(iCv) specifies the electric
+!     potential on the (iCv) cell.
 !
-!     fna - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
-!     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
-!     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax(ix,iy,is) specifies
-!     the flux of atoms of species (is) through the face between the
-!     (ix,iy) cell and its left neighbor.
-!     For ix.eq.-1, fnax(ix,-1:ny,0:ns-1) will hold 0.
-!     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay(ix,iy,is) specifies
-!     the flux of atoms of species (is) through the face between the
-!     (ix,iy) cell and its bottom neighbor.
-!     For iy.eq.-1, fnay(-1:nx,iy,0:ns-1) will hold 0.
+!     kt - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), kt(iCv) specifies the turbulent kinetic
+!     energy on the (iCv) cell.
 !
-!     fhe - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)
-!     For (ix,iy) in (0:nx,-1:ny), fhex(ix,iy) specifies the electron
-!     heat flux through the face between the (ix,iy) cell and its
-!     left neighbor. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), fhey(ix,iy) specifies the electron
-!     heat flux through the face between the (ix,iy) cell and its
-!     bottom neighbor. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
+!     zt - (1:nCv) real*8 array.
+!     For (iCv) in (1:nCv), kt(iCv) specifies the enstrophy
+!     on the (iCv) cell.
 !
-!     fhi - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
-!     For (ix,iy) in (0:nx,-1:ny), fhix(ix,iy) specifies the all atom
-!     heat flux through the face between the (ix,iy) cell and its left
-!     neighbor. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
-!     heat flux through the face between the (ix,iy) cell and its
-!     bottom neighbor. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
+!     For all the fluxes below, the sign convention is as follows.
+!     Fluxes are positive when they flow in the local x-direction,
+!     where x is the connector line from C1 to C2.
 !
-!     fch - (-1:nx,-1:ny,0:1) real*8 array.
-!     (Let fchx(,)=fch(,,0) and fchy(,)=fch(,,1).)
-!     For (ix,iy) in (0:nx,-1:ny), fchx(ix,iy) specifies the electric
-!     current through the face between the (ix,iy) cell and its left
-!     neighbor. For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
-!     For (ix,iy) in (-1:nx,0:ny), fchy(ix,iy) specifies the electric
-!     current through the face between the (ix,iy) cell and its bottom
-!     neighbor. For iy.eq.-1, fchy(-1:nx,iy) will hold 0.
+!     fna - (1:nFc,0:1,0:ns-1) real*8 array.
+!     For (iFc,is) in (1:nFc,0:1,0:ns-1), fna(iFc,0,is) specifies
+!     the poloidal component and fna(iFc,1,is) specifies
+!     the radial component of the flux of atoms of species (is) through the
+!     face iFc.
+!
+!     fhe - (1:nFc,0:1) real*8 array.
+!     For (iFc) in (1:nFc), fhe(iFc,0) specifies the poloidal component and
+!     fhe(iFc,1) specifies the radial component of the electron heat flux
+!     through the face iFc.
+!
+!     fhi - (1:nFc,0:1) real*8 array.
+!     For (iFc) in (1:nFc), fhi(iFc,0) specifies the poloidal component and
+!     fhi(iFc,1) specifies the radial component of the all atom heat flux
+!     through the face iFc.
+!
+!     fch - (1:nFc,0:1) real*8 array.
+!     For (iFc) in (1:nFc), fch(iFc,0) specifies the poloidal component and
+!     fch(iFc,1) specifies the radial component of the electric
+!     current through the face iFc.
+!
+!     uadia - (1:nFc,0:1,0:ns-1) real*8 array.
+!     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,0,is) specifies
+!     the total effective drift velocity of species (is) on the (iFc) face
+!     in the diamagnetic direction (i.e. within the flux surface but
+!     perpendicular to the magnetic field), but projected onto the
+!     poloidal direction.
+!     For (iFc,is) in (1:nFc,0:1,0:ns-1), uadia(iFc,1,is) specifies
+!     the total effective drift velocity of species (is) on the (iFc) face
+!     in the radial direction.
 !
 !     na0, ua0, te0, ti0, po0, fna0, fhe0, fhi0, fch0 - real*8 array.
 !     state of the plasma at the start of the present timestep.
@@ -8891,18 +8521,6 @@ CONTAINS
     CALL READ_B2FGMTRY(ninp(1), mpg, geo)
     CALL INIT_GEOMETRY(mpg, geo, switch)
 !
-    CALL IPGETI('b2mndr_redef_pbs', b2mndr_redef_pbs)
-    IF (b2mndr_redef_pbs .NE. 0) THEN
-      IF (redef_gmtry .EQ. 1) THEN
-        WRITE(6, *) &
-&       'Magnetic flux correction of pbsx already done in b2ag.'
-      ELSE
-        WRITE(6, *) 'Magnetic flux correction must now be done in b2ag.'
-        WRITE(6, *) 'Please set b2agdr_redef_gmtry to 1 in b2ag.dat ', &
-&       'and re-run b2ag.'
-        CALL XERRAB('Obsolete switch b2mndr_redef_pbs!')
-      END IF
-    END IF
 !
     CALL ALLOC_B2MOD_TALLIES(mpg%nnreg, ns)
 !
@@ -9419,41 +9037,43 @@ CONTAINS
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
 !   Plus diff mem management of: b2voloncfd:in b2voloncf:in b2data:in
 !                b2dataoncfd:in b2datad:in b2dataoncf:in par_opt_phys:in
-!                rtlsa:in rtlcx:in rtlqa:in rtlra:in geo.cvbb:in
-!                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvhx:in
-!                geo.cvqgam:in geo.cvvol:in geo.cvonedbsq:in geo.cvfpsi:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
-!                geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in geo.fcbzb:in
-!                geo.fcfpsi:in geo.vxbb:in geo.vxx:in geo.vxy:in
-!                geo.vxhz:in geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in
-!                geo.ftconn:in geo.fsconn:in geo.fteps:in geo.ftbbav2:in
-!                state_ext.am:in state_ext.ne:in state_ext.ne2:in
-!                state_ext.ue:in state_ext.za:in state_ext.za2:in
-!                state_ext.pt:in state_ext.na:in state_ext.ni:in
-!                state_ext.ua:in state_ext.ta:in state_ext.fhi:in
-!                state_ext.fa:in state_ext.sne:in state_ext.she:in
-!                state_ext.shi:in state_ext.sch:in state_ext.sna:in
-!                state_ext.smo:in stated.pl.na:in stated.pl.ua:in
-!                stated.pl.po:in stated.pl.te:in stated.pl.ti:in
-!                stated.pl.tn:in stated.pl.kt:in stated.pl.zt:in
-!                stated.co.csig:in stated.co.calf:in stated.co.csig_an:in
-!                stated.co.csigin:in stated.co.chce:in stated.co.chce_exb:in
-!                stated.co.chci:in stated.co.chci_exb:in stated.co.chcn:in
-!                stated.co.cdkt:in stated.co.cdzt:in stated.co.chvemx:in
-!                stated.co.chvimx:in stated.co.cvla:in stated.co.cdna:in
-!                stated.co.cdna_exb:in stated.co.cdpa:in stated.co.cvsa:in
-!                stated.co.cvlahz:in stated.co.cdpahz:in stated.co.cvsahz:in
-!                stated.co.cddi:in stated.co.cvsahz_cl:in stated.co.chcb:in
-!                stated.co.cvsahz_eff:in stated.co.cvsa_cl:in stated.co.ceqp:in
-!                stated.co.vsaf_cl:in stated.co.sig0:in stated.co.hce0:in
-!                stated.co.hci0:in stated.co.hcn0:in stated.co.alf0:in
-!                stated.co.dkt0:in stated.co.dzt0:in stated.co.dna_exb:in
-!                stated.co.hce_exb:in stated.co.hci_exb:in stated.co.dpa0:in
-!                stated.co.dna0:in stated.co.vsa0:in stated.co.hcib:in
-!                stated.co.vla0:in stated.co.alfx_c:in stated.co.sigx_c:in
-!                stated.co.sigx_kt:in stated.co.hcix_c:in stated.co.fllim_ki:in
-!                stated.co.fllim_ke:in stated.co.fllim_al:in stated.co.fllim_al_c:in
+!                rtlsa:in rtlcx:in rtlqa:in rtlra:in state_extd.she:in
+!                state_extd.shi:in state_extd.sch:in state_extd.sna:in
+!                state_extd.smo:in geo.cvbb:in geo.cvx:in geo.cvy:in
+!                geo.cvhz:in geo.cvhx:in geo.cvhy:in geo.cvqgam:in
+!                geo.cvvol:in geo.cvonedbsq:in geo.cvfpsi:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
+!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
+!                geo.fcpbs:in geo.fcpbshz:in geo.fcbzb:in geo.fcfpsi:in
+!                geo.vxbb:in geo.vxx:in geo.vxy:in geo.vxhz:in
+!                geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in geo.ftconn:in
+!                geo.fsconn:in geo.fteps:in geo.ftbbav2:in state_ext.am:in
+!                state_ext.ne:in state_ext.ne2:in state_ext.ue:in
+!                state_ext.za:in state_ext.za2:in state_ext.pt:in
+!                state_ext.na:in state_ext.ni:in state_ext.ua:in
+!                state_ext.ta:in state_ext.fhi:in state_ext.fa:in
+!                state_ext.sne:in state_ext.she:in state_ext.shi:in
+!                state_ext.sch:in state_ext.sna:in state_ext.smo:in
+!                stated.pl.na:in stated.pl.ua:in stated.pl.po:in
+!                stated.pl.te:in stated.pl.ti:in stated.pl.tn:in
+!                stated.pl.kt:in stated.pl.zt:in stated.co.csig:in
+!                stated.co.calf:in stated.co.csig_an:in stated.co.csigin:in
+!                stated.co.chce:in stated.co.chce_exb:in stated.co.chci:in
+!                stated.co.chci_exb:in stated.co.chcn:in stated.co.cdkt:in
+!                stated.co.cdzt:in stated.co.chvemx:in stated.co.chvimx:in
+!                stated.co.cvla:in stated.co.cdna:in stated.co.cdna_exb:in
+!                stated.co.cdpa:in stated.co.cvsa:in stated.co.cvlahz:in
+!                stated.co.cdpahz:in stated.co.cvsahz:in stated.co.cddi:in
+!                stated.co.cvsahz_cl:in stated.co.chcb:in stated.co.cvsahz_eff:in
+!                stated.co.cvsa_cl:in stated.co.ceqp:in stated.co.vsaf_cl:in
+!                stated.co.sig0:in stated.co.hce0:in stated.co.hci0:in
+!                stated.co.hcn0:in stated.co.alf0:in stated.co.dkt0:in
+!                stated.co.dzt0:in stated.co.dna_exb:in stated.co.hce_exb:in
+!                stated.co.hci_exb:in stated.co.dpa0:in stated.co.dna0:in
+!                stated.co.vsa0:in stated.co.hcib:in stated.co.vla0:in
+!                stated.co.alfx_c:in stated.co.sigx_c:in stated.co.sigx_kt:in
+!                stated.co.hcix_c:in stated.co.fllim_ki:in stated.co.fllim_ke:in
+!                stated.co.fllim_al:in stated.co.fllim_al_c:in
 !                stated.co.fllim_ki_c:in stated.co.f_luc_ke:in
 !                stated.co.f_luc_ki:in stated.co.f_luc_et:in stated.co.f_luc_sg:in
 !                stated.co.f_luc_al:in stated.co.cssb:in stated.dv.fch:in
@@ -9588,26 +9208,26 @@ CONTAINS
 !                state.sr.skt_prod:in state.srw.sch0:in state.srw.she0:in
 !                state.srw.shi0:in state.srw.sne0:in state.srw.shn0:in
 !                state.srw.skt0:in state.srw.szt0:in state.srw.smo0:in
-!                state.srw.smq0:in state.srw.sna0:in state.srw.smcf:in
-!                state.srw.smpr:in state.srw.smpt:in state.srw.smfr:in
-!                state.srw.b2stbc_sch:in state.srw.b2stbc_she:in
-!                state.srw.b2stbc_shi:in state.srw.b2stbc_sne:in
-!                state.srw.b2stbc_shn:in state.srw.b2stbc_skt:in
-!                state.srw.b2stbc_szt:in state.srw.b2stbc_smo:in
-!                state.srw.b2stbc_sna:in state.srw.b2stbm_sch:in
-!                state.srw.b2stbm_she:in state.srw.b2stbm_shi:in
-!                state.srw.b2stbm_sne:in state.srw.b2stbm_smo:in
-!                state.srw.b2stbm_sna:in state.srw.b2stbr_sch:in
-!                state.srw.b2stbr_she:in state.srw.b2stbr_shi:in
-!                state.srw.b2stbr_sne:in state.srw.b2stbr_shn:in
-!                state.srw.b2stbr_skt:in state.srw.b2stbr_szt:in
-!                state.srw.b2stbr_smo:in state.srw.b2stbr_sna:in
-!                state.srw.b2npmo_smaf:in state.srw.b2npmo_smag:in
-!                state.srw.b2npmo_smav:in state.srw.rsana:in state.srw.rsahi:in
-!                state.srw.rsamo:in state.srw.rrana:in state.srw.rrahi:in
-!                state.srw.rramo:in state.srw.rcxna:in state.srw.rcxhi:in
-!                state.srw.rcxmo:in state.srw.rqahe:in state.srw.rqrad:in
-!                state.srw.rqbrm:in state.srw.b2sihs_joule:in state.srw.b2sihs_divue:in
+!                state.srw.smq0:in state.srw.sna0:in state.srw.smpr:in
+!                state.srw.smpt:in state.srw.smfr:in state.srw.b2stbc_sch:in
+!                state.srw.b2stbc_she:in state.srw.b2stbc_shi:in
+!                state.srw.b2stbc_sne:in state.srw.b2stbc_shn:in
+!                state.srw.b2stbc_skt:in state.srw.b2stbc_szt:in
+!                state.srw.b2stbc_smo:in state.srw.b2stbc_sna:in
+!                state.srw.b2stbm_sch:in state.srw.b2stbm_she:in
+!                state.srw.b2stbm_shi:in state.srw.b2stbm_sne:in
+!                state.srw.b2stbm_smo:in state.srw.b2stbm_sna:in
+!                state.srw.b2stbr_sch:in state.srw.b2stbr_she:in
+!                state.srw.b2stbr_shi:in state.srw.b2stbr_sne:in
+!                state.srw.b2stbr_shn:in state.srw.b2stbr_skt:in
+!                state.srw.b2stbr_szt:in state.srw.b2stbr_smo:in
+!                state.srw.b2stbr_sna:in state.srw.b2npmo_smaf:in
+!                state.srw.b2npmo_smag:in state.srw.b2npmo_smav:in
+!                state.srw.rsana:in state.srw.rsahi:in state.srw.rsamo:in
+!                state.srw.rrana:in state.srw.rrahi:in state.srw.rramo:in
+!                state.srw.rcxna:in state.srw.rcxhi:in state.srw.rcxmo:in
+!                state.srw.rqahe:in state.srw.rqrad:in state.srw.rqbrm:in
+!                state.srw.b2sihs_joule:in state.srw.b2sihs_divue:in
 !                state.srw.b2sihs_divua:in state.srw.b2sihs_exbe:in
 !                state.srw.b2sihs_exba:in state.srw.b2sihs_visa:in
 !                state.srw.b2sihs_fraa:in state.srw.b2sihs_str:in
@@ -9621,14 +9241,18 @@ CONTAINS
 !                state.rt.rpi:in state.rtw.rsa:in state.rtw.rra:in
 !                state.rtw.rqa:in state.rtw.rrd:in state.rtw.rbr:in
 !                state.rtw.rcx:in state.rtw.rqr:in state.psnl.na:in
-!                state.psnl.ua:in state.psnl.te:in state.psnl.ti:in
-!                state.psnl.tn:in state.psnl.kt:in state.psnl.zt:in
-!                state.psnl.ne:in state.psnl.ni:in state.psnl.nn:in
-!                state.psnl.fna:in state.psnl.kinrgy:in state.psnc.na:in
-!                state.psnc.ua:in state.psnc.te:in state.psnc.ti:in
-!                state.psnc.tn:in state.psnc.kt:in state.psnc.zt:in
-!                state.psnc.ne:in state.psnc.ni:in state.psnc.nn:in
-!                state.psnc.fna:in state.psnc.kinrgy:in state.diag.aresco:in
+!                state.psnl.ua:in state.psnl.po:in state.psnl.te:in
+!                state.psnl.ti:in state.psnl.tn:in state.psnl.kt:in
+!                state.psnl.zt:in state.psnl.ne:in state.psnl.ni:in
+!                state.psnl.nn:in state.psnl.fch:in state.psnl.fna:in
+!                state.psnl.fhi:in state.psnl.fhe:in state.psnl.fkt:in
+!                state.psnl.fzt:in state.psnl.kinrgy:in state.psnc.na:in
+!                state.psnc.ua:in state.psnc.po:in state.psnc.te:in
+!                state.psnc.ti:in state.psnc.tn:in state.psnc.kt:in
+!                state.psnc.zt:in state.psnc.ne:in state.psnc.ni:in
+!                state.psnc.nn:in state.psnc.fch:in state.psnc.fna:in
+!                state.psnc.fhi:in state.psnc.fhe:in state.psnc.fkt:in
+!                state.psnc.fzt:in state.psnc.kinrgy:in state.diag.aresco:in
 !                state.diag.aresmo:in state.diag.acorpa:in state.diag.acorua:in
 !                state.diag.rescoreg:in state.diag.resmoreg:in
 !                state.diag.reshereg:in state.diag.reshireg:in
@@ -9636,8 +9260,8 @@ CONTAINS
 !   variations   of useful results: enepar conpar potpar enipar
 !                b2recyc tdata j
 !   with respect to varying inputs: enepar conpar enkpar potpar
-!                mompar enipar b2recyc tdata parm_hce parm_hci
-!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
+!                mompar enipar b2recyc parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
 !                corr_length sigma shift *par_opt_phys mean *rtlsa
 !                *rtlcx *rtlqa *rtlra switch.keps_cd switch.keps_heat
 !                switch.keps_heat_i switch.keps_sig switch.keps_alf
@@ -9650,98 +9274,106 @@ CONTAINS
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
 !   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
 !                par_opt_phys:in rtlsa:in rtlcx:in rtlqa:in rtlra:in
-!                mpg.bcfcor:in mpg.rcfcor:in-out mpg.intcellp:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
-!                geo.cvonedbsq:in geo.cvfpsi:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.fcpbshz:in geo.fcbzb:in geo.vxbb:in geo.vxx:in
-!                geo.vxy:in geo.vxhz:in geo.vxvol:in geo.vxonedbsq:in
-!                geo.cvconn:in geo.ftconn:in geo.fsconn:in geo.fteps:in
-!                geo.ftbbav2:in state_ext.am:in state_ext.ne:in
-!                state_ext.ne2:in state_ext.ue:in state_ext.za:in
-!                state_ext.za2:in state_ext.pt:in state_ext.na:in
-!                state_ext.ni:in state_ext.ua:in state_ext.ta:in
-!                state_ext.fhi:in state_ext.fa:in state_ext.sne:in
-!                state_ext.she:in state_ext.shi:in state_ext.sch:in
-!                state_ext.sna:in state_ext.smo:in state.pl.na:in
-!                state.pl.ua:in state.pl.po:in state.pl.te:in state.pl.ti:in
-!                state.pl.tn:in state.pl.kt:in state.pl.zt:in state.co.csig:in
-!                state.co.calf:in state.co.csig_an:in state.co.calf_an:in
-!                state.co.csig_cl:in state.co.calf_cl:in state.co.csigin:in
-!                state.co.chve:in state.co.chce:in state.co.chce_exb:in
-!                state.co.chvi:in state.co.chci:in state.co.chci_exb:in
-!                state.co.chcn:in state.co.cdkt:in state.co.cdzt:in
-!                state.co.chvemx:in state.co.chvimx:in state.co.cvla:in
-!                state.co.cdna:in state.co.cdna_exb:in state.co.cdpa:in
-!                state.co.cvsa:in state.co.cvlahz:in state.co.cdnahz:in
-!                state.co.cdpahz:in state.co.cvsahz:in state.co.cddi:in
-!                state.co.cvsahz_cl:in state.co.chcb:in state.co.cvsa_an:in
-!                state.co.cvmahz:in state.co.cvsahz_eff:in state.co.cthe:in
-!                state.co.cthi:in state.co.cvsa_cl:in state.co.ceqp:in
-!                state.co.fllim0fhi:in state.co.fllimvisc:in state.co.fllim0fna:in
-!                state.co.vsaf_cl:in state.co.sig0:in state.co.hce0:in
-!                state.co.hci0:in state.co.hcn0:in state.co.alf0:in
-!                state.co.dkt0:in state.co.dzt0:in state.co.dna_exb:in
-!                state.co.hce_exb:in state.co.hci_exb:in state.co.dpa0:in
-!                state.co.dna0:in state.co.vsa0:in state.co.hcib:in
-!                state.co.vla0:in state.co.vma0:in state.co.kt_neo:in
-!                state.co.alfx_c:in state.co.sigx_c:in state.co.sigx_kt:in
-!                state.co.hcix_c:in state.co.fllim_ki:in state.co.fllim_ke:in
-!                state.co.fllim_al:in state.co.fllim_al_c:in state.co.fllim_ki_c:in
-!                state.co.f_luc_ke:in state.co.f_luc_ki:in state.co.f_luc_et:in
-!                state.co.f_luc_sg:in state.co.f_luc_al:in state.co.cssb:in
-!                state.dv.fch:in state.dv.fch_32:in state.dv.fch_52:in
-!                state.dv.fch_p:in state.dv.fchdia:in state.dv.fchin:in
-!                state.dv.fchvispar:in state.dv.fchvisper:in state.dv.fchvisq:in
-!                state.dv.fchinert:in state.dv.fchanml:in state.dv.fchviskt:in
-!                state.dv.fch_pi_c:in state.dv.fch_pi_f:in state.dv.fni_32:in
-!                state.dv.fni_52:in state.dv.fni:in state.dv.fni_he:in
-!                state.dv.fna:in state.dv.fna_mdf:in state.dv.fna_52:in
-!                state.dv.fna_32:in state.dv.fna_53:in state.dv.fna_52nd:in
-!                state.dv.fna_32nd:in state.dv.fna_nodrift:in state.dv.fna_he:in
-!                state.dv.fnapsch:in state.dv.fna_fcor:in state.dv.fna_eir:in
-!                state.dv.fna_exb:in state.dv.fmo:in state.dv.fne:in
-!                state.dv.fne_he:in state.dv.fne_32:in state.dv.fne_52:in
-!                state.dv.fne_eir:in state.dv.fne_53:in state.dv.fhe:in
-!                state.dv.fhe_mdf:in state.dv.fhepsch:in state.dv.fhe_eir:in
-!                state.dv.fhe_exb:in state.dv.fhi:in state.dv.fhi_mdf:in
-!                state.dv.fhipsch:in state.dv.fhi_eir:in state.dv.fhi_exb:in
-!                state.dv.fnn:in state.dv.fnn_32:in state.dv.fnn_52:in
-!                state.dv.fhn:in state.dv.fnn_inc:in state.dv.fhm:in
-!                state.dv.fhp:in state.dv.fhj:in state.dv.fht:in
-!                state.dv.fkt:in state.dv.fzt:in state.dv.kin_frac_hyb:in
-!                state.dv.fluid_frac_hyb:in state.dv.kinrgy:in
-!                state.dv.conc:in state.dv.flob:in state.dv.floe:in
-!                state.dv.floi:in state.dv.floe_noc:in state.dv.floi_noc:in
-!                state.dv.flon:in state.dv.flokt:in state.dv.flozt:in
-!                state.dv.conn:in state.dv.conkt:in state.dv.conzt:in
-!                state.dv.conb:in state.dv.cone:in state.dv.coni:in
-!                state.dv.resmo:in state.dv.resco:in state.dv.respo:in
-!                state.dv.reshe:in state.dv.reshi:in state.dv.resht:in
-!                state.dv.resmt:in state.dv.reshn:in state.dv.reskt:in
-!                state.dv.reszt:in state.dv.corua:in state.dv.corpa:in
-!                state.dv.corut:in state.dv.corpo:in state.dv.cortt:in
-!                state.dv.corte:in state.dv.corti:in state.dv.cortn:in
-!                state.dv.corkt:in state.dv.corzt:in state.dv.pcca:in
-!                state.dv.pccm:in state.dv.ne:in state.dv.ni:in-out
-!                state.dv.nn:in-out state.dv.ue:in state.dv.ne2:in
-!                state.dv.pa:in state.dv.pz:in state.dv.lnlam:in
-!                state.dv.uadia:in state.dv.vadia:in state.dv.wadia:in
-!                state.dv.vaecrb:in state.dv.vedia:in state.dv.wedia:in
-!                state.dv.veecrb:in state.dv.facdrift:in state.dv.fac_exb:in
-!                state.dv.fac_vis:in state.sr.sch:in state.sr.she:in
-!                state.sr.shi:in state.sr.sne:in state.sr.shn:in
-!                state.sr.skt:in state.sr.szt:in state.sr.smo:in
-!                state.sr.smq:in state.sr.sna:in state.sr.shedt:in
-!                state.sr.sktdt:in state.sr.sztdt:in state.sr.snedt:in
-!                state.sr.shidt:in state.sr.shndt:in state.sr.schdt:in
-!                state.sr.smodt:in state.sr.snadt:in state.sr.skt_diss:in
-!                state.sr.skt_prod:in state.srw.sch0:in state.srw.she0:in
-!                state.srw.shi0:in state.srw.sne0:in state.srw.shn0:in
-!                state.srw.skt0:in state.srw.szt0:in state.srw.smo0:in
-!                state.srw.smq0:in state.srw.sna0:in state.srw.smcf:in
+!                state_avg.na_mean:out state_avg.ua_mean:out state_avg.te_mean:out
+!                state_avg.ti_mean:out state_avg.po_mean:out state_avg.kt_mean:out
+!                state_avg.zt_mean:out state_avg.sna_mean:out state_avg.smo_mean:out
+!                state_avg.she_mean:out state_avg.shi_mean:out
+!                state_avg.shn_mean:out state_avg.e_na:out state_avg.e_ua:out
+!                state_avg.e_te:out state_avg.e_ti:out state_avg.e_po:out
+!                state_avg.e_kt:out state_avg.e_zt:out state_avg.e_sna:out
+!                state_avg.e_smo:out state_avg.e_she:out state_avg.e_shi:out
+!                state_avg.e_shn:out mpg.bcfcor:in mpg.rcfcor:in-out
+!                mpg.intcellp:in mpg.intcellr:in geo.cvbb:in geo.cvx:in
+!                geo.cvy:in geo.cvhz:in geo.cvhx:in geo.cvhy:in
+!                geo.cvqgam:in geo.cvvol:in geo.cvonedbsq:in geo.cvfpsi:in
+!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
+!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in geo.fcbzb:in
+!                geo.vxbb:in geo.vxx:in geo.vxy:in geo.vxhz:in
+!                geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in geo.ftconn:in
+!                geo.fsconn:in geo.fteps:in geo.ftbbav2:in state_ext.am:in
+!                state_ext.ne:in state_ext.ne2:in state_ext.ue:in
+!                state_ext.za:in state_ext.za2:in state_ext.pt:in
+!                state_ext.na:in state_ext.ni:in state_ext.ua:in
+!                state_ext.ta:in state_ext.fhi:in state_ext.fa:in
+!                state_ext.sne:in state_ext.she:in state_ext.shi:in
+!                state_ext.sch:in state_ext.sna:in state_ext.smo:in
+!                state.pl.na:in state.pl.ua:in state.pl.po:in state.pl.te:in
+!                state.pl.ti:in state.pl.tn:in state.pl.kt:in state.pl.zt:in
+!                state.co.csig:in state.co.calf:in state.co.csig_an:in
+!                state.co.calf_an:in state.co.csig_cl:in state.co.calf_cl:in
+!                state.co.csigin:in state.co.chve:in state.co.chce:in
+!                state.co.chce_exb:in state.co.chvi:in state.co.chci:in
+!                state.co.chci_exb:in state.co.chcn:in state.co.cdkt:in
+!                state.co.cdzt:in state.co.chvemx:in state.co.chvimx:in
+!                state.co.cvla:in state.co.cdna:in state.co.cdna_exb:in
+!                state.co.cdpa:in state.co.cvsa:in state.co.cvlahz:in
+!                state.co.cdnahz:in state.co.cdpahz:in state.co.cvsahz:in
+!                state.co.cddi:in state.co.cvsahz_cl:in state.co.chcb:in
+!                state.co.cvsa_an:in state.co.cvmahz:in state.co.cvsahz_eff:in
+!                state.co.cthe:in state.co.cthi:in state.co.cvsa_cl:in
+!                state.co.ceqp:in state.co.fllim0fhi:in state.co.fllimvisc:in
+!                state.co.fllim0fna:in state.co.vsaf_cl:in state.co.sig0:in
+!                state.co.hce0:in state.co.hci0:in state.co.hcn0:in
+!                state.co.alf0:in state.co.dkt0:in state.co.dzt0:in
+!                state.co.dna_exb:in state.co.hce_exb:in state.co.hci_exb:in
+!                state.co.dpa0:in state.co.dna0:in state.co.vsa0:in
+!                state.co.hcib:in state.co.vla0:in state.co.vma0:in
+!                state.co.kt_neo:in state.co.alfx_c:in state.co.sigx_c:in
+!                state.co.sigx_kt:in state.co.hcix_c:in state.co.fllim_ki:in
+!                state.co.fllim_ke:in state.co.fllim_al:in state.co.fllim_al_c:in
+!                state.co.fllim_ki_c:in state.co.f_luc_ke:in state.co.f_luc_ki:in
+!                state.co.f_luc_et:in state.co.f_luc_sg:in state.co.f_luc_al:in
+!                state.co.cssb:in state.dv.fch:in state.dv.fch_32:in
+!                state.dv.fch_52:in state.dv.fch_p:in state.dv.fchdia:in
+!                state.dv.fchin:in state.dv.fchvispar:in state.dv.fchvisper:in
+!                state.dv.fchvisq:in state.dv.fchinert:in state.dv.fchanml:in
+!                state.dv.fchviskt:in state.dv.fch_pi_c:in state.dv.fch_pi_f:in
+!                state.dv.fni_32:in state.dv.fni_52:in state.dv.fni:in
+!                state.dv.fni_he:in state.dv.fna:in state.dv.fna_mdf:in
+!                state.dv.fna_52:in state.dv.fna_32:in state.dv.fna_53:in
+!                state.dv.fna_52nd:in state.dv.fna_32nd:in state.dv.fna_nodrift:in
+!                state.dv.fna_he:in state.dv.fnapsch:in state.dv.fna_fcor:in
+!                state.dv.fna_eir:in state.dv.fna_exb:in state.dv.fmo:in
+!                state.dv.fne:in state.dv.fne_he:in state.dv.fne_32:in
+!                state.dv.fne_52:in state.dv.fne_eir:in state.dv.fne_53:in
+!                state.dv.fhe:in state.dv.fhe_mdf:in state.dv.fhepsch:in
+!                state.dv.fhe_eir:in state.dv.fhe_exb:in state.dv.fhi:in
+!                state.dv.fhi_mdf:in state.dv.fhipsch:in state.dv.fhi_eir:in
+!                state.dv.fhi_exb:in state.dv.fnn:in state.dv.fnn_32:in
+!                state.dv.fnn_52:in state.dv.fhn:in state.dv.fnn_inc:in
+!                state.dv.fhm:in state.dv.fhp:in state.dv.fhj:in
+!                state.dv.fht:in state.dv.fkt:in state.dv.fzt:in
+!                state.dv.kin_frac_hyb:in state.dv.fluid_frac_hyb:in
+!                state.dv.kinrgy:in state.dv.conc:in state.dv.flob:in
+!                state.dv.floe:in state.dv.floi:in state.dv.floe_noc:in
+!                state.dv.floi_noc:in state.dv.flon:in state.dv.flokt:in
+!                state.dv.flozt:in state.dv.conn:in state.dv.conkt:in
+!                state.dv.conzt:in state.dv.conb:in state.dv.cone:in
+!                state.dv.coni:in state.dv.resmo:in state.dv.resco:in
+!                state.dv.respo:in state.dv.reshe:in state.dv.reshi:in
+!                state.dv.resht:in state.dv.resmt:in state.dv.reshn:in
+!                state.dv.reskt:in state.dv.reszt:in state.dv.corua:in
+!                state.dv.corpa:in state.dv.corut:in state.dv.corpo:in
+!                state.dv.cortt:in state.dv.corte:in state.dv.corti:in
+!                state.dv.cortn:in state.dv.corkt:in state.dv.corzt:in
+!                state.dv.pcca:in state.dv.pccm:in state.dv.ne:in
+!                state.dv.ni:in-out state.dv.nn:in-out state.dv.ue:in
+!                state.dv.ne2:in state.dv.pa:in state.dv.pz:in
+!                state.dv.lnlam:in state.dv.uadia:in state.dv.vadia:in
+!                state.dv.wadia:in state.dv.vaecrb:in state.dv.vedia:in
+!                state.dv.wedia:in state.dv.veecrb:in state.dv.facdrift:in
+!                state.dv.fac_exb:in state.dv.fac_vis:in state.sr.sch:in
+!                state.sr.she:in state.sr.shi:in state.sr.sne:in
+!                state.sr.shn:in state.sr.skt:in state.sr.szt:in
+!                state.sr.smo:in state.sr.smq:in state.sr.sna:in
+!                state.sr.shedt:in state.sr.sktdt:in state.sr.sztdt:in
+!                state.sr.snedt:in state.sr.shidt:in state.sr.shndt:in
+!                state.sr.schdt:in state.sr.smodt:in state.sr.snadt:in
+!                state.sr.skt_diss:in state.sr.skt_prod:in state.srw.sch0:in
+!                state.srw.she0:in state.srw.shi0:in state.srw.sne0:in
+!                state.srw.shn0:in state.srw.skt0:in state.srw.szt0:in
+!                state.srw.smo0:in state.srw.smq0:in state.srw.sna0:in
 !                state.srw.smpr:in state.srw.smpt:in state.srw.smfr:in
 !                state.srw.b2stbc_sch:in state.srw.b2stbc_she:in
 !                state.srw.b2stbc_shi:in state.srw.b2stbc_sne:in
@@ -9774,22 +9406,26 @@ CONTAINS
 !                state.rt.rpi:in state.rtw.rsa:in state.rtw.rra:in
 !                state.rtw.rqa:in state.rtw.rrd:in state.rtw.rbr:in
 !                state.rtw.rcx:in state.rtw.rqr:in state.psnl.na:in
-!                state.psnl.ua:in state.psnl.te:in state.psnl.ti:in
-!                state.psnl.tn:in state.psnl.kt:in state.psnl.zt:in
-!                state.psnl.ne:in state.psnl.ni:in state.psnl.nn:in
-!                state.psnl.fna:in state.psnl.kinrgy:in state.psnc.na:in
-!                state.psnc.ua:in state.psnc.te:in state.psnc.ti:in
-!                state.psnc.tn:in state.psnc.kt:in state.psnc.zt:in
-!                state.psnc.ne:in state.psnc.ni:in state.psnc.nn:in
-!                state.psnc.fna:in state.psnc.kinrgy:in state.diag.aresco:in
+!                state.psnl.ua:in state.psnl.po:in state.psnl.te:in
+!                state.psnl.ti:in state.psnl.tn:in state.psnl.kt:in
+!                state.psnl.zt:in state.psnl.ne:in state.psnl.ni:in
+!                state.psnl.nn:in state.psnl.fch:in state.psnl.fna:in
+!                state.psnl.fhi:in state.psnl.fhe:in state.psnl.fkt:in
+!                state.psnl.fzt:in state.psnl.kinrgy:in state.psnc.na:in
+!                state.psnc.ua:in state.psnc.po:in state.psnc.te:in
+!                state.psnc.ti:in state.psnc.tn:in state.psnc.kt:in
+!                state.psnc.zt:in state.psnc.ne:in state.psnc.ni:in
+!                state.psnc.nn:in state.psnc.fch:in state.psnc.fna:in
+!                state.psnc.fhi:in state.psnc.fhe:in state.psnc.fkt:in
+!                state.psnc.fzt:in state.psnc.kinrgy:in state.diag.aresco:in
 !                state.diag.aresmo:in state.diag.acorpa:in state.diag.acorua:in
 !                state.diag.rescoreg:in state.diag.resmoreg:in
 !                state.diag.reshereg:in state.diag.reshireg:in
 !
   SUBROUTINE B2MNDR_1_DV_DV(nout, ns, switch, switchd0, switchd, geo, &
 &   geod0, geod, mpg, mpgd, state, stated0, stated, statedd, state_ext, &
-&   state_extd0, state_extd, state_avg, state_avgd, j, jd0, jd, jdd, &
-&   nbdirs, nbdirs0)
+&   state_extd0, state_extd, state_extdd, state_avg, state_avgd, j, jd0&
+&   , jd, jdd, nbdirs, nbdirs0)
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
     USE B2MOD_BATCH_AVERAGE_DIFFV_DIFFV, ONLY : e_she, e_shi, e_ua, &
@@ -9806,6 +9442,13 @@ CONTAINS
     USE B2MOD_FACDRIFT_EXB_DIFFV_DIFFV, ONLY : ncall_drift, &
 &   facdrift_scalar, fac_exb_scalar, fac_exb_scalard, fac_vis_scalar, &
 &   fac_vis_scalard
+    USE B2MOD_INPUT_PROFILE_DIFFV_DIFFV, ONLY : sources_time_mod, &
+&   sources_time_switch, sources_filename, sr_ip_elm_count, new_files, &
+&   nsdata, nxdata, divheat, sdata, xdata
+    USE B2MOD_FACDRIFT_EXB_DIFFV_DIFFV, ONLY : iy_nocoreexb, &
+&   facdrift_tanh_a, facdrift_tanh_b, facexb_tanh_a, facexb_tanh_b, &
+&   facvis_tanh_a, facvis_tanh_b, fac_exb_profile, facdrift_profile, &
+&   fac_vis_profile
     USE B2MOD_AD_DIFFV_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
     USE B2MOD_DIFFSIZES
@@ -9824,6 +9467,7 @@ CONTAINS
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2STATEEXT_DIFFV0), INTENT(INOUT) :: state_extd0
     TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
+    TYPE(B2STATEEXT_DIFFV_DIFFV), INTENT(INOUT) :: state_extdd
     TYPE(B2AVERAGE), INTENT(INOUT) :: state_avg
     TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: state_avgd
     TYPE(SWITCHES), INTENT(INOUT) :: switch
@@ -9956,6 +9600,36 @@ CONTAINS
       fb_rescaled(nd, :) = 0.d0
     END DO
     IF (first_opt_call .AND. (.NOT.reset_gradient)) THEN
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
+          state_extdd%she(nd0, nd, :) = 0.0_8
+        END DO
+        state_extd%she(nd, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
+          state_extdd%shi(nd0, nd, :) = 0.0_8
+        END DO
+        state_extd%shi(nd, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
+          state_extdd%sch(nd0, nd, :) = 0.0_8
+        END DO
+        state_extd%sch(nd, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
+          state_extdd%sna(nd0, nd, :, :) = 0.0_8
+        END DO
+        state_extd%sna(nd, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        DO nd0=1,nbdirs0
+          state_extdd%smo(nd0, nd, :, :) = 0.0_8
+        END DO
+        state_extd%smo(nd, :, :) = 0.d0
+      END DO
       DO nd=1,nbdirsmax
         DO nd0=1,nbdirs0
           statedd%pl%na(nd0, nd, :, :) = 0.0_8
@@ -11341,6 +11015,16 @@ CONTAINS
       fb_rescaled0(:, :) = 0.0_8
       charge_fracdd(:, :, :) = 0.0_8
       fb_rescaledd(:, :, :) = 0.0_8
+      state_extdd%she(:, :, :) = 0.0_8
+      state_extdd%shi(:, :, :) = 0.0_8
+      state_extdd%sch(:, :, :) = 0.0_8
+      state_extdd%sna(:, :, :, :) = 0.0_8
+      state_extdd%smo(:, :, :, :) = 0.0_8
+      state_extd0%she(:, :) = 0.0_8
+      state_extd0%shi(:, :) = 0.0_8
+      state_extd0%sch(:, :) = 0.0_8
+      state_extd0%sna(:, :, :) = 0.0_8
+      state_extd0%smo(:, :, :) = 0.0_8
       statedd%pl%na(:, :, :, :) = 0.0_8
       statedd%pl%ua(:, :, :, :) = 0.0_8
       statedd%pl%po(:, :, :) = 0.0_8
@@ -11835,6 +11519,16 @@ CONTAINS
       fb_rescaled0(:, :) = 0.0_8
       charge_fracdd(:, :, :) = 0.0_8
       fb_rescaledd(:, :, :) = 0.0_8
+      state_extdd%she(:, :, :) = 0.0_8
+      state_extdd%shi(:, :, :) = 0.0_8
+      state_extdd%sch(:, :, :) = 0.0_8
+      state_extdd%sna(:, :, :, :) = 0.0_8
+      state_extdd%smo(:, :, :, :) = 0.0_8
+      state_extd0%she(:, :) = 0.0_8
+      state_extd0%shi(:, :) = 0.0_8
+      state_extd0%sch(:, :) = 0.0_8
+      state_extd0%sna(:, :, :) = 0.0_8
+      state_extd0%smo(:, :, :) = 0.0_8
       statedd%pl%na(:, :, :, :) = 0.0_8
       statedd%pl%ua(:, :, :, :) = 0.0_8
       statedd%pl%po(:, :, :) = 0.0_8
@@ -12443,14 +12137,14 @@ CONTAINS
 &                 rt%nscx, state%rt%nscxmax, state%rt%iscx, itim, dtim, &
 &                 ntim, switch, switchd0, switchd, geo, geod0, geod, mpg&
 &                 , mpgd, state, stated0, stated, statedd, state_ext, &
-&                 state_extd0, state_extd, state_avg, state_avgd, ierr, &
-&                 nbdirs, nbdirs0)
+&                 state_extd0, state_extd, state_extdd, state_avg, &
+&                 state_avgd, ierr, nbdirs, nbdirs0)
 !     manually inserted call to cost function, for output purposes only
       arg10 = nbdirs + nsigma_opt + nmean_opt + nshift_opt + ncorr_opt
       CALL B2USR_COST_FUNCTION_DV_DV(ncv, nfc, nvx, ns, geo, geod0, mpg&
 &                              , state, stated0, stated, statedd, &
-&                              state_ext, state_extd0, switch%boris, j, &
-&                              jd0, jd, jdd, arg10, arg10)
+&                              state_ext, state_extd0, j, jd0, jd, jdd, &
+&                              arg10, arg10)
       IF (first_time_step) WRITE(*, *) 'nbdirs: ', nbdirs + nsigma_opt +&
 &                          nmean_opt + nshift_opt + ncorr_opt
       CALL PRINT_TGT_HESSIAN(jd,jdd)
@@ -12482,24 +12176,6 @@ CONTAINS
 &           max1, geo, mpg, switch, state%pl, state%dv, state%co, state%&
 &           rt, state%srw, state_ext, ismain, ismain0, lwti, lwav, &
 &           .true.)
-      IF (ibatch_av_all .GT. 0 .AND. lwav) THEN
-        edition_batch = edition_batch + 1
-        WRITE(batch_name, '(a18,i4.4)') 'batch_av/batch_av.', &
-&       edition_batch
-        CALL BATCH_AV_ALL_SAVE(batch_name, ncv, ns)
-        WRITE(*, *) 'Saved ', batch_name
-      END IF
-      IF (iav_run .GT. 0 .AND. ntim_run .GT. 0) THEN
-        lrav = MOD(itim, ntim_run) .EQ. 0
-        WRITE(*, *) ' itim,ntim_batch,lrav ', itim, ntim_run, lrav
-        IF (lrav) THEN
-          edition_run = edition_run + 1
-          WRITE(run_av_name, '(a14,i4.4)') 'run_av/run_av.', edition_run
-          CALL RUN_AV_SAVE(run_av_name, ncv, ns, .true., .false., &
-&                    state_avg)
-          WRITE(*, *) 'Saved ', run_av_name
-        END IF
-      END IF
 !srv 18.05.09 13.04.11
       INQUIRE(file='_quit', exist=quitexist_) 
       INQUIRE(file='.quit', exist=quitexist) 
@@ -12644,8 +12320,8 @@ CONTAINS
     arg10 = nbdirs + nsigma_opt + nmean_opt + nshift_opt + ncorr_opt
     CALL B2USR_COST_FUNCTION_DV_DV(ncv, nfc, nvx, ns, geo, geod0, mpg, &
 &                            state, stated0, stated, statedd, state_ext&
-&                            , state_extd0, switch%boris, j, jd0, jd, &
-&                            jdd, arg10, arg10)
+&                            , state_extd0, j, jd0, jd, jdd, arg10, &
+&                            arg10)
     IF (first_time_step) WRITE(*, *) 'nbdirs: ', nbdirs + nsigma_opt + &
 &                        nmean_opt + nshift_opt + ncorr_opt
     CALL PRINT_TGT_HESSIAN(jd,jdd)
@@ -12662,8 +12338,8 @@ CONTAINS
 !   variations   of useful results: enepar conpar potpar enipar
 !                b2recyc tdata j
 !   with respect to varying inputs: enepar conpar enkpar potpar
-!                mompar enipar b2recyc tdata parm_hce parm_hci
-!                parm_vla parm_vsa parm_alf parm_dpa parm_sig parm_dna
+!                mompar enipar b2recyc parm_hce parm_hci parm_vla
+!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
 !                corr_length sigma shift *par_opt_phys mean *rtlsa
 !                *rtlcx *rtlqa *rtlra switch.keps_cd switch.keps_heat
 !                switch.keps_heat_i switch.keps_sig switch.keps_alf
@@ -12676,98 +12352,106 @@ CONTAINS
 !                switch.b2tqna_ballooning switch.b2tqna_ballooning_rescale
 !   Plus diff mem management of: b2voloncf:in b2data:in b2dataoncf:in
 !                par_opt_phys:in rtlsa:in rtlcx:in rtlqa:in rtlra:in
-!                mpg.bcfcor:in mpg.rcfcor:in-out mpg.intcellp:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
-!                geo.cvonedbsq:in geo.cvfpsi:in geo.fcbb:in geo.fcs:in
-!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
-!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
-!                geo.fcpbshz:in geo.fcbzb:in geo.vxbb:in geo.vxx:in
-!                geo.vxy:in geo.vxhz:in geo.vxvol:in geo.vxonedbsq:in
-!                geo.cvconn:in geo.ftconn:in geo.fsconn:in geo.fteps:in
-!                geo.ftbbav2:in state_ext.am:in state_ext.ne:in
-!                state_ext.ne2:in state_ext.ue:in state_ext.za:in
-!                state_ext.za2:in state_ext.pt:in state_ext.na:in
-!                state_ext.ni:in state_ext.ua:in state_ext.ta:in
-!                state_ext.fhi:in state_ext.fa:in state_ext.sne:in
-!                state_ext.she:in state_ext.shi:in state_ext.sch:in
-!                state_ext.sna:in state_ext.smo:in state.pl.na:in
-!                state.pl.ua:in state.pl.po:in state.pl.te:in state.pl.ti:in
-!                state.pl.tn:in state.pl.kt:in state.pl.zt:in state.co.csig:in
-!                state.co.calf:in state.co.csig_an:in state.co.calf_an:in
-!                state.co.csig_cl:in state.co.calf_cl:in state.co.csigin:in
-!                state.co.chve:in state.co.chce:in state.co.chce_exb:in
-!                state.co.chvi:in state.co.chci:in state.co.chci_exb:in
-!                state.co.chcn:in state.co.cdkt:in state.co.cdzt:in
-!                state.co.chvemx:in state.co.chvimx:in state.co.cvla:in
-!                state.co.cdna:in state.co.cdna_exb:in state.co.cdpa:in
-!                state.co.cvsa:in state.co.cvlahz:in state.co.cdnahz:in
-!                state.co.cdpahz:in state.co.cvsahz:in state.co.cddi:in
-!                state.co.cvsahz_cl:in state.co.chcb:in state.co.cvsa_an:in
-!                state.co.cvmahz:in state.co.cvsahz_eff:in state.co.cthe:in
-!                state.co.cthi:in state.co.cvsa_cl:in state.co.ceqp:in
-!                state.co.fllim0fhi:in state.co.fllimvisc:in state.co.fllim0fna:in
-!                state.co.vsaf_cl:in state.co.sig0:in state.co.hce0:in
-!                state.co.hci0:in state.co.hcn0:in state.co.alf0:in
-!                state.co.dkt0:in state.co.dzt0:in state.co.dna_exb:in
-!                state.co.hce_exb:in state.co.hci_exb:in state.co.dpa0:in
-!                state.co.dna0:in state.co.vsa0:in state.co.hcib:in
-!                state.co.vla0:in state.co.vma0:in state.co.kt_neo:in
-!                state.co.alfx_c:in state.co.sigx_c:in state.co.sigx_kt:in
-!                state.co.hcix_c:in state.co.fllim_ki:in state.co.fllim_ke:in
-!                state.co.fllim_al:in state.co.fllim_al_c:in state.co.fllim_ki_c:in
-!                state.co.f_luc_ke:in state.co.f_luc_ki:in state.co.f_luc_et:in
-!                state.co.f_luc_sg:in state.co.f_luc_al:in state.co.cssb:in
-!                state.dv.fch:in state.dv.fch_32:in state.dv.fch_52:in
-!                state.dv.fch_p:in state.dv.fchdia:in state.dv.fchin:in
-!                state.dv.fchvispar:in state.dv.fchvisper:in state.dv.fchvisq:in
-!                state.dv.fchinert:in state.dv.fchanml:in state.dv.fchviskt:in
-!                state.dv.fch_pi_c:in state.dv.fch_pi_f:in state.dv.fni_32:in
-!                state.dv.fni_52:in state.dv.fni:in state.dv.fni_he:in
-!                state.dv.fna:in state.dv.fna_mdf:in state.dv.fna_52:in
-!                state.dv.fna_32:in state.dv.fna_53:in state.dv.fna_52nd:in
-!                state.dv.fna_32nd:in state.dv.fna_nodrift:in state.dv.fna_he:in
-!                state.dv.fnapsch:in state.dv.fna_fcor:in state.dv.fna_eir:in
-!                state.dv.fna_exb:in state.dv.fmo:in state.dv.fne:in
-!                state.dv.fne_he:in state.dv.fne_32:in state.dv.fne_52:in
-!                state.dv.fne_eir:in state.dv.fne_53:in state.dv.fhe:in
-!                state.dv.fhe_mdf:in state.dv.fhepsch:in state.dv.fhe_eir:in
-!                state.dv.fhe_exb:in state.dv.fhi:in state.dv.fhi_mdf:in
-!                state.dv.fhipsch:in state.dv.fhi_eir:in state.dv.fhi_exb:in
-!                state.dv.fnn:in state.dv.fnn_32:in state.dv.fnn_52:in
-!                state.dv.fhn:in state.dv.fnn_inc:in state.dv.fhm:in
-!                state.dv.fhp:in state.dv.fhj:in state.dv.fht:in
-!                state.dv.fkt:in state.dv.fzt:in state.dv.kin_frac_hyb:in
-!                state.dv.fluid_frac_hyb:in state.dv.kinrgy:in
-!                state.dv.conc:in state.dv.flob:in state.dv.floe:in
-!                state.dv.floi:in state.dv.floe_noc:in state.dv.floi_noc:in
-!                state.dv.flon:in state.dv.flokt:in state.dv.flozt:in
-!                state.dv.conn:in state.dv.conkt:in state.dv.conzt:in
-!                state.dv.conb:in state.dv.cone:in state.dv.coni:in
-!                state.dv.resmo:in state.dv.resco:in state.dv.respo:in
-!                state.dv.reshe:in state.dv.reshi:in state.dv.resht:in
-!                state.dv.resmt:in state.dv.reshn:in state.dv.reskt:in
-!                state.dv.reszt:in state.dv.corua:in state.dv.corpa:in
-!                state.dv.corut:in state.dv.corpo:in state.dv.cortt:in
-!                state.dv.corte:in state.dv.corti:in state.dv.cortn:in
-!                state.dv.corkt:in state.dv.corzt:in state.dv.pcca:in
-!                state.dv.pccm:in state.dv.ne:in state.dv.ni:in-out
-!                state.dv.nn:in-out state.dv.ue:in state.dv.ne2:in
-!                state.dv.pa:in state.dv.pz:in state.dv.lnlam:in
-!                state.dv.uadia:in state.dv.vadia:in state.dv.wadia:in
-!                state.dv.vaecrb:in state.dv.vedia:in state.dv.wedia:in
-!                state.dv.veecrb:in state.dv.facdrift:in state.dv.fac_exb:in
-!                state.dv.fac_vis:in state.sr.sch:in state.sr.she:in
-!                state.sr.shi:in state.sr.sne:in state.sr.shn:in
-!                state.sr.skt:in state.sr.szt:in state.sr.smo:in
-!                state.sr.smq:in state.sr.sna:in state.sr.shedt:in
-!                state.sr.sktdt:in state.sr.sztdt:in state.sr.snedt:in
-!                state.sr.shidt:in state.sr.shndt:in state.sr.schdt:in
-!                state.sr.smodt:in state.sr.snadt:in state.sr.skt_diss:in
-!                state.sr.skt_prod:in state.srw.sch0:in state.srw.she0:in
-!                state.srw.shi0:in state.srw.sne0:in state.srw.shn0:in
-!                state.srw.skt0:in state.srw.szt0:in state.srw.smo0:in
-!                state.srw.smq0:in state.srw.sna0:in state.srw.smcf:in
+!                state_avg.na_mean:out state_avg.ua_mean:out state_avg.te_mean:out
+!                state_avg.ti_mean:out state_avg.po_mean:out state_avg.kt_mean:out
+!                state_avg.zt_mean:out state_avg.sna_mean:out state_avg.smo_mean:out
+!                state_avg.she_mean:out state_avg.shi_mean:out
+!                state_avg.shn_mean:out state_avg.e_na:out state_avg.e_ua:out
+!                state_avg.e_te:out state_avg.e_ti:out state_avg.e_po:out
+!                state_avg.e_kt:out state_avg.e_zt:out state_avg.e_sna:out
+!                state_avg.e_smo:out state_avg.e_she:out state_avg.e_shi:out
+!                state_avg.e_shn:out mpg.bcfcor:in mpg.rcfcor:in-out
+!                mpg.intcellp:in mpg.intcellr:in geo.cvbb:in geo.cvx:in
+!                geo.cvy:in geo.cvhz:in geo.cvhx:in geo.cvhy:in
+!                geo.cvqgam:in geo.cvvol:in geo.cvonedbsq:in geo.cvfpsi:in
+!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
+!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in geo.fcbzb:in
+!                geo.vxbb:in geo.vxx:in geo.vxy:in geo.vxhz:in
+!                geo.vxvol:in geo.vxonedbsq:in geo.cvconn:in geo.ftconn:in
+!                geo.fsconn:in geo.fteps:in geo.ftbbav2:in state_ext.am:in
+!                state_ext.ne:in state_ext.ne2:in state_ext.ue:in
+!                state_ext.za:in state_ext.za2:in state_ext.pt:in
+!                state_ext.na:in state_ext.ni:in state_ext.ua:in
+!                state_ext.ta:in state_ext.fhi:in state_ext.fa:in
+!                state_ext.sne:in state_ext.she:in state_ext.shi:in
+!                state_ext.sch:in state_ext.sna:in state_ext.smo:in
+!                state.pl.na:in state.pl.ua:in state.pl.po:in state.pl.te:in
+!                state.pl.ti:in state.pl.tn:in state.pl.kt:in state.pl.zt:in
+!                state.co.csig:in state.co.calf:in state.co.csig_an:in
+!                state.co.calf_an:in state.co.csig_cl:in state.co.calf_cl:in
+!                state.co.csigin:in state.co.chve:in state.co.chce:in
+!                state.co.chce_exb:in state.co.chvi:in state.co.chci:in
+!                state.co.chci_exb:in state.co.chcn:in state.co.cdkt:in
+!                state.co.cdzt:in state.co.chvemx:in state.co.chvimx:in
+!                state.co.cvla:in state.co.cdna:in state.co.cdna_exb:in
+!                state.co.cdpa:in state.co.cvsa:in state.co.cvlahz:in
+!                state.co.cdnahz:in state.co.cdpahz:in state.co.cvsahz:in
+!                state.co.cddi:in state.co.cvsahz_cl:in state.co.chcb:in
+!                state.co.cvsa_an:in state.co.cvmahz:in state.co.cvsahz_eff:in
+!                state.co.cthe:in state.co.cthi:in state.co.cvsa_cl:in
+!                state.co.ceqp:in state.co.fllim0fhi:in state.co.fllimvisc:in
+!                state.co.fllim0fna:in state.co.vsaf_cl:in state.co.sig0:in
+!                state.co.hce0:in state.co.hci0:in state.co.hcn0:in
+!                state.co.alf0:in state.co.dkt0:in state.co.dzt0:in
+!                state.co.dna_exb:in state.co.hce_exb:in state.co.hci_exb:in
+!                state.co.dpa0:in state.co.dna0:in state.co.vsa0:in
+!                state.co.hcib:in state.co.vla0:in state.co.vma0:in
+!                state.co.kt_neo:in state.co.alfx_c:in state.co.sigx_c:in
+!                state.co.sigx_kt:in state.co.hcix_c:in state.co.fllim_ki:in
+!                state.co.fllim_ke:in state.co.fllim_al:in state.co.fllim_al_c:in
+!                state.co.fllim_ki_c:in state.co.f_luc_ke:in state.co.f_luc_ki:in
+!                state.co.f_luc_et:in state.co.f_luc_sg:in state.co.f_luc_al:in
+!                state.co.cssb:in state.dv.fch:in state.dv.fch_32:in
+!                state.dv.fch_52:in state.dv.fch_p:in state.dv.fchdia:in
+!                state.dv.fchin:in state.dv.fchvispar:in state.dv.fchvisper:in
+!                state.dv.fchvisq:in state.dv.fchinert:in state.dv.fchanml:in
+!                state.dv.fchviskt:in state.dv.fch_pi_c:in state.dv.fch_pi_f:in
+!                state.dv.fni_32:in state.dv.fni_52:in state.dv.fni:in
+!                state.dv.fni_he:in state.dv.fna:in state.dv.fna_mdf:in
+!                state.dv.fna_52:in state.dv.fna_32:in state.dv.fna_53:in
+!                state.dv.fna_52nd:in state.dv.fna_32nd:in state.dv.fna_nodrift:in
+!                state.dv.fna_he:in state.dv.fnapsch:in state.dv.fna_fcor:in
+!                state.dv.fna_eir:in state.dv.fna_exb:in state.dv.fmo:in
+!                state.dv.fne:in state.dv.fne_he:in state.dv.fne_32:in
+!                state.dv.fne_52:in state.dv.fne_eir:in state.dv.fne_53:in
+!                state.dv.fhe:in state.dv.fhe_mdf:in state.dv.fhepsch:in
+!                state.dv.fhe_eir:in state.dv.fhe_exb:in state.dv.fhi:in
+!                state.dv.fhi_mdf:in state.dv.fhipsch:in state.dv.fhi_eir:in
+!                state.dv.fhi_exb:in state.dv.fnn:in state.dv.fnn_32:in
+!                state.dv.fnn_52:in state.dv.fhn:in state.dv.fnn_inc:in
+!                state.dv.fhm:in state.dv.fhp:in state.dv.fhj:in
+!                state.dv.fht:in state.dv.fkt:in state.dv.fzt:in
+!                state.dv.kin_frac_hyb:in state.dv.fluid_frac_hyb:in
+!                state.dv.kinrgy:in state.dv.conc:in state.dv.flob:in
+!                state.dv.floe:in state.dv.floi:in state.dv.floe_noc:in
+!                state.dv.floi_noc:in state.dv.flon:in state.dv.flokt:in
+!                state.dv.flozt:in state.dv.conn:in state.dv.conkt:in
+!                state.dv.conzt:in state.dv.conb:in state.dv.cone:in
+!                state.dv.coni:in state.dv.resmo:in state.dv.resco:in
+!                state.dv.respo:in state.dv.reshe:in state.dv.reshi:in
+!                state.dv.resht:in state.dv.resmt:in state.dv.reshn:in
+!                state.dv.reskt:in state.dv.reszt:in state.dv.corua:in
+!                state.dv.corpa:in state.dv.corut:in state.dv.corpo:in
+!                state.dv.cortt:in state.dv.corte:in state.dv.corti:in
+!                state.dv.cortn:in state.dv.corkt:in state.dv.corzt:in
+!                state.dv.pcca:in state.dv.pccm:in state.dv.ne:in
+!                state.dv.ni:in-out state.dv.nn:in-out state.dv.ue:in
+!                state.dv.ne2:in state.dv.pa:in state.dv.pz:in
+!                state.dv.lnlam:in state.dv.uadia:in state.dv.vadia:in
+!                state.dv.wadia:in state.dv.vaecrb:in state.dv.vedia:in
+!                state.dv.wedia:in state.dv.veecrb:in state.dv.facdrift:in
+!                state.dv.fac_exb:in state.dv.fac_vis:in state.sr.sch:in
+!                state.sr.she:in state.sr.shi:in state.sr.sne:in
+!                state.sr.shn:in state.sr.skt:in state.sr.szt:in
+!                state.sr.smo:in state.sr.smq:in state.sr.sna:in
+!                state.sr.shedt:in state.sr.sktdt:in state.sr.sztdt:in
+!                state.sr.snedt:in state.sr.shidt:in state.sr.shndt:in
+!                state.sr.schdt:in state.sr.smodt:in state.sr.snadt:in
+!                state.sr.skt_diss:in state.sr.skt_prod:in state.srw.sch0:in
+!                state.srw.she0:in state.srw.shi0:in state.srw.sne0:in
+!                state.srw.shn0:in state.srw.skt0:in state.srw.szt0:in
+!                state.srw.smo0:in state.srw.smq0:in state.srw.sna0:in
 !                state.srw.smpr:in state.srw.smpt:in state.srw.smfr:in
 !                state.srw.b2stbc_sch:in state.srw.b2stbc_she:in
 !                state.srw.b2stbc_shi:in state.srw.b2stbc_sne:in
@@ -12800,14 +12484,18 @@ CONTAINS
 !                state.rt.rpi:in state.rtw.rsa:in state.rtw.rra:in
 !                state.rtw.rqa:in state.rtw.rrd:in state.rtw.rbr:in
 !                state.rtw.rcx:in state.rtw.rqr:in state.psnl.na:in
-!                state.psnl.ua:in state.psnl.te:in state.psnl.ti:in
-!                state.psnl.tn:in state.psnl.kt:in state.psnl.zt:in
-!                state.psnl.ne:in state.psnl.ni:in state.psnl.nn:in
-!                state.psnl.fna:in state.psnl.kinrgy:in state.psnc.na:in
-!                state.psnc.ua:in state.psnc.te:in state.psnc.ti:in
-!                state.psnc.tn:in state.psnc.kt:in state.psnc.zt:in
-!                state.psnc.ne:in state.psnc.ni:in state.psnc.nn:in
-!                state.psnc.fna:in state.psnc.kinrgy:in state.diag.aresco:in
+!                state.psnl.ua:in state.psnl.po:in state.psnl.te:in
+!                state.psnl.ti:in state.psnl.tn:in state.psnl.kt:in
+!                state.psnl.zt:in state.psnl.ne:in state.psnl.ni:in
+!                state.psnl.nn:in state.psnl.fch:in state.psnl.fna:in
+!                state.psnl.fhi:in state.psnl.fhe:in state.psnl.fkt:in
+!                state.psnl.fzt:in state.psnl.kinrgy:in state.psnc.na:in
+!                state.psnc.ua:in state.psnc.po:in state.psnc.te:in
+!                state.psnc.ti:in state.psnc.tn:in state.psnc.kt:in
+!                state.psnc.zt:in state.psnc.ne:in state.psnc.ni:in
+!                state.psnc.nn:in state.psnc.fch:in state.psnc.fna:in
+!                state.psnc.fhi:in state.psnc.fhe:in state.psnc.fkt:in
+!                state.psnc.fzt:in state.psnc.kinrgy:in state.diag.aresco:in
 !                state.diag.aresmo:in state.diag.acorpa:in state.diag.acorua:in
 !                state.diag.rescoreg:in state.diag.resmoreg:in
 !                state.diag.reshereg:in state.diag.reshireg:in
@@ -12830,6 +12518,13 @@ CONTAINS
     USE B2MOD_FACDRIFT_EXB_DIFFV_DIFFV, ONLY : ncall_drift, &
 &   facdrift_scalar, fac_exb_scalar, fac_exb_scalard, fac_vis_scalar, &
 &   fac_vis_scalard
+    USE B2MOD_INPUT_PROFILE_DIFFV_DIFFV, ONLY : sources_time_mod, &
+&   sources_time_switch, sources_filename, sr_ip_elm_count, new_files, &
+&   nsdata, nxdata, divheat, sdata, xdata
+    USE B2MOD_FACDRIFT_EXB_DIFFV_DIFFV, ONLY : iy_nocoreexb, &
+&   facdrift_tanh_a, facdrift_tanh_b, facexb_tanh_a, facexb_tanh_b, &
+&   facvis_tanh_a, facvis_tanh_b, fac_exb_profile, facdrift_profile, &
+&   fac_vis_profile
     USE B2MOD_AD_DIFFV_DIFFV
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
     USE B2MOD_DIFFSIZES
@@ -12970,6 +12665,21 @@ CONTAINS
       fb_rescaled(nd, :) = 0.d0
     END DO
     IF (first_opt_call .AND. (.NOT.reset_gradient)) THEN
+      DO nd=1,nbdirsmax
+        state_extd%she(nd, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        state_extd%shi(nd, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        state_extd%sch(nd, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        state_extd%sna(nd, :, :) = 0.d0
+      END DO
+      DO nd=1,nbdirsmax
+        state_extd%smo(nd, :, :) = 0.d0
+      END DO
       DO nd=1,nbdirsmax
         stated%pl%na(nd, :, :) = 0.d0
       END DO
@@ -13746,8 +13456,8 @@ CONTAINS
 !     manually inserted call to cost function, for output purposes only
       arg10 = nbdirs + nsigma_opt + nmean_opt + nshift_opt + ncorr_opt
       CALL B2USR_COST_FUNCTION_DV_NODIFF(ncv, nfc, nvx, ns, geo, mpg, &
-&                                  state, stated, state_ext, switch%&
-&                                  boris, j, jd, arg10)
+&                                  state, stated, state_ext, j, jd, &
+&                                  arg10)
       IF (first_time_step) WRITE(*, *) 'nbdirs: ', nbdirs + nsigma_opt +&
 &                          nmean_opt + nshift_opt + ncorr_opt
       DO icf=1,ncf
@@ -13778,24 +13488,6 @@ CONTAINS
 &           max1, geo, mpg, switch, state%pl, state%dv, state%co, state%&
 &           rt, state%srw, state_ext, ismain, ismain0, lwti, lwav, &
 &           .true.)
-      IF (ibatch_av_all .GT. 0 .AND. lwav) THEN
-        edition_batch = edition_batch + 1
-        WRITE(batch_name, '(a18,i4.4)') 'batch_av/batch_av.', &
-&       edition_batch
-        CALL BATCH_AV_ALL_SAVE(batch_name, ncv, ns)
-        WRITE(*, *) 'Saved ', batch_name
-      END IF
-      IF (iav_run .GT. 0 .AND. ntim_run .GT. 0) THEN
-        lrav = MOD(itim, ntim_run) .EQ. 0
-        WRITE(*, *) ' itim,ntim_batch,lrav ', itim, ntim_run, lrav
-        IF (lrav) THEN
-          edition_run = edition_run + 1
-          WRITE(run_av_name, '(a14,i4.4)') 'run_av/run_av.', edition_run
-          CALL RUN_AV_SAVE(run_av_name, ncv, ns, .true., .false., &
-&                    state_avg)
-          WRITE(*, *) 'Saved ', run_av_name
-        END IF
-      END IF
 !srv 18.05.09 13.04.11
       INQUIRE(file='_quit', exist=quitexist_) 
       INQUIRE(file='.quit', exist=quitexist) 
@@ -13939,8 +13631,7 @@ CONTAINS
 !   ..call cost function
     arg10 = nbdirs + nsigma_opt + nmean_opt + nshift_opt + ncorr_opt
     CALL B2USR_COST_FUNCTION_DV_NODIFF(ncv, nfc, nvx, ns, geo, mpg, &
-&                                state, stated, state_ext, switch%boris&
-&                                , j, jd, arg10)
+&                                state, stated, state_ext, j, jd, arg10)
     IF (first_time_step) WRITE(*, *) 'nbdirs: ', nbdirs + nsigma_opt + &
 &                        nmean_opt + nshift_opt + ncorr_opt
     DO icf=1,ncf
@@ -13968,6 +13659,13 @@ CONTAINS
 &   b2mod_math_initialised, small_r4_constant
     USE B2MOD_FACDRIFT_EXB_DIFFV_DIFFV, ONLY : ncall_drift, &
 &   facdrift_scalar, fac_exb_scalar, fac_vis_scalar
+    USE B2MOD_INPUT_PROFILE_DIFFV_DIFFV, ONLY : sources_time_mod, &
+&   sources_time_switch, sources_filename, sr_ip_elm_count, new_files, &
+&   nsdata, nxdata, divheat, sdata, xdata
+    USE B2MOD_FACDRIFT_EXB_DIFFV_DIFFV, ONLY : iy_nocoreexb, &
+&   facdrift_tanh_a, facdrift_tanh_b, facexb_tanh_a, facexb_tanh_b, &
+&   facvis_tanh_a, facvis_tanh_b, fac_exb_profile, facdrift_profile, &
+&   fac_vis_profile
     USE B2MOD_AD_DIFFV_DIFFV
     USE B2MOD_DIFFSIZES
     IMPLICIT NONE
@@ -14106,8 +13804,7 @@ CONTAINS
 &                         state, state_ext, state_avg, ierr)
 !     manually inserted call to cost function, for output purposes only
       CALL B2USR_COST_FUNCTION_NODIFF_NODIFF(ncv, nfc, nvx, ns, geo, mpg&
-&                                      , state, state_ext, switch%boris&
-&                                      , j)
+&                                      , state, state_ext, j)
       DO icf=1,ncf
         WRITE(ss, '(I1)') icf
         IF (icf .GT. 9) WRITE(ss, '(I2)') icf
@@ -14136,24 +13833,6 @@ CONTAINS
 &           max1, geo, mpg, switch, state%pl, state%dv, state%co, state%&
 &           rt, state%srw, state_ext, ismain, ismain0, lwti, lwav, &
 &           .true.)
-      IF (ibatch_av_all .GT. 0 .AND. lwav) THEN
-        edition_batch = edition_batch + 1
-        WRITE(batch_name, '(a18,i4.4)') 'batch_av/batch_av.', &
-&       edition_batch
-        CALL BATCH_AV_ALL_SAVE(batch_name, ncv, ns)
-        WRITE(*, *) 'Saved ', batch_name
-      END IF
-      IF (iav_run .GT. 0 .AND. ntim_run .GT. 0) THEN
-        lrav = MOD(itim, ntim_run) .EQ. 0
-        WRITE(*, *) ' itim,ntim_batch,lrav ', itim, ntim_run, lrav
-        IF (lrav) THEN
-          edition_run = edition_run + 1
-          WRITE(run_av_name, '(a14,i4.4)') 'run_av/run_av.', edition_run
-          CALL RUN_AV_SAVE(run_av_name, ncv, ns, .true., .false., &
-&                    state_avg)
-          WRITE(*, *) 'Saved ', run_av_name
-        END IF
-      END IF
 !srv 18.05.09 13.04.11
       INQUIRE(file='_quit', exist=quitexist_) 
       INQUIRE(file='.quit', exist=quitexist) 
@@ -14285,7 +13964,7 @@ CONTAINS
 !   ..end loop
 !   ..call cost function
     CALL B2USR_COST_FUNCTION_NODIFF_NODIFF(ncv, nfc, nvx, ns, geo, mpg, &
-&                                    state, state_ext, switch%boris, j)
+&                                    state, state_ext, j)
     DO icf=1,ncf
       WRITE(ss, '(I1)') icf
       IF (icf .GT. 9) WRITE(ss, '(I2)') icf
@@ -14298,9 +13977,160 @@ CONTAINS
 !  Differentiation of b2mndr_2_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: b2voloncfd:out b2voloncf:out b2data:out
 !                b2dataoncfd:out b2datad:out b2dataoncf:out par_opt_phys:out
-!                rtlsa:out rtlcx:out rtlqa:out rtlra:out state.sr_eir.sch:out
-!                state.sr_eir.she:out state.sr_eir.shi:out state.sr_eir.sne:out
-!                state.sr_eir.smo:out state.sr_eir.smq:out state.sr_eir.sna:out
+!                rtlsa:out rtlcx:out rtlqa:out rtlra:out state.pl.na:in-out
+!                state.pl.ua:in-out state.pl.po:in-out state.pl.te:in-out
+!                state.pl.ti:in-out state.pl.tn:in-out state.pl.kt:in-out
+!                state.pl.zt:in-out state.co.csig:in-out state.co.calf:in-out
+!                state.co.csig_an:in-out state.co.calf_an:in-out
+!                state.co.csig_cl:in-out state.co.calf_cl:in-out
+!                state.co.csigin:in-out state.co.chve:in-out state.co.chce:in-out
+!                state.co.chce_exb:in-out state.co.chvi:in-out
+!                state.co.chci:in-out state.co.chci_exb:in-out
+!                state.co.chcn:in-out state.co.cdkt:in-out state.co.cdzt:in-out
+!                state.co.chvemx:in-out state.co.chvimx:in-out
+!                state.co.cvla:in-out state.co.cdna:in-out state.co.cdna_exb:in-out
+!                state.co.cdpa:in-out state.co.cvsa:in-out state.co.cvlahz:in-out
+!                state.co.cdnahz:in-out state.co.cdpahz:in-out
+!                state.co.cvsahz:in-out state.co.cddi:in-out state.co.cvsahz_cl:in-out
+!                state.co.chcb:in-out state.co.cvsa_an:in-out state.co.cvmahz:in-out
+!                state.co.cvsahz_eff:in-out state.co.cthe:in-out
+!                state.co.cthi:in-out state.co.cvsa_cl:in-out state.co.ceqp:in-out
+!                state.co.fllim0fhi:in-out state.co.fllimvisc:in-out
+!                state.co.fllim0fna:in-out state.co.vsaf_cl:in-out
+!                state.co.sig0:in-out state.co.hce0:in-out state.co.hci0:in-out
+!                state.co.hcn0:in-out state.co.alf0:in-out state.co.dkt0:in-out
+!                state.co.dzt0:in-out state.co.dna_exb:in-out state.co.hce_exb:in-out
+!                state.co.hci_exb:in-out state.co.dpa0:in-out state.co.dna0:in-out
+!                state.co.vsa0:in-out state.co.hcib:in-out state.co.vla0:in-out
+!                state.co.vma0:in-out state.co.kt_neo:in-out state.co.alfx_c:in-out
+!                state.co.sigx_c:in-out state.co.sigx_kt:in-out
+!                state.co.hcix_c:in-out state.co.fllim_ki:in-out
+!                state.co.fllim_ke:in-out state.co.fllim_al:in-out
+!                state.co.fllim_al_c:in-out state.co.fllim_ki_c:in-out
+!                state.co.f_luc_ke:in-out state.co.f_luc_ki:in-out
+!                state.co.f_luc_et:in-out state.co.f_luc_sg:in-out
+!                state.co.f_luc_al:in-out state.co.cssb:in-out
+!                state.dv.fch:in-out state.dv.fch_32:in-out state.dv.fch_52:in-out
+!                state.dv.fch_p:in-out state.dv.fchdia:in-out state.dv.fchin:in-out
+!                state.dv.fchvispar:in-out state.dv.fchvisper:in-out
+!                state.dv.fchvisq:in-out state.dv.fchinert:in-out
+!                state.dv.fchanml:in-out state.dv.fchviskt:in-out
+!                state.dv.fch_pi_c:in-out state.dv.fch_pi_f:in-out
+!                state.dv.fni_32:in-out state.dv.fni_52:in-out
+!                state.dv.fni:in-out state.dv.fni_he:in-out state.dv.fna:in-out
+!                state.dv.fna_mdf:in-out state.dv.fna_52:in-out
+!                state.dv.fna_32:in-out state.dv.fna_53:in-out
+!                state.dv.fna_52nd:in-out state.dv.fna_32nd:in-out
+!                state.dv.fna_nodrift:in-out state.dv.fna_he:in-out
+!                state.dv.fnapsch:in-out state.dv.fna_fcor:in-out
+!                state.dv.fna_eir:in-out state.dv.fna_exb:in-out
+!                state.dv.fmo:in-out state.dv.fne:in-out state.dv.fne_he:in-out
+!                state.dv.fne_32:in-out state.dv.fne_52:in-out
+!                state.dv.fne_eir:in-out state.dv.fne_53:in-out
+!                state.dv.fhe:in-out state.dv.fhe_mdf:in-out state.dv.fhet:in-out
+!                state.dv.fhepsch:in-out state.dv.fhe_eir:in-out
+!                state.dv.fhe_exb:in-out state.dv.fhi:in-out state.dv.fhi_mdf:in-out
+!                state.dv.fhit:in-out state.dv.fhipsch:in-out state.dv.fhi_eir:in-out
+!                state.dv.fhi_exb:in-out state.dv.fnn:in-out state.dv.fnn_32:in-out
+!                state.dv.fnn_52:in-out state.dv.fhn:in-out state.dv.fnn_inc:in-out
+!                state.dv.fhm:in-out state.dv.fhp:in-out state.dv.fhj:in-out
+!                state.dv.fht:in-out state.dv.fkt:in-out state.dv.fzt:in-out
+!                state.dv.kin_frac_hyb:in-out state.dv.fluid_frac_hyb:in-out
+!                state.dv.kinrgy:in-out state.dv.conc:in-out state.dv.flob:in-out
+!                state.dv.floe:in-out state.dv.floi:in-out state.dv.floe_noc:in-out
+!                state.dv.floi_noc:in-out state.dv.flon:in-out
+!                state.dv.flokt:in-out state.dv.flozt:in-out state.dv.conn:in-out
+!                state.dv.conkt:in-out state.dv.conzt:in-out state.dv.conb:in-out
+!                state.dv.cone:in-out state.dv.coni:in-out state.dv.fllime:in-out
+!                state.dv.fllimi:in-out state.dv.resmo:in-out state.dv.resco:in-out
+!                state.dv.respo:in-out state.dv.reshe:in-out state.dv.reshi:in-out
+!                state.dv.resht:in-out state.dv.resmt:in-out state.dv.reshn:in-out
+!                state.dv.reskt:in-out state.dv.reszt:in-out state.dv.corua:in-out
+!                state.dv.corpa:in-out state.dv.corut:in-out state.dv.corpo:in-out
+!                state.dv.cortt:in-out state.dv.corte:in-out state.dv.corti:in-out
+!                state.dv.cortn:in-out state.dv.corkt:in-out state.dv.corzt:in-out
+!                state.dv.pcca:in-out state.dv.pccm:in-out state.dv.ne:in-out
+!                state.dv.ni:in-out state.dv.nn:in-out state.dv.ue:in-out
+!                state.dv.ne2:in-out state.dv.pa:in-out state.dv.pz:in-out
+!                state.dv.lnlam:in-out state.dv.uadia:in-out state.dv.vadia:in-out
+!                state.dv.wadia:in-out state.dv.vaecrb:in-out state.dv.vedia:in-out
+!                state.dv.wedia:in-out state.dv.veecrb:in-out state.dv.facdrift:in-out
+!                state.dv.fac_exb:in-out state.dv.fac_vis:in-out
+!                state.sr.sch:in-out state.sr.she:in-out state.sr.shi:in-out
+!                state.sr.sne:in-out state.sr.shn:in-out state.sr.skt:in-out
+!                state.sr.szt:in-out state.sr.smo:in-out state.sr.smq:in-out
+!                state.sr.sna:in-out state.sr.shedt:in-out state.sr.sktdt:in-out
+!                state.sr.sztdt:in-out state.sr.snedt:in-out state.sr.shidt:in-out
+!                state.sr.shndt:in-out state.sr.schdt:in-out state.sr.smodt:in-out
+!                state.sr.snadt:in-out state.sr.skt_diss:in-out
+!                state.sr.skt_prod:in-out state.sr_eir.sch:in-out
+!                state.sr_eir.she:in-out state.sr_eir.shi:in-out
+!                state.sr_eir.sne:in-out state.sr_eir.smo:in-out
+!                state.sr_eir.smq:in-out state.sr_eir.sna:in-out
+!                state.srw.sch0:in-out state.srw.she0:in-out state.srw.shi0:in-out
+!                state.srw.sne0:in-out state.srw.shn0:in-out state.srw.skt0:in-out
+!                state.srw.szt0:in-out state.srw.smo0:in-out state.srw.smq0:in-out
+!                state.srw.sna0:in-out state.srw.smcf:in-out state.srw.smpr:in-out
+!                state.srw.smpt:in-out state.srw.smfr:in-out state.srw.b2stbc_sch:in-out
+!                state.srw.b2stbc_she:in-out state.srw.b2stbc_shi:in-out
+!                state.srw.b2stbc_sne:in-out state.srw.b2stbc_shn:in-out
+!                state.srw.b2stbc_skt:in-out state.srw.b2stbc_szt:in-out
+!                state.srw.b2stbc_smo:in-out state.srw.b2stbc_sna:in-out
+!                state.srw.b2stbm_sch:in-out state.srw.b2stbm_she:in-out
+!                state.srw.b2stbm_shi:in-out state.srw.b2stbm_sne:in-out
+!                state.srw.b2stbm_smo:in-out state.srw.b2stbm_smq:in-out
+!                state.srw.b2stbm_sna:in-out state.srw.b2stbr_sch:in-out
+!                state.srw.b2stbr_she:in-out state.srw.b2stbr_shi:in-out
+!                state.srw.b2stbr_sne:in-out state.srw.b2stbr_shn:in-out
+!                state.srw.b2stbr_skt:in-out state.srw.b2stbr_szt:in-out
+!                state.srw.b2stbr_smo:in-out state.srw.b2stbr_sna:in-out
+!                state.srw.b2npmo_smaf:in-out state.srw.b2npmo_smag:in-out
+!                state.srw.b2npmo_smav:in-out state.srw.rsana:in-out
+!                state.srw.rsahi:in-out state.srw.rsamo:in-out
+!                state.srw.rrana:in-out state.srw.rrahi:in-out
+!                state.srw.rramo:in-out state.srw.rcxna:in-out
+!                state.srw.rcxhi:in-out state.srw.rcxmo:in-out
+!                state.srw.rqahe:in-out state.srw.rqrad:in-out
+!                state.srw.rqbrm:in-out state.srw.b2sihs_joule:in-out
+!                state.srw.b2sihs_divue:in-out state.srw.b2sihs_divua:in-out
+!                state.srw.b2sihs_exbe:in-out state.srw.b2sihs_exba:in-out
+!                state.srw.b2sihs_visa:in-out state.srw.b2sihs_fraa:in-out
+!                state.srw.b2sihs_str:in-out state.srw.sna0_eir_tot:in-out
+!                state.srw.smo0_eir_tot:in-out state.srw.sne0_eir_tot:in-out
+!                state.srw.she0_eir_tot:in-out state.srw.shi0_eir_tot:in-out
+!                state.srw.shn0_eir_tot:in-out state.srw.sch0_eir_tot:in-out
+!                state.rt.rlcx:in-out state.rt.rlqa:in-out state.rt.rlrd:in-out
+!                state.rt.rlbr:in-out state.rt.rlra:in-out state.rt.rlsa:in-out
+!                state.rt.rlza:in-out state.rt.rlz2:in-out state.rt.rlpt:in-out
+!                state.rt.rlpi:in-out state.rt.rlqr:in-out state.rt.rza:in-out
+!                state.rt.rz2:in-out state.rt.rpt:in-out state.rt.rpi:in-out
+!                state.rtw.rsa:in-out state.rtw.rra:in-out state.rtw.rqa:in-out
+!                state.rtw.rrd:in-out state.rtw.rbr:in-out state.rtw.rcx:in-out
+!                state.rtw.rqr:in-out state.psnl.na:in-out state.psnl.ua:in-out
+!                state.psnl.po:in-out state.psnl.te:in-out state.psnl.ti:in-out
+!                state.psnl.tn:in-out state.psnl.kt:in-out state.psnl.zt:in-out
+!                state.psnl.ne:in-out state.psnl.ni:in-out state.psnl.nn:in-out
+!                state.psnl.fch:in-out state.psnl.fna:in-out state.psnl.fhi:in-out
+!                state.psnl.fhe:in-out state.psnl.fhn:in-out state.psnl.fkt:in-out
+!                state.psnl.fzt:in-out state.psnl.kinrgy:in-out
+!                state.psnc.na:in-out state.psnc.ua:in-out state.psnc.po:in-out
+!                state.psnc.te:in-out state.psnc.ti:in-out state.psnc.tn:in-out
+!                state.psnc.kt:in-out state.psnc.zt:in-out state.psnc.ne:in-out
+!                state.psnc.ni:in-out state.psnc.nn:in-out state.psnc.fch:in-out
+!                state.psnc.fna:in-out state.psnc.fhi:in-out state.psnc.fhe:in-out
+!                state.psnc.fhn:in-out state.psnc.fkt:in-out state.psnc.fzt:in-out
+!                state.psnc.kinrgy:in-out state.diag.srcna:in-out
+!                state.diag.srcmo:in-out state.diag.srcpo:in-out
+!                state.diag.srche:in-out state.diag.srchi:in-out
+!                state.diag.srcmt:in-out state.diag.aresco:in-out
+!                state.diag.aresmo:in-out state.diag.acorpa:in-out
+!                state.diag.acorua:in-out state.diag.rescoreg:in-out
+!                state.diag.resmoreg:in-out state.diag.reshereg:in-out
+!                state.diag.reshireg:in-out state.update.ua:in-out
+!                state.update.na:in-out state.update.pa:in-out
+!                state.update.po:in-out state.update.te:in-out
+!                state.update.ti:in-out state.update.kt:in-out
+!                state.update.zt:in-out
 !  Differentiation of b2mndr_2 as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: b2voloncf:out b2data:out b2dataoncf:out
 !                par_opt_phys:out rtlsa:out rtlcx:out rtzmax:out
@@ -14314,9 +14144,159 @@ CONTAINS
 !                state_avg.e_te:out state_avg.e_ti:out state_avg.e_po:out
 !                state_avg.e_kt:out state_avg.e_zt:out state_avg.e_sna:out
 !                state_avg.e_smo:out state_avg.e_she:out state_avg.e_shi:out
-!                state_avg.e_shn:out state.sr_eir.sch:out state.sr_eir.she:out
-!                state.sr_eir.shi:out state.sr_eir.sne:out state.sr_eir.smo:out
-!                state.sr_eir.smq:out state.sr_eir.sna:out
+!                state_avg.e_shn:out state.pl.na:in-out state.pl.ua:in-out
+!                state.pl.po:in-out state.pl.te:in-out state.pl.ti:in-out
+!                state.pl.tn:in-out state.pl.kt:in-out state.pl.zt:in-out
+!                state.co.csig:in-out state.co.calf:in-out state.co.csig_an:in-out
+!                state.co.calf_an:in-out state.co.csig_cl:in-out
+!                state.co.calf_cl:in-out state.co.csigin:in-out
+!                state.co.chve:in-out state.co.chce:in-out state.co.chce_exb:in-out
+!                state.co.chvi:in-out state.co.chci:in-out state.co.chci_exb:in-out
+!                state.co.chcn:in-out state.co.cdkt:in-out state.co.cdzt:in-out
+!                state.co.chvemx:in-out state.co.chvimx:in-out
+!                state.co.cvla:in-out state.co.cdna:in-out state.co.cdna_exb:in-out
+!                state.co.cdpa:in-out state.co.cvsa:in-out state.co.cvlahz:in-out
+!                state.co.cdnahz:in-out state.co.cdpahz:in-out
+!                state.co.cvsahz:in-out state.co.cddi:in-out state.co.cvsahz_cl:in-out
+!                state.co.chcb:in-out state.co.cvsa_an:in-out state.co.cvmahz:in-out
+!                state.co.cvsahz_eff:in-out state.co.cthe:in-out
+!                state.co.cthi:in-out state.co.cvsa_cl:in-out state.co.ceqp:in-out
+!                state.co.fllim0fhi:in-out state.co.fllimvisc:in-out
+!                state.co.fllim0fna:in-out state.co.vsaf_cl:in-out
+!                state.co.sig0:in-out state.co.hce0:in-out state.co.hci0:in-out
+!                state.co.hcn0:in-out state.co.alf0:in-out state.co.dkt0:in-out
+!                state.co.dzt0:in-out state.co.dna_exb:in-out state.co.hce_exb:in-out
+!                state.co.hci_exb:in-out state.co.dpa0:in-out state.co.dna0:in-out
+!                state.co.vsa0:in-out state.co.hcib:in-out state.co.vla0:in-out
+!                state.co.vma0:in-out state.co.kt_neo:in-out state.co.alfx_c:in-out
+!                state.co.sigx_c:in-out state.co.sigx_kt:in-out
+!                state.co.hcix_c:in-out state.co.fllim_ki:in-out
+!                state.co.fllim_ke:in-out state.co.fllim_al:in-out
+!                state.co.fllim_al_c:in-out state.co.fllim_ki_c:in-out
+!                state.co.f_luc_ke:in-out state.co.f_luc_ki:in-out
+!                state.co.f_luc_et:in-out state.co.f_luc_sg:in-out
+!                state.co.f_luc_al:in-out state.co.cssb:in-out
+!                state.dv.fch:in-out state.dv.fch_32:in-out state.dv.fch_52:in-out
+!                state.dv.fch_p:in-out state.dv.fchdia:in-out state.dv.fchin:in-out
+!                state.dv.fchvispar:in-out state.dv.fchvisper:in-out
+!                state.dv.fchvisq:in-out state.dv.fchinert:in-out
+!                state.dv.fchanml:in-out state.dv.fchviskt:in-out
+!                state.dv.fch_pi_c:in-out state.dv.fch_pi_f:in-out
+!                state.dv.fni_32:in-out state.dv.fni_52:in-out
+!                state.dv.fni:in-out state.dv.fni_he:in-out state.dv.fna:in-out
+!                state.dv.fna_mdf:in-out state.dv.fna_52:in-out
+!                state.dv.fna_32:in-out state.dv.fna_53:in-out
+!                state.dv.fna_52nd:in-out state.dv.fna_32nd:in-out
+!                state.dv.fna_nodrift:in-out state.dv.fna_he:in-out
+!                state.dv.fnapsch:in-out state.dv.fna_fcor:in-out
+!                state.dv.fna_eir:in-out state.dv.fna_exb:in-out
+!                state.dv.fmo:in-out state.dv.fne:in-out state.dv.fne_he:in-out
+!                state.dv.fne_32:in-out state.dv.fne_52:in-out
+!                state.dv.fne_eir:in-out state.dv.fne_53:in-out
+!                state.dv.fhe:in-out state.dv.fhe_mdf:in-out state.dv.fhet:in-out
+!                state.dv.fhepsch:in-out state.dv.fhe_eir:in-out
+!                state.dv.fhe_exb:in-out state.dv.fhi:in-out state.dv.fhi_mdf:in-out
+!                state.dv.fhit:in-out state.dv.fhipsch:in-out state.dv.fhi_eir:in-out
+!                state.dv.fhi_exb:in-out state.dv.fnn:in-out state.dv.fnn_32:in-out
+!                state.dv.fnn_52:in-out state.dv.fhn:in-out state.dv.fnn_inc:in-out
+!                state.dv.fhm:in-out state.dv.fhp:in-out state.dv.fhj:in-out
+!                state.dv.fht:in-out state.dv.fkt:in-out state.dv.fzt:in-out
+!                state.dv.kin_frac_hyb:in-out state.dv.fluid_frac_hyb:in-out
+!                state.dv.kinrgy:in-out state.dv.conc:in-out state.dv.flob:in-out
+!                state.dv.floe:in-out state.dv.floi:in-out state.dv.floe_noc:in-out
+!                state.dv.floi_noc:in-out state.dv.flon:in-out
+!                state.dv.flokt:in-out state.dv.flozt:in-out state.dv.conn:in-out
+!                state.dv.conkt:in-out state.dv.conzt:in-out state.dv.conb:in-out
+!                state.dv.cone:in-out state.dv.coni:in-out state.dv.fllime:in-out
+!                state.dv.fllimi:in-out state.dv.resmo:in-out state.dv.resco:in-out
+!                state.dv.respo:in-out state.dv.reshe:in-out state.dv.reshi:in-out
+!                state.dv.resht:in-out state.dv.resmt:in-out state.dv.reshn:in-out
+!                state.dv.reskt:in-out state.dv.reszt:in-out state.dv.corua:in-out
+!                state.dv.corpa:in-out state.dv.corut:in-out state.dv.corpo:in-out
+!                state.dv.cortt:in-out state.dv.corte:in-out state.dv.corti:in-out
+!                state.dv.cortn:in-out state.dv.corkt:in-out state.dv.corzt:in-out
+!                state.dv.pcca:in-out state.dv.pccm:in-out state.dv.ne:in-out
+!                state.dv.ni:in-out state.dv.nn:in-out state.dv.ue:in-out
+!                state.dv.ne2:in-out state.dv.pa:in-out state.dv.pz:in-out
+!                state.dv.lnlam:in-out state.dv.uadia:in-out state.dv.vadia:in-out
+!                state.dv.wadia:in-out state.dv.vaecrb:in-out state.dv.vedia:in-out
+!                state.dv.wedia:in-out state.dv.veecrb:in-out state.dv.facdrift:in-out
+!                state.dv.fac_exb:in-out state.dv.fac_vis:in-out
+!                state.sr.sch:in-out state.sr.she:in-out state.sr.shi:in-out
+!                state.sr.sne:in-out state.sr.shn:in-out state.sr.skt:in-out
+!                state.sr.szt:in-out state.sr.smo:in-out state.sr.smq:in-out
+!                state.sr.sna:in-out state.sr.shedt:in-out state.sr.sktdt:in-out
+!                state.sr.sztdt:in-out state.sr.snedt:in-out state.sr.shidt:in-out
+!                state.sr.shndt:in-out state.sr.schdt:in-out state.sr.smodt:in-out
+!                state.sr.snadt:in-out state.sr.skt_diss:in-out
+!                state.sr.skt_prod:in-out state.sr_eir.sch:in-out
+!                state.sr_eir.she:in-out state.sr_eir.shi:in-out
+!                state.sr_eir.sne:in-out state.sr_eir.smo:in-out
+!                state.sr_eir.smq:in-out state.sr_eir.sna:in-out
+!                state.srw.sch0:in-out state.srw.she0:in-out state.srw.shi0:in-out
+!                state.srw.sne0:in-out state.srw.shn0:in-out state.srw.skt0:in-out
+!                state.srw.szt0:in-out state.srw.smo0:in-out state.srw.smq0:in-out
+!                state.srw.sna0:in-out state.srw.smcf:in-out state.srw.smpr:in-out
+!                state.srw.smpt:in-out state.srw.smfr:in-out state.srw.b2stbc_sch:in-out
+!                state.srw.b2stbc_she:in-out state.srw.b2stbc_shi:in-out
+!                state.srw.b2stbc_sne:in-out state.srw.b2stbc_shn:in-out
+!                state.srw.b2stbc_skt:in-out state.srw.b2stbc_szt:in-out
+!                state.srw.b2stbc_smo:in-out state.srw.b2stbc_sna:in-out
+!                state.srw.b2stbm_sch:in-out state.srw.b2stbm_she:in-out
+!                state.srw.b2stbm_shi:in-out state.srw.b2stbm_sne:in-out
+!                state.srw.b2stbm_smo:in-out state.srw.b2stbm_smq:in-out
+!                state.srw.b2stbm_sna:in-out state.srw.b2stbr_sch:in-out
+!                state.srw.b2stbr_she:in-out state.srw.b2stbr_shi:in-out
+!                state.srw.b2stbr_sne:in-out state.srw.b2stbr_shn:in-out
+!                state.srw.b2stbr_skt:in-out state.srw.b2stbr_szt:in-out
+!                state.srw.b2stbr_smo:in-out state.srw.b2stbr_sna:in-out
+!                state.srw.b2npmo_smaf:in-out state.srw.b2npmo_smag:in-out
+!                state.srw.b2npmo_smav:in-out state.srw.rsana:in-out
+!                state.srw.rsahi:in-out state.srw.rsamo:in-out
+!                state.srw.rrana:in-out state.srw.rrahi:in-out
+!                state.srw.rramo:in-out state.srw.rcxna:in-out
+!                state.srw.rcxhi:in-out state.srw.rcxmo:in-out
+!                state.srw.rqahe:in-out state.srw.rqrad:in-out
+!                state.srw.rqbrm:in-out state.srw.b2sihs_joule:in-out
+!                state.srw.b2sihs_divue:in-out state.srw.b2sihs_divua:in-out
+!                state.srw.b2sihs_exbe:in-out state.srw.b2sihs_exba:in-out
+!                state.srw.b2sihs_visa:in-out state.srw.b2sihs_fraa:in-out
+!                state.srw.b2sihs_str:in-out state.srw.sna0_eir_tot:in-out
+!                state.srw.smo0_eir_tot:in-out state.srw.sne0_eir_tot:in-out
+!                state.srw.she0_eir_tot:in-out state.srw.shi0_eir_tot:in-out
+!                state.srw.shn0_eir_tot:in-out state.srw.sch0_eir_tot:in-out
+!                state.rt.rlcx:in-out state.rt.rlqa:in-out state.rt.rlrd:in-out
+!                state.rt.rlbr:in-out state.rt.rlra:in-out state.rt.rlsa:in-out
+!                state.rt.rlza:in-out state.rt.rlz2:in-out state.rt.rlpt:in-out
+!                state.rt.rlpi:in-out state.rt.rlqr:in-out state.rt.rza:in-out
+!                state.rt.rz2:in-out state.rt.rpt:in-out state.rt.rpi:in-out
+!                state.rtw.rsa:in-out state.rtw.rra:in-out state.rtw.rqa:in-out
+!                state.rtw.rrd:in-out state.rtw.rbr:in-out state.rtw.rcx:in-out
+!                state.rtw.rqr:in-out state.psnl.na:in-out state.psnl.ua:in-out
+!                state.psnl.po:in-out state.psnl.te:in-out state.psnl.ti:in-out
+!                state.psnl.tn:in-out state.psnl.kt:in-out state.psnl.zt:in-out
+!                state.psnl.ne:in-out state.psnl.ni:in-out state.psnl.nn:in-out
+!                state.psnl.fch:in-out state.psnl.fna:in-out state.psnl.fhi:in-out
+!                state.psnl.fhe:in-out state.psnl.fhn:in-out state.psnl.fkt:in-out
+!                state.psnl.fzt:in-out state.psnl.kinrgy:in-out
+!                state.psnc.na:in-out state.psnc.ua:in-out state.psnc.po:in-out
+!                state.psnc.te:in-out state.psnc.ti:in-out state.psnc.tn:in-out
+!                state.psnc.kt:in-out state.psnc.zt:in-out state.psnc.ne:in-out
+!                state.psnc.ni:in-out state.psnc.nn:in-out state.psnc.fch:in-out
+!                state.psnc.fna:in-out state.psnc.fhi:in-out state.psnc.fhe:in-out
+!                state.psnc.fhn:in-out state.psnc.fkt:in-out state.psnc.fzt:in-out
+!                state.psnc.kinrgy:in-out state.diag.srcna:in-out
+!                state.diag.srcmo:in-out state.diag.srcpo:in-out
+!                state.diag.srche:in-out state.diag.srchi:in-out
+!                state.diag.srcmt:in-out state.diag.aresco:in-out
+!                state.diag.aresmo:in-out state.diag.acorpa:in-out
+!                state.diag.acorua:in-out state.diag.rescoreg:in-out
+!                state.diag.resmoreg:in-out state.diag.reshereg:in-out
+!                state.diag.reshireg:in-out state.update.ua:in-out
+!                state.update.na:in-out state.update.pa:in-out
+!                state.update.po:in-out state.update.te:in-out
+!                state.update.ti:in-out state.update.kt:in-out
+!                state.update.zt:in-out
 !
   SUBROUTINE B2MNDR_2_DV_DV(nout, ns, switch, geo, mpg, state, stated0, &
 &   stated, state_ext, state_avg, state_avgd, nbdirs, nbdirs0)
@@ -14341,16 +14321,20 @@ CONTAINS
     INTEGER :: ncv, nfc, is
     INTEGER :: nvx
     LOGICAL :: ids_done
+    EXTERNAL B2XVSG
     EXTERNAL CALC_ERR
     EXTERNAL B2WDAT_NODIFF
     INTRINSIC TRIM
     INTRINSIC MOD
+    EXTERNAL B2MWMV
+    EXTERNAL B2MWMV_DV
     INTRINSIC MAX
     EXTERNAL XERRAB
     INTEGER :: max1
-    CHARACTER(len=9) :: arg1
-    REAL(r8), DIMENSION(mpg%ncv) :: arg10
+    INTEGER :: arg1
+    CHARACTER(len=9) :: arg10
     REAL(r8), DIMENSION(mpg%ncv) :: arg11
+    REAL(r8), DIMENSION(mpg%ncv) :: arg12
     INTEGER :: nbdirs
     INTRINSIC ALLOCATED
     INTEGER :: nbdirs0
@@ -14395,6 +14379,10 @@ CONTAINS
     CALL WRITE_B2US_FEEDBACK(99, '    ')
 ! finalise transport_models
     CALL WRITE_B2MOD_TRANSPORT_MODELS(99, '    ')
+!   ..test plasma state
+    CALL B2XVPS_NODIFF_NODIFF(ncv, nfc, ns, state%pl, state%dv)
+    arg1 = ncv*ns
+    CALL B2XVSG(arg1, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
 !   ..save final state
     CALL WRITE_B2FSTATE(nout(2), ncv, nfc, ns, state)
 !   ..write plasma state
@@ -14419,17 +14407,19 @@ CONTAINS
 !srv 29.11.18 {
         DO is=0,ns-1
           WRITE(chns, '(i3.3)') is
-          arg1(:) = 'b2mndr_na'//chns//'out'
-          CALL MY_OUT_US(70, ncv, 0, state%pl%na(1, is), arg1(:))
-          arg1(:) = 'b2mndr_ua'//chns//'out'
-          CALL MY_OUT_US(70, ncv, 0, state%pl%ua(1, is), arg1(:))
+          arg10(:) = 'b2mndr_na'//chns//'out'
+          CALL MY_OUT_US(70, ncv, 0, state%pl%na(1, is), arg10(:)&
+&                        )
+          arg10(:) = 'b2mndr_ua'//chns//'out'
+          CALL MY_OUT_US(70, ncv, 0, state%pl%ua(1, is), arg10(:)&
+&                        )
         END DO
         CALL MY_OUT_US(70, ncv, 0, state%pl%te, 'b2mndr_te_out')
-        arg10(:) = state%pl%te/ev
-        CALL MY_OUT_US(70, ncv, 0, arg10(:), 'b2mndr_te_eV_out')
+        arg11(:) = state%pl%te/ev
+        CALL MY_OUT_US(70, ncv, 0, arg11(:), 'b2mndr_te_eV_out')
         CALL MY_OUT_US(70, ncv, 0, state%pl%ti, 'b2mndr_ti_out')
-        arg11(:) = state%pl%ti/ev
-        CALL MY_OUT_US(70, ncv, 0, arg11(:), 'b2mndr_ti_eV_out')
+        arg12(:) = state%pl%ti/ev
+        CALL MY_OUT_US(70, ncv, 0, arg12(:), 'b2mndr_ti_eV_out')
         CALL MY_OUT_US(70, ncv, 0, state%pl%po, 'b2mndr_po_out')
       END IF
     END IF
@@ -14447,6 +14437,9 @@ CONTAINS
         CLOSE(31) 
       END IF
     END IF
+!   ..produce data for last frame in movie if not yet done
+    IF (MOD(itim, mvinc) .NE. 0 .AND. itim/mvinc + 1 .LE. mvnum) CALL &
+&     B2MWMV(nout(3), ncv, state, itim, tim, dtim)
 !   ..produce last CDF movie frame if not yet done
     IF (tim .GT. save_cdfmovie_time - delta_cdfmovie_time + dtim .AND. &
 &       delta_cdfmovie_time .GT. 0.0_R8) CALL CDFMOVIE(ncid, ncv, ns, &
@@ -14559,6 +14552,7 @@ CONTAINS
 !WG_RM      call dealloc_b2mod_external
     CALL DEALLOC_B2MOD_WALL_INIT()
     CALL DEALLOC_B2MOD_YSMP_SDRV()
+    CALL DEALLOC_B2MOD_FACDRIFT_EXB()
     CALL DEALLOC_TRANSPORT_NAMELIST()
     CALL DEALLOC_B2MOD_FIRST_FLIGHT()
     CALL DEALLOC_B2MOD_NEOCLASSICAL()
@@ -14593,9 +14587,159 @@ CONTAINS
 !                state_avg.e_te:out state_avg.e_ti:out state_avg.e_po:out
 !                state_avg.e_kt:out state_avg.e_zt:out state_avg.e_sna:out
 !                state_avg.e_smo:out state_avg.e_she:out state_avg.e_shi:out
-!                state_avg.e_shn:out state.sr_eir.sch:out state.sr_eir.she:out
-!                state.sr_eir.shi:out state.sr_eir.sne:out state.sr_eir.smo:out
-!                state.sr_eir.smq:out state.sr_eir.sna:out
+!                state_avg.e_shn:out state.pl.na:in-out state.pl.ua:in-out
+!                state.pl.po:in-out state.pl.te:in-out state.pl.ti:in-out
+!                state.pl.tn:in-out state.pl.kt:in-out state.pl.zt:in-out
+!                state.co.csig:in-out state.co.calf:in-out state.co.csig_an:in-out
+!                state.co.calf_an:in-out state.co.csig_cl:in-out
+!                state.co.calf_cl:in-out state.co.csigin:in-out
+!                state.co.chve:in-out state.co.chce:in-out state.co.chce_exb:in-out
+!                state.co.chvi:in-out state.co.chci:in-out state.co.chci_exb:in-out
+!                state.co.chcn:in-out state.co.cdkt:in-out state.co.cdzt:in-out
+!                state.co.chvemx:in-out state.co.chvimx:in-out
+!                state.co.cvla:in-out state.co.cdna:in-out state.co.cdna_exb:in-out
+!                state.co.cdpa:in-out state.co.cvsa:in-out state.co.cvlahz:in-out
+!                state.co.cdnahz:in-out state.co.cdpahz:in-out
+!                state.co.cvsahz:in-out state.co.cddi:in-out state.co.cvsahz_cl:in-out
+!                state.co.chcb:in-out state.co.cvsa_an:in-out state.co.cvmahz:in-out
+!                state.co.cvsahz_eff:in-out state.co.cthe:in-out
+!                state.co.cthi:in-out state.co.cvsa_cl:in-out state.co.ceqp:in-out
+!                state.co.fllim0fhi:in-out state.co.fllimvisc:in-out
+!                state.co.fllim0fna:in-out state.co.vsaf_cl:in-out
+!                state.co.sig0:in-out state.co.hce0:in-out state.co.hci0:in-out
+!                state.co.hcn0:in-out state.co.alf0:in-out state.co.dkt0:in-out
+!                state.co.dzt0:in-out state.co.dna_exb:in-out state.co.hce_exb:in-out
+!                state.co.hci_exb:in-out state.co.dpa0:in-out state.co.dna0:in-out
+!                state.co.vsa0:in-out state.co.hcib:in-out state.co.vla0:in-out
+!                state.co.vma0:in-out state.co.kt_neo:in-out state.co.alfx_c:in-out
+!                state.co.sigx_c:in-out state.co.sigx_kt:in-out
+!                state.co.hcix_c:in-out state.co.fllim_ki:in-out
+!                state.co.fllim_ke:in-out state.co.fllim_al:in-out
+!                state.co.fllim_al_c:in-out state.co.fllim_ki_c:in-out
+!                state.co.f_luc_ke:in-out state.co.f_luc_ki:in-out
+!                state.co.f_luc_et:in-out state.co.f_luc_sg:in-out
+!                state.co.f_luc_al:in-out state.co.cssb:in-out
+!                state.dv.fch:in-out state.dv.fch_32:in-out state.dv.fch_52:in-out
+!                state.dv.fch_p:in-out state.dv.fchdia:in-out state.dv.fchin:in-out
+!                state.dv.fchvispar:in-out state.dv.fchvisper:in-out
+!                state.dv.fchvisq:in-out state.dv.fchinert:in-out
+!                state.dv.fchanml:in-out state.dv.fchviskt:in-out
+!                state.dv.fch_pi_c:in-out state.dv.fch_pi_f:in-out
+!                state.dv.fni_32:in-out state.dv.fni_52:in-out
+!                state.dv.fni:in-out state.dv.fni_he:in-out state.dv.fna:in-out
+!                state.dv.fna_mdf:in-out state.dv.fna_52:in-out
+!                state.dv.fna_32:in-out state.dv.fna_53:in-out
+!                state.dv.fna_52nd:in-out state.dv.fna_32nd:in-out
+!                state.dv.fna_nodrift:in-out state.dv.fna_he:in-out
+!                state.dv.fnapsch:in-out state.dv.fna_fcor:in-out
+!                state.dv.fna_eir:in-out state.dv.fna_exb:in-out
+!                state.dv.fmo:in-out state.dv.fne:in-out state.dv.fne_he:in-out
+!                state.dv.fne_32:in-out state.dv.fne_52:in-out
+!                state.dv.fne_eir:in-out state.dv.fne_53:in-out
+!                state.dv.fhe:in-out state.dv.fhe_mdf:in-out state.dv.fhet:in-out
+!                state.dv.fhepsch:in-out state.dv.fhe_eir:in-out
+!                state.dv.fhe_exb:in-out state.dv.fhi:in-out state.dv.fhi_mdf:in-out
+!                state.dv.fhit:in-out state.dv.fhipsch:in-out state.dv.fhi_eir:in-out
+!                state.dv.fhi_exb:in-out state.dv.fnn:in-out state.dv.fnn_32:in-out
+!                state.dv.fnn_52:in-out state.dv.fhn:in-out state.dv.fnn_inc:in-out
+!                state.dv.fhm:in-out state.dv.fhp:in-out state.dv.fhj:in-out
+!                state.dv.fht:in-out state.dv.fkt:in-out state.dv.fzt:in-out
+!                state.dv.kin_frac_hyb:in-out state.dv.fluid_frac_hyb:in-out
+!                state.dv.kinrgy:in-out state.dv.conc:in-out state.dv.flob:in-out
+!                state.dv.floe:in-out state.dv.floi:in-out state.dv.floe_noc:in-out
+!                state.dv.floi_noc:in-out state.dv.flon:in-out
+!                state.dv.flokt:in-out state.dv.flozt:in-out state.dv.conn:in-out
+!                state.dv.conkt:in-out state.dv.conzt:in-out state.dv.conb:in-out
+!                state.dv.cone:in-out state.dv.coni:in-out state.dv.fllime:in-out
+!                state.dv.fllimi:in-out state.dv.resmo:in-out state.dv.resco:in-out
+!                state.dv.respo:in-out state.dv.reshe:in-out state.dv.reshi:in-out
+!                state.dv.resht:in-out state.dv.resmt:in-out state.dv.reshn:in-out
+!                state.dv.reskt:in-out state.dv.reszt:in-out state.dv.corua:in-out
+!                state.dv.corpa:in-out state.dv.corut:in-out state.dv.corpo:in-out
+!                state.dv.cortt:in-out state.dv.corte:in-out state.dv.corti:in-out
+!                state.dv.cortn:in-out state.dv.corkt:in-out state.dv.corzt:in-out
+!                state.dv.pcca:in-out state.dv.pccm:in-out state.dv.ne:in-out
+!                state.dv.ni:in-out state.dv.nn:in-out state.dv.ue:in-out
+!                state.dv.ne2:in-out state.dv.pa:in-out state.dv.pz:in-out
+!                state.dv.lnlam:in-out state.dv.uadia:in-out state.dv.vadia:in-out
+!                state.dv.wadia:in-out state.dv.vaecrb:in-out state.dv.vedia:in-out
+!                state.dv.wedia:in-out state.dv.veecrb:in-out state.dv.facdrift:in-out
+!                state.dv.fac_exb:in-out state.dv.fac_vis:in-out
+!                state.sr.sch:in-out state.sr.she:in-out state.sr.shi:in-out
+!                state.sr.sne:in-out state.sr.shn:in-out state.sr.skt:in-out
+!                state.sr.szt:in-out state.sr.smo:in-out state.sr.smq:in-out
+!                state.sr.sna:in-out state.sr.shedt:in-out state.sr.sktdt:in-out
+!                state.sr.sztdt:in-out state.sr.snedt:in-out state.sr.shidt:in-out
+!                state.sr.shndt:in-out state.sr.schdt:in-out state.sr.smodt:in-out
+!                state.sr.snadt:in-out state.sr.skt_diss:in-out
+!                state.sr.skt_prod:in-out state.sr_eir.sch:in-out
+!                state.sr_eir.she:in-out state.sr_eir.shi:in-out
+!                state.sr_eir.sne:in-out state.sr_eir.smo:in-out
+!                state.sr_eir.smq:in-out state.sr_eir.sna:in-out
+!                state.srw.sch0:in-out state.srw.she0:in-out state.srw.shi0:in-out
+!                state.srw.sne0:in-out state.srw.shn0:in-out state.srw.skt0:in-out
+!                state.srw.szt0:in-out state.srw.smo0:in-out state.srw.smq0:in-out
+!                state.srw.sna0:in-out state.srw.smcf:in-out state.srw.smpr:in-out
+!                state.srw.smpt:in-out state.srw.smfr:in-out state.srw.b2stbc_sch:in-out
+!                state.srw.b2stbc_she:in-out state.srw.b2stbc_shi:in-out
+!                state.srw.b2stbc_sne:in-out state.srw.b2stbc_shn:in-out
+!                state.srw.b2stbc_skt:in-out state.srw.b2stbc_szt:in-out
+!                state.srw.b2stbc_smo:in-out state.srw.b2stbc_sna:in-out
+!                state.srw.b2stbm_sch:in-out state.srw.b2stbm_she:in-out
+!                state.srw.b2stbm_shi:in-out state.srw.b2stbm_sne:in-out
+!                state.srw.b2stbm_smo:in-out state.srw.b2stbm_smq:in-out
+!                state.srw.b2stbm_sna:in-out state.srw.b2stbr_sch:in-out
+!                state.srw.b2stbr_she:in-out state.srw.b2stbr_shi:in-out
+!                state.srw.b2stbr_sne:in-out state.srw.b2stbr_shn:in-out
+!                state.srw.b2stbr_skt:in-out state.srw.b2stbr_szt:in-out
+!                state.srw.b2stbr_smo:in-out state.srw.b2stbr_sna:in-out
+!                state.srw.b2npmo_smaf:in-out state.srw.b2npmo_smag:in-out
+!                state.srw.b2npmo_smav:in-out state.srw.rsana:in-out
+!                state.srw.rsahi:in-out state.srw.rsamo:in-out
+!                state.srw.rrana:in-out state.srw.rrahi:in-out
+!                state.srw.rramo:in-out state.srw.rcxna:in-out
+!                state.srw.rcxhi:in-out state.srw.rcxmo:in-out
+!                state.srw.rqahe:in-out state.srw.rqrad:in-out
+!                state.srw.rqbrm:in-out state.srw.b2sihs_joule:in-out
+!                state.srw.b2sihs_divue:in-out state.srw.b2sihs_divua:in-out
+!                state.srw.b2sihs_exbe:in-out state.srw.b2sihs_exba:in-out
+!                state.srw.b2sihs_visa:in-out state.srw.b2sihs_fraa:in-out
+!                state.srw.b2sihs_str:in-out state.srw.sna0_eir_tot:in-out
+!                state.srw.smo0_eir_tot:in-out state.srw.sne0_eir_tot:in-out
+!                state.srw.she0_eir_tot:in-out state.srw.shi0_eir_tot:in-out
+!                state.srw.shn0_eir_tot:in-out state.srw.sch0_eir_tot:in-out
+!                state.rt.rlcx:in-out state.rt.rlqa:in-out state.rt.rlrd:in-out
+!                state.rt.rlbr:in-out state.rt.rlra:in-out state.rt.rlsa:in-out
+!                state.rt.rlza:in-out state.rt.rlz2:in-out state.rt.rlpt:in-out
+!                state.rt.rlpi:in-out state.rt.rlqr:in-out state.rt.rza:in-out
+!                state.rt.rz2:in-out state.rt.rpt:in-out state.rt.rpi:in-out
+!                state.rtw.rsa:in-out state.rtw.rra:in-out state.rtw.rqa:in-out
+!                state.rtw.rrd:in-out state.rtw.rbr:in-out state.rtw.rcx:in-out
+!                state.rtw.rqr:in-out state.psnl.na:in-out state.psnl.ua:in-out
+!                state.psnl.po:in-out state.psnl.te:in-out state.psnl.ti:in-out
+!                state.psnl.tn:in-out state.psnl.kt:in-out state.psnl.zt:in-out
+!                state.psnl.ne:in-out state.psnl.ni:in-out state.psnl.nn:in-out
+!                state.psnl.fch:in-out state.psnl.fna:in-out state.psnl.fhi:in-out
+!                state.psnl.fhe:in-out state.psnl.fhn:in-out state.psnl.fkt:in-out
+!                state.psnl.fzt:in-out state.psnl.kinrgy:in-out
+!                state.psnc.na:in-out state.psnc.ua:in-out state.psnc.po:in-out
+!                state.psnc.te:in-out state.psnc.ti:in-out state.psnc.tn:in-out
+!                state.psnc.kt:in-out state.psnc.zt:in-out state.psnc.ne:in-out
+!                state.psnc.ni:in-out state.psnc.nn:in-out state.psnc.fch:in-out
+!                state.psnc.fna:in-out state.psnc.fhi:in-out state.psnc.fhe:in-out
+!                state.psnc.fhn:in-out state.psnc.fkt:in-out state.psnc.fzt:in-out
+!                state.psnc.kinrgy:in-out state.diag.srcna:in-out
+!                state.diag.srcmo:in-out state.diag.srcpo:in-out
+!                state.diag.srche:in-out state.diag.srchi:in-out
+!                state.diag.srcmt:in-out state.diag.aresco:in-out
+!                state.diag.aresmo:in-out state.diag.acorpa:in-out
+!                state.diag.acorua:in-out state.diag.rescoreg:in-out
+!                state.diag.resmoreg:in-out state.diag.reshereg:in-out
+!                state.diag.reshireg:in-out state.update.ua:in-out
+!                state.update.na:in-out state.update.pa:in-out
+!                state.update.po:in-out state.update.te:in-out
+!                state.update.ti:in-out state.update.kt:in-out
+!                state.update.zt:in-out
 !
   SUBROUTINE B2MNDR_2_DV(nout, ns, switch, geo, mpg, state, stated, &
 &   state_ext, state_avg, state_avgd, nbdirs)
@@ -14618,16 +14762,20 @@ CONTAINS
     INTEGER :: ncv, nfc, is
     INTEGER :: nvx
     LOGICAL :: ids_done
+    EXTERNAL B2XVSG
     EXTERNAL CALC_ERR
     EXTERNAL B2WDAT_NODIFF
     INTRINSIC TRIM
     INTRINSIC MOD
+    EXTERNAL B2MWMV
+    EXTERNAL B2MWMV_DV
     INTRINSIC MAX
     EXTERNAL XERRAB
     INTEGER :: max1
-    CHARACTER(len=9) :: arg1
-    REAL(r8), DIMENSION(mpg%ncv) :: arg10
+    INTEGER :: arg1
+    CHARACTER(len=9) :: arg10
     REAL(r8), DIMENSION(mpg%ncv) :: arg11
+    REAL(r8), DIMENSION(mpg%ncv) :: arg12
     INTEGER :: nbdirs
     INTRINSIC ALLOCATED
 !
@@ -14671,6 +14819,10 @@ CONTAINS
     CALL WRITE_B2US_FEEDBACK(99, '    ')
 ! finalise transport_models
     CALL WRITE_B2MOD_TRANSPORT_MODELS(99, '    ')
+!   ..test plasma state
+    CALL B2XVPS_NODIFF_NODIFF(ncv, nfc, ns, state%pl, state%dv)
+    arg1 = ncv*ns
+    CALL B2XVSG(arg1, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
 !   ..save final state
     CALL WRITE_B2FSTATE(nout(2), ncv, nfc, ns, state)
 !   ..write plasma state
@@ -14695,17 +14847,19 @@ CONTAINS
 !srv 29.11.18 {
         DO is=0,ns-1
           WRITE(chns, '(i3.3)') is
-          arg1(:) = 'b2mndr_na'//chns//'out'
-          CALL MY_OUT_US(70, ncv, 0, state%pl%na(1, is), arg1(:))
-          arg1(:) = 'b2mndr_ua'//chns//'out'
-          CALL MY_OUT_US(70, ncv, 0, state%pl%ua(1, is), arg1(:))
+          arg10(:) = 'b2mndr_na'//chns//'out'
+          CALL MY_OUT_US(70, ncv, 0, state%pl%na(1, is), arg10(:)&
+&                        )
+          arg10(:) = 'b2mndr_ua'//chns//'out'
+          CALL MY_OUT_US(70, ncv, 0, state%pl%ua(1, is), arg10(:)&
+&                        )
         END DO
         CALL MY_OUT_US(70, ncv, 0, state%pl%te, 'b2mndr_te_out')
-        arg10(:) = state%pl%te/ev
-        CALL MY_OUT_US(70, ncv, 0, arg10(:), 'b2mndr_te_eV_out')
+        arg11(:) = state%pl%te/ev
+        CALL MY_OUT_US(70, ncv, 0, arg11(:), 'b2mndr_te_eV_out')
         CALL MY_OUT_US(70, ncv, 0, state%pl%ti, 'b2mndr_ti_out')
-        arg11(:) = state%pl%ti/ev
-        CALL MY_OUT_US(70, ncv, 0, arg11(:), 'b2mndr_ti_eV_out')
+        arg12(:) = state%pl%ti/ev
+        CALL MY_OUT_US(70, ncv, 0, arg12(:), 'b2mndr_ti_eV_out')
         CALL MY_OUT_US(70, ncv, 0, state%pl%po, 'b2mndr_po_out')
       END IF
     END IF
@@ -14723,6 +14877,9 @@ CONTAINS
         CLOSE(31) 
       END IF
     END IF
+!   ..produce data for last frame in movie if not yet done
+    IF (MOD(itim, mvinc) .NE. 0 .AND. itim/mvinc + 1 .LE. mvnum) CALL &
+&     B2MWMV(nout(3), ncv, state, itim, tim, dtim)
 !   ..produce last CDF movie frame if not yet done
     IF (tim .GT. save_cdfmovie_time - delta_cdfmovie_time + dtim .AND. &
 &       delta_cdfmovie_time .GT. 0.0_R8) CALL CDFMOVIE(ncid, ncv, ns, &
@@ -14832,6 +14989,7 @@ CONTAINS
 !WG_RM      call dealloc_b2mod_external
     CALL DEALLOC_B2MOD_WALL_INIT()
     CALL DEALLOC_B2MOD_YSMP_SDRV()
+    CALL DEALLOC_B2MOD_FACDRIFT_EXB()
     CALL DEALLOC_TRANSPORT_NAMELIST()
     CALL DEALLOC_B2MOD_FIRST_FLIGHT()
     CALL DEALLOC_B2MOD_NEOCLASSICAL()
@@ -14853,9 +15011,159 @@ CONTAINS
   END SUBROUTINE B2MNDR_2_DV
 
 !  Differentiation of b2mndr_2 as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: state.sr_eir.sch:out state.sr_eir.she:out
-!                state.sr_eir.shi:out state.sr_eir.sne:out state.sr_eir.smo:out
-!                state.sr_eir.smq:out state.sr_eir.sna:out
+!   Plus diff mem management of: state.pl.na:in-out state.pl.ua:in-out
+!                state.pl.po:in-out state.pl.te:in-out state.pl.ti:in-out
+!                state.pl.tn:in-out state.pl.kt:in-out state.pl.zt:in-out
+!                state.co.csig:in-out state.co.calf:in-out state.co.csig_an:in-out
+!                state.co.calf_an:in-out state.co.csig_cl:in-out
+!                state.co.calf_cl:in-out state.co.csigin:in-out
+!                state.co.chve:in-out state.co.chce:in-out state.co.chce_exb:in-out
+!                state.co.chvi:in-out state.co.chci:in-out state.co.chci_exb:in-out
+!                state.co.chcn:in-out state.co.cdkt:in-out state.co.cdzt:in-out
+!                state.co.chvemx:in-out state.co.chvimx:in-out
+!                state.co.cvla:in-out state.co.cdna:in-out state.co.cdna_exb:in-out
+!                state.co.cdpa:in-out state.co.cvsa:in-out state.co.cvlahz:in-out
+!                state.co.cdnahz:in-out state.co.cdpahz:in-out
+!                state.co.cvsahz:in-out state.co.cddi:in-out state.co.cvsahz_cl:in-out
+!                state.co.chcb:in-out state.co.cvsa_an:in-out state.co.cvmahz:in-out
+!                state.co.cvsahz_eff:in-out state.co.cthe:in-out
+!                state.co.cthi:in-out state.co.cvsa_cl:in-out state.co.ceqp:in-out
+!                state.co.fllim0fhi:in-out state.co.fllimvisc:in-out
+!                state.co.fllim0fna:in-out state.co.vsaf_cl:in-out
+!                state.co.sig0:in-out state.co.hce0:in-out state.co.hci0:in-out
+!                state.co.hcn0:in-out state.co.alf0:in-out state.co.dkt0:in-out
+!                state.co.dzt0:in-out state.co.dna_exb:in-out state.co.hce_exb:in-out
+!                state.co.hci_exb:in-out state.co.dpa0:in-out state.co.dna0:in-out
+!                state.co.vsa0:in-out state.co.hcib:in-out state.co.vla0:in-out
+!                state.co.vma0:in-out state.co.kt_neo:in-out state.co.alfx_c:in-out
+!                state.co.sigx_c:in-out state.co.sigx_kt:in-out
+!                state.co.hcix_c:in-out state.co.fllim_ki:in-out
+!                state.co.fllim_ke:in-out state.co.fllim_al:in-out
+!                state.co.fllim_al_c:in-out state.co.fllim_ki_c:in-out
+!                state.co.f_luc_ke:in-out state.co.f_luc_ki:in-out
+!                state.co.f_luc_et:in-out state.co.f_luc_sg:in-out
+!                state.co.f_luc_al:in-out state.co.cssb:in-out
+!                state.dv.fch:in-out state.dv.fch_32:in-out state.dv.fch_52:in-out
+!                state.dv.fch_p:in-out state.dv.fchdia:in-out state.dv.fchin:in-out
+!                state.dv.fchvispar:in-out state.dv.fchvisper:in-out
+!                state.dv.fchvisq:in-out state.dv.fchinert:in-out
+!                state.dv.fchanml:in-out state.dv.fchviskt:in-out
+!                state.dv.fch_pi_c:in-out state.dv.fch_pi_f:in-out
+!                state.dv.fni_32:in-out state.dv.fni_52:in-out
+!                state.dv.fni:in-out state.dv.fni_he:in-out state.dv.fna:in-out
+!                state.dv.fna_mdf:in-out state.dv.fna_52:in-out
+!                state.dv.fna_32:in-out state.dv.fna_53:in-out
+!                state.dv.fna_52nd:in-out state.dv.fna_32nd:in-out
+!                state.dv.fna_nodrift:in-out state.dv.fna_he:in-out
+!                state.dv.fnapsch:in-out state.dv.fna_fcor:in-out
+!                state.dv.fna_eir:in-out state.dv.fna_exb:in-out
+!                state.dv.fmo:in-out state.dv.fne:in-out state.dv.fne_he:in-out
+!                state.dv.fne_32:in-out state.dv.fne_52:in-out
+!                state.dv.fne_eir:in-out state.dv.fne_53:in-out
+!                state.dv.fhe:in-out state.dv.fhe_mdf:in-out state.dv.fhet:in-out
+!                state.dv.fhepsch:in-out state.dv.fhe_eir:in-out
+!                state.dv.fhe_exb:in-out state.dv.fhi:in-out state.dv.fhi_mdf:in-out
+!                state.dv.fhit:in-out state.dv.fhipsch:in-out state.dv.fhi_eir:in-out
+!                state.dv.fhi_exb:in-out state.dv.fnn:in-out state.dv.fnn_32:in-out
+!                state.dv.fnn_52:in-out state.dv.fhn:in-out state.dv.fnn_inc:in-out
+!                state.dv.fhm:in-out state.dv.fhp:in-out state.dv.fhj:in-out
+!                state.dv.fht:in-out state.dv.fkt:in-out state.dv.fzt:in-out
+!                state.dv.kin_frac_hyb:in-out state.dv.fluid_frac_hyb:in-out
+!                state.dv.kinrgy:in-out state.dv.conc:in-out state.dv.flob:in-out
+!                state.dv.floe:in-out state.dv.floi:in-out state.dv.floe_noc:in-out
+!                state.dv.floi_noc:in-out state.dv.flon:in-out
+!                state.dv.flokt:in-out state.dv.flozt:in-out state.dv.conn:in-out
+!                state.dv.conkt:in-out state.dv.conzt:in-out state.dv.conb:in-out
+!                state.dv.cone:in-out state.dv.coni:in-out state.dv.fllime:in-out
+!                state.dv.fllimi:in-out state.dv.resmo:in-out state.dv.resco:in-out
+!                state.dv.respo:in-out state.dv.reshe:in-out state.dv.reshi:in-out
+!                state.dv.resht:in-out state.dv.resmt:in-out state.dv.reshn:in-out
+!                state.dv.reskt:in-out state.dv.reszt:in-out state.dv.corua:in-out
+!                state.dv.corpa:in-out state.dv.corut:in-out state.dv.corpo:in-out
+!                state.dv.cortt:in-out state.dv.corte:in-out state.dv.corti:in-out
+!                state.dv.cortn:in-out state.dv.corkt:in-out state.dv.corzt:in-out
+!                state.dv.pcca:in-out state.dv.pccm:in-out state.dv.ne:in-out
+!                state.dv.ni:in-out state.dv.nn:in-out state.dv.ue:in-out
+!                state.dv.ne2:in-out state.dv.pa:in-out state.dv.pz:in-out
+!                state.dv.lnlam:in-out state.dv.uadia:in-out state.dv.vadia:in-out
+!                state.dv.wadia:in-out state.dv.vaecrb:in-out state.dv.vedia:in-out
+!                state.dv.wedia:in-out state.dv.veecrb:in-out state.dv.facdrift:in-out
+!                state.dv.fac_exb:in-out state.dv.fac_vis:in-out
+!                state.sr.sch:in-out state.sr.she:in-out state.sr.shi:in-out
+!                state.sr.sne:in-out state.sr.shn:in-out state.sr.skt:in-out
+!                state.sr.szt:in-out state.sr.smo:in-out state.sr.smq:in-out
+!                state.sr.sna:in-out state.sr.shedt:in-out state.sr.sktdt:in-out
+!                state.sr.sztdt:in-out state.sr.snedt:in-out state.sr.shidt:in-out
+!                state.sr.shndt:in-out state.sr.schdt:in-out state.sr.smodt:in-out
+!                state.sr.snadt:in-out state.sr.skt_diss:in-out
+!                state.sr.skt_prod:in-out state.sr_eir.sch:in-out
+!                state.sr_eir.she:in-out state.sr_eir.shi:in-out
+!                state.sr_eir.sne:in-out state.sr_eir.smo:in-out
+!                state.sr_eir.smq:in-out state.sr_eir.sna:in-out
+!                state.srw.sch0:in-out state.srw.she0:in-out state.srw.shi0:in-out
+!                state.srw.sne0:in-out state.srw.shn0:in-out state.srw.skt0:in-out
+!                state.srw.szt0:in-out state.srw.smo0:in-out state.srw.smq0:in-out
+!                state.srw.sna0:in-out state.srw.smcf:in-out state.srw.smpr:in-out
+!                state.srw.smpt:in-out state.srw.smfr:in-out state.srw.b2stbc_sch:in-out
+!                state.srw.b2stbc_she:in-out state.srw.b2stbc_shi:in-out
+!                state.srw.b2stbc_sne:in-out state.srw.b2stbc_shn:in-out
+!                state.srw.b2stbc_skt:in-out state.srw.b2stbc_szt:in-out
+!                state.srw.b2stbc_smo:in-out state.srw.b2stbc_sna:in-out
+!                state.srw.b2stbm_sch:in-out state.srw.b2stbm_she:in-out
+!                state.srw.b2stbm_shi:in-out state.srw.b2stbm_sne:in-out
+!                state.srw.b2stbm_smo:in-out state.srw.b2stbm_smq:in-out
+!                state.srw.b2stbm_sna:in-out state.srw.b2stbr_sch:in-out
+!                state.srw.b2stbr_she:in-out state.srw.b2stbr_shi:in-out
+!                state.srw.b2stbr_sne:in-out state.srw.b2stbr_shn:in-out
+!                state.srw.b2stbr_skt:in-out state.srw.b2stbr_szt:in-out
+!                state.srw.b2stbr_smo:in-out state.srw.b2stbr_sna:in-out
+!                state.srw.b2npmo_smaf:in-out state.srw.b2npmo_smag:in-out
+!                state.srw.b2npmo_smav:in-out state.srw.rsana:in-out
+!                state.srw.rsahi:in-out state.srw.rsamo:in-out
+!                state.srw.rrana:in-out state.srw.rrahi:in-out
+!                state.srw.rramo:in-out state.srw.rcxna:in-out
+!                state.srw.rcxhi:in-out state.srw.rcxmo:in-out
+!                state.srw.rqahe:in-out state.srw.rqrad:in-out
+!                state.srw.rqbrm:in-out state.srw.b2sihs_joule:in-out
+!                state.srw.b2sihs_divue:in-out state.srw.b2sihs_divua:in-out
+!                state.srw.b2sihs_exbe:in-out state.srw.b2sihs_exba:in-out
+!                state.srw.b2sihs_visa:in-out state.srw.b2sihs_fraa:in-out
+!                state.srw.b2sihs_str:in-out state.srw.sna0_eir_tot:in-out
+!                state.srw.smo0_eir_tot:in-out state.srw.sne0_eir_tot:in-out
+!                state.srw.she0_eir_tot:in-out state.srw.shi0_eir_tot:in-out
+!                state.srw.shn0_eir_tot:in-out state.srw.sch0_eir_tot:in-out
+!                state.rt.rlcx:in-out state.rt.rlqa:in-out state.rt.rlrd:in-out
+!                state.rt.rlbr:in-out state.rt.rlra:in-out state.rt.rlsa:in-out
+!                state.rt.rlza:in-out state.rt.rlz2:in-out state.rt.rlpt:in-out
+!                state.rt.rlpi:in-out state.rt.rlqr:in-out state.rt.rza:in-out
+!                state.rt.rz2:in-out state.rt.rpt:in-out state.rt.rpi:in-out
+!                state.rtw.rsa:in-out state.rtw.rra:in-out state.rtw.rqa:in-out
+!                state.rtw.rrd:in-out state.rtw.rbr:in-out state.rtw.rcx:in-out
+!                state.rtw.rqr:in-out state.psnl.na:in-out state.psnl.ua:in-out
+!                state.psnl.po:in-out state.psnl.te:in-out state.psnl.ti:in-out
+!                state.psnl.tn:in-out state.psnl.kt:in-out state.psnl.zt:in-out
+!                state.psnl.ne:in-out state.psnl.ni:in-out state.psnl.nn:in-out
+!                state.psnl.fch:in-out state.psnl.fna:in-out state.psnl.fhi:in-out
+!                state.psnl.fhe:in-out state.psnl.fhn:in-out state.psnl.fkt:in-out
+!                state.psnl.fzt:in-out state.psnl.kinrgy:in-out
+!                state.psnc.na:in-out state.psnc.ua:in-out state.psnc.po:in-out
+!                state.psnc.te:in-out state.psnc.ti:in-out state.psnc.tn:in-out
+!                state.psnc.kt:in-out state.psnc.zt:in-out state.psnc.ne:in-out
+!                state.psnc.ni:in-out state.psnc.nn:in-out state.psnc.fch:in-out
+!                state.psnc.fna:in-out state.psnc.fhi:in-out state.psnc.fhe:in-out
+!                state.psnc.fhn:in-out state.psnc.fkt:in-out state.psnc.fzt:in-out
+!                state.psnc.kinrgy:in-out state.diag.srcna:in-out
+!                state.diag.srcmo:in-out state.diag.srcpo:in-out
+!                state.diag.srche:in-out state.diag.srchi:in-out
+!                state.diag.srcmt:in-out state.diag.aresco:in-out
+!                state.diag.aresmo:in-out state.diag.acorpa:in-out
+!                state.diag.acorua:in-out state.diag.rescoreg:in-out
+!                state.diag.resmoreg:in-out state.diag.reshereg:in-out
+!                state.diag.reshireg:in-out state.update.ua:in-out
+!                state.update.na:in-out state.update.pa:in-out
+!                state.update.po:in-out state.update.te:in-out
+!                state.update.ti:in-out state.update.kt:in-out
+!                state.update.zt:in-out
 !
   SUBROUTINE B2MNDR_2_DV0(nout, ns, switch, geo, mpg, state, stated, &
 &   state_ext, state_avg, nbdirs)
@@ -14877,16 +15185,19 @@ CONTAINS
     INTEGER :: ncv, nfc, is
     INTEGER :: nvx
     LOGICAL :: ids_done
+    EXTERNAL B2XVSG
     EXTERNAL CALC_ERR
     EXTERNAL B2WDAT_NODIFF
     INTRINSIC TRIM
     INTRINSIC MOD
+    EXTERNAL B2MWMV
     INTRINSIC MAX
     EXTERNAL XERRAB
     INTEGER :: max1
-    CHARACTER(len=9) :: arg1
-    REAL(r8), DIMENSION(mpg%ncv) :: arg10
+    INTEGER :: arg1
+    CHARACTER(len=9) :: arg10
     REAL(r8), DIMENSION(mpg%ncv) :: arg11
+    REAL(r8), DIMENSION(mpg%ncv) :: arg12
     INTEGER :: nbdirs
 !
     CALL SUBINI('b2mndr_2')
@@ -14929,6 +15240,10 @@ CONTAINS
     CALL WRITE_B2US_FEEDBACK(99, '    ')
 ! finalise transport_models
     CALL WRITE_B2MOD_TRANSPORT_MODELS(99, '    ')
+!   ..test plasma state
+    CALL B2XVPS_NODIFF_NODIFF(ncv, nfc, ns, state%pl, state%dv)
+    arg1 = ncv*ns
+    CALL B2XVSG(arg1, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
 !   ..save final state
     CALL WRITE_B2FSTATE(nout(2), ncv, nfc, ns, state)
 !   ..write plasma state
@@ -14953,17 +15268,19 @@ CONTAINS
 !srv 29.11.18 {
         DO is=0,ns-1
           WRITE(chns, '(i3.3)') is
-          arg1(:) = 'b2mndr_na'//chns//'out'
-          CALL MY_OUT_US(70, ncv, 0, state%pl%na(1, is), arg1(:))
-          arg1(:) = 'b2mndr_ua'//chns//'out'
-          CALL MY_OUT_US(70, ncv, 0, state%pl%ua(1, is), arg1(:))
+          arg10(:) = 'b2mndr_na'//chns//'out'
+          CALL MY_OUT_US(70, ncv, 0, state%pl%na(1, is), arg10(:)&
+&                        )
+          arg10(:) = 'b2mndr_ua'//chns//'out'
+          CALL MY_OUT_US(70, ncv, 0, state%pl%ua(1, is), arg10(:)&
+&                        )
         END DO
         CALL MY_OUT_US(70, ncv, 0, state%pl%te, 'b2mndr_te_out')
-        arg10(:) = state%pl%te/ev
-        CALL MY_OUT_US(70, ncv, 0, arg10(:), 'b2mndr_te_eV_out')
+        arg11(:) = state%pl%te/ev
+        CALL MY_OUT_US(70, ncv, 0, arg11(:), 'b2mndr_te_eV_out')
         CALL MY_OUT_US(70, ncv, 0, state%pl%ti, 'b2mndr_ti_out')
-        arg11(:) = state%pl%ti/ev
-        CALL MY_OUT_US(70, ncv, 0, arg11(:), 'b2mndr_ti_eV_out')
+        arg12(:) = state%pl%ti/ev
+        CALL MY_OUT_US(70, ncv, 0, arg12(:), 'b2mndr_ti_eV_out')
         CALL MY_OUT_US(70, ncv, 0, state%pl%po, 'b2mndr_po_out')
       END IF
     END IF
@@ -14981,6 +15298,9 @@ CONTAINS
         CLOSE(31) 
       END IF
     END IF
+!   ..produce data for last frame in movie if not yet done
+    IF (MOD(itim, mvinc) .NE. 0 .AND. itim/mvinc + 1 .LE. mvnum) CALL &
+&     B2MWMV(nout(3), ncv, state, itim, tim, dtim)
 !   ..produce last CDF movie frame if not yet done
     IF (tim .GT. save_cdfmovie_time - delta_cdfmovie_time + dtim .AND. &
 &       delta_cdfmovie_time .GT. 0.0_R8) CALL CDFMOVIE(ncid, ncv, ns, &
@@ -15078,6 +15398,7 @@ CONTAINS
 !WG_RM      call dealloc_b2mod_external
     CALL DEALLOC_B2MOD_WALL_INIT()
     CALL DEALLOC_B2MOD_YSMP_SDRV()
+    CALL DEALLOC_B2MOD_FACDRIFT_EXB()
     CALL DEALLOC_TRANSPORT_NAMELIST()
     CALL DEALLOC_B2MOD_FIRST_FLIGHT()
     CALL DEALLOC_B2MOD_NEOCLASSICAL()
@@ -15117,16 +15438,19 @@ CONTAINS
     INTEGER :: ncv, nfc, is
     INTEGER :: nvx
     LOGICAL :: ids_done
+    EXTERNAL B2XVSG
     EXTERNAL CALC_ERR
     EXTERNAL B2WDAT_NODIFF
     INTRINSIC TRIM
     INTRINSIC MOD
+    EXTERNAL B2MWMV
     INTRINSIC MAX
     EXTERNAL XERRAB
     INTEGER :: max1
-    CHARACTER(len=9) :: arg1
-    REAL(r8), DIMENSION(mpg%ncv) :: arg10
+    INTEGER :: arg1
+    CHARACTER(len=9) :: arg10
     REAL(r8), DIMENSION(mpg%ncv) :: arg11
+    REAL(r8), DIMENSION(mpg%ncv) :: arg12
 !
     CALL SUBINI('b2mndr_2')
     IF (quitexist) WRITE(*, *) 'stopping because .quit seen'
@@ -15168,6 +15492,10 @@ CONTAINS
     CALL WRITE_B2US_FEEDBACK(99, '    ')
 ! finalise transport_models
     CALL WRITE_B2MOD_TRANSPORT_MODELS(99, '    ')
+!   ..test plasma state
+    CALL B2XVPS_NODIFF_NODIFF(ncv, nfc, ns, state%pl, state%dv)
+    arg1 = ncv*ns
+    CALL B2XVSG(arg1, state%dv%kinrgy, 1, 'kinrgy', '.ge.')
 !   ..save final state
     CALL WRITE_B2FSTATE(nout(2), ncv, nfc, ns, state)
 !   ..write plasma state
@@ -15192,17 +15520,19 @@ CONTAINS
 !srv 29.11.18 {
         DO is=0,ns-1
           WRITE(chns, '(i3.3)') is
-          arg1(:) = 'b2mndr_na'//chns//'out'
-          CALL MY_OUT_US(70, ncv, 0, state%pl%na(1, is), arg1(:))
-          arg1(:) = 'b2mndr_ua'//chns//'out'
-          CALL MY_OUT_US(70, ncv, 0, state%pl%ua(1, is), arg1(:))
+          arg10(:) = 'b2mndr_na'//chns//'out'
+          CALL MY_OUT_US(70, ncv, 0, state%pl%na(1, is), arg10(:)&
+&                        )
+          arg10(:) = 'b2mndr_ua'//chns//'out'
+          CALL MY_OUT_US(70, ncv, 0, state%pl%ua(1, is), arg10(:)&
+&                        )
         END DO
         CALL MY_OUT_US(70, ncv, 0, state%pl%te, 'b2mndr_te_out')
-        arg10(:) = state%pl%te/ev
-        CALL MY_OUT_US(70, ncv, 0, arg10(:), 'b2mndr_te_eV_out')
+        arg11(:) = state%pl%te/ev
+        CALL MY_OUT_US(70, ncv, 0, arg11(:), 'b2mndr_te_eV_out')
         CALL MY_OUT_US(70, ncv, 0, state%pl%ti, 'b2mndr_ti_out')
-        arg11(:) = state%pl%ti/ev
-        CALL MY_OUT_US(70, ncv, 0, arg11(:), 'b2mndr_ti_eV_out')
+        arg12(:) = state%pl%ti/ev
+        CALL MY_OUT_US(70, ncv, 0, arg12(:), 'b2mndr_ti_eV_out')
         CALL MY_OUT_US(70, ncv, 0, state%pl%po, 'b2mndr_po_out')
       END IF
     END IF
@@ -15220,6 +15550,9 @@ CONTAINS
         CLOSE(31) 
       END IF
     END IF
+!   ..produce data for last frame in movie if not yet done
+    IF (MOD(itim, mvinc) .NE. 0 .AND. itim/mvinc + 1 .LE. mvnum) CALL &
+&     B2MWMV(nout(3), ncv, state, itim, tim, dtim)
 !   ..produce last CDF movie frame if not yet done
     IF (tim .GT. save_cdfmovie_time - delta_cdfmovie_time + dtim .AND. &
 &       delta_cdfmovie_time .GT. 0.0_R8) CALL CDFMOVIE(ncid, ncv, ns, &
@@ -15314,6 +15647,7 @@ CONTAINS
 !WG_RM      call dealloc_b2mod_external
     CALL DEALLOC_B2MOD_WALL_INIT()
     CALL DEALLOC_B2MOD_YSMP_SDRV()
+    CALL DEALLOC_B2MOD_FACDRIFT_EXB()
     CALL DEALLOC_TRANSPORT_NAMELIST()
     CALL DEALLOC_B2MOD_FIRST_FLIGHT()
     CALL DEALLOC_B2MOD_NEOCLASSICAL()
