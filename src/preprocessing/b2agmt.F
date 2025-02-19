@@ -618,8 +618,8 @@
       enddo
 
       ! Give vxBb the correct magnetic field value, till now it was
-      ! g%vxBb(:,0) = dpsi/dx
-      ! g%vxBb(:,1) = dpsi/dy, for directional purposes
+      ! g%vxBb(:,0) = dpsi/dy
+      ! g%vxBb(:,1) = -dpsi/dx, for directional purposes
 
       do iVx = 1,m%nVx
         if (isymm.eq.0) then
@@ -815,9 +815,9 @@ cnv   but now for quads
       allocate(verts(nv))
 
       verts = m%cvVx(m%cvVxP(bc,1):m%cvVxP(bc,1)+nv-1)
-      bcBb(0) = sum( g%vxBb(verts,0) ) / nv
-      bcBb(1) = sum( g%vxBb(verts,1) ) / nv
-      bcBb(2) = sum( g%vxFfbz(verts)) / nv
+      bcBb(0) = 0.25_R8 * sum( g%vxBb(verts,0) )
+      bcBb(1) = 0.25_R8 * sum( g%vxBb(verts,1) )
+      bcBb(2) = 0.25_R8 * sum( g%vxFfbz(verts))
 
       !2. construct 3d-plane with two guard cell vertices and cell center
       ! p(0)*x+ p(1)*y + p(2)*z = d met x = x-coordinate, y = y-coordinate, z = bb-value
