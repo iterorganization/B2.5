@@ -341,7 +341,6 @@ CONTAINS
 !   Horsten, Niels, Giovanni Samaey, and M. Baelmans.
 !  "Development and assessment of 2D fluid neutral models that include atomic databases and a microscopic reflection model."
 !   Nuclear Fusion 57.11 (2017): 116043.
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
@@ -1100,7 +1099,6 @@ CONTAINS
 !   Horsten, Niels, Giovanni Samaey, and M. Baelmans.
 !  "Development and assessment of 2D fluid neutral models that include atomic databases and a microscopic reflection model."
 !   Nuclear Fusion 57.11 (2017): 116043.
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
@@ -1409,7 +1407,6 @@ CONTAINS
 !   Horsten, Niels, Giovanni Samaey, and M. Baelmans.
 !  "Development and assessment of 2D fluid neutral models that include atomic databases and a microscopic reflection model."
 !   Nuclear Fusion 57.11 (2017): 116043.
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
@@ -1583,7 +1580,6 @@ CONTAINS
 &   fenenid1, fenenid0, fenenid0d, nbdirs, nbdirs0)
 !     This routine is an interface to CalcIncidentFluxesMaxwellian and CalcIncidentFluxesDiffusion
 !     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
@@ -1951,7 +1947,6 @@ CONTAINS
 &   nbdirs)
 !     This routine is an interface to CalcIncidentFluxesMaxwellian and CalcIncidentFluxesDiffusion
 !     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
@@ -2123,7 +2118,6 @@ CONTAINS
 &   , fmomni, nni, nnwwni, feneni)
 !     This routine is an interface to CalcIncidentFluxesMaxwellian and CalcIncidentFluxesDiffusion
 !     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
@@ -2254,7 +2248,6 @@ CONTAINS
 !     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lo
 !west Kn of that "stratum".
 !     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
@@ -2355,7 +2348,6 @@ CONTAINS
 !     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lo
 !west Kn of that "stratum".
 !     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
@@ -2419,7 +2411,6 @@ CONTAINS
 !     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lo
 !west Kn of that "stratum".
 !     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
@@ -3016,7 +3007,6 @@ CONTAINS
 !mb   17.07.17
 !     This routine calculates the recycled neutral particle, momentum and energy fluxes based
 !     on the diffusion approximation (see papers of Niels Horsten).
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV, ONLY : e_fc, accel_ion
     USE B2US_GEO_DIFFV_DIFFV
@@ -3890,7 +3880,6 @@ CONTAINS
 !mb   17.07.17
 !     This routine calculates the recycled neutral particle, momentum and energy fluxes based
 !     on the diffusion approximation (see papers of Niels Horsten).
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV, ONLY : e_fc, accel_ion
     USE B2US_GEO_DIFFV_DIFFV
@@ -4304,7 +4293,6 @@ CONTAINS
 !mb   17.07.17
 !     This routine calculates the recycled neutral particle, momentum and energy fluxes based
 !     on the diffusion approximation (see papers of Niels Horsten).
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV, ONLY : e_fc, accel_ion
     USE B2US_GEO_DIFFV_DIFFV
@@ -4567,7 +4555,6 @@ CONTAINS
 !     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the d
 !iffusion approximation (see papers of Niels Horsten).
     USE B2MOD_B2CMPA_DIFFV_DIFFV
-    USE B2MOD_RATES
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV, ONLY : e_fc
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
@@ -6049,7 +6036,6 @@ CONTAINS
 !     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the d
 !iffusion approximation (see papers of Niels Horsten).
     USE B2MOD_B2CMPA_DIFFV_DIFFV
-    USE B2MOD_RATES
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV, ONLY : e_fc
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
@@ -6713,7 +6699,6 @@ CONTAINS
 !     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the d
 !iffusion approximation (see papers of Niels Horsten).
     USE B2MOD_B2CMPA_DIFFV_DIFFV
-    USE B2MOD_RATES
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV, ONLY : e_fc
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
@@ -7094,7 +7079,6 @@ CONTAINS
 !     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
 !     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
     USE B2MOD_B2CMPA_DIFFV_DIFFV
-    USE B2MOD_RATES
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
     USE B2US_MAP_DIFFV_DIFFV
@@ -7509,7 +7493,6 @@ CONTAINS
 !     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
 !     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
     USE B2MOD_B2CMPA_DIFFV_DIFFV
-    USE B2MOD_RATES
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
     USE B2US_MAP_DIFFV_DIFFV
@@ -7702,7 +7685,6 @@ CONTAINS
 !     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
 !     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
     USE B2MOD_B2CMPA_DIFFV_DIFFV
-    USE B2MOD_RATES
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
     USE B2US_MAP_DIFFV_DIFFV
@@ -7849,7 +7831,6 @@ CONTAINS
 !west Kn of that "stratum".
 !     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
     USE B2MOD_B2CMPA_DIFFV_DIFFV
-    USE B2MOD_RATES
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
     USE B2US_MAP_DIFFV_DIFFV
@@ -7974,7 +7955,6 @@ CONTAINS
 !west Kn of that "stratum".
 !     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
     USE B2MOD_B2CMPA_DIFFV_DIFFV
-    USE B2MOD_RATES
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
     USE B2US_MAP_DIFFV_DIFFV
@@ -8053,7 +8033,6 @@ CONTAINS
 !west Kn of that "stratum".
 !     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
     USE B2MOD_B2CMPA_DIFFV_DIFFV
-    USE B2MOD_RATES
     USE B2US_GEO_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
     USE B2US_MAP_DIFFV_DIFFV
@@ -10736,7 +10715,6 @@ CONTAINS
 &   dvd0, dvd, dvdd, rt, rtd0, rtd, rtdd, l, min_kn, kn, mfp, mfpd0, &
 &   mfpd, mfpdd, nbdirs, nbdirs0)
 !     This routine calculates the minimum mean free path for a certain stratum
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
@@ -10996,7 +10974,6 @@ CONTAINS
   SUBROUTINE CALCMINKN_DV(icv, isn, istra, pl, pld, dv, dvd, rt, rtd, l&
 &   , min_kn, kn, mfp, mfpd, nbdirs)
 !     This routine calculates the minimum mean free path for a certain stratum
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
@@ -11112,7 +11089,6 @@ CONTAINS
 !
   SUBROUTINE CALCMINKN(icv, isn, istra, pl, dv, rt, l, min_kn, kn, mfp)
 !     This routine calculates the minimum mean free path for a certain stratum
-    USE B2MOD_RATES
     USE B2MOD_B2CMPA_DIFFV_DIFFV
     USE B2US_PLASMA_DIFFV_DIFFV
     USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV

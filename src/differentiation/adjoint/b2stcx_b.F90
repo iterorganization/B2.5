@@ -20,7 +20,7 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 & , ua, ti, tn, ni, rcx, sna0, smq0, shi0, shn0, rcxna, rcxmo, rcxhi)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-!      use b2mod_tallies
+  USE B2MOD_TALLIES
 !      use b2mod_sources
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_SWITCHES_DIFF
@@ -160,10 +160,10 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
 &             )
             rcxna(icv, is0) = rcxna(icv, is0) - t0*na(icv, is0)*na(icv, &
 &             is)
-!WG_TODO            rcxnareg(mpg%cvReg(iCv),is)=
-!WG_TODO     1       rcxnareg(mpg%cvReg(iCv),is)+t0*na(iCv,is0)*na(iCv,is)
-!WG_TODO            rcxnareg(mpg%cvReg(iCv),is0)=
-!WG_TODO     1       rcxnareg(mpg%cvReg(iCv),is0)-t0*na(iCv,is0)*na(iCv,is)
+            rcxnareg(mpg%cvreg(icv), is) = rcxnareg(mpg%cvreg(icv), is) &
+&             + t0*na(icv, is0)*na(icv, is)
+            rcxnareg(mpg%cvreg(icv), is0) = rcxnareg(mpg%cvreg(icv), is0&
+&             ) - t0*na(icv, is0)*na(icv, is)
           END IF
         END DO
       END IF
@@ -226,7 +226,8 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
             shn0(icv, 0) = shn0(icv, 0) + t1n
           END IF
           rcxhi(icv, is) = rcxhi(icv, is) + t1
-!WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
+          rcxhireg(mpg%cvreg(icv), is) = rcxhireg(mpg%cvreg(icv), is) + &
+&           t1
         END IF
       END DO
 !     ..parallel momentum source
@@ -323,10 +324,10 @@ SUBROUTINE B2STCX_NODIFF(ncv, nfc, ns, is0, ismain, switch, geo, mpg, na&
           END IF
           rcxmo(icv, is) = rcxmo(icv, is) + t1*ua(icv, is)
           rcxmo(icv, is0) = rcxmo(icv, is0) - t2*ua(icv, is)
-!WG_TODO            rcxmoreg(mpg%cvReg(iCv),is)=
-!WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is)+t1*ua(iCv,is)
-!WG_TODO            rcxmoreg(mpg%cvReg(iCv),is0)=
-!WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is0)-t2*ua(iCv,is0)
+          rcxmoreg(mpg%cvreg(icv), is) = rcxmoreg(mpg%cvreg(icv), is) + &
+&           t1*ua(icv, is)
+          rcxmoreg(mpg%cvreg(icv), is0) = rcxmoreg(mpg%cvreg(icv), is0) &
+&           - t2*ua(icv, is0)
         END IF
       END DO
     END IF
@@ -437,7 +438,7 @@ SUBROUTINE B2STCX_B(ncv, nfc, ns, is0, ismain, switch, switchb, geo, &
 & rcxhi)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
-!      use b2mod_tallies
+  USE B2MOD_TALLIES
 !      use b2mod_sources
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_SWITCHES_DIFF

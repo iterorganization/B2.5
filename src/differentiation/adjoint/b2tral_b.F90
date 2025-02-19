@@ -54,28 +54,28 @@
 !                *(pl.tn) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.lnlam:in
 !                dv.vaecrb:in mpg.intcellp:in mpg.intcellr:in geo.cvbb:in
-!                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvqgam:in
-!                geo.cvvol:in geo.fcbb:in geo.fcs:in geo.fchc:in
-!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcbzb:in
-!                geo.vxvol:in geo.ftconn:in geo.fsconn:in geo.fteps:in
-!                st_ext.am:in st_ext.za2:in st_ext.na:in st_ext.ni:in
-!                rt.rlcx:in rt.rlsa:in rt.rza:in rt.rz2:in co.csig:in
-!                co.calf:in co.csig_an:in co.calf_an:in co.csig_cl:in
-!                co.calf_cl:in co.csigin:in co.chve:in co.chce:in
-!                co.chce_exb:in co.chvi:in co.chci:in co.chci_exb:in
-!                co.chcn:in co.cdkt:in co.cdzt:in co.chvemx:in
-!                co.chvimx:in co.cvla:in co.cdna:in co.cdna_exb:in
-!                co.cdpa:in co.cvsa:in co.cvlahz:in co.cdnahz:in
-!                co.cdpahz:in co.cvsahz:in co.cddi:in co.cvsahz_cl:in
-!                co.chcb:in co.cvsa_an:in co.cvmahz:in co.cthe:in
-!                co.cthi:in co.cvsa_cl:in co.fllim0fhi:in co.fllimvisc:in
-!                co.vsaf_cl:in co.sig0:in co.hce0:in co.hci0:in
-!                co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in co.dna_exb:in
-!                co.hce_exb:in co.hci_exb:in co.dpa0:in co.dna0:in
-!                co.vsa0:in co.hcib:in co.vla0:in co.vma0:in co.alfx_c:in
-!                co.sigx_c:in co.sigx_kt:in co.hcix_c:in co.fllim_ki:in
-!                co.fllim_ke:in co.fllim_al:in co.fllim_al_c:in
+!                geo.cvx:in geo.cvy:in geo.cvhz:in geo.cvhy:in
+!                geo.cvqgam:in geo.cvvol:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.fcbzb:in geo.vxvol:in geo.ftconn:in geo.fsconn:in
+!                geo.fteps:in st_ext.am:in st_ext.za2:in st_ext.na:in
+!                st_ext.ni:in rt.rlcx:in rt.rlsa:in rt.rza:in rt.rz2:in
+!                co.csig:in co.calf:in co.csig_an:in co.calf_an:in
+!                co.csig_cl:in co.calf_cl:in co.csigin:in co.chve:in
+!                co.chce:in co.chce_exb:in co.chvi:in co.chci:in
+!                co.chci_exb:in co.chcn:in co.cdkt:in co.cdzt:in
+!                co.chvemx:in co.chvimx:in co.cvla:in co.cdna:in
+!                co.cdna_exb:in co.cdpa:in co.cvsa:in co.cvlahz:in
+!                co.cdnahz:in co.cdpahz:in co.cvsahz:in co.cddi:in
+!                co.cvsahz_cl:in co.chcb:in co.cvsa_an:in co.cvmahz:in
+!                co.cthe:in co.cthi:in co.cvsa_cl:in co.fllim0fhi:in
+!                co.fllimvisc:in co.vsaf_cl:in co.sig0:in co.hce0:in
+!                co.hci0:in co.hcn0:in co.alf0:in co.dkt0:in co.dzt0:in
+!                co.dna_exb:in co.hce_exb:in co.hci_exb:in co.dpa0:in
+!                co.dna0:in co.vsa0:in co.hcib:in co.vla0:in co.vma0:in
+!                co.alfx_c:in co.sigx_c:in co.sigx_kt:in co.hcix_c:in
+!                co.fllim_ki:in co.fllim_ke:in co.fllim_al:in co.fllim_al_c:in
 !                co.fllim_ki_c:in co.f_luc_ke:in co.f_luc_ki:in
 !                co.f_luc_et:in co.f_luc_sg:in co.f_luc_al:in pl.na:in
 !                pl.ua:in pl.te:in pl.ti:in pl.tn:in pl.kt:in pl.zt:in

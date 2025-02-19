@@ -21,6 +21,7 @@
 SUBROUTINE B2STEL_NODIFF_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, &
 & pl, dv, rt, rtw, srw)
   USE B2MOD_TYPES
+  USE B2MOD_DIAG_DIFFV_DIFFV
   USE B2MOD_TALLIES_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_EIRENE_GLOBALS
@@ -49,7 +50,6 @@ SUBROUTINE B2STEL_NODIFF_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, &
   TYPE(B2RATESWORK), INTENT(IN) :: rtw
 !   ..output arguments (unspecified on entry)
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
-!   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -66,7 +66,7 @@ SUBROUTINE B2STEL_NODIFF_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, &
 !   ..local variables
 !, k
   INTEGER :: icv, is
-!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
+  INTEGER, SAVE :: nimp_tmp, jimp_tmp(def_natm)
 !, chk*1                                          !srv 30.06.08
   CHARACTER :: chns*3
   REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n
@@ -81,7 +81,6 @@ SUBROUTINE B2STEL_NODIFF_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, &
   EXTERNAL B2XVSG
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
-  INTRINSIC MAX
   INTRINSIC NINT
   REAL(r8) :: max1
   REAL(r8) :: max2
@@ -104,14 +103,18 @@ SUBROUTINE B2STEL_NODIFF_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, &
   CALL SUBINI('b2stel')
 !   ..set internal parameters on first call
 !   ..identify impurity isonuclear sequences
-!WG_TODO       nimp_tmp=0
-!WG_TODO       jimp_tmp=0
-!WG_TODO       do is = 1, nspecies !{
-!WG_TODO         if(nfluids(is).gt.1) then !{
-!WG_TODO           nimp_tmp=nimp_tmp+1
-!WG_TODO           jimp_tmp(is)=nimp_tmp
-!WG_TODO         end if !}
-!WG_TODO       end do !}
+  nimp_tmp = 0
+  jimp_tmp = 0
+!{
+  DO is=1,nspecies
+!}
+    IF (nfluids(is) .GT. 1) THEN
+!{
+      nimp_tmp = nimp_tmp + 1
+      jimp_tmp(is) = nimp_tmp
+    END IF
+  END DO
+!}
 !   ..test nCv, ns
   CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
@@ -474,16 +477,15 @@ SUBROUTINE B2STEL_NODIFF_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, &
     END IF
   END DO
 !
-!
 !   ..compute source terms for electron heat loss and radiation
-!WG_TODO      b2rad=0.0_R8
+  b2rad = 0.0_R8
   b2radreg = 0.0_R8
   b2bremreg = 0.0_R8
   rqradreg = 0.0_R8
   rqbrmreg = 0.0_R8
   srw%rqrad = 0.0_R8
-!WG_TODO      b2brem=0.0_R8
-!WG_TODO      rad_imp=0.0_R8
+  b2brem = 0.0_R8
+  rad_imp = 0.0_R8
   DO is=0,ns-1
 ! internal cells only
     DO icv=1,mpg%nci
@@ -515,11 +517,10 @@ SUBROUTINE B2STEL_NODIFF_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, &
         srw%rqrad(icv, is) = t0
         rqradreg(mpg%cvreg(icv), is) = rqradreg(mpg%cvreg(icv), is) + t0
         b2radreg(mpg%cvreg(icv)) = b2radreg(mpg%cvreg(icv)) - t0
-!WG_TODO          b2rad=b2rad-t0
-!WG_TODO          if (.not.is_neutral(is) .and. jimp_tmp(b2espcr(is)).ne.0) then
-!WG_TODO            rad_imp(jimp_tmp(b2espcr(is)))=
-!WG_TODO     .       rad_imp(jimp_tmp(b2espcr(is)))-t0
-!WG_TODO          endif
+        b2rad = b2rad - t0
+        IF (.NOT.is_neutral(is) .AND. jimp_tmp(b2espcr(is)) .NE. 0) &
+&         rad_imp(jimp_tmp(b2espcr(is))) = rad_imp(jimp_tmp(b2espcr(is))&
+&           ) - t0
 !      ..compute bremsstrahlung radiation rate for is->any
 !srv 05.06.18
         t0 = switch%b2stel_phm0*rtw%rbr(icv, is)*geo%cvvol(icv)*dv%ne(&
@@ -528,7 +529,7 @@ SUBROUTINE B2STEL_NODIFF_NODIFF(ncv, nfc, ns, ismain, switch, geo, mpg, &
         srw%rqbrm(icv, is) = t0
         rqbrmreg(mpg%cvreg(icv), is) = rqbrmreg(mpg%cvreg(icv), is) + t0
         b2bremreg(mpg%cvreg(icv)) = b2bremreg(mpg%cvreg(icv)) - t0
-!WG_TODO          b2brem=b2brem-t0
+        b2brem = b2brem - t0
       END IF
     END DO
   END DO
@@ -674,6 +675,7 @@ END SUBROUTINE B2STEL_NODIFF_NODIFF
 SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, geod, mpg&
 & , pl, pld, dv, dvd, rt, rtd, rtw, rtwd, srw, srwd, nbdirs)
   USE B2MOD_TYPES
+  USE B2MOD_DIAG_DIFFV_DIFFV
   USE B2MOD_TALLIES_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_EIRENE_GLOBALS
@@ -709,7 +711,6 @@ SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, geod, mpg&
 !   ..output arguments (unspecified on entry)
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
   TYPE(B2SOURCEWORK_DIFFV), INTENT(INOUT) :: srwd
-!   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -726,7 +727,7 @@ SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, geod, mpg&
 !   ..local variables
 !, k
   INTEGER :: icv, is
-!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
+  INTEGER, SAVE :: nimp_tmp, jimp_tmp(def_natm)
 !, chk*1                                          !srv 30.06.08
   CHARACTER :: chns*3
   REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n
@@ -749,7 +750,6 @@ SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, geod, mpg&
   EXTERNAL B2XVSG
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
-  INTRINSIC MAX
   INTRINSIC NINT
   REAL(r8) :: max1
   REAL(r8), DIMENSION(nbdirsmax) :: max1d
@@ -785,14 +785,18 @@ SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, geod, mpg&
   CALL SUBINI('b2stel')
 !   ..set internal parameters on first call
 !   ..identify impurity isonuclear sequences
-!WG_TODO       nimp_tmp=0
-!WG_TODO       jimp_tmp=0
-!WG_TODO       do is = 1, nspecies !{
-!WG_TODO         if(nfluids(is).gt.1) then !{
-!WG_TODO           nimp_tmp=nimp_tmp+1
-!WG_TODO           jimp_tmp(is)=nimp_tmp
-!WG_TODO         end if !}
-!WG_TODO       end do !}
+  nimp_tmp = 0
+  jimp_tmp = 0
+!{
+  DO is=1,nspecies
+!}
+    IF (nfluids(is) .GT. 1) THEN
+!{
+      nimp_tmp = nimp_tmp + 1
+      jimp_tmp(is) = nimp_tmp
+    END IF
+  END DO
+!}
 !   ..test nCv, ns
   CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
@@ -1473,16 +1477,15 @@ SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, geod, mpg&
     END IF
   END DO
 !
-!
 !   ..compute source terms for electron heat loss and radiation
-!WG_TODO      b2rad=0.0_R8
+  b2rad = 0.0_R8
   b2radreg = 0.0_R8
   b2bremreg = 0.0_R8
   rqradreg = 0.0_R8
   rqbrmreg = 0.0_R8
   srw%rqrad = 0.0_R8
-!WG_TODO      b2brem=0.0_R8
-!WG_TODO      rad_imp=0.0_R8
+  b2brem = 0.0_R8
+  rad_imp = 0.0_R8
   DO is=0,ns-1
 ! internal cells only
     DO icv=1,mpg%nci
@@ -1536,11 +1539,10 @@ SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, geod, mpg&
         srw%rqrad(icv, is) = t0
         rqradreg(mpg%cvreg(icv), is) = rqradreg(mpg%cvreg(icv), is) + t0
         b2radreg(mpg%cvreg(icv)) = b2radreg(mpg%cvreg(icv)) - t0
-!WG_TODO          b2rad=b2rad-t0
-!WG_TODO          if (.not.is_neutral(is) .and. jimp_tmp(b2espcr(is)).ne.0) then
-!WG_TODO            rad_imp(jimp_tmp(b2espcr(is)))=
-!WG_TODO     .       rad_imp(jimp_tmp(b2espcr(is)))-t0
-!WG_TODO          endif
+        b2rad = b2rad - t0
+        IF (.NOT.is_neutral(is) .AND. jimp_tmp(b2espcr(is)) .NE. 0) &
+&         rad_imp(jimp_tmp(b2espcr(is))) = rad_imp(jimp_tmp(b2espcr(is))&
+&           ) - t0
 !      ..compute bremsstrahlung radiation rate for is->any
 !srv 05.06.18
         t0 = switch%b2stel_phm0*rtw%rbr(icv, is)*geo%cvvol(icv)*dv%ne(&
@@ -1549,7 +1551,7 @@ SUBROUTINE B2STEL_DV_NODIFF(ncv, nfc, ns, ismain, switch, geo, geod, mpg&
         srw%rqbrm(icv, is) = t0
         rqbrmreg(mpg%cvreg(icv), is) = rqbrmreg(mpg%cvreg(icv), is) + t0
         b2bremreg(mpg%cvreg(icv)) = b2bremreg(mpg%cvreg(icv)) - t0
-!WG_TODO          b2brem=b2brem-t0
+        b2brem = b2brem - t0
       END IF
     END DO
   END DO
@@ -1757,6 +1759,7 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
 & , pld0, pld, pldd, dv, dvd0, dvd, dvdd, rt, rtd0, rtd, rtdd, rtw, &
 & rtwd0, rtwd, rtwdd, srw, srwd0, srwd, srwdd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
+  USE B2MOD_DIAG_DIFFV_DIFFV
   USE B2MOD_TALLIES_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_EIRENE_GLOBALS
@@ -1803,7 +1806,6 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
   TYPE(B2SOURCEWORK_DIFFV0), INTENT(INOUT) :: srwd0
   TYPE(B2SOURCEWORK_DIFFV), INTENT(INOUT) :: srwd
   TYPE(B2SOURCEWORK_DIFFV_DIFFV), INTENT(INOUT) :: srwdd
-!   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -1820,7 +1822,7 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
 !   ..local variables
 !, k
   INTEGER :: icv, is
-!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
+  INTEGER, SAVE :: nimp_tmp, jimp_tmp(def_natm)
 !, chk*1                                          !srv 30.06.08
   CHARACTER :: chns*3
   REAL(kind=r8) :: rf0, t0, t1, t2, tkin, t1i, t1n
@@ -1860,7 +1862,6 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
   EXTERNAL B2XVSG
   INTRINSIC MINVAL
   INTRINSIC MAXVAL
-  INTRINSIC MAX
   INTRINSIC NINT
   REAL(r8) :: max1
   REAL(r8), DIMENSION(nbdirsmax0) :: max1d0
@@ -1919,14 +1920,18 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
   CALL SUBINI('b2stel')
 !   ..set internal parameters on first call
 !   ..identify impurity isonuclear sequences
-!WG_TODO       nimp_tmp=0
-!WG_TODO       jimp_tmp=0
-!WG_TODO       do is = 1, nspecies !{
-!WG_TODO         if(nfluids(is).gt.1) then !{
-!WG_TODO           nimp_tmp=nimp_tmp+1
-!WG_TODO           jimp_tmp(is)=nimp_tmp
-!WG_TODO         end if !}
-!WG_TODO       end do !}
+  nimp_tmp = 0
+  jimp_tmp = 0
+!{
+  DO is=1,nspecies
+!}
+    IF (nfluids(is) .GT. 1) THEN
+!{
+      nimp_tmp = nimp_tmp + 1
+      jimp_tmp(is) = nimp_tmp
+    END IF
+  END DO
+!}
 !   ..test nCv, ns
   CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
@@ -3471,17 +3476,16 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
     END IF
   END DO
 !
-!
 !   ..compute source terms for electron heat loss and radiation
-!WG_TODO      b2rad=0.0_R8
+  b2rad = 0.0_R8
   b2radreg = 0.0_R8
   b2bremreg = 0.0_R8
   rqradreg = 0.0_R8
   rqbrmreg = 0.0_R8
   srw%rqrad = 0.0_R8
+  b2brem = 0.0_R8
+  rad_imp = 0.0_R8
   max5dd(:, :) = 0.0_8
-!WG_TODO      b2brem=0.0_R8
-!WG_TODO      rad_imp=0.0_R8
   DO is=0,ns-1
 ! internal cells only
     DO icv=1,mpg%nci
@@ -3586,11 +3590,10 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
         srw%rqrad(icv, is) = t0
         rqradreg(mpg%cvreg(icv), is) = rqradreg(mpg%cvreg(icv), is) + t0
         b2radreg(mpg%cvreg(icv)) = b2radreg(mpg%cvreg(icv)) - t0
-!WG_TODO          b2rad=b2rad-t0
-!WG_TODO          if (.not.is_neutral(is) .and. jimp_tmp(b2espcr(is)).ne.0) then
-!WG_TODO            rad_imp(jimp_tmp(b2espcr(is)))=
-!WG_TODO     .       rad_imp(jimp_tmp(b2espcr(is)))-t0
-!WG_TODO          endif
+        b2rad = b2rad - t0
+        IF (.NOT.is_neutral(is) .AND. jimp_tmp(b2espcr(is)) .NE. 0) &
+&         rad_imp(jimp_tmp(b2espcr(is))) = rad_imp(jimp_tmp(b2espcr(is))&
+&           ) - t0
 !      ..compute bremsstrahlung radiation rate for is->any
 !srv 05.06.18
         t0 = switch%b2stel_phm0*rtw%rbr(icv, is)*geo%cvvol(icv)*dv%ne(&
@@ -3599,7 +3602,7 @@ SUBROUTINE B2STEL_DV_DV(ncv, nfc, ns, ismain, switch, geo, geod, mpg, pl&
         srw%rqbrm(icv, is) = t0
         rqbrmreg(mpg%cvreg(icv), is) = rqbrmreg(mpg%cvreg(icv), is) + t0
         b2bremreg(mpg%cvreg(icv)) = b2bremreg(mpg%cvreg(icv)) - t0
-!WG_TODO          b2brem=b2brem-t0
+        b2brem = b2brem - t0
       END IF
     END DO
   END DO

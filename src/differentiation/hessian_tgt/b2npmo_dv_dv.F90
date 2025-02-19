@@ -107,8 +107,8 @@
 SUBROUTINE B2NPMO_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo&
 & , geod0, geod, mpg, mpgd, itcnt, solving, rxf, dtim, pl, pld0, pld, &
 & pldd, dv, dvd0, dvd, dvdd, rt, rtd0, rtd, rtdd, co, cod0, cod, codd, &
-& sr, srd0, srd, srdd, srw, srwd0, srwd, psnc, psnl, psnld0, psnld, &
-& psnldd, st_ext, st_extd0, st_extd, ierr, nbdirs, nbdirs0)
+& sr, srd0, srd, srdd, srw, srwd0, srwd, psnl, psnld0, psnld, psnldd, &
+& st_ext, st_extd0, st_extd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
@@ -169,7 +169,7 @@ SUBROUTINE B2NPMO_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo&
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
   TYPE(B2SOURCEWORK_DIFFV0), INTENT(INOUT) :: srwd0
   TYPE(B2SOURCEWORK_DIFFV), INTENT(INOUT) :: srwd
-  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   TYPE(B2PLASMASNAPSHOT_DIFFV0), INTENT(INOUT) :: psnld0
   TYPE(B2PLASMASNAPSHOT_DIFFV), INTENT(INOUT) :: psnld
   TYPE(B2PLASMASNAPSHOT_DIFFV_DIFFV), INTENT(INOUT) :: psnldd
@@ -188,10 +188,7 @@ SUBROUTINE B2NPMO_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo&
   TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
   TYPE(B2DERIVATIVES_DIFFV_DIFFV), INTENT(INOUT) :: dvdd
 !   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
-!WG_TODO     &  smof(nCv,0:3,0:ns-1)
   REAL(kind=r8) :: ubf(nfc), robf(nfc)
-!   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -767,7 +764,7 @@ SUBROUTINE B2NPMO_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo&
     CALL B2NXFX_DV_DV(ncv, nfc, nvx, switch, geo, geod0, geod, mpg, mpgd&
 &               , qe, dv%ne, dvd0%ne, dvd%ne, dvdd%ne, pl%te, pld0%te, &
 &               pld%te, pldd%te, pl%po, pld0%po, pld%po, pldd%po, ehxp, &
-&               ehxpd0, ehxpd, ehxpdd, wrkf0, wrkf1, nbdirs, nbdirs0)
+&               ehxpd0, ehxpd, ehxpdd, nbdirs, nbdirs0)
   ELSE
     DO nd=1,nbdirsmax
       ehxpd(nd, :) = 0.d0
@@ -961,7 +958,7 @@ SUBROUTINE B2NPMO_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo&
 &               dv%ne, dvd0%ne, dvd%ne, dvdd%ne, pl%te, pld0%te, pld%te&
 &               , pldd%te, pl%po, pld0%po, pld%po, pldd%po, smbgp, &
 &               smbgpd0, smbgpd, smbgpdd, wrk0, wrk0d0, wrk0d, wrk0dd, &
-&               wrk1, wrk1d0, wrk1d, wrk1dd, wrk2, nbdirs, nbdirs0)
+&               wrk1, wrk1d0, wrk1d, wrk1dd, nbdirs, nbdirs0)
 !    ..compute flub
     arg12 = nfc*2
     CALL B2SCOPY_DV_DV(arg12, dv%fna_fcor(:, :, is), dvd0%fna_fcor(:, :&
@@ -1015,9 +1012,8 @@ SUBROUTINE B2NPMO_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo&
 &               , mpg, mpgd, pl%na(:, is), pld0%na(:, :, is), pld%na(:, &
 &               :, is), pldd%na(:, :, :, is), pl%ua(:, is), pld0%ua(:, :&
 &               , is), pld%ua(:, :, is), pldd%ua(:, :, :, is), smbcf, &
-&               smbcfd0, smbcfd, smbcfdd, srw%smcf(:, is), ctcfb, &
-&               ctcfbd0, ctcfbd, ctcfbdd, wrk0, wrk0d0, wrk0d, wrk0dd, &
-&               nbdirs, nbdirs0)
+&               smbcfd0, smbcfd, smbcfdd, ctcfb, ctcfbd0, ctcfbd, &
+&               ctcfbdd, wrk0, wrk0d0, wrk0d, wrk0dd, nbdirs, nbdirs0)
 !    ..compute correcting source due to artificial anomalous electric conductivity
     CALL B2SIAN_DV_DV(ncv, nfc, is, switch, geo, mpg, mpgd, dv%fchanml, &
 &               dvd0%fchanml, dvd%fchanml, dvdd%fchanml, smban, smband0&
@@ -1065,10 +1061,7 @@ SUBROUTINE B2NPMO_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo&
 &               is), srdd%smq(:, :, :, :, is), smqdu, smqdud0, smqdud, &
 &               smqdudd, smb, smbd0, smbd, smbdd, nbdirs, nbdirs0)
 !srv 22.05.18
-!srv ???
-!    ..save final source for species (is)                               !srv 10.11.02
-!WG_TODO       smof(:,:,is) = smb                                       !srv 10.11.02
-!
+!srv
 !
 !    ..compute residual
     IF ((solving .AND. ANY(solvemo(is, 0:mpg%nnreg(0)))) .OR. switch%&
@@ -1155,7 +1148,7 @@ SUBROUTINE B2NPMO_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo&
     END IF
 !srv 12.07.02 }
 !
-    IF (switch%b2npmo_iout .NE. 0) THEN
+    IF (switch%b2npmo_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
       arg16(:) = 'b2npmo_ua_input'//chns
       CALL MY_OUT_US(70, ncv, 0, pl%ua(1, is), arg16(:))
       wrks = sr%smo(:, 0, is) + sr%smo(:, 1, is)*pl%ua(:, is) + sr%smo(:&
@@ -1623,10 +1616,6 @@ SUBROUTINE B2NPMO_DV_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo&
     CALL MY_OUT_US(70, ncv, 0, dv%pccm(1, 1), 'b2npmo_pccm_r')
 !srv 11.01.13
   END IF
-!   ..set error parameter
-!     (at present all errors cause an abort through xerrab)
-  ierr = 0
-!
 ! ..return
   ncall_b2npmo = ncall_b2npmo + 1
   CALL SUBEND()
@@ -1684,8 +1673,8 @@ END SUBROUTINE B2NPMO_DV_DV
 !
 SUBROUTINE B2NPMO_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
 & geo, geod, mpg, mpgd, itcnt, solving, rxf, dtim, pl, pld, dv, dvd, rt&
-& , rtd, co, cod, sr, srd, srw, srwd, psnc, psnl, psnld, st_ext, st_extd&
-& , ierr, nbdirs)
+& , rtd, co, cod, sr, srd, srw, srwd, psnl, psnld, st_ext, st_extd, &
+& nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
@@ -1736,7 +1725,7 @@ SUBROUTINE B2NPMO_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
   TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
   TYPE(B2SOURCEWORK_DIFFV), INTENT(INOUT) :: srwd
-  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   TYPE(B2PLASMASNAPSHOT_DIFFV), INTENT(INOUT) :: psnld
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   TYPE(B2STATEEXT_DIFFV), INTENT(IN) :: st_extd
@@ -1748,10 +1737,7 @@ SUBROUTINE B2NPMO_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
   TYPE(B2DERIVATIVES_DIFFV), INTENT(INOUT) :: dvd
 !   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
-!WG_TODO     &  smof(nCv,0:3,0:ns-1)
   REAL(kind=r8) :: ubf(nfc), robf(nfc)
-!   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -2101,7 +2087,7 @@ SUBROUTINE B2NPMO_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
   IF (switch%b2sigp_style .NE. 2) THEN
     CALL B2NXFX_DV_NODIFF(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, &
 &                   qe, dv%ne, dvd%ne, pl%te, pld%te, pl%po, pld%po, &
-&                   ehxp, ehxpd, wrkf0, wrkf1, nbdirs)
+&                   ehxp, ehxpd, nbdirs)
   ELSE
     DO nd=1,nbdirsmax
       ehxpd(nd, :) = 0.d0
@@ -2221,7 +2207,7 @@ SUBROUTINE B2NPMO_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
 &                   mpgd, rt%rza(:, is), rtd%rza(:, :, is), pl%na(:, is)&
 &                   , pld%na(:, :, is), pl%ti, pld%ti, pl%tn, pld%tn, dv&
 &                   %ne, dvd%ne, pl%te, pld%te, pl%po, pld%po, smbgp, &
-&                   smbgpd, wrk0, wrk0d, wrk1, wrk1d, wrk2, nbdirs)
+&                   smbgpd, wrk0, wrk0d, wrk1, wrk1d, nbdirs)
 !    ..compute flub
     arg12 = nfc*2
     CALL B2SCOPY_DV_NODIFF(arg12, dv%fna_fcor(:, :, is), dvd%fna_fcor(:&
@@ -2259,8 +2245,8 @@ SUBROUTINE B2NPMO_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
     arg13 = am(is)*mp
     CALL B2SICF_DV_NODIFF(ncv, nfc, nvx, is, arg13, switch, geo, geod, &
 &                   mpg, mpgd, pl%na(:, is), pld%na(:, :, is), pl%ua(:, &
-&                   is), pld%ua(:, :, is), smbcf, smbcfd, srw%smcf(:, is&
-&                   ), ctcfb, ctcfbd, wrk0, wrk0d, nbdirs)
+&                   is), pld%ua(:, :, is), smbcf, smbcfd, ctcfb, ctcfbd&
+&                   , wrk0, wrk0d, nbdirs)
 !    ..compute correcting source due to artificial anomalous electric conductivity
     CALL B2SIAN_DV_NODIFF(ncv, nfc, is, switch, geo, mpg, mpgd, dv%&
 &                   fchanml, dvd%fchanml, smban, smband, nbdirs)
@@ -2304,10 +2290,7 @@ SUBROUTINE B2NPMO_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
 &                   is), srd%smq(:, :, :, is), smqdu, smqdud, smb, smbd&
 &                   , nbdirs)
 !srv 22.05.18
-!srv ???
-!    ..save final source for species (is)                               !srv 10.11.02
-!WG_TODO       smof(:,:,is) = smb                                       !srv 10.11.02
-!
+!srv
 !
 !    ..compute residual
     IF ((solving .AND. ANY(solvemo(is, 0:mpg%nnreg(0)))) .OR. switch%&
@@ -2388,7 +2371,7 @@ SUBROUTINE B2NPMO_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
     END IF
 !srv 12.07.02 }
 !
-    IF (switch%b2npmo_iout .NE. 0) THEN
+    IF (switch%b2npmo_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
       arg16(:) = 'b2npmo_ua_input'//chns
       CALL MY_OUT_US(70, ncv, 0, pl%ua(1, is), arg16(:))
       wrks = sr%smo(:, 0, is) + sr%smo(:, 1, is)*pl%ua(:, is) + sr%smo(:&
@@ -2701,10 +2684,6 @@ SUBROUTINE B2NPMO_DV_NODIFF(ncv, nfc, nvx, ns, ismain, switch, switchd, &
     CALL MY_OUT_US(70, ncv, 0, dv%pccm(1, 1), 'b2npmo_pccm_r')
 !srv 11.01.13
   END IF
-!   ..set error parameter
-!     (at present all errors cause an abort through xerrab)
-  ierr = 0
-!
 ! ..return
   ncall_b2npmo = ncall_b2npmo + 1
   CALL SUBEND()
@@ -2726,8 +2705,7 @@ END SUBROUTINE B2NPMO_DV_NODIFF
 !.specification
 !
 SUBROUTINE B2NPMO_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
-& mpg, itcnt, solving, rxf, dtim, pl, dv, rt, co, sr, srw, psnc, psnl, &
-& st_ext, ierr)
+& mpg, itcnt, solving, rxf, dtim, pl, dv, rt, co, sr, srw, psnl, st_ext)
   USE B2MOD_TYPES
   USE B2MOD_MATH_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
@@ -2767,7 +2745,7 @@ SUBROUTINE B2NPMO_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
   TYPE(B2RATES), INTENT(IN) :: rt
   TYPE(B2SOURCE), INTENT(INOUT) :: sr
   TYPE(B2SOURCEWORK), INTENT(INOUT) :: srw
-  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnc, psnl
+  TYPE(B2PLASMASNAPSHOT), INTENT(INOUT) :: psnl
   TYPE(B2STATEEXT), INTENT(IN) :: st_ext
   REAL(kind=r8) :: rxf, dtim
   LOGICAL :: solving
@@ -2775,10 +2753,7 @@ SUBROUTINE B2NPMO_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
   TYPE(B2PLASMA), INTENT(INOUT) :: pl
   TYPE(B2DERIVATIVES), INTENT(INOUT) :: dv
 !   ..output arguments (unspecified on entry)
-  INTEGER :: ierr
-!WG_TODO     &  smof(nCv,0:3,0:ns-1)
   REAL(kind=r8) :: ubf(nfc), robf(nfc)
-!   ..common blocks
 !-----------------------------------------------------------------------
 !.documentation
 !
@@ -3012,8 +2987,7 @@ SUBROUTINE B2NPMO_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
   IF (switch%b2sigp_style .NE. 2) CALL B2NXFX_NODIFF_NODIFF(ncv, nfc, &
 &                                                     nvx, switch, geo, &
 &                                                     mpg, qe, dv%ne, pl&
-&                                                     %te, pl%po, ehxp, &
-&                                                     wrkf0, wrkf1)
+&                                                     %te, pl%po, ehxp)
 !   ..compute smqdu
   CALL B2NXDU_NODIFF_NODIFF(ncv, ns, pl%na, pl%ua, sr%smq, smqdu, wrk0, &
 &                     wrk1)
@@ -3071,7 +3045,7 @@ SUBROUTINE B2NPMO_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
 !    ..compute pressure gradient term
     CALL B2SIGP_NODIFF_NODIFF(ncv, nfc, nvx, is, switch, geo, mpg, rt%&
 &                       rza(:, is), pl%na(:, is), pl%ti, pl%tn, dv%ne, &
-&                       pl%te, pl%po, smbgp, wrk0, wrk1, wrk2)
+&                       pl%te, pl%po, smbgp, wrk0, wrk1)
 !    ..compute flub
     arg12 = nfc*2
     CALL B2SCOPY_NODIFF_NODIFF(arg12, dv%fna_fcor(:, :, is), 1, flub, 1)
@@ -3100,8 +3074,8 @@ SUBROUTINE B2NPMO_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
 !srv 09.07.01 28.01.02 22.07.05
     arg13 = am(is)*mp
     CALL B2SICF_NODIFF_NODIFF(ncv, nfc, nvx, is, arg13, switch, geo, mpg&
-&                       , pl%na(:, is), pl%ua(:, is), smbcf, srw%smcf(:&
-&                       , is), ctcfb, wrk0)
+&                       , pl%na(:, is), pl%ua(:, is), smbcf, ctcfb, wrk0&
+&                      )
 !    ..compute correcting source due to artificial anomalous electric conductivity
     CALL B2SIAN_NODIFF_NODIFF(ncv, nfc, is, switch, geo, mpg, dv%fchanml&
 &                       , smban)
@@ -3136,10 +3110,7 @@ SUBROUTINE B2NPMO_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
     CALL B2NXDV_NODIFF_NODIFF(ncv, is, switch, mpg, rob, sr%smq(:, :, is&
 &                       ), smqdu, smb)
 !srv 22.05.18
-!srv ???
-!    ..save final source for species (is)                               !srv 10.11.02
-!WG_TODO       smof(:,:,is) = smb                                       !srv 10.11.02
-!
+!srv
 !
 !    ..compute residual
     IF ((solving .AND. ANY(solvemo(is, 0:mpg%nnreg(0)))) .OR. switch%&
@@ -3216,7 +3187,7 @@ SUBROUTINE B2NPMO_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
     END IF
 !srv 12.07.02 }
 !
-    IF (switch%b2npmo_iout .NE. 0) THEN
+    IF (switch%b2npmo_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
       arg16(:) = 'b2npmo_ua_input'//chns
       CALL MY_OUT_US(70, ncv, 0, pl%ua(1, is), arg16(:))
       wrks = sr%smo(:, 0, is) + sr%smo(:, 1, is)*pl%ua(:, is) + sr%smo(:&
@@ -3445,10 +3416,6 @@ SUBROUTINE B2NPMO_NODIFF_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, &
     CALL MY_OUT_US(70, ncv, 0, dv%pccm(1, 1), 'b2npmo_pccm_r')
 !srv 11.01.13
   END IF
-!   ..set error parameter
-!     (at present all errors cause an abort through xerrab)
-  ierr = 0
-!
 ! ..return
   ncall_b2npmo = ncall_b2npmo + 1
   CALL SUBEND()

@@ -32,13 +32,10 @@ SUBROUTINE B2SRSM_NODIFF_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua&
   USE B2US_PLASMA_DIFFV_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
-  USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2srsm
+  USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2srsm, diagno_srsm
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
-!
-!-----------------------------------------------------------------------
-!.end b2srsm
 !
 !   ..input arguments (unchanged on exit)
   INTEGER :: ncv, ns
@@ -66,10 +63,11 @@ SUBROUTINE B2SRSM_NODIFF_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua&
 !.declarations
 !
 !   ..local variables
-  INTEGER :: is
+  INTEGER :: is, icv
   INTEGER :: k
 !srv 11.09.09 }
   CHARACTER :: chns*3, chk*1
+  REAL(kind=r8) :: timescale, invtimescale, timefactor, hlp
 !djm Jan2017
   REAL(kind=r8) :: snatmp(ncv, 0:1, 0:ns-1), smotmp(ncv, 0:3, 0:ns-1), &
 & shetmp(ncv, 0:3), shitmp(ncv, 0:3)
@@ -78,9 +76,25 @@ SUBROUTINE B2SRSM_NODIFF_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua&
   INTRINSIC ABS
   INTRINSIC MAXVAL
   EXTERNAL XERRAB
+  INTRINSIC MIN
+  INTRINSIC MOD
+  INTRINSIC SQRT
+  REAL(r8) :: x1
+  REAL(r8) :: x2
+  REAL(r8) :: x3
   REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
+  REAL(r8) :: abs0
+  REAL(r8) :: abs1
+  REAL(r8) :: abs2
+  REAL(r8) :: abs3
+  REAL(r8) :: abs4
   REAL(kind=r8) :: result1
-  CHARACTER(len=12) :: arg1
+  REAL(kind=r8) :: result10
+  REAL(kind=r8) :: result2
+  REAL(kind=r8) :: arg1
+  REAL(r8), DIMENSION(ncv) :: arg10
+  CHARACTER(len=12) :: arg2
+  CHARACTER(len=12) :: arg11
 !-----------------------------------------------------------------------
 !.computation
 !
@@ -124,35 +138,289 @@ SUBROUTINE B2SRSM_NODIFF_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua&
   shetmp = sr%she
   shitmp = sr%shi
 !
-  IF (switch%b2srsm_enable .NE. 0) CALL XERRAB(&
-&                                        'b2srsm not adapted for WG')
+  IF (switch%b2srsm_enable .NE. 0) THEN
+!WG_TODO
+    CALL XERRAB('b2srsm not adapted for WG')
+!*** calculate the integral sources for all regions:
+!*** before correction (1), after correction (2)
+    timefactor = 1.0_R8
+!
+!   ..smooth particle and parallel momentum sources
+    DO is=0,ns-1
+      DO icv=1,mpg%ncv
+        IF (sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is) .GE. 0.&
+&       ) THEN
+          abs0 = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is)
+        ELSE
+          abs0 = -(sr%sna(icv, 0, is)+sr%sna(icv, 1, is)*na(icv, is))
+        END IF
+!WG_TODO            if (resignore(iCv,1).ne.0) then
+! check particles
+        invtimescale = abs0/(na(icv, is)*geo%cvvol(icv))
+        hlp = invtimescale*time_factor_required*dtim*dtco(is, mpg%cvreg(&
+&         icv))*time_factor(icv)
+        IF (hlp .GT. 1.0_R8) THEN
+          timescale = 1.0_R8/invtimescale
+          IF (timefactor .GT. 1.0_R8/hlp) THEN
+            timefactor = 1.0_R8/hlp
+          ELSE
+            timefactor = timefactor
+          END IF
+          IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE.&
+&             2) THEN
+            WRITE(*, *) 'WARNING: particle sources very strong @'
+            WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*&
+&           dtco(is, mpg%cvreg(icv))*time_factor(icv)
+            WRITE(*, '(a,2i4,i3)') 'iCv,is = ', icv, is
+            WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev&
+&           , ne(icv)
+          END IF
+          sr%sna(icv, 0, is) = sr%sna(icv, 0, is)/hlp
+          sr%sna(icv, 1, is) = sr%sna(icv, 1, is)/hlp
+          IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+            src_ni(mpg%cvreg(icv), 2, b2espcr(is)) = src_ni(mpg%cvreg(&
+&             icv), 2, b2espcr(is)) + cor_ni(icv, b2espcr(is))*(1.0_R8/&
+&             hlp-1.0_R8)
+            src_ni(0, 2, b2espcr(is)) = src_ni(0, 2, b2espcr(is)) + &
+&             cor_ni(icv, b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+          END IF
+        END IF
+      END DO
+!WG_TODO            endif
+      DO icv=1,mpg%ncv
+        result10 = ROXA(icv, is)
+        result2 = ROXA(icv, is)
+        x1 = sr%smo(icv, 0, is) + sr%smo(icv, 1, is)*ua(icv, is) + sr%&
+&         smo(icv, 2, is)*result10 + sr%smo(icv, 3, is)*result2*ua(icv, &
+&         is)
+        IF (x1 .GE. 0.) THEN
+          abs1 = x1
+        ELSE
+          abs1 = -x1
+        END IF
+!WG_TODO            if (resignore(iCv,2).ne.0) then
+! check parallel momentum
+        arg1 = ti(icv)/(am(is)*mp)
+        result10 = SQRT(arg1)
+        result2 = ROXA(icv, is)
+        invtimescale = abs1/(result10*result2*geo%cvvol(icv))
+        hlp = invtimescale*time_factor_required*dtim*dtmo(is, mpg%cvreg(&
+&         icv))*time_factor(icv)
+        IF (hlp .GT. 1.0_R8) THEN
+          timescale = 1.0_R8/invtimescale
+          IF (timefactor .GT. 1.0_R8/hlp) THEN
+            timefactor = 1.0_R8/hlp
+          ELSE
+            timefactor = timefactor
+          END IF
+          IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE.&
+&             2) THEN
+            WRITE(*, *) &
+&           'WARNING: parallel momentum sources very strong @'
+            WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*&
+&           dtmo(is, mpg%cvreg(icv))*time_factor(icv)
+            WRITE(*, '(a,2i4,i3)') 'iCv,is = ', icv, is
+            WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev&
+&           , ne(icv)
+          END IF
+          sr%smo(icv, 0, is) = sr%smo(icv, 0, is)/hlp
+          sr%smo(icv, 1, is) = sr%smo(icv, 1, is)/hlp
+          sr%smo(icv, 2, is) = sr%smo(icv, 2, is)/hlp
+          sr%smo(icv, 3, is) = sr%smo(icv, 3, is)/hlp
+          IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+            src_mo(mpg%cvreg(icv), 2, b2espcr(is)) = src_mo(mpg%cvreg(&
+&             icv), 2, b2espcr(is)) + cor_mo(icv, b2espcr(is))*(1.0_R8/&
+&             hlp-1.0_R8)
+            src_mo(0, 2, b2espcr(is)) = src_mo(0, 2, b2espcr(is)) + &
+&             cor_mo(icv, b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+            src_ms(mpg%cvreg(icv), 2) = src_ms(mpg%cvreg(icv), 2) + &
+&             cor_mo(icv, b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+            src_ms(0, 2) = src_ms(0, 2) + cor_mo(icv, b2espcr(is))*(&
+&             1.0_R8/hlp-1.0_R8)
+          END IF
+        END IF
+      END DO
+    END DO
+!WG_TODO            endif
+!   ..smooth electron heat, ion heat and electron particle sources
+    DO icv=1,mpg%ncv
+      x2 = sr%shi(icv, 0) + sr%shi(icv, 1)*ti(icv) + sr%shi(icv, 2)*ni(&
+&       icv, 0) + sr%shi(icv, 3)*ti(icv)*ni(icv, 0)
+      IF (x2 .GE. 0.) THEN
+        abs2 = x2
+      ELSE
+        abs2 = -x2
+      END IF
+!WG_TODO          if (resignore(iCv,1).ne.0) then
+! check ion energy
+      invtimescale = abs2/(ti(icv)*ni(icv, 0)*geo%cvvol(icv))
+      hlp = invtimescale*time_factor_required*dtim*dtei(mpg%cvreg(icv))*&
+&       time_factor(icv)
+      IF (hlp .GT. 1.0_R8) THEN
+        timescale = 1.0_R8/invtimescale
+        IF (timefactor .GT. 1.0_R8/hlp) THEN
+          timefactor = 1.0_R8/hlp
+        ELSE
+          timefactor = timefactor
+        END IF
+        IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE. 2&
+&       ) THEN
+          WRITE(*, *) 'WARNING: ion heat sources very strong @'
+          WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*dtei&
+&         (mpg%cvreg(icv))*time_factor(icv)
+          WRITE(*, '(a,2i4)') 'iCv = ', icv
+          WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev, &
+&         ne(icv)
+        END IF
+        sr%shi(icv, 0) = sr%shi(icv, 0)/hlp
+        sr%shi(icv, 1) = sr%shi(icv, 1)/hlp
+        sr%shi(icv, 2) = sr%shi(icv, 2)/hlp
+        sr%shi(icv, 3) = sr%shi(icv, 3)/hlp
+        IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+          src_ei(mpg%cvreg(icv), 2) = src_ei(mpg%cvreg(icv), 2) + cor_ei&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_ei(0, 2) = src_ei(0, 2) + cor_ei(icv)*(1.0_R8/hlp-1.0_R8)
+          src_es(mpg%cvreg(icv), 2) = src_es(mpg%cvreg(icv), 2) + cor_ei&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_es(0, 2) = src_es(0, 2) + cor_ei(icv)*(1.0_R8/hlp-1.0_R8)
+        END IF
+      END IF
+! check neutral energy
+      IF (switch%tn_style .NE. 0) CALL XERRAB(&
+&                               'b2srsm not developed for tn_style.ne.0'&
+&                                      )
+      x3 = sr%she(icv, 0) + sr%she(icv, 1)*te(icv) + sr%she(icv, 2)*ne(&
+&       icv) + sr%she(icv, 3)*te(icv)*ne(icv)
+      IF (x3 .GE. 0.) THEN
+        abs3 = x3
+      ELSE
+        abs3 = -x3
+      END IF
+! check electron energy
+      invtimescale = abs3/(te(icv)*ne(icv)*geo%cvvol(icv))
+      hlp = invtimescale*time_factor_required*dtim*dtee(mpg%cvreg(icv))*&
+&       time_factor(icv)
+      IF (hlp .GT. 1.0_R8) THEN
+        timescale = 1.0_R8/invtimescale
+        IF (timefactor .GT. 1.0_R8/hlp) THEN
+          timefactor = 1.0_R8/hlp
+        ELSE
+          timefactor = timefactor
+        END IF
+        IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE. 2&
+&       ) THEN
+          WRITE(*, *) 'WARNING: electron heat sources very strong @'
+          WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*dtee&
+&         (mpg%cvreg(icv))*time_factor(icv)
+          WRITE(*, '(a,2i4)') 'iCv = ', icv
+          WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev, &
+&         ne(icv)
+        END IF
+        sr%she(icv, 0) = sr%she(icv, 0)/hlp
+        sr%she(icv, 1) = sr%she(icv, 1)/hlp
+        sr%she(icv, 2) = sr%she(icv, 2)/hlp
+        sr%she(icv, 3) = sr%she(icv, 3)/hlp
+        IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+          src_ee(mpg%cvreg(icv), 2) = src_ee(mpg%cvreg(icv), 2) + cor_ee&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_ee(0, 2) = src_ee(0, 2) + cor_ee(icv)*(1.0_R8/hlp-1.0_R8)
+          src_es(mpg%cvreg(icv), 2) = src_es(mpg%cvreg(icv), 2) + cor_ee&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_es(0, 2) = src_es(0, 2) + cor_ee(icv)*(1.0_R8/hlp-1.0_R8)
+        END IF
+      END IF
+      IF (sr%sne(icv, 0) + sr%sne(icv, 1)*ne(icv) .GE. 0.) THEN
+        abs4 = sr%sne(icv, 0) + sr%sne(icv, 1)*ne(icv)
+      ELSE
+        abs4 = -(sr%sne(icv, 0)+sr%sne(icv, 1)*ne(icv))
+      END IF
+! check electron particle number
+      invtimescale = abs4/(ne(icv)*geo%cvvol(icv))
+      hlp = invtimescale*time_factor_required*dtim*time_factor(icv)
+      IF (hlp .GT. 1.0_R8) THEN
+        timescale = 1.0_R8/invtimescale
+        IF (timefactor .GT. 1.0_R8/hlp) THEN
+          timefactor = 1.0_R8/hlp
+        ELSE
+          timefactor = timefactor
+        END IF
+        IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE. 2&
+&       ) THEN
+          WRITE(*, *) 'WARNING: electron particle sources very strong @'
+          WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*&
+&         time_factor(icv)
+          WRITE(*, '(a,2i4)') 'iCv = ', icv
+          WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev, &
+&         ne(icv)
+        END IF
+        sr%sne(icv, 0) = sr%sne(icv, 0)/hlp
+        sr%sne(icv, 1) = sr%sne(icv, 1)/hlp
+        IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+          src_ne(mpg%cvreg(icv), 2) = src_ne(mpg%cvreg(icv), 2) + cor_ne&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_ne(0, 2) = src_ne(0, 2) + cor_ne(icv)*(1.0_R8/hlp-1.0_R8)
+        END IF
+      END IF
+    END DO
+  END IF
+!WG_TODO          endif
+!
+!
+  IF (switch%b2npmo_iout .EQ. 1) THEN
+!srv 11.09.09 {
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+!srv 07.10.09
+      arg10(:) = sr%smo(:, 0, is) + sr%smo(:, 1, is)*ua(:, is) + sr%smo(&
+&       :, 2, is)*na(:, is)*mp*am(is) + sr%smo(:, 3, is)*ua(:, is)*na(:&
+&       , is)*mp*am(is)
+      arg2(:) = 'b2srsm_smosm'//chns
+      CALL MY_OUT_US(70, ncv, 0, arg10(:), arg2(:))
+    END DO
+  END IF
+  IF (switch%b2npco_iout .EQ. 1) THEN
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+!srv 07.10.09
+      arg10(:) = sr%sna(:, 0, is) + sr%sna(:, 1, is)*na(:, is)
+      arg2(:) = 'b2srsm_snasm'//chns
+      CALL MY_OUT_US(70, ncv, 0, arg10(:), arg2(:))
+    END DO
+  END IF
+  IF (switch%b2npht_iout .EQ. 1) THEN
+!srv 07.10.09
+    arg10(:) = sr%she(:, 0) + sr%she(:, 1)*te + sr%she(:, 2)*ne + sr%she&
+&     (:, 3)*te*ne
+    CALL MY_OUT_US(70, ncv, 0, arg10(:), 'b2srsm_shesm')
+    arg10(:) = sr%shi(:, 0) + sr%shi(:, 1)*ti + sr%shi(:, 2)*ni(:, 0) + &
+&     sr%shi(:, 3)*ti*ni(:, 0)
+    CALL MY_OUT_US(70, ncv, 0, arg10(:), 'b2srsm_shism')
+  END IF
 !srv 11.09.09 }
-!
-!
 !
   IF (switch%b2srsm_iout .EQ. 1) THEN
     DO is=0,ns-1
       WRITE(chns, '(i3.3)') is
       DO k=0,3
         WRITE(chk, '(i1)') k
-        arg1(:) = 'b2srsm_smosm'//chk//chns
-        CALL MY_OUT_US(70, ncv, 0, sr%smo(1, k, is), arg1(:))
+        arg11(:) = 'b2srsm_smosm'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, sr%smo(1, k, is), arg11(:))
       END DO
       DO k=0,1
         WRITE(chk, '(i1)') k
-        arg1(:) = 'b2srsm_snasm'//chk//chns
-        CALL MY_OUT_US(70, ncv, 0, sr%sna(1, k, is), arg1(:))
+        arg11(:) = 'b2srsm_snasm'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, sr%sna(1, k, is), arg11(:))
       END DO
     END DO
     DO k=0,3
-      arg1(:) = 'b2srsm_shesm'//chk
-      CALL MY_OUT_US(70, ncv, 0, sr%she(1, k), arg1(:))
-      arg1(:) = 'b2srsm_shism'//chk
-      CALL MY_OUT_US(70, ncv, 0, sr%shi(1, k), arg1(:))
+      arg11(:) = 'b2srsm_shesm'//chk
+      CALL MY_OUT_US(70, ncv, 0, sr%she(1, k), arg11(:))
+      arg11(:) = 'b2srsm_shism'//chk
+      CALL MY_OUT_US(70, ncv, 0, sr%shi(1, k), arg11(:))
     END DO
     DO k=0,1
-      arg1(:) = 'b2srsm_snesm'//chk
-      CALL MY_OUT_US(70, ncv, 0, sr%sne(1, k), arg1(:))
+      arg11(:) = 'b2srsm_snesm'//chk
+      CALL MY_OUT_US(70, ncv, 0, sr%sne(1, k), arg11(:))
     END DO
   END IF
 !
@@ -161,5 +429,1825 @@ SUBROUTINE B2SRSM_NODIFF_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, ua&
 &     1
   CALL SUBEND()
   RETURN
+
+CONTAINS
+!
+!-----------------------------------------------------------------------
+!.end b2srsm
+!
+!
+  FUNCTION ROXA(icv, is)
+    USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: icv, is
+    REAL(kind=r8) :: roxa
+!
+    roxa = am(is)*mp*na(icv, is)
+    RETURN
+  END FUNCTION ROXA
+
 END SUBROUTINE B2SRSM_NODIFF_NODIFF
+
+!  Differentiation of b2srsm in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: *(sr.she) *(sr.shi) *(sr.smo)
+!                *(sr.sna)
+!   with respect to varying inputs: ti na ne ni ua *(sr.she) *(sr.shi)
+!                *(sr.smo) *(sr.sna) te
+!   Plus diff mem management of: sr.she:in sr.shi:in sr.sne:in
+!                sr.smo:in sr.sna:in
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!-----------------------------------------------------------------------
+!.specification
+SUBROUTINE B2SRSM_DV_NODIFF(ncv, ns, dtim, switch, geo, mpg, na, nad, ua&
+& , uad, te, ted, ti, tid, ne, ned, ni, nid, nn, nnd, sr, srd, main_call&
+& , nbdirs)
+  USE B2MOD_TYPES
+  USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
+  USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
+  USE B2MOD_CONSTANTS
+  USE B2MOD_DIAG_DIFFV_DIFFV
+  USE B2MOD_TIME
+  USE B2MOD_B2CMPA_DIFFV_DIFFV
+  USE B2MOD_SWITCHES_DIFFV_DIFFV
+  USE B2US_GEO_DIFFV_DIFFV
+  USE B2US_MAP_DIFFV_DIFFV
+  USE B2US_PLASMA_DIFFV_DIFFV
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+  USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2srsm, diagno_srsm
+  USE B2MOD_SUBSYS
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2MOD_DIFFSIZES
+  IMPLICIT NONE
+!
+!   ..input arguments (unchanged on exit)
+  INTEGER :: ncv, ns
+  TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(GEOMETRY), INTENT(IN) :: geo
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  REAL(kind=r8) :: dtim
+  REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), ni(ncv, 0:1), te(&
+& ncv), ti(ncv), ne(ncv), nn(ncv)
+  REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
+& -1), nid(nbdirsmax, ncv, 0:1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv&
+& ), ned(nbdirsmax, ncv), nnd(nbdirsmax, ncv)
+  LOGICAL :: main_call
+!   ..input/output arguments
+  TYPE(B2SOURCE), INTENT(INOUT) :: sr
+  TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
+!-----------------------------------------------------------------------
+!.documentation
+!
+!  1. purpose
+!
+!     B2SRSM smoothes expressions the sources strengths of
+!     density, parallel momentum, electron heat, atom heat, and charge.
+!     The idea is to limit the source strength by (value)/(dt*t._f._r.)
+!     - and to do this smoothly!
+!
+!
+!-----------------------------------------------------------------------
+!.declarations
+!
+!   ..local variables
+  INTEGER :: is, icv
+  INTEGER :: k
+!srv 11.09.09 }
+  CHARACTER :: chns*3, chk*1
+  REAL(kind=r8) :: timescale, invtimescale, timefactor, hlp
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: invtimescaled, hlpd
+!djm Jan2017
+  REAL(kind=r8) :: snatmp(ncv, 0:1, 0:ns-1), smotmp(ncv, 0:3, 0:ns-1), &
+& shetmp(ncv, 0:3), shitmp(ncv, 0:3)
+!   ..procedures
+  EXTERNAL XERTST, IPGETI, B2XVSG
+  INTRINSIC ABS
+  INTRINSIC MAXVAL
+  EXTERNAL XERRAB
+  INTRINSIC MIN
+  INTRINSIC MOD
+  INTRINSIC SQRT
+  REAL(r8) :: x1
+  REAL(r8), DIMENSION(nbdirsmax) :: x1d
+  REAL(r8) :: x2
+  REAL(r8), DIMENSION(nbdirsmax) :: x2d
+  REAL(r8) :: x3
+  REAL(r8), DIMENSION(nbdirsmax) :: x3d
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
+  REAL(r8) :: abs0
+  REAL(r8), DIMENSION(nbdirsmax) :: abs0d
+  REAL(r8) :: abs1
+  REAL(r8), DIMENSION(nbdirsmax) :: abs1d
+  REAL(r8) :: abs2
+  REAL(r8), DIMENSION(nbdirsmax) :: abs2d
+  REAL(r8) :: abs3
+  REAL(r8), DIMENSION(nbdirsmax) :: abs3d
+  REAL(r8) :: abs4
+  REAL(kind=r8) :: result1
+  REAL(kind=r8) :: result10
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: result10d
+  REAL(kind=r8) :: result2
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: result2d
+  REAL(kind=r8) :: arg1
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
+  REAL(r8), DIMENSION(ncv) :: arg10
+  CHARACTER(len=12) :: arg2
+  CHARACTER(len=12) :: arg11
+  INTEGER :: nd
+  REAL(kind=r8) :: temp
+  REAL(r8) :: temp0
+  REAL(kind=r8) :: temp1
+  INTEGER :: nbdirs
+!-----------------------------------------------------------------------
+!.computation
+!
+! ..preliminaries
+!   ..subprogram start-up calls
+  CALL SUBINI('b2srsm')
+!   ..test nCv, ns
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
+  CALL XERTST(1 .LE. ns, 'faulty argument ns')
+!   ..test dtim
+  CALL XERTST(0 .LT. dtim, 'faulty argument dtim')
+!   ..test sign of na, ni, ne, te, ti
+  DO is=0,ns-1
+    CALL B2XVSG(ncv, na(1, is), 1, 'na', '.gt.')
+  END DO
+  DO is=0,1
+    CALL B2XVSG(ncv, ni(1, is), 1, 'ni', '.gt.')
+  END DO
+  CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+  CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+  CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+  CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+  WHERE (ua .GE. 0.) 
+    dabs0 = ua
+  ELSEWHERE
+    dabs0 = -ua
+  END WHERE
+  result1 = MAXVAL(dabs0)
+  CALL XERTST(result1 .LT. c, 'Supra-luminal velocities !')
+!   ..obtain input
+  IF (ncall_b2srsm .EQ. 0) THEN
+! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+!        call ipgeti ('b2srsm_diagno', diagno)
+    IF (switch%b2srsm_enable .EQ. 0) WRITE(*, *) 'b2srsm disabled'
+    IF (eirene_mod .LE. 0) eirene_mod = 1
+  END IF
+!
+!djm Jan2017 Keep sources at the start to calculate total change for balance routines
+  snatmp = sr%sna
+  smotmp = sr%smo
+  shetmp = sr%she
+  shitmp = sr%shi
+!
+  IF (switch%b2srsm_enable .NE. 0) THEN
+!WG_TODO
+    CALL XERRAB('b2srsm not adapted for WG')
+!*** calculate the integral sources for all regions:
+!*** before correction (1), after correction (2)
+    timefactor = 1.0_R8
+!
+!   ..smooth particle and parallel momentum sources
+    DO is=0,ns-1
+      DO icv=1,mpg%ncv
+        IF (sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is) .GE. 0.&
+&       ) THEN
+          DO nd=1,nbdirs
+            abs0d(nd) = srd%sna(nd, icv, 0, is) + na(icv, is)*srd%sna(nd&
+&             , icv, 1, is) + sr%sna(icv, 1, is)*nad(nd, icv, is)
+          END DO
+          abs0 = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is)
+        ELSE
+          DO nd=1,nbdirs
+            abs0d(nd) = -srd%sna(nd, icv, 0, is) - na(icv, is)*srd%sna(&
+&             nd, icv, 1, is) - sr%sna(icv, 1, is)*nad(nd, icv, is)
+          END DO
+          abs0 = -(sr%sna(icv, 0, is)+sr%sna(icv, 1, is)*na(icv, is))
+        END IF
+!WG_TODO            if (resignore(iCv,1).ne.0) then
+! check particles
+        temp = geo%cvvol(icv)*na(icv, is)
+        DO nd=1,nbdirs
+          invtimescaled(nd) = (abs0d(nd)-abs0*geo%cvvol(icv)*nad(nd, icv&
+&           , is)/temp)/temp
+        END DO
+        invtimescale = abs0/temp
+        temp = time_factor_required*dtim*dtco(is, mpg%cvreg(icv))
+        DO nd=1,nbdirs
+          hlpd(nd) = temp*time_factor(icv)*invtimescaled(nd)
+        END DO
+        hlp = temp*(time_factor(icv)*invtimescale)
+        IF (hlp .GT. 1.0_R8) THEN
+          timescale = 1.0_R8/invtimescale
+          IF (timefactor .GT. 1.0_R8/hlp) THEN
+            timefactor = 1.0_R8/hlp
+          ELSE
+            timefactor = timefactor
+          END IF
+          IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE.&
+&             2) THEN
+            WRITE(*, *) 'WARNING: particle sources very strong @'
+            WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*&
+&           dtco(is, mpg%cvreg(icv))*time_factor(icv)
+            WRITE(*, '(a,2i4,i3)') 'iCv,is = ', icv, is
+            WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev&
+&           , ne(icv)
+          END IF
+          temp0 = sr%sna(icv, 0, is)/hlp
+          DO nd=1,nbdirs
+            srd%sna(nd, icv, 0, is) = (srd%sna(nd, icv, 0, is)-temp0*&
+&             hlpd(nd))/hlp
+          END DO
+          sr%sna(icv, 0, is) = temp0
+          temp0 = sr%sna(icv, 1, is)/hlp
+          DO nd=1,nbdirs
+            srd%sna(nd, icv, 1, is) = (srd%sna(nd, icv, 1, is)-temp0*&
+&             hlpd(nd))/hlp
+          END DO
+          sr%sna(icv, 1, is) = temp0
+          IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+            src_ni(mpg%cvreg(icv), 2, b2espcr(is)) = src_ni(mpg%cvreg(&
+&             icv), 2, b2espcr(is)) + cor_ni(icv, b2espcr(is))*(1.0_R8/&
+&             hlp-1.0_R8)
+            src_ni(0, 2, b2espcr(is)) = src_ni(0, 2, b2espcr(is)) + &
+&             cor_ni(icv, b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+          END IF
+        END IF
+      END DO
+!WG_TODO            endif
+      DO icv=1,mpg%ncv
+        CALL ROXA_DV(icv, is, result10, result10d, nbdirs)
+        CALL ROXA_DV(icv, is, result2, result2d, nbdirs)
+        temp = result2*ua(icv, is)
+        DO nd=1,nbdirs
+          x1d(nd) = srd%smo(nd, icv, 0, is) + ua(icv, is)*srd%smo(nd, &
+&           icv, 1, is) + sr%smo(icv, 1, is)*uad(nd, icv, is) + result10&
+&           *srd%smo(nd, icv, 2, is) + sr%smo(icv, 2, is)*result10d(nd) &
+&           + temp*srd%smo(nd, icv, 3, is) + sr%smo(icv, 3, is)*(ua(icv&
+&           , is)*result2d(nd)+result2*uad(nd, icv, is))
+        END DO
+        x1 = sr%smo(icv, 0, is) + sr%smo(icv, 1, is)*ua(icv, is) + sr%&
+&         smo(icv, 2, is)*result10 + sr%smo(icv, 3, is)*temp
+        IF (x1 .GE. 0.) THEN
+          DO nd=1,nbdirs
+            abs1d(nd) = x1d(nd)
+          END DO
+          abs1 = x1
+        ELSE
+          DO nd=1,nbdirs
+            abs1d(nd) = -x1d(nd)
+          END DO
+          abs1 = -x1
+        END IF
+        arg1 = ti(icv)/(am(is)*mp)
+        temp = SQRT(arg1)
+        DO nd=1,nbdirs
+!WG_TODO            if (resignore(iCv,2).ne.0) then
+! check parallel momentum
+          arg1d(nd) = tid(nd, icv)/(am(is)*mp)
+          IF (arg1 .EQ. 0.d0) THEN
+            result10d(nd) = 0.d0
+          ELSE
+            result10d(nd) = arg1d(nd)/(2.0*temp)
+          END IF
+        END DO
+        result10 = temp
+        CALL ROXA_DV(icv, is, result2, result2d, nbdirs)
+        temp = geo%cvvol(icv)*result10*result2
+        DO nd=1,nbdirs
+          invtimescaled(nd) = (abs1d(nd)-abs1*geo%cvvol(icv)*(result2*&
+&           result10d(nd)+result10*result2d(nd))/temp)/temp
+        END DO
+        invtimescale = abs1/temp
+        temp = time_factor_required*dtim*dtmo(is, mpg%cvreg(icv))
+        DO nd=1,nbdirs
+          hlpd(nd) = temp*time_factor(icv)*invtimescaled(nd)
+        END DO
+        hlp = temp*(time_factor(icv)*invtimescale)
+        IF (hlp .GT. 1.0_R8) THEN
+          timescale = 1.0_R8/invtimescale
+          IF (timefactor .GT. 1.0_R8/hlp) THEN
+            timefactor = 1.0_R8/hlp
+          ELSE
+            timefactor = timefactor
+          END IF
+          IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE.&
+&             2) THEN
+            WRITE(*, *) &
+&           'WARNING: parallel momentum sources very strong @'
+            WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*&
+&           dtmo(is, mpg%cvreg(icv))*time_factor(icv)
+            WRITE(*, '(a,2i4,i3)') 'iCv,is = ', icv, is
+            WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev&
+&           , ne(icv)
+          END IF
+          temp0 = sr%smo(icv, 0, is)/hlp
+          DO nd=1,nbdirs
+            srd%smo(nd, icv, 0, is) = (srd%smo(nd, icv, 0, is)-temp0*&
+&             hlpd(nd))/hlp
+          END DO
+          sr%smo(icv, 0, is) = temp0
+          temp0 = sr%smo(icv, 1, is)/hlp
+          DO nd=1,nbdirs
+            srd%smo(nd, icv, 1, is) = (srd%smo(nd, icv, 1, is)-temp0*&
+&             hlpd(nd))/hlp
+          END DO
+          sr%smo(icv, 1, is) = temp0
+          temp0 = sr%smo(icv, 2, is)/hlp
+          DO nd=1,nbdirs
+            srd%smo(nd, icv, 2, is) = (srd%smo(nd, icv, 2, is)-temp0*&
+&             hlpd(nd))/hlp
+          END DO
+          sr%smo(icv, 2, is) = temp0
+          temp0 = sr%smo(icv, 3, is)/hlp
+          DO nd=1,nbdirs
+            srd%smo(nd, icv, 3, is) = (srd%smo(nd, icv, 3, is)-temp0*&
+&             hlpd(nd))/hlp
+          END DO
+          sr%smo(icv, 3, is) = temp0
+          IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+            src_mo(mpg%cvreg(icv), 2, b2espcr(is)) = src_mo(mpg%cvreg(&
+&             icv), 2, b2espcr(is)) + cor_mo(icv, b2espcr(is))*(1.0_R8/&
+&             hlp-1.0_R8)
+            src_mo(0, 2, b2espcr(is)) = src_mo(0, 2, b2espcr(is)) + &
+&             cor_mo(icv, b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+            src_ms(mpg%cvreg(icv), 2) = src_ms(mpg%cvreg(icv), 2) + &
+&             cor_mo(icv, b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+            src_ms(0, 2) = src_ms(0, 2) + cor_mo(icv, b2espcr(is))*(&
+&             1.0_R8/hlp-1.0_R8)
+          END IF
+        END IF
+      END DO
+    END DO
+!WG_TODO            endif
+!   ..smooth electron heat, ion heat and electron particle sources
+    DO icv=1,mpg%ncv
+      temp = ti(icv)*ni(icv, 0)
+      DO nd=1,nbdirs
+        x2d(nd) = srd%shi(nd, icv, 0) + ti(icv)*srd%shi(nd, icv, 1) + sr&
+&         %shi(icv, 1)*tid(nd, icv) + ni(icv, 0)*srd%shi(nd, icv, 2) + &
+&         sr%shi(icv, 2)*nid(nd, icv, 0) + temp*srd%shi(nd, icv, 3) + sr&
+&         %shi(icv, 3)*(ni(icv, 0)*tid(nd, icv)+ti(icv)*nid(nd, icv, 0))
+      END DO
+      x2 = sr%shi(icv, 0) + sr%shi(icv, 1)*ti(icv) + sr%shi(icv, 2)*ni(&
+&       icv, 0) + sr%shi(icv, 3)*temp
+      IF (x2 .GE. 0.) THEN
+        DO nd=1,nbdirs
+          abs2d(nd) = x2d(nd)
+        END DO
+        abs2 = x2
+      ELSE
+        DO nd=1,nbdirs
+          abs2d(nd) = -x2d(nd)
+        END DO
+        abs2 = -x2
+      END IF
+!WG_TODO          if (resignore(iCv,1).ne.0) then
+! check ion energy
+      temp = geo%cvvol(icv)*ti(icv)
+      temp1 = temp*ni(icv, 0)
+      DO nd=1,nbdirs
+        invtimescaled(nd) = (abs2d(nd)-abs2*(ni(icv, 0)*geo%cvvol(icv)*&
+&         tid(nd, icv)+temp*nid(nd, icv, 0))/temp1)/temp1
+      END DO
+      invtimescale = abs2/temp1
+      temp1 = time_factor_required*dtim*dtei(mpg%cvreg(icv))
+      DO nd=1,nbdirs
+        hlpd(nd) = temp1*time_factor(icv)*invtimescaled(nd)
+      END DO
+      hlp = temp1*(time_factor(icv)*invtimescale)
+      IF (hlp .GT. 1.0_R8) THEN
+        timescale = 1.0_R8/invtimescale
+        IF (timefactor .GT. 1.0_R8/hlp) THEN
+          timefactor = 1.0_R8/hlp
+        ELSE
+          timefactor = timefactor
+        END IF
+        IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE. 2&
+&       ) THEN
+          WRITE(*, *) 'WARNING: ion heat sources very strong @'
+          WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*dtei&
+&         (mpg%cvreg(icv))*time_factor(icv)
+          WRITE(*, '(a,2i4)') 'iCv = ', icv
+          WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev, &
+&         ne(icv)
+        END IF
+        temp0 = sr%shi(icv, 0)/hlp
+        DO nd=1,nbdirs
+          srd%shi(nd, icv, 0) = (srd%shi(nd, icv, 0)-temp0*hlpd(nd))/hlp
+        END DO
+        sr%shi(icv, 0) = temp0
+        temp0 = sr%shi(icv, 1)/hlp
+        DO nd=1,nbdirs
+          srd%shi(nd, icv, 1) = (srd%shi(nd, icv, 1)-temp0*hlpd(nd))/hlp
+        END DO
+        sr%shi(icv, 1) = temp0
+        temp0 = sr%shi(icv, 2)/hlp
+        DO nd=1,nbdirs
+          srd%shi(nd, icv, 2) = (srd%shi(nd, icv, 2)-temp0*hlpd(nd))/hlp
+        END DO
+        sr%shi(icv, 2) = temp0
+        temp0 = sr%shi(icv, 3)/hlp
+        DO nd=1,nbdirs
+          srd%shi(nd, icv, 3) = (srd%shi(nd, icv, 3)-temp0*hlpd(nd))/hlp
+        END DO
+        sr%shi(icv, 3) = temp0
+        IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+          src_ei(mpg%cvreg(icv), 2) = src_ei(mpg%cvreg(icv), 2) + cor_ei&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_ei(0, 2) = src_ei(0, 2) + cor_ei(icv)*(1.0_R8/hlp-1.0_R8)
+          src_es(mpg%cvreg(icv), 2) = src_es(mpg%cvreg(icv), 2) + cor_ei&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_es(0, 2) = src_es(0, 2) + cor_ei(icv)*(1.0_R8/hlp-1.0_R8)
+        END IF
+      END IF
+! check neutral energy
+      IF (switch%tn_style .NE. 0) CALL XERRAB(&
+&                               'b2srsm not developed for tn_style.ne.0'&
+&                                      )
+      temp1 = te(icv)*ne(icv)
+      DO nd=1,nbdirs
+        x3d(nd) = srd%she(nd, icv, 0) + te(icv)*srd%she(nd, icv, 1) + sr&
+&         %she(icv, 1)*ted(nd, icv) + ne(icv)*srd%she(nd, icv, 2) + sr%&
+&         she(icv, 2)*ned(nd, icv) + temp1*srd%she(nd, icv, 3) + sr%she(&
+&         icv, 3)*(ne(icv)*ted(nd, icv)+te(icv)*ned(nd, icv))
+      END DO
+      x3 = sr%she(icv, 0) + sr%she(icv, 1)*te(icv) + sr%she(icv, 2)*ne(&
+&       icv) + sr%she(icv, 3)*temp1
+      IF (x3 .GE. 0.) THEN
+        DO nd=1,nbdirs
+          abs3d(nd) = x3d(nd)
+        END DO
+        abs3 = x3
+      ELSE
+        DO nd=1,nbdirs
+          abs3d(nd) = -x3d(nd)
+        END DO
+        abs3 = -x3
+      END IF
+! check electron energy
+      temp1 = geo%cvvol(icv)*te(icv)*ne(icv)
+      DO nd=1,nbdirs
+        invtimescaled(nd) = (abs3d(nd)-abs3*geo%cvvol(icv)*(ne(icv)*ted(&
+&         nd, icv)+te(icv)*ned(nd, icv))/temp1)/temp1
+      END DO
+      invtimescale = abs3/temp1
+      temp1 = time_factor_required*dtim*dtee(mpg%cvreg(icv))
+      DO nd=1,nbdirs
+        hlpd(nd) = temp1*time_factor(icv)*invtimescaled(nd)
+      END DO
+      hlp = temp1*(time_factor(icv)*invtimescale)
+      IF (hlp .GT. 1.0_R8) THEN
+        timescale = 1.0_R8/invtimescale
+        IF (timefactor .GT. 1.0_R8/hlp) THEN
+          timefactor = 1.0_R8/hlp
+        ELSE
+          timefactor = timefactor
+        END IF
+        IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE. 2&
+&       ) THEN
+          WRITE(*, *) 'WARNING: electron heat sources very strong @'
+          WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*dtee&
+&         (mpg%cvreg(icv))*time_factor(icv)
+          WRITE(*, '(a,2i4)') 'iCv = ', icv
+          WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev, &
+&         ne(icv)
+        END IF
+        temp0 = sr%she(icv, 0)/hlp
+        DO nd=1,nbdirs
+          srd%she(nd, icv, 0) = (srd%she(nd, icv, 0)-temp0*hlpd(nd))/hlp
+        END DO
+        sr%she(icv, 0) = temp0
+        temp0 = sr%she(icv, 1)/hlp
+        DO nd=1,nbdirs
+          srd%she(nd, icv, 1) = (srd%she(nd, icv, 1)-temp0*hlpd(nd))/hlp
+        END DO
+        sr%she(icv, 1) = temp0
+        temp0 = sr%she(icv, 2)/hlp
+        DO nd=1,nbdirs
+          srd%she(nd, icv, 2) = (srd%she(nd, icv, 2)-temp0*hlpd(nd))/hlp
+        END DO
+        sr%she(icv, 2) = temp0
+        temp0 = sr%she(icv, 3)/hlp
+        DO nd=1,nbdirs
+          srd%she(nd, icv, 3) = (srd%she(nd, icv, 3)-temp0*hlpd(nd))/hlp
+        END DO
+        sr%she(icv, 3) = temp0
+        IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+          src_ee(mpg%cvreg(icv), 2) = src_ee(mpg%cvreg(icv), 2) + cor_ee&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_ee(0, 2) = src_ee(0, 2) + cor_ee(icv)*(1.0_R8/hlp-1.0_R8)
+          src_es(mpg%cvreg(icv), 2) = src_es(mpg%cvreg(icv), 2) + cor_ee&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_es(0, 2) = src_es(0, 2) + cor_ee(icv)*(1.0_R8/hlp-1.0_R8)
+        END IF
+      END IF
+      IF (sr%sne(icv, 0) + sr%sne(icv, 1)*ne(icv) .GE. 0.) THEN
+        abs4 = sr%sne(icv, 0) + sr%sne(icv, 1)*ne(icv)
+      ELSE
+        abs4 = -(sr%sne(icv, 0)+sr%sne(icv, 1)*ne(icv))
+      END IF
+! check electron particle number
+      invtimescale = abs4/(ne(icv)*geo%cvvol(icv))
+      hlp = invtimescale*time_factor_required*dtim*time_factor(icv)
+      IF (hlp .GT. 1.0_R8) THEN
+        timescale = 1.0_R8/invtimescale
+        IF (timefactor .GT. 1.0_R8/hlp) THEN
+          timefactor = 1.0_R8/hlp
+        ELSE
+          timefactor = timefactor
+        END IF
+        IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE. 2&
+&       ) THEN
+          WRITE(*, *) 'WARNING: electron particle sources very strong @'
+          WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*&
+&         time_factor(icv)
+          WRITE(*, '(a,2i4)') 'iCv = ', icv
+          WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev, &
+&         ne(icv)
+        END IF
+        sr%sne(icv, 0) = sr%sne(icv, 0)/hlp
+        sr%sne(icv, 1) = sr%sne(icv, 1)/hlp
+        IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+          src_ne(mpg%cvreg(icv), 2) = src_ne(mpg%cvreg(icv), 2) + cor_ne&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_ne(0, 2) = src_ne(0, 2) + cor_ne(icv)*(1.0_R8/hlp-1.0_R8)
+        END IF
+      END IF
+    END DO
+  END IF
+!WG_TODO          endif
+!
+!
+  IF (switch%b2npmo_iout .EQ. 1) THEN
+!srv 11.09.09 {
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+!srv 07.10.09
+      arg10(:) = sr%smo(:, 0, is) + sr%smo(:, 1, is)*ua(:, is) + sr%smo(&
+&       :, 2, is)*na(:, is)*mp*am(is) + sr%smo(:, 3, is)*ua(:, is)*na(:&
+&       , is)*mp*am(is)
+      arg2(:) = 'b2srsm_smosm'//chns
+      CALL MY_OUT_US(70, ncv, 0, arg10(:), arg2(:))
+    END DO
+  END IF
+  IF (switch%b2npco_iout .EQ. 1) THEN
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+!srv 07.10.09
+      arg10(:) = sr%sna(:, 0, is) + sr%sna(:, 1, is)*na(:, is)
+      arg2(:) = 'b2srsm_snasm'//chns
+      CALL MY_OUT_US(70, ncv, 0, arg10(:), arg2(:))
+    END DO
+  END IF
+  IF (switch%b2npht_iout .EQ. 1) THEN
+!srv 07.10.09
+    arg10(:) = sr%she(:, 0) + sr%she(:, 1)*te + sr%she(:, 2)*ne + sr%she&
+&     (:, 3)*te*ne
+    CALL MY_OUT_US(70, ncv, 0, arg10(:), 'b2srsm_shesm')
+    arg10(:) = sr%shi(:, 0) + sr%shi(:, 1)*ti + sr%shi(:, 2)*ni(:, 0) + &
+&     sr%shi(:, 3)*ti*ni(:, 0)
+    CALL MY_OUT_US(70, ncv, 0, arg10(:), 'b2srsm_shism')
+  END IF
+!srv 11.09.09 }
+!
+  IF (switch%b2srsm_iout .EQ. 1) THEN
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+      DO k=0,3
+        WRITE(chk, '(i1)') k
+        arg11(:) = 'b2srsm_smosm'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, sr%smo(1, k, is), arg11(:))
+      END DO
+      DO k=0,1
+        WRITE(chk, '(i1)') k
+        arg11(:) = 'b2srsm_snasm'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, sr%sna(1, k, is), arg11(:))
+      END DO
+    END DO
+    DO k=0,3
+      arg11(:) = 'b2srsm_shesm'//chk
+      CALL MY_OUT_US(70, ncv, 0, sr%she(1, k), arg11(:))
+      arg11(:) = 'b2srsm_shism'//chk
+      CALL MY_OUT_US(70, ncv, 0, sr%shi(1, k), arg11(:))
+    END DO
+    DO k=0,1
+      arg11(:) = 'b2srsm_snesm'//chk
+      CALL MY_OUT_US(70, ncv, 0, sr%sne(1, k), arg11(:))
+    END DO
+  END IF
+!
+! ..return
+  IF (ncall_b2srsm .EQ. 0 .OR. main_call) ncall_b2srsm = ncall_b2srsm + &
+&     1
+  CALL SUBEND()
+  RETURN
+
+CONTAINS
+!  Differentiation of roxa in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: roxa
+!   with respect to varying inputs: na
+!
+!-----------------------------------------------------------------------
+!.end b2srsm
+!
+!
+  SUBROUTINE ROXA_DV(icv, is, roxa, roxad, nbdirs)
+    USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+    INTEGER, INTENT(IN) :: icv, is
+    REAL(kind=r8) :: roxa
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: roxad
+    INTEGER :: nd
+    INTEGER :: nbdirs
+!
+    DO nd=1,nbdirs
+      roxad(nd) = am(is)*mp*nad(nd, icv, is)
+    END DO
+    roxa = am(is)*mp*na(icv, is)
+    RETURN
+  END SUBROUTINE ROXA_DV
+
+!
+!-----------------------------------------------------------------------
+!.end b2srsm
+!
+!
+  FUNCTION ROXA(icv, is)
+    USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: icv, is
+    REAL(kind=r8) :: roxa
+!
+    roxa = am(is)*mp*na(icv, is)
+    RETURN
+  END FUNCTION ROXA
+
+END SUBROUTINE B2SRSM_DV_NODIFF
+
+!  Differentiation of b2srsm_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: *(srd.she) *(srd.shi) *(srd.smo)
+!                *(srd.sna) *(sr.she) *(sr.shi) *(sr.smo) *(sr.sna)
+!   with respect to varying inputs: ti ted na ne ni nad ua tid
+!                ned uad *(srd.she) *(srd.shi) *(srd.smo) *(srd.sna)
+!                nid *(sr.she) *(sr.shi) *(sr.smo) *(sr.sna) te
+!   Plus diff mem management of: srd.she:in srd.shi:in srd.smo:in
+!                srd.sna:in sr.she:in sr.shi:in sr.sne:in sr.smo:in
+!                sr.sna:in
+!  Differentiation of b2srsm in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: *(sr.she) *(sr.shi) *(sr.smo)
+!                *(sr.sna)
+!   with respect to varying inputs: ti na ne ni ua *(sr.she) *(sr.shi)
+!                *(sr.smo) *(sr.sna) te
+!   Plus diff mem management of: sr.she:in sr.shi:in sr.sne:in
+!                sr.smo:in sr.sna:in
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!-----------------------------------------------------------------------
+!.specification
+SUBROUTINE B2SRSM_DV_DV(ncv, ns, dtim, switch, geo, mpg, na, nad0, nad, &
+& nadd, ua, uad0, uad, uadd, te, ted0, ted, tedd, ti, tid0, tid, tidd, &
+& ne, ned0, ned, nedd, ni, nid0, nid, nidd, nn, nnd, sr, srd0, srd, srdd&
+& , main_call, nbdirs, nbdirs0)
+  USE B2MOD_TYPES
+  USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
+  USE B2MOD_NEUTRALS_NAMELIST_DIFFV_DIFFV
+  USE B2MOD_CONSTANTS
+  USE B2MOD_DIAG_DIFFV_DIFFV
+  USE B2MOD_TIME
+  USE B2MOD_B2CMPA_DIFFV_DIFFV
+  USE B2MOD_SWITCHES_DIFFV_DIFFV
+  USE B2US_GEO_DIFFV_DIFFV
+  USE B2US_MAP_DIFFV_DIFFV
+  USE B2US_PLASMA_DIFFV_DIFFV
+! csc The following are not necessary for computation but are needed
+!     for adjoint AD to avoid side-effect variables
+  USE B2MOD_AD_DIFFV_DIFFV, ONLY : ncall_b2srsm, diagno_srsm
+  USE B2MOD_SUBSYS
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+  USE B2MOD_DIFFSIZES
+!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
+  IMPLICIT NONE
+!
+!   ..input arguments (unchanged on exit)
+  INTEGER :: ncv, ns
+  TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(GEOMETRY), INTENT(IN) :: geo
+  TYPE(MAPPING), INTENT(IN) :: mpg
+  REAL(kind=r8) :: dtim
+  REAL(kind=r8) :: na(ncv, 0:ns-1), ua(ncv, 0:ns-1), ni(ncv, 0:1), te(&
+& ncv), ti(ncv), ne(ncv), nn(ncv)
+  REAL(kind=r8) :: nad0(nbdirsmax0, ncv, 0:ns-1), uad0(nbdirsmax0, ncv, &
+& 0:ns-1), nid0(nbdirsmax0, ncv, 0:1), ted0(nbdirsmax0, ncv), tid0(&
+& nbdirsmax0, ncv), ned0(nbdirsmax0, ncv)
+  REAL(kind=r8) :: nad(nbdirsmax, ncv, 0:ns-1), uad(nbdirsmax, ncv, 0:ns&
+& -1), nid(nbdirsmax, ncv, 0:1), ted(nbdirsmax, ncv), tid(nbdirsmax, ncv&
+& ), ned(nbdirsmax, ncv), nnd(nbdirsmax, ncv)
+  REAL(kind=r8) :: nadd(nbdirsmax0, nbdirsmax, ncv, 0:ns-1), uadd(&
+& nbdirsmax0, nbdirsmax, ncv, 0:ns-1), nidd(nbdirsmax0, nbdirsmax, ncv, &
+& 0:1), tedd(nbdirsmax0, nbdirsmax, ncv), tidd(nbdirsmax0, nbdirsmax, &
+& ncv), nedd(nbdirsmax0, nbdirsmax, ncv)
+  LOGICAL :: main_call
+!   ..input/output arguments
+  TYPE(B2SOURCE), INTENT(INOUT) :: sr
+  TYPE(B2SOURCE_DIFFV0), INTENT(INOUT) :: srd0
+  TYPE(B2SOURCE_DIFFV), INTENT(INOUT) :: srd
+  TYPE(B2SOURCE_DIFFV_DIFFV), INTENT(INOUT) :: srdd
+!-----------------------------------------------------------------------
+!.documentation
+!
+!  1. purpose
+!
+!     B2SRSM smoothes expressions the sources strengths of
+!     density, parallel momentum, electron heat, atom heat, and charge.
+!     The idea is to limit the source strength by (value)/(dt*t._f._r.)
+!     - and to do this smoothly!
+!
+!
+!-----------------------------------------------------------------------
+!.declarations
+!
+!   ..local variables
+  INTEGER :: is, icv
+  INTEGER :: k
+!srv 11.09.09 }
+  CHARACTER :: chns*3, chk*1
+  REAL(kind=r8) :: timescale, invtimescale, timefactor, hlp
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: invtimescaled0, hlpd0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: invtimescaled, hlpd
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: invtimescaledd, &
+& hlpdd
+!djm Jan2017
+  REAL(kind=r8) :: snatmp(ncv, 0:1, 0:ns-1), smotmp(ncv, 0:3, 0:ns-1), &
+& shetmp(ncv, 0:3), shitmp(ncv, 0:3)
+!   ..procedures
+  EXTERNAL XERTST, IPGETI, B2XVSG
+  INTRINSIC ABS
+  INTRINSIC MAXVAL
+  EXTERNAL XERRAB
+  INTRINSIC MIN
+  INTRINSIC MOD
+  INTRINSIC SQRT
+  REAL(r8) :: x1
+  REAL(r8), DIMENSION(nbdirsmax0) :: x1d0
+  REAL(r8), DIMENSION(nbdirsmax) :: x1d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: x1dd
+  REAL(r8) :: x2
+  REAL(r8), DIMENSION(nbdirsmax0) :: x2d0
+  REAL(r8), DIMENSION(nbdirsmax) :: x2d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: x2dd
+  REAL(r8) :: x3
+  REAL(r8), DIMENSION(nbdirsmax0) :: x3d0
+  REAL(r8), DIMENSION(nbdirsmax) :: x3d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: x3dd
+  REAL(kind=r8), DIMENSION(ncv, 0:ns-1) :: dabs0
+  REAL(r8) :: abs0
+  REAL(r8), DIMENSION(nbdirsmax0) :: abs0d0
+  REAL(r8), DIMENSION(nbdirsmax) :: abs0d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: abs0dd
+  REAL(r8) :: abs1
+  REAL(r8), DIMENSION(nbdirsmax0) :: abs1d0
+  REAL(r8), DIMENSION(nbdirsmax) :: abs1d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: abs1dd
+  REAL(r8) :: abs2
+  REAL(r8), DIMENSION(nbdirsmax0) :: abs2d0
+  REAL(r8), DIMENSION(nbdirsmax) :: abs2d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: abs2dd
+  REAL(r8) :: abs3
+  REAL(r8), DIMENSION(nbdirsmax0) :: abs3d0
+  REAL(r8), DIMENSION(nbdirsmax) :: abs3d
+  REAL(r8), DIMENSION(nbdirsmax0, nbdirsmax) :: abs3dd
+  REAL(r8) :: abs4
+  REAL(kind=r8) :: result1
+  REAL(kind=r8) :: result10
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: result10d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: result10d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: result10dd
+  REAL(kind=r8) :: result2
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: result2d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: result2d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: result2dd
+  REAL(kind=r8) :: arg1
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: arg1d0
+  REAL(kind=r8), DIMENSION(nbdirsmax) :: arg1d
+  REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: arg1dd
+  REAL(r8), DIMENSION(ncv) :: arg10
+  CHARACTER(len=12) :: arg2
+  CHARACTER(len=12) :: arg11
+  INTEGER :: nd
+  REAL(kind=r8) :: temp
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: tempd
+  REAL(r8) :: temp0
+  REAL(r8), DIMENSION(nbdirsmax0) :: temp0d
+  REAL(kind=r8) :: temp1
+  REAL(kind=r8), DIMENSION(nbdirsmax0) :: temp1d
+  INTEGER :: nbdirs
+  INTEGER :: nd0
+  REAL(r8) :: temp2
+  REAL(r8) :: temp3
+  REAL(r8) :: temp4
+  REAL(kind=r8) :: temp5
+  INTEGER :: nbdirs0
+!-----------------------------------------------------------------------
+!.computation
+!
+! ..preliminaries
+!   ..subprogram start-up calls
+  CALL SUBINI('b2srsm')
+!   ..test nCv, ns
+  CALL XERTST(0 .LT. ncv, 'faulty argument nCv')
+  CALL XERTST(1 .LE. ns, 'faulty argument ns')
+!   ..test dtim
+  CALL XERTST(0 .LT. dtim, 'faulty argument dtim')
+!   ..test sign of na, ni, ne, te, ti
+  DO is=0,ns-1
+    CALL B2XVSG(ncv, na(1, is), 1, 'na', '.gt.')
+  END DO
+  DO is=0,1
+    CALL B2XVSG(ncv, ni(1, is), 1, 'ni', '.gt.')
+  END DO
+  CALL B2XVSG(ncv, nn, 1, 'nn', '.gt.')
+  CALL B2XVSG(ncv, ne, 1, 'ne', '.gt.')
+  CALL B2XVSG(ncv, te, 1, 'te', '.gt.')
+  CALL B2XVSG(ncv, ti, 1, 'ti', '.gt.')
+  WHERE (ua .GE. 0.) 
+    dabs0 = ua
+  ELSEWHERE
+    dabs0 = -ua
+  END WHERE
+  result1 = MAXVAL(dabs0)
+  CALL XERTST(result1 .LT. c, 'Supra-luminal velocities !')
+!   ..obtain input
+  IF (ncall_b2srsm .EQ. 0) THEN
+! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
+!        call ipgeti ('b2srsm_diagno', diagno)
+    IF (switch%b2srsm_enable .EQ. 0) WRITE(*, *) 'b2srsm disabled'
+    IF (eirene_mod .LE. 0) eirene_mod = 1
+  END IF
+!
+!djm Jan2017 Keep sources at the start to calculate total change for balance routines
+  snatmp = sr%sna
+  smotmp = sr%smo
+  shetmp = sr%she
+  shitmp = sr%shi
+!
+  IF (switch%b2srsm_enable .NE. 0) THEN
+!WG_TODO
+    CALL XERRAB('b2srsm not adapted for WG')
+!*** calculate the integral sources for all regions:
+!*** before correction (1), after correction (2)
+    timefactor = 1.0_R8
+    result10dd(:, :) = 0.0_8
+    arg1dd(:, :) = 0.0_8
+    result2dd(:, :) = 0.0_8
+    hlpdd(:, :) = 0.0_8
+    result10d0(:) = 0.0_8
+    invtimescaledd(:, :) = 0.0_8
+    x1dd(:, :) = 0.0_8
+    abs0dd(:, :) = 0.0_8
+    result2d0(:) = 0.0_8
+    abs1dd(:, :) = 0.0_8
+!
+!   ..smooth particle and parallel momentum sources
+    DO is=0,ns-1
+      DO icv=1,mpg%ncv
+        IF (sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is) .GE. 0.&
+&       ) THEN
+          DO nd=1,nbdirs
+            temp2 = srd%sna(nd, icv, 1, is)
+            DO nd0=1,nbdirs0
+              abs0dd(nd0, nd) = srdd%sna(nd0, nd, icv, 0, is) + temp2*&
+&               nad0(nd0, icv, is) + na(icv, is)*srdd%sna(nd0, nd, icv, &
+&               1, is) + nad(nd, icv, is)*srd0%sna(nd0, icv, 1, is) + sr&
+&               %sna(icv, 1, is)*nadd(nd0, nd, icv, is)
+            END DO
+            abs0d(nd) = srd%sna(nd, icv, 0, is) + na(icv, is)*temp2 + sr&
+&             %sna(icv, 1, is)*nad(nd, icv, is)
+          END DO
+          DO nd0=1,nbdirs0
+            abs0d0(nd0) = srd0%sna(nd0, icv, 0, is) + na(icv, is)*srd0%&
+&             sna(nd0, icv, 1, is) + sr%sna(icv, 1, is)*nad0(nd0, icv, &
+&             is)
+          END DO
+          abs0 = sr%sna(icv, 0, is) + sr%sna(icv, 1, is)*na(icv, is)
+        ELSE
+          DO nd=1,nbdirs
+            temp2 = srd%sna(nd, icv, 1, is)
+            DO nd0=1,nbdirs0
+              abs0dd(nd0, nd) = -srdd%sna(nd0, nd, icv, 0, is) - temp2*&
+&               nad0(nd0, icv, is) - na(icv, is)*srdd%sna(nd0, nd, icv, &
+&               1, is) - nad(nd, icv, is)*srd0%sna(nd0, icv, 1, is) - sr&
+&               %sna(icv, 1, is)*nadd(nd0, nd, icv, is)
+            END DO
+            abs0d(nd) = -srd%sna(nd, icv, 0, is) - na(icv, is)*temp2 - &
+&             sr%sna(icv, 1, is)*nad(nd, icv, is)
+          END DO
+          DO nd0=1,nbdirs0
+            abs0d0(nd0) = -srd0%sna(nd0, icv, 0, is) - na(icv, is)*srd0%&
+&             sna(nd0, icv, 1, is) - sr%sna(icv, 1, is)*nad0(nd0, icv, &
+&             is)
+          END DO
+          abs0 = -(sr%sna(icv, 0, is)+sr%sna(icv, 1, is)*na(icv, is))
+        END IF
+!WG_TODO            if (resignore(iCv,1).ne.0) then
+! check particles
+        DO nd0=1,nbdirs0
+          tempd(nd0) = geo%cvvol(icv)*nad0(nd0, icv, is)
+        END DO
+        temp = geo%cvvol(icv)*na(icv, is)
+        DO nd=1,nbdirs
+          temp2 = abs0/temp
+          temp3 = (abs0d(nd)-geo%cvvol(icv)*nad(nd, icv, is)*temp2)/temp
+          DO nd0=1,nbdirs0
+            invtimescaledd(nd0, nd) = (abs0dd(nd0, nd)-geo%cvvol(icv)*(&
+&             temp2*nadd(nd0, nd, icv, is)+nad(nd, icv, is)*(abs0d0(nd0)&
+&             -temp2*tempd(nd0))/temp)-temp3*tempd(nd0))/temp
+          END DO
+          invtimescaled(nd) = temp3
+        END DO
+        DO nd0=1,nbdirs0
+          invtimescaled0(nd0) = (abs0d0(nd0)-abs0*tempd(nd0)/temp)/temp
+        END DO
+        invtimescale = abs0/temp
+        temp = time_factor_required*dtim*dtco(is, mpg%cvreg(icv))
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            hlpdd(nd0, nd) = time_factor(icv)*temp*invtimescaledd(nd0, &
+&             nd)
+          END DO
+          hlpd(nd) = temp*time_factor(icv)*invtimescaled(nd)
+        END DO
+        DO nd0=1,nbdirs0
+          hlpd0(nd0) = time_factor(icv)*temp*invtimescaled0(nd0)
+        END DO
+        hlp = temp*(time_factor(icv)*invtimescale)
+        IF (hlp .GT. 1.0_R8) THEN
+          timescale = 1.0_R8/invtimescale
+          IF (timefactor .GT. 1.0_R8/hlp) THEN
+            timefactor = 1.0_R8/hlp
+          ELSE
+            timefactor = timefactor
+          END IF
+          IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE.&
+&             2) THEN
+            WRITE(*, *) 'WARNING: particle sources very strong @'
+            WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*&
+&           dtco(is, mpg%cvreg(icv))*time_factor(icv)
+            WRITE(*, '(a,2i4,i3)') 'iCv,is = ', icv, is
+            WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev&
+&           , ne(icv)
+          END IF
+          temp3 = sr%sna(icv, 0, is)/hlp
+          DO nd0=1,nbdirs0
+            temp0d(nd0) = (srd0%sna(nd0, icv, 0, is)-temp3*hlpd0(nd0))/&
+&             hlp
+          END DO
+          temp0 = temp3
+          DO nd=1,nbdirs
+            temp3 = (srd%sna(nd, icv, 0, is)-temp0*hlpd(nd))/hlp
+            DO nd0=1,nbdirs0
+              srdd%sna(nd0, nd, icv, 0, is) = (srdd%sna(nd0, nd, icv, 0&
+&               , is)-hlpd(nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp3*&
+&               hlpd0(nd0))/hlp
+            END DO
+            srd%sna(nd, icv, 0, is) = temp3
+          END DO
+          sr%sna(icv, 0, is) = temp0
+          temp3 = sr%sna(icv, 1, is)/hlp
+          DO nd0=1,nbdirs0
+            srd0%sna(nd0, icv, 0, is) = temp0d(nd0)
+            temp0d(nd0) = (srd0%sna(nd0, icv, 1, is)-temp3*hlpd0(nd0))/&
+&             hlp
+          END DO
+          temp0 = temp3
+          DO nd=1,nbdirs
+            temp3 = (srd%sna(nd, icv, 1, is)-temp0*hlpd(nd))/hlp
+            DO nd0=1,nbdirs0
+              srdd%sna(nd0, nd, icv, 1, is) = (srdd%sna(nd0, nd, icv, 1&
+&               , is)-hlpd(nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp3*&
+&               hlpd0(nd0))/hlp
+            END DO
+            srd%sna(nd, icv, 1, is) = temp3
+          END DO
+          DO nd0=1,nbdirs0
+            srd0%sna(nd0, icv, 1, is) = temp0d(nd0)
+          END DO
+          sr%sna(icv, 1, is) = temp0
+          IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+            src_ni(mpg%cvreg(icv), 2, b2espcr(is)) = src_ni(mpg%cvreg(&
+&             icv), 2, b2espcr(is)) + cor_ni(icv, b2espcr(is))*(1.0_R8/&
+&             hlp-1.0_R8)
+            src_ni(0, 2, b2espcr(is)) = src_ni(0, 2, b2espcr(is)) + &
+&             cor_ni(icv, b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+          END IF
+        END IF
+      END DO
+!WG_TODO            endif
+      DO icv=1,mpg%ncv
+        CALL ROXA_DV_DV(icv, is, result10, result10d0, result10d, &
+&                 result10dd, nbdirs, nbdirs0)
+        CALL ROXA_DV_DV(icv, is, result2, result2d0, result2d, result2dd&
+&                 , nbdirs, nbdirs0)
+        DO nd0=1,nbdirs0
+          tempd(nd0) = ua(icv, is)*result2d0(nd0) + result2*uad0(nd0, &
+&           icv, is)
+        END DO
+        temp = result2*ua(icv, is)
+        DO nd=1,nbdirs
+          temp3 = srd%smo(nd, icv, 1, is)
+          temp2 = srd%smo(nd, icv, 2, is)
+          temp4 = srd%smo(nd, icv, 3, is)
+          temp5 = ua(icv, is)*result2d(nd) + result2*uad(nd, icv, is)
+          DO nd0=1,nbdirs0
+            x1dd(nd0, nd) = srdd%smo(nd0, nd, icv, 0, is) + temp3*uad0(&
+&             nd0, icv, is) + ua(icv, is)*srdd%smo(nd0, nd, icv, 1, is) &
+&             + uad(nd, icv, is)*srd0%smo(nd0, icv, 1, is) + sr%smo(icv&
+&             , 1, is)*uadd(nd0, nd, icv, is) + temp2*result10d0(nd0) + &
+&             result10*srdd%smo(nd0, nd, icv, 2, is) + result10d(nd)*&
+&             srd0%smo(nd0, icv, 2, is) + sr%smo(icv, 2, is)*result10dd(&
+&             nd0, nd) + temp4*tempd(nd0) + temp*srdd%smo(nd0, nd, icv, &
+&             3, is) + temp5*srd0%smo(nd0, icv, 3, is) + sr%smo(icv, 3, &
+&             is)*(result2d(nd)*uad0(nd0, icv, is)+ua(icv, is)*result2dd&
+&             (nd0, nd)+uad(nd, icv, is)*result2d0(nd0)+result2*uadd(nd0&
+&             , nd, icv, is))
+          END DO
+          x1d(nd) = srd%smo(nd, icv, 0, is) + ua(icv, is)*temp3 + sr%smo&
+&           (icv, 1, is)*uad(nd, icv, is) + result10*temp2 + sr%smo(icv&
+&           , 2, is)*result10d(nd) + temp*temp4 + sr%smo(icv, 3, is)*&
+&           temp5
+        END DO
+        DO nd0=1,nbdirs0
+          x1d0(nd0) = srd0%smo(nd0, icv, 0, is) + ua(icv, is)*srd0%smo(&
+&           nd0, icv, 1, is) + sr%smo(icv, 1, is)*uad0(nd0, icv, is) + &
+&           result10*srd0%smo(nd0, icv, 2, is) + sr%smo(icv, 2, is)*&
+&           result10d0(nd0) + temp*srd0%smo(nd0, icv, 3, is) + sr%smo(&
+&           icv, 3, is)*tempd(nd0)
+        END DO
+        x1 = sr%smo(icv, 0, is) + sr%smo(icv, 1, is)*ua(icv, is) + sr%&
+&         smo(icv, 2, is)*result10 + sr%smo(icv, 3, is)*temp
+        IF (x1 .GE. 0.) THEN
+          DO nd=1,nbdirs
+            DO nd0=nd,nbdirs0
+              abs1dd(nd0, nd) = x1dd(nd0, nd)
+            END DO
+            abs1d(nd) = x1d(nd)
+          END DO
+          DO nd0=1,nbdirs0
+            abs1d0(nd0) = x1d0(nd0)
+          END DO
+          abs1 = x1
+        ELSE
+          DO nd=1,nbdirs
+            DO nd0=nd,nbdirs0
+              abs1dd(nd0, nd) = -x1dd(nd0, nd)
+            END DO
+            abs1d(nd) = -x1d(nd)
+          END DO
+          DO nd0=1,nbdirs0
+            abs1d0(nd0) = -x1d0(nd0)
+          END DO
+          abs1 = -x1
+        END IF
+        arg1 = ti(icv)/(am(is)*mp)
+        temp5 = SQRT(arg1)
+        DO nd0=1,nbdirs0
+          arg1d0(nd0) = tid0(nd0, icv)/(am(is)*mp)
+          IF (arg1 .EQ. 0.0_8) THEN
+            tempd(nd0) = 0.0_8
+          ELSE
+            tempd(nd0) = arg1d0(nd0)/(2.0*temp5)
+          END IF
+        END DO
+        temp = temp5
+        DO nd=1,nbdirs
+!WG_TODO            if (resignore(iCv,2).ne.0) then
+! check parallel momentum
+          DO nd0=1,nbdirs0
+            arg1dd(nd0, nd) = tidd(nd0, nd, icv)/(am(is)*mp)
+          END DO
+          arg1d(nd) = tid(nd, icv)/(am(is)*mp)
+          IF (arg1 .EQ. 0.d0) THEN
+            DO nd0=1,nbdirs0
+              result10dd(nd0, nd) = 0.0_8
+            END DO
+            result10d(nd) = 0.d0
+          ELSE
+            temp5 = arg1d(nd)/(2.0*temp)
+            DO nd0=1,nbdirs0
+              result10dd(nd0, nd) = (arg1dd(nd0, nd)-temp5*2.0*tempd(nd0&
+&               ))/(2.0*temp)
+            END DO
+            result10d(nd) = temp5
+          END IF
+        END DO
+        result10 = temp
+        CALL ROXA_DV_DV(icv, is, result2, result2d0, result2d, result2dd&
+&                 , nbdirs, nbdirs0)
+        DO nd0=1,nbdirs0
+          result10d0(nd0) = tempd(nd0)
+          tempd(nd0) = geo%cvvol(icv)*(result2*result10d0(nd0)+result10*&
+&           result2d0(nd0))
+        END DO
+        temp = geo%cvvol(icv)*result10*result2
+        DO nd=1,nbdirs
+          temp4 = abs1/temp
+          temp5 = result2*result10d(nd) + result10*result2d(nd)
+          temp3 = (abs1d(nd)-geo%cvvol(icv)*temp5*temp4)/temp
+          DO nd0=1,nbdirs0
+            invtimescaledd(nd0, nd) = (abs1dd(nd0, nd)-geo%cvvol(icv)*(&
+&             temp4*(result10d(nd)*result2d0(nd0)+result2*result10dd(nd0&
+&             , nd)+result2d(nd)*result10d0(nd0)+result10*result2dd(nd0&
+&             , nd))+temp5*(abs1d0(nd0)-temp4*tempd(nd0))/temp)-temp3*&
+&             tempd(nd0))/temp
+          END DO
+          invtimescaled(nd) = temp3
+        END DO
+        DO nd0=1,nbdirs0
+          invtimescaled0(nd0) = (abs1d0(nd0)-abs1*tempd(nd0)/temp)/temp
+        END DO
+        invtimescale = abs1/temp
+        temp = time_factor_required*dtim*dtmo(is, mpg%cvreg(icv))
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            hlpdd(nd0, nd) = time_factor(icv)*temp*invtimescaledd(nd0, &
+&             nd)
+          END DO
+          hlpd(nd) = temp*time_factor(icv)*invtimescaled(nd)
+        END DO
+        DO nd0=1,nbdirs0
+          hlpd0(nd0) = time_factor(icv)*temp*invtimescaled0(nd0)
+        END DO
+        hlp = temp*(time_factor(icv)*invtimescale)
+        IF (hlp .GT. 1.0_R8) THEN
+          timescale = 1.0_R8/invtimescale
+          IF (timefactor .GT. 1.0_R8/hlp) THEN
+            timefactor = 1.0_R8/hlp
+          ELSE
+            timefactor = timefactor
+          END IF
+          IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE.&
+&             2) THEN
+            WRITE(*, *) &
+&           'WARNING: parallel momentum sources very strong @'
+            WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*&
+&           dtmo(is, mpg%cvreg(icv))*time_factor(icv)
+            WRITE(*, '(a,2i4,i3)') 'iCv,is = ', icv, is
+            WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev&
+&           , ne(icv)
+          END IF
+          temp4 = sr%smo(icv, 0, is)/hlp
+          DO nd0=1,nbdirs0
+            temp0d(nd0) = (srd0%smo(nd0, icv, 0, is)-temp4*hlpd0(nd0))/&
+&             hlp
+          END DO
+          temp0 = temp4
+          DO nd=1,nbdirs
+            temp4 = (srd%smo(nd, icv, 0, is)-temp0*hlpd(nd))/hlp
+            DO nd0=1,nbdirs0
+              srdd%smo(nd0, nd, icv, 0, is) = (srdd%smo(nd0, nd, icv, 0&
+&               , is)-hlpd(nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp4*&
+&               hlpd0(nd0))/hlp
+            END DO
+            srd%smo(nd, icv, 0, is) = temp4
+          END DO
+          sr%smo(icv, 0, is) = temp0
+          temp4 = sr%smo(icv, 1, is)/hlp
+          DO nd0=1,nbdirs0
+            srd0%smo(nd0, icv, 0, is) = temp0d(nd0)
+            temp0d(nd0) = (srd0%smo(nd0, icv, 1, is)-temp4*hlpd0(nd0))/&
+&             hlp
+          END DO
+          temp0 = temp4
+          DO nd=1,nbdirs
+            temp4 = (srd%smo(nd, icv, 1, is)-temp0*hlpd(nd))/hlp
+            DO nd0=1,nbdirs0
+              srdd%smo(nd0, nd, icv, 1, is) = (srdd%smo(nd0, nd, icv, 1&
+&               , is)-hlpd(nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp4*&
+&               hlpd0(nd0))/hlp
+            END DO
+            srd%smo(nd, icv, 1, is) = temp4
+          END DO
+          sr%smo(icv, 1, is) = temp0
+          temp4 = sr%smo(icv, 2, is)/hlp
+          DO nd0=1,nbdirs0
+            srd0%smo(nd0, icv, 1, is) = temp0d(nd0)
+            temp0d(nd0) = (srd0%smo(nd0, icv, 2, is)-temp4*hlpd0(nd0))/&
+&             hlp
+          END DO
+          temp0 = temp4
+          DO nd=1,nbdirs
+            temp4 = (srd%smo(nd, icv, 2, is)-temp0*hlpd(nd))/hlp
+            DO nd0=1,nbdirs0
+              srdd%smo(nd0, nd, icv, 2, is) = (srdd%smo(nd0, nd, icv, 2&
+&               , is)-hlpd(nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp4*&
+&               hlpd0(nd0))/hlp
+            END DO
+            srd%smo(nd, icv, 2, is) = temp4
+          END DO
+          sr%smo(icv, 2, is) = temp0
+          temp4 = sr%smo(icv, 3, is)/hlp
+          DO nd0=1,nbdirs0
+            srd0%smo(nd0, icv, 2, is) = temp0d(nd0)
+            temp0d(nd0) = (srd0%smo(nd0, icv, 3, is)-temp4*hlpd0(nd0))/&
+&             hlp
+          END DO
+          temp0 = temp4
+          DO nd=1,nbdirs
+            temp4 = (srd%smo(nd, icv, 3, is)-temp0*hlpd(nd))/hlp
+            DO nd0=1,nbdirs0
+              srdd%smo(nd0, nd, icv, 3, is) = (srdd%smo(nd0, nd, icv, 3&
+&               , is)-hlpd(nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp4*&
+&               hlpd0(nd0))/hlp
+            END DO
+            srd%smo(nd, icv, 3, is) = temp4
+          END DO
+          DO nd0=1,nbdirs0
+            srd0%smo(nd0, icv, 3, is) = temp0d(nd0)
+          END DO
+          sr%smo(icv, 3, is) = temp0
+          IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+            src_mo(mpg%cvreg(icv), 2, b2espcr(is)) = src_mo(mpg%cvreg(&
+&             icv), 2, b2espcr(is)) + cor_mo(icv, b2espcr(is))*(1.0_R8/&
+&             hlp-1.0_R8)
+            src_mo(0, 2, b2espcr(is)) = src_mo(0, 2, b2espcr(is)) + &
+&             cor_mo(icv, b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+            src_ms(mpg%cvreg(icv), 2) = src_ms(mpg%cvreg(icv), 2) + &
+&             cor_mo(icv, b2espcr(is))*(1.0_R8/hlp-1.0_R8)
+            src_ms(0, 2) = src_ms(0, 2) + cor_mo(icv, b2espcr(is))*(&
+&             1.0_R8/hlp-1.0_R8)
+          END IF
+        END IF
+      END DO
+    END DO
+    x3dd(:, :) = 0.0_8
+    abs2dd(:, :) = 0.0_8
+    abs3dd(:, :) = 0.0_8
+    x2dd(:, :) = 0.0_8
+!WG_TODO            endif
+!   ..smooth electron heat, ion heat and electron particle sources
+    DO icv=1,mpg%ncv
+      DO nd0=1,nbdirs0
+        tempd(nd0) = ni(icv, 0)*tid0(nd0, icv) + ti(icv)*nid0(nd0, icv, &
+&         0)
+      END DO
+      temp = ti(icv)*ni(icv, 0)
+      DO nd=1,nbdirs
+        temp5 = ni(icv, 0)*tid(nd, icv) + ti(icv)*nid(nd, icv, 0)
+        DO nd0=1,nbdirs0
+          x2dd(nd0, nd) = srdd%shi(nd0, nd, icv, 0) + srd%shi(nd, icv, 1&
+&           )*tid0(nd0, icv) + ti(icv)*srdd%shi(nd0, nd, icv, 1) + tid(&
+&           nd, icv)*srd0%shi(nd0, icv, 1) + sr%shi(icv, 1)*tidd(nd0, nd&
+&           , icv) + srd%shi(nd, icv, 2)*nid0(nd0, icv, 0) + ni(icv, 0)*&
+&           srdd%shi(nd0, nd, icv, 2) + nid(nd, icv, 0)*srd0%shi(nd0, &
+&           icv, 2) + sr%shi(icv, 2)*nidd(nd0, nd, icv, 0) + srd%shi(nd&
+&           , icv, 3)*tempd(nd0) + temp*srdd%shi(nd0, nd, icv, 3) + &
+&           temp5*srd0%shi(nd0, icv, 3) + sr%shi(icv, 3)*(tid(nd, icv)*&
+&           nid0(nd0, icv, 0)+ni(icv, 0)*tidd(nd0, nd, icv)+nid(nd, icv&
+&           , 0)*tid0(nd0, icv)+ti(icv)*nidd(nd0, nd, icv, 0))
+        END DO
+        x2d(nd) = srd%shi(nd, icv, 0) + ti(icv)*srd%shi(nd, icv, 1) + sr&
+&         %shi(icv, 1)*tid(nd, icv) + ni(icv, 0)*srd%shi(nd, icv, 2) + &
+&         sr%shi(icv, 2)*nid(nd, icv, 0) + temp*srd%shi(nd, icv, 3) + sr&
+&         %shi(icv, 3)*temp5
+      END DO
+      DO nd0=1,nbdirs0
+        x2d0(nd0) = srd0%shi(nd0, icv, 0) + ti(icv)*srd0%shi(nd0, icv, 1&
+&         ) + sr%shi(icv, 1)*tid0(nd0, icv) + ni(icv, 0)*srd0%shi(nd0, &
+&         icv, 2) + sr%shi(icv, 2)*nid0(nd0, icv, 0) + temp*srd0%shi(nd0&
+&         , icv, 3) + sr%shi(icv, 3)*tempd(nd0)
+      END DO
+      x2 = sr%shi(icv, 0) + sr%shi(icv, 1)*ti(icv) + sr%shi(icv, 2)*ni(&
+&       icv, 0) + sr%shi(icv, 3)*temp
+      IF (x2 .GE. 0.) THEN
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            abs2dd(nd0, nd) = x2dd(nd0, nd)
+          END DO
+          abs2d(nd) = x2d(nd)
+        END DO
+        DO nd0=1,nbdirs0
+          abs2d0(nd0) = x2d0(nd0)
+        END DO
+        abs2 = x2
+      ELSE
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            abs2dd(nd0, nd) = -x2dd(nd0, nd)
+          END DO
+          abs2d(nd) = -x2d(nd)
+        END DO
+        DO nd0=1,nbdirs0
+          abs2d0(nd0) = -x2d0(nd0)
+        END DO
+        abs2 = -x2
+      END IF
+      temp = geo%cvvol(icv)*ti(icv)
+      DO nd0=1,nbdirs0
+!WG_TODO          if (resignore(iCv,1).ne.0) then
+! check ion energy
+        tempd(nd0) = geo%cvvol(icv)*tid0(nd0, icv)
+        temp1d(nd0) = ni(icv, 0)*tempd(nd0) + temp*nid0(nd0, icv, 0)
+      END DO
+      temp1 = temp*ni(icv, 0)
+      DO nd=1,nbdirs
+        temp4 = abs2/temp1
+        temp5 = geo%cvvol(icv)*ni(icv, 0)*tid(nd, icv) + temp*nid(nd, &
+&         icv, 0)
+        temp3 = (abs2d(nd)-temp5*temp4)/temp1
+        DO nd0=1,nbdirs0
+          invtimescaledd(nd0, nd) = (abs2dd(nd0, nd)-temp4*(geo%cvvol(&
+&           icv)*(tid(nd, icv)*nid0(nd0, icv, 0)+ni(icv, 0)*tidd(nd0, nd&
+&           , icv))+nid(nd, icv, 0)*tempd(nd0)+temp*nidd(nd0, nd, icv, 0&
+&           ))-temp5*(abs2d0(nd0)-temp4*temp1d(nd0))/temp1-temp3*temp1d(&
+&           nd0))/temp1
+        END DO
+        invtimescaled(nd) = temp3
+      END DO
+      DO nd0=1,nbdirs0
+        invtimescaled0(nd0) = (abs2d0(nd0)-abs2*temp1d(nd0)/temp1)/temp1
+      END DO
+      invtimescale = abs2/temp1
+      temp1 = time_factor_required*dtim*dtei(mpg%cvreg(icv))
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          hlpdd(nd0, nd) = time_factor(icv)*temp1*invtimescaledd(nd0, nd&
+&           )
+        END DO
+        hlpd(nd) = temp1*time_factor(icv)*invtimescaled(nd)
+      END DO
+      DO nd0=1,nbdirs0
+        hlpd0(nd0) = time_factor(icv)*temp1*invtimescaled0(nd0)
+      END DO
+      hlp = temp1*(time_factor(icv)*invtimescale)
+      IF (hlp .GT. 1.0_R8) THEN
+        timescale = 1.0_R8/invtimescale
+        IF (timefactor .GT. 1.0_R8/hlp) THEN
+          timefactor = 1.0_R8/hlp
+        ELSE
+          timefactor = timefactor
+        END IF
+        IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE. 2&
+&       ) THEN
+          WRITE(*, *) 'WARNING: ion heat sources very strong @'
+          WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*dtei&
+&         (mpg%cvreg(icv))*time_factor(icv)
+          WRITE(*, '(a,2i4)') 'iCv = ', icv
+          WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev, &
+&         ne(icv)
+        END IF
+        temp4 = sr%shi(icv, 0)/hlp
+        DO nd0=1,nbdirs0
+          temp0d(nd0) = (srd0%shi(nd0, icv, 0)-temp4*hlpd0(nd0))/hlp
+        END DO
+        temp0 = temp4
+        DO nd=1,nbdirs
+          temp4 = (srd%shi(nd, icv, 0)-temp0*hlpd(nd))/hlp
+          DO nd0=1,nbdirs0
+            srdd%shi(nd0, nd, icv, 0) = (srdd%shi(nd0, nd, icv, 0)-hlpd(&
+&             nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp4*hlpd0(nd0))/hlp
+          END DO
+          srd%shi(nd, icv, 0) = temp4
+        END DO
+        sr%shi(icv, 0) = temp0
+        temp4 = sr%shi(icv, 1)/hlp
+        DO nd0=1,nbdirs0
+          srd0%shi(nd0, icv, 0) = temp0d(nd0)
+          temp0d(nd0) = (srd0%shi(nd0, icv, 1)-temp4*hlpd0(nd0))/hlp
+        END DO
+        temp0 = temp4
+        DO nd=1,nbdirs
+          temp4 = (srd%shi(nd, icv, 1)-temp0*hlpd(nd))/hlp
+          DO nd0=1,nbdirs0
+            srdd%shi(nd0, nd, icv, 1) = (srdd%shi(nd0, nd, icv, 1)-hlpd(&
+&             nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp4*hlpd0(nd0))/hlp
+          END DO
+          srd%shi(nd, icv, 1) = temp4
+        END DO
+        sr%shi(icv, 1) = temp0
+        temp4 = sr%shi(icv, 2)/hlp
+        DO nd0=1,nbdirs0
+          srd0%shi(nd0, icv, 1) = temp0d(nd0)
+          temp0d(nd0) = (srd0%shi(nd0, icv, 2)-temp4*hlpd0(nd0))/hlp
+        END DO
+        temp0 = temp4
+        DO nd=1,nbdirs
+          temp4 = (srd%shi(nd, icv, 2)-temp0*hlpd(nd))/hlp
+          DO nd0=1,nbdirs0
+            srdd%shi(nd0, nd, icv, 2) = (srdd%shi(nd0, nd, icv, 2)-hlpd(&
+&             nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp4*hlpd0(nd0))/hlp
+          END DO
+          srd%shi(nd, icv, 2) = temp4
+        END DO
+        sr%shi(icv, 2) = temp0
+        temp4 = sr%shi(icv, 3)/hlp
+        DO nd0=1,nbdirs0
+          srd0%shi(nd0, icv, 2) = temp0d(nd0)
+          temp0d(nd0) = (srd0%shi(nd0, icv, 3)-temp4*hlpd0(nd0))/hlp
+        END DO
+        temp0 = temp4
+        DO nd=1,nbdirs
+          temp4 = (srd%shi(nd, icv, 3)-temp0*hlpd(nd))/hlp
+          DO nd0=1,nbdirs0
+            srdd%shi(nd0, nd, icv, 3) = (srdd%shi(nd0, nd, icv, 3)-hlpd(&
+&             nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp4*hlpd0(nd0))/hlp
+          END DO
+          srd%shi(nd, icv, 3) = temp4
+        END DO
+        DO nd0=1,nbdirs0
+          srd0%shi(nd0, icv, 3) = temp0d(nd0)
+        END DO
+        sr%shi(icv, 3) = temp0
+        IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+          src_ei(mpg%cvreg(icv), 2) = src_ei(mpg%cvreg(icv), 2) + cor_ei&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_ei(0, 2) = src_ei(0, 2) + cor_ei(icv)*(1.0_R8/hlp-1.0_R8)
+          src_es(mpg%cvreg(icv), 2) = src_es(mpg%cvreg(icv), 2) + cor_ei&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_es(0, 2) = src_es(0, 2) + cor_ei(icv)*(1.0_R8/hlp-1.0_R8)
+        END IF
+      END IF
+! check neutral energy
+      IF (switch%tn_style .NE. 0) CALL XERRAB(&
+&                               'b2srsm not developed for tn_style.ne.0'&
+&                                      )
+      DO nd0=1,nbdirs0
+        temp1d(nd0) = ne(icv)*ted0(nd0, icv) + te(icv)*ned0(nd0, icv)
+      END DO
+      temp1 = te(icv)*ne(icv)
+      DO nd=1,nbdirs
+        temp5 = ne(icv)*ted(nd, icv) + te(icv)*ned(nd, icv)
+        DO nd0=1,nbdirs0
+          x3dd(nd0, nd) = srdd%she(nd0, nd, icv, 0) + srd%she(nd, icv, 1&
+&           )*ted0(nd0, icv) + te(icv)*srdd%she(nd0, nd, icv, 1) + ted(&
+&           nd, icv)*srd0%she(nd0, icv, 1) + sr%she(icv, 1)*tedd(nd0, nd&
+&           , icv) + srd%she(nd, icv, 2)*ned0(nd0, icv) + ne(icv)*srdd%&
+&           she(nd0, nd, icv, 2) + ned(nd, icv)*srd0%she(nd0, icv, 2) + &
+&           sr%she(icv, 2)*nedd(nd0, nd, icv) + srd%she(nd, icv, 3)*&
+&           temp1d(nd0) + temp1*srdd%she(nd0, nd, icv, 3) + temp5*srd0%&
+&           she(nd0, icv, 3) + sr%she(icv, 3)*(ted(nd, icv)*ned0(nd0, &
+&           icv)+ne(icv)*tedd(nd0, nd, icv)+ned(nd, icv)*ted0(nd0, icv)+&
+&           te(icv)*nedd(nd0, nd, icv))
+        END DO
+        x3d(nd) = srd%she(nd, icv, 0) + te(icv)*srd%she(nd, icv, 1) + sr&
+&         %she(icv, 1)*ted(nd, icv) + ne(icv)*srd%she(nd, icv, 2) + sr%&
+&         she(icv, 2)*ned(nd, icv) + temp1*srd%she(nd, icv, 3) + sr%she(&
+&         icv, 3)*temp5
+      END DO
+      DO nd0=1,nbdirs0
+        x3d0(nd0) = srd0%she(nd0, icv, 0) + te(icv)*srd0%she(nd0, icv, 1&
+&         ) + sr%she(icv, 1)*ted0(nd0, icv) + ne(icv)*srd0%she(nd0, icv&
+&         , 2) + sr%she(icv, 2)*ned0(nd0, icv) + temp1*srd0%she(nd0, icv&
+&         , 3) + sr%she(icv, 3)*temp1d(nd0)
+      END DO
+      x3 = sr%she(icv, 0) + sr%she(icv, 1)*te(icv) + sr%she(icv, 2)*ne(&
+&       icv) + sr%she(icv, 3)*temp1
+      IF (x3 .GE. 0.) THEN
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            abs3dd(nd0, nd) = x3dd(nd0, nd)
+          END DO
+          abs3d(nd) = x3d(nd)
+        END DO
+        DO nd0=1,nbdirs0
+          abs3d0(nd0) = x3d0(nd0)
+        END DO
+        abs3 = x3
+      ELSE
+        DO nd=1,nbdirs
+          DO nd0=nd,nbdirs0
+            abs3dd(nd0, nd) = -x3dd(nd0, nd)
+          END DO
+          abs3d(nd) = -x3d(nd)
+        END DO
+        DO nd0=1,nbdirs0
+          abs3d0(nd0) = -x3d0(nd0)
+        END DO
+        abs3 = -x3
+      END IF
+! check electron energy
+      DO nd0=1,nbdirs0
+        temp1d(nd0) = geo%cvvol(icv)*(ne(icv)*ted0(nd0, icv)+te(icv)*&
+&         ned0(nd0, icv))
+      END DO
+      temp1 = geo%cvvol(icv)*te(icv)*ne(icv)
+      DO nd=1,nbdirs
+        temp4 = abs3/temp1
+        temp5 = ne(icv)*ted(nd, icv) + te(icv)*ned(nd, icv)
+        temp3 = (abs3d(nd)-geo%cvvol(icv)*temp5*temp4)/temp1
+        DO nd0=1,nbdirs0
+          invtimescaledd(nd0, nd) = (abs3dd(nd0, nd)-geo%cvvol(icv)*(&
+&           temp4*(ted(nd, icv)*ned0(nd0, icv)+ne(icv)*tedd(nd0, nd, icv&
+&           )+ned(nd, icv)*ted0(nd0, icv)+te(icv)*nedd(nd0, nd, icv))+&
+&           temp5*(abs3d0(nd0)-temp4*temp1d(nd0))/temp1)-temp3*temp1d(&
+&           nd0))/temp1
+        END DO
+        invtimescaled(nd) = temp3
+      END DO
+      DO nd0=1,nbdirs0
+        invtimescaled0(nd0) = (abs3d0(nd0)-abs3*temp1d(nd0)/temp1)/temp1
+      END DO
+      invtimescale = abs3/temp1
+      temp1 = time_factor_required*dtim*dtee(mpg%cvreg(icv))
+      DO nd=1,nbdirs
+        DO nd0=nd,nbdirs0
+          hlpdd(nd0, nd) = time_factor(icv)*temp1*invtimescaledd(nd0, nd&
+&           )
+        END DO
+        hlpd(nd) = temp1*time_factor(icv)*invtimescaled(nd)
+      END DO
+      DO nd0=1,nbdirs0
+        hlpd0(nd0) = time_factor(icv)*temp1*invtimescaled0(nd0)
+      END DO
+      hlp = temp1*(time_factor(icv)*invtimescale)
+      IF (hlp .GT. 1.0_R8) THEN
+        timescale = 1.0_R8/invtimescale
+        IF (timefactor .GT. 1.0_R8/hlp) THEN
+          timefactor = 1.0_R8/hlp
+        ELSE
+          timefactor = timefactor
+        END IF
+        IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE. 2&
+&       ) THEN
+          WRITE(*, *) 'WARNING: electron heat sources very strong @'
+          WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*dtee&
+&         (mpg%cvreg(icv))*time_factor(icv)
+          WRITE(*, '(a,2i4)') 'iCv = ', icv
+          WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev, &
+&         ne(icv)
+        END IF
+        temp4 = sr%she(icv, 0)/hlp
+        DO nd0=1,nbdirs0
+          temp0d(nd0) = (srd0%she(nd0, icv, 0)-temp4*hlpd0(nd0))/hlp
+        END DO
+        temp0 = temp4
+        DO nd=1,nbdirs
+          temp4 = (srd%she(nd, icv, 0)-temp0*hlpd(nd))/hlp
+          DO nd0=1,nbdirs0
+            srdd%she(nd0, nd, icv, 0) = (srdd%she(nd0, nd, icv, 0)-hlpd(&
+&             nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp4*hlpd0(nd0))/hlp
+          END DO
+          srd%she(nd, icv, 0) = temp4
+        END DO
+        sr%she(icv, 0) = temp0
+        temp4 = sr%she(icv, 1)/hlp
+        DO nd0=1,nbdirs0
+          srd0%she(nd0, icv, 0) = temp0d(nd0)
+          temp0d(nd0) = (srd0%she(nd0, icv, 1)-temp4*hlpd0(nd0))/hlp
+        END DO
+        temp0 = temp4
+        DO nd=1,nbdirs
+          temp4 = (srd%she(nd, icv, 1)-temp0*hlpd(nd))/hlp
+          DO nd0=1,nbdirs0
+            srdd%she(nd0, nd, icv, 1) = (srdd%she(nd0, nd, icv, 1)-hlpd(&
+&             nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp4*hlpd0(nd0))/hlp
+          END DO
+          srd%she(nd, icv, 1) = temp4
+        END DO
+        sr%she(icv, 1) = temp0
+        temp4 = sr%she(icv, 2)/hlp
+        DO nd0=1,nbdirs0
+          srd0%she(nd0, icv, 1) = temp0d(nd0)
+          temp0d(nd0) = (srd0%she(nd0, icv, 2)-temp4*hlpd0(nd0))/hlp
+        END DO
+        temp0 = temp4
+        DO nd=1,nbdirs
+          temp4 = (srd%she(nd, icv, 2)-temp0*hlpd(nd))/hlp
+          DO nd0=1,nbdirs0
+            srdd%she(nd0, nd, icv, 2) = (srdd%she(nd0, nd, icv, 2)-hlpd(&
+&             nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp4*hlpd0(nd0))/hlp
+          END DO
+          srd%she(nd, icv, 2) = temp4
+        END DO
+        sr%she(icv, 2) = temp0
+        temp4 = sr%she(icv, 3)/hlp
+        DO nd0=1,nbdirs0
+          srd0%she(nd0, icv, 2) = temp0d(nd0)
+          temp0d(nd0) = (srd0%she(nd0, icv, 3)-temp4*hlpd0(nd0))/hlp
+        END DO
+        temp0 = temp4
+        DO nd=1,nbdirs
+          temp4 = (srd%she(nd, icv, 3)-temp0*hlpd(nd))/hlp
+          DO nd0=1,nbdirs0
+            srdd%she(nd0, nd, icv, 3) = (srdd%she(nd0, nd, icv, 3)-hlpd(&
+&             nd)*temp0d(nd0)-temp0*hlpdd(nd0, nd)-temp4*hlpd0(nd0))/hlp
+          END DO
+          srd%she(nd, icv, 3) = temp4
+        END DO
+        DO nd0=1,nbdirs0
+          srd0%she(nd0, icv, 3) = temp0d(nd0)
+        END DO
+        sr%she(icv, 3) = temp0
+        IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+          src_ee(mpg%cvreg(icv), 2) = src_ee(mpg%cvreg(icv), 2) + cor_ee&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_ee(0, 2) = src_ee(0, 2) + cor_ee(icv)*(1.0_R8/hlp-1.0_R8)
+          src_es(mpg%cvreg(icv), 2) = src_es(mpg%cvreg(icv), 2) + cor_ee&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_es(0, 2) = src_es(0, 2) + cor_ee(icv)*(1.0_R8/hlp-1.0_R8)
+        END IF
+      END IF
+      IF (sr%sne(icv, 0) + sr%sne(icv, 1)*ne(icv) .GE. 0.) THEN
+        abs4 = sr%sne(icv, 0) + sr%sne(icv, 1)*ne(icv)
+      ELSE
+        abs4 = -(sr%sne(icv, 0)+sr%sne(icv, 1)*ne(icv))
+      END IF
+! check electron particle number
+      invtimescale = abs4/(ne(icv)*geo%cvvol(icv))
+      hlp = invtimescale*time_factor_required*dtim*time_factor(icv)
+      IF (hlp .GT. 1.0_R8) THEN
+        timescale = 1.0_R8/invtimescale
+        IF (timefactor .GT. 1.0_R8/hlp) THEN
+          timefactor = 1.0_R8/hlp
+        ELSE
+          timefactor = timefactor
+        END IF
+        IF ((main_call .AND. diagno_srsm .GE. 1) .OR. diagno_srsm .GE. 2&
+&       ) THEN
+          WRITE(*, *) 'WARNING: electron particle sources very strong @'
+          WRITE(*, '(a,2e10.3)') 'timescale,dt = ', timescale, dtim*&
+&         time_factor(icv)
+          WRITE(*, '(a,2i4)') 'iCv = ', icv
+          WRITE(*, '(a,3e10.3)') 'te,ti,ne = ', te(icv)/ev, ti(icv)/ev, &
+&         ne(icv)
+        END IF
+        sr%sne(icv, 0) = sr%sne(icv, 0)/hlp
+        sr%sne(icv, 1) = sr%sne(icv, 1)/hlp
+        IF (main_call .AND. MOD(ncall_b2srsm, eirene_mod) .EQ. 0) THEN
+          src_ne(mpg%cvreg(icv), 2) = src_ne(mpg%cvreg(icv), 2) + cor_ne&
+&           (icv)*(1.0_R8/hlp-1.0_R8)
+          src_ne(0, 2) = src_ne(0, 2) + cor_ne(icv)*(1.0_R8/hlp-1.0_R8)
+        END IF
+      END IF
+    END DO
+  END IF
+!WG_TODO          endif
+!
+!
+  IF (switch%b2npmo_iout .EQ. 1) THEN
+!srv 11.09.09 {
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+!srv 07.10.09
+      arg10(:) = sr%smo(:, 0, is) + sr%smo(:, 1, is)*ua(:, is) + sr%smo(&
+&       :, 2, is)*na(:, is)*mp*am(is) + sr%smo(:, 3, is)*ua(:, is)*na(:&
+&       , is)*mp*am(is)
+      arg2(:) = 'b2srsm_smosm'//chns
+      CALL MY_OUT_US(70, ncv, 0, arg10(:), arg2(:))
+    END DO
+  END IF
+  IF (switch%b2npco_iout .EQ. 1) THEN
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+!srv 07.10.09
+      arg10(:) = sr%sna(:, 0, is) + sr%sna(:, 1, is)*na(:, is)
+      arg2(:) = 'b2srsm_snasm'//chns
+      CALL MY_OUT_US(70, ncv, 0, arg10(:), arg2(:))
+    END DO
+  END IF
+  IF (switch%b2npht_iout .EQ. 1) THEN
+!srv 07.10.09
+    arg10(:) = sr%she(:, 0) + sr%she(:, 1)*te + sr%she(:, 2)*ne + sr%she&
+&     (:, 3)*te*ne
+    CALL MY_OUT_US(70, ncv, 0, arg10(:), 'b2srsm_shesm')
+    arg10(:) = sr%shi(:, 0) + sr%shi(:, 1)*ti + sr%shi(:, 2)*ni(:, 0) + &
+&     sr%shi(:, 3)*ti*ni(:, 0)
+    CALL MY_OUT_US(70, ncv, 0, arg10(:), 'b2srsm_shism')
+  END IF
+!srv 11.09.09 }
+!
+  IF (switch%b2srsm_iout .EQ. 1) THEN
+    DO is=0,ns-1
+      WRITE(chns, '(i3.3)') is
+      DO k=0,3
+        WRITE(chk, '(i1)') k
+        arg11(:) = 'b2srsm_smosm'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, sr%smo(1, k, is), arg11(:))
+      END DO
+      DO k=0,1
+        WRITE(chk, '(i1)') k
+        arg11(:) = 'b2srsm_snasm'//chk//chns
+        CALL MY_OUT_US(70, ncv, 0, sr%sna(1, k, is), arg11(:))
+      END DO
+    END DO
+    DO k=0,3
+      arg11(:) = 'b2srsm_shesm'//chk
+      CALL MY_OUT_US(70, ncv, 0, sr%she(1, k), arg11(:))
+      arg11(:) = 'b2srsm_shism'//chk
+      CALL MY_OUT_US(70, ncv, 0, sr%shi(1, k), arg11(:))
+    END DO
+    DO k=0,1
+      arg11(:) = 'b2srsm_snesm'//chk
+      CALL MY_OUT_US(70, ncv, 0, sr%sne(1, k), arg11(:))
+    END DO
+  END IF
+!
+! ..return
+  IF (ncall_b2srsm .EQ. 0 .OR. main_call) ncall_b2srsm = ncall_b2srsm + &
+&     1
+  CALL SUBEND()
+  RETURN
+
+CONTAINS
+!  Differentiation of roxa_dv in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: roxad roxa
+!   with respect to varying inputs: na nad roxad
+!  Differentiation of roxa in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: roxa
+!   with respect to varying inputs: na
+!
+!-----------------------------------------------------------------------
+!.end b2srsm
+!
+!
+  SUBROUTINE ROXA_DV_DV(icv, is, roxa, roxad0, roxad, roxadd, nbdirs, &
+&   nbdirs0)
+    USE B2MOD_DIFFSIZES
+!  Hint: nbdirsmax0 should be the maximum number of differentiation directions
+    IMPLICIT NONE
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+    INTEGER, INTENT(IN) :: icv, is
+    REAL(kind=r8) :: roxa
+    REAL(kind=r8), DIMENSION(nbdirsmax0) :: roxad0
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: roxad
+    REAL(kind=r8), DIMENSION(nbdirsmax0, nbdirsmax) :: roxadd
+    INTEGER :: nd
+    INTEGER :: nbdirs
+    INTEGER :: nd0
+    INTEGER :: nbdirs0
+!
+    DO nd=1,nbdirs
+      DO nd0=nd,nbdirs0
+        roxadd(nd0, nd) = am(is)*mp*nadd(nd0, nd, icv, is)
+      END DO
+      roxad(nd) = am(is)*mp*nad(nd, icv, is)
+    END DO
+    DO nd0=1,nbdirs0
+      roxad0(nd0) = am(is)*mp*nad0(nd0, icv, is)
+    END DO
+    roxa = am(is)*mp*na(icv, is)
+    RETURN
+  END SUBROUTINE ROXA_DV_DV
+
+!  Differentiation of roxa in forward (tangent) mode (with options multiDirectional context noISIZE r8):
+!   variations   of useful results: roxa
+!   with respect to varying inputs: na
+!
+!-----------------------------------------------------------------------
+!.end b2srsm
+!
+!
+  SUBROUTINE ROXA_DV(icv, is, roxa, roxad, nbdirs)
+    USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!  Hint: nbdirsmax should be the maximum number of differentiation directions
+    INTEGER, INTENT(IN) :: icv, is
+    REAL(kind=r8) :: roxa
+    REAL(kind=r8), DIMENSION(nbdirsmax) :: roxad
+    INTEGER :: nd
+    INTEGER :: nbdirs
+!
+    DO nd=1,nbdirs
+      roxad(nd) = am(is)*mp*nad(nd, icv, is)
+    END DO
+    roxa = am(is)*mp*na(icv, is)
+    RETURN
+  END SUBROUTINE ROXA_DV
+
+!
+!-----------------------------------------------------------------------
+!.end b2srsm
+!
+!
+  FUNCTION ROXA(icv, is)
+    USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: icv, is
+    REAL(kind=r8) :: roxa
+!
+    roxa = am(is)*mp*na(icv, is)
+    RETURN
+  END FUNCTION ROXA
+
+END SUBROUTINE B2SRSM_DV_DV
 

@@ -38,7 +38,6 @@ SUBROUTINE B2SHDT_DV_DV(ncv, nci, ns, dtim, cvvol, nap, napd0, napd, &
 & shndtdd, sktdt, sktdtd0, sktdtd, sktdtdd, sztdt, sztdtd0, sztdtd, &
 & sztdtdd, nbdirs, nbdirs0)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFFV_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
@@ -476,7 +475,6 @@ SUBROUTINE B2SHDT_DV_NODIFF(ncv, nci, ns, dtim, cvvol, nap, napd, tep, &
 & , nnd, kinrgyp, kinrgypd, switch, mpg, shedt, shedtd, shidt, shidtd, &
 & shndt, shndtd, sktdt, sktdtd, sztdt, sztdtd, nbdirs)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFFV_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV_DIFFV
@@ -754,7 +752,6 @@ SUBROUTINE B2SHDT_NODIFF_NODIFF(ncv, nci, ns, dtim, cvvol, nap, tep, tip&
 & , tnp, ktp, ztp, ne, ni, nn, kinrgyp, switch, mpg, shedt, shidt, shndt&
 & , sktdt, sztdt)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFFV_DIFFV
   USE B2MOD_NUMERICS_NAMELIST_DIFFV_DIFFV
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFFV_DIFFV

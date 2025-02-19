@@ -38,18 +38,21 @@ MODULE B2MOD_USER_NAMELIST_DIFFV_DIFFV
 ! - [oi]mp: list of CVs belonging to the [OI]MP, defined through the segment rz[oi]mp
 !           it should be built as an ordered list from core to SOL.
 ! - nromp: pre-defined maximum size for these lists
-! - icsep[oi]mp: location of the separatrix position in the [oi]mp list
+! - icsep[oi]mp: location of the first cell outside the separatrix in the [oi]mp list
 ! - ifsep[oi]mp: the face index of the separatrix intersection with the [oi]mp
 ! - n[oi]mp: number of CVs in the [oi]mp list
 ! - rz[o1]mp: R-Z coordinates of a segment whose intersection with the
 !             plasma grid defines the OMP and IMP. rzomp(1,1:2) holds R-coordinates
 !             of first and second point of the segment, rzomp(2,1:2) holds Z-coordinates
 ! - psi_[oi]mp: psi value of midplane cells
-! - fs_ds_[oi]mp: distance
+! - fs_ds_[oi]mp: distance along midplane of intersection with flux surface
+! - ft_ds_[oi]mp: distance along midplane of flux tube cell center
+! - ft_[oi]mp: index in list of flux tube cell intersection
 !
   INTEGER, PARAMETER :: nromp=def_nyd*4
   INTEGER, SAVE :: omp(nromp), icsepomp, ifsepomp, nomp, imp(nromp), &
 & icsepimp, ifsepimp, nimp
+  INTEGER, ALLOCATABLE :: ft_imp(:), ft_omp(:)
   REAL(kind=r8) :: rzomp(2, 2), rzimp(2, 2)
   REAL(kind=r8) :: psi_omp(nromp), psi_imp(nromp)
   REAL(kind=r8), ALLOCATABLE :: fs_ds_imp(:), fs_ds_omp(:)
@@ -112,7 +115,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: ns, nlim, nmol
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(INOUT) :: m
-    TYPE(SWITCHES), INTENT(IN) :: sw
+    TYPE(SWITCHES), INTENT(INOUT) :: sw
 !
     CALL XERTST(1 .LE. ns, 'faulty argument ns')
     CALL XERTST(0 .LE. nlim, 'faulty argument nlim')
@@ -124,6 +127,8 @@ CONTAINS
       ALLOCATE(fs_ds_omp(m%nfs))
       ALLOCATE(ft_ds_imp(m%nft))
       ALLOCATE(ft_ds_omp(m%nft))
+      ALLOCATE(ft_imp(0:m%nft))
+      ALLOCATE(ft_omp(0:m%nft))
 !
 !*** PFR specification - for He enrichment and neutral pressure
 !***  Standard set-up:
@@ -156,6 +161,8 @@ CONTAINS
       print_isat = .false.
       rzomp = 0.0_R8
       rzimp = 0.0_R8
+      ft_imp = 0
+      ft_omp = 0
       fs_ds_imp = -999.0_R8
       fs_ds_omp = -999.0_R8
       ft_ds_imp = -999.0_R8
@@ -180,6 +187,8 @@ CONTAINS
       DEALLOCATE(fs_ds_imp)
       DEALLOCATE(ft_ds_omp)
       DEALLOCATE(ft_ds_imp)
+      DEALLOCATE(ft_omp)
+      DEALLOCATE(ft_imp)
       user_initialised = .false.
       RETURN
     END IF
@@ -194,7 +203,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: ns
     TYPE(GEOMETRY), INTENT(IN) :: geo
     TYPE(MAPPING), INTENT(INOUT) :: m
-    TYPE(SWITCHES), INTENT(IN) :: sw
+    TYPE(SWITCHES), INTENT(INOUT) :: sw
     INTEGER :: ic, ifc, ifs, ifs1, ifs2, ift, ivx1, ivx2
     REAL(kind=r8) :: distint, dsep, xv1, xv2, yv1, yv2, xm1, xm2, ym1, &
 &   ym2, xint, yint
@@ -316,6 +325,7 @@ CONTAINS
       ifs2 = 0
       ift = m%cvft(omp(ic))
       IF (ift .NE. 0) THEN
+        ft_omp(ift) = ic
         DO i=m%cvvxp(omp(ic), 1),m%cvvxp(omp(ic), 1)+m%cvvxp(omp(ic), 2)&
 &           -1
           ifs = m%vxfs(m%cvvx(i))
@@ -331,6 +341,12 @@ CONTAINS
 &           fs_ds_omp(ifs1)+fs_ds_omp(ifs2))
       END IF
     END DO
+!xpb set default switches depending on midplane location
+    IF (sw%set_transport_iyref .EQ. 0) sw%set_transport_iyref = icsepomp&
+&       - 1
+    CALL XERTST(1 .LE. sw%set_transport_iyref .AND. sw%&
+&         set_transport_iyref .LE. nomp, &
+&         'Invalid switch setting for set_transport_iyref')
 !
 !xpb convert old-style j_h_at and l_h_mol to deal with isotope mixes
     result1 = MAXVAL(j_h_at)
@@ -532,6 +548,7 @@ CONTAINS
       ifs2 = 0
       ift = m%cvft(imp(ic))
       IF (ift .NE. 0) THEN
+        ft_imp(ift) = ic
         DO i=m%cvvxp(imp(ic), 1),m%cvvxp(imp(ic), 1)+m%cvvxp(imp(ic), 2)&
 &           -1
           ifs = m%vxfs(m%cvvx(i))

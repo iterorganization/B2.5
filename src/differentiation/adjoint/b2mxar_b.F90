@@ -97,9 +97,9 @@ SUBROUTINE B2MXAR_NODIFF(ncv, ns, switch, geo, mpg, pl, dv, diag)
       navi = navi + geo%cvvol(icv)*pl%na(icv, is)
       movi = movi + geo%cvvol(icv)*pl%na(icv, is)*SQRT(pl%ti(icv)*am(is)&
 &       *mp)
-!WG_TODO         if (resignore(ix,iy,1).ne.0) 
+!WG_TODO         if (resignore(iCv,1).ne.0)
 !WG_TODO     >    navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
-!WG_TODO         if (resignore(ix,iy,2).ne.0)
+!WG_TODO         if (resignore(iCv,2).ne.0)
 !WG_TODO     >    movi = movi+geo%cvVol(iCv)*
 !WG_TODO     &     pl%na(iCv,is)*sqrt(pl%ti(iCv)*am(is)*mp)
     END DO
@@ -139,7 +139,7 @@ SUBROUTINE B2MXAR_NODIFF(ncv, ns, switch, geo, mpg, pl, dv, diag)
   prvi = 0.0_R8
   prvn = 0.0_R8
   DO icv=1,mpg%nci
-!WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
+!WG_TODO        if (resignore(iCv,1).eq.0) cycle
     nevi = nevi + geo%cvvol(icv)*dv%ne(icv)
     prvi = prvi + geo%cvvol(icv)*dv%ne(icv)*pl%te(icv)
     IF (switch%tn_style .EQ. 0) THEN
@@ -246,7 +246,7 @@ SUBROUTINE B2MXAR_NODIFF(ncv, ns, switch, geo, mpg, pl, dv, diag)
 !   ..compute prvi
   prvi = 0.0_R8
   DO icv=1,mpg%nci
-!WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
+!WG_TODO        if (resignore(iCv,1).eq.0) cycle
     prvi = prvi + geo%cvvol(icv)*dv%ne(icv)*pl%te(icv)
     DO is=0,ns-1
       IF (.NOT.is_neutral(is)) prvi = prvi + geo%cvvol(icv)*pl%na(icv, &

@@ -151,8 +151,6 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
 !lk
   REAL(kind=r8) :: weight(nfc, 2)
   INTEGER :: xcount
-! The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
-!      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 !   ..procedures
 !xpb
   EXTERNAL XERTST, IPGETI, IPGETR
@@ -237,9 +235,6 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
 !    ..test sign of nb, ne, pb, cdnb, cdpb
     wrk0(:) = co%cdpa(:, 0, isb)*geo%fcqalf(:, 0)
     wrk1(:) = co%cdpa(:, 1, isb)*geo%fcqalf(:, 1)
-! The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
-!        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
-!        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
     CALL PUSHCONTROL1B(0)
   ELSE
     CALL PUSHCONTROL1B(1)
@@ -1833,7 +1828,6 @@ SUBROUTINE B2TFNB_B(ncv, nfc, nvx, isb, ismain, switch, switchb, geo, &
     cob%cdpa(:, 0, isb) = cob%cdpa(:, 0, isb) + geo%fcqalf(:, 0)*wrk0b
   END IF
 END SUBROUTINE B2TFNB_B
-!
 
 !
 !
@@ -1926,8 +1920,6 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 !lk
   REAL(kind=r8) :: weight(nfc, 2)
   INTEGER :: xcount
-! The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
-!      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 !   ..procedures
 !xpb
   EXTERNAL XERTST, IPGETI, IPGETR
@@ -1984,9 +1976,6 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
     CALL B2XVSG(nfc, wrk0, 1, 'cdpa0', '.ge.')
     wrk1(:) = co%cdpa(:, 1, isb)*geo%fcqalf(:, 1)
     CALL B2XVSG(nfc, wrk1, 1, 'cdna1', '.ge.')
-! The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
-!        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
-!        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
   END IF
 !
   meth = switch%b2tfnb_discr_meth
@@ -2934,5 +2923,4 @@ SUBROUTINE B2TFNB_NODIFF(ncv, nfc, nvx, isb, ismain, switch, geo, mpg, &
 !.end b2tfnb
 !
 END SUBROUTINE B2TFNB_NODIFF
-!
 

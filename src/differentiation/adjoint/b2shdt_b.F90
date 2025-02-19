@@ -25,7 +25,6 @@ SUBROUTINE B2SHDT_B(ncv, nci, ns, dtim, cvvol, nap, napb, tep, tepb, tip&
 & kinrgyp, kinrgypb, switch, mpg, shedt, shedtb, shidt, shidtb, shndt, &
 & shndtb, sktdt, sktdtb, sztdt, sztdtb)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFF
   USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFF
@@ -249,7 +248,6 @@ SUBROUTINE B2SHDT_NODIFF(ncv, nci, ns, dtim, cvvol, nap, tep, tip, tnp, &
 & ktp, ztp, ne, ni, nn, kinrgyp, switch, mpg, shedt, shidt, shndt, sktdt&
 & , sztdt)
   USE B2MOD_TYPES
-  USE B2MOD_INDIRECT_DIFF
   USE B2MOD_NUMERICS_NAMELIST_DIFF
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFF

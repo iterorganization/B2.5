@@ -40,11 +40,11 @@
 !                *(pl.te) *(pl.ti) *(pl.tn) *(pl.kt) *(pl.zt)
 !   Plus diff mem management of: dv.ne:in dv.ni:in dv.ne2:in dv.vaecrb:in
 !                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhz:in geo.cvqgam:in geo.cvvol:in geo.fcbb:in
-!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fchz:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.vxvol:in st_ext.ni:in rt.rlcx:in rt.rlsa:in
-!                rt.rza:in co.csig:in co.calf:in co.csig_an:in
+!                geo.cvhz:in geo.cvhy:in geo.cvqgam:in geo.cvvol:in
+!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
+!                geo.fchz:in geo.fcvol:in geo.fcqgam:in geo.fcqalf:in
+!                geo.fcqbet:in geo.vxvol:in st_ext.ni:in rt.rlcx:in
+!                rt.rlsa:in rt.rza:in co.csig:in co.calf:in co.csig_an:in
 !                co.calf_an:in co.chve:in co.chce:in co.chce_exb:in
 !                co.chvi:in co.chci:in co.chci_exb:in co.chcn:in
 !                co.cdkt:in co.cdzt:in co.cvla:in co.cdna:in co.cdna_exb:in
@@ -178,8 +178,8 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 !   ..procedures
   REAL(kind=r8) :: smin, smax
   EXTERNAL IPGETR, IPGETI
-  EXTERNAL B2TQNA_NODIFF, B2TXCX_NODIFF, B2TXCY_NODIFF, B2TXCV_NODIFF, &
-&     B2TXSX_NODIFF, B2TXSY_NODIFF
+  EXTERNAL B2TQNA_NODIFF, B2TXCX_NODIFF, B2TXCY_NODIFF, B2TXSX_NODIFF, &
+&     B2TXSY_NODIFF
   EXTERNAL B2TQNA_B, B2TXCX_FWD, B2TXCX_BWD, B2TXCY_FWD, B2TXCY_BWD, &
 &     B2TXSX_B, B2TXSY_B
   EXTERNAL B2XVSG
@@ -972,7 +972,6 @@ SUBROUTINE B2TRNO_B(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
 &         hve0b, co%dkt0, cob%dkt0, co%dzt0, cob%dzt0, co%dna_exb, cob%&
 &         dna_exb, co%hce_exb, cob%hce_exb, co%hci_exb, cob%hci_exb)
 END SUBROUTINE B2TRNO_B
-!
 
 !
 !
@@ -1079,8 +1078,8 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !   ..procedures
   REAL(kind=r8) :: smin, smax
   EXTERNAL IPGETR, IPGETI
-  EXTERNAL B2TQNA_NODIFF, B2TXCX_NODIFF, B2TXCY_NODIFF, B2TXCV_NODIFF, &
-&     B2TXSX_NODIFF, B2TXSY_NODIFF
+  EXTERNAL B2TQNA_NODIFF, B2TXCX_NODIFF, B2TXCY_NODIFF, B2TXSX_NODIFF, &
+&     B2TXSY_NODIFF
   EXTERNAL B2XVSG
   INTRINSIC NINT
   EXTERNAL XERRAB
@@ -1507,5 +1506,4 @@ SUBROUTINE B2TRNO_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain&
 !.end b2trno
 !
 END SUBROUTINE B2TRNO_NODIFF
-!
 

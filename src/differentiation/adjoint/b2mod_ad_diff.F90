@@ -78,6 +78,8 @@ MODULE B2MOD_AD_DIFF
   INTEGER, SAVE :: in_no_of_angles=9
   INTEGER, SAVE :: in_size_of_table=200000
   INTEGER, SAVE :: icase_sifr=0
+  INTEGER, SAVE :: sources_inputfile=0
+  INTEGER, SAVE :: diagno_srsm=0
 !
 ! some variables for chord_find
   INTEGER :: lngcov, lngind
@@ -173,6 +175,7 @@ MODULE B2MOD_AD_DIFF
   INTEGER, SAVE :: ncall_b2xehx=0
   INTEGER, SAVE :: ncall_b2xehy=0
   INTEGER, SAVE :: ncall_b2mndt=0
+  INTEGER, SAVE :: ncall_b2mwit=0
 !
   INTEGER, SAVE :: gradient_iterations=0
   INTEGER, SAVE :: primal_iterations=0

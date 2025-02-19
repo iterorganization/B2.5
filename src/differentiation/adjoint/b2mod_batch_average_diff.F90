@@ -15,10 +15,10 @@
 !
 MODULE B2MOD_BATCH_AVERAGE_DIFF
   USE B2MOD_TYPES
+  USE B2MOD_VERSION
   USE B2MOD_CONSTANTS
   USE B2MOD_B2CMPA_DIFF
-  USE B2MOD_PLASMA_DIFF
-  USE B2MOD_SOURCES
+  USE B2US_PLASMA_DIFF
   IMPLICIT NONE
   REAL(kind=r8), ALLOCATABLE, SAVE :: na_mean(:, :), te_mean(:), ti_mean&
 & (:), ua_mean(:, :), po_mean(:), kt_mean(:)
@@ -32,9 +32,10 @@ MODULE B2MOD_BATCH_AVERAGE_DIFF
 
 CONTAINS
 !
-  SUBROUTINE BATCH_AV_ALL(itim, ntim_batch, ncv, ns)
+  SUBROUTINE BATCH_AV_ALL(itim, ntim_batch, ncv, pl, ns)
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: itim, ntim_batch, ncv, ns
+    TYPE(B2PLASMA), INTENT(IN) :: pl
     INTEGER :: itp
     REAL(kind=r8) :: sna_tot(ncv, 0:ns-1), smo_tot(ncv, 0:ns-1), she_tot&
 &   (ncv), shi_tot(ncv)
@@ -44,13 +45,13 @@ CONTAINS
 !
 !  calculate averaged plasma profiles and sources
     arg1 = ncv*ns
-    CALL BATCH_AVERAGE(arg1, na, na_mean, itp, ntim_batch)
-    CALL BATCH_AVERAGE(ncv, te, te_mean, itp, ntim_batch)
-    CALL BATCH_AVERAGE(ncv, ti, ti_mean, itp, ntim_batch)
-    CALL BATCH_AVERAGE(ncv, po, po_mean, itp, ntim_batch)
+    CALL BATCH_AVERAGE(arg1, pl%na, na_mean, itp, ntim_batch)
+    CALL BATCH_AVERAGE(ncv, pl%te, te_mean, itp, ntim_batch)
+    CALL BATCH_AVERAGE(ncv, pl%ti, ti_mean, itp, ntim_batch)
+    CALL BATCH_AVERAGE(ncv, pl%po, po_mean, itp, ntim_batch)
     arg1 = ncv*ns
-    CALL BATCH_AVERAGE(arg1, ua, ua_mean, itp, ntim_batch)
-    CALL BATCH_AVERAGE(ncv, kt, kt_mean, itp, ntim_batch)
+    CALL BATCH_AVERAGE(arg1, pl%ua, ua_mean, itp, ntim_batch)
+    CALL BATCH_AVERAGE(ncv, pl%kt, kt_mean, itp, ntim_batch)
 !
     arg1 = ncv*ns
     CALL BATCH_AVERAGE(arg1, sna_tot, sna_mean, itp, ntim_batch)
@@ -61,13 +62,13 @@ CONTAINS
 !
 !  calculate squared averaged plasma profiles
     arg1 = ncv*ns
-    CALL BATCH_AVERAGE_SQ(arg1, na, e_na, itp, ntim_batch)
-    CALL BATCH_AVERAGE_SQ(ncv, te, e_te, itp, ntim_batch)
-    CALL BATCH_AVERAGE_SQ(ncv, ti, e_ti, itp, ntim_batch)
-    CALL BATCH_AVERAGE_SQ(ncv, po, e_po, itp, ntim_batch)
+    CALL BATCH_AVERAGE_SQ(arg1, pl%na, e_na, itp, ntim_batch)
+    CALL BATCH_AVERAGE_SQ(ncv, pl%te, e_te, itp, ntim_batch)
+    CALL BATCH_AVERAGE_SQ(ncv, pl%ti, e_ti, itp, ntim_batch)
+    CALL BATCH_AVERAGE_SQ(ncv, pl%po, e_po, itp, ntim_batch)
     arg1 = ncv*ns
-    CALL BATCH_AVERAGE_SQ(arg1, ua, e_ua, itp, ntim_batch)
-    CALL BATCH_AVERAGE_SQ(ncv, kt, e_kt, itp, ntim_batch)
+    CALL BATCH_AVERAGE_SQ(arg1, pl%ua, e_ua, itp, ntim_batch)
+    CALL BATCH_AVERAGE_SQ(ncv, pl%kt, e_kt, itp, ntim_batch)
     arg1 = ncv*ns
     CALL BATCH_AVERAGE_SQ(arg1, sna_tot, e_sna, itp, ntim_batch)
     CALL BATCH_AVERAGE_SQ(ncv, she_tot, e_she, itp, ntim_batch)

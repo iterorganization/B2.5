@@ -30,6 +30,7 @@ MODULE B2US_GEO_DIFF
 ! Area perp. to third (z) direction
 ! Length in third (z) direction
 ! Temp: characteristic poloidal length; eventually remove, because meaning unclear in WG context
+! Estimate of the radial width of a cell
 ! Temp: complementary angle between poloidal and radial directions; remove?
 ! Cell volume
 ! 1/B**2 in cell centers
@@ -91,6 +92,7 @@ MODULE B2US_GEO_DIFF
       REAL(kind=r8), ALLOCATABLE :: cvsz(:)
       REAL(kind=r8), ALLOCATABLE :: cvhz(:)
       REAL(kind=r8), ALLOCATABLE :: cvhx(:)
+      REAL(kind=r8), ALLOCATABLE :: cvhy(:)
       REAL(kind=r8), ALLOCATABLE :: cvqgam(:, :)
       REAL(kind=r8), ALLOCATABLE :: cvvol(:)
       REAL(kind=r8), ALLOCATABLE :: cvonedbsq(:)
@@ -139,6 +141,7 @@ MODULE B2US_GEO_DIFF
       REAL(kind=r8), DIMENSION(:), ALLOCATABLE :: cvsz
       REAL(kind=r8), DIMENSION(:), ALLOCATABLE :: cvhz
       REAL(kind=r8), DIMENSION(:), ALLOCATABLE :: cvhx
+      REAL(kind=r8), DIMENSION(:), ALLOCATABLE :: cvhy
       REAL(kind=r8), DIMENSION(:, :), ALLOCATABLE :: cvqgam
       REAL(kind=r8), DIMENSION(:), ALLOCATABLE :: cvvol
       REAL(kind=r8), DIMENSION(:), ALLOCATABLE :: cvonedbsq
@@ -182,16 +185,16 @@ MODULE B2US_GEO_DIFF
 CONTAINS
 !  Differentiation of alloc_geometry as a context to call adjoint code (with options context noISIZE r8):
 !   Plus diff mem management of: g.cvbb:in-out g.cvx:in-out g.cvy:in-out
-!                g.cvsz:in-out g.cvhz:in-out g.cvhx:in-out g.cvqgam:in-out
-!                g.cvvol:in-out g.cvonedbsq:in-out g.cvbzb:in-out
-!                g.cveb:in-out g.cvfpsi:in-out g.fcbb:in-out g.fcs:in-out
-!                g.fchc:in-out g.fcht:in-out g.fchz:in-out g.fcvol:in-out
-!                g.fcqgam:in-out g.fcqalf:in-out g.fcqbet:in-out
-!                g.fcpbs:in-out g.fcpbshz:in-out g.fcbzb:in-out
-!                g.fceb:in-out g.fcfpsi:in-out g.vxbb:in-out g.vxx:in-out
-!                g.vxy:in-out g.vxhz:in-out g.vxvol:in-out g.vxffbz:in-out
-!                g.vxfpsi:in-out g.vxonedbsq:in-out g.vxbzb:in-out
-!                g.vxeb:in-out g.cvconn:in-out g.vxconn:in-out
+!                g.cvsz:in-out g.cvhz:in-out g.cvhx:in-out g.cvhy:in-out
+!                g.cvqgam:in-out g.cvvol:in-out g.cvonedbsq:in-out
+!                g.cvbzb:in-out g.cveb:in-out g.cvfpsi:in-out g.fcbb:in-out
+!                g.fcs:in-out g.fchc:in-out g.fcht:in-out g.fchz:in-out
+!                g.fcvol:in-out g.fcqgam:in-out g.fcqalf:in-out
+!                g.fcqbet:in-out g.fcpbs:in-out g.fcpbshz:in-out
+!                g.fcbzb:in-out g.fceb:in-out g.fcfpsi:in-out g.vxbb:in-out
+!                g.vxx:in-out g.vxy:in-out g.vxhz:in-out g.vxvol:in-out
+!                g.vxffbz:in-out g.vxfpsi:in-out g.vxonedbsq:in-out
+!                g.vxbzb:in-out g.vxeb:in-out g.cvconn:in-out g.vxconn:in-out
 !                g.ftconn:in-out g.fsconn:in-out g.fteps:in-out
 !                g.ftbbav2:in-out g.fspsi:in-out
 !
@@ -227,6 +230,9 @@ CONTAINS
       ALLOCATE(gb%cvhx(ncv))
       gb%cvhx = 0.D0
       ALLOCATE(g%cvhx(ncv))
+      ALLOCATE(gb%cvhy(ncv))
+      gb%cvhy = 0.D0
+      ALLOCATE(g%cvhy(ncv))
       ALLOCATE(gb%cvqgam(ncv, 0:1))
       gb%cvqgam = 0.D0
       ALLOCATE(g%cvqgam(ncv, 0:1))
@@ -373,6 +379,7 @@ CONTAINS
       ALLOCATE(g%cvsz(ncv))
       ALLOCATE(g%cvhz(ncv))
       ALLOCATE(g%cvhx(ncv))
+      ALLOCATE(g%cvhy(ncv))
       ALLOCATE(g%cvqgam(ncv, 0:1))
       ALLOCATE(g%cvvol(ncv))
       ALLOCATE(g%cvonedbsq(ncv))
@@ -439,6 +446,7 @@ CONTAINS
     g%cvsz = 0._R8
     g%cvhz = 0._R8
     g%cvhx = 0._R8
+    g%cvhy = 0._R8
     g%cvqgam = 0._R8
     g%cvvol = 0._R8
     g%cvonedbsq = 0._R8
@@ -493,7 +501,7 @@ CONTAINS
 
 !  Differentiation of dealloc_geometry as a context to call adjoint code (with options context noISIZE r8):
 !   Plus diff mem management of: g.cvbb:out g.cvx:out g.cvy:out
-!                g.cvsz:out g.cvhz:out g.cvhx:out g.cvqgam:out
+!                g.cvsz:out g.cvhz:out g.cvhx:out g.cvhy:out g.cvqgam:out
 !                g.cvvol:out g.cvonedbsq:out g.cvbzb:out g.cveb:out
 !                g.cvfpsi:out g.fcbb:out g.fcs:out g.fchc:out g.fcht:out
 !                g.fchz:out g.fcvol:out g.fcqgam:out g.fcqalf:out
@@ -541,6 +549,10 @@ CONTAINS
         DEALLOCATE(gb%cvhx)
       END IF
       DEALLOCATE(g%cvhx)
+      IF (ALLOCATED(gb%cvhy)) THEN
+        DEALLOCATE(gb%cvhy)
+      END IF
+      DEALLOCATE(g%cvhy)
       IF (ALLOCATED(gb%cvqgam)) THEN
         DEALLOCATE(gb%cvqgam)
       END IF
@@ -721,6 +733,7 @@ CONTAINS
       DEALLOCATE(g%cvsz)
       DEALLOCATE(g%cvhz)
       DEALLOCATE(g%cvhx)
+      DEALLOCATE(g%cvhy)
       DEALLOCATE(g%cvqgam)
       DEALLOCATE(g%cvvol)
       DEALLOCATE(g%cvonedbsq)
@@ -773,19 +786,19 @@ CONTAINS
 
 !  Differentiation of read_geometry as a context to call adjoint code (with options context noISIZE r8):
 !   Plus diff mem management of: gm.cvbb:in-out gm.cvx:in-out gm.cvy:in-out
-!                gm.cvsz:in-out gm.cvhz:in-out gm.cvhx:in-out gm.cvqgam:in-out
-!                gm.cvvol:in-out gm.cvonedbsq:in-out gm.cvbzb:in-out
-!                gm.cveb:in-out gm.cvfpsi:in-out gm.fcbb:in-out
-!                gm.fcs:in-out gm.fchc:in-out gm.fcht:in-out gm.fchz:in-out
-!                gm.fcvol:in-out gm.fcqgam:in-out gm.fcqalf:in-out
-!                gm.fcqbet:in-out gm.fcpbs:in-out gm.fcpbshz:in-out
-!                gm.fcbzb:in-out gm.fceb:in-out gm.fcfpsi:in-out
-!                gm.vxbb:in-out gm.vxx:in-out gm.vxy:in-out gm.vxhz:in-out
-!                gm.vxvol:in-out gm.vxffbz:in-out gm.vxfpsi:in-out
-!                gm.vxonedbsq:in-out gm.vxbzb:in-out gm.vxeb:in-out
-!                gm.cvconn:in-out gm.vxconn:in-out gm.ftconn:in-out
-!                gm.fsconn:in-out gm.fteps:in-out gm.ftbbav2:in-out
-!                gm.fspsi:in-out
+!                gm.cvsz:in-out gm.cvhz:in-out gm.cvhx:in-out gm.cvhy:in-out
+!                gm.cvqgam:in-out gm.cvvol:in-out gm.cvonedbsq:in-out
+!                gm.cvbzb:in-out gm.cveb:in-out gm.cvfpsi:in-out
+!                gm.fcbb:in-out gm.fcs:in-out gm.fchc:in-out gm.fcht:in-out
+!                gm.fchz:in-out gm.fcvol:in-out gm.fcqgam:in-out
+!                gm.fcqalf:in-out gm.fcqbet:in-out gm.fcpbs:in-out
+!                gm.fcpbshz:in-out gm.fcbzb:in-out gm.fceb:in-out
+!                gm.fcfpsi:in-out gm.vxbb:in-out gm.vxx:in-out
+!                gm.vxy:in-out gm.vxhz:in-out gm.vxvol:in-out gm.vxffbz:in-out
+!                gm.vxfpsi:in-out gm.vxonedbsq:in-out gm.vxbzb:in-out
+!                gm.vxeb:in-out gm.cvconn:in-out gm.vxconn:in-out
+!                gm.ftconn:in-out gm.fsconn:in-out gm.fteps:in-out
+!                gm.ftbbav2:in-out gm.fspsi:in-out
 !
 !**********************************************************************
 !
@@ -1030,8 +1043,9 @@ CONTAINS
     INTRINSIC ANY
     INTRINSIC ALLOCATED
     REAL(kind=r8) :: x1
+    REAL(kind=r8) :: abs0
     REAL(kind=r8), DIMENSION(mpg%nFs) :: dabs0
-    REAL(kind=r8), DIMENSION(mpg%nFs) :: abs0
+    REAL(kind=r8), DIMENSION(mpg%nFs) :: abs1
     REAL(kind=r8) :: result1
     REAL(kind=r8) :: result2
     INTEGER :: result10
@@ -1512,6 +1526,22 @@ CONTAINS
 !
 !WG_TODO: Need to provide a calculation for gm%vxEb
 !
+!   ..estimate the radial width of cells: cvHy
+    DO icv=1,ncv
+      DO i=1,mpg%cvfcp(icv, 2)
+        ifc = mpg%cvfc(mpg%cvfcp(icv, 1)+i-1)
+        IF (gm%fcqalf(ifc, 0) .GE. 0.) THEN
+          abs0 = gm%fcqalf(ifc, 0)
+        ELSE
+          abs0 = -gm%fcqalf(ifc, 0)
+        END IF
+        gm%cvhy(icv) = gm%cvhy(icv) + gm%fcht(ifc)*abs0
+      END DO
+    END DO
+    DO icv=1,mpg%nci
+      gm%cvhy(icv) = 0.5_R8*gm%cvhy(icv)
+    END DO
+!
 !   ..compute cvHz
 ! for ITER for testing
     hzconst = 2.0_R8*pi*6.0_R8
@@ -1658,11 +1688,11 @@ CONTAINS
 &               THEN
                   mask0 = gm%fspsi .GE. 0.0
                   WHERE (mask0) 
-                    abs0 = gm%fspsi
+                    abs1 = gm%fspsi
                   ELSEWHERE
-                    abs0 = -gm%fspsi
+                    abs1 = -gm%fspsi
                   END WHERE
-                  result1 = MAXVAL(abs0)
+                  result1 = MAXVAL(abs1)
                   gm%psi_increasing = gm%fspsi(mpg%vxfs(mpg%cvvx(j))) &
 &                   .LT. gm%fspsi(mpg%vxfs(mpg%xpt(ixpt))) .OR. result1 &
 &                   .EQ. 0.0_R8
@@ -1940,7 +1970,7 @@ CONTAINS
         ELSE
 ! SOL/PF: effective distance to targets/boundaries
 ! implicit assumption that cells in ftCv are listed starting
-! at one  of the targets
+! at one of the targets
           DO ic=mpg%ftcvp(ift, 1),mpg%ftcvp(ift, 1)+mpg%ftcvp(ift, 2)-1
             icv = mpg%ftcv(ic)
             l1 = 0.5_R8*wrk0(icv)

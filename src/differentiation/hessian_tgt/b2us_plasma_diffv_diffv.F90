@@ -70,9 +70,9 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: zt
   END TYPE B2PLASMA_DIFFV_DIFFV
 ! fluxes/flux densities
-! dimensions: fc, direction (, species)
+! dimensions: nFc, direction (, species)
 ! kinetic energy
-! dimensions: cv, species
+! dimensions: nCv, species
 !
 ! numerical coefficients (maybe move to separate object)
 !
@@ -89,8 +89,6 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
 !
 ! drift velocities, at cell faces
 ! dimensions: fc, direction, species
-!
-!
 !
 !
 ! Quantities derived from plasma state
@@ -484,14 +482,6 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
 !
 !
 !
-!
-!
-!
-!wdk move to dv
-!        ! velocities at cell centers
-!        ! dimensions: cv, direction, species
-!        real(R8), allocatable :: uadia(:,:,:,:), wadia(:,:,:,:),
-!     .                           vaecrb(:,:,:,:)
 !
 !
 ! Transport coefficients (velocities, diffusivities...)
@@ -1014,7 +1004,6 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: smq0
       REAL(r8), DIMENSION(:, :, :, :, :), ALLOCATABLE :: sna0
   END TYPE B2SOURCEWORK_DIFFV_DIFFV
-!
 ! nCv, dir, ns, 0:nscxmax-1
 !
 ! nCv, dir, is
@@ -1370,8 +1359,6 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
 !
 !
 !
-!
-!
 ! External plasma
 ! A simplified type containg all data on possible external species
 ! To be considered: move to a separate module b2us_plasma_ext?
@@ -1436,8 +1423,13 @@ MODULE B2US_PLASMA_DIFFV_DIFFV
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sna
       REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: smo
   END TYPE B2STATEEXT_DIFFV
-!
-!
+  TYPE B2STATEEXT_DIFFV_DIFFV
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: she
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: shi
+      REAL(r8), DIMENSION(:, :, :), ALLOCATABLE :: sch
+      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: sna
+      REAL(r8), DIMENSION(:, :, :, :), ALLOCATABLE :: smo
+  END TYPE B2STATEEXT_DIFFV_DIFFV
 !
 ! Averaged plasma state
   TYPE B2AVERAGE
@@ -12803,13 +12795,13 @@ CONTAINS
   END SUBROUTINE DESTROYB2SOURCE
 
 !  Differentiation of createb2sourceeir_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: sr_eir.sch:out sr_eir.she:out
-!                sr_eir.shi:out sr_eir.sne:out sr_eir.smo:out sr_eir.smq:out
-!                sr_eir.sna:out
+!   Plus diff mem management of: sr_eir.sch:in-out sr_eir.she:in-out
+!                sr_eir.shi:in-out sr_eir.sne:in-out sr_eir.smo:in-out
+!                sr_eir.smq:in-out sr_eir.sna:in-out
 !  Differentiation of createb2sourceeir as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: sr_eir.sch:out sr_eir.she:out
-!                sr_eir.shi:out sr_eir.sne:out sr_eir.smo:out sr_eir.smq:out
-!                sr_eir.sna:out
+!   Plus diff mem management of: sr_eir.sch:in-out sr_eir.she:in-out
+!                sr_eir.shi:in-out sr_eir.sne:in-out sr_eir.smo:in-out
+!                sr_eir.smq:in-out sr_eir.sna:in-out
 !
   SUBROUTINE CREATEB2SOURCEEIR_DV_DV(ncv, ns, nstra, sr_eir, sr_eird0, &
 &   sr_eird, nbdirs, nbdirs0)
@@ -12887,9 +12879,9 @@ CONTAINS
   END SUBROUTINE CREATEB2SOURCEEIR_DV_DV
 
 !  Differentiation of createb2sourceeir as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: sr_eir.sch:out sr_eir.she:out
-!                sr_eir.shi:out sr_eir.sne:out sr_eir.smo:out sr_eir.smq:out
-!                sr_eir.sna:out
+!   Plus diff mem management of: sr_eir.sch:in-out sr_eir.she:in-out
+!                sr_eir.shi:in-out sr_eir.sne:in-out sr_eir.smo:in-out
+!                sr_eir.smq:in-out sr_eir.sna:in-out
 !
   SUBROUTINE CREATEB2SOURCEEIR_DV(ncv, ns, nstra, sr_eir, sr_eird, &
 &   nbdirs)
@@ -12947,9 +12939,9 @@ CONTAINS
   END SUBROUTINE CREATEB2SOURCEEIR_DV
 
 !  Differentiation of createb2sourceeir as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: sr_eir.sch:out sr_eir.she:out
-!                sr_eir.shi:out sr_eir.sne:out sr_eir.smo:out sr_eir.smq:out
-!                sr_eir.sna:out
+!   Plus diff mem management of: sr_eir.sch:in-out sr_eir.she:in-out
+!                sr_eir.shi:in-out sr_eir.sne:in-out sr_eir.smo:in-out
+!                sr_eir.smq:in-out sr_eir.sna:in-out
 !
   SUBROUTINE CREATEB2SOURCEEIR_DV0(ncv, ns, nstra, sr_eir, sr_eird, &
 &   nbdirs)
@@ -18139,20 +18131,20 @@ CONTAINS
   END SUBROUTINE DESTROYB2PLASMASNAPSHOT
 
 !  Differentiation of createb2diagnostic_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: diag.srcna:out diag.srcmo:out
-!                diag.srcpo:out diag.srche:out diag.srchi:out diag.srcmt:out
-!                diag.aresco:in-out diag.aresmo:in-out diag.acorpa:in-out
-!                diag.acorua:in-out diag.rescoreg:in-out diag.resmoreg:in-out
-!                diag.reshereg:in-out diag.reshireg:in-out diagd.aresco:in-out
-!                diagd.aresmo:in-out diagd.acorpa:in-out diagd.acorua:in-out
-!                diagd.rescoreg:in-out diagd.resmoreg:in-out diagd.reshereg:in-out
-!                diagd.reshireg:in-out
+!   Plus diff mem management of: diag.srcna:in-out diag.srcmo:in-out
+!                diag.srcpo:in-out diag.srche:in-out diag.srchi:in-out
+!                diag.srcmt:in-out diag.aresco:in-out diag.aresmo:in-out
+!                diag.acorpa:in-out diag.acorua:in-out diag.rescoreg:in-out
+!                diag.resmoreg:in-out diag.reshereg:in-out diag.reshireg:in-out
+!                diagd.aresco:in-out diagd.aresmo:in-out diagd.acorpa:in-out
+!                diagd.acorua:in-out diagd.rescoreg:in-out diagd.resmoreg:in-out
+!                diagd.reshereg:in-out diagd.reshireg:in-out
 !  Differentiation of createb2diagnostic as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: diag.srcna:out diag.srcmo:out
-!                diag.srcpo:out diag.srche:out diag.srchi:out diag.srcmt:out
-!                diag.aresco:in-out diag.aresmo:in-out diag.acorpa:in-out
-!                diag.acorua:in-out diag.rescoreg:in-out diag.resmoreg:in-out
-!                diag.reshereg:in-out diag.reshireg:in-out
+!   Plus diff mem management of: diag.srcna:in-out diag.srcmo:in-out
+!                diag.srcpo:in-out diag.srche:in-out diag.srchi:in-out
+!                diag.srcmt:in-out diag.aresco:in-out diag.aresmo:in-out
+!                diag.acorpa:in-out diag.acorua:in-out diag.rescoreg:in-out
+!                diag.resmoreg:in-out diag.reshereg:in-out diag.reshireg:in-out
 !
   SUBROUTINE CREATEB2DIAGNOSTIC_DV_DV(ncv, ns, nnreg, diag, diagd0, &
 &   diagd, diagdd, nbdirs, nbdirs0)
@@ -18309,11 +18301,11 @@ CONTAINS
   END SUBROUTINE CREATEB2DIAGNOSTIC_DV_DV
 
 !  Differentiation of createb2diagnostic as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: diag.srcna:out diag.srcmo:out
-!                diag.srcpo:out diag.srche:out diag.srchi:out diag.srcmt:out
-!                diag.aresco:in-out diag.aresmo:in-out diag.acorpa:in-out
-!                diag.acorua:in-out diag.rescoreg:in-out diag.resmoreg:in-out
-!                diag.reshereg:in-out diag.reshireg:in-out
+!   Plus diff mem management of: diag.srcna:in-out diag.srcmo:in-out
+!                diag.srcpo:in-out diag.srche:in-out diag.srchi:in-out
+!                diag.srcmt:in-out diag.aresco:in-out diag.aresmo:in-out
+!                diag.acorpa:in-out diag.acorua:in-out diag.rescoreg:in-out
+!                diag.resmoreg:in-out diag.reshereg:in-out diag.reshireg:in-out
 !
   SUBROUTINE CREATEB2DIAGNOSTIC_DV(ncv, ns, nnreg, diag, diagd, nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
@@ -18411,11 +18403,11 @@ CONTAINS
   END SUBROUTINE CREATEB2DIAGNOSTIC_DV
 
 !  Differentiation of createb2diagnostic as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: diag.srcna:out diag.srcmo:out
-!                diag.srcpo:out diag.srche:out diag.srchi:out diag.srcmt:out
-!                diag.aresco:in-out diag.aresmo:in-out diag.acorpa:in-out
-!                diag.acorua:in-out diag.rescoreg:in-out diag.resmoreg:in-out
-!                diag.reshereg:in-out diag.reshireg:in-out
+!   Plus diff mem management of: diag.srcna:in-out diag.srcmo:in-out
+!                diag.srcpo:in-out diag.srche:in-out diag.srchi:in-out
+!                diag.srcmt:in-out diag.aresco:in-out diag.aresmo:in-out
+!                diag.acorpa:in-out diag.acorua:in-out diag.rescoreg:in-out
+!                diag.resmoreg:in-out diag.reshereg:in-out diag.reshireg:in-out
 !
   SUBROUTINE CREATEB2DIAGNOSTIC_DV0(ncv, ns, nnreg, diag, diagd, nbdirs)
     USE B2MOD_DIFFSIZES
@@ -19336,13 +19328,15 @@ CONTAINS
   END SUBROUTINE DESTROYB2UPDATE
 
 !  Differentiation of createb2stateext_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: state_ext.zn:out state_ext.am:in-out
-!                state_ext.ne:in-out state_ext.ne2:in-out state_ext.ue:in-out
-!                state_ext.za:in-out state_ext.za2:in-out state_ext.pt:in-out
-!                state_ext.na:in-out state_ext.ni:in-out state_ext.ua:in-out
-!                state_ext.ta:in-out state_ext.fhi:in-out state_ext.fa:in-out
-!                state_ext.sne:in-out state_ext.she:in-out state_ext.shi:in-out
-!                state_ext.sch:in-out state_ext.sna:in-out state_ext.smo:in-out
+!   Plus diff mem management of: state_extd.she:in-out state_extd.shi:in-out
+!                state_extd.sch:in-out state_extd.sna:in-out state_extd.smo:in-out
+!                state_ext.zn:out state_ext.am:in-out state_ext.ne:in-out
+!                state_ext.ne2:in-out state_ext.ue:in-out state_ext.za:in-out
+!                state_ext.za2:in-out state_ext.pt:in-out state_ext.na:in-out
+!                state_ext.ni:in-out state_ext.ua:in-out state_ext.ta:in-out
+!                state_ext.fhi:in-out state_ext.fa:in-out state_ext.sne:in-out
+!                state_ext.she:in-out state_ext.shi:in-out state_ext.sch:in-out
+!                state_ext.sna:in-out state_ext.smo:in-out
 !  Differentiation of createb2stateext as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: state_ext.zn:out state_ext.am:in-out
 !                state_ext.ne:in-out state_ext.ne2:in-out state_ext.ue:in-out
@@ -19355,7 +19349,7 @@ CONTAINS
 !
 ! External plasma
   SUBROUTINE CREATEB2STATEEXT_DV_DV(ncv, nfc, ns_ext, state_ext, &
-&   state_extd0, state_extd, nbdirs, nbdirs0)
+&   state_extd0, state_extd, state_extdd, nbdirs, nbdirs0)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
     USE B2MOD_DIFFSIZES
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
@@ -19364,6 +19358,7 @@ CONTAINS
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2STATEEXT_DIFFV0), INTENT(INOUT) :: state_extd0
     TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
+    TYPE(B2STATEEXT_DIFFV_DIFFV), INTENT(INOUT) :: state_extdd
     INTRINSIC ALLOCATED
     INTEGER :: ii1
     INTEGER :: nd
@@ -19498,6 +19493,8 @@ CONTAINS
       ALLOCATE(state_extd0%sne(nbdirsmax0, 1:ncv))
       state_extd0%sne(:, 1:ncv) = 0.0_8
       ALLOCATE(state_ext%sne(1:ncv))
+      ALLOCATE(state_extdd%she(nbdirsmax0, nbdirsmax, 1:ncv))
+      state_extdd%she(:, 1:nbdirsmax, 1:ncv) = 0.0_8
       ALLOCATE(state_extd%she(nbdirsmax, 1:ncv))
       DO nd=1,nbdirsmax
         state_extd%she(nd, 1:ncv) = 0.d0
@@ -19505,6 +19502,8 @@ CONTAINS
       ALLOCATE(state_extd0%she(nbdirsmax0, 1:ncv))
       state_extd0%she(:, 1:ncv) = 0.0_8
       ALLOCATE(state_ext%she(1:ncv))
+      ALLOCATE(state_extdd%shi(nbdirsmax0, nbdirsmax, 1:ncv))
+      state_extdd%shi(:, 1:nbdirsmax, 1:ncv) = 0.0_8
       ALLOCATE(state_extd%shi(nbdirsmax, 1:ncv))
       DO nd=1,nbdirsmax
         state_extd%shi(nd, 1:ncv) = 0.d0
@@ -19512,6 +19511,8 @@ CONTAINS
       ALLOCATE(state_extd0%shi(nbdirsmax0, 1:ncv))
       state_extd0%shi(:, 1:ncv) = 0.0_8
       ALLOCATE(state_ext%shi(1:ncv))
+      ALLOCATE(state_extdd%sch(nbdirsmax0, nbdirsmax, 1:ncv))
+      state_extdd%sch(:, 1:nbdirsmax, 1:ncv) = 0.0_8
       ALLOCATE(state_extd%sch(nbdirsmax, 1:ncv))
       DO nd=1,nbdirsmax
         state_extd%sch(nd, 1:ncv) = 0.d0
@@ -19519,6 +19520,9 @@ CONTAINS
       ALLOCATE(state_extd0%sch(nbdirsmax0, 1:ncv))
       state_extd0%sch(:, 1:ncv) = 0.0_8
       ALLOCATE(state_ext%sch(1:ncv))
+      ALLOCATE(state_extdd%sna(nbdirsmax0, nbdirsmax, 1:ncv, 0:ns_ext-1)&
+&     )
+      state_extdd%sna(:, 1:nbdirsmax, 1:ncv, 0:ns_ext-1) = 0.0_8
       ALLOCATE(state_extd%sna(nbdirsmax, 1:ncv, 0:ns_ext-1))
       DO nd=1,nbdirsmax
         state_extd%sna(nd, 1:ncv, 0:ns_ext-1) = 0.d0
@@ -19526,6 +19530,9 @@ CONTAINS
       ALLOCATE(state_extd0%sna(nbdirsmax0, 1:ncv, 0:ns_ext-1))
       state_extd0%sna(:, 1:ncv, 0:ns_ext-1) = 0.0_8
       ALLOCATE(state_ext%sna(1:ncv, 0:ns_ext-1))
+      ALLOCATE(state_extdd%smo(nbdirsmax0, nbdirsmax, 1:ncv, 0:ns_ext-1)&
+&     )
+      state_extdd%smo(:, 1:nbdirsmax, 1:ncv, 0:ns_ext-1) = 0.0_8
       ALLOCATE(state_extd%smo(nbdirsmax, 1:ncv, 0:ns_ext-1))
       DO nd=1,nbdirsmax
         state_extd%smo(nd, 1:ncv, 0:ns_ext-1) = 0.d0
@@ -19791,13 +19798,15 @@ CONTAINS
   END SUBROUTINE CREATEB2STATEEXT
 
 !  Differentiation of destroyb2stateext_dv as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: state_ext.zn:out state_ext.am:out
-!                state_ext.ne:out state_ext.ne2:out state_ext.ue:out
-!                state_ext.za:out state_ext.za2:out state_ext.pt:out
-!                state_ext.na:out state_ext.ni:out state_ext.ua:out
-!                state_ext.ta:out state_ext.fhi:out state_ext.fa:out
-!                state_ext.sne:out state_ext.she:out state_ext.shi:out
-!                state_ext.sch:out state_ext.sna:out state_ext.smo:out
+!   Plus diff mem management of: state_extd.she:out state_extd.shi:out
+!                state_extd.sch:out state_extd.sna:out state_extd.smo:out
+!                state_ext.zn:out state_ext.am:out state_ext.ne:out
+!                state_ext.ne2:out state_ext.ue:out state_ext.za:out
+!                state_ext.za2:out state_ext.pt:out state_ext.na:out
+!                state_ext.ni:out state_ext.ua:out state_ext.ta:out
+!                state_ext.fhi:out state_ext.fa:out state_ext.sne:out
+!                state_ext.she:out state_ext.shi:out state_ext.sch:out
+!                state_ext.sna:out state_ext.smo:out
 !  Differentiation of destroyb2stateext as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: state_ext.zn:out state_ext.am:out
 !                state_ext.ne:out state_ext.ne2:out state_ext.ue:out
@@ -19809,7 +19818,7 @@ CONTAINS
 !
 !
   SUBROUTINE DESTROYB2STATEEXT_DV_DV(state_ext, state_extd0, state_extd&
-&   , nbdirs, nbdirs0)
+&   , state_extdd, nbdirs, nbdirs0)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
     USE B2MOD_DIFFSIZES
 !  Hint: nbdirsmax0 should be the maximum number of differentiation directions
@@ -19817,6 +19826,7 @@ CONTAINS
     TYPE(B2STATEEXT), INTENT(INOUT) :: state_ext
     TYPE(B2STATEEXT_DIFFV0), INTENT(INOUT) :: state_extd0
     TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: state_extd
+    TYPE(B2STATEEXT_DIFFV_DIFFV), INTENT(INOUT) :: state_extdd
     INTRINSIC ALLOCATED
     INTEGER :: nbdirs
     INTEGER :: nbdirs0
@@ -19945,6 +19955,9 @@ CONTAINS
       END IF
       DEALLOCATE(state_ext%sne)
       IF (ALLOCATED(state_extd%she)) THEN
+        IF (ALLOCATED(state_extdd%she)) THEN
+          DEALLOCATE(state_extdd%she)
+        END IF
         DEALLOCATE(state_extd%she)
       END IF
       IF (ALLOCATED(state_extd0%she)) THEN
@@ -19952,6 +19965,9 @@ CONTAINS
       END IF
       DEALLOCATE(state_ext%she)
       IF (ALLOCATED(state_extd%shi)) THEN
+        IF (ALLOCATED(state_extdd%shi)) THEN
+          DEALLOCATE(state_extdd%shi)
+        END IF
         DEALLOCATE(state_extd%shi)
       END IF
       IF (ALLOCATED(state_extd0%shi)) THEN
@@ -19959,6 +19975,9 @@ CONTAINS
       END IF
       DEALLOCATE(state_ext%shi)
       IF (ALLOCATED(state_extd%sch)) THEN
+        IF (ALLOCATED(state_extdd%sch)) THEN
+          DEALLOCATE(state_extdd%sch)
+        END IF
         DEALLOCATE(state_extd%sch)
       END IF
       IF (ALLOCATED(state_extd0%sch)) THEN
@@ -19966,6 +19985,9 @@ CONTAINS
       END IF
       DEALLOCATE(state_ext%sch)
       IF (ALLOCATED(state_extd%sna)) THEN
+        IF (ALLOCATED(state_extdd%sna)) THEN
+          DEALLOCATE(state_extdd%sna)
+        END IF
         DEALLOCATE(state_extd%sna)
       END IF
       IF (ALLOCATED(state_extd0%sna)) THEN
@@ -19973,6 +19995,9 @@ CONTAINS
       END IF
       DEALLOCATE(state_ext%sna)
       IF (ALLOCATED(state_extd%smo)) THEN
+        IF (ALLOCATED(state_extdd%smo)) THEN
+          DEALLOCATE(state_extdd%smo)
+        END IF
         DEALLOCATE(state_extd%smo)
       END IF
       IF (ALLOCATED(state_extd0%smo)) THEN
@@ -20321,9 +20346,9 @@ CONTAINS
 !                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
 !                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
 !                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
-!                st.dv.fhet:out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhet:in-out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
 !                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
-!                st.dv.fhit:out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhit:in-out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
 !                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
 !                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
 !                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
@@ -20334,7 +20359,7 @@ CONTAINS
 !                st.dv.floi_noc:in-out st.dv.flon:in-out st.dv.flokt:in-out
 !                st.dv.flozt:in-out st.dv.conn:in-out st.dv.conkt:in-out
 !                st.dv.conzt:in-out st.dv.conb:in-out st.dv.cone:in-out
-!                st.dv.coni:in-out st.dv.fllime:out st.dv.fllimi:out
+!                st.dv.coni:in-out st.dv.fllime:in-out st.dv.fllimi:in-out
 !                st.dv.resmo:in-out st.dv.resco:in-out st.dv.respo:in-out
 !                st.dv.reshe:in-out st.dv.reshi:in-out st.dv.resht:in-out
 !                st.dv.resmt:in-out st.dv.reshn:in-out st.dv.reskt:in-out
@@ -20367,7 +20392,7 @@ CONTAINS
 !                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
 !                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
 !                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:out st.srw.b2stbm_sna:in-out
+!                st.srw.b2stbm_smq:in-out st.srw.b2stbm_sna:in-out
 !                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
 !                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
 !                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
@@ -20383,9 +20408,9 @@ CONTAINS
 !                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
 !                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
 !                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:out st.srw.she0_eir_tot:in-out
+!                st.srw.sne0_eir_tot:in-out st.srw.she0_eir_tot:in-out
 !                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:out st.rt.rlcx:in-out st.rt.rlqa:in-out
+!                st.srw.sch0_eir_tot:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
 !                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
 !                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
 !                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
@@ -20393,21 +20418,21 @@ CONTAINS
 !                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
 !                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
 !                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:out st.psnl.te:in-out
+!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
 !                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
 !                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:out st.psnl.fna:in-out
-!                st.psnl.fhi:out st.psnl.fhe:out st.psnl.fhn:out
-!                st.psnl.fkt:out st.psnl.fzt:out st.psnl.kinrgy:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:out
+!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
+!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:in-out
+!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
+!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
 !                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
 !                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:out
-!                st.psnc.fna:in-out st.psnc.fhi:out st.psnc.fhe:out
-!                st.psnc.fhn:out st.psnc.fkt:out st.psnc.fzt:out
-!                st.psnc.kinrgy:in-out st.update.ua:out st.update.na:out
-!                st.update.pa:out st.update.po:out st.update.te:out
-!                st.update.ti:out st.update.kt:out st.update.zt:out
+!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
+!                st.psnc.fna:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
+!                st.psnc.fhn:in-out st.psnc.fkt:in-out st.psnc.fzt:in-out
+!                st.psnc.kinrgy:in-out st.update.ua:in-out st.update.na:in-out
+!                st.update.pa:in-out st.update.po:in-out st.update.te:in-out
+!                st.update.ti:in-out st.update.kt:in-out st.update.zt:in-out
 !  Differentiation of read_state as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: st.pl.na:in-out st.pl.ua:in-out
 !                st.pl.po:in-out st.pl.te:in-out st.pl.ti:in-out
@@ -20450,9 +20475,9 @@ CONTAINS
 !                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
 !                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
 !                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
-!                st.dv.fhet:out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhet:in-out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
 !                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
-!                st.dv.fhit:out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhit:in-out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
 !                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
 !                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
 !                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
@@ -20463,7 +20488,7 @@ CONTAINS
 !                st.dv.floi_noc:in-out st.dv.flon:in-out st.dv.flokt:in-out
 !                st.dv.flozt:in-out st.dv.conn:in-out st.dv.conkt:in-out
 !                st.dv.conzt:in-out st.dv.conb:in-out st.dv.cone:in-out
-!                st.dv.coni:in-out st.dv.fllime:out st.dv.fllimi:out
+!                st.dv.coni:in-out st.dv.fllime:in-out st.dv.fllimi:in-out
 !                st.dv.resmo:in-out st.dv.resco:in-out st.dv.respo:in-out
 !                st.dv.reshe:in-out st.dv.reshi:in-out st.dv.resht:in-out
 !                st.dv.resmt:in-out st.dv.reshn:in-out st.dv.reskt:in-out
@@ -20496,7 +20521,7 @@ CONTAINS
 !                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
 !                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
 !                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:out st.srw.b2stbm_sna:in-out
+!                st.srw.b2stbm_smq:in-out st.srw.b2stbm_sna:in-out
 !                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
 !                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
 !                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
@@ -20512,9 +20537,9 @@ CONTAINS
 !                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
 !                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
 !                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:out st.srw.she0_eir_tot:in-out
+!                st.srw.sne0_eir_tot:in-out st.srw.she0_eir_tot:in-out
 !                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:out st.rt.rlcx:in-out st.rt.rlqa:in-out
+!                st.srw.sch0_eir_tot:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
 !                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
 !                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
 !                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
@@ -20522,21 +20547,21 @@ CONTAINS
 !                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
 !                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
 !                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:out st.psnl.te:in-out
+!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
 !                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
 !                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:out st.psnl.fna:in-out
-!                st.psnl.fhi:out st.psnl.fhe:out st.psnl.fhn:out
-!                st.psnl.fkt:out st.psnl.fzt:out st.psnl.kinrgy:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:out
+!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
+!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:in-out
+!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
+!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
 !                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
 !                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:out
-!                st.psnc.fna:in-out st.psnc.fhi:out st.psnc.fhe:out
-!                st.psnc.fhn:out st.psnc.fkt:out st.psnc.fzt:out
-!                st.psnc.kinrgy:in-out st.update.ua:out st.update.na:out
-!                st.update.pa:out st.update.po:out st.update.te:out
-!                st.update.ti:out st.update.kt:out st.update.zt:out
+!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
+!                st.psnc.fna:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
+!                st.psnc.fhn:in-out st.psnc.fkt:in-out st.psnc.fzt:in-out
+!                st.psnc.kinrgy:in-out st.update.ua:in-out st.update.na:in-out
+!                st.update.pa:in-out st.update.po:in-out st.update.te:in-out
+!                st.update.ti:in-out st.update.kt:in-out st.update.zt:in-out
 !
 !**********************************************************************
 !
@@ -20739,9 +20764,9 @@ CONTAINS
 !                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
 !                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
 !                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
-!                st.dv.fhet:out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhet:in-out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
 !                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
-!                st.dv.fhit:out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhit:in-out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
 !                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
 !                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
 !                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
@@ -20752,7 +20777,7 @@ CONTAINS
 !                st.dv.floi_noc:in-out st.dv.flon:in-out st.dv.flokt:in-out
 !                st.dv.flozt:in-out st.dv.conn:in-out st.dv.conkt:in-out
 !                st.dv.conzt:in-out st.dv.conb:in-out st.dv.cone:in-out
-!                st.dv.coni:in-out st.dv.fllime:out st.dv.fllimi:out
+!                st.dv.coni:in-out st.dv.fllime:in-out st.dv.fllimi:in-out
 !                st.dv.resmo:in-out st.dv.resco:in-out st.dv.respo:in-out
 !                st.dv.reshe:in-out st.dv.reshi:in-out st.dv.resht:in-out
 !                st.dv.resmt:in-out st.dv.reshn:in-out st.dv.reskt:in-out
@@ -20785,7 +20810,7 @@ CONTAINS
 !                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
 !                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
 !                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:out st.srw.b2stbm_sna:in-out
+!                st.srw.b2stbm_smq:in-out st.srw.b2stbm_sna:in-out
 !                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
 !                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
 !                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
@@ -20801,9 +20826,9 @@ CONTAINS
 !                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
 !                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
 !                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:out st.srw.she0_eir_tot:in-out
+!                st.srw.sne0_eir_tot:in-out st.srw.she0_eir_tot:in-out
 !                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:out st.rt.rlcx:in-out st.rt.rlqa:in-out
+!                st.srw.sch0_eir_tot:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
 !                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
 !                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
 !                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
@@ -20811,21 +20836,21 @@ CONTAINS
 !                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
 !                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
 !                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:out st.psnl.te:in-out
+!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
 !                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
 !                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:out st.psnl.fna:in-out
-!                st.psnl.fhi:out st.psnl.fhe:out st.psnl.fhn:out
-!                st.psnl.fkt:out st.psnl.fzt:out st.psnl.kinrgy:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:out
+!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
+!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:in-out
+!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
+!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
 !                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
 !                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:out
-!                st.psnc.fna:in-out st.psnc.fhi:out st.psnc.fhe:out
-!                st.psnc.fhn:out st.psnc.fkt:out st.psnc.fzt:out
-!                st.psnc.kinrgy:in-out st.update.ua:out st.update.na:out
-!                st.update.pa:out st.update.po:out st.update.te:out
-!                st.update.ti:out st.update.kt:out st.update.zt:out
+!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
+!                st.psnc.fna:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
+!                st.psnc.fhn:in-out st.psnc.fkt:in-out st.psnc.fzt:in-out
+!                st.psnc.kinrgy:in-out st.update.ua:in-out st.update.na:in-out
+!                st.update.pa:in-out st.update.po:in-out st.update.te:in-out
+!                st.update.ti:in-out st.update.kt:in-out st.update.zt:in-out
 !
 !**********************************************************************
 !
@@ -20981,21 +21006,21 @@ CONTAINS
 
 !  Differentiation of read_state as a context to call tangent code (with options multiDirectional context noISIZE r8):
 !   Plus diff mem management of: st.pl.na:in-out st.pl.ua:in-out
-!                st.pl.po:in-out st.pl.te:out st.pl.ti:out st.pl.tn:in-out
-!                st.pl.kt:in-out st.pl.zt:in-out st.co.csig:in-out
-!                st.co.calf:in-out st.co.csig_an:in-out st.co.calf_an:in-out
-!                st.co.csig_cl:in-out st.co.calf_cl:in-out st.co.csigin:in-out
-!                st.co.chve:in-out st.co.chce:in-out st.co.chce_exb:in-out
-!                st.co.chvi:in-out st.co.chci:in-out st.co.chci_exb:in-out
-!                st.co.chcn:in-out st.co.cdkt:in-out st.co.cdzt:in-out
-!                st.co.chvemx:in-out st.co.chvimx:in-out st.co.cvla:in-out
-!                st.co.cdna:in-out st.co.cdna_exb:in-out st.co.cdpa:in-out
-!                st.co.cvsa:in-out st.co.cvlahz:in-out st.co.cdnahz:in-out
-!                st.co.cdpahz:in-out st.co.cvsahz:in-out st.co.cddi:in-out
-!                st.co.cvsahz_cl:in-out st.co.chcb:in-out st.co.cvsa_an:in-out
-!                st.co.cvmahz:in-out st.co.cvsahz_eff:in-out st.co.cthe:in-out
-!                st.co.cthi:in-out st.co.cvsa_cl:in-out st.co.ceqp:in-out
-!                st.co.fllim0fhi:in-out st.co.fllimvisc:in-out
+!                st.pl.po:in-out st.pl.te:in-out st.pl.ti:in-out
+!                st.pl.tn:in-out st.pl.kt:in-out st.pl.zt:in-out
+!                st.co.csig:in-out st.co.calf:in-out st.co.csig_an:in-out
+!                st.co.calf_an:in-out st.co.csig_cl:in-out st.co.calf_cl:in-out
+!                st.co.csigin:in-out st.co.chve:in-out st.co.chce:in-out
+!                st.co.chce_exb:in-out st.co.chvi:in-out st.co.chci:in-out
+!                st.co.chci_exb:in-out st.co.chcn:in-out st.co.cdkt:in-out
+!                st.co.cdzt:in-out st.co.chvemx:in-out st.co.chvimx:in-out
+!                st.co.cvla:in-out st.co.cdna:in-out st.co.cdna_exb:in-out
+!                st.co.cdpa:in-out st.co.cvsa:in-out st.co.cvlahz:in-out
+!                st.co.cdnahz:in-out st.co.cdpahz:in-out st.co.cvsahz:in-out
+!                st.co.cddi:in-out st.co.cvsahz_cl:in-out st.co.chcb:in-out
+!                st.co.cvsa_an:in-out st.co.cvmahz:in-out st.co.cvsahz_eff:in-out
+!                st.co.cthe:in-out st.co.cthi:in-out st.co.cvsa_cl:in-out
+!                st.co.ceqp:in-out st.co.fllim0fhi:in-out st.co.fllimvisc:in-out
 !                st.co.fllim0fna:in-out st.co.vsaf_cl:in-out st.co.sig0:in-out
 !                st.co.hce0:in-out st.co.hci0:in-out st.co.hcn0:in-out
 !                st.co.alf0:in-out st.co.dkt0:in-out st.co.dzt0:in-out
@@ -21021,9 +21046,9 @@ CONTAINS
 !                st.dv.fmo:in-out st.dv.fne:in-out st.dv.fne_he:in-out
 !                st.dv.fne_32:in-out st.dv.fne_52:in-out st.dv.fne_eir:in-out
 !                st.dv.fne_53:in-out st.dv.fhe:in-out st.dv.fhe_mdf:in-out
-!                st.dv.fhet:out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
+!                st.dv.fhet:in-out st.dv.fhepsch:in-out st.dv.fhe_eir:in-out
 !                st.dv.fhe_exb:in-out st.dv.fhi:in-out st.dv.fhi_mdf:in-out
-!                st.dv.fhit:out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
+!                st.dv.fhit:in-out st.dv.fhipsch:in-out st.dv.fhi_eir:in-out
 !                st.dv.fhi_exb:in-out st.dv.fnn:in-out st.dv.fnn_32:in-out
 !                st.dv.fnn_52:in-out st.dv.fhn:in-out st.dv.fnn_inc:in-out
 !                st.dv.fhm:in-out st.dv.fhp:in-out st.dv.fhj:in-out
@@ -21034,7 +21059,7 @@ CONTAINS
 !                st.dv.floi_noc:in-out st.dv.flon:in-out st.dv.flokt:in-out
 !                st.dv.flozt:in-out st.dv.conn:in-out st.dv.conkt:in-out
 !                st.dv.conzt:in-out st.dv.conb:in-out st.dv.cone:in-out
-!                st.dv.coni:in-out st.dv.fllime:out st.dv.fllimi:out
+!                st.dv.coni:in-out st.dv.fllime:in-out st.dv.fllimi:in-out
 !                st.dv.resmo:in-out st.dv.resco:in-out st.dv.respo:in-out
 !                st.dv.reshe:in-out st.dv.reshi:in-out st.dv.resht:in-out
 !                st.dv.resmt:in-out st.dv.reshn:in-out st.dv.reskt:in-out
@@ -21067,7 +21092,7 @@ CONTAINS
 !                st.srw.b2stbc_sna:in-out st.srw.b2stbm_sch:in-out
 !                st.srw.b2stbm_she:in-out st.srw.b2stbm_shi:in-out
 !                st.srw.b2stbm_sne:in-out st.srw.b2stbm_smo:in-out
-!                st.srw.b2stbm_smq:out st.srw.b2stbm_sna:in-out
+!                st.srw.b2stbm_smq:in-out st.srw.b2stbm_sna:in-out
 !                st.srw.b2stbr_sch:in-out st.srw.b2stbr_she:in-out
 !                st.srw.b2stbr_shi:in-out st.srw.b2stbr_sne:in-out
 !                st.srw.b2stbr_shn:in-out st.srw.b2stbr_skt:in-out
@@ -21083,9 +21108,9 @@ CONTAINS
 !                st.srw.b2sihs_exba:in-out st.srw.b2sihs_visa:in-out
 !                st.srw.b2sihs_fraa:in-out st.srw.b2sihs_str:in-out
 !                st.srw.sna0_eir_tot:in-out st.srw.smo0_eir_tot:in-out
-!                st.srw.sne0_eir_tot:out st.srw.she0_eir_tot:in-out
+!                st.srw.sne0_eir_tot:in-out st.srw.she0_eir_tot:in-out
 !                st.srw.shi0_eir_tot:in-out st.srw.shn0_eir_tot:in-out
-!                st.srw.sch0_eir_tot:out st.rt.rlcx:in-out st.rt.rlqa:in-out
+!                st.srw.sch0_eir_tot:in-out st.rt.rlcx:in-out st.rt.rlqa:in-out
 !                st.rt.rlrd:in-out st.rt.rlbr:in-out st.rt.rlra:in-out
 !                st.rt.rlsa:in-out st.rt.rlza:in-out st.rt.rlz2:in-out
 !                st.rt.rlpt:in-out st.rt.rlpi:in-out st.rt.rlqr:in-out
@@ -21093,21 +21118,21 @@ CONTAINS
 !                st.rt.rpi:in-out st.rtw.rsa:in-out st.rtw.rra:in-out
 !                st.rtw.rqa:in-out st.rtw.rrd:in-out st.rtw.rbr:in-out
 !                st.rtw.rcx:in-out st.rtw.rqr:in-out st.psnl.na:in-out
-!                st.psnl.ua:in-out st.psnl.po:out st.psnl.te:in-out
+!                st.psnl.ua:in-out st.psnl.po:in-out st.psnl.te:in-out
 !                st.psnl.ti:in-out st.psnl.tn:in-out st.psnl.kt:in-out
 !                st.psnl.zt:in-out st.psnl.ne:in-out st.psnl.ni:in-out
-!                st.psnl.nn:in-out st.psnl.fch:out st.psnl.fna:in-out
-!                st.psnl.fhi:out st.psnl.fhe:out st.psnl.fhn:out
-!                st.psnl.fkt:out st.psnl.fzt:out st.psnl.kinrgy:in-out
-!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:out
+!                st.psnl.nn:in-out st.psnl.fch:in-out st.psnl.fna:in-out
+!                st.psnl.fhi:in-out st.psnl.fhe:in-out st.psnl.fhn:in-out
+!                st.psnl.fkt:in-out st.psnl.fzt:in-out st.psnl.kinrgy:in-out
+!                st.psnc.na:in-out st.psnc.ua:in-out st.psnc.po:in-out
 !                st.psnc.te:in-out st.psnc.ti:in-out st.psnc.tn:in-out
 !                st.psnc.kt:in-out st.psnc.zt:in-out st.psnc.ne:in-out
-!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:out
-!                st.psnc.fna:in-out st.psnc.fhi:out st.psnc.fhe:out
-!                st.psnc.fhn:out st.psnc.fkt:out st.psnc.fzt:out
-!                st.psnc.kinrgy:in-out st.update.ua:out st.update.na:out
-!                st.update.pa:out st.update.po:out st.update.te:out
-!                st.update.ti:out st.update.kt:out st.update.zt:out
+!                st.psnc.ni:in-out st.psnc.nn:in-out st.psnc.fch:in-out
+!                st.psnc.fna:in-out st.psnc.fhi:in-out st.psnc.fhe:in-out
+!                st.psnc.fhn:in-out st.psnc.fkt:in-out st.psnc.fzt:in-out
+!                st.psnc.kinrgy:in-out st.update.ua:in-out st.update.na:in-out
+!                st.update.pa:in-out st.update.po:in-out st.update.te:in-out
+!                st.update.ti:in-out st.update.kt:in-out st.update.zt:in-out
 !
 !**********************************************************************
 !

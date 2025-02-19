@@ -19,10 +19,7 @@ SUBROUTINE B2SIFR__NODIFF(ncv, nfc, nvx, ns, isb, switch, geo, mpg, na, &
 & ua, te, ti, ni, ne, ne2, rza, rz2, ehxp, lnlam, cthe, cthi, st_ext, &
 & smbch, smbtf, smprb, smptb, smfrb, vti32, gti, gte)
   USE B2MOD_TYPES
-!WG_RM      use b2mod_rates
-!WG_RM      use b2mod_indirect
   USE B2MOD_CONSTANTS
-!WG_RM      use b2mod_external
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF
@@ -326,10 +323,7 @@ SUBROUTINE B2SIFR__B(ncv, nfc, nvx, ns, isb, switch, switchb, geo, geob&
 & st_ext, smbch, smbchb, smbtf, smbtfb, smprb, smptb, smfrb, vti32, &
 & vti32b, gti, gtib, gte, gteb)
   USE B2MOD_TYPES
-!WG_RM      use b2mod_rates
-!WG_RM      use b2mod_indirect
   USE B2MOD_CONSTANTS
-!WG_RM      use b2mod_external
   USE B2MOD_B2CMPA_DIFF
   USE B2MOD_SWITCHES_DIFF
   USE B2US_GEO_DIFF

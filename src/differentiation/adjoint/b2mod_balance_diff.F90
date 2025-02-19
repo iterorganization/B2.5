@@ -4147,13 +4147,14 @@ CONTAINS
     vdims(1) = nfcid
     CALL WRITE_CDF_INT(ncid, 'fcVx', mpg%fcvx, vdims, 2)
     CALL WRITE_CDF_INT(ncid, 'fcCv', mpg%fccv, vdims, 2)
-!   ..cvBb, cvEb, cvHx, cvHz, cvVol, fcS, fcHz, fcLbl, fcQalf, fcBb, am:
+!   ..cvBb, cvEb, cvHx, cvHy, cvHz, cvVol, fcS, fcHz, fcLbl, fcQalf, fcBb, am:
     vdims(1) = ncvpid
     vdims(2) = n4id
     CALL WRITE_CDF_DOUBLE(ncid, 'cvBb', geo%cvbb, vdims, 2)
     vdims(2) = n3id
     CALL WRITE_CDF_DOUBLE(ncid, 'cvEb', geo%cveb, vdims, 2)
     CALL WRITE_CDF_DOUBLE(ncid, 'cvHx', geo%cvhx, vdims, 1)
+    CALL WRITE_CDF_DOUBLE(ncid, 'cvHy', geo%cvhy, vdims, 1)
     CALL WRITE_CDF_DOUBLE(ncid, 'cvHz', geo%cvhz, vdims, 1)
     CALL WRITE_CDF_DOUBLE(ncid, 'cvVol', geo%cvvol, vdims, 1)
     vdims(1) = nfcid

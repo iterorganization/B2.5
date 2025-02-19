@@ -24,16 +24,17 @@
 !                dv.fchin:in dv.fchvispar:in dv.fchvisper:in dv.fchvisq:in
 !                dv.fchinert:in dv.fchanml:in dv.fchviskt:in dv.fch_pi_c:in
 !                dv.fch_pi_f:in dv.fna:in dv.conc:in dv.ne:in dv.ni:in
-!                dv.ne2:in dv.pz:in dv.lnlam:in dv.uadia:in mpg.intcellp:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvvol:in geo.cvonedbsq:in
-!                geo.fcbb:in geo.fcs:in geo.fchc:in geo.fcht:in
-!                geo.fcvol:in geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in
-!                geo.vxvol:in geo.vxonedbsq:in geo.ftconn:in geo.fteps:in
-!                geo.ftbbav2:in st_ext.za:in st_ext.za2:in st_ext.na:in
-!                st_ext.ua:in rt.rza:in rt.rz2:in co.csig:in co.calf:in
-!                co.csig_an:in co.csigin:in co.vsaf_cl:in co.dna_exb:in
-!                co.vsa0:in co.hcix_c:in pl.na:in pl.ua:in pl.po:in
-!                pl.te:in pl.ti:in pl.kt:in
+!                dv.ne2:in dv.pz:in dv.lnlam:in dv.vaecrb:in dv.facdrift:in
+!                dv.fac_exb:in dv.fac_vis:in mpg.intcellp:in mpg.intcellr:in
+!                geo.cvbb:in geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in
+!                geo.fcs:in geo.fchc:in geo.fcht:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.vxvol:in
+!                geo.vxonedbsq:in geo.ftconn:in geo.fteps:in geo.ftbbav2:in
+!                st_ext.za:in st_ext.za2:in st_ext.na:in st_ext.ua:in
+!                rt.rza:in rt.rz2:in co.csig:in co.calf:in co.csig_an:in
+!                co.csigin:in co.vsaf_cl:in co.dna_exb:in co.vsa0:in
+!                co.hcix_c:in pl.na:in pl.ua:in pl.po:in pl.te:in
+!                pl.ti:in pl.kt:in
 !
 !
 !
@@ -169,8 +170,7 @@ SUBROUTINE B2TFCH__B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb&
     CALL PUSHREAL8ARRAY(dv%fchdia, r8*SIZE(dv%fchdia, 1)*SIZE(dv%fchdia&
 &                 , 2)/8)
     CALL PUSHREAL8ARRAY(geo%vxonedbsq, r8*SIZE(geo%vxonedbsq, 1)/8)
-    CALL B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, dv%pz, dv%&
-&                fna, dv%uadia, dv%facdrift, dv%fchdia)
+    CALL B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, dv)
 !     ..calculate x,y-components of viscosity parallel current
     CALL PUSHREAL8ARRAY(dv%fchvispar, r8*SIZE(dv%fchvispar, 1)*SIZE(dv%&
 &                 fchvispar, 2)/8)
@@ -312,9 +312,8 @@ SUBROUTINE B2TFCH__B(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchb&
     CALL POPREAL8ARRAY(geo%vxonedbsq, r8*SIZE(geo%vxonedbsq, 1)/8)
     CALL POPREAL8ARRAY(dv%fchdia, r8*SIZE(dv%fchdia, 1)*SIZE(dv%fchdia, &
 &                2)/8)
-    CALL B2TDIA_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, dv%pz&
-&           , dvb%pz, dv%fna, dv%uadia, dv%facdrift, dv%fchdia, dvb%&
-&           fchdia)
+    CALL B2TDIA_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, dv, &
+&           dvb)
     CALL B2TINNT_B(ncv, nfc, nvx, ns, switch, geo, geob, mpg, mpgb, rt, &
 &            rtb, dv%facdrift, dv%fac_exb, ismain, ismain0, pl, plb, dv%&
 &            fna, dvb%fna, co%csigin, cob%csigin, dv%fchin, dvb%fchin)
@@ -462,8 +461,7 @@ SUBROUTINE B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &                 facdrift, dv%fac_exb, ismain, ismain0, pl, dv%fna, co%&
 &                 csigin, dv%fchin)
 !     ..compute x,y-components of divergent part of diamagnetic current
-    CALL B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, dv%pz, dv%&
-&                fna, dv%uadia, dv%facdrift, dv%fchdia)
+    CALL B2TDIA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, dv)
 !     ..calculate x,y-components of viscosity parallel current
     CALL B2TVSPA_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl%ua, co%&
 &                 vsaf_cl, dv%fac_vis, dv%fchvispar)

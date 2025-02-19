@@ -446,6 +446,14 @@ SUBROUTINE B2TFHE__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
 &                   'b2tfhe__fhe_mdf_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 1), &
 &                   'b2tfhe__fhe_mdf_r')
+  END IF
+!
+  IF (switch%b2npht_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
+!srv 11.09.09 {
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe(1, 0), &
+&                   'b2tfhe__fhe_no_mdf_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe(1, 1), &
+&                   'b2tfhe__fhe_no_mdf_r')
     CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 0), &
 &                   'b2tfhe__fhePSch_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 1), &
@@ -769,6 +777,14 @@ SUBROUTINE B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, &
 &                   'b2tfhe__fhe_mdf_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhe_mdf(1, 1), &
 &                   'b2tfhe__fhe_mdf_r')
+  END IF
+!
+  IF (switch%b2npht_iout .NE. 0 .OR. switch%iout_b2wdat .EQ. 4) THEN
+!srv 11.09.09 {
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe(1, 0), &
+&                   'b2tfhe__fhe_no_mdf_th')
+    CALL MY_OUT_US(70, nfc, 1, dv%fhe(1, 1), &
+&                   'b2tfhe__fhe_no_mdf_r')
     CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 0), &
 &                   'b2tfhe__fhePSch_th')
     CALL MY_OUT_US(70, nfc, 1, dv%fhepsch(1, 1), &

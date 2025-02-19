@@ -45,7 +45,7 @@ MODULE B2US_MAP_DIFFV_DIFFV
 !         listing for every cell the corresponding vertex numbers
 ! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces
 !         listing for every vertex the corresponding face numbers
-! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells
+! (nVx,2) pointing for every vertex to the first index number in the vxCv list and its number of cells
 !         listing for every vertex the corresponding cell numbers
 ! (nFt,2) pointing for every flux tube to the first index number in the ftCv list and its number of cells
 !         listing for every flux tube the corresponding cell numbers
@@ -1739,7 +1739,7 @@ CONTAINS
       md0%cvnvp(nd, 1:m%ncv, 1:2) = 0
     END DO
     ALLOCATE(m%cvnvp(m%ncv, 2))
-    ALLOCATE(cvnvloc(10*m%ncv))
+    ALLOCATE(cvnvloc(20*m%ncv))
 ! initial overestimate of size cvNv array
     ALLOCATE(indcv(100))
 ! (over)estimate of max number number of neighbors an individual cell could have
@@ -2214,7 +2214,12 @@ CONTAINS
         DEALLOCATE(indfc)
       END IF
     END IF
-    DEALLOCATE(freg)
+    IF (ALLOCATED(freg)) THEN
+      DEALLOCATE(freg)
+    ELSE
+      WRITE(*, *) 'Targetless topology detected :'
+      WRITE(*, *) 'Strike point data not defined'
+    END IF
 !
     WRITE(*, *) 'nXpt, nStr, nTgc ', m%nxpt, m%nstr, m%ntgc
     WRITE(*, *) 'nFsVxmx          ', m%nfsvxmx
@@ -2249,7 +2254,7 @@ CONTAINS
 !
 !   ..set up connectivity information for the matrix stencil
     ALLOCATE(m%cvnvp(m%ncv, 2))
-    ALLOCATE(cvnvloc(10*m%ncv))
+    ALLOCATE(cvnvloc(20*m%ncv))
 ! initial overestimate of size cvNv array
     ALLOCATE(indcv(100))
 ! (over)estimate of max number number of neighbors an individual cell could have
@@ -2657,7 +2662,12 @@ CONTAINS
         DEALLOCATE(indfc)
       END IF
     END IF
-    DEALLOCATE(freg)
+    IF (ALLOCATED(freg)) THEN
+      DEALLOCATE(freg)
+    ELSE
+      WRITE(*, *) 'Targetless topology detected :'
+      WRITE(*, *) 'Strike point data not defined'
+    END IF
 !
     WRITE(*, *) 'nXpt, nStr, nTgc ', m%nxpt, m%nstr, m%ntgc
     WRITE(*, *) 'nFsVxmx          ', m%nfsvxmx

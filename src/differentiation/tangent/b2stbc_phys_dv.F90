@@ -2711,8 +2711,6 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           ELSE
             abs2 = -geo%fcpbs(ifc)
           END IF
-!srv 11.03.09 {
-!srv 19.04.13
           srw%shi0(icv1, 1) = srw%shi0(icv1, 1) - (enipar(ib, 1)+switch%&
 &           stab_coeff_sheath_ti)*t0*cs*abs2 - enipar(ib, 2)*t1*geo%fcs(&
 &           ifc)
@@ -2721,13 +2719,12 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
           ELSE
             abs3 = -geo%fcpbs(ifc)
           END IF
-!srv 11.03.09 {
           srw%shi0(icv1, 0) = srw%shi0(icv1, 0) + switch%&
 &           stab_coeff_sheath_ti*t0*cs*abs3
         ELSE
 !wdk sheath transmission factor consistent with truncated
 !    Maxwellian distribution on Eirene side (NEMODS=7)
-!    See eirene manual for details.
+!    See Eirene manual for details.
           DO is=0,ns-1
             IF (.NOT.is_neutral(is)) THEN
               arg11 = 2.0_R8*pl%ti(icv1)/(am(is)*mp)
@@ -4612,6 +4609,104 @@ CONTAINS
 !
     RETURN
   END FUNCTION PIT
+
+!
+!-----------------------------------------------------------------------
+!.specification
+  FUNCTION BCINT(fun, nx, ny, il, ib)
+    USE B2MOD_TYPES
+    USE B2MOD_GEO_DIFFV
+    USE B2MOD_INDIRECT_DIFFV
+    USE B2MOD_BOUNDARY_NAMELIST_DIFFV
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!
+!-----------------------------------------------------------------------
+!.end bcint
+!
+!   ..output result (undefined upon entry)
+    REAL(kind=r8) :: bcint
+!   ..input arguments (unchanged on exit)
+    INTEGER :: nx, ny, il, ib
+    REAL(kind=r8) :: fun(-1:nx, -1:ny)
+!
+!-----------------------------------------------------------------------
+!.documentation
+!
+!  1. purpose
+!
+!     BCINT provides interpolated face-centred values for cell-centred
+!     quantities (array fun), for use in boundary conditions.
+!     The interpolation is done according to distance away from the
+!     cell face. The boundary index is ib, and the cell index along
+!     the boundary is il.
+!
+!
+!-----------------------------------------------------------------------
+!.declarations
+!
+!   ..procedures
+    EXTERNAL XERTST, XERRAB
+    REAL(kind=r8) :: result11
+    REAL(kind=r8) :: result21
+    REAL(kind=r8) :: result3
+    REAL(kind=r8) :: result4
+!
+!-----------------------------------------------------------------------
+!.computation
+!
+! ..preliminaries
+!  ..test input parameters
+    CALL XERTST(0 .LE. nx .AND. 0 .LE. ny, 'faulty parameter nx, ny')
+    CALL XERTST(0 .LT. ib .AND. nbc .GE. ib, 'faulty parameter ib')
+    CALL XERTST(1 .LE. il .AND. bc_list_size(ib) .GE. il, &
+&         'faulty parameter il')
+!
+! ..main computation
+    IF (bcchar(ib) .EQ. 'S') THEN
+      result11 = HY1(topix(bc_list_x(il, ib), bc_list_y(il, ib)), topiy(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)))
+      result21 = HY1(bc_list_x(il, ib), bc_list_y(il, ib))
+      result3 = HY1(bc_list_x(il, ib), bc_list_y(il, ib))
+      result4 = HY1(topix(bc_list_x(il, ib), bc_list_y(il, ib)), topiy(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)))
+      bcint = (fun(bc_list_x(il, ib), bc_list_y(il, ib))*result11+fun(&
+&       topix(bc_list_x(il, ib), bc_list_y(il, ib)), topiy(bc_list_x(il&
+&       , ib), bc_list_y(il, ib)))*result21)/(result3+result4)
+    ELSE IF (bcchar(ib) .EQ. 'N') THEN
+      result11 = HY1(bottomix(bc_list_x(il, ib), bc_list_y(il, ib)), &
+&       bottomiy(bc_list_x(il, ib), bc_list_y(il, ib)))
+      result21 = HY1(bc_list_x(il, ib), bc_list_y(il, ib))
+      result3 = HY1(bc_list_x(il, ib), bc_list_y(il, ib))
+      result4 = HY1(bottomix(bc_list_x(il, ib), bc_list_y(il, ib)), &
+&       bottomiy(bc_list_x(il, ib), bc_list_y(il, ib)))
+      bcint = (fun(bc_list_x(il, ib), bc_list_y(il, ib))*result11+fun(&
+&       bottomix(bc_list_x(il, ib), bc_list_y(il, ib)), bottomiy(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)))*result21)/(result3+&
+&       result4)
+    ELSE IF (bcchar(ib) .EQ. 'E') THEN
+      bcint = (fun(bc_list_x(il, ib), bc_list_y(il, ib))*hx(leftix(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)), leftiy(bc_list_x(il, ib)&
+&       , bc_list_y(il, ib)))+fun(leftix(bc_list_x(il, ib), bc_list_y(il&
+&       , ib)), leftiy(bc_list_x(il, ib), bc_list_y(il, ib)))*hx(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)))/(hx(bc_list_x(il, ib), &
+&       bc_list_y(il, ib))+hx(leftix(bc_list_x(il, ib), bc_list_y(il, ib&
+&       )), leftiy(bc_list_x(il, ib), bc_list_y(il, ib))))
+    ELSE IF (bcchar(ib) .EQ. 'W') THEN
+      bcint = (fun(bc_list_x(il, ib), bc_list_y(il, ib))*hx(rightix(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)), rightiy(bc_list_x(il, ib)&
+&       , bc_list_y(il, ib)))+fun(rightix(bc_list_x(il, ib), bc_list_y(&
+&       il, ib)), rightiy(bc_list_x(il, ib), bc_list_y(il, ib)))*hx(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)))/(hx(bc_list_x(il, ib), &
+&       bc_list_y(il, ib))+hx(rightix(bc_list_x(il, ib), bc_list_y(il, &
+&       ib)), rightiy(bc_list_x(il, ib), bc_list_y(il, ib))))
+    ELSE
+      CALL XERRAB('bcint : Unknown orientation!')
+    END IF
+!
+! ..return
+    RETURN
+  END FUNCTION BCINT
 
 END SUBROUTINE B2STBC_PHYS_NODIFF
 
@@ -8841,8 +8936,6 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           ELSE
             abs2 = -geo%fcpbs(ifc)
           END IF
-!srv 11.03.09 {
-!srv 19.04.13
           DO nd=1,nbdirs
             srwd%shi0(nd, icv1, 1) = srwd%shi0(nd, icv1, 1) - abs2*(t0*&
 &             cs*enipard(nd, ib, 1)+(switch%stab_coeff_sheath_ti+enipar(&
@@ -8857,7 +8950,6 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           ELSE
             abs3 = -geo%fcpbs(ifc)
           END IF
-!srv 11.03.09 {
           DO nd=1,nbdirs
             srwd%shi0(nd, icv1, 0) = srwd%shi0(nd, icv1, 0) + switch%&
 &             stab_coeff_sheath_ti*abs3*(cs*t0d(nd)+t0*csd(nd))
@@ -8876,7 +8968,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
           END DO
 !wdk sheath transmission factor consistent with truncated
 !    Maxwellian distribution on Eirene side (NEMODS=7)
-!    See eirene manual for details.
+!    See Eirene manual for details.
           DO is=0,ns-1
             IF (.NOT.is_neutral(is)) THEN
               arg11 = 2.0_R8*pl%ti(icv1)/(am(is)*mp)
@@ -11792,6 +11884,100 @@ CONTAINS
 !
     RETURN
   END FUNCTION PIT
+
+!
+!-----------------------------------------------------------------------
+!.specification
+  FUNCTION BCINT(fun, nx, ny, il, ib)
+    USE B2MOD_TYPES
+    USE B2MOD_GEO_DIFFV
+    USE B2MOD_INDIRECT_DIFFV
+    USE B2MOD_BOUNDARY_NAMELIST_DIFFV
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!   ..output result (undefined upon entry)
+    REAL(kind=r8) :: bcint
+!   ..input arguments (unchanged on exit)
+    INTEGER :: nx, ny, il, ib
+    REAL(kind=r8) :: fun(-1:nx, -1:ny)
+!
+!-----------------------------------------------------------------------
+!.documentation
+!
+!  1. purpose
+!
+!     BCINT provides interpolated face-centred values for cell-centred
+!     quantities (array fun), for use in boundary conditions.
+!     The interpolation is done according to distance away from the
+!     cell face. The boundary index is ib, and the cell index along
+!     the boundary is il.
+!
+!
+!-----------------------------------------------------------------------
+!.declarations
+!
+!   ..procedures
+    EXTERNAL XERTST, XERRAB
+    REAL(kind=r8) :: result11
+    REAL(kind=r8) :: result21
+    REAL(kind=r8) :: result3
+    REAL(kind=r8) :: result4
+!
+!-----------------------------------------------------------------------
+!.computation
+!
+! ..preliminaries
+!  ..test input parameters
+    CALL XERTST(0 .LE. nx .AND. 0 .LE. ny, 'faulty parameter nx, ny')
+    CALL XERTST(0 .LT. ib .AND. nbc .GE. ib, 'faulty parameter ib')
+    CALL XERTST(1 .LE. il .AND. bc_list_size(ib) .GE. il, &
+&         'faulty parameter il')
+!
+! ..main computation
+    IF (bcchar(ib) .EQ. 'S') THEN
+      result11 = HY1(topix(bc_list_x(il, ib), bc_list_y(il, ib)), topiy(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)))
+      result21 = HY1(bc_list_x(il, ib), bc_list_y(il, ib))
+      result3 = HY1(bc_list_x(il, ib), bc_list_y(il, ib))
+      result4 = HY1(topix(bc_list_x(il, ib), bc_list_y(il, ib)), topiy(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)))
+      bcint = (fun(bc_list_x(il, ib), bc_list_y(il, ib))*result11+fun(&
+&       topix(bc_list_x(il, ib), bc_list_y(il, ib)), topiy(bc_list_x(il&
+&       , ib), bc_list_y(il, ib)))*result21)/(result3+result4)
+    ELSE IF (bcchar(ib) .EQ. 'N') THEN
+      result11 = HY1(bottomix(bc_list_x(il, ib), bc_list_y(il, ib)), &
+&       bottomiy(bc_list_x(il, ib), bc_list_y(il, ib)))
+      result21 = HY1(bc_list_x(il, ib), bc_list_y(il, ib))
+      result3 = HY1(bc_list_x(il, ib), bc_list_y(il, ib))
+      result4 = HY1(bottomix(bc_list_x(il, ib), bc_list_y(il, ib)), &
+&       bottomiy(bc_list_x(il, ib), bc_list_y(il, ib)))
+      bcint = (fun(bc_list_x(il, ib), bc_list_y(il, ib))*result11+fun(&
+&       bottomix(bc_list_x(il, ib), bc_list_y(il, ib)), bottomiy(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)))*result21)/(result3+&
+&       result4)
+    ELSE IF (bcchar(ib) .EQ. 'E') THEN
+      bcint = (fun(bc_list_x(il, ib), bc_list_y(il, ib))*hx(leftix(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)), leftiy(bc_list_x(il, ib)&
+&       , bc_list_y(il, ib)))+fun(leftix(bc_list_x(il, ib), bc_list_y(il&
+&       , ib)), leftiy(bc_list_x(il, ib), bc_list_y(il, ib)))*hx(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)))/(hx(bc_list_x(il, ib), &
+&       bc_list_y(il, ib))+hx(leftix(bc_list_x(il, ib), bc_list_y(il, ib&
+&       )), leftiy(bc_list_x(il, ib), bc_list_y(il, ib))))
+    ELSE IF (bcchar(ib) .EQ. 'W') THEN
+      bcint = (fun(bc_list_x(il, ib), bc_list_y(il, ib))*hx(rightix(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)), rightiy(bc_list_x(il, ib)&
+&       , bc_list_y(il, ib)))+fun(rightix(bc_list_x(il, ib), bc_list_y(&
+&       il, ib)), rightiy(bc_list_x(il, ib), bc_list_y(il, ib)))*hx(&
+&       bc_list_x(il, ib), bc_list_y(il, ib)))/(hx(bc_list_x(il, ib), &
+&       bc_list_y(il, ib))+hx(rightix(bc_list_x(il, ib), bc_list_y(il, &
+&       ib)), rightiy(bc_list_x(il, ib), bc_list_y(il, ib))))
+    ELSE
+      CALL XERRAB('bcint : Unknown orientation!')
+    END IF
+!
+! ..return
+    RETURN
+  END FUNCTION BCINT
 
 END SUBROUTINE B2STBC_PHYS_DV
 

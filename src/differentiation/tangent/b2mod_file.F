@@ -51,7 +51,6 @@ c
       contains
 c
       subroutine b2filei(ns,nregionv,switch)
-      use b2mod_plasma_diffv
       use b2mod_version_diffv
       implicit none
 c
