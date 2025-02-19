@@ -251,6 +251,7 @@ CONTAINS
           she0dd(nd0, nd, :, :) = 0.0_8
         END DO
         she0d(nd, :, :) = 0.d0
+        sne0d(nd, :, :) = 0.d0
       END DO
       smo0d0(:, :, :, :) = 0.0_8
       shi0d0(:, :, :) = 0.0_8
