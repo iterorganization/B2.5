@@ -2442,7 +2442,7 @@
       integer :: fcsb(mpg%nCg), cvsb(mpg%nCg,2), k, ind, ind1, tmp, iFt
       logical :: iscvsb(mpg%nCv)
       integer :: wrkVx(mpg%nVx)
-      real (kind=R8) :: meanCv(2),meanFc(2)
+      real (kind=R8) :: meanCv(2),meanFc(2), bz_sign
 
       call ipgetr('b2stbc_Qalfmin',Qalfmin)
       call ipgetr('b2stbc_Qalfmax',Qalfmax)
@@ -2525,42 +2525,6 @@
      .        sign(1.0_R8,wbbl(ix,iy,2))
             gm%fcPbs(iFc) = pbs(ix,iy,0)
             gm%fcPbshz(iFc) = pbshz(ix,iy,0)
-            wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
-            if (wrk >= Qalfmin .and. wrk < Qalfmax .and.
-     .          mpg%fcLbl(iFc) > 0) then
-              gm%fcPbs(iFc) = Qalfmax*gm%fcS(iFc)*
-     .         sign(1.0_R8,gm%fcPbs(iFc))
-              gm%fcPbshz(iFc) = Qalfmax*gm%fcS(iFc)*gm%fcHz(iFc)*
-     .         sign(1.0_R8,gm%fcPbshz(iFc))
-              if (mod_alpha.eq.1) then
-                gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)
-     .           /gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
-                gm%fcQalf(iFc,1) = sign(gm%fcQalf(iFc,1),
-     .           sqrt(1.0_R8-gm%fcQalf(iFc,0)**2))
-                if (gm%fcQbet(iFc,0) < 0.0_R8) then
-                  gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
-                  gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)
-                elseif (gm%fcQbet(iFc,0) >= 0.0_R8) then
-                  gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
-                  gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)
-                endif
-              endif
-              write(*,*) 'pbs and pbshz were modified for iFc=',iFc
-            elseif (wrk < Qalfmin .and. mpg%fcLbl(iFc) > 0) then
-              gm%fcPbs(iFc) = pbs_red_fac*gm%fcPbs(iFc)
-              gm%fcPbshz(iFc) = pbs_red_fac*gm%fcPbshz(iFc)
-              if (mod_alpha.eq.1) then
-                gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)/
-     .           gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
-                gm%fcQalf(iFc,1) = sign(gm%fcQalf(iFc,1),
-     .           sqrt(1.0_R8-gm%fcQalf(iFc,0)**2))
-                gm%fcQbet(iFc,0) = gm%fcQgam(iFc,0)*gm%fcQalf(iFc,0) +
-     .           gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)
-                gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
-     .           gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)
-              endif
-              write(*,*) 'pbs and pbshz were reduced for iFc=',iFc
-            endif
           end if
         end do
       end do
@@ -2608,45 +2572,52 @@
      .        sign(1.0_R8,wbbv(ix,iy,2))
             gm%fcPbs(iFc) = pbs(ix,iy,1)
             gm%fcPbshz(iFc) = pbshz(ix,iy,1)
-            wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
-            if (wrk >= Qalfmin .and. wrk < Qalfmax .and.
-     .          mpg%fcLbl(iFc) > 0 ) then
-              gm%fcPbs(iFc) = Qalfmax*gm%fcS(iFc)*
-     .         sign(1.0_R8,gm%fcPbs(iFc))
-              gm%fcPbshz(iFc) = Qalfmax*gm%fcS(iFc)*gm%fcHz(iFc)*
-     .         sign(1.0_R8,gm%fcPbshz(iFc))
-              if (mod_alpha.eq.1) then
-                gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)
-     .           /gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
-                gm%fcQalf(iFc,1) = sign(gm%fcQalf(iFc,1),
-     .           sqrt(1.0_R8-gm%fcQalf(iFc,0)**2))
-                if (gm%fcQbet(iFc,0) < 0.0_R8) then
-                  gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
-                  gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)
-                elseif (gm%fcQbet(iFc,0) >= 0.0_R8) then
-                  gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
-                  gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)
-                endif
-              endif
-              write(*,*) 'pbs and pbshz were modified for iFc=',iFc
-            elseif (wrk < Qalfmin .and. mpg%fcLbl(iFc) > 0) then
-              gm%fcPbs(iFc) = pbs_red_fac*gm%fcPbs(iFc)
-              gm%fcPbshz(iFc) = pbs_red_fac*gm%fcPbshz(iFc)
-              if (mod_alpha.eq.1) then
-                gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)/
-     .           gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
-                gm%fcQalf(iFc,1) = sign(gm%fcQalf(iFc,1),
-     .           sqrt(1.0_R8-gm%fcQalf(iFc,0)**2))
-                gm%fcQbet(iFc,0) = gm%fcQgam(iFc,0)*gm%fcQalf(iFc,0) +
-     .           gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)
-                gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
-     .           gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)
-              endif
-              write(*,*) 'pbs and pbshz were reduced for iFc=',iFc
-            endif
           end if
         end do
       end do
+
+      do ic=mpg%nCi+1,mpg%nCv
+        iFc = mpg%cvFc(mpg%cvFcP(ic,1))
+        if (mpg%fcLbl(iFc) .le. 0) cycle
+        bz_sign = sign(1.0_R8,gm%cvEb(ic,2))
+        wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
+        if (wrk >= Qalfmin .and. wrk < Qalfmax .and.
+     .        mpg%fcLbl(iFc) > 0) then
+          gm%fcPbs(iFc) = Qalfmax*gm%fcS(iFc)*
+     .       sign(1.0_R8,gm%fcPbs(iFc))
+          gm%fcPbshz(iFc) = Qalfmax*gm%fcS(iFc)*gm%fcHz(iFc)*
+     .       sign(1.0_R8,gm%fcPbshz(iFc))
+          if (mod_alpha.eq.1) then
+            gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)
+     .         /gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+            gm%fcQalf(iFc,1) = sign(sqrt(1.0_R8-
+     .          gm%fcQalf(iFc,0)**2),gm%fcQalf(iFc,1))
+            if (gm%fcQbet(iFc,0)*bz_sign < 0.0_R8) then
+              gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
+              gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)*bz_sign
+            elseif (gm%fcQbet(iFc,0)*bz_sign >= 0.0_R8) then
+              gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
+              gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)*bz_sign
+            endif
+          endif
+          write(*,*) 'pbs and pbshz were modified for iFc=',iFc
+        elseif (wrk < Qalfmin .and. mpg%fcLbl(iFc) > 0) then
+          gm%fcPbs(iFc) = pbs_red_fac*gm%fcPbs(iFc)
+          gm%fcPbshz(iFc) = pbs_red_fac*gm%fcPbshz(iFc)
+          if (mod_alpha.eq.1) then
+            gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)/
+     .         gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+            gm%fcQalf(iFc,1) = sign(sqrt(1.0_R8-
+     .          gm%fcQalf(iFc,0)**2),gm%fcQalf(iFc,1))
+            gm%fcQbet(iFc,0) = gm%fcQgam(iFc,0)*gm%fcQalf(iFc,0) +
+     .         gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)*bz_sign
+            gm%fcQbet(iFc,0) = gm%fcQbet(iFc,0)*bz_sign
+            gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
+     .         gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)*bz_sign
+          endif
+          write(*,*) 'pbs and pbshz were reduced for iFc=',iFc
+        endif
+      enddo
 
       k = 1
       do ic=mpg%nCi+1,mpg%nCv
@@ -2682,16 +2653,18 @@
         do iFt=1,mpg%nFt
           do k=mpg%ftFcP(iFt,1),mpg%ftFcP(iFt,1)+mpg%ftFcP(iFt,2)-1
             iFc = mpg%ftFc(k)
+            if (mpg%fcLbl(iFc).gt.0) cycle
             if (.not.iscvsb(mpg%fcCv(iFc,1)) .and.
      &          .not.iscvsb(mpg%fcCv(iFc,2))) cycle
-            if (gm%fcQbet(iFc,0) < 0.0_R8) then
-              gm%fcQbet(iFc,0) = -1.0_R8
+            bz_sign = sign(1.0_R8,gm%cvEb(mpg%fcCv(iFc,1),2))
+            if (gm%fcQbet(iFc,0)*bz_sign < 0.0_R8) then
+              gm%fcQbet(iFc,0) = -1.0_R8*bz_sign
               gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
-              gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)
-            elseif (gm%fcQbet(iFc,0) >= 0.0_R8) then
-              gm%fcQbet(iFc,0) = 1.0_R8
+              gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)*bz_sign
+            elseif (gm%fcQbet(iFc,0)*bz_sign >= 0.0_R8) then
+              gm%fcQbet(iFc,0) = 1.0_R8*bz_sign
               gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
-              gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)
+              gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)*bz_sign
             endif
             gm%fcQbet(iFc,1) = 0.0_R8
           enddo
