@@ -509,8 +509,6 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,fhe_32_loc(1,1),'b2tfhe__fhe_32_r')
        call my_out_us(70,nFc,1,fhe_52_loc(1,0),'b2tfhe__fhe_52_th')
        call my_out_us(70,nFc,1,fhe_52_loc(1,1),'b2tfhe__fhe_52_r')
-       call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
-       call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
       endif
 
 
