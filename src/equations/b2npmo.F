@@ -28,7 +28,7 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2usmo,
+     & , only : ncall_b2usmo, nsmooth_siav_zh,
      &          ncall_b2urmo, ncall_b2sicf, ncall_b2nxfc, ncall_b2sigp,
      &          ncall_b2nxdu, ncall_b2ttia, ncall_b2sifr, ncall_b2siav,
 #ifdef WG_DEBUG
@@ -254,7 +254,9 @@ c time-dependent treatment                                            !srv 07.07
         call b2xz22 (nCv, ns, ismain, rt%rz2, pl%na, am1, z22)
         if (switch%impr_form_fr.eq.0) then
           do iCv = 1, nCv
-            cimp1(iCv,0:ns-1)=fce1(zmff(iCv))
+            do is = 0, ns-1
+              cimp1(iCv,is)=fce1(zmff(iCv))
+            end do
           enddo
         else
           do is = 0, ns-1
@@ -266,7 +268,9 @@ c time-dependent treatment                                            !srv 07.07
         endif
         if (switch%impr_form_tf.eq.0) then
           do iCv = 1, nCv
-            cimp2(iCv,0:ns-1)=fce2(zmff(iCv))
+            do is = 0, ns-1
+              cimp2(iCv,is)=fce2(zmff(iCv))
+            enddo
           enddo
         else
           do is = 0, ns-1

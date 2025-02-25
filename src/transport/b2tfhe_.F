@@ -394,14 +394,14 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 #ifdef WG_TODO
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                      .or. iout_b2wdat.eq.4) then                  !srv 16.09.02 {
-       call my_out(70,nx,ny,w1,'b2tfhe__qe_32x')
+       call my_out_us(70,nx,ny,w1,'b2tfhe__qe_32x')
 !       call my_out(70,nx,ny,w2,'b2tfhe__qe_strx')
-       call my_out(70,nx,ny,w3,'b2tfhe__qe_ke_gTx')
-       call my_out(70,nx,ny,w4,'b2tfhe__qe_alphaTehx')
+       call my_out_us(70,nx,ny,w3,'b2tfhe__qe_ke_gTx')
+       call my_out_us(70,nx,ny,w4,'b2tfhe__qe_alphaTehx')
 !       w5=w1+w2+w3+w4
 !       call my_out(70,nx,ny,w5,'b2tfhe__qex5')
-       call my_out(70,nx,ny,w5,'b2tfhe__qediax')
-       call my_out(70,nx,ny,w6,'b2tfhe__chcex_Pat')
+       call my_out_us(70,nx,ny,w5,'b2tfhe__qediax')
+       call my_out_us(70,nx,ny,w6,'b2tfhe__chcex_Pat')
 
        w1=0.0_R8; w2=0.0_R8; w3=0.0_R8; w4=0.0_R8; w5=0.0_R8;
        w6=0.0_R8;
@@ -444,14 +444,14 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
      &                                .or. iout_b2wdat.eq.4) then        !srv 16.09.02 {
-       call my_out(70,nx,ny,w1,'b2tfhe__qe_32y')                         !srv 16.09.02 {
+       call my_out_us(70,nx,ny,w1,'b2tfhe__qe_32y')                         !srv 16.09.02 {
 !       call my_out(70,nx,ny,w2,'b2tfhe__qe_stry')
-       call my_out(70,nx,ny,w3,'b2tfhe__qe_ke_gTy')
-       call my_out(70,nx,ny,w4,'b2tfhe__qe_alphaTehy')
+       call my_out_us(70,nx,ny,w3,'b2tfhe__qe_ke_gTy')
+       call my_out_us(70,nx,ny,w4,'b2tfhe__qe_alphaTehy')
 !       w5=w1+w2+w3+w4
 !       call my_out(70,nx,ny,w5,'b2tfhe__qey5')
-       call my_out(70,nx,ny,w5,'b2tfhe__qediay')
-       call my_out(70,nx,ny,w6,'b2tfhe__chcey_Pat')
+       call my_out_us(70,nx,ny,w5,'b2tfhe__qediay')
+       call my_out_us(70,nx,ny,w6,'b2tfhe__chcey_Pat')
       endif                                                              !srv 16.09.02 }
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
@@ -520,10 +520,10 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
       endif
 
       if(switch%b2npht_iout.ne.0.or.switch%iout_b2wdat.eq.4) then        !srv 11.09.09 {
-       call my_out(70,nFc,1,dv%fhe(1,0),'b2tfhe__fhe_no_mdf_th')
-       call my_out(70,nFc,1,dv%fhe(1,1),'b2tfhe__fhe_no_mdf_r')
-       call my_out(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
-       call my_out(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
+       call my_out_us(70,nFc,1,dv%fhe(1,0),'b2tfhe__fhe_no_mdf_th')
+       call my_out_us(70,nFc,1,dv%fhe(1,1),'b2tfhe__fhe_no_mdf_r')
+       call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
+       call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
       endif
 
 * ..return
