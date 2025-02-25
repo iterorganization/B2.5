@@ -2020,13 +2020,9 @@ c dpc
               CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      .                RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
 !             CS=SQRT(BCINT(PZ,NX,NY,IY,IB)/BCINT(RZ,NX,NY,IY,IB))
-caap              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
      .           S1*stab_coeff_sheath_ni*CS*
      .           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
-caap              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
-caap     .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
-caap     .           S1*CONPAR(IS,IB,1)*CS
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
      .           S1*(CONPAR(IS,IB,1)+stab_coeff_sheath_ni)*CS
@@ -2053,13 +2049,9 @@ caap     .           S1*CONPAR(IS,IB,1)*CS
               CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      .                RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
 !              CS=SQRT(BCINT(PZ,NX,NY,IY,IB)/BCINT(RZ,NX,NY,IY,IB))
-caap              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
      .           S1*stab_coeff_sheath_ni*CS*
      .           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
-caap              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
-caap     .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
-caap     .           S1*CONPAR(IS,IB,1)*CS
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
      .           S1*(CONPAR(IS,IB,1)+stab_coeff_sheath_ni)*CS
