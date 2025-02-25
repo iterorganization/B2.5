@@ -93,8 +93,8 @@
         fchvispar = 0.0_R8
         do is = 0, ns-1                                                 !srv 24.06.99
 
-         if (switch%Zhdanov_closure.ne.0.and.
-     &       switch%Zhdanov_test.ne.1.and.switch%Zhdanov_visu.ne.0) then
+         if (switch%Zhdanov_closure.eq.0.or.
+     &       switch%Zhdanov_test.eq.1.or.switch%Zhdanov_visu.eq.0) then
 
 *       ..compute dvpar
           if (is.eq.ismain .and. .not.is_neutral(is)) then
