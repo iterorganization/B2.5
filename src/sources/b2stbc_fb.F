@@ -1840,6 +1840,7 @@ c           Inverse the actuator if necessary
      .           saved_na_feedback_actuator(ispecies)
               endif
 #endif
+
             case default
               write(*,*) 'na feedback_option not coded ',
      &                    na_feedback_option(ispecies)
