@@ -163,8 +163,10 @@
      &                        corr_flux   = 0.0_R8                      !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
       !iyv optional stabilisation coefficients for sheath BCENI/E = 15
+      !and BCCON = 14
       real (kind=R8), save :: stab_coeff_sheath_te = 0.0_R8,            !iyv 18.12.23
-     &                        stab_coeff_sheath_ti = 0.0_R8             !iyv 13.02.24
+     &                        stab_coeff_sheath_ti = 0.0_R8,            !iyv 13.02.24
+     &                        stab_coeff_sheath_ni = 0.0_R8             !aap 31.01.25
       character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, fedback_species, ishigh
       logical, save :: BCCON14(NBCD)                                    !srv 20.09.17
@@ -302,8 +304,10 @@
        call ipgeti ('b2stbc_bceni_16_style', bceni_16_style)
        call ipgetr ('b2stbc_stab_coeff_sheath_te', stab_coeff_sheath_te) !iyv 18.12.23
        call ipgetr ('b2stbc_stab_coeff_sheath_ti', stab_coeff_sheath_ti) !iyv 13.02.24
+       call ipgetr ('b2stbc_stab_coeff_sheath_ni', stab_coeff_sheath_ni) !aap 31.01.25
        call xertst (0.0_R8.le.stab_coeff_sheath_te.and.
-     &              0.0_R8.le.stab_coeff_sheath_ti,
+     &              0.0_R8.le.stab_coeff_sheath_ti.and.
+     &              0.0_R8.le.stab_coeff_sheath_ni,
      &  'faulty sheath BC stabilization coefficients')
        call ipgeti ('b2tfhe_no_current', no_current)
        call ipgeti ('b2news_poteq', pot_eq)                          !srv 27.02.13
@@ -2016,10 +2020,16 @@ c dpc
               CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      .                RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
 !             CS=SQRT(BCINT(PZ,NX,NY,IY,IB)/BCINT(RZ,NX,NY,IY,IB))
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
+caap              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .           S1*stab_coeff_sheath_ni*CS*
+     .           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+caap              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+caap     .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
+caap     .           S1*CONPAR(IS,IB,1)*CS
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
-     .           S1*CONPAR(IS,IB,1)*CS
+     .           S1*(CONPAR(IS,IB,1)+stab_coeff_sheath_ni)*CS
               sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)=
      &           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS) +
      &           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)
@@ -2043,10 +2053,16 @@ c dpc
               CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      .                RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
 !              CS=SQRT(BCINT(PZ,NX,NY,IY,IB)/BCINT(RZ,NX,NY,IY,IB))
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
+caap              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .           S1*stab_coeff_sheath_ni*CS*
+     .           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+caap              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+caap     .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
+caap     .           S1*CONPAR(IS,IB,1)*CS
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
-     .           S1*CONPAR(IS,IB,1)*CS
+     .           S1*(CONPAR(IS,IB,1)+stab_coeff_sheath_ni)*CS
               sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)=
      &           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS) +
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)
