@@ -540,7 +540,9 @@
      &      ((na_feedback_actuator(ispecies).ne.1 .and.
      &       (na_feedback_option(ispecies).ne.4 .and.
      &        na_feedback_option(ispecies).ne.5 .and.
-     &        na_feedback_option(ispecies).ne.8)) .or.
+     &        na_feedback_option(ispecies).ne.8 .and.
+     &        na_feedback_option(ispecies).ne.9 .and.
+     &        na_feedback_option(ispecies).ne.10)) .or.
      &       na_feedback_actuator(ispecies).eq.1))
        end do
        call xertst (consistent,
@@ -588,6 +590,11 @@
      &      na_feedback_actuator(ispecies) .eq. 0) .or.
      &     (na_feedback_option(ispecies).ne.4 .and.
      &      na_feedback_option(ispecies).ne.5 .and.
+     &      .not.((na_feedback_option(ispecies).eq.9 .or.
+     &       na_feedback_option(ispecies).eq.10) .and.
+     &       (na_feedback_choice(ispecies).ne.4 .and.
+     &        na_feedback_choice(ispecies).ne.5 .and.
+     &        na_feedback_choice(ispecies).ne.11)) .and.
      &      na_feedback_target(ispecies).gt.0.0_R8))
          call xertst (consistent,
      &     'Feedback actuator inversion cannot apply to additive ' //
@@ -1615,6 +1622,134 @@
                 endif
               enddo
 
+            case (17)  ! radiation from given isonuclear sequence on desired domain
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,a,i3)')
+     &           'b2stbc_fb_pre_choice: using ',
+     &           'radiation from given isonuclear sequence ',
+     &           'in area for sequence ',
+     &            ispecies+1
+              endif
+
+              na_feedback_current = 0.0_R8
+
+              is_start=-1
+              is_end=-1
+              do is = 0, ns-1
+                if(b2espcr(is).eq.ispecies+1) then
+                  if(is_start.eq.-1) is_start=is
+                  do iy = na_feedback_iy1(ispecies),
+     &                    na_feedback_iy2(ispecies)
+                    do ix = na_feedback_ix1(ispecies),
+     &                      na_feedback_ix2(ispecies)
+                      if (region(ix,iy,0).ne.0 .and.
+     &                    leftix(ix,iy).ne.-2 .and.
+     &                    rightix(ix,iy).ne.nx+1 .and.
+     &                    bottomiy(ix,iy).ne.-2 .and.
+     &                    topiy(ix,iy).ne.ny+1) then
+                        na_feedback_current = na_feedback_current +
+     .                             rqbrm(ix,iy,is) + rqrad(ix,iy,is)
+                      endif
+                    enddo
+                  enddo
+                  is_end=is
+                endif
+              enddo
+#ifdef B25_EIRENE
+              do j=1,nnatmi
+                if (latmscl(j).eq.ispecies+1) then 
+                  do iy = na_feedback_iy1(ispecies),
+     &                    na_feedback_iy2(ispecies)
+                    do ix = na_feedback_ix1(ispecies),
+     &                      na_feedback_ix2(ispecies)
+                      if (region(ix,iy,0).ne.0 .and.
+     &                    leftix(ix,iy).ne.-2 .and.
+     &                    rightix(ix,iy).ne.nx+1 .and.
+     &                    bottomiy(ix,iy).ne.-2 .and.
+     &                    topiy(ix,iy).ne.ny+1) then
+                        na_feedback_current = na_feedback_current -
+     .                             eneutrad(ix+1,iy+1,j,0)
+                        do k=1,nnmoli
+                          if (mlcmp(j,k).eq.0) cycle
+                            na_feedback_current = na_feedback_current -
+     .                                 emolrad(ix+1,iy+1,k,0)
+                        enddo
+                        do k=1,nnioni
+                          if (micmp(j,k).eq.0) cycle
+                            na_feedback_current = na_feedback_current -
+     .                                 eionrad(ix+1,iy+1,k,0)
+                        enddo
+                      endif
+                    enddo
+                  enddo
+                endif
+              enddo
+#endif
+
+            case (18)  ! radiation from given isonuclear sequence outside the separatrix
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,a,i3)')
+     &           'b2stbc_fb_pre_choice: using ',
+     &           'radiation from given isonuclear sequence ',
+     &           'outside the separatrix ',
+     &            ispecies+1
+              endif
+
+              na_feedback_current = 0.0_R8
+
+              is_start=-1
+              is_end=-1
+              do is = 0, ns-1
+                if(b2espcr(is).eq.ispecies+1) then
+                  if(is_start.eq.-1) is_start=is
+                  do iy = 0, ny-1
+                    do ix = 0, nx-1
+                      if (.not.ON_CLOSED_SURFACE(ix,iy) .and.
+     &                    region(ix,iy,0).ne.0 .and.
+     &                    leftix(ix,iy).ne.-2 .and.
+     &                    rightix(ix,iy).ne.nx+1 .and.
+     &                    bottomiy(ix,iy).ne.-2 .and.
+     &                    topiy(ix,iy).ne.ny+1) then
+                        na_feedback_current = na_feedback_current +
+     .                             rqbrm(ix,iy,is) + rqrad(ix,iy,is)
+                      endif
+                    enddo
+                  enddo
+                  is_end=is
+                endif
+              enddo
+#ifdef B25_EIRENE
+              do j=1,nnatmi
+                if (latmscl(j).eq.ispecies+1) then 
+                  do iy = 0, ny-1
+                    do ix = 0, nx-1
+                      if (.not.ON_CLOSED_SURFACE(ix,iy) .and.
+     &                    region(ix,iy,0).ne.0 .and.
+     &                    leftix(ix,iy).ne.-2 .and.
+     &                    rightix(ix,iy).ne.nx+1 .and.
+     &                    bottomiy(ix,iy).ne.-2 .and.
+     &                    topiy(ix,iy).ne.ny+1) then
+                        na_feedback_current = na_feedback_current -
+     .                             eneutrad(ix+1,iy+1,j,0)
+                        do k=1,nnmoli
+                          if (mlcmp(j,k).eq.0) cycle
+                            na_feedback_current = na_feedback_current -
+     .                                 emolrad(ix+1,iy+1,k,0)
+                        enddo
+                        do k=1,nnioni
+                          if (micmp(j,k).eq.0) cycle
+                            na_feedback_current = na_feedback_current -
+     .                                 eionrad(ix+1,iy+1,k,0)
+                        enddo
+                      endif
+                    enddo
+                  enddo
+                endif
+              enddo
+#endif
+
             case default
               write(*,*) 'na feedback_choice not coded ',
      &                    na_feedback_choice(ispecies)
@@ -1843,6 +1978,205 @@ c           Inverse the actuator if necessary
      .           saved_na_feedback_actuator(ispecies)
               endif
 #endif
+
+            case (9) ! rescale done according to SOLPS4 formula:
+                     ! Feedback target changes as:
+                     ! S --> S + D, where
+                     ! D = A((N_tar - N_cur)/dt + (N_prev - N_cur))/dt_prev
+                     ! if actuator if not number of particles it is
+                     ! assumed to be linearly proportional to the total number
+                     ! of particles in desired area (including neutrals)
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,a,a,i3)')
+     &           'b2stbc_fb_pre_option: using ',
+     &           'SOLPS4 formula and assuming linear relation between ',
+     &           'target and total number of particles in the area ',
+     &           ' for sequence ',
+     &            ispecies+1
+                if ((na_feedback_choice(ispecies).eq.4).or.
+     &              (na_feedback_choice(ispecies).eq.5).or.
+     &              (na_feedback_choice(ispecies).eq.11)) then
+                  write(*,'(a,a,i3,a,i3,a,a,es9.1)')
+     .             'b2stbc_fb_pre: Warning!   ',
+     .             'na_feedback_current for sequence ',ispecies+1,
+     .             ' using na_feedback_choice',
+     .              na_feedback_choice(ispecies),
+     .             ' no linearisation needed falling back to ',
+     .             'na_feedback_option 4 with na_feedback_const = 0.0'
+                  na_feedback_prev(ispecies) = na_feedback_current
+                endif
+              endif
+
+              if ((na_feedback_choice(ispecies).ne.4).and.
+     &            (na_feedback_choice(ispecies).ne.5).and.
+     &            (na_feedback_choice(ispecies).ne.11)) then
+                hlp = 0.0_R8
+                is_start=-1
+                is_end=-1
+                do is = 0, ns-1
+                  if(b2espcr(is).eq.ispecies+1) then
+                    if(is_start.eq.-1) is_start=is
+                    do iy = na_feedback_iy1(ispecies),
+     &                      na_feedback_iy2(ispecies)
+                      do ix = na_feedback_ix1(ispecies),
+     &                        na_feedback_ix2(ispecies)
+                        if(region(ix,iy,0).ne.0 .and.
+     &                     leftix(ix,iy).ne.-2 .and.
+     &                     rightix(ix,iy).ne.nx+1 .and.
+     &                     bottomiy(ix,iy).ne.-2 .and.
+     &                     topiy(ix,iy).ne.ny+1) then
+                          hlp = hlp + na(ix,iy,is)*vol(ix, iy)
+                        endif
+                      enddo
+                    enddo
+                    is_end=is
+                  endif
+                enddo
+#ifdef B25_EIRENE
+                do j=1,nnatmi
+                  if (latmscl(j).eq.ispecies+1) then
+                    do iy = na_feedback_iy1(ispecies),
+     &                      na_feedback_iy2(ispecies)
+                      do ix = na_feedback_ix1(ispecies),
+     &                      na_feedback_ix2(ispecies)
+                        if(region(ix,iy,0).ne.0 .and.
+     &                     leftix(ix,iy).ne.-2 .and.
+     &                     rightix(ix,iy).ne.nx+1 .and.
+     &                     bottomiy(ix,iy).ne.-2 .and.
+     &                     topiy(ix,iy).ne.ny+1) then
+                          hlp = hlp + dab2(ix+1,iy+1,j,1)*vol(ix,iy)
+                          do k=1,nnmoli
+                            if (mlcmp(j,k).eq.0) cycle
+                            hlp = hlp +  
+     &                       mlcmp(j,k)*dmb2(ix+1,iy+1,k,1)*vol(ix,iy)
+                          end do
+                          do k=1,nnioni
+                            if (micmp(j,k).eq.0) cycle
+                            hlp = hlp +
+     &                       micmp(j,k)*dib2(ix+1,iy+1,k,1)*vol(ix,iy)
+                          enddo
+                        endif
+                      enddo
+                    enddo
+                  endif
+                enddo
+#endif
+                if (ncall.eq.0) na_feedback_prev(ispecies) = hlp
+                na_feedback_rescale =
+     .            na_feedback_alpha(ispecies) *
+     .            ((na_feedback_target(ispecies)/na_feedback_current -
+     .             1.0_R8)*hlp/dteff +
+     .             (na_feedback_prev(ispecies) - hlp)/dt_prev)
+                na_feedback_save(ispecies) = hlp
+              else
+                na_feedback_rescale =
+     .            na_feedback_alpha(ispecies) *
+     .            ((na_feedback_target(ispecies) -
+     .             na_feedback_current)/dteff +
+     .             (na_feedback_prev(ispecies) -
+     .             na_feedback_current)/dt_prev)
+                na_feedback_save(ispecies) = na_feedback_current
+              endif
+
+            case (10)! rescale done according to SOLPS4 formula:
+                     ! Feedback target changes as:
+                     ! S --> S + D, where
+                     ! D = A((N_tar - N_cur)/dt + (N_prev - N_cur))/dt_prev
+                     ! if actuator if not number of particles it is
+                     ! assumed to be linearly proportional to the total number
+                     ! of particles in the edge (including neutrals)
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,a,a,i3)')
+     &           'b2stbc_fb_pre_option: using ',
+     &           'SOLPS4 formula and assuming linear relation between ',
+     &           'target and total number of particles in the edge ',
+     &           ' for sequence ',
+     &            ispecies+1
+                if ((na_feedback_choice(ispecies).eq.4).or.
+     &              (na_feedback_choice(ispecies).eq.5).or.
+     &              (na_feedback_choice(ispecies).eq.11)) then
+                  write(*,'(a,a,i3,a,i3,a,a,es9.1)')
+     .             'b2stbc_fb_pre: Warning!   ',
+     .             'na_feedback_current for sequence ',ispecies+1,
+     .             ' using na_feedback_choice',
+     .              na_feedback_choice(ispecies),
+     .             ' no linearisation needed falling back to ',
+     .             'na_feedback_option 4 with na_feedback_const = 0.0'
+                  na_feedback_prev(ispecies) = na_feedback_current
+                endif
+              endif
+
+              if ((na_feedback_choice(ispecies).ne.4).and.
+     &            (na_feedback_choice(ispecies).ne.5).and.
+     &            (na_feedback_choice(ispecies).ne.11)) then
+                hlp = 0.0_R8
+                is_start=-1
+                is_end=-1
+                do is = 0, ns-1
+                  if(b2espcr(is).eq.ispecies+1) then
+                    if(is_start.eq.-1) is_start=is
+                    do iy = 0,ny-1
+                      do ix = 0,nx-1
+                        if(.not.ON_CLOSED_SURFACE(ix,iy) .and.
+     &                     region(ix,iy,0).ne.0 .and.
+     &                     leftix(ix,iy).ne.-2 .and.
+     &                     rightix(ix,iy).ne.nx+1 .and.
+     &                     bottomiy(ix,iy).ne.-2 .and.
+     &                     topiy(ix,iy).ne.ny+1) then
+                          hlp = hlp + na(ix,iy,is)*vol(ix, iy)
+                        endif
+                      enddo
+                    enddo
+                    is_end=is
+                  endif
+                enddo
+#ifdef B25_EIRENE
+                do j=1,nnatmi
+                  if (latmscl(j).eq.ispecies+1) then
+                    do iy = 0,ny-1
+                      do ix = 0,nx-1
+                        if(.not.ON_CLOSED_SURFACE(ix,iy) .and.
+     &                     region(ix,iy,0).ne.0 .and.
+     &                     leftix(ix,iy).ne.-2 .and.
+     &                     rightix(ix,iy).ne.nx+1 .and.
+     &                     bottomiy(ix,iy).ne.-2 .and.
+     &                     topiy(ix,iy).ne.ny+1) then
+                          hlp = hlp + dab2(ix+1,iy+1,j,1)*vol(ix,iy)
+                          do k=1,nnmoli
+                            if (mlcmp(j,k).eq.0) cycle
+                            hlp = hlp +  
+     &                       mlcmp(j,k)*dmb2(ix+1,iy+1,k,1)*vol(ix,iy)
+                          end do
+                          do k=1,nnioni
+                            if (micmp(j,k).eq.0) cycle
+                            hlp = hlp +
+     &                       micmp(j,k)*dib2(ix+1,iy+1,k,1)*vol(ix,iy)
+                          enddo
+                        endif
+                      enddo
+                    enddo
+                  endif
+                enddo
+#endif
+                if (ncall.eq.0) na_feedback_prev(ispecies) = hlp
+                na_feedback_rescale =
+     .            na_feedback_alpha(ispecies) *
+     .            ((na_feedback_target(ispecies)/na_feedback_current -
+     .             1.0_R8)*hlp/dteff +
+     .             (na_feedback_prev(ispecies) - hlp)/dt_prev)
+                na_feedback_save(ispecies) = hlp
+              else
+                na_feedback_rescale =
+     .            na_feedback_alpha(ispecies) *
+     .            ((na_feedback_target(ispecies) -
+     .             na_feedback_current)/dteff +
+     .             (na_feedback_prev(ispecies) -
+     .             na_feedback_current)/dt_prev)
+                na_feedback_save(ispecies) = na_feedback_current
+              endif
+
             case default
               write(*,*) 'na feedback_option not coded ',
      &                    na_feedback_option(ispecies)
@@ -1878,7 +2212,9 @@ c           Inverse the actuator if necessary
      &           .not.(feedback_namelist_used .and.
      &                 (na_feedback_option(ispecies).eq.4 .or.
      &                  na_feedback_option(ispecies).eq.5 .or.
-     &                  na_feedback_option(ispecies).eq.8))) then
+     &                  na_feedback_option(ispecies).eq.8 .or.
+     &                  na_feedback_option(ispecies).eq.9 .or.
+     &                  na_feedback_option(ispecies).eq.10))) then
                 if(na_feedback_ib(ispecies).gt.0) then
                   write(message,'(a,i3,a,i2,a)')
      .             'Initial gas puff strength.le.0, set by CONPAR(',
@@ -1900,8 +2236,10 @@ c           Inverse the actuator if necessary
                 end if
               end if
 
-              if ((na_feedback_option(ispecies).eq.4) .or.
-     &            (na_feedback_option(ispecies).eq.5)) then
+              if (na_feedback_option(ispecies).eq.4 .or.
+     &            na_feedback_option(ispecies).eq.5 .or.
+     &            na_feedback_option(ispecies).eq.9 .or.
+     &            na_feedback_option(ispecies).eq.10) then
                 saved_na_feedback_actuator(ispecies) =
      .           saved_na_feedback_actuator(ispecies) +
      .           na_feedback_rescale
