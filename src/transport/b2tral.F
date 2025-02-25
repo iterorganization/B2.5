@@ -22,7 +22,7 @@
       use b2mod_input_profile
      & , only : alloc_input_profile
       use b2mod_ad
-     & , only : b2news_solving, ncall_b2tral
+     & , only : b2news_solving, ncall_b2tral, nnucl_tral
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -38,6 +38,19 @@
      &          nss, nrr, nkind_coeff, nkind_data, poloidal_scaling,
      &          transport_ip_filename, nscale, transport_ip_time_switch,
      &          transport_ip_time_mod
+      use b2mod_zhfrtf
+     & , only : is_i, z2n_xy, nal, ia, av_ualpha, gt_ac, rho_a_rel,
+     &         gavm_uc, z_to_m1_ast
+      use b2mod_b2zhco
+     & , only : c_hw_save, c_r_ta, c_r_ta_nofl, c_r_tb, c_r_tb_nofl,
+     &         c_r_w, tf_ton_mat
+      use b2mod_b2mrel
+     & , only : s2nucl, amnucl, n2, n3, n4, n5, n6, n8, n9, n10, n11,
+     &          n12, n13, n14, n15, n16, mu, mum, rmu, rmd2, mdm,
+     &          amnucl_mdf, n2_mdf, n3_mdf, n4_mdf, n5_mdf, n6_mdf,
+     &          n8_mdf, n9_mdf, n10_mdf, n11_mdf, n12_mdf, n13_mdf,
+     &          n14_mdf, n15_mdf, n16_mdf, mu_mdf, mum_mdf, rmu_mdf,
+     &          rmd2_mdf, mdm_mdf
       use b2mod_ad
      & , only : my_out_folder,
 #ifdef WG_DEBUG
@@ -102,7 +115,7 @@
 *   ..local variables
       integer iFc, is, is0, iz, inucl
       character(3) chns, chns0                                          !srv 17.06.08
-      integer, save :: nnucl, zmaxmax                                   !som 09.02.21
+      integer, save :: zmaxmax                                          !som 09.02.21
       real (kind=R8), save :: gamma = 1.0_R8                            !som 20.03.21
       real (kind=R8) ::
      1  chvi0(nFc,0:1), csig0(nFc,0:1), calf0(nFc,0:1), chci0(nFc,0:1),
@@ -178,8 +191,8 @@
 *   ..compute Zhdanov closure coefficients
       if (switch%Zhdanov_closure.eq.1) then                             !som 09.02.21
         if (ncall_b2tral.eq.0) then
-          call b2trnu (ns, nnucl, zmaxmax)
-          call xertst (nnucl.eq.nspecies,
+          call b2trnu (ns, nnucl_tral, zmaxmax)
+          call xertst (nnucl_tral.eq.nspecies,
      &     'Error while building isonuclear sequences!')
         endif
         call b2tlnl (nCv, switch, switch%icase_ii, pl%te, pl%ti, dv%ne,

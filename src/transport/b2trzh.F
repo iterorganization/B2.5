@@ -28,6 +28,8 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_ad
+     & , only : ncall_b2trzh
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, znmax
@@ -174,9 +176,6 @@
      &  cvsa0(nFc,0:1,0:ns-1),
      &  cvsa_drho(nFc,0:1,0:ns-1)
       character*80 cvalip
-*   ..initialisation
-      save ncall
-      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -184,7 +183,7 @@
 *   ..subprogram start-up calls
       call subini ('b2trzh')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then
+      if (ncall_b2trzh.eq.0) then
 *   ..allocate
         call alloc_b2mod_mrel(nspecies,znmax,ns)
         call alloc_b2mod_zhco(nspecies, nCv)
@@ -927,7 +926,7 @@
      &    co%f_luc_et*co%alpha1f
       enddo
 
-      ncall = ncall+1
+      ncall_b2trzh = ncall_b2trzh+1
       call subend ()
       return
 
