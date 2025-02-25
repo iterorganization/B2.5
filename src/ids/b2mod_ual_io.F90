@@ -300,7 +300,8 @@ module b2mod_ual_io
   real(IDS_real), save :: nepedm_sol = 0.0_IDS_real
   real(IDS_real), save :: volrec_sol = 0.0_IDS_real
   real(IDS_real), save :: private_flux_puff = 0.0_IDS_real
-  real(IDS_real) :: time  !< Generic time
+  real(IDS_real), save :: time  !< Generic time
+  real(IDS_real), save :: time_slice_value !< Time slice value
   real(IDS_real), save :: b0, r0, b0r0
   real(IDS_real), save :: flux_expansion(4), extension_r(4), extension_z(4), &
       &                   wetted_area(4)
@@ -811,7 +812,6 @@ contains
         real(IDS_real) :: pz( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: zeff( -1:ubound( na, 1), -1:ubound( na, 2) )
         real(IDS_real) :: time_step !< Time step
-        real(IDS_real) :: time_slice_value   !< Time slice value
         real(IDS_real) :: nibnd, frac, u, v,                                 &
             &             qtot, qetot, qitot, qmax, qemax, qimax, lambda,    &
             &             vtor, nisep, nasum
@@ -1409,7 +1409,7 @@ contains
 #if ( AL_MAJOR_VERSION > 4 && GGD_MAJOR_VERSION > 0 )
             &  time_sind, &
 #endif
-            &  time_slice_value, .true., new_eq_ggd )
+            &  .true., new_eq_ggd )
 #if IMAS_MAJOR_VERSION > 3
         allocate( plasma_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
         plasma_profiles%vacuum_toroidal_field%b0( time_sind ) = &
@@ -8921,7 +8921,7 @@ contains
 #if ( AL_MAJOR_VERSION > 4 && GGD_MAJOR_VERSION > 0 )
             &  batch_index, &
 #endif
-            &  time, do_description, new_eq_ggd )
+            &  do_description, new_eq_ggd )
 #if IMAS_MAJOR_VERSION > 3
         allocate( batch_plasma_profiles%vacuum_toroidal_field%b0( num_time_slices ) )
         batch_plasma_profiles%vacuum_toroidal_field%b0( batch_index ) = &
@@ -10024,7 +10024,7 @@ contains
 #if ( AL_MAJOR_VERSION > 4 && GGD_MAJOR_VERSION > 0 )
        &  time_sind, &
 #endif
-       &  time_slice_value, do_summary_data, new_eq_ggd )
+       &  do_summary_data, new_eq_ggd )
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
     use b2mod_ual_io_grid &
        & , only: GGD_copy_AoS3Root_to_Dynamic
@@ -10043,7 +10043,6 @@ contains
     integer, intent(in) :: time_sind     !< Corresponding time slice index
                                          !< in edge_profiles IDS
 #endif
-    real(IDS_real), intent(in) :: time_slice_value   !< Time slice value
     logical, intent(in) :: do_summary_data
     logical, intent(out) :: new_eq_ggd
 #if GGD_MAJOR_VERSION > 0
