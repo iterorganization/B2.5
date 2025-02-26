@@ -3048,10 +3048,16 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                   uri_dest, status )
                     end if
-                    write(systemarg,'(a,a,a,a)')
+#if IMAS_MAJOR_VERSION < 4
+                    write(systemarg,'(a,a,a,a,a)')
      &                'idscp --set-dataset-version'//
      &                     ' -s ',trim(uri_source),
-     &                     ' -d ',trim(uri_dest)
+     &                     ' -d ',trim(uri_dest),' --dd-update'
+#else
+                    write(systemarg,'(a,a,a,a,a)')
+     &                'idscp -s ',trim(uri_source),
+     &                     ' -d ',trim(uri_dest),' --dd-update'
+#endif
 #else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
@@ -3086,9 +3092,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                   trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                   uri_dest, status )
                       write(systemarg,'(a,a,a,a)')
-     &                  'idscp --set-dataset-version'//
-     &                     ' -s ',trim(uri_source),
-     &                     ' -d ',trim(uri_dest)
+     &                  'idscp -s ',trim(uri_source),
+     &                       ' -d ',trim(uri_dest)
 #else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                       write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
@@ -3681,10 +3686,16 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                 uri_dest, status )
                   end if
-                  write(systemarg,'(a,a,a,a)')
+#if IMAS_MAJOR_VERSION < 4
+                  write(systemarg,'(a,a,a,a,a)')
      &              'idscp --set-dataset-version'//
      &                   ' -s ',trim(uri_source),
-     &                   ' -d ',trim(uri_dest)
+     &                   ' -d ',trim(uri_dest),' --dd-update'
+#else
+                  write(systemarg,'(a,a,a,a,a)')
+     &              'idscp -s ',trim(uri_source),
+     &                   ' -d ',trim(uri_dest),' --dd-update'
+#endif
 #else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                   write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
@@ -3719,9 +3730,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &                 trim(database), int2str(IMAS_MAJOR_VERSION), '',
      &                 uri_dest, status )
                     write(systemarg,'(a,a,a,a)')
-     &               'idscp --set-dataset-version'//
-     &                  ' -s ',trim(uri_source),
-     &                  ' -d ',trim(uri_dest)
+     &               'idscp -s ',trim(uri_source),
+     &                    ' -d ',trim(uri_dest)
 #else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
                     write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)')
