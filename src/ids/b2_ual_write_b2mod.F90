@@ -690,10 +690,16 @@ program b2_ual_write_b2mod
                 & ( MDSPLUS_BACKEND, shot, tmp_run, trim(username),  &
                 &   trim(database), int2str(IMAS_MAJOR_VERSION), '', &
                 &   uri_source, status )
-              write(systemarg,'(a,a,a,a)')                     &
+#if IMAS_MAJOR_VERSION < 4
+              write(systemarg,'(a,a,a,a,a)')                   &
                 & 'idscp --set-dataset-version'//              &
                 &      ' -s ',trim(uri_source),                &
-                &      ' -d ',trim(uri_dest)
+                &      ' -d ',trim(uri_dest),' --dd-update'
+#else
+              write(systemarg,'(a,a,a,a,a)')                   &
+                & 'idscp -s ',trim(uri_source),                &
+                &      ' -d ',trim(uri_dest),' --dd-update'
+#endif
 #else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
               write(systemarg,'(a,i7,a,i4,a,i7,a,i4,a,a,a,a)') &
@@ -731,8 +737,7 @@ program b2_ual_write_b2mod
                 &   uri_source, status )
             end if
             write(systemarg,'(a,a,a,a)')                     &
-              & 'idscp --set-dataset-version'//              &
-              &      ' -s ',trim(uri_source),                &
+              & 'idscp -s ',trim(uri_source),                &
               &      ' -d ',trim(uri_dest)
 #else
 #if ( IMAS_MINOR_VERSION > 31 || IMAS_MAJOR_VERSION > 3 )
