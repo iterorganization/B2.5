@@ -74,10 +74,6 @@
                        ! the inner one
         logical :: psi_increasing ! .true. if the psi value increases from the O-point to the active X-point
 
-        real (kind=R8) :: signmf  ! Direction of poloidal field
-                                  ! +1: Going clockwise around plasma
-                                  ! -1: Going counterclockwise around plasma
-
         real (kind=R8) :: Qalfmin, Qalfmax
       end type geometry
 
@@ -223,8 +219,8 @@
       g%LSN = .true.
       g%psi_increasing = .true.
 
-      g%Qalfmax = 1.0e-3_R8
-      g%Qalfmin = 1.0e-3_R8
+      g%Qalfmax = 0._R8
+      g%Qalfmin = 0._R8
 
       return
       end subroutine initialize_geometry
@@ -344,14 +340,8 @@
       call cfrure (iun, nCv,   gm%cvConn, 'cvConn')
       call cfrure (iun, nFs,   gm%fsPsi,  'fsPsi')
 
-      rdum(1) = 1.0e-3_R8
-      call ipgetr('b2us_prep_Qalfmin', rdum(1))
-      call cfrure_opt (iun,   1,   rdum, 'Qalfmin')
-      gm%Qalfmin = rdum(1)
-      rdum(1) = 1.0e-3_R8
-      call ipgetr('b2us_prep_Qalfmax', rdum(1))
-      call cfrure_opt (iun,   1,   rdum, 'Qalfmax')
-      gm%Qalfmax = rdum(1)
+      call cfrure (iun,   1,   gm%Qalfmin, 'Qalfmin')
+      call cfrure (iun,   1,   gm%Qalfmax, 'Qalfmax')
 
 ! check consistency of input
       call check_geometry(nCv, nFc, nVx, nFs, nFt, gm)
@@ -401,10 +391,8 @@
       call cfwure (nout, nCv,   gm%cvConn, 'cvConn')
       call cfwure (nout, nFs,   gm%fsPsi,  'fsPsi')
 
-      rdum(1) = gm%Qalfmin
-      call cfwure (nout,   1,   rdum,  'Qalfmin')
-      rdum(1) = gm%Qalfmax
-      call cfwure (nout,   1,   rdum,  'Qalfmax')
+      call cfwure (nout,   1,   gm%Qalfmin,  'Qalfmin')
+      call cfwure (nout,   1,   gm%Qalfmax,  'Qalfmax')
 
       return
       end subroutine write_geometry

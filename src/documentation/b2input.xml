@@ -309,23 +309,6 @@
 					Obsolete. Should use b2agdr_redef_pbs instead.
 				</description>
 			</switch>
-      <switch>
-				<name>b2stbc_Qalfmin</name>
-				<default>1e-3</default>
-				<type>real</type>
-				<description>
-					If abs(cos(alpha)*bx).ge.b2stbc_Qalfmin beta angle is assigned to zero during writing of b2fgmtry.
-          If abs(cos(alpha)*bx).lt.b2stbc_Qalfmin boundary faces treated like field-alinged faces in BCMOM=13, BCCON=14, BCENE=15 (style=1), BCENI=15 (style=0) and BCPOT=11. Leakage coffients (if it is needed) equal to b2stbc_Qalfmax key.
-				</description>
-			</switch>
-      <switch>
-				<name>b2stbc_Qalfmax</name>
-				<default>1e-3</default>
-				<type>real</type>
-				<description>
-					If abs(cos(alpha)*bx).ge.b2stbc_Qalfmin .and. abs(cos(alpha)*bx).lt.b2stbc_Qalfmax fcPbs equals to b2stbc_Qalfmax*fcS for boundary faces during writing of b2fgmtry.
-				</description>
-			</switch>
 			<switch>
 				<name>b2agfs_periodic_bc</name>
 				<default>0</default>
@@ -637,43 +620,6 @@
 				<type>real</type>
 				<description>
 					If abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin .and. abs(cos(alpha)*bx).lt.b2us_prep_Qalfmax, fcPbs is set equal to b2us_prep_Qalfmax*fcS for boundary faces during writing of b2fgmtry.
-				</description>
-			</switch>
-			<switch>
-				<name>b2us_prep_mod_hc</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If b2us_prep_mod_hc.eq.1 then the length between cell face center and neighboring cell centers (fcHc) will be modified.	It will be the same for neighboring boundary faces belonging to the same flux tube. For all boundary faces it will be recalculated to decrease the distance between boundary face and guard cell centers.
-				</description>
-			</switch>
-			<switch>
-				<name>b2us_prep_set_beta_0</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If b2us_prep_set_beta_0.eq.1, the beta angle will be assigned to zero for faces between boundary cells belonging to same shaved flux tube.
-				</description>
-			</switch>
-			<switch>
-				<name>b2us_prep_Qalf_mod_style</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					Controls which boundary faces are treated as wall (not field-aligned).
-					If b2us_prep_Qalf_mod_style.eq.0 then all faces with abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin are treated as walls.
-					If b2us_prep_Qalf_mod_style.eq.1 then wall faces must be located at the end of a flux tube, or satisfy both conditions:
-					1. abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin
-					2. have at least one neighboring wall face
-					If all faces along a flux surface have abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin, then the face where the magnetic field angle changes sign is treated as field-aligned (not a wall).
-				</description>
-			</switch>
-			<switch>
-				<name>b2mndr_temp_ignore_geo</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					This switch (b2mndr_temp_ignore_geo.eq.1) allows to run geometrically complex unstructured cases that do not yet fit in any specified case categorization. This switch should disappear as the integration of new unstructured grid generators with SOLPS / IMAS matures. Activating this switch makes it impossible to use or get correct results from some integrated post-processing options. The B2.5-EIRENE solution algorithm is unaffected.
 				</description>
 			</switch>
 		</category>
@@ -6042,7 +5988,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Sets the same value to magnetically connected face area fcPbs = fcS * b2stbc_Qalfmin for all boundary faces if length of flux tube is less than b2stbc_min_ftConn.
+					Sets the same value to magnetically connected face area fcPbs = fcS * b2us_prep_Qalfmin for all boundary faces if length of flux tube is less than b2stbc_min_ftConn.
 				</description>
 			</switch>
 			<switch>
@@ -6050,7 +5996,7 @@
 				<default>3</default>
 				<type>integer</type>
 				<description>
-					Keys b2stbc_Qalfmin and b2stbc_min_ftConn will be applied for boundary region if its label number is equal or bigger than b2stbc_str_for_Qalfmin.
+					Keys b2us_prep_Qalfmin and b2stbc_min_ftConn will be applied for boundary region if its label number is equal or bigger than b2stbc_str_for_Qalfmin.
 				</description>
 			</switch>
 		</category>
