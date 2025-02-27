@@ -2425,7 +2425,7 @@
       implicit none
       integer, intent(in) :: nx, ny
       integer :: ix, iy, ic, iFc, iVx, iFs, iCv, Cvs(2), iVx1, iVx2
-      real :: wrk
+      real :: wrk, pbs_red_fac=1.0e-2_R8
 #ifdef WG_TODO
       integer :: i, j, idb
 #endif
@@ -2435,8 +2435,6 @@
       integer newunit
       external newunit
 #endif
-      real (kind=R8), save :: Qalfmin = 1.0e-3_R8, Qalfmax=1.0e-2_R8,
-     & pbs_red_fac=1.0e-2_R8
       integer, save :: mod_hc = 0, mean_boundary_hc = 0, set_beta = 0,
      & mod_alpha = 0
       integer :: fcsb(mpg%nCg), cvsb(mpg%nCg,2), k, ind, ind1, tmp, iFt
@@ -2444,20 +2442,20 @@
       integer :: wrkVx(mpg%nVx)
       real (kind=R8) :: meanCv(2),meanFc(2), bz_sign
 
-      call ipgetr('b2stbc_Qalfmin',Qalfmin)
-      call ipgetr('b2stbc_Qalfmax',Qalfmax)
+      call alloc_geometry (gm,
+     &  mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt, mpg%nVmxCv)
+
+      call ipgetr('b2us_prep_Qalfmin',gm%Qalfmin)
+      call ipgetr('b2us_prep_Qalfmax',gm%Qalfmax)
       call ipgetr('b2us_prep_Pbs_reduce_fac',pbs_red_fac)
       call ipgeti('b2us_prep_mod_hc',mod_hc)
       call ipgeti('b2us_prep_set_beta_0',set_beta)
       call ipgeti('b2us_prep_mod_alpha',mod_alpha)
       call ipgeti('b2us_prep_mean_boundary_hc',mean_boundary_hc)
       call ipgeti('b2us_prep_mean_boundary_hc',mean_boundary_hc)
-      write (*,*) "Qalfmin=",Qalfmin
-      write (*,*) "Qalfmax=",Qalfmax
+      write (*,*) "Qalfmin=",gm%Qalfmin
+      write (*,*) "Qalfmax=",gm%Qalfmax
       write (*,*) "Pbs reduce factor=",pbs_red_fac
-
-      call alloc_geometry (gm,
-     &  mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt, mpg%nVmxCv)
 
 ! cell volumes
       do iy = -1, ny
@@ -2581,11 +2579,11 @@
         if (mpg%fcLbl(iFc) .le. 0) cycle
         bz_sign = sign(1.0_R8,gm%cvEb(ic,2))
         wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
-        if (wrk >= Qalfmin .and. wrk < Qalfmax .and.
+        if (wrk >= gm%Qalfmin .and. wrk < gm%Qalfmax .and.
      .        mpg%fcLbl(iFc) > 0) then
-          gm%fcPbs(iFc) = Qalfmax*gm%fcS(iFc)*
+          gm%fcPbs(iFc) = gm%Qalfmax*gm%fcS(iFc)*
      .       sign(1.0_R8,gm%fcPbs(iFc))
-          gm%fcPbshz(iFc) = Qalfmax*gm%fcS(iFc)*gm%fcHz(iFc)*
+          gm%fcPbshz(iFc) = gm%Qalfmax*gm%fcS(iFc)*gm%fcHz(iFc)*
      .       sign(1.0_R8,gm%fcPbshz(iFc))
           if (mod_alpha.eq.1) then
             gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)
@@ -2601,7 +2599,7 @@
             endif
           endif
           write(*,*) 'pbs and pbshz were modified for iFc=',iFc
-        elseif (wrk < Qalfmin .and. mpg%fcLbl(iFc) > 0) then
+        elseif (wrk < gm%Qalfmin .and. mpg%fcLbl(iFc) > 0) then
           gm%fcPbs(iFc) = pbs_red_fac*gm%fcPbs(iFc)
           gm%fcPbshz(iFc) = pbs_red_fac*gm%fcPbshz(iFc)
           if (mod_alpha.eq.1) then
@@ -2774,7 +2772,7 @@
           endif
           if (mpg%cvFt(minval(mpg%fcCv(iFc,:))).ne.
      &        mpg%cvFt(minval(mpg%fcCv(fcsb(ind1-1),:)))
-     &        .or. wrk < Qalfmin ) then
+     &        .or. wrk < gm%Qalfmin ) then
 
             k = ind1-1
             if(((ind1-1) .le. ind) .or.

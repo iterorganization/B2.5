@@ -1290,11 +1290,11 @@ c   (ionising_core option)
             s1 = abs(geo%fcPbs(iFc))
             cs = sqrt(pz(iCv1)/rz(iCv1))
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-            if (((wrk < switch%Qalfmin)
+            if (((wrk < geo%Qalfmin)
      &       .or.((geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0)))
      &       .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
               srw%sna0(iCv1,0,is) = 0.0_R8
-              srw%sna0(iCv1,1,is) = -geo%fcS(iFc)*cs*switch%Qalfmax
+              srw%sna0(iCv1,1,is) = -geo%fcS(iFc)*cs*geo%Qalfmax
               sna0_no_mdf(iCv1,:,is) =
      &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
               if (switch%mdf_fnb.eq.0) then
@@ -3603,7 +3603,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
             cs = sqrt(pz(iCv1)/rz(iCv1))
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-            if (((wrk < switch%Qalfmin)
+            if (((wrk < geo%Qalfmin)
      &       .or.((geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0)))
      &       .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
               srw%smo0(iCv1,0,is)=
@@ -4973,10 +4973,10 @@ cwdk    Todo: corrections for BCCON.ne.14
             s1   = abs(geo%fcPbs(iFc))
             vte  = sqrt(pl%te(iCv1)/me)
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-            if (((wrk < switch%Qalfmin)
+            if (((wrk < geo%Qalfmin)
      &       .or.(geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0))
      &       .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
-              s1 = abs(geo%fcS(iFc))*switch%Qalfmax
+              s1 = abs(geo%fcS(iFc))*geo%Qalfmax
             else
               s1 = abs(geo%fcPbs(iFc))
             endif
@@ -6933,11 +6933,11 @@ cxpb          endif
           iFt = mpg%cvFt(iCv2)
           wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
           if (bceni_15_style == 0) then
-            if (((wrk < switch%Qalfmin)
+            if (((wrk < geo%Qalfmin)
      &       .or.((geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0)))
      &       .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
               srw%shi0(iCv1,0) = 0.0_R8
-              srw%shi0(iCv1,1) = -1.5*geo%fcS(iFc)*switch%Qalfmax*cs
+              srw%shi0(iCv1,1) = -1.5*geo%fcS(iFc)*geo%Qalfmax*cs
      &         *dv%ni(iCv1,1)
               if(switch%mdf_fhi.ne.0) then
                 srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
@@ -8756,10 +8756,10 @@ c              fchi=0.0_R8
           iFt = mpg%cvFt(iCv2)
           t0 = 0.0_R8
           wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-          if (((wrk < switch%Qalfmin)
+          if (((wrk < geo%Qalfmin)
      &     .or.(geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0))
      &     .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
-            s1 = abs(geo%fcS(iFc))*switch%Qalfmax
+            s1 = abs(geo%fcS(iFc))*geo%Qalfmax
           else
             s1 = abs(geo%fcPbs(iFc))
           endif

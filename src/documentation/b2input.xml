@@ -310,40 +310,6 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2stbc_Qalfmin</name>
-				<default>1e-3</default>
-				<type>real</type>
-				<description>
-					If abs(cos(alpha)*bx).ge.b2stbc_Qalfmin, the beta angle is assigned to zero during writing of b2fgmtry.
-					If abs(cos(alpha)*bx).lt.b2stbc_Qalfmin, boundary faces are treated like field-aligned faces in BCMOM=13, BCCON=14, BCENE=15 (style=1), BCENI=15 (style=0) and BCPOT=11. Leakage coefficients (if they are needed) are set equal to b2stbc_Qalfmax.
-				</description>
-			</switch>
-			<switch>
-				<name>b2stbc_Qalfmax</name>
-				<default>1e-3</default>
-				<type>real</type>
-				<description>
-					If abs(cos(alpha)*bx).ge.b2stbc_Qalfmin .and. abs(cos(alpha)*bx).lt.b2stbc_Qalfmax, fcPbs is set equal to b2stbc_Qalfmax*fcS for boundary faces during writing of b2fgmtry.
-				</description>
-			</switch>
-			<switch>
-				<name>b2stbc_Qalfmin</name>
-				<default>1e-3</default>
-				<type>real</type>
-				<description>
-					If abs(cos(alpha)*bx).ge.b2stbc_Qalfmin, the beta angle is assigned to zero during writing of b2fgmtry.
-					If abs(cos(alpha)*bx).lt.b2stbc_Qalfmin, boundary faces are treated like field-aligned faces in BCMOM=13, BCCON=14, BCENE=15 (style=1), BCENI=15 (style=0) and BCPOT=11. Leakage coefficients (if they are needed) are set equal to b2stbc_Qalfmax.
-				</description>
-			</switch>
-			<switch>
-				<name>b2stbc_Qalfmax</name>
-				<default>1e-3</default>
-				<type>real</type>
-				<description>
-					If abs(cos(alpha)*bx).ge.b2stbc_Qalfmin .and. abs(cos(alpha)*bx).lt.b2stbc_Qalfmax, fcPbs is set equal to b2stbc_Qalfmax*fcS for boundary faces during writing of b2fgmtry.
-				</description>
-			</switch>
-			<switch>
 				<name>b2agfs_periodic_bc</name>
 				<default>0</default>
 				<type>integer</type>
@@ -637,6 +603,23 @@
 				<type>integer</type>
 				<description>
 					Switch for conversion with b2us; can be specified in the b2mn.dat file read by b2us during case conversion to unstructured format. When set to 1, b2us will automatically try to reconstruct outer and inner midplane from the geometry (magnetic field and cell coordinates), and write the corresponding coordinates in b2.user.parameters. When set to 0, the IMP and OMP definition will be based on the values of b2mwti_jxi, b2mwti_jxa, b2mwti_jsep.
+				</description>
+			</switch>
+			<switch>
+				<name>b2us_prep_Qalfmin</name>
+				<default>1e-3</default>
+				<type>real</type>
+				<description>
+					If abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin, the beta angle is assigned to zero during writing of b2fgmtry.
+					If abs(cos(alpha)*bx).lt.b2us_prep_Qalfmin, boundary faces are treated like field-aligned faces in BCMOM=13, BCCON=14, BCENE=15 (style=1), BCENI=15 (style=0) and BCPOT=11. Leakage coefficients (if they are needed) are set equal to b2us_prep_Qalfmax.
+				</description>
+			</switch>
+			<switch>
+				<name>b2us_prep_Qalfmax</name>
+				<default>1e-3</default>
+				<type>real</type>
+				<description>
+					If abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin .and. abs(cos(alpha)*bx).lt.b2us_prep_Qalfmax, fcPbs is set equal to b2us_prep_Qalfmax*fcS for boundary faces during writing of b2fgmtry.
 				</description>
 			</switch>
 		</category>
@@ -5298,7 +5281,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Sets the same value to magnetically connected face area fcPbs = fcS * b2stbc_Qalfmin for all boundary faces if length of flux tube is less than b2stbc_min_ftConn.
+					Sets the same value to magnetically connected face area fcPbs = fcS * b2us_prep_Qalfmin for all boundary faces if length of flux tube is less than b2stbc_min_ftConn.
 				</description>
 			</switch>
 			<switch>
@@ -5306,7 +5289,7 @@
 				<default>3</default>
 				<type>integer</type>
 				<description>
-					Keys b2stbc_Qalfmin and b2stbc_min_ftConn will be applied for boundary region if its label number is equal or bigger than b2stbc_str_for_Qalfmin.
+					Keys b2us_prep_Qalfmin and b2stbc_min_ftConn will be applied for boundary region if its label number is equal or bigger than b2stbc_str_for_Qalfmin.
 				</description>
 			</switch>
 			<switch>
