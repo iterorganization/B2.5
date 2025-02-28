@@ -1622,20 +1622,29 @@ cxpb size is changed in b2mod_dimensions
                   if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
 ! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
 !     belonging to each face of the flux surface
-                  do k = mpg%fsFcP(mpg%iFssep,1),
-     &                   mpg%fsFcP(mpg%iFssep,1)+
-     &                   mpg%fsFcP(mpg%iFssep,2)-1
-                    iFc = mpg%fsFc(k)
-                    ic1 = mpg%fcCv(iFc,1)
-                    ic2 = mpg%fcCv(iFc,2)
-                    if(mpg%cvOnClosedSurface(ic1) .or.
-     &                 mpg%cvOnClosedSurface(ic2)) then
-                      fb_current(ifb) = fb_current(ifb) +
-     &                  (pl%na(ic1,is)*geo%fcHc(iFc,2) + pl%na(ic2,is)
-     &                  *geo%fcHc(iFc,1)) /
-     &                  sum(geo%fcHc(iFc,:))*geo%fcS(iFc)
-                      if (is.eq.is_start+1) then
-                        sum_e = sum_e + geo%fcS(iFc)
+                  do ic = 1, 2
+                    if (ic.eq.1) then
+                      iFs = mpg%iFssep
+                    elseif (ic.eq.2.and.
+     &               geometryType.eq.GEOMETRY_CDN) then
+                      iFs = mpg%iFssep2
+                    else
+                      cycle
+                    end if
+                    do k = mpg%fsFcP(iFs,1),
+     &                     mpg%fsFcP(iFs,1)+mpg%fsFcP(iFs,2)-1
+                      iFc = mpg%fsFc(k)
+                      ic1 = mpg%fcCv(iFc,1)
+                      ic2 = mpg%fcCv(iFc,2)
+                      if(mpg%cvOnClosedSurface(ic1) .or.
+     &                   mpg%cvOnClosedSurface(ic2)) then
+                        fb_current(ifb) = fb_current(ifb) +
+     &                    (pl%na(ic1,is)*geo%fcHc(iFc,2) + pl%na(ic2,is)
+     &                    *geo%fcHc(iFc,1)) /
+     &                    sum(geo%fcHc(iFc,:))*geo%fcS(iFc)
+                        if (is.eq.is_start+1) then
+                          sum_e = sum_e + geo%fcS(iFc)
+                        end if
                       end if
                     end if
                   enddo
