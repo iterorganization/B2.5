@@ -5984,19 +5984,65 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2stbc_min_ftConn</name>
-				<default>0.0</default>
-				<type>real</type>
+				<name>b2stbr_phys_lin_shi0</name>
+				<default>0</default>
+				<type>integer</type>
 				<description>
-					Sets the same value to magnetically connected face area fcPbs = fcS * b2us_prep_Qalfmin for all boundary faces if length of flux tube is less than b2stbc_min_ftConn.
+					Determines the linearisation of the boundary condition heat source due to neutral recycling/reflection when erecyc in used. Not used for advanced fluid neutral (AFN) model.
+					lin_shi0.eq.0: put source in shi0(iCv,0).
+					lin_shi0.eq.1: put source/ti in shi0(iCv,1).
+				</description>
+			</switch>
+			<switchgroup>
+				<name>b2npmo_discr_meth*</name>
+				<description>
+					Determines the discretization method for the calculation of the fluxes.
+					discr_meth.eq.0: central scheme
+					discr_meth.eq.1: upwind scheme
+					discr_meth.eq.2: SOLPS5 hybrid scheme
+					discr_meth.eq.3: SOLPS4 continuity scheme. Not yet available for WG.
+				</description>
+				<switch>
+					<name>b2npmo_discr_meth</name>
+					<default>2</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2tfhe_discr_meth</name>
+					<default>2</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2tfhi_discr_meth</name>
+					<default>2</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2tfnb_discr_meth</name>
+					<default>2</default>
+					<type>integer</type>
+				</switch>
+			</switchgroup>
+			<switch>
+				<name>b2tfnb_style_int_vel</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Determines the interpolation weights to get the parallel velocities at the cell faces.
+					style_int_vel.eq.0: interpolation based on cell volumes.
+					style_int_vel.eq.1: interpolation based on cell connector lengths.
+					Only the combination b2tfnb_style_int_vel=0 and b2sihs_style_int_vel=0 works robustly for now. Other combinations gave rise to oscillations. More research needed.
 				</description>
 			</switch>
 			<switch>
-				<name>b2stbc_str_for_Qalfmin</name>
-				<default>3</default>
+				<name>b2sihs_style_int_vel</name>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					Keys b2us_prep_Qalfmin and b2stbc_min_ftConn will be applied for boundary region if its label number is equal or bigger than b2stbc_str_for_Qalfmin.
+					Determines the interpolation weights to get the parallel velocities at the cell faces for the calculation of divergence ua.
+					style_int_vel.eq.0: interpolation based on cell connector lengths.
+					style_int_vel.eq.1: interpolation based on cell volumes.
+					Only the combination b2tfnb_style_int_vel=0 and b2sihs_style_int_vel=0 works robustly for now. Other combinations gave rise to oscillations. More research needed.
 				</description>
 			</switch>
 		</category>
