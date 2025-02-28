@@ -1630,8 +1630,10 @@ cxpb size is changed in b2mod_dimensions
 ! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
 !     belonging to each face of the flux surface
                   do ic = 1, 2
-                    if (ic.eq.1) iFs = mpg%iFssep
-                    if (ic.eq.2.and.geometryType.eq.GEOMETRY_CDN) then
+                    if (ic.eq.1) then
+                      iFs = mpg%iFssep
+                    elseif (ic.eq.2.and.
+     &               geometryType.eq.GEOMETRY_CDN) then
                       iFs = mpg%iFssep2
                     else
                       cycle
