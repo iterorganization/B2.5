@@ -367,6 +367,14 @@
         enddo
        endif
       enddo
+      if (switch%b2sihs_shidd.eq.0) then
+        do k=1,mpg%nCg
+          iFc = mpg%fcs_wall(k)
+          if (mpg%fcLbl(iFc).le.0) cycle
+          iCv = minval(mpg%fcCv(iFc,1:2))
+          shidd(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exba0to3 = shidd

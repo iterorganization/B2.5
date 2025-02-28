@@ -3992,11 +3992,11 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2sihs_ne_min</name>
-				<default>1.0e18</default>
-				<type>real</type>
+				<name>b2sihs_shidd</name>
+				<default>1</default>
+				<type>integer</type>
 				<description>
-					If the electron density in a cell is smaller than the value in the key, ion sources due to viscosity (shiva, shivc) will be zero in that cell.
+					If b2sihs_shidd.eq.0, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
 				</description>
 			</switch>
 			<switch>
