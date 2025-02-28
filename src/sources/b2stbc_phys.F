@@ -118,8 +118,7 @@
      *  pz(nCv), !sxhz(-1:nx,-1:ny),                                    !srv 24.08.08
      *  gOnedBsq(nFc,0:1),
      &  sna0_no_mdf(nCv,0:1,0:ns-1)
-      real (kind=R8), save :: cor9 = 0.0_R8, min_ftConn = 0.0_R8        !srv 23.09.08
-      integer, save :: str_for_Qalfmin = 3
+      real (kind=R8), save :: cor9 = 0.0_R8                             !srv 23.09.08
       character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, ishigh
 #ifdef WG_TODO
@@ -206,8 +205,6 @@ c       call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 2
 c       call ipgeti ('b2stbc_type16_kinetic_energy',
 c     1  bc_type16_kinetic_energy)
 c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.02
-        call ipgetr ('b2stbc_min_ftConn', min_ftConn)
-        call ipgeti ('b2stbc_str_for_Qalfmin', str_for_Qalfmin)
       endif
 *   ..test nCv, nFc, ns
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
@@ -1290,9 +1287,7 @@ c   (ionising_core option)
             s1 = abs(geo%fcPbs(iFc))
             cs = sqrt(pz(iCv1)/rz(iCv1))
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-            if (((wrk < geo%Qalfmin)
-     &       .or.((geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0)))
-     &       .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
+            if (wrk < geo%Qalfmin) then
               srw%sna0(iCv1,0,is) = 0.0_R8
               srw%sna0(iCv1,1,is) = -geo%fcS(iFc)*cs*geo%Qalfmax
               sna0_no_mdf(iCv1,:,is) =
@@ -3603,9 +3598,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
             cs = sqrt(pz(iCv1)/rz(iCv1))
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-            if (((wrk < geo%Qalfmin)
-     &       .or.((geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0)))
-     &       .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
+            if (wrk < geo%Qalfmin) then
               srw%smo0(iCv1,0,is)=
      .          VBIG*am(is)*pl%na(iCv1,is)*geo%fcS(iFc)*geo%fcHz(iFc)*
      .         (0.0_R8*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
@@ -4973,9 +4966,7 @@ cwdk    Todo: corrections for BCCON.ne.14
             s1   = abs(geo%fcPbs(iFc))
             vte  = sqrt(pl%te(iCv1)/me)
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-            if (((wrk < geo%Qalfmin)
-     &       .or.(geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0))
-     &       .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
+            if (wrk < geo%Qalfmin) then
               s1 = abs(geo%fcS(iFc))*geo%Qalfmax
             else
               s1 = abs(geo%fcPbs(iFc))
@@ -6933,9 +6924,7 @@ cxpb          endif
           iFt = mpg%cvFt(iCv2)
           wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
           if (bceni_15_style == 0) then
-            if (((wrk < geo%Qalfmin)
-     &       .or.((geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0)))
-     &       .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
+            if (wrk < geo%Qalfmin) then
               srw%shi0(iCv1,0) = 0.0_R8
               srw%shi0(iCv1,1) = -1.5*geo%fcS(iFc)*geo%Qalfmax*cs
      &         *dv%ni(iCv1,1)
@@ -8756,9 +8745,7 @@ c              fchi=0.0_R8
           iFt = mpg%cvFt(iCv2)
           t0 = 0.0_R8
           wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
-          if (((wrk < geo%Qalfmin)
-     &     .or.(geo%ftConn(iFt)<min_ftConn.and.mpg%cvFt(iCv2).ne.0))
-     &     .and.(mpg%fcLbl(iFc).ge.str_for_Qalfmin)) then
+          if (wrk < geo%Qalfmin) then
             s1 = abs(geo%fcS(iFc))*geo%Qalfmax
           else
             s1 = abs(geo%fcPbs(iFc))
