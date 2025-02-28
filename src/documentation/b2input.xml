@@ -5277,22 +5277,6 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2stbc_min_ftConn</name>
-				<default>0.0</default>
-				<type>real</type>
-				<description>
-					Sets the same value to magnetically connected face area fcPbs = fcS * b2us_prep_Qalfmin for all boundary faces if length of flux tube is less than b2stbc_min_ftConn.
-				</description>
-			</switch>
-			<switch>
-				<name>b2stbc_str_for_Qalfmin</name>
-				<default>3</default>
-				<type>integer</type>
-				<description>
-					Keys b2us_prep_Qalfmin and b2stbc_min_ftConn will be applied for boundary region if its label number is equal or bigger than b2stbc_str_for_Qalfmin.
-				</description>
-			</switch>
-			<switch>
 				<name>b2stbr_phys_lin_shi0</name>
 				<default>0</default>
 				<type>integer</type>
