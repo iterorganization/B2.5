@@ -952,10 +952,6 @@ C
       call subend ()
       RETURN
 
-#ifdef B25_EIRENE
- 948  call xerrab (fort_lc//'44_aver file found empty!')
-#endif
-
 *=======================================================================
 *//END NGREAD//
 
