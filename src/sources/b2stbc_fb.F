@@ -710,8 +710,8 @@
        endif
        call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
        call ipgetr ('b2stbc_ndes', ndes)
-       call ipgeti('b2tfnb_mdf', mdf_fnb)
-       call ipgeti('b2mndt_style', style_b2mndt)
+       call ipgeti ('b2tfnb_mdf', mdf_fnb)
+       call ipgeti ('b2mndt_style', style_b2mndt)
        call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
        call ipgetr ('b2stbc_cbsnafac', cbsnafac)
        call xertst (0.0_R8.lt.cbsnafac,
