@@ -4552,14 +4552,6 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2tfnb_flux_limit_min_ni</name>
-				<default>1.0e17</default>
-				<type>real</type>
-				<description>
-					If averaged ion density in flux tube is lower than the value in the key, radial ion heat flux due to convective anomalous  particle flux will be decreased in order of 5/3.
-				</description>
-			</switch>
-			<switch>
 				<name>b2sihs_shidu</name>
 				<default>1</default>
 				<type>integer</type>
@@ -4954,6 +4946,14 @@
 				<type>real</type>
 				<description>
 					Multiplication factor to the poloidal transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa).
+				</description>
+			</switch>
+			<switch>
+				<name>b2trno_set_chcb_0</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Sets radial componets of transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa) equals to zero or decreases it in b2txcx_increase_transp_coefs times on not field-aligned faces (it is defined by b2us_prep_Qalfmin).
 				</description>
 			</switch>
 			<switch>
