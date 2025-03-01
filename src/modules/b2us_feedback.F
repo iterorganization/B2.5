@@ -1938,9 +1938,7 @@ cxpb size is changed in b2mod_dimensions
       ncall = ncall + 1
       call subend ()
       return
-
       end subroutine compute_feedback
-
 
       subroutine dealloc_feedback
       implicit none

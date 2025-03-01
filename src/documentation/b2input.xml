@@ -7340,7 +7340,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Additional divertor ion heat source (in Watts/m3)
+					Additional divertor ion heat source (in Watts/m<sup>3</sup>)
 				</description>
 			</switch>
 			<switch>
