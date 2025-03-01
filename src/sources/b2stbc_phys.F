@@ -89,7 +89,6 @@
 #endif
       integer, save :: bccon_flux_fb_style =0
       integer, save :: bcene_15_style =1                                !srv 19.04.13
-      integer, save :: b2stbc_bcene_15_restr = 0
       integer, save :: bceni_15_style =0                                !srv 19.04.13
       integer, save :: bcpot_12_style =0                                !srv 19.04.13
       integer, save :: bcenk_17_style =0
@@ -173,7 +172,6 @@
       if (ncall_b2stbc_phys.eq.0) then
        call ipgeti ('b2stbc_bccon_flux_fb_style', bccon_flux_fb_style)
        call ipgeti ('b2stbc_bcene_15_style', bcene_15_style)
-       call ipgeti ('b2stbc_bcene_15_restr', b2stbc_bcene_15_restr)
        call ipgeti ('b2stbc_bceni_15_style', bceni_15_style)
        call ipgeti ('b2stbc_bcpot_12_style', bcpot_12_style)
        call ipgeti ('b2stbc_bcenk_17_style', bcenk_17_style)
@@ -4989,7 +4987,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      &          ((1.0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))
      &           - switch%stab_coeff_sheath_te*pl%te(iCv1))*t0 -        !lkw 31.03.2023
      &                            qe*(pl%po(iCv1)-potpar(ib,2))*t1      !wdk to check: correct 2nd term for gammae?
-              if (b2stbc_bcene_15_restr.eq.1 .and. 
+              if (switch%b2nppo_restr_po.ne.0.0_R8.eq.1 .and. 
      &            (srw%she0(iCv1,0)+srw%she0(iCv1,1)*pl%te(iCv1)
      &            .gt. 0.0_R8)) srw%she0(iCv1,:) = 0.0_R8
             else
