@@ -519,6 +519,10 @@
 *     B2TXSY computes the integrals over cell y-faces of a function
 *     that is provided on the cells.
 *
+*     B2TXNCI computes number of main ion collisions in every flux tube.
+*
+*     B2TXNCE computes number of electron collisions in every flux tube.
+*
 *     B2UPCO corrects the state of the plasma towards the solution of
 *     continuity equation for one atomic species.
 *

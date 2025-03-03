@@ -1,4 +1,4 @@
-      subroutine b2tnci (mpg, geo, switch, nCv, ns, ti, te, rz2, ne, 
+      subroutine b2txnci (mpg, geo, switch, nCv, ns, ti, te, rz2, ne,
      &  ne2, na, lnlam, ismain, st_ext, collisnumf, collisnumc)
       use b2mod_types
       use b2mod_constants
@@ -67,10 +67,10 @@
       enddo
 
       if (switch%iout_b2wdat.eq.4) then
-        call my_out_us(70,mpg%nFt,1,collisnum,'b2tnci_numcoli')
-        call my_out_us(70,mpg%nFc,1,collisnumf,'b2tnci_numcolif')
-        call my_out_us(70,mpg%nCv,1,collisnumc,'b2tnci_numcolic')
+        call my_out_us(70,mpg%nFt,1,collisnum,'b2txnci_numcoli')
+        call my_out_us(70,mpg%nFc,1,collisnumf,'b2txnci_numcolif')
+        call my_out_us(70,mpg%nCv,1,collisnumc,'b2txnci_numcolic')
       endif
 
       return
-      end subroutine b2tnci
+      end subroutine b2txnci

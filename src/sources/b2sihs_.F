@@ -385,8 +385,8 @@
       b2visa=0.0_R8
       srw%b2sihs_visa=0.0_R8
       if (switch%min_collisions .gt. 0.0_R8) then
-        call b2tnci (mpg, geo, switch, nCv, ns, ti, te, rz2,
-     &   ne, ne2, na, lnlam, ismain, st_ext, wrkf, 
+        call b2txnci (mpg, geo, switch, nCv, ns, ti, te, rz2,
+     &   ne, ne2, na, lnlam, ismain, st_ext, wrkf,
      &   wrkc)
       else
         wrkc = 1.0_R8
