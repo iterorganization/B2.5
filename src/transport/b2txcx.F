@@ -52,8 +52,8 @@
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))
          if (increase_transp_coefs.gt.1.0_R8) then
            cvs = mpg%fcCv(iFc,1:2)
-           if (mpg%islongbound(cvs(1)).and.
-     &         mpg%islongbound(cvs(2))) then
+           if (mpg%cvAlongBoundary(cvs(1)).and.
+     &         mpg%cvAlongBoundary(cvs(2))) then
              conx(iFc) = conx(iFc)*increase_transp_coefs
            endif
          endif
@@ -67,8 +67,8 @@
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
         if (increase_transp_coefs.gt.1.0_R8) then
           cvs = mpg%fcCv(iFc,1:2)
-          if (mpg%islongbound(cvs(1)).and.
-     &        mpg%islongbound(cvs(2))) then
+          if (mpg%cvAlongBoundary(cvs(1)).and.
+     &        mpg%cvAlongBoundary(cvs(2))) then
             conx(iFc) = conx(iFc)*increase_transp_coefs
           endif
         endif
@@ -83,8 +83,8 @@
      &   (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))**2
          if (increase_transp_coefs.gt.1.0_R8) then
            cvs = mpg%fcCv(iFc,1:2)
-           if (mpg%islongbound(cvs(1)).and.
-     &         mpg%islongbound(cvs(2))) then
+           if (mpg%cvAlongBoundary(cvs(1)).and.
+     &         mpg%cvAlongBoundary(cvs(2))) then
              conx(iFc) = conx(iFc)*increase_transp_coefs
            endif
          endif
@@ -100,8 +100,8 @@
      &   (geo%fcVol(iFc,1) + geo%fcVol(iFc,2))
          if (increase_transp_coefs.gt.1.0_R8) then
            cvs = mpg%fcCv(iFc,1:2)
-           if (mpg%islongbound(cvs(1)).and.
-     &         mpg%islongbound(cvs(2))) then
+           if (mpg%cvAlongBoundary(cvs(1)).and.
+     &         mpg%cvAlongBoundary(cvs(2))) then
              conx(iFc) = conx(iFc)*increase_transp_coefs
            endif
          endif
