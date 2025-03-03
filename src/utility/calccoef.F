@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 ! $AD NOCHECKPOINT
-      subroutine calccoef(nCv,nFc,nVx,meth,geo,mpg,flo,con,flo0,con0)
+      subroutine calccoef(nCv,nFc,nVx,meth,geo,flo,con,flo0,con0)
       use b2mod_types
       use b2us_geo
       use b2us_map
@@ -9,7 +9,6 @@
 *   ..input arguments
       integer, intent (in) :: nCv, nFc, nVx, meth
       type (geometry), intent (in) :: geo
-      type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *   flo(nFc,0:1), con(nFc,0:1)
 *   ..output arguments
