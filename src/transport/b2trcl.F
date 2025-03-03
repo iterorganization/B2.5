@@ -622,11 +622,11 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       endif
 
       if (switch%min_collisions .gt. 0.0_R8) then
-        call b2tnci (mpg, geo, switch, nCv, ns, pl%ti, pl%te, rt%rz2,
-     &   dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, collisnumf, 
+        call b2txnci (mpg, geo, switch, nCv, ns, pl%ti, pl%te, rt%rz2,
+     &   dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, collisnumf,
      &   wrkc)
-        call b2tnce (mpg, geo, switch, nCv, pl%te, dv%ne2,
-     &  dv%lnlam, collisnumef, wrkc)
+        call b2txnce (mpg, geo, switch, nCv, pl%te, dv%ne2,
+     &   dv%lnlam, collisnumef, wrkc)
       else
         collisnumf = 1.0_R8
         collisnumef = 1.0_R8
@@ -667,13 +667,13 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))))) then
           if (collisnumf(iFc) .gt. switch%min_collisions) then
-            flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
-     &                             +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
-            t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
-     &        pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) +
-     &        b2trcl_cutlo)
-          else 
-            t0 = (cflim(1)*max(collisnumf(iFc), 1e-16_R8))**(-1)
+           flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
+     &                            +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
+           t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
+     &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) +
+     &      b2trcl_cutlo)
+          else
+           t0 = (cflim(1)*max(collisnumf(iFc), 1e-16_R8))**(-1)
           endif
           co%fllim_ki(iFc) = 1.0_R8/(1.0_R8+t0)
           chci(iFc,0)=chci(iFc,0)*co%fllim_ki(iFc)
