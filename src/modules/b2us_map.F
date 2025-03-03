@@ -103,10 +103,10 @@
         integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
         integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
 
-        logical, allocatable :: islongbound(:)         ! (nCv) indicates whether the contol volume is connected to boundary cell
-        integer, allocatable :: fcs_wall(:)         ! (nCv) indicates whether the contol volume is connected to boundary cell
-        integer, allocatable :: fcs_wall_ind(:,:)         ! (nCv) indicates whether the contol volume is connected to boundary cell
-        integer :: nFcs_wall
+        logical, allocatable :: cvAlongBoundary(:)     ! (nCv) indicates whether the control volume is connected to a boundary cell
+        integer, allocatable :: fcs_wall(:)            ! (nCg) ordered list of faces along the boundary
+        integer, allocatable :: fcs_wall_ind(:,:)      ! (nFci,2) indicates range in fcs_wall, where neighbouring faces connected to the one flux tube are placed.
+
         end type mapping
 
       contains
@@ -373,7 +373,7 @@
       deallocate (m%ftLbl)
       deallocate (m%cvLbl)
 
-      if (allocated(m%islongbound)) deallocate(m%islongbound)
+      if (allocated(m%cvAlongBoundary)) deallocate(m%cvAlongBoundary)
       if (allocated(m%fcs_wall)) deallocate(m%fcs_wall)
       if (allocated(m%fcs_wall_ind)) deallocate(m%fcs_wall_ind)
       return
@@ -1089,8 +1089,8 @@ cwdk  can be derived directly from data in that file
         deallocate(freg)
       endif
 
-      allocate(m%islongbound(m%nCv))
-      m%islongbound = .false.
+      allocate(m%cvAlongBoundary(m%nCv))
+      m%cvAlongBoundary = .false.
       fcsbcounter = 0
       do iCv=m%nCi+1,m%nCv
         iFc = m%cvFc(m%cvFcP(iCv,1))
@@ -1102,32 +1102,21 @@ cwdk  can be derived directly from data in that file
         cvsb(m%fcLbl(iFc),fcsbcounter(m%fcLbl(iFc))) = min(iCv1,iCv2)
       enddo
       do k=1,maxval(m%fcLbl)
-        print *, "fcLbl=",k
         do j=1,fcsbcounter(k)
           iCv2 = cvsb(k,j)
           iFc = fcsb(k,j)
-          ! if (findloc(m%divFc,iFc,1).eq.0) cycle
           iCv1 = maxval(m%fcCv(iFc,1:2))
-          print *,iCv1,iCv2,iFc
           if (j.lt.fcsbcounter(k)) then
             if (m%cvFt(iCv2).eq.m%cvFt(cvsb(k,j+1))) then
-              m%islongbound(iCv2) = .true.
-              ! m%islongbound(iCv1) = .true.
+              m%cvAlongBoundary(iCv2) = .true.
             endif
           endif
           if (j.gt.1) then
             if (m%cvFt(iCv2).eq.m%cvFt(cvsb(k,j-1))) then
-              m%islongbound(iCv2) = .true.
-              ! m%islongbound(iCv1) = .true.
+              m%cvAlongBoundary(iCv2) = .true.
             endif
           endif
         enddo
-      enddo
-
-      write (*,*) 'islongbound'
-      do iCv=1,m%nCv
-        if (m%islongbound(iCv))
-     &    write (*,*) iCv
       enddo
 
       allocate(m%fcs_wall(m%nCg))
@@ -1138,8 +1127,8 @@ cwdk  can be derived directly from data in that file
         k = k+1
       enddo
 
-      m%nFcs_wall = 1
-      do k=1,m%nCg-1
+      m%nFci = 0
+      do k=1,m%nCg
         is_found = .false.
         do l=k+1,m%nCg
           if (m%fcVx(m%fcs_wall(k),1) == m%fcVx(m%fcs_wall(l),1) .or.
@@ -1152,37 +1141,42 @@ cwdk  can be derived directly from data in that file
             m%fcs_wall(l) = inew
             if (maxval(m%cvFt(m%fcCv(m%fcs_wall(k+1),1:2))) .ne.
      &          maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
-                  write (*,*), "changed ft between", m%fcs_wall(k),
-     &              m%fcs_wall(k+1)
-                  m%nFcs_wall = m%nFcs_wall+1
+              m%nFci = m%nFci+1
             endif
             exit
           endif
         enddo
         if (.not.is_found) then
-          write (*,*), "Can't find pair to", m%fcs_wall(k), 
-     &      "Assume end of group"
-          m%nFcs_wall = m%nFcs_wall+1
+          if (k.lt.m%nCg.or.(k.eq.m%nCg.and.
+     &     maxval(m%cvFt(m%fcCv(m%fcs_wall(k-1),1:2))) .ne.
+     &     maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2))))) then
+            m%nFci = m%nFci+1
+          endif
         endif
       enddo
-      allocate(m%fcs_wall_ind(m%nFcs_wall,2))
+      allocate(m%fcs_wall_ind(m%nFci,2))
       j = 1
       l = 1
       do k=1,m%nCg
         if (maxval(m%cvFt(m%fcCv(m%fcs_wall(k+1),1:2))) .ne.
-     &        maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
-              write (*,*), "changed ft between", m%fcs_wall(k),
-     &          m%fcs_wall(k+1)
+     &      maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
           m%fcs_wall_ind(l,1) = j
           m%fcs_wall_ind(l,2) = k-j+1
           j = k+1
           l = l+1
         endif
       enddo
-      write(*,*) "Nfcs wall",m%nFcs_wall
-      write(*,*) "wall fcs:"
-      do j=1,m%nFcs_wall
-        write(*,*) m%fcs_wall_ind(j,1),sum(m%fcs_wall_ind(j,1:2))-1
+      ! Doing the last cell by hand if it is on its own flux tube
+      if (maxval(m%cvFt(m%fcCv(m%fcs_wall(m%nCg-1),1:2))) .ne.
+     &    maxval(m%cvFt(m%fcCv(m%fcs_wall(m%nCg),1:2)))) then
+        m%fcs_wall_ind(l,1) = m%nCg
+        m%fcs_wall_ind(l,2) = 1
+      end if
+
+      write(*,*) "list of boundary faces in one flux tube:"
+      do j=1,m%nFci
+        if (m%fcs_wall_ind(j,1) .eq. m%fcs_wall_ind(j,2)) cycle
+        write(*,'(3i4)') j, m%fcs_wall_ind(j,1), m%fcs_wall_ind(j,2)
         write(*,*) m%fcs_wall(m%fcs_wall_ind(j,1):
      &      sum(m%fcs_wall_ind(j,1:2))-1)
       enddo
