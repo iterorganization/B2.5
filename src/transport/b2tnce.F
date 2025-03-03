@@ -7,10 +7,6 @@
       use b2us_map
       use b2us_geo
       use b2mod_switches
-! csc The following are not necessary for computation but are needed
-!     for adjoint AD to avoid side-effect variables
-    !   use b2mod_ad
-    !  & , only : ncall_b2ttia
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -19,20 +15,28 @@
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
       type (switches), intent (in) :: switch
-      real (kind=R8) :: wrk1(mpg%nFc,2), tauf(mpg%nFc),
-     *   vte(mpg%nFc), collisnum(mpg%nFt),
-     *   tau(nCv), t0, t1, ctaue, wrkc(mpg%nCv)
-      integer :: iFt, k, iFc, iCv
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) :: collisnumf(mpg%nFc),
+      real (kind=R8), intent (out) :: collisnumf(mpg%nFc),
      *  collisnumc(mpg%nCv)
+*   ..common blocks
+*-----------------------------------------------------------------------
+*.declarations
+
+*   ..local variables
+      real (kind=R8) :: wrk1(mpg%nFc,2), tauf(mpg%nFc),
+     *  vte(mpg%nFc), collisnum(mpg%nFt),
+     *  tau(nCv), t0, t1, ctaue, wrkc(mpg%nCv)
+      integer :: iFt, k, iFc, iCv
+
+*-----------------------------------------------------------------------
+*.computation
 
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
       if (switch%b2tqce_model.eq.1.or.switch%b2tqce_model.eq.3) then
-        ctaue = t0*sqrt(me)                                                !xpb
+        ctaue = t0*sqrt(me)                                                
       else if (switch%b2tqce_model.eq.2) then
-        ctaue = 3.5e11_R8             ! lower precision as per SOLPS4.0
+        ctaue = 3.5e11_R8                                               ! lower precision as per SOLPS4.0
       endif
       do iCv=1, nCv
         t0 = te(iCv)/ev
