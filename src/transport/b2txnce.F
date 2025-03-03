@@ -1,4 +1,4 @@
-      subroutine b2tnce (mpg, geo, switch, nCv, te, 
+      subroutine b2txnce (mpg, geo, switch, nCv, te, 
      &  ne2, lnlam, collisnumf, collisnumc)
       use b2mod_types
       use b2mod_constants
@@ -34,13 +34,13 @@
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
       if (switch%b2tqce_model.eq.1.or.switch%b2tqce_model.eq.3) then
-        ctaue = t0*sqrt(me)                                                
+        ctaue = t0*sqrt(me)
       else if (switch%b2tqce_model.eq.2) then
         ctaue = 3.5e11_R8                                               ! lower precision as per SOLPS4.0
       endif
       do iCv=1, nCv
         t0 = te(iCv)/ev
-        tau(iCv) = (ctaue/lnlam(iCv))*t0*sqrt(t0)/ne2(iCv)  
+        tau(iCv) = (ctaue/lnlam(iCv))*t0*sqrt(t0)/ne2(iCv)
       enddo
 
       wrk1 = 1.0_R8
@@ -73,11 +73,11 @@
       enddo
 
       if (switch%iout_b2wdat.eq.4) then
-        call my_out_us(70,mpg%nCv,1,tau,'b2tnce_tau')
-        call my_out_us(70,mpg%nFt,1,collisnum,'b2tnce_numcole')
-        call my_out_us(70,mpg%nFc,1,collisnumf,'b2tnce_numcolef')
-        call my_out_us(70,mpg%nCv,1,collisnumc,'b2tnce_numcolec')
+        call my_out_us(70,mpg%nCv,1,tau,'b2txnce_tau')
+        call my_out_us(70,mpg%nFt,1,collisnum,'b2txnce_numcole')
+        call my_out_us(70,mpg%nFc,1,collisnumf,'b2txnce_numcolef')
+        call my_out_us(70,mpg%nCv,1,collisnumc,'b2txnce_numcolec')
       endif
 
       return
-      end subroutine b2tnce
+      end subroutine b2txnce

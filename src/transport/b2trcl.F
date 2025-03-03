@@ -596,10 +596,10 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       wrk = chce(:,0)                                                    !srv 13.01.17
 
       if (switch%min_collisions .gt. 0.0_R8) then
-        call b2tnci (mpg, geo, switch, nCv, ns, pl%ti, pl%te, rt%rz2,
-     &   dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, collisnumf, 
+        call b2txnci (mpg, geo, switch, nCv, ns, pl%ti, pl%te, rt%rz2,
+     &   dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, collisnumf,
      &   wrkc)
-        call b2tnce (mpg, geo, switch, nCv, pl%te, dv%ne2,
+        call b2txnce (mpg, geo, switch, nCv, pl%te, dv%ne2,
      &   dv%lnlam, collisnumef, wrkc)
       else
         collisnumf = 1.0_R8
@@ -646,7 +646,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
            t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
      &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) +
      &      b2trcl_cutlo)
-          else 
+          else
            t0 = (cflim(1)*max(collisnumf(iFc), 1e-16_R8))**(-1)
           endif
           co%fllim_ki(iFc) = 1.0_R8/(1.0_R8+t0)
