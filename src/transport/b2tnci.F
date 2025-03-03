@@ -7,10 +7,6 @@
       use b2us_map
       use b2us_geo
       use b2mod_switches
-! csc The following are not necessary for computation but are needed
-!     for adjoint AD to avoid side-effect variables
-    !   use b2mod_ad
-    !  & , only : ncall_b2ttia
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -22,13 +18,21 @@
       type (mapping), intent (in) :: mpg
       type (geometry), intent (in) :: geo
       type (switches), intent (in) :: switch
+*   ..output arguments (unspecified on entry)
+      real (kind=R8), intent (out) :: collisnumf(mpg%nFc),
+     *  collisnumc(mpg%nCv)
+*   ..common blocks
+*-----------------------------------------------------------------------
+*.declarations
+
+*   ..local variables
       real (kind=R8) :: wrkc(nCv),
-     *   tauia(nCv,0:ns-1), rz(nCv), pz(nCv), wrk1(mpg%nFc,2), 
+     *   tauia(nCv,0:ns-1), rz(nCv), pz(nCv), wrk1(mpg%nFc,2),
      *   tauiaf(mpg%nFc), csf(mpg%nFc), collisnum(mpg%nFt)
       integer :: iFt, k, iFc, iCv
-*   ..output arguments (unspecified on entry)
-      real (kind=R8) :: collisnumf(mpg%nFc),
-     *  collisnumc(mpg%nCv)
+
+*-----------------------------------------------------------------------
+*.computation
 
       call b2ttia (nCv, ns, ti, rz2, ne2, lnlam, tauia)
       call b2xprz (nCv, ns, mp, am, na, rz, st_ext)
