@@ -179,7 +179,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
           wrk(:,1) = wrk(:,1) + csig_stoch
         endif                                                            !lk 31.01.08 }
 #endif
-        call calccoef(nCv,nFc,nVx,0,geo,mpg,dumm0,wrk,dumm1,dv%conc)
+        call calccoef(nCv,nFc,nVx,0,geo,dumm0,wrk,dumm1,dv%conc)
 
       endif !no_current
 

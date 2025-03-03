@@ -83,7 +83,7 @@
 
 * ..apply discretization scheme
       call calccoef(nCv,nFc,nVx,switch%b2npmo_discr_meth,
-     &                                geo,mpg,flcb,cvsb,flcb0,cvsb0)
+     &                                geo,flcb,cvsb,flcb0,cvsb0)
 
 * ..compute the correction
       aa = 0.0_R8
