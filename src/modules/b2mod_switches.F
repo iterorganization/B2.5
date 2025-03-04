@@ -422,8 +422,8 @@ c b2tqna
       real (kind=R8) :: b2tqna_min_df0
       real (kind=R8) :: b2tqna_max_df0
       real (kind=R8) :: b2tqna_cfvma
-      real (kind=R8) :: bar_length
-      real (kind=R8) :: inner_sol_length,
+      real (kind=R8) :: bar_width
+      real (kind=R8) :: sol_width,lfs_sol_width,hfs_sol_width,
      *  na_alfa1, na_alfa2, na_alfa3, na_alfa4,
      *  te_alfa1, te_alfa2, te_alfa3, te_alfa4,
      *  ti_alfa1, ti_alfa2, ti_alfa3, ti_alfa4,
@@ -1014,28 +1014,28 @@ c b2tqna
       s % b2tqna_transport_inputfile = 0
       s % b2tqna_ballooning_sig = 1
       s % b2tqna_limit_coeff = 0
-      s % bar_length = 0.0_R8
-      s % inner_sol_length = 0.0_R8
+      s % bar_width = 0.0_R8
+      s % sol_width = 0.0_R8
       s % na_alfa1 = 1.0_R8
       s % na_alfa2 = 1.0_R8
       s % na_alfa3 = 1.0_R8
-      s % na_alfa4 = 1.0_R8
+      s % na_alfa4 = 0.0_R8
       s % te_alfa1 = 1.0_R8
       s % te_alfa2 = 1.0_R8
       s % te_alfa3 = 1.0_R8
-      s % te_alfa4 = 1.0_R8
+      s % te_alfa4 = 0.0_R8
       s % ti_alfa1 = 1.0_R8
       s % ti_alfa2 = 1.0_R8
       s % ti_alfa3 = 1.0_R8
-      s % ti_alfa4 = 1.0_R8
+      s % ti_alfa4 = 0.0_R8
       s % vsa_alfa1 = 1.0_R8
       s % vsa_alfa2 = 1.0_R8
       s % vsa_alfa3 = 1.0_R8
-      s % vsa_alfa4 = 1.0_R8
+      s % vsa_alfa4 = 0.0_R8
       s % vla_alfa1 = 1.0_R8
       s % vla_alfa2 = 1.0_R8
       s % vla_alfa3 = 1.0_R8
-      s % vla_alfa4 = 1.0_R8
+      s % vla_alfa4 = 0.0_R8
 
 c fch_anomalous
       s % fch_anomalous = 1.0_R8
@@ -1689,24 +1689,32 @@ c b2tqna
      &      'faulty argument b2tqna_vsa_alfa4')
 
       call ipgetr ('b2tqna_vla_alfa1', s%vla_alfa1)
-      call xertst (0.lt.s%vla_alfa1,
-     &      'faulty argument b2tqna_vsa_alfa1')
+      call xertst (0.0_R8.le.s%vla_alfa1,
+     &      'faulty argument b2tqna_vla_alfa1')
       call ipgetr ('b2tqna_vla_alfa2', s%vla_alfa2)
-      call xertst (0.lt.s%vla_alfa2,
-     &      'faulty argument b2tqna_vsa_alfa2')
+      call xertst (0.0_R8.le.s%vla_alfa2,
+     &      'faulty argument b2tqna_vla_alfa2')
       call ipgetr ('b2tqna_vla_alfa3', s%vla_alfa3)
-      call xertst (0.lt.s%vla_alfa3,
-     &      'faulty argument b2tqna_vsa_alfa3')
+      call xertst (0.0_R8.le.s%vla_alfa3,
+     &      'faulty argument b2tqna_vla_alfa3')
       call ipgetr ('b2tqna_vla_alfa4', s%vla_alfa4)
-      call xertst (0.lt.s%vla_alfa4,
-     &      'faulty argument b2tqna_vsa_alfa4')
+      call xertst (0.0_R8.le.s%vla_alfa4,
+     &      'faulty argument b2tqna_vla_alfa4')
 
-      call ipgetr ('b2tqna_delta1', s%bar_length)
-      call xertst (0.0_R8.le.s%bar_length,
-     &      'faulty argument b2tqna_delta1')
-      call ipgetr ('b2tqna_delta2', s%inner_sol_length)
-      call xertst (0.0_R8.le.s%inner_sol_length,
-     &      'faulty argument b2tqna_delta2')
+      call ipgetr ('b2tqna_bar_width', s%bar_width)
+      call xertst (0.0_R8.le.s%bar_width,
+     &      'faulty argument b2tqna_bar_width')
+      call ipgetr ('b2tqna_sol_width', s%sol_width)
+      call xertst (0.0_R8.le.s%sol_width,
+     &      'faulty argument b2tqna_sol_width')
+      s%lfs_sol_width = s%sol_width
+      s%hfs_sol_width = s%sol_width
+      call ipgetr ('b2tqna_hfs_sol_width', s%hfs_sol_width)
+      call xertst (0.0_R8.le.s%hfs_sol_width,
+     &      'faulty argument b2tqna_hfs_sol_width')
+      call ipgetr ('b2tqna_lfs_sol_width', s%lfs_sol_width)
+      call xertst (0.0_R8.le.s%lfs_sol_width,
+     &      'faulty argument b2tqna_lfs_sol_width')
 
 c fch anomalous
       call ipgetr ('b2tfhe_anomalous', s%fch_anomalous)
