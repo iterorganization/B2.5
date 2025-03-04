@@ -1945,6 +1945,198 @@
 					<default>5.0e4</default>
 					<type>real</type>
 				</switch>
+				<switch>
+					<name>b2tqna_bar_width</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Width of transport barrier where *_alfa1 multipliers will be applied. Width is measured at outer midplane.
+					</description>
+				</switch>
+				<switch>
+				<name>b2tqna_sol_width</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Width of SOL where *_alfa2 multipliers will be applied. Width is measured at outer midplane if flux tube crosses it. Otherwise width is measured at inner midplane if flux tube crosses it.
+					</description>
+				</switch>
+				<switch>
+				<name>b2tqna_lfs_sol_width</name>
+					<default>b2tqna_sol_width</default>
+					<type>real</type>
+					<description>
+						Width of LFS SOL where *_alfa2 multipliers will be applied. Width is measured at outer midplane if flux tube crosses it.
+					</description>
+				</switch>
+				<switch>
+				<name>b2tqna_hfs_sol_width</name>
+					<default>b2tqna_sol_width</default>
+					<type>real</type>
+					<description>
+						Width of HFS SOL where *_alfa2 multipliers will be applied. Width is measured at inner midplane if flux tube crosses it.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_te_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Electron thermal conductivity multiplier inside the transport barrier. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_te_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Electron thermal conductivity multiplier inside the near SOL. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_te_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Electron thermal conductivity multiplier inside the far SOL. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_te_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Electron thermal conductivity multiplier inside the divertor regions. Works only when b2tqna_user_transport.eq.6 and b2tqna_te_alfa4.gt.0.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_ti_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Ion thermal conductivity multiplier inside the transport barrier. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_ti_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Ion thermal conductivity multiplier inside the near SOL. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_ti_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Ion thermal conductivity multiplier inside the far SOL. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_ti_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Ion thermal conductivity multiplier inside the divertor regions. Works only when b2tqna_user_transport.eq.6 and b2tqna_ti_alfa4.gt.0.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_na_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous diffusivity with respect to grad(na) multiplier inside the transport barrier. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_na_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous diffusivity with respect to grad(na) multiplier inside the near SOL. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_na_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous diffusivity with respect to grad(na) multiplier inside the far SOL. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_na_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Anomalous diffusivity with respect to grad(na) multiplier inside the divertor regions. Works only when b2tqna_user_transport.eq.6 and b2tqna_na_alfa4.gt.0.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vsa_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous viscosity multiplier inside the transport barrier. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vsa_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous viscosity multiplier inside the near SOL. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vsa_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous viscosity multiplier inside the far SOL. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vsa_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Anomalous viscosity multiplier inside the divertor regions. Works only when b2tqna_user_transport.eq.6 and b2tqna_vsa_alfa4.gt.0.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vla_alfa1</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous velocity multiplier inside the transport barrier. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vla_alfa2</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous velocity multiplier inside the near SOL. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vla_alfa3</name>
+					<default>1.0</default>
+					<type>real</type>
+					<description>
+						Anomalous velocity multiplier inside the far SOL. Works only when b2tqna_user_transport.eq.6.
+					</description>
+				</switch>
+				<switch>
+					<name>b2tqna_vla_alfa4</name>
+					<default>0.0</default>
+					<type>real</type>
+					<description>
+						Anomalous velocity multiplier inside the divertor regions. Works only when b2tqna_user_transport.eq.6 and b2tqna_vla_alfa4.gt.0.
+					</description>
+				</switch>
 			</switchgroup>
 			<switchgroup>
 				<name>b2tqna_m*</name>

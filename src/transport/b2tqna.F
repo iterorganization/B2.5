@@ -692,36 +692,6 @@ cdpc
 
       end subroutine b2tqna
 
-      subroutine modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
-     & inner_sol_loc,bar_coef,inner_sol_coef,
-     & outer_sol_coef, div_coef, iCv, dna0)
-
-        use b2mod_types
-        use b2us_map
-        implicit none
-        type (mapping), intent (in) :: mpg
-        real (kind=R8) :: dna0,  bar_coef,inner_sol_coef,
-     &     outer_sol_coef, div_coef
-        integer flux_surf(2),iCv,sep_loc,inner_bar_loc,inner_sol_loc
-        flux_surf = findloc(mpg%imapCv,iCv)-2
-        if (mpg%cvOnClosedSurface(iCv)) then
-          if((flux_surf(2)>=inner_bar_loc).and.
-     &          (flux_surf(2)<=sep_loc)) then
-            dna0 = bar_coef*dna0
-          elseif(flux_surf(2)<inner_bar_loc) then
-            ! dna0 = core_coef*dna0
-          endif
-        elseif ((div_coef .ne. 0.0_R8) .and. 
-     &      (mod(mpg%cvReg(iCv),4).eq.3 .or. 
-     &       mod(mpg%cvReg(iCv),4).eq.0)) then
-          dna0 = div_coef*dna0
-        elseif(flux_surf(2)<inner_sol_loc) then
-          dna0 = inner_sol_coef*dna0
-        else
-          dna0 = outer_sol_coef*dna0
-        endif  
-      end subroutine modify_tram_coefs
-
       subroutine set_transport_srv(geo,mpg,ns,nCv,switch,dna0,hcib,
      & vsa0,vla0,hce0)
 
@@ -731,101 +701,130 @@ cdpc
       use b2us_geo
       use b2mod_b2cmpa
      , , only : is_neutral
+      use b2mod_user_namelist
+     , , only : ft_ds_omp, ft_ds_imp
       implicit none
       integer, intent (in) :: nCv, ns
       type (mapping), intent (in) :: mpg
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
+      logical :: cond
 
-      integer omp_start,l,iVx,fcs,flux_surf(2),omp_loc(2),
-     & size_arr,iFc,inner_bar_loc,sep_loc,inner_sol_loc,is,iCv
-      integer, allocatable :: cvs(:)
-      integer findloc
-      real (kind=R8) :: Bmin,len_in
       real (kind=R8) ::
      *  dna0(nCv,0:ns-1), vsa0(nCv,0:ns-1),
-     &  hcib(nCv,0:ns-1), hce0(nCv)
+     &  hcib(nCv,0:ns-1), hce0(nCv), vla0(nCv,0:1,0:ns-1)
 
-      iVx=1
-      flux_surf = 0
-      do while((flux_surf(2).eq.0).and.(iVx<=mpg%nVx))
-        fcs = size(mpg%vxFc(mpg%vxFcP(iVx,1):sum(mpg%vxFcP(iVx,:))-1))
-        if (fcs.eq.8) then
-          ! print *, "X-point vertex",iVx
-          flux_surf = findloc(mpg%imapVx,iVx)-2
-        endif
-        iVx = iVx+1
-      enddo
-      size_arr = size(mpg%imapCv(:,flux_surf(2)-1))
-      allocate(cvs(-1:size_arr-2))
-      cvs = mpg%imapCv(:,flux_surf(2)-1)
-      Bmin = 0.0_R8
-      omp_start = 0
-      sep_loc = flux_surf(2)
-      ! print *, "flux_surf:", sep_loc
-      do l=-1,size_arr-2
-        ! print *, l,cvs(l)
-        if (cvs(l).ne.0) then
-          if(mpg%cvOnClosedSurface(cvs(l))) then
-            if (abs(Bmin) > 1e-6_R8) then
-              if(abs(geo%cvBb(cvs(l),3))<Bmin) then
-                Bmin = abs(geo%cvBb(cvs(l),3))
-                omp_start = cvs(l)
-              endif
-            else
-              Bmin = abs(geo%cvBb(cvs(l),3))
-              omp_start = cvs(l)
-            endif
-          endif
-        endif
-      enddo
-      ! print *, "omp_start", omp_start
-      deallocate(cvs)
-      len_in = 0.0_R8
-      omp_loc = findloc(mpg%imapCv,omp_start)-2
-      l = omp_loc(2)
-      do while (l>-1.and.len_in<switch%bar_length)
-          ! iCv = mpg%imapCv(omp_loc(1),l)
-          iFc = mpg%imapFcy(omp_loc(1),l)
-          len_in = len_in+sum(geo%fcHc(iFc,:))
-          l = l-1
-      enddo
-      inner_bar_loc = l
-      ! print *,"end_bar_y",inner_bar_loc
-      l = omp_loc(2)
-      len_in = 0.0_R8
-      size_arr = size(mpg%imapFcy,2)
-      do while (l<size_arr.and.len_in<switch%inner_sol_length)
-        ! iCv = mpg%imapCv(omp_loc(1),l)
-        iFc = mpg%imapFcy(omp_loc(1),l)
-        len_in = len_in+sum(geo%fcHc(iFc,:))
-        l = l+1
-      enddo
-      inner_sol_loc = l
-      ! print *,"end_inner_sol_y",inner_sol_loc
+      integer :: iFt, is, iCv, iCv2, iFc
+
       do iCv=1,nCv
-        do is=1,ns-1
-          if (.not.is_neutral(is)) then
-              call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
-     &          inner_sol_loc, switch%na_alfa1, switch%na_alfa2,
-     &          switch%na_alfa3,switch%na_alfa4, iCv, dna0(iCv,is))
-              call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
-     &          inner_sol_loc, switch%ti_alfa1, switch%ti_alfa2,
-     &          switch%ti_alfa3,switch%ti_alfa4, iCv, hcib(iCv,is))
-              call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
-     &          inner_sol_loc, switch%vsa_alfa1, switch%vsa_alfa2,
-     &         switch%vsa_alfa3, switch%vsa_alfa4, iCv, vsa0(iCv,is))
-              call modify_tram_coefs(mpg,sep_loc,inner_bar_loc,
-     &          inner_sol_loc,switch%vla_alfa1, switch%vla_alfa2,
-     &         switch%vla_alfa3, switch%vla_alfa4, iCv, vla0(iCv,1,is))
+        if (iCv .le. mpg%nCi) then
+          iFt = mpg%cvFt(iCv)
+          iCv2 = iCv
+        else
+          iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+          iCv2 = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          iFt = mpg%cvFt(iCv2)
+        endif
+        if (mod(mpg%cvReg(iCv),4).eq.3 .or.
+     &      mod(mpg%cvReg(iCv),4).eq.0) then                            ! special case for divertor regions
+          do is=1,ns-1
+            if (is_neutral(is)) cycle
+            cond = (ft_ds_omp(iFt).le.switch%lfs_sol_width .and.        ! div SOL LFS
+     &              ft_ds_omp(iFt).ge.0.0_R8) .or.
+     &             (ft_ds_imp(iFt).le.switch%hfs_sol_width .and.        ! div SOL HFS
+     &              ft_ds_imp(iFt).ge.0.0_R8) .or.
+     &              mpg%ftReg(iFt).eq.3                                 ! PFR
+            if (switch%na_alfa4.gt.0.0_R8) then
+              dna0(iCv,is) = dna0(iCv,is)*switch%na_alfa4
+            elseif(cond) then
+              dna0(iCv,is) = dna0(iCv,is)*switch%na_alfa2
+            else
+              dna0(iCv,is) = dna0(iCv,is)*switch%na_alfa3
             endif
-        enddo
-        call modify_tram_coefs(mpg, sep_loc, inner_bar_loc,
-     &    inner_sol_loc, switch%te_alfa1, switch%te_alfa2,
-     &    switch%te_alfa3, switch%te_alfa4, iCv, hce0(iCv))
+            if (switch%vsa_alfa4.gt.0.0_R8) then
+              vsa0(iCv,is) = vsa0(iCv,is)*switch%vsa_alfa4
+            elseif(cond) then
+              vsa0(iCv,is) = vsa0(iCv,is)*switch%vsa_alfa2
+            else
+              vsa0(iCv,is) = vsa0(iCv,is)*switch%vsa_alfa3
+            endif
+            if (switch%ti_alfa4.gt.0.0_R8) then
+              hcib(iCv,is) = hcib(iCv,is)*switch%ti_alfa4
+            elseif(cond) then
+              hcib(iCv,is) = hcib(iCv,is)*switch%ti_alfa2
+            else
+              hcib(iCv,is) = hcib(iCv,is)*switch%ti_alfa3
+            endif
+            if (switch%vla_alfa4.gt.0.0_R8) then
+              vla0(iCv,1,is) = vla0(iCv,1,is)*switch%vla_alfa4
+            elseif(cond) then
+              vla0(iCv,1,is) = vla0(iCv,1,is)*switch%vla_alfa2
+            else
+              vla0(iCv,1,is) = vla0(iCv,1,is)*switch%vla_alfa3
+            endif
+          enddo
+          if (switch%te_alfa4.gt.0.0_R8) then
+            hce0(iCv) = hce0(iCv)*switch%te_alfa4
+            elseif(cond) then
+            hce0(iCv) = hce0(iCv)*switch%te_alfa2
+          else
+            hce0(iCv) = hce0(iCv)*switch%te_alfa3
+          endif
+        elseif (ft_ds_omp(iFt).le.-switch%bar_width .and.               ! do nothing in core outside barrier
+     &    ft_ds_omp(iFt).le.0.0_R8 .and.
+     &    mpg%cvOnClosedSurface(iCv2)) then
+        elseif (ft_ds_omp(iFt).gt.-switch%bar_width .and.               ! transport barrier
+     &    ft_ds_omp(iFt).le.0.0_R8 .and.
+     &    mpg%cvOnClosedSurface(iCv2)) then
+          do is=1,ns-1
+            if (is_neutral(is)) cycle
+            dna0(iCv,is) = dna0(iCv,is)*switch%na_alfa1
+            vsa0(iCv,is) = vsa0(iCv,is)*switch%vsa_alfa1
+            hcib(iCv,is) = hcib(iCv,is)*switch%ti_alfa1
+            vla0(iCv,1,is) = vla0(iCv,1,is)*switch%vla_alfa1
+          enddo
+          hce0(iCv) = hce0(iCv)*switch%te_alfa1
+        elseif((ft_ds_omp(iFt).le.switch%lfs_sol_width .and.            ! inner SOL LFS
+     &          ft_ds_omp(iFt).ge.0.0_R8) .or.
+     &         (ft_ds_imp(iFt).le.switch%hfs_sol_width .and.            ! inner SOL HFS
+     &          ft_ds_imp(iFt).ge.0.0_R8)) then
+          do is=1,ns-1
+            if (is_neutral(is)) cycle
+            dna0(iCv,is) = dna0(iCv,is)*switch%na_alfa2
+            vsa0(iCv,is) = vsa0(iCv,is)*switch%vsa_alfa2
+            hcib(iCv,is) = hcib(iCv,is)*switch%ti_alfa2
+            vla0(iCv,1,is) = vla0(iCv,1,is)*switch%vla_alfa2
+          enddo
+          hce0(iCv) = hce0(iCv)*switch%te_alfa2
+        elseif((ft_ds_omp(iFt).gt.switch%lfs_sol_width .and.            ! outer SOL LFS
+     &          ft_ds_omp(iFt).gt.0.0_R8) .or.
+     &         (ft_ds_imp(iFt).gt.switch%hfs_sol_width .and.            ! outer SOL HFS
+     &          ft_ds_imp(iFt).gt.0.0_R8)) then
+
+          do is=1,ns-1
+            if (is_neutral(is)) cycle
+            dna0(iCv,is) = dna0(iCv,is)*switch%na_alfa3
+            vsa0(iCv,is) = vsa0(iCv,is)*switch%vsa_alfa3
+            hcib(iCv,is) = hcib(iCv,is)*switch%ti_alfa3
+            vla0(iCv,1,is) = vla0(iCv,1,is)*switch%vla_alfa3
+          enddo
+          hce0(iCv) = hce0(iCv)*switch%te_alfa3
+        elseif (ft_ds_omp(iFt).eq.-999.0_R8 .and.                       ! assume that only far SOL is left
+     &    ft_ds_imp(iFt).eq.-999.0_R8) then
+          do is=1,ns-1
+            if (is_neutral(is)) cycle
+            dna0(iCv,is) = dna0(iCv,is)*switch%na_alfa3
+            vsa0(iCv,is) = vsa0(iCv,is)*switch%vsa_alfa3
+            hcib(iCv,is) = hcib(iCv,is)*switch%ti_alfa3
+            vla0(iCv,1,is) = vla0(iCv,1,is)*switch%vla_alfa3
+          enddo
+          hce0(iCv) = hce0(iCv)*switch%te_alfa3
+        else
+          write(*, '(a,1i4,1i3,2es1.2,a)') 'b2tqna: iCv,iFt,ds_o,imp=',
+     &     iCv,iFt,ft_ds_omp(iFt),ft_ds_imp(iFt),' was not detected!'
+        endif
       enddo
 
-      return
       end subroutine set_transport_srv
 #ifdef WG_TODO
       subroutine set_transport(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
