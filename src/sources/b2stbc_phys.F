@@ -100,8 +100,8 @@
       logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) ::
      *  vte, s1, s1hz, fche, fchi, t0, t1, t2,                          !srv 15.11.07
-     1  t3, t4, totflux, dsh, vt,
-     2  vbnd, totpar, teave, tiave, neave, niave, poave, weight,
+     1  t3, t4, totflux, dsh, vt, fcOr,
+     2  vbnd, totpar,
      &  naua2sum(0:ns-1), naua2average(0:ns-1),
      &  pzaverage, pzsum, volsum,
      &  totfluxi, totfluxn
@@ -2345,10 +2345,13 @@ cxpb  Add contribution from Eirene core boundary fluxes
           sconpar = 0.0_R8
           do iCv1 = mpg%nCi+1, mpg%nCv
             iFc = mpg%cvFc(mpg%cvFcP(iCv1,1))
-            iCv2 = mpg%fcCv(iFc,2)
-            if (.not.mpg%cvOnClosedSurface(iCv1)) cycle
+            iCv2 = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            if (.not.mpg%cvOnClosedSurface(iCv2)) cycle
+            fcOr = -1.0_R8
+            if (mpg%fcCv(iFc,2).gt.mpg%fcCv(iFc,1)) fcOr = 1.0_R8
             t0 = t0 + geo%cvVol(iCv2)
-            totfluxi = totfluxi+dv%fna_mdf(iFc,1,is)
+            totfluxi = totfluxi-fcOr*(dv%fna_mdf(iFc,0,is)+
+     &                                dv%fna_mdf(iFc,1,is))
             t1 = t1 + geo%cvVol(iCv2)*pl%na(iCv2,is)
             nas = nas + geo%cvVol(iCv2)*pl%na(iCv1,is)
           enddo
@@ -2375,8 +2378,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
               call xerrab
      1          ('B2STBC -- BCCON=26 IS AVAILABLE FOR CORE ONLY')
             endif
-            srw%sna0(iCv1,0,is) = 
-     &        VBIG*(nas+pl%na(iCv2,is)-t1)*geo%fcS(iFc)
+            srw%sna0(iCv1,0,is) =
+     &       VBIG*(nas+pl%na(iCv2,is)-t1)*geo%fcS(iFc)
             srw%sna0(iCv1,1,is) = -VBIG*geo%fcS(iFc)
           enddo
 #ifdef WG_TODO
@@ -2511,18 +2514,22 @@ cxpb  Add contribution from Eirene core boundary fluxes
           sconpar = 0.0_R8
           do iCv1 = mpg%nCi+1, mpg%nCv
             iFc = mpg%cvFc(mpg%cvFcP(iCv1,1))
-            iCv2 = mpg%fcCv(iFc,2)
-            if (.not.mpg%cvOnClosedSurface(iCv1)) cycle
+            iCv2 = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            if (.not.mpg%cvOnClosedSurface(iCv2)) cycle
+            fcOr = -1.0_R8
+            if (mpg%fcCv(iFc,2).gt.mpg%fcCv(iFc,1)) fcOr = 1.0_R8
             t0 = t0 + geo%cvVol(iCv2)
             do isb = 0, ns-1
               if(b2espcr(is).eq.b2espcr(isb).and.is.ne.isb) then
                 if(.not.is_neutral(isb).or.
-     &            switch%use_eirene.eq.0) then
-                    totfluxn = totfluxn+dv%fna_mdf(iFc,1,isb)
+     &           switch%use_eirene.eq.0) then
+                  totfluxn = totfluxn-fcOr*(dv%fna_mdf(iFc,0,isb)+
+     &                                      dv%fna_mdf(iFc,1,isb))
                 endif
               endif
             enddo
-            totfluxi = totfluxi+dv%fna_mdf(iFc,1,is)
+            totfluxi = totfluxi-fcOr*(dv%fna_mdf(iFc,0,is)+
+     &                                dv%fna_mdf(iFc,1,is))
             t1 = t1 + geo%cvVol(iCv2)*pl%na(iCv2,is)
             nas = nas + geo%cvVol(iCv2)*pl%na(iCv1,is)
           enddo
@@ -2565,13 +2572,13 @@ cxpb  Add contribution from Eirene core boundary fluxes
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1)) 
-            if (.not.mpg%cvOnClosedSurface(iCv1)) then
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))
+            if (.not.mpg%cvOnClosedSurface(iCv2)) then
               call xerrab
      1          ('B2STBC -- BCCON=27 IS AVAILABLE FOR CORE ONLY')
             endif
-            srw%sna0(iCv1,0,is) = 
-     &        VBIG*(nas+pl%na(iCv2,is)-t1)*geo%fcS(iFc)
+            srw%sna0(iCv1,0,is) =
+     &       VBIG*(nas+pl%na(iCv2,is)-t1)*geo%fcS(iFc)
             srw%sna0(iCv1,1,is) = -VBIG*geo%fcS(iFc)
           enddo
           
@@ -4735,13 +4742,17 @@ cwdk    Todo: corrections for BCCON.ne.14
           SENEPAR = 0.0_R8
           do iCv1 = mpg%nCi+1, mpg%nCv
             iFc = mpg%cvFc(mpg%cvFcP(iCv1,1))
-            iCv2 = mpg%fcCv(iFc,2)
-            if (.not.mpg%cvOnClosedSurface(iCv1)) cycle
+            iCv2 = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            if (.not.mpg%cvOnClosedSurface(iCv2)) cycle
+            fcOr = -1.0_R8
+            if (mpg%fcCv(iFc,2).gt.mpg%fcCv(iFc,1)) fcOr = 1.0_R8
             t0 = t0 + geo%cvVol(iCv1)
             tes = tes + geo%cvVol(iCv1)*pl%te(iCv1)
-            totflux = totflux + dv%fhe_mdf(iFc,1)
-            totflux = totflux + dv%vaecrb(iFc,1,ns-1)*pl%te(iCv1)*
-     &        dv%ne(iCv1)*geo%fcS(iFc)*geo%fcQalf(iFc,1)
+            totflux = totflux - fcOr*(dv%fhe_mdf(iFc,0)+
+     &                                dv%fhe_mdf(iFc,1))
+            totflux = totflux - pl%te(iCv1)*dv%ne(iCv1)*geo%fcS(iFc)*
+     &           fcOr*(dv%vaecrb(iFc,0,ns-1)*geo%fcQalf(iFc,0)+
+     &                 dv%vaecrb(iFc,1,ns-1)*geo%fcQalf(iFc,1))
           enddo
           tes = tes/t0
           do ibw=1,nbc
@@ -7182,15 +7193,19 @@ cwdk     * need to correct this BC for hybrid scheme
         SENIPAR = 0.0_R8
         do iCv1 = mpg%nCi+1, mpg%nCv
           iFc = mpg%cvFc(mpg%cvFcP(iCv1,1))
-          iCv2 = mpg%fcCv(iFc,2)
-          if (.not.mpg%cvOnClosedSurface(iCv1)) cycle
+          iCv2 = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          if (.not.mpg%cvOnClosedSurface(iCv2)) cycle
+          fcOr = -1.0_R8
+          if (mpg%fcCv(iFc,2).gt.mpg%fcCv(iFc,1)) fcOr = 1.0_R8
           t0 = t0 + geo%cvVol(iCv1)
           t1 = t1 + geo%cvVol(iCv1)*pl%ti(iCv2)
           nivs = nivs + geo%cvVol(iCv1)*dv%ni(iCv1,0)
           tis = tis + geo%cvVol(iCv1)*pl%ti(iCv1)*dv%ni(iCv1,0)
-          totflux = totflux + dv%fhi_mdf(iFc,1)
-          totflux = totflux + dv%vaecrb(iFc,1,ns-1)*pl%ti(iCv1)*
-     &       dv%ni(iCv1,0)*geo%fcS(iFc)*geo%fcQalf(iFc,1)
+          totflux = totflux - fcOr*(dv%fhi_mdf(iFc,0)+
+     &                              dv%fhi_mdf(iFc,1))
+          totflux = totflux - pl%ti(iCv1)*dv%ni(iCv1,0)*geo%fcS(iFc)*
+     &              fcOr*(dv%vaecrb(iFc,0,ns-1)*geo%fcQalf(iFc,0)+
+     &                    dv%vaecrb(iFc,1,ns-1)*geo%fcQalf(iFc,1))
         enddo
         tis = tis/nivs
         t1 = t1/t0
@@ -7207,13 +7222,13 @@ cwdk     * need to correct this BC for hybrid scheme
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
-          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1)) 
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))
           if (.not.mpg%cvOnClosedSurface(iCv1)) then
             call xerrab
      1         ('B2STBC -- BCENI=27 IS AVAILABLE FOR CORE ONLY')
           endif
-          srw%shi0(iCv1,0) = 
-     &       VBIG*NE00*(tis+pl%ti(iCv2)-t1)*geo%fcS(iFc)
+          srw%shi0(iCv1,0) =
+     &     VBIG*NE00*(tis+pl%ti(iCv2)-t1)*geo%fcS(iFc)
           srw%shi0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
         enddo
 #ifdef WG_TODO
