@@ -68,8 +68,13 @@
        movi = 0.0_R8
        do iCv = 1, mpg%nCi
           navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
-          movi = movi+geo%cvVol(iCv)*
-     &     pl%na(iCv,is)*sqrt(pl%ti(iCv)*am(is)*mp)
+          if (switch%b2mndt_temp2.eq.1) then !backward compatible: scale with ion sound speed
+            movi = movi+geo%cvVol(iCv)*
+     &        pl%na(iCv,is)*sqrt(pl%ti(iCv)*am(is)*mp)
+          else !new test: scale with total momentum content
+            movi = movi+geo%cvVol(iCv)*
+     &        pl%na(iCv,is)*am(is)*mp*abs(pl%ua(iCv,is))
+          endif
 !WG_TODO         if (resignore(ix,iy,1).ne.0) 
 !WG_TODO     >    navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
 !WG_TODO         if (resignore(ix,iy,2).ne.0)
