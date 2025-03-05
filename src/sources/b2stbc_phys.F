@@ -10009,6 +10009,181 @@ cwdk    Todo: corrections for BCCON.ne.14
 
         end select
 
+      select case (BCENN(IB))
+
+      case (0)
+        continue
+
+* -- BCENN=1 -- PRESCRIBE THE VALUE OF THE NEUTRAL TEMPERATURE
+
+      case (1)
+        if(ncall_b2stbc_phys.eq.0) then
+          IF(BCCHAR(IB).EQ.'S'.and.switch%use_astra.ne.0) THEN
+            ENNPAR(IB,1) = tib_astra*1.0e3_R8                          !srv 14.06.12
+          ENDIF
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'BCENN =  1 : specified neutral temperature ',ENNPAR(IB,1),
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
+          call xertst(ENNPAR(IB,1).gt.0.0_R8,
+     1     'BCENN = 1, ENNPAR(,1) !> 0')
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          srw%shn0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*ennpar(iB,1)*EV
+          srw%shn0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
+
+* -- BCENN=2 -- PRESCRIBE THE GRADIENT OF THE ION TEMPERATURE
+
+      case (2)
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'BCENN =  2 : neutral temperature gradient ',ENNPAR(IB,1),
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          iVx1 = mpg%fcVx(iFc,1)
+          iVx2 = mpg%fcVx(iFc,2)
+          t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%tn)
+          t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%tn)
+          srw%shn0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
+     .       (EV*ennpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
+     .       (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%tn(iCv2))
+          srw%shn0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
+        enddo
+
+* -- BCENN=3 -- SHEATH CONDITIONS, ION ENERGY TRANSMISSION COEFFICIENT
+
+      case (3)
+        call xerrab ('b2stbc_phys -- BCENN = 3 cannot be imposed.'//
+     .                 ' Sheath condition do not apply to neutrals.')
+
+* -- BCENN=4 -- PRESCRIBE THE VALUE OF THE NEUTRAL TEMPERATURE, WEAKLY
+*                 A MIXED BOUNDARY CONDITION
+
+      case (4)
+        call xerrab ('b2stbc_phys -- BCENN = 4 not adapted for WG')
+#ifdef WG_TODO
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .     'BCENN =  4 : weak ion temperature ',ENNPAR(IB,1),' on ',
+     1     BCCHAR(IB),boundary_location(ib)
+          call xertst(ENNPAR(IB,1).gt.0.0_R8,
+     1     'BCENN = 4, ENNPAR(,1) !> 0')
+          call xertst(ENNPAR(IB,2).gt.0.0_R8,                !srv 02.02.11
+     1     'BCENN = 4, ENNPAR(,2) !> 0')
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          srw%shn0(iCv1,0) =  ENNPAR(IB,2)*geo%fcS(iFc)*
+     .                        ENNPAR(IB,1)
+          srw%shn0(iCv1,1) = -ENNPAR(IB,2)/EV*geo%fcS(iFc)
+        enddo
+#endif
+* -- BCENN=5 -- PRESCRIBE THE ION ENERGY FLUX PER UNIT AREA
+
+      case (5)
+        call xerrab ('b2stbc_phys -- BCENN = 5 not adapted for WG')
+
+* -- BCENN=6 -- PRESCRIBE THE TOTAL ION ENERGY FLUX FOR A
+*                 CONSTANT ION TEMPERATURE
+
+      case (6)
+        call xerrab ('b2stbc_phys -- BCENN = 6 not adapted for WG')
+
+* -- BCENN=7 -- PRESCRIBE THE ION TEMPERATURE PROFILE
+
+      case (7)
+        call xerrab ('b2stbc_phys -- BCENN = 7 not adapted for WG')
+
+* -- BCENN=8 -- PRESCRIBE THE TOTAL ION HEAT FLUX WITH CONSTANT
+*                 FLUX DENSITY
+
+      case (8)
+        call xerrab ('b2stbc_phys -- BCENN = 8 not adapted for WG')
+
+* -- BCENN=9 -- PRESCRIBE THE DECAY LENGTH FOR THE ION TEMPERATURE
+
+      case (9)
+        if(ncall_b2stbc_phys.eq.0) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .    'BCENN =  9 : neutral temperature decay length ',ENNPAR(IB,1),
+     1     ' on ',BCCHAR(IB),boundary_location(ib)
+          call xertst(ENNPAR(IB,1).ne.0.0_R8,
+     1     'BCENN = 9, ENNPAR(,1) = 0')
+          decay_length_ok = .true.
+          do is = 0, ns-1
+            decay_length_ok = decay_length_ok .and.
+     1       (bccon(is,ib).eq.9 .or. bccon(is,ib).eq.0 .or.
+     2       (is_neutral(is) .and. switch%use_eirene.eq.1))
+            if (bccon(is,ib).eq.1) then
+              write(0,*)
+     &         'Should use BCENN=19 in conjunction with BCCON=1'
+            end if
+          end do
+          if (.not.decay_length_ok) then
+            write(0,*)
+     &       'Should use BCENN.EQ.9 together with BCCON=9'
+            write(*,*)
+     &       'Should use BCENN.EQ.9 together with BCCON=9'
+            write(*,'(1x,a)')
+     &                 'Please ensure that this boundary condition '//
+     &                 'is consistent with '//
+     &                 'the density boundary condition'  !srv 21.09.12
+          endif
+        endif
+
+        do ibc = 1, mpg%bcCvP(ib,2)
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          sy = geo%fcS(iFc)
+          srw%shn0(iCv1,0) = 0.0_R8
+          !! Note that
+          !! if tn_style=0: hci0 includes contributions from all ions and all fluid neutrals
+          !! if tn_style=1: hci0 includes contributions from ions only
+          !! if tn_style=2: hci0 includes contributions from all ions and non-hydrogenic neutrals
+          srw%shn0(iCv1,1) = -co%hcn0(iCv1)/ennpar(ib,1)*sy
+          do is = 0, ns-1
+            if(is_neutral(is).and.nint(zn(is)).eq.1) then
+              srw%shn0(iCv1,0) = srw%shn0(iCv1,0) +
+     &                     2.5_R8*pl%tn(iCv1)*srw%sna0(iCv1,0,is)
+              srw%shn0(iCv1,1) = srw%shn0(iCv1,1) +
+     &                     2.5_R8*pl%na(iCv1,is)*srw%sna0(iCv1,1,is)
+            endif
+          enddo !! end species loop
+#ifdef WG_TODO
+          if(switch%mdf_fhi.ne.0) then
+            srw%shn0(iCv1,0) = srw%shn0(iCv1,0) +
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &       (dv%fhiPSch(iFc,0) + dv%fhiPSch(iFc,1))
+            do is=0,ns-1
+              t0 = -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*1.5_R8*
+     &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vaecrb(iFc,0,is) +
+     &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vaecrb(iFc,1,is))*
+     &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is))*
+     &           0.5_R8*(pl%tn(iCv1)+pl%tn(iCv2))
+              srw%shn0(iCv1,0) = srw%shn0(iCv1,0) +
+     &          max(0.0_R8,t0)
+              srw%shi0(iCv1,1) = srw%shn0(iCv1,1) +
+     &          min(0.0_R8,t0)/pl%tn(iCv1)
+            enddo
+          endif
+#endif
+        enddo   !! end boundary cell loop
+
+        case default
+          write(*,*) BCENN(IB)
+          call xerrab ('BCENN out of bounds')
+
+        end select
+
 
       enddo
 #ifdef WG_TODO
