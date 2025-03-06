@@ -485,10 +485,10 @@ cwdk                   (original code: simple averaging)
 
       dv%fna_he(:,0,isb)   = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
      &   dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf -
-     &   - co%cdpa(:,0,isb)*dpb(:,0)
+     &   - co%cdpa(:,0,isb)*dpb(:,0) - drift_hyb*scur(:,0)*nbf
       dv%fna_he(:,1,isb)   = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
      &   dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf -
-     &   - co%cdpa(:,1,isb)*dpb(:,1)
+     &   - co%cdpa(:,1,isb)*dpb(:,1) - drift_hyb*scur(:,1)*nbf
 
       dv%fna_53(:,0,isb)   = flo_53(:,0)*nbf
       dv%fna_53(:,1,isb)   = flo_53(:,1)*nbf
