@@ -46,7 +46,7 @@
 *   ..subprogram start-up calls
       call subini ('b2agbs')
       call ipgetr ('b2agmt_1d_width', width)
-      
+
 *   ..preparatory quantities
       hz(:,:) = vol(:,:)/gs(:,:,2)
       if (isymm.eq.0) then
@@ -142,7 +142,7 @@
             ixref(i,iy) = jxi
           else
             do ix=1,nx
-              if (isRealCell(cflags(ix,iy,CELLFLAG_TYPE)) .and. 
+              if (isRealCell(cflags(ix,iy,CELLFLAG_TYPE)) .and.
      &          (.not.isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)))) exit
             enddo
             if (ix.ge.nx) then
