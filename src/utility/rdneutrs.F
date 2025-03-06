@@ -48,12 +48,18 @@ c
       do ifl=1,ldmf
         if(nlimi.gt.0) read(kard,910,end=10)
      1   (dummy(is,ifl),is=1,nlimi)
-        if(nstsi.gt.0) read(kard,910,end=10)
-     1   (dummy(is+nlim,ifl),is=1,nstsi)
         if(present(extra_time)) then
           if(extra_time) then
+            if(nstsi.gt.0) read(kard,910,end=10)
+     1       (dummy(is+nlim,ifl),is=1,nstsi-1)
             if(mod(nstsi,5).eq.1) read(kard,'()',end=10)
+          else
+            if(nstsi.gt.0) read(kard,910,end=10)
+     1       (dummy(is+nlim,ifl),is=1,nstsi)
           end if
+        else
+          if(nstsi.gt.0) read(kard,910,end=10)
+     1     (dummy(is+nlim,ifl),is=1,nstsi)
         end if
       enddo
   910 format(5e16.8)
@@ -84,7 +90,7 @@ c
         if(nlimi.gt.0) write(kard,'(5(e16.8))') 
      &                 (dummy(is,iif),is=1,nlim1)
         if(nstsi.gt.0) write(kard,'(5(e16.8))') 
-     &                 (dummy(is+nlim,iif),is=1,nstsi)
+     &                 (dummy(is+nlim,iif),is=1,nsts1)
       enddo
       end subroutine wrneutrs
 
