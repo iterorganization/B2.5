@@ -10009,6 +10009,14 @@ cwdk    Todo: corrections for BCCON.ne.14
 
         end select
 
+      if (ncall_b2stbc_phys.eq.0) then
+        if ((ANY(recyc(0:ns-1,1:mpg%nRc)/=0.0_R8)).and.
+     &      (bcenn(ib).ne.0)) then
+          call xerrab('Error: neutral temperature BCs imposed ' //
+     1      'but recycling is non-zero.')
+        endif
+      endif
+
       select case (BCENN(IB))
 
       case (0)
@@ -10068,8 +10076,6 @@ cwdk    Todo: corrections for BCCON.ne.14
 *                 A MIXED BOUNDARY CONDITION
 
       case (4)
-        call xerrab ('b2stbc_phys -- BCENN = 4 not adapted for WG')
-#ifdef WG_TODO
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'BCENN =  4 : weak ion temperature ',ENNPAR(IB,1),' on ',
@@ -10086,7 +10092,6 @@ cwdk    Todo: corrections for BCCON.ne.14
      .                        ENNPAR(IB,1)
           srw%shn0(iCv1,1) = -ENNPAR(IB,2)/EV*geo%fcS(iFc)
         enddo
-#endif
 * -- BCENN=5 -- PRESCRIBE THE ION ENERGY FLUX PER UNIT AREA
 
       case (5)
@@ -10167,24 +10172,6 @@ cwdk    Todo: corrections for BCCON.ne.14
      &                     2.5_R8*pl%na(iCv1,is)*srw%sna0(iCv1,1,is)
             endif
           enddo !! end species loop
-#ifdef WG_TODO
-          if(switch%mdf_fhi.ne.0) then
-            srw%shn0(iCv1,0) = srw%shn0(iCv1,0) +
-     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
-     &       (dv%fhiPSch(iFc,0) + dv%fhiPSch(iFc,1))
-            do is=0,ns-1
-              t0 = -mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*1.5_R8*
-     &          (geo%fcS(iFc)*geo%fcQalf(iFc,0)*dv%vaecrb(iFc,0,is) +
-     &           geo%fcS(iFc)*geo%fcQalf(iFc,1)*dv%vaecrb(iFc,1,is))*
-     &           0.5_R8*(pl%na(iCv1,is)+pl%na(iCv2,is))*
-     &           0.5_R8*(pl%tn(iCv1)+pl%tn(iCv2))
-              srw%shn0(iCv1,0) = srw%shn0(iCv1,0) +
-     &          max(0.0_R8,t0)
-              srw%shi0(iCv1,1) = srw%shn0(iCv1,1) +
-     &          min(0.0_R8,t0)/pl%tn(iCv1)
-            enddo
-          endif
-#endif
         enddo   !! end boundary cell loop
 
         case default
@@ -10192,7 +10179,6 @@ cwdk    Todo: corrections for BCCON.ne.14
           call xerrab ('BCENN out of bounds')
 
         end select
-
 
       enddo
 #ifdef WG_TODO
