@@ -328,7 +328,9 @@ csw 27nov2012  added check upwind (SOLPS4 style)
              fhi_anml(ix,iy,0) = 1.5e0_R8/qe*fchanml(ix,iy,0)*xcur*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-             fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)
+             fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)*
+     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                          (1.0_R8-upfac)*ti(ix,iy))/2.0_R8
            endif
           else
            fhi(ix,iy,0) = floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
@@ -358,7 +360,8 @@ csw 27nov2012  added check upwind (SOLPS4 style)
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_anml(ix,iy,0) = 1.5e0_R8/qe*fchanml(ix,iy,0)*xcur*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-             fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)
+             fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)*
+     &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
            endif
           endif
 
@@ -468,7 +471,9 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &           1.5e0_R8/qe*fchanml(ix,iy,0)*xcur*
      &          (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &          (1.0_R8-upfac)*ti(ix,iy))
-               fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)
+               fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)*
+     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                          (1.0_R8-upfac)*ti(ix,iy))/2.0_R8
              endif
            else
              fhi_mdf(ix,iy,0) = floi0_mdf*
@@ -517,7 +522,8 @@ csw 27nov2012 added check upwind (SOLPS4 style)
                fhi_anml(ix,iy,0) =
      &              1.5e0_R8/qe*fchanml(ix,iy,0)*xcur*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-               fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)
+               fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)*
+     &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
              endif
            endif
           endif
@@ -609,7 +615,9 @@ csw 27nov2012 added check upwind (SOLPS4 style)
               fhi_anml(ix,iy,0) = 1.5e0_R8/qe*fchanml(ix,iy,0)*xcur*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-              fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)
+              fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)*
+     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                          (1.0_R8-upfac)*ti(ix,iy))/2.0_R8
             endif
             if (balance.and.
      &          (balance_netcdf.ne.0).and.
@@ -646,7 +654,9 @@ csw 27nov2012 added check upwind (SOLPS4 style)
               fhi_anml(ix,iy,0) = 1.5e0_R8/qe*fchanml(ix,iy,0)*xcur*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &                          (1.0_R8-upfac)*ti(ix,iy))
-              fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)
+              fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)*
+     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                          (1.0_R8-upfac)*ti(ix,iy))/2.0_R8
             endif
           else
             fhi(ix,iy,0) = floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
@@ -679,7 +689,8 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
               fhi_anml(ix,iy,0) = 1.5e0_R8/qe*fchanml(ix,iy,0)*xcur*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-              fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)
+              fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)*
+     &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
             endif
             if (balance.and.
      &          (balance_netcdf.ne.0).and.
@@ -704,7 +715,8 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
               fhi_anml(ix,iy,0) = 1.5e0_R8/qe*fchanml(ix,iy,0)*xcur*
      &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-              fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)
+              fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)*
+     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
             endif
           endif
 
