@@ -330,7 +330,7 @@ csw 27nov2012  added check upwind (SOLPS4 style)
      &                          (1.0_R8-upfac)*ti(ix,iy))
              fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
-     &                          (1.0_R8-upfac)*ti(ix,iy))/2.0_R8
+     &                          (1.0_R8-upfac)*ti(ix,iy))
            endif
           else
            fhi(ix,iy,0) = floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
@@ -472,8 +472,8 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &          (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
      &          (1.0_R8-upfac)*ti(ix,iy))
                fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)*
-     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
-     &                          (1.0_R8-upfac)*ti(ix,iy))/2.0_R8
+     &          (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &          (1.0_R8-upfac)*ti(ix,iy))
              endif
            else
              fhi_mdf(ix,iy,0) = floi0_mdf*
@@ -617,7 +617,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &                          (1.0_R8-upfac)*ti(ix,iy))
               fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
-     &                          (1.0_R8-upfac)*ti(ix,iy))/2.0_R8
+     &                          (1.0_R8-upfac)*ti(ix,iy))
             endif
             if (balance.and.
      &          (balance_netcdf.ne.0).and.
@@ -656,7 +656,7 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &                          (1.0_R8-upfac)*ti(ix,iy))
               fhi_vzh(ix,iy,0) = floi_vhx(ix,iy)*
      &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
-     &                          (1.0_R8-upfac)*ti(ix,iy))/2.0_R8
+     &                          (1.0_R8-upfac)*ti(ix,iy))
             endif
           else
             fhi(ix,iy,0) = floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
