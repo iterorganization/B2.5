@@ -141,7 +141,7 @@
      &              'equations was implemented similarly as the energy',
      &              'equations but lacks theoretical development'
           endif
-*    ..make sure time-depndent equations are not altered by convergence tricks
+*    ..make sure time-dependent equations are not altered by convergence tricks
           rxg_npht = huge(1.0_R8)
           if (switch%b2npht_pcm0.gt.0.0_R8) then
             call xerrab('b2npht_pcm0 must be 0 for time-dependent mode')

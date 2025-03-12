@@ -366,6 +366,8 @@ ctmp.dpc
      &          geo%cvVol(iCv)*art_she(iCv,0:3)
               st%sr%shi(iCv,0:3) = st%sr%shi(iCv,0:3)+
      &          geo%cvVol(iCv)*art_shi(iCv,0:3)
+              st%sr%shn(iCv,0:3) = st%sr%shn(iCv,0:3)+
+     &          geo%cvVol(iCv)*art_shn(iCv,0:3)
               st%sr%sch(iCv,0:3) = st%sr%sch(iCv,0:3)+
      &          geo%cvVol(iCv)*art_sch(iCv,0:3)
             enddo

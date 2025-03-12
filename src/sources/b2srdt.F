@@ -238,17 +238,19 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
         elseif (switch%tn_style.eq.1) then
 
-          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,1)*ti0(iCv)
           sr%shidt(iCv,1) = 0.0_R8
           sr%shidt(iCv,2) = 0.0_R8
-          sr%shidt(iCv,3) = -1.5_R8*t0
+          sr%shidt(iCv,3) = -1.5_R8*t0*ni0(iCv,1)/ni0(iCv,0)     ! this is needed because the source scaling for shi remains based on ni(:,0), even though physically it involves ni(:,1)
+                                                                 ! when using a pure ion energy equation (tn_style=1)
 
         else
 
-          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,1)*ti0(iCv)
           sr%shidt(iCv,1) = 0.0_R8
           sr%shidt(iCv,2) = 0.0_R8
-          sr%shidt(iCv,3) = -1.5_R8*t0
+          sr%shidt(iCv,3) = -1.5_R8*t0*ni0(iCv,1)/ni0(iCv,0)     ! this is needed because the source scaling for shi remains based on ni(:,0), even though physically it involves ni(:,1)
+                                                                 ! when using a separate ion-neutral energy equation (tn_style=2)
 
           sr%shndt(iCv,0) = 1.5_R8*t0*nn0(iCv)*tn0(iCv)
           sr%shndt(iCv,1) = 0.0_R8

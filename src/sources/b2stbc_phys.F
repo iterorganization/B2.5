@@ -10101,7 +10101,16 @@ cwdk    Todo: corrections for BCCON.ne.14
 * -- BCENN=7 -- PRESCRIBE THE ION TEMPERATURE PROFILE
 
       case (7)
-        call xerrab ('b2stbc_phys -- BCENN = 7 not adapted for WG')
+        if(ncall_b2stbc_phys.eq.0) then                               !srv 26.02.18 {
+          write(*,'(3a)') 'specified neutral temperature on ',
+     1     BCCHAR(IB), boundary_location(ib)
+        endif
+        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
+          srw%shn0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*bv_tn(iCv1)*EV
+          srw%shn0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
+        enddo
 
 * -- BCENN=8 -- PRESCRIBE THE TOTAL ION HEAT FLUX WITH CONSTANT
 *                 FLUX DENSITY

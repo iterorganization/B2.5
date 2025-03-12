@@ -33,7 +33,7 @@
       integer, parameter :: DEF_NPLS = (DEF_NSD-DEF_NATM)+
      &                                 (DEF_NATM+DEF_NMOL)*
      &                                 (DEF_NATM+DEF_NMOL)
-      integer, parameter :: DEF_NLIM = 1000
+      integer, parameter :: DEF_NLIM = 300
       integer, parameter :: DEF_NSTS = 50
       integer, parameter :: DEF_NTOR = 60
 !*** Max. number of groups of Eirene surfaces for which the data can
@@ -41,7 +41,7 @@
       integer, parameter :: DEF_NSPCSRFG = 40
 
 ! new! [2002.04.22]
-      integer, parameter :: DEF_NADD = 20
+      integer, parameter :: DEF_NADD = 4
       integer, parameter :: DEF_NPRNL = 50000
 ! new! [2002.06.14]
       integer, parameter :: DEF_NSRFS = 4

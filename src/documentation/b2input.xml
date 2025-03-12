@@ -739,16 +739,16 @@
 					 ..do i0=1,nstg0
 					  ..compute log-log linearised rate coefficients
 					  ..do i1=1,nstg1
-					   ..compute source linearisation
+					   ..compute source linearisation (Eirene call)
 					   ..do i2=1,nstg2
-					    ..perform one inner iteration
+					    ..perform one inner iteration (on fluid equations)
 					    ..re-compute auxiliary quantities
 					    ..produce monitoring output
 					   ..enddo
 					  ..enddo
 					 ..enddo
-					This can be completed by the the 'b2mndt_nstg_ares??' switches.
-					See 'Numerics' section for details.
+					This can be completed by the the 'b2mndt_nstg_ares??' switches. See 'Numerics' section for details.
+					It is recommended to use these inner iterations when running in time-dependent mode (b2mndt_style=2) to make residuals converge within each time-step.
 				</description>
 				<switch>
 					<name>b2mndt_nstg0</name>
@@ -4547,9 +4547,8 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If b2mndt_ckn=2, the Crank-Nicolson time-stepping scheme is activated. 
-					This is a 2nd order scheme, while the default 1st order implicit Euler scheme is 1st order. 
-					This scheme can only be used in time-dependent mode (b2mndt_style=2).
+					If b2mndt_ckn=2, the 2nd order Crank-Nicolson time-stepping scheme is used, instead of the default 1st order implicit Euler scheme.
+					This scheme can be used both in time-dependent mode (b2mndt_style=2) and in steady-state mode (b2mndt_style=1).
 				</description>
 			</switch>
 			<switch>
@@ -4764,10 +4763,11 @@
 				<default>See description</default>
 				<type>real</type>
 				<description>
-					Main under-relaxation parameter.
-					Should be set to 1.0 (default) if running in time-dependent mode (b2mndt_style.eq.2).
-					Otherwise, default value is 0.5.
+					Main under-relaxation parameter. The default value is 0.5 in steady-state mode (b2mndt_style.eq.1).
 					Setting this switch to zero prevents updating of the principal code quantities.
+					In time-dependent mode (b2mndt_style.eq.2), the default value is 1.0. It can be set lower than 1, provided that the following relationship is satisfied: DTxx=1/(1-(1-rxf)^nstgJ).
+					DTxx are the time-step multipliers (xx=CO,MO,EE,EI,...) and nstgJ the inner iterations (J=0,1,2). For example, if rxf=0.5 and nstgJ=1, then it must be DTxx=2.
+					Tip: If nstgJ is high enough, DTxx tends to 1 for any rxf, and no time-step multipliers need to be changed.
 				</description>
 			</switch>
 			<switchgroup>
