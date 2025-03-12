@@ -331,6 +331,7 @@ c MMS
       integer:: set_ua_numerical
       integer:: set_ti_numerical
       integer:: set_te_numerical
+      integer:: set_tn_numerical
       integer:: set_po_numerical
 
 c geometry
@@ -890,6 +891,7 @@ c Advanced fluid neutral models
       s % set_ua_numerical = 0
       s % set_te_numerical = 0
       s % set_ti_numerical = 0
+      s % set_tn_numerical = 0
       s % set_po_numerical = 0
 
 
@@ -1486,6 +1488,7 @@ c MMS
       call ipgeti ('b2mndr_set_ua_numerical', s % set_ua_numerical)
       call ipgeti ('b2mndr_set_te_numerical', s % set_te_numerical)
       call ipgeti ('b2mndr_set_ti_numerical', s % set_ti_numerical)
+      call ipgeti ('b2mndr_set_tn_numerical', s % set_tn_numerical)
       call ipgeti ('b2mndr_set_po_numerical', s % set_po_numerical)
 
 c geometry
@@ -2374,11 +2377,6 @@ c k-enstrophy model
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
 
-      if (s%b2mndt_temp1.eq.1) then
-        if(s%b2mndt_style.eq.2 .and. s%b2mndt_rxf.lt.1.0_R8) then
-          call xerrab('time-dependent mode requires rxf = 1.0')
-        endif
-      endif
 
       return
       end subroutine check_consistency_switches
