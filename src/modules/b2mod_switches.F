@@ -2913,11 +2913,6 @@ c Zhdanov closure
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
 
-      if (s%b2mndt_temp1.eq.1) then
-        if(s%b2mndt_style.eq.2 .and. s%b2mndt_rxf.lt.1.0_R8) then
-          call xerrab('time-dependent mode requires rxf = 1.0')
-        endif
-      endif
 
 c controlling minimum density via b2.numerics
       if(s%b2srdt_numerics_namelist.eq.0 .and. 

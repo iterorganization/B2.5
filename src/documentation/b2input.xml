@@ -774,16 +774,16 @@
 					 ..do i0=1,nstg0
 					  ..compute log-log linearised rate coefficients
 					  ..do i1=1,nstg1
-					   ..compute source linearisation
+					   ..compute source linearisation (Eirene call)
 					   ..do i2=1,nstg2
-					    ..perform one inner iteration
+					    ..perform one inner iteration (on fluid equations)
 					    ..re-compute auxiliary quantities
 					    ..produce monitoring output
 					   ..enddo
 					  ..enddo
 					 ..enddo
-					This can be completed by the the 'b2mndt_nstg_ares??' switches.
-					See 'Numerics' section for details.
+					This can be completed by the the 'b2mndt_nstg_ares??' switches. See 'Numerics' section for details.
+					It is recommended to use these inner iterations when running in time-dependent mode (b2mndt_style=2) to make residuals converge within each time-step.
 				</description>
 				<switch>
 					<name>b2mndt_nstg0</name>
@@ -5390,9 +5390,26 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					Since v3.2.0, the physics model always corresponds to b2mndt_style=1 option (SOLPS5.2). Hence b2mndt_style=0 is no longer allowed.
-					If b2mndt_style=2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode, using an implicit Euler time-stepping scheme.
-                    B2news_m uses new order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations (and optionally also Tn and k-epsilon equations).
+					If 0, refers to the obsolete SOLPS5.0 physics model, no longer supported.
+					If 1, the SOLPS5.2 physics model is used, and b2news_ is called to compute the new plasma state. (default)
+					If 2, the SOLPS5.2 physics model is used, and b2news_m is called instead to run the code in fully self-consistent time-dependent mode. B2news_m uses a different order of solving equations: first the density equations, then the parallel velocity, electrical potential and Te and Ti equations (and optionally also the Tn and k-epsilon equations, if requested).
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_ckn</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_ckn=2, the 2nd order Crank-Nicolson time-stepping scheme is used, instead of the default 1st order implicit Euler scheme.
+					This scheme can be used both in time-dependent mode (b2mndt_style=2) and in steady-state mode (b2mndt_style=1).
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_dummy</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					This switch is used internally in the code to initially run a dummy call to b2mndt, which is needed to use the Crank-Nicolson time-stepping scheme (b2mndt_ckn=2). This switch is not meant to be changed by users, it should always stay at its default value of 0.
 				</description>
 			</switch>
 			<switch>

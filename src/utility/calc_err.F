@@ -54,6 +54,15 @@
         close(70)
        endif
 
+       if(switch%set_tn_numerical.ne.0) then
+        filename='exact_tn_us.dat'
+        call find_file(filename,l_exist)
+        call xertst(l_exist,'No exact_tn_us.dat file')
+        open(70,file=trim(filename))
+        read (70,"(1x,e23.16)") (pl%tn(iCv),iCv=1,nCv)
+        close(70)
+       endif
+
        if(switch%set_po_numerical.ne.0) then
         filename='exact_po_us.dat'
         call find_file(filename,l_exist)
@@ -181,6 +190,10 @@
          endif
          if (any(solveei(0:mpg%nnreg(0)))) then
            call calc_err_cc(nCv, 'ti', pl%ti, exact_ti, qe,
+     &                      switch, itim)
+         endif
+         if (any(solveen(0:mpg%nnreg(0)))) then
+           call calc_err_cc(nCv, 'tn', pl%tn, exact_tn, qe,
      &                      switch, itim)
          endif
        endif
