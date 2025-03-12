@@ -528,6 +528,7 @@ c b2mndt
       real (kind=R8) :: b2mndt_var_te_min
       real (kind=R8) :: b2mndt_var_te_max
       real (kind=R8) :: b2mndt_var_mult
+      real (kind=R8) :: b2mndt_var_style2_SF
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -1121,6 +1122,7 @@ c b2mndt
       s % b2mndt_var_te_min = 0.0_R8
       s % b2mndt_var_te_max = 1e30_R8
       s % b2mndt_var_mult = 1.0_R8
+      s % b2mndt_var_style2_SF = 10.0_R8
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1731,6 +1733,7 @@ c b2mndt
       call ipgetr ('b2mndt_var_te_min', s%b2mndt_var_te_min)
       call ipgetr ('b2mndt_var_te_max', s%b2mndt_var_te_max)
       call ipgetr ('b2mndt_var_mult', s%b2mndt_var_mult)
+      call ipgetr ('b2mndt_var_style2_SF', s%b2mndt_var_style2_SF)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08

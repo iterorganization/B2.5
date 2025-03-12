@@ -56,6 +56,9 @@
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) :: t0, ttim
       real (kind=R8) :: wrk0(nCv), mult_dt(nCv)
+      real (kind=R8) :: ttim2, src_tot, content, smt(0:3)
+      real (kind=R8) :: ttim2_na(nCv,ns), ttim2_ua(nCv,ns),
+     &                  ttim2_ti(nCv), ttim2_te(nCv)
 *   ..procedures
       external xertst
       external b2xvsg
@@ -118,6 +121,16 @@ csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
           ttim=dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)*
      &         mult_dt(iCv)
+          if (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to particle content
+            src_tot = sr%sna(iCv,0,is)+sr%sna(iCv,1,is)*na0(iCv,is)
+            content = geo%cvVol(iCv)*na0(iCv,is)
+            ttim2 = content/abs(src_tot)/
+     &              switch%b2mndt_var_style2_SF
+            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+            if (switch%b2srdt_iout.eq.1) then
+              ttim2_na(iCv,is) = ttim2
+            endif
+          endif
           sr%snadt(iCv,0,is) =
      &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*na0(iCv,is)
           sr%snadt(iCv,1,is) = -
@@ -134,6 +147,21 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
           ttim=dtim*dtmo(is,mpg%cvReg(iCv))*time_factor(iCv)*
      &         mult_dt(iCv)
+          if (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to parallel momentum content
+            smt = sr%smq(iCv,0:3,is) + sr%smo(iCv,0:3,is)
+            src_tot = smt(0) + 
+     &                smt(1)*ua0(iCv,is) + 
+     &                smt(2)*am(is)*mp*na0(iCv,is) +
+     &                smt(3)*am(is)*mp*ua0(iCv,is)*na0(iCv,is)
+            content = geo%cvVol(iCv)*geo%cvHz(iCv)*
+     &                am(is)*mp*ua0(iCv,is)*na0(iCv,is)
+            ttim2 = abs(content/src_tot)/
+     &              switch%b2mndt_var_style2_SF
+            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+            if (switch%b2srdt_iout.eq.1) then
+              ttim2_ua(iCv,is) = ttim2
+            endif
+          endif
           t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)   !srv 09.01.01
           sr%smodt(iCv,0,is) = t0*am(is)*mp*ua0(iCv,is)*na0(iCv,is)
           sr%smodt(iCv,1,is) = 0.0_R8
@@ -153,6 +181,19 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
         ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)*
      &         mult_dt(iCv)
+        if (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to electron heat content
+            src_tot = sr%she(iCv,0) + 
+     &                sr%she(iCv,1)*te0(iCv) + 
+     &                sr%she(iCv,2)*ne0(iCv) +
+     &                sr%she(iCv,3)*te0(iCv)*ne0(iCv)
+            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+            ttim2 = content/abs(src_tot)/
+     &              switch%b2mndt_var_style2_SF
+            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+            if (switch%b2srdt_iout.eq.1) then
+              ttim2_te(iCv) = ttim2
+            endif
+        endif
         t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
         sr%shedt(iCv,0) = 1.5_R8*t0*ne0(iCv)*te0(iCv)
         sr%shedt(iCv,1) = 0.0_R8
@@ -162,6 +203,19 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
         ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)*
      &         mult_dt(iCv)
+        if (switch%b2mndt_var_style.eq.2) then !! For now keep timestep for kt and zt same is for ti
+            src_tot = sr%shi(iCv,0) + 
+     &                sr%shi(iCv,1)*ti0(iCv) + 
+     &                sr%shi(iCv,2)*ni0(iCv,0) +
+     &                sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
+            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+            ttim2 = content/abs(src_tot)/
+     &              switch%b2mndt_var_style2_SF
+            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+            if (switch%b2srdt_iout.eq.1) then
+              ttim2_ti(iCv) = ttim2
+            endif
+        endif
         t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
         sr%sktdt(iCv,0) = t0*ni0(iCv,1)*kt0(iCv)
         sr%sktdt(iCv,1) = 0.0_R8
@@ -182,6 +236,19 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
         ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)*
      &         mult_dt(iCv)
+        if (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to ion heat content
+            src_tot = sr%shi(iCv,0) + 
+     &                sr%shi(iCv,1)*ti0(iCv) + 
+     &                sr%shi(iCv,2)*ni0(iCv,0) +
+     &                sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
+            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+            ttim2 = content/abs(src_tot)/
+     &              switch%b2mndt_var_style2_SF
+            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+            if (switch%b2srdt_iout.eq.1) then
+              ttim2_ti(iCv) = ttim2
+            endif
+        endif
         t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
 
         if (switch%tn_style.eq.0) then
@@ -312,6 +379,18 @@ cdjm Store the total change in linearised sources for balance
         call my_out_us(70,nCv,0,sr%sztdt(1,k),'b2srdt_sztdt'//chk)
        enddo
       endif                                                           !srv 11.09.09 }
+
+      if (switch%b2srdt_iout.eq.1.and.switch%b2mndt_var_style.eq.2) then
+        do is = 0, ns-1
+          write (chns,'(i3.3)') is
+          wrk0 = ttim2_na(:,is)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_ttim2_na'//chns)
+          wrk0 = ttim2_ua(:,is)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_ttim2_ua'//chns)
+        enddo
+        call my_out_us(70,nCv,0,ttim2_te,'b2srdt_ttim2_te')
+        call my_out_us(70,nCv,0,ttim2_ti,'b2srdt_ttim2_ti')
+      endif
 
 * ..return
       ncall_b2srdt = ncall_b2srdt+1
