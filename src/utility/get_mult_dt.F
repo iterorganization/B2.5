@@ -7,11 +7,11 @@
       use b2mod_constants
       implicit none
 *   ..input arguments
-      integer style, nCv
-      real (kind=R8) ::
+      integer, intent(in) :: style, nCv
+      real (kind=R8), intent(in) ::
      *   te_min, te_max, mult_max, te(nCv)
 *   ..output arguments
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   mult_dt(nCv)
 *-----------------------------------------------------------------------
 *.documentation
@@ -24,6 +24,8 @@
 *     style = 1: based on Te. In low Te regions (typically more interaction with neutrals) a small timestep is preferred. 
 *                In high Te regions there is typically less neutral interaction, or this interaction
 *                is a least less critical from a numerical point of view. 
+*
+*     style = 2: based on the magnitude of the sources compared to the particle/momentum/energy content of the cell. 
 *
 *     Other styles can be added in the future.
 *
@@ -55,6 +57,8 @@
             mult_dt(iCv) = 10**exp1
           endif
         enddo
+      elseif (style.eq.2) then !! This option is worked out in b2srdt itself.
+        mult_dt = 1.0_R8 
       else
         call xerrab('This b2mndt_var_style is not available')
       endif
