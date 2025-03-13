@@ -170,6 +170,10 @@ c
                   iFp = iFn
                 end if
               end do
+              if (iCp.eq.0) then                                        ! In cases where several volumed boundary cells
+                iCx = -1                                                ! belong one flux tube iCp can not be found
+                cycle
+              end if
               iCb = iCn
               iCn = iCp
               if (mpg%cvReg(iCb).ne.mpg%cvReg(iCn)) then
