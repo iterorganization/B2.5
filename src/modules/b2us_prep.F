@@ -2842,7 +2842,7 @@
      &           "of original fcHc."
                 wrk = sum(gm%fcHc(fcsb(ind:ind1-1),1)+
      &           gm%fcHc(fcsb(ind:ind1-1),2))/(ind1-ind)
-                write (*,*), "new fcHc:"
+                write (*,*) "new fcHc:"
                 write (*,'(1es17.6)') wrk
               endif
             write(*,*) "----------"
