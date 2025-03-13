@@ -622,6 +622,24 @@
 					If abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin .and. abs(cos(alpha)*bx).lt.b2us_prep_Qalfmax, fcPbs is set equal to b2us_prep_Qalfmax*fcS for boundary faces during writing of b2fgmtry.
 				</description>
 			</switch>
+			<switch>
+				<name>b2us_prep_mod_hc</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2us_prep_mod_hc.eq.1 then length between cell face center and neighboring cell centers (fcHc) will be modified:
+					It will be the same for neighboring boundary faces belonging one flux tube.
+					For all boundary faces it will be recalculated to decrease distance between boundary face and boundary guard cell.
+				</description>
+			</switch>
+			<switch>
+				<name>b2us_prep_set_beta_0</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2us_prep_set_beta_0.eq.1 beta angle will be assigned to zero for faces between boundary-volume cells.
+				</description>
+			</switch>
 		</category>
 		<category name="Run">
 			<switchgroup>
@@ -4168,6 +4186,22 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2sihs_shivis</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shivis.eq.0, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shi</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shi.eq.0, then all b2sihs_shi* and b2sihs_shivis keys will be assigned to zero.
+				</description>
+			</switch>
+			<switch>
 				<name>b2sihs_shidu</name>
 				<default>1</default>
 				<type>integer</type>
@@ -4562,6 +4596,7 @@
 				<type>real</type>
 				<description>
 					Multiplication factor to the poloidal transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa). Must be greater than 1.0 to have an effect.
+					If b2txcx_increase_transp_coefs.gt.1.0 b2trno_set_chcb_0 will be assigned to 1.
 				</description>
 			</switch>
 			<switch>

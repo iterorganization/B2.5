@@ -123,6 +123,8 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..read data on first call
       if (ncall_b2trno.eq.0) then
+        if (switch%b2txcx_increase_transp_coefs.gt.1.0_R8)
+     &    set_chcb_0 = 1
         call ipgeti('b2trno_set_chcb_0', set_chcb_0)
       end if
 *   ..extensive tests on first few calls
