@@ -14,13 +14,13 @@ c     Mixed materials are not considered in this recycling model
       logical, save :: recycle_initialised
       data recycle_initialised /.false./
 
-
-      integer, save :: nm, nt, nshpottau,nx1,ny1,ns1
+      real (kind=R8), save :: uold=0.0_R8, told=0.0_R8, mold=0.0_R8
+      integer, save :: nm, nt, nshpottau, nx1, ny1, ns1
 
 c     Recycle_index and target_index refer for each species and boundary in which integer
 c     the corresponding recycling coefficients are stored. 
       integer, allocatable, save ::
-     *  recycle_index(:),target_index(:)
+     *  recycle_index(:), target_index(:)
 c     Boolean to indicate whether trim data is present for species/material combination
       logical, allocatable, save :: 
      *  trimrecyc_present(:,:)
@@ -29,10 +29,15 @@ c     Boolean to indicate whether trim data is present for species/material comb
      &  rmx1(:,:,:,:,:),rmx2(:,:,:,:,:),rmy1(:,:,:,:,:),rmy2(:,:,:,:,:),
      &  rmz1(:,:,:,:,:),rmz2(:,:,:,:,:),re1(:,:,:,:,:),re2(:,:,:,:,:),
      &  rp11(:,:,:,:,:),rp12(:,:,:,:,:),rp21(:,:,:,:,:),
-     &  rp22(:,:,:,:,:),rp31(:,:,:,:,:),rp32(:,:,:,:,:)
+     &  rp22(:,:,:,:,:),rp31(:,:,:,:,:),rp32(:,:,:,:,:),
+     &  M_dummy(:),T_dummy(:),shpottau_dummy(:),        !nh 21.02.2020
+     &  fna_mol(:,:)                                    !nh 30.03.2021
+      real (kind=R8), allocatable, save :: recycle_zn(:)
 
-      real (kind = R8),save ::     
-     &  cutlo, cutll
+      real (kind=R8), save :: int0l,int0r,
+     &    int1l,int1r,int2l,int2r,
+     &    int3l,int3r,int4l,int4r,
+     &    int5l,int5r,int6l,int6r
 
 
 
@@ -42,19 +47,18 @@ c     Boolean to indicate whether trim data is present for species/material comb
       use b2mod_b2cmpa
       use b2mod_elements
       implicit none
-      integer,intent(in):: nsd,nbnd2
+      integer, intent(in) :: nsd, nbnd_local, use_coarse
       character*256 filename
       integer ib, isp, is, il,it,itm,ndata
 c      integer nmax, itargsp, ic, i
       integer idum(0:9)
       logical open_file, found
 
-      character*10::fnn_version
-      character lblfnn*120 
-      character*2 target_code(0:nbnd2-1)
-cmb size cannot become bigger than nsd-1?
-c#ifndef PSR
-c      character*2 recycle_code(0:nsd-1+6)
+      character*10 :: fnn_version
+      character lblfnn*120
+      character lblfnn_dummy*120              !nh 21.02.2020
+      character*2 target_code(0:nbnd_local-1)
+
       character*2 recycle_code(0:nsd-1)
 c#else
 c      character*2 recycle_code(0:100)
@@ -1380,38 +1384,75 @@ c     int6r = int_{0}^{inf} v^{6} M(v) dv
       implicit none
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      integer, intent(in):: iCv, iCn, iFc
-      integer, intent(out):: iCl, iCr
-      character, intent(in):: location*1 
-*     .. local variables
-      integer ix,iy,nx,ny
-      external subini, subend, xertst
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (inout) :: dv
+      type (B2Coeff), intent (inout) :: co
+      type (B2Rates), intent (in) :: rt
+      real (kind=R8), intent(inout) :: dnn(nFc,0:1)
+c     local variables
+      integer :: istra, i, iRc1, isn, iFc
+      integer, save :: ncall = 0, style_visc = 0
+      real(kind=R8) :: nnVx(nVx),
+     &                 neVx(nVx), tiVx(nVx),
+     &                 min_Kn(1:nstrat), mfp, mfp_out(nCv),
+     &                 Kn, Kn_ti, Kn_ne,
+     &                 Kn_out(nCv), Kn_ti_out(nCv), Kn_ne_out(nCv),
+     &                 L_ne_out(nCv), L_ti_out(nCv),
+     &                 dti(nFc,0:1), dne(nFc,0:1), L_ti, L_ne
 
-      call subini ('gnbr_subini')
-      call xertst(mpg%isclassicalgrid.eq.1,'only for classical grids')
-      iCl = 1
-      iCr = 1
-      !! in the unstructered solver, guard cells no longer have neighbours. Also the "left", "right", "top" and "bottom" neighbours no longer exist.
-      !! However, for full backwards compatibitliy with  dev_wim_hybr branch, we need them again.
-      !! This process can only be used for classical grids, i.e. grids than can be mapped back to the traditional topologically rectangular grids.
-      !! Moreover, cuts are not taken into account.
-!!      ---------------
-!!       iCl |      |
-!!      ---------------
-!!       iCv | iCn  |
-!!      ---------------
-!!       iCr |      |
-!!      ---------------
-       
+      if (ncall.eq.0) then
+        call ipgeti ('b2sihs_style_visc', style_visc)
+      endif
+      isn = 0 !! AFN_TODO generalize species index for multi-speciescases?
+              !! For now KUL AFN models have only been developed for single species cases.
+      call intvertex(nCv, nVx, mpg, geo%vxVol, pl%na(:,isn), nnVx)
+      call intvertex(nCv, nVx, mpg, geo%vxVol, dv%ne, neVx)
+      call intvertex(nCv, nVx, mpg, geo%vxVol, pl%ti, tiVx)
+      call grad_nt(nCv, nFc, nVx, 1, geo, mpg, pl%na(:,isn), nnVx, dnn)
+      call grad(nCv, nFc, nVx, 1, geo, mpg, pl%ti, tiVx, dti)
+      call grad(nCv, nFc, nVx, 1, geo, mpg, dv%ne, neVx, dne)
 
-        nx = mpg%nx
-        ny = mpg%ny
-        if (location.eq.'W') then
-          ix = -1
-          do iy=-1,ny
-            if (mpg%imapcv(ix,iy).eq.iCv) then
-               iCl = mpg%imapcv(ix,iy+1)
-               iCr = mpg%imapcv(ix,iy-1)
+      mfp_out = 0.0_R8
+c     pre-computation of the minimal mean-free path along a boundary stratum
+      min_Kn(:) = 1.0_R8
+      do istra = 1, nstrai
+*   ..loop over boundary cells
+        do i = 1, mpg%rcCvP(istra,2)
+          iRc1 = mpg%rcCv(mpg%rcCvP(istra,1)+i-1,1) ! the guard cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iRc1,1))        ! the guard face
+          call CalcMinKn(iRc1,isn,istra,
+     &        pl,dv,rt,switch%L_macro_AFN,min_Kn,Kn,mfp)
+          mfp_out(iRc1) = mfp
+
+cc compute Knudsen number
+          L_ti = pl%ti(iRc1)/
+     &     max(sqrt(dti(iFc,0)**2+dti(iFc,1)**2),1.0e-30_R8)    !! gradient length of Ti
+          L_ne = dv%ne(iRc1)/
+     &     max(sqrt(dne(iFc,0)**2+dne(iFc,1)**2),1.0e-30_R8)    !! gradient length of ne
+c          L = min(L_ti,L_ne) !! shortest gradient length
+          Kn = mfp/switch%L_macro_AFN
+          Kn_ti = mfp/L_ti
+          Kn_ne = mfp/L_ne
+          Kn_out(iRc1) = Kn
+          Kn_ti_out(iRc1) = Kn_ti
+          Kn_ne_out(iRc1) = Kn_ne
+          L_ti_out(iRc1) = L_ti
+          L_ne_out(iRc1) = L_ne
+
+cc compute fluid/kinetic fraction
+          if (switch%use_auto_spatial_hyb.eq.1.and.
+     &                                HYB_TYPE(istra).eq.'A') then !! 'A' = automatic
+            if (Kn.le.switch%auto_spatial_hyb_Kn_1) then !! fluid treatment
+              dv%fluid_frac_hyb(iFc) = 1.0_R8
+              dv%kin_frac_hyb(iFc) = 0.0_R8
+            elseif (Kn.ge.switch%auto_spatial_hyb_Kn_2) then  !! kinetic treatment
+              dv%fluid_frac_hyb(iFc) = 0.0_R8
+              dv%kin_frac_hyb(iFc) = 1.0_R8
+            else
+!! avoid discontinuities if a target face switches from fluid to kinetic. Linear interpolation in betweeen auto_Kn_1 and auto_Kn_2
+              dv%kin_frac_hyb(iFc) = (Kn-switch%auto_spatial_hyb_Kn_1)/
+     &     (switch%auto_spatial_hyb_Kn_2-switch%auto_spatial_hyb_Kn_1)
+              dv%fluid_frac_hyb(iFc) = 1.0_R8 - dv%kin_frac_hyb(iFc)
             endif
           enddo
 	else if (location.eq.'E') then
