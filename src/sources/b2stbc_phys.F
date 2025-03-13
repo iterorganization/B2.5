@@ -72,7 +72,7 @@
       integer iCv, iCv1, iCv2, iFc, iVx1, iVx2, is, ib, ibc, ib0,
      &  ism, ibc0, k, isb, ibw, isa, ix, iFt
 #ifdef WG_TODO
-     & ,coreregno, coreregn2, ireg, 
+     & ,coreregno, coreregn2, ireg,
      1  bc_type13_ref, bc_type13_ix, bc_type13_iy, bc_type13_i,
      2  bc_type13_ixx,
      1  bc_type16_ref, bc_type16_ix, bc_type16_iy, bc_type16_i,
@@ -4994,7 +4994,7 @@ cwdk    Todo: corrections for BCCON.ne.14
      &          ((1.0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))
      &           - switch%stab_coeff_sheath_te*pl%te(iCv1))*t0 -        !lkw 31.03.2023
      &                            qe*(pl%po(iCv1)-potpar(ib,2))*t1      !wdk to check: correct 2nd term for gammae?
-              if (switch%b2nppo_restr_po.ne.0.0_R8.eq.1 .and. 
+              if (switch%b2nppo_restr_po.ne.0.0_R8 .and.
      &            (srw%she0(iCv1,0)+srw%she0(iCv1,1)*pl%te(iCv1)
      &            .gt. 0.0_R8)) srw%she0(iCv1,:) = 0.0_R8
             else
