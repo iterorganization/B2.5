@@ -2048,6 +2048,15 @@ cxpb size is changed in b2mod_dimensions
                   call calc_puff_pump(switch, ns, mpg, nCv, dv,
      &             b2espcr(fb_species(ifb)),
      &             sna_pump,sna_puff, sna_core)
+                  sna_puff = 0.0_R8
+                  do istra=1,mpg%nRc
+                    if (crcstra(istra).ne.'C') cycle
+                    if (istra.eq.fb_istra(ifb)) cycle
+                    if (species_start(fb_istra(ifb)).ne.
+     &                  species_start(istra)) cycle
+                    sna_puff = sna_puff + userfluxparm(istra,1)
+                  enddo
+                  write(*,'(a,i6,es17.6)')'Total puff',ifb,sna_puff
                   if (fb_tau(ifb).gt.0.0_R8) then
                     if (fb_style_calc_puff.eq.0) then
                       t0 = sna_pump*fb_rescale(ifb) -
@@ -2068,6 +2077,8 @@ cxpb size is changed in b2mod_dimensions
      &                 (sna_pump - sna_core)*fb_rescale(ifb))
                     endif
                   endif
+                  saved_fb_actuator(ifb) = saved_fb_actuator(ifb)
+     &              - sna_puff
 #endif
                 else
                   saved_fb_actuator(ifb) =
