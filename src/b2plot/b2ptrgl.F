@@ -45,7 +45,7 @@ c
       integer i,j,jj,k,l,m,n,iss,imol,iy,js,nclm_ld,nclm_er
       integer i1,i2,i3,ia,ib,ic,is,ims,ias,nclm_na,nclm_nm
       integer iCb,iCm,iCn,iCp,iCv,iCx
-      integer iFc,iFn,iFs,iFs1,iFs2,iVx1,iVx2
+      integer iFc,iFn,iFs,iFs1,iFs2,iVx,iVx1,iVx2
       integer m_hlp(ntrgsx),npar_hlp(ntrgsx),ntrg_hlp(ntrgsx)
       integer im,midplane_list(nromp),nmp
       logical found,match_found,do_sput(ntrgsx)
@@ -269,7 +269,7 @@ c*** Target geometry
 c*** Midplane coordinates
 
       xmc_hlp=0.0_R8
-      do j=1,2*ntrgts
+      do j=1,ntrgts
         if (j.le.ntrgts/2 .and. nimp.gt.0) then
           midplane_list = imp
           fs_ds_mp = fs_ds_imp
@@ -345,7 +345,8 @@ c*** Midplane coordinates
               do k = mpg%cvVxP(midplane_list(im),1),
      .               mpg%cvVxP(midplane_list(im),1) +
      .               mpg%cvVxP(midplane_list(im),2) - 1
-                iFs = mpg%vxFs(k)
+                iVx = mpg%cvVx(k)
+                iFs = mpg%vxFs(iVx)
                 if (iFs.eq.0) cycle
                 if (iFs1.eq.0) then
                   iFs1 = iFs
