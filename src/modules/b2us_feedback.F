@@ -927,10 +927,7 @@ cxpb size is changed in b2mod_dimensions
       logical main_call
 *   ..local variables
       integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
-     & is_end, iss
-#ifdef B25_EIRENE
-      integer :: i, j, k, l
-#endif
+     & is_end, iss, i, j, k, l
       integer, save :: ncall = 0
       real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s
 
