@@ -260,11 +260,15 @@ c*** Belongs to the target j?
   100   continue !}
 c
 c*** Across or along the field?
-        lcross_hlp =
-     .   boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
-     .                       geometryType).eq.SOUTH .or.
-     .   boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
-     .                       geometryType).eq.NORTH
+        if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).ne.0) then
+          lcross_hlp =
+     .     boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .                         geometryType).eq.SOUTH .or.
+     .     boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .                         geometryType).eq.NORTH
+        else ! assume a floating structure in SOL or PFR
+          lcross_hlp = .true.
+        end if
         lbound_hlp = bcchar(ic).eq.'S' .or. bcchar(ic).eq.'N' .or.
      .               bcchar(ic).eq.'E' .or. bcchar(ic).eq.'W' .or.
      .               bcchar(ic).eq.'A'
@@ -347,15 +351,17 @@ c>>>
             if(k.gt.0) hlp=hlp+wldpeb(k,ic)
           end do !}
           k=0
-          if(boundaryAssignments(mpg%fcReg(mpg%rcFc(mpg%rcFcP(ic,1))),
-     &                           geometryType).eq.EAST .or.
-     &       boundaryAssignments(mpg%fcReg(mpg%rcFc(mpg%rcFcP(ic,1))),
-     &                           geometryType).eq.WEST) then !{
-            do i=1,nbc !{
-              if(bcchar(i).eq.crcstra(ic) .and.
-     &           bcstart(i).eq.rcstart(ic)) k=i
-            end do !}
-          end if !}
+          if (mpg%fcReg(mpg%rcFc(mpg%rcFcP(ic,1))).ne.0) then
+            if(boundaryAssignments(mpg%fcReg(mpg%rcFc(mpg%rcFcP(ic,1))),
+     &                             geometryType).eq.EAST .or.
+     &         boundaryAssignments(mpg%fcReg(mpg%rcFc(mpg%rcFcP(ic,1))),
+     &                             geometryType).eq.WEST) then !{
+              do i=1,nbc !{
+                if(bcchar(i).eq.crcstra(ic) .and.
+     &             bcstart(i).eq.rcstart(ic)) k=i
+              end do !}
+            end if !}
+          end if
 c<<<
 c          print *,'b2blne: ic,k= ',ic,k
 c>>>
@@ -533,6 +539,7 @@ c*** First, targets in B2
       warn_tmp=.true.
       k=0
       do j=1,nbc !{
+        if(mpg%fcReg(mpg%bcFc(mpg%bcFcP(j,1))).eq.0) cycle
         if(boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(j,1))),
      &                         geometryType).eq.EAST .or.
      &     boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(j,1))),
