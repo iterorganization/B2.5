@@ -1198,7 +1198,6 @@ c   (ionising_core option)
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
-            iFt = mpg%cvFt(iCv2)
             s1 = abs(geo%fcPbs(iFc))
             cs = sqrt(pz(iCv1)/rz(iCv1))
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
@@ -3387,7 +3386,6 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
-            iFt = mpg%cvFt(iCv2)
             iVx1 = mpg%fcVx(iFc,1)
             iVx2 = mpg%fcVx(iFc,2)
             t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
@@ -4631,7 +4629,6 @@ cwdk    Todo: corrections for BCCON.ne.14
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-            iFt = mpg%cvFt(iCv2)
             s1   = abs(geo%fcPbs(iFc))
             vte  = sqrt(pl%te(iCv1)/me)
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
@@ -6270,7 +6267,6 @@ c test
           t0 = 0.0_R8
           t1 = 0.0_R8
           t2 = 0.0_R8
-          iFt = mpg%cvFt(iCv2)
           wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
           if (bceni_15_style == 0) then
             if (wrk < geo%Qalfmin) then
@@ -6295,7 +6291,9 @@ c test
      &            min(0.0_R8,t0)/pl%ti(iCv1)
               endif
           else
-            s1 = abs(geo%fcPbs(iFc))
+          !wdk sheath transmission factor consistent with truncated
+          !    Maxwellian distribution on Eirene side (NEMODS=7)
+          !    See Eirene manual for details.
             do is = 0, ns-1
               if(.not.is_neutral(is)) then
                 t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
@@ -7820,11 +7818,9 @@ c              fchi=0.0_R8
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
-          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           vte  = sqrt(pl%te(iCv1)/me)
-          iFt = mpg%cvFt(iCv2)
           t0 = 0.0_R8
           wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
           if (wrk < geo%Qalfmin) then
