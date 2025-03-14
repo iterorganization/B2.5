@@ -2438,7 +2438,7 @@
       integer :: fcsb(mpg%nCg), cvsb(mpg%nCg,2), k, ind, ind1, tmp, iFt
       logical :: iscvsb(mpg%nCv)
       integer :: wrkVx(mpg%nVx)
-      real (kind=R8) :: meanCv(2),meanFc(2), bz_sign, 
+      real (kind=R8) :: meanCv(2),meanFc(2), bz_sign,
      & wrk, pbs_red_fac=1.0e-3_R8
 
 *   ..procedures
@@ -2491,21 +2491,8 @@
             ! wdk sign of field now included in angles
             gm%fcBb(iFc,0:3) = abs(wbbl(ix,iy,0:3))
             gm%fcS(iFc) = gs(ix,iy,0)
-            if (iCv.le.mpg%nCi .or. mod_hc.eq.0) then
-              gm%fcHc(iFc,1) = hc(leftix(ix,iy),leftiy(ix,iy),2)
-              gm%fcHc(iFc,2) = hc(ix,iy,0)
-            else
-              Cvs = mpg%fcCv(iFc,1:2)
-              wrk = sqrt((gm%cvX(Cvs(1))-gm%cvX(Cvs(2)))**2+
-     &                   (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
-              if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
-                gm%fcHc(iFc,1) = 0.01_R8*wrk
-                gm%fcHc(iFc,2) = 0.99_R8*wrk
-              elseif (mpg%fcCv(iFc,2).gt.mpg%nCi) then
-                gm%fcHc(iFc,2) = 0.01_R8*wrk
-                gm%fcHc(iFc,1) = 0.99_R8*wrk
-              endif
-            endif
+            gm%fcHc(iFc,1) = hc(leftix(ix,iy),leftiy(ix,iy),2)
+            gm%fcHc(iFc,2) = hc(ix,iy,0)
             gm%fcHt(iFc)   = ht(ix,iy,0)
             gm%fcVol(iFc,1) = 0.5_R8*vol(leftix(ix,iy),leftiy(ix,iy))
             gm%fcVol(iFc,2) = 0.5_R8*vol(ix,iy)
@@ -2533,25 +2520,11 @@
         do iy = 0, ny
           if(mpg%imapFcy(ix,iy)/=0) then
             iFc = mpg%imapFcy(ix,iy)
-            iCv = mpg%imapCv(ix,iy)
             ! wdk sign of field now included in angles
             gm%fcBb(iFc,0:3) = abs(wbbv(ix,iy,0:3))
             gm%fcS(iFc) = gs(ix,iy,1)
-            if (iCv.le.mpg%nCi .or. mod_hc.eq.0) then
-              gm%fcHc(iFc,1) = hc(bottomix(ix,iy),bottomiy(ix,iy),3)
-              gm%fcHc(iFc,2) = hc(ix,iy,1)
-            else
-              Cvs = mpg%fcCv(iFc,1:2)
-              wrk = sqrt((gm%cvX(Cvs(1))-gm%cvX(Cvs(2)))**2+
-     &                   (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
-              if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
-                gm%fcHc(iFc,1) = 0.01_R8*wrk
-                gm%fcHc(iFc,2) = 0.99_R8*wrk
-              elseif (mpg%fcCv(iFc,2).gt.mpg%nCi) then
-                gm%fcHc(iFc,2) = 0.01_R8*wrk
-                gm%fcHc(iFc,1) = 0.99_R8*wrk
-              endif
-            endif
+            gm%fcHc(iFc,1) = hc(bottomix(ix,iy),bottomiy(ix,iy),3)
+            gm%fcHc(iFc,2) = hc(ix,iy,1)
             gm%fcHt(iFc)   = ht(ix,iy,1)
             gm%fcVol(iFc,1) = 0.5_R8*vol(bottomix(ix,iy),
      .                                    bottomiy(ix,iy))
@@ -2615,6 +2588,18 @@
           gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
      .       gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)*bz_sign
           write(*,*) 'pbs and pbshz were reduced for iFc=',iFc
+        endif
+        if (mod_hc.eq.1) then
+          Cvs = mpg%fcCv(iFc,1:2)
+          wrk = sqrt((gm%cvX(Cvs(1))-gm%cvX(Cvs(2)))**2+
+     &               (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
+          if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
+            gm%fcHc(iFc,1) = 0.01_R8*wrk
+            gm%fcHc(iFc,2) = 0.99_R8*wrk
+          elseif (mpg%fcCv(iFc,2).gt.mpg%nCi) then
+            gm%fcHc(iFc,2) = 0.01_R8*wrk
+            gm%fcHc(iFc,1) = 0.99_R8*wrk
+          endif
         endif
       enddo
 
