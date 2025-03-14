@@ -730,8 +730,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
       wrkc = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
      &       dabs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
-      wrkc = co%sigx_c*wrkc**2*geo%cvBb(:,3)**2/(am(ismain)*mp)*
-     &  switch%b2tfhi_fsigkt
+      wrkc = co%sigx_c*wrkc**2*geo%cvBb(:,3)**2/(am(ismain)*mp)
       call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  wrkc, cdkt(:,0))
       cdkt(:,0) = cdkt(:,0)*switch%b2tfhi_fsigkt
