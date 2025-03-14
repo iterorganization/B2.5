@@ -175,8 +175,11 @@ c
                   iFp = iFn
                 end if
               end do
-              if (iCp.eq.0) then                                        ! In cases where several volumed boundary cells
-                iCx = -1                                                ! belong one flux tube iCp can not be found
+! In case of a shaved flux tube, we may have started in the wrong direction
+! The algorithm will however always work
+! when starting from the triangle tip cell
+              if (iCp.eq.0) then
+                iCx = -1
                 cycle
               end if
               iCb = iCn
