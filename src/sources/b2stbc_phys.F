@@ -4821,6 +4821,9 @@ cwdk    Todo: corrections for BCCON.ne.14
      &          ((1.0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))
      &           - switch%stab_coeff_sheath_te*pl%te(iCv1))*t0 -        !lkw 31.03.2023
      &                            qe*(pl%po(iCv1)-potpar(ib,2))*t1      !wdk to check: correct 2nd term for gammae?
+              if (switch%b2nppo_restr_po.ne.0.0_R8 .and.
+     &            (srw%she0(iCv1,0)+srw%she0(iCv1,1)*pl%te(iCv1)
+     &            .gt. 0.0_R8)) srw%she0(iCv1,:) = 0.0_R8
             else
               cs = sqrt(pz(iCv1)/rz(iCv1))
               srw%she0(iCv1,1) = srw%she0(iCv1,1) - s1*dv%ne(iCv1)*cs*  !srv 11.03.09 {
@@ -8460,10 +8463,10 @@ c              fchi=0.0_R8
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          s1   = abs(geo%fcPbs(iFc))
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           vte  = sqrt(pl%te(iCv1)/me)
           t0 = 0.0_R8
+          s1 = abs(geo%fcPbs(iFc))
           do is = 0, ns-1
             t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*cs*s1*
      *        pl%na(iCv1,is)

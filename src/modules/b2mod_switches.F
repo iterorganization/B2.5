@@ -541,7 +541,7 @@ c b2trno
       real (kind=R8) :: b2trno_alpha_stoch
 
 c b2nppo
-      integer :: b2nppo_restrict_po
+      real (kind=R8) :: b2nppo_restr_po
 
 c Feedback
       integer :: b2stbc_feedback
@@ -1117,7 +1117,7 @@ c b2trno
       s % b2trno_alpha_stoch =  1.0_R8       !srv 17.12.13
 
 c b2nppo
-      s % b2nppo_restrict_po = 0
+      s % b2nppo_restr_po = 0.0_R8
 
 c Optimization
       s % b2optim_save_states = 0
@@ -1712,7 +1712,7 @@ c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
 
 c b2nppo
-      call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
+      call ipgetr ('b2nppo_restr_po', s%b2nppo_restr_po)
 
 c Optimization
       call ipgeti ('b2optim_save_states', s%b2optim_save_states)
