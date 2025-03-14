@@ -81,7 +81,8 @@ c       write(lun_w,*)
 c      end do !}
 c      close(lun_w)
 c>>>
-      lim_cnf=mpg%nncut.eq.0 .and. mpg%nnreg(0).eq.2
+      geometryType = geometryId( mpg, geo )
+      lim_cnf=geometryType.eq.GEOMETRY_LIMITER
 
 c*** Make the list of references to the Eirene "Additional surfaces" -
 c*** count for "unused elements", "elements not for Eirene", and
@@ -157,7 +158,6 @@ c*** Check the topology of the grid and the list of target edges
         end if
       end if !}
       ntrgts=2
-      geometryType = geometryId( mpg, geo )
       if(mpg%nncut.eq.0 .and. .not.lim_cnf) then
         if (mpg%periodic_bc.eq.1) then
           ntrgts=0
@@ -198,13 +198,11 @@ c*** Check the topology of the grid and the list of target edges
             itrg(1)=2
           end if
         end if
-      end if
-      if(mpg%nncut.eq.1 .or. lim_cnf) then
+      else if(geometryType.eq.GEOMETRY_SN .or. lim_cnf) then
         ntrgts=2
         itrg(1)=1
         itrg(2)=2
-      end if
-      if(mpg%nncut.eq.2) then
+      else if(mpg%nncut.eq.2) then
         ntrgts=4
         itrg(1)=1
         itrg(2)=2
