@@ -90,7 +90,7 @@ c*** Column headers:
      3 'Spmp_nom'/
       data hlp_hs /
      1  ' ni_sep_',' Zi_sep_',' Ze_sep_',' Gi_sep_',' na_sep_',
-     2  ' Ta_sep_',' Ga_sep_',' Gp_sep_',' pr_sep_',' nr_sep_', 
+     2  ' Ta_sep_',' Ga_sep_',' Gp_sep_',' pr_sep_',' nr_sep_',
      3  'nri_sep_' /
       data hlp_hi / 'nii_sep_','Gii_sep_' /
 c----------------------------------------------------------------------
