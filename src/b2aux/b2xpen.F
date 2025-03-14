@@ -28,7 +28,7 @@
       integer iFc, is
       real (kind=R8) ::
      &  fnt(nFc,0:1)
-      character chns*3  
+      character chns*3
 *     ------------------------------------------------------------------
 *$$$  call subini ('b2xpen')
 

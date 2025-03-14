@@ -1945,6 +1945,9 @@ c 2002-09-11: logic revised
         case ('b2stbr_sna_corr', 'b2stbr_taumax') ! Converted to a species-resolved scheme
           todo = .false.
           wait = .true.
+        case ('b2nppo_restrict_po') ! Superseded by real switch b2nppo_restr_po
+          todo = .false.
+          wait = .true.
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
