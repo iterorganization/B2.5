@@ -167,6 +167,7 @@ c*** Check the topology of the grid and the list of target edges
           target_east = .false.
           target_west = .false.
           do i = 1, nbc
+            if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))).eq.0) cycle
             if(boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
      &                             geometryType).eq.EAST) then
               target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.

@@ -199,11 +199,9 @@
 *
 *     B2MWMV writes to an un*formatted file a selection of data
 *     describing the state of the plasma.
-*     Not converted for WG.
 *
 *     B2MWIT writes to an un*formatted file detailed monitoring output
 *     for the inner iterations of the B2.5 solution process.
-*     Not converted for WG.
 *
 *     B2MWQ0 writes a header for the output from b2mwqt.
 *

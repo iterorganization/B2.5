@@ -631,6 +631,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
      &              .and. ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8
        do ib = 1, nbc
          iFc = mpg%bcFc(mpg%bcFcP(ib,1))
+         if (mpg%fcReg(iFc).eq.0) cycle
          if (boundaryAssignments(mpg%fcReg(iFc),geometryType).eq.NORTH)
      >    then
            if(nesepm_sol.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8 .or.
