@@ -71,8 +71,11 @@
 *   ..local variables
       integer iCv, iCv1, iCv2, iFc, iVx1, iVx2, is, ib, ibc, ib0,
      &  ism, ibc0, k, isb, ibw
+#ifdef B25_EIRENE
+      integer isa, ix
+#endif
 #ifdef WG_TODO
-     & ,coreregno, coreregn2, ireg, isa, ix,
+     & ,coreregno, coreregn2, ireg,
      1  bc_type13_ref, bc_type13_ix, bc_type13_iy, bc_type13_i,
      2  bc_type13_ixx,
      1  bc_type16_ref, bc_type16_ix, bc_type16_iy, bc_type16_i,
