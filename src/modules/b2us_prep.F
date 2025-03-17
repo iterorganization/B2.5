@@ -2590,15 +2590,10 @@
           write(*,*) 'pbs and pbshz were reduced for iFc=',iFc
         endif
         if (mod_hc.eq.1) then
-          Cvs = mpg%fcCv(iFc,1:2)
-          wrk = sqrt((gm%cvX(Cvs(1))-gm%cvX(Cvs(2)))**2+
-     &               (gm%cvY(Cvs(1))-gm%cvY(Cvs(2)))**2)
           if (mpg%fcCv(iFc,1).gt.mpg%nCi) then
-            gm%fcHc(iFc,1) = 0.01_R8*wrk
-            gm%fcHc(iFc,2) = 0.99_R8*wrk
+            gm%fcHc(iFc,1) = 0.01_R8*gm%fcHc(iFc,2)
           elseif (mpg%fcCv(iFc,2).gt.mpg%nCi) then
-            gm%fcHc(iFc,2) = 0.01_R8*wrk
-            gm%fcHc(iFc,1) = 0.99_R8*wrk
+            gm%fcHc(iFc,2) = 0.01_R8*gm%fcHc(iFc,1)
           endif
         endif
       enddo
@@ -2834,11 +2829,11 @@
             do k=ind,ind1-1
               iFc = fcsb(k)
               if (mpg%fcCv(iFc,1).lt.mpg%fcCv(iFc,2)) then
-                gm%fcHc(iFc,1) = 0.99_R8*wrk
-                gm%fcHc(iFc,2) = 0.01_R8*wrk
+                gm%fcHc(iFc,1) = wrk
+                gm%fcHc(iFc,2) = 0.01_R8*gm%fcHc(iFc,1)
               else
-                gm%fcHc(iFc,2) = 0.99_R8*wrk
-                gm%fcHc(iFc,1) = 0.01_R8*wrk
+                gm%fcHc(iFc,2) = wrk
+                gm%fcHc(iFc,1) = 0.01_R8*gm%fcHc(iFc,2)
               endif
             enddo
             ind = ind1
