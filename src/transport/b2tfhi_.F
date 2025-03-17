@@ -15,7 +15,8 @@
       use b2mod_balance                                                 !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
-     &          fhi_visper, fhi_visq, fhi_anml, balance_netcdf
+     &          fhi_visper, fhi_visq, fhi_anml, fhi_vzh, 
+     &          balance_netcdf
 #endif
       use b2mod_ad
      & , only : ncall_b2tfhi
@@ -381,6 +382,11 @@ cwdk    related to (fluctuations in diamagnetic current) * (fluctuations in pote
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
      &    wrkf,dumm1,dumm2,fhi_anml,dumm3)
         fhi_anml = sign(fhi_anml,dumm4)
+        wrkf = 0.0_R8
+        wrkf(:,0) = sign(floi_vhx,floi0_mdf(:,0))
+        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,
+     &    wrkf,dumm1,dumm2,fhi_vzh,dumm4)
+        fhi_vzh(:,0) = sign(fhi_vzh(:,0),floi_vhx)
       endif
 #endif
 
