@@ -45,7 +45,7 @@ c
       integer i,j,jj,k,l,m,n,iss,imol,iy,js,nclm_ld,nclm_er
       integer i1,i2,i3,ia,ib,ic,is,ims,ias,nclm_na,nclm_nm
       integer iCb,iCm,iCn,iCp,iCv,iCx
-      integer iFc,iFn,iFs,iFs1,iFs2,iFt,iFm,iVx,iVx1,iVx2
+      integer iFc,iFn,iFs,iFs1,iFs2,iVx,iVx1,iVx2
       integer m_hlp(ntrgsx),npar_hlp(ntrgsx),ntrg_hlp(ntrgsx)
       integer im,midplane_list(nromp),nmp
       logical found,match_found,do_sput(ntrgsx)
