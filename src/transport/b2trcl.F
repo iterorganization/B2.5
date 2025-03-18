@@ -691,17 +691,17 @@ c          if(.not.on_closed_surface(ix,iy)) then                        !lk 06.
              if(leftix(ix,iy).eq.-2) then
                dte =
      &          (te(rightix(ix,iy),rightiy(ix,iy))-te(ix,iy))/
-     &          (hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy))/2.0_R8
+     &         ((hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy))/2.0_R8)
              elseif(rightix(ix,iy).eq.nx+1) then
                dte =
      &          (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
-     &          (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
+     &         ((hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8)
              else
                dte =
      &          ((te(rightix(ix,iy),rightiy(ix,iy))-te(ix,iy))/
-     &           (hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy))/2.0_R8+
+     &          ((hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy))/2.0_R8)+
      &           (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
-     &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8)/
+     &          ((hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8))/
      &          2.0_R8
              endif
              jemax = sqrt(te(ix,iy)/me)*
