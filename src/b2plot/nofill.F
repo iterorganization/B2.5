@@ -1,8 +1,10 @@
 c
       subroutine nofill(filflg)
       use b2mod_types
-#include "graphics_vars.h"
+      use b2mod_graphics
+      implicit none
       logical filflg
+
       colprt=.not.filflg
       if(colprt) then
         write (*,*) 'Filled Contour Levels'

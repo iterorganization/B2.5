@@ -8,10 +8,10 @@ C =====================================================================
       use b2mod_b2plot_debug
       use b2mod_b2plot_xy
       use b2mod_boundary_namelist
+      use b2mod_graphics
       use b2mod_subsys
       use b2us_data
       implicit none
-#include "graphics_vars.h"
       INTEGER NCV,IS,LINLOG
 cxpb  INTEGER NNCUT_L
       REAL (KIND=R8) :: CR(NCV),CZ(NCV),FIELD(NCV),ZLOD,ZHID
