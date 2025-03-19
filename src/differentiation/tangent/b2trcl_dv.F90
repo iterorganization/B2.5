@@ -1697,7 +1697,7 @@ SUBROUTINE B2TRCL_NODIFF(ncv, nfc, nvx, ns, nscx, iscx, ismain, switch, &
   REAL(kind=r8) :: arg2
   CHARACTER(len=22) :: arg13
   REAL(r8), DIMENSION(nCv) :: arg14
-  REAL(kind=r8), DIMENSION(nCv) :: result12
+  REAL(kind=r8), DIMENSION(nCv) :: result12, result13
   CHARACTER(len=30) :: arg15
   CHARACTER(len=10) :: arg16
   CHARACTER(len=9) :: arg17
