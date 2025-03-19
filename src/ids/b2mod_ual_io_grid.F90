@@ -280,6 +280,12 @@ module b2mod_ual_io_grid
     !> Vertical vector component ID
     character(len=132), parameter :: VEC_ALIGN_Z_ID = "Z"
 #endif
+#if ( GGD_MAJOR_VERSION < 2 && GGD_MINOR_VERSION < 13 )
+    !> Toroidal vector component
+    integer, parameter :: VEC_ALIGN_PHI = 1004
+    !> Toroidal vector component ID
+    character(len=132), parameter :: VEC_ALIGN_PHI_ID = "Phi"
+#endif
 
     !! Subgrid/Grid subset name constants
 
@@ -1031,7 +1037,7 @@ contains
                   &   "Toroidal angle, full circle"
             end if
           end if
-#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MAJOR_VERSION > 0 && ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) ) )
+#if ( ( IMAS_MINOR_VERSION > 33 || IMAS_MAJOR_VERSION > 3 ) && ( GGD_MAJOR_VERSION > 1 || ( GGD_MAJOR_VERSION == 1 && ( GGD_MINOR_VERSION > 10 || ( GGD_MINOR_VERSION == 10 && GGD_MICRO_VERSION > 1 ) ) ) ) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
              &     objects_per_dimension(1)%geometry_content%name(1) )
           allocate(grid_ggd%space( SPACE_TOROIDALANGLE )% &
@@ -2405,7 +2411,8 @@ contains
         !! Outer strikepoint
           iVx = US_GRID_UNDEFINED
           do i = 1, mpg%nStr
-            if (mpg%nnreg(0).le.7 .or. geoId.eq.GEOMETRY_DDN_TOP) then
+            if ( mpg%nnreg(0).le.7 .or. geoId.eq.GEOMETRY_DDN_TOP .or. &
+              & (mpg%nnreg(0).eq.8 .and. geoId.eq.GEOMETRY_SN) ) then
               if (mpg%strDiv(i).eq.2) iVx = mpg%strVx(i)
             else if (geoId.eq.GEOMETRY_CDN .or. geoId.eq.GEOMETRY_DDN_BOTTOM) then
               if (mpg%strDiv(i).eq.4) iVx = mpg%strVx(i)
