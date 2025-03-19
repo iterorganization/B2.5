@@ -4944,7 +4944,7 @@
         write(*,'(a,2i5)')
      &             'Inner and outermost flux tube at IMP at '//
      &             'iymin, iymax  = ', iymin, iymax
-        if (nnreg(0).eq.1.or.artificial_slab) then
+        if (nnreg(0).eq.1.or.artificial_slab.eq.1) then
         ! swap iymin and iymax for calculation below if we deal with slab or linear cases
           iyi = iymin
           iymin = iymax
