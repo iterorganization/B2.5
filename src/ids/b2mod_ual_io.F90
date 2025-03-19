@@ -202,7 +202,8 @@ module b2mod_ual_io
 #endif
     use ids_schemas &     ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,     &
-     &          ids_radiation, ids_equilibrium, ids_ids_properties,          &
+     &          ids_radiation, ids_dataset_description, ids_equilibrium,     &
+     &          ids_ids_properties,                                          &
      &          ids_code, ids_signal_int_1d, ids_signal_flt_1d,              &
      &          ids_generic_grid_scalar, ids_generic_grid_vector_components, &
      &          ids_generic_grid_dynamic,                                    &
@@ -937,7 +938,7 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_code( switch, divertors%code, code_commit, code_description )
 #endif
-#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
+#if IMAS_MAJOR_VERSION > 3
         call write_ids_code_constant( description%code, code_commit, code_description )
 #endif
         allocate( edge_transport%model(1) )
@@ -1908,8 +1909,8 @@ contains
           allocate( divertors%divertor(2)%target(1)%identifier(1) )
           allocate( divertors%divertor(2)%target(2)%identifier(1) )
 #endif
-          if ( plasmaGeometry == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
-          &    plasmaGeometry == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+          if (GeometryType == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+          &   GeometryType == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
             divertors%divertor(1)%name = 'Lower divertor'
             divertors%divertor(2)%name = 'Lower SF divertor'
             divertors%divertor(1)%target(1)%name = "Lower inner target"
@@ -2187,7 +2188,6 @@ contains
         !! Allocate and set time slice value
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         edge_profiles%grid_ggd( time_sind )%time = time_slice_value
-        edge_profiles%ggd( time_sind )%time = time_slice_value
         edge_transport%grid_ggd( time_sind )%time = time_slice_value
         edge_sources%grid_ggd( time_sind )%time = time_slice_value
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -4950,7 +4950,7 @@ contains
                       &   value = state%rt%rz2(:,ispion(is,js)) )
 #if IMAS_MAJOR_VERSION > 3
                 !! Ionization potential
-                  call write_IDS_quantity( edge_grid,                       &
+                  call write_IDS_quantity( edge_grid, mpg, geo,             &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%ionization_potential,           &
                       &   value = state%rt%rpt(:,ispion(is,js)) )
@@ -7658,119 +7658,7 @@ contains
     end subroutine write_ids_code_constant
 #endif
 
-#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
-    subroutine write_ids_code_timed( code, commit, description )
-    implicit none
-    type(ids_code_with_timebase), intent(inout) :: code
-                !< Type of IDS data structure, designed for code data handling
-    character(len=ids_string_length), intent(in) :: commit
-    character(len=ids_string_length), intent(in) :: description
-
-    allocate( code%name(1) )
-    code%name = source
-#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-    allocate( code%description(1) )
-    code%description = description
-#endif
-    allocate( code%version(1) )
-    code%version = newversion
-    allocate( code%commit(1) )
-    code%commit = commit
-    allocate( code%repository(1) )
-    code%repository(1) = "ssh://git.iter.org/bnd/b2.5.git"
-    call write_timed_integer( code%output_flag, 0 )
-
-    return
-    end subroutine write_ids_code_timed
-
-    subroutine write_timed_integer( ival, ivalue )
-    type(ids_signal_int_1d), intent(inout) :: ival
-        !< Type of IDS data structure, designed for integer data handling
-    integer, intent(in) :: ivalue
-
-    allocate( ival%data( num_slices ) )
-    ival%data( slice_index ) = ivalue
-    allocate( ival%time( num_slices ) )
-    ival%time( slice_index ) = time_slice_value
-
-    return
-    end subroutine write_timed_integer
-#endif
-
-    subroutine write_timed_value( val, value )
-    type(ids_signal_flt_1d), intent(inout) :: val
-      !< Type of IDS data structure, designed for scalar data handling
-    real(IDS_real), intent(in) :: value
-
-    allocate( val%data( num_slices ) )
-    val%data( slice_index ) = value
-    allocate( val%time( num_slices ) )
-    val%time( slice_index ) = time_slice_value
-
-    return
-    end subroutine write_timed_value
-
-    subroutine write_model_identifier( model_id )
-    implicit none
-    type(ids_identifier) :: model_id
-    integer, save :: ncall = 0
-    integer, save :: style = 1
-    integer, save :: ids_from_43 = 0
-
-    if (ncall.eq.0) then
-      call ipgeti ('ids_from_43', ids_from_43)
-      call ipgeti ('b2mndt_style', style)
-    endif
-
-    allocate( model_id%name(1) )
-    allocate( model_id%description(1) )
-    if (ids_from_43.eq.0) then
-      if (style.eq.0) then
-        model_id%index = -2
-        model_id%name(1) = "SOLPS5.0"
-        model_id%description(1) = "SOLPS5.0 physics model"
-      else if (style.ge.1) then
-        if (switch%keps_anom_he_model.eq.0) then
-          model_id%index = -3
-          model_id%name(1) = "SOLPS5.2"
-          model_id%description(1) = "SOLPS5.2 physics model"
-        else
-          model_id%index = -4
-          model_id%name(1) = "SOLPS-WG k-eps"
-          model_id%description(1) = "SOLPS-ITER Wide Grids k-epsilon physics model"
-        end if
-      else if (style.eq.-1) then
-        model_id%index = -1
-        model_id%name(1) = "SOLPS4.3"
-        model_id%description(1) = "SOLPS4.3 physics model"
-      end if
-    else
-      model_id%index = -1
-      model_id%name(1) = "SOLPS4.3"
-      model_id%description(1) = "SOLPS4.3 physics model"
-    end if
-
-    ncall = ncall + 1
-    return
-    end subroutine write_model_identifier
-
-#if ( ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION > 30 ) || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 ) )
-    subroutine write_source_identifier( source_id, id_index )
-    implicit none
-    type(ids_identifier) :: source_id
-    integer :: id_index
-
-    allocate( source_id%name(1) )
-    allocate( source_id%description(1) )
-    source_id%index = id_index
-    source_id%name = edge_source_identifier%name( id_index )
-    source_id%description = edge_source_identifier%description( id_index )
-
-    return
-    end subroutine write_source_identifier
-#endif
-
-    subroutine put_equilibrium_data ( equilibrium, &
+    subroutine put_equilibrium_data ( mpg, geo, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
        &  summary, &
 #endif
@@ -8153,7 +8041,7 @@ contains
             call write_face_scalar( eq_grid,                                  &
                 &   val = equilibrium%time_slice( slice_index )%ggd(1)%psi,   &
                 &   value = tmpFace )
-            call write_cell_scalar( eq_grid,                                  &
+            call write_cell_scalar( eq_grid, mpg,                             &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &            psi,   &
                 &   b2CellData = geo%cvFpsi )

@@ -7,7 +7,7 @@ C =====================================================================
       use b2mod_b2plot_debug
       use b2mod_graphics
       implicit none
-      integer nbnd,ndepth,igraphs,linlog
+      integer nCv,nbnd,ndepth,igraphs,linlog
       REAL (KIND=R8) :: 
      * targetcr(1:nbnd,1:ndepth,1:2),targetcz(1:nbnd,1:ndepth,1:2),
      1 target_stack(1:nbnd,1:ndepth),ZLOD,ZHID
