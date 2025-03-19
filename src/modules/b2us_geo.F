@@ -955,7 +955,7 @@
 !! LSN = .false. if the tangency or X-point is above or
 !!               at the same level and to the left of the O-point
       iXpt = 0
-      if (mpg%nnreg(0).eq.1.or..not.allocated(mpg.Xpt)) then
+      if (mpg%nnreg(0).eq.1.or..not.allocated(mpg%Xpt)) then
 !! TODO: Find a way to ascertain, if flux surfaces are defined,
 !!       whether the psi value is increasing or decreasing radially
       elseif (mpg%nnreg(0).eq.2) then
