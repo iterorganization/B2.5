@@ -16,7 +16,7 @@
 #endif
       implicit none
       integer nrr, nxx, nss
-      integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
+      integer, parameter :: nkind_source=6,nkind_data=2,nscale=10
       integer, parameter :: nkind_coeff=9
       integer, save :: csig_an_style=1
       integer :: ixref_profile, iyref_profile
