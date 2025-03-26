@@ -293,7 +293,7 @@
       integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nFt, nVmxCv
       type (geometry), intent (inout) :: gm
       real(kind=R8) :: rdum(1)
-      external cfrure, ipgetr
+      external cfrure, cfrure_opt, ipgetr
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
