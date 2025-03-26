@@ -31,7 +31,7 @@
       integer iCv, is
       integer ncall
       integer status, ndims, nvars, natts, unlimid
-      character*256 filename
+      character*256, save :: filename
       logical ex
       save ncall
       data ncall/0/

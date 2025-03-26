@@ -1992,7 +1992,7 @@ c   --> better way doing this is necessary)
       end if
       save_plasma_time = tim + delta_plasma_time
       save_ids_time = tim + delta_ids_time
-      save_cdfmovie_time = tim
+      save_cdfmovie_time = tim + delta_cdfmovie_time
 *   ..initialise tracing routines
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
