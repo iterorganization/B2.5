@@ -2285,7 +2285,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
       end if
       save_plasma_time = tim + delta_plasma_time
       save_ids_time = tim + delta_ids_time
-      save_cdfmovie_time = tim
+      save_cdfmovie_time = tim + delta_cdfmovie_time
       call b2stbr_init (nx, ny, ns, BoRiS)
 *     ..compute sources due to electron-atom processes
 *    (to provide rqrad and rqahe in the first movie frame and b2brem to Eirene)

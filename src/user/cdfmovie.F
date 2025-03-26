@@ -30,7 +30,7 @@
       integer ncall
       integer status, ndims, nvars, natts, unlimid
       real (kind=R8), save :: stim = 0.0_R8
-      character*256 filename
+      character*256, save :: filename
       logical ex
       save ncall
       data ncall/0/
