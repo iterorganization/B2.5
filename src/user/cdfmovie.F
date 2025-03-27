@@ -58,7 +58,7 @@
      &     nnatmi, nnmoli)
           if (fields_selection.ge.1) then
             call create_cdf_field3(ncid, 'na', 1,
-     1       'Density of atomic species', 'm^-3')
+     1       'Density of fluid species', 'm^-3')
             call create_cdf_field2(ncid, 'ne',
      1       'Electron density', 'm^-3')
             call create_cdf_field2(ncid, 'te',
@@ -101,19 +101,24 @@
               call create_cdf_field3(ncid, 'rsahi', 1,
      1         'Volumetric ionisation energy source/sink', 'W m^-3')
               call create_cdf_field2(ncid, 'rsahisum',
-     1         'Total volumetric ionisation energy source/sink', 'W m^-3')
+     1         'Total volumetric ionisation energy source/sink', 
+     2         'W m^-3')
               call create_cdf_field3(ncid, 'rrana', 1,
      1         'Volumetric recombination rate', 'm^-3 s^-1')
               call create_cdf_field3(ncid, 'rrahi', 1,
-     1         'Volumetric recombination energy source/sink', 'W m^-3')
+     1         'Volumetric recombination energy source/sink',
+     2         'W m^-3')
               call create_cdf_field2(ncid, 'rrahisum',
-     1         'Total volumetric recombination energy source/sink', 'W m^-3')
+     1         'Total volumetric recombination energy source/sink',
+     2         'W m^-3')
               call create_cdf_field3(ncid, 'rcxna', 1,
      1         'Volumetric charge exchange rate', 'm^-3 s^-1')
               call create_cdf_field3(ncid, 'rcxhi', 1,
-     1         'Volumetric charge exchange energy source/sink', 'W m^-3')
+     1         'Volumetric charge exchange energy source/sink',
+     2         'W m^-3')
               call create_cdf_field2(ncid, 'rcxhisum',
-     1         'Total volumetric charge exchange energy source/sink', 'W m^-3')
+     1         'Total volumetric charge exchange energy source/sink',
+     2         'W m^-3')
               call create_cdf_field3(ncid, 'rqahe', 1,
      1         'Volumetric electron cooling rate', 'W m^-3')
               call create_cdf_field2(ncid, 'rqahesum',
@@ -170,7 +175,7 @@
             do ix=-1,nx
               do is=1,ns
                 dummy3(ix,iy,is)=0.0_R8
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)+fna(ix,iy,1,is-1)
+                dummy3(ix,iy,is)=dummy3(ix,iy,is)+fna(ix,iy,0,is-1)
               enddo
             enddo
           enddo
@@ -180,7 +185,7 @@
             do ix=-1,nx
               do is=1,ns
                 dummy3(ix,iy,is)=0.0_R8
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)+fna(ix,iy,2,is-1)
+                dummy3(ix,iy,is)=dummy3(ix,iy,is)+fna(ix,iy,1,is-1)
               enddo
             enddo
           enddo
@@ -189,7 +194,7 @@
           do iy=-1,ny
             do ix=-1,nx
               dummy(ix,iy)=0.0_R8
-              dummy(ix,iy)=dummy(ix,iy)+fhe(ix,iy,1)
+              dummy(ix,iy)=dummy(ix,iy)+fhe(ix,iy,0)
             enddo
           enddo
           write(*,*) 'put_cdf_field2: fhex'
@@ -197,7 +202,7 @@
           do iy=-1,ny
             do ix=-1,nx
               dummy(ix,iy)=0.0_R8
-              dummy(ix,iy)=dummy(ix,iy)+fhe(ix,iy,2)
+              dummy(ix,iy)=dummy(ix,iy)+fhe(ix,iy,1)
             enddo
           enddo
           write(*,*) 'put_cdf_field2: fhey'
@@ -205,7 +210,7 @@
           do iy=-1,ny
             do ix=-1,nx
               dummy(ix,iy)=0.0_R8
-              dummy(ix,iy)=dummy(ix,iy)+fhi(ix,iy,1)
+              dummy(ix,iy)=dummy(ix,iy)+fhi(ix,iy,0)
             enddo
           enddo
           write(*,*) 'put_cdf_field2: fhix'
@@ -213,7 +218,7 @@
           do iy=-1,ny
             do ix=-1,nx
               dummy(ix,iy)=0.0_R8
-              dummy(ix,iy)=dummy(ix,iy)+fhi(ix,iy,2)
+              dummy(ix,iy)=dummy(ix,iy)+fhi(ix,iy,1)
             enddo
           enddo
           write(*,*) 'put_cdf_field2: fhiy'
@@ -221,7 +226,7 @@
           do iy=-1,ny
             do ix=-1,nx
               dummy(ix,iy)=0.0_R8
-              dummy(ix,iy)=dummy(ix,iy)+fch(ix,iy,1)
+              dummy(ix,iy)=dummy(ix,iy)+fch(ix,iy,0)
             enddo
           enddo
           write(*,*) 'put_cdf_field2: fchx'
@@ -229,7 +234,7 @@
           do iy=-1,ny
             do ix=-1,nx
               dummy(ix,iy)=0.0_R8
-              dummy(ix,iy)=dummy(ix,iy)+fch(ix,iy,2)
+              dummy(ix,iy)=dummy(ix,iy)+fch(ix,iy,1)
             enddo
           enddo
           write(*,*) 'put_cdf_field2: fchy'

@@ -145,7 +145,7 @@ c prepare the b2movies.nc.xxxx file
       call create_cdf_start(ncid2, filename, nx+2, ny+2, ns, natm, nmol)
       if (fields_selection.ge.1) then
         call create_cdf_field3(ncid, 'na', 1,
-     1   'Density of atomic species', 'm^-3')
+     1   'Density of fluid species', 'm^-3')
         call create_cdf_field2(ncid, 'ne',
      1   'Electron density', 'm^-3')
         call create_cdf_field2(ncid2, 'te',
@@ -194,13 +194,15 @@ c prepare the b2movies.nc.xxxx file
           call create_cdf_field3(ncid, 'rrahi', 1,
      1      'Volumetric recombination energy source/sink', 'W m^-3')
           call create_cdf_field2(ncid, 'rrahisum',
-     1      'Total volumetric recombination energy source/sink', 'W m^-3')
+     1      'Total volumetric recombination energy source/sink',
+     2      'W m^-3')
           call create_cdf_field3(ncid, 'rcxna', 1,
      1      'Volumetric charge exchange rate', 'm^-3 s^-1')
           call create_cdf_field3(ncid, 'rcxhi', 1,
      1      'Volumetric charge exchange energy source/sink', 'W m^-3')
           call create_cdf_field2(ncid, 'rcxhisum',
-     1      'Total volumetric charge exchange energy source/sink', 'W m^-3')
+     1      'Total volumetric charge exchange energy source/sink',
+     2      'W m^-3')
           call create_cdf_field3(ncid, 'rqahe', 1,
      1      'Volumetric electron cooling rate', 'W m^-3')
           call create_cdf_field2(ncid, 'rqahesum',
