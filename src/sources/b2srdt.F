@@ -57,8 +57,10 @@
       real (kind=R8) :: t0, ttim
       real (kind=R8) :: wrk0(nCv), mult_dt(nCv)
       real (kind=R8) :: ttim2, src_tot, content, smt(0:3)
-      real (kind=R8) :: ttim2_na(nCv,ns), ttim2_ua(nCv,ns),
-     &                  ttim2_ti(nCv), ttim2_te(nCv)
+      real (kind=R8) :: ttim2_na(nCv,0:ns-1), ttim2_ua(nCv,0:ns-1),   ! only for iout = 1 + var_style = 2
+     &                  ttim2_ti(nCv), ttim2_te(nCv),
+     &                  ttim_na(nCv,0:ns-1), ttim_ua(nCv,0:ns-1),       
+     &                  ttim_ti(nCv), ttim_te(nCv)
 *   ..procedures
       external xertst
       external b2xvsg
@@ -129,6 +131,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
             if (switch%b2srdt_iout.eq.1) then
               ttim2_na(iCv,is) = ttim2
+              ttim_na(iCv,is) = ttim
             endif
           endif
           sr%snadt(iCv,0,is) =
@@ -160,6 +163,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
             if (switch%b2srdt_iout.eq.1) then
               ttim2_ua(iCv,is) = ttim2
+              ttim_ua(iCv,is) = ttim
             endif
           endif
           t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)   !srv 09.01.01
@@ -192,6 +196,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
             if (switch%b2srdt_iout.eq.1) then
               ttim2_te(iCv) = ttim2
+              ttim_te(iCv) = ttim
             endif
         endif
         t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
@@ -214,6 +219,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
             if (switch%b2srdt_iout.eq.1) then
               ttim2_ti(iCv) = ttim2
+              ttim_ti(iCv) = ttim
             endif
         endif
         t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
@@ -245,9 +251,6 @@ csw 24feb2014 check for guard cell (SOLPS4)
             ttim2 = content/abs(src_tot)/
      &              switch%b2mndt_var_style2_SF
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
-            if (switch%b2srdt_iout.eq.1) then
-              ttim2_ti(iCv) = ttim2
-            endif
         endif
         t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
 
@@ -381,15 +384,27 @@ cdjm Store the total change in linearised sources for balance
       endif                                                           !srv 11.09.09 }
 
       if (switch%b2srdt_iout.eq.1.and.switch%b2mndt_var_style.eq.2) then
+c print out the variable local timesteps for b2mndt_var_style = 2.
+c ttim2 = unlimited value
+c ttim = value limited by minumum timestep (=baseline timestep) and by maximum timestep (=baseline timestep x multiplier)
         do is = 0, ns-1
           write (chns,'(i3.3)') is
           wrk0 = ttim2_na(:,is)
           call my_out_us(70,nCv,0,wrk0,'b2srdt_ttim2_na'//chns)
+          wrk0 = ttim_na(:,is)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_ttim_na'//chns)
           wrk0 = ttim2_ua(:,is)
           call my_out_us(70,nCv,0,wrk0,'b2srdt_ttim2_ua'//chns)
+          wrk0 = ttim_ua(:,is)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_ttim_ua'//chns)
         enddo
         call my_out_us(70,nCv,0,ttim2_te,'b2srdt_ttim2_te')
+        call my_out_us(70,nCv,0,ttim_te,'b2srdt_ttim_te')
         call my_out_us(70,nCv,0,ttim2_ti,'b2srdt_ttim2_ti')
+        call my_out_us(70,nCv,0,ttim_ti,'b2srdt_ttim_ti')
+      endif
+      if (switch%b2srdt_iout.eq.1.and.switch%b2mndt_var_style.eq.1) then
+        call my_out_us(70,nCv,0,mult_dt,'b2srdt_mult_dt')
       endif
 
 * ..return
