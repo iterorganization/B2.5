@@ -504,7 +504,7 @@ c User transport options
         !! the default transport model calculated above is used. Nothing to do.
       elseif(switch%user_transport.eq.6) then                         !srv 13.06.08
         call set_transport_srv(geo,mpg,ns,nCv,switch,dna0,hcib,
-     &    vsa0, vla0, hce0)
+     &    vsa0, vla0, hce0, sig0, alf0, hci0)
       else
         call xerrab('transport model undefined or not yet converted')
       endif
@@ -693,7 +693,7 @@ cdpc
       end subroutine b2tqna
 
       subroutine set_transport_srv(geo,mpg,ns,nCv,switch,dna0,hcib,
-     & vsa0,vla0,hce0)
+     & vsa0,vla0,hce0, sig0, alf0, hci0)
 
       use b2mod_types
       use b2us_map
@@ -712,7 +712,8 @@ cdpc
 
       real (kind=R8) ::
      *  dna0(nCv,0:ns-1), vsa0(nCv,0:ns-1),
-     &  hcib(nCv,0:ns-1), hce0(nCv), vla0(nCv,0:1,0:ns-1)
+     &  hcib(nCv,0:ns-1), hce0(nCv), vla0(nCv,0:1,0:ns-1),
+     &  sig0(nCv), alf0(nCv), hci0(nCv)
 
       integer :: iFt, is, iCv, iCv2, iFc
 
@@ -823,6 +824,25 @@ cdpc
           write(*, '(a,1i4,1i3,2es1.2,a)') 'b2tqna: iCv,iFt,ds_o,imp=',
      &     iCv,iFt,ft_ds_omp(iFt),ft_ds_imp(iFt),' was not detected!'
         endif
+        ! special treatment for sig0 and al0
+        if (ft_ds_omp(iFt).gt.-switch%sig_bar_width .and.               ! transport barrier
+     &    ft_ds_omp(iFt).le.0.0_R8 .and.
+     &    mpg%cvOnClosedSurface(iCv2)) then
+          sig0(iCv) = sig0(iCv)*switch%sig_alfa1
+          alf0(iCv) = alf0(iCv)*switch%sig_alfa1
+        elseif(((ft_ds_omp(iFt).le.switch%sig_sol_width .and.            ! inner SOL LFS
+     &          ft_ds_omp(iFt).ge.0.0_R8) .or.
+     &         (ft_ds_imp(iFt).le.switch%sig_sol_width .and.             ! inner SOL HFS
+     &          ft_ds_imp(iFt).ge.0.0_R8)) .and.
+     &          mod(mpg%cvReg(iCv),4).eq.2) then
+          sig0(iCv) = sig0(iCv)*switch%sig_alfa2
+          alf0(iCv) = alf0(iCv)*switch%sig_alfa2
+        endif
+      enddo
+
+      hci0 = 0.0_R8
+      do is=1,ns-1
+        hci0 = hci0 + hcib(:,is)
       enddo
 
       end subroutine set_transport_srv

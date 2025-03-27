@@ -451,13 +451,14 @@ c b2tqna
       real (kind=R8) :: b2tqna_min_df0
       real (kind=R8) :: b2tqna_max_df0
       real (kind=R8) :: b2tqna_cfvma
-      real (kind=R8) :: bar_width
+      real (kind=R8) :: bar_width, sig_bar_width, sig_sol_width
       real (kind=R8) :: sol_width,lfs_sol_width,hfs_sol_width,
      *  na_alfa1, na_alfa2, na_alfa3, na_alfa4,
      *  te_alfa1, te_alfa2, te_alfa3, te_alfa4,
      *  ti_alfa1, ti_alfa2, ti_alfa3, ti_alfa4,
      *  vsa_alfa1, vsa_alfa2, vsa_alfa3, vsa_alfa4,
-     *  vla_alfa1, vla_alfa2, vla_alfa3, vla_alfa4
+     *  vla_alfa1, vla_alfa2, vla_alfa3, vla_alfa4,
+     *  sig_alfa1, sig_alfa2
       integer :: b2tqna_new_df0
       integer :: b2tqna_ixref
       integer :: b2tqna_transport_inputfile
@@ -1078,6 +1079,8 @@ c b2tqna
       s % b2tqna_limit_coeff = 0
       s % bar_width = 0.0_R8
       s % sol_width = 0.0_R8
+      s % sig_bar_width = 0.0_R8
+      s % sig_sol_width = 0.0_R8
       s % na_alfa1 = 1.0_R8
       s % na_alfa2 = 1.0_R8
       s % na_alfa3 = 1.0_R8
@@ -1098,6 +1101,8 @@ c b2tqna
       s % vla_alfa2 = 1.0_R8
       s % vla_alfa3 = 1.0_R8
       s % vla_alfa4 = 0.0_R8
+      s % sig_alfa1 = 1.0_R8
+      s % sig_alfa2 = 1.0_R8
 
 c fch_anomalous
       s % anml_all_ions = 1
@@ -2064,9 +2069,22 @@ c b2tqna
       call xertst (0.0_R8.le.s%vla_alfa4,
      &      'faulty argument b2tqna_vla_alfa4')
 
+      call ipgetr ('b2tqna_sig_alfa1', s%sig_alfa1)
+      call xertst (0.0_R8.le.s%sig_alfa1,
+     &      'faulty argument b2tqna_sig_alfa1')
+      call ipgetr ('b2tqna_sig_alfa2', s%sig_alfa2)
+      call xertst (0.0_R8.le.s%sig_alfa2,
+     &      'faulty argument b2tqna_sig_alfa2')
+
       call ipgetr ('b2tqna_bar_width', s%bar_width)
       call xertst (0.0_R8.le.s%bar_width,
      &      'faulty argument b2tqna_bar_width')
+      call ipgetr ('b2tqna_sig_bar_width', s%sig_bar_width)
+      call xertst (0.0_R8.le.s%sig_bar_width,
+     &      'faulty argument b2tqna_sig_bar_width')
+      call ipgetr ('b2tqna_sig_sol_width', s%sig_sol_width)
+      call xertst (0.0_R8.le.s%sig_sol_width,
+     &      'faulty argument b2tqna_sig_sol_width')
       call ipgetr ('b2tqna_sol_width', s%sol_width)
       call xertst (0.0_R8.le.s%sol_width,
      &      'faulty argument b2tqna_sol_width')
