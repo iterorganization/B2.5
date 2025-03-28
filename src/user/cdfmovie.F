@@ -25,8 +25,10 @@
 #     include <COUPLE/KOPPLDIM.F>
 #endif
       real (kind=R8) :: time(1), dummy(-1:nx, -1:ny),
-     & dummy3(-1:nx, -1:ny, 1:ns)
-      integer ix, iy, is
+     & dummy3(-1:nx, -1:ny, 1:ns),
+     & dummy3atm(-1:nx, -1:ny, 1:nnatmi),
+     & dummy3mol(-1:nx, -1:ny, 1:nnmoli)
+      integer ix, iy, is, iatmi, imoli, istra
       integer ncall
       integer status, ndims, nvars, natts, unlimid
       integer, save :: fields_selection = 1
@@ -127,6 +129,21 @@
      1         'Volumetric line radiation rate', 'W m^-3')
               call create_cdf_field2(ncid, 'rqradsum',
      1         'Total volumetric line radiation rate', 'W m^-3')
+              if(nnatmi.gt.0) then
+                call create_cdf_field3(ncid, 'eneutrad', 2,
+     1           'Volumetric radiation rate due to atoms', 'W m^-3')
+                call create_cdf_field2(ncid, 'eneutradsum',
+     1           'Total volumetric radiation rate due to atoms',
+     2           'W m^-3')
+              endif
+              if(nnmoli.gt.0) then
+                call create_cdf_field3(ncid, 'emolrad', 3,
+     1           'Volumetric radiation rate due to molecules',
+     2           'W m^-3')
+               call create_cdf_field2(ncid, 'emolradsum',
+     1           'Total volumetric radiation rate due to molecules',
+     2           'W m^-3')
+              endif
             endif
             call create_cdf_end(ncid)
           endif
@@ -382,6 +399,72 @@
           enddo
           write(*,*) 'put_cdf_field2: rqradsum'
           call put_cdf_field2(ncid,'rqradsum',dummy,nx+2,ny+2)
+          if(nnatmi.gt.0) then
+            dummy3atm=0.0_R8
+            do istra=1,nstra+1
+              dummy3atm(-1:nx,-1:ny,1:nnatmi)=
+     1         dummy3atm(-1:nx,-1:ny,1:nnatmi)+
+     2         eneutrad(0:nx+1,0:ny+1,1:nnatmi,istra)
+            enddo
+            do iy=-1,ny
+              do ix=-1,nx
+                do iatmi=1,nnatmi
+                  dummy3atm(ix,iy,iatmi)=dummy3atm(ix,iy,iatmi)
+     1             /vol(ix,iy)
+                enddo
+              enddo
+            enddo
+            write(*,*) 'put_cdf_field3: eneutrad'
+            call put_cdf_field3(ncid,'eneutrad',dummy3atm,nx+2,ny+2,
+     1       nnatmi)
+            do iy=-1,ny
+              do ix=-1,nx
+                dummy(ix,iy)=0.0_R8
+                do iatmi=1,nnatmi
+                  do istra=1,nstra+1
+                    dummy(ix,iy)=dummy(ix,iy)+eneutrad(ix+1,iy+1,
+     1               iatmi,istra)
+                  enddo
+                enddo
+                dummy(ix,iy)=dummy(ix,iy)/vol(ix,iy)
+              enddo
+            enddo
+            write(*,*) 'put_cdf_field2: eneutradsum'
+            call put_cdf_field2(ncid,'eneutradsum',dummy,nx+2,ny+2)
+          endif
+          if(nnmoli.gt.0) then
+            dummy3mol=0.0_R8
+            do istra=1,nstra+1
+              dummy3mol(-1:nx,-1:ny,1:nnmoli)=
+     1         dummy3mol(-1:nx,-1:ny,1:nnmoli)+
+     2         emolrad(0:nx+1,0:ny+1,1:nnmoli,istra)
+            enddo
+            do iy=-1,ny
+              do ix=-1,nx
+                do imoli=1,nnmoli
+                  dummy3mol(ix,iy,imoli)=dummy3mol(ix,iy,imoli)
+     1             /vol(ix,iy)
+                enddo
+              enddo
+            enddo
+            write(*,*) 'put_cdf_field3: emolrad'
+            call put_cdf_field3(ncid,'emolrad',dummy3mol,nx+2,ny+2,
+     1       nnmoli)
+            do iy=-1,ny
+              do ix=-1,nx
+                dummy(ix,iy)=0.0_R8
+                do imoli=1,nnmoli
+                  do istra=1,nstra+1
+                    dummy(ix,iy)=dummy(ix,iy)+emolrad(ix+1,iy+1,
+     1               imoli,istra)
+                  enddo
+                enddo
+                dummy(ix,iy)=dummy(ix,iy)/vol(ix,iy)
+              enddo
+            enddo
+            write(*,*) 'put_cdf_field2: emolradsum'
+            call put_cdf_field2(ncid,'emolradsum',dummy,nx+2,ny+2)
+          endif
         endif
       endif
       write(*,*) 'put_cdf_end'
