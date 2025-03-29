@@ -6,6 +6,7 @@
       use b2mod_b2cmrc
       use b2us_plasma
       use b2mod_math
+      use b2mod_openmp
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -88,6 +89,15 @@
       ine = 0
 *   ..loop over cells
 ! $AD II-LOOP
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SPEL) )
+!$omp parallel do default(none) shared(nCv,ns) private(iCv,is)
+!$omp& firstprivate(ite, ine)
+!$omp& private(ltst0, rlte, rlne, fxte, fxne, t0, t1, tt)
+!$omp& shared(rtlt, te, ev, rtnt, rtln, rtnn, rtlsa, rtlra, rtlqr)
+!$omp& shared(ne, rtlqa, rtlrd, rtlbr, rtlza)
+!$omp& shared(rtlz2, rtlpt, rtlpi)
+!$omp& shared(rt)
+#endif
       do iCv = 1,nCv
 *     ..set ltst0
         ltst0 = rtlt(0).le.log(te(iCv)/ev)
@@ -265,6 +275,9 @@
      .    (1.0_R8-fxte)*t0+fxte*t1-rt%rlpi(iCv,1,is)*rlte
         enddo
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SPEL) )
+!$omp end parallel do
+#endif
 
 * ..return
       ncall_b2spel = ncall_b2spel+1

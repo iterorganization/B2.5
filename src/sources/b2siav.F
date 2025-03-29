@@ -10,6 +10,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_openmp
 #ifndef FIXED_POINT
       use b2mod_balance                                                 !djm Jan2017
      & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
@@ -283,6 +284,16 @@
       endif                                                             !srv 26.10.08
 
       if (switch%b2siav_iout.ne.0) then                                 !srv 17.06.02 {
+        if (in_parallel()) then 
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+         write(*,*) 'B2SIAV OpenMP warning: no file output in ',
+     &              'parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,alpha1,'b2siav_alpha1')
         call my_out_us(70,nCv,0,kt_neo,'b2siav_kt_neo')
@@ -300,6 +311,7 @@
         call my_out_us(70,nCv,0,wrks,'b2siav_smovh'//chns)
         call my_out_us(70,nFc,1,cvsbhz_cl(1,0),'b2siav_cvsbhz_th'//chns)
         call my_out_us(70,nFc,1,cvsbhz_cl(1,1),'b2siav_cvsbhz_r'//chns)
+      endif
       endif                                                             !srv 17.06.02 }
 
 #ifndef FIXED_POINT

@@ -129,6 +129,20 @@
         dtmo_fts(dtfts(k)) = dtmo_ft(k)
         k = k + 1
       enddo
+
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
+!$omp parallel
+!$omp& default(none)
+!$omp& private(is,iCv,ttim,t0, iFt, iFc)
+!$omp& shared(nCv,ns,time_factor, geo, mpg, sr, lout)
+!$omp& shared(dtim,dtco,dtmo,dtee,dtei, switch)
+!$omp& shared(dtco_fts,dtmo_fts,dtee_fts,dtei_fts)
+!$omp& shared(kinrgy0)
+!$omp& shared(na0,ne0,ni0,ua0,ti0,te0,am, kt0, zt0, nn0, tn0)
+!$omp& shared(ttim_na,ttim2_na,ttim_ua,ttim2_ua)
+!$omp& shared(ttim_te,ttim2_te,ttim_ti,ttim2_ti,mult_dt)
+!$omp& private(ttim2,content,src_tot)
+#endif
       do is = 0, ns-1
         do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
@@ -159,6 +173,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
       enddo
 
 *   ..modify smodt
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
+!$omp DO
+#endif
       do is = 0, ns-1
         do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
@@ -191,6 +208,8 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &     sr%smo(iCv,:,is) = sr%smo(iCv,:,is)+sr%smodt(iCv,:,is)
         enddo
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
+!$omp end do
 
 *   ..modify shedt, shidt, shndt, sktdt, sztdt, schdt, snedt
       do iCv = 1, mpg%nCi
@@ -252,8 +271,12 @@ csw 24feb2014 check for guard cell (SOLPS4)
         if (.not.lout)
      &   sr%szt(iCv,:) = sr%szt(iCv,:)+sr%sztdt(iCv,:)
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
+!$omp end do
 
-      do iCv = 1, mpg%nCi
+!$omp do
+#endif
+      do iCv = 1, nCv
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
@@ -314,8 +337,12 @@ csw 24feb2014 check for guard cell (SOLPS4)
         if (.not.lout)
      &   sr%shi(iCv,:) = sr%shi(iCv,:)+sr%shidt(iCv,:)
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
+!$omp end do
 
-      do iCv = 1, mpg%nCi
+!$omp do
+#endif
+      do iCv = 1, nCv
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
@@ -329,9 +356,13 @@ cxpb  This treatment added as a fix to get the ExB runs going
         if (.not.lout)
      &   sr%sch(iCv,:) = sr%sch(iCv,:)+sr%schdt(iCv,:)
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
+!$omp end do
 
-      do iCv = 1, mpg%nCi
-!WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
+!$omp do
+#endif
+      do iCv = 1, nCv
+!WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
         t0 = (switch%b2srdt_phm5/dtim)*geo%cvVol(iCv)
      &                                  *time_factor(iCv)               !xpb
         sr%snedt(iCv,0) = t0*ne0(iCv)
@@ -339,6 +370,10 @@ cxpb  This treatment added as a fix to get the ExB runs going
         if (.not.lout)
      &   sr%sne(iCv,:) = sr%sne(iCv,:)+sr%snedt(iCv,:)
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
+!$omp end do
+!$omp end parallel
+#endif
 
 #ifndef FIXED_POINT
 cdjm Store the total change in linearised sources for balance
