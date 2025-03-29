@@ -112,6 +112,16 @@ ctmp.dpc
       call sfill (nCv*4, 0.0_R8, shi0, 1)
       call sfill (nCv*4, 0.0_R8, shn0, 1)
 *   ..compute sources due to charge exchange
+#if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
+
+!$omp parallel do default(none) 
+!$omp& private(is, iCv)
+!$omp& private(t0, t1, t2, du0, du1, t1n)
+!$omp& shared(ns, mpg, is0, switch, rg0, geo, is_neutral, tkin, tn, ti)
+!$omp& shared(rcx, sna0, na, rcxna, am, shi0, rcxhi, smq0, ua, shn0)
+!$omp& reduction(+: rcxnareg, rcxhireg, rcxmoreg)
+!$omp& shared(rcxmo, zamin, zamax, zn)
+#endif
       do is = 1, ns-1
        if (lnext(is-1,is)) then
 *     ..particle source
@@ -302,6 +312,9 @@ ctmp.dpc
         enddo
        endif
       enddo
+#if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
+!$omp end parallel do
+#endif
 
 #ifdef ASTRA
       do is = 0, ns-1                     !srv 28.07.11 {

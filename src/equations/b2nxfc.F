@@ -8,6 +8,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_openmp
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -100,14 +101,25 @@
       cvcb(:,1) = cvsb(:,1)
 
       if (switch%b2nxfc_iout.ne.0) then                                !sv 17.06.02 {
-        write (charns,'(i3.3)') isb    
-        call my_out_us(70,nFc,1,flub(1,0),'b2nxfc_flub_th'//charns)
-        call my_out_us(70,nFc,1,flub(1,1),'b2nxfc_flub_r'//charns)
-        call my_out_us(70,nFc,1,flcb(1,0),'b2nxfc_flcb_th'//charns)
-        call my_out_us(70,nFc,1,flcb(1,1),'b2nxfc_flcb_r'//charns)
-        call my_out_us(70,nFc,1,cvcb(1,0),'b2nxfc_cvcb_th'//charns)
-        call my_out_us(70,nFc,1,cvcb(1,1),'b2nxfc_cvcb_r'//charns)
-        call my_out_us(70,nCv,0,rob,'b2nxfc_rob'//charns)
+        if (in_parallel()) then 
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+      write(*,*) 'B2NXFC OpenMP warning: no file output in ',
+     &   'parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else
+          write (charns,'(i3.3)') isb    
+          call my_out_us(70,nFc,1,flub(1,0),'b2nxfc_flub_th'//charns)
+          call my_out_us(70,nFc,1,flub(1,1),'b2nxfc_flub_r'//charns)
+          call my_out_us(70,nFc,1,flcb(1,0),'b2nxfc_flcb_th'//charns)
+          call my_out_us(70,nFc,1,flcb(1,1),'b2nxfc_flcb_r'//charns)
+          call my_out_us(70,nFc,1,cvcb(1,0),'b2nxfc_cvcb_th'//charns)
+          call my_out_us(70,nFc,1,cvcb(1,1),'b2nxfc_cvcb_r'//charns)
+          call my_out_us(70,nCv,0,rob,'b2nxfc_rob'//charns)
+        endif
       endif                                                            !sv 17.06.02 }
 * ..return
       ncall_b2nxfc = ncall_b2nxfc+1

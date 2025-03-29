@@ -10,6 +10,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_openmp
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -191,27 +192,37 @@
       call b2uxus (nCv, mpg, aa, itcnt, respo, corpo, name)           !srv 18.03.10
 
       if (switch%b2uspo_iout.ne.0) then                                          !srv 08.07.08 {
-        do k=0,3
-          write (chark,'(i1)') k
-          call my_out_us(70,nCv,0,sch(1,k),'b2uspo_sch'//chark)
-        enddo
-#ifdef WG_TODO
-        call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2uspo_aam6')
-        call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2uspo_aam5')
-        call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2uspo_aam4')
-        call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2uspo_aam3')
-        call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2uspo_aam2')
-        call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2uspo_aam1')
-        call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2uspo_aam0')
-        call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2uspo_aap1')
-        call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2uspo_aap2')
-        call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2uspo_aap3')
-        call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2uspo_aap4')
-        call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2uspo_aap5')
-        call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2uspo_aap6')
+        if (in_parallel()) then 
+#ifdef _OPENMP
+!$OMP MASTER
 #endif
-        call my_out_us(70,nCv,0,respo,'b2uspo_respo')
-        call my_out_us(70,nCv,0,corpo,'b2uspo_corpo')
+         write(*,*) 'b2uspo OpenMP warning: no file IO in parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else
+          do k=0,3
+            write (chark,'(i1)') k
+            call my_out_us(70,nCv,0,sch(1,k),'b2uspo_sch'//chark)
+          enddo
+#ifdef WG_TODO
+          call my_out_us(70,nCv,0,aa(-1,-1,-6),'b2uspo_aam6')
+          call my_out_us(70,nCv,0,aa(-1,-1,-5),'b2uspo_aam5')
+          call my_out_us(70,nCv,0,aa(-1,-1,-4),'b2uspo_aam4')
+          call my_out_us(70,nCv,0,aa(-1,-1,-3),'b2uspo_aam3')
+          call my_out_us(70,nCv,0,aa(-1,-1,-2),'b2uspo_aam2')
+          call my_out_us(70,nCv,0,aa(-1,-1,-1),'b2uspo_aam1')
+          call my_out_us(70,nCv,0,aa(-1,-1, 0),'b2uspo_aam0')
+          call my_out_us(70,nCv,0,aa(-1,-1, 1),'b2uspo_aap1')
+          call my_out_us(70,nCv,0,aa(-1,-1, 2),'b2uspo_aap2')
+          call my_out_us(70,nCv,0,aa(-1,-1, 3),'b2uspo_aap3')
+          call my_out_us(70,nCv,0,aa(-1,-1, 4),'b2uspo_aap4')
+          call my_out_us(70,nCv,0,aa(-1,-1, 5),'b2uspo_aap5')
+          call my_out_us(70,nCv,0,aa(-1,-1, 6),'b2uspo_aap6')
+#endif
+          call my_out_us(70,nCv,0,respo,'b2uspo_respo')
+          call my_out_us(70,nCv,0,corpo,'b2uspo_corpo')
+        end if 
       endif
 
 * ..return

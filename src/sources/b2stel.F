@@ -145,6 +145,22 @@
       srw%rsana=0.0_R8
       srw%rsahi=0.0_R8
       srw%rsamo=0.0_R8
+
+#if ( !defined(NO_OPENMP_B2STEL) && defined(_OPENMP) )
+!$omp parallel default(none)
+!$omp& private(iCv, is, rf0, t0, t1, t2, t1i, t1n)
+!$omp& shared(ns, mpg, switch, srw, pl, dv, rt, rtw, geo)
+!$omp& shared(zn, am)
+!$omp& shared(sna0_ion, shi0_ion, smq0_ion, shn0_ion)
+!$omp& shared(she0_ion, she0_rec, rsanareg, rsamoreg, rsahireg)
+!$omp& shared(sna0_rec, shi0_rec, smq0_rec)
+!$omp& shared(fix_recomb, zmax_recomb, is_neutral)
+#ifndef FIXED_POINT
+!$omp& shared(b2stel_she0to3, balance_netcdf)
+#endif
+!$omp& reduction(+:b2rad, b2brem)
+!$omp do 
+#endif
       do is = 0, ns-2
        if (lnext(is,is+1)) then
 *     ..particle source and heat source
@@ -264,6 +280,10 @@
         enddo
        endif
       enddo
+#if ( !defined(NO_OPENMP_B2STEL) && defined(_OPENMP) )
+!$omp end do 
+!$omp end parallel
+#endif
 
 *   ..compute sources due to recombination
       rranareg=0.0_R8

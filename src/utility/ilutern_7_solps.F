@@ -4,9 +4,7 @@
       use b2mod_ma28_for_7diag
       use b2mod_indirect
       use b2mod_subsys
-#ifdef _OPENMP
       use b2mod_openmp
-#endif
       IMPLICIT NONE
       external bd1copy3                                            !srv 26.12.17
 C
@@ -68,6 +66,11 @@ c
       integer, save :: kwrite_bnr = -1                             !srv 18.05.02
       save ncall, nwrite
       data ncall /0/, nwrite /0/
+
+#ifdef _OPENMP
+!$omp threadprivate(/ma28fdc3/, /ma28hdc3/)
+!$omp threadprivate(ncall, nwrite, kwrite_fmt, kwrite_bnr)
+#endif
 
 *=======================================================================
 *//COMPUTATION//
@@ -167,8 +170,21 @@ c       IF (A1HN.EQ.0.0_R8) THEN
           S1(I+(J-1)*N1)=0.0_R8
          enddo
       enddo
-      if(kwrite_bnr.eq.ncall) then                                !srv 18.05.02 {
-        write(*,*) 'Opening 83'
+        !!FR The b2_matrix file will not write out correctly if code runs in parallel
+!!FR thus ensure that the code will not be executed if accessed in parallel region.
+      if(kwrite_bnr.eq.ncall) then                                   !srv 18.03.10 {
+            if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+            write(*,*)'OpenMP: warning: running in parallel the ',
+     1    'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ',
+     2    'will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+      else
+            write(*,*) 'Opening 83'
         open(83,file='b2_7_rhs_binary_'//trim(name),form='unformatted') !srv 11.03.13
         write(83) n
         do i=1,n
@@ -183,9 +199,21 @@ c       IF (A1HN.EQ.0.0_R8) THEN
           write(82) IRNH(i),ICNH(i),A1H(i)
         enddo
         close(82)
-      endif                                                       !srv 18.05.02 }
+      endif 
+      endif 
+                                                            !srv 18.05.02 }
       if(kwrite_fmt.eq.ncall) then                                !srv 18.05.02 {
-        write(*,*) 'Opening 83'
+      if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+            write(*,*)'OpenMP: warning: running in parallel the ',
+     1    'b2_5_rhs_ and b2_5_matrix_ files will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+      else
+      write(*,*) 'Opening 83'
         open(83,file='b2_7_rhs_'//trim(name))
         write(83,*) n
         do i=1,n
@@ -198,10 +226,21 @@ c       IF (A1HN.EQ.0.0_R8) THEN
           write(82,*) IRNH(i),ICNH(i),A1H(i)
         enddo
         close(82)
+      endif
       endif                                                    !srv 18.05.02 }
 cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
+      if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+      write(*,*)'OpenMP: warning: running in parallel the ',
+     1      'b2_matrix_ files will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+      else
           if(ncall.eq.0) then
             write(*,*) 'Opening 81'                            !srv 11.01.00
             open(81,file='b2_7_diagonal_matrix')               !srv 11.01.00
@@ -215,10 +254,12 @@ cdpc
           do i=1,nz
             write(81,*) IRNH(i),ICNH(i),A1H(i)                 !srv 11.01.00
           enddo
-        elseif(nwrite.eq.ncall) then
+      if(nwrite.eq.ncall) then
           write(*,*) 'Closing 81'                              !srv 11.01.00
           close(81)                                            !srv 11.01.00
         endif
+      endif
+      endif
       endif
 cdpc
       if(nltrsol.eq.0) then

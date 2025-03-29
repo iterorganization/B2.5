@@ -9,6 +9,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_openmp
       use b2us_plasma
       use b2mod_numerics_namelist                                        !srv 07.07.21 {
      & , only : dtco, time_factor                                        !srv 07.07.21 }
@@ -136,6 +137,17 @@
           rxg = switch%b2npco_rxg
         endif
       endif
+      if (switch%b2npco_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then 
+        if (in_parallel()) then 
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+          write(*,*) 'B2NPCO will not write to file in parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        end if 
+      end if 
 *   ..extensive tests on first few calls
       if (ncall_b2npco.lt.3) then
 *    ..test sign of conb
@@ -189,7 +201,7 @@ cdjm Jan2017 update particle source components for balance
      &   dv%pcca(:,0,isb),
      &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb), isb, psnl)
       endif                                                             !srv 22.05.18
-      if (switch%b2npco_iout.ne.0) then                                 !srv 12.07.02 {
+      if (switch%b2npco_iout.ne.0 .and. .not. in_parallel()) then                           !srv 12.07.02 {
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,dv%pa(1,isb),'b2npco_pa'//chns)
         call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)
@@ -205,7 +217,7 @@ cdjm Jan2017 update particle source components for balance
      .    'b2npco_fna_mdf_th'//chns)
         call my_out_us(70,nFc,1,dv%fna_mdf(1,1,isb),
      .    'b2npco_fna_mdf_r'//chns)
-      elseif (switch%iout_b2wdat.eq.4) then                             !iys 17.04.17
+      elseif (switch%iout_b2wdat.eq.4 .and. .not. in_parallel()) then                             !iys 17.04.17
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,pl%na(1,isb),'b2npco_na'//chns)
         call my_out_us(70,nCv,0,dv%resco(1,isb),'b2npco_resco'//chns)

@@ -15,6 +15,7 @@
       use b2us_map
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
+      use b2mod_openmp
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -155,15 +156,27 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *   ..compute flo0, con0
       flo0        = floe + floi + flon
       con0(:,:,0) = cone(:,:,0) + coni(:,:,0)+ conn
-      if (switch%b2usht_iout.ne.0) then      
-       call my_out_us(70,nFc,1,flo0(1,0),'b2usht_flo0x')
-       call my_out_us(70,nFc,1,flo0(1,1),'b2usht_flo0y')
-       call my_out_us(70,nFc,1,con0(1,0,0),'b2usht_con0xtest')
-       call my_out_us(70,nFc,1,con0(1,1,0),'b2usht_con0ytest')
-       call my_out_us(70,nFc,1,con0(1,0,1),'b2usht_con0x10')
-       call my_out_us(70,nFc,1,con0(1,1,1),'b2usht_con0y10')
-       call my_out_us(70,nFc,1,con0(1,0,2),'b2usht_con0x20') 
-       call my_out_us(70,nFc,1,con0(1,1,2),'b2usht_con0y20') 
+      if (switch%b2usht_iout.ne.0) then  
+        if (in_parallel() ) then 
+          if (ncall_b2usht == 0) then 
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+         write(*,*) 'b2ush9 OpenMP warning: no file IO in parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+          end if 
+        else
+          call my_out_us(70,nFc,1,flo0(1,0),'b2usht_flo0x')
+          call my_out_us(70,nFc,1,flo0(1,1),'b2usht_flo0y')
+          call my_out_us(70,nFc,1,con0(1,0,0),'b2usht_con0xtest')
+          call my_out_us(70,nFc,1,con0(1,1,0),'b2usht_con0ytest')
+          call my_out_us(70,nFc,1,con0(1,0,1),'b2usht_con0x10')
+          call my_out_us(70,nFc,1,con0(1,1,1),'b2usht_con0y10')
+          call my_out_us(70,nFc,1,con0(1,0,2),'b2usht_con0x20') 
+          call my_out_us(70,nFc,1,con0(1,1,2),'b2usht_con0y20') 
+        end if 
       endif
 
 *   ..initialize matrix to zero
@@ -198,7 +211,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       enddo
 ! $AD II-LOOP
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,nCv,0,she(1,1),'b2usht_she1')     
        call my_out_us(70,nCv,0,she(1,3),'b2usht_she3')
        call my_out_us(70,nCv,0,shi(1,1),'b2usht_shi1')     
@@ -318,14 +331,14 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           resht(iCv) = 0.0_R8
         endif
       enddo
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
         call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_tt')
       endif 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, resht, cortt, 'b2usht_total')  !srv 18.05.02
       endif                                                             !srv 22.05.18
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_ht_aa')
        call my_out_us(70,nCv,0,resht,'b2usht_resht')
        call my_out_us(70,nCv,0,cortt,'b2usht_cortt')
@@ -361,7 +374,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       enddo
 ! $AD II-LOOP
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,nCv,0,she(1,1),'b2usht_she1_te')     
        call my_out_us(70,nCv,0,she(1,3),'b2usht_she3_te')
        call my_out_us(70,nCv,0,te,'b2usht_te_te')
@@ -480,14 +493,14 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
         endif
       enddo
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_te')
       endif
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshe, corte, 'b2usht_Te')     !srv 18.05.02
       endif                                                            !srv 22.05.18
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_he_aa')
        call my_out_us(70,nCv,0,reshe,'b2usht_reshe')
        call my_out_us(70,nCv,0,corte,'b2usht_corte')
@@ -522,7 +535,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       enddo
 ! $AD II-LOOP
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,nFc,1,floi(1,0),'b2usht_floix') 
        call my_out_us(70,nFc,1,floi(1,1),'b2usht_floiy')  
        call my_out_us(70,nFc,1,coni(1,0,0),'b2usht_conix')
@@ -639,7 +652,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
           reshi(iCv) = 0.0_R8
         endif
       enddo
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_aa_ti')
       endif
 
@@ -652,7 +665,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       enddo
       endif                                                          !srv 22.05.18
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_hi_aa')
        call my_out_us(70,nCv,0,reshi,'b2usht_reshi')
        call my_out_us(70,nCv,0,corti,'b2usht_corti')
@@ -798,7 +811,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       endif
 
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_hn_aa')
        call my_out_us(70,nCv,0,reshi,'b2usht_reshn')
        call my_out_us(70,nCv,0,corti,'b2usht_cortn')
@@ -936,7 +949,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        enddo
       endif !solve_keps - kt
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_kt_aa')
        call my_out_us(70,nCv,0,reskt,'b2usht_reskt')
        call my_out_us(70,nCv,0,corkt,'b2usht_corkt')
@@ -1074,7 +1087,7 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        enddo
       endif !solve_keps - enstrophy
 
-      if (switch%b2usht_iout.ne.0) then
+      if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_zt_aa')
        call my_out_us(70,nCv,0,reszt,'b2usht_reszt')
        call my_out_us(70,nCv,0,corzt,'b2usht_corzt')

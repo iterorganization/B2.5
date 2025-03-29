@@ -17,6 +17,7 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_openmp
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
       use b2mod_ad
@@ -312,6 +313,38 @@ c time-dependent treatment                                            !srv 07.07
 
 * ..main computation
 *   ..compute individual species corrections
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!!FR smt, resmt, cvct & flct accumulate by species and thus need
+!!FR to be reduction variables.
+!!FR rob, pb, flub, flcb, cvcb, wrkf, smb are all
+!!FR local to the parallel region and thus are private
+!!FR wrk0 is used outside parallel region but is zeroed before use
+!!FR aa5, wrk1 are used outside parallel region but are output arguments
+!!FR and thus their contents should not matter
+!!FR all other variables are shared
+!$omp parallel do default(none)
+!$omp& shared(pl, dv, co, rt, co_ns, geo, nCv, nFc, nVx, switch, mpg)
+!$omp& shared(st_ext, srw, sr)
+!$omp& reduction(+: dv%resmt, flct, cvct, cvcb, smt, ctcft)
+!$omp& private(rob, robf, pb, wrk0, flub, flcb, pb1, rob1, ehxp, wrkf0)
+!$omp& private(wrkf, wrk1, smb, b2npmo_solvedum, ro)
+!$omp& private(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf,smbvtmp)
+!$omp& private(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)
+!$omp& private(smbvi, rho_b_rel)
+!$omp& private(chns, wrks, aa, wrkff, wrkfff)
+!$omp& shared(solvemt, solvemo, ns, am, solving, ismain, smqdu, itcnt)
+#ifndef FIXED_POINT
+!$omp& shared(balance_netcdf, fmo_b2nxfv)
+!$omp& shared(fmo_tot, tot_smo0to3, ubf)
+#endif
+!$omp& shared(is_neutral, last_solve_9)
+!$omp& shared(zetap, zetae, gti, gte, ce1, ce2, cimp1)
+!$omp& shared(cimp2, zeff, rxg_npmo)
+!$omp& shared(rho_A_rel, avm_u)
+#endif
 !      do is = 0, ns-1
       do is = switch%nsmin, switch%nsmax-1
 *    ..compute rob, pb
@@ -356,7 +389,7 @@ c time-dependent treatment                                            !srv 07.07
        call b2scopy (nFc*2, dv%fna_fcor(:,:,is), 1, flub, 1)
        call b2sscal (nFc*2, am(is)*mp, flub, 1)
 *    ..add convective term due to new form of ion viscosity term only
-       if (switch%Zhdanov_closure.ne.0 .and.
+       if (switch%Zhdanov_closure.ne.0 .and. ! can be put outside of loop?
      &      switch%Zhdanov_test.ne.1 .and.
      &      switch%Zhdanov_visu.ne.0 .and.
      &      switch%zh_vis_type.eq.1) then
@@ -534,12 +567,16 @@ cdjm Mar2019 output the total momentum flux and source for balance
        if (solving.and.any(solvemo(is,0:mpg%nnreg(0)))) then            !srv 06.07.10 22.05.18
          b2npmo_solvedum(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
 c    ..compare matrices
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+         call restart_ma28_for_us
+#else
          new_matrix = .false.
          do ireg = 0, mpg%nnreg(0)
           new_matrix = new_matrix.or.
      &     solvemo(is,ireg).neqv.last_solve_9(ireg)
          end do
          if (new_matrix.or..true.) call restart_ma28_for_us
+#endif
 *    ..compute correction
          pb1 = pb !csc to avoid aliasing in Tapenade
          rob1 = rob !csc to avoid aliasing in Tapenade
@@ -587,19 +624,26 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (nCv, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
        endif                                                            !srv 22.05.18
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+!$omp end parallel do
+#endif
 
 csw 21feb2014, execute simultaneous corrections always
       if (solving.and.any(solvemo(0:ns-1,0:mpg%nnreg(0)))
      &                  .and.any(solvemt(0:mpg%nnreg(0)))) then         !srv 06.07.10 22.05.18
 *     ..compute simultaneous correction
         call sfill (nCv, 0.0_R8, wrk0, 1)
-c     ..compare 9-pt stencil matrices
+c     ..compare 9-pt stencil matrice
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+         call restart_ma28_for_us
+#else
         new_matrix = .false.
         do ireg = 0, mpg%nnreg(0)
          new_matrix = new_matrix.or.
      &    solvemt(ireg).neqv.last_solve_9(ireg)
         end do
         if (new_matrix.or..true.) call restart_ma28_for_us
+#endif
 *     ..compute correction
         call b2usmo (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
      &    solvemt, itcnt, rxg, ro, rz, pr, pz, wrk0,

@@ -18,6 +18,7 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_openmp
       use b2mod_ad
      & , only : ncall_b2sifr
 #ifndef NAGFOR
@@ -83,6 +84,9 @@
       external xertst, xerrab, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
 
+#ifdef _OPENMP
+!$omp threadprivate(iout)
+#endif
 *-----------------------------------------------------------------------
 *.computation
 
@@ -104,7 +108,18 @@ csw 24sep2013
        call xertst (0.0_R8.le.switch%b2sifr_limthii.and.
      &              0.0_R8.le.switch%b2sifr_limthee,
      &  'faulty internal parameter limthii, limthee')
-       call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.02
+       call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.0
+       if ((iout.ne.0) .and. in_parallel()) then
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+          write(*,*) 'B2SIFR_ OpenMP warning: no file output in ',
+     &               'parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+         iout = 0
+       end if 
        call ipgeti ('b2tlnl_ii', icase)
        call xertst (0.eq.icase .or. 1.eq.icase,
      &               'faulty input b2tlnl_ii')

@@ -27,6 +27,14 @@ c     File names will be appended with "*_st.dat".
       integer, save :: iappend = 0, ndigits = 6
       external ipgeti, xertst
 
+#ifdef _OPENMP
+!$omp threadprivate(ncall, iappend, ndigits)
+#endif 
+
+#ifdef _OPENMP
+!$OMP CRITICAL(synch_my_out)
+#endif
+
       if (ncall.eq.0) then
         call ipgeti('b2wdat_append', iappend)
         call ipgeti('my_out_digits', ndigits)
@@ -153,6 +161,9 @@ c     File names will be appended with "*_st.dat".
       endif                                                       !srv 13.12.18  }
 
       endif
+#endif
+#ifdef _OPENMP
+!$OMP END CRITICAL(synch_my_out)
 #endif
       return
       end subroutine my_out_us

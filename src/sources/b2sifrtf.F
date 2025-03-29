@@ -18,6 +18,7 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_openmp
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -71,6 +72,9 @@
 *   ..local variables
       integer iCv, is
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
+#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) ) )
+!$omp threadprivate(iout, iout_b2npmo, iout_b2wdat)
+#endif
       character chns*3, chis*3
       real (kind=R8) ::
      *  coef, t0, calfab, fllim_al_ab, jabmax
@@ -86,6 +90,9 @@
       real (kind=R8) :: rz2_temp(1:ns*nCv), na_temp(1:ns*nCv),
      &                  am_sqrt(0:ns-1, 0:ns-1)
       integer :: ctr, i, j
+#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) ) )
+      logical :: make_parallel
+#endif
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgeti, ipgetr, sfill
@@ -108,11 +115,37 @@
      &              0.0_R8.le.switch%b2sifr_phm3,
      &  'faulty internal parameter phm0, phm1, phm2, phm3')
        call ipgeti ('b2sifrtf_iout', iout)
+       if ((iout.ne.0) .and. in_parallel()) then
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+          write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
+     &               'parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        iout = 0
+       end if
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
+       if ((iout_b2wdat==4) .and. in_parallel()) then
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+          write(*,*) 'B2SIFRTF OpenMP warning: no file output in ',
+     &               'parallel mode (b2wdat)'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        iout_b2wdat = 0
+      end if
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
-*   ..test nCv, nFc
-      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) ) )
+      make_parallel = .not. in_parallel()
+#endif
+*   ..test nCv, nFc, nVx
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     . 'faulty argument nCv, nFc, nVx')
 *   ..extensive tests on first few calls
       if (ncall_b2sifrtf.lt.3) then
 *    ..test sign of vol
@@ -138,6 +171,9 @@
 *   ..make 3rd dimension contiguous by copying to 1-d array (Gaurav Saxena: BSC ACH)
       ctr = 1
       do iCv = 1, nCv
+#if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
+!$OMP SIMD
+#endif
         do is = 0, ns-1
           rz2_temp(ctr) = rz2(iCv,is)
           na_temp(ctr) = na(iCv,is)
@@ -172,6 +208,15 @@
           enddo
         endif
 *     ..standard friction force calculation
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
+!$omp parallel do if (make_parallel)
+!$omp& default(none)
+!$omp& private(KabVp, is, iCv, coef, t0)
+!$omp& shared(ns, isb, is_neutral, mpg, switch)
+!$omp& shared(rz2, am, zetap, na, ua)
+!$omp& shared(ismain, cimp1)
+!$omp& reduction(+: smbfrial)
+#endif
         do is = 0, ns-1
           if(isb.ne.is .and.
      &      .not.is_neutral(isb).and. .not.is_neutral(is)) then
@@ -254,6 +299,19 @@
         do iCv = 1, nCv
           ka(iCv) = fka(iCv,isb)
         enddo
+
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
+!$omp parallel do if (make_parallel)
+!$omp& default(NONE)
+!$omp& private(KabVp, Kbatf, Kabtf, kb, is, iCv, coef, t0)
+!$omp& private(calfab, jabmax, fllim_al_ab)
+!$omp& shared(ns, isb, is_neutral, mpg, switch, geo)
+!$omp& shared(rz2, am, zetap, na, ua, gti, cflim, ti)
+!$omp& shared(ka)
+!$omp& shared(rz2_temp, na_temp, am_sqrt)
+!$omp& shared(ismain, cimp1, cimp2)
+!$omp& reduction(+: smbtfial, smbtfial_nofl)
+#endif
         do is = 0, ns-1
          if(isb.ne.is .and.
      &      .not.is_neutral(isb) .and. .not.is_neutral(is)) then
@@ -436,6 +494,9 @@ c        .. apply flux limit
       real (kind=R8) :: fka
       integer r
       fka = 0.0_R8
+#if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
+!$omp simd reduction(+:fka)
+#endif
       do r = 0, ns-1
         fka = fka + rz2(iCv,r)*na(iCv,r)*sqrt(mp)*
      &          sqrt(am(a)*am(r)/(am(a)+am(r)))
@@ -454,6 +515,9 @@ c        .. apply flux limit
       integer r, ind
       fka_new = 0.0_R8
       ind = (iCv-1)*ns
+#if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
+!$omp simd reduction(+:fka_new)
+#endif
       do r = 0, ns-1
         fka_new = fka_new + rz2_temp(ind+r+1)*na_temp(ind+r+1)*
      &   sqrt(mp)*am_sqrt(r,a)

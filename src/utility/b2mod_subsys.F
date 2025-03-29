@@ -1,6 +1,7 @@
       module b2mod_subsys
       use b2mod_lwimai
       use b2mod_lwmain
+      use b2mod_openmp
       implicit none
 *     ------------------------------------------------------------------
 *     SUBSYS is a group of routines that
@@ -32,6 +33,9 @@
 #ifdef PERFMON
       call perfon (srname)
 #endif
+#ifdef _OPENMP
+      if (get_num_threads().gt.1.or.in_parallel()) return !!FR do not do the stack tracing if running in parallel
+#endif
 *   ..test nchs
       call xertst (nchs.ne.nchmx, 'subini--error, nchs.eq.nchmx')
 *   ..get base addresses for free workspace
@@ -49,6 +53,10 @@ cxpb      write(*,'(a,a8,i3)') 'subini: ',trim(srname),nchs
       subroutine subend ()
       implicit none
       external xertst
+
+#ifdef _OPENMP
+      if (get_num_threads().gt.1.or.in_parallel()) return  !!FR do not do the stack tracing if running in parallel
+#endif
 *   ..test nchs
       call xertst (nchs.gt.0, 'subend--error, nchs.le.0')
 *   ..pop data from the stack

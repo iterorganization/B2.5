@@ -7,6 +7,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_switches
+      use b2mod_openmp
       use b2us_geo
       use b2us_map
       use b2mod_balance !djm Jan2017
@@ -75,12 +76,23 @@ cdjm Store linearised source for balance
       endif
 
       if (switch%b2sian_iout.ne.0) then
-        write (chns,'(i3.3)') isb
-        do k=0,3
-          write (chark,'(i1)') k
-          call my_out_us(70,nCv,0,smban(1,k),
+        if (in_parallel()) then
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+          write(*,*) 'B2SIAN OpenMP warning: no file output in ',
+     &              'parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else
+          write (chns,'(i3.3)') isb
+          do k=0,3
+            write (chark,'(i1)') k
+            call my_out_us(70,nCv,0,smban(1,k),
      .                         'b2sian_smoan'//chark//chns)
-        enddo
+          enddo
+        endif 
       endif
 
 * ..return
