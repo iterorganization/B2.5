@@ -4,6 +4,7 @@
       use b2mod_ma28
       use b2mod_indirect
       use b2mod_subsys
+      use b2mod_openmp
       IMPLICIT NONE
       external bd1
 C
@@ -56,6 +57,11 @@ c
       integer, save :: b2swtest=0
       save ncall, nwrite
       data ncall /0/, nwrite /0/
+
+#ifdef _OPENMP
+!$omp threadprivate(/ma28fd/, /ma28hd/, kwrite_fmt, kwrite_bnr)
+!$omp threadprivate(b2swtest, ncall, nwrite)
+#endif
 
 *=======================================================================
 *//COMPUTATION//
@@ -139,26 +145,51 @@ csw 12oct2012 in case of b2swtest=T --> reinit solver
 c             (maybe necessary in case of multi-fluid?)
       if(b2swtest.eq.1) lfirst_ilu=.true.
 
+!!FR The b2_matrix file will not write out correctly if code runs in parallel
+!!FR thus ensure that the code will not be executed if accessed in parallel region.
       if(kwrite_bnr.eq.ncall) then                                   !srv 18.03.10 {
-         write(*,*) 'Opening 76'
-         open(76,file='b2_5_rhs_binary_'//trim(name)//'.dat',
+        if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+          write(*,*)'OpenMP: warning: running in parallel the ',
+     1    'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ',
+     2    'will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+
+          else                                   !srv 18.03.10 {
+            write(*,*) 'Opening 76'
+            open(76,file='b2_5_rhs_binary_'//trim(name)//'.dat',
      .         form='unformatted')                                   !srv 11.03.13
-         write(76) n
-         do i=1,n
-           write(76) r1(i)
-         enddo
-         close(76)
-         write(*,*) 'Opening 77'
-         open(77,file='b2_5_mtr_binary_'//trim(name)//'.dat',
+            write(76) n
+            do i=1,n
+              write(76) r1(i)
+            enddo
+            close(76)
+            write(*,*) 'Opening 77'
+            open(77,file='b2_5_mtr_binary_'//trim(name)//'.dat',
      .         form='unformatted')                                   !srv 11.03.13
-         write(77) n, nz
-         do i=1,nz
-           write(77) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
-         enddo
-         close(77)
+            write(77) n, nz
+            do i=1,nz
+              write(77) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
+            enddo
+            close(77)
+        endif
       endif
 
       if(kwrite_fmt.eq.ncall) then
+        if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+        write(*,*)'OpenMP: warning: running in parallel the ',
+     1    'b2_5_rhs_ and b2_5_matrix_ files will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else
         write(*,*) 'Opening 76'
         open(76,file='b2_5_rhs_'//trim(name)//'.dat')
         write(76,*) n
@@ -172,11 +203,22 @@ c             (maybe necessary in case of multi-fluid?)
           write(77,*) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
         enddo
         close(77)
-      endif                                                          !srv 18.03.10 }
+      endif             
+      endif                                             !srv 18.03.10 }
 
 cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
+          if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+            write(*,*)'OpenMP: warning: running in parallel the ',
+     1      'b2_matrix_ files will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else
           if (ncall.eq.0) then
             write(*,*) 'Opening 84'
             open(84,file='b2_matrix')
@@ -203,6 +245,7 @@ cdpc
           end if
         end if
       end if
+      end if  
 cdpc
       if(nltrsol.eq.0) then
       elseif(nltrsol.eq.1) then

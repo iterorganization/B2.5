@@ -8,8 +8,11 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_openmp
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2sicf_smo0to3, balance_netcdf
+#endif
       use b2mod_ad
      & , only : ncall_b2sicf
       use b2mod_subsys
@@ -128,7 +131,13 @@ cdjm Store linearised source for balance
       endif
 
       if (switch%b2sicf_iout.ne.0) then                                 !srv 17.06.02 {
-        write (chns,'(i3.3)') isb
+#ifdef _OPENMP
+!$OMP MASTER
+         write(*,*) 'B2SICF OpenMP warning: no file output in ',
+     &              'parallel mode'
+!$OMP END MASTER
+#else
+      write (chns,'(i3.3)') isb
         do k=0,3
           write (chark,'(i1)') k
           call my_out_us(70,nCv,0,smbcf(1,k),
@@ -138,6 +147,7 @@ cdjm Store linearised source for balance
      &       smbcf(:,2)*nb*mb+smbcf(:,3)*ub*nb*mb
         call my_out_us(70,nCv,0,wrks,'b2sicf_smocf'//chns)
         call my_out_us(70,nCv,0,ctcf,'b2sicf_ctcf'//chns)
+#endif
       endif                                                             !srv 17.06.02 }
 
 * ..return

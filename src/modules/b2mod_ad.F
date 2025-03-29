@@ -8,7 +8,7 @@
       integer NSDMAX
       parameter (NSDMAX=DEF_NSD)
       integer CVREGMAX
-      parameter (CVREGMAX=8)
+      parameter (CVREGMAX=100)
       integer nncf
       parameter (nncf=8)
 
@@ -94,5 +94,38 @@
      & ncall_b2uspo = 0,
 ! ncall variables from other routines
      & ncall_b2xehx = 0, ncall_b2xehy = 0, ncall_b2mndt = 0
+
+#ifdef _OPENMP
+!$omp threadprivate(ncall_b2tcpa , ncall_b2tfcc )
+!$omp threadprivate( ncall_b2tfch , ncall_b2tfed , ncall_b2tfhe )
+!$omp threadprivate( ncall_b2tfhi , ncall_b2tfnb , ncall_b2tfrn )
+!$omp threadprivate( ncall_b2tlh0 , ncall_b2tlhe )
+!$omp threadprivate( ncall_b2tlmv , ncall_b2tlnl , ncall_b2tqca )
+!$omp threadprivate( ncall_b2tqce , ncall_b2tqin , ncall_b2tqna )
+!$omp threadprivate( ncall_b2tral , ncall_transp_keps , ncall_b2trcl)
+!$omp threadprivate( ncall_b2treq , ncall_b2trno , ncall_b2trql )
+!$omp threadprivate( ncall_b2ttia , ncall_b2tiner , ncall_b2trzh)
+!$omp threadprivate( ncall_b2siav , ncall_b2sigp , ncall_b2sihs_ )
+!$omp threadprivate( ncall_b2sikt , ncall_b2spcx , ncall_b2spel )
+!$omp threadprivate( ncall_b2sqcx , ncall_b2sqel , ncall_b2sral )
+!$omp threadprivate( ncall_b2srdt , ncall_b2srsm , ncall_b2srst )
+!$omp threadprivate( ncall_b2stbc , ncall_b2stbc_phys , ncall_b2stbr )
+!$omp threadprivate( ncall_b2stbr_phys , ncall_b2stcx , ncall_b2stel )
+!$omp threadprivate( ncall_b2sicf , ncall_b2sifr , ncall_b2sifrtf )
+!$omp threadprivate( ncall_b2stbr_neutr_scl , ncall_b2shdt )
+!$omp threadprivate( ncall_b2smdt , ncall_b2scdt )
+!$omp threadprivate( ncall_b2npco , ncall_b2news_ , ncall_b2npht )
+!$omp threadprivate( ncall_b2npmo , ncall_b2nppo , ncall_b2nxdp )
+!$omp threadprivate( ncall_b2nxdu , ncall_b2nxfc )
+!$omp threadprivate( ncall_b2upco , ncall_b2upht )
+!$omp threadprivate( ncall_b2urmo ,ncall_b2ursc , ncall_b2ursd )
+!$omp threadprivate( ncall_b2usco , ncall_b2usht , ncall_b2usmo )
+!$omp threadprivate( ncall_b2uspo , ncall_b2uppo )
+!$omp threadprivate( ncall_b2xehx , ncall_b2xehy , ncall_b2mndt )
+!$omp threadprivate( ncall_b2mwit )
+!$omp threadprivate( gradient_iterations, primal_iterations)
+!$omp threadprivate( primal_res, gradient_res)
+#endif
+
 
       end module b2mod_ad

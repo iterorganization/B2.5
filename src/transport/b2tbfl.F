@@ -27,6 +27,9 @@
 *   ..local variables
       integer :: ib, ibc, iCv, iFc
       integer, save :: ncall = 0
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(ncall)
+#endif
 *-----------------------------------------------------------------------
 *.computation
 

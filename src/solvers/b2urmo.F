@@ -7,8 +7,11 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_openmp
+#ifndef FIXED_POINT
       use b2mod_balance                                                         !djm Jan2017
      & , only : fmo_flua, fmo_cvsa, fmo_hybr, balance_netcdf
+#endif
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -113,10 +116,23 @@ cwdk store effective viscosity, for use in viscous heating
       endif
 
       if(switch%b2npmo_iout.eq.1 .or. switch%iout_b2wdat.eq.4) then
+        if (in_parallel()) then 
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+        if (ncall_b2urmo==0) then
+          write(*,*) 'b2urmo OpenMP warning: no file output ',
+     &               'in parallel mode'
+        end if
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        else
        write (chns,'(i3.3)') isb
        call my_out_us(70,nFc,1,flv(1,0),'b2urmo_etaPat_gradua_th'//chns)
        call my_out_us(70,nFc,1,flv(1,1),'b2urmo_etaPat_gradua_r'//chns)
       endif  
+      endif
 
 * ..compute kinetic energy flux
       ! Note: flf and flv used as dummy arrays in this call !!

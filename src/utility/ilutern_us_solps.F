@@ -1,9 +1,7 @@
       SUBROUTINE ILUTERN_US(NCV, NZ, RHS, SOL, name)      !srv 13.10.06 (
       use b2mod_types
       use b2mod_ma28_for_us
-#ifdef _OPENMP
       use b2mod_openmp
-#endif
       IMPLICIT NONE
 C
 
@@ -59,7 +57,12 @@ c
       integer, save :: kwrite_bnr = -1                                !srv 18.05.02
       save ncall, nwrite
       data ncall /0/, nwrite /0/
-
+#ifdef _OPENMP
+!!FR Make all the save and common block variables threadprivate
+!$OMP THREADPRIVATE (ncall, nwrite)
+!$OMP THREADPRIVATE (/ma28fdc/,/ma28hdc/)
+!$OMP THREADPRIVATE (kwrite_fmt, kwrite_bnr)
+#endif
 *=======================================================================
 *//COMPUTATION//
 
@@ -92,7 +95,20 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
       RR1 = RHS
       S1 = 0.0_R8
 
-      if(kwrite_bnr.eq.ncall) then                                  !srv 18.05.02 {
+      if(kwrite_bnr.eq.ncall) then      
+!!FR The b2_matrix file will not write out correctly if code runs in parallel
+!!FR thus ensure that the code will not be executed if accessed in parallel region.
+      if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+            write(*,*)'OpenMP: warning: running in parallel the ', 
+     1    'b2_5_rhs_binary_ and b2_5_mtr_binary_ files ',
+     2    'will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+      else                            !srv 18.05.02 {
          write(*,*) 'Opening 76'
          open(76,file='b2_us_rhs_binary_'//trim(name),
      &     form='unformatted') !srv 11.03.13
@@ -109,9 +125,20 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
            write(77) IRNH(i),ICNH(i),A1H(i)
          enddo
          close(77)
-      endif                                                         !srv 18.05.02 }
+      endif       
+      endif                                                  !srv 18.05.02 }
       if(kwrite_fmt.eq.ncall) then                                  !srv 18.05.02 {
-        write(*,*) 'Opening 76'
+      if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+      write(*,*)'OpenMP: warning: running in parallel the ',
+     1    'b2_5_rhs_ and b2_5_matrix_ files will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+                  else
+      write(*,*) 'Opening 76'
         open(76,file='b2_us_rhs_'//trim(name))
         write(76,*) n
         do i=1,n
@@ -124,10 +151,21 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
           write(77,*) IRNH(i),ICNH(i),A1H(i)
         enddo
         close(77)
+      endif
       endif                                                         !srv 18.05.02 }
 cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
+            if (in_parallel()) then !!FR in parallel do not write this file
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+      write(*,*)'OpenMP: warning: running in parallel the ',
+     1      'b2_matrix_ files will not be written out'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+            else
           if(ncall.eq.0) then
             write(*,*) 'Opening 84'
             open(79,file='b2_us_matrix')
@@ -148,6 +186,7 @@ cdpc
           endif
         endif
       endif
+      endif 
 cdpc
       if(lfirst_ilu_us) then
         write(*,*) 'ilutern_us: nz = ',nz

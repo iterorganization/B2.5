@@ -8,6 +8,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_openmp
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -235,29 +236,39 @@
       call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name)           !srv 18.03.10
 
       if (switch%b2usmo_iout.ne.0) then                               !srv 17.06.02 {
-#ifdef WG_TODO
-       call my_out_us(70,nCv,0,aa(-1,-1,-4),name//'_aam4')
-       call my_out_us(70,nCv,0,aa(-1,-1,-3),name//'_aam3')
-       call my_out_us(70,nCv,0,aa(-1,-1,-2),name//'_aam2')
-       call my_out_us(70,nCv,0,aa(-1,-1,-1),name//'_aam1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 0),name//'_aam0')
-       call my_out_us(70,nCv,0,aa(-1,-1, 1),name//'_aap1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 2),name//'_aap2')
-       call my_out_us(70,nCv,0,aa(-1,-1, 3),name//'_aap3')
-       call my_out_us(70,nCv,0,aa(-1,-1, 4),name//'_aap4')
+        if (in_parallel()) then 
+#ifdef _OPENMP
+!$OMP MASTER
 #endif
-       call my_out_us(70,nCv,0,resmb,name//'_resmb')
-       call my_out_us(70,nCv,0,corub,name//'_corub')
-       call my_out_us(70,nCv,0,pccb(1,0),name//'_pccbx')
-       call my_out_us(70,nCv,0,pccb(1,1),name//'_pccby')
-       call my_out_us(70,nCv,0,rob,name//'_rob')
-       call my_out_us(70,nCv,0,pb,name//'_pb')
-       call my_out_us(70,nCv,0,smb(:,0),name//'_smb0')
-       call my_out_us(70,nCv,0,smb(:,1),name//'_smb1')
-       call my_out_us(70,nCv,0,smb(:,2),name//'_smb2')
-       call my_out_us(70,nCv,0,smb(:,3),name//'_smb3')
-       call my_out_us(70,nFc,1,flcb,name//'_flcb')
-       call my_out_us(70,nFc,1,cvsb,name//'_cvsb')
+        write(*,*) 'b2usmo OpenMP warning: no file IO in parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif    
+        else 
+#ifdef WG_TODO
+          call my_out_us(70,nCv,0,aa(-1,-1,-4),name//'_aam4')
+          call my_out_us(70,nCv,0,aa(-1,-1,-3),name//'_aam3')
+          call my_out_us(70,nCv,0,aa(-1,-1,-2),name//'_aam2')
+          call my_out_us(70,nCv,0,aa(-1,-1,-1),name//'_aam1')
+          call my_out_us(70,nCv,0,aa(-1,-1, 0),name//'_aam0')
+          call my_out_us(70,nCv,0,aa(-1,-1, 1),name//'_aap1')
+          call my_out_us(70,nCv,0,aa(-1,-1, 2),name//'_aap2')
+          call my_out_us(70,nCv,0,aa(-1,-1, 3),name//'_aap3')
+          call my_out_us(70,nCv,0,aa(-1,-1, 4),name//'_aap4')
+#endif
+          call my_out_us(70,nCv,0,resmb,name//'_resmb')
+          call my_out_us(70,nCv,0,corub,name//'_corub')
+          call my_out_us(70,nCv,0,pccb(1,0),name//'_pccbx')
+          call my_out_us(70,nCv,0,pccb(1,1),name//'_pccby')
+          call my_out_us(70,nCv,0,rob,name//'_rob')
+          call my_out_us(70,nCv,0,pb,name//'_pb')
+          call my_out_us(70,nCv,0,smb(:,0),name//'_smb0')
+          call my_out_us(70,nCv,0,smb(:,1),name//'_smb1')
+          call my_out_us(70,nCv,0,smb(:,2),name//'_smb2')
+          call my_out_us(70,nCv,0,smb(:,3),name//'_smb3')
+          call my_out_us(70,nFc,1,flcb,name//'_flcb')
+          call my_out_us(70,nFc,1,cvsb,name//'_cvsb')
+        endif 
 
       endif                                                           !srv 17.06.02 }
 

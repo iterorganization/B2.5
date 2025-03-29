@@ -321,6 +321,16 @@ c b2npmo with rxf = 0 and recompute fluxes.
      &    ncall_b2news_, b2news_solving(1), 0.0_R8, dtim,
      &    st%pl, st%dv, st%rt, st%co, st%co_ns, st%sr, st%srw,
      &    st%psnc, st%psnl, st_ext, ier0)
+
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1) )
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
+!! FR possible loop (1) for use with OpenMP
+!$omp parallel do default(none) 
+!$omp& private(is)
+!$omp& shared(nCv, nFc, nVx, switch, st, ismain, geo, mpg)
+#endif
       do is = switch%nsmin, switch%nsmax-1
 *    ..compute partial pressure
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
@@ -329,6 +339,11 @@ c b2npmo with rxf = 0 and recompute fluxes.
         call b2tfnb (nCv, nFc, nVx, is, ismain,
      &   switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .true.)
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP1) )
+!$OMP END PARALLEL DO
+!! FR end of loop (1)
+#endif
+
 *    ..compute electron drift velocities
       call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
      &    st%dv%fac_ExB, st%dv%ne, st%pl%te, st%pl%po, st%dv%vedia,
@@ -439,6 +454,14 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
      &  st%dv%fchinert_a, st%dv%fchinert)
 *     ..iterate on particle balance
 !      do is = 0, ns-1
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
+!!FR Possible loop (2) for use with OpenMP
+!$omp parallel do default(none)
+!$omp& private(is, iCv, solvedum, solvedm2)
+!$omp& shared(switch, st, geo, mpg)
+!$omp& shared(is_neutral, nCv, nFc, nVx, ns, ismain, solveco, solvemo)
+!$omp& shared(b2news_solving, rxf0, dtim, last_solve_9)
+#endif
       do is = switch%nsmin, switch%nsmax-1
 *    ..DPC
         do iCv = 1, nCv
@@ -470,12 +493,16 @@ csw 16oct2012 init ier0
 !       if (all(solveco(is,0:mpg%nnreg(0)))) then                        !srv 26.09.12 22.05.18
           solvedum(0:mpg%nnreg(0))=solveco(is,0:mpg%nnreg(0))
           solvedm2(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
+          call restart_ma28_for_us
+#else 
           new_matrix = .false.
           do ireg = 0, mpg%nnreg(0)
             new_matrix = new_matrix.or.
      &       solveco(is,ireg).neqv.last_solve_9(ireg)
           end do
           if(new_matrix.or..true.) call restart_ma28_for_us
+#endif 
           call b2npco (nCv, nFc, nVx, mpg%nnreg(0),                      !srv 22.05.18
      &      b2news_solving(2), solvedum, b2news_solving(1), solvedm2,
      &      ncall_b2news_, is, rxf0, dtim, switch, geo, mpg,
@@ -496,6 +523,12 @@ csw 16oct2012 init ier0
         call b2tfnb (nCv, nFc, nVx, is, ismain,
      &    switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
       enddo
+    
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
+!$omp end parallel do
+!! FR End of loop (2)
+#endif
+
 *      ..compute electron drift velocities
         call b2tfed (nCv, nFc, nVx, switch, geo, mpg, st%dv%facdrift,
      &    st%dv%fac_ExB, st%dv%ne, st%pl%te, st%pl%po,
@@ -617,6 +650,16 @@ csw 16oct2012 init ier0
       else
         st%co%cssb = 0.0_R8
       endif
+
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3) )
+!! FR possible loop (3) for use with OpenMP
+!$omp parallel do default(none)
+!$omp& private(is) 
+!$omp& shared(nCv, nFc, nVx, ismain, switch, geo, mpg, st, ns)
+#ifdef DBG
+!$omp& shared(zamin, zamax)
+#endif 
+#endif
       do is = 0, ns-1
 *   ..compute partial pressure
         call b2xppb (nCv, st%rt%rza(:,is), st%pl%na(:,is), st%pl%te,
@@ -628,6 +671,11 @@ csw 16oct2012 init ier0
         call b2tfnb (nCv, nFc, nVx, is, ismain,
      &   switch, geo, mpg, st%pl, st%dv, st%co, st%rt, .false.)
       enddo
+
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP3) )
+!$OMP END PARALLEL DO
+!!FR End of loop (3)
+#endif
 
 *   ..compute fne_he, fni_he
 c      with diamagnetic drift part                                       !srv 13.05.99
@@ -691,6 +739,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 !lkw20.03.2023{
       wrkf = -st%dv%fch_p(:,0)/(qe*(geo%fcPbs + b2news_cutlo))
       call intcell(nFc,nCv,mpg,mpg%intcellP,wrkf,st%dv%ue)
+
       do is=0,ns-1
         st%dv%ue = st%dv%ue +
      &           st%rt%rza(:,is)*st%pl%ua(:,is)*st%pl%na(:,is)

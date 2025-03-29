@@ -193,10 +193,14 @@
       subroutine b2saxpy (n, sa, sx, incx, sy, incy)
       use b2mod_types
       use b2mod_math
+      use b2mod_openmp
       implicit none
       integer n, incx, incy
       real (kind=R8) ::
      *   sa, sx(0:*), sy(0:*)
+#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_MYBLAS) )  )
+      logical make_parallel
+#endif
 *     ------------------------------------------------------------------
 *     B2SAXPY (BLAS routine) performs the vector operation y:=y+sa*x.
 *     x and y are d.p. real vectors, described by (n,sx,incx) and
@@ -207,21 +211,31 @@
       integer i, ix, iy
       external xerrab
 *     ------------------------------------------------------------------
+#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_MYBLAS) ) )
+      make_parallel =  (.not. in_parallel())
+#endif
       if (incy.eq.0) then
-       call xerrab ('b2saxpy--error, incy.eq.0')
+      call xerrab ('b2saxpy--error, incy.eq.0')
       else if (sa.eq.0.0_R8) then
       else if (incx.eq.1.and.incy.eq.1) then
-       do i = 0, n-1
-        sy(i) = sy(i)+sa*sx(i)
-       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_MYBLAS) )
+!$OMP PARALLEL DO IF (make_parallel)
+!$OMP& SCHEDULE(static)
+!$OMP& DEFAULT(none)
+!$OMP& PRIVATE(i)
+!$OMP& SHARED(sx,sy,sa,n)
+#endif
+      do i = 0, n-1
+      sy(i) = sy(i)+sa*sx(i)
+      enddo
       else
-       ix = ibase(n,incx)
-       iy = ibase(n,incy)
-       do i = 0, n-1
-        sy(iy) = sy(iy)+sa*sx(ix)
-        ix = ix+incx
-        iy = iy+incy
-       enddo
+      ix = ibase(n,incx)
+      iy = ibase(n,incy)
+      do i = 0, n-1
+      sy(iy) = sy(iy)+sa*sx(ix)
+      ix = ix+incx
+      iy = iy+incy
+      enddo
       endif
       return
 *     ------------------------------------------------------------------

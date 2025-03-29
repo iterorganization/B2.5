@@ -8,6 +8,7 @@
       use b2mod_switches
       use b2us_geo
       use b2us_map
+      use b2mod_openmp
       use b2mod_b2cmpa
       use b2mod_balance                                           !djm Jan2017
      & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf,
@@ -81,6 +82,21 @@
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
        call b2xvsg (nCv, rzb, 1, 'rzb', '.ge.')
       endif
+*   .. check output writing
+      if ((switch%b2sigp_iout.ne.0.or.switch%iout_b2wdat.eq.4)) then                       !srv 17.06.02 {
+        if (in_parallel() .and. ncall_b2sigp == 0) then
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+           if (ncall_b2sigp==0) then
+             write(*,*) 'b2sigp OpenMP warning: no file output ',
+     &                 'in parallel mode'
+           end if
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+        end if 
+      end if
 
 * ..choose the correct temperature
       if (switch%tn_style.eq.2.and.is_neutral(isb).and.
@@ -322,19 +338,21 @@ cxpb apply restriction to pressure gradient for minority ions
       endif                                                           !srv 26.06.18 }
 
       if (switch%b2sigp_iout.ne.0.or.switch%iout_b2wdat.eq.4) then    !srv 17.06.02 {
-       write (chns,'(i3.3)') isb
-!      do k=0,3
-!        write (chk,'(i1)') k
-!        call my_out_us(70,nCv,0,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
-!      enddo
-       call my_out_us(70,nCv,0,smbgp(1,0),'b2sigp_smogp'//chns)
-       if(switch%b2sigp_style.eq.0 .or. switch%b2sigp_style.eq.1 ) then
-          call my_out_us(70,nCv,0,wrk5,'b2sigp_smogpi'//chns)
-          call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpe'//chns)
-       elseif(switch%b2sigp_style.eq.2) then
-          call my_out_us(70,nCv,0,wrk5,'b2sigp_smogpi'//chns)
-          call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpo'//chns)
-       endif
+        if (.not. in_parallel()) then 
+          write (chns,'(i3.3)') isb
+    !      do k=0,3
+    !        write (chk,'(i1)') k
+    !        call my_out_us(70,nCv,0,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
+    !      enddo
+          call my_out_us(70,nCv,0,smbgp(1,0),'b2sigp_smogp'//chns)
+        if(switch%b2sigp_style.eq.0 .or. switch%b2sigp_style.eq.1 ) then
+              call my_out_us(70,nCv,0,wrk5,'b2sigp_smogpi'//chns)
+              call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpe'//chns)
+          elseif(switch%b2sigp_style.eq.2) then
+              call my_out_us(70,nCv,0,wrk5,'b2sigp_smogpi'//chns)
+              call my_out_us(70,nCv,0,wrk6,'b2sigp_smogpo'//chns)
+          endif
+        endif
       endif                                                           !srv 17.06.02 }
 
 cdjm Jan2017 Store linearised source for balance

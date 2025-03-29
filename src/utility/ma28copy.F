@@ -129,6 +129,12 @@ c
 c
       integer i, i1, ii, iend, j, j1, j2, jj, jay, newj1,
      *  newpos, knum, length, move
+
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28edc/,/ma28fdc/,/ma28gdc/,/ma28hdc/)
+!$OMP THREADPRIVATE(/ma30idc/,/ma30edc/,/ma30fdc/)
+!$OMP THREADPRIVATE(/mc23bdc/,/lpivotc/)
+#endif
 c
 c some  initialisation and transfer of information between
 c     common blocks (see earlier comments).
@@ -389,6 +395,10 @@ c
       common /ma30idc/ tol1, big1, ndrop1, nsrch1, lbig1
 c
       integer i1, idup, iend
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28edc/,/ma28fdc/,/ma28gdc/,/ma28hdc/)
+!$OMP THREADPRIVATE(/ma30edc/,/ma30gdc/,/ma30idc/)
+#endif
 c
 c check to see if elements were dropped in previous ma28a/ad call.
       if (ndrop.eq.0) go to 10
@@ -501,7 +511,11 @@ c     data or ma28a/ad.
      * irank, abort1, abort2
       common /ma28gdc/ idisp
       common /ma30hdc/ mresid
-c
+
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28fdc/,/ma28gdc/,/ma30hdc/)
+#endif
+
 c this call performs the solution of the set of equations.
       call ma30cdcopy(n, icn, a, licn, ikeep, ikeep(1,4), ikeep(1,5),
      * idisp, ikeep(1,2), ikeep(1,3), rhs, w, mtype)
@@ -529,11 +543,16 @@ c     it also calculates the largest element in the input matrix.
       common /ma28edc/ lp, mp, lblock, grow
       common /ma28gdc/ idisp
 c
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28edc/,/ma28gdc/)
+#endif
       integer ii, i, jj, j1, j2, iold, inew, jnew, jold,
      * idisp2, iblock, jcomp, idummy, jdummy, midpt
 c
       data zero /0.0_R8/
       blockl = lenoff(1).ge.0
+
+
 c iw1(i,3)  is set to the block in which row i lies and the
 c     inverse permutations to ip and iq are set in iw1(.,1) and
 c     iw1(.,2) resp.
@@ -720,6 +739,9 @@ c
       common /ma28edc/ lp, mp, lblock, grow
       common /ma28hdc/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28edc/,/ma28hdc/)
+#endif
 c
       integer i, iterat, nrow, ncol
 c
@@ -1036,6 +1058,9 @@ c for comments of common block variables see block data subprogram.
       common /ma30fdc/ irncp, icncp, irank, minirn, minicn
       common /ma30idc/ tol, big, ndrop, nsrch, lbig
       common /lpivotc/ lpiv,lnpiv,mapiv,manpiv,iavpiv,ianpiv,kountl
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma30edc/,/ma30fdc/,/ma30idc/,/lpivotc/)
+#endif
 c
       integer i, j, k, l, n, i1, i2, ii, j1, j2, jj, kk, ll, iii,
      * lc, lr, nc, nr, nz, nz2, nzpc,
@@ -2102,6 +2127,10 @@ c see block data for comments on variables in common.
       common /ma30edc/ lp, abort1, abort2, abort3
       common /ma30idc/ tol, big, ndrop, nsrch, lbig
       common /ma30gdc/ eps, rmin
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma30edc/,/ma30idc/,/ma30gdc/)
+#endif
+c
 c
       integer i, j, jj, jay, jayjay, ifin, jfin, istart,
      * ilend, ipivj, ising
@@ -2320,6 +2349,10 @@ c
       integer icn(licn), lenr(n), lenrl(n), lenoff(n), ip(n), iq(n)
 c see block data for comments on variables in common.
       common /ma30hdc/ resid
+
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma30hdc/)
+#endif
 c
       integer i, ib, ii, iii, j, j1, j2, j3, jj, k, lj1, lj2,
      * iend, iback, ifirst, ilast, iblock, iblend,
@@ -2598,6 +2631,9 @@ c
 c see block data for comments on variables in common.
       integer irncp, icncp, irank, minirn, minicn
       common /ma30fdc/ irncp, icncp, irank, minirn, minicn
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma30fdc/)
+#endif
 c
       integer j, jpos, k, kn, kl
 c
@@ -3111,6 +3147,9 @@ c###### calls   mc13    mc21
 c input ... n,icn .. a,icn,lenr ....
       integer i, j, k, i1, i2, ii, jj, ibeg, iend, inew, iold,
      * jold, jnew, ilend, iblock, irowb, irowe, jnpos, leni, nz
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/mc23bdc/)
+#endif
 c
 c set up pointers iw(.,1) to the beginning of the rows and set lenoff
 c     equal to lenr.
@@ -3480,6 +3519,9 @@ c
 c     common /ma28gdc/ idisp(2)
       common /ma28hdc/ tol, themax, big, dxmax, errmax, dres, cgce,
      * ndrop, maxit, noiter, nsrch, istart, lbig
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28edc/,/ma28fdc/,/ma28hdc/)
+#endif
       data eps /1.0e-4_R8/, tol /0.0_R8/, cgce /0.5_R8/
       data maxit /16/
       data lp /6/, mp /6/, nsrch /32768/, istart /0/
@@ -3489,6 +3531,8 @@ c     common /ma28gdc/ idisp(2)
       block data bd2copy
       use b2mod_types
       implicit none
+
+      
 c although all common block variables do not have default values,
 c     we comment on all the common block variables here.
 c
@@ -3632,6 +3676,9 @@ c
       common /ma30edc/ lp, abort1, abort2, abort3
       common /ma30gdc/ eps, rmin
       common /ma30idc/ tol, big, ndrop, nsrch, lbig
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma30edc/,/ma30gdc/,/ma30idc/)
+#endif
       data eps /1.0e-4_R8/, tol /0.0_R8/, big /0.0_R8/
       data lp /6/, nsrch /32768/
       data lbig /.false./
@@ -3643,5 +3690,8 @@ c
       integer lp,numnz,num,large
       logical abort
       common /mc23bdc/ lp,numnz,num,large,abort
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/mc23bdc/)
+#endif
       data lp/6/,abort/.false./
       end block data bd3copy
