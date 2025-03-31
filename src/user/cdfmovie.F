@@ -103,7 +103,7 @@
               call create_cdf_field3(ncid, 'rsahi', 1,
      1         'Volumetric ionisation energy source/sink', 'W m^-3')
               call create_cdf_field2(ncid, 'rsahisum',
-     1         'Total volumetric ionisation energy source/sink', 
+     1         'Total volumetric ionisation energy source/sink',
      2         'W m^-3')
               call create_cdf_field3(ncid, 'rrana', 1,
      1         'Volumetric recombination rate', 'm^-3 s^-1')
@@ -192,24 +192,10 @@
           call put_cdf_field3(ncid,'tmb2',dummy3mol,nx+2,ny+2,nnmoli)
         endif
         if (fields_selection.ge.2) then
-          dummy3 = 0.0_R8
-          do iy=-1,ny
-            do ix=-1,nx
-              do is=1,ns
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)+fna(ix,iy,0,is-1)
-              enddo
-            enddo
-          enddo
+          dummy3(-1:nx,-1:ny,0:ns-1) = fna(-1:nx,-1:ny,0,0:ns-1)
           write(*,*) 'put_cdf_field3: fnax'
           call put_cdf_field3(ncid,'fnax',dummy3,nx+2,ny+2,ns)
-          dummy3 = 0.0_R8
-          do iy=-1,ny
-            do ix=-1,nx
-              do is=1,ns
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)+fna(ix,iy,1,is-1)
-              enddo
-            enddo
-          enddo
+          dummy3(-1:nx,-1:ny,0:ns-1) = fna(-1:nx,-1:ny,1,0:ns-1)
           write(*,*) 'put_cdf_field3: fnay'
           call put_cdf_field3(ncid,'fnay',dummy3,nx+2,ny+2,ns)
           dummy(:,:) = fhe(:,:,0)
