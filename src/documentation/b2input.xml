@@ -209,7 +209,7 @@
 			</introduction>
 		</routine>
 		<coefficients>
-			<!-- These block contains tooltips for cofficient blocks-->
+			<!-- These block contains tooltips for coefficient blocks-->
 			<param>
 				<name>label</name>
 				<type>string</type>
@@ -2927,7 +2927,15 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Another option for movie output. Gives the real-time interval between movie frames. If non-zero, must be at least as large as the simulation timestep.
+					If non-zero, the movie file b2movies.nc is generated, containing several 2d quantities. Gives the real-time interval between writes of movie frames in b2movies.nc. If non-zero, must be at least as large as the simulation timestep.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_fields</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_fields.ge.1 then only the main state variables (na, ne, Te, Ti, etc.) are written with each write to b2movies.nc. If cdfmovie_fields.ge.2 then additional quantities (e.g. fluxes, particle and energy sources) are also included.
 				</description>
 			</switch>
 			<switch>
@@ -3128,7 +3136,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Controls additional output to b2time.nc.  If eq 1 then a few 2d arrays (ne, Te, Ti) are written with each write to b2time.nc. If eq 2 then fluxes, electric potential, kinetic energy, and fluid particle and energy source terms are also included (e.g., rsana, rsahi, rqrad).
+					Controls additional output to b2time.nc.  If 2dwrite.ge.1 then a few 2d arrays (ne, Te, Ti) are written with each write to b2time.nc. If 2dwrite.ge.2 then fluxes, electric potential, kinetic energy, and fluid particle and energy source terms are also included (e.g., rsana, rsahi, rqrad).
 				</description>
 			</switch>
 			<switch>
