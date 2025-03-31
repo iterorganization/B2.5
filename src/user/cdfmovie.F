@@ -60,7 +60,7 @@
      &     nnatmi, nnmoli)
           if (fields_selection.ge.1) then
             call create_cdf_field3(ncid, 'na', 1,
-     1       'Density of fluid species', 'm^-3')
+     1       'Ion density', 'm^-3')
             call create_cdf_field2(ncid, 'ne',
      1       'Electron density', 'm^-3')
             call create_cdf_field2(ncid, 'te',
@@ -77,7 +77,7 @@
             endif
             if(nnmoli.gt.0) then
               call create_cdf_field3(ncid, 'dmb2', 3,
-     1         'Molecule density', 'm^-3')
+     1         'Molecular density', 'm^-3')
               call create_cdf_field3(ncid, 'tmb2', 3,
      1         'Molecule temperature', 'eV')
             endif
@@ -145,8 +145,8 @@
      2           'W m^-3')
               endif
             endif
-            call create_cdf_end(ncid)
           endif
+          call create_cdf_end(ncid)
         endif
       endif
 
@@ -168,299 +168,178 @@
         write(*,*) 'put_cdf_field2: po'
         call put_cdf_field2(ncid,'po',po,nx+2,ny+2)
         if(nnatmi.gt.0) then
-          dummy3=0.0_R8
-          dummy3(-1:nx,-1:ny,1:nnatmi)=dab2(0:nx+1,0:ny+1,1:nnatmi,1)
+          dummy3atm = 0.0_R8
+          dummy3atm(-1:nx,-1:ny,1:nnatmi) =
+     .     dab2(0:nx+1,0:ny+1,1:nnatmi,1)
           write(*,*) 'put_cdf_field3: dab2'
-          call put_cdf_field3(ncid,'dab2',dummy3,nx+2,ny+2,nnatmi)
-          dummy3=0.0_R8
-          dummy3(-1:nx,-1:ny,1:nnatmi)=tab2(0:nx+1,0:ny+1,1:nnatmi,1)/qe
+          call put_cdf_field3(ncid,'dab2',dummy3atm,nx+2,ny+2,nnatmi)
+          dummy3atm = 0.0_R8
+          dummy3atm(-1:nx,-1:ny,1:nnatmi) =
+     .     tab2(0:nx+1,0:ny+1,1:nnatmi,1)/qe
           write(*,*) 'put_cdf_field3: tab2'
-          call put_cdf_field3(ncid,'tab2',dummy3,nx+2,ny+2,nnatmi)
+          call put_cdf_field3(ncid,'tab2',dummy3atm,nx+2,ny+2,nnatmi)
         endif
         if(nnmoli.gt.0) then
-          dummy3=0.0_R8
-          dummy3(-1:nx,-1:ny,1:nnmoli)=dmb2(0:nx+1,0:ny+1,1:nnmoli,1)
+          dummy3mol = 0.0_R8
+          dummy3mol(-1:nx,-1:ny,1:nnmoli) =
+     .     dmb2(0:nx+1,0:ny+1,1:nnmoli,1)
           write(*,*) 'put_cdf_field3: dmb2'
-          call put_cdf_field3(ncid,'dmb2',dummy3,nx+2,ny+2,nnmoli)
-          dummy3=0.0_R8
-          dummy3(-1:nx,-1:ny,1:nnmoli)=tmb2(0:nx+1,0:ny+1,1:nnmoli,1)/qe
+          call put_cdf_field3(ncid,'dmb2',dummy3mol,nx+2,ny+2,nnmoli)
+          dummy3mol = 0.0_R8
+          dummy3mol(-1:nx,-1:ny,1:nnmoli) =
+     .     tmb2(0:nx+1,0:ny+1,1:nnmoli,1)/qe
           write(*,*) 'put_cdf_field3: tmb2'
-          call put_cdf_field3(ncid,'tmb2',dummy3,nx+2,ny+2,nnmoli)
+          call put_cdf_field3(ncid,'tmb2',dummy3mol,nx+2,ny+2,nnmoli)
         endif
         if (fields_selection.ge.2) then
+          dummy3 = 0.0_R8
           do iy=-1,ny
             do ix=-1,nx
               do is=1,ns
-                dummy3(ix,iy,is)=0.0_R8
                 dummy3(ix,iy,is)=dummy3(ix,iy,is)+fna(ix,iy,0,is-1)
               enddo
             enddo
           enddo
           write(*,*) 'put_cdf_field3: fnax'
           call put_cdf_field3(ncid,'fnax',dummy3,nx+2,ny+2,ns)
+          dummy3 = 0.0_R8
           do iy=-1,ny
             do ix=-1,nx
               do is=1,ns
-                dummy3(ix,iy,is)=0.0_R8
                 dummy3(ix,iy,is)=dummy3(ix,iy,is)+fna(ix,iy,1,is-1)
               enddo
             enddo
           enddo
           write(*,*) 'put_cdf_field3: fnay'
           call put_cdf_field3(ncid,'fnay',dummy3,nx+2,ny+2,ns)
-          do iy=-1,ny
-            do ix=-1,nx
-              dummy(ix,iy)=0.0_R8
-              dummy(ix,iy)=dummy(ix,iy)+fhe(ix,iy,0)
-            enddo
-          enddo
+          dummy(:,:) = fhe(:,:,0)
           write(*,*) 'put_cdf_field2: fhex'
           call put_cdf_field2(ncid,'fhex',dummy,nx+2,ny+2)
-          do iy=-1,ny
-            do ix=-1,nx
-              dummy(ix,iy)=0.0_R8
-              dummy(ix,iy)=dummy(ix,iy)+fhe(ix,iy,1)
-            enddo
-          enddo
+          dummy(:,:) = fhe(:,:,1)
           write(*,*) 'put_cdf_field2: fhey'
           call put_cdf_field2(ncid,'fhey',dummy,nx+2,ny+2)
-          do iy=-1,ny
-            do ix=-1,nx
-              dummy(ix,iy)=0.0_R8
-              dummy(ix,iy)=dummy(ix,iy)+fhi(ix,iy,0)
-            enddo
-          enddo
+          dummy(:,:) = fhi(:,:,0)
           write(*,*) 'put_cdf_field2: fhix'
           call put_cdf_field2(ncid,'fhix',dummy,nx+2,ny+2)
-          do iy=-1,ny
-            do ix=-1,nx
-              dummy(ix,iy)=0.0_R8
-              dummy(ix,iy)=dummy(ix,iy)+fhi(ix,iy,1)
-            enddo
-          enddo
+          dummy(:,:) = fhi(:,:,1)
           write(*,*) 'put_cdf_field2: fhiy'
           call put_cdf_field2(ncid,'fhiy',dummy,nx+2,ny+2)
-          do iy=-1,ny
-            do ix=-1,nx
-              dummy(ix,iy)=0.0_R8
-              dummy(ix,iy)=dummy(ix,iy)+fch(ix,iy,0)
-            enddo
-          enddo
+          dummy(:,:) = fch(:,:,0)
           write(*,*) 'put_cdf_field2: fchx'
           call put_cdf_field2(ncid,'fchx',dummy,nx+2,ny+2)
-          do iy=-1,ny
-            do ix=-1,nx
-              dummy(ix,iy)=0.0_R8
-              dummy(ix,iy)=dummy(ix,iy)+fch(ix,iy,1)
-            enddo
-          enddo
+          dummy(:,:) = fch(:,:,1)
           write(*,*) 'put_cdf_field2: fchy'
           call put_cdf_field2(ncid,'fchy',dummy,nx+2,ny+2)
-          do iy=-1,ny
-            do ix=-1,nx
-              do is=1,ns
-                dummy3(ix,iy,is)=0.0_R8
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)+rsana(ix,iy,is-1)
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)/vol(ix,iy)
-              enddo
-            enddo
+          dummy3 = 0.0_R8
+          do is=1,ns
+            dummy3(:,:,is) = rsana(:,:,is-1)/vol(:,:)
           enddo
           write(*,*) 'put_cdf_field3: rsana'
           call put_cdf_field3(ncid,'rsana',dummy3,nx+2,ny+2,ns)
-          do iy=-1,ny
-            do ix=-1,nx
-              do is=1,ns
-                dummy3(ix,iy,is)=0.0_R8
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)+rsahi(ix,iy,is-1)
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)/vol(ix,iy)
-              enddo
-            enddo
+          dummy3 = 0.0_R8
+          do is=1,ns
+            dummy3(:,:,is) = rsahi(:,:,is-1)/vol(:,:)
           enddo
           write(*,*) 'put_cdf_field3: rsahi'
           call put_cdf_field3(ncid,'rsahi',dummy3,nx+2,ny+2,ns)
-          do iy=-1,ny
-            do ix=-1,nx
-              dummy(ix,iy)=0.0_R8
-              do is=0,ns-1
-                dummy(ix,iy)=dummy(ix,iy)+rsahi(ix,iy,is)
-              enddo
-              dummy(ix,iy)=dummy(ix,iy)/vol(ix,iy)
-            enddo
+          dummy = 0.0_R8
+          do is=0,ns-1
+            dummy(:,:) = dummy(:,:)+rsahi(:,:,is)
           enddo
+          dummy(:,:)=dummy(:,:)/vol(:,:)
           write(*,*) 'put_cdf_field2: rsahisum'
           call put_cdf_field2(ncid,'rsahisum',dummy,nx+2,ny+2)
-          do iy=-1,ny
-            do ix=-1,nx
-              do is=1,ns
-                dummy3(ix,iy,is)=0.0_R8
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)+rcxna(ix,iy,is-1)
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)/vol(ix,iy)
-              enddo
-            enddo
+          dummy3 = 0.0_R8
+          do is=1,ns
+            dummy3(:,:,is) = rcxna(:,:,is-1)/vol(:,:)
           enddo
           write(*,*) 'put_cdf_field3: rcxna'
           call put_cdf_field3(ncid,'rcxna',dummy3,nx+2,ny+2,ns)
-          do iy=-1,ny
-            do ix=-1,nx
-              do is=1,ns
-                dummy3(ix,iy,is)=0.0_R8
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)+rrahi(ix,iy,is-1)
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)/vol(ix,iy)
-              enddo
-            enddo
+          dummy3 = 0.0_R8
+          do is=1,ns
+            dummy3(:,:,is)=rrahi(:,:,is-1)/vol(:,:)
           enddo
           write(*,*) 'put_cdf_field3: rrahi'
           call put_cdf_field3(ncid,'rrahi',dummy3,nx+2,ny+2,ns)
-          do iy=-1,ny
-            do ix=-1,nx
-              dummy(ix,iy)=0.0_R8
-              do is=0,ns-1
-                dummy(ix,iy)=dummy(ix,iy)+rrahi(ix,iy,is)
-              enddo
-              dummy(ix,iy)=dummy(ix,iy)/vol(ix,iy)
-            enddo
+          dummy = 0.0_R8
+          do is=0,ns-1
+            dummy(:,:) = dummy(:,:)+rrahi(:,:,is)
           enddo
+          dummy(:,:)=dummy(:,:)/vol(:,:)
           write(*,*) 'put_cdf_field2: rrahisum'
           call put_cdf_field2(ncid,'rrahisum',dummy,nx+2,ny+2)
-          do iy=-1,ny
-            do ix=-1,nx
-              do is=1,ns
-                dummy3(ix,iy,is)=0.0_R8
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)+rsana(ix,iy,is-1)
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)/vol(ix,iy)
-              enddo
-            enddo
+          dummy3 = 0.0_R8
+          do is=1,ns
+            dummy3(:,:,is) = rsana(:,:,is-1)/vol(:,:)
           enddo
           write(*,*) 'put_cdf_field3: rsana'
           call put_cdf_field3(ncid,'rsana',dummy3,nx+2,ny+2,ns)
-          do iy=-1,ny
-            do ix=-1,nx
-              do is=1,ns
-                dummy3(ix,iy,is)=0.0_R8
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)+rcxhi(ix,iy,is-1)
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)/vol(ix,iy)
-              enddo
-            enddo
+          dummy3 = 0.0_R8
+          do is=1,ns
+            dummy3(:,:,is) = rcxhi(:,:,is-1)/vol(:,:)
           enddo
           write(*,*) 'put_cdf_field3: rcxhi'
           call put_cdf_field3(ncid,'rcxhi',dummy3,nx+2,ny+2,ns)
-          do iy=-1,ny
-            do ix=-1,nx
-              dummy(ix,iy)=0.0_R8
-              do is=0,ns-1
-                dummy(ix,iy)=dummy(ix,iy)+rcxhi(ix,iy,is)
-              enddo
-              dummy(ix,iy)=dummy(ix,iy)/vol(ix,iy)
-            enddo
+          dummy = 0.0_R8
+          do is=0,ns-1
+            dummy(:,:)=dummy(:,:)+rcxhi(:,:,is)/vol(:,:)
           enddo
           write(*,*) 'put_cdf_field2: rcxhisum'
           call put_cdf_field2(ncid,'rcxhisum',dummy,nx+2,ny+2)
-          do iy=-1,ny
-            do ix=-1,nx
-              do is=1,ns
-                dummy3(ix,iy,is)=0.0_R8
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)+rqahe(ix,iy,is-1)
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)/vol(ix,iy)
-              enddo
-            enddo
+          dummy3 = 0.0_R8
+          do is=1,ns
+            dummy3(:,:,is) = rqahe(:,:,is-1)/vol(:,:)
           enddo
           write(*,*) 'put_cdf_field3: rqahe'
           call put_cdf_field3(ncid,'rqahe',dummy3,nx+2,ny+2,ns)
-          do iy=-1,ny
-            do ix=-1,nx
-              dummy(ix,iy)=0.0_R8
-              do is=0,ns-1
-                dummy(ix,iy)=dummy(ix,iy)+rqahe(ix,iy,is)
-              enddo
-              dummy(ix,iy)=dummy(ix,iy)/vol(ix,iy)
-            enddo
+          dummy = 0.0_R8
+          do is=0,ns-1
+            dummy(:,:) = dummy(:,:) + rqahe(:,:,is)/vol(:,:)
           enddo
           write(*,*) 'put_cdf_field2: rqahesum'
           call put_cdf_field2(ncid,'rqahesum',dummy,nx+2,ny+2)
-          do iy=-1,ny
-            do ix=-1,nx
-              do is=1,ns
-                dummy3(ix,iy,is)=0.0_R8
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)+rqrad(ix,iy,is-1)
-                dummy3(ix,iy,is)=dummy3(ix,iy,is)/vol(ix,iy)
-              enddo
-            enddo
+          dummy3 = 0.0_R8
+          do is=1,ns
+            dummy3(:,:,is) = rqrad(:,:,is-1)/vol(:,:)
           enddo
           write(*,*) 'put_cdf_field3: rqrad'
           call put_cdf_field3(ncid,'rqrad',dummy3,nx+2,ny+2,ns)
-          do iy=-1,ny
-            do ix=-1,nx
-              dummy(ix,iy)=0.0_R8
-              do is=0,ns-1
-                dummy(ix,iy)=dummy(ix,iy)+rqrad(ix,iy,is)
-              enddo
-              dummy(ix,iy)=dummy(ix,iy)/vol(ix,iy)
-            enddo
+          dummy = 0.0_R8
+          do is=0,ns-1
+            dummy(:,:) = dummy(:,:) + rqrad(:,:,is)/vol(:,:)
           enddo
           write(*,*) 'put_cdf_field2: rqradsum'
           call put_cdf_field2(ncid,'rqradsum',dummy,nx+2,ny+2)
           if(nnatmi.gt.0) then
-            dummy3atm=0.0_R8
-            do istra=1,nstra+1
-              dummy3atm(-1:nx,-1:ny,1:nnatmi)=
-     1         dummy3atm(-1:nx,-1:ny,1:nnatmi)+
-     2         eneutrad(0:nx+1,0:ny+1,1:nnatmi,istra)
-            enddo
-            do iy=-1,ny
-              do ix=-1,nx
-                do iatmi=1,nnatmi
-                  dummy3atm(ix,iy,iatmi)=dummy3atm(ix,iy,iatmi)
-     1             /vol(ix,iy)
-                enddo
-              enddo
+            dummy3atm = 0.0_R8
+            do iatmi = 1, nnatmi
+              dummy3atm(-1:nx,-1:ny,iatmi) =
+     .         eneutrad(0:nx+1,0:ny+1,iatmi,0)/vol(-1:nx,-1:ny)
             enddo
             write(*,*) 'put_cdf_field3: eneutrad'
             call put_cdf_field3(ncid,'eneutrad',dummy3atm,nx+2,ny+2,
      1       nnatmi)
-            do iy=-1,ny
-              do ix=-1,nx
-                dummy(ix,iy)=0.0_R8
-                do iatmi=1,nnatmi
-                  do istra=1,nstra+1
-                    dummy(ix,iy)=dummy(ix,iy)+eneutrad(ix+1,iy+1,
-     1               iatmi,istra)
-                  enddo
-                enddo
-                dummy(ix,iy)=dummy(ix,iy)/vol(ix,iy)
-              enddo
+            dummy = 0.0_R8
+            do iatmi=1,nnatmi
+              dummy(-1:nx,-1:ny) = dummy(-1:nx,-1:ny) +
+     .         eneutrad(0:nx,0:ny,iatmi,0)/vol(-1:nx,-1:ny)
             enddo
             write(*,*) 'put_cdf_field2: eneutradsum'
             call put_cdf_field2(ncid,'eneutradsum',dummy,nx+2,ny+2)
           endif
           if(nnmoli.gt.0) then
-            dummy3mol=0.0_R8
-            do istra=1,nstra+1
-              dummy3mol(-1:nx,-1:ny,1:nnmoli)=
-     1         dummy3mol(-1:nx,-1:ny,1:nnmoli)+
-     2         emolrad(0:nx+1,0:ny+1,1:nnmoli,istra)
-            enddo
-            do iy=-1,ny
-              do ix=-1,nx
-                do imoli=1,nnmoli
-                  dummy3mol(ix,iy,imoli)=dummy3mol(ix,iy,imoli)
-     1             /vol(ix,iy)
-                enddo
-              enddo
+            dummy3mol = 0.0_R8
+            do imoli = 1, nnmoli
+              dummy3mol(-1:nx,-1:ny,imoli)=
+     .         emolrad(0:nx+1,0:ny+1,imoli,0)/vol(-1:nx,-1:ny)
             enddo
             write(*,*) 'put_cdf_field3: emolrad'
             call put_cdf_field3(ncid,'emolrad',dummy3mol,nx+2,ny+2,
      1       nnmoli)
-            do iy=-1,ny
-              do ix=-1,nx
-                dummy(ix,iy)=0.0_R8
-                do imoli=1,nnmoli
-                  do istra=1,nstra+1
-                    dummy(ix,iy)=dummy(ix,iy)+emolrad(ix+1,iy+1,
-     1               imoli,istra)
-                  enddo
-                enddo
-                dummy(ix,iy)=dummy(ix,iy)/vol(ix,iy)
-              enddo
+            dummy = 0.0_R8
+            do imoli = 1, nnmoli
+              dummy(-1:nx,-1:ny) = dummy(-1:nx,-1:ny) +
+     .         emolrad(0:nx,0:ny,imoli,istra)/vol(-1:nx,-1:ny)
             enddo
             write(*,*) 'put_cdf_field2: emolradsum'
             call put_cdf_field2(ncid,'emolradsum',dummy,nx+2,ny+2)

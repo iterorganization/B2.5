@@ -145,7 +145,7 @@ c prepare the b2movies.nc.xxxx file
       call create_cdf_start(ncid2, filename, nx+2, ny+2, ns, natm, nmol)
       if (fields_selection.ge.1) then
         call create_cdf_field3(ncid2, 'na', 1,
-     1   'Density of fluid species', 'm^-3')
+     1   'Ion density', 'm^-3')
         call create_cdf_field2(ncid2, 'ne',
      1   'Electron density', 'm^-3')
         call create_cdf_field2(ncid2, 'te',
@@ -162,7 +162,7 @@ c prepare the b2movies.nc.xxxx file
         endif
         if(nmol.gt.0) then
           call create_cdf_field3(ncid2, 'dmb2', 3,
-     1     'Molecule density', 'm^-3')
+     1     'Molecular density', 'm^-3')
           call create_cdf_field3(ncid2, 'tmb2', 3,
      1     'Molecule temperature', 'eV')
         endif

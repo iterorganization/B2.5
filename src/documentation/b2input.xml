@@ -209,7 +209,7 @@
 			</introduction>
 		</routine>
 		<coefficients>
-			<!-- These block contains tooltips for cofficient blocks-->
+			<!-- These block contains tooltips for coefficient blocks-->
 			<param>
 				<name>label</name>
 				<type>string</type>
