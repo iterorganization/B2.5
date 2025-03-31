@@ -17,7 +17,6 @@
 #endif
 #endif
       integer :: status
-      integer, save :: fields_selection = 1
       integer :: idim, ivar, iatt, ib, it, ih, idum,
      1 itim, ncid, ncid2, ndims, nvars, natts, unlimid, xtype,
      2 dimids(NF_MAX_VAR_DIMS), len, dimsize(NF_MAX_VAR_DIMS),
@@ -32,6 +31,7 @@
       character*256 filename, plasmastate
       logical :: exists
 #endif
+      integer, save :: fields_selection = 1
       external ipgeti, ipgetr, xerrab, xertst
 
       call ipgeti ('cdfmovie_fields',fields_selection)
