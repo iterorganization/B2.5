@@ -550,7 +550,7 @@ c*** Gas puffing source and recycling
           if (crcstra(ic).eq.'C') then
             do j=1,nnatmi
               if(latmscl(j).eq.ls)
-     >          hlpnp=hlpnp+userfluxparm(ic,1)*gpfc(j,ic)*recyctmp
+     >          hlpnp=hlpnp+tflux(ic)*gpfc(j,ic)*recyctmp
             end do
           else
             hlp_lw = crcstra(ic).eq.'S' .or. crcstra(ic).eq.'N'
