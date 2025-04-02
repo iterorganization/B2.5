@@ -711,7 +711,7 @@ cank
             end if
           END IF
 
-          geometryType = geometryId( mpg, geo )
+          geometryType = geometryId( mpg, geo, 1 )
           if (geometryType.eq.GEOMETRY_LINEAR .or.
      &        geometryType.eq.GEOMETRY_CYLINDER) then
             target_east = .false.
