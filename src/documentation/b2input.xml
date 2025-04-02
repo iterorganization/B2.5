@@ -5313,8 +5313,9 @@
 				<name>b2ardr_*_recomb</name>
 				<description>
 					When fix_recomb is changed from 0, and if the ADAS option is in use, then uses the PRB file to add the contribution arising from is--&gt;is-1 processes.
+					If the AMJUEL/HYDHEL rates are in use and fix_recomb.eq.0, then the recombination energy is substracted to the electron recombination energy costs. May lead to negative rates!
 					This term includes the bremsstrahlung.
-					The '0' option only contains the bremsstrahlung for the is--&gt;is-1 process.
+					For ADAS, the '0' option only contains the bremsstrahlung for the is--&gt;is-1 process.
 					The correction is only applied for isonuclear sequences with nuclear charge up to zmax_recomb, inclusive.
 					Use of this option is still experimental!
 				</description>
@@ -5375,7 +5376,8 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Lower temperature bound (in eV) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+					Lower temperature bound (in eV) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species. Rates below this bound are given the same value as they have at t_min.
+					Only operational if within the bounds provided by tlohi in the b2ar.dat file header.
 				</description>
 			</switch>
 			<switch>
@@ -5383,7 +5385,8 @@
 				<default>1.0e30</default>
 				<type>real</type>
 				<description>
-					Upper temperature bound (in eV) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+					Upper temperature bound (in eV) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species. Rates above this bound are given the same value as they have at t_max.
+					Only operational if within the bounds provided by tlohi in the b2ar.dat file header.
 				</description>
 			</switch>
 			<switch>
@@ -5391,7 +5394,8 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Lower density bound (in m^{-3}) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+					Lower density bound (in m^{-3}) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species. Rates below this bound are given the same value as they have at n_min.
+					Only operational if within the bounds provided by nlohi in the b2ar.dat file header.
 				</description>
 			</switch>
 			<switch>
@@ -5399,7 +5403,8 @@
 				<default>1.0e30</default>
 				<type>real</type>
 				<description>
-					Upper density bound (in m^{-3}) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+					Upper density bound (in m^{-3}) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species. Rates above this bound are given the same value as they have at n_max.
+					Only operational if within the bounds provided by nlohi in the b2ar.dat file header.
 				</description>
 			</switch>
 		</category>

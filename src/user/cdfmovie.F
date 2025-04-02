@@ -29,7 +29,7 @@
 #endif
       real (kind=R8) :: time(1), dummy(1:nCv), dummy3(1:nCv, 1:ns),
      & dummy3atm(1:nCv, 1:nnatmi), dummy3mol(1:nCv, 1:nnatmi)
-      integer iCv, is, iatmi, imoli
+      integer is, iatmi, imoli
       integer ncall
       integer status, ndims, nvars, natts, unlimid
       integer, save :: fields_selection = 1

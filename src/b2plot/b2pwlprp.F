@@ -36,7 +36,7 @@ c======================================================================
       use b2mod_dimensions
       implicit none
       integer i,j,k,n
-      integer geometryType
+      integer gridGeometry, plasmaGeometry
       logical lim_cnf,target_east,target_west
 #ifdef DBG
       integer il
@@ -81,8 +81,9 @@ c       write(lun_w,*)
 c      end do !}
 c      close(lun_w)
 c>>>
-      geometryType = geometryId( mpg, geo )
-      lim_cnf=geometryType.eq.GEOMETRY_LIMITER
+      gridGeometry = geometryId( mpg, geo, 1 )
+      plasmaGeometry = geometryId( mpg, geo, 2 )
+      lim_cnf=plasmaGeometry.eq.GEOMETRY_LIMITER
 
 c*** Make the list of references to the Eirene "Additional surfaces" -
 c*** count for "unused elements", "elements not for Eirene", and
@@ -169,12 +170,12 @@ c*** Check the topology of the grid and the list of target edges
           do i = 1, nbc
             if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))).eq.0) cycle
             if(boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
-     &                             geometryType).eq.EAST) then
+     &                             gridGeometry).eq.EAST) then
               target_east = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
      &                      bcene(i).eq.15.or. target_east
             end if
             if(boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(i,1))),
-     &                             geometryType).eq.WEST) then
+     &                             gridGeometry).eq.WEST) then
                target_west = bcene(i).eq.3 .or. bcene(i).eq.12 .or.
      &                       bcene(i).eq.15.or. target_west
             end if
@@ -198,7 +199,7 @@ c*** Check the topology of the grid and the list of target edges
             itrg(1)=2
           end if
         end if
-      else if(geometryType.eq.GEOMETRY_SN .or. lim_cnf) then
+      else if(plasmaGeometry.eq.GEOMETRY_SN .or. lim_cnf) then
         ntrgts=2
         itrg(1)=1
         itrg(2)=2

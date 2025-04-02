@@ -259,7 +259,8 @@ module b2mod_ual_io
                                     !< 2: Z at location of maximum major radius
                                     !< 3: Z at dR/dZ = 0 maximum R location
                                     !< 4: GGD grid subset defined by jxa value
-  integer, save :: GeometryType !< Geometry identifier number
+  integer, save :: gridGeometry   !< Grid geometry identifier number
+  integer, save :: plasmaGeometry !< Plasma topology identifier number
 #if GGD_MAJOR_VERSION > 0
   integer, save :: iGsCoreBoundary  !< Variable to hold Core grid subset base
             !< index, later found by findGridSubsetByName() routine.
@@ -334,9 +335,10 @@ contains
     B25_git_version = get_B25_hash()
     code_commit = B25_git_version
 
-    geometryType = geometryId( mpg, geo )
-    configuration = geometryName( geometryType )
-    select case ( geometryType )
+    gridGeometry = geometryId( mpg, geo, 1 )
+    plasmaGeometry = geometryId( mpg, geo, 2 )
+    configuration = geometryName( plasmaGeometry )
+    select case ( plasmaGeometry )
     case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
       plate_name(1) = 'W'
       plate_name(2) = 'E'
@@ -373,7 +375,7 @@ contains
       wetted_area(i) = 0.0_IDS_real
       do iFc = 1, mpg%nFc
         if (mpg%fcReg(iFc).eq. &
-          & regionNumbers(i,REGIONTYPE_EDGE,geometryType)) then
+          & regionNumbers(i,REGIONTYPE_EDGE,gridGeometry)) then
           if (mpg%fcCv(iFc,1).le.mpg%nCi) then
             iCv = mpg%fcCv(iFc,1)
           else
@@ -1162,7 +1164,7 @@ contains
           end if
         end if
 
-        select case (GeometryType)
+        select case ( gridGeometry )
         case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
           u = 0.0_IDS_real
           frac = 0.0_IDS_real
@@ -1254,7 +1256,7 @@ contains
         if (iactive.gt.0) &
             &  call write_sourced_rz( summary%boundary%x_point_main, &
             &   geo%vxX(mpg%Xpt(iactive)), geo%vxY(mpg%Xpt(iactive)) )
-        select case (GeometryType)
+        select case ( plasmaGeometry )
         case ( GEOMETRY_CDN )
           call write_sourced_value( summary%boundary%distance_inner_outer_separatrices, 0.0_IDS_real )
         case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
@@ -1356,7 +1358,7 @@ contains
             end do
           end do
         end if
-        select case ( GeometryType )
+        select case ( plasmaGeometry )
         case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
           if (mpg%nStr.gt.0) then
             allocate( divertors%divertor( mpg%nStr ) )
@@ -1557,8 +1559,8 @@ contains
           allocate( divertors%divertor(2)%target(1)%identifier(1) )
           allocate( divertors%divertor(2)%target(2)%identifier(1) )
 #endif
-          if (GeometryType == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
-          &   GeometryType == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+          if ( plasmaGeometry == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+          &    plasmaGeometry == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
             divertors%divertor(1)%name = 'Lower divertor'
             divertors%divertor(2)%name = 'Lower SF divertor'
             divertors%divertor(1)%target(1)%name = "Lower inner target"
@@ -5632,7 +5634,7 @@ contains
 #endif
 
 ! Data at limiter tangency point
-        if (geometryType.eq.GEOMETRY_LIMITER) then
+        if (plasmaGeometry.eq.GEOMETRY_LIMITER) then
           u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te )/ev
           call write_sourced_value( summary%local%limiter%t_e, u )
           u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti )/ev
@@ -5854,16 +5856,16 @@ contains
         call fill_summary_data( geo, summary )
         u = 0.0_IDS_real
         do iCv = 1, mpg%nCi
-          if (geometryType.eq.GEOMETRY_LIMITER .or. &
-           &  geometryType.eq.GEOMETRY_SN .or. &
-           &  geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
-           &  geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+          if (gridGeometry.eq.GEOMETRY_LIMITER .or. &
+           &  gridGeometry.eq.GEOMETRY_SN .or. &
+           &  gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+           &  gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
             if (mpg%cvReg(iCv).ne.2) cycle
-          else if (geometryType.eq.GEOMETRY_STELLARATORISLAND) then
+          else if (gridGeometry.eq.GEOMETRY_STELLARATORISLAND) then
             if (mpg%cvReg(iCv).ne.2 .and. mpg%cvReg(iCv).ne.5) cycle
-          else if (geometryType.eq.GEOMETRY_CDN .or. &
-               &  geometryType.eq.GEOMETRY_DDN_BOTTOM .or. &
-               &  geometryType.eq.GEOMETRY_DDN_TOP) then
+          else if (gridGeometry.eq.GEOMETRY_CDN .or. &
+               &   gridgeometry.eq.GEOMETRY_DDN_BOTTOM .or. &
+               &   gridgeometry.eq.GEOMETRY_DDN_TOP) then
             if (mpg%cvReg(iCv).ne.2 .and. mpg%cvReg(iCv).ne.6) cycle
           else
             cycle
@@ -7377,7 +7379,7 @@ contains
       end if
     end if
 
-    if (GeometryType .eq. GEOMETRY_LINEAR) then
+    if ( gridGeometry .eq. GEOMETRY_LINEAR) then
       midplane_id = 4
     else
       if ( eq_found ) then
@@ -7456,7 +7458,7 @@ contains
     type (geometry), intent(in) :: geo
     type (ids_summary), intent(inout) :: summary
 
-    select case (GeometryType)
+    select case ( plasmaGeometry )
     case( GEOMETRY_LIMITER )
       call write_sourced_integer( summary%boundary%type, 0 )
     case( GEOMETRY_SN )
@@ -8747,7 +8749,7 @@ contains
         & topix,topiy,bottomix,bottomiy, &
         & nnreg, topcut, region, cflags, INCLUDE_GHOST_CELLS, vol, gs, qc )
 
-    call xertst( geometryId( mpg, geo ) == GEOMETRY_SN,   &
+    call xertst( geometryId( mpg, geo, 1 ) == GEOMETRY_SN,   &
         &   "write_cpo: can only do single null" )
 
     !! Write plasma state
