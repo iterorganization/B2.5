@@ -22,6 +22,8 @@ c*  lcns          : Eirene 'non-default surfaces' for the core boundary
 c*  ncns          : number of these surfaces
 c*  ltns          : Eirene 'non-default surfaces' for the targets
 c*  ntns          : number of these surfaces
+c*  lsns          : Eirene recycling 'non-default surfaces'
+c*  nsns          : number of these surfaces
 c*  l_neutrad     : if >=0, import radiation losses due to neutrals from Eirene
 c*  l_neutflux    : if >=0, then correct treatment of the incident fluxes in
 c*                  B2 and b2plot; if <0, then old (approximate) treatment
@@ -186,7 +188,7 @@ cank }
       real (kind=R8), save :: RCFE(NSTRAID), RCFI(NSTRAID)
 #endif
 
-      integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns,
+      integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns, nsns,
      .     dbg_eir_mc, debug_flags(100), neutrals_count
       real (kind=R8), save :: RF_NEUT(4)
       real (kind=R8), save :: eirene_step_cpu, eirene_step_dt,
@@ -466,6 +468,7 @@ cmb   b2species_start and end are set -100 here to check whether the field was r
       ktns=0
       ncns=0
       ntns=0
+      nsns=0
       ksns=0
       lsns=0
       msns=0
@@ -1037,8 +1040,15 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       else !}{
         ntns=ii(1)-1
       end if !}
+      ii=minloc(lsns)
+      if(lsns(ii(1)).gt.0) then !{
+        nsns=nstsid
+      else !}{
+        nsns=ii(1)-1
+      end if !}
       call xertst (0.le.ncns, 'faulty input ncns')
       call xertst (0.le.ntns, 'faulty input ntns')
+      call xertst (0.le.nsns, 'faulty input nsns')
 
       do j=1,nstrai !{
         if(lsns(j).gt.0 .and. lsns(j).le.nsts) lsns(j)=-lsns(j)
@@ -1631,8 +1641,15 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       else !}{
         ntns=ii(1)-1
       end if !}
+      ii=minloc(lsns)
+      if(lsns(ii(1)).gt.0) then !{
+        nsns=nstsid
+      else !}{
+        nsns=ii(1)-1
+      end if !}
       call xertst (0.le.ncns, 'faulty input ncns')
       call xertst (0.le.ntns, 'faulty input ntns')
+      call xertst (0.le.nsns, 'faulty input nsns')
 
       do j=1,nstrai !{
         if(lsns(j).gt.0 .and. lsns(j).le.nsts) lsns(j)=-lsns(j)

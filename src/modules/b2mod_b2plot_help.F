@@ -236,7 +236,7 @@
      *    'Ionisation energy (eV) [shifted down one]'/
       data descriptions(111:120) /
      1    'Self-pressure force',
-     2    'Region',
+     2    'Volume region index',
      3    'Parallel momentum source (N)',
      4    'Momentum sources from atomic physics (N)',
      5    'Extended friction term (N)',
@@ -308,8 +308,8 @@
      5    'bottomiy',
      6    'topix',
      7    'topiy',
-     8    'real cells',
-     9    'guard cells',
+     8    'Real cells',
+     9    'Guard cells',
      *    'Test ion density (m^{-3})'/
       data descriptions(181:190) /
      1    'Test ion temperature (eV)',
