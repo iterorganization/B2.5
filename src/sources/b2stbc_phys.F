@@ -3277,7 +3277,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-            srw%smo0(iCv1,0,is) = mompar(is,iB,1)*geo%fcS(iFc)*
+            srw%smo0(iCv1,0,is) = mompar(is,ib,1)*geo%fcS(iFc)*
      .        geo%fcHz(iFc)
             srw%smo0(iCv1,1,is) = 0.0_R8
           enddo
@@ -3644,9 +3644,9 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             srw%smo0(iCv1,0,is) = 0.0_R8 !TODO: drift contributions!
-            srw%smo0(iCv1,1,IS) = 0.0_R8
-            srw%smo0(iCv1,2,IS) = 0.0_R8
-            srw%smo0(iCv1,3,IS) = srw%smo0(iCv1,3,IS) +
+            srw%smo0(iCv1,1,is) = 0.0_R8
+            srw%smo0(iCv1,2,is) = 0.0_R8
+            srw%smo0(iCv1,3,is) = srw%smo0(iCv1,3,is) +
      &         MOMPAR(IS,IB,2)*geo%fcS(iFc)*geo%fcHz(iFc) +
      &         MOMPAR(IS,IB,1)*
      &         max(0.0_R8,mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*

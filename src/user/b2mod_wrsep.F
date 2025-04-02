@@ -430,7 +430,7 @@ c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c----------------------------------------------------------------------
 
-      geometryType = geometryId( mpg, geo )
+      geometryType = geometryId( mpg, geo, 2 )
 
       if(nspecies.le.0) then !{
         write(*,*) '!!! b2wrsep: nspecies.lt.0 - no tracing data'

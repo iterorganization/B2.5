@@ -195,7 +195,7 @@ contains
          'invalid main neutral species index ismain0')
     !   ..extensive tests on first few calls
     if (ncall.eq.0) then
-      geometryType = geometryId ( mpg, geo )
+      geometryType = geometryId ( mpg, geo, 1 )
       !   ..test state
       call ipgeti ('b2mwti_2dwrite',write_2d)
       call xertst (0.le.write_2d.and.write_2d.le.2,'faulty internal parameter write_2d')

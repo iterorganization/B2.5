@@ -894,7 +894,7 @@
 			<switchgroup>
 				<name>b2news_facdrift*</name>
 				<description>
-					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. Note that facdrift_dec and facdrift profile options have not been converted to WG! If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
+					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
 					The ion-neutral friction current requires either facdrift or fac_ExB to be turned on as well.
 				</description>
 				<switch>
@@ -921,7 +921,7 @@
 			<switchgroup>
 				<name>b2news_facExB_*</name>
 				<description>
-					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift. Can be superseded by b2news_ExB to set a constant value throughout the run. Note that facExB_dec and facExB profile options have not been converted to WG!
+					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift. Can be superseded by b2news_ExB to set a constant value throughout the run.
 				</description>
 				<switch>
 					<name>b2news_facExB_dec</name>
@@ -947,7 +947,7 @@
 			<switchgroup>
 				<name>b2news_facvis_*</name>
 				<description>
-					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift. Can be superseded by b2news_vis to set a constant value throughout the run. Note that facvis_dec and facvis profile options have not been converted to WG!
+					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift. Can be superseded by b2news_vis to set a constant value throughout the run.
 				</description>
 				<switch>
 					<name>b2news_facvis_dec</name>
@@ -1259,7 +1259,7 @@
 				<type>real</type>
 				<description>
 					Real parameter which multiplies ExB flows. If b2news_ExB.eq.0 and b2news_facExB_start.eq.0 then ExB flows are switched off. If b2news_ExB is nonzero, then ExB flows are multiplied by that constant throughout the run.
-					See also Run section on switches b2news_facExB_... for more details.
+					See also Run section on switches b2news_facExB_... for more details. A spatial fac_ExB profile is also possible, see Numerics section for details.
 				</description>
 			</switch>
 			<switch>
@@ -1268,7 +1268,7 @@
 				<type>real</type>
 				<description>
 					Real parameter which multiplies the viscous drift flows. If b2news_vis.eq.0 and b2news_facvis_start.eq.0 then the viscous drift flows are switched off. If b2news_vis is nonzero, then the viscous drift flows are multiplied by that constant throughout the run.
-					See also Run section on switches b2news_facvis_... for more details.
+					See also Run section on switches b2news_facvis_... for more details. A spatial fac_vis profile is also possible, see Numerics section for details.
 				</description>
 			</switch>
 			<switch>
@@ -3439,7 +3439,15 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Another option for movie output. Gives the real-time interval between movie frames. If non-zero, must be at least as large as the simulation timestep.
+					If non-zero, the movie file b2movies.nc is generated, containing several 2d quantities. Gives the real-time interval between writes of movie frames in b2movies.nc. If non-zero, must be at least as large as the simulation timestep.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_fields</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_fields.ge.1 then only the main state variables (na, ne, Te, Ti, etc.) are written with each write to b2movies.nc. If cdfmovie_fields.ge.2 then additional quantities (e.g. fluxes, particle and energy sources) are also included.
 				</description>
 			</switch>
 			<switch>
@@ -5616,8 +5624,9 @@
 				<name>b2ardr_*_recomb</name>
 				<description>
 					When fix_recomb is changed from 0, and if the ADAS option is in use, then uses the PRB file to add the contribution arising from is--&gt;is-1 processes.
+					If the AMJUEL/HYDHEL rates are in use and fix_recomb.eq.0, then the recombination energy is substracted to the electron recombination energy costs. May lead to negative rates!
 					This term includes the bremsstrahlung.
-					The '0' option only contains the bremsstrahlung for the is--&gt;is-1 process.
+					For ADAS, the '0' option only contains the bremsstrahlung for the is--&gt;is-1 process.
 					The correction is only applied for isonuclear sequences with nuclear charge up to zmax_recomb, inclusive.
 					Use of this option is still experimental!
 				</description>
@@ -5678,7 +5687,8 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Lower temperature bound (in eV) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+					Lower temperature bound (in eV) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species. Rates below this bound are given the same value as they have at t_min.
+					Only operational if within the bounds provided by tlohi in the b2ar.dat file header.
 				</description>
 			</switch>
 			<switch>
@@ -5686,7 +5696,8 @@
 				<default>1.0e30</default>
 				<type>real</type>
 				<description>
-					Upper temperature bound (in eV) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+					Upper temperature bound (in eV) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species. Rates above this bound are given the same value as they have at t_max.
+					Only operational if within the bounds provided by tlohi in the b2ar.dat file header.
 				</description>
 			</switch>
 			<switch>
@@ -5694,7 +5705,8 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Lower density bound (in m^{-3}) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+					Lower density bound (in m^{-3}) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species. Rates below this bound are given the same value as they have at n_min.
+					Only operational if within the bounds provided by nlohi in the b2ar.dat file header.
 				</description>
 			</switch>
 			<switch>
@@ -5702,7 +5714,8 @@
 				<default>1.0e30</default>
 				<type>real</type>
 				<description>
-					Upper density bound (in m^{-3}) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species.
+					Upper density bound (in m^{-3}) used for rates imported from AMJUEL/HYDHEL database for neutral hydrogenic species. Rates above this bound are given the same value as they have at n_max.
+					Only operational if within the bounds provided by nlohi in the b2ar.dat file header.
 				</description>
 			</switch>
 		</category>
