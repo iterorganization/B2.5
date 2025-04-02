@@ -78,6 +78,7 @@ c 2002-09-11: logic revised
       use b2mod_subsys
       use b2mod_dimensions
       use b2mod_chord_shift
+      use helper
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -2755,7 +2756,7 @@ c
           end do
           call copy(mach,1.0_R8,nz,textpl)
         case ('nreg')
-          description='Region'
+          description='Volume region index'
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -2769,12 +2770,15 @@ c
                 else
                   mach(ix,iy,0)=0.0_R8
                 end if
+                description='Volume region '//int2str(istack(iistack))  ! IGNORE
               else
                 if(region(ix,iy,0) .eq. -istack(iistack)) then
                   mach(ix,iy,0)=0.0_R8
                 else
                   mach(ix,iy,0)=1.0_R8
                 end if
+                description=  ! IGNORE
+     .    'All volume regions except region '//int2str(istack(iistack))
               end if
             end do
           end do
@@ -2795,12 +2799,17 @@ c
                 else
                   mach(ix,iy,0)=0.0_R8
                 end if
+                description=  ! IGNORE
+     .           'X-directed flux region '//int2str(istack(iistack))
               else
                 if(region(ix,iy,1) .eq. -istack(iistack)) then
                   mach(ix,iy,0)=0.0_R8
                 else
                   mach(ix,iy,0)=1.0_R8
                 end if
+                description=  ! IGNORE
+     .           'All X-directed flux regions except region '//
+     .            int2str(istack(iistack))
               end if
             end do
           end do
@@ -2822,12 +2831,17 @@ c
                 else
                   mach(ix,iy,0)=0.0_R8
                 end if
+                description=  ! IGNORE
+     .           'Y-directed flux region '//int2str(istack(iistack))
               else
                 if(region(ix,iy,2) .eq. -istack(iistack)) then
                   mach(ix,iy,0)=0.0_R8
                 else
                   mach(ix,iy,0)=1.0_R8
                 end if
+                description=  ! IGNORE
+     .           'All Y-directed flux regions except region '//
+     .            int2str(istack(iistack))
               end if
             end do
           end do
@@ -3227,6 +3241,7 @@ c
               end if
             end do
           end do
+          description='ix < '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixlt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixle')
@@ -3243,6 +3258,7 @@ c
               end if
             end do
           end do
+          description='ix =< '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixle" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixeq')
@@ -3259,6 +3275,7 @@ c
               end if
             end do
           end do
+          description='ix = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixne')
@@ -3275,6 +3292,7 @@ c
               end if
             end do
           end do
+          description='ix != '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixne" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixge')
@@ -3291,6 +3309,7 @@ c
               end if
             end do
           end do
+          description='ix >= '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixge" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixgt')
@@ -3307,6 +3326,7 @@ c
               end if
             end do
           end do
+          description='ix > '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixgt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iylt')
@@ -3323,6 +3343,7 @@ c
               end if
             end do
           end do
+          description='iy < '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iylt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyle')
@@ -3339,6 +3360,7 @@ c
               end if
             end do
           end do
+          description='iy =< '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyle" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyeq')
@@ -3355,6 +3377,7 @@ c
               end if
             end do
           end do
+          description='iy = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyne')
@@ -3371,6 +3394,7 @@ c
               end if
             end do
           end do
+          description='iy != '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyne" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyge')
@@ -3387,6 +3411,7 @@ c
               end if
             end do
           end do
+          description='iy >= '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyge" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iygt')
@@ -3403,6 +3428,7 @@ c
               end if
             end do
           end do
+          description='iy > '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iygt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('islt')
@@ -3940,7 +3966,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           call copy(mach,1.0_R8,nz,textbl)
         case ('rlcl')
-          description='real cells'
+          description='Real cells'
           nz=1
           do iy=-1,ny
             do ix=-1,nx
@@ -3953,7 +3979,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           call copy(mach,1.0_R8,nz,textbl)
         case ('gdcl')
-          description='guard cells'
+          description='Guard cells'
           nz=1
           do iy=-1,ny
             do ix=-1,nx
