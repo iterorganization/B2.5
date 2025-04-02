@@ -872,7 +872,7 @@ cxpb size is changed in b2mod_dimensions
       endif
 
 !   ..Calculate and fill list of CVs and faces needed for each type of feedback
-      geometryType = geometryId ( mpg, geo )
+      geometryType = geometryId ( mpg, geo, 2 )
       ifbreg = 1
       if  (maxval(fb_type(1:nFb)).gt.0) then
         do ifb = 1, nFb

@@ -11,6 +11,9 @@ c-----------------------------------------------------------------------
       use b2mod_boundary_namelist
       use b2us_geo
       use b2us_map
+#ifdef B25_EIRENE
+      use eirmod_clgin
+#endif
       implicit none
 
 c-----------------------------------------------------------------------
@@ -184,8 +187,9 @@ c-----------------------------------------------------------------------
       real (kind=R8) :: intface_s
       external intface_s
 #ifdef B25_EIRENE
-      integer, save :: l, m, js
+      integer, save :: l, m, js, ks
       real (kind=R8), save :: hlp
+      logical :: is_target
 #endif
 c-----------------------------------------------------------------------
 c
@@ -275,13 +279,12 @@ c*** Across or along the field?
 c
         do i = 1, mpg%bcFcP(ic,2)
           iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
-          hlp_h = state%dv%fht(iFc,0)-state%dv%fht(iFc,0)+
+          hlp_h = state%dv%fht(iFc,0)-state%dv%fhj(iFc,0)+
      .            state_ext%fhi(iFc,0)+
-     .            state%dv%fht(iFc,1)-state%dv%fht(iFc,1)+
+     .            state%dv%fht(iFc,1)-state%dv%fhj(iFc,1)+
      .            state_ext%fhi(iFc,1)
           hlp_p=0.0_R8
           do is=0,ns-1 !{
-            hlp_h=hlp_h+state%dv%fhp(iFc,0,is)+state%dv%fhp(iFc,1,is)
             hlp_p=hlp_p+state%dv%fhp(iFc,0,is)+state%dv%fhp(iFc,1,is)
           end do !}
           do is=0,state_ext%ns-1 !{
@@ -303,19 +306,19 @@ c
           hlp_h=hlp_h*mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
           hlp_p=hlp_p*mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c<<<
-c          print *,'b2blne: ic,bcchar,bcFcOr,hlp_h=',ic,' ',bcchar(ic),
-c     ,        ' ',mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1),hlp_h
+c          print *,'b2blne: ic,bcchar,hlp_h=',ic,' ',bcchar(ic),
+c     ,        ' ',hlp_h
 c>>>
 c
 c*** Now add the data to the proper accumulators
           if (lcore_hlp) then !{
-            pwcrh_tmp=pwcrh_tmp+hlp_h
-            pwcrp_tmp=pwcrp_tmp+hlp_p
+            pwcrh_tmp=pwcrh_tmp-hlp_h
+            pwcrp_tmp=pwcrp_tmp-hlp_p
           else !}{
             if (lcross_hlp) then !{
-              pwwlp_tmp=pwwlp_tmp+hlp_h+hlp_p
+              pwwlp_tmp=pwwlp_tmp+hlp_h
             else if (lbound_hlp) then !}{
-              pwtgp_tmp=pwtgp_tmp+hlp_h+hlp_p
+              pwtgp_tmp=pwtgp_tmp+hlp_h
             end if !}
           end if !}
           do j = 1,ntrgf_tmp !{
@@ -372,7 +375,7 @@ c>>>
             end do !}
             if(j.gt.0) then !{
               k=j
-              pwtgp_tmp=pwtgp_tmp+hlp
+              pwtgp_tmp=pwtgp_tmp-hlp
             else !}{
               k=0
               write(*,*) 'b2blne: failed to relate a stratum',ic,
@@ -380,9 +383,9 @@ c>>>
             end if !}
           else !}{
             k=ntrgf_tmp
-            pwwlp_tmp=pwwlp_tmp+hlp
+            pwwlp_tmp=pwwlp_tmp-hlp
           end if !}
-          if(k.gt.0) pwtpl_tmp(k)=pwtpl_tmp(k)+hlp
+          if(k.gt.0) pwtpl_tmp(k)=pwtpl_tmp(k)-hlp
         end if !}
       end do !}
 #endif
@@ -414,8 +417,27 @@ c*** flux across the targets
         pwtgn_tmp=pwtgn_tmp+wldnek(js,0)+wldnep(js,0)
        end do !}
 c*** flux across the side walls
+       k=ntrgf_tmp
        do js=1,nnlimi !{
         pwwln_tmp=pwwln_tmp+wldnek(js,0)+wldnep(js,0)
+        pwtnu_tmp(k)=pwtnu_tmp(k)+wldnek(js,0)
+        pwtds_tmp(k)=pwtds_tmp(k)+wldnep(js,0)
+       end do !}
+c*** flux across other recycling surfaces for vessel mode grids
+c*** we must remove targets and transparent surfaces from that list
+       do is=1,nsns !{
+         is_target = .false.
+         do js=1,ntns !{
+           is_target = is_target.or.abs(lsns(is)).eq.ltns(js)
+         end do !}
+         if (.not.is_target) then !{
+           ks = abs(lsns(is))+nnlimi
+           if (iliin(abs(lsns(is))).gt.0) then !{
+             pwwln_tmp=pwwln_tmp+wldnek(ks,0)+wldnep(ks,0)
+             pwtnu_tmp(k)=pwtnu_tmp(k)+wldnek(ks,0)
+             pwtds_tmp(k)=pwtds_tmp(k)+wldnep(ks,0)
+           end if !}
+         end if !}
        end do !}
 c*** flux across the specified zones
        do j=1,ntrgf_tmp !{
@@ -436,7 +458,7 @@ c*** flux across the specified zones
       endif !nnatmi
 #endif
 c
-c*** Energy content
+C*** Energy content
 c
       do iCv=1,mpg%nCi !{
         enrte_tmp=enrte_tmp+
@@ -454,10 +476,7 @@ c***            kinetic energy of the plasma flow is still neglected!!!
 c
 c*** Totals
 c
-      pwtgp_tmp=-pwtgp_tmp
-      pwwlp_tmp=-pwwlp_tmp
-c
-      pwcrt_tmp=pwcrh_tmp+pwcrp_tmp-pwcrn_tmp
+      pwcrt_tmp=pwcrh_tmp-pwcrn_tmp
       pwwlt_tmp=pwwlp_tmp+pwwln_tmp
       pwtgt_tmp=pwtgp_tmp+pwtgn_tmp
       pwrdt_tmp=radbr_tmp+radnu_tmp
@@ -470,8 +489,6 @@ c
       pwttr_tmp=pwtot_tmp/enrtt_tmp
 c
       do k=1,ntrgf_tmp !{
-        pwtpl_tmp(k)=-pwtpl_tmp(k)
-        pwtio_tmp(k)=-pwtio_tmp(k)
         pwttt_tmp(k)=pwtpl_tmp(k)+pwtnu_tmp(k)+pwtio_tmp(k)+pwtds_tmp(k)
       end do !}
 c
@@ -516,7 +533,7 @@ c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_ble)=.true.
 c-----------------------------------------------------------------------
 c
-      geometryType = geometryId( mpg, geo )
+      geometryType = geometryId( mpg, geo, 1 )
       allocate(ltgs(nlim,ntrgs_tmp))
       allocate(limp_tmp(nspecies))
       allocate(radim_tmp(nspecies))
