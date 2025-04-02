@@ -312,7 +312,7 @@ c>>>
 c
 c*** Now add the data to the proper accumulators
           if (lcore_hlp) then !{
-            pwcrh_tmp=pwcrh_tmp-hlp_h+hlp_p
+            pwcrh_tmp=pwcrh_tmp-hlp_h
             pwcrp_tmp=pwcrp_tmp-hlp_p
           else !}{
             if (lcross_hlp) then !{
@@ -425,14 +425,14 @@ c*** flux across the side walls
        end do !}
 c*** flux across other recycling surfaces for vessel mode grids
 c*** we must remove targets and transparent surfaces from that list
-       do is=1,nsts !{
+       do is=1,nsns !{
          is_target = .false.
          do js=1,ntns !{
-           is_target = is_target.or.is.eq.ltns(js)
+           is_target = is_target.or.abs(lsns(is)).eq.ltns(js)
          end do !}
          if (.not.is_target) then !{
-           ks = is+nnlimi
-           if (iliin(is).gt.0) then !{
+           ks = abs(lsns(is))+nnlimi
+           if (iliin(abs(lsns(is))).gt.0) then !{
              pwwln_tmp=pwwln_tmp+wldnek(ks,0)+wldnep(ks,0)
              pwtnu_tmp(k)=pwtnu_tmp(k)+wldnek(ks,0)
              pwtds_tmp(k)=pwtds_tmp(k)+wldnep(ks,0)
@@ -476,7 +476,7 @@ c***            kinetic energy of the plasma flow is still neglected!!!
 c
 c*** Totals
 c
-      pwcrt_tmp=pwcrh_tmp+pwcrp_tmp-pwcrn_tmp
+      pwcrt_tmp=pwcrh_tmp-pwcrn_tmp
       pwwlt_tmp=pwwlp_tmp+pwwln_tmp
       pwtgt_tmp=pwtgp_tmp+pwtgn_tmp
       pwrdt_tmp=radbr_tmp+radnu_tmp

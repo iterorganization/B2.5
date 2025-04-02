@@ -343,9 +343,7 @@ module b2mod_ual_io
                                     !< 4: GGD grid subset defined by jxa value
   integer, save :: gridGeometry   !< Grid geometry identifier number
   integer, save :: plasmaGeometry !< Plasma topology identifier number
-  integer, save :: nneut !< Total number of IDS neutral species
-  integer, save :: nsion !< Total number of IDS ion species
-# if GGD_MAJOR_VERSION > 0
+#if GGD_MAJOR_VERSION > 0
   integer, save :: iGsCoreBoundary  !< Variable to hold Core grid subset base
             !< index, later found by findGridSubsetByName() routine.
   integer, save :: iGsInnerMidplane !< Variable to hold Inner Midplane grid
@@ -480,7 +478,7 @@ contains
       wetted_area(i) = 0.0_IDS_real
       do iFc = 1, mpg%nFc
         if (mpg%fcReg(iFc).eq. &
-          & regionNumbers(ireg,REGIONTYPE_EDGE,gridGeometry)) then
+          & regionNumbers(i,REGIONTYPE_EDGE,gridGeometry)) then
           if (mpg%fcCv(iFc,1).le.mpg%nCi) then
             iCv = mpg%fcCv(iFc,1)
           else
@@ -2068,7 +2066,7 @@ contains
           allocate( divertors%divertor(1)%target(2)%identifier(1) )
           allocate( divertors%divertor(2)%target(1)%identifier(1) )
           allocate( divertors%divertor(2)%target(2)%identifier(1) )
-#   endif
+#endif
           if ( plasmaGeometry == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
           &    plasmaGeometry == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
             divertors%divertor(1)%name = 'Lower divertor'
@@ -11258,21 +11256,6 @@ contains
     return
     end subroutine fill_mol_ion_elements
 # endif
-
-# if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-    subroutine fill_summary_data( summary, wall, time_sind )
-    implicit none
-    type (ids_summary), intent(inout) :: summary
-    type (ids_wall), intent(inout), optional :: wall
-    integer, optional :: time_sind
-    integer :: i, ib, ireg, freg, is, iFc, ngpn
-    integer :: istrai
-    integer :: iatm
-    integer :: iatm1  !< Hydrogenic atom index in molecule composition
-    integer :: iatm2  !< Non-hydrogenic atom index in molecule composition
-    real(IDS_real) :: gpff, gsum, gmid, gbot, gtop, area
-    real(IDS_real), allocatable :: gas_puff(:)
-    logical at_top, at_bot, at_mid
 
     select case ( plasmaGeometry )
     case( GEOMETRY_LIMITER )

@@ -490,9 +490,9 @@ c======================================================================
 c----------------------------------------------------------------------
 c*** Initialise the file for tracing data
 c----------------------------------------------------------------------
-#ifdef WG_TODO
-      call get_jsep(nx,ny,jxi,jxa,jsep)
-#endif
+
+      geometryType = geometryId( mpg, geo, 2 )
+
       if(nspecies.le.0) then !{
         write(*,*) '!!! b2wrsep: nspecies.lt.0 - no tracing data'
         filedata(ltrc)=.false.

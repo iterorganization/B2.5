@@ -300,9 +300,14 @@ c*** The plasma flows across the boundaries
 c<<<
         do ic=1,mpg%nbc
           hlp_pls(ic,ls)=0.0_R8
-          if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).eq.0) cycle
-          if (boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
-     .         geometryType).ne.NODIRECTION) kst_hlp=ic
+          if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).eq.0 .and.
+     .        bcchar(ic).eq.'A') then
+            kst_hlp=ic
+          elseif (
+     .     boundaryAssignments(mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
+     .     geometryType).ne.NODIRECTION) then
+            kst_hlp=ic
+          end if
         end do
 c>>>
         do is=1,nfluids(ls)
@@ -311,35 +316,19 @@ c>>>
             if (mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))).eq.0) then
               iFc = mpg%bcFc(mpg%bcFcP(ic,1))
               iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-              if (mod(mpg%cvReg(iCv),4).eq.2) then ! Floating surface in SOL
-                do i = 1, mpg%bcFcP(ic,2)
-                  iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
-                  hlpiw=hlpiw
-     .             -(st%dv%fna(iFc,0,ions_list(ks))+
-     .               st%dv%fna(iFc,1,ions_list(ks)))*
-     .              mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+              do i = 1, mpg%bcFcP(ic,2)
+                iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
+                hlpiw=hlpiw-
+     .            (st%dv%fna(iFc,0,ions_list(ks))+
+     .             st%dv%fna(iFc,1,ions_list(ks)))*
+     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c<<<
-                  hlp_pls(ic,ls)=hlp_pls(ic,ls)-
-     .             (st%dv%fna(iFc,0,ions_list(ks))+
-     .              st%dv%fna(iFc,1,ions_list(ks)))*
-     .              mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-c>>>
-                end do
-              else
-                do i = 1, mpg%bcFcP(ic,2)
-                  iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
-                  hlpiw=hlpiw+
-     .             (st%dv%fna(iFc,0,ions_list(ks))+
-     .              st%dv%fna(iFc,1,ions_list(ks)))*
-     .              mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-c<<<
-                  hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .             (st%dv%fna(iFc,0,ions_list(ks))+
-     .              st%dv%fna(iFc,1,ions_list(ks)))*
-     .              mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+                hlp_pls(ic,ls)=hlp_pls(ic,ls)-
+     .           (st%dv%fna(iFc,0,ions_list(ks))+
+     .            st%dv%fna(iFc,1,ions_list(ks)))*
+     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c>>>
               end do
-              end if
             else if (boundaryAssignments(
      .           mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
      .           geometryType).eq.SOUTH) then
@@ -348,15 +337,15 @@ c>>>
 c***     core boundary
                   do i = 1, mpg%bcFcP(ic,2)
                     iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
-                    hlpic=hlpic+
+                    hlpic=hlpic-
      .               (st%dv%fna(iFc,0,ions_list(ks))+
      .                st%dv%fna(iFc,1,ions_list(ks)))*
-     .                mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+     .               mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c<<<
-                    hlp_pls(ic,ls)=hlp_pls(ic,ls)+
+                    hlp_pls(ic,ls)=hlp_pls(ic,ls)-
      .               (st%dv%fna(iFc,0,ions_list(ks))+
      .                st%dv%fna(iFc,1,ions_list(ks)))*
-     .                mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+     .               mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c>>>
                   end do
                   go to 1100
@@ -365,15 +354,15 @@ c>>>
 c***     wall in PFR
               do i = 1, mpg%bcFcP(ic,2)
                 iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
-                hlpiw=hlpiw+
+                hlpiw=hlpiw-
      .           (st%dv%fna(iFc,0,ions_list(ks))+
      .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-c<<<
-                hlp_pls(ic,ls)=hlp_pls(ic,ls)+
+     .           mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+c<<<`<
+                hlp_pls(ic,ls)=hlp_pls(ic,ls)-
      .           (st%dv%fna(iFc,0,ions_list(ks))+
      .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+     .           mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c>>>
               end do
             else if (boundaryAssignments(
@@ -382,57 +371,39 @@ c>>>
 c***     outer wall
               do i = 1, mpg%bcFcP(ic,2)
                 iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
-                hlpiw=hlpiw
-     .           -(st%dv%fna(iFc,0,ions_list(ks))+
+                hlpiw=hlpiw-
+     .            (st%dv%fna(iFc,0,ions_list(ks))+
      .             st%dv%fna(iFc,1,ions_list(ks)))*
-     .             mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)-
      .           (st%dv%fna(iFc,0,ions_list(ks))+
      .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+     .           mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c>>>
               end do
             else if (boundaryAssignments(
      .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
-     .                geometryType).eq.WEST) then
-c***     left target
-              do i = 1, mpg%bcFcp(ic,2)
-                iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
-                hlpit=hlpit+
-     .           (st%dv%fna(iFc,0,ions_list(ks))+
-     .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-                hlpit_lp(ls)=hlpit_lp(ls)+
-     .           (st%dv%fna(iFc,0,ions_list(ks))+
-     .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-c<<<
-                hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     .           (st%dv%fna(iFc,0,ions_list(ks))+
-     .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-c>>>
-              end do
-            else if (boundaryAssignments(
+     .                geometryType).eq.WEST .or.
+     .               boundaryAssignments(
      .                mpg%fcReg(mpg%bcFc(mpg%bcFcP(ic,1))),
      .                geometryType).eq.EAST) then
-c***     right target
-              do i = 1, mpg%bcFcP(ic,2)
+c***     targets
+              do i = 1, mpg%bcFcp(ic,2)
                 iFc = mpg%bcFc(mpg%bcFcP(ic,1)+i-1)
                 hlpit=hlpit-
      .           (st%dv%fna(iFc,0,ions_list(ks))+
      .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
-                hlpit_rp(ls)=hlpit_rp(ls)-
+     .           mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+                hlpit_lp(ls)=hlpit_lp(ls)-
      .           (st%dv%fna(iFc,0,ions_list(ks))+
      .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+     .           mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)-
      .           (st%dv%fna(iFc,0,ions_list(ks))+
      .            st%dv%fna(iFc,1,ions_list(ks)))*
-     .            mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
+     .           mpg%bcFcOr(mpg%bcFcP(ic,1)+i-1)
 c>>>
               end do
             end if
@@ -575,31 +546,31 @@ c*** Flux across the side walls
               end if
             end do
           end do
+        end do
 #ifdef B25_EIRENE
 c*** flux across other recycling surfaces for vessel mode grids
-c*** we must remove targets, core boundaries and transparent surfaces from that list
-          do js=1,nsts !{
-            is_target = .false.
-            do ic=1,ntns !{
-              is_target = is_target.or.js.eq.ltns(ic).or.js.eq.lcns(ic)
-            end do !}
-            if (.not.is_target) then !{
-              ilks = js+nnlimi
-              if (iliin(ilks).gt.0) then !{
-                do j=1,nnatmi !{
-                  if(latmscl(j).eq.ls) then !{
-                    hlpnw=hlpnw-wldna(ilks,j,0)+wldra(ilks,j,0)
-                    do ic=1,nnmoli !{
-                      if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
-     .                           (wldnm(ilks,ic,0)-wldrm(ilks,ic,0))
-                    end do !}
-                  end if !}
-                end do !}
-              end if !}
-            end if !}
+c*** we must remove targets and transparent surfaces from that list
+        do js=1,nsns !{
+          is_target = .false.
+          do ic=1,ntns !{
+            is_target = is_target.or.abs(lsns(js)).eq.ltns(ic)
           end do !}
+          if (.not.is_target) then !{
+            ks = abs(lsns(js))+nnlimi
+            if (iliin(abs(lsns(js))).gt.0) then !{
+              do j=1,nnatmi !{
+                if(latmscl(j).eq.ls) then !{
+                  hlpnw=hlpnw-wldna(ks,j,0)+wldra(ks,j,0)+wldpa(ks,j,0)
+                  do ic=1,nnmoli !{
+                    if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
+     .               (wldnm(ks,ic,0)-wldrm(ks,ic,0)-wldpm(ks,ic,0))
+                  end do !}
+                end if !}
+              end do !}
+            end if !}
+          end if !}
+        end do !}
 #endif
-        end if
 c*** Gas puffing source and recycling
         do ic=1,nstrat
           hlp_tt = debug_flags(90).gt.0 .and.
@@ -653,7 +624,7 @@ c<<<
                       hlp_wldpp=hlp_wldpp+wldpp(k,ii,ic)
                     end do
                     print '(1x,a,2i5,1p,40e12.4)',
-     ,                 '%%# i,k,hlp_wldpp= ',
+     ,                 '%%# i,k,hlp,wldpp= ',
      ,                      i,k,hlp_wldpp
                   end if
 c>>>
@@ -692,8 +663,6 @@ c<<<
      ,          '%%# hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyc=',
      ,               hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyctmp
 c>>>
-              if(hlp_lw) hlpiw=hlpiw+hlp*recyctmp
-              if(hlp_lt) hlpit=hlpit+hlp*recyctmp
             end if
           end if
         end do

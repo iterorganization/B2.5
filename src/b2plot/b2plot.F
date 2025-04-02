@@ -3019,12 +3019,15 @@ c
               else
                 mach(iCv,0)=0.0_R8
               end if
+              description='Volume region '//int2str(istack(iistack))  ! IGNORE
             else
               if(mpg%cvReg(iCv) .eq. -istack(iistack)) then
                 mach(iCv,0)=0.0_R8
               else
                 mach(iCv,0)=1.0_R8
               end if
+              description=  ! IGNORE
+     .    'All volume regions except region '//int2str(istack(iistack))
             end if
           end do
           if (abs(istack(iistack)).gt.0) then
@@ -3057,6 +3060,7 @@ c
                 mach(mpg%fcCv(iFc,1),0)=1.0_R8
                 mach(mpg%fcCv(iFc,2),0)=1.0_R8
               end if
+              description='Flux region '//int2str(istack(iistack))  ! IGNORE
             end if
           end do
           if (istack(iistack).gt.0) then
@@ -3083,6 +3087,7 @@ c
               if(mpg%cvLbl(iCv).eq.istack(iistack)) then
                 mach(iCv,0)=1.0_R8
               end if
+              description='Cell label '//int2str(istack(iistack))  ! IGNORE
             end if
           end do
           if (istack(iistack).ne.0) then
@@ -3111,6 +3116,7 @@ c
                 mach(mpg%fcCv(iFc,1),0)=1.0_R8
                 mach(mpg%fcCv(iFc,2),0)=1.0_R8
               end if
+              description='Face label '//int2str(istack(iistack))  ! IGNORE
             end if
           end do
           if (istack(iistack).ne.0) then
@@ -3143,6 +3149,7 @@ c
                   mach(iCv,0)=1.0_R8
                 end do
               end if
+              description='Flux tube '//int2str(istack(iistack))  ! IGNORE
             end if
           end do
           if (istack(iistack).ne.0) then
@@ -3993,13 +4000,8 @@ c
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           mach(:,0)=0.0_R8
-          if(1.le.istack(iistack).and.istack(iistack).le.mpg%nFc) then
-            mach(mpg%fcCv(istack(iistack),1),0)=1.0_R8
-            mach(mpg%fcCv(istack(iistack),2),0)=1.0_R8
-          else
-            write(*,*) 'Face index '//int2str(istack(iistack))//
-     .                ' outside range !'
-          end if
+          mach(mpg%fcCv(istack(iistack),1),0)=1.0_R8
+          mach(mpg%fcCv(istack(iistack),2),0)=1.0_R8
           description='iFc = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ifeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -4009,15 +4011,10 @@ c
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           mach(:,0)=0.0_R8
-          if(1.le.istack(iistack).and.istack(iistack).le.mpg%nVx) then
-            do i=1,mpg%vxCvP(istack(iistack),2)
-              iCv=mpg%vxCv(mpg%vxCvP(istack(iistack),1)+i-1)
-              mach(iCv,0)=1.0_R8
-            end do
-          else
-            write(*,*) 'Vertex index '//int2str(istack(iistack))//
-     .                ' outside range !'
-          end if
+          do i=1,mpg%vxCvP(istack(iistack),2)
+            iCv=mpg%vxCv(mpg%vxCvP(istack(iistack),1)+i-1)
+            mach(iCv,0)=1.0_R8
+          end do
           description='iVx = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iveq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)

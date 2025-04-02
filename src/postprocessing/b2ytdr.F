@@ -283,8 +283,8 @@ c 2002-09-11: logic revised
      8 sna_corr1(:), taumax1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
-      integer i, j, ij, k, kk, ix, iy, is, ib, ireg, len, nsns1
-      integer ib1, ib2, ifl, ij1, j1, js, ks, itrack
+      integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns1
+      integer ib1, ib2, ifl, js, ks, itrack
       integer natm1, nmol1, nion1, nspecies1
       integer iss, jss, ispecies, jspecies
       integer itrack1, itrack2, itrack3

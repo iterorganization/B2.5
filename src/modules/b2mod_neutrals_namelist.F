@@ -22,7 +22,7 @@ c*  lcns          : Eirene 'non-default surfaces' for the core boundary
 c*  ncns          : number of these surfaces
 c*  ltns          : Eirene 'non-default surfaces' for the targets
 c*  ntns          : number of these surfaces
-c*  lsns          : Eirene recycling 'non-default surfaces' for the strata
+c*  lsns          : Eirene recycling 'non-default surfaces'
 c*  nsns          : number of these surfaces
 c*  l_neutrad     : if >=0, import radiation losses due to neutrals from Eirene
 c*  l_neutflux    : if >=0, then correct treatment of the incident fluxes in
@@ -191,7 +191,7 @@ cank }
 #endif
 
       integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns, nsns,
-     .     dbg_eir_mc, debug_flags(100), neutrals_count, maxpoin
+     .     dbg_eir_mc, debug_flags(100), neutrals_count
       real (kind=R8), save :: RF_NEUT(4)
       real (kind=R8), save :: eirene_step_cpu, eirene_step_dt,
      .     volrecinc, volrecwt
