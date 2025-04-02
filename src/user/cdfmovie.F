@@ -28,7 +28,7 @@
      & dummy3(-1:nx, -1:ny, 1:ns),
      & dummy3atm(-1:nx, -1:ny, 1:nnatmi),
      & dummy3mol(-1:nx, -1:ny, 1:nnmoli)
-      integer ix, iy, is, iatmi, imoli, istra
+      integer is, iatmi, imoli
       integer ncall
       integer status, ndims, nvars, natts, unlimid
       integer, save :: fields_selection = 1
@@ -325,7 +325,7 @@
             dummy = 0.0_R8
             do imoli = 1, nnmoli
               dummy(-1:nx,-1:ny) = dummy(-1:nx,-1:ny) +
-     .         emolrad(0:nx,0:ny,imoli,istra)/vol(-1:nx,-1:ny)
+     .         emolrad(0:nx,0:ny,imoli,0)/vol(-1:nx,-1:ny)
             enddo
             write(*,*) 'put_cdf_field2: emolradsum'
             call put_cdf_field2(ncid,'emolradsum',dummy,nx+2,ny+2)
