@@ -620,7 +620,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
        endif
 #endif
 *   ..test for input consistency, i.e. are the cbs.. arrays used in the b.c settings
-       geometryType = geometryId( mpg, geo )
+       geometryType = geometryId( mpg, geo, 1 )
        consistent_core = fnaycore.eq.-1.0e30_R8 .and. fheycore.eq.0.0_R8
      &             .and. fhiycore.eq.0.0_R8 .and. nesepm.eq.0.0_R8
      &             .and. fchycore.eq.-1.0e30_R8
