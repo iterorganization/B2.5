@@ -140,6 +140,7 @@
 !$omp& shared(ttim_na,ttim2_na,ttim_ua,ttim2_ua)
 !$omp& shared(ttim_te,ttim2_te,ttim_ti,ttim2_ti,mult_dt)
 !$omp& private(ttim2,content,src_tot)
+!$omp do
 #endif
       do is = 0, ns-1
         do iCv = 1, nCv
@@ -169,6 +170,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
           sr%sna(iCv,:,is) = sr%sna(iCv,:,is)+sr%snadt(iCv,:,is)
         enddo
       enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )
+!$omp end do
+#endif
 
 *   ..modify smodt
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRDT) )

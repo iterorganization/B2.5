@@ -327,9 +327,9 @@ c time-dependent treatment                                            !srv 07.07
 !!FR all other variables are shared
 !$omp parallel do default(none)
 !$omp& shared(pl, dv, co, rt, co_ns, geo, nCv, nFc, nVx, switch, mpg)
-!$omp& shared(st_ext, srw, sr)
+!$omp& shared(st_ext, srw, sr, ehxp)
 !$omp& reduction(+: dv%resmt, flct, cvct, cvcb, smt, ctcft)
-!$omp& private(rob, robf, pb, wrk0, flub, flcb, pb1, rob1, ehxp, wrkf0)
+!$omp& private(rob, robf, pb, wrk0, flub, flcb, pb1, rob1, wrkf0)
 !$omp& private(wrkf, wrk1, smb, b2npmo_solvedum, ro)
 !$omp& private(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf,smbvtmp)
 !$omp& private(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)

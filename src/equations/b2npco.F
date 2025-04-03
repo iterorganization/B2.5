@@ -151,9 +151,9 @@
 *   ..extensive tests on first few calls
       if (ncall_b2npco.lt.3) then
 *    ..test sign of conb
-       call b2xvsg (nFc, dv%conb(1,0,0), 1, 'conb00', '.ge.')
-       call b2xvsg (nFc, dv%conb(1,0,1), 1, 'conb01', '.ge.')
-       call b2xvsg (nFc, dv%conb(1,0,2), 1, 'conb02', '.ge.')
+       call b2xvsg (nFc, dv%conb(1,0,0,isb), 1, 'conb00', '.ge.')
+       call b2xvsg (nFc, dv%conb(1,0,1,isb), 1, 'conb01', '.ge.')
+       call b2xvsg (nFc, dv%conb(1,0,2,isb), 1, 'conb02', '.ge.')
 *    ..test sign of snbc, snbv
        call b2xvsg (nCv, sr%sna(1,0,isb), 1, 'snbc', '.ge.')
        call b2xvsg (nCv, sr%sna(1,1,isb), 1, 'snbv', '.le.')
