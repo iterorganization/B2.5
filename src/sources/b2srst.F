@@ -125,7 +125,7 @@
 !WG_TODO       endif                                                         !srv 01.07.08 }
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
-!$omp end do nowait
+!$omp end do 
 #endif
 *   ..modify smo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
@@ -144,7 +144,7 @@
        enddo
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
-!$omp end do nowait
+!$omp end do 
 #endif
 *   ..modify she, shi, sch, skt, szt
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
@@ -238,7 +238,7 @@
      &   (1.0_R8+switch%b2srst_rf3)*t0)
       enddo
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SRST) )
-!$omp end do nowait
+!$omp end do 
 #endif
 
 *   ..calculate the source coefficients of numerical stabilisation.
