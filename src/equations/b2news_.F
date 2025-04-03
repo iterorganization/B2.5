@@ -456,11 +456,12 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 !      do is = 0, ns-1
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
 !!FR Possible loop (2) for use with OpenMP
+! Note: need to copy in all global variables from the ma28 solver...
 !$omp parallel do default(none)
 !$omp& private(is, iCv, solvedum, solvedm2)
 !$omp& shared(switch, st, geo, mpg)
 !$omp& shared(is_neutral, nCv, nFc, nVx, ns, ismain, solveco, solvemo)
-!$omp& shared(b2news_solving, rxf0, dtim, last_solve_9)
+!$omp& shared(b2news_solving, rxf0, dtim, last_solve_9, ncall_b2news_)
 #endif
       do is = switch%nsmin, switch%nsmax-1
 *    ..DPC

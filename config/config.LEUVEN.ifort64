@@ -44,8 +44,8 @@ ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
 FCOPTS  += -qopenmp
 LDOPTS  += -qopenmp
 else
-FCOPTS  += -openmp
-LDOPTS  += -openmp
+FCOPTS  += -qopenmp
+LDOPTS  += -qopenmp
 endif
 endif
 

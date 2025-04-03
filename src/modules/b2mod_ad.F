@@ -96,6 +96,7 @@
      & ncall_b2xehx = 0, ncall_b2xehy = 0, ncall_b2mndt = 0
 
 #ifdef _OPENMP
+! ncall_b2news_ is NOT threadprivate but shared!
 !$omp threadprivate(ncall_b2tcpa , ncall_b2tfcc )
 !$omp threadprivate( ncall_b2tfch , ncall_b2tfed , ncall_b2tfhe )
 !$omp threadprivate( ncall_b2tfhi , ncall_b2tfnb , ncall_b2tfrn )
@@ -114,7 +115,7 @@
 !$omp threadprivate( ncall_b2sicf , ncall_b2sifr , ncall_b2sifrtf )
 !$omp threadprivate( ncall_b2stbr_neutr_scl , ncall_b2shdt )
 !$omp threadprivate( ncall_b2smdt , ncall_b2scdt )
-!$omp threadprivate( ncall_b2npco , ncall_b2news_ , ncall_b2npht )
+!$omp threadprivate( ncall_b2npco , ncall_b2npht )
 !$omp threadprivate( ncall_b2npmo , ncall_b2nppo , ncall_b2nxdp )
 !$omp threadprivate( ncall_b2nxdu , ncall_b2nxfc )
 !$omp threadprivate( ncall_b2upco , ncall_b2upht )
