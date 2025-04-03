@@ -1,15 +1,21 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine get_mult_dt(style, nCv, te, te_min, te_max, 
-     &                       mult_max, mult_dt)
+      subroutine get_mult_dt(style, dtim, dv, geo, mpg, nCv, ns, te,
+     &                     te_min, te_max, mult_max, Cmax, mult_dt)
       use b2mod_types
       use b2mod_constants
+      use b2us_geo
+      use b2us_plasma
+      use b2us_map
       implicit none
 *   ..input arguments
-      integer, intent(in) :: style, nCv
+      type (B2Derivatives), intent (in) :: dv
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      integer, intent(in) :: style, nCv, ns
       real (kind=R8), intent(in) ::
-     *   te_min, te_max, mult_max, te(nCv)
+     *   dtim, te_min, te_max, mult_max, te(nCv), Cmax
 *   ..output arguments
       real (kind=R8), intent(out) ::
      *   mult_dt(nCv)
@@ -27,6 +33,8 @@
 *
 *     style = 2: based on the magnitude of the sources compared to the particle/momentum/energy content of the cell. 
 *
+*     style = 3: CFL-like criterium for drift velocities
+*
 *     Other styles can be added in the future.
 *
 *-----------------------------------------------------------------------
@@ -34,7 +42,8 @@
 
 *   ..local variables
       integer :: iCv
-      real (kind=R8) :: te_min_J, te_max_J, exp1
+      real (kind=R8) :: te_min_J, te_max_J, exp1, hx, hy, Vx, Vy, dt3,
+     &                  dtx, dty, wrk0(nCv,0:ns-1), wrk1(nCv,0:ns-1)
 *   ..procedures
       external xertst
 *-----------------------------------------------------------------------
@@ -59,6 +68,23 @@
         enddo
       elseif (style.eq.2) then !! This option is worked out in b2srdt itself.
         mult_dt = 1.0_R8 
+      elseif (style.eq.3) then 
+        !! interpolate drift velocities to cell centers
+        call intcell1(mpg%nFc, nCv, ns, mpg, mpg%intcellP,
+     &               dv%vaecrb(:,0,:),wrk0)
+        call intcell1(mpg%nFc, nCv, ns, mpg, mpg%intcellP,
+     &               dv%vaecrb(:,1,:),wrk1)
+        !! sum drift velocities
+        do iCv = 1, nCv
+          hy = geo%cvVol(iCv)/geo%cvHx(iCv)/geo%cvHz(iCv) !! hx and hy are approximations for non-quadrilateral cells
+          hx = geo%cvHz(iCv)
+          Vx = maxval(abs(wrk0(iCv,:)))
+          Vy = maxval(abs(wrk1(iCv,:)))
+          dtx = hx / Vx
+          dty = hy / Vy
+          dt3 = min(dtx,dty)
+          mult_dt(iCv) = dt3/dtim
+        enddo
       else
         call xerrab('This b2mndt_var_style is not available')
       endif

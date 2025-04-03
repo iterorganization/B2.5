@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2srdt (nCv, ns, dtim, switch, geo, mpg,
+      subroutine b2srdt (nCv, ns, dtim, switch, geo, mpg, dv,
      &  na0, ua0, te0, ti0, tn0, ne0, ni0, nn0, kinrgy0, kt0, zt0,
      &  na, ua, te, ti, tn, ne, ni, nn, kinrgy, kt, zt,                 !srv 16.07.10
      &  sr, lout)              !srv 11.09.09
@@ -28,6 +28,7 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
+      type (B2Derivatives), intent (in) :: dv
       real (kind=R8) ::
      *  dtim, na0(nCv,0:ns-1),
      &  ua0(nCv,0:ns-1), te0(nCv), ti0(nCv), tn0(nCv),
@@ -107,9 +108,10 @@
 
 * ..Optionally, calculate a local (cell-based) multiplier to the timestep.
 *   mult_dt will be 1.0 if b2mndt_var_style = 0 (default). 
-      call get_mult_dt(switch%b2mndt_var_style, nCv, te,
-     &     switch%b2mndt_var_te_min, switch%b2mndt_var_te_max, 
-     &     switch%b2mndt_var_mult, mult_dt)
+      call get_mult_dt(switch%b2mndt_var_style, dtim, dv, geo, mpg, 
+     &     nCv, ns,  te, switch%b2mndt_var_te_min,
+     &     switch%b2mndt_var_te_max, switch%b2mndt_var_mult, 
+     &     switch%b2mndt_var_style3_Cmax, mult_dt)
 
 * ..include the contributions from dtim
 *   ..modify snadt
