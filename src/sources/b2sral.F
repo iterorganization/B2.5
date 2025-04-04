@@ -398,8 +398,8 @@ c Artificial losses
 
 c ECH power
       if(switch%use_ech.eq.1) then
-        call CalcECH(nCv,geo,mpg,st%dv,switch,st%srw%she0)
-        call b2saxpy (nCv*4, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
+        call CalcECH(nCv,geo,mpg,st%dv,switch)
+        call b2saxpy (nCv*4, 1.0_R8, she_ech, 1, st%sr%she, 1)
       endif
 c end ECH
 

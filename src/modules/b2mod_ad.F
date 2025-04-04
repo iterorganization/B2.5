@@ -102,7 +102,7 @@
      & ncall_b2stbr_phys = 0, ncall_b2stcx = 0, ncall_b2stel = 0,
      & ncall_b2sicf = 0, ncall_b2sifr = 0, ncall_b2sifrtf = 0,
      & ncall_b2stbr_neutr_scl = 0, ncall_b2shdt = 0,
-     & ncall_b2smdt = 0, ncall_b2scdt = 0,
+     & ncall_b2smdt = 0, ncall_b2scdt = 0, ncall_calcECH = 0,
 ! ncall variables from equation routines
      & ncall_b2npco = 0, ncall_b2news_ = 0, ncall_b2npht = 0,
      & ncall_b2npmo = 0, ncall_b2nppo = 0, ncall_b2nxdp = 0,
