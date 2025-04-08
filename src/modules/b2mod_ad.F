@@ -73,7 +73,7 @@
      & ncall_b2tqce = 0, ncall_b2tqin = 0, ncall_b2tqna = 0,
      & ncall_b2tral = 0, ncall_transp_keps = 0, ncall_b2trcl = 0,
      & ncall_b2treq = 0, ncall_b2trno = 0, ncall_b2trql = 0,
-     & ncall_b2ttia = 0,
+     & ncall_b2ttia = 0, ncall_b2tiner = 0, ncall_b2trzh = 0,
 ! ncall variables from sources routines
      & ncall_b2siav = 0, ncall_b2sigp = 0, ncall_b2sihs_ = 0,
      & ncall_b2sikt = 0, ncall_b2spcx = 0, ncall_b2spel = 0,
@@ -82,7 +82,8 @@
      & ncall_b2stbc = 0, ncall_b2stbc_phys = 0, ncall_b2stbr = 0,
      & ncall_b2stbr_phys = 0, ncall_b2stcx = 0, ncall_b2stel = 0,
      & ncall_b2sicf = 0, ncall_b2sifr = 0, ncall_b2sifrtf = 0,
-     & ncall_b2stbr_neutr_scl = 0,
+     & ncall_b2stbr_neutr_scl = 0, ncall_b2shdt = 0,
+     & ncall_b2smdt = 0, ncall_b2scdt = 0,
 ! ncall variables from equation routines
      & ncall_b2npco = 0, ncall_b2news_ = 0, ncall_b2npht = 0,
      & ncall_b2npmo = 0, ncall_b2nppo = 0, ncall_b2nxdp = 0,
@@ -91,9 +92,14 @@
      & ncall_b2upco = 0, ncall_b2upht = 0,
      & ncall_b2urmo = 0,ncall_b2ursc = 0, ncall_b2ursd = 0, 
      & ncall_b2usco = 0, ncall_b2usht = 0, ncall_b2usmo = 0,
-     & ncall_b2uspo = 0,
+     & ncall_b2uspo = 0, ncall_b2uppo = 0,
 ! ncall variables from other routines
-     & ncall_b2xehx = 0, ncall_b2xehy = 0, ncall_b2mndt = 0
+     & ncall_b2xehx = 0, ncall_b2xehy = 0, ncall_b2mndt = 0,
+     & ncall_b2mwit = 0
+
+      integer, save :: gradient_iterations = 0, primal_iterations = 0
+      real (kind=R8), save :: primal_res=0.0_R8, gradient_res=0.0_R8
+
 
 #ifdef _OPENMP
 ! ncall_b2news_ is NOT threadprivate but shared!

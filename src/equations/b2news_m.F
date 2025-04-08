@@ -462,7 +462,7 @@ c   extra call at this place within internal iteration)
      &    st%pl%na, st%pl%ua, st%pl%te, st%pl%ti,
      &    st%dv%ne, st%dv%ni, st%dv%nn, st%sr, .false.)
 *     ..include contributions due to timestep                            !xpb
-        call b2srdt (nCv, ns, dtim, switch, geo, mpg,
+        call b2srdt (nCv, ns, dtim, switch, geo, mpg, st%dv,
      &    st%psnc%na, st%psnc%ua, st%psnc%te, st%psnc%ti, st%psnc%tn,
      &    st%psnc%ne, st%psnc%ni, st%psnc%nn, st%psnc%kinrgy,
      &    st%psnc%kt, st%psnc%zt,                                        !srv 23.07.21

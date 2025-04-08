@@ -61,12 +61,8 @@
      *   rlt0, rln0, fxt0, fxn0, t0, t1, tt
 *   ..procedures
       intrinsic min, max, log
-      real (kind=R8) ::
-     *   trimg
       external xertst
-      external b2xvsg, trimg
-*     (trimg will be used to trim the logarithmic gradients to avoid
-*     some pathetic behaviour near the underflow limit.)
+      external b2xvsg
 *   ..initialisation
 
 *-----------------------------------------------------------------------
