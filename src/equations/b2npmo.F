@@ -342,7 +342,7 @@ c time-dependent treatment                                            !srv 07.07
 #endif
 !$omp& shared(is_neutral, last_solve_9)
 !$omp& shared(zetap, zetae, gti, gte, ce1, ce2, cimp1)
-!$omp& shared(cimp2, zeff, rxg_npmo)
+!$omp& shared(cimp2, zeff, rxg)
 !$omp& shared(rho_A_rel, avm_u)
 #endif
 !      do is = 0, ns-1

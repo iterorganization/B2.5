@@ -119,7 +119,6 @@ ctmp.dpc
 !$omp& private(t0, t1, t2, du0, du1, t1n)
 !$omp& shared(ns, mpg, is0, switch, rg0, geo, is_neutral, tkin, tn, ti)
 !$omp& shared(rcx, sna0, na, rcxna, am, shi0, rcxhi, smq0, ua, shn0)
-!$omp& reduction(+: rcxnareg, rcxhireg, rcxmoreg)
 !$omp& shared(rcxmo, zamin, zamax, zn)
 #endif
       do is = 1, ns-1
