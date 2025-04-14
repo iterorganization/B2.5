@@ -132,7 +132,7 @@
       if (switch%solve_keps.gt.0) then
         do iCv = 1, nCi ! only internal cells
           ttim=dtim*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
+          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
           sktdt(iCv,0) = 1.5_R8*t0*ni(iCv,1)*ktp(iCv)
           sktdt(iCv,1) = 0.0_R8
           sktdt(iCv,2) = 0.0_R8
@@ -143,7 +143,7 @@
       if (switch%solve_keps.gt.1) then
         do iCv = 1, nCi ! only internal cells
           ttim=dtim*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)
+          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
           sztdt(iCv,0) = 1.5_R8*t0*ni(iCv,1)*ztp(iCv)
           sztdt(iCv,1) = 0.0_R8
           sztdt(iCv,2) = 0.0_R8

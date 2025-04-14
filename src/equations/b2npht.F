@@ -342,6 +342,19 @@ cdjm Jan2017 update particle source components for balance
           else
             dv%reshn = 0.0_R8         !! this is needed because reshn is added to the total energy equation
           endif
+*       ..k-eps equations
+          if ((switch%solve_keps.gt.0.and.
+     &         any(solvkreg(0:mpg%nnreg(0)))).or.
+     &         switch%get_residuals.eq.1) then
+            call b2ursd (nCv, nFc, mpg, dv%ni(:,1), pl%kt, skt0,
+     &       dv%fkt, dv%reskt0)
+          endif
+          if ((switch%solve_keps.gt.1.and.
+     &         any(solvzreg(0:mpg%nnreg(0)))).or.
+     &         switch%get_residuals.eq.1) then
+            call b2ursd (nCv, nFc, mpg, dv%ni(:,1), pl%zt, szt0,
+     &       dv%fzt, dv%reszt0)
+          endif
         endif
 c time-dependent treatment                                              !srv 07.07.21 {
       if(switch%b2mndt_style.eq.2) then
@@ -498,9 +511,21 @@ c residuals for separate neutral energy equation
         if (switch%tn_style.eq.2) then
           if (any(solvnreg(0:mpg%nnreg(0))).or.
      &      switch%get_residuals.eq.1) then
-          dv%reshn(1:mpg%nCi) = dv%reshn(1:mpg%nCi) +
-     &                          psnl%reshn0(1:mpg%nCi)
+            dv%reshn(1:mpg%nCi) = dv%reshn(1:mpg%nCi) +
+     &                            psnl%reshn0(1:mpg%nCi)
           endif
+        endif
+        if ((switch%solve_keps.gt.0.and.
+     &       any(solvkreg(0:mpg%nnreg(0)))).or.
+     &       switch%get_residuals.eq.1) then
+          dv%reskt(1:mpg%nCi) = dv%reskt(1:mpg%nCi) +
+     &                          psnl%reskt0(1:mpg%nCi)
+        endif
+        if ((switch%solve_keps.gt.1.and.
+     &       any(solvzreg(0:mpg%nnreg(0)))).or.
+     &       switch%get_residuals.eq.1) then
+          dv%reszt(1:mpg%nCi) = dv%reszt(1:mpg%nCi) +
+     &                          psnl%reszt0(1:mpg%nCi)
         endif
       endif
 
