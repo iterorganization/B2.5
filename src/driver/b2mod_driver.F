@@ -2192,9 +2192,12 @@ c new CDF movie option (1st frame at t=0)
         switch%b2mndt_dummy = 0
         !Update plasma snapshots with initialized residuals (without time-stepping sources)
         state%psnl%resco0 = state%dv%resco0
-        state%psnc%resco0 = state%dv%resco0
         state%psnl%resmo0 = state%dv%resmo0
-        state%psnc%resmo0 = state%dv%resmo0
+        state%psnl%reshe0 = state%dv%reshe0
+        state%psnl%reshi0 = state%dv%reshi0
+        state%psnl%reshn0 = state%dv%reshn0
+        state%psnl%reskt0 = state%dv%reskt0
+        state%psnl%reszt0 = state%dv%reszt0
         endif
 
       call subend()
@@ -2357,8 +2360,8 @@ cwdk  set some integers
 c      nap, uap, etc from 3.0.9 -> psnl = Plasma SNapshot Last
 c      na0, ua0, etc from 3.0.9 -> psnc = Plasma SNapshot Current
 c      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc, which is what currently happens in the b2mxnp and b2mxnu routines in 3.0.9
-        call getB2PlasmaSnapshot(state%pl,state%dv,state%psnl)
-        call getB2PlasmaSnapshot(state%pl,state%dv,state%psnc)
+        call getB2PlasmaSnapshot(state%pl, state%dv, state%psnl)
+        call getB2PlasmaSnapshot(state%pl, state%dv, state%psnc)
 
         call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)

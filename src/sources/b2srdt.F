@@ -136,7 +136,17 @@ csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
 !WG_TODO     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
           ttim=dtim*dtco(is,mpg%cvReg(iCv))*time_factor(iCv)
-          t0=(switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)                    !fc 11.03.24
+          iFt = mpg%cvFt(iCv)
+          if (iFt.eq.0 .and. iCv.gt.mpg%nCi) then
+            iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+            iFt = mpg%cvFt(minval(mpg%fcCv(iFc,:)))
+          endif
+          if (iFt.ne.0) then
+            if (dtco_fts(iFt).gt.0.0_R8) then
+              ttim=dtim*dtco_fts(iFt)*time_factor(iCv)
+            endif
+          endif
+          t0=(switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*switch%b2mndt_ckn    !fc 11.03.24
           sr%snadt(iCv,0,is) = t0*na0(iCv,is)
           sr%snadt(iCv,1,is) = -t0
           sr%sna(iCv,:,is) = sr%sna(iCv,:,is)+sr%snadt(iCv,:,is)
@@ -166,7 +176,8 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim=dtim*dtmo_fts(iFt)*time_factor(iCv)
             endif
           endif
-          t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)   !srv 09.01.01
+          t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)  !srv 09.01.01
+     &         *switch%b2mndt_ckn
           sr%smodt(iCv,0,is) = t0*am(is)*mp*ua0(iCv,is)*na0(iCv,is)
           sr%smodt(iCv,1,is) = 0.0_R8
           sr%smodt(iCv,2,is) = 0.0_R8
@@ -198,7 +209,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             ttim=dtim*dtee_fts(iFt)*time_factor(iCv)
           endif
         endif
-        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*switch%b2mndt_ckn
         sr%shedt(iCv,0) = 1.5_R8*t0*ne0(iCv)*te0(iCv)
         sr%shedt(iCv,1) = 0.0_R8
         sr%shedt(iCv,2) = 0.0_R8
@@ -212,7 +223,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
             ttim=dtim*dtei_fts(iFt)*time_factor(iCv)
           endif
         endif
-        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*switch%b2mndt_ckn
         sr%sktdt(iCv,0) = t0*ni0(iCv,1)*kt0(iCv)
         sr%sktdt(iCv,1) = 0.0_R8
         sr%sktdt(iCv,2) = 0.0_R8
@@ -234,42 +245,8 @@ csw 24feb2014 check for guard cell (SOLPS4)
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
-        if (switch%b2mndt_var_style.eq.0) then 
-          ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
-          if (iFt.ne.0) then
-            if (dtei_fts(iFt) .gt. 0.0_R8) then
-              ttim=dtim*dtei_fts(iFt)*time_factor(iCv)
-            endif
-          endif
-        elseif (switch%b2mndt_var_style.eq.1) then 
-          ttim=dtim*dtei(mpg%cvReg(iCv))*mult_dt(iCv)
-        elseif (switch%b2mndt_var_style.eq.2) then !! Timestep directly based on ratio of source to ion heat content
-          src_tot = sr%shi(iCv,0) +
-     &              sr%shi(iCv,1)*ti0(iCv) +
-     &              sr%shi(iCv,2)*ni0(iCv,0) +
-     &              sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
-          content = 1.5_R8*ni0(iCv,0)*ti0(iCv)*geo%cvVol(iCv)
-          ttim2 = content/abs(src_tot)/
-     &            switch%b2mndt_var_style2_SF
-          ttim=dtim*dtei(mpg%cvReg(iCv))
-          ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
-        elseif (switch%b2mndt_var_style.eq.3) then
-          ttim=dtim*dtei(mpg%cvReg(iCv))*mult_dt(iCv)
-        elseif (switch%b2mndt_var_style.eq.4) then !! Timestep directly based on ratio of source to ion heat content + drift CFL condition
-          src_tot = sr%shi(iCv,0) +
-     &              sr%shi(iCv,1)*ti0(iCv) +
-     &              sr%shi(iCv,2)*ni0(iCv,0) +
-     &              sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
-          content = 1.5_R8*ni0(iCv,0)*ti0(iCv)*geo%cvVol(iCv)
-          ttim2 = content/abs(src_tot)/
-     &            switch%b2mndt_var_style2_SF
-          ttim2 = min(ttim2,dt_var4_min(iCv))
-          ttim=dtim*dtei(mpg%cvReg(iCv))
-          ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
-        else
-          call xerrab('b2mndt_var_style.gt.4 not yet implemented')
-        endif
-        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
+        ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
+        t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)*switch%b2mndt_ckn
 
         if (switch%tn_style.eq.0) then
 
