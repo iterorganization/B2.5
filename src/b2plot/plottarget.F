@@ -1,5 +1,5 @@
 C =====================================================================
-      subroutine plottarget(nCv,nbnd,ndepth,
+      subroutine plottarget(nbnd,ndepth,
      . targetcr,targetcz,target_stack,
      . ZLOD,ZHID,PHYSICAL,linlog,igraphs)
 C =====================================================================
@@ -7,7 +7,7 @@ C =====================================================================
       use b2mod_b2plot_debug
       use b2mod_graphics
       implicit none
-      integer nCv,nbnd,ndepth,igraphs,linlog
+      integer nbnd,ndepth,igraphs,linlog
       REAL (KIND=R8) :: 
      * targetcr(1:nbnd,1:ndepth,1:2),targetcz(1:nbnd,1:ndepth,1:2),
      1 target_stack(1:nbnd,1:ndepth),ZLOD,ZHID
@@ -240,7 +240,7 @@ C Draw Mesh/Vessel if wanted
 C Draw Wall elements if wanted
       if(wall) then
         call data_copy(0)
-        call pltwall(nCv,physical,.true.)
+        call pltwall(physical,.true.)
       endif
       return
       end subroutine plottarget
