@@ -283,7 +283,7 @@ csw
       call alloc_b2us_work (mpg%nCv, ns)
       call alloc_b2mod_ppout (DEF_NXD, DEF_NYD, ns)
       call alloc_b2mod_recycle (mpg%nFc, ns)   !nh 30.03.21
-      call alloc_b2mod_astra_to_b2 (mpg, DEF_NXD, DEF_NYD)
+      call alloc_b2mod_astra_to_b2 (mpg, DEF_NYD)
       call alloc_b2mod_b2_to_astra (mpg, DEF_NYD, ns)
 
       call b2mndr_0 (ninp, nout, ns, ns0, switch, geo, mpg, 

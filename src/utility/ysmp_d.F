@@ -132,7 +132,7 @@ C
 C...        REAL  A(1)
         real (kind=R8) :: A(NNZ)
         LOGICAL  DFLAG
-        INTEGER  MAX, NEXT                                               !srv 11.01.07
+        INTEGER  MAX                                                     !srv 11.01.07
 C
 C----INITIALIZE ERROR FLAG AND VALIDATE PATH SPECIFICATION
         FLAG = 0
@@ -144,7 +144,6 @@ C----ALLOCATE STORAGE AND FIND MINIMUM DEGREE ORDERING
           V    = 1
           L    = V     +  MAX
           HEAD = L     +  MAX
-          NEXT = HEAD  +  N
           IF (MAX.LT.N)  GO TO 110
 C
           CALL  MD
