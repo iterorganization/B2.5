@@ -47,11 +47,11 @@
 
        contains
 
-       subroutine alloc_b2mod_astra_to_b2(mpg, nxd, nyd)
+       subroutine alloc_b2mod_astra_to_b2(mpg, nyd)
        use b2us_map
        implicit none
        type(mapping), intent(in) :: mpg
-       integer, intent(in) :: nxd, nyd
+       integer, intent(in) :: nyd
 
        allocate (Rmaj_astra(-1:nyd))
        allocate (Rmajc_astra(-1:nyd))

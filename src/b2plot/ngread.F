@@ -758,7 +758,7 @@ cank
                   ktns(i) = 1
                 end if
               else
-                ktns(i) = (3-ke)*mpg%nncut
+                ktns(i) = (3-ke)*mpg%nXpt
               end if
             end if
           end do
