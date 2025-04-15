@@ -1,6 +1,6 @@
 c
 C =====================================================================
-      subroutine pltwall(nCv,physical,from_target)
+      subroutine pltwall(physical,from_target)
 C =====================================================================
       use b2mod_types
       use b2mod_indirect
@@ -9,7 +9,6 @@ C =====================================================================
       use b2mod_graphics
       use b2mod_wall
       implicit none
-      integer nCv
       logical physical, from_target
 
       real (kind=R8) :: zlod,zhid

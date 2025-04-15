@@ -194,7 +194,7 @@
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'New model is based on b2npmo_b2sifr_ = 1.'
         case ('b2nppo_restrict_po')
-          write (*,'(/,1x,a,1x,1/1x,a)') 'Prohibited switch',
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Replaced by real switch b2nppo_restr_po.'
         case ('b2sifr_styl1')
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
