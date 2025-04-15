@@ -33,7 +33,7 @@ c*** and for the power flux.
       real (kind=R8) ::
      *   flxctff,enrctff,pwrctff
       parameter (flxctff=0.1_R8,enrctff=1.0e-8_R8,pwrctff=1.0e-8_R8)
-      integer il,is,i,ii,ia,ib,j,js,k,ic,ias,iend,istart,iFc,iCv
+      integer il,is,i,ii,ia,ib,j,js,k,ic,ias,iend,istart,iFc
       character*74 hlp_frm
       real (kind=R8) ::
      *   x,distance,h,a,aa,u,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,wwy(4),
@@ -270,24 +270,30 @@ c*** Calculate the net and gross erosion
                   wwe(ii)=enrctff
                 end do
               end if
-              if (from_b2plot) then
-                write (hlp_frm,'(a,i2,a)')
-     ,                 '(1x,a8,2i5,1p,5f10.4,',2*k+12,'e12.4)'
-                if (ic.eq.0) then
-                  write (lun,hlp_frm) pltzlbl(il),
-     ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
-     ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k)
-                else
-                  write (lun,hlp_frm) pltzlbl(il),
-     ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
-     ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k),
-     ,                wwyn,wwyg
-                end if
+            else if (ib.gt.lppp) then
+              iend = lppp
+              if (grid_mode.lt.2) then
+                j = 0
+                js = 0
+                do ii = 1, ntrgts
+                  if (itrg(ii).eq.0) cycle
+                  if (j.gt.0.and.js.gt.0) cycle
+                  istart = iend+1
+                  iend = iend+mpg%divFcP(itrg(ii),2)
+                  if (ib.ge.istart.and.ib.le.iend) then
+                    j = ii
+                    js = ib-istart+1
+                  end if
+                end do
+                iFc = mpg%divFc(mpg%divFcP(itrg(j),1)+js-1)
+                ias = b2_fnmti(iFc)
+              else
+                ias = ib-lppp
+                do ii = 1, ncns
+                  ias = ias+eirdiag_nds_ind(ii+1)-eirdiag_nds_ind(ii)
+                end do
+                ias = ias + 1
               end if
-            else if (grid_mode.eq.2) then
-              u=mpg%bcFcOr(mpg%fcBc(is,1))
-              iCv=min(mpg%fcCv(is,1),mpg%fcCv(is,2))
-              k=0
               wwk=0.0_R8
               wwp=0.0_R8
               do ii=0,state%ns-1

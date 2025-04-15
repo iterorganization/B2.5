@@ -2454,7 +2454,7 @@
 
       implicit none
       integer, intent(in) :: nx, ny
-      integer :: ix, iy, ic, iFc, iVx, iFs, iCv, Cvs(2), iVx1, iVx2
+      integer :: ix, iy, ic, iFc, iVx, iFs, iCv, iVx1, iVx2
 #ifdef WG_TODO
       integer :: i, j, idb
 #endif

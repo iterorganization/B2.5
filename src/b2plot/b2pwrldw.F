@@ -1,6 +1,5 @@
       subroutine b2pwrldw
       use b2us_data
-      use b2mod_rdload
       use b2mod_b2plot_wall_loading
       use b2mod_dimensions
 c
@@ -55,7 +54,7 @@ c
       do j=2,nwldprt
         do 100 i=1,nwldlis(j)
           l=iabs(lwldlis(i,j))
-          if(l.gt.lppp.and.l.le.lptg.and.grid_mode.lt.2) then
+          if(l.gt.lppp.and.l.le.lptg) then
             ltg=.true.
           else if (l.gt.lptg.or.grid_mode.eq.2) then
             do m=1,nwldlis(1)
