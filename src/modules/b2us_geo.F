@@ -446,7 +446,7 @@
       else if (mpg%nnreg(0).eq.7) then
         mpg%cvOnClosedSurface = mpg%cvReg.eq.1
       else
-        mpg%cvOnClosedSurface = mpg%cvReg.eq.1
+        mpg%cvOnClosedSurface = mpg%cvReg.eq.1.and.mpg%periodic_bc.eq.1
         write (*,*) 'Warning: unknown number of regions'
         write (*,*) 'Assuming core is region 1'
         !call xerrab ('Unknown number of regions!')
