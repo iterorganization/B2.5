@@ -151,7 +151,7 @@ c Internal variables
       real (kind=R8) :: segment(2,2), segmdist(mpg%nCi),
      &                  totaldist, crction, summation
       integer :: list_cv(nCv), nncv, nnci,
-     &                 list_fc(mpg%nFc), nnfc
+     &           list_fc(mpg%nFc), nnfc
       logical :: ifail
       integer :: iCv, cntr
 
@@ -175,7 +175,7 @@ c Internal variables
      &   list_ci_ech, nnci, list_fc, nnfc, segmdist, totaldist, ifail)
 
         chi(:) = segmdist/totaldist
-        summation = sum(chi(:)*geo%cvVol(:)) ! normalisation condition
+        summation = sum(chi(:)*geo%cvVol(1:mpg%nCi)) ! normalisation condition on internal elements only
         chi = chi/summation
       endif
 
@@ -268,7 +268,7 @@ c Internal variables
           enddo
         endif
 
-        summation = sum(chi(:)*geo%cvVol(:))
+        summation = sum(chi(:)*geo%cvVol(1:mpg%nCi))
         chi = chi/summation
       endif
 
@@ -436,9 +436,10 @@ c     LBr = abs(Br[id] * abs(aR[id + 1] - aR[id - 1]) / 100.0 / (Br[id - 1] - Br
         LBphi = BUHR/gradB
         alphaUHR = sqrt(neUHR*qe**2/me/eps0) / omegace ! wpe/wce @ UHR
 #ifdef WG_TODO
+!ap Reference for this formula is: Ram, Schultz; Phys. Plasma 7 4084-4094 (2000)
         Buddenparam = omegace*Lne/c * alphaUHR/sqrt(alphaUHR**2 +
      &                2.0_R8*(Lne/LBphi))*((sqrt(1.0 +
-     &		      alphaUHR**2)-1.0_R8)/(alphaUHR**2+(Lne/LBr)*
+     &		      alphaUHR**2)-1.0_R8)/(alphaUHR**2+(Lne/LBphi)*
      &                sqrt(1.0 + alphaUHR**2))**0.5_R8 ! Budden parameter
 
         T = expu(-2.0_R8 * Buddenparam) ! Tunneling fraction
