@@ -2263,8 +2263,9 @@ c k-enstrophy model
 c ECH model
       call xertst ((0.le.s%use_ech).and.(s%use_ech.le.1),
      1              'b2sral_use_ECH value not coded')
-      call xertst ((0.le.s%ech_coupling.le.2).or.(s%use_ech.eq.0),
-     1              'b2sral_ECH_coupling value not coded')
+      call xertst (((0.le.s%ech_coupling).and.(s%ech_coupling.le.2))
+     1               .or.(s%use_ech.eq.0),
+     2              'b2sral_ECH_coupling value not coded')
       call xertst (0.0_R8.lt.s%ech_RFfreq.or.s%use_ech.eq.0,
      1              'b2sral_ECH_RFfrequency must be .gt. 0.0')
       call xertst ((0.le.s%ech_gaussian_type).and.
