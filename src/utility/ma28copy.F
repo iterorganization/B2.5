@@ -5,7 +5,9 @@ c###### calls   ma30    mc20    mc22    mc23    mc24
      * iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy, bd2copy, bd3copy
+#endif
 c this subroutine performs the LU factorisation of a.
 c
 c the parameters are as follows.....
@@ -321,7 +323,9 @@ c set flag if the only error is due to duplicate elements.
      * iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy, bd2copy
+#endif 
 c this subroutine factorises a matrix of a similar sparsity
 c     pattern to that previously factorised by ma28a/ad.
 c the parameters are as follows ...
@@ -467,7 +471,9 @@ c set flag if the only error is due to duplicate elements.
       subroutine ma28cdcopy(n, a, licn, icn, ikeep, rhs, w, mtype)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy, bd2copy
+#endif
 c
 c this subroutine uses the factors from ma28a/ad or ma28b/bd to
 c     solve a system of equations without iterative refinement.
@@ -668,7 +674,9 @@ c also calculate maximum element of a.
      * ikeep, rhs, x, r, w, mtype, prec, iflag)
       use b2mod_types
       implicit none
+#ifndef GFORTRAN
       external bd1copy
+#endif
 c this subroutine uses the factors from an earlier call to ma28a/ad
 c     or ma28b/bd to solve the system of equations with iterative
 c     refinement.
@@ -3386,6 +3394,10 @@ c grofac is max u max-norm times max l 1-norm.
       w(1)=amaxl*amaxu
       return
       end subroutine mc24adcopy
+
+! svdk apparently for gfortran we need to declare bd1copy and others 
+! svdk as subroutines instead of block data 
+#ifndef GFORTRAN
       block data bd1copy
       use b2mod_types
       implicit none
@@ -3695,3 +3707,78 @@ c
 #endif
       data lp/6/,abort/.false./
       end block data bd3copy
+#else
+      subroutine set_data_bd1copy
+      use b2mod_types
+      implicit none
+      real (kind=R8) ::
+     *   eps, rmin, resid
+      real (kind=R8) :: tol, themax, big, dxmax, errmax, dres, cgce
+      integer lp, mp
+      integer irncp, icncp, minirn, minicn, irank
+      integer ndrop, maxit, noiter, nsrch, istart
+      logical lblock, grow
+      logical abort1, abort2
+      logical lbig
+      common /ma28edc/ lp, mp, lblock, grow
+      common /ma28fdc/ eps, rmin, resid, irncp, icncp, minirn, minicn,
+     * irank, abort1, abort2
+      common /ma28hdc/ tol, themax, big, dxmax, errmax, dres, cgce,
+     * ndrop, maxit, noiter, nsrch, istart, lbig
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma28edc/,/ma28fdc/,/ma28hdc/)
+#endif
+      eps = 1.0e-4_R8
+      tol = 0.0e0_R8
+      big = 0.0e0_R8
+      cgce = 0.5e0_R8
+      lp = 6
+      mp = 6
+      maxit = 16
+      nsrch = 32768
+      istart = 0
+      lbig = .false.
+      abort1 = .true.
+      abort2 = .true.
+      lblock = .true.
+      grow = .true.
+      end subroutine set_data_bd1copy
+      subroutine set_data_bd2copy
+      use b2mod_types
+      implicit none
+      real (kind=R8) ::
+     *   eps, rmin
+      real (kind=R8) :: tol, big
+      integer lp
+      integer ndrop, nsrch
+      logical abort1, abort2, abort3
+      logical lbig
+      common /ma30edc/ lp, abort1, abort2, abort3
+      common /ma30gdc/ eps, rmin
+      common /ma30idc/ tol, big, ndrop, nsrch, lbig
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/ma30edc/,/ma30gdc/,/ma30idc/)
+#endif
+      lp = 6
+      eps = 1.0e-4_R8
+      tol = 0.0e0_R8
+      big = 0.0e0_R8
+      nsrch = 32768
+      lbig = .false.
+      abort1 = .true.
+      abort2 = .true.
+      abort3 = .false.
+      end subroutine set_data_bd2copy
+      subroutine set_data_bd3copy
+      use b2mod_types
+      implicit none
+      integer lp, numnz, num, large
+      logical abort
+      common /mc23bdc/ lp, numnz, num, large, abort
+#ifdef _OPENMP
+!$OMP THREADPRIVATE(/mc23bdc/)
+#endif
+      lp = 6
+      abort = .false.
+      end subroutine set_data_bd3copy
+#endif
