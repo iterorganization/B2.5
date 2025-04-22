@@ -21,20 +21,21 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, isb
+      integer, intent(in) :: nCv, nFc, nVx, isb
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      *  rzb(nCv),
      &  nb(nCv), ti(nCv), tn(nCv),
      &  ne(nCv), te(nCv), po(nCv)
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   smbgp(nCv,0:3)
 *   ..workspace arguments (unspecified on entry and on exit)
-      real (kind=R8) ::
-     * wrk0(nCv), wrk1(nCv), wrk2(nCv), wrk3(nCv),
+      real (kind=R8), intent(inout) ::
+     * wrk0(nCv), wrk1(nCv), wrk2(nCv)
+      real(kind=R8) :: wrk3(nCv),
 #ifdef WG_TODO
      * wrk4(nCv),                                  !djm Jan2017
 #endif
@@ -264,20 +265,23 @@
         enddo
 cdjm compute b2sigp_pstat0to3 on cell face
         if (balance_netcdf.ne.0) then
-          b2sigp_pstat0to3 = 0.0_R8
-          b2sigp_pstati0to3 = 0.0_R8
+          b2sigp_pstat0to3(:, :, isb) = 0.0_R8
+          b2sigp_pstati0to3(:, :, isb) = 0.0_R8
+!$omp critical
           b2sigp_pstate0to3 = 0.0_R8
           do iFc = 1, nFc
-            t0 = geo%fcHz(iFc)*geo%fcS(iFc)*geo%fcBb(iFc,0)/
-     &        geo%fcBb(iFc,3)*geo%fcQalf(iFc,0)
+            t0 = switch%b2sigp_phm0*geo%fcHz(iFc)*geo%fcS(iFc)*
+     &       geo%fcBb(iFc,0)/geo%fcBb(iFc,3)*geo%fcQalf(iFc,0)
             b2sigp_pstat0to3(iFc,0,isb) = t0*(nbf(iFc)*tbf(iFc)+
-     &        rzbf(iFc)*nbf(iFc)*tef(iFc))
+     &       rzbf(iFc)*nbf(iFc)*tef(iFc))
             b2sigp_pstati0to3(iFc,0,isb) = t0*nbf(iFc)*tbf(iFc)
             b2sigp_pstate0to3(iFc,0) = t0*rzbf(iFc)*nbf(iFc)*tef(iFc)
           enddo
+!$omp end critical
         endif
+#endif
       else                                                            !srv 23.03.10 {
-        call xertst(switch%pot_eq.eq.1,
+          call xertst(switch%pot_eq.eq.1,
      &   'b2sigp_style.eq.2 requires pot_eq.eq.1!')
 * ..compute pressure gradient term
         smbgp = 0.0_R8
@@ -331,7 +335,7 @@ cxpb apply restriction to pressure gradient for minority ions
       else                                                            !srv 26.06.18 {
         smbgp = 0.0_R8
 #ifdef WG_TODO
-        b2sigp_pstat0to3 = 0.0_R8
+        b2sigp_pstat0to3(:, :, isb) = 0.0_R8
 #endif
         wrk5 = 0.0_R8
         wrk6 = 0.0_R8

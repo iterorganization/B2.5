@@ -13,11 +13,11 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       type (switches), intent (in) :: switch
-      integer nCv, icase                                                !srv 20.09.11
-      real (kind=R8) ::
+      integer, intent(in) :: nCv, icase                                                !srv 20.09.11
+      real (kind=R8), intent(in) ::
      &   te(nCv), ti(nCv), ne(nCv)                                      !srv 20.09.11
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   lnlam(nCv)
 *   ..common blocks
 *-----------------------------------------------------------------------

@@ -147,6 +147,10 @@
       srw%rsamo=0.0_R8
 
 #if ( !defined(NO_OPENMP_B2STEL) && defined(_OPENMP) )
+!svdk Note that we parallellized over iCv here instead of is, since
+!svdk both is and is+1 indices are used and hence race conditions may
+!svdk exist when parallellizing over is, which are non-trivial to 
+!svdk eliminate
 !$omp parallel default(none)
 !$omp& private(iCv, is, rf0, t0, t1, t2, t1i, t1n)
 !$omp& shared(ns, mpg, switch, srw, pl, dv, rt, rtw, geo)
@@ -158,11 +162,14 @@
 #ifndef FIXED_POINT
 !$omp& shared(b2stel_she0to3, balance_netcdf)
 #endif
-!$omp do 
+!$omp& reduction(+:b2rad, b2brem)
 #endif
       do is = 0, ns-2
        if (lnext(is,is+1)) then
 *     ..particle source and heat source
+#if ( !defined(NO_OPENMP_B2STEL) && defined(_OPENMP) )
+!$omp do 
+#endif
         do iCv = 1, mpg%nCi ! internal cells only
           if(mpg%cvReg(iCv).ne.0) then
 *       ..compute damping coefficient
@@ -219,6 +226,10 @@
            srw%rsahi(iCv,is) = t1
           endif
         enddo
+#if ( !defined(NO_OPENMP_B2STEL) && defined(_OPENMP) )
+!$omp end do 
+!$omp do
+#endif
 *     ..parallel momentum source
         do iCv = 1, mpg%nCi ! internal cells only
           if(mpg%cvReg(iCv).ne.0) then
@@ -277,10 +288,12 @@
      &        rsamoreg(mpg%cvReg(iCv),is+1)-t1*pl%ua(iCv,is)
           endif
         enddo
+#if ( !defined(NO_OPENMP_B2STEL) && defined(_OPENMP) )
+!$omp end do 
+#endif
        endif
       enddo
 #if ( !defined(NO_OPENMP_B2STEL) && defined(_OPENMP) )
-!$omp end do 
 !$omp end parallel
 #endif
 
