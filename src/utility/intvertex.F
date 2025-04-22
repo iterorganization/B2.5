@@ -22,8 +22,9 @@ c
       implicit none
       integer nCv,nVx
       type (mapping), intent (in) :: mpg
-      real (kind=R8) ::
-     *   vxvol(mpg%nVmxCv),centre(nCv),vertex(nVx)
+      real(kind=R8), intent(out)  :: vertex(nVx)
+      real (kind=R8), intent(in)  ::
+     *   vxvol(mpg%nVmxCv),centre(nCv)
   
       integer iVx,iCv
       real (kind=R8) :: volsum

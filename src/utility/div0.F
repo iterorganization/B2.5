@@ -8,10 +8,10 @@
 *   ..input arguments
       integer nCv, nFc
       type (mapping), intent (in) :: mpg
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      *   flo(nFc)
 *   ..output arguments
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   dflo(nCv)
 *-----------------------------------------------------------------------
 *.documentation

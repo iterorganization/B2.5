@@ -3,11 +3,14 @@
       use b2mod_ma28_for_us
       use b2mod_openmp
       IMPLICIT NONE
+#ifndef GFORTRAN 
+      external bd1copy, bd2copy, bd3copy
+#endif 
 C
 
 *  -- INPUT ARGUMENTS --
       INTEGER NCV, NZ
-      REAL (KIND=R8) :: RHS(NCV)
+      REAL (KIND=R8), intent(in) :: RHS(nCv)
       character*(*) name                                         !srv 18.05.02
 
 *  -- OUTPUT ARGUMENTS --
@@ -50,6 +53,7 @@ c
       external omp_get_wtime
 #endif
 #endif
+
       EXTERNAL XERRAB
 
       integer ncall, nwrite
@@ -69,12 +73,16 @@ c
 *  ---------------------------------------------------------------------
 *  TEST INPUTS AND SET AUXILIARIES.
 *  ---------------------------------------------------------------------
-
       if(ncall.eq.0) then
         call ipgeti ('ma28_for_us_nwrite', nwrite)
         call ipgeti ('ma28_for_us_kwrite_fmt', kwrite_fmt)            !srv 18.05.02
         call ipgeti ('ma28_for_us_kwrite_bnr', kwrite_bnr)            !srv 18.05.02
       endif
+#ifdef GFORTRAN
+       call set_data_bd1copy
+       call set_data_bd2copy
+       call set_data_bd3copy
+#endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
 #ifdef _OPENMP
@@ -94,7 +102,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
       N  = NCV
       RR1 = RHS
       S1 = 0.0_R8
-
+      
       if(kwrite_bnr.eq.ncall) then      
 !!FR The b2_matrix file will not write out correctly if code runs in parallel
 !!FR thus ensure that the code will not be executed if accessed in parallel region.

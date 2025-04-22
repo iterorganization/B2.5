@@ -18,10 +18,11 @@ c
       use b2mod_types
       implicit none
 
-      integer nCv,nFc
-      integer fcCv(nFc,2)
-      real (kind=R8) ::
-     *   fcVol(nFc,2),centre(nCv),face(nFc)
+      integer, intent(in) :: nCv,nFc
+      integer, intent(in) :: fcCv(nFc,2)
+      real (kind=R8), intent(in) ::
+     *   fcVol(nFc,2),centre(nCv)
+      real(kind=R8), intent(out) :: face(nFc)
       integer iFc
       do iFc = 1, nFc
         face(iFc) =
