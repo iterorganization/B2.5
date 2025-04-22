@@ -16,18 +16,18 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, isb
+      integer, intent(in) :: nCv, nFc, nVx, isb
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      *  rob(nCv), ub(nCv),
      &  flub(nFc,0:1), cvsb(nFc,0:1)
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   flcb(nFc,0:1), cvcb(nFc,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
-      real (kind=R8) ::
+      real (kind=R8), intent(inout) ::
      *   wrkf(nFc)                                                  !srv 02.07.08
 
 *-----------------------------------------------------------------------

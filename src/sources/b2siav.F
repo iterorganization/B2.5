@@ -26,21 +26,21 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, isb, ismain
+      integer, intent(in) :: nCv, nFc, nVx, ns, isb, ismain
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (switches), intent (in) :: switch
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      & mb, lnlam(nCv),                                                  !srv 01.07.09
      & ub(nCv),
      & te(nCv), ti(nCv), nb(nCv), ni(nCv), ne2(nCv),
      & hcix_c(nCv), cvsbhz_cl(nFc,0:1), rz2(nCv,0:ns-1)                 !srv 31.07.02
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   smbvh(nCv,0:3), smbvv(nCv,0:3),
      &   kt_neo(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
-      real (kind=R8) ::
+      real (kind=R8), intent(inout)  ::
      *   wrk0(nCv), wrk1(nCv), wrk2(nCv)
 *   ..common blocks
 *-----------------------------------------------------------------------

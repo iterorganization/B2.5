@@ -17,7 +17,7 @@
       real (kind=R8) ::
      *   aa(13*nCv)
       real(kind=R8), intent(inout) :: resfun(nCv)
-      character*(*) name                                                 !sv 18.05.02
+      character*(*) name                                              !sv 18.05.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(nCv)
@@ -153,7 +153,7 @@
        call cpu_time(c_end)
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
-         !! ma28 solver, default
+*    ..use ma28
        call ILUTERN_US(NCV, NZ, resfun, corfun, name)     !sv 13.10.06
       else if (style.eq.3) then
        call cpu_time(c_start)

@@ -26,7 +26,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
-      type (B2Derivatives), intent (in) :: dv
+      type (B2Derivatives), intent (inout) :: dv
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  hce(nCv,0:1), sig(nCv,0:1), alf(nCv,0:1)
