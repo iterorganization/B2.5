@@ -20,9 +20,10 @@ c
       implicit none
       integer, intent (in) :: nCv,nFc
       type (mapping), intent (in) :: mpg
-      real (kind=R8) ::
-     *   wght(mpg%nCmxFc),face(nFc),centre(nCv)
-
+      real (kind=R8), intent(in) ::
+     *   wght(mpg%nCmxFc),face(nFc)
+      real (kind=R8), intent(out) :: centre(nCv)
+  
       integer iFc,iCv
       real (kind=R8) :: wghtsum
 
