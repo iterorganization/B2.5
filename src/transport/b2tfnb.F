@@ -471,7 +471,10 @@ cwdk                   (original code: simple averaging)
       dv%fna(:,0,isb)      = fna_mdf0(:,0) + (1.0_R8-drift_hyb)*
      &  (dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0) + scur(:,0))*nbf +
      &  (flo(:,0) - flo_mdf(:,0))*nbf - co%cdpa(:,0,isb)*dpb(:,0)
-
+!      if (isb == 0) then 
+!        write (*, *) 'b2tfnb: value of fna(1, 0, 0) is: ', 
+!     &  dv%fna(1, 0, isb)
+!      end if 
       dv%fna(:,1,isb)      = fna_mdf0(:,1) + (1.0_R8-drift_hyb)*
      &  (dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1) + scur(:,1))*nbf +
      &  (flo(:,1) - flo_mdf(:,1))*nbf - co%cdpa(:,1,isb)*dpb(:,1)
@@ -539,8 +542,8 @@ cwdk                   (original code: simple averaging)
      &   co%cdpa(:,1,isb)*dpb(:,1)
 
 *   ..compute ExB fluxes for k-model
-      dv%fna_ExB = 0.0_R8
       if (isb .eq. ismain .and. switch%solve_keps.gt.0) then
+        dv%fna_ExB = 0.0_R8 ! initialization within the if-statement to avoid race conditions with openMP
         zeros = 0.0_R8
         zeros1 = 0.0_R8
         call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%na(:,isb),zeros,

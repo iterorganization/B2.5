@@ -14,7 +14,8 @@
       integer nCv, itcnt
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *   aa(13*nCv), resfun(nCv)
+     *   aa(13*nCv)
+      real(kind=R8), intent(inout) :: resfun(nCv)
       character*(*) name                                              !sv 18.05.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -76,7 +77,7 @@
 *   ..procedures
       intrinsic cpu_time
       external xertst, ipgeti, ipgetr,
-     &  slv5pt, iluter, xerrab
+     &  xerrab, ilutern_us
 *   ..initialization
       save ncall, style, cpu
       data ncall/0/, style/2/, cpu/0/
@@ -148,7 +149,6 @@
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_us ',
      &               c_end-c_start
 *    ..use ma28
-       call cpu_time(cpu_start)
        call ILUTERN_US(NCV, NZ, resfun, corfun, name)     !sv 13.10.06
       endif
       call cpu_time(cpu_end)

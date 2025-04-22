@@ -459,9 +459,10 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
 ! Note: need to copy in all global variables from the ma28 solver...
 !$omp parallel do default(none)
 !$omp& private(is, iCv, solvedum, solvedm2,ier0,na_min)
+!$omp& firstprivate(last_solve_9) lastprivate(last_solve_9)
 !$omp& shared(switch, st, geo, mpg)
 !$omp& shared(is_neutral, nCv, nFc, nVx, ns, ismain, solveco, solvemo)
-!$omp& shared(b2news_solving, rxf0, dtim, last_solve_9, ncall_b2news_)
+!$omp& shared(b2news_solving, rxf0, dtim, ncall_b2news_)
 !$omp& shared(min_na)
 #endif
       do is = switch%nsmin, switch%nsmax-1

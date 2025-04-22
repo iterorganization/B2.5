@@ -111,10 +111,12 @@ ctmp.dpc
       call sfill (nCv*4*ns, 0.0_R8, smq0, 1)
       call sfill (nCv*4, 0.0_R8, shi0, 1)
       call sfill (nCv*4, 0.0_R8, shn0, 1)
+      rg0 = switch%b2stcx_rg0
 *   ..compute sources due to charge exchange
 #if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
-
-!$omp parallel do default(none) 
+!svdk note that we parallellize here over iCv instead of is since 
+!svdk otherwise race conditions will occur due to use of is-1
+!$omp parallel default(none) 
 !$omp& private(is, iCv)
 !$omp& private(t0, t1, t2, du0, du1, t1n)
 !$omp& shared(ns, mpg, is0, switch, rg0, geo, is_neutral, tkin, tn, ti)
@@ -128,6 +130,9 @@ ctmp.dpc
 *        (This is a special case: charge exchange between H0 and H1,
 *        for which there is no particle source.)
         else
+#if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
+!$omp do
+#endif 
          do iCv = 1, mpg%nCi
            if(mpg%cvReg(iCv).ne.0) then
 *        ..compute rate for is->is-1 and is0->is0+1
@@ -151,8 +156,14 @@ ctmp.dpc
 !WG_TODO     1       rcxnareg(mpg%cvReg(iCv),is0)-t0*na(iCv,is0)*na(iCv,is)
            endif
          enddo
+#if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
+!$omp end do
+#endif 
         endif
 *     ..heat source
+#if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
+!$omp do
+#endif 
         do iCv = 1, mpg%nCi
           if(mpg%cvReg(iCv).ne.0) then
 *       ..compute rate for is->is-1 and is0->is0+1
@@ -218,8 +229,12 @@ ctmp.dpc
 !WG_TODO           rcxhireg(mpg%cvReg(iCv),is)=rcxhireg(mpg%cvReg(iCv),is)+t1
           endif
         enddo
+#if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
+!$omp end do
+!$omp do
+#endif 
 *     ..parallel momentum source
-        rg0 = switch%b2stcx_rg0
+        
 !!   (rg0 for numerical stabilisation; needs experiments.) (default = 1.0)
         do iCv = 1,mpg%nCi
           if(mpg%cvReg(iCv).ne.0) then
@@ -309,10 +324,13 @@ ctmp.dpc
 !WG_TODO     1       rcxmoreg(mpg%cvReg(iCv),is0)-t2*ua(iCv,is0)
           endif
         enddo
+#if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
+!$omp end do
+#endif 
        endif
       enddo
 #if ( !defined(NO_OPENMP_B2STCX) && defined(_OPENMP) )
-!$omp end parallel do
+!$omp end parallel 
 #endif
 
 #ifdef ASTRA

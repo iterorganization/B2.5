@@ -72,7 +72,7 @@
 *   ..local variables
       integer iCv, is
       integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat =0
-#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) ) )
+#if  ( defined(_OPENMP)  )
 !$omp threadprivate(iout, iout_b2npmo, iout_b2wdat)
 #endif
       character chns*3, chis*3
@@ -90,7 +90,7 @@
       real (kind=R8) :: rz2_temp(1:ns*nCv), na_temp(1:ns*nCv),
      &                  am_sqrt(0:ns-1, 0:ns-1)
       integer :: ctr, i, j
-#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) ) )
+#if ( ( defined(_OPENMP)  ) )
       logical :: make_parallel
 #endif
 *   ..procedures
@@ -140,7 +140,7 @@
       end if
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
-#if ( ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) ) )
+#if ( ( defined(_OPENMP) ) )
       make_parallel = .not. in_parallel()
 #endif
 *   ..test nCv, nFc, nVx
@@ -171,9 +171,9 @@
 *   ..make 3rd dimension contiguous by copying to 1-d array (Gaurav Saxena: BSC ACH)
       ctr = 1
       do iCv = 1, nCv
-#if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
+!#if ( defined(_OPENMP) && !defined(LEGACYCOMP) && !defined(NAGFOR) )
 !$OMP SIMD
-#endif
+!#endif
         do is = 0, ns-1
           rz2_temp(ctr) = rz2(iCv,is)
           na_temp(ctr) = na(iCv,is)
@@ -243,6 +243,9 @@
             enddo
           endif
         enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
+!$omp end parallel do
+#endif
       endif
       call nancheck(nCv, smbfrial(:,0), 'smbfrial(,0)')
 
@@ -347,6 +350,9 @@ c        .. apply flux limit
           enddo
          endif
         enddo
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF) )
+!$omp end parallel do
+#endif
       endif
       call nancheck(nCv, smbtfial(:,0), 'smbtfial(,,0)')
 

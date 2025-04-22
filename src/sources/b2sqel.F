@@ -75,6 +75,10 @@
        call b2xvsg (nCv, te, 1, 'te', '.gt.')
       endif
 
+*   ..compute wrk0()=log(te()/ev)
+      wrk0 = log(te/ev)
+      art_rad = switch%art_rad
+
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SQEL) )
 ! TNORM was originally shared in the structured code, but this seems
 ! wrong, as it is computed for each cell (race conditions may occur
@@ -86,9 +90,6 @@
 !$omp& shared(art_rad, ismain, TE)
 !$omp& shared(rtw, rt, switch)
 #endif
-
-*   ..compute wrk0()=log(te()/ev)
-      wrk0 = log(te/ev)
 
 * ..main computation
 *   ..compute rate coefficients
@@ -133,7 +134,7 @@
 #endif
 
 * ..artificial radiation                DPC 2000.08.25
-      art_rad = switch%art_rad
+      
       if(art_rad.ne.0.0_R8) then
         if(ncall_b2sqel.eq.0) then
           art_rad=abs(art_rad)

@@ -24,7 +24,7 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (B2Plasma), intent (in) :: pl
-      type (B2Derivatives), intent (in) :: dv
+      type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
       type (B2StateExt), intent (in) :: st_ext
 *   ..output arguments (unspecified on entry)

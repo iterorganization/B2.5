@@ -30,22 +30,23 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, isb
+      integer, intent(in) :: nCv, nFc, nVx, ns, isb
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2StateExt), intent (in) :: st_ext
-      real (kind=R8) ::
+      real (kind=R8), intent(in) ::
      &  na(nCv,0:ns-1), ua(nCv,0:ns-1), te(nCv), ti(nCv), ni(nCv,0:1),
      &  ne(nCv), ne2(nCv), rza(nCv,0:ns-1), rz2(nCv,0:ns-1), ehxp(nCv),
-     &  lnlam(nCv), cthe(nCv,0:ns-1), cthi(nCv,0:ns-1)
+     &  cthe(nCv,0:ns-1), cthi(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
-      real (kind=R8) ::
+      real (kind=R8), intent(out) ::
      *   smbch(nCv,0:3), smbtf(nCv,0:3),                                !srv 11.09.09
      &   smprb(nCv), smptb(nCv), smfrb(nCv)
 *   ..workspace arguments (unspecified on entry and on exit)
-      real (kind=R8) ::
-     *   vti32(nCv), gti(nCv), gte(nCv),
+      real (kind=R8), intent(inout) ::
+     *   vti32(nCv), gti(nCv), gte(nCv), lnlam(nCv)
+      real (kind=R8) :: 
      *   smbtf_cthe(nCv),                                               !djm Jul2018
      *   smbtf_cthi(nCv)
 *-----------------------------------------------------------------------
@@ -155,6 +156,7 @@ csw 24sep2013
 *   ..compute gti,gte
       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, ti, wrkv, gti)
       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, te, wrkv, gte)
+
 * ..compute friction
 *   ..initialise to 0
       smbch = 0.0_R8
@@ -164,6 +166,7 @@ csw 24sep2013
       smfrb = 0.0_R8
       smbtf_cthe = 0.0_R8
       smbtf_cthi = 0.0_R8
+
 *   ..loop over all other species
       do is = 0, ns-1
 *    ..consider distinct cases
@@ -196,6 +199,7 @@ csw 24sep2013
 *       physics routines.)
        endif
       enddo
+
 *   ..compute thermal force
       if (.not.is_neutral(isb)) then
        do iCv = 1, mpg%nCi

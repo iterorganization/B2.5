@@ -43,19 +43,20 @@
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
-      type (B2Coeff), intent (in) :: co
       type (B2Coeff_nspecies), intent (in) :: co_ns
       type (B2Rates), intent (in) :: rt
       type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       type (B2StateExt), intent (in) :: st_ext
+      ! type(B2State), intent(inout)   :: st
       real (kind=R8) ::
      *  rxf, dtim
       logical solving
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
+      type (B2Coeff), intent (inout) :: co ! due to kt_neo
 *   ..output arguments (unspecified on entry)
       integer ierr
 !WG_TODO     &  smof(nCv,0:3,0:ns-1)
@@ -103,8 +104,8 @@
      *  smbvh(nCv,0:3), smbvv(nCv,0:3), smbvi(nCv,0:3),                !srv 23.07.99 04.10.99
      *  smbvtmp(nCv,0:3),
      *  smbcf(nCv,0:3), smban(nCv,0:3),                                !srv 09.07.01 25.09.17
-     1  pb(nCv), cvct(nFc,0:1),
-     2  rob(nCv), flub(nFc,0:1),
+     1  cvct(nFc,0:1), pb(nCv), 
+     2  flub(nFc,0:1), lnlam(nCv), kt_neo(nCv), rob(nCv), 
      *  flubv(nFc,0:1),                                                !srv 11.09.09
      3  wrkf(nFc,0:1), wrkff(nFc,0:1), wrkfff(nFc,0:1),
      *  wrkv(nVx), aa(mpg%nCmxNv),
@@ -124,7 +125,7 @@
      9  zmc(nCv), z11(nCv),                                            !som 13.11.20
      1  z12(nCv), z22(nCv),
      2  zf1(nCv), zf2(nCv),
-     3  rho_b_rel(nCv)
+     3  rho_b_rel(nCv), resmt(nCv)
 
       real (kind=R8) ::
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
@@ -137,7 +138,6 @@
      &  b2xvsg, b2xvff, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,
      &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfc, b2nxst,
      &  b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
-*   ..initialisation
 
 *-----------------------------------------------------------------------
 *.computation
@@ -309,9 +309,11 @@ c time-dependent treatment                                            !srv 07.07
       call sfill (nFc*2, 0.0_R8, flct, 1)
       call sfill (nFc*2, 0.0_R8, cvct, 1)
       call sfill (nCv, 0.0_R8, dv%resmt, 1)
+      call sfill (nCv, 0.0_R8, resmt, 1)
       call sfill (nCv, 0.0_R8, ctcft, 1)                               !srv 06.04.07
 
 * ..main computation
+      lnlam = dv%lnlam ! copy 
 *   ..compute individual species corrections
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
 #ifdef WITH_FTIMINGS
@@ -326,21 +328,30 @@ c time-dependent treatment                                            !srv 07.07
 !!FR and thus their contents should not matter
 !!FR all other variables are shared
 !$omp parallel do default(none)
-!$omp& shared(pl, dv, co, rt, co_ns, geo, nCv, nFc, nVx, switch, mpg)
-!$omp& shared(st_ext, srw, sr, ehxp)
-!$omp& reduction(+: dv%resmt, flct, cvct, cvcb, smt, ctcft)
-!$omp& private(rob, robf, pb, wrk0, flub, flcb, pb1, rob1, wrkf0)
-!$omp& private(wrkf, wrk1, smb, b2npmo_solvedum, ro)
-!$omp& private(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf,smbvtmp)
-!$omp& private(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)
+!$omp& shared(geo, nCv, nFc, nVx, switch, mpg)
+!$omp& shared(co, co_ns, dv, pl, rt, srw, sr)
+!$omp& shared(st_ext, ehxp)
+!$omp& reduction(+:resmt, flct, cvct, smt)
+!$omp& reduction(+:ctcft)
+!$omp& private(rob, pb, wrk0, flub, flcb, b2npmo_solvedum)
+!$omp& private(pb1, rob1, wrkf0)
+!$omp& firstprivate(lnlam)
+!$omp& private(is, k)
+!$omp& lastprivate(kt_neo, robf, ubf)
+!$omp& private(wrkf, wrk1, smb, ro)
+!$omp& private(smbfrea, smbfria, smbtfea, smbtfia)
+!$omp& private(smbch, smbtf, smbvtmp)
+!$omp& private(smbgp, flubv, wrk2, smbvh,smbvv) 
+!$omp& private(smbcf, ctcfb, smban, cvcb)
 !$omp& private(smbvi, rho_b_rel)
 !$omp& private(chns, wrks, aa, wrkff, wrkfff)
+!$omp& firstprivate(last_solve_9) lastprivate(last_solve_9)
 !$omp& shared(solvemt, solvemo, ns, am, solving, ismain, smqdu, itcnt)
 #ifndef FIXED_POINT
 !$omp& shared(balance_netcdf, fmo_b2nxfv)
-!$omp& shared(fmo_tot, tot_smo0to3, ubf)
+!$omp& shared(fmo_tot, tot_smo0to3)
 #endif
-!$omp& shared(is_neutral, last_solve_9)
+!$omp& shared(is_neutral)
 !$omp& shared(zetap, zetae, gti, gte, ce1, ce2, cimp1)
 !$omp& shared(cimp2, zeff, rxg)
 !$omp& shared(rho_A_rel, avm_u)
@@ -350,16 +361,17 @@ c time-dependent treatment                                            !srv 07.07
 *    ..compute rob, pb
        call b2scopy (nCv, pl%na(:,is), 1, rob, 1)
        call b2sscal (nCv, am(is)*mp, rob, 1)
+
        call b2xppb (nCv, rt%rza(:,is), pl%na(:,is), pl%te, pl%ti,
      &               pl%tn, is, pb)
 *    ..compute extended friction term
        if(switch%b2sigp_style.eq.2) then                               !srv 13.01.17
         call b2sifrtf (nCv, nFc, nVx, ns, is, ismain, switch, geo,
      &   mpg, pl%na, pl%ua, dv%ue, pl%te, pl%ti, dv%ni, dv%ne, dv%ne2,
-     &   rt%rza, rt%rz2, pl%po,
-     &   zetap, zetae, gti, gte, ce1, ce2, cimp1, cimp2, zeff,
-     &   co%f_luc_sg, co%alfx_c, co%sigx_c, st_ext,
-     &   smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)             ! smbch and smbtf will be multiplied by vol*hz below !srv 05.07.17
+     &   rt%rza, rt%rz2, pl%po,zetap, zetae, gti, gte, ce1, ce2, 
+     &   cimp1, cimp2, zeff, co%f_luc_sg, co%alfx_c, co%sigx_c, st_ext,
+     &   smbfrea, smbfria, smbtfea, smbtfia, smbch, 
+     &   smbtf)             ! smbch and smbtf will be multiplied by vol*hz below !srv 05.07.17
         do k = 0, 3
          smbch(:,k) = geo%cvVol*geo%cvHz*smbch(:,k)
          smbtf(:,k) = geo%cvVol*geo%cvHz*smbtf(:,k)
@@ -377,14 +389,15 @@ c time-dependent treatment                                            !srv 07.07
         smbtfea = 0.0_R8
         call b2sifr_ (nCv, nFc, nVx, ns, is, switch, geo, mpg,
      &   pl%na, pl%ua, pl%te, pl%ti, dv%ni, dv%ne, dv%ne2, rt%rza,
-     &   rt%rz2, ehxp, dv%lnlam, co%cthe, co%cthi, st_ext,
+     &   rt%rz2, ehxp, lnlam, co%cthe, co%cthi, st_ext,
      &   smbch, smbtf, srw%smpr(:,is), srw%smpt(:,is), srw%smfr(:,is),
-     &   wrk0, gti, gte)
+     &   wrk0, wrk1, wrk2)
        endif
 *    ..compute pressure gradient term
        call b2sigp (nCv, nFc, nVx, is, switch, geo, mpg, rt%rza(:,is),
      &   pl%na(:,is), pl%ti, pl%tn, dv%ne, pl%te, pl%po, smbgp, wrk0,
      &   wrk1, wrk2)
+
 *    ..compute flub
        call b2scopy (nFc*2, dv%fna_fcor(:,:,is), 1, flub, 1)
        call b2sscal (nFc*2, am(is)*mp, flub, 1)
@@ -398,23 +411,30 @@ c time-dependent treatment                                            !srv 07.07
          rho_b_rel = 0.0_R8
        endif
        call b2nxfv (nCv, nFc, nVx, is, ismain, switch, geo, mpg,
-     &    rho_b_rel, co%cvsahz_cl(:,:,is), co%cvsahz(:,:,is), flubv)
+     &    rho_b_rel, co%cvsahz_cl(:,:,is), co%cvsahz(:,:,is), 
+     &    flubv)
+#ifndef FIXED_POINT
        if (balance_netcdf.ne.0) then
          fmo_b2nxfv(:,:,is)=flubv                                       !djm Jan2017
        endif
+#endif
+
        call b2saxpy (nFc*2, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
 *    ..compute flcb, cvcb
        call b2nxfc (nCv, nFc, nVx, is, switch, geo, mpg, rob,
-     &  pl%ua(:,is), flub, co%cvsahz(:,:,is), flcb, cvcb, wrkf0)
+     &  pl%ua(:,is), flub, co%cvsahz(:,:,is), flcb, cvcb, 
+     &  wrkf0)
 
 *    ..compute additional viscosity term
        if (switch%Zhdanov_closure.eq.0.or.switch%Zhdanov_test.eq.1 .or.
      &    (switch%Zhdanov_visu.eq.0.and.switch%Zhdanov_vish.eq.0)) then !som 13.08.21
          call b2siav (nCv, nFc, nVx, ns, is, ismain, switch, geo, mpg,
-     &    am(is)*mp, pl%ua(:,is), pl%te, pl%ti, pl%na(:,is), dv%ni(:,1),
-     &    dv%ne2, rt%rz2, dv%lnlam, co%hcix_c, co%cvsahz_cl(:,:,is),
-     &    smbvh, smbvv, co%kt_neo, wrk0, wrk1, wrk2)
-         smbvi = 0.0_R8
+     &    am(is)*mp, pl%ua(:,is), pl%te, pl%ti, pl%na(:,is), 
+     &    dv%ni(:,1),
+     &    dv%ne2, rt%rz2, lnlam, co%hcix_c, co%cvsahz_cl(:,:,is),
+     &    smbvh, smbvv, kt_neo, wrk0, wrk1, 
+     &    wrk2)
+          smbvi = 0.0_R8
        elseif (switch%Zhdanov_visu.eq.1 .and.
      &         switch%Zhdanov_vish.eq.1) then
          call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
@@ -425,9 +445,11 @@ c time-dependent treatment                                            !srv 07.07
        elseif (switch%Zhdanov_visu.eq.1 .and.
      &         switch%Zhdanov_vish.eq.0) then
          call b2siav (nCv, nFc, nVx, ns, is, ismain, switch, geo, mpg,
-     &    am(is)*mp, pl%ua(:,is), pl%te, pl%ti, pl%na(:,is), dv%ni(:,1),
-     &    dv%ne2, rt%rz2, dv%lnlam, co%hcix_c, co%cvsahz_cl(:,:,is),
-     &    smbvh, smbvtmp, co%kt_neo, wrk0, wrk1, wrk2)
+     &    am(is)*mp, pl%ua(:,is), pl%te, pl%ti, pl%na(:,is), 
+     &    dv%ni(:,1),
+     &    dv%ne2, rt%rz2, lnlam, co%hcix_c, co%cvsahz_cl(:,:,is),
+     &    smbvh, smbvtmp, kt_neo, wrk0, wrk1, 
+     &    wrk2)
          call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
      &    am(is)*mp, rt%rza(:,is), pl%ua(:,is), pl%te, pl%ti,
      &    pl%na(:,is), dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
@@ -437,16 +459,20 @@ c time-dependent treatment                                            !srv 07.07
        elseif (switch%Zhdanov_visu.eq.0 .and.
      &         switch%Zhdanov_vish.eq.1) then
          call b2siav (nCv, nFc, nVx, ns, is, ismain, switch, geo, mpg,
-     &    am(is)*mp, pl%ua(:,is), pl%te, pl%ti, pl%na(:,is), dv%ni(:,1),
-     &    dv%ne2, rt%rz2, dv%lnlam, co%hcix_c, co%cvsahz_cl(:,:,is),
-     &    smbvtmp, smbvv, co%kt_neo, wrk0, wrk1, wrk2)
+     &    am(is)*mp, pl%ua(:,is), pl%te, pl%ti, pl%na(:,is), 
+     &    dv%ni(:,1),
+     &    dv%ne2, rt%rz2, lnlam, co%hcix_c, co%cvsahz_cl(:,:,is),
+     &    smbvtmp, smbvv, kt_neo, wrk0, wrk1, 
+     &    wrk2)
          call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
      &    am(is)*mp, rt%rza(:,is), pl%ua(:,is), pl%te, pl%ti,
      &    pl%na(:,is), dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
      &    co_ns%hci_al, co%cvsahz_drho(:,:,is), co%vsa_drho(:,is),
      &    smbvh, smbvtmp, smbvi, rho_A_rel(:,is), avm_u,
      &    wrk0, wrk1, wrk2)
-         smbvi = 0.0_R8
+        smbvi = 0.0_R8
+       else
+        kt_neo = 0.0_R8
        endif
        smbvi = smbvi*switch%smbvi_factor
 *    ..compute centrifugal force term                                   !srv 09.07.01
@@ -463,7 +489,8 @@ c time-dependent treatment                                            !srv 07.07
        call b2saxpy (nCv*4, 1.0_R8, smbtf, 1, smb, 1)                   !srv 11.09.09 }
        srw%b2npmo_smag(:,:,is)=smbgp(:,:)
        call b2saxpy (nCv*4, 1.0_R8, smbgp, 1, smb, 1)
-       srw%b2npmo_smav(:,:,is)=smbvh(:,:)+smbvv(:,:) +smbvi(:,:)        !srv 03.07.08 {
+       srw%b2npmo_smav(:,:,is)=smbvh(:,:)+smbvv(:,:) 
+     &    + smbvi(:,:)        !srv 03.07.08 {
        call b2saxpy (nCv*4, 1.0_R8, smbvh,  1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbvv,  1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbvi,  1, smb, 1)
@@ -472,21 +499,21 @@ c time-dependent treatment                                            !srv 07.07
        call b2nxdv (nCv,is,switch,mpg,rob,sr%smq(:,:,is),smqdu,smb)     !srv ???
 *    ..save final source for species (is)                               !srv 10.11.02
 !WG_TODO       smof(:,:,is) = smb                                       !srv 10.11.02
-
 cdjm Jan2017 update momentum source components for balance
       if (balance_netcdf.ne.0) then
          tot_smo0to3(:,:,is)=smb !djm Mar2019
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,is),ubf)
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,rob,robf)
-        call update_balance_sources_momentum(nCv,nFc,is,pl%ua(:,is),rob,
-     &    ubf,robf)
+        call update_balance_sources_momentum(nCv,nFc,is,pl%ua(:,is),
+     &    rob,ubf,robf)
       endif
 
 *    ..compute residual
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
      &            .or.switch%get_residuals.eq.1) then                   !srv 22.05.18
         call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is, pl%ua(:,is),
-     .    rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
+     .    rob, smb, flub, flubv, co%cvsahz(:,:,is), 
+     .    dv%resmo(:,is),
      .    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))        !srv 04.07.08
 
 cdjm Mar2019 output the total momentum flux and source for balance
@@ -499,11 +526,15 @@ cdjm Mar2019 output the total momentum flux and source for balance
       write (chns,'(i3.3)') is                                          !srv 18.03.10
 
       if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then  !srv 12.07.02 {
-        call my_out_us(70,nCv,0,dv%resmo(1,is),'b2npmo_resmo'//chns)
-        call my_out_us(70,nFc,1,dv%fmo(1,0,is),'b2npmo_fmo_th'//chns)
-        call my_out_us(70,nFc,1,dv%fmo(1,1,is),'b2npmo_fmo_r'//chns)
+        call my_out_us(70,nCv,0,dv%resmo(1,is),
+     &  'b2npmo_resmo'//chns)
+        call my_out_us(70,nFc,1,dv%fmo(1,0,is),
+     &  'b2npmo_fmo_th'//chns)
+        call my_out_us(70,nFc,1,dv%fmo(1,1,is),
+     &  'b2npmo_fmo_r'//chns)
         if(.not. is_neutral(is)) then
-          call my_out_us(70,nFc,1,flubv(1,0),'b2npmo_flubv_th'//chns)
+          call my_out_us(70,nFc,1,flubv(1,0),
+     &  'b2npmo_flubv_th'//chns)
           wrks=smbvv(:,0)+smbvv(:,1)*pl%ua(:,is)+
      &         smbvv(:,2)*pl%na(:,is)*mp*am(is)+
      &         smbvv(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
@@ -565,7 +596,7 @@ cdjm Mar2019 output the total momentum flux and source for balance
        endif                                                            !srv 12.07.02 }
 
        if (solving.and.any(solvemo(is,0:mpg%nnreg(0)))) then            !srv 06.07.10 22.05.18
-         b2npmo_solvedum(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
+        b2npmo_solvedum(0:mpg%nnreg(0))=solvemo(is,0:mpg%nnreg(0))
 c    ..compare matrices
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
          call restart_ma28_for_us
@@ -577,13 +608,14 @@ c    ..compare matrices
          end do
          if (new_matrix.or..true.) call restart_ma28_for_us
 #endif
+
 *    ..compute correction
-         pb1 = pb !csc to avoid aliasing in Tapenade
-         rob1 = rob !csc to avoid aliasing in Tapenade
+        pb1 = pb !csc to avoid aliasing in Tapenade
+        rob1 = rob !csc to avoid aliasing in Tapenade
          call b2usmo (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
      &     b2npmo_solvedum, itcnt, rxg, rob, rob1, pb,
      &     pb1, pl%ua(:,is), smb,
-     &     flcb, cvcb, dv%resmo(:,is), ctcfb, dv%corua(:,is),
+     &    flcb, cvcb, dv%resmo(:,is), ctcfb, dv%corua(:,is),
      &     dv%pcca(:,:,is), aa, wrk1, 'b2usmo_'//chns)
          last_solve_9(0:mpg%nnreg(0)) = solvemo(is,0:mpg%nnreg(0))
 csw 21feb2014 added this else branch
@@ -592,6 +624,7 @@ csw 21feb2014 added this else branch
 !         dv%resmo(:,is) = 0.0_R8       ! it is useful to know resmo    !srv 22.05.18
          dv%corua(:,is) = 0.0_R8
        endif
+
 *    ..compute contribution to total residual
 csw 21feb2014 and do this only for the solved species, i.e. added next branch
       if((solving.and.any(solvemo(0:ns-1,0:mpg%nnreg(0)))
@@ -612,21 +645,27 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (nCv*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
         call b2saxpy (nCv*4, 1.0_R8, smban, 1, smb, 1)                  !srv 25.09.17
         call b2urmo (nCv, nFc, nVx, switch, geo, mpg,  is, pl%ua(:,is),
-     .     rob, smb, flub, flubv, co%cvsahz(:,:,is), wrk0, wrkf, wrkff,
+     .     rob, smb, flub, flubv, co%cvsahz(:,:,is), 
+     .    wrk0, wrkf, wrkff,
      .    wrkfff)
 *    ..accumulate residual
-        call b2saxpy (nCv, 1.0_R8, wrk0, 1, dv%resmt, 1)
+        call b2saxpy (nCv, 1.0_R8, wrk0, 1, resmt, 1)
 *    ..accumulate smb
         call b2nxst (nCv, rob, smb, ro, smt)
 *    ..accumulate transport coefficients
         call b2saxpy (nFc*2, 1.0_R8, flcb, 1, flct, 1)
         call b2saxpy (nFc*2, 1.0_R8, cvcb, 1, cvct, 1)
         call b2saxpy (nCv, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
-       endif                                                            !srv 22.05.18
+       endif                !srv 22.05.18
       enddo
+
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
 !$omp end parallel do
 #endif
+
+*     .. attribute kt_neo, resmt
+      dv%resmt  = resmt
+      co%kt_neo = kt_neo
 
 csw 21feb2014, execute simultaneous corrections always
       if (solving.and.any(solvemo(0:ns-1,0:mpg%nnreg(0)))
@@ -766,6 +805,7 @@ c     ..compare 9-pt stencil matrice
 * ..return
       ncall_b2npmo = ncall_b2npmo+1
       call subend ()
+
       return
 
 *-----------------------------------------------------------------------
