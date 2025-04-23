@@ -280,7 +280,7 @@ c 2002-09-11: logic revised
      8 sna_corr1(:), taumax1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
-      integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns
+      integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns1
       integer ib1, ib2, ifl, js, ks, itrack
       integer natm1, nmol1, nion1, nspecies1
       integer iss, jss, ispecies, jspecies
@@ -1943,6 +1943,9 @@ c 2002-09-11: logic revised
         case ('b2tfhe_neutral')
           rswitch = fch_ion_neutral
         case ('b2stbr_sna_corr', 'b2stbr_taumax') ! Converted to a species-resolved scheme
+          todo = .false.
+          wait = .true.
+        case ('b2nppo_restrict_po') ! Superseded by real switch b2nppo_restr_po
           todo = .false.
           wait = .true.
         case default RSWITCHES
@@ -11150,15 +11153,15 @@ cxpb as they no longer necessarily point to the same species
         k = 0
         kk = 0
         ib1 = 0
-        nsns = 0
+        nsns1 = 0
         do ib = 1, nstrai
           if (crcstra(ib).eq.'N'.or. crcstra(ib).eq.'W'.or.
      &        crcstra(ib).eq.'E') then
-            nsns = nsns + 1
+            nsns1 = nsns1 + 1
             if (savestratum(ib)) then
               ib1 = ib1 + 1
-              ksns1(ib1) = ksns(nsns)
-              do j = k+1, k+ksns(nsns)
+              ksns1(ib1) = ksns(nsns1)
+              do j = k+1, k+ksns(nsns1)
                 kk = kk + 1
                 lsns1(kk) = lsns(j)
               end do
@@ -11166,7 +11169,7 @@ cxpb as they no longer necessarily point to the same species
           else if (crcstra(ib).eq.'S') then
             if (rcpos1(ib).ne.-2) then
               if(mod(region1(rcstart1(ib),rcpos1(ib),0),4).ne.1) then
-                nsns = nsns + 1
+                nsns1 = nsns1 + 1
               end if
             else
               found = .true.
@@ -11175,27 +11178,27 @@ cxpb as they no longer necessarily point to the same species
      &           mod(region1(rc_list_x1(ix,ib),
      .                       rc_list_y1(ix,ib),0),4).ne.1
               end do
-              if (found) nsns = nsns + 1
+              if (found) nsns1 = nsns1 + 1
             end if
             if (savestratum(ib)) then
               ib1 = ib1 + 1
-              ksns1(ib1) = ksns(nsns)
-              do j = k+1, k+ksns(nsns)
+              ksns1(ib1) = ksns(nsns1)
+              do j = k+1, k+ksns(nsns1)
                 kk = kk + 1
                 lsns1(kk) = lsns(j)
               end do
             end if
           end if
-          k = k + ksns(nsns)
+          k = k + ksns(nsns1)
         end do
-        nsns = ib1
-        if (nsns.gt.0) then
+        nsns1 = ib1
+        if (nsns1.gt.0) then
           write(hlp_frm,'(a,i3,a)') '(1x,a,',kk,'(1x,i3,'',''))'
           if(maxval(lsns(1:k)).gt.0.or.minval(lsns(1:k)).lt.0)
      >     write(99,hlp_frm) 'LSNS=',(lsns1(j),j=1,kk)
-          write(hlp_frm,'(a,i2,a)') '(1x,a,',nsns,'(1x,i3,'',''))'
-          if(maxval(ksns(1:nsns)).gt.0)
-     >     write(99,hlp_frm) 'KSNS=',(ksns1(ib),ib=1,nsns)
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nsns1,'(1x,i3,'',''))'
+          if(maxval(ksns(1:nsns1)).gt.0)
+     >     write(99,hlp_frm) 'KSNS=',(ksns1(ib),ib=1,nsns1)
         endif
         write(99,'(1x,a,1pg10.3,a)') 'NEUT_SCL_LIM=',neut_scl_lim,','
         if (n_spcsrf.gt.0) then

@@ -264,7 +264,7 @@ cc while the second contribution corresponds to T dn/dt
       else
        call b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg, ismain,
      &  dv%fac_ExB, dv%lnlam, pl%na, pl%ua, dv%ue, pl%te, pl%ti, pl%tn,
-     &  pl%po, dv%ne, dv%ni, dv%nn, dv%fch,
+     &  pl%po, dv%ne, dv%ne2, dv%ni, dv%nn, dv%fch,
      &  co%cvsa, co%cvsa_cl, co%cvsa_drho, co%cvsahz_eff,
      &  co%f_luc_sg, co%alfx_c, co%sigx_c, rt%rza, rt%rz2, st_ext,
      &  she0, shi0, shn0, srw)

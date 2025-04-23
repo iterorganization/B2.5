@@ -9,30 +9,30 @@ c======================================================================
 c
 c  version : 06.09.97 19:59
 c
-      integer nwldprtx,nadsrcm,ntrgsx,mskipel,lnwlmtrl,mlblprtx
+      integer nwldprtx, nadsrcm, ntrgsx, mskipel, lnwlmtrl, mlblprtx
       integer nsptmx
-      parameter (ntrgsx=4,nwldprtx=ntrgsx+12, nadsrcm=400)
-      parameter (mskipel=DEF_NLIM,lnwlmtrl=8, mlblprtx=8)
+      parameter (ntrgsx=4, nwldprtx=ntrgsx+12, nadsrcm=400)
+      parameter (mskipel=DEF_NLIM, lnwlmtrl=8, mlblprtx=8)
       parameter (nsptmx=3)
       integer ildparm, irdparm, lppp, nwldprt,
      ,  lwldstrt(nwldprtx), nwldlis(nwldprtx),
      ,  jedge(2*ntrgsx), ltrgpos(ntrgsx),
      ,  lseppos(ntrgsx), lpfrpos(ntrgsx),
-     ,  ntrgts, ntrgs,
+     ,  ntrgts, ntrgs, grid_mode,
      ,  nadsrc, nwldrad, npumplis, ntrgsa, lnumboff, nskipel
       integer itrg(ntrgsx)
       integer, allocatable :: indwll(:), lewrk(:), luwrk(:), lwldrad(:),
      ,  lwldlis(:,:), leirlis(:,:), lpumplis(:)
       integer lelmind(mskipel), lskipel(mskipel), lcspwll(mskipel),
      ,        lpspwll(mskipel), lpsptrg(ntrgsx), lcsptrg(ntrgsx),
-     ,        ltrgedge(2,ntrgsx), mtrgedge(2,ntrgsx)
+     ,        ltrgedge(2,ntrgsx), mtrgedge(2,ntrgsx), lfclbl(mskipel)
       real (kind=R8) :: wpk_tt(0:ntrgsx) ! iyv 11.04.22
       logical lvdg20
       logical, save :: l2pwinp = .false.
       logical, save :: l2rdldw = .false., l2rdldt = .false.
       logical, save :: shadow = .true.
       logical lrdlsp, lrdlcr,
-     ,  lwlddir(nwldprtx), lskip(DEF_NLIM)
+     ,  lwlddir(nwldprtx), lskip(DEF_NLIM+4*DEF_NYD)
       real (kind=R4) :: ppp1(3,DEF_NLIM), ppp2(3,DEF_NLIM)
       real (kind=R8) :: addsrc_xy(2,nadsrcm), add_rad
       real (kind=R8), allocatable :: segm_area(:), segm_len(:),
@@ -61,8 +61,9 @@ c*** leirlis  : list of segments belonging to the "plot zones" (Eirene numbering
 c*** lnumboff : numbering offset for the wall segments in Eirene
 c*** nskipel  : number of segments to be ignored by Eirene
 c*** lskipel  : list of segments to be ignored by Eirene
+c*** lfclbl   : face label indices of Eirene wall segments shared with B2.5 grid
 c*** lelmind  : segment index in Eirene notation (lelmind(i) is the
-c***          : Eirene segment number for i-th element in DG)
+c***            Eirene segment number for i-th element in DG)
 c*** lcsptrg  : chemical sputtering flag for targets
 c*** lpsptrg  : physical sputtering flag for targets
 c*** lcspwll  : chemical sputtering flag for wall nsegments
@@ -130,6 +131,7 @@ c======================================================================
       allocate(mtrwldsg(nsgmx))
       lewrk = 0
       lskip = .false.
+      grid_mode = 0
 
       return
       end subroutine alloc_b2plot_wall_loading
