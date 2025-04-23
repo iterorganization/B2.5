@@ -151,6 +151,9 @@ c*** No connection found
               else if (nlimi.eq.0) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
+              else if (lfclbl(j).gt.0) then
+                lwldlis(ii,il)=j
+                leirlis(ii,il)=nlimi+lfclbl(j)
               else 
                 is_target_edge = .false.
                 do k=1,ntrgts

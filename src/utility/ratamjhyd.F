@@ -226,7 +226,7 @@ c     logarithmic representation. Instead, one should add the potential energy c
       else
         rtqr(:,:,nz) = rates +
      1    depot*(am*(mp+me)/(me+am*mp))*rtra(:,:,nz)
-        call xertst(any(rtqr(:,:,nz)<0.0_R8),
+        call xertst(minval(rtqr(:,:,nz)).ge.0.0_R8,
      1   'Negative rates present, try turning on b2ardr_fix_recomb')
       end if
 
@@ -286,7 +286,7 @@ c     Add Bremsstrahlung
               else
                 rtqr(:,:,nz) = rates +
      1            depot*(am*(mp+me)/(me+am*mp))*rtra(:,:,nz)
-                call xertst(any(rtqr(:,:,nz)<0.0_R8),
+                call xertst(minval(rtqr(:,:,nz)).ge.0.0_R8,
      1            'Negative rates present, try turning on ' //
      2            'b2ardr_fix_recomb')
               end if

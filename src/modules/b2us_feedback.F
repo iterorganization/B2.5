@@ -927,10 +927,7 @@ cxpb size is changed in b2mod_dimensions
       logical main_call
 *   ..local variables
       integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
-     & is_end, iss
-#ifdef B25_EIRENE
-      integer :: i, j, k, l
-#endif
+     & is_end, iss, i, j, k, l
       integer, save :: ncall = 0
       real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s
 
@@ -1117,7 +1114,8 @@ cxpb size is changed in b2mod_dimensions
               write(*,*) 'WARNING: fb_type = 6 needs to be'//
      &         ' adapted for hybrid methods!'
 
-#ifdef B25_EIRENE
+              call xertst(switch%use_eirene.ne.0,
+     &         'fb_type=6 not yet adapted for pure fluid cases')
               do k=1,ncns !{
                 l=nlim+lcns(k)
                 do j=1,nnatmi !{
@@ -1131,10 +1129,6 @@ cxpb size is changed in b2mod_dimensions
                   end if !}
                 end do !}
               end do !}
-#else
-              call xerrab('fb_type=6 not yet adapted for'//
-     &          ' pure fluid cases')
-#endif
               is_start = eb2spcr(b2espcr(fb_species(ifb)))
               is_end = eb2spcr(b2espcr(fb_species(ifb)))+
      &          nfluids(b2espcr(fb_species(ifb)))
@@ -1938,9 +1932,7 @@ cxpb size is changed in b2mod_dimensions
       ncall = ncall + 1
       call subend ()
       return
-
       end subroutine compute_feedback
-
 
       subroutine dealloc_feedback
       implicit none

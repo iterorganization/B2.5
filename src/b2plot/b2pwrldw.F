@@ -1,4 +1,5 @@
       subroutine b2pwrldw
+      use b2us_data
       use b2mod_b2plot_wall_loading
       use b2mod_dimensions
 c
@@ -10,7 +11,7 @@ c*** Power is in W/m**2
 c======================================================================
       implicit none
 #include <COUPLE/KOPPLDIM.F>
-      integer i,j,k,l,m
+      integer i,j,k,l,m,lptg
       logical ltg
 c======================================================================
 c*** This routine works only once
@@ -44,11 +45,16 @@ c----------------------------------------------------------------------
 c*** Fill in the input arrays for b2pwrdld
 c
       ltg=.false.
+      lptg=lppp
+      do j=1,ntrgts
+        if (itrg(j).eq.0) cycle
+        lptg=lptg+mpg%divFcP(itrg(j),2)
+      end do
       k=0
       do j=2,nwldprt
         do 100 i=1,nwldlis(j)
           l=iabs(lwldlis(i,j))
-          if(l.gt.lppp) then
+          if(l.gt.lppp.and.l.le.lptg) then
             ltg=.true.
           else
             do m=1,k
