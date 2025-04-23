@@ -74,6 +74,7 @@ c 2002-09-11: logic revised
       use b2mod_subsys
       use b2mod_dimensions
       use b2mod_chord_shift
+      use helper
       implicit none
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -872,8 +873,8 @@ c
      & switch, geo, mpg, ismain,
      & state%dv%fac_ExB, state%dv%lnlam, state%pl%na, state%pl%ua,
      & state%dv%ue, state%pl%te, state%pl%ti, state%pl%tn,
-     & state%pl%po, state%dv%ne, state%dv%ni, state%dv%nn,
-     & state%dv%fch,
+     & state%pl%po, state%dv%ne, state%dv%ne2, state%dv%ni,
+     & state%dv%nn, state%dv%fch,
      & state%co%cvsa, state%co%cvsa_cl, state%co%cvsa_drho,
      & state%co%cvsahz_eff, state%co%f_luc_sg,
      & state%co%alfx_c, state%co%sigx_c,
@@ -2824,7 +2825,7 @@ c
      2                geo%cvX(iCv)*geo%cvHy(iCv)
             end do
           end if
-          geometryType = geometryId( mpg, geo )
+          geometryType = geometryId( mpg, geo, 2 )
           select case ( geometryType )
           case ( GEOMETRY_LFS_SNOWFLAKE_MINUS )
             write(*,*) 'Midplane pressure: ',sumomp
@@ -3007,7 +3008,7 @@ c
           end do
           call copy(mach,1.0_R8,nz,textpl)
         case ('nreg')
-          description='Region'
+          description='Volume region index'
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -3020,12 +3021,21 @@ c
               else
                 mach(iCv,0)=0.0_R8
               end if
+              description='Volume region '//int2str(istack(iistack))  ! IGNORE
+              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >         write(*,*) 'No cells with region index '//
+     .                     int2str(istack(iistack))//' found!'
             else
               if(mpg%cvReg(iCv) .eq. -istack(iistack)) then
                 mach(iCv,0)=0.0_R8
               else
                 mach(iCv,0)=1.0_R8
               end if
+              description=  ! IGNORE
+     .    'All volume regions except region '//int2str(-istack(iistack))
+              if (minval(mach(1:mpg%nCv,0)).eq.1.0_R8)
+     >         write(*,*) 'No cells with region index '//
+     .                     int2str(-istack(iistack))//' found!'
             end if
           end do
           write(*,*) '"region" option with ',ipop(istack,iistack)
@@ -3047,6 +3057,10 @@ c
                 mach(mpg%fcCv(iFc,1),0)=1.0_R8
                 mach(mpg%fcCv(iFc,2),0)=1.0_R8
               end if
+              description='Flux region '//int2str(istack(iistack))  ! IGNORE
+              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >         write(*,*) 'No faces with region index '//
+     .                     int2str(istack(iistack))//' found!'
             end if
           end do
           write(*,*) 'Flux "region" option with ',
@@ -3067,6 +3081,10 @@ c
               if(mpg%cvLbl(iCv).eq.istack(iistack)) then
                 mach(iCv,0)=1.0_R8
               end if
+              description='Cell label '//int2str(istack(iistack))  ! IGNORE
+              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >         write(*,*) 'No cells with label '//
+     .                     int2str(istack(iistack))//' found!'
             end if
           end do
           write(*,*) 'Cell label option with ',
@@ -3089,6 +3107,10 @@ c
                 mach(mpg%fcCv(iFc,1),0)=1.0_R8
                 mach(mpg%fcCv(iFc,2),0)=1.0_R8
               end if
+              description='Face label '//int2str(istack(iistack))  ! IGNORE
+              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >         write(*,*) 'No faces with label '//
+     .                     int2str(istack(iistack))//' found!'
             end if
           end do
           write(*,*) 'Face label option with ',
@@ -3115,6 +3137,10 @@ c
                   mach(iCv,0)=1.0_R8
                 end do
               end if
+              description='Flux tube '//int2str(istack(iistack))  ! IGNORE
+              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >         write(*,*) 'No flux tube with label '//
+     .                     int2str(istack(iistack))//' found!'
             end if
           end do
           write(*,*) 'Flux tube label option with ',
@@ -3630,6 +3656,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='ix < '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixlt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixle')
@@ -3645,6 +3672,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='ix =< '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixle" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixeq')
@@ -3660,6 +3688,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='ix = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixne')
@@ -3675,6 +3704,7 @@ c
               mach(iCv,0)=1.0_R8
             end if
           end do
+          description='ix != '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixne" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixge')
@@ -3690,6 +3720,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='ix >= '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixge" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('ixgt')
@@ -3705,6 +3736,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='ix > '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ixgt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iylt')
@@ -3720,6 +3752,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='iy < '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iylt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyle')
@@ -3735,6 +3768,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='iy =< '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyle" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyeq')
@@ -3750,6 +3784,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='iy = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyne')
@@ -3765,6 +3800,7 @@ c
               mach(iCv,0)=1.0_R8
             end if
           end do
+          description='iy != '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyne" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iyge')
@@ -3780,6 +3816,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='iy >= '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iyge" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iygt')
@@ -3795,6 +3832,7 @@ c
               mach(iCv,0)=0.0_R8
             end if
           end do
+          description='iy > '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iygt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iclt')
@@ -3804,6 +3842,7 @@ c
           if(bad_args(stack_req)) return
           mach(1:istack(iistack)-1,0)=1.0_R8
           mach(istack(iistack):mpg%nCv,0)=0.0_R8
+          description='iCv < '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iclt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('icle')
@@ -3813,6 +3852,7 @@ c
           if(bad_args(stack_req)) return
           mach(1:istack(iistack),0)=1.0_R8
           mach(istack(iistack)+1:mpg%nCv,0)=0.0_R8
+          description='iCv =< '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"icle" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iceq')
@@ -3822,6 +3862,7 @@ c
           if(bad_args(stack_req)) return
           mach(:,0)=0.0_R8
           mach(istack(iistack),0)=1.0_R8
+          description='iCv = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iceq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('icne')
@@ -3831,6 +3872,7 @@ c
           if(bad_args(stack_req)) return
           mach(:,0)=1.0_R8
           mach(istack(iistack),0)=0.0_R8
+          description='iCv != '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"icne" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('icge')
@@ -3840,6 +3882,7 @@ c
           if(bad_args(stack_req)) return
           mach(1:istack(iistack)-1,0)=0.0_R8
           mach(istack(iistack):mpg%nCv,0)=1.0_R8
+          description='iCv >= '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"icge" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('icgt')
@@ -3849,6 +3892,7 @@ c
           if(bad_args(stack_req)) return
           mach(1:istack(iistack),0)=0.0_R8
           mach(istack(iistack)+1:mpg%nCv,0)=1.0_R8
+          description='iCv > '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"icgt" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('islt')
@@ -3941,8 +3985,14 @@ c
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           mach(:,0)=0.0_R8
-          mach(mpg%fcCv(istack(iistack),1),0)=1.0_R8
-          mach(mpg%fcCv(istack(iistack),2),0)=1.0_R8
+          if(1.le.istack(iistack).and.istack(iistack).le.mpg%nFc) then
+            mach(mpg%fcCv(istack(iistack),1),0)=1.0_R8
+            mach(mpg%fcCv(istack(iistack),2),0)=1.0_R8
+          else
+            write(*,*) 'Face index '//int2str(istack(iistack))//
+     .                ' outside range !'
+          end if
+          description='iFc = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ifeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('iveq')
@@ -3951,10 +4001,16 @@ c
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           mach(:,0)=0.0_R8
-          do i=1,mpg%vxCvP(istack(iistack),2)
-            iCv=mpg%vxCv(mpg%vxCvP(istack(iistack),1)+i-1)
-            mach(iCv,0)=1.0_R8
-          end do
+          if(1.le.istack(iistack).and.istack(iistack).le.mpg%nVx) then
+            do i=1,mpg%vxCvP(istack(iistack),2)
+              iCv=mpg%vxCv(mpg%vxCvP(istack(iistack),1)+i-1)
+              mach(iCv,0)=1.0_R8
+            end do
+          else
+            write(*,*) 'Vertex index '//int2str(istack(iistack))//
+     .                ' outside range !'
+          end if
+          description='iVx = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iveq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('lnlam')
@@ -4481,13 +4537,13 @@ c     assumes that bb is OK for 1d cases
           call copy(mach,1.0_R8,nz,textbl)
 #endif
         case ('rlcl')
-          description='real cells'
+          description='Real cells'
           nz=1
           mach(1:mpg%nCi,0)=1.0_R8
           mach(mpg%nCi+1:mpg%nCv,0)=0.0_R8
           call copy(mach,1.0_R8,nz,textbl)
         case ('gdcl')
-          description='guard cells'
+          description='Guard cells'
           nz=1
           mach(1:mpg%nCi,0)=0.0_R8
           mach(mpg%nCi+1:mpg%nCv,0)=1.0_R8
@@ -10675,7 +10731,7 @@ c
         case('trgsurf')  ! plot target plot
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
-          call trgsurf(mpg%nCv,1)
+          call trgsurf(1)
         case('kappa_ab') ! target heat conductivity computed as 1/(AT+B)
           do ibnd = 1, nbnd
             do i = 1, ndepth_nml

@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg,
-     &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ni, nn,
-     &  fch, cvsa, cvsa_cl, cvsa_drho, cvsahz_eff,
+     &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ne2,
+     &  ni, nn, fch, cvsa, cvsa_cl, cvsa_drho, cvsahz_eff,
      &  f_luc_sg, alfx_c, sigx_c, rza, rz2, st_ext,
      &  she0, shi0, shn0, srw)
       use b2mod_types
@@ -52,7 +52,7 @@
      *  fac_ExB(nFc), na(nCv,0:ns-1), ua(nCv,0:ns-1), ue(nCv),        !srv 05.03.11
      &  te(nCv), ti(nCv), tn(nCv), po(nCv), ne(nCv), ni(nCv,0:1),   !srv 07.05.08 01.07.09
      &  lnlam(nCv), f_luc_sg(nFc), alfx_c(nCv), sigx_c(nCv),
-     &  nn(nCv)
+     &  nn(nCv), ne2(nCv)
       real (kind=R8) ::
      *  fch(nFc,0:1),
      *  cvsa(nFc,0:1,0:ns-1), cvsahz_eff(nFc,0:1,0:ns-1),
@@ -102,7 +102,7 @@
      3  zeff(nCv), zmff(nCv), ce1(nCv),                                 !srv 13.01.17 05.07.17 {
      4  ce2(nCv), cimp1(nCv,0:ns-1), cimp2(nCv,0:ns-1),
      5  zetap(nCv), zetae(nCv),
-     6  gti(nCv), gte(nCv), ne2(nCv),
+     6  gti(nCv), gte(nCv),
      7  zmc(nCv), z11(nCv),                                             !som 13.11.20
      8  z12(nCv), z22(nCv),
      9  zf1(nCv), zf2(nCv),
@@ -473,8 +473,7 @@
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
 *     in case of small impurity amount see below for b2sigp_style.ne.2
       if(switch%b2sigp_style.eq.2) then                                !srv 05.07.17
-       call b2xpne (nCv, ns, rz2, na, st_ext%ne2, ne2)
-       call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)                    !srv 13.01.17 {
+       call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)                !srv 13.01.17 {
        do iCv = 1, nCv
          ce1(iCv)=fce1(zeff(iCv))
          ce2(iCv)=fce2(zeff(iCv))

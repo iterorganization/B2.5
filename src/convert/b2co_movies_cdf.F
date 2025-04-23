@@ -31,12 +31,19 @@
       character*256 filename, plasmastate
       logical :: exists
 #endif
+      integer, save :: fields_selection = 1
       external ipgeti, ipgetr, xerrab, xertst
 
+      call ipgeti ('cdfmovie_fields',fields_selection)
       call subini ('b2co_movies_cdf')
       write(*,*) 'b2co_movies_cdf ...'
 
 #ifndef NO_CDF
+*   ..test input
+      call xertst (1.le.nCv, 'faulty argument nCv')
+      call xertst (0.lt.ns, 'faulty argument ns')
+      call xertst (0.le.natm, 'faulty argument natm')
+      call xertst (0.le.nmol, 'faulty argument nmol')
 c access the b2movies.nc file
       filename='b2movies.nc'
       call find_file(filename,exists)
@@ -137,20 +144,72 @@ c prepare the b2movies.nc.xxxx file
       idum=timedim
       timedim=itim
       call create_cdf_start(ncid2, filename, nCv, ns, natm, nmol)
-      call create_cdf_field2(ncid2, 'te', 'Electron temperature', 'eV')
-      call create_cdf_field2(ncid2, 'ti', 'Ion temperature', 'eV')
-      call create_cdf_field2(ncid2, 'ne', 'Electron density', 'm^-3')
-      call create_cdf_field3(ncid2, 'na', 1, 'Ion density', 'm^-3')
-      call create_cdf_field2(ncid2, 'rqahesum',
-     1   'Electron cooling rate', 'W m^-3')
-      call create_cdf_field2(ncid2, 'rqradsum',
-     1   'Radiation rate', 'W m^-3')
-      if(natm.gt.0) then
-        call create_cdf_field3(ncid2, 'dab2', 2, 'Atom density', 'm^-3')
-      endif
-      if(nmol.gt.0) then
-        call create_cdf_field3(ncid2, 'dmb2', 3,
-     1   'Molecular density', 'm^-3')
+      if (fields_selection.ge.1) then
+        call create_cdf_field3(ncid2, 'na', 1,
+     1   'Ion density', 'm^-3')
+        call create_cdf_field2(ncid2, 'ne',
+     1   'Electron density', 'm^-3')
+        call create_cdf_field2(ncid2, 'te',
+     1   'Electron temperature', 'eV')
+        call create_cdf_field2(ncid2, 'ti',
+     1   'Ion temperature', 'eV')
+        call create_cdf_field2(ncid2, 'po',
+     1   'Electric potential', 'V')
+        if(natm.gt.0) then
+          call create_cdf_field3(ncid2, 'dab2', 2,
+     1     'Atom density', 'm^-3')
+          call create_cdf_field3(ncid2, 'tab2', 2,
+     1     'Atom temperature', 'eV')
+        endif
+        if(nmol.gt.0) then
+          call create_cdf_field3(ncid2, 'dmb2', 3,
+     1     'Molecular density', 'm^-3')
+          call create_cdf_field3(ncid2, 'tmb2', 3,
+     1     'Molecule temperature', 'eV')
+        endif
+        if (fields_selection.ge.2) then
+          call create_cdf_field3(ncid2, 'rsana', 1,
+     1      'Volumetric ionisation rate', 'm^-3 s^-1')
+          call create_cdf_field3(ncid2, 'rsahi', 1,
+     1      'Volumetric ionisation energy source/sink', 'W m^-3')
+          call create_cdf_field2(ncid2, 'rsahisum',
+     1      'Total volumetric ionisation energy source/sink', 'W m^-3')
+          call create_cdf_field3(ncid2, 'rrana', 1,
+     1      'Volumetric recombination rate', 'm^-3 s^-1')
+          call create_cdf_field3(ncid2, 'rrahi', 1,
+     1      'Volumetric recombination energy source/sink', 'W m^-3')
+          call create_cdf_field2(ncid2, 'rrahisum',
+     1      'Total volumetric recombination energy source/sink',
+     2      'W m^-3')
+          call create_cdf_field3(ncid2, 'rcxna', 1,
+     1      'Volumetric charge exchange rate', 'm^-3 s^-1')
+          call create_cdf_field3(ncid2, 'rcxhi', 1,
+     1      'Volumetric charge exchange energy source/sink', 'W m^-3')
+          call create_cdf_field2(ncid2, 'rcxhisum',
+     1      'Total volumetric charge exchange energy source/sink',
+     2      'W m^-3')
+          call create_cdf_field3(ncid2, 'rqahe', 1,
+     1      'Volumetric electron cooling rate', 'W m^-3')
+          call create_cdf_field2(ncid2, 'rqahesum',
+     1      'Total volumetric electron cooling rate', 'W m^-3')
+          call create_cdf_field3(ncid2, 'rqrad', 1,
+     1      'Volumetric line radiation rate', 'W m^-3')
+          call create_cdf_field2(ncid2, 'rqradsum',
+     1      'Total volumetric line radiation rate', 'W m^-3')
+          if(natm.gt.0) then
+            call create_cdf_field3(ncid2, 'eneutrad', 2,
+     1       'Volumetric radiation rate due to atoms', 'W m^-3')
+            call create_cdf_field2(ncid2, 'eneutradsum',
+     1       'Total volumetric radiation rate due to atoms', 'W m^-3')
+          endif
+          if(nmol.gt.0) then
+            call create_cdf_field3(ncid2, 'emolrad', 3,
+     1       'Volumetric radiation rate due to molecules', 'W m^-3')
+            call create_cdf_field2(ncid2, 'emolradsum',
+     1       'Total volumetric radiation rate due to molecules',
+     2       'W m^-3')
+          endif
+        endif
       endif
       call create_cdf_end(ncid2)
       timedim=idum

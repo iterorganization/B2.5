@@ -561,9 +561,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       endif           ! if pot_eq                                        !srv 13.07.05 29.01.20 }
 
       if(switch%b2news_iout .ne. 0) then                                 !srv 12.07.05 {
-        write (charns,'(i3.3)') i
-        call my_out_us(70,nCv,0,st%dv%respo,'b2news__respo'//charns)
-        call my_out_us(70,nCv,0,st%pl%po,'b2news__po'//charns)
+        call my_out_us(70,nCv,0,st%dv%respo,'b2news__respo')
+        call my_out_us(70,nCv,0,st%pl%po,'b2news__po')
       endif                                                              !srv 12.07.05 }
 
       if(switch%ion_vlct_restrict .ne. 0 ) then                          !iyv 06.02.14
