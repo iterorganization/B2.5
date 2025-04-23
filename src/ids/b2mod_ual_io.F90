@@ -10230,8 +10230,8 @@ contains
 
     subroutine write_ids_code( switch, code, commit, description )
     implicit none
-    type(switches), intent(in) :: switch
-    type(ids_code), intent(inout) :: code
+    type (switches), intent(in) :: switch
+    type (ids_code), intent(inout) :: code
                 !< Type of IDS data structure, designed for code data handling
     character(len=ids_string_length), intent(in) :: commit
     character(len=ids_string_length), intent(in) :: description
