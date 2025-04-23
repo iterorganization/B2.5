@@ -2425,7 +2425,7 @@
       implicit none
       integer, intent(in) :: nx, ny
       integer :: ix, iy, ic, iFc, iVx, iFs, iCv, iVx1, iVx2
-#ifdef WG_TODO
+#ifdef WG_DEBUG
       integer :: i, j, idb
 #endif
       type (mapping) , intent (in) :: mpg
