@@ -118,9 +118,21 @@ c      print *,'b2prdn >> ',unm
       case (5)
         call rearre(ppp1,3*DEF_NLIM,ll)
         lppp=ll/3
+        if(lppp.gt.DEF_NLIM) then !{
+          write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
+          write(0,*) 'Current number of requested elements: ',lppp
+          call xerrab
+     .     (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
+        end if !}
       case (6)
         call rearre(ppp2,3*DEF_NLIM,ll)
         lppp=ll/3
+        if(lppp.gt.DEF_NLIM) then !{
+          write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
+          write(0,*) 'Current number of requested elements: ',lppp
+          call xerrab
+     .     (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
+        end if !}
       case (9:13)
         if (streql(u,unms(9))) then
 c*** Inner edge of Western target (inner for LSN, outer for USN)
@@ -182,6 +194,13 @@ c*** Plotzone label
 c*** Elements not for Eirene
         call rearri(lskipel(nskipel+1),mskipel-nskipel,i)
         do j = nskipel+1, nskipel+i
+          if(lskipel(j).gt.DEF_NLIM) then !{
+            write(0,*) 'Too many wall elements: maximum ',DEF_NLIM
+            write(0,*) 'Current number of requested elements: ',
+     .        lskipel(j)
+            call xerrab
+     .       (' ==> Increase DEF_NLIM in b2mod_dimensions.F')
+          end if !}
           lskip(lskipel(j)) = .true.
         end do
         nskipel=nskipel+i
