@@ -946,8 +946,7 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
-       if (switch%Zhdanov_closure.gt.0)
-     &   call createB2Coeff_nspecies(nCv, nFc, nspecies, state % co_ns)
+       call createB2Coeff_nspecies(nCv, nFc, nspecies, state % co_ns)
 #ifndef FIXED_POINT
        balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
