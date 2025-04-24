@@ -605,6 +605,23 @@
 					Switch for conversion with b2us; can be specified in the b2mn.dat file read by b2us during case conversion to unstructured format. When set to 1, b2us will automatically try to reconstruct outer and inner midplane from the geometry (magnetic field and cell coordinates), and write the corresponding coordinates in b2.user.parameters. When set to 0, the IMP and OMP definition will be based on the values of b2mwti_jxi, b2mwti_jxa, b2mwti_jsep.
 				</description>
 			</switch>
+			<switch>
+				<name>b2us_prep_Qalfmin</name>
+				<default>1e-3</default>
+				<type>real</type>
+				<description>
+					If abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin, the beta angle is assigned to zero during writing of b2fgmtry.
+					If abs(cos(alpha)*bx).lt.b2us_prep_Qalfmin, boundary faces are treated like field-aligned faces in BCMOM=13, BCCON=14, BCENE=15 (style=1), BCENI=15 (style=0) and BCPOT=11. Leakage coefficients (if they are needed) are set equal to b2us_prep_Qalfmax.
+				</description>
+			</switch>
+			<switch>
+				<name>b2us_prep_Qalfmax</name>
+				<default>1e-3</default>
+				<type>real</type>
+				<description>
+					If abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin .and. abs(cos(alpha)*bx).lt.b2us_prep_Qalfmax, fcPbs is set equal to b2us_prep_Qalfmax*fcS for boundary faces during writing of b2fgmtry.
+				</description>
+			</switch>
 		</category>
 		<category name="Run">
 			<switchgroup>
@@ -2944,14 +2961,6 @@
 				<type>integer</type>
 				<description>
 					When set to 1, the energy required for the Franck-Condon dissociation of the thermally released particles at the surfaces in the AFN boundary conditions is subtracted from the electron energy equation. It is not recommended to turn this switch on, because it seems to lower the electron temperature to unrealistic values.
-				</description>
-			</switch>
-			<switch>
-				<name>b2stbc_Qalfmin</name>
-				<default>1.0e-3</default>
-				<type>real</type>
-				<description>
-					When the magnetic field lines are almost tangential to a wall structure, the sheath boundary conditions from BCMOM = 13 are replaced by leakage conditions. This happens when abs(fcQalf(iFc,0)*cvBb(iCv1,0)/cvBb(iCv1,3)).lt.Qalfmin.
 				</description>
 			</switch>
 			<switch>
