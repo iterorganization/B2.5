@@ -1289,7 +1289,8 @@ c   (ionising_core option)
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
             if (wrk < geo%Qalfmin) then
               srw%sna0(iCv1,0,is) = 0.0_R8
-              srw%sna0(iCv1,1,is) = -geo%fcS(iFc)*cs*geo%Qalfmax
+              srw%sna0(iCv1,1,is) =
+     &         -geo%fcS(iFc)*conpar(is,ib,1)*cs*geo%Qalfmax
               sna0_no_mdf(iCv1,:,is) =
      &         sna0_no_mdf(iCv1,:,is) + srw%sna0(iCv1,:,is)
               if (switch%mdf_fnb.eq.0) then
@@ -1325,7 +1326,6 @@ c   (ionising_core option)
               !  srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is)-t0               !lkw 30.06.2022}
               endif
             else
-              s1 = abs(geo%fcPbs(iFc))
               srw%sna0(iCv1,0,is) = 0.0_R8
               srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs
               if (conpar(is,ib,2).gt.0.0_R8) then
@@ -3616,7 +3616,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             else
               s1hz = geo%fcPbshz(iFc)
               vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &         dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))
+     &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))
               wrk = abs(2.0_R8*cs*geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)
      &         /geo%fcBb(iFc,3))
               vbnd = min(wrk,abs(vbnd))*sign(1.0_R8,vbnd)
@@ -4968,7 +4968,6 @@ cwdk    Todo: corrections for BCCON.ne.14
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-            s1   = abs(geo%fcPbs(iFc))
             vte  = sqrt(pl%te(iCv1)/me)
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
             if (wrk < geo%Qalfmin) then
