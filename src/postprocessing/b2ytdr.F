@@ -483,9 +483,9 @@ c 2002-09-11: logic revised
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat_ip, rswitch, ycur,
      .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,
-     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert,
-     .  b2stbc_Qalfmin, b2us_prep_Qalfmin, fac_aniso,
-     .  sources_time_mod_ip, sources_time_switch_ip, fch_ion_neutral,
+     .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert, fac_aniso,
+     .  sources_time_mod, sources_time_switch, fch_ion_neutral,
+     .  b2stbc_Qalfmin, b2us_prep_Qalfmin,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      4  rescale_ra(0:nsdecl-1), rescale_sa(0:nsdecl-1),
@@ -1965,7 +1965,7 @@ c 2002-09-11: logic revised
             cnamip = 'b2tfhe_vis_par'
           else
             wait = .true.
-          endif
+          end if
         case ('b2tfhe_vis_par') ! superseding of b2tvspa_vis_par, with above
           wait = b2tvspa_vis_par.ne.1.0_R8 .and.
      &           b2tfhe_vis_par .eq.1.0_R8
