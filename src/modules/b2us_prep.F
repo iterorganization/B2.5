@@ -2430,21 +2430,21 @@
 #endif
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
-#ifdef LEGACYCOMP
-      integer newunit
-      external newunit
-#endif
       integer, save :: mod_hc = 0, set_beta = 0
       integer :: fcsb(mpg%nCg), cvsb(mpg%nCg,2), k, ind, ind1, tmp, iFt
       logical :: iscvsb(mpg%nCv)
       integer :: wrkVx(mpg%nVx)
-      real (kind=R8) :: meanCv(2),meanFc(2), bz_sign,
-     & wrk, pbs_red_fac=1.0e-3_R8
+      real (kind=R8) :: meanCv(2), meanFc(2), bz_sign, wrk
+      real (kind=R8), save :: pbs_red_fac = 1.0e-3_R8
 
 *   ..procedures
       real (kind=R8) ::
      *   smin, smax
       external smin, smax
+#ifdef LEGACYCOMP
+      integer newunit
+      external newunit
+#endif
 
       call alloc_geometry (gm,
      &  mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt, mpg%nVmxCv)
