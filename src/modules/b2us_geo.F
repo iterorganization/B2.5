@@ -72,6 +72,8 @@
         logical :: LSN ! Identifies topologies where the western target is
                        ! the inner one
         logical :: psi_increasing ! .true. if the psi value increases from the O-point to the active X-point
+
+        real (kind=R8) :: Qalfmin, Qalfmax
       end type geometry
 
       contains
@@ -209,6 +211,9 @@
       g%LSN = .true.
       g%psi_increasing = .true.
 
+      g%Qalfmax = 0._R8
+      g%Qalfmin = 0._R8
+
       return
       end subroutine initialize_geometry
 
@@ -287,7 +292,8 @@
       implicit none
       integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nFt, nVmxCv
       type (geometry), intent (inout) :: gm
-      external cfrure
+      real(kind=R8) :: rdum(1)
+      external cfrure, cfrure_opt, ipgetr
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
@@ -323,6 +329,15 @@
       call cfrure (iun, nCv,   gm%cvConn, 'cvConn')
       call cfrure (iun, nFs,   gm%fsPsi,  'fsPsi')
 
+      rdum(1) = 1.0e-3_R8
+      call ipgetr('b2us_prep_Qalfmin', rdum(1))
+      call cfrure_opt (iun,   1,   rdum, 'Qalfmin')
+      gm%Qalfmin = rdum(1)
+      rdum(1) = 1.0e-3_R8
+      call ipgetr('b2us_prep_Qalfmax', rdum(1))
+      call cfrure_opt (iun,   1,   rdum, 'Qalfmax')
+      gm%Qalfmax = rdum(1)
+
 ! check consistency of input
       call check_geometry(nCv, nFc, nVx, nFs, nFt, gm)
 
@@ -336,6 +351,7 @@
       implicit none
       integer, intent(in) :: nout, nCv, nFc, nVx, nFs
       type (geometry), intent (in) :: gm
+      real(kind=R8) :: rdum(1)
       external cfwure
 
 ! cell volumes
@@ -369,6 +385,11 @@
 ! flux surface quantities
       call cfwure (nout, nCv,   gm%cvConn, 'cvConn')
       call cfwure (nout, nFs,   gm%fsPsi,  'fsPsi')
+
+      rdum(1) = gm%Qalfmin
+      call cfwure (nout,   1,   rdum,  'Qalfmin')
+      rdum(1) = gm%Qalfmax
+      call cfwure (nout,   1,   rdum,  'Qalfmax')
 
       return
       end subroutine write_geometry

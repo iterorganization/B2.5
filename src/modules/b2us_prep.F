@@ -2430,6 +2430,13 @@
 #endif
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
+      real (kind=R8) :: bz_sign, wrk
+      real (kind=R8), save :: pbs_red_fac = 1.0e-3_R8
+
+*   ..procedures
+      real (kind=R8) ::
+     *   smin, smax
+      external smin, smax
 #ifdef LEGACYCOMP
       integer newunit
       external newunit
@@ -2437,6 +2444,13 @@
 
       call alloc_geometry (gm,
      &  mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt, mpg%nVmxCv)
+
+      call ipgetr('b2us_prep_Qalfmin',gm%Qalfmin)
+      call ipgetr('b2us_prep_Qalfmax',gm%Qalfmax)
+      call ipgetr('b2us_prep_Pbs_reduce_fac',pbs_red_fac)
+      write (*,*) "Qalfmin=",gm%Qalfmin
+      write (*,*) "Qalfmax=",gm%Qalfmax
+      write (*,*) "Pbs reduce factor=",pbs_red_fac
 
 ! cell volumes
       do iy = -1, ny
@@ -2527,6 +2541,57 @@
           end if
         end do
       end do
+
+      do ic=mpg%nCi+1,mpg%nCv
+        iFc = mpg%cvFc(mpg%cvFcP(ic,1))
+        if (mpg%fcLbl(iFc) .le. 0) cycle
+        bz_sign = sign(1.0_R8,gm%cvEb(ic,2))
+        wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
+        if (wrk >= gm%Qalfmin) then
+          if (wrk < gm%Qalfmax) then
+            gm%fcPbs(iFc) = gm%Qalfmax*gm%fcS(iFc)*
+     .         sign(1.0_R8,gm%fcPbs(iFc))
+            gm%fcPbshz(iFc) = gm%Qalfmax*gm%fcS(iFc)*gm%fcHz(iFc)*
+     .         sign(1.0_R8,gm%fcPbshz(iFc))
+            gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)
+     .         /gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+            gm%fcQalf(iFc,1) = sign(sqrt(1.0_R8-
+     .         gm%fcQalf(iFc,0)**2),gm%fcQalf(iFc,1))
+            write(*,*) 'pbs and pbshz were modified for iFc=',iFc
+          endif
+          if (gm%fcQalf(iFc,0) < 0.0_R8) then
+            gm%fcQbet(iFc,0) = -1.0_R8*bz_sign
+            gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
+            gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)*bz_sign
+          elseif (gm%fcQalf(iFc,0) >= 0.0_R8) then
+            gm%fcQbet(iFc,0) = 1.0_R8*bz_sign
+            gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
+            gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)*bz_sign
+          endif
+          gm%fcQbet(iFc,1) = 0.0_R8
+        else
+          gm%fcPbs(iFc) = pbs_red_fac*gm%fcPbs(iFc)
+          gm%fcPbshz(iFc) = pbs_red_fac*gm%fcPbshz(iFc)
+          gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)/
+     .       gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+          gm%fcQalf(iFc,1) = sign(sqrt(1.0_R8-
+     .        gm%fcQalf(iFc,0)**2),gm%fcQalf(iFc,1))
+          gm%fcQbet(iFc,0) = gm%fcQgam(iFc,0)*gm%fcQalf(iFc,0) +
+     .       gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)*bz_sign
+          gm%fcQbet(iFc,0) = gm%fcQbet(iFc,0)*bz_sign
+          gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
+     .       gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)*bz_sign
+          write(*,*) 'pbs and pbshz were reduced for iFc=',iFc
+        endif
+      enddo
+
+! check gamma after modifications
+      call xertst (-1.0_R8.lt.smin(mpg%nFc,gm%fcQgam(1,1),1).and.
+     &   smax(mpg%nFc,gm%fcQgam(1,1),1).lt.1.0_R8,
+     &   'faulty argument range fcQgam(,1)')
+       call xertst (0.0_R8.lt.smin(mpg%nFc,gm%fcQgam(1,0),1).and.
+     &   smax(mpg%nFc,gm%fcQgam(1,0),1).le.1.0_R8,
+     &   'faulty argument range fcQgam(,0)')
 
 ! vertices
       gm%vxX = 0._R8
