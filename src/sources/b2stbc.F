@@ -325,7 +325,7 @@
       if(switch%b2stbc_boundary_namelist.ge.1) then
         if(lfeedback.or.switch%b2stbc_feedback.ne.0)
      &    call compute_feedback(nCv, nFc, ns, ismain,
-     &     switch, geo, mpg, pl, dv, rt, psnc, psnl,
+     &     switch, geo, mpg, pl, dv, rt, srw, psnc, psnl,
      &     main_call)
 
         if(ncall_b2stbc.eq.0) write(*,*) ' b2stbc_phys called'
