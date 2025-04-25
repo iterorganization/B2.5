@@ -3953,7 +3953,55 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					If b2nppo_rte_min.gt.0.0, the electron to ion temperature ratio is forced to not be lower than rte_min (so, Te/Ti >= rte_min).
+					If b2upht_rte_min.gt.0.0, the electron to ion temperature ratio is forced to not be lower than rte_min (i.e. Te/Ti >= rte_min).
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shivis</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shivis.eq.0, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shi</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shi.eq.0, then all b2sihs_shi* and b2sihs_shivis keys will be assigned to zero.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shidu</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shidu.eq.0, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shidd</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shidd.eq.0, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shedu</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shedu.eq.0, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shedd</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shedd.eq.0, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
 				</description>
 			</switch>
 			<switch>

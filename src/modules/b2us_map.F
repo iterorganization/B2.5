@@ -101,6 +101,7 @@
         integer, allocatable :: fcLbl(:)               ! (nFc) indicates for each face the corresponding face label
         integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
         integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
+
         end type mapping
 
       contains

@@ -218,6 +218,13 @@
      1     t0*ne(iCv)*te(iCv)
          srw%b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+      if (switch%b2sihs_shedu.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shedu(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divue0to3 = shedu
@@ -280,6 +287,13 @@
      1         t0*ni(iCv,0)*ti(iCv)
         enddo
       enddo
+      if (switch%b2sihs_shidu.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shidu(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divua0to3 = shidu
@@ -312,6 +326,13 @@
      1      t0*ne(iCv)*te(iCv)
         srw%b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+      if (switch%b2sihs_shedd.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shedd(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exbe0to3 = shedd
@@ -343,6 +364,13 @@
         enddo
        endif
       enddo
+      if (switch%b2sihs_shidd.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shidd(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exba0to3 = shidd
@@ -420,6 +448,16 @@
         enddo
        endif                                                           !srv 29.08.02
       enddo
+
+      if (switch%b2sihs_shivis.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shivc(iCv,:) = 0.0_R8
+          shiva(iCv,:) = 0.0_R8
+        enddo
+      endif
+
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_visa0to3 = shivc+shiva
