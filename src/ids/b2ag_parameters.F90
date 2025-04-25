@@ -170,9 +170,9 @@ contains
      call ipgetc ('b2agfs_geometry', local_sonnet)
      if(open_file(lun,local_sonnet, 'data.local/meshes|data/meshes')) then
        call cfverr(lun,grid_version)
-       if(istyle.eq.-1) then
+       if(s%istyle.eq.-1) then
          ! Carre grid input
-         if (grid_version.eq."03.002.000") then
+         if (grid_version >= "03.002.000") then
            ! obtain nCv, nFc, nVx from geometry file
            call cfruin (lun, 6, idum, 'nCi,nFc,nVx,nCg,nFs,nFt')
            nCv0 = idum(0)
@@ -201,6 +201,43 @@ contains
              m%ny = idum(1)
              nncut = idum(2)
            end if
+           if (m%isClassicalGrid.eq.1) then
+             m%nCornVx = m%nx
+           else
+             idum = 0
+             call cfruin_opt (lun,1,idum,'nCornVx')
+             m%nCornVx = 0
+           endif
+
+           ! Additional topological data?
+           if (grid_version >= "03.002.001") then 
+            ! Set flag
+            m%hasTopologicalData = .true. 
+
+            ! Read in topology ID
+            call cfruin(lun, 1, idum, 'topoflag')
+            m%topoID = idum(0)
+
+            ! Read in x-point, strike point, tangency point, and divertor target numbers 
+            call cfruin(lun, 6, idum, 'nX,nO,nS,nT,nDiv,nDivFc')
+            m%nXpt = idum(0)
+            m%nOpt = idum(1)
+            m%nStr = idum(2)
+            m%nTgc = idum(3)
+            m%nDiv = idum(4)
+            m%nfcDiv = idum(5)
+
+          else
+            ! Set default values
+            m%hasTopologicalData = .false. 
+            m%nXpt = 0
+            m%nOpt = 0
+            m%nStr = 0
+            m%nTgc = 0
+            m%nDiv = 0
+            m%nfcDiv = 0
+            m%topoID = 0 ! to be determined later
+           end if 
          end if
        end if
      end if
