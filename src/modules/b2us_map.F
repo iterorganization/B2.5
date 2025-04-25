@@ -17,9 +17,16 @@
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
      &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt, nStr, nTgc,
-     &             nFci
+     &             nOpt, nCornVx, 
+     &             ncvOMP, ncvIMP, nfcOMP, nfcIMP
         integer :: nnreg(0:1), periodic_bc, iFssep, iFssep2
 
+        logical              :: hasTopologicalData     ! Boolean to indicate if additional topological data has been made available
+                                                       ! in the input file (x-points, strike points, ...)
+        integer              :: topoID                 ! Topology ID specifying which topology the grid represents. Zero for general topologies, 
+        integer              :: nfcDiv                 ! total number of faces in the divertor face list                                               !         non-zero for specific topologies (e.g. single null, double null, ...)
+        integer              :: nDiv                   ! total number of divertor plates/targets (numbering from 1 to nDiv)
+        integer              :: nStrXpt                ! dimension of x-point list of strike points
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
         integer, allocatable :: cvFc(:)                !         listing for every cell the corresponding face numbers
         integer, allocatable :: fcCv(:,:)              ! (nFc,2) listing for every face the two corresponding cells
@@ -77,12 +84,23 @@
         integer, allocatable :: fsVx(:)                ! list of vertices belonging to the flux surfaces
         integer, allocatable :: vxFs(:)                ! for each vertex, the flux surface it belongs to
 
+        integer, allocatable :: alliFssep(:)           ! all separatrix flux surface indices
         integer, allocatable :: Xpt(:)                 ! vertex numbers for the X-points
+        integer, allocatable :: Opt(:)                 ! vertex numbers for O-points (if present in the mesh)
+        integer, allocatable :: isPrimaryXpt(:)        ! (nXpt) number that indicates if an x-point is a primary x-point (i.e. the x-point lies adjacent to a core region, 1 if yes, 0 if no)
+        integer, allocatable :: XptFsID(:)             ! (nXpt) index of the flux surface to which the x-point belongs
+        integer, allocatable :: XptStrP(:, :)          ! (nXpt, 2) pointer for the list of strike points per x-point
+        integer, allocatable :: XptStr(:)              ! (nXptStr) list of strike points for each x-point
         integer, allocatable :: strVxP(:,:)            !(nXpt,2): for each Xpt, the list of associated strike point vertices, and their number
+                                                       ! Note: nomenclature here suggests a pointer, but this is not the case (simply 2 strike points per x-point assumed)
+        integer, allocatable :: strXpt(:)              ! for each strike point, the x-point it belongs to
         integer, allocatable :: strVx(:)               ! list of vertex numbers for the strike points
         integer, allocatable :: tgVx(:)                ! list of vertex numbers for the tangency points
+        integer, allocatable :: tgFsID(:)              ! list of flux surface indices for each tangency point
+        integer, allocatable :: tgDiv(:)               ! For every tangency point the divertor target it belongs to
         integer, allocatable :: strDiv(:)              ! For every strike point, the index of the divertor target on which it is located
                                                        ! The divertor targets are labelled from 1 to 4 starting travelling from West to East in the computational domain
+        integer, allocatable :: strFsID(:)             ! For every strike point, the flux surface index it belongs to
         integer, allocatable :: divFcP(:,:)            ! For each divertor target, the list of associated divertor faces, and their number
         integer, allocatable :: divFc(:)               ! ORDERED list of faces forming the divertor targets
         real (kind=R8), allocatable :: divFcOr(:)      ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
@@ -177,6 +195,24 @@
         allocate (m%imapFcy(-1:m%nx,-1:m%ny))
         allocate (m%imapVx(-1:m%nx,-1:m%ny))
         allocate (m%icornVx(1:m%nx))
+      ! Allocate additional topological data if available
+      if (m%hasTopologicalData) then 
+        allocate(m%Xpt(m%nXpt))
+        allocate(m%strVx(m%nStr))
+        allocate(m%strVxP(m%nXpt, 2))
+        allocate(m%tgVx(m%nTgc))
+        allocate(m%strDiv(m%nStr))
+        allocate(m%divFcP(m%nDiv, 2))
+        allocate(m%divFc(m%nfcDiv)) 
+        allocate(m%isPrimaryXpt(m%nXpt))
+        allocate(m%XptFsID(m%nXpt))
+        allocate(m%strFsID(m%nStr))
+        allocate(m%tgFsID(m%nTgc))
+        allocate(m%strXpt(m%nStr))
+        allocate(m%XptStrP(m%nXpt, 2))
+        allocate(m%tgDiv(m%nTgc))
+      end if 
+
 #ifdef DBG
         allocate (imapCv(-1:m%nx,-1:m%ny))
         allocate (imapFcx(-1:m%nx,-1:m%ny))
@@ -217,6 +253,13 @@
       write (*,*) 'nFs           ', m%nFs
       write (*,*) 'nCmxVx, nCmxFc', m%nCmxVx, m%nCmxFc
       write (*,*) 'nVmxCv, nVmxFc', m%nVmxCv, m%nVmxFc
+      if (m%hasTopologicalData) then 
+        ! Write out additional data
+        write (*,*) 'topoID        ', m%topoID 
+        write (*,*) 'nXpt, nStr    ', m%nXpt, m%nStr 
+        write (*,*) 'nTgc, nDiv    ', m%nTgc, m%nDiv 
+        write (*,*) 'nfcDiv        ', m%nfcDiv
+      end if   
       write (*,*) '=================================='
 
       return
@@ -299,6 +342,24 @@
       m%IMPr = 0
       m%IMPz = 0
 
+      ! Initialize topology data
+      if (m%hasTopologicalData) then 
+        m%Xpt     = 0
+        m%strVxP  = 0
+        m%strVx   = 0
+        m%tgVx    = 0
+        m%strDiv  = 0
+        m%divFcP  = 0
+        m%divFc   = 0
+        m%isPrimaryXpt  = 0
+        m%XptFsID       = 0
+        m%strFsID       = 0
+        m%tgDiv         = 0
+        m%tgFsID        = 0
+        m%strXpt  = 0
+        m%XptStrP = 0
+      end if 
+
       write (*,*) '=================================='
       write (*,*) 'Mapping initialized'
       write (*,*) '=================================='
@@ -368,6 +429,14 @@
       if (allocated(m%divFcOr)) deallocate (m%divFcOr)
       if (allocated(m%ifdiv)) deallocate (m%ifdiv)
       if (allocated(m%ivdiv)) deallocate (m%ivdiv)
+      if (allocated(m%isPrimaryXpt)) deallocate(m%isPrimaryXpt)
+      if (allocated(m%XptFsID)) deallocate(m%XptFsID)
+      if (allocated(m%strFsID)) deallocate(m%strFsID)
+      if (allocated(m%tgFsID)) deallocate(m%tgFsID)
+      if (allocated(m%strXpt)) deallocate(m%strXpt)
+      if (allocated(m%XptStrP)) deallocate(m%XptStrP)
+      if (allocated(m%XptStr)) deallocate(m%XptStr)
+      if (allocated(m%tgDiv)) deallocate(m%tgDiv)
 
       deallocate (m%imapCv)
       deallocate (m%imapFcx)
@@ -535,8 +604,11 @@
 #endif
       implicit none
       integer, intent(in) :: iun
-      integer :: n2, nx
+      integer :: n2, nx, i
       type (mapping), intent (inout) :: mpg
+      character(8)    :: idcod
+      character(32)   :: id
+
       external cfruin, cfrure
 
 #ifdef DBG
@@ -547,7 +619,7 @@
 
       call alloc_mapping (mpg)
 
-! write the mapping information
+      ! read the mapping information
       call cfruin (iun, mpg%nCv*2,   mpg%cvFcP, 'cvFcP')
       call cfruin (iun, mpg%nCmxFc,  mpg%cvFc,  'cvFc')
       call cfruin (iun, mpg%nFc*2,   mpg%fcCv,  'fcCv')
@@ -592,6 +664,66 @@
       imapVx  = mpg%imapVx
 #endif
 
+      ! Read additional topology data
+      if (mpg%hasTopologicalData) then 
+        ! Read x-point data
+        read(iun, *) idcod, id
+        if (streql('*cf:',idcod).and.streql('Vx',id)) then
+          do i = 1, mpg%nXpt 
+            ! Vx isPrimary fsID
+            read(iun, *) mpg%Xpt(i), mpg%isPrimaryXpt(i), mpg%XptFsID(i)
+          end do
+        else 
+          ! Throw error
+          call xerrab('read_mapping: expected x-point data but ' // 
+     &       'could not find it')
+        end if 
+
+        ! Read strike point data
+        read(iun, *) idcod, id
+        if (streql('*cf:',idcod).and.streql('Vx',id)) then
+          do i = 1, mpg%nStr 
+            ! Vx XptP divID fsID
+            read(iun, *) mpg%strVx(i), mpg%strXpt(i), 
+     &         mpg%strDiv(i), mpg%strFsID(i)
+          end do
+        else 
+          ! Throw error
+          call xerrab('read_mapping: expected strike point data ' // 
+     &       'but could not find it')
+        end if 
+
+        ! Read tangency point data
+        read(iun, *) idcod, id
+        if (streql('*cf:',idcod).and.streql('Vx',id)) then
+          do i = 1, mpg%nTgc 
+            ! Vx divID fsID
+            read(iun, *) mpg%tgVx(i), mpg%tgDiv(i), mpg%tgFsID(i)
+          end do
+        else 
+           ! Throw error
+          call xerrab('read_mapping: expected tangency point data ' // 
+     &       'but could not find it')
+        end if 
+
+        ! Read in divertor plate data
+        read(iun, *) idcod, id
+        if (streql('*cf:',idcod).and.streql('divFcP1',id)) then
+          do i = 1, mpg%nDiv 
+            ! divFcP1 divFcP2
+            read(iun, *) mpg%divFcP(i, 1), mpg%divFcP(i, 2)
+          end do
+        else 
+          ! Throw error
+          call xerrab('read_mapping: expected divertor plate data ' //  
+     &       'but could not find it')
+        end if 
+
+        ! Read face list of divertor plate faces
+        call cfruin (iun, mpg%nfcDiv, mpg%divFc, 'divFc')
+
+      end if 
+
       call init_mapping (mpg)
 
       return
@@ -603,7 +735,7 @@
 
       implicit none
       integer, intent(in) :: nout
-      integer :: idum(0:9), n2
+      integer :: idum(0:9), n2, i
       type (mapping), intent (in) :: mpg
       external cfwuin, cfwure
 
@@ -649,6 +781,42 @@
       call cfwuin (nout, mpg%nCv, mpg%cvLbl, 'cvLbl')
       call cfwuin (nout, mpg%nFt, mpg%ftLbl, 'ftLbl')
 
+      ! Write additional topology data
+      if (mpg%hasTopologicalData) then 
+        ! Write x-point data
+        write (nout, *) '*cf:    Vx isPrimary fsID'
+        do i = 1, mpg%nXpt 
+          ! Vx isPrimary fsID
+          write(nout, *) mpg%Xpt(i), mpg%isPrimaryXpt(i), mpg%XptFsID(i)
+        end do
+
+        ! Write strike point data
+        write (nout, *) '*cf:    Vx Xpt divID fsID'
+        do i = 1, mpg%nStr 
+          ! Vx XptP divID fsID
+          write(nout, *) mpg%strVx(i), mpg%strXpt(i), 
+     &      mpg%strDiv(i), mpg%strFsID(i)
+        end do
+
+        ! Write tangency point data
+        write(nout, *) '*cf:    Vx divID fsID'
+        do i = 1, mpg%nTgc 
+          ! Vx fsID
+          write(nout, *) mpg%tgVx(i), mpg%tgDiv(i), mpg%tgFsID(i)
+        end do
+
+        ! Write in divertor plate data
+        write(nout, *) '*cf:    divFcP1 divFcP2'
+        do i = 1, mpg%nDiv 
+          ! divFcP1 divFcP2
+          write(nout, *) mpg%divFcP(i, 1), mpg%divFcP(i, 2)
+        end do
+
+        ! Write face list of divertor plate faces
+        call cfwuin (nout, mpg%nfcDiv, mpg%divFc, 'divFc')
+
+      end if 
+
       return
       end subroutine write_mapping
 
@@ -657,18 +825,21 @@
       subroutine init_mapping(m)
       implicit none
       type (mapping), intent (inout) :: m
-      integer :: i, j, k, l, indd
+      integer :: i, j, k, l, indd, ind
       integer :: iCv, iCv1, iCv2, iFc, iFcc, iFs, iVa, iVb,
      *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, inew
       integer :: totalcount, fscount, iactive, icount, fccount,
      *           artificial_slab = 0, found = 0
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:),
      *                        indFc(:), cvNvLoc(:), freg(:),
-     *                        old_face_list(:), new_face_list(:),
+     *                        old_face_list(:), new_face_list(:), 
+     *                        counter(:), mapXptID(:),
      *                        regcount(:)
       integer :: fcsb(maxval(m%fcLbl),m%nCi),
      * fcsbcounter(maxval(m%fcLbl)), cvsb(maxval(m%fcLbl),m%nCi)
-      logical :: duplicate, left_match_found, right_match_found
+      logical :: duplicate, left_match_found, right_match_found,
+     * is_found
+      logical, allocatable, dimension(:)  :: issep
       external ipgeti, xerrab
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
@@ -728,6 +899,7 @@ cwdk  can be derived directly from data in that file
       deallocate (cvNvLoc)
       deallocate (indCv)
 
+      ! Determine vertex flux surface ID
       allocate (indFsVx(m%nVx))
       m%fcFs = 0
       indFsVx = 0
@@ -764,109 +936,210 @@ cwdk  can be derived directly from data in that file
       m%fsVx(1:m%nFsVxmx) = indFsVx(1:m%nFsVxmx)
       deallocate(indFsVx)
 
-!! standard approach to find X-points: find vertices where 4 of the surrounding faces lie on a flux surface.
-      allocate(indXpt(m%nVx))
-      indXpt = 0
-      m%nXpt = 0
-      iactive = 0
-      do iVx = 1, m%nVx
-        if (m%vxFcP(iVx,2).ge.4) then
-          fccount = 0
-          do i = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
-            iFc = m%vxFc(i)
-            if (m%fcFs(iFc).eq.0) cycle
-            fccount = fccount + 1
-          end do
-          if (fccount.eq.4) then
-            m%nXpt = m%nXpt + 1
-            indXpt(m%nXpt) = iVx
-            if (iactive.eq.0) then
-              do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1) + m%vxCvP(iVx,2) - 1
-                if (iactive.ne.0) cycle
-                iCv = m%vxCv(i)
-                if (m%cvReg(iCv).eq.1) iactive = m%nXpt
-              end do
-            end if
-          end if
-        end if
-      end do
 
-!! use a different approach for slab cases with cuts,
-!! because in this case the two X-point vertices are each surrounded by 2 faces that lie on a flux surface, just like all other internal vertices.
-!! An X-point vertex in this case is surrounded by cvReg values 1, 2, and 3 or 4
-      call ipgeti ('artificial_slab', artificial_slab)
-      if (m%nXpt.eq.0.and.artificial_slab.eq.1) then
+    
+*   .. Determine additional topological data
+      if (m%hasTopologicalData) then 
+        ! Most data already available, need to recompute some derivative
+        ! data such as strVxP, iFssep (iFssep 2 if need be)
+
+        ! Note: we do not yet support "hacks" where the separatrix 
+        ! flux surface ID is given by the user or where strike points 
+        ! are not connected to an X-point
+
+        ! Compute general data
+        !---------------------
+        ! Compute alliFssep 
+        allocate(issep(maxval(m%XptFsID)))
+        issep = .false. 
+        do i = 1, m%nXpt 
+          issep(m%XptFsID(i)) = .true. 
+        end do 
+        allocate(m%alliFssep(count(issep)))
+
+        ! Compute mapping from vertex ID to local Xpt array ID
+        allocate(mapXptID(m%nVx))
+        mapXptID = 0
+        do i = 1, m%nXpt 
+          mapXptID(m%Xpt(i)) = i
+        end do 
+
+        ! Compute XptStrP
+        m%XptStrP = 0
+        if (m%nXpt > 0) then 
+          m%XptStrP(1, 1) = 1
+        end if 
+        do i = 1, m%nStr
+          ! Count
+          m%XptStrP(mapXptID(m%strXpt(i)), 2) = 
+     &      m%XptStrP(mapXptID(m%strXpt(i)), 2) + 1
+        end do
+        do i = 2, m%nXpt 
+          m%XptStrP(i, 1) = m%XptStrP(i-1, 1) + m%XptStrP(i-1, 2)
+        end do 
+
+        ! Compute XptStr
+        if (allocated(m%XptStr)) deallocate(m%XptStr)
+        allocate(m%XptStr(sum(m%XptStrP(:, 2))))
+        allocate(counter(m%nVx))
+        m%XptStr = 0
+        counter = 0
+        do i = 1, m%nStr 
+          ! Compute the index for the list
+          ind = counter(m%strXpt(i)) 
+     &      + m%XptStrP(mapXptID(m%strXpt(i)), 1)
+
+          ! Set the list value to i 
+          m%XptStr(ind) = i 
+
+          ! Update the counter
+          counter(m%strXpt(i)) = counter(m%strXpt(i)) + 1
+        end do 
+
+        ! Initialize divFcOr
+        if (allocated(m%divFcOr)) deallocate(m%divFcOr)
+        allocate(m%divFcOr(m%nfcDiv))
+        m%divFcOr = 0.0_R8
+
+        ! Initialize ifdiv and ivdiv
+        if (allocated(m%ifdiv)) deallocate(m%ifdiv)
+        if (allocated(m%ivdiv)) deallocate(m%ivdiv)
+        allocate(m%ifdiv(m%nDiv))
+        allocate(m%ivdiv(m%nDiv))
+        m%ifdiv = 0 
+        m%ivdiv = 0
+
+        ! Housekeeping
+        deallocate(counter)
+
+        ! Compute case-specific data
+        !---------------------------
+        ! Check if we adhere to the standard case of two strike points 
+        ! per x-point. 
+        if (all(m%XptStrP(:, 2) == 2)) then 
+          do i = 1, m%nXpt 
+            m%strVxP(i, :) = m%XptStr(2*i-1:2*i)
+          end do 
+        end if 
+
+        ! Check if we can assign two separatrices
+        m%iFssep = 0 
+        m%iFssep2 = 0
+        if (size(m%alliFssep) == 1) then 
+          m%iFssep = m%alliFssep(1)
+        elseif (size(m%alliFssep) == 2) then 
+          ! Check the active X-point
+          if (count(m%isPrimaryXpt == 1) == 1) then 
+            do j = 1, m%nXpt 
+              if (m%isPrimaryXpt(j) == 1) then 
+                m%iFssep = m%XptFsID(j)
+              end if 
+            end do 
+            if (m%nXpt == 2) then 
+              do j = 1, m%nXpt 
+                if (m%isPrimaryXpt(j) /= 1) then 
+                  m%iFssep2 = m%XptFsID(j)
+                end if 
+              end do
+            end if 
+          end if
+        end if 
+      end if 
+      
+      if (.not. m%hasTopologicalData) then 
+        ! Identify X-points based on vertex flux surface IDs and 
+        allocate(indXpt(m%nVx))
+        indXpt = 0
+        m%nXpt = 0
+        iactive = 0
         do iVx = 1, m%nVx
-          if (found.eq.1) cycle
-          if (m%vxCvP(iVx,2).ge.4) then
-            allocate(regcount(m%vxCvP(iVx,2)))
-            do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1) + m%vxCvP(iVx,2) - 1
-              iCv = m%vxCv(i)
-              regcount(i-m%vxCvP(iVx,1)+1) = m%cvReg(iCv)
+          if (m%vxFcP(iVx,2).ge.4) then
+            fccount = 0
+            do i = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+              iFc = m%vxFc(i)
+              if (m%fcFs(iFc).eq.0) cycle
+              fccount = fccount + 1
             end do
-            if (ANY(regcount==1).and.ANY(regcount==2).and.
-     &         (ANY(regcount==3).or.ANY(regcount==4))) then
+            if (fccount.eq.4) then
               m%nXpt = m%nXpt + 1
               indXpt(m%nXpt) = iVx
-              found = 1
               if (iactive.eq.0) then
-                do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1)+m%vxCvP(iVx,2)-1
+                do i = m%vxCvP(iVx,1), 
+     &            m%vxCvP(iVx,1) + m%vxCvP(iVx,2) - 1
                   if (iactive.ne.0) cycle
-                 iCv = m%vxCv(i)
+                  iCv = m%vxCv(i)
                   if (m%cvReg(iCv).eq.1) iactive = m%nXpt
                 end do
               end if
             end if
-            deallocate(regcount)
           end if
         end do
-      endif
+      end if 
 
-      m%nStr = 0
-      m%nTgc = 0
-      if (m%nXpt.gt.0) then
-        allocate(m%Xpt(m%nXpt))
-        m%Xpt(1:m%nXpt) = indXpt(1:m%nXpt)
-        if (iactive.ne.0) then
-          do i = 1, m%vxFcP(m%Xpt(iactive),2)
-            iFs = m%fcFs(m%vxFc(m%vxFcP(m%Xpt(iactive),1)+i-1))
-            if (iFs.eq.0) cycle
-            if (m%iFssep.eq.0) m%iFssep = iFs
-            if (m%iFssep2.eq.0.and.iFs.ne.m%iFssep) m%iFssep2 = iFs
-          end do
-        end if
-        indXpt = 0
-        icount = 0
-        allocate(m%strVxP(m%nXpt,2))
-        m%strVxP = 0
-        m%strVxP(1,1) = 1
-        do i = 1, m%nXpt
-          if (i.gt.1) m%strVxP(i,1) = m%strVxP(i-1,1) + m%strVxP(i-1,2)
-          iFs = m%iFssep
-          do j = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
-            iFc = m%fsFc(j)
-            do k = 1, 2
-              iVx = m%fcVx(iFc,k)
-              fccount = 0
-              do l = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
-                if (m%fcFs(m%vxFc(l)).eq.iFs) fccount = fccount + 1
+      ! Determine strike points, tangency points, and related quantities
+      if (.not. m%hasTopologicalData) then 
+!! use a different approach for slab cases with cuts,
+!! because in this case the two X-point vertices are each surrounded by 2 faces that lie on a flux surface, just like all other internal vertices.
+!! An X-point vertex in this case is surrounded by cvReg values 1, 2, and 3 or 4
+        call ipgeti ('artificial_slab', artificial_slab)
+        if (m%nXpt.eq.0.and.artificial_slab.eq.1) then
+          do iVx = 1, m%nVx
+            if (found.eq.1) cycle
+            if (m%vxCvP(iVx,2).ge.4) then
+              allocate(regcount(m%vxCvP(iVx,2)))
+              do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1) + m%vxCvP(iVx,2) - 1
+                iCv = m%vxCv(i)
+                regcount(i-m%vxCvP(iVx,1)+1) = m%cvReg(iCv)
               end do
-              if (fccount.eq.1) then
-                icount = icount + 1
-                m%strVxP(i,2) = m%strVxP(i,2) + 1
-                indXpt(icount) = iVx
+              if (ANY(regcount==1).and.ANY(regcount==2).and.
+     &          (ANY(regcount==3).or.ANY(regcount==4))) then
+                m%nXpt = m%nXpt + 1
+                indXpt(m%nXpt) = iVx
+                found = 1
+                if (iactive.eq.0) then
+                  do i = m%vxCvP(iVx,1), m%vxCvP(iVx,1)+m%vxCvP(iVx,2)-1
+                    if (iactive.ne.0) cycle
+                  iCv = m%vxCv(i)
+                    if (m%cvReg(iCv).eq.1) iactive = m%nXpt
+                  end do
+                end if
               end if
-            end do
+              deallocate(regcount)
+            end if
           end do
-          if (m%iFssep2.gt.0) then
-            iFs = m%iFssep2
+        endif
+
+
+        ! Recompute from scratch
+        m%nStr = 0
+        m%nTgc = 0
+        if (m%nXpt.gt.0) then
+          allocate(m%Xpt(m%nXpt))
+          m%Xpt(1:m%nXpt) = indXpt(1:m%nXpt)
+          if (iactive.ne.0) then
+            do i = 1, m%vxFcP(m%Xpt(iactive),2)
+              iFs = m%fcFs(m%vxFc(m%vxFcP(m%Xpt(iactive),1)+i-1))
+              if (iFs.eq.0) cycle
+              if (m%iFssep.eq.0) m%iFssep = iFs
+              if (m%iFssep2.eq.0.and.iFs.ne.m%iFssep) m%iFssep2 = iFs
+            end do
+          end if
+          indXpt = 0
+          icount = 0
+          allocate(m%strVxP(m%nXpt,2))
+          m%strVxP = 0
+          m%strVxP(1,1) = 1
+          do i = 1, m%nXpt
+            if (i.gt.1) m%strVxP(i,1) = 
+     &        m%strVxP(i-1,1) + m%strVxP(i-1,2) 
+            iFs = m%iFssep
             do j = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
               iFc = m%fsFc(j)
               do k = 1, 2
                 iVx = m%fcVx(iFc,k)
                 fccount = 0
-                do l = m%vxFcP(iVx,1),
-     &                 m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+                do l = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + 
+     &            m%vxFcP(iVx,2) - 1
                   if (m%fcFs(m%vxFc(l)).eq.iFs) fccount = fccount + 1
                 end do
                 if (fccount.eq.1) then
@@ -876,135 +1149,158 @@ cwdk  can be derived directly from data in that file
                 end if
               end do
             end do
-          end if
-        end do
-        m%nStr = icount
-        allocate(m%strVx(m%nStr))
-        m%strVx(1:m%nStr) = indXpt(1:m%nStr)
-        allocate(m%strDiv(m%nStr))
-        allocate(freg(m%nStr))
-        m%strDiv = 0
-        freg = 0
-        do i = 1, m%nStr
-          iVx = m%strVx(i)
-          do j = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
-            if (m%strDiv(i).ne.0) cycle
-            iFc = m%vxFc(j)
-            if (m%fcReg(iFc).eq.1) then
-              m%strDiv(i) = 1
-              freg(i) = 1
-            else if (m%fcReg(iFc).eq.4) then
-              m%strDiv(i) = 2
-              freg(i) = 4
-            else if (m%fcReg(iFc).eq.5) then
-              if (m%nXpt.eq.1) then
-                m%strDiv(i) = 1
-              else
-                m%strDiv(i) = 3
-              endif
-              freg(i) = 5
-            else if (m%fcReg(iFc).eq.8) then
-              if (m%nXpt.eq.1) then
-                m%strDiv(i) = 2
-              else
-                m%strDiv(i) = 4
-              endif
-              freg(i) = 8
+            if (m%iFssep2.gt.0) then
+              iFs = m%iFssep2
+              do j = m%fsFcP(iFs,1), m%fsFcP(iFs,1) + m%fsFcP(iFs,2) - 1
+                iFc = m%fsFc(j)
+                do k = 1, 2
+                  iVx = m%fcVx(iFc,k)
+                  fccount = 0
+                  do l = m%vxFcP(iVx,1),
+     &                 m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+                    if (m%fcFs(m%vxFc(l)).eq.iFs) fccount = fccount + 1
+                  end do
+                  if (fccount.eq.1) then
+                    icount = icount + 1
+                    m%strVxP(i,2) = m%strVxP(i,2) + 1
+                    indXpt(icount) = iVx
+                  end if
+                end do
+              end do
             end if
           end do
-        end do
-        allocate(m%tgVx(m%nTgc)) !csc needed for adjoint AD
-      else if (m%nnreg(0).eq.2) then
-        allocate(freg(2))
-        iFc = 1
-        icount = 0
-        do while (m%iFssep.eq.0.and.iFc.le.m%nFc)
-          iCv1 = m%fcCv(iFc,1)
-          iCv2 = m%fcCv(iFc,2)
-          if (m%cvReg(iCv1).ne.m%cvReg(iCv2).and.
-     &        m%cvReg(iCv1).ne.0.and.m%cvReg(iCv2).ne.0) then
-            m%iFssep = m%fcFs(iFc)
-          end if
-          if (m%iFssep.eq.0) iFc = iFc + 1
-        end do
-        do i = m%fsFcP(m%iFssep,1),
-     &         m%fsFcP(m%iFssep,1) + m%fsFcP(m%iFssep,2) - 1
-          iFc = m%fsFc(i)
-          do k = 1, 2
-            iVx = m%fcVx(iFc,k)
+          m%nStr = icount
+          allocate(m%strVx(m%nStr))
+          m%strVx(1:m%nStr) = indXpt(1:m%nStr)
+          allocate(m%strDiv(m%nStr))
+          allocate(freg(m%nStr))
+          m%strDiv = 0
+          freg = 0
+          do i = 1, m%nStr
+            iVx = m%strVx(i)
             do j = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
-              iFcc = m%vxFc(j)
-              if (m%fcLbl(iFcc).ne.0) then
-                duplicate = .false.
-                do l = 1, icount
-                  if (indXpt(l).eq.iVx) duplicate = .true.
+              if (m%strDiv(i).ne.0) cycle
+              iFc = m%vxFc(j)
+              if (m%fcReg(iFc).eq.1) then
+                m%strDiv(i) = 1
+                freg(i) = 1
+              else if (m%fcReg(iFc).eq.4) then
+                m%strDiv(i) = 2
+                freg(i) = 4
+              else if (m%fcReg(iFc).eq.5) then
+                if (m%nXpt.eq.1) then
+                  m%strDiv(i) = 1
+                else
+                  m%strDiv(i) = 3
+                endif
+                freg(i) = 5
+              else if (m%fcReg(iFc).eq.8) then
+                if (m%nXpt.eq.1) then
+                  m%strDiv(i) = 2
+                else
+                  m%strDiv(i) = 4
+                endif
+                freg(i) = 8
+              end if
+            end do
+          end do
+          allocate(m%tgVx(m%nTgc)) !csc needed for adjoint AD
+      else if (m%nnreg(0).eq.2) then
+          allocate(freg(2))
+          iFc = 1
+          icount = 0
+          do while (m%iFssep.eq.0.and.iFc.le.m%nFc)
+            iCv1 = m%fcCv(iFc,1)
+            iCv2 = m%fcCv(iFc,2)
+            if (m%cvReg(iCv1).ne.m%cvReg(iCv2).and.
+     &        m%cvReg(iCv1).ne.0.and.m%cvReg(iCv2).ne.0) then
+              m%iFssep = m%fcFs(iFc)
+            end if
+            if (m%iFssep.eq.0) iFc = iFc + 1
+          end do
+          do i = m%fsFcP(m%iFssep,1),
+     &         m%fsFcP(m%iFssep,1) + m%fsFcP(m%iFssep,2) - 1
+            iFc = m%fsFc(i)
+            do k = 1, 2
+              iVx = m%fcVx(iFc,k)
+              do j = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+                iFcc = m%vxFc(j)
+                if (m%fcLbl(iFcc).ne.0) then
+                  duplicate = .false.
+                  do l = 1, icount
+                    if (indXpt(l).eq.iVx) duplicate = .true.
+                  end do
+                  if (.not.duplicate) then
+                    icount = icount + 1
+                    indXpt(icount) = iVx
+                  end if
+                end if
+              end do
+            end do
+          end do
+          m%nTgc = icount
+          allocate(m%tgVx(m%nTgc))
+          m%tgVx(1:m%nTgc) = indXpt(1:m%nTgc)
+          allocate(m%strDiv(2))
+          m%strDiv(1) = 1
+          m%strDiv(2) = 2
+          freg(1) = 1
+          freg(2) = 2
+        else if (m%nnreg(0).eq.1) then
+          call ipgeti ('b2mwti_jsep', m%iFssep)
+          allocate(freg(2))
+          freg(1) = 1
+          freg(2) = 2
+          if (m%iFssep.gt.0) then
+            indXpt = 0
+            icount = 0
+            allocate(m%strVxP(1,2))
+            m%strVxP(1,1) = 1
+            m%strVxP(1,2) = 2
+            do j = m%fsFcP(m%iFssep,1),
+     &           m%fsFcP(m%iFssep,1) + m%fsFcP(m%iFssep,2) - 1
+              iFc = m%fsFc(j)
+              do k = 1, 2
+                iVx = m%fcVx(iFc,k)
+                fccount = 0
+                do l = m%vxFcP(iVx,1), 
+     &              m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+                  if (m%fcFs(m%vxFc(l)).eq.m%iFssep) 
+     &              fccount = fccount + 1
                 end do
-                if (.not.duplicate) then
+                if (fccount.eq.1) then
                   icount = icount + 1
                   indXpt(icount) = iVx
                 end if
-              end if
-            end do
-          end do
-        end do
-        m%nTgc = icount
-        allocate(m%tgVx(m%nTgc))
-        m%tgVx(1:m%nTgc) = indXpt(1:m%nTgc)
-        allocate(m%strDiv(2))
-        m%strDiv(1) = 1
-        m%strDiv(2) = 2
-        freg(1) = 1
-        freg(2) = 2
-      else if (m%nnreg(0).eq.1) then
-        call ipgeti ('b2mwti_jsep', m%iFssep)
-        allocate(freg(2))
-        freg(1) = 1
-        freg(2) = 2
-        if (m%iFssep.gt.0) then
-          indXpt = 0
-          icount = 0
-          allocate(m%strVxP(1,2))
-          m%strVxP(1,1) = 1
-          m%strVxP(1,2) = 2
-          do j = m%fsFcP(m%iFssep,1),
-     &           m%fsFcP(m%iFssep,1) + m%fsFcP(m%iFssep,2) - 1
-            iFc = m%fsFc(j)
-            do k = 1, 2
-              iVx = m%fcVx(iFc,k)
-              fccount = 0
-              do l = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
-                if (m%fcFs(m%vxFc(l)).eq.m%iFssep) fccount = fccount + 1
-              end do
-              if (fccount.eq.1) then
-                icount = icount + 1
-                indXpt(icount) = iVx
-              end if
-            end do
-          end do
-          m%nStr = icount
-          if (m%nStr.gt.0) then
-            allocate(m%strVx(m%nStr))
-            m%strVx(1:m%nStr) = indXpt(1:m%nStr)
-            allocate(m%strDiv(m%nStr))
-            m%strDiv = 0
-            do i = 1, m%nStr
-              iVx = m%strVx(i)
-              do j = m%vxFcP(iVx,1), m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
-                if (m%strDiv(i).ne.0) cycle
-                iFc = m%vxFc(j)
-                if (m%fcReg(iFc).eq.1) then
-                  m%strDiv(i) = 1
-                else if (m%fcReg(iFc).eq.2) then
-                  m%strDiv(i) = 2
-                end if
               end do
             end do
+            m%nStr = icount
+            if (m%nStr.gt.0) then
+              allocate(m%strVx(m%nStr))
+              m%strVx(1:m%nStr) = indXpt(1:m%nStr)
+              allocate(m%strDiv(m%nStr))
+              m%strDiv = 0
+              do i = 1, m%nStr
+                iVx = m%strVx(i)
+                do j = m%vxFcP(iVx,1), 
+     &            m%vxFcP(iVx,1) + m%vxFcP(iVx,2) - 1
+                  if (m%strDiv(i).ne.0) cycle
+                  iFc = m%vxFc(j)
+                  if (m%fcReg(iFc).eq.1) then
+                    m%strDiv(i) = 1
+                  else if (m%fcReg(iFc).eq.2) then
+                    m%strDiv(i) = 2
+                  end if
+                end do
+              end do
+            end if
           end if
         end if
-      end if
-      deallocate(indXpt)
+        deallocate(indXpt)
+      end if 
 
-      if (allocated(m%strDiv)) then
+
+      if (allocated(m%strDiv) .and. .not. m%hasTopologicalData) then
        indd = maxval(m%strDiv)
        if (indd.gt.0) then
         allocate(m%ifdiv(maxval(m%strDiv)))
@@ -1107,12 +1403,15 @@ cwdk  can be derived directly from data in that file
        end if
       end if
 
-      if (allocated(freg)) then
-        deallocate(freg)
-      else
-        write(*,*) 'Targetless topology detected :'
-        write(*,*) 'Strike point data not defined'
-      end if
+
+      if (.not. m%hasTopologicalData) then 
+        if (allocated(freg)) then
+          deallocate(freg)
+        else
+          write(*,*) 'Targetless topology detected :'
+          write(*,*) 'Strike point data not defined'
+        end if
+      end if 
 
       allocate(m%cvAlongBoundary(m%nCv))
       m%cvAlongBoundary = .false.
@@ -1164,9 +1463,44 @@ cwdk  can be derived directly from data in that file
             exit
           endif
         enddo
+        if (.not.is_found) then
+          if (k.lt.m%nCg.or.(k.eq.m%nCg.and.
+     &     maxval(m%cvFt(m%fcCv(m%fcs_wall(k-1),1:2))) .ne.
+     &     maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2))))) then
+            m%nFci = m%nFci+1
+          endif
+        endif
+      enddo
+      allocate(m%fcs_wall_ind(m%nFci,2))
+      j = 1
+      l = 1
+      do k=1,m%nCg-1
+        if (maxval(m%cvFt(m%fcCv(m%fcs_wall(k+1),1:2))) .ne.
+     &      maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
+          m%fcs_wall_ind(l,1) = j
+          m%fcs_wall_ind(l,2) = k-j+1
+          j = k+1
+          l = l+1
+        endif
+      enddo
+      ! Doing the last cell by hand if it is on its own flux tube
+      if (maxval(m%cvFt(m%fcCv(m%fcs_wall(m%nCg-1),1:2))) .ne.
+     &    maxval(m%cvFt(m%fcCv(m%fcs_wall(m%nCg),1:2)))) then
+        m%fcs_wall_ind(l,1) = m%nCg
+        m%fcs_wall_ind(l,2) = 1
+      end if
+
+      write(*,*) "list of boundary faces in one flux tube:"
+      do j=1,m%nFci
+        if (m%fcs_wall_ind(j,1) .eq. m%fcs_wall_ind(j,2)) cycle
+        write(*,'(3i4)') j, m%fcs_wall_ind(j,1), m%fcs_wall_ind(j,2)
+        write(*,*) m%fcs_wall(m%fcs_wall_ind(j,1):
+     &                        m%fcs_wall_ind(j,1)+m%fcs_wall_ind(j,2)-1)
       enddo
 
-      write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc
+*   .. write out some data
+      write (*,*) 'nXpt, nStr, nTgc, nOpt, nDiv ', m%nXpt, m%nStr, 
+     &  m%nTgc, m%nOpt, m%nDiv
       write (*,*) 'nFsVxmx          ', m%nFsVxmx
 
       return

@@ -331,7 +331,7 @@
           nnVx = idum(2)
           nnFs = idum(4)
           nnFt = idum(5)
-          if (grid_version.eq."03.002.000") then
+          if (grid_version >= "03.002.000") then
             !ghostcells are not provided, nnCv does not match nCv
             !but will match after guard cells are created
 
@@ -384,18 +384,19 @@
               enddo
 
             else ! for artificial slab constant magnetic field
-              g%cvBb(:,0) = cvBp(1)
-              g%cvBb(:,1) = 0
-              g%cvBb(:,2) = cvBt(1)
-              g%cvBb(:,3) = sqrt( cvBp(1)**2 + cvBt(1)**2)
-              g%fcBb(:,0) = cvBp(1)
-              g%fcBb(:,1) = 0
-              g%fcBb(:,2) = cvBt(1)
-              g%fcBb(:,3) = sqrt( cvBp(1)**2 + cvBt(1)**2)
-            endif
-          else
-            call xerrab('Grid version not equal to 03.002.00')
-          endif  ! if of the grid_version
+                g%cvBb(:,0) = g%cvBp(1)
+                g%cvBb(:,1) = 0
+                g%cvBb(:,2) = g%cvBt(1)
+                g%cvBb(:,3) = sqrt( g%cvBp(1)**2 + g%cvBt(1)**2)
+                g%fcBb(:,0) = g%cvBp(1)
+                g%fcBb(:,1) = 0
+                g%fcBb(:,2) = g%cvBt(1)
+                g%fcBb(:,3) = sqrt( g%cvBp(1)**2 + g%cvBt(1)**2)
+            endif        
+           else
+             call xerrab('Grid version not greater than or equal to' //
+     &         '03.002.00')
+           endif  ! if of the grid_version
 
         else
           call xerrab('Error in reading geometry file')
@@ -450,7 +451,7 @@
       !rewind nrid
       call cfverr(nrid,grid_version)
 
-      if (grid_version.eq."03.002.000") then
+      if (grid_version.ge."03.002.000") then
         !read nCv, nFc, nVx (without ghostcells)
         call cfruin (nrid, 6, idum, 'nCi,nFc,nVx,nCg,nFs,nFt')
         nnCv = idum(0)
@@ -479,18 +480,87 @@
           m%nncut = idum(2)
         endif
 
-!        ! read Xpoint information
-!        call cfruin (nrid, 1, idum,'nX')
-!        m%nXp = idum(0)
+        if (m%isClassicalGrid.eq.1) then
+          m%nCornVx = m%nx
+        else
+          idum = 0
+          call cfruin_opt (nrid,1,idum,'nCornVx')
+          m%nCornVx = 0
+        endif
 
-!        ! read OMPr, OMPz, IMPr, IMPz
-!        call cfrure(nrid,2,m%OMPr,'OMPr')
-!        call cfrure(nrid,2,m%OMPz,'OMPz')
-!        call cfrure(nrid,2,m%IMPr,'IMPr')
-!        call cfrure(nrid,2,m%IMPz,'IMPz')
+        ! Read topological data if present
+        if (grid_version >= '03.002.001') then
+          ! Set logical
+          m%hasTopologicalData = .true. 
 
-!        ! read Xpoint vertex number
-!        call cfruin(nrid,m%nXp,m%Xpoint,'Xpoint(s)')
+          ! Read topological mesh flag
+          call cfruin(nrid, 1, idum, 'topoflag')
+          m%topoID = idum(0)
+
+          ! Read number of topological points
+          call cfruin(nrid, 6, idum, 'nX,nO,nS,nT,nDiv,nDivFc')
+          m%nXpt = idum(0)
+          m%nOpt = idum(1)
+          m%nStr = idum(2)
+          m%nTgc = idum(3)
+          m%nDiv = idum(4)
+          m%nfcDiv = idum(5)
+
+          ! Read X-point data
+          read(nrid,*,err=91) idcod, id
+          if (streql('*cf:',idcod).and.streql('Vx',id)) then
+            do iVx = 1, m%nXpt
+              ! vx isprimary fsID
+                read(nrid,*,err=91) m%Xpt(iVx), m%isPrimaryXpt(iVx),
+     &            m%XptFsID(iVx)
+              enddo
+          endif
+
+          ! Read O-point data
+          read(nrid,*,err=91) idcod, id
+          if (streql('*cf:',idcod).and.streql('Vx',id)) then
+            do iVx = 1, m%nOpt
+              ! vx 
+                read(nrid,*,err=91) m%Opt(iVx)
+              enddo
+          endif
+
+          ! Read strike point data
+          read(nrid,*,err=91) idcod, id
+          if (streql('*cf:',idcod).and.streql('Vx',id)) then
+            do iVx = 1, m%nStr
+              ! vx xpointID divID fsID
+                read(nrid,*,err=91) m%StrVx(iVx), m%strXpt(iVx), 
+     &            m%strDiv(iVx), m%strFsID(iVx)
+              enddo
+          endif
+
+          ! Read tangency point data
+          read(nrid,*,err=91) idcod, id
+          if (streql('*cf:',idcod).and.streql('Vx',id)) then
+            do iVx = 1, m%nTgc
+              ! vx xpointID divID fsID
+                read(nrid,*,err=91) m%TgVx(iVx), m%tgDiv(iVx), 
+     &            m%tgFsID(iVx)
+              enddo
+          endif
+
+          ! Read divertor data
+          read(nrid,*,err=91) idcod, id
+          if (streql('*cf:',idcod).and.streql('div',id)) then
+            do iVx = 1, m%nDiv
+              ! div divFcP(:, 1) divFcP(:, 2)
+                read(nrid,*,err=91) idum(0), m%divFcP(iVx, 1), 
+     &            m%divFcP(iVx, 2)
+              enddo
+          endif
+
+          ! Read divertor face data
+          call cfruin(nrid, m%nfcDiv, m%divFc, 'divFc')
+        else
+          ! No data available, will be determined later on based on 
+          ! standard data/cases
+        end if 
 
         ! read vertex information
         read(nrid,*,err=91) idcod, id
@@ -502,7 +572,7 @@
           enddo
         endif
 
-        !read cell information
+        ! read cell information
         read(nrid,*,err=91) idcod, id
         if (streql('*cf:',idcod).and.streql('cv',id)) then
           do iCv = 1, nnCv

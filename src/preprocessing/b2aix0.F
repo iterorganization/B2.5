@@ -98,6 +98,33 @@
       mpg%nx    = idum(0)
       mpg%ny    = idum(1)
       mpg%nncut = idum(2)
+      if (mpg%isClassicalGrid.eq.1) then
+        mpg%nCornVx = mpg%nx
+      else
+        idum = 0
+        call cfruin_opt (ninp(1),1,idum,'nCornVx')
+        mpg%nCornVx = idum(0)
+      endif
+
+*   ..read topological data if available
+      if (b2fgmtry_version >= '03.002.001') then 
+        ! Set logical
+        mpg%hasTopologicalData = .true. 
+
+        ! Read topological mesh flag
+        call cfruin(ninp(1), 1, idum, 'topoflag')
+        mpg%topoID = idum(0)
+
+        ! Read number of topological points
+        call cfruin(ninp(1), 6, idum, 'nX,nO,nS,nT,nDiv,nDivFc')
+        mpg%nXpt = idum(0)
+        mpg%nOpt = idum(1)
+        mpg%nStr = idum(2)
+        mpg%nTgc = idum(3)
+        mpg%nDiv = idum(4)
+        mpg%nfcDiv = idum(5)
+      end if  
+
 *   ..test basic dimensions
       nCv = mpg%nCv
       nFc = mpg%nFc

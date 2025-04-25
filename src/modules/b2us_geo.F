@@ -457,13 +457,20 @@
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
      &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2, iFt,
      &           inv_dist(mpg%nVx)
-      integer :: count_up, count_down, count_eq
+      integer :: count_up, count_down, count_eq, ndivStrVx
       integer, allocatable :: old_face_list(:), verts(:)
       integer, save :: temp_ignore_geo = 0
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
      .  Psi1, Psi2, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
+
+      integer                             :: tXptVx
+      integer, allocatable, dimension(:)  :: divStrVx, tdivFc, 
+     &  tdivFcVx1, tdivFcVx2, divStrVxind
+      logical, allocatable, dimension(:)  :: isStrikePoint, 
+     &  isStrikePointFace, isPrimaryXpoint
+
       intrinsic maxval, abs, sqrt
       external b2xbzb, intface, intvertex, ipgeti, xerrab, xertst
 
@@ -477,19 +484,27 @@
       call is_periodic( mpg, gm )
 
 *   ..identify cells on closed surfaces
-      if (mpg%nnreg(0).eq.1) then
-        mpg%cvOnClosedSurface = mpg%periodic_bc.eq.1
-      else if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.4 .or.
-     .         mpg%nnreg(0).eq.5 .or. mpg%nnreg(0).eq.8) then
-        mpg%cvOnClosedSurface = mod(mpg%cvReg,4).eq.1
-      else if (mpg%nnreg(0).eq.7) then
-        mpg%cvOnClosedSurface = mpg%cvReg.eq.1
+      if (mpg%hasTopologicalData .and. (mpg%topoID == 0)) then 
+        ! Assumed that core regions always have cvReg equal to 1 + n*4
+        write (*,*) 'b2us_geo: init_geometry: general topology ' // 
+     &    'detected, assuming core region is 1 + n*, n=0, 1, ...'
+        mpg%cvOnClosedSurface = mod(mpg%cvReg,4) == 1
       else
-        mpg%cvOnClosedSurface = mpg%cvReg.eq.1
-        write (*,*) 'Warning: unknown number of regions'
-        write (*,*) 'Assuming core is region 1'
-        !call xerrab ('Unknown number of regions!')
-      end if
+        ! Original way of determining cells on closed surface
+        if (mpg%nnreg(0).eq.1) then
+          mpg%cvOnClosedSurface = mpg%periodic_bc.eq.1
+        else if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.4 .or.
+     .         mpg%nnreg(0).eq.5 .or. mpg%nnreg(0).eq.8) then
+          mpg%cvOnClosedSurface = mod(mpg%cvReg,4).eq.1
+        else if (mpg%nnreg(0).eq.7) then
+          mpg%cvOnClosedSurface = mpg%cvReg.eq.1
+        else
+          mpg%cvOnClosedSurface = mpg%cvReg.eq.1
+          write (*,*) 'Warning: unknown number of regions'
+          write (*,*) 'Assuming core is region 1'
+          !call xerrab ('Unknown number of regions!')
+        end if
+      end if 
 
 *   ..set weights for interpolation to faces
       if (switch%fcVol_style.eq.0) then
@@ -995,259 +1010,363 @@
 *   ..determine topology and sign of psi derivative
 !! LSN = .false. if the tangency or X-point is above or
 !!               at the same level and to the left of the O-point
-      iXpt = 0
-      if (mpg%nnreg(0).eq.1.or..not.allocated(mpg%Xpt)) then
-!! TODO: Find a way to ascertain, if flux surfaces are defined,
-!!       whether the psi value is increasing or decreasing radially
-      elseif (mpg%nnreg(0).eq.2) then
-        do i = mpg%vxFcP(mpg%tgVx(1),1),
-     &         mpg%vxFcP(mpg%tgVx(1),1)+mpg%vxFcP(mpg%tgVx(1),2)-1
-          iFc = mpg%vxFc(i)
-          if ( mpg%cvReg(mpg%fcCv(iFc,1)).eq.1 .and.
+      if (mpg%hasTopologicalData .and. (mpg%topoID == 0)) then 
+        ! We don't compute anything for the general case here
+        write (*, *) 'b2us_geo: general topology detected, assuming ' //
+     &    'correct orientation of targets'  
+      else
+        iXpt = 0
+        if (mpg%nnreg(0).eq.1.or..not.allocated(mpg%Xpt)) then
+          !! TODO: Find a way to ascertain, if flux surfaces are defined,
+          !!       whether the psi value is increasing or decreasing radially
+        elseif (mpg%nnreg(0).eq.2) then
+          do i = mpg%vxFcP(mpg%tgVx(1),1),
+     &          mpg%vxFcP(mpg%tgVx(1),1)+mpg%vxFcP(mpg%tgVx(1),2)-1
+            iFc = mpg%vxFc(i)
+            if ( mpg%cvReg(mpg%fcCv(iFc,1)).eq.1 .and.
      &         mpg%cvReg(mpg%fcCv(iFc,2)).eq.1) then
-            if ( mpg%fcVx(iFc,1).eq.mpg%tgVx(1)) then
-              iVx = mpg%fcVx(iFc,2)
-            else
-              iVx = mpg%fcVx(iFc,1)
-            end if
-            if ( gm%vxY(mpg%tgVx(1)).gt.gm%vxY(iVx) .or.
+              if ( mpg%fcVx(iFc,1).eq.mpg%tgVx(1)) then
+                iVx = mpg%fcVx(iFc,2)
+              else
+                iVx = mpg%fcVx(iFc,1)
+              end if
+              if ( gm%vxY(mpg%tgVx(1)).gt.gm%vxY(iVx) .or.
      &          (gm%vxY(mpg%tgVx(1)).eq.gm%vxY(iVx) .and.
      &           gm%vxX(mpg%tgVx(1)).gt.gm%vxX(iVx)) ) then
-              gm%LSN = .false.
-            end if
-            gm%psi_increasing = gm%fsPsi(mpg%vxFs(iVx)).lt.
+                gm%LSN = .false.
+              end if
+              gm%psi_increasing = gm%fsPsi(mpg%vxFs(iVx)).lt.
      &                          gm%fsPsi(mpg%vxFs(mpg%tgVx(1))).or.
      &                          maxval(dabs(gm%fsPsi)).eq.0.0_R8
-          end if
-        end do
-      else if (mpg%nnreg(0).eq.4) then
-        do i = mpg%vxFcP(mpg%Xpt(1),1),
-     &         mpg%vxFcP(mpg%Xpt(1),1)+mpg%vxFcP(mpg%Xpt(1),2)-1
-          iFc = mpg%vxFc(i)
-          if ( mpg%cvReg(mpg%fcCv(iFc,1)).eq.1 .and.
-     &         mpg%cvReg(mpg%fcCv(iFc,2)).eq.1) then
-            if ( mpg%fcVx(iFc,1).eq.mpg%Xpt(1)) then
-              iVx = mpg%fcVx(iFc,2)
-            else
-              iVx = mpg%fcVx(iFc,1)
             end if
-            if ( gm%vxY(mpg%Xpt(1)).gt.gm%vxY(iVx) .or.
+          end do
+        else if (mpg%nnreg(0).eq.4) then
+          do i = mpg%vxFcP(mpg%Xpt(1),1),
+     &         mpg%vxFcP(mpg%Xpt(1),1)+mpg%vxFcP(mpg%Xpt(1),2)-1
+            iFc = mpg%vxFc(i)
+            if ( mpg%cvReg(mpg%fcCv(iFc,1)).eq.1 .and.
+     &         mpg%cvReg(mpg%fcCv(iFc,2)).eq.1) then
+              if ( mpg%fcVx(iFc,1).eq.mpg%Xpt(1)) then
+                iVx = mpg%fcVx(iFc,2)
+              else
+                iVx = mpg%fcVx(iFc,1)
+              end if
+              if ( gm%vxY(mpg%Xpt(1)).gt.gm%vxY(iVx) .or.
      &          (gm%vxY(mpg%Xpt(1)).eq.gm%vxY(iVx) .and.
      &           gm%vxX(mpg%Xpt(1)).gt.gm%vxX(iVx)) ) then
-              gm%LSN = .false.
+                gm%LSN = .false.
+              end if
             end if
-          end if
-        end do
-        iXpt = 1
-      else if (mpg%nnreg(0).eq.5) then
-        iXpt = 1
-      else if (mpg%nnreg(0).ge.7) then
-        active = .false.
-        do i = mpg%vxCvP(mpg%Xpt(1),1),
-     &         mpg%vxCvP(mpg%Xpt(1),1) + mpg%vxCvP(mpg%Xpt(1),2) - 1
-          iCv = mpg%vxCv(i)
-          if (mpg%cvReg(iCv).eq.1) active = .true.
-        end do
-        if (active) then
+          end do
           iXpt = 1
-        else
-          iXpt = 2
+        else if (mpg%nnreg(0).eq.5) then
+          iXpt = 1
+        else if (mpg%nnreg(0).ge.7) then
+          active = .false.
+          do i = mpg%vxCvP(mpg%Xpt(1),1),
+     &         mpg%vxCvP(mpg%Xpt(1),1) + mpg%vxCvP(mpg%Xpt(1),2) - 1
+            iCv = mpg%vxCv(i)
+            if (mpg%cvReg(iCv).eq.1) active = .true.
+          end do
+          if (active) then
+            iXpt = 1
+          else
+            iXpt = 2
+          end if
         end if
-      end if
-      if (iXpt.ne.0) then
-       match_found = .false.
-       do i = mpg%vxCvP(mpg%Xpt(iXpt),1), mpg%vxCvP(mpg%Xpt(iXpt),1) +
+        if (iXpt.ne.0) then
+        match_found = .false.
+        do i = mpg%vxCvP(mpg%Xpt(iXpt),1), mpg%vxCvP(mpg%Xpt(iXpt),1) +
      &                                    mpg%vxCvP(mpg%Xpt(iXpt),2) - 1
-        if (match_found) cycle
-        iCv = mpg%vxCv(i)
-        if (mpg%cvReg(iCv).eq.1) then
-          do j = mpg%cvVxP(iCv,1),
+          if (match_found) cycle
+          iCv = mpg%vxCv(i)
+          if (mpg%cvReg(iCv).eq.1) then
+            do j = mpg%cvVxP(iCv,1),
      &           mpg%cvVxP(iCv,1) + mpg%cvVxP(iCv,2) - 1
             if (match_found) cycle
             if (mpg%vxFs(mpg%cvVx(j)).eq.mpg%vxFs(mpg%Xpt(iXpt))) cycle
-            gm%psi_increasing = gm%fsPsi(mpg%vxFs(mpg%cvVx(j))).lt.
+              gm%psi_increasing = gm%fsPsi(mpg%vxFs(mpg%cvVx(j))).lt.
      &                          gm%fsPsi(mpg%vxFs(mpg%Xpt(iXpt))).or.
      &                          maxval(abs(gm%fsPsi)).eq.0.0_R8
-            match_found = .true.
-          end do
-        end if
-       end do
-      end if
-
-      ! Compute signmf
-      r0=0.0_R8
-      z0=0.0_R8
-      t0=0.0_R8
-      iFt=0
-      gm%signmf=0.0_R8
-      if (any(mpg%cvOnClosedSurface(1:mpg%nCi))) then
-        do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
-          iFt=iFt+1
-          iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
-          if (mpg%cvOnClosedSurface(iCv)) then
-            do i=1,mpg%ftCvP(iFt,2)
-              r0=r0+gm%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
-     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-              z0=z0+gm%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
-     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
-              t0=t0+
-     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+              match_found = .true.
             end do
           end if
         end do
-      end if
-      if (t0.gt.0.0_R8) then
-        r0=r0/t0
-        z0=z0/t0
+        end if
+      end if 
+
+      ! Compute signmf
+      if (mpg%hasTopologicalData .and. (mpg%topoID == 0)) then 
+        write (*, *) 'b2us_geo: general topology, not computing signmf'
+      else
+        r0=0.0_R8
+        z0=0.0_R8
+        t0=0.0_R8
         iFt=0
-        do while (gm%signmf.eq.0.0_R8.or.iFt.lt.mpg%nFt)
-          iFt=iFt+1
-          iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
-          if (mpg%cvOnClosedSurface(iCv)) then
-            do i=1,mpg%ftCvP(iFt,2)
-              gm%signmf=gm%signmf
+        gm%signmf=0.0_R8
+        if (any(mpg%cvOnClosedSurface(1:mpg%nCi))) then
+          do while (t0.eq.0.0_R8.or.iFt.lt.mpg%nFt)
+            iFt=iFt+1
+            iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+            if (mpg%cvOnClosedSurface(iCv)) then
+              do i=1,mpg%ftCvP(iFt,2)
+                r0=r0+gm%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+               z0=z0+gm%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))*
+     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+                t0=t0+
+     .              gm%cvHx(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))
+              end do
+            end if
+          end do
+        end if
+        if (t0.gt.0.0_R8) then
+          r0=r0/t0
+          z0=z0/t0
+          iFt=0
+          do while (gm%signmf.eq.0.0_R8.or.iFt.lt.mpg%nFt)
+            iFt=iFt+1
+            iCv=mpg%ftCv(mpg%ftCvP(iFt,1))
+            if (mpg%cvOnClosedSurface(iCv)) then
+              do i=1,mpg%ftCvP(iFt,2)
+                gm%signmf=gm%signmf
      .         -((gm%cvX(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))-r0)*
      .            gm%cvEb(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),1))
      .         +((gm%cvY(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1))-z0)*
      .            gm%cvEb(mpg%ftCv(mpg%ftCvP(iFt,1)+i-1),0))
-            end do
-          end if
-        end do
-! signmf is positive if the poloidal field travels clockwise around the O-point
-        gm%signmf=sign(1.0_R8,gm%signmf)
-      else
-        gm%signmf=sign(1.0_R8,gm%cvEb(1,0))
+              end do
+            end if
+          end do
+  ! signmf is positive if the poloidal field travels clockwise around the O-point
+          gm%signmf=sign(1.0_R8,gm%signmf)
+        else
+          gm%signmf=sign(1.0_R8,gm%cvEb(1,0))
+        end if
       end if
 
-      if (temp_ignore_geo.eq.0) then !! This is a temporary solution to be able to run extended cases, while more general solutions are being developed
+      
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
-      if (allocated(mpg%strDiv)) then
-       do i = 1, maxval(mpg%strDiv)
-        match_found = .false.
-        k = 1
-        do while (.not.match_found)
-          iFc1 = mpg%divFc(mpg%divFcP(i,1)+k-1)
-!nh check if the vertices belong to a flux surface
-          if ((mpg%vxFs(mpg%fcVx(iFc1,1)).ne.0).and.
+      if (mpg%hasTopologicalData .and. (mpg%topoID == 0)) then 
+        ! Issue message, but we do compute the strike point face 
+        ! indices 
+        write (*, *) 'b2us_geo: general topology, not reorienting ' // 
+     &     'divertor face list'
+
+        ! Initialize
+        allocate(isStrikePoint(mpg%nVx), isPrimaryXpoint(mpg%nVx))
+        isStrikePoint = .false. 
+        isPrimaryXpoint = .false. 
+        isStrikePoint(mpg%strVx) = .true.
+        isPrimaryXpoint(mpg%Xpt) = .true. 
+
+        ! Compute for each divertor target an active strike point vertex
+        ! index and find the face index (according to divFc) that gives 
+        ! the subsequent face
+        do i = 1, mpg%nDiv
+          ! Get all strike/tangency points that belong to this divertor target
+          ndivStrVx = count([(mpg%strDiv == i), (mpg%tgDiv == i)])
+          allocate(divStrVx(ndivStrVx))
+          divStrVx = pack([mpg%StrVx, mpg%tgVx], 
+     &      [(mpg%strDiv == i), (mpg%tgDiv == i)])
+
+          ! Also store the indices of the strike points (if any)
+          allocate(divStrVxind(count(mpg%strDiv == i)))
+          divStrVxind = pack([(k, k = 1, mpg%nStr)], mpg%strDiv == i)
+
+          ! Normally, each divertor target has at least one strike or 
+          ! tangency point
+          call xertst(ndivStrVx > 0, 'b2us_geo, init_geometry: ' // 
+     &      'could not find any strike points for divertor target, ' // 
+     &      'unexpected') 
+
+          ! Check size
+          if (ndivStrVx == 1) then 
+            ! Just take this one
+            mpg%ivdiv(i) = divStrVx(1)
+          else ! There are multiple tanks!
+            ! Find the first one that belongs to an active X-point. If 
+            ! none found, take the first one.
+            match_found = .false. 
+            k = 1
+            do while ((.not. match_found) .and. 
+     &          (k <= size(divStrVxind)))
+              ! Get the X-point the strike point belongs to
+              tXptVx = mpg%strXpt(divStrVxind(k))
+
+              ! Check
+              if (isPrimaryXpoint(tXptVx)) then 
+                match_found = .true. 
+                mpg%ivdiv(i) = divStrVx(k)
+              end if 
+
+              ! Update counter
+              k = k + 1
+            end do 
+
+            if (.not. match_found) then 
+              mpg%ivdiv(i) = divStrVx(1)
+            end if 
+          end if 
+
+          ! Get the divertor target faces and vertices
+          tdivFc = mpg%divFc(mpg%divFcP(i, 1):
+     &      mpg%divFcP(i, 1)+mpg%divFcP(i, 2)-1)
+          tdivFcVx1 = mpg%FcVx(tdivFc, 1)
+          tdivFcVx2 = mpg%fcVx(tdivFc, 2)
+
+          ! Set the divertor face index 
+          match_found = .false.
+          k = 1
+          do while ((k < mpg%divFcP(i, 2)) .and. (.not. match_found))
+            ! Check face k and k+1
+            if ((tdivFcVx1(k) == mpg%ivdiv(i)) .or. 
+     &        (tdivFcVx2(k) == mpg%ivdiv(i)) .and. 
+     &        ((tdivFcVx1(k+1) == mpg%ivdiv(i)) .or. 
+     &        (tdivFcVx2(k+1) == mpg%ivdiv(i)))) then 
+              match_found = .true. 
+              mpg%ifdiv(i) = k+1 ! take last face always
+            end if 
+
+            ! Update counter
+            k = k + 1
+          end do 
+
+          ! Sanity check
+          call xertst(match_found, 'b2us_geo, init_geometry: ' // 
+     &      'could not find divertor target face, unexpected')
+
+          ! Housekeeping
+          deallocate(divStrVx, divStrVxind)
+          
+        end do
+
+        ! Housekeeping
+        deallocate(isStrikePoint, isPrimaryXpoint)
+
+      else
+        if (allocated(mpg%strDiv)) then
+        mpg%ifdiv = 0
+        mpg%ivdiv = 0
+        do i = 1, maxval(mpg%strDiv)
+          match_found = .false.
+          k = 1
+          do while (.not.match_found)
+            iFc1 = mpg%divFc(mpg%divFcP(i,1)+k-1)
+  !nh check if the vertices belong to a flux surface
+            if ((mpg%vxFs(mpg%fcVx(iFc1,1)).ne.0).and.
      &        (mpg%vxFs(mpg%fcVx(iFc1,2)).ne.0)) then ! linear interpolation
-            Psi1 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,1)))+
+              Psi1 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,1)))+
      &                       gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,2))))
-            match_found = .true.
-          elseif (mpg%vxFs(mpg%fcVx(iFc1,1)).ne.0) then ! take value from vertex 1
-            Psi1 = gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,1)))
-            match_found = .true.
-          elseif (mpg%vxFs(mpg%fcVx(iFc1,2)).ne.0) then ! take value from vertex 2
-            Psi1 = gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,2)))
-            match_found = .true.
-          else
-            if (k.eq.mpg%divFcP(i,2)) then ! last face
-              Psi1 = 0.0_R8
-              write (*,*) 'Warning: no flux surface assigned to any ' //
-     &         'of the grid vertices coinciding with '
-              write (*,*) 'target ', i
-              write (*,*) 'Assume Psi = 0'
+              match_found = .true.
+            elseif (mpg%vxFs(mpg%fcVx(iFc1,1)).ne.0) then ! take value from vertex 1
+              Psi1 = gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,1)))
+              match_found = .true.
+            elseif (mpg%vxFs(mpg%fcVx(iFc1,2)).ne.0) then ! take value from vertex 2
+              Psi1 = gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc1,2)))
               match_found = .true.
             else
-              k = k+1 ! check next face
+              if (k.eq.mpg%divFcP(i,2)) then ! last face
+                Psi1 = 0.0_R8
+                write (*,*) 'Warning: no flux surface assigned to ' //
+     &         'any of the grid vertices coinciding with '
+                write (*,*) 'target ', i
+                write (*,*) 'Assume Psi = 0'
+                match_found = .true.
+              else
+                k = k+1 ! check next face
+              end if
             end if
-          end if
-        end do
-        match_found = .false.
-        k = mpg%divFcP(i,2)
-        do while (.not.match_found)
-          iFc2 = mpg%divFc(mpg%divFcP(i,1)+k-1)
-!nh check if the vertices belong to a flux surface
-          if ((mpg%vxFs(mpg%fcVx(iFc2,1)).ne.0).and.
-     &        (mpg%vxFs(mpg%fcVx(iFc2,2)).ne.0)) then ! linear interpolation
-            Psi2 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,1)))+
-     &                       gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,2))))
-            match_found = .true.
-          elseif (mpg%vxFs(mpg%fcVx(iFc2,1)).ne.0) then ! take value from vertex 1
-            Psi2 = gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,1)))
-            match_found = .true.
-          elseif (mpg%vxFs(mpg%fcVx(iFc2,2)).ne.0) then ! take value from vertex 2
-            Psi2 = gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,2)))
-            match_found = .true.
-          else
-            if (k.eq.1) then ! last face
-              Psi2 = 0.0_R8
-              match_found = .true.
-            else
-              k = k-1 ! check next face
-            end if
-          end if
-        end do
-        if ((gm%psi_increasing .and. Psi1.gt.Psi2) .or.
-     &      (.not.gm%psi_increasing .and. Psi2.gt.Psi1)) then
-          allocate(old_face_list(1:mpg%divFcP(i,2)))
-          old_face_list(1:mpg%divFcP(i,2)) =
-     &     mpg%divFc(mpg%divFcP(i,1):mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
-          do j = 1, mpg%divFcP(i,2)
-            mpg%divFc(mpg%divFcP(i,1)+j-1) =
-     &       old_face_list(mpg%divFcP(i,2)-j+1)
           end do
-          deallocate(old_face_list)
-        end if
-        match_found = .false.
-        do j = mpg%divFcP(i,1), mpg%divFcP(i,1)+mpg%divFcP(i,2)-1
-          iVx1 = mpg%fcVx(mpg%divFc(j),1)
-          iVx2 = mpg%fcVx(mpg%divFc(j),2)
-          do k = 1, mpg%nXpt
-            do l = mpg%strVxP(k,1), mpg%strVxP(k,1)+mpg%strVxP(k,2)-1
-              if (iVx1.eq.mpg%strVx(l)) then
-                if((gm%psi_increasing .and.
+          match_found = .false.
+          k = mpg%divFcP(i,2)
+          do while (.not.match_found)
+            iFc2 = mpg%divFc(mpg%divFcP(i,1)+k-1)
+  !nh check if the vertices belong to a flux surface
+            if ((mpg%vxFs(mpg%fcVx(iFc2,1)).ne.0).and.
+     &        (mpg%vxFs(mpg%fcVx(iFc2,2)).ne.0)) then ! linear interpolation
+              Psi2 = 0.5_R8 * (gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,1)))+
+     &                       gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,2))))
+              match_found = .true.
+            elseif (mpg%vxFs(mpg%fcVx(iFc2,1)).ne.0) then ! take value from vertex 1
+              Psi2 = gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,1)))
+              match_found = .true.
+            elseif (mpg%vxFs(mpg%fcVx(iFc2,2)).ne.0) then ! take value from vertex 2
+              Psi2 = gm%fsPsi(mpg%vxFs(mpg%fcVx(iFc2,2)))
+              match_found = .true.
+            else
+              if (k.eq.1) then ! last face
+                Psi2 = 0.0_R8
+                match_found = .true.
+              else
+                k = k-1 ! check next face
+              end if
+            end if
+          end do
+          if ((gm%psi_increasing .and. Psi1.gt.Psi2) .or.
+     &      (.not.gm%psi_increasing .and. Psi2.gt.Psi1)) then
+            allocate(old_face_list(1:mpg%divFcP(i,2)))
+            old_face_list(1:mpg%divFcP(i,2)) =
+     &     mpg%divFc(mpg%divFcP(i,1):mpg%divFcP(i,1)+mpg%divFcP(i,2)-1)
+            do j = 1, mpg%divFcP(i,2)
+              mpg%divFc(mpg%divFcP(i,1)+j-1) =
+     &       old_face_list(mpg%divFcP(i,2)-j+1)
+            end do
+            deallocate(old_face_list)
+          end if
+          match_found = .false.
+          do j = mpg%divFcP(i,1), mpg%divFcP(i,1)+mpg%divFcP(i,2)-1
+            iVx1 = mpg%fcVx(mpg%divFc(j),1)
+            iVx2 = mpg%fcVx(mpg%divFc(j),2)
+            do k = 1, mpg%nXpt
+              do l = mpg%strVxP(k,1), mpg%strVxP(k,1)+mpg%strVxP(k,2)-1
+                if (iVx1.eq.mpg%strVx(l)) then
+                  if((gm%psi_increasing .and.
      &              gm%vxFpsi(iVx1).le.gm%vxFpsi(iVx2)).or.
      &             (.not.gm%psi_increasing .and.
      &              gm%vxFpsi(iVx1).gt.gm%vxFpsi(iVx2))) then
-                  if (mpg%ifdiv(i).eq.0) then
-                    match_found = .true.
-                    mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
-                    mpg%ivdiv(i) = iVx1
-                  else ! Two strike points on the same target
-                       ! We label the active one only
-                    if (mpg%vxFs(iVx1).eq.mpg%iFssep.or.
-     &                 (mpg%vxFs(iVx1).eq.mpg%iFssep2.and.
-     &                  mpg%iFssep2.gt.0)) then
+                    if (mpg%ifdiv(i).eq.0) then
+                      match_found = .true.
                       mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
                       mpg%ivdiv(i) = iVx1
+                    else ! Two strike points on the same target
+                        ! We label the active one only
+                      if (mpg%vxFs(iVx1).eq.mpg%iFssep.or.
+     &                 (mpg%vxFs(iVx1).eq.mpg%iFssep2.and.
+     &                  mpg%iFssep2.gt.0)) then
+                        mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
+                        mpg%ivdiv(i) = iVx1
+                      end if
                     end if
                   end if
-                end if
-              else if (iVx2.eq.mpg%strVx(l)) then
-                if((gm%psi_increasing .and.
+                else if (iVx2.eq.mpg%strVx(l)) then
+                  if((gm%psi_increasing .and.
      &              gm%vxFpsi(iVx2).le.gm%vxFpsi(iVx1)).or.
      &             (.not.gm%psi_increasing .and.
      &              gm%vxFpsi(iVx2).gt.gm%vxFpsi(iVx1))) then
-                  if (mpg%ifdiv(i).eq.0) then
-                    match_found = .true.
-                    mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
-                    mpg%ivdiv(i) = iVx2
-                  else ! Two strike points on the same target
-                       ! We label the active one only
-                    if (mpg%vxFs(iVx2).eq.mpg%iFssep.or.
-     &                 (mpg%vxFs(iVx2).eq.mpg%iFssep2.and.
-     &                  mpg%iFssep2.gt.0)) then
+                    if (mpg%ifdiv(i).eq.0) then
+                      match_found = .true.
                       mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
                       mpg%ivdiv(i) = iVx2
+                    else ! Two strike points on the same target
+                        ! We label the active one only
+                      if (mpg%vxFs(iVx2).eq.mpg%iFssep.or.
+     &                 (mpg%vxFs(iVx2).eq.mpg%iFssep2.and.
+     &                  mpg%iFssep2.gt.0)) then
+                        mpg%ifdiv(i) = j - mpg%divFcP(i,1) + 1
+                        mpg%ivdiv(i) = iVx2
+                      end if
                     end if
                   end if
                 end if
-              end if
+              end do
             end do
           end do
-        end do
-        call xertst (match_found .or. mpg%nXpt.eq.0,
+          call xertst (match_found .or. mpg%nXpt.eq.0,
      &   'No matching face found for strike point !')
-       end do
-      end if
-
-      else
-        write (*,*) 'Warning: temp_ignore_geo switch used'
-        write (*,*) 'This is a temporary solution to run unstructured',
-     & ' geometries that do not fit in existing case categorizations.'
-        write (*,*) 'This option limits post-processing options.'
-      endif
+        end do
+        end if
+      end if 
 
       if (allocated(mpg%fcs_wall)) then
       ! Count nFci
@@ -1480,6 +1599,11 @@
       logical :: closed, end_found, all_closed
 
       mpg%periodic_bc = 0
+      if (mpg%hasTopologicalData .and. mpg%topoID == 0) then 
+        write (*, *) 'b2us_geo, is_periodic: general topology, ' // 
+     &    'assuming not periodic'
+        return 
+      end if 
       if (mpg%nnreg(0).eq.2 .or. mpg%nnreg(0).eq.5) then
         mpg%periodic_bc = 1
       else if (mpg%nnreg(0).eq.1) then

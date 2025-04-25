@@ -452,6 +452,23 @@
         idum(2) = -1
       endif
       call cfwuin (nout(1), 3, idum, 'nx,ny,nncut')
+
+*   .. write topological data if available
+      if (newversion .ge. '03.002.001') then 
+         ! Topoflag
+         idum(0) = m%topoID
+         call cfwuin (nout(1), 1, idum, 'topoflag')
+
+         ! Number of X-points etc
+         idum(0) = m%nXpt 
+         idum(1) = m%nOpt 
+         idum(2) = m%nStr 
+         idum(3) = m%nTgc 
+         idum(4) = m%nDiv 
+         idum(5) = m%nfcDiv 
+         call cfwuin (nout(1), 6, idum, 'nX,nO,nS,nT,nDiv,nDivFc')
+      end if 
+
       call cfwuch (nout(1), 120, lblgm, 'label')
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
