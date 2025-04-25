@@ -7449,9 +7449,9 @@
 						15: Volumetric recombination (only for kinetic neutral cases) (similar to 'b2stbc_volrec_sol' but actuator applied to any boundary)
 						16: Pedestal electron density (similar to 'b2stbc_nepedm_sol' but actuator applied to any boundary)
 						17: Density of ions at the outer midplane separatrix
-						18: Total electron radiation losses over the entire domain
+						18: Integrated electron cooling over the entire domain
 						20: Neutral pressure of this sequence. It is necessary to set PFR_CVS and NPFR_CVS in b2.user.parameters to specify the control volumes used to compute the neutral pressure.
-						21: Total ion radiation losses over the entire domain
+						21: Total radiation losses over the entire domain
 						22: Average density of this species along the separatrix
 						23: Peak heat flux density along a specific boundary. The boundary index should be defined by FB_TYPE_IB. By default it equals 2, which usually maps to the outer target.
 						24: Peak electron temperature along a specific boundary. The boundary index should be defined by FB_TYPE_IB. By default it equals 2, which usually maps to the outer target.
