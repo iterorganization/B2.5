@@ -36,7 +36,6 @@
       use b2mod_recycle !nh Feb2020
      & ,only : fna_mol
 #ifdef B25_EIRENE
-      use b2mod_work
       use eirmod_parmmod
      ,   , only : natm, nmol, nion, nfl, nstra
       use eirmod_braeir

@@ -482,6 +482,7 @@ c 2002-09-11: logic revised
      .  ixfb, iyfb, ixfb1, iyfb1, b2tfhe_vis_par, b2tvspa_vis_par,
      .  xfrhie, xfrhiehz, xfrhie_no_drift, b2tfhe_inert, fac_aniso,
      .  sources_time_mod, sources_time_switch, fch_ion_neutral,
+     .  b2stbc_Qalfmin, b2us_prep_Qalfmin,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      4  rescale_ra(0:nsdecl-1), rescale_sa(0:nsdecl-1),
@@ -613,6 +614,7 @@ c 2002-09-11: logic revised
       data b2stbr_sna_corr/0.0_R8/, b2stbr_taumax/0.05_R8/
       data fch_ion_neutral/0.0_R8/
       data b2tfhe_vis_par/1.0_R8/, b2tvspa_vis_par/1.0_R8/
+      data b2stbc_Qalfmin/1.0e-3_R8/, b2us_prep_Qalfmin/1.0e-3_R8/
 *  ..namelists
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
@@ -1453,6 +1455,8 @@ c 2002-09-11: logic revised
       call ipgetr ('b2sikt_aniso', fac_aniso)
       call ipgetr ('b2tfhe_vis_par', b2tfhe_vis_par)
       call ipgetr ('b2tvspa_vis_par', b2tvspa_vis_par)
+      call ipgetr ('b2stbc_Qalfmin', b2stbc_Qalfmin)
+      call ipgetr ('b2us_prep_Qalfmin', b2us_prep_Qalfmin)
       call ipgeti ('b2ux7p_style', b2ux7p_style)
       if (b2ux7p_style.eq.3) b2ux7p_style = 2
       call ipgeti ('b2tqin_csigin_style', csigin_style)
@@ -1928,14 +1932,33 @@ c 2002-09-11: logic revised
             cnamip = 'b2tfhe_vis_par'
           else
             wait = .true.
-          endif
+          end if
         case ('b2tfhe_vis_par') ! superseding of b2tvspa_vis_par, with above
           wait = b2tvspa_vis_par.ne.1.0_R8 .and.
      &           b2tfhe_vis_par .eq.1.0_R8
           if (wait) then
             rswitch = b2tvspa_vis_par
+            wait = .false.
           else
             rswitch = b2tfhe_vis_par
+          end if
+        case ('b2stbc_Qalfmin') ! obsolete, superseded by b2us_prep_Qalfmin
+          todo = b2stbc_Qalfmin    .ne. 1.0e-3_R8 .and.
+     &           b2us_prep_Qalfmin .eq. 1.0e-3_R8
+          if (todo) then
+            rswitch = b2stbc_Qalfmin
+            cnamip = 'b2us_prep_Qalfmin'
+          else
+            wait = .true.
+          end if
+        case ('b2us_prep_Qalfmin') ! superseding b2stbc_Qalfmin, with above
+          wait = b2stbc_Qalfmin    .ne. 1.0e-3_R8 .and.
+     &           b2us_prep_Qalfmin .eq. 1.0e-3_R8
+          if (wait) then
+            rswitch = b2stbc_Qalfmin
+            wait = .false.
+          else
+            rswitch = b2us_prep_Qalfmin
           end if
         case ('b2tfnb_ycur')
           rswitch = ycur

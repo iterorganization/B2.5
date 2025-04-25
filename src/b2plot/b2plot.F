@@ -35,7 +35,6 @@ c 2002-09-11: logic revised
       use b2mod_neoclassical
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_ranges
       use b2us_plasma
       use b2us_data
@@ -874,8 +873,8 @@ c
      & switch, geo, mpg, ismain,
      & state%dv%fac_ExB, state%dv%lnlam, state%pl%na, state%pl%ua,
      & state%dv%ue, state%pl%te, state%pl%ti, state%pl%tn,
-     & state%pl%po, state%dv%ne, state%dv%ni, state%dv%nn,
-     & state%dv%fch,
+     & state%pl%po, state%dv%ne, state%dv%ne2, state%dv%ni,
+     & state%dv%nn, state%dv%fch,
      & state%co%cvsa, state%co%cvsahz_eff, state%co%f_luc_sg,
      & state%co%alfx_c, state%co%sigx_c,
      & state%rt%rza, state%rt%rz2, state_ext,
@@ -3022,6 +3021,9 @@ c
                 mach(iCv,0)=0.0_R8
               end if
               description='Volume region '//int2str(istack(iistack))  ! IGNORE
+              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >         write(*,*) 'No cells with region index '//
+     .                     int2str(istack(iistack))//' found!'
             else
               if(mpg%cvReg(iCv) .eq. -istack(iistack)) then
                 mach(iCv,0)=0.0_R8
@@ -3029,7 +3031,10 @@ c
                 mach(iCv,0)=1.0_R8
               end if
               description=  ! IGNORE
-     .    'All volume regions except region '//int2str(istack(iistack))
+     .    'All volume regions except region '//int2str(-istack(iistack))
+              if (minval(mach(1:mpg%nCv,0)).eq.1.0_R8)
+     >         write(*,*) 'No cells with region index '//
+     .                     int2str(-istack(iistack))//' found!'
             end if
           end do
           write(*,*) '"region" option with ',ipop(istack,iistack)
@@ -3052,6 +3057,9 @@ c
                 mach(mpg%fcCv(iFc,2),0)=1.0_R8
               end if
               description='Flux region '//int2str(istack(iistack))  ! IGNORE
+              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >         write(*,*) 'No faces with region index '//
+     .                     int2str(istack(iistack))//' found!'
             end if
           end do
           write(*,*) 'Flux "region" option with ',
@@ -3073,6 +3081,9 @@ c
                 mach(iCv,0)=1.0_R8
               end if
               description='Cell label '//int2str(istack(iistack))  ! IGNORE
+              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >         write(*,*) 'No cells with label '//
+     .                     int2str(istack(iistack))//' found!'
             end if
           end do
           write(*,*) 'Cell label option with ',
@@ -3096,6 +3107,9 @@ c
                 mach(mpg%fcCv(iFc,2),0)=1.0_R8
               end if
               description='Face label '//int2str(istack(iistack))  ! IGNORE
+              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >         write(*,*) 'No faces with label '//
+     .                     int2str(istack(iistack))//' found!'
             end if
           end do
           write(*,*) 'Face label option with ',
@@ -3123,6 +3137,9 @@ c
                 end do
               end if
               description='Flux tube '//int2str(istack(iistack))  ! IGNORE
+              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >         write(*,*) 'No flux tube with label '//
+     .                     int2str(istack(iistack))//' found!'
             end if
           end do
           write(*,*) 'Flux tube label option with ',
@@ -3967,8 +3984,13 @@ c
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           mach(:,0)=0.0_R8
-          mach(mpg%fcCv(istack(iistack),1),0)=1.0_R8
-          mach(mpg%fcCv(istack(iistack),2),0)=1.0_R8
+          if(1.le.istack(iistack).and.istack(iistack).le.mpg%nFc) then
+            mach(mpg%fcCv(istack(iistack),1),0)=1.0_R8
+            mach(mpg%fcCv(istack(iistack),2),0)=1.0_R8
+          else
+            write(*,*) 'Face index '//int2str(istack(iistack))//
+     .                ' outside range !'
+          end if
           description='iFc = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"ifeq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3978,10 +4000,15 @@ c
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           mach(:,0)=0.0_R8
-          do i=1,mpg%vxCvP(istack(iistack),2)
-            iCv=mpg%vxCv(mpg%vxCvP(istack(iistack),1)+i-1)
-            mach(iCv,0)=1.0_R8
-          end do
+          if(1.le.istack(iistack).and.istack(iistack).le.mpg%nVx) then
+            do i=1,mpg%vxCvP(istack(iistack),2)
+              iCv=mpg%vxCv(mpg%vxCvP(istack(iistack),1)+i-1)
+              mach(iCv,0)=1.0_R8
+            end do
+          else
+            write(*,*) 'Vertex index '//int2str(istack(iistack))//
+     .                ' outside range !'
+          end if
           description='iVx = '//int2str(istack(iistack))  ! IGNORE
           write(*,*) '"iveq" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -10703,7 +10730,7 @@ c
         case('trgsurf')  ! plot target plot
           stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
-          call trgsurf(mpg%nCv,1)
+          call trgsurf(1)
         case('kappa_ab') ! target heat conductivity computed as 1/(AT+B)
           do ibnd = 1, nbnd
             do i = 1, ndepth_nml

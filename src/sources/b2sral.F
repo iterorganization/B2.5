@@ -11,7 +11,6 @@
       use b2mod_numerics_namelist
 !      use b2mod_boundary_namelist
       use b2mod_time
-!      use b2mod_anomalous_transport
       use b2mod_b2cmpa
       use b2mod_b2cmfs
 !      use b2mod_external

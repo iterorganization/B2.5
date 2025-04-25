@@ -4,7 +4,6 @@
       program b2mnastra
       use b2mod_types
       use b2mod_version
-      use b2mod_work
       use b2mod_ma28
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
@@ -235,7 +234,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 *   ..call principal driver routine
       call alloc_b2mod_ppout (DEF_NXD, DEF_NYD, ns)
       call alloc_b2mod_recycle (mpg%nFc, ns)   !nh 30.03.21
-      call alloc_b2mod_astra_to_b2(mpg, DEF_NXD, DEF_NYD)       !srv 28.07.11 {
+      call alloc_b2mod_astra_to_b2(mpg, DEF_NYD)                !srv 28.07.11 {
       call alloc_b2mod_b2_to_astra(mpg, DEF_NYD, ns)
 !WG_TODO      call read_astra_to_b2(ny, ninp(6))
       open(70,file='check_astra_to_b2.prt')

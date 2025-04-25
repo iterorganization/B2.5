@@ -4,9 +4,7 @@
       subroutine b2wscp (nspc, nx, ny, ns)
       use b2mod_types
       use b2mod_constants
-      use b2mod_b2cmgs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_subsys
       implicit none
@@ -43,16 +41,8 @@
 *
 *     (parameters in common:)
 *
-*     /b2cmgs/ - input.
-*     /b2cmgs/ specifies the singular regions in the geometry.
-*     See the calling routine for description.
-*
 *     /b2cmpa/ - input.
 *     /b2cmpa/ specifies basic physics parameters.
-*     See the calling routine for description.
-*
-*     /b2cmpb/ - input.
-*     /b2cmpb/ specifies physics parameters for boundary conditions.
 *     See the calling routine for description.
 *
 *     /b2cmpt/ - input.

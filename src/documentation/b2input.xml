@@ -605,6 +605,23 @@
 					Switch for conversion with b2us; can be specified in the b2mn.dat file read by b2us during case conversion to unstructured format. When set to 1, b2us will automatically try to reconstruct outer and inner midplane from the geometry (magnetic field and cell coordinates), and write the corresponding coordinates in b2.user.parameters. When set to 0, the IMP and OMP definition will be based on the values of b2mwti_jxi, b2mwti_jxa, b2mwti_jsep.
 				</description>
 			</switch>
+			<switch>
+				<name>b2us_prep_Qalfmin</name>
+				<default>1e-3</default>
+				<type>real</type>
+				<description>
+					If abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin, the beta angle is assigned to zero during writing of b2fgmtry.
+					If abs(cos(alpha)*bx).lt.b2us_prep_Qalfmin, boundary faces are treated like field-aligned faces in BCMOM=13, BCCON=14, BCENE=15 (style=1), BCENI=15 (style=0) and BCPOT=11. Leakage coefficients (if they are needed) are set equal to b2us_prep_Qalfmax.
+				</description>
+			</switch>
+			<switch>
+				<name>b2us_prep_Qalfmax</name>
+				<default>1e-3</default>
+				<type>real</type>
+				<description>
+					If abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin .and. abs(cos(alpha)*bx).lt.b2us_prep_Qalfmax, fcPbs is set equal to b2us_prep_Qalfmax*fcS for boundary faces during writing of b2fgmtry.
+				</description>
+			</switch>
 		</category>
 		<category name="Run">
 			<switchgroup>
@@ -859,7 +876,7 @@
 			<switchgroup>
 				<name>b2news_facdrift*</name>
 				<description>
-					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. Note that facdrift_dec and facdrift profile options have not been converted to WG! If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
+					Ramping parameters for facdrift, which multiplies the diamagnetic terms as well as the ion inertia current. The code is started on the first time step with facdrift=facdrift_start. If facdrift_target.ne.facdrift_start, then, on each time step, facdrift is multiplied by facdrift_inc. If the code does not converge on the timestep, facdrift is decreased by facdrift_dec. A facdrift profile is also possible, see Numerics section for details.
 					The ion-neutral friction current requires either facdrift or fac_ExB to be turned on as well.
 				</description>
 				<switch>
@@ -886,7 +903,7 @@
 			<switchgroup>
 				<name>b2news_facExB_*</name>
 				<description>
-					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift. Can be superseded by b2news_ExB to set a constant value throughout the run. Note that facExB_dec and facExB profile options have not been converted to WG!
+					Ramping parameters for facExB, which multiplies the ExB terms. Same treatment as above for facdrift. Can be superseded by b2news_ExB to set a constant value throughout the run.
 				</description>
 				<switch>
 					<name>b2news_facExB_dec</name>
@@ -912,7 +929,7 @@
 			<switchgroup>
 				<name>b2news_facvis_*</name>
 				<description>
-					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift. Can be superseded by b2news_vis to set a constant value throughout the run. Note that facvis_dec and facvis profile options have not been converted to WG!
+					Ramping parameters for facvis, which multiplies the drift viscosity terms. Same treatment as above for facdrift. Can be superseded by b2news_vis to set a constant value throughout the run.
 				</description>
 				<switch>
 					<name>b2news_facvis_dec</name>
@@ -1205,7 +1222,7 @@
 				<type>real</type>
 				<description>
 					Real parameter which multiplies ExB flows. If b2news_ExB.eq.0 and b2news_facExB_start.eq.0 then ExB flows are switched off. If b2news_ExB is nonzero, then ExB flows are multiplied by that constant throughout the run.
-					See also Run section on switches b2news_facExB_... for more details.
+					See also Run section on switches b2news_facExB_... for more details. A spatial fac_ExB profile is also possible, see Numerics section for details.
 				</description>
 			</switch>
 			<switch>
@@ -1214,7 +1231,7 @@
 				<type>real</type>
 				<description>
 					Real parameter which multiplies the viscous drift flows. If b2news_vis.eq.0 and b2news_facvis_start.eq.0 then the viscous drift flows are switched off. If b2news_vis is nonzero, then the viscous drift flows are multiplied by that constant throughout the run.
-					See also Run section on switches b2news_facvis_... for more details.
+					See also Run section on switches b2news_facvis_... for more details. A spatial fac_vis profile is also possible, see Numerics section for details.
 				</description>
 			</switch>
 			<switch>
@@ -3198,14 +3215,6 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2stbc_Qalfmin</name>
-				<default>1.0e-3</default>
-				<type>real</type>
-				<description>
-					When the magnetic field lines are almost tangential to a wall structure, the sheath boundary conditions from BCMOM = 13 are replaced by leakage conditions. This happens when abs(fcQalf(iFc,0)*cvBb(iCv1,0)/cvBb(iCv1,3)).lt.Qalfmin.
-				</description>
-			</switch>
-			<switch>
 				<name>b2stbc_delpo</name>
 				<default>3.1</default>
 				<type>real</type>
@@ -3444,7 +3453,15 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Another option for movie output. Gives the real-time interval between movie frames. If non-zero, must be at least as large as the simulation timestep.
+					If non-zero, the movie file b2movies.nc is generated, containing several 2d quantities. Gives the real-time interval between writes of movie frames in b2movies.nc. If non-zero, must be at least as large as the simulation timestep.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_fields</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_fields.ge.1 then only the main state variables (na, ne, Te, Ti, etc.) are written with each write to b2movies.nc. If cdfmovie_fields.ge.2 then additional quantities (e.g. fluxes, particle and energy sources) are also included.
 				</description>
 			</switch>
 			<switch>
@@ -4187,7 +4204,55 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					If b2nppo_rte_min.gt.0.0, the electron to ion temperature ratio is forced to not be lower than rte_min (so, Te/Ti >= rte_min).
+					If b2upht_rte_min.gt.0.0, the electron to ion temperature ratio is forced to not be lower than rte_min (i.e. Te/Ti >= rte_min).
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shivis</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shivis.eq.0, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shi</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shi.eq.0, then all b2sihs_shi* and b2sihs_shivis keys will be assigned to zero.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shidu</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shidu.eq.0, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shidd</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shidd.eq.0, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shedu</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shedu.eq.0, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_shedd</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sihs_shedd.eq.0, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
 				</description>
 			</switch>
 			<switch>
@@ -7595,7 +7660,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Additional divertor ion heat source (in Watts/m3)
+					Additional divertor ion heat source (in Watts/m<sup>3</sup>)
 				</description>
 			</switch>
 			<switch>

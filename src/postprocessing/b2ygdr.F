@@ -4,7 +4,6 @@
       subroutine b2ygdr (ninp, nout, nx, ny)
       use b2mod_types
       use b2mod_geo
-      use b2mod_b2cmgs
       use b2mod_b2cmwg
       use b2mod_lbfill
       use b2mod_subsys
@@ -90,29 +89,6 @@
 *
 *     The following common blocks have their outermost declaration in
 *     this routine; they need not be preserved between calls.
-*
-*     /b2cmgs/ specifies the singular regions in the geometry.
-*      nlrmx - integer constant.
-*     nlrmx is an upper bound for nlreg, and is used in dimension
-*     specifications.
-*      nlreg - integer.
-*     nlreg specifies the number of singular regions. It will hold that
-*     0.le.nlreg.le.nlrmx.
-*      nlxlo, nlxhi, nlylo, nlyhi - (0:nlrmx-1) integer array.
-*     For 0.le.i.lt.nlreg, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i) are
-*     the bounds of the i-th singular region. Mesh locations (ix,iy)
-*     in (nlxlo(i):nlxhi(i),nlylo(i):nlyhi(i)) make up the region, which
-*     will be included in (-1:nx,-1:ny).
-*     For nlreg.le.i.lt.nlrmx, nlxlo(i), nlxhi(i), nlylo(i) and nlyhi(i)
-*     are unspecified.
-*      nlloc - (0:nlrmx-1) integer array.
-*     For 0.le.i.lt.4, nlloc(i) specifies the class of quantities for
-*     which the i-th region is special, as follows:
-*       nlloc(i) = 0: cell centers, indices (-1:nx,-1:ny).
-*       nlloc(i) = 1: cell x-faces, indices (0:nx,-1:ny).
-*       nlloc(i) = 2: cell y-faces, indices (-1:nx,0:ny).
-*       nlloc(i) = 3: cell corners, indices (0:nx,0:ny).
-*     For nlreg.le.i.lt.nlrmx, nlloc(i) is unspecified.
 *
 *     /b2cmwg/ contains some parameters to control graphical output.
 *      nmbpmx - integer constant.

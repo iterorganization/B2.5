@@ -16,10 +16,7 @@
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
       use b2mod_elements
-!      use b2mod_sign_of_magnetic_field
-      use b2mod_b2cmgs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
 #ifdef B25_EIRENE
