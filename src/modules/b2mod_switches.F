@@ -342,7 +342,6 @@ c phm switches
       real (kind=R8) :: b2treq_phm0
       real (kind=R8) :: b2stbc_phm0
       real (kind=R8) :: b2stbc_phm1
-      real (kind=R8) :: b2stbc_phm2
       integer :: b2sihs_shi
       integer :: b2sihs_shidu
       integer :: b2sihs_shidd
@@ -979,7 +978,6 @@ c Zhdanov closure switches
       s % b2treq_phm0 = 1.0_R8
       s % b2stbc_phm0 = 1.0_R8
       s % b2stbc_phm1 = 1.0_R8
-      s % b2stbc_phm2 = 1.0_R8
       s % b2sihs_shidu = 1
       s % b2sihs_shidd = 1
       s % b2sihs_shedu = 1

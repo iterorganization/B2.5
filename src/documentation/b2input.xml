@@ -8103,15 +8103,15 @@
 						14: total particle content of that species on the entire domain (similar to 'b2stbc_ndes' and 'b2stbc_ndes_sol' but actuator applied to any boundary)
 						15: Volumetric recombination (only for kinetic neutral cases) (similar to 'b2stbc_volrec_sol' but actuator applied to any boundary)
 						16: Pedestal electron density (similar to 'b2stbc_nepedm_sol' but actuator applied to any boundary)
-            17: Density of ions at outer midplane
-            18: Total electron radiation losses on the entire domain
-            20: Neutral pressure of this sequence. It is necessary to set PFR_CVS and NPFR_CVS in b2.user.parameters.
-            21: Total ion radiation losses on the entire domain
-            22: Average density of this species at the separatrix
-            23: Peak heat flux density at specific boundary. Boundary index should be defined by FB_TYPE_IB. By default it equals 2.
-            24: Peak electron temperature at specific boundary. Boundary index should be defined by FB_TYPE_IB. By default it equals 2.
-            25: Peak electron density at specific boundary. Boundary index should be defined by FB_TYPE_IB. By default it equals 2.
-            26: Peak saturation current at specific boundary. Boundary index should be defined by FB_TYPE_IB. By default it equals 2.
+						17: Density of ions at the outer midplane separatrix
+						18: Integrated electron cooling over the entire domain
+						20: Neutral pressure of this sequence. It is necessary to set PFR_CVS and NPFR_CVS in b2.user.parameters to specify the control volumes used to compute the neutral pressure.
+						21: Total radiation losses over the entire domain
+						22: Average density of this species along the separatrix
+						23: Peak heat flux density along a specific boundary. The boundary index should be defined by FB_TYPE_IB. By default it equals 2, which usually maps to the outer target.
+						24: Peak electron temperature along a specific boundary. The boundary index should be defined by FB_TYPE_IB. By default it equals 2, which usually maps to the outer target.
+						25: Peak electron density along a specific boundary. The boundary index should be defined by FB_TYPE_IB. By default it equals 2, which usually maps to the outer target.
+						26: Peak saturation current along a specific boundary. The boundary index should be defined by FB_TYPE_IB. By default it equals 2, which usually maps to the outer target.
 				</description>
 			</switch>
 			<switch>
