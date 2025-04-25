@@ -17,8 +17,14 @@
       use b2mod_user_namelist
      & , only : nomp, omp, icsepomp, nimp, imp, icsepimp
 #ifdef B25_EIRENE
+#ifndef SOLPS4_3
       use eirmod_wneutrals
      & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm
+#else
+      use eirdiag
+#endif
+#else
+      use b2mod_eirdiag
 #endif
       use b2mod_dimensions
       implicit none
@@ -26,7 +32,7 @@
 
 *   ..variables
       real (kind=R8), save ::
-     * cum_volrec, dt_prev, ddtim
+     * cum_volrec, dt_prev, ddtim, she_rad_tot, she_eir_tot
       logical, save :: feedback_namelist_used
       logical, save :: feedback_read, control_read
       logical, save :: feedback_allocated = .false.
@@ -46,7 +52,8 @@
      & fb_const(DEF_NATM) = 0.0_R8, fb_puff_min(DEF_NATM) = 0.0_R8,
      & fb_puff_max(DEF_NATM) = 0.0_R8, fb_overshoot(DEF_NATM) = 0.0_R8,
      & fb_current(DEF_NATM) = 0.0_R8, fb_prev(DEF_NATM) = 0.0_R8,
-     & fb_rescale(DEF_NATM) = 1.0_R8
+     & fb_rescale(DEF_NATM) = 1.0_R8,
+     & fb_current_prev(DEF_NATM) = 0.0_R8
 
       integer, save :: fb_reg_par(DEF_NATM,2) = 0, !contains face label to define list of faces for feedback
      & fb_species(DEF_NATM) = 0, fb_ib(DEF_NATM) = -1,
@@ -779,7 +786,7 @@ cxpb size is changed in b2mod_dimensions
           if ( (fb_type(ifb).eq.fb_type(ifbb)).and. .not.
      &         ((fb_type(ifb).eq.1).or.(fb_type(ifb).eq.4).or.
      &          (fb_type(ifb).eq.5).or.(fb_type(ifb).eq.7).or.
-     &          (fb_type(ifb).eq.8)) )
+     &          (fb_type(ifb).eq.8).or.(fb_type(ifb).eq.17)) )
      &          call xerrab('init_feedback:'//
      &      ' set of feedbacks cannot be applied multiple times')
         enddo
@@ -913,7 +920,7 @@ cxpb size is changed in b2mod_dimensions
       end subroutine init_feedback
 
       subroutine compute_feedback(nCv, nFc, ns, ismain,
-     &  switch, geo, mpg, pl, dv, rt, psnc, psnl, main_call)
+     &  switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, main_call)
       implicit none
 *   ..input arguments (unchanged on exit)
       integer, intent (in) :: nCv, nFc, ns, ismain
@@ -923,6 +930,7 @@ cxpb size is changed in b2mod_dimensions
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
+      type (B2SourceWork), intent (in) :: srw
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       logical main_call
 *   ..local variables
@@ -960,6 +968,8 @@ cxpb size is changed in b2mod_dimensions
               fb_prev(ifb) = saved_fb_actuator(ifb)
             end if
 
+          if (abs(fb_current(ifb)) > 1.0e-7_R8)
+     >        fb_current_prev(ifb) = fb_current(ifb)
 ! phase 1:
             select case(fb_type(ifb))
 
@@ -1463,6 +1473,76 @@ cxpb size is changed in b2mod_dimensions
                   is_end=is
                 endif
               enddo
+
+            case (17) !  density of ions at outer midplane
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'density of ions at outer midplane for sequence ',
+     &           b2espcr(fb_species(ifb))
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  fb_current(ifb) = fb_current(ifb) + 0.5_R8 *
+     &              (pl%na(omp(icsepomp-1),is)+pl%na(omp(icsepomp),is))
+                  is_end=is
+                endif
+              enddo
+
+            case (18) !  integrated electron cooling
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'integrated electron cooling'
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  is_end=is
+                endif
+              enddo
+              fb_current(ifb) = she_rad_tot + she_eir_tot
+              if (fb_current(ifb).eq.0.0_R8)
+     &          fb_current(ifb) = fb_target(ifb)
+
+            case (21) !  total radiation losses
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'total radiation losses'
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  is_end=is
+                endif
+              enddo
+              fb_current(ifb) = sum(srw%rqbrm)+sum(srw%rqrad)
+#ifndef SOLPS4_3
+              if (switch%use_eirene.ne.0)
+     >         fb_current(ifb) = fb_current(ifb) -
+     &          (sum(emolrad(:,:,0))+sum(eneutrad(:,:,0))
+     &          +sum(eionrad(:,:,0)))
+#endif
 
             case default
                write(*,*) 'fb_type not coded ',

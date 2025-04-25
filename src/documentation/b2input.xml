@@ -7194,6 +7194,9 @@
 						14: total particle content of that species on the entire domain (similar to 'b2stbc_ndes' and 'b2stbc_ndes_sol' but actuator applied to any boundary)
 						15: Volumetric recombination (only for kinetic neutral cases) (similar to 'b2stbc_volrec_sol' but actuator applied to any boundary)
 						16: Pedestal electron density (similar to 'b2stbc_nepedm_sol' but actuator applied to any boundary)
+						17: Density of ions at the outer midplane separatrix
+						18: Integrated electron cooling over the entire domain
+						21: Total radiation losses over the entire domain
 				</description>
 			</switch>
 			<switch>

@@ -4547,6 +4547,16 @@ c     assumes that bb is OK for 1d cases
           mach(1:mpg%nCi,0)=0.0_R8
           mach(mpg%nCi+1:mpg%nCv,0)=1.0_R8
           call copy(mach,1.0_R8,nz,textbl)
+        case ('bdcl')
+          description='Boundary cells'
+          nz=1
+          mach(1:mpg%nCv,0)=0.0_R8
+          do i=mpg%nCi+1,mpg%nCv
+            iFc=mpg%cvFc(mpg%cvFcP(i,1))
+            iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            mach(iCv,0)=1.0_R8
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
         case ('iimp')
           description='Inner midplane cells'
           nz=1
