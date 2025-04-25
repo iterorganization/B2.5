@@ -280,7 +280,6 @@ c phm switches
       real (kind=R8) :: b2treq_phm0
       real (kind=R8) :: b2stbc_phm0
       real (kind=R8) :: b2stbc_phm1
-      real (kind=R8) :: b2stbc_phm2
       integer :: b2sihs_shi
       integer :: b2sihs_shidu
       integer :: b2sihs_shidd
@@ -843,7 +842,6 @@ c Advanced fluid neutral models
       s % b2treq_phm0 = 1.0_R8
       s % b2stbc_phm0 = 1.0_R8
       s % b2stbc_phm1 = 1.0_R8
-      s % b2stbc_phm2 = 1.0_R8
       s % b2sihs_shidu = 1
       s % b2sihs_shidd = 1
       s % b2sihs_shedu = 1
@@ -1462,7 +1460,6 @@ c phm switches
       call ipgetr ('b2treq_phm0', s % b2treq_phm0)
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
-      call ipgetr ('b2stbc_phm2', s % b2stbc_phm2)
       call ipgeti ('b2sihs_shi', s % b2sihs_shi)
       if (s % b2sihs_shi .eq. 0) then
         s % b2sihs_shidu = 0

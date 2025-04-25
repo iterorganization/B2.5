@@ -76,7 +76,7 @@
       integer, save :: coreregno, coreregn2, solregno,
      &                 pfrregno1, pfrregno2,
      &                 isfeedback, nesepm_istra, iyped,
-     &                  fb_style_calc_puff = 0
+     &                 fb_style_calc_puff = 0
       real (kind=R8), save ::
      &  fnaycore, fnaycore_alpha,
      1  fheycore, fheycore_alpha,
@@ -799,8 +799,7 @@ cxpb size is changed in b2mod_dimensions
           if ( (fb_type(ifb).eq.fb_type(ifbb)).and. .not.
      &         ((fb_type(ifb).eq.1).or.(fb_type(ifb).eq.4).or.
      &          (fb_type(ifb).eq.5).or.(fb_type(ifb).eq.7).or.
-     &          (fb_type(ifb).eq.8).or.(fb_type(ifb).eq.17).or.
-     &          (fb_type(ifb).eq.19)) )
+     &          (fb_type(ifb).eq.8).or.(fb_type(ifb).eq.17)) )
      &          call xerrab('init_feedback:'//
      &      ' set of feedbacks cannot be applied multiple times')
         enddo
@@ -958,7 +957,7 @@ cxpb size is changed in b2mod_dimensions
       integer :: ib
 #endif
       integer :: find_loc
-      real(kind=r8) :: sna_pump, sna_puff, sna_core
+      real (kind=R8) :: sna_pump, sna_puff, sna_core
       integer, save :: ncall = 0
       real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s,
      & t0, t1, t2
@@ -1520,12 +1519,12 @@ cxpb size is changed in b2mod_dimensions
                 endif
               enddo
 
-            case (18) !  total electron radiation losses
+            case (18) !  integrated electron cooling
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
      &           'compute_feedback_type: using ',
-     &           'total electron radiation losses'
+     &           'integrated electron cooling'
               endif
 
               fb_current(ifb) = 0.0_R8
@@ -1585,12 +1584,12 @@ cxpb size is changed in b2mod_dimensions
               fb_current(ifb) = fb_current(ifb)/
      &         sum(geo%cvVol(pfr_cvs(1:npfr_cvs)))
 
-            case (21) !  ion radiation losses
+            case (21) !  total radiation losses
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
      &           'compute_feedback_type: using ',
-     &           'total ion radiation losses'
+     &           'total radiation losses'
               endif
 
               fb_current(ifb) = 0.0_R8
