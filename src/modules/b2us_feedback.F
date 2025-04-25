@@ -21,7 +21,7 @@
       use eirmod_wneutrals
      & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm
 #else
-      use eirdiag
+      use eirdiag          ! IGNORE
 #endif
 #else
       use b2mod_eirdiag
