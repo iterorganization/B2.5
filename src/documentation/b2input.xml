@@ -7197,6 +7197,7 @@
 						17: Density of ions at the outer midplane separatrix
 						18: Integrated electron cooling over the entire domain
 						21: Total radiation losses over the entire domain
+						22: Average density of this species along the separatrix
 				</description>
 			</switch>
 			<switch>

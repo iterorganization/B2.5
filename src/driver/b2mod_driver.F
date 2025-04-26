@@ -2030,7 +2030,7 @@ cxpb initialize the data necessary for boundary conditions
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
       if(switch%b2stbc_feedback.eq.1.or.lfeedback) then
-        call init_feedback(nFc, ns, switch, mpg)
+        call init_feedback(nFc, ns, switch, mpg, geo)
       endif
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
       nlimi = 0
