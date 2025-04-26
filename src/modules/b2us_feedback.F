@@ -1,6 +1,7 @@
       module b2us_feedback
       use b2mod_types
       use b2mod_indirect
+      use b2mod_geometry
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -39,6 +40,7 @@
       real (kind=R8) :: charge_frac(DEF_NSD)
 
       integer, save :: icped = 0, b2sral_style = 2, ncallfeedback = 0
+      integer, save :: geometryType
 
       integer, allocatable, save :: fbRegP(:,:) ! (nFb,2) pointing for each feedback to the first index in the fbReg list, and its number of CVs or faces
       integer, allocatable, save :: fbReg(:)  !         listing for each feedback the cells or faces
@@ -228,10 +230,11 @@ cxpb size is changed in b2mod_dimensions
       control_read = .false.
       end subroutine write_b2us_feedback_control
 
-      subroutine init_feedback(nFc, ns, switch, mpg)
+      subroutine init_feedback(nFc, ns, switch, mpg, geo)
       implicit none
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
+      type (geometry), intent (in) :: geo
       integer :: nFc, ns
       integer ifb, ifbb, istrai, icount
       integer ifbreg, is, ib, is0, is00, is_start, is_end, iatm
@@ -857,6 +860,7 @@ cxpb size is changed in b2mod_dimensions
       endif
 
 !   ..Calculate and fill list of CVs and faces needed for each type of feedback
+      geometryType = geometryId ( mpg, geo, 2 )
       ifbreg = 1
       if  (maxval(fb_type(1:nFb)).gt.0) then
         do ifb = 1, nFb
@@ -935,7 +939,7 @@ cxpb size is changed in b2mod_dimensions
       logical main_call
 *   ..local variables
       integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
-     & is_end, iss, i, j, k, l
+     & is_end, iss, i, j, k, l, ic, iFs
       integer, save :: ncall = 0
       real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s
 
@@ -1543,6 +1547,55 @@ cxpb size is changed in b2mod_dimensions
      &          (sum(emolrad(:,:,0))+sum(eneutrad(:,:,0))
      &          +sum(eionrad(:,:,0)))
 #endif
+
+            case (22) ! average density of this species at the separatrix
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &            'compute_feedback_type: using ',
+     &            'average separatrix density for sequence ',
+     &            b2espcr(fb_species(ifb))
+              endif
+              fb_current(ifb) = 0.0_R8
+              sum_e = 0.0_R8
+              is_start = -1
+              is_end = -1
+              do is = 0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
+! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
+!     belonging to each face of the flux surface
+                  do ic = 1, 2
+                    if (ic.eq.1) then
+                      iFs = mpg%iFssep
+                    elseif (ic.eq.2.and.
+     &               geometryType.eq.GEOMETRY_CDN) then
+                      iFs = mpg%iFssep2
+                    else
+                      cycle
+                    end if
+                    do k = mpg%fsFcP(iFs,1),
+     &                     mpg%fsFcP(iFs,1)+mpg%fsFcP(iFs,2)-1
+                      iFc = mpg%fsFc(k)
+                      ic1 = mpg%fcCv(iFc,1)
+                      ic2 = mpg%fcCv(iFc,2)
+                      if(mpg%cvOnClosedSurface(ic1) .or.
+     &                   mpg%cvOnClosedSurface(ic2)) then
+                        fb_current(ifb) = fb_current(ifb) +
+     &                    (pl%na(ic1,is)*geo%fcHc(iFc,2) + pl%na(ic2,is)
+     &                    *geo%fcHc(iFc,1)) /
+     &                    sum(geo%fcHc(iFc,:))*geo%fcS(iFc)
+                        if (is.eq.is_start+1) then
+                          sum_e = sum_e + geo%fcS(iFc)
+                        end if
+                      end if
+                    enddo
+                  enddo
+                  is_end = is
+                endif
+              enddo
+              fb_current(ifb) = fb_current(ifb)/sum_e
 
             case default
                write(*,*) 'fb_type not coded ',
