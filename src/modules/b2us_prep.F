@@ -170,7 +170,7 @@
        do ix = -1, nx
         if (.not.isGhostCell(cflags(ix, iy, CELLFLAG_TYPE))) cycle
         ict = 0
-! Count inexisting neighbors
+! Count inexistent neighbors
         if (rightix(ix,iy)==nx+1) ict = ict+1
         if (leftix(ix,iy)==-2  )  ict = ict+1
         if (topiy(ix,iy)==ny+1)   ict = ict+1
@@ -2195,7 +2195,8 @@
       endif
 
 !     Create b2.user.parameters file with definition of outer/inner midplanes
-      call conv_midplane(nx,ny)
+!     and list of neutral pressure cells
+      call conv_midplane(nx,ny,m)
 
       ! Identify corner coordinates/vertices
       icount = 0
@@ -5010,13 +5011,18 @@
 
 ******************************************************************************
 
-      subroutine conv_midplane(nx,ny)                                   !srv 16.11.22 {
-        integer :: nx, ny
-        real (kind=R8) :: ro(2), zo(2), rzomp(2,2)
-        real (kind=R8) :: ri(2), zi(2), rzimp(2,2)
-        integer :: ix, iy, iyi, iyo, iymin, iymax, iout,
-     .             n_omp, n_imp, n_sep
+      subroutine conv_midplane(nx,ny,m)                                 !srv 16.11.22 {
+        use b2mod_user_namelist
+        implicit none
+        integer, intent(in) :: nx, ny
+        type (mapping), intent(in) :: m
+        real (kind=R8) :: ro(2), zo(2)
+        real (kind=R8) :: ri(2), zi(2)
+        integer :: ix, iy, ix1, ix2, iyi, iyo, iymin, iymax, iout,
+     .             n_omp, n_imp, n_sep, nxtl, nxtr
         integer :: autodet = 1
+        character*24 hlp_frm, filename
+        logical file_ok
 #ifdef LEGACYCOMP
         integer newunit
         external newunit
@@ -5192,6 +5198,96 @@
           call xerrab('conv_midplane: unexpected coordinates for rzimp')
         endif
 
+c    ..convert neutral pressure cell list if present
+c***  lpfrs_pmp - location of the pump: 0 - no pump at all,
+c***              1 - in lower PFR, 2 - on the outer wall,
+c***              3 - in upper PFR, 4 - on the inner wall
+        npfr_cvs = 0
+        if (isClassicalGrid(cflags)) then
+          call get_nxt(nx, nxtl, nxtr)
+#ifdef ALLOCATE_AND_NAMELIST
+          allocate(lhetrgts(nlim),lpfrgrp(nlim),lntrgrp(nlim))
+          allocate(l_h_mol(nmol,3))
+#endif
+          filename='b2.user.parameters'
+          lpfrs_pmp=0
+          lpfrb_i=0
+          lpfrb_o=0
+          lpfrt_i=0
+          lpfrt_o=0
+          call find_file(filename,file_ok)
+          if(file_ok) then
+            open(99,file=filename)
+            write(*,*) 'Reading namelist user from ',trim(filename)
+            read(99,user)
+            close(99)
+            write(*,*) 'Read namelist user from ',trim(filename)
+          else
+            write(*,*) 'No ',trim(filename)
+          endif
+          if (lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) then
+            iy = ny-1
+          else
+            iy = 0
+          end if
+          if (lpfrb_i.ne.0.or.lpfrt_i.ne.0.or.lpfrs_pmp.gt.0) then
+            ix1 = lpfrb_i !{
+            if (ix1 .lt. 0) then !{
+              if (lpfrs_pmp .eq. 1) then !{
+                ix1 = leftcut(1) - 1 + ix1
+              elseif (lpfrs_pmp .eq. 2) then !}{
+                ix1 = nx - 1 + ix1
+              elseif (lpfrs_pmp .eq.3 .or. lpfrs_pmp .eq. 4) then !}{
+                ix1 = nxtl - 1 + ix1
+              end if !}
+            end if !}
+            ix2 = lpfrt_i
+            if (ix2 .lt. 0) then !{
+              if (lpfrs_pmp .eq. 1) then !{
+                ix2 = leftcut(1) - 1 + ix2
+              elseif (lpfrs_pmp .eq. 2) then !}{
+                ix2 = nx - 1 + ix2
+              elseif (lpfrs_pmp .eq. 3) then !}{
+                ix2 = leftcut(2) - ix2
+              elseif (lpfrs_pmp.eq.4) then !}{
+                ix2 = nxtl - 1 + ix2
+              end if !}
+            end if !}
+            do ix = ix1, ix2
+              pfr_cvs(npfr_cvs+ix-ix1+1) = m%imapCv(ix,iy)
+            end do
+            npfr_cvs = npfr_cvs + (ix2-ix1+1)
+          end if
+          if (lpfrb_o.ne.0.or.lpfrt_o.ne.0.or.lpfrs_pmp.gt.0) then
+            ix1 = lpfrt_o
+            if (ix1 .lt. 0) then !{
+              if (lpfrs_pmp .eq. 1) then !{
+                ix1 = rightcut(1) - ix1
+              elseif (lpfrs_pmp .eq. 2) then !}{
+                ix1 = nx - 1 + ix1
+              elseif (lpfrs_pmp .eq. 3) then !}{
+                ix1 = rightcut(2) - 1 + ix1
+              elseif (lpfrs_pmp.eq.4) then !}{
+                ix1 = nxtr - 1 - ix1
+              end if !}
+            end if !}
+            ix2 = lpfrb_o
+            if (ix2 .lt. 0) then !{
+              if (lpfrs_pmp .eq. 1 .or. lpfrs_pmp .eq. 2) then !{
+                ix2 = nx - 1 + ix2
+              else if (lpfrs_pmp .eq. 3) then !}{
+                ix2 = nxtr + 1 - ix2
+              else if (lpfrs_pmp .eq. 4) then !}{
+                ix2 = nxtl - 1 + ix2
+              end if !}
+            end if !}
+            do ix = ix1, ix2
+              pfr_cvs(npfr_cvs+ix-ix1+1) = m%imapCv(ix,iy)
+            end do
+            npfr_cvs = npfr_cvs + (ix2-ix1+1)
+          end if
+        end if
+
 #ifndef LEGACYCOMP
         open(newunit=iout,file='b2us.midplane.parameters')
 #else
@@ -5219,6 +5315,11 @@
         write(iout,'(a,f8.2,a)') 'rzimp(2,1) = ',rzimp(2,1),','
         write(iout,'(a,f8.2,a)') 'rzimp(1,2) = ',rzimp(1,2),','
         write(iout,'(a,f8.2,a)') 'rzimp(2,2) = ',rzimp(2,2),','
+        if (npfr_cvs.gt.0) then
+          write(iout,'(a,i3,a)') 'npfr_cvs=',npfr_cvs,','
+          write(hlp_frm,'(a,i3,a)') '(a,',npfr_cvs,'(1x,i5,'',''))'
+          write(iout,hlp_frm) 'pfr_cvs=',(pfr_cvs(ix),ix=1,npfr_cvs)
+        end if
         write(iout,"(a)") '/'
         close (iout)
 

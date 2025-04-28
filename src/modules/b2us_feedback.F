@@ -17,13 +17,13 @@
       use b2us_plasma
       use b2mod_user_namelist
      & , only : nomp, omp, icsepomp, nimp, imp, icsepimp,
-     &        npfr_cvs, pfr_cvs
+     &          npfr_cvs, pfr_cvs
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
-      use eirmod_wneutrals ! IGNORE
+      use eirmod_wneutrals
      & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm,
      &          ewldrp_res
-      use eirmod_eirbra    ! IGNORE
+      use eirmod_eirbra
      & , only : fnmti_B2
 #else
       use eirdiag          ! IGNORE
@@ -1576,7 +1576,11 @@ cxpb size is changed in b2mod_dimensions
                     end if
                   end do
                 else
-                  t0 = pl%na(iCv,fb_species(ifb))*pl%ti(iCv)
+                  if (nint(zn(fb_species(ifb))).eq.1) then
+                    t0 = pl%na(iCv,fb_species(ifb))*pl%tn(iCv)
+                  else
+                    t0 = pl%na(iCv,fb_species(ifb))*pl%ti(iCv)
+                  end if
                 end if
                 fb_current(ifb) = fb_current(ifb) + t0*geo%cvVol(iCv)
               end do

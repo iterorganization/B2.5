@@ -219,10 +219,9 @@
          srw%b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
       enddo
       if (switch%b2sihs_shedu.eq.0) then
-        do k=1,mpg%nCg
-          iFc = mpg%fcs_wall(k)
-          if (mpg%fcLbl(iFc).le.0) cycle
-          iCv = minval(mpg%fcCv(iFc,1:2))
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
           shedu(iCv,:) = 0.0_R8
         enddo
       endif
@@ -289,10 +288,9 @@
         enddo
       enddo
       if (switch%b2sihs_shidu.eq.0) then
-        do k=1,mpg%nCg
-          iFc = mpg%fcs_wall(k)
-          if (mpg%fcLbl(iFc).le.0) cycle
-          iCv = minval(mpg%fcCv(iFc,1:2))
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
           shidu(iCv,:) = 0.0_R8
         enddo
       endif
@@ -329,10 +327,9 @@
         srw%b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
       enddo
       if (switch%b2sihs_shedd.eq.0) then
-        do k=1,mpg%nCg
-          iFc = mpg%fcs_wall(k)
-          if (mpg%fcLbl(iFc).le.0) cycle
-          iCv = minval(mpg%fcCv(iFc,1:2))
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
           shedd(iCv,:) = 0.0_R8
         enddo
       endif
@@ -368,10 +365,9 @@
        endif
       enddo
       if (switch%b2sihs_shidd.eq.0) then
-        do k=1,mpg%nCg
-          iFc = mpg%fcs_wall(k)
-          if (mpg%fcLbl(iFc).le.0) cycle
-          iCv = minval(mpg%fcCv(iFc,1:2))
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
           shidd(iCv,:) = 0.0_R8
         enddo
       endif
@@ -463,10 +459,9 @@
       enddo
 
       if (switch%b2sihs_shivis.eq.0) then
-        do k=1,mpg%nCg
-          iFc = mpg%fcs_wall(k)
-          if (mpg%fcLbl(iFc) .le. 0) cycle
-          iCv = minval(mpg%fcCv(iFc,1:2))
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
           shivc(iCv,:) = 0.0_R8
           shiva(iCv,:) = 0.0_R8
         enddo

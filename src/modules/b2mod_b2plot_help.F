@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=413,nfns=219,nsparameters=34,nelabels=36,
+      parameter(nlabels=414,nfns=219,nsparameters=34,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=89)
 
       integer, save ::
@@ -109,10 +109,10 @@
      8  'bchn'    , 'bckt'    , 'bczt'    , 'brhn'    , 'brkt'    ,
      9  'brzt'    , 'tn0'     , 'kt0'     , 'zt0'     , 'fnnx'    ,
      *  'fnny'    , 'fhnx'    , 'fhny'    , 'ift'     , 'iclt'    /
-      data labels(401:413) /
+      data labels(401:414) /
      1  'icle'    , 'iceq'    , 'icne'    , 'icge'    , 'icgt'    ,
      2  'ifeq'    , 'iveq'    , 'ic'      , 'iimp'    , 'iomp'    ,
-     3  'clbl'    , 'tlbl'    , 'bdcl'    /
+     3  'clbl'    , 'tlbl'    , 'bdcl'    , 'npcl'    /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -564,10 +564,11 @@
      8    'ic',
      9    'Inner midplane cells',
      *    'Outer midplane cells'/
-      data descriptions(411:413) /
+      data descriptions(411:414) /
      1    'Cell label',
      2    'Flux tube label',
-     3    'Boundary cells'/
+     3    'Boundary cells',
+     4    'Neutral pressure cells'/
       data dimensions(1:50) /
      1    1,      1,      1,      1,      1,
      2    2,      2,      2,      2,      2,
@@ -656,10 +657,10 @@
      8    1,      1,      1,      1,      1,
      9    1,      1,      1,      1,      1,
      *    1,      1,      1,      1,      1/
-      data dimensions(401:413) /
+      data dimensions(401:414) /
      1    1,      1,      1,      1,      1,
      2    1,      1,      1,      1,      1,
-     3    1,      1,      1/
+     3    1,      1,      1,      1/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
