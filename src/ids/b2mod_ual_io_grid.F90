@@ -1248,6 +1248,8 @@ contains
           if (ifsepomp.ne.US_GRID_UNDEFINED) nGSubset = nGSubset + 1
           if (ifsepimp.ne.US_GRID_UNDEFINED) nGSubset = nGSubset + 1
         end if
+        !! Neutral pressure calculation cells
+        if (npfr_cvs.gt.0) nGSubset = nGSubset + 1
 
         call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc: expecting total of " &
             &//int2str(nGSubset)//" grid subsets" )
@@ -1421,6 +1423,39 @@ contains
             end do
         end do
 
+        !! Neutral pressure calculation cells
+        !! Hard-coded to index -101
+        if (npfr_cvs.gt.0) then
+            cls = CLASS_CELL
+            GSubSetCount = GSubsetCount + 1
+            RegionDescription = "Cells used for neutral pressure calculation"
+
+            call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc:"// &
+                &   " add (private) grid subset #"//           &
+                &   int2str(GSubsetCount)//": "//              &
+                &   "Neutral pressure cells          " )
+
+            !! Create grid subset with one object list
+            call createEmptyGridSubset(                        &
+                &   grid_ggd%grid_subset( GSubsetCount ),      &
+                &   -101, "Neutral pressure cells          ",  &
+                &   RegionDescription )
+
+            !! Get explicit cell list
+            deallocate( indexList2d )
+            nInd = npfr_cvs
+            allocate( indexList2d(nInd, SPACE_COUNT) )
+            do i = 1, nInd
+              indexList2d(i, SPACE_POLOIDALPLANE ) = pfr_cvs(i)
+            end do
+
+            !! Initialize explicit object list for grid subset
+            call createExplicitObjectListSingleSpace( grid_ggd,     &
+                &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+                &   SPACE_POLOIDALPLANE )
+
+        end if
         deallocate(indexList2d)
 #endif
 

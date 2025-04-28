@@ -7196,6 +7196,7 @@
 						16: Pedestal electron density (similar to 'b2stbc_nepedm_sol' but actuator applied to any boundary)
 						17: Density of ions at the outer midplane separatrix
 						18: Integrated electron cooling over the entire domain
+						20: Neutral pressure of this sequence. It is necessary to set PFR_CVS and NPFR_CVS in b2.user.parameters to specify the control volumes used to compute the neutral pressure.
 						21: Total radiation losses over the entire domain
 						22: Average density of this species along the separatrix
 				</description>
@@ -8236,6 +8237,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
+					Obsolete. Use PFR_CVS instead.
 					B2.5 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (Western divertor, edge closest to target). If non-positive, counted backwards from the X-point location in the lower PFR, from the inner upper target in the upper PFR, from the lower outer target in the outer SOL, and from the inner upper target in the inner SOL.
 				</description>
 			</switch>
@@ -8244,6 +8246,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
+					Obsolete. Use PFR_CVS instead.
 					B2.5 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (Eastern divertor, edge closest to target). If non-positive, counted backwards from the outer lower target in the lower PFR, from the lower outer target in the outer SOL, from the upper outer target in the upper PFR, and from the inner upper target in the inner SOL.
 				</description>
 			</switch>
@@ -8252,6 +8255,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
+					Obsolete. Use PFR_CVS instead.
 					B2.5 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (Western divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
 				</description>
 			</switch>
@@ -8260,6 +8264,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
+					Obsolete. Use PFR_CVS instead.
 					B2.5 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (Eastern divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
 				</description>
 			</switch>
@@ -8387,6 +8392,22 @@
 				<type>character*8 array of size (NNTRGRP)</type>
 				<description>
 					Labels for the neutral data surface groups.
+				</description>
+			</switch>
+			<switch>
+				<name>NPFR_CVS</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Number of control volumes which are written in PFR_CVS.
+				</description>
+			</switch>
+			<switch>
+				<name>PFR_CVS</name>
+				<default>0</default>
+				<type>integer array of size (100)</type>
+				<description>
+					List of control volumes over which the average neutral pressure for fb_type.eq.20 is calculated.
 				</description>
 			</switch>
 			<switch>

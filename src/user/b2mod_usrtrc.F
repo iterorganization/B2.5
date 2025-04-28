@@ -792,7 +792,7 @@ c*** Western divertor
           end if !}
           iy=0
           iyp=1
-          if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.2) then
+          if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) then
             iy=ny
             iyp=ny
           end if

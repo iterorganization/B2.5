@@ -16,7 +16,8 @@
       use b2us_map
       use b2us_plasma
       use b2mod_user_namelist
-     & , only : nomp, omp, icsepomp, nimp, imp, icsepimp
+     & , only : nomp, omp, icsepomp, nimp, imp, icsepimp,
+     &          npfr_cvs, pfr_cvs
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_wneutrals
@@ -834,7 +835,7 @@ cxpb size is changed in b2mod_dimensions
         if (fb_ib(ifb).ge.0) cycle
         consistent = consistent .and.
      &    .not.(fb_actuator(ifb).eq.1 .or.
-     &          fb_actuator(ifb).eq.3) .and.
+     &          fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.7) .and.
      &    .not.(fb_rescale_option(ifb).eq.4)
       end do
       do ifb = 1, nFb
@@ -939,9 +940,11 @@ cxpb size is changed in b2mod_dimensions
       logical main_call
 *   ..local variables
       integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
-     & is_end, iss, i, j, k, l, ic, iFs
+     & is_end, iss, i, j, k, l, ic, iFs,
+     & iatm, imol
       integer, save :: ncall = 0
-      real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s
+      real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s,
+     & t0
 
       call subini ('compute_feedback')
       if (ncall.eq.0) then
@@ -1521,6 +1524,53 @@ cxpb size is changed in b2mod_dimensions
               fb_current(ifb) = she_rad_tot + she_eir_tot
               if (fb_current(ifb).eq.0.0_R8)
      &          fb_current(ifb) = fb_target(ifb)
+
+            case (20) !  neutral pressure in PFR
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'average neutral pressure for sequence ',
+     &           b2espcr(fb_species(ifb))
+                write(*,*) pfr_cvs(1:npfr_cvs)
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  is_end=is
+                endif
+              enddo
+
+#ifndef SOLPS4_3
+              do k = 1,npfr_cvs
+                iCv = pfr_cvs(k)
+                if (switch%use_eirene.ne.0) then
+                  do iatm=1,nnatmi
+                    if (latmscl(iatm).eq.fb_species(ifb)) then
+                      t0 = dab2(iCv,iatm,1)*tab2(iCv,iatm,1)
+                    end if
+                  end do
+                  do imol=1,nnmoli
+                    if (lmolscl(imol).eq.fb_species(ifb)) then
+                      t0 = t0 + dmb2(iCv,imol,1)*tmb2(iCv,imol,1)
+                    end if
+                  end do
+                else
+                  if (nint(zn(fb_species(ifb))).eq.1) then
+                    t0 = pl%na(iCv,fb_species(ifb))*pl%tn(iCv)
+                  else
+                    t0 = pl%na(iCv,fb_species(ifb))*pl%ti(iCv)
+                  end if
+                end if
+                fb_current(ifb) = fb_current(ifb) + t0*geo%cvVol(iCv)
+              end do
+#endif
+              fb_current(ifb) = fb_current(ifb)/
+     &         sum(geo%cvVol(pfr_cvs(1:npfr_cvs)))
 
             case (21) !  total radiation losses
 
