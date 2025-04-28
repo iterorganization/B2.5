@@ -942,9 +942,36 @@ c-----------------------------------------------------------------------
 
 c*** Western divertor
 
-          do j=1,npfr_cvs !{
-            if(mod(mpg%cvReg(pfr_cvs(j)),4).ne.0) cycle
-            hlp_si=hlp_si+geo%cvSz(pfr_cvs(j))
+          m=lpfrb_i
+          if(m.le.0) then !{
+            if(lpfrs_pmp.eq.1) then !{
+              m=leftcut(1)-1+m
+            elseif(lpfrs_pmp.eq.2) then !}{
+              m=nx-1+m
+            elseif(lpfrs_pmp.eq.3 .or. lpfrs_pmp.eq.4) then !}{
+              m=nxtl-1+m
+            end if !}
+          end if !}
+          n=lpfrt_i
+          if(n.le.0) then !{
+            if(lpfrs_pmp.eq.1) then !{
+              n=leftcut(1)-1+n
+            elseif(lpfrs_pmp.eq.2) then !}{
+              n=nx-1+n
+            elseif(lpfrs_pmp.eq.3) then !}{
+              n=leftcut(2)-n
+            elseif(lpfrs_pmp.eq.4) then !}{
+              n=nxtl-1+n
+            end if !}
+          end if !}
+          iy=0
+          iyp=1
+          if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) then
+            iy=ny
+            iyp=ny
+          end if
+          do j=m,n !{
+            hlp_si=hlp_si+gs(j,iy,1)
             hlp=0.0_R8
             do k=1,nnatmi !{
               hlp=hlp+dab2(pfr_cvs(j),k,1)*tab2(pfr_cvs(j),k,1)

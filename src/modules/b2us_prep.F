@@ -5157,13 +5157,18 @@
 
 ******************************************************************************
 
-      subroutine conv_midplane(nx,ny)                                   !srv 16.11.22 {
-        integer :: nx, ny
-        real (kind=R8) :: ro(2), zo(2), rzomp(2,2)
-        real (kind=R8) :: ri(2), zi(2), rzimp(2,2)
-        integer :: ix, iy, iyi, iyo, iymin, iymax, iout,
-     .             n_omp, n_imp, n_sep
-        integer :: autodet = 1, artificial_slab = 0
+      subroutine conv_midplane(nx,ny,m)                                 !srv 16.11.22 {
+        use b2mod_user_namelist
+        implicit none
+        integer, intent(in) :: nx, ny
+        type (mapping), intent(in) :: m
+        real (kind=R8) :: ro(2), zo(2)
+        real (kind=R8) :: ri(2), zi(2)
+        integer :: ix, iy, ix1, ix2, iyi, iyo, iymin, iymax, iout,
+     .             n_omp, n_imp, n_sep, nxtl, nxtr
+        integer :: autodet = 1
+        character*24 hlp_frm, filename
+        logical file_ok
 #ifdef LEGACYCOMP
         integer newunit
         external newunit

@@ -43,7 +43,7 @@
       real (kind=R8), allocatable :: ft_ds_imp(:), ft_ds_omp(:)
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
-      integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
+      integer :: lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfr_cvs,pfr_cvs(100),
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
@@ -71,19 +71,6 @@
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
-c*** Te_det_threshold : Temperature threshold at the target below which
-c***                    a flux tube is considered detached (typically, 2.0 eV)
-c*** q95_albll    : safety factor used to estimate the ballooning "alpha"
-c***                parameter, if not assigned will be estimated as
-c***                Lcon/(2*pi*R) at the core interface
-c*** R0_albll     : major radius used to estimate the ballooning "alpha"
-c***                parameter, if not assigned will be estimated as
-c***                0.5*(Rmin-Rmax) at the core interface
-c*** B0_albll     : major radius used to estimate the ballooning "alpha"
-c***                parameter, if not assigned will be estimated as
-c***                Bomp*R0/Romp at the core interface
-c*** trgshp       : target shaping factor applied to plasma heat loads in
-c***                peak heat flux estimate calculated by b2mod_usrtrc
 c*** lhetrgts     : list of surface indices (EIRENE notation) which
 c***                are used for calculation of helium enrichment
 c*** j_h_at       : Hydrogen isotope index in EIRENE atoms list
@@ -418,16 +405,6 @@ c*** Set default values according to current species list
      . 'faulty input Spmp_nom')
       call xertst(0.0_R8.le.Spmp_He_to_D,
      . 'faulty input Spmp_He_to_D')
-      call xertst(0.0_R8.lt.Te_det_threshold,
-     . 'faulty input Te_det_threshold')
-      call xertst(0.0_R8.le.q95_albll,
-     . 'faulty input q95_albll')
-      call xertst(0.0_R8.le.B0_albll,
-     . 'faulty input B0_albll')
-      call xertst(0.0_R8.le.R0_albll,
-     . 'faulty input R0_albll')
-      call xertst(1.0_R8.le.minval(trgshp),
-     . 'faulty input trgshp')
       call xertst(0.le.npfr_cvs, 'faulty input npfr_cvs')
       if (npfr_cvs.gt.0)
      > call xertst(minval(pfr_cvs(1:npfr_cvs)).gt.0.and.

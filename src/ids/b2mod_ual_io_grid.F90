@@ -1477,7 +1477,7 @@ contains
 
             !! Create grid subset with one object list
             call createEmptyGridSubset(                        &
-                &   local_ggd%grid_subset( GSubsetCount ),     &
+                &   grid_ggd%grid_subset( GSubsetCount ),      &
                 &   -101, "Neutral pressure cells          ",  &
                 &   RegionDescription )
 
@@ -1490,9 +1490,9 @@ contains
             end do
 
             !! Initialize explicit object list for grid subset
-            call createExplicitObjectListSingleSpace( grid_ggd,      &
-                &   local_ggd%grid_subset( GSubsetCount ), sum(cls), &
-                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),    &
+            call createExplicitObjectListSingleSpace( grid_ggd,     &
+                &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
                 &   SPACE_POLOIDALPLANE )
 
         end if
