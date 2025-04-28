@@ -43,8 +43,9 @@
       real (kind=R8), allocatable :: ft_ds_imp(:), ft_ds_omp(:)
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
-      integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
+      integer :: lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
+     ,  npfr_cvs,pfr_cvs(100),
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd)
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
@@ -55,11 +56,11 @@
       logical, save :: write_nml_user = .false.
       logical, save :: user_initialised = .false.
 
-      private :: user
       namelist /user/
      ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
      ,  j_h_at,j_he_at,j_ne_at,
      ,  l_h_mol,fusion_power,Spmp_He_to_D,lpfrs_pmp,
+     ,  npfr_cvs,pfr_cvs,
      ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
      ,  Spmp_nom,scale_He,print_isat,write_nml_user,
@@ -67,32 +68,31 @@
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
-c*** lhetrgts  :  list of surface indices (EIRENE notation) which
-c***              are used for calculation of helium enrichment
-c*** lpfrb_[io]:  B2 x-cell indices corresponding to the bottom of the
-c***              bypass between the inner and outer divertor (counted
-c***              from the bottom, if non-positive)
-c*** lpfrt_[io]:  B2 x-cell indices corresponding to the top of the
-c***              bypass between the inner and outer divertor (counted
-c***              from the x-point, if non-positive)
-c*** j_h_at    :  Hydrogen isotope index in EIRENE atoms list
-c*** j_he_at   :  Helium index in EIRENE atoms list
-c*** j_ne_at   :  Neon index in EIRENE atoms list
-c*** l_h_mol   :  Hydrogen isotope content in the molecules
-c*** lpfrs_pmp :  Location of the pump.
-c***              0 no pump at all, 1 - lower PFR, 2 - lower outer
-c*** npfrgrpd  :  max. number of surface groups for PFR flows
-c*** npfrgrp   :  actual number of surface groups for PFR flows
-c*** lpfrgrp   :  list of surface segments for PFR flows
-c*** [ij]pfrgrp:  first and last positions in this list for each group
-c*** gpfrgrp   :  identifiers for the PFR surface groups
-c*** nntrgrpd  :  max. number of surface groups for neutral data
-c*** nntrgrp   :  actual number of surface groups for neutral data
-c*** lntrgrp   :  list of surface segments for neutral data
-c*** [ij]ntrgrp:  first and last positions in this list for each group
-c*** gntrgrp   :  identifiers for the neutral data surface groups
-c*** filedata  :  flag to turn on/off individual tracing files
-c***              (see b2mod_diag for their definition)
+c*** lhetrgts     : list of surface indices (EIRENE notation) which
+c***                are used for calculation of helium enrichment
+c*** j_h_at       : Hydrogen isotope index in EIRENE atoms list
+c*** j_he_at      : Helium index in EIRENE atoms list
+c*** j_ne_at      : Neon index in EIRENE atoms list
+c*** l_h_mol      : Hydrogen isotope content in the molecules
+c*** lpfrs_pmp    : Location of the pump.
+c***                0 - no pump at all, 1 - lower PFR, 2 - lower outer
+c*** lpfrb_[io]   : Obsolete. Use PFR_CVS instead.
+c*** lpfrt_[io]   : Obsolete. Use PFR_CVS instead.
+c*** npfr_cvs     : number of control volumes used for PFR neutral pressure
+c***                calculation
+c*** pfr_cvs      : list of those control volumes
+c*** npfrgrpd     : max. number of surface groups for PFR flows
+c*** npfrgrp      : actual number of surface groups for PFR flows
+c*** lpfrgrp      : list of surface segments for PFR flows
+c*** [ij]pfrgrp   : first and last positions in this list for each group
+c*** gpfrgrp      : identifiers for the PFR surface groups
+c*** nntrgrpd     : max. number of surface groups for neutral data
+c*** nntrgrp      : actual number of surface groups for neutral data
+c*** lntrgrp      : list of surface segments for neutral data
+c*** [ij]ntrgrp   : first and last positions in this list for each group
+c*** gntrgrp      : identifiers for the neutral data surface groups
+c*** filedata     : flag to turn on/off individual tracing files
+c***                (see b2mod_diag for their definition)
 c----------------------------------------------------------------------
 
       contains
@@ -131,6 +131,8 @@ c***  Standard set-up:
       lpfrb_o=0
       lpfrt_i=0
       lpfrt_o=0
+      npfr_cvs=0
+      pfr_cvs=0
       npfrgrp=0
       ipfrgrp=0
       jpfrgrp=0
@@ -373,12 +375,11 @@ c*** Set default values according to current species list
      . 'faulty input Spmp_nom')
       call xertst(0.0_R8.le.Spmp_He_to_D,
      . 'faulty input Spmp_He_to_D')
-#ifdef WG_TODO
-      call xertst (abs(lpfrb_i).le.nx, 'faulty input lpfrb_i')
-      call xertst (abs(lpfrb_o).le.nx, 'faulty input lpfrb_o')
-      call xertst (abs(lpfrt_i).le.nx, 'faulty input lpfrt_i')
-      call xertst (abs(lpfrt_o).le.nx, 'faulty input lpfrt_o')
-#endif
+      call xertst(0.le.npfr_cvs, 'faulty input npfr_cvs')
+      if (npfr_cvs.gt.0)
+     > call xertst(minval(pfr_cvs(1:npfr_cvs)).gt.0.and.
+     &             maxval(pfr_cvs(1:npfr_cvs)).le.m%nCi,
+     &            'faulty input pfr_cvs')
       call xertst (0.le.npfrgrp, 'faulty input npfrgrp')
       do i = 1, npfrgrp
         call xertst(1.le.ipfrgrp(i).and.ipfrgrp(i).le.jpfrgrp(i),

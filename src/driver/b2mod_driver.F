@@ -2512,7 +2512,7 @@ c new CDF movie option
           call b2trci(geo,mpg,ns,nlim,nmol,switch)
           if (write_nml_user) call write_b2mod_user_namelist
         endif
-        if (ank_tracing.ne.0) then
+        if (ank_tracing.ne.0.and.ntim.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
      >     call b2trace(ns,nxtl,nxtr,ismain,dtim,
      .                  geo,mpg,state,switch,state_ext)
