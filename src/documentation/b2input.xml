@@ -2218,7 +2218,7 @@
 				<type>integer</type>
 				<description>
 					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
-                                        If set to 1, enables gradual modification of the electron heat flux limiter towards low density regions. Above b2tlhe_ne_max  (default 1.0e18 m^{-3}), the standard value cflme is used. Below b2tlhe_ne_min (default 1.0e17 m^{-3}), the value b2tlhe_cflme_min is used (default 0.2). For densities in between b2tlhe_ne_min and b2tlhe_ne_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
+					If set to 1, enables gradual modification of the electron heat flux limiter towards low density regions. Above b2tlhe_ne_max (default 1.0e18 m^{-3}), the standard value cflme is used. Below b2tlhe_ne_min (default 1.0e17 m^{-3}), the value b2tlhe_cflme_min is used (default 0.2). For densities in between b2tlhe_ne_min and b2tlhe_ne_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
 				</description>
 			</switch>
 			<switch>
@@ -2227,7 +2227,7 @@
 				<type>integer</type>
 				<description>
 					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
-                                        If set to 1, enables gradual modification of the ion heat flux limiter towards low density regions. Above b2tlhi_ni_max  (default 1.0e18 m^{-3}), the standard value cflmi is used. Below b2tlhi_ni_min (default 1.0e17 m^{-3}), the value b2tlhi_cflmi_min is used (default 1.0e1). For densities in between b2tlhi_ni_min and b2tlhi_ni_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
+					If set to 1, enables gradual modification of the ion heat flux limiter towards low density regions. Above b2tlhi_ni_max (default 1.0e18 m^{-3}), the standard value cflmi is used. Below b2tlhi_ni_min (default 1.0e17 m^{-3}), the value b2tlhi_cflmi_min is used (default 1.0e1). For densities in between b2tlhi_ni_min and b2tlhi_ni_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
 				</description>
 			</switch>
 			<switch>
@@ -2236,10 +2236,9 @@
 				<type>integer</type>
 				<description>
 					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
-                                        If set to 1, enables gradual modification of the parallel viscosity flux limiter towards low density regions. Above b2tlmv_ni_max  (default 1.0e18 m^{-3}), the standard value cflmv is used. Below b2tlmv_ni_min (default 1.0e17 m^{-3}), the value b2tlmv_cflmv_min is used (default 0.5). For densities in between b2tlmv_ni_min and b2tlmv_ni_max, the flux limiter is computed based on linear interpolation between the limiting values.
+					If set to 1, enables gradual modification of the parallel viscosity flux limiter towards low density regions. Above b2tlmv_ni_max  (default 1.0e18 m^{-3}), the standard value cflmv is used. Below b2tlmv_ni_min (default 1.0e17 m^{-3}), the value b2tlmv_cflmv_min is used (default 0.5). For densities in between b2tlmv_ni_min and b2tlmv_ni_max, the flux limiter is computed based on linear interpolation between the limiting values.
 				</description>
 			</switch>
-
 			<switch>
 				<name>b2sihs_phm0</name>
 				<default>1.0</default>
@@ -2961,6 +2960,14 @@
 				<type>integer</type>
 				<description>
 					When set to 1, the energy required for the Franck-Condon dissociation of the thermally released particles at the surfaces in the AFN boundary conditions is subtracted from the electron energy equation. It is not recommended to turn this switch on, because it seems to lower the electron temperature to unrealistic values.
+				</description>
+			</switch>
+			<switch>
+				<name>b2trcl_min_collisions</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Defines the style of the ion heat flux limit. If the number of collisions in the flux tube (determined by its average collisionnality) is larger than the value in the key, the old style of ion flux limit will be applied. Otherwise the new style (flux limit is defined by the number of collisions) will be applied.
 				</description>
 			</switch>
 			<switch>

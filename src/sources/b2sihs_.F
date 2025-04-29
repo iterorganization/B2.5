@@ -380,6 +380,13 @@
 *   ..contribution from viscous heating
       b2visa=0.0_R8
       srw%b2sihs_visa=0.0_R8
+      if (switch%min_collisions .gt. 0.0_R8) then
+        call b2txnci (mpg, geo, switch, nCv, ns, ti, te, rz2,
+     &   ne, ne2, na, lnlam, ismain, st_ext, wrkf,
+     &   wrkc)
+      else
+        wrkc = 1.0_R8
+      endif
       do is = 0, ns-1
        if(.not.is_neutral(is).or.switch%use_eirene.eq.0.or.           !srv 29.08.02
      &                           switch%spatial_hybrid.eq.1) then
@@ -400,6 +407,8 @@
          call intcell(nFc, nCv, mpg, mpg%intcellR, wrkf(:,1), visc(:,1))
         endif
         do iCv = 1, mpg%nCi
+          if (wrkc(iCv) .le. switch%min_collisions .and.
+     &     .not.mpg%cvOnClosedSurface(iCv)) cycle
           t0 = switch%b2sihs_phm2*(1.0_R8-switch%BoRiS)*visc(iCv,0)
           t1 = switch%b2sihs_phm8*(1.0_R8-switch%BoRiS)*visc(iCv,1)
           if (switch%tn_style.eq.0) then
