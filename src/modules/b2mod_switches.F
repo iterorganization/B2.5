@@ -154,6 +154,7 @@ c switches for far-sol flux limiting options
       real (kind=R8) :: b2tlmv_ni_min
       real (kind=R8) :: b2tlmv_ni_max
       real (kind=R8) :: b2tlmv_cflmv_min
+      real (kind=R8) :: min_collisions
 
 c iout switches
       integer :: iout_b2wdat
@@ -909,6 +910,7 @@ c far-sol flux limiting options
       s % b2tlmv_ni_min = 1.0e17_R8
       s % b2tlmv_ni_max = 1.0e18_R8
       s % b2tlmv_cflmv_min = 0.5e0_R8
+      s % min_collisions = 0.0_R8
 
 c geometry
       s % fcHz_style = 1
@@ -1296,6 +1298,7 @@ c far sol flux limiting
       call ipgetr ('b2tlmv_ni_min', s % b2tlmv_ni_min)
       call ipgetr ('b2tlmv_ni_max', s % b2tlmv_ni_max)
       call ipgetr ('b2tlmv_cflmv_min', s % b2tlmv_cflmv_min)
+      call ipgetr ('b2trcl_min_collisions', s % min_collisions)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
