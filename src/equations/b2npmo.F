@@ -19,11 +19,12 @@
      1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
      2          smpr, smpt, smfr, smcf, smodt                          !srv 09.03.21
       use b2mod_balance !djm Jan2017
-     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-     2          balance_netcdf, tot_smo0to3, fmo_tot
-      use b2mod_ma28_for_9diag
+     1 , only : update_balance_sources_momentum,
+     2          update_balance_eirene_sources_momentum,
+     3          balance_netcdf, fmo_b2nxfv, tot_smo0to3, fmo_tot
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
+      use b2mod_ma28_for_9diag
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_openmp
@@ -145,6 +146,7 @@
       integer, save :: vlct_diagno = 1
       integer, save :: get_residuals = 0                               !srv 22.05.18
       integer, save :: use_9pt_stencil = 1
+      integer, save :: write_eirene_sources = 0
       integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
       integer, save :: style_b2mndt = 1                                !srv 07.07.21
@@ -190,7 +192,10 @@
      *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)             !srv 13.01.17 05.07.17
       real (kind=R8) ::
      &  ua_inp(-1:nx,-1:ny,0:ns-1) !, smb_no_dt(-1:nx,-1:ny,0:3)       !srv 09.03.21
-      logical new_matrix, solvedum(0:NNREGMAX), main_lightest
+      logical solvedum(0:NNREGMAX), main_lightest
+#if ( !defined(_OPENMP) || defined(NO_OPENMP_B2NPMO) )
+      logical new_matrix
+#endif
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
       external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
@@ -272,6 +277,7 @@
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii')
         call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
         call ipgeti ('b2mndr_use_9pt_stencil', use_9pt_stencil)
+        call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
 
         impr_form_tf = 0                                               !som 13.11.20
         impr_form_fr = 0
@@ -477,7 +483,7 @@
 !$OMP& PRIVATE(smbfrea, smbfria, smbtfea, smbtfia, smbch, smbtf)
 !$OMP& PRIVATE(smbgp, flubv, wrk2, smbvh, smbvv, smbcf, ctcfb, smban)
 !$OMP& PRIVATE(smbvi, smbvtemp)
-!$OMP& PRIVATE(chns, wrks, new_matrix)
+!$OMP& PRIVATE(chns, wrks)
 !$OMP& FIRSTPRIVATE(lnlam) LASTPRIVATE(lnlam)
 !$OMP& LASTPRIVATE(kt_neo)
 !$OMP& SHARED(solvemt, solvemo)
@@ -492,7 +498,7 @@
 !$OMP& SHARED(nsmin, nsmax, ismain)
 !$OMP& SHARED(style, b2sifr_ver, style_b2mndt)
 !$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl)
-!$OMP& SHARED(balance_netcdf, fmo_b2nxfv)
+!$OMP& SHARED(balance_netcdf, write_eirene_sources, fmo_b2nxfv)
 !$OMP& SHARED(pbshz, cvsahz, chci, smcf, fchanml, smof)
 !$OMP& SHARED(facdrift, fac_ExB)
 !$OMP& SHARED(is_neutral, ue, use_9pt_stencil)
@@ -750,6 +756,10 @@ cdjm Jan2017 update momentum source components for balance
          tot_smo0to3(:,:,:,is)=smb !djm Mar2019
          call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
        endif
+       if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
+         call update_balance_eirene_sources_momentum(
+     &    nx,ny,is,ua(-1,-1,is),rob)
+       endif
 
 *    ..compute residual
        if((solving.and.any(solvemo(is,0:nnreg(0))))
@@ -847,14 +857,14 @@ cdjm Mar2019 output the total momentum flux and source for balance
          last_solve_9(is,0:nnreg(0)) = solvemo(is,0:nnreg(0))
         else
 c    ..compare 5-pt stencil matrices
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+         call restart_ma28
+#else
          new_matrix = .false.
          do ireg = 0, nnreg(0)
           new_matrix = new_matrix.or.
      &     solvemo(is,ireg).neqv.last_solve_5(is,ireg)
          end do
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
-         call restart_ma28
-#else
          if (new_matrix.or.in_parallel()) call restart_ma28
 #endif
 *    ..compute correction
@@ -922,14 +932,14 @@ c     ..compare 9-pt stencil matrices
      &    cvct, resmt, ctcft, corut, pccm, aa9, wrk1, 'b2usm9_total')
          last_solve_9(ns,0:nnreg(0)) = solvemt(0:nnreg(0))
         else
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
+         call restart_ma28
+#else
          new_matrix = .false.
          do ireg = 0, nnreg(0)
            new_matrix = new_matrix.or.
      &      solvemt(ireg).neqv.last_solve_5(ns,ireg)
          end do
-#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NPMO) )
-         call restart_ma28
-#else
          if (new_matrix.or.in_parallel()) call restart_ma28
 #endif
          call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,       !srv 04.07.08

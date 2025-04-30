@@ -340,7 +340,7 @@
           enddo
          endif
         enddo
-#ifndef NO_OPENMP_B2SIFRTF_LOOP1
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP1) )
 !$OMP END PARALLEL DO
 #endif
       endif
@@ -543,7 +543,7 @@ c   .... apply flux limit
           enddo
          endif
         enddo
-#ifndef NO_OPENMP_B2SIFRTF_LOOP2
+#if ( defined(_OPENMP) && !defined(NO_OPENMP_B2SIFRTF_LOOP2) )
 !$OMP END PARALLEL DO
 #endif
       endif
