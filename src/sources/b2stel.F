@@ -162,7 +162,6 @@
 #ifndef FIXED_POINT
 !$omp& shared(b2stel_she0to3, balance_netcdf)
 #endif
-!$omp& reduction(+:b2rad, b2brem)
 #endif
       do is = 0, ns-2
        if (lnext(is,is+1)) then

@@ -279,7 +279,6 @@ cdjm compute b2sigp_pstat0to3 on cell face
           enddo
 !$omp end critical
         endif
-#endif
       else                                                            !srv 23.03.10 {
           call xertst(switch%pot_eq.eq.1,
      &   'b2sigp_style.eq.2 requires pot_eq.eq.1!')
