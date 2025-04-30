@@ -434,12 +434,15 @@
      &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2, iFt,
      &           i1, i2, inv_dist(mpg%nVx) , vv(2)
       integer, allocatable :: old_face_list(:), verts(:)
+      integer, save :: temp_ignore_geo = 0
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
      .  Psi1, Psi2, count_up, count_down, count_eq, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
       intrinsic maxval, maxloc, minloc, abs, sqrt
       external b2xbzb, intface, intvertex, xerrab, xertst
+
+      call ipgeti ('b2mndr_temp_ignore_geo', temp_ignore_geo)
 
       nCv = mpg%nCv
       nFc = mpg%nFc
@@ -1078,6 +1081,8 @@
         gm%signmf=sign(1.0_R8,gm%cvEb(1,0))
       end if
 
+
+      if (temp_ignore_geo.eq.0) then !! This is a temporary solution to be able to run extended cases, while more general solutions are being developed
 !! Invert the divertor face list if not in correct psi order
 !! and identify strike point face indices
       if (allocated(mpg%strDiv)) then
@@ -1199,6 +1204,8 @@
      &   'No matching face found for strike point !')
        end do
       end if
+
+      end if !! belonging to temp_ignore_geo switch
 
       return
       end subroutine init_geometry
