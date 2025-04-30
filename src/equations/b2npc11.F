@@ -10,7 +10,9 @@
       use b2mod_indirect
       use b2mod_openmp
       use b2mod_balance
-     & ,only : update_balance_sources_particles, balance_netcdf,     !djm Jan2017
+     & ,only : update_balance_sources_particles,                     !djm Jan2017
+     &         update_balance_eirene_sources_particles,
+     &         balance_netcdf,                                       !djm Jan2017
      &         tot_sna0to1, fna_tot                                  !djm Mar2019
       use b2mod_subsys
       use b2mod_lwmain
@@ -70,6 +72,7 @@
       integer, save :: iout = 0, iout_b2wdat = 0                     !srv 04.07.08
       integer, save :: get_residuals = 0                             !srv 22.05.18
       integer, save :: style_b2mndt = 1                              !srv 07.07.21
+      integer, save :: write_eirene_sources = 0
       character chns*3                                               !srv 04.07.08
       logical warning
 #ifdef _OPENMP
@@ -150,6 +153,7 @@
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
        call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
+       call ipgeti ('cdfmovie_eirene_sources',write_eirene_sources)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -191,6 +195,9 @@ cdjm Jan2017 update particle source components for balance
         tot_sna0to1(:,:,:,isb)=snb !djm Mar2019
         fna_tot(:,:,:,isb)=fnb     !djm Mar2019
         call update_balance_sources_particles(nx,ny,isb,nb)
+      endif
+      if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_particles(nx,ny,isb,nb)
       endif
 
       if (iout.ne.0) then                                             !srv 12.07.02 {

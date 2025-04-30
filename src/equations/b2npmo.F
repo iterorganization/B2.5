@@ -19,8 +19,9 @@
      1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
      2          smpr, smpt, smfr, smcf, smodt                          !srv 09.03.21
       use b2mod_balance !djm Jan2017
-     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-     2          balance_netcdf, tot_smo0to3, fmo_tot
+     1 , only : update_balance_sources_momentum,
+     2          update_balance_eirene_sources_momentum,
+     3          balance_netcdf, fmo_b2nxfv, tot_smo0to3, fmo_tot
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -142,6 +143,7 @@
       integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
       integer, save :: vlct_diagno = 1
       integer, save :: get_residuals = 0                               !srv 22.05.18
+      integer, save :: write_eirene_sources = 0
       integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
       integer, save :: style_b2mndt = 1                                !srv 07.07.21
@@ -270,6 +272,7 @@
         call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii')
         call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
+        call ipgeti ('cdfmovie_eirene_sources',write_eirene_sources)
 
         impr_form_tf = 0                                               !som 13.11.20
         impr_form_fr = 0
@@ -489,7 +492,7 @@
 !$OMP& SHARED(nsmin, nsmax, ismain)
 !$OMP& SHARED(style, b2sifr_ver, style_b2mndt)
 !$OMP& SHARED(smpr, smpt, smfr, cvsahz_cl)
-!$OMP& SHARED(balance_netcdf, fmo_b2nxfv)
+!$OMP& SHARED(balance_netcdf, write_eirene_sources, fmo_b2nxfv)
 !$OMP& SHARED(pbshz, cvsahz, chci, smcf, fchanml, smof)
 !$OMP& SHARED(facdrift, fac_ExB)
 !$OMP& SHARED(is_neutral, ue)
@@ -738,6 +741,10 @@ cdjm Jan2017 update momentum source components for balance
        if (balance_netcdf.ne.0) then
          tot_smo0to3(:,:,:,is)=smb !djm Mar2019
          call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
+       endif
+       if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
+         call update_balance_eirene_sources_momentum(
+     &    nx,ny,is,ua(-1,-1,is),rob)
        endif
 
 *    ..compute residual
