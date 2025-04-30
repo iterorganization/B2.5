@@ -4,11 +4,9 @@
       subroutine b2trno (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
      &  switch, geo, mpg, pl, dv, rt, st_ext, co)
       use b2mod_types
-!      use b2mod_anomalous_transport
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-!      use b2mod_neoclassical
       use b2mod_switches
       use b2us_geo
       use b2us_map
@@ -39,8 +37,8 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, nscx, nscxmax, iscx(0:nscxmax-1),
-     *  ismain
+      integer, intent (in) :: nCv, nFc, nVx, ns,
+     *                        nscx, nscxmax, iscx(0:nscxmax-1), ismain
       type (switches), intent (inout) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -109,7 +107,7 @@
      *  smin, smax
       external xertst, sfill, smin, smax
       external ipgetr, ipgeti
-      external b2tqna, b2txcx, b2txcy, b2txcv, b2txsx, b2txsy
+      external b2tqna, b2txcx, b2txcy, b2txsx, b2txsy
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -162,35 +160,35 @@
      &  co%hci_ExB, co%dna_bohm, co%vla_bohm, co%vsa_bohm)
 *   ..incorporate geometry
       do is = 0, ns-1
-        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%dna0(1:nCv,is), co%cdna(1:nFc,0,is))
+        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, co%dna0(1:nCv,is), co%cdna(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%dna0(1:nCv,is), co%cdna(1:nFc,1,is))
-        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%dpa0(1:nCv,is), co%cdpa(1:nFc,0,is))
+        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, co%dpa0(1:nCv,is), co%cdpa(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%dpa0(1:nCv,is), co%cdpa(1:nFc,1,is))
-        call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%dpa0(1:nCv,is), cdpa0(1:nFc,is))
-        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
+        call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, co%dpa0(1:nCv,is), cdpa0(1:nFc,is))
+        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vla0(1:nCv,0,is), co%cvla(1:nFc,0,is))
-        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS, 
+        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vla0(1:nCv,1,is), co%cvla(1:nFc,1,is))
-        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%vsa0(1:nCv,is), co%cvsa(1:nFc,0,is))
+        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, co%vsa0(1:nCv,is), co%cvsa(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vsa0(1:nCv,is), co%cvsa(1:nFc,1,is))
-        call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%vsa0(1:nCv,is), cvsa0(1:nFc,is))
-        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%hcib(1:nCv,is), co%chcb(1:nFc,0,is))
+        call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, co%vsa0(1:nCv,is), cvsa0(1:nFc,is))
+        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, co%hcib(1:nCv,is), co%chcb(1:nFc,0,is))
         call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%hcib(1:nCv,is), co%chcb(1:nFc,1,is))
-        call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%hcib(1:nCv,is), chcib(1:nFc,is))
+        call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, co%hcib(1:nCv,is), chcib(1:nFc,is))
       enddo
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     & co%dna_ExB, co%cdna_ExB(1,0))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     & geo%fcS, co%dna_ExB, co%cdna_ExB(1,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      & co%dna_ExB, co%cdna_ExB(1,1))
 
@@ -225,14 +223,14 @@
 
 *   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
-      if (switch%transport_afn.eq.1) then 
+      if (switch%transport_afn.eq.1) then
        do is = 0, ns-1
          if (is_neutral(is).and.nint(zn(is)).eq.1) then
            wrkc =  co%dpa0(:,is)*(geo%cvBb(:,2)/geo%cvBb(:,3))**2
-           call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &                 wrkc, co%cdpa(1:nFc,0,is))   
+           call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &                  geo%fcS, wrkc, co%cdpa(1:nFc,0,is))
            call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &                 wrkc, co%cdpahz(1:nFc,0,is))
+     &                  wrkc, co%cdpahz(1:nFc,0,is))
          endif
        enddo
       endif
@@ -266,34 +264,34 @@ c   Bohm
       call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
      &   hve0(1:nCv,1), co%chve(1:nFc,1))
 
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%hce0, co%chce(1:nFc,0))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &  geo%fcS, co%hce0, co%chce(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hce0, co%chce(1:nFc,1))
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%sig0, co%csig(1:nFc,0))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &  geo%fcS, co%sig0, co%csig(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%sig0, co%csig(1:nFc,1))
-      call b2txcx (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%alf0, co%calf(1:nFc,0))
+      call b2txcx (nCv, nFc,   -1, geo, mpg, geo%fcVol,
+     &  geo%fcS, co%alf0, co%calf(1:nFc,0))
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
      &  co%alf0, co%calf(1:nFc,1))
       wrkc = co%dkt0*(1.0_R8 + switch%b2tfhi_fconkt)
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  wrkc, co%cdkt(1:nFc,0))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &  geo%fcS, wrkc, co%cdkt(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%dkt0, co%cdkt(1:nFc,1))
       wrkc = co%dzt0*(1.0_R8 + switch%b2tfhi_fconzt)
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  wrkc, co%cdzt(1:nFc,0))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &  geo%fcS, wrkc, co%cdzt(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%dzt0, co%cdzt(1:nFc,1))
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%hce_ExB, co%chce_ExB(1:nFc,0))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &  geo%fcS, co%hce_ExB, co%chce_ExB(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hce_ExB, co%chce_ExB(1:nFc,1))
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%hci_ExB, co%chci_ExB(1:nFc,0))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     &  geo%fcS, co%hci_ExB, co%chci_ExB(1:nFc,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  co%hci_ExB, co%chci_ExB(1:nFc,1))
 
@@ -348,7 +346,7 @@ c      call sfill (nFc*2, 0.0_R8, co%chvi, 1)
 
       if(switch%flux_limit_to_dpa .ne. 0) then                            !srv 15.06.08 {
 *   .. apply flux limit to neutrals contribution to cdpa and cdpahz
-        call b2tlc0 (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%te, 
+        call b2tlc0 (nCv, nFc, nVx, ns, switch, geo, mpg, pl%na, pl%te,
      &    pl%ti, pl%tn, rt%rza, cdpa0, co%cdpa, co%cdpahz, flc)
       endif                                                               !srv 15.06.08 }
 
@@ -379,7 +377,7 @@ c the logic statements below could be simplfied but for now we go for readabilit
         if (is_neutral(is).and.nint(zn(is)).eq.1) then             !! hcn for hydrogenic atoms
          co%chcn = co%chcn + co%chcb(:,:,is)
         endif
-      enddo 
+      enddo
 
 *   ..test sign of chce, chci
       wrk(:) = co%chce(:,0)*geo%fcQalf(:,0)
@@ -399,7 +397,7 @@ c the logic statements below could be simplfied but for now we go for readabilit
       wrk(:) = co%cdkt(:,1)*geo%fcQalf(:,1)
       call b2xvsg (nFc, wrk, 1, 'cdkt', '.ge.')
 
-      if(switch%b2npco_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then                  !srv 19.05.10 {
+      if(switch%b2npco_iout.ne.0 .or. switch%iout_b2wdat.eq.4) then      !srv 19.05.10 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         if (is_neutral(is) ) then
@@ -509,13 +507,6 @@ c the logic statements below could be simplfied but for now we go for readabilit
       return
 
 *-----------------------------------------------------------------------
-*.scribbles
-
-*!!   Consider to apply a flux limit to the anomalous particle transport.
-*!!   Still must consider how to deal with a non-orthogonal grid.
-
-*-----------------------------------------------------------------------
 *.end b2trno
 
       end subroutine b2trno
-

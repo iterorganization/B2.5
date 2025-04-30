@@ -4,13 +4,15 @@
       subroutine b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
      &  itcnt, solving, rxf, dtim, pl, dv, rt, co, sr, srw,
-     &  psnc, psnl, st_ext, ierr)
+     &  psnl, st_ext)
       use b2mod_types
       use b2mod_math
       use b2mod_constants
+#ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      1 , only : update_balance_sources_momentum, fmo_b2nxfv,
      2          balance_netcdf, tot_smo0to3, fmo_tot
+#endif
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -21,7 +23,7 @@
       use b2mod_ma28_for_us
      , , only : restart_ma28_for_us
       use b2mod_ad
-     & , only : b2npmo_solvedum, ncall_b2npmo
+     & , only : b2npmo_solvedum, ncall_b2npmo, rxg_npmo
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -32,7 +34,7 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                             !srv 27.06.21
 #endif
-     &          my_out_folder, ncall_b2tlnl, ncall_b2sifrtf
+     &          my_out_folder, ncall_b2tlnl, ncall_b2sifrtf, icase_sifr
 #endif
       use b2mod_subsys
       implicit none
@@ -45,7 +47,7 @@
       type (B2Rates), intent (in) :: rt
       type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
-      type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
+      type (B2PlasmaSnapshot), intent (inout) :: psnl
       type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) ::
      *  rxf, dtim
@@ -54,11 +56,8 @@
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
 *   ..output arguments (unspecified on entry)
-      integer ierr
-!WG_TODO     &  smof(nCv,0:3,0:ns-1)
       real (kind=R8) ::
      *  ubf(nFc), robf(nFc)
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -119,12 +118,11 @@
       real (kind=R8) ::
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)                             !srv 13.01.17 05.07.17
-      real (kind=R8) , save:: rxg
       logical new_matrix, main_lightest, warning
 *   ..procedures
       external xertst, ipgetr, sfill, b2scopy, b2sscal, b2saxpy
       external
-     &  b2xvsg, b2xvff, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,
+     &  b2xvsg, b2xpne, b2xprz, b2xpro, b2xppr, b2xppz,
      &  b2xppb, b2nxdu, b2nxdv, b2nxfx, b2nxfc, b2nxst,
      &  b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
 *   ..initialisation
@@ -157,7 +155,7 @@
         endif
 c time-dependent treatment
         if(switch%b2mndt_style.eq.2) then
-         rxg = huge(1.0_R8)
+         rxg_npmo = huge(1.0_R8)
          do is = 0,ns-1
           warning = .false.
           do iCv = 1, nCv
@@ -171,9 +169,10 @@ c time-dependent treatment
           end if
          enddo
         else
-         rxg = switch%b2npmo_rxg
+         rxg_npmo = switch%b2npmo_rxg
         endif
-        call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
+        call xertst (0.0_R8.lt.rxg_npmo, 
+     &    'faulty internal parameter rxg')
       endif
 *   ..extensive tests on first few calls
       if (ncall_b2npmo.lt.3) then
@@ -250,7 +249,7 @@ c time-dependent treatment                                            !srv 07.07
 *   ..compute ehxp
       if(switch%b2sigp_style.ne.2) then
         call b2nxfx (nCv, nFc, nVx, switch, geo, mpg, qe, dv%ne,
-     &     pl%te, pl%po, ehxp, wrkf0, wrkf1)
+     &     pl%te, pl%po, ehxp)
       endif                                                            !srv 13.01.17 }
 *   ..compute smqdu
       call b2nxdu (nCv, ns, pl%na, pl%ua, sr%smq, smqdu, wrk0, wrk1)
@@ -300,16 +299,18 @@ c time-dependent treatment                                            !srv 07.07
 *    ..compute pressure gradient term
        call b2sigp (nCv, nFc, nVx, is, switch, geo, mpg, rt%rza(:,is),
      &   pl%na(:,is), pl%ti, pl%tn, dv%ne, pl%te, pl%po, smbgp, wrk0,
-     &   wrk1, wrk2)
+     &   wrk1)
 *    ..compute flub
        call b2scopy (nFc*2, dv%fna_fcor(:,:,is), 1, flub, 1)
        call b2sscal (nFc*2, am(is)*mp, flub, 1)
 *    ..add convective term due to new form of ion viscosity term only
        call b2nxfv (nCv, nFc, nVx, is, switch, geo, mpg,
      &   co%cvsahz_cl(:,:,is), co%cvsahz(:,:,is), flubv)
+#ifndef FIXED_POINT
        if (balance_netcdf.ne.0) then
          fmo_b2nxfv(:,:,is)=flubv                                       !djm Jan2017
        endif
+#endif
        call b2saxpy (nFc*2, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
 *    ..compute flcb, cvcb
        call b2nxfc (nCv, nFc, nVx, is, switch, geo, mpg, rob,
@@ -322,7 +323,7 @@ c time-dependent treatment                                            !srv 07.07
      &   smbvv, co%kt_neo, wrk0, wrk1, wrk2)
 *    ..compute centrifugal force term                                   !srv 09.07.01
        call b2sicf (nCv, nFc, nVx, is, am(is)*mp, switch,  geo, mpg,    !srv 09.07.01 28.01.02 22.07.05
-     *   pl%na(:,is), pl%ua(:,is), smbcf, srw%smcf(:,is), ctcfb, wrk0)
+     *   pl%na(:,is), pl%ua(:,is), smbcf, ctcfb, wrk0)
 *    ..compute correcting source due to artificial anomalous electric conductivity
        call b2sian (nCv, nFc, is, switch, geo, mpg, dv%fchanml, smban)
 *    ..compute total parallel momentum source
@@ -338,10 +339,8 @@ c time-dependent treatment                                            !srv 07.07
        call b2saxpy (nCv*4, 1.0_R8, smbvv,  1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
        call b2saxpy (nCv*4, 1.0_R8, smban,  1, smb, 1)                  !srv 25.09.17
-       call b2nxdv (nCv,is,switch,mpg,rob,sr%smq(:,:,is),smqdu,smb)     !srv ???
-*    ..save final source for species (is)                               !srv 10.11.02
-!WG_TODO       smof(:,:,is) = smb                                       !srv 10.11.02
-
+       call b2nxdv (nCv,is,switch,mpg,rob,sr%smq(:,:,is),smqdu,smb)     !srv
+#ifndef FIXED_POINT
 cdjm Jan2017 update momentum source components for balance
       if (balance_netcdf.ne.0) then
          tot_smo0to3(:,:,is)=smb !djm Mar2019
@@ -350,6 +349,7 @@ cdjm Jan2017 update momentum source components for balance
         call update_balance_sources_momentum(nCv,nFc,is,pl%ua(:,is),rob,
      &    ubf,robf)
       endif
+#endif
 
 *    ..compute residual
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
@@ -359,10 +359,12 @@ cdjm Jan2017 update momentum source components for balance
      .    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))        !srv 04.07.08
       endif                                                             !srv 22.05.18
 
+#ifndef FIXED_POINT
 cdjm Mar2019 output the total momentum flux and source for balance
       if (balance_netcdf.ne.0) then
         fmo_tot(:,:,is)=dv%fmo(:,:,is)
       endif
+#endif
 
       write (chns,'(i3.3)') is                                          !srv 18.03.10
 
@@ -408,7 +410,7 @@ cdjm Mar2019 output the total momentum flux and source for balance
         call my_out_us(70,nCv,0,wrks,'b2npmo_smoan'//chns)              !srv 25.09.17
       endif                                                             !srv 05.07.17
 
-      if (switch%b2npmo_iout .ne. 0) then
+      if (switch%b2npmo_iout .ne. 0 .or. switch%iout_b2wdat .eq. 4) then
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua_input'//chns)
         wrks=sr%smo(:,0,is)+sr%smo(:,1,is)*pl%ua(:,is)+
      &       sr%smo(:,2,is)*pl%na(:,is)*mp*am(is)+
@@ -441,7 +443,7 @@ c    ..compare matrices
          pb1 = pb !csc to avoid aliasing in Tapenade
          rob1 = rob !csc to avoid aliasing in Tapenade
          call b2usmo (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
-     &     b2npmo_solvedum, itcnt, rxg, rob, rob1, pb,
+     &     b2npmo_solvedum, itcnt, rxg_npmo, rob, rob1, pb,
      &     pb1, pl%ua(:,is), smb,
      &     flcb, cvcb, dv%resmo(:,is), ctcfb, dv%corua(:,is),
      &     dv%pcca(:,:,is), aa, wrk1, 'b2usmo_'//chns)
@@ -498,7 +500,7 @@ c     ..compare 9-pt stencil matrices
         if (new_matrix.or..true.) call restart_ma28_for_us
 *     ..compute correction
         call b2usmo (nCv, nFc, nVx, switch, geo, mpg, mpg%nnreg(0),
-     &    solvemt, itcnt, rxg, ro, rz, pr, pz, wrk0,
+     &    solvemt, itcnt, rxg_npmo, ro, rz, pr, pz, wrk0,
      &    smt, flct, cvct,
      &    dv%resmt, ctcft, dv%corut, dv%pccm, aa, wrk1, 'b2usmo_total')
         last_solve_9(0:mpg%nnreg(0)) = solvemt(0:mpg%nnreg(0))
@@ -590,10 +592,6 @@ c     ..compare 9-pt stencil matrices
        call my_out_us(70,nCv,0,dv%pccm(1,0),'b2npmo_pccm_th')           !srv 11.01.13
        call my_out_us(70,nCv,0,dv%pccm(1,1),'b2npmo_pccm_r')            !srv 11.01.13
       endif                                                             !srv 12.07.02 }
-*   ..set error parameter
-*     (at present all errors cause an abort through xerrab)
-      ierr = 0
-
 * ..return
       ncall_b2npmo = ncall_b2npmo+1
       call subend ()

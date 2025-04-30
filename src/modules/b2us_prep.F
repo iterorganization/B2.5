@@ -878,7 +878,7 @@
               endif
             else
               ! For corners, only keep vertex of NE corners:
-              ! check whether bottom(left) or left(bottom) exists 
+              ! check whether bottom(left) or left(bottom) exists
               lfound=.false.
               if (leftix(ix,iy).ne.-2) then
                 if (bottomiy(leftix(ix,iy),leftiy(ix,iy)).ne.-2) then
@@ -1944,7 +1944,7 @@
                     endif
                     if (istrtt.eq.-1) then
                      iFt = iFt + 1
-                     if (isBoundaryCell(ctype).and. 
+                     if (isBoundaryCell(ctype).and.
      .                   .not. on_closed_surface(ix,iy)) then
                       ! Find the guard cell at start of flux tube
                       lfound = .false.
@@ -1955,9 +1955,9 @@
                        if (.not.
      .                     isGhostCell(cflags(lix,liy,CELLFLAG_TYPE)))
      .                 then
-                        write (*,*) 
+                        write (*,*)
      .                    'ix, iy, lix, liy, cflag cflagl, iFt = ',
-     .                    ix, iy, lix, liy, ctype, 
+     .                    ix, iy, lix, liy, ctype,
      .                    cflags(lix,liy,CELLFLAG_TYPE), iFt
                         write (*,*) 'on_closed_surface ',
      .                    on_closed_surface(ix,iy)
@@ -2108,7 +2108,7 @@
                       iFc = m%imapFcy(tix,tiy)
                       if (isBoundaryCell(ctypen)) then
                         if (m%fcLbl(iFc).lt.0) lfound = .true.
-                      endif 
+                      endif
                     endif
                     if (biy.ne.-2) then
                       ctypen = cflags(bix,biy,CELLFLAG_TYPE)
@@ -2262,8 +2262,8 @@
       nvertpf = icount
 
       ! Check for 'north' boundaries
-      nfaces = count(m%fcLbl==-43) + 
-     .         count(m%fcLbl==-42) + 
+      nfaces = count(m%fcLbl==-43) +
+     .         count(m%fcLbl==-42) +
      .         count(m%fcLbl==-44)
       if (nfaces.gt.0) then
 
@@ -2318,8 +2318,8 @@
 
       end if
 
-      nfaces = count(m%fcLbl==-47) + 
-     .         count(m%fcLbl==-46) + 
+      nfaces = count(m%fcLbl==-47) +
+     .         count(m%fcLbl==-46) +
      .         count(m%fcLbl==-48)
       if (nfaces.gt.0) then
 
@@ -2425,18 +2425,32 @@
       implicit none
       integer, intent(in) :: nx, ny
       integer :: ix, iy, ic, iFc, iVx, iFs
-#ifdef WG_TODO
+#ifdef WG_DEBUG
       integer :: i, j, idb, iVx1, iVx2
 #endif
       type (mapping) , intent (in) :: mpg
       type (geometry), intent (out) :: gm
-#ifndef F2003
+      real (kind=R8) :: bz_sign, wrk
+      real (kind=R8), save :: pbs_red_fac = 1.0e-3_R8
+
+*   ..procedures
+      real (kind=R8) ::
+     *   smin, smax
+      external smin, smax
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
       call alloc_geometry (gm,
      &  mpg%nCv, mpg%nFc, mpg%nVx, mpg%nFs, mpg%nFt, mpg%nVmxCv)
+
+      call ipgetr('b2us_prep_Qalfmin',gm%Qalfmin)
+      call ipgetr('b2us_prep_Qalfmax',gm%Qalfmax)
+      call ipgetr('b2us_prep_Pbs_reduce_fac',pbs_red_fac)
+      write (*,*) "Qalfmin=",gm%Qalfmin
+      write (*,*) "Qalfmax=",gm%Qalfmax
+      write (*,*) "Pbs reduce factor=",pbs_red_fac
 
 ! cell volumes
       do iy = -1, ny
@@ -2453,6 +2467,7 @@
             gm%cvSz(ic) = gs(ix,iy,2)
             gm%cvHz(ic) = hz(ix,iy)
             gm%cvHx(ic) = hx(ix,iy)
+            gm%cvHy(ic) = hy1(ix,iy)
             gm%cvQgam(ic,0) = qz(ix,iy,1)    ! cos
             gm%cvQgam(ic,1) = -qz(ix,iy,0)   ! sin
             gm%cvVol(ic) = vol(ix,iy)
@@ -2527,6 +2542,57 @@
         end do
       end do
 
+      do ic=mpg%nCi+1,mpg%nCv
+        iFc = mpg%cvFc(mpg%cvFcP(ic,1))
+        if (mpg%fcLbl(iFc) .le. 0) cycle
+        bz_sign = sign(1.0_R8,gm%cvEb(ic,2))
+        wrk = abs(gm%fcQalf(iFc,0)*gm%fcBb(iFc,0)/gm%fcBb(iFc,3))
+        if (wrk >= gm%Qalfmin) then
+          if (wrk < gm%Qalfmax) then
+            gm%fcPbs(iFc) = gm%Qalfmax*gm%fcS(iFc)*
+     .         sign(1.0_R8,gm%fcPbs(iFc))
+            gm%fcPbshz(iFc) = gm%Qalfmax*gm%fcS(iFc)*gm%fcHz(iFc)*
+     .         sign(1.0_R8,gm%fcPbshz(iFc))
+            gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)
+     .         /gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+            gm%fcQalf(iFc,1) = sign(sqrt(1.0_R8-
+     .         gm%fcQalf(iFc,0)**2),gm%fcQalf(iFc,1))
+            write(*,*) 'pbs and pbshz were modified for iFc=',iFc
+          endif
+          if (gm%fcQalf(iFc,0) < 0.0_R8) then
+            gm%fcQbet(iFc,0) = -1.0_R8*bz_sign
+            gm%fcQgam(iFc,0) = -gm%fcQalf(iFc,0)
+            gm%fcQgam(iFc,1) = -gm%fcQalf(iFc,1)*bz_sign
+          elseif (gm%fcQalf(iFc,0) >= 0.0_R8) then
+            gm%fcQbet(iFc,0) = 1.0_R8*bz_sign
+            gm%fcQgam(iFc,0) = gm%fcQalf(iFc,0)
+            gm%fcQgam(iFc,1) = gm%fcQalf(iFc,1)*bz_sign
+          endif
+          gm%fcQbet(iFc,1) = 0.0_R8
+        else
+          gm%fcPbs(iFc) = pbs_red_fac*gm%fcPbs(iFc)
+          gm%fcPbshz(iFc) = pbs_red_fac*gm%fcPbshz(iFc)
+          gm%fcQalf(iFc,0) = max(-1.0_R8,min(1.0_R8,gm%fcPbs(iFc)/
+     .       gm%fcS(iFc)*gm%fcBb(iFc,3)/gm%fcBb(iFc,0)))
+          gm%fcQalf(iFc,1) = sign(sqrt(1.0_R8-
+     .        gm%fcQalf(iFc,0)**2),gm%fcQalf(iFc,1))
+          gm%fcQbet(iFc,0) = gm%fcQgam(iFc,0)*gm%fcQalf(iFc,0) +
+     .       gm%fcQgam(iFc,1)*gm%fcQalf(iFc,1)*bz_sign
+          gm%fcQbet(iFc,0) = gm%fcQbet(iFc,0)*bz_sign
+          gm%fcQbet(iFc,1) = gm%fcQgam(iFc,1)*gm%fcQalf(iFc,0) -
+     .       gm%fcQgam(iFc,0)*gm%fcQalf(iFc,1)*bz_sign
+          write(*,*) 'pbs and pbshz were reduced for iFc=',iFc
+        endif
+      enddo
+
+! check gamma after modifications
+      call xertst (-1.0_R8.lt.smin(mpg%nFc,gm%fcQgam(1,1),1).and.
+     &   smax(mpg%nFc,gm%fcQgam(1,1),1).lt.1.0_R8,
+     &   'faulty argument range fcQgam(,1)')
+       call xertst (0.0_R8.lt.smin(mpg%nFc,gm%fcQgam(1,0),1).and.
+     &   smax(mpg%nFc,gm%fcQgam(1,0),1).le.1.0_R8,
+     &   'faulty argument range fcQgam(,0)')
+
 ! vertices
       gm%vxX = 0._R8
       gm%vxY = 0._R8
@@ -2543,8 +2609,8 @@
         end do
       end do
 
-#ifdef WG_TODO
-#ifdef F2003
+#ifdef WG_DEBUG
+#ifndef LEGACYCOMP
       open (newunit=idb,file='debug.out')
 #else
       idb = newunit()
@@ -3706,7 +3772,7 @@
       integer :: ix, iy, ic, iFc
       integer :: nout_st, io, idum(0:9)
       character lblst*120, lblps*120
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -4588,7 +4654,7 @@
      .            st % dv % fnaPSch(iFc,0:1,0:ns-1)
             fna_32(ix,iy,1,0:1,0:ns-1) =
      .            st % dv % fna_32(iFc,0:1,0:ns-1)
-            fna_52(ix,iy,1,0:1,0:ns-1) = 
+            fna_52(ix,iy,1,0:1,0:ns-1) =
      .            st % dv % fna_52(iFc,0:1,0:ns-1)
             fna_32nd(ix,iy,1,0:1,0:ns-1) =
      .            st % dv % fna_32nd(iFc,0:1,0:ns-1)
@@ -4663,7 +4729,7 @@
 !      reshireg(0:nnreg(0)) = st % diag % reshireg(0:nnreg(0))
 
 *   ..write b2fstate_st in structured format
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=nout_st,file='b2fstate_st',iostat=io)
 #else
       nout_st = newunit()
@@ -4697,7 +4763,7 @@
       close(nout_st)
 
 *   ..write b2fplasmf_st in structured format
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=nout_st,file='b2fplasmf_st',iostat=io)
 #else
       nout_st = newunit()
@@ -4753,13 +4819,13 @@
         implicit none
         integer, intent(in) :: nnreg(0:2)
         integer :: ii, iout
-#ifndef F2003
+#ifdef LEGACYCOMP
         integer newunit
         external newunit
 #endif
 
 ! csc Provide conversion of x/y directed regions
-#ifdef F2003
+#ifndef LEGACYCOMP
         open(newunit=iout,file='b2us.regions.parameters')
 #else
         iout = newunit()
@@ -4792,7 +4858,7 @@
         integer :: ix, iy, iyi, iyo, iymin, iymax, iout,
      .             n_omp, n_imp, n_sep
         integer :: autodet = 1
-#ifndef F2003
+#ifdef LEGACYCOMP
         integer newunit
         external newunit
 #endif
@@ -4807,7 +4873,7 @@
         ! Writes the coordinates into b2.user.parameters
 
 *   ..find the poloidal number of outer midplane cell as the cell with min Bz
-        
+
         if (autodet.eq.0) then
 
           call get_jsep(nx,ny,n_imp,n_omp,n_sep)
@@ -4816,71 +4882,70 @@
 
         else
 
-        write (*,*) 'Attempting automatic detection of OMP and IMP'
+          write (*,*) 'Attempting automatic detection of OMP and IMP'
 
-        if(nnreg(0).eq.8) then
-          n_omp = rightcut(2)
-          iy = min(topcut(1),topcut(2))
-          do ix = rightcut(2)+1, rightcut(1)-1
-            if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
-            if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
-          enddo
-        elseif(nnreg(0).ge.4) then
-          n_omp = leftcut(1)
-          iy = topcut(1)
-          do ix = leftcut(1)+1, rightcut(1)-1
-            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-            if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
-            if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
-          enddo
-        else
-          write(*,*) ' conv_midplane: nnreg = ', nnreg(0)
-          n_omp = (nx+2)/2
-          iy = ny/2
-          do ix = -1, nx
-            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-            if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
-            if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
-          enddo
-        endif
-        iyo = iy
-        write(*,'(a,2i5)')
-     .   ' Found OMP location at ix, iy = ' , n_omp, iyo
+          if(nnreg(0).eq.8) then
+            n_omp = rightcut(2)
+            iy = min(topcut(1),topcut(2))
+            do ix = rightcut(2)+1, rightcut(1)-1
+              if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
+              if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
+            enddo
+          elseif(nnreg(0).ge.4) then
+            n_omp = leftcut(1)
+            iy = topcut(1)
+            do ix = leftcut(1)+1, rightcut(1)-1
+              if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
+              if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
+              if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
+            enddo
+          else
+            write(*,*) ' conv_midplane: nnreg = ', nnreg(0)
+            n_omp = (nx+2)/2
+            iy = ny/2
+            do ix = -1, nx
+              if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
+              if(bb(n_omp,iy,2).eq.0.0_R8) n_omp=ix
+              if(abs(bb(ix,iy,2)).lt.abs(bb(n_omp,iy,2))) n_omp=ix
+            enddo
+          endif
+          iyo = iy
+          write(*,'(a,2i5)')
+     .     ' Found OMP location at ix, iy = ' , n_omp, iyo
 
 *   ..find the poloidal number of the inner midplane cell as the cell with max Bz
 
-        if(nnreg(0).eq.8) then
-          n_imp = leftcut(2)
-          iy = min(topcut(1),topcut(2))
-          do ix = leftcut(1)+1, leftcut(2)-1
-            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-            if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
-            if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
-          enddo
-        elseif(nnreg(0).ge.4) then
-          n_imp = leftcut(1)
-          iy = topcut(1)
-          do ix = leftcut(1)+1, rightcut(1)-1
-            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-            if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
-            if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
-          enddo
-        else
-          write(*,*) ' conv_midplane: nnreg = ', nnreg(0)
-          n_imp = (nx+2)/4
-          iy = ny/2
-          do ix = -1, nx
-            if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
-            if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
-            if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
-          enddo
-        endif
-        iyi = iy
-        write(*,'(a,2i5)')
-     .   ' Found IMP location at ix, iy = ' , n_imp, iyi
+          if(nnreg(0).eq.8) then
+            n_imp = leftcut(2)
+            iy = min(topcut(1),topcut(2))
+            do ix = leftcut(1)+1, leftcut(2)-1
+              if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
+              if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
+              if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
+            enddo
+          elseif(nnreg(0).ge.4) then
+            n_imp = leftcut(1)
+            iy = topcut(1)
+            do ix = leftcut(1)+1, rightcut(1)-1
+              if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
+              if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
+              if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
+            enddo
+          else
+            write(*,*) ' conv_midplane: nnreg = ', nnreg(0)
+            n_imp = (nx+2)/4
+            iy = ny/2
+            do ix = -1, nx
+              if(.not.isRealCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
+              if(bb(n_imp,iy,2).eq.0.0_R8) n_imp=ix
+              if(abs(bb(ix,iy,2)).gt.abs(bb(n_imp,iy,2))) n_imp=ix
+            enddo
+          endif
+          iyi = iy
+          write(*,'(a,2i5)')
+     .     ' Found IMP location at ix, iy = ' , n_imp, iyi
 
         endif ! autodet
-
 
         ! Computing coordinates at OMP
         iymax = iyo
@@ -4894,8 +4959,6 @@
         write(*,'(a,2i5)')
      &             'Inner and outermost flux tube at OMP at '//
      &             'iymin, iymax  = ',iymin, iymax
-
-        
 
         ro(1)=0.25_R8*(crx(n_omp,iymin,0)+crx(n_omp,iymin,1)+ ! R-coordinate of center of [n_omp,-1] cell
      &                 crx(n_omp,iymin,2)+crx(n_omp,iymin,3))
@@ -4970,7 +5033,7 @@
           call xerrab('conv_midplane: unexpected coordinates for rzimp')
         endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
         open(newunit=iout,file='b2us.midplane.parameters')
 #else
         iout = newunit()
@@ -4983,7 +5046,7 @@
         write(iout,'(a,f6.2,a,f6.2)') ' Ri1 = ', ri(1),' Zi1 = ', zi(1)
         write(iout,'(a,f6.2,a,f6.2)') ' Ri2 = ', ri(2),' Zi2 = ', zi(2)
         close(iout)
-#ifdef F2003
+#ifndef LEGACYCOMP
         open(newunit=iout,file='b2us.user.parameters')
 #else
         open(unit=iout,file='b2us.user.parameters')
@@ -5006,4 +5069,3 @@
 ******************************************************************************
 
       end module b2us_prep
-

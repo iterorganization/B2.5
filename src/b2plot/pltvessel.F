@@ -15,6 +15,7 @@ c
       call lastd
       if(vcol .gt. 1) call gsplci(vcol)
       call gslwsc_d(vwidth)
+      call dashdc('$',1,0)
 #endif
       icnt=0
       if(mod(typeofplot,2) .eq. 1) then ! mesh physical domain

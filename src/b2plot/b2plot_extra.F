@@ -37,6 +37,7 @@ c     log10 of rate coefficient (in cm3/s)
      *   DREAC(isdimd,itdimd,iddimd),DTMP(itdimd,iddimd),ans
 *..   local variables
       integer is, ic, iCv
+      integer, save :: extrap_mode = 1, ncall = 0
       CHARACTER*2 ELNAME
       CHARACTER*200 DSN
 *..   procedures
@@ -44,6 +45,9 @@ c     log10 of rate coefficient (in cm3/s)
       external lower_case, xxdata_11, xerrab
 
       call subini ('get_adas_data')
+      if (ncall.eq.0) then
+        call ipgeti ('adas_extrap', extrap_mode)
+      end if
       is = 0
       DREAC = 6.0_R8
       do while (is.le.ns-1)
@@ -131,7 +135,8 @@ c     filling array and computing rate
             do iCv=1,nCv
               logT=log10(te(iCv)/qe)
               logD=log10(ne(iCv)/1.0e6_R8)
-              call int2d(DTMP(1:itdimd,1:iddimd),itdimd,iddimd,
+              call int2d(DTMP(1:itdimd,1:iddimd),
+     &         extrap_mode,itdimd,iddimd,
      1         DTEVD,ITMAXD,DDENSD,IDMAXD,
      2         logT,logD,ans)
               if(id.lt.10) then
@@ -163,6 +168,7 @@ c     filling array and computing rate
           end do
         endif
       enddo
+      ncall = ncall + 1
       call subend ()
       return
       end subroutine get_adas_data
@@ -170,9 +176,9 @@ c     filling array and computing rate
       subroutine get_amjuel_data(filnam,h123,reac,crc,
      1 nCv,ne,te,mach)
       use b2mod_types
+      use b2mod_eirreac
       use b2mod_constants
       IMPLICIT NONE
-#     include <eir_reac.F>
       integer nCv
       real (kind=R8) :: ne(nCv),te(nCv),mach(nCv),D11(0:8,0:8)
       CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
@@ -520,6 +526,7 @@ c         write(*,*) 'Do not yet know about ',h123
 
       SUBROUTINE SLREAC_b2plot(IR,FILNAM,H123,REAC,CRC)
       use b2mod_types
+      use b2mod_eirreac
       use b2mod_subsys
 c
 C  input
@@ -594,7 +601,6 @@ C                                   9 ELECTRON DENSITIES  AVAILABLE
 C                                   (ON CREAC(..,J,IR),J=1,9)
 C                   N           =0  ELSE
 C
-#     include <eir_reac.F>
       real(kind=R8) :: CONST, FPARM(3)
       REAL(kind=R8) :: R1MN, R1MX, R2MN, R2MX
       integer IR,I0,ISW,J,IND,INDADD,I,K,IH,IANF,IREAC,INDFF,IFLG

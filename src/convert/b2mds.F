@@ -87,7 +87,7 @@ c
       character :: mds_signal_name*(64), tdi*(172)
       real (kind=R8), allocatable ::
      *   vesl(:,:)
-      integer i, j, iCv, icnt, nsw, iVx1, iVx2
+      integer i, j, iCv, iFt, icnt, nsw, iVx1, iVx2
 #ifdef WG_TODO
       integer itmp(-1:nxd,-1:nyd)
 #endif
@@ -97,9 +97,7 @@ c
      5   crf(mpg%nFc), czf(mpg%nFc),
      7   flux_x(mpg%nFc,0:nsd_local-1),
      7   flux_y(mpg%nFc,0:nsd_local-1),
-#ifdef WG_TODO
-     8   dsrad(-1:nxd,-1:nyd),dspol(-1:nxd,-1:nyd),dspar(-1:nxd,-1:nyd),
-#endif
+     8   dsrad(1:DEF_NYD),dspol(mpg%nCv),dspar(mpg%nCv),
      9   fhesep,fhisep,fnesep,fnisep,
      *   pot(0:nsd_local-1),poti(0:nsd_local-1),
      7   za(0:nsd_local-1)
@@ -296,11 +294,10 @@ c
       end do
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
-      call b2xpen (nCv, nFc, ns, mpg,
+      call b2xpen (nCv, nFc, ns, mpg, switch,
      1  state%dv%fna, state%dv%fna_53, state%dv%fne_53, state%dv%fch,
      1  state%dv%fhe, state%dv%fhi, state%dv%fhn, state%rt%rpt,
      2  state%pl%te, state%pl%ti, state%pl%tn, state%pl%po,
-     2  switch%BoRiS,
      2  state%dv%fhm, state%dv%fhp, state%dv%fhj, state%dv%fht)
       state%dv%fht=state%dv%fht+state_ext%fhi
       do is=0,state_ext%ns-1
@@ -538,40 +535,40 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
 
-#ifdef WG_TODO
-      do ix=-1,nx
-        dsrad(ix,jsep+1)=hy1(ix,jsep+1)/2.0_R8
-        do iy=jsep+2,ny
-          dsrad(ix,iy)=dsrad(ix,iy-1)+(hy1(ix,iy-1)+hy1(ix,iy))/2.0_R8
-        enddo
-        dsrad(ix,jsep)=-hy1(ix,jsep)/2.0_R8
-        do iy=jsep-1,-1,-1
-          dsrad(ix,iy)=dsrad(ix,iy+1)-(hy1(ix,iy+1)+hy1(ix,iy))/2.0_R8
-        enddo
-      enddo
-      write(*,*) 'dsrad :',(dsrad(jxa,iy),iy=-1,ny)
-      do iy=-1,ny
-        dspol(-1,iy)=0.0_R8
-        dspar(-1,iy)=0.0_R8
-        do ix=0,nx
-          dspol(ix,iy)=dspol(ix-1,iy)+(hx(ix-1,iy)+hx(ix,iy))/2.0_R8
-          dspar(ix,iy)=dspar(ix-1,iy)+
-     1     (hx(ix-1,iy)*abs(bb(ix-1,iy,3)/bb(ix-1,iy,0))+
-     2      hx(ix,iy)*abs(bb(ix,iy,3)/bb(ix,iy,0)))/2.0_R8
-        enddo
-      enddo
-      write(*,*) 'dspol :',(dspol(ix,jsep),ix=-1,nx)
-      write(*,*) 'dspar :',(dspar(ix,jsep),ix=-1,nx)
+      call calc_dist(gm,omp,nomp,icsepomp,dsrad)
+      write(*,*) 'dsrad :',(dsrad(j),j=1,nomp)
+      dspol=0.0_R8
+      dspar=0.0_R8
+      do iFt = 1, mpg%nFt
+        do j = mpg%ftFcP(iFt,1), mpg%ftFcP(iFt,1)+mpg%ftFcP(iFt,2)-1
+          iFc = mpg%ftFc(j)
+          iCv1 = mpg%fcCv(iFc,1)
+          iCv2 = mpg%fcCv(iFc,2)
+          dspol(iCv1) = dspol(iCv1) + gm%fcHc(iFc,1)
+          dspol(iCv2) = dspol(iCv2) + gm%fcHc(iFc,2)
+        end do
+      end do
+      do iFt = 1, mpg%nFt
+        do j = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
+          iCv = mpg%ftCv(j)
+          dspar(iCv) = dspol(iCv)*gm%cvBb(iCv,3)/gm%cvBb(iCv,0)
+        end do
+      end do
+      iFt=mpg%cvFt(omp(icsepomp))
+      write(*,*) 'dspol :',(dspol(mpg%ftCv(i)),
+     . i=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1)
+      write(*,*) 'dspar :',(dspar(mpg%ftCv(i)),
+     . i=mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1)
       mds_signal_name='\TOP.SNAPSHOT.GRID:DSRAD'
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+2,ny+2,0),dsrad,0)
+     * descr2_i1(idtype_double,mpg%nCv,0),dsrad,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),dsrad,0)
+     * descr2(idtype_double,mpg%nCv,0),dsrad,0)
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
@@ -580,11 +577,11 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+2,ny+2,0),dspol,0)
+     * descr2_i1(idtype_double,mpg%nCv,0),dspol,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),dspol,0)
+     * descr2(idtype_double,mpg%nCv,0),dspol,0)
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
@@ -593,15 +590,14 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 #if ( defined(GFORTRAN) && COMPILER_MAJOR_VERSION > 9 ) || defined(G95)
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2_i2(idtype_double,nx+2,ny+2,0),dspar,0)
+     * descr2_i1(idtype_double,mpg%nCv,0),dspar,0)
 #else
       status=mdsput2(
      * trim(mds_signal_name)//char(0),trim(tdi)//char(0),
-     * descr2(idtype_double,nx+2,ny+2,0),dspar,0)
+     * descr2(idtype_double,mpg%nCv,0),dspar,0)
 #endif
       write(*,*) 'mdsput2'
       call mds_err_msg(status)
-#endif
 c
       dbsolpsversion=b2fplasma_version
       call mds_put_string('\TOP.IDENT:SOLPSVERSION',dbsolpsversion)
@@ -643,8 +639,9 @@ c 26: using total field for computing dspar
 c 27: Added EMOLRAD and EIONRAD arrays
 c 29: Same indexing error was also present in emolrad and eionrad
 c 30: changed quantities to unstructured grid
+c 32: Corrected units for srcml and edissml
 
-      dbversion=30
+      dbversion=32
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -800,6 +797,7 @@ c
      &     nCv,state%psnl%po,'')
       call mds_put_double_us('\TOP.SNAPSHOT:VOL','m^3',nCv,gm%cvVol,'')
       call mds_put_double_us('\TOP.SNAPSHOT:HX','m',nCv,gm%cvHx,'')
+      call mds_put_double_us('\TOP.SNAPSHOT:HY','m',nCv,gm%cvHy,'')
       call mds_put_double_us('\TOP.SNAPSHOT:fllime','',
      1     nFc,state%dv%fllime,'')
       call mds_put_double_us('\TOP.SNAPSHOT:fllimi','',
@@ -1149,16 +1147,11 @@ c
       flux_x(0:nx,-1:ny,0)=gs(0:nx,-1:ny,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:SX','m^2',
      1 nx+1,ny+2,flux_x,'_X')
-      do iy=-1,ny
-        do ix=0,nx
-          flux_x(ix,iy,0)=gs(ix,iy,0)*
-     1     (vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),1)+
-     2     vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,1))/
-     3     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-        enddo
-      enddo
-      call mds_put_double_rz('\TOP.SNAPSHOT:SXPERP','m^2',
-     1 nx+1,ny+2,flux_x,'_X')
+#endif
+      flux_x(:,0)=gm%fcS*gm%fcQalf(:,0)
+      call mds_put_double_us('\TOP.SNAPSHOT:SXPERP','m^2',
+     1     nFc,flux_x,'_X')
+#ifdef WG_TODO
       flux_y(-1:nx,0:ny,0)=gs(-1:nx,0:ny,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:SY','m^2',
      1 nx+2,ny+1,flux_y,'_Y')
@@ -1263,10 +1256,21 @@ c
         temp(:)=emissmol(:,1,1)
         call mds_put_double_us('\TOP.SNAPSHOT:EMISSMOL','ph.m^-3.s^-1',
      1       nCv,temp,'')
-        forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=srcml(iCv,is+1,1)
-        call mds_put_double_usns('\TOP.SNAPSHOT:SRCML','A',
+        if (jvft44.lt.20240627) then
+          forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=srcml(iCv,is+1,1)
+     1     *1.0e6_R8*gm%cvVol(iCv)/qe
+        else
+          forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=srcml(iCv,is+1,1)
+        endif
+        call mds_put_double_usns('\TOP.SNAPSHOT:SRCML','s^-1',
      1       nCv,nmoli,tmp,'TEXTMN','')
-        forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=edissml(iCv,is+1,1)
+        if (jvft44.lt.20240627) then
+          forall (iCv=1:nCv,is=0:nmoli-1)
+     1       tmp(iCv,is)=edissml(iCv,is+1,1)*1.0e6_R8*gm%cvVol(iCv)
+        else
+          forall (iCv=1:nCv,is=0:nmoli-1)
+     1       tmp(iCv,is)=edissml(iCv,is+1,1)
+        endif
         call mds_put_double_usns('\TOP.SNAPSHOT:EDISSML','W',
      1       nCv,nmoli,tmp,'TEXTMN','')
         forall (iCv=1:nCv,is=0:nmoli-1) tmp(iCv,is)=emolrad(iCv,is+1,0)

@@ -45,11 +45,11 @@
      *  twrk_hlp(:)
 
       real (kind=R8), save ::
-     *  pp1(2,DEF_NLIM+2*DEF_NYD),
-     *  pp2(2,DEF_NLIM+2*DEF_NYD)
+     *  pp1(2,2*DEF_NLIM+4*DEF_NYD),
+     *  pp2(2,2*DEF_NLIM+4*DEF_NYD)
 
       integer, allocatable, save ::
-     *  ind_hlp(:), indt_hlp(:)
+     *  ind_hlp(:), indt_hlp(:), b2_fnmti(:)
 
       integer, allocatable, save ::
      *  cvIx(:), cvIy(:), fcxIx(:), fcxIy(:), fcyIx(:), fcyIy(:),
@@ -77,7 +77,7 @@
       parameter (wklng=10)
 
 #ifndef PSR
-      character*16, allocatable, save ::
+      character*19, allocatable, save ::
      *  textpl(:),
      *  textplel(:),
      *  textplel2(:,:),
@@ -94,7 +94,7 @@
      *  texttrack(:),
      *  texttargsp(:)    
 #else
-      character*16, save ::
+      character*19, save ::
      *  textpl(0:DEF_NPLS-1),
      *  textplel(0:DEF_NPLS),
      *  textplel2(0:DEF_NPLS,0:DEF_NPLS),
@@ -117,7 +117,7 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
       parameter(npart=100000)
 
       real (kind=R8), save ::
-     * arrowl,earrowl,arroww,signmf,
+     * arrowl,earrowl,arroww,
      * sepwidth,lwidth,wwidth,owidth,vwidth,ewidth,zwidth
       integer, save ::
      * nidim,linlog,wlinlog,tlinlog,trglinlog
@@ -127,7 +127,7 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
      *  ixref,iyref
 cank 960511
       integer, save ::
-     *  nlimi,nstsi,natmi,nmoli,nioni,nlim1
+     *  nlimi,nstsi,natmi,nmoli,nioni,nlim1,nsts1
 cank
       integer, save ::
      *  mcol,scol,vcol,ocol,ecol,fcol,acol,zcol,y_transform_l,
@@ -137,7 +137,7 @@ cank
      *  writing_to_file,color_set,use_compile,
      *  plot_vs_full_psi,plot_vs_norm_psi,plot_vs_root_psi,plot_vs_rmaj,
      *  set_resignore_regions_to_zero,plotting_wall,map_to_midplane,
-     *  xparallel,plotting_sep,bold,expline
+     *  xparallel,plotting_sep,bold,expline,ratio
 
       character*256, save ::
      *  graphlabel(wklng),
@@ -146,6 +146,8 @@ cank
      *  solpstop,moviename,expfile,wallfile
       character*80, save ::
      *  b2version
+      character*10, save ::
+     *  linefmt
 
       integer, save :: nsw
 
@@ -159,9 +161,6 @@ cank
       integer nCv,nFc,nVx
       integer nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
       integer nsw
-#ifdef WG_TODO
-      external get_jsep, get_nxt, ipgeti, xertst
-#endif
 
       nsw=max(nsd+3,(nsd+1)*(nsd+1)-1,ns_ext)
 
@@ -191,6 +190,7 @@ cank
       allocate(fcyIy(1:nFc))
       allocate(vxIx(1:nVx))
       allocate(vxIy(1:nVx))
+      allocate(b2_fnmti(1:nFc))
       allocate(ic_active(1:nCv))
 #ifndef PSR
       allocate(textpl(0:nsd-1))
@@ -220,6 +220,7 @@ cank
       call xertst(wklngd.le.wklng,
      . 'increase size of textwk array')
 #endif
+      ratio = .true.
 
       return
       end subroutine alloc_b2mod_b2plot
@@ -302,6 +303,7 @@ cank
       deallocate(fcyIy)
       deallocate(vxIx)
       deallocate(vxIy)
+      deallocate(b2_fnmti)
       deallocate(ic_active)
 #ifndef PSR
       deallocate(textpl)

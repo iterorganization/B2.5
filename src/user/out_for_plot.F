@@ -11,12 +11,12 @@
       type(geometry), intent(in) :: gm
       type(B2state), intent(in) :: st
       integer :: iout, igeo, ielm
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iout,file='idl.conf',form='FORMATTED',
      .            ACCESS='SEQUENTIAL')
 #else
@@ -26,7 +26,7 @@
 #endif
       call out_config(iout, mpg)
       close (iout)
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=igeo,file='geometry.npco_char',form='FORMATTED',
      .            ACCESS='SEQUENTIAL')
       open (newunit=ielm,file='geometry.elemente',form='FORMATTED',
@@ -264,7 +264,7 @@
       character(*), intent(in) :: txttal, txtspc(0:ns-1), txtunt
       integer :: iout, i, k
       CHARACTER(50) :: FNAME, FORMA, FORME, FORME2
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -285,7 +285,7 @@
       WRITE (FNAME(8:9),'(i0)') ITAL
 
       IF (LFIRST) THEN
-#ifdef F2003
+#ifndef LEGACYCOMP
         OPEN (NEWUNIT=IOUT,FILE=FNAME,FORM='FORMATTED',
      .        ACCESS='SEQUENTIAL')
 #else
@@ -294,7 +294,7 @@
      .        ACCESS='SEQUENTIAL')
 #endif
       ELSE
-#ifdef F2003
+#ifndef LEGACYCOMP
         OPEN (NEWUNIT=IOUT,FILE=FNAME,FORM='FORMATTED',
      .        ACCESS='SEQUENTIAL',POSITION='APPEND')
 #else

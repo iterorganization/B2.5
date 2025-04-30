@@ -3,9 +3,9 @@
 !
 !  Differentiation of b2news_ in forward (tangent) mode (with options multiDirectional context noISIZE r8):
 !   variations   of useful results: enepar conpar potpar enipar
-!                userfluxparm cfvla cfvsa cfalf cfdpa cfsig cfdna
-!                cfhce cfhci tdata int4l int1l int2l int3l int0l
-!                fb_target fb_prev fb_current fb_const charge_frac
+!                b2recyc userfluxparm tdata cfvla cfvsa cfalf cfdpa
+!                cfsig cfdna cfhce cfhci int4l int1l int2l int3l
+!                int0l fb_target fb_prev fb_current fb_const charge_frac
 !                saved_fb_actuator fb_rescale *(st.pl.na) *(st.pl.ua)
 !                *(st.pl.po) *(st.pl.te) *(st.pl.ti) *(st.pl.tn)
 !                *(st.pl.kt) *(st.pl.zt) *(st.co.csig) *(st.co.calf)
@@ -30,39 +30,45 @@
 !                *(st.dv.fchvisq) *(st.dv.fchinert) *(st.dv.fchanml)
 !                *(st.dv.fchviskt) *(st.dv.fch_pi_c) *(st.dv.fch_pi_f)
 !                *(st.dv.fni_he) *(st.dv.fna) *(st.dv.fna_mdf)
-!                *(st.dv.fna_32) *(st.dv.fna_he) *(st.dv.fnapsch)
-!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.fna_exb)
-!                *(st.dv.fmo) *(st.dv.fne) *(st.dv.fne_he) *(st.dv.fhe)
-!                *(st.dv.fhe_mdf) *(st.dv.fhepsch) *(st.dv.fhe_exb)
-!                *(st.dv.fhi) *(st.dv.fhi_mdf) *(st.dv.fhipsch)
-!                *(st.dv.fhi_exb) *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm)
-!                *(st.dv.fkt) *(st.dv.fzt) *(st.dv.kinrgy) *(st.dv.conc)
-!                *(st.dv.flob) *(st.dv.floe) *(st.dv.floi) *(st.dv.flon)
-!                *(st.dv.flokt) *(st.dv.flozt) *(st.dv.conn) *(st.dv.conkt)
-!                *(st.dv.conzt) *(st.dv.conb) *(st.dv.cone) *(st.dv.coni)
-!                *(st.dv.resmo) *(st.dv.resco) *(st.dv.respo) *(st.dv.reshe)
-!                *(st.dv.reshi) *(st.dv.resht) *(st.dv.resmt) *(st.dv.reshn)
-!                *(st.dv.reskt) *(st.dv.reszt) *(st.dv.corua) *(st.dv.corpa)
-!                *(st.dv.corut) *(st.dv.corpo) *(st.dv.cortt) *(st.dv.corte)
-!                *(st.dv.corti) *(st.dv.cortn) *(st.dv.corkt) *(st.dv.corzt)
-!                *(st.dv.pcca) *(st.dv.pccm) *(st.dv.ne) *(st.dv.ni)
-!                *(st.dv.nn) *(st.dv.ue) *(st.dv.ne2) *(st.dv.pa)
-!                *(st.dv.pz) *(st.dv.lnlam) *(st.dv.vadia) *(st.dv.wadia)
-!                *(st.dv.vaecrb) *(st.dv.vedia) *(st.dv.veecrb)
-!                *(st.sr.sch) *(st.sr.she) *(st.sr.shi) *(st.sr.shn)
-!                *(st.sr.skt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
-!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
-!                *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
+!                *(st.dv.fna_32) *(st.dv.fna_53) *(st.dv.fna_he)
+!                *(st.dv.fnapsch) *(st.dv.fna_fcor) *(st.dv.fna_eir)
+!                *(st.dv.fna_exb) *(st.dv.fmo) *(st.dv.fne_he)
+!                *(st.dv.fne_53) *(st.dv.fhe) *(st.dv.fhe_mdf)
+!                *(st.dv.fhepsch) *(st.dv.fhe_exb) *(st.dv.fhi)
+!                *(st.dv.fhi_mdf) *(st.dv.fhipsch) *(st.dv.fhi_exb)
+!                *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm) *(st.dv.fhp)
+!                *(st.dv.fhj) *(st.dv.fht) *(st.dv.fkt) *(st.dv.fzt)
+!                *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
+!                *(st.dv.kinrgy) *(st.dv.conc) *(st.dv.flob) *(st.dv.floe)
+!                *(st.dv.floi) *(st.dv.flon) *(st.dv.flokt) *(st.dv.flozt)
+!                *(st.dv.conn) *(st.dv.conkt) *(st.dv.conzt) *(st.dv.conb)
+!                *(st.dv.cone) *(st.dv.coni) *(st.dv.resmo) *(st.dv.resco)
+!                *(st.dv.respo) *(st.dv.reshe) *(st.dv.reshi) *(st.dv.resht)
+!                *(st.dv.resmt) *(st.dv.reshn) *(st.dv.reskt) *(st.dv.reszt)
+!                *(st.dv.corua) *(st.dv.corpa) *(st.dv.corut) *(st.dv.corpo)
+!                *(st.dv.cortt) *(st.dv.corte) *(st.dv.corti) *(st.dv.cortn)
+!                *(st.dv.corkt) *(st.dv.corzt) *(st.dv.pcca) *(st.dv.pccm)
+!                *(st.dv.ne) *(st.dv.ni) *(st.dv.nn) *(st.dv.ue)
+!                *(st.dv.ne2) *(st.dv.pa) *(st.dv.pz) *(st.dv.lnlam)
+!                *(st.dv.vadia) *(st.dv.wadia) *(st.dv.vaecrb)
+!                *(st.dv.vedia) *(st.dv.veecrb) *(st.sr.sch) *(st.sr.she)
+!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.szt)
+!                *(st.sr.smo) *(st.sr.smq) *(st.sr.sna) *(st.sr.shedt)
+!                *(st.sr.sktdt) *(st.sr.sztdt) *(st.sr.shidt) *(st.sr.shndt)
+!                *(st.sr.schdt) *(st.sr.smodt) *(st.sr.snadt) *(st.srw.sch0)
+!                *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0)
+!                *(st.srw.szt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
 !                *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt) *(st.rt.rpi)
 !                *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa) *(st.rtw.rcx)
-!                *(st.rtw.rqr) *(st.psnc.na) *(st.psnc.ne) *(st.psnc.ni)
-!                *(st.psnc.fna) *(st.psnc.kinrgy)
+!                *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ne) *(st.psnl.ni)
+!                *(st.psnl.kinrgy) *(st.psnc.na) *(st.psnc.ne)
+!                *(st.psnc.ni) *(st.psnc.kinrgy)
 !   with respect to varying inputs: enepar conpar enkpar potpar
-!                mompar enipar userfluxparm cfvla cfvsa cfalf cfdpa
-!                cfsig cfdna cfhce cfhci parm_hce parm_hci parm_vla
-!                parm_vsa parm_alf parm_dpa parm_sig parm_dna tdata
-!                int4l int1l int2l int3l int0l fb_target fb_prev
-!                fb_current fb_const charge_frac saved_fb_actuator
+!                mompar enipar b2recyc userfluxparm tdata cfvla
+!                cfvsa cfalf cfdpa cfsig cfdna cfhce cfhci parm_hce
+!                parm_hci parm_vla parm_vsa parm_alf parm_dpa parm_sig
+!                parm_dna int4l int1l int2l int3l int0l fb_target
+!                fb_prev fb_current fb_const charge_frac saved_fb_actuator
 !                fb_rescale switch.keps_cd switch.keps_heat switch.keps_heat_i
 !                switch.keps_sig switch.keps_alf switch.keps_visc
 !                switch.keps_dkt switch.keps_dzt switch.keps_shear
@@ -96,45 +102,53 @@
 !                *(st.dv.fchvisq) *(st.dv.fchinert) *(st.dv.fchanml)
 !                *(st.dv.fchviskt) *(st.dv.fch_pi_c) *(st.dv.fch_pi_f)
 !                *(st.dv.fni_he) *(st.dv.fna) *(st.dv.fna_mdf)
-!                *(st.dv.fna_32) *(st.dv.fna_he) *(st.dv.fnapsch)
-!                *(st.dv.fna_fcor) *(st.dv.fna_eir) *(st.dv.fna_exb)
-!                *(st.dv.fmo) *(st.dv.fne) *(st.dv.fne_he) *(st.dv.fhe)
-!                *(st.dv.fhe_mdf) *(st.dv.fhepsch) *(st.dv.fhe_exb)
-!                *(st.dv.fhi) *(st.dv.fhi_mdf) *(st.dv.fhipsch)
-!                *(st.dv.fhi_exb) *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm)
-!                *(st.dv.fkt) *(st.dv.fzt) *(st.dv.kinrgy) *(st.dv.conc)
-!                *(st.dv.flob) *(st.dv.floe) *(st.dv.floi) *(st.dv.flon)
-!                *(st.dv.flokt) *(st.dv.flozt) *(st.dv.conn) *(st.dv.conkt)
-!                *(st.dv.conzt) *(st.dv.conb) *(st.dv.cone) *(st.dv.coni)
-!                *(st.dv.resmo) *(st.dv.resco) *(st.dv.respo) *(st.dv.reshe)
-!                *(st.dv.reshi) *(st.dv.resht) *(st.dv.resmt) *(st.dv.reshn)
-!                *(st.dv.reskt) *(st.dv.reszt) *(st.dv.corua) *(st.dv.corpa)
-!                *(st.dv.corut) *(st.dv.corpo) *(st.dv.cortt) *(st.dv.corte)
-!                *(st.dv.corti) *(st.dv.cortn) *(st.dv.corkt) *(st.dv.corzt)
-!                *(st.dv.pcca) *(st.dv.pccm) *(st.dv.ne) *(st.dv.ni)
-!                *(st.dv.nn) *(st.dv.ue) *(st.dv.ne2) *(st.dv.pa)
-!                *(st.dv.pz) *(st.dv.lnlam) *(st.dv.vadia) *(st.dv.wadia)
-!                *(st.dv.vaecrb) *(st.dv.vedia) *(st.dv.veecrb)
-!                *(st.sr.sch) *(st.sr.she) *(st.sr.shi) *(st.sr.shn)
-!                *(st.sr.skt) *(st.sr.smo) *(st.sr.smq) *(st.sr.sna)
-!                *(st.srw.sch0) *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0)
-!                *(st.srw.skt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
+!                *(st.dv.fna_32) *(st.dv.fna_53) *(st.dv.fna_he)
+!                *(st.dv.fnapsch) *(st.dv.fna_fcor) *(st.dv.fna_eir)
+!                *(st.dv.fna_exb) *(st.dv.fmo) *(st.dv.fne_he)
+!                *(st.dv.fne_53) *(st.dv.fhe) *(st.dv.fhe_mdf)
+!                *(st.dv.fhepsch) *(st.dv.fhe_exb) *(st.dv.fhi)
+!                *(st.dv.fhi_mdf) *(st.dv.fhipsch) *(st.dv.fhi_exb)
+!                *(st.dv.fnn) *(st.dv.fhn) *(st.dv.fhm) *(st.dv.fhp)
+!                *(st.dv.fhj) *(st.dv.fht) *(st.dv.fkt) *(st.dv.fzt)
+!                *(st.dv.kin_frac_hyb) *(st.dv.fluid_frac_hyb)
+!                *(st.dv.kinrgy) *(st.dv.conc) *(st.dv.flob) *(st.dv.floe)
+!                *(st.dv.floi) *(st.dv.flon) *(st.dv.flokt) *(st.dv.flozt)
+!                *(st.dv.conn) *(st.dv.conkt) *(st.dv.conzt) *(st.dv.conb)
+!                *(st.dv.cone) *(st.dv.coni) *(st.dv.resmo) *(st.dv.resco)
+!                *(st.dv.respo) *(st.dv.reshe) *(st.dv.reshi) *(st.dv.resht)
+!                *(st.dv.resmt) *(st.dv.reshn) *(st.dv.reskt) *(st.dv.reszt)
+!                *(st.dv.corua) *(st.dv.corpa) *(st.dv.corut) *(st.dv.corpo)
+!                *(st.dv.cortt) *(st.dv.corte) *(st.dv.corti) *(st.dv.cortn)
+!                *(st.dv.corkt) *(st.dv.corzt) *(st.dv.pcca) *(st.dv.pccm)
+!                *(st.dv.ne) *(st.dv.ni) *(st.dv.nn) *(st.dv.ue)
+!                *(st.dv.ne2) *(st.dv.pa) *(st.dv.pz) *(st.dv.lnlam)
+!                *(st.dv.vadia) *(st.dv.wadia) *(st.dv.vaecrb)
+!                *(st.dv.vedia) *(st.dv.veecrb) *(st.sr.sch) *(st.sr.she)
+!                *(st.sr.shi) *(st.sr.shn) *(st.sr.skt) *(st.sr.szt)
+!                *(st.sr.smo) *(st.sr.smq) *(st.sr.sna) *(st.sr.shedt)
+!                *(st.sr.sktdt) *(st.sr.sztdt) *(st.sr.shidt) *(st.sr.shndt)
+!                *(st.sr.schdt) *(st.sr.smodt) *(st.sr.snadt) *(st.srw.sch0)
+!                *(st.srw.she0) *(st.srw.shi0) *(st.srw.shn0) *(st.srw.skt0)
+!                *(st.srw.szt0) *(st.srw.smo0) *(st.srw.smq0) *(st.srw.sna0)
 !                *(st.rt.rlcx) *(st.rt.rlqa) *(st.rt.rlra) *(st.rt.rlsa)
 !                *(st.rt.rlza) *(st.rt.rlz2) *(st.rt.rlpt) *(st.rt.rlpi)
 !                *(st.rt.rlqr) *(st.rt.rza) *(st.rt.rz2) *(st.rt.rpt)
 !                *(st.rt.rpi) *(st.rtw.rsa) *(st.rtw.rra) *(st.rtw.rqa)
-!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnc.na) *(st.psnc.ua)
-!                *(st.psnc.te) *(st.psnc.ti) *(st.psnc.tn) *(st.psnc.kt)
-!                *(st.psnc.ne) *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.fna)
-!                *(st.psnc.kinrgy) (global)b2recyc[1:nstraid,0:nsdmax-1]
-!   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in mpg.intcellp:in
-!                mpg.intcellr:in geo.cvbb:in geo.cvx:in geo.cvy:in
-!                geo.cvhz:in geo.cvhx:in geo.cvqgam:in geo.cvvol:in
-!                geo.cvonedbsq:in geo.fcbb:in geo.fcs:in geo.fchc:in
-!                geo.fcht:in geo.fchz:in geo.fcvol:in geo.fcqgam:in
-!                geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in geo.fcpbshz:in
-!                geo.fcbzb:in geo.vxbb:in geo.vxhz:in geo.vxvol:in
-!                geo.vxonedbsq:in geo.cvconn:in geo.ftconn:in geo.fteps:in
+!                *(st.rtw.rcx) *(st.rtw.rqr) *(st.psnl.na) *(st.psnl.ua)
+!                *(st.psnl.te) *(st.psnl.ti) *(st.psnl.tn) *(st.psnl.kt)
+!                *(st.psnl.zt) *(st.psnl.ne) *(st.psnl.ni) *(st.psnl.kinrgy)
+!                *(st.psnc.na) *(st.psnc.ua) *(st.psnc.te) *(st.psnc.ti)
+!                *(st.psnc.tn) *(st.psnc.kt) *(st.psnc.zt) *(st.psnc.ne)
+!                *(st.psnc.ni) *(st.psnc.nn) *(st.psnc.kinrgy)
+!   Plus diff mem management of: mpg.bcfcor:in mpg.rcfcor:in-out
+!                mpg.intcellp:in mpg.intcellr:in geo.cvbb:in geo.cvx:in
+!                geo.cvy:in geo.cvhz:in geo.cvhx:in geo.cvqgam:in
+!                geo.cvvol:in geo.cvonedbsq:in geo.fcbb:in geo.fcs:in
+!                geo.fchc:in geo.fcht:in geo.fchz:in geo.fcvol:in
+!                geo.fcqgam:in geo.fcqalf:in geo.fcqbet:in geo.fcpbs:in
+!                geo.fcpbshz:in geo.fcbzb:in geo.vxbb:in geo.vxx:in
+!                geo.vxy:in geo.vxhz:in geo.vxvol:in geo.vxonedbsq:in
+!                geo.cvconn:in geo.ftconn:in geo.fsconn:in geo.fteps:in
 !                geo.ftbbav2:in st_ext.am:in st_ext.ne:in st_ext.ne2:in
 !                st_ext.ue:in st_ext.za:in st_ext.za2:in st_ext.pt:in
 !                st_ext.na:in st_ext.ni:in st_ext.ua:in st_ext.ta:in
@@ -179,10 +193,11 @@
 !                st.dv.fhepsch:in st.dv.fhe_eir:in st.dv.fhe_exb:in
 !                st.dv.fhi:in st.dv.fhi_mdf:in st.dv.fhipsch:in
 !                st.dv.fhi_eir:in st.dv.fhi_exb:in st.dv.fnn:in
-!                st.dv.fnn_32:in st.dv.fnn_52:in st.dv.fhn:in st.dv.fhm:in
-!                st.dv.fhp:in st.dv.fhj:in st.dv.fht:in st.dv.fkt:in
-!                st.dv.fzt:in st.dv.kinrgy:in st.dv.conc:in st.dv.flob:in
-!                st.dv.floe:in st.dv.floi:in st.dv.floe_noc:in
+!                st.dv.fnn_32:in st.dv.fnn_52:in st.dv.fhn:in st.dv.fnn_inc:in
+!                st.dv.fhm:in st.dv.fhp:in st.dv.fhj:in st.dv.fht:in
+!                st.dv.fkt:in st.dv.fzt:in st.dv.kin_frac_hyb:in
+!                st.dv.fluid_frac_hyb:in st.dv.kinrgy:in st.dv.conc:in
+!                st.dv.flob:in st.dv.floe:in st.dv.floi:in st.dv.floe_noc:in
 !                st.dv.floi_noc:in st.dv.flon:in st.dv.flokt:in
 !                st.dv.flozt:in st.dv.conn:in st.dv.conkt:in st.dv.conzt:in
 !                st.dv.conb:in st.dv.cone:in st.dv.coni:in st.dv.resmo:in
@@ -198,22 +213,41 @@
 !                st.dv.veecrb:in st.dv.facdrift:in st.dv.fac_exb:in
 !                st.dv.fac_vis:in st.sr.sch:in st.sr.she:in st.sr.shi:in
 !                st.sr.sne:in st.sr.shn:in st.sr.skt:in st.sr.szt:in
-!                st.sr.smo:in st.sr.smq:in st.sr.sna:in st.sr.skt_diss:in
-!                st.sr.skt_prod:in st.srw.sch0:in st.srw.she0:in
-!                st.srw.shi0:in st.srw.sne0:in st.srw.shn0:in st.srw.skt0:in
-!                st.srw.szt0:in st.srw.smo0:in st.srw.smq0:in st.srw.sna0:in
-!                st.srw.b2stbm_sch:in st.srw.b2stbm_she:in st.srw.b2stbm_shi:in
-!                st.srw.b2stbm_sne:in st.srw.b2stbm_smo:in st.srw.b2stbm_sna:in
+!                st.sr.smo:in st.sr.smq:in st.sr.sna:in st.sr.shedt:in
+!                st.sr.sktdt:in st.sr.sztdt:in st.sr.snedt:in st.sr.shidt:in
+!                st.sr.shndt:in st.sr.schdt:in st.sr.smodt:in st.sr.snadt:in
+!                st.sr.skt_diss:in st.sr.skt_prod:in st.srw.sch0:in
+!                st.srw.she0:in st.srw.shi0:in st.srw.sne0:in st.srw.shn0:in
+!                st.srw.skt0:in st.srw.szt0:in st.srw.smo0:in st.srw.smq0:in
+!                st.srw.sna0:in st.srw.smcf:in st.srw.smpr:in st.srw.smpt:in
+!                st.srw.smfr:in st.srw.b2stbc_sch:in st.srw.b2stbc_she:in
+!                st.srw.b2stbc_shi:in st.srw.b2stbc_sne:in st.srw.b2stbc_shn:in
+!                st.srw.b2stbc_skt:in st.srw.b2stbc_szt:in st.srw.b2stbc_smo:in
+!                st.srw.b2stbc_sna:in st.srw.b2stbm_sch:in st.srw.b2stbm_she:in
+!                st.srw.b2stbm_shi:in st.srw.b2stbm_sne:in st.srw.b2stbm_smo:in
+!                st.srw.b2stbm_sna:in st.srw.b2stbr_sch:in st.srw.b2stbr_she:in
+!                st.srw.b2stbr_shi:in st.srw.b2stbr_sne:in st.srw.b2stbr_shn:in
+!                st.srw.b2stbr_skt:in st.srw.b2stbr_szt:in st.srw.b2stbr_smo:in
+!                st.srw.b2stbr_sna:in st.srw.b2npmo_smaf:in st.srw.b2npmo_smag:in
+!                st.srw.b2npmo_smav:in st.srw.rsana:in st.srw.rsahi:in
+!                st.srw.rsamo:in st.srw.rrana:in st.srw.rrahi:in
+!                st.srw.rramo:in st.srw.rcxna:in st.srw.rcxhi:in
+!                st.srw.rcxmo:in st.srw.rqahe:in st.srw.rqrad:in
+!                st.srw.rqbrm:in st.srw.b2sihs_joule:in st.srw.b2sihs_divue:in
+!                st.srw.b2sihs_divua:in st.srw.b2sihs_exbe:in st.srw.b2sihs_exba:in
+!                st.srw.b2sihs_visa:in st.srw.b2sihs_fraa:in st.srw.b2sihs_str:in
 !                st.rt.rlcx:in st.rt.rlqa:in st.rt.rlrd:in st.rt.rlbr:in
 !                st.rt.rlra:in st.rt.rlsa:in st.rt.rlza:in st.rt.rlz2:in
 !                st.rt.rlpt:in st.rt.rlpi:in st.rt.rlqr:in st.rt.rza:in
 !                st.rt.rz2:in st.rt.rpt:in st.rt.rpi:in st.rtw.rsa:in
 !                st.rtw.rra:in st.rtw.rqa:in st.rtw.rrd:in st.rtw.rbr:in
-!                st.rtw.rcx:in st.rtw.rqr:in st.psnl.na:in st.psnl.ne:in
-!                st.psnl.ni:in st.psnl.fna:in st.psnl.kinrgy:in
-!                st.psnc.na:in st.psnc.ua:in st.psnc.te:in st.psnc.ti:in
-!                st.psnc.tn:in st.psnc.kt:in st.psnc.zt:in st.psnc.ne:in
-!                st.psnc.ni:in st.psnc.nn:in st.psnc.fna:in st.psnc.kinrgy:in
+!                st.rtw.rcx:in st.rtw.rqr:in st.psnl.na:in st.psnl.ua:in
+!                st.psnl.te:in st.psnl.ti:in st.psnl.tn:in st.psnl.kt:in
+!                st.psnl.zt:in st.psnl.ne:in st.psnl.ni:in st.psnl.nn:in
+!                st.psnl.fna:in st.psnl.kinrgy:in st.psnc.na:in
+!                st.psnc.ua:in st.psnc.te:in st.psnc.ti:in st.psnc.tn:in
+!                st.psnc.kt:in st.psnc.zt:in st.psnc.ne:in st.psnc.ni:in
+!                st.psnc.nn:in st.psnc.fna:in st.psnc.kinrgy:in
 !
 !
 !
@@ -228,9 +262,9 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
-& , ismain, ismain0, dtim, switch, switchd, geo, geod, mpg, mpgd, st, &
-& std, st_ext, st_extd, ierr, nbdirs)
+SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain, &
+& ismain0, dtim, switch, switchd, geo, geod, mpg, mpgd, st, std, st_ext&
+& , st_extd, st_avg, ierr, ramp_call, nbdirs)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
@@ -241,13 +275,14 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_MA28_FOR_US, ONLY : restart_ma28_for_us
+  USE B2MOD_FACDRIFT_EXB_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_TALLIES_DIFFV, ONLY : rrahireg, rranareg, rsahireg, rqradreg&
 & , rsanareg, b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg, &
-& rsamoreg
+& rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue, b2divua, b2exbe
   USE B2MOD_EIRDIAG, ONLY : tmb2, dib2, tab2, tib2, pefluxa, rfluxa, &
-& pfluxa, dmb2, lkindp, lkindm, lkindi, refluxa, dab2
+& pfluxa, dmb2, lkindp, lkindm, lkindi, refluxa, dab2, tfluxa
   USE B2MOD_TRANSPORT_NAMELIST_DIFFV, ONLY : parm_hce, parm_hced, &
 & parm_hci, parm_hcid, parm_dna, parm_dnad, parm_dpa, parm_dpad, &
 & parm_vla, parm_vlad, parm_vsa, parm_vsad, parm_alf, parm_alfd, &
@@ -259,10 +294,13 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 & enepard, enipar, enipard, nbcd, enkpar, enkpard, potpar, potpard, &
 & mompar, mompard, lfeedback
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : maxw_eff, nstraid, &
-& userfluxparm, userfluxparmd
-  USE B2MOD_B2CMPT_DIFFV, ONLY : cfvla, cfvlad, cflim, cfvsa, cfvsad, &
-& cfalf, cfalfd, cfdpa, cfdpad, cfsig, cfsigd, cfdna, cfdnad, cfhce, &
-& cfhced, cfhci, cfhcid
+& userfluxparm, userfluxparmd, b2recyc, b2recycd, arcend, targsp, &
+& b2species_start, b2species_end, lstrascl, lsns, msns, gpfc, nstrai, &
+& nstrat, debug_flags, neutrals_count, neutrals_time_mod, &
+& neutrals_time_switch, neut_scl_lim, natmid, ntrack
+  USE B2MOD_B2CMPT_DIFFV, ONLY : cfvla, cfvlad, cflim, cflimd, cfvsa, &
+& cfvsad, cfalf, cfalfd, cfdpa, cfdpad, cfsig, cfsigd, cfdna, cfdnad, &
+& cfhce, cfhced, cfhci, cfhcid
   USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : ndata, no_pflux, tr_ip_new_files&
 & , region_flags, tdata, tdatad, tr_ip_elm_count, no_div, addspec, nss, &
 & nrr, nkind_coeff, nkind_data, poloidal_scaling, transport_ip_filename,&
@@ -273,9 +311,11 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 & fb_rescale, fb_rescaled, dt_prev, feedback_namelist_used
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutlod, cutll, &
 & b2mod_math_initialised, small_r4_constant
+  USE B2MOD_WALL_DIFFV, ONLY : track_species
   USE B2MOD_AD_DIFFV
   USE B2MOD_SUBSYS
 !  Hint: nCv should be the size of dimension 1 of array temp
+!  Hint: ISIZE1OFcvvol should be the size of dimension 1 of array cvvol
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
   IMPLICIT NONE
@@ -284,23 +324,24 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 !.end b2news_
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nxtl, nxtr
+  INTEGER :: ncv, nfc, nvx, ns
   INTEGER :: nscx, nscxmax, iscx(0:nscxmax-1), ismain, ismain0
   REAL(kind=r8) :: dtim
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(SWITCHES_DIFFV), INTENT(INOUT) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
-  TYPE(MAPPING), INTENT(IN) :: mpg
-  TYPE(MAPPING_DIFFV), INTENT(IN) :: mpgd
+  TYPE(MAPPING), INTENT(INOUT) :: mpg
+  TYPE(MAPPING_DIFFV), INTENT(INOUT) :: mpgd
 !   ..input/output arguments
   TYPE(B2STATE), INTENT(INOUT) :: st
   TYPE(B2STATE_DIFFV), INTENT(INOUT) :: std
   TYPE(B2STATEEXT), INTENT(INOUT) :: st_ext
   TYPE(B2STATEEXT_DIFFV), INTENT(INOUT) :: st_extd
+  TYPE(B2AVERAGE), INTENT(IN) :: st_avg
 !   ..output arguments                                                    !xpb
   INTEGER :: ierr
-  LOGICAL :: wrong_flow
+  LOGICAL :: wrong_flow, ramp_call
 !   ..common blocks
 !
 !-----------------------------------------------------------------------
@@ -354,10 +395,8 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &     B2SAXPY_NODIFF, B2SASUM_NODIFF, IPGETI
   EXTERNAL B2SCOPY_DV, B2SAXPY_DV
   REAL(kind=r8) :: smin, smax, B2SASUM_NODIFF
-  EXTERNAL LEN_OF_DIGITS
-  INTEGER :: LEN_OF_DIGITS
 !srv 06.07.00 18.01.02
-  EXTERNAL B2XVSG_NODIFF, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
+  EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
 &     B2XPNN_NODIFF, B2XPFE_NODIFF, B2XPFI_NODIFF, B2XPPB_NODIFF, &
 &     B2XPNM_NODIFF, B2TRAL_NODIFF, B2TRQL_NODIFF, B2TREQ_NODIFF, &
 &     B2TFNB_NODIFF, B2NPMO_NODIFF, B2NPCO_NODIFF, B2NPPO_NODIFF, &
@@ -368,6 +407,8 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 !   ..initialization
   INTEGER, SAVE :: no_neutr_scl=0
   INTRINSIC ABS
+  INTRINSIC MINVAL
+  INTRINSIC MAXVAL
   INTRINSIC SQRT
   INTRINSIC MAX
   INTRINSIC MIN
@@ -376,6 +417,14 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
   EXTERNAL XERRAB
   REAL(r8) :: x1
   REAL(r8), DIMENSION(nbdirsmax) :: x1d
+  REAL(r8) :: x2
+  REAL(r8), DIMENSION(nbdirsmax) :: x2d
+  REAL(r8) :: x3
+  REAL(r8), DIMENSION(nbdirsmax) :: x3d
+  REAL(r8) :: x4
+  REAL(r8), DIMENSION(nbdirsmax) :: x4d
+  REAL(r8) :: x5
+  REAL(r8), DIMENSION(nbdirsmax) :: x5d
   INTEGER :: abs0
   REAL(r8) :: min1
   REAL(r8), DIMENSION(nbdirsmax) :: min1d
@@ -385,33 +434,34 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: arg1
+  REAL(r8) :: result10
+  REAL(r8) :: result20
   REAL(r8), DIMENSION(ncv) :: arg10
   REAL(r8), DIMENSION(nbdirsmax, ncv) :: arg10d
-  REAL(r8), DIMENSION(ncv) :: result10
-  REAL(r8), DIMENSION(nbdirsmax, ncv) :: result10d
+  REAL(r8), DIMENSION(ncv) :: result11
+  REAL(r8), DIMENSION(nbdirsmax, ncv) :: result11d
   CHARACTER(len=10) :: arg11
   CHARACTER(len=13) :: arg12
   INTEGER :: nd
   REAL(r8), DIMENSION(ncv) :: temp
   REAL(r8), DIMENSION(nCv) :: temp0
+  REAL(kind=r8), DIMENSION(nbdirsmax, nCv) :: dummyzerodiffd
   REAL(r8), DIMENSION(nbdirsmax, SIZE(st_ext%za, 1), SIZE(st_ext%za, 2)) :: &
-& dummyzerodiffd
+& dummyzerodiffd0
+  REAL(r8), DIMENSION(nbdirsmax, SIZE(st_ext%za, 1), SIZE(st_ext%za, 2)) :: &
+& dummyzerodiffd1
   REAL(r8), DIMENSION(nCv) :: temp1
   INTEGER :: nbdirs
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !     ingeger, save :: nstg2 = 0
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      real (kind=R8) ::                                                 !srv 04.06.99
 !     *   fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1)                        !srv 04.06.99
-!     2 ,facdrift/0.0e0_R8/, facdrift_target/0.0e0_R8/, facdrift_start/0.0e0_R8/, !srv 09.07.99
-!     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                 !srv 09.07.99
 !     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                    !xpb
 !     1  sne0(-1:nx,-1:ny,0:1),                                           !xpb
 !     2  shi0(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),                    !xpb
 !     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      integer, save :: re_compute_pb = 1                                !srv 15.02.10
 !
 !-----------------------------------------------------------------------
@@ -487,28 +537,24 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &                               'Not solving heat equations!'
   END IF
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-!       call ipgeti ('b2mndt_nstg2', nstg2)
-!       if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
-!         write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
-!       endif
-!       call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+!      call ipgeti ('b2mndt_nstg2', nstg2)
+!      if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
+!        write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
+!      endif
+!      call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+!
 !sw 26feb2014 some extra variables
-!       call ipgeti ('eirene_neutr_avg', neutr_avg)
-!       call ipgeti ('eirene_underrelax', nrelax)
-!       call ipgeti ('b2stbr_eir_src_nhist', nhist)
-!       call xertst (.not.(
+!      call ipgeti ('eirene_neutr_avg', neutr_avg)
+!      call ipgeti ('eirene_underrelax', nrelax)
+!      call ipgeti ('b2stbr_eir_src_nhist', nhist)
+!      call xertst (.not.(
 !     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
 !     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
 !     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
 !     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
-!       call ipgetr ('b2news_facdrift_target', facdrift_target)          !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_start', facdrift_start)            !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_inc', facdrift_inc)                !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_dec', facdrift_dec)                !srv 09.07.99
-!       facdrift=facdrift_start                                          !srv 09.07.99
-!       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
+!      call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFv')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'invalid main plasma species index ismain')
@@ -521,9 +567,9 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 !   ..extensive tests on first few calls
   IF (ncall_b2news_ .LT. 3) THEN
 !    ..test sign of bb
-    CALL B2XVSG_NODIFF(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test cvVol, cvQgam
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     result1 = smin(ncv, geo%cvqgam(1, 1), 1)
     result2 = smax(ncv, geo%cvqgam(1, 1), 1)
     CALL XERTST(-1.0_R8 .LT. result1 .AND. result2 .LT. 1.0_R8, &
@@ -543,16 +589,16 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 !    ..test present state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, st%pl, st%dv)
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
+    CALL B2XVSG(arg1, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
   END IF
 !   ..set rxf0/1/2/3
 !     Note: The potential equation needs an accurate solution on each
 !     iteration; hence the different setting of rxf2.
   rxf0 = switch%b2mndt_rxf*switch%xfm0
   rxf1 = switch%b2mndt_rxf*switch%xfm1
-! (rxf*xfm2)**0.2e0_R8                             !srv 15.01.03
-  rxf2 = 1.0e0_R8
-  IF (switch%b2mndt_rxf .EQ. 0.0e0_R8) rxf2 = 0.0e0_R8
+! (rxf*xfm2)**0.2_R8                                 !srv 15.01.03
+  rxf2 = 1.0_R8
+  IF (switch%b2mndt_rxf .EQ. 0.0_R8) rxf2 = 0.0_R8
   rxf3 = switch%b2mndt_rxf*switch%xfm3
 !
   zero = 0.0_R8
@@ -563,7 +609,7 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
     DO nd=1,nbdirs
       std%pl%po(nd, :) = 0.D0
     END DO
-    st%pl%po = 0.0e0_R8
+    st%pl%po = 0.0_R8
   ELSE IF (switch%pot_eq .EQ. 2) THEN
     DO nd=1,nbdirs
       std%pl%po(nd, :) = 3.1_R8*std%pl%te(nd, :)/qe
@@ -571,8 +617,23 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
     st%pl%po = 3.1_R8*st%pl%te/qe
   END IF
 !
-!      facdrift=min(facdrift*facdrift_inc,facdrift_target)               !srv 09.07.99
-!      write(*,*) 'facdrift',facdrift                                    !srv 09.07.99
+  IF (ramp_call .OR. ncall_b2news_ .EQ. 0) CALL &
+&   B2NEWS_FACDRIFT_FAC_EXB_INC(nfc, st%dv%fac_exb, st%dv%facdrift, st%&
+&                         dv%fac_vis, switch)
+!   ..test facdrift, fac_ExB, fac_vis
+  result10 = MINVAL(st%dv%facdrift)
+  result20 = MAXVAL(st%dv%facdrift)
+  CALL XERTST(0.0_R8 .LE. result10 .AND. 1.0_R8 .GE. result20, &
+&       'faulty argument facdrift')
+  result10 = MINVAL(st%dv%fac_exb)
+  result20 = MAXVAL(st%dv%fac_exb)
+  CALL XERTST(0.0_R8 .LE. result10 .AND. 1.0_R8 .GE. result20, &
+&       'faulty argument fac_ExB')
+  result10 = MINVAL(st%dv%fac_vis)
+  result20 = MAXVAL(st%dv%fac_vis)
+  CALL XERTST(0.0_R8 .LE. result10 .AND. 1.0_R8 .GE. result20, &
+&       'faulty argument fac_ExB')
+!
 ! ..main computation
 !   ..compute ni, nn, ne, ne2
   CALL B2XPNI_DV(ncv, ns, st%pl%na, std%pl%na, st%dv%ni, std%dv%ni, &
@@ -583,10 +644,6 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &          st_ext%ne, st%dv%ne, std%dv%ne, nbdirs)
   CALL B2XPNE_DV(ncv, ns, st%rt%rz2, std%rt%rz2, st%pl%na, std%pl%na, &
 &          st_ext%ne2, st%dv%ne2, std%dv%ne2, nbdirs)
-!*   ..compute ceqp                                                      !srv 03.07.03 {
-!      call b2xpnm (nCv, ns, st%rt%rz2, am, st%pl%na, wrk0)
-!      call b2treq (nCv, switch, geo%cvVol, st%pl%te, st%pl%ti,
-!    &  st%pl%ne, st%dv%ni, wrk0, lnlam, st_ext, ceqp)                   !srv 03.07.03 }
 !   ..compute flux limit coefficients
   CALL B2TRQL_DV(ncv, nfc, ns, switch, switchd, geo, geod, mpg, mpgd, st&
 &          %pl, std%pl, st%dv, std%dv, st_ext, st%co%chvemx, std%co%&
@@ -607,7 +664,6 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &           fchinert, std%dv%fchinert, nbdirs)
 !iyv 06.02.14
 !   ..iterate on momentum balance
-!      if (ncall_b2news_.eq.0) then                                      !srv 01.10.99
   IF (switch%ion_vlct_restrict .NE. 0) THEN
 !iyv 06.02.14
     CALL B2XPRZ_DV(ncv, ns, mp, am, st%pl%na, std%pl%na, rz, rzd, st_ext&
@@ -620,14 +676,14 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
     DO nd=1,nbdirs
       arg10d(nd, :) = (std%dv%pz(nd, :)-st%dv%pz*rzd(nd, :)/rz)/rz
       WHERE (arg10(:) .EQ. 0.D0) 
-        result10d(nd, :) = 0.D0
+        result11d(nd, :) = 0.D0
       ELSEWHERE
-        result10d(nd, :) = arg10d(nd, :)/(2.0*temp)
+        result11d(nd, :) = arg10d(nd, :)/(2.0*temp)
       END WHERE
-      wrk0d(nd, :) = geo%cvbb(:, 0)*result10d(nd, :)/geo%cvbb(:, 3)
+      wrk0d(nd, :) = geo%cvbb(:, 0)*result11d(nd, :)/geo%cvbb(:, 3)
     END DO
-    result10 = temp
-    wrk0 = result10*geo%cvbb(:, 0)/geo%cvbb(:, 3)
+    result11 = temp
+    wrk0 = result11*geo%cvbb(:, 0)/geo%cvbb(:, 3)
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, wrk0, wrk0d, st%co%&
 &             cssb, std%co%cssb, nbdirs)
   ELSE
@@ -635,40 +691,41 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
       std%co%cssb(nd, :) = 0.D0
     END DO
     st%co%cssb = 0.0_R8
-    DO nd=1,nbdirsmax
-      wrk0d(nd, :) = 0.D0
-    END DO
   END IF
-!        do is=0,ns-1                                                    !srv 01.10.99
+! The Rhie-Chow term in the particle fluxes uses pccb terms
+! which are calculated in b2npmo.
+! Hence to get a consistent calculation we need to do a dummy call to
+! b2npmo with rxf = 0 and recompute fluxes.
+  CALL B2NPMO_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, geod, &
+&          mpg, mpgd, ncall_b2news_, b2news_solving(1), 0.0_R8, dtim, st&
+&          %pl, std%pl, st%dv, std%dv, st%rt, std%rt, st%co, std%co, st%&
+&          sr, std%sr, st%srw, std%srw, st%psnc, st%psnl, std%psnl, &
+&          st_ext, st_extd, ier0, nbdirs)
   DO is=switch%nsmin,switch%nsmax-1
 !    ..compute partial pressure
     CALL B2XPPB_DV(ncv, st%rt%rza(:, is), std%rt%rza(:, :, is), st%pl%na&
 &            (:, is), std%pl%na(:, :, is), st%pl%te, std%pl%te, st%pl%ti&
 &            , std%pl%ti, st%pl%tn, std%pl%tn, is, st%dv%pa(:, is), std%&
 &            dv%pa(:, :, is), nbdirs)
-!srv 01.10.99
 !    ..compute particle flux
     CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, switch, switchd, geo, geod&
 &            , mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std%co, &
 &            st%rt, std%rt, .true., nbdirs)
   END DO
-!srv 01.10.99
-!      ..compute electron drift velocities
+!    ..compute electron drift velocities
   CALL B2TFED_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, st%dv%&
 &          facdrift, st%dv%fac_exb, st%dv%ne, std%dv%ne, st%pl%te, std%&
 &          pl%te, st%pl%po, std%pl%po, st%dv%vedia, std%dv%vedia, st%dv%&
 &          veecrb, std%dv%veecrb, nbdirs)
-!      end if                                                            !srv 01.10.99
 !
 !sw 10dec2012: added extra call if wanted/not-wanted (SOLPS4 has an
 !   extra call at this place within internal iteration)
   IF (switch%no_b2sral_call .EQ. 0) THEN
     WRITE(*, *) ' re-compute source '
 !     ..re-compute source linearisation                                  !xpb
-    CALL B2SRAL_DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, iscx, &
-&            ismain, ismain0, dtim, switch, switchd, geo, geod, mpg, &
-&            mpgd, st, std, st_ext, st_extd, wrong_flow, .false., nbdirs&
-&           )
+    CALL B2SRAL_DV(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
+&            ismain0, dtim, switch, switchd, geo, geod, mpg, mpgd, st, &
+&            std, st_ext, st_extd, st_avg, wrong_flow, .false., nbdirs)
 !     ..smooth out sources
     CALL B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, st%pl%na, st%pl%&
 &                ua, st%pl%te, st%pl%ti, st%dv%ne, st%dv%ni, st%dv%nn, &
@@ -680,60 +737,54 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &            psnc%ti, std%psnc%ti, st%psnc%tn, std%psnc%tn, st%psnc%ne, &
 &            std%psnc%ne, st%psnc%ni, std%psnc%ni, st%psnc%nn, std%psnc%&
 &            nn, st%psnc%kinrgy, std%psnc%kinrgy, st%psnc%kt, std%psnc%&
-&            kt, st%psnc%zt, st%pl%na, st%pl%ua, st%pl%te, st%pl%ti, st%&
-&            pl%tn, st%dv%ne, st%dv%ni, st%dv%nn, st%dv%kinrgy, st%pl%kt&
-&            , st%pl%zt, st%sr, std%sr, .false., nbdirs)
+&            kt, st%psnc%zt, std%psnc%zt, st%pl%na, std%pl%na, st%pl%ua&
+&            , st%pl%te, std%pl%te, st%pl%ti, std%pl%ti, st%pl%tn, std%&
+&            pl%tn, st%dv%ne, std%dv%ne, st%dv%ni, std%dv%ni, st%dv%nn, &
+&            std%dv%nn, st%dv%kinrgy, std%dv%kinrgy, st%pl%kt, std%pl%kt&
+&            , st%pl%zt, std%pl%zt, st%sr, std%sr, .false., nbdirs)
 !srv 23.07.21
 !     ..stabilise the source coefficients                                !xpb
 !srv 01.07.08
-    CALL B2SRST_DV(ncv, ns, switch, mpg, st%pl%na, std%pl%na, st%pl%ua, &
-&            std%pl%ua, st%pl%te, std%pl%te, st%pl%ti, std%pl%ti, st%pl%&
-&            tn, std%pl%tn, st%pl%po, std%pl%po, st%dv%ne, st%dv%ni, st%&
-&            dv%nn, st%pl%kt, std%pl%kt, st%pl%zt, st%sr, std%sr, nbdirs&
-&           )
+    CALL B2SRST_DV(ncv, ns, switch, st%pl%na, std%pl%na, st%pl%ua, std%&
+&            pl%ua, st%pl%te, std%pl%te, st%pl%ti, std%pl%ti, st%pl%tn, &
+&            std%pl%tn, st%pl%po, std%pl%po, st%dv%ne, std%dv%ne, st%dv%&
+&            ni, std%dv%ni, st%dv%nn, std%dv%nn, st%pl%kt, std%pl%kt, st&
+&            %pl%zt, std%pl%zt, st%sr, std%sr, nbdirs)
 !srv 23.07.21
   END IF
 !   ..compute ue, electron parallel velocity
-  IF (switch%b2sigp_style .EQ. 2 .OR. switch%b2news_iout .NE. 0) CALL &
-&   B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, qe, st%rt%rza&
-&       , std%rt%rza, st%rt%rz2, std%rt%rz2, st%co%alfx_c, std%co%alfx_c&
-&       , st%co%sigx_c, std%co%sigx_c, st%dv%fch_pi_c, std%dv%fch_pi_c, &
-&       st%pl%po, std%pl%po, st%dv%ne, std%dv%ne, st%pl%te, std%pl%te, &
-&       st%pl%na, std%pl%na, st%pl%ua, std%pl%ua, st_ext, st_extd, st%dv&
-&       %ue, std%dv%ue, nbdirs)
-  IF (switch%b2sigp_style .NE. 2 .OR. switch%b2news_iout .NE. 0) THEN
+! lkw20.03.2023{
+  DO nd=1,nbdirs
+    wrkfd(nd, :) = -(std%dv%fch_p(nd, :, 0)/(qe*(geo%fcpbs+b2news_cutlo)&
+&     ))
+  END DO
+  wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
+  CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, wrk0, wrk0d&
+&           , nbdirs)
+  DO is=0,ns-1
+    temp0 = st%rt%rza(:, is)*st%pl%ua(:, is)
     DO nd=1,nbdirs
-      wrkfd(nd, :) = -(std%dv%fch_p(nd, :, 0)/(qe*(geo%fcpbs+&
-&       b2news_cutlo)))
+      wrk0d(nd, :) = wrk0d(nd, :) + st%pl%na(:, is)*(st%pl%ua(:, is)*std&
+&       %rt%rza(nd, :, is)+st%rt%rza(:, is)*std%pl%ua(nd, :, is)) + &
+&       temp0*std%pl%na(nd, :, is)
     END DO
-    wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
-    CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, wrk0, &
-&             wrk0d, nbdirs)
-    DO is=0,ns-1
-      temp0 = st%rt%rza(:, is)*st%pl%ua(:, is)
-      DO nd=1,nbdirs
-        wrk0d(nd, :) = wrk0d(nd, :) + st%pl%na(:, is)*(st%pl%ua(:, is)*&
-&         std%rt%rza(nd, :, is)+st%rt%rza(:, is)*std%pl%ua(nd, :, is)) +&
-&         temp0*std%pl%na(nd, :, is)
-      END DO
-      wrk0 = wrk0 + temp0*st%pl%na(:, is)
-    END DO
-    wrk0 = wrk0 + st_ext%ue*st_ext%ne
+    wrk0 = wrk0 + temp0*st%pl%na(:, is)
+  END DO
+  wrk0 = wrk0 + st_ext%ue*st_ext%ne
 !srv 05.03.11
-    DO nd=1,nbdirs
-      wrk0d(nd, :) = (wrk0d(nd, :)-wrk0*std%dv%ne(nd, :)/st%dv%ne)/st%dv&
-&       %ne
-    END DO
-    wrk0 = wrk0/st%dv%ne
-  END IF
+  DO nd=1,nbdirs
+    wrk0d(nd, :) = (wrk0d(nd, :)-wrk0*std%dv%ne(nd, :)/st%dv%ne)/st%dv%&
+&     ne
+  END DO
+  wrk0 = wrk0/st%dv%ne
 !srv 05.07.17
   IF (switch%b2news_iout .NE. 0) THEN
 !srv 05.07.17
     CALL B2XZEF_DV(ncv, ns, st%rt%rz2, std%rt%rz2, st%pl%na, std%pl%na, &
 &            st%dv%ne, std%dv%ne, zeff, zeffd, st_ext, nbdirs)
-    CALL B2XPIC_DV(ncv, ns, mpg, qe, st%rt%rza, std%rt%rza, geo%cvbb, st&
-&            %pl%na, std%pl%na, st%pl%ua, std%pl%ua, zeff, zeffd, st_ext&
-&            , st%dv%fch_pi_c, std%dv%fch_pi_c, nbdirs)
+    CALL B2XPIC_DV(ncv, ns, qe, st%rt%rza, std%rt%rza, geo%cvbb, st%pl%&
+&            na, std%pl%na, st%pl%ua, std%pl%ua, zeff, zeffd, st_ext, st&
+&            %dv%fch_pi_c, std%dv%fch_pi_c, nbdirs)
     CALL B2XPIF_DV(ncv, nfc, switch, geo, mpg, st%dv%fch_pi_c, std%dv%&
 &            fch_pi_c, st%dv%fch_pi_f, std%dv%fch_pi_f, nbdirs)
     CALL MY_OUT_US(70, ncv, 0, st%dv%fch_pi_c, 'b2news__fch_pi_c'&
@@ -743,39 +794,17 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
     CALL MY_OUT_US(70, ncv, 0, st%dv%ue, 'b2news__ve')
     CALL MY_OUT_US(70, ncv, 0, wrk0, 'b2news__ue')
   END IF
-  IF (switch%b2sigp_style .NE. 2) THEN
-    DO nd=1,nbdirs
-      std%dv%ue(nd, :) = wrk0d(nd, :)
-    END DO
-    st%dv%ue = wrk0
-  END IF
-!
+  DO nd=1,nbdirs
+    std%dv%ue(nd, :) = wrk0d(nd, :)
+  END DO
+  st%dv%ue = wrk0
+!lkw20.03.2023}
 !sw 11oct2012 added check on Coriolis force (taken from b2news)
   ier0 = 0
-! Necessary for smooth restart with Rhie-Chow:
-! The Rhie-Chow term in the particle fluxes uses pccb terms which are calculated in b2npmo.
-! Hence to get a smooth restart after cp b2fstate bfstati we need to do a dummy call to
-! b2npmo with rxf = 0 and recompute fluxes.
-  IF (ncall_b2news_ .EQ. 0) THEN
-    CALL B2NPMO_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, &
-&            mpgd, ncall_b2news_, b2news_solving(1), 0.0_R8, st%pl, std%&
-&            pl, st%dv, std%dv, st%rt, std%rt, st%co, std%co, st%sr, std&
-&            %sr, st_ext, st_extd, ier0, nbdirs)
-    DO is=switch%nsmin,switch%nsmax-1
-!    ..compute partial pressure
-      CALL B2XPPB_DV(ncv, st%rt%rza(:, is), std%rt%rza(:, :, is), st%pl%&
-&              na(:, is), std%pl%na(:, :, is), st%pl%te, std%pl%te, st%&
-&              pl%ti, std%pl%ti, st%pl%tn, std%pl%tn, is, st%dv%pa(:, is&
-&              ), std%dv%pa(:, :, is), nbdirs)
-!    ..compute particle flux
-      CALL B2TFNB_DV(ncv, nfc, nvx, is, ismain, switch, switchd, geo, &
-&              geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std&
-&              %co, st%rt, std%rt, .true., nbdirs)
-    END DO
-  END IF
-  CALL B2NPMO_DV(ncv, nfc, nvx, ns, ismain, switch, geo, geod, mpg, mpgd&
-&          , ncall_b2news_, b2news_solving(1), rxf1, st%pl, std%pl, st%&
-&          dv, std%dv, st%rt, std%rt, st%co, std%co, st%sr, std%sr, &
+  CALL B2NPMO_DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, geod, &
+&          mpg, mpgd, ncall_b2news_, b2news_solving(1), rxf1, dtim, st%&
+&          pl, std%pl, st%dv, std%dv, st%rt, std%rt, st%co, std%co, st%&
+&          sr, std%sr, st%srw, std%srw, st%psnc, st%psnl, std%psnl, &
 &          st_ext, st_extd, ier0, nbdirs)
   CALL XERTST(ier0 .EQ. 0, 'error return from b2npmo')
 !   ..set nep
@@ -801,38 +830,54 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
     DO icv=1,ncv
       IF (st%pl%na(icv, is) .LT. switch%b2mndr_na_min) THEN
         DO nd=1,nbdirs
+          x1d(nd) = 0.D0
+        END DO
+        x1 = switch%b2mndr_na_min
+        DO nd=1,nbdirsmax
+          x1d(nd) = 0.D0
+        END DO
+      ELSE
+        DO nd=1,nbdirs
+          x1d(nd) = std%pl%na(nd, icv, is)
+        END DO
+        x1 = st%pl%na(icv, is)
+      END IF
+      IF (x1 .GT. switch%b2mndr_na_max) THEN
+        DO nd=1,nbdirs
           std%pl%na(nd, icv, is) = 0.D0
         END DO
-        st%pl%na(icv, is) = switch%b2mndr_na_min
+        st%pl%na(icv, is) = switch%b2mndr_na_max
       ELSE
-        st%pl%na(icv, is) = st%pl%na(icv, is)
+        DO nd=1,nbdirs
+          std%pl%na(nd, icv, is) = x1d(nd)
+        END DO
+        st%pl%na(icv, is) = x1
       END IF
     END DO
-!
 !! option to impose a speed limit for fluid neutrals in case of spatially hybrid neutrals
     IF (switch%spatial_hybrid .NE. 0 .AND. is_neutral(is)) THEN
       DO icv=1,ncv
         IF (st%pl%ua(icv, is) .GE. 0.) THEN
           DO nd=1,nbdirs
-            x1d(nd) = std%pl%ua(nd, icv, is)
+            x2d(nd) = std%pl%ua(nd, icv, is)
           END DO
-          x1 = st%pl%ua(icv, is)
+          x2 = st%pl%ua(icv, is)
         ELSE
           DO nd=1,nbdirs
-            x1d(nd) = -std%pl%ua(nd, icv, is)
+            x2d(nd) = -std%pl%ua(nd, icv, is)
           END DO
-          x1 = -st%pl%ua(icv, is)
+          x2 = -st%pl%ua(icv, is)
         END IF
-        IF (x1 .GT. switch%b2mndr_ua_max) THEN
+        IF (x2 .GT. switch%b2mndr_ua_max) THEN
           min1 = switch%b2mndr_ua_max
           DO nd=1,nbdirsmax
             min1d(nd) = 0.D0
           END DO
         ELSE
           DO nd=1,nbdirs
-            min1d(nd) = x1d(nd)
+            min1d(nd) = x2d(nd)
           END DO
-          min1 = x1
+          min1 = x2
         END IF
         DO nd=1,nbdirs
           std%pl%ua(nd, icv, is) = SIGN(1.d0, min1*st%pl%ua(icv, is))*&
@@ -841,7 +886,6 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
         st%pl%ua(icv, is) = SIGN(min1, st%pl%ua(icv, is))
       END DO
     END IF
-!
 !    ..compute partial pressure
     CALL B2XPPB_DV(ncv, st%rt%rza(:, is), std%rt%rza(:, :, is), st%pl%na&
 &            (:, is), std%pl%na(:, :, is), st%pl%te, std%pl%te, st%pl%ti&
@@ -866,19 +910,37 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 !srv 22.05.18
     CALL B2NPCO_DV(ncv, nfc, nvx, mpg%nnreg(0), b2news_solving(2), &
 &            solvedum, b2news_solving(1), solvedm2, ncall_b2news_, is, &
-&            rxf0, switch, switchd, geo, geod, mpg, mpgd, st%pl, std%pl&
-&            , st%dv, std%dv, st%sr, std%sr, ier0, nbdirs)
+&            rxf0, dtim, switch, switchd, geo, geod, mpg, mpgd, st%pl, &
+&            std%pl, st%dv, std%dv, st%sr, std%sr, st%psnc, st%psnl, std&
+&            %psnl, ier0, nbdirs)
     CALL XERTST(ier0 .EQ. 0, 'error return from b2npco')
     last_solve_9(0:mpg%nnreg(0)) = solveco(is, 0:mpg%nnreg(0))
-!        endif                                                            !srv 13.10.06 } 22.05.18
+!        endif                                                           !srv 13.10.06 } 22.05.18
     DO icv=1,ncv
       IF (st%pl%na(icv, is) .LT. switch%b2mndr_na_min) THEN
         DO nd=1,nbdirs
+          x3d(nd) = 0.D0
+        END DO
+        x3 = switch%b2mndr_na_min
+        DO nd=1,nbdirsmax
+          x3d(nd) = 0.D0
+        END DO
+      ELSE
+        DO nd=1,nbdirs
+          x3d(nd) = std%pl%na(nd, icv, is)
+        END DO
+        x3 = st%pl%na(icv, is)
+      END IF
+      IF (x3 .GT. switch%b2mndr_na_max) THEN
+        DO nd=1,nbdirs
           std%pl%na(nd, icv, is) = 0.D0
         END DO
-        st%pl%na(icv, is) = switch%b2mndr_na_min
+        st%pl%na(icv, is) = switch%b2mndr_na_max
       ELSE
-        st%pl%na(icv, is) = st%pl%na(icv, is)
+        DO nd=1,nbdirs
+          std%pl%na(nd, icv, is) = x3d(nd)
+        END DO
+        st%pl%na(icv, is) = x3
       END IF
     END DO
 !        if(re_compute_pb.eq.1) then                                     !srv 15.02.10
@@ -929,10 +991,13 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 !   ..compute ceqp                                                       !srv 03.07.03 {
   CALL B2XPNM_DV(ncv, ns, st%rt%rz2, std%rt%rz2, am, st%pl%na, std%pl%na&
 &          , wrk0, wrk0d, nbdirs)
-  CALL B2TREQ_DV(ncv, switch, geo%cvvol, st%pl%te, std%pl%te, st%pl%ti, &
-&          std%pl%ti, st%dv%ne, std%dv%ne, st%dv%ni, std%dv%ni, wrk0, &
-&          wrk0d, st%dv%lnlam, std%dv%lnlam, st_ext, st%co%ceqp, std%co%&
-&          ceqp, nbdirs)
+  DO nd=1,nbdirsmax
+    dummyzerodiffd(nd, :) = 0.D0
+  END DO
+  CALL B2TREQ_DV(ncv, switch, switchd, geo%cvvol, dummyzerodiffd, st%pl%&
+&          te, std%pl%te, st%pl%ti, std%pl%ti, st%dv%ne, std%dv%ne, st%&
+&          dv%ni, std%dv%ni, wrk0, wrk0d, st%dv%lnlam, std%dv%lnlam, &
+&          st_ext, st%co%ceqp, std%co%ceqp, nbdirs)
 !srv 12.07.05 }
 !srv 03.07.03 }
   IF (switch%b2news_iout .NE. 0) THEN
@@ -956,7 +1021,7 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
     DO nd=1,nbdirs
       std%pl%po(nd, :) = 0.D0
     END DO
-    st%pl%po = 0.0e0_R8
+    st%pl%po = 0.0_R8
     CALL B2TFCH__DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, switchd&
 &             , geo, geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%&
 &             co, std%co, st%rt, std%rt, st_ext, st_extd, nbdirs)
@@ -991,7 +1056,7 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
     IF (b2news_solving(3)) THEN
 !srv 06.07.00
 !   ..solve the potential equation
-      IF (switch%fhe_vis_per .EQ. 0.0e0_R8 .OR. .true.) THEN
+      IF (switch%fhe_vis_per .EQ. 0.0_R8 .OR. .true.) THEN
 !srv 06.07.00
         new_matrix = .false.
         DO ireg=0,mpg%nnreg(0)
@@ -1001,9 +1066,9 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
         IF (new_matrix .OR. .true.) CALL RESTART_MA28_FOR_US()
 !srv 22.05.18
         CALL B2NPPO_DV(ncv, nfc, nvx, mpg%nnreg(0), b2news_solving(3), &
-&                solvepo, ncall_b2news_, rxf2, switch, geo, geod, mpg, &
-&                mpgd, st%pl, std%pl, st%dv, std%dv, st%sr, std%sr, ier0&
-&                , nbdirs)
+&                solvepo, ncall_b2news_, rxf2, switch, switchd, geo, &
+&                geod, mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%sr, &
+&                std%sr, ier0, nbdirs)
         last_solve_9(0:mpg%nnreg(0)) = solvepo(0:mpg%nnreg(0))
       ELSE
         CALL XERRAB('visper not yet available for WG')
@@ -1017,14 +1082,14 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &               %dv, st%co, std%co, st%rt, std%rt, st_ext, st_extd, &
 &               nbdirs)
 !   ..compute new residual following the tradition
-      CALL B2URSD_NODIFF(ncv, nfc, geo, mpg, st%dv%ne, st%pl%po, st%sr%&
-&                  sch, st%dv%fch, wrk0)
+      CALL B2URSD_NODIFF(ncv, nfc, mpg, st%dv%ne, st%pl%po, st%sr%sch, &
+&                  st%dv%fch, wrk0)
       t0 = B2SASUM_NODIFF(ncv, wrk0, 1)
       WRITE(*, *) 'respo after solving', t0
     ELSE IF (switch%get_residuals .EQ. 1) THEN
-      CALL B2URSD_DV(ncv, nfc, geo, mpg, st%dv%ne, std%dv%ne, st%pl%po, &
-&              std%pl%po, st%sr%sch, std%sr%sch, st%dv%fch, std%dv%fch, &
-&              st%dv%respo, std%dv%respo, nbdirs)
+      CALL B2URSD_DV(ncv, nfc, mpg, st%dv%ne, std%dv%ne, st%pl%po, std%&
+&              pl%po, st%sr%sch, std%sr%sch, st%dv%fch, std%dv%fch, st%&
+&              dv%respo, std%dv%respo, nbdirs)
     END IF
   END IF
 !srv 12.07.05 }
@@ -1050,14 +1115,14 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
     DO nd=1,nbdirs
       arg10d(nd, :) = (std%dv%pz(nd, :)-st%dv%pz*rzd(nd, :)/rz)/rz
       WHERE (arg10(:) .EQ. 0.D0) 
-        result10d(nd, :) = 0.D0
+        result11d(nd, :) = 0.D0
       ELSEWHERE
-        result10d(nd, :) = arg10d(nd, :)/(2.0*temp)
+        result11d(nd, :) = arg10d(nd, :)/(2.0*temp)
       END WHERE
-      wrk0d(nd, :) = geo%cvbb(:, 0)*result10d(nd, :)/geo%cvbb(:, 3)
+      wrk0d(nd, :) = geo%cvbb(:, 0)*result11d(nd, :)/geo%cvbb(:, 3)
     END DO
-    result10 = temp
-    wrk0 = result10*geo%cvbb(:, 0)/geo%cvbb(:, 3)
+    result11 = temp
+    wrk0 = result11*geo%cvbb(:, 0)/geo%cvbb(:, 3)
     CALL INTFACE_DV(ncv, nfc, mpg%fccv, geo%fcvol, wrk0, wrk0d, st%co%&
 &             cssb, std%co%cssb, nbdirs)
   ELSE
@@ -1081,16 +1146,20 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 !   ..compute fne_he, fni_he
 !      with diamagnetic drift part                                       !srv 13.05.99
   DO nd=1,nbdirsmax
-    dummyzerodiffd(nd, :, :) = 0.D0
+    dummyzerodiffd0(nd, :, :) = 0.D0
   END DO
   CALL B2XPFE_DV(ncv, nfc, ns, st_ext%ns, geo, mpg, qe, st%rt%rza, std%&
-&          rt%rza, st_ext%za, dummyzerodiffd, st%dv%fna_he, std%dv%&
+&          rt%rza, st_ext%za, dummyzerodiffd0, st%dv%fna_he, std%dv%&
 &          fna_he, st_ext%fa, st%dv%fch_p, std%dv%fch_p, st%dv%fne_he, &
 &          std%dv%fne_he, nbdirs)
 !srv 13.05.99 21.01.00 11.10.02
-  CALL B2XPFE_NODIFF(ncv, nfc, ns, st_ext%ns, geo, mpg, qe, st%rt%rza, &
-&              st_ext%za, st%dv%fna_53, st_ext%fa, st%dv%fch_p, st%dv%&
-&              fne_53)
+  DO nd=1,nbdirsmax
+    dummyzerodiffd1(nd, :, :) = 0.D0
+  END DO
+  CALL B2XPFE_DV(ncv, nfc, ns, st_ext%ns, geo, mpg, qe, st%rt%rza, std%&
+&          rt%rza, st_ext%za, dummyzerodiffd1, st%dv%fna_53, std%dv%&
+&          fna_53, st_ext%fa, st%dv%fch_p, std%dv%fch_p, st%dv%fne_53, &
+&          std%dv%fne_53, nbdirs)
   CALL B2XPFE_NODIFF(ncv, nfc, ns, st_ext%ns, geo, mpg, qe, st%rt%rza, &
 &              st_ext%za, st%dv%fna_32nd, st_ext%fa, st%dv%fch_32, st%dv&
 &              %fne_32)
@@ -1132,77 +1201,74 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
     CALL B2XPFN_NODIFF(nfc, ns, st%dv%fna_52nd, st%dv%fnn_52)
     st%dv%fni_52 = fni0 - st%dv%fnn_52
   END IF
-!      ..compute electron drift velocities
+!   ..compute electron drift velocities
   CALL B2TFED_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, st%dv%&
 &          facdrift, st%dv%fac_exb, st%dv%ne, std%dv%ne, st%pl%te, std%&
 &          pl%te, st%pl%po, std%pl%po, st%dv%vedia, std%dv%vedia, st%dv%&
 &          veecrb, std%dv%veecrb, nbdirs)
+!   ..compute heat fluxes
 !srv 29.01.20
-  CALL B2TFHE__DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, st%pl&
-&           , std%pl, st%dv, std%dv, st%co, std%co, st%rt, std%rt, &
-&           st_ext, st_extd, .true., nbdirs)
+  CALL B2TFHE__DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg, &
+&           mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std%co, st%rt, &
+&           std%rt, st_ext, st_extd, .true., nbdirs)
 !djm Jan2017
 !sw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 !srv 13.10.06
   CALL B2TFHI__DV(ncv, nfc, nvx, ns, ismain, switch, switchd, geo, geod&
-&           , mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std%co, st&
-&           %rt, .true., nbdirs)
+&           , mpg, mpgd, st%pl, std%pl, st%dv, std%dv, st%co, std%co, &
+&           .true., nbdirs)
 !djm Jan2017
 !srv 24.10.02
   st%dv%floi_noc = st%dv%floi
 !srv 24.10.02
   st%dv%floe_noc = st%dv%floe
-!
-  CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, st%dv%fna, st%dv%fna_53, st%dv%&
-&              fne_53, st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt&
-&              %rpt, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, switch%&
-&              boris, st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
+  CALL B2XPEN_DV(ncv, nfc, ns, mpg, switch, st%dv%fna, std%dv%fna, st%dv&
+&          %fna_53, std%dv%fna_53, st%dv%fne_53, std%dv%fne_53, st%dv%&
+&          fch, std%dv%fch, st%dv%fhe, std%dv%fhe, st%dv%fhi, std%dv%fhi&
+&          , st%dv%fhn, std%dv%fhn, st%rt%rpt, std%rt%rpt, st%pl%te, std&
+&          %pl%te, st%pl%ti, std%pl%ti, st%pl%tn, std%pl%tn, st%pl%po, &
+&          std%pl%po, st%dv%fhm, std%dv%fhm, st%dv%fhp, std%dv%fhp, st%&
+&          dv%fhj, std%dv%fhj, st%dv%fht, std%dv%fht, nbdirs)
 !
 !   ..add contribution from cdpa to floe, cone, floi, coni
   CALL B2TFCC_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, st%pl&
 &          , std%pl, st%dv, std%dv, st%co, std%co, st%rt, std%rt, nbdirs&
 &         )
-  IF (switch%b2sigp_style .NE. 2) THEN
 !   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
+!lkw20.03.2023{
+  DO nd=1,nbdirs
+    wrkfd(nd, :) = -(std%dv%fch_p(nd, :, 0)/(qe*(geo%fcpbs+b2news_cutlo)&
+&     ))
+  END DO
+  wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
+  CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, st%dv%ue, &
+&           std%dv%ue, nbdirs)
+  DO is=0,ns-1
+    temp1 = st%rt%rza(:, is)*st%pl%ua(:, is)
     DO nd=1,nbdirs
-      wrkfd(nd, :) = -(std%dv%fch_p(nd, :, 0)/(qe*(geo%fcpbs+&
-&       b2news_cutlo)))
+      std%dv%ue(nd, :) = std%dv%ue(nd, :) + st%pl%na(:, is)*(st%pl%ua(:&
+&       , is)*std%rt%rza(nd, :, is)+st%rt%rza(:, is)*std%pl%ua(nd, :, is&
+&       )) + temp1*std%pl%na(nd, :, is)
     END DO
-    wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
-    CALL INTCELL_DV(nfc, ncv, mpg, mpg%intcellp, wrkf, wrkfd, st%dv%ue, &
-&             std%dv%ue, nbdirs)
-    DO is=0,ns-1
-      temp1 = st%rt%rza(:, is)*st%pl%ua(:, is)
-      DO nd=1,nbdirs
-        std%dv%ue(nd, :) = std%dv%ue(nd, :) + st%pl%na(:, is)*(st%pl%ua(&
-&         :, is)*std%rt%rza(nd, :, is)+st%rt%rza(:, is)*std%pl%ua(nd, :&
-&         , is)) + temp1*std%pl%na(nd, :, is)
-      END DO
-      st%dv%ue = st%dv%ue + temp1*st%pl%na(:, is)
-    END DO
-    st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
+    st%dv%ue = st%dv%ue + temp1*st%pl%na(:, is)
+  END DO
+  st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
 !srv 05.03.11
-    DO nd=1,nbdirs
-      std%dv%ue(nd, :) = (std%dv%ue(nd, :)-st%dv%ue*std%dv%ne(nd, :)/st%&
-&       dv%ne)/st%dv%ne
-    END DO
-    st%dv%ue = st%dv%ue/st%dv%ne
-  ELSE
-    CALL B2XPVE_DV(ncv, nfc, ns, switch, geo, geod, mpg, mpgd, qe, st%rt&
-&            %rza, std%rt%rza, st%rt%rz2, std%rt%rz2, st%co%alfx_c, std%&
-&            co%alfx_c, st%co%sigx_c, std%co%sigx_c, st%dv%fch_pi_c, std&
-&            %dv%fch_pi_c, st%pl%po, std%pl%po, st%dv%ne, std%dv%ne, st%&
-&            pl%te, std%pl%te, st%pl%na, std%pl%na, st%pl%ua, std%pl%ua&
-&            , st_ext, st_extd, st%dv%ue, std%dv%ue, nbdirs)
-  END IF
+  DO nd=1,nbdirs
+    std%dv%ue(nd, :) = (std%dv%ue(nd, :)-st%dv%ue*std%dv%ne(nd, :)/st%dv&
+&     %ne)/st%dv%ne
+  END DO
+  st%dv%ue = st%dv%ue/st%dv%ne
+!lkw20.03.2023}
 !
 !   ..iterate on heat balance
 !srv 22.05.18
   CALL B2NPHT_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg, &
 &          mpgd, ncall_b2news_, ismain, b2news_solving, solveee, solveei&
 &          , solveen, solveet, solvepo, solvemo, solvekt, solvezt, rxf3&
-&          , st%pl, std%pl, st%dv, std%dv, st%co, std%co, st%rt, std%rt&
-&          , st%sr, std%sr, st_ext, st_extd, ier0, nbdirs)
+&          , dtim, st%pl, std%pl, st%dv, std%dv, st%co, std%co, st%rt, &
+&          std%rt, st%sr, std%sr, st%srw, std%srw, st%psnc, st%psnl, std&
+&          %psnl, st_ext, st_extd, ier0, nbdirs)
 !sw 16aug2011 init potential
 !srv 13.07.05
   IF (switch%pot_eq .EQ. 0) THEN
@@ -1229,11 +1295,28 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
       DO icv=1,ncv
         IF (st%pl%na(icv, is) .LT. switch%b2mndr_na_min) THEN
           DO nd=1,nbdirs
+            x4d(nd) = 0.D0
+          END DO
+          x4 = switch%b2mndr_na_min
+          DO nd=1,nbdirsmax
+            x4d(nd) = 0.D0
+          END DO
+        ELSE
+          DO nd=1,nbdirs
+            x4d(nd) = std%pl%na(nd, icv, is)
+          END DO
+          x4 = st%pl%na(icv, is)
+        END IF
+        IF (x4 .GT. switch%b2mndr_na_max) THEN
+          DO nd=1,nbdirs
             std%pl%na(nd, icv, is) = 0.D0
           END DO
-          st%pl%na(icv, is) = switch%b2mndr_na_min
+          st%pl%na(icv, is) = switch%b2mndr_na_max
         ELSE
-          st%pl%na(icv, is) = st%pl%na(icv, is)
+          DO nd=1,nbdirs
+            std%pl%na(nd, icv, is) = x4d(nd)
+          END DO
+          st%pl%na(icv, is) = x4
         END IF
       END DO
 !    ..compute partial pressure
@@ -1257,12 +1340,13 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 !srv 22.05.18
       CALL B2NPCO_DV(ncv, nfc, nvx, mpg%nnreg(0), b2news_solving(2), &
 &              solvedum, b2news_solving(1), solvedm2, ncall_b2news_, is&
-&              , rxf0, switch, switchd, geo, geod, mpg, mpgd, st%pl, std&
-&              %pl, st%dv, std%dv, st%sr, std%sr, ier0, nbdirs)
+&              , rxf0, dtim, switch, switchd, geo, geod, mpg, mpgd, st%&
+&              pl, std%pl, st%dv, std%dv, st%sr, std%sr, st%psnc, st%&
+&              psnl, std%psnl, ier0, nbdirs)
       last_solve_9(0:mpg%nnreg(0)) = solveco(is, 0:mpg%nnreg(0))
       CALL XERTST(ier0 .EQ. 0, 'error return from b2npco')
     END DO
-!      ..compute electron drift velocities
+!    ..compute electron drift velocities
     CALL B2TFED_DV(ncv, nfc, nvx, switch, geo, geod, mpg, mpgd, st%dv%&
 &            facdrift, st%dv%fac_exb, st%dv%ne, std%dv%ne, st%pl%te, std&
 &            %pl%te, st%pl%po, std%pl%po, st%dv%vedia, std%dv%vedia, st%&
@@ -1279,11 +1363,28 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
       DO icv=1,ncv
         IF (st%pl%na(icv, is) .LT. switch%b2mndr_na_min) THEN
           DO nd=1,nbdirs
+            x5d(nd) = 0.D0
+          END DO
+          x5 = switch%b2mndr_na_min
+          DO nd=1,nbdirsmax
+            x5d(nd) = 0.D0
+          END DO
+        ELSE
+          DO nd=1,nbdirs
+            x5d(nd) = std%pl%na(nd, icv, is)
+          END DO
+          x5 = st%pl%na(icv, is)
+        END IF
+        IF (x5 .GT. switch%b2mndr_na_max) THEN
+          DO nd=1,nbdirs
             std%pl%na(nd, icv, is) = 0.D0
           END DO
-          st%pl%na(icv, is) = switch%b2mndr_na_min
+          st%pl%na(icv, is) = switch%b2mndr_na_max
         ELSE
-          st%pl%na(icv, is) = st%pl%na(icv, is)
+          DO nd=1,nbdirs
+            std%pl%na(nd, icv, is) = x5d(nd)
+          END DO
+          st%pl%na(icv, is) = x5
         END IF
       END DO
 !    ..compute partial pressure
@@ -1304,7 +1405,6 @@ SUBROUTINE B2NEWS__DV(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, nscxmax&
 &            %pl%te, st%pl%po, std%pl%po, st%dv%vedia, std%dv%vedia, st%&
 &            dv%veecrb, std%dv%veecrb, nbdirs)
   END IF
-!
 !sw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
   IF (no_neutr_scl .EQ. 0) THEN
     WRITE(*, *) 'Calling b2stbr_neutr_scl'
@@ -1335,8 +1435,9 @@ END SUBROUTINE B2NEWS__DV
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
-& nscxmax, ismain, ismain0, dtim, switch, geo, mpg, st, st_ext, ierr)
+SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nscx, iscx, nscxmax, ismain&
+& , ismain0, dtim, switch, geo, mpg, st, st_ext, st_avg, ierr, ramp_call&
+&)
   USE B2MOD_TYPES
   USE B2MOD_CONSTANTS
   USE B2MOD_NUMERICS_NAMELIST_DIFFV
@@ -1347,13 +1448,14 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
   USE B2US_MAP_DIFFV
   USE B2US_PLASMA_DIFFV
   USE B2MOD_MA28_FOR_US, ONLY : restart_ma28_for_us
+  USE B2MOD_FACDRIFT_EXB_DIFFV
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
   USE B2MOD_TALLIES_DIFFV, ONLY : rrahireg, rranareg, rsahireg, rqradreg&
 & , rsanareg, b2bremreg, rqahereg, rramoreg, b2radreg, rqbrmreg, &
-& rsamoreg
+& rsamoreg, b2exba, b2fraa, b2joule, b2visa, b2divue, b2divua, b2exbe
   USE B2MOD_EIRDIAG, ONLY : tmb2, dib2, tab2, tib2, pefluxa, rfluxa, &
-& pfluxa, dmb2, lkindp, lkindm, lkindi, refluxa, dab2
+& pfluxa, dmb2, lkindp, lkindm, lkindi, refluxa, dab2, tfluxa
   USE B2MOD_TRANSPORT_NAMELIST_DIFFV, ONLY : parm_hce, parm_hci, &
 & parm_dna, parm_dpa, parm_vla, parm_vsa, parm_alf, parm_sig
   USE B2MOD_RECYCLE_DIFFV, ONLY : int0r, int0l, int3r, int3l, int6r, &
@@ -1361,7 +1463,10 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
   USE B2MOD_BOUNDARY_NAMELIST_DIFFV, ONLY : conpar, enepar, enipar, nbcd&
 & , enkpar, potpar, mompar, lfeedback
   USE B2MOD_NEUTRALS_NAMELIST_DIFFV, ONLY : maxw_eff, nstraid, &
-& userfluxparm
+& userfluxparm, b2recyc, arcend, targsp, b2species_start, b2species_end,&
+& lstrascl, lsns, msns, gpfc, nstrai, nstrat, debug_flags, &
+& neutrals_count, neutrals_time_mod, neutrals_time_switch, neut_scl_lim,&
+& natmid, ntrack
   USE B2MOD_B2CMPT_DIFFV, ONLY : cfvla, cflim, cfvsa, cfalf, cfdpa, &
 & cfsig, cfdna, cfhce, cfhci
   USE B2MOD_INPUT_PROFILE_DIFFV, ONLY : ndata, no_pflux, tr_ip_new_files&
@@ -1373,6 +1478,7 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 & dt_prev, feedback_namelist_used
   USE B2MOD_MATH_DIFFV, ONLY : cutlo, cutll, b2mod_math_initialised, &
 & small_r4_constant
+  USE B2MOD_WALL_DIFFV, ONLY : track_species
   USE B2MOD_AD_DIFFV
   USE B2MOD_SUBSYS
   USE B2MOD_DIFFSIZES
@@ -1382,18 +1488,19 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !.end b2news_
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns, nxtl, nxtr
+  INTEGER :: ncv, nfc, nvx, ns
   INTEGER :: nscx, nscxmax, iscx(0:nscxmax-1), ismain, ismain0
   REAL(kind=r8) :: dtim
   TYPE(SWITCHES), INTENT(INOUT) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
-  TYPE(MAPPING), INTENT(IN) :: mpg
+  TYPE(MAPPING), INTENT(INOUT) :: mpg
 !   ..input/output arguments
   TYPE(B2STATE), INTENT(INOUT) :: st
   TYPE(B2STATEEXT), INTENT(INOUT) :: st_ext
+  TYPE(B2AVERAGE), INTENT(IN) :: st_avg
 !   ..output arguments                                                    !xpb
   INTEGER :: ierr
-  LOGICAL :: wrong_flow
+  LOGICAL :: wrong_flow, ramp_call
 !   ..common blocks
 !
 !-----------------------------------------------------------------------
@@ -1443,10 +1550,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
   EXTERNAL XERTST, IPGETR, smin, smax, B2SCOPY_NODIFF, &
 &     B2SAXPY_NODIFF, B2SASUM_NODIFF, IPGETI
   REAL(kind=r8) :: smin, smax, B2SASUM_NODIFF
-  EXTERNAL LEN_OF_DIGITS
-  INTEGER :: LEN_OF_DIGITS
 !srv 06.07.00 18.01.02
-  EXTERNAL B2XVSG_NODIFF, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
+  EXTERNAL B2XVSG, B2XVPS_NODIFF, B2XPNE_NODIFF, B2XPNI_NODIFF, &
 &     B2XPNN_NODIFF, B2XPFE_NODIFF, B2XPFI_NODIFF, B2XPPB_NODIFF, &
 &     B2XPNM_NODIFF, B2TRAL_NODIFF, B2TRQL_NODIFF, B2TREQ_NODIFF, &
 &     B2TFNB_NODIFF, B2NPMO_NODIFF, B2NPCO_NODIFF, B2NPPO_NODIFF, &
@@ -1454,6 +1559,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !   ..initialization
   INTEGER, SAVE :: no_neutr_scl=0
   INTRINSIC ABS
+  INTRINSIC MINVAL
+  INTRINSIC MAXVAL
   INTRINSIC SQRT
   INTRINSIC MAX
   INTRINSIC MIN
@@ -1461,6 +1568,10 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
   EXTERNAL NANCHECK
   EXTERNAL XERRAB
   REAL(r8) :: x1
+  REAL(r8) :: x2
+  REAL(r8) :: x3
+  REAL(r8) :: x4
+  REAL(r8) :: x5
   INTEGER :: abs0
   REAL(r8) :: min1
   INTEGER :: pwr1
@@ -1469,24 +1580,22 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
   REAL(kind=r8) :: result1
   REAL(kind=r8) :: result2
   INTEGER :: arg1
+  REAL(r8) :: result10
+  REAL(r8) :: result20
   REAL(r8), DIMENSION(ncv) :: arg10
-  REAL(r8), DIMENSION(ncv) :: result10
+  REAL(r8), DIMENSION(ncv) :: result11
   CHARACTER(len=10) :: arg11
   CHARACTER(len=13) :: arg12
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
 !     ingeger, save :: nstg2 = 0
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      real (kind=R8) ::                                                 !srv 04.06.99
 !     *   fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1)                        !srv 04.06.99
-!     2 ,facdrift/0.0e0_R8/, facdrift_target/0.0e0_R8/, facdrift_start/0.0e0_R8/, !srv 09.07.99
-!     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                 !srv 09.07.99
 !     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                    !xpb
 !     1  sne0(-1:nx,-1:ny,0:1),                                           !xpb
 !     2  shi0(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),                    !xpb
 !     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-!     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      integer, save :: re_compute_pb = 1                                !srv 15.02.10
 !
 !-----------------------------------------------------------------------
@@ -1562,28 +1671,24 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 &                               'Not solving heat equations!'
   END IF
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
-!       call ipgeti ('b2mndt_nstg2', nstg2)
-!       if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
-!         write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
-!       endif
-!       call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+!      call ipgeti ('b2mndt_nstg2', nstg2)
+!      if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
+!        write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
+!      endif
+!      call ipgeti ('b2news_no_neutr_scl', no_neutr_scl)
+!
 !sw 26feb2014 some extra variables
-!       call ipgeti ('eirene_neutr_avg', neutr_avg)
-!       call ipgeti ('eirene_underrelax', nrelax)
-!       call ipgeti ('b2stbr_eir_src_nhist', nhist)
-!       call xertst (.not.(
+!      call ipgeti ('eirene_neutr_avg', neutr_avg)
+!      call ipgeti ('eirene_underrelax', nrelax)
+!      call ipgeti ('b2stbr_eir_src_nhist', nhist)
+!      call xertst (.not.(
 !     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
 !     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
 !     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
 !     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
-!       call ipgetr ('b2news_facdrift_target', facdrift_target)          !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_start', facdrift_start)            !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_inc', facdrift_inc)                !srv 09.07.99
-!       call ipgetr ('b2news_facdrift_dec', facdrift_dec)                !srv 09.07.99
-!       facdrift=facdrift_start                                          !srv 09.07.99
-!       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
+!      call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
 !   ..test nCv, nFc, ns
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFv')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFv')
   CALL XERTST(1 .LE. ns, 'faulty argument ns')
   CALL XERTST(0 .LE. ismain .AND. ismain .LT. ns, &
 &       'invalid main plasma species index ismain')
@@ -1596,9 +1701,9 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !   ..extensive tests on first few calls
   IF (ncall_b2news_ .LT. 3) THEN
 !    ..test sign of bb
-    CALL B2XVSG_NODIFF(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
+    CALL B2XVSG(ncv, geo%cvbb(1, 3), 1, 'bb3', '.gt.')
 !    ..test cvVol, cvQgam
-    CALL B2XVSG_NODIFF(ncv, geo%cvvol, 1, 'vol', '.gt.')
+    CALL B2XVSG(ncv, geo%cvvol, 1, 'vol', '.gt.')
     result1 = smin(ncv, geo%cvqgam(1, 1), 1)
     result2 = smax(ncv, geo%cvqgam(1, 1), 1)
     CALL XERTST(-1.0_R8 .LT. result1 .AND. result2 .LT. 1.0_R8, &
@@ -1618,16 +1723,16 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !    ..test present state
     CALL B2XVPS_NODIFF(ncv, nfc, ns, st%pl, st%dv)
     arg1 = ncv*ns
-    CALL B2XVSG_NODIFF(arg1, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
+    CALL B2XVSG(arg1, st%dv%kinrgy, 1, 'kinrgy', '.ge.')
   END IF
 !   ..set rxf0/1/2/3
 !     Note: The potential equation needs an accurate solution on each
 !     iteration; hence the different setting of rxf2.
   rxf0 = switch%b2mndt_rxf*switch%xfm0
   rxf1 = switch%b2mndt_rxf*switch%xfm1
-! (rxf*xfm2)**0.2e0_R8                             !srv 15.01.03
-  rxf2 = 1.0e0_R8
-  IF (switch%b2mndt_rxf .EQ. 0.0e0_R8) rxf2 = 0.0e0_R8
+! (rxf*xfm2)**0.2_R8                                 !srv 15.01.03
+  rxf2 = 1.0_R8
+  IF (switch%b2mndt_rxf .EQ. 0.0_R8) rxf2 = 0.0_R8
   rxf3 = switch%b2mndt_rxf*switch%xfm3
 !
   zero = 0.0_R8
@@ -1635,13 +1740,28 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !sw 01oct2012 initialize potential if necessary
   IF (switch%pot_eq .EQ. 0) THEN
 !srv 13.07.05 {
-    st%pl%po = 0.0e0_R8
+    st%pl%po = 0.0_R8
   ELSE IF (switch%pot_eq .EQ. 2) THEN
     st%pl%po = 3.1_R8*st%pl%te/qe
   END IF
 !
-!      facdrift=min(facdrift*facdrift_inc,facdrift_target)               !srv 09.07.99
-!      write(*,*) 'facdrift',facdrift                                    !srv 09.07.99
+  IF (ramp_call .OR. ncall_b2news_ .EQ. 0) CALL &
+&   B2NEWS_FACDRIFT_FAC_EXB_INC(nfc, st%dv%fac_exb, st%dv%facdrift, st%&
+&                         dv%fac_vis, switch)
+!   ..test facdrift, fac_ExB, fac_vis
+  result10 = MINVAL(st%dv%facdrift)
+  result20 = MAXVAL(st%dv%facdrift)
+  CALL XERTST(0.0_R8 .LE. result10 .AND. 1.0_R8 .GE. result20, &
+&       'faulty argument facdrift')
+  result10 = MINVAL(st%dv%fac_exb)
+  result20 = MAXVAL(st%dv%fac_exb)
+  CALL XERTST(0.0_R8 .LE. result10 .AND. 1.0_R8 .GE. result20, &
+&       'faulty argument fac_ExB')
+  result10 = MINVAL(st%dv%fac_vis)
+  result20 = MAXVAL(st%dv%fac_vis)
+  CALL XERTST(0.0_R8 .LE. result10 .AND. 1.0_R8 .GE. result20, &
+&       'faulty argument fac_ExB')
+!
 ! ..main computation
 !   ..compute ni, nn, ne, ne2
   CALL B2XPNI_NODIFF(ncv, ns, st%pl%na, st%dv%ni)
@@ -1649,10 +1769,6 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
   CALL B2XPNE_NODIFF(ncv, ns, st%rt%rza, st%pl%na, st_ext%ne, st%dv%ne)
   CALL B2XPNE_NODIFF(ncv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, st%dv%ne2&
 &             )
-!*   ..compute ceqp                                                      !srv 03.07.03 {
-!      call b2xpnm (nCv, ns, st%rt%rz2, am, st%pl%na, wrk0)
-!      call b2treq (nCv, switch, geo%cvVol, st%pl%te, st%pl%ti,
-!    &  st%pl%ne, st%dv%ni, wrk0, lnlam, st_ext, ceqp)                   !srv 03.07.03 }
 !   ..compute flux limit coefficients
   CALL B2TRQL_NODIFF(ncv, nfc, ns, switch, geo, mpg, st%pl, st%dv, &
 &              st_ext, st%co%chvemx, st%co%chvimx)
@@ -1668,44 +1784,47 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 &               pl%ua, st%dv%facdrift, st%dv%fchinert)
 !iyv 06.02.14
 !   ..iterate on momentum balance
-!      if (ncall_b2news_.eq.0) then                                      !srv 01.10.99
   IF (switch%ion_vlct_restrict .NE. 0) THEN
 !iyv 06.02.14
     CALL B2XPRZ_NODIFF(ncv, ns, mp, am, st%pl%na, rz, st_ext)
     CALL B2XPPZ_NODIFF(ncv, ns, st%dv%ne, st%pl%na, st%pl%te, st%pl%ti, &
 &                st%dv%pz, st_ext)
     arg10(:) = st%dv%pz/rz
-    result10 = SQRT(arg10(:))
-    wrk0 = result10*geo%cvbb(:, 0)/geo%cvbb(:, 3)
+    result11 = SQRT(arg10(:))
+    wrk0 = result11*geo%cvbb(:, 0)/geo%cvbb(:, 3)
     CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, wrk0, st%co%cssb)
   ELSE
     st%co%cssb = 0.0_R8
   END IF
-!        do is=0,ns-1                                                    !srv 01.10.99
+! The Rhie-Chow term in the particle fluxes uses pccb terms
+! which are calculated in b2npmo.
+! Hence to get a consistent calculation we need to do a dummy call to
+! b2npmo with rxf = 0 and recompute fluxes.
+  CALL B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
+&              ncall_b2news_, b2news_solving(1), 0.0_R8, dtim, st%pl, st&
+&              %dv, st%rt, st%co, st%sr, st%srw, st%psnc, st%psnl, &
+&              st_ext, ier0)
   DO is=switch%nsmin,switch%nsmax-1
 !    ..compute partial pressure
     CALL B2XPPB_NODIFF(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%te&
 &                , st%pl%ti, st%pl%tn, is, st%dv%pa(:, is))
-!srv 01.10.99
 !    ..compute particle flux
     CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st%&
 &                pl, st%dv, st%co, st%rt, .true.)
   END DO
-!srv 01.10.99
-!      ..compute electron drift velocities
+!    ..compute electron drift velocities
   CALL B2TFED_NODIFF(ncv, nfc, nvx, switch, geo, mpg, st%dv%facdrift, st&
 &              %dv%fac_exb, st%dv%ne, st%pl%te, st%pl%po, st%dv%vedia, &
 &              st%dv%veecrb)
-!      end if                                                            !srv 01.10.99
 !
 !sw 10dec2012: added extra call if wanted/not-wanted (SOLPS4 has an
 !   extra call at this place within internal iteration)
   IF (switch%no_b2sral_call .EQ. 0) THEN
     WRITE(*, *) ' re-compute source '
 !     ..re-compute source linearisation                                  !xpb
-    CALL B2SRAL_NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, nscxmax, &
-&                iscx, ismain, ismain0, dtim, switch, geo, mpg, st, &
-&                st_ext, wrong_flow, .false.)
+    CALL B2SRAL_NODIFF(ncv, nfc, nvx, ns, nscx, nscxmax, iscx, ismain, &
+&                ismain0, dtim, switch, geo, mpg, st, st_ext, st_avg, &
+&                wrong_flow, .false.)
 !     ..smooth out sources
     CALL B2SRSM_NODIFF(ncv, ns, dtim, switch, geo, mpg, st%pl%na, st%pl%&
 &                ua, st%pl%te, st%pl%ti, st%dv%ne, st%dv%ni, st%dv%nn, &
@@ -1721,33 +1840,28 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !srv 23.07.21
 !     ..stabilise the source coefficients                                !xpb
 !srv 01.07.08
-    CALL B2SRST_NODIFF(ncv, ns, switch, mpg, st%pl%na, st%pl%ua, st%pl%&
-&                te, st%pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni, &
-&                st%dv%nn, st%pl%kt, st%pl%zt, st%sr)
+    CALL B2SRST_NODIFF(ncv, ns, switch, st%pl%na, st%pl%ua, st%pl%te, st&
+&                %pl%ti, st%pl%tn, st%pl%po, st%dv%ne, st%dv%ni, st%dv%&
+&                nn, st%pl%kt, st%pl%zt, st%sr)
 !srv 23.07.21
   END IF
 !   ..compute ue, electron parallel velocity
-  IF (switch%b2sigp_style .EQ. 2 .OR. switch%b2news_iout .NE. 0) CALL &
-&   B2XPVE_NODIFF(ncv, nfc, ns, switch, geo, mpg, qe, st%rt%rza, st%rt%&
-&           rz2, st%co%alfx_c, st%co%sigx_c, st%dv%fch_pi_c, st%pl%po, &
-&           st%dv%ne, st%pl%te, st%pl%na, st%pl%ua, st_ext, st%dv%ue)
-  IF (switch%b2sigp_style .NE. 2 .OR. switch%b2news_iout .NE. 0) THEN
-    wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
-    CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, wrk0)
-    DO is=0,ns-1
-      wrk0 = wrk0 + st%rt%rza(:, is)*st%pl%ua(:, is)*st%pl%na(:, is)
-    END DO
-    wrk0 = wrk0 + st_ext%ue*st_ext%ne
+! lkw20.03.2023{
+  wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
+  CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, wrk0)
+  DO is=0,ns-1
+    wrk0 = wrk0 + st%rt%rza(:, is)*st%pl%ua(:, is)*st%pl%na(:, is)
+  END DO
+  wrk0 = wrk0 + st_ext%ue*st_ext%ne
 !srv 05.03.11
-    wrk0 = wrk0/st%dv%ne
-  END IF
+  wrk0 = wrk0/st%dv%ne
 !srv 05.07.17
   IF (switch%b2news_iout .NE. 0) THEN
 !srv 05.07.17
     CALL B2XZEF_NODIFF(ncv, ns, st%rt%rz2, st%pl%na, st%dv%ne, zeff, &
 &                st_ext)
-    CALL B2XPIC_NODIFF(ncv, ns, mpg, qe, st%rt%rza, geo%cvbb, st%pl%na, &
-&                st%pl%ua, zeff, st_ext, st%dv%fch_pi_c)
+    CALL B2XPIC_NODIFF(ncv, ns, qe, st%rt%rza, geo%cvbb, st%pl%na, st%pl&
+&                %ua, zeff, st_ext, st%dv%fch_pi_c)
     CALL B2XPIF_NODIFF(ncv, nfc, switch, geo, mpg, st%dv%fch_pi_c, st%dv&
 &                %fch_pi_f)
     CALL MY_OUT_US(70, ncv, 0, st%dv%fch_pi_c, 'b2news__fch_pi_c'&
@@ -1757,30 +1871,14 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
     CALL MY_OUT_US(70, ncv, 0, st%dv%ue, 'b2news__ve')
     CALL MY_OUT_US(70, ncv, 0, wrk0, 'b2news__ue')
   END IF
-  IF (switch%b2sigp_style .NE. 2) st%dv%ue = wrk0
-!
+  st%dv%ue = wrk0
+!lkw20.03.2023}
 !sw 11oct2012 added check on Coriolis force (taken from b2news)
   ier0 = 0
-! Necessary for smooth restart with Rhie-Chow:
-! The Rhie-Chow term in the particle fluxes uses pccb terms which are calculated in b2npmo.
-! Hence to get a smooth restart after cp b2fstate bfstati we need to do a dummy call to
-! b2npmo with rxf = 0 and recompute fluxes.
-  IF (ncall_b2news_ .EQ. 0) THEN
-    CALL B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
-&                ncall_b2news_, b2news_solving(1), 0.0_R8, st%pl, st%dv&
-&                , st%rt, st%co, st%sr, st_ext, ier0)
-    DO is=switch%nsmin,switch%nsmax-1
-!    ..compute partial pressure
-      CALL B2XPPB_NODIFF(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%&
-&                  te, st%pl%ti, st%pl%tn, is, st%dv%pa(:, is))
-!    ..compute particle flux
-      CALL B2TFNB_NODIFF(ncv, nfc, nvx, is, ismain, switch, geo, mpg, st&
-&                  %pl, st%dv, st%co, st%rt, .true.)
-    END DO
-  END IF
   CALL B2NPMO_NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, &
-&              ncall_b2news_, b2news_solving(1), rxf1, st%pl, st%dv, st%&
-&              rt, st%co, st%sr, st_ext, ier0)
+&              ncall_b2news_, b2news_solving(1), rxf1, dtim, st%pl, st%&
+&              dv, st%rt, st%co, st%sr, st%srw, st%psnc, st%psnl, st_ext&
+&              , ier0)
   CALL XERTST(ier0 .EQ. 0, 'error return from b2npmo')
 !   ..set nep
 !     (= ne before continuity update)
@@ -1798,29 +1896,32 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !    ..DPC
     DO icv=1,ncv
       IF (st%pl%na(icv, is) .LT. switch%b2mndr_na_min) THEN
-        st%pl%na(icv, is) = switch%b2mndr_na_min
+        x1 = switch%b2mndr_na_min
       ELSE
-        st%pl%na(icv, is) = st%pl%na(icv, is)
+        x1 = st%pl%na(icv, is)
+      END IF
+      IF (x1 .GT. switch%b2mndr_na_max) THEN
+        st%pl%na(icv, is) = switch%b2mndr_na_max
+      ELSE
+        st%pl%na(icv, is) = x1
       END IF
     END DO
-!
 !! option to impose a speed limit for fluid neutrals in case of spatially hybrid neutrals
     IF (switch%spatial_hybrid .NE. 0 .AND. is_neutral(is)) THEN
       DO icv=1,ncv
         IF (st%pl%ua(icv, is) .GE. 0.) THEN
-          x1 = st%pl%ua(icv, is)
+          x2 = st%pl%ua(icv, is)
         ELSE
-          x1 = -st%pl%ua(icv, is)
+          x2 = -st%pl%ua(icv, is)
         END IF
-        IF (x1 .GT. switch%b2mndr_ua_max) THEN
+        IF (x2 .GT. switch%b2mndr_ua_max) THEN
           min1 = switch%b2mndr_ua_max
         ELSE
-          min1 = x1
+          min1 = x2
         END IF
         st%pl%ua(icv, is) = SIGN(min1, st%pl%ua(icv, is))
       END DO
     END IF
-!
 !    ..compute partial pressure
     CALL B2XPPB_NODIFF(ncv, st%rt%rza(:, is), st%pl%na(:, is), st%pl%te&
 &                , st%pl%ti, st%pl%tn, is, st%dv%pa(:, is))
@@ -1842,15 +1943,21 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !srv 22.05.18
     CALL B2NPCO_NODIFF(ncv, nfc, nvx, mpg%nnreg(0), b2news_solving(2), &
 &                solvedum, b2news_solving(1), solvedm2, ncall_b2news_, &
-&                is, rxf0, switch, geo, mpg, st%pl, st%dv, st%sr, ier0)
+&                is, rxf0, dtim, switch, geo, mpg, st%pl, st%dv, st%sr, &
+&                st%psnc, st%psnl, ier0)
     CALL XERTST(ier0 .EQ. 0, 'error return from b2npco')
     last_solve_9(0:mpg%nnreg(0)) = solveco(is, 0:mpg%nnreg(0))
-!        endif                                                            !srv 13.10.06 } 22.05.18
+!        endif                                                           !srv 13.10.06 } 22.05.18
     DO icv=1,ncv
       IF (st%pl%na(icv, is) .LT. switch%b2mndr_na_min) THEN
-        st%pl%na(icv, is) = switch%b2mndr_na_min
+        x3 = switch%b2mndr_na_min
       ELSE
-        st%pl%na(icv, is) = st%pl%na(icv, is)
+        x3 = st%pl%na(icv, is)
+      END IF
+      IF (x3 .GT. switch%b2mndr_na_max) THEN
+        st%pl%na(icv, is) = switch%b2mndr_na_max
+      ELSE
+        st%pl%na(icv, is) = x3
       END IF
     END DO
 !        if(re_compute_pb.eq.1) then                                     !srv 15.02.10
@@ -1916,7 +2023,7 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
   IF (switch%pot_eq .EQ. 0) THEN
 !srv 13.07.05 {
 !wdk call b2tfch_ to ensure all currents are properly set to 0
-    st%pl%po = 0.0e0_R8
+    st%pl%po = 0.0_R8
     CALL B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, geo&
 &                 , mpg, st%pl, st%dv, st%co, st%rt, st_ext)
   ELSE IF (switch%pot_eq .EQ. 2) THEN
@@ -1944,7 +2051,7 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
     IF (b2news_solving(3)) THEN
 !srv 06.07.00
 !   ..solve the potential equation
-      IF (switch%fhe_vis_per .EQ. 0.0e0_R8 .OR. .true.) THEN
+      IF (switch%fhe_vis_per .EQ. 0.0_R8 .OR. .true.) THEN
 !srv 06.07.00
         new_matrix = .false.
         DO ireg=0,mpg%nnreg(0)
@@ -1967,13 +2074,13 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
       CALL B2TFCH__NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
 &                   geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
 !   ..compute new residual following the tradition
-      CALL B2URSD_NODIFF(ncv, nfc, geo, mpg, st%dv%ne, st%pl%po, st%sr%&
-&                  sch, st%dv%fch, wrk0)
+      CALL B2URSD_NODIFF(ncv, nfc, mpg, st%dv%ne, st%pl%po, st%sr%sch, &
+&                  st%dv%fch, wrk0)
       t0 = B2SASUM_NODIFF(ncv, wrk0, 1)
       WRITE(*, *) 'respo after solving', t0
     ELSE IF (switch%get_residuals .EQ. 1) THEN
-      CALL B2URSD_NODIFF(ncv, nfc, geo, mpg, st%dv%ne, st%pl%po, st%sr%&
-&                  sch, st%dv%fch, st%dv%respo)
+      CALL B2URSD_NODIFF(ncv, nfc, mpg, st%dv%ne, st%pl%po, st%sr%sch, &
+&                  st%dv%fch, st%dv%respo)
     END IF
   END IF
 !srv 12.07.05 }
@@ -1993,8 +2100,8 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
     CALL B2XPPZ_NODIFF(ncv, ns, st%dv%ne, st%pl%na, st%pl%te, st%pl%ti, &
 &                st%dv%pz, st_ext)
     arg10(:) = st%dv%pz/rz
-    result10 = SQRT(arg10(:))
-    wrk0 = result10*geo%cvbb(:, 0)/geo%cvbb(:, 3)
+    result11 = SQRT(arg10(:))
+    wrk0 = result11*geo%cvbb(:, 0)/geo%cvbb(:, 3)
     CALL INTFACE(ncv, nfc, mpg%fccv, geo%fcvol, wrk0, st%co%cssb)
   ELSE
     st%co%cssb = 0.0_R8
@@ -2048,10 +2155,11 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
     CALL B2XPFN_NODIFF(nfc, ns, st%dv%fna_52nd, st%dv%fnn_52)
     st%dv%fni_52 = fni0 - st%dv%fnn_52
   END IF
-!      ..compute electron drift velocities
+!   ..compute electron drift velocities
   CALL B2TFED_NODIFF(ncv, nfc, nvx, switch, geo, mpg, st%dv%facdrift, st&
 &              %dv%fac_exb, st%dv%ne, st%pl%te, st%pl%po, st%dv%vedia, &
 &              st%dv%veecrb)
+!   ..compute heat fluxes
 !srv 29.01.20
   CALL B2TFHE__NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, st%pl, st%dv&
 &               , st%co, st%rt, st_ext, .true.)
@@ -2059,45 +2167,40 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !sw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 !srv 13.10.06
   CALL B2TFHI__NODIFF(ncv, nfc, nvx, ns, ismain, switch, geo, mpg, st%pl&
-&               , st%dv, st%co, st%rt, .true.)
+&               , st%dv, st%co, .true.)
 !djm Jan2017
 !srv 24.10.02
   st%dv%floi_noc = st%dv%floi
 !srv 24.10.02
   st%dv%floe_noc = st%dv%floe
-!
-  CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, st%dv%fna, st%dv%fna_53, st%dv%&
-&              fne_53, st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%fhn, st%rt&
-&              %rpt, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, switch%&
-&              boris, st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
+  CALL B2XPEN_NODIFF(ncv, nfc, ns, mpg, switch, st%dv%fna, st%dv%fna_53&
+&              , st%dv%fne_53, st%dv%fch, st%dv%fhe, st%dv%fhi, st%dv%&
+&              fhn, st%rt%rpt, st%pl%te, st%pl%ti, st%pl%tn, st%pl%po, &
+&              st%dv%fhm, st%dv%fhp, st%dv%fhj, st%dv%fht)
 !
 !   ..add contribution from cdpa to floe, cone, floi, coni
   CALL B2TFCC_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, st%pl, st%dv, &
 &              st%co, st%rt)
-  IF (switch%b2sigp_style .NE. 2) THEN
 !   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
-    wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
-    CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, st%dv%ue)
-    DO is=0,ns-1
-      st%dv%ue = st%dv%ue + st%rt%rza(:, is)*st%pl%ua(:, is)*st%pl%na(:&
-&       , is)
-    END DO
-    st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
+!lkw20.03.2023{
+  wrkf = -(st%dv%fch_p(:, 0)/(qe*(geo%fcpbs+b2news_cutlo)))
+  CALL INTCELL_NODIFF(nfc, ncv, mpg, mpg%intcellp, wrkf, st%dv%ue)
+  DO is=0,ns-1
+    st%dv%ue = st%dv%ue + st%rt%rza(:, is)*st%pl%ua(:, is)*st%pl%na(:, &
+&     is)
+  END DO
+  st%dv%ue = st%dv%ue + st_ext%ue*st_ext%ne
 !srv 05.03.11
-    st%dv%ue = st%dv%ue/st%dv%ne
-  ELSE
-    CALL B2XPVE_NODIFF(ncv, nfc, ns, switch, geo, mpg, qe, st%rt%rza, st&
-&                %rt%rz2, st%co%alfx_c, st%co%sigx_c, st%dv%fch_pi_c, st&
-&                %pl%po, st%dv%ne, st%pl%te, st%pl%na, st%pl%ua, st_ext&
-&                , st%dv%ue)
-  END IF
+  st%dv%ue = st%dv%ue/st%dv%ne
+!lkw20.03.2023}
 !
 !   ..iterate on heat balance
 !srv 22.05.18
   CALL B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, ncall_b2news_&
 &              , ismain, b2news_solving, solveee, solveei, solveen, &
-&              solveet, solvepo, solvemo, solvekt, solvezt, rxf3, st%pl&
-&              , st%dv, st%co, st%rt, st%sr, st_ext, ier0)
+&              solveet, solvepo, solvemo, solvekt, solvezt, rxf3, dtim, &
+&              st%pl, st%dv, st%co, st%rt, st%sr, st%srw, st%psnc, st%&
+&              psnl, st_ext, ier0)
 !sw 16aug2011 init potential
 !srv 13.07.05
   IF (switch%pot_eq .EQ. 0) st%pl%po = 0.0_R8
@@ -2113,9 +2216,14 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !    ..DPC
       DO icv=1,ncv
         IF (st%pl%na(icv, is) .LT. switch%b2mndr_na_min) THEN
-          st%pl%na(icv, is) = switch%b2mndr_na_min
+          x4 = switch%b2mndr_na_min
         ELSE
-          st%pl%na(icv, is) = st%pl%na(icv, is)
+          x4 = st%pl%na(icv, is)
+        END IF
+        IF (x4 .GT. switch%b2mndr_na_max) THEN
+          st%pl%na(icv, is) = switch%b2mndr_na_max
+        ELSE
+          st%pl%na(icv, is) = x4
         END IF
       END DO
 !    ..compute partial pressure
@@ -2136,12 +2244,12 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 !srv 22.05.18
       CALL B2NPCO_NODIFF(ncv, nfc, nvx, mpg%nnreg(0), b2news_solving(2)&
 &                  , solvedum, b2news_solving(1), solvedm2, &
-&                  ncall_b2news_, is, rxf0, switch, geo, mpg, st%pl, st%&
-&                  dv, st%sr, ier0)
+&                  ncall_b2news_, is, rxf0, dtim, switch, geo, mpg, st%&
+&                  pl, st%dv, st%sr, st%psnc, st%psnl, ier0)
       last_solve_9(0:mpg%nnreg(0)) = solveco(is, 0:mpg%nnreg(0))
       CALL XERTST(ier0 .EQ. 0, 'error return from b2npco')
     END DO
-!      ..compute electron drift velocities
+!    ..compute electron drift velocities
     CALL B2TFED_NODIFF(ncv, nfc, nvx, switch, geo, mpg, st%dv%facdrift, &
 &                st%dv%fac_exb, st%dv%ne, st%pl%te, st%pl%po, st%dv%&
 &                vedia, st%dv%veecrb)
@@ -2156,9 +2264,14 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
     DO is=0,ns-1
       DO icv=1,ncv
         IF (st%pl%na(icv, is) .LT. switch%b2mndr_na_min) THEN
-          st%pl%na(icv, is) = switch%b2mndr_na_min
+          x5 = switch%b2mndr_na_min
         ELSE
-          st%pl%na(icv, is) = st%pl%na(icv, is)
+          x5 = st%pl%na(icv, is)
+        END IF
+        IF (x5 .GT. switch%b2mndr_na_max) THEN
+          st%pl%na(icv, is) = switch%b2mndr_na_max
+        ELSE
+          st%pl%na(icv, is) = x5
         END IF
       END DO
 !    ..compute partial pressure
@@ -2175,7 +2288,6 @@ SUBROUTINE B2NEWS__NODIFF(ncv, nfc, nvx, ns, nxtl, nxtr, nscx, iscx, &
 &                st%dv%fac_exb, st%dv%ne, st%pl%te, st%pl%po, st%dv%&
 &                vedia, st%dv%veecrb)
   END IF
-!
 !sw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
   IF (no_neutr_scl .EQ. 0) THEN
     WRITE(*, *) 'Calling b2stbr_neutr_scl'

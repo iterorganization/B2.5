@@ -22,6 +22,8 @@ c*  lcns          : Eirene 'non-default surfaces' for the core boundary
 c*  ncns          : number of these surfaces
 c*  ltns          : Eirene 'non-default surfaces' for the targets
 c*  ntns          : number of these surfaces
+c*  lsns          : Eirene recycling 'non-default surfaces'
+c*  nsns          : number of these surfaces
 c*  l_neutrad     : if >=0, import radiation losses due to neutrals from Eirene
 c*  l_neutflux    : if >=0, then correct treatment of the incident fluxes in
 c*                  B2 and b2plot; if <0, then old (approximate) treatment
@@ -57,13 +59,13 @@ cank }
 #else
       use b2mod_eirdiag
 #endif
+#ifndef SOLPS4_3
+      use b2mod_eirsrt
+#endif
       use b2mod_dimensions
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#endif
-#ifndef SOLPS4_3
-#     include "COUPLE/EIRSRT.F"
 #endif
       integer nstraid, natmid, nmolid, nionid, nstsid, nlimpsd
       parameter (NSTRAID=DEF_NSTRA)
@@ -186,7 +188,7 @@ cank }
       real (kind=R8), save :: RCFE(NSTRAID), RCFI(NSTRAID)
 #endif
 
-      integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns,
+      integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns, nsns,
      .     dbg_eir_mc, debug_flags(100), neutrals_count
       real (kind=R8), save :: RF_NEUT(4)
       real (kind=R8), save :: eirene_step_cpu, eirene_step_dt,
@@ -348,6 +350,9 @@ csw 21feb2012
       if (nion_in.gt.0) allocate(textin(0:nion_in-1))
 #ifndef NO_B2_CHEM_SPUT
       allocate(chemical_sputter_yield(0:nlimps))
+#else
+      call xertst (nlimps.le.DEF_NLIM+DEF_NSTS,
+     . 'Increase DEF_NLIM and/or DEF_NSTS in b2mod_dimensions !')
 #endif
 #else
       call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
@@ -463,6 +468,7 @@ cmb   b2species_start and end are set -100 here to check whether the field was r
       ktns=0
       ncns=0
       ntns=0
+      nsns=0
       ksns=0
       lsns=0
       msns=0
@@ -1034,8 +1040,15 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       else !}{
         ntns=ii(1)-1
       end if !}
+      ii=minloc(lsns)
+      if(lsns(ii(1)).gt.0) then !{
+        nsns=nstsid
+      else !}{
+        nsns=ii(1)-1
+      end if !}
       call xertst (0.le.ncns, 'faulty input ncns')
       call xertst (0.le.ntns, 'faulty input ntns')
+      call xertst (0.le.nsns, 'faulty input nsns')
 
       do j=1,nstrai !{
         if(lsns(j).gt.0 .and. lsns(j).le.nsts) lsns(j)=-lsns(j)
@@ -1282,19 +1295,12 @@ c.. Test consistency with physical edges within the computational domain
       logical dotest
       integer is, ist, ix, istra, i, j, k, n, ii(1), itrack,
      >        noss, instra, iss, indss, idb, nrcl
-#ifdef WG_TODO
-      integer ic
-      logical found, side
-#endif
       real (kind=R8) hlp
       logical :: file_ok
-#ifdef WG_TODO
-      logical, allocatable :: old_style(:)
-#endif
       character*3 ss
       character*16 hlp_frm
       character*260 filename
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -1360,11 +1366,11 @@ cwvu    for (advanced) spatially hybrid, might need even more.
         call alloc_mapping_rc (m)
         m%rcFcP = 0
 
-#ifdef F2003
+#ifndef LEGACYCOMP
         open (newunit=idb,file='debug_neutrals.out')
 #else
         idb = newunit()
-        open (unit=idb,file='deug_neutrals.out')
+        open (unit=idb,file='debug_neutrals.out')
 #endif
         instra = 0
         do istra = 1, nstrai
@@ -1401,32 +1407,7 @@ cwvu    for (advanced) spatially hybrid, might need even more.
 
       call rc_to_struct(m)
 
-      if (nstrai.gt.0) then
-#ifdef WG_TODO
-        allocate(old_style(nstrat))
-        do is = 1, nstrat
-          if (rc_list_size(is).eq.0) then
-            old_style(is) = .true.
-            rc_list_size(is) = rcend(is) - rcstart(is) + 1
-            if (crcstra(is).eq.'N' .or. crcstra(is).eq.'S') then
-              do ix = rcstart(is), rcend(is)
-                rc_list_x(ix-rcstart(is)+1,is) =  ix
-              end do
-              rc_list_y(1:rc_list_size(is),is) = rcpos(is)
-            else if (crcstra(is).eq.'E' .or. crcstra(is).eq.'W') then
-              rc_list_x(1:rc_list_size(is),is) = rcpos(is)
-              do ix = rcstart(is), rcend(is)
-                rc_list_y(ix-rcstart(is)+1,is) =  ix
-              end do
-            endif
-          else
-            old_style(is) = .false.
-          end if
-        end do
-#endif
-      else
-        nstrat = 0
-      endif
+      if (nstrai.eq.0) nstrat = 0
 
       arcstra = crcstra
       arcstart = rcstart
@@ -1499,85 +1480,6 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
      . 'faulty input neutrals_time_switch')
 
       do istra = 1, nstrat
-#ifdef WG_TODO
-        if (crcstra(istra).eq.'N') then
-          if (old_style(istra)) then
-            call xertst (1.le.rcpos(istra).and.rcpos(istra).le.ny+1,
-     .       'faulty input rcpos (North)')
-            call xertst (-1.le.rcstart(istra).and.
-     .                   rcstart(istra).le.nx+1,
-     .       'faulty input rcstart (North)')
-            call xertst (-1.le.rcend(istra).and.rcend(istra).le.nx+1,
-     .       'faulty input rcend (North)')
-          else
-            do ix = 1, rc_list_size(istra)
-              call xertst (1.le.rc_list_y(ix,istra).and.
-     .                     rc_list_y(ix,istra).le.ny+1,
-     .                     'faulty input rc_list_y (North)')
-              call xertst (-1.le.rc_list_x(ix,istra).and.
-     .                     rc_list_x(ix,istra).le.nx+1,
-     .                     'faulty input rc_list_x (North)')
-            end do
-          end if
-        else if (crcstra(istra).eq.'S') then
-          if (old_style(istra)) then
-            call xertst (-1.le.rcpos(istra).and.rcpos(istra).le.ny-1,
-     .       'faulty input rcpos (South)')
-            call xertst (-1.le.rcstart(istra).and.
-     .                   rcstart(istra).le.nx+1,
-     .       'faulty input rcstart (South)')
-            call xertst (-1.le.rcend(istra).and.rcend(istra).le.nx+1,
-     .       'faulty input rcend (South)')
-          else
-            do ix = 1, rc_list_size(istra)
-              call xertst (-1.le.rc_list_y(ix,istra).and.
-     .                     rc_list_y(ix,istra).le.ny-1,
-     .                     'faulty input rc_list_y (South)')
-              call xertst (-1.le.rc_list_x(ix,istra).and.
-     .                     rc_list_x(ix,istra).le.nx+1,
-     .                     'faulty input rc_list_x (South)')
-            end do
-          end if
-        else if (crcstra(istra).eq.'E') then
-          if (old_style(istra)) then
-            call xertst (1.le.rcpos(istra).and.rcpos(istra).le.nx+1,
-     .       'faulty input rcpos (East)')
-            call xertst (-1.le.rcstart(istra).and.
-     .       rcstart(istra).le.ny+1,
-     .       'faulty input rcstart (East)')
-            call xertst (-1.le.rcend(istra).and.rcend(istra).le.ny+1,
-     .       'faulty input rcend (East)')
-          else
-            do ix = 1, rc_list_size(istra)
-              call xertst (1.le.rc_list_x(ix,istra).and.
-     .                     rc_list_x(ix,istra).le.nx+1,
-     .                     'faulty input rc_list_x (East)')
-              call xertst (-1.le.rc_list_y(ix,istra).and.
-     .                     rc_list_y(ix,istra).le.ny+1,
-     .                     'faulty input rc_list_y (East)')
-            end do
-          end if
-        else if (crcstra(istra).eq.'W') then
-          if (old_style(istra)) then
-            call xertst (-1.le.rcpos(istra).and.rcpos(istra).le.nx-1,
-     .       'faulty input rcpos (West)')
-            call xertst (-1.le.rcstart(istra).and.
-     .       rcstart(istra).le.ny+1,
-     .       'faulty input rcstart (West)')
-            call xertst (-1.le.rcend(istra).and.rcend(istra).le.ny+1,
-     .       'faulty input rcend (West)')
-          else
-            do ix = 1, rc_list_size(istra)
-              call xertst (-1.le.rc_list_x(ix,istra).and.
-     .                     rc_list_x(ix,istra).le.nx-1,
-     .                     'faulty input rc_list_x (West)')
-              call xertst (-1.le.rc_list_y(ix,istra).and.
-     .                     rc_list_y(ix,istra).le.ny+1,
-     .                     'faulty input rc_list_y (West)')
-            end do
-          end if
-        endif
-#endif
         call xertst (rcstart(istra).le.rcend(istra),
      .   'faulty inputs rcstart > rcend')
         call xertst (maxval(targsp(istra,:)).lt.ns,
@@ -1739,8 +1641,15 @@ cmb 10.04.18. Introduced b2recyc, b2species_start and b2species_end for hybrid n
       else !}{
         ntns=ii(1)-1
       end if !}
+      ii=minloc(lsns)
+      if(lsns(ii(1)).gt.0) then !{
+        nsns=nstsid
+      else !}{
+        nsns=ii(1)-1
+      end if !}
       call xertst (0.le.ncns, 'faulty input ncns')
       call xertst (0.le.ntns, 'faulty input ntns')
+      call xertst (0.le.nsns, 'faulty input nsns')
 
       do j=1,nstrai !{
         if(lsns(j).gt.0 .and. lsns(j).le.nsts) lsns(j)=-lsns(j)
@@ -1808,183 +1717,7 @@ c>>>
       enddo
       write(hlp_frm,'(a,i2,a)') '(1x,a,',ntrack,'(a2,1x))'
       write(*,hlp_frm) 'track_species : Bulk ', track_species(1:ntrack)
-c.. Test consistency with region boundaries
       if (.not.dotest) return
-#ifdef WG_TODO
-      do ic=1, nncut
-        found = on_closed_surface(leftcut(ic)-1,-1)
-        istra = 0
-        do while (istra.lt.nstrai .and. .not.found)
-          istra = istra + 1
-          found = rcend(istra).eq.leftcut(ic)-1 .and.
-     &            crcstra(istra).eq.'S' .and. old_style(istra)
-        end do
-        istra = 0
-        do while (istra.lt.nstrai .and. .not.found)
-          istra = istra + 1
-          if (.not.old_style(istra) .and. crcstra(istra).eq.'S') then
-            side = .false.
-            ix = 1
-            do while (.not.side .and. ix.le.rc_list_size(istra))
-              side = rc_list_x(ix,istra).eq.leftcut(ic)-1 .and.
-     .               rc_list_y(ix,istra).le.topcut(ic)
-              ix = ix + 1
-            end do
-            ix = 1
-            do while (side .and. ix.le.rc_list_size(istra))
-              found = rc_list_x(ix,istra).eq.leftcut(ic) .and.
-     .                rc_list_y(ix,istra).le.topcut(ic)
-              ix = ix + 1
-            end do
-          end if
-        end do
-        call xertst (found,
-     .   'Mismatch with neutrals boundaries (South) !')
-        found = on_closed_surface(leftcut(ic),-1)
-        istra = 0
-        do while (istra.lt.nstrai .and. .not.found)
-          istra = istra + 1
-          found = rcstart(istra).eq.leftcut(ic) .and.
-     &            crcstra(istra).eq.'S' .and. old_style(istra)
-        end do
-        call xertst (found,
-     .   'Mismatch with neutrals boundaries (South) !')
-        found = on_closed_surface(rightcut(ic)-1,-1)
-        istra = 0
-        do while (istra.lt.nstrai .and. .not.found)
-          istra = istra + 1
-          found = rcend(istra).eq.rightcut(ic)-1 .and.
-     &            crcstra(istra).eq.'S' .and. old_style(istra)
-        end do
-        istra = 0
-        do while (istra.lt.nstrai .and. .not.found)
-          istra = istra + 1
-          if (.not.old_style(istra) .and. crcstra(istra).eq.'S') then
-            side = .false.
-            ix = 1
-            do while (.not.side .and. ix.le.rc_list_size(istra))
-              side = rc_list_x(ix,istra).eq.rightcut(ic)-1 .and.
-     .               rc_list_y(ix,istra).le.topcut(ic)
-              ix = ix + 1
-            end do
-            ix = 1
-            do while (side .and. ix.le.rc_list_size(istra))
-              found = rc_list_x(ix,istra).eq.rightcut(ic) .and.
-     .                rc_list_y(ix,istra).le.topcut(ic)
-              ix = ix + 1
-            end do
-          end if
-        end do
-        call xertst (found,
-     .   'Mismatch with neutrals boundaries (South) !')
-        found = on_closed_surface(rightcut(ic),-1)
-        istra = 0
-        do while (istra.lt.nstrai .and. .not.found)
-          istra = istra + 1
-          found = rcstart(istra).eq.rightcut(ic) .and.
-     &            crcstra(istra).eq.'S' .and. old_style(istra)
-        end do
-        call xertst (found,
-     .   'Mismatch with neutrals boundaries (South) !')
-      end do
-#endif
-c.. Test consistency with physical edges within the computational domain
-#ifdef WG_TODO
-      do ix=0,nx-1
-        if (rightix(ix,-1).eq.nx+1 .and. region(ix,-1,0).ne.0) then
-          found = isymm.eq.2
-          istra = 0
-          do while (istra.lt.nstrai .and. .not.found)
-            istra = istra + 1
-            found = crcstra(istra).eq.'S' .and. rcend(istra).eq.ix-1
-     .       .and. old_style(istra)
-          end do
-          istra = 0
-          do while (istra.lt.nstrai .and. .not.found)
-            istra = istra + 1
-            if (.not.old_style(istra) .and. crcstra(istra).eq.'S') then
-              ic = 1
-              do while (.not.found .and. ic.le.rc_list_size(istra))
-                found = rc_list_x(ic,istra).eq.ix-1 .and.
-     .                  rc_list_y(ic,istra).eq.-1
-                ic = ic + 1
-              end do
-            end if
-          end do
-          call xertst (found,
-     .     'Mismatch with right internal edge (South) !')
-        endif
-        if (rightix(ix,ny).eq.nx+1 .and. region(ix,ny,0).ne.0) then
-          found = .false.
-          istra = 0
-          do while (istra.lt.nstrai .and. .not.found)
-            istra = istra + 1
-            found = crcstra(istra).eq.'N' .and. rcend(istra).eq.ix-1
-     .       .and. old_style(istra)
-          end do
-          istra = 0
-          do while (istra.lt.nstrai .and. .not.found)
-            istra = istra + 1
-            if (.not.old_style(istra) .and. crcstra(istra).eq.'N') then
-              ic = 1
-              do while (.not.found .and. ic.le.rc_list_size(istra))
-                found = rc_list_x(ic,istra).eq.ix-1 .and.
-     .                  rc_list_y(ic,istra).eq.ny
-                ic = ic + 1
-              end do
-            end if
-          end do
-          call xertst (found,
-     .     'Mismatch with right internal edge (North) !')
-        endif
-        if (leftix(ix,-1).eq.-2 .and. region(ix,-1,0).ne.0) then
-          found = isymm.eq.2
-          istra = 0
-          do while (istra.lt.nstrai .and. .not.found)
-            istra = istra + 1
-            found = crcstra(istra).eq.'S' .and. rcstart(istra).eq.ix+1
-     .       .and. old_style(istra)
-          end do
-          istra = 0
-          do while (istra.lt.nstrai .and. .not.found)
-            istra = istra + 1
-            if (.not.old_style(istra) .and. crcstra(istra).eq.'S') then
-              ic = 1
-              do while (.not.found .and. ic.le.rc_list_size(istra))
-                found = rc_list_x(ic,istra).eq.ix+1 .and.
-     .                  rc_list_y(ic,istra).eq.-1
-                ic = ic + 1
-              end do
-            end if
-          end do
-          call xertst (found,
-     .     'Mismatch with left internal edge (South) !')
-        endif
-        if (leftix(ix,ny).eq.-2 .and. region(ix,ny,0).ne.0) then
-          found = .false.
-          istra = 0
-          do while (istra.lt.nstrai .and. .not.found)
-            istra = istra + 1
-            found = crcstra(istra).eq.'N' .and. rcstart(istra).eq.ix+1
-     .       .and. old_style(istra)
-          end do
-          istra = 0
-          do while (istra.lt.nstrai .and. .not.found)
-            istra = istra + 1
-            if (.not.old_style(istra) .and. crcstra(istra).eq.'N') then
-              ic = 1
-              do while (.not.found .and. ic.le.rc_list_size(istra))
-                found = rc_list_x(ic,istra).eq.ix+1 .and.
-     .                  rc_list_y(ic,istra).eq.ny
-                ic = ic + 1
-              end do
-            end if
-          end do
-          call xertst (found,
-     .     'Mismatch with left internal edge (North) !')
-        endif
-      enddo
-#endif
       call map_ion_components
       return
 
@@ -2174,7 +1907,7 @@ c.. Test consistency with physical edges within the computational domain
       character(1) :: lchar(nstrat)
       character*3 ss
       type (mapping), intent (inout) :: m
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -2241,7 +1974,7 @@ cwdk also need to correct for degenerate faces?
       enddo
 
       call alloc_mapping_rc (m)
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=idb,file='recyc.out')
 #else
       idb = newunit()
@@ -2364,7 +2097,7 @@ cwdk also need to correct for degenerate faces?
 #ifdef WG_DEBUG
       integer :: iout, ian, ien, i
 #endif
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -2400,7 +2133,7 @@ cwdk also need to correct for degenerate faces?
         end do
       end do
 #ifdef WG_DEBUG
-#ifdef F2003
+#ifndef LEGACYCOMP
       open (newunit=iout,file='rc.testout')
 #else
       iout = newunit()
@@ -2435,12 +2168,12 @@ cwdk also need to correct for degenerate faces?
       integer :: istra, iout, is, i
       integer :: ii(1)
       character(1) :: ap =''''
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       open(newunit=iout,file='b2us.neutrals.parameters')
 #else
       iout = newunit()
@@ -2648,7 +2381,7 @@ cwdk also need to correct for degenerate faces?
       write (iout,'(1x,a,i5,a1)')
      .    'n_spcsrf= ',n_spcsrf,','
       if (n_spcsrf > 0) then
-        ii=minloc(abs(l_spcsrf))
+        ii=minloc(iabs(l_spcsrf))
         if (ii(1).eq.1) then
           is = 0
         else if (l_spcsrf(ii(1)).eq.0) then

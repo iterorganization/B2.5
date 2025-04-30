@@ -19,9 +19,11 @@
       use b2mod_ad
      & , only : ncall_b2sifrtf
       use b2mod_subsys
+#ifndef FIXED_POINT
       use b2mod_balance                                                 !djm Jun2019
      & , only : b2sifr_smofrea0to3, b2sifr_smofria0to3,
      &          b2sifr_smotfea0to3, b2sifr_smotfia0to3, balance_netcdf
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, nVx, ns, isb, ismain
@@ -83,7 +85,7 @@
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgeti, ipgetr, sfill
-      external b2xvff, b2xvfx, b2xvsg
+      external b2xvsg
 
 *-----------------------------------------------------------------------
 *.computation
@@ -105,8 +107,9 @@
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        call ipgeti ('b2npmo_iout', iout_b2npmo)
       endif
-*   ..test nCv, nFc
-      call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
+*   ..test nCv, nFc, nVx
+      call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
+     . 'faulty argument nCv, nFc, nVx')
 *   ..extensive tests on first few calls
       if (ncall_b2sifrtf.lt.3) then
 *    ..test sign of vol
@@ -247,8 +250,9 @@ c      .. apply flux limit
       smbtfia = smbtfial
       smbtfea = smbtfeal
 
+#ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jun2019
-        do iCv=1,nCv
+        do iCv = 1, nCv
           b2sifr_smofria0to3(iCv,0:3,isb)=geo%cvVol(iCv)*geo%cvHz(iCv)*
      &                                      smbfria(iCv,0:3)
           b2sifr_smofrea0to3(iCv,0:3,isb)=geo%cvVol(iCv)*geo%cvHz(iCv)*
@@ -259,6 +263,7 @@ c      .. apply flux limit
      &                                      smbtfea(iCv,0:3)
         enddo
       endif
+#endif
 
       if (iout.ne.0) then !  . or. iout_b2wdat.eq.4) then              !srv 05.07.17
        write (chns,'(i3.3)') isb
@@ -317,7 +322,6 @@ c      .. apply flux limit
 
         call my_out_us(70,nCv,0,ua(:,isb),'b2sifrtf_ua'//chns)
       endif
-
 
 * ..return
       ncall_b2sifrtf = ncall_b2sifrtf+1

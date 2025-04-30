@@ -20,7 +20,7 @@
 ! Quantities derived from plasma state
       type B2Derivatives
         ! fluxes/flux densities
-        ! dimensions: fc, direction (, species)
+        ! dimensions: nFc, direction (, species)
         real(R8), allocatable :: fch(:,:), fch_32(:,:),
      .                           fch_52(:,:), fch_p(:,:),
      .                           fchdia(:,:), fchin(:,:),
@@ -53,7 +53,7 @@
         real(R8), allocatable :: kin_frac_hyb(:), fluid_frac_hyb(:)
 
         ! kinetic energy
-        ! dimensions: cv, species
+        ! dimensions: nCv, species
         real(R8), allocatable :: kinrgy(:,:)
 
         ! numerical coefficients (maybe move to separate object)
@@ -95,8 +95,6 @@
      .                           wadia(:,:,:), vaecrb(:,:,:),
      .                           vedia(:,:), wedia(:,:), veecrb(:,:),
      .                           facdrift(:), fac_ExB(:), fac_vis(:)
-
-
       end type B2Derivatives
 
 ! Transport coefficients (velocities, diffusivities...)
@@ -148,14 +146,6 @@
      .                           f_luc_et, f_luc_sg, f_luc_al
 
         real(R8), allocatable, dimension(:) :: cssb
-
-
-cwdk move to dv
-!        ! velocities at cell centers
-!        ! dimensions: cv, direction, species
-!        real(R8), allocatable :: uadia(:,:,:,:), wadia(:,:,:,:),
-!     .                           vaecrb(:,:,:,:)
-
       end type B2Coeff
 
       type B2Source
@@ -212,9 +202,8 @@ cwdk move to dv
 
 ! b2mod_rates
       type B2Rates
-
         integer :: nscx, nscxmax = 3
-        integer,allocatable :: iscx(:)
+        integer, allocatable :: iscx(:)
 
         ! nCv, dir, ns, 0:nscxmax-1
         real(R8), allocatable :: rlcx(:,:,:,:)
@@ -251,7 +240,7 @@ cwdk move to dv
      .                                         srcmt
 
         ! b2mod_residuals
-        real(R8), allocatable ::  aresco(:), aresmo(:)
+        real(R8), allocatable :: aresco(:), aresmo(:)
         real(R8) :: aresmt, areshe, areshi, arespo, areshn, areskt,
      .              areszt
 
@@ -261,8 +250,8 @@ cwdk move to dv
      .              acorzt
 
         ! b2mod_diag
-        real (R8), allocatable ::  rescoreg(:,:) , resmoreg(:,:),
-     .                             reshereg(:), reshireg(:)
+        real (R8), allocatable :: rescoreg(:,:) , resmoreg(:,:),
+     .                            reshereg(:), reshireg(:)
       end type B2Diagnostic
 
       type B2Update
@@ -293,7 +282,6 @@ cwdk move to dv
 ! A simplified type containg all data on possible external species
 ! To be considered: move to a separate module b2us_plasma_ext?
       type B2StateExt
-
         character*13, allocatable :: text(:)
         integer :: ns
         logical, allocatable :: is_neutral(:)
@@ -309,12 +297,10 @@ cwdk move to dv
 
         real(R8), dimension(:), allocatable :: sne, she, shi, sch
         real(R8), dimension(:,:), allocatable :: sna, smo
-
       end type B2StateExt
 
 ! Averaged plasma state
       type B2Average
-
         real(R8), dimension(:,:), allocatable :: na_mean, ua_mean
         real(R8), dimension(:), allocatable :: te_mean, ti_mean,
      .                                         po_mean,
@@ -327,7 +313,6 @@ cwdk move to dv
      .                                         e_kt, e_zt
         real(R8), dimension(:,:), allocatable :: e_sna, e_smo
         real(R8), dimension(:), allocatable :: e_she, e_shi, e_shn
-
       end type B2Average
 
       contains
@@ -339,7 +324,7 @@ cwdk move to dv
 
       st%ns = ns
       call createB2Plasma( nCv, ns, st % pl )
-      call createB2Coeff( nCv, nFC, ns, st % co )
+      call createB2Coeff( nCv, nFc, ns, st % co )
       call createB2Derivatives( nCv, nFc, ns, st % dv )
       call createB2Source( nCv, ns, st % sr )
       call createB2SourceWork( nCv, ns, st % srw )
@@ -428,7 +413,7 @@ cwdk move to dv
 
       if (allocated(coeff % calf)) return
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( coeff % calf( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % calf_cl( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % calf_an( nFc, 0:1 ), SOURCE=0._R8 )
@@ -821,7 +806,7 @@ cwdk move to dv
       type(B2Derivatives), intent(inout) :: dv
 
       if (allocated(dv % fch)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
 ! fluxes
       allocate( dv % fch( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fch_32( nFc, 0:1 ), SOURCE=0._R8 )
@@ -1215,7 +1200,7 @@ cwdk move to dv
       dv % corkt = 0.0_R8
       dv % corzt = 0.0_R8
 ! coupling coefficients
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( dv % pcca( nCv, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % pccm( nCv, 0:1 ), SOURCE=0._R8 )
 #else
@@ -1378,7 +1363,7 @@ cwdk move to dv
       type(B2Source), intent(inout) :: sr
 
       if (allocated(sr % sch)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( sr % sch( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( sr % she( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( sr % shi( nCv, 0:3 ), SOURCE=0._R8 )
@@ -1484,7 +1469,7 @@ cwdk move to dv
       type(B2SourceEir), intent(inout) :: sr_eir
 
       if (allocated(sr_eir % sch)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( sr_eir % sch( nCv, nstra), SOURCE=0._R8 )
       allocate( sr_eir % she( nCv, nstra), SOURCE=0._R8 )
       allocate( sr_eir % shi( nCv, nstra), SOURCE=0._R8 )
@@ -1535,7 +1520,7 @@ cwdk move to dv
       type(B2SourceWork), intent(inout) :: srw
 
       if (allocated(srw % sch0)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( srw % sch0( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( srw % she0( nCv, 0:3 ), SOURCE=0._R8 )
       allocate( srw % shi0( nCv, 0:3 ), SOURCE=0._R8 )
@@ -1868,7 +1853,7 @@ cwdk move to dv
       type(B2Rates), intent(inout) :: rt
 
       if (allocated(rt % iscx)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate (rt % iscx( 0:rt%nscxmax-1 ), SOURCE=0 )
 
       allocate( rt % rlcx( nCv, 0:1, 0:ns-1, 0:rt%nscxmax-1),
@@ -1965,7 +1950,7 @@ cwdk move to dv
       type(B2RatesWork), intent(inout) :: rtw
 
       if (allocated(rtw % rsa)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( rtw % rsa( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( rtw % rra( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( rtw % rqa( nCv, 0:ns-1 ), SOURCE=0._R8 )
@@ -2013,7 +1998,7 @@ cwdk move to dv
       type(B2PlasmaSnapshot), intent(inout) :: snap
 
       if (allocated(snap % na)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( snap % na( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( snap % ua( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( snap % po( nCv ), SOURCE=0._R8 )
@@ -2121,7 +2106,7 @@ cwdk move to dv
       type(B2Diagnostic), intent(inout) :: diag
 
       if (allocated(diag % srcna)) return
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( diag % srcna( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( diag % srcmo( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( diag % srcpo( nCv ), SOURCE=0._R8 )
@@ -2212,7 +2197,7 @@ cwdk move to dv
       if (allocated(update % pa)) return
 
 ! corrections
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( update % pa( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( update % ua( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( update % na( nCv, 0:ns-1 ), SOURCE=0._R8 )

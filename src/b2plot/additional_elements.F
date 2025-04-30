@@ -1,8 +1,8 @@
 c
       subroutine additional_elements(nCv,physical)
       use b2mod_types
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       integer nCv
       logical physical
 
@@ -22,7 +22,7 @@ c
       call flux_add(nCv)
 #endif
       if(wall) then
-        call pltwall(nCv,physical,.false.)
+        call pltwall(physical,.false.)
       endif
       if(target.and.physical) then
         call plttarget

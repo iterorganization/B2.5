@@ -187,8 +187,6 @@
       subroutine b2stbc_fb_pre (nCv, nFc, ns, ismain,
      &  switch, geo, mpg, pl, dv, rt, psnc, psnl, main_call)
       use b2mod_types
-      use b2mod_rates
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_feedback
       use b2mod_b2cmpa
@@ -199,10 +197,10 @@
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
       use b2mod_user_namelist
-     & ,only : omp, icsepomp
+     & , only : omp, icsepomp
 #ifdef WG_TODO
       use b2mod_user_namelist
-     & ,only : nomp
+     & , only : nomp
 #endif
       use b2mod_switches
       use b2us_geo
@@ -388,7 +386,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
      .                   na_feedback_ib(ispecies))).eq.11 .and.
      &      na_feedback_choice(ispecies).eq.6))
        end do
-       consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
+       consistent = consistent .or. b2sral_style.eq.1 .or.
      &  switch%b2stbc_boundary_namelist.lt.1
        do ispecies = 0, nspecies-1
          if (na_feedback_ib(ispecies).ge.0) cycle
@@ -478,7 +476,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
      1  0.0_R8.eq.volrec_overshoot,
      1  'faulty internal parameter volrec_overshoot')
 #endif
-       if (nnreg(0).le.2) then
+       if (mpg%nnreg(0).le.2) then
          coreregno = 0
        else
          coreregno = 1
@@ -622,7 +620,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
        endif
 #endif
 *   ..test for input consistency, i.e. are the cbs.. arrays used in the b.c settings
-       geometryType = geometryId( mpg, geo )
+       geometryType = geometryId( mpg, geo, 1 )
        consistent_core = fnaycore.eq.-1.0e30_R8 .and. fheycore.eq.0.0_R8
      &             .and. fhiycore.eq.0.0_R8 .and. nesepm.eq.0.0_R8
      &             .and. fchycore.eq.-1.0e30_R8
@@ -633,6 +631,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
      &              .and. ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8
        do ib = 1, nbc
          iFc = mpg%bcFc(mpg%bcFcP(ib,1))
+         if (mpg%fcReg(iFc).eq.0) cycle
          if (boundaryAssignments(mpg%fcReg(iFc),geometryType).eq.NORTH)
      >    then
            if(nesepm_sol.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8 .or.
@@ -687,7 +686,7 @@ c       call get_jsep(nx,ny,jxi,jxa,jsep)
        end do
        consistent = consistent_core .and. consistent_sol .and.
      &              consistent_pfr1 .and. consistent_pfr2
-       consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
+       consistent = consistent .or. b2sral_style.eq.1 .or.
      &  switch%b2stbc_boundary_namelist.lt.1
        call xertst (consistent,
      .  'feedback scheme not consistent with B.C.''s!')

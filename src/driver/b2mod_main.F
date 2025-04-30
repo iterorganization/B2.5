@@ -15,6 +15,7 @@
       use b2us_map
       use b2us_plasma
       use b2us_io
+      use b2us_work
       use b2mod_switches
       use b2mod_recycle
       use b2mod_xerset
@@ -279,10 +280,11 @@ csw
       call createB2State (mpg%nCv, mpg%nFc, ns, state)
       call createB2StateExt (mpg%nCv, mpg%nFc, ns, state_ext)
 *   ..call principal driver routine
+      call alloc_b2us_work (mpg%nCv, ns)
       call alloc_b2mod_ppout (DEF_NXD, DEF_NYD, ns)
       call alloc_b2mod_recycle (mpg%nFc, ns)   !nh 30.03.21
-      call alloc_b2mod_astra_to_b2(mpg, DEF_NXD, DEF_NYD)
-      call alloc_b2mod_b2_to_astra(mpg, DEF_NYD, ns)
+      call alloc_b2mod_astra_to_b2 (mpg, DEF_NYD)
+      call alloc_b2mod_b2_to_astra (mpg, DEF_NYD, ns)
 
       call b2mndr_0 (ninp, nout, ns, ns0, switch, geo, mpg, 
      &               state, state_ext, state_avg)
@@ -301,7 +303,8 @@ csw
       use b2mod_input_profile
      , , only : tdata
       use b2mod_par_opt
-     & , only : par_opt_phys, npar_opt, sigma, nsigma
+     & , only : par_opt_phys, npar_opt, sigma, nsigma, mean, nmean,
+     &          shift, nshift, nshift_opt
 #endif
       use b2mod_ad
      , , only: nncf
@@ -335,10 +338,10 @@ csw
      .               state, state_ext, state_avg)
 #ifdef JET
 *   ..set and write ppout
-      call cfopen (nout(10),'tran','new','unformatted')
+      call cfopen (nout(11),'tran','new','unformatted')
       call set_b2mod_ppout
-      call write_b2mod_ppout(nout(10))
-      close (nout(10))
+      call write_b2mod_ppout(nout(11))
+      close (nout(11))
 #endif
 *   ..close files
       do io=0,size(ninp)-1
@@ -355,6 +358,7 @@ csw
       call destroyB2StateExt (state_ext)
       call dealloc_geometry (geo)
       call dealloc_mapping (mpg)
+      call dealloc_b2us_work
       call dealloc_b2mod_ppout
 !WG_TODO      call dealloc_b2mod_astra_to_b2
 !WG_TODO      call dealloc_b2mod_b2_to_astra
@@ -378,4 +382,3 @@ csw
       end subroutine b2mn_fin
 
       end module b2mod_main
-

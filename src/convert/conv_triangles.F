@@ -56,7 +56,7 @@
 
       type(tri_list), allocatable :: trias(:,:)
       type(tri_elem), pointer :: tel
-#ifndef F2003
+#ifdef LEGACYCOMP
       integer newunit
       external newunit
 #endif
@@ -71,7 +71,7 @@
 !  if input.dat exists check which form of fort.33 is used
       inquire (file='input.dat',exist=ffound)
       if (ffound) then
-#ifdef F2003
+#ifndef LEGACYCOMP
         open (newunit=ineir,file='input.dat')
 #else
         ineir = newunit()
@@ -134,7 +134,6 @@
             write(*,*) '------------'
         endif
       end do
-
 
 !  now check coordinates from old fort.33 file for new index
       nnodes = npnodes

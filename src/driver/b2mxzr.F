@@ -41,7 +41,6 @@
       integer is, iCv
 *   ..procedures
       external xertst, sfill
-      external b2xvfx
 
 *-----------------------------------------------------------------------
 *.computation
@@ -94,24 +93,21 @@
        enddo
 
 #ifdef WG_TODO
-      do ix = 0, nx-1
-        do iy = 0, ny-1
-*   ..zero out interior boundaries and resignore regions
-          if(resignore(ix,iy,1).eq.0 .or. leftix(ix,iy).eq.-2 .or.
-     &       rightix(ix,iy).eq.nx+1) then
-            do is = 0, ns-1
-              resco(ix,iy,is) = 0.0_R8
-              resmo(ix,iy,is) = 0.0_R8
-            enddo
-            resmt(ix,iy) = 0.0_R8
-            reshe(ix,iy) = 0.0_R8
-            reshi(ix,iy) = 0.0_R8
-            reshn(ix,iy) = 0.0_R8
-            respo(ix,iy) = 0.0_R8
-            reskt(ix,iy) = 0.0_R8
-            reszt(ix,iy) = 0.0_R8
-          endif
-        enddo
+      do iCv = 1, mpg%nCi
+*   ..zero out resignore regions
+        if(resignore(iCv,1).eq.0) then
+          do is = 0, ns-1
+            resco(iCv,is) = 0.0_R8
+            resmo(iCv,is) = 0.0_R8
+          enddo
+          resmt(iCv) = 0.0_R8
+          reshe(iCv) = 0.0_R8
+          reshi(iCv) = 0.0_R8
+          reshn(iCv) = 0.0_R8
+          respo(iCv) = 0.0_R8
+          reskt(iCv) = 0.0_R8
+          reszt(iCv) = 0.0_R8
+        endif
       enddo
 #endif
 

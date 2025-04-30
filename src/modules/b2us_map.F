@@ -27,7 +27,7 @@
         integer, allocatable :: cvVx(:)                !         listing for every cell the corresponding vertex numbers
         integer, allocatable :: vxFcP(:,:)             ! (nVx,2) pointing for every vertex to the first index number in the vxFc list and its number of faces
         integer, allocatable :: vxFc(:)                !         listing for every vertex the corresponding face numbers
-        integer, allocatable :: vxCvP(:,:)             ! (nVx,2) pointing for every cell to the first index number in the vxCv list and its number of cells
+        integer, allocatable :: vxCvP(:,:)             ! (nVx,2) pointing for every vertex to the first index number in the vxCv list and its number of cells
         integer, allocatable :: vxCv(:)                !         listing for every vertex the corresponding cell numbers
         integer, allocatable :: ftCvP(:,:)             ! (nFt,2) pointing for every flux tube to the first index number in the ftCv list and its number of cells
         integer, allocatable :: ftCv(:)                !         listing for every flux tube the corresponding cell numbers
@@ -49,6 +49,9 @@
         integer, allocatable :: bcFcP(:,:)             ! (nBc,2) pointing for each boundary condition to the first index in the bcFc list, and its number of boundary faces
         integer, allocatable :: bcFc(:)                !         listing for each boundary condition the boundary faces
         real (kind=R8), allocatable :: bcFcOr(:)       ! Multiplier to indicate whether outward normal coincides with the face normal (1.0_R8) or not (-1.0_R8)
+        integer, allocatable :: fcBc(:,:)              ! (nFc,2) Correspondence array with BCs
+                                                       ! fcBc(iFc,1) contains the boundary face index corresponding to iFc
+                                                       ! fcBc(iFc,2) contains the boundary condition to which the face belongs
 
         integer, allocatable :: rcCvP(:,:)             ! (nRc,2) pointing for each stratum to the first index in the rcCv list, and its number of guard cells
         integer, allocatable :: rcCv(:,:)              !         listing for each stratum the guard cells, and the corresponding domain cells
@@ -98,6 +101,7 @@
         integer, allocatable :: fcLbl(:)               ! (nFc) indicates for each face the corresponding face label
         integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
         integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
+
         end type mapping
 
       contains
@@ -362,12 +366,14 @@
       allocate (m%bcFcP  ( m % nBc,   2 ) )
       allocate (m%bcFc   ( m % mxnBc    ) )
       allocate (m%bcFcOr ( m % mxnBc    ) )
+      allocate (m%fcBc   ( m % nFc,   2 ) )
 
       m%bcCvP = 0
       m%bcCv = 0
       m%bcFcP = 0
       m%bcFc = 0
-      m%bcFcOr = 0._R8
+      m%bcFcOr = 0.0_R8
+      m%fcBc = 0
 
       return
       end subroutine alloc_mapping_bc
@@ -386,6 +392,7 @@
       deallocate ( m % bcFcP  )
       deallocate ( m % bcFc   )
       deallocate ( m % bcFcOr )
+      deallocate ( m % fcBc   )
 
       return
       end subroutine dealloc_mapping_bc
@@ -601,7 +608,7 @@
       subroutine init_mapping(m)
       implicit none
       type (mapping), intent (inout) :: m
-      integer :: i, j, k, l
+      integer :: i, j, k, l, indd
       integer :: iCv, iCv1, iCv2, iFc, iFcc, iFs, iVa, iVb,
      *           iNv, iNv1, iNv2, iVx, iVx1, iVx2, iNvmx, inew
       integer :: totalcount, fscount, iactive, icount, fccount
@@ -620,7 +627,7 @@ cwdk  can be derived directly from data in that file
 
 *   ..set up connectivity information for the matrix stencil
       allocate (m%cvNvP(m%nCv,2))
-      allocate (cvNvLoc(10*m%nCv)) ! initial overestimate of size cvNv array
+      allocate (cvNvLoc(20*m%nCv)) ! initial overestimate of size cvNv array
       allocate (indCv(100))        ! (over)estimate of max number number of neighbors an individual cell could have
 
       iNv = 1
@@ -912,7 +919,8 @@ cwdk  can be derived directly from data in that file
       deallocate(indXpt)
 
       if (allocated(m%strDiv)) then
-       if (maxval(m%strDiv).gt.0) then
+       indd = maxval(m%strDiv)
+       if (indd.gt.0) then
         allocate(m%ifdiv(maxval(m%strDiv)))
         allocate(m%ivdiv(maxval(m%strDiv)))
         allocate(m%divFcP(maxval(m%strDiv),2))
@@ -922,7 +930,7 @@ cwdk  can be derived directly from data in that file
         m%ivdiv = 0
         m%divFcP(1,1) = 1
         m%divFcP(:,2) = 0
-        do i = 1, maxval(m%strDiv)  ! first assemble all the faces
+        do i = 1, indd  ! first assemble all the faces
           if (i.gt.1) m%divFcP(i,1) = m%divFcP(i-1,1) + m%divFcP(i-1,2)
           do iFc = 1, m%nFc
             if (m%fcReg(iFc).eq.freg(i)) then
@@ -936,7 +944,7 @@ cwdk  can be derived directly from data in that file
         allocate(m%divFcOr(icount))
         m%divFcOr = 0.0_R8
         m%divFc(1:icount) = indFc(1:icount)
-        do i = 1, maxval(m%strDiv) ! now re-order them
+        do i = 1, indd ! now re-order them
           allocate(old_face_list(m%divFcP(i,2)))
           allocate(new_face_list(m%divFcP(i,2)))
           old_face_list(1:m%divFcP(i,2))=
@@ -1012,7 +1020,12 @@ cwdk  can be derived directly from data in that file
         deallocate(indFc)
        end if
       end if
-      deallocate(freg)
+      if (allocated(freg)) then
+        deallocate(freg)
+      else
+        write(*,*) 'Targetless topology detected :'
+        write(*,*) 'Strike point data not defined'
+      end if
 
       write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc
       write (*,*) 'nFsVxmx          ', m%nFsVxmx

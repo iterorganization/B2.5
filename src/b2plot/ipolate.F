@@ -1,8 +1,10 @@
 c
       subroutine ipolate(onflag)
       use b2mod_types
-#include "graphics_vars.h"
+      use b2mod_graphics
+      implicit none
       logical onflag
+
       if(onflag) then
         intpol=.true.
       else

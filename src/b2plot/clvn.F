@@ -2,8 +2,8 @@ c
       subroutine clvn(clvmin,clvmax,ncls)
       use b2mod_types
       use b2mod_subsys
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       real (kind=R8) ::
      * clvmin,clvmax,delta
       integer :: iclv, ncls
@@ -32,8 +32,8 @@ c
       subroutine eclvn(clvmin,clvmax,ncls)
       use b2mod_types
       use b2mod_subsys
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       real (kind=R8) ::
      * clvmin,clvmax,delta
       integer :: iclv, ncls
@@ -62,8 +62,8 @@ c
       subroutine wclvn(clvmin,clvmax,ncls)
       use b2mod_types
       use b2mod_subsys
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       real (kind=R8) ::
      * clvmin,clvmax,delta
       integer :: iclv, ncls
@@ -92,8 +92,8 @@ c
       subroutine tclvn(clvmin,clvmax,ncls)
       use b2mod_types
       use b2mod_subsys
+      use b2mod_graphics
       implicit none
-#include "graphics_vars.h"
       real (kind=R8) ::
      * clvmin,clvmax,delta
       integer :: iclv, ncls

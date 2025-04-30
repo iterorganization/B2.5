@@ -1,5 +1,5 @@
       subroutine cv_intersections (geo, m, segm, list, list_ci,
-     &   list_fc, nncv, nnci, nnfc, nmax, mode, ifail)
+     &   list_fc, nncv, nnci, nnfc, nmax, XI, YI, mode, ifail)
       use b2mod_types
       use b2us_geo
       use b2us_map
@@ -12,6 +12,7 @@
       integer :: list_fc(m%nFc), nnfc
       integer :: ic, ifc, ii, kk
       real(kind=r8) :: p1(2), q1(2), p2(2), q2(2)
+      real(kind=r8) :: XI(m%nFc), YI(m%nFc)
       logical found, intersects, ifail
       external intersects, xertst
 
@@ -20,7 +21,8 @@
 *     It is assumed that segm(1,:) contains x-coordinate and segm(2,:) the y-coordinates
 *     list will contain all the CVs intersecting (without repetitions) and nncv the number of 
 *     CVs. list_ci will only contain the internal CVs intersecting, and nnci the number of CVs.
-*     The CVs will be sorted according to mode, mode=1 sorted along x-dir, mode=2 sorted along y-dir
+*     The lists of x- and y-coordinates of intersection points between the segments are returned as well.
+*     The CVs will be sorted according to mode, mode=1 sorted along x-dir, mode=2 sorted along y-dir.
 ***
 
       call xertst(mode.ge.1.and.mode.le.2,'mode value not encoded')
@@ -39,6 +41,7 @@
         q2(1) = geo%vxX(m%fcVx(ifc,2))
         q2(2) = geo%vxY(m%fcVx(ifc,2))
         if (intersects(p1,q1,p2,q2)) then
+          call intersect_coord(m, p1, q1, p2, q2, XI(ifc), YI(ifc))
           nnfc = nnfc + 1
           list_fc(nnfc) = ifc
           do ii=1,2

@@ -22,7 +22,7 @@
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
-     &          ncall_b2ttia
+     &          ncall_b2ttia, nsmooth_tvsq
 #endif
       use b2mod_subsys
       implicit none
@@ -65,7 +65,7 @@ c       real (kind=R8), save :: drift_hyb = 1.0_R8, fch_inert = 1.0_R8
 c      real (kind=R8), save :: fch_stochastic = 0.0_R8                   !lk 31.01.08
 *   ..procedures
       external xertst
-      external b2xvsg, b2xvff, b2xvfx, b2ttia                            !srv 11.07.99
+      external b2xvsg, b2ttia                                            !srv 11.07.99
 *   ..initialization
 
 *-----------------------------------------------------------------------
@@ -121,8 +121,7 @@ c       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31
      &    dv%facdrift, dv%fac_ExB, ismain, ismain0, pl,
      &    dv%fna, co%csigin, dv%fchin)                     !srv 11.05.09
 *     ..compute x,y-components of divergent part of diamagnetic current
-        call b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv%pz, dv%fna,
-     &    dv%uadia, dv%facdrift, dv%fchdia)
+        call b2tdia(nCv, nFc, nVx, ns, switch, geo, mpg, dv)
 *     ..calculate x,y-components of viscosity parallel current
         call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, pl%ua,
      &    co%vsaf_cl, dv%fac_vis, dv%fchvispar)

@@ -12,9 +12,11 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+#ifndef FIXED_POINT
       use b2mod_balance                                                 !djm Jan2017
      & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
      &          fna_ch, fna_pschused, balance_netcdf
+#endif
       use b2mod_ad
      & , only : ncall_b2tfnb
 #ifndef NAGFOR
@@ -72,7 +74,7 @@
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrk3(nFc), wrk4(nFc),
      *   wrk6(nFc), wrk8(nFc),
 !    *   wrk5(nFc), wrk7(nFc,0:1),
-     *   wrk(nCv), wrkVx(nVx),
+     *   wrk(nCv), wrkf(nFc,0:1), wrkVx(nVx),
      *   zeros(nFc,0:1), dumm1(nFc,0:1), dumm2(nFc,0:1), dumm3(nFc,0:1),
      *   dumm4(nFc,0:1), zeros1(nFc,0:1)
       real (kind=R8) ::
@@ -88,11 +90,9 @@
      *   cddb(nFc,0:1), cdpb(nFc,0:1)
       real (kind=R8) :: weight(nFc,2)                                    !lk
       integer :: xcount
-c The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
-c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 *   ..procedures
       external xertst, ipgeti, ipgetr                                    !xpb
-      external b2xvsg, b2xvff, intface, diff
+      external b2xvsg, intface, diff
       intrinsic abs, max, sqrt, sign
 *   ..initialisation
 
@@ -120,9 +120,6 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
        call b2xvsg (nFc, wrk0, 1, 'cdpa0','.ge.')
        wrk1(:) = co%cdpa(:,1,isb)*geo%fcQalf(:,1)
        call b2xvsg (nFc, wrk1, 1, 'cdna1','.ge.')
-c The following switches are only used in 'WG_TODO' blocks, i.e. not yet converted to wide grid functionality
-c        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
-c        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
       endif
 
       meth = switch%b2tfnb_discr_meth
@@ -365,10 +362,9 @@ cwdk                   (original code: simple averaging)
       flo_mdf(:,1) = co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       flo_he(:,0) = geo%fcPbs*wrk0 +
-     &  5.0_R8/3.0_R8*switch%b2tfnb_facvla_start*co%cvla(:,0,isb) +
+     &  5.0_R8/3.0_R8*co%cvla(:,0,isb) +
      &  drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
-      flo_he(:,1)  = 5.0_R8/3.0_R8*switch%b2tfnb_facvla_start*
-     &  co%cvla(:,1,isb) +
+      flo_he(:,1)  = 5.0_R8/3.0_R8*co%cvla(:,1,isb) +
      &  drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)
       flo_53(:,0) = geo%fcPbs*wrk0 +
      &  dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)
@@ -492,17 +488,15 @@ cwdk                   (original code: simple averaging)
      &  (flo2dia(:,1) - flo_mdf(:,1)*geo%fcHz)*nbf -
      &   co%cdpahz(:,1,isb)*dpb(:,1)
 
-      dv%fna_he(:,0,isb)   = (fna_mdf0(:,0)*(5.0_R8/3.0_R8)-
-     &  (5.0_R8/3.0_R8)*flo_mdf(:,0)*nbf)*switch%b2tfnb_facdna_start +
+      dv%fna_he(:,0,isb)   = fna_mdf0(:,0)*(5.0_R8/3.0_R8) +
      &  (1.0_R8-drift_hyb)*
      &   dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf +
-     &   flo_he(:,0)*nbf -
+     &  (flo_he(:,0) - (5.0_R8/3.0_R8)*flo_mdf(:,0))*nbf -
      &  (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
-      dv%fna_he(:,1,isb)   = (fna_mdf0(:,1)*(5.0_R8/3.0_R8)-
-     &  (5.0_R8/3.0_R8)*flo_mdf(:,1)*nbf)*switch%b2tfnb_facvla_start +
+      dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*(5.0_R8/3.0_R8) +
      &  (1.0_R8-drift_hyb)*
      &   dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf +
-     &   flo_he(:,1)*nbf -
+     &  (flo_he(:,1) - (5.0_R8/3.0_R8)*flo_mdf(:,1))*nbf -
      &  (5.0_R8/3.0_R8)*co%cdpa(:,1,isb)*dpb(:,1)
 
       dv%fna_53(:,0,isb)   = flo_53(:,0)*nbf
@@ -775,28 +769,39 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
           endif
         endif
       endif                                                             !srv 05.03.16 }
-
+#ifndef FIXED_POINT
 * ..compute variables for balance.nc
       if (balance.and.(balance_netcdf.ne.0)) then    !nh 08.01.24
         dumm1 = 0.0_R8
         dumm2 = 0.0_R8
         dumm3 = 0.0_R8
         dumm4 = 0.0_R8
+        wrkf = sign(co%cvla(:,:,isb),flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
-     &    sign(co%cvla(:,:,isb),flo_mdf), dumm1, dumm2,
-     &    fna_pinch(:,:,isb), dumm3)
+     &    wrkf, dumm1, dumm2, fna_pinch(:,:,isb), dumm3)
+        do iFc = 1,nFc !nh limit by sound speed
+          fna_pinch(iFc,:,isb) = wrk4(iFc)*fna_pinch(iFc,:,isb)
+        enddo
         fna_pinch(:,:,isb) = sign(fna_pinch(:,:,isb),co%cvla(:,:,isb))
         dumm4(:,0) = geo%fcPbs*wrk0
+        wrkf = sign(dumm4,flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
-     &    sign(dumm4,flo_mdf), dumm1, dumm2, fna_pll(:,:,isb), dumm3)
+     &    wrkf, dumm1, dumm2, fna_pll(:,:,isb), dumm3)
+        do iFc = 1,nFc !nh limit by sound speed
+          fna_pll(iFc,:,isb) = wrk4(iFc)*fna_pll(iFc,:,isb)
+        enddo
         fna_pll(:,:,isb) = sign(fna_pll(:,:,isb),dumm4)
         fna_pll(:,0,isb) = fna_pll(:,0,isb) + term
         dumm4(:,0) = drift_hyb*dv%vaecrb(:,0,isb)*geo%fcS*
      &    geo%fcQalf(:,0)
         dumm4(:,1) = drift_hyb*dv%vaecrb(:,1,isb)*geo%fcS*
      &    geo%fcQalf(:,1)
+        wrkf = sign(dumm4,flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
-     &     sign(dumm4,flo_mdf), dumm1, dumm2, fna_drift(:,:,isb), dumm3)
+     &    wrkf, dumm1, dumm2, fna_drift(:,:,isb), dumm3)
+        do iFc = 1,nFc !nh limit by sound speed
+          fna_drift(iFc,:,isb) = wrk4(iFc)*fna_drift(iFc,:,isb)
+        enddo
         fna_drift(:,:,isb) = sign(fna_drift(:,:,isb),dumm4)
         fna_drift(:,0,isb) = fna_drift(:,0,isb) + (1.0_R8-drift_hyb)*
      &    dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf
@@ -811,9 +816,12 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
         else
           fna_pschused(:,:,isb) = -dv%fnaPSch(:,:,isb)
         endif
+        wrkf = sign(drift_hyb*scur,flo_mdf)
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
-     &    sign(drift_hyb*scur,flo_mdf), dumm1, dumm2, fna_ch(:,:,isb),
-     &    dumm3)
+     &    wrkf, dumm1, dumm2, fna_ch(:,:,isb), dumm3)
+        do iFc = 1,nFc !nh limit by sound speed
+          fna_ch(iFc,:,isb) = wrk4(iFc)*fna_ch(iFc,:,isb)
+        enddo
         fna_ch(:,:,isb) = sign(fna_ch(:,:,isb),drift_hyb*scur)
         fna_ch(:,0,isb) = fna_ch(:,0,isb) + (1.0_R8-drift_hyb)*
      &    scur(:,0)*nbf
@@ -821,9 +829,12 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
      &    scur(:,1)*nbf
         call calcflow(nCv, nFc, nVx, meth, geo, mpg, pl%na(:,isb),
      &    flo_mdf, co%cdna(:,:,isb), dumm2, dumm3, fna_nanom(:,:,isb))
+        do iFc = 1,nFc !nh limit by sound speed
+          fna_nanom(iFc,:,isb) = wrk4(iFc)*fna_nanom(iFc,:,isb)
+        enddo
         fna_panom(:,:,isb) = -co%cdpa(:,:,isb)*dpb(:,:)
       endif
-
+#endif
 
       if (switch%iout_b2wdat .eq. 4) then
        call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2tfnb_fnb_th'//chns)
@@ -999,4 +1010,3 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
 *.end b2tfnb
 
       end subroutine b2tfnb
-

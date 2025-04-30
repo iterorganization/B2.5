@@ -33,8 +33,8 @@
 !-----------------------------------------------------------------------
 !.specification
 !
-SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
-& , pld, dv, dvd, co, cod, rt, rtd, st_ext, st_extd, nbdirs)
+SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, switchd, geo, geod, mpg&
+& , mpgd, pl, pld, dv, dvd, co, cod, rt, rtd, st_ext, st_extd, nbdirs)
   USE B2MOD_TYPES
 !      use b2mod_boundary_namelist
   USE B2MOD_CONSTANTS
@@ -59,8 +59,9 @@ SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
 !.end b2tfrn
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
+  TYPE(SWITCHES_DIFFV), INTENT(IN) :: switchd
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(GEOMETRY_DIFFV), INTENT(IN) :: geod
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -117,7 +118,7 @@ SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
 !      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 !   ..procedures
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, INTFACE
+  EXTERNAL B2XVSG, INTFACE
   EXTERNAL INTFACE_DV
   INTRINSIC NINT
   INTRINSIC MAXVAL
@@ -152,7 +153,7 @@ SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tfrn')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..set internal parameters on first call
 !      if (ncall_b2tfrn.eq.0) then
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -166,7 +167,7 @@ SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
 !   ..extensive tests on first few calls
   IF (ncall_b2tfrn .LT. 3) THEN
 !    ..test sign of ne
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
   END IF
 !
   meth = switch%b2tfnb_discr_meth
@@ -369,7 +370,7 @@ SUBROUTINE B2TFRN_DV(ncv, nfc, nvx, ns, switch, geo, geod, mpg, mpgd, pl&
     END DO
   ELSE
 !srv 13.01.17
-    c071 = 0.71e0_R8
+    c071 = 0.71_R8
   END IF
 !
 !wdk  interpolate to cell faces!
@@ -523,7 +524,7 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !.end b2tfrn
 !
 !   ..input arguments (unchanged on exit)
-  INTEGER :: ncv, nfc, nvx, ns
+  INTEGER, INTENT(IN) :: ncv, nfc, nvx, ns
   TYPE(SWITCHES), INTENT(IN) :: switch
   TYPE(GEOMETRY), INTENT(IN) :: geo
   TYPE(MAPPING), INTENT(IN) :: mpg
@@ -567,7 +568,7 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
 !   ..procedures
   EXTERNAL XERTST, IPGETI, IPGETR
-  EXTERNAL B2XVSG_NODIFF, B2XVFF_NODIFF, INTFACE
+  EXTERNAL B2XVSG, INTFACE
   INTRINSIC NINT
   INTRINSIC MAXVAL
   REAL(r8) :: result1
@@ -589,7 +590,7 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !   ..subprogram start-up calls
   CALL SUBINI('b2tfrn')
 !   ..test nCv, nFc
-  CALL XERTST(0 .LE. ncv .AND. 0 .LE. nfc, 'faulty argument nCv, nFc')
+  CALL XERTST(0 .LT. ncv .AND. 0 .LT. nfc, 'faulty argument nCv, nFc')
 !   ..set internal parameters on first call
 !      if (ncall_b2tfrn.eq.0) then
 ! The following switches are only used in 'WG-TODO' blocks, i.e. not yet converted to wide grid functionality
@@ -603,7 +604,7 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
 !   ..extensive tests on first few calls
   IF (ncall_b2tfrn .LT. 3) THEN
 !    ..test sign of ne
-    CALL B2XVSG_NODIFF(ncv, dv%ne, 1, 'ne', '.gt.')
+    CALL B2XVSG(ncv, dv%ne, 1, 'ne', '.gt.')
   END IF
 !
   meth = switch%b2tfnb_discr_meth
@@ -713,7 +714,7 @@ SUBROUTINE B2TFRN_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, pl, dv, co&
     END DO
   ELSE
 !srv 13.01.17
-    c071 = 0.71e0_R8
+    c071 = 0.71_R8
   END IF
 !
 !wdk  interpolate to cell faces!

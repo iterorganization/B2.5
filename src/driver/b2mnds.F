@@ -7,9 +7,7 @@
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmfs
-      use b2mod_b2cmgs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_ipmain
@@ -20,7 +18,12 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:6), nout(0:10), nCv, nFc, ns, ns0
+      integer ninp(0:6), nCv, nFc, ns, ns0
+#ifdef JET
+      integer nout(0:11)
+#else
+      integer nout(0:10)
+#endif
       type (switches), intent (inout) :: switch
 *   ..output arguments (unspecified on entry)
 *     (none)

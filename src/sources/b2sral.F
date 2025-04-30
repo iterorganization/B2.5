@@ -11,7 +11,6 @@
       use b2mod_numerics_namelist
 !      use b2mod_boundary_namelist
       use b2mod_time
-!      use b2mod_anomalous_transport
       use b2mod_b2cmpa
       use b2mod_b2cmfs
 !      use b2mod_external
@@ -33,7 +32,7 @@ c Artificial losses
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_neutrals_namelist
-     & , only : maxw_eff, nstraid, userfluxparm
+!     & , only : maxw_eff, nstraid, userfluxparm
       use b2mod_recycle
      & , only : int0r, int0l, int3r, int3l, int6r, int6l, int2r, int2l,
      &          int5r, int5l, int1r, int1l, int4r, int4l, fna_mol
@@ -48,10 +47,10 @@ c Artificial losses
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
 #ifndef B25_EIRENE
       use b2mod_eirdiag
-     & , only : dab2, lkindi, lkindm, lkindp
+     & , only : dab2, lkindi, lkindm, lkindp, pfluxa, rfluxa, tfluxa
 #endif
       use b2mod_ad
-     & , only : my_out_folder,
+     & , only : my_out_folder, in_no_of_start_points,
 #ifdef WG_DEBUG
      &          my_out_sf,                                              !srv 27.06.21
 #endif
@@ -109,7 +108,7 @@ c Artificial losses
       real (kind=R8) ::
      *  smin, smax
       external xertst, sfill, b2saxpy, smin, smax
-      external b2xvsg, b2xvff, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
+      external b2xvsg, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
      &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
 *   ..initialisation
       data sources_inputfile/0/
@@ -165,11 +164,11 @@ c Artificial losses
       call b2xpfi (nFc, ns, st%dv%fna, st%dv%fni)
 
 *   ..test facdrift and fac_ExB
-      if (ncall_b2sral.eq.0) then                                              !xpb
+      if (ncall_b2sral.eq.0) then                                       !xpb
         if(switch%b2srdt_numerics_namelist.ge.1) then
           call read_b2mod_numerics_namelist(nCv,ns,
      .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
-     .      switch%b2mndt_style)
+     .      switch%b2mndt_style,.false.)
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
@@ -189,7 +188,7 @@ c Artificial losses
           write(*,*) 'b2sral: catching up ...'
           call read_b2mod_numerics_namelist(nCv,ns,
      .      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
-     .      switch%b2mndt_style)
+     .      switch%b2mndt_style,.false.)
           call write_b2mod_numerics_namelist
           if(numerics_time_mod.gt.0.0_R8) then
             catch_up=mod(tim,numerics_time_mod).ge.numerics_time_switch
@@ -223,7 +222,7 @@ c Artificial losses
      >     b2sral_elm_count=int(tim/numerics_time_mod)
           call read_b2mod_numerics_namelist(nCv,ns,
      .     switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
-     .     switch%b2mndt_style)
+     .     switch%b2mndt_style,.false.)
           call write_b2mod_numerics_namelist
         endif
       endif                                                             !xpb
@@ -272,25 +271,8 @@ c Artificial losses
        if(wrong_flow) write(*,*)
      &  'b2sral [1]: wrong_flow returned from b2stbc'
 
-#ifdef WG_TODO
-      elseif(switch%b2sral_style.eq.1) then
-!! FIXME : Need to add sne in argument list here ???
-       if(ncall_b2sral.eq.0) then
-         write(*,*) ' style=',switch%b2sral_style,' b2stbc_spb called'
-       endif
-       call b2stbc_spb (nx, ny, ns, facdrift,                           !srv 09.01.01
-     &  na, ua, uadia, vaecrb, vadia, te, ti, po, ne, ni,               !srv 14.10.99 12.05.00 09.01.01 28.10.02
-     1  floe_noc, floi_noc, fna, fna_fcor, fnaPSch, fhe, fhi,           !srv 13.10.06
-     &  fhePSch, fhiPSch, fne, fni, fch,                                !srv 25.02.00 21.10.02
-     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
-     &  sna, smo, she, shi, sch, wrong_flow)                            !srv 09.07.99 01.07.05
-       if(wrong_flow) write(*,*)
-     &  'b2sral [2]: wrong_flow returned from b2stbc_spb'
-#endif
       else
-       call xertst (0.le.switch%b2sral_style.and.
-     .                                        switch%b2sral_style.le.2, !srv 03.11.17
-     .  'invalid switch b2sral_style')
+       call xerrab ('invalid switch b2sral_style')
       endif                                                             !srv 28.07.08 }
 #ifdef WG_TODO
       if (switch%use_astra.ne.0) then
@@ -347,7 +329,7 @@ c Artificial losses
      > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
 *   ..compute more special contributions
       call b2stbm (nCv, nFc, nVx, ns, ismain, dtim, switch,
-     &  geo, mpg, st%pl, st%dv, st_ext, st%sr, st%srw, main_call)
+     &  geo, mpg, st%pl, st%dv, st_ext, st%srw, main_call)
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
         call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))
@@ -366,11 +348,11 @@ c Artificial losses
       call b2saxpy (nCv*4, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
       call b2saxpy (nCv*4, 1.0_R8, st%srw%shn0, 1, st%sr%shn, 1)
       call b2saxpy (nCv*4, 1.0_R8, st%srw%sch0, 1, st%sr%sch, 1)
-#ifdef WG_TODO
 *   ..compute sources by inputfiles (heating,...)
       if (sources_inputfile.eq.1) then
-        call source_input(nx,ny,ns,
-     &   sna0,smo0,she0,shi0,sch0,sne0,vol,ncall_b2sral)
+        call source_input(mpg,geo,switch,st_ext,ns,
+     &   st%srw%sna0,st%srw%smo0,st%srw%she0,st%srw%shi0,st%srw%sch0,
+     &   st%srw%sne0,ncall_b2sral)
 *   ..zero out contributions in dead cells and core boundary
         do is = 0, ns-1
           call b2xzdd (nCv, 1, switch, mpg, st%srw%sna0(1,0,is))
@@ -388,7 +370,6 @@ c Artificial losses
         call b2saxpy (nCv*4, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
         call b2saxpy (nCv*4, 1.0_R8, st%srw%sch0, 1, st%sr%sch, 1)
       endif
-#endif
 
 *   ..compute sources due to electron-atom processes
 *     (parallel momentum source must be pure friction)
@@ -419,8 +400,8 @@ c Artificial losses
 
 c ECH power
       if(switch%use_ech.eq.1) then
-        call CalcECH(nCv,geo,mpg,st%dv,switch,st%srw%she0)
-        call b2saxpy (nCv*4, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
+        call CalcECH(nCv,geo,mpg,st%dv,switch)
+        call b2saxpy (nCv*4, 1.0_R8, she_ech, 1, st%sr%she, 1)
       endif
 c end ECH
 

@@ -70,6 +70,9 @@
        use b2mod_types
        use b2mod_constants
        use b2us_plasma
+#ifdef LEGACYCOMP
+       use b2mod_math
+#endif
        implicit none
        integer nCv, ns
        type (B2Plasma), intent (in) :: pl
@@ -83,11 +86,8 @@
        logical l_exist
        character chns*3, chnCv*6
        character*27 filename
-#ifdef F2003
+#ifndef LEGACYCOMP
        intrinsic norm2
-#else
-       real (kind=R8) :: norm2
-       external norm2
 #endif
 
        write (chnCv,'(i6.6)') nCv
@@ -122,7 +122,7 @@
      &      ' Max|eraNa',chns,'/Na',chns,'|   =',' Inf'                 !srv 09.07.18
          endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
          L2norm=norm2(exact_na(:,is))                                   !srv 09.07.18 {
 #else
          L2norm=norm2(nCv,exact_na(:,is))
@@ -130,7 +130,7 @@
          if(L2norm.ne.0.0_R8) then
            write(71,'(a,a3,a,a3,a,es10.3)')
      &      ' L2eraNa',chns,'/L2Na',chns,'    =',
-#ifdef F2003
+#ifndef LEGACYCOMP
      &        norm2(era)/L2norm
 #else
      &        norm2(nCv,era)/L2norm
@@ -182,7 +182,7 @@
      &      ' Max|eraUa',chns,'/Ua',chns,'|   =',' Inf'                 !srv 09.07.18
          endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
          L2norm=norm2(exact_ua(:,is))                                   !srv 09.07.18 {
 #else
          L2norm=norm2(nCv,exact_ua(:,is))
@@ -190,7 +190,7 @@
          if(L2norm.ne.0.0_R8) then
            write(71,'(a,a3,a,a3,a,es10.3)')
      &      ' L2eraUa',chns,'/L2Ua',chns,'    =',
-#ifdef F2003
+#ifndef LEGACYCOMP
      &        norm2(era)/L2norm
 #else
      &        norm2(nCv,era)/L2norm
@@ -212,7 +212,6 @@
 
        close(71)
        return
-
        end subroutine calc_err
 
        subroutine calc_err_transport(nFc, ns)
@@ -236,10 +235,14 @@
 !     &    exact_csigin(nFc,0:1,0:ns-1,0:ns-1),
      &    err(nFc), era(nFc)
 
+      return
       end subroutine calc_err_transport
 
       subroutine calc_err_cc(nCv, nmvar, var, exact_var, scl)
        use b2mod_types
+#ifdef LEGACYCOMP
+       use b2mod_math
+#endif
        implicit none
        integer nCv
        character(*) :: nmvar
@@ -250,11 +253,8 @@
        logical l_exist
        integer iCv, ind                                                 !srv 09.07.18
        character(32) :: pass
-#ifdef F2003
+#ifndef LEGACYCOMP
        intrinsic norm2
-#else
-       real (kind=R8) :: norm2
-       external norm2
 #endif
 
        pass='exact_'//trim(nmvar)//'_us.dat'
@@ -287,7 +287,7 @@
      &   ' Max|era',trim(nmvar),'/',trim(nmvar),'|     =',' Inf'
        endif
 
-#ifdef F2003
+#ifndef LEGACYCOMP
        L2norm=norm2(exact_var)                                          !srv 09.07.18 {
 #else
        L2norm=norm2(nCv,exact_var)
@@ -295,7 +295,7 @@
        if(L2norm.ne.0.0_R8) then
         write(71,'(a,a,a,a,a,es10.3)')
      &   ' L2era',trim(nmvar),'/L2',trim(nmvar),'        =',
-#ifdef F2003
+#ifndef LEGACYCOMP
      &   norm2(era)/L2norm
 #else
      &   norm2(nCv,era)/L2norm
@@ -312,22 +312,5 @@
 
        write(71,*)
 
-      end subroutine calc_err_cc                                        !srv 26.02.18 }
-
-#ifndef F2003
-      function norm2(n,vector)
-      use b2mod_types
-      implicit none
-      real (kind=R8) :: norm2
-      integer, intent(in) :: n
-      real (kind=R8), intent(in) :: vector(n)
-      integer i
-
-      norm2 = 0.0_R8
-      do i = 1, n
-        norm2 = norm2 + vector(i)*vector(i)
-      end do
-      norm2 = sqrt(norm2)
       return
-      end function norm2
-#endif
+      end subroutine calc_err_cc                                        !srv 26.02.18 }

@@ -5,12 +5,11 @@
       use b2mod_types
       use b2mod_ma28_for_7diag
       use b2mod_ysmp_sdrv
-!      use b2mod_ma28
       use b2mod_indirect
-      use b2mod_subsys
 #ifdef _OPENMP
       use b2mod_openmp
 #endif
+      use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt

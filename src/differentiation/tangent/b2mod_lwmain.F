@@ -1,12 +1,13 @@
       module b2mod_lwmain
       use b2mod_types
+      use b2mod_stack
       implicit none
       private
       public :: lwset, lwget, lwmax
 *     ------------------------------------------------------------------
 *     LWMAIN is a group of routines (entry points in lwmain) that
 *     maintain a base address for free space in the workspace area
-*     stackw%w. The subroutines are lwset, lwget, and lwmax.
+*     b2mod_stack%w. The subroutines are lwset, lwget, and lwmax.
 *     LWSET frees workspace by resetting the base address.
 *     LWGET reserves workspace by incrementing the base address.
 *     LWMAX returns the maximum workspace use.
@@ -22,7 +23,6 @@
       implicit none
       integer, intent(in) :: lw0
       external prvrt, b25_mpi_stop
-#     include "stackw.h"
 *     (revert base address to lw0)
       if (lw0.lt.0.or.lwrk.lt.lw0) then
         write (0,*) 'lwset--faulty argument lw0'
@@ -40,7 +40,6 @@
       integer, intent(out) :: lw1
       intrinsic max
       external b25_mpi_stop
-#     include "stackw.h"
       if (nw.lt.0) then
         write (0,*) 'lwget--faulty argument nw'
         call b25_mpi_stop
@@ -49,7 +48,7 @@
       lwrk = lwrk+nw
       lwrkmx = max(lwrk,lwrkmx)
       if (nstckw.lt.lwrk) then
-        write(0,*) 'lwget--insufficient workspace stackw%w(0:*)'
+        write(0,*) 'lwget--insufficient workspace b2mod_stack%w(0:*)'
         call b25_mpi_stop
       end if
       return

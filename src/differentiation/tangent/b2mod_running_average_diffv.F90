@@ -26,37 +26,32 @@ MODULE B2MOD_RUNNING_AVERAGE_DIFFV
 !
 !
   INTEGER, SAVE :: naver, ntotdt
-  REAL(kind=r8), ALLOCATABLE, SAVE :: na_mean(:, :), te_mean(:), ti_mean&
-& (:), ua_mean(:, :), po_mean(:), kt_mean(:), zt_mean(:)
-  REAL(kind=r8), ALLOCATABLE, SAVE :: na_meand(:, :, :)
-  REAL(kind=r8), ALLOCATABLE, SAVE :: e_na(:, :), e_te(:), e_ti(:), e_ua&
-& (:, :), e_po(:), e_kt(:), e_zt(:)
-  REAL(kind=r8), ALLOCATABLE, SAVE :: sna_mean(:, :), smo_mean(:, :), &
-& she_mean(:), shi_mean(:)
-  REAL(kind=r8), ALLOCATABLE, SAVE :: e_sna(:, :), e_smo(:, :), e_she(:)&
-& , e_shi(:)
 !
+  REAL(kind=r8), ALLOCATABLE, SAVE :: na_mean(:, :, :), te_mean(:, :), &
+& ti_mean(:, :), ua_mean(:, :, :), po_mean(:, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: e_na(:, :, :), e_te(:, :), e_ti(:&
+& , :), e_ua(:, :, :), e_po(:, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: sna_mean(:, :, :), smo_mean(:, :, &
+& :), she_mean(:, :), shi_mean(:, :)
+  REAL(kind=r8), ALLOCATABLE, SAVE :: e_sna(:, :, :), e_smo(:, :, :), &
+& e_she(:, :), e_shi(:, :)
 !
   CHARACTER :: lble*120, lbli*120, check*10
 
 CONTAINS
 !
 !
-  SUBROUTINE RUNNING_AVERAGE(ncv, ns, pl, dv, sna0_eir, smo0_eir, &
-&   she0_eir, shi0_eir)
+  SUBROUTINE RUNNING_AVERAGE(ncv, ns, pl, srw, avg)
     USE B2MOD_PLASMA_DIFFV
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 ! input
     INTEGER, INTENT(IN) :: ncv, ns
     TYPE(B2PLASMA), INTENT(IN) :: pl
-    TYPE(B2DERIVATIVES), INTENT(IN) :: dv
-    REAL(kind=r8), INTENT(IN) :: sna0_eir(ncv, 0:1, 0:ns-1), smo0_eir(&
-&   ncv, 0:3, 0:ns-1), she0_eir(ncv, 0:3), shi0_eir(ncv, 0:3)
+    TYPE(B2SOURCEWORK), INTENT(IN) :: srw
+    TYPE(B2AVERAGE), INTENT(INOUT) :: avg
 ! local
-    INTEGER :: itp, is
-    REAL(kind=r8) :: sna_tot(ncv, 0:ns-1), smo_tot(ncv, 0:ns-1), she_tot&
-&   (ncv), shi_tot(ncv)
+    INTEGER :: itp
     EXTERNAL BATCH_AVERAGE, BATCH_AVERAGE_SQ
     INTEGER :: arg1
 !
@@ -67,53 +62,42 @@ CONTAINS
 !
     itp = 0
 !
-!nh   Calculation of the total sources
-    DO is=0,ns-1
-      sna_tot(:, is) = sna0_eir(:, 0, is) + sna0_eir(:, 1, is)*pl%na(:, &
-&       is)
-      smo_tot(:, is) = smo0_eir(:, 0, is) + smo0_eir(:, 1, is)*pl%ua(:, &
-&       is) + smo0_eir(:, 2, is)*pl%na(:, is)*mp*am(is) + smo0_eir(:, 3&
-&       , is)*pl%ua(:, is)*pl%na(:, is)*mp*am(is)
-    END DO
-    she_tot = she0_eir(:, 0) + she0_eir(:, 1)*pl%te + she0_eir(:, 2)*dv%&
-&     ne + she0_eir(:, 3)*pl%te*dv%ne
-    shi_tot = shi0_eir(:, 0) + shi0_eir(:, 1)*pl%ti + shi0_eir(:, 2)*dv%&
-&     ni(:, 0) + shi0_eir(:, 3)*pl%ti*dv%ni(:, 0)
-!
 !  calculate averaged plasma profiles and sources
     arg1 = ncv*ns
-    CALL BATCH_AVERAGE(arg1, pl%na, na_mean, itp, naver)
-    CALL BATCH_AVERAGE(ncv, pl%te, te_mean, itp, naver)
-    CALL BATCH_AVERAGE(ncv, pl%ti, ti_mean, itp, naver)
-    CALL BATCH_AVERAGE(ncv, pl%po, po_mean, itp, naver)
+    CALL BATCH_AVERAGE(arg1, pl%na, avg%na_mean, itp, naver)
+    CALL BATCH_AVERAGE(ncv, pl%te, avg%te_mean, itp, naver)
+    CALL BATCH_AVERAGE(ncv, pl%ti, avg%ti_mean, itp, naver)
+    CALL BATCH_AVERAGE(ncv, pl%po, avg%po_mean, itp, naver)
     arg1 = ncv*ns
-    CALL BATCH_AVERAGE(arg1, pl%ua, ua_mean, itp, naver)
-    CALL BATCH_AVERAGE(ncv, pl%kt, kt_mean, itp, naver)
-    CALL BATCH_AVERAGE(ncv, pl%zt, zt_mean, itp, naver)
+    CALL BATCH_AVERAGE(arg1, pl%ua, avg%ua_mean, itp, naver)
+    CALL BATCH_AVERAGE(ncv, pl%kt, avg%kt_mean, itp, naver)
+    CALL BATCH_AVERAGE(ncv, pl%zt, avg%zt_mean, itp, naver)
 !
     arg1 = ncv*ns
-    CALL BATCH_AVERAGE(arg1, sna_tot, sna_mean, itp, naver)
-    CALL BATCH_AVERAGE(ncv, she_tot, she_mean, itp, naver)
-    CALL BATCH_AVERAGE(ncv, shi_tot, shi_mean, itp, naver)
+    CALL BATCH_AVERAGE(arg1, srw%sna0_eir_tot, avg%sna_mean, itp, naver)
+    CALL BATCH_AVERAGE(ncv, srw%she0_eir_tot, avg%she_mean, itp, naver)
+    CALL BATCH_AVERAGE(ncv, srw%shi0_eir_tot, avg%shi_mean, itp, naver)
+    CALL BATCH_AVERAGE(ncv, srw%shn0_eir_tot, avg%shn_mean, itp, naver)
     arg1 = ncv*ns
-    CALL BATCH_AVERAGE(arg1, smo_tot, smo_mean, itp, naver)
+    CALL BATCH_AVERAGE(arg1, srw%smo0_eir_tot, avg%smo_mean, itp, naver)
 !
 !  calculate squared averaged plasma profiles
     arg1 = ncv*ns
-    CALL BATCH_AVERAGE_SQ(arg1, pl%na, e_na, itp, naver)
-    CALL BATCH_AVERAGE_SQ(ncv, pl%te, e_te, itp, naver)
-    CALL BATCH_AVERAGE_SQ(ncv, pl%ti, e_ti, itp, naver)
-    CALL BATCH_AVERAGE_SQ(ncv, pl%po, e_po, itp, naver)
+    CALL BATCH_AVERAGE_SQ(arg1, pl%na, avg%e_na, itp, naver)
+    CALL BATCH_AVERAGE_SQ(ncv, pl%te, avg%e_te, itp, naver)
+    CALL BATCH_AVERAGE_SQ(ncv, pl%ti, avg%e_ti, itp, naver)
+    CALL BATCH_AVERAGE_SQ(ncv, pl%po, avg%e_po, itp, naver)
     arg1 = ncv*ns
-    CALL BATCH_AVERAGE_SQ(arg1, pl%ua, e_ua, itp, naver)
-    CALL BATCH_AVERAGE_SQ(ncv, pl%kt, e_kt, itp, naver)
-    CALL BATCH_AVERAGE_SQ(ncv, pl%zt, e_zt, itp, naver)
+    CALL BATCH_AVERAGE_SQ(arg1, pl%ua, avg%e_ua, itp, naver)
+    CALL BATCH_AVERAGE_SQ(ncv, pl%kt, avg%e_kt, itp, naver)
+    CALL BATCH_AVERAGE_SQ(ncv, pl%zt, avg%e_zt, itp, naver)
     arg1 = ncv*ns
-    CALL BATCH_AVERAGE_SQ(arg1, sna_tot, e_sna, itp, naver)
-    CALL BATCH_AVERAGE_SQ(ncv, she_tot, e_she, itp, naver)
-    CALL BATCH_AVERAGE_SQ(ncv, shi_tot, e_shi, itp, naver)
+    CALL BATCH_AVERAGE_SQ(arg1, srw%sna0_eir_tot, avg%e_sna, itp, naver)
+    CALL BATCH_AVERAGE_SQ(ncv, srw%she0_eir_tot, avg%e_she, itp, naver)
+    CALL BATCH_AVERAGE_SQ(ncv, srw%shi0_eir_tot, avg%e_shi, itp, naver)
+    CALL BATCH_AVERAGE_SQ(ncv, srw%shn0_eir_tot, avg%e_shn, itp, naver)
     arg1 = ncv*ns
-    CALL BATCH_AVERAGE_SQ(arg1, smo_tot, e_smo, itp, naver)
+    CALL BATCH_AVERAGE_SQ(arg1, srw%smo0_eir_tot, avg%e_smo, itp, naver)
 !
     CALL SUBEND()
 !
@@ -121,15 +105,25 @@ CONTAINS
   END SUBROUTINE RUNNING_AVERAGE
 
 !  Differentiation of run_av_init as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: na_mean:in-out
+!   Plus diff mem management of: avg.na_mean:in-out avg.ua_mean:out
+!                avg.te_mean:in-out avg.ti_mean:in-out avg.po_mean:out
+!                avg.kt_mean:in-out avg.zt_mean:in-out avg.sna_mean:out
+!                avg.smo_mean:out avg.she_mean:out avg.shi_mean:out
+!                avg.shn_mean:out avg.e_na:out avg.e_ua:out avg.e_te:out
+!                avg.e_ti:out avg.e_po:out avg.e_kt:out avg.e_zt:out
+!                avg.e_sna:out avg.e_smo:out avg.e_she:out avg.e_shi:out
+!                avg.e_shn:out
 !
-  SUBROUTINE RUN_AV_INIT_DV(iav_cont, ncv, ns, lpr, ler, nbdirs)
+  SUBROUTINE RUN_AV_INIT_DV(iav_cont, ncv, ns, lpr, ler, avg, avgd, &
+&   nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 ! input
     INTEGER, INTENT(IN) :: ncv, ns, iav_cont
     LOGICAL, INTENT(IN) :: lpr, ler
+    TYPE(B2AVERAGE), INTENT(INOUT) :: avg
+    TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: avgd
 ! local variables
     INTEGER :: io, iun, idum(0:1), iex
     REAL(kind=r8) :: zpdum(0:nsdecl-1, 4)
@@ -140,65 +134,165 @@ CONTAINS
 !
     CALL SUBINI('run_av_init')
 !
-    IF (.NOT.ALLOCATED(na_mean)) THEN
-      ALLOCATE(na_meand(nbdirsmax, ncv, 0:ns-1))
+    IF (.NOT.ALLOCATED(avg%na_mean)) THEN
+      ALLOCATE(avgd%na_mean(nbdirsmax, ncv, 0:ns-1))
       DO nd=1,nbdirsmax
-        na_meand(nd, 1:ncv, 0:ns-1) = 0.D0
+        avgd%na_mean(nd, 1:ncv, 0:ns-1) = 0.D0
       END DO
-      ALLOCATE(na_mean(ncv, 0:ns-1))
-      ALLOCATE(ua_mean(ncv, 0:ns-1))
-      ALLOCATE(te_mean(ncv))
-      ALLOCATE(ti_mean(ncv))
-      ALLOCATE(po_mean(ncv))
-      ALLOCATE(kt_mean(ncv))
-      ALLOCATE(zt_mean(ncv))
-      ALLOCATE(e_na(ncv, 0:ns-1))
-      ALLOCATE(e_ua(ncv, 0:ns-1))
-      ALLOCATE(e_te(ncv))
-      ALLOCATE(e_ti(ncv))
-      ALLOCATE(e_po(ncv))
-      ALLOCATE(e_kt(ncv))
-      ALLOCATE(e_zt(ncv))
+      ALLOCATE(avg%na_mean(ncv, 0:ns-1))
+      ALLOCATE(avgd%ua_mean(nbdirsmax, ncv, 0:ns-1))
+      DO nd=1,nbdirsmax
+        avgd%ua_mean(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(avg%ua_mean(ncv, 0:ns-1))
+      ALLOCATE(avgd%te_mean(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%te_mean(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%te_mean(ncv))
+      ALLOCATE(avgd%ti_mean(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%ti_mean(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%ti_mean(ncv))
+      ALLOCATE(avgd%po_mean(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%po_mean(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%po_mean(ncv))
+      ALLOCATE(avgd%kt_mean(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%kt_mean(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%kt_mean(ncv))
+      ALLOCATE(avgd%zt_mean(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%zt_mean(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%zt_mean(ncv))
+      ALLOCATE(avgd%e_na(nbdirsmax, ncv, 0:ns-1))
+      DO nd=1,nbdirsmax
+        avgd%e_na(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(avg%e_na(ncv, 0:ns-1))
+      ALLOCATE(avgd%e_ua(nbdirsmax, ncv, 0:ns-1))
+      DO nd=1,nbdirsmax
+        avgd%e_ua(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(avg%e_ua(ncv, 0:ns-1))
+      ALLOCATE(avgd%e_te(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%e_te(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%e_te(ncv))
+      ALLOCATE(avgd%e_ti(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%e_ti(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%e_ti(ncv))
+      ALLOCATE(avgd%e_po(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%e_po(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%e_po(ncv))
+      ALLOCATE(avgd%e_kt(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%e_kt(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%e_kt(ncv))
+      ALLOCATE(avgd%e_zt(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%e_zt(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%e_zt(ncv))
 !
-      ALLOCATE(sna_mean(ncv, 0:ns-1))
-      ALLOCATE(smo_mean(ncv, 0:ns-1))
-      ALLOCATE(she_mean(ncv))
-      ALLOCATE(shi_mean(ncv))
-      ALLOCATE(e_sna(ncv, 0:ns-1))
-      ALLOCATE(e_smo(ncv, 0:ns-1))
-      ALLOCATE(e_she(ncv))
-      ALLOCATE(e_shi(ncv))
+      ALLOCATE(avgd%sna_mean(nbdirsmax, ncv, 0:ns-1))
+      DO nd=1,nbdirsmax
+        avgd%sna_mean(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(avg%sna_mean(ncv, 0:ns-1))
+      ALLOCATE(avgd%smo_mean(nbdirsmax, ncv, 0:ns-1))
+      DO nd=1,nbdirsmax
+        avgd%smo_mean(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(avg%smo_mean(ncv, 0:ns-1))
+      ALLOCATE(avgd%she_mean(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%she_mean(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%she_mean(ncv))
+      ALLOCATE(avgd%shi_mean(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%shi_mean(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%shi_mean(ncv))
+      ALLOCATE(avgd%shn_mean(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%shn_mean(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%shn_mean(ncv))
+      ALLOCATE(avgd%e_sna(nbdirsmax, ncv, 0:ns-1))
+      DO nd=1,nbdirsmax
+        avgd%e_sna(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(avg%e_sna(ncv, 0:ns-1))
+      ALLOCATE(avgd%e_smo(nbdirsmax, ncv, 0:ns-1))
+      DO nd=1,nbdirsmax
+        avgd%e_smo(nd, 1:ncv, 0:ns-1) = 0.D0
+      END DO
+      ALLOCATE(avg%e_smo(ncv, 0:ns-1))
+      ALLOCATE(avgd%e_she(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%e_she(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%e_she(ncv))
+      ALLOCATE(avgd%e_shi(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%e_shi(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%e_shi(ncv))
+      ALLOCATE(avgd%e_shn(nbdirsmax, ncv))
+      DO nd=1,nbdirsmax
+        avgd%e_shn(nd, 1:ncv) = 0.D0
+      END DO
+      ALLOCATE(avg%e_shn(ncv))
     END IF
 !
     naver = 0
     ntotdt = 0
-!
     DO nd=1,nbdirs
-      na_meand(nd, :, :) = 0.D0
-    END DO
-    na_mean = 0.0_R8
-    te_mean = 0.0_R8
-    ti_mean = 0.0_R8
-    ua_mean = 0.0_R8
-    po_mean = 0.0_R8
-    kt_mean = 0.0_R8
-    zt_mean = 0.0_R8
-    e_na = 0.0_R8
-    e_te = 0.0_R8
-    e_ti = 0.0_R8
-    e_ua = 0.0_R8
-    e_po = 0.0_R8
-    e_kt = 0.0_R8
-    e_zt = 0.0_R8
 !
-    sna_mean = 0.0_R8
-    she_mean = 0.0_R8
-    shi_mean = 0.0_R8
-    smo_mean = 0.0_R8
-    e_sna = 0.0_R8
-    e_she = 0.0_R8
-    e_shi = 0.0_R8
-    e_smo = 0.0_R8
+      avgd%na_mean(nd, :, :) = 0.D0
+      avgd%te_mean(nd, :) = 0.D0
+      avgd%ti_mean(nd, :) = 0.D0
+      avgd%kt_mean(nd, :) = 0.D0
+      avgd%zt_mean(nd, :) = 0.D0
+    END DO
+    avg%na_mean = 0.0_R8
+    avg%te_mean = 0.0_R8
+    avg%ti_mean = 0.0_R8
+    avg%ua_mean = 0.0_R8
+    avg%po_mean = 0.0_R8
+    avg%kt_mean = 0.0_R8
+    avg%zt_mean = 0.0_R8
+    avg%e_na = 0.0_R8
+    avg%e_te = 0.0_R8
+    avg%e_ti = 0.0_R8
+    avg%e_ua = 0.0_R8
+    avg%e_po = 0.0_R8
+    avg%e_kt = 0.0_R8
+    avg%e_zt = 0.0_R8
+!
+    avg%sna_mean = 0.0_R8
+    avg%she_mean = 0.0_R8
+    avg%shi_mean = 0.0_R8
+    avg%shn_mean = 0.0_R8
+    avg%smo_mean = 0.0_R8
+    avg%e_sna = 0.0_R8
+    avg%e_she = 0.0_R8
+    avg%e_shi = 0.0_R8
+    avg%e_shn = 0.0_R8
+    avg%e_smo = 0.0_R8
 !
     IF (iav_cont .GT. 0) THEN
 !
@@ -225,42 +319,44 @@ CONTAINS
           CALL CFRUIN(iun, 1, idum, 'ntotdt')
           ntotdt = idum(0)
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, na_mean, 'na_mean')
-          CALL CFRURE(iun, ncv, te_mean, 'te_mean')
-          CALL CFRURE(iun, ncv, ti_mean, 'ti_mean')
-          CALL CFRURE(iun, ncv, po_mean, 'po_mean')
+          CALL CFRURE(iun, arg1, avg%na_mean, 'na_mean')
+          CALL CFRURE(iun, ncv, avg%te_mean, 'te_mean')
+          CALL CFRURE(iun, ncv, avg%ti_mean, 'ti_mean')
+          CALL CFRURE(iun, ncv, avg%po_mean, 'po_mean')
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, ua_mean, 'ua_mean')
-          CALL CFRURE(iun, ncv, kt_mean, 'kt_mean')
-          CALL CFRURE(iun, ncv, zt_mean, 'zt_mean')
+          CALL CFRURE(iun, arg1, avg%ua_mean, 'ua_mean')
+          CALL CFRURE(iun, ncv, avg%kt_mean, 'kt_mean')
+          CALL CFRURE(iun, ncv, avg%zt_mean, 'zt_mean')
 !
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, sna_mean, 'sna_mean')
-          CALL CFRURE(iun, ncv, she_mean, 'she_mean')
-          CALL CFRURE(iun, ncv, shi_mean, 'shi_mean')
+          CALL CFRURE(iun, arg1, avg%sna_mean, 'sna_mean')
+          CALL CFRURE(iun, ncv, avg%she_mean, 'she_mean')
+          CALL CFRURE(iun, ncv, avg%shi_mean, 'shi_mean')
+          CALL CFRURE(iun, ncv, avg%shn_mean, 'shn_mean')
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, smo_mean, 'smo_mean')
+          CALL CFRURE(iun, arg1, avg%smo_mean, 'smo_mean')
         END IF
 !
 !  read 2d averaged squared plasma profiles from b2fstati_run_var
 !
         IF (ler) THEN
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, e_na, 'e_na')
-          CALL CFRURE(iun, ncv, e_te, 'e_te')
-          CALL CFRURE(iun, ncv, e_ti, 'e_ti')
-          CALL CFRURE(iun, ncv, e_po, 'e_po')
+          CALL CFRURE(iun, arg1, avg%e_na, 'e_na')
+          CALL CFRURE(iun, ncv, avg%e_te, 'e_te')
+          CALL CFRURE(iun, ncv, avg%e_ti, 'e_ti')
+          CALL CFRURE(iun, ncv, avg%e_po, 'e_po')
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, e_ua, 'e_ua')
-          CALL CFRURE(iun, ncv, e_kt, 'e_kt')
-          CALL CFRURE(iun, ncv, e_zt, 'e_zt')
+          CALL CFRURE(iun, arg1, avg%e_ua, 'e_ua')
+          CALL CFRURE(iun, ncv, avg%e_kt, 'e_kt')
+          CALL CFRURE(iun, ncv, avg%e_zt, 'e_zt')
 !
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, e_sna, 'e_sna')
-          CALL CFRURE(iun, ncv, e_she, 'e_she')
-          CALL CFRURE(iun, ncv, e_shi, 'e_shi')
+          CALL CFRURE(iun, arg1, avg%e_sna, 'e_sna')
+          CALL CFRURE(iun, ncv, avg%e_she, 'e_she')
+          CALL CFRURE(iun, ncv, avg%e_shi, 'e_shi')
+          CALL CFRURE(iun, ncv, avg%e_shn, 'e_shn')
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, e_smo, 'e_smo')
+          CALL CFRURE(iun, arg1, avg%e_smo, 'e_smo')
         END IF
       ELSE
 !
@@ -280,12 +376,13 @@ CONTAINS
   END SUBROUTINE RUN_AV_INIT_DV
 
 !
-  SUBROUTINE RUN_AV_INIT(iav_cont, ncv, ns, lpr, ler)
+  SUBROUTINE RUN_AV_INIT(iav_cont, ncv, ns, lpr, ler, avg)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
 ! input
     INTEGER, INTENT(IN) :: ncv, ns, iav_cont
     LOGICAL, INTENT(IN) :: lpr, ler
+    TYPE(B2AVERAGE), INTENT(INOUT) :: avg
 ! local variables
     INTEGER :: io, iun, idum(0:1), iex
     REAL(kind=r8) :: zpdum(0:nsdecl-1, 4)
@@ -294,58 +391,62 @@ CONTAINS
 !
     CALL SUBINI('run_av_init')
 !
-    IF (.NOT.ALLOCATED(na_mean)) THEN
-      ALLOCATE(na_mean(ncv, 0:ns-1))
-      ALLOCATE(ua_mean(ncv, 0:ns-1))
-      ALLOCATE(te_mean(ncv))
-      ALLOCATE(ti_mean(ncv))
-      ALLOCATE(po_mean(ncv))
-      ALLOCATE(kt_mean(ncv))
-      ALLOCATE(zt_mean(ncv))
-      ALLOCATE(e_na(ncv, 0:ns-1))
-      ALLOCATE(e_ua(ncv, 0:ns-1))
-      ALLOCATE(e_te(ncv))
-      ALLOCATE(e_ti(ncv))
-      ALLOCATE(e_po(ncv))
-      ALLOCATE(e_kt(ncv))
-      ALLOCATE(e_zt(ncv))
+    IF (.NOT.ALLOCATED(avg%na_mean)) THEN
+      ALLOCATE(avg%na_mean(ncv, 0:ns-1))
+      ALLOCATE(avg%ua_mean(ncv, 0:ns-1))
+      ALLOCATE(avg%te_mean(ncv))
+      ALLOCATE(avg%ti_mean(ncv))
+      ALLOCATE(avg%po_mean(ncv))
+      ALLOCATE(avg%kt_mean(ncv))
+      ALLOCATE(avg%zt_mean(ncv))
+      ALLOCATE(avg%e_na(ncv, 0:ns-1))
+      ALLOCATE(avg%e_ua(ncv, 0:ns-1))
+      ALLOCATE(avg%e_te(ncv))
+      ALLOCATE(avg%e_ti(ncv))
+      ALLOCATE(avg%e_po(ncv))
+      ALLOCATE(avg%e_kt(ncv))
+      ALLOCATE(avg%e_zt(ncv))
 !
-      ALLOCATE(sna_mean(ncv, 0:ns-1))
-      ALLOCATE(smo_mean(ncv, 0:ns-1))
-      ALLOCATE(she_mean(ncv))
-      ALLOCATE(shi_mean(ncv))
-      ALLOCATE(e_sna(ncv, 0:ns-1))
-      ALLOCATE(e_smo(ncv, 0:ns-1))
-      ALLOCATE(e_she(ncv))
-      ALLOCATE(e_shi(ncv))
+      ALLOCATE(avg%sna_mean(ncv, 0:ns-1))
+      ALLOCATE(avg%smo_mean(ncv, 0:ns-1))
+      ALLOCATE(avg%she_mean(ncv))
+      ALLOCATE(avg%shi_mean(ncv))
+      ALLOCATE(avg%shn_mean(ncv))
+      ALLOCATE(avg%e_sna(ncv, 0:ns-1))
+      ALLOCATE(avg%e_smo(ncv, 0:ns-1))
+      ALLOCATE(avg%e_she(ncv))
+      ALLOCATE(avg%e_shi(ncv))
+      ALLOCATE(avg%e_shn(ncv))
     END IF
 !
     naver = 0
     ntotdt = 0
 !
-    na_mean = 0.0_R8
-    te_mean = 0.0_R8
-    ti_mean = 0.0_R8
-    ua_mean = 0.0_R8
-    po_mean = 0.0_R8
-    kt_mean = 0.0_R8
-    zt_mean = 0.0_R8
-    e_na = 0.0_R8
-    e_te = 0.0_R8
-    e_ti = 0.0_R8
-    e_ua = 0.0_R8
-    e_po = 0.0_R8
-    e_kt = 0.0_R8
-    e_zt = 0.0_R8
+    avg%na_mean = 0.0_R8
+    avg%te_mean = 0.0_R8
+    avg%ti_mean = 0.0_R8
+    avg%ua_mean = 0.0_R8
+    avg%po_mean = 0.0_R8
+    avg%kt_mean = 0.0_R8
+    avg%zt_mean = 0.0_R8
+    avg%e_na = 0.0_R8
+    avg%e_te = 0.0_R8
+    avg%e_ti = 0.0_R8
+    avg%e_ua = 0.0_R8
+    avg%e_po = 0.0_R8
+    avg%e_kt = 0.0_R8
+    avg%e_zt = 0.0_R8
 !
-    sna_mean = 0.0_R8
-    she_mean = 0.0_R8
-    shi_mean = 0.0_R8
-    smo_mean = 0.0_R8
-    e_sna = 0.0_R8
-    e_she = 0.0_R8
-    e_shi = 0.0_R8
-    e_smo = 0.0_R8
+    avg%sna_mean = 0.0_R8
+    avg%she_mean = 0.0_R8
+    avg%shi_mean = 0.0_R8
+    avg%shn_mean = 0.0_R8
+    avg%smo_mean = 0.0_R8
+    avg%e_sna = 0.0_R8
+    avg%e_she = 0.0_R8
+    avg%e_shi = 0.0_R8
+    avg%e_shn = 0.0_R8
+    avg%e_smo = 0.0_R8
 !
     IF (iav_cont .GT. 0) THEN
 !
@@ -372,42 +473,44 @@ CONTAINS
           CALL CFRUIN(iun, 1, idum, 'ntotdt')
           ntotdt = idum(0)
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, na_mean, 'na_mean')
-          CALL CFRURE(iun, ncv, te_mean, 'te_mean')
-          CALL CFRURE(iun, ncv, ti_mean, 'ti_mean')
-          CALL CFRURE(iun, ncv, po_mean, 'po_mean')
+          CALL CFRURE(iun, arg1, avg%na_mean, 'na_mean')
+          CALL CFRURE(iun, ncv, avg%te_mean, 'te_mean')
+          CALL CFRURE(iun, ncv, avg%ti_mean, 'ti_mean')
+          CALL CFRURE(iun, ncv, avg%po_mean, 'po_mean')
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, ua_mean, 'ua_mean')
-          CALL CFRURE(iun, ncv, kt_mean, 'kt_mean')
-          CALL CFRURE(iun, ncv, zt_mean, 'zt_mean')
+          CALL CFRURE(iun, arg1, avg%ua_mean, 'ua_mean')
+          CALL CFRURE(iun, ncv, avg%kt_mean, 'kt_mean')
+          CALL CFRURE(iun, ncv, avg%zt_mean, 'zt_mean')
 !
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, sna_mean, 'sna_mean')
-          CALL CFRURE(iun, ncv, she_mean, 'she_mean')
-          CALL CFRURE(iun, ncv, shi_mean, 'shi_mean')
+          CALL CFRURE(iun, arg1, avg%sna_mean, 'sna_mean')
+          CALL CFRURE(iun, ncv, avg%she_mean, 'she_mean')
+          CALL CFRURE(iun, ncv, avg%shi_mean, 'shi_mean')
+          CALL CFRURE(iun, ncv, avg%shn_mean, 'shn_mean')
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, smo_mean, 'smo_mean')
+          CALL CFRURE(iun, arg1, avg%smo_mean, 'smo_mean')
         END IF
 !
 !  read 2d averaged squared plasma profiles from b2fstati_run_var
 !
         IF (ler) THEN
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, e_na, 'e_na')
-          CALL CFRURE(iun, ncv, e_te, 'e_te')
-          CALL CFRURE(iun, ncv, e_ti, 'e_ti')
-          CALL CFRURE(iun, ncv, e_po, 'e_po')
+          CALL CFRURE(iun, arg1, avg%e_na, 'e_na')
+          CALL CFRURE(iun, ncv, avg%e_te, 'e_te')
+          CALL CFRURE(iun, ncv, avg%e_ti, 'e_ti')
+          CALL CFRURE(iun, ncv, avg%e_po, 'e_po')
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, e_ua, 'e_ua')
-          CALL CFRURE(iun, ncv, e_kt, 'e_kt')
-          CALL CFRURE(iun, ncv, e_zt, 'e_zt')
+          CALL CFRURE(iun, arg1, avg%e_ua, 'e_ua')
+          CALL CFRURE(iun, ncv, avg%e_kt, 'e_kt')
+          CALL CFRURE(iun, ncv, avg%e_zt, 'e_zt')
 !
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, e_sna, 'e_sna')
-          CALL CFRURE(iun, ncv, e_she, 'e_she')
-          CALL CFRURE(iun, ncv, e_shi, 'e_shi')
+          CALL CFRURE(iun, arg1, avg%e_sna, 'e_sna')
+          CALL CFRURE(iun, ncv, avg%e_she, 'e_she')
+          CALL CFRURE(iun, ncv, avg%e_shi, 'e_shi')
+          CALL CFRURE(iun, ncv, avg%e_shn, 'e_shn')
           arg1 = ncv*ns
-          CALL CFRURE(iun, arg1, e_smo, 'e_smo')
+          CALL CFRURE(iun, arg1, avg%e_smo, 'e_smo')
         END IF
       ELSE
 !
@@ -427,101 +530,184 @@ CONTAINS
   END SUBROUTINE RUN_AV_INIT
 
 !  Differentiation of run_av_fin as a context to call tangent code (with options multiDirectional context noISIZE r8):
-!   Plus diff mem management of: na_mean:out
+!   Plus diff mem management of: avg.na_mean:out avg.ua_mean:out
+!                avg.te_mean:out avg.ti_mean:out avg.po_mean:out
+!                avg.kt_mean:out avg.zt_mean:out avg.sna_mean:out
+!                avg.smo_mean:out avg.she_mean:out avg.shi_mean:out
+!                avg.shn_mean:out avg.e_na:out avg.e_ua:out avg.e_te:out
+!                avg.e_ti:out avg.e_po:out avg.e_kt:out avg.e_zt:out
+!                avg.e_sna:out avg.e_smo:out avg.e_she:out avg.e_shi:out
+!                avg.e_shn:out
 !
-  SUBROUTINE RUN_AV_FIN_DV(nbdirs)
+  SUBROUTINE RUN_AV_FIN_DV(avg, avgd, nbdirs)
 !  Hint: nbdirsmax should be the maximum number of differentiation directions
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
+    TYPE(B2AVERAGE), INTENT(INOUT) :: avg
+    TYPE(B2AVERAGE_DIFFV), INTENT(INOUT) :: avgd
     INTRINSIC ALLOCATED
     INTEGER :: nbdirs
 !
-    IF (.NOT.ALLOCATED(na_mean)) THEN
+    IF (.NOT.ALLOCATED(avg%na_mean)) THEN
       RETURN
     ELSE
 !
-      IF (ALLOCATED(na_meand)) THEN
-        DEALLOCATE(na_meand)
+      IF (ALLOCATED(avgd%na_mean)) THEN
+        DEALLOCATE(avgd%na_mean)
       END IF
-      DEALLOCATE(na_mean)
-      DEALLOCATE(ua_mean)
-      DEALLOCATE(te_mean)
-      DEALLOCATE(ti_mean)
-      DEALLOCATE(po_mean)
-      DEALLOCATE(kt_mean)
-      DEALLOCATE(zt_mean)
-      DEALLOCATE(e_na)
-      DEALLOCATE(e_ua)
-      DEALLOCATE(e_te)
-      DEALLOCATE(e_ti)
-      DEALLOCATE(e_po)
-      DEALLOCATE(e_kt)
-      DEALLOCATE(e_zt)
-      DEALLOCATE(sna_mean)
-      DEALLOCATE(smo_mean)
-      DEALLOCATE(she_mean)
-      DEALLOCATE(shi_mean)
-      DEALLOCATE(e_sna)
-      DEALLOCATE(e_smo)
-      DEALLOCATE(e_she)
-      DEALLOCATE(e_shi)
+      DEALLOCATE(avg%na_mean)
+      IF (ALLOCATED(avgd%ua_mean)) THEN
+        DEALLOCATE(avgd%ua_mean)
+      END IF
+      DEALLOCATE(avg%ua_mean)
+      IF (ALLOCATED(avgd%te_mean)) THEN
+        DEALLOCATE(avgd%te_mean)
+      END IF
+      DEALLOCATE(avg%te_mean)
+      IF (ALLOCATED(avgd%ti_mean)) THEN
+        DEALLOCATE(avgd%ti_mean)
+      END IF
+      DEALLOCATE(avg%ti_mean)
+      IF (ALLOCATED(avgd%po_mean)) THEN
+        DEALLOCATE(avgd%po_mean)
+      END IF
+      DEALLOCATE(avg%po_mean)
+      IF (ALLOCATED(avgd%kt_mean)) THEN
+        DEALLOCATE(avgd%kt_mean)
+      END IF
+      DEALLOCATE(avg%kt_mean)
+      IF (ALLOCATED(avgd%zt_mean)) THEN
+        DEALLOCATE(avgd%zt_mean)
+      END IF
+      DEALLOCATE(avg%zt_mean)
+      IF (ALLOCATED(avgd%e_na)) THEN
+        DEALLOCATE(avgd%e_na)
+      END IF
+      DEALLOCATE(avg%e_na)
+      IF (ALLOCATED(avgd%e_ua)) THEN
+        DEALLOCATE(avgd%e_ua)
+      END IF
+      DEALLOCATE(avg%e_ua)
+      IF (ALLOCATED(avgd%e_te)) THEN
+        DEALLOCATE(avgd%e_te)
+      END IF
+      DEALLOCATE(avg%e_te)
+      IF (ALLOCATED(avgd%e_ti)) THEN
+        DEALLOCATE(avgd%e_ti)
+      END IF
+      DEALLOCATE(avg%e_ti)
+      IF (ALLOCATED(avgd%e_po)) THEN
+        DEALLOCATE(avgd%e_po)
+      END IF
+      DEALLOCATE(avg%e_po)
+      IF (ALLOCATED(avgd%e_kt)) THEN
+        DEALLOCATE(avgd%e_kt)
+      END IF
+      DEALLOCATE(avg%e_kt)
+      IF (ALLOCATED(avgd%e_zt)) THEN
+        DEALLOCATE(avgd%e_zt)
+      END IF
+      DEALLOCATE(avg%e_zt)
+      IF (ALLOCATED(avgd%sna_mean)) THEN
+        DEALLOCATE(avgd%sna_mean)
+      END IF
+      DEALLOCATE(avg%sna_mean)
+      IF (ALLOCATED(avgd%smo_mean)) THEN
+        DEALLOCATE(avgd%smo_mean)
+      END IF
+      DEALLOCATE(avg%smo_mean)
+      IF (ALLOCATED(avgd%she_mean)) THEN
+        DEALLOCATE(avgd%she_mean)
+      END IF
+      DEALLOCATE(avg%she_mean)
+      IF (ALLOCATED(avgd%shi_mean)) THEN
+        DEALLOCATE(avgd%shi_mean)
+      END IF
+      DEALLOCATE(avg%shi_mean)
+      IF (ALLOCATED(avgd%shn_mean)) THEN
+        DEALLOCATE(avgd%shn_mean)
+      END IF
+      DEALLOCATE(avg%shn_mean)
+      IF (ALLOCATED(avgd%e_sna)) THEN
+        DEALLOCATE(avgd%e_sna)
+      END IF
+      DEALLOCATE(avg%e_sna)
+      IF (ALLOCATED(avgd%e_smo)) THEN
+        DEALLOCATE(avgd%e_smo)
+      END IF
+      DEALLOCATE(avg%e_smo)
+      IF (ALLOCATED(avgd%e_she)) THEN
+        DEALLOCATE(avgd%e_she)
+      END IF
+      DEALLOCATE(avg%e_she)
+      IF (ALLOCATED(avgd%e_shi)) THEN
+        DEALLOCATE(avgd%e_shi)
+      END IF
+      DEALLOCATE(avg%e_shi)
+      IF (ALLOCATED(avgd%e_shn)) THEN
+        DEALLOCATE(avgd%e_shn)
+      END IF
+      DEALLOCATE(avg%e_shn)
 !
       RETURN
     END IF
   END SUBROUTINE RUN_AV_FIN_DV
 
 !
-  SUBROUTINE RUN_AV_FIN()
+  SUBROUTINE RUN_AV_FIN(avg)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
+    TYPE(B2AVERAGE), INTENT(INOUT) :: avg
     INTRINSIC ALLOCATED
 !
-    IF (.NOT.ALLOCATED(na_mean)) THEN
+    IF (.NOT.ALLOCATED(avg%na_mean)) THEN
       RETURN
     ELSE
 !
-      DEALLOCATE(na_mean)
-      DEALLOCATE(ua_mean)
-      DEALLOCATE(te_mean)
-      DEALLOCATE(ti_mean)
-      DEALLOCATE(po_mean)
-      DEALLOCATE(kt_mean)
-      DEALLOCATE(zt_mean)
-      DEALLOCATE(e_na)
-      DEALLOCATE(e_ua)
-      DEALLOCATE(e_te)
-      DEALLOCATE(e_ti)
-      DEALLOCATE(e_po)
-      DEALLOCATE(e_kt)
-      DEALLOCATE(e_zt)
-      DEALLOCATE(sna_mean)
-      DEALLOCATE(smo_mean)
-      DEALLOCATE(she_mean)
-      DEALLOCATE(shi_mean)
-      DEALLOCATE(e_sna)
-      DEALLOCATE(e_smo)
-      DEALLOCATE(e_she)
-      DEALLOCATE(e_shi)
+      DEALLOCATE(avg%na_mean)
+      DEALLOCATE(avg%ua_mean)
+      DEALLOCATE(avg%te_mean)
+      DEALLOCATE(avg%ti_mean)
+      DEALLOCATE(avg%po_mean)
+      DEALLOCATE(avg%kt_mean)
+      DEALLOCATE(avg%zt_mean)
+      DEALLOCATE(avg%e_na)
+      DEALLOCATE(avg%e_ua)
+      DEALLOCATE(avg%e_te)
+      DEALLOCATE(avg%e_ti)
+      DEALLOCATE(avg%e_po)
+      DEALLOCATE(avg%e_kt)
+      DEALLOCATE(avg%e_zt)
+      DEALLOCATE(avg%sna_mean)
+      DEALLOCATE(avg%smo_mean)
+      DEALLOCATE(avg%she_mean)
+      DEALLOCATE(avg%shi_mean)
+      DEALLOCATE(avg%shn_mean)
+      DEALLOCATE(avg%e_sna)
+      DEALLOCATE(avg%e_smo)
+      DEALLOCATE(avg%e_she)
+      DEALLOCATE(avg%e_shi)
+      DEALLOCATE(avg%e_shn)
 !
       RETURN
     END IF
   END SUBROUTINE RUN_AV_FIN
 
 !
-  SUBROUTINE RUN_AV_SAVE(savefile, ncv, ns, lpr, ler)
+  SUBROUTINE RUN_AV_SAVE(savefile, ncv, ns, lpr, ler, avg)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ncv, ns
     LOGICAL, INTENT(IN) :: lpr, ler
+    TYPE(B2AVERAGE), INTENT(IN) :: avg
     CHARACTER(len=*) :: savefile
 ! local variables
     INTEGER :: idum(0:1), iun
     EXTERNAL CFWUCH, CFWUIN, CFWURE
-    EXTERNAL B2XXID, B2WUZD_NODIFF
+    EXTERNAL B2XXID, B2WUZD
     INTEGER :: arg1
 !
     CALL SUBINI('run_av_save')
-!
 !
 !  write 2d averaged plasma profiles
 !
@@ -543,7 +729,7 @@ CONTAINS
       CALL CFVERW(iun, newversion)
       CALL CFWUIN(iun, 2, idum, 'nCv,ns')
       CALL CFWUCH(iun, 120, lble, 'label')
-      CALL B2WUZD_NODIFF(iun, newversion, ns, zamin, zamax, zn, am)
+      CALL B2WUZD(iun, newversion, ns, zamin, zamax, zn, am)
 !
 !   ..write average state and sources
       idum(0) = naver
@@ -552,21 +738,22 @@ CONTAINS
       CALL CFWUIN(iun, 1, idum, 'ntotdt')
 !
       arg1 = ncv*ns
-      CALL CFWURE(iun, arg1, na_mean, 'na_mean')
-      CALL CFWURE(iun, ncv, te_mean, 'te_mean')
-      CALL CFWURE(iun, ncv, ti_mean, 'ti_mean')
-      CALL CFWURE(iun, ncv, po_mean, 'po_mean')
+      CALL CFWURE(iun, arg1, avg%na_mean, 'na_mean')
+      CALL CFWURE(iun, ncv, avg%te_mean, 'te_mean')
+      CALL CFWURE(iun, ncv, avg%ti_mean, 'ti_mean')
+      CALL CFWURE(iun, ncv, avg%po_mean, 'po_mean')
       arg1 = ncv*ns
-      CALL CFWURE(iun, arg1, ua_mean, 'ua_mean')
-      CALL CFWURE(iun, ncv, kt_mean, 'kt_mean')
-      CALL CFWURE(iun, ncv, zt_mean, 'zt_mean')
+      CALL CFWURE(iun, arg1, avg%ua_mean, 'ua_mean')
+      CALL CFWURE(iun, ncv, avg%kt_mean, 'kt_mean')
+      CALL CFWURE(iun, ncv, avg%zt_mean, 'zt_mean')
 !
       arg1 = ncv*ns
-      CALL CFWURE(iun, arg1, sna_mean, 'sna_mean')
-      CALL CFWURE(iun, ncv, she_mean, 'she_mean')
-      CALL CFWURE(iun, ncv, shi_mean, 'shi_mean')
+      CALL CFWURE(iun, arg1, avg%sna_mean, 'sna_mean')
+      CALL CFWURE(iun, ncv, avg%she_mean, 'she_mean')
+      CALL CFWURE(iun, ncv, avg%shi_mean, 'shi_mean')
+      CALL CFWURE(iun, ncv, avg%shn_mean, 'shn_mean')
       arg1 = ncv*ns
-      CALL CFWURE(iun, arg1, smo_mean, 'smo_mean')
+      CALL CFWURE(iun, arg1, avg%smo_mean, 'smo_mean')
 !
     END IF
 !
@@ -575,21 +762,22 @@ CONTAINS
     IF (ler) THEN
 !
       arg1 = ncv*ns
-      CALL CFWURE(iun, arg1, e_na, 'e_na')
-      CALL CFWURE(iun, ncv, e_te, 'e_te')
-      CALL CFWURE(iun, ncv, e_ti, 'e_ti')
-      CALL CFWURE(iun, ncv, e_po, 'e_po')
+      CALL CFWURE(iun, arg1, avg%e_na, 'e_na')
+      CALL CFWURE(iun, ncv, avg%e_te, 'e_te')
+      CALL CFWURE(iun, ncv, avg%e_ti, 'e_ti')
+      CALL CFWURE(iun, ncv, avg%e_po, 'e_po')
       arg1 = ncv*ns
-      CALL CFWURE(iun, arg1, e_ua, 'e_ua')
-      CALL CFWURE(iun, ncv, e_kt, 'e_kt')
-      CALL CFWURE(iun, ncv, e_zt, 'e_zt')
+      CALL CFWURE(iun, arg1, avg%e_ua, 'e_ua')
+      CALL CFWURE(iun, ncv, avg%e_kt, 'e_kt')
+      CALL CFWURE(iun, ncv, avg%e_zt, 'e_zt')
 !
       arg1 = ncv*ns
-      CALL CFWURE(iun, arg1, e_sna, 'e_sna')
-      CALL CFWURE(iun, ncv, e_she, 'e_she')
-      CALL CFWURE(iun, ncv, e_shi, 'e_shi')
+      CALL CFWURE(iun, arg1, avg%e_sna, 'e_sna')
+      CALL CFWURE(iun, ncv, avg%e_she, 'e_she')
+      CALL CFWURE(iun, ncv, avg%e_shi, 'e_shi')
+      CALL CFWURE(iun, ncv, avg%e_shn, 'e_shn')
       arg1 = ncv*ns
-      CALL CFWURE(iun, arg1, e_smo, 'e_smo')
+      CALL CFWURE(iun, arg1, avg%e_smo, 'e_smo')
 !
     END IF
 !
@@ -603,23 +791,24 @@ CONTAINS
 
 !
   SUBROUTINE RUN_AV_GET_PLASMA(na_arg, te_arg, ti_arg, ua_arg, po_arg, &
-&   kt_arg, zt_arg, ncv, ns)
+&   kt_arg, zt_arg, ncv, ns, avg)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ncv, ns
+    TYPE(B2AVERAGE), INTENT(IN) :: avg
     REAL(kind=r8), INTENT(INOUT) :: na_arg(ncv, 0:ns-1), ua_arg(ncv, 0:&
 &   ns-1), te_arg(ncv), ti_arg(ncv), po_arg(ncv), kt_arg(ncv), zt_arg(&
 &   ncv)
 !
     CALL SUBINI('run_av_get_plasma')
 !
-    na_arg = na_mean
-    ua_arg = ua_mean
-    te_arg = te_mean
-    ti_arg = ti_mean
-    po_arg = po_mean
-    kt_arg = kt_mean
-    zt_arg = zt_mean
+    na_arg = avg%na_mean
+    ua_arg = avg%ua_mean
+    te_arg = avg%te_mean
+    ti_arg = avg%ti_mean
+    po_arg = avg%po_mean
+    kt_arg = avg%kt_mean
+    zt_arg = avg%zt_mean
 !
     CALL SUBEND()
 !
@@ -627,33 +816,214 @@ CONTAINS
   END SUBROUTINE RUN_AV_GET_PLASMA
 
 !
-  SUBROUTINE RUN_AV_GET_SOURCES(sna_out, smo_out, she_out, shi_out, ncv&
-&   , ns)
+  SUBROUTINE RUN_AV_GET_SOURCES(sna_out, smo_out, she_out, shi_out, &
+&   shn_out, ncv, ns, avg)
   USE B2MOD_DIFFSIZES
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: ncv, ns
-    REAL(kind=r8), INTENT(OUT) :: sna_out(ncv, 0:1, 0:ns-1), smo_out(ncv&
-&   , 0:3, 0:ns-1), she_out(ncv, 0:3), shi_out(ncv, 0:3)
+    TYPE(B2AVERAGE), INTENT(IN) :: avg
+    REAL(kind=r8), INTENT(OUT) :: sna_out(ncv, 0:ns-1), smo_out(ncv, 0:&
+&   ns-1), she_out(ncv), shi_out(ncv), shn_out(ncv)
 !
     CALL SUBINI('run_av_get_sources')
 !
 ! only the total sources are averaged, not the linearised components.
-! when calling the averaged sources the linearisation must be overwritten (everything in the "0" part)
 !
-    sna_out(:, 0, :) = sna_mean
-    smo_out(:, 0, :) = smo_mean
-    she_out(:, 0) = she_mean
-    shi_out(:, 0) = shi_mean
-!
-    sna_out(:, 1, :) = 0.0_R8
-    smo_out(:, 1:3, :) = 0.0_R8
-    she_out(:, 1:3) = 0.0_R8
-    shi_out(:, 1:3) = 0.0_R8
+    sna_out = avg%sna_mean
+    smo_out = avg%smo_mean
+    she_out = avg%she_mean
+    shi_out = avg%shi_mean
+    shn_out = avg%shn_mean
 !
     CALL SUBEND()
 !
     RETURN
   END SUBROUTINE RUN_AV_GET_SOURCES
+
+!
+  SUBROUTINE READ_B2FAVERI_ST(nx, ny, ns)
+    USE B2MOD_RATES
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: nx, ny, ns
+    INTEGER :: iun, io, iex, is, n2, idum(0:2)
+    REAL(kind=r8) :: zpdum(0:nsdecl-1, 4), dummy(-1:nx, -1:ny), zero(-1:&
+&   nx, -1:ny), swrk2(-1:nx, -1:ny, 0:1), swrk2s(-1:nx, -1:ny, 0:1, 0:ns&
+&   -1), swrk4(-1:nx, -1:ny, 0:3), swrk4s(-1:nx, -1:ny, 0:3, 0:ns-1), &
+&   ne_mean(-1:nx, -1:ny), ni_mean(-1:nx, -1:ny, 0:1)
+    INTEGER :: arg1
+!
+    n2 = (nx+2)*(ny+2)
+!
+    ALLOCATE(na_mean(-1:nx, -1:ny, 0:ns-1))
+    ALLOCATE(ua_mean(-1:nx, -1:ny, 0:ns-1))
+    ALLOCATE(te_mean(-1:nx, -1:ny))
+    ALLOCATE(ti_mean(-1:nx, -1:ny))
+    ALLOCATE(po_mean(-1:nx, -1:ny))
+    ALLOCATE(e_na(-1:nx, -1:ny, 0:ns-1))
+    ALLOCATE(e_ua(-1:nx, -1:ny, 0:ns-1))
+    ALLOCATE(e_te(-1:nx, -1:ny))
+    ALLOCATE(e_ti(-1:nx, -1:ny))
+    ALLOCATE(e_po(-1:nx, -1:ny))
+!
+    ALLOCATE(sna_mean(-1:nx, -1:ny, 0:ns-1))
+    ALLOCATE(smo_mean(-1:nx, -1:ny, 0:ns-1))
+    ALLOCATE(she_mean(-1:nx, -1:ny))
+    ALLOCATE(shi_mean(-1:nx, -1:ny))
+    ALLOCATE(e_sna(-1:nx, -1:ny, 0:ns-1))
+    ALLOCATE(e_smo(-1:nx, -1:ny, 0:ns-1))
+    ALLOCATE(e_she(-1:nx, -1:ny))
+    ALLOCATE(e_shi(-1:nx, -1:ny))
+!
+    OPEN(newunit=iun, file='b2faveri', access='SEQUENTIAL', form=&
+&  'FORMATTED', status='OLD', iostat=iex) 
+    io = iex
+    READ(iun, '(A10)', iostat=io) check
+!  read 2d averaged plasma profiles from b2faveri
+    IF (io .EQ. 0) THEN
+      BACKSPACE(iun) 
+      CALL CFVERR(iun, b2faveri_version)
+      CALL CFRUIN(iun, 3, idum, 'nx,ny,ns')
+      CALL CFRUCH(iun, 120, lbli, 'label')
+      CALL B2RUZD_NODIFF(iun, b2faveri_version, ns, zpdum(0, 1), zpdum(0&
+&                  , 2), zpdum(0, 3), zpdum(0, 4), .false.)
+!
+      CALL CFRUIN(iun, 1, idum, 'naver')
+      naver = idum(0)
+      CALL CFRUIN(iun, 1, idum, 'ntotdt')
+      ntotdt = idum(0)
+      arg1 = n2*ns
+      CALL CFRURE(iun, arg1, na_mean, 'na_mean')
+      CALL CFRURE(iun, n2, te_mean, 'te_mean')
+      CALL CFRURE(iun, n2, ti_mean, 'ti_mean')
+      CALL CFRURE(iun, n2, po_mean, 'po_mean')
+      arg1 = n2*ns
+      CALL CFRURE(iun, arg1, ua_mean, 'ua_mean')
+!
+      IF (b2faveri_version .GE. '03.000.008') THEN
+        arg1 = n2*ns
+        CALL CFRURE(iun, arg1, sna_mean, 'sna_mean')
+        CALL CFRURE(iun, n2, dummy, 'sne_mean')
+        CALL CFRURE(iun, n2, she_mean, 'she_mean')
+        CALL CFRURE(iun, n2, shi_mean, 'shi_mean')
+        CALL CFRURE(iun, n2, dummy, 'sch_mean')
+        arg1 = n2*ns
+        CALL CFRURE(iun, arg1, smo_mean, 'smo_mean')
+      ELSE
+        zero = 0.0_R8
+        CALL B2XPNE_ST(nx, ny, ns, rza, na_mean, zero, ne_mean)
+        CALL B2XPNI_NODIFF(n2, ns, na_mean, ni_mean)
+        arg1 = n2*2*ns
+        CALL CFRURE(iun, arg1, swrk2s, 'sna_mean')
+        sna_mean(:, :, :) = swrk2s(:, :, 0, :) + swrk2s(:, :, 1, :)*&
+&         na_mean(:, :, :)
+        arg1 = n2*2
+        CALL CFRURE(iun, arg1, swrk2, 'sne_mean')
+        arg1 = n2*4
+        CALL CFRURE(iun, arg1, swrk4, 'she_mean')
+        she_mean(:, :) = swrk4(:, :, 0) + swrk4(:, :, 1)*ne_mean(:, :) +&
+&         swrk4(:, :, 2)*te_mean(:, :) + swrk4(:, :, 3)*ne_mean(:, :)*&
+&         te_mean(:, :)
+        arg1 = n2*4
+        CALL CFRURE(iun, arg1, swrk4, 'shi_mean')
+        shi_mean(:, :) = swrk4(:, :, 0) + swrk4(:, :, 1)*ni_mean(:, :, 0&
+&         ) + swrk4(:, :, 2)*ti_mean(:, :) + swrk4(:, :, 3)*ni_mean(:, :&
+&         , 0)*ti_mean(:, :)
+        arg1 = n2*4
+        CALL CFRURE(iun, arg1, swrk4, 'sch_mean')
+        arg1 = n2*4*ns
+        CALL CFRURE(iun, arg1, swrk4s, 'smo_mean')
+        DO is=0,ns-1
+          smo_mean(:, :, is) = swrk4s(:, :, 0, is) + swrk4s(:, :, 1, is)&
+&           *ua_mean(:, :, is) + swrk4s(:, :, 2, is)*na_mean(:, :, is)*&
+&           mp*am(is) + swrk4s(:, :, 1, is)*ua_mean(:, :, is)*na_mean(:&
+&           , :, is)*mp*am(is)
+        END DO
+      END IF
+!
+      READ(iun, '(A10)', iostat=io) check
+!  read 2d averaged squared plasma profiles from b2faveri if present
+      IF (io .EQ. 0) THEN
+        BACKSPACE(iun) 
+        arg1 = n2*ns
+        CALL CFRURE(iun, arg1, e_na, 'e_na')
+        CALL CFRURE(iun, n2, e_te, 'e_te')
+        CALL CFRURE(iun, n2, e_ti, 'e_ti')
+        CALL CFRURE(iun, n2, e_po, 'e_po')
+        arg1 = n2*ns
+        CALL CFRURE(iun, arg1, e_ua, 'e_ua')
+!
+        IF (b2faveri_version .GE. '03.000.008') THEN
+          arg1 = n2*ns
+          CALL CFRURE(iun, arg1, e_sna, 'e_sna')
+          CALL CFRURE(iun, n2, dummy, 'e_sne')
+          CALL CFRURE(iun, n2, e_she, 'e_she')
+          CALL CFRURE(iun, n2, e_shi, 'e_shi')
+          CALL CFRURE(iun, n2, dummy, 'e_sch')
+          arg1 = n2*ns
+          CALL CFRURE(iun, arg1, e_smo, 'e_smo')
+        ELSE
+          arg1 = n2*2*ns
+          CALL CFRURE(iun, arg1, swrk2s, 'e_sna')
+          e_sna(:, :, :) = swrk2s(:, :, 0, :) + swrk2s(:, :, 1, :)*&
+&           na_mean(:, :, :)
+          arg1 = n2*2
+          CALL CFRURE(iun, arg1, swrk2, 'e_sne')
+          arg1 = n2*4
+          CALL CFRURE(iun, arg1, swrk4, 'e_she')
+          e_she(:, :) = swrk4(:, :, 0) + swrk4(:, :, 1)*ne_mean(:, :) + &
+&           swrk4(:, :, 2)*te_mean(:, :) + swrk4(:, :, 3)*ne_mean(:, :)*&
+&           te_mean(:, :)
+          arg1 = n2*4
+          CALL CFRURE(iun, arg1, swrk4, 'e_shi')
+          e_shi(:, :) = swrk4(:, :, 0) + swrk4(:, :, 1)*ni_mean(:, :, 0)&
+&           + swrk4(:, :, 2)*ti_mean(:, :) + swrk4(:, :, 3)*ni_mean(:, :&
+&           , 0)*ti_mean(:, :)
+          arg1 = n2*4
+          CALL CFRURE(iun, arg1, swrk4, 'e_sch')
+          arg1 = n2*4*ns
+          CALL CFRURE(iun, arg1, swrk4s, 'e_smo')
+          DO is=0,ns-1
+            e_smo(:, :, is) = swrk4s(:, :, 0, is) + swrk4s(:, :, 1, is)*&
+&             ua_mean(:, :, is) + swrk4s(:, :, 2, is)*na_mean(:, :, is)*&
+&             mp*am(is) + swrk4s(:, :, 1, is)*ua_mean(:, :, is)*na_mean(&
+&             :, :, is)*mp*am(is)
+          END DO
+        END IF
+      END IF
+    END IF
+!
+    CLOSE(iun) 
+!
+    RETURN
+  END SUBROUTINE READ_B2FAVERI_ST
+
+!
+  SUBROUTINE DEALLOC_AVG_ST()
+  USE B2MOD_DIFFSIZES
+    IMPLICIT NONE
+!
+    DEALLOCATE(na_mean)
+    DEALLOCATE(ua_mean)
+    DEALLOCATE(te_mean)
+    DEALLOCATE(ti_mean)
+    DEALLOCATE(po_mean)
+    DEALLOCATE(e_na)
+    DEALLOCATE(e_ua)
+    DEALLOCATE(e_te)
+    DEALLOCATE(e_ti)
+    DEALLOCATE(e_po)
+    DEALLOCATE(sna_mean)
+    DEALLOCATE(smo_mean)
+    DEALLOCATE(she_mean)
+    DEALLOCATE(shi_mean)
+    DEALLOCATE(e_sna)
+    DEALLOCATE(e_smo)
+    DEALLOCATE(e_she)
+    DEALLOCATE(e_shi)
+!
+    RETURN
+  END SUBROUTINE DEALLOC_AVG_ST
 
 END MODULE B2MOD_RUNNING_AVERAGE_DIFFV
 

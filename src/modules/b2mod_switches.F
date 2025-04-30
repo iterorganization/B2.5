@@ -52,6 +52,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: flux_limit_to_vsa
       integer :: csig_an_style
       integer :: user_transport
+      integer :: set_transport_iyref
 
 c Advanced fluid neutral models
       integer :: tn_style
@@ -63,9 +64,10 @@ c Advanced fluid neutral models
       integer :: spatial_hybrid
       integer :: use_auto_spatial_hyb
       integer :: diffusion_bc_safeguard
-      integer :: do_volrec
       integer :: transport_afn !! use advanced fluid neutral (afn) transport coefficients
       integer :: afn_bcs_use_coarse
+      integer :: afn_vnn
+      integer :: afn_vnn_ndiff
 
       real (kind=R8) :: fhe_vis_per  !srv 06.07.00
       real (kind=R8) :: fhe_vis_par  !srv 22.03.02
@@ -89,7 +91,9 @@ c Advanced fluid neutral models
       real (kind=R8) :: b2mndr_na_max
       real (kind=R8) :: b2mndr_ua_max !! in absolute sense: abs(ua) < ua_max
       real (kind=R8) :: b2mndr_na_new
+      real (kind=R8) :: b2npht_stab_shei
       real (kind=R8) :: b2upht_te_min
+      real (kind=R8) :: b2upht_rte_min
       real (kind=R8) :: b2upht_te_max
       real (kind=R8) :: b2upht_ti_min
       real (kind=R8) :: b2upht_ti_max
@@ -127,7 +131,6 @@ c Advanced fluid neutral models
       real (kind=R8) :: b2tfnb_alpha
       real (kind=R8) :: b2tfnb_gamma
       real (kind=R8) :: fch_stochastic
-      real (kind=R8) :: Qalfmin
       real (kind=R8) :: delpo
       real (kind=R8) :: Kn_b1
       real (kind=R8) :: Kn_b2
@@ -157,13 +160,14 @@ c ECH model
       integer :: ech_out
       integer :: ech_harmonics
       integer :: ech_coupling
-      integer :: ech_gaussian_symmetry
+      integer :: ech_gaussian_type
       real (kind=R8) :: ech_power
       real (kind=R8) :: ech_absfract
       real (kind=R8) :: ech_Rdep
       real (kind=R8) :: ech_Zdep
       real (kind=R8) :: ech_RFfreq
-      real (kind=R8) :: ech_gaussian_width
+      real (kind=R8) :: ech_gaussian_width_x
+      real (kind=R8) :: ech_gaussian_width_y
 
 c ICH model
       integer :: use_ich
@@ -197,7 +201,6 @@ c iout switches
       integer :: b2npco_iout
       integer :: b2npp7_iout
       integer :: b2nppo_iout
-!      integer :: b2nph9_iout       ! No longer needed for unstructured grids
       integer :: b2news_iout
       integer :: b2nxfx_iout
       integer :: b2nxfc_iout        !srv 17.06.02
@@ -238,7 +241,6 @@ c style switches
       integer :: b2sicf_style
       integer :: b2sigp_style
       integer :: b2sigp_pressure_restriction
-      integer :: b2sihs_style
       integer :: b2sral_style
       integer :: style_visc
       integer :: b2tfnb_style_int_vel
@@ -304,7 +306,12 @@ c phm switches
       real (kind=R8) :: b2treq_phm0
       real (kind=R8) :: b2stbc_phm0
       real (kind=R8) :: b2stbc_phm1
-      real (kind=R8) :: b2stbc_phm2
+      integer :: b2sihs_shi
+      integer :: b2sihs_shidu
+      integer :: b2sihs_shidd
+      integer :: b2sihs_shedu
+      integer :: b2sihs_shedd
+      integer :: b2sihs_shivis
 
 c pcm switches
       real (kind=R8) :: b2npco_pcm0
@@ -345,10 +352,11 @@ c namelist switches
 c diagnostics switches
       integer :: b2stbc_diagno
       integer :: b2npmo_diagno
-      integer :: ion_vlct_restrict
       integer :: vlct_diagno
       integer :: b2tqna_diagno
 
+c hard limit velocities
+      integer :: ion_vlct_restrict
       real(kind=R8) :: ion_vlct_restrict_M
 
 c MMS
@@ -411,7 +419,6 @@ c k-enstrophy model
       integer :: b2sikt_iout
       integer :: b2sikt_style
       integer :: b2sikt_model
-      integer :: b2sikt_local
       integer :: b2sikt_sheath_local
       integer :: b2sikt_fac_diss_core_mode
       integer :: b2sikt_min_source
@@ -429,6 +436,7 @@ c k-enstrophy model
       real (kind=R8) :: b2tfhi_fsigkt
       real (kind=R8) :: b2tfhi_fkt_hie
       real (kind=R8) :: b2tfhe_vis_kt
+      real (kind=R8) :: b2sikt_lpar_ref
 
 c Bohm-like transport model
       integer :: transport_bohm
@@ -533,8 +541,6 @@ c b2srst
 c b2tfnb
       integer :: b2tfnb_no_hybr
       real (kind=R8) :: b2tfnb_flux_limit_min_ti
-      real (kind=R8) :: b2tfnb_facdna_start
-      real (kind=R8) :: b2tfnb_facvla_start
 
 c b2srsm
       integer :: b2srsm_enable
@@ -577,22 +583,29 @@ c b2stbc
       real (kind=R8) :: b2stbc_bc_ref
       real (kind=R8) :: b2stbc_bc_ref_te
       real (kind=R8) :: b2stbc_bc_ref_ti
-      real (kind=R8) :: b2stbc_corr_flux
       real (kind=R8) :: bc_type13_norm
       real (kind=R8) :: bc_type13_fac
       real (kind=R8) :: nesepm
       real (kind=R8) :: ndes_sol
       real (kind=R8) :: nesepm_overshoot
+      real (kind=R8) :: b2stbc_cor9
       real (kind=R8) :: stab_coeff_sheath_te
       real (kind=R8) :: stab_coeff_sheath_ti
 
 c b2trno
       real (kind=R8) :: b2trno_alpha_stoch
+
+c b2nppo
+      real (kind=R8) :: b2nppo_restr_po
+
 c Feedback
       integer :: b2stbc_feedback
 
-c Med
-      integer :: med_style
+
+c Optimization
+      integer :: b2optim_save_states
+      integer :: b2optim_reset_iter
+      real (kind=R8) :: b2optim_reset_drift
 
       end type switches
 
@@ -650,6 +663,7 @@ c Med
       s % flux_limit_to_vsa = 1
       s % csig_an_style = 1
       s % user_transport = 0
+      s % set_transport_iyref = 0
 
 c Advanced fluid neutral models
       s % tn_style = 0
@@ -666,8 +680,9 @@ c Advanced fluid neutral models
       s % spatial_hybrid = 0
       s % use_auto_spatial_hyb = 0
       s % diffusion_bc_safeguard = 1
-      s % do_volrec = 1
       s % afn_bcs_use_coarse = 1
+      s % afn_vnn = 1
+      s % afn_vnn_ndiff = 0
 
       s % fhe_vis_per = 0.0_R8
       s % fhe_vis_par = 0.0_R8
@@ -691,7 +706,9 @@ c Advanced fluid neutral models
       s % b2mndr_na_max = 1.0e30_R8
       s % b2mndr_ua_max = 1.0e6_R8
       s % b2mndr_na_new = 1.0e14_R8
+      s % b2npht_stab_shei = 0.0_R8
       s % b2upht_te_min = 0.1_R8
+      s % b2upht_rte_min = 0.0_R8
       s % b2upht_te_max = 1.0e30_R8
       s % b2upht_ti_min = 0.1_R8
       s % b2upht_ti_max = 1.0e30_R8
@@ -735,10 +752,9 @@ c Advanced fluid neutral models
       s % b2tfnb_alpha = 0.0_R8
       s % b2tfnb_gamma = 2.0_R8
       s % fch_stochastic = 0.0_R8
-      s % Qalfmin        = 1.0e-3_R8
-      s % delpo          = 3.1_R8
-      s % Kn_b1         = 0.01_R8
-      s % Kn_b2         = 0.10_R8
+      s % delpo = 3.1_R8
+      s % Kn_b1 = 0.01_R8
+      s % Kn_b2 = 0.10_R8
       s % pol_anom_scale = 1.0_R8
       s % auto_spatial_hyb_Kn_1 = 0.0_R8
       s % auto_spatial_hyb_Kn_2 = 100.0_R8
@@ -762,7 +778,6 @@ c Advanced fluid neutral models
       s % b2npco_iout = 0
       s % b2npp7_iout = 0
       s % b2nppo_iout = 0
-!      s % b2nph9_iout = 0
       s % b2news_iout = 0
       s % b2nxfx_iout = 0
       s % b2nxfc_iout = 0
@@ -802,7 +817,6 @@ c Advanced fluid neutral models
       s % b2sicf_style = 0
       s % b2sigp_style = 2
       s % b2sigp_pressure_restriction = 1
-      s % b2sihs_style = 0
       s % b2sral_style = 2
       s % style_visc = 0
       s % b2tfnb_style_int_vel = 0
@@ -867,7 +881,12 @@ c Advanced fluid neutral models
       s % b2treq_phm0 = 1.0_R8
       s % b2stbc_phm0 = 1.0_R8
       s % b2stbc_phm1 = 1.0_R8
-      s % b2stbc_phm2 = 1.0_R8
+      s % b2sihs_shidu = 1
+      s % b2sihs_shidd = 1
+      s % b2sihs_shedu = 1
+      s % b2sihs_shedd = 1
+      s % b2sihs_shivis = 1
+      s % b2sihs_shi = 1
 
       if ( s % b2mndt_style.eq.2 ) then
         s % b2npco_rxg =  huge(1.0_R8)
@@ -913,10 +932,11 @@ c Advanced fluid neutral models
 
       s % b2stbc_diagno = 0
       s % b2npmo_diagno = 0
-      s % ion_vlct_restrict = 0
-      s % ion_vlct_restrict_M = 3.0_R8
       s % vlct_diagno = 0
       s % b2tqna_diagno = 0
+
+      s % ion_vlct_restrict = 0
+      s % ion_vlct_restrict_M = 3.0_R8
 
       s % set_na_numerical = 0
       s % set_ua_numerical = 0
@@ -932,13 +952,13 @@ c far-sol flux limiting options
 
       s % b2tlhe_ne_min = 1.0e17_R8
       s % b2tlhe_ne_max = 1.0e18_R8
-      s % b2tlhe_cflme_min = 1.0e-3_R8
+      s % b2tlhe_cflme_min = 0.2e0_R8
       s % b2tlhi_ni_min = 1.0e17_R8
       s % b2tlhi_ni_max = 1.0e18_R8
-      s % b2tlhi_cflmi_min = 1.0e-3_R8
+      s % b2tlhi_cflmi_min = 1.0e1_R8
       s % b2tlmv_ni_min = 1.0e17_R8
       s % b2tlmv_ni_max = 1.0e18_R8
-      s % b2tlmv_cflmv_min = 1.0e-3_R8
+      s % b2tlmv_cflmv_min = 0.5e0_R8
 
 c geometry
       s % fcHz_style = 1
@@ -997,7 +1017,6 @@ c k-enstrophy model
       s % b2sikt_iout = 0
       s % b2sikt_style = 0
       s % b2sikt_model = 1
-      s % b2sikt_local = 1
       s % b2sikt_fac_diss_core_mode = 0
       s % b2sikt_sheath_local = 1
       s % b2sikt_min_source = 0
@@ -1012,22 +1031,24 @@ c k-enstrophy model
       s % b2tfhi_fconkt = 0.0_R8
       s % b2tfhi_fflozt = 0.0_R8
       s % b2tfhi_fconzt = 0.0_R8
-      s % b2tfhi_fsigkt = 0.0_R8
+      s % b2tfhi_fsigkt = 0.1_R8
       s % b2tfhi_fkt_hie = 0.0_R8
       s % b2tfhe_vis_kt = 0.0_R8
+      s % b2sikt_lpar_ref = 10.0_R8
 
 c ECH model
       s % use_ech = 0
       s % ech_out = 0
       s % ech_harmonics = 0
       s % ech_coupling = 0
-      s % ech_gaussian_symmetry = 0
+      s % ech_gaussian_type = 0
       s % ech_power = 0.0_R8
       s % ech_absfract = 0.0_R8
       s % ech_Rdep = 0.0_R8
       s % ech_Zdep = 0.0_R8
       s % ech_RFfreq = 0.0_R8
-      s % ech_gaussian_width = 0.0_R8
+      s % ech_gaussian_width_x = 0.0_R8
+      s % ech_gaussian_width_y = 0.0_R8
 
 c ICH model
       s % use_ich = 0
@@ -1145,8 +1166,6 @@ c b2sihs_
 c b2tfnb
       s % b2tfnb_no_hybr = 0
       s % b2tfnb_flux_limit_min_ti = 0.0_R8
-      s % b2tfnb_facdna_start = 1.0_R8
-      s % b2tfnb_facvla_start = 1.0_R8
 
 c b2srsm
       s % b2srsm_enable = 0
@@ -1195,20 +1214,25 @@ c b2stbc_phys
       s % b2stbc_bc_ref = 0.01_R8            !srv 14.10.99
       s % b2stbc_bc_ref_te = 0.01_R8         !IYS 07.03.2013 11.04.13
       s % b2stbc_bc_ref_ti = 0.01_R8         !IYS 07.03.2013 11.04.13
-      s % b2stbc_corr_flux = 0.0_R8        !srv 25.07.05
       s % bc_type13_norm = 1.0e15_R8
       s % bc_type13_fac = 1.0_R8
       s % nesepm = 0.0_R8
       s % nesepm_overshoot = 0.0_R8
       s % ndes_sol = 0.0_R8
+      s % b2stbc_cor9 = 0.0_R8
       s % stab_coeff_sheath_te = 0.0_R8
       s % stab_coeff_sheath_ti = 0.0_R8
 
 c b2trno
       s % b2trno_alpha_stoch =  1.0_R8       !srv 17.12.13
 
-c med
-      s % med_style = 0
+c b2nppo
+      s % b2nppo_restr_po = 0.0_R8
+
+c Optimization
+      s % b2optim_save_states = 0
+      s % b2optim_reset_iter = 2
+      s % b2optim_reset_drift = 0.4_R8
 
       return
       end subroutine set_defaults_switches
@@ -1272,6 +1296,7 @@ c med
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)
       call ipgeti ('b2tqna_user_transport', s % user_transport)
+      call ipgeti ('set_transport_iyref', s % set_transport_iyref)
 
 c Advanced fluid neutral models
       call ipgeti ('b2mn_tn_style', s % tn_style)
@@ -1281,10 +1306,11 @@ c Advanced fluid neutral models
       call ipgeti ('b2stbr_remove_FC_el', s % remove_FC_el)
       call ipgeti ('b2mn_spatial_hybrid', s % spatial_hybrid)
       call ipgeti ('use_auto_spatial_hyb', s % use_auto_spatial_hyb)
-      call ipgeti ('b2mn_do_volrec', s % do_volrec)
       call ipgeti ('b2tqna_transport_afn', s % transport_afn)
       call ipgeti ('diffusion_bc_safeguard', s % diffusion_bc_safeguard)
       call ipgeti ('b2stbr_afn_bcs_use_coarse', s % afn_bcs_use_coarse)
+      call ipgeti ('b2tqna_afn_vnn', s % afn_vnn)
+      call ipgeti ('b2tqna_afn_vnn_ndiff', s % afn_vnn_ndiff)
 
       call ipgetr ('b2tfhe_vis_per', s % fhe_vis_per)
       call ipgetr ('b2tfhe_vis_par', s % fhe_vis_par)
@@ -1308,7 +1334,9 @@ c Advanced fluid neutral models
       call ipgetr ('b2mndr_na_max', s%b2mndr_na_max)
       call ipgetr ('b2mndr_ua_max', s%b2mndr_ua_max)
       call ipgetr ('b2mndr_na_new', s%b2mndr_na_new)
+      call ipgetr ('b2npht_stab_shei', s%b2npht_stab_shei)
       call ipgetr ('b2upht_te_min', s%b2upht_te_min)
+      call ipgetr ('b2upht_rte_min', s%b2upht_rte_min)
       call ipgetr ('b2upht_te_max', s%b2upht_te_max)
       call ipgetr ('b2upht_ti_min', s%b2upht_ti_min)
       call ipgetr ('b2upht_ti_max', s%b2upht_ti_max)
@@ -1346,7 +1374,6 @@ c Advanced fluid neutral models
       call ipgetr ('b2tfnb_alpha', s % b2tfnb_alpha)
       call ipgetr ('b2tfnb_gamma', s % b2tfnb_gamma)
       call ipgetr ('b2tfhe_stochastic', s%fch_stochastic)           !lk 31.01.08
-      call ipgetr ('b2stbc_Qalfmin', s % Qalfmin)
       call ipgetr ('b2stbc_delpo', s % delpo)
       call ipgetr ('b2stbr_Kn_b1',s % Kn_b1)
       call ipgetr ('b2stbr_Kn_b2',s % Kn_b2)
@@ -1374,13 +1401,14 @@ c ECH model
       call ipgeti ('b2sral_use_ECH', s % use_ech)
       call ipgeti ('b2sral_ECH_harmonics', s % ech_harmonics)
       call ipgeti ('b2sral_ECH_coupling', s % ech_coupling)
-      call ipgeti ('b2sral_ECH_gauss_symm', s % ech_gaussian_symmetry)
+      call ipgeti ('b2sral_ECH_gauss_type', s % ech_gaussian_type)
       call ipgetr ('b2sral_ECH_power', s % ech_power)
       call ipgetr ('b2sral_ECH_Rdep', s % ech_Rdep)
       call ipgetr ('b2sral_ECH_absorption_frac', s % ech_absfract)
       call ipgetr ('b2sral_ECH_Zdep', s % ech_Zdep)
       call ipgetr ('b2sral_ECH_RFfrequency', s % ech_RFfreq)
-      call ipgetr ('b2sral_ECH_gauss_width', s % ech_gaussian_width)
+      call ipgetr ('b2sral_ECH_gauss_width_x', s % ech_gaussian_width_x)
+      call ipgetr ('b2sral_ECH_gauss_width_y', s % ech_gaussian_width_y)
 
 c ICH model
       call ipgeti ('b2sral_use_ICH', s % use_ich)
@@ -1413,7 +1441,6 @@ c iout switches
       call ipgeti ('b2npco_iout', s % b2npco_iout)
       call ipgeti ('b2npp7_iout', s % b2npp7_iout)
       call ipgeti ('b2nppo_iout', s % b2nppo_iout)
-!      call ipgeti ('b2nph9_iout', s % b2nph9_iout)
       call ipgeti ('b2news_iout', s % b2news_iout)
       call ipgeti ('b2nxfx_iout', s % b2nxfx_iout)
       call ipgeti ('b2nxfc_iout', s % b2nxfc_iout)
@@ -1456,7 +1483,6 @@ c style/mode switches
       call ipgeti ('b2sigp_style', s % b2sigp_style)
       call ipgeti ('b2sigp_pressure_restriction',
      &  s % b2sigp_pressure_restriction)
-      call ipgeti ('b2sihs_style', s % b2sihs_style)
       call ipgeti ('b2sral_style', s % b2sral_style)
       call ipgeti ('b2sihs_style_visc', s % style_visc)
       call ipgeti ('b2tfnb_style_int_vel', s % b2tfnb_style_int_vel)
@@ -1469,14 +1495,14 @@ c style/mode switches
       call ipgeti ('b2nxdv_style', s % b2nxdv_style)
       call ipgeti ('b2nxfx_style', s % b2nxfx_style)
       call ipgeti ('b2nxfc_style', s % b2nxfc_style)
-      call ipgeti ('b2tfhe_mode_ehy',s% mode_ehy)
-      call ipgeti ('b2tfhe_mode_ehx',s% mode_ehx)
-      call ipgeti ('b2tlmv_style', s% b2tlmv_style)
-      call ipgeti ('b2tqca_model', s% b2tqca_model)
-      call ipgeti ('b2tqce_model', s% b2tqce_model)
+      call ipgeti ('b2tfhe_mode_ehy', s % mode_ehy)
+      call ipgeti ('b2tfhe_mode_ehx', s % mode_ehx)
+      call ipgeti ('b2tlmv_style', s % b2tlmv_style)
+      call ipgeti ('b2tqca_model', s % b2tqca_model)
+      call ipgeti ('b2tqce_model', s % b2tqce_model)
       call ipgeti ('b2tqce_style_guard_cells',
-     &                                    s%b2tqce_style_guard_cells)
-      call ipgeti ('b2tral_mode',s% b2tral_mode)
+     &                                  s % b2tqce_style_guard_cells)
+      call ipgeti ('b2tral_mode', s % b2tral_mode)
       call ipgeti ('b2tlv0_style', s % b2tlv0_style)
       call ipgeti ('b2tlh0_style', s % b2tlh0_style)
       call ipgeti ('b2tlc0_style', s % b2tlc0_style)
@@ -1524,7 +1550,19 @@ c phm switches
       call ipgetr ('b2treq_phm0', s % b2treq_phm0)
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
-      call ipgetr ('b2stbc_phm2', s % b2stbc_phm2)
+      call ipgeti ('b2sihs_shi', s % b2sihs_shi)
+      if (s % b2sihs_shi .eq. 0) then
+        s % b2sihs_shidu = 0
+        s % b2sihs_shidd = 0
+        s % b2sihs_shedu = 0
+        s % b2sihs_shedd = 0
+        s % b2sihs_shivis = 0
+      endif
+      call ipgeti ('b2sihs_shidu', s % b2sihs_shidu)
+      call ipgeti ('b2sihs_shidd', s % b2sihs_shidd)
+      call ipgeti ('b2sihs_shedu', s % b2sihs_shedu)
+      call ipgeti ('b2sihs_shedd', s % b2sihs_shedd)
+      call ipgeti ('b2sihs_shivis', s % b2sihs_shivis)
 
 c pcm switches
       call ipgetr ('b2npco_pcm0', s% b2npco_pcm0)
@@ -1567,10 +1605,12 @@ c namelist switches
 c diagnostic switches
       call ipgeti ('b2stbc_diagno', s % b2stbc_diagno)
       call ipgeti ('b2npmo_diagno', s % b2npmo_diagno)
-      call ipgeti ('b2npmo_ion_vlct_restrict', s % ion_vlct_restrict)
-      call ipgetr ('b2npmo_ion_vlct_restrict_M', s%ion_vlct_restrict_M)
       call ipgeti ('b2npmo_vlct_diagno', s % vlct_diagno)
       call ipgeti ('b2tqna_diagno', s % b2tqna_diagno)
+
+c hard limit velocities
+      call ipgeti ('b2npmo_ion_vlct_restrict', s % ion_vlct_restrict)
+      call ipgetr ('b2npmo_ion_vlct_restrict_M', s%ion_vlct_restrict_M)
 
 c MMS
       call ipgeti ('b2mndr_set_na_numerical', s % set_na_numerical)
@@ -1639,11 +1679,10 @@ c k-enstrophy model
       call ipgeti ('b2sikt_iout', s % b2sikt_iout)
       call ipgeti ('b2sikt_style', s % b2sikt_style)
       call ipgeti ('b2sikt_model', s % b2sikt_model)
-      call ipgeti ('b2sikt_keps_local', s % b2sikt_local)
       call ipgeti ('b2sikt_fac_sheath_local', s % b2sikt_sheath_local)
       call ipgeti ('b2sikt_min_source', s % b2sikt_min_source)
       call ipgeti ('b2sikt_kt_source_stab', s % b2sikt_kt_source_stab)
-      call ipgetr ('b2sikt_aniso', s % b2sikt_fac_aniso)
+      call ipgetr ('b2sikt_fac_aniso', s % b2sikt_fac_aniso)
       call ipgetr ('b2sikt_fac_sheath', s % b2sikt_fac_sheath)
       call ipgetr ('b2sikt_fac_sheath_core', s % b2sikt_fac_sheath_core)
       call ipgetr ('b2sikt_fac_diss', s % b2sikt_fac_diss)
@@ -1658,6 +1697,7 @@ c k-enstrophy model
       call ipgetr ('b2tfhi_fsigkt', s % b2tfhi_fsigkt)
       call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
       call ipgetr ('b2tfhe_vis_kt', s % b2tfhe_vis_kt)
+      call ipgetr ('b2sikt_fac_diss_lpar', s % b2sikt_lpar_ref)
 
 c Bohm-like transport model
       call ipgeti ('b2tqna_transport_bohm', s%transport_bohm)
@@ -1696,7 +1736,7 @@ c b2tqna
       call ipgeti ('b2tqna_limit_coeff', s%b2tqna_limit_coeff)
       call ipgetr ('b2tqna_pfr_rescale', s%b2tqna_pfr_rescale)
       call ipgetr ('b2tqna_divsol_rescale', s%b2tqna_divsol_rescale)
-      call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)                !srv 15.12.05
+      call ipgetr ('b2tqna_cfvma', s%b2tqna_cfvma)
 
 c fch anomalous
       call ipgetr ('b2tfhe_anomalous', s%fch_anomalous)
@@ -1782,8 +1822,6 @@ c b2tfnb
      &  s%b2tfnb_flux_limit_min_ti)
       s%b2tfnb_flux_limit_min_ti=s%b2tfnb_flux_limit_min_ti*ev
       call ipgeti ('b2tfnb_no_hybr', s%b2tfnb_no_hybr)
-      call ipgetr ('b2tfnb_facdna_start', s%b2tfnb_facdna_start)
-      call ipgetr ('b2tfnb_facvla_start', s%b2tfnb_facvla_start)
 
 c b2srsm
       call ipgeti ('b2srsm_enable', s%b2srsm_enable)
@@ -1828,12 +1866,12 @@ c b2stbc
       call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)           !srv 11.04.13
       call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)
       call ipgetr ('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)           !srv 11.04.13
-      call ipgetr ('b2stbc_corr_flux_in_core', s%b2stbc_corr_flux)   !srv 25.07.05
       call ipgetr ('b2stbc_type13_norm', s%bc_type13_norm)
       call ipgetr ('b2stbc_type13_fac', s%bc_type13_fac)
       call ipgetr ('b2stbc_nesepm', s%nesepm)
       call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
       call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
+      call ipgetr ('b2stbc_BC2_cor9', s%b2stbc_cor9)
       call ipgetr ('b2stbc_stab_coeff_sheath_te',
      &                                s%stab_coeff_sheath_te)
       call ipgetr ('b2stbc_stab_coeff_sheath_ti',
@@ -1845,8 +1883,13 @@ c b2trno
 c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
 
-c Med
-      call ipgeti ('b2mndr_med_style', s%med_style)
+c b2nppo
+      call ipgetr ('b2nppo_restr_po', s%b2nppo_restr_po)
+
+c Optimization
+      call ipgeti ('b2optim_save_states', s%b2optim_save_states)
+      call ipgeti ('b2optim_reset_iter', s%b2optim_reset_iter)
+      call ipgetr ('b2optim_reset_drift', s%b2optim_reset_drift)
 
       return
       end subroutine read_switches
@@ -2024,10 +2067,6 @@ c b2stbc
        call xertst (0.0_R8.le.s%stab_coeff_sheath_ti,
      &              'faulty parameter b2stbc_stab_coeff_sheath_ti')
 
-c b2sihs
-       call xertst (0.le.s%b2sihs_style,
-     &                        'faulty parameter b2sihs style')
-
 c b2sral
        call xertst (1.ne.s%b2sral_style,
      .  'b2sral_style = 1 not yet developed for WG')
@@ -2036,14 +2075,20 @@ c b2sral
      .  'b2sral_style should be 0, 1 or 2')
 
 c b2npco
-       call xertst (0.lt.s%b2npco_rxg, 'faulty parameter b2npco rxg')
-       call xertst (0.le.s%b2npco_pcm0, 'faulty parameter b2npco pcm0')
-       call xertst (0.le.s%b2npco_pcm1, 'faulty parameter b2npco pcm1')
+       call xertst (0.0_R8.lt.s%b2npco_rxg,
+     .  'faulty parameter b2npco rxg')
+       call xertst (0.0_R8.le.s%b2npco_pcm0,
+     .  'faulty parameter b2npco pcm0')
+       call xertst (0.0_R8.le.s%b2npco_pcm1,
+     .  'faulty parameter b2npco pcm1')
 
 c b2npht
-       call xertst (0.le.s%b2npht_pcm0, 'faulty parameter b2npht pcm0')
-       call xertst (0.le.s%b2npht_pcm1, 'faulty parameter b2npht pcm1')
-       call xertst (0.lt.s%b2npht_rxg, 'faulty parameter b2npht rxg')
+       call xertst (0.0_R8.le.s%b2npht_pcm0,
+     .  'faulty parameter b2npht pcm0')
+       call xertst (0.0_R8.le.s%b2npht_pcm1,
+     .  'faulty parameter b2npht pcm1')
+       call xertst (0.0_R8.lt.s%b2npht_rxg,
+     .  'faulty parameter b2npht rxg')
 
 c b2nxfc
        call xertst (0.le.s%b2nxfc_style.and.s%b2nxfc_style.lt.2,
@@ -2265,12 +2310,10 @@ c k-enstrophy model
      &  'b2tfhi_fsigkt must be .ge. 0.0')
       call xertst (0.0_R8.le.s%b2tfhi_fkt_hie,
      &  'b2tfhi_fkt_hie must be .ge. 0.0')
-      call xertst (0.0_R8.le.s%keps_inc,
-     &  'keps_inc must be .ge. 0.0')
+      call xertst (1.0_R8.le.s%keps_inc,
+     &  'keps_inc must be .ge. 1.0')
       call xertst (0.0_R8.le.s%keps_fac,
      &  'keps_fac must be .ge. 0.0')
-      call xertst (0.le.s%b2sikt_local .and. s%b2sikt_local.le.1,
-     &  'b2sikt_local must be either 0 or 1')
       call xertst (0.le.s%b2sikt_sheath_local .and.
      &  s%b2sikt_sheath_local.le.1,
      &  'b2sikt_sheath_local must be either 0 or 1')
@@ -2279,14 +2322,20 @@ c k-enstrophy model
      &  'b2sikt_min_source must be either 0, 1 or 2')
 
 c ECH model
-      call xertst (0.le.s%use_ech.le.1,
+      call xertst ((0.le.s%use_ech).and.(s%use_ech.le.1),
      1              'b2sral_use_ECH value not coded')
-      call xertst (0.le.s%ech_coupling.le.8,
-     1              'b2sral_ECH_coupling value not coded')
+      call xertst (((0.le.s%ech_coupling).and.(s%ech_coupling.le.2))
+     1               .or.(s%use_ech.eq.0),
+     2              'b2sral_ECH_coupling value not coded')
       call xertst (0.0_R8.lt.s%ech_RFfreq.or.s%use_ech.eq.0,
      1              'b2sral_ECH_RFfrequency must be .gt. 0.0')
-      call xertst (0.0.lt.s%ech_gaussian_width.or.s%use_ech.eq.0,
-     1              'b2sral_ECH_gauss_width must be .gt. 0.0')
+      call xertst ((0.le.s%ech_gaussian_type).and.
+     1             (s%ech_gaussian_type.le.3),
+     2              'b2sral_ECH_gauss_type value not coded')
+      call xertst (0.0.lt.s%ech_gaussian_width_x.or.s%ech_coupling.ne.1,
+     1              'b2sral_ECH_gauss_width_x must be .gt. 0.0')
+      call xertst (0.0.lt.s%ech_gaussian_width_y.or.s%ech_coupling.ne.1,
+     1              'b2sral_ECH_gauss_width_y must be .gt. 0.0')
       call xertst (1.lt.s%ech_harmonics.or.s%use_ech.eq.0,
      1              'b2sral_ECH_harmonics must be .ge. 1')
       call xertst (0.0_R8.lt.s%ech_power.or.s%use_ech.eq.0,
@@ -2295,6 +2344,9 @@ c ECH model
      1              'b2sral_ECH_absorption_frac must be .gt. 0.0')
       call xertst (0.0_R8.lt.s%ech_Rdep.or.s%use_ech.eq.0,
      1              'b2sral_ECH_Rdep must be .gt. 0.0')
+      call xertst ((0.0_R8.lt.s%ech_Zdep).or.
+     1              (s%ech_gaussian_type.eq.1),
+     2              'b2sral_ECH_Zdep must be .gt. 0.0')
 
 c ICH model
       call xertst (0.le.s%use_ich.le.1,
@@ -2424,6 +2476,12 @@ c b2srst
 c b2tfnb
       call xertst (0.0_R8.le.s%b2tfnb_flux_limit_min_ti,
      &  'faulty internal parameter flux_limit_min_ti')
+     
+c b2tqce
+      if (.not.(s%b2tqce_style_guard_cells.eq.0.or.
+     &                           s%b2tqce_style_guard_cells.eq.1)) then
+        call xerrab('b2tqce_style_guard_cells is expected to be 0 or 1')
+      endif
 
 c b2mndt
       call xertst (1.le.s%nstg(0).and.1.le.s%nstg(1).and.1.le.s%nstg(2),
@@ -2451,9 +2509,14 @@ c b2ag
       call xertst (s%geom_match_dist.gt.0.0_R8,
      &  'faulty argument geom_match_dist')
 
-c med
-      call xertst (s%med_style.ge.0 .and. s%med_style.le.1,
-     &  'faulty parameter b2mndr_med_style')
+c Optimization
+      call xertst (s%b2optim_save_states.ge.0,
+     &  'faulty parameter b2optim_save_states')
+      call xertst (s%b2optim_reset_iter.gt.0,
+     &  'faulty parameter b2optim_reset_iter')
+      call xertst (s%b2optim_reset_drift.gt.0.0 .and.
+     &   s%b2optim_reset_drift.le.1.0_R8,
+     &  'faulty parameter b2optim_reset_drift')
 
       return
       end subroutine check_values_switches
@@ -2567,12 +2630,6 @@ c k-enstrophy model
 
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
-      if (s%b2tfnb_facdna_start.le.0.0_R8) then
-        call xerrab('b2tfnb_facdna_start must be .gt. 0.0')
-      endif
-      if (s%b2tfnb_facvla_start.le.0.0_R8) then
-        call xerrab('b2tfnb_facvla_start must be .gt. 0.0')
-      endif
 
       if(s%b2mndt_style.eq.2 .and. s%b2mndt_rxf.lt.1.0_R8) then
         call xerrab('time-dependent mode requires rxf = 1.0')

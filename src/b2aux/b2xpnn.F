@@ -14,7 +14,7 @@
       integer is
 *     ------------------------------------------------------------------
 *$$$  call subini ('b2xpnn')
-      nn = 0.0_R8
+      nn = EPSILON(1.0_R8) !ap this to avoid code crash in pure He cases --> to be removed when Zhdanov closure available
       do is = 0, ns-1
        if(is_neutral(is).and.nint(zn(is)).eq.1) nn = nn + na(:,is)
       enddo
