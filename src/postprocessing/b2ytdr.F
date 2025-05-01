@@ -28,7 +28,6 @@ c 2002-09-11: logic revised
       use b2mod_sputter
       use b2mod_indirect
       use b2mod_elements
-      use b2mod_feedback
       use b2mod_geo_corner
       use b2mod_input_profile
       use b2mod_user_namelist
@@ -86,6 +85,7 @@ c 2002-09-11: logic revised
       use b2mod_subsys
       use b2us_map
       use b2us_geo
+      use b2us_feedback
       use b2mod_switches
       use b2mod_dimensions
       implicit none
@@ -176,7 +176,7 @@ c 2002-09-11: logic revised
       integer sources_inputfile, b2stbc_feedback
       integer transport_namelist, transport_inputfile
       integer atomic_physics_rescale_flag
-      integer ismain, ismain0, isfeedback, isfb
+      integer ismain, ismain0, isfb, is_previous, nfb1
       integer nsmin, nsmax, ns1min, ns1max
       integer sput_phys_col, sput_phys_model, refl_model
       integer iy_nocoreExB, bc_type16_ref, bc_type20_ref
@@ -184,7 +184,7 @@ c 2002-09-11: logic revised
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
       integer elm_ix1, elm_ix2
-      integer mw_ix1, mw_ix2, mw_jxa, mw_jsep, iyped
+      integer mw_ix1, mw_ix2, mw_jxa, mw_jsep
       integer mw_jxa1, mw_jsep1, iyped1
       integer jsep, jxi, jxa, nxtl, nxtr
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch, pulse, shot
@@ -272,11 +272,11 @@ c 2002-09-11: logic revised
      * xr1(:), xf1(:), xd1(:), xr2(:), xf2(:), xd2(:),
      1 xpr(:), xpf1(:), xpf2(:), x1d(:,:,:,:),
      2 l_conn(:), nbini(:),
-     3 saved_na_feedback_actuator1(:), na_feedback_target1(:),
-     4 na_feedback_alpha1(:), na_feedback_beta1(:),
-     5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
-     6 na_feedback_const1(:), na_feedback_overshoot1(:),
-     7 na_feedback_time1(:), gpdata1(:,:,:),
+     3 saved_fb_actuator1(:),
+     4 fb_target1(:), fb_alpha1(:), fb_beta1(:),
+     5 fb_puff_min1(:), fb_puff_max1(:),
+     6 fb_const1(:), fb_overshoot1(:),
+     7 fb_time1(:), gpdata1(:,:,:),
      8 sna_corr1(:), taumax1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
@@ -300,11 +300,10 @@ c 2002-09-11: logic revised
       integer, allocatable :: n1data(:,:,:), ad1spec(:,:,:)
       integer, allocatable :: lstrascl1(:,:), lsns1(:), ksns1(:)
       integer, allocatable :: ngpdata1(:)
-      integer, allocatable :: na_feedback_actuator1(:),
-     1  na_feedback_choice1(:), na_feedback_option1(:),
-     2  na_feedback_ix11(:), na_feedback_ix21(:),
-     3  na_feedback_iy11(:), na_feedback_iy21(:),
-     4  na_feedback_ib1(:)
+      integer, allocatable :: fb_actuator1(:),
+     1  fb_type1(:), fb_rescale_option1(:),
+     2  fb_reg1(:), fb_regp1(:,:), fb_reg_par1(:,:),
+     4  fb_ib1(:), fb_istra1(:), fb_species1(:)
       integer, allocatable :: l_h_mol1(:,:)
       integer, allocatable :: sps_sgrp1(:)
       integer bcpos1(nbcd), bcstart1(nbcd), bcend1(nbcd)
@@ -503,7 +502,6 @@ c 2002-09-11: logic revised
       character*80 ZEILE, ULINE, ZEILEN(100)
       character*98, allocatable :: REAC_LINE(:)
       character*98 REACZEILE
-      character*80 MESSAGE
       character*24 TXTSPC, TXTUNT, TEXTLA
       character*72 TXTMOL, TXTION, TXTPLS, TXTPHOT, TXTCRM
       character*72 TITLE5, CHRTAL
@@ -537,6 +535,7 @@ c 2002-09-11: logic revised
       real(kind=R8) :: time_dep_puff_param1(10,NSTRAID)
       logical, allocatable :: is_neutral1(:)
       logical, allocatable :: do_sna_corr_core1(:)
+      logical, allocatable :: fb_type_inverse1(:)
 #ifdef B25_EIRENE
       logical ldum(0:60)
       logical LMULPL, LRDMLTI, LRDMLV
@@ -601,7 +600,7 @@ c 2002-09-11: logic revised
       data transport_namelist/0/, transport_inputfile/0/
       data atomic_physics_rescale_flag/0/
       data itrack1/-1/, itrack2/-1/, itrack3/-1/
-      data ismain/1/, ismain0/0/, isfeedback/0/, b2stbc_feedback/0/
+      data ismain/1/, ismain0/0/, b2stbc_feedback/0/
       data sput_phys_col/3/, sput_phys_model/1/, refl_model/1/
       data iy_nocoreExB/0/
       data bc_type16_ref/1/, bc_type20_ref/1/
@@ -11516,49 +11515,35 @@ cxpb as they no longer necessarily point to the same species
       if (found) write(6,*) trim(new_filename),' already present!'
       if((lfeedback.or.b2stbc_feedback.ne.0.or.todo)
      &   .and. .not.found .and. .not.same_atoms) then
-        call read_b2mod_feedback(99,'    ',feedback_namelist_used)
-        if (maxval(saved_na_feedback_actuator).gt.0.0_R8) then
+        call read_b2us_feedback(99,'    ',feedback_namelist_used)
+        if (maxval(saved_fb_actuator).gt.0.0_R8) then
           todo = .false.
           is = 1
           do while (.not.todo .and. is.le.nspecies)
             todo = todo .or.
-     &        (saved_na_feedback_actuator(is-1).gt.0.0_R8 .and.
+     &        (saved_fb_actuator(is-1).gt.0.0_R8 .and.
      &         ispecies1(is).ne.is)
             is = is+1
           end do
           if (todo) then
-            allocate(saved_na_feedback_actuator1(0:nspecies1-1))
-            saved_na_feedback_actuator1 = 0.0_R8
+            allocate(saved_fb_actuator1(0:nspecies1-1))
+            saved_fb_actuator1 = 0.0_R8
             do is = 1, nspecies
               if (ispecies1(is).ne.-1)
-     >         saved_na_feedback_actuator1(ispecies1(is)-1) =
-     .          saved_na_feedback_actuator(is-1)
+     >         saved_fb_actuator1(ispecies1(is)-1) =
+     .          saved_fb_actuator(is-1)
             end do
             write(*,*) 'Writing b2.feedback_save.parameters.2'
             write(nout(5),'(a)') trim(new_filename)
             open(99,file=new_filename)
             write(99,'(a9)') '&FEEDBACK'
-            if (saved_cbshe_core.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSHE_CORE=',saved_cbshe_core,','
-            if (saved_cbshi_core.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSHI_CORE=',saved_cbshi_core,','
-            if (saved_cbsna_core.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSNA_CORE=',saved_cbsna_core,','
-            if (saved_cbsch_core.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSCH_CORE=',saved_cbsch_core,','
-            if (saved_cbsna_pfr1.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSNA_PFR1=',saved_cbsna_pfr1,','
-            if (saved_cbsna_pfr2.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSNA_PFR2=',saved_cbsna_pfr2,','
-            if (saved_cbsna_sol.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSNA_SOL= ',saved_cbsna_sol,','
             write(hlp_frm,'(a,i2,a)')
      >       '(a,1p,',nspecies1,'(1x,1e15.8,'',''))'
-            write(99,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
-     >       (saved_na_feedback_actuator1(is),is=0,nspecies1-1)
+            write(99,hlp_frm) 'SAVED_FB_ACTUATOR=',
+     >       (saved_fb_actuator1(is),is=0,nspecies1-1)
             write(99,'(a1)') '/'
             close(99)
-            deallocate(saved_na_feedback_actuator1)
+            deallocate(saved_fb_actuator1)
           end if
         end if
       else if (todo) then
@@ -11574,27 +11559,30 @@ cxpb as they no longer necessarily point to the same species
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or..not.same_grid)) then
-        allocate(na_feedback_target1(0:nspecies1-1))
-        allocate(na_feedback_choice1(0:nspecies1-1))
-        allocate(na_feedback_option1(0:nspecies1-1))
-        allocate(na_feedback_actuator1(0:nspecies1-1))
-        allocate(na_feedback_ix11(0:nspecies1-1))
-        allocate(na_feedback_ix21(0:nspecies1-1))
-        allocate(na_feedback_iy11(0:nspecies1-1))
-        allocate(na_feedback_iy21(0:nspecies1-1))
-        allocate(na_feedback_ib1(0:nspecies1-1))
-        allocate(na_feedback_alpha1(0:nspecies1-1))
-        allocate(na_feedback_beta1(0:nspecies1-1))
-        allocate(na_feedback_const1(0:nspecies1-1))
-        allocate(na_feedback_time1(0:nspecies1-1))
-        allocate(na_feedback_puff_min1(0:nspecies1-1))
-        allocate(na_feedback_puff_max1(0:nspecies1-1))
-        allocate(na_feedback_overshoot1(0:nspecies1-1))
-        call read_b2mod_feedback_control(99)
+        allocate(fb_target1(0:nspecies1-1))
+        allocate(fb_type1(0:nspecies1-1))
+        allocate(fb_type_inverse1(0:nspecies1-1))
+        allocate(fb_rescale_option1(0:nspecies1-1))
+        allocate(fb_actuator1(0:nspecies1-1))
+        allocate(fb_reg1(nMxFbReg))
+        allocate(fb_regp1(0:nspecies1-1,2))
+        allocate(fb_reg_par1(0:nspecies1-1,2))
+        allocate(fb_istra1(0:nspecies1-1))
+        allocate(fb_ib1(0:nspecies1-1))
+        allocate(fb_species1(0:nspecies1-1))
+        allocate(fb_alpha1(0:nspecies1-1))
+        allocate(fb_beta1(0:nspecies1-1))
+        allocate(fb_const1(0:nspecies1-1))
+        allocate(fb_time1(0:nspecies1-1))
+        allocate(fb_puff_min1(0:nspecies1-1))
+        allocate(fb_puff_max1(0:nspecies1-1))
+        allocate(fb_overshoot1(0:nspecies1-1))
+        call read_b2us_feedback_control(99)
         write(*,*) 'Writing b2.feedback_control.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
         write(99,'(a17)') '&FEEDBACK_CONTROL'
+#ifdef WG_TODO
         if (vacuum_communication.ne.0) write(99,'(a,i2,a)')
      .   'VACUUM_COMMUNICATION=',vacuum_communication,','
         write (hlp_frm,'(a,i2,a)') '(a,',nvac,'(i2,'',''))'
@@ -11656,123 +11644,153 @@ cxpb as they no longer necessarily point to the same species
      .       (vacuum_communication_beta(is,i2),is=0,ns1-1)
           end if
         end do
+#endif
+        nfb1 = 0
+        fb_reg1 = 0
+        fb_regp1 = 0
         do is = 1, nspecies
           if (ispecies1(is).ne.-1) then
-            na_feedback_target1(ispecies1(is)-1) =
-     .       na_feedback_target(is-1)
-            na_feedback_choice1(ispecies1(is)-1) =
-     .       na_feedback_choice(is-1)
-            na_feedback_option1(ispecies1(is)-1) =
-     .       na_feedback_option(is-1)
-            na_feedback_actuator1(ispecies1(is)-1) =
-     .       na_feedback_actuator(is-1)
-            na_feedback_ix11(ispecies1(is)-1) =
-     .       conformal_convert(non_commensurate,1,
-     .       na_feedback_ix1(is-1),na_feedback_iy1(is-1),
-     .       nx,ny,nx1,ny1,1)
-            na_feedback_iy11(ispecies1(is)-1) =
-     .       conformal_convert(non_commensurate,2,
-     .       na_feedback_ix1(is-1),na_feedback_iy1(is-1),
-     .       nx,ny,nx1,ny1,0)
-            na_feedback_ix21(ispecies1(is)-1) =
-     .       conformal_convert(non_commensurate,1,
-     .       na_feedback_ix2(is-1),na_feedback_iy2(is-1),
-     .       nx,ny,nx1,ny1,3)
-            na_feedback_iy21(ispecies1(is)-1) =
-     .       conformal_convert(non_commensurate,2,
-     .       na_feedback_ix2(is-1),na_feedback_iy2(is-1),
-     .       nx,ny,nx1,ny1,2)
-            na_feedback_ib1(ispecies1(is)-1) =
-     .       na_feedback_ib(is-1)
-            na_feedback_alpha1(ispecies1(is)-1) =
-     .       na_feedback_alpha(is-1)
-            na_feedback_beta1(ispecies1(is)-1) =
-     .       na_feedback_beta(is-1)
-            na_feedback_const1(ispecies1(is)-1) =
-     .       na_feedback_const(is-1)
-            na_feedback_puff_min1(ispecies1(is)-1) =
-     .       na_feedback_puff_min(is-1)
-            na_feedback_puff_max1(ispecies1(is)-1) =
-     .       na_feedback_puff_max(is-1)
-            na_feedback_overshoot1(ispecies1(is)-1) =
-     .       na_feedback_overshoot(is-1)
-            na_feedback_time1(ispecies1(is)-1) =
-     .       na_feedback_time(is-1)
+            nfb1 = nfb1 + 1
+            fb_target1(ispecies1(is)-1) = fb_target(is-1)
+            fb_type1(ispecies1(is)-1) = fb_type(is-1)
+            fb_type_inverse1(ispecies1(is)-1) = fb_type_inverse(is-1)
+            fb_rescale_option1(ispecies1(is)-1) =
+     .       fb_rescale_option(is-1)
+            fb_actuator1(ispecies1(is)-1) = fb_actuator(is-1)
+            fb_reg_par1(ispecies1(is)-1,1:2) = fb_reg_par(is-1,1:2)
+            if (maxval(fb_reg).gt.0) then
+              if (fb_regp(is-1,2).gt.0) then
+                fb_regp1(ispecies1(is)-1,2) = fb_regp(is-1,2)
+                if (nfb1.eq.1) then
+                  fb_regp1(ispecies1(is)-1,1) = 1
+                else
+                  fb_regp1(ispecies1(is)-1,1) =
+     .             fb_regp1(is_previous,1)+fb_regp1(is_previous,2)
+                end if
+                fb_reg1(fb_regp1(ispecies1(is)-1,1):
+     .                  fb_regp1(ispecies1(is)-1,1)+
+     .                  fb_regp1(ispecies1(is)-1,2)-1) =
+     .           fb_reg(fb_regp(is-1,1):
+     .                  fb_regp(is-1,1)+fb_regp(is-1,2)-1)
+              end if
+              is_previous = ispecies1(is)-1
+            end if
+            fb_istra1(ispecies1(is)-1) = istra1(fb_istra(is-1))
+            fb_ib1(ispecies1(is)-1) = fb_ib(is-1)
+            if (is1(fb_species(is-1)).ne.-1) then
+              fb_species1(ispecies1(is)-1) = is1(fb_species(is-1))
+            else
+              if (fb_actuator(is-1).eq.1) then
+                fb_species1(ispecies1(is)-1) = ismain0
+              else
+                fb_species1(ispecies1(is)-1) = ismain
+              endif
+            end if
+            fb_alpha1(ispecies1(is)-1) = fb_alpha(is-1)
+            fb_beta1(ispecies1(is)-1) = fb_beta(is-1)
+            fb_const1(ispecies1(is)-1) = fb_const(is-1)
+            fb_puff_min1(ispecies1(is)-1) = fb_puff_min(is-1)
+            fb_puff_max1(ispecies1(is)-1) = fb_puff_max(is-1)
+            fb_overshoot1(ispecies1(is)-1) = fb_overshoot(is-1)
+            fb_time1(ispecies1(is)-1) = fb_time(is-1)
           end if
         end do
-        write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i2,'',''))'
-        if (maxval(na_feedback_choice1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_CHOICE=  ',na_feedback_choice1(0:nspecies1-1)
-        if (maxval(na_feedback_option1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_OPTION=  ',na_feedback_option1(0:nspecies1-1)
-        if (maxval(na_feedback_actuator1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_ACTUATOR=',na_feedback_actuator1(0:nspecies1-1)
-        write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i4,'',''))'
-        if (maxval(na_feedback_ib1(0:nspecies1-1)).gt.0)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_IB= ',na_feedback_ib1(0:nspecies1-1)
-        if (maxval(na_feedback_ix11(0:nspecies1-1)).gt.-2)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_IX1=',na_feedback_ix11(0:nspecies1-1)
-        if (maxval(na_feedback_ix21(0:nspecies1-1)).gt.-2)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_IX2=',na_feedback_ix21(0:nspecies1-1)
-        if (maxval(na_feedback_iy11(0:nspecies1-1)).gt.-2)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_IY1=',na_feedback_iy11(0:nspecies1-1)
-        if (maxval(na_feedback_iy21(0:nspecies1-1)).gt.-2)
-     >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_IY2=',na_feedback_iy21(0:nspecies1-1)
+        write(99,'(a,i2,a)') 'NFB=',nfb1,','
         write(hlp_frm,'(a,i2,a)')
-     .   '(1x,a,1p,',nspecies1,'(1x,g10.3,'',''))'
-        if (maxval(na_feedback_target1(0:nspecies1-1)).gt.0.0_R8)
+     .   '(1x,a,t20,',nspecies1,'(1x,i2,'',''))'
+        if (maxval(fb_type1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_TARGET=  ',na_feedback_target1(0:nspecies1-1)
-        if (maxval(na_feedback_alpha1(0:nspecies1-1)).ne.0.001_R8 .or.
-     &      minval(na_feedback_alpha1(0:nspecies1-1)).ne.0.001_R8)
+     .     'FB_TYPE=',fb_type1(0:nspecies1-1)
+        if (maxval(fb_rescale_option1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_ALPHA=   ',na_feedback_alpha1(0:nspecies1-1)
-        if (maxval(na_feedback_beta1(0:nspecies1-1)).ne.1.0_R8 .or.
-     &      minval(na_feedback_beta1(0:nspecies1-1)).ne.1.0_R8)
+     .     'FB_RESCALE_OPTION=',fb_rescale_option1(0:nspecies1-1)
+        if (maxval(fb_actuator1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_BETA=    ',na_feedback_beta1(0:nspecies1-1)
-        if (maxval(na_feedback_const1(0:nspecies1-1)).ne.0.0_R8 .or.
-     &      minval(na_feedback_const1(0:nspecies1-1)).ne.0.0_R8)
+     .     'FB_ACTUATOR=',fb_actuator1(0:nspecies1-1)
+        write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i4,'',''))'
+        if (maxval(fb_ib1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_CONST=   ',na_feedback_const1(0:nspecies1-1)
-        if (maxval(na_feedback_puff_min1(0:nspecies1-1)).gt.0.0_R8)
+     .     'FB_IB=',fb_ib1(0:nspecies1-1)
+        if (maxval(fb_species1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_PUFF_MIN=',na_feedback_puff_min1(0:nspecies1-1)
-        if (maxval(na_feedback_puff_max1(0:nspecies1-1)).gt.0.0_R8)
+     .     'FB_SPECIES=',fb_species1(0:nspecies1-1)
+        if (maxval(fb_reg_par1(0:nspecies1-1,1:2)).gt.0) then
+          write(99,hlp_frm)
+     .     'FB_REG_PAR(1,1)=',fb_reg_par1(0:nspecies1-1,1)
+          write(99,hlp_frm)
+     .     'FB_REG_PAR(1,1)=',fb_reg_par1(0:nspecies1-1,2)
+        end if
+        if (maxval(fb_regp1(0:nspecies1-1,1:2)).gt.0) then
+          write(99,hlp_frm)
+     .     'FB_REGP(1,1)=',fb_regp1(0:nspecies1-1,1)
+          write(99,hlp_frm)
+     .     'FB_REGP(1,2)=',fb_regp1(0:nspecies1-1,2)
+        end if
+        if (maxval(fb_istra1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_PUFF_MAX=',na_feedback_puff_max1(0:nspecies1-1)
-        if (maxval(na_feedback_overshoot1(0:nspecies1-1)).gt.0.0_R8)
-     >   write(99,hlp_frm) 'NA_FEEDBACK_OVERSHOOT=',
-     .     na_feedback_overshoot1(0:nspecies1-1)
-        if (maxval(na_feedback_time1(0:nspecies1-1)).gt.0.0_R8)
+     .     'FB_ISTRA=',fb_istra1(0:nspecies1-1)
+        write(hlp_frm,'(a,i2,a)')
+     .   '(1x,a,t20,1p,',nspecies1,'(1x,g10.3,'',''))'
+        if (maxval(fb_target1(0:nspecies1-1)).gt.0.0_R8)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_TIME=',na_feedback_time1(0:nspecies1-1)
+     .     'FB_TARGET=',fb_target1(0:nspecies1-1)
+        if (maxval(fb_alpha1(0:nspecies1-1)).ne.0.001_R8 .or.
+     &      minval(fb_alpha1(0:nspecies1-1)).ne.0.001_R8)
+     >   write(99,hlp_frm)
+     .     'FB_ALPHA=',fb_alpha1(0:nspecies1-1)
+        if (maxval(fb_beta1(0:nspecies1-1)).ne.1.0_R8 .or.
+     &      minval(fb_beta1(0:nspecies1-1)).ne.1.0_R8)
+     >   write(99,hlp_frm)
+     .     'FB_BETA=',fb_beta1(0:nspecies1-1)
+        if (maxval(fb_const1(0:nspecies1-1)).ne.0.0_R8 .or.
+     &      minval(fb_const1(0:nspecies1-1)).ne.0.0_R8)
+     >   write(99,hlp_frm)
+     .     'FB_CONST=',fb_const1(0:nspecies1-1)
+        if (maxval(fb_puff_min1(0:nspecies1-1)).gt.0.0_R8)
+     >   write(99,hlp_frm)
+     .     'FB_PUFF_MIN=',fb_puff_min1(0:nspecies1-1)
+        if (maxval(fb_puff_max1(0:nspecies1-1)).gt.0.0_R8)
+     >   write(99,hlp_frm)
+     .     'FB_PUFF_MAX=',fb_puff_max1(0:nspecies1-1)
+        if (maxval(fb_overshoot1(0:nspecies1-1)).gt.0.0_R8)
+     >   write(99,hlp_frm)
+     .     'FB_OVERSHOOT=', fb_overshoot1(0:nspecies1-1)
+        if (maxval(fb_time1(0:nspecies1-1)).gt.0.0_R8)
+     >   write(99,hlp_frm)
+     .     'FB_TIME=',fb_time1(0:nspecies1-1)
+        write(hlp_frm,'(a,i2,a)')
+     .   '(1x,a,',nspecies1,'l1,'',''))'
+        if (any(fb_type_inverse1(0:nspecies1-1)))
+     >   write(99,hlp_frm)
+     .     'FB_TYPE_INVERSE=',fb_type_inverse1(0:nspecies1-1)
+        if (maxval(fb_reg1).gt.0) then
+          write(hlp_frm,'(a,i4,a)')
+     .     '(1x,a,',fb_regp(is_previous,1)+fb_regp(is_previous,2)-1,
+     .     '(1x,i5,'',''))'
+          write(99,hlp_frm)
+     .     'FB_REG=',fb_reg1(1:fb_regp(is_previous,1)+
+     .                         fb_regp(is_previous,2)-1)
+        end if
         write(99,'(a1)') '/'
         close(99)
-        deallocate(na_feedback_target1)
-        deallocate(na_feedback_choice1)
-        deallocate(na_feedback_option1)
-        deallocate(na_feedback_actuator1)
-        deallocate(na_feedback_ix11)
-        deallocate(na_feedback_ix21)
-        deallocate(na_feedback_iy11)
-        deallocate(na_feedback_iy21)
-        deallocate(na_feedback_ib1)
-        deallocate(na_feedback_alpha1)
-        deallocate(na_feedback_beta1)
-        deallocate(na_feedback_const1)
-        deallocate(na_feedback_puff_min1)
-        deallocate(na_feedback_puff_max1)
-        deallocate(na_feedback_overshoot1)
-        deallocate(na_feedback_time1)
+        deallocate(fb_target1)
+        deallocate(fb_type1)
+        deallocate(fb_type_inverse1)
+        deallocate(fb_rescale_option1)
+        deallocate(fb_actuator1)
+        deallocate(fb_reg1)
+        deallocate(fb_regp1)
+        deallocate(fb_reg_par1)
+        deallocate(fb_istra1)
+        deallocate(fb_ib1)
+        deallocate(fb_species1)
+        deallocate(fb_alpha1)
+        deallocate(fb_beta1)
+        deallocate(fb_const1)
+        deallocate(fb_puff_min1)
+        deallocate(fb_puff_max1)
+        deallocate(fb_overshoot1)
+        deallocate(fb_time1)
       else if (todo) then
         write(nout(5),'(a)') 'b2.feedback_control.parameters'
         write(*,*) 'No changes needed in b2.feedback_control.parameters'
