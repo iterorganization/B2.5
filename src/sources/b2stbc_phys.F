@@ -5,7 +5,6 @@
      &  wrong_flow, main_call, praverage)
       use b2mod_types
       use b2mod_math
-      use b2mod_feedback
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_constants
