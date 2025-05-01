@@ -770,20 +770,20 @@
 				<name>b2mndt_nstg.</name>
 				<description>
 					Time-dependent mode and iterative mode switches. The basic code timestep proceeds as follows:
-					..test input arguments
-					..compute auxiliary quantities
-					..prepare source computation
-					..do i0=1,nstg0
-						..compute log-log linearised rate coefficients
-						..do i1=1,nstg1
-							..compute source linearisation
-							..do i2=1,nstg2
-								..perform one inner iteration
-								..re-compute auxiliary quantities
-								..produce monitoring output
-							..enddo
-						..enddo
-					..enddo
+					 ..test input arguments
+					 ..compute auxiliary quantities
+					 ..prepare source computation
+					 ..do i0=1,nstg0
+					  ..compute log-log linearised rate coefficients
+					  ..do i1=1,nstg1
+					   ..compute source linearisation
+					   ..do i2=1,nstg2
+					    ..perform one inner iteration
+					    ..re-compute auxiliary quantities
+					    ..produce monitoring output
+					   ..enddo
+					  ..enddo
+					 ..enddo
 					This can be completed by the the 'b2mndt_nstg_ares??' switches.
 					See 'Numerics' section for details.
 				</description>
@@ -1692,7 +1692,7 @@
 					For neutrals species, we add a factor of &alpha;*na*vbar to the particle flux to the plate (used to compute chemical and RES sputtering), where vbar is the average neutral particle speed.
 					Sput_phys turns on physical sputtering when sput_phys.gt.0.0 and contains a (real) multiplier for the physical sputtering rate looked up in the TRIM tables. It is superseded by the phys_sput array in b2.neutrals.parameters if the latter is used.
 					sput_phys_col indicates which column to use in the TRIM table; the default (3) corresponds to 30 degrees incidence. The columns are for
-						0 15 30 45 55 65 75 80 85
+					  0 15 30 45 55 65 75 80 85
 					degrees. This angle is also used in the empirical formula. Plate_temp is the temperature (in Kelvin) of the COOLED end of the divertor plates. The surface temperature is computed self-consistently (using a 1-D description) according to the incident heat fluxes from the plasma. The plate is assumed to have a thickness of plate_thick, measured in metres. When plate_thick.eq.0 (default), the plate surface temperature is assumed to be the same as plate_temp. Sput_res turns on radiation enhanced sublimation (RES) when .gt.0.0 and is a multiplier to the RES rate.
 					The switch sputter_energy_on turns on the energy contribution from the sputtered particles (physical and chemical). If sputter_energy_on.eq.0, the particles are sputtered cold, with no energy contribution to the ion heat equation.
 					If sputter_energy_on.ne.0 (default), the chemically sputtered particles are re-introduced into the plasma with the thermal energy corresponding to the surface temperature of the material, while physically sputtered particles are re-introduced with the TRIM-calculated energy sputtering yield (if the TRIM model is used).
@@ -2447,7 +2447,7 @@
 				<type>integer</type>
 				<description>
 					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
-                                        If set to 1, enables gradual modification of the electron heat flux limiter towards low density regions. Above b2tlhe_ne_max  (default 1.0e18 m^{-3}), the standard value cflme is used. Below b2tlhe_ne_min (default 1.0e17 m^{-3}), the value b2tlhe_cflme_min is used (default 0.2). For densities in between b2tlhe_ne_min and b2tlhe_ne_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
+					If set to 1, enables gradual modification of the electron heat flux limiter towards low density regions. Above b2tlhe_ne_max (default 1.0e18 m^{-3}), the standard value cflme is used. Below b2tlhe_ne_min (default 1.0e17 m^{-3}), the value b2tlhe_cflme_min is used (default 0.2). For densities in between b2tlhe_ne_min and b2tlhe_ne_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
 				</description>
 			</switch>
 			<switch>
@@ -2456,7 +2456,7 @@
 				<type>integer</type>
 				<description>
 					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
-                                        If set to 1, enables gradual modification of the ion heat flux limiter towards low density regions. Above b2tlhi_ni_max  (default 1.0e18 m^{-3}), the standard value cflmi is used. Below b2tlhi_ni_min (default 1.0e17 m^{-3}), the value b2tlhi_cflmi_min is used (default 1.0e1). For densities in between b2tlhi_ni_min and b2tlhi_ni_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
+					If set to 1, enables gradual modification of the ion heat flux limiter towards low density regions. Above b2tlhi_ni_max (default 1.0e18 m^{-3}), the standard value cflmi is used. Below b2tlhi_ni_min (default 1.0e17 m^{-3}), the value b2tlhi_cflmi_min is used (default 1.0e1). For densities in between b2tlhi_ni_min and b2tlhi_ni_max, the heat flux limiter is computed based on linear interpolation between the limiting values.
 				</description>
 			</switch>
 			<switch>
@@ -2465,10 +2465,9 @@
 				<type>integer</type>
 				<description>
 					EXPERIMENTAL SWITCH GROUP, USE WITH CARE.
-                                        If set to 1, enables gradual modification of the parallel viscosity flux limiter towards low density regions. Above b2tlmv_ni_max  (default 1.0e18 m^{-3}), the standard value cflmv is used. Below b2tlmv_ni_min (default 1.0e17 m^{-3}), the value b2tlmv_cflmv_min is used (default 0.5). For densities in between b2tlmv_ni_min and b2tlmv_ni_max, the flux limiter is computed based on linear interpolation between the limiting values.
+					If set to 1, enables gradual modification of the parallel viscosity flux limiter towards low density regions. Above b2tlmv_ni_max  (default 1.0e18 m^{-3}), the standard value cflmv is used. Below b2tlmv_ni_min (default 1.0e17 m^{-3}), the value b2tlmv_cflmv_min is used (default 0.5). For densities in between b2tlmv_ni_min and b2tlmv_ni_max, the flux limiter is computed based on linear interpolation between the limiting values.
 				</description>
 			</switch>
-
 			<switch>
 				<name>b2sihs_phm0</name>
 				<default>1.0</default>
@@ -7354,8 +7353,8 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If &gt; 0, allows for a
-					communication of particle fluxes across vacuum regions. This option only applies to neutrals. The density boundary condition is based on the difference between the average pressure and the local pressure.
+					If &gt; 0, allows for a	communication of particle fluxes across vacuum regions. This option only applies to neutrals. The density boundary condition is based on the difference between the average pressure and the local pressure.
+					Not yet implemented in WG code.
 				</description>
 			</switch>
 			<switch>
@@ -7364,6 +7363,7 @@
 				<type>integer array of size (NVAC)</type>
 				<description>
 					Number of communicating vacuum regions.
+					Not yet implemented in WG code.
 				</description>
 			</switch>
 			<switch>
@@ -7375,6 +7375,7 @@
 						1: Try to set a flux. Corr = (beta*ave_pressure - pressure)/temp * alpha
 						2: Try to set a density based on pressure equality.
 					Corr = &alpha; * beta * pressure / Ti
+					Not yet implemented in WG code.
 				</description>
 			</switch>
 			<switch>
@@ -7383,6 +7384,7 @@
 				<type>integer array of size (NVACREG,NVAC)</type>
 				<description>
 					Radial index of the ring on which the neutral pressure is computed for region IREG.
+					Not yet implemented in WG code.
 				</description>
 			</switch>
 			<switch>
@@ -7391,6 +7393,7 @@
 				<type>integer array of size (NVACREG,NVAC)</type>
 				<description>
 					Poloidal lower bound of the range over which the neutral pressure is computed for region IREG.
+					Not yet implemented in WG code.
 				</description>
 			</switch>
 			<switch>
@@ -7399,6 +7402,7 @@
 				<type>integer array of size (NVACREG,NVAC)</type>
 				<description>
 					Poloidal upper bound of the range over which the neutral pressure is computed for region IREG.
+					Not yet implemented in WG code.
 				</description>
 			</switch>
 			<switch>
@@ -7407,14 +7411,16 @@
 				<type>real array of size (0:NSPECIES-1,NVAC)</type>
 				<description>
 					Parameter for setting the pressure correction. See above.
+					Not yet implemented in WG code.
 				</description>
 			</switch>
 			<switch>
-				<name>VACUUM_COMMINICATION_BETA</name>
+				<name>VACUUM_COMMUNICATION_BETA</name>
 				<default>1.0</default>
 				<type>real array of size (0:NSPECIES-1,NVAC)</type>
 				<description>
 					Parameter for setting the pressure correction. See above.
+					Not yet implemented in WG code.
 				</description>
 			</switch>
 			<switch>
@@ -7505,11 +7511,20 @@
 				</description>
 			</switch>
 			<switch>
+				<name>FB_TYPE_INVERSE</name>
+				<default>.false.</default>
+				<type>logical array of size (NFB)</type>
+				<description>
+					If FB_TYPE_INVERSE(IFB) is .true., then the feedback is done on the inverse of the quantity provided as FB_TARGET(IFB).
+					Can be used in conjunction with FB_TYPE=26.
+				</description>
+			</switch>
+			<switch>
 				<name>FB_SPECIES</name>
 				<default>0</default>
 				<type>integer array of size (NFB)</type>
 				<description>
-					Specifies the species used to calculate the controlled variable and to which he actuator is applied. It follows the B2.5 plasma species enumeration. In general, controlled quantities are calculated on the whole isonuclear sequence to which fb_species(ifb) belongs to. Then if fb_actuator = 1, it is applied to neutral species through gas puff, if fb_actuator=2 it is applied to the ionized species only, if actuator=3 it is applied only to fb_species. For fb_type=6 and actuator=3 then it is also applied to all ionized species (as old feedback treatment). Overridden by switch 'b2stbc_isfeedback'
+					Specifies the species used to calculate the controlled variable and to which the actuator is applied. It follows the B2.5 plasma species enumeration. In general, controlled quantities are calculated on the whole isonuclear sequence to which fb_species(ifb) belongs. Then if fb_actuator.eq.1, it is applied to neutral species through gas puff; if fb_actuator.eq.2, it is applied to the ionized species only; if fb_actuator.eq.3 it is applied only to fb_species. For fb_type.eq.6 and fb_actuator.eq.3 then it is also applied to all ionized species (as in the old feedback treatment). Overridden by switch 'b2stbc_isfeedback'.
 				</description>
 			</switch>
 			<switch>
@@ -7529,7 +7544,7 @@
 					Option 1: (1 + alpha*target/current) / (1 + alpha)
 					Option 3: 2**(tanh(log(x)/beta)*log(alpha)/log(2))
 					Options 4 and 5: Corresponds to parameter F
-					Can be overridden by switches 'b2stbc_nesepm_alpha', 'b2stbc_fnaycore_alpha', 'b2stbc_fheycore_alpha', 'b2stbc_fhiycore_alpha', 'b2stbc_fchycore_alpha', 'b2stbc_volrec_alpha'
+					Can be overridden by switches 'b2stbc_nesepm_alpha', 'b2stbc_fnaycore_alpha', 'b2stbc_fheycore_alpha', 'b2stbc_fhiycore_alpha', 'b2stbc_fchycore_alpha', 'b2stbc_volrec_alpha'.
 				</description>
 			</switch>
 			<switch>
@@ -7537,7 +7552,7 @@
 				<default>1.0</default>
 				<type>real array of size (NFB)</type>
 				<description>
-					Factor by which the rescaling is slowed. See above. Options 4 and 5: Corresponds to parameter V (ffb_rtvn). Cna be overridden by 'b2stbc_volrec_beta'
+					Factor by which the rescaling is slowed. See above. Options 4 and 5: Corresponds to parameter V (ffb_rtvn). Cna be overridden by 'b2stbc_volrec_beta'.
 				</description>
 			</switch>
 			<switch>
@@ -7557,11 +7572,20 @@
 				</description>
 			</switch>
 			<switch>
+				<name>FB_TYPE_IB</name>
+				<default>2</default>
+				<type>integer array of size (NFB)</type>
+				<description>
+					Boundary condition index of the faces used to compute the fedback quantity, for FB_TYPE = 23 to 26.
+					Default value of 2 usually corresponds to the outer target.
+				</description>
+			</switch>
+			<switch>
 				<name>FB_ISTRA</name>
 				<default>0</default>
 				<type>integer array of size (NFB)</type>
 				<description>
-					Eirene strata where the gas puff feedback is applied. Overridden by switch 'eirene_nesepm_istra'
+					Eirene strata where the gas puff feedback is applied. Overridden by switch 'eirene_nesepm_istra'.
 				</description>
 			</switch>
 			<switch>
@@ -7569,7 +7593,7 @@
 				<default>0.0</default>
 				<type>real array of size (NFB)</type>
 				<description>
-					Minimum gas puff being applied. Can be overrdidden by switch 'b2stbc_nesepm_minpuff'
+					Minimum gas puff being applied. Can be overrdidden by switch 'b2stbc_nesepm_minpuff'.
 				</description>
 			</switch>
 			<switch>
@@ -7577,7 +7601,7 @@
 				<default>0.0</default>
 				<type>real array of size (NFB)</type>
 				<description>
-					Maximum gas puff being applied. Can be overrdidden by switch 'b2stbc_nesepm_maxpuff'
+					Maximum gas puff being applied. Can be overrdidden by switch 'b2stbc_nesepm_maxpuff'.
 				</description>
 			</switch>
 			<switch>
@@ -7585,7 +7609,7 @@
 				<default>0.0</default>
 				<type>real array of size (NFB)</type>
 				<description>
-					If the density is larger than target*overshoot, the gas puff is turned off. Can be overridden by switch 'b2stbc_nesepm_overshoot', 'b2stbc_volrec_overshoot'
+					If the density is larger than target*overshoot, the gas puff is turned off. Can be overridden by switch 'b2stbc_nesepm_overshoot', 'b2stbc_volrec_overshoot'.
 				</description>
 			</switch>
 			<switch>
@@ -7593,7 +7617,7 @@
 				<default>0</default>
 				<type>integer array of size (NFB,2)</type>
 				<description>
-					Pointing for each feedback to the first index in FB_REG, and its number of CVs or faces
+					Pointing for each feedback to the first index in FB_REG, and its number of CVs or faces.
 				</description>
 			</switch>
 			<switch>
@@ -7601,7 +7625,7 @@
 				<default>0</default>
 				<type>integer array of size (nMxFbReg)</type>
 				<description>
-					Listing for each feedback the cells or faces where controlled quantity is calculated. If different feedbacks use the same domain then this can be defined only ones and simply point to it twice with fb_regP. nMxFbReg is a maximum length set in b2us_feedback
+					Listing for each feedback the cells or faces where controlled quantity is calculated. If different feedbacks use the same domain then this can be defined only ones and simply point to it twice with fb_regP. nMxFbReg is a maximum length set in b2us_feedback.
 				</description>
 			</switch>
 			<switch>
@@ -7611,7 +7635,7 @@
 				<description>
 					If the two FB_REG and FB_REGP are not defined, then the code will look for this array.
 					For fb_type 6-10-11-12-13, fb_reg_par(ifb,:) indicates the starting (iFb,1) and ending (iFb,2) face region label over which the controlled quantity is calculated.
-					For fb_type 1-2-4-5-8, fb_reg_par(ifb,:) indicates the starting (ifB,1) and ending (iFb,2) volume region label over which the controlled quantity is calculated.
+					For fb_type 1-2-4-5-8, fb_reg_par(ifb,:) indicates the starting (iFb,1) and ending (iFb,2) volume region label over which the controlled quantity is calculated.
 				</description>
 			</switch>
 		</category>

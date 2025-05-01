@@ -337,10 +337,6 @@
      &        'b2stbc: wrong_flow returned from b2stbc_phys'
       endif
 
-!WG_RM      if(lfeedback.or.switch%b2stbc_feedback.ne.0)
-!WG_RM     &  call b2stbc_fb_post(nCv, nFc, ns, ismain,
-!WG_RM     &    switch, geo, pl, dv, srw, main_call)
-
 #ifdef WG_TODO
 c added 2001.11.26 dpc/xpb
 c to fix problems with the core energy boundary condition arising

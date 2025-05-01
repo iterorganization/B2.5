@@ -5,6 +5,8 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpb
+      use b2mod_b2plot
+     & , only : b2_fnmti
       use b2mod_diag
       use b2mod_time
       use b2mod_neutrals_namelist
@@ -746,7 +748,7 @@ cxpb size is changed in b2mod_dimensions
       endif
 
       call xertst(nFb.le.DEF_NATM,
-     & 'b2mod_feedback: increase size of DEF_NATM')
+     & 'b2us_feedback: increase size of DEF_NATM')
 
       do ifb = 1, nFb
         if (fb_actuator(ifb).ne.1.or.switch%use_eirene.eq.0) cycle
@@ -882,21 +884,21 @@ cxpb size is changed in b2mod_dimensions
             fbRegP(ifb,2) = fb_RegP(ifb,2)
             fbReg(ifbreg:ifbreg+fbRegP(ifb,2)-1) =
      &        fb_Reg(fb_RegP(ifb,1):fb_RegP(ifb,1)+fb_RegP(ifb,2)-1)
-            ifbreg = ifbreg +   fb_RegP(ifb,2)
+            ifbreg = ifbreg + fb_RegP(ifb,2)
             done = .true.
           endif
         ! now look for feedback types requiring faces
-          if ((fb_type(ifb).eq.6 .or. fb_type(ifb).eq.10 .or.
-     &        fb_type(ifb).eq.11 .or. fb_type(ifb).eq.12 .or.
-     &        fb_type(ifb).eq.13)
+          if ((fb_type(ifb).eq.6  .or. fb_type(ifb).eq.10 .or.
+     &         fb_type(ifb).eq.11 .or. fb_type(ifb).eq.12 .or.
+     &         fb_type(ifb).eq.13)
      &        .and. .not.done) then
             call xertst(fb_reg_par(ifb,1).gt.0,
      &        'init_feedback: At lest one segment must be specified'//
-     &        ' in fb_reg_par for fb_type=  6, 7, 10-13 and 15')
+     &        ' in fb_reg_par for fb_type = 6, 7, 10 to 13, or 15')
             ! check if same region/boundary has already been done
             do ifbb = 1, ifb-1
-              if (fb_reg_par(ifb,1).eq.fb_reg_par(ifbb,1)
-     &         .and.fb_reg_par(ifb,2).eq.fb_reg_par(ifbb,2)) then
+              if (fb_reg_par(ifb,1).eq.fb_reg_par(ifbb,1) .and.
+     &            fb_reg_par(ifb,2).eq.fb_reg_par(ifbb,2)) then
                 fbRegP(ifb,:) = fbRegP(ifbb,:)
                 done = .true.
               endif
@@ -912,7 +914,7 @@ cxpb size is changed in b2mod_dimensions
      &        fb_type(ifb).eq.8) .and. .not.done) then
             call xertst(fb_reg_par(ifb,1).gt.0,
      &        'init_feedback: At lest one segment must be specified'//
-     &        ' in fb_reg_par for fb_type=  1, 2, 5 and 8')
+     &        ' in fb_reg_par for fb_type = 1, 2, 5, or 8')
             ! check if same region/boundary has already been done
             do ifbb = 1, ifb-1
               if (fb_reg_par(ifb,1).eq.fb_reg_par(ifbb,1)
@@ -951,16 +953,12 @@ cxpb size is changed in b2mod_dimensions
       logical main_call
 *   ..local variables
       integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
-     & is_end, iss, iCv1, iCv2, ibc, istra, i, j, k, l, ic, iFs,
-     & iatm, imol, indx
-#ifdef COMPLICATED
-      integer :: ib
-#endif
-      integer :: find_loc
+     & is_end, iss, ibc, istra, i, j, k, l, ic, iFs,
+     & iatm, imol
       real (kind=R8) :: sna_pump, sna_puff, sna_core
       integer, save :: ncall = 0
       real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s,
-     & t0, t1, t2
+     & t0, t1
 
       call subini ('compute_feedback')
       if (ncall.eq.0) then
@@ -1321,37 +1319,12 @@ cxpb size is changed in b2mod_dimensions
      &            'compute_feedback_type: using ',
      &            'electron heat flux'
               endif
-#ifdef COMPLICATED
-              call xerrab('COMPLICATED not yet converted for WG')
-! the 'complicated' calculation downwards was correct assuming we look only at core boundary
-! while now we generalize for any boundary/surface
-              teave1=0.0_R8
-              neave1=0.0_R8
-              teave2=0.0_R8
-              neave2=0.0_R8
-#endif
               fb_current(ifb) = 0.0_R8
               iFc1 = fbRegP(ifb,1)
               iFc2 = iFc1 + fbRegP(ifb,2) - 1
               do iFc = iFc1, iFc2
                 fb_current(ifb)=fb_current(ifb)+
      &           dv%fhe(fbReg(iFc),1)
-#ifdef COMPLICATED
-            ic1 = mpg%bcCvP(ib,1)
-            ic2 = ic1 + mpg%bcCvP(ib,2) -1
-            do iCv = ic1, ic2
-              teave1=teave1+pl%te(mpg%bcCv(iCv,1))*
-     .                      dv%ne(mpg%bcCv(iCv,1))*
-     .                     geo%cvVol(mpg%bcCv(iCv,1))
-              neave1=neave1+dv%ne(mpg%bcCv(iCv,1))*
-     .                     geo%cvVol(mpg%bcCv(iCv,1))
-              teave2=teave2+pl%te(mpg%bcCv(iCv,2))*
-     .                      dv%ne(mpg%bcCv(iCv,2))*
-     .                     geo%cvVol(mpg%bcCv(iCv,2))
-              neave2=neave2+dv%ne(mpg%bcCv(iCv,2))*
-     .                     geo%cvVol(mpg%bcCv(iCv,2))
-            enddo
-#endif
               end do
               is_start=-1
               is_end=-1
@@ -1369,37 +1342,12 @@ cxpb size is changed in b2mod_dimensions
      &            'compute_feedback_type: using ',
      &            'ion heat flux '
               endif
-#ifdef COMPLICATED
-              call xerrab('COMPLICATED not yet converted for WG')
-! the 'complicated' calculation downwards was correct assuming we look only at core boundary
-! while now we generalize for any boundary/surface
-              tiave1=0.0_R8
-              niave1=0.0_R8
-              tiave2=0.0_R8
-              niave2=0.0_R8
-#endif
               fb_current(ifb) = 0.0_R8
               iFc1 = fbRegP(ifb,1)
               iFc2 = iFc1 + fbRegP(ifb,2) - 1
               do iFc = iFc1, iFc2
                 fb_current(ifb)=fb_current(ifb)+
      &           dv%fhi(fbReg(iFc),1)
-#ifdef COMPLICATED
-            ic1 = mpg%bcCvP(ib,1)
-            ic2 = ic1 + mpg%bcCvP(ib,2) -1
-            do iCv = ic1, ic2
-              tiave1=tiave1+pl%ti(mpg%bcCv(iCv,1))*
-     .                      dv%ni(mpg%bcCv(iCv,1),0)*
-     .                     geo%cvVol(mpg%bcCv(iCv,1))
-              niave1=niave1+dv%ni(mpg%bcCv(iCv,1),0)*
-     .                     geo%cvVol(mpg%bcCv(iCv,1))
-              tiave2=tiave2+pl%ti(mpg%bcCv(iCv,2))*
-     .                      dv%ni(mpg%bcCv(iCv,2)),0*
-     .                     geo%cvVol(mpg%bcCv(iCv,2))
-              niave2=niave2+dv%ni(mpg%bcCv(iCv,2),0)*
-     .                     geo%cvVol(mpg%bcCv(iCv,2))
-            enddo
-#endif
               enddo
               is_start=-1
               is_end=-1
@@ -1674,8 +1622,8 @@ cxpb size is changed in b2mod_dimensions
                 endif
                 write(*,'(a,a,i3,a,i3)')
      &           'compute_feedback_type: using ',
-     &           ' plasma heat flux density at boundary ',
-     &           fb_type_ib(ifb), ' for sequence ',
+     &           ' plasma heat flux density along boundary ',
+     &           fb_type_ib(ifb),' for sequence ',
      &           b2espcr(fb_species(ifb))
                 fb_target(ifb) = 1.0_R8/fb_target(ifb)
               endif
@@ -1691,27 +1639,15 @@ cxpb size is changed in b2mod_dimensions
                 endif
               enddo
               fb_current(ifb) = 0.0_R8
-              do iCv = mpg%nCi+1, nCv
-                iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
-                iCv1 = mpg%fcCv(iFc,1)
-                iCv2 = mpg%fcCv(iFc,2)
-                t1 = -1.0_R8
-                if (iCv2.gt.iCv1) t1 = 1.0_R8
-                if (mpg%fcLbl(iFc).eq.fb_type_ib(ifb)) then
-                  t0 = dv%fht(iFc,0)+dv%fht(iFc,1)
-                  t0 = t1*t0/geo%fcS(iFc)
-#ifndef SOLPS4_3
-                  if (allocated(fnmti_b2) .and.
-     &                allocated(ewldrp_res) .and.
-     &                switch%use_eirene.ne.0) then
-                    indx = find_loc(fnmti_b2,nsts+1,iFc)
-                    if (indx.gt.0) then
-                      t0 = t0-ewldrp_res(indx)
-                    endif
-                  endif
-#endif
-                  fb_current(ifb) = max(fb_current(ifb),t0)
+              do i = 1, mpg%bcFcP(fb_type_ib(ifb),2)
+                iFc = mpg%bcFc(mpg%bcFcP(fb_type_ib(ifb),1)+i-1)
+                t1 = mpg%bcFcOr(mpg%bcFcP(fb_type_ib(ifb),1)+i-1)
+                t0 = dv%fht(iFc,0)+dv%fht(iFc,1)
+                t0 = t1*t0/geo%fcS(iFc)
+                if (switch%use_eirene.ne.0) then
+                  t0 = t0 - ewldrp_res(b2_fnmti(iFc))
                 endif
+                fb_current(ifb) = max(fb_current(ifb),t0)
               enddo
               if (fb_current(ifb).ne.0.0_R8) then
                 fb_current(ifb) = 1.0_R8/abs(fb_current(ifb))
@@ -1728,8 +1664,8 @@ cxpb size is changed in b2mod_dimensions
                 endif
                 write(*,'(a,a,i3,a,i3)')
      &           'compute_feedback_type: using ',
-     &           'electron temperature at boundary ',
-     &           fb_type_ib(ifb), ' for sequence ',
+     &           'peak electron temperature along boundary ',
+     &           fb_type_ib(ifb),' for sequence ',
      &           b2espcr(fb_species(ifb))
                 fb_target(ifb) = 1.0_R8/fb_target(ifb)
               endif
@@ -1746,15 +1682,9 @@ cxpb size is changed in b2mod_dimensions
               enddo
               fb_current(ifb) = 0.0_R8
 
-              do iCv=mpg%nCi+1,nCv
-                iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
-                iCv1 = mpg%fcCv(iFc,1)
-                iCv2 = mpg%fcCv(iFc,2)
-                t1 = -1.0_R8
-                if (iCv2.gt.iCv1) t1 = 1.0_R8
-                if (mpg%fcLbl(iFc).eq.fb_type_ib(ifb)) then
-                  fb_current(ifb) = max(fb_current(ifb),pl%te(iCv1)/qe)
-                endif
+              do i = 1, mpg%bcCvP(fb_type_ib(ifb),2)
+                iCv = mpg%bcCv(mpg%bcCvP(fb_type_ib(ifb),1)+i-1,2)
+                fb_current(ifb) = max(fb_current(ifb),pl%te(iCv)/qe)
               enddo
               fb_current(ifb) = 1.0_R8/fb_current(ifb)
 
@@ -1769,8 +1699,8 @@ cxpb size is changed in b2mod_dimensions
                 endif
                 write(*,'(a,a,i3,a,i3)')
      &           'compute_feedback_type: using ',
-     &           'electron density at boundary ',
-     &           fb_type_ib(ifb), ' for sequence ',
+     &           'peak electron density along boundary ',
+     &           fb_type_ib(ifb),' for sequence ',
      &           b2espcr(fb_species(ifb))
               endif
 
@@ -1786,15 +1716,9 @@ cxpb size is changed in b2mod_dimensions
               enddo
               fb_current(ifb) = 0.0_R8
 
-              do iCv=mpg%nCi+1,nCv
-                iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
-                iCv1 = mpg%fcCv(iFc,1)
-                iCv2 = mpg%fcCv(iFc,2)
-                t1 = -1.0_R8
-                if (iCv2.gt.iCv1) t1 = 1.0_R8
-                if (mpg%fcLbl(iFc).eq.fb_type_ib(ifb)) then
-                  fb_current(ifb) = max(fb_current(ifb),dv%ne(iCv1))
-                endif
+              do i = 1, mpg%bcCvP(fb_type_ib(ifb),2)
+                iCv = mpg%bcCv(mpg%bcCvP(fb_type_ib(ifb),1)+i-1,2)
+                fb_current(ifb) = max(fb_current(ifb),dv%ne(iCv))
               enddo
 
             case (26) ! peak parallel saturation current
@@ -1808,8 +1732,8 @@ cxpb size is changed in b2mod_dimensions
                 endif
                 write(*,'(a,a,i3,a,i3)')
      &           'compute_feedback_type: using ',
-     &           'peak parallel saturation current at boundary ',
-     &           fb_type_ib(ifb), ' for sequence ',
+     &           'peak parallel saturation current along boundary ',
+     &           fb_type_ib(ifb),' for sequence ',
      &           b2espcr(fb_species(ifb))
                 if (fb_type_inverse(ifb))
      &           fb_target(ifb) = 1.0_R8/fb_target(ifb)
@@ -1827,23 +1751,19 @@ cxpb size is changed in b2mod_dimensions
               enddo
               fb_current(ifb) = 0.0_R8
 
-              do iCv=mpg%nCi+1,nCv
-                iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
-                iCv1 = mpg%fcCv(iFc,1)
-                iCv2 = mpg%fcCv(iFc,2)
-                t1 = -1.0_R8
-                if (iCv2.gt.iCv1) t1 = 1.0_R8
-                if (mpg%fcLbl(iFc).eq.fb_type_ib(ifb)) then
-                  t2 = 0.0_R8
-                  do is=0,ns-1
-                    if (is_neutral(is)) cycle
-                    t2 = t2 + t1*(dv%fna(iFc,0,is)+dv%fna(iFc,1,is))*
+              do i = 1, mpg%bcFcP(fb_type_ib(ifb),2)
+                iFc = mpg%bcFc(mpg%bcFcP(fb_type_ib(ifb),1)+i-1)
+                iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+                t1 = mpg%bcFcOr(mpg%bcFcP(fb_type_ib(ifb),1)+i-1)
+                t0 = 0.0_R8
+                do is = 0, ns-1
+                  if (is_neutral(is)) cycle
+                  t0 = t0 + t1*(dv%fna(iFc,0,is)+dv%fna(iFc,1,is))*
      .                 rt%rza(iCv,is)*qe/geo%fcS(iFc)/
-     .                 (geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/
+     .                (geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/
      .                 geo%fcBb(iFc,3))
-                  enddo
-                  fb_current(ifb) = max(fb_current(ifb),t2)
-                endif
+                enddo
+                fb_current(ifb) = max(fb_current(ifb),t0)
               enddo
               if (fb_type_inverse(ifb))
      &         fb_current(ifb) = 1.0_R8/fb_current(ifb)
