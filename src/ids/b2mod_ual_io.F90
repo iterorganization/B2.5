@@ -25,7 +25,6 @@ module b2mod_ual_io
     use b2us_plasma
     use b2mod_elements
     use b2mod_constants
-!    use b2mod_feedback
 !    use b2mod_boundary_namelist
     use b2mod_neutrals_namelist
     use b2mod_user_namelist
