@@ -600,7 +600,7 @@ c 2002-09-11: logic revised
       data transport_namelist/0/, transport_inputfile/0/
       data atomic_physics_rescale_flag/0/
       data itrack1/-1/, itrack2/-1/, itrack3/-1/
-      data ismain/1/, ismain0/0/, isfeedback/0/, b2stbc_feedback/0/
+      data ismain/1/, ismain0/0/, b2stbc_feedback/0/
       data sput_phys_col/3/, sput_phys_model/1/, refl_model/1/
       data iy_nocoreExB/0/
       data bc_type16_ref/1/, bc_type20_ref/1/
