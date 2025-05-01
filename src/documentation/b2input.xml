@@ -776,16 +776,16 @@
 					 ..do i0=1,nstg0
 					  ..compute log-log linearised rate coefficients
 					  ..do i1=1,nstg1
-					   ..compute source linearisation (Eirene call)
+					   ..compute source linearisation
 					   ..do i2=1,nstg2
-					    ..perform one inner iteration (on fluid equations)
+					    ..perform one inner iteration
 					    ..re-compute auxiliary quantities
 					    ..produce monitoring output
 					   ..enddo
 					  ..enddo
 					 ..enddo
-					This can be completed by the the 'b2mndt_nstg_ares??' switches. See 'Numerics' section for details.
-					It is recommended to use these inner iterations when running in time-dependent mode (b2mndt_style=2) to make residuals converge within each time-step.
+					This can be completed by the the 'b2mndt_nstg_ares??' switches.
+					See 'Numerics' section for details.
 				</description>
 				<switch>
 					<name>b2mndt_nstg0</name>
@@ -8221,6 +8221,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>FB_TYPE_IB</name>
+				<default>2</default>
+				<type>integer array of size (NFB)</type>
+				<description>
+					Boundary condition index of the faces used to compute the fedback quantity, for FB_TYPE = 23 to 26.
+					Default value of 2 usually corresponds to the outer target.
+				</description>
+			</switch>
+			<switch>
 				<name>FB_ISTRA</name>
 				<default>0</default>
 				<type>integer array of size (NFB)</type>
@@ -8274,7 +8283,7 @@
 				<type>integer array of size (NFB,2)</type>
 				<description>
 					If the two FB_REG and FB_REGP are not defined, then the code will look for this array.
-					For fb_type 6-10-11-12-13-23-24-25-26, fb_reg_par(ifb,:) indicates the starting (iFb,1) and ending (iFb,2) face region label over which the controlled quantity is calculated.
+					For fb_type 6-10-11-12-13, fb_reg_par(ifb,:) indicates the starting (iFb,1) and ending (iFb,2) face region label over which the controlled quantity is calculated.
 					For fb_type 1-2-4-5-8, fb_reg_par(ifb,:) indicates the starting (iFb,1) and ending (iFb,2) volume region label over which the controlled quantity is calculated.
 				</description>
 			</switch>
