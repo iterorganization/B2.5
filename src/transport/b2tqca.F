@@ -138,6 +138,13 @@
 *   ..compute vsax, hcix
 *     (initialise hcix to 0)
       call sfill (nCv, 0.0_R8, hci(1,0), 1)
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TQCA)) 
+!$omp parallel do default(none)
+!$omp& private(is, t0, tau, tnp, w, t, js, ctaui, fxi, chns)
+!$omp& shared(ctaup, t1, dv, am, rt, pl, switch, vsa, st_ext, nCv)
+!$omp& shared(ns, is_neutral)
+!$omp& reduction(+:hci)
+#endif 
       do is = 0, ns-1
        if (is_neutral(is)) then
 *       (neutral vsax and hcix are strictly anomalous)
@@ -194,6 +201,10 @@ cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
         endif
        endif
       enddo
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TQCA)) 
+!$omp end parallel do
+#endif 
+
 *   ..compute vsay, hciy
 *!!   (classical perpendicular transport is set to 0)
       do is = 0, ns-1

@@ -58,6 +58,13 @@ c        flux_limit_min_tn=flux_limit_min_tn*ev
 *   .. compute differences of temperature
        call diff(nCv, nFc, nVx, 0, geo, mpg, tn, tnv, dtnf)
        if (switch%b2tlh0_style.eq.0) then
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TLH0))
+!$omp parallel do default(none)
+!$omp& private(is, iFc, t0, t1, dtn, vthi, t2)
+!$omp& shared(ns, nFc, geo, mpg, tn, dtnf, am, chcb, gamma, alpha)
+!$omp& shared(fllim0fhi, is_neutral, b2tlh0_cutlo, na)
+!$omp& reduction(max: maxfluxlimit)
+#endif 
         do is = 0, ns-1
          if (is_neutral(is)) then
           do iFc = 1, nFc
@@ -86,9 +93,19 @@ c        flux_limit_min_tn=flux_limit_min_tn*ev
           end do
          end if
         end do
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TLH0))
+!$omp end parallel do 
+#endif 
        else
 cwdk    flux limit total gradient-driven flow, not individual poloidal
 cwdk    or radial contributions, since neutral transport is isotropic
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TLH0))
+!$omp parallel do default(none)
+!$omp& private(is, iFc, t0, t1, dtn, vthi, t2)
+!$omp& shared(ns, nFc, geo, mpg, tn, dtnf, am, chcb, gamma, alpha)
+!$omp& shared(fllim0fhi, is_neutral, b2tlh0_cutlo, chcib, na)
+!$omp& reduction(max: maxfluxlimit)
+#endif 
         do is = 0, ns-1
          if (is_neutral(is)) then
           do iFc = 1, nFc
@@ -111,6 +128,9 @@ cwdk    or radial contributions, since neutral transport is isotropic
           end do
          end if
         end do
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TLH0))
+!$omp end parallel do
+#endif 
        endif
       endif
 

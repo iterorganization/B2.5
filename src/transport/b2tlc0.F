@@ -55,6 +55,15 @@
 *   ..nothing done if alpha.eq.0
       if (alpha.ne.0.0_R8) then
        if (switch%b2tlc0_style.eq.0) then
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TLC0))
+!svdk parallellize over species
+!$omp parallel do default(none)
+!$omp& private(is, iFc, t0, t1, dpb, vbar, t2, pb, pbv, dpbf)
+!$omp& shared(nCv, nFc, nVx, ns)
+!$omp& shared(geo, mpg, is_neutral, alpha, b2tlc0_cutlo, gamma)
+!$omp& shared(cdpa, cdpahz, flc, te, ti, tn, rza, na, am)
+!$omp& reduction(max: maxfluxlimit)
+#endif 
         do is = 0, ns-1
          if (is_neutral(is)) then
 *    ..compute partial pressure
@@ -89,9 +98,22 @@
           enddo
          endif
         enddo
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TLC0))
+!$omp end parallel do
+#endif
+
        else
 cwdk    flux limit total gradient-driven flow, not individual poloidal
 cwdk    or radial contributions, since neutral transport is isotropic
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TLC0))
+!svdk parallellize over species
+!$omp parallel do default(none)
+!$omp& private(is, iFc, t0, t1, dpb, vbar, t2, t3, pb, pbv, dpbf)
+!$omp& shared(nCv, nFc, nVx, ns)
+!$omp& shared(geo, mpg, is_neutral, alpha, b2tlc0_cutlo, gamma)
+!$omp& shared(cdpa, cdpa0, cdpahz, flc, te, ti, tn, rza, na, am)
+!$omp& reduction(max: maxfluxlimit)
+#endif 
         do is = 0, ns-1
          if (is_neutral(is)) then
 *    ..compute partial pressure
@@ -124,6 +146,9 @@ cwdk    or radial contributions, since neutral transport is isotropic
           enddo
          endif
         enddo
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TLC0))
+!$omp end parallel do
+#endif
        endif
       endif
 

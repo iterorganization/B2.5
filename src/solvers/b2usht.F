@@ -85,6 +85,9 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
       real (kind=R8) ::
      *   t0, t1, t2, t3, t11, t22
       logical new_matrix
+#ifdef _OPENMP
+      logical make_parallel
+#endif 
 *   ..procedures
       intrinsic abs, sqrt, dim
       external xertst, sfill
@@ -95,8 +98,25 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 *.computation
 
 * ..preliminaries
-      icv1 = 1 !csc needed for correct initialization in adjoint AD
-      icv2 = 1
+#ifdef _OPENMP
+      ! Check if we're already running in parallel 
+      make_parallel = in_parallel()
+#endif 
+      if (switch%b2usht_iout.ne.0) then  
+        if (in_parallel() ) then 
+          if (ncall_b2usht == 0) then 
+#ifdef _OPENMP
+!$OMP MASTER
+#endif
+      write(*,*) 'b2ush9 OpenMP warning: no file IO in parallel mode'
+#ifdef _OPENMP
+!$OMP END MASTER
+#endif
+          endif 
+        endif 
+      endif
+      iCv1 = 1 !csc needed for correct initialization in adjoint AD
+      iCv2 = 1
 *   ..subprogram start-up calls
       call subini ('b2usht')
 *   ..test nCv, nFc, ns
@@ -142,40 +162,62 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
          shn = 0.0_R8
       endif
 
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+* ..initialize openmp parallel region for workshare
+!svdk the current implementation permits to parallellize this section
+!svdk using a task construct, since each energy equation is solved
+!svdk separately first, and updates are applied only later.
+!$omp parallel default(none) 
+!$omp& shared(mpg, switch, geo, nCv, nFc, itcnt)
+!$omp& shared(solveee, solveei, solveen, solveet, solvekt, solvezt)
+!$omp& shared(floe, floi, flon, flokt, flozt)
+!$omp& shared(cone, coni, conn, conkt, conzt)
+!$omp& shared(resht, cortt, reshe, corte, reshi, corti, reshn, cortn)
+!$omp& shared(reskt, corkt, reszt, corzt)
+!$omp& shared(she, shi, shn, ne, ni, nn, te, ti, tn, ceqp)
+!$omp& shared(skt, kt, szt, zt)
+!$omp& shared(last_solve_9) 
+!$omp& private(aa, flo0, con0)
+!$omp& private(iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv)
+!$omp& private(ireg, t0, t1, t2, t11, t22, t3, lnonzero, dumm)
+!svdk task 1: total heat correction equation
+!svdk should be ran by a single thread, tasks are accumulated and 
+!svdk executed by other threads
+!!$omp single 
+!!$omp task
+!$omp sections
+!$omp section
+#endif 
+* ..total heat correction equation 
       if (any(solveee(0:mpg%nnreg(0))).and.
      &    any(solveei(0:mpg%nnreg(0))).and.
      &    any(solveen(0:mpg%nnreg(0))).and.
      &    any(solveet(0:mpg%nnreg(0)))) then                                !srv 22.05.18
+   
+#ifdef _OPENMP 
+      call restart_ma28_for_us
+#else
       new_matrix = .false.
       do ireg = 0, mpg%nnreg(0)
         new_matrix = new_matrix.or.
      &   solveet(ireg).neqv.last_solve_9(ireg)
       end do
       if (new_matrix.or..true.) call restart_ma28_for_us
+#endif
 * ..total heat correction equation
 *   ..compute flo0, con0
       flo0        = floe + floi + flon
       con0(:,:,0) = cone(:,:,0) + coni(:,:,0)+ conn
       if (switch%b2usht_iout.ne.0) then  
-        if (in_parallel() ) then 
-          if (ncall_b2usht == 0) then 
-#ifdef _OPENMP
-!$OMP MASTER
-#endif
-         write(*,*) 'b2ush9 OpenMP warning: no file IO in parallel mode'
-#ifdef _OPENMP
-!$OMP END MASTER
-#endif
-          end if 
-        else
-          call my_out_us(70,nFc,1,flo0(1,0),'b2usht_flo0x')
-          call my_out_us(70,nFc,1,flo0(1,1),'b2usht_flo0y')
-          call my_out_us(70,nFc,1,con0(1,0,0),'b2usht_con0xtest')
-          call my_out_us(70,nFc,1,con0(1,1,0),'b2usht_con0ytest')
-          call my_out_us(70,nFc,1,con0(1,0,1),'b2usht_con0x10')
-          call my_out_us(70,nFc,1,con0(1,1,1),'b2usht_con0y10')
-          call my_out_us(70,nFc,1,con0(1,0,2),'b2usht_con0x20') 
-          call my_out_us(70,nFc,1,con0(1,1,2),'b2usht_con0y20') 
+          if (ncall_b2usht == 0 .and. .not. in_parallel()) then 
+            call my_out_us(70,nFc,1,flo0(1,0),'b2usht_flo0x')
+            call my_out_us(70,nFc,1,flo0(1,1),'b2usht_flo0y')
+            call my_out_us(70,nFc,1,con0(1,0,0),'b2usht_con0xtest')
+            call my_out_us(70,nFc,1,con0(1,1,0),'b2usht_con0ytest')
+            call my_out_us(70,nFc,1,con0(1,0,1),'b2usht_con0x10')
+            call my_out_us(70,nFc,1,con0(1,1,1),'b2usht_con0y10')
+            call my_out_us(70,nFc,1,con0(1,0,2),'b2usht_con0x20') 
+            call my_out_us(70,nFc,1,con0(1,1,2),'b2usht_con0y20') 
         end if 
       endif
 
@@ -344,14 +386,24 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call my_out_us(70,nCv,0,cortt,'b2usht_cortt')
       endif
 
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!!$omp end task
+!svdk task 2: electron temperature equation
+!!$omp task
+!$omp section
+#endif 
 * ..electron temperature correction equation
       if (any(solveee(0:mpg%nnreg(0)))) then                                 !srv 22.05.18
+#ifdef _OPENMP 
+      call restart_ma28_for_us
+#else 
       new_matrix = .false.
       do ireg = 0, mpg%nnreg(0)
         new_matrix = new_matrix.or.
      &   solveee(ireg).neqv.solveet(ireg)
       end do
       if (new_matrix.or..true.) call restart_ma28_for_us
+#endif 
 *   ..compute flo0, con0
       flo0        = floe
       con0(:,:,0) = cone(:,:,0)
@@ -506,14 +558,24 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call my_out_us(70,nCv,0,corte,'b2usht_corte')
       endif
 
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!!$omp end task
+!svdk task 3: ion temperature equation
+!!$omp task
+!$omp section
+#endif 
 * ..atom temperature correction equation
       if (any(solveei(0:mpg%nnreg(0)))) then                                 !srv 22.05.18
+#ifdef _OPENMP 
+      call restart_ma28_for_us  
+#else 
       new_matrix = .false.
       do ireg = 0, mpg%nnreg(0)
         new_matrix = new_matrix.or.
      &   solveei(ireg).neqv.solveee(ireg)
       end do
       if (new_matrix.or..true.) call restart_ma28_for_us
+#endif 
 *   ..compute flo0, con0
       flo0        = floi
       con0(:,:,0) = coni(:,:,0)
@@ -658,11 +720,15 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshi, corti, 'b2usht_Ti')
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!svdk don't update last_solve_9, not yet supported
+#else 
       last_solve_9(0:mpg%nnreg(0)) = solveei(0:mpg%nnreg(0))
 ! $AD II-LOOP
       do iCv = 1, nCv
         corti(iCv) = corti(iCv)
       enddo
+#endif
       endif                                                          !srv 22.05.18
 
       if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
@@ -671,15 +737,25 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call my_out_us(70,nCv,0,corti,'b2usht_corti')
       endif
 
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!!$omp end task
+!svdk task 4: neutral temperature equation
+!!$omp task
+!$omp section
+#endif      
       if (switch%tn_style.eq.2) then
 * ..neutral atom temperature correction equation
       if (any(solveen(0:mpg%nnreg(0)))) then                                !srv 22.05.18
+#ifdef _OPENMP 
+      call restart_ma28_for_us
+#else
       new_matrix = .false.
       do ireg = 0, mpg%nnreg(0)
         new_matrix = new_matrix.or.
      &   solveen(ireg).neqv.solveei(ireg)
       end do
       if (new_matrix.or..true.) call restart_ma28_for_us
+#endif
 *   ..compute flo0, con0
       flo0        = flon
       con0(:,:,0) = conn
@@ -802,21 +878,31 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
 
 *   ..solve the correction equation
       call b2uxus (nCv, mpg, aa, itcnt, reshn, cortn, 'b2usht_Tn')
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!svdk don't update last_solve_9, not yet supported
+#else 
       last_solve_9(0:mpg%nnreg(0)) = solveen(0:mpg%nnreg(0))
 ! $AD II-LOOP
       do iCv = 1, nCv
         cortn(iCv) = cortn(iCv)
       enddo
+#endif
+
       endif                                                          !srv 22.05.18
       endif
 
-
       if (switch%b2usht_iout.ne.0 .and. .not. in_parallel()) then
-       call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_hn_aa')
-       call my_out_us(70,nCv,0,reshi,'b2usht_reshn')
-       call my_out_us(70,nCv,0,corti,'b2usht_cortn')
+        call my_out_us(70,mpg%nCmxNv,0,aa,'b2usht_hn_aa')
+        call my_out_us(70,nCv,0,reshi,'b2usht_reshn')
+        call my_out_us(70,nCv,0,corti,'b2usht_cortn')
       endif
 
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!!$omp end task
+!svdk task 5: turbulent kinetic energy equation
+!!$omp task
+!$omp section
+#endif 
 * ..turbulent kinetic energy correction equation
       corkt = 0.0_R8
       if (switch%solve_keps.gt.0.and.any(solvekt(0:mpg%nnreg(0)))) then
@@ -955,6 +1041,12 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call my_out_us(70,nCv,0,corkt,'b2usht_corkt')
       endif
 
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!!$omp end task
+!svdk task 6: turbulent enstrophy equation
+!!$omp task
+!$omp section
+#endif 
 * ..turbulent enstrophy correction equation
       corzt = 0.0_R8
       if (switch%solve_keps.gt.1.and.any(solvezt(0:mpg%nnreg(0)))) then
@@ -1092,8 +1184,12 @@ c      integer, save :: iadd_9 = 1                                      !srv 02.
        call my_out_us(70,nCv,0,reszt,'b2usht_reszt')
        call my_out_us(70,nCv,0,corzt,'b2usht_corzt')
       endif
-
-
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2USHT))
+!$omp end sections
+!!$omp end task
+!!$omp end single
+!$omp end parallel
+#endif 
 
 *   ..return
       ncall_b2usht = ncall_b2usht+1
