@@ -1933,6 +1933,34 @@ cxpb size is changed in b2mod_dimensions
                   fb_rescale(ifb) =
      &               fb_alpha(ifb) * fb_current(ifb)
 
+            case (7) ! rescale slowed by tanh_log
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_option: using ',
+     &           'tanh_log_rescale with plateau for sequence ',
+     &            b2espcr(fb_species(ifb))
+              endif
+
+! 2**(tanh(log(x)/b)*log(a)/log(2))
+              t0 = fb_target(ifb)*(1.0_R8-fb_const(ifb))
+              t1 = fb_target(ifb)*(1.0_R8+fb_const(ifb))
+              if(fb_current(ifb) < t0) then
+                fb_rescale(ifb) = 2.0_R8 **
+     &             (tanh(log(t0 /
+     &             fb_current(ifb))/
+     &             fb_beta(ifb))*
+     &             log(fb_alpha(ifb))/log(2.0_R8))
+              elseif(fb_current(ifb) > t1) then
+                fb_rescale(ifb) = 2.0_R8 **
+     &             (tanh(log(t1 /
+     &             fb_current(ifb))/
+     &             fb_beta(ifb))*
+     &             log(fb_alpha(ifb))/log(2.0_R8))
+              else
+                fb_rescale(ifb) = 1.0_R8
+              endif
+
             case default
               write(*,*) 'fb_rescale_option not coded ',
      &          fb_rescale_option(ifb)
