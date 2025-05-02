@@ -477,7 +477,7 @@ c find the time vector size
             end if
           end do
 
-c prepare the b2movies.nc.xxxx file
+c prepare the eirenemovies.nc.xxxx file
           extension='xxxx'
 #ifndef NO_GETENV
 #ifdef USE_PXFGETENV
