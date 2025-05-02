@@ -10,7 +10,7 @@
       use b2mod_balance !djm Jan 2017
      1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
      2          b2stbc_shi0to3,balance_netcdf
-#endif
+      use b2mod_openmp
       use b2us_feedback
       use b2mod_b2cmpa
       use b2mod_time
@@ -69,21 +69,23 @@
       integer i, j, is, iCv, iFc, iFt
       real (kind=R8) :: praverage(2)
       real (kind=R8) :: wrk(nFc)
+      integer regcnt, ixx
       real (kind=R8) ::
      &   prsum(2), gssum(2), tesum(2), tisum(2),
      1   nasum(0:ns-1,2),
      1   nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
      x   nxf, taf, zxf,
-     1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2)
-#ifdef WG_TODO
-      integer ixx, regcnt, element_done(-1:nx)
-      real (kind=R8) :: t0, testqe, testqi, sum_sch0, sum_vol
-#endif
+     1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
+     1   sum_sch0, sum_vol
+!WG_TODO      integer element_done(-1:nx)
       real (kind=R8) :: intface_s
 *   ..procedures
       intrinsic nint
       external xertst, sfill, b2saxpy, ipgetr, ipgeti, intface_s
-      external b2xvsg, b2xvps, b2stbc_phys
+      external b2xvsg, b2xvff, b2xvps, b2stbc_phys
+#ifdef WG_TODO
+     & , b2stbc_bas                                          !srv 27.06.21
+#endif
 *   ..initialisation
 *-----------------------------------------------------------------------
 *.computation
@@ -177,6 +179,16 @@
       qisum(1)=0.0_R8
       gssum(1)=0.0_R8                                                    !xpb
       volsum(1)=0.0_R8
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2STBC))
+!svdk parallellize over tubes
+!$omp parallel do default(none)
+!$omp& private(i, iCv, j, iFc, is)
+!$omp& private(tef, tif, nef, nif, naf, zaf, nxf, taf, zxf)
+!$omp& shared(mpg, geo, pl, dv, rt, st_ext)
+!$omp& shared(nCv, nFc, iFt, ns, is_neutral)
+!$omp& reduction(+: tesum, tisum, nasum, prsum, qesum, qisum, gssum)
+!$omp& reduction(+: volsum)
+#endif
       do i = 1, mpg%ftCvP(iFt,2)                                         !xpb
         iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
         if(mpg%cvOnClosedSurface(iCv)) then                              !xpb
@@ -217,11 +229,11 @@
                 taf = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,
      &           st_ext%ta(1,is))
                 prsum(1)=prsum(1) + nxf*taf*geo%cvVol(iCv)*
-     2           geo%fcBb(iFc,2)*geo%cvHz(iCv)
+     2           geo%fcBb(iFc,2)*geo%fcHz(iFC)
                 if (.not.st_ext%is_neutral(is)) then
                   zxf = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,
      &             st_ext%za(1,is))
-                  qisum(1)=qisum(1)-2.5_R8*geo%cvHz(iFc)*
+                  qisum(1)=qisum(1)-2.5_R8*geo%fcHz(iFc)*
      3             nxf*taf**2*geo%fcBb(iFc,2)/(qe*zxf)*geo%fcS(iFc)
                 endif
               enddo
@@ -229,8 +241,11 @@
               volsum(1)=volsum(1) + geo%cvVol(iCv)
             endif                                                        !xpb
           enddo
-        endif
+        endif                                                            !xpb
       enddo                                                      !sv 24.03.99
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2STBR))
+!$omp end parallel do
+#endif
       if (volsum(1).gt.0.0_R8) praverage(1)=prsum(1)/volsum(1)           !xpb
       if (gssum(1).gt.0.0_R8) then
         qeaverage(1)=qesum(1)/gssum(1)

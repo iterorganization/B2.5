@@ -218,6 +218,13 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       enddo                                                           !srv 09.01.01
 *   ..incorporate geometry
       call sfill (nFc*2*ns*ns, 0.0_R8, csigin, 1)
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRCL))
+!svdk parallelize over species
+!$omp parallel do default(none)
+!$omp& private(is, k, is0)
+!$omp& shared(ns, nCv, nFc, mode, geo, mpg, vsa, cvsa, nscx, iscx)
+!$omp& shared(is_neutral, zn, sigin, csigin)
+#endif
       do is = 0, ns-1
         call b2txcx (nCv, nFc, 0.0_R8,
      &   mode, geo, mpg, geo%fcVol, geo%fcS, vsa(:,0,is), cvsa(:,0,is))
@@ -235,23 +242,26 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           endif
         enddo
       enddo
-      inctran = switch%b2txcx_increase_transp_coefs
-      call b2txcx (nCv, nFc, inctran,
-     & mode, geo, mpg, geo%fcVol, geo%fcS, hce(:,0), chce(:,0))
-      call b2txcy (nCv, nFc,
-     & mode, geo, mpg, geo%fcVol, geo%fcS, hce(:,1), chce(:,1))
-      call b2txcx (nCv, nFc, inctran,
-     & mode, geo, mpg, geo%fcVol, geo%fcS, hci(:,0), chci(:,0))
-      call b2txcy (nCv, nFc,
-     & mode, geo, mpg, geo%fcVol, geo%fcS, hci(:,1), chci(:,1))
-      call b2txcx (nCv, nFc, 0.0_R8,
-     & mode, geo, mpg, geo%fcVol, geo%fcS, sig(:,0), csig(:,0))
-      call b2txcy (nCv, nFc,
-     & mode, geo, mpg, geo%fcVol, geo%fcS, sig(:,1), csig(:,1))
-      call b2txcx (nCv, nFc, 0.0_R8,
-     &   -1, geo, mpg, geo%fcVol, geo%fcS, alf(:,0), calf(:,0))
-      call b2txcy (nCv, nFc,
-     &   -1, geo, mpg, geo%fcVol, geo%fcS, alf(:,1), calf(:,1))
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRCL))
+!$omp end parallel do
+#endif
+
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  hce(:,0), chce(:,0))
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  hce(:,1), chce(:,1))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  hci(:,0), chci(:,0))
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  hci(:,1), chci(:,1))
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  sig(:,0), csig(:,0))
+      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+     &  sig(:,1), csig(:,1))
+      call b2txcx (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
+     &  alf(:,0), calf(:,0))
+      call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
+     &  alf(:,1), calf(:,1))
 
       if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
