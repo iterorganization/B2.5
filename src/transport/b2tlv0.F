@@ -56,6 +56,13 @@
 *   ..nothing done if alpha.eq.0
       if (alpha.ne.0.0_R8) then
        if (switch%b2tlv0_style.eq.0) then
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TLV0))
+!$omp parallel do default(none)
+!$omp& private(is, iFc, qcl, qfl, tfl, ubv, dubf)
+!$omp& shared(ns, nCv, nFc, nVx, geo, mpg, alpha, gamma)
+!$omp& shared(cvsa, cvsahz, flv, ua, na, tn, b2tlv0_cutlo, is_neutral)
+!$omp& reduction(max: maxfluxlimit)
+#endif
         do is = 0, ns-1
          if (is_neutral(is)) then
 *    ..compute differences of parallel velocity
@@ -86,9 +93,19 @@
            enddo
          endif
         enddo
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TLV0))
+!$omp end parallel do
+#endif 
        else
 cwdk    flux limit total gradient-driven flow, not individual poloidal
 cwdk    or radial contributions, since neutral transport is isotropic
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TLV0))
+!$omp parallel do default(none)
+!$omp& private(is, iFc, qcl, qfl, tfl, ubv, dubf)
+!$omp& shared(ns, nCv, nFc, nVx, geo, mpg, alpha, gamma, cvsa0)
+!$omp& shared(cvsa, cvsahz, flv, ua, na, tn, b2tlv0_cutlo, is_neutral)
+!$omp& reduction(max: maxfluxlimit)
+#endif
         do is = 0, ns-1
          if (is_neutral(is)) then
 *    ..compute differences of parallel velocity
@@ -114,6 +131,9 @@ cwdk    or radial contributions, since neutral transport is isotropic
           enddo
          endif
         enddo
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TLV0))
+!$omp end parallel do
+#endif 
        endif
       endif
 

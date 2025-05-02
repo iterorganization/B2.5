@@ -13,6 +13,7 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_openmp
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
@@ -52,7 +53,7 @@
       real (kind=R8) ::
      *   flo_eir(nFc,0:1), scur(nFc,0:1), fle_eir(nFc,0:1),   !srv 14.07.10
      &   floe_eir(nFc,0:1), floi_eir(nFc,0:1), floi_vhx(nFc),
-     &   fnef(nFc,0:1), fnec(nFc,0:1)
+     &   fnef(nFc,0:1), fnec(nFc,0:1), fne_eir(nFc, 0:1)
       real (kind=R8) :: 
      &   nbf(nFc), pbf(nFc), rzf(nFc), dpb(nFc,0:1), dpbc(nCv),
      &   dnete(nFc,0:1), weight(nFc,2)
@@ -96,6 +97,25 @@ c      endif
 
       meth = switch%b2tfnb_discr_meth
 
+*    ..initialize
+      fne_eir = 0.0_R8
+      weight = 1.0_R8
+      fnef = 0.0_R8
+
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TFRN))
+!svdk initialize the parallel region
+!$omp parallel default(none)
+!$omp& shared(nCv, nFc, nVx, ns, meth, is_neutral) 
+!$omp& shared(rt, pl, dv, mpg, geo, co, switch, st_ext)
+!$omp& shared(fle_eir, c071, c071f, zeff, floi_vhx, weight)
+!$omp& private(is, iFc)
+!$omp& private(nbf, pbf, rzf, wrkVx, dpb, dpbc, wrk0, fnec)
+!$omp& private(flo_eir, scur, wrk00, wrk11, wrk1, wrk2, wrkCv)
+!$omp& private(dnete)
+!$omp& reduction(+:fne_eir)
+!svdk parallellize over species
+!$omp do 
+#endif 
       do is = 0, ns-1
 
 *    ..compute partial pressure
@@ -103,7 +123,7 @@ c      endif
      &   pl%tn, is, dv%pa(:,is))
 
 *   ..interpolate na and pa to cell faces
-       weight = 1.0_R8
+       
        call intface(nCv,nFc,mpg%fcCv,weight,pl%na(:,is),nbf)
        call intface(nCv,nFc,mpg%fcCv,weight,dv%pa(:,is),pbf)
        call intface(nCv,nFc,mpg%fcCv,weight,rt%rza(:,is),rzf)
@@ -180,6 +200,11 @@ cwdk   still to be checked: vis_per and vis_q also in b2tfnb?
        dv%fna_eir(:,0,is) = dv%fna_eir(:,0,is) - wrk1*(dpb(:,0) - wrk2)
 
       enddo !is
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TFRN))
+!$omp end do
+!$omp end parallel
+!svdk next part should be only executed by a single thread 
+#endif 
 
 c Drift terms
       if((maxval(dv%facdrift).ne.0.0_R8 .or.
@@ -237,18 +262,20 @@ cwdk  * adapted check: added zn(is).eq.1 to avoid double counting
      &  (switch%xvecrb*dv%veecrb(:,1) + switch%xwdia*dv%wedia(:,1))*
      &   geo%fcS*geo%fcQalf(:,1)
 
-      dv%fne_eir = 0.0_R8
+*      dv%fne_eir = 0.0_R8
       do is = 0,ns-1
         if(.not.is_neutral(is)) then
 *       ..apply discretization scheme
           !accumulate conductive piece per species(fnec)
           call calcflow(nCv,nFc,nVx,meth,geo,mpg,dv%ne,fle_eir,
      &      co%cdna(:,:,is),wrk00,fnef,fnec)
-          dv%fne_eir = dv%fne_eir + fnec
+*          dv%fne_eir = dv%fne_eir + fnec
+            fne_eir = fne_eir + fnec 
         endif
       enddo
       !add convective piece (once)
-      dv%fne_eir = dv%fne_eir + fnef
+*     dv%fne_eir = dv%fne_eir + fnef
+      dv%fne_eir = fne_eir + fnef
 
 *   ..compute convective coefficients electron heat flux
       floe_eir(:,0) = 2.5_R8*dv%fne_eir(:,0) - 

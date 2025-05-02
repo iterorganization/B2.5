@@ -161,6 +161,14 @@
      &  co%alf0, hvi0, hve0, co%dkt0, co%dzt0, co%dna_ExB, co%hce_ExB,
      &  co%hci_ExB)
 *   ..incorporate geometry
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRNO))
+!svdk parallellize over species
+!$omp parallel default(none) 
+!$omp& private(is, iFc, wrkc)
+!$omp& shared(nCv, nFc, ns, mode, geo, mpg, co, chcib, wrk, wrk1)
+!$omp& shared(cdpa0, cvsa0, switch, is_neutral, zn)
+!$omp do
+#endif 
       do is = 0, ns-1
         call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%dna0(1:nCv,is), co%cdna(1:nFc,0,is))
@@ -189,8 +197,12 @@
         call b2txcc (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%hcib(1:nCv,is), chcib(1:nFc,is))
       enddo
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     & co%dna_ExB, co%cdna_ExB(1,0))
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRNO))
+!$omp end do 
+!$omp single
+#endif 
+      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol,
+     & geo%fcS, co%dna_ExB, co%cdna_ExB(1,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      & co%dna_ExB, co%cdna_ExB(1,1))
 
@@ -200,6 +212,10 @@
         wrk1(iFc,1) = geo%fcVol(iFc,1)*geo%cvHz(mpg%fcCv(iFc,1))
         wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvHz(mpg%fcCv(iFc,2))
       enddo
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRNO))
+!$omp end single
+!$omp do
+#endif 
       do is = 0, ns-1
        call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   co%dna0(1:nCv,is), co%cdnahz(1:nFc,0,is))
@@ -222,10 +238,15 @@
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   co%vsa0(1:nCv,is), co%cvsahz(1:nFc,1,is))                    !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
-
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRNO))
+!$omp end do
+#endif 
 *   ..Correction for advanced fluid neutral model                     !mb 09.10.17
 c   poloidal pressure diffusion coefficient is only from diamagnetic contribution --> projection
-      if (switch%transport_afn.eq.1) then 
+      if (switch%transport_afn.eq.1) then
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRNO))
+!$omp do
+#endif 
        do is = 0, ns-1
          if (is_neutral(is).and.nint(zn(is)).eq.1) then
            wrkc =  co%dpa0(:,is)*(geo%cvBb(:,2)/geo%cvBb(:,3))**2
@@ -235,8 +256,13 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
      &                 wrkc, co%cdpahz(1:nFc,0,is))
          endif
        enddo
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRNO))
+!$omp end do
+#endif 
       endif
-
+#if (defined(_OPENMP) && !defined(NO_OPENMP_B2TRNO))
+!$omp end parallel
+#endif 
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       co%cvsa_an = co%cvsa                                            !srv 04.10.99
       call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
