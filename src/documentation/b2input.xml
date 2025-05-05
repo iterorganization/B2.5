@@ -6291,6 +6291,7 @@
 						28 : density is read from the CON_FN file. If CONPAR(,,2) > 0 the profile is scaled so CONPAR(,,1) gives the maximum density. Values for the density are given in m<sup>-3</sup>.
 						29 : presure is prescribed from the CONPAR(,,1) in Pa.
 						30 : The particle flux per unit area is read from the CON_FN file. If CONPAR(,,2) > 0 the profile is scaled so CONPAR(,,1) gives the maximum particle flux per unit area. Values for the density are given in m<sup>-2</sup>s<sup>-1</sup>.
+						31 : non-marginal imposition of the Bohm-Chodura sheath entrance condition: the sum of the parallel and ExB velocity contributions to the target flux must be at least equal to the specific species sound speed. CONPAR(,,1) is a multiplier to the outgoing specific species sound speed C<sub>s,i</sub>, and must be set equal to MOMPAR(:,:,1) for consistency. To be used in conjunction with BCMOM=23, BCENE=24, BCENI=29, BCPOT=3. Recommended for cases with drifts.
 				</description>
 			</switch>
 			<switch>
@@ -6322,6 +6323,7 @@
 						19 : reads the momentum fllux profile from MOM_FN in units of m<sup>-2</sup>.s<sup>-1</sup>. This has to be used in combination with BCCON = 1, 28, 30 and BCENI = 15. Only available for E and W boundaries.
 						20 : reads the Mach number from the MOM_FN file. Velocity is calculated with the temperature at the boundary and &gamma;_i = 1. Only available for E and W boundaries.
 						21 : reads the parallel velocity gradient from the MOM_FN file in units of s<sup>-1</sup>.  If MOMPAR(,,2) > 0 the profile is scaled so the maximum parallel velocity gradient is given by MOMPAR(,,1). Only available for E and W boundaries.
+						22 : non-marginal imposition of the Bohm-Chodura sheath entrance condition: the sum of the parallel and ExB velocity contributions to the target flux must be at least equal to the specific species sound speed. MOMPAR(,,1) is a multiplier to the outgoing specific species sound speed C<sub>s,i</sub>, and must be set equal to CONPAR(:,:,1) for consistency. To be used in conjunction with BCCON=31, BCENE=24, BCENI=29, BCPOT=3. Recommended for cases with drifts.
 				</description>
 			</switch>
 			<switch>
@@ -6355,6 +6357,7 @@
 							ENEPAR(,2) is the strength of the feedback.
 						22 : radial leakage condition for the electron temperature. ENEPAR(,1) specifies the leakage velocity in units of the electron thermal velocity. A temperature gradient such that the diffusive flux is set to match this leakage is imposed.
 						23 : electron temperature profile in eV is read from the ENE_FN file. If ENEPAR(,,2) > 0 the profile is scaled so ENEPAR(,,1) provides the maximum electron temperature in eV.
+						24 : non-marginal imposition of the Bohm-Chodura sheath entrance condition: the electron heat outflux must be equal to the electron sheath transmission coefficient times the convected electron particle flux. ENEPAR(,,1) is an additional term to artificially increase / decrease the electron sheath transmission coefficient (recommended: 0), that is by default computed via the plasma parameters. To be used in conjunction with BCCON=31, BCMOM=23, BCENI=29, BCPOT=3. Recommended for cases with drifts.
 				</description>
 			</switch>
 			<switch>
@@ -6392,6 +6395,7 @@
 						26 : prescribe the poloidally averaged value of the ion temperature and introduce a poloidal variation in a simplified manner. This boundary condition is suitable for any plasma composition (i.e. when BCENI=23 fails). It is recommended to use this boundary condition together with corresponding condition on ion density (BCCON = 25,26,27). The average is taken over all core boundaries with BCENI=26. ENIPAR(,1) specifies the temperature in eV
 						27 : feedback boundary condition with prescribed total ion heat flux, constant poloidally averaged ion temperature and a poloidal variation in a simplified manner. This boundary condition is suitable for any plasma composition (i.e. when BCENI=24 fails). It is recommended to use this boundary condition together with corresponding condition on ion density (BCCON = 25,26,27). The flux is summed over all core boundaries with BCENI=27. ENIPAR(,1) specifies the energy flux in W
 						28 : ion temperature profile in eV is read from the ENI_FN file. If ENIPAR(,,2) > 0 the profile is scaled so ENIPAR(,,1) provides the maximum ion temperature in eV.
+						29 : non-marginal imposition of the Bohm-Chodura sheath entrance condition: the ion heat outflux must be equal to the ion sheath transmission coefficient times the convected ion particle flux. ENIPAR(,,1) sets the ion sheath transmission coefficient (recommended: 1.5). To be used in conjunction with BCCON=31, BCMOM=23, BCENI=29, BCPOT=3. Recommended for cases with drifts.
 				</description>
 			</switch>
 			<switch>

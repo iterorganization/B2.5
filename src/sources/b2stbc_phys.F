@@ -170,7 +170,7 @@
       character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, fedback_species, ishigh
       logical, save :: BCCON14(NBCD)                                    !srv 20.09.17
-      logical, save :: consistent
+      logical, save :: consistent, new_driftCompatible
       real (kind=R8) ::
      *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
@@ -600,6 +600,42 @@ cwdk  now need to recompute full diamagnetic component for ud
             WRITE(0,*) 'BCENE/I=15, BCPOT=11, ',
      &       'with BCMOM=13 and BCCON=14 for all ion species'
           END IF
+          ! New drift compatible BCs (still in test, print warnings)
+          DO IS = 0, NS-1
+            IF (IS_NEUTRAL(IS)) CYCLE
+            new_driftCompatible = .false.
+            IF (BCENE(IB).EQ.24 .OR. BCENI(IB).EQ.29 .OR. 
+     .          BCCON(IS,IB).EQ.31 .OR. BCMOM(IS,IB).EQ.22)
+     .        THEN
+              new_driftCompatible = .true.
+              consistent = BCENE(IB).eq.24 .and. 
+     .                     BCENI(IB).eq.29 .and. 
+     .                     BCPOT(IB).eq.3  .and. 
+     .                     BCCON(IS,IB).eq.31 .and. 
+     .                     BCMOM(IS,IB).eq.22
+            END IF
+            IF (new_driftCompatible) then
+              IF (.not.consistent) then
+                write(*,*) '!!! FOR SPECIES: ', IS, 'ON BOUNDARY: ',
+     &              IB, ': Inconsistency in using new drift sheath BCs!'
+                WRITE(*,*) 'IT IS RECOMMENDED TO IMPOSE TOGETHER : '
+                WRITE(*,*) 'BCCON=31, BCMOM=22, BCENE=24, BCENI=29, ',
+     &              'BCPOT=3'
+                WRITE(*,*) 'See b2stbc_phys.F for more info.'
+                write(0,*) '!!! FOR SPECIES: ', IS, 'ON BOUNDARY: ',
+     &              IB, ': Inconsistency in using new drift sheath BCs!',
+                WRITE(0,*) 'IT IS RECOMMENDED TO IMPOSE TOGETHER : '
+                WRITE(0,*) 'BCCON=31, BCMOM=22, BCENE=24, BCENI=29, ',
+     &              'BCPOT=3'
+                WRITE(0,*) 'See b2stbc_phys.F for more info.'
+              ELSE
+                write(*,*) '- Using new drift sheath BCs -'
+                WRITE(*,*) 'This set of BCs is still under test!'
+                write(0,*) '- Using new drift sheath BCs -'
+                WRITE(0,*) 'This set of BCs is still under test!'
+              END IF
+            END IF
+          END DO
         ENDIF
 
         call b2stbc_phys_species(IB)
@@ -3718,6 +3754,179 @@ cxpb  Add contribution from Eirene core boundary fluxes
           else
             call xerrab ('B2STBC -- BCCON=30, NOT AVAILABLE FOR N,S')
           endif
+  
+* -- BCCON=31 -- New version of drift-compatible target sheath BCs
+* This boundary condition is used for targets (surfaces W/E).
+* The original skeleton for this boundary condition is BCCON = 14.
+* Physically, this boundary condition imposes that the sum of the
+* parallel velocity and the poloidal ExB velocity (reprojected)
+* equals AT LEAST the specific species sound speed. 
+* If this constraint is over-fulfilled, the parallel velocity 
+* is extrapolated.
+* Compared to BCCON = 14, the perfect entrainment constraint is
+* removed, and the boundary condition is no longer marginal (>= 
+* instead of =).
+* 
+* IN:
+*   - CONPAR(IS,IB,1) sets a scalar, positive, multiplier for the
+*     sound speed, here computed assuming a polytropic index = GAMMAI.
+*     Its default should be 1. It should be equal to MOMPAR(IS,IB,1).
+*
+* Created by Massimo Carpita, SPC (massimo.carpita@epfl.ch)
+*
+* !!! WARNING: the current version of this BC is still under test!
+* -- BCCON=31 ---------------------------------------------------------
+
+
+        case (31)
+          if (new_boundary_files) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'BCCON = 31 : new drift-compatible sheath BC, CONPAR = ',
+     .       MOMPAR(IS,IB,1),' on boundary ',
+     .       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
+     .       'BCCON = 31, CONPAR(,,1) <= 0 not allowed!')
+          endif
+          IF(BCCHAR(IB).EQ.'W') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              S1 = ABS(
+     .           PBS(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))
+              ZBAR=bcint(na(-1,-1,is),nx,ny,iy,ib)/
+     .           bcint(NE,nx,ny,IY,IB)
+              ZARG=(GAMMAI*bcint(ti,nx,ny,iy,ib)
+     .           +bcint(rz2(-1,-1,is),nx,ny,iy,ib)*ZBAR
+     .           *bcint(TE,nx,ny,IY,IB))/(AM(IS)*mp)
+              CS=SQRT(ZARG)
+! UUTEST = V_par_extrap
+              UUTEST=ua(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),IS)*
+     .           (1.0_R8+
+     .            HX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
+     .    HX(RIGHTIX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),
+     .       RIGHTIY(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))))-
+     .    ua(RIGHTIX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),
+     .       RIGHTIY(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),IS)*
+     .            HX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
+     .    HX(RIGHTIX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),
+     .       RIGHTIY(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))) 
+! Make positive if along x direction, i.e. away from W target   
+              UUTEST=UUTEST*bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
+     .                  abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
+              if(.not.is_neutral(is)) then                          
+! Both V_par_extrap and V_ExB,x are positive if away from W target                   
+! U_out = MAX(- V_par_extrap - V_ExB,x * |B/B_x|, CS)
+              UUOUT=MAX(CONPAR(IS,IB,1)*CS,
+     .            - UUTEST - 
+     .            vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)*
+     .            abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3)/
+     .                bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)))                         
+              else           
+! V_par_extrap is positive if away from W target   
+! U_out = MAX(- V_par_extrap, CS)                                       
+                UUOUT=MAX(CONPAR(IS,IB,1)*CS,-UUTEST)                                      
+              endif   
+! Ensure UPOUT is positive
+              UPOUT=max(0.0_R8, UUOUT)
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
+     .           S1*UPOUT
+              sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)=
+     .           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS) +
+     .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)
+              if(mdf_fnb.ne.0) then                                
+                t0 = -
+     .        fnaPSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)
+                if (t0.ge.0.0_R8) then
+                  sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
+     .             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)+t0
+                else
+                  sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
+     .             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)+t0/
+     .               na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+                endif
+              endif                                                   
+            ENDDO
+          ELSEIF(BCCHAR(IB).EQ.'E') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              S1 = ABS(PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
+              ZBAR=bcint(na(-1,-1,is),nx,ny,iy,ib)/
+     .           bcint(NE,nx,ny,IY,IB)
+              ZARG=(GAMMAI*bcint(ti,nx,ny,iy,ib)
+     .           +bcint(rz2(-1,-1,is),nx,ny,iy,ib)*ZBAR
+     .           *bcint(TE,nx,ny,IY,IB))/(AM(IS)*mp)
+              CS=SQRT(ZARG)
+! UUTEST = V_par_extrap
+              UUTEST=ua(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),IS)*
+     .           (1.0_R8+
+     .            HX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
+     .       HX(LEFTIX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),
+     .          LEFTIY(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))))-
+     .       ua(LEFTIX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),
+     .          LEFTIY(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),IS)*
+     .            HX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
+     .       HX(LEFTIX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),
+     .          LEFTIY(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
+! Make UUTEST positive if along x direction, i.e. towards E target   
+              UUTEST=UUTEST*bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
+     .                  abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
+              if(.not.is_neutral(is)) then                          
+! Both V_par_extrap and V_ExB,x are positive if towards E target                   
+! U_out = MAX(V_par_extrap + V_ExB,x * |B/B_x|, CS)
+              UUOUT=MAX(CONPAR(IS,IB,1)*CS,
+     .            UUTEST + 
+     .            vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)*
+     .            abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3)/
+     .                bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)))                           
+              else           
+! V_par_extrap is positive if towards E target   
+! U_out = MAX(V_par_extrap, CS)                                       
+                UUOUT=MAX(CONPAR(IS,IB,1)*CS,UUTEST)                                      
+              endif          
+! Ensure UPOUT is positive
+              UPOUT=max(0.0_R8, UUOUT)
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
+     .           S1*UPOUT
+              sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)=
+     .           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS) +
+     .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)
+              if(mdf_fnb.ne.0) then                                
+                t0 = fnaPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+                if(t0.ge.0.0_R8) then
+                  sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
+     .             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)+t0
+                else
+                  sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
+     .             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)+t0/
+     .               na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+                endif
+              endif                                     
+            ENDDO
+          ELSE
+            CALL XERRAB ('B2STBC -- BCCON=31, NOT IN RADIAL DIR')
+          ENDIF
 
         case default
           write(*,*) BCCON(IS,IB)
@@ -4961,6 +5170,158 @@ cxpb  and max(,,) statement for stability
           ELSE
             CALL XERRAB ('B2STBC -- BCMOM=21, NOT AVAILABLE FOR N,S')
           ENDIF
+
+* -- BCMOM=22 -- New version of drift-compatible target sheath BCs
+* This boundary condition is used for targets (surfaces W/E).
+* The original skeleton for this boundary condition is BCMOM = 3.
+* Physically, this boundary condition imposes that the sum of the
+* parallel velocity and the poloidal ExB velocity (reprojected)
+* equals AT LEAST the specific species sound speed. 
+* If this constraint is over-fulfilled, the parallel velocity 
+* is extrapolated.
+* Compared to BCMOM = 13, the perfect entrainment constraint is
+* removed, and the boundary condition is no longer marginal (>= 
+* instead of =).
+* Compared to BCMOM = 3, the role of MOMPAR(:,:,2) is removed,
+* and the poloidal ExB contribution is added to the parallel.
+* 
+* IN:
+*   - MOMPAR(IS,IB,1) sets a scalar, positive, multiplier for the
+*     sound speed, here computed assuming a polytropic index = GAMMAI.
+*     Its default should be 1. It should be equal to CONPAR(IS,IB,1).
+*
+* Created by Massimo Carpita, SPC (massimo.carpita@epfl.ch)
+*
+* !!! WARNING: the current version of this BC is still under test!
+* -- BCMOM=22 ---------------------------------------------------------
+
+        case (22)
+          if(new_boundary_files) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'BCMOM = 22 : new drift-compatible sheath BC, MOMPAR = ',
+     .       MOMPAR(IS,IB,1),' on boundary ',
+     .       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            call xertst(MOMPAR(IS,IB,1).gt.0.0_R8,
+     .       'BCMOM = 22, MOMPAR(,,1) <= 0 not allowed!')
+          endif
+          IF(BCCHAR(IB).EQ.'W') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              ZBAR=bcint(na(-1,-1,is),nx,ny,iy,ib)/
+     .           bcint(NE,nx,ny,IY,IB)
+              ZARG=(GAMMAI*bcint(ti,nx,ny,iy,ib)
+     .           +bcint(rz2(-1,-1,is),nx,ny,iy,ib)*ZBAR
+     .           *bcint(TE,nx,ny,IY,IB))/(AM(IS)*mp)
+              CS=SQRT(ZARG)
+              UUTEST=ua(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),IS)*
+     .           (1.0_R8+
+     .            HX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
+     .    HX(RIGHTIX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),
+     .       RIGHTIY(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))))-
+     .    ua(RIGHTIX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),
+     .       RIGHTIY(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),IS)*
+     .            HX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
+     .    HX(RIGHTIX(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),
+     .       RIGHTIY(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
+! Make positive if along x direction, i.e. away from W target   
+              UUTEST=UUTEST*bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
+     .                  abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
+              if(.not.is_neutral(is)) then                          
+! Both V_par_extrap and V_ExB,x are positive if away from W target   
+! U_out = MAX(- V_par_extrap, CS + V_ExB,x * |B/B_x|)
+                UUOUT=MAX(MOMPAR(IS,IB,1)*CS + 
+     .            vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .             rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)*
+     .            abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3)/
+     .                bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)),
+     .            - UUTEST)
+                UPOUT=max(0.0_R8, UUOUT)                            
+              else     
+! V_par_extrap is positive if away from W target   
+! U_out = MAX(- V_par_extrap, CS)                                             
+                UUOUT=MAX(MOMPAR(IS,IB,1)*CS, - UUTEST)
+                UPOUT = UUOUT                                       
+              endif   
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .         (UBIG/EPSLON**2)*AM(IS)*mp*
+     .         bcint(na(-1,-1,IS),nx,ny,IY,IB)*
+     .         SXHZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
+     .         (-UPOUT)*
+     .         SIGN(1.0_R8,BB(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))   
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .         -(UBIG/EPSLON**2)*AM(IS)*mp*
+     .         bcint(na(-1,-1,IS),nx,ny,IY,IB)*
+     .         SXHZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            end do
+          ELSEIF(BCCHAR(IB).EQ.'E') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)
+              ZBAR=bcint(na(-1,-1,is),nx,ny,iy,ib)/
+     .           bcint(NE,nx,ny,IY,IB)
+              ZARG=(GAMMAI*bcint(ti,nx,ny,iy,ib)
+     .           +bcint(rz2(-1,-1,is),nx,ny,iy,ib)*ZBAR
+     .           *bcint(TE,nx,ny,IY,IB))/(AM(IS)*mp)
+              CS=SQRT(ZARG)
+              UUTEST=ua(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),IS)*
+     .           (1.0_R8+
+     .            HX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
+     .       HX(LEFTIX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),
+     .          LEFTIY(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))))-
+     .       ua(LEFTIX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),
+     .          LEFTIY(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),IS)*
+     .            HX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
+     .       HX(LEFTIX(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))),
+     .          LEFTIY(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
+! Make positive if along x direction, i.e. towards E target   
+              UUTEST=UUTEST*bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
+     .                  abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
+              if(.not.is_neutral(is)) then                          
+! Both V_par_extrap and V_ExB,x are positive if towards E target   
+! U_out = MAX(V_par_extrap, CS - V_ExB,x * |B/B_x|)
+                UUOUT=MAX(MOMPAR(IS,IB,1)*CS - 
+     .            vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)*
+     .            abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3)/
+     .                bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)),
+     .            UUTEST)
+                UPOUT=max(0.0_R8, UUOUT)                             
+              else           
+! V_par_extrap is positive if towards E target   
+! U_out = MAX(V_par_extrap, CS)                                       
+                UUOUT=MAX(MOMPAR(IS,IB,1)*CS,UUTEST)
+                UPOUT = UUOUT                                        
+              endif                                                 
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .         (UBIG/EPSLON**2)*AM(IS)*mp*
+     .         bcint(na(-1,-1,IS),nx,ny,IY,IB)*
+     .         SXHZ(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*UPOUT*
+     .         SIGN(1.0_R8,BB(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))   
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .        -(UBIG/EPSLON**2)*AM(IS)*mp*
+     .         bcint(na(-1,-1,IS),nx,ny,IY,IB)*
+     .         SXHZ(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+            end do
+          ELSE
+            CALL XERRAB
+     .       ('B2STBC -- BCMOM=22, NO SHEATH IN RADIAL DIR.')
+          END IF
 
         case default
           write(*,*) BCMOM(IS,IB)
@@ -7087,6 +7448,142 @@ cxpb code segment analog to b2tfhe
         ELSE
           CALL XERRAB ('B2STBC -- BCENE=23, NOT AVAILABLE FOR N,S')
         ENDIF
+
+* -- BCENE=24 -- New version of drift-compatible target sheath BCs
+* This boundary condition is used for targets (surfaces W/E).
+* The original skeleton for this boundary condition is BCENE = 15,
+* in its "stablized" form, i.e. with bcene_15_style=1, i.e. 
+* computing the electron particle flux via the sheath electric
+* potential drop.
+* Physically, this boundary condition imposes that the electron
+* heat flux, minus its PS (dia) component, equals the product
+* of the convective electron particle flux times the electron
+* sheath transmission coefficient, here computed self-consistently
+* via the secondary electron coefficient GAMMAE and the potential
+* drop in the sheath.
+* Note that these sheath transmission coefficients are for the
+* INTERNAL energy only. Therefore their default value should not
+* account for pressure work and kinetic energy.
+* GAMMAE can be also evaluated with a kinetic model, if turned on.
+* A zero-sum term stab_coeff_sheath_te is used to improve stability.
+*
+* IN:
+*   - ENEPAR(IS,IB,1) sets a scalar factor, used to artificially
+*     increase / decrease the sheath transmission coefficient.
+*     Its default should be 0. An error is raised if the total
+*     sheath transmission coefficient drops below 0.
+*
+* Created by Massimo Carpita, SPC (massimo.carpita@epfl.ch)
+*
+* !!! WARNING: the current version of this BC is still under test!
+* -- BCENE=24 ---------------------------------------------------------
+      case (24)
+        if(new_boundary_files) then
+          write(*,'(a,g14.7,a,g14.7,a,a)') 
+     .       'BCENE = 24 : new drift compatible BC with GAMMAE = ', 
+     .        GAMMAE, ' and ENEPAR(IB,1) = ', ENEPAR(IB,1), 
+     .       ' (def = 0), on ', TRIM(BCCHAR(IB)), ' at ', 
+     .       boundary_location(IB)
+        endif
+        IF(BCCHAR(IB).EQ.'W') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)                                 
+            call xertst((1.0e0_R8 + GAMMAE + ENEPAR(IB,1) + 
+     .                  (1.0e0_R8-GAMMAE)*qe*
+     .                  (po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     .                  - potpar(IB,2))).gt.0, 
+     .                  'e- sheath transm. coeff. < 0 on W target')
+            if(pot_eq.eq.1) then                                   
+              s1=abs(pbs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)) 
+              vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
+              t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              t0 = s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*                   
+     .             expu2(max(-50.0_R8,
+     .        min(0.0_R8, -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-
+     .        potpar(ib,2))) / te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))   
+              she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     .        she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) -
+     .        (1.0e0_R8+GAMMAE+ENEPAR(IB,1)+stab_coeff_sheath_te)*t0        
+              she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     .        she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
+     .        ((1.0e0_R8-GAMMAE)*
+     .        qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     .            - potpar(IB,2))-stab_coeff_sheath_te*
+     .              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*t0
+            else   
+            ! No pot. eq., so qe*(po-potpar)/Te assumed = 3.1,
+            ! and use fne to compute electron particle flux                                                 
+              she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     .        she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) -
+     .        ((1.0e0_R8 + GAMMAE + ENEPAR(IB,1))/
+     .         (1.0e0_R8-GAMMAE)+3.1_R8)*max(0.0_R8,-fne(
+     .         rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .         rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0))
+            endif                                                     
+            if(mdf_fhe.ne.0) then                                     
+              t0 =
+     .          -fhePSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                   rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)
+              if (t0.ge.0.0_R8) then
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     .             she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) + t0
+              else
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     .             she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) + t0/
+     .             te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              end if
+            endif                                                     
+          END DO
+        ELSEIF(BCCHAR(IB).EQ.'E') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)  
+            call xertst((1.0e0_R8 + GAMMAE + ENEPAR(IB,1) + 
+     .                  (1.0e0_R8-GAMMAE)*qe*
+     .                  (po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     .                  - potpar(IB,2))).gt.0, 
+     .                  'e- sheath transm. coeff. < 0 on E target')                            
+            if(pot_eq.eq.1) then   
+              s1=abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)) 
+              vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
+              t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              t0 =s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*                   
+     .            expu2(max(-50.0_R8,
+     .        min(0.0_R8, -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-
+     .        potpar(ib,2))) / te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))                                  
+              she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     .        she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) -
+     .        (1.0e0_R8+GAMMAE+ENEPAR(IB,1)+stab_coeff_sheath_te)*t0      
+              she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     .        she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
+     .        ((1.0e0_R8-GAMMAE)*
+     .        qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     .            - potpar(IB,2))-stab_coeff_sheath_te*
+     .            te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))*t0  
+            else   
+            ! No pot. eq., so qe*(po-potpar)/Te assumed = 3.1,
+            ! and use fne to compute electron particle flux                                                   
+              she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     .           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
+     .                 ((1.0e0_R8 + GAMMAE + ENEPAR(IB,1))/
+     .                   (1.0e0_R8-GAMMAE)+3.1_R8)*max(0.0_R8,
+     .                fne(bc_list_x(iy,ib),bc_list_y(iy,ib),0))  
+            endif                                                
+            if(mdf_fhe.ne.0) then                                     
+                t0 =
+     .           fhePSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)        
+                if (t0.ge.0.0_R8) then
+                  she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     .             she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) + t0
+                else
+                  she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     .             she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) + t0/
+     .             te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              end if
+            endif                                                     
+          end do
+        ELSE
+          CALL XERRAB
+     .      ('B2STBC -- BCENE=24, not available for S and N')
+        END IF
 
       case default
         write(*,*) BCENE(IB)
@@ -9693,6 +10190,108 @@ cxpb Careful here because of BC number clash
         ELSE
           CALL XERRAB ('B2STBC -- BCENI=28, NOT AVAILABLE FOR N,S')
         ENDIF
+
+* -- BCENI=29 -- New version of drift-compatible target sheath BCs
+* This boundary condition is used for targets (surfaces W/E).
+* The original skeleton for this boundary condition is BCENI = 12 
+* and BCENI = 15.
+* Physically, this boundary condition imposes that the ion species i
+* heat flux, minus its PS (dia) component, equals the product
+* of the convective ion species i particle flux times the ion
+* sheath transmission coefficient ENIPAR(:,:,1).
+* Note that these sheath transmission coefficients are for the
+* INTERNAL energy only. Therefore their default value should not
+* account for pressure work and kinetic energy.
+* A zero-sum term stab_coeff_sheath_ti is used to improve stability.
+* 
+* IN:
+*   - ENIPAR(IS,IB,1) sets a scalar factor, used to artificially
+*     increase / decrease the sheath transmission coefficient.
+*     Its default should be 1.5.
+*
+* Created by Massimo Carpita, SPC (massimo.carpita@epfl.ch)
+*
+* !!! WARNING: the current version of this BC is still under test!
+* -- BCENI=29 ---------------------------------------------------------
+
+      case (29)
+        if(new_boundary_files) then
+          write(*,'(a,1p,g14.7,a,a,a)')
+     .       'BCENI = 29 : new drift compatible BC, ENIPAR(IB,1) = ', 
+     .        ENEPAR(IB,1), ' (def = 0), on ', 
+     .        BCCHAR(IB),boundary_location(ib)
+        endif
+        IF(BCCHAR(IB).EQ.'W') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)
+            DO IS=0,NS-1
+              shi0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) =
+     .        shi0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) -
+     .          ((ENIPAR(IB,1)+stab_coeff_sheath_ti) 
+     .          )*max(0.0_R8,
+     .            -fna_mdf(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .               rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,is)
+     .            -fnaPSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is))  
+              shi0(bc_list_x(iy,ib),bc_list_y(iy,ib),0) =
+     .        shi0(bc_list_x(iy,ib),bc_list_y(iy,ib),0) +
+     .          stab_coeff_sheath_ti 
+     .          *TI(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     .          *max(0.0_R8,
+     .            -fna_mdf(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .              rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,is)
+     .            -fnaPSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is))               
+            end do
+            t0 = 0.0_R8 
+            if(mdf_fhi.ne.0) then                                    
+            t0 = t0
+     .      -fhiPSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)
+            endif
+            if (t0.ge.0.0_R8) then
+              shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     .        shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) + t0
+            else
+              shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     .        shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) + t0/
+     .        ti(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            end if
+          end do
+        ELSEIF(BCCHAR(IB).EQ.'E') THEN
+          DO IY = 1, BC_LIST_SIZE(IB)
+            DO IS=0,NS-1
+              shi0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) =
+     .        shi0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) -
+     .          (ENIPAR(IB,1)+stab_coeff_sheath_ti 
+     .          )*max(0.0_R8,
+     .              fna_mdf(bc_list_x(iy,ib),bc_list_y(iy,ib),0,is)
+     .             +fnaPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is))
+              shi0(bc_list_x(iy,ib),bc_list_y(iy,ib),0) =
+     .        shi0(bc_list_x(iy,ib),bc_list_y(iy,ib),0) +
+     .          stab_coeff_sheath_ti
+     .          *TI(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     .          *max(0.0_R8,
+     .              fna_mdf(bc_list_x(iy,ib),bc_list_y(iy,ib),0,is)
+     .             +fnaPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is))
+            end do
+            t0 = 0.0_R8
+            if(mdf_fhi.ne.0) then                                    
+            t0 =
+     .          fhiPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)
+            endif
+            if (t0.ge.0.0_R8) then
+              shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     .        shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) + t0
+            else
+              shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     .        shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) + t0/
+     .        ti(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            end if
+          end do
+        ELSE
+          CALL XERRAB
+     .       ('B2STBC -- BCENI=29, not available for S and N')
+        END IF
 
 * -- BOUNDARY CONDITIONS FOR POTENTIAL EQUATION --
       case default
