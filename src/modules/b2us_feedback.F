@@ -62,7 +62,6 @@
      & fb_current(DEF_NATM) = 0.0_R8, fb_prev(DEF_NATM) = 0.0_R8,
      & fb_rescale(DEF_NATM) = 1.0_R8,
      & fb_current_prev(DEF_NATM) = 0.0_R8,
-     & fb_target_actuator(DEF_NATM) = 0.0_R8,
      & fb_tau(DEF_NATM) = 0.0_R8
 
       integer, save :: fb_reg_par(DEF_NATM,2) = 0, !contains face label to define list of faces for feedback
