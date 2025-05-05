@@ -157,7 +157,7 @@
       else
         if (.not.file_ok) write(6,*) 'No ',trim(filename)
       endif
-      found = maxval(saved_fb_actuator).gt. 0.0_R8
+      found = maxval(saved_fb_actuator).gt.0.0_R8
       return
 #ifdef USE_MPI
   999 call xerrab ('Error while reading FEEDBACK namelist!')
@@ -173,8 +173,7 @@
       character*256 filename
 
 c      feedback_namelist_used = feedback_namelist_used .or.
-c     .            saved_cbsna_sol, maxval(saved_na_feedback_actuator))
-c     .            .gt.0.0_R8
+c     .            maxval(saved_fb_actuator).gt.0.0_R8
 
       if (edition.eq.'    ') then
         filename = 'b2.feedback_save.parameters'
@@ -1800,7 +1799,7 @@ cxpb size is changed in b2mod_dimensions
 
             case (0) ! no action
 
-            case (1) ! rescale slowed by na_feedback_alpha
+            case (1) ! rescale slowed by fb_alpha
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
