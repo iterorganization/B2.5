@@ -2160,17 +2160,17 @@ c b2trcl
       call ipgetr ('b2trcl_cvsa_mltpl', s%cvsa_mltpl)                !iyv 06.12.13
 
 c b2stbc
-      call ipgeti ('b2stbc_bcene_16_style', s % bcene_16_style)
-      call ipgeti ('b2stbc_bceni_16_style', s % bceni_16_style)
+      call ipgeti ('b2stbc_bcene_16_style', s%bcene_16_style)
+      call ipgeti ('b2stbc_bceni_16_style', s%bceni_16_style)
 
-      call ipgetr ('b2stbc_cbc', s % b2stbc_cbc)                     !srv 14.10.99
-      call ipgetr ('b2stbc_bc_ref', s % b2stbc_bc_ref)
-      call ipgetr ('b2stbc_bc_ref_te', s % b2stbc_bc_ref_te)         !srv 11.04.13
-      call ipgetr ('b2stbc_bc_ref_ti', s % b2stbc_bc_ref_ti)         !srv 11.04.13
-      call ipgetr ('b2stbc_nesepm', s % nesepm)
-      call ipgetr ('b2stbc_ndes_sol', s % ndes_sol)
-      call ipgetr ('b2stbc_nesepm_overshoot', s % nesepm_overshoot)
-      call ipgetr ('b2stbc_BC2_cor9', s % b2stbc_cor9)
+      call ipgetr ('b2stbc_cbc', s%b2stbc_cbc)                       !srv 14.10.99
+      call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)
+      call ipgetr ('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)           !srv 11.04.13
+      call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)           !srv 11.04.13
+      call ipgetr ('b2stbc_nesepm', s%nesepm)
+      call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
+      call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
+      call ipgetr ('b2stbc_BC2_cor9', s%b2stbc_cor9)
       call ipgetr ('b2stbc_stab_coeff_sheath_te',
      &                                s % stab_coeff_sheath_te)
       call ipgetr ('b2stbc_stab_coeff_sheath_ti',

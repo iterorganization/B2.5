@@ -3864,9 +3864,24 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Defines the style of ion heat flux limit. If number of collisions in flux tube(determined by average collisionality) is bigger than the value in the key, old style of ion flux limit will be applied. Otherwise new style  (flux limit is defined by the number of collisions) will be applied.
+					Under-relaxation factors related to feedback schemes for boundary conditions.
 				</description>
-			</switch>
+				<switch>
+					<name>b2stbc_bc_ref</name>
+					<default>0.01</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2stbc_bc_ref_ti</name>
+					<default>0.01</default>
+					<type>real</type>
+				</switch>
+				<switch>
+					<name>b2stbc_bc_ref_te</name>
+					<default>0.01</default>
+					<type>real</type>
+				</switch>
+			</switchgroup>
 		</category>
 		<category name="Output">
 			<switch>
@@ -7641,8 +7656,11 @@
 					10 : leakage option for density, recommended for cases with drifts, CONPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub> n<sub>a</sub>, CONPAR(,,2)>0 is the stabilizing factor which may be needed if drifts are activated.
 					11 : should not be used for feedbacks anymore, not converted to WG code.
 					12 : should not be used for feedbacks anymore, not converted to WG code.
-					13 : particle density to achieve specified total flux, CONPAR(,,1) is the specified flux crossing the boundary flux surface, CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used), CONPAR(,,3), when running with Eirene and the 'ionising core' switch is used, is set internally to match the re-entering flux of ionised neutrals that crossed the core boundary (one must then have 'ionising_core'.eq.-IB where IB is the boundary index).
-					14 : sound speed velocity flux, CONPAR(,,1) is a multiplier to the outgoing sound speed C<sub>s</sub>. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCMOM=13. Recommended for cases with drifts. If MOMPAR(:,:,2).ge.0.5, the sound speed is defined separately for each ionization state. If CONPAR(,,2).gt.0, an additional decay-length loss is added, where CONPAR(,,2) is the decay length.
+					13 : particle density to achieve specified total flux,
+						CONPAR(,,1) is the specified flux crossing the flux surface 'b2stbc_type13_ref' steps away from the boundary,
+						CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used),
+						CONPAR(,,3), when running with Eirene and the 'ionising core' switch is used, is set internally to match the re-entering flux of ionised neutrals that crossed the core boundary (one must then have 'ionising_core'.eq.-IB where IB is the boundary index).
+					14 : sound speed velocity flux, CONPAR(,,1) is a multiplier to the outgoing sound speed C<sub>s</sub>. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCMOM=13. Recommended for cases with drifts. If CONPAR(,,2).gt.0, an additional decay-length loss is added, where CONPAR(,,2) is the decay length.
 					15 : prescribe a radial leakage velocity, CONPAR(,,1) specifies the leakage velocity in units of the local thermal velocity.
 					16 : particle density to achieve specified total flux, used with ASTRA coupling. The total desired flux is summed over all BCCON=16 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
 					18 : prescribe total main ion particle flux, used with ASTRA coupling. Not yet available for WG.
@@ -7654,7 +7672,7 @@
 					24 : constant density feedback scaled by density on the ring 'bc_type21_ref' away. CONPAR(,,1) specifies the desired density in m<sup>-3</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used). Not yet available for WG.
 					25 : feedback boundary condition: prescribe the average value of the density and add the poloidal density variation from the neighbouring radial ring. This boundary condition is suitable for any species of a multi-species plasma (i.e. in the case when the condition used in BCCON=21 fails). It is recommended to use this boundary condition together with the corresponding condition on ion temperature (BCENI=26,27). CONPAR(,,1) specifies the desired average density in m<sup>-3</sup>.
 					26 : feedback boundary condition: prescribe the total ion flux and find the average density. The poloidal density variation from the neighbouring radial ring is applied on top of the average density. This boundary condition is suitable for any species of a multi-species plasma (i.e. in the case when the condition used in BCCON=22 fails). It is recommended to use this boundary condition together with a corresponding condition on the ion temperature (BCENI=26,27). The total desired flux is summed over all BCCON=26 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
-					27 : feedback boundary condition: prescribe the particle flux sum for all neutrals and ions belonging to a given isonuclear sequence and find the average density. The poloidal density variation from the neighbouring radial ring is applied on top of the average density. It is recommended to use this boundary condition together with corresponding condition on ion temperature (BCENI=25,26). The total desired flux is summed over all BCCON=27 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
+					27 : feedback boundary condition: prescribe the particle flux sum for all neutrals and ions belonging to a given isonuclear sequence and find the average density of the highest ionization stage. The poloidal density variation from the neighbouring radial ring is applied on top of the average density. It is recommended to use this boundary condition together with corresponding condition on ion temperature (BCENI=25,26). The total desired flux is summed over all BCCON=27 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
 					28 : Prescribe the flux surface averaged density, with a poloidal perturbation taken from the flux tube just inside the domain. Only intended for core boundaries. CONPAR(,,1) specifies the desired average density in m<sup>-3</sup>.
 					29 : Feedback on the total particle flux, by imposing a flux surface averaged density, with a poloidal perturbation taken from the flux tube just inside the domain. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used). Intended for core boundaries only.
 				</description>
@@ -7677,7 +7695,7 @@
 					10 : prescribe the decay length for the parallel momentum, MOMPAR(,,1) specifies the decay length in m.
 					11 : Rozhansky viscosity condition for the parallel momentum, MOMPAR(,,1) is not used. Not yet available for WG.
 					12 : condition from b2stbc_spb for the parallel momentum.
-					13 : drift-compatible sheath boundary condition for the parallel momentum. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCCON=14. Recommended for cases with drifts. If MOMPAR(:,:,2).ge.0.5, the sound speed is defined separately for each ionization state.
+					13 : sheath boundary condition from b2stbc_spb for the parallel momentum. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCCON=14. Recommended for cases with drifts.
 					14 : condition from b2stbc_spb for the parallel momentum
 					15 : prescribe the value of the parallel velocity, scaled with B_average/B_local. Not yet available for WG.
 					16 : prescribe the average value of the parallel velocity MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup>
@@ -7704,8 +7722,8 @@
 					11 : not used
 					12 : sheath conditions, electron energy transmission coefficient, ENEPAR(,1) specifies an energy transmission factor, delta<sub>e</sub> in Q<sub>e</sub> = delta<sub>e</sub> &Gamma;<sub>e</sub> T<sub>e</sub>. Obsolete. Replace with drift-compatible BCENE = 15.
 					13 : prescribe the electron energy flux per unit area proportional to temperature, ENEPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J).
-					14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>. The energy loss also includes an electrostatic term as &alpha; ENEPAR(,2) C<sub>s</sub>,collective e &Phi; n<sub>e</sub>.
-					15 : sheath boundary condition, recommended when using drifts (see Section C.9.4 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, BCENI=15, and BCPOT=11.
+					14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>
+					15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.4 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, BCENI=15, and BCPOT=11.
 					16 : feedback boundary condition with constant temperature, ENEPAR(,1) specifies the power flux in W across the core boundary, ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback (if left zero, b2stbc_bc_ref_te will be used). Also see type [17] below. Available if bcene_16_style=0 (default). If bcene_16_style=1, integrated electron heat flux with constant electron temperature, summed over all core boundaries with BCENE=16.
 					17 : feedback boundary condition with constant shared temperature for both electrons and ions, with ENEPAR(,1) + ENIPAR(,1) giving the total power flux in W across the core boundary, ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Recommended to replace [16] for high densities.
 					18 : fractional drop condition. Experimental. Attempts to set the guard cell temperature to be (1 - ENEPAR(,1)) times the boundary cell temperature.
@@ -7737,7 +7755,7 @@
 					12 : sheath conditions, ion energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, delta<sub>i</sub> in Q<sub>i</sub> = delta<sub>i</sub> T<sub>i</sub> sum<sub>a</sub> &Gamma;<sub>a</sub>. Obsolete. Replace with drift-compatible BCENI = 15.
 					13 : prescribe the ion energy flux per unit area proportional to temperature, ENIPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J).
 					14 : leakage option for ion energy, ENIPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>T<sub>i</sub>.
-					15 : sheath boundary condition, recommended when using drifts (see Section C.9.5 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, along with BCENE=15 and BCPOT=11.
+					15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.5 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, along with BCENE=15 and BCPOT=11.
 					16 : feedback boundary condition with constant temperature, ENIPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2) should be something like 0.1 and specifies the strength of the feedback (if left zero, b2stbc_bc_ref_ti will be used). Also see type [17] below. Available if bceni_16_style=0 (default). If bceni_16_style=1, integrated ion heat flux with constant ion temperature, summed over all core boundaries with BCENI=16. ENIPAR(,1) specifies the power flux in W.
 					17 : feedback boundary condition with constant shared temperature for both electrons and ions, see BCENE=17 above for description.
 					18 : fractional drop condition.  Experimental. Attempts to set the guard cell temperature to be (1 - ENIPAR(,1)) times the boundary cell temperature.
@@ -7780,7 +7798,7 @@
 					17 : feedback condition on total current, imposing a potential profile matching that of the neighbouring flux tube. POTPAR(,1) specifies the electric current in A. POTPAR(,2) specifies the strength of the feedback (if left zero, b2stbc_bc_ref_te will be used).
 					21 : constant potential feedback scaled by potential on the nearby ring. POTPAR(,,1) specifies the desired potential in V. POTPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref_te will be used).
 					22 : prescribe the value of the potential, with a perturbation taken from the first flux tube in the domain. Intended for core boundaries only. POTPAR(,1) specifies the average potential.
-					23 : potential feedback on the total current for the core boundary, imposing a flux surface averaged potential, with poloidal perturbation taken from flux tube just inside domain. The feedback is scaled with the ion temperature. POTPAR(,,1) specifies the desired integral current through flux surfaces (in Amperes). POTPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref_te will be used).
+					23 : potential feedback on the total current for the core boundary, imposing a flux surface averaged potential, with poloidal perturbation taken from flux tube just inside domain. The feedback is scaled with the ion temperature. POTPAR(,,1) specifies the desired integral current through flux surfaces (in Amperes).	POTPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref_te will be used).
 				</description>
 			</switch>
 			<switch>
