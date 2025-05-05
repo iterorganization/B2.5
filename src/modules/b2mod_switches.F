@@ -534,8 +534,6 @@ c b2stbc
       real (kind=R8) :: b2stbc_bc_ref
       real (kind=R8) :: b2stbc_bc_ref_te
       real (kind=R8) :: b2stbc_bc_ref_ti
-      real (kind=R8) :: bc_type13_norm
-      real (kind=R8) :: bc_type13_fac
       real (kind=R8) :: nesepm
       real (kind=R8) :: ndes_sol
       real (kind=R8) :: nesepm_overshoot
@@ -1116,8 +1114,6 @@ c b2stbc_phys
       s % b2stbc_bc_ref = 0.01_R8            !srv 14.10.99
       s % b2stbc_bc_ref_te = 0.01_R8         !IYS 07.03.2013 11.04.13
       s % b2stbc_bc_ref_ti = 0.01_R8         !IYS 07.03.2013 11.04.13
-      s % bc_type13_norm = 1.0e15_R8
-      s % bc_type13_fac = 1.0_R8
       s % nesepm = 0.0_R8
       s % nesepm_overshoot = 0.0_R8
       s % ndes_sol = 0.0_R8
@@ -1716,11 +1712,9 @@ c b2stbc
       call ipgeti ('b2stbc_bceni_16_style', s%bceni_16_style)
 
       call ipgetr ('b2stbc_cbc', s%b2stbc_cbc)                       !srv 14.10.99
-      call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)           !srv 11.04.13
       call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)
       call ipgetr ('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)           !srv 11.04.13
-      call ipgetr ('b2stbc_type13_norm', s%bc_type13_norm)
-      call ipgetr ('b2stbc_type13_fac', s%bc_type13_fac)
+      call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)           !srv 11.04.13
       call ipgetr ('b2stbc_nesepm', s%nesepm)
       call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
       call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)

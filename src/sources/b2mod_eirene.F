@@ -817,13 +817,13 @@ c first save the original NPTS provided by the Eirene input files.
           else if (ncall.ge.ncallfeedback.and.
      &             istrai.eq.nesepm_istra.and.na_feedback_on) then !}{
             do is = 0, nspecies-1 !{
-              if (na_feedback_target(is).gt.0.0_R8.and.
-     &            na_feedback_actuator(is).eq.1.and.
+              if (fb_target(is).gt.0.0_R8.and.
+     &            fb_actuator(is).eq.1.and.
      &            species_start(nesepm_istra).le.
      &              eb2spcr(is+1)+nfluids(is+1).and.
      &            species_end(nesepm_istra).ge.eb2spcr(is+1)) then !{
                 tflux(istrai)=tflux(istrai)+
-     .           conpar(eb2spcr(is+1),na_feedback_ib(is),1)
+     .           conpar(eb2spcr(is+1),fb_ib(is),1)
               end if !}
             end do !}
 #endif
