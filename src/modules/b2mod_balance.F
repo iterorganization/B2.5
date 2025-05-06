@@ -1658,8 +1658,6 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       real (kind=R8):: nb(-1:nx,-1:ny)
 *   ..local variables
       integer ix,iy
-*   ..procedures
-      intrinsic size
       
       do ix=-1,nx
         do iy=-1,ny
@@ -1742,8 +1740,6 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       real (kind=R8):: ub(-1:nx,-1:ny), rob(-1:nx,-1:ny)
 *   ..local variables
       integer ix,iy
-*   ..procedures
-      intrinsic size
 
       do ix=-1,nx
         do iy=-1,ny
@@ -1949,8 +1945,6 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
      &                 te(-1:nx,-1:ny), ti(-1:nx,-1:ny)
 *   ..local variables
       integer ix,iy,is
-*   ..procedures
-      intrinsic size
 
 cdjm Update electron heat sources
 cxpb We also treat the electron particle sources
@@ -2134,14 +2128,14 @@ cdjm Update ion heat sources
       end subroutine update_balance_sources_heat
 
       subroutine update_balance_eirene_sources_heat(
-     &     nx,ny,ne,ni,te,ti,ns)
+     &     nx,ny,ne,ni,te,ti)
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx,ny,ns
+      integer nx,ny
       real (kind=R8):: ne(-1:nx,-1:ny), ni(-1:nx,-1:ny),
      &                 te(-1:nx,-1:ny), ti(-1:nx,-1:ny)
 *   ..local variables
-      integer ix,iy,istrai,nstrad,is
+      integer ix,iy,istrai,nstrad
 *   ..procedures
       intrinsic size
 

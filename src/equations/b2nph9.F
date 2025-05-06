@@ -273,7 +273,7 @@ cdjm Jan2017 update particle source components for balance
         call update_balance_sources_heat(nx,ny,ne,ni,te,ti,ns)
       endif
       if (balance_netcdf.ne.0 .or. write_eirene_sources.ne.0) then
-        call update_balance_eirene_sources_heat(nx,ny,ne,ni,te,ti,ns)
+        call update_balance_eirene_sources_heat(nx,ny,ne,ni,te,ti)
       endif
 
       if (iout.eq.1 .or. iout_b2wdat.eq.4) then                         !srv 31.01.21

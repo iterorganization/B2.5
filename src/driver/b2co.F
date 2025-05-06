@@ -80,7 +80,7 @@
       integer iargc
 #endif
       integer :: b2time = 1, ntim_batch = 500
-      integer :: ismain = 1, b2wall_netcdf = 0, mvnum = 0, tally = 1
+      integer :: ismain = 1, b2wall_netcdf = 0, tally = 1
       integer :: use_eirene = 0, external_species = 0
       integer :: neutrals_namelist = 0, numerics_namelist = 0
       integer :: b2mndt_style = 1
@@ -407,7 +407,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(nx, ny, ns, nnatmi, nnmoli, tim, .false.)
+          call b2co_time_cdf(nx, ny, ns, tim, .false.)
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//
@@ -419,7 +419,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
         call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
-          call b2co_time_cdf(nx, ny, ns, nnatmi, nnmoli, tim, .true.)
+          call b2co_time_cdf(nx, ny, ns, tim, .true.)
           write(*,*) 'Returned from b2co_time_cdf'
         else
           write(*,*) 'Skipped calling b2co_time_cdf because '//

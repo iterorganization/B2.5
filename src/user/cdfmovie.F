@@ -20,7 +20,7 @@
 #endif
       use b2mod_subsys
       implicit none
-      integer ncid, nx, ny, ns, nstrad
+      integer ncid, nx, ny, ns
 #ifndef NO_CDF
 #     include <netcdf.inc>
 #ifndef B25_EIRENE
@@ -31,6 +31,7 @@
      & dummy3atm(-1:nx, -1:ny, 1:nnatmi),
      & dummy3mol(-1:nx, -1:ny, 1:nnmoli)
 #ifdef B25_EIRENE
+      integer nstrad
       real (kind=R8) :: dummytriatm(1:ntri-1, 1:nnatmi),
      & dummytrimol(1:ntri-1, 1:nnmoli)
 #else 

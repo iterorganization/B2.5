@@ -57,6 +57,7 @@
       call xertst (0.lt.ns, 'faulty argument ns')
       call xertst (0.le.natm, 'faulty argument natm')
       call xertst (0.le.nmol, 'faulty argument nmol')
+      call xertst (0.le.ntri, 'faulty argument ntri')
 
 #ifndef NO_CDF
 

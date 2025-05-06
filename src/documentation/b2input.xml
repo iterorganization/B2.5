@@ -6759,7 +6759,7 @@
 				</description>
 			</switch>
 			<switch>
-				<name>VACUUM_COMMINICATION_BETA</name>
+				<name>VACUUM_COMMUNICATION_BETA</name>
 				<default>1.0</default>
 				<type>real array of size (0:NSPECIES-1,NVAC)</type>
 				<description>
