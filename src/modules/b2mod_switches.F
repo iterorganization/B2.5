@@ -2305,9 +2305,6 @@ c ECH model
      1              'b2sral_ECH_absorption_frac must be .gt. 0.0')
       call xertst (0.0_R8.lt.s%ech_Rdep.or.s%use_ech.eq.0,
      1              'b2sral_ECH_Rdep must be .gt. 0.0')
-      call xertst ((0.0_R8.lt.s%ech_Zdep).or.
-     1              (s%ech_gaussian_type.eq.1),
-     2              'b2sral_ECH_Zdep must be .gt. 0.0')
 
 c Bohm transport model
       call xertst (s%transport_bohm.ge.0.and.s%transport_bohm.le.1,
@@ -2522,6 +2519,10 @@ c ECH model
       if(s%ech_out.ne.0.and.s%ech_out.ne.1) then
         call xerrab ('b2sral_ECH_out should be either 0 (no output) ' //
      &   'or 1 (standard output)')
+      endif
+      if(((s%ech_coupling.eq.1.and.s%ech_gaussian_type.gt.1).or.
+     &   (s%ech_coupling.gt.1)).and.s%ech_Zdep.le.0.0_R8) then
+        call xerrab ('b2sral_ECH_Zdep must be .gt. 0.0')
       endif
 
 c Artifial losses model
