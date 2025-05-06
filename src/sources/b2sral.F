@@ -407,7 +407,8 @@ c end ECH
 
 c ICH power
       if(switch%use_ich.eq.1) then
-        call CalcICH(nCv,geo,mpg,st%dv,switch,st%srw%shi0,st%srw%she0)
+        call CalcICH(nCv,ns,geo,mpg,st%pl,st%dv,switch,st%srw%shi0,
+     &       st%srw%she0)
         call b2saxpy (nCv*4, 1.0_R8, st%srw%shi0, 1, st%sr%shi, 1)
         call b2saxpy (nCv*4, 1.0_R8, st%srw%she0, 1, st%sr%she, 1)
       endif

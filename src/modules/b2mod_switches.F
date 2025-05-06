@@ -177,10 +177,12 @@ c ICH model
       integer :: ich_gaussian_symmetry
       real (kind=R8) :: ich_power
       real (kind=R8) :: ich_absfract
+      real (kind=R8) :: ich_fracpne
       real (kind=R8) :: ich_Rdep
       real (kind=R8) :: ich_Zdep
       real (kind=R8) :: ich_RFfreq
-      real (kind=R8) :: ich_gaussian_width
+      real (kind=R8) :: ich_gaussian_width_x
+      real (kind=R8) :: ich_gaussian_width_y
 
 c iout switches
       integer :: iout_b2wdat
@@ -1058,10 +1060,12 @@ c ICH model
       s % ich_gaussian_symmetry = 0
       s % ich_power = 0.0_R8
       s % ich_absfract = 0.0_R8
+      s % ich_fracpne = 0.0_R8
       s % ich_Rdep = 0.0_R8
       s % ich_Zdep = 0.0_R8
       s % ich_RFfreq = 0.0_R8
-      s % ich_gaussian_width = 0.0_R8
+      s % ich_gaussian_width_x = 0.0_R8
+      s % ich_gaussian_width_y = 0.0_R8
 
 c Bohm-like transport model
       s % transport_bohm = 0
@@ -1418,9 +1422,11 @@ c ICH model
       call ipgetr ('b2sral_ICH_power', s % ich_power)
       call ipgetr ('b2sral_ICH_Rdep', s % ich_Rdep)
       call ipgetr ('b2sral_ICH_absorption_frac', s % ich_absfract)
+      call ipgetr ('b2sral_ICH_fracpne', s % ich_fracpne)
       call ipgetr ('b2sral_ICH_Zdep', s % ich_Zdep)
       call ipgetr ('b2sral_ICH_RFfrequency', s % ich_RFfreq)
-      call ipgetr ('b2sral_ICH_gauss_width', s % ich_gaussian_width)
+      call ipgetr ('b2sral_ICH_gauss_width_x', s % ich_gaussian_width_x)
+      call ipgetr ('b2sral_ICH_gauss_width_y', s % ich_gaussian_width_y)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
@@ -2355,16 +2361,22 @@ c ICH model
      1              'b2sral_ICH_coupling value not coded')
       call xertst (0.0_R8.lt.s%ich_RFfreq.or.s%use_ich.eq.0,
      1              'b2sral_ICH_RFfrequency must be .gt. 0.0')
-      call xertst (0.0.lt.s%ich_gaussian_width.or.s%use_ich.eq.0,
-     1              'b2sral_ICH_gauss_width must be .gt. 0.0')
+      call xertst (0.0.lt.s%ich_gaussian_width_x.or.s%use_ich.eq.0,
+     1              'b2sral_ICH_gauss_width_x must be .gt. 0.0')
+      call xertst (0.0.lt.s%ich_gaussian_width_y.or.s%use_ich.eq.0,
+     1              'b2sral_ICH_gauss_width_y must be .gt. 0.0')
       call xertst (1.lt.s%ich_harmonics.or.s%use_ich.eq.0,
      1              'b2sral_ICH_harmonics must be .ge. 1')
       call xertst (0.0_R8.lt.s%ich_power.or.s%use_ich.eq.0,
      1              'b2sral_ICH_power must be .gt. 0.0')
       call xertst (0.0_R8.lt.s%ich_absfract.or.s%use_ich.eq.0,
      1              'b2sral_ICH_absorption_frac must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%ich_fracpne.or.s%use_ich.eq.0,
+     1              'b2sral_ICH_fracpne must be .gt. 0.0')
       call xertst (0.0_R8.lt.s%ich_Rdep.or.s%use_ich.eq.0,
      1              'b2sral_ICH_Rdep must be .gt. 0.0')
+      call xertst (0.0_R8.lt.s%ich_Zdep.or.s%use_ich.eq.0,
+     1              'b2sral_ICH_Zdep must be .gt. 0.0')
 
 c Bohm transport model
       call xertst (s%transport_bohm.ge.0.and.s%transport_bohm.le.1,
