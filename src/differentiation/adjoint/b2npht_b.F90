@@ -1030,7 +1030,7 @@ SUBROUTINE B2NPHT_NODIFF(ncv, nfc, nvx, ns, switch, geo, mpg, itcnt, &
 &                    'equations was implemented similarly as the energy'&
 &                                   , &
 &                          'equations but lacks theoretical development'
-!    ..make sure time-depndent equations are not altered by convergence tricks
+!    ..make sure time-dependent equations are not altered by convergence tricks
       rxg_npht = HUGE(1.0_R8)
       IF (switch%b2npht_pcm0 .GT. 0.0_R8) CALL XERRAB(&
 &                        'b2npht_pcm0 must be 0 for time-dependent mode'&
