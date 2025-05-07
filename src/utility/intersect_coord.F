@@ -45,6 +45,8 @@ c Collinear segments
 c Parallel but not collinear
             iflag = 0
          endif
+*      ..return
+         call subend ()
          return
       endif
 
