@@ -14,7 +14,9 @@
      & , only : dtco, time_factor                                        !srv 07.07.21 }
 #ifndef FIXED_POINT
       use b2mod_balance
-     & ,only : update_balance_sources_particles, balance_netcdf,         !djm Jan2017
+     & ,only : update_balance_sources_particles,
+     &         update_balance_eirene_sources_particles,
+     &         balance_netcdf,                                           !djm Jan2017
      &         tot_sna0to1, fna_tot                                      !djm Mar2019
 #endif
       use b2mod_ad
@@ -153,6 +155,11 @@ cdjm Jan2017 update particle source components for balance
         tot_sna0to1(:,:,isb)=sr%sna(:,:,isb)    !djm Mar2019
         fna_tot(:,:,isb)=dv%fna(:,:,isb)        !djm Mar2019
         call update_balance_sources_particles(nCv,isb,pl%na(:,isb))
+      endif
+      if (balance_netcdf.ne.0 .or.
+     &    switch%write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_particles
+     &   (nCv,isb,pl%na(:,isb))
       endif
 #endif
 
