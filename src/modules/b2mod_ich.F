@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 c**************************************************************************************
-c**********************  NEW KU Leuven module for ECH plasmas  ************************
+c**********************  NEW KU Leuven module for ICH plasmas  ************************
 c**************************************************************************************
-! mb  16/10/23
+! ec  10/10/24
 ! main author: Elise Chambard
       module b2mod_ich
 *   ..other modules called 
@@ -12,11 +12,14 @@ c*******************************************************************************
       use b2us_geo
       use b2us_map
       use b2us_plasma
+      use b2mod_math
+      use b2mod_ad
+     & , only : ncall_calcICH
 
       implicit none
 *   ..declarations allocatable variable
       real (kind=R8), allocatable, save ::
-     &  sICH(:,:)
+     &  chi_ich(:), shi_ich(:,:), she_ich(:,:)
 
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -36,20 +39,25 @@ c*******************************************************************************
       contains
 
 c Alloc
-      subroutine alloc_b2mod_ich(nCv)
+      subroutine alloc_b2mod_ich(mpg,nCv)
       implicit none
+      type(mapping), intent(in):: mpg
       integer, intent(in) :: nCv
 
-      allocate(sICH(nCv,0:3))
+      allocate(chi_ich(mpg%nCi))
+      allocate(she_ich(nCv,0:3))
+      allocate(shi_ich(nCv,0:3))
 
-      sICH(:,:) = 0.0_R8
+      chi_ich(:) = 0.0_R8
+      she_ich(:,:) = 0.0_R8
+      shi_ich(:,:) = 0.0_R8
 
       return
       end subroutine alloc_b2mod_ich
 c End alloc
 
 c ICH power computation
-      subroutine CalcICH(nCv,ns,geo,mpg,pl,dv,switch,shi0_ich,she0_ich)
+      subroutine CalcICH(nCv,ns,geo,mpg,pl,dv,switch)
 c     This routine calculates the ICH power deposition
       use b2mod_b2cmpa
       use b2mod_subsys
@@ -63,22 +71,263 @@ c     This routine calculates the ICH power deposition
       type (switches), intent (in) :: switch
       integer, intent(in):: nCv,ns
 c     Output variables
-      real (kind=R8), intent(out):: shi0_ich(nCv,0:3), she0_ich(nCv,0:3)
+c      real (kind=R8), intent(out):: shi0_ich(nCv,0:3), she0_ich(nCv,0:3) not used anymore
 c     Other variables
-      real (kind=R8) :: omegaci(nCv), Rdep_vect(nCv)
-      integer :: maskf(nCv)
+      real (kind=R8) :: omegaci(nCv)
 c     Internal variables
-      real (kind = R8) :: chi(nCv), sx, sigma_y, intchi, normlz, h,
-     &                    summation, res_freq
-      real (kind = R8) :: segment(2,2), segmdist(nCv), totaldist
-      real (kind = R8) :: fcCnX1, fcCnX2, fcCnY1, fcCnY2
+      real (kind = R8) :: res_freq
+      integer :: iCv, iFc, cntr, is
+      character :: chns*3
+
+
+* ..preliminaries
+*   ..subprogram start-up calls
+      call subini ('CalcICH')
+      if(ncall_calcICH.lt.1) then
+        write (0,*) 'ICH module used.'
+        write (*,*) 'ICH module used.'
+      endif
+
+c      call sfill (nCv*4, 0.0_R8, shi0_ich, 1) not used anymore
+c      call sfill (nCv*4, 0.0_R8, she0_ich, 1) not used anymore
+c      i_R_Rp = -120 !why this value?
+
+      select case (switch%ich_coupling)
+
+
+* -- COUPLING = 0 -- Fixed power distributed as a Dirac delta in volumes intersected at given radial position.
+
+      case(0)
+        call compute_ich_0(nCv,geo,mpg,switch)
+
+
+* -- COUPLING = 1 -- Fixed fraction of launched power is coupled/Gaussian injection.
+
+      case(1)
+        call compute_ich_1(nCv,geo,mpg,switch)
+
+
+* -- COUPLING = 2 -- lhr coupling !!TODO
+
+      case(2)
+        call compute_ich_2(nCv,geo,mpg,pl,dv,switch)
+
+
+* -- COUPLING = 3 -- 2D Gauss coupling !!TODO
+
+      case(3)
+#ifdef WG_TODO
+        sx = switch%ich_gaussian_width_x
+        sy = switch%ich_gaussian_width_y
+
+        do iCv = 1,mpg%nCi
+          chi_ich(iCv) = 1.0_R8/(2.0_R8*pi*sx*sy)*expu(-1.0_R8/2.0_R8*
+     &          (((geo%cvX(iCv)-switch%ich_Rdep)/sx)**2+
+     &          ((geo%cvY(iCv)-switch%ich_Zdep)/sy)**2))
+        enddo
+
+        NF = sum(chi_ich(:)*geo%cvVol(1:mpg%nCi))
+
+        chi_ich = chi_ich/NF
+
+        do iCv = 1, mpg%nCi
+          shi0_ich(iCv,0) = switch%ich_power*chi_ich(iCv)*
+     &                      (1-switch%ich_fracpne)*
+     &                      switch%ich_absfract*geo%cvVol(iCv)
+          she0_ich(iCv,0) = switch%ich_power*chi_ich(iCv)*
+     &                      switch%ich_fracpne*
+     &                      switch%ich_absfract*geo%cvVol(iCv)
+        enddo
+#endif
+      end select
+
+      if (switch%ich_out.eq.1.or.switch%iout_b2wdat.eq.4) then
+        call my_out_us(70,nCv,0,chi_ich,'b2mod_ICH_shapefun')
+        do cntr = 0,3
+          write (chns,'(i3.3)') cntr
+          call my_out_us(70,nCv,0,shi_ich(:,cntr),
+     &         'b2mod_ICH_shi_'//chns)
+          call my_out_us(70,nCv,0,she_ich(:,cntr),
+     &         'b2mod_ICH_she_'//chns)
+        enddo
+      endif
+
+      ncall_calcICH = ncall_calcICH + 1
+
+*   ..return
+      call subend ()
+      return
+
+*-----------------------------------------------------------------------
+*.end CalcICH
+
+      end subroutine CalcICH
+
+
+c Compute ICH - Dirac's delta
+      subroutine compute_ich_0(nCv,geo,mpg,switch)
+      use b2mod_b2cmpa
+      use b2mod_subsys
+      use b2mod_switches
+      use b2mod_ad
+     & , only : ncall_calcICH
+      implicit none
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (switches), intent (in) :: switch
+      integer, intent(in):: nCv
+c Internal variables
+      real (kind=R8) :: segment(2,2), segmdist(mpg%nCi),
+     &                  totaldist, crction, summation
       integer :: list_cv(nCv), nncv, list_ci(mpg%nCi), nnci,
-     &           list_fc(mpg%nFc), nnfc, face1, face2
-      integer :: iCv, iCv2, iFc, cntr, is
-      character chns*3
-      logical:: ifail
-c     Variables for coupling 4
-      real (kind = R8) :: P_rest, P_norm, chi_tot(nCv), NF,
+     &           list_fc(mpg%nFc), nnfc
+      logical :: ifail
+      integer :: iCv, cntr
+
+* ..preliminaries
+*   ..subprogram start-up calls
+      call subini ('compute_ich_0')
+      call sfill (nCv*4, 0.0_R8, she_ich, 1)
+      call sfill (nCv*4, 0.0_R8, shi_ich, 1)
+
+* ..precomputation
+      if(ncall_calcICH.lt.1) then
+        write (0,*) 'Dirac delta coupling scheme used.'
+        write (*,*) 'Dirac delta coupling scheme used.'
+        summation = 0.0_R8
+        totaldist = 0.0_R8
+        crction = switch%geom_match_dist !ap correction distance to avoid numerical error when defining segment for cv_intersection
+        call sfill (mpg%nCi, 0.0_R8, chi_ich, 1)
+        segment = reshape((/ switch%ich_Rdep, minval(geo%vxY)-crction,
+     &      switch%ich_Rdep, maxval(geo%vxY)+crction /), shape(segment))
+
+        call calc_face_dist(geo, mpg, nCv, segment, list_cv, nncv,
+     &   list_ci, nnci, list_fc, nnfc, segmdist, totaldist, ifail)
+
+        chi_ich(:) = segmdist/totaldist
+        summation = sum(chi_ich(:)*geo%cvVol(1:mpg%nCi)) ! normalisation condition on internal elements only
+        chi_ich = chi_ich/summation
+      endif
+
+* ..computation
+      do cntr = 1, size(list_ci)
+        if(list_ci(cntr).ne.0) then
+          iCv = list_ci(cntr)
+          shi_ich(iCv,0) = chi_ich(iCv)*switch%ich_absfract*
+     &                     switch%ich_power*geo%cvVol(iCv)
+        endif
+      enddo
+
+*   ..return
+      call subend ()
+      return
+
+*-----------------------------------------------------------------------
+*.end compute_ich_0
+
+      end subroutine compute_ich_0
+
+
+c Compute ICH - Gaussian-like
+      subroutine compute_ich_1(nCv,geo,mpg,switch)
+      use b2mod_b2cmpa
+      use b2mod_subsys
+      use b2mod_switches
+      use b2mod_ad
+     & , only : ncall_calcICH
+      implicit none
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (switches), intent (in) :: switch
+      integer, intent(in):: nCv
+c Internal variables
+      real (kind=R8):: sx, sy, summation
+      integer :: iCv
+
+* ..preliminaries
+*   ..subprogram start-up calls
+      call subini ('compute_ich_1')
+      call sfill (nCv*4, 0.0_R8, shi_ich, 1)
+      call sfill (nCv*4, 0.0_R8, she_ich, 1)
+      summation = 0.0_R8
+
+* ..precomputation
+
+      if(ncall_calcICH.lt.1) then
+        write (0,*) 'Gaussian-like coupling scheme used.'
+        write (*,*) 'Gaussian-like coupling scheme used.'
+        sx = switch%ich_gaussian_width_x ! widthich in T1D
+        sy = switch%ich_gaussian_width_y ! widthich (Y direction)
+        call sfill (mpg%nCi, 0.0_R8, chi_ich, 1)
+        if (switch%ich_gaussian_symmetry.eq.1) then ! gaussian symmetric in poloidal direction
+          write (0,*) 'Poloidally symmetric gaussian used. ' //
+     &                'Power spread over the whole domain in '
+          write (0,*) 'poloidal direction. Should be used for '
+     &                // 'symmetric cases only!'
+          write (*,*) 'Poloidally symmetric gaussian used. ' //
+     &                'Power spread over the whole domain in '
+          write (*,*)  'poloidal direction. Should be used for '
+     &                // 'symmetric cases only!'
+cec     The mask function chi_ich was changed on 28/04/25 again to have the exact same profile as in TOMATOR: no -1/2 but -1 in exp
+          do iCv = 1, mpg%nCi
+            chi_ich(iCv) = geo%cvX(iCv)*expu(-
+     &            ((geo%cvX(iCv)-switch%ich_Rdep)/sx)**2)+
+     &            1.0E-7*geo%cvX(iCv)*expu(-
+     &            ((geo%cvX(iCv)-switch%ich_Rdep)/switch%a0)**2) ! symmetry on poloidal direction
+          enddo
+        else
+          write (0,*) 'Standard binormal distribution used. ' //
+     &                'No toroidal effects considered.'
+          write (*,*) 'Standard binormal distribution used. ' //
+     &                'No toroidal effects considered.'
+          do iCv = 1, mpg%nCi
+            chi_ich(iCv) = 1.0_R8/(2*pi*sx*sy)*exp(-1.0_R8/2.0_R8*
+     &            ((geo%cvX(iCv)-switch%ich_Rdep)**2/sx**2 +
+     &             (geo%cvY(iCv)-switch%ich_Zdep)**2/sy**2))
+          enddo
+        endif
+
+        summation = sum(chi_ich(:)*geo%cvVol(1:mpg%nCi))
+        chi_ich = chi_ich/summation
+      endif
+
+      do iCv = 1, mpg%nCi
+        shi_ich(iCv,0) = switch%ich_power*chi_ich(iCv)*
+     &                    (1-switch%ich_fracpne)*
+     &                    switch%ich_absfract*geo%cvVol(iCv)
+        she_ich(iCv,0) = switch%ich_power*chi_ich(iCv)*
+     &                    switch%ich_fracpne*
+     &                    switch%ich_absfract*geo%cvVol(iCv)
+      enddo
+
+*   ..return
+      call subend ()
+      return
+
+*-----------------------------------------------------------------------
+*.end compute_ich_1
+
+      end subroutine compute_ich_1
+
+
+c Compute ICH - LHR
+      subroutine compute_ich_2(nCv,geo,mpg,pl,dv,switch)
+      use b2mod_b2cmpa
+      use b2mod_subsys
+      use b2mod_switches
+      use b2mod_ad
+     & , only : ncall_calcICH
+      implicit none
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (in) :: dv
+      type (switches), intent (in) :: switch
+      integer, intent(in):: nCv
+c Internal variables
+      integer :: iCv
+      real (kind = R8) :: segment(2,2), segmdist(nCv), totaldist, sx
+      real (kind = R8) :: P_rest, P_norm, chi_tot(nCv), NF, crction,
      &                    eps_perp(mpg%nCi), sign_eps_perp, R_lhr(nCv),
      &                    lhr_background, test_lhr(mpg%nCi)
       real (kind = R8) :: omega2_in, omega2_cycl_e(nCv), 
@@ -98,168 +347,57 @@ c     Variables for coupling 4
      &           list_fc_Z(mpg%nFc), nnfc_Z, i_R_Rp
       integer :: id, id2, i_R_Ant, i_Z_Ant, i_Cell_Ant,
      &           i_Z_Rp, i_Cell_Rp
-
+      logical :: ifail
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('CalcICH')
-      call sfill (nCv*4, 0.0_R8, shi0_ich, 1)
-      call sfill (nCv*4, 0.0_R8, she0_ich, 1)
-      call ifill (nCv, 0, maskf, 1)
-      call sfill (nCv, switch%ich_Rdep, Rdep_vect, 1)
-      call sfill (nCv, 0.0_R8, chi, 1)
-      call sfill (4, 0.0_R8, segment, 1)
-      call sfill (nCv, 0.0_R8, segmdist, 1)
-c      inteprof = 0.0_R8
-c      i_R_Rp = -120 !why this value?
-      summation = 0.0_R8
-      totaldist = 0.0_R8
-      fcCnX1 = 0.0_R8
-      fcCnX2 = 0.0_R8
-      fcCnY1 = 0.0_R8
-      fcCnY2 = 0.0_R8
-      cntr = 0
-c      normlz = 0.0_R8
+      call subini ('compute_ich_2')
+      call sfill (nCv*4, 0.0_R8, shi_ich, 1)
+      call sfill (nCv*4, 0.0_R8, she_ich, 1)
 
-      select case (switch%ich_coupling)
-
-
-* -- COUPLING = 0 -- Fixed power distributed as a Dirac delta in volumes intersected at given radial position.
-
-      case(0)
-        segment = reshape((/ switch%ich_Rdep, -0.1_R8,
-     &       switch%ich_Rdep, maxval(geo%cvY)+0.1_R8 /), shape(segment))
-
-        call cv_intersections (geo, mpg, segment, list_cv, list_ci,
-     &   list_fc, nncv, nnci, nnfc, nCv, XI, YI, 1, ifail)
-
-        do iFc = 1, nnfc-1
-            iCv = list_ci(iFc)
-            face1 = list_fc(iFc)
-            face2 = list_fc(iFc+1)
-            fcCnX1 = (geo%vxX(mpg%fcVx(face1,1))+
-     &                geo%vxX(mpg%fcVx(face1,2)))/2
-            fcCnY1 = (geo%vxY(mpg%fcVx(face1,1))+
-     &                geo%vxY(mpg%fcVx(face1,2)))/2
-            fcCnX2 = (geo%vxX(mpg%fcVx(face2,1))+
-     &                geo%vxX(mpg%fcVx(face2,2)))/2
-            fcCnY2 = (geo%vxY(mpg%fcVx(face2,1))+
-     &                geo%vxY(mpg%fcVx(face2,2)))/2
-            segmdist(iCv) = sqrt((fcCnX1-fcCnX2)**2+(fcCnY1-fcCnY2)**2)
-            totaldist = totaldist + segmdist(iCv)
-        enddo
-        chi(:) = segmdist/totaldist ! (distance of 2 face centers (vxX(fcVx(ifc,1)+vxX(fcVx(ifc,2))/2 for X, same for Y
-        summation = sum(chi(:)*geo%cvVol(:))
-        chi = chi/summation
-        do cntr = 1, size(list_ci)
-          if(list_ci(cntr).ne.0) then
-            iCv = list_ci(cntr)
-            shi0_ich(iCv,0) = chi(iCv)*switch%ich_absfract*
-     &                        switch%ich_power*geo%cvVol(iCv)
-          endif
-        enddo
-
-
-* -- COUPLING = 1 -- Fixed fraction of launched power is coupled/Gaussian injection.
-
-      case(1)
-        sx = switch%ich_gaussian_width_x ! widthich in T1D
-        sigma_y = switch%ich_gaussian_width_y ! used to be defined as "sy" but this is also a function in geo so doesn't work
-        if (switch%ich_gaussian_symmetry.eq.1) then
-          do iCv = 1, mpg%nCi
-            chi(iCv) = geo%cvX(iCv)*
-     &            expu(-1.0_R8*
-     &            ((geo%cvX(iCv)-switch%ich_Rdep)/sx)**2)+
-     &            1.0E-7*geo%cvX(iCv)*expu(-1.0_R8*
-     &            ((geo%cvX(iCv)-switch%ich_Rdep)/switch%a0)**2) ! symmetry on poloidal direction
-          enddo
-
-c     The mask function chi was changed on 28/04 again to have the exact same profile as in TOMATOR: no -1/2 but -1 in exp
-
-c          segment = reshape((/
-c     &       minval(geo%cVx), maxval(geo%cvY)/2.0_R8,
-c     &       maxval(geo%cVx), maxval(geo%cvY)/2.0_R8 /),
-c     &              shape(segment))
-
-c          call cv_intersections (geo, mpg, segment, list_cv, list_ci,
-c     &   list_fc, nncv, nnci, nnfc, nCv, 1, ifail)
-
-          summation = sum(chi(:)*geo%cvVol(:))
-
-c          do cntr = 1, size(list_ci)
-c            if(list_ci(cntr).ne.0) then
-c              iCv = list_ci(cntr)
-c              summation = summation + chi(:)*geo%cvVol(:)
-c            endif
-c          enddo
-
-          chi = chi/summation
-
-        else
-          chi = 1.0_R8/(2*pi*sx*sigma_y)*exp(-1.0_R8/2.0_R8*
-     &            ((geo%cvX-switch%ich_Rdep)**2/sx**2 +
-     &             (geo%cvY-switch%ich_Zdep)**2/sigma_y**2)) ! ich_Zdep to be defined
-
-          do iCv = 1, mpg%nCi
-            summation = summation + chi(iCv)*geo%cvVol(iCv) ! normalisation condition to ensure grid independence
-          enddo
-          chi = chi/summation ! normalisation condition to ensure grid independence
-
-        endif
-
-        do iCv = 1, mpg%nCi
-          shi0_ich(iCv,0) = switch%ich_power*chi(iCv)*
-     &                      (1-switch%ich_fracpne)*
-     &                      switch%ich_absfract*geo%cvVol(iCv)
-          she0_ich(iCv,0) = switch%ich_power*chi(iCv)*
-     &                      switch%ich_fracpne*
-     &                      switch%ich_absfract*geo%cvVol(iCv)
-        enddo
-
-* -- COUPLING = 2 -- lhr coupling !!TODO
-
-      case(2)
+      if(ncall_calcICH.lt.1) then
+        write (0,*) 'LHR coupling scheme used.'
+        write (*,*) 'LHR coupling scheme used.'
+      endif
 
       P_rest = 1.0_R8
       P_norm = 0.0_R8
       N_lhr = 0
       NF = 0.0_R8
+c      i_R_Rp = 1 !!TODO
       iAnt = 0
       sx = switch%ich_gaussian_width_x
 
       omega2_in = (2*pi*switch%ich_RFfreq)**2
       Rp_min = switch%R0 - switch%limiter_width * switch%a0 ! this is lHFS in T1D
-
-      segment = reshape((/ Rp_min, -0.1_R8,
-     &       Rp_min, maxval(geo%cvY)+0.1_R8 /), shape(segment))
+      crction = switch%geom_match_dist !ap correction distance to avoid numerical error when defining segment for cv_intersection
+      segment = reshape((/ Rp_min, minval(geo%vxY)-crction,
+     &       Rp_min, maxval(geo%vxY)+crction /), shape(segment))
 
         call cv_intersections (geo, mpg, segment, list_cv_Rp_min,
      &   list_ci_Rp_min, list_fc_Rp_min, nncv_Rp_min, nnci_Rp_min,
      &   nnfc_Rp_min, nCv, XI, YI, 1, ifail)
 
-      segment = reshape((/ switch%ich_Rdep, -0.1_R8,
-     &       switch%ich_Rdep, maxval(geo%cvY)+0.1_R8 /), shape(segment))
+      segment = reshape((/ switch%ich_Rdep, minval(geo%vxY)-crction,
+     &      switch%ich_Rdep, maxval(geo%vxY)+crction /), shape(segment))
 
         call cv_intersections (geo, mpg, segment, list_cv_R_ant,
      &   list_ci_R_ant, list_fc_R_ant, nncv_R_ant, nnci_R_ant,
      &   nnfc_R_ant, nCv, XI, YI, 1, ifail)
 
 
-      segment = reshape((/ minval(geo%cVx) -0.1_R8, 
-     &          maxval(geo%cvY)/2.0_R8, maxval(geo%cVx)+0.1_R8,
-     &          maxval(geo%cvY)/2.0_R8 /), shape(segment))
+      segment = reshape((/ minval(geo%vxX)-crction, 
+     &          maxval(geo%vxY)/2.0_R8, maxval(geo%vxX)+crction,
+     &          maxval(geo%vxY)/2.0_R8 /), shape(segment))
 
         call cv_intersections (geo, mpg, segment, list_cv_Z, list_ci_Z,
      &   list_fc_Z, nncv_Z, nnci_Z, nnfc_Z, nCv, XI, YI, 1, ifail)
 
 
-      call sfill (nCv, 0.0_R8, chi, 1)
+      call sfill (nCv, 0.0_R8, chi_ich, 1)
       call sfill (nCv, 0.0_R8, chi_tot, 1)
       call sfill (nCv, 0.0_R8, R_lhr, 1)
-
-      do iCv=1, nCv
-        i_R_lhr(iCv) = 0
-      enddo
+      call ifill (nCv, 0, i_R_lhr, 1)
 
 c      do while (geo%cvX(iAnt) < switch%ich_Rdep) ! can be left out because we have i_Ant as a vector of indexes from cv_intersections
 c          iAnt = iAnt+1
@@ -358,86 +496,51 @@ c      enddo
           if (i_R_lhr(id_lhr) /= 0) then
             if (switch%ich_gaussian_symmetry.eq.1) then
               do iCv = 1,mpg%nCi
-                chi(iCv) = geo%cvX(iCv)*expu(-1.0_R8*((geo%cvX(iCv)-
+                chi_ich(iCv) = geo%cvX(iCv)*expu(-((geo%cvX(iCv)-
      &                     geo%cvX(id_lhr))/sx)**2)+
-     &                     lhr_background*geo%cvX(iCv)*expu(-1.0_R8*
+     &                     lhr_background*geo%cvX(iCv)*expu(-
      &                     ((geo%cvX(iCv)-geo%cvX(id_lhr))/
      &                     switch%a0)**2)
               enddo
               NF = 0.0_R8
-              NF = sum(chi(:)*geo%cvVol(:))
+              NF = sum(chi_ich(:)*geo%cvVol(1:mpg%nCi))
               do iCv=1,mpg%nCi
-                chi(iCv) = chi(iCv)/NF*R_lhr(id_lhr)
-                chi_tot(iCv) = chi_tot(iCv)+chi(iCv)
+                chi_ich(iCv) = chi_ich(iCv)/NF*R_lhr(id_lhr)
+                chi_tot(iCv) = chi_tot(iCv)+chi_ich(iCv)
               enddo
             endif
           endif
       enddo
 
       do iCv = 1, mpg%nCi
-          shi0_ich(iCv,0) = switch%ich_power*chi_tot(iCv)*
+          shi_ich(iCv,0) = switch%ich_power*chi_tot(iCv)*
      &                      (1-switch%ich_fracpne)*
      &                      geo%cvVol(iCv)
-          she0_ich(iCv,0) = switch%ich_power*chi_tot(iCv)*
+          she_ich(iCv,0) = switch%ich_power*chi_tot(iCv)*
      &                      switch%ich_fracpne*
      &                      geo%cvVol(iCv)
       enddo
 
-
-* -- COUPLING = 3 -- 2D Gauss coupling !!TODO
-
-      case(3)
-
-        sx = switch%ich_gaussian_width_x
-        sigma_y = switch%ich_gaussian_width_y
-
-        do iCv = 1,mpg%nCi
-          chi(iCv) = 1.0_R8/(2.0_R8*pi*sx*sigma_y)*expu(-1.0_R8/2.0_R8*
-     &          (((geo%cvX(iCv)-switch%ich_Rdep)/sx)**2+
-     &          ((geo%cvY(iCv)-switch%ich_Zdep)/sigma_y)**2))
-        enddo
-
-        NF = sum(chi(:)*geo%cvVol(:))
-
-        chi = chi/NF
-
-        do iCv = 1, mpg%nCi
-          shi0_ich(iCv,0) = switch%ich_power*chi(iCv)*
-     &                      (1-switch%ich_fracpne)*
-     &                      switch%ich_absfract*geo%cvVol(iCv)
-          she0_ich(iCv,0) = switch%ich_power*chi(iCv)*
-     &                      switch%ich_fracpne*
-     &                      switch%ich_absfract*geo%cvVol(iCv)
-        enddo
-
-      end select
-
-      sICH = shi0_ich
       if (switch%ich_out.eq.1.or.switch%iout_b2wdat.eq.4) then
-        call my_out_us(70,nCv,0,chi,'b2mod_ICH_shapefun')
         call my_out_us(70,nCv,0,eps_perp(:),'b2mod_ICH_eps_perp')
         call my_out_us(70,nCv,0,test_lhr(:),'b2mod_ICH_test_lhr')
-        call my_outi_us(70,nCv,0,maskf,'b2mod_ECH_maskf')
-        do cntr = 0,3
-          write (chns,'(i3.3)') cntr
-          call my_out_us(70,nCv,0,sICH(:,cntr),'b2mod_ICH_shi_'//chns)
-          call my_out_us(70,nCv,0,she0_ich(:,cntr),
-     &         'b2mod_ICH_she_'//chns)
-        enddo
       endif
+
 
 *   ..return
       call subend ()
       return
 
 *-----------------------------------------------------------------------
-*.end CalcICH
+*.end compute_ich_2
 
-      end subroutine CalcICH
+      end subroutine compute_ich_2
 
-c Find resonance layer
+
+
+c Find resonance layer !!TODO
       subroutine find_resonance(nCv,geo,mpg,switch,omegace,
-     &           res_freq,maskf)
+     &           res_freq)
       use b2mod_b2cmpa
       use b2mod_subsys
       use b2mod_switches
@@ -448,34 +551,30 @@ c Find resonance layer
       integer, intent(in):: nCv
       real (kind=R8):: omegace(nCv), res_freq, B_res, B_resV(nCv)
 c     Output variables
-      integer :: maskf(nCv)
 
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('find_resonance')
       call sfill (nCv, 0.0_R8, omegace, 1)
-      call ifill (nCv, 0, maskf, 1)
 
-      call elcyclfr(nCv,geo,omegace)
+      call ioncyclfr(nCv,geo,omegace)
 
       res_freq = 2*pi*switch%ich_RFfreq/switch%ich_harmonics
       B_res = me*res_freq/qe
       call sfill (nCv, B_res, B_resV, 1)
 
-      call maskfun(mpg%nCi, B_resV, geo%cvBb(:,3),
-     &             1.0E-3_R8, maskf) ! 1E-3 is the tolerance
 
 *   ..return
       call subend ()
       return
 
 *-----------------------------------------------------------------------
-*.end elcyclfr
+*.end find_resonance
 
       end subroutine find_resonance
 
-c Electron Cyclotron Frequency computation
-      subroutine elcyclfr(nCv,geo,omegace)
+c Ion Cyclotron Frequency computation !!TODO
+      subroutine ioncyclfr(nCv,geo,omegace)
       use b2mod_b2cmpa
       use b2mod_subsys
       implicit none
@@ -486,7 +585,7 @@ c     Output variables
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('elcyclfr')
+      call subini ('ioncyclfr')
       call sfill (nCv, 0.0_R8, omegace, 1)
 
       omegace(:) = qe*geo%cvBb(:,3)/me
@@ -496,16 +595,18 @@ c     Output variables
       return
 
 *-----------------------------------------------------------------------
-*.end elcyclfr
+*.end ioncyclfr
 
-      end subroutine elcyclfr
+      end subroutine ioncyclfr
 
 c Dealloc
       subroutine dealloc_b2mod_ich
       implicit none
-      if (allocated(sICH)) then
-        deallocate(sICH)
-      endif
+
+      if (allocated(shi_ich)) deallocate(shi_ich)
+      if (allocated(she_ich)) deallocate(she_ich)
+      if (allocated(chi_ich)) deallocate(chi_ich)
+
 
       return
       end subroutine dealloc_b2mod_ich

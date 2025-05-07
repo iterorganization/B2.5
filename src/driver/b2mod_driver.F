@@ -145,8 +145,9 @@
 #endif
       use b2mod_subsys
       use b2mod_dimensions
-c ECH module
+c ECH/ICH module
       use b2mod_ech
+      use b2mod_ich
 c Artificial losses module
       use b2mod_artificialsinks
       implicit none
@@ -2016,6 +2017,10 @@ c ECH module
       if(switch%use_ech.eq.1) then
         call alloc_b2mod_ech(mpg, nCv)
       endif
+c ICH module
+      if(switch%use_ich.eq.1) then
+        call alloc_b2mod_ich(mpg, nCv)
+      endif
 c Artificial losses module
       if(switch%losses_limiters.eq.1.or.switch%losses_drifts.eq.1.or.
      &   switch%losses_poloidal.eq.1) then
@@ -3852,6 +3857,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call dealloc_b2mod_boundary
       call dealloc_b2mod_neutrals
       call dealloc_b2mod_ech
+      call dealloc_b2mod_ich
       call dealloc_b2mod_numerics
       call dealloc_b2mod_user
       call dealloc_b2mod_par_opt
