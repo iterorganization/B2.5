@@ -386,11 +386,13 @@ c diagnostics switches
       integer :: vlct_diagno
       integer :: b2tqna_diagno
       integer :: ion_vlct_restrict_core
+      integer :: ion_vlct_restrict_abs
 
 c hard limit velocities
       integer :: ion_vlct_restrict
       real(kind=R8) :: ion_vlct_restrict_M
       real(kind=R8) :: ion_vlct_restrict_core_M
+      real(kind=R8) :: ion_vlct_restrict_ua
 
 c MMS
       integer:: set_na_numerical
@@ -1014,6 +1016,8 @@ c Zhdanov closure switches
       s % b2tqna_diagno = 0
       s % ion_vlct_restrict_core = 0
       s % ion_vlct_restrict_core_M = 3.0_R8
+      s % ion_vlct_restrict_abs = 0
+      s % ion_vlct_restrict_ua = 1e30
 
       s % ion_vlct_restrict = 0
       s % ion_vlct_restrict_M = 3.0_R8
@@ -1742,6 +1746,10 @@ c diagnostic switches
      &             s % ion_vlct_restrict_core)
       call ipgetr ('b2npmo_ion_vlct_restrict_core_M',
      &             s % ion_vlct_restrict_core_M)
+      call ipgeti ('b2npmo_ion_vlct_restrict_abs', 
+     &             s % ion_vlct_restrict_abs)
+      call ipgetr ('b2npmo_ion_vlct_restrict_ua',
+     &             s % ion_vlct_restrict_ua)
 
 c hard limit velocities
       call ipgeti ('b2npmo_ion_vlct_restrict', s % ion_vlct_restrict)
