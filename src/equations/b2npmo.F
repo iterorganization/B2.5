@@ -786,6 +786,20 @@ c     ..compare 9-pt stencil matrice
         enddo
       endif
 
+!! do the same but with a value for the parallel velocity rather than the Mach number. For now, no diagnostic output for this one.
+!! Limiting only Mach number may not be enough if there is a feedback loop on viscous heating -> increased T -> increased allowable ua and sound speed -> increased ua -> increased viscous heating -> ...
+      if( switch%ion_vlct_restrict_abs .ne. 0 ) then                
+        do is = 0, ns-1
+          do iCv = 1, nCv
+              if( abs(pl%ua(iCv,is)).gt.
+     .         switch%ion_vlct_restrict_ua ) then
+              pl%ua(iCv,is)= sign(switch%ion_vlct_restrict_ua,
+     .                              pl%ua(iCv,is))                
+              endif
+          enddo
+        enddo
+      endif
+
 *   ..correct pcca
       call b2nxcm (nCv, ns, dv%pccm, dv%pcca)
       if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then  !srv 12.07.02 {
