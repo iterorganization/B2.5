@@ -17,7 +17,7 @@
 #ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
-     &          balance_netcdf
+     &          balance_netcdf, update_balance_eirene_sources_heat
 #endif
       use b2mod_ad
      & , only : ncall_b2npht, rxg_npht
@@ -138,7 +138,7 @@
      &              'equations was implemented similarly as the energy',
      &              'equations but lacks theoretical development'
           endif
-*    ..make sure time-depndent equations are not altered by convergence tricks
+*    ..make sure time-dependent equations are not altered by convergence tricks
           rxg_npht = huge(1.0_R8)
           if (switch%b2npht_pcm0.gt.0.0_R8) then
             call xerrab('b2npht_pcm0 must be 0 for time-dependent mode')
@@ -290,6 +290,11 @@ cc while the second contribution corresponds to T dn/dt
 cdjm Jan2017 update particle source components for balance
       if (balance_netcdf.ne.0) then
         call update_balance_sources_heat(nCv,dv%ne,dv%ni,pl%te,pl%ti,ns)
+      endif
+      if (balance_netcdf.ne.0 .or.
+     &    switch%write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_heat
+     .   (nCv,dv%ne,dv%ni,pl%te,pl%ti)
       endif
 #endif
 

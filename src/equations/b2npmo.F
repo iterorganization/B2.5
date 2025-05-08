@@ -10,8 +10,9 @@
       use b2mod_constants
 #ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
-     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-     2          balance_netcdf, tot_smo0to3, fmo_tot
+     1 , only : update_balance_sources_momentum,
+     2          update_balance_eirene_sources_momentum,
+     3          balance_netcdf, fmo_b2nxfv, tot_smo0to3, fmo_tot
 #endif
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
@@ -348,6 +349,11 @@ cdjm Jan2017 update momentum source components for balance
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,rob,robf)
         call update_balance_sources_momentum(nCv,nFc,is,pl%ua(:,is),rob,
      &    ubf,robf)
+      endif
+      if (balance_netcdf.ne.0 .or.
+     &    switch%write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_momentum(
+     &   nCv,is,pl%ua(1,is),rob)
       endif
 #endif
 

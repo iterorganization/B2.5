@@ -83,15 +83,19 @@
       integer iargc
 #endif
       integer :: b2time = 1, ntim_batch = 500
-      integer :: ismain = 1, ismain0 = 0, mvnum = 0, tally = 1
+      integer :: ismain = 1, ismain0 = 0, tally = 1
+      integer :: write_triangles = 0
+      real (kind=R8) :: delta_cdfmovie_time = 0.0_R8
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
       character filename*256
+      character filename_tri*256
       character b2fstate_only*256
 #ifdef B25_EIRENE
       character extension*4
 #endif
       character cnamip*80, cvalip*80, line*500
-      logical file_open, file_exists, match_found, todo
+      logical file_open, file_exists, file_tri_exists, todo
+      logical match_found
 *   ..procedures
       logical is_comment, streql
       external is_comment, streql
@@ -446,15 +450,27 @@
      .               'no b2tallies.nc file found'
         end if
       end if
-      call ipgeti ('b2mndr_mvnum', mvnum)
-      if (todo.and.mvnum.gt.0) then
+      call ipgetr ('b2mndr_cdfmovietim', delta_cdfmovie_time)
+      call ipgeti ('cdfmovie_triangles', write_triangles)
+      if (todo.and.delta_cdfmovie_time.gt.0.0_R8) then
         filename='b2movies.nc'
         call find_file(filename,file_exists)
+        if (write_triangles.ge.1) then
+          filename_tri='eirenemovies.nc'
+          call find_file(filename_tri,file_tri_exists)
+        end if
         if(file_exists) then
           write(*,*) 'Truncating ', trim(filename)
+          if(file_tri_exists) then
+            write(*,*) 'Truncating ', trim(filename_tri)
+          endif
           call b2co_movies_cdf
 #ifndef NO_CDF
-     .     (nCv, ns, nnatmi, nnmoli, tim)
+#ifdef B25_EIRENE
+     .     (nCv, ns, nnatmi, nnmoli, ncvtot, tim)
+#else
+     .     (nCv, ns, nnatmi, nnmoli, 0, tim)
+#endif
 #endif
           write(*,*) 'Returned from b2co_movies_cdf'
         else

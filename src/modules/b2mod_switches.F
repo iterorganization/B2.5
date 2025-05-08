@@ -210,6 +210,7 @@ c iout switches
       integer :: b2scdt_iout
       integer :: b2smdt_iout
       integer :: b2shdt_iout
+      integer :: write_eirene_sources
 
 c style switches
       integer :: b2sicf_style
@@ -772,6 +773,7 @@ c Advanced fluid neutral models
       s % b2scdt_iout = 0
       s % b2smdt_iout = 0
       s % b2shdt_iout = 0
+      s % write_eirene_sources = 0
 
       s % b2sicf_style = 0
       s % b2sigp_style = 2
@@ -1383,6 +1385,7 @@ c iout switches
       call ipgeti ('b2scdt_iout', s % b2scdt_iout)
       call ipgeti ('b2smdt_iout', s % b2smdt_iout)
       call ipgeti ('b2shdt_iout', s % b2shdt_iout)
+      call ipgeti ('cdfmovie_eirene_sources', s % write_eirene_sources)
 
 c style/mode switches
       call ipgeti ('b2sicf_style', s % b2sicf_style)

@@ -3643,7 +3643,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Controls additional output to b2time.nc.  If eq 1 then a few 2d arrays (ne, Te, Ti) are written with each write to b2time.nc. If eq 2 then fluxes, electric potential, kinetic energy, and fluid particle and energy source terms are also included (e.g., rsana, rsahi, rqrad).
+					Controls additional output to b2time.nc.  If 2dwrite.ge.1 then a few 2d arrays (ne, Te, Ti) are written with each write to b2time.nc. If 2dwrite.ge.2 then fluxes, electric potential, kinetic energy, and fluid particle and energy source terms are also included (e.g., rsana, rsahi, rqrad).
 				</description>
 			</switch>
 			<switch>
@@ -6986,10 +6986,7 @@
 					10 : leakage option for density, recommended for cases with drifts, CONPAR(,,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub> n<sub>a</sub>, CONPAR(,,2)>0 is the stabilizing factor which may be needed if drifts are activated.
 					11 : should not be used for feedbacks anymore, not converted to WG code.
 					12 : should not be used for feedbacks anymore, not converted to WG code.
-					13 : particle density to achieve specified total flux,
-						CONPAR(,,1) is the specified flux crossing the flux surface 'b2stbc_type13_ref' steps away from the boundary,
-						CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used),
-						CONPAR(,,3), when running with Eirene and the 'ionising core' switch is used, is set internally to match the re-entering flux of ionised neutrals that crossed the core boundary (one must then have 'ionising_core'.eq.-IB where IB is the boundary index).
+					13 : particle density to achieve specified total flux, CONPAR(,,1) is the specified flux crossing the boundary flux surface, CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used), CONPAR(,,3), when running with Eirene and the 'ionising core' switch is used, is set internally to match the re-entering flux of ionised neutrals that crossed the core boundary (one must then have 'ionising_core'.eq.-IB where IB is the boundary index).
 					14 : sound speed velocity flux, CONPAR(,,1) is a multiplier to the outgoing sound speed C<sub>s</sub>. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCMOM=13. Recommended for cases with drifts. If CONPAR(,,2).gt.0, an additional decay-length loss is added, where CONPAR(,,2) is the decay length.
 					15 : prescribe a radial leakage velocity, CONPAR(,,1) specifies the leakage velocity in units of the local thermal velocity.
 					16 : particle density to achieve specified total flux, used with ASTRA coupling. The total desired flux is summed over all BCCON=16 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>. CONPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref will be used).
@@ -7015,9 +7012,7 @@
 					0 : default, no boundary condition is applied
 					1 : prescribe the value of the parallel velocity, MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup>
 					2 : prescribe the gradient of the parallel velocity, MOMPAR(,,1) specifies the parallel velocity gradient in s<sup>-1</sup>
-					3 : sheath conditions, Mach number as input,
-						if MOMPAR(,,2) &lt; 0.5, then the velocity is set to exactly
-						MOMPAR(,,1) * C<sub>s,collective</sub>, otherwise the velocity is set to be at least MOMPAR(,,1) * C<sub>s,a</sub>, the thermal velocity of that species. BCMOM = 3 was not adapted for WG. Replace with drift-compatible BCMOM = 13.
+					3 : sheath conditions, Mach number as input, if MOMPAR(,,2) &lt; 0.5, then the velocity is set to exactly MOMPAR(,,1) * C<sub>s,collective</sub>, otherwise the velocity is set to be at least MOMPAR(,,1) * C<sub>s,a</sub>, the thermal velocity of that species. BCMOM = 3 was not adapted for WG. Replace with drift-compatible BCMOM = 13.
 					4 : prescribe the value of the velocity, weakly a mixed boundary condition, MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup> and MOMPAR(,,2) specifies the 'strength' of the boundary condition.
 					5 : prescribe the parallel momentum flux per unit area, MOMPAR(,,1) specifies the parallel momentum flux density in N.m<sup>-2</sup>
 					6 : prescribe the total parallel momentum flux for a constant parallel velocity [not yet available]
@@ -7130,7 +7125,7 @@
 					17 : feedback condition on total current, imposing a potential profile matching that of the neighbouring flux tube. POTPAR(,1) specifies the electric current in A. POTPAR(,2) specifies the strength of the feedback (if left zero, b2stbc_bc_ref_te will be used).
 					21 : constant potential feedback scaled by potential on the nearby ring. POTPAR(,,1) specifies the desired potential in V. POTPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref_te will be used).
 					22 : prescribe the value of the potential, with a perturbation taken from the first flux tube in the domain. Intended for core boundaries only. POTPAR(,1) specifies the average potential.
-					23 : potential feedback on the total current for the core boundary, imposing a flux surface averaged potential, with poloidal perturbation taken from flux tube just inside domain. The feedback is scaled with the ion temperature. POTPAR(,,1) specifies the desired integral current through flux surfaces (in Amperes).	POTPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref_te will be used).
+					23 : potential feedback on the total current for the core boundary, imposing a flux surface averaged potential, with poloidal perturbation taken from flux tube just inside domain. The feedback is scaled with the ion temperature. POTPAR(,,1) specifies the desired integral current through flux surfaces (in Amperes). POTPAR(,,2) is the strength of the feedback (if left zero, b2stbc_bc_ref_te will be used).
 				</description>
 			</switch>
 			<switch>
