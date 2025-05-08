@@ -2,17 +2,17 @@
       use b2mod_types
       use b2mod_constants
 #ifndef NO_CDF
-      integer, save :: ncvdim, nfcdim, nsdim, natmdim, nmoldim, ntridim,
+      integer, save :: ncvdim, nsdim, natmdim, nmoldim, ntridim,
      & timedim, ntstep
 
       contains
 
       subroutine create_cdf_start(ncid, filename,
-     & nCv, nFc, ns, natm, nmol, ntri)
+     & nCv, ns, natm, nmol, ntri)
       implicit none
 #     include <netcdf.inc>
       character*(*) filename
-      integer ncid, nCv, nFc, ns, natm, nmol, ntri
+      integer ncid, nCv, ns, natm, nmol, ntri
 * variable shapes
       integer dims(3)
 * dimensions and variables
@@ -24,8 +24,6 @@
 * define dimensions
       if (index(trim(filename), 'b2movies') .gt. 0) then
         iret = nf_def_dim(ncid, 'ncv', nCv, ncvdim)
-        call check_cdf_status(iret)
-        iret = nf_def_dim(ncid, 'nfc', nFc, nfcdim)
         call check_cdf_status(iret)
         iret = nf_def_dim(ncid, 'ns', ns, nsdim)
         call check_cdf_status(iret)
@@ -155,15 +153,15 @@
       integer z_trit_id
 * define variable
       dims(1) = ntridim
-      select case (itype)
+      type: select case (itype)
       case(1)
         dims(2) = natmdim
       case(2)
         dims(2) = nmoldim
-      case default
+      case default type
         write(*,*) 'Undefined "itype" in create_cdf_field_tri ',itype
         call xerrab ('Undefined itype value')
-      end select
+      end select type
       dims(3) = timedim
       iret = nf_def_var (ncid, name, NF_DOUBLE, 3, dims, z_trit_id)
       call check_cdf_status(iret)

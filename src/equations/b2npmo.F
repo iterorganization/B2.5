@@ -522,6 +522,12 @@ cdjm Jan2017 update momentum source components for balance
         call update_balance_sources_momentum(nCv,nFc,is,pl%ua(:,is),
      &    rob,ubf,robf)
       endif
+      if (balance_netcdf.ne.0 .or.
+     &    switch%write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_momentum(
+     &   nCv,is,pl%ua(1,is),rob)
+      endif
+#endif
 
       call my_out_us(70,nFc,1,co%cvsahz(1,:,is),'b2npmo_cvsahz'//chns)
       call my_out_us(70,nFc,1,flub,'b2npmo_flub'//chns)

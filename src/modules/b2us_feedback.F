@@ -161,8 +161,7 @@
       else
         if (.not.file_ok) write(6,*) 'No ',trim(filename)
       endif
-      found = maxval(saved_fb_actuator).gt.0.0_R8 .or.
-     &        maxval(saved_fb_prev).gt.0.0_R8
+      found = maxval(saved_fb_actuator).gt.0.0_R8
       return
 #ifdef USE_MPI
   999 call xerrab ('Error while reading FEEDBACK namelist!')
@@ -178,8 +177,7 @@
       character*256 filename
 
 c      feedback_namelist_used = feedback_namelist_used .or.
-c     .            maxval(saved_fb_actuator).gt.0.0_R8 .or.
-c     .            maxval(saved_fb_prev).gt.0.0_R8
+c     .            maxval(saved_fb_actuator).gt.0.0_R8
 
       if (edition.eq.'    ') then
         filename = 'b2.feedback_save.parameters'
