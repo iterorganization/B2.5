@@ -128,6 +128,19 @@
       call cfverr (ninp(1), b2fgmtry_version)                          !xpb
       call cfverr (ninp(2), b2fparam_version)                          !xpb
       call cfverr (ninp(3), b2fstati_version)                          !xpb
+*   ..read and echo code internal parameters
+    1 continue
+       read (ninp(0),'(a)',end=2,err=91) line
+       if (.not.is_comment(line)) then
+         ligne = line
+         call strip_spaces(ligne)
+         if (ligne(1:1).eq.'''') then
+           read (line,*) cnamip, cvalip
+           call ipsetc (cnamip, cvalip)
+         end if
+       end if
+       goto 1
+    2 continue
 
 *   ..reading/converting the b2fgmtry file
       if (b2fgmtry_version.lt.'03.002.000') then
@@ -272,19 +285,6 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
       call b2rfcp (ninp(0), ns)
 *   ..test parameters
       call b2xvcp (ns)
-*   ..read and echo code internal parameters
-    1 continue
-       read (ninp(0),'(a)',end=2,err=91) line
-       if (.not.is_comment(line)) then
-         ligne = line
-         call strip_spaces(ligne)
-         if (ligne(1:1).eq.'''') then
-           read (line,*) cnamip, cvalip
-           call ipsetc (cnamip, cvalip)
-         end if
-       end if
-       goto 1
-    2 continue
 
 *   ..reading/converting the b2fstati file
       if (b2fstati_version.lt.'03.002.000') then
