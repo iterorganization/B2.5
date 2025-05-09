@@ -211,8 +211,8 @@
       g%LSN = .true.
       g%psi_increasing = .true.
 
-      g%Qalfmax = 0._R8
-      g%Qalfmin = 0._R8
+      g%Qalfmax = 1.0e-3_R8
+      g%Qalfmin = 1.0e-3_R8
 
       return
       end subroutine initialize_geometry
