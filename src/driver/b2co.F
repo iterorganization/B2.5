@@ -455,7 +455,7 @@
       if (todo.and.delta_cdfmovie_time.gt.0.0_R8) then
         filename='b2movies.nc'
         call find_file(filename,file_exists)
-        if (nnatmi.gt.0 .and. write_triangles.ge.1) then
+        if (write_triangles.ge.1) then
           filename_tri='eirenemovies.nc'
           call find_file(filename_tri,file_tri_exists)
         end if

@@ -1675,7 +1675,7 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
       integer nCv,nFc,isb
       real (kind=R8):: ub(nCv), rob(nCv), ubf(nFc), robf(nFc)
 *   ..local variables
-      integer iCv,iFc,istrai
+      integer iCv,iFc
 
       do iCv=1,nCv
         b2stbr_phys_smo_bal(iCv,isb)=
@@ -2044,7 +2044,7 @@ cdjm Update ion heat sources
       subroutine update_balance_eirene_sources_heat(nCv,ne,ni,te,ti)
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv,ns
+      integer nCv
       real (kind=R8):: ne(nCv), ni(nCv),
      &                 te(nCv), ti(nCv)
 *   ..local variables
