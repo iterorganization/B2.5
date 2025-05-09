@@ -622,6 +622,22 @@
 					If abs(cos(alpha)*bx).ge.b2us_prep_Qalfmin .and. abs(cos(alpha)*bx).lt.b2us_prep_Qalfmax, fcPbs is set equal to b2us_prep_Qalfmax*fcS for boundary faces during writing of b2fgmtry.
 				</description>
 			</switch>
+			<switch>
+				<name>b2us_prep_mod_hc</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2us_prep_mod_hc.eq.1 then the length between cell face center and neighboring cell centers (fcHc) will be modified.	It will be the same for neighboring boundary faces belonging to the same flux tube. For all boundary faces it will be recalculated to decrease the distance between boundary face and guard cell centers.
+				</description>
+			</switch>
+			<switch>
+				<name>b2us_prep_set_beta_0</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2us_prep_set_beta_0.eq.1, the beta angle will be assigned to zero for faces between boundary cells belonging to same shaved flux tube.
+				</description>
+			</switch>
 		</category>
 		<category name="Run">
 			<switchgroup>
@@ -1955,7 +1971,7 @@
 				<name>b2tqna_ballooning</name>
 				<description>
 					Ballooning model switches. If ballooning.ne.0, then all transport coefficients in cell (i) are rescaled by a factor of ballooning_rescale*abs(bb_ref/bb(i))**ballooning .
-					The default value for bb_ref is the arithmetic average of the total magnetic field strength over the entire computational domain.
+					The default value for bb_ref is the arithmetic average of the total magnetic field strength over the entire computational domain. If b2tqna_ballooning_sig.ne.0 (default), the ballooning factor is also applied to the anomalous radial electrical conductivity and the anomalous radial thermo-electric coefficient.
 				</description>
 				<switch>
 					<name>b2tqna_ballooning</name>
@@ -4591,7 +4607,7 @@
 					<name>b2stbc_cbsnafac</name>
 					<default>0.01</default>
 					<type>real</type>
-                    <note>NOT YET CONVERTED IN WG CODE</note>
+					<note>NOT YET CONVERTED IN WG CODE</note>
 				</switch>
 				<switch>
 					<name>b2stbc_fchycore_alpha</name>
@@ -4627,7 +4643,7 @@
 					<name>b2stbc_nesepm_gamma</name>
 					<default>0.99</default>
 					<type>real</type>
-                    <note>NOT YET CONVERTED IN WG CODE</note>
+					<note>NOT YET CONVERTED IN WG CODE</note>
 				</switch>
 				<switch>
 					<name>b2stbc_volrec_alpha</name>
@@ -5788,6 +5804,24 @@
 				<description>
 					Weight of new volume recombination strength relative to that of previous iteration in the volume recombination regulation scaling scheme.
 					Rendered obsolete by 'eirene_dpc_fix'.
+				</description>
+			</switch>
+			<switch>
+				<name>B2SPECIES_START</name>
+				<default>0</default>
+				<type>integer array of size (NSTRAT)</type>
+				<description>
+					Specifies the index of the first B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model.
+					If not specified, B2SPECIES_START = SPECIES_START.
+				</description>
+			</switch>
+			<switch>
+				<name>B2SPECIES_END</name>
+				<default>ns-1</default>
+				<type>integer array of size (NSTRAT)</type>
+				<description>
+					Specifies the index of the last B2.5 species involved in stratum (istra) for the B2.5 fluid neutral model.
+					If not specified, B2SPECIES_END = SPECIES_END.
 				</description>
 			</switch>
 			<switch>
