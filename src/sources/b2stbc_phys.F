@@ -9069,11 +9069,18 @@ cwdk    Todo: corrections for BCCON.ne.14
 
         end select
 
+*     ..warning when BCENN is used together with recyc>0 (normally, BCENN should overwrite the recycling BCs)
       if (ncall_b2stbc_phys.eq.0) then
         if ((ANY(recyc(0:ns-1,1:mpg%nRc)/=0.0_R8)).and.
      &      (bcenn(ib).ne.0)) then
-          call xerrab('Error: neutral temperature BCs imposed ' //
-     1      'but recycling is non-zero.')
+          write(0,'(a)')
+     &      'Imposing BCENN on top of the recycling neutral energy'//
+     &      ' flux. Verify that the BC is correctly imposed!'//
+     &      ' (Only relevant for boundary strata ''A'')'
+          write(*,'(a)')
+     &      'Imposing BCENN on top of the recycling neutral energy'//
+     &      ' flux. Verify that the BC is correctly imposed!'//
+     &      ' (Only relevant for boundary strata ''A'')'
         endif
       endif
 
@@ -9102,7 +9109,7 @@ cwdk    Todo: corrections for BCCON.ne.14
           srw%shn0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
         enddo
 
-* -- BCENN=2 -- PRESCRIBE THE GRADIENT OF THE ION TEMPERATURE
+* -- BCENN=2 -- PRESCRIBE THE GRADIENT OF THE NEUTRAL TEMPERATURE
 
       case (2)
         if(ncall_b2stbc_phys.eq.0) then
@@ -9163,11 +9170,12 @@ cwdk    Todo: corrections for BCCON.ne.14
       case (6)
         call xerrab ('b2stbc_phys -- BCENN = 6 not adapted for WG')
 
-* -- BCENN=7 -- PRESCRIBE THE ION TEMPERATURE PROFILE
+* -- BCENN=7 -- PRESCRIBE THE NEUTRAL TEMPERATURE PROFILE
 
       case (7)
         if(ncall_b2stbc_phys.eq.0) then                               !srv 26.02.18 {
-          write(*,'(3a)') 'specified neutral temperature on ',
+          write(*,'(3a)')
+     .     'BCENN = 7 : specified neutral temperature on ',
      1     BCCHAR(IB), boundary_location(ib)
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
@@ -9183,7 +9191,7 @@ cwdk    Todo: corrections for BCCON.ne.14
       case (8)
         call xerrab ('b2stbc_phys -- BCENN = 8 not adapted for WG')
 
-* -- BCENN=9 -- PRESCRIBE THE DECAY LENGTH FOR THE ION TEMPERATURE
+* -- BCENN=9 -- PRESCRIBE THE DECAY LENGTH FOR THE NEUTRAL TEMPERATURE
 
       case (9)
         if(ncall_b2stbc_phys.eq.0) then
