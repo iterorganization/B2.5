@@ -2818,7 +2818,7 @@
             write (*,*) "new fcHc:"
             write (*,'(1es17.6)') wrk
               if (wrk.le.1.0E-08_R8) then
-                write (*,*) "new fcHc too small! Changes won't"//
+                write (*,*) "new fcHc too small! Changes will not"//
      &           " be applied. Calc new fcHc as average value "//
      &           "of original fcHc."
                 wrk = sum(gm%fcHc(fcsb(ind:ind1-1),1)+
