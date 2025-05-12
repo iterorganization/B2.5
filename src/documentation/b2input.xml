@@ -4385,6 +4385,23 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2txcx_increase_transp_coefs</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Multiplication factor to the poloidal transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa). Must be greater than 1.0 to have an effect.
+					If b2txcx_increase_transp_coefs.gt.1.0, b2trno_set_chcb_0 will be assigned to 1.
+				</description>
+			</switch>
+			<switch>
+				<name>b2trno_set_chcb_0</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If set_chcb_0.eq.1, sets radial components of transport coefficients (electron and ion thermal conductivity, particle transport proportional to grad na and grad pa) equals to zero on not field-aligned boundary faces (as defined by b2us_prep_Qalfmin). Also decreases the same radial components by a b2txcx_increase_transp_coefs factor on not field-aligned faces between two neighbouring boundary cells. Always on if b2txcx_increase_transp_coefs.gt.1.0.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndr_na_min</name>
 				<default>1.0e4</default>
 				<type>real</type>
