@@ -3,9 +3,6 @@
 
       program b2fgmtry_mod
       use b2mod_types
-      use b2mod_geo
-      use b2mod_geo2
-      use b2mod_indirect
       use b2mod_xerset
       implicit none
 
@@ -116,9 +113,6 @@
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..call principal driver routine
-c      call alloc_b2mod_indirect(nx,ny,nncutmax)
-c      call alloc_b2mod_geo(nx,ny)
-c     call alloc_b2mod_geo2(nx1,ny1,nncutmax)
       call b2fgmtry_moddr (ninp, nout)
 *   ..close graphics files
 *     (none)

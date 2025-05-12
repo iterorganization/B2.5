@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2nppo (nCv, nFc, nVx, nregionv, solving, solvereg,     !srv 22.05.18
-     &  itcnt, rxf, switch, geo, mpg, pl, dv, sr, ierr)
+     &  itcnt, rxf, switch, geo, mpg, pl, dv, sr)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -37,8 +37,6 @@
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Source), intent (inout) :: sr
-*   ..output arguments (unspecified on entry)
-      integer ierr
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -69,7 +67,6 @@
       integer :: iCv
       real (kind=R8) ::
      *  aa(mpg%nCmxNv), wrk0(nCv), wrk
-      real (kind=R8), save :: b2nppo_restr_po = 0.0_R8
 *   ..procedures
       external xertst
       external b2xvsg, b2ursd, b2uspo, b2uppo
@@ -88,7 +85,6 @@
      . 'faulty argument rxf')
 *   ..read switches
       if (ncall_b2nppo.eq.0) then
-        call ipgetr ('b2nppo_restr_po', b2nppo_restr_po)
       endif
 *   ..extensive tests on first few calls
       if (ncall_b2nppo.lt.3) then
@@ -124,24 +120,24 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
      &  'b2nppo')
 *   ..apply correction
         call b2uppo (nCv, rxf, dv%corpo, pl%po)
-        if (b2nppo_restr_po.ne.0.0_R8) then
+        if (switch%b2nppo_restr_po.ne.0.0_R8) then
           do iCv=1,mpg%nCv
             if (mpg%cvOnClosedSurface(iCv)) cycle
-            if (b2nppo_restr_po.gt.0.0_R8) then
+            if (switch%b2nppo_restr_po.gt.0.0_R8) then
               if (abs(qe*pl%po(iCv))/pl%te(iCv)
-     &                   .gt. b2nppo_restr_po ) then
+     &                   .gt. switch%b2nppo_restr_po ) then
                 wrk = pl%po(iCv)
-                pl%po(iCv) = sign(b2nppo_restr_po*pl%te(iCv)/qe,
+                pl%po(iCv) = sign(switch%b2nppo_restr_po*pl%te(iCv)/qe,
      &           pl%po(iCv))
                 write(*,*) "Applied po/Te ratio limit",
      &           iCv,wrk,pl%po(iCv)
               endif
             else
               if (abs(qe*pl%po(iCv))/pl%te(iCv)
-     &                   .gt. abs(b2nppo_restr_po) .and.
+     &                   .gt. abs(switch%b2nppo_restr_po) .and.
      &             pl%po(iCv).lt.0.0_R8) then
                 wrk = pl%po(iCv)
-                pl%po(iCv) = sign(b2nppo_restr_po*pl%te(iCv)/qe,
+                pl%po(iCv) = sign(switch%b2nppo_restr_po*pl%te(iCv)/qe,
      &           pl%po(iCv))
                 write(*,*) "Applied po/Te ratio limit",
      &           iCv,wrk,pl%po(iCv)
@@ -167,9 +163,6 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
         call my_out_us(70,nCv,0,wrk0,'b2nppo_sch')
       endif                                                       !srv 11.09.09 }
 
-*   ..set error parameter and return
-*     (at present all errors cause an abort through xertst)
-      ierr = 0
 * ..return
       ncall_b2nppo = ncall_b2nppo+1
       call subend ()

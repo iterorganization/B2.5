@@ -10,8 +10,7 @@
       character*(*) :: y1a,y2a,z1a,z2a,z3a,z4a
       character*12 :: a1
       open(99,file=trim(a1))
-      
-      
+
       write (99,*) y1a,'start'
       ma=0.
       mi=0.
@@ -24,7 +23,7 @@
          write (99,*) iy,ix,(x(ix),ix=-1,nx)
       enddo
       write (99,*) y1a,'ende:',mi,ma
-      
+
       write (99,*) y2a,'start'
       ma=0.
       mi=0.
@@ -53,7 +52,6 @@
       enddo
       write (99,*) z1a,'ende:',mi,ma
 
-      
       write (99,*) z2a,'start'
       ma=0.
       mi=0.
@@ -102,5 +100,4 @@
       close (99)
 
       return
-
       end subroutine hbout

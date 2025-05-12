@@ -4,15 +4,6 @@
       subroutine b2sikt (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &   pl, dv, rza, co, st_ext, she0, shi0, skt0, skt_prod, skt_diss)
       use b2mod_types
-!      use b2mod_indirect
-!      use b2mod_geo_corner
-!      use b2mod_geo
-!     & , only : crx
-!      use b2mod_sources
-!     & , only : skt_prod, skt_diss
-!      use b2mod_rates
-!     & , only : rza
-!      use b2mod_anomalous_transport
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa

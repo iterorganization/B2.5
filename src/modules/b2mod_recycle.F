@@ -15,13 +15,13 @@ c     Mixed materials are not considered in this recycling model
       logical, save :: recycle_initialised
       data recycle_initialised /.false./
 
-      real (kind=R8),save::uold=0.0_R8,told=0.0_R8,mold=0.0_R8
-      integer, save :: nm, nt, nshpottau,nx1,ny1,ns1
+      real (kind=R8), save :: uold=0.0_R8, told=0.0_R8, mold=0.0_R8
+      integer, save :: nm, nt, nshpottau, nx1, ny1, ns1
 
 c     Recycle_index and target_index refer for each species and boundary in which integer
 c     the corresponding recycling coefficients are stored.
       integer, allocatable, save ::
-     *  recycle_index(:),target_index(:)
+     *  recycle_index(:), target_index(:)
 c     Boolean to indicate whether trim data is present for species/material combination
       logical, allocatable, save ::
      *  trimrecyc_present(:,:)
@@ -32,11 +32,11 @@ c     Boolean to indicate whether trim data is present for species/material comb
      &  rmz1(:,:,:,:,:),rmz2(:,:,:,:,:),re1(:,:,:,:,:),re2(:,:,:,:,:),
      &  rp11(:,:,:,:,:),rp12(:,:,:,:,:),rp21(:,:,:,:,:),
      &  rp22(:,:,:,:,:),rp31(:,:,:,:,:),rp32(:,:,:,:,:),
-     &  M_dummy(:), T_dummy(:), shpottau_dummy(:),        !nh 21.02.2020
+     &  M_dummy(:),T_dummy(:),shpottau_dummy(:),        !nh 21.02.2020
      &  fna_mol(:,:)                                    !nh 30.03.2021
       real (kind=R8), allocatable, save :: recycle_zn(:)
 
-      real (kind=R8),save::int0l,int0r,
+      real (kind=R8), save :: int0l,int0r,
      &    int1l,int1r,int2l,int2r,
      &    int3l,int3r,int4l,int4r,
      &    int5l,int5r,int6l,int6r
@@ -60,13 +60,13 @@ c     Boolean to indicate whether trim data is present for species/material comb
       use b2mod_neutrals_namelist
       use b2mod_subsys
       implicit none
-      integer,intent(in):: nsd, nbnd_local, use_coarse
+      integer, intent(in) :: nsd, nbnd_local, use_coarse
       character*256 filename
       integer istra, isp, is, il,it,itm,ndata
       integer idum(0:9)
       logical open_file
 
-      character*10::fnn_version
+      character*10 :: fnn_version
       character lblfnn*120
       character lblfnn_dummy*120              !nh 21.02.2020
       character*2 target_code(0:nbnd_local-1)
@@ -269,7 +269,6 @@ c main reference:
 c   Horsten, Niels, Giovanni Samaey, and M. Baelmans.
 c  "Development and assessment of 2D fluid neutral models that include atomic databases and a microscopic reflection model."
 c   Nuclear Fusion 57.11 (2017): 116043.
-      use b2mod_rates
       use b2mod_b2cmpa
       use b2us_geo
       use b2us_plasma
@@ -413,7 +412,6 @@ c if incident flux is negative (this can happen if the diffusion approximation i
      &            fnni,fmomni,nni,nnwwni,feneni)
 c     This routine is an interface to CalcIncidentFluxesMaxwellian and CalcIncidentFluxesDiffusion
 c     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
-      use b2mod_rates
       use b2mod_b2cmpa
       use b2us_geo
       use b2us_plasma
@@ -507,7 +505,6 @@ c     It will decide which one to use based on the minimum Knudsen of the neutra
 c     If the choice is based on Kn at each boundary face (as is done in CalcIncidentFluxesKn), additional convergence problems may arise.
 c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest Kn of that "stratum".
 c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
-      use b2mod_rates
       use b2mod_b2cmpa
       use b2us_geo
       use b2us_plasma
@@ -638,7 +635,6 @@ c     Convert energy flux densities in net energy flux contributions
 !mb   17.07.17
 c     This routine calculates the recycled neutral particle, momentum and energy fluxes based
 c     on the diffusion approximation (see papers of Niels Horsten).
-      use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_neutrals_namelist , only:E_fc, accel_ion
       use b2us_geo
@@ -811,7 +807,6 @@ c     Convert energy flux densities in energy fluxes
 !mb   17.07.17
 c     This routine calculates the reflected neutral particle,momentum and energy fluxes with incident neutral flux based on the diffusion approximation (see papers of Niels Horsten).
       use b2mod_b2cmpa
-      use b2mod_rates
       use b2mod_neutrals_namelist , only:E_fc
       use b2us_geo
       use b2us_plasma
@@ -1059,7 +1054,6 @@ c if incident flux is negative (this can happen if the diffusion approximation i
 c     This routine is an interface to CalcReflectedFluxesMaxwellian and CalcReflectedFluxesDiffusion
 c     It will decide which one to use based on the Knudsen number (Kn) of the neutral atoms.
       use b2mod_b2cmpa
-      use b2mod_rates
       use b2us_geo
       use b2us_plasma
       use b2us_map
@@ -1163,7 +1157,6 @@ c     If the choice is based on the Kn at each boundary face (as is done in Calc
 c     In this function, the choice is the same for each boundary face of the same group (istra) and the choice is based on the lowest Kn of that "stratum".
 c     Here, the choice is made based on maxw_eff (effective), which has been set in b2stbr_pĥys.F
       use b2mod_b2cmpa
-      use b2mod_rates
       use b2us_geo
       use b2us_plasma
       use b2us_map
@@ -1532,7 +1525,6 @@ c      Kn1----Kn------Kn2
       subroutine CalcMinKn(iCv,isn,istra,
      &            pl,dv,rt,L,min_Kn,Kn,mfp)
 c     This routine calculates the minimum mean free path for a certain stratum
-      use b2mod_rates
       use b2mod_b2cmpa
       use b2us_plasma
       use b2mod_neutrals_namelist
@@ -1622,21 +1614,21 @@ c     local variables
       integer :: istra, i, iRc1, isn, iFc
       integer, save :: ncall = 0, style_visc = 0
       real(kind=R8) :: nnVx(nVx),
-     &                 neVx(nVx),tiVx(nVx),
+     &                 neVx(nVx), tiVx(nVx),
      &                 min_Kn(1:nstrat), mfp, mfp_out(nCv),
-     &                 Kn,Kn_ti,Kn_ne,
-     &                 Kn_out(nCv),Kn_ti_out(nCv),Kn_ne_out(nCv),
-     &                 L_ne_out(nCv),L_ti_out(nCv),
-     &                 dti(nFc,0:1),dne(nFc,0:1),L_ti,L_ne
+     &                 Kn, Kn_ti, Kn_ne,
+     &                 Kn_out(nCv), Kn_ti_out(nCv), Kn_ne_out(nCv),
+     &                 L_ne_out(nCv), L_ti_out(nCv),
+     &                 dti(nFc,0:1), dne(nFc,0:1), L_ti, L_ne
 
       if (ncall.eq.0) then
         call ipgeti ('b2sihs_style_visc', style_visc)
       endif
       isn = 0 !! AFN_TODO generalize species index for multi-speciescases?
               !! For now KUL AFN models have only been developed for single species cases.
-      call intvertex(nCv,nVx,mpg,geo%vxVol,pl%na(:,isn),nnVx)
-      call intvertex(nCv,nVx,mpg,geo%vxVol,dv%ne,neVx)
-      call intvertex(nCv,nVx,mpg,geo%vxVol,pl%ti,tiVx)
+      call intvertex(nCv, nVx, mpg, geo%vxVol, pl%na(:,isn), nnVx)
+      call intvertex(nCv, nVx, mpg, geo%vxVol, dv%ne, neVx)
+      call intvertex(nCv, nVx, mpg, geo%vxVol, pl%ti, tiVx)
       call grad_nt(nCv, nFc, nVx, 1, geo, mpg, pl%na(:,isn), nnVx, dnn)
       call grad(nCv, nFc, nVx, 1, geo, mpg, pl%ti, tiVx, dti)
       call grad(nCv, nFc, nVx, 1, geo, mpg, dv%ne, neVx, dne)
@@ -1654,8 +1646,10 @@ c     pre-computation of the minimal mean-free path along a boundary stratum
           mfp_out(iRc1) = mfp
 
 cc compute Knudsen number
-          L_ti = pl%ti(iRc1)/sqrt(dti(iFc,0)**2+dti(iFc,1)**2)  !! gradient length of Ti
-          L_ne = dv%ne(iRc1)/sqrt(dne(iFc,0)**2+dne(iFc,1)**2)  !! gradient length of ne
+          L_ti = pl%ti(iRc1)/
+     &     max(sqrt(dti(iFc,0)**2+dti(iFc,1)**2),1.0e-30_R8)    !! gradient length of Ti
+          L_ne = dv%ne(iRc1)/
+     &     max(sqrt(dne(iFc,0)**2+dne(iFc,1)**2),1.0e-30_R8)    !! gradient length of ne
 c          L = min(L_ti,L_ne) !! shortest gradient length
           Kn = mfp/switch%L_macro_AFN
           Kn_ti = mfp/L_ti

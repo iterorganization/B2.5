@@ -105,7 +105,7 @@ c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06
 * ..compute flux
 cwdk note: compared to original code, flv is now based on "effective" 
 cwdk       viscosity, and will be zero if cvsb is zero
-      call calcflow(nCv,nFc,nVx, switch%b2npmo_discr_meth,
+      call calcflow(nCv,nFc,nVx,switch%b2npmo_discr_meth,
      &                       geo,mpg,ub,flub,cvsb,fmb,flf,flv)
 cwdk store effective viscosity, for use in viscous heating
       call diff(nCv, nFc, nVx, 0, geo, mpg, ub, wrkv, wrkf)
@@ -124,6 +124,8 @@ cwdk store effective viscosity, for use in viscous heating
        write (chns,'(i3.3)') isb
        call my_out_us(70,nFc,1,flv(1,0),'b2urmo_etaPat_gradua_th'//chns)
        call my_out_us(70,nFc,1,flv(1,1),'b2urmo_etaPat_gradua_r'//chns)
+       call my_out_us(70,nFc,1,flf(1,0),'b2urmo_etaPat_ua_th'//chns)
+       call my_out_us(70,nFc,1,flf(1,1),'b2urmo_etaPat_ua_r'//chns)
       endif  
 
 * ..compute kinetic energy flux
@@ -133,7 +135,7 @@ cwdk store effective viscosity, for use in viscous heating
       ! - should contribution from flubv be in here?
       wrk  = 0.5_R8*ub**2
       wrkf = flub + flubv
-      call calcflow(nCv,nFc,nVx,switch%b2npmo_discr_ meth,
+      call calcflow(nCv,nFc,nVx,switch%b2npmo_discr_meth,
      &                     geo,mpg,wrk,wrkf,cvsb,fkb,flf,flv)
       fkb(:,0) = fkb(:,0)/geo%fcHz
       fkb(:,1) = fkb(:,1)/geo%fcHz

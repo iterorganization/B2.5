@@ -4,6 +4,7 @@
       subroutine b2stel (nCv, nFc, ns, ismain,
      &  switch, geo, mpg, pl, dv, rt, rtw, srw)
       use b2mod_types
+      use b2mod_diag
       use b2mod_tallies
       use b2mod_constants
       use b2mod_eirene_globals
@@ -32,6 +33,8 @@
      & , only : ncall_b2stel
       use b2mod_subsys
       use b2mod_dimensions
+      use b2us_feedback
+     & , only : she_rad_tot
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nCv, nFc, ns, ismain
@@ -44,7 +47,6 @@
       type (B2RatesWork), intent (in) :: rtw
 *   ..output arguments (unspecified on entry)
       type (B2SourceWork), intent (inout) :: srw
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -60,7 +62,7 @@
 
 *   ..local variables
       integer iCv, is!, k
-!WG_TODO      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
+      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
       character chns*3!, chk*1                                          !srv 30.06.08
       real (kind=R8) ::
      *  rf0, t0, t1, t2, tkin, t1i, t1n
@@ -85,14 +87,14 @@
       call subini ('b2stel')
 *   ..set internal parameters on first call
 *   ..identify impurity isonuclear sequences
-!WG_TODO       nimp_tmp=0
-!WG_TODO       jimp_tmp=0
-!WG_TODO       do is = 1, nspecies !{
-!WG_TODO         if(nfluids(is).gt.1) then !{
-!WG_TODO           nimp_tmp=nimp_tmp+1
-!WG_TODO           jimp_tmp(is)=nimp_tmp
-!WG_TODO         end if !}
-!WG_TODO       end do !}
+      nimp_tmp=0
+      jimp_tmp=0
+      do is = 1, nspecies !{
+        if(nfluids(is).gt.1) then !{
+          nimp_tmp=nimp_tmp+1
+          jimp_tmp(is)=nimp_tmp
+        end if !}
+      end do !}
 *   ..test nCv, ns
       call xertst (0.lt.nCv, 'faulty argument nCv')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -385,16 +387,15 @@ c accounted for)
        endif
       enddo
 
-
 *   ..compute source terms for electron heat loss and radiation
-!WG_TODO      b2rad=0.0_R8
+      b2rad=0.0_R8
       b2radreg=0.0_R8
       b2bremreg=0.0_R8
       rqradreg=0.0_R8
       rqbrmreg=0.0_R8
       srw%rqrad=0.0_R8
-!WG_TODO      b2brem=0.0_R8
-!WG_TODO      rad_imp=0.0_R8
+      b2brem=0.0_R8
+      rad_imp=0.0_R8
       do is = 0, ns-1
         do iCv = 1, mpg%nCi ! internal cells only
          if(mpg%cvReg(iCv).ne.0) then
@@ -426,11 +427,11 @@ c accounted for)
           srw%rqrad(iCv,is) = t0
           rqradreg(mpg%cvReg(iCv),is)=rqradreg(mpg%cvReg(iCv),is)+t0
           b2radreg(mpg%cvReg(iCv))=b2radreg(mpg%cvReg(iCv))-t0
-!WG_TODO          b2rad=b2rad-t0
-!WG_TODO          if (.not.is_neutral(is) .and. jimp_tmp(b2espcr(is)).ne.0) then
-!WG_TODO            rad_imp(jimp_tmp(b2espcr(is)))=
-!WG_TODO     .       rad_imp(jimp_tmp(b2espcr(is)))-t0
-!WG_TODO          endif
+          b2rad=b2rad-t0
+          if (.not.is_neutral(is) .and. jimp_tmp(b2espcr(is)).ne.0) then
+            rad_imp(jimp_tmp(b2espcr(is)))=
+     .       rad_imp(jimp_tmp(b2espcr(is)))-t0
+          endif
 *      ..compute bremsstrahlung radiation rate for is->any
           t0 = switch%b2stel_phm0*
      &         rtw%rbr(iCv,is)*geo%cvVol(iCv)*dv%ne(iCv)*
@@ -439,7 +440,7 @@ c accounted for)
           srw%rqbrm(iCv,is) = t0
           rqbrmreg(mpg%cvReg(iCv),is)=rqbrmreg(mpg%cvReg(iCv),is)+t0
           b2bremreg(mpg%cvReg(iCv))=b2bremreg(mpg%cvReg(iCv))-t0
-!WG_TODO          b2brem=b2brem-t0
+          b2brem=b2brem-t0
          endif
         enddo
       enddo
@@ -517,6 +518,9 @@ c accounted for)
 
         enddo
       endif
+      wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
+     &     srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
+      she_rad_tot = -sum(wrk0)
       if (switch%b2stel_iout.eq.1 .or. switch%b2npht_iout.eq.1
      &                            .or. switch%iout_b2wdat .eq. 4) then
 !        do k=0,3
@@ -525,8 +529,6 @@ c accounted for)
 !         call my_out(70,nx,ny,shi0_rec(-1,-1,k),'b2stel_shi_rec'//chk)
 !        enddo
 !      call my_out(70,nx,ny,srw%she0(-1,-1,k),'b2stel_she')
-        wrk0=srw%she0(:,0)+srw%she0(:,1)*pl%te+
-     &       srw%she0(:,2)*dv%ne + srw%she0(:,3)*pl%te*dv%ne
         call my_out_us(70,nCv,0,wrk0,'b2stel_she_rad')
         wrk0=shi0_ion(:,0)+shi0_ion(:,1)*pl%ti+
      &       shi0_ion(:,2)*dv%ni(:,0)+

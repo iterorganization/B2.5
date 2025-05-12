@@ -25,7 +25,6 @@ module b2mod_ual_io
     use b2us_plasma
     use b2mod_elements
     use b2mod_constants
-!    use b2mod_feedback
 !    use b2mod_boundary_namelist
     use b2mod_neutrals_namelist
     use b2mod_user_namelist
@@ -58,9 +57,16 @@ module b2mod_ual_io
 #ifdef IMAS
     use eirmod_cinit &
      & , only : fort_lc
+    use eirmod_ctrig &
+     & , only : ntrii, ixtri
     use eirmod_comusr &
      & , only : natmi, nmoli, nioni, nmassa, nchara, nmassm, ncharm, &
      &          nprt, nchrgi, nchari
+    use eirmod_cestim &
+     & , only : pdena, pdenm, &
+     &          vxdena, vydena, vzdena, vxdenm, vydenm, vzdenm
+    use eirmod_braeir &
+     & , only : pux, puy, pvx, pvy
     use b2mod_b2plot &
      & , only : triangle_vol, wklng, alloc_b2mod_b2plot_eirene
 #endif
@@ -252,7 +258,8 @@ module b2mod_ual_io
                                     !< 2: Z at location of maximum major radius
                                     !< 3: Z at dR/dZ = 0 maximum R location
                                     !< 4: GGD grid subset defined by jxa value
-  integer, save :: GeometryType !< Geometry identifier number
+  integer, save :: gridGeometry   !< Grid geometry identifier number
+  integer, save :: plasmaGeometry !< Plasma topology identifier number
 #if GGD_MAJOR_VERSION > 0
   integer, save :: iGsCoreBoundary  !< Variable to hold Core grid subset base
             !< index, later found by findGridSubsetByName() routine.
@@ -327,9 +334,10 @@ contains
     B25_git_version = get_B25_hash()
     code_commit = B25_git_version
 
-    geometryType = geometryId( mpg, geo )
-    configuration = geometryName( geometryType )
-    select case ( geometryType )
+    gridGeometry = geometryId( mpg, geo, 1 )
+    plasmaGeometry = geometryId( mpg, geo, 2 )
+    configuration = geometryName( plasmaGeometry )
+    select case ( plasmaGeometry )
     case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
       plate_name(1) = 'W'
       plate_name(2) = 'E'
@@ -366,7 +374,7 @@ contains
       wetted_area(i) = 0.0_IDS_real
       do iFc = 1, mpg%nFc
         if (mpg%fcReg(iFc).eq. &
-          & regionNumbers(i,REGIONTYPE_EDGE,geometryType)) then
+          & regionNumbers(i,REGIONTYPE_EDGE,gridGeometry)) then
           if (mpg%fcCv(iFc,1).le.mpg%nCi) then
             iCv = mpg%fcCv(iFc,1)
           else
@@ -554,9 +562,7 @@ contains
         logical :: found
 #endif
 #ifdef B25_EIRENE
-#ifdef WG_TODO
         real(IDS_real), allocatable :: un0(:,:,:), um0(:,:,:)
-#endif
 #endif
  !< Type of IDS data structure, designed for handling grid geometry data
 #if GGD_MAJOR_VERSION > 0
@@ -1157,7 +1163,7 @@ contains
           end if
         end if
 
-        select case (GeometryType)
+        select case ( gridGeometry )
         case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
           u = 0.0_IDS_real
           frac = 0.0_IDS_real
@@ -1249,7 +1255,7 @@ contains
         if (iactive.gt.0) &
             &  call write_sourced_rz( summary%boundary%x_point_main, &
             &   geo%vxX(mpg%Xpt(iactive)), geo%vxY(mpg%Xpt(iactive)) )
-        select case (GeometryType)
+        select case ( plasmaGeometry )
         case ( GEOMETRY_CDN )
           call write_sourced_value( summary%boundary%distance_inner_outer_separatrices, 0.0_IDS_real )
         case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
@@ -1351,7 +1357,7 @@ contains
             end do
           end do
         end if
-        select case ( GeometryType )
+        select case ( plasmaGeometry )
         case ( GEOMETRY_LINEAR, GEOMETRY_CYLINDER )
           if (mpg%nStr.gt.0) then
             allocate( divertors%divertor( mpg%nStr ) )
@@ -1552,8 +1558,8 @@ contains
           allocate( divertors%divertor(2)%target(1)%identifier(1) )
           allocate( divertors%divertor(2)%target(2)%identifier(1) )
 #endif
-          if (GeometryType == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
-          &   GeometryType == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+          if ( plasmaGeometry == GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+          &    plasmaGeometry == GEOMETRY_LFS_SNOWFLAKE_PLUS) then
             divertors%divertor(1)%name = 'Lower divertor'
             divertors%divertor(2)%name = 'Lower SF divertor'
             divertors%divertor(1)%target(1)%name = "Lower inner target"
@@ -1726,7 +1732,7 @@ contains
         !! Allocate and set time slice value
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         edge_profiles%grid_ggd( time_sind )%time = time_slice_value
-        edge_transport%model(1)%ggd( time_sind )%time = time_slice_value
+        edge_transport%grid_ggd( time_sind )%time = time_slice_value
         edge_sources%grid_ggd( time_sind )%time = time_slice_value
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         radiation%grid_ggd( time_sind )%time = time_slice_value
@@ -3091,7 +3097,6 @@ contains
 #endif
 
 #ifdef B25_EIRENE
-#ifdef WG_TODO
 !! Obtain the neutral velocities
 !! Recall that P[XYZ]DEN[AM] are momentum densities in CGS units!
 !! P[UV][XY] will only exist if fort.46 file was written with format 20170930 or later
@@ -3103,63 +3108,50 @@ contains
           DO IS = 1, NATMI
             totCv = 0.0_IDS_real
             do I = 1, NTRII
-              IX = IXTRI(I)
-              IY = IYTRI(I)
-              IF (B2_CELL(IX,IY)) THEN
-                IXX = ix_e2b(IX)
-                IYY = IY-1
-                UN0(IXX,IYY,0,IS) = UN0(IXX,IYY,0,IS) + &
+              IF (IXTRI(I).GT.0) THEN
+                UN0(IXTRI(I),0,IS) = UN0(IXTRI(I),0,IS) + &
                    &  TRIANGLE_VOL(I)*( &
                    &   VXDENA(IS,I)*PUX(I) + VYDENA(IS,I)*PUY(I) )
-                UN0(IXX,IYY,1,IS) = UN0(IXX,IYY,1,IS) + &
+                UN0(IXTRI(I),1,IS) = UN0(IXTRI(I),1,IS) + &
                    &  TRIANGLE_VOL(I)*( &
                    &   VXDENA(IS,I)*PVX(I) + VYDENA(IS,I)*PVY(I) )
-                UN0(IXX,IYY,2,IS) = UN0(IXX,IYY,2,IS) + &
+                UN0(IXTRI(I),2,IS) = UN0(IXTRI(I),2,IS) + &
                    &  TRIANGLE_VOL(I)*VZDENA(IS,I)
-                totCv(IXX,IYY) = totCv(IXX,IYY) + &
+                totCv(IXTRI(I)) = totCv(IXTRI(I)) + &
                    &  TRIANGLE_VOL(I)*PDENA(IS,I)
               END IF
             end do
-            do iy = -1, ny
-              do ix = -1, nx
-                if (totCv(ix,iy).gt.0.0_IDS_real) then
-                  un0(ix,iy,:,is) = un0(ix,iy,:,is) / totCv(ix,iy) &
-                     &  / (nmassa(is)*mp*1000.0_R8) / 100.0_R8
-                end if
-              end do
+            do iCv = 1, mpg%nCv
+              if (totCv(iCv).gt.0.0_IDS_real) then
+                un0(iCv,:,is) = un0(iCv,:,is) / totCv(iCv) &
+                  &  / (nmassa(is)*mp*1000.0_R8) / 100.0_R8
+              end if
             end do
           END DO
           DO IS = 1, NMOLI
             totCv = 0.0_IDS_real
             do I = 1, NTRII
-              IX = IXTRI(I)
-              IY = IYTRI(I)
-              IF (B2_CELL(IX,IY)) THEN
-                IXX = ix_e2b(IX)
-                IYY = IY-1
-                UM0(IXX,IYY,0,IS) = UM0(IXX,IYY,0,IS) + &
+              IF (IXTRI(I).GT.0) THEN
+                UM0(IXTRI(I),0,IS) = UM0(IXTRI(I),0,IS) + &
                    &  TRIANGLE_VOL(I)*( &
                    &   VXDENM(IS,I)*PUX(I) + VYDENM(IS,I)*PUY(I) )
-                UM0(IXX,IYY,1,IS) = UM0(IXX,IYY,1,IS) + &
+                UM0(IXTRI(I),1,IS) = UM0(IXTRI(I),1,IS) + &
                    &  TRIANGLE_VOL(I)*( &
                    &   VXDENM(IS,I)*PVX(I) + VYDENM(IS,I)*PVY(I) )
-                UM0(IXX,IYY,2,IS) = UM0(IXX,IYY,2,IS) + &
+                UM0(IXTRI(I),2,IS) = UM0(IXTRI(I),2,IS) + &
                    &  TRIANGLE_VOL(I)*VZDENM(IS,I)
-                totCv(IXX,IYY) = totCv(IXX,IYY) + &
+                totCv(IXTRI(I)) = totCv(IXTRI(I)) + &
                    &  TRIANGLE_VOL(I)*PDENM(IS,I)
               END IF
             end do
-            do iy = -1, ny
-              do ix = -1, nx
-                if (totCv(ix,iy).gt.0.0_IDS_real) then
-                  um0(ix,iy,:,is) = um0(ix,iy,:,is) / totCv(ix,iy) &
-                     &  / (nmassm(is)*mp*1000.0_R8) / 100.0_R8
-                end if
-              end do
+            do iCv = 1, mpg%nCv
+              if (totCv(iCv).gt.0.0_IDS_real) then
+                um0(iCv,:,is) = um0(iCv,:,is) / totCv(iCv) &
+                  &  / (nmassm(is)*mp*1000.0_R8) / 100.0_R8
+              end if
             end do
           END DO
         end if
-#endif
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call write_sourced_string( summary%configuration, configuration )
@@ -4480,7 +4472,7 @@ contains
                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
                    call write_cell_scalar( sources_grid, mpg,                &
                        &   scalar = edge_sources%source(12)%ggd( time_sind )%&
-                       &            neutral( is )%particles,                 &
+                       &            neutral( is )%energy,                    &
                        &   b2CellData = tmpCv )
                 end do
                 do is = 1, natmi
@@ -4564,7 +4556,7 @@ contains
                    call write_cell_scalar( sources_grid, mpg,                &
                        &   scalar = edge_sources%source(12)%                 &
                        &            ggd( time_sind )%neutral( js )%          &
-                       &            state( ks )%particles,                   &
+                       &            state( ks )%energy,                      &
                        &   b2CellData = tmpCv )
                 end do
 
@@ -5028,7 +5020,7 @@ contains
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                     call write_cell_vector_component( sources_grid, mpg,      &
                         &   vectorComponent = edge_sources%source(8)%         &
-                        &                     ggd( time_sind )%neutral( is )% &
+                        &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum,              &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
@@ -5641,7 +5633,7 @@ contains
 #endif
 
 ! Data at limiter tangency point
-        if (geometryType.eq.GEOMETRY_LIMITER) then
+        if (plasmaGeometry.eq.GEOMETRY_LIMITER) then
           u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%te )/ev
           call write_sourced_value( summary%local%limiter%t_e, u )
           u = intvertex_s( mpg%tgVx(1), mpg%nCv, mpg%nVx, mpg, geo%vxVol, state%pl%ti )/ev
@@ -5863,16 +5855,16 @@ contains
         call fill_summary_data( geo, summary )
         u = 0.0_IDS_real
         do iCv = 1, mpg%nCi
-          if (geometryType.eq.GEOMETRY_LIMITER .or. &
-           &  geometryType.eq.GEOMETRY_SN .or. &
-           &  geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
-           &  geometryType.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
+          if (gridGeometry.eq.GEOMETRY_LIMITER .or. &
+           &  gridGeometry.eq.GEOMETRY_SN .or. &
+           &  gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_MINUS .or. &
+           &  gridGeometry.eq.GEOMETRY_LFS_SNOWFLAKE_PLUS) then
             if (mpg%cvReg(iCv).ne.2) cycle
-          else if (geometryType.eq.GEOMETRY_STELLARATORISLAND) then
+          else if (gridGeometry.eq.GEOMETRY_STELLARATORISLAND) then
             if (mpg%cvReg(iCv).ne.2 .and. mpg%cvReg(iCv).ne.5) cycle
-          else if (geometryType.eq.GEOMETRY_CDN .or. &
-               &  geometryType.eq.GEOMETRY_DDN_BOTTOM .or. &
-               &  geometryType.eq.GEOMETRY_DDN_TOP) then
+          else if (gridGeometry.eq.GEOMETRY_CDN .or. &
+               &   gridgeometry.eq.GEOMETRY_DDN_BOTTOM .or. &
+               &   gridgeometry.eq.GEOMETRY_DDN_TOP) then
             if (mpg%cvReg(iCv).ne.2 .and. mpg%cvReg(iCv).ne.6) cycle
           else
             cycle
@@ -6715,7 +6707,7 @@ contains
     subroutine write_ids_code( switch, code, commit, description )
     implicit none
     type (switches), intent(in) :: switch
-    type(ids_code), intent(inout) :: code
+    type (ids_code), intent(inout) :: code
                 !< Type of IDS data structure, designed for code data handling
     character(len=ids_string_length), intent(in) :: commit
     character(len=ids_string_length), intent(in) :: description
@@ -7257,14 +7249,10 @@ contains
             call write_face_scalar( eq_grid, mpg,                             &
                 &   val = equilibrium%time_slice( slice_index )%ggd(1)%psi,   &
                 &   value = tmpFace )
-#ifdef WG_TODO
-            tmpCv(:,:) = (fpsi(:,:,0) + fpsi(:,:,1) +                         &
-                &         fpsi(:,:,2) + fpsi(:,:,3) )/4.0_IDS_real
             call write_cell_scalar( eq_grid, mpg,                             &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &            psi,   &
-                &   b2CellData = tmpCv )
-#endif
+                &   b2CellData = geo%cvFpsi )
           end if
           if (maxval(abs(geo%vxFfbz)).ne.0.0_IDS_real .and. .not.associated(        &
             &  equilibrium%time_slice( slice_index )%ggd(1)%phi ) ) then
@@ -7390,7 +7378,7 @@ contains
       end if
     end if
 
-    if (GeometryType .eq. GEOMETRY_LINEAR) then
+    if ( gridGeometry .eq. GEOMETRY_LINEAR) then
       midplane_id = 4
     else
       if ( eq_found ) then
@@ -7469,7 +7457,7 @@ contains
     type (geometry), intent(in) :: geo
     type (ids_summary), intent(inout) :: summary
 
-    select case (GeometryType)
+    select case ( plasmaGeometry )
     case( GEOMETRY_LIMITER )
       call write_sourced_integer( summary%boundary%type, 0 )
     case( GEOMETRY_SN )
@@ -8760,7 +8748,7 @@ contains
         & topix,topiy,bottomix,bottomiy, &
         & nnreg, topcut, region, cflags, INCLUDE_GHOST_CELLS, vol, gs, qc )
 
-    call xertst( geometryId( mpg, geo ) == GEOMETRY_SN,   &
+    call xertst( geometryId( mpg, geo, 1 ) == GEOMETRY_SN,   &
         &   "write_cpo: can only do single null" )
 
     !! Write plasma state

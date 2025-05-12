@@ -104,8 +104,9 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      *  cflmv, jemax                                                  !srv 13.01.17
       real (kind=R8) ::                                               !srv 03.06.03
      *   t0, dte(nFc), dti(nFc), flomx, connf, epsf
-      real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),  !lk 19.09.07
-     &    k2(nCv)
+      real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),                  !lk 19.09.07
+     &    k2(nCv), collisnumf(mpg%nFc), collisnumef(mpg%nFc)
+      real (kind=R8) :: inctran
 #ifdef ASTRA
      & , tt0(mpg%nFt), tt1(mpg%nFt)                                   !lk 19.09.07
 #endif
@@ -176,17 +177,17 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 
 * ..compute transport coefficients
 *   ..compute differential classical transport coefficients
-      call b2tqca (nCv, ns, switch, geo, pl, dv, rt, st_ext, vsa, hci)        !srv 01.07.09 20.09.11
-      call b2tqce (nCv, switch, geo, mpg, pl, dv, hce, sig, alf)              !srv 01.07.09 20.09.11
-      call b2tqin (nCv, ns, nscx, iscx, switch, geo, pl, rt, sigin)           !xpb
+      call b2tqca (nCv, ns, switch, geo, pl, dv, rt, st_ext, vsa, hci) !srv 01.07.09 20.09.11
+      call b2tqce (nCv, switch, geo, mpg, pl, dv, hce, sig, alf)       !srv 01.07.09 20.09.11
+      call b2tqin (nCv, ns, nscx, iscx, switch, geo, pl, rt, sigin)    !xpb
       call sfill (nCv*ns, switch%cthev, cthe,1)
       call sfill (nCv*ns, switch%cthiv, cthi,1)
-      call sfill (nFc, 1.0_R8, co%fllim_ki, 1)                            !srv 13.01.17 {
+      call sfill (nFc, 1.0_R8, co%fllim_ki, 1)                         !srv 13.01.17 {
       call sfill (nFc, 1.0_R8, co%fllim_ke, 1)
       call sfill (nFc, 1.0_R8, co%fllim_al, 1)
       call sfill (nCv, 1.0_R8, co%fllim_al_c, 1)
-      co%alfx_c(:) = alf(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
-      co%sigx_c(:) = sig(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !             }               !srv 13.01.17
+      co%alfx_c(:) = alf(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))            !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
+      co%sigx_c(:) = sig(:,0)  !/abs((bb(:,:,0))/bb(:,:,3))            !srv 13.01.17 }
       co%hcix_c(:) = hci(:,0)
 *   ..interpolate vsa to faces
       !wdk need to write general routine for volume interpolation like this...
@@ -203,14 +204,14 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &      (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
         enddo
       enddo
-*   ..incorporate geometry with hz                                    !srv 09.01.01
+*   ..incorporate geometry with hz                                     !srv 09.01.01
       wrk = geo%fcS*geo%fcHz
       do iFc = 1, nFc
         wrk1(iFc,1) = geo%fcVol(iFc,1)*geo%cvHz(mpg%fcCv(iFc,1))
         wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvHz(mpg%fcCv(iFc,2))
       enddo
       do is = 0, ns-1
-       call b2txcx (nCv, nFc, mode, geo, mpg, wrk1, wrk,              !srv 01.07.05 {
+       call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, wrk1, wrk,      !srv 01.07.05 {
      &   vsa(:,0,is), cvsahz(:,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
      &   vsa(:,1,is), cvsahz(:,1,is))                                 !srv 01.07.05 }
@@ -218,35 +219,35 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 *   ..incorporate geometry
       call sfill (nFc*2*ns*ns, 0.0_R8, csigin, 1)
       do is = 0, ns-1
-       call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   vsa(:,0,is), cvsa(:,0,is))
+       call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, vsa(:,0,is), cvsa(:,0,is))
        call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   vsa(:,1,is), cvsa(:,1,is))
        do k = 0, nscx-1
          is0 = iscx(k)
          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
-           call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,   !sv
-     &       sigin(:,0,is,k), csigin(:,0,is,is0))                       !sv 01.07.99
-           call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,   !sv
-     &       sigin(:,1,is,k), csigin(:,1,is,is0))                       !sv
+           call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,  !sv
+     &       geo%fcS, sigin(:,0,is,k), csigin(:,0,is,is0))            !sv 01.07.99
+           call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, !sv
+     &       sigin(:,1,is,k), csigin(:,1,is,is0))                     !sv
         endif
        enddo
       enddo
-
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hce(:,0), chce(:,0))
+      inctran = switch%b2txcx_increase_transp_coefs
+      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
+     &  geo%fcS, hce(:,0), chce(:,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  hce(:,1), chce(:,1))
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hci(:,0), chci(:,0))
+      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
+     &  geo%fcS, hci(:,0), chci(:,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  hci(:,1), chci(:,1))
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  sig(:,0), csig(:,0))
+      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
+     &  geo%fcS, sig(:,0), csig(:,0))
       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  sig(:,1), csig(:,1))
-      call b2txcx (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
-     &  alf(:,0), calf(:,0))
+      call b2txcx (nCv, nFc, 0.0_R8,   -1, geo, mpg, geo%fcVol,
+     &  geo%fcS, alf(:,0), calf(:,0))
       call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
      &  alf(:,1), calf(:,1))
 
@@ -264,7 +265,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 !        call my_out_us(70,nFc,1,chce(1,1),'b2trcl_chcey')
         call my_out_us(70,nFc,1,calf(1,0),'b2trcl_calfx')
 !        call my_out_us(70,nFc,1,calf(1,1),'b2trcl_calfy')
-        call my_out_us(70,nCv,0,co%alfx_c,'b2trcl_alfx_c')                    !srv 05.07.17
+        call my_out_us(70,nCv,0,co%alfx_c,'b2trcl_alfx_c')            !srv 05.07.17
         call my_out_us(70,nFc,1,chci(1,0),'b2trcl_chcix')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_chciy')
       endif
@@ -272,24 +273,24 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &                   .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,csig(1,0),'b2trcl_csigx')
 !        call my_out_us(70,nFc,1,csig(1,1),'b2trcl_csigy')
-        call my_out_us(70,nCv,0,co%sigx_c,'b2trcl_sigx_c')                    !srv 05.07.17
+        call my_out_us(70,nCv,0,co%sigx_c,'b2trcl_sigx_c')            !srv 05.07.17
       endif
 
 *   ..call 21 moment routines
 #ifdef WG_TODO
 #ifndef NO_21
-      if (lthf21.ne.0) call b2t21t (nx, ny, ns, lnlam, bb, vol, hx,     !srv 01.07.09
+      if (lthf21.ne.0) call b2t21t (nx, ny, ns, lnlam, bb, vol, hx,   !srv 01.07.09
      1 pbs, ne, na, ne2, te, ti, ua, fch_p, chce, chci, cthe, cthi)
-      if (lvis21.ne.0) call b2t21v (nx, ny, ns, lnlam,                  !srv 01.07.09
+      if (lvis21.ne.0) call b2t21v (nx, ny, ns, lnlam,                !srv 01.07.09
      1 bb, vol, hx, pbs, ne, na, te, ti, ua, cvsa)
 #endif
 #endif
 *   ..luciani
-      co%f_luc_ke = 1.0_R8                                              !srv 13.01.17 {
+      co%f_luc_ke = 1.0_R8                                            !srv 13.01.17 {
       co%f_luc_ki = 1.0_R8
       co%f_luc_et = 1.0_R8
       co%f_luc_sg = 1.0_R8
-      co%f_luc_al = 1.0_R8                                              !srv 13.01.17 }
+      co%f_luc_al = 1.0_R8                                            !srv 13.01.17 }
       if(switch%lluciani.eq.1) then   ! connection length formulation
        !wdk There is implicit assumption here that flux tubes exist in the grid.
        !wdk Need to generalize to truly unstructured grids; using fcConn at each
@@ -299,7 +300,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
        call intface(nCv,nFc,mpg%fcCv,wrk1,pl%te,tef)
        call intface(nCv,nFc,mpg%fcCv,wrk1,pl%ti,tif)
        call intface(nCv,nFc,mpg%fcCv,wrk1,dv%ne2,ne2f)
-       do iFc = 1, nFc                                                  !lkw 12.10.22 {
+       do iFc = 1, nFc                                                !lkw 12.10.22 {
         if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .or.
      &      mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
           if (mpg%fcFs(iFc).gt.0) then
@@ -351,7 +352,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
        call intface(nCv,nFc,mpg%fcCv,wrk1,pl%te,tef)
        call intface(nCv,nFc,mpg%fcCv,wrk1,pl%ti,tif)
        call intface(nCv,nFc,mpg%fcCv,wrk1,dv%ne2,ne2f)
-       do iFc = 1, nFc                                                 !lkw 12.10.22 {
+       do iFc = 1, nFc                                                !lkw 12.10.22 {
         if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .or.
      &      mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
           co%f_luc_ke(iFc) = 1.0_R8/(1.0_R8 +
@@ -428,7 +429,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
        call intface(nCv,nFc,mpg%fcCv,wrk1,tau,tauf)
        call intface(nCv,nFc,mpg%fcCv,wrk1,tauia(:,ismain),tauiaf)
 *    ..compute flux limits at faces
-       do iFc = 1, nFc                                                    !lkw 12.10.22 {
+       do iFc = 1, nFc                                                !lkw 12.10.22 {
         if (mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .or.
      &      mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))) then
           ! compute conn and eps on the face
@@ -497,7 +498,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
           csig(iFc,0) = csig(iFc,0)*co%f_luc_sg(iFc)
           calf(iFc,0) = calf(iFc,0)*co%f_luc_al(iFc)
           chci(iFc,0) = chci(iFc,0)*co%f_luc_ki(iFc)
-        endif                                                          !lkw 12.10.22 {
+        endif                                                         !lkw 12.10.22 {
        enddo
        do iCv = 1, nCv
         if (mpg%cvOnClosedSurface(iCv)) then
@@ -514,7 +515,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       endif
 #ifdef WG_TODO
 #ifdef ASTRA
-      bbaverage2 = 0.0_R8                                               !srv 28.07.11 {
+      bbaverage2 = 0.0_R8                                             !srv 28.07.11 {
       chci_koeff = 0.0_R8
       tt0 = 0.0_R8
       tt1 = 0.0_R8
@@ -539,10 +540,10 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         !wdk For WG, need to add flux limits for hcix_c !!
         do ix=0,nx
          if(on_closed_surface(ix,iy)) then
-          chci_koeff(ix,iy) = 25.0_R8/4.0_R8*hy1(nmdpl,iy)/qe*tt0(iy)*   !srv 22.04.16
-     &     0.5_R8*((bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)/hx(ix,iy))**2     !srv 22.04.16
+          chci_koeff(ix,iy) = 25.0_R8/4.0_R8*hy1(nmdpl,iy)/qe*tt0(iy)* !srv 22.04.16
+     &     0.5_R8*((bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)/hx(ix,iy))**2  !srv 22.04.16
      &     *vol(ix,iy)+(bb(leftix(ix,iy),iy,2)/bb(leftix(ix,iy),iy,3)
-     &     /hy1(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy))**2               !srv 22.04.16
+     &     /hy1(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy))**2            !srv 22.04.16
      &     *vol(leftix(ix,iy),iy))*inv_hi_astra(iy) !     chi_N_astra(iy)
          endif
         enddo
@@ -557,7 +558,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &     +(ti(leftix(ix,iy),iy)*na(leftix(ix,iy),iy,ismain))**2)
          endif
         enddo
-       enddo                                                             !srv 28.07.11 }
+       enddo                                                          !srv 28.07.11 }
       endif
 #endif
 #endif
@@ -579,7 +580,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         call my_out_us(70,nFc,1,chce(1,0),'b2trcl_luciani_chce_th')
 !        call my_out_us(70,nFc,1,chce(1,1),'b2trcl_luciani_chcey')
         call my_out_us(70,nFc,1,calf(1,0),'b2trcl_luciani_calf_th')
-        call my_out_us(70,nCv,0,co%alfx_c,'b2trcl_luciani_alfx_c')       !srv 05.07.17
+        call my_out_us(70,nCv,0,co%alfx_c,'b2trcl_luciani_alfx_c')    !srv 05.07.17
 !        call my_out_us(70,nFc,1,calf(1,1),'b2trcl_luciani_calfy')
         call my_out_us(70,nFc,1,chci(1,0),'b2trcl_luciani_chci_th')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_chciy')
@@ -588,29 +589,44 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
      &                  .or. switch%iout_b2wdat.eq.4) then
         call my_out_us(70,nFc,1,csig(1,0),'b2trcl_luciani_csig_th')
 !        call my_out_us(70,nFc,1,csig(1,1),'b2trcl_luciani_csigy')
-        call my_out_us(70,nCv,0,co%sigx_c,'b2trcl_luciani_sig_th_c')     !srv 05.07.17
+        call my_out_us(70,nCv,0,co%sigx_c,'b2trcl_luciani_sig_th_c')  !srv 05.07.17
       endif
 
 *   .. save chce(:,0) after applying Luciani
-      wrk = chce(:,0)                                                    !srv 13.01.17
+      wrk = chce(:,0)                                                 !srv 13.01.17
 
-      if(switch%conductive_limit.ne.0) then                              !srv 16.06.08 {
+      if (switch%min_collisions .gt. 0.0_R8) then
+        call b2txnci (mpg, geo, switch, nCv, ns, pl%ti, pl%te, rt%rz2,
+     &   dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, collisnumf,
+     &   wrkc)
+        call b2txnce (mpg, geo, switch, nCv, pl%te, dv%ne2,
+     &   dv%lnlam, collisnumef, wrkc)
+      else
+        collisnumf = 1.0_R8
+        collisnumef = 1.0_R8
+      endif
+
+      if(switch%conductive_limit.ne.0) then                           !srv 16.06.08 {
 *   .. pre-compute poloidal differences of te, ti
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dte)
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, dti)
-*   .. apply the conductive limit of parallel electron heat flux         !srv 03.06.03 {
+*   .. apply the conductive limit of parallel electron heat flux      !srv 03.06.03 {
        if(cflim(0).ne.0.0_R8) then
         do iFc = 1, nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
-c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.05.07
+c            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.07
          if(switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
-          flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
-     &                            dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
-          t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
+          if (collisnumef(iFc) .gt. switch%min_collisions) then
+           flomx = co%chvemx(iFc)*(dv%ne(mpg%fcCv(iFc,1))+
+     &                             dv%ne(mpg%fcCv(iFc,2)))/2.0_R8
+           t0 = abs(chce(iFc,0)*dte(iFc))/(flomx*max(
      &      pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
      &      b2trcl_cutlo)
+          else
+           t0 = (cflim(0)*max(collisnumef(iFc), 1e-16_R8))**(-1)
+          endif
           co%fllim_ke(iFc)=1.0_R8/(1.0_R8+t0)
           chce(iFc,0)=chce(iFc,0)*co%fllim_ke(iFc)
          endif
@@ -620,15 +636,19 @@ c            if(.not.on_closed_surface(ix,iy)) then                      !lk 06.
        if(cflim(1).ne.0.0_R8) then
         do iFc = 1,nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
-c          if(.not.on_closed_surface(ix,iy)) then                           !lk 06.05.07
+c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.07
          if(switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then
-          flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
-     &                           +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
-          t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
+          if (collisnumf(iFc) .gt. switch%min_collisions) then
+           flomx = co%chvimx(iFc)*(dv%ni(mpg%fcCv(iFc,1),0)
+     &                            +dv%ni(mpg%fcCv(iFc,2),0))/2.0_R8
+           t0 = abs(chci(iFc,0)*dti(iFc))/(flomx*max(
      &      pl%ti(mpg%fcCv(iFc,1)),pl%ti(mpg%fcCv(iFc,2))) +
      &      b2trcl_cutlo)
+          else
+           t0 = (cflim(1)*max(collisnumf(iFc), 1e-16_R8))**(-1)
+          endif
           co%fllim_ki(iFc) = 1.0_R8/(1.0_R8+t0)
           chci(iFc,0)=chci(iFc,0)*co%fllim_ki(iFc)
          endif
@@ -643,8 +663,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
          endif
         enddo
        endif
-      endif                                                              !srv 16.06.08 }
-*   ..apply flux limit to calf                                           !srv 13.01.17 {
+      endif                                                           !srv 16.06.08 }
+*   ..apply flux limit to calf                                        !srv 13.01.17 {
       if(switch%b2sigp_style.ne.2) then
        if(cflim(0).ne.0.0_R8) then
         do iFc = 1, nFc
@@ -656,7 +676,7 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &        pl%te(mpg%fcCv(iFc,1)),pl%te(mpg%fcCv(iFc,2))) +
      &        b2trcl_cutlo)
             co%fllim_al(iFc)=1.0_R8/(1.0_R8+t0)
-            calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                    !srv 13.01.17
+            calf(iFc,0)=calf(iFc,0)*co%fllim_al(iFc)                  !srv 13.01.17
          endif
         enddo
         !wdk pragmatic approximation for cell center flux limits: based on interpolation
@@ -703,15 +723,15 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       do is = 0, ns-1
        call b2tlmv (nCv, nFc, nVx, is, cflmv, switch, geo, mpg,
      &   pl%na(:,is),
-     &   pl%ti, pl%ua(:,is), vsaf_cl(:,0,is), cvsa(:,0,is),
-     &   cvsahz(:,0,is), fllimvisc(:,is))
+     &   pl%ti, pl%ua(:,is), collisnumf, vsaf_cl(:,0,is),
+     &   cvsa(:,0,is), cvsahz(:,0,is), fllimvisc(:,is))
       enddo
 *   ..computation conductivity of kt due to classical parallel current
 !wdk  current model: conductivity ~ sigx*rhol**2/(am(ismain)*mp)
       wrkc = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
      &       dabs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
       wrkc = co%sigx_c*wrkc**2*geo%cvBb(:,3)**2/(am(ismain)*mp)
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol, geo%fcS,
      &  wrkc, cdkt(:,0))
       cdkt(:,0) = cdkt(:,0)*switch%b2tfhi_fsigkt
       cdkt(:,1) = 0.0_R8
@@ -739,13 +759,13 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
      &             'b2trcl_luciani_fllim_calf_th')
 !        call my_out_us(70,nFc,1,calf(1,1),'b2trcl_luciani_fllim_calfy')
         call my_out_us(70,nCv,0,co%alfx_c,
-     &             'b2trcl_luciani_fllim_alf_th_c')                      !srv 05.07.17
+     &             'b2trcl_luciani_fllim_alf_th_c')                   !srv 05.07.17
         call my_out_us(70,nFc,1,chci(1,0),
      &             'b2trcl_luciani_fllim_chci_th')
 !        call my_out_us(70,nFc,1,chci(1,1),'b2trcl_luciani_fllim_chciy')
       endif
 
-      if(switch%b2trcl_iout.ne.0) then                                   !srv 17.06.08 {
+      if(switch%b2trcl_iout.ne.0) then                                !srv 17.06.08 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         call my_out_us(70,nFc,1,cvsa(1,0,is),'cl_cvsa_th'//chns)
@@ -780,9 +800,9 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
        call my_out_us(70,nFc,1,csig(1,1),'cl_csig_r')
        call my_out_us(70,nFc,1,calf(1,0),'cl_calf_th')
        call my_out_us(70,nFc,1,calf(1,1),'cl_calf_r')
-       call my_out_us(70,nCv,0,co%sigx_c,'cl_sig_th_c')                  !srv 05.07.17
-       call my_out_us(70,nCv,0,co%alfx_c,'cl_alf_th_c')                  !srv 05.07.17
-      endif                                                              !srv 17.06.08 }
+       call my_out_us(70,nCv,0,co%sigx_c,'cl_sig_th_c')               !srv 05.07.17
+       call my_out_us(70,nCv,0,co%alfx_c,'cl_alf_th_c')               !srv 05.07.17
+      endif                                                           !srv 17.06.08 }
 
 * ..return
       ncall_b2trcl = ncall_b2trcl+1

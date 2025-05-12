@@ -3,11 +3,6 @@
 
       program b2ab
       use b2mod_types
-      use b2mod_rates
-      use b2mod_geo
-      use b2mod_work
-      use b2mod_plasma
-      use b2mod_indirect
       use b2mod_xerset
       use b2mod_create_afn_bc_tables
       implicit none
@@ -132,6 +127,6 @@
       stop 'b2ab'
 
 *-----------------------------------------------------------------------
-*.end b2ai
+*.end b2ab
 
       end program b2ab

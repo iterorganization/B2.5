@@ -1,5 +1,6 @@
       module b2mod_input_profile
       use b2mod_types
+      use b2mod_user_namelist
       use b2mod_numerics_namelist
       use b2mod_time
       use b2us_geo
@@ -11,7 +12,7 @@
 #endif
       implicit none
       integer nrr, nxx, nss
-      integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
+      integer, parameter :: nkind_source=6,nkind_data=2,nscale=10
       integer, parameter :: nkind_coeff=9
       integer, save :: csig_an_style=1
 #ifdef ALLOCATE_AND_NAMELIST
@@ -102,30 +103,37 @@
       return
       end subroutine dealloc_input_profile
 
-#ifdef WG_TODO
-      subroutine source_input(nx,ny,ns,
-     &  sna0,smo0,she0,shi0,sch0,sne0,vol,nc)
+      subroutine source_input(mpg,geo,switch,state_ext,ns,
+     &  sna0,smo0,she0,shi0,sch0,sne0,nc)
 !**************************************************************************
 !*     subroutine for reading in source-profiles of density, parallel     *
 !*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
 !*     Inputfile: b2.sources.profile                                      *
 !**************************************************************************
-      integer :: nx,ny,ns,nc
-      integer :: ix,iy,i,ireg
-      integer :: nanf,ndim,ifail,is,ndat,kind_data
-      integer :: nxanf,nxend,nxdim,nxdat
-      integer :: kind_source,spec,ifa
+      use b2mod_balance
+      implicit none
+      type(mapping), intent(in) :: mpg
+      type(geometry), intent(in) :: geo
+      type(switches), intent(in) :: switch
+      type(B2StateExt) :: state_ext
+      integer, intent(in) :: ns,nc
+      integer :: i,j,ix,ixx,iy,iFc,iFt,iCv,iCv1,iCv2,iCvanf,iCvend,ireg
+      integer :: ndim,nxdim,ifail,is,ndat,nxdat,kind_data
+      integer :: nfitanf,nfitref,nfitend
+      integer :: kind_source,spec
       real(kind=R8), save :: divheat
       real(kind=R8), save :: sources_time_mod,sources_time_switch
       character*256, save :: sources_filename
-      real(kind=R8), dimension(-1:nx,-1:ny,0:3) :: she0,shi0,sch0
-      real(kind=R8) :: sna0(-1:nx,-1:ny,0:1,0:ns-1)
-      real(kind=R8) :: sne0(-1:nx,-1:ny,0:1)
-      real(kind=R8) :: smo0(-1:nx,-1:ny,0:3,0:ns-1)
-      real(kind=R8) :: vol(-1:nx,-1:ny),totpower,totna(0:ns-1)
+      real(kind=R8), intent(out) :: she0(1:mpg%nCv,0:3),
+     ,  shi0(1:mpg%nCv,0:3),sch0(1:mpg%nCv,0:3)
+      real(kind=R8), intent(out) :: sna0(1:mpg%nCv,0:1,0:ns-1)
+      real(kind=R8), intent(out) :: sne0(1:mpg%nCv,0:1)
+      real(kind=R8), intent(out) :: smo0(1:mpg%nCv,0:3,0:ns-1)
+      real(kind=R8) :: totpower,totna(0:ns-1)
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr)
-      real(kind=R8) :: dhtot
-      real(kind=R8) :: fx(nxx),x(nxx),xr(-1:nxx),xf(-1:nxx),dx(nxx)
+      real(kind=R8) :: wrk0(mpg%nCv),wrk1(mpg%nCv)
+      real(kind=R8) :: dhtot,dtot,dref
+      real(kind=R8), allocatable :: fx(:),x(:),xr(:),xf(:),dx(:)
       integer, save :: elm_count
       logical, save :: catch_up, new_files
 #ifdef DBG
@@ -141,12 +149,12 @@
         sdata(:,:,:,:)=0.0_R8
         nxdata(:,:,:)=0
         xdata(:,:,:,:)=0.0_R8
-        sna0(:,:,:,:)=0.0_R8
-        sne0(:,:,:)=0.0_R8
-        smo0(:,:,:,:)=0.0_R8
-        she0(:,:,:)=0.0_R8
-        shi0(:,:,:)=0.0_R8
-        sch0(:,:,:)=0.0_R8
+        sna0(:,:,:)=0.0_R8
+        sne0(:,:)=0.0_R8
+        smo0(:,:,:)=0.0_R8
+        she0(:,:)=0.0_R8
+        shi0(:,:)=0.0_R8
+        sch0(:,:)=0.0_R8
         divheat=0.0_R8
         sources_filename='b2.sources.profile'
         sources_time_mod=0.0_R8
@@ -228,23 +236,20 @@
               write(*,*) 'source poloidal profile. '
               write(*,*) 'KIND_DATA = 2 ignored.'
               write(*,'(a,i2,a,i3)')
-     .         'KIND_SOURCE = ', kind_source, ' Species = ' ,spec
+     .         'KIND_SOURCE = ', kind_source, ' Species = ' , spec
             endif
           enddo
           if (ndat.eq.0) goto 1
-          call xertst(ndat.le.nrr,
-     .     'Increase NYD in b2mod_dimensions to match size of profile')
-!       allocate (f(1:ndat))
-!       allocate (r(1:ndat))
+          call xertst(ndat.le.DEF_NYD,
+     .  'Increase DEF_NYD in b2mod_dimensions to match size of profile')
           do i=1,ndat
             r(i)=sdata(1,i,kind_source,spec)
             f(i)=sdata(2,i,kind_source,spec)
             if (new_files) write(93,*) r(i),f(i)
           enddo
 !          write(*,*) 'vor region_profile'
-          call region_profile(mpg,geo,kind_data,ndat,r,ndim,pr,ifa,nanf)
-!          write (*,*) 'ifa=',ifa
-          if (ifa.eq.1) goto 99
+          ndim=nomp
+          call calc_dist(geo,omp,nomp,icsepomp,pr)
 !          allocate (pf(1:ndim))
           call E01BEF(ndat,r,f,d,ifail)
 !          write(*,*) 'zwischen,ifail=',ifail
@@ -262,56 +267,104 @@
               write(*,*) 'source axial profile. '
               write(*,*) 'KIND_DATA = 1 ignored.'
               write(*,'(a,i2,a,i3)')
-     .         'KIND_SOURCE = ', kind_source, ' Species = ' ,spec
+     .         'KIND_SOURCE = ', kind_source, ' Species = ' , spec
             endif
           enddo
-          xf(-1)=0.0_R8
-          xf(0:nx-1)=1.0_R8
-          xf(nx)=0.0_R8
+          call xertst(nxdat.le.DEF_NXD,
+     . 'Increase DEF_NXD in b2mod_dimensions to match size of profile')
+          allocate(xf(0:nxdat+1))
+          xf(0)=0.0_R8
+          xf(1:nxdat)=1.0_R8
+          xf(nxdat+1)=0.0_R8
           if (nxdat.gt.0) then
-            call xertst(nxdat.le.nxx+2,
-     .     'Increase NXD in b2mod_dimensions to match size of profile')
+            allocate(fx(1:nxdat),x(1:nxdat),xr(0:nxdat+1),dx(1:nxdat))
             do i=1,nxdat
               x(i)=xdata(1,i,kind_source,spec)
               fx(i)=xdata(2,i,kind_source,spec)
               if (new_files) write(95,*) x(i),fx(i)
             enddo
-!            write(*,*) 'vor axial_profile'
-            call axial_profile
-     .       (kind_data,nxdat,x,nxdim,xr,nx,ny,ifa,nxanf,nxend)
-            if (ifa.eq.1) goto 98
+            if (nxdat.eq.1) goto 98
             call E01BEF(nxdat,x,fx,dx,ifail)
-            call E01BFF(nxdat,x,fx,dx,nxdim,
-     .       xr(nxanf:nxend),xf(nxanf:nxend),ifail)
           endif
 
           do iy=1,ndim
-            do ix=-1,nx
-              ireg=region(ix,nanf-3+iy,0)
-              if (bottomiy(ix,nanf-3+iy).ne.-2 .and.
-     &            topiy(ix,nanf-3+iy).ne.ny+1 .and.
-     &            leftix(ix,nanf-3+iy).ne.-2 .and.
-     &            rightix(ix,nanf-3+iy).ne.nx+1 .and.
-     &            ireg.ne.0 .and.
-     &            (mod(ireg,4).eq.1 .or. mod(ireg,4).eq.2)) then
+            iFt=mpg%cvFt(omp(iy))
+            allocate(xr(mpg%ftCvP(iFt,2)),xf(mpg%ftCvP(iFt,2)))
+            nfitanf=mpg%ftCvP(iFt,2)+1
+            nfitend=0
+            nfitref=0
+            iCvanf=0
+            iCvend=0
+            do ix=1,mpg%ftCvP(iFt,2)
+              iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+ix-1)
+              if (iCv.eq.omp(iy)) nfitref=ix
+              if (iCv.gt.mpg%nCi) cycle
+              ireg=mpg%cvReg(iCv)
+              if (mod(ireg,4).eq.3) then
+                xr(ix)=0.0_R8
+              else if (mod(ireg,4).eq.0) then
+                xr(ix)=1.0_R8
+              else
+                if (ix.lt.nfitanf) then
+                  nfitanf=ix
+                  iCvanf=iCv
+                end if
+                if (ix.gt.nfitend) then
+                  nfitend=ix
+                  iCvend=iCv
+                end if
+              end if
+            end do
+            nxdim=nfitend-nfitanf+1
+            wrk1 = 0.0_R8
+            do j = mpg%ftFcP(iFt,1), mpg%ftFcP(iFt,1)+mpg%ftFcP(iFt,2)-1
+              iFc = mpg%ftFc(j)
+              iCv1 = mpg%fcCv(iFc,1)
+              iCv2 = mpg%fcCv(iFc,2)
+              wrk1(iCv1) = wrk1(iCv1) + geo%fcHc(iFc,1)
+              wrk1(iCv2) = wrk1(iCv2) + geo%fcHc(iFc,2)
+            end do
+            wrk0 = 0.0_R8
+            do ix=nfitanf,nfitend
+              iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+ix-1)
+              wrk0(iCv) = wrk1(iCv)*geo%cvBb(iCv,3)/geo%cvBb(iCv,0)
+            end do
+            do ix=nfitanf,nfitend
+              do ixx=nfitanf,ix
+                iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+ix-1)
+                xr(ix)=xr(ix)+wrk0(iCv)
+              end do
+            end do
+            dref=xr(nfitref)
+            dtot=(xr(nfitend)+0.5_R8*wrk1(iCvend))-
+     .           (xr(nfitanf)+0.5_R8*wrk1(iCvanf))
+            do ix=nfitanf,nfitend
+              iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+ix-1)
+              if (mpg%cvOnClosedSurface(iCv)) then
+                xr(ix)=(xr(ix)-dref)/geo%ftConn(iFt)
+              else
+                xr(ix)=(xr(ix)-dref)/dtot
+              end if
+            end do
+            call E01BFF(nxdat,x,fx,dx,nxdim,
+     .       xr(nfitanf:nfitend),xf(nfitanf:nfitend),ifail)
+            do ix=1,mpg%ftCvP(iFt,2)
+              iCv=mpg%ftCv(mpg%ftCvP(iFt,1)+ix-1)
+              ireg=mpg%cvReg(iCv)
+              if (iCv.le.mpg%nCi .and.
+     &           (mod(ireg,4).eq.1 .or. mod(ireg,4).eq.2)) then
                 if (kind_source.eq.1) then
-                  sna0(ix,nanf-3+iy,0,spec)=
-     .             pf(iy)*xf(ix)*vol(ix,nanf-3+iy)
+                  sna0(iCv,0,spec)=pf(iy)*xf(ix)*geo%cvVol(iCv)
                 elseif (kind_source.eq.2) then
-                  smo0(ix,nanf-3+iy,0,spec)=
-     .             pf(iy)*xf(ix)*vol(ix,nanf-3+iy)
+                  smo0(iCv,0,spec)=pf(iy)*xf(ix)*geo%cvVol(iCv)
                 elseif (kind_source.eq.3) then
-                  she0(ix,nanf-3+iy,0)=
-     .             pf(iy)*xf(ix)*vol(ix,nanf-3+iy)
+                  she0(iCv,0)=pf(iy)*xf(ix)*geo%cvVol(iCv)
                 elseif (kind_source.eq.4) then
-                  shi0(ix,nanf-3+iy,0)=
-     .             pf(iy)*xf(ix)*vol(ix,nanf-3+iy)
+                  shi0(iCv,0)=pf(iy)*xf(ix)*geo%cvVol(iCv)
                 elseif (kind_source.eq.5) then
-                  sch0(ix,nanf-3+iy,0)=
-     .             pf(iy)*xf(ix)*vol(ix,nanf-3+iy)
+                  sch0(iCv,0)=pf(iy)*xf(ix)*geo%cvVol(iCv)
                 elseif (kind_source.eq.6) then
-                  sne0(ix,nanf-3+iy,0)=
-     .             pf(iy)*xf(ix)*vol(ix,nanf-3+iy)
+                  sne0(iCv,0)=pf(iy)*xf(ix)*geo%cvVol(iCV)
                 endif
               endif
               if ((nc.eq.0.and.iy.eq.1).or.debug) then
@@ -349,6 +402,7 @@
                 if (new_files) write (94,*) pr(iy),pf(iy)
               endif
             endif
+            deallocate(xr,xf)
           enddo
     1     continue
         enddo
@@ -357,12 +411,10 @@
       if (nc.eq.0 .or. debug) then
         totpower=0.0_R8
         totna(:)=0.0_R8
-        do iy=-1,ny
-          do ix=-1,nx
-            totpower=totpower+she0(ix,iy,0)+shi0(ix,iy,0)
-            do is=0,ns-1
-              totna(is)=totna(is)+sna0(ix,iy,0,is)
-            enddo
+        do iCv=1,mpg%nCi
+          totpower=totpower+she0(iCv,0)+shi0(iCv,0)
+          do is=0,ns-1
+            totna(is)=totna(is)+sna0(iCv,0,is)
           enddo
         enddo
         write (*,*) 'Total profile-source Power=', totpower
@@ -373,17 +425,12 @@
 
       if (divheat.GT.0.0_R8) then
         dhtot=0.0_R8
-        do iy=-1,ny
-          do ix=-1,nx
-            if((mod(region(ix,iy,0),4).eq.3 .or.
-     &         (mod(region(ix,iy,0),4).eq.0 .and. region(ix,iy,0).ne.0))
-     &        .and. leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1
-     &        .and. bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
-     >       then
-              shi0(ix,iy,0)=shi0(ix,iy,0)+divheat*vol(ix,iy)
-              dhtot=dhtot+divheat*vol(ix,iy)
-            endif
-          enddo
+        do iCv=1,mpg%nCi
+          if (mod(mpg%cvReg(iCv),4).eq.3 .or.
+     &        mod(mpg%cvReg(iCv),4).eq.0) then
+            shi0(iCv,0)=shi0(iCv,0)+divheat*geo%cvVol(iCv)
+            dhtot=dhtot+divheat*geo%cvVol(iCv)
+          endif
         enddo
         write (*,*) 'DIVHEAT=', dhtot,divheat
       endif
@@ -396,28 +443,28 @@
 
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
-        call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
-        call b2xzdd (nx, ny, 3, smo0(-1,-1,0,is))
+        call b2xzdd (mpg%nCv, 1, switch, mpg, sna0(1,0,is))
+        call b2xzdd (mpg%nCv, 3, switch, mpg, smo0(1,0,is))
       enddo
-      call b2xzdd (nx, ny, 1, sne0)
-      call b2xzdd (nx, ny, 3, she0)
-      call b2xzdd (nx, ny, 3, shi0)
-      call b2xzdd (nx, ny, 3, sch0)
+      call b2xzdd (mpg%nCv, 1, switch, mpg, sne0)
+      call b2xzdd (mpg%nCv, 3, switch, mpg, she0)
+      call b2xzdd (mpg%nCv, 3, switch, mpg, shi0)
+      call b2xzdd (mpg%nCv, 3, switch, mpg, sch0)
 
-      ext_sna(:,:,:)=sna0(:,:,0,:)
-      ext_smo(:,:,:)=smo0(:,:,0,:)
-      ext_sne(:,:)=sne0(:,:,0)
-      ext_she(:,:)=she0(:,:,0)
-      ext_shi(:,:)=shi0(:,:,0)
-      ext_sch(:,:)=sch0(:,:,0)
+      state_ext%sna(:,:)=sna0(:,0,:)
+      state_ext%smo(:,:)=smo0(:,0,:)
+      state_ext%sne(:)=sne0(:,0)
+      state_ext%she(:)=she0(:,0)
+      state_ext%shi(:)=shi0(:,0)
+      state_ext%sch(:)=sch0(:,0)
 
 cdjm Jan2017 Keep linearised sources for balance
-!WG_TODO      if (balance_netcdf.ne.0) then
-!WG_TODO        ext_sna0to1 = sna0
-!WG_TODO        ext_smo0to3 = smo0
-!WG_TODO        ext_she0to3 = she0
-!WG_TODO        ext_shi0to3 = shi0
-!WG_TODO      endif
+      if (balance_netcdf.ne.0) then
+        ext_sna0to1 = sna0
+        ext_smo0to3 = smo0
+        ext_she0to3 = she0
+        ext_shi0to3 = shi0
+      endif
 
       if (new_files) then
         if (maxval(nsdata).gt.0) close(93)
@@ -467,11 +514,10 @@ cdjm Jan2017 Keep linearised sources for balance
       end subroutine read_source_profile
 
       end subroutine source_input
-#endif
 
 *-----------------------------------------------------------------------
 
-      subroutine transport_input(nCv, nFc, ns, geo, mpg, pl, dv, rt,
+      subroutine transport_input(nCv, ns, geo, mpg, pl, dv, rt,
      &  hcib, dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall)
 
 !**************************************************************************
@@ -486,7 +532,7 @@ cdjm Jan2017 Keep linearised sources for balance
       use b2mod_user_namelist
      , , only : nomp, omp, icsepomp
       IMPLICIT NONE
-      integer, intent (in) :: nCv, nFc, ns
+      integer, intent (in) :: nCv, ns
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
@@ -507,9 +553,9 @@ cdjm Jan2017 Keep linearised sources for balance
       real (kind=R8) :: poloidal_scale_factor
       logical, save :: elm_region, elm_data
 #ifdef WG_TODO
-      integer :: ifa, isc, nfitanf
+      integer :: isc
       integer :: ixwidth(nscale), ixmean(nscale)
-      logical, save :: elm_time, found
+      logical, save :: elm_time
 #endif
       character*26 hlp_frm
       logical catch_up, lpflux, ldiv
@@ -629,14 +675,6 @@ cdjm Jan2017 Keep linearised sources for balance
               if (elm_data) felm(i)=tdata(3,i,kind_coeff,spec)
 !             if (tr_ip_new_files) write(93,*) r(i),f(i),felm(i)
             enddo
-#ifdef WG_TODO
-            call region_profile(mpg,geo,1,ndat,r,ndim,pr,ifa,nfitanf)
-!           if (iloop.eq.0) print *,'R=',r(1:ndat)
-!           if (iloop.eq.0) print *,'F=',f(1:ndat)
-!           if (iloop.eq.0) print *,'PR=',pr(1:ndim)
-!           write (*,*) 'ifa=',ifa
-            if (ifa.eq.1) goto 99
-#endif
 ! csc for now identify pr with r-coordinate of midplane CVs
 ! csvdk reworked the implementation to be consistent with structured
 ! csvdk code. Now based on euclidean distance in (R,Z) coordinates.
@@ -691,10 +729,10 @@ cdjm Jan2017 Keep linearised sources for balance
                    if (mpg%ftLbl(iFt).ne.lbl) cycle
                    iy2=iy
                  else
-                   if (iFt.ne.mpg%cvFt(omp(iy))) then 
+                   if (iFt.ne.mpg%cvFt(omp(iy))) then
                      if ((iFt.le.mpg%cvFt(omp(ndim-1))).or.
      &                 (iFt.ge.mpg%cvFt(omp(2)))) then
-                       cycle                
+                       cycle
                      else
                        iy2=ndim !nh flux tube outside OMP ==> take last OMP flux tube
                      endif
@@ -794,7 +832,7 @@ cdjm Jan2017 Keep linearised sources for balance
                   if (mpg%cvFcP(iCv,2).eq.1) then
                     iir = mpg%cvReg(iCv)
                     if ((iir.eq.1).or.(iir.eq.5)) then ! core boundary
-                      iy2 = 1 
+                      iy2 = 1
                     elseif ((iir.eq.2).or.(iir.eq.6)) then ! SOL boundary
                       iy2 = ndim
                     else
@@ -883,7 +921,7 @@ cdjm Jan2017 Keep linearised sources for balance
 
                   endif
                 enddo
-              endif     
+              endif
             enddo !is=1,nspec
             if (ncall.eq.0) then
               if (elm_data) then
@@ -960,12 +998,6 @@ cdjm Jan2017 Keep linearised sources for balance
         enddo !spec=0,ns-1
       enddo !kind_coeff
 
-      goto 100
-#ifdef WG_TODO
-   99 write (*,*) 'Error in reading the dsp file'
-#endif
-  100 continue
-
       if (tr_ip_new_files) then
         close(93)
         close(94)
@@ -973,7 +1005,6 @@ cdjm Jan2017 Keep linearised sources for balance
       end if
 
       return
-
       end subroutine transport_input
 
 *-----------------------------------------------------------------------
@@ -1114,103 +1145,4 @@ c*** Clear data to forget previous profiles
 
 *-----------------------------------------------------------------------
 
-      subroutine axial_profile(kind_data,ndat,x,ndim,pr,nx,ny,ifa,
-     & nfitanf,nfitend)
-
-      use b2mod_indirect
-      use b2mod_geo
-      implicit none
-      integer :: i,nx,ny,ifa
-      integer :: nfitanf,nfitend,ndim,ndat,kind_data
-      real(kind=R8) :: x(1:ndat),pr(-1:nxx-2)
-      real(kind=R8) :: l_conn(-1:nx), l_total, l_ref
-      integer jxi, jxa, jsep, ncall
-      integer ixref, iyref
-      integer ireg
-      external ipgetr
-      external get_jsep
-      save jxi, jxa, jsep, ixref, iyref, ncall
-      data ncall/0/
-
-      call subini('axial_profile')
-      if (ncall.eq.0) then
-        call get_jsep(nx,ny,jxi,jxa,jsep)
-        call ipgeti ('b2mwti_jxa',jxa)
-        call xertst (-1.le.jxa.and.jxa.le.nx,
-     2   'faulty internal parameter jxa')
-        ixref = jxa
-        iyref = jsep
-        call ipgeti ('set_transport_ixref', ixref)
-        call xertst (-1.le.ixref.and.ixref.le.nx,
-     1   'faulty argument set_transport_ixref')
-        call ipgeti ('set_transport_iyref', iyref)
-        call xertst (-1.le.iyref.and.iyref.le.ny,
-     1   'faulty argument set_transport_iyref')
-      endif
-
-      if (kind_data.eq.1) then
-! Establish relative profile in relative connection length
-! For closed field lines, zero point sits at ix = ixref
-! Reference connection length computed along iy = iyref
-        ireg = mod(region(ixref,iyref,0),4)
-        l_total = 0.0_R8
-        pr(-1) = 0.0_R8
-        l_conn(-1) = 0.0_R8
-        do i = 0, nx-1
-          l_conn(i) = hx(i,iyref)/
-     1         (sqrt(bb(i,iyref,0)**2+bb(i,iyref,1)**2)/bb(i,iyref,3))
-          pr(i) = pr(i-1) + 0.5_R8*(l_conn(i)+l_conn(i-1))
-          l_total = l_total + l_conn(i)
-        end do
-        pr(nx) = pr(nx-1) + 0.5_R8*l_conn(nx-1)
-        l_ref = pr(ixref)
-        if (l_total.le.0.0_R8) goto 97
-        if (ireg.eq.1 .and. nnreg(0).ge.4) then
-          do i = -1, nx
-            if (mod(region(i,iyref,0),4).eq.ireg) then
-              pr(i) = (pr(i) - l_ref) / l_total
-              if (pr(i).lt.0.0_R8) pr(i) = pr(i) + 1.0_R8
-            else
-              pr(i) = 0.0_R8
-            end if
-          end do
-        else
-          do i = -1, nx
-            pr(i) = pr(i) / l_total
-          end do
-        endif
-      else if (kind_data.eq.2) then
-! Establish profile in computational space
-        pr(-1) = 0.0_R8
-        do i = 0, nx-1
-          pr(i) = (i + 0.5_R8) / (real(nx))
-        end do
-        pr(nx) = 1.0_R8
-      endif
-      ifa = 0
-
-      nfitanf = -1
-      do i = 0, nx
-        if (pr(i).lt.x(1)) nfitanf = nfitanf+1
-        nfitend=i-1
-        if (pr(i).gt.x(ndat)) exit
-        nfitend=i
-      end do
-!     write (*,*) nfitanf,nfitend
-      if (nfitend.LE.nfitanf) goto 97
-
-      ndim=nfitend+1-nfitanf
-!     write (*,*) 'ndim=',ndim
-!     allocate (pr(1:ndim))
-
-      goto 108
-   97 ifa=1
-
-  108 continue
-      ncall=ncall+1
-      call subend ()
-      return
-      end subroutine axial_profile
-
       end module b2mod_input_profile
-

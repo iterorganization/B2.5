@@ -33,7 +33,7 @@
      *  isnum(nncutmax,-1:ny)
       real (kind=R8) :: hz(-1:nx,-1:ny),
      *                  hzl(-1:nx,-1:ny),    ! hz at the left cell face
-     *                  pol_flux, width
+     *                  pol_flux, width, wrk
       data width /1.0_R8/
       save width
 *     ------------------------------------------------------------------
@@ -46,7 +46,7 @@
 *   ..subprogram start-up calls
       call subini ('b2agbs')
       call ipgetr ('b2agmt_1d_width', width)
-      
+
 *   ..preparatory quantities
       hz(:,:) = vol(:,:)/gs(:,:,2)
       if (isymm.eq.0) then
@@ -141,7 +141,15 @@
           else if (i.eq.iseg(jxi,iy)) then
             ixref(i,iy) = jxi
           else
-            ixref(i,iy) = rightix(ixleft(i,iy),iy)
+            do ix=1,nx
+              if (isRealCell(cflags(ix,iy,CELLFLAG_TYPE)) .and.
+     &          (.not.isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)))) exit
+            enddo
+            if (ix.ge.nx) then
+              ixref(i,iy) = rightix(ixleft(i,iy),iy)
+            else
+              ixref(i,iy) = ix
+            endif
           end if
         end do
       end do
@@ -163,7 +171,9 @@
             pol_flux = bb(ixref(iseg(ix,iy),iy),iy,0) *
      &                 hy(ixref(iseg(ix,iy),iy),iy)
           end if
-
+          wrk = wbbl(ix,iy,0)*gs(ix,iy,0)*qc(ix,iy,0)
+          if ((abs(wrk).lt.abs(pol_flux)) .and.
+     &        isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) ) cycle
           if (leftix(ix,iy).ne.-2) then ! do not adjust pbs if leftix=-2
                                         ! since there is no western face
             wbbl(ix,iy,0) = pol_flux / (gs(ix,iy,0) * qc(ix,iy,0))
@@ -177,8 +187,14 @@
             wbbl(ix,iy,3) =
      &       sqrt(wbbl(ix,iy,0)**2+wbbl(ix,iy,1)**2+wbbl(ix,iy,2)**2)
           end if
-          hy(ix,iy) = pol_flux /
-     .               (hz(ix,iy)*qz(ix,iy,1)*bb(ix,iy,0))
+          wrk = pol_flux /
+     .         (hz(ix,iy)*qz(ix,iy,1)*bb(ix,iy,0))
+          if (wrk .lt. 0.0_R8) then
+            write(*,'(a,i2,a,i2,a)') "For cell (ix,iy) (", ix,",", iy,
+     &        ") redefined hy < 0!"
+            cycle
+          endif
+          hy(ix,iy) = wrk
           hx(ix,iy) = vol(ix,iy)/
      .               (hz(ix,iy)*hy(ix,iy)*qz(ix,iy,1))
         end do
@@ -194,4 +210,3 @@
       call subend ()
       return
       end subroutine b2agbs
-

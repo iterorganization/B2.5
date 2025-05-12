@@ -16,10 +16,7 @@
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
       use b2mod_elements
-!      use b2mod_sign_of_magnetic_field
-      use b2mod_b2cmgs
       use b2mod_b2cmpa
-      use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
 #ifdef B25_EIRENE
@@ -48,7 +45,7 @@
 *   ..local variables
       integer ncall
 #ifdef WG_TODO
-      integer iout, is, ix, iy, ib, iw, iout_iout_ASTRA           !srv 05.10.01 03.04.13 19.04.13
+      integer iout, is, ix, iy, ib, iw, iout_iout_ASTRA            !srv 05.10.01 03.04.13 19.04.13
       integer jsep, jxi, jxa, ndat, k, mintopcut, ixx,             !srv 12.07.10
      *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra

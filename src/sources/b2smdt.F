@@ -4,7 +4,6 @@
       subroutine b2smdt (nCv, nCi, ns, dtim, hz,          !srv 09.01.01 01.07.08
      &  cvVol, na, uap, switch, mpg, smodt, isb)              !srv 11.09.09
       use b2mod_types
-      use b2mod_indirect
       use b2mod_numerics_namelist
       use b2mod_constants
       use b2mod_b2cmpa

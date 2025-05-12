@@ -10,7 +10,6 @@ c======================================================================
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2cmfs
-      use b2mod_indirect
       use b2mod_constants
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
@@ -31,7 +30,7 @@ c*** scale. enrctff and pwrctff do the same for the particle energy
 c*** and for the power flux.
       real (kind=R8) ::
      *   flxctff,enrctff,pwrctff
-      parameter (flxctff=0.1_R8, enrctff=1.0e-8_R8, pwrctff=1.0e-8_R8)
+      parameter (flxctff=0.1_R8,enrctff=1.0e-8_R8,pwrctff=1.0e-8_R8)
       integer il,is,i,ii,ia,ib,j,js,k,ic,ias,iend,istart,iFc
       character*74 hlp_frm
       real (kind=R8) ::
@@ -121,7 +120,7 @@ c
       print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
       do il=1,nwldprt
         print '(1x,2i4,1x,a)',il,nwldlis(il),pltzlbl(il)
-        write (6,'(1x,20i4)') (lwldlis(i,il),i=1,nwldlis(il))
+        write (6,'(1x,20i5)') (lwldlis(i,il),i=1,nwldlis(il))
       end do
 #endif
 c
@@ -190,20 +189,28 @@ c*** Calculate the net and gross erosion
               end if
             else if (ib.gt.lppp) then
               iend = lppp
-              j = 0
-              js = 0
-              do ii = 1, ntrgts
-                if (itrg(ii).eq.0) cycle
-                if (j.gt.0.and.js.gt.0) cycle
-                istart = iend+1
-                iend = iend+mpg%divFcP(itrg(ii),2)
-                if (ib.ge.istart.and.ib.le.iend) then
-                  j = ii
-                  js = ib-istart+1
-                end if
-              end do
-              iFc = mpg%divFc(mpg%divFcP(itrg(j),1)+js-1)
-              ias = b2_fnmti(iFc)
+              if (grid_mode.lt.2) then
+                j = 0
+                js = 0
+                do ii = 1, ntrgts
+                  if (itrg(ii).eq.0) cycle
+                  if (j.gt.0.and.js.gt.0) cycle
+                  istart = iend+1
+                  iend = iend+mpg%divFcP(itrg(ii),2)
+                  if (ib.ge.istart.and.ib.le.iend) then
+                    j = ii
+                    js = ib-istart+1
+                  end if
+                end do
+                iFc = mpg%divFc(mpg%divFcP(itrg(j),1)+js-1)
+                ias = b2_fnmti(iFc)
+              else
+                ias = ib-lppp
+                do ii = 1, ncns
+                  ias = ias+eirdiag_nds_ind(ii+1)-eirdiag_nds_ind(ii)
+                end do
+                ias = ias + 1
+              end if
               wwk=0.0_R8
               wwp=0.0_R8
               k=0
@@ -404,9 +411,9 @@ c***  nwldlis : the list lengths
 c***  lwldlis : the lists themselves (DG numbering)
 c***  leirlis : the lists themselves (Eirene numbering)
 c
+      use b2us_data
       use b2mod_types
       use b2mod_b2plot
-      use b2mod_indirect
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -438,7 +445,7 @@ c----------------------------------------------------------------------
 c
 cc%%%
 c      print *,'b2pwsrt',nwldprt
-c      if (nnreg(0).lt.7) then
+c      if (mpg%nnreg(0).lt.7) then
 c        print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
 c      else
 c        print '(a,4i6)','jedgi1, jedgi2, jedgi3, jedgi4 =',jedge(1:4)
@@ -555,7 +562,7 @@ c*** No connection found
      .                 j.eq.jedge(3).or.j.eq.jedge(4).or.
      .               ((j.eq.jedge(5).or.j.eq.jedge(6).or.
      .                 j.eq.jedge(7).or.j.eq.jedge(8)).and.
-     .                 nnreg(0).ge.7)) then
+     .                 mpg%nnreg(0).ge.7)) then
                 k = 1
                 found = .false.
                 do while (.not.found .and. k.le.nlim)

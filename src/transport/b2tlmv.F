@@ -1,5 +1,5 @@
       subroutine b2tlmv (nCv, nFc, nVx, isb, cflmv, switch, geo, mpg,
-     &    nb, tb, ub, vsbfx, cvsbx, cvsbxhz, fl)                       !srv 09.01.01
+     &    nb, tb, ub, collisnumf, vsbfx, cvsbx, cvsbxhz, fl)         !srv 09.01.01
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_switches
@@ -20,8 +20,8 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     *  cflmv, nb(nCv), tb(nCv), ub(nCv), vsbfx(nFc), cvsbx(nFc), 
-     *  cvsbxhz(nFc), fl(nFc)
+     *  cflmv, nb(nCv), tb(nCv), ub(nCv), vsbfx(nFc), cvsbx(nFc),
+     *  cvsbxhz(nFc), fl(nFc), collisnumf(nFc)
 *     ------------------------------------------------------------------
 *     B2TLMV applies a flux limit to the viscosity.
 *     ------------------------------------------------------------------
@@ -59,8 +59,8 @@
            cflmv_loc(iFc) = switch%b2tlmv_cflmv_min
           elseif (nbf(iFc) .lt. switch%b2tlmv_ni_max ) then
            ! Interpolate for smooth transition
-           cflmv_loc(iFc) = 
-     .      (cflmv*(nbf(iFc) - switch%b2tlmv_ni_min) + 
+           cflmv_loc(iFc) =
+     .      (cflmv*(nbf(iFc) - switch%b2tlmv_ni_min) +
      .       switch%b2tlmv_cflmv_min*(switch%b2tlmv_ni_max - nbf(iFc)))/
      .      (switch%b2tlmv_ni_max - switch%b2tlmv_ni_min)
           endif
@@ -76,8 +76,8 @@
           qcl = -cvsbx(iFc)*dub(iFc)
           qfl = cflmv_loc(iFc)*abs(geo%fcPbs(iFc))*                  !srv 11.01.13
      &     (nb(mpg%fcCv(iFc,1))*tb(mpg%fcCv(iFc,1))+
-     &      nb(mpg%fcCv(iFc,2))*tb(mpg%fcCv(iFc,2)))/2.0_R8  
-          if (qfl.gt.0.0_R8) then 
+     &      nb(mpg%fcCv(iFc,2))*tb(mpg%fcCv(iFc,2)))/2.0_R8
+          if (qfl.gt.0.0_R8) then
             tfl = 1.0_R8 + abs(qcl/qfl)
           else
             tfl = 1.0_R8
@@ -92,27 +92,32 @@ c             limit
 c      else if(style.eq.2) then
 c       fl = 1.0_R8
       else                                                           !srv 30.05.08
-       do iFc = 1, nFc
+        do iFc = 1, nFc
           if(.not.(.not.is_neutral(isb) .and.
-     &              mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
-     &              mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then    !srv 12.04.08
-           qcl = -cvsbx(iFc)*dub(iFc)
-           qfl = cflmv_loc(iFc)*abs(geo%fcPbs(iFc))*                 !srv 11.01.13
+     &             mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
+     &             mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then     !srv 12.04.08
+            if (collisnumf(iFc) .gt. switch%min_collisions) then
+              qcl = -cvsbx(iFc)*dub(iFc)
+              qfl = cflmv_loc(iFc)*abs(geo%fcPbs(iFc))*              !srv 11.01.13
      &          (nb(mpg%fcCv(iFc,1))*tb(mpg%fcCv(iFc,1))+
      &           nb(mpg%fcCv(iFc,2))*tb(mpg%fcCv(iFc,2)))/2.0_R8
-           if (qfl.gt.0.0_R8) then
-             tfl = 1.0_R8 + abs(qcl/qfl)
-           else
-             tfl = 1.0_R8
-           endif
-           cvsbx(iFc) = cvsbx(iFc)/tfl
-           cvsbxhz(iFc) = cvsbxhz(iFc)/tfl
-           vsbfx(iFc) = vsbfx(iFc)/tfl
-           fl(iFc) = tfl
-         else
-           fl(iFc) = 1.0_R8
-         endif
-       enddo
+              if (qfl.gt.0.0_R8) then
+                tfl = 1.0_R8 + abs(qcl/qfl)
+              else
+                tfl = 1.0_R8
+              endif
+            else
+              tfl = 1.0_R8
+     &         +1.0_R8/(cflmv_loc(iFc)*max(collisnumf(iFc),1.0e-16_R8))
+            endif
+            cvsbx(iFc) = cvsbx(iFc)/tfl
+            cvsbxhz(iFc) = cvsbxhz(iFc)/tfl
+            vsbfx(iFc) = vsbfx(iFc)/tfl
+            fl(iFc) = tfl
+          else
+            fl(iFc) = 1.0_R8
+          endif
+        enddo
       endif                                                          !srv 30.05.08
 
       if(switch%b2tlmv_iout.ne.0) then                               !srv 12.04.04 {

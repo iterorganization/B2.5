@@ -1,6 +1,5 @@
       module b2mod_boundary_namelist
       use b2mod_types
-      use b2mod_indirect
       use b2mod_version
       use b2us_map
       use b2us_geo
@@ -94,13 +93,8 @@ cank }
       integer, save :: BC_FACES(2*(DEF_NXD+DEF_NYD),NBCD)
       real (kind=R8), save :: BC_FACE_ORI(2*(DEF_NXD+DEF_NYD),NBCD)
 #endif
-#ifdef WG_OUT
 csw 18feb2014 added for correct implementation of boundary conditions
-      integer, save :: l_fbound=0, l_enebound=0, l_timbound=0
-      integer, allocatable, save ::
-     .  iffboundx(:,:), iffboundy(:,:),
-     .  ifenebound(:,:), iftimbound(:,:)
-#endif
+!WG_TODO     integer, allocatable, save :: iftimbound(:)
 
       integer, save :: NBC, NNISO, ncbs
       real (kind=R8) , save :: gammai, gammae, TEISO, TIISO, PHIISO
@@ -181,17 +175,17 @@ csw 18feb2014 added for correct implementation of boundary conditions
       enddo
 #ifdef WG_TODO
       do ib = 1, nbc
-         do is = 0, ns-1
-            if (bccon(is,ib).ne.0)
-     >           resignore(bc_list_x(1:bc_list_size(ib),ib),
-     .           bc_list_y(1:bc_list_size(ib),ib),1) = 0
-            if (bcmom(is,ib).ne.0)
-     >           resignore(bc_list_x(1:bc_list_size(ib),ib),
-     .           bc_list_y(1:bc_list_size(ib),ib),2) = 0
-         end do
-         if (bcene(ib).ne.0 .or. bceni(ib).ne.0)
-     >        resignore(bc_list_x(1:bc_list_size(ib),ib),
-     .        bc_list_y(1:bc_list_size(ib),ib),1) = 0
+        do is = 0, ns-1
+          if (bccon(is,ib).ne.0)
+     >     resignore(mpg%bcCv(mpg%bcCvP(ib,1):
+     .                        mpg%bcCvP(ib,1)+mpg%bcCvP(ib,2)-1),1)=0
+          if (bcmom(is,ib).ne.0)
+     >     resignore(mpg%bcCv(mpg%bcCvP(ib,1):
+     .                        mpg%bcCvP(ib,1)+mpg%bcCvP(ib,2)-1),2)=0
+        end do
+        if (bcene(ib).ne.0 .or. bceni(ib).ne.0)
+     >   resignore(mpg%bcCv(mpg%bcCvP(ib,1):
+     .                        mpg%bcCvP(ib,1)+mpg%bcCvP(ib,2)-1),1)=0
       enddo
 #endif
 
@@ -381,6 +375,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
       end subroutine dealloc_b2mod_boundary
 
       subroutine read_b2mod_boundary_namelist_st(nx, ny, ns, dotest)
+      use b2mod_indirect
       implicit none
       integer, intent(in) :: nx, ny, ns
       logical, intent(in) :: dotest
@@ -1144,7 +1139,6 @@ c.. Make a list of core boundaries
 
       function get_phi_applied(boundary_namelist,mpg,iFc)
       use b2mod_types
-      use b2mod_plasma
       use b2mod_boundary_sources
       implicit none
       real (kind=R8) :: get_phi_applied
@@ -1229,6 +1223,7 @@ c.. Make a list of core boundaries
 ***********************************************************************
 
       subroutine conv_bcparms (ns, m)
+      use b2mod_geo
       implicit none
       integer, intent(in) :: ns
       type (mapping), intent (inout) :: m
@@ -1243,7 +1238,6 @@ c.. Make a list of core boundaries
       integer newunit
       external newunit
 #endif
-      intrinsic huge
 
       m%nBc   = nbc     ! number of boundary conditions
       m%mxnBc = 0       ! number of cells with imposed BC
@@ -1524,7 +1518,6 @@ cwdk also need to correct for degenerate faces?
 
       write (iout,'(1x,a,f10.7,a1)') 'GAMMAI=',gammai,','
       write (iout,'(1x,a,f10.7,a1)') 'GAMMAE=',gammae,','
-      write (iout,'(1x,a,l1,a1)') 'LBNDUSR=',lbndusr,','
       write (iout,'(1x,a,l1,a1)') 'LFEEDBACK=',lfeedback,','
 
       write (iout,'(1x,a,i2,a1)') 'NNISO = ',nniso,','

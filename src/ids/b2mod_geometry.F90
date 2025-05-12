@@ -6,7 +6,7 @@ module b2mod_geometry
 
     implicit none
 
-    !! Geometry/topology IDs (obtain using function geometryId(..:))
+    !! Geometry/topology IDs (obtain using function geometryId)
 
     integer, parameter :: GEOMETRY_COUNT = 13
         !< Number of different geometry/topology situations = max(GEOMETRY_*)
@@ -521,19 +521,26 @@ contains
 
   !> Identify what geometry/topology is present from cut and periodicity data.
   !> Returns one of the GEOMETRY_* constants. Stops if unknown geometry.
-  integer function geometryId( mpg, geo )
+  !> The object variable indicates for what object we are asking the topology of:
+  !> 1: The GRID topology
+  !> 2: The PLASMA topology
+  !> The number of regions mpg%nnreg(0) and face indices mpg%fcReg refer to grid regions
+  integer function geometryId( mpg, geo, object )
     use b2mod_types
     use b2us_map
     use b2us_geo
     implicit none
     type(mapping), intent(in) :: mpg
     type(geometry), intent(in) :: geo
+    integer, intent(in) :: object
     integer :: i, iCv
     real(kind=R8) :: Xpsi_active, Xpsi_snowflake
     logical :: active
-    external xerrab
+    external xerrab, xertst
     logical, save :: first
     data first/.true./
+
+    call xertst ( object.eq.1.or.object.eq.2, 'incorrect object setting in geometryId')
 
     if (mpg%nnreg(0) == 1 .and. mpg%periodic_bc.le.0) then
         geometryId = GEOMETRY_LINEAR
@@ -563,10 +570,26 @@ contains
     end if
 
     if (mpg%nnreg(0) == 4) then
-        geometryId = GEOMETRY_SN
-        if (first) then
-            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_SN")
+        if (object.eq.1) then
+          geometryId = GEOMETRY_SN
+          if (first) then
+            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_SN")
             first = .false.
+          end if
+        else if (object.eq.2) then
+          if (maxval(mpg%fcReg(1:mpg%nFc)).le.6) then
+            geometryId = GEOMETRY_LIMITER
+            if (first) then
+              call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_LIMITER")
+              first = .false.
+            end if
+          else
+            geometryId = GEOMETRY_SN
+            if (first) then
+              call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_SN")
+              first = .false.
+            end if
+          end if
         end if
         return
     end if
@@ -623,17 +646,63 @@ contains
 
     if (mpg%nnreg(0) == 8) then
 
-        if (mpg%nXpt.eq.1) then !nh only 1 X-point for vessel mode grids
+      if (object.eq.1) then
+        if (mpg%nXpt.le.1) then
+          geometryId = GEOMETRY_DDN_BOTTOM ! Arbitrary ambiguous GEOMETRY_DDN assignment
+          if (first) then
+            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN(_BOTTOM?)")
+            first = .false.
+          end if
+          return
+        elseif (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
+          geometryId = GEOMETRY_CDN
+          if (first) then
+            call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_CDN")
+            first = .false.
+          end if
+          return
+        else
+          active = .false.
+          do i = mpg%vxCvP(mpg%Xpt(1),1), mpg%vxCvP(mpg%Xpt(1),1) + &
+                                        & mpg%vxCvP(mpg%Xpt(1),2) - 1
+            iCv = mpg%vxCv(i)
+            if (mpg%cvReg(iCv).eq.1) active = .true.
+          end do
+          if ((geo%vxY(mpg%Xpt(1)) < geo%vxY(mpg%Xpt(2)).and.active).or. &
+           &  (geo%vxY(mpg%Xpt(1)) > geo%vxY(mpg%Xpt(2)).and..not.active)) then
+            geometryId = GEOMETRY_DDN_BOTTOM
+            if (first) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN_BOTTOM")
+                first = .false.
+            end if
+            return
+          else
+            geometryId = GEOMETRY_DDN_TOP
+            if (first) then
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified grid GEOMETRY_DDN_TOP")
+                first = .false.
+            end if
+            return
+          end if
+        end if
+      else if (object.eq.2) then
+        if (maxval(mpg%fcReg(1:mpg%nFc)).le.6) then
+            geometryId = GEOMETRY_LIMITER
+            if (first) then
+              call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_LIMITER")
+              first = .false.
+            end if
+        elseif (mpg%nXpt.eq.1) then !nh only 1 X-point for vessel mode grids
             geometryID = GEOMETRY_SN
             if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_SN")
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_SN")
                 first = .false.
             end if
             return
         elseif (mpg%vxFs(mpg%Xpt(1)) == mpg%vxFs(mpg%Xpt(2))) then
             geometryId = GEOMETRY_CDN
             if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_CDN")
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_CDN")
                 first = .false.
             end if
             return
@@ -648,19 +717,20 @@ contains
            &  (geo%vxY(mpg%Xpt(1)) > geo%vxY(mpg%Xpt(2)).and..not.active)) then
             geometryId = GEOMETRY_DDN_BOTTOM
             if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_DDN_BOTTOM")
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_DDN_BOTTOM")
                 first = .false.
             end if
             return
           else
             geometryId = GEOMETRY_DDN_TOP
             if (first) then
-                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_DDN_TOP")
+                call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified plasma GEOMETRY_DDN_TOP")
                 first = .false.
             end if
             return
           end if
         end if
+      end if
     end if
 
     geometryId = GEOMETRY_UNSPECIFIED
@@ -674,7 +744,7 @@ contains
   end function geometryId
 
 
-  !> Return number of regions of a given type for a given geometry.
+  !> Return number of regions of a given type for a given grid geometry.
   !> @param geometryId: see definition of GEOMETRY_* constants.
   !> @param regionType: see definition of REGIONTYPE_* constants.
   integer function regionCount( geometryId, regionType )
@@ -686,7 +756,7 @@ contains
 
 
   !> Return total number of regions (both cell and face regions) for
-  !> the given geometry
+  !> the given grid geometry
   integer function regionCountTotal( geometryId )
     integer, intent(in) :: geometryId
 
@@ -700,7 +770,7 @@ contains
   end function regionCountTotal
 
 
-  !> Return name of a specific region.
+  !> Return name of a specific grid region.
   !> @param geometryId: see definition of GEOMETRY_* constants.
   !> @param regionType: see definition of REGIONTYPE_* constants.
   !> @param regionId: number of region. Should be between [1, regionCount(geometryId, regionType)].
@@ -710,7 +780,7 @@ contains
     regionName = regionNames(regionId, regionType, geometryId)
   end function regionName
 
-  !> Return number of a specific region as per the cfReg numbering
+  !> Return number of a specific grid region as per the cfReg numbering
   !> @param geometryId: see definition of GEOMETRY_* constants.
   !> @param regionType: see definition of REGIONTYPE_* constants.
   !> @param regionId: number of region. Should be between [1, regionCount(geometryId, regionType)].

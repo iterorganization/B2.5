@@ -2,12 +2,11 @@
 *.specification
 
       subroutine b2sihs_ (nCv, nFc, nVx, ns, switch, geo, mpg,
-     &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ni, nn,
-     &  fna_fcor, fne, fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c,
+     &  ismain, fac_ExB, lnlam, na, ua, ue, te, ti, tn, po, ne, ne2,
+     &  ni, nn, fch, cvsa, cvsahz_eff, f_luc_sg, alfx_c, sigx_c,
      &  rza, rz2, st_ext, she0, shi0, shn0, srw)
       use b2mod_types
       use b2mod_tallies
-!      use b2mod_anomalous_transport
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
@@ -47,9 +46,9 @@
      *  fac_ExB(nFc), na(nCv,0:ns-1), ua(nCv,0:ns-1), ue(nCv),        !srv 05.03.11
      &  te(nCv), ti(nCv), tn(nCv), po(nCv), ne(nCv), ni(nCv,0:1),   !srv 07.05.08 01.07.09
      &  lnlam(nCv), f_luc_sg(nFc), alfx_c(nCv), sigx_c(nCv),
-     &  nn(nCv)
+     &  nn(nCv), ne2(nCv)
       real (kind=R8) ::
-     *  fna_fcor(nFc,0:1,0:ns-1), fne(nFc,0:1), fch(nFc,0:1),
+     *  fch(nFc,0:1),
      *  cvsa(nFc,0:1,0:ns-1), cvsahz_eff(nFc,0:1,0:ns-1),
      *  rza(nCv,0:ns-1), rz2(nCv,0:ns-1)
 *   ..output arguments (unspecified on entry)
@@ -95,7 +94,7 @@
      3  zeff(nCv), zmff(nCv), ce1(nCv),                     !srv 13.01.17 05.07.17 {
      4  ce2(nCv), cimp1(nCv), cimp2(nCv),
      5  zetap(nCv), zetae(nCv),
-     6  gti(nCv), gte(nCv), ne2(nCv),
+     6  gti(nCv), gte(nCv),
      7  smbch(nCv,0:3), smbtf(nCv,0:3),
      *  smbfria(nCv,0:3), smbfrea(nCv,0:3),
      *  smbtfia(nCv,0:3), smbtfea(nCv,0:3)                              !srv 13.01.17 05.07.17 }
@@ -219,6 +218,13 @@
      1     t0*ne(iCv)*te(iCv)
          srw%b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+      if (switch%b2sihs_shedu.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shedu(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divue0to3 = shedu
@@ -281,6 +287,13 @@
      1         t0*ni(iCv,0)*ti(iCv)
         enddo
       enddo
+      if (switch%b2sihs_shidu.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shidu(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divua0to3 = shidu
@@ -313,6 +326,13 @@
      1      t0*ne(iCv)*te(iCv)
         srw%b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+      if (switch%b2sihs_shedd.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shedd(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exbe0to3 = shedd
@@ -344,6 +364,13 @@
         enddo
        endif
       enddo
+      if (switch%b2sihs_shidd.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shidd(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exba0to3 = shidd
@@ -353,14 +380,21 @@
 *   ..contribution from viscous heating
       b2visa=0.0_R8
       srw%b2sihs_visa=0.0_R8
+      if (switch%min_collisions .gt. 0.0_R8) then
+        call b2txnci (mpg, geo, switch, nCv, ns, ti, te, rz2,
+     &   ne, ne2, na, lnlam, ismain, st_ext, wrkf,
+     &   wrkc)
+      else
+        wrkc = 1.0_R8
+      endif
       do is = 0, ns-1
        if(.not.is_neutral(is).or.switch%use_eirene.eq.0.or.           !srv 29.08.02
      &                           switch%spatial_hybrid.eq.1) then
         if (switch%style_visc.eq.0) then
          call diff(nCv, nFc, nVx, 0, geo, mpg, ua(:,is), wrkv, wrkf)
          wrkf = cvsa(:,:,is)/(geo%fcQalf+eps)*wrkf**2
-         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(:,0),visc(:,0))
-         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(:,1),visc(:,1))
+         call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf(:,0), visc(:,0))
+         call intcell(nFc, nCv, mpg, mpg%intcellR, wrkf(:,1), visc(:,1))
         else
          !wdk use effective viscous momentum terms from the hybrid scheme
          !wdk avoids excessive heating in convection-dominated regions
@@ -369,10 +403,12 @@
          wrkf = cvsahz_eff(:,:,is)/(geo%fcQalf+eps)*wrkf**2
          wrkf(:,0) = wrkf(:,0)/geo%fcHz
          wrkf(:,1) = wrkf(:,1)/geo%fcHz
-         call intcell(nFc, nCv, mpg, mpg%intcellP,wrkf(:,0),visc(:,0))
-         call intcell(nFc, nCv, mpg, mpg%intcellR,wrkf(:,1),visc(:,1))
+         call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf(:,0), visc(:,0))
+         call intcell(nFc, nCv, mpg, mpg%intcellR, wrkf(:,1), visc(:,1))
         endif
         do iCv = 1, mpg%nCi
+          if (wrkc(iCv) .le. switch%min_collisions .and.
+     &     .not.mpg%cvOnClosedSurface(iCv)) cycle
           t0 = switch%b2sihs_phm2*(1.0_R8-switch%BoRiS)*visc(iCv,0)
           t1 = switch%b2sihs_phm8*(1.0_R8-switch%BoRiS)*visc(iCv,1)
           if (switch%tn_style.eq.0) then
@@ -421,6 +457,16 @@
         enddo
        endif                                                           !srv 29.08.02
       enddo
+
+      if (switch%b2sihs_shivis.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shivc(iCv,:) = 0.0_R8
+          shiva(iCv,:) = 0.0_R8
+        enddo
+      endif
+
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_visa0to3 = shivc+shiva
@@ -439,7 +485,6 @@
 *   ..contribution from electron-ion and ion-ion friction in case of arbitrary impurity amount
 *     in case of small impurity amount see below for b2sigp_style.ne.2
       if(switch%b2sigp_style.eq.2) then                                !srv 05.07.17
-       call b2xpne (nCv, ns, rz2, na, st_ext%ne2, ne2)
        call b2xzef (nCv, ns, rz2, na, ne, zeff, st_ext)                !srv 13.01.17 {
        call b2xzmf (nCv, ns, ismain, rz2, na, zmff)
        do iCv = 1, nCv
@@ -536,14 +581,14 @@
      &    ((geo%fcS(iFc)*geo%fcQalf(iFc,0) + eps)*
      &     (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))))
        enddo
-       call intcell(nFc,nCv,mpg, mpg%intcellP, wrkf(:,0),wrkc)
+       call intcell(nFc, nCv, mpg, mpg%intcellP, wrkf(:,0), wrkc)
        if (switch%istyle_Joule_heating.eq.0) then
         do iFc = 1, nFc
           wrkf(iFc,1) = fch(iFc,1)*ehy(iFc)/
      &     ((geo%fcS(iFc)*geo%fcQalf(iFc,1) + eps)*
      &      (geo%fcQgam(iFc,0)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))))
         enddo
-        call intcell(nFc,nCv,mpg, mpg%intcellR, wrkf(:,1),wrkc1)
+        call intcell(nFc, nCv, mpg, mpg%intcellR, wrkf(:,1), wrkc1)
         wrkc = wrkc + wrkc1
        endif
        do iCv = 1, mpg%nCi

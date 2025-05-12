@@ -52,6 +52,7 @@ c consistency checks for combinations of different switches (check_consistency_s
       integer :: flux_limit_to_vsa
       integer :: csig_an_style
       integer :: user_transport
+      integer :: set_transport_iyref
 
 c Advanced fluid neutral models
       integer :: tn_style
@@ -130,7 +131,6 @@ c Advanced fluid neutral models
       real (kind=R8) :: b2tfnb_alpha
       real (kind=R8) :: b2tfnb_gamma
       real (kind=R8) :: fch_stochastic
-      real (kind=R8) :: Qalfmin
       real (kind=R8) :: delpo
       real (kind=R8) :: Kn_b1
       real (kind=R8) :: Kn_b2
@@ -154,6 +154,7 @@ c switches for far-sol flux limiting options
       real (kind=R8) :: b2tlmv_ni_min
       real (kind=R8) :: b2tlmv_ni_max
       real (kind=R8) :: b2tlmv_cflmv_min
+      real (kind=R8) :: min_collisions
 
 c iout switches
       integer :: iout_b2wdat
@@ -209,6 +210,7 @@ c iout switches
       integer :: b2scdt_iout
       integer :: b2smdt_iout
       integer :: b2shdt_iout
+      integer :: write_eirene_sources
 
 c style switches
       integer :: b2sicf_style
@@ -279,6 +281,12 @@ c phm switches
       real (kind=R8) :: b2treq_phm0
       real (kind=R8) :: b2stbc_phm0
       real (kind=R8) :: b2stbc_phm1
+      integer :: b2sihs_shi
+      integer :: b2sihs_shidu
+      integer :: b2sihs_shidd
+      integer :: b2sihs_shedu
+      integer :: b2sihs_shedd
+      integer :: b2sihs_shivis
 
 c pcm switches
       real (kind=R8) :: b2npco_pcm0
@@ -538,8 +546,6 @@ c b2stbc
       real (kind=R8) :: b2stbc_bc_ref
       real (kind=R8) :: b2stbc_bc_ref_te
       real (kind=R8) :: b2stbc_bc_ref_ti
-      real (kind=R8) :: bc_type13_norm
-      real (kind=R8) :: bc_type13_fac
       real (kind=R8) :: nesepm
       real (kind=R8) :: ndes_sol
       real (kind=R8) :: nesepm_overshoot
@@ -551,7 +557,10 @@ c b2trno
       real (kind=R8) :: b2trno_alpha_stoch
 
 c b2nppo
-      integer :: b2nppo_restrict_po
+      real (kind=R8) :: b2nppo_restr_po
+
+c b2txcx
+      real (kind=R8) :: b2txcx_increase_transp_coefs
 
 c Feedback
       integer :: b2stbc_feedback
@@ -618,6 +627,7 @@ c Optimization
       s % flux_limit_to_vsa = 1
       s % csig_an_style = 1
       s % user_transport = 0
+      s % set_transport_iyref = 0
 
 c Advanced fluid neutral models
       s % tn_style = 0
@@ -706,10 +716,9 @@ c Advanced fluid neutral models
       s % b2tfnb_alpha = 0.0_R8
       s % b2tfnb_gamma = 2.0_R8
       s % fch_stochastic = 0.0_R8
-      s % Qalfmin        = 1.0e-3_R8
-      s % delpo          = 3.1_R8
-      s % Kn_b1         = 0.01_R8
-      s % Kn_b2         = 0.10_R8
+      s % delpo = 3.1_R8
+      s % Kn_b1 = 0.01_R8
+      s % Kn_b2 = 0.10_R8
       s % pol_anom_scale = 1.0_R8
       s % auto_spatial_hyb_Kn_1 = 0.0_R8
       s % auto_spatial_hyb_Kn_2 = 100.0_R8
@@ -768,6 +777,7 @@ c Advanced fluid neutral models
       s % b2scdt_iout = 0
       s % b2smdt_iout = 0
       s % b2shdt_iout = 0
+      s % write_eirene_sources = 0
 
       s % b2sicf_style = 0
       s % b2sigp_style = 2
@@ -836,6 +846,12 @@ c Advanced fluid neutral models
       s % b2treq_phm0 = 1.0_R8
       s % b2stbc_phm0 = 1.0_R8
       s % b2stbc_phm1 = 1.0_R8
+      s % b2sihs_shidu = 1
+      s % b2sihs_shidd = 1
+      s % b2sihs_shedu = 1
+      s % b2sihs_shedd = 1
+      s % b2sihs_shivis = 1
+      s % b2sihs_shi = 1
 
       if ( s % b2mndt_style.eq.2 ) then
         s % b2npco_rxg =  huge(1.0_R8)
@@ -909,6 +925,7 @@ c far-sol flux limiting options
       s % b2tlmv_ni_min = 1.0e17_R8
       s % b2tlmv_ni_max = 1.0e18_R8
       s % b2tlmv_cflmv_min = 0.5e0_R8
+      s % min_collisions = 0.0_R8
 
 c geometry
       s % fcHz_style = 1
@@ -1125,8 +1142,6 @@ c b2stbc_phys
       s % b2stbc_bc_ref = 0.01_R8            !srv 14.10.99
       s % b2stbc_bc_ref_te = 0.01_R8         !IYS 07.03.2013 11.04.13
       s % b2stbc_bc_ref_ti = 0.01_R8         !IYS 07.03.2013 11.04.13
-      s % bc_type13_norm = 1.0e15_R8
-      s % bc_type13_fac = 1.0_R8
       s % nesepm = 0.0_R8
       s % nesepm_overshoot = 0.0_R8
       s % ndes_sol = 0.0_R8
@@ -1138,7 +1153,8 @@ c b2trno
       s % b2trno_alpha_stoch =  1.0_R8       !srv 17.12.13
 
 c b2nppo
-      s % b2nppo_restrict_po = 0
+      s % b2nppo_restr_po = 0.0_R8
+      s % b2txcx_increase_transp_coefs = 0.0_R8
 
 c Optimization
       s % b2optim_save_states = 0
@@ -1207,6 +1223,7 @@ c Optimization
       call ipgeti ('b2trno_flux_limit_to_vsa', s % flux_limit_to_vsa)
       call ipgeti ('b2trno_csig_an_style', s % csig_an_style)
       call ipgeti ('b2tqna_user_transport', s % user_transport)
+      call ipgeti ('set_transport_iyref', s % set_transport_iyref)
 
 c Advanced fluid neutral models
       call ipgeti ('b2mn_tn_style', s % tn_style)
@@ -1284,7 +1301,6 @@ c Advanced fluid neutral models
       call ipgetr ('b2tfnb_alpha', s % b2tfnb_alpha)
       call ipgetr ('b2tfnb_gamma', s % b2tfnb_gamma)
       call ipgetr ('b2tfhe_stochastic', s%fch_stochastic)           !lk 31.01.08
-      call ipgetr ('b2stbc_Qalfmin', s % Qalfmin)
       call ipgetr ('b2stbc_delpo', s % delpo)
       call ipgetr ('b2stbr_Kn_b1',s % Kn_b1)
       call ipgetr ('b2stbr_Kn_b2',s % Kn_b2)
@@ -1307,6 +1323,7 @@ c far sol flux limiting
       call ipgetr ('b2tlmv_ni_min', s % b2tlmv_ni_min)
       call ipgetr ('b2tlmv_ni_max', s % b2tlmv_ni_max)
       call ipgetr ('b2tlmv_cflmv_min', s % b2tlmv_cflmv_min)
+      call ipgetr ('b2trcl_min_collisions', s % min_collisions)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
@@ -1361,6 +1378,7 @@ c iout switches
       call ipgeti ('b2scdt_iout', s % b2scdt_iout)
       call ipgeti ('b2smdt_iout', s % b2smdt_iout)
       call ipgeti ('b2shdt_iout', s % b2shdt_iout)
+      call ipgeti ('cdfmovie_eirene_sources', s % write_eirene_sources)
 
 c style/mode switches
       call ipgeti ('b2sicf_style', s % b2sicf_style)
@@ -1434,6 +1452,19 @@ c phm switches
       call ipgetr ('b2treq_phm0', s % b2treq_phm0)
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
+      call ipgeti ('b2sihs_shi', s % b2sihs_shi)
+      if (s % b2sihs_shi .eq. 0) then
+        s % b2sihs_shidu = 0
+        s % b2sihs_shidd = 0
+        s % b2sihs_shedu = 0
+        s % b2sihs_shedd = 0
+        s % b2sihs_shivis = 0
+      endif
+      call ipgeti ('b2sihs_shidu', s % b2sihs_shidu)
+      call ipgeti ('b2sihs_shidd', s % b2sihs_shidd)
+      call ipgeti ('b2sihs_shedu', s % b2sihs_shedu)
+      call ipgeti ('b2sihs_shedd', s % b2sihs_shedd)
+      call ipgeti ('b2sihs_shivis', s % b2sihs_shivis)
 
 c pcm switches
       call ipgetr ('b2npco_pcm0', s% b2npco_pcm0)
@@ -1723,11 +1754,9 @@ c b2stbc
       call ipgeti ('b2stbc_bceni_16_style', s%bceni_16_style)
 
       call ipgetr ('b2stbc_cbc', s%b2stbc_cbc)                       !srv 14.10.99
-      call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)           !srv 11.04.13
       call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)
       call ipgetr ('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)           !srv 11.04.13
-      call ipgetr ('b2stbc_type13_norm', s%bc_type13_norm)
-      call ipgetr ('b2stbc_type13_fac', s%bc_type13_fac)
+      call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)           !srv 11.04.13
       call ipgetr ('b2stbc_nesepm', s%nesepm)
       call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
       call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
@@ -1744,7 +1773,9 @@ c Feedback
       call ipgeti ('b2stbc_feedback', s%b2stbc_feedback)
 
 c b2nppo
-      call ipgeti ('b2nppo_restrict_po', s%b2nppo_restrict_po)
+      call ipgetr ('b2nppo_restr_po', s%b2nppo_restr_po)
+      call ipgetr ('b2txcx_increase_transp_coefs',
+     &      s%b2txcx_increase_transp_coefs)
 
 c Optimization
       call ipgeti ('b2optim_save_states', s%b2optim_save_states)

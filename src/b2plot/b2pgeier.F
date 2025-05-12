@@ -14,7 +14,7 @@ c=======================================================================
       implicit none
       integer lun
 
-      integer i,j,is,iy,jj,ibf,iFc
+      integer i,j,is,iy,jj,iFc
       real (kind=R8) :: u
       real (kind=R8), allocatable :: hlp_flx(:,:,:)
       character ftrg(ntrgsx)*12,trg_label(ntrgsx)*9,fmt_peak*80

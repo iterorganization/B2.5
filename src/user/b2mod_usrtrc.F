@@ -3,7 +3,6 @@
       use b2mod_diag
       use b2mod_time
       use b2mod_b2cmpa
-      use b2mod_indirect
       use b2mod_user_namelist
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -165,6 +164,7 @@ c*** Column headers:
       use b2mod_rates
       use b2mod_plasma
       use b2mod_external
+      use b2mod_indirect
       use b2mod_constants
       use b2mod_boundary_namelist
       use b2mod_numerics_namelist
@@ -792,7 +792,7 @@ c*** Western divertor
           end if !}
           iy=0
           iyp=1
-          if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.2) then
+          if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) then
             iy=ny
             iyp=ny
           end if
@@ -1681,6 +1681,7 @@ c=======================================================================
 c======================================================================
 c
       subroutine b2usrtrcc(nx,nxtl,nxtr,iline)
+      use b2mod_indirect
       implicit none
       integer, intent(in) :: nx, nxtl, nxtr
       integer, intent(out) :: iline
