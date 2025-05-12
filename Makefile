@@ -151,9 +151,21 @@ ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local ] && ec
   MAKES += ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
 endif
 
+# Verify that some needed variables are defined
+ifndef LD_MSCL
+ifndef SOLPS_CPP
+$(error LD_MSCL not defined!)
+else
+$(error LD_MSCL not defined. Run the install_dependencies script first.)
+endif
+endif
+
 # Add external includes first
 ifdef NCDIR
 SOLPSINCLUDE += -I${NCDIR}/include
+ifeq ($(UNAME),Darwin)
+SOLPSINCLUDE += -I${NCFDIR}/include
+endif
 endif
 
 ifdef USE_IMPGYRO

@@ -77,7 +77,7 @@
           endif
 !WG_TODO         if (resignore(ix,iy,1).ne.0) 
 !WG_TODO     >    navi = navi+geo%cvVol(iCv)*pl%na(iCv,is)
-!WG_TODO         if (resignore(ix,iy,2).ne.0)
+!WG_TODO         if (resignore(iCv,2).ne.0)
 !WG_TODO     >    movi = movi+geo%cvVol(iCv)*
 !WG_TODO     &     pl%na(iCv,is)*sqrt(pl%ti(iCv)*am(is)*mp)
        enddo
@@ -102,7 +102,7 @@
       prvi = 0.0_R8
       prvn = 0.0_R8
       do iCv = 1, mpg%nCi
-!WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
+!WG_TODO        if (resignore(iCv,1).eq.0) cycle
         nevi = nevi+geo%cvVol(iCv)*dv%ne(iCv)
         prvi = prvi+geo%cvVol(iCv)*dv%ne(iCv)*pl%te(iCv)
         if (switch%tn_style.eq.0) then
@@ -173,7 +173,7 @@
 *   ..compute prvi
       prvi = 0.0_R8
       do iCv = 1, mpg%nCi
-!WG_TODO        if (resignore(ix,iy,1).eq.0) cycle
+!WG_TODO        if (resignore(iCv,1).eq.0) cycle
         prvi = prvi+geo%cvVol(iCv)*dv%ne(iCv)*pl%te(iCv)
         do is = 0, ns-1
          if (.not.is_neutral(is))

@@ -18,6 +18,7 @@
         real (kind=R8), allocatable  :: cvSz(:)        ! Area perp. to third (z) direction
         real (kind=R8), allocatable  :: cvHz(:)        ! Length in third (z) direction
         real (kind=R8), allocatable  :: cvHx(:)        ! Temp: characteristic poloidal length; eventually remove, because meaning unclear in WG context
+        real (kind=R8), allocatable  :: cvHy(:)        ! Estimate of the radial width of a cell
         real (kind=R8), allocatable  :: cvQgam(:,:)    ! Temp: complementary angle between poloidal and radial directions; remove?
         real (kind=R8), allocatable  :: cvVol(:)       ! Cell volume
         real (kind=R8), allocatable  :: cvOnedBsq(:)   ! 1/B**2 in cell centers
@@ -71,6 +72,8 @@
         logical :: LSN ! Identifies topologies where the western target is
                        ! the inner one
         logical :: psi_increasing ! .true. if the psi value increases from the O-point to the active X-point
+
+        real (kind=R8) :: Qalfmin, Qalfmax
       end type geometry
 
       contains
@@ -92,6 +95,7 @@
       allocate (g%cvSz(nCv))
       allocate (g%cvHz(nCv))
       allocate (g%cvHx(nCv))
+      allocate (g%cvHy(nCv))
       allocate (g%cvQgam(nCv,0:1))
       allocate (g%cvVol(nCv))
       allocate (g%cvOnedBsq(nCv))
@@ -157,6 +161,7 @@
       g%cvSz = 0._R8
       g%cvHz = 0._R8
       g%cvHx = 0._R8
+      g%cvHy = 0._R8
       g%cvQgam = 0._R8
       g%cvVol = 0._R8
       g%cvOnedBsq = 0._R8
@@ -206,6 +211,9 @@
       g%LSN = .true.
       g%psi_increasing = .true.
 
+      g%Qalfmax = 1.0e-3_R8
+      g%Qalfmin = 1.0e-3_R8
+
       return
       end subroutine initialize_geometry
 
@@ -225,6 +233,7 @@
       deallocate (g%cvSz)
       deallocate (g%cvHz)
       deallocate (g%cvHx)
+      deallocate (g%cvHy)
       deallocate (g%cvQgam)
       deallocate (g%cvVol)
       deallocate (g%cvOnedBsq)
@@ -283,7 +292,8 @@
       implicit none
       integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nFt, nVmxCv
       type (geometry), intent (inout) :: gm
-      external cfrure
+      real(kind=R8) :: rdum(1)
+      external cfrure, cfrure_opt, ipgetr
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
@@ -319,6 +329,15 @@
       call cfrure (iun, nCv,   gm%cvConn, 'cvConn')
       call cfrure (iun, nFs,   gm%fsPsi,  'fsPsi')
 
+      rdum(1) = 1.0e-3_R8
+      call ipgetr('b2us_prep_Qalfmin', rdum(1))
+      call cfrure_opt (iun,   1,   rdum, 'Qalfmin')
+      gm%Qalfmin = rdum(1)
+      rdum(1) = 1.0e-3_R8
+      call ipgetr('b2us_prep_Qalfmax', rdum(1))
+      call cfrure_opt (iun,   1,   rdum, 'Qalfmax')
+      gm%Qalfmax = rdum(1)
+
 ! check consistency of input
       call check_geometry(nCv, nFc, nVx, nFs, nFt, gm)
 
@@ -332,6 +351,7 @@
       implicit none
       integer, intent(in) :: nout, nCv, nFc, nVx, nFs
       type (geometry), intent (in) :: gm
+      real(kind=R8) :: rdum(1)
       external cfwure
 
 ! cell volumes
@@ -365,6 +385,11 @@
 ! flux surface quantities
       call cfwure (nout, nCv,   gm%cvConn, 'cvConn')
       call cfwure (nout, nFs,   gm%fsPsi,  'fsPsi')
+
+      rdum(1) = gm%Qalfmin
+      call cfwure (nout,   1,   rdum,  'Qalfmin')
+      rdum(1) = gm%Qalfmax
+      call cfwure (nout,   1,   rdum,  'Qalfmax')
 
       return
       end subroutine write_geometry
@@ -896,6 +921,18 @@
 
 !WG_TODO: Need to provide a calculation for gm%vxEb
 
+*   ..estimate the radial width of cells: cvHy
+      do iCv = 1, nCv
+        do i = 1, mpg%cvFcP(iCv,2)
+          iFc = mpg%cvFc(mpg%cvFcP(iCv,1)+i-1)
+          gm%cvHy(iCv) = gm%cvHy(iCv)+
+     .                   gm%fcHt(iFc)*abs(gm%fcQalf(iFc,0))
+        enddo
+      enddo
+      do iCv = 1, mpg%nCi
+        gm%cvHy(iCv) = 0.5_R8*gm%cvHy(iCv)
+      enddo
+
 *   ..compute cvHz
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
       hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
@@ -1303,7 +1340,7 @@
         else
          ! SOL/PF: effective distance to targets/boundaries
          ! implicit assumption that cells in ftCv are listed starting
-         ! at one  of the targets
+         ! at one of the targets
          do ic = mpg%ftCvP(iFt,1),mpg%ftCvP(iFt,1)+mpg%ftCvP(iFt,2)-1
           iCv = mpg%ftCv(ic)
           L1 = 0.5_R8*wrk0(iCv)

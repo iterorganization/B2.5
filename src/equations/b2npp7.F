@@ -3,7 +3,7 @@
 
       subroutine b2npp7 (nx, ny, nregionv, solvereg, itcnt, rxf,  !srv 06.07.00 27.01.00
      &  ne, te, conc, avisper, bvisper, cvisper, sch, po,         !srv 27.01.00
-     &  fch, respo, corpo, ierr)
+     &  fch, respo, corpo)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -22,7 +22,6 @@
       real (kind=R8) ::
      *   po(-1:nx,-1:ny), fch(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
-      integer ierr
       real (kind=R8) ::
      *   respo(-1:nx,-1:ny), corpo(-1:nx,-1:ny)
 *   ..common blocks
@@ -129,9 +128,6 @@
      &       sch(:,:,3)*ne*po
         call my_out(70,nx,ny,wrk0,'b2npp7_sch')
       endif                                                           !srv 11.09.09 }
-*   ..set error parameter and return
-*     (at present all errors cause an abort through xertst)
-      ierr = 0
 * ..return
       ncall = ncall+1
       call subend ()

@@ -2,7 +2,6 @@
      . ASO1, ASO, AWE, ACP, AEA, ANO, ANO1, RHS, SOL, name)        !srv 11.01.00
       use b2mod_types
       use b2mod_ma28_for_7diag
-      use b2mod_indirect
       use b2mod_subsys
 #ifdef _OPENMP
       use b2mod_openmp

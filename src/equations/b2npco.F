@@ -3,7 +3,7 @@
 
       subroutine b2npco (nCv, nFc, nVx, nregionv, solving,               !srv 22.05.18
      &  solvcreg, ua_solve, solvmreg, itcnt, isb, rxf, dtim, switch,
-     &  geo, mpg, pl, dv, sr, psnc, psnl, ierr)
+     &  geo, mpg, pl, dv, sr, psnl)
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_switches
@@ -14,7 +14,9 @@
      & , only : dtco, time_factor                                        !srv 07.07.21 }
 #ifndef FIXED_POINT
       use b2mod_balance
-     & ,only : update_balance_sources_particles, balance_netcdf,         !djm Jan2017
+     & ,only : update_balance_sources_particles,
+     &         update_balance_eirene_sources_particles,
+     &         balance_netcdf,                                           !djm Jan2017
      &         tot_sna0to1, fna_tot                                      !djm Mar2019
 #endif
       use b2mod_ad
@@ -37,7 +39,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (B2Source), intent (inout) :: sr
-      type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
+      type (B2PlasmaSnapshot), intent (inout) :: psnl
       real (kind=R8) ::
      *  rxf, dtim
       logical solving, solvcreg(0:nregionv), ua_solve,                   !srv 22.05.18
@@ -45,8 +47,6 @@
 *   ..input/output arguments
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
-*   ..output arguments (unspecified on entry)
-      integer ierr
 *   ..common blocks
 
 *-----------------------------------------------------------------------
@@ -156,6 +156,11 @@ cdjm Jan2017 update particle source components for balance
         fna_tot(:,:,isb)=dv%fna(:,:,isb)        !djm Mar2019
         call update_balance_sources_particles(nCv,isb,pl%na(:,isb))
       endif
+      if (balance_netcdf.ne.0 .or.
+     &    switch%write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_particles
+     &   (nCv,isb,pl%na(:,isb))
+      endif
 #endif
 
       !Compute residual without time-stepping sources (needed at next time-step for ckn scheme)
@@ -239,10 +244,6 @@ cdjm Jan2017 update particle source components for balance
         call my_out_us(70,nFc,1,dv%fna_mdf(1,1,isb),
      .    'b2npco_fna_mdf_r'//chns)
       endif
-
-*   ..set error parameter
-*     (at present all errors cause an abort through xerrab)
-      ierr = 0
 
 * ..return
       ncall_b2npco = ncall_b2npco+1

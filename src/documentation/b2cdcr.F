@@ -199,11 +199,9 @@
 *
 *     B2MWMV writes to an un*formatted file a selection of data
 *     describing the state of the plasma.
-*     Not converted for WG.
 *
 *     B2MWIT writes to an un*formatted file detailed monitoring output
 *     for the inner iterations of the B2.5 solution process.
-*     Not converted for WG.
 *
 *     B2MWQ0 writes a header for the output from b2mwqt.
 *
@@ -499,9 +497,6 @@
 *     B2TXCC computes normal conductances between neighbouring cells,
 *     given the conductivities.
 *
-*     B2TXCV computes viscous conductances between neighbouring
-*     staggered cells, given the viscosities (not used anymore).
-*
 *     B2TXCX computes conductances between neighbouring cells in the
 *     poloidal direction, given the conductivities.
 *
@@ -521,6 +516,10 @@
 *
 *     B2TXSY computes the integrals over cell y-faces of a function
 *     that is provided on the cells.
+*
+*     B2TXNCI computes number of main ion collisions in every flux tube.
+*
+*     B2TXNCE computes number of electron collisions in every flux tube.
 *
 *     B2UPCO corrects the state of the plasma towards the solution of
 *     continuity equation for one atomic species.

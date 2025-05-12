@@ -4,14 +4,15 @@
       subroutine b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
      &  itcnt, solving, rxf, dtim, pl, dv, rt, co, sr, srw,
-     &  psnc, psnl, st_ext, ierr)
+     &  psnl, st_ext)
       use b2mod_types
       use b2mod_math
       use b2mod_constants
 #ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
-     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-     2          balance_netcdf, tot_smo0to3, fmo_tot
+     1 , only : update_balance_sources_momentum,
+     2          update_balance_eirene_sources_momentum,
+     3          balance_netcdf, fmo_b2nxfv, tot_smo0to3, fmo_tot
 #endif
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
@@ -47,7 +48,7 @@
       type (B2Rates), intent (in) :: rt
       type (B2Source), intent (inout) :: sr
       type (B2SourceWork), intent (inout) :: srw
-      type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
+      type (B2PlasmaSnapshot), intent (inout) :: psnl
       type (B2StateExt), intent (in) :: st_ext
       real (kind=R8) ::
      *  rxf, dtim
@@ -56,11 +57,8 @@
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
 *   ..output arguments (unspecified on entry)
-      integer ierr
-!WG_TODO     &  smof(nCv,0:3,0:ns-1)
       real (kind=R8) ::
      *  ubf(nFc), robf(nFc)
-*   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -239,7 +237,7 @@ c time-dependent treatment
 *   ..compute ehxp
       if(switch%b2sigp_style.ne.2) then
         call b2nxfx (nCv, nFc, nVx, switch, geo, mpg, qe, dv%ne,
-     &     pl%te, pl%po, ehxp, wrkf0, wrkf1)
+     &     pl%te, pl%po, ehxp)
       endif                                                            !srv 13.01.17 }
 *   ..compute smqdu
       call b2nxdu (nCv, ns, pl%na, pl%ua, sr%smq, smqdu, wrk0, wrk1)
@@ -289,7 +287,7 @@ c time-dependent treatment
 *    ..compute pressure gradient term
        call b2sigp (nCv, nFc, nVx, is, switch, geo, mpg, rt%rza(:,is),
      &   pl%na(:,is), pl%ti, pl%tn, dv%ne, pl%te, pl%po, smbgp, wrk0,
-     &   wrk1, wrk2)
+     &   wrk1)
 *    ..compute flub
        call b2scopy (nFc*2, dv%fna_fcor(:,:,is), 1, flub, 1)
        call b2sscal (nFc*2, am(is)*mp, flub, 1)
@@ -313,7 +311,7 @@ c time-dependent treatment
      &   smbvv, co%kt_neo, wrk0, wrk1, wrk2)
 *    ..compute centrifugal force term                                   !srv 09.07.01
        call b2sicf (nCv, nFc, nVx, is, am(is)*mp, switch,  geo, mpg,    !srv 09.07.01 28.01.02 22.07.05
-     *   pl%na(:,is), pl%ua(:,is), smbcf, srw%smcf(:,is), ctcfb, wrk0)
+     *   pl%na(:,is), pl%ua(:,is), smbcf, ctcfb, wrk0)
 *    ..compute correcting source due to artificial anomalous electric conductivity
        call b2sian (nCv, nFc, is, switch, geo, mpg, dv%fchanml, smban)
 *    ..compute total parallel momentum source
@@ -329,10 +327,7 @@ c time-dependent treatment
        call b2saxpy (nCv*4, 1.0_R8, smbvv,  1, smb, 1)
        call b2saxpy (nCv*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
        call b2saxpy (nCv*4, 1.0_R8, smban,  1, smb, 1)                  !srv 25.09.17
-       call b2nxdv (nCv,is,switch,mpg,rob,sr%smq(:,:,is),smqdu,smb)     !srv ???
-*    ..save final source for species (is)                               !srv 10.11.02
-!WG_TODO       smof(:,:,is) = smb                                       !srv 10.11.02
-
+       call b2nxdv (nCv,is,switch,mpg,rob,sr%smq(:,:,is),smqdu,smb)     !srv
 #ifndef FIXED_POINT
 cdjm Jan2017 update momentum source components for balance
       if (balance_netcdf.ne.0) then
@@ -341,6 +336,11 @@ cdjm Jan2017 update momentum source components for balance
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,rob,robf)
         call update_balance_sources_momentum(nCv,nFc,is,pl%ua(:,is),rob,
      &    ubf,robf)
+      endif
+      if (balance_netcdf.ne.0 .or.
+     &    switch%write_eirene_sources.ne.0) then
+        call update_balance_eirene_sources_momentum(
+     &   nCv,is,pl%ua(1,is),rob)
       endif
 #endif
 
@@ -435,7 +435,7 @@ cdjm Mar2019 output the total momentum flux and source for balance
         call my_out_us(70,nCv,0,wrks,'b2npmo_smoan'//chns)              !srv 25.09.17
       endif                                                             !srv 05.07.17
 
-      if (switch%b2npmo_iout .ne. 0) then
+      if (switch%b2npmo_iout .ne. 0 .or. switch%iout_b2wdat .eq. 4) then
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2npmo_ua_input'//chns)
         wrks=sr%smo(:,0,is)+sr%smo(:,1,is)*pl%ua(:,is)+
      &       sr%smo(:,2,is)*pl%na(:,is)*mp*am(is)+
@@ -617,10 +617,6 @@ c     ..compare 9-pt stencil matrices
        call my_out_us(70,nCv,0,dv%pccm(1,0),'b2npmo_pccm_th')           !srv 11.01.13
        call my_out_us(70,nCv,0,dv%pccm(1,1),'b2npmo_pccm_r')            !srv 11.01.13
       endif                                                             !srv 12.07.02 }
-*   ..set error parameter
-*     (at present all errors cause an abort through xerrab)
-      ierr = 0
-
 * ..return
       ncall_b2npmo = ncall_b2npmo+1
       call subend ()
