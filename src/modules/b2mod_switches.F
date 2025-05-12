@@ -548,6 +548,9 @@ c b2trno
 c b2nppo
       real (kind=R8) :: b2nppo_restr_po
 
+c b2txcx
+      real (kind=R8) :: b2txcx_increase_transp_coefs
+
 c Feedback
       integer :: b2stbc_feedback
 
@@ -1128,6 +1131,7 @@ c b2trno
 
 c b2nppo
       s % b2nppo_restr_po = 0.0_R8
+      s % b2txcx_increase_transp_coefs = 0.0_R8
 
 c Optimization
       s % b2optim_save_states = 0
@@ -1735,6 +1739,8 @@ c Feedback
 
 c b2nppo
       call ipgetr ('b2nppo_restr_po', s%b2nppo_restr_po)
+      call ipgetr ('b2txcx_increase_transp_coefs',
+     &      s%b2txcx_increase_transp_coefs)
 
 c Optimization
       call ipgeti ('b2optim_save_states', s%b2optim_save_states)
