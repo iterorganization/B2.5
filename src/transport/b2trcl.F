@@ -104,7 +104,7 @@ cwdk to consider: create an output struct co0 of type (B2Coeff) for this?
      *  cflmv, jemax                                                  !srv 13.01.17
       real (kind=R8) ::                                               !srv 03.06.03
      *   t0, dte(nFc), dti(nFc), flomx, connf, epsf
-      real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),  !lk 19.09.07
+      real (kind=R8) :: tauia(nCv,0:ns-1), nu2(nCv),                  !lk 19.09.07
      &    k2(nCv), collisnumf(mpg%nFc), collisnumef(mpg%nFc)
       real (kind=R8) :: inctran
 #ifdef ASTRA
@@ -207,17 +207,16 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         enddo
       enddo
 *   ..incorporate geometry with hz                                     !srv 09.01.01
-      inctran = switch%b2txcx_increase_transp_coefs
       wrk = geo%fcS*geo%fcHz
       do iFc = 1, nFc
         wrk1(iFc,1) = geo%fcVol(iFc,1)*geo%cvHz(mpg%fcCv(iFc,1))
         wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvHz(mpg%fcCv(iFc,2))
       enddo
       do is = 0, ns-1
-       call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, wrk1, wrk,              !srv 01.07.05 {
-     &   vsa(:,0,is), cvsahz(:,0,is))
-       call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   vsa(:,1,is), cvsahz(:,1,is))                                 !srv 01.07.05 }
+       call b2txcx (nCv, nFc, 0.0_R8,
+     &  mode, geo, mpg, wrk1, wrk, vsa(:,0,is), cvsahz(:,0,is))
+       call b2txcy (nCv, nFc,
+     &  mode, geo, mpg, wrk1, wrk, vsa(:,1,is), cvsahz(:,1,is))
       enddo                                                           !srv 09.01.01
 *   ..incorporate geometry
       call sfill (nFc*2*ns*ns, 0.0_R8, csigin, 1)
@@ -229,37 +228,39 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 !$omp& shared(is_neutral, zn, sigin, csigin, inctran)
 #endif
       do is = 0, ns-1
-       call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &    geo%fcS, vsa(:,0,is), cvsa(:,0,is))
-       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   vsa(:,1,is), cvsa(:,1,is))
-       do k = 0, nscx-1
-         is0 = iscx(k)
-         if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
-           call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,    !sv
-     &       geo%fcS, sigin(:,0,is,k), csigin(:,0,is,is0))              !sv 01.07.99
-           call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,   !sv
-     &       sigin(:,1,is,k), csigin(:,1,is,is0))                       !sv
-        endif
-       enddo
+        call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS, vsa(:,0,is), cvsa(:,0,is))
+        call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS, vsa(:,1,is), cvsa(:,1,is))
+        do k = 0, nscx-1
+          is0 = iscx(k)
+          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
+            call b2txcx (nCv, nFc, 0.0_R8,
+     &       mode, geo, mpg, geo%fcVol, geo%fcS,
+     &       sigin(:,0,is,k), csigin(:,0,is,is0))
+            call b2txcy (nCv, nFc,
+     &       mode, geo, mpg, geo%fcVol, geo%fcS,
+     &       sigin(:,1,is,k), csigin(:,1,is,is0))
+          endif
+        enddo
       enddo
       inctran = switch%b2txcx_increase_transp_coefs
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, hce(:,0), chce(:,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hce(:,1), chce(:,1))
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, hci(:,0), chci(:,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hci(:,1), chci(:,1))
-      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, sig(:,0), csig(:,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  sig(:,1), csig(:,1))
-      call b2txcx (nCv, nFc, 0.0_R8,   -1, geo, mpg, geo%fcVol,
-     &   geo%fcS, alf(:,0), calf(:,0))
-      call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
-     &  alf(:,1), calf(:,1))
+      call b2txcx (nCv, nFc, inctran,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hce(:,0), chce(:,0))
+      call b2txcy (nCv, nFc,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hce(:,1), chce(:,1))
+      call b2txcx (nCv, nFc, inctran,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hci(:,0), chci(:,0))
+      call b2txcy (nCv, nFc,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hci(:,1), chci(:,1))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, sig(:,0), csig(:,0))
+      call b2txcy (nCv, nFc,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, sig(:,1), csig(:,1))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     &   -1, geo, mpg, geo%fcVol, geo%fcS, alf(:,0), calf(:,0))
+      call b2txcy (nCv, nFc,
+     &   -1, geo, mpg, geo%fcVol, geo%fcS, alf(:,1), calf(:,1))
 
       if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
@@ -301,9 +302,6 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
       co%f_luc_et = 1.0_R8
       co%f_luc_sg = 1.0_R8
       co%f_luc_al = 1.0_R8                                            !srv 13.01.17 }
-      co%alpha1f = 1.0_R8
-      co%f_luc_ke_c = 1.0_R8
-      co%f_luc_ki_c = 1.0_R8
       if(switch%lluciani.eq.1) then   ! connection length formulation
        !wdk There is implicit assumption here that flux tubes exist in the grid.
        !wdk Need to generalize to truly unstructured grids; using fcConn at each
@@ -610,17 +608,6 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
 *   .. save chce(:,0) after applying Luciani
       wrk = chce(:,0)                                                 !srv 13.01.17
 
-      if (switch%min_collisions.gt.0.0_R8) then
-        call b2txnci (mpg, geo, switch, nCv, ns, pl%ti, pl%te, rt%rz2,
-     &   dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, collisnumf,
-     &   wrkc)
-        call b2txnce (mpg, geo, switch, nCv, pl%te, dv%ne2,
-     &   dv%lnlam, collisnumef, wrkc)
-      else
-        collisnumf = 1.0_R8
-        collisnumef = 1.0_R8
-      endif
-
       if (switch%min_collisions .gt. 0.0_R8) then
         call b2txnci (mpg, geo, switch, nCv, ns, pl%ti, pl%te, rt%rz2,
      &   dv%ne, dv%ne2, pl%na, dv%lnlam, ismain, st_ext, collisnumf,
@@ -632,7 +619,7 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         collisnumef = 1.0_R8
       endif
 
-      if(switch%conductive_limit.ne.0) then                              !srv 16.06.08 {
+      if(switch%conductive_limit.ne.0) then                           !srv 16.06.08 {
 *   .. pre-compute poloidal differences of te, ti
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%te, wrkv, dte)
        call diff_p(nCv, nFc, nVx, 0, geo, mpg, pl%ti, wrkv, dti)
@@ -662,8 +649,8 @@ c            if(.not.on_closed_surface(ix,iy)) then                   !lk 06.05.
        if(cflim(1).ne.0.0_R8) then
         do iFc = 1,nFc
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
-c          if(.not.on_closed_surface(ix,iy)) then                           !lk 06.05.07
-        if((switch%core_cond_limit.ne.0.or.
+c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.07
+         if(switch%core_cond_limit.ne.0.or.
      &      .not.(mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &            mpg%cvOnClosedSurface(mpg%fcCv(iFc,2))))) then
           if (collisnumf(iFc) .gt. switch%min_collisions) then
@@ -757,8 +744,9 @@ c          if(.not.on_closed_surface(ix,iy)) then                           !lk 
       wrkc = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
      &       dabs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
       wrkc = co%sigx_c*wrkc**2*geo%cvBb(:,3)**2/(am(ismain)*mp)
-      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  wrkc, cdkt(:,0))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, wrkc, cdkt(:,0))
+      cdkt(:,0) = cdkt(:,0)*switch%b2tfhi_fsigkt
       cdkt(:,1) = 0.0_R8
       co%sigx_kt = wrkc
 *   ..save the classical transport coefficients
