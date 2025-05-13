@@ -211,45 +211,47 @@ c     &   '21-moment viscosity already includes parallel viscosity!')
         wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvHz(mpg%fcCv(iFc,2))
       enddo
       do is = 0, ns-1
-       call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, wrk1, wrk,      !srv 01.07.05 {
-     &   vsa(:,0,is), cvsahz(:,0,is))
-       call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   vsa(:,1,is), cvsahz(:,1,is))                                 !srv 01.07.05 }
+       call b2txcx (nCv, nFc, 0.0_R8,
+     &  mode, geo, mpg, wrk1, wrk, vsa(:,0,is), cvsahz(:,0,is))
+       call b2txcy (nCv, nFc,
+     &  mode, geo, mpg, wrk1, wrk, vsa(:,1,is), cvsahz(:,1,is))
       enddo                                                           !srv 09.01.01
 *   ..incorporate geometry
       call sfill (nFc*2*ns*ns, 0.0_R8, csigin, 1)
       do is = 0, ns-1
-       call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, vsa(:,0,is), cvsa(:,0,is))
-       call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   vsa(:,1,is), cvsa(:,1,is))
-       do k = 0, nscx-1
-         is0 = iscx(k)
-         if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
-           call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,  !sv
-     &       geo%fcS, sigin(:,0,is,k), csigin(:,0,is,is0))            !sv 01.07.99
-           call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS, !sv
-     &       sigin(:,1,is,k), csigin(:,1,is,is0))                     !sv
-        endif
-       enddo
+        call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS, vsa(:,0,is), cvsa(:,0,is))
+        call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS, vsa(:,1,is), cvsa(:,1,is))
+        do k = 0, nscx-1
+          is0 = iscx(k)
+          if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
+            call b2txcx (nCv, nFc, 0.0_R8,
+     &       mode, geo, mpg, geo%fcVol, geo%fcS,
+     &       sigin(:,0,is,k), csigin(:,0,is,is0))
+            call b2txcy (nCv, nFc,
+     &       mode, geo, mpg, geo%fcVol, geo%fcS,
+     &       sigin(:,1,is,k), csigin(:,1,is,is0))
+          endif
+        enddo
       enddo
       inctran = switch%b2txcx_increase_transp_coefs
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &  geo%fcS, hce(:,0), chce(:,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hce(:,1), chce(:,1))
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &  geo%fcS, hci(:,0), chci(:,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hci(:,1), chci(:,1))
-      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &  geo%fcS, sig(:,0), csig(:,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  sig(:,1), csig(:,1))
-      call b2txcx (nCv, nFc, 0.0_R8,   -1, geo, mpg, geo%fcVol,
-     &  geo%fcS, alf(:,0), calf(:,0))
-      call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
-     &  alf(:,1), calf(:,1))
+      call b2txcx (nCv, nFc, inctran,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hce(:,0), chce(:,0))
+      call b2txcy (nCv, nFc,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hce(:,1), chce(:,1))
+      call b2txcx (nCv, nFc, inctran,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hci(:,0), chci(:,0))
+      call b2txcy (nCv, nFc,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hci(:,1), chci(:,1))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, sig(:,0), csig(:,0))
+      call b2txcy (nCv, nFc,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, sig(:,1), csig(:,1))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     &   -1, geo, mpg, geo%fcVol, geo%fcS, alf(:,0), calf(:,0))
+      call b2txcy (nCv, nFc,
+     &   -1, geo, mpg, geo%fcVol, geo%fcS, alf(:,1), calf(:,1))
 
       if(switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
@@ -731,8 +733,8 @@ c          if(.not.on_closed_surface(ix,iy)) then                     !lk 06.05.
       wrkc = sqrt(2.0_R8*pl%ti*(am(ismain)*mp))/
      &       dabs(rt%rza(:,ismain)*qe*geo%cvBb(:,3))
       wrkc = co%sigx_c*wrkc**2*geo%cvBb(:,3)**2/(am(ismain)*mp)
-      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  wrkc, cdkt(:,0))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, wrkc, cdkt(:,0))
       cdkt(:,0) = cdkt(:,0)*switch%b2tfhi_fsigkt
       cdkt(:,1) = 0.0_R8
       co%sigx_kt = wrkc
