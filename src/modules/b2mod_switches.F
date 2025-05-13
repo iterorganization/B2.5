@@ -2352,9 +2352,10 @@ c ECH model
      1              'b2sral_ECH_Rdep must be .gt. 0.0')
 
 c ICH model
-      call xertst (0.le.s%use_ich.le.1,
+      call xertst ((0.le.s%use_ich).and.(s%use_ich.le.1),
      1              'b2sral_use_ICH value not coded')
-      call xertst (0.le.s%ich_coupling.le.8,
+      call xertst (((0.le.s%ich_coupling).and.(s%ich_coupling.le.8))
+     1               .or.(s%use_ich.eq.0),
      1              'b2sral_ICH_coupling value not coded')
       call xertst (0.0_R8.lt.s%ich_RFfreq.or.s%use_ich.eq.0,
      1              'b2sral_ICH_RFfrequency must be .gt. 0.0')
