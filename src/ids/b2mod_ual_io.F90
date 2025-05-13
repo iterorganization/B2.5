@@ -309,7 +309,7 @@ contains
     type( mapping ), intent(in) :: mpg
     type( geometry ), intent(in) :: geo
     integer tvalues(8)
-    integer i, iCv, iFc
+    integer i, iCv, iFc, ireg
     real(IDS_real) :: r_min, r_max, z_min, z_max
     logical, save :: IDS_initialized = .false.
     character*16 usrnam
@@ -367,6 +367,13 @@ contains
       allocate(flux_expansion( maxval(mpg%strDiv) ) )
     end if
     do i = 1, maxval(mpg%strDiv)
+      if (gridGeometry.eq.plasmaGeometry .or. i.eq.1) then
+        ireg = i
+      else if (mpg%nnreg(0).eq.8 .and. i.eq.2) then
+        ireg = 4
+      else
+        call xerrab ('Unexpected geometry!')
+      end if
       r_min = huge(1.0_R8)
       r_max = 0.0_R8
       z_min = huge(1.0_R8)
@@ -374,7 +381,7 @@ contains
       wetted_area(i) = 0.0_IDS_real
       do iFc = 1, mpg%nFc
         if (mpg%fcReg(iFc).eq. &
-          & regionNumbers(i,REGIONTYPE_EDGE,gridGeometry)) then
+          & regionNumbers(ireg,REGIONTYPE_EDGE,gridGeometry)) then
           if (mpg%fcCv(iFc,1).le.mpg%nCi) then
             iCv = mpg%fcCv(iFc,1)
           else
