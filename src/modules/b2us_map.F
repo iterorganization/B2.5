@@ -1172,7 +1172,7 @@ cwdk  can be derived directly from data in that file
       !!.. local variables
       integer :: i, ic, ivx, ifc, n, vxFc_end, vxCv_end
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), fch(:),
-     .                    indcvfc(:)
+     .                        indcvfc(:)
       intrinsic pack, count
       external xerrab
 
@@ -1182,7 +1182,7 @@ cwdk  can be derived directly from data in that file
       !Construct vxFcP
       allocate (indFc(2*m%nFc))
       indFc(1:m%nFc)          = (/ (i, i=1,m%nFc) /)
-      indFc(m%nFc+1:2*m%nFc)    = (/ (i, i=1,m%nFc) /)
+      indFc(m%nFc+1:2*m%nFc)  = (/ (i, i=1,m%nFc) /)
 
       allocate (fh(2*m%nFc))
       fh(1:m%nFc)             = m%fcVx(1:m%nFc,1)
@@ -1210,7 +1210,7 @@ cwdk  can be derived directly from data in that file
          m%vxCvP(ivx+1,1) = m%vxCvP(ivx,1) + m%vxCvP(ivx,2)
          if (m%vxCvP(ivx,2) > 0 ) then
             m%vxCv(m%vxCvP(ivx,1):m%vxCvP(ivx+1,1)-1) =
-     .         pack( indCv, ch == ivx )
+     .       pack( indCv, ch == ivx )
          endif
       enddo
 
@@ -1219,13 +1219,13 @@ cwdk  can be derived directly from data in that file
       vxFc_end = m%vxFcP(ivx,1) + m%vxFcP(ivx,2) -1
       if (m%vxFcP(ivx,2) > 0) then
           m%vxFc(m%vxFcP(ivx,1):vxFc_end) =
-     .      pack( indFc, fh == ivx )
+     .     pack( indFc, fh == ivx )
       end if
       m%vxCvP(ivx,2) = count(ch == ivx)
       vxCv_end = m%vxCvP(ivx,1) + m%vxCvP(ivx,2) - 1
       if (m%vxCvP(ivx,2) > 0) then
          m%vxCv(m%vxCvP(ivx,1):vxCv_end) =
-     .     pack( indCv, ch == ivx )
+     .    pack( indCv, ch == ivx )
       endif
 
       !Try analog for fcCv(nFc,2), similar to vxCv - check this in debugger
@@ -1241,13 +1241,13 @@ cwdk  can be derived directly from data in that file
       !here loop over the faces
 
       do ifc = 1,m%nFc
-           n = count(fch == ifc)
-           if (n .eq. 2) then
-             m%fcCv(ifc,1:2) = pack(indcvfc, fch == ifc)
-           else
-             call xerrab
-     .        ('calc_add_connectivity: Wrong # of cells per face')
-           endif
+         n = count(fch == ifc)
+         if (n .eq. 2) then
+            m%fcCv(ifc,1:2) = pack(indcvfc, fch == ifc)
+         else
+            call xerrab
+     .       ('calc_add_connectivity: Wrong # of cells per face')
+         endif
       enddo
 
       deallocate (indFc)

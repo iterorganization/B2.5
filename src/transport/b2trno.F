@@ -125,7 +125,7 @@
       if (ncall_b2trno.eq.0) then
         if (switch%b2txcx_increase_transp_coefs.gt.1.0_R8)
      &    set_chcb_0 = 1
-        call ipgeti('b2trno_set_chcb_0', set_chcb_0)
+        call ipgeti ('b2trno_set_chcb_0', set_chcb_0)
       end if
 *   ..extensive tests on first few calls
       if (ncall_b2trno.lt.3) then
@@ -166,36 +166,51 @@
 *   ..incorporate geometry
       inctran = switch%b2txcx_increase_transp_coefs
       do is = 0, ns-1
-        call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, co%dna0(1:nCv,is), co%cdna(1:nFc,0,is))
-        call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+        call b2txcx (nCv, nFc, inctran,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%dna0(1:nCv,is), co%cdna(1:nFc,0,is))
+        call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%dna0(1:nCv,is), co%cdna(1:nFc,1,is))
-        call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, co%dpa0(1:nCv,is), co%cdpa(1:nFc,0,is))
-        call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+        call b2txcx (nCv, nFc, inctran,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%dpa0(1:nCv,is), co%cdpa(1:nFc,0,is))
+        call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%dpa0(1:nCv,is), co%cdpa(1:nFc,1,is))
-        call b2txcc (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, co%dpa0(1:nCv,is), cdpa0(1:nFc,is))
-        call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
+        call b2txcc (nCv, nFc, inctran,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%dpa0(1:nCv,is), cdpa0(1:nFc,is))
+        call b2txsx (nCv, nFc,
+     &   geo, mpg, geo%fcVol, geo%fcS,
      &   co%vla0(1:nCv,0,is), co%cvla(1:nFc,0,is))
-        call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
+        call b2txsy (nCv, nFc,
+     &   geo, mpg, geo%fcVol, geo%fcS,
      &   co%vla0(1:nCv,1,is), co%cvla(1:nFc,1,is))
-        call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, co%vsa0(1:nCv,is), co%cvsa(1:nFc,0,is))
-        call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+        call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%vsa0(1:nCv,is), co%cvsa(1:nFc,0,is))
+        call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vsa0(1:nCv,is), co%cvsa(1:nFc,1,is))
-        call b2txcc (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, co%vsa0(1:nCv,is), cvsa0(1:nFc,is))
-        call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, co%hcib(1:nCv,is), co%chcb(1:nFc,0,is))
-        call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+        call b2txcc (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%vsa0(1:nCv,is), cvsa0(1:nFc,is))
+        call b2txcx (nCv, nFc, inctran,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hcib(1:nCv,is), co%chcb(1:nFc,0,is))
+        call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%hcib(1:nCv,is), co%chcb(1:nFc,1,is))
-        call b2txcc (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &   geo%fcS, co%hcib(1:nCv,is), chcib(1:nFc,is))
+        call b2txcc (nCv, nFc, inctran,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hcib(1:nCv,is), chcib(1:nFc,is))
       enddo
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     & geo%fcS, co%dna_ExB, co%cdna_ExB(1,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+      call b2txcx (nCv, nFc, inctran,
+     & mode, geo, mpg, geo%fcVol, geo%fcS,
+     & co%dna_ExB, co%cdna_ExB(1,0))
+      call b2txcy (nCv, nFc,
+     & mode, geo, mpg, geo%fcVol, geo%fcS,
      & co%dna_ExB, co%cdna_ExB(1,1))
 
 *   ..incorporate geometry and hz                                     !srv 09.01.01
@@ -205,26 +220,36 @@
         wrk1(iFc,2) = geo%fcVol(iFc,2)*geo%cvHz(mpg%fcCv(iFc,2))
       enddo
       do is = 0, ns-1
-       call b2txcx (nCv, nFc, inctran, mode, geo, mpg, wrk1, wrk,
-     &   co%dna0(1:nCv,is), co%cdnahz(1:nFc,0,is))
-       call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%dna0(1:nCv,is), co%cdnahz(1:nFc,1,is))
-       call b2txcx (nCv, nFc, inctran, mode, geo, mpg, wrk1, wrk,
-     &   co%dpa0(1:nCv,is), co%cdpahz(1:nFc,0,is))
-       call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%dpa0(1:nCv,is), co%cdpahz(1:nFc,1,is))
-       call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, wrk,
-     &   co%vla0(1:nCv,0,is), co%cvlahz(1:nFc,0,is))
-       call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, wrk,
-     &   co%vla0(1:nCv,1,is), co%cvlahz(1:nFc,1,is))
-       call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, wrk,
-     &   co%vma0(1:nCv,0,is), co%cvmahz(1:nFc,0,is))
-       call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, wrk,
-     &   co%vma0(1:nCv,1,is), co%cvmahz(1:nFc,1,is))
-       call b2txcx (nCv, nFc, inctran, mode, geo, mpg, wrk1, wrk,              !srv 01.07.05 {
-     &   co%vsa0(1:nCv,is), co%cvsahz(1:nFc,0,is))
-       call b2txcy (nCv, nFc, mode, geo, mpg, wrk1, wrk,
-     &   co%vsa0(1:nCv,is), co%cvsahz(1:nFc,1,is))                    !srv 01.07.05 }
+       call b2txcx (nCv, nFc, inctran,
+     &  mode, geo, mpg, wrk1, wrk,
+     &  co%dna0(1:nCv,is), co%cdnahz(1:nFc,0,is))
+       call b2txcy (nCv, nFc,
+     &  mode, geo, mpg, wrk1, wrk,
+     &  co%dna0(1:nCv,is), co%cdnahz(1:nFc,1,is))
+       call b2txcx (nCv, nFc, inctran,
+     &  mode, geo, mpg, wrk1, wrk,
+     &  co%dpa0(1:nCv,is), co%cdpahz(1:nFc,0,is))
+       call b2txcy (nCv, nFc,
+     &  mode, geo, mpg, wrk1, wrk,
+     &  co%dpa0(1:nCv,is), co%cdpahz(1:nFc,1,is))
+       call b2txsx (nCv, nFc,
+     &  geo, mpg, geo%fcVol, wrk,
+     &  co%vla0(1:nCv,0,is), co%cvlahz(1:nFc,0,is))
+       call b2txsy (nCv, nFc,
+     &  geo, mpg, geo%fcVol, wrk,
+     &  co%vla0(1:nCv,1,is), co%cvlahz(1:nFc,1,is))
+       call b2txsx (nCv, nFc,
+     &  geo, mpg, geo%fcVol, wrk,
+     &  co%vma0(1:nCv,0,is), co%cvmahz(1:nFc,0,is))
+       call b2txsy (nCv, nFc,
+     &  geo, mpg, geo%fcVol, wrk,
+     &  co%vma0(1:nCv,1,is), co%cvmahz(1:nFc,1,is))
+       call b2txcx (nCv, nFc, inctran,
+     &  mode, geo, mpg, wrk1, wrk,
+     &  co%vsa0(1:nCv,is), co%cvsahz(1:nFc,0,is))
+       call b2txcy (nCv, nFc,
+     &  mode, geo, mpg, wrk1, wrk,
+     &  co%vsa0(1:nCv,is), co%cvsahz(1:nFc,1,is))
       enddo                                                           !srv 09.01.01
 
 *   ..Correction for advanced fluid neutral model                     !mb 09.10.17
@@ -233,9 +258,11 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
        do is = 0, ns-1
          if (is_neutral(is).and.nint(zn(is)).eq.1) then
            wrkc =  co%dpa0(:,is)*(geo%cvBb(:,2)/geo%cvBb(:,3))**2
-           call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &                  geo%fcS, wrkc, co%cdpa(1:nFc,0,is))
-           call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, wrk1, wrk,
+           call b2txcx (nCv, nFc, 0.0_R8,
+     &                  mode, geo, mpg, geo%fcVol, geo%fcS,
+     &                  wrkc, co%cdpa(1:nFc,0,is))
+           call b2txcx (nCv, nFc, 0.0_R8,
+     &                  mode, geo, mpg, wrk1, wrk,
      &                  wrkc, co%cdpahz(1:nFc,0,is))
          endif
        enddo
@@ -243,48 +270,66 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
 
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       co%cvsa_an = co%cvsa                                            !srv 04.10.99
-      call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
+      call b2txsx (nCv, nFc,
+     &   geo, mpg, geo%fcVol, geo%fcS,
      &   hvi0(1:nCv,0), co%chvi(1:nFc,0))
-      call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
+      call b2txsy (nCv, nFc,
+     &   geo, mpg, geo%fcVol, geo%fcS,
      &   hvi0(1:nCv,1), co%chvi(1:nFc,1))
-      call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
+      call b2txsx (nCv, nFc,
+     &   geo, mpg, geo%fcVol, geo%fcS,
      &   hve0(1:nCv,0), co%chve(1:nFc,0))
-      call b2txsy (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
+      call b2txsy (nCv, nFc,
+     &   geo, mpg, geo%fcVol, geo%fcS,
      &   hve0(1:nCv,1), co%chve(1:nFc,1))
 
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &  geo%fcS, co%hce0, co%chce(1:nFc,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%hce0, co%chce(1:nFc,1))
-      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &  geo%fcS, co%sig0, co%csig(1:nFc,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%sig0, co%csig(1:nFc,1))
-      call b2txcx (nCv, nFc, 0.0_R8,   -1, geo, mpg, geo%fcVol,
-     &  geo%fcS, co%alf0, co%calf(1:nFc,0))
-      call b2txcy (nCv, nFc,   -1, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%alf0, co%calf(1:nFc,1))
+      call b2txcx (nCv, nFc, inctran,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hce0, co%chce(1:nFc,0))
+      call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hce0, co%chce(1:nFc,1))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%sig0, co%csig(1:nFc,0))
+      call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%sig0, co%csig(1:nFc,1))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     &     -1, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%alf0, co%calf(1:nFc,0))
+      call b2txcy (nCv, nFc,
+     &     -1, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%alf0, co%calf(1:nFc,1))
       wrkc = co%dkt0*(1.0_R8 + switch%b2tfhi_fconkt)
-      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &  geo%fcS, wrkc, co%cdkt(1:nFc,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%dkt0, co%cdkt(1:nFc,1))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   wrkc, co%cdkt(1:nFc,0))
+      call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%dkt0, co%cdkt(1:nFc,1))
       wrkc = co%dzt0*(1.0_R8 + switch%b2tfhi_fconzt)
-      call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
-     &  geo%fcS, wrkc, co%cdzt(1:nFc,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%dzt0, co%cdzt(1:nFc,1))
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &  geo%fcS, co%hce_ExB, co%chce_ExB(1:nFc,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%hce_ExB, co%chce_ExB(1:nFc,1))
-      call b2txcx (nCv, nFc, inctran, mode, geo, mpg, geo%fcVol,
-     &  geo%fcS, co%hci_ExB, co%chci_ExB(1:nFc,0))
-      call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  co%hci_ExB, co%chci_ExB(1:nFc,1))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, wrkc, co%cdzt(1:nFc,0))
+      call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%dzt0, co%cdzt(1:nFc,1))
+      call b2txcx (nCv, nFc, inctran,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hce_ExB, co%chce_ExB(1:nFc,0))
+      call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hce_ExB, co%chce_ExB(1:nFc,1))
+      call b2txcx (nCv, nFc, inctran,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hci_ExB, co%chci_ExB(1:nFc,0))
+      call b2txcy (nCv, nFc,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
+     &   co%hci_ExB, co%chci_ExB(1:nFc,1))
 
       if (set_chcb_0.eq.1) then
-        do k=1, mpg%nCg
+        do k = 1, mpg%nCg
           iFc = mpg%fcs_wall(k)
           wrk0 = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
           if ((wrk0 >= geo%Qalfmin)) then
@@ -295,14 +340,14 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
             co%cdna(iFc,1,:) = 0.0_R8
           endif
         enddo
-        do iFc=1,mpg%nFc
+        do iFc = 1,mpg%nFc
           cvs = mpg%fcCv(iFc,1:2)
           if (mpg%cvAlongBoundary(cvs(1)).and.
      &        mpg%cvAlongBoundary(cvs(2))) then
             co%chcb(iFc,1,:) = 0.0_R8
             co%chce(iFc,1) = 0.0_R8
             do is = 0, ns-1
-              if (co%cdna(iFc,0,is)*geo%fcQalf(iFc,0) + 
+              if (co%cdna(iFc,0,is)*geo%fcQalf(iFc,0) +
      .            co%cdpa(iFc,0,is)*geo%fcQalf(iFc,0) +
      .            co%cdpa(iFc,1,is)*geo%fcQalf(iFc,1).gt.0.0_R8) then
                 co%cdna(iFc,1,is) = 0.0_R8
@@ -315,7 +360,7 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
               co%csig(iFc,1) = 0.0_R8
             else
               co%calf(iFc,1) = co%calf(iFc,1)/inctran
-              co%csig(iFc,1) = co%csig(iFc,1)/inctran           
+              co%csig(iFc,1) = co%csig(iFc,1)/inctran
             endif
           endif
         enddo
