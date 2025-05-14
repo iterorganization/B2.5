@@ -951,7 +951,7 @@ cxpb size is changed in b2mod_dimensions
       logical main_call
 *   ..local variables
       integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
-     & is_end, iss, ibc, istra, i, j, k, l, ic, iFs,
+     & is_end, iss, ibc, istra, i, j, k, l, ic, iFs, find_loc,
      & iatm, imol
       real (kind=R8) :: sna_pump, sna_puff, sna_core
       integer, save :: ncall = 0
@@ -1655,7 +1655,7 @@ cxpb size is changed in b2mod_dimensions
 
               if(ncall.eq.0) then
                 if (fb_type_ib(ifb).eq.0) then
-                  fb_type_ib(ifb) = 2
+                  fb_type_ib(ifb) = find_loc(bcstart,mpg%nBc,2)
                   write(*,*) 'No fb_type_ib is found. '//
      &             'Setting fb_type_ib=',fb_type_ib(ifb),
      &             ' (presumably the outer target)'
@@ -1723,7 +1723,7 @@ cxpb size is changed in b2mod_dimensions
 
               if(ncall.eq.0) then
                 if (fb_type_ib(ifb).eq.0) then
-                  fb_type_ib(ifb) = 2
+                  fb_type_ib(ifb) = find_loc(bcstart,mpg%nBc,2)
                   write(*,*) 'No fb_type_ib is found. '//
      &             'Setting fb_type_ib=',fb_type_ib(ifb),
      &             ' (presumably the outer target)'
