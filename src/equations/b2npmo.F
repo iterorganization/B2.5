@@ -272,7 +272,7 @@
         call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii')
         call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
-        call ipgeti ('cdfmovie_eirene_sources',write_eirene_sources)
+        call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
 
         impr_form_tf = 0                                               !som 13.11.20
         impr_form_fr = 0
@@ -496,9 +496,10 @@
 !$OMP& SHARED(pbshz, cvsahz, chci, smcf, fchanml, smof)
 !$OMP& SHARED(facdrift, fac_ExB)
 !$OMP& SHARED(is_neutral, ue)
-!$OMP& SHARED(zetap, zetae, gti, gte, ce1, ce2, cimp1)
-!$OMP& SHARED(cimp2, zeff, fmo, fna_fcor, iout, iout_b2wdat, rxg)
+!$OMP& SHARED(zetap, zetae, gti, gte)
+!$OMP& SHARED(ce1, ce2, cimp1, cimp2, zeff)
 !$OMP& SHARED(rz2, ne_ext, ro)
+!$OMP& SHARED(fmo, fna_fcor, iout, iout_b2wdat, rxg)
 !$OMP& SHARED(leftix, rightix, leftiy, rightiy, on_closed_surface)
 !$OMP& SHARED(bottomix, bottomiy, topix, topiy)
 !$OMP& SHARED(b2stbr_phys_smo_bal, b2stbr_phys_smo0to3)

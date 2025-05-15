@@ -187,7 +187,7 @@
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2npht_style', style)                            !srv 09.07.08
        call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
-       call ipgeti ('cdfmovie_eirene_sources',write_eirene_sources)
+       call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then

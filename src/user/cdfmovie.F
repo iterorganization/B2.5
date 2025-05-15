@@ -27,17 +27,19 @@
 #     include <COUPLE/KOPPLDIM.F>
 #endif
       real (kind=R8) :: time(1), dummy(-1:nx, -1:ny),
-     & dummy3(-1:nx, -1:ny, 1:ns),
-     & dummy3atm(-1:nx, -1:ny, 1:nnatmi),
-     & dummy3mol(-1:nx, -1:ny, 1:nnmoli)
+     & dummy3(-1:nx, -1:ny, 1:ns)
 #ifdef B25_EIRENE
       integer nstrad
+      integer iatmi, imoli, istra
       real (kind=R8) :: dummytriatm(1:ntri-1, 1:nnatmi),
-     & dummytrimol(1:ntri-1, 1:nnmoli)
+     & dummytrimol(1:ntri-1, 1:nnmoli),
+     & dummy3atm(-1:nx, -1:ny, 1:nnatmi),
+     & dummy3mol(-1:nx, -1:ny, 1:nnmoli)
+      character*256, save :: filename_tri
 #else 
       integer, save :: ntri = 0
 #endif
-      integer is, iatmi, imoli, istra
+      integer is
       integer ncall
       integer status, ndims, nvars, natts, unlimid
       integer, save :: write_b25_state_variables = 1
@@ -49,20 +51,19 @@
       integer, save :: write_triangles = 0
       real (kind=R8), save :: stim = 0.0_R8
       character*256, save :: filename
-      character*256, save :: filename_tri
       logical ex
       save ncall
       data ncall/0/
 
       call ipgeti ('cdfmovie_b25_state_variables',
      1  write_b25_state_variables)
-      call ipgeti ('cdfmovie_b25_fluxes',write_b25_fluxes)
-      call ipgeti ('cdfmovie_b25_sources',write_b25_sources)
+      call ipgeti ('cdfmovie_b25_fluxes', write_b25_fluxes)
+      call ipgeti ('cdfmovie_b25_sources', write_b25_sources)
       call ipgeti ('cdfmovie_eirene_state_variables',
      1  write_eirene_state_variables)
-      call ipgeti ('cdfmovie_eirene_fluxes',write_eirene_fluxes)
-      call ipgeti ('cdfmovie_eirene_sources',write_eirene_sources)
-      call ipgeti ('cdfmovie_triangles',write_triangles)
+      call ipgeti ('cdfmovie_eirene_fluxes', write_eirene_fluxes)
+      call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
+      call ipgeti ('cdfmovie_triangles', write_triangles)
 
       call subini ('cdfmovie')
       if (ncall.eq.0) then

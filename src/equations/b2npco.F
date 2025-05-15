@@ -160,7 +160,7 @@
        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
-       call ipgeti ('cdfmovie_eirene_sources',write_eirene_sources)
+       call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

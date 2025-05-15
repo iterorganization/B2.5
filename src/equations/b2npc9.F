@@ -162,7 +162,7 @@
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
        call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
-       call ipgeti ('cdfmovie_eirene_sources',write_eirene_sources)
+       call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

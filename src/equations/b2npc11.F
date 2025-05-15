@@ -153,7 +153,7 @@
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
        call ipgeti ('get_residuals', get_residuals)                   !srv 22.05.18
-       call ipgeti ('cdfmovie_eirene_sources',write_eirene_sources)
+       call ipgeti ('cdfmovie_eirene_sources', write_eirene_sources)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -240,13 +240,13 @@ cdjm Jan2017 update particle source components for balance
 *   ..replace the incorrect corner values by the interpolated values  !srv 30.04.08 {
           iy=-1                                                       !srv 27.06.08 {
           do ix = -1, nx
-            if(leftix(ix,iy).eq.-2 )
+            if(leftix(ix,iy).eq.-2)
      &       nb(ix,iy) = exp(
      .         log(nb(rightix(ix,iy),rightiy(ix,iy))) +
      .         log(nb(topix(ix,iy),topiy(ix,iy))) -
      &         log(nb(topix(rightix(ix,iy),rightiy(ix,iy)),
      &                topiy(rightix(ix,iy),rightiy(ix,iy)))))
-            if(rightix(ix,iy).eq.nx+1 )
+            if(rightix(ix,iy).eq.nx+1)
      &        nb(ix,iy) = exp(
      .          log(nb(leftix(ix,iy),leftiy(ix,iy))) +
      .          log(nb(topix(ix,iy),topiy(ix,iy))) -
@@ -255,13 +255,13 @@ cdjm Jan2017 update particle source components for balance
           enddo
           iy=ny
           do ix = -1, nx
-            if(leftix(ix,iy).eq.-2 )
+            if(leftix(ix,iy).eq.-2)
      &        nb(ix,iy) = exp(
      .          log(nb(rightix(ix,iy),rightiy(ix,iy))) +
      .          log(nb(bottomix(ix,iy),bottomiy(ix,iy))) -
      &          log(nb(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &                 bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
-            if(rightix(ix,iy).eq.nx+1 )
+            if(rightix(ix,iy).eq.nx+1)
      &        nb(ix,iy) = exp(
      .          log(nb(leftix(ix,iy),leftiy(ix,iy))) +
      .          log(nb(bottomix(ix,iy),bottomiy(ix,iy))) -
