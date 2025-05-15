@@ -301,6 +301,16 @@ csw 01oct2012 initialize potential if necessary
       call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &  st%pl%na, st%pl%ua, st%dv%facdrift,
      &  st%dv%fchinert_a, st%dv%fchinert)
+      call b2tvspr(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%pl%po, st%pl%ti, st%pl%na, st%rt%rza, st%co%vsa0, 
+     &  st%dv%fac_vis, st%dv%fchvisper_a, st%dv%fchvisper)
+      call b2tvsq (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%dv%fac_vis, st%dv%ne2, st%rt%rz2, st%dv%lnlam, st%pl%te, 
+     &  st%pl%ti, st%dv%ni(:,1), st%co%hcix_c, st%dv%fchvisq_a,
+     &  st%dv%fchvisq)
+      call b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%pl%po, st%pl%na, st%pl%kt, st%dv%vaecrb, st%co%dna_ExB,
+     &  st%dv%fchviskt_a, st%dv%fchviskt)
 *     ..iterate on particle balance
       if(switch%ion_vlct_restrict .ne. 0 ) then                          !iyv 06.02.14
         call b2xprz (nCv, ns, mp, am, st%pl%na, rz, st_ext)
