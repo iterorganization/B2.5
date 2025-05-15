@@ -314,6 +314,16 @@ ctmp.dpc
           call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &      st%pl%na, st%pl%ua, st%dv%facdrift,
      &      st%dv%fchinert_a, st%dv%fchinert)
+          call b2tvspr(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &      st%pl%po, st%pl%ti, st%pl%na, st%rt%rza, st%co%vsa0, 
+     &      st%dv%fac_vis, st%dv%fchvisper_a, st%dv%fchvisper)
+          call b2tvsq (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &      st%dv%fac_vis, st%dv%ne2, st%rt%rz2, st%dv%lnlam, st%pl%te, 
+     &      st%pl%ti, st%dv%ni(:,1), st%co%hcix_c, st%dv%fchvisq_a,
+     &      st%dv%fchvisq)
+          call b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &    st%pl%po, st%pl%na, st%pl%kt, st%dv%vaecrb, st%co%dna_ExB,
+     &    st%dv%fchviskt_a, st%dv%fchviskt)
 #ifdef WG_TODO
           src_ni=0.0_R8
           src_ne=0.0_R8
