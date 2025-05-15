@@ -194,33 +194,33 @@ c prepare the b2movies.nc.xxxx file
       endif
       if (write_b25_sources.ge.1) then
         call create_cdf_field3(ncid2, 'rsana', 1,
-     1    'Volumetric ionisation rate', 'm^-3 s^-1')
+     1   'Volumetric ionisation rate', 'm^-3 s^-1')
         call create_cdf_field3(ncid2, 'rsahi', 1,
-     1    'Volumetric ionisation energy source/sink', 'W m^-3')
+     1   'Volumetric ionisation energy source/sink', 'W m^-3')
         call create_cdf_field2(ncid2, 'rsahisum',
-     1    'Total volumetric ionisation energy source/sink', 'W m^-3')
+     1   'Total volumetric ionisation energy source/sink', 'W m^-3')
         call create_cdf_field3(ncid2, 'rrana', 1,
-     1    'Volumetric recombination rate', 'm^-3 s^-1')
+     1   'Volumetric recombination rate', 'm^-3 s^-1')
         call create_cdf_field3(ncid2, 'rrahi', 1,
-     1    'Volumetric recombination energy source/sink', 'W m^-3')
+     1   'Volumetric recombination energy source/sink', 'W m^-3')
         call create_cdf_field2(ncid2, 'rrahisum',
-     1    'Total volumetric recombination energy source/sink',
-     2    'W m^-3')
+     1   'Total volumetric recombination energy source/sink',
+     2   'W m^-3')
         call create_cdf_field3(ncid2, 'rcxna', 1,
-     1    'Volumetric charge exchange rate', 'm^-3 s^-1')
+     1   'Volumetric charge exchange rate', 'm^-3 s^-1')
         call create_cdf_field3(ncid2, 'rcxhi', 1,
-     1    'Volumetric charge exchange energy source/sink', 'W m^-3')
+     1   'Volumetric charge exchange energy source/sink', 'W m^-3')
         call create_cdf_field2(ncid2, 'rcxhisum',
-     1    'Total volumetric charge exchange energy source/sink',
-     2    'W m^-3')
+     1   'Total volumetric charge exchange energy source/sink',
+     2   'W m^-3')
         call create_cdf_field3(ncid2, 'rqahe', 1,
-     1    'Volumetric electron cooling rate', 'W m^-3')
+     1   'Volumetric electron cooling rate', 'W m^-3')
         call create_cdf_field2(ncid2, 'rqahesum',
-     1    'Total volumetric electron cooling rate', 'W m^-3')
+     1   'Total volumetric electron cooling rate', 'W m^-3')
         call create_cdf_field3(ncid2, 'rqrad', 1,
-     1    'Volumetric line radiation rate', 'W m^-3')
+     1   'Volumetric line radiation rate', 'W m^-3')
         call create_cdf_field2(ncid2, 'rqradsum',
-     1    'Total volumetric line radiation rate', 'W m^-3')
+     1   'Total volumetric line radiation rate', 'W m^-3')
       endif
       if (write_eirene_state_variables.ge.1) then
         if(natm.gt.0) then
@@ -247,14 +247,14 @@ c prepare the b2movies.nc.xxxx file
           call create_cdf_field3(ncid2, 'pefluxa', 2,
      1     'Atomic poloidal energy flux density', 'W m^-2')
         endif
-          if(nmol.gt.0) then
-            call create_cdf_field3(ncid2, 'rfluxm', 3,
+        if(nmol.gt.0) then
+          call create_cdf_field3(ncid2, 'rfluxm', 3,
      1     'Molecular radial flux density', 'm^-2 s^-1')
-            call create_cdf_field3(ncid2, 'pfluxm', 3,
+          call create_cdf_field3(ncid2, 'pfluxm', 3,
      1     'Molecular poloidal flux density', 'm^-2 s^-1')
-            call create_cdf_field3(ncid2, 'refluxm', 3,
+          call create_cdf_field3(ncid2, 'refluxm', 3,
      1     'Molecular radial energy flux density', 'W m^-2')
-            call create_cdf_field3(ncid2, 'pefluxm', 3,
+          call create_cdf_field3(ncid2, 'pefluxm', 3,
      1     'Molecular poloidal energy flux density', 'W m^-2')
         endif
       endif
@@ -499,31 +499,33 @@ c prepare the eirenemovies.nc.xxxx file
           timedim=itim
           call create_cdf_start(ncid2, filename_tri, nx+2, ny+2, ns,
      .      natm, nmol, ntri-1)
-              call create_cdf_field_tri(ncid2, 'pdena', 1,
-     1         'Atom particle density', 'm^-3')
-              call create_cdf_field_tri(ncid2, 'edena', 1,
-     1         'Atom energy density', 'eV m^-3')
-              call create_cdf_field_tri(ncid2, 'vxdena', 1,
-     1         'Atom x-directed momentum density', 'kg s^-1 m^-2')
-              call create_cdf_field_tri(ncid2, 'vydena', 1,
-     1         'Atom y-directed momentum density', 'kg s^-1 m^-2')
-              call create_cdf_field_tri(ncid2, 'vzdena', 1,
-     1         'Atom z-directed momentum density', 'kg s^-1 m^-2')
-              if(nmol.gt.0) then
-                call create_cdf_field_tri(ncid2, 'pdenm', 2,
-     1           'Molecular particle density', 'm^-3')
-                call create_cdf_field_tri(ncid2, 'edenm', 2,
-     1           'Molecular energy density', 'eV m^-3')
-                call create_cdf_field_tri(ncid2, 'vxdenm', 2,
-     1           'Molecular x-directed momentum density',
-     2           'kg s^-1 m^-2')
-                call create_cdf_field_tri(ncid2, 'vydenm', 2,
-     1           'Molecular y-directed momentum density',
-     2           'kg s^-1 m^-2')
-                call create_cdf_field_tri(ncid2, 'vzdenm', 2,
-     1           'Molecular z-directed momentum density',
-     2           'kg s^-1 m^-2')
-              endif
+          if(natm.gt.0) then
+            call create_cdf_field_tri(ncid2, 'pdena', 1,
+     1       'Atom particle density', 'm^-3')
+            call create_cdf_field_tri(ncid2, 'edena', 1,
+     1       'Atom energy density', 'eV m^-3')
+            call create_cdf_field_tri(ncid2, 'vxdena', 1,
+     1       'Atom x-directed momentum density', 'kg s^-1 m^-2')
+            call create_cdf_field_tri(ncid2, 'vydena', 1,
+     1       'Atom y-directed momentum density', 'kg s^-1 m^-2')
+            call create_cdf_field_tri(ncid2, 'vzdena', 1,
+     1       'Atom z-directed momentum density', 'kg s^-1 m^-2')
+          endif
+          if(nmol.gt.0) then
+            call create_cdf_field_tri(ncid2, 'pdenm', 2,
+     1       'Molecular particle density', 'm^-3')
+            call create_cdf_field_tri(ncid2, 'edenm', 2,
+     1       'Molecular energy density', 'eV m^-3')
+            call create_cdf_field_tri(ncid2, 'vxdenm', 2,
+     1       'Molecular x-directed momentum density',
+     2       'kg s^-1 m^-2')
+            call create_cdf_field_tri(ncid2, 'vydenm', 2,
+     1       'Molecular y-directed momentum density',
+     2       'kg s^-1 m^-2')
+            call create_cdf_field_tri(ncid2, 'vzdenm', 2,
+     1       'Molecular z-directed momentum density',
+     2       'kg s^-1 m^-2')
+          endif
           call create_cdf_end(ncid2)
           timedim=idum
 

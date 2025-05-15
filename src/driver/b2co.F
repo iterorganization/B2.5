@@ -481,7 +481,7 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
           write(*,*) 'Returned from b2co_movies_cdf'
         else
           write(*,*) 'Skipped calling b2co_movies_cdf because '//
-     .               'no b2movies.nc found'
+     .               'no b2movies.nc file found'
         end if
       end if
 *   ..close other files
@@ -517,4 +517,3 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
 *.end b2co
 
       end program b2co
-
