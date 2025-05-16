@@ -71,4 +71,3 @@ cwdk  test for wbb.(:,:,3) switched to .ge.; could be zero in dead cells
       return
 *     ------------------------------------------------------------------
       end subroutine b2xgbs
-

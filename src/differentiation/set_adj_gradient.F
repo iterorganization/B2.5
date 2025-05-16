@@ -272,4 +272,3 @@
 
       return
       end subroutine set_adj_gradient
-

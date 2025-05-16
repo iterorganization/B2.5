@@ -213,6 +213,7 @@ program b2_ual_write
 #ifdef B25_EIRENE
     CALL EIRENE_ALLOC_COMUSR(1)
     call eirene_extrab25_eirpbls_init(nmol,nion,npls)
+    call ntread
 #endif
     ! read plasma state
     call cfopen(56,'b2fplasma','old','unformatted')
@@ -418,6 +419,8 @@ program b2_ual_write
           old_imas_version = old_description%ids_properties% &
                           &  version_put%data_dictionary(1)
           call ids_deallocate( old_description )
+        else if ( streql(old_imas_version,'x.xx.x') ) then
+          call xerrab ('Old IMAS data entry is incomplete !')
         end if
         continued = run_start_time.eq.IDS_REAL_INVALID .and. &
            &       (ids_end_time.lt.tim .and. ids_end_time.ne.IDS_REAL_INVALID)

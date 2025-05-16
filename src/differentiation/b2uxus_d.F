@@ -81,4 +81,3 @@
 *.end b2uxus_dd
 
       end subroutine b2uxus_d
-
