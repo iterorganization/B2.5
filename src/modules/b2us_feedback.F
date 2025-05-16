@@ -1894,28 +1894,12 @@ cxpb size is changed in b2mod_dimensions
      &           'compute_feedback_option: using ',
      &           'SOLPS4 linear increase for sequence ',
      &           b2espcr(fb_species(ifb))
-                if(fb_const(ifb).lt.0.0_R8) then
-                  fb_const(ifb) = 0.0_R8
-                  is_start=-1
-                  is_end=-1
-                  do is=0, ns-1
-                    if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
-                      if(is_start.eq.-1) is_start=is
-                      ic1 = fbRegP(ifb,1)
-                      ic2 = ic1 + fbRegP(ifb,2) - 1
-                      do iCv = ic1, ic2
-                        if(mpg%cvReg(fbReg(iCv)).ne.0 .and.
-     &                     fbReg(iCv).le.mpg%nCi) then
-                          fb_const(ifb) =
-     &                      fb_const(ifb) +
-     &                      pl%na(fbReg(iCv),is) * geo%cvVol(fbReg(iCv))
-                        endif
-                      enddo
-                      is_end=is
-                    endif
-                  enddo
-                endif
-                  fb_prev(ifb) = fb_current(ifb)
+                if(fb_const(ifb).le.0.0_R8)
+     &             fb_const(ifb) = fb_target(ifb)
+                if(fb_prev(ifb).eq.0.0_R8)
+     &             fb_prev(ifb) = fb_current(ifb)
+                if(fb_current(ifb).gt.0.0_R8)
+     &             fb_current_prev(ifb) = fb_current(ifb)
               endif
 
               fb_target(ifb) =
@@ -1926,7 +1910,7 @@ cxpb size is changed in b2mod_dimensions
      .          fb_alpha(ifb) *
      .          ((fb_target(ifb) -
      .          fb_current(ifb))/ddtim +
-     .          (fb_prev(ifb) -
+     .          (fb_current_prev(ifb) -
      .          fb_current(ifb))/dt_prev)
               saved_fb_actuator(ifb) = fb_current(ifb)
 
@@ -1938,25 +1922,12 @@ cxpb size is changed in b2mod_dimensions
      &           'compute_feedback_option: using ',
      &           'SOLPS4 exponential decay for sequence ',
      &           b2espcr(fb_species(ifb))
-                if(fb_const(ifb).lt.0.0_R8) then
-                  fb_const(ifb) = 0.0_R8
-                  is_start=-1
-                  is_end=-1
-                  do is=0, ns-1
-                    if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
-                      if(is_start.eq.-1) is_start=is
-                      do iCv = 1, mpg%nCi
-                        if(mpg%cvReg(iCv).ne.0) then
-                          fb_const(ifb) =
-     &                      fb_const(ifb) +
-     &                      pl%na(iCv,is) * geo%cvVol(iCv)
-                        endif
-                      enddo
-                      is_end=is
-                    endif
-                  enddo
-                endif
-                fb_prev(ifb) = fb_current(ifb)
+                if(fb_const(ifb).le.0.0_R8)
+     &             fb_const(ifb) = fb_target(ifb)
+                if(fb_prev(ifb).eq.0.0_R8)
+     &             fb_prev(ifb) = fb_current(ifb)
+                if(fb_current(ifb).gt.0.0_R8)
+     &             fb_current_prev(ifb) = fb_current(ifb)
               endif
 
               fb_target(ifb) =
@@ -1967,14 +1938,14 @@ cxpb size is changed in b2mod_dimensions
      .           fb_alpha(ifb) *
      .           ((fb_target(ifb) -
      .           fb_current(ifb))/ddtim +
-     .           (fb_prev(ifb) -
+     .           (fb_current_prev(ifb) -
      .           fb_current(ifb))/dt_prev)
               saved_fb_actuator(ifb) = fb_current(ifb)
 
             case (6) ! rescale slowed by fb_alpha (SOLPS4 style)
 
-                  fb_rescale(ifb) =
-     &               fb_alpha(ifb) * fb_current(ifb)
+              fb_rescale(ifb) =
+     &           fb_alpha(ifb) * fb_current(ifb)
 
             case (7) ! rescale slowed by tanh_log
 
@@ -2063,8 +2034,11 @@ cxpb size is changed in b2mod_dimensions
               if (fb_rescale_option(ifb).lt.4) then
                 saved_fb_actuator(ifb) =
      &            saved_fb_actuator(ifb) * fb_rescale(ifb)
-              else
+              elseif (fb_rescale_option(ifb).ge.6) then
                 saved_fb_actuator(ifb) = fb_rescale(ifb)
+              else
+                saved_fb_actuator(ifb) =
+     &           saved_fb_actuator(ifb) + fb_rescale(ifb)
               end if
               if(fb_puff_min(ifb).ge.0.0_R8)
      >         saved_fb_actuator(ifb) =
