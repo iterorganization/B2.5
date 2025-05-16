@@ -1914,8 +1914,10 @@ cxpb size is changed in b2mod_dimensions
      &           b2espcr(fb_species(ifb))
                 if(fb_const(ifb).le.0.0_R8)
      &             fb_const(ifb) = fb_target(ifb)
-                if(saved_fb_prev(ifb).le.0.0_R8)
-     &             saved_fb_prev(ifb) = fb_current(ifb)
+                if(fb_prev(ifb).eq.0.0_R8)
+     &             fb_prev(ifb) = fb_current(ifb)
+                if(fb_current(ifb).gt.0.0_R8)
+     &             fb_current_prev(ifb) = fb_current(ifb)
               endif
 
               fb_target(ifb) =
@@ -1926,7 +1928,7 @@ cxpb size is changed in b2mod_dimensions
      .          fb_alpha(ifb) *
      .          ((fb_target(ifb) -
      .          fb_current(ifb))/ddtim +
-     .          (saved_fb_prev(ifb) -
+     .          (fb_current_prev(ifb) -
      .          fb_current(ifb))/dt_prev)
 
             case (5) ! rescale done according to SOLPS4 formula:
@@ -1939,8 +1941,10 @@ cxpb size is changed in b2mod_dimensions
      &           b2espcr(fb_species(ifb))
                 if(fb_const(ifb).le.0.0_R8)
      &             fb_const(ifb) = fb_target(ifb)
-                if(saved_fb_prev(ifb).le.0.0_R8)
-     &             saved_fb_prev(ifb) = fb_current(ifb)
+                if(fb_prev(ifb).eq.0.0_R8)
+     &             fb_prev(ifb) = fb_current(ifb)
+                if(fb_current(ifb).gt.0.0_R8)
+     &             fb_current_prev(ifb) = fb_current(ifb)
               endif
 
               fb_target(ifb) =
@@ -1951,7 +1955,7 @@ cxpb size is changed in b2mod_dimensions
      .           fb_alpha(ifb) *
      .           ((fb_target(ifb) -
      .           fb_current(ifb))/ddtim +
-     .           (saved_fb_prev(ifb) -
+     .           (fb_current_prev(ifb) -
      .           fb_current(ifb))/dt_prev)
 
             case (6) ! rescale slowed by fb_alpha (SOLPS4 style)
@@ -2209,8 +2213,11 @@ cxpb size is changed in b2mod_dimensions
                   saved_fb_actuator(ifb) =
      &             saved_fb_actuator(ifb) * fb_rescale(ifb)
                 endif
-              else
+              elseif (fb_rescale_option(ifb).ge.6) then
                 saved_fb_actuator(ifb) = fb_rescale(ifb)
+              else
+                saved_fb_actuator(ifb) =
+     &           saved_fb_actuator(ifb) + fb_rescale(ifb)
               end if
               if(fb_puff_min(ifb).ge.0.0_R8)
      >         saved_fb_actuator(ifb) =
