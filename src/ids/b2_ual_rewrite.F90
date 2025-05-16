@@ -124,11 +124,6 @@ program b2_ual_rewrite
     use b2mod_driver &
      & , only : treename
 #endif
-#ifdef B25_EIRENE
-    use eirmod_parmmod
-    use eirmod_comusr
-    use eirmod_extrab25
-#endif
     use b2mod_ipmain
     implicit none
 #ifndef NO_GETENV
@@ -207,10 +202,6 @@ program b2_ual_rewrite
     write (*,*) 'Starting b2mn init'
     call b2mn_init
     ! call b2mn_step(0)
-#ifdef B25_EIRENE
-    CALL EIRENE_ALLOC_COMUSR(1)
-    call eirene_extrab25_eirpbls_init(nmol,nion,npls)
-#endif
     ! read plasma state
     call cfopen(56,'b2fplasma','old','unformatted')
     call cfverr(56, b2fplasma_version)
