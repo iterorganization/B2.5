@@ -653,7 +653,8 @@ program b2_ual_rewrite
 #endif
         &   idx, new_eq_ggd )
     systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
-        &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string)
+        &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string) &
+        &  //' -v '//int2str(IMAS_MAJOR_VERSION)
     write(0,*) trim(systemarg)
 #ifdef NAGFOR
     call system(systemarg, status, ierror)
