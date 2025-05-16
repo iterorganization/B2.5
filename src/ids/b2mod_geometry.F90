@@ -212,7 +212,7 @@ module b2mod_geometry
         &   'Upper outer throat              ', 'Lower outer throat              ', &
         &   'Lower core cut                  ', 'Upper PFR cut                   ', &
         &   'Upper core cut                  ', 'Lower PFR cut                   ', &
-        &   'Between separatrices core cut   ',                                     &
+        &   'Between separatrices SOL cut    ',                                     &
         &   UU, UU, UU, UU, UU, UU,                                                 &
         & &
         &   'Inner core boundary             ', 'Inner separatrix                ', &
@@ -238,7 +238,7 @@ module b2mod_geometry
         &   'Upper outer throat              ', 'Lower outer throat              ', &
         &   'Lower core cut                  ', 'Upper PFR cut                   ', &
         &   'Upper core cut                  ', 'Lower PFR cut                   ', &
-        &   'Between separatrices core cut   ',                                     &
+        &   'Between separatrices SOL cut    ',                                     &
         &   UU, UU, UU, UU, UU, UU,                                                 &
         & &
         &   'Inner core boundary             ', 'Inner separatrix                ', &
