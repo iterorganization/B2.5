@@ -1783,10 +1783,10 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       if (switch%b2stbc_boundary_namelist.ge.1) then
         call initialize_b2mod_boundary(ns,mpg,0.0_R8)
       else
-        call xerrab('b2mndr -- specify BCs using boundary_namelist')
+        call xerrab ('b2mndr -- specify BCs using boundary_namelist')
       endif
 
-      if(switch%b2mndr_iout.ne.0) then                                  !srv 25.01.16 {
+      if(switch%b2mndr_iout.ne.0) then                               !srv 25.01.16 {
        call my_out_us(70,nCv,0,state%dv%ne,'b2mndr_ne')
        do is = 0,ns-1
         write (chns,'(i3.3)') is

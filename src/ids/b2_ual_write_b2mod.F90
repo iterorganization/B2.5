@@ -350,7 +350,6 @@ program b2_ual_write_b2mod
 #ifdef B25_EIRENE
     use eirmod_parmmod
     use eirmod_comusr
-    use eirmod_cgeom
     use eirmod_extrab25
 #endif
 
@@ -587,7 +586,6 @@ program b2_ual_write_b2mod
 #ifdef B25_EIRENE
     else
       CALL EIRENE_ALLOC_COMUSR(1)
-      CALL EIRENE_ALLOC_CGEOM(1)
       call eirene_extrab25_eirpbls_init(nmol,nion,npls)
       call ntread
 #endif
@@ -699,7 +697,6 @@ program b2_ual_write_b2mod
           old_imas_version = old_description%ids_properties% &
                           &  version_put%data_dictionary(1)
           call ids_deallocate( old_description )
-#endif
         else if ( streql(old_imas_version,'x.xx.x') ) then
           call xerrab ('Old IMAS data entry is incomplete !')
         end if

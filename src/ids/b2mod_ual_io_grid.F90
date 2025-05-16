@@ -1250,6 +1250,7 @@ contains
 
         if (ncall.eq.0) then
           geoId = geometryId( mpg, geo, 1 )
+          plasmaId = geometryId( mpg, geo, 2 )
         end if
 
         !! Figure out total number of grid subsets
@@ -1274,12 +1275,17 @@ contains
             nGSubset = nGSubset + 15 + 2
         case ( GEOMETRY_CDN )
             nGSubset = nGSubset + 33 + 4
-        case ( GEOMETRY_DDN_TOP, GEOMETRY_DDN_BOTTOM )
-            if (mpg%nXpt.eq.1) then
-              nGSubset = nGSubset + 33 + 4
-            else
-              nGSubset = nGSubset + 34 + 4
-            end if
+        case ( GEOMETRY_DDN_BOTTOM )
+            select case ( plasmaId )
+            case ( GEOMETRY_LIMITER, GEOMETRY_SN )
+                nGSubset = nGSubset + 33 + 2
+            case ( GEOMETRY_DDN_BOTTOM )
+                nGSubset = nGSubset + 34 + 4
+            case default
+                call xerrab ('Unexpected geometry!')
+            end select
+        case ( GEOMETRY_DDN_TOP )
+            nGSubset = nGSubset + 34 + 4
         case ( GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
             nGSubset = nGSubset + 33 + 4
         end select
@@ -1413,6 +1419,7 @@ contains
             end select
 
             do iRegion = 1, regionCount(geoId, iType)
+                iPrivateB2 = iPrivateB2 - 1
                 select case(iType)
                 case( REGIONTYPE_CELL )
                   RegionDescription = "Volumetric B2.5 internal region #"// &
@@ -1434,11 +1441,11 @@ contains
 
                 if ( size(indexList2d,1) > 0 ) then
                   GSubsetCount = GSubsetCount + 1
-                  call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc:"//     &
-                    &   " add (private) grid subset #"//                 &
-                    &   int2str(GSubsetCount)//                          &
-                    &   " for iType "//int2str( iType )//", iRegion "//  &
-                    &   int2str( regionNumber(geoId, iType, iRegion) )   &
+                  call logmsg( LOGDEBUG, "b2_IMAS_Fill_Grid_Desc:"//    &
+                    &   " add (private) grid subset #"//                &
+                    &   int2str(GSubsetCount)//                         &
+                    &   " for iType "//int2str( iType )//", iRegion "// &
+                    &   int2str( regionNumber(geoId, iType, iRegion) )  &
                     &   //": "//regionName(geoId, iType, iRegion) )
 
                 !! Create grid subset with one object list
@@ -1477,7 +1484,7 @@ contains
 
             !! Create grid subset with one object list
             call createEmptyGridSubset(                        &
-                &   grid_ggd%grid_subset( GSubsetCount ),      &
+                &   local_ggd%grid_subset( GSubsetCount ),     &
                 &   -101, "Neutral pressure cells          ",  &
                 &   RegionDescription )
 
@@ -1490,9 +1497,9 @@ contains
             end do
 
             !! Initialize explicit object list for grid subset
-            call createExplicitObjectListSingleSpace( grid_ggd,     &
-                &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
-                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+            call createExplicitObjectListSingleSpace( grid_ggd,      &
+                &   local_ggd%grid_subset( GSubsetCount ), sum(cls), &
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),    &
                 &   SPACE_POLOIDALPLANE )
 
         end if
@@ -2353,46 +2360,81 @@ contains
               &   SPACE_POLOIDALPLANE )
           deallocate(IndexList2d)
 
-            if (mpg%nXpt.gt.1) then
-              iType = REGIONTYPE_CELL
-              cls = CLASS_CELL
-              iSubset = GRID_SUBSET_BETWEEN_SEPARATRICES
-              GSubsetCount = GSubsetCount + 1
+        case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+          iType = REGIONTYPE_YEDGE
+          cls = CLASS_POLOIDALRADIAL_EDGE
+          iSubset = GRID_SUBSET_SEPARATRIX
+          GSubsetCount = GSubsetCount + 1
 
-              call logmsg( LOGDEBUG,                                    &
-                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
-                &   int2str(GSubsetCount)//": "//                       &
+          call logmsg( LOGDEBUG,                                      &
+              &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
+              &   int2str(GSubsetCount)//": "//                       &
+              &   gridSubsetName ( iSubset ) )
+
+          !! Create grid subset with one object list
+          call createEmptyGridSubset(                     &
+              &   local_ggd%grid_subset( GSubsetCount ),  &
+              &   iSubset, gridSubsetName ( iSubset ),    &
+              &   gridSubsetDescription ( iSubset ) )
+
+          allocate( indexList2d(mpg%fsFcP(mpg%iFssep,2), SPACE_COUNT) )
+          indexList2d(:,SPACE_TOROIDALANGLE) = 1
+          do iInd = mpg%fsFcP(mpg%iFssep,1), &
+                  & mpg%fsFcP(mpg%iFssep,1) + mpg%fsFcP(mpg%iFssep,2) - 1
+            ind = mpg%fsFc(iInd)
+            indexList2d( iInd-mpg%fsFcP(mpg%iFssep,1)+1, &
+                  &        SPACE_POLOIDALPLANE ) = ind
+          end do
+
+          !! Initialize explicit object list for grid subset
+          call createExplicitObjectListSingleSpace( grid_ggd,      &
+              &   local_ggd%grid_subset( GSubsetCount ), sum(cls), &
+              &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),    &
+              &   SPACE_POLOIDALPLANE )
+          deallocate(IndexList2d)
+
+          if (mpg%nXpt.gt.1) then
+            iType = REGIONTYPE_CELL
+            cls = CLASS_CELL
+            iSubset = GRID_SUBSET_BETWEEN_SEPARATRICES
+            GSubsetCount = GSubsetCount + 1
+
+            call logmsg( LOGDEBUG,                                    &
+                &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//     &
+                &   int2str(GSubsetCount)//": "//                     &
                 &   gridSubsetName ( iSubset ) )
 
-              allocate( indexList2d(mpg%nCi, SPACE_COUNT) )
-              indexList2d(:,SPACE_TOROIDALANGLE) = 1
-              iInd = 0
-              do iCv = 1, mpg%nCi
-                psi_average = 0.0_R8
-                do i = mpg%cvVxP(iCv,1), mpg%cvVxP(iCv,1) + mpg%cvVxP(iCv,2) - 1
-                  iVx = mpg%cvVx(i)
-                  psi_average = psi_average + geo%vxFpsi(iVx)
-                end do
-                psi_average = psi_average / real(mpg%cvVxP(iCv,2))
-                if (psi_average.gt.min(geo%vxFpsi(mpg%Xpt(1)),geo%vxFpsi(mpg%Xpt(2))).and. &
-                  & psi_average.lt.max(geo%vxFpsi(mpg%Xpt(1)),geo%vxFpsi(mpg%Xpt(2)))) then
-                    iInd = iInd + 1
-                    indexList2d( iInd, SPACE_POLOIDALPLANE ) = iCv
-                end if
+            allocate( indexList2d(mpg%nCi, SPACE_COUNT) )
+            indexList2d(:,SPACE_TOROIDALANGLE) = 1
+            iInd = 0
+            do iCv = 1, mpg%nCi
+              psi_average = 0.0_R8
+              do i = mpg%cvVxP(iCv,1), mpg%cvVxP(iCv,1) + mpg%cvVxP(iCv,2) - 1
+                iVx = mpg%cvVx(i)
+                psi_average = psi_average + geo%vxFpsi(iVx)
               end do
+              psi_average = psi_average / real(mpg%cvVxP(iCv,2))
+              if (psi_average.gt.min(geo%vxFpsi(mpg%Xpt(1)),      &
+                                   & geo%vxFpsi(mpg%Xpt(2))).and. &
+                & psi_average.lt.max(geo%vxFpsi(mpg%Xpt(1)),      &
+                                   & geo%vxFpsi(mpg%Xpt(2)))) then
+                iInd = iInd + 1
+                indexList2d( iInd, SPACE_POLOIDALPLANE ) = iCv
+              end if
+            end do
 
-              !! Create grid subset with one object list
-              call createEmptyGridSubset(                   &
-                &   grid_ggd%grid_subset( GSubsetCount ),   &
+            !! Create grid subset with one object list
+            call createEmptyGridSubset(                     &
+                &   local_ggd%grid_subset( GSubsetCount ),  &
                 &   iSubset, gridSubsetName ( iSubset ),    &
                 &   gridSubsetDescription ( iSubset ) )
 
-              !! Initialize explicit object list for grid subset
-              call createExplicitObjectListSingleSpace( grid_ggd,   &
-                &   grid_ggd%grid_subset( GSubsetCount ), sum(cls), &
-                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),   &
+            !! Initialize explicit object list for grid subset
+            call createExplicitObjectListSingleSpace( grid_ggd,      &
+                &   local_ggd%grid_subset( GSubsetCount ), sum(cls), &
+                &   indexList2d(:,SPACE_POLOIDALPLANE), sum(cls),    &
                 &   SPACE_POLOIDALPLANE )
-              deallocate(IndexList2d)
+            deallocate(IndexList2d)
 
           end if
 
@@ -2467,8 +2509,8 @@ contains
           !! Outer strikepoint
           iVx = US_GRID_UNDEFINED
           do i = 1, mpg%nStr
-            if ( mpg%nnreg(0).le.7 .or. geoId.eq.GEOMETRY_DDN_TOP .or. &
-              & (mpg%nnreg(0).eq.8 .and. geoId.eq.GEOMETRY_SN) ) then
+            if ( mpg%nnreg(0).le.7 .or. plasmaId.eq.GEOMETRY_DDN_TOP .or. &
+              & (mpg%nnreg(0).eq.8 .and. plasmaId.eq.GEOMETRY_SN) ) then
               if (mpg%strDiv(i).eq.2) iVx = mpg%strVx(i)
             else if (plasmaId.eq.GEOMETRY_CDN .or. &
                    & plasmaId.eq.GEOMETRY_DDN_BOTTOM) then

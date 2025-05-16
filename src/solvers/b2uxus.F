@@ -340,5 +340,4 @@
       endif
 
       ncall = ncall + 1
-      return
       end subroutine storage_us                                     !sv 22.11.06

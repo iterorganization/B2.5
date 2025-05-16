@@ -990,7 +990,7 @@ cxpb size is changed in b2mod_dimensions
      & iatm, imol
       real (kind=R8) :: sna_pump, sna_puff, sna_core
       integer, save :: ncall = 0
-      real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s,
+      real (kind=R8) :: sum_e, total_flux, vol_feedback, sum_s,
      & t0, t1
 
       call subini ('compute_feedback')
@@ -1431,7 +1431,7 @@ cxpb size is changed in b2mod_dimensions
               do is=0, ns-1
                 if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
-                  do iCv = 1, nCv
+                  do iCv = 1, mpg%nCi
                     fb_current(ifb) = fb_current(ifb) +
      &               pl%na(iCv,is)*geo%cvVol(iCv)
                   enddo
@@ -1802,7 +1802,57 @@ cxpb size is changed in b2mod_dimensions
                 fb_current(ifb) = max(fb_current(ifb),t0)
               enddo
               if (fb_type_inverse(ifb))
-     &            fb_current(ifb) = 1/fb_current(ifb)
+     &         fb_current(ifb) = 1.0_R8/fb_current(ifb)
+
+            case (27) ! total particle content in SOL+PFR for given
+                      ! isonuclear sequence (including neutrals)
+                      ! test ions from EIRENE are not included for now
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'total particle content in SOL for sequence ',
+     &            b2espcr(fb_species(ifb))
+              endif
+
+              is_start=-1
+              is_end=-1
+              fb_current(ifb) = 0.0_R8
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  do iCv = 1, mpg%nCi
+                    if(mpg%cvOnClosedSurface(iCv)) cycle
+                    if(mpg%cvReg(iCv).eq.0) cycle
+                    fb_current(ifb) = fb_current(ifb) +
+     &               pl%na(iCv,is)*geo%cvVol(iCv)
+#ifndef SOLPS4_3
+                    if (switch%use_eirene.ne.0) then
+                      do iatm=1,nnatmi
+                        if (latmscl(iatm).eq.fb_species(ifb)) then
+                          fb_current(ifb) = fb_current(ifb) +
+     &                     dab2(iCv,iatm,1)*geo%cvVol(iCv)
+                        endif
+                      enddo
+                      do imol=1,nnmoli
+                        if (mlcmp(iatm,imol).ne.0) then
+                          fb_current(ifb) = fb_current(ifb) +
+     &                     dmb2(iCv,imol,1)*mlcmp(iatm,imol)
+     &                     *geo%cvVol(iCv)
+                        endif
+                      enddo
+                    endif
+#endif
+                  enddo
+                  is_end=is
+                endif
+              enddo
+
+            case default
+               write(*,*) 'fb_type not coded ',
+     &              fb_type(ifb)
+               call xerrab('fb_type not coded')
+
             end select
 
 ! phase 2:
