@@ -7238,6 +7238,7 @@
 						24: Peak electron temperature along a specific boundary. The boundary index should be defined by FB_REG_PAR. By default it equals 2, which usually maps to the outer target.
 						25: Peak electron density along a specific boundary. The boundary index should be defined by FB_REG_PAR. By default it equals 2, which usually maps to the outer target.
 						26: Peak saturation current along a specific boundary. The boundary index should be defined by FB_REG_PAR. By default it equals 2, which usually maps to the outer target.
+						27: Total particle content in the SOL and PFR for the isonuclear sequence (including Eirene neutrals).
 				</description>
 			</switch>
 			<switch>

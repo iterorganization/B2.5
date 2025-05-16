@@ -307,4 +307,3 @@
       return
 
       end subroutine b2usr_cost_function
-

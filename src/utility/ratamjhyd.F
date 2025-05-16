@@ -659,4 +659,3 @@ c         --Convert from cm**3/s to m**3/s
       end function maxwell1d
 
       end subroutine get_amjhyd_rates
-

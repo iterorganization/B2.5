@@ -177,5 +177,3 @@ C   END SORT
       call subend ()
       return
       end subroutine iniilu_7_w
-
-

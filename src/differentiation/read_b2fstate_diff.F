@@ -91,4 +91,3 @@
       return
 
       end subroutine read_b2fstate_diff
-

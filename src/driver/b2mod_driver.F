@@ -1703,10 +1703,10 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       if (switch%b2stbc_boundary_namelist.ge.1) then
         call initialize_b2mod_boundary(ns,mpg,0.0_R8)
       else
-        call xerrab('b2mndr -- specify BCs using boundary_namelist')
+        call xerrab ('b2mndr -- specify BCs using boundary_namelist')
       endif
 
-      if(switch%b2mndr_iout.ne.0) then                                             !srv 25.01.16 {
+      if(switch%b2mndr_iout.ne.0) then                               !srv 25.01.16 {
        call my_out_us(70,nCv,0,state%dv%ne,'b2mndr_ne')
        do is = 0,ns-1
         write (chns,'(i3.3)') is
@@ -2821,6 +2821,8 @@ c new CDF movie option
                   old_imas_version = old_description%ids_properties%
      &                               version_put%data_dictionary(1)
                   call ids_deallocate( old_description )
+                else if ( streql(old_imas_version,'x.xx.x') ) then
+                  call xerrab ('Old IMAS data entry is incomplete !')
                 end if
                 continued = continued .and.
      &           (ids_end_time.lt.tim .and.
@@ -3541,6 +3543,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                 old_imas_version = old_description%ids_properties%
      &                             version_put%data_dictionary(1)
                 call ids_deallocate( old_description )
+              else if ( streql(old_imas_version,'x.xx.x') ) then
+                call xerrab ('Old IMAS data entry is incomplete !')
               end if
               continued = continued .and.
      &         (ids_end_time.lt.tim .and.

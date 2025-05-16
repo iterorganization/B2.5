@@ -133,7 +133,6 @@
         T2=0.0_R8
       ENDIF
 
-
 *** Compute statistical error
 
       tmax = max(T1,T2)
@@ -141,12 +140,7 @@
       eps_s1 = sqrt(varbatch*T1/NN)
       eps_s2 = sqrt(varbatch*T2/NN)
 
-
       return
       end subroutine b2ye_sterr
 
-
 * -----------------------------------------------------------------------------
-
-
-
