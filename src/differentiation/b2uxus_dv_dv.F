@@ -92,4 +92,3 @@
 *.end b2uxus_dd_dd
 
       end subroutine b2uxus_dv_dv
-

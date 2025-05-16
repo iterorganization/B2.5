@@ -975,4 +975,3 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
       call xerrab ('b2gxdr_dummy_st: Premature end in the grid file')
 
       end subroutine b2gxdr_dummy_st
-

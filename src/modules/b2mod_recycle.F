@@ -1704,4 +1704,3 @@ c         do nothing to prevent oscillations if minimum Kn is just around Kn_b1
       end subroutine precompute_kul_quant
 
       end module b2mod_recycle
-

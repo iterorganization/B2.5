@@ -146,5 +146,3 @@ C   END SORT
       call subend ()
       return
       end subroutine iniilu_w
-
-

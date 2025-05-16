@@ -218,6 +218,7 @@ program b2_ual_rewrite
 #ifdef B25_EIRENE
     CALL EIRENE_ALLOC_COMUSR(1)
     call eirene_extrab25_eirpbls_init(nmol,nion,npls)
+    call ntread
 #endif
     ! read plasma state
     call cfopen(56,'b2fplasma','old','unformatted')
@@ -430,6 +431,8 @@ program b2_ual_rewrite
                       &   version_put%data_dictionary)) then
         old_imas_version = old_description%ids_properties% &
                       &   version_put%data_dictionary(1)
+      else if ( streql(old_imas_version,'x.xx.x') ) then
+        call xerrab ('Old IMAS data entry is incomplete !')
       end if
       call ids_deallocate( old_description )
       if (.not.streql(old_imas_version,imas_version).or.database.eq.'iter') then
@@ -637,7 +640,8 @@ program b2_ual_rewrite
 #endif
         &   idx, new_eq_ggd )
     systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
-        &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string)
+        &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string) &
+        &  //' -v '//int2str(IMAS_MAJOR_VERSION)
     write(0,*) trim(systemarg)
 #ifdef NAGFOR
     call system(systemarg, status, ierror)

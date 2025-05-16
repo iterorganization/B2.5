@@ -318,6 +318,11 @@ program b2_ual_write_b2mod
      & , only : IDS_real, IDS_REAL_INVALID
     use b2mod_ad &
         & , only : nncf
+#ifdef B25_EIRENE
+    use eirmod_parmmod
+    use eirmod_comusr
+    use eirmod_extrab25
+#endif
 
     implicit none
 #ifndef NO_GETENV
@@ -554,6 +559,12 @@ program b2_ual_write_b2mod
         write(0,*) "Running b2mn_step()"
         call b2mn_step( switch, geo, mpg, state, state_ext, state_avg, J )
         write(0,*) "b2mn_step() completed"
+#ifdef B25_EIRENE
+    else
+      CALL EIRENE_ALLOC_COMUSR(1)
+      call eirene_extrab25_eirpbls_init(nmol,nion,npls)
+      call ntread
+#endif
     end if
 
     !! Process B2.5 data and set it to IMAS IDS
@@ -630,6 +641,8 @@ program b2_ual_write_b2mod
           old_imas_version = old_description%ids_properties% &
                           &  version_put%data_dictionary(1)
           call ids_deallocate( old_description )
+        else if ( streql(old_imas_version,'x.xx.x') ) then
+          call xerrab ('Old IMAS data entry is incomplete !')
         end if
         continued = run_start_time.eq.IDS_REAL_INVALID .and. &
            &       (ids_end_time.lt.tim .and. ids_end_time.ne.IDS_REAL_INVALID)

@@ -112,4 +112,3 @@
 *.end b2tvspr
 
       end subroutine b2tvspr                                            !srv 10.10.17
-

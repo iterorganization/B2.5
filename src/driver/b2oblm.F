@@ -361,5 +361,3 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        enddo
       endif
       end subroutine treat_exp_res_eq
-
-

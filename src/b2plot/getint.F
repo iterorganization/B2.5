@@ -34,4 +34,4 @@ c
         if(ipos .ne. 1) call readline(textline,iun,ipos)
       endif
       return
-      end
+      end function getint
