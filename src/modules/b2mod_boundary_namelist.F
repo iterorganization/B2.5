@@ -833,11 +833,20 @@ c.. Make a list of core boundaries
       enddo
 c..  test that all boundary cells to the real domain are covered at least once
 c..  we exclude corners from this test
+c..  only test guard cells that have a real cell on the other side
       do ix = -1, nx
         do iy = -1, ny
           guard_cell = region(ix,iy,0).ne.0 .and.
      &     (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      &      bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)
+          if (guard_cell .and. leftix(ix,iy).eq.-2)
+     >     guard_cell = rightix(ix,iy).lt.nx+1
+          if (guard_cell .and. rightix(ix,iy).eq.nx+1)
+     >     guard_cell = leftix(ix,iy).gt.-2
+          if (guard_cell .and. bottomiy(ix,iy).eq.-2)
+     >     guard_cell = topiy(ix,iy).lt.ny+1
+          if (guard_cell .and. topiy(ix,iy).eq.ny+1)
+     >     guard_cell = bottomiy(ix,iy).gt.-2
           corner =
      &     (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) .and.
      &     (bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)
