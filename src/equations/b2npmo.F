@@ -548,8 +548,7 @@ cdjm Jan2017 update momentum source components for balance
            sr%smodt(:,0,is) = sr%smodt(:,0,is)-switch%b2mndt_ckn*
      &       am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-psnl%na(:,is))
      &       *psnl%ua(:,is)/dtim
-           call b2saxpy(nCv*4, 1.0_R8, sr%smodt(:,:,is), 1, sr%smo, 1)
-           call b2saxpy(nCv*4, 1.0_R8, sr%smodt(:,:,is), 1, smb, 1)
+           smb = smb + sr%smodt(:,:,is)
          endif
 
 *    ..compute residual
@@ -613,9 +612,9 @@ cdjm Jan2017 update momentum source components for balance
      &       smban(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
         call my_out_us(70,nCv,0,wrks,'b2npmo_smoan'//chns)              !srv 25.09.17
         wrks=sr%smodt(:,0,is)+
-     &       sr%smodt(:,1,is)*pl%ua(:,is)+
-     &       sr%smodt(:,2,is)*pl%na(:,is)*mp*am(is)+
-     &       sr%smodt(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
+     &        sr%smodt(:,1,is)*pl%ua(:,is)+
+     &        sr%smodt(:,2,is)*pl%na(:,is)*mp*am(is)+
+     &        sr%smodt(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
          call my_out_us(70,nCv,0,wrks,'b2npmo_smodt'//chns)
       endif                                                             !srv 05.07.17
 
