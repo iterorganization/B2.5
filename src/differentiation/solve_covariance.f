@@ -25,5 +25,3 @@
       U = C
       return
       end subroutine solve_covariance
-
-

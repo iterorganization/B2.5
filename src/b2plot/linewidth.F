@@ -31,4 +31,3 @@ c
       write (*,*) 'Wall Line Width set to',width
       return
       end subroutine walllinewidth
-

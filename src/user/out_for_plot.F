@@ -340,4 +340,3 @@ C
       
       return
       end subroutine write_quantity
-

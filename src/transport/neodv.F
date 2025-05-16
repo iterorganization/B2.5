@@ -144,10 +144,3 @@ c       calculate pinch including the ware pinch
 
       return 
       end subroutine neodv
-
-
-
-
-
-
-

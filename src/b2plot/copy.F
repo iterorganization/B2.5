@@ -155,4 +155,3 @@ c  Copy the top of the wall stack to the data array
 
       return
       end subroutine data_copy
-      

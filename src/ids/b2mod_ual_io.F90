@@ -3118,10 +3118,12 @@ contains
               IF (IXTRI(I).GT.0) THEN
                 UN0(IXTRI(I),0,IS) = UN0(IXTRI(I),0,IS) + &
                    &  TRIANGLE_VOL(I)*( &
-                   &   VXDENA(IS,I)*PUX(I) + VYDENA(IS,I)*PUY(I) )
+                   &   VXDENA(IS,I)*PUX(IXTRI(I)) + &
+                   &   VYDENA(IS,I)*PUY(IXTRI(I)) )
                 UN0(IXTRI(I),1,IS) = UN0(IXTRI(I),1,IS) + &
                    &  TRIANGLE_VOL(I)*( &
-                   &   VXDENA(IS,I)*PVX(I) + VYDENA(IS,I)*PVY(I) )
+                   &   VXDENA(IS,I)*PVX(IXTRI(I)) + &
+                   &   VYDENA(IS,I)*PVY(IXTRI(I)) )
                 UN0(IXTRI(I),2,IS) = UN0(IXTRI(I),2,IS) + &
                    &  TRIANGLE_VOL(I)*VZDENA(IS,I)
                 totCv(IXTRI(I)) = totCv(IXTRI(I)) + &
@@ -3141,10 +3143,12 @@ contains
               IF (IXTRI(I).GT.0) THEN
                 UM0(IXTRI(I),0,IS) = UM0(IXTRI(I),0,IS) + &
                    &  TRIANGLE_VOL(I)*( &
-                   &   VXDENM(IS,I)*PUX(I) + VYDENM(IS,I)*PUY(I) )
+                   &   VXDENM(IS,I)*PUX(IXTRI(I)) + &
+                   &   VYDENM(IS,I)*PUY(IXTRI(I)) )
                 UM0(IXTRI(I),1,IS) = UM0(IXTRI(I),1,IS) + &
                    &  TRIANGLE_VOL(I)*( &
-                   &   VXDENM(IS,I)*PVX(I) + VYDENM(IS,I)*PVY(I) )
+                   &   VXDENM(IS,I)*PVX(IXTRI(I)) + &
+                   &   VYDENM(IS,I)*PVY(IXTRI(I)) )
                 UM0(IXTRI(I),2,IS) = UM0(IXTRI(I),2,IS) + &
                    &  TRIANGLE_VOL(I)*VZDENM(IS,I)
                 totCv(IXTRI(I)) = totCv(IXTRI(I)) + &
