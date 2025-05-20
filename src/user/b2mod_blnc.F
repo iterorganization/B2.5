@@ -551,14 +551,16 @@ c*** we must remove targets and transparent surfaces from that list
             is_target = is_target.or.abs(lsns(js)).eq.ltns(ic)
           end do !}
           if (.not.is_target) then !{
-            ks = abs(lsns(js))+nnlimi
+            ilks = abs(lsns(js))+nnlimi
             if (iliin(abs(lsns(js))).gt.0) then !{
               do j=1,nnatmi !{
                 if(latmscl(j).eq.ls) then !{
-                  hlpnw=hlpnw-wldna(ks,j,0)+wldra(ks,j,0)+wldpa(ks,j,0)
+                  hlpnw=hlpnw-wldna(ilks,j,0)+wldra(ilks,j,0)+
+     .                  wldpa(ilks,j,0)
                   do ic=1,nnmoli !{
                     if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
-     .               (wldnm(ks,ic,0)-wldrm(ks,ic,0)-wldpm(ks,ic,0))
+     .               (wldnm(ilks,ic,0)-wldrm(ilks,ic,0)-
+     .                wldpm(ilks,ic,0))
                   end do !}
                 end if !}
               end do !}
