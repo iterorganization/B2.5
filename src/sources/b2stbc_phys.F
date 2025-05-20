@@ -1160,8 +1160,13 @@ c   (ionising_core option)
             iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
             iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
             s1 = abs(geo%fcPbs(iFc))
-            cs = sqrt(pz(iCv1)/rz(iCv1))
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
+            if (conpar(is,ib,2).eq.0.0_R8) then
+              cs = sqrt(pz(iCv1)/rz(iCv1))
+            else
+              cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
+     &          (am(is)*mp))
+            endif
             if (wrk < geo%Qalfmin) then
               srw%sna0(iCv1,0,is) = 0.0_R8
               srw%sna0(iCv1,1,is) =
@@ -1194,19 +1199,16 @@ c   (ionising_core option)
                   srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) +
      .             t0/pl%na(iCv1,is)
                 endif
-    !             t0 = geo%fcS(iFc)*                                        !lkw 30.06.2022{
-    !  &          sqrt((rt%rza(iCv1,is)*pl%te(iCv1)+pl%ti(iCv1))/
-    !  &          (am(is)*mp))*conpar(is,ib,2)
-              !  srw%sna0(iCv1,0,is) = srw%sna0(iCv1,0,is)+t0*pl%na(iCv1,is)
-              !  srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is)-t0               !lkw 30.06.2022}
               endif
             else
+              vbnd = max(conpar(is,ib,1)*mompar(is,ib,1)*cs*s1,
+     &         s1*abs(pl%ua(iCv1,is))+geo%fcS(iFc)*
+     &         (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0)+
+     &          dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))*
+     &          mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1))
+
               srw%sna0(iCv1,0,is) = 0.0_R8
-              srw%sna0(iCv1,1,is) = -s1*conpar(is,ib,1)*cs
-              if (conpar(is,ib,2).gt.0.0_R8) then
-                srw%sna0(iCv1,1,is) = srw%sna0(iCv1,1,is) -
-     .           co%dna0(iCv1,is)/conpar(is,ib,2)*geo%fcS(iFc)
-              endif
+              srw%sna0(iCv1,1,is) = -vbnd
               sna0_no_mdf(iCv1,:,is) = srw%sna0(iCv1,:,is)
               if (switch%mdf_fnb.ne.0) then
                 t0 = mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
@@ -3139,7 +3141,6 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             iVx2 = mpg%fcVx(iFc,2)
             t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
             t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%ua(:,is))
-            cs = sqrt(pz(iCv1)/rz(iCv1))
             wrk = abs(geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/geo%fcBb(iFc,3))
             if (wrk < geo%Qalfmin) then
               srw%smo0(iCv1,0,is)=
@@ -3153,13 +3154,25 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
             else
               s1hz = geo%fcPbshz(iFc)
               vbnd = (dv%vaecrb(iFc,0,is)*geo%fcQalf(iFc,0) +
-     &                dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))
-              wrk = abs(2.0_R8*cs*geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)
-     &         /geo%fcBb(iFc,3))
-              vbnd = min(wrk,abs(vbnd))*sign(1.0_R8,vbnd)
-              vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
-     &         vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
-     &         geo%fcS(iFc)
+     &          dv%vaecrb(iFc,1,is)*geo%fcQalf(iFc,1))
+              if (MOMPAR(IS,IB,2).eq.0.0_R8) then
+                cs = sqrt(pz(iCv1)/rz(iCv1))
+                vbnd = sign(min(MOMPAR(IS,IB,1)*2.0_R8*cs*wrk,
+     &            abs(vbnd)),vbnd)
+                vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
+     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
+     &           geo%fcS(iFc)
+              else
+                cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
+     &                    (am(is)*mp))
+                vbnd = sign(min(MOMPAR(IS,IB,1)*2.0_R8*cs*wrk,
+     &            abs(vbnd)), vbnd)
+                vbnd = cs*s1hz*mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) -
+     &           vbnd*sign(1.0_R8,geo%fcQalf(iFc,0))*geo%fcHz(iFc)*
+     &           geo%fcS(iFc)
+                vbnd = sign(max(abs(vbnd),abs(s1hz*pl%ua(iCv2,is))),
+     &            vbnd)
+              endif
               srw%smo0(iCv1,0,is) = srw%smo0(iCv1,0,is) +               !srv 07.05.09 {
      &         (UBIG/EPSLON**2)*am(is)*mp*pl%na(iCv1,is)*
      &         mompar(is,ib,1)*vbnd
@@ -5878,7 +5891,12 @@ cxpb code segment analog to b2tfhi
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
           iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
-          cs   = sqrt(pz(iCv1)/rz(iCv1))
+          if (conpar(is,ib,2).eq.0.0_R8) then
+            cs = sqrt(pz(iCv1)/rz(iCv1))
+          else
+            cs = sqrt((pl%te(iCv1)*rt%rza(iCv1,is)+pl%ti(iCv1))/
+     &        (am(is)*mp))
+          endif
           t0 = 0.0_R8
           t1 = 0.0_R8
           t2 = 0.0_R8
@@ -5908,15 +5926,15 @@ cxpb code segment analog to b2tfhi
             else
               s1 = abs(geo%fcPbs(iFc))
               do is = 0, ns-1
-                if(.not.is_neutral(is)) then
-                  t0 = t0 + conpar(is,ib,1)*pl%na(iCv1,is)
-                  if (conpar(is,ib,2).gt.0.0_R8)
-     &             t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)
-     &              *pl%na(iCv1,is)
-                endif
+                if(is_neutral(is)) cycle
+                t0 = t0 - (srw%sna0(iCv1,0,is) + srw%sna0(iCv1,1,is)*
+     &             pl%na(iCv1,is)) + pl%na(iCv1,is)*geo%fcS(iFc)*
+     &            (dv%vadia(iFc,0,is)*geo%fcQalf(iFc,0) +
+     &             dv%vadia(iFc,1,is)*geo%fcQalf(iFc,1))*
+     &             mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
               enddo
-              srw%shi0(iCv1,1) = srw%shi0(iCv1,1) -
-     &         enipar(ib,1)*t0*cs*s1 -
+              srw%shi0(iCv1,1) = srw%shi0(iCv1,1) - (t0*enipar(ib,1) -
+     &         (dv%fhiPSch(iFc,0)+dv%fhiPSch(iFc,1))/pl%ti(iCv1)) -
      &         switch%stab_coeff_sheath_ti*dv%ne(iCv1)*cs*geo%fcS(iFc) -
      &         fac_he_anom_bc*enipar(ib,2)*t1*geo%fcS(iFc)
               srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
@@ -7392,8 +7410,12 @@ c              fchi=0.0_R8
             s1 = abs(geo%fcPbs(iFc))
           endif
           do is = 0, ns-1
-            t0 = t0 + rt%rza(iCv1,is)*conpar(is,ib,1)*cs*s1*
-     *        pl%na(iCv1,is)
+            if(is_neutral(is)) cycle
+            t0 = t0 - ((srw%sna0(iCv1,0,is) + srw%sna0(iCv1,1,is)*
+     &       pl%na(iCv1,is)) + pl%na(iCv1,is)*geo%fcS(iFc)*
+     &       (dv%vadia(iFc,0,is)*geo%fcQalf(iFc,0) +
+     &        dv%vadia(iFc,1,is)*geo%fcQalf(iFc,1)) *
+     &        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1))*rt%rza(iCv1,is)
           enddo
           fchi = qe*t0
           fche = sqrt(1/(2*pi))*qe*dv%ne(iCv1)*vte*s1*
