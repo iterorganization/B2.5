@@ -595,7 +595,7 @@ program b2_ual_rewrite
       &  numerics, &
 #endif
 #if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
-     &   run_start_time, run_end_time, &
+      &  run_start_time, run_end_time, &
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       &  divertors, &

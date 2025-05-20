@@ -292,7 +292,7 @@ module b2mod_ual_io
   real(IDS_real), save :: private_flux_puff = 0.0_IDS_real
   real(IDS_real), save :: time  !< Generic time
   real(IDS_real), save :: time_slice_value !< Time slice value
-  real(IDS_real), save :: b0, r0, b0r0
+  real(IDS_real), save :: b0, r0, b0r0, z_eq
   real(IDS_real), save :: flux_expansion(4), extension_r(4), extension_z(4), &
       &                   wetted_area(4)
   character(len=ids_string_length), save :: username  !< IDS user name
@@ -2310,20 +2310,20 @@ contains
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+            &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   edge_transport%model(1)%ggd( time_sind )%grid,              &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+            &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
         do is = 1, nsources
             call b2_IMAS_Fill_Grid_Desc( IDSmap,                              &
                 &   edge_sources%source(is)%ggd( time_sind )%grid,            &
                 &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),      &
                 &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix, &
                 &   bottomiy, nnreg, topcut, region, cflags,                  &
-                &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+                &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
         end do
 #else
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
@@ -2331,7 +2331,7 @@ contains
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+            &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
 #if AL_MAJOR_VERSION > 4
         allocate( edge_transport%grid_ggd( time_sind )%path(1) )
         edge_transport%grid_ggd( time_sind )%path = &
@@ -2348,20 +2348,20 @@ contains
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+            &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   edge_sources%grid_ggd( time_sind ),                         &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+            &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   radiation%grid_ggd( time_sind ),                            &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+            &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
 #endif
 #endif
 #endif
@@ -7363,20 +7363,20 @@ contains
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+            &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   batch_sources%source(1)%ggd( batch_index )%grid,            &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+            &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
 #else
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   batch_profiles%grid_ggd( batch_index ),                     &
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+            &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
 #if AL_MAJOR_VERSION > 4
         allocate( batch_sources%grid_ggd( batch_index )%path(1) )
         batch_sources%grid_ggd( batch_index )%path = &
@@ -7387,7 +7387,7 @@ contains
             &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
             &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
             &   bottomiy, nnreg, topcut, region, cflags,                    &
-            &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+            &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
 #endif
 #endif
 #endif
@@ -8153,7 +8153,7 @@ contains
     integer, save :: ncall = 0
     real(IDS_real) :: parg(0:99)
     real(IDS_real), save :: pit_rescale = 1.0_IDS_real
-    real(IDS_real) :: b0r0_ref, z_eq
+    real(IDS_real) :: b0r0_ref, zmid
     character*8 id
     character*80 cnamip, cvalip
     character*132 eq_source
@@ -8407,7 +8407,7 @@ contains
               &   nx, ny, crx(-1:nx, -1:ny, :), cry(-1:nx, -1:ny, : ),        &
               &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,   &
               &   bottomiy, nnreg, topcut, region, cflags,                    &
-              &   INCLUDE_GHOST_CELLS, vol, gs, qc )
+              &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
 #if AL_MAJOR_VERSION > 4
             allocate( equilibrium%grids_ggd( slice_index )%grid(1)%path(1) )
@@ -8656,7 +8656,14 @@ contains
          & (cry(jxa,jsep,2)-z_eq)*(cry(jxa,jsep,3)-z_eq).le.0.0_R8 ) then
         midplane_id = 1
       else if ( jxa .eq. nmdpl ) then
-        midplane_id = 2
+        zmid = 0.5_R8*(cry(jxa,jsep,2)+cry(jxa,jsep,3))
+        if ( jxi.eq.-2 ) then
+          midplane_id = 2
+        else if ( (cry(jxi,jsep,2)-zmid)*(cry(jxi,jsep,3)-zmid).le.0.0_R8) then
+          midplane_id = 2
+        else
+          midplane_id = 4
+        end if
       else if ( cry(jxa,jsep,2)*cry(jxa,jsep,3).le.0.0_R8 ) then
         midplane_id = 3
       else
