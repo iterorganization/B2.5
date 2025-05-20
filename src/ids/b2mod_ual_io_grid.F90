@@ -566,7 +566,7 @@ contains
     subroutine b2_IMAS_Fill_Grid_Desc( gmap, grid_ggd, nx, ny, crx, cry,    &
         &   leftix, leftiy, rightix, rightiy, topix, topiy, bottomix,       &
         &   bottomiy, nnreg, topcut, region, cflag, includeGhostCells,      &
-        &   vol, gs, qc )
+        &   midplane_id, z_eq, vol, gs, qc )
         type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed
             !< by b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
@@ -589,7 +589,7 @@ contains
             !< coordinates of the four corners of the (ix, iy) cell
         real(kind=R8), intent(in) :: cry( -1:nx, -1:ny, 0:3 )    !< Vertical vertex
             !< coordinates of the four corners of the (ix, iy) cell
-
+        real(kind=R8), intent(in) :: z_eq  !< Vertical coordinate of the O-point (if known)
         !! B2 connectivity array
         integer, intent(in) :: leftix( -1:nx, -1:ny )   !< Left neighbour
             !< poloidal (first coordinate) index array
@@ -612,6 +612,7 @@ contains
         integer, intent(in) :: nnreg(0:2)
         integer, intent(in) :: topcut(:)
         integer, intent(in) :: region( -1:nx, -1:ny, 0:2 )
+        integer, intent(in) :: midplane_id
         !! Cell flags
         integer cflag( -1:nx, -1:ny, CARREOUT_NCELLFLAGS ) !< Cell flag
         logical, intent(in) :: includeGhostCells    !< Include "fake" cells
@@ -1549,7 +1550,7 @@ contains
         end select
         !! Inner/outer midplane grid subsets
         nGSubset = nGSubset + 2
-        !! Inner/outer midplane separatrix
+        !! Inner/outer midplane separatrix intersection points
         if (jsep /= B2_GRID_UNDEFINED) nGSubset = nGSubset + 2
         !! Neutral pressure calculation cells
         if (lpfrs_pmp.ne.0 .or. lpfrb_i.ne.0 .or. lpfrb_o.ne.0 .or. &
@@ -2412,16 +2413,16 @@ contains
             & " outer midplane grid subset" )
 
         !! Figure out starting points for inner and outer midplane on core
-        !! boundary
-        call find_Midplane_Cells(grid_ggd%grid_subset( iCoreGS ), gmap, crx,  &
-            &   xIn, yIn, xOut, yOut)
+        !! boundary, applying the midplane_id convention
+        call find_Midplane_Cells(grid_ggd%grid_subset( iCoreGS ), gmap, &
+            &   midplane_id, z_eq, crx, cry, xIn, yIn, xOut, yOut)
 
         GSubsetCount = GSubsetCount + 1
         !! Create grid subset with one object list
         call createEmptyGridSubset(                           &
             &   grid_ggd%grid_subset( GSubsetCount ),         &
-            &   GRID_SUBSET_INNER_MIDPLANE, "Inner Midplane", &
-            &   "All cells (2D objects) along the inner midplane." )
+            &   GRID_SUBSET_INNER_MIDPLANE, "INNER MIDPLANE", &
+            &   "All nodes (OD objects) along the inner midplane." )
 
         call logmsg( LOGDEBUG,                                      &
             &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
@@ -2446,8 +2447,8 @@ contains
         !! Create grid subset with one object list
         call createEmptyGridSubset(                           &
             &   grid_ggd%grid_subset( GSubsetCount ),         &
-            &   GRID_SUBSET_OUTER_MIDPLANE, "Outer Midplane", &
-            &   "All cells (2D objects) along the outer midplane." )
+            &   GRID_SUBSET_OUTER_MIDPLANE, "OUTER MIDPLANE", &
+            &   "All nodes (0D objects) along the outer midplane." )
 
         call logmsg( LOGDEBUG,                                      &
             &   "b2_IMAS_Fill_Grid_Desc: add grid subset #"//       &
@@ -3030,54 +3031,105 @@ contains
     !> Figure out starting cells for inner and outer midplane on core boundary
     !! by finding the points on the core boundary with minimum and maximum r
     !! positions
-    subroutine find_Midplane_Cells( GridSubset, gmap, crx, xIn, yIn,  &
-            &   xOut, yOut )
-        type(ids_generic_grid_dynamic_grid_subset), intent(in) :: GridSubset
+    subroutine find_Midplane_Cells( GridSubset, gmap, midplane_id, z_eq, &
+            &   crx, cry, xIn, yIn, xOut, yOut )
+      type(ids_generic_grid_dynamic_grid_subset), intent(in) :: GridSubset
             !< Type of IDS data structure, designed for handling grid subset
             !< definitions
-        type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
+      type(B2GridMap), intent(in) :: gmap !< The grid mapping as computed by
             !< b2CreateMap holding an intermediate grid description to be
             !< transferred into a CPO or IDS
-        real(IDS_real), intent(in) :: crx( -1:gmap%b2nx, -1:gmap%b2ny, 0:3 )
+      real(IDS_real), intent(in) :: crx( -1:gmap%b2nx, -1:gmap%b2ny, 0:3 )
             !< Horizontal (x/radial) vertex coordinates of the four corners
             !< of the (ix, iy) cell
-        integer, intent(out) :: xIn
-        integer, intent(out) :: yIn
-        integer, intent(out) :: xOut
-        integer, intent(out) :: yOut
+      real(IDS_real), intent(in) :: cry( -1:gmap%b2nx, -1:gmap%b2ny, 0:3 )
+            !< Vertical (z) vertex coordinates of the four corners
+            !< of the (ix, iy) cell
+      real(IDS_real), intent(in) :: z_eq
+            !< Vertical coordinate of the O-point (if known)
+      integer, intent(in) :: midplane_id
+            !< Definition of where the midplane lies
+            !< midplane_id = 1 : Z equal to equilibrium O-point
+            !<             = 2 : Z at location of maximum/minimum major radius
+            !<             = 3 : Z at dR/dZ = 0 maximum R location
+            !<             = 4 : User-defined via jxi and jax flags
+      integer, intent(out) :: xIn
+      integer, intent(out) :: yIn
+      integer, intent(out) :: xOut
+      integer, intent(out) :: yOut
 
-        !! Internal variables
-        real(IDS_real) :: rMin
-        real(IDS_real) :: rMax
-        type(GridObject) :: obj !< GGD grid object
-        integer :: ix   !< x-aligned cell index
-        integer :: iy   !< y-aligned cell index
-        integer :: iObj !< Object index
+      !! Internal variables
+      real(IDS_real) :: rMin
+      real(IDS_real) :: rMax
+      type(GridObject) :: obj !< GGD grid object
+      integer :: ix   !< x-aligned cell index
+      integer :: iy   !< y-aligned cell index
+      integer :: iObj !< Object index
 
-        !! Procedures
-        external xertst
+      !! Procedures
+      external xertst
 
-        rMin = huge(rMin)
-        rMax = -huge(rMax)
+      rMin = huge(rMin)
+      rMax = -huge(rMax)
 
+      if (midplane_id.eq.4) then
+        xIn = jxi
+        xOut = jxa
+        yIn = -2
+        yOut = -2
+        !! Loop over all edges in core boundary grid subset
+        do iObj = 1, getGridSubsetSize(GridSubset)
+          obj = getGridSubsetObject(GridSubset, iObj)
+          !! Expect an edge
+          call xertst( obj%cls( SPACE_POLOIDALPLANE ) == &
+              &   IDS_CLASS_POLOIDALRADIAL_EDGE, &
+              & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
+          !! ...which is aligned along the x-direction
+          call xertst( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==  &
+              &   BOTTOM, &
+              & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
+          ix = gmap % mapFcix( obj%ind( SPACE_POLOIDALPLANE ) )
+          if ( ix .eq. xIn ) &
+            &  yIn = gmap % mapFciy( obj%ind( SPACE_POLOIDALPLANE ) )
+          if ( ix .eq. xOut ) &
+            &  yOut = gmap % mapFciy( obj%ind( SPACE_POLOIDALPLANE ) )
+        end do
+        if ( yIn .eq. -2 ) yIn = 0
+        if ( yOut .eq. -2 ) yOut = 0
+      else
         xIn = huge(xIn)
         xOut = huge(xOut)
 
         !! Loop over all edges in core boundary grid subset
         do iObj = 1, getGridSubsetSize(GridSubset)
-            obj = getGridSubsetObject(GridSubset, iObj)
-            !! Expect an edge
-            call xertst( obj%cls( SPACE_POLOIDALPLANE ) == &
-                &   IDS_CLASS_POLOIDALRADIAL_EDGE, &
-                & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
-            !! ...which is aligned along the x-direction
-            call xertst( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==  &
-                &   BOTTOM, &
-                & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
-            ix = gmap % mapFcix( obj%ind( SPACE_POLOIDALPLANE ) )
-            iy = gmap % mapFciy( obj%ind( SPACE_POLOIDALPLANE ) )
+          obj = getGridSubsetObject(GridSubset, iObj)
+          !! Expect an edge
+          call xertst( obj%cls( SPACE_POLOIDALPLANE ) == &
+              &   IDS_CLASS_POLOIDALRADIAL_EDGE, &
+              & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
+          !! ...which is aligned along the x-direction
+          call xertst( gmap%mapFcIFace( obj%ind( SPACE_POLOIDALPLANE ) ) ==  &
+              &   BOTTOM, &
+              & "b2mod_ual_io_grid find_Midplane_Cells: assertion failure." )
+          ix = gmap % mapFcix( obj%ind( SPACE_POLOIDALPLANE ) )
+          iy = gmap % mapFciy( obj%ind( SPACE_POLOIDALPLANE ) )
 
-            !! We want the vertex associated with the cell at ix, iy, which is number 0
+          !! We want the vertex associated with the cell at ix, iy, which is number 0
+          select case( midplane_id )
+          case (1)
+            if ( ((cry(ix,iy,0)-z_eq)*(cry(ix,iy,2)-z_eq)).le.0.0_R8) then
+              if ( crx(ix, iy, 0) < rMin ) then
+                rMin = crx(ix, iy, 0)
+                xIn = ix
+                yIn = iy
+              end if
+              if ( crx(ix, iy, 0) > rMax ) then
+                rMax = crx(ix, iy, 0)
+                xOut = ix
+                yOut = iy
+              end if
+            end if
+          case (2)
             if ( crx(ix, iy, 0) < rMin ) then
                 rMin = crx(ix, iy, 0)
                 xIn = ix
@@ -3088,20 +3140,39 @@ contains
                 xOut = ix
                 yOut = iy
             end if
-        end do
+          case (3)
+            if ( (cry(ix,iy,0)*cry(ix,iy,2)).le.0.0_R8) then
+              if ( crx(ix, iy, 0) < rMin ) then
+                rMin = crx(ix, iy, 0)
+                xIn = ix
+                yIn = iy
+              end if
+              if ( crx(ix, iy, 0) > rMax ) then
+                rMax = crx(ix, iy, 0)
+                xOut = ix
+                yOut = iy
+              end if
+            end if
+          end select
 
-        if ( xIn == huge( xIn ) ) then
-          call logmsg( LOGWARNING, "find_Midplane_Cells: "   &
-              &   //"did not find inner midplane position. " &
-              &   //"Assigning it to jxi index." )
-          xIn = jxi
-        end if
-        if ( xOut == huge( xOut ) ) then
-          call logmsg( LOGWARNING, "find_Midplane_Cells: "   &
-              &   //"did not find outer midplane position. " &
-              &   //"Assigning it to jxa index." )
-          xOut = jxa
-        end if
+        end do
+      end if
+
+      if ( xIn == huge( xIn ) ) then
+        call logmsg( LOGWARNING, "find_Midplane_Cells: "   &
+            &   //"did not find inner midplane position. " &
+            &   //"Assigning it to jxi index." )
+        xIn = jxi
+        yIn = 0
+      end if
+      if ( xOut == huge( xOut ) ) then
+        call logmsg( LOGWARNING, "find_Midplane_Cells: "   &
+            &   //"did not find outer midplane position. " &
+            &   //"Assigning it to jxa index." )
+        xOut = jxa
+        yOut = 0
+      end if
+      return
 
     end subroutine find_Midplane_Cells
 
