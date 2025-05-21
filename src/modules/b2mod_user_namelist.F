@@ -45,13 +45,13 @@ c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
 c*** Te_det_threshold : Temperature threshold at the target below which
 c***                    a flux tube is considered detached (typically, 2.0 eV)
 c*** q95_albll :  safety factor used to estimate the ballooning "alpha"
-c***              paramteter, if not assigned will be estimated as
+c***              parameter, if not assigned will be estimated as
 c***              Lcon/(2*pi*R) at the core interface
 c*** R0_albll  :  major radius used to estimate the ballooning "alpha"
-c***              paramteter, if not assigned will be estimated as
+c***              parameter, if not assigned will be estimated as
 c***              0.5*(Rmin-Rmax) at the core interface
 c*** B0_albll  :  major radius used to estimate the ballooning "alpha"
-c***              paramteter, if not assigned will be estimated as
+c***              parameter, if not assigned will be estimated as
 c***              Bomp*R0/Romp at the core interface
 c*** trgshp    :  target shaping factor applied to plasma heat loads in
 c***              peak heat flux estimate calculated by b2mod_usrtrc

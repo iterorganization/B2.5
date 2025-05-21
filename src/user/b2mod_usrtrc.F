@@ -50,7 +50,7 @@ c***    pk_pwr_i  hlp_ppwi   peak power load onto the inner target
 c***    pk_pwr_o  hlp_ppwo   peak power load onto the outer target
 c***    pk_pw_iu  hlp_pwiu   peak power load on the inner upper target
 c***    pk_pw_ou  hlp_pwou   peak power load on the outer upper target
-c***                         (the peaks are calculated is more simple
+c***                         (the peaks are calculated in a more simple
 c***                         way compared to userspb however they allow
 c**                          for additional multiplcator to plasma loads)
 c***    Sp_DT     hlp_spdt   effective pumping speed for DT
@@ -1213,7 +1213,7 @@ c*** Calculate the neutral flows in PFR
 caap          hlp=1.0_R8/2.7e20_R8
 caap          if(species_list(j).eq.'H' .or. species_list(j).eq.'D' .or.
 caap     ,       species_list(j).eq.'T') hlp=0.5_R8*hlp
-caap no need to convert to molecualr throughput here
+caap no need to convert to molecular throughput here
           hlp=1.0_R8
           do i=ipfrgrp(k),jpfrgrp(k) !{
             m=lpfrgrp(i)
