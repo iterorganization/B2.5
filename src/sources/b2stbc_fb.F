@@ -191,7 +191,8 @@
      .        max(saved_cbshe_core, saved_cbshi_core,
      .            saved_cbsna_core, saved_cbsch_core,
      .            saved_cbsna_pfr1, saved_cbsna_pfr2,
-     .            saved_cbsna_sol, maxval(saved_na_feedback_actuator))
+     .            saved_cbsna_sol, maxval(saved_na_feedback_actuator),
+     .            maxval(saved_na_feedback_prev))
      .            .gt.0.0_R8
       if(feedback_namelist_used) then
         call write_b2mod_feedback(99,'    ')
@@ -278,7 +279,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, ispecies, is0,
-     &        mdf_fnb, style_b2mndt, lit,
+     &        mdf_fnb, style_b2mndt, lit, lib,
 #ifdef B25_EIRENE
      &        i, j, k, l, npump_list,
      &        pump_list(DEF_NLIM+DEF_NSTS,0:DEF_NATM-1),
@@ -293,7 +294,7 @@
       integer, save :: nxtl, nxtr, puff_strata(0:DEF_NATM-1)
       real (kind=R8) ::
      &  na_feedback_current, na_feedback_rescale, vol_feedback,
-     &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
+     &  na_feedback_save(0:DEF_NATM-1),
      &  dt_prev, sum_e, sum_s,
      &  total_flux, flux_old, target_flux,
      &  fnaycore, fnaycore_alpha, fnaycurr,
@@ -323,7 +324,7 @@
       logical, save :: consistent
       logical consistent_core, consistent_sol, consistent_pfr1,
      .        consistent_pfr2, zeroslope
-      save ncall, dt_prev, na_feedback_prev, na_feedback_save,
+      save ncall, dt_prev, na_feedback_save,
      1  fnaycore, fnaycore_alpha, fheycore, fheycore_alpha,
      2  fhiycore, fhiycore_alpha, fchycore, fchycore_alpha,
      3  nesepm, nesepm_sol, nepedm_sol, nesepm_pfr,
@@ -352,7 +353,7 @@
 #endif
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
      &  n_flux_zero/0/, na_feedback_save/DEF_NATM*0.0_R8/,
-     &  na_feedback_prev/DEF_NATM*0.0_R8/, use_eirene/0/,
+     &  use_eirene/0/,
      1  fnaycore/-1.0e30_R8/, fnaycore_alpha/1.0e-1_R8/,
      1  fheycore/0.0_R8/, fheycore_alpha/1.0e-1_R8/,
      2  fhiycore/0.0_R8/, fhiycore_alpha/1.0e-1_R8/,
@@ -526,8 +527,8 @@
      &       (na_feedback_actuator(ispecies).eq.4 .and.
      &        na_feedback_ib(ispecies).gt.0 .and.
      &        na_feedback_ib(ispecies).le.n_spcsrf .and.
-     &        i_spcsrf(na_feedback_ib(ispecies)) .le.
-     &        j_spcsrf(na_feedback_ib(ispecies)))))
+     &        i_spcsrf(abs(na_feedback_ib(ispecies))) .le.
+     &        j_spcsrf(abs(na_feedback_ib(ispecies))))))
        end do
        call xertst (consistent,
      .  'feedback scheme not consistent with B.C.''s!')
@@ -909,8 +910,9 @@
      &       na_feedback_option(ispecies) .gt. 0 .and.
      &       na_feedback_actuator(ispecies) .gt. 0) then
 
-            if (main_call) then
-              na_feedback_prev(ispecies) = na_feedback_save(ispecies)
+            if (main_call.and.ncall.gt.0) then
+              saved_na_feedback_prev(ispecies) =
+     .                               na_feedback_save(ispecies)
             end if
 ! phase 1:
             select case(na_feedback_choice(ispecies))
@@ -1541,13 +1543,16 @@
               endif
 
               if (ncall.gt.0) then
-                lit = ltrgpos(na_feedback_it(ispecies)) + 1 -
+                lit = ltrgpos(na_feedback_it(ispecies)) +
+     .                    mod(na_feedback_it(ispecies),2)
+                lib = ltrgpos(na_feedback_it(ispecies)) + 1 -
      .                    mod(na_feedback_it(ispecies),2)
                 na_feedback_current = 0.0_R8
                 do iy= 0, ny-1
                   do is = 0, ns-1
                     na_feedback_current = na_feedback_current +
-     .                rza(lit,iy,is) * fna(lit,iy,0,is)
+     .                      0.5_R8*(rza(lit,iy,is) + rza(lib,iy,is)) *
+     .                      fna(max(lib,lit),iy,0,is)
                   enddo
                 enddo
                 na_feedback_current = abs(qe*na_feedback_current)
@@ -1835,7 +1840,8 @@ c           Inverse the actuator if necessary
                 if (na_feedback_const(ispecies).le.0.0_R8)
      &            na_feedback_const(ispecies) =
      &                        na_feedback_target(ispecies)
-                na_feedback_prev(ispecies) = na_feedback_current
+                if (saved_na_feedback_prev(ispecies).le.0.0_R8)
+     &            saved_na_feedback_prev(ispecies)=na_feedback_current
               endif
 
               na_feedback_target(ispecies) =
@@ -1846,7 +1852,7 @@ c           Inverse the actuator if necessary
      .          na_feedback_alpha(ispecies) *
      .        ((na_feedback_target(ispecies) -
      .          na_feedback_current)/dteff +
-     .         (na_feedback_prev(ispecies) -
+     .         (saved_na_feedback_prev(ispecies) -
      .          na_feedback_current)/dt_prev)
               na_feedback_save(ispecies) = na_feedback_current
 
@@ -1865,7 +1871,8 @@ c           Inverse the actuator if necessary
                 if (na_feedback_const(ispecies).le.0.0_R8)
      &            na_feedback_const(ispecies) =
      &                        na_feedback_target(ispecies)
-                na_feedback_prev(ispecies) = na_feedback_current
+                if (saved_na_feedback_prev(ispecies).le.0.0_R8)
+     &            saved_na_feedback_prev(ispecies)=na_feedback_current
               endif
 
               na_feedback_target(ispecies) =
@@ -1876,7 +1883,7 @@ c           Inverse the actuator if necessary
      .           na_feedback_alpha(ispecies) *
      .         ((na_feedback_target(ispecies) -
      .           na_feedback_current)/dteff +
-     .          (na_feedback_prev(ispecies) -
+     .          (saved_na_feedback_prev(ispecies) -
      .           na_feedback_current)/dt_prev)
               na_feedback_save(ispecies) = na_feedback_current
 
@@ -2001,7 +2008,6 @@ c           Inverse the actuator if necessary
      .              na_feedback_choice(ispecies),
      .             '. No linearisation needed. Falling back to ',
      .             'na_feedback_option 4 with na_feedback_const = 0.0'
-                  na_feedback_prev(ispecies) = na_feedback_current
                 endif
               endif
 
@@ -2059,19 +2065,24 @@ c           Inverse the actuator if necessary
                   endif
                 enddo
 #endif
-                if (ncall.eq.0) na_feedback_prev(ispecies) = hlp
+                if (ncall.eq.0.and.
+     .                  saved_na_feedback_prev(ispecies).le.0.0_R8)
+     &            saved_na_feedback_prev(ispecies) = hlp
                 na_feedback_rescale =
-     .           na_feedback_alpha(ispecies) *
+     .            na_feedback_alpha(ispecies) *
      .            ((na_feedback_target(ispecies)/na_feedback_current -
-     .             1.0_R8)*hlp/dteff +
-     .             (na_feedback_prev(ispecies) - hlp)/dt_prev)
+     .              1.0_R8)*hlp/dteff +
+     .             (saved_na_feedback_prev(ispecies) - hlp)/dt_prev)
                 na_feedback_save(ispecies) = hlp
               else
+                if (ncall.eq.0.and.
+     .                  saved_na_feedback_prev(ispecies).le.0.0_R8)
+     &            saved_na_feedback_prev(ispecies)=na_feedback_current
                 na_feedback_rescale =
-     .           na_feedback_alpha(ispecies) *
+     .            na_feedback_alpha(ispecies) *
      .            ((na_feedback_target(ispecies) -
-     .             na_feedback_current)/dteff +
-     .             (na_feedback_prev(ispecies) -
+     .              na_feedback_current)/dteff +
+     .             (saved_na_feedback_prev(ispecies) -
      .             na_feedback_current)/dt_prev)
                 na_feedback_save(ispecies) = na_feedback_current
               endif
@@ -2101,7 +2112,6 @@ c           Inverse the actuator if necessary
      .              na_feedback_choice(ispecies),
      .             '. No linearisation needed. Falling back to ',
      .             'na_feedback_option 4 with na_feedback_const = 0.0'
-                  na_feedback_prev(ispecies) = na_feedback_current
                 endif
               endif
 
@@ -2157,19 +2167,24 @@ c           Inverse the actuator if necessary
                   endif
                 enddo
 #endif
-                if (ncall.eq.0) na_feedback_prev(ispecies) = hlp
+                if (ncall.eq.0.and.
+     .                  saved_na_feedback_prev(ispecies).le.0.0_R8)
+     &            saved_na_feedback_prev(ispecies) = hlp
                 na_feedback_rescale =
-     .           na_feedback_alpha(ispecies) *
+     .            na_feedback_alpha(ispecies) *
      .            ((na_feedback_target(ispecies)/na_feedback_current -
-     .             1.0_R8)*hlp/dteff +
-     .             (na_feedback_prev(ispecies) - hlp)/dt_prev)
+     .              1.0_R8)*hlp/dteff +
+     .             (saved_na_feedback_prev(ispecies) - hlp)/dt_prev)
                 na_feedback_save(ispecies) = hlp
               else
+                if (ncall.eq.0.and.
+     .                  saved_na_feedback_prev(ispecies).le.0.0_R8)
+     &            saved_na_feedback_prev(ispecies)=na_feedback_current
                 na_feedback_rescale =
-     .           na_feedback_alpha(ispecies) *
+     .            na_feedback_alpha(ispecies) *
      .            ((na_feedback_target(ispecies) -
-     .             na_feedback_current)/dteff +
-     .             (na_feedback_prev(ispecies) -
+     .              na_feedback_current)/dteff +
+     .             (saved_na_feedback_prev(ispecies) -
      .             na_feedback_current)/dt_prev)
                 na_feedback_save(ispecies) = na_feedback_current
               endif
@@ -2186,7 +2201,7 @@ c           Inverse the actuator if necessary
      &        na_feedback_target(ispecies),
      &        saved_na_feedback_actuator(ispecies),
      &        na_feedback_rescale,
-     &        na_feedback_prev(ispecies),
+     &        saved_na_feedback_prev(ispecies),
      &        dteff, dt_prev
 
 ! phase 3:
@@ -3453,10 +3468,10 @@ c  substract neutral flux to the core from pumping
         if (k.lt.0) k = nlim - k
         do ja = 1, nnatmi
           if (latmscl(ja) .eq. ispecies) then
-            recyct(ja,k) = 1.0_R8 - absr
+            recyct(ja,k) = 1.0_R8 - absr !aap nphoti shift needed 
             do jm = 1,nnmoli
               if (mlcmp(ja,jm) .gt. 0) then
-                recyct(jm+nnatmi,k) = 1.0_R8 - absr
+                recyct(jm+nnatmi,k) = 1.0_R8 - absr !aap nphoti shift needed
               endif
             enddo
           endif
