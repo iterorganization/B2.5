@@ -99,7 +99,7 @@ c*** Calculate the load
 #ifdef DBG
         do j=1,ntrgts !{
           print '(a,i2,a/(1p,5e17.4))','Target',j,': load',
-     ,     (wldrdld(lppp+(j-1)*ny+i+1),i=0,ny-1)
+     ,     (wldrdld(lppp+(j-1)*nytg+i+1),i=0,nytg-1)
         end do !}
 #endif
       end if !}

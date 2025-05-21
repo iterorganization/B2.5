@@ -110,13 +110,18 @@ function run_test {
       export OMP_STACKSIZE=128MB
     fi
   fi
+  if [ -n "$SOLPS_MPI" ]; then
+    echo "Found MPI mode"
+    MPI_OPTS='-m "mpiexec -np 1"'
+    echo b2run $MPI_OPTS b2mn
+  fi
 
   if [ $4 -eq 1 ]; then
     echo Running B2.5 in serial mode
-    b2run -s b2mn 2>&1 | tee run.log
+    b2run -o $MPI_OPTS -s b2mn 2>&1 | tee run.log
   else
     echo Running B2.5 using $4 threads
-    b2run -s -t $4 b2mn 2>&1 | tee run.log
+    b2run -o $MPI_OPTS -s -t $4 b2mn 2>&1 | tee run.log
   fi
   cd ..
 }

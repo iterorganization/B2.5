@@ -209,7 +209,7 @@
 			</introduction>
 		</routine>
 		<coefficients>
-			<!-- These block contains tooltips for cofficient blocks-->
+			<!-- These block contains tooltips for coefficient blocks-->
 			<param>
 				<name>label</name>
 				<type>string</type>
@@ -2872,7 +2872,63 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Another option for movie output. Gives the real-time interval between movie frames. If non-zero, must be at least as large as the simulation timestep.
+					If non-zero, the movie files b2movies.nc and eirenemovies.nc are generated (the second one only in case of coupled runs), containing several multidimensional quantities. Gives the real-time interval between writes of movie frames in b2movies.nc and eirenemovies.nc. If non-zero, must be at least as large as the simulation timestep.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_b25_state_variables</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_state_variables.ge.1 then the plasma state variables (na, ne, Te, Ti, etc.) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_b25_fluxes</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_fluxes.ge.1 then the plasma fluxes (fna(x/y), fhe(x/y), fhi(x/y), etc.) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_b25_sources</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_b25_sources.ge.1 then the sources calculated by B2.5 (i.e. by atomic processes, electron cooling and line radiation) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_eirene_state_variables</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_eirene_state_variables.ge.1 then neutrals state variables (densities and temperatures for atoms and molecules) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_eirene_fluxes</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_eirene_fluxes.ge.1 then the neutrals fluxes (particle and energy fluxes for atoms and molecules) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_eirene_sources</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to b2movies.nc. If cdfmovie_eirene_sources.ge.1 then the plasma sources due to plasma-neutrals interactions (particle and energy sources for each fluid species, and neutrals radiation from atoms and molecules) over the B2.5 grid are outputted.
+				</description>
+			</switch>
+			<switch>
+				<name>cdfmovie_triangles</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Controls the quantities outputted to eirenemovies.nc. If cdfmovie_triangles.ge.1 then particle density, energy density and x-, y- and z-directed momentum density for atoms and molecules on the Eirene triangular grid are outputted, in case of coupled runs.
 				</description>
 			</switch>
 			<switch>
@@ -3073,7 +3129,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Controls additional output to b2time.nc.  If eq 1 then a few 2d arrays (ne, Te, Ti) are written with each write to b2time.nc. If eq 2 then fluxes, electric potential, kinetic energy, and fluid particle and energy source terms are also included (e.g., rsana, rsahi, rqrad).
+					Controls additional output to b2time.nc.  If 2dwrite.ge.1 then a few 2d arrays (ne, Te, Ti) are written with each write to b2time.nc. If 2dwrite.ge.2 then fluxes, electric potential, kinetic energy, and fluid particle and energy source terms are also included (e.g., rsana, rsahi, rqrad).
 				</description>
 			</switch>
 			<switch>
@@ -3644,8 +3700,8 @@
 				<type>integer</type>
 				<description>
 					If '0', use the SOLPS5.0 scheme for neutral heat conductivity flux limits.
-					If '1', SPB form to calculate parallel and perpendicular neutral heat conductivity flux limit (does not preserve symmetry, kept for backward compatibility reasons).
-					If '2', modifies the SPB treatment for the flux limits to be applied on the transport coefficients directly.
+					If '1', SPb form to calculate parallel and perpendicular neutral heat conductivity flux limit (does not preserve symmetry, kept for backward compatibility reasons).
+					If '2', modifies the SPb treatment for the flux limits to be applied on the transport coefficients directly.
 					It is recommended '2'.
 				</description>
 			</switch>
@@ -4146,8 +4202,8 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '2', SPB form of adding currents on the South core boundary is included by using BCPOT=12, and on the South PFR and North boundaries by using BCPOT=13. It is recommended '2', in conjunction with the BCPOT=12 and BCPOT=13 settings, respectively.
-					When set to '1', SPB form of adding currents on South and North boundaries is done explicitly in addition to other existing boundary conditions for the potential equation.
+					When set to '2', SPb form of adding currents on the South core boundary is included by using BCPOT=12, and on the South PFR and North boundaries by using BCPOT=13. It is recommended '2', in conjunction with the BCPOT=12 and BCPOT=13 settings, respectively.
+					When set to '1', SPb form of adding currents on South and North boundaries is done explicitly in addition to other existing boundary conditions for the potential equation.
 					The old 5.0 calculation is recovered by using the value '0'.
 				</description>
 			</switch>
@@ -4470,7 +4526,7 @@
 			<switchgroup>
 				<name>b2nph*</name>
 				<description>
-					When set to '1', SPB form of the program b2sihs_ is called. It is recommended '1'.
+					When set to '1', SPb form of the program b2sihs_ is called. It is recommended '1'.
 				</description>
 				<switch>
 					<name>b2npht_style</name>
@@ -4517,7 +4573,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					style specifies the precise form of interpolation used in the computation of flcb and cvcb. When set to '1', SPB form of the transport terms in the momentum correction equation is used.
+					style specifies the precise form of interpolation used in the computation of flcb and cvcb. When set to '1', SPb form of the transport terms in the momentum correction equation is used.
 					It is recommended '1'.
 				</description>
 			</switch>
@@ -4526,7 +4582,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPB form of an expression that occurs in the electron-atom thermal force is used. Only used if b2sigp_style.ne.2.
+					When set to '1', SPb form of an expression that occurs in the electron-atom thermal force is used. Only used if b2sigp_style.ne.2.
 					It is recommended '1'.
 				</description>
 			</switch>
@@ -4560,7 +4616,7 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPB form of the pressure gradient term on the right hand of the momentum balance equation is used.
+					When set to '1', SPb form of the pressure gradient term on the right hand of the momentum balance equation is used.
 					When set to '2', the parallel current term contains a correction due to impurities, when Z_eff is not equal to the average plasma ion charge. Only usable if the potential equation is solved simultaneously (b2news_poteq.eq.1).
 					The default value of '2' is recommended for cases with one main hydrogenic species (or at least where the main species is the lightest one) and any amount of impurities. It is not guaranteed to yield correct results for hydrogen isotopic mixtures or non-hydrogenic plasmas.
 				</description>
@@ -4782,7 +4838,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPB new form of calculating electron heat flux is used. It is recommended '1' for runs with drifts.
+					If '1', SPb new form of calculating electron heat flux is used. It is recommended '1' for runs with drifts.
 				</description>
 			</switch>
 			<switch>
@@ -4806,7 +4862,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPB new form of calculating ion heat flux is used.
+					If '1', SPb new form of calculating ion heat flux is used.
 					It is recommended '1' for runs with drifts.
 				</description>
 			</switch>
@@ -4887,7 +4943,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPB new form of calculating particle flux is used.
+					If '1', SPb new form of calculating particle flux is used.
 					It is recommended '1' for runs with drifts.
 				</description>
 			</switch>
@@ -5004,14 +5060,14 @@
 					Use of this option is still experimental!
 				</description>
 				<switch>
-				  <name>b2ardr_fix_recomb</name>
-				  <default>0</default>
-				  <type>integer</type>
+					<name>b2ardr_fix_recomb</name>
+					<default>0</default>
+					<type>integer</type>
 				</switch>
 				<switch>
-				  <name>b2ardr_zmax_recomb</name>
-				  <default>1</default>
-				  <type>integer</type>
+					<name>b2ardr_zmax_recomb</name>
+					<default>1</default>
+					<type>integer</type>
 				</switch>
 			</switchgroup>
 			<switchgroup>
@@ -6301,7 +6357,6 @@
 						23 : electron temperature profile in eV is read from the ENE_FN file. If ENEPAR(,,2) > 0 the profile is scaled so ENEPAR(,,1) provides the maximum electron temperature in eV.
 				</description>
 			</switch>
-
 			<switch>
 				<name>BCENI</name>
 				<type>integer array, length NBC</type>
@@ -6369,7 +6424,6 @@
 							POTPAR(,,2) is the strength of the feedback
 				</description>
 			</switch>
-
 			<switch>
 				<name>GAMMAI</name>
 				<default>1.0</default>
@@ -6506,7 +6560,7 @@
 				<type>integer array of size (NBC)</type>
 				<description>
 					List of core boundary segments, according to their numbering in the current /BOUNDARY/ namelist.
-					For limiter, SN, and DN topologies, the code will attempt to build the array from the topology information available, i.e., it will contain the list of 'South' boundaries forming a closed contour.
+					For cases with closed field lines, the code will attempt to build the array from the topology information available, i.e., it will contain the list of 'South' boundaries forming a closed contour.
 					For linear cases, in case a "core" type boundary condition is desired, then LCBS must be specified explicitly.
 				</description>
 			</switch>
@@ -6703,7 +6757,7 @@
 				</description>
 			</switch>
 			<switch>
-				<name>VACUUM_COMMINICATION_BETA</name>
+				<name>VACUUM_COMMUNICATION_BETA</name>
 				<default>1.0</default>
 				<type>real array of size (0:NSPECIES-1,NVAC)</type>
 				<description>
@@ -7361,7 +7415,7 @@
 				<type>logical array of size (0:NREG)</type>
 				<description>
 					Indicates whether the total energy equation is to be solved in region (ireg). For the equation to be solved in region (ireg), both SOLVEEE and SOLVEEI must be true in that region. Subservient to 'no_solve' switch.
-					It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with total energy equation, as a group.
+					It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with the total energy equation, as a group.
 					Defaults to .true. unless using the time-dependent mode, in which case it is set to .false. and should not be used.
 				</description>
 			</switch>

@@ -142,11 +142,6 @@ program b2_ual_rewrite
     use b2mod_driver &
      & , only : treename
 #endif
-#ifdef B25_EIRENE
-    use eirmod_parmmod
-    use eirmod_comusr
-    use eirmod_extrab25
-#endif
     use b2mod_ipmain
     implicit none
 #ifndef NO_GETENV
@@ -225,10 +220,6 @@ program b2_ual_rewrite
     write (*,*) 'Starting b2mn init'
     call b2mn_init
     ! call b2mn_step(0)
-#ifdef B25_EIRENE
-    CALL EIRENE_ALLOC_COMUSR(1)
-    call eirene_extrab25_eirpbls_init(nmol,nion,npls)
-#endif
     ! read plasma state
     call cfopen(56,'b2fplasma','old','unformatted')
     call cfverr(56, b2fplasma_version)
@@ -625,12 +616,16 @@ program b2_ual_rewrite
       &  numerics, &
 #endif
 #if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
-     &   run_start_time, run_end_time, &
+      &  run_start_time, run_end_time, &
 #endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
       &  divertors, &
 #endif
+#if IMAS_MAJOR_VERSION > 3
+      &  tim, dteff, shot, database, new_eq_ggd )
+#else
       &  tim, dteff, shot, new_run, database, version, new_eq_ggd )
+#endif
 
     write(*,*) "START new_ids_edge"
     call new_ids_edge( &
@@ -653,7 +648,8 @@ program b2_ual_rewrite
 #endif
         &   idx, new_eq_ggd )
     systemarg = 'create_db_entry -u '//trim(username)//' -d '//trim(database) &
-        &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string)
+        &  //' -s '//trim(shot_string)//' -r '//trim(new_run_string) &
+        &  //' -v '//int2str(IMAS_MAJOR_VERSION)
     write(0,*) trim(systemarg)
 #ifdef NAGFOR
     call system(systemarg, status, ierror)
