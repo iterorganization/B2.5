@@ -752,7 +752,11 @@ program b2_ual_write_b2mod
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
              &  divertors, &
 #endif
+#if IMAS_MAJOR_VERSION > 3
+             &  tim, dteff, shot, database, new_eq_ggd, &
+#else
              &  tim, dteff, shot, run, database, version, new_eq_ggd, &
+#endif
              &  time_slice_index, num_time_slices )
         else
           write (0,*) "Not a time continuation, IDS will be overwritten !"
@@ -783,7 +787,11 @@ program b2_ual_write_b2mod
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
          &  divertors, &
 #endif
+#if IMAS_MAJOR_VERSION > 3
+         &  tim, dteff, shot, database, new_eq_ggd )
+#else
          &  tim, dteff, shot, run, database, version, new_eq_ggd )
+#endif
     end if
 
     !! Create Write the set data to IDSs
