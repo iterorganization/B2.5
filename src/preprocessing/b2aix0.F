@@ -102,7 +102,7 @@
         mpg%nCornVx = mpg%nx
       else
         idum = 0
-        call cfruin_opt (ninp(1),1,idum,'nCornVx')
+        !call cfruin_opt (ninp(1),1,idum,'nCornVx')
         mpg%nCornVx = idum(0)
       endif
 

@@ -956,6 +956,7 @@ cwdk  can be derived directly from data in that file
           issep(m%XptFsID(i)) = .true. 
         end do 
         allocate(m%alliFssep(count(issep)))
+        m%alliFssep = m%XptFsID
 
         ! Compute mapping from vertex ID to local Xpt array ID
         allocate(mapXptID(m%nVx))

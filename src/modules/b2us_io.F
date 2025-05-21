@@ -93,6 +93,7 @@
           m%isClassicalGrid = idum(0)
           call cfruin_opt (ninp, 3, idum, 'nx,ny,nncut')
           if (m%isClassicalGrid == 1) then
+            
             m%nx = idum(0)
             m%ny = idum(1)
             m%nncut = idum(2)

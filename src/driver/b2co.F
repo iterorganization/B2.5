@@ -87,6 +87,7 @@
       integer :: write_triangles = 0
       real (kind=R8) :: delta_cdfmovie_time = 0.0_R8
       character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
+      character(120)  :: cdum 
       character filename*256
       character filename_tri*256
       character b2fstate_only*256
@@ -141,26 +142,8 @@
       call cfverr (ninp(2), b2fparam_version)                          !xpb
       call cfverr (ninp(3), b2fstati_version)                          !xpb
 *   ..obtain mapping/geometry dimensions from b2fgmtry file
-      call cfruin (ninp(1),7,idum,'nCi,nCg,nCv,nFc,nVx,nFs,nFt')
-      mpg%nCi = idum(0) 
-      mpg%nCg = idum(1) 
-      mpg%nCv = idum(2)
-      mpg%nFc = idum(3)
-      mpg%nVx = idum(4)
-      mpg%nFs = idum(5)
-      mpg%nFt = idum(6)
-      call cfruin (ninp(1),5,idum,'nCmxVx,nCmxFc,nVmxCv,nVmxFc,nCmxNv')
-      mpg%nCmxVx = idum(0)
-      mpg%nCmxFc = idum(1)
-      mpg%nVmxCv = idum(2)
-      mpg%nVmxFc = idum(3)
-      mpg%nCmxNv = idum(4)
-      call cfruin (ninp(1),1,idum,'isClassicalGrid')
-      mpg%isClassicalGrid = idum(0)
-      call cfruin (ninp(1),3,idum,'nx,ny,nncut')
-      mpg%nx    = idum(0)
-      mpg%ny    = idum(1)
-      mpg%nncut = idum(2)
+      call read_b2fgmtry_header(ninp(1), b2fgmtry_version, mpg, 
+     &  cdum, idum(0))
       call xertst (0.lt.mpg%nCv.and.0.lt.mpg%nFc,
      &  'faulty input nCv, nFc from geometry file')
 *   ..obtain ns from parameters file

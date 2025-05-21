@@ -484,7 +484,7 @@
           m%nCornVx = m%nx
         else
           idum = 0
-          call cfruin_opt (nrid,1,idum,'nCornVx')
+          ! call cfruin_opt (nrid,1,idum,'nCornVx')
           m%nCornVx = 0
         endif
 
