@@ -681,7 +681,11 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
 #endif
+#if IMAS_MAJOR_VERSION > 3
+            &   time_IN, time_step_IN, shot, database, &
+#else
             &   time_IN, time_step_IN, shot, run, database, version, &
+#endif
             &   new_eq_ggd, &
             &   time_slice_ind_IN, num_time_slices_IN )
 #ifdef NO_OPT
@@ -721,8 +725,12 @@ contains
         type (ids_divertors) :: divertors !< IDS designed to store
             !< data related to the divertor plates
 #endif
-        integer, intent(in) :: shot, run
-        character(len=24), intent(in) :: database, version
+#if IMAS_MAJOR_VERSION < 4
+        integer, intent(in) :: run
+        character(len=24), intent(in) :: version
+#endif
+        integer, intent(in) :: shot
+        character(len=24), intent(in) :: database
         real(IDS_real), intent(in), optional :: time_IN !< Time
         real(IDS_real), intent(in), optional :: time_step_IN !< Time step
         integer, intent(in), optional :: time_slice_ind_IN
@@ -7145,8 +7153,12 @@ contains
             &   description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
-#endif
+#if IMAS_MAJOR_VERSION == 3
             &   time_IN, shot, run, database, version, &
+#else
+            &   time_IN, shot, database, &
+#endif
+#endif
             &   new_eq_ggd, &
             &   batch_ind_IN, num_batch_slices_IN )
 #ifdef NO_OPT
@@ -7168,9 +7180,13 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary) :: summary !< IDS designed to store
             !< run summary data
+#if IMAS_MAJOR_VERSION == 3
+        integer, intent(in) :: run
+        character(len=24), intent(in) :: version
 #endif
-        integer, intent(in) :: shot, run
-        character(len=24), intent(in) :: database, version
+#endif
+        integer, intent(in) :: shot
+        character(len=24), intent(in) :: database
         real(IDS_real), intent(in), optional :: time_IN !< Time
         integer, intent(in), optional :: batch_ind_IN
             !< Batch index for the current time slice
