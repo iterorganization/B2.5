@@ -71,7 +71,7 @@ c*** from 960808 on
      ,     flxrl_tmp(:)
 
       character f*(lenfnm), hlp_h(np_tmp)*8, hlp_frm*80
-
+      
       save f, hlp_frm, hlp_h, lun,
      , hlpit_lp,hlpit_rp,hlpit_pl,hlpic_s,hlpiw_s,hlpit_s,
      , flxic_tmp,flxnc_tmp,flxit_tmp,flxnt_tmp,
@@ -100,6 +100,8 @@ c*** Column headers:
       use b2mod_boundary_namelist
 #ifdef B25_EIRENE
       use eirmod_wneutrals
+      use eirmod_clgin
+     ,   , only : iliin
 #endif
       use b2mod_dimensions
 c
@@ -171,7 +173,7 @@ c<<<
         print *,'=== Regions of the grid:'
         l=ny+1
         n=mod(l-1,10)+1
-        i=(nx+2)/10+1
+        i=mod(nx+2,10)+1
         write(hlp_prt,'(a,i3,a)') '(1x,i4,1x,i1,',i,'(1x,10i1))'
         do k=0,ny-1
           m=l
@@ -492,22 +494,25 @@ c*** Flux across the targets
           js=ltns(is)+nnlimi
           do j=1,nnatmi
             if(latmscl(j).eq.ls) then
-              hlpnt=hlpnt-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
+              hlpnt=hlpnt-wldna(js,j,0)+wldra(js,j,0)
               do ic=1,nnmoli
                 if(mlcmp(j,ic).gt.0) hlpnt=hlpnt-mlcmp(j,ic)*
-     .                (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
+     .                (wldnm(js,ic,0)-wldrm(js,ic,0))
               end do
             end if
           end do
         end do
 c*** Flux across the side walls
         do js=1,nnlimi
+          if(iliin(js).le.0) cycle
           do j=1,nnatmi
             if(latmscl(j).eq.ls) then
-              hlpnw=hlpnw-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
+              hlpnw=hlpnw-wldna(js,j,0)+wldra(js,j,0)
               do ic=1,nnmoli
                 if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
-     .           (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
+     .                 (wldnm(js,ic,0)-wldrm(js,ic,0))
+                if(mlcmp(j,ic).gt.0) hlp=hlp-mlcmp(j,ic)*
+     .                 (wldnm(js,ic,0)-wldrm(js,ic,0))
               end do
             end if
           end do
