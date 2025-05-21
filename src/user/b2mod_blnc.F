@@ -504,7 +504,9 @@ c*** Flux across the targets
         end do
 c*** Flux across the side walls
         do js=1,nnlimi
+#ifdef B25_EIRENE
           if(iliin(js).le.0) cycle
+#endif
           do j=1,nnatmi
             if(latmscl(j).eq.ls) then
               hlpnw=hlpnw-wldna(js,j,0)+wldra(js,j,0)
