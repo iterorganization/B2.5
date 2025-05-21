@@ -2980,7 +2980,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &               divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &               tim, dtim, shot, database,
+#else
      &               tim, dtim, shot, run, database, version,
+#endif
      &               new_eq_ggd,
      &               time_slice_index, num_time_slices )
                     process_ids = .false.
@@ -2994,7 +2998,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &               summary,
 #endif
+#if IMAS_MAJOR_VERSION == 3
      &               tim, shot, run, database, version, new_eq_ggd,
+#else
+     &               tim, shot, database, new_eq_ggd,
+#endif
      &               batch_index, num_batch_slices )
                     process_av = .false.
                   end if
@@ -3037,7 +3045,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &          divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &          tim, dtim, shot, database, new_eq_ggd )
+#else
      &          tim, dtim, shot, run, database, version, new_eq_ggd )
+#endif
               old_start_time = run_start_time
               process_ids = .false.
             end if
@@ -3049,7 +3061,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &         summary,
 #endif
+#if IMAS_MAJOR_VERSION == 3
      &         tim, shot, run, database, version, new_eq_ggd )
+#else
+     &         tim, shot, database, new_eq_ggd )
+#endif
               process_av = .false.
             end if
           else if (process_ids .or. process_av) then
@@ -3074,7 +3090,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &          divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &          tim, dtim, shot, database, new_eq_ggd,
+#else
      &          tim, dtim, shot, run, database, version, new_eq_ggd,
+#endif
      &          time_slice_index, num_time_slices )
               process_ids = .false.
             end if
@@ -3091,7 +3111,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
+#if IMAS_MAJOR_VERSION == 3
      &          tim, shot, run, database, version, new_eq_ggd,
+#else
+     &          tim, shot, database, new_eq_ggd,
+#endif
      &          batch_index, num_batch_slices )
               process_av = .false.
             end if
@@ -3454,7 +3478,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &      tim, dtim, shot, database, new_eq_ggd,
+#else
      &      tim, dtim, shot, run, database, version, new_eq_ggd,
+#endif
      &      time_slice_index, num_time_slices )
         else if (continued) then
 #if AL_MAJOR_VERSION > 4
@@ -3694,7 +3722,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &            divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &            tim, dtim, shot, database, new_eq_ggd,
+#else
      &            tim, dtim, shot, run, database, version, new_eq_ggd,
+#endif
      &            time_slice_index, num_time_slices )
               else
                 write(*,'(a)')
@@ -3741,7 +3773,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &      tim, dtim, shot, database, new_eq_ggd )
+#else
      &      tim, dtim, shot, run, database, version, new_eq_ggd )
+#endif
         end if
         if (ids_replace) then
           call new_ids_edge( edge_profiles, edge_sources,
