@@ -173,7 +173,7 @@ c<<<
         print *,'=== Regions of the grid:'
         l=ny+1
         n=mod(l-1,10)+1
-        i=mod(nx+2,10)+1
+        i=(nx+2)/10+1
         write(hlp_prt,'(a,i3,a)') '(1x,i4,1x,i1,',i,'(1x,10i1))'
         do k=0,ny-1
           m=l
