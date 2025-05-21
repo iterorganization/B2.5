@@ -1284,7 +1284,7 @@ c*** a their atomic mass in AMU, x the absorption probability.
           a=hlp_awdts(j)
           x=hlp_ksdts(k,j)
           hlp_tmdts(k,j)=0.5_R8*e
-          hlp_dndts(k,j)=3.6e-4_R8*g*sqrt(a/(e*s*s))
+          hlp_dndts(k,j)=2.6e-4_R8*g*sqrt(a/(e*s*s))
           hlp_prdts(k,j)=ev*hlp_tmdts(k,j)*hlp_dndts(k,j)
           hlp_fxdts(k,j)=g/s
           if(ndta_tmp(k,j).gt.nmnt_tmp) then !{
