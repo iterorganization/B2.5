@@ -513,8 +513,6 @@ c*** Flux across the side walls
               do ic=1,nnmoli
                 if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
      .                 (wldnm(js,ic,0)-wldrm(js,ic,0))
-                if(mlcmp(j,ic).gt.0) hlp=hlp-mlcmp(j,ic)*
-     .                 (wldnm(js,ic,0)-wldrm(js,ic,0))
               end do
             end if
           end do
