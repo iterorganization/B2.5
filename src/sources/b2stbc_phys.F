@@ -2377,7 +2377,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                     iCv1 = mpg%bcCv(mpg%bcCvP(ibw,1)+ibc-1,1)
                     iCv2 = mpg%bcCv(mpg%bcCvP(ibw,1)+ibc-1,2)
                     iFc = mpg%cvFc(mpg%cvFcP(iCv1,1))
-                    srw%sna0(iCv1,0,is) = VBIG*(NAS+pl%na(iCv1,is)-t1)
+                    srw%sna0(iCv1,0,is) = VBIG*(NAS+pl%na(iCv2,is)-t1)
      &               *geo%fcS(iFc)
                     srw%sna0(iCv1,1,is) =-VBIG*geo%fcS(iFc)
                     sna0_no_mdf(iCv1,0,is) = srw%sna0(iCv1,0,is)
@@ -2435,8 +2435,6 @@ cxpb  Add contribution from Eirene core boundary fluxes
      .                      '26 and 27 cannot be mixed!')
               endif
             ENDDO
-            if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
-     1       'BCCON = 27 is applied to highest ionisation stages only')
           endif
           IF (BCCHAR(IB).EQ.'S'.or.BCCHAR(IB).EQ.'A') THEN
             if(.not.once_bccon(is)) then
