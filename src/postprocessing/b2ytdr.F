@@ -12379,6 +12379,23 @@ cxpb as they no longer necessarily point to the same species
         if (Te_det_threshold.ne.2.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)')
      >    'TE_DET_THRESHOLD=',Te_det_threshold,','
+        if (q95_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'Q95_ALBLL=',q95_albll,','
+        if (B0_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'B0_ALBLL=',B0_albll,','
+        if (R0_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'R0_ALBLL=',R0_albll,','
+        if (maxval(trgshp(1:2*nncut)).gt.1.0_R8) then
+          write(hlp_frm,'(a,i1,a)') '(1x,a,1p,',2*nncut,'(e10.2,a))'
+          if (flip) then
+            write(99,hlp_frm) 'TRGSHP=',(trgshp(i),',',i=2*nncut,1,-1)
+          else
+            write(99,hlp_frm) 'TRGSHP=',(trgshp(i),',',i=1,2*nncut)
+          end if
+        end if
         do i=1,3
           if (j_h_at(i).ne.0) j_h_at(i) = iatm1(j_h_at(i))
         end do
