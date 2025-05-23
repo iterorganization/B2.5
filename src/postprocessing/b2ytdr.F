@@ -272,7 +272,7 @@ c 2002-09-11: logic revised
      * xr1(:), xf1(:), xd1(:), xr2(:), xf2(:), xd2(:),
      1 xpr(:), xpf1(:), xpf2(:), x1d(:,:,:,:),
      2 l_conn(:), nbini(:),
-     3 saved_fb_actuator1(:),
+     3 saved_fb_actuator1(:), saved_fb_prev1(:),
      4 fb_target1(:), fb_alpha1(:), fb_beta1(:),
      5 fb_puff_min1(:), fb_puff_max1(:),
      6 fb_const1(:), fb_overshoot1(:),
@@ -1496,7 +1496,7 @@ c 2002-09-11: logic revised
       if (neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo) then
         call alloc_b2mod_neutrals
      .   (ns, natm, nmol, nion, nstraid, nsts, sput_dst)
-        call read_neutrals_namelist(nx, ny, ns, .false.)
+        call read_neutrals_namelist(nx, ny, ns, switch, .false.)
         call xertst (nstrat.le.nstraid,
      .   'Increase DEF_NSTRA in b2mod_dimensions')
         ib1 = 0
@@ -11341,7 +11341,7 @@ cxpb as they no longer necessarily point to the same species
          filename = neutrals_filename
          new_filename = trim(neutrals_filename)//'.2'
          call find_file(filename,todo)
-         call read_neutrals_namelist(nx, ny, ns, .false.)
+         call read_neutrals_namelist(nx, ny, ns, switch, .false.)
          call xertst (nstrai.le.nstraid,
      >      'Increase DEF_NSTRA in b2mod_dimensions')
          call find_file(new_filename,found)
@@ -11516,22 +11516,29 @@ cxpb as they no longer necessarily point to the same species
       if((lfeedback.or.b2stbc_feedback.ne.0.or.todo)
      &   .and. .not.found .and. .not.same_atoms) then
         call read_b2us_feedback(99,'    ',feedback_namelist_used)
-        if (maxval(saved_fb_actuator).gt.0.0_R8) then
+        if (maxval(saved_fb_actuator).gt.0.0_R8.or.
+     &      maxval(saved_fb_prev).gt.0.0_R8) then
           todo = .false.
           is = 1
           do while (.not.todo .and. is.le.nspecies)
             todo = todo .or.
-     &        (saved_fb_actuator(is-1).gt.0.0_R8 .and.
+     &       ((saved_fb_actuator(is-1).gt.0.0_R8.or.
+     &         saved_fb_prev(is-1).gt.0.0_R8) .and.
      &         ispecies1(is).ne.is)
             is = is+1
           end do
           if (todo) then
             allocate(saved_fb_actuator1(0:nspecies1-1))
+            allocate(saved_fb_prev1(0:nspecies1-1))
             saved_fb_actuator1 = 0.0_R8
+            saved_fb_prev1 = 0.0_R8
             do is = 1, nspecies
-              if (ispecies1(is).ne.-1)
-     >         saved_fb_actuator1(ispecies1(is)-1) =
-     .          saved_fb_actuator(is-1)
+              if (ispecies1(is).ne.-1) then
+                saved_fb_actuator1(ispecies1(is)-1) =
+     .           saved_fb_actuator(is-1)
+                saved_fb_prev1(ispecies1(is)-1) =
+     .           saved_fb_prev(is-1)
+              end if
             end do
             write(*,*) 'Writing b2.feedback_save.parameters.2'
             write(nout(5),'(a)') trim(new_filename)
@@ -11539,11 +11546,16 @@ cxpb as they no longer necessarily point to the same species
             write(99,'(a9)') '&FEEDBACK'
             write(hlp_frm,'(a,i2,a)')
      >       '(a,1p,',nspecies1,'(1x,1e15.8,'',''))'
-            write(99,hlp_frm) 'SAVED_FB_ACTUATOR=',
-     >       (saved_fb_actuator1(is),is=0,nspecies1-1)
+            if (maxval(saved_fb_actuator1).gt.0.0_R8)
+     >       write(99,hlp_frm) 'SAVED_FB_ACTUATOR=',
+     >        (saved_fb_actuator1(is),is=0,nspecies1-1)
+            if (maxval(saved_fb_prev1).gt.0.0_R8)
+     >       write(99,hlp_frm) 'SAVED_FB_PREV=',
+     >        (saved_fb_prev1(is),is=0,nspecies1-1)
             write(99,'(a1)') '/'
             close(99)
             deallocate(saved_fb_actuator1)
+            deallocate(saved_fb_prev1)
           end if
         end if
       else if (todo) then
@@ -11929,6 +11941,22 @@ cxpb as they no longer necessarily point to the same species
      >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_HE_TO_D=',Spmp_He_to_D,','
         if (Spmp_nom.ne.0.0_R8)
      >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_NOM=',Spmp_nom,','
+        if (Te_det_threshold.ne.2.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'TE_DET_THRESHOLD=',Te_det_threshold,','
+        if (q95_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'Q95_ALBLL=',q95_albll,','
+        if (B0_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'B0_ALBLL=',B0_albll,','
+        if (R0_albll.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)')
+     >    'R0_ALBLL=',R0_albll,','
+        if (maxval(trgshp(1:2*nncut)).gt.1.0_R8) then
+          write(hlp_frm,'(a,i1,a)') '(1x,a,1p,',2*nncut,'(e10.2,a))'
+          write(99,hlp_frm) 'TRGSHP=',(trgshp(i),',',i=1,2*nncut)
+        end if
         do i=1,3
           if (j_h_at(i).ne.0) j_h_at(i) = iatm1(j_h_at(i))
         end do

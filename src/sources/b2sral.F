@@ -33,8 +33,8 @@
      & , only : conpar, enepar, enipar, nbcd, enkpar, potpar, mompar,
      &          lfeedback
       use b2us_feedback
-     & , only : fb_target, fb_prev, fb_current, cum_volrec, fb_const,
-     &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
+     & , only : fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
+     &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
      &          feedback_namelist_used
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
