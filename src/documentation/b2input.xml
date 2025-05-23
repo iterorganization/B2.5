@@ -6687,6 +6687,14 @@
 					Last value used for the feedback control actuator for each isonuclear sequence.
 				</description>
 			</switch>
+			<switch>
+				<name>SAVED_NA_FEEDBACK_PREV</name>
+				<default>0.0</default>
+				<type>real array of size (NSPECIES)</type>
+				<description>
+					Last value of the density used for the feedback control for each isonuclear sequence.
+				</description>
+			</switch>
 		</category>
 		<category name="b2.feedback_control.parameters">
 			<introduction>
@@ -8082,6 +8090,38 @@
 				<type>real</type>
 				<description>
 					Electron temperature at the target (in eV) which is used a threshold identifying the transition of the local magnetic flux tube to detachment. The width of the zone with Te less than TE_DET_THRESHOLD (counted from the strike point towards the SOL side) is outputted into user_SPb.trc. This distance monotonically increases with increasing of radiated power fraction or with decreasing of peak target energy loads, therefore it may be used as a measure of the degree of detachment.
+				</description>
+			</switch>
+			<switch>
+				<name>Q95_ALBLL</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Safety factor used to estimate the ballooning "alpha" parameter, if not assigned will be estimated as L_conn/(2*pi*R) at the core interface.
+				</description>
+			</switch>
+			<switch>
+				<name>R0_ALBLL</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Major radius used to estimate the ballooning "alpha" parameter. If not assigned, will be estimated as 0.5*(Rmin-Rmax) at the core interface.
+				</description>
+			</switch>
+			<switch>
+				<name>B0_ALBLL</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Magnetic field used to estimate the ballooning "alpha" parameter. If not assigned, will be estimated as Bomp*R0/Romp at the core interface.
+				</description>
+			</switch>
+			<switch>
+				<name>TRGSHP</name>
+				<default>1.0</default>
+				<type>real array of size (NTRGTS)</type>
+				<description>
+					Target shaping factor applied to plasma heat loads in peak heat flux estimate calculated by b2mod_usertrc.
 				</description>
 			</switch>
 			<switch>
