@@ -8,6 +8,8 @@
 #ifdef B25_EIRENE
       use eirmod_wneutrals
       use eirmod_eirbra
+      use eirmod_clgin
+     ,   , only : iliin
 #else
       use b2mod_eirbra
 #endif
@@ -28,6 +30,11 @@ c*** lvmj  :  version number referring to the last major change
       integer lv,lvmj
       parameter (lv=20000727, lvmj=970212)
 
+c----------------------------------------------------------------------
+c*** debug_flags usage:
+c***  xx  >0 : debugging printout on
+c***  81     : target fluxes from b2usr_loads printed to targb2*.dat
+c***  99     : enables debug printouts in b2mod_usrtrc.F
 c-----------------------------------------------------------------------
 c*** User-specific data:
 c***
@@ -43,7 +50,9 @@ c***    pk_pwr_i  hlp_ppwi   peak power load onto the inner target
 c***    pk_pwr_o  hlp_ppwo   peak power load onto the outer target
 c***    pk_pw_iu  hlp_pwiu   peak power load on the inner upper target
 c***    pk_pw_ou  hlp_pwou   peak power load on the outer upper target
-c***                         (the peaks do not include radiation load)
+c***                         (the peaks are calculated in a more simple
+c***                         way compared to user_spb however they allow
+c**                          for an additional multiplicator to the plasma loads)
 c***    Sp_DT     hlp_spdt   effective pumping speed for DT
 c***    Sp_He     hlp_sphe   effective pumping speed for He
 c***    Sp_He_sc  hlp_sshe   re-scaled pumping speed for He
@@ -79,6 +88,13 @@ c***    DoD_il    hlp_dodil  min. DoD, inner lower divertor
 c***    DoD_ol    hlp_dodol  min. DoD, outer lower divertor
 c***    DoD_iu    hlp_dodiu  min. DoD, inner upper divertor
 c***    DoD_ou    hlp_dodou  min. DoD, outer upper divertor
+c***    isatt_il  hlp_istil  total Isat to inner lower divertor
+c***    isatt_ol  hlp_istil  total Isat to outer lower divertor
+c***    isatt_iu  hlp_istil  total Isat to inner upper divertor
+c***    isatt_ou  hlp_istil  total Isat to inner upper divertor
+c***    albll_mx  al_bll_mx  ballooning alpha parameter maximum value
+c***    albll_ix  al_bll_ix  ballooning alpha parameter maximum ix
+c***    albll_iy  al_bll_iy  ballooning alpha parameter maximum iy
 c-----------------------------------------------------------------------
 
 c*** Global values
@@ -137,11 +153,11 @@ c*** Column headers:
      4      'He_sc_sp', 'He_og_cr', 'He_og_sp', 'He_enrcs', 'He_enrcc',
      4      'DT_thrpt', 'He_thrpt'/
       data hlp_hg2 /
-     1      'DoD_il', 'DoD_ol', 'DoD_iu', 'DoD_ou' /
+     1      'DoD_il  ', 'DoD_ol  ', 'DoD_iu  ', 'DoD_ou  ' /
       data hlp_hg3 /
-     1      'isat_tt_il', 'isat_tt_ol', 'isat_tt_iu', 'isat_tt_ou' /
+     1      'isatt_il', 'isatt_ol', 'isatt_iu', 'isatt_ou' /
       data hlp_hg4 /
-     1      'al_bll_max', 'al_bll_ix', 'al_bll_iy' /
+     1      'albll_mx', 'albll_ix', 'albll_iy' /
       data hlp_hp / 'PFR_flow' /
       data hlp_hn / 'n','p','T','j','G','S','s' /
       data hlp_hr / 'n', 'T', 'v' /
@@ -266,10 +282,11 @@ c***    surface area,cell interface areas
       real (kind=R8) ::
      *  hlp, hlp_s, hlp_pi, hlp_si, hlp_po, hlp_so,
      ,  hlp_he, hlp_hep,
-     ,  hlp_ne_he_c, hlp_ne_he_s
+     ,  hlp_ne_he_c, hlp_ne_he_s,
+     ,  hlp_alcff
       real (kind=R8) ::
      *  d, e, s, x
-      real (kind=R8) :: pz(-1:nx,-1:ny)
+      real (kind=R8) :: pz(-1:nx,-1:ny), albll(0:nx-1,0:ny-1)
       integer i, j, k, l, m, n, i0, is, ix, iy, js, irt,
      ,  j_he_i, l_pad_str
 #ifdef B25_EIRENE
@@ -281,7 +298,7 @@ c*** radial position of the separatrix and poloidal positions of
 c*** targets and midplane for DoD calculation for each target
       integer isp_tmp(4),imp_tmp(4)
       integer use_eirene
-      logical ex, first, first_out
+      logical ex, first, first_out, hlp_dbg
       character f*(lenfnm)
       character hlp_tpl*2
       data use_eirene / 0 /
@@ -289,29 +306,32 @@ c*** targets and midplane for DoD calculation for each target
 c-----------------------------------------------------------------------
 
       save
-c=======================================================================
+      if(first_time_step) return
       if(.not.filedata(ltrc)) return
 c=======================================================================
 
+      hlp_dbg=debug_flags(99).gt.0
+
       if (first) then !{
 
-c!###{
-c        print *
-c        print *,'b2usrtrc: before initialisation. ',
-c     ,    'natm,nmol,nnatmi,nnmoli,nntrgrp=',
-c     ,     natm,nmol,nnatmi,nnmoli,nntrgrp
-c        if(nntrgrp.gt.0) then !{
-c          print '(1x,a9,2x,20i4/(12x,20i4))','lntrgrp:',
-c     ,                                (lntrgrp(i),i=1,jntrgrp(nntrgrp))
-c          print '(1x,a9,2x,16a9)','gntrgrp:',
-c     ,                                (gntrgrp(i),i=1,nntrgrp)
-c          print '(1x,a9,1x,i4,15i9)','intrgrp:',
-c     ,                                (intrgrp(i),i=1,nntrgrp)
-c          print '(1x,a9,1x,i4,15i9)','jntrgrp:',
-c     ,                                (jntrgrp(i),i=1,nntrgrp)
-c          print *
-c        end if !}
-c!###}
+        if(hlp_dbg) then !{
+          print *
+          print *,'b2usrtrc: before initialisation. ',
+     ,     'natm,nmol,nnatmi,nnmoli,nntrgrp=',
+     ,      natm,nmol,nnatmi,nnmoli,nntrgrp
+          if(nntrgrp.gt.0) then !{
+            print '(1x,a9,2x,20i4/(12x,20i4))','lntrgrp:',
+     ,                                (lntrgrp(i),i=1,jntrgrp(nntrgrp))
+            print '(1x,a9,2x,16a9)','gntrgrp:',
+     ,                                (gntrgrp(i),i=1,nntrgrp)
+            print '(1x,a9,1x,i4,15i9)','intrgrp:',
+     ,                                (intrgrp(i),i=1,nntrgrp)
+            print '(1x,a9,1x,i4,15i9)','jntrgrp:',
+     ,                                (jntrgrp(i),i=1,nntrgrp)
+            print *
+          end if !}
+        endif !}
+
         tab=char(9)
         call ipgeti ('b2mndr_eirene', use_eirene)
 c-----------------------------------------------------------------------
@@ -359,9 +379,11 @@ c*** Check the input data for consistency and prepare indices
           end if !}
         end do !}
 
-        print '(a,5(i3,1x),l1)',
-     ,   '%% b2usrtrc: j_he_at,j_h_at(1:3),j_he_i,double_null = ', !###
-     ,                 j_he_at,j_h_at     ,j_he_i,double_null      !###
+        if(hlp_dbg) then !{
+          print '(a,5(i3,1x),l1)',
+     ,     '%% b2usrtrc: j_he_at,j_h_at(1:3),j_he_i,double_null = ', !###
+     ,                   j_he_at,j_h_at     ,j_he_i,double_null      !###
+        endif !}
 
 c*** Prepare for neutral data evaluation at diagnostic surfaces
 
@@ -391,6 +413,7 @@ c*** Calculate the basic quantities for each surface/species
             m=natm-ndtm_tmp(j)
           end if !}
           ndtx_tmp(j)=m
+caap tbd add nphoti shift
         end do !}
 
         hlp_ardts=0.0_R8
@@ -420,25 +443,27 @@ c*** Calculate the basic quantities for each surface/species
               end do !}
             end do !}
           end do !}
-c!###{
-c          print *
-c          print *,'b2usrtrc: after initialisation. ',
-c     ,            'nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp=',
-c     ,             nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp
-c          write(f,'(10h(1x,a9,2x,,i2,3hi3))') ndts_tmp
-c          print *,'tallies (ndta_tmp):'
-c          print f,(gntrgrp(i),(ndta_tmp(i,j),j=1,ndts_tmp),i=1,nntrgrp)
-c          print *
-c          print f,'ndtm_tmp',(ndtm_tmp(j),j=1,ndts_tmp)
-c          print f,'ndtx_tmp',(ndtx_tmp(j),j=1,ndts_tmp)
-c          write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp
-c          print f,'hlp_awdts',(hlp_awdts(j),j=1,ndts_tmp)
-c          print *,'area/absorption:'
-c          write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp+1
-c          print f,(gntrgrp(i),hlp_ardts(i),
-c     ,                       (hlp_ksdts(i,j),j=1,ndts_tmp),i=1,nntrgrp)
-c          print *
-c!###}
+
+          if(hlp_dbg) then !{
+           print *
+           print *,'b2usrtrc: after initialisation. ',
+     ,             'nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp=',
+     ,              nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp
+           write(f,'(a,i2,a)') '(1x,a9,2x,',ndts_tmp,'i3)'
+           print *,'tallies (ndta_tmp):'
+           print f,(gntrgrp(i),(ndta_tmp(i,j),j=1,ndts_tmp),i=1,nntrgrp)
+           print *
+           print f,'ndtm_tmp',(ndtm_tmp(j),j=1,ndts_tmp)
+           print f,'ndtx_tmp',(ndtx_tmp(j),j=1,ndts_tmp)
+           write(f,'(a,i2,a)') '(1x,a9,2x,1p,',ndts_tmp,'e10.2)'
+           print f,'hlp_awdts',(hlp_awdts(j),j=1,ndts_tmp)
+           print *,'area/absorption:'
+           write(f,'(a,i2,a)') '(1x,a9,2x,1p,',ndts_tmp+1,'e10.2)'
+           print f,(gntrgrp(i),hlp_ardts(i),
+     ,                        (hlp_ksdts(i,j),j=1,ndts_tmp),i=1,nntrgrp)
+           print *
+          endif !}
+
         end if
 
 c*** Find the Eirene surfaces corresponding to PFR interfaces
@@ -457,7 +482,6 @@ c***  (npfs_tmp, lpfs_tmp, hlp_arpfs)
                 k=2
               end if !}
               if(k.gt.0) then !{
-c                print *,'i,k,msns=',i,k,msns(1,i),msns(2,i) !###
                 do j=msns(1,i),msns(1,i)+msns(2,i)-1 !{
                   npfs_tmp(k)=npfs_tmp(k)+1
                   lpfs_tmp(npfs_tmp(k),k)=lsns(j)
@@ -542,25 +566,32 @@ c*** Eastern divertor
             hlp_w(k)=hlp_w(k)+gs(i,iy,1)
           end do !}
         end do !}
-c!###{
-c        print *
-c        print *,'b2usrtrc: PFR initialisation. npfi=',npfi_tmp
-c        do k=1,npfi_tmp !{
-c          print *,'PFR areaEir, areaB2 ',k,hlp_arpfs(k),hlp_w(k)
-c          print *,'npfs,lpfs=',npfs_tmp(k),
-c     ,                                  (lpfs_tmp(i,k),i=1,npfs_tmp(k))
-c          print *,'ipfc,jpfc=',ipfc_tmp(k),jpfc_tmp(k)
-c        end do !}
-c        print *,'nlim,lsns: ',nlim,lsns(1:sum(ksns(1:nstrai)))
-c        print *
-c!###}
+
+        if(hlp_dbg) then !{
+          print *
+          print *,'b2usrtrc: PFR initialisation. npfi=',npfi_tmp
+          do k=1,npfi_tmp !{
+            print *,'PFR areaEir, areaB2 ',k,hlp_arpfs(k),hlp_w(k)
+            print *,'npfs,lpfs=',npfs_tmp(k),
+     ,                                  (lpfs_tmp(i,k),i=1,npfs_tmp(k))
+            print *,'ipfc,jpfc=',ipfc_tmp(k),jpfc_tmp(k)
+          end do !}
+          print *,'nlim,lsns: ',nlim,lsns(1:sum(ksns(1:nstrai)))
+          print *
+        endif !}
+
 c-----------------------------------------------------------------------
 c*** Prepare constants for DoD calculation
 
         isp_tmp(1)=topcut(1)
         isp_tmp(2)=isp_tmp(1)
-        itg_tmp(1)=0
-        itg_tmp(2)=nx-1
+        if(LSN) then
+          itg_tmp(1)=0
+          itg_tmp(2)=nx-1
+        else
+          itg_tmp(2)=0
+          itg_tmp(1)=nx-1
+        endif
         imp_tmp(1)=jxa
         imp_tmp(2)=jxa
         if(double_null) then !{
@@ -572,12 +603,44 @@ c*** Prepare constants for DoD calculation
           imp_tmp(3)=jxi
           imp_tmp(4)=jxa
         end if !}
-c!###{
-c        print '(10x,4i6)',1,2,3,4
-c        print '(2x,a8,4i6)','isp_tmp',(isp_tmp(i),i=1,4)
-c        print '(2x,a8,4i6)','itg_tmp',(itg_tmp(i),i=1,4)
-c        print '(2x,a8,4i6)','imp_tmp',(imp_tmp(i),i=1,4)
-c!###}
+
+        if(hlp_dbg) then !{
+          print '(10x,4i6)',1,2,3,4
+          print '(2x,a8,4i6)','isp_tmp',(isp_tmp(i),i=1,4)
+          print '(2x,a8,4i6)','itg_tmp',(itg_tmp(i),i=1,4)
+          print '(2x,a8,4i6)','imp_tmp',(imp_tmp(i),i=1,4)
+        endif !}
+
+c-----------------------------------------------------------------------
+c*** Prepare constants for ballooning alpha calculation
+
+        if(R0_albll.le.0.0_R8) then
+          e=1.0e20_R8
+          d=0.0_R8
+          do ix=0,nx-1
+            if(.not.on_closed_surface(ix,0)) cycle
+            e=min(e,cr(ix,0))
+            d=max(d,cr(ix,0))
+          enddo
+          R0_albll=0.5_R8*(e+d)
+        endif
+        if(B0_albll.le.0.0_R8) B0_albll=bb(jxa,0,3)*cr(jxa,0)/R0_albll
+        if(q95_albll.le.0.0_R8) then
+          s=0.0_R8
+          do ix=0,nx-1
+            if(.not.on_closed_surface(ix,0)) cycle
+            s=s+hx(ix,0)/pit(ix,0)
+          enddo
+          q95_albll=s/(2.0_R8*pi*R0_albll)
+        endif
+        if(min(q95_albll,B0_albll,R0_albll).gt.0.0_R8) then
+          hlp_alcff=(q95_albll/B0_albll)**2*R0_albll*2.0_R8*mu0
+        else
+          hlp_alcff=0.0_R8
+        endif
+        if(hlp_dbg) print '(1x,a,4e12.4)', "### albll: B,R,q,hlp =>",
+     .                            B0_albll,R0_albll,q95_albll,hlp_alcff
+
 c-----------------------------------------------------------------------
 c*** Allocate the buffer arrays for header and table lines
 
@@ -589,10 +652,10 @@ c*** Allocate the buffer arrays for header and table lines
         do k=1,nntrgrp !{
           do j=1,ndts_tmp !{
             ntrc_tmp=ntrc_tmp+ndta_tmp(k,j)
-c!###{
-c            print '(a,4i6)','ntrc_tmp,k,j,ndta_tmp(k,j):',
-c     ,        ntrc_tmp,k,j,ndta_tmp(k,j)
-c!###}
+            if(hlp_dbg) then !{
+              print '(a,4i6)','ntrc_tmp,k,j,ndta_tmp(k,j):',
+     ,          ntrc_tmp,k,j,ndta_tmp(k,j)
+            endif !}
           end do !}
         end do !}
         if(print_isat) then !{
@@ -600,17 +663,17 @@ c!###}
           if(double_null) ntrc_tmp=ntrc_tmp+2
         end if !}
 
-!###{
-        write(6,'(3x,11a10)') 'ntrc_tmp','nglb_tmp','nspecies',
-     ,    'npff_tmp','npfrgrp','nntrgrp','npfi_tmp','npft_tmp',
-     ,    'ndts_tmp','ngl2_tmp','ngl4_tmp'
-        write(6,'(11i10)') ntrc_tmp,nglb_tmp,nspecies,
-     ,    npff_tmp,npfrgrp,nntrgrp,npfi_tmp,npft_tmp,
-     ,    ndts_tmp,ngl2_tmp,ngl4_tmp
-!###}
+        if(hlp_dbg) then !{
+          write(6,'(3x,11a10)') 'ntrc_tmp','nglb_tmp','nspecies',
+     ,     'npff_tmp','npfrgrp','nntrgrp','npfi_tmp','npft_tmp',
+     ,     'ndts_tmp','ngl2_tmp','ngl4_tmp'
+          write(6,'(11i10)') ntrc_tmp,nglb_tmp,nspecies,
+     ,      npff_tmp,npfrgrp,nntrgrp,npfi_tmp,npft_tmp,
+     ,      ndts_tmp,ngl2_tmp,ngl4_tmp
+          endif !}
+
         if(.not.allocated(hlp_out)) then !{
           allocate(hlp_out(ntrc_tmp), hlp_hdr(ntrc_tmp))
-c          print *,'b2usrtrc: allocated hlp_out,hlp_hdr:',ntrc_tmp !###
         end if !}
 
         first=.false.
@@ -674,7 +737,7 @@ c*** ... and separatrix
         hlp_ne_he_s=0.0_R8
         iy=jsep+1
 
-c        print *,'%% b2usrtrc: j_he_i,iy = ',j_he_i,iy !###
+        if(hlp_dbg) print *,'%% b2usrtrc: j_he_i,iy = ',j_he_i,iy !###
 
         do ix=0,nx-1 !{
           if (on_closed_surface(ix,iy-1)) then  !{
@@ -730,9 +793,8 @@ c***              just beginning of the region open to the duct
 c***  lpfrt_[io]: cell indices corresponding to the top (PFR) or just
 c***              end of the region open to the duct
 c***
-c*** In case of PFR, the bottom cells are counted back from the targets
-c*** and the top cells down from the x-point if the corresponding value
-c*** is negative.
+c*** In case of PFR, the bottom and top cells are counted down from
+c*** the x-point if the corresponding value is negative.
 c*** In case of SOL, negative values of lpfrb_[io] mean counting
 c*** back from the next target.
 c*** In case of DN configuration, negative values of lpfrt_[io] mean
@@ -749,11 +811,13 @@ c-----------------------------------------------------------------------
         hlp_p=0.0_R8
         hlp_s=0.0_R8
         hlp_hep=0.0_R8
-#ifdef DBG
-        print '(1x,a,6i4)',
+
+        if(hlp_dbg) then !{
+          print '(1x,a,6i4)',
      ,          '%%## j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o',!###
      ,                j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o  !###
-#endif
+        endif !}
+
         hlp_pi=0.0_R8
         hlp_si=0.0_R8
         hlp_po=0.0_R8
@@ -804,8 +868,10 @@ c*** Western divertor
             hlp_pi=hlp_pi+hlp*gs(j,iy,1)
           end do !}
 
-c          print '(a,1p,2i4,2e12.3)',' %%## m,n,hlp_si,hlp_hep: ',  !###
-c     ,                                     m,n,hlp_si,hlp_hep      !###
+          if(hlp_dbg) then !{
+            print '(a,1p,2i4,2e12.3)',' %%## m,n,hlp_si,hlp_hep: ',  !###
+     ,                                       m,n,hlp_si,hlp_hep      !###
+          endif !}
 
 c*** Eastern divertor
 
@@ -854,10 +920,11 @@ c*** Eastern divertor
           hlp_s=hlp_si+hlp_so
           hlp_p=hlp_pi+hlp_po
         end if !}
-c<<<
-c        print '(a,1p,2i4,3e12.3)',' %%## m,n,hlp_so,hlp_hep,hlp_p: ',
-c     ,                                   m,n,hlp_so,hlp_hep,hlp_p
-c>>>
+
+        if(hlp_dbg)
+     .    print '(a,1p,2i4,3e12.3)',' %%## m,n,hlp_so,hlp_hep,hlp_p: ',
+     ,                                     m,n,hlp_so,hlp_hep,hlp_p
+
         if(hlp_s.gt.0.0_R8) then !{
           hlp_ppfr=hlp_p/hlp_s
           hlp_hepr=hlp_hep/hlp_s
@@ -867,29 +934,38 @@ c>>>
 
 c*** Calculate throughputs, pumping speed, and re-scale He if necessary
 
+        if(hlp_dbg) print *,' %%## l,js,hlp_wa,hlp_wm,hlpnw: '
         do l=1,4 !{
           if (l.eq.4) then !{
             ls=j_he_at
           else !}{
             ls=j_h_at(l)
           end if !}
+          hlpnw=0.0_R8
           if(ls.gt.0 .and. ls.le.nnatmi) then !{
 
 c*** Neutral flux across the side walls
 
-            hlpnw=0.0_R8
             do js=1,nnlimi !{
-              hlpnw=hlpnw+wldna(js,ls,0)-wldra(js,ls,0)-wldpa(js,ls,0)
+              if(iliin(js).le.0) cycle
+              hlpnw=hlpnw+wldna(js,ls,0)-wldra(js,ls,0)
+              if(hlp_dbg) hlp_tot=0.0_R8
               do j=1,nnmoli !{
                 if(mlcmp(ls,j).gt.0) hlpnw=hlpnw+
-     +           mlcmp(ls,j)*(wldnm(js,j,0)-wldrm(js,j,0)-wldpm(js,j,0))
+     +           mlcmp(ls,j)*(wldnm(js,j,0)-wldrm(js,j,0))
+                 if(mlcmp(ls,j).gt.0.and.hlp_dbg)
+     .             hlp_tot = hlp_tot +
+     +                       mlcmp(ls,j)*(wldnm(js,j,0)-wldrm(js,j,0))
               end do !}
+              if(hlp_dbg) print '(1x,2i4,3e12.3)',
+     .                       l,js,wldna(js,ls,0)-wldra(js,ls,0),
+     ,                       hlp_tot,hlpnw
             end do !}
           end if !}
-          if (l.eq.2 .or. l.eq.3) then !{
-            equg_tmp(21)=equg_tmp(21)+hlpnw/2.7e20_R8
+          if (l.le.3) then !{
+            hlp_dttp=hlp_dttp+hlpnw/2.7e20_R8
           else if (l.eq.4) then !}{
-            equg_tmp(22)=hlpnw/2.7e20_R8
+            hlp_hetp=hlpnw/2.7e20_R8
           end if !}
         end do !}
         hlp_dttp=0.5_R8*hlp_dttp     ! assume molecular DT pumping
@@ -903,8 +979,11 @@ c*** Neutral flux across the side walls
 
 c*** Calculate the helium-related data
 
-c       print *,'%%## j_he_at,nhetrgtx,fusion_power =',  !###
-c     ,               j_he_at,nhetrgtx,fusion_power      !###
+       if(hlp_dbg) then !{
+         print '(a,1p,2i4,1e12.3)',
+     ,           '%%## j_he_at,nhetrgtx,fusion_power =',
+     ,                 j_he_at,nhetrgtx,fusion_power      !###
+       endif !}
         if(fusion_power.gt.0.0_R8) then !{
 
 c*** Re-scale the helium density upstream to meet both throughput and
@@ -1105,13 +1184,17 @@ c East target
           end do !}
         end if !}
       else !}{VK
-#ifdef DBG
-        write(*,*) 'In b2mod_usrtrc: nxtl, nxtr = ', nxtl, nxtr
-#endif
-        call b2usr_loads(nx,ny,nxtl,nxtr,BoRiS,wtarg_max)
-#ifdef DBG
-        write(*,*) 'b2usr_loads finished'
-#endif
+
+        if(hlp_dbg) then !{
+          write(*,*) 'In b2mod_usrtrc: nxtl, nxtr = ', nxtl, nxtr
+        endif !}
+
+        call b2usr_loads(ny,BoRiS,wtarg_max)
+
+        if(hlp_dbg) then !{
+          write(*,*) 'b2usr_loads finished'
+        endif !}
+
         hlp_ppwi=wtarg_max(1)
 csw 02jan2017 corrected hlp_ppwo
 c       hlp_ppwo=wtarg_max(nncut)
@@ -1127,9 +1210,11 @@ c*** Calculate the neutral flows in PFR
       if (use_eirene.eq.0) goto 30
       do k=1,npfrgrp !{
         do j=1,nspecies !{
-          hlp=1.0_R8/2.7e20_R8
-          if(species_list(j).eq.'H' .or. species_list(j).eq.'D' .or.
-     ,       species_list(j).eq.'T') hlp=0.5_R8*hlp
+caap          hlp=1.0_R8/2.7e20_R8
+caap          if(species_list(j).eq.'H' .or. species_list(j).eq.'D' .or.
+caap     ,       species_list(j).eq.'T') hlp=0.5_R8*hlp
+caap no need to convert to molecular throughput here
+          hlp=1.0_R8
           do i=ipfrgrp(k),jpfrgrp(k) !{
             m=lpfrgrp(i)
             if(m.lt.0) m=nnlimi-m
@@ -1199,7 +1284,7 @@ c*** a their atomic mass in AMU, x the absorption probability.
           a=hlp_awdts(j)
           x=hlp_ksdts(k,j)
           hlp_tmdts(k,j)=0.5_R8*e
-          hlp_dndts(k,j)=3.6e-4_R8*g*sqrt(a/(e*s*s))
+          hlp_dndts(k,j)=2.6e-4_R8*g*sqrt(a/(e*s*s))
           hlp_prdts(k,j)=ev*hlp_tmdts(k,j)*hlp_dndts(k,j)
           hlp_fxdts(k,j)=g/s
           if(ndta_tmp(k,j).gt.nmnt_tmp) then !{
@@ -1256,15 +1341,15 @@ c*** e the temperature*density*area, v the flux*area
           hlp_vlpfs(k,j)=v*0.39e4_R8/sqrt(hlp_awdts(j))
         end do !}
       end do !}
-c!###{
-c      d=0.0_R8
-c      e=0.0_R8
-c      do j=1,n !{
-c        d=d+hlp_dnpfs(1,j)*hlp_tmpfs(1,j)
-c        e=e+hlp_dnpfs(2,j)*hlp_tmpfs(2,j)
-c      end do !}
-c      print *,'prfi,prfo=',ev*d,ev*e
-c!###}
+      if(hlp_dbg) then !{
+        d=0.0_R8
+        e=0.0_R8
+        do j=1,n !{
+          d=d+hlp_dnpfs(1,j)*hlp_tmpfs(1,j)
+          e=e+hlp_dnpfs(2,j)*hlp_tmpfs(2,j)
+        end do !}
+        print *,'prfi,prfo=',ev*d,ev*e
+      endif !}
 #endif
 c-----------------------------------------------------------------------
 c*** evaluate "Degree of detachment" and Isat for each divertor
@@ -1273,19 +1358,20 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
       hlp_isat=0.0_R8
       mgl3_tmp=0
       call b2xppz(nx,ny,ns,ne,na,te,ti,pz)
-c      print *,'### print_isat=',print_isat    !###
+
+      if(hlp_dbg) print *,'### print_isat=',print_isat    !###
+
       do k=1,4 !{
         if(itg_tmp(k).ne.-2) then !{
-c          print * !###
+          if(hlp_dbg) print *, 'k,itg_tmp(k)=',k,itg_tmp(k) !###
           d=1.e18_R8
           do iy=isp_tmp(k),ny-1 !{
             e=2.0_R8*pz(itg_tmp(k),iy)
             if(e.gt.0.0_R8) d=min(d,pz(imp_tmp(k),iy)/e)
-c            print *,'e,d=',e,d  !###
+            if(hlp_dbg) print *,'e,d=',e,d  !###
           end do !}
           hlp_dod(k)=d
-c          print *, k,hlp_dod(k) !###
-c          print * !###
+          if(hlp_dbg) print *, 'hpl_dod(k)',hlp_dod(k) !###
           if(print_isat) then !{
             mgl3_tmp=mgl3_tmp+1
 csw 03jan2017 corrected do loop to avoid exceed of array limits and to
@@ -1302,52 +1388,167 @@ csw           exclude neutrals from isat calculation
             end do !}
             hlp_isat(mgl3_tmp)=hlp_isat(mgl3_tmp)*
      *                      qe*(2.0_R8*kgl3_tmp(k)+1)
-c            print *,'### mgl3_tmp=',mgl3_tmp  !###
+            if(hlp_dbg) print *,'### mgl3_tmp=',mgl3_tmp  !###
           end if !}
         end if !}
       end do !}
 c-----------------------------------------------------------------------
-c*  Find the maximum ballooning factor and its location
+c*** find the maximum ballooning factor and its location
 
-c$$$      m=topcut(1)
-c$$$      n=ny
-c$$$      k=0
-c$$$      if(nncut.eq.2) then !{
-c$$$        if(topcut(2).gt.topcut(1)) then !{
-c$$$          n=topcut(2)-1
-c$$$        else if(topcut(2).eq.topcut(1)) then !}{
-c$$$          k=leftcut(2)-1
-c$$$        else !}{
-c$$$          n=m-1
-c$$$          m=topcut(2)
-c$$$        end if !}
-c$$$      end if !}
-c$$$c      print *,'b2usrtrc: m,n,k=',m,n,k  !###
-c$$$      if(k.eq.0) then !{
-c$$$        al_bll_mx=maxval(aalbll(leftcut(1):leftcut(nncut),m:n))
-c$$$        kgl4_tmp=maxloc(aalbll(leftcut(1):leftcut(nncut),m:n))
-c$$$        al_bll_ix=kgl4_tmp(1)+leftcut(1)-1
-c$$$        al_bll_iy=kgl4_tmp(2)+m-1
-c$$$      else !}{
-c$$$        al_bll_mx=maxval(aalbll(rightcut(2):leftcut(nncut),m:n))
-c$$$        kgl4_tmp=maxloc(aalbll(rightcut(2):leftcut(nncut),m:n))
-c$$$        al_bll_ix=kgl4_tmp(1)+rightcut(1)-1
-c$$$        al_bll_iy=kgl4_tmp(2)+m-1
-c$$$        t=maxval(aalbll(leftcut(1):rightcut(1),m:n))
-c$$$        if(t.gt.al_bll_mx) then !{
-c$$$          al_bll_mx=t
-c$$$          kgl4_tmp=maxloc(aalbll(leftcut(1):rightcut(1),m:n))
-c$$$          al_bll_ix=kgl4_tmp(1)+leftcut(1)-1
-c$$$          al_bll_iy=kgl4_tmp(2)+m-1
-c$$$        end if !}
-c$$$      end if !}
-c!###{
-c      i=al_bll_ix
-c      j=al_bll_iy
-c      print '(2a,1p,4i5,2e12.3)','al_bll_ix,al_bll_iy,',
-c     ,  'kgl4_tmp,al_bll_mx,aalbll',i,j,
-c     ,  kgl4_tmp,al_bll_mx,aalbll(i,j)
-c!###}
+      al_bll_mx=0.0_R8
+      al_bll_ix=0
+      al_bll_iy=0
+
+      do ix=0,nx-1
+        do iy=0,ny-1
+          if(ON_CLOSED_SURFACE(ix,iy) .and. region(ix,iy,0).ne.0
+     &       .and.leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1
+     &       .and.bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
+            albll(ix,iy)=abs(pz(ix,bottomiy(ix,iy))-pz(ix,iy))/
+     .           (0.5_R8*(hy1(ix,iy)+hy1(ix,bottomiy(ix,iy))))*hlp_alcff
+            if(hlp_dbg) print '(1x,a,2i4,2e12.4)',
+     .           "ix,iy,al_bll_mx,albll =>",ix,iy,al_bll_mx,albll(ix,iy)
+            if(al_bll_mx.lt.albll(ix,iy)) then
+              al_bll_mx=albll(ix,iy)
+              al_bll_ix=ix
+              al_bll_iy=iy
+            endif
+          endif
+        enddo
+      enddo
+      if(hlp_dbg) print '(1x,a,2i4,1e12.4)',
+     .               "all_bll_ix,al_bll_iy,albll_mx, =>",ix,iy,al_bll_mx
+
+c=======================================================================
+      if(filedata(ltrc)) then !{
+
+c*** Write the data for the table line on the output array
+
+        ex=nglb_tmp.lt.ntrc_tmp
+        if(ex) hlp_out(1)=tim
+        if(ex) hlp_out(2:nglb_tmp+1)=equg_tmp(1:nglb_tmp)
+        n=nglb_tmp+1
+        if(npfrgrp.gt.0) then !{
+          i0=0
+          if(npfrgrp.le.1) i0=1
+          do i=i0,npfrgrp !{
+            do j=1,nspecies !{
+              do k=1,npff_tmp !{
+                ex = ex .and. n.lt.ntrc_tmp
+                n=n+1
+                if(ex) hlp_out(n)=equp_tmp(i,j,k)
+              end do !}
+            end do !}
+          end do !}
+        end if !}
+
+        if(hlp_dbg) print *,'eqp_tmp:',n  !###
+
+        do k=1,nntrgrp !{
+          n=n+1
+          ex=ex .and. n.le.ntrc_tmp
+          if(ex) hlp_out(n)=hlp_ardts(k)
+          do j=1,ndts_tmp !{
+            ex = ex .and. n+ndta_tmp(k,j).le.ntrc_tmp
+            do i=1,ndta_tmp(k,j) !{
+              if(ex) hlp_out(n+i)=equn_tmp(k,j,i)
+            end do !}
+            n=n+ndta_tmp(k,j)
+          end do !}
+        end do !}
+
+        if(hlp_dbg) print *,'ndta_tmp:',n  !###
+
+        do k=1,npfi_tmp !{
+          n=n+1
+          ex=ex .and. n.le.ntrc_tmp
+          if(ex) hlp_out(n)=hlp_w(k)
+          do j=1,ndts_tmp !{
+            ex = ex .and. n+npft_tmp.le.ntrc_tmp
+            do i=1,npft_tmp !{
+              if(ex) hlp_out(n+i)=equr_tmp(k,j,i)
+            end do !}
+            n=n+npft_tmp
+          end do !}
+        end do !}
+
+        if(hlp_dbg) print *,'npft_tmp:',n  !###
+
+        ex=ex .and. n+ngl2_tmp.le.ntrc_tmp
+        if(ex) then !{
+          do i=1,ngl2_tmp !{
+            hlp_out(n+i)=equg2_tmp(i)
+          end do !}
+        end if !}
+        n=n+ngl2_tmp
+
+        if(hlp_dbg) print *,'ngl2_tmp:',n  !###
+
+        ex=ex .and. n+mgl3_tmp.le.ntrc_tmp
+        if(hlp_dbg) print *,'###a ex,mgl3_tmp,n,ntrc_tmp=',
+     .                            ex,mgl3_tmp,n,ntrc_tmp !###
+        if(ex) then !{
+          do i=1,mgl3_tmp !{
+            hlp_out(n+i)=equg3_tmp(i)
+          end do !}
+        end if !}
+        n=n+mgl3_tmp
+        if(hlp_dbg) print '(a,4i8)','n,mgl3_tmp,ngl4_tmp,ntrc_tmp:',
+     ,                               n,mgl3_tmp,ngl4_tmp,ntrc_tmp
+        ex=ex .and. n+ngl4_tmp.le.ntrc_tmp
+        if(ex) then !{
+          do i=1,ngl4_tmp !{
+            hlp_out(n+i)=equg4_tmp(i)
+          end do !}
+        end if !}
+        n=n+ngl4_tmp
+
+        if(hlp_dbg) print *,'ngl4_tmp:',n  !###
+
+        if(.not.ex .or. n.ne.ntrc_tmp) go to 96
+      end if !}
+
+      if(first_out.and.hlp_dbg) then !{
+        print *
+        print *,'b2usrtc: Eirene data. nnatmi,nnmoli=',nnatmi,nnmoli
+        print *,'eirtxt:'
+        print '(10a10)',(eirtxt(i),i=1,nnatmi+nnmoli)
+caap tbd add nphoti
+        print *,'Species: ',ndts_tmp,(ndtm_tmp(j),j=1,ndts_tmp)
+        do j=1,ndts_tmp !{
+          do i=1,ndta_tmp(k,j) !{
+            if(ndtm_tmp(j).gt.0) then !{
+              hlp_hdr(j)=adjustl(eirtxt(ndtm_tmp(j)))
+caap tbd add nphoti
+            else !}{
+              hlp_hdr(j)=adjustl(eirtxt(nnatmi-ndtm_tmp(j)))
+caap tbd add nphoti
+            end if !}
+          end do !}
+        end do !}
+        print *,'Diagnostic surface groups:'
+        do k=1,nntrgrp !{
+          print *
+          print '(1x,a8,i9,9i10/(8x,10i10))',gntrgrp(k),
+     ,                            (lntrgrp(i),i=intrgrp(k),jntrgrp(k))
+
+          print '(3x,a5,4x,1p,10e10.2)','area',
+     ,                    (wlarea(lntrgrp(i)),i=intrgrp(k),jntrgrp(k))
+          do j=1,ndts_tmp !{
+            if(j.le.nnatmi) then !{
+              print '(3x,a5,1x,a2,1x,1p,10e10.2)','wldna',hlp_hdr(j),
+     ,                  (wldna(lntrgrp(i),j,0),i=intrgrp(k),jntrgrp(k))
+              print '(3x,a5,1x,a2,1x,1p,10e10.2)','ewlda',hlp_hdr(j),
+     ,                  (ewlda(lntrgrp(i),j,0),i=intrgrp(k),jntrgrp(k))
+            else !}{
+              print '(3x,a5,1x,a2,1x,1p,10e10.2)','wldnm',hlp_hdr(j),
+     ,           (wldnm(lntrgrp(i),j-nnatmi,0),i=intrgrp(k),jntrgrp(k))
+              print '(3x,a5,1x,a2,1x,1p,10e10.2)','ewldm',hlp_hdr(j),
+     ,           (ewldm(lntrgrp(i),j-nnatmi,0),i=intrgrp(k),jntrgrp(k))
+            end if !}
+          end do !}
+        end do !}
+      end if !}
 c=======================================================================
       if(first_out .and. filedata(ltrc)) then !{
 
@@ -1412,8 +1613,10 @@ c*** Prepare the headers, markers, and padding data for the output file
             do i=1,npft_tmp !{
               if(ndtm_tmp(j).gt.0) then !{
                 hlp_m=adjustl(eirtxt(ndtm_tmp(j)))
+caap tbd add nphoti
               else !}{
                 hlp_m=adjustl(eirtxt(nnatmi-ndtm_tmp(j)))
+caap tbd add nphoti
               end if !}
               if(ex) hlp_hdr(n+i)='PFR'//trim(hlp_hs(js))//'_'//
      /             trim(hlp_hr(i))//'_'//trim(hlp_m)
@@ -1437,7 +1640,8 @@ c*** Prepare the headers, markers, and padding data for the output file
           hlp_lb3(2)=hlp_hg3(3)
         endif
         ex=ex .and. n+mgl3_tmp.le.ntrc_tmp
-c        print *,'###b ex,mgl3_tmp,n,ntrc_tmp=',ex,mgl3_tmp,n,ntrc_tmp !###
+        if(hlp_dbg) print *,'###b ex,mgl3_tmp,n,ntrc_tmp=',
+     .                            ex,mgl3_tmp,n,ntrc_tmp !###
         if(ex .and. mgl3_tmp.gt.0) then !{
           i=0
           do k=1,4 !{
@@ -1465,7 +1669,8 @@ c        print *,'###b ex,mgl3_tmp,n,ntrc_tmp=',ex,mgl3_tmp,n,ntrc_tmp !###
         n_pad_str=n-l_pad_str+1
         if(n_pad_str.eq.0) l_pad_str=1
 
-c        print *,'n,hlp_hdr= ',n,('  ',trim(hlp_hdr(i)),i=1,n) !###
+        if(hlp_dbg) print *,' n,hlp_hdr= ',
+     .                        n,('  ',trim(hlp_hdr(i)),i=1,n) !###
 
         if(.not.ex .or. n.ne.ntrc_tmp) go to 98
 
@@ -1496,8 +1701,9 @@ c*** f     :  the associated file name
      ,                fix_user,hlp_hdr(l_pad_str),hlp_out(l_pad_str),
      ,                n_pad_str,7,4,tab,mrks_hlp,n,xdum,m,hlp_frm,irt)
 
-c        print *,'b2usrtrc: after combfile. irt,m,f=',          !###
-c     ,                                     irt,m,'  ',trim(f)  !###
+        if(hlp_dbg) print *,'b2usrtrc: after combfile. irt,m,f=',  !###
+     ,                                         irt,m,'  ',trim(f)  !###
+
         if(irt.lt.0) then !{
           go to 92
         else if(irt.gt.0) then !}{
@@ -1509,9 +1715,7 @@ c     ,                                     irt,m,'  ',trim(f)  !###
           end if !}
           fn_ntrc(ltrc)=f
         end if !}
-#ifdef DBG
-        print *,'hlp_frm=',trim(hlp_frm)  !###
-#endif
+        if(hlp_dbg) print *,'hlp_frm=',trim(hlp_frm)  !###
         first_out=.false.
       end if !}
 c=======================================================================
@@ -1521,14 +1725,21 @@ c=======================================================================
 
 c*** Write the data in a separate file for plotting...
 
-        if(npfrgrp.gt.0) then !{
-          i0=0
-          if(npfrgrp.le.1) i0=1
-          write(lun,hlp_frm,err=94) tim,(equg_tmp(j),j=1,ng_tmp),
-     ,      (((equp_tmp(i,j,k),i=i0,npfrgrp),j=1,nspecies),k=1,npff_tmp)
-        else !}{
-          write(lun,hlp_frm,err=94) tim,(equg_tmp(j),j=1,ng_tmp)
-        end if !}
+        if(hlp_dbg) then !{
+          inquire(lun,opened=ex,name=f)
+          print *,'b2usrtrc: unit ',lun,', opened=',ex,
+     ,                                           ', file ',trim(f)
+        endif !}
+
+        write(lun,hlp_frm,err=94) (hlp_out(j),j=1,ntrc_tmp)
+caap        if(npfrgrp.gt.0) then !{
+caap          i0=0
+caap          if(npfrgrp.le.1) i0=1
+caap          write(lun,hlp_frm,err=94) tim,(equg_tmp(j),j=1,ng_tmp),
+caap     ,      (((equp_tmp(i,j,k),i=i0,npfrgrp),j=1,nspecies),k=1,npff_tmp)
+caap        else !}{
+caap          write(lun,hlp_frm,err=94) tim,(equg_tmp(j),j=1,ng_tmp)
+caap        end if !}
       end if !}
       return
 c=======================================================================
@@ -1542,6 +1753,11 @@ c=======================================================================
       return
 
    94 write(*,*) 'b2usrtrc: cannot write in the file ',trim(f)
+      filedata(ltrc)=.false.
+      return
+
+ 96   write(*,'(2a,2i8)') 'b2usrtrc: number of columns ',
+     ,  'in the header and data differ:',ntrc_tmp,n
       filedata(ltrc)=.false.
       return
 
@@ -1853,6 +2069,13 @@ c*** Limiter case
       if(ex) hlp_hdr(n+1:n+ngl2_tmp)=hlp_lb2
       n=n+ngl2_tmp
       mgl3_tmp=0
+      if(LSN) then
+        itg_tmp(1)=0
+        itg_tmp(2)=nx-1
+      else
+        itg_tmp(2)=0
+        itg_tmp(1)=nx-1
+      endif
       itg_tmp(1)=0
       itg_tmp(2)=nx-1
       if(double_null) then !{

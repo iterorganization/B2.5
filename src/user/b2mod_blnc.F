@@ -100,6 +100,8 @@ c*** Column headers:
       use b2mod_boundary_namelist
 #ifdef B25_EIRENE
       use eirmod_wneutrals
+      use eirmod_clgin
+     ,   , only : iliin
 #endif
       use b2mod_dimensions
 c
@@ -518,22 +520,25 @@ c*** Flux across the targets
           js=ltns(is)+nnlimi
           do j=1,nnatmi
             if(latmscl(j).eq.ls) then
-              hlpnt=hlpnt-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
+              hlpnt=hlpnt-wldna(js,j,0)+wldra(js,j,0)
               do ic=1,nnmoli
                 if(mlcmp(j,ic).gt.0) hlpnt=hlpnt-mlcmp(j,ic)*
-     .                (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
+     .                (wldnm(js,ic,0)-wldrm(js,ic,0))
               end do
             end if
           end do
         end do
 c*** Flux across the side walls
         do js=1,nnlimi
+#ifdef B25_EIRENE
+          if(iliin(js).le.0) cycle
+#endif
           do j=1,nnatmi
             if(latmscl(j).eq.ls) then
-              hlpnw=hlpnw-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
+              hlpnw=hlpnw-wldna(js,j,0)+wldra(js,j,0)
               do ic=1,nnmoli
                 if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
-     .           (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
+     .           (wldnm(js,ic,0)-wldrm(js,ic,0))
               end do
             end if
           end do

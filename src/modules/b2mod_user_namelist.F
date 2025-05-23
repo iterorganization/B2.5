@@ -20,7 +20,9 @@
      ,  j_he_at,j_h_at(3),j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd)
-      real (kind=R8) :: Te_det_threshold
+      real (kind=R8) :: Te_det_threshold, q95_albll,
+     ,  R0_albll, B0_albll
+      real (kind=R8) :: trgshp(DEF_NCUT*2)
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
       character*80 user_filename
       logical scale_He, print_isat
@@ -42,6 +44,17 @@ c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
 c*** Te_det_threshold : Temperature threshold at the target below which
 c***                    a flux tube is considered detached (typically, 2.0 eV)
+c*** q95_albll :  safety factor used to estimate the ballooning "alpha"
+c***              parameter, if not assigned will be estimated as
+c***              Lcon/(2*pi*R) at the core interface
+c*** R0_albll  :  major radius used to estimate the ballooning "alpha"
+c***              parameter, if not assigned will be estimated as
+c***              0.5*(Rmin-Rmax) at the core interface
+c*** B0_albll  :  major radius used to estimate the ballooning "alpha"
+c***              parameter, if not assigned will be estimated as
+c***              Bomp*R0/Romp at the core interface
+c*** trgshp    :  target shaping factor applied to plasma heat loads in
+c***              peak heat flux estimate calculated by b2mod_usrtrc
 c*** lhetrgts  :  list of surface indices (EIRENE notation) which
 c***              are used for calculation of helium enrichment
 c*** lpfrb_[io]:  B2 x-cell indices corresponding to the bottom of the
@@ -96,6 +109,10 @@ c***  Standard set-up:
       Spmp_He_to_D=1.0_R8    ! same pumping speed for He and D
       Spmp_nom=0.0_R8
       Te_det_threshold = 2.0_R8
+      q95_albll = 0.0_R8
+      B0_albll = 0.0_R8
+      R0_albll = 0.0_R8
+      trgshp = 1.0_R8
       j_h_at =0
       l_h_mol=0
       j_he_at=0
@@ -226,6 +243,14 @@ c*** Set default values according to current species list
      . 'faulty input Spmp_He_to_D')
       call xertst(0.0_R8.lt.Te_det_threshold,
      . 'faulty input Te_det_threshold')
+      call xertst(0.0_R8.le.q95_albll,
+     . 'faulty input q95_albll')
+      call xertst(0.0_R8.le.B0_albll,
+     . 'faulty input B0_albll')
+      call xertst(0.0_R8.le.R0_albll,
+     . 'faulty input R0_albll')
+      call xertst(1.0_R8.le.minval(trgshp),
+     . 'faulty input trgshp')
       call xertst (abs(lpfrb_i).le.nx, 'faulty input lpfrb_i')
       call xertst (abs(lpfrb_o).le.nx, 'faulty input lpfrb_o')
       call xertst (abs(lpfrt_i).le.nx, 'faulty input lpfrt_i')
