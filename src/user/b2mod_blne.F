@@ -681,7 +681,7 @@ c*** It was a major change of the file format - impossible to continue
         if(nz_tmp.ne.ntrgf_tmp) then !{
           warn_tmp=.true.
           write(*,'(a,i2,3a,i2)')
-     ,     '!!! b2blne: current number of targets ',ntrgf_tmp,
+     ,     '!!! b2blne: current number of surfaces ',ntrgf_tmp,
      ,     ' differs from that in the file ',trim(f),' : ',nz_tmp
           filedata(ltrc)=.false.
         end if !}
