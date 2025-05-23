@@ -449,16 +449,16 @@ caap tbd add nphoti shift
            print *,'b2usrtrc: after initialisation. ',
      ,             'nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp=',
      ,              nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp
-           write(f,'(10h(1x,a9,2x,,i2,3hi3))') ndts_tmp
+           write(f,'(a,i2,a)') '(1x,a9,2x,',ndts_tmp,'i3)'
            print *,'tallies (ndta_tmp):'
            print f,(gntrgrp(i),(ndta_tmp(i,j),j=1,ndts_tmp),i=1,nntrgrp)
            print *
            print f,'ndtm_tmp',(ndtm_tmp(j),j=1,ndts_tmp)
            print f,'ndtx_tmp',(ndtx_tmp(j),j=1,ndts_tmp)
-           write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp
+           write(f,'(a,i2,a)') '(1x,a9,2x,1p,',ndts_tmp,'e10.2)'
            print f,'hlp_awdts',(hlp_awdts(j),j=1,ndts_tmp)
            print *,'area/absorption:'
-           write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp+1
+           write(f,'(a,i2,a)') '(1x,a9,2x,1p,',ndts_tmp+1,'e10.2)'
            print f,(gntrgrp(i),hlp_ardts(i),
      ,                        (hlp_ksdts(i,j),j=1,ndts_tmp),i=1,nntrgrp)
            print *
