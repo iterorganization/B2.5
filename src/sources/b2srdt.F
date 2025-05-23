@@ -445,7 +445,10 @@ c ttim = value limited by minumum timestep (=baseline timestep) and by maximum t
         call my_out_us(70,nCv,0,ttim_ti,'b2srdt_ttim_ti')
       endif
       if (switch%b2srdt_iout.eq.1.and.switch%b2mndt_var_style.eq.1) then
-        call my_out_us(70,nCv,0,mult_dt,'b2srdt_mult_dt')
+        call my_out_us(70,nCv,0,mult_dt,'b2srdt_mult_dt_style1')
+      endif
+      if (switch%b2srdt_iout.eq.1.and.switch%b2mndt_var_style.eq.3) then
+        call my_out_us(70,nCv,0,mult_dt,'b2srdt_mult_dt_style3')
       endif
 
 * ..return

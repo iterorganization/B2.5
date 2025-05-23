@@ -43,7 +43,8 @@
 *   ..local variables
       integer :: iCv
       real (kind=R8) :: te_min_J, te_max_J, exp1, hx, hy, Vx, Vy, dt3,
-     &                  dtx, dty, wrk0(nCv,0:ns-1), wrk1(nCv,0:ns-1)
+     &                  dtx, dty, wrk0(nCv,0:ns-1), wrk1(nCv,0:ns-1),
+     &                  wrk00(0:ns-1), wrk11(0:ns-1)
 *   ..procedures
       external xertst
 *-----------------------------------------------------------------------
@@ -70,19 +71,21 @@
         mult_dt = 1.0_R8 
       elseif (style.eq.3) then 
         !! interpolate drift velocities to cell centers
-        call intcell1(mpg%nFc, nCv, ns, mpg, mpg%intcellP,
+        call intcell1(mpg%nFc, nCv, ns-1, mpg, mpg%intcellP,
      &               dv%vaecrb(:,0,:),wrk0)
-        call intcell1(mpg%nFc, nCv, ns, mpg, mpg%intcellP,
+        call intcell1(mpg%nFc, nCv, ns-1, mpg, mpg%intcellR,
      &               dv%vaecrb(:,1,:),wrk1)
-        !! sum drift velocities
         do iCv = 1, nCv
           hy = geo%cvVol(iCv)/geo%cvHx(iCv)/geo%cvHz(iCv) !! hx and hy are approximations for non-quadrilateral cells
           hx = geo%cvHz(iCv)
-          Vx = maxval(abs(wrk0(iCv,:)))
-          Vy = maxval(abs(wrk1(iCv,:)))
-          dtx = hx / Vx
-          dty = hy / Vy
+          wrk00 = wrk0(iCv,:)
+          wrk11 = wrk1(iCv,:)
+          Vx = maxval(abs(wrk00))
+          Vy = maxval(abs(wrk11))
+          dtx = Cmax*hx/Vx
+          dty = Cmax*hy/Vy
           dt3 = min(dtx,dty)
+          dt3 = min(max(dtim,dt3),dtim*mult_max) !! limit with minimum (= baseline) and maximum (= baseline*mult_max) timestep
           mult_dt(iCv) = dt3/dtim
         enddo
       else
