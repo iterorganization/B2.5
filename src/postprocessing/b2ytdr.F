@@ -263,7 +263,8 @@ c 2002-09-11: logic revised
      * xr1(:), xf1(:), xd1(:), xr2(:), xf2(:), xd2(:),
      1 xpr(:), xpf1(:), xpf2(:), x1d(:,:,:,:),
      2 l_conn(:), nbini(:),
-     3 saved_na_feedback_actuator1(:), na_feedback_target1(:),
+     3 saved_na_feedback_actuator1(:), saved_na_feedback_prev1(:),
+     4 na_feedback_target1(:),
      4 na_feedback_alpha1(:), na_feedback_beta1(:),
      4 na_feedback_gamma1(:),
      5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
@@ -11796,22 +11797,29 @@ cxpb as they no longer necessarily point to the same species
       if((lfeedback.or.b2stbc_feedback.ne.0.or.todo)
      &   .and. .not.found .and. .not.same_atoms) then
         call read_b2mod_feedback(99,'    ',feedback_namelist_used)
-        if (maxval(saved_na_feedback_actuator).gt.0.0_R8) then
+        if (maxval(saved_na_feedback_actuator).gt.0.0_R8.or.
+     &      maxval(saved_na_feedback_prev).gt.0.0_R8) then
           todo = .false.
           is = 1
           do while (.not.todo .and. is.le.nspecies)
             todo = todo .or.
-     &        (saved_na_feedback_actuator(is-1).gt.0.0_R8 .and.
+     &       ((saved_na_feedback_actuator(is-1).gt.0.0_R8.or.
+     &         saved_na_feedback_prev(is-1).gt.0.0_R8) .and.
      &         ispecies1(is).ne.is)
             is = is+1
           end do
           if (todo) then
             allocate(saved_na_feedback_actuator1(0:nspecies1-1))
+            allocate(saved_na_feedback_prev1(0:nspecies1-1))
             saved_na_feedback_actuator1 = 0.0_R8
+            saved_na_feedback_prev1 = 0.0_R8
             do is = 1, nspecies
-              if (ispecies1(is).ne.-1)
-     >         saved_na_feedback_actuator1(ispecies1(is)-1) =
-     .          saved_na_feedback_actuator(is-1)
+              if (ispecies1(is).ne.-1) then
+                saved_na_feedback_actuator1(ispecies1(is)-1) =
+     .           saved_na_feedback_actuator(is-1)
+                saved_na_feedback_prev1(ispecies1(is)-1) =
+     .           saved_na_feedback_prev(is-1)
+              end if
             end do
             write(*,*) 'Writing b2.feedback_save.parameters.2'
             write(nout(5),'(a)') trim(new_filename)
@@ -11840,11 +11848,16 @@ cxpb as they no longer necessarily point to the same species
      >       write(99,*) 'SAVED_CBSNA_SOL= ',saved_cbsna_sol,','
             write(hlp_frm,'(a,i2,a)')
      >       '(a,1p,',nspecies1,'(1x,1e15.8,'',''))'
-            write(99,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
-     >       (saved_na_feedback_actuator1(is),is=0,nspecies1-1)
+            if (maxval(saved_na_feedback_actuator1).gt.0.0_R8)
+     >       write(99,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
+     >        (saved_na_feedback_actuator1(is),is=0,nspecies1-1)
+            if (maxval(saved_na_feedback_prev1).gt.0.0_R8)
+     >       write(99,hlp_frm) 'SAVED_NA_FEEDBACK_PREV=',
+     >        (saved_na_feedback_prev1(is),is=0,nspecies1-1)
             write(99,'(a1)') '/'
             close(99)
             deallocate(saved_na_feedback_actuator1)
+            deallocate(saved_na_feedback_prev1)
           end if
         end if
       else if (todo) then
