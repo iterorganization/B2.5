@@ -61,7 +61,8 @@
       real (kind=R8) :: ttim2_na(nCv,0:ns-1), ttim2_ua(nCv,0:ns-1),   ! only for iout = 1 + var_style = 2
      &                  ttim2_ti(nCv), ttim2_te(nCv),
      &                  ttim_na(nCv,0:ns-1), ttim_ua(nCv,0:ns-1),       
-     &                  ttim_ti(nCv), ttim_te(nCv)
+     &                  ttim_ti(nCv), ttim_te(nCv),
+     &                  dt_var4_ns(nCv,0:ns-1), dt_var4_min(nCv)
 *   ..procedures
       external xertst
       external b2xvsg
@@ -111,7 +112,8 @@
       call get_mult_dt(switch%b2mndt_var_style, dtim, dv, geo, mpg, 
      &     nCv, ns,  te, switch%b2mndt_var_te_min,
      &     switch%b2mndt_var_te_max, switch%b2mndt_var_mult, 
-     &     switch%b2mndt_var_style3_Cmax, mult_dt)
+     &     switch%b2mndt_var_style3_Cmax, mult_dt, 
+     &     dt_var4_ns,dt_var4_min)
 
 * ..include the contributions from dtim
 *   ..modify snadt
@@ -144,6 +146,18 @@ csw 24feb2014 check for guard cell (SOLPS4)
             content = geo%cvVol(iCv)*na0(iCv,is)
             ttim2 = content/abs(src_tot)/
      &              switch%b2mndt_var_style2_SF
+            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+            if (switch%b2srdt_iout.eq.1) then
+              ttim2_na(iCv,is) = ttim2
+              ttim_na(iCv,is) = ttim
+            endif
+          endif
+          if (switch%b2mndt_var_style.eq.4) then !! Timestep based on ratio of source to particle content and drift CFL criterion
+            src_tot = sr%sna(iCv,0,is)+sr%sna(iCv,1,is)*na0(iCv,is)
+            content = geo%cvVol(iCv)*na0(iCv,is)
+            ttim2 = content/abs(src_tot)/
+     &              switch%b2mndt_var_style2_SF
+            ttim2 = min(ttim2,dt_var4_ns(iCv,is))
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
             if (switch%b2srdt_iout.eq.1) then
               ttim2_na(iCv,is) = ttim2
@@ -188,6 +202,23 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim_ua(iCv,is) = ttim
             endif
           endif
+          if (switch%b2mndt_var_style.eq.4) then !! Timestep based on ratio of source to parallel momentum content and drift CFL criterion
+            smt = sr%smq(iCv,0:3,is) + sr%smo(iCv,0:3,is)
+            src_tot = smt(0) + 
+     &                smt(1)*ua0(iCv,is) + 
+     &                smt(2)*am(is)*mp*na0(iCv,is) +
+     &                smt(3)*am(is)*mp*ua0(iCv,is)*na0(iCv,is)
+            content = geo%cvVol(iCv)*geo%cvHz(iCv)*
+     &                am(is)*mp*ua0(iCv,is)*na0(iCv,is)
+            ttim2 = abs(content/src_tot)/
+     &              switch%b2mndt_var_style2_SF
+            ttim2 = min(ttim2,dt_var4_ns(iCv,is))
+            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+            if (switch%b2srdt_iout.eq.1) then
+              ttim2_ua(iCv,is) = ttim2
+              ttim_ua(iCv,is) = ttim
+            endif
+          endif
           t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)   !srv 09.01.01
           sr%smodt(iCv,0,is) = t0*am(is)*mp*ua0(iCv,is)*na0(iCv,is)
           sr%smodt(iCv,1,is) = 0.0_R8
@@ -224,6 +255,21 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim_te(iCv) = ttim
             endif
         endif
+        if (switch%b2mndt_var_style.eq.4) then !! Timestep directly based on ratio of source to electron heat content + drift CFL criterion
+            src_tot = sr%she(iCv,0) + 
+     &                sr%she(iCv,1)*te0(iCv) + 
+     &                sr%she(iCv,2)*ne0(iCv) +
+     &                sr%she(iCv,3)*te0(iCv)*ne0(iCv)
+            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+            ttim2 = content/abs(src_tot)/
+     &              switch%b2mndt_var_style2_SF
+            ttim2 = min(ttim2,dt_var4_min(iCv))
+            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+            if (switch%b2srdt_iout.eq.1) then
+              ttim2_te(iCv) = ttim2
+              ttim_te(iCv) = ttim
+            endif
+        endif
         t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
         sr%shedt(iCv,0) = 1.5_R8*t0*ne0(iCv)*te0(iCv)
         sr%shedt(iCv,1) = 0.0_R8
@@ -241,6 +287,21 @@ csw 24feb2014 check for guard cell (SOLPS4)
             content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
             ttim2 = content/abs(src_tot)/
      &              switch%b2mndt_var_style2_SF
+            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+            if (switch%b2srdt_iout.eq.1) then
+              ttim2_ti(iCv) = ttim2
+              ttim_ti(iCv) = ttim
+            endif
+        endif
+        if (switch%b2mndt_var_style.eq.4) then 
+            src_tot = sr%shi(iCv,0) + 
+     &                sr%shi(iCv,1)*ti0(iCv) + 
+     &                sr%shi(iCv,2)*ni0(iCv,0) +
+     &                sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
+            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+            ttim2 = content/abs(src_tot)/
+     &              switch%b2mndt_var_style2_SF
+            ttim2 = min(ttim2,dt_var4_min(iCv))
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
             if (switch%b2srdt_iout.eq.1) then
               ttim2_ti(iCv) = ttim2
@@ -279,6 +340,17 @@ csw 24feb2014 check for guard cell (SOLPS4)
             content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
             ttim2 = content/abs(src_tot)/
      &              switch%b2mndt_var_style2_SF
+            ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
+        endif
+        if (switch%b2mndt_var_style.eq.4) then !! Timestep directly based on ratio of source to ion heat content + drift CFL condition
+            src_tot = sr%shi(iCv,0) + 
+     &                sr%shi(iCv,1)*ti0(iCv) + 
+     &                sr%shi(iCv,2)*ni0(iCv,0) +
+     &                sr%shi(iCv,3)*ti0(iCv)*ni0(iCv,0)
+            content = 1.5_R8*ne0(iCv)*te0(iCv)*geo%cvVol(iCv)
+            ttim2 = content/abs(src_tot)/
+     &              switch%b2mndt_var_style2_SF
+            ttim2 = min(ttim2,dt_var4_min(iCv))
             ttim  = min(max(ttim2,ttim),ttim*switch%b2mndt_var_mult)
         endif
         t0 = (switch%b2srdt_phm3/ttim)*geo%cvVol(iCv)
