@@ -320,9 +320,11 @@ csw 01oct2012 initialize potential if necessary
      &  st%pl%po, st%pl%ti, st%pl%na, st%rt%rza, st%co%vsa0, 
      &  st%dv%fac_vis, st%dv%fchvisper_a, st%dv%fchvisper)
       call b2tvsq (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
-     &  st%dv%fac_vis, st%dv%ne2, st%rt%rz2, st%dv%lnlam, st%pl%te, 
-     &  st%pl%ti, st%dv%ni(:,1), st%co%hcix_c, st%dv%fchvisq_a,
-     &  st%dv%fchvisq)
+     &  st%dv%fac_vis, st%dv%ne2, st%rt%rz2, st%dv%lnlam, st%pl%te,
+     &  st%pl%ti, st%pl%na, st%dv%ni(:,1), st%rt%rza,
+     &  st%co_ns%vsaf_hAdp_albe, st%co_ns%vsaf_hBdp_al,
+     &  st%co%hcix_c, st%co%hci_a, st%co_ns%hci_al_ast,
+     &  st%dv%fchvisq_a, st%dv%fchvisq)
       call b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
      &  st%pl%po, st%pl%na, st%pl%kt, st%dv%vaecrb, st%co%dna_ExB,
      &  st%dv%fchviskt_a, st%dv%fchviskt)
