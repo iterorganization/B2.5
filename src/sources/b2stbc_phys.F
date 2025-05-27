@@ -275,6 +275,14 @@ c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.
         fac_he_anom_bc = 3.0_R8/5.0_R8
       endif
 
+      if (switch%keps_anom_he_model.eq.0) then
+        ! Default model. Apply factor 5/2 for anomalous terms in heat equations
+        fac_he_anom = 2.5_R8
+      else
+        ! keps model. Apply factor 3/2 for anomalous terms in heat equations
+        fac_he_anom = 1.5_R8
+      endif
+
       call b2xppz (nCv, ns, dv%ne, pl%na, pl%te, pl%ti, pz, st_ext)!srv 18.01.02
 
 *   ..pre-compute some quantities for core BCs with drifts

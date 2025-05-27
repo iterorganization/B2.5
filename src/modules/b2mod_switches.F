@@ -430,6 +430,7 @@ c k-enstrophy model
       real (kind=R8) :: b2tfhi_fsigkt
       real (kind=R8) :: b2tfhi_fkt_hie
       real (kind=R8) :: b2tfhe_vis_kt
+      real (kind=R8) :: b2sikt_lpar_ref
       integer :: keps_anom_he_model
 
 c b2tqna
@@ -1024,6 +1025,7 @@ c k-enstrophy model
       s % b2tfhi_fsigkt = 0.0_R8
       s % b2tfhi_fkt_hie = 0.0_R8
       s % b2tfhe_vis_kt = 0.0_R8
+      s % b2sikt_lpar_ref = 10.0_R8
       s % keps_anom_he_model = 0
 
 c b2tqna
@@ -1626,6 +1628,7 @@ c k-enstrophy model
       call ipgetr ('b2tfhi_fsigkt', s % b2tfhi_fsigkt)
       call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
       call ipgetr ('b2tfhe_vis_kt', s % b2tfhe_vis_kt)
+      call ipgetr ('b2sikt_fac_diss_lpar', s % b2sikt_lpar_ref)
       call ipgeti ('keps_anom_he_model',
      .          s % keps_anom_he_model)
 
@@ -2229,6 +2232,10 @@ c k-enstrophy model
       call xertst (0.le.s%b2sikt_min_source .and.
      &  s%b2sikt_min_source.le.2,
      &  'b2sikt_min_source must be either 0, 1 or 2')
+      call xertst (0.le.s%keps_anom_he_model .and.
+     &  s%keps_anom_he_model.le.2,
+     &  'keps_anom_he_model must be 0, 1 or 2')
+
 c eirene_mc
       call xertst (0.0_R8.le.s%neutral_sources_rescale,
      1   'faulty input neutral_sources_rescale')
