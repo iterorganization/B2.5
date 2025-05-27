@@ -2487,102 +2487,6 @@ c k-enstrophy model
       call xertst (0.le.s%b2sikt_min_source .and.
      &  s%b2sikt_min_source.le.2,
      &  'b2sikt_min_source must be either 0, 1 or 2')
-      call xertst (0.le.s%keps_anom_he_model .and.
-     &  s%keps_anom_he_model.le.2,
-     &  'Allowed values for keps_anom_he_model range from 0 to 2')
-
-c ECH model
-      call xertst ((0.le.s%use_ech).and.(s%use_ech.le.1),
-     1              'b2sral_use_ECH value not coded')
-      call xertst (((0.le.s%ech_coupling).and.(s%ech_coupling.le.2))
-     1               .or.(s%use_ech.eq.0),
-     2              'b2sral_ECH_coupling value not coded')
-      call xertst (0.0_R8.lt.s%ech_RFfreq.or.s%use_ech.eq.0,
-     1              'b2sral_ECH_RFfrequency must be .gt. 0.0')
-      call xertst ((0.le.s%ech_gaussian_type).and.
-     1             (s%ech_gaussian_type.le.3),
-     2              'b2sral_ECH_gauss_type value not coded')
-      call xertst (0.0.lt.s%ech_gaussian_width_x.or.s%ech_coupling.ne.1,
-     1              'b2sral_ECH_gauss_width_x must be .gt. 0.0')
-      call xertst (0.0.lt.s%ech_gaussian_width_y.or.s%ech_coupling.ne.1,
-     1              'b2sral_ECH_gauss_width_y must be .gt. 0.0')
-      call xertst (1.lt.s%ech_harmonics.or.s%use_ech.eq.0,
-     1              'b2sral_ECH_harmonics must be .ge. 1')
-      call xertst (0.0_R8.lt.s%ech_power.or.s%use_ech.eq.0,
-     1              'b2sral_ECH_power must be .gt. 0.0')
-      call xertst (0.0_R8.lt.s%ech_absfract.or.s%use_ech.eq.0,
-     1              'b2sral_ECH_absorption_frac must be .gt. 0.0')
-      call xertst (0.0_R8.lt.s%ech_Rdep.or.s%use_ech.eq.0,
-     1              'b2sral_ECH_Rdep must be .gt. 0.0')
-
-c ICH model
-      call xertst ((0.le.s%use_ich).and.(s%use_ich.le.1),
-     1              'b2sral_use_ICH value not coded')
-      call xertst (((0.le.s%ich_coupling).and.(s%ich_coupling.le.8))
-     1               .or.(s%use_ich.eq.0),
-     1              'b2sral_ICH_coupling value not coded')
-      call xertst (0.0_R8.lt.s%ich_RFfreq.or.s%use_ich.eq.0,
-     1              'b2sral_ICH_RFfrequency must be .gt. 0.0')
-      call xertst (0.0.lt.s%ich_gaussian_width_x.or.s%use_ich.eq.0,
-     1              'b2sral_ICH_gauss_width_x must be .gt. 0.0')
-      call xertst (0.0.lt.s%ich_gaussian_width_y.or.s%use_ich.eq.0,
-     1              'b2sral_ICH_gauss_width_y must be .gt. 0.0')
-      call xertst (1.lt.s%ich_harmonics.or.s%use_ich.eq.0,
-     1              'b2sral_ICH_harmonics must be .ge. 1')
-      call xertst (0.0_R8.lt.s%ich_power.or.s%use_ich.eq.0,
-     1              'b2sral_ICH_power must be .gt. 0.0')
-      call xertst (0.0_R8.lt.s%ich_absfract.or.s%use_ich.eq.0,
-     1              'b2sral_ICH_absorption_frac must be .gt. 0.0')
-      call xertst (0.0_R8.lt.s%ich_fracpne.or.s%use_ich.eq.0,
-     1              'b2sral_ICH_fracpne must be .gt. 0.0')
-      call xertst (0.0_R8.lt.s%ich_Rdep.or.s%use_ich.eq.0,
-     1              'b2sral_ICH_Rdep must be .gt. 0.0')
-      call xertst (0.0_R8.lt.s%ich_Zdep.or.s%use_ich.eq.0,
-     1              'b2sral_ICH_Zdep must be .gt. 0.0')
-
-c Bohm transport model
-      call xertst (s%transport_bohm.ge.0.and.s%transport_bohm.le.1,
-     1                         'b2tqna_transport_bohm value not coded')
-      call xertst (s%bohm_pureDiff.ge.0.and.s%bohm_pureDiff.le.1,
-     1                         'b2tqna_bohm_diff value not coded')
-      call xertst (s%bohm_ExB.ge.0.and.s%bohm_ExB.le.1,
-     1                         'b2tqna_bohm_ExB value not coded')
-      call xertst (s%bohm_viscosity.ge.0.and.s%bohm_viscosity.le.1,
-     1             'b2tqna_bohm_viscosity value not coded')
-      call xertst (s%bohm_average.ge.0.and.s%bohm_average.le.1,
-     1             'b2tqna_bohm_average value not coded')
-      call xertst (s%bohm_iout.ge.0.and.s%bohm_iout.le.1,
-     1                         'b2tqna_bohm_iout value not coded')
-      call xertst (0.0_R8.lt.s%bohm_gammaD.or.s%transport_bohm.eq.0,
-     1                         'b2tqna_bohm_gammaD must be .gt. 0.0')
-      call xertst (0.0_R8.lt.s%bohm_dnafact.or.s%transport_bohm.eq.0,
-     1                         'b2tqna_bohm_dnafact must be .gt. 0.0')
-      call xertst (0.0_R8.lt.s%bohm_vlafact.or.s%transport_bohm.eq.0,
-     1                         'b2tqna_bohm_vlafact must be .gt. 0.0')
-      call xertst ((0.0_R8.lt.s%R0.or.s%transport_bohm.eq.0).and.
-     1            (0.0_R8.lt.s%R0.or.s%losses_limiters.eq.0),
-     2            'Major radius must be .gt. 0.0')
-      call xertst ((0.0_R8.lt.s%a0.or.s%transport_bohm.eq.0).and.
-     1            (0.0_R8.lt.s%a0.or.s%losses_limiters.eq.0).and.
-     2            (0.0_R8.lt.s%a0.or.s%losses_drifts.eq.0),
-     3            'Minor radius must be .gt. 0.0')
-
-c Artificial losses
-      call xertst (s%losses_poloidal.ge.0.and.s%losses_poloidal.le.1,
-     1                        'b2sral_losses_poloidal value not coded')
-      call xertst (s%losses_limiters.ge.0.and.s%losses_limiters.le.1,
-     1                        'b2sral_losses_limiters value not coded')
-      call xertst (s%losses_drifts.ge.0.and.s%losses_drifts.le.1,
-     1                        'b2sral_losses_drifts value not coded')
-      call xertst (0.0_R8.lt.s%b.or.s%losses_poloidal.eq.0, 
-     1     'b must be .gt. 0.0')
-      call xertst (0.lt.s%nlimiters.or.s%losses_limiters.eq.0,
-     1              'Number of limiters must be .gt. 0')
-      call xertst (0.0_R8.lt.s%limiter_width.or.s%losses_limiters.eq.0,
-     1              'Limiter width must be .gt. 0.0')
-      call xertst (0.0_R8.lt.s%T_wall.or.s%losses_limiters.eq.0,
-     1              'T_wall must be .gt. 0.0')
-
 c eirene_mc
       call xertst (0.0_R8.le.s%neutral_sources_rescale,
      1   'faulty input neutral_sources_rescale')
@@ -2833,11 +2737,12 @@ c k-enstrophy model
      &    s%solve_keps,' and b2tqna_transport_keps =',
      &    s%transport_keps,' should go together'
       endif
-      if ((s%solve_keps.gt.0 .or. s%transport_keps.gt.0) .and.
-     &     s%keps_anom_he_model.eq.0 ) then
-        write(*,*) 'WARNING! should use keps_anom_he_model.gt.0 for '//
+      if (s%solve_keps.gt.0 .or. s%transport_keps.gt.0 .and.
+     &    s%keps_anom_he_model.eq.0 ) then
+        write(*,*) 'WARNING! should use keps_anom_he_model .gt.0 for '//
      &             'keps-model.'
       endif
+
 
 c Zhdanov closure
       if (s%Zhdanov_closure.lt.0 .or. s%Zhdanov_closure.gt.1) then
