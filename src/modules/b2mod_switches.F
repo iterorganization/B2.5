@@ -2222,7 +2222,6 @@ c k-enstrophy model
       call xertst (0.le.s%b2sikt_min_source .and.
      &  s%b2sikt_min_source.le.2,
      &  'b2sikt_min_source must be either 0, 1 or 2')
-
 c eirene_mc
       call xertst (0.0_R8.le.s%neutral_sources_rescale,
      1   'faulty input neutral_sources_rescale')
@@ -2401,6 +2400,11 @@ c k-enstrophy model
         write(*,*) 'WARNING! b2mndr_solve_keps = ',
      &    s%solve_keps,' and b2tqna_transport_keps =',
      &    s%transport_keps,' should go together'
+      endif
+      if (s%solve_keps.gt.0 .or. s%transport_keps.gt.0 .and.
+     &    s%keps_anom_he_model.eq.0 ) then
+        write(*,*) 'WARNING! should use keps_anom_he_model .gt.0 for '//
+     &             'keps-model.'
       endif
 
 
