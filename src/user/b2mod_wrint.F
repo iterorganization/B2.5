@@ -349,7 +349,7 @@ csw 20sep2013 added
                 nasum(is,ir) = nasum(is,ir) +
      .           mlcmp(iatm,imol)*dmb2(ix+1,iy+1,imol,1)*vol(ix,iy)
                 if(hlp_l) nsla_tmp(b2espcr(is)) = nsla_tmp(b2espcr(is))
-     .              + mlcmp(iatm,imol)*dmb2(ix+1,iy+1,iatm,1)*vol(ix,iy)
+     .              + mlcmp(iatm,imol)*dmb2(ix+1,iy+1,imol,1)*vol(ix,iy)
               endif
             end do
           end do

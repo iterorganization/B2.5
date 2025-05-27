@@ -89,9 +89,9 @@ c***    DoD_ol    hlp_dodol  min. DoD, outer lower divertor
 c***    DoD_iu    hlp_dodiu  min. DoD, inner upper divertor
 c***    DoD_ou    hlp_dodou  min. DoD, outer upper divertor
 c***    isatt_il  hlp_istil  total Isat to inner lower divertor
-c***    isatt_ol  hlp_istil  total Isat to outer lower divertor
-c***    isatt_iu  hlp_istil  total Isat to inner upper divertor
-c***    isatt_ou  hlp_istil  total Isat to inner upper divertor
+c***    isatt_ol  hlp_istol  total Isat to outer lower divertor
+c***    isatt_iu  hlp_istiu  total Isat to inner upper divertor
+c***    isatt_ou  hlp_istou  total Isat to inner upper divertor
 c***    albll_mx  al_bll_mx  ballooning alpha parameter maximum value
 c***    albll_ix  al_bll_ix  ballooning alpha parameter maximum ix
 c***    albll_iy  al_bll_iy  ballooning alpha parameter maximum iy
@@ -209,10 +209,10 @@ c*** Column headers:
       real (kind=R8) ::
      *     equg2_tmp(ngl2_tmp)
       real (kind=R8) ::
-     *     hlp_dod(4), hlp_dodil, hlp_dodol,hlp_dodiu, hlp_dodou
+     *     hlp_dod(4), hlp_dodil, hlp_dodol, hlp_dodiu, hlp_dodou
       equivalence (equg2_tmp(1), hlp_dod),
-     ,     (equg2_tmp(1),  hlp_dodil), (equg2_tmp(2),  hlp_dodol),
-     ,     (equg2_tmp(3),  hlp_dodiu), (equg2_tmp(4),  hlp_dodou)
+     ,     (equg2_tmp(1), hlp_dodil), (equg2_tmp(2), hlp_dodol),
+     ,     (equg2_tmp(3), hlp_dodiu), (equg2_tmp(4), hlp_dodou)
       integer mgl3_tmp
       integer kgl3_tmp(ngl3_tmp)
       data kgl3_tmp / -1, 0, 0, -1 /
@@ -221,16 +221,16 @@ c*** Column headers:
       real (kind=R8) ::
      *     hlp_isat(4), hlp_istil, hlp_istol, hlp_istiu, hlp_istou
       equivalence (equg3_tmp(1), hlp_isat),
-     ,     (equg3_tmp(1),  hlp_istil), (equg3_tmp(2),  hlp_istol),
-     ,     (equg3_tmp(3),  hlp_istiu), (equg3_tmp(4),  hlp_istou)
+     ,     (equg3_tmp(1), hlp_istil), (equg3_tmp(2), hlp_istol),
+     ,     (equg3_tmp(3), hlp_istiu), (equg3_tmp(4), hlp_istou)
 c     integer kgl4_tmp(2)
       real (kind=R8) ::
      *     equg4_tmp(ngl4_tmp)
       real (kind=R8) ::
-     *     hlp_albll(ngl4_tmp),al_bll_mx,al_bll_ix,al_bll_iy
+     *     hlp_albll(ngl4_tmp), al_bll_mx, al_bll_ix, al_bll_iy
       equivalence (equg4_tmp(1), hlp_albll),
-     ,     (equg4_tmp(1),  al_bll_mx), (equg4_tmp(2),  al_bll_ix),
-     ,     (equg4_tmp(3),  al_bll_iy)
+     ,     (equg4_tmp(1), al_bll_mx), (equg4_tmp(2), al_bll_ix),
+     ,     (equg4_tmp(3), al_bll_iy)
 
 c*** PFR flow values
       real (kind=R8) ::
@@ -869,8 +869,8 @@ c*** Western divertor
           end do !}
 
           if(hlp_dbg) then !{
-            print '(a,1p,2i4,2e12.3)',' %%## m,n,hlp_si,hlp_hep: ',  !###
-     ,                                       m,n,hlp_si,hlp_hep      !###
+            print '(a,1p,2i4,2e12.3)',' %%## m,n,hlp_si,hlp_pi: ',  !###
+     ,                                       m,n,hlp_si,hlp_pi      !###
           endif !}
 
 c*** Eastern divertor
@@ -1396,8 +1396,8 @@ c-----------------------------------------------------------------------
 c*** find the maximum ballooning factor and its location
 
       al_bll_mx=0.0_R8
-      al_bll_ix=0
-      al_bll_iy=0
+      al_bll_ix=0.0_R8
+      al_bll_iy=0.0_R8
 
       do ix=0,nx-1
         do iy=0,ny-1
@@ -1410,14 +1410,15 @@ c*** find the maximum ballooning factor and its location
      .           "ix,iy,al_bll_mx,albll =>",ix,iy,al_bll_mx,albll(ix,iy)
             if(al_bll_mx.lt.albll(ix,iy)) then
               al_bll_mx=albll(ix,iy)
-              al_bll_ix=ix
-              al_bll_iy=iy
+              al_bll_ix=real(ix,R8)
+              al_bll_iy=real(iy,R8)
             endif
           endif
         enddo
       enddo
       if(hlp_dbg) print '(1x,a,2i4,1e12.4)',
-     .               "all_bll_ix,al_bll_iy,albll_mx, =>",ix,iy,al_bll_mx
+     . "all_bll_ix,al_bll_iy,albll_mx, =>",
+     .  nint(al_bll_ix),nint(al_bll_iy),al_bll_mx
 
 c=======================================================================
       if(filedata(ltrc)) then !{
