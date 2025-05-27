@@ -1843,8 +1843,9 @@ c k-enstrophy model
       call ipgetr ('b2tfhi_fkt_hie', s % b2tfhi_fkt_hie)
       call ipgetr ('b2tfhe_vis_kt', s % b2tfhe_vis_kt)
       call ipgetr ('b2sikt_fac_diss_lpar', s % b2sikt_lpar_ref)
-      call ipgeti ('keps_anom_he_model', s % keps_anom_he_model)
-
+      call ipgeti ('keps_anom_he_model',
+     .          s % keps_anom_he_model)
+     
 c Bohm-like transport model
       call ipgeti ('b2tqna_transport_bohm', s % transport_bohm)
       call ipgeti ('b2tqna_bohm_purediff', s % bohm_pureDiff)
@@ -2487,6 +2488,10 @@ c k-enstrophy model
       call xertst (0.le.s%b2sikt_min_source .and.
      &  s%b2sikt_min_source.le.2,
      &  'b2sikt_min_source must be either 0, 1 or 2')
+      call xertst (0.le.s%keps_anom_he_model .and.
+     &  s%keps_anom_he_model.le.2,
+     &  'keps_anom_he_model must be 0, 1 or 2')
+
 c eirene_mc
       call xertst (0.0_R8.le.s%neutral_sources_rescale,
      1   'faulty input neutral_sources_rescale')

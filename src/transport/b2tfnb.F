@@ -498,12 +498,16 @@ cwdk                   (original code: simple averaging)
      &      (flo2dia(:,1) - flo_mdf(:,1)*wrk3)*nbf - 
      &       co%cdpahz(:,1,isb)*dpb(:,1)
 
-      dv%fna_he(:,0,isb)   = fna_mdf0(:,0)*(5.0_R8/3.0_R8) + 
-     &      (flo_he(:,0) - (5.0_R8/3.0_R8)*flo_mdf(:,0))*nbf - 
-     &      (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
-      dv%fna_he(:,1,isb)   = fna_mdf0(:,1)*(5.0_R8/3.0_R8) + 
-     &      (flo_he(:,1) - (5.0_R8/3.0_R8)*flo_mdf(:,1))*nbf - 
-     &      (5.0_R8/3.0_R8)*co%cdpa(:,1,isb)*dpb(:,1)
+      dv%fna_he(:,0,isb)   = fac_he_anom*fna_mdf0(:,0) +
+     &  (1.0_R8-drift_hyb)*
+     &   dv%vaecrb(:,0,isb)*geo%fcS*geo%fcQalf(:,0)*nbf +
+     &  (flo_he(:,0) - fac_he_anom*flo_mdf(:,0))*nbf -
+     &  (5.0_R8/3.0_R8)*co%cdpa(:,0,isb)*dpb(:,0)
+      dv%fna_he(:,1,isb)   = fac_he_anom*fna_mdf0(:,1) +
+     &  (1.0_R8-drift_hyb)*
+     &   dv%vaecrb(:,1,isb)*geo%fcS*geo%fcQalf(:,1)*nbf +
+     &  (flo_he(:,1) - fac_he_anom*flo_mdf(:,1))*nbf -
+     &  (5.0_R8/3.0_R8)*co%cdpa(:,1,isb)*dpb(:,1)
 
       dv%fna_32(:,0,isb)   = dv%fna_32(:,0,isb) + 
      &     (flo(:,0) - flo_mdf(:,0))*nbf
