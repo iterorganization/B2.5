@@ -1544,8 +1544,8 @@
                 do iy= 0, ny-1
                   do is = 0, ns-1
                     na_feedback_current = na_feedback_current +
-     .                      0.5_R8*(rza(lit,iy,is) + rza(lib,iy,is)) *
-     .                      fna(max(lib,lit),iy,0,is)
+     .                0.5_R8*(rza(lit,iy,is) + rza(lib,iy,is)) *
+     .                fna(max(lib,lit),iy,0,is)
                   enddo
                 enddo
                 na_feedback_current = abs(qe*na_feedback_current)

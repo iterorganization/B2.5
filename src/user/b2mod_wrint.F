@@ -113,7 +113,8 @@ c*** Column headers:
      1          'Brmsreg_','imp_rad_','neu_rad_','tot_rad_','SSEEreg_',
      2          'SSEIreg_','th_enre_','th_enri_',
      3          'K_en_ri_','N_e_reg_','vol_reg_'/
-      data hlp_hs / 'SSNItot_', 'N_a_tot_', 'N_i_tot_','N_s_sli_', 
+      data hlp_hs /
+     1          'SSNItot_','N_a_tot_','N_i_tot_','N_s_sli_',
      4          'N_s_sla_','N_s_slt_' /
 c-----------------------------------------------------------------------
       save lun
@@ -303,7 +304,7 @@ csw 20sep2013 added
       do iy=0,ny-1
         do ix=0,nx-1
           ir=region(ix,iy,0)
-          hlp_l = .not.ON_CLOSED_SURFACE(ix,iy) .and. 
+          hlp_l = .not.ON_CLOSED_SURFACE(ix,iy) .and.
      &         region(ix,iy,0).ne.0 .and. leftix(ix,iy).ne.-2 .and.
      &         rightix(ix,iy).ne.nx+1 .and. bottomiy(ix,iy).ne.-2 .and.
      &         topiy(ix,iy).ne.ny+1
@@ -321,16 +322,16 @@ csw 20sep2013 added
 ! For fluid neutrals Natm_tmp is just the number of atoms integrated over
 ! the whole B2.5 domain
               Natm_tmp(b2espcr(is)) = Natm_tmp(b2espcr(is)) +
-     .                                 na(ix,iy,is)*vol(ix,iy)
+     .                                na(ix,iy,is)*vol(ix,iy)
               if(hlp_l) nsla_tmp(b2espcr(is)) = nsla_tmp(b2espcr(is)) +
      .                                           na(ix,iy,is)*vol(ix,iy)
             else
               nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
-     .                                 na(ix,iy,is)*vol(ix,iy)
+     .                                na(ix,iy,is)*vol(ix,iy)
               kisum(ir) = kisum(ir) +
      &        0.5_R8*mp*am(is)*na(ix,iy,is)*(ua(ix,iy,is)**2)*vol(ix,iy)
               Nion_tmp(b2espcr(is)) = Nion_tmp(b2espcr(is)) +
-     .                                 na(ix,iy,is)*vol(ix,iy)
+     .                                na(ix,iy,is)*vol(ix,iy)
               if(hlp_l) nsli_tmp(b2espcr(is)) = nsli_tmp(b2espcr(is)) +
      .                                           na(ix,iy,is)*vol(ix,iy)
             endif
@@ -348,7 +349,7 @@ csw 20sep2013 added
                 nasum(is,ir) = nasum(is,ir) +
      .           mlcmp(iatm,imol)*dmb2(ix+1,iy+1,imol,1)*vol(ix,iy)
                 if(hlp_l) nsla_tmp(b2espcr(is)) = nsla_tmp(b2espcr(is))
-     .              + mlcmp(iatm,imol)*dmb2(ix+1,iy+1,iatm,1)*vol(ix,iy)
+     .              + mlcmp(iatm,imol)*dmb2(ix+1,iy+1,imol,1)*vol(ix,iy)
               endif
             end do
           end do

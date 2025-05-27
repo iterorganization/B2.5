@@ -1,7 +1,7 @@
 C
 CVK CORRECT CALCULATION OF THE HEAT LOADS IN B2
 C
-      subroutine b2usr_loads(nx,ny,nxtl,nxtr,BoRiS,wtarg_max)
+      subroutine b2usr_loads(ny,BoRiS,wtarg_max)
       use b2mod_types
       use b2mod_geo
       use b2mod_rates
@@ -17,7 +17,7 @@ C
      , , only : trgshp
       IMPLICIT NONE
 
-      integer nx, ny, nxtl, nxtr
+      integer ny
       real(kind=R8) :: BoRiS
 
       REAL(KIND=R8), INTENT(OUT) :: wtarg_max(NTRGSX)
