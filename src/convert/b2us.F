@@ -87,7 +87,7 @@
       character filename*256
       character cnamip*80, cvalip*80, line*500, ligne*500
       character bcp_filename*260
-      logical file_open, file_exists
+      logical file_open, file_exists, found
 
       type(mapping), save :: mpg
       type(geometry), save :: gm
@@ -479,7 +479,7 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
           endif
           call alloc_b2mod_neutrals
      .     (ns, natm_loc, nmol, nion, nstraid, nsts, sput_dst)
-          call read_neutrals_namelist(nx, ny, ns, .false.)
+          call read_neutrals_namelist(nx, ny, ns, switch, .false.)
           call conv_rcparms (mpg)
           call write_rcparms(ns,mpg)
         else
@@ -531,6 +531,22 @@ c      hz = 1.0_R8*(1.0_R8-fac_hz)+fac_hz*vol/hx/hy
         write(0,'(a)') 'WARNING: coreregno, solregno, etc., now'//
      &   ' identify only the boundary where feedback is applied!'
       endif
+      filename='b2.feedback_save.parameters'
+      call find_file(filename,file_exists)
+      if (file_exists) then
+        if (b2fgmtry_version.lt.'03.002.000') then
+          call read_b2mod_feedback(99,'    ',found)
+          if (found) then
+            if (maxval(saved_na_feedback_actuator).gt.0.0_R8)
+     &       saved_fb_actuator(0:nspecies-1)=
+     &        saved_na_feedback_actuator(0:nspecies-1)
+            if (maxval(saved_na_feedback_prev).gt.0.0_R8)
+     &       saved_fb_prev(0:nspecies-1)=
+     &        saved_na_feedback_prev(0:nspecies-1)
+            call write_fbsave
+          end if
+        end if
+      end if
 
 *   ..close other files
       do io=0,size(ninp)-1

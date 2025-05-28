@@ -362,7 +362,7 @@
       end if
       if (ank_tracing.ne.0) then
         call b2trci(geo,mpg,ns,nlim,nmol,switch)
-        call b2trcc(nout(1))
+        call b2trcc(mpg,nout(1))
         call b2filei(ns,mpg%nnreg(0),switch)
         call b2filec
       end if

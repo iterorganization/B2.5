@@ -56,11 +56,11 @@
       real (kind=R8), save ::
      & fb_target(DEF_NATM) = 0.0_R8, fb_time(DEF_NATM) = 0.0_R8,
      & saved_fb_actuator(DEF_NATM) = 0.0_R8,
+     & saved_fb_prev(DEF_NATM) = 0.0_R8,
      & fb_alpha(DEF_NATM) = 0.001_R8, fb_beta(DEF_NATM) = 1.0_R8,
      & fb_const(DEF_NATM) = 0.0_R8, fb_puff_min(DEF_NATM) = 0.0_R8,
      & fb_puff_max(DEF_NATM) = 0.0_R8, fb_overshoot(DEF_NATM) = 0.0_R8,
-     & fb_current(DEF_NATM) = 0.0_R8, fb_prev(DEF_NATM) = 0.0_R8,
-     & fb_rescale(DEF_NATM) = 1.0_R8,
+     & fb_current(DEF_NATM) = 0.0_R8, fb_rescale(DEF_NATM) = 1.0_R8,
      & fb_current_prev(DEF_NATM) = 0.0_R8,
      & fb_tau(DEF_NATM) = 0.0_R8
 
@@ -112,7 +112,7 @@
      i  coreregno/1/, coreregn2/0/, solregno/6/,
      i  pfrregno1/4/, pfrregno2/5/, isfeedback/0/, nesepm_istra/-1/
 
-      namelist /feedback/ saved_fb_actuator
+      namelist /feedback/ saved_fb_actuator, saved_fb_prev
 ! new namelist for specifying more complicated feedback options
       namelist /feedback_control/
 ! csc new namelist merging all feedback schemes
@@ -160,7 +160,8 @@
       else
         if (.not.file_ok) write(6,*) 'No ',trim(filename)
       endif
-      found = maxval(saved_fb_actuator).gt.0.0_R8
+      found = maxval(saved_fb_actuator).gt.0.0_R8 .or.
+     &        maxval(saved_fb_prev).gt.0.0_R8
       return
 #ifdef USE_MPI
   999 call xerrab ('Error while reading FEEDBACK namelist!')
@@ -176,7 +177,8 @@
       character*256 filename
 
 c      feedback_namelist_used = feedback_namelist_used .or.
-c     .            maxval(saved_fb_actuator).gt.0.0_R8
+c     .            maxval(saved_fb_actuator).gt.0.0_R8 .or.
+c     .            maxval(saved_fb_prev).gt.0.0_R8
 
       if (edition.eq.'    ') then
         filename = 'b2.feedback_save.parameters'
@@ -193,6 +195,8 @@ cxpb size is changed in b2mod_dimensions
      >   '(a,1p,',nFb,'(1x,1e15.8,'',''))'
         write(nwrite,hlp_frm) 'SAVED_FB_ACTUATOR=',
      >   (saved_fb_actuator(is),is=1,nFb)
+        write(nwrite,hlp_frm) 'SAVED_FB_PREV=',
+     >   (saved_fb_prev(is),is=1,nFb)
         write(nwrite,'(a1)') '/'
         close(nwrite)
         write(*,*) 'Saved ',trim(filename)
@@ -956,7 +960,8 @@ cxpb size is changed in b2mod_dimensions
       real (kind=R8) :: sna_pump, sna_puff, sna_core
       integer, save :: ncall = 0
       real (kind=R8) :: sum_e, total_flux, vol_feedback, sum_s,
-     & t0, t1
+     & t0, t1, zaf
+      real (kind=R8), external :: intface_s
 
       call subini ('compute_feedback')
       if (ncall.eq.0) then
@@ -983,8 +988,8 @@ cxpb size is changed in b2mod_dimensions
      &        fb_rescale_option(ifb) .gt. 0 .and.
      &        fb_actuator(ifb) .gt.0) then
 
-            if (main_call) then
-              fb_prev(ifb) = saved_fb_actuator(ifb)
+            if (main_call.and.ncall.gt.0) then
+              saved_fb_prev(ifb) = saved_fb_actuator(ifb)
             end if
 
           if (abs(fb_current(ifb)) > 1.0e-7_R8)
@@ -1756,8 +1761,10 @@ cxpb size is changed in b2mod_dimensions
                 t0 = 0.0_R8
                 do is = 0, ns-1
                   if (is_neutral(is)) cycle
+                  zaf = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,
+     .             rt%rza(1,is))
                   t0 = t0 + t1*(dv%fna(iFc,0,is)+dv%fna(iFc,1,is))*
-     .                 rt%rza(iCv,is)*qe/geo%fcS(iFc)/
+     .                 zaf*qe/geo%fcS(iFc)/
      .                (geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/
      .                 geo%fcBb(iFc,3))
                 enddo
@@ -1876,8 +1883,8 @@ cxpb size is changed in b2mod_dimensions
      &           b2espcr(fb_species(ifb))
                 if(fb_const(ifb).le.0.0_R8)
      &             fb_const(ifb) = fb_target(ifb)
-                if(fb_prev(ifb).eq.0.0_R8)
-     &             fb_prev(ifb) = fb_current(ifb)
+                if(saved_fb_prev(ifb).eq.0.0_R8)
+     &             saved_fb_prev(ifb) = fb_current(ifb)
                 if(fb_current(ifb).gt.0.0_R8)
      &             fb_current_prev(ifb) = fb_current(ifb)
               endif
@@ -1904,8 +1911,8 @@ cxpb size is changed in b2mod_dimensions
      &           b2espcr(fb_species(ifb))
                 if(fb_const(ifb).le.0.0_R8)
      &             fb_const(ifb) = fb_target(ifb)
-                if(fb_prev(ifb).eq.0.0_R8)
-     &             fb_prev(ifb) = fb_current(ifb)
+                if(saved_fb_prev(ifb).eq.0.0_R8)
+     &             saved_fb_prev(ifb) = fb_current(ifb)
                 if(fb_current(ifb).gt.0.0_R8)
      &             fb_current_prev(ifb) = fb_current(ifb)
               endif
@@ -1966,7 +1973,7 @@ cxpb size is changed in b2mod_dimensions
      &        fb_current(ifb),
      &        fb_target(ifb),
      &        fb_rescale(ifb),
-     &        fb_prev(ifb),
+     &        saved_fb_prev(ifb),
      &        ddtim, dt_prev
 
 ! phase 3:
@@ -2640,6 +2647,41 @@ cxpb size is changed in b2mod_dimensions
 
       return
       end subroutine write_fbparms
+
+***********************************************************************
+
+      subroutine write_fbsave
+      use b2mod_version
+      implicit none
+      integer :: is, iout
+      character*26 :: hlp_frm
+#ifdef LEGACYCOMP
+      integer newunit
+      external newunit
+#endif
+
+#ifndef LEGACYCOMP
+      open(newunit=iout,file='b2us.feedback_save.parameters')
+#else
+      iout = newunit()
+      open(unit=iout,file='b2us.feedback_save.parameters')
+#endif
+      call cfverw(iout,newversion)
+
+      write (iout,'(1x,a)') '&feedback'
+      write(hlp_frm,'(a,i2,a)') '(1x,a,(1x,',nspecies,'(es22.15,a1)))'
+      if (maxval(saved_fb_actuator).gt.0.0_R8)
+     > write(iout,hlp_frm) 'SAVED_FB_ACTUATOR = ',
+     .  (saved_fb_actuator(is),',',is=0,nspecies-1)
+      if (maxval(saved_fb_prev).gt.0.0_R8)
+     > write(iout,hlp_frm) 'SAVED_FB_PREV = ',
+     .  (saved_fb_prev(is),',',is=0,nspecies-1)
+
+      write (iout,'(1x,a)') '/'
+      close (iout)
+
+      return
+      end subroutine write_fbsave
 
       subroutine calc_puff_pump_b25(switch, mpg, nCv, dv, pl, sr,
      & is_start, is_end, sna_pump, sna_puff, sna_core)

@@ -8,8 +8,8 @@
       use b2mod_elements
       use b2us_feedback
      & , only : write_b2us_feedback, init_feedback, dealloc_feedback,
-     &          fb_target, fb_prev, fb_current, cum_volrec, fb_const,
-     &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
+     &          fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
+     &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
      &          feedback_namelist_used
       use b2mod_sputter
      & , only : sput_dst, dealloc_sputter_data, dealloc_b2mod_sputter
@@ -149,8 +149,7 @@
 *   ..common blocks
 *   ..local variables
       integer ncall, ntim, mvinc, mvnum, jsep,
-     &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
-     &  nxtl, nxtr
+     &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       save isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
@@ -2514,8 +2513,7 @@ c new CDF movie option
         endif
         if (ank_tracing.ne.0.and.ntim.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >     call b2trace(ns,nxtl,nxtr,ismain,dtim,
-     .                  geo,mpg,state,switch,state_ext)
+     >     call b2trace(ns,ismain,dtim,geo,mpg,state,switch,state_ext)
         endif
 *    ..loop
 #endif
