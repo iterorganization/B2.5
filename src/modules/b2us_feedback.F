@@ -2502,13 +2502,13 @@ cxpb size is changed in b2mod_dimensions
       call cfverw(iout,newversion)
 
       write (iout,'(1x,a)') '&feedback'
-      write(hlp_frm,'(a,i2,a)') '(1x,a,(1x,',nspecies,'(es22.15,a1)))'
+      write(hlp_frm,'(a,i2,a)') '(1x,a,(1x,',nFb,'(es22.15,a1)))'
       if (maxval(saved_fb_actuator).gt.0.0_R8)
      > write(iout,hlp_frm) 'SAVED_FB_ACTUATOR = ',
-     .  (saved_fb_actuator(is),',',is=0,nspecies-1)
+     .  (saved_fb_actuator(is),',',is=1,nFb)
       if (maxval(saved_fb_prev).gt.0.0_R8)
      > write(iout,hlp_frm) 'SAVED_FB_PREV = ',
-     .  (saved_fb_prev(is),',',is=0,nspecies-1)
+     .  (saved_fb_prev(is),',',is=1,nFb)
 
       write (iout,'(1x,a)') '/'
       close (iout)
