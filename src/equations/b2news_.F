@@ -51,8 +51,7 @@
       use b2us_feedback
      & , only : fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
-     &          feedback_namelist_used, she_rad_tot, she_eir_tot,
-     &          fb_current_prev
+     &          feedback_namelist_used
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_wall

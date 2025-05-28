@@ -696,21 +696,14 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           end if
 #else
           nstrat=nstrai+1
-#endif
+        elseif (switch%use_eirene.ne.0) then
+          nstrat=nstrai+1
+          crcstra(nstrat)='T'
+          rcpos(nstrat)=0
+          rcstart(nstrat)=0
+          rcend(nstrat)=0
         else
-#ifdef B25_EIRENE
-          if (ntime.ge.1.and.nprnli.gt.0) then
-            nstrat=nstrai+1
-            crcstra(nstrat)='T'
-            rcpos(nstrat)=0
-            rcstart(nstrat)=0
-            rcend(nstrat)=0
-          else
-            nstrat=nstrai
-          endif
-#else
           nstrat=nstrai
-#endif
         endif
 
         allocate(old_style(nstrat))
@@ -1395,29 +1388,22 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
           end if
 #else
           nstrat=nstrai+1
-#endif
+        elseif (switch%use_eirene.ne.0) then
+          nstrat=nstrai+1
+          crcstra(nstrat)='T'
+          rcpos(nstrat)=0
+          rcstart(nstrat)=0
+          rcend(nstrat)=0
+          if (switch%recycle_afn.ne.0) then
+            do is = 0, ns-1
+              if (nint(zn(is)).eq.1) then
+                erecyc(is,nstrat) = 0.0_R8
+                mrecyc(is,nstrat) = 0.0_R8
+              end if
+            end do
+          end if
         else
-#ifdef B25_EIRENE
-          if (ntime.ge.1.and.nprnli.gt.0) then
-            nstrat=nstrai+1
-            crcstra(nstrat)='T'
-            rcpos(nstrat)=0
-            rcstart(nstrat)=0
-            rcend(nstrat)=0
-            if (switch%recycle_afn.ne.0) then
-              do is = 0, ns-1
-                if (nint(zn(is)).eq.1) then
-                  erecyc(is,nstrat) = 0.0_R8
-                  mrecyc(is,nstrat) = 0.0_R8
-                end if
-              end do
-            end if
-          else
-            nstrat=nstrai
-          endif
-#else
           nstrat=nstrai
-#endif
         endif
 
         m%nRc = nstrat

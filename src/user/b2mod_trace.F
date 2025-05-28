@@ -146,7 +146,9 @@ c*** Power balance
 c*** Parallel momentum balance
       if(filedata(ntrc_blm)) call b2blnm(mpg,geo,ns,st,st_ext)
 c*** Additional integrals
-      if(filedata(ntrc_int)) call b2wrint(nx,ny,ns,nnreg(0))
+      if(filedata(ntrc_int)) call b2wrint(mpg,geo,st,st_ext,ns)
+c*** Separatrix data
+      if(filedata(ntrc_sep)) call b2wrsep(mpg,geo,ns,st,st_ext,switch)
 c*** User-specific data
       if(filedata(ntrc_usr)) call b2usrtrc(mpg,geo,ns,st,st_ext,switch)
 c
@@ -168,13 +170,9 @@ c*** Initialise tracing routines
       if(filedata(ntrc_ble)) call b2blnei(mpg,geo,switch)
       if(filedata(ntrc_bln)) call b2blnci(switch)
       if(filedata(ntrc_srt)) call b2wrsrti(mpg%nnreg(0),switch)
-      if(filedata(ntrc_sep)) call b2wrsepi(ns,switch)
-#ifdef WG_TODO
-      if(filedata(ntrc_ble)) call b2blnei(ny,switch)
-      if(filedata(ntrc_blm)) call b2blnmi(switch)
       if(filedata(ntrc_int)) call b2wrinti(mpg%nnreg(0),switch)
-      if(filedata(ntrc_usr)) call b2usrtri(nx,ny,ns,switch)
-#endif
+      if(filedata(ntrc_sep)) call b2wrsepi(mpg,geo,ns,switch)
+      if(filedata(ntrc_usr)) call b2usrtri(mpg,geo,ns,switch)
       tracing_initialised = .true.
       return
       end subroutine b2trci

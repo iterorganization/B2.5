@@ -7998,7 +7998,7 @@
 				<default>0.0</default>
 				<type>real array of size (NSPECIES)</type>
 				<description>
-					Last value of the target quantity used for the feedback control for each isonuclear sequence.
+					Last value of the density used for the feedback control for each isonuclear sequence.
 				</description>
 			</switch>
 		</category>

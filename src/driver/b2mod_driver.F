@@ -10,8 +10,7 @@
      & , only : write_b2us_feedback, init_feedback, dealloc_feedback,
      &          fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
      &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
-     &          feedback_namelist_used, she_rad_tot, she_eir_tot,
-     &          fb_current_prev
+     &          feedback_namelist_used
       use b2mod_sputter
      & , only : sput_dst, dealloc_sputter_data, dealloc_b2mod_sputter
       use b2mod_solpstop

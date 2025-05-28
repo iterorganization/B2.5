@@ -546,33 +546,33 @@ c*** Flux across the side walls
               end if
             end do
           end do
-        end do
 #ifdef B25_EIRENE
 c*** flux across other recycling surfaces for vessel mode grids
 c*** we must remove targets and transparent surfaces from that list
-        do js=1,nsns !{
-          is_target = .false.
-          do ic=1,ntns !{
-            is_target = is_target.or.abs(lsns(js)).eq.ltns(ic)
-          end do !}
-          if (.not.is_target) then !{
-            ilks = abs(lsns(js))+nnlimi
-            if (iliin(abs(lsns(js))).gt.0) then !{
-              do j=1,nnatmi !{
-                if(latmscl(j).eq.ls) then !{
-                  hlpnw=hlpnw-wldna(ilks,j,0)+wldra(ilks,j,0)+
-     .                  wldpa(ilks,j,0)
-                  do ic=1,nnmoli !{
-                    if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
-     .               (wldnm(ilks,ic,0)-wldrm(ilks,ic,0)-
-     .                wldpm(ilks,ic,0))
-                  end do !}
-                end if !}
-              end do !}
+          do js=1,nsns !{
+            is_target = .false.
+            do ic=1,ntns !{
+              is_target = is_target.or.abs(lsns(js)).eq.ltns(ic)
+            end do !}
+            if (.not.is_target) then !{
+              ilks = abs(lsns(js))+nnlimi
+              if (iliin(abs(lsns(js))).gt.0) then !{
+                do j=1,nnatmi !{
+                  if(latmscl(j).eq.ls) then !{
+                    hlpnw=hlpnw-
+     .               wldna(ilks,j,0)+wldra(ilks,j,0)+wldpa(ilks,j,0)
+                    do ic=1,nnmoli !{
+                      if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
+     .                 (wldnm(ilks,ic,0)
+     .                 -wldrm(ilks,ic,0)-wldpm(ilks,ic,0))
+                    end do !}
+                  end if !}
+                end do !}
+              end if !}
             end if !}
-          end if !}
-        end do !}
+          end do !}
 #endif
+        end if
 c*** Gas puffing source and recycling
         do ic=1,nstrat
           hlp_tt = debug_flags(90).gt.0 .and.
