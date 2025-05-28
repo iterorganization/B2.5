@@ -2173,7 +2173,15 @@
             end do !ixreg
           end do !iy
         end do !iyreg
+
+        ! To avoid segmentation fault error we check if guessed amount
+        ! of faces and cells is bigger than found amount faces and cells.
+        call xertst (iFccy.le.m%nFc, 'iFccy.gt.nFc!')
+        call xertst (iFcc.le.m%nFc, 'iFcc.gt.nFc!')
+        call xertst (iCv.le.m%nCv, 'iCv.gt.nCv!')
+        call xertst (iFt.le.m%nFt, 'Too many flux tubes found!')
         m%nFt = iFt
+        call xertst (iFs.le.m%nFs, 'Too many flux surfaces found!')
         m%nFs = iFs
 ! csc Now that real number of flux surfaces is known re-allocate and assign ftFcP and ftCvP
         deallocate(m%ftFcP,m%ftCvP,m%fsFcP,m%ftReg,m%ftLbl)
