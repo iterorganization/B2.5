@@ -71,7 +71,7 @@ c*** from 960808 on
      ,     flxrl_tmp(:)
 
       character f*(lenfnm), hlp_h(np_tmp)*8, hlp_frm*80
-      
+
       save f, hlp_frm, hlp_h, lun,
      , hlpit_lp,hlpit_rp,hlpit_pl,hlpic_s,hlpiw_s,hlpit_s,
      , flxic_tmp,flxnc_tmp,flxit_tmp,flxnt_tmp,
@@ -512,7 +512,7 @@ c*** Flux across the side walls
               hlpnw=hlpnw-wldna(js,j,0)+wldra(js,j,0)
               do ic=1,nnmoli
                 if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
-     .                 (wldnm(js,ic,0)-wldrm(js,ic,0))
+     .           (wldnm(js,ic,0)-wldrm(js,ic,0))
               end do
             end if
           end do

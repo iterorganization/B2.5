@@ -51,8 +51,8 @@ c***    pk_pwr_o  hlp_ppwo   peak power load onto the outer target
 c***    pk_pw_iu  hlp_pwiu   peak power load on the inner upper target
 c***    pk_pw_ou  hlp_pwou   peak power load on the outer upper target
 c***                         (the peaks are calculated in a more simple
-c***                         way compared to userspb however they allow
-c**                          for additional multiplcator to plasma loads)
+c***                         way compared to user_spb however they allow
+c**                          for an additional multiplicator to the plasma loads)
 c***    Sp_DT     hlp_spdt   effective pumping speed for DT
 c***    Sp_He     hlp_sphe   effective pumping speed for He
 c***    Sp_He_sc  hlp_sshe   re-scaled pumping speed for He
@@ -89,12 +89,12 @@ c***    DoD_ol    hlp_dodol  min. DoD, outer lower divertor
 c***    DoD_iu    hlp_dodiu  min. DoD, inner upper divertor
 c***    DoD_ou    hlp_dodou  min. DoD, outer upper divertor
 c***    isatt_il  hlp_istil  total Isat to inner lower divertor
-c***    isatt_ol  hlp_istil  total Isat to outer lower divertor
-c***    isatt_iu  hlp_istil  total Isat to inner upper divertor
-c***    isatt_ou  hlp_istil  total Isat to inner upper divertor
-c***    albll_mx  al_bll_mx  ballooning alpha paramter maximum value
-c***    albll_ix  al_bll_ix  ballooning alpha paramter maximum ix
-c***    albll_iy  al_bll_iy  ballooning alpha paramter maximum iy
+c***    isatt_ol  hlp_istol  total Isat to outer lower divertor
+c***    isatt_iu  hlp_istiu  total Isat to inner upper divertor
+c***    isatt_ou  hlp_istou  total Isat to inner upper divertor
+c***    albll_mx  al_bll_mx  ballooning alpha parameter maximum value
+c***    albll_ix  al_bll_ix  ballooning alpha parameter maximum ix
+c***    albll_iy  al_bll_iy  ballooning alpha parameter maximum iy
 c-----------------------------------------------------------------------
 
 c*** Global values
@@ -209,10 +209,10 @@ c*** Column headers:
       real (kind=R8) ::
      *     equg2_tmp(ngl2_tmp)
       real (kind=R8) ::
-     *     hlp_dod(4), hlp_dodil, hlp_dodol,hlp_dodiu, hlp_dodou
+     *     hlp_dod(4), hlp_dodil, hlp_dodol, hlp_dodiu, hlp_dodou
       equivalence (equg2_tmp(1), hlp_dod),
-     ,     (equg2_tmp(1),  hlp_dodil), (equg2_tmp(2),  hlp_dodol),
-     ,     (equg2_tmp(3),  hlp_dodiu), (equg2_tmp(4),  hlp_dodou)
+     ,     (equg2_tmp(1), hlp_dodil), (equg2_tmp(2), hlp_dodol),
+     ,     (equg2_tmp(3), hlp_dodiu), (equg2_tmp(4), hlp_dodou)
       integer mgl3_tmp
       integer kgl3_tmp(ngl3_tmp)
       data kgl3_tmp / -1, 0, 0, -1 /
@@ -221,16 +221,16 @@ c*** Column headers:
       real (kind=R8) ::
      *     hlp_isat(4), hlp_istil, hlp_istol, hlp_istiu, hlp_istou
       equivalence (equg3_tmp(1), hlp_isat),
-     ,     (equg3_tmp(1),  hlp_istil), (equg3_tmp(2),  hlp_istol),
-     ,     (equg3_tmp(3),  hlp_istiu), (equg3_tmp(4),  hlp_istou)
+     ,     (equg3_tmp(1), hlp_istil), (equg3_tmp(2), hlp_istol),
+     ,     (equg3_tmp(3), hlp_istiu), (equg3_tmp(4), hlp_istou)
 c     integer kgl4_tmp(2)
       real (kind=R8) ::
      *     equg4_tmp(ngl4_tmp)
       real (kind=R8) ::
-     *     hlp_albll(ngl4_tmp),al_bll_mx,al_bll_ix,al_bll_iy
+     *     hlp_albll(ngl4_tmp), al_bll_mx, al_bll_ix, al_bll_iy
       equivalence (equg4_tmp(1), hlp_albll),
-     ,     (equg4_tmp(1),  al_bll_mx), (equg4_tmp(2),  al_bll_ix),
-     ,     (equg4_tmp(3),  al_bll_iy)
+     ,     (equg4_tmp(1), al_bll_mx), (equg4_tmp(2), al_bll_ix),
+     ,     (equg4_tmp(3), al_bll_iy)
 
 c*** PFR flow values
       real (kind=R8) ::
@@ -286,7 +286,7 @@ c***    surface area,cell interface areas
      ,  hlp_alcff
       real (kind=R8) ::
      *  d, e, s, x
-      real (kind=R8) :: pz(-1:nx,-1:ny),albll(0:nx-1,0:ny-1)
+      real (kind=R8) :: pz(-1:nx,-1:ny), albll(0:nx-1,0:ny-1)
       integer i, j, k, l, m, n, i0, is, ix, iy, js, irt,
      ,  j_he_i, l_pad_str
 #ifdef B25_EIRENE
@@ -317,8 +317,8 @@ c=======================================================================
         if(hlp_dbg) then !{
           print *
           print *,'b2usrtrc: before initialisation. ',
-     ,      'natm,nmol,nnatmi,nnmoli,nntrgrp=',
-     ,       natm,nmol,nnatmi,nnmoli,nntrgrp
+     ,     'natm,nmol,nnatmi,nnmoli,nntrgrp=',
+     ,      natm,nmol,nnatmi,nnmoli,nntrgrp
           if(nntrgrp.gt.0) then !{
             print '(1x,a9,2x,20i4/(12x,20i4))','lntrgrp:',
      ,                                (lntrgrp(i),i=1,jntrgrp(nntrgrp))
@@ -412,7 +412,7 @@ c*** Calculate the basic quantities for each surface/species
           else !}{
             m=natm-ndtm_tmp(j)
           end if !}
-          ndtx_tmp(j)=m 
+          ndtx_tmp(j)=m
 caap tbd add nphoti shift
         end do !}
 
@@ -449,16 +449,16 @@ caap tbd add nphoti shift
            print *,'b2usrtrc: after initialisation. ',
      ,             'nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp=',
      ,              nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp
-           write(f,'(10h(1x,a9,2x,,i2,3hi3))') ndts_tmp
+           write(f,'(a,i2,a)') '(1x,a9,2x,',ndts_tmp,'i3)'
            print *,'tallies (ndta_tmp):'
            print f,(gntrgrp(i),(ndta_tmp(i,j),j=1,ndts_tmp),i=1,nntrgrp)
            print *
            print f,'ndtm_tmp',(ndtm_tmp(j),j=1,ndts_tmp)
            print f,'ndtx_tmp',(ndtx_tmp(j),j=1,ndts_tmp)
-           write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp
+           write(f,'(a,i2,a)') '(1x,a9,2x,1p,',ndts_tmp,'e10.2)'
            print f,'hlp_awdts',(hlp_awdts(j),j=1,ndts_tmp)
            print *,'area/absorption:'
-           write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp+1
+           write(f,'(a,i2,a)') '(1x,a9,2x,1p,',ndts_tmp+1,'e10.2)'
            print f,(gntrgrp(i),hlp_ardts(i),
      ,                        (hlp_ksdts(i,j),j=1,ndts_tmp),i=1,nntrgrp)
            print *
@@ -665,8 +665,8 @@ c*** Allocate the buffer arrays for header and table lines
 
         if(hlp_dbg) then !{
           write(6,'(3x,11a10)') 'ntrc_tmp','nglb_tmp','nspecies',
-     ,      'npff_tmp','npfrgrp','nntrgrp','npfi_tmp','npft_tmp',
-     ,      'ndts_tmp','ngl2_tmp','ngl4_tmp'
+     ,     'npff_tmp','npfrgrp','nntrgrp','npfi_tmp','npft_tmp',
+     ,     'ndts_tmp','ngl2_tmp','ngl4_tmp'
           write(6,'(11i10)') ntrc_tmp,nglb_tmp,nspecies,
      ,      npff_tmp,npfrgrp,nntrgrp,npfi_tmp,npft_tmp,
      ,      ndts_tmp,ngl2_tmp,ngl4_tmp
@@ -869,8 +869,8 @@ c*** Western divertor
           end do !}
 
           if(hlp_dbg) then !{
-            print '(a,1p,2i4,2e12.3)',' %%## m,n,hlp_si,hlp_hep: ',  !###
-     ,                                       m,n,hlp_si,hlp_hep      !###
+            print '(a,1p,2i4,2e12.3)',' %%## m,n,hlp_si,hlp_pi: ',  !###
+     ,                                       m,n,hlp_si,hlp_pi      !###
           endif !}
 
 c*** Eastern divertor
@@ -1189,7 +1189,7 @@ c East target
           write(*,*) 'In b2mod_usrtrc: nxtl, nxtr = ', nxtl, nxtr
         endif !}
 
-        call b2usr_loads(nx,ny,nxtl,nxtr,BoRiS,wtarg_max)
+        call b2usr_loads(ny,BoRiS,wtarg_max)
 
         if(hlp_dbg) then !{
           write(*,*) 'b2usr_loads finished'
@@ -1395,8 +1395,8 @@ c-----------------------------------------------------------------------
 c*** find the maximum ballooning factor and its location
 
       al_bll_mx=0.0_R8
-      al_bll_ix=0
-      al_bll_iy=0
+      al_bll_ix=0.0_R8
+      al_bll_iy=0.0_R8
 
       do ix=0,nx-1
         do iy=0,ny-1
@@ -1409,14 +1409,15 @@ c*** find the maximum ballooning factor and its location
      .           "ix,iy,al_bll_mx,albll =>",ix,iy,al_bll_mx,albll(ix,iy)
             if(al_bll_mx.lt.albll(ix,iy)) then
               al_bll_mx=albll(ix,iy)
-              al_bll_ix=ix
-              al_bll_iy=iy
+              al_bll_ix=real(ix,R8)
+              al_bll_iy=real(iy,R8)
             endif
           endif
         enddo
       enddo
       if(hlp_dbg) print '(1x,a,2i4,1e12.4)', 
-     .               "all_bll_ix,al_bll_iy,albll_mx, =>",ix,iy,al_bll_mx
+     . "all_bll_ix,al_bll_iy,albll_mx, =>",
+     .  nint(al_bll_ix),nint(al_bll_iy),al_bll_mx
           
 c=======================================================================
       if(filedata(ltrc)) then !{
@@ -1614,7 +1615,7 @@ c*** Prepare the headers, markers, and padding data for the output file
                 hlp_m=adjustl(eirtxt(ndtm_tmp(j)))
 caap tbd add nphoti
               else !}{
-                hlp_m=adjustl(eirtxt(nnatmi-ndtm_tmp(j))) 
+                hlp_m=adjustl(eirtxt(nnatmi-ndtm_tmp(j)))
 caap tbd add nphoti
               end if !}
               if(ex) hlp_hdr(n+i)='PFR'//trim(hlp_hs(js))//'_'//
