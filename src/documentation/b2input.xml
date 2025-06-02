@@ -6275,7 +6275,7 @@
 							CONPAR(,,2) is the strength of the feedback,
 							CONPAR(,,3), when running with Eirene and the 'ionising core' switch is used, is set internally to match the re-entering flux of ionised neutrals that crossed the core boundary (one must then have 'ionising_core'.eq.-IB where IB is the boundary index).
 							The feedback scheme can be further tweaked with the switches 'b2stbc_type13_norm' and 'b2stbc_type13_fac'. See code for details.
-						14 : if MOMPAR(:,:,2) &lt; 0.5, collective sound speed velocity flux, and marginal imposition of the Bohm-Chodura sheath entrance condition; CONPAR(,,1) is a multiplier to the outgoing collective sound speed C<sub>s</sub>; to be used in conjunction with BCENE/I=15, BCPOT=11, and BCMOM=13. If MOMPAR(:,:,2) &gt;= 0.5, single species sound speed velocity flux, non-marginal imposition of the Bohm-Chodura sheath entrance condition; MOMPAR(,,1) is a multiplier to the outgoing specific species sound speed C<sub>s,i</sub>; to be used in conjunction with BCMOM=13, BCENE=15 with bcene_15_style=1, BCENI=15, BCPOT=3 or BCPOT=11 with istyle_fchi=0. Recommended for cases with drifts.
+						14 : if MOMPAR(:,:,2) &lt; 0.5, collective sound speed velocity flux, and marginal imposition of the Bohm-Chodura sheath entrance condition; CONPAR(,,1) is a multiplier to the outgoing collective sound speed C<sub>s</sub>; to be used in conjunction with BCENE/I=15, BCPOT=11, and BCMOM=13. If MOMPAR(:,:,2) &gt;= 0.5, single species sound speed velocity flux, non-marginal imposition of the Bohm-Chodura sheath entrance condition; MOMPAR(,,1) is a multiplier to the outgoing specific species sound speed C<sub>s,a</sub>; to be used in conjunction with BCMOM=13, BCENE=15 with bcene_15_style=1, BCENI=15, BCPOT=3 or BCPOT=11 with istyle_fchi=0. Recommended for cases with drifts.
 						15 : prescribe a radial leakage velocity, CONPAR(,,1) specifies the leakage velocity in units of the local thermal velocity.
 						16 : particle density to achieve specified total flux, used with ASTRA coupling. The total desired flux is summed over all BCCON=16 core boundaries. CONPAR(,,1) specifies the desired particle flux in s<sup>-1</sup>.
 						18 : prescribe total main ion particle flux, used with ASTRA coupling.
@@ -6313,7 +6313,7 @@
 						10 : prescribe the decay length for the parallel momentum, MOMPAR(,,1) specifies the decay length in m
 						11 : Rozhansky viscosity condition for the parallel momentum, MOMPAR(,,1) is not used
 						12 : condition from b2stbc_spb for the parallel momentum
-						13 : if MOMPAR(:,:,2) &lt; 0.5, collective sound speed velocity flux, and marginal imposition of the Bohm-Chodura sheath entrance condition; MOMPAR(,,1) is a multiplier to the outgoing collective sound speed C<sub>s</sub>; to be used in conjunction with BCENE/I=15, BCPOT=11, and BCMOM=13. If MOMPAR(:,:,2) &gt;= 0.5, single species sound speed velocity flux, non-marginal imposition of the Bohm-Chodura sheath entrance condition; MOMPAR(,,1) is a multiplier to the outgoing specific species sound speed C<sub>s,i</sub>; to be used in conjunction with BCMOM=13, BCENE=15 with bcene_15_style=1, BCENI=15, BCPOT=3 or BCPOT=11 with istyle_fchi=0. Recommended for cases with drifts.
+						13 : if MOMPAR(:,:,2) &lt; 0.5, collective sound speed velocity flux, and marginal imposition of the Bohm-Chodura sheath entrance condition; MOMPAR(,,1) is a multiplier to the outgoing collective sound speed C<sub>s</sub>; to be used in conjunction with BCCON=14, BCENE/I=15, and BCPOT=11. If MOMPAR(:,:,2) &gt;= 0.5, single species sound speed velocity flux, non-marginal imposition of the Bohm-Chodura sheath entrance condition; MOMPAR(,,1) is a multiplier to the outgoing specific species sound speed C<sub>s,a</sub>; to be used in conjunction with BCCON=14, BCENE=15 with bcene_15_style=1, BCENI=15, BCPOT=3 or BCPOT=11 with istyle_fchi=0. Recommended for cases with drifts.
 						14 : condition from b2stbc_spb for the parallel momentum
 						15 : prescribe the value of the parallel velocity, scaled with B_average/B_local
 						16 : prescribe the average value of the parallel velocity MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup>
@@ -6354,7 +6354,7 @@
 							ENEPAR(,1) specifies the desired electron temperature in eV.
 							ENEPAR(,2) is the strength of the feedback.
 						22 : radial leakage condition for the electron temperature. ENEPAR(,1) specifies the leakage velocity in units of the electron thermal velocity. A temperature gradient such that the diffusive flux is set to match this leakage is imposed.
-						23 : electron temperature profile in eV is read from the ENE_FN file. If ENEPAR(,,2) > 0 the profile is scaled so ENEPAR(,,1) provides the maximum electron temperature in eV.
+						23 : electron temperature profile in eV is read from the ENE_FN file. If ENEPAR(,2) > 0 the profile is scaled so ENEPAR(,1) provides the maximum electron temperature in eV.
 				</description>
 			</switch>
 			<switch>
@@ -6377,9 +6377,8 @@
 						12 : sheath conditions, ion energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, delta<sub>i</sub> in Q<sub>i</sub> = delta<sub>i</sub> T<sub>i</sub> sum<sub>a</sub> &Gamma;<sub>a</sub>
 						13 : prescribe the ion energy flux per unit area proportional to temperature, ENIPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
 						14 : leakage option for ion energy, ENIPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>T<sub>i</sub>
-						15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts. If MOMPAR(:,:,2) &lt; 0.5, collective sound speed velocity flux, and marginal imposition of the Bohm-Chodura sheath entrance condition; the ion heat flux is computed using the collective sound speed and ENIPAR(:,1) sets the ion sheath transmission coefficient (def: 1.5); to be used in conjunction with BCENE/I=15, BCPOT=11, and BCMOM=13. If MOMPAR(:,:,2) &gt;= 0.5, single species sound speed velocity flux, non-marginal imposition of the Bohm-Chodura sheath entrance condition; the ion heat flux is computed using the target particle flux and ENIPAR(:,1) sets the ion sheath transmission coefficient (def: 1.5); to be used in conjunction with BCMOM=13, BCENE=15 with bcene_15_style=1, BCENI=15, BCPOT=3 or BCPOT=11 with istyle_fchi=0. Recommended for cases with drifts.
-						16 : feedback boundary condition with constant temperature, ENIPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bceni_16_style=0 (default). If bceni_16_style=1, integrated ion heat flux with constant ion temperature, summed over all core boundaries with BCENI=16.
-							ENIPAR(,1) specifies the power flux in W
+						15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts. If MOMPAR(ismain,:,2) &lt; 0.5, collective sound speed velocity flux, and marginal imposition of the Bohm-Chodura sheath entrance condition; the ion heat flux is computed using the collective sound speed and ENIPAR(:,1) sets the ion sheath transmission coefficient (def: 1.5); to be used in conjunction with BCENE=15, BCPOT=11, BCCON=14, and BCMOM=13. If MOMPAR(ismain,:,2) &gt;= 0.5, single species sound speed velocity flux, non-marginal imposition of the Bohm-Chodura sheath entrance condition; the ion heat flux is computed using the target particle flux and ENIPAR(:,1) sets the ion sheath transmission coefficient (def: 1.5); to be used in conjunction with BCMOM=13, BCENE=15 with bcene_15_style=1, BCCON=14, BCPOT=3 or BCPOT=11 with istyle_fchi=0. Recommended for cases with drifts.
+						16 : feedback boundary condition with constant temperature, ENIPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bceni_16_style=0 (default). If bceni_16_style=1, integrated ion heat flux with constant ion temperature, summed over all core boundaries with BCENI=16. ENIPAR(,1) specifies the power flux in W
 						17 : feedback boundary condition with constant shared temperature for both electrons and ions, see BCENE=17 above for description.
 						18 : fractional drop condition. Not yet working.
 						19 : same as [9] but to be used when simultaneously setting BCCON=1 on the same boundary.
@@ -6391,7 +6390,7 @@
 						25 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away. ENIPAR(,1) specifies the desired ion temperature in eV. ENIPAR(,2) is the strength of the feedback
 						26 : prescribe the poloidally averaged value of the ion temperature and introduce a poloidal variation in a simplified manner. This boundary condition is suitable for any plasma composition (i.e. when BCENI=23 fails). It is recommended to use this boundary condition together with corresponding condition on ion density (BCCON = 25,26,27). The average is taken over all core boundaries with BCENI=26. ENIPAR(,1) specifies the temperature in eV
 						27 : feedback boundary condition with prescribed total ion heat flux, constant poloidally averaged ion temperature and a poloidal variation in a simplified manner. This boundary condition is suitable for any plasma composition (i.e. when BCENI=24 fails). It is recommended to use this boundary condition together with corresponding condition on ion density (BCCON = 25,26,27). The flux is summed over all core boundaries with BCENI=27. ENIPAR(,1) specifies the energy flux in W
-						28 : ion temperature profile in eV is read from the ENI_FN file. If ENIPAR(,,2) > 0 the profile is scaled so ENIPAR(,,1) provides the maximum ion temperature in eV.
+						28 : ion temperature profile in eV is read from the ENI_FN file. If ENIPAR(,2) > 0 the profile is scaled so ENIPAR(,1) provides the maximum ion temperature in eV.
 				</description>
 			</switch>
 			<switch>
@@ -6402,8 +6401,7 @@
 						 0 : default, no boundary condition is applied
 						 1 : prescribe the value of the potential, POTPAR(,1) specifies the potential in V
 						 2 : prescribe the gradient of the potential, POTPAR(,1) specifies the potential gradient in V.m<sup>-1</sup>
-						 3 : sheath conditions,
-							POTPAR(,2) used for biasing [see code for details]
+						 3 : sheath conditions, POTPAR(,2) used for biasing [see code for details]
 						 4 : prescribe the value of the potential weakly a mixed boundary condition, POTPAR(,1) specifies the potential in V and POTPAR(,2) specifies the 'strength' of the boundary condition
 						 5 : prescribe the current flux density per unit area, POTPAR(,1) specifies the electric current flux density in A.m<sup>-2</sup>
 						 6 : prescribe the total current flux density for a constant potential [not yet available]
@@ -6416,12 +6414,9 @@
 						13 : Imposes the currents due to drifts for the South private flux and North boundaries. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
 						14 : Prescribe the value of the radial sheath potential, POTPAR(,1), in V
 						15 : potential profile is read from POT_FN file. Only available for E and W boundaries.
-						16 : Constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries.
-							Still experimental, will not work for drift cases.
+						16 : Constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries. Still experimental, will not work for drift cases.
 						17 : Sheath condition for floating target. This BC provides a floating target with a near zero current through the target. First, the total target current is calculated. Then, the potential is corrected by a factor POTPAR(,1) * current to reduce the current close to zero. POTPAR(,2) is used to provide an initial guess in V of the target potential and to store the value, in V, during the iterative process.
-						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away.
-							POTPAR(,,1) specifies the desired potential in V.
-							POTPAR(,,2) is the strength of the feedback
+						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away. POTPAR(,1) specifies the desired potential in V. POTPAR(,2) is the strength of the feedback
 				</description>
 			</switch>
 			<switch>

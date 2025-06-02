@@ -2,7 +2,6 @@ c
 cvk interfaces to surface flux data calculated by Eirene
 
 c  version: 11.07.2008 18:53
-
 c
 c calculating the index shift in the Eirene flux arrays.
 c to be used in interface subroutines to Eirene flux data
@@ -45,7 +44,6 @@ c the surface has been found
       shift=-1
    20 return
       end subroutine b2neut_ind
-
 
 c=======================================================================
 c check if surface areas in B2 and Eirene are the same
@@ -99,7 +97,6 @@ c
       return
       end subroutine b2neut_surfcheck
 
-
 c=======================================================================
 cvk power flux delivered to the surface with neutrals
 c
@@ -110,8 +107,6 @@ c  wnpr  : kinetic energy of reflected neutrals originated from ions
 c          (including sputtered neutrals)
 c  n     : length of arrays wneut and wnpr
 c  shift : data offset in the Eirene arrays
-
-
 
       subroutine b2neut_eng(wneut,wnpr,n,shift)
       use b2mod_types
@@ -188,8 +183,6 @@ c molecules
       end if
       return
       end subroutine b2neut_flux
-
-
 
 c=======================================================================
 cak average energy of impinging neutrals
