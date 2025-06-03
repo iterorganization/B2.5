@@ -50,10 +50,11 @@
 *.declarations
 
 *   ..local variables
-      integer iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg
+      integer iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg, k
       real (kind=R8) ::
      *  t1, t2, t3, csb, csb1,
-     *  t11, t22
+     *  t11, t22, wrk(nCv)
+      character*2 charnv
       logical lnonzero
 *   ..procedures
       external xertst, ipgetr, sfill
@@ -96,7 +97,7 @@
          csb1 = sqrt(ub(iCv)**2+csb**2)
          aad0(iCv) = -smb(iCv,1)-
      &    smb(iCv,3)*rob(iCv)+
-     &    switch%cfc0*geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv)*       !srv 09.01.01
+     &    switch%cfc0*geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv)*    !srv 09.01.01
      &    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*csb*rob(iCv)
          aa(mpg%cvNvP(iCv,1)) = aad0(iCv)
          if (switch%b2mndt_style.lt.2) then
@@ -204,10 +205,10 @@
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
-         pccb(iCv,0) = geo%cvVol(iCv)*geo%cvHz(iCv)*                    !srv 09.01.01
-     .    geo%cvBb(iCv,0)/(geo%cvBb(iCv,3)*aa(mpg%cvNvP(iCv,1)))   !srv 11.01.13
-         pccb(iCv,1) = geo%cvVol(iCv)*geo%cvHz(iCv)*                    !srv 09.01.01
-     .    geo%cvBb(iCv,0)/(geo%cvBb(iCv,3)*aad0(iCv))              !srv 11.01.13
+         pccb(iCv,0) = geo%cvVol(iCv)*geo%cvHz(iCv)*                 !srv 09.01.01
+     .    geo%cvBb(iCv,0)/(geo%cvBb(iCv,3)*aa(mpg%cvNvP(iCv,1)))     !srv 11.01.13
+         pccb(iCv,1) = geo%cvVol(iCv)*geo%cvHz(iCv)*                 !srv 09.01.01
+     .    geo%cvBb(iCv,0)/(geo%cvBb(iCv,3)*aad0(iCv))                !srv 11.01.13
         else
          resmb(iCv) = 0.0_R8   ! take opportunity to correct RHS
         endif
@@ -221,7 +222,7 @@
 ! $AD II-LOOP
       do iCv = 1, nCv
         lnonzero=.false.
-        do inCv = 1,mpg%cvNvP(iCv,2)
+        do inCv = 1, mpg%cvNvP(iCv,2)
           lnonzero = lnonzero.or.(aa(mpg%cvNvP(iCv,1)+inCv-1).ne.0.0_R8)
         enddo
         if (.not.lnonzero) then
@@ -232,20 +233,20 @@
 
 *   ..solve the correction equation
       write(*,'(a,a)') 'Calling b2uxus from ', name
-      call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name)           !srv 18.03.10
+      call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name)          !srv 18.03.10
 
-      if (switch%b2usmo_iout.ne.0) then                               !srv 17.06.02 {
-#ifdef WG_TODO
-       call my_out_us(70,nCv,0,aa(-1,-1,-4),name//'_aam4')
-       call my_out_us(70,nCv,0,aa(-1,-1,-3),name//'_aam3')
-       call my_out_us(70,nCv,0,aa(-1,-1,-2),name//'_aam2')
-       call my_out_us(70,nCv,0,aa(-1,-1,-1),name//'_aam1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 0),name//'_aam0')
-       call my_out_us(70,nCv,0,aa(-1,-1, 1),name//'_aap1')
-       call my_out_us(70,nCv,0,aa(-1,-1, 2),name//'_aap2')
-       call my_out_us(70,nCv,0,aa(-1,-1, 3),name//'_aap3')
-       call my_out_us(70,nCv,0,aa(-1,-1, 4),name//'_aap4')
-#endif
+      if (switch%b2usmo_iout.ne.0) then                              !srv 17.06.02 {
+       do k=1,maxval(mpg%cvNvP(1:nCv,2))
+         write (charnv,'(i2.2)') k
+         do iCv = 1, nCv
+           if (k.le.mpg%cvNvP(iCv,2)) then
+             wrk(iCv) = aa(mpg%cvNvP(iCv,1)+k-1)
+           else
+             wrk(iCv) = 0.0_R8
+           end if
+         end do
+         call my_out_us(70,nCv,0,wrk,name//'_aam'//charnv)
+       end do
        call my_out_us(70,nCv,0,resmb,name//'_resmb')
        call my_out_us(70,nCv,0,corub,name//'_corub')
        call my_out_us(70,nCv,0,pccb(1,0),name//'_pccbx')
@@ -258,8 +259,7 @@
        call my_out_us(70,nCv,0,smb(:,3),name//'_smb3')
        call my_out_us(70,nFc,1,flcb,name//'_flcb')
        call my_out_us(70,nFc,1,cvsb,name//'_cvsb')
-
-      endif                                                           !srv 17.06.02 }
+      endif                                                          !srv 17.06.02 }
 
 * ..return
       ncall_b2usmo = ncall_b2usmo+1
