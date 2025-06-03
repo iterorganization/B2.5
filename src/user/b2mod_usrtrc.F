@@ -235,7 +235,11 @@ c     integer kgl4_tmp(2)
       equivalence (equg4_tmp(1), hlp_albll),
      ,     (equg4_tmp(1), al_bll_mx), (equg4_tmp(2), al_bll_ic)
       real (kind=R8) :: wtarg(DEF_NYD,2*DEF_NCUT),
-     *      wnutrg(DEF_NYD,2*DEF_NCUT), wnutpr(DEF_NYD,2*DEF_NCUT)
+     ,     wnutrg(DEF_NYD,2*DEF_NCUT)
+#ifdef B25_EIRENE
+      real (kind=R8) ::
+     *     wnutpr(DEF_NYD,2*DEF_NCUT)
+#endif
       real(kind=R8) :: wrad(DEF_NYD,2*DEF_NCUT,0:DEF_NATM)
 
 c*** PFR flow values
@@ -1136,6 +1140,7 @@ c*** Helium fraction and related data - flux estimation
 c*** Calculate the peak powers to the targets
 
       wtarg=0.0_R8
+      wnutrg=0.0_R8
       call b2ptrdl(wrad)
 c West target
       hlp_ppwi=0.0_R8
@@ -1166,7 +1171,6 @@ c West target
 #ifdef B25_EIRENE
         ias=b2_fnmti(iFc)
         hlp=hlp+ewldt_res(ias)
-        wnutrg(i,1)=0.0_R8
         do is=1,nnatmi
           wnutrg(i,1)=wnutrg(i,1)+ewlda_res(is,ias)-ewldea_res(is,ias)
         end do
@@ -1210,7 +1214,6 @@ c East target
 #ifdef B25_EIRENE
         ias=b2_fnmti(iFc)
         hlp=hlp+ewldt_res(ias)
-        wnutrg(i,maxval(mpg%strDiv))=0.0_R8
         do is=1,nnatmi
           wnutrg(i,maxval(mpg%strDiv))=wnutrg(i,maxval(mpg%strDiv))+
      .     ewlda_res(is,ias)-ewldea_res(is,ias)
@@ -1257,7 +1260,6 @@ c East target
 #ifdef B25_EIRENE
           ias=b2_fnmti(iFc)
           hlp=hlp+ewldt_res(ias)
-          wnutrg(i,2)=0.0_R8
           do is=1,nnatmi
             wnutrg(i,2)=wnutrg(i,2)+
      .      ewlda_res(is,ias)-ewldea_res(is,ias)
@@ -1302,7 +1304,6 @@ c East target
 #ifdef B25_EIRENE
           ias=b2_fnmti(iFc)
           hlp=hlp+ewldt_res(ias)
-          wnutrg(i,3)=0.0_R8
           do is=1,nnatmi
             wnutrg(i,3)=wnutrg(i,3)+
      .      ewlda_res(is,ias)-ewldea_res(is,ias)
