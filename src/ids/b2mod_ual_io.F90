@@ -703,22 +703,29 @@ contains
         enddo
         call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
         call b2xpnn (mpg%nCv, ns, state%pl%na, state%dv%nn)
-        call b2xpne (mpg%nCv, ns, state%rt%rz2, state%pl%na, &
+        call b2xpne (mpg%nCv, ns, state%rt%rz2, state%pl%na,    &
             &        state_ext%ne2, state%dv%ne2)
 !   ..compute flux limit coefficients
-        call b2trql (mpg%nCv, mpg%nFc, ns, switch, geo, mpg, &
-            &        state%pl, state%dv, state_ext,          &
+        call b2trql (mpg%nCv, mpg%nFc, ns, switch, geo, mpg,    &
+            &        state%pl, state%dv, state_ext,             &
             &        state%co%chvemx, state%co%chvimx)
-        call b2tral (mpg%nCv, mpg%nFc, mpg%nVx, ns,          &
-            &        state%rt%nscx, state%rt%nscxmax,        &
-            &        state%rt%iscx, ismain,                  &
-            &        switch, geo, mpg, state%pl, state%dv,   &
+        call b2tral (mpg%nCv, mpg%nFc, mpg%nVx, ns,             &
+            &        state%rt%nscx, state%rt%nscxmax,           &
+            &        state%rt%iscx, ismain,                     &
+            &        switch, geo, mpg, state%pl, state%dv,      &
             &        state%rt, state_ext, state%co)
+!  ..compute log-log charge exchange rate coefficients
+        do k = 0, state%rt%nscx-1
+          call b2spcx (mpg%nCv, ns, ev, am(state%rt%iscx(k)),   &
+            &          state%pl%ti, state%dv%ne,                &
+            &          state%rt%rlcx(1:mpg%nCv,0:1,0:ns-1,k))
+        enddo
 !   ..compute sources
-        call b2sral ( mpg%nCv, mpg%nFc, mpg%nVx, ns,         &
-     &   state%rt%nscx, state%rt%nscxmax, state%rt%iscx,     &
-     &   ismain, ismain0, dtim,                              &
-     &   switch, geo, mpg, state, state_ext, state_avg, wrong_flow, .false.)
+        call b2sral ( mpg%nCv, mpg%nFc, mpg%nVx, ns,            &
+            &   state%rt%nscx, state%rt%nscxmax, state%rt%iscx, &
+            &   ismain, ismain0, dtim,                          &
+            &   switch, geo, mpg, state, state_ext, state_avg,  &
+            &   wrong_flow, .false.)
 
         if (balance_netcdf.ne.0) call read_balance
 
