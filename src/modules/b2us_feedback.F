@@ -753,7 +753,7 @@ cxpb size is changed in b2mod_dimensions
      & 'b2us_feedback: increase size of DEF_NATM')
 
       do ifb = 1, nFb
-        if (fb_actuator(ifb).ne.1.or.switch%use_eirene.eq.0) cycle
+        if(fb_actuator(ifb).ne.1.or.switch%use_eirene.eq.0) cycle
         if(fb_istra(ifb).gt.0) then
           call xertst (fb_istra(ifb).le.nstrat,
      1      'faulty internal parameter fb_istra')
@@ -784,6 +784,29 @@ cxpb size is changed in b2mod_dimensions
         call xertst (fb_istra(ifb).gt.0,
      &    'No "C" stratum for feedback scheme specified !')
       enddo
+! sanity checks of namelist and converted input
+      do iFb = 1, nFb
+        call xertst(0.le.fb_species(iFb).and.fb_species(iFb).lt.ns,
+     .   'faulty parameter fb_species!')
+        call xertst(0.le.fb_type(iFb), 'faulty parameter fb_type!')
+        call xertst(0.le.fb_rescale_option(iFb),
+     .   'faulty parameter fb_rescale_option!')
+        call xertst(0.le.fb_actuator(iFb),
+     .   'faulty parameter fb_actuator!')
+        call xertst(-1.le.fb_ib(iFb).and.fb_ib(iFb).le.nbc,
+     .   'faulty parameter fb_ib!')
+        call xertst(0.le.fb_istra(iFb).and.fb_istra(iFb).le.nstrai,
+     .   'faulty parameter fb_istra!')
+        call xertst(0.0_R8.le.fb_puff_min(iFb).and.
+     .    fb_puff_min(iFb).le.fb_puff_max(iFb),
+     .   'faulty parameters fb_puff_min/max!')
+        call xertst(0.0_R8.le.fb_overshoot(iFb),
+     .   'faulty parameter fb_overshoot!')
+        call xertst(0.le.fb_regp(iFb,1).and.0.le.fb_regp(iFb,2),
+     .   'faulty parameters fb_regp!')
+        call xertst(0.le.fb_reg_par(iFb,1).and.0.le.fb_reg_par(iFb,2),
+     .   'faulty parameters fb_reg_par!')
+      end do
 
       consistent = .true.
       do ifb = 1, nFb

@@ -157,13 +157,31 @@ program b2_ual_write
     logical absolute_path, not_default
     external usrnam
 
+    write(*,*) 'Starting b2mn init'
+    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
+    ! call b2mn_step(0)
+#ifdef B25_EIRENE
+    CALL EIRENE_ALLOC_COMUSR(1)
+    call eirene_extrab25_eirpbls_init(nmol,nion,npls)
+    call ntread
+#endif
+    ! read plasma state
+    call cfopen(56,'b2fplasma','old','unformatted')
+    call cfverr(56, b2fplasma_version)
+    ! obtain parameters from b2fplasma file
+    call cfruin (56,3,idum,'nCv,nFc,ns')
+    call xertst (idum(0).eq.mpg%nCv.and.idum(1).eq.mpg%nFc.and. &
+     &           idum(2).eq.state%pl%ns, &
+     &          'faulty input nCv, nFc, ns from b2fplasma file')
+    call read_b2fplasma(56, mpg%nCv, mpg%nFc, state%pl%ns, state)
+
     !! Set default value for IMAS major version and IDS treename
     status = 0
     run_user = usrnam()
-    call ipgetc('b2mndr_user', run_user )
-    call xertst( .not.streql(run_user,' '), 'User name not defined !')
-    not_default = .not.streql(run_user, usrnam())
     username = run_user
+    call ipgetc('b2mndr_user', username )
+    call xertst( .not.streql(username,' '), 'User name not defined !')
+    not_default = .not.streql(username, usrnam())
     home_dir = '/home/'//trim(run_user)
     database = 'solps-iter'
     write(version,'(i1)') IMAS_MAJOR_VERSION
@@ -207,24 +225,6 @@ program b2_ual_write
     if (ierror.eq.0) call get_environment_variable('IMAS_VERSION', value=imas_version)
 #endif
 #endif
-    write(*,*) 'Starting b2mn init'
-    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
-    ! call b2mn_step(0)
-#ifdef B25_EIRENE
-    CALL EIRENE_ALLOC_COMUSR(1)
-    call eirene_extrab25_eirpbls_init(nmol,nion,npls)
-    call ntread
-#endif
-    ! read plasma state
-    call cfopen(56,'b2fplasma','old','unformatted')
-    call cfverr(56, b2fplasma_version)
-    ! obtain parameters from b2fplasma file
-    call cfruin (56,3,idum,'nCv,nFc,ns')
-    call xertst (idum(0).eq.mpg%nCv.and.idum(1).eq.mpg%nFc.and. &
-     &           idum(2).eq.state%pl%ns, &
-     &          'faulty input nCv, nFc, ns from b2fplasma file')
-    call read_b2fplasma(56, mpg%nCv, mpg%nFc, state%pl%ns, state)
-
     call ipgeti('b2mndr_pulse_number', shot )
     if (shot.eq.0) call ipgeti('b2mndr_shot_number', shot )
     call ipgeti('b2mndr_run_number', run )
@@ -304,7 +304,8 @@ program b2_ual_write
     if (index(imasdir,trim(username)).eq.0) then
       l=index(imasdir,trim(run_user))
       m=index(imasdir(l+len_trim(run_user):256),'/')
-      write(imasdir,'(a)') imasdir(1:l)//trim(username)//trim(imasdir(m+l:256))
+      write(imasdir,'(a)') &
+        & imasdir(1:l-1)//trim(username)//trim(imasdir(m+l+len_trim(run_user)-1:256))
     end if
     if (index(imasdir,'imasdb/'//trim(database)).eq.0) then
       l=index(imasdir,'imasdb/')
@@ -351,7 +352,7 @@ program b2_ual_write
 #if AL_MAJOR_VERSION > 4
     uri = 'imas:mdsplus?path='//trim(ids_path)
     write(0,'(2a)') "Checking if IMAS data entry already exists : ", &
-      &  trim(imasdir)//'/'//trim(ids_path)
+      &  trim(ids_path)
     call imas_open( uri, OPEN_PULSE, idx, status, message )
 #else
     write(0,'(2a,2i8)') "Checking if IMAS data entry already exists : ", &
