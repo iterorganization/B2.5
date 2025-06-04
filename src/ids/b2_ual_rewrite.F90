@@ -182,7 +182,7 @@ program b2_ual_rewrite
     call read_b2mod_plasma(nx, ny, ns, 56)
     call read_b2mod_residuals(56)
     call read_b2mod_sources(56)
-    call read_b2mod_transport(nx, ny, ns, 56)
+    call read_b2mod_transport(56)
 
     !! Set default value for IMAS major version and IDS treename
     status = 0
