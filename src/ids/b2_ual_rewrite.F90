@@ -154,13 +154,25 @@ program b2_ual_rewrite
     integer len_of_digits
     external usrnam, len_of_digits
 
+    write (*,*) 'Starting b2mn init'
+    call b2mn_init
+    ! call b2mn_step(0)
+    ! read plasma state
+    call cfopen(56,'b2fplasma','old','unformatted')
+    call cfverr(56, b2fplasma_version)
+    call read_b2mod_geo(nx, ny, 56)
+    call read_b2mod_plasma(nx, ny, ns, 56)
+    call read_b2mod_residuals(56)
+    call read_b2mod_sources(56)
+    call read_b2mod_transport(nx, ny, ns, 56)
+
     !! Set default value for IMAS major version and IDS treename
     status = 0
     run_user = usrnam()
-    call ipgetc('b2mndr_user', run_user )
-    call xertst( .not.streql(run_user,' '), 'User name not defined !')
-    not_default = .not.streql(run_user, usrnam())
     username = run_user
+    call ipgetc('b2mndr_user', username )
+    call xertst( .not.streql(username,' '), 'User name not defined !')
+    not_default = .not.streql(username, usrnam())
     home_dir = '/home/'//trim(run_user)
     database = 'solps-iter'
     write(version,'(i1)') IMAS_MAJOR_VERSION
@@ -199,18 +211,6 @@ program b2_ual_rewrite
 #endif
     ids_path = ' '
     same_run_number = .true.
-    write (*,*) 'Starting b2mn init'
-    call b2mn_init
-    ! call b2mn_step(0)
-    ! read plasma state
-    call cfopen(56,'b2fplasma','old','unformatted')
-    call cfverr(56, b2fplasma_version)
-    call read_b2mod_geo(nx, ny, 56)
-    call read_b2mod_plasma(nx, ny, ns, 56)
-    call read_b2mod_residuals(56)
-    call read_b2mod_sources(56)
-    call read_b2mod_transport(nx, ny, ns, 56)
-
     call ipgeti('b2mndr_pulse_number', shot )
     if (shot.eq.0) call ipgeti('b2mndr_shot_number', shot )
     if (shot.gt.0) then
@@ -324,7 +324,8 @@ program b2_ual_rewrite
     if (index(imasdir,trim(username)).eq.0) then
       l=index(imasdir,trim(run_user))
       m=index(imasdir(l+len_trim(run_user):256),'/')
-      write(imasdir,'(a)') imasdir(1:l)//trim(username)//trim(imasdir(m+l:256))
+      write(imasdir,'(a)') &
+        & imasdir(1:l-1)//trim(username)//trim(imasdir(m+l+len_trim(run_user)-1:256))
     end if
     if (index(imasdir,'imasdb/'//trim(database)).eq.0) then
       l=index(imasdir,'imasdb/')
@@ -412,6 +413,8 @@ program b2_ual_rewrite
                       &   version_put%data_dictionary)) then
         old_imas_version = old_description%ids_properties% &
                       &   version_put%data_dictionary(1)
+      else if ( streql(old_imas_version,'x.xx.x') ) then
+        call xerrab ('Old IMAS data entry is incomplete !')
       end if
       call ids_deallocate( old_description )
       if (.not.streql(old_imas_version,imas_version).or.database.eq.'iter') then
