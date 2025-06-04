@@ -1226,10 +1226,9 @@ c and hence the reaction rates have to be rescaled here.
              enddo
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+log(scl)
-                write(*,*) is,zamax(is),rtlra(0,0,is+1)
+                write(*,'(i3,1p,2e16.8)') is,zamax(is),rtlra(0,0,is+1)
                 rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+log(scl)      !mb 22.05.18
-                write(*,'(i3,1p,2e16.8)')
-     *             is,zamax(is),rtlqr(0,0,is+1)
+                write(*,'(i3,1p,2e16.8)') is,zamax(is),rtlqr(0,0,is+1)
              endif
            enddo
            if (switch%spatial_hybrid.eq.1) then
@@ -1751,8 +1750,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
        call my_out_us(70,nFc,1,geo%fcEb(1,1),'b2mndr_fcEbY')
        call my_out_us(70,nFc,1,geo%fcEb(1,2),'b2mndr_fcEbZ')
       endif                                                          !srv 25.01.16 }
-      do is = 0,ns-1                                                 !srv 25.01.16 {
-        do iCv=1,nCv
+      do is = 0, ns-1                                                !srv 25.01.16 {
+        do iCv = 1, nCv
           state % pl % na(iCv,is) = min(max(state % pl % na(iCv,is),
      &      switch % b2mndr_na_min),switch % b2mndr_na_max)
         enddo

@@ -373,15 +373,20 @@ program b2_ual_write_b2mod
     call checkFileAndDelete( "b2ftrack" )
     call checkFileAndDelete( "b2fplasma" )
 
+    !! Run main B2 routine to process and read the B2 data
+    write(0,*) "Running b2mn_init"
+    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
+    write(0,*) "b2mn_init completed"
+
     !! Set default value for IMAS major version
     new_run = .false.
     status = 0
     write(version,'(i1)') IMAS_MAJOR_VERSION
     treename = 'ids'
     run_user = usrnam()
-    call ipgetc('b2mndr_user', run_user )
-    call xertst( .not.streql(run_user,' '), 'User name not defined !')
     username = run_user
+    call ipgetc('b2mndr_user', username )
+    call xertst( .not.streql(username,' '), 'User name not defined !')
     home_dir = '/home/'//trim(run_user)
     database = 'solps-iter'
     path = ' '
@@ -483,11 +488,6 @@ program b2_ual_write_b2mod
     call xertst( .not.streql(username,' '), 'User name not defined !')
     call xertst( .not.streql(database,' '), 'Database not defined !')
 
-    !! Run main B2 routine to process and read the B2 data
-    write(0,*) "Running b2mn_init"
-    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
-    write(0,*) "b2mn_init completed"
-
     !! Parse HOME and SOLPSTOP and remove IMASDIR prefix from path if present
     !! and correct from input if necessary
     l=index(path,'$HOME')
@@ -521,7 +521,8 @@ program b2_ual_write_b2mod
     if (index(imasdir,trim(username)).eq.0) then
       l=index(imasdir,trim(run_user))
       m=index(imasdir(l+len_trim(run_user):256),'/')
-      write(imasdir,'(a)') imasdir(1:l)//trim(username)//trim(imasdir(m+l:256))
+      write(imasdir,'(a)') &
+        & imasdir(1:l-1)//trim(username)//trim(imasdir(m+l+len_trim(run_user)-1:256))
     end if
     if (index(imasdir,'imasdb/'//trim(database)).eq.0) then
       l=index(imasdir,'imasdb/')
