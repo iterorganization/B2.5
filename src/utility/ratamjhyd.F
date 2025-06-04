@@ -461,7 +461,7 @@ c     Local variables
           enddo
          enddo
         enddo
-        write(*,*) 'Extract energy-dependent cx rates'
+        write(*,*) 'Extract energy-dependent CX rates'
 *    -- Extract energy dependent rates
         EEF=LOG(1.0_R8/am*energy/ev)
         s=0.0_R8
