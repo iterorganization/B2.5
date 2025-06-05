@@ -625,7 +625,7 @@ cwdk  now need to recompute full diamagnetic component for ud
      &              'and [BCPOT=3 or BCPOT=11 with istyle_fchi=0]'
                 WRITE(*,*) 'See b2stbc_phys.F for more info.'
                 write(0,*) '!!! FOR SPECIES: ', IS, 'ON BOUNDARY: ',
-     &              IB, ': Inconsistency in using new drift sheath BCs!',
+     &              IB, ': Inconsistency in using new drift sheath BCs!'
                 WRITE(0,*) 'IT IS RECOMMENDED TO IMPOSE TOGETHER : '
                 WRITE(0,*) 'BCCON=14, BCMOM=13, BCENI=15, ',
      &              'BCENI=15 with bcene_15_style=1, ',
