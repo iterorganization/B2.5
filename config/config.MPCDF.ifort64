@@ -1,14 +1,14 @@
 # Test whether necessary variables are set
 NCDIR       ?= ${NETCDF_HOME}
 LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdff
-MSCL_ROOT   ?= /tokp/work/dpc/SOLPS-ITER/mscl
+MSCL_ROOT   ?= ${IPPSOLPSLIBS}/mscl
 LD_MSCL     ?= -L${MSCL_ROOT} -lmscl
-GLI_HOME    ?= /tokp/work/dpc/SOLPS-ITER/gks
-NCARG_ROOT  ?= /tokp/work/dpc/SOLPS-ITER/NCARG
-LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
-NAGDIR      ?= /tokp/work/dpc/SOLPS-ITER/nag
+GLI_HOME    ?= ${IPPSOLPSLIBS}/gks
+NCARG_ROOT  ?= ${IPPSOLPSLIBS}/NCARG
+LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/lib64 -lX11 -lm
+NAGDIR      ?= ${IPPSOLPSLIBS}/nag
 LD_NAG      ?= -L${NAGDIR} -lnag
-MDSPLUS_DIR ?= /tokp/work/dpc/SOLPS-ITER/MDSPLUS
+MDSPLUS_DIR ?= ${IPPSOLPSLIBS}/MDSPLUS
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
 
@@ -24,8 +24,10 @@ endif
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
 else
-FCOPTS   = -O2 -xHost
+FCOPTS   = ${FCOPTS_B25}
 endif
+
+FFLAGSEXTRA = -diag-disable=10448
 
 DEFINES += -DNO_OPT
 
