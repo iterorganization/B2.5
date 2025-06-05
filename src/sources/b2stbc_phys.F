@@ -2068,7 +2068,7 @@ c dpc
         case (14)
           IF(MOMPAR(IS,IB,2).LT.0.5_R8) THEN
             if (new_boundary_files) then
-              write(*,'(a,1p,g14.7,a,a,a,a,a,i3)')
+              write(*,'(a,a,1p,g14.7,a,a,a,a,i3)')
      .        'BCCON = 14 with MOMPAR(:,:,2) < 0.5 : marginal ',
      .        'sheath BC, with CONPAR(:,:,1) = ',CONPAR(IS,IB,1),
      .        ' on ',BCCHAR(IB),boundary_location(ib),
@@ -2139,7 +2139,7 @@ c dpc
             ENDIF
           ELSE
             if (new_boundary_files) then
-              write(*,'(a,1p,g14.7,a,a,a,a,a,i3)')
+              write(*,'(a,a,1p,g14.7,a,a,a,a,i3)')
      .        'BCCON = 14 with MOMPAR(:,:,2) > 0.5 : non-marginal ',
      .        'sheath BC, with MOMPAR(:,:,1) = ',
      .        MOMPAR(IS,IB,1),' on boundary ',
@@ -4736,7 +4736,7 @@ cxpb  and max(,,) statement for stability
             ENDIF
           ELSE
             if(new_boundary_files) then
-              write(*,'(a,1p,g14.7,a,a,a,a,a,i3)')
+              write(*,'(a,a,1p,g14.7,a,a,a,a,i3)')
      .        'BCMOM = 13 with MOMPAR(:,:,2) > 0.5 : non-marginal ',
      .        'sheath BC, with MOMPAR(:,:,1) = ',
      .        MOMPAR(IS,IB,1),' on boundary ',
@@ -8786,7 +8786,7 @@ cxpb          endif
       case (15)
         IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
           if(new_boundary_files) then
-            write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
+            write(*,'(a,a,1p,g14.7,a,a,a)')
      .        'BCENI = 15 with MOMPAR(ismain,:,2) < 0.5 : marginal ',
      .        'sheath BC, with ENIPAR(:,:,1) = ',ENIPAR(IB,1),
      .        ' on ',BCCHAR(IB),boundary_location(ib)
@@ -8885,7 +8885,7 @@ cxpb          endif
           ENDIF
         ELSE
           if(new_boundary_files) then
-            write(*,'(a,1p,g14.7,a,a,a,a)')
+            write(*,'(a,a,1p,g14.7,a,a,a)')
      .        'BCENI = 15 with MOMPAR(ismain,:,2) >= 0.5 : ',
      .        'non-marginal sheath BC, with ENIPAR(:,:,1) = ',
      .         ENIPAR(IB,1),' on ',BCCHAR(IB),boundary_location(ib)
