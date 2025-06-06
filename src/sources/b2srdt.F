@@ -266,7 +266,6 @@ csw 24feb2014 check for guard cell (SOLPS4)
 csw 24feb2014 check for guard cell (SOLPS4)
           if(iftimbound(ix,iy) .ne. 0) cycle
 
-
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
           t0 = (phm4/dtim)*vol(ix,iy)*qe*time_factor(ix,iy)              !xpb

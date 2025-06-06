@@ -771,7 +771,7 @@ csw 16oct2012 init ier0
             if(.not.is_neutral(is) .or. use_9pt_stencil.ne.0) then
               if(visper_all_ions.ne.0 .or. is.eq.ismain) then
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
-              call restart_ma28_for_11
+                call restart_ma28_for_11
 #else
                 new_matrix = first_pass_11
                 do ireg = 0, nnreg(0)
@@ -792,7 +792,7 @@ csw 16oct2012 init ier0
                 first_pass_11 = .false.
               else                                                       !srv 02.04.18
 #if ( defined(_OPENMP) && !defined(NO_OPENMP_B2NEWS_UNDERSCORE_LOOP2) )
-              call restart_ma28_for_9
+                call restart_ma28_for_9
 #else
                 new_matrix = first_pass_9
                 do ireg = 0, nnreg(0)
