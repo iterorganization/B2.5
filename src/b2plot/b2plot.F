@@ -878,9 +878,10 @@ c
      & switch, geo, mpg, ismain,
      & state%dv%fac_ExB, state%dv%lnlam, state%pl%na, state%pl%ua,
      & state%dv%ue, state%pl%te, state%pl%ti, state%pl%tn,
-     & state%pl%po, state%dv%ne, state%dv%ne2, state%dv%ni,
-     & state%dv%nn, state%dv%fch,
-     & state%co%cvsa, state%co%cvsahz_eff, state%co%f_luc_sg,
+     & state%pl%po, state%dv%vaecrb, state%dv%ne, state%dv%ne2,
+     & state%dv%ni, state%dv%nn, state%dv%fch,
+     & state%co%cvsa, state%co%cvsa_cl, state%co%cvsa_drho,
+     & state%co%cvsahz_eff, state%co%f_luc_sg,
      & state%co%alfx_c, state%co%sigx_c,
      & state%rt%rza, state%rt%rz2, state_ext,
      & state%srw%she0, state%srw%shi0, state%srw%shn0, state%srw)
