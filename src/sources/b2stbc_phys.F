@@ -2182,14 +2182,40 @@ c dpc
                 if(.not.is_neutral(is)) then
 ! Both V_par_extrap and V_ExB,x are positive if away from W target
 ! U_out = MAX(- V_par_extrap - V_ExB,x * |B/B_x|, CS)
-! V_ExB,x is restricted within +- 2 CS
-                  vexbrestr = min(2.0_R8*CS,max(-2.0_R8*CS,
+! V_ExB,x is restricted within +- 2 CS * |B_x|/B
+                  if (drift_style.ne.0) then
+                    vexbrestr = min(2.0_R8*CS*
+     .               abs(wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
+     .                   wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3),
+     .                          max(-2.0_R8*CS*
+     .               abs(wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
+     .                   wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3),
+     .         vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)))
+                    UUOUT=MAX(MOMPAR(IS,IB,1)*CS,
+     .               - UUTEST - vexbrestr*
+     .               abs(wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3)/
+     .                   wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)))
+                  else
+                    vexbrestr = min(2.0_R8*CS*
+     .       abs(bb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))/
+     .           bb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),3),
+     .                          max(-2.0_R8*CS*
+     .       abs(bb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))/
+     .           bb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),3),
      .       vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)))
-                  UUOUT=MAX(MOMPAR(IS,IB,1)*CS,
-     .             - UUTEST - vexbrestr*
-     .             abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3)/
-     .                 bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)))
+                    UUOUT=MAX(MOMPAR(IS,IB,1)*CS,
+     .               - UUTEST - vexbrestr*
+     .       abs(bb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),3)/
+     .           bb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)))
+                  end if
                 else
 ! V_par_extrap is positive if away from W target
 ! U_out = MAX(- V_par_extrap, CS)
@@ -2247,17 +2273,42 @@ c dpc
      .                  LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
 ! Make UUTEST positive if along x direction, i.e. towards E target
                 UUTEST=UUTEST*bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
-     .                   abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
+     .                    abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
                 if(.not.is_neutral(is)) then
 ! Both V_par_extrap and V_ExB,x are positive if towards E target
 ! U_out = MAX(V_par_extrap + V_ExB,x * |B/B_x|, CS)
-! V_ExB,x is restricted within +- 2 CS
-                  vexbrestr = min(2.0_R8*CS, max(-2.0_R8*CS,
-     .              vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)))
-                  UUOUT=MAX(MOMPAR(IS,IB,1)*CS,
-     .             UUTEST + vexbrestr*
-     .             abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3)/
-     .                 bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)))
+! V_ExB,x is restricted within +- 2 CS * |B_x/B|
+                  if (drift_style.ne.0) then
+                    vexbrestr = min(2.0_R8*CS*
+     .               abs(wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
+     .                   wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3),
+     .                        max(-2.0_R8*CS*
+     .               abs(wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
+     .                   wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3),
+     .                 vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)))
+                    UUOUT=MAX(MOMPAR(IS,IB,1)*CS,
+     .               UUTEST + vexbrestr*
+     .               abs(wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3)/
+     .                   wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)))
+                  else
+                    vexbrestr = min(2.0_R8*CS*
+     .        abs(bb(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))/
+     .            bb(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),3),
+     .                        max(-2.0_R8*CS*
+     .        abs(bb(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))/
+     .            bb(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),3),
+     .               vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)))
+                    UUOUT=MAX(MOMPAR(IS,IB,1)*CS,
+     .               UUTEST + vexbrestr*
+     .        abs(bb(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),3)/
+     .            bb(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)))
+                  end if
                 else
 ! V_par_extrap is positive if towards E target
 ! U_out = MAX(V_par_extrap, CS)
@@ -4775,15 +4826,42 @@ cxpb  and max(,,) statement for stability
                 if(.not.is_neutral(is)) then
 ! Both V_par_extrap and V_ExB,x are positive if away from W target
 ! U_out = MAX(- V_par_extrap, CS + V_ExB,x * |B/B_x|)
-! V_ExB,x is restricted within +- 2 CS
-                  vexbrestr = min(2.0_R8*CS,max(-2.0_R8*CS,
+! V_ExB,x is restricted within +- 2 CS * |B_x|/B
+                  if (drift_style.ne.0) then
+                    vexbrestr = min(2.0_R8*CS*
+     .               abs(wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
+     .                   wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3),
+     .                          max(-2.0_R8*CS*
+     .               abs(wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
+     .                   wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3),
      .       vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)))
-                  UUOUT=MAX(MOMPAR(IS,IB,1)*CS +
-     .             vexbrestr*
-     .             abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3)/
-     .                 bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)),
-     .             - UUTEST)
+                    UUOUT=MAX(MOMPAR(IS,IB,1)*CS +
+     .               vexbrestr*
+     .               abs(wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3)/
+     .                   wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)),
+     .               - UUTEST)
+                  else
+                    vexbrestr = min(2.0_R8*CS*
+     .       abs(bb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))/
+     .           bb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),3),
+     .                          max(-2.0_R8*CS*
+     .       abs(bb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))/
+     .           bb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),3),
+     .       vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)))
+                    UUOUT=MAX(MOMPAR(IS,IB,1)*CS +
+     .               vexbrestr*
+     .       abs(bb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),3)/
+     .           bb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)),
+     .               - UUTEST)
+                  end if
                   UPOUT=max(0.0_R8, UUOUT)
                 else
 ! V_par_extrap is positive if away from W target
@@ -4832,15 +4910,40 @@ cxpb  and max(,,) statement for stability
      .                   abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
                 if(.not.is_neutral(is)) then
 ! Both V_par_extrap and V_ExB,x are positive if towards E target
-! U_out = MAX(V_par_extrap, CS - V_ExB,x * |B/B_x|)
-! V_ExB,x is restricted within +- 2 CS
-                  vexbrestr = min(2.0_R8*CS,max(-2.0_R8*CS,
-     .              vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)))
-                  UUOUT=MAX(MOMPAR(IS,IB,1)*CS -
-     .             vexbrestr*
-     .             abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3)/
-     .                 bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)),
-     .             UUTEST)
+! U_out = MAX(V_par_extrap, CS - V_ExB,x * B/|B_x|)
+! V_ExB,x is restricted within +- 2 CS * |B_x/B|
+                  if (drift_style.ne.0) then
+                    vexbrestr = min(2.0_R8*CS*
+     .               abs(wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
+     .                   wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3),
+     .                          max(-2.0_R8*CS*
+     .               abs(wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
+     .                   wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3),
+     .               vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)))
+                    UUOUT=MAX(MOMPAR(IS,IB,1)*CS -
+     .               vexbrestr*
+     .               abs(wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3)/
+     .                   wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)),
+     .               UUTEST)
+                  else
+                    vexbrestr = min(2.0_R8*CS*
+     .        abs(bb(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))/
+     .            bb(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),3),
+     .                        max(-2.0_R8*CS*
+     .        abs(bb(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))/
+     .            bb(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),3),
+     .               vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)))
+                    UUOUT=MAX(MOMPAR(IS,IB,1)*CS,
+     .               UUTEST + vexbrestr*
+     .        abs(bb(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),3)/
+     .            bb(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .               leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)))
+                  end if
                   UPOUT=max(0.0_R8, UUOUT)
                 else
 ! V_par_extrap is positive if towards E target
