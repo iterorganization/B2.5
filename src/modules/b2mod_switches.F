@@ -1120,7 +1120,7 @@ c k-enstrophy model
       s % b2tfhi_fkt_hie = 0.0_R8
       s % b2tfhe_vis_kt = 0.0_R8
       s % b2sikt_lpar_ref = 10.0_R8
-      s % keps_anom_he_model = 1
+      s % keps_anom_he_model = 0
 
 c ECH model
       s % use_ech = 0
