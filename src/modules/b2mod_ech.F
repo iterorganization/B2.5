@@ -19,7 +19,7 @@ c*******************************************************************************
       implicit none
 *   ..declarations allocatable variable
       real (kind=R8), allocatable, save ::
-     &  chi(:), she_ech(:,:)
+     &  chi_ech(:), she_ech(:,:)
       integer, allocatable, save :: list_ci_ech(:)
 
 *   ..common blocks
@@ -40,16 +40,16 @@ c*******************************************************************************
       contains
 
 c alloc
-      subroutine alloc_b2mod_ech(mpg, nCv)
+      subroutine alloc_b2mod_ech(mpg,nCv)
       implicit none
       type(mapping), intent(in):: mpg
       integer, intent(in) :: nCv
 
-      allocate(chi(mpg%nCi))
+      allocate(chi_ech(mpg%nCi))
       allocate(she_ech(nCv,0:3))
       allocate(list_ci_ech(mpg%nCi))
 
-      chi(:) = 0.0_R8
+      chi_ech(:) = 0.0_R8
       she_ech(:,:) = 0.0_R8
       list_ci_ech = 0
 
@@ -72,7 +72,7 @@ c     This routine calculates the ECH power deposition
       type (switches), intent (in) :: switch
       integer, intent(in):: nCv
 c     Output variables
-c      real (kind=R8), intent(out):: she_ech(nCv,0:3)
+c      real (kind=R8), intent(out):: she_ech(nCv,0:3) not used anymore
       character chns*3
 
 
@@ -113,7 +113,7 @@ c      call sfill (nCv*4, 0.0_R8, she0_ech, 1) not used anymore
       end select
 
       if (switch%ech_out.eq.1.or.switch%iout_b2wdat.eq.4) then
-c        call my_out_us(70,nCv,0,chi,'b2mod_ECH_shapefun')
+c        call my_out_us(70,nCv,0,chi_ech,'b2mod_ECH_shapefun')
 c        call my_outi_us(70,nCv,0,maskf,'b2mod_ECH_maskf')
 c        do cntr = 0,3
 c          write (chns,'(i3.3)') cntr
@@ -167,23 +167,23 @@ c Internal variables
         summation = 0.0_R8
         totaldist = 0.0_R8
         crction = switch%geom_match_dist !ap correction distance to avoid numerical error when defining segment for cv_intersection
-        call sfill (mpg%nCi, 0.0_R8, chi, 1)
+        call sfill (mpg%nCi, 0.0_R8, chi_ech, 1)
         segment = reshape((/ switch%ech_Rdep, minval(geo%vxY)-crction,
      &      switch%ech_Rdep, maxval(geo%vxY)+crction /), shape(segment))
 
         call calc_face_dist(geo, mpg, nCv, segment, list_cv, nncv,
      &   list_ci_ech, nnci, list_fc, nnfc, segmdist, totaldist, ifail)
 
-        chi(:) = segmdist/totaldist
-        summation = sum(chi(:)*geo%cvVol(1:mpg%nCi)) ! normalisation condition on internal elements only
-        chi = chi/summation
+        chi_ech(:) = segmdist/totaldist
+        summation = sum(chi_ech(:)*geo%cvVol(1:mpg%nCi)) ! normalisation condition on internal elements only
+        chi_ech = chi_ech/summation
       endif
 
 * ..computation
       do cntr = 1, size(list_ci_ech)
         if(list_ci_ech(cntr).ne.0) then
           iCv = list_ci_ech(cntr)
-          she_ech(iCv,0) = chi(iCv)*switch%ech_absfract*
+          she_ech(iCv,0) = chi_ech(iCv)*switch%ech_absfract*
      &                     switch%ech_power*geo%cvVol(iCv)
         endif
       enddo
@@ -229,7 +229,7 @@ c Internal variables
         write (*,*) 'Gaussian-like coupling scheme used.'
         sx = switch%ech_gaussian_width_x ! widthech (X direction) in TOMATOR 1D
         sy = switch%ech_gaussian_width_y ! widthech (Y direction)
-        call sfill (mpg%nCi, 0.0_R8, chi, 1)
+        call sfill (mpg%nCi, 0.0_R8, chi_ech, 1)
         if (switch%ech_gaussian_type.eq.1) then ! gaussian symmetric in poloidal direction
           write (0,*) 'Poloidally symmetric gaussian used. ' //
      &                'Power spread over the whole domain in '
@@ -240,7 +240,7 @@ c Internal variables
           write (*,*)  'poloidal direction. Should be used for '
      &                // 'symmetric cases only!'
           do iCv = 1, mpg%nCi
-            chi(iCv) = geo%cvX(iCv)*expu(-
+            chi_ech(iCv) = geo%cvX(iCv)*expu(-
      &            ((geo%cvX(iCv)-switch%ech_Rdep)/sx)**2)+
      &            1.0E-7*geo%cvX(iCv)*expu(- ! 1.0E-7 is the background value (from TOMATOR 1D)
      &            ((geo%cvX(iCv)-switch%ech_Rdep)/switch%a0)**2)
@@ -251,29 +251,31 @@ c Internal variables
           write (*,*) 'Standard binormal distribution used. ' //
      &                'No toroidal effects considered.'
           do iCv = 1, mpg%nCi
-            chi(iCv) = 1.0_R8/(2*pi*sx*sy)*exp(-1.0_R8/2.0_R8*
+            chi_ech(iCv) = 1.0_R8/(2*pi*sx*sy)*exp(-1.0_R8/2.0_R8*
      &                 ((geo%cvX(iCv)-switch%ech_Rdep)**2/sx**2 +
      &                  (geo%cvY(iCv)-switch%ech_Zdep)**2/sy**2))
           enddo
-        else ! 1/R*binormal to account for toroidal effects (see A. Piras PhD)
+        elseif (switch%ech_gaussian_type.eq.3) then ! 1/R*binormal to account for toroidal effects (see A. Piras PhD)
           write (0,*) 'Standard binormal distribution used. ' //
      &                'Toroidal effects considered.'
           write (*,*) 'Standard binormal distribution used. ' //
      &                'Toroidal effects considered.'
           do iCv = 1, mpg%nCi
-            chi(iCv) = 1.0_R8/geo%cvX(iCv)*(1.0_R8/(2*pi*sx*sy)*
+            chi_ech(iCv) = 1.0_R8/geo%cvX(iCv)*(1.0_R8/(2*pi*sx*sy)*
      &                   exp(-1.0_R8/2.0_R8*((geo%cvX(iCv)-
      &                   switch%ech_Rdep)**2/sx**2 + (geo%cvY(iCv)
      &                   -switch%ech_Zdep)**2/sy**2)))
           enddo
+        else
+          call xerrab('Invalid ech_gauss_type switch value!')
         endif
 
-        summation = sum(chi(:)*geo%cvVol(1:mpg%nCi))
-        chi = chi/summation
+        summation = sum(chi_ech(:)*geo%cvVol(1:mpg%nCi))
+        chi_ech = chi_ech/summation
       endif
 
       do iCv = 1, mpg%nCi
-        she_ech(iCv,0) = switch%ech_power*chi(iCv)*
+        she_ech(iCv,0) = switch%ech_power*chi_ech(iCv)*
      &                   switch%ech_absfract*geo%cvVol(iCv)
       enddo
 
@@ -325,6 +327,7 @@ c Internal variables
 *   ..subprogram start-up calls
       call subini ('compute_ech_2')
       call sfill (nCv*4, 0.0_R8, she_ech, 1)
+      cntr = 0
 
 * ..precomputation
       crction = switch%geom_match_dist !ap correction distance to avoid numerical error when defining segment for cv_intersection
@@ -416,14 +419,6 @@ c-----------------Locate UHR-layer-----------------
           endif
         enddo
 
-        neUHR(list_cutoff) = dv%ne(list_cutoff)
-        BUHR(list_cutoff) = geo%cvBb(list_cutoff,3)
-        R_UHR(list_cutoff) = geo%cvX(list_cutoff) ! UHR radial location
-        deallocate (list_cutoff)
-        cntr = 0
-
-c-----------------Budden Analysis @ UHR-----------------
-
 c     Lne = abs(nr.ne[id] * abs(aR[id + 1] - aR[id - 1]) / 100.0 / (nr.ne[id - 1] - nr.ne[id + 1])); ! density scale length [m]
         call gradc_r(nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
      &               neUHR, funv, gradne)
@@ -434,6 +429,14 @@ c     LBr = abs(Br[id] * abs(aR[id + 1] - aR[id - 1]) / 100.0 / (Br[id - 1] - Br
 
         Lne = neUHR/gradne
         LBphi = BUHR/gradB
+        neUHR(list_cutoff) = dv%ne(list_cutoff)
+        BUHR(list_cutoff) = geo%cvBb(list_cutoff,3)
+        R_UHR(list_cutoff) = geo%cvX(list_cutoff) ! UHR radial location
+        deallocate (list_cutoff)
+        cntr = 0
+
+c-----------------Budden Analysis @ UHR-----------------
+
         alphaUHR = sqrt(neUHR*qe**2/me/eps0) / omegace ! wpe/wce @ UHR
 #ifdef WG_TODO
 !ap Reference for this formula is: Ram, Schultz; Phys. Plasma 7 4084-4094 (2000)
@@ -549,7 +552,7 @@ c-----------------X-absorption-----------------
 }
 
         do iCv = 1, mpg%nCi
-          she0_ech(iCv,0) = switch%ech_power*chi(iCv)*
+          she_ech(iCv,0) = switch%ech_power*chi_ech(iCv)*
      &                      switch%ech_absfract*geo%cvVol(iCv)
         enddo
 #endif
@@ -632,7 +635,7 @@ c dealloc
       implicit none
 
       if (allocated(she_ech)) deallocate(she_ech)
-      if (allocated(chi)) deallocate(chi)
+      if (allocated(chi_ech)) deallocate(chi_ech)
       if (allocated(list_ci_ech)) deallocate(list_ci_ech)
 
       return
