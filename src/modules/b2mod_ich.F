@@ -116,29 +116,9 @@ c      i_R_Rp = -120 !why this value?
 * -- COUPLING = 3 -- 2D Gauss coupling !!TODO
 
       case(3)
-#ifdef WG_TODO
-        sx = switch%ich_gaussian_width_x
-        sy = switch%ich_gaussian_width_y
+        call compute_ich_3(nCv,geo,mpg,pl,dv,switch)
+        
 
-        do iCv = 1,mpg%nCi
-          chi_ich(iCv) = 1.0_R8/(2.0_R8*pi*sx*sy)*expu(-1.0_R8/2.0_R8*
-     &          (((geo%cvX(iCv)-switch%ich_Rdep)/sx)**2+
-     &          ((geo%cvY(iCv)-switch%ich_Zdep)/sy)**2))
-        enddo
-
-        NF = sum(chi_ich(:)*geo%cvVol(1:mpg%nCi))
-
-        chi_ich = chi_ich/NF
-
-        do iCv = 1, mpg%nCi
-          shi0_ich(iCv,0) = switch%ich_power*chi_ich(iCv)*
-     &                      (1-switch%ich_fracpne)*
-     &                      switch%ich_absfract*geo%cvVol(iCv)
-          she0_ich(iCv,0) = switch%ich_power*chi_ich(iCv)*
-     &                      switch%ich_fracpne*
-     &                      switch%ich_absfract*geo%cvVol(iCv)
-        enddo
-#endif
       end select
 
       if (switch%ich_out.eq.1.or.switch%iout_b2wdat.eq.4) then
@@ -241,7 +221,7 @@ c Compute ICH - Gaussian-like
       type (switches), intent (in) :: switch
       integer, intent(in):: nCv
 c Internal variables
-      real (kind=R8):: sx, sy, summation
+      real (kind=R8):: sx, sigma_y, summation
       integer :: iCv
 
 * ..preliminaries
@@ -257,7 +237,7 @@ c Internal variables
         write (0,*) 'Gaussian-like coupling scheme used.'
         write (*,*) 'Gaussian-like coupling scheme used.'
         sx = switch%ich_gaussian_width_x ! widthich in T1D
-        sy = switch%ich_gaussian_width_y ! widthich (Y direction)
+        sigma_y= switch%ich_gaussian_width_y ! widthich (Y direction)
         call sfill (mpg%nCi, 0.0_R8, chi_ich, 1)
         if (switch%ich_gaussian_symmetry.eq.1) then ! gaussian symmetric in poloidal direction
           write (0,*) 'Poloidally symmetric gaussian used. ' //
@@ -281,9 +261,9 @@ cec     The mask function chi_ich was changed on 28/04/25 again to have the exac
           write (*,*) 'Standard binormal distribution used. ' //
      &                'No toroidal effects considered.'
           do iCv = 1, mpg%nCi
-            chi_ich(iCv) = 1.0_R8/(2*pi*sx*sy)*exp(-1.0_R8/2.0_R8*
+            chi_ich(iCv) = 1.0_R8/(2*pi*sx*sigma_y)*exp(-1.0_R8/2.0_R8*
      &            ((geo%cvX(iCv)-switch%ich_Rdep)**2/sx**2 +
-     &             (geo%cvY(iCv)-switch%ich_Zdep)**2/sy**2))
+     &             (geo%cvY(iCv)-switch%ich_Zdep)**2/sigma_y**2))
           enddo
         endif
 
@@ -535,6 +515,71 @@ c      enddo
 *.end compute_ich_2
 
       end subroutine compute_ich_2
+
+
+c Compute ICH - 2D Gauss
+      subroutine compute_ich_3(nCv,geo,mpg,pl,dv,switch)
+      use b2mod_b2cmpa
+      use b2mod_subsys
+      use b2mod_switches
+      use b2mod_ad
+     & , only : ncall_calcICH
+      implicit none
+      type (geometry), intent (in) :: geo
+      type (mapping), intent (in) :: mpg
+      type (B2Plasma), intent (in) :: pl
+      type (B2Derivatives), intent (in) :: dv
+      type (switches), intent (in) :: switch
+      integer, intent(in):: nCv
+c Internal variables
+      integer :: iCv
+      real (kind = R8) :: sx, sigma_y
+      real (kind = R8) :: NF,chi_ich(nCv)
+      logical :: ifail
+
+* ..preliminaries
+*   ..subprogram start-up calls
+      call subini ('compute_ich_3')
+      call sfill (nCv*4, 0.0_R8, shi_ich, 1)
+      call sfill (nCv*4, 0.0_R8, she_ich, 1)
+
+      if(ncall_calcICH.lt.1) then
+        write (0,*) '2D Gauss coupling scheme used.'
+        write (*,*) '2D Gauss coupling scheme used.'
+      endif
+
+      sx = switch%ich_gaussian_width_x
+      sigma_y = switch%ich_gaussian_width_y
+
+      do iCv = 1,mpg%nCi
+        chi_ich(iCv) = 1.0_R8/(2.0_R8*pi*sx*sigma_y)*
+     &        expu(-1.0_R8/2.0_R8*
+     &        (((geo%cvX(iCv)-switch%ich_Rdep)/sx)**2+
+     &        ((geo%cvY(iCv)-switch%ich_Zdep)/sigma_y)**2))
+      enddo
+
+      NF = sum(chi_ich(:)*geo%cvVol(1:mpg%nCi))
+
+      chi_ich = chi_ich/NF
+
+      do iCv = 1, mpg%nCi
+        shi_ich(iCv,0) = switch%ich_power*chi_ich(iCv)*
+     &                    (1-switch%ich_fracpne)*
+     &                    switch%ich_absfract*geo%cvVol(iCv)
+        she_ich(iCv,0) = switch%ich_power*chi_ich(iCv)*
+     &                    switch%ich_fracpne*
+     &                    switch%ich_absfract*geo%cvVol(iCv)
+      enddo
+
+
+*   ..return
+      call subend ()
+      return
+
+*-----------------------------------------------------------------------
+*.end compute_ich_3
+
+      end subroutine compute_ich_3
 
 
 
