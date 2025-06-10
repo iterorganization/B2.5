@@ -255,7 +255,6 @@ c       call ipgeti ('b2stbc_average_pr', istyle_average_pr)         !srv 08.08.
 
       sna0_no_mdf = 0.0_R8
 
-      cor9 = switch%b2stbc_cor9
 
       if (switch%keps_anom_he_model.eq.0) then
         ! Default model. Apply factor 5/2 for anomalous terms in heat equations
