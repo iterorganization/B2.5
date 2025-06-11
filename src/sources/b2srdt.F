@@ -128,6 +128,7 @@
 !$omp& shared(na0,ne0,ni0,ua0,ti0,te0,am, kt0, zt0, nn0, tn0)
 !$omp& shared(ttim_na,ttim2_na,ttim_ua,ttim2_ua)
 !$omp& shared(ttim_te,ttim2_te,ttim_ti,ttim2_ti,mult_dt)
+!$omp& shared(dt_var4_ns,dt_var4_min)
 !$omp& private(ttim2,content,src_tot,smt)
 !$omp do
 #endif
