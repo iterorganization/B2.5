@@ -5801,7 +5801,7 @@ cxpb code segment analog to b2tfhi
       case (14)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
-     .     'BCCON = 14 : ion energy leakage ',ENIPAR(IB,1),' on ',
+     .     'BCENI = 14 : ion energy leakage ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
