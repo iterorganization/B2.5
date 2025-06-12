@@ -200,19 +200,6 @@ c time-dependent treatment
        enddo
       endif
 
-c time-dependent treatment                                            !srv 07.07.21 {
-      if(switch%b2mndt_style.eq.2) then
-*  .. calculate time-dependent source
-       call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
-     &               pl%na, psnl%ua, switch, mpg, sr%smodt)
-*  .. add contribution from time-dependent source
-       sr%smo = sr%smo + sr%smodt
-       do is = 0, ns-1
-         sr%smo(:,0,is) = sr%smo(:,0,is)-am(is)*mp*geo%cvVol*geo%cvHz*
-     &           (pl%na(:,is)-psnl%na(:,is))*psnl%ua(:,is)/dtim
-       enddo
-      endif                                                            !srv 07.07.21 }
-
 *   ..compute ne, ne2, ro, rz, pr, pz
       call b2xpni (nCv, ns, pl%na, dv%ni)
       call b2xpnn (nCv, ns, pl%na, dv%nn)
@@ -343,26 +330,38 @@ c time-dependent treatment                                            !srv 07.07
        call b2nxdv (nCv,is,switch,mpg,rob,sr%smq(:,:,is),smqdu,smb)     !srv
 #ifndef FIXED_POINT
 cdjm Jan2017 update momentum source components for balance
-      if (balance_netcdf.ne.0) then
+       if (balance_netcdf.ne.0) then
          tot_smo0to3(:,:,is)=smb !djm Mar2019
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,pl%ua(:,is),ubf)
         call intface(nCv,nFc,mpg%fcCv,geo%fcVol,rob,robf)
         call update_balance_sources_momentum(nCv,nFc,is,pl%ua(:,is),rob,
      &    ubf,robf)
-      endif
-      if (balance_netcdf.ne.0 .or.
+       endif
+       if (balance_netcdf.ne.0 .or.
      &    switch%write_eirene_sources.ne.0) then
         call update_balance_eirene_sources_momentum(
      &   nCv,is,pl%ua(1,is),rob)
-      endif
+       endif
 #endif
+
+*    ..time-dependent treatment
+*    .. calculate time-dependent source
+       if (switch%b2mndt_style.eq.2) then
+         call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
+     &                pl%na, psnl%ua, switch, mpg, sr%smodt, is)
+*    .. add contribution from time-dependent source
+         sr%smodt(:,0,is) = sr%smodt(:,0,is)-
+     &    am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-psnl%na(:,is))*
+     &    psnl%ua(:,is)/dtim
+         smb = smb + sr%smodt(:,:,is)
+       endif
 
 *    ..compute residual
       if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
      &            .or.switch%get_residuals.eq.1) then                   !srv 22.05.18
         call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is, pl%ua(:,is),
-     .    rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
-     .    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))        !srv 04.07.08
+     &    rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
+     &    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))        !srv 04.07.08
       endif                                                             !srv 22.05.18
 
 #ifndef FIXED_POINT
@@ -414,6 +413,11 @@ cdjm Mar2019 output the total momentum flux and source for balance
      &       smban(:,2)*pl%na(:,is)*mp*am(is)+
      &       smban(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
         call my_out_us(70,nCv,0,wrks,'b2npmo_smoan'//chns)              !srv 25.09.17
+        wrks=sr%smodt(:,0,is)+
+     &       sr%smodt(:,1,is)*pl%ua(:,is)+
+     &       sr%smodt(:,2,is)*pl%na(:,is)*mp*am(is)+
+     &       sr%smodt(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
+         call my_out_us(70,nCv,0,wrks,'b2npmo_smodt'//chns)
       endif                                                             !srv 05.07.17
 
       if (switch%b2npmo_iout .ne. 0 .or. switch%iout_b2wdat .eq. 4) then

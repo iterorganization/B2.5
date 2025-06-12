@@ -231,15 +231,15 @@ cc while the second contribution corresponds to T dn/dt
         if (switch%tn_style.eq.0) then     ! default, combined ion-neutral energy equation
           sr%shi = sr%shi+sr%shidt
           sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
-     &                                  psnl%ti/dtim*geo%cvVol
+     &                                    psnl%ti/dtim*geo%cvVol
         elseif (switch%tn_style.eq.1) then ! pure ion energy equation
           sr%shi = sr%shi+sr%shidt
           sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
-     &                                  psnl%ti/dtim*geo%cvVol
+     &                                    psnl%ti/dtim*geo%cvVol
         else                               ! separate ion and neutral energy equation
           sr%shi = sr%shi+sr%shidt
           sr%shi(:,0)=sr%shi(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
-     &                                  psnl%ti/dtim*geo%cvVol
+     &                                    psnl%ti/dtim*geo%cvVol
           sr%shn = sr%shn+sr%shndt
           sr%shn(:,0)=sr%shn(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))*
      &                                    psnl%tn/dtim*geo%cvVol
@@ -297,6 +297,49 @@ cdjm Jan2017 update particle source components for balance
      .   (nCv,dv%ne,dv%ni,pl%te,pl%ti)
       endif
 #endif
+!fc This is the new positioning of time-dependent treatment
+c time-dependent treatment                                              !srv 07.07.21 {
+      if(switch%b2mndt_style.eq.2) then
+*  .. calculate time-dependent source
+        call b2shdt (nCv, mpg%nCi, ns, dtim,
+     &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
+     &    psnl%kt, psnl%zt, dv%ne, dv%ni, dv%nn,
+     &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,
+     &    sr%sktdt, sr%sztdt)
+*  .. add contribution from time-dependent source
+cc If e.g. d(nT)/dt = n dT/dt + T dn/dt,
+cc then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
+cc while the second contribution corresponds to T dn/dt
+        she0 = she0+sr%shedt
+        she0(:,0)=she0(:,0)-1.5_R8*(dv%ne-psnl%ne)*
+     &                              psnl%te/dtim*geo%cvVol
+        if (switch%tn_style.eq.0) then       ! default, combined ion-neutral energy equation
+          shi0 = shi0+sr%shidt
+          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))*
+     &                              psnl%ti/dtim*geo%cvVol
+        elseif (switch%tn_style.eq.1) then   ! pure ion energy equation
+          shi0 = shi0+sr%shidt
+          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                              psnl%ti/dtim*geo%cvVol
+        else                                 ! separate ion and neutral energy equation
+          shi0 = shi0+sr%shidt
+          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                              psnl%ti/dtim*geo%cvVol
+          shn0 = shn0+sr%shndt
+          shn0(:,0)=shn0(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))*
+     &                              psnl%tn/dtim*geo%cvVol
+        endif
+        if (switch%solve_keps.gt.0) then
+          skt0 = skt0 + sr%sktdt
+          skt0(:,0)=skt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                              psnl%kt/dtim*geo%cvVol
+        endif
+        if (switch%solve_keps.gt.1) then
+          szt0 = szt0 + sr%sztdt
+          szt0(:,0)=szt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+     &                              psnl%zt/dtim*geo%cvVol
+        endif
+      endif                                                              !srv 207.07.21 }
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
@@ -342,7 +385,7 @@ c residuals for separate neutral energy equation
       else
         dv%reshn = 0.0_R8         !! this is needed because reshn is added to the total energy equation
       endif
-
+*     ..compute equipartition
       do iCv = 1, mpg%nCi
         shei(iCv) = co%ceqp(iCv)*dv%ne(iCv)*dv%ni(iCv,0)/
      &     (pl%te(iCv)*sqrt(pl%te(iCv)))*(pl%te(iCv)-pl%ti(iCv))
@@ -377,6 +420,7 @@ c residuals for separate neutral energy equation
 !        dv%reshe = dv%reshe - shei
 !        dv%reshi = dv%reshi + shei
 !      endif                                                             !srv 22.05.18
+*     ..correct residual with equipartition
       if ((solving(4).and.any(solvereg(0:mpg%nnreg(0))))                     !srv 22.05.18 {
      &    .or.switch%get_residuals.eq.1) dv%reshe = dv%reshe - shei
       if ((solving(4).and.any(solvireg(0:mpg%nnreg(0))))
