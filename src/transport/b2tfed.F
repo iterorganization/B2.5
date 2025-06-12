@@ -72,8 +72,7 @@ cwdk precomputation of gradients on faces
 *     ..computation of ExB drift
 cwdk    to be checked: now we use inverse volume weighting
 cwdk                   (original code: simple averaging)
-        wrk0  = geo%fcBb(:,2)/geo%fcBb(:,3)**2
-c        call intface(nCv,nFc,mpg%fcCv,geo%fcVol,wrk,wrk0)
+        wrk0 = geo%fcBb(:,2)/geo%fcBb(:,3)**2
         veecrb(:,0) = -switch%poleldr*fac_ExB*wrk0*dpo(:,1)
         veecrb(:,1) =  switch%radeldr*fac_ExB*wrk0*dpo(:,0)
 *     ..computation of grad-B drift

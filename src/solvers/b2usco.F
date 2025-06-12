@@ -62,17 +62,16 @@
 
 *   ..local variables
       integer iCv, iFc, iCv1, iCv2, iVx1, iVx2, inCv, ireg, k
-c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0      !srv 06.07.06
-c      integer, save :: iadd_9 = 1                                !srv 13.10.06
+c      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
+c      integer, save :: iadd_9 = 1                                     !srv 13.10.06
       real (kind=R8) ::
      *   t1, t2, t3, t11, t22, wrk(nCv)
       character chns*3, charnv*2
-
       logical lnonzero
 *   ..procedures
       intrinsic abs
       external xertst, ipgetr, sfill
-      external b2xvsg                                             !srv 02.01.07
+      external b2xvsg                                                  !srv 02.01.07
 
 *-----------------------------------------------------------------------
 *.computation
@@ -81,11 +80,11 @@ c      integer, save :: iadd_9 = 1                                !srv 13.10.06
 *   ..subprogram start-up calls
       call subini ('b2usco')
 *   ..set internal parameters on first call
-      if (ncall_b2usco.eq.0) then                                 !srv 06.07.06 {
+      if (ncall_b2usco.eq.0) then                                     !srv 06.07.06 {
 c       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
 c       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
-c       call ipgeti ('b2usco_add_9', iadd_9)                      !srv 13.10.06
-      endif                                                       !srv 06.07.06 }
+c       call ipgeti ('b2usco_add_9', iadd_9)                          !srv 13.10.06
+      endif                                                           !srv 06.07.06 }
 *   ..test nCv, nFc, nVx
       call xertst (0.lt.nCv.and.0.lt.nFc.and.0.lt.nVx,
      .  'faulty argument nCv, nFc, nVx')
@@ -109,13 +108,13 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                      !srv 13.10.06
       do iCv = 1, nCv
         ireg  = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
-          if (switch%b2mndt_style.lt.2) then                      !srv 13.10.06 {
+          if (switch%b2mndt_style.lt.2) then                          !srv 13.10.06 {
             aa(mpg%cvNvP(iCv,1)) = (-snbv(iCv)*nb(iCv)/pb(iCv)+
      &       abs(rescb(iCv))/(rxg*pb(iCv)))*rscal(pb(iCv))
           else
             aa(mpg%cvNvP(iCv,1)) = (-snbv(iCv)*nb(iCv)/pb(iCv))*
      &          rscal(pb(iCv))
-          endif                                                   !srv 13.10.06 }
+          endif                                                       !srv 13.10.06 }
         else
           aa(mpg%cvNvP(iCv,1)) = rscal(pb(iCv))
         endif
@@ -227,13 +226,13 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                      !srv 13.10.06
       enddo
 
 *   ..solve the correction equation
-      call b2uxus (nCv, mpg, aa, itcnt, rescb, corpb, name)       !srv 18.05.02
+      call b2uxus (nCv, mpg, aa, itcnt, rescb, corpb, name)            !srv 18.05.02
 *   ..redo the scaling
 ! $AD II-LOOP
       do iCv = 1, nCv
         corpb(iCv) = corpb(iCv)*rscal(pb(iCv))
       enddo
-      if (switch%b2usco_iout.ne.0) then                           !srv 17.06.02 {
+      if (switch%b2usco_iout.ne.0) then                                !srv 17.06.02 {
         write (chns,'(i3.3)') isb
         do k=1,maxval(mpg%cvNvP(1:nCv,2))
           write (charnv,'(i2.2)') k
@@ -249,7 +248,7 @@ c       call ipgeti ('b2usco_add_9', iadd_9)                      !srv 13.10.06
         call my_out_us(70,nCv,0,corpb,name//'_corpb'//chns)
         call my_out_us(70,nCv,0,rescb,name//'_rescb'//chns)
         call my_out_us(70,nCv,0,nb,name//'_na'//chns)
-      endif                                                       !srv 17.06.02 }
+      endif                                                            !srv 17.06.02 }
 
 * ..return
       ncall_b2usco = ncall_b2usco+1

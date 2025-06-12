@@ -5,6 +5,7 @@
      *  art_sch(:,:),
      *  art_she(:,:),
      *  art_shi(:,:),
+     *  art_shn(:,:),
      *  art_smo(:,:,:),
      *  art_sna(:,:,:)
 
@@ -17,12 +18,14 @@
        allocate(art_sch(nCv,0:3))
        allocate(art_she(nCv,0:3))
        allocate(art_shi(nCv,0:3))
+       allocate(art_shn(nCv,0:3))
        allocate(art_smo(nCv,0:3,0:nsd-1))
        allocate(art_sna(nCv,0:1,0:nsd-1))
 
        art_sch =0.0_R8
        art_she =0.0_R8
        art_shi =0.0_R8
+       art_shn =0.0_R8
        art_smo =0.0_R8
        art_sna =0.0_R8
 
@@ -37,73 +40,171 @@
        deallocate(art_sch)
        deallocate(art_she)
        deallocate(art_shi)
+       deallocate(art_shn)
        deallocate(art_smo)
        deallocate(art_sna)
 
        return
       end subroutine dealloc_b2mod_equation_sources
 
-      subroutine read_equation_sources(nCv, ns)
+      subroutine read_equation_sources(nCv, ns, switch, itim, mpg)
        use b2mod_types
+       use b2mod_switches
+       use b2mod_numerics_namelist
+       use b2us_map
        implicit none
-       integer nCv, ns
-       integer is, iCv
+       type (switches), intent (in) :: switch
+       type (mapping), intent (in) :: mpg
+       integer nCv, ns, itim
+       integer i, is, iCv, tt
+       logical b2news_solving(4)
        character*27 filename
        logical art_exists
+       character*4 chitim
 
-       filename = 'art_sna_us.dat'
-       call find_file(filename,art_exists)
-       if(art_exists) then
-         open(70,FILE=trim(filename))
-         read (70,"(2x,e23.16)")
-     &    ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
-         close(70)
-       else
-         call xerrab ('There is no art_sna_us.dat file')
+!      For time-dependent: tt is the time instant at which the sources are to be read
+       if (switch%use_mms.eq.2) then
+         tt = itim + 1
        endif
 
-       filename='art_smo_us.dat'
-       call find_file(filename,art_exists)
-       if(art_exists) then
-         open(70,FILE=trim(filename))
-         read (70,"(2x,e23.16)")
-     &    ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
-         close(70)
-       else
-         call xerrab('There is no art_smo_us.dat file')
+!      Check equations to be solved
+       b2news_solving(1:4)=switch%no_solve.eq.0
+       do i=1,4
+         b2news_solving(i)=b2news_solving(i).or.
+     &    (switch%no_solve.lt.0.and.
+     &     mod(abs(switch%no_solve),2**i).ge.2**(i-1))
+       enddo
+       call read_b2mod_numerics_namelist(nCv,ns,
+     &      switch%nsmin,switch%nsmax,mpg%nnreg,mpg%cvOnClosedSurface,
+     &      switch%b2mndt_style, .false.)
+
+!      Read inputs
+
+       if (b2news_solving(2).and.
+     &     any(solveco(0:ns-1,0:mpg%nnreg(0)))) then
+         if (switch%use_mms.eq.1) then
+           filename = 'art_sna_us.dat'
+           call find_file(filename,art_exists)
+           call xertst(art_exists,'File '//trim(filename)//' not found')
+           open(70,FILE=trim(filename))
+           read (70,"(1x,e24.16)")
+     &      ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+           close(70)
+         elseif (switch%use_mms.eq.2) then
+           write (chitim,'(i4.4)') tt
+           filename = 'art_sna_us'//chitim//'.dat'
+           call find_file(filename,art_exists)
+           call xertst(art_exists,'File '//trim(filename)//' not found')
+           open(70,FILE=trim(filename))
+           read (70,"(1x,e24.16)")
+     &      ((art_sna(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+           close(70)
+         endif
        endif
 
-       filename='art_she_us.dat'
-       call find_file(filename,art_exists)
-       if(art_exists) then
-         open(70,FILE=trim(filename))
-         read (70,"(2x,e23.16)") 
-     &    (art_she(iCv,0),iCv=1,nCv)
-         close(70)
-       else
-         call xerrab('There is no art_she_us.dat file')
+       if (b2news_solving(1).and.
+     &     any(solvemo(0:ns-1,0:mpg%nnreg(0)))) then
+         if (switch%use_mms.eq.1) then
+           filename = 'art_smo_us.dat'
+           call find_file(filename,art_exists)
+           call xertst(art_exists,'File '//trim(filename)//' not found')
+           open(70,FILE=trim(filename))
+           read (70,"(1x,e24.16)")
+     &      ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+           close(70)
+         elseif (switch%use_mms.eq.2) then
+           write (chitim,'(i4.4)') tt
+           filename = 'art_smo_us'//chitim//'.dat'
+           call find_file(filename,art_exists)
+           call xertst(art_exists,'File '//trim(filename)//' not found')
+           open(70,FILE=trim(filename))
+           read (70,"(1x,e24.16)")
+     &      ((art_smo(iCv,0,is),iCv=1,nCv),is=0,ns-1)
+           close(70)
+         endif
        endif
 
-       filename='art_shi_us.dat'
-       call find_file(filename,art_exists)
-       if(art_exists) then
-         open(70,FILE=trim(filename))
-         read (70,"(2x,e23.16)") 
-     &    (art_shi(iCv,0),iCv=1,nCv)
-         close(70)
-       else
-         call xerrab('There is no art_shi_us.dat file')
+       if (b2news_solving(4)) then
+         if (any(solveee(0:mpg%nnreg(0)))) then
+           if (switch%use_mms.eq.1) then
+             filename = 'art_she_us.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &        'File '//trim(filename)//' not found')
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &        (art_she(iCv,0),iCv=1,nCv)
+             close(70)
+           elseif (switch%use_mms.eq.2) then
+             write (chitim,'(i4.4)') tt
+             filename = 'art_she_us'//chitim//'.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &          'File '//trim(filename)//' not found')
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &          (art_she(iCv,0),iCv=1,nCv)
+             close(70)
+           endif
+         endif
+         if (any(solveei(0:mpg%nnreg(0)))) then
+           if (switch%use_mms.eq.1) then
+             filename = 'art_shi_us.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &        'File '//trim(filename)//' not found')
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &        (art_shi(iCv,0),iCv=1,nCv)
+             close(70)
+           elseif (switch%use_mms.eq.2) then
+             write (chitim,'(i4.4)') tt
+             filename = 'art_shi_us'//chitim//'.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &          'File '//trim(filename)//' not found')
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &          (art_shi(iCv,0),iCv=1,nCv)
+             close(70)
+           endif
+         endif
        endif
 
-       filename='art_sch_us.dat'
-       call find_file(filename,art_exists)
-       if(art_exists) then
+       if (b2news_solving(3).and.
+     &     any(solvepo(0:mpg%nnreg(0)))) then
+         filename = 'art_sch_us.dat'
+         call find_file(filename,art_exists)
+         call xertst(art_exists,'File '//trim(filename)//' not found')
          open(70,FILE=trim(filename))
-         read (70,"(2x,e23.16)") 
+         read (70,"(1x,e24.16)")
      &    (art_sch(iCv,0),iCv=1,nCv)
          close(70)
-       else
-         call xerrab('There is no art_sch_us.dat file')
+       endif
+
+       if (switch%tn_style.eq.2) then
+         if (any(solveen(0:mpg%nnreg(0)))) then
+           if (switch%use_mms.eq.1) then
+             filename = 'art_shn_us.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &        'File '//trim(filename)//' not found')
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &        (art_shn(iCv,0),iCv=1,nCv)
+             close(70)
+           elseif (switch%use_mms.eq.2) then
+             write (chitim,'(i4.4)') tt
+             filename = 'art_shn_us'//chitim//'.dat'
+             call find_file(filename,art_exists)
+             call xertst(art_exists,
+     &        'File '//trim(filename)//' not found')
+             open(70,FILE=trim(filename))
+             read (70,"(1x,e24.16)")
+     &        (art_shn(iCv,0),iCv=1,nCv)
+             close(70)
+           endif
+         endif
        endif
 
        return
