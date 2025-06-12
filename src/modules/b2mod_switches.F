@@ -339,6 +339,7 @@ c MMS
       integer:: set_ua_numerical
       integer:: set_ti_numerical
       integer:: set_te_numerical
+      integer:: set_tn_numerical
       integer:: set_po_numerical
 
 c geometry
@@ -508,11 +509,16 @@ c b2mndt
       real (kind=R8) :: BoRiS
       real (kind=R8) :: b2mndt_rxf
       integer :: b2mndt_style
+      integer :: ntim_step_out
+      integer :: calc_err_step_out
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
       real (kind=R8) :: b2mndr_stim
       real (kind=R8) :: neutral_rescale
+      integer :: use_mms
+      integer :: equation_sources
+      integer :: boundary_sources
 
 c b2ag
       real (kind=R8) :: b2agmt_width
@@ -896,6 +902,7 @@ c Advanced fluid neutral models
       s % set_ua_numerical = 0
       s % set_te_numerical = 0
       s % set_ti_numerical = 0
+      s % set_tn_numerical = 0
       s % set_po_numerical = 0
 
 
@@ -1091,6 +1098,9 @@ c b2mndt
       else
         s % b2mndt_rxf = 0.5_R8
       end if
+      s % b2mndt_style = 1
+      s % ntim_step_out = 1
+      s % calc_err_step_out = 1
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1099,6 +1109,9 @@ c b2mndr
       s % b2mndr_hz = 1.0_R8
       s % b2mndr_stim = 0.0_R8
       s % neutral_rescale = 1.0_R8
+      s % use_mms = 0
+      s % equation_sources = 0
+      s % boundary_sources = 0
 
 c b2ag
       s % b2agmt_width = 1.0_R8
@@ -1496,6 +1509,7 @@ c MMS
       call ipgeti ('b2mndr_set_ua_numerical', s % set_ua_numerical)
       call ipgeti ('b2mndr_set_te_numerical', s % set_te_numerical)
       call ipgeti ('b2mndr_set_ti_numerical', s % set_ti_numerical)
+      call ipgeti ('b2mndr_set_tn_numerical', s % set_tn_numerical)
       call ipgeti ('b2mndr_set_po_numerical', s % set_po_numerical)
 
 c geometry
@@ -1694,11 +1708,17 @@ c b2mndt
       call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
       call ipgetr ('b2news_BoRiS', s%BoRiS)
       call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
+      call ipgeti ('b2mndt_style',s%b2mndt_style)
+      call ipgeti ('b2mndt_ntim_step_out',s%ntim_step_out)
+      call ipgeti ('b2mndt_calc_err_step_out',s%calc_err_step_out)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
       call ipgetr ('b2mndr_stim', s%b2mndr_stim)
       call ipgetr ('b2mndr_rescale_neutrals', s%neutral_rescale)
+      call ipgeti ('b2mndr_use_mms', s%use_mms)
+      call ipgeti ('b2mndr_equation_sources', s%equation_sources)
+      call ipgeti ('b2mndr_boundary_sources', s%boundary_sources)
 
 c b2ag
       call ipgetr ('b2agmt_1d_width', s%b2agmt_width)
@@ -2244,7 +2264,7 @@ c b2srst
 c b2tfnb
       call xertst (0.0_R8.le.s%b2tfnb_flux_limit_min_ti,
      &  'faulty internal parameter flux_limit_min_ti')
-     
+
 c b2tqce
       if (.not.(s%b2tqce_style_guard_cells.eq.0.or.
      &                           s%b2tqce_style_guard_cells.eq.1)) then
@@ -2268,6 +2288,10 @@ c b2mndt
      &  'faulty internal parameter rxf')
       call xertst (1.eq.s%b2mndt_style.or.s%b2mndt_style.eq.2,
      &  'b2mndt_style should be 1 or 2')
+      call xertst (1.le.s%ntim_step_out,
+     &   'faulty internal parameter ntim_step_out')
+      call xertst (1.le.s%calc_err_step_out,
+     &   'faulty internal parameter calc_err_step_out')
 
 c b2mndr
        call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,
@@ -2366,10 +2390,6 @@ c k-enstrophy model
 
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
-
-      if(s%b2mndt_style.eq.2 .and. s%b2mndt_rxf.lt.1.0_R8) then
-        call xerrab('time-dependent mode requires rxf = 1.0')
-      endif
 
       return
       end subroutine check_consistency_switches

@@ -119,7 +119,7 @@
         k = k + 1
       enddo
       do is = 0, ns-1
-        do iCv = 1, nCv
+        do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO           if(iftimbound(ix,iy) .ne. 0) cycle
 !WG_TODO           if((guard_flows.eq.2 .or.
@@ -137,10 +137,9 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim=dtim*dtco_fts(iFt)*time_factor(iCv)
             endif
           endif
-          sr%snadt(iCv,0,is) =
-     &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)*na0(iCv,is)
-          sr%snadt(iCv,1,is) = -
-     &     (switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)
+          t0=(switch%b2srdt_phm0/ttim)*geo%cvVol(iCv)
+          sr%snadt(iCv,0,is) = t0*na0(iCv,is)
+          sr%snadt(iCv,1,is) = -t0
           if (.not.lout)
      &     sr%sna(iCv,:,is) = sr%sna(iCv,:,is)+sr%snadt(iCv,:,is)
         enddo
@@ -148,7 +147,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
 *   ..modify smodt
       do is = 0, ns-1
-        do iCv = 1, nCv
+        do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO            if(iftimbound(ix,iy) .ne. 0) cycle
 
@@ -163,7 +162,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
               ttim=dtim*dtmo_fts(iFt)*time_factor(iCv)
             endif
           endif
-          t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)   !srv 09.01.01
+          t0 = (switch%b2srdt_phm1/ttim)*geo%cvVol(iCv)*geo%cvHz(iCv)  !srv 09.01.01
           sr%smodt(iCv,0,is) = t0*am(is)*mp*ua0(iCv,is)*na0(iCv,is)
           sr%smodt(iCv,1,is) = 0.0_R8
           sr%smodt(iCv,2,is) = 0.0_R8
@@ -174,7 +173,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
       enddo
 
 *   ..modify shedt, shidt, shndt, sktdt, sztdt, schdt, snedt
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
@@ -219,7 +218,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &   sr%szt(iCv,:) = sr%szt(iCv,:)+sr%sztdt(iCv,:)
       enddo
 
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(ix,iy) .ne. 0) cycle
 
@@ -244,17 +243,19 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
         elseif (switch%tn_style.eq.1) then
 
-          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,1)*ti0(iCv)
           sr%shidt(iCv,1) = 0.0_R8
           sr%shidt(iCv,2) = 0.0_R8
-          sr%shidt(iCv,3) = -1.5_R8*t0
+          sr%shidt(iCv,3) = -1.5_R8*t0*ni0(iCv,1)/ni0(iCv,0)     ! this is needed because the source scaling for shi remains based on ni(:,0), even though physically it involves ni(:,1)
+                                                                 ! when using a pure ion energy equation (tn_style=1)
 
         else
 
-          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,0)*ti0(iCv)
+          sr%shidt(iCv,0) = 1.5_R8*t0*ni0(iCv,1)*ti0(iCv)
           sr%shidt(iCv,1) = 0.0_R8
           sr%shidt(iCv,2) = 0.0_R8
-          sr%shidt(iCv,3) = -1.5_R8*t0
+          sr%shidt(iCv,3) = -1.5_R8*t0*ni0(iCv,1)/ni0(iCv,0)     ! this is needed because the source scaling for shi remains based on ni(:,0), even though physically it involves ni(:,1)
+                                                                 ! when using a separate ion-neutral energy equation (tn_style=2)
 
           sr%shndt(iCv,0) = 1.5_R8*t0*nn0(iCv)*tn0(iCv)
           sr%shndt(iCv,1) = 0.0_R8
@@ -268,7 +269,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &   sr%shi(iCv,:) = sr%shi(iCv,:)+sr%shidt(iCv,:)
       enddo
 
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 csw 24feb2014 check for guard cell (SOLPS4)
 !WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
@@ -283,7 +284,7 @@ cxpb  This treatment added as a fix to get the ExB runs going
      &   sr%sch(iCv,:) = sr%sch(iCv,:)+sr%schdt(iCv,:)
       enddo
 
-      do iCv = 1, nCv
+      do iCv = 1, mpg%nCi
 !WG_TODO          if(iftimbound(iCv) .ne. 0) cycle
         t0 = (switch%b2srdt_phm5/dtim)*geo%cvVol(iCv)
      &                                  *time_factor(iCv)               !xpb
