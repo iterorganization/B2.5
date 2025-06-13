@@ -1942,7 +1942,6 @@ cxpb size is changed in b2mod_dimensions
      .          fb_current(ifb))/ddtim +
      .          (fb_current_prev(ifb) -
      .          fb_current(ifb))/dt_prev)
-              saved_fb_actuator(ifb) = fb_current(ifb)
 
             case (5) ! rescale done according to SOLPS4 formula:
                         ! Nt = A*exp((time-T)*B)
@@ -1970,7 +1969,6 @@ cxpb size is changed in b2mod_dimensions
      .           fb_current(ifb))/ddtim +
      .           (fb_current_prev(ifb) -
      .           fb_current(ifb))/dt_prev)
-              saved_fb_actuator(ifb) = fb_current(ifb)
 
             case (6) ! rescale slowed by fb_alpha (SOLPS4 style)
 
