@@ -1,13 +1,11 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2trcv(nnucl, amti,mdm, N3, N4, N13,
+      subroutine b2trcv(nnucl, amti, mdm, N3, N4, N13,
      & N14, N15, N16, nz2n, Cinv)                                       !som 05.02.2021
       use b2mod_types
       use b2mod_subsys
       implicit none
-      external DGETRF
-      external DGETRI
 *   ..input arguments (unchanged on exit)
       integer nnucl
       real (kind=R8) :: amti(0:nnucl-1), mdm(0:nnucl-1,0:nnucl-1),
@@ -40,9 +38,6 @@
      &  G13(0:nnucl-1,0:nnucl-1), G14(0:nnucl-1,0:nnucl-1),
      &  G15(0:nnucl-1,0:nnucl-1), G16(0:nnucl-1,0:nnucl-1),
      &  C(0:2*nnucl-1,0:2*nnucl-1)
-      real(kind=R8), dimension(size(C,1)) :: work  ! work array for LAPACK
-      integer, dimension(size(C,1)) :: ipiv   ! pivot indices
-      integer :: info
 *-----------------------------------------------------------------------
 *.computation
 
@@ -77,42 +72,8 @@
         C(j+nnucl,j+nnucl)=C(j+nnucl,j+nnucl)+amti(j)*sum(G15(j,:))
       enddo
 
-*    ..the matrix inversion
-      Cinv=C
-      ! DGETRF computes an LU factorization of a general M-by-N matrix C
-      ! using partial pivoting with row interchanges.
-      call DGETRF(dnnucl, dnnucl, Cinv, dnnucl, ipiv, info)
+      call invert_matrix(C, Cinv, nnucl, nz2n)
 
-      if (info /= 0) then
-         print *, nz2n
-         print *
-         do i = 0, dnnucl-1
-           print *, (C(i,j), j = 0, dnnucl-1 )
-         enddo
-         print *
-#ifndef NAGFOR
-         call sleep(3)
-#endif
-         flush(6)
-         call xerrab ('Matrix is numerically singular!')
-      end if
-
-      ! DGETRI computes the inverse of a matrix using the LU factorization
-      ! computed by DGETRF.
-      call DGETRI(dnnucl, Cinv, dnnucl, ipiv, work, dnnucl, info)
-
-      call xertst (info.eq.0, 'Matrix inversion failed!')
-
-!       print *, 'C:'
-!       do i = 0, dnnucl-1
-!         print *, (C(i,j), j = 0, dnnucl-1 )
-!       enddo
-!       print *
-!       print *, 'Cinv:'
-!       do i = 0, dnnucl-1
-!         print *, (Cinv(i,j), j = 0, dnnucl-1 )
-!       enddo
-!       print *
       call subend ()
       return
 
