@@ -6,8 +6,6 @@
       use b2mod_types
       use b2mod_subsys
       implicit none
-      external DGETRF
-      external DGETRI
 *   ..input arguments (unchanged on exit)
       integer nnucl
       real (kind=R8) ::
@@ -41,9 +39,6 @@
      &  G9(0:nnucl-1,0:nnucl-1),
      &  G10(0:nnucl-1,0:nnucl-1), G11(0:nnucl-1,0:nnucl-1),
      &  G12(0:nnucl-1,0:nnucl-1), A(0:2*nnucl-1,0:2*nnucl-1)
-      real(kind=R8), dimension(size(A,1)) :: work  ! work array for LAPACK
-      integer, dimension(size(A,1)) :: ipiv   ! pivot indices
-      integer :: info
 *-----------------------------------------------------------------------
 *.computation
 
@@ -77,31 +72,7 @@
         A(j+nnucl,j+nnucl)=A(j+nnucl,j+nnucl)+amti(j)*sum(G11(j,:))
       enddo
 
-*    ..the matrix inversion
-      Ainv=A
-      ! DGETRF computes an LU factorization of a general M-by-N matrix A
-      ! using partial pivoting with row interchanges.
-      call DGETRF(dnnucl, dnnucl, Ainv, dnnucl, ipiv, info)
-
-      if (info /= 0) then
-         print *, nz2n
-         print *
-         do i = 0, dnnucl-1
-           print *, (A(i,j), j = 0, dnnucl-1 )
-         enddo
-         print *
-#ifndef NAGFOR
-         call sleep(3)
-#endif
-         flush(6)
-         call xerrab ('Matrix is numerically singular!')
-      end if
-
-      ! DGETRI computes the inverse of a matrix using the LU factorization
-      ! computed by DGETRF.
-      call DGETRI(dnnucl, Ainv, dnnucl, ipiv, work, dnnucl, info)
-
-      call xertst(info.eq.0, 'Matrix inversion failed!')
+      call invert_matrix(A, Ainv, nnucl, nz2n)
 
       call subend ()
       return
