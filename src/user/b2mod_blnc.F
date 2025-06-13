@@ -510,7 +510,7 @@ c*** Flux across the core boundary
               hlpnc=hlpnc-wldna(js,j,0)+wldra(js,j,0)
               do ic=1,nnmoli
                 if(mlcmp(j,ic).gt.0) hlpnc=hlpnc-mlcmp(j,ic)*
-     .                (wldnm(js,ic,0)-wldrm(js,ic,0)
+     .                 (wldnm(js,ic,0)-wldrm(js,ic,0))
               end do
             end if
           end do
