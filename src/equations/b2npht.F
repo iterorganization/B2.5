@@ -385,13 +385,13 @@ cc while the second contribution corresponds to T dn/dt
         endif
         if (switch%solve_keps.gt.0) then
           skt0 = skt0 + sr%sktdt
-          skt0(:,0)=skt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
-     &                                    psnl%kt/dtim*geo%cvVol
+          skt0(:,0)=skt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                  *switch%b2mndt_ckn*psnl%kt/dtim*geo%cvVol
         endif
         if (switch%solve_keps.gt.1) then
           szt0 = szt0 + sr%sztdt
-          szt0(:,0)=szt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
-     &                                    psnl%zt/dtim*geo%cvVol
+          szt0(:,0)=szt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                  *switch%b2mndt_ckn*psnl%zt/dtim*geo%cvVol
         endif
       endif                                                              !srv 207.07.21 }
       endif
