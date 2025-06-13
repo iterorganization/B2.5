@@ -345,10 +345,18 @@ c time-dependent treatment                                              !srv 07.
         she0 = she0+sr%shedt
         she0(:,0)=she0(:,0)-1.5_R8*(dv%ne-psnl%ne)
      &                *switch%b2mndt_ckn*psnl%te/dtim*geo%cvVol
-        shi0 = shi0+sr%shidt
-        shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
-     &                *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol
-        if (switch%tn_style.eq.2) then
+        if (switch%tn_style.eq.0) then       ! default, combined ion-neutral energy equation
+          shi0 = shi0+sr%shidt
+          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
+     &                  *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol
+        elseif (switch%tn_style.eq.1) then   ! pure ion energy equation
+          shi0 = shi0+sr%shidt
+          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                  *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol          
+        else                                 ! separate ion and neutral energy equation
+          shi0 = shi0+sr%shidt
+          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                  *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol
           shn0 = shn0+sr%shndt
           shn0(:,0)=shn0(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))
      &                  *switch%b2mndt_ckn*psnl%tn/dtim*geo%cvVol
