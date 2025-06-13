@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,           !srv 05.07.17
-     &  itcnt, ismain, solving, solvereg, solvireg, solvnreg, solvtreg, !srv 22.05.18
+      subroutine b2npht (nCv, nFc, nVx, ns, switch, geo, mpg,            !srv 05.07.17
+     &  itcnt, ismain, solving, solvereg, solvireg, solvnreg, solvtreg,  !srv 22.05.18
      &  solvpreg, solvmreg, solvkreg, solvzreg, rxf, dtim,
      &  pl, dv, co, rt, sr, srw, psnl, st_ext)
       use b2mod_types
@@ -12,8 +12,8 @@
       use b2us_geo
       use b2us_map
       use b2us_plasma
-      use b2mod_numerics_namelist                                     !srv 07.07.21 {
-     & , only : time_factor, dtei, dtee, dten                         !srv 07.07.21 }
+      use b2mod_numerics_namelist                                        !srv 07.07.21 {
+     & , only : time_factor, dtei, dtee, dten                            !srv 07.07.21 }
 #ifndef FIXED_POINT
       use b2mod_balance !djm Jan2017
      & , only : b2npht_shei_bal, update_balance_sources_heat,
@@ -29,7 +29,7 @@
       use b2mod_ad
      & , only : my_out_folder,
 #ifdef WG_DEBUG
-     &          my_out_sf,                                              !srv 27.06.21
+     &          my_out_sf,                                               !srv 27.06.21
 #endif
      &          ncall_b2sikt, ncall_b2sifrtf,
      &          ncall_b2xehx, ncall_b2xehy, ncall_b2upht, ncall_b2usht,
@@ -38,7 +38,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, itcnt, ismain                          !srv 05.07.17
+      integer nCv, nFc, nVx, ns, itcnt, ismain                           !srv 05.07.17
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -46,7 +46,7 @@
       real (kind=R8) :: rxf, dtim
       logical solving(4),
      *  solvereg(0:mpg%nnreg(0)), solvireg(0:mpg%nnreg(0)),
-     *  solvnreg(0:mpg%nnreg(0)), solvtreg(0:mpg%nnreg(0)),             !srv 22.05.18
+     *  solvnreg(0:mpg%nnreg(0)), solvtreg(0:mpg%nnreg(0)),              !srv 22.05.18
      *  solvpreg(0:mpg%nnreg(0)), solvmreg(0:ns-1,0:mpg%nnreg(0)),
      *  solvkreg(0:mpg%nnreg(0)), solvzreg(0:mpg%nnreg(0))
 *   ..input/output arguments
@@ -86,18 +86,18 @@
 *   ..local variables
       integer iCv, is
       real (kind=R8) ::
-     * aa(mpg%nCmxNv), wrkf(nFc,0:1),                                   !srv 02.01.07
-     1 wrkc(nFc,0:1,0:2),                                               !srv 02.01.07
+     * aa(mpg%nCmxNv), wrkf(nFc,0:1),                                    !srv 02.01.07
+     1 wrkc(nFc,0:1,0:2),                                                !srv 02.01.07
      2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
-     3 wrk0(nCv), shei(nCv),                                            !srv 18.09.09
+     3 wrk0(nCv), shei(nCv),                                             !srv 18.09.09
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
      6 skt_prod(nCv), skt_diss(nCv)
-      character chns*3                                                  !srv 17.07.05
+      character chns*3                                                   !srv 17.07.05
       logical :: warning_i, warning_e, warning_n, warning_kt, warning_zt
 *   ..procedures
       intrinsic sqrt
       external xertst, ipgetr, b2saxpy
-      external b2xvsg, b2ursd, b2usht, b2upht                           !srv 02.01.07
+      external b2xvsg, b2ursd, b2usht, b2upht                            !srv 02.01.07
 *   ..initialisation
 
 *-----------------------------------------------------------------------
@@ -179,7 +179,7 @@
      .   write(6,*) 'Time derivative terms may be inacurrate for k-eps!'
         else
           rxg_npht = 1.0_R8
-        endif                                                           !srv 07.07.21 }
+        endif                                                            !srv 07.07.21 }
         call xertst (0.0_R8.lt.rxg_npht,
      &   'faulty internal parameter rxg')
       endif
@@ -261,7 +261,7 @@ cdjm Jan2017 update particle source components for balance
         if (switch%b2mndt_ckn.eq.2) then
 *       ..electrons
           if ((solving(4).and.any(solvereg(0:mpg%nnreg(0)))).or.
-     &         switch%get_residuals.eq.1) then                          !srv 22.05.18
+     &         switch%get_residuals.eq.1) then                           !srv 22.05.18
             if (switch%mdf_fhe.eq.0) then
               call b2ursd (nCv, nFc, mpg, dv%ne, pl%te, she0,
      &                     dv%fhe, dv%reshe0)
@@ -272,7 +272,7 @@ cdjm Jan2017 update particle source components for balance
           endif
 *       ..ions
           if ((solving(4).and.any(solvireg(0:mpg%nnreg(0)))).or.
-     &         switch%get_residuals.eq.1) then                          !srv 22.05.18
+     &         switch%get_residuals.eq.1) then                           !srv 22.05.18
             if (switch%mdf_fhi.eq.0) then
               call b2ursd (nCv, nFc, mpg, dv%ni(:,0), pl%ti, shi0,
      &                     dv%fhi, dv%reshi0)
@@ -338,20 +338,20 @@ cc while the second contribution corresponds to T dn/dt
         endif
         if (switch%solve_keps.gt.0) then
           skt0 = skt0 + sr%sktdt
-          skt0(:,0)=skt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
-     &                                psnl%kt/dtim*geo%cvVol
+          skt0(:,0)=skt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                  *switch%b2mndt_ckn*psnl%kt/dtim*geo%cvVol
         endif
         if (switch%solve_keps.gt.1) then
           szt0 = szt0 + sr%sztdt
-          szt0(:,0)=szt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
-     &                                psnl%zt/dtim*geo%cvVol
+          szt0(:,0)=szt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                  *switch%b2mndt_ckn*psnl%zt/dtim*geo%cvVol
         endif
       endif                                                              !srv 207.07.21 }
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
       if ((solving(4).and.any(solvereg(0:mpg%nnreg(0)))).or.
-     &     switch%get_residuals.eq.1) then                              !srv 22.05.18
+     &     switch%get_residuals.eq.1) then                               !srv 22.05.18
         if (switch%mdf_fhe.eq.0) then
           call b2ursd (nCv, nFc, mpg, dv%ne, pl%te, she0, dv%fhe,
      &     dv%reshe)
@@ -359,7 +359,7 @@ cc while the second contribution corresponds to T dn/dt
           call b2ursd (nCv, nFc, mpg, dv%ne, pl%te, she0,
      &     dv%fhe_mdf, dv%reshe)
         endif
-      endif                                                             !srv 22.05.18
+      endif                                                              !srv 22.05.18
       if ((solving(4).and.any(solvireg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then    !srv 22.05.18
         if (switch%mdf_fhi.eq.0) then
@@ -369,7 +369,7 @@ cc while the second contribution corresponds to T dn/dt
           call b2ursd (nCv, nFc, mpg, dv%ni(:,0), pl%ti, shi0,
      &     dv%fhi_mdf, dv%reshi)
         endif
-      endif                                                             !srv 22.05.18
+      endif                                                              !srv 22.05.18
       if ((switch%solve_keps.gt.0.and.any(solvkreg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then
         call b2ursd (nCv, nFc, mpg, dv%ni(:,1), pl%kt, skt0,
@@ -428,7 +428,7 @@ c residuals for separate neutral energy equation
 !        dv%reshi = dv%reshi + shei
 !      endif                                                             !srv 22.05.18
 *     ..correct residual with equipartition
-      if ((solving(4).and.any(solvereg(0:mpg%nnreg(0))))                     !srv 22.05.18 {
+      if ((solving(4).and.any(solvereg(0:mpg%nnreg(0))))                 !srv 22.05.18 {
      &    .or.switch%get_residuals.eq.1) dv%reshe = dv%reshe - shei
       if ((solving(4).and.any(solvireg(0:mpg%nnreg(0))))
      &    .or.switch%get_residuals.eq.1) dv%reshi = dv%reshi + shei
@@ -496,7 +496,7 @@ c residuals for separate neutral energy equation
         call my_out_us(70,nCv,0,wrk0,'b2npht_she')
         call my_out_us(70,nCv,0,dv%reshi,'b2npht_reshi')
         call my_out_us(70,nCv,0,dv%reshn,'b2npht_reshn')
-        call my_out_us(70,nCv,0,dv%resht,'b2npht_resht')                  !srv 22.05.18
+        call my_out_us(70,nCv,0,dv%resht,'b2npht_resht')                 !srv 22.05.18
         call my_out_us(70,nFc,1,dv%fhi(1,0),'b2npht_fhi_th')
         call my_out_us(70,nFc,1,dv%fhi(1,1),'b2npht_fhi_r')
         call my_out_us(70,nFc,1,dv%fhn(1,0),'b2npht_fhn_th')
@@ -522,9 +522,9 @@ c residuals for separate neutral energy equation
         wrk0=szt0(:,0)+szt0(:,1)*pl%zt+
      &       szt0(:,2)*dv%ni(:,1)+szt0(:,3)*pl%zt*dv%ni(:,1)
         call my_out_us(70,nCv,0,wrk0,'b2npht_szt')
-      endif                                                             !srv 17.07.05 01.11.10 }
+      endif                                                              !srv 17.07.05 01.11.10 }
 *   ..compute correction
-      if (solving(4)) then                                              !srv 11.01.13
+      if (solving(4)) then                                               !srv 11.01.13
         call b2usht (nCv, nFc, nVx, ns, switch, geo, mpg,
      &  itcnt, dv%ne, dv%ni, dv%nn, pl%te, pl%ti,
      &  pl%tn, pl%kt, pl%zt, dv%floe, dv%cone, dv%floi, dv%coni,
