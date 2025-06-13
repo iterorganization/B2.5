@@ -4613,6 +4613,23 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mndt_ckn</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_ckn=2, the 2nd order Crank-Nicolson time-stepping scheme is used, instead of the default 1st order implicit Euler scheme.
+					This scheme can be used both in time-dependent mode (b2mndt_style=2) and in steady-state mode (b2mndt_style=1).
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_dummy</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					This switch is used internally in the code to initially run a dummy call to b2mndt, which is needed to use the Crank-Nicolson time-stepping scheme (b2mndt_ckn=2). This switch is not meant to be changed by users, it should always stay at its default value of 0.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndt_ntim_step_out</name>
 				<default>1</default>
 				<type>integer</type>
