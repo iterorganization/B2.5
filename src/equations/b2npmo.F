@@ -345,12 +345,22 @@ cdjm Jan2017 update momentum source components for balance
 #endif
 
 *    ..time-dependent treatment
+*    ..compute residual without time-stepping sources (needed at next time-step for ckn scheme)
+       if (switch%b2mndt_ckn.eq.2) then
+         if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
+     &            .or.switch%get_residuals.eq.1) then
+           call b2urmo (nCv, nFc, nVx, switch, geo, mpg, is,
+     &       pl%ua(:,is), rob, smb, flub, flubv, co%cvsahz(:,:,is),
+     &       dv%resmo0(:,is), dv%fmo(:,:,is), dv%fhm(:,:,is),
+     &       co%cvsahz_eff(:,:,is))
+         endif
+       endif
 *    .. calculate time-dependent source
        if (switch%b2mndt_style.eq.2) then
          call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
      &                pl%na, psnl%ua, switch, mpg, sr%smodt, is)
 *    .. add contribution from time-dependent source
-         sr%smodt(:,0,is) = sr%smodt(:,0,is)-
+         sr%smodt(:,0,is) = sr%smodt(:,0,is)-switch%b2mndt_ckn*
      &    am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-psnl%na(:,is))*
      &    psnl%ua(:,is)/dtim
          smb = smb + sr%smodt(:,:,is)
@@ -363,6 +373,14 @@ cdjm Jan2017 update momentum source components for balance
      &    rob, smb, flub, flubv, co%cvsahz(:,:,is), dv%resmo(:,is),
      &    dv%fmo(:,:,is), dv%fhm(:,:,is), co%cvsahz_eff(:,:,is))        !srv 04.07.08
       endif                                                             !srv 22.05.18
+*    ..modify residual for ckn scheme
+      if (switch%b2mndt_ckn.eq.2) then
+        if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
+     &      .or.switch%get_residuals.eq.1) then
+          dv%resmo(1:mpg%nCi,is) = dv%resmo(1:mpg%nCi,is) +
+     &     psnl%resmo0(1:mpg%nCi,is)
+        endif
+      endif
 
 #ifndef FIXED_POINT
 cdjm Mar2019 output the total momentum flux and source for balance
