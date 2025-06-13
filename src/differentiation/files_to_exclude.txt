@@ -104,7 +104,6 @@
   b2mod_wrsrt
   b2mod_lbfill
   b2mod_mwti
-  b2mod_create_afn_bc_tables
   b2ag_parameters
   open_file
   streql
@@ -130,3 +129,5 @@
   b2mod_grid_mapping
   cpmpxy
   b2mwmv
+  b2mod_create_afn_bc_tables
+  invert_matrix
