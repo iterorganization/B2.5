@@ -72,6 +72,7 @@
       do iCv = 1, nCi !only internal cells
         ttim=dtim*dtmo(isb,mpg%cvReg(iCv))*time_factor(iCv)
         t0 = (switch%b2srdt_phm1/ttim)*cvVol(iCv)*hz(iCv)
+     &       *switch%b2mndt_ckn
         smodt(iCv,0,isb) = t0*am(isb)*mp*uap(iCv,isb)*na(iCv,isb)    !srv 06.01.21 {
         smodt(iCv,1,isb) = 0.0_R8
         smodt(iCv,2,isb) = 0.0_R8

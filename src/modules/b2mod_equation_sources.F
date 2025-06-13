@@ -64,7 +64,11 @@
 
 !      For time-dependent: tt is the time instant at which the sources are to be read
        if (switch%use_mms.eq.2) then
-         tt = itim + 1
+         if (switch%b2mndt_dummy.eq.0) then
+           tt = itim + 1
+         else
+           tt = 0 !initial dummy call for Crank Nicolson reads sources at t = 0 s
+         endif
        endif
 
 !      Check equations to be solved

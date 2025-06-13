@@ -514,7 +514,8 @@ ctmp.dpc
 
 *   ..mms time-dependent error analysis
       if(switch%use_mms.eq.2.and.
-     &  mod(ncall_b2mndt+1,switch%calc_err_step_out).eq.0) then
+     &  mod(ncall_b2mndt+1,switch%calc_err_step_out).eq.0
+     &  .and.switch%b2mndt_dummy.eq.0) then
         call calc_err(nCv, ns, st%pl, switch, itim, mpg)
       endif
 
@@ -525,6 +526,12 @@ ctmp.dpc
 
 * ..return
       ncall_b2mndt = ncall_b2mndt+1
+
+      !Reset ncall_b2mndt to 0 in case of initial dummy call for Crank Nicolson
+      !This is currently necessary to make Crank Nicolson work
+      !To be assessed whether other counters ncall_* should be reset, too
+      if (switch%b2mndt_dummy.eq.1) ncall_b2mndt = 0
+
       call subend ()
       return
 

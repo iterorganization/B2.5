@@ -8468,11 +8468,11 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
           if(.not.BCCON14_IS(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
      &      'HAS NOT BEEN IMPOSED AT BOUNDARY', IB,' FOR ALL IONS'
           call xertst(ENKPAR(IB,1).gt.0.0_R8,
-     1      'BCENK = 15, ENKPAR(I,,1) <= 0 not allowed!')          !srv 20.09.17
+     1      'BCENK = 15, ENKPAR(I,,1) <= 0 not allowed!')            !srv 20.09.17
           write(*,'(a,a,1p,g14.7,a,a,a)')
      &     'sheath transmission factor BC for turb. kin. energy',
      .     ' with ENKPAR(IB,1) =',
-     &     ENKPAR(IB,1),' on ', BCCHAR(IB),boundary_location(ib)      !srv 20.09.17
+     &     ENKPAR(IB,1),' on ', BCCHAR(IB),boundary_location(ib)     !srv 20.09.17
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell

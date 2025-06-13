@@ -2058,6 +2058,38 @@ c new CDF movie option (1st frame at t=0)
       idx = 0
       write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
 
+      !Initialize residual if using Crank-Nicolson scheme
+      if (switch%b2mndt_ckn.eq.2.and.itim.eq.0) then
+        !Dummy call to b2mndt
+        !Temporarily set dummy switch to 1
+        switch%b2mndt_dummy = 1
+        !Temporarily set rxf to 0 to not update any physical quantities
+        switch%b2mndt_rxf = 0.0_R8
+        !Temporarily set inner iterations to 1
+        switch%nstg(0) = 1
+        switch%nstg(1) = 1
+        switch%nstg(2) = 1
+        call b2mndt (nout, nCv, nFc, nVx, ns,
+     &       ismain, ismain0, state%rt%nscx, state%rt%nscxmax,
+     &       state%rt%iscx, itim, dtim, ntim,
+     &       switch, geo, mpg, state, state_ext, state_avg, ierr)
+        !Read again rxf switch and inner iterations switches
+        call ipgetr ('b2mndt_rxf', switch%b2mndt_rxf)
+        call ipgeti ('b2mndt_nstg0', switch%nstg(0))
+        call ipgeti ('b2mndt_nstg1', switch%nstg(1))
+        call ipgeti ('b2mndt_nstg2', switch%nstg(2))
+        !Set back dummy switch to default value of 0
+        switch%b2mndt_dummy = 0
+        !Update plasma snapshots with initialized residuals (without time-stepping sources)
+        state%psnl%resco0 = state%dv%resco0
+        state%psnl%resmo0 = state%dv%resmo0
+        state%psnl%reshe0 = state%dv%reshe0
+        state%psnl%reshi0 = state%dv%reshi0
+        state%psnl%reshn0 = state%dv%reshn0
+        state%psnl%reskt0 = state%dv%reskt0
+        state%psnl%reszt0 = state%dv%reszt0
+      endif
+
       call subend()
       return
 #ifdef USE_MPI
