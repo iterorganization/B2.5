@@ -509,10 +509,10 @@ c*** Flux across the core boundary
           js=lcns(is)+nnlimi
           do j=1,nnatmi
             if(latmscl(j).eq.ls) then
-              hlpnc=hlpnc-wldna(js,j,0)+wldra(js,j,0)+wldpa(js,j,0)
+              hlpnc=hlpnc-wldna(js,j,0)+wldra(js,j,0)
               do ic=1,nnmoli
                 if(mlcmp(j,ic).gt.0) hlpnc=hlpnc-mlcmp(j,ic)*
-     .                (wldnm(js,ic,0)-wldrm(js,ic,0)-wldpm(js,ic,0))
+     .                (wldnm(js,ic,0)-wldrm(js,ic,0))
               end do
             end if
           end do
@@ -559,12 +559,10 @@ c*** we must remove targets and transparent surfaces from that list
               if (iliin(abs(lsns(js))).gt.0) then !{
                 do j=1,nnatmi !{
                   if(latmscl(j).eq.ls) then !{
-                    hlpnw=hlpnw-
-     .               wldna(ilks,j,0)+wldra(ilks,j,0)+wldpa(ilks,j,0)
+                    hlpnw=hlpnw-wldna(ilks,j,0)+wldra(ilks,j,0)
                     do ic=1,nnmoli !{
                       if(mlcmp(j,ic).gt.0) hlpnw=hlpnw-mlcmp(j,ic)*
-     .                 (wldnm(ilks,ic,0)
-     .                 -wldrm(ilks,ic,0)-wldpm(ilks,ic,0))
+     .                           (wldnm(ilks,ic,0)-wldrm(ilks,ic,0))
                     end do !}
                   end if !}
                 end do !}
@@ -665,6 +663,8 @@ c<<<
      ,          '%%# hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyc=',
      ,               hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyctmp
 c>>>
+              if(hlp_lw) hlpiw=hlpiw+hlp*recyctmp
+              if(hlp_lt) hlpit=hlpit+hlp*recyctmp
             end if
           end if
         end do
