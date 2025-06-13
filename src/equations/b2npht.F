@@ -377,7 +377,7 @@ cc while the second contribution corresponds to T dn/dt
      &                  *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol          
         else                                 ! separate ion and neutral energy equation
           shi0 = shi0+sr%shidt
-          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))*
+          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
      &                  *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol
           shn0 = shn0+sr%shndt
           shn0(:,0)=shn0(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))
