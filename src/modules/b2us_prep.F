@@ -2175,7 +2175,7 @@
         end do !iyreg
 
         ! To avoid segmentation fault error we check if guessed amount
-        ! of faces and cells is bigger than found amount faces and cells.
+        ! of faces and cells is bigger than found amount of faces and cells.
         call xertst (iFccy.le.m%nFc, 'iFccy.gt.nFc!')
         call xertst (iFcc.le.m%nFc, 'iFcc.gt.nFc!')
         call xertst (iCv.le.m%nCv, 'iCv.gt.nCv!')
