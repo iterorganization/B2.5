@@ -749,8 +749,8 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
 
         case (7)
           if(ncall_b2stbc_phys.eq.0) then                              !srv 26.02.18 {
-            write(*,'(a,a,a,a,a,i3)')
-     .       'profile of density ',' on ',
+            write(*,'(4a,i3)')
+     .       'BCCON = 7 : specified density on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
@@ -2946,7 +2946,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
         case (6)
           CALL XERRAB ('B2STBC -- BCMOM=6, NOT YET AVAILABLE')
 
-* -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF VELOSITY
+* -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF VELOCITY
 
         case (7)
           if(ncall_b2stbc_phys.eq.0) then                               !srv 26.02.18 {
@@ -3101,7 +3101,7 @@ cwdk      radial direction at N/S - unchanged for aligned grids)
      .       pl%na(iCv,is)
           end do
 
-* -- BCMOM=13 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM
+* -- BCMOM=13 -- DRIFT-COMPATIBLE SHEATH CONDITION FOR THE PARALLEL MOMENTUM
 !srv added accumulation in order to account twice b.c. for corner cells
         case (13)
           if(ncall_b2stbc_phys.eq.0) then
@@ -3964,7 +3964,7 @@ cxpb code segment analog to b2tfhe
       case (7)
         if(ncall_b2stbc_phys.eq.0) then                               !srv 26.02.18 {
           write(*,'(3a)')
-     .     'specified electron temperature on ',
+     .     'BCENE = 7 : specified electron temperature on ',
      1     BCCHAR(IB), boundary_location(ib)
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
@@ -4238,7 +4238,7 @@ cxpb code segment analog to b2tfhe
           endif
         enddo
 
-* -- BCENE=15 -- FROM B2STBC_SPB                                        !srv 01.02.09 {
+* -- BCENE=15 -- DRIFT-COMPATIBLE SHEATH CONDITION                      !srv 01.02.09 {
       case (15)
         if(ncall_b2stbc_phys.eq.0) then                                 !srv 20.09.17 {
           write(*,'(a,1p,g14.7,a,a,a)')
@@ -5507,7 +5507,8 @@ cxpb code segment analog to b2tfhi
 
       case (7)
         if(ncall_b2stbc_phys.eq.0) then                               !srv 26.02.18 {
-          write(*,'(3a)') 'specified ion temperature on ',
+          write(*,'(3a)')
+     .     'BCENI = 7 : specified ion temperature on ',
      1     BCCHAR(IB), boundary_location(ib)
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
@@ -5830,13 +5831,13 @@ cxpb code segment analog to b2tfhi
           endif
         enddo
 
-* -- BCENI=15 -- from b2stbc_spb                                      !srv 01.02.09 {
+* -- BCENI=15 -- DRIFT-COMPATIBLE SHEATH CONDITION                   !srv 01.02.09 {
 
       case (15)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
-     &     'BCENI = 15 : from b2stbc_spb for ion temperature '//
-     &     'with ENIPAR(IB,1) =',
+     &     'BCENI = 15 : drift-compatible sheath condition '//
+     &     'for ion temperature with ENIPAR(IB,1) =',
      &     ENIPAR(IB,1),' on ', BCCHAR(IB),boundary_location(ib)      !srv 20.09.17
           write(*,*) 'BCENI=15 - should have BCCON=14 for all ions'
           call xertst(ENIPAR(IB,1).gt.0.0_R8,
@@ -7269,7 +7270,8 @@ c              fchi=0.0_R8
 
       case (7)
         if(ncall_b2stbc_phys.eq.0) then                              !srv 26.02.18 {
-          write(*,'(3a)') 'specified potential on ',
+          write(*,'(3a)')
+     .     'BCPOT = 7 : specified potential on ',
      1     BCCHAR(IB), boundary_location(ib)
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
@@ -7348,12 +7350,12 @@ c              fchi=0.0_R8
           CALL XERRAB ('B2STBC -- BCPOT=10, NOT AVAILABLE FOR N,W,E')
         ENDIF
 #endif
-* -- BCPOT=11 -- SHEATH CONDITIONS, CURRENT CONTINUITY; FROM b2stbc_spb !srv 01.02.09 {
+* -- BCPOT=11 -- SHEATH CONDITION, CURRENT CONTINUITY                !srv 01.02.09 {
 
       case (11)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,a,1p,g14.7,a,g14.7,a,a,a)')
-     &     'BCPOT = 11 : sheath potential bc from b2stbc_spb',
+     &     'BCPOT = 11 : sheath potential current continuity bc',
      &     ' with POTPAR(IB,2) =',POTPAR(IB,2),' gammae =', gammae,
      &     ' on ',BCCHAR(IB),boundary_location(ib)
         endif
@@ -8225,13 +8227,13 @@ c end of implementation
 #endif
 * -- BOUNDARY CONDITIONS FOR TURBULENT KINETIC ENERGY EQUATION --
 
-        select case (BCENK(IB))
+      select case (BCENK(IB))
 
-        case (0)
+      case (0)
 
 * -- BCENK=1 -- PRESCRIBE THE VALUE OF KT
 
-        case (1)
+      case (1)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'specified kt ',ENKPAR(IB,1),' on ',
@@ -8247,7 +8249,8 @@ c end of implementation
         enddo
 
 * -- BCENK=2 -- PRESCRIBE THE GRADIENT OF THE TURB. KIN. ENERGY
-        case (2)
+
+      case (2)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'turb. kin. en. gradient ',ENKPAR(IB,1),' on ',
@@ -8255,42 +8258,45 @@ c end of implementation
         endif
 cwdk    Note: specifies the gradient in the outward normal direction
 cwdk    Tmp: in "connector" direction - ok for orthogonal grids
-        do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
-          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the corresponding domain cell
-          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the corresponding domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           iVx1 = mpg%fcVx(iFc,1)
           iVx2 = mpg%fcVx(iFc,2)
           t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%kt)
           t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%kt)
           srw%skt0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
-     .       (EV*enkpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
-     .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
-     .       (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%kt(iCv2))
+     .     (EV*enkpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .      geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
+     .     (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .      mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%kt(iCv2))
           srw%skt0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
         enddo
 
 * -- BCENK=3 -- not implemented
-        case (3)
+
+      case (3)
         CALL XERRAB ('B2STBC -- BCENK=3, NOT AVAILABLE')
 
 * -- BCENK=4 -- not implemented
-        case (4)
+
+      case (4)
         CALL XERRAB ('B2STBC -- BCENK=4, NOT AVAILABLE')
 
 * -- BCENK=5 -- not implemented
-        case (5)
+
+      case (5)
         CALL XERRAB ('B2STBC -- BCENK=5, NOT AVAILABLE')
 
 * -- BCENK=6 -- Prescribe the total flux of kt, following the
 *               profile of fhi + fhe
 
-        case (6)
+      case (6)
         if(ncall_b2stbc_phys.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)
-           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
-           call xertst(mpg%cvOnClosedSurface(iCv1),
+           iCv = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
+           call xertst(mpg%cvOnClosedSurface(iCv),
      .      'BCENK=6 intended for core boundaries only!')
           enddo
           write(*,'(a,1p,g14.7,a,a,a)')
@@ -8305,13 +8311,13 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
          ! form single flux surface
          ! implicit assumption at the moment: first ring in the
          ! core is a 'structured grid' ring with quad cells
-         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
-         if (mpg%cvOnClosedSurface(iCv1)) then
+         iCv = mpg%bcCv(mpg%bcCvP(ib0,1),2)
+         if (mpg%cvOnClosedSurface(iCv)) then
           if (bcenk(ib0).ne.6)
-     .      call xerrab ('BCENK=6: incompatible core BCs')
-          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
-           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
-           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+     .     call xerrab ('BCENK=6: incompatible core BCs')
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                              ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                ! number of the guard cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                        ! number of the guard cell face
            totflux = totflux -
      &      (dv%fhe(iFc,0) + dv%fhe(iFc,1) +
      &       dv%fhi(iFc,0) + dv%fhi(iFc,1))*
@@ -8328,25 +8334,25 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           srw%skt0(iCv1,0) = -totpar/totflux*
-     &      (dv%fhe(iFc,0) + dv%fhe(iFc,1) +
-     &       dv%fhi(iFc,0) + dv%fhi(iFc,1))*
-     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+     &     (dv%fhe(iFc,0) + dv%fhe(iFc,1) +
+     &      dv%fhi(iFc,0) + dv%fhi(iFc,1))*
+     &      mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           srw%skt0(iCv1,1) = 0.0_R8
         enddo
 
 * -- BCENK=7 -- Prescribe the total flux of kt, following the
 *               profile of fna
 
-        case (7)
+      case (7)
         if(ncall_b2stbc_phys.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)
-           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
-           call xertst(mpg%cvOnClosedSurface(iCv1),
-     .      'BCENK=7 intended for core boundaries only!')
+            iCv = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
+            call xertst(mpg%cvOnClosedSurface(iCv),
+     .       'BCENK=7 intended for core boundaries only!')
           enddo
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'turb. kin. energy flux ',ENKPAR(IB,1),' on ',
-     1     BCCHAR(IB),boundary_location(ib)
+     1      BCCHAR(IB),boundary_location(ib)
         endif
 *     ..compute total particle flux, and total kt flux
         totflux = 0.0_R8
@@ -8356,13 +8362,13 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
          ! form single flux surface
          ! implicit assumption at the moment: first ring in the
          ! core is a 'structured grid' ring with quad cells
-         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
-         if (mpg%cvOnClosedSurface(iCv1)) then
+         iCv = mpg%bcCv(mpg%bcCvP(ib0,1),2)
+         if (mpg%cvOnClosedSurface(iCv)) then
           if (bcenk(ib0).ne.7)
-     .      call xerrab ('BCENK=7: incompatible core BCs')
-          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
-           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
-           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+     .     call xerrab ('BCENK=7: incompatible core BCs')
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                              ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                ! number of the guard cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                        ! number of the guard cell face
            totflux = totflux -
      &      (dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))*
      &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
@@ -8378,15 +8384,15 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           cs   = sqrt(pz(iCv1)/rz(iCv1))
           srw%skt0(iCv1,0) = -totpar/totflux*
-     &      (dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))*
-     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+     &     (dv%fna(iFc,0,ismain) + dv%fna(iFc,1,ismain))*
+     &      mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
           srw%skt0(iCv1,1) = 0.0_R8
         enddo
 
 * -- BCENK=8 -- PRESCRIBE THE TOTAL FLUX OF KT WITH CONSTANT
 *               FLUX DENSITY
 
-        case (8)
+      case (8)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'total turb. kin. energy flux ',ENKPAR(IB,1),' on ',
@@ -8406,27 +8412,32 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
         enddo
 
 * -- BCENK=9 -- not implemented
-        case (9)
+
+      case (9)
         CALL XERRAB ('B2STBC -- BCENK=9, NOT AVAILABLE')
 
 * -- BCENK=10 -- not implemented
-        case (10)
+
+      case (10)
         CALL XERRAB ('B2STBC -- BCENK=10, NOT AVAILABLE')
 
 * -- BCENK=11 -- not implemented
-        case (11)
+
+      case (11)
         CALL XERRAB ('B2STBC -- BCENK=11, NOT AVAILABLE')
 
 * -- BCENK=12 -- not implemented
-        case (12)
+
+      case (12)
         CALL XERRAB ('B2STBC -- BCENK=12, NOT AVAILABLE')
 
 * -- BCENK=13 -- not implemented
-        case (13)
+
+      case (13)
         CALL XERRAB ('B2STBC -- BCENK=13, NOT AVAILABLE')
 
 * -- BCENK=14 -- Leakage option for turbulent kinetic energy
-        case (14)
+      case (14)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'turb. kin. energy leakage ',ENKPAR(IB,1),' on ',
@@ -8441,45 +8452,27 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
           srw%skt0(iCv1,3) = geo%fcS(iFc)*cs*enkpar(ib,1)
         enddo
 
-* -- BCENK=15 -- Sheath tranmission factor
-        case (15)
+* -- BCENK=15 -- Sheath transmission factor
+
+      case (15)
         if(ncall_b2stbc_phys.eq.0) then
-            write(*,*) 'BCENK=15 - assuming BCCON=14 for all ions'
-#ifdef WG_TODO
-          IF(BCCHAR(IB).EQ.'W') THEN
-            BCCON14_W(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
-            DO IS = 0, NS-1
-              IF(.NOT.IS_NEUTRAL(IS)) THEN
-                IF(BCCON(IS,IB).NE.14) THEN
-                  BCCON14_W(IB) = .FALSE.
-                ENDIF
-              ENDIF
-            ENDDO
-            if(BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
-     &      'BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
-            if(.not.BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
-     &      'HAS NOT BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
-          ENDIF
-          IF(BCCHAR(IB).EQ.'E') THEN
-            BCCON14_E(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
-            DO IS = 0, NS-1
-              IF(.NOT.IS_NEUTRAL(IS)) THEN
-                IF(BCCON(IS,IB).NE.14) THEN
-                  BCCON14_E(IB) = .FALSE.
-                ENDIF
-              ENDIF
-            ENDDO
-            if(BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
-     &       'BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
-            if(.not.BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
-     &       'HAS NOT BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
-          ENDIF
+          write(*,*) 'BCENK=15 - should have BCCON=14 for all ions'
+          BCCON14_IS(IB) = .TRUE.
+          DO IS = 0, NS-1
+            IF(.NOT.IS_NEUTRAL(IS)) THEN
+              BCCON14_IS(IB) = BCCON14_IS(IB).AND.BCCON(IS,IB).EQ.14
+            ENDIF
+          ENDDO
+          if(BCCON14_IS(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
+     &      'BEEN IMPOSED AT BOUNDARY', IB,' FOR ALL IONS'
+          if(.not.BCCON14_IS(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
+     &      'HAS NOT BEEN IMPOSED AT BOUNDARY', IB,' FOR ALL IONS'
           call xertst(ENKPAR(IB,1).gt.0.0_R8,
-     1       'BCENK = 15, ENKPAR(I,,1) <= 0 not allowed!')              !srv 20.09.17
-          write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
-     &     'from b2stbc_spb for ion temperature with ENIPAR(IB,1) =',
-     &     ENKPAR(IB,1),' on ', BCCHAR(IB),boundary_location(ib)        !srv 20.09.17
-#endif
+     1      'BCENK = 15, ENKPAR(I,,1) <= 0 not allowed!')            !srv 20.09.17
+          write(*,'(a,a,1p,g14.7,a,a,a)')
+     &     'sheath transmission factor BC for turb. kin. energy',
+     .     ' with ENKPAR(IB,1) =',
+     &     ENKPAR(IB,1),' on ', BCCHAR(IB),boundary_location(ib)     !srv 20.09.17
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
@@ -8497,7 +8490,7 @@ cwdk    Tmp: in "connector" direction - ok for orthogonal grids
           enddo
           srw%skt0(iCv1,1) = srw%skt0(iCv1,1) -
      &      enkpar(ib,1)*t0*cs*abs(geo%fcPbs(iFc))*
-     &      (1.0_R8 + switch%b2tfhi_fflokt)  -
+     &     (1.0_R8 + switch%b2tfhi_fflokt)  -
      &      enkpar(ib,2)*t1*geo%fcS(iFc)
 cwdk    Todo: corrections for BCCON.ne.14
         enddo
@@ -8505,12 +8498,12 @@ cwdk    Todo: corrections for BCCON.ne.14
 * -- BCENK=16 -- Prescribe the value of the turb. kin. energy, with poloidal
 *                perturbation taken from flux tube just inside domain
 
-        case (16)
+      case (16)
         if(ncall_b2stbc_phys.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)
-           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
-           call xertst(mpg%cvOnClosedSurface(iCv1),
-     .      'BCENK=16 intended for core boundaries only!')
+            iCv = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
+            call xertst(mpg%cvOnClosedSurface(iCv),
+     .       'BCENK=16 intended for core boundaries only!')
           enddo
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'specified turb. kin. energy + perturbation',ENKPAR(IB,1),
@@ -8522,43 +8515,42 @@ cwdk    Todo: corrections for BCCON.ne.14
         t0 = 0.0_R8
         t1 = 0.0_R8
         do ib0 = 1, nbc
-         ! identify core boundaries; assume all core boundaries
-         ! form single flux surface
-         ! implicit assumption at the moment: first ring in the
-         ! core is a 'structured grid' ring with quad cells
-         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
-         if (mpg%cvOnClosedSurface(iCv1)) then
-          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
-           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
-           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
-           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
-           t0 = t0 + geo%cvVol(iCv2)
-           t1 = t1 + geo%cvVol(iCv2)*pl%kt(iCv2)
-          enddo
-         endif
+        ! identify core boundaries; assume all core boundaries
+        ! form single flux surface
+        ! implicit assumption at the moment: first ring in the
+        ! core is a 'structured grid' ring with quad cells
+          iCv = mpg%bcCv(mpg%bcCvP(ib0,1),2)
+          if (mpg%cvOnClosedSurface(iCv)) then
+            do ibc0 = 1, mpg%bcCvP(ib0,2)                            ! loop over number of cells in the boundary
+              iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)             ! number of the guard cell
+              iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)             ! number of the domain cell
+              iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                     ! number of the guard cell face
+              t0 = t0 + geo%cvVol(iCv2)
+              t1 = t1 + geo%cvVol(iCv2)*pl%kt(iCv2)
+            enddo
+          endif
         enddo
         t1 = t1/t0
 *     ..impose kt with perturbation
-        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
-          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
-          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the domain cell
-          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%skt0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*
-     .      (pl%kt(iCv2) + enkpar(iB,1)*EV - t1)
+     .     (pl%kt(iCv2) + enkpar(iB,1)*EV - t1)
           srw%skt0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
         enddo
-
 
 * -- BCENK=17 -- Feedback on turb. kin. energy flux, by imposing a flux surface
 *                averaged kt, with poloidal perturbation taken from flux
 *                tube just inside domain
 
-        case (17)
+      case (17)
         if(ncall_b2stbc_phys.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)
-           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
-           call xertst(mpg%cvOnClosedSurface(iCv1),
-     .      'BCENK=17 intended for core boundaries only!')
+            iCv = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
+            call xertst(mpg%cvOnClosedSurface(iCv),
+     .       'BCENK=17 intended for core boundaries only!')
           enddo
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'specified turb. kin. energy flux ',ENKPAR(IB,1),
@@ -8573,69 +8565,69 @@ cwdk    Todo: corrections for BCCON.ne.14
         totflux = 0.0_R8
         totpar  = 0.0_R8
         do ib0 = 1, nbc
-         ! identify core boundaries; assume all core boundaries
-         ! form single flux surface
-         ! implicit assumption at the moment: first ring in the
-         ! core is a 'structured grid' ring with quad cells
-         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
-         if (mpg%cvOnClosedSurface(iCv1)) then
-          if (bcenk(ib0).ne.17)
-     .      call xerrab ('BCENK=17: incompatible core BCs')
-          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
-           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
-           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
-           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
-           t0 = t0 + geo%cvVol(iCv2)*dv%ni(iCv1,0)
-           t1 = t1 + geo%cvVol(iCv2)*dv%ni(iCv1,0)*pl%kt(iCv1)
-           t2 = t2 + geo%cvVol(iCv2)*dv%ni(iCv2,0)*pl%kt(iCv2)
-           totflux = totflux - (dv%fkt(iFc,0) + dv%fkt(iFc,1))*
-     &       mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
-          enddo
-          totpar = totpar + enkpar(ib0,1)
-         endif
+        ! identify core boundaries; assume all core boundaries
+        ! form single flux surface
+        ! implicit assumption at the moment: first ring in the
+        ! core is a 'structured grid' ring with quad cells
+          iCv = mpg%bcCv(mpg%bcCvP(ib0,1),2)
+          if (mpg%cvOnClosedSurface(iCv)) then
+            if (bcenk(ib0).ne.17)
+     .       call xerrab ('BCENK=17: incompatible core BCs')
+            do ibc0 = 1, mpg%bcCvP(ib0,2)                            ! loop over number of cells in the boundary
+              iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)             ! number of the guard cell
+              iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)             ! number of the domain cell
+              iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                     ! number of the guard cell face
+              t0 = t0 + geo%cvVol(iCv2)*dv%ni(iCv1,0)
+              t1 = t1 + geo%cvVol(iCv2)*dv%ni(iCv1,0)*pl%kt(iCv1)
+              t2 = t2 + geo%cvVol(iCv2)*dv%ni(iCv2,0)*pl%kt(iCv2)
+              totflux = totflux - (dv%fkt(iFc,0) + dv%fkt(iFc,1))*
+     &         mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)
+            enddo
+            totpar = totpar + enkpar(ib0,1)
+          endif
         enddo
         t1 = t1/t0
         t2 = t2/t0
         if (enkpar(ib,2).gt.0.0_R8) t3 = enkpar(ib,2)
         if (enkpar(ib,2).le.0.0_R8) t3 = switch%b2stbc_bc_ref_ti
         t4 = (1.0_R8-t3*(totflux-totpar)/
-     &         max(abs(totflux),totpar))*t1
+     &       max(abs(totflux),totpar))*t1
         if (bcenk_17_style.eq.0) then
 *       ..impose kt with perturbation
-          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
-            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the domain cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          do ibc = 1, mpg%bcCvP(ib,2)                                ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                 ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                 ! number of the domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                       ! number of the guard cell face
             srw%skt0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*
-     .        (pl%kt(iCv2) + t4 - t2)
+     .       (pl%kt(iCv2) + t4 - t2)
             srw%skt0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
           enddo
         else
 *       ..impose kt w/o perturbation
-          do ibc = 1, mpg%bcCvP(ib,2)                                   ! loop over number of cells in the boundary
-            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                    ! number of the guard cell
-            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                    ! number of the domain cell
-            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                          ! number of the guard cell face
+          do ibc = 1, mpg%bcCvP(ib,2)                                ! loop over number of cells in the boundary
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                 ! number of the guard cell
+            iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                 ! number of the domain cell
+            iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                       ! number of the guard cell face
             srw%skt0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*t4
             srw%skt0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
           enddo
         endif
 
-        case default
-          write(*,*) BCENK(IB)
-          call xerrab ('BCENK out of bounds')
+      case default
+        write(*,*) BCENK(IB)
+        call xerrab ('BCENK out of bounds')
 
-        end select
+      end select
 
 * -- BOUNDARY CONDITIONS FOR TURBULENT ENSTROPHY EQUATION --
 
-        select case (BCENZ(IB))
+      select case (BCENZ(IB))
 
-        case (0)
+      case (0)
 
 * -- BCENZ=1 -- PRESCRIBE THE VALUE OF ZT
 
-        case (1)
+      case (1)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'specified zt ',ENZPAR(IB,1),' on ',
@@ -8651,7 +8643,8 @@ cwdk    Todo: corrections for BCCON.ne.14
         enddo
 
 * -- BCENZ=2 -- PRESCRIBE THE GRADIENT OF THE TURB. ENSTROPHY
-        case (2)
+
+      case (2)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'turb. enstr. gradient ',ENZPAR(IB,1),' on ',
@@ -8666,62 +8659,74 @@ cwdk    Todo: corrections for BCCON.ne.14
           t1 = intvertex_s(iVx1,nCv,nVx,mpg,geo%vxVol,pl%zt)
           t2 = intvertex_s(iVx2,nCv,nVx,mpg,geo%vxVol,pl%zt)
           srw%szt0(iCv1,0)=  VBIG*NE00*geo%fcS(iFc)*
-     .       (EV*enzpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
-     .        geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
-     .       (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
-     .        mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%zt(iCv2))
+     .     (EV*enzpar(ib,1)*(geo%fcHc(iFc,1) + geo%fcHc(iFc,2))*
+     .      geo%fcQgam(iFc,0) - cor9*(t2 - t1)*geo%fcQgam(iFc,1)*
+     .     (geo%fcHc(iFc,1) + geo%fcHc(iFc,2))/geo%fcHt(iFc)*
+     .      mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1) + pl%zt(iCv2))
           srw%szt0(iCv1,1)= -VBIG*NE00*geo%fcS(iFc)
         enddo
 
 * -- BCENZ=3 -- not implemented
-        case (3)
+
+      case (3)
         CALL XERRAB ('B2STBC -- BCENZ=3, NOT AVAILABLE')
 
 * -- BCENZ=4 -- not implemented
-        case (4)
+
+      case (4)
         CALL XERRAB ('B2STBC -- BCENZ=4, NOT AVAILABLE')
 
 * -- BCENZ=5 -- not implemented
-        case (5)
+
+      case (5)
         CALL XERRAB ('B2STBC -- BCENZ=5, NOT AVAILABLE')
 
 * -- BCENZ=6 -- Prescribe the total flux of kt, following the
 *               profile of fhi + fhe
-        case (6)
+
+      case (6)
         CALL XERRAB ('B2STBC -- BCENZ=6, NOT AVAILABLE')
 
 * -- BCENZ=7 -- Prescribe the total flux of kt, following the
 *               profile of fna
-        case (7)
+
+      case (7)
         CALL XERRAB ('B2STBC -- BCENZ=7, NOT AVAILABLE')
 
 * -- BCENZ=8 -- PRESCRIBE THE TOTAL FLUX OF KT WITH CONSTANT
 *               FLUX DENSITY
-        case (8)
+
+      case (8)
         CALL XERRAB ('B2STBC -- BCENZ=8, NOT AVAILABLE')
 
 * -- BCENZ=9 -- not implemented
-        case (9)
+
+      case (9)
         CALL XERRAB ('B2STBC -- BCENZ=9, NOT AVAILABLE')
 
 * -- BCENZ=10 -- not implemented
-        case (10)
+
+      case (10)
         CALL XERRAB ('B2STBC -- BCENZ=10, NOT AVAILABLE')
 
 * -- BCENZ=11 -- not implemented
-        case (11)
+
+      case (11)
         CALL XERRAB ('B2STBC -- BCENZ=11, NOT AVAILABLE')
 
 * -- BCENZ=12 -- not implemented
-        case (12)
+
+      case (12)
         CALL XERRAB ('B2STBC -- BCENZ=12, NOT AVAILABLE')
 
 * -- BCENZ=13 -- not implemented
-        case (13)
+
+      case (13)
         CALL XERRAB ('B2STBC -- BCENZ=13, NOT AVAILABLE')
 
 * -- BCENZ=14 -- Leakage option for turbulent enstrophy
-        case (14)
+
+      case (14)
         if(ncall_b2stbc_phys.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'turb. enstrophy leakage ',ENZPAR(IB,1),' on ',
@@ -8736,45 +8741,27 @@ cwdk    Todo: corrections for BCCON.ne.14
           srw%szt0(iCv1,3) = geo%fcS(iFc)*cs*enzpar(ib,1)
         enddo
 
-* -- BCENZ=15 -- Sheath tranmission factor
-        case (15)
+* -- BCENZ=15 -- Sheath transmission factor
+
+      case (15)
         if(ncall_b2stbc_phys.eq.0) then
-            write(*,*) 'BCENZ=15 - assuming BCCON=14 for all ions'
-#ifdef WG_TODO
-          IF(BCCHAR(IB).EQ.'W') THEN
-            BCCON14_W(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
-            DO IS = 0, NS-1
-              IF(.NOT.IS_NEUTRAL(IS)) THEN
-                IF(BCCON(IS,IB).NE.14) THEN
-                  BCCON14_W(IB) = .FALSE.
-                ENDIF
-              ENDIF
-            ENDDO
-            if(BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
-     &      'BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
-            if(.not.BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
-     &      'HAS NOT BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
-          ENDIF
-          IF(BCCHAR(IB).EQ.'E') THEN
-            BCCON14_E(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
-            DO IS = 0, NS-1
-              IF(.NOT.IS_NEUTRAL(IS)) THEN
-                IF(BCCON(IS,IB).NE.14) THEN
-                  BCCON14_E(IB) = .FALSE.
-                ENDIF
-              ENDIF
-            ENDDO
-            if(BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
-     &       'BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
-            if(.not.BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
-     &       'HAS NOT BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
-          ENDIF
+          write(*,*) 'BCENZ=15 - should have BCCON=14 for all ions'
+          BCCON14_IS(IB) = .TRUE.
+          DO IS = 0, NS-1
+            IF(.NOT.IS_NEUTRAL(IS)) THEN
+              BCCON14_IS(IB) = BCCON14_IS(IB).AND.BCCON(IS,IB).EQ.14
+            ENDIF
+          ENDDO
+          if(BCCON14_IS(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
+     &      'BEEN IMPOSED AT BOUNDARY', IB,' FOR ALL IONS'
+          if(.not.BCCON14_IS(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
+     &      'HAS NOT BEEN IMPOSED AT BOUNDARY', IB,' FOR ALL IONS'
           call xertst(ENKPAR(IB,1).gt.0.0_R8,
-     1       'BCENZ = 15, ENZPAR(I,,1) <= 0 not allowed!')              !srv 20.09.17
-          write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
-     &     'from b2stbc_spb for ion temperature with ENIPAR(IB,1) =',
-     &     ENZPAR(IB,1),' on ', BCCHAR(IB),boundary_location(ib)        !srv 20.09.17
-#endif
+     1       'BCENZ = 15, ENZPAR(I,,1) <= 0 not allowed!')           !srv 20.09.17
+          write(*,'(a,a,1p,g14.7,a,a,a)')
+     &     'BCENZ=15: sheath transmission factor BC for ',
+     &     'turb. enstrophy with ENZPAR(IB,1) =',
+     &     ENZPAR(IB,1),' on ', BCCHAR(IB),boundary_location(ib)     !srv 20.09.17
         endif
         do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
@@ -8799,12 +8786,13 @@ cwdk    Todo: corrections for BCCON.ne.14
 
 * -- BCENZ=16 -- Prescribe the value of the turb. enstropy, with poloidal
 *                perturbation taken from flux tube just inside domain
-        case (16)
+
+      case (16)
         if(ncall_b2stbc_phys.eq.0) then
           do ibc = 1, mpg%bcCvP(ib,2)
-           iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
-           call xertst(mpg%cvOnClosedSurface(iCv1),
-     .      'BCENZ=16 intended for core boundaries only!')
+            iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)
+            call xertst(mpg%cvOnClosedSurface(iCv),
+     .       'BCENZ=16 intended for core boundaries only!')
           enddo
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'specified turb. enstrophy + perturbation',ENZPAR(IB,1),
@@ -8820,12 +8808,12 @@ cwdk    Todo: corrections for BCCON.ne.14
          ! form single flux surface
          ! implicit assumption at the moment: first ring in the
          ! core is a 'structured grid' ring with quad cells
-         iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1),1)
-         if (mpg%cvOnClosedSurface(iCv1)) then
-          do ibc0 = 1, mpg%bcCvP(ib0,2)                                 ! loop over number of cells in the boundary
-           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                   ! number of the guard cell
-           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                   ! number of the domain cell
-           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                           ! number of the guard cell face
+         iCv = mpg%bcCv(mpg%bcCvP(ib0,1),2)
+         if (mpg%cvOnClosedSurface(iCv)) then
+          do ibc0 = 1, mpg%bcCvP(ib0,2)                              ! loop over number of cells in the boundary
+           iCv1 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,1)                ! number of the guard cell
+           iCv2 = mpg%bcCv(mpg%bcCvP(ib0,1)+ibc0-1,2)                ! number of the domain cell
+           iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                        ! number of the guard cell face
            t0 = t0 + geo%cvVol(iCv2)
            t1 = t1 + geo%cvVol(iCv2)*pl%zt(iCv2)
           enddo
@@ -8833,21 +8821,20 @@ cwdk    Todo: corrections for BCCON.ne.14
         enddo
         t1 = t1/t0
 *     ..impose zt with perturbation
-        do ibc = 1, mpg%bcCvP(ib,2)                                     ! loop over number of cells in the boundary
-          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                      ! number of the guard cell
-          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                      ! number of the domain cell
-          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                            ! number of the guard cell face
+        do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
+          iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
+          iCv2 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,2)                   ! number of the domain cell
+          iFc  = mpg%cvFc(mpg%cvFcP(iCv1,1))                         ! number of the guard cell face
           srw%szt0(iCv1,0) =  VBIG*NE00*geo%fcS(iFc)*
      .      (pl%zt(iCv2) + enzpar(iB,1)*EV - t1)
           srw%szt0(iCv1,1) = -VBIG*NE00*geo%fcS(iFc)
         enddo
 
-        case default
-          write(*,*) BCENZ(IB)
-          call xerrab ('BCENZ out of bounds')
+      case default
+        write(*,*) BCENZ(IB)
+        call xerrab ('BCENZ out of bounds')
 
-        end select
-
+      end select
 
       enddo
 #ifdef WG_TODO
