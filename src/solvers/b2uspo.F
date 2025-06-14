@@ -191,7 +191,7 @@
       write(*,'(1x,a,a)') 'Calling b2uxus from '//trim(name)
       call b2uxus (nCv, mpg, aa, itcnt, respo, corpo, name)           !srv 18.03.10
 
-      if (switch%b2uspo_iout.ne.0) then                                          !srv 08.07.08 {
+      if (switch%b2uspo_iout.ne.0) then                               !srv 08.07.08 {
         do k=0,3
           write (chark,'(i1)') k
           call my_out_us(70,nCv,0,sch(1,k),'b2uspo_sch'//chark)

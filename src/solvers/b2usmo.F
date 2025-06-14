@@ -97,7 +97,7 @@
          csb1 = sqrt(ub(iCv)**2+csb**2)
          aad0(iCv) = -smb(iCv,1)-
      &    smb(iCv,3)*rob(iCv)+
-     &    switch%cfc0*geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv)*    !srv 09.01.01
+     &    switch%cfc0*geo%cvVol(iCv)*geo%cvHz(iCv)/geo%cvHx(iCv)*       !srv 09.01.01
      &    geo%cvBb(iCv,0)/geo%cvBb(iCv,3)*csb*rob(iCv)
          aa(mpg%cvNvP(iCv,1)) = aad0(iCv)
          if (switch%b2mndt_style.lt.2) then
@@ -205,10 +205,10 @@
       do iCv = 1, nCv
         ireg = mpg%cvReg(iCv)
         if (solvereg(ireg)) then
-         pccb(iCv,0) = geo%cvVol(iCv)*geo%cvHz(iCv)*                 !srv 09.01.01
-     .    geo%cvBb(iCv,0)/(geo%cvBb(iCv,3)*aa(mpg%cvNvP(iCv,1)))     !srv 11.01.13
-         pccb(iCv,1) = geo%cvVol(iCv)*geo%cvHz(iCv)*                 !srv 09.01.01
-     .    geo%cvBb(iCv,0)/(geo%cvBb(iCv,3)*aad0(iCv))                !srv 11.01.13
+         pccb(iCv,0) = geo%cvVol(iCv)*geo%cvHz(iCv)*                    !srv 09.01.01
+     .    geo%cvBb(iCv,0)/(geo%cvBb(iCv,3)*aa(mpg%cvNvP(iCv,1)))        !srv 11.01.13
+         pccb(iCv,1) = geo%cvVol(iCv)*geo%cvHz(iCv)*                    !srv 09.01.01
+     .    geo%cvBb(iCv,0)/(geo%cvBb(iCv,3)*aad0(iCv))                   !srv 11.01.13
         else
          resmb(iCv) = 0.0_R8   ! take opportunity to correct RHS
         endif
@@ -233,9 +233,9 @@
 
 *   ..solve the correction equation
       write(*,'(a,a)') 'Calling b2uxus from ', name
-      call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name)          !srv 18.03.10
+      call b2uxus (nCv, mpg, aa, itcnt, resmb, corub, name)             !srv 18.03.10
 
-      if (switch%b2usmo_iout.ne.0) then                              !srv 17.06.02 {
+      if (switch%b2usmo_iout.ne.0) then                                 !srv 17.06.02 {
        do k=1,maxval(mpg%cvNvP(1:nCv,2))
          write (charnv,'(i2.2)') k
          do iCv = 1, nCv
@@ -259,7 +259,7 @@
        call my_out_us(70,nCv,0,smb(:,3),name//'_smb3')
        call my_out_us(70,nFc,1,flcb,name//'_flcb')
        call my_out_us(70,nFc,1,cvsb,name//'_cvsb')
-      endif                                                          !srv 17.06.02 }
+      endif                                                             !srv 17.06.02 }
 
 * ..return
       ncall_b2usmo = ncall_b2usmo+1
