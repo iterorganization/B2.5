@@ -152,12 +152,10 @@
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       save isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
-      integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
+      integer, save :: inverse_ua = 0                                !srv 11.01.13 25.01.16
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
       integer, save :: shot = 0, run = 0, ids_save = 0, ids_av = 0
-      integer, save :: use_mms = 0                                   !srv 26.02.18
-      integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
 #ifdef _OPENMP
       real (kind=R8) :: cpuval, cpustart, cpuinit
 #else
@@ -947,13 +945,9 @@
        call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
 #endif
-       call ipgeti ('b2mndr_iout', iout)                                !srv 25.01.16
-       call ipgeti ('b2mndr_use_mms', use_mms)                          !srv 26.02.18 {
-       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
-       if(boundary_sources.ne.0)
+       if(switch%boundary_sources.ne.0)
      &    call alloc_b2mod_boundary_sources(nCv,ns)
-       call ipgeti ('b2mndr_equation_sources', equation_sources)
-       if(equation_sources.ne.0)
+       if(switch%equation_sources.ne.0)
      &    call alloc_b2mod_equation_sources(nCv,ns)                   !srv 26.02.18 }
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
@@ -1701,10 +1695,10 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
       if (switch%b2stbc_boundary_namelist.ge.1) then
         call initialize_b2mod_boundary(ns,mpg,0.0_R8)
       else
-        call xerrab ('b2mndr -- specify BCs using boundary_namelist')
+        call xerrab('b2mndr -- specify BCs using boundary_namelist')
       endif
 
-      if(switch%b2mndr_iout.ne.0) then                               !srv 25.01.16 {
+      if(switch%b2mndr_iout.ne.0) then                                  !srv 25.01.16 {
        call my_out_us(70,nCv,0,state%dv%ne,'b2mndr_ne')
        do is = 0,ns-1
         write (chns,'(i3.3)') is
@@ -1756,10 +1750,8 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
      &      switch % b2mndr_na_min),switch % b2mndr_na_max)
         enddo
       enddo                                                          !srv 25.01.16 }
-!      if(use_mms.ne.0) then                                         !srv 26.02.18 {
-*   ..reset initial state using exact solution
+*   ..reset initial state if using exact solution
        call set_exact_solution(nCv, ns, switch, state % pl, state % dv)
-!      endif                                                         !srv 26.02.18 {
 *   ..test plasma state
       call b2xvps (nCv, nFc, ns, state % pl, state % dv)
 *   ..compute log-log electron rate coefficients
@@ -1953,8 +1945,8 @@ c   --> better way doing this is necessary)
       call b2xpni (nCv, ns, state%pl%na, state%dv%ni)
       call b2xpnn (nCv, ns, state%pl%na, state%dv%nn)
 *   ..initialise previous state and fluxes
-      call getB2PlasmaSnapshot( state%pl, state%dv, state%psnc )
-      call getB2PlasmaSnapshot( state%pl, state%dv, state%psnl )
+      call getB2PlasmaSnapshot(state%pl, state%dv, state%psnc)
+      call getB2PlasmaSnapshot(state%pl, state%dv, state%psnl)
 !WG_TODO*   ..write output control
 !WG_TODO      write (nout(0),'(2(/2x,a,2x,a))')
 !WG_TODO     &  'idout0:', idout0, 'idout1:', idout1
@@ -2065,6 +2057,38 @@ c new CDF movie option (1st frame at t=0)
       endif
       idx = 0
       write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
+
+      !Initialize residual if using Crank-Nicolson scheme
+      if (switch%b2mndt_ckn.eq.2.and.itim.eq.0) then
+        !Dummy call to b2mndt
+        !Temporarily set dummy switch to 1
+        switch%b2mndt_dummy = 1
+        !Temporarily set rxf to 0 to not update any physical quantities
+        switch%b2mndt_rxf = 0.0_R8
+        !Temporarily set inner iterations to 1
+        switch%nstg(0) = 1
+        switch%nstg(1) = 1
+        switch%nstg(2) = 1
+        call b2mndt (nout, nCv, nFc, nVx, ns,
+     &       ismain, ismain0, state%rt%nscx, state%rt%nscxmax,
+     &       state%rt%iscx, itim, dtim, ntim,
+     &       switch, geo, mpg, state, state_ext, state_avg, ierr)
+        !Read again rxf switch and inner iterations switches
+        call ipgetr ('b2mndt_rxf', switch%b2mndt_rxf)
+        call ipgeti ('b2mndt_nstg0', switch%nstg(0))
+        call ipgeti ('b2mndt_nstg1', switch%nstg(1))
+        call ipgeti ('b2mndt_nstg2', switch%nstg(2))
+        !Set back dummy switch to default value of 0
+        switch%b2mndt_dummy = 0
+        !Update plasma snapshots with initialized residuals (without time-stepping sources)
+        state%psnl%resco0 = state%dv%resco0
+        state%psnl%resmo0 = state%dv%resmo0
+        state%psnl%reshe0 = state%dv%reshe0
+        state%psnl%reshi0 = state%dv%reshi0
+        state%psnl%reshn0 = state%dv%reshn0
+        state%psnl%reskt0 = state%dv%reskt0
+        state%psnl%reszt0 = state%dv%reszt0
+      endif
 
       call subend()
       return
@@ -2244,40 +2268,9 @@ cwdk  set some integers
 c      nap, uap, etc from 3.0.9 -> psnl = Plasma SNapshot Last
 c      na0, ua0, etc from 3.0.9 -> psnc = Plasma SNapshot Current
 c      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc, which is what currently happens in the b2mxnp and b2mxnu routines in 3.0.9
-        state%psnl%na = state%pl%na
-        state%psnc%na = state%pl%na
-        state%psnl%ua = state%pl%ua
-        state%psnc%ua = state%pl%ua
-        state%psnl%ne = state%dv%ne
-        state%psnc%ne = state%dv%ne
-        state%psnl%ni = state%dv%ni
-        state%psnc%ni = state%dv%ni
-        state%psnl%te = state%pl%te
-        state%psnc%te = state%pl%te
-        state%psnl%ti = state%pl%ti
-        state%psnc%ti = state%pl%ti
-        state%psnl%tn = state%pl%tn
-        state%psnc%tn = state%pl%tn
-        state%psnl%kinrgy = state%dv%kinrgy
-        state%psnc%kinrgy = state%dv%kinrgy
-        state%psnl%po = state%pl%po
-        state%psnc%po = state%pl%po
-        state%psnl%kt = state%pl%kt
-        state%psnc%kt = state%pl%kt
-        state%psnl%zt = state%pl%zt
-        state%psnc%zt = state%pl%zt
-        state%psnl%fna = state%dv%fna
-        state%psnc%fna = state%dv%fna
-        state%psnl%fhe = state%dv%fhe
-        state%psnc%fhe = state%dv%fhe
-        state%psnl%fhi = state%dv%fhi
-        state%psnc%fhi = state%dv%fhi
-        state%psnl%fch = state%dv%fch
-        state%psnc%fch = state%dv%fch
-        state%psnl%fkt = state%dv%fkt
-        state%psnc%fkt = state%dv%fkt
-        state%psnl%fzt = state%dv%fzt
-        state%psnc%fzt = state%dv%fzt
+        call getB2PlasmaSnapshot(state%pl, state%dv, state%psnl)
+        call getB2PlasmaSnapshot(state%pl, state%dv, state%psnc)
+
         call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
         if (switch%pot_eq.eq.0) then                           !srv 13.07.05 {
@@ -3330,12 +3323,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       close(nout(7))
 
-*   ..mms error analysis
-      if(use_mms.ne.0) then                                              !srv 26.02.18 {
-        call calc_err(nCv, ns, state%pl)
+*   ..mms steady-state error analysis
+      if(switch%use_mms.eq.1.and.switch%iout_b2wdat.eq.10) then          !srv 26.02.18 {
+        call calc_err(nCv, ns, state%pl, switch, itim, mpg)
       endif                                                              !srv 26.02.18 }
-      if(iout.ne.0) then
-        if(use_mms.eq.0) then                                            !srv 29.11.18 {
+      if(switch%b2mndr_iout.ne.0) then
+        if(switch%use_mms.eq.0) then                                     !srv 29.11.18 {
          do is = 0,ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,state%pl%na(1,is),
@@ -3895,8 +3888,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 !WG_TODO      call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
       call dealloc_b2mod_transport_disruption
-      if(boundary_sources.ne.0) call dealloc_b2mod_boundary_sources     !srv 26.02.18
-      if(equation_sources.ne.0) call dealloc_b2mod_equation_sources     !srv 26.02.18
+      if(switch%boundary_sources.ne.0)
+     & call dealloc_b2mod_boundary_sources                              !srv 26.02.18
+      if(switch%equation_sources.ne.0)
+     & call dealloc_b2mod_equation_sources                              !srv 26.02.18
       call dealloc_b2mod_b2plot
 #ifdef B25_EIRENE
       CALL EIRENE_DEALLOC_BRAEIR
