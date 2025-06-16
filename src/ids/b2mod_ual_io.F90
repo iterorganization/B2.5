@@ -25,7 +25,6 @@ module b2mod_ual_io
     use b2us_plasma
     use b2mod_elements
     use b2mod_constants
-!    use b2mod_feedback
 !    use b2mod_boundary_namelist
     use b2mod_neutrals_namelist
     use b2mod_user_namelist
@@ -310,7 +309,7 @@ contains
     type( mapping ), intent(in) :: mpg
     type( geometry ), intent(in) :: geo
     integer tvalues(8)
-    integer i, iCv, iFc
+    integer i, iCv, iFc, ireg
     real(IDS_real) :: r_min, r_max, z_min, z_max
     logical, save :: IDS_initialized = .false.
     character*16 usrnam
@@ -368,6 +367,13 @@ contains
       allocate(flux_expansion( maxval(mpg%strDiv) ) )
     end if
     do i = 1, maxval(mpg%strDiv)
+      if (gridGeometry.eq.plasmaGeometry .or. i.eq.1) then
+        ireg = i
+      else if (mpg%nnreg(0).eq.8 .and. i.eq.2) then
+        ireg = 4
+      else
+        call xerrab ('Unexpected geometry!')
+      end if
       r_min = huge(1.0_R8)
       r_max = 0.0_R8
       z_min = huge(1.0_R8)
@@ -375,7 +381,7 @@ contains
       wetted_area(i) = 0.0_IDS_real
       do iFc = 1, mpg%nFc
         if (mpg%fcReg(iFc).eq. &
-          & regionNumbers(i,REGIONTYPE_EDGE,gridGeometry)) then
+          & regionNumbers(ireg,REGIONTYPE_EDGE,gridGeometry)) then
           if (mpg%fcCv(iFc,1).le.mpg%nCi) then
             iCv = mpg%fcCv(iFc,1)
           else
@@ -436,7 +442,11 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
             &   divertors, &
 #endif
+#if IMAS_MAJOR_VERSION > 3
+            &   time_IN, time_step_IN, shot, database, &
+#else
             &   time_IN, time_step_IN, shot, run, database, version, &
+#endif
             &   new_eq_ggd, &
             &   time_slice_ind_IN, num_time_slices_IN )
 #ifdef NO_OPT
@@ -482,8 +492,12 @@ contains
         type (ids_divertors) :: divertors !< IDS designed to store
             !< data related to the divertor plates
 #endif
-        integer, intent(in) :: shot, run
-        character(len=24), intent(in) :: database, version
+#if IMAS_MAJOR_VERSION < 4
+        integer, intent(in) :: run
+        character(len=24), intent(in) :: version
+#endif
+        integer, intent(in) :: shot
+        character(len=24), intent(in) :: database
         real(IDS_real), intent(in), optional :: time_IN !< Time
         real(IDS_real), intent(in), optional :: time_step_IN !< Time step
         integer, intent(in), optional :: time_slice_ind_IN
@@ -693,20 +707,30 @@ contains
         enddo
         call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
         call b2xpnn (mpg%nCv, ns, state%pl%na, state%dv%nn)
-        call b2xpne (mpg%nCv, ns, state%rt%rz2, state%pl%na, &
+        call b2xpne (mpg%nCv, ns, state%rt%rz2, state%pl%na,    &
             &        state_ext%ne2, state%dv%ne2)
-!   ..compute transport coefficients
-        call b2tral (mpg%nCv, mpg%nFc, mpg%nVx, ns,          &
-            &        state%rt%nscx, state%rt%nscxmax,        &
-            &        state%rt%iscx, ismain,                  &
-            &        switch, geo, mpg, state%pl, state%dv,   &
-            &        state%rt, state_ext, state%co,          &
+!   ..compute flux limit coefficients
+        call b2trql (mpg%nCv, mpg%nFc, ns, switch, geo, mpg,    &
+            &        state%pl, state%dv, state_ext,             &
+            &        state%co%chvemx, state%co%chvimx)
+        call b2tral (mpg%nCv, mpg%nFc, mpg%nVx, ns,             &
+            &        state%rt%nscx, state%rt%nscxmax,           &
+            &        state%rt%iscx, ismain,                     &
+            &        switch, geo, mpg, state%pl, state%dv,      &
+            &        state%rt, state_ext, state%co,             &
             &        state%co_ns)
+!  ..compute log-log charge exchange rate coefficients
+        do k = 0, state%rt%nscx-1
+          call b2spcx (mpg%nCv, ns, ev, am(state%rt%iscx(k)),   &
+            &          state%pl%ti, state%dv%ne,                &
+            &          state%rt%rlcx(1:mpg%nCv,0:1,0:ns-1,k))
+        enddo
 !   ..compute sources
-        call b2sral ( mpg%nCv, mpg%nFc, mpg%nVx, ns,         &
-     &   state%rt%nscx, state%rt%nscxmax, state%rt%iscx,     &
-     &   ismain, ismain0, dtim,                              &
-     &   switch, geo, mpg, state, state_ext, state_avg, wrong_flow, .false.)
+        call b2sral ( mpg%nCv, mpg%nFc, mpg%nVx, ns,            &
+            &   state%rt%nscx, state%rt%nscxmax, state%rt%iscx, &
+            &   ismain, ismain0, dtim,                          &
+            &   switch, geo, mpg, state, state_ext, state_avg,  &
+            &   wrong_flow, .false.)
 
         if (balance_netcdf.ne.0) call read_balance
 
@@ -3114,10 +3138,12 @@ contains
               IF (IXTRI(I).GT.0) THEN
                 UN0(IXTRI(I),0,IS) = UN0(IXTRI(I),0,IS) + &
                    &  TRIANGLE_VOL(I)*( &
-                   &   VXDENA(IS,I)*PUX(I) + VYDENA(IS,I)*PUY(I) )
+                   &   VXDENA(IS,I)*PUX(IXTRI(I)) + &
+                   &   VYDENA(IS,I)*PUY(IXTRI(I)) )
                 UN0(IXTRI(I),1,IS) = UN0(IXTRI(I),1,IS) + &
                    &  TRIANGLE_VOL(I)*( &
-                   &   VXDENA(IS,I)*PVX(I) + VYDENA(IS,I)*PVY(I) )
+                   &   VXDENA(IS,I)*PVX(IXTRI(I)) + &
+                   &   VYDENA(IS,I)*PVY(IXTRI(I)) )
                 UN0(IXTRI(I),2,IS) = UN0(IXTRI(I),2,IS) + &
                    &  TRIANGLE_VOL(I)*VZDENA(IS,I)
                 totCv(IXTRI(I)) = totCv(IXTRI(I)) + &
@@ -3137,10 +3163,12 @@ contains
               IF (IXTRI(I).GT.0) THEN
                 UM0(IXTRI(I),0,IS) = UM0(IXTRI(I),0,IS) + &
                    &  TRIANGLE_VOL(I)*( &
-                   &   VXDENM(IS,I)*PUX(I) + VYDENM(IS,I)*PUY(I) )
+                   &   VXDENM(IS,I)*PUX(IXTRI(I)) + &
+                   &   VYDENM(IS,I)*PUY(IXTRI(I)) )
                 UM0(IXTRI(I),1,IS) = UM0(IXTRI(I),1,IS) + &
                    &  TRIANGLE_VOL(I)*( &
-                   &   VXDENM(IS,I)*PVX(I) + VYDENM(IS,I)*PVY(I) )
+                   &   VXDENM(IS,I)*PVX(IXTRI(I)) + &
+                   &   VYDENM(IS,I)*PVY(IXTRI(I)) )
                 UM0(IXTRI(I),2,IS) = UM0(IXTRI(I),2,IS) + &
                    &  TRIANGLE_VOL(I)*VZDENM(IS,I)
                 totCv(IXTRI(I)) = totCv(IXTRI(I)) + &
@@ -5956,8 +5984,12 @@ contains
             &   description, equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
-#endif
+#if IMAS_MAJOR_VERSION == 3
             &   time_IN, shot, run, database, version, &
+#else
+            &   time_IN, shot, database, &
+#endif
+#endif
             &   new_eq_ggd, &
             &   batch_ind_IN, num_batch_slices_IN )
 #ifdef NO_OPT
@@ -5986,9 +6018,13 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary) :: summary !< IDS designed to store
             !< run summary data
+#if IMAS_MAJOR_VERSION == 3
+        integer, intent(in) :: run
+        character(len=24), intent(in) :: version
 #endif
-        integer, intent(in) :: shot, run
-        character(len=24), intent(in) :: database, version
+#endif
+        integer, intent(in) :: shot
+        character(len=24), intent(in) :: database
         real(IDS_real), intent(in), optional :: time_IN !< Time
         integer, intent(in), optional :: batch_ind_IN
             !< Batch index for the current time slice

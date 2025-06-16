@@ -881,5 +881,3 @@
 
       return
       end subroutine find_eirene_numbering
-
-

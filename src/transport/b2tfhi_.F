@@ -15,7 +15,7 @@
       use b2mod_balance                                                 !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
-     &          fhi_visper, fhi_visq, fhi_anml, fhi_vzh, 
+     &          fhi_visper, fhi_visq, fhi_anml, fhi_vzh,
      &          balance_netcdf
 #endif
       use b2mod_ad

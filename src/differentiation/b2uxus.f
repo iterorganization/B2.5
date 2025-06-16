@@ -17,5 +17,3 @@
       end do
       return
       end subroutine b2uxus
-
-

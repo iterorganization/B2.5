@@ -20,8 +20,3 @@ Generating and viewing documentation (PDF)
 or
 
     $ evince refman.pdf
-
-
-
-
-

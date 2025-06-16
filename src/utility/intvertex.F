@@ -71,4 +71,3 @@ c
 
       return
       end function intvertex_s
-

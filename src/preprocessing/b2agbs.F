@@ -9,7 +9,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       type(mapping) :: m
-*   ..input/ouput arguments (defined on entry, changed upon exit)
+*   ..input/output arguments (defined on entry, changed upon exit)
       type(geometry) :: g
 *   ..local variables
       integer :: iCv, sv, nv, sf, nf, verts(0:100), ref_ind_cv(m%nFt), 
@@ -48,7 +48,7 @@
         g%fcHz(:) = pi * ( g%vxX(m%fcVx(:,1)) + g%vxX(m%fcVx(:,2)) )
       else if (isymm.eq.3 .or. isymm.eq.4) then
         g%fcHz(:) = pi * ( g%vxY(m%fcVx(:,1)) + g%vxY(m%fcVx(:,2)) )
-      endif 
+      end if
 
 *   ..toroidal magnetic field
       if (isymm.eq.1 .or. isymm.eq.3) then
@@ -81,12 +81,12 @@
       rzimp(2,:) = m%IMPz
       ncvOMP = 0
       cvOMP = 0
-      call cv_intersections (g, m, rzomp, 
+      call cv_intersections (g, m, rzomp,
      &  cvOMP, ncvOMP, m%nCv, 1, ifail)
       call xertst(.not.ifail,'Getting OMP cells failed in b2agbs')
       ncvIMP = 0
       cvIMP = 0
-      call cv_intersections (g, m, rzimp, 
+      call cv_intersections (g, m, rzimp,
      &  cvIMP, ncvIMP, m%nCv, 1, ifail)
       call xertst(.not.ifail,'Getting OMP cells failed in b2agbs')
       ref_ind_cv = 0
@@ -96,7 +96,7 @@
         nc = m%ftCvP(iFt,2)
         cells = 0
         cells(0:nc-1) = m%ftCv(sc:sc+nc-1)
-        
+
         ! Get faces
         sf = m%ftFcP(iFt,1)
         nf = m%ftFcP(iFt,2)
@@ -104,7 +104,7 @@
         faces(0:nf-1) = m%ftFc(sf:sf+nf-1)
 
         wrkf(0:nf-1) = (/ (i, i=0,nf-1) /)
-   
+
         ! If there is a common cell between omp cells and tube cells
         do i = 0,nc-1
            if (isMember(cells(i),cvOMP(1:ncvOMP),ncvOMP)) then
@@ -118,8 +118,8 @@
            if (isMember(cells(i),cvIMP(1:ncvIMP),ncvIMP)) then
               ref_ind_cv(iFt) = i
               exit
-           endif   
-          enddo 
+           endif
+          enddo
         endif
         ! Else  take the middle of the tube
         if (ref_ind_cv(iFt).eq.0) then
@@ -130,8 +130,8 @@
 
         ! Get the poloidal face of that cell
         cv = ref_cv(iFt);
-        
-        ! Get a poloidal faces
+
+        ! Get a poloidal face
         ind = -1
         do i = 1,m%cvFcP(cv,2)
           iFc = m%cvFc(m%cvFcP(cv,1)+i-1)
@@ -149,12 +149,12 @@
              if (ind .ne. -1 ) exit
           endif
         enddo
-        
+
         ! Check if face is assigned
         if ( ind .eq. -1 ) then
           call xerrab('b2agbs: no reference face assigned')
         endif
-      
+
       enddo
 
 *   ..correct fcPbs (pbsx), cvHx (hx), and cvHy (hy) to enforce:
@@ -169,7 +169,6 @@
         psif(iFc) = abs(g%vxFpsi(v1) - g%vxFpsi(v2))
       enddo
 
-      
       do iFt = 1,m%nFt
         ! Get cells
         cells = 0
@@ -230,7 +229,7 @@
           endif
 
         enddo
-  
+
         ! Get psi width of face in the tube
         psif_max = 0
         do j = 0,nf-1
@@ -259,11 +258,11 @@
 
                  ! Adjust pitch of faces(k) and next face
                  call AdjustPitch(g,faces(k),pol_flux_ref)
-		 fc_done(k) = .true.                
-                 if ( typef .eq. 1 )  then
+		 fc_done(k) = .true.
+                 if ( typef .eq. 1 ) then
                    ! Closed tube
                    if ( k .ne. nc-1 ) then
-                    
+
                      call AdjustPitch(g,faces(k+1),pol_flux_ref)
                      fc_done(k+1) = .true.
 
@@ -272,7 +271,7 @@
                      call AdjustPitch(g,faces(0),pol_flux_ref)
                      fc_done(0) = .true.
  
-                   endif 
+                   endif
                  elseif ( typef .eq. 2 ) then
                    ! Open tube
                    call AdjustPitch(g,faces(k+1),pol_flux_ref)
@@ -283,12 +282,12 @@
                    call xerrab('b2agbs: type not defined')
 
                  endif
-               endif 
+               endif
             endif
 
           enddo
 
-        else 
+        else
 
           ! Get reference cell
           cv = ref_cv(iFt)
@@ -324,13 +323,13 @@
 
             ! Two other faces need to the sum of the reference
             do i = 0,2
-              if ( pfaces(i) .ne. ref_face ) then  
+              if ( pfaces(i) .ne. ref_face ) then
                 face1 = pfaces(i)
-              endif        
+              endif
             enddo
 
             do i = 0,2
-              if (( pfaces(i).ne. ref_face) 
+              if (( pfaces(i).ne. ref_face)
      &           .and. (pfaces(i) .ne. face1 )) then
                 face2 = pfaces(i)
               endif
@@ -342,21 +341,20 @@
           pol_flux2 = abs(g%fcBb(face2,0)*g%fcS(face2)
      &       *g%fcQalf(face2,0))
 
-
           pol_flux_ref1 = pol_flux_ref * pol_flux1
      &      /(pol_flux1 + pol_flux2)
           pol_flux_ref2 = pol_flux_ref * pol_flux2
-     &      /(pol_flux1 + pol_flux2)  
+     &      /(pol_flux1 + pol_flux2)
 
           call AdjustPitch(g,face1,pol_flux_ref1)
           call AdjustPitch(g,face2,pol_flux_ref2)
-          
+
           ! Update fc_done and cv_done
           cv_done(ref_ind_cv(iFt)) = .true.
           fc_done(ref_ind_cv(iFt)) = .true.
-          fc_done(ref_ind_cv(iFt)+1) = .true. 
+          fc_done(ref_ind_cv(iFt)+1) = .true.
 
-        endif 
+        endif
 
         ! Complete cells which are not of full width
         ! Forward propagation
@@ -374,12 +372,11 @@
                call xerrab
      &    ('b2agbs: forward prop: fc_done of cv_done cells not done')
 
-             endif 
+             endif
 
           endif
 
         enddo
-
 
         ! Backward propagation
         do  j = 1,nc-1
@@ -400,7 +397,6 @@
              endif
            endif
         enddo 
-    
 
 !        ! Get reference
 !        pol_flux = g%fcBb(ref_ind_fc(iFt),0) 
@@ -419,7 +415,7 @@
 !           g%fcBb(iFc,3) = sqrt(g%fcBb(iFc,0)**2 + g%fcBb(iFc,1)**2 
 !     &                     + g%fcBb(iFc,2)**2)
 !            
-	   ! Recompute fcPbs(:)
+            ! Recompute fcPbs(:)
 !           g%fcPbs(iFc) = sign(1.0,g%fcPbs(iFc))
 !     &       * abs(pol_flux / g%fcBb(iFc,3))
 !        enddo
@@ -428,7 +424,7 @@
 
 *   ..copying over modified data
        
-      g%cvBb(:,3) = sqrt(g%cvBb(:,0)**2 + g%cvBb(:,1)**2 
+      g%cvBb(:,3) = sqrt(g%cvBb(:,0)**2 + g%cvBb(:,1)**2
      &        + g%cvBb(:,2)**2)
 
 *   ..return

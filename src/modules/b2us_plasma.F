@@ -14,7 +14,7 @@
 ! Main plasma state parameters
       type B2Plasma
         integer :: ns           ! number of species (0:ns-1)
-        integer :: nspecies     ! number of isonuclear sequences (0:ns-1)
+        integer :: nspecies     ! number of isonuclear sequences (0:nspecies-1)
         integer :: ismain       ! index of main species
         integer :: ismain0      ! index of main neutral species
 
@@ -74,11 +74,13 @@
         real(R8), dimension(:), allocatable :: fllime, fllimi
 
         ! residuals
-        real(R8), dimension(:,:), allocatable :: resmo
-        real(R8), dimension(:,:), allocatable :: resco
+        real(R8), dimension(:,:), allocatable :: resmo, resmo0
+        real(R8), dimension(:,:), allocatable :: resco, resco0
         real(R8), dimension(:), allocatable :: respo, reshe, reshi,
      .                                         resht, resmt, reshn,
      .                                         reskt, reszt
+        real(R8), dimension(:), allocatable :: reshe0, reshi0, reshn0,
+     .                                         reskt0, reszt0
 
         ! corrections
         real(R8), dimension(:,:), allocatable :: corua, corpa
@@ -162,7 +164,6 @@
       end type B2Coeff
 
       type B2Coeff_nspecies
-
         ! Dedicated coefficients related to Zhdanov closure
         real(R8), allocatable :: vsaf_hAdp_albe(:,:,:,:),
      .                           vsaf_hBdp_al(:,:,:),
@@ -178,7 +179,6 @@
      .                           cvsahz_hBdp_al(:,:,:),
      .                           cvsahz_uAdp_albe(:,:,:,:),
      .                           cvsahz_uBdp_al(:,:,:)
-
       end type B2Coeff_nspecies      
 
       type B2Source
@@ -260,10 +260,13 @@
         real(R8), dimension(:,:), allocatable :: na, ua  ! second index is species
         real(R8), dimension(:), allocatable :: po, te, ti, tn, kt, zt
         real(R8), allocatable :: ne(:), ni(:,:), nn(:)
-        real(R8), allocatable :: fch(:,:), fna(:,:,:),
+        real(R8), allocatable :: fch(:,:), fna(:,:,:), fmo(:,:,:),
      .                           fhi(:,:), fhe(:,:), fhn(:,:), fkt(:,:),
      .                           fzt(:,:)
         real(R8), allocatable :: kinrgy(:,:)
+        real(R8), allocatable :: resco0(:,:), resmo0(:,:),
+     .                           reshi0(:), reshe0(:), reshn0(:),
+     .                           reskt0(:), reszt0(:)
       end type B2PlasmaSnapshot
 
       type B2Diagnostic
@@ -548,8 +551,6 @@
       allocate( coeff%hcix_c( nCv ), SOURCE=0._R8 )
 
       allocate( coeff%cssb( nFc ), SOURCE=0._R8 )
-
-
 #else
       allocate( coeff % calf( nFc, 0:1 ) )
       allocate( coeff % calf_cl( nFc, 0:1 ) )
@@ -868,7 +869,7 @@
 
       if (allocated(coeff_ns % hci_al_ast)) return
 
-#ifdef F2003
+#ifndef LEGACYCOMP
       allocate( coeff_ns % vsaf_hAdp_albe( nFc, 0:1, 0:nspecies-1,
      .  0:nspecies-1 ), SOURCE=0._R8 )
       allocate( coeff_ns % vsaf_hBdp_al( nFc, 0:1, 0:nspecies-1 ),
@@ -1346,6 +1347,13 @@
       allocate( dv % resmt( nCv ) )
       allocate( dv % reskt( nCv ) )
       allocate( dv % reszt( nCv ) )
+      allocate( dv % resco0( nCv, 0:ns-1 ) )
+      allocate( dv % resmo0( nCv, 0:ns-1 ) )
+      allocate( dv % reshe0( nCv ) )
+      allocate( dv % reshi0( nCv ) )
+      allocate( dv % reshn0( nCv ) )
+      allocate( dv % reskt0( nCv ) )
+      allocate( dv % reszt0( nCv ) )
       dv % resmo = 0.0_R8                             !srv 22.05.18 {
       dv % resco = 0.0_R8
       dv % respo = 0.0_R8
@@ -1356,6 +1364,13 @@
       dv % reskt = 0.0_R8
       dv % reszt = 0.0_R8
       dv % resmt = 0.0_R8                             !srv 22.05.18 }
+      dv % resco0 = 0.0_R8
+      dv % resmo0 = 0.0_R8
+      dv % reshe0 = 0.0_R8
+      dv % reshi0 = 0.0_R8
+      dv % reshn0 = 0.0_R8
+      dv % reskt0 = 0.0_R8
+      dv % reszt0 = 0.0_R8
 
 ! corrections
       allocate( dv % corua( nCv, 0:ns-1 ) )
@@ -1525,6 +1540,13 @@
       deallocate( dv % resmt )
       deallocate( dv % reskt )
       deallocate( dv % reszt )
+      deallocate( dv % resco0 )
+      deallocate( dv % resmo0 )
+      deallocate( dv % reshe0 )
+      deallocate( dv % reshi0 )
+      deallocate( dv % reshn0 )
+      deallocate( dv % reskt0 )
+      deallocate( dv % reszt0 )
 
       deallocate( dv % corua )
       deallocate( dv % corpa )
@@ -2199,6 +2221,7 @@
 
       allocate( snap % fch( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( snap % fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( snap % fmo( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( snap % fhe( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( snap % fhi( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( snap % fhn( nFc, 0:1 ), SOURCE=0._R8 )
@@ -2206,6 +2229,14 @@
       allocate( snap % fzt( nFc, 0:1 ), SOURCE=0._R8 )
 
       allocate( snap % kinrgy( nCv, 0:ns-1 ), SOURCE=0._R8 )
+
+      allocate( snap % resco0( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( snap % resmo0( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( snap % reshe0( nCv ), SOURCE=0._R8 )
+      allocate( snap % reshi0( nCv ), SOURCE=0._R8 )
+      allocate( snap % reshn0( nCv ), SOURCE=0._R8 )
+      allocate( snap % reskt0( nCv ), SOURCE=0._R8 )
+      allocate( snap % reszt0( nCv ), SOURCE=0._R8 )
 #else
       allocate( snap % na( nCv, 0:ns-1 ) )
       allocate( snap % ua( nCv, 0:ns-1 ) )
@@ -2222,6 +2253,7 @@
 
       allocate( snap % fch( nFc, 0:1 ) )
       allocate( snap % fna( nFc, 0:1, 0:ns-1 ) )
+      allocate( snap % fmo( nFc, 0:1, 0:ns-1 ) )
       allocate( snap % fhe( nFc, 0:1 ) )
       allocate( snap % fhi( nFc, 0:1 ) )
       allocate( snap % fhn( nFc, 0:1 ) )
@@ -2229,6 +2261,14 @@
       allocate( snap % fzt( nFc, 0:1 ) )
 
       allocate( snap % kinrgy( nCv, 0:ns-1 ) )
+
+      allocate( snap % resco0( nCv, 0:ns-1 ) )
+      allocate( snap % resmo0( nCv, 0:ns-1 ) )
+      allocate( snap % reshe0( nCv ) )
+      allocate( snap % reshi0( nCv ) )
+      allocate( snap % reshn0( nCv ) )
+      allocate( snap % reskt0( nCv ) )
+      allocate( snap % reszt0( nCv ) )
 
       snap % na = 0._R8
       snap % ua = 0._R8
@@ -2245,6 +2285,7 @@
 
       snap % fch = 0._R8
       snap % fna = 0._R8
+      snap % fmo = 0._R8
       snap % fhe = 0._R8
       snap % fhi = 0._R8
       snap % fhn = 0._R8
@@ -2252,6 +2293,14 @@
       snap % fzt = 0._R8
 
       snap % kinrgy = 0._R8
+
+      snap % resco0 = 0._R8
+      snap % resmo0 = 0._R8
+      snap % reshe0 = 0._R8
+      snap % reshi0 = 0._R8
+      snap % reshn0 = 0._R8
+      snap % reskt0 = 0._R8
+      snap % reszt0 = 0._R8
 #endif
       return
       end subroutine createB2PlasmaSnapshot
@@ -2273,6 +2322,7 @@
       deallocate( snap % nn )
       deallocate( snap % fch )
       deallocate( snap % fna )
+      deallocate( snap % fmo )
       deallocate( snap % fhe )
       deallocate( snap % fhi )
       deallocate( snap % fhn )
@@ -2281,6 +2331,13 @@
       deallocate( snap % zt )
       deallocate( snap % fkt )
       deallocate( snap % fzt )
+      deallocate( snap % resco0 )
+      deallocate( snap % resmo0 )
+      deallocate( snap % reshe0 )
+      deallocate( snap % reshi0 )
+      deallocate( snap % reshn0 )
+      deallocate( snap % reskt0 )
+      deallocate( snap % reszt0 )
 
       return
       end subroutine destroyB2PlasmaSnapshot
@@ -2537,6 +2594,7 @@
         snap % ni = dv % ni
         snap % nn = dv % nn
         snap % fna = dv % fna
+        snap % fmo = dv % fmo
         snap % fch = dv % fch
         snap % fhe = dv % fhe
         snap % fhi = dv % fhi
@@ -2545,6 +2603,13 @@
         snap % zt = pl % zt
         snap % fkt = dv % fkt
         snap % fzt = dv % fzt
+        snap % resco0 = dv % resco0
+        snap % resmo0 = dv % resmo0
+        snap % reshe0 = dv % reshe0
+        snap % reshi0 = dv % reshi0
+        snap % reshn0 = dv % reshn0
+        snap % reskt0 = dv % reskt0
+        snap % reszt0 = dv % reszt0
 
       return
       end subroutine getB2PlasmaSnapshot
@@ -2564,6 +2629,7 @@
         dv % ni = snap % ni
         dv % nn = snap % nn
         dv % fna = snap % fna
+        dv % fmo = snap % fmo
         dv % fch = snap % fch
         dv % fhe = snap % fhe
         dv % fhi = snap % fhi
@@ -2572,6 +2638,13 @@
         pl % zt = snap % zt
         dv % fkt = snap % fkt
         dv % fzt = snap % fzt
+        dv % resco0 = snap % resco0
+        dv % resmo0 = snap % resmo0
+        dv % reshe0 = snap % reshe0
+        dv % reshi0 = snap % reshi0
+        dv % reshn0 = snap % reshn0
+        dv % reskt0 = snap % reskt0
+        dv % reszt0 = snap % reszt0
 
       return
       end subroutine putB2PlasmaSnapshot

@@ -156,7 +156,7 @@
 *-----------------------------------------------------------------------
 *.end b2uxus
 
-      end
+      end subroutine b2uxus
 
       subroutine storage_us (nCv, mpg, aa, nnz, ia, ja, a, k,            !sv 22.11.06
      *                      ind, iasave, jasave, name)
@@ -289,6 +289,6 @@
       endif
 
       ncall = ncall + 1
+      return
 
-      end                                                             !sv 22.11.06
-
+      end subroutine storage_us                                     !sv 22.11.06
