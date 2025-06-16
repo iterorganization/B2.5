@@ -277,7 +277,7 @@ c 2002-09-11: logic revised
      5 fb_puff_min1(:), fb_puff_max1(:),
      6 fb_const1(:), fb_overshoot1(:),
      7 fb_time1(:), gpdata1(:,:,:),
-     8 sna_corr1(:), taumax1(:)
+     8 sna_corr1(:), taumax1(:), amfact1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
       integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns1
@@ -490,7 +490,7 @@ c 2002-09-11: logic revised
      7  b2stbr_sna_corr, b2stbr_taumax
       real (kind=R8) :: recyceir1(nstraid), volrecstart1(nstraid),
      &  userfluxparm1(nstraid,2)
-      character cnamip*80, cnbmip*80, cvalip*80
+      character cnamip*80, cnbmip*80, cvalip*80, cswitch*80
       character*256 sources_filename, new_filename, filename
       character*1 crcstra1(nstraid)
       character*36 hlp_frm, hlp_frp, hlp_frb
@@ -498,6 +498,7 @@ c 2002-09-11: logic revised
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
       character*500 line, ligne, cur_contr_comment
       character*500, allocatable :: add_comment(:)
+      character*1, allocatable :: zh_tf_toff1(:)
 #ifdef B25_EIRENE
       character*80 ZEILE, ULINE, ZEILEN(100)
       character*98, allocatable :: REAC_LINE(:)
@@ -1464,6 +1465,21 @@ c 2002-09-11: logic revised
       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)
       if (.not.hydrogen) fch_ion_neutral = 0.0_R8
       call ipgeti ('b2mndt_style', style_b2mndt)
+      allocate(zh_tf_toff(max(1,(nspecies*(nspecies+1))/2-nspecies)))
+      cvalip = repeat('0',max(1,(nspecies*(nspecies+1))/2-nspecies))
+      call ipgetc ('b2tral_zh_tf_toff', cvalip)
+      do i = 1, max(1,(nspecies*(nspecies+1))/2-nspecies)
+        zh_tf_toff(i) = cvalip(i:i)
+      end do
+      call alloc_b2mod_zhco_amfact(nspecies)
+      allocate(amfact1(0:nspecies1-1))
+      amfact(0:nspecies-1) = 1.0_R8
+      do i = 0, nspecies-1
+        write (chns,'(i3.3)') is
+        call ipgetr ('b2tral_amfact_'//chns, amfact(i))
+        j = ispecies1(i+1)
+        if (j.gt.0) amfact1(j-1)=amfact(i)
+      end do
       call ipgeti ('b2mndr_pulse_number', pulse)
       call ipgeti ('b2mndr_shot_number', shot)
 *   ..we do the allocation calls now so that
@@ -1973,7 +1989,59 @@ c 2002-09-11: logic revised
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
+      if (cnamip(1:14).eq.'b2tral_amfact_'.and.
+     &    .not.streql(cnamip,'b2tral_amfact_on')) then
+        read (cnamip(15:17),'(i3.3)') i
+        j = ispecies1(i+1)
+        if (j.gt.0) then
+          todo = .true.
+          rswitch = amfact1(j-1)
+          write (cnamip,'(a14,i3.3)') 'b2tral_amfact_', j-1
+        else
+          todo = .false.
+          wait = .true.
+        end if
+      end if
       if (todo) write(cvalip,'(1p,e10.3)') rswitch
+*   ..character string switches
+      todo = .true.
+      CSWITCHES: select case (cnamip)
+        case('b2tral_zh_tf_toff')
+          if (same_atoms) then
+            todo = .false.
+          else
+            allocate(zh_tf_toff1(max(1,
+     .                (nspecies1*(nspecies1+1))/2-nspecies1)))
+            do i = 1, nspecies-1
+              do j = i+1, nspecies
+                i1 = ispecies1(i)
+                j1 = ispecies1(j)
+                if (i1.ne.-1 .and. j1.ne.-1) then
+                  ij = 0
+                  do k = 1, i-1
+                    ij = ij + (nspecies-k)
+                  end do
+                  ij = ij + (j-i)
+                  ij1 = 0
+                  do k = 1, min(i1,j1)-1
+                    ij1 = ij1 + (nspecies1-k)
+                  end do
+                  ij1 = ij1 + (max(i1,j1)-min(i1,j1))
+                  zh_tf_toff1(ij1) = zh_tf_toff(ij)
+                end if
+              end do
+            end do
+            if (nspecies1.eq.1) zh_tf_toff1(1)='0'
+            write(hlp_frm,'(a,i3,a)')
+     .       '(',max(1,(nspecies1*(nspecies1+1))/2-nspecies1),'a1)'
+            write(cswitch,hlp_frm) (zh_tf_toff1(i),
+     .       i=1,max(1,(nspecies1*(nspecies1+1))/2-nspecies1))
+            deallocate(zh_tf_toff1)
+          end if
+        case default CSWITCHES
+          todo = .false.
+      end select CSWITCHES
+      if (todo) write(cvalip,'(a)') trim(cswitch)
 *   ..write converted switches
       if (.not.is_comment(line) .and. .not.wait) then
         if (end_comment(line,i) .and. .not.streql(cnamip,' ')) then
@@ -2017,6 +2085,8 @@ c 2002-09-11: logic revised
       end if
       if (ycur.ne.1.0_R8 .and. .not.ycur_done)
      >  write(nout(2),'(a)') '''b2tfnb_ycur'''//tab//'''0.0'''
+      deallocate(zh_tf_toff)
+      deallocate(amfact1)
 
 *  ..rewrite boundary namelist
       first_pass = .true.
