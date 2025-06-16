@@ -89,7 +89,7 @@
 #ifdef WG_TODO
       real (kind=R8) :: csig_stoch(nFc), fchstoch(nCv)                  !lk 31.01.08 }
 #endif
-      real (kind=R8) :: 
+      real (kind=R8) ::
      *  shidu(nCv,0:3), shidd(nCv,0:3),                                 !srv 11.09.09 {
      *  shiva(nCv,0:3), shivc(nCv,0:3),
      *  shivan(nCv,0:3), shivcn(nCv,0:3),
@@ -227,6 +227,13 @@
      1     t0*ne(iCv)*te(iCv)
          srw%b2sihs_divue(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+      if (switch%b2sihs_shedu.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shedu(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divue0to3 = shedu
@@ -289,6 +296,13 @@
      1         t0*ni(iCv,0)*ti(iCv)
         enddo
       enddo
+      if (switch%b2sihs_shidu.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shidu(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_divua0to3 = shidu
@@ -301,7 +315,7 @@
         call b2saxpy (nCv*4, 1.0_R8, shidun, 1, shn0, 1)
       endif
 
-*   ..contribution from divergence of the electrical drift             !srv 02.06.99
+*   ..contribution from divergence of the electrical drift            !srv 02.06.99
       call gradc(nCv, nFc, nVx, 0, geo, mpg, po, wrkv, dpoc)
       call gradc(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
      &  geo%vxOnedBsq, dOnedBsqc)
@@ -321,13 +335,20 @@
      1      t0*ne(iCv)*te(iCv)
         srw%b2sihs_exbe(iCv)=t0*ne(iCv)*te(iCv)
       enddo
+      if (switch%b2sihs_shedd.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shedd(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exbe0to3 = shedd
       endif
-      call b2saxpy (nCv*4, 1.0_R8, shedd, 1, she0, 1)                  !srv 11.09.09
-*   ..contribution from divergence of the electrical drift             !srv 02.06.99                                               !srv 02.06.99
 #endif
+      call b2saxpy (nCv*4, 1.0_R8, shedd, 1, she0, 1)                 !srv 11.09.09
+*   ..contribution from divergence of the electrical drift            !srv 02.06.99                                               !srv 02.06.99
       b2exba=0.0_R8
       srw%b2sihs_exba=0.0_R8
       do is = 0, ns-1
@@ -336,7 +357,7 @@
 !WG_TODO need better solution here...
            fac_ExB_c = fac_ExB(mpg%cvFc(mpg%cvFcP(iCv,1)))
            t0=switch%b2sihs_phm6*fac_ExB_c*
-     &      (na(iCv,is)/ni(iCv,0))*wrkc(iCv)                           !srv 07.06.00 02.06.99
+     &      (na(iCv,is)/ni(iCv,0))*wrkc(iCv)                          !srv 07.06.00 02.06.99
            shidd(iCv,0) = shidd(iCv,0)+
      &      (max(0.0_R8,t0)+switch%b2sihs__rf1*abs(t0))*ni(iCv,0)*
      &       ti(iCv)
@@ -352,23 +373,37 @@
         enddo
        endif
       enddo
+      if (switch%b2sihs_shidd.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shidd(iCv,:) = 0.0_R8
+        enddo
+      endif
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_exba0to3 = shidd
       endif
-      call b2saxpy (nCv*4, 1.0_R8, shidd, 1, shi0, 1)                  !srv 11.09.09
 #endif
+      call b2saxpy (nCv*4, 1.0_R8, shidd, 1, shi0, 1)                 !srv 11.09.09
 *   ..contribution from viscous heating
       if ((switch%Zhdanov_closure.eq.1) .and. 
      &    (switch%Zhdanov_test.eq.0) .and.
-     &    switch%Zhdanov_visu.eq.1) then                               !som 18.08.21
+     &    switch%Zhdanov_visu.eq.1) then                              !som 18.08.21
 *   ..re-calculate mass-average velocity
         call b2mod_zhfrtf_avm_u(nCv, ns, na, ua)
       endif
       b2visa=0.0_R8
       srw%b2sihs_visa=0.0_R8
+      if (switch%min_collisions .gt. 0.0_R8) then
+        call b2txnci (mpg, geo, switch, nCv, ns, ti, te, rz2,
+     &   ne, ne2, na, lnlam, ismain, st_ext, wrkf,
+     &   wrkc)
+      else
+        wrkc = 1.0_R8
+      endif
       do is = 0, ns-1
-       if(.not.is_neutral(is).or.switch%use_eirene.eq.0.or.            !srv 29.08.02
+       if(.not.is_neutral(is).or.switch%use_eirene.eq.0.or.           !srv 29.08.02
      &                           switch%spatial_hybrid.eq.1) then
         if (switch%style_visc.eq.0) then
           wrkf1 = 1.0_R8
@@ -381,7 +416,7 @@
         endif
         if ((switch%Zhdanov_closure.eq.0) .or.
      &      (switch%Zhdanov_test.eq.1) .or.
-     &      (switch%Zhdanov_visu.eq.0) .or.                            !som 16.08.21
+     &      (switch%Zhdanov_visu.eq.0) .or.                           !som 16.08.21
      &      (switch%zh_vis_type.eq.0) .or.
      &      is_neutral(is) ) then
           call diff(nCv, nFc, nVx, 0, geo, mpg, ua(:,is), wrkv, wrkf)
@@ -407,6 +442,8 @@
          visc(:,0) = visc(:,0) + wrkc
         endif
         do iCv = 1, mpg%nCi
+          if (wrkc(iCv) .le. switch%min_collisions .and.
+     &     .not.mpg%cvOnClosedSurface(iCv)) cycle
           t0 = switch%b2sihs_phm2*(1.0_R8-switch%BoRiS)*visc(iCv,0)
           t1 = switch%b2sihs_phm8*(1.0_R8-switch%BoRiS)*visc(iCv,1)
           if (switch%tn_style.eq.0) then
@@ -455,6 +492,16 @@
         enddo
        endif                                                           !srv 29.08.02
       enddo
+
+      if (switch%b2sihs_shivis.eq.0) then
+        do k=mpg%nCi+1,mpg%nCv
+          iFc = mpg%cvFc(mpg%cvFcP(k,1))
+          iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          shivc(iCv,:) = 0.0_R8
+          shiva(iCv,:) = 0.0_R8
+        enddo
+      endif
+
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_visa0to3 = shivc+shiva
@@ -564,7 +611,7 @@
        enddo
 *   ..add contribution due to Zhdanov multi-species approach
        if(switch%Zhdanov_closure.eq.1.and.switch%Zhdanov_test.eq.0.and.
-     &    switch%Zhdanov_tf_fr.eq.1) then                              !som 01.07.21
+     &    switch%Zhdanov_tf_fr.eq.1) then                             !som 01.07.21
          shifr(:,0) = shifr(:,0)-switch%zhd_corr*avm_u*shefr(:,0)
          shefr(:,0) = shefr(:,0)-switch%zhd_corr*(avm_u/ue)*shefr(:,0)
        endif
@@ -603,7 +650,7 @@
 *     (a.k.a. Joule heating) in case of small impurity amount;
 *     in case of arbitrary impurity amount see above for b2sigp_style.eq.2
       if(switch%b2sigp_style.ne.2) then                               !srv 05.07.17
-       call b2xehx (nCv, nFc, nVx, switch, geo, mpg, te, po, ne, ehx)         !srv 13.01.17
+       call b2xehx (nCv, nFc, nVx, switch, geo, mpg, te, po, ne, ehx) !srv 13.01.17
        if (switch%istyle_Joule_heating.eq.0)
      &   call b2xehy (nCv, nFc, nVx, switch, geo, mpg, te, po, ne, ehy)       !srv 13.01.17
        b2joule=0.0_R8
@@ -633,17 +680,17 @@
      &    (ne(iCv)*te(iCv))
           b2joule(mpg%cvReg(iCv))=b2joule(mpg%cvReg(iCv))+t0
           srw%b2sihs_joule(iCv)=t0
-        endif                                                        !srv 26.11.02
+        endif                                                         !srv 26.11.02
        enddo
-      endif                                                          !srv 05.07.17
+      endif                                                           !srv 05.07.17
 #ifndef FIXED_POINT
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_joule0to3 = shefr
       endif
 #endif
-      call b2saxpy (nCv*4, 1.0_R8, shefr, 1, she0, 1)                !srv 11.09.09
+      call b2saxpy (nCv*4, 1.0_R8, shefr, 1, she0, 1)                 !srv 11.09.09
 *   ..contribution from atom-atom friction
-      if(switch%b2sigp_style.ne.2) then                           !srv 05.07.17
+      if(switch%b2sigp_style.ne.2) then                               !srv 05.07.17
        b2fraa=0.0_R8
        srw%b2sihs_fraa=0.0_R8
        do isb = 0, ns-1
@@ -653,12 +700,12 @@
 *      ..contribution from friction between charged species in case of small impurity amount;
 *       in case of arbitrary impurity amount see above for b2sigp_style.eq.2
           coef = switch%b2sihs_phm4/ctaup*mp*
-     &      sqrt(am(isb)*am(is)/(am(isb)+am(is)))  !srv 01.07.09 11.01.12
+     &      sqrt(am(isb)*am(is)/(am(isb)+am(is)))                     !srv 01.07.09 11.01.12
           do iCv = 1,mpg%nCi
             t0 = rz2(iCv,isb)*rz2(iCv,is)*
-     &          (coef*lnlam(iCv)/4.0_R8)*(1.0_R8-switch%BoRiS)*   !srv 11.01.12
+     &          (coef*lnlam(iCv)/4.0_R8)*(1.0_R8-switch%BoRiS)*       !srv 11.01.12
      &           na(iCv,is)*na(iCv,isb)*vti32(iCv)*
-     &           ((ua(iCv,is)-ua(iCv,isb))**2)                    !srv 22.07.05
+     &           ((ua(iCv,is)-ua(iCv,isb))**2)                        !srv 22.07.05
             shifr(iCv,0) = shifr(iCv,0)+
      &                        (2.5_R8+switch%b2sihs__rf4)*t0
             shifr(iCv,3) = shifr(iCv,3)-
@@ -709,7 +756,7 @@
         call my_out_us(70,nCv,0,wrks,'b2sihs__she')
         wrks=shest(:,0)+shest(:,1)*te+
      &       shest(:,2)*ne + shest(:,3)*te*ne
-        call my_out_us(70,nCv,0,shest,'b2sihs__shest')        !srv 17.12.13
+        call my_out_us(70,nCv,0,shest,'b2sihs__shest')                !srv 17.12.13
         wrks=shedu(:,0)+shedu(:,1)*te+
      &       shedu(:,2)*ne + shedu(:,3)*te*ne
         call my_out_us(70,nCv,0,wrks,'b2sihs__shedu')

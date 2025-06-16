@@ -78,8 +78,7 @@
                                   ! +1: Going clockwise around plasma
                                   ! -1: Going counterclockwise around plasma
 
-
-
+        real (kind=R8) :: Qalfmin, Qalfmax
       end type geometry
 
       contains
@@ -224,6 +223,9 @@
       g%LSN = .true.
       g%psi_increasing = .true.
 
+      g%Qalfmax = 1.0e-3_R8
+      g%Qalfmin = 1.0e-3_R8
+
       return
       end subroutine initialize_geometry
 
@@ -305,7 +307,8 @@
       implicit none
       integer, intent(in) :: iun, nCv, nFc, nVx, nFs, nFt, nVmxCv
       type (geometry), intent (inout) :: gm
-      external cfrure
+      real(kind=R8) :: rdum(1)
+      external cfrure, cfrure_opt, ipgetr
 
       call alloc_geometry (gm, nCv, nFc, nVx, nFs, nFt, nVmxCv)
 
@@ -341,6 +344,15 @@
       call cfrure (iun, nCv,   gm%cvConn, 'cvConn')
       call cfrure (iun, nFs,   gm%fsPsi,  'fsPsi')
 
+      rdum(1) = 1.0e-3_R8
+      call ipgetr('b2us_prep_Qalfmin', rdum(1))
+      call cfrure_opt (iun,   1,   rdum, 'Qalfmin')
+      gm%Qalfmin = rdum(1)
+      rdum(1) = 1.0e-3_R8
+      call ipgetr('b2us_prep_Qalfmax', rdum(1))
+      call cfrure_opt (iun,   1,   rdum, 'Qalfmax')
+      gm%Qalfmax = rdum(1)
+
 ! check consistency of input
       call check_geometry(nCv, nFc, nVx, nFs, nFt, gm)
 
@@ -354,6 +366,7 @@
       implicit none
       integer, intent(in) :: nout, nCv, nFc, nVx, nFs
       type (geometry), intent (in) :: gm
+      real(kind=R8) :: rdum(1)
       external cfwure
 
 ! cell volumes
@@ -387,6 +400,11 @@
 ! flux surface quantities
       call cfwure (nout, nCv,   gm%cvConn, 'cvConn')
       call cfwure (nout, nFs,   gm%fsPsi,  'fsPsi')
+
+      rdum(1) = gm%Qalfmin
+      call cfwure (nout,   1,   rdum,  'Qalfmin')
+      rdum(1) = gm%Qalfmax
+      call cfwure (nout,   1,   rdum,  'Qalfmax')
 
       return
       end subroutine write_geometry
@@ -438,10 +456,11 @@
       type (geometry), intent (inout) :: gm
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
      &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2, iFt,
-     &           i1, i2, inv_dist(mpg%nVx) , vv(2)
+     &           i1, i2, inv_dist(mpg%nVx), vv(2)
+      integer :: count_up, count_down, count_eq
       integer, allocatable :: old_face_list(:), verts(:)
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
-     .  Psi1, Psi2, count_up, count_down, count_eq, dpsi(mpg%nCv),
+     .  Psi1, Psi2, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
       intrinsic maxval, maxloc, minloc, abs, sqrt
@@ -558,31 +577,31 @@
         ! Exceptional case: equal Psi (pentagon splitting);
         ! will also catch case where Psi = 0 everywhere
         do iVx = 1, nVx
-          count_down    = 0.0_R8
-          count_up      = 0.0_R8
-          count_eq      = 0.0_R8
+          count_down = 0
+          count_up   = 0
+          count_eq   = 0
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
             if (gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-              count_up = count_up + 1.0_R8
+              count_up = count_up + 1
             elseif (gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-              count_down = count_down + 1.0_R8
+              count_down = count_down + 1
             else
-              count_eq = count_eq + 1.0_R8
-            endif 
+              count_eq = count_eq + 1
+            endif
           enddo
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
             if (iCv.le.mpg%nCi) then
               if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &            2.0_R8*count_up
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &           2.0_R8*count_up
               elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
-     &            2.0_R8*count_down
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
+     &           2.0_R8*count_down
               else
                 gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
-     &            count_eq
+     &           count_eq
               endif
             else
               ! Make sure guard cells dominate in the interpolation
@@ -692,31 +711,31 @@
         ! Exceptional case: equal Psi (pentagon splitting);
         ! will also catch case where Psi = 0 everywhere
         do iVx = 1, nVx
-          count_down    = 0.0_R8
-          count_up      = 0.0_R8
-          count_eq      = 0.0_R8
+          count_down = 0
+          count_up   = 0
+          count_eq   = 0
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
-            if (gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-              count_up = count_up + 1.0_R8
-            elseif (gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-              count_down = count_down + 1.0_R8
+            if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx) ) then
+              count_up = count_up + 1
+            elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx) ) then
+              count_down = count_down + 1
             else
-              count_eq = count_eq + 1.0_R8
-            endif 
+              count_eq = count_eq + 1
+            endif
           enddo
           do inCv = 1, mpg%vxCvP(iVx,2)
             iCv = mpg%vxCv(mpg%vxCvP(iVx,1) + inCv - 1)
             if (iCv.le.mpg%nCi) then
               if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
      &            2.0_R8*count_up
               elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) = 
+                gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
      &            2.0_R8*count_down
               else
                 gm%vxVol(mpg%vxCvP(iVx,1) + inCv - 1) =
-     &            count_eq
+     &            real(count_eq,R8)
               endif
             else
               ! Make guards cells dominate and account for
@@ -727,56 +746,56 @@
             endif
           enddo
         enddo
-      elseif (switch%vxVol_style .eq. 9) then 
-         !count cells per vertex with higher and lower Psi
-         do iVx = 1, nVx
-            count_down    = 0.0_R8
-            count_up      = 0.0_R8
-            dpsi_max_down = 0.0_R8
-            dpsi_max_up   = 0.0_R8
-            do inCv = 1, mpg%vxCvP(iVx,2)
-               iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-               if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-                  count_up = count_up + 1.0e0_R8
-                  if ( dpsi(iCv) .gt. dpsi_max_up) then
-                     dpsi_max_up = dpsi(iCv)
-                  endif
-               elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-                  count_down = count_down + 1.0e0_R8
-                  if ( dpsi(iCv) .gt. dpsi_max_down) then
-                     dpsi_max_down = dpsi(iCv)
-                  endif
-               endif 
-            enddo
-            do inCv = 1, mpg%vxCvP(iVx,2)
-              iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
-              if (iCv.le.mpg%nCi) then
-               if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx)) then
-                 if (mpg%cvVxP(iCv,2) .eq. 3) then
-                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 
-     &               count_up / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)* 
-     &                sqrt(dpsi_max_up/dpsi(iCv)))               
-                 else
-                   gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 
-     &               count_up / mpg%vxCvP(iVx,2)
-                 endif 
-               elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx)) then
-                  if (mpg%cvVxP(iCv,2) .eq. 3) then
-                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 
-     &                count_down / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
-     &                   sqrt(dpsi_max_up/dpsi(iCv)))                  
-                  else
-                    gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 
-     &                count_down / mpg%vxCvP(iVx,2)
-                  endif
-               endif
-              else 
-                 ! Make guards cells dominate and account for 
-                 ! length difference via distance to vertex
-                 gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
-     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2  + 
-     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2  )            
-              endif 
+      elseif (switch%vxVol_style .eq. 9) then
+        !count cells per vertex with higher and lower Psi
+        do iVx = 1, nVx
+          count_down = 0
+          count_up   = 0
+          dpsi_max_down = 0.0_R8
+          dpsi_max_up   = 0.0_R8
+          do inCv = 1, mpg%vxCvP(iVx,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
+            if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx) ) then
+              count_up = count_up + 1
+              if ( dpsi(iCv) .gt. dpsi_max_up) then
+                dpsi_max_up = dpsi(iCv)
+              endif
+            elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx) ) then
+              count_down = count_down + 1
+              if ( dpsi(iCv) .gt. dpsi_max_down) then
+                dpsi_max_down = dpsi(iCv)
+              endif
+            endif
+          enddo
+          do inCv = 1, mpg%vxCvP(iVx,2)
+            iCv = mpg%vxCv(mpg%vxCvP(iVx,1)+ inCv - 1)
+            if (iCv .le. mpg%nCi) then
+              if ( gm%cvFpsi(iCv) .gt. gm%vxFpsi(iVx) ) then
+                if (mpg%cvVxP(iCv,2) .eq. 3) then
+                  gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
+     &               real(count_up,R8) / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
+     &               sqrt(dpsi_max_up/dpsi(iCv)))
+                else
+                  gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
+     &               real(count_up,R8) / mpg%vxCvP(iVx,2)
+                endif
+              elseif ( gm%cvFpsi(iCv) .lt. gm%vxFpsi(iVx) ) then
+                if (mpg%cvVxP(iCv,2) .eq. 3) then
+                  gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
+     &             real(count_down,R8) / (mpg%vxCvP(iVx,2)*sqrt(2.0_R8)*
+     &                   sqrt(dpsi_max_up/dpsi(iCv)))
+                else
+                  gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) =
+     &             real(count_down,R8) / mpg%vxCvP(iVx,2)
+                endif
+              endif
+            else
+              ! Make guards cells dominate and account for
+              ! length difference via distance to vertex
+              gm%vxVol(mpg%vxCvP(iVx,1)+inCv - 1) = 0.25e-3_R8 *
+     &             sqrt( (gm%cvX(iCv) - gm%vxX(iVx))**2 +
+     &                   (gm%cvY(iCv) - gm%vxY(iVx))**2 )
+            endif
           enddo
           !Special case for pentagon splitting
           if (mpg%vxCvP(iVx,2).eq.3) then

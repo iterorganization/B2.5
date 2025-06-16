@@ -8,6 +8,3 @@
 
       return
       end function dim
-
-      
-    

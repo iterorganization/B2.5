@@ -126,4 +126,3 @@
 *.end b2mn
 
       end program b2mn
-

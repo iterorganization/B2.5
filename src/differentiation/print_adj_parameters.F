@@ -225,4 +225,3 @@
 
       return
       end subroutine print_adj_parameters
-

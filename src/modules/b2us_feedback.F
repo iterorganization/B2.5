@@ -1,9 +1,12 @@
       module b2us_feedback
       use b2mod_types
       use b2mod_indirect
+      use b2mod_geometry
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpb
+      use b2mod_b2plot
+     & , only : b2_fnmti
       use b2mod_diag
       use b2mod_time
       use b2mod_neutrals_namelist
@@ -15,10 +18,20 @@
       use b2us_map
       use b2us_plasma
       use b2mod_user_namelist
-     & , only : nomp, omp, icsepomp, nimp, imp, icsepimp
+     & , only : nomp, omp, icsepomp, nimp, imp, icsepimp,
+     &          npfr_cvs, pfr_cvs
 #ifdef B25_EIRENE
+#ifndef SOLPS4_3
       use eirmod_wneutrals
-     & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm
+     & , only : wldna, wldra, wldpa, wldnm, wldrm, wldpm,
+     &          ewldrp_res
+      use eirmod_eirbra
+     & , only : fnmti_B2
+#else
+      use eirdiag          ! IGNORE
+#endif
+#else
+      use b2mod_eirdiag
 #endif
       use b2mod_dimensions
       implicit none
@@ -26,13 +39,14 @@
 
 *   ..variables
       real (kind=R8), save ::
-     * cum_volrec, dt_prev, ddtim
+     * cum_volrec, dt_prev, ddtim, she_rad_tot, she_eir_tot
       logical, save :: feedback_namelist_used
       logical, save :: feedback_read, control_read
       logical, save :: feedback_allocated = .false.
       real (kind=R8) :: charge_frac(DEF_NSD)
 
       integer, save :: icped = 0, b2sral_style = 2, ncallfeedback = 0
+      integer, save :: geometryType
 
       integer, allocatable, save :: fbRegP(:,:) ! (nFb,2) pointing for each feedback to the first index in the fbReg list, and its number of CVs or faces
       integer, allocatable, save :: fbReg(:)  !         listing for each feedback the cells or faces
@@ -42,17 +56,19 @@
       real (kind=R8), save ::
      & fb_target(DEF_NATM) = 0.0_R8, fb_time(DEF_NATM) = 0.0_R8,
      & saved_fb_actuator(DEF_NATM) = 0.0_R8,
+     & saved_fb_prev(DEF_NATM) = 0.0_R8,
      & fb_alpha(DEF_NATM) = 0.001_R8, fb_beta(DEF_NATM) = 1.0_R8,
      & fb_const(DEF_NATM) = 0.0_R8, fb_puff_min(DEF_NATM) = 0.0_R8,
      & fb_puff_max(DEF_NATM) = 0.0_R8, fb_overshoot(DEF_NATM) = 0.0_R8,
-     & fb_current(DEF_NATM) = 0.0_R8, fb_prev(DEF_NATM) = 0.0_R8,
-     & fb_rescale(DEF_NATM) = 1.0_R8
+     & fb_current(DEF_NATM) = 0.0_R8, fb_rescale(DEF_NATM) = 1.0_R8,
+     & fb_current_prev(DEF_NATM) = 0.0_R8
 
       integer, save :: fb_reg_par(DEF_NATM,2) = 0, !contains face label to define list of faces for feedback
      & fb_species(DEF_NATM) = 0, fb_ib(DEF_NATM) = -1,
      & fb_type(DEF_NATM) = 0, fb_rescale_option(DEF_NATM) = 0,
      & fb_actuator(DEF_NATM) = 0, fb_istra(DEF_NATM) = 0,
      & fb_reg(nMxFbReg) = 0, fb_regp(DEF_NATM,2) = 0 !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
+      logical, save :: fb_type_inverse(DEF_NATM) = .false.
 
 ! csc old switches
       integer, save :: fhiycore_kinetic_energy
@@ -93,7 +109,7 @@
      i  coreregno/1/, coreregn2/0/, solregno/6/,
      i  pfrregno1/4/, pfrregno2/5/, isfeedback/0/, nesepm_istra/-1/
 
-      namelist /feedback/ saved_fb_actuator
+      namelist /feedback/ saved_fb_actuator, saved_fb_prev
 ! new namelist for specifying more complicated feedback options
       namelist /feedback_control/
 ! csc new namelist merging all feedback schemes
@@ -101,7 +117,7 @@
      & fb_target, fb_type, fb_rescale_option,
      & fb_actuator, fb_alpha, fb_beta,
      & fb_const, fb_time,
-     & fb_ib, fb_species,
+     & fb_ib, fb_species, fb_type_inverse,
      & fb_puff_min, fb_puff_max,
      & fb_overshoot, fb_reg, fb_regp,
      & fb_reg_par, fb_istra
@@ -141,7 +157,8 @@
       else
         if (.not.file_ok) write(6,*) 'No ',trim(filename)
       endif
-      found = maxval(saved_fb_actuator).gt. 0.0_R8
+      found = maxval(saved_fb_actuator).gt.0.0_R8 .or.
+     &        maxval(saved_fb_prev).gt.0.0_R8
       return
 #ifdef USE_MPI
   999 call xerrab ('Error while reading FEEDBACK namelist!')
@@ -157,8 +174,8 @@
       character*256 filename
 
 c      feedback_namelist_used = feedback_namelist_used .or.
-c     .            saved_cbsna_sol, maxval(saved_na_feedback_actuator))
-c     .            .gt.0.0_R8
+c     .            maxval(saved_fb_actuator).gt.0.0_R8 .or.
+c     .            maxval(saved_fb_prev).gt.0.0_R8
 
       if (edition.eq.'    ') then
         filename = 'b2.feedback_save.parameters'
@@ -175,6 +192,8 @@ cxpb size is changed in b2mod_dimensions
      >   '(a,1p,',nFb,'(1x,1e15.8,'',''))'
         write(nwrite,hlp_frm) 'SAVED_FB_ACTUATOR=',
      >   (saved_fb_actuator(is),is=1,nFb)
+        write(nwrite,hlp_frm) 'SAVED_FB_PREV=',
+     >   (saved_fb_prev(is),is=1,nFb)
         write(nwrite,'(a1)') '/'
         close(nwrite)
         write(*,*) 'Saved ',trim(filename)
@@ -221,10 +240,11 @@ cxpb size is changed in b2mod_dimensions
       control_read = .false.
       end subroutine write_b2us_feedback_control
 
-      subroutine init_feedback(nFc, ns, switch, mpg)
+      subroutine init_feedback(nFc, ns, switch, mpg, geo)
       implicit none
       type (switches), intent (in) :: switch
       type (mapping), intent (in) :: mpg
+      type (geometry), intent (in) :: geo
       integer :: nFc, ns
       integer ifb, ifbb, istrai, icount
       integer ifbreg, is, ib, is0, is00, is_start, is_end, iatm
@@ -726,10 +746,10 @@ cxpb size is changed in b2mod_dimensions
       endif
 
       call xertst(nFb.le.DEF_NATM,
-     & 'b2mod_feedback: increase size of DEF_NATM')
+     & 'b2us_feedback: increase size of DEF_NATM')
 
       do ifb = 1, nFb
-        if (fb_actuator(ifb).ne.1.or.switch%use_eirene.eq.0) cycle
+        if(fb_actuator(ifb).ne.1.or.switch%use_eirene.eq.0) cycle
         if(fb_istra(ifb).gt.0) then
           call xertst (fb_istra(ifb).le.nstrat,
      1      'faulty internal parameter fb_istra')
@@ -760,6 +780,29 @@ cxpb size is changed in b2mod_dimensions
         call xertst (fb_istra(ifb).gt.0,
      &    'No "C" stratum for feedback scheme specified !')
       enddo
+! sanity checks of namelist and converted input
+      do iFb = 1, nFb
+        call xertst(0.le.fb_species(iFb).and.fb_species(iFb).lt.ns,
+     .   'faulty parameter fb_species!')
+        call xertst(0.le.fb_type(iFb), 'faulty parameter fb_type!')
+        call xertst(0.le.fb_rescale_option(iFb),
+     .   'faulty parameter fb_rescale_option!')
+        call xertst(0.le.fb_actuator(iFb),
+     .   'faulty parameter fb_actuator!')
+        call xertst(-1.le.fb_ib(iFb).and.fb_ib(iFb).le.nbc,
+     .   'faulty parameter fb_ib!')
+        call xertst(0.le.fb_istra(iFb).and.fb_istra(iFb).le.nstrai,
+     .   'faulty parameter fb_istra!')
+        call xertst(0.0_R8.le.fb_puff_min(iFb).and.
+     .    fb_puff_min(iFb).le.fb_puff_max(iFb),
+     .   'faulty parameters fb_puff_min/max!')
+        call xertst(0.0_R8.le.fb_overshoot(iFb),
+     .   'faulty parameter fb_overshoot!')
+        call xertst(0.le.fb_regp(iFb,1).and.0.le.fb_regp(iFb,2),
+     .   'faulty parameters fb_regp!')
+        call xertst(0.le.fb_reg_par(iFb,1).and.0.le.fb_reg_par(iFb,2),
+     .   'faulty parameters fb_reg_par!')
+      end do
 
       consistent = .true.
       do ifb = 1, nFb
@@ -779,7 +822,7 @@ cxpb size is changed in b2mod_dimensions
           if ( (fb_type(ifb).eq.fb_type(ifbb)).and. .not.
      &         ((fb_type(ifb).eq.1).or.(fb_type(ifb).eq.4).or.
      &          (fb_type(ifb).eq.5).or.(fb_type(ifb).eq.7).or.
-     &          (fb_type(ifb).eq.8)) )
+     &          (fb_type(ifb).eq.8).or.(fb_type(ifb).eq.17)) )
      &          call xerrab('init_feedback:'//
      &      ' set of feedbacks cannot be applied multiple times')
         enddo
@@ -824,7 +867,7 @@ cxpb size is changed in b2mod_dimensions
         if (fb_ib(ifb).ge.0) cycle
         consistent = consistent .and.
      &    .not.(fb_actuator(ifb).eq.1 .or.
-     &          fb_actuator(ifb).eq.3) .and.
+     &          fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.7) .and.
      &    .not.(fb_rescale_option(ifb).eq.4)
       end do
       do ifb = 1, nFb
@@ -850,6 +893,7 @@ cxpb size is changed in b2mod_dimensions
       endif
 
 !   ..Calculate and fill list of CVs and faces needed for each type of feedback
+      geometryType = geometryId ( mpg, geo, 2 )
       ifbreg = 1
       if  (maxval(fb_type(1:nFb)).gt.0) then
         do ifb = 1, nFb
@@ -860,21 +904,31 @@ cxpb size is changed in b2mod_dimensions
             fbRegP(ifb,2) = fb_RegP(ifb,2)
             fbReg(ifbreg:ifbreg+fbRegP(ifb,2)-1) =
      &        fb_Reg(fb_RegP(ifb,1):fb_RegP(ifb,1)+fb_RegP(ifb,2)-1)
-            ifbreg = ifbreg +   fb_RegP(ifb,2)
+            ifbreg = ifbreg + fb_RegP(ifb,2)
             done = .true.
           endif
+        ! include default to outer target for certain feedback schemes
+          if (fb_type(ifb).ge.23 .and. fb_type(ifb).le.26 .and.
+     &        fb_reg_par(ifb,1).eq.0) then
+            write(*,*) 'No fb_reg_par is found. '//
+     &       'Setting fb_reg_par to 2 (presumably the outer target)'
+            fb_reg_par(ifb,1) = 2
+          end if
+          if (fb_type(ifb).ge.23 .and. fb_type(ifb).le.26 .and.
+     &        fb_reg_par(ifb,2).eq.0) fb_reg_par(ifb,2) = 2
         ! now look for feedback types requiring faces
-          if ((fb_type(ifb).eq.6 .or. fb_type(ifb).eq.10 .or.
-     &        fb_type(ifb).eq.11 .or. fb_type(ifb).eq.12 .or.
-     &        fb_type(ifb).eq.13)
+          if ((fb_type(ifb).eq.6  .or. fb_type(ifb).eq.10 .or.
+     &         fb_type(ifb).eq.11 .or. fb_type(ifb).eq.12 .or.
+     &         fb_type(ifb).eq.13 .or.
+     &        (fb_type(ifb).ge.23 .and. fb_type(ifb).le.26))
      &        .and. .not.done) then
             call xertst(fb_reg_par(ifb,1).gt.0,
      &        'init_feedback: At lest one segment must be specified'//
-     &        ' in fb_reg_par for fb_type=  6, 7, 10-13 and 15')
+     &        ' in fb_reg_par for fb_type = 6, 7, 10 to 13, or 15')
             ! check if same region/boundary has already been done
             do ifbb = 1, ifb-1
-              if (fb_reg_par(ifb,1).eq.fb_reg_par(ifbb,1)
-     &         .and.fb_reg_par(ifb,2).eq.fb_reg_par(ifbb,2)) then
+              if (fb_reg_par(ifb,1).eq.fb_reg_par(ifbb,1) .and.
+     &            fb_reg_par(ifb,2).eq.fb_reg_par(ifbb,2)) then
                 fbRegP(ifb,:) = fbRegP(ifbb,:)
                 done = .true.
               endif
@@ -890,7 +944,7 @@ cxpb size is changed in b2mod_dimensions
      &        fb_type(ifb).eq.8) .and. .not.done) then
             call xertst(fb_reg_par(ifb,1).gt.0,
      &        'init_feedback: At lest one segment must be specified'//
-     &        ' in fb_reg_par for fb_type=  1, 2, 5 and 8')
+     &        ' in fb_reg_par for fb_type = 1, 2, 5, or 8')
             ! check if same region/boundary has already been done
             do ifbb = 1, ifb-1
               if (fb_reg_par(ifb,1).eq.fb_reg_par(ifbb,1)
@@ -913,7 +967,7 @@ cxpb size is changed in b2mod_dimensions
       end subroutine init_feedback
 
       subroutine compute_feedback(nCv, nFc, ns, ismain,
-     &  switch, geo, mpg, pl, dv, rt, psnc, psnl, main_call)
+     &  switch, geo, mpg, pl, dv, rt, srw, psnc, psnl, main_call)
       implicit none
 *   ..input arguments (unchanged on exit)
       integer, intent (in) :: nCv, nFc, ns, ismain
@@ -923,13 +977,17 @@ cxpb size is changed in b2mod_dimensions
       type (B2Plasma), intent (inout) :: pl
       type (B2Derivatives), intent (inout) :: dv
       type (B2Rates), intent (in) :: rt
+      type (B2SourceWork), intent (in) :: srw
       type (B2PlasmaSnapshot), intent (inout) :: psnc, psnl
       logical main_call
 *   ..local variables
       integer :: ifb, iFc, iFc1, iFc2, iCv, ic1, ic2, is, is_start,
-     & is_end, iss, i, j, k, l
+     & is_end, iss, i, j, k, l, ic, iFs,
+     & iatm, imol
       integer, save :: ncall = 0
-      real(kind=r8) :: sum_e, total_flux, vol_feedback, sum_s
+      real (kind=R8) :: sum_e, total_flux, vol_feedback, sum_s,
+     & t0, t1, zaf
+      real (kind=R8), external :: intface_s
 
       call subini ('compute_feedback')
       if (ncall.eq.0) then
@@ -956,10 +1014,12 @@ cxpb size is changed in b2mod_dimensions
      &        fb_rescale_option(ifb) .gt. 0 .and.
      &        fb_actuator(ifb) .gt.0) then
 
-            if (main_call) then
-              fb_prev(ifb) = saved_fb_actuator(ifb)
+            if (main_call.and.ncall.gt.0) then
+              saved_fb_prev(ifb) = saved_fb_actuator(ifb)
             end if
 
+          if (abs(fb_current(ifb)) > 1.0e-7_R8)
+     >        fb_current_prev(ifb) = fb_current(ifb)
 ! phase 1:
             select case(fb_type(ifb))
 
@@ -1288,37 +1348,12 @@ cxpb size is changed in b2mod_dimensions
      &            'compute_feedback_type: using ',
      &            'electron heat flux'
               endif
-#ifdef COMPLICATED
-              call xerrab('COMPLICATED not yet converted for WG')
-! the 'complicated' calculation downwards was correct assuming we look only at core boundary
-! while now we generalize for any boundary/surface
-              teave1=0.0_R8
-              neave1=0.0_R8
-              teave2=0.0_R8
-              neave2=0.0_R8
-#endif
               fb_current(ifb) = 0.0_R8
               iFc1 = fbRegP(ifb,1)
               iFc2 = iFc1 + fbRegP(ifb,2) - 1
               do iFc = iFc1, iFc2
                 fb_current(ifb)=fb_current(ifb)+
      &           dv%fhe(fbReg(iFc),1)
-#ifdef COMPLICATED
-            ic1 = mpg%bcCvP(ib,1)
-            ic2 = ic1 + mpg%bcCvP(ib,2) -1
-            do iCv = ic1, ic2
-              teave1=teave1+pl%te(mpg%bcCv(iCv,1))*
-     .                      dv%ne(mpg%bcCv(iCv,1))*
-     .                     geo%cvVol(mpg%bcCv(iCv,1))
-              neave1=neave1+dv%ne(mpg%bcCv(iCv,1))*
-     .                     geo%cvVol(mpg%bcCv(iCv,1))
-              teave2=teave2+pl%te(mpg%bcCv(iCv,2))*
-     .                      dv%ne(mpg%bcCv(iCv,2))*
-     .                     geo%cvVol(mpg%bcCv(iCv,2))
-              neave2=neave2+dv%ne(mpg%bcCv(iCv,2))*
-     .                     geo%cvVol(mpg%bcCv(iCv,2))
-            enddo
-#endif
               end do
               is_start=-1
               is_end=-1
@@ -1336,37 +1371,12 @@ cxpb size is changed in b2mod_dimensions
      &            'compute_feedback_type: using ',
      &            'ion heat flux '
               endif
-#ifdef COMPLICATED
-              call xerrab('COMPLICATED not yet converted for WG')
-! the 'complicated' calculation downwards was correct assuming we look only at core boundary
-! while now we generalize for any boundary/surface
-              tiave1=0.0_R8
-              niave1=0.0_R8
-              tiave2=0.0_R8
-              niave2=0.0_R8
-#endif
               fb_current(ifb) = 0.0_R8
               iFc1 = fbRegP(ifb,1)
               iFc2 = iFc1 + fbRegP(ifb,2) - 1
               do iFc = iFc1, iFc2
                 fb_current(ifb)=fb_current(ifb)+
      &           dv%fhi(fbReg(iFc),1)
-#ifdef COMPLICATED
-            ic1 = mpg%bcCvP(ib,1)
-            ic2 = ic1 + mpg%bcCvP(ib,2) -1
-            do iCv = ic1, ic2
-              tiave1=tiave1+pl%ti(mpg%bcCv(iCv,1))*
-     .                      dv%ni(mpg%bcCv(iCv,1),0)*
-     .                     geo%cvVol(mpg%bcCv(iCv,1))
-              niave1=niave1+dv%ni(mpg%bcCv(iCv,1),0)*
-     .                     geo%cvVol(mpg%bcCv(iCv,1))
-              tiave2=tiave2+pl%ti(mpg%bcCv(iCv,2))*
-     .                      dv%ni(mpg%bcCv(iCv,2)),0*
-     .                     geo%cvVol(mpg%bcCv(iCv,2))
-              niave2=niave2+dv%ni(mpg%bcCv(iCv,2),0)*
-     .                     geo%cvVol(mpg%bcCv(iCv,2))
-            enddo
-#endif
               enddo
               is_start=-1
               is_end=-1
@@ -1415,7 +1425,7 @@ cxpb size is changed in b2mod_dimensions
               do is=0, ns-1
                 if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
                   if(is_start.eq.-1) is_start=is
-                  do iCv = 1, nCv
+                  do iCv = 1, mpg%nCi
                     fb_current(ifb) = fb_current(ifb) +
      &               pl%na(iCv,is)*geo%cvVol(iCv)
                   enddo
@@ -1464,6 +1474,392 @@ cxpb size is changed in b2mod_dimensions
                 endif
               enddo
 
+            case (17) !  density of ions at outer midplane
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'density of ions at outer midplane for sequence ',
+     &           b2espcr(fb_species(ifb))
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  fb_current(ifb) = fb_current(ifb) + 0.5_R8 *
+     &              (pl%na(omp(icsepomp-1),is)+pl%na(omp(icsepomp),is))
+                  is_end=is
+                endif
+              enddo
+
+            case (18) !  integrated electron cooling
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'integrated electron cooling'
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  is_end=is
+                endif
+              enddo
+              fb_current(ifb) = she_rad_tot + she_eir_tot
+              if (fb_current(ifb).eq.0.0_R8)
+     &          fb_current(ifb) = fb_target(ifb)
+
+            case (20) !  neutral pressure in PFR
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'average neutral pressure for sequence ',
+     &           b2espcr(fb_species(ifb))
+                write(*,*) pfr_cvs(1:npfr_cvs)
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  is_end=is
+                endif
+              enddo
+
+#ifndef SOLPS4_3
+              do k = 1,npfr_cvs
+                iCv = pfr_cvs(k)
+                if (switch%use_eirene.ne.0) then
+                  do iatm=1,nnatmi
+                    if (latmscl(iatm).eq.fb_species(ifb)) then
+                      t0 = dab2(iCv,iatm,1)*tab2(iCv,iatm,1)
+                    end if
+                  end do
+                  do imol=1,nnmoli
+                    if (lmolscl(imol).eq.fb_species(ifb)) then
+                      t0 = t0 + dmb2(iCv,imol,1)*tmb2(iCv,imol,1)
+                    end if
+                  end do
+                else
+                  if (nint(zn(fb_species(ifb))).eq.1) then
+                    t0 = pl%na(iCv,fb_species(ifb))*pl%tn(iCv)
+                  else
+                    t0 = pl%na(iCv,fb_species(ifb))*pl%ti(iCv)
+                  end if
+                end if
+                fb_current(ifb) = fb_current(ifb) + t0*geo%cvVol(iCv)
+              end do
+#endif
+              fb_current(ifb) = fb_current(ifb)/
+     &         sum(geo%cvVol(pfr_cvs(1:npfr_cvs)))
+
+            case (21) !  total radiation losses
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'total radiation losses'
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  is_end=is
+                endif
+              enddo
+              fb_current(ifb) = sum(srw%rqbrm)+sum(srw%rqrad)
+#ifndef SOLPS4_3
+              if (switch%use_eirene.ne.0)
+     >         fb_current(ifb) = fb_current(ifb) -
+     &          (sum(emolrad(:,:,0))+sum(eneutrad(:,:,0))
+     &          +sum(eionrad(:,:,0)))
+#endif
+
+            case (22) ! average density of this species at the separatrix
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &            'compute_feedback_type: using ',
+     &            'average separatrix density for sequence ',
+     &            b2espcr(fb_species(ifb))
+              endif
+              fb_current(ifb) = 0.0_R8
+              sum_e = 0.0_R8
+              is_start = -1
+              is_end = -1
+              do is = 0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is).and.switch%use_eirene.ne.0) cycle
+! csc Here the idea is to follow the separatrix along its flux surface, then use the two CVs
+!     belonging to each face of the flux surface
+                  do ic = 1, 2
+                    if (ic.eq.1) then
+                      iFs = mpg%iFssep
+                    elseif (ic.eq.2.and.
+     &               geometryType.eq.GEOMETRY_CDN) then
+                      iFs = mpg%iFssep2
+                    else
+                      cycle
+                    end if
+                    do k = mpg%fsFcP(iFs,1),
+     &                     mpg%fsFcP(iFs,1)+mpg%fsFcP(iFs,2)-1
+                      iFc = mpg%fsFc(k)
+                      ic1 = mpg%fcCv(iFc,1)
+                      ic2 = mpg%fcCv(iFc,2)
+                      if(mpg%cvOnClosedSurface(ic1) .or.
+     &                   mpg%cvOnClosedSurface(ic2)) then
+                        fb_current(ifb) = fb_current(ifb) +
+     &                    (pl%na(ic1,is)*geo%fcHc(iFc,2) + pl%na(ic2,is)
+     &                    *geo%fcHc(iFc,1)) /
+     &                    sum(geo%fcHc(iFc,:))*geo%fcS(iFc)
+                        if (is.eq.is_start+1) then
+                          sum_e = sum_e + geo%fcS(iFc)
+                        end if
+                      end if
+                    enddo
+                  enddo
+                  is_end = is
+                endif
+              enddo
+              fb_current(ifb) = fb_current(ifb)/sum_e
+
+            case (23) !  Total plasma heat flux at outer target
+
+              if(ncall.eq.0) then
+                if (fb_reg_par(ifb,1).eq.fb_reg_par(ifb,2)) then
+                  write(*,'(a,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             ' plasma heat flux density along boundary ',
+     &              fb_reg_par(ifb,1), ' for sequence ',
+     &              b2espcr(fb_species(ifb))
+                else
+                  write(*,'(a,a,i3,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             ' plasma heat flux density along boundaries ',
+     &              fb_reg_par(ifb,1),' to ',fb_reg_par(ifb,2),
+     &             ' for sequence ',b2espcr(fb_species(ifb))
+                end if
+                fb_target(ifb) = 1.0_R8/fb_target(ifb)
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  is_end=is
+                endif
+              enddo
+              fb_current(ifb) = 0.0_R8
+              iFc1 = fbRegP(ifb,1)
+              iFc2 = iFc1 + fbRegP(ifb,2) - 1
+              do iFc = iFc1, iFc2
+                ic = mpg%fcBc(fbReg(iFc),1)
+                t1 = mpg%bcFcOr(ic)
+                t0 = dv%fht(fbReg(iFc),0)+dv%fht(fbReg(iFc),1)
+                t0 = t1*t0/geo%fcS(fbReg(iFc))
+                if (switch%use_eirene.ne.0) then
+                  t0 = t0 - ewldrp_res(b2_fnmti(fbReg(iFc)))
+                endif
+                fb_current(ifb) = max(fb_current(ifb),t0)
+              enddo
+              if (fb_current(ifb).ne.0.0_R8) then
+                fb_current(ifb) = 1.0_R8/abs(fb_current(ifb))
+              endif
+
+            case (24) ! peak electron temperature at specific boundary
+
+              if(ncall.eq.0) then
+                if (fb_reg_par(ifb,1).eq.fb_reg_par(ifb,2)) then
+                  write(*,'(a,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             'peak electron temperature along boundary ',
+     &              fb_reg_par(ifb,1),' for sequence ',
+     &              b2espcr(fb_species(ifb))
+                else
+                  write(*,'(a,a,i3,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             'peak electron temperature along boundaries ',
+     &              fb_reg_par(ifb,1),' to ',fb_reg_par(ifb,2),
+     &             ' for sequence ',b2espcr(fb_species(ifb))
+                end if
+                fb_target(ifb) = 1.0_R8/fb_target(ifb)
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  is_end=is
+                endif
+              enddo
+              fb_current(ifb) = 0.0_R8
+
+              iFc1 = fbRegP(ifb,1)
+              iFc2 = iFc1 + fbRegP(ifb,2) - 1
+              do iFc = iFc1, iFc2
+                iCv = min(mpg%fcCv(fbReg(iFc),1),mpg%fcCv(fbReg(iFc),2))
+                fb_current(ifb) = max(fb_current(ifb),pl%te(iCv)/qe)
+              enddo
+              fb_current(ifb) = 1.0_R8/fb_current(ifb)
+
+            case (25) ! peak electron density at specific boundary
+
+              if(ncall.eq.0) then
+                if (fb_reg_par(ifb,1).eq.fb_reg_par(ifb,2)) then
+                  write(*,'(a,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             'peak electron density along boundary ',
+     &              fb_reg_par(ifb,1),' for sequence ',
+     &              b2espcr(fb_species(ifb))
+                else
+                  write(*,'(a,a,i3,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             'peak electron density along boundaries ',
+     &              fb_reg_par(ifb,1),' to ',fb_reg_par(ifb,2),
+     &             ' for sequence ',b2espcr(fb_species(ifb))
+                endif
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  is_end=is
+                endif
+              enddo
+              fb_current(ifb) = 0.0_R8
+
+              iFc1 = fbRegP(ifb,1)
+              iFc2 = iFc1 + fbRegP(ifb,2) - 1
+              do iFc = iFc1, iFc2
+                iCv = min(mpg%fcCv(fbReg(iFc),1),mpg%fcCv(fbReg(iFc),2))
+                fb_current(ifb) = max(fb_current(ifb),dv%ne(iCv))
+              enddo
+
+            case (26) ! peak parallel saturation current
+
+              if(ncall.eq.0) then
+                if (fb_reg_par(ifb,1).eq.fb_reg_par(ifb,2)) then
+                  write(*,'(a,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             'peak parallel saturation current along boundary ',
+     &             fb_reg_par(ifb,1),' for sequence ',
+     &             b2espcr(fb_species(ifb))
+                else
+                  write(*,'(a,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             'peak parallel saturation current along boundaries ',
+     &             fb_reg_par(ifb,1),' to ',fb_reg_par(ifb,2),
+     &             ' for sequence ',b2espcr(fb_species(ifb))
+                end if
+                if (fb_type_inverse(ifb))
+     &           fb_target(ifb) = 1.0_R8/fb_target(ifb)
+              endif
+
+              fb_current(ifb) = 0.0_R8
+              is_start=-1
+              is_end=-1
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  if(is_neutral(is)) cycle
+                  is_end=is
+                endif
+              enddo
+              fb_current(ifb) = 0.0_R8
+
+              iFc1 = fbRegP(ifb,1)
+              iFc2 = iFc1 + fbRegP(ifb,2) - 1
+              do iFc = iFc1, iFc2
+                iCv = min(mpg%fcCv(fbReg(iFc),1),mpg%fcCv(fbReg(iFc),2))
+                ic = mpg%fcBc(fbReg(iFc),1)
+                t1 = mpg%bcFcOr(ic)
+                t0 = 0.0_R8
+                do is = 0, ns-1
+                  if (is_neutral(is)) cycle
+                  zaf = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,
+     .             rt%rza(1,is))
+                  t0 = t0 + t1*(dv%fna(fbReg(iFc),0,is)+
+     .                          dv%fna(fbReg(iFc),1,is))*
+     .                 zaf*qe/geo%fcS(fbReg(iFc))/
+     .                (geo%fcQalf(fbReg(iFc),0)*geo%fcBb(fbReg(iFc),0)/
+     .                 geo%fcBb(fbReg(iFc),3))
+                enddo
+                fb_current(ifb) = max(fb_current(ifb),t0)
+              enddo
+              if (fb_type_inverse(ifb))
+     &         fb_current(ifb) = 1.0_R8/fb_current(ifb)
+
+            case (27) ! total particle content in SOL+PFR for given
+                      ! isonuclear sequence (including neutrals)
+                      ! test ions from EIRENE are not included for now
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_type: using ',
+     &           'total particle content in SOL for sequence ',
+     &            b2espcr(fb_species(ifb))
+              endif
+
+              is_start=-1
+              is_end=-1
+              fb_current(ifb) = 0.0_R8
+              do is=0, ns-1
+                if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
+                  if(is_start.eq.-1) is_start=is
+                  do iCv = 1, mpg%nCi
+                    if(mpg%cvOnClosedSurface(iCv)) cycle
+                    if(mpg%cvReg(iCv).eq.0) cycle
+                    fb_current(ifb) = fb_current(ifb) +
+     &               pl%na(iCv,is)*geo%cvVol(iCv)
+#ifndef SOLPS4_3
+                    if (switch%use_eirene.ne.0) then
+                      do iatm=1,nnatmi
+                        if (latmscl(iatm).eq.fb_species(ifb)) then
+                          fb_current(ifb) = fb_current(ifb) +
+     &                     dab2(iCv,iatm,1)*geo%cvVol(iCv)
+                        endif
+                      enddo
+                      do imol=1,nnmoli
+                        if (mlcmp(iatm,imol).ne.0) then
+                          fb_current(ifb) = fb_current(ifb) +
+     &                     dmb2(iCv,imol,1)*mlcmp(iatm,imol)
+     &                     *geo%cvVol(iCv)
+                        endif
+                      enddo
+                    endif
+#endif
+                  enddo
+                  is_end=is
+                endif
+              enddo
+
             case default
                write(*,*) 'fb_type not coded ',
      &              fb_type(ifb)
@@ -1477,7 +1873,7 @@ cxpb size is changed in b2mod_dimensions
 
             case (0) ! no action
 
-            case (1) ! rescale slowed by na_feedback_alpha
+            case (1) ! rescale slowed by fb_alpha
 
               if(ncall.eq.0) then
                 write(*,'(a,a,i3)')
@@ -1528,41 +1924,24 @@ cxpb size is changed in b2mod_dimensions
      &           'compute_feedback_option: using ',
      &           'SOLPS4 linear increase for sequence ',
      &           b2espcr(fb_species(ifb))
-                if(fb_const(ifb).lt.0.0_R8) then
-                  fb_const(ifb) = 0.0_R8
-                  is_start=-1
-                  is_end=-1
-                  do is=0, ns-1
-                    if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
-                      if(is_start.eq.-1) is_start=is
-                      ic1 = fbRegP(ifb,1)
-                      ic2 = ic1 + fbRegP(ifb,2) - 1
-                      do iCv = ic1, ic2
-                        if(mpg%cvReg(fbReg(iCv)).ne.0 .and.
-     &                     fbReg(iCv).le.mpg%nCi) then
-                          fb_const(ifb) =
-     &                      fb_const(ifb) +
-     &                      pl%na(fbReg(iCv),is) * geo%cvVol(fbReg(iCv))
-                        endif
-                      enddo
-                      is_end=is
-                    endif
-                  enddo
-                endif
-                  fb_prev(ifb) = fb_current(ifb)
+                if(fb_const(ifb).le.0.0_R8)
+     &             fb_const(ifb) = fb_target(ifb)
+                if(saved_fb_prev(ifb).eq.0.0_R8)
+     &             saved_fb_prev(ifb) = fb_current(ifb)
+                if(fb_current(ifb).gt.0.0_R8)
+     &             fb_current_prev(ifb) = fb_current(ifb)
               endif
 
               fb_target(ifb) =
      .          fb_const(ifb) +
      .          fb_beta(ifb)*
      .          (tim-fb_time(ifb))
-              fb_rescale =
+              fb_rescale(ifb) =
      .          fb_alpha(ifb) *
      .          ((fb_target(ifb) -
      .          fb_current(ifb))/ddtim +
-     .          (fb_prev(ifb) -
+     .          (fb_current_prev(ifb) -
      .          fb_current(ifb))/dt_prev)
-              saved_fb_actuator(ifb) = fb_current(ifb)
 
             case (5) ! rescale done according to SOLPS4 formula:
                         ! Nt = A*exp((time-T)*B)
@@ -1572,25 +1951,12 @@ cxpb size is changed in b2mod_dimensions
      &           'compute_feedback_option: using ',
      &           'SOLPS4 exponential decay for sequence ',
      &           b2espcr(fb_species(ifb))
-                if(fb_const(ifb).lt.0.0_R8) then
-                  fb_const(ifb) = 0.0_R8
-                  is_start=-1
-                  is_end=-1
-                  do is=0, ns-1
-                    if(b2espcr(is).eq.b2espcr(fb_species(ifb))) then
-                      if(is_start.eq.-1) is_start=is
-                      do iCv = 1, mpg%nCi
-                        if(mpg%cvReg(iCv).ne.0) then
-                          fb_const(ifb) =
-     &                      fb_const(ifb) +
-     &                      pl%na(iCv,is) * geo%cvVol(iCv)
-                        endif
-                      enddo
-                      is_end=is
-                    endif
-                  enddo
-                endif
-                fb_prev(ifb) = fb_current(ifb)
+                if(fb_const(ifb).le.0.0_R8)
+     &             fb_const(ifb) = fb_target(ifb)
+                if(saved_fb_prev(ifb).eq.0.0_R8)
+     &             saved_fb_prev(ifb) = fb_current(ifb)
+                if(fb_current(ifb).gt.0.0_R8)
+     &             fb_current_prev(ifb) = fb_current(ifb)
               endif
 
               fb_target(ifb) =
@@ -1601,14 +1967,41 @@ cxpb size is changed in b2mod_dimensions
      .           fb_alpha(ifb) *
      .           ((fb_target(ifb) -
      .           fb_current(ifb))/ddtim +
-     .           (fb_prev(ifb) -
+     .           (fb_current_prev(ifb) -
      .           fb_current(ifb))/dt_prev)
-              saved_fb_actuator(ifb) = fb_current(ifb)
 
             case (6) ! rescale slowed by fb_alpha (SOLPS4 style)
 
-                  fb_rescale(ifb) =
-     &               fb_alpha(ifb) * fb_current(ifb)
+              fb_rescale(ifb) =
+     &           fb_alpha(ifb) * fb_current(ifb)
+
+            case (7) ! rescale slowed by tanh_log
+
+              if(ncall.eq.0) then
+                write(*,'(a,a,i3)')
+     &           'compute_feedback_option: using ',
+     &           'tanh_log_rescale with plateau for sequence ',
+     &            b2espcr(fb_species(ifb))
+              endif
+
+! 2**(tanh(log(x)/b)*log(a)/log(2))
+              t0 = fb_target(ifb)*(1.0_R8-fb_const(ifb))
+              t1 = fb_target(ifb)*(1.0_R8+fb_const(ifb))
+              if(fb_current(ifb) < t0) then
+                fb_rescale(ifb) = 2.0_R8 **
+     &             (tanh(log(t0 /
+     &             fb_current(ifb))/
+     &             fb_beta(ifb))*
+     &             log(fb_alpha(ifb))/log(2.0_R8))
+              elseif(fb_current(ifb) > t1) then
+                fb_rescale(ifb) = 2.0_R8 **
+     &             (tanh(log(t1 /
+     &             fb_current(ifb))/
+     &             fb_beta(ifb))*
+     &             log(fb_alpha(ifb))/log(2.0_R8))
+              else
+                fb_rescale(ifb) = 1.0_R8
+              endif
 
             case default
               write(*,*) 'fb_rescale_option not coded ',
@@ -1621,7 +2014,7 @@ cxpb size is changed in b2mod_dimensions
      &        fb_current(ifb),
      &        fb_target(ifb),
      &        fb_rescale(ifb),
-     &        fb_prev(ifb),
+     &        saved_fb_prev(ifb),
      &        ddtim, dt_prev
 
 ! phase 3:
@@ -1669,8 +2062,11 @@ cxpb size is changed in b2mod_dimensions
               if (fb_rescale_option(ifb).lt.4) then
                 saved_fb_actuator(ifb) =
      &            saved_fb_actuator(ifb) * fb_rescale(ifb)
-              else
+              elseif (fb_rescale_option(ifb).ge.6) then
                 saved_fb_actuator(ifb) = fb_rescale(ifb)
+              else
+                saved_fb_actuator(ifb) =
+     &           saved_fb_actuator(ifb) + fb_rescale(ifb)
               end if
               if(fb_puff_min(ifb).ge.0.0_R8)
      >         saved_fb_actuator(ifb) =
@@ -2105,5 +2501,40 @@ cxpb size is changed in b2mod_dimensions
 
       return
       end subroutine write_fbparms
+
+***********************************************************************
+
+      subroutine write_fbsave
+      use b2mod_version
+      implicit none
+      integer :: is, iout
+      character*26 :: hlp_frm
+#ifdef LEGACYCOMP
+      integer newunit
+      external newunit
+#endif
+
+#ifndef LEGACYCOMP
+      open(newunit=iout,file='b2us.feedback_save.parameters')
+#else
+      iout = newunit()
+      open(unit=iout,file='b2us.feedback_save.parameters')
+#endif
+      call cfverw(iout,newversion)
+
+      write (iout,'(1x,a)') '&feedback'
+      write(hlp_frm,'(a,i2,a)') '(1x,a,(1x,',nFb,'(es22.15,a1)))'
+      if (maxval(saved_fb_actuator).gt.0.0_R8)
+     > write(iout,hlp_frm) 'SAVED_FB_ACTUATOR = ',
+     .  (saved_fb_actuator(is),',',is=1,nFb)
+      if (maxval(saved_fb_prev).gt.0.0_R8)
+     > write(iout,hlp_frm) 'SAVED_FB_PREV = ',
+     .  (saved_fb_prev(is),',',is=1,nFb)
+
+      write (iout,'(1x,a)') '/'
+      close (iout)
+
+      return
+      end subroutine write_fbsave
 
       end module b2us_feedback

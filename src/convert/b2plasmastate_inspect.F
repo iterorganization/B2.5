@@ -164,4 +164,3 @@
 
       stop 'b2plasmastate_inspect'
       end program b2plasmastate_inspect
-

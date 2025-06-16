@@ -55,4 +55,3 @@ c      write(*,*) it,in,rval
 
       return
       end subroutine int2d
-

@@ -279,7 +279,7 @@ c        .. apply flux limit
               jabmax = qe*KabVp(iCv)*sqrt(ti(iCv)/mp)*
      &          (na(iCv,isb)+na(iCv,is))
               t0 = abs(calfab*gti(iCv))/(cflim(4)*jabmax)
-              fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
+              fllim_al_ab = 1.0_R8/(1.0_R8+t0)
             else
               fllim_al_ab = 1.0_R8
             endif

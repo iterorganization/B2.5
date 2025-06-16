@@ -56,4 +56,3 @@ To compile and run the optimization version, for example with PETCs/TAO optimiza
     $ set_tao
     $ gmake b25_adj
     $ b2run -opt_adj b2mn
-

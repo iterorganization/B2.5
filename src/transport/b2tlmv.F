@@ -1,5 +1,5 @@
       subroutine b2tlmv (nCv, nFc, nVx, isb, cflmv, switch, geo, mpg,
-     &    nb, tb, ub, vsbfx, cvsbx, cvsbxhz, fl)                       !srv 09.01.01
+     &    nb, tb, ub, collisnumf, vsbfx, cvsbx, cvsbxhz, fl)         !srv 09.01.01
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_switches
@@ -21,7 +21,7 @@
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
      *  cflmv, nb(nCv), tb(nCv), ub(nCv), vsbfx(nFc), cvsbx(nFc),
-     *  cvsbxhz(nFc), fl(nFc)
+     *  cvsbxhz(nFc), fl(nFc), collisnumf(nFc)
 *     ------------------------------------------------------------------
 *     B2TLMV applies a flux limit to the viscosity.
 *     ------------------------------------------------------------------
@@ -96,14 +96,19 @@ c       fl = 1.0_R8
           if(.not.(.not.is_neutral(isb) .and.
      &             mpg%cvOnClosedSurface(mpg%fcCv(iFc,1)) .and.
      &             mpg%cvOnClosedSurface(mpg%fcCv(iFc,2)))) then     !srv 12.04.08
-            qcl = -cvsbx(iFc)*dub(iFc)
-            qfl = cflmv_loc(iFc)*abs(geo%fcPbs(iFc))*                !srv 11.01.13
+            if (collisnumf(iFc) .gt. switch%min_collisions) then
+              qcl = -cvsbx(iFc)*dub(iFc)
+              qfl = cflmv_loc(iFc)*abs(geo%fcPbs(iFc))*              !srv 11.01.13
      &          (nb(mpg%fcCv(iFc,1))*tb(mpg%fcCv(iFc,1))+
      &           nb(mpg%fcCv(iFc,2))*tb(mpg%fcCv(iFc,2)))/2.0_R8
-            if (qfl.gt.0.0_R8) then
-              tfl = 1.0_R8 + abs(qcl/qfl)
+              if (qfl.gt.0.0_R8) then
+                tfl = 1.0_R8 + abs(qcl/qfl)
+              else
+                tfl = 1.0_R8
+              endif
             else
               tfl = 1.0_R8
+     &         +1.0_R8/(cflmv_loc(iFc)*max(collisnumf(iFc),1.0e-16_R8))
             endif
             cvsbx(iFc) = cvsbx(iFc)/tfl
             cvsbxhz(iFc) = cvsbxhz(iFc)/tfl

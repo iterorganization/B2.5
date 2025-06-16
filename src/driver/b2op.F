@@ -647,4 +647,3 @@
 *.end b2op
 
       end program b2op
-

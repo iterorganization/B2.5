@@ -1370,7 +1370,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
         CALL XERRAB('B2STBC -- BCMOM=6, NOT YET AVAILABLE')
       CASE (7) 
 !
-! -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF VELOSITY
+! -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF VELOCITY
 !
         IF (ncall_b2stbc_phys .EQ. 0) THEN
 !srv 26.02.18 {
@@ -4112,7 +4112,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
       END DO
     CASE (15) 
 !
-! -- BCENK=15 -- Sheath tranmission factor
+! -- BCENK=15 -- Sheath transmission factor
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, *) &
 &                            'BCENK=15 - assuming BCCON=14 for all ions'
 ! loop over number of cells in the boundary
@@ -4417,7 +4417,7 @@ SUBROUTINE B2STBC_PHYS_NODIFF(ncv, nfc, nvx, ns, ismain, ismain0, switch&
       END DO
     CASE (15) 
 !
-! -- BCENZ=15 -- Sheath tranmission factor
+! -- BCENZ=15 -- Sheath transmission factor
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, *) &
 &                            'BCENZ=15 - assuming BCCON=14 for all ions'
 ! loop over number of cells in the boundary
@@ -6646,7 +6646,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
         CALL XERRAB('B2STBC -- BCMOM=6, NOT YET AVAILABLE')
       CASE (7) 
 !
-! -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF VELOSITY
+! -- BCMOM=7 -- PRESCRIBE THE GIVEN PROFILE OF VELOCITY
 !
         IF (ncall_b2stbc_phys .EQ. 0) THEN
 !srv 26.02.18 {
@@ -11058,7 +11058,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
       END DO
     CASE (15) 
 !
-! -- BCENK=15 -- Sheath tranmission factor
+! -- BCENK=15 -- Sheath transmission factor
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, *) &
 &                            'BCENK=15 - assuming BCCON=14 for all ions'
 ! loop over number of cells in the boundary
@@ -11512,7 +11512,7 @@ SUBROUTINE B2STBC_PHYS_DV(ncv, nfc, nvx, ns, ismain, ismain0, switch, &
       END DO
     CASE (15) 
 !
-! -- BCENZ=15 -- Sheath tranmission factor
+! -- BCENZ=15 -- Sheath transmission factor
       IF (ncall_b2stbc_phys .EQ. 0) WRITE(*, *) &
 &                            'BCENZ=15 - assuming BCCON=14 for all ions'
 ! loop over number of cells in the boundary
