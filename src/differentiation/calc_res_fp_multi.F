@@ -38,4 +38,3 @@
 
       return
       end subroutine calc_res_fp_multi
-

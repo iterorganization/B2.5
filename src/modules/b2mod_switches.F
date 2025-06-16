@@ -93,8 +93,6 @@ c Zhdanov closure switches
       real (kind=R8) :: zhflcorr=3.0_R8
       real (kind=R8) :: zhflcorrh=0.4_R8
 
-
-
       integer :: inert_all_ions
       integer :: visper_all_ions
       integer :: dia_lim_all_ions
@@ -160,7 +158,6 @@ c Zhdanov closure switches
       real (kind=R8) :: b2tfnb_alpha
       real (kind=R8) :: b2tfnb_gamma
       real (kind=R8) :: fch_stochastic
-      real (kind=R8) :: Qalfmin
       real (kind=R8) :: delpo
       real (kind=R8) :: Kn_b1
       real (kind=R8) :: Kn_b2
@@ -184,6 +181,7 @@ c switches for far-sol flux limiting options
       real (kind=R8) :: b2tlmv_ni_min
       real (kind=R8) :: b2tlmv_ni_max
       real (kind=R8) :: b2tlmv_cflmv_min
+      real (kind=R8) :: min_collisions
 
 c iout switches
       integer :: iout_b2wdat
@@ -239,6 +237,7 @@ c iout switches
       integer :: b2scdt_iout
       integer :: b2smdt_iout
       integer :: b2shdt_iout
+      integer :: write_eirene_sources
 
 c style switches
       integer :: b2sicf_style
@@ -309,6 +308,12 @@ c phm switches
       real (kind=R8) :: b2treq_phm0
       real (kind=R8) :: b2stbc_phm0
       real (kind=R8) :: b2stbc_phm1
+      integer :: b2sihs_shi
+      integer :: b2sihs_shidu
+      integer :: b2sihs_shidd
+      integer :: b2sihs_shedu
+      integer :: b2sihs_shedd
+      integer :: b2sihs_shivis
 
 c pcm switches
       real (kind=R8) :: b2npco_pcm0
@@ -361,6 +366,7 @@ c MMS
       integer:: set_ua_numerical
       integer:: set_ti_numerical
       integer:: set_te_numerical
+      integer:: set_tn_numerical
       integer:: set_po_numerical
 
 c geometry
@@ -531,11 +537,18 @@ c b2mndt
       real (kind=R8) :: BoRiS
       real (kind=R8) :: b2mndt_rxf
       integer :: b2mndt_style
+      integer :: b2mndt_ckn
+      integer :: b2mndt_dummy
+      integer :: ntim_step_out
+      integer :: calc_err_step_out
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
       real (kind=R8) :: b2mndr_stim
       real (kind=R8) :: neutral_rescale
+      integer :: use_mms
+      integer :: equation_sources
+      integer :: boundary_sources
 
 c b2ag
       real (kind=R8) :: b2agmt_width
@@ -558,8 +571,6 @@ c b2stbc
       real (kind=R8) :: b2stbc_bc_ref
       real (kind=R8) :: b2stbc_bc_ref_te
       real (kind=R8) :: b2stbc_bc_ref_ti
-      real (kind=R8) :: bc_type13_norm
-      real (kind=R8) :: bc_type13_fac
       real (kind=R8) :: nesepm
       real (kind=R8) :: ndes_sol
       real (kind=R8) :: nesepm_overshoot
@@ -572,6 +583,9 @@ c b2trno
 
 c b2nppo
       real (kind=R8) :: b2nppo_restr_po
+
+c b2txcx
+      real (kind=R8) :: b2txcx_increase_transp_coefs
 
 c Feedback
       integer :: b2stbc_feedback
@@ -683,22 +697,21 @@ c Zhdanov closure switches
       s % zhflcorr = 3.0_R8
       s % zhflcorrh = 0.4_R8
 
-
       s % inert_all_ions = 1
       s % visper_all_ions = 1
       s % dia_lim_all_ions = 1
-      s % fhe_vis_per = 0.0e0_R8
-      s % fhe_vis_par = 0.0e0_R8
-      s % fnb_vis_per = 0.0e0_R8
-      s % fnb_vis_q   = 1.0e0_R8
-      s % fhe_vis_q   = 1.0e0_R8
-      s % fnbPSch        = 1.0e0_R8
-      s % fhePSch        = 1.0e0_R8
-      s % fhiPSch        = 1.0e0_R8
-      s % b2tfnb_xcur        = 0.0e0_R8
-      s % b2tfnb_ycur        = 1.0e0_R8
-      s % fch_ion_neutral = 0.0e0_R8
-      s % art_rad = 0.0e0_R8
+      s % fhe_vis_per = 0.0_R8
+      s % fhe_vis_par = 0.0_R8
+      s % fnb_vis_per = 0.0_R8
+      s % fnb_vis_q   = 1.0_R8
+      s % fhe_vis_q   = 1.0_R8
+      s % fnbPSch     = 1.0_R8
+      s % fhePSch     = 1.0_R8
+      s % fhiPSch     = 1.0_R8
+      s % b2tfnb_xcur = 0.0_R8
+      s % b2tfnb_ycur = 1.0_R8
+      s % fch_ion_neutral = 0.0_R8
+      s % art_rad = 0.0_R8
       s % sna0ep = 1.0e-36_R8
       s % she0ep = 1.0e-36_R8
       s % shi0ep = 1.0e-36_R8
@@ -755,7 +768,6 @@ c Zhdanov closure switches
       s % b2tfnb_alpha = 0.0_R8
       s % b2tfnb_gamma = 2.0_R8
       s % fch_stochastic = 0.0_R8
-      s % Qalfmin = 1.0e-3_R8
       s % delpo = 3.1_R8
       s % Kn_b1 = 0.01_R8
       s % Kn_b2 = 0.10_R8
@@ -817,6 +829,7 @@ c Zhdanov closure switches
       s % b2scdt_iout = 0
       s % b2smdt_iout = 0
       s % b2shdt_iout = 0
+      s % write_eirene_sources = 0
 
       s % b2sicf_style = 0
       s % b2sigp_style = 2
@@ -885,6 +898,12 @@ c Zhdanov closure switches
       s % b2treq_phm0 = 1.0_R8
       s % b2stbc_phm0 = 1.0_R8
       s % b2stbc_phm1 = 1.0_R8
+      s % b2sihs_shidu = 1
+      s % b2sihs_shidd = 1
+      s % b2sihs_shedu = 1
+      s % b2sihs_shedd = 1
+      s % b2sihs_shivis = 1
+      s % b2sihs_shi = 1
 
       if ( s % b2mndt_style.eq.2 ) then
         s % b2npco_rxg =  huge(1.0_R8)
@@ -940,6 +959,7 @@ c Zhdanov closure switches
       s % set_ua_numerical = 0
       s % set_te_numerical = 0
       s % set_ti_numerical = 0
+      s % set_tn_numerical = 0
       s % set_po_numerical = 0
 
 
@@ -957,6 +977,7 @@ c far-sol flux limiting options
       s % b2tlmv_ni_min = 1.0e17_R8
       s % b2tlmv_ni_max = 1.0e18_R8
       s % b2tlmv_cflmv_min = 0.5e0_R8
+      s % min_collisions = 0.0_R8
 
 c geometry
       s % fcHz_style = 1
@@ -1051,7 +1072,7 @@ c b2tqna
 
 c fch_anomalous
       s % anml_all_ions = 1
-      s % fch_anomalous = 1.0e0_R8
+      s % fch_anomalous = 1.0_R8
 
 c b2stbm
       s % b2stbm_impgyro_mod = 0
@@ -1135,6 +1156,11 @@ c b2mndt
       else
         s % b2mndt_rxf = 0.5_R8
       end if
+      s % b2mndt_style = 1
+      s % b2mndt_ckn = 1
+      s % b2mndt_dummy = 0
+      s % ntim_step_out = 1
+      s % calc_err_step_out = 1
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1143,6 +1169,9 @@ c b2mndr
       s % b2mndr_hz = 1.0_R8
       s % b2mndr_stim = 0.0_R8
       s % neutral_rescale = 1.0_R8
+      s % use_mms = 0
+      s % equation_sources = 0
+      s % boundary_sources = 0
 
 c b2ag
       s % b2agmt_width = 1.0_R8
@@ -1163,8 +1192,6 @@ c b2stbc_phys
       s % b2stbc_bc_ref = 0.01_R8            !srv 14.10.99
       s % b2stbc_bc_ref_te = 0.01_R8         !IYS 07.03.2013 11.04.13
       s % b2stbc_bc_ref_ti = 0.01_R8         !IYS 07.03.2013 11.04.13
-      s % bc_type13_norm = 1.0e15_R8
-      s % bc_type13_fac = 1.0_R8
       s % nesepm = 0.0_R8
       s % nesepm_overshoot = 0.0_R8
       s % ndes_sol = 0.0_R8
@@ -1177,6 +1204,7 @@ c b2trno
 
 c b2nppo
       s % b2nppo_restr_po = 0.0_R8
+      s % b2txcx_increase_transp_coefs = 0.0_R8
 
 c Optimization
       s % b2optim_save_states = 0
@@ -1285,7 +1313,6 @@ c Zhdanov closure
       call ipgetr ('b2tral_zhflcorr', s % zhflcorr)
       call ipgetr ('b2tral_zhflcorrh', s % zhflcorrh)
 
-
       call ipgeti ('b2tvspr_visper_all_ions', s % visper_all_ions)
       call ipgeti ('b2tiner_inert_all_ions', s % inert_all_ions)
       call ipgeti ('b2tfnb_dia_lim_all_ions', s % dia_lim_all_ions)
@@ -1351,7 +1378,6 @@ c Zhdanov closure
       call ipgetr ('b2tfnb_alpha', s % b2tfnb_alpha)
       call ipgetr ('b2tfnb_gamma', s % b2tfnb_gamma)
       call ipgetr ('b2tfhe_stochastic', s%fch_stochastic)           !lk 31.01.08
-      call ipgetr ('b2stbc_Qalfmin', s % Qalfmin)
       call ipgetr ('b2stbc_delpo', s % delpo)
       call ipgetr ('b2stbr_Kn_b1',s % Kn_b1)
       call ipgetr ('b2stbr_Kn_b2',s % Kn_b2)
@@ -1374,6 +1400,7 @@ c far sol flux limiting
       call ipgetr ('b2tlmv_ni_min', s % b2tlmv_ni_min)
       call ipgetr ('b2tlmv_ni_max', s % b2tlmv_ni_max)
       call ipgetr ('b2tlmv_cflmv_min', s % b2tlmv_cflmv_min)
+      call ipgetr ('b2trcl_min_collisions', s % min_collisions)
 
 c iout switches
       call ipgeti ('b2wdat_iout', s % iout_b2wdat)
@@ -1428,6 +1455,7 @@ c iout switches
       call ipgeti ('b2scdt_iout', s % b2scdt_iout)
       call ipgeti ('b2smdt_iout', s % b2smdt_iout)
       call ipgeti ('b2shdt_iout', s % b2shdt_iout)
+      call ipgeti ('cdfmovie_eirene_sources', s % write_eirene_sources)
 
 c style/mode switches
       call ipgeti ('b2sicf_style', s % b2sicf_style)
@@ -1501,6 +1529,19 @@ c phm switches
       call ipgetr ('b2treq_phm0', s % b2treq_phm0)
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
+      call ipgeti ('b2sihs_shi', s % b2sihs_shi)
+      if (s % b2sihs_shi .eq. 0) then
+        s % b2sihs_shidu = 0
+        s % b2sihs_shidd = 0
+        s % b2sihs_shedu = 0
+        s % b2sihs_shedd = 0
+        s % b2sihs_shivis = 0
+      endif
+      call ipgeti ('b2sihs_shidu', s % b2sihs_shidu)
+      call ipgeti ('b2sihs_shidd', s % b2sihs_shidd)
+      call ipgeti ('b2sihs_shedu', s % b2sihs_shedu)
+      call ipgeti ('b2sihs_shedd', s % b2sihs_shedd)
+      call ipgeti ('b2sihs_shivis', s % b2sihs_shivis)
 
 c pcm switches
       call ipgetr ('b2npco_pcm0', s% b2npco_pcm0)
@@ -1555,6 +1596,7 @@ c MMS
       call ipgeti ('b2mndr_set_ua_numerical', s % set_ua_numerical)
       call ipgeti ('b2mndr_set_te_numerical', s % set_te_numerical)
       call ipgeti ('b2mndr_set_ti_numerical', s % set_ti_numerical)
+      call ipgeti ('b2mndr_set_tn_numerical', s % set_tn_numerical)
       call ipgeti ('b2mndr_set_po_numerical', s % set_po_numerical)
 
 c geometry
@@ -1754,11 +1796,19 @@ c b2mndt
       call ipgetr ('b2mndt_nstg_aresco', s%nstg_aresco)
       call ipgetr ('b2news_BoRiS', s%BoRiS)
       call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
+      call ipgeti ('b2mndt_style', s%b2mndt_style)
+      call ipgeti ('b2mndt_ckn', s%b2mndt_ckn)
+      call ipgeti ('b2mndt_dummy', s%b2mndt_dummy)
+      call ipgeti ('b2mndt_ntim_step_out', s%ntim_step_out)
+      call ipgeti ('b2mndt_calc_err_step_out', s%calc_err_step_out)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
       call ipgetr ('b2mndr_stim', s%b2mndr_stim)
       call ipgetr ('b2mndr_rescale_neutrals', s%neutral_rescale)
+      call ipgeti ('b2mndr_use_mms', s%use_mms)
+      call ipgeti ('b2mndr_equation_sources', s%equation_sources)
+      call ipgeti ('b2mndr_boundary_sources', s%boundary_sources)
 
 c b2ag
       call ipgetr ('b2agmt_1d_width', s%b2agmt_width)
@@ -1779,11 +1829,9 @@ c b2stbc
       call ipgeti ('b2stbc_bceni_16_style', s%bceni_16_style)
 
       call ipgetr ('b2stbc_cbc', s%b2stbc_cbc)                       !srv 14.10.99
-      call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)           !srv 11.04.13
       call ipgetr ('b2stbc_bc_ref', s%b2stbc_bc_ref)
       call ipgetr ('b2stbc_bc_ref_te', s%b2stbc_bc_ref_te)           !srv 11.04.13
-      call ipgetr ('b2stbc_type13_norm', s%bc_type13_norm)
-      call ipgetr ('b2stbc_type13_fac', s%bc_type13_fac)
+      call ipgetr ('b2stbc_bc_ref_ti', s%b2stbc_bc_ref_ti)           !srv 11.04.13
       call ipgetr ('b2stbc_nesepm', s%nesepm)
       call ipgetr ('b2stbc_ndes_sol', s%ndes_sol)
       call ipgetr ('b2stbc_nesepm_overshoot', s%nesepm_overshoot)
@@ -1801,6 +1849,8 @@ c Feedback
 
 c b2nppo
       call ipgetr ('b2nppo_restr_po', s%b2nppo_restr_po)
+      call ipgetr ('b2txcx_increase_transp_coefs',
+     &      s%b2txcx_increase_transp_coefs)
 
 c Optimization
       call ipgeti ('b2optim_save_states', s%b2optim_save_states)
@@ -2304,7 +2354,7 @@ c b2srst
 c b2tfnb
       call xertst (0.0_R8.le.s%b2tfnb_flux_limit_min_ti,
      &  'faulty internal parameter flux_limit_min_ti')
-     
+
 c b2tqce
       if (.not.(s%b2tqce_style_guard_cells.eq.0.or.
      &                           s%b2tqce_style_guard_cells.eq.1)) then
@@ -2328,6 +2378,12 @@ c b2mndt
      &  'faulty internal parameter rxf')
       call xertst (1.eq.s%b2mndt_style.or.s%b2mndt_style.eq.2,
      &  'b2mndt_style should be 1 or 2')
+      call xertst (s%b2mndt_ckn.eq.1.or.s%b2mndt_ckn.eq.2,
+     &  'b2mndt_ckn should be 1 or 2')
+      call xertst (1.le.s%ntim_step_out,
+     &   'faulty internal parameter ntim_step_out')
+      call xertst (1.le.s%calc_err_step_out,
+     &   'faulty internal parameter calc_err_step_out')
 
 c b2mndr
        call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,
@@ -2428,7 +2484,6 @@ c k-enstrophy model
      &    s%transport_keps,' should go together'
       endif
 
-
 c Zhdanov closure
       if (s%Zhdanov_closure.lt.0 .or. s%Zhdanov_closure.gt.1) then
         call xerrab('wrong value of b2tral_Zhdanov_closure')
@@ -2436,10 +2491,6 @@ c Zhdanov closure
 
 c b2tfnb b2tfrn, this needs to be here otherwise clashes with Tapenade adjoint
       if (s%b2tfnb_no_hybr .eq. 1) s%b2tfnb_discr_meth = 0
-
-      if(s%b2mndt_style.eq.2 .and. s%b2mndt_rxf.lt.1.0_R8) then
-        call xerrab('time-dependent mode requires rxf = 1.0')
-      endif
 
       return
       end subroutine check_consistency_switches

@@ -45,7 +45,7 @@
       call grad_r(nCv, nFc, nVx, 1, geo, mpg, fun, funv, gfunrf)
 
 *   ..interpolate to centers
-      call intcell(nFc, nCv, mpg, mpg%intcellR, gfunrf,gfunr)
+      call intcell(nFc, nCv, mpg, mpg%intcellR, gfunrf, gfunr)
 
 *   ..return
       return

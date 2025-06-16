@@ -16,7 +16,8 @@
       type, public :: mapping
         integer :: nCv, nFc, nVx, nCg, nCi, nCmxVx, nCmxFc, nVmxCv,
      &             nVmxFc, nFs, nFt, nBc, mxnBc, nRc, mxnRc, nCmxNv,
-     &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt, nStr, nTgc
+     &             nCf, mxnCf, mxStencil, nFsVxmx, nXpt, nStr, nTgc,
+     &             nFci
         integer :: nnreg(0:1), periodic_bc, iFssep, iFssep2
 
         integer, allocatable :: cvFcP(:,:)             ! (nCv,2) pointing for every cell to the first index number in the cvFc list and its number of faces
@@ -111,8 +112,12 @@
         
         real (kind=R8) :: OMPr(1:2)
         real (kind=R8) :: OMPz(1:2)
-	real (kind=R8) :: IMPr(1:2)
+        real (kind=R8) :: IMPr(1:2)
         real (kind=R8) :: IMPz(1:2)
+
+        logical, allocatable :: cvAlongBoundary(:)     ! (nCv) indicates whether the control volume is connected to a boundary cell
+        integer, allocatable :: fcs_wall(:)            ! (nCg) ordered list of faces along the boundary
+        integer, allocatable :: fcs_wall_ind(:,:)      ! (nFci,2) indicates range in fcs_wall, where neighbouring faces connected to the one flux tube are placed.
 
         end type mapping
 
@@ -387,6 +392,10 @@
 
 !      deallocate (m%Xpoint)
       
+      if (allocated(m%cvAlongBoundary)) deallocate(m%cvAlongBoundary)
+      if (allocated(m%fcs_wall)) deallocate(m%fcs_wall)
+      if (allocated(m%fcs_wall_ind)) deallocate(m%fcs_wall_ind)
+
       return
       end subroutine dealloc_mapping
 
@@ -653,7 +662,10 @@
       integer, allocatable :: indCv(:), indFsVx(:), indXpt(:),
      *                        indFc(:), cvNvLoc(:), freg(:),
      *                        old_face_list(:), new_face_list(:)
-      logical :: duplicate, left_match_found, right_match_found
+      integer :: fcsb(maxval(m%fcLbl),m%nCi),
+     * fcsbcounter(maxval(m%fcLbl)), cvsb(maxval(m%fcLbl),m%nCi)
+      logical :: duplicate, left_match_found, right_match_found,
+     * is_found
       external ipgeti, xerrab
 cwdk  This initialization routine precomputes a number of arrays
 cwdk  in the mapping that are not stored in the b2fgmtry file, but
@@ -1065,6 +1077,98 @@ cwdk  can be derived directly from data in that file
         write(*,*) 'Strike point data not defined'
       end if
 
+      allocate(m%cvAlongBoundary(m%nCv))
+      m%cvAlongBoundary = .false.
+      fcsbcounter = 0
+      do iCv=m%nCi+1,m%nCv
+        iFc = m%cvFc(m%cvFcP(iCv,1))
+        if (m%fcLbl(iFc).le.0) cycle
+        fcsbcounter(m%fcLbl(iFc)) = fcsbcounter(m%fcLbl(iFc))+1
+        fcsb(m%fcLbl(iFc),fcsbcounter(m%fcLbl(iFc))) = iFc
+        iCv1 = m%fcCv(iFc,1)
+        iCv2 = m%fcCv(iFc,2)
+        cvsb(m%fcLbl(iFc),fcsbcounter(m%fcLbl(iFc))) = min(iCv1,iCv2)
+      enddo
+      do k=1,maxval(m%fcLbl)
+        do j=1,fcsbcounter(k)
+          iCv2 = cvsb(k,j)
+          iFc = fcsb(k,j)
+          iCv1 = maxval(m%fcCv(iFc,1:2))
+          if (j.lt.fcsbcounter(k)) then
+            if (m%cvFt(iCv2).eq.m%cvFt(cvsb(k,j+1))) then
+              m%cvAlongBoundary(iCv2) = .true.
+            endif
+          endif
+          if (j.gt.1) then
+            if (m%cvFt(iCv2).eq.m%cvFt(cvsb(k,j-1))) then
+              m%cvAlongBoundary(iCv2) = .true.
+            endif
+          endif
+        enddo
+      enddo
+
+      allocate(m%fcs_wall(m%nCg))
+
+      k = 1
+      do l=m%nCi+1,m%nCv
+        m%fcs_wall(k) = m%cvFc(m%cvFcP(l,1))
+        k = k+1
+      enddo
+
+      m%nFci = 0
+      do k=1,m%nCg
+        is_found = .false.
+        do l=k+1,m%nCg
+          if (m%fcVx(m%fcs_wall(k),1) == m%fcVx(m%fcs_wall(l),1) .or.
+     &        m%fcVx(m%fcs_wall(k),1) == m%fcVx(m%fcs_wall(l),2) .or.
+     &        m%fcVx(m%fcs_wall(k),2) == m%fcVx(m%fcs_wall(l),1) .or.
+     &        m%fcVx(m%fcs_wall(k),2) == m%fcVx(m%fcs_wall(l),2)) then
+            is_found = .true.
+            inew = m%fcs_wall(k+1)
+            m%fcs_wall(k+1) = m%fcs_wall(l)
+            m%fcs_wall(l) = inew
+            if (maxval(m%cvFt(m%fcCv(m%fcs_wall(k+1),1:2))) .ne.
+     &          maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
+              m%nFci = m%nFci+1
+            endif
+            exit
+          endif
+        enddo
+        if (.not.is_found) then
+          if (k.lt.m%nCg.or.(k.eq.m%nCg.and.
+     &     maxval(m%cvFt(m%fcCv(m%fcs_wall(k-1),1:2))) .ne.
+     &     maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2))))) then
+            m%nFci = m%nFci+1
+          endif
+        endif
+      enddo
+      allocate(m%fcs_wall_ind(m%nFci,2))
+      j = 1
+      l = 1
+      do k=1,m%nCg-1
+        if (maxval(m%cvFt(m%fcCv(m%fcs_wall(k+1),1:2))) .ne.
+     &      maxval(m%cvFt(m%fcCv(m%fcs_wall(k),1:2)))) then
+          m%fcs_wall_ind(l,1) = j
+          m%fcs_wall_ind(l,2) = k-j+1
+          j = k+1
+          l = l+1
+        endif
+      enddo
+      ! Doing the last cell by hand if it is on its own flux tube
+      if (maxval(m%cvFt(m%fcCv(m%fcs_wall(m%nCg-1),1:2))) .ne.
+     &    maxval(m%cvFt(m%fcCv(m%fcs_wall(m%nCg),1:2)))) then
+        m%fcs_wall_ind(l,1) = m%nCg
+        m%fcs_wall_ind(l,2) = 1
+      end if
+
+      write(*,*) "list of boundary faces in one flux tube:"
+      do j=1,m%nFci
+        if (m%fcs_wall_ind(j,1) .eq. m%fcs_wall_ind(j,2)) cycle
+        write(*,'(3i4)') j, m%fcs_wall_ind(j,1), m%fcs_wall_ind(j,2)
+        write(*,*) m%fcs_wall(m%fcs_wall_ind(j,1):
+     &                        m%fcs_wall_ind(j,1)+m%fcs_wall_ind(j,2)-1)
+      enddo
+
       write (*,*) 'nXpt, nStr, nTgc ', m%nXpt, m%nStr, m%nTgc
       write (*,*) 'nFsVxmx          ', m%nFsVxmx
 
@@ -1106,7 +1210,7 @@ cwdk  can be derived directly from data in that file
       !!.. local variables
       integer :: i, ic, ivx, ifc, n, vxFc_end, vxCv_end
       integer, allocatable :: indFc(:), indCv(:), fh(:), ch(:), fch(:),
-     .                    indcvfc(:)
+     .                        indcvfc(:)
       intrinsic pack, count
       external xerrab
 
@@ -1116,7 +1220,7 @@ cwdk  can be derived directly from data in that file
       !Construct vxFcP
       allocate (indFc(2*m%nFc))
       indFc(1:m%nFc)          = (/ (i, i=1,m%nFc) /)
-      indFc(m%nFc+1:2*m%nFc)    = (/ (i, i=1,m%nFc) /)
+      indFc(m%nFc+1:2*m%nFc)  = (/ (i, i=1,m%nFc) /)
 
       allocate (fh(2*m%nFc))
       fh(1:m%nFc)             = m%fcVx(1:m%nFc,1)
@@ -1144,7 +1248,7 @@ cwdk  can be derived directly from data in that file
          m%vxCvP(ivx+1,1) = m%vxCvP(ivx,1) + m%vxCvP(ivx,2)
          if (m%vxCvP(ivx,2) > 0 ) then
             m%vxCv(m%vxCvP(ivx,1):m%vxCvP(ivx+1,1)-1) =
-     .         pack( indCv, ch == ivx )
+     .       pack( indCv, ch == ivx )
          endif
       enddo
 
@@ -1153,13 +1257,13 @@ cwdk  can be derived directly from data in that file
       vxFc_end = m%vxFcP(ivx,1) + m%vxFcP(ivx,2) -1
       if (m%vxFcP(ivx,2) > 0) then
           m%vxFc(m%vxFcP(ivx,1):vxFc_end) =
-     .      pack( indFc, fh == ivx )
+     .     pack( indFc, fh == ivx )
       end if
       m%vxCvP(ivx,2) = count(ch == ivx)
       vxCv_end = m%vxCvP(ivx,1) + m%vxCvP(ivx,2) - 1
       if (m%vxCvP(ivx,2) > 0) then
          m%vxCv(m%vxCvP(ivx,1):vxCv_end) =
-     .     pack( indCv, ch == ivx )
+     .    pack( indCv, ch == ivx )
       endif
 
       !Try analog for fcCv(nFc,2), similar to vxCv - check this in debugger
@@ -1175,13 +1279,13 @@ cwdk  can be derived directly from data in that file
       !here loop over the faces
 
       do ifc = 1,m%nFc
-           n = count(fch == ifc)
-           if (n .eq. 2) then
-             m%fcCv(ifc,1:2) = pack(indcvfc, fch == ifc)
-           else
-             call xerrab
-     .        ('calc_add_connectivity: Wrong # of cells per face')
-           endif
+         n = count(fch == ifc)
+         if (n .eq. 2) then
+            m%fcCv(ifc,1:2) = pack(indcvfc, fch == ifc)
+         else
+            call xerrab
+     .       ('calc_add_connectivity: Wrong # of cells per face')
+         endif
       enddo
 
       deallocate (indFc)

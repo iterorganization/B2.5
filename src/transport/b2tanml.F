@@ -67,10 +67,10 @@
 
       else                                                              !srv 27.02.13
 
-*     ..compute differences of po
+*   ..compute differences of po
         call diff(nCv, nFc, nVx, 0, geo, mpg, po, pov, dpo)
 
-*     ..compute the anomalous current
+*   ..compute the anomalous current
         fchanml = 0.0_R8
         do is = 0, ns-1
           if (.not.is_neutral(is)) then
@@ -89,7 +89,7 @@
           endif
         enddo
 
-*     ..fully assign to main ion species if needed
+*   ..fully assign to main ion species if needed
         if (switch%anml_all_ions.eq.0) then
           do is = 0, ns-1
             if (is.eq.ismain) then
