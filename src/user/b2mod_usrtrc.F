@@ -286,7 +286,7 @@ c***  surface area
      ,  hlp_ne_he_c, hlp_ne_he_s,
      ,  hlp_alcff
       real (kind=R8) ::
-     *  d, e, s, x, kef, taf, uaf
+     *  d, e, s, x, taf, uaf
       real (kind=R8) :: pz(1:mpg%nCv), pv(1:mpg%nVx), grpz(1:mpg%nCv),
      *  albll(1:mpg%nCi)
       integer i, j, k, l, m, n, i0, is, iCv, iFc, irt,
@@ -1153,12 +1153,12 @@ c West target
         s=geo%fcS(iFc)
         hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
      .          st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
-     .          st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-        kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .          st%dv%kinrgy(1,is))
+     .          st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1)+
+     .          (st%dv%fne(iFc,0)+st%dv%fne(iFc,1))*st%pl%te(iCv))
         do is=0,ns-1 !{
-          hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
-     .     st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
+          hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*
+     .     (st%rt%rpt(iCv,is)*ev+st%pl%ti(iCv))+
+     .     st%dv%fhm(iFc,0,is)+st%dv%fhm(iFc,1,is))
         end do !}
         do is=0,st_ext%ns-1 !{
           taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
@@ -1182,9 +1182,10 @@ c West target
      .                            ewldmr_res(is,ias)
         end do
         wnutpr(i,1)=ewldrp_res(ias)
-        wtarg(i,1)=(hlp-wnutpr(i,1))*trgshp(1)
-     .                 +wnutrg(i,1)+wrad(i,1,0)
+        hlp=hlp-wnutpr(i,1)
 #endif
+        wtarg(i,1)=hlp*trgshp(1)
+     .                 +wnutrg(i,1)+wrad(i,1,0)
         hlp_ppwi=max(hlp_ppwi,hlp)
         hlp_s=hlp_s+s
       end do !}
@@ -1197,12 +1198,12 @@ c East target
         s=geo%fcS(iFc)
         hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
      .          st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
-     .          st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-        kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .          st%dv%kinrgy(1,is))
+     .          st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1)+
+     .          (st%dv%fne(iFc,0)+st%dv%fne(iFc,1))*st%pl%te(iCv))
         do is=0,ns-1 !{
-          hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
-     .     st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
+          hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*
+     .     (st%rt%rpt(iCv,is)*ev+st%pl%ti(iCv))+
+     .     st%dv%fhm(iFc,0,is)+st%dv%fhm(iFc,1,is))
         end do !}
         do is=0,st_ext%ns-1 !{
           taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
@@ -1227,10 +1228,11 @@ c East target
      .     ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
         end do
         wnutpr(i,maxval(mpg%strDiv))=ewldrp_res(ias)
-        wtarg(i,maxval(mpg%strDiv))=
-     .   (hlp-wnutpr(i,maxval(mpg%strDiv)))*trgshp(maxval(mpg%strDiv))
-     .       +wnutrg(i,maxval(mpg%strDiv))+wrad(i,maxval(mpg%strDiv),0)
+        hlp = hlp-wnutpr(i,maxval(mpg%strDiv))
 #endif
+        wtarg(i,maxval(mpg%strDiv))=
+     .   hlp*trgshp(maxval(mpg%strDiv))
+     .       +wnutrg(i,maxval(mpg%strDiv))+wrad(i,maxval(mpg%strDiv),0)
         hlp_ppwo=max(hlp_ppwo,hlp)
         hlp_s=hlp_s+s
       end do !}
@@ -1244,12 +1246,12 @@ c East target
           s=geo%fcS(iFc)
           hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
      .            st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
-     .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .     st%dv%kinrgy(1,is))
+     .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1)+
+     .            (st%dv%fne(iFc,0)+st%dv%fne(iFc,1))*st%pl%te(iCv))
           do is=0,ns-1 !{
-            hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
-     .       st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
+            hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*
+     .       (st%rt%rpt(iCv,is)*ev+st%pl%ti(iCv))+
+     .       st%dv%fhm(iFc,0,is)+st%dv%fhm(iFc,1,is))
           end do !}
           do is=0,st_ext%ns-1 !{
             taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
@@ -1274,9 +1276,10 @@ c East target
      .       ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
           end do
           wnutpr(i,2)=ewldrp_res(ias)
-          wtarg(i,2)=(hlp-wnutpr(i,2))*trgshp(2)
-     .                   +wnutrg(i,2)+wrad(i,2,0)
+          hlp = hlp-wnutpr(i,2)
 #endif
+          wtarg(i,2)=hlp*trgshp(2)
+     .                   +wnutrg(i,2)+wrad(i,2,0)
           hlp_pwou=max(hlp_pwou,hlp)
           hlp_s=hlp_s+s
         end do !}
@@ -1289,12 +1292,12 @@ c East target
           s=geo%fcS(iFc)
           hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
      .            st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
-     .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .     st%dv%kinrgy(1,is))
+     .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1)+
+     .            (st%dv%fne(iFc,0)+st%dv%fne(iFc,1))*st%pl%te(iCv))
           do is=0,ns-1 !{
-            hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
-     .       st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
+            hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*
+     .       (st%rt%rpt(iCv,is)*ev+st%pl%ti(iCv))+
+     .       st%dv%fhm(iFc,0,is)+st%dv%fhm(iFc,1,is))
           end do !}
           do is=0,st_ext%ns-1 !{
             taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
@@ -1319,9 +1322,10 @@ c East target
      .       ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
           end do
           wnutpr(i,3)=ewldrp_res(ias)
-          wtarg(i,3)=(hlp-wnutpr(i,3))*trgshp(3)
-     .                   +wnutrg(i,3)+wrad(i,3,0)
+          hlp = hlp-wnutpr(i,3)
 #endif
+          wtarg(i,3)=hlp*trgshp(3)
+     .                   +wnutrg(i,3)+wrad(i,3,0)
           hlp_pwiu=max(hlp_pwiu,hlp)
           hlp_s=hlp_s+s
         end do !}
@@ -1362,6 +1366,57 @@ C radiation
         end do
         close(3)
       end if
+
+c*** Calculate the peak parallel power flux to the main chamber wall
+
+      hlp_ppfw=0.0_R8
+      if(hlp_dbg) print *,'### b2usrtrc: calculating max. parallel '//
+     .                    'heat flux to the main chamber wall'
+      do i=1,mpg%nCg !{
+        iFc=mpg%fcs_wall(i)
+        iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        if (mpg%fcReg(iFc).eq.0) cycle
+        select case ( gridGeometry )
+        case ( GEOMETRY_LINEAR )
+          if (mpg%fcReg(iFc).ne.4) cycle
+        case ( GEOMETRY_LIMITER )
+          if (mpg%fcReg(iFc).ne.6) cycle
+        case ( GEOMETRY_SN )
+          if (mpg%fcReg(iFc).ne.12) cycle
+        case ( GEOMETRY_CDN )
+          if (mpg%fcReg(iFc).ne.18 .and. mpg%fcReg(iFc).ne.25) cycle
+        case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+          if (mpg%fcReg(iFc).ne.19 .and. mpg%fcReg(iFc).ne.26) cycle
+        case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &         GEOMETRY_LFS_SNOWFLAKE_PLUS )
+          if (mpg%fcReg(iFc).ne.19) cycle
+        case default
+          cycle
+        end select
+        s=abs(geo%fcPbs(iFc))
+        hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
+     .            st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
+     .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1)+
+     .            (st%dv%fne(iFc,0)+st%dv%fne(iFc,1))*st%pl%te(iCv))
+          do is=0,ns-1 !{
+            hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*
+     .       (st%rt%rpt(iCv,is)*ev+st%pl%ti(iCv))+
+     .       st%dv%fhm(iFc,0,is)+st%dv%fhm(iFc,1,is))
+          end do !}
+        do is=0,st_ext%ns-1 !{
+          taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .     st_ext%ta(1,is))
+          uaf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .     st_ext%ua(1,is))
+          hlp=hlp+abs((st_ext%fa(iFc,0,is))*
+     .    (st_ext%pt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*
+     .    (0.5_R8*st_ext%am(is)*mp*uaf**2+taf)))
+        end do !}
+        hlp=hlp/s
+        hlp_ppfw=max(hlp_ppfw,hlp)
+          if(hlp_dbg) print '(1x,a,i6,3e12.4)',
+     .     "iCv,pbs,hlp_ppfw,hlp_ppfw_max =>",iCv,s,hlp,hlp_ppfw
+      end do !}
 
 #ifdef B25_EIRENE
 c*** Calculate the neutral flows in PFR
