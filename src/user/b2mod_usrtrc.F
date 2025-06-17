@@ -286,7 +286,7 @@ c***  surface area
      ,  hlp_ne_he_c, hlp_ne_he_s,
      ,  hlp_alcff
       real (kind=R8) ::
-     *  d, e, s, x, kef, taf, uaf
+     *  d, e, s, x, taf, uaf
       real (kind=R8) :: pz(1:mpg%nCv), pv(1:mpg%nVx), grpz(1:mpg%nCv),
      *  albll(1:mpg%nCi)
       integer i, j, k, l, m, n, i0, is, iCv, iFc, iFt, irt,
@@ -1151,12 +1151,12 @@ c West target
         s=geo%fcS(iFc)
         hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
      .          st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
-     .          st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
+     .          st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1)+
+     .          (st%dv%fne(iFc,0)+st%dv%fne(iFc,1))*st%pl%te(iCv))
         do is=0,ns-1 !{
-          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .          st%dv%kinrgy(1,is))
-          hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
-     .     st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
+          hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*
+     .     (st%rt%rpt(iCv,is)*ev+st%pl%ti(iCv))+
+     .     st%dv%fhm(iFc,0,is)+st%dv%fhm(iFc,1,is))
         end do !}
         do is=0,st_ext%ns-1 !{
           taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
@@ -1179,10 +1179,12 @@ c West target
      .                            ewldmr_res(is,ias)
         end do
         wnutpr(i,1)=ewldrp_res(ias)
+        hlp=hlp-wnutpr(i,1)
 #endif
-        wtarg(i,1)=(hlp-wnutpr(i,1))*trgshp(1)
+        wtarg(i,1)=hlp*trgshp(1)
      .                 +wnutrg(i,1)+wrad(i,1,0)
-        hlp_ppwi=max(hlp_ppwi,wtarg(i,1))
+        hlp_ppwi=max(hlp_ppwi,hlp)
+        hlp_s=hlp_s+s
       end do !}
 c East target
       hlp_ppwo=0.0_R8
@@ -1192,12 +1194,12 @@ c East target
         s=geo%fcS(iFc)
         hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
      .          st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
-     .          st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
+     .          st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1)+
+     .          (st%dv%fne(iFc,0)+st%dv%fne(iFc,1))*st%pl%te(iCv))
         do is=0,ns-1 !{
-          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .          st%dv%kinrgy(1,is))
-          hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
-     .     st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
+          hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*
+     .     (st%rt%rpt(iCv,is)*ev+st%pl%ti(iCv))+
+     .     st%dv%fhm(iFc,0,is)+st%dv%fhm(iFc,1,is))
         end do !}
         do is=0,st_ext%ns-1 !{
           taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
@@ -1221,11 +1223,13 @@ c East target
      .     ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
         end do
         wnutpr(i,maxval(mpg%strDiv))=ewldrp_res(ias)
+        hlp = hlp-wnutpr(i,maxval(mpg%strDiv))
 #endif
         wtarg(i,maxval(mpg%strDiv))=
-     .   (hlp-wnutpr(i,maxval(mpg%strDiv)))*trgshp(maxval(mpg%strDiv))
+     .   hlp*trgshp(maxval(mpg%strDiv))
      .       +wnutrg(i,maxval(mpg%strDiv))+wrad(i,maxval(mpg%strDiv),0)
-        hlp_ppwo=max(hlp_ppwo,wtarg(i,maxval(mpg%strDiv)))
+        hlp_ppwo=max(hlp_ppwo,hlp)
+        hlp_s=hlp_s+s
       end do !}
 
       if(maxval(mpg%strDiv).gt.2) then !{
@@ -1236,12 +1240,12 @@ c East target
           s=geo%fcS(iFc)
           hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
      .            st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
-     .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
+     .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1)+
+     .            (st%dv%fne(iFc,0)+st%dv%fne(iFc,1))*st%pl%te(iCv))
           do is=0,ns-1 !{
-            kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .       st%dv%kinrgy(1,is))
-            hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
-     .       st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
+            hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*
+     .       (st%rt%rpt(iCv,is)*ev+st%pl%ti(iCv))+
+     .       st%dv%fhm(iFc,0,is)+st%dv%fhm(iFc,1,is))
           end do !}
           do is=0,st_ext%ns-1 !{
             taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
@@ -1265,10 +1269,12 @@ c East target
      .       ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
           end do
           wnutpr(i,2)=ewldrp_res(ias)
+          hlp = hlp-wnutpr(i,2)
 #endif
-          wtarg(i,2)=(hlp-wnutpr(i,2))*trgshp(2)
+          wtarg(i,2)=hlp*trgshp(2)
      .                   +wnutrg(i,2)+wrad(i,2,0)
-          hlp_pwou=max(hlp_pwou,wtarg(i,2))
+          hlp_pwou=max(hlp_pwou,hlp)
+          hlp_s=hlp_s+s
         end do !}
 
         hlp_pwiu=0.0_R8
@@ -1278,12 +1284,12 @@ c East target
           s=geo%fcS(iFc)
           hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
      .            st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
-     .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
+     .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1)+
+     .            (st%dv%fne(iFc,0)+st%dv%fne(iFc,1))*st%pl%te(iCv))
           do is=0,ns-1 !{
-            kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .       st%dv%kinrgy(1,is))
-            hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
-     .       st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
+            hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*
+     .       (st%rt%rpt(iCv,is)*ev+st%pl%ti(iCv))+
+     .       st%dv%fhm(iFc,0,is)+st%dv%fhm(iFc,1,is))
           end do !}
           do is=0,st_ext%ns-1 !{
             taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
@@ -1307,10 +1313,12 @@ c East target
      .       ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
           end do
           wnutpr(i,3)=ewldrp_res(ias)
+          hlp = hlp-wnutpr(i,3)
 #endif
-          wtarg(i,3)=(hlp-wnutpr(i,3))*trgshp(3)
+          wtarg(i,3)=hlp*trgshp(3)
      .                   +wnutrg(i,3)+wrad(i,3,0)
-          hlp_pwiu=max(hlp_pwiu,wtarg(i,3))
+          hlp_pwiu=max(hlp_pwiu,hlp)
+          hlp_s=hlp_s+s
         end do !}
       end if !}
 
@@ -1377,13 +1385,15 @@ c*** Calculate the peak parallel power flux to the main chamber wall
           cycle
         end select
         s=abs(geo%fcPbs(iFc))
-        hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhi(iFc,0)+st_ext%fhi(iFc,0))
-        do is=0,ns-1 !{
-          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .          st%dv%kinrgy(1,is))
-          hlp=hlp+abs((st%dv%fna(iFc,0,is))*
-     .     (st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
-        end do !}
+        hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
+     .            st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
+     .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1)+
+     .            (st%dv%fne(iFc,0)+st%dv%fne(iFc,1))*st%pl%te(iCv))
+          do is=0,ns-1 !{
+            hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*
+     .       (st%rt%rpt(iCv,is)*ev+st%pl%ti(iCv))+
+     .       st%dv%fhm(iFc,0,is)+st%dv%fhm(iFc,1,is))
+          end do !}
         do is=0,st_ext%ns-1 !{
           taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
      .     st_ext%ta(1,is))

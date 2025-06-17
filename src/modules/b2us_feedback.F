@@ -1643,18 +1643,18 @@ cxpb size is changed in b2mod_dimensions
               enddo
               fb_current(ifb) = fb_current(ifb)/sum_e
 
-            case (23) !  Total plasma heat flux at outer target
+            case (23) !  Total heat flux at outer target
 
               if(ncall.eq.0) then
                 if (fb_type_ib(ifb).eq.0) then
-                  fb_type_ib(ifb) = 2
+                  fb_type_ib(ifb) = find_loc(bcstart,mpg%nBc,2)
                   write(*,*) 'No fb_type_ib is found. '//
      &             'Setting fb_type_ib=',fb_type_ib(ifb),
      &             ' (presumably the outer target)'
                 endif
                 write(*,'(a,a,i3,a,i3)')
      &           'compute_feedback_type: using ',
-     &           ' plasma heat flux density along boundary ',
+     &           ' Total heat flux density along boundary ',
      &           fb_type_ib(ifb),' for sequence ',
      &           b2espcr(fb_species(ifb))
                 fb_target(ifb) = 1.0_R8/fb_target(ifb)
@@ -1673,16 +1673,28 @@ cxpb size is changed in b2mod_dimensions
               fb_current(ifb) = 0.0_R8
               do i = 1, mpg%bcFcP(fb_type_ib(ifb),2)
                 iFc = mpg%bcFc(mpg%bcFcP(fb_type_ib(ifb),1)+i-1)
+                iCv = mpg%bcCv(mpg%bcCvP(fb_type_ib(ifb),1)+i-1,1)
                 t1 = mpg%bcFcOr(mpg%bcFcP(fb_type_ib(ifb),1)+i-1)
-                t0 = dv%fht(iFc,0)+dv%fht(iFc,1)
+                t0 = dv%fhe(iFc,0)+dv%fhe(iFc,1)+
+     .            dv%fhi(iFc,0)+dv%fhi(iFc,1)+
+     .            (dv%fne(iFc,0)+dv%fne(iFc,1))*pl%te(iCv)
+                do is=0,ns-1 !{
+                  t0=t0+(dv%fna(iFc,0,is)+dv%fna(iFc,1,is))*
+     .            (rt%rpt(iCv,is)*ev+pl%ti(iCv))+
+     .            dv%fhm(iFc,0,is)+dv%fhm(iFc,1,is)
+                end do !}
                 t0 = t1*t0/geo%fcS(iFc)
-                if (switch%use_eirene.ne.0) then
-                  t0 = t0 - ewldrp_res(b2_fnmti(iFc))
-                endif
+#ifdef B25_EIRENE
+                if (switch%use_eirene.ne.0)
+     .            t0=t0+ewldt_res(b2_fnmti(iFc)) -
+     .               ewldrp_res(b2_fnmti(iFc))
+#endif
                 fb_current(ifb) = max(fb_current(ifb),t0)
               enddo
               if (fb_current(ifb).ne.0.0_R8) then
                 fb_current(ifb) = 1.0_R8/abs(fb_current(ifb))
+              else
+                fb_current(ifb) = fb_target(ifb)
               endif
 
             case (24) ! peak electron temperature at specific boundary
