@@ -85,8 +85,7 @@
      *   dpo(nFc,0:1), dnbti(nFc,0:1),
      *   nbf(nFc), rzf(nFc),
      *   dOnedBsq(nFc,0:1),
-     *   fna_mdf0(nFc,0:1), flo_factor(nFc,0:1),
-     *   cddb(nFc,0:1), cdpb(nFc,0:1)
+     *   fna_mdf0(nFc,0:1), flo_factor(nFc,0:1), cdpb(nFc,0:1)
       real (kind=R8) :: weight(nFc,2)                                    !lk
       integer :: xcount
 *   ..procedures
@@ -246,7 +245,7 @@ cwdk                   (original code: simple averaging)
         ub2dia = dv%vaecrb(:,:,isb) + 2.0_R8*dv%vadia(:,:,isb)
 
 *     ..computation of P.Sch flows
-        call b2tnpsch(nCv, nFc, nVx, isb, switch, geo, mpg,
+        call b2tnpsch(nCv, nFc, nVx, switch, geo, mpg,
      &    dv%facdrift, co%cddi(:,:,isb), pl%ti, pl%na(:,isb), kmprti,
      &    dv%flob, dv%conb, dv%fnaPSch(:,:,isb))
 
@@ -963,8 +962,8 @@ cwdk should this be conb in general? (but without the rescaling for pressure)
      &            'b2tfnb_cdnb_r'//chns)
        wrkf(:,0) = co%cddi(:,0,isb)*geo%fcQalf(:,0)
        wrkf(:,1) = co%cddi(:,1,isb)*geo%fcQalf(:,1)
-       call my_out_us(70,nFc,1,wrkf(1,0),'b2tfnb_cddb_th'//chns)
-       call my_out_us(70,nFc,1,wrkf(1,1),'b2tfnb_cddb_r'//chns)
+       call my_out_us(70,nFc,1,wrkf(1,0),'b2tfnb_cddi_th'//chns)
+       call my_out_us(70,nFc,1,wrkf(1,1),'b2tfnb_cddi_r'//chns)
        call my_out_us(70,nFc,1,term,'b2tfnb_term'//chns)
        call my_out_us(70,nFc,1,term*geo%fcHz,'b2tfnb_termhz'//chns)
        call my_out_us(70,nFc,1,geo%fcPbs,'b2tfnb_pbs')

@@ -216,7 +216,9 @@ cxpb  along the OMP, to the flux limit multipliers, if the limit values in
 cxpb  the deep core ('core') and far-SOL ('sol') are provided
 cxpb  The tanh profile applies to the core and CFR.
 cpxb  In the PFR, we apply the value at the relevant separatrix.
+#ifdef WG_TODO
       integer :: iCv
+#endif
 
       cfl(nCv) = cflm
       if (core.gt.0.0_R8.and.sol.gt.0.0_R8) then

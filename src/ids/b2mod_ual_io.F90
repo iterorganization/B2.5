@@ -668,27 +668,30 @@ contains
         call IDS_init( mpg, geo )
         ns = size( state%pl%na, 2 )
         do is = 0, ns-1
-          call b2xppb( mpg%nCv, state%rt%rza(:,is),                 &
-            &          state%pl%na(:,is), state%pl%te, state%pl%ti, &
+          call b2xppb( mpg%nCv, state%rt%rza(:,is),                  &
+            &          state%pl%na(:,is), state%pl%te, state%pl%ti,  &
             &          state%pl%tn, is, state%dv%pa(:,is) )
         end do
-        call b2xpne( mpg%nCv, ns, state%rt%rza, state%pl%na,        &
+        call b2xpne( mpg%nCv, ns, state%rt%rza, state%pl%na,         &
             &        state_ext%ne, state%dv%ne)
-        call b2xzef( mpg%nCv, ns, state%rt%rz2, state%pl%na,        &
+        call b2xzef( mpg%nCv, ns, state%rt%rz2, state%pl%na,         &
             &        state%dv%ne, zeff, state_ext)
-        call b2xppz( mpg%nCv, ns, state%dv%ne, state%pl%na,         &
+        call b2xppz( mpg%nCv, ns, state%dv%ne, state%pl%na,          &
             &        state%pl%te, state%pl%ti, state%dv%pz, state_ext)
-        call b2tanml(mpg%nCv, mpg%nFc, mpg%nVx, ns, ismain,         &
-            &        switch, geo, mpg, state%co%csig_an,            &
-            &        state%pl%po, state%dv%ne,                      &
-            &        state%pl%na, state%rt%rza,                     &
+        call b2tanml(mpg%nCv, mpg%nFc, mpg%nVx, ns, ismain,          &
+            &        switch, geo, mpg, state%co%csig_an,             &
+            &        state%pl%po, state%dv%ne,                       &
+            &        state%pl%na, state%rt%rza,                      &
             &        state%dv%fchanml_a, state%dv%fchanml)
-        call b2tvspa(mpg%nCv, mpg%nFc, mpg%nVx, ns, ismain,         &
-            &        switch, geo, mpg, state%pl%ua,                 &
-            &        state%co%vsaf_cl, state%dv%fac_vis,            &
+        call b2tvspa(mpg%nCv, mpg%nFc, mpg%nVx, ns, ismain,          &
+            &        switch, geo, mpg,                               &
+            &        state%pl%na, state%pl%ua, state%pl%ti,          &
+            &        state%rt%rza, state%co%vsaf_cl,                 &
+            &        state%co%vsaf_drho, state%co_ns%vsaf_uAdp_albe, &
+            &        state%co_ns%vsaf_uBdp_al, state%dv%fac_vis,     &
             &        state%dv%fchvispar_a, state%dv%fchvispar)
         call b2tiner(mpg%nCv, mpg%nFc, mpg%nVx, ns, ismain,          &
-            &        switch, geo, mpg, state%pl%na, state%pl%ua,    &
+            &        switch, geo, mpg, state%pl%na, state%pl%ua,     &
             &        state%dv%facdrift, state%dv%fchinert_a, state%dv%fchinert)
 
 !   ..find nscx, iscx

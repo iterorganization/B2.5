@@ -33,7 +33,7 @@
 *-----------------------------------------------------------------------
 *.declarations
 *   ..local variables
-      integer iC, is, isp
+      integer is, isp
       real (kind=R8) :: cfloi_vh(nCv)
 *   ..procedures
       external intface
