@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2trzh (nCv, nFc, nVx, ns, znmax, switch,
-     &  geo, mpg, pl, dv, rt, co, co_ns,
+     &  geo, mpg, pl, dv, co,
      &  hci0_al_luc, hci0_a_luc,
      &  chci0_nofl, chci0, chci0_luc,
      &  chci0_al, chci0_al_luc, chci0_a, chci0_a_luc,
@@ -38,10 +38,8 @@
       type (mapping), intent (in) :: mpg
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (inout) :: dv
-      type (B2Rates), intent (in) :: rt
 *   ..input/output arguments
       type (B2Coeff), intent (inout) :: co
-      type (B2Coeff_nspecies), intent (inout) :: co_ns
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &  chci0(nFc,0:1), chci0_nofl(nFc,0:1),
@@ -112,7 +110,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, mode
+      integer mode
       integer iCv, iFc, is, inucl, iz, i, j
       real (kind=R8) :: temp, gamma
       real (kind=R8) :: wrk(nCv), fcSHz(nFc), fcVolHz(nFc,2)
@@ -749,16 +747,19 @@
       mode = switch%b2tral_mode
 
 *    ..ion conductivity on the cell boundary
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &  hci0(:,0), chci0(:,0))
-      call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+      call b2txcx (nCv, nFc, 0.0_R8,
+     & mode, geo, mpg, geo%fcVol, geo%fcS, hci0(:,0), chci0(:,0))
+      call b2txcx (nCv, nFc, 0.0_R8,
+     & mode, geo, mpg, geo%fcVol, geo%fcS,
      & hci0_nofl(:,0), chci0_nofl(:,0))
       do i = 0, nspecies-1
-        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+        call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
      &   hci0_al(:,i), chci0_al(:,0,i))
       enddo
       do is = 0, ns-1
-        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+        call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
      &   hci0_a(:,is), chci0_a(:,0,is))
       enddo
 
@@ -783,11 +784,12 @@
      &        (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
           enddo
           vsaf0_luc(:,1,is) = 0.0_R8
-          call b2txcx (nCv, nFc, mode, geo, mpg, fcVolHz, fcSHz,
-     &     wrk, cvsahz0(:,0,is))
-          call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &     wrk, cvsa0(:,0,is))
-          call b2txcx (nCv, nFc, mode, geo, mpg, fcVolHz, fcSHz,
+          call b2txcx (nCv, nFc, 0.0_R8,
+     &     mode, geo, mpg, fcVolHz, fcSHz, wrk, cvsahz0(:,0,is))
+          call b2txcx (nCv, nFc, 0.0_R8,
+     &     mode, geo, mpg, geo%fcVol, geo%fcS, wrk, cvsa0(:,0,is))
+          call b2txcx (nCv, nFc, 0.0_R8,
+     &     mode, geo, mpg, fcVolHz, fcSHz,
      &     eta_cl_fl(:,is), cvsahz_drho(:,0,is))
           wrk = eta_cl(:,is)*rho_A_rel(:,is)
           do iFc = 1, nFc
@@ -797,9 +799,10 @@
      &        (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
           enddo
           vsaf_drho_luc(:,1,is) = 0.0_R8
-          call b2txcx (nCv, nFc, mode, geo, mpg, fcVolHz, fcSHz,
-     &     wrk, cvsahz0_nofl(:,0,is))
-          call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+          call b2txcx (nCv, nFc, 0.0_R8,
+     &     mode, geo, mpg, fcVolHz, fcSHz, wrk, cvsahz0_nofl(:,0,is))
+          call b2txcx (nCv, nFc, 0.0_R8,
+     &     mode, geo, mpg, geo%fcVol, geo%fcS,
      &     eta_cl_fl(:,is), cvsa_drho(:,0,is))
         enddo
       elseif (switch%zh_vis_type.eq.2) then
@@ -812,11 +815,14 @@
      &        (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
           enddo
           vsaf0_luc(:,1,is) = 0.0_R8
-          call b2txcx (nCv, nFc, mode, geo, mpg, fcVolHz, fcSHz,
+          call b2txcx (nCv, nFc, 0.0_R8,
+     &     mode, geo, mpg, fcVolHz, fcSHz,
      &     eta_cl_a_only_fl(:,is), cvsahz0(:,0,is))
-          call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+          call b2txcx (nCv, nFc, 0.0_R8,
+     &     mode, geo, mpg, geo%fcVol, geo%fcS,
      &     eta_cl_a_only_fl(:,is), cvsa0(:,0,is))
-          call b2txcx (nCv, nFc, mode, geo, mpg, fcVolHz, fcSHz,
+          call b2txcx (nCv, nFc, 0.0_R8,
+     &     mode, geo, mpg, fcVolHz, fcSHz,
      &     eta_cl_a_only(:,is), cvsahz0_nofl(:,0,is))
         enddo
       endif
@@ -832,9 +838,11 @@
      &        (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
           enddo
           vsaf_uAdp_luc(:,1,i,j) = 0.0_R8
-          call b2txcx (nCv, nFc, mode, geo, mpg, fcVolHz, fcSHz,
+          call b2txcx (nCv, nFc, 0.0_R8,
+     &     mode, geo, mpg, fcVolHz, fcSHz,
      &     eta_uAdp_fl(:,i,j), cvsahz_uAdp_fl(:,0,i,j))
-          call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+          call b2txcx (nCv, nFc, 0.0_R8,
+     &     mode, geo, mpg, geo%fcVol, geo%fcS,
      &     eta_uAdp_fl(:,i,j), cvsa_uAdp_fl(:,0,i,j))
         enddo
 
@@ -846,24 +854,30 @@
      &      (geo%fcVol(iFc,1)+geo%fcVol(iFc,2))
         enddo
         vsaf_uBdp_luc(:,1,i) = 0.0_R8
-        call b2txcx (nCv, nFc, mode, geo, mpg, fcVolHz, fcSHz,
+        call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, fcVolHz, fcSHz,
      &   eta_uBdp_fl(:,i), cvsahz_uBdp_fl(:,0,i))
-        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+        call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
      &   eta_uBdp_fl(:,i), cvsa_uBdp_fl(:,0,i))
       enddo
 
 *    ..ion heat flux dependent viscosity on the cell boundary
       do i = 0, nspecies-1
         do j = 0, nspecies-1
-          call b2txcx (nCv, nFc, mode, geo, mpg, fcVolHz, fcSHz,
+          call b2txcx (nCv, nFc, 0.0_R8,
+     &     mode, geo, mpg, fcVolHz, fcSHz,
      &     eta_hAdp(:,i,j), cvsahz_hAdp(:,0,i,j))
-          call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+          call b2txcx (nCv, nFc, 0.0_R8,
+     &     mode, geo, mpg, geo%fcVol, geo%fcS,
      &     eta_hAdp(:,i,j), cvsa_hAdp(:,0,i,j))
         enddo
 
-        call b2txcx (nCv, nFc, mode, geo, mpg, fcVolHz, fcSHz,
+        call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, fcVolHz, fcSHz,
      &   eta_hBdp(:,i), cvsahz_hBdp(:,0,i))
-        call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
+        call b2txcx (nCv, nFc, 0.0_R8,
+     &   mode, geo, mpg, geo%fcVol, geo%fcS,
      &   eta_hBdp(:,i), cvsa_hBdp(:,0,i))
       enddo
 

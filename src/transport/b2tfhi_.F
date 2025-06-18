@@ -60,7 +60,7 @@
 *.declarations
 
 *   ..local variables
-      integer iFc, is, meth
+      integer is, meth
       real (kind=R8) ::
      *   floi0(nFc,0:1), coni0(nFc,0:1), fhi_32_loc(nFc,0:1),
      *   fhi_52_loc(nFc,0:1),

@@ -15,8 +15,10 @@
       use b2us_plasma
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
+#ifndef NAGFOR
       use b2mod_b2zhco
      & , only : c_hw_save
+#endif
       use b2mod_ad
      & , only : ncall_b2tfrn
       use b2mod_subsys

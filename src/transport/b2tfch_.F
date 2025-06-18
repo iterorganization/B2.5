@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch, !srv 29.01.20 {
+      subroutine b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,            !srv 29.01.20 {
      &  geo, mpg, pl, dv, co, co_ns, rt, st_ext)
       use b2mod_types
 !      use b2mod_boundary_namelist
@@ -30,7 +30,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, ismain, ismain0
+      integer nCv, nFc, nVx, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg

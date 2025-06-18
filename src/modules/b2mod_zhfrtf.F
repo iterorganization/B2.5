@@ -120,7 +120,7 @@
       real (kind=R8) :: na(nCv,0:ns-1),
      &  ua(nCv,0:ns-1)
 *   ..local variables
-      integer :: iCv, inucl, iz
+      integer :: inucl, iz
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -241,7 +241,7 @@
 
 *   ..local variables
       integer is, iz, inucl
-      real (kind=R8) :: rho_A(nCv,0:ns-1), rho(nCv), w_A(nCv,0:ns-1),
+      real (kind=R8) :: rho(nCv), w_A(nCv,0:ns-1),
      &   t_A(nCv,0:ns-1), wrkv(nVx)
 
 *-----------------------------------------------------------------------

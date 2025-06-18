@@ -456,14 +456,14 @@
       type (geometry), intent (inout) :: gm
       integer :: i, j, k, l, nCv, nFc, nVx, nFx,
      &           iCv, iFc, iVx, inCv, iXpt, iFc1, iFc2, iVx1, iVx2, iFt,
-     &           i1, i2, inv_dist(mpg%nVx), vv(2)
+     &           inv_dist(mpg%nVx)
       integer :: count_up, count_down, count_eq
       integer, allocatable :: old_face_list(:), verts(:)
       real (kind=R8) :: hzconst, r0, z0, t0, dux, duy, du, sbf,
      .  Psi1, Psi2, dpsi(mpg%nCv),
      .  dpsi_max_down, dpsi_max_up
       logical active, match_found
-      intrinsic maxval, maxloc, minloc, abs, sqrt
+      intrinsic maxval, abs, sqrt
       external b2xbzb, intface, intvertex, xerrab, xertst
 
       nCv = mpg%nCv
