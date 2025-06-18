@@ -41,6 +41,7 @@ c 2002-09-11: logic revised
       use b2mod_b2cmpt
       use b2mod_b2cmrc
       use b2mod_b2cmfs
+      use b2mod_b2zhco
       use b2mod_ppout
       use b2mod_b2plot
      , , only : wklng,
@@ -195,7 +196,7 @@ c 2002-09-11: logic revised
       integer invert_bpol, invert_btor, b2ux7p_style, csigin_style
       integer naver, ntotdt, ntfts
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120
-      character id0*8
+      character id0*8, chns*3
       character*4 solps_version
       data solps_version / 'iter' /
       data invert_bpol/0/, invert_btor/0/, b2ux7p_style/2/
@@ -280,8 +281,8 @@ c 2002-09-11: logic revised
      8 sna_corr1(:), taumax1(:), amfact1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps, na_min, ttini
       integer ns1, nsm, nym, natmm, nmolm, nionm, nwallm
-      integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns1
-      integer ib1, ib2, ifl, js, ks, itrack
+      integer i, j, ij, k, kk, ix, iy, is, ib, ireg, len, nsns1
+      integer ib1, ib2, ifl, ij1, j1, js, ks, itrack
       integer natm1, nmol1, nion1, nspecies1
       integer iss, jss, ispecies, jspecies
       integer itrack1, itrack2, itrack3

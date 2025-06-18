@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2siav_zh (nCv, nFc, nVx, ns, isb, switch, geo, mpg,
-     & mb, rzb, te, ti, na, ua, ni, ne2, rz2, lnlam, hci_a, hci_al_ast,
+     & mb, rzb, te, ti, na, ua, ne2, rz2, lnlam, hci_a, hci_al_ast,
      & cvsbhz_cl, cvsbhz_drho, vsbf_drho, vsaf_hAdp_albe, vsaf_hBdp_al,
      & vsaf_uAdp_albe, vsaf_uBdp_al,
      & smbvh, smbvv, smbvi, rho_rel, avm_u,
@@ -16,12 +16,12 @@
       use b2mod_balance                                                 !djm Jan2017
      & , only : b2siav_smovh0to3, b2siav_smovv0to3, balance_netcdf
       use b2mod_ad
-     & , only : ncall_b2siav
+     & , only : ncall_b2siav, nsmooth_siav_zh
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_ad
-     & , only : ncall_b2ttia, nsmooth_siav_zh
+     & , only : ncall_b2ttia
 #endif
       use b2mod_zhfrtf
      & , only : nal, Z_to_m1_ast, Ia
@@ -37,7 +37,7 @@
       real (kind=R8) ::
      & mb, lnlam(nCv),                                                  !srv 01.07.09
      & na(nCv,0:ns-1), ua(nCv,0:ns-1),
-     & te(nCv), ti(nCv), rzb(nCv), ni(nCv), ne2(nCv),
+     & te(nCv), ti(nCv), rzb(nCv), ne2(nCv),
      & hci_a(nCv,0:ns-1),
      & hci_al_ast(nCv,0:nspecies-1),
      & cvsbhz_cl(nFc,0:1),
@@ -75,7 +75,7 @@
      *     t0, ft, ft_h                                                 !srv 16.10.17
       real (kind=R8) ::
      &     wrks(nCv), wrkf(nFc), wrkv(nVx), wght(nFc,2),
-     *     wrkf0(nFc), wrkf1(nFc), wrkf2(nFc), wrkf3(nFc),
+     *     wrkf0(nFc), wrkf1(nFc), wrkf2(nFc),
      *     tauia(nCv,0:ns-1), qip0(nCv),                                !srv 23.07.99
      *     qip1(nCv), qipgen(nCv), qipgen_al(nCv,0:nspecies-1),         !srv 23.07.99 19.01.05
      &     gti(nCv,0:1), u_res_b(nCv)

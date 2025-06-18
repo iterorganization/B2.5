@@ -513,12 +513,12 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       if (switch%pot_eq.eq.0) then                                       !srv 13.07.05 {
         st%pl%po        = 0.0_R8
         !wdk call b2tfch_ to ensure all currents are properly set to 0
-        call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
+        call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
      &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
       else if (switch%pot_eq.eq.2) then                                  !srv 11.01.12
         st%pl%po        = 3.1_R8*st%pl%te/qe
         !wdk call b2tfch_ to ensure all currents are properly set to 0
-        call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
+        call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
      &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
       else                                                               !srv 13.07.05 }
 *   ..correct po
@@ -531,7 +531,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
           endif                                                          !srv 12.07.05 }
         endif
 *   ..compute currents                                                   !srv 29.01.20 {
-        call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
+        call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
      &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
         if (b2news_solving(3)) then
 *   ..solve the potential equation
@@ -557,7 +557,7 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
           t0 = b2sasum(nCv,st%dv%respo,1)
           write(*,*) 'respo before solving',t0
 *   ..recompute currents
-          call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
+          call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
      &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
 *   ..compute new residual following the tradition
           call b2ursd (nCv, nFc, mpg, st%dv%ne, st%pl%po,

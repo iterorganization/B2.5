@@ -380,7 +380,7 @@ c time-dependent treatment
      &         switch%Zhdanov_vish.eq.1) then
          call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
      &    am(is)*mp, rt%rza(:,is), pl%te, pl%ti, pl%na, pl%ua,
-     &    dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
+     &    dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
      &    co_ns%hci_al_ast, co%cvsahz_cl(:,:,is),
      &    co%cvsahz_drho(:,:,is), co%vsaf_drho(:,:,is),
      &    co_ns%vsaf_hAdp_albe, co_ns%vsaf_hBdp_al,
@@ -394,7 +394,7 @@ c time-dependent treatment
      &    smbvh, smbvtmp, co%kt_neo, wrk0, wrk1, wrk2)
          call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
      &    am(is)*mp, rt%rza(:,is), pl%te, pl%ti, pl%na, pl%ua,
-     &    dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
+     &    dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
      &    co_ns%hci_al_ast, co%cvsahz_cl(:,:,is),
      &    co%cvsahz_drho(:,:,is), co%vsaf_drho(:,:,is),
      &    co_ns%vsaf_hAdp_albe, co_ns%vsaf_hBdp_al,
@@ -409,7 +409,7 @@ c time-dependent treatment
      &    smbvtmp, smbvv, co%kt_neo, wrk0, wrk1, wrk2)
          call b2siav_zh (nCv, nFc, nVx, ns, is, switch, geo, mpg,
      &    am(is)*mp, rt%rza(:,is), pl%te, pl%ti, pl%na, pl%ua,
-     &    dv%ni, dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
+     &    dv%ne2, rt%rz2, dv%lnlam, co%hci_a,
      &    co_ns%hci_al_ast, co%cvsahz_cl(:,:,is),
      &    co%cvsahz_drho(:,:,is), co%vsaf_drho(:,:,is),
      &    co_ns%vsaf_hAdp_albe, co_ns%vsaf_hBdp_al,

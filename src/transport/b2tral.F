@@ -7,11 +7,10 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2zhco
-     & , only: amfact, alloc_b2mod_zhco_amfact
+     & , only : amfact, alloc_b2mod_zhco_amfact
       use b2mod_zhfrtf
-     & , only: avm_u, w_out, hTdp_out, hwdp_out,
-     &         rTdpgamma_out, rwdpgamma_out,
-     &         piu_out
+     & , only : avm_u, w_out, hTdp_out, hwdp_out,
+     &          rTdpgamma_out, rwdpgamma_out
       use b2mod_b2mrel
      & , only : nucl2s, znnucl_int
 !WG_TBD      use b2mod_neoclassical
@@ -27,8 +26,8 @@
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
       use b2mod_b2cmpt
-     &  , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna, 
-     &           cfhce, cfhci
+     & , only : cfvla, cflim, cfvsa, cfalf, cfdpa, cfsig, cfdna,
+     &          cfhce, cfhci
       use b2mod_transport_namelist
      & , only : parm_hce, parm_hci, parm_dna, parm_dpa, parm_vla,
      &          parm_vsa, parm_alf, parm_sig
@@ -40,10 +39,10 @@
      &          transport_ip_time_mod
       use b2mod_zhfrtf
      & , only : is_i, z2n_xy, nal, ia, av_ualpha, gt_ac, rho_a_rel,
-     &         gavm_uc, z_to_m1_ast
+     &          gavm_uc, z_to_m1_ast
       use b2mod_b2zhco
      & , only : c_hw_save, c_r_ta, c_r_ta_nofl, c_r_tb, c_r_tb_nofl,
-     &         c_r_w, tf_ton_mat
+     &          c_r_w, tf_ton_mat
       use b2mod_b2mrel
      & , only : s2nucl, amnucl, n2, n3, n4, n5, n6, n8, n9, n10, n11,
      &          n12, n13, n14, n15, n16, mu, mum, rmu, rmd2, mdm,
@@ -57,7 +56,7 @@
      &          my_out_sf,                                              !srv 27.06.21
 #endif
      &          ncall_b2tlmv, ncall_b2tqin, ncall_b2tqce, ncall_b2tlnl,
-     &          ncall_b2tqca, ncall_b2tlh0, ncall_b2tqna, ncall_b2trno, 
+     &          ncall_b2tqca, ncall_b2tlh0, ncall_b2tqna, ncall_b2trno,
      &          ncall_transp_keps, nsdmax, cvregmax, ncall_b2trcl,
      &          ncall_b2ttia
       use b2mod_math
@@ -116,7 +115,6 @@
       integer iFc, is, is0, iz, inucl
       character(3) chns, chns0                                          !srv 17.06.08
       integer, save :: zmaxmax                                          !som 09.02.21
-      real (kind=R8), save :: gamma = 1.0_R8                            !som 20.03.21
       real (kind=R8) ::
      1  chvi0(nFc,0:1), csig0(nFc,0:1), calf0(nFc,0:1), chci0(nFc,0:1),
      3  cvsa0(nFc,0:1,0:ns-1), cvsahz0(nFc,0:1,0:ns-1),                 !srv 09.01.01
@@ -136,11 +134,10 @@
      &  cvsa_uBdp_fl(nFc,0:1,0:nspecies-1),
      &  cvsahz_uAdp_fl(nFc,0:1,0:nspecies-1,0:nspecies-1),
      &  cvsahz_uBdp_fl(nFc,0:1,0:nspecies-1),
-     &  vsaf0(nFc,0:1,0:ns-1),
      &  vsaf0_luc(nFc,0:1,0:ns-1),
      1  ft,                                                             !srv 16.10.17
      *  wrkc(nCv), wrkf(nFc), wrkmin, wght(nFc,2)
-        
+
       character*72 message
 *   ..procedures
       external xertst, ipgetr, b2saxpy
@@ -186,7 +183,7 @@
       call b2trcl (nCv, nFc, nVx, ns, nscx, iscx, ismain,               !srv 23.11.10
      1  switch, geo, mpg, pl, dv, rt, co, st_ext, cvsahz0,              !srv 09.01.01 03.06.03
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, cdkt0,         !xpb
-     4  co%csigin, co%cthe, co%cthi, co%vsaf_cl, co%cvsa_cl, 
+     4  co%csigin, co%cthe, co%cthi, co%vsaf_cl, co%cvsa_cl,
      5  co%cvsahz_cl, co%fllimvisc, co%csig_cl, co%calf_cl)
 *   ..compute Zhdanov closure coefficients
       if (switch%Zhdanov_closure.eq.1) then                             !som 09.02.21
@@ -198,7 +195,7 @@
         call b2tlnl (nCv, switch, switch%icase_ii, pl%te, pl%ti, dv%ne,
      &    dv%lnlam)                                                     !srv 01.07.09  20.09.11
         call b2trzh (nCv, nFc, nVx, ns, zmaxmax, switch,
-     &    geo, mpg, pl, dv, rt, co, co_ns,
+     &    geo, mpg, pl, dv, co,
      &    co_ns%hci_al_ast, co%hci_a,
      &    chci0_nofl, chci0_fl, chci0_luc,
      &    chci0_al, chci_al_luc, chci0_a, co%chci_a,
@@ -219,7 +216,7 @@
         co_ns%chci_al_ast = 0.0_R8
         do inucl=0,nspecies-1
           do iz= 1, znnucl_int(inucl)
-            co_ns%chci_al_ast(:,0,inucl) = 
+            co_ns%chci_al_ast(:,0,inucl) =
      &        co_ns%chci_al_ast(:,0,inucl) +
      &        co%chci_a(:,0,nucl2s(inucl,iz))
           enddo
@@ -233,7 +230,6 @@
         if (switch%Zhdanov_test.eq.0 .and.
      &      switch%Zhdanov_visu.eq.1) then                              !som 10.08.21
           if (switch%zh_vis_type.eq.0) then                             !som 13.01.22
-            vsaf0(:,0:1,0:ns-1) = co%vsaf_drho(:,0:1,0:ns-1)
             cvsahz0(:,0:1,0:ns-1) = co%cvsahz_drho(:,0:1,0:ns-1)
             cvsa0(:,0:1,0:ns-1) = co%cvsa_drho(:,0:1,0:ns-1)
             co%vsaf_cl(:,0:1,0:ns-1) = co%vsaf_drho(:,0:1,0:ns-1)
@@ -241,7 +237,6 @@
             co%cvsa_cl(:,0:1,0:ns-1) = co%cvsa_drho(:,0:1,0:ns-1)
           else if (switch%zh_vis_type.eq.1 .or.
      &             switch%zh_vis_type.eq.2) then
-            vsaf0(:,0:1,0:ns-1) = vsaf0_luc(:,0:1,0:ns-1)
             cvsahz0(:,0:1,0:ns-1) = cvsahz0_luc(:,0:1,0:ns-1)
             cvsa0(:,0:1,0:ns-1)= cvsa0_luc(:,0:1,0:ns-1)
             co%vsaf_cl(:,0:1,0:ns-1) = vsaf0_luc(:,0:1,0:ns-1)
@@ -288,7 +283,7 @@
      &         'b2trzh_luciani_cvsa_hAdp_th'//chns//'_'//chns0)
               call my_out_us(70,nFc,1,cvsahz0_hAdp(1,0,is,is0),
      &         'b2trzh_cvsahz_hAdp_th'//chns//'_'//chns0)
-              call 
+              call
      &          my_out_us(70,nFc,1,co_ns%cvsahz_hAdp_albe(1,0,is,is0),
      &         'b2trzh_luciani_cvsahz_hAdp_th'//chns//'_'//chns0)
             enddo
@@ -372,16 +367,16 @@
         co%cddi(:,1,is) = wrkf*co%cdde(:,1)
        else
         co%cddi(:,:,is) = 0.0_R8
-       endif 
+       endif
       enddo                                                           !srv 13.10.06 }
 
 *  ..check that we have some particle diffusion
       if (ncall_b2tral.le.3) then                                            !srv 12.03.12 {
         do is = 0, ns-1
 cwdk combined check for poloidal or radial diffusion
-          wrkf(:) = co%cdna(:,0,is)*geo%fcQalf(:,0) + 
-     .              co%cdpa(:,0,is)*geo%fcQalf(:,0) + 
-     .              co%cdna(:,1,is)*geo%fcQalf(:,1) + 
+          wrkf(:) = co%cdna(:,0,is)*geo%fcQalf(:,0) +
+     .              co%cdpa(:,0,is)*geo%fcQalf(:,0) +
+     .              co%cdna(:,1,is)*geo%fcQalf(:,1) +
      .              co%cdpa(:,1,is)*geo%fcQalf(:,1)
           wrkmin = huge(1.0_R8)
           do iFc = 1, nFc
@@ -389,7 +384,7 @@ cwdk combined check for poloidal or radial diffusion
           enddo
           write(message,'(a, i3)')
      .     'No particle diffusion for species ',is
-          call xertst (wrkmin.gt.0.0_R8 .or. 
+          call xertst (wrkmin.gt.0.0_R8 .or.
      .     switch%pol_anom_scale.eq.0.0_R8 .or. .not.b2news_solving(2),
      .     message)
 *  ..check that we have some anomalous ion heat transport
@@ -445,7 +440,7 @@ cwdk combined check for poloidal or radial diffusion
         call my_out_us(70,nCv,0,co%cthi(1,is),'cthi'//chns)
         do is0=0,ns-1
          write (chns0,'(i3.3)') is0
-         if(is0.ne.is .and. .not.is_neutral(is)) then 
+         if(is0.ne.is .and. .not.is_neutral(is)) then
           call my_out_us(70,nFc,1,co%csigin(1,0,is,is0),'csigin_th'//
      &        chns//'_'//chns0)
           call my_out_us(70,nFc,1,co%csigin(1,1,is,is0),'csigin_r'//
@@ -473,7 +468,7 @@ cwdk combined check for poloidal or radial diffusion
 
       if(switch%b2npco_iout.ne.0) then                               !srv 11.09.09 {
        do is = 0, ns-1
-        write (chns,'(i3.3)') is 
+        write (chns,'(i3.3)') is
         call my_out_us(70,nFc,1,co%cdna(1,0,is),'b2tral_cdna_th'//chns)
         call my_out_us(70,nFc,1,co%cdna(1,1,is),'b2tral_cdna_r'//chns)
         call my_out_us(70,nFc,1,co%cdpa(1,0,is),'b2tral_cdpa_th'//chns)
