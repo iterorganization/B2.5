@@ -59,7 +59,7 @@ c*** Loop over the sources
 c
 c<<<
       if (uu_dbg) then
-        print *,'rlcomp: nsrc,ntrg = ',nsrc,ntrg
+        print *,'rlcomp: nsrc, ntrg = ',nsrc,ntrg
         open(lun_s,file='sources.dat')
         write(lun_s,'(2a)') '# Radiation sources : ',trim(label)
         write(lun_s,'(5a)') '# R',tab,'Z',tab,'S'

@@ -1454,25 +1454,56 @@ c*** use the zone index to label the plot zone
 c*** Fill in the input arrays for b2pwrdld
 c
       nwldrad=0
-      do j=1,ntrgts !{
-        if (itrg(j).eq.0) cycle
-        do i=1,mpg%divFcP(itrg(j),2) !{
-          if (CCW(itrg(j))) then
-            lwldrad(nwldrad+mpg%divFcP(itrg(j),2)+1-i)=lppp+nwldrad+i
-          else
-            lwldrad(nwldrad+i)=lppp+nwldrad+i
-          end if
+      if (grid_mode.lt.2) then
+        do j=1,ntrgts !{
+          if (itrg(j).eq.0) cycle
+          do i=1,mpg%divFcP(itrg(j),2) !{
+            if (CCW(itrg(j))) then
+              lwldrad(nwldrad+mpg%divFcP(itrg(j),2)+1-i)=lppp+nwldrad+i
+            else
+              lwldrad(nwldrad+i)=lppp+nwldrad+i
+            end if
+          end do !}
+          nwldrad=nwldrad+mpg%divFcP(itrg(j),2)
         end do !}
-        nwldrad=nwldrad+mpg%divFcP(itrg(j),2)
-      end do !}
 #ifdef DBG
-      print *,'%% b2pwltrg: nwldrad / lwldrad',nwldrad
-      k=0
-      do j=1,ntrgts !{
-        if (itrg(j).eq.0) cycle
-        print '(20i5)',(lwldrad(k+i),i=1,mpg%divFcP(itrg(j),2))
-        k=k+mpg%divFcP(itrg(j),2)
-      end do !}
+        print *,'%% b2pwltrg: nwldrad / lwldrad',nwldrad
+        k=0
+        do j=1,ntrgts !{
+          if (itrg(j).eq.0) cycle
+          print '(20i5)',(lwldrad(k+i),i=1,mpg%divFcP(itrg(j),2))
+          k=k+mpg%divFcP(itrg(j),2)
+        end do !}
+#endif
+      else
+        do j=1,nsns !{
+          ks=abs(lsns(j))
+          if(fnmti_b2(eirdiag_nds_ind(ks)+1).eq.-1) cycle
+          do i=eirdiag_nds_ind(ks)+1,eirdiag_nds_ind(ks+1)-1 !{
+            if (CCW(ntrgts+j)) then
+              lwldrad(nwldrad+eirdiag_nds_ind(ks+1)-i)=
+     .         lppp+nwldrad+i-eirdiag_nds_ind(ks)
+            else
+              lwldrad(nwldrad+i-eirdiag_nds_ind(ks))=
+     .         lppp+nwldrad+i-eirdiag_nds_ind(ks)
+            end if
+          end do !}
+          nwldrad=nwldrad+eirdiag_nds_ind(ks+1)-(eirdiag_nds_ind(ks)+1)
+        end do !}
+#ifdef DBG
+        print *,'%% b2pwltrg: nwldrad / lwldrad',nwldrad
+        k=0
+        do j=1,nsns !{
+          ks=abs(lsns(j))
+          if(fnmti_b2(eirdiag_nds_ind(ks)+1).eq.-1) cycle
+          print '(20i5)',
+     .     (lwldrad(k+i),i=1,eirdiag_nds_ind(ks+1)-
+     .                      (eirdiag_nds_ind(ks)+1))
+          k=k+eirdiag_nds_ind(ks+1)-(eirdiag_nds_ind(ks)+1)
+        end do !}
+#endif
+      end if
+#ifdef DBG
       print '(1x,a,i5/(20i5))','nwldlis / lwldlis',nwldlis(1),
      ,                           (lwldlis(i,1),i=1,nwldlis(1))
 #endif
