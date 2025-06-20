@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sian(nCv, nFc, isb, switch, geo, mpg, fchanml, smban)
+      subroutine b2sian(nCv, nFc, isb, switch, geo, mpg, fchanml_b,
+     &   smban)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -24,7 +25,7 @@
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       real (kind=R8) ::
-     &   fchanml(nFc,0:1)
+     &   fchanml_b(nFc,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   smban(nCv,0:3)
@@ -60,9 +61,9 @@
 *   ..test nCv, nFc
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       smban = 0.0_R8
-      if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+      if(.not.is_neutral(isb)) then
 *   ..  compute smban
-        wrkf = fchanml(:,1)/(geo%fcS*geo%fcQalf(:,1) + b2sian_eps)
+        wrkf = fchanml_b(:,1)/(geo%fcS*geo%fcQalf(:,1) + b2sian_eps)
         call intcell(nFc,nCv,mpg,mpg%intcellR,wrkf,wrk)
         do iCv = 1, mpg%nCi
           smban(iCv,0) = -switch%b2sian_phm0*

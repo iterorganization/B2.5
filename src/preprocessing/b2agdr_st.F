@@ -349,7 +349,7 @@
      & leftcut1, rightcut1, bottomcut1, topcut1, ccut1, cflags1)
 *   ..correct pbsx on the proper mesh
       if(redef_gmtry.ne.0) then
-        call b2agbs (nx, ny, nncutmax,
+        call b2agbs_st (nx, ny, nncutmax,
      1   leftix, leftiy, rightix, rightiy, region, crx, cry,
      1   ffbz, bb, wbbl, gs, qz, qc, hx, hy, vol,
      2   pbs, cell_width, cell_height, cflags1)
@@ -677,4 +677,3 @@ cdpc-debug
 *.end b2agdr_st
 
       end subroutine b2agdr_st
-

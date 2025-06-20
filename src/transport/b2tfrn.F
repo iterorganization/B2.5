@@ -15,6 +15,10 @@
       use b2us_plasma
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
+#ifndef NAGFOR
+      use b2mod_b2zhco
+     & , only : c_hw_save
+#endif
       use b2mod_ad
      & , only : ncall_b2tfrn
       use b2mod_subsys
@@ -50,10 +54,11 @@
       integer iCv, iFc, is, isb, meth
       character chns*3                                                   !srv 16.09.02
       real (kind=R8) ::
-     *   flo_eir(nFc,0:1), scur(nFc,0:1), fle_eir(nFc,0:1),   !srv 14.07.10
-     &   floe_eir(nFc,0:1), floi_eir(nFc,0:1)
+     *   flo_eir(nFc,0:1), scur(nFc,0:1), fle_eir(nFc,0:1),              !srv 14.07.10
+     &   floe_eir(nFc,0:1), floi_eir(nFc,0:1), floi_vhx(nFc),
+     &   fnef(nFc,0:1), fnec(nFc,0:1)
       real (kind=R8) ::
-     &   nbf(nFc), pbf(nFc), dpb(nFc,0:1), dpbc(nCv),
+     &   nbf(nFc), pbf(nFc), rzf(nFc), dpb(nFc,0:1), dpbc(nCv),
      &   dnete(nFc,0:1), weight(nFc,2)
       real (kind=R8) ::
      *   wrk0(nFc), wrk1(nFc), wrk2(nFc), wrkVx(nVx),
@@ -105,6 +110,7 @@ c      endif
        weight = 1.0_R8
        call intface(nCv,nFc,mpg%fcCv,weight,pl%na(:,is),nbf)
        call intface(nCv,nFc,mpg%fcCv,weight,dv%pa(:,is),pbf)
+       call intface(nCv,nFc,mpg%fcCv,weight,rt%rza(:,is),rzf)
 
 *   ..compute differences of pb
        call diff(nCv, nFc, nVx, 0, geo, mpg, dv%pa(:,is), wrkVx, dpb)
@@ -125,20 +131,25 @@ c      endif
      &   geo%fcS*geo%fcQalf(:,1)
 
 *   ..add contribution from currents
-cwdk   condition made consistent with b2tfnb => check zn(is) instead of rza(ix,iy,is)
 cwdk   still to be checked: vis_per and vis_q also in b2tfnb?
-       if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
+       if (.not.is_neutral(is)) then
         scur(:,0) =
-     &   (dv%fchinert(:,0) + dv%fchvispar(:,0) +
-     &    switch%fnb_vis_per*dv%fchvisper(:,0) + dv%fchanml(:,0) +
-     &    switch%fnb_vis_q*dv%fchvisq(:,0))*switch%b2tfnb_xcur/
-     &   (qe*nbf) + dv%fchviskt(:,0)/(qe*nbf)
+     &   (dv%fchinert_a(:,0,is) + dv%fchvispar_a(:,0,is) +
+     &    switch%fnb_vis_per*dv%fchvisper_a(:,0,is) +
+     &    dv%fchanml_a(:,0,is) +
+     &    switch%fnb_vis_q*dv%fchvisq_a(:,0,is))*switch%b2tfnb_xcur/
+     &   (rzf*qe*nbf) +
+     &    dv%fchviskt_a(:,0,is)/(rzf*qe*nbf)
         scur(:,1) =
-     &   (dv%fchinert(:,1) + dv%fchvispar(:,1) +
-     &    switch%fnb_vis_per*dv%fchvisper(:,1) + dv%fchanml(:,1) +
-     &    switch%fnb_vis_q*dv%fchvisq(:,1))*switch%b2tfnb_ycur/
-     &   (qe*nbf) + dv%fchviskt(:,1)/(qe*nbf)
+     &   (dv%fchinert_a(:,1,is) + dv%fchvispar_a(:,1,is) +
+     &    switch%fnb_vis_per*dv%fchvisper_a(:,1,is) +
+     &    dv%fchanml_a(:,1,is) +
+     &    switch%fnb_vis_q*dv%fchvisq_a(:,1,is))*switch%b2tfnb_ycur/
+     &   (rzf*qe*nbf) +
+     &    dv%fchviskt_a(:,1,is)/(rzf*qe*nbf)
         flo_eir   = flo_eir + switch%fnb_drift_hyb*scur
+       else
+        scur = 0.0_R8 
        end if
 
 *   ..apply discretization scheme for density-part of fna_eir
@@ -195,7 +206,7 @@ cwdk    to be checked: now we use inverse volume weighting in wkr0
       endif
 
 *   ..compute wrk0
-       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,dv%ue,wrk0)
+      call intface(nCv,nFc,mpg%fcCv,geo%fcVol,dv%ue,wrk0)
 
       if(switch%b2sigp_style.eq.2) then
         call b2xzef (nCv, ns, rt%rz2, pl%na, dv%ne, zeff, st_ext)
@@ -209,51 +220,62 @@ cwdk    to be checked: now we use inverse volume weighting in wkr0
 cwdk  interpolate to cell faces!
       call intface(nCv,nFc,mpg%fcCv,geo%fcVol,c071,c071f)
 
+*   ..velocity-dependent part of the heat flux
+      floi_vhx = 0.0_R8                                                 !som 13.07.21
+      if (switch%Zhdanov_closure.eq.1 .and.
+     &    switch%Zhdanov_test.eq.0 .and.
+     &    switch%Zhdanov_vel_heat.eq.1) then                            !som 13.07.21
+        call b2tfvh (nCv, nFc, ns, geo, mpg, pl%na, pl%ua, floi_vhx)
+      endif
+
 * ..compute fluxes
 cwdk  * why the species loop + check for zamax = 1 here?
 cwdk    should we not compute fne_eir as sum(fna_eir,is) - fch?
 cwdk    (in that case, fch including full diamagnetic current?)
 cwdk  * adapted check: added zn(is).eq.1 to avoid double counting
-      do is = 0, ns-1
-       if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
-
 *   ..compute convective coefficients (poloidal and radial)
-        fle_eir(:,0) = geo%fcPbs*wrk0 +
-     &    (switch%xvecrb*dv%veecrb(:,0) + switch%xwdia*dv%wedia(:,0))*
-     &     geo%fcS*geo%fcQalf(:,0)
-        fle_eir(:,1) =
-     &    (switch%xvecrb*dv%veecrb(:,1) + switch%xwdia*dv%wedia(:,1))*
-     &     geo%fcS*geo%fcQalf(:,1)
+      fle_eir(:,0) = geo%fcPbs*wrk0 +
+     &  (switch%xvecrb*dv%veecrb(:,0) + switch%xwdia*dv%wedia(:,0))*
+     &   geo%fcS*geo%fcQalf(:,0)
+      fle_eir(:,1) =
+     &  (switch%xvecrb*dv%veecrb(:,1) + switch%xwdia*dv%wedia(:,1))*
+     &   geo%fcS*geo%fcQalf(:,1)
 
-*   ..apply discretization scheme
-        call calcflow(nCv,nFc,nVx,meth,geo,mpg,dv%ne,fle_eir,
-     &    co%cdna(:,:,is),dv%fne_eir,wrk00,wrk11)
+      dv%fne_eir = 0.0_R8
+      do is = 0,ns-1
+        if(.not.is_neutral(is)) then
+*       ..apply discretization scheme
+          !accumulate conductive piece per species(fnec)
+          call calcflow(nCv,nFc,nVx,meth,geo,mpg,dv%ne,fle_eir,
+     &      co%cdna(:,:,is),wrk00,fnef,fnec)
+          dv%fne_eir = dv%fne_eir + fnec
+        endif
+      enddo
+      !add convective piece (once)
+      dv%fne_eir = dv%fne_eir + fnef
 
 *   ..compute convective coefficients electron heat flux
-        floe_eir(:,0) = 2.5_R8*dv%fne_eir(:,0) -
-     &    c071f*dv%fch_p(:,0)/qe*switch%fch_pTe
-        floe_eir(:,1) = 2.5_R8*dv%fne_eir(:,1)
+      floe_eir(:,0) = 2.5_R8*dv%fne_eir(:,0) -
+     &  c071f*dv%fch_p(:,0)/qe*switch%fch_pTe
+      floe_eir(:,1) = 2.5_R8*dv%fne_eir(:,1)
 
 *   ..apply discretization scheme
-        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%te,floe_eir,
-     &    co%chce,dv%fhe_eir,wrk00,wrk11)
+      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%te,floe_eir,
+     &  co%chce,dv%fhe_eir,wrk00,wrk11)
 
 *   ..compute convective coefficients ion heat flux
-        floi_eir = 0.0_R8
-        do isb = 0, ns-1
-         if(.not.is_neutral(isb)) then
+      floi_eir = 0.0_R8
+      do isb = 0, ns-1
+        if(.not.is_neutral(isb)) then
           floi_eir = floi_eir + dv%fna_eir(:,:,isb)
-         endif
-        enddo
-        floi_eir(:,0) = 2.5_R8*floi_eir(:,0)
-        floi_eir(:,1) = 2.5_R8*floi_eir(:,1)
+        endif
+      enddo
+      floi_eir(:,0) = 2.5_R8*floi_eir(:,0) + floi_vhx
+      floi_eir(:,1) = 2.5_R8*floi_eir(:,1)
 
 *   ..apply discretization scheme
-        call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi_eir,
-     &    co%chci,dv%fhi_eir,wrk00,wrk11)
-
-       endif
-      enddo
+      call calcflow(nCv,nFc,nVx,meth,geo,mpg,pl%ti,floi_eir,
+     &  co%chci,dv%fhi_eir,wrk00,wrk11)
 
       if(switch%b2tfrn_iout.ne.0) then                                   !srv 18.06.08 {
        do is = 0, ns-1
@@ -274,6 +296,18 @@ cwdk  * adapted check: added zn(is).eq.1 to avoid double counting
         call my_out_us(70,nFc,1,co%cdna(1,1,is),'b2tfrn_cdna_r'//chns)
         call my_out_us(70,nCv,0,pl%ua(1,is),'b2tfrn_ua'//chns)
         call my_out_us(70,nCv,0,pl%na(1,is),'b2tfrn_na'//chns)
+        call my_out_us(70,nFc,1,dv%fchvispar_a(1,0,is),
+     &   'b2tfrn_fchvispar_th'//chns)
+        call my_out_us(70,nFc,1,dv%fchvispar_a(1,1,is),
+     &   'b2tfrn_fchvispar_r'//chns)
+        call my_out_us(70,nFc,1,dv%fchinert_a(1,0,is),
+     &   'b2tfrn_fchinert_th'//chns)
+        call my_out_us(70,nFc,1,dv%fchinert_a(1,1,is),
+     &   'b2tfrn_fchinert_r'//chns)
+        call my_out_us(70,nFc,1,dv%fchanml_a(1,0,is),
+     &   'b2tfrn_fchanml_th'//chns)
+        call my_out_us(70,nFc,1,dv%fchanml_a(1,1,is),
+     &   'b2tfrn_fchanml_r'//chns)
        enddo
        call my_out_us(70,nFc,1,dv%fne_eir(1,0),'b2tfrn_fne_eir_th')
        call my_out_us(70,nFc,1,dv%fne_eir(1,1),'b2tfrn_fne_eir_r')
@@ -283,12 +317,6 @@ cwdk  * adapted check: added zn(is).eq.1 to avoid double counting
        call my_out_us(70,nFc,1,dv%fhi_eir(1,1),'b2tfrn_fhi_eir_r')
        call my_out_us(70,nFc,1,dv%fch_p(1,0),'b2tfrn_fch_p_th')
        call my_out_us(70,nFc,1,dv%fch_p(1,1),'b2tfrn_fch_p_r')
-       call my_out_us(70,nFc,1,dv%fchvispar(1,0),'b2tfrn_fchvispar_th')
-       call my_out_us(70,nFc,1,dv%fchvispar(1,1),'b2tfrn_fchvispar_r')
-       call my_out_us(70,nFc,1,dv%fchinert(1,0),'b2tfrn_fchinert_th')
-       call my_out_us(70,nFc,1,dv%fchinert(1,1),'b2tfrn_fchinert_r')
-       call my_out_us(70,nFc,1,dv%fchanml(1,0),'b2tfrn_fchanml_th')
-       call my_out_us(70,nFc,1,dv%fchanml(1,1),'b2tfrn_fchanml_r')
        call my_out_us(70,nFc,1,dv%wedia(1,0),'b2tfrn_wedia_th')
        call my_out_us(70,nFc,1,dv%wedia(1,1),'b2tfrn_wedia_r')
        call my_out_us(70,nFc,1,dv%ue,'b2tfrn_ve')

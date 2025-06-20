@@ -8,8 +8,8 @@
       use b2mod_elements
       use b2us_feedback
      & , only : write_b2us_feedback, init_feedback, dealloc_feedback,
-     &          fb_target, fb_prev, fb_current, cum_volrec, fb_const,
-     &          charge_frac, saved_fb_actuator, fb_rescale, dt_prev,
+     &          fb_target, fb_rescale, fb_current, cum_volrec, fb_const,
+     &          charge_frac, saved_fb_actuator, saved_fb_prev, dt_prev,
      &          feedback_namelist_used
       use b2mod_sputter
      & , only : sput_dst, dealloc_sputter_data, dealloc_b2mod_sputter
@@ -36,6 +36,11 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpt
       use b2mod_b2cmrc
+      use b2mod_b2mrel
+     & , only : dealloc_b2mod_mrel
+      use b2mod_b2zhco
+      use b2mod_zhfrtf
+     & , only : dealloc_b2mod_zhfrtf, dealloc_b2mod_zhfrtf_df
       use b2mod_boundary_namelist
       use b2mod_mwti
       use b2mod_file
@@ -154,16 +159,13 @@ c Artificial losses module
 *   ..common blocks
 *   ..local variables
       integer ncall, ntim, mvinc, mvnum, jsep,
-     &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
-     &  nxtl, nxtr
+     &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       save isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
-      integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
+      integer, save :: inverse_ua = 0                                !srv 11.01.13 25.01.16
       integer, save :: old_style = 0                                 !pb 29.07.16
       integer, save :: ird_aver = 0
       integer, save :: shot = 0, run = 0, ids_save = 0, ids_av = 0
-      integer, save :: use_mms = 0                                   !srv 26.02.18
-      integer, save :: boundary_sources = 0, equation_sources = 0    !srv 26.02.18
 #ifdef _OPENMP
       real (kind=R8) :: cpuval, cpustart, cpuinit
 #else
@@ -946,6 +948,7 @@ c Artificial losses module
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
+       call createB2Coeff_nspecies(nCv, nFc, nspecies, state % co_ns)
 #ifndef FIXED_POINT
        balance_netcdf  = 0 ! Default: do not create balance arrays
        balance_average = 0 ! Default: do not perform averages of balance arrays
@@ -953,13 +956,9 @@ c Artificial losses module
        call ipgeti ('balance_average', balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nCv,nFc,ns)
 #endif
-       call ipgeti ('b2mndr_iout', iout)                                !srv 25.01.16
-       call ipgeti ('b2mndr_use_mms', use_mms)                          !srv 26.02.18 {
-       call ipgeti ('b2mndr_boundary_sources', boundary_sources)
-       if(boundary_sources.ne.0)
+       if(switch%boundary_sources.ne.0)
      &    call alloc_b2mod_boundary_sources(nCv,ns)
-       call ipgeti ('b2mndr_equation_sources', equation_sources)
-       if(equation_sources.ne.0)
+       if(switch%equation_sources.ne.0)
      &    call alloc_b2mod_equation_sources(nCv,ns)                   !srv 26.02.18 }
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
@@ -1232,10 +1231,9 @@ c and hence the reaction rates have to be rescaled here.
              enddo
              if(is_neutral(is) .and. lnext(is,is+1)) then
                 rtlra(:,:,is+1)=rtlra(:,:,is+1)+log(scl)
-                write(*,*) is,zamax(is),rtlra(0,0,is+1)
+                write(*,'(i3,1p,2e16.8)') is,zamax(is),rtlra(0,0,is+1)
                 rtlqr(:,:,is+1)=rtlqr(:,:,is+1)+log(scl)      !mb 22.05.18
-                write(*,'(i3,1p,2e16.8)')
-     *             is,zamax(is),rtlqr(0,0,is+1)
+                write(*,'(i3,1p,2e16.8)') is,zamax(is),rtlqr(0,0,is+1)
              endif
            enddo
            if (switch%spatial_hybrid.eq.1) then
@@ -1711,7 +1709,7 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
         call xerrab('b2mndr -- specify BCs using boundary_namelist')
       endif
 
-      if(switch%b2mndr_iout.ne.0) then                                             !srv 25.01.16 {
+      if(switch%b2mndr_iout.ne.0) then                                  !srv 25.01.16 {
        call my_out_us(70,nCv,0,state%dv%ne,'b2mndr_ne')
        do is = 0,ns-1
         write (chns,'(i3.3)') is
@@ -1757,16 +1755,14 @@ cwdk eventually to be moved into init_geometry (or: defined through b2fgmtry)
        call my_out_us(70,nFc,1,geo%fcEb(1,1),'b2mndr_fcEbY')
        call my_out_us(70,nFc,1,geo%fcEb(1,2),'b2mndr_fcEbZ')
       endif                                                          !srv 25.01.16 }
-      do is = 0,ns-1                                                 !srv 25.01.16 {
-        do iCv=1,nCv
+      do is = 0, ns-1                                                !srv 25.01.16 {
+        do iCv = 1, nCv
           state % pl % na(iCv,is) = min(max(state % pl % na(iCv,is),
      &      switch % b2mndr_na_min),switch % b2mndr_na_max)
         enddo
       enddo                                                          !srv 25.01.16 }
-!      if(use_mms.ne.0) then                                         !srv 26.02.18 {
-*   ..reset initial state using exact solution
+*   ..reset initial state if using exact solution
        call set_exact_solution(nCv, ns, switch, state % pl, state % dv)
-!      endif                                                         !srv 26.02.18 {
 *   ..test plasma state
       call b2xvps (nCv, nFc, ns, state % pl, state % dv)
 *   ..compute log-log electron rate coefficients
@@ -1960,8 +1956,8 @@ c   --> better way doing this is necessary)
       call b2xpni (nCv, ns, state%pl%na, state%dv%ni)
       call b2xpnn (nCv, ns, state%pl%na, state%dv%nn)
 *   ..initialise previous state and fluxes
-      call getB2PlasmaSnapshot( state%pl, state%dv, state%psnc )
-      call getB2PlasmaSnapshot( state%pl, state%dv, state%psnl )
+      call getB2PlasmaSnapshot(state%pl, state%dv, state%psnc)
+      call getB2PlasmaSnapshot(state%pl, state%dv, state%psnl)
 !WG_TODO*   ..write output control
 !WG_TODO      write (nout(0),'(2(/2x,a,2x,a))')
 !WG_TODO     &  'idout0:', idout0, 'idout1:', idout1
@@ -2048,7 +2044,7 @@ cxpb initialize the data necessary for boundary conditions
 cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
       if(switch%b2stbc_feedback.eq.1.or.lfeedback) then
-        call init_feedback(nFc, ns, switch, mpg)
+        call init_feedback(nFc, ns, switch, mpg, geo)
       endif
 !WG_TODO      call calc_mapping_rc (nx, ny, ns, mpg)
       nlimi = 0
@@ -2076,7 +2072,7 @@ c new CDF movie option (1st frame at t=0)
      1 delta_cdfmovie_time.gt.0.0_R8) then
         if(switch%use_eirene.eq.0) then
 #ifndef NO_CDF
-          call cdfmovie(ncid,nCv,ns,geo,state,switch)
+          call cdfmovie(ncid,nCv,mpg%nCi,ns,geo,state,switch)
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -2085,6 +2081,38 @@ c new CDF movie option (1st frame at t=0)
       endif
       idx = 0
       write (*,*) 'b2mndr_0, end: nCv = ',mpg%nCv
+
+      !Initialize residual if using Crank-Nicolson scheme
+      if (switch%b2mndt_ckn.eq.2.and.itim.eq.0) then
+        !Dummy call to b2mndt
+        !Temporarily set dummy switch to 1
+        switch%b2mndt_dummy = 1
+        !Temporarily set rxf to 0 to not update any physical quantities
+        switch%b2mndt_rxf = 0.0_R8
+        !Temporarily set inner iterations to 1
+        switch%nstg(0) = 1
+        switch%nstg(1) = 1
+        switch%nstg(2) = 1
+        call b2mndt (nout, nCv, nFc, nVx, ns,
+     &       ismain, ismain0, state%rt%nscx, state%rt%nscxmax,
+     &       state%rt%iscx, itim, dtim, ntim,
+     &       switch, geo, mpg, state, state_ext, state_avg, ierr)
+        !Read again rxf switch and inner iterations switches
+        call ipgetr ('b2mndt_rxf', switch%b2mndt_rxf)
+        call ipgeti ('b2mndt_nstg0', switch%nstg(0))
+        call ipgeti ('b2mndt_nstg1', switch%nstg(1))
+        call ipgeti ('b2mndt_nstg2', switch%nstg(2))
+        !Set back dummy switch to default value of 0
+        switch%b2mndt_dummy = 0
+        !Update plasma snapshots with initialized residuals (without time-stepping sources)
+        state%psnl%resco0 = state%dv%resco0
+        state%psnl%resmo0 = state%dv%resmo0
+        state%psnl%reshe0 = state%dv%reshe0
+        state%psnl%reshi0 = state%dv%reshi0
+        state%psnl%reshn0 = state%dv%reshn0
+        state%psnl%reskt0 = state%dv%reskt0
+        state%psnl%reszt0 = state%dv%reszt0
+      endif
 
       call subend()
       return
@@ -2113,6 +2141,16 @@ c new CDF movie option (1st frame at t=0)
       use b2mod_facdrift_ExB
      & , only : ncall_drift, facdrift_scalar, fac_exb_scalar,
      &          fac_vis_scalar
+      use b2mod_zhfrtf
+     & , only : is_i, z2n_xy, nal, ia, av_ualpha, gt_ac, gtalc, avm_u,
+     &          rho_a_rel, gavm_uc, z_to_m1_ast, w_out, htdp_out,
+     &          hwdp_out, rtdpgamma_out, rwdpgamma_out, piu_out
+      use b2mod_b2mrel
+     & , only : nucl2s, znnucl_int, s2nucl, amnucl, n2, n3, n4, n5, n6,
+     &          n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu,
+     &          rmd2, mdm, amnucl_mdf, n2_mdf, n5_mdf, n6_mdf, n8_mdf,
+     &          n9_mdf, n10_mdf, n11_mdf, n12_mdf, mum_mdf, rmu_mdf,
+     &          mdm_mdf
 #endif
       use b2mod_ad
 #ifdef IMAS
@@ -2264,40 +2302,9 @@ cwdk  set some integers
 c      nap, uap, etc from 3.0.9 -> psnl = Plasma SNapshot Last
 c      na0, ua0, etc from 3.0.9 -> psnc = Plasma SNapshot Current
 c      the code below copies ua -> psnl%ua (= uap) and ua -> psnc%ua (= ua0) etc, which is what currently happens in the b2mxnp and b2mxnu routines in 3.0.9
-        state%psnl%na = state%pl%na
-        state%psnc%na = state%pl%na
-        state%psnl%ua = state%pl%ua
-        state%psnc%ua = state%pl%ua
-        state%psnl%ne = state%dv%ne
-        state%psnc%ne = state%dv%ne
-        state%psnl%ni = state%dv%ni
-        state%psnc%ni = state%dv%ni
-        state%psnl%te = state%pl%te
-        state%psnc%te = state%pl%te
-        state%psnl%ti = state%pl%ti
-        state%psnc%ti = state%pl%ti
-        state%psnl%tn = state%pl%tn
-        state%psnc%tn = state%pl%tn
-        state%psnl%kinrgy = state%dv%kinrgy
-        state%psnc%kinrgy = state%dv%kinrgy
-        state%psnl%po = state%pl%po
-        state%psnc%po = state%pl%po
-        state%psnl%kt = state%pl%kt
-        state%psnc%kt = state%pl%kt
-        state%psnl%zt = state%pl%zt
-        state%psnc%zt = state%pl%zt
-        state%psnl%fna = state%dv%fna
-        state%psnc%fna = state%dv%fna
-        state%psnl%fhe = state%dv%fhe
-        state%psnc%fhe = state%dv%fhe
-        state%psnl%fhi = state%dv%fhi
-        state%psnc%fhi = state%dv%fhi
-        state%psnl%fch = state%dv%fch
-        state%psnc%fch = state%dv%fch
-        state%psnl%fkt = state%dv%fkt
-        state%psnc%fkt = state%dv%fkt
-        state%psnl%fzt = state%dv%fzt
-        state%psnc%fzt = state%dv%fzt
+        call getB2PlasmaSnapshot(state%pl, state%dv, state%psnl)
+        call getB2PlasmaSnapshot(state%pl, state%dv, state%psnc)
+
         call b2trcs
 csw 09oct2012 set default potential already at this point (BCs)
         if (switch%pot_eq.eq.0) then                           !srv 13.07.05 {
@@ -2334,7 +2341,7 @@ csw 09oct2012 set default potential already at this point (BCs)
         enddo
 *    ..call cost function
         call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state,
-     &    state_ext, switch, J)
+     &    state_ext, J)
         do icf = 1, ncf
           write (ss,'(I1)') icf
           if (icf.gt.9) write (ss,'(I2)') icf
@@ -2475,7 +2482,7 @@ c new CDF movie option
         if(tim.ge.(save_cdfmovie_time-dtim/2.0_R8).and.
      1    delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-          call cdfmovie(ncid,nCv,ns,geo,state,switch)
+          call cdfmovie(ncid,nCv,mpg%nCi,ns,geo,state,switch)
 #else
           write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -2530,10 +2537,9 @@ c new CDF movie option
           call b2trci(geo,mpg,ns,nlim,nmol,switch)
           if (write_nml_user) call write_b2mod_user_namelist
         endif
-        if (ank_tracing.ne.0) then
+        if (ank_tracing.ne.0.and.ntim.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >     call b2trace(ns,nxtl,nxtr,ismain,dtim,
-     .                  geo,mpg,state,switch,state_ext)
+     >     call b2trace(ns,ismain,dtim,geo,mpg,state,switch,state_ext)
         endif
 *    ..loop
 #endif
@@ -2839,6 +2845,8 @@ c new CDF movie option
                   old_imas_version = old_description%ids_properties%
      &                               version_put%data_dictionary(1)
                   call ids_deallocate( old_description )
+                else if ( streql(old_imas_version,'x.xx.x') ) then
+                  call xerrab ('Old IMAS data entry is incomplete !')
                 end if
                 continued = continued .and.
      &           (ids_end_time.lt.tim .and.
@@ -2996,7 +3004,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &               divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &               tim, dtim, shot, database,
+#else
      &               tim, dtim, shot, run, database, version,
+#endif
      &               new_eq_ggd,
      &               time_slice_index, num_time_slices )
                     process_ids = .false.
@@ -3010,7 +3022,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &               summary,
 #endif
+#if IMAS_MAJOR_VERSION == 3
      &               tim, shot, run, database, version, new_eq_ggd,
+#else
+     &               tim, shot, database, new_eq_ggd,
+#endif
      &               batch_index, num_batch_slices )
                     process_av = .false.
                   end if
@@ -3053,7 +3069,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &          divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &          tim, dtim, shot, database, new_eq_ggd )
+#else
      &          tim, dtim, shot, run, database, version, new_eq_ggd )
+#endif
               old_start_time = run_start_time
               process_ids = .false.
             end if
@@ -3065,7 +3085,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &         summary,
 #endif
+#if IMAS_MAJOR_VERSION == 3
      &         tim, shot, run, database, version, new_eq_ggd )
+#else
+     &         tim, shot, database, new_eq_ggd )
+#endif
               process_av = .false.
             end if
           else if (process_ids .or. process_av) then
@@ -3090,7 +3114,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &          divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &          tim, dtim, shot, database, new_eq_ggd,
+#else
      &          tim, dtim, shot, run, database, version, new_eq_ggd,
+#endif
      &          time_slice_index, num_time_slices )
               process_ids = .false.
             end if
@@ -3107,7 +3135,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
+#if IMAS_MAJOR_VERSION == 3
      &          tim, shot, run, database, version, new_eq_ggd,
+#else
+     &          tim, shot, database, new_eq_ggd,
+#endif
      &          batch_index, num_batch_slices )
               process_av = .false.
             end if
@@ -3195,7 +3227,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       end do
 *   ..call cost function
       call b2usr_cost_function(nCv, nFc, nVx, ns, geo, mpg, state,
-     &    state_ext, switch, J)
+     &    state_ext, J)
       do icf = 1, ncf
         write (ss,'(I1)') icf
         if (icf.gt.9) write (ss,'(I2)') icf
@@ -3325,12 +3357,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       call write_b2fplasma (nout(7), nCv, nFc, ns, state)
       close(nout(7))
 
-*   ..mms error analysis
-      if(use_mms.ne.0) then                                              !srv 26.02.18 {
-        call calc_err(nCv, ns, state%pl)
+*   ..mms steady-state error analysis
+      if(switch%use_mms.eq.1.and.switch%iout_b2wdat.eq.10) then          !srv 26.02.18 {
+        call calc_err(nCv, ns, state%pl, switch, itim, mpg)
       endif                                                              !srv 26.02.18 }
-      if(iout.ne.0) then
-        if(use_mms.eq.0) then                                            !srv 29.11.18 {
+      if(switch%b2mndr_iout.ne.0) then
+        if(switch%use_mms.eq.0) then                                     !srv 29.11.18 {
          do is = 0,ns-1
           write (chns,'(i3.3)') is
           call my_out_us(70,nCv,0,state%pl%na(1,is),
@@ -3393,7 +3425,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       if(tim.gt.save_cdfmovie_time-delta_cdfmovie_time+dtim.and.
      1  delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-        call cdfmovie(ncid,nCv,ns,geo,state,switch)
+        call cdfmovie(ncid,nCv,mpg%nCi,ns,geo,state,switch)
 #else
         write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
@@ -3470,7 +3502,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &      tim, dtim, shot, database, new_eq_ggd,
+#else
      &      tim, dtim, shot, run, database, version, new_eq_ggd,
+#endif
      &      time_slice_index, num_time_slices )
         else if (continued) then
 #if AL_MAJOR_VERSION > 4
@@ -3559,6 +3595,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                 old_imas_version = old_description%ids_properties%
      &                             version_put%data_dictionary(1)
                 call ids_deallocate( old_description )
+              else if ( streql(old_imas_version,'x.xx.x') ) then
+                call xerrab ('Old IMAS data entry is incomplete !')
               end if
               continued = continued .and.
      &         (ids_end_time.lt.tim .and.
@@ -3708,7 +3746,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &            divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &            tim, dtim, shot, database, new_eq_ggd,
+#else
      &            tim, dtim, shot, run, database, version, new_eq_ggd,
+#endif
      &            time_slice_index, num_time_slices )
               else
                 write(*,'(a)')
@@ -3755,7 +3797,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
      &      divertors,
 #endif
+#if IMAS_MAJOR_VERSION > 3
+     &      tim, dtim, shot, database, new_eq_ggd )
+#else
      &      tim, dtim, shot, run, database, version, new_eq_ggd )
+#endif
         end if
         if (ids_replace) then
           call new_ids_edge( edge_profiles, edge_sources,
@@ -3843,9 +3889,12 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       deallocate(rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag
 !WG_RM      call dealloc_b2mod_ma28
+      call dealloc_b2mod_mrel
       call dealloc_b2mod_wall
+      call dealloc_b2mod_zhco
       call dealloc_b2mod_layer
       call dealloc_b2mod_b2cmrc
+      call dealloc_b2mod_zhfrtf
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
       call dealloc_b2mod_tallies
@@ -3865,6 +3914,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 !WG_RM      call dealloc_b2mod_external
       call dealloc_b2mod_wall_init
       call dealloc_b2mod_ysmp_sdrv
+      call dealloc_b2mod_zhfrtf_df
       call dealloc_b2mod_facdrift_ExB
       call dealloc_transport_namelist
       call dealloc_b2mod_first_flight
@@ -3878,8 +3928,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 !WG_TODO      call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
       call dealloc_b2mod_transport_disruption
-      if(boundary_sources.ne.0) call dealloc_b2mod_boundary_sources     !srv 26.02.18
-      if(equation_sources.ne.0) call dealloc_b2mod_equation_sources     !srv 26.02.18
+      if(switch%boundary_sources.ne.0)
+     & call dealloc_b2mod_boundary_sources                              !srv 26.02.18
+      if(switch%equation_sources.ne.0)
+     & call dealloc_b2mod_equation_sources                              !srv 26.02.18
       call dealloc_b2mod_b2plot
 #ifdef B25_EIRENE
       CALL EIRENE_DEALLOC_BRAEIR

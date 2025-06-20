@@ -10,7 +10,7 @@
       logical function in_parallel()
       in_parallel = .false.
 !$      in_parallel = OMP_IN_PARALLEL()
-      end function
+      end function in_parallel
 
       integer function get_num_threads()
 #ifdef _OPENMP
@@ -22,12 +22,12 @@
 #else
       get_num_threads = 1
 #endif
-      end function
+      end function get_num_threads
 
       integer function get_thread_num()
       get_thread_num = 0
 !$    get_thread_num = omp_get_thread_num()
-      end function
+      end function get_thread_num
 
 #if !defined GFORTRAN && !defined NAGFOR && !defined PGF90
 #if !defined CRAY
@@ -47,7 +47,7 @@
       if (streql(stacksize,' ')) stacksize = '128 MB'
       get_stacksize_s = trim(stacksize)
 #endif
-      end function
+      end function get_stacksize_s
 #endif
 
       subroutine print_openmp_info()
@@ -68,6 +68,6 @@
       write(*,*) 'B2.5 running in serial mode, without ',
      & 'OpenMP threads.'
 #endif
-      end subroutine
+      end subroutine print_openmp_info
 
-      end module
+      end module b2mod_openmp

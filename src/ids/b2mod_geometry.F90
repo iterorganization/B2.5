@@ -212,7 +212,7 @@ module b2mod_geometry
         &   'Upper outer throat              ', 'Lower outer throat              ', &
         &   'Lower core cut                  ', 'Upper PFR cut                   ', &
         &   'Upper core cut                  ', 'Lower PFR cut                   ', &
-        &   'Between separatrices core cut   ',                                     &
+        &   'Between separatrices SOL cut    ',                                     &
         &   UU, UU, UU, UU, UU, UU,                                                 &
         & &
         &   'Inner core boundary             ', 'Inner separatrix                ', &
@@ -238,7 +238,7 @@ module b2mod_geometry
         &   'Upper outer throat              ', 'Lower outer throat              ', &
         &   'Lower core cut                  ', 'Upper PFR cut                   ', &
         &   'Upper core cut                  ', 'Lower PFR cut                   ', &
-        &   'Between separatrices core cut   ',                                     &
+        &   'Between separatrices SOL cut    ',                                     &
         &   UU, UU, UU, UU, UU, UU,                                                 &
         & &
         &   'Inner core boundary             ', 'Inner separatrix                ', &
@@ -780,7 +780,7 @@ contains
     regionName = regionNames(regionId, regionType, geometryId)
   end function regionName
 
-  !> Return number of a specific grid region as per the cfReg numbering
+  !> Return number of a specific grid region as per the fcReg numbering
   !> @param geometryId: see definition of GEOMETRY_* constants.
   !> @param regionType: see definition of REGIONTYPE_* constants.
   !> @param regionId: number of region. Should be between [1, regionCount(geometryId, regionType)].

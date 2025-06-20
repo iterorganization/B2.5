@@ -875,7 +875,8 @@ c
      & state%dv%ue, state%pl%te, state%pl%ti, state%pl%tn,
      & state%pl%po, state%dv%ne, state%dv%ne2, state%dv%ni,
      & state%dv%nn, state%dv%fch,
-     & state%co%cvsa, state%co%cvsahz_eff, state%co%f_luc_sg,
+     & state%co%cvsa, state%co%cvsa_cl, state%co%cvsa_drho,
+     & state%co%cvsahz_eff, state%co%f_luc_sg,
      & state%co%alfx_c, state%co%sigx_c,
      & state%rt%rza, state%rt%rz2, state_ext,
      & state%srw%she0, state%srw%shi0, state%srw%shn0, state%srw)
@@ -902,7 +903,7 @@ c
      &   state%dv%ne, state%pl%te, state%pl%po,
      &   state%srw%b2npmo_smag(1,0,is),
      &   wrkcs(1,0), wrkcs(1,1))
-        call b2siav (mpg%nCv, mpg%nFc, mpg%nVx, ns, is,
+        call b2siav (mpg%nCv, mpg%nFc, mpg%nVx, ns, is, ismain,
      &   switch, geo, mpg, am(is)*mp,
      &   state%pl%ua(:,is), state%pl%te, state%pl%ti,
      &   state%pl%na(:,is), state%dv%ni(:,1), state%dv%ne2,
@@ -4546,6 +4547,28 @@ c     assumes that bb is OK for 1d cases
           nz=1
           mach(1:mpg%nCi,0)=0.0_R8
           mach(mpg%nCi+1:mpg%nCv,0)=1.0_R8
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('bdcl')
+          description='Boundary cells'
+          nz=1
+          mach(1:mpg%nCv,0)=0.0_R8
+          do i=mpg%nCi+1,mpg%nCv
+            iFc=mpg%cvFc(mpg%cvFcP(i,1))
+            iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+            mach(iCv,0)=1.0_R8
+          end do
+          call copy(mach,1.0_R8,nz,textbl)
+        case ('npcl')
+          description='Neutral pressure cells'
+          nz=1
+          mach(1:mpg%nCv,0)=0.0_R8
+          if (npfr_cvs.eq.0) then
+            write(*,*) 'No neutral pressure cells defined'
+          else
+            do i=1,npfr_cvs
+              mach(pfr_cvs(i),0)=1.0_R8
+            end do
+          end if
           call copy(mach,1.0_R8,nz,textbl)
         case ('iimp')
           description='Inner midplane cells'

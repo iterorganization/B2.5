@@ -15,4 +15,3 @@
       end do
       return
       end function len_of_digits
-c 
