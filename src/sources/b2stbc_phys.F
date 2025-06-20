@@ -4755,7 +4755,7 @@ cxpb  and max(,,) statement for stability
               DO IY = 1, BC_LIST_SIZE(IB)
 !             CS=SQRT(BCINT(PZ,NX,NY,IY,IB)/BCINT(RZ,NX,NY,IY,IB))
                 cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
-     &                 rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+     &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                 s1hz = pbshz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)      !srv 11.01.13
               veast = cs*s1hz-                                        !srv 17.02.04 19.02.08 25.04.08 { 11.01.13
      &           hz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
@@ -4822,7 +4822,7 @@ cxpb  and max(,,) statement for stability
      .                RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
 ! Make positive if along x direction, i.e. away from W target
                 UUTEST=UUTEST*bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
-     .                   abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
+     .                    abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
                 if(.not.is_neutral(is)) then
 ! Both V_par_extrap and V_ExB,x are positive if away from W target
 ! U_out = MAX(- V_par_extrap, CS + V_ExB,x * |B/B_x|)
@@ -4907,7 +4907,7 @@ cxpb  and max(,,) statement for stability
      .                  LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
 ! Make positive if along x direction, i.e. towards E target
                 UUTEST=UUTEST*bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
-     .                   abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
+     .                    abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
                 if(.not.is_neutral(is)) then
 ! Both V_par_extrap and V_ExB,x are positive if towards E target
 ! U_out = MAX(V_par_extrap, CS - V_ExB,x * B/|B_x|)
@@ -8979,7 +8979,7 @@ cxpb          endif
                 else
                   shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &            shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) + t0/
-     &            ti(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     &              ti(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
                 end if
               endif                                                     !srv 13.10.06 }
             ENDDO
