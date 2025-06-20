@@ -531,8 +531,9 @@
         do i = 1, mpg%ftCvP(iFt,2)
           iCv = mpg%ftCv(mpg%ftCvP(iFt,1)+i-1)
           if (gm%cvFpsi(iCv).ne.gm%ftFpsi(iFt)) then
-            write (*,*) 'Warning: cvFpsi value in cell ', iCv,
-     &                  'not equal to value in its flux tube ', iFt
+            write (*,'(a,i6,a,i4)')
+     &       'Warning: cvFpsi value in cell ', iCv,
+     &       ' not equal to value in its flux tube ', iFt
             write (*,*) gm%cvFpsi(iCv), gm%ftFpsi(iFt)
           endif
         enddo

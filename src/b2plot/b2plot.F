@@ -3021,27 +3021,29 @@ c
               else
                 mach(iCv,0)=0.0_R8
               end if
-              description='Volume region '//int2str(istack(iistack))  ! IGNORE
-              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
-     >         write(*,*) 'No cells with region index '//
-     .                     int2str(istack(iistack))//' found!'
             else
               if(mpg%cvReg(iCv) .eq. -istack(iistack)) then
                 mach(iCv,0)=0.0_R8
               else
                 mach(iCv,0)=1.0_R8
               end if
-              description=  ! IGNORE
-     .    'All volume regions except region '//int2str(-istack(iistack))
-              if (minval(mach(1:mpg%nCv,0)).eq.1.0_R8)
-     >         write(*,*) 'No cells with region index '//
-     .                     int2str(-istack(iistack))//' found!'
             end if
           end do
+          if (abs(istack(iistack)).gt.0) then
+            if (istack(iistack).gt.0) then
+              description='Volume region '//int2str(istack(iistack))  ! IGNORE
+            else
+              description=  ! IGNORE
+     .    'All volume regions except region '//int2str(-istack(iistack))
+            end if
+            if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >       write(*,*) 'No cells with region index '//
+     .                   int2str(abs(istack(iistack)))//' found!'
+          end if
           write(*,*) '"region" option with ',ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('freg')
-          description='Flux region index'
+          description='Face region index'
           nz=1
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -3057,13 +3059,15 @@ c
                 mach(mpg%fcCv(iFc,1),0)=1.0_R8
                 mach(mpg%fcCv(iFc,2),0)=1.0_R8
               end if
-              description='Flux region '//int2str(istack(iistack))  ! IGNORE
-              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
-     >         write(*,*) 'No faces with region index '//
-     .                     int2str(istack(iistack))//' found!'
             end if
           end do
-          write(*,*) 'Flux "region" option with ',
+          if (istack(iistack).gt.0) then
+            description='Flux region '//int2str(istack(iistack))  ! IGNORE
+            if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >       write(*,*) 'No faces with region index '//
+     .                   int2str(istack(iistack))//' found!'
+          end if
+          write(*,*) 'Face "region" option with ',
      .     ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
         case ('clbl')
@@ -3081,12 +3085,14 @@ c
               if(mpg%cvLbl(iCv).eq.istack(iistack)) then
                 mach(iCv,0)=1.0_R8
               end if
-              description='Cell label '//int2str(istack(iistack))  ! IGNORE
-              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
-     >         write(*,*) 'No cells with label '//
-     .                     int2str(istack(iistack))//' found!'
             end if
           end do
+          if (istack(iistack).ne.0) then
+            description='Cell label '//int2str(istack(iistack))  ! IGNORE
+            if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >       write(*,*) 'No cells with label '//
+     .                   int2str(istack(iistack))//' found!'
+          end if
           write(*,*) 'Cell label option with ',
      .     ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3107,12 +3113,14 @@ c
                 mach(mpg%fcCv(iFc,1),0)=1.0_R8
                 mach(mpg%fcCv(iFc,2),0)=1.0_R8
               end if
-              description='Face label '//int2str(istack(iistack))  ! IGNORE
-              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
-     >         write(*,*) 'No faces with label '//
-     .                     int2str(istack(iistack))//' found!'
             end if
           end do
+          if (istack(iistack).ne.0) then
+            description='Face label '//int2str(istack(iistack))  ! IGNORE
+            if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >       write(*,*) 'No faces with label '//
+     .                   int2str(istack(iistack))//' found!'
+          end if
           write(*,*) 'Face label option with ',
      .     ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)
@@ -3137,12 +3145,14 @@ c
                   mach(iCv,0)=1.0_R8
                 end do
               end if
-              description='Flux tube '//int2str(istack(iistack))  ! IGNORE
-              if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
-     >         write(*,*) 'No flux tube with label '//
-     .                     int2str(istack(iistack))//' found!'
             end if
           end do
+          if (istack(iistack).ne.0) then
+            description='Flux tube '//int2str(istack(iistack))  ! IGNORE
+            if (maxval(mach(1:mpg%nCv,0)).eq.0.0_R8)
+     >       write(*,*) 'No flux tube with label '//
+     .                   int2str(istack(iistack))//' found!'
+          end if
           write(*,*) 'Flux tube label option with ',
      .     ipop(istack,iistack)
           call copy(mach,1.0_R8,nz,textbl)

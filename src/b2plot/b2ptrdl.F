@@ -1,4 +1,4 @@
-      subroutine b2ptrdl(rdl)
+      subroutine b2ptrdl(nwe,ntg,rdl,tg_only)
 c
 c  version : 07.11.97 13:22
 c
@@ -12,12 +12,20 @@ c======================================================================
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_b2plot
+      use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
       use b2mod_dimensions
+#ifdef B25_EIRENE
+      use eirmod_eirbra
+#else
+      use b2mod_eirbra
+#endif
       implicit none
+      integer, intent(in) :: nwe, ntg
       real (kind=R8) ::
-     *   rdl(1:DEF_NYD,ntrgsx,0:DEF_NATM)
-      integer i,j,k,m,n
+     *   rdl(nwe,ntg,0:DEF_NATM)
+      logical, intent(in) :: tg_only
+      integer i,ii,j,jj,k,m,n
 #ifdef DBG
       integer istart,iend
 #endif
@@ -61,7 +69,7 @@ c>>>
           write(*,*) '**** b2ptrdl: error detected in the input data ',
      ,                            '==> no radiation load calculated!!!'
           do k=0,DEF_NATM !{
-            do j=1,ntrgsx !{
+            do j=1,ntg !{
               do i=1,maxval(mpg%divFcP(:,2)) !{
                 rdl(i,j,k)=0.0_R8
               end do !}
@@ -86,13 +94,26 @@ c*** Calculate the load
         l2rdldt=.true.
 #ifdef DBG
         iend=lppp
-        do j=1,ntrgts !{
-          if (itrg(j).eq.0) cycle
-          istart=iend+1
-          iend=iend+mpg%divFcP(itrg(j),2)
-          print '(a,i2,a/(1p,5e17.4))','Target',j,': load',
-     ,     (wldrdld(i),i=istart,iend)
-        end do !}
+        if (tg_only) then !{
+          do j=1,ntrgts !{
+            if (itrg(j).eq.0) cycle
+            istart=iend+1
+            iend=iend+mpg%divFcP(itrg(j),2)
+            print '(a,i2,a/(1p,5e17.4))','Target',j,': load',
+     ,       (wldrdld(i),i=istart,iend)
+          end do !}
+        else !}{
+          do j=1,nsns !{
+            if (fnmti_b2(eirdiag_nds_ind(abs(lsns(j)))+1).eq.-1)
+     >       cycle
+            istart=iend+1
+            iend=iend+eirdiag_nds_ind(abs(lsns(j))+1)-
+     .               (eirdiag_nds_ind(abs(lsns(j)))+1)
+            print '(a,i3,a/(1p,5e17.4))',
+     ,       'Eirene non-standard surface',j,': load',
+     ,       (wldrdld(i),i=istart,iend)
+          end do !}
+        end if !}
 #endif
       end if !}
 c----------------------------------------------------------------------
@@ -104,21 +125,44 @@ c*** Arrange the output data
       n=nspecies
 #endif
       k=0
-      do j=1,ntrgts !{
-        if (itrg(j).eq.0) cycle
-        do i=1,mpg%divFcP(itrg(j),2) !{
-          k=k+1
-          rdl(i,itrg(j),0)=wldrdld(lwldrad(k))
-          if(lrdlsp) then !{
-            do m=1,n !{
-              rdl(i,itrg(j),m)=wldrdlsp(lwldrad(k),m)
-            end do !}
-          end if !}
-          if(lrdlcr) then !{
-            rdl(i,itrg(j),1)=wldrdlsp(lwldrad(k),1)
-          end if !}
+      if (tg_only) then !{
+        do j=1,ntrgts !{
+          if (itrg(j).eq.0) cycle
+          do i=1,mpg%divFcP(itrg(j),2) !{
+            k=k+1
+            rdl(i,itrg(j),0)=wldrdld(lwldrad(k))
+            if(lrdlsp) then !{
+              do m=1,n !{
+                rdl(i,itrg(j),m)=wldrdlsp(lwldrad(k),m)
+              end do !}
+            end if !}
+            if(lrdlcr) then !{
+              rdl(i,itrg(j),1)=wldrdlsp(lwldrad(k),1)
+            end if !}
+          end do !}
         end do !}
-      end do !}
+      else !}{
+        jj=0
+        do j=1,nsns !{
+          if (fnmti_b2(eirdiag_nds_ind(abs(lsns(j)))+1).eq.-1) cycle
+          jj=jj+1
+          do i=eirdiag_nds_ind(abs(lsns(j)))+1,
+     .         eirdiag_nds_ind(abs(lsns(j))+1)-1
+            k=k+1
+            if (lwldrad(k).eq.0) cycle
+            ii=i-eirdiag_nds_ind(abs(lsns(j)))
+            rdl(ii,jj,0)=wldrdld(lwldrad(k))
+            if(lrdlsp) then !{
+              do m=1,n !{
+                rdl(ii,jj,m)=wldrdlsp(lwldrad(k),m)
+              end do !}
+            end if !}
+            if(lrdlcr) then !{
+              rdl(ii,jj,1)=wldrdlsp(lwldrad(k),1)
+            end if !}
+          end do
+        end do !}
+      end if !}
 c======================================================================
       return
       end subroutine b2ptrdl
