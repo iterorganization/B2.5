@@ -271,12 +271,12 @@ c   poloidal pressure diffusion coefficient is only from diamagnetic contributio
 c   Bohm
       if(switch%transport_bohm.eq.1) then
         do is = 0, ns-1
-          call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%dna_bohm(1:nCv,0,is), co%cdna(1:nFc,0,is))
+          call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, co%dna_bohm(1:nCv,0,is), co%cdna(1:nFc,0,is))
           call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%dna_bohm(1:nCv,1,is), co%cdna(1:nFc,1,is))
-          call b2txcx (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
-     &   co%vsa_bohm(1:nCv,0,is), co%cvsa(1:nFc,0,is))
+          call b2txcx (nCv, nFc, 0.0_R8, mode, geo, mpg, geo%fcVol,
+     &   geo%fcS, co%vsa_bohm(1:nCv,0,is), co%cvsa(1:nFc,0,is))
           call b2txcy (nCv, nFc, mode, geo, mpg, geo%fcVol, geo%fcS,
      &   co%vsa_bohm(1:nCv,1,is), co%cvsa(1:nFc,1,is))
           call b2txsx (nCv, nFc, geo, mpg, geo%fcVol, geo%fcS,
