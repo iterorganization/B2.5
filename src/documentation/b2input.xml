@@ -7073,12 +7073,12 @@
 					For (i,ir,ik,is) in (1:2,1:NY+2,1:NKIND_SOURCE,0:NS),
 					SDATA(1,ir,:,:) contains the radial location of the profile point (ir).
 					SDATA(2,ir,:,:) contains the source profile value at point (ir).
-					KIND_SOURCE=1 means particle source of species (is) (in particles/m3)
-					KIND_SOURCE=2 means parallel momentum source for species (is) (in kg.m/s/m3)
+					KIND_SOURCE=1 means particle source of species (is) (in particles/s/m3)
+					KIND_SOURCE=2 means parallel momentum source for species (is) (in N/m3)
 					KIND_SOURCE=3 means electron heat source (in Watts/m3)
 					KIND_SOURCE=4 means ion heat source (in Watts/m3)
-					KIND_SOURCE=5 means electric charge source (in Coulombs/m3)
-					KIND_SOURCE=6 means non-ambipolar electron particle source (in e/m3)
+					KIND_SOURCE=5 means electric charge source (in Amperes/m3)
+					KIND_SOURCE=6 means non-ambipolar electron particle source (in e/s/m3)
 				</description>
 			</switch>
 			<switch>

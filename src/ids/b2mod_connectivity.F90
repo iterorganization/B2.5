@@ -149,7 +149,7 @@ module b2mod_connectivity
         &   'Top boundary                    ', 'Bottom boundary                 ', &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & & ! GEOMETRY_LIMITER
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & &
         &   'Anti-clockwise target           ', 'Clockwise target                ', &
@@ -160,7 +160,7 @@ module b2mod_connectivity
         &   'Main chamber wall               ',                                     &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                             &
         & & ! GEOMETRY_SN Single null
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   'Western divertor                ', 'Eastern divertor                ', &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                                 &
         & &
@@ -252,7 +252,7 @@ module b2mod_connectivity
         &   'Top boundary                    ', 'Bottom boundary                 ', &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & & ! GEOMETRY_STELLARATORISLAND
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   'Inner divertor                  ', 'Outer divertor                  ', &
         &   'Island                          ',                                     &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU,                                     &
@@ -278,7 +278,7 @@ module b2mod_connectivity
         &   'Top boundary                    ', 'Bottom boundary                 ', &
         &   UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU, UU,                         &
         & & ! GEOMETRY_LFS_SNOWFLAKE_MINUS
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   'Inner divertor                  ', 'Outer divertor entrance         ', &
         &   'First outboard divertor leg     ', 'Second outboard divertor leg    ', &
         &   'Third outboard divertor leg     ',                                     &
@@ -302,7 +302,7 @@ module b2mod_connectivity
         &   'Third outer leg baffle          ',                                     &
         &   UU,                                                                     &
         & & ! GEOMETRY_LFS_SNOWFLAKE_PLUS
-        &   'Core                            ', 'SOL                             ', &
+        &   'Core                            ', 'Scrape-Off Layer                ', &
         &   'Inner divertor                  ', 'Outer divertor entrance         ', &
         &   'First outboard divertor leg     ', 'Second outboard divertor leg    ', &
         &   'Third outboard divertor leg     ',                                     &
