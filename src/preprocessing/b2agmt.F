@@ -798,7 +798,7 @@ cnv   but now for quads
 
 *-----------------------------------------------------------------------
 
-      subroutine recalc_guard_bb(m,g,isymm,bc,iCv, v1, v2)
+      subroutine recalc_guard_bb(m,g,isymm,bc,iCv,v1,v2)
       use b2mod_types
       use b2us_map
       use b2us_geo
@@ -820,7 +820,6 @@ cnv   but now for quads
       bcBb(0) = sum( g%vxBb(verts,0) ) / real(nv,R8)
       bcBb(1) = sum( g%vxBb(verts,1) ) / real(nv,R8)
       bcBb(2) = sum( g%vxFfbz(verts) ) / real(nv,R8)
-
 
       !2. construct 3d-plane with two guard cell vertices and cell center
       ! p(0)*x+ p(1)*y + p(2)*z = d met x = x-coordinate, y = y-coordinate, z = bb-value
