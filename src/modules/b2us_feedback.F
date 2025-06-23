@@ -1838,27 +1838,31 @@ cxpb size is changed in b2mod_dimensions
                     if(mpg%cvReg(iCv).eq.0) cycle
                     fb_current(ifb) = fb_current(ifb) +
      &               pl%na(iCv,is)*geo%cvVol(iCv)
-#ifndef SOLPS4_3
-                    if (switch%use_eirene.ne.0) then
-                      do iatm=1,nnatmi
-                        if (latmscl(iatm).eq.fb_species(ifb)) then
-                          fb_current(ifb) = fb_current(ifb) +
-     &                     dab2(iCv,iatm,1)*geo%cvVol(iCv)
-                        endif
-                      enddo
-                      do imol=1,nnmoli
-                        if (mlcmp(iatm,imol).ne.0) then
-                          fb_current(ifb) = fb_current(ifb) +
-     &                     dmb2(iCv,imol,1)*mlcmp(iatm,imol)
-     &                     *geo%cvVol(iCv)
-                        endif
-                      enddo
-                    endif
-#endif
                   enddo
                   is_end=is
                 endif
               enddo
+#ifndef SOLPS4_3
+              if (switch%use_eirene.ne.0) then
+                do iatm=1,nnatmi
+                  if (latmscl(iatm).eq.fb_species(ifb)) then
+                    do iCv = 1, mpg%nCi
+                      if(mpg%cvOnClosedSurface(iCv)) cycle
+                      if(mpg%cvReg(iCv).eq.0) cycle
+                      fb_current(ifb) = fb_current(ifb) +
+     &                   dab2(iCv,iatm,1)*geo%cvVol(iCv)
+                      do imol=1,nnmoli
+                        if (mlcmp(iatm,imol).gt.0) then
+                          fb_current(ifb) = fb_current(ifb) +
+     &                       dmb2(iCv,imol,1)*mlcmp(iatm,imol)
+     &                        *geo%cvVol(iCv)
+                        endif
+                      enddo
+                    enddo
+                  endif
+                enddo
+              endif
+#endif
 
             case default
                write(*,*) 'fb_type not coded ',
