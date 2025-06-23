@@ -2,6 +2,9 @@
 ifndef NCDIR
   $(error NCDIR not defined)
 endif
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
+endif
 ifndef LD_NETCDF
   $(error LD_NETCDF not defined)
 endif
@@ -13,13 +16,6 @@ ifndef LD_NAG
 endif
 
 CPP = /lib/cpp -traditional
-
-FC = gfortran
-
-GFORTRAN_VERSION ?= $(shell ${FC} --version | head -1 | awk 'match($$0,/[0-9]+\.[0-9]+\.[0-9]+/){print substr($$0, RSTART, RLENGTH)}')
-
-GFORTRAN_MAJOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 1 )
-GFORTRAN_MINOR_VERSION ?= $(shell echo ${GFORTRAN_VERSION} | cut -d '.' -f 2 )
 
 ifdef SOLPS_DEBUG
 FCOPTS += -gdwarf-2

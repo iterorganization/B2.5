@@ -36,10 +36,10 @@ FCOPTS   = -g -C -debug all -traceback -check all
 else
 CLUSTER_NAME := $(shell hostname)
 ifeq ($(findstring raven,$(CLUSTER_NAME)),raven)
-FCOPTS  = -O2 -xHost
+FCOPTS   = -O2 -xHost
 endif
 ifeq ($(findstring viper,$(CLUSTER_NAME)),viper)
-FCOPTS  = -O2 -march=core-avx2 -diag-disable=10448
+FCOPTS   = -O2 -march=core-avx2 -diag-disable=10448
 endif
 endif
 
