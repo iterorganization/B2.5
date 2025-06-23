@@ -6,11 +6,11 @@ DDBLOPTION = -Ad # ???
 
 INCMOD = -B
 # Test whether necessary variables are set
-MDSPLUS_DIR ?= /marconi_work/FUSIO_ALL/SOLPS-ITER/${COMPILER}/MDSPLUS
-NCARG_ROOT  ?= /marconi_work/FUSIO_ALL/SOLPS-ITER/${COMPILER}/NCARG
-MSCL_ROOT   ?= /marconi_work/FUSIO_ALL/SOLPS-ITER/${COMPILER}/mscl/1.2.3
-GLI_HOME    ?= /marconi_work/FUSIO_ALL/SOLPS-ITER/${COMPILER}/gks
-NAGDIR      ?= /marconi_work/FUSIO_ALL/SOLPS-ITER/${COMPILER}/nag
+MDSPLUS_DIR ?= /pitagora/pub/userexternal/dcoster0/SOLPS-ITER/${COMPILER}/MDSPLUS
+NCARG_ROOT  ?= /pitagora/pub/userexternal/dcoster0/SOLPS-ITER/${COMPILER}/NCARG
+MSCL_ROOT   ?= /pitagora/pub/userexternal/dcoster0/SOLPS-ITER/${COMPILER}/mscl/1.2.3
+GLI_HOME    ?= /pitagora/pub/userexternal/dcoster0/SOLPS-ITER/${COMPILER}/gks
+NAGDIR      ?= /pitagora/pub/userexternal/dcoster0/SOLPS-ITER/${COMPILER}/nag
 NCDIR       ?= ${NETCDFF_HOME}
 MPDIR       ?= ${INTELMPI_HOME}
 
