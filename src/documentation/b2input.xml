@@ -3063,6 +3063,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>keps_anom_he_model</name>
+				<default>See description</default>
+				<type>integer</type>
+				<description>
+					If set to 1, uses multiplier 3/2 for the anomalous convective and conductive fluxes associated with electrostatic ExB drift turbulence, consistent with the keps-model derivation.
+					If set to 2 (experimental), additionally assumes the corresponding physical fluxes across surfaces/boundaries to have multiplier 3/2.
+					Default value is 1 if the k-eps model is activated, 0 otherwise.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mn_afn</name>
 				<default>0</default>
 				<type>integer</type>
