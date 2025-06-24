@@ -302,6 +302,7 @@ c phm switches
       real (kind=R8) :: b2stbc_phm0
       real (kind=R8) :: b2stbc_phm1
       real (kind=R8) :: b2stbc_phm2
+      integer :: b2sihs_sh
 
 c pcm switches
       real (kind=R8) :: b2npco_pcm0
@@ -873,6 +874,7 @@ c Zhdanov closure switches
       s % b2stbc_phm0 = 1.0_R8
       s % b2stbc_phm1 = 1.0_R8
       s % b2stbc_phm2 = 1.0_R8
+      s % b2sihs_sh = 1
 
       if ( s % b2mndt_style.eq.2 ) then
         s % b2npco_rxg =  huge(1.0_R8)
@@ -1487,6 +1489,7 @@ c phm switches
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
       call ipgetr ('b2stbc_phm2', s % b2stbc_phm2)
+      call ipgeti ('b2sihs_sh', s % b2sihs_sh)
 
 c pcm switches
       call ipgetr ('b2npco_pcm0', s% b2npco_pcm0)
