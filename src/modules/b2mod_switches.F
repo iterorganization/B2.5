@@ -337,12 +337,8 @@ c phm switches
       real (kind=R8) :: b2treq_phm0
       real (kind=R8) :: b2stbc_phm0
       real (kind=R8) :: b2stbc_phm1
-      integer :: b2sihs_shi
-      integer :: b2sihs_shidu
-      integer :: b2sihs_shidd
-      integer :: b2sihs_shedu
-      integer :: b2sihs_shedd
-      integer :: b2sihs_shivis
+      real (kind=R8) :: b2stbc_phm2
+      integer :: b2sihs_sh
 
 c pcm switches
       real (kind=R8) :: b2npco_pcm0
@@ -961,12 +957,8 @@ c Zhdanov closure switches
       s % b2treq_phm0 = 1.0_R8
       s % b2stbc_phm0 = 1.0_R8
       s % b2stbc_phm1 = 1.0_R8
-      s % b2sihs_shidu = 0
-      s % b2sihs_shidd = 0
-      s % b2sihs_shedu = 0
-      s % b2sihs_shedd = 0
-      s % b2sihs_shivis = 0
-      s % b2sihs_shi = 0
+      s % b2stbc_phm2 = 1.0_R8
+      s % b2sihs_sh = 1
 
       if ( s % b2mndt_style.eq.2 ) then
         s % b2npco_rxg =  huge(1.0_R8)
@@ -1683,19 +1675,8 @@ c phm switches
       call ipgetr ('b2treq_phm0', s % b2treq_phm0)
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
-      call ipgeti ('b2sihs_shi', s % b2sihs_shi)
-      if (s % b2sihs_shi .ne. 0) then
-        s % b2sihs_shidu = s % b2sihs_shi
-        s % b2sihs_shidd = s % b2sihs_shi
-        s % b2sihs_shedu = s % b2sihs_shi
-        s % b2sihs_shedd = s % b2sihs_shi
-        s % b2sihs_shivis = s % b2sihs_shi
-      endif
-      call ipgeti ('b2sihs_shidu', s % b2sihs_shidu)
-      call ipgeti ('b2sihs_shidd', s % b2sihs_shidd)
-      call ipgeti ('b2sihs_shedu', s % b2sihs_shedu)
-      call ipgeti ('b2sihs_shedd', s % b2sihs_shedd)
-      call ipgeti ('b2sihs_shivis', s % b2sihs_shivis)
+      call ipgetr ('b2stbc_phm2', s % b2stbc_phm2)
+      call ipgeti ('b2sihs_sh', s % b2sihs_sh)
 
 c pcm switches
       call ipgetr ('b2npco_pcm0', s % b2npco_pcm0)
@@ -1845,7 +1826,7 @@ c k-enstrophy model
       call ipgetr ('b2sikt_fac_diss_lpar', s % b2sikt_lpar_ref)
       call ipgeti ('keps_anom_he_model',
      .          s % keps_anom_he_model)
-     
+
 c Bohm-like transport model
       call ipgeti ('b2tqna_transport_bohm', s % transport_bohm)
       call ipgeti ('b2tqna_bohm_purediff', s % bohm_pureDiff)
