@@ -1277,10 +1277,17 @@ cwdk for now, dummy external state is created in b2mod_main
          if (nint(zn(is)).eq.1.and.
      .      (nint(zamin(is)).eq.1.and.nint(zamax(is)).eq.1)) k = k + 1
        end do
-       call xertst (k.eq.1.or.(switch%b2tfnb_xcur.eq.0.0_R8 .and.
-     &                         switch%b2tfnb_ycur.eq.0.0_R8),
+       call xertst (k.eq.1.or.switch%Zhdanov_closure.gt.0.or.
+     &  (switch%b2tfnb_xcur.eq.0.0_R8.and.switch%b2tfnb_ycur.eq.0.0_R8),
      .  'Currents assignment to ions only supported for single '//
-     .  'hydrogenic species!')
+     .  'hydrogenic species unless the Zhdanov closure is used!')
+       if (k.gt.1.and.switch%Zhdanov_closure.eq.0.and.
+     >     switch%b2sigp_style.eq.2) then
+         write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas with more than one hydrogenic species!'
+         write(6,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for plasmas with more than one hydrogenic species!'
+       endif
 *
        ixfb=rratio(nCv,8) !WG_TODO dummy values provided now; probably need icvfb instead...
        iyfb=rratio(nCv,2) !WG_TODO dummy values provided now
