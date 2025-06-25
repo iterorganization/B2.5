@@ -518,8 +518,9 @@ cdjm Jan2017 Keep linearised sources for balance
 
 *-----------------------------------------------------------------------
 
-      subroutine transport_input(nCv, ns, geo, mpg, pl, dv, rt,
-     &  hcib, dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall)
+      subroutine transport_input(nCv, nFc, ns, geo, mpg, pl, dv, rt,
+     &  hcib, dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall,
+     &  no_fluxtube_ordering)
 
 !**************************************************************************
 !*     subroutine for reading in experimental transport coefficients from *
@@ -539,6 +540,7 @@ cdjm Jan2017 Keep linearised sources for balance
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (in) :: dv
       type (B2Rates), intent (in) :: rt
+      integer, intent (in) :: no_fluxtube_ordering
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  dna0(nCv,0:ns-1), dpa0(nCv,0:ns-1),
@@ -721,8 +723,34 @@ cdjm Jan2017 Keep linearised sources for balance
                 else
                   iy2=iy
                 endif
-                do ic = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1) +
-     &                                    mpg%ftCvP(iFt,2) - 1
+                iy2=iy
+                iir=mpg%cvReg(omp(iy))
+                if(iir.le.0.or.iir.gt.CVREGMAX) then
+                  write(*,*) 'transport_input: out of bounds ',
+     1             'iy,region(ix,iy) ',iy,iir
+                  iir=CVREGMAX
+                endif
+                lbl = mpg%ftLbl(mpg%cvFt(omp(iy)))
+                do iFt=1,mpg%nFt
+                 if (mpg%isClassicalGrid.eq.1) then
+                   if (mpg%ftLbl(iFt).ne.lbl) cycle
+                   iy2=iy
+                 else
+                   if (iFt.ne.mpg%cvFt(omp(iy))) then 
+                     if ((iFt.le.mpg%cvFt(omp(ndim-1))).or.
+     &                 (iFt.ge.mpg%cvFt(omp(2))).or.
+     &                  no_fluxtube_ordering.eq.1) then
+                       cycle                
+                     else
+                       iy2=ndim !nh flux tube outside OMP ==> take last OMP flux tube
+                     endif
+                   else
+                     iy2=iy
+                   endif
+                 endif
+
+                 do ic = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1) +
+     &                                     mpg%ftCvP(iFt,2) - 1
                   iCv = mpg%ftCv(ic)
                   iir = mpg%cvReg(iCv)
                   lpflux = mpg%ftReg(mpg%cvFt(iCv)).eq.3
