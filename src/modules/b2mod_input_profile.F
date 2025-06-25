@@ -545,7 +545,7 @@ cdjm Jan2017 Keep linearised sources for balance
      &  hci0(nCv), hcib(nCv,0:ns-1)
       real (kind=R8) ::
      *  hce0(nCv), sig0(nCv), alf0(nCv)
-      integer :: iy,iy2,i,ifail,spec,nspec,iir,ift,icv,
+      integer :: iy,iy2,i,ifail,spec,nspec,iir,iFc,iFt,iCv,iCn,
      &      ndim,is,nsp(1:ns+1),iloop,ncall,ndat,
      &      kind_coeff,kind_data,ic,lbl
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
@@ -558,7 +558,7 @@ cdjm Jan2017 Keep linearised sources for balance
       logical, save :: elm_time
 #endif
       character*26 hlp_frm
-      logical catch_up, lpflux, ldiv
+      logical catch_up, lpflux, ldiv, found
       intrinsic sqrt
       external calc_dist, E01BEF, E01BFF
 
@@ -712,53 +712,32 @@ cdjm Jan2017 Keep linearised sources for balance
             endif
 
             do is=1,nspec
-              do iy=1,ndim
-                if (mpg%isClassicalGrid.eq.0) then ! skip guard cells
-                  if ((iy.eq.1).or.(iy.eq.ndim)) cycle
+              do iFt=1,mpg%nFt
+                iy = ft_omp(iFt)
+                if (iy.eq.0) then
+                  iy2 = ndim ! The flux tube does not intercept the OMP
+                             ! Assume it lies in the far SOL
+                else
+                  iy2=iy
                 endif
-                iy2=iy
-                iir=mpg%cvReg(omp(iy))
-                if(iir.le.0.or.iir.gt.CVREGMAX) then
-                  write(*,*) 'transport_input: out of bounds ',
-     1             'iy,region(ix,iy) ',iy,iir
-                  iir=CVREGMAX
-                endif
-                lbl = mpg%ftLbl(mpg%cvFt(omp(iy)))
-                do iFt=1,mpg%nFt
-                 if (mpg%isClassicalGrid.eq.1) then
-                   if (mpg%ftLbl(iFt).ne.lbl) cycle
-                   iy2=iy
-                 else
-                   if (iFt.ne.mpg%cvFt(omp(iy))) then
-                     if ((iFt.le.mpg%cvFt(omp(ndim-1))).or.
-     &                 (iFt.ge.mpg%cvFt(omp(2)))) then
-                       cycle
-                     else
-                       iy2=ndim !nh flux tube outside OMP ==> take last OMP flux tube
-                     endif
-                   else
-                     iy2=iy
-                   endif
-                 endif
-
-                 do ic = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1) +
-     &                                     mpg%ftCvP(iFt,2) - 1
+                do ic = mpg%ftCvP(iFt,1), mpg%ftCvP(iFt,1) +
+     &                                    mpg%ftCvP(iFt,2) - 1
                   iCv = mpg%ftCv(ic)
                   iir = mpg%cvReg(iCv)
                   lpflux = mpg%ftReg(mpg%cvFt(iCv)).eq.3
-                  ldiv=mod(iir-1,4)+1.ge.3
+                  ldiv = mod(iir-1,4)+1.ge.3
                   poloidal_scale_factor = 1.0_R8
-                  elm_region=.false.
+                  elm_region = .false.
 #ifdef WG_TODO
                   do isc=1,nscale
                     if (poloidal_scaling(isc) .and.
-     $                ix.ge.scaling_ix_begin(isc) .and.
-     $                    ix.le.scaling_ix_end(isc)) then
+     &                  ix.ge.scaling_ix_begin(isc) .and.
+     &                  ix.le.scaling_ix_end(isc)) then
                       poloidal_scale_factor = poloidal_scale_factor*
-     $                    (1.0_R8 + scaling_strength(isc)/
-     $                    (sqrt(2.0_R8*pi)*scaling_width(isc))*
-     $                    exp(-(ix-ixmean(isc))*(ix-ixmean(isc))/
-     $                         (2.0_R8*scaling_width(isc)**2)))
+     &                  (1.0_R8 + scaling_strength(isc)/
+     &                  (sqrt(2.0_R8*pi)*scaling_width(isc))*
+     &                  exp(-(ix-ixmean(isc))*(ix-ixmean(isc))/
+     &                       (2.0_R8*scaling_width(isc)**2)))
                     endif
                   enddo
                   elm_region=elm_time.and.elm_data.and.
@@ -824,104 +803,99 @@ cdjm Jan2017 Keep linearised sources for balance
                     endif
 
                   endif
-                 enddo !ic
-                enddo !ift=1,mpg%nFt
-              enddo !iy=1,ndim
-              if (mpg%isClassicalGrid.eq.0) then ! treatment of guard cells
-                do iCv = 1, nCv
-                  if (mpg%cvFcP(iCv,2).eq.1) then
-                    iir = mpg%cvReg(iCv)
-                    if ((iir.eq.1).or.(iir.eq.5)) then ! core boundary
-                      iy2 = 1
-                    elseif ((iir.eq.2).or.(iir.eq.6)) then ! SOL boundary
-                      iy2 = ndim
-                    else
-                      cycle
-                    endif
-                  else
-                    cycle
-                  endif
-                  lpflux = mpg%ftReg(mpg%cvFt(iCv)).eq.3
-                  ldiv=mod(iir-1,4)+1.ge.3
-                  poloidal_scale_factor = 1.0_R8
-                  elm_region=.false.
+                enddo !ic
+              enddo !iFt=1,mpg%nFt
+              do iCv = mpg%nCi+1, mpg%nCv ! treatment of guard cells
+                iFc = mpg%cvFc(mpg%cvFcP(iCv,1))
+                iCn = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2)) ! neighbour cell
+                iir = mpg%cvReg(iCn)
+                if ((iir.eq.1).or.(iir.eq.5)) then ! core boundary
+                  iy2 = 1
+                elseif ((iir.eq.2).or.(iir.eq.6)) then ! SOL boundary
+                  iy2 = ndim
+                else
+                  cycle
+                endif
+                lpflux = mpg%ftReg(mpg%cvFt(iCn)).eq.3
+                ldiv=mod(iir-1,4)+1.ge.3
+                poloidal_scale_factor = 1.0_R8
+                elm_region=.false.
 #ifdef WG_TODO
-                  do isc=1,nscale
-                    if (poloidal_scaling(isc) .and.
+                do isc=1,nscale
+                  if (poloidal_scaling(isc) .and.
      $                ix.ge.scaling_ix_begin(isc) .and.
-     $                    ix.le.scaling_ix_end(isc)) then
-                      poloidal_scale_factor = poloidal_scale_factor*
-     $                    (1.0_R8 + scaling_strength(isc)/
-     $                    (sqrt(2.0_R8*pi)*scaling_width(isc))*
-     $                    exp(-(ix-ixmean(isc))*(ix-ixmean(isc))/
-     $                         (2.0_R8*scaling_width(isc)**2)))
-                    endif
-                  enddo
-                  elm_region=elm_time.and.elm_data.and.
-     &                     ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
-#endif
-                  if(.not.
-     1             (.not.region_flags(iir,kind_coeff).or.
-     1             (lpflux.and.no_pflux).or.
-     1             (ldiv.and.no_div))) then
-
-                    if (elm_region) then
-                      prof(1:ndim)=pelm(1:ndim)
-                    else
-                      prof(1:ndim)=pf(1:ndim)
-                    endif
-
-                    if (kind_coeff.eq.1) then
-                      dna0(iCv,nsp(is))=
-     1                 prof(iy2)*poloidal_scale_factor
-
-                    elseif (kind_coeff.eq.2) then
-                      dpa0(iCv,nsp(is))=
-     1                 prof(iy2)*poloidal_scale_factor/
-     &                 (rt%rza(iCv,nsp(is))*pl%te(iCv)+pl%ti(iCv))
-
-                    elseif (kind_coeff.eq.3) then
-                      hcib(iCv,nsp(is))=poloidal_scale_factor*
-     &                 prof(iy2)*pl%na(iCv,nsp(is))
-
-                    elseif (kind_coeff.eq.4) then
-                      hce0(iCv)=prof(iy2)*dv%ne(iCv)*
-     1                 poloidal_scale_factor
-
-                    elseif (kind_coeff.eq.5) then
-                      vla0(iCv,0,nsp(is))=
-     1                 prof(iy2)*poloidal_scale_factor
-
-                    elseif (kind_coeff.eq.6) then
-                      vla0(iCv,1,nsp(is))=
-     1                 prof(iy2)*poloidal_scale_factor
-
-                    elseif (kind_coeff.eq.7) then
-                      vsa0(iCv,nsp(is))=poloidal_scale_factor*
-     1                 prof(iy2)*mp*am(nsp(is))*pl%na(iCv,nsp(is))
-
-                    elseif (kind_coeff.eq.8) then
-                      if (csig_an_style.eq.0) then
-                        sig0(iCv)=prof(iy2)*qe*dv%ne(iCv)*
-     1                   poloidal_scale_factor
-                      elseif(csig_an_style.eq.1.and.nomp.gt.0) then
-                        sig0(iCv)=prof(iy2)*qe*dv%ne(omp(1))*
-     1                   poloidal_scale_factor
-                      endif
-
-                    elseif (kind_coeff.eq.9) then
-                      alf0(iCv)=poloidal_scale_factor*
-     1                 prof(iy2)*dv%ne(iCv)*
-     2                 sqrt(qe/pl%te(iCv))
-
-                    else
-                      write(*,*)
-     .                 'Option',kind_coeff,'not yet implemented'
-                    endif
-
+     $                ix.le.scaling_ix_end(isc)) then
+                    poloidal_scale_factor = poloidal_scale_factor*
+     $               (1.0_R8 + scaling_strength(isc)/
+     $               (sqrt(2.0_R8*pi)*scaling_width(isc))*
+     $                exp(-(ix-ixmean(isc))*(ix-ixmean(isc))/
+     $                   (2.0_R8*scaling_width(isc)**2)))
                   endif
                 enddo
-              endif
+                elm_region=elm_time.and.elm_data.and.
+     &                     ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
+#endif
+                if(.not.
+     1            (.not.region_flags(iir,kind_coeff).or.
+     1            (lpflux.and.no_pflux).or.
+     1            (ldiv.and.no_div))) then
+
+                  if (elm_region) then
+                    prof(1:ndim)=pelm(1:ndim)
+                  else
+                    prof(1:ndim)=pf(1:ndim)
+                  endif
+
+                  if (kind_coeff.eq.1) then
+                    dna0(iCv,nsp(is))=
+     1               prof(iy2)*poloidal_scale_factor
+
+                  elseif (kind_coeff.eq.2) then
+                    dpa0(iCv,nsp(is))=
+     1               prof(iy2)*poloidal_scale_factor/
+     &               (rt%rza(iCv,nsp(is))*pl%te(iCv)+pl%ti(iCv))
+
+                  elseif (kind_coeff.eq.3) then
+                    hcib(iCv,nsp(is))=poloidal_scale_factor*
+     &               prof(iy2)*pl%na(iCv,nsp(is))
+
+                  elseif (kind_coeff.eq.4) then
+                    hce0(iCv)=prof(iy2)*dv%ne(iCv)*
+     1               poloidal_scale_factor
+
+                  elseif (kind_coeff.eq.5) then
+                    vla0(iCv,0,nsp(is))=
+     1               prof(iy2)*poloidal_scale_factor
+
+                  elseif (kind_coeff.eq.6) then
+                    vla0(iCv,1,nsp(is))=
+     1               prof(iy2)*poloidal_scale_factor
+
+                  elseif (kind_coeff.eq.7) then
+                    vsa0(iCv,nsp(is))=poloidal_scale_factor*
+     1               prof(iy2)*mp*am(nsp(is))*pl%na(iCv,nsp(is))
+
+                  elseif (kind_coeff.eq.8) then
+                    if (csig_an_style.eq.0) then
+                      sig0(iCv)=prof(iy2)*qe*dv%ne(iCv)*
+     1                 poloidal_scale_factor
+                    elseif(csig_an_style.eq.1.and.nomp.gt.0) then
+                      sig0(iCv)=prof(iy2)*qe*dv%ne(omp(1))*
+     1                 poloidal_scale_factor
+                    endif
+
+                  elseif (kind_coeff.eq.9) then
+                    alf0(iCv)=poloidal_scale_factor*
+     1               prof(iy2)*dv%ne(iCv)*
+     2               sqrt(qe/pl%te(iCv))
+
+                  else
+                    write(*,*)
+     .               'Option',kind_coeff,'not yet implemented'
+                  endif
+
+                endif
+              enddo
             enddo !is=1,nspec
             if (ncall.eq.0) then
               if (elm_data) then
