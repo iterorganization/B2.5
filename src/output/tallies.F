@@ -194,6 +194,12 @@
      2         /2.0_R8
             endif
           enddo
+          if (leftix(ix,iy).ne.-2) then
+            qconvexreg(region(ix,iy,1))=                                !wuhsh
+     1       qconvexreg(region(ix,iy,1))-
+     1        (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8*
+     1        (1.5_R8*fch_p(ix,iy,0,0)/qe)
+          endif
           fhixreg(region(ix,iy,1))=fhixreg(region(ix,iy,1))+
      1     fhi(ix,iy,0,0)+fhi(ix,iy,0,1)
           fhiyreg(region(ix,iy,2))=fhiyreg(region(ix,iy,2))+
