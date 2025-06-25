@@ -179,7 +179,7 @@
      .                           cvsahz_hBdp_al(:,:,:),
      .                           cvsahz_uAdp_albe(:,:,:,:),
      .                           cvsahz_uBdp_al(:,:,:)
-      end type B2Coeff_nspecies      
+      end type B2Coeff_nspecies
 
       type B2Source
         real(R8), dimension(:,:), allocatable :: sch, she, shi, sne,
@@ -2850,6 +2850,7 @@
 
 
       subroutine read_plasma (ninp, nCv, nFc, ns, st)
+      use b2mod_version
       use b2mod_subsys
       implicit none
       integer, intent(in) :: ninp, nCv, nFc, ns
@@ -2960,6 +2961,76 @@
       call cfrure (ninp, nCv,        st % sr % skt_prod, 'skt_prod')
       call cfrure (ninp, nCv,        st % sr % skt_diss, 'skt_diss')
       call cfrure (ninp, nCv*4,      st % sr % szt, 'szt')
+
+*  .. additional sources
+      if (b2fplasma_version.ge.'03.002.001') then
+        call cfrure (ninp, nCv*ns, st % srw % rsana, 'rsana')
+        call cfrure (ninp, nCv*ns, st % srw % rrana, 'rrana')
+        call cfrure (ninp, nCv*ns, st % srw % rcxna, 'rcxna')
+        call cfrure (ninp, nCv*ns, st % srw % rsamo, 'rsamo')
+        call cfrure (ninp, nCv*ns, st % srw % rramo, 'rramo')
+        call cfrure (ninp, nCv*ns, st % srw % rcxmo, 'rcxmo')
+        call cfrure (ninp, nCv*ns, st % srw % rsahi, 'rsahi')
+        call cfrure (ninp, nCv*ns, st % srw % rrahi, 'rrahi')
+        call cfrure (ninp, nCv*ns, st % srw % rcxhi, 'rcxhi')
+        call cfrure (ninp, nCv*ns, st % srw % rqahe, 'rqahe')
+        call cfrure (ninp, nCv*ns, st % srw % rqrad, 'rqrad')
+        call cfrure (ninp, nCv*ns, st % srw % rqbrm, 'rqbrm')
+        call cfrure (ninp, nCv*ns, st % srw % b2stbc_sna, 'b2stbc_sna')
+        call cfrure (ninp, nCv*ns, st % srw % b2stbr_sna, 'b2stbr_sna')
+        call cfrure (ninp, nCv*ns, st % srw % b2stbm_sna, 'b2stbm_sna')
+        call cfrure (ninp, nCv*ns, st % srw % b2stbc_smo, 'b2stbc_smo')
+        call cfrure (ninp, nCv*ns, st % srw % b2stbr_smo, 'b2stbr_smo')
+        call cfrure (ninp, nCv*ns, st % srw % b2stbm_smo, 'b2stbm_smo')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_she, 'b2stbc_she')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_she, 'b2stbr_she')
+        call cfrure (ninp, nCv,    st % srw % b2stbm_she, 'b2stbm_she')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_shi, 'b2stbc_shi')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_shi, 'b2stbr_shi')
+        call cfrure (ninp, nCv,    st % srw % b2stbm_shi, 'b2stbm_shi')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_shn, 'b2stbc_shn')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_shn, 'b2stbr_shn')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_sch, 'b2stbc_sch')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_sch, 'b2stbr_sch')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_sne, 'b2stbc_sne')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_sne, 'b2stbr_sne')
+        call cfrure (ninp, nCv,    st % srw % b2stbm_sne, 'b2stbm_sne')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_skt, 'b2stbc_skt')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_skt, 'b2stbr_skt')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_szt, 'b2stbc_szt')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_szt, 'b2stbr_szt')
+        call cfrure (ninp, nCv*ns, st % srw % sna0_eir_tot, 'sna0_eir')
+        call cfrure (ninp, nCv*ns, st % srw % smo0_eir_tot, 'smo0_eir')
+        call cfrure (ninp, nCv,    st % srw % she0_eir_tot, 'she0_eir')
+        call cfrure (ninp, nCv,    st % srw % shi0_eir_tot, 'shi0_eir')
+        call cfrure (ninp, nCv,    st % srw % sch0_eir_tot, 'sch0_eir')
+        call cfrure (ninp, nCv,    st % srw % sne0_eir_tot, 'sne0_eir')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_divua,
+     .                                                  'b2sihs_divua')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_divue,
+     .                                                  'b2sihs_divue')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_exba,
+     .                                                  'b2sihs_exba')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_exbe,
+     .                                                  'b2sihs_exbe')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_fraa,
+     .                                                  'b2sihs_fraa')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_joule,
+     .                                                  'b2sihs_joule')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_str, 'b2sihs_str')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_visa,
+     .                                                  'b2sihs_visa')
+        call cfrure (ninp, nCv*4*ns, st % srw % b2npmo_smaf,
+     .                                                  'b2nmpo_smaf')
+        call cfrure (ninp, nCv*4*ns, st % srw % b2npmo_smag,
+     .                                                  'b2nmpo_smag')
+        call cfrure (ninp, nCv*4*ns, st % srw % b2npmo_smav,
+     .                                                  'b2nmpo_smav')
+        call cfrure (ninp, nCv*ns, st % srw % smcf, 'smcf')
+        call cfrure (ninp, nCv*ns, st % srw % smfr, 'smfr')
+        call cfrure (ninp, nCv*ns, st % srw % smpr, 'smpr')
+        call cfrure (ninp, nCv*ns, st % srw % smpt, 'smpt')
+      end if
 
 *  .. transport
       call cfrure (ninp, nFc*2,      st % co % calf, 'calf')
@@ -3133,6 +3204,76 @@
       call cfwure (nout, nCv,        st % sr % skt_prod, 'skt_prod')
       call cfwure (nout, nCv,        st % sr % skt_diss, 'skt_diss')
       call cfwure (nout, nCv*4,      st % sr % szt, 'szt')
+
+*  .. additional sources
+      if (newversion.ge.'03.002.001') then
+        call cfwure (nout, nCv*ns, st % srw % rsana, 'rsana')
+        call cfwure (nout, nCv*ns, st % srw % rrana, 'rrana')
+        call cfwure (nout, nCv*ns, st % srw % rrana, 'rcxna')
+        call cfwure (nout, nCv*ns, st % srw % rsamo, 'rsamo')
+        call cfwure (nout, nCv*ns, st % srw % rramo, 'rramo')
+        call cfwure (nout, nCv*ns, st % srw % rramo, 'rcxmo')
+        call cfwure (nout, nCv*ns, st % srw % rsahi, 'rsahi')
+        call cfwure (nout, nCv*ns, st % srw % rrahi, 'rrahi')
+        call cfwure (nout, nCv*ns, st % srw % rcxhi, 'rcxhi')
+        call cfwure (nout, nCv*ns, st % srw % rqahe, 'rqahe')
+        call cfwure (nout, nCv*ns, st % srw % rqrad, 'rqrad')
+        call cfwure (nout, nCv*ns, st % srw % rqbrm, 'rqbrm')
+        call cfwure (nout, nCv*ns, st % srw % b2stbc_sna, 'b2stbc_sna')
+        call cfwure (nout, nCv*ns, st % srw % b2stbr_sna, 'b2stbr_sna')
+        call cfwure (nout, nCv*ns, st % srw % b2stbm_sna, 'b2stbm_sna')
+        call cfwure (nout, nCv*ns, st % srw % b2stbc_smo, 'b2stbc_smo')
+        call cfwure (nout, nCv*ns, st % srw % b2stbr_smo, 'b2stbr_smo')
+        call cfwure (nout, nCv*ns, st % srw % b2stbm_smo, 'b2stbm_smo')
+        call cfwure (nout, nCv,    st % srw % b2stbc_she, 'b2stbc_she')
+        call cfwure (nout, nCv,    st % srw % b2stbr_she, 'b2stbr_she')
+        call cfwure (nout, nCv,    st % srw % b2stbm_she, 'b2stbm_she')
+        call cfwure (nout, nCv,    st % srw % b2stbc_shi, 'b2stbc_shi')
+        call cfwure (nout, nCv,    st % srw % b2stbr_shi, 'b2stbr_shi')
+        call cfwure (nout, nCv,    st % srw % b2stbm_shi, 'b2stbm_shi')
+        call cfwure (nout, nCv,    st % srw % b2stbc_shn, 'b2stbc_shn')
+        call cfwure (nout, nCv,    st % srw % b2stbr_shn, 'b2stbr_shn')
+        call cfwure (nout, nCv,    st % srw % b2stbc_sch, 'b2stbc_sch')
+        call cfwure (nout, nCv,    st % srw % b2stbr_sch, 'b2stbr_sch')
+        call cfwure (nout, nCv,    st % srw % b2stbc_sne, 'b2stbc_sne')
+        call cfwure (nout, nCv,    st % srw % b2stbr_sne, 'b2stbr_sne')
+        call cfwure (nout, nCv,    st % srw % b2stbm_sne, 'b2stbm_sne')
+        call cfwure (nout, nCv,    st % srw % b2stbc_skt, 'b2stbc_skt')
+        call cfwure (nout, nCv,    st % srw % b2stbr_skt, 'b2stbr_skt')
+        call cfwure (nout, nCv,    st % srw % b2stbc_szt, 'b2stbc_szt')
+        call cfwure (nout, nCv,    st % srw % b2stbr_szt, 'b2stbr_szt')
+        call cfwure (nout, nCv*ns, st % srw % sna0_eir_tot, 'sna0_eir')
+        call cfwure (nout, nCv*ns, st % srw % smo0_eir_tot, 'smo0_eir')
+        call cfwure (nout, nCv,    st % srw % she0_eir_tot, 'she0_eir')
+        call cfwure (nout, nCv,    st % srw % shi0_eir_tot, 'shi0_eir')
+        call cfwure (nout, nCv,    st % srw % sch0_eir_tot, 'sch0_eir')
+        call cfwure (nout, nCv,    st % srw % sne0_eir_tot, 'sne0_eir')
+        call cfwure (nout, nCv,    st % srw % b2sihs_divua,
+     .                                                  'b2sihs_divua')
+        call cfwure (nout, nCv,    st % srw % b2sihs_divue,
+     .                                                  'b2sihs_divue')
+        call cfwure (nout, nCv,    st % srw % b2sihs_exba,
+     .                                                  'b2sihs_exba')
+        call cfwure (nout, nCv,    st % srw % b2sihs_exbe,
+     .                                                  'b2sihs_exbe')
+        call cfwure (nout, nCv,    st % srw % b2sihs_fraa,
+     .                                                  'b2sihs_fraa')
+        call cfwure (nout, nCv,    st % srw % b2sihs_joule,
+     .                                                  'b2sihs_joule')
+        call cfwure (nout, nCv,    st % srw % b2sihs_str, 'b2sihs_str')
+        call cfwure (nout, nCv,    st % srw % b2sihs_visa,
+     .                                                  'b2sihs_visa')
+        call cfwure (nout, nCv*4*ns, st % srw % b2npmo_smaf,
+     .                                                  'b2nmpo_smaf')
+        call cfwure (nout, nCv*4*ns, st % srw % b2npmo_smag,
+     .                                                  'b2nmpo_smag')
+        call cfwure (nout, nCv*4*ns, st % srw % b2npmo_smav,
+     .                                                  'b2nmpo_smav')
+        call cfwure (nout, nCv*ns, st % srw % smcf, 'smcf')
+        call cfwure (nout, nCv*ns, st % srw % smfr, 'smfr')
+        call cfwure (nout, nCv*ns, st % srw % smpr, 'smpr')
+        call cfwure (nout, nCv*ns, st % srw % smpt, 'smpt')
+      end if
 
 *  .. transport
       call cfwure (nout, nFc*2,      st % co % calf, 'calf')
