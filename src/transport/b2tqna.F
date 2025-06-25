@@ -463,7 +463,8 @@ cxpb Corrected for dimensionality
 
       if(switch%b2tqna_transport_inputfile.eq.1) then
         call transport_input(nCv, nFc, ns, geo, mpg, pl, dv, rt, hcib,
-     &   dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall_b2tqna)
+     &   dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall_b2tqna,
+     &   switch%b2tqna_no_fluxtube_ordering)
 *     ..recompute hci0, hcn0
         hci0 = 0.0_R8
         hcn0 = 0.0_R8

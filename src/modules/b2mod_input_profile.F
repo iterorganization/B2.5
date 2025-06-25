@@ -472,7 +472,8 @@ cdjm Jan2017 Keep linearised sources for balance
 *-----------------------------------------------------------------------
 
       subroutine transport_input(nCv, nFc, ns, geo, mpg, pl, dv, rt,
-     &  hcib, dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall)
+     &  hcib, dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall,
+     &  no_fluxtube_ordering)
 
 !**************************************************************************
 !*     subroutine for reading in experimental transport coefficients from *
@@ -492,6 +493,7 @@ cdjm Jan2017 Keep linearised sources for balance
       type (B2Plasma), intent (in) :: pl
       type (B2Derivatives), intent (in) :: dv
       type (B2Rates), intent (in) :: rt
+      integer, intent (in) :: no_fluxtube_ordering
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  dna0(nCv,0:ns-1), dpa0(nCv,0:ns-1),
@@ -693,7 +695,8 @@ cdjm Jan2017 Keep linearised sources for balance
                  else
                    if (iFt.ne.mpg%cvFt(omp(iy))) then 
                      if ((iFt.le.mpg%cvFt(omp(ndim-1))).or.
-     &                 (iFt.ge.mpg%cvFt(omp(2)))) then
+     &                 (iFt.ge.mpg%cvFt(omp(2))).or.
+     &                  no_fluxtube_ordering.eq.1) then
                        cycle                
                      else
                        iy2=ndim !nh flux tube outside OMP ==> take last OMP flux tube
