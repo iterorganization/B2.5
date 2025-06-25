@@ -822,7 +822,8 @@ cxpb size is changed in b2mod_dimensions
           if ( (fb_type(ifb).eq.fb_type(ifbb)).and. .not.
      &         ((fb_type(ifb).eq.1).or.(fb_type(ifb).eq.4).or.
      &          (fb_type(ifb).eq.5).or.(fb_type(ifb).eq.7).or.
-     &          (fb_type(ifb).eq.8).or.(fb_type(ifb).eq.17)) )
+     &          (fb_type(ifb).eq.8).or.(fb_type(ifb).eq.17).or.
+     &          (fb_type(ifb).eq.27)) )
      &          call xerrab('init_feedback:'//
      &      ' set of feedbacks cannot be applied multiple times')
         enddo
@@ -866,9 +867,14 @@ cxpb size is changed in b2mod_dimensions
       do ifb = 1, nFb
         if (fb_ib(ifb).ge.0) cycle
         consistent = consistent .and.
-     &    .not.(fb_actuator(ifb).eq.1 .or.
-     &          fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.7) .and.
-     &    .not.(fb_rescale_option(ifb).eq.4)
+     &    .not.((fb_actuator(ifb).eq.1.and.switch%use_eirene.eq.0) .or.
+     &          fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.7)
+      end do
+      do ifb = 1, nFb
+        if (fb_actuator(ifb).eq.1) cycle
+        consistent = consistent .and.
+     &    .not.(fb_rescale_option(ifb).eq.4 .or.
+     &          fb_rescale_option(ifb).eq.5)
       end do
       do ifb = 1, nFb
         if (fb_actuator(ifb).ne.2) cycle
