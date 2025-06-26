@@ -259,9 +259,8 @@ program b2_ual_write_b2mod
      & , only : b2mn_init, b2mn_step, b2mn_fin
     use b2mod_driver &
      & , only : idx, ids_path, imas_version, continued, &
-     &          shot, run, username, database, version, &
-     &          description, old_imas_version, &
-     &          old_description, old_edge_profiles, equilibrium, &
+     &          shot, run, username, database, version, old_imas_version, &
+     &          old_edge_profiles, equilibrium, &
      &          ids_end_time, old_start_time, old_end_time, new_eq_ggd, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
      &          batch_profiles, batch_sources
@@ -274,7 +273,7 @@ program b2_ual_write_b2mod
      & , only : imas_create_env
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_dataset_description, ids_equilibrium
+     &          ids_radiation, ids_equilibrium
     use b2mod_ual &
      & , only : new_ids_edge, put_ids_edge, close_ual, &
      &          dealloc_ids_edge, dealloc_batch_edge
@@ -297,6 +296,15 @@ program b2_ual_write_b2mod
      & , only : ids_divertors
     use b2mod_driver &
      & , only : divertors
+#endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+    use ids_schemas &   ! IGNORE
+     & , only : ids_dataset_description
+    use b2mod_driver &
+     & , only : old_description, description
+#else
+    use b2mod_driver &
+     & , only : old_summary
 #endif
 #if ( IMAS_MINOR_VERSION > 11 && IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION == 3 )
     use ids_grid_examples       ! IGNORE
@@ -607,18 +615,31 @@ program b2_ual_write_b2mod
         old_start_time = 0.0_IDS_real
         old_end_time = IDS_REAL_INVALID
         old_imas_version = 'x.xx.x'
-        call ids_get( idx, "dataset_description", old_description, status)
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+        call ids_get( idx, "summary", old_summary, status )
+        if ( status.ne.0 ) then
+          write (0,*) 'Error opening old summary IDS !'
+        else if (associated(old_summary%ids_properties% &
+                        &   version_put%data_dictionary)) then
+          old_start_time = old_summary%simulation%time_begin
+          old_end_time = old_summary%simulation%time_end
+          old_imas_version = old_summary%ids_properties% &
+                          &  version_put%data_dictionary(1)
+          call ids_deallocate( old_summary )
+#else
+        call ids_get( idx, "dataset_description", old_description, status )
         if ( status.ne.0 ) then
           write (0,*) 'Error opening old dataset_description IDS !'
         else if (associated(old_description%ids_properties% &
                         &   version_put%data_dictionary)) then
 #if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
-          old_start_time = description%simulation%time_begin
-          old_end_time = description%simulation%time_end
+          old_start_time = old_description%simulation%time_begin
+          old_end_time = old_description%simulation%time_end
 #endif
           old_imas_version = old_description%ids_properties% &
                           &  version_put%data_dictionary(1)
           call ids_deallocate( old_description )
+#endif
         else if ( streql(old_imas_version,'x.xx.x') ) then
           call xerrab ('Old IMAS data entry is incomplete !')
         end if
@@ -743,7 +764,11 @@ program b2_ual_write_b2mod
           time_slice_index = num_time_slices
           call B25_process_ids( &
              &  edge_profiles, edge_sources, edge_transport, &
-             &  radiation, description, equilibrium, &
+             &  radiation, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+             &  description, &
+#endif
+             &  equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
              &  summary, &
 #endif
@@ -779,7 +804,11 @@ program b2_ual_write_b2mod
     if ( status.ne.0 .or. idx.eq.0 ) then
       call B25_process_ids( &
          &  edge_profiles, edge_sources, edge_transport, &
-         &  radiation, description, equilibrium, &
+         &  radiation, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+         &  description, &
+#endif
+         &  equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
          &  summary, &
 #endif
@@ -801,8 +830,13 @@ program b2_ual_write_b2mod
 
     !! Create Write the set data to IDSs
     write(*,*) "START put_ids_edge"
-    call put_ids_edge( edge_profiles, edge_sources, edge_transport, &
-        &   radiation, description, equilibrium, &
+    call put_ids_edge( &
+        &   edge_profiles, edge_sources, edge_transport, &
+        &   radiation, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+        &   description, &
+#endif
+        &   equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
@@ -830,7 +864,10 @@ program b2_ual_write_b2mod
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
-        &   description )
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+        &   description &
+#endif
+        &   )
     call close_ual(idx)
 
     write(0,*) " Running b2mn_fin"
