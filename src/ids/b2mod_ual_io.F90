@@ -1467,7 +1467,11 @@ contains
         do i = 1, nspecies
           call write_sourced_string( summary%composition%names(i), &
               &  species_list(i) )
-          frac = sum(na(:,:,eb2spcr(i):eb2spcr(i)+nfluids(i)+1)/sum(ne(:,:))
+          frac = 0.0_R8
+          do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
+            frac = frac + sum(na(:,:,is)*vol(:,:))
+          end do
+          frac = frac / sum(ne(:,:)*vol(:,:))
           call write_sourced_value( summary%composition%n_i_over_n_e(i), &
               &  frac )
         end do
@@ -7617,7 +7621,7 @@ contains
           allocate( description%machine(1) )
           description%machine = database
           description%pulse = shot
-#elif
+#elif ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
           summary%type%index = 2
           allocate( summary%type%name(1) )
           allocate( summary%type%description(1) )
@@ -8051,8 +8055,15 @@ contains
           do i = 1, nspecies
             call write_sourced_string( summary%composition%names(i), &
                 &  species_list(i) )
-            frac = sum(na_mean(:,:,eb2spcr(i):eb2spcr(i)+nfluids(i)+1)/ &
-                &  sum(na_mean(:,:,:)*rza(:,:,:))
+            u = 0.0_R8
+            do is = 0, ns-1
+              u = u + sum(na_mean(:,:,is)*rza(:,:,is)*vol(:,:))
+            end do
+            frac = 0.0_R8
+            do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
+              frac = frac + sum(na_mean(:,:,is)*vol(:,:))
+            end do
+            frac = frac / u
             call write_sourced_value( summary%composition%n_i_over_n_e(i), &
                 &  frac )
           end do
