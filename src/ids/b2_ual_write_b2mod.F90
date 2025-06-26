@@ -788,8 +788,6 @@ program b2_ual_write_b2mod
           time_slice_index = num_time_slices
           call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
              &  edge_profiles, edge_sources, edge_transport, &
-          call B25_process_ids( &
-             &  edge_profiles, edge_sources, edge_transport, &
              &  radiation, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
              &  description, &
