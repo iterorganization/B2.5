@@ -1053,11 +1053,7 @@ c k-enstrophy model
       s % b2tfhi_fkt_hie = 0.0_R8
       s % b2tfhe_vis_kt = 0.0_R8
       s % b2sikt_lpar_ref = 10.0_R8
-      if (s%transport_keps.eq.0 .and. s%solve_keps.eq.0) then
-        s % keps_anom_he_model = 0
-      else
-        s % keps_anom_he_model = 1
-      end if
+      s % keps_anom_he_model = 1
 
 c b2tqna
       s % b2tqna_ballooning = 0.0_R8
@@ -2497,8 +2493,8 @@ c k-enstrophy model
      &    s%solve_keps,' and b2tqna_transport_keps =',
      &    s%transport_keps,' should go together'
       endif
-      if (s%solve_keps.gt.0 .or. s%transport_keps.gt.0 .and.
-     &    s%keps_anom_he_model.eq.0 ) then
+      if ((s%solve_keps.gt.0 .or. s%transport_keps.gt.0) .and.
+     &     s%keps_anom_he_model.eq.0 ) then
         write(*,*) 'WARNING! should use keps_anom_he_model.gt.0 for '//
      &             'keps-model.'
       endif
