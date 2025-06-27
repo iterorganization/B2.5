@@ -1462,6 +1462,9 @@ contains
               &  species_list(i) )
           frac = 0.0_R8
           do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
+            if (is.ge.ns) cycle
+            if (is_neutral(is)) cycle
+            if (.not.(is.eq.eb2spcr(i).or.lnext(eb2spcr(i),is))) cycle
             frac = frac + sum(na(:,:,is)*vol(:,:))
           end do
           frac = frac / sum(ne(:,:)*vol(:,:))
@@ -7833,15 +7836,18 @@ contains
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
           allocate( summary%composition%names( nspecies ) )
           allocate( summary%composition%n_i_over_n_e( nspecies ) )
+          u = 0.0_R8
+          do is = 0, ns-1
+            u = u + sum(na_mean(:,:,is)*rza(:,:,is)*vol(:,:))
+          end do
           do i = 1, nspecies
             call write_sourced_string( summary%composition%names(i), &
                 &  species_list(i) )
-            u = 0.0_R8
-            do is = 0, ns-1
-              u = u + sum(na_mean(:,:,is)*rza(:,:,is)*vol(:,:))
-            end do
             frac = 0.0_R8
             do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
+              if (is.ge.ns) cycle
+              if (is_neutral(is)) cycle
+              if (.not.(is.eq.eb2spcr(i).or.lnext(eb2spcr(i),is))) cycle
               frac = frac + sum(na_mean(:,:,is)*vol(:,:))
             end do
             frac = frac / u
