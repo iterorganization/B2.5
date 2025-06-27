@@ -868,7 +868,7 @@ cxpb size is changed in b2mod_dimensions
         if (fb_ib(ifb).ge.0) cycle
         consistent = consistent .and.
      &    .not.((fb_actuator(ifb).eq.1.and.switch%use_eirene.eq.0) .or.
-     &          fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.7)
+     &           fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.7)
       end do
       do ifb = 1, nFb
         if (fb_actuator(ifb).eq.1) cycle
@@ -1861,7 +1861,7 @@ cxpb size is changed in b2mod_dimensions
                         if (mlcmp(iatm,imol).gt.0) then
                           fb_current(ifb) = fb_current(ifb) +
      &                       dmb2(iCv,imol,1)*mlcmp(iatm,imol)
-     &                        *geo%cvVol(iCv)
+     &                      *geo%cvVol(iCv)
                         endif
                       enddo
                     enddo
