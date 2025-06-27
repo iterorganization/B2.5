@@ -422,6 +422,9 @@ c time-dependent treatment
 *    ..compute centrifugal force term                                   !srv 09.07.01
        call b2sicf (nCv, nFc, nVx, is, am(is)*mp, switch,  geo, mpg,    !srv 09.07.01 28.01.02 22.07.05
      *   pl%na(:,is), pl%ua(:,is), smbcf, ctcfb, wrk0)
+       srw%smcf(:,is)=smbcf(:,0)+smbcf(:,1)*pl%ua(:,is)+
+     &                smbcf(:,2)*pl%na(:,is)*mp*am(is)+
+     &                smbcf(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
 *    ..compute correcting source due to artificial anomalous electric conductivity
        call b2sian (nCv, nFc, is, switch, geo, mpg,
      &   dv%fchanml_a(:,:,is), smban)
@@ -526,10 +529,7 @@ cdjm Mar2019 output the total momentum flux and source for balance
      &       smb(:,2)*pl%na(:,is)*mp*am(is)+
      &       smb(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
         call my_out_us(70,nCv,0,wrks,'b2npmo_smb'//chns)                !srv 28.02.17
-        wrks=smbcf(:,0)+smbcf(:,1)*pl%ua(:,is)+
-     &       smbcf(:,2)*pl%na(:,is)*mp*am(is)+
-     &       smbcf(:,3)*pl%ua(:,is)*pl%na(:,is)*mp*am(is)
-        call my_out_us(70,nCv,0,wrks,'b2npmo_smocf'//chns)
+        call my_out_us(70,nCv,0,srw%smcf(1,is),'b2npmo_smocf'//chns)
         wrks = geo%cvVol*geo%cvHz*(smbfria(:,0)+
      &        smbfria(:,1)*pl%ua(:,is)+      !srv 05.07.17 {
      &        smbfria(:,2)*pl%na(:,is)*mp*am(is)+

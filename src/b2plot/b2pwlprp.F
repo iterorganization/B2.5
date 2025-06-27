@@ -1227,7 +1227,7 @@ c                print *,'il,kn = ',il,kn                  !###
 #ifdef DBG
       print *,'After correction. nwldprt =',nwldprt
       print '(a,i4,1x,a,i4/(20i5))',
-     ,  'lwldlis :',il,pltzlbl(1),nwldlis(1),
+     ,  'lwldlis :',1,pltzlbl(1),nwldlis(1),
      ,  (lwldlis(i,1),i=1,nwldlis(1))
 #endif
 
