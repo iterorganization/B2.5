@@ -17,8 +17,11 @@
      .  faces(0:m%nFc), iFc, i, cv, v1, v2,
      .  scf, ncf, fcs(0:100), c_al, j, ref_fc(m%nFt), ref_cv(m%nFt),
      .  counter, pfaces(0:100), ref_face, ind,
-     .  face1, face2, nf2, k, l, ncvOMP, ncvIMP, cvOMP(1:m%nCv),
-     .  cvIMP(1:m%nCv)
+     .  face1, face2, nf2, k, l, ncvOMP, ncvIMP, nciOMP, nciIMP, nfcOMP,
+     .  nfcIMP, cvOMP(1:m%nCv), cvIMP(1:m%nCv), ciOMP(1:m%nCi),
+     .  ciIMP(1:m%nCi), fcOMP(m%nFc), fcIMP(m%nFc)
+      real (kind = R8) :: xiOMP(m%nFc), xiIMP(m%nFc),
+     .                    yiOMP(m%nFc), yiIMP(m%nFc)
 !      real (kind=R8) :: pol_flux
       real (kind=R8) :: width, vpsi(0:100), psi_max(0:m%nCv),
      .  psif_max(0:m%nFc), psi_ref, pol_flux_ref, cutoff_width ,
@@ -82,13 +85,16 @@
       rzimp(2,:) = m%IMPz
       ncvOMP = 0
       cvOMP = 0
-      call cv_intersections (g, m, rzomp,
-     &  cvOMP, ncvOMP, m%nCv, 1, ifail)
+      call cv_intersections (g, m, rzimp,
+     &  cvOMP, ciOMP, fcOMP, ncvOMP, nciOMP,
+     &  nfcOMP, m%nCv, xiOMP, yiOMP, 1, ifail)
       call xertst(.not.ifail,'Getting OMP cells failed in b2agbs')
       ncvIMP = 0
       cvIMP = 0
       call cv_intersections (g, m, rzimp,
-     &  cvIMP, ncvIMP, m%nCv, 1, ifail)
+     &  cvIMP, ciIMP, fcIMP, ncvIMP, nciIMP,
+     &  nfcIMP, m%nCv, xiIMP, yiIMP, 1, ifail)
+
       call xertst(.not.ifail,'Getting OMP cells failed in b2agbs')
       ref_ind_cv = 0
       do iFt = 1,m%nFt
