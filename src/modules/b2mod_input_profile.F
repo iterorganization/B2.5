@@ -547,7 +547,7 @@ cdjm Jan2017 Keep linearised sources for balance
      *  hce0(nCv), sig0(nCv), alf0(nCv)
       integer :: iy,iy2,i,ifail,spec,nspec,iir,iFc,iFt,iCv,iCn,
      &      ndim,is,nsp(1:ns+1),iloop,ncall,ndat,
-     &      kind_coeff,kind_data,ic,lbl
+     &      kind_coeff,kind_data,ic
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
      &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr)
       real (kind=R8) :: poloidal_scale_factor
@@ -558,7 +558,7 @@ cdjm Jan2017 Keep linearised sources for balance
       logical, save :: elm_time
 #endif
       character*26 hlp_frm
-      logical catch_up, lpflux, ldiv, found
+      logical catch_up, lpflux, ldiv
       intrinsic sqrt
       external calc_dist, E01BEF, E01BFF
 
