@@ -880,7 +880,8 @@ c
      & state%co%alfx_c, state%co%sigx_c,
      & state%rt%rza, state%rt%rz2, state_ext,
      & state%srw%she0, state%srw%shi0, state%srw%shn0, state%srw)
-      if(switch%b2sigp_style.ne.2) then
+      if(switch%b2sigp_style.ne.2.and.b2fplasma_version.lt.'03.002.001')
+     > then
        call b2nxfx (mpg%nCv, mpg%nFc, mpg%nVx, switch, geo, mpg, qe,
      &  state%dv%ne, state%pl%te, state%pl%po, ehxp)
        call gradc_p(mpg%nCv, mpg%nFc, mpg%nVx, 0, geo, mpg,
