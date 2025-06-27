@@ -1206,7 +1206,10 @@ contains
               &  species_list(i) )
           frac = 0.0_R8
           do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
-            frac = sum(state%pl%na(:,is)*geo%cvVol(:))
+            if (is.ge.ns) cycle
+            if (is_neutral(is)) cycle
+            if (.not.(is.eq.eb2spcr(i).or.lnext(eb2spcr(i),is))) cycle
+            frac = frac + sum(state%pl%na(:,is)*geo%cvVol(:))
           end do
           frac = frac / sum(state%dv%ne(:)*geo%cvVol(:))
           call write_sourced_value( summary%composition%n_i_over_n_e(i), &
@@ -6654,6 +6657,9 @@ contains
                 &  species_list(i) )
             frac = 0.0_R8
             do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
+              if (is.ge.ns) cycle
+              if (is_neutral(is)) cycle
+              if (.not.(is.eq.eb2spcr(i).or.lnext(eb2spcr(i),is))) cycle
               frac = frac + sum(state_avg%na_mean(:,is)*geo%cvVol(:))
             end do
             frac = frac / u
