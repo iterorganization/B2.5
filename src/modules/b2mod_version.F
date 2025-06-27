@@ -340,3 +340,10 @@ c
 c    Version 03.001.000  16.12.15 Introduction of 9-point stencil
 c                                 Redimensioning of most flux arrays, to take into account both poloidal and radial flows across each cell face
 c                                 Introduced routines from computation of ue (b2xpue.F)
+c
+c    Version 03.002.000  11.07.18 Initial Wide-Grids code version
+c                                 Complete overhaul of b2fgmtry
+c                                 New organization of plasma data structures
+c    Version 03.002.001  25.06.25 Added Qalfmin/max variables to b2fgmtry
+c                                 Added srw arrays to b2fplasma
+c

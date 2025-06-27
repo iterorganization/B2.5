@@ -124,7 +124,11 @@
      , , only : ids_deallocate, ids_get
       use ids_schemas   ! IGNORE
      , , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,
-     ,          ids_radiation, ids_dataset_description, ids_equilibrium
+     ,          ids_radiation, ids_equilibrium
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+      use ids_schemas   ! IGNORE
+     , , only : ids_dataset_description
+#endif
 #if ( IMAS_MINOR_VERSION > 8 || IMAS_MAJOR_VERSION > 3 )
       use ids_schemas   ! IGNORE
      , , only : ids_real, ids_real_invalid
@@ -223,8 +227,12 @@ c Artificial losses module
       type(ids_edge_sources) :: batch_sources
       type(ids_edge_transport) :: edge_transport
       type(ids_radiation) :: radiation
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
       type(ids_dataset_description) :: description
       type(ids_dataset_description) :: old_description
+#else
+      type(ids_summary) :: old_summary
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
       type(ids_summary) :: summary
 #endif
@@ -2811,9 +2819,9 @@ c new CDF movie option
             if (status.eq.0 .and. idx.ne.0) then
               write(*,*) "Reading old IMAS data entry: ",
      .         trim(database), shot, run
-              call ids_get( idx, "equilibrium", equilibrium, status)
+              call ids_get( idx, "equilibrium", equilibrium, status )
               call ids_get( idx, "edge_profiles", old_edge_profiles,
-     .          status)
+     .          status )
               if (status.ne.0) then
                 write(*,*) 'Error opening old edge_profiles IDS ! '//
      .                     'Will create a new one.'
@@ -2828,7 +2836,7 @@ c new CDF movie option
                 end if
                 call ids_deallocate( old_edge_profiles )
                 call ids_get( idx, "edge_profiles/1",
-     .            old_batch_profiles, status)
+     .            old_batch_profiles, status )
                 if (status.ne.0) then
                   num_batch_slices = 0
                 else
@@ -2838,23 +2846,37 @@ c new CDF movie option
                 old_start_time = 0.0_IDS_real
                 old_end_time = IDS_REAL_INVALID
                 old_imas_version = 'x.xx.x'
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+                call ids_get( idx, "summary", old_summary, status )
+                if ( status.ne.0 ) then
+                  write(*,*) 'Error opening old summary IDS !'
+                else if (associated(old_summary%ids_properties%
+     &                              version_put%data_dictionary)) then
+                  old_imas_version = old_summary%ids_properties%
+     &                               version_put%data_dictionary(1)
+                  old_start_time = old_summary%simulation%time_begin
+                  old_end_time = old_summary%simulation%time_end
+                  call ids_deallocate( old_summary )
+                end if
+#else
                 call ids_get( idx, "dataset_description",
-     .                                  old_description, status)
+     .                                  old_description, status )
                 if ( status.ne.0 ) then
                   write(*,*)
      .              'Error opening old dataset_description IDS !'
                 else if (associated(old_description%ids_properties%
      &                              version_put%data_dictionary)) then
-#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
-                  old_start_time = description%simulation%time_begin
-                  old_end_time = description%simulation%time_end
-#endif
                   old_imas_version = old_description%ids_properties%
      &                               version_put%data_dictionary(1)
+#if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
+                  old_start_time = old_description%simulation%time_begin
+                  old_end_time = old_description%simulation%time_end
+#endif
                   call ids_deallocate( old_description )
                 else if ( streql(old_imas_version,'x.xx.x') ) then
                   call xerrab ('Old IMAS data entry is incomplete !')
                 end if
+#endif
                 continued = continued .and.
      &           (ids_end_time.lt.tim .and.
      &            ids_end_time.ne.IDS_REAL_INVALID)
@@ -2998,7 +3020,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     call B25_process_ids(
      &               geo, mpg, state, state_ext, state_avg, switch,
      &               edge_profiles, edge_sources, edge_transport,
-     &               radiation, description, equilibrium,
+     &               radiation,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &               description,
+#endif
+     &               equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &               summary,
 #endif
@@ -3025,7 +3051,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                     call B25_av_ids( summary_av,
      &               geo, mpg, state, state_ext, state_avg, switch,
      &               batch_profiles, batch_sources,
-     &               description, equilibrium,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &               description,
+#endif
+     &               equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &               summary,
 #endif
@@ -3063,7 +3092,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               call B25_process_ids(
      &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
-     &          radiation, description, equilibrium,
+     &          radiation,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &          description,
+#endif
+     &          equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
@@ -3088,7 +3121,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               call B25_av_ids( summary_av,
      &         geo, mpg, state, state_ext, state_avg, switch,
      &         batch_profiles, batch_sources,
-     &         description, equilibrium,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &         description,
+#endif
+     &         equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &         summary,
 #endif
@@ -3108,7 +3144,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               call B25_process_ids(
      &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
-     &          radiation, description, equilibrium,
+     &          radiation,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &          description,
+#endif
+     &          equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
@@ -3138,7 +3178,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               call B25_av_ids( summary_av,
      &          geo, mpg, state, state_ext, state_avg, switch,
      &          batch_profiles, batch_sources,
-     &          description, equilibrium,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &          description,
+#endif
+     &          equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &          summary,
 #endif
@@ -3153,8 +3196,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           end if
           if (ids_replace) then
             if (write_ids)
-     >       call new_ids_edge( edge_profiles, edge_sources,
-     &        edge_transport, radiation, description, equilibrium,
+     >       call new_ids_edge(
+     &        edge_profiles, edge_sources, edge_transport,
+     &        radiation,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &        description,
+#endif
+     &        equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &        summary,
 #endif
@@ -3178,12 +3226,20 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &        summary,
 #endif
-     &        description, summary_av, new_eq_ggd )
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &        description,
+#endif
+     &        summary_av, new_eq_ggd )
           else
             if (database.eq.'iter') database = 'ITER'
             if (write_ids)
-     >       call put_ids_edge( edge_profiles, edge_sources,
-     &        edge_transport, radiation, description, equilibrium,
+     >       call put_ids_edge(
+     &        edge_profiles, edge_sources, edge_transport,
+     &        radiation,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &        description,
+#endif
+     &        equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &        summary,
 #endif
@@ -3211,7 +3267,10 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &        summary,
 #endif
-     &        description, summary_av, new_eq_ggd )
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &        description,
+#endif
+     &        summary_av, new_eq_ggd )
           end if
 #endif
           if (.not.continued) continued = .true.
@@ -3496,7 +3555,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           call B25_process_ids(
      &      geo, mpg, state, state_ext, state_avg, switch,
      &      edge_profiles, edge_sources, edge_transport,
-     &      radiation, description, equilibrium,
+     &      radiation,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &      description,
+#endif
+     &      equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
@@ -3570,9 +3633,9 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           if (status.eq.0 .and. idx.ne.0) then
             write(*,*) "Reading old IMAS data entry: ",
      .       trim(database), shot, run
-            call ids_get( idx, "equilibrium", equilibrium, status)
+            call ids_get( idx, "equilibrium", equilibrium, status )
             call ids_get( idx, "edge_profiles", old_edge_profiles,
-     .        status)
+     .        status )
             if (status.ne.0) then
               write(*,*) 'Error opening old edge_profiles IDS ! '//
      .                   'Will create a new one.'
@@ -3589,15 +3652,28 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               old_start_time = 0.0_IDS_real
               old_end_time = IDS_REAL_INVALID
               old_imas_version = 'x.xx.x'
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+              call ids_get( idx, "summary", old_summary, status )
+              if ( status.ne.0 ) then
+                write(*,*) 'Error opening old summary IDS !'
+              else if (associated(old_summary%ids_properties%
+     &                            version_put%data_dictionary)) then
+                old_imas_version = old_summary%ids_properties%
+     &                             version_put%data_dictionary(1)
+                old_start_time = old_summary%simulation%time_begin
+                old_end_time = old_summary%simulation%time_end
+                call ids_deallocate( old_summary )
+              end if
+#else
               call ids_get( idx, "dataset_description",
-     .                                old_description, status)
+     .                                old_description, status )
               if ( status.ne.0 ) then
                 write(*,*) 'Error opening old dataset_description IDS !'
               else if (associated(old_description%ids_properties%
      &                            version_put%data_dictionary)) then
 #if ( IMAS_MINOR_VERSION > 25 || IMAS_MAJOR_VERSION > 3 )
-                old_start_time = description%simulation%time_begin
-                old_end_time = description%simulation%time_end
+                old_start_time = old_description%simulation%time_begin
+                old_end_time = old_description%simulation%time_end
 #endif
                 old_imas_version = old_description%ids_properties%
      &                             version_put%data_dictionary(1)
@@ -3605,6 +3681,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               else if ( streql(old_imas_version,'x.xx.x') ) then
                 call xerrab ('Old IMAS data entry is incomplete !')
               end if
+#endif
               continued = continued .and.
      &         (ids_end_time.lt.tim .and.
      &          ids_end_time.ne.IDS_REAL_INVALID)
@@ -3740,7 +3817,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                 call B25_process_ids(
      &            geo, mpg, state, state_ext, state_avg, switch,
      &            edge_profiles, edge_sources, edge_transport,
-     &            radiation, description, equilibrium,
+     &            radiation,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &            description,
+#endif
+     &            equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &            summary,
 #endif
@@ -3791,7 +3872,11 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           call B25_process_ids(
      &      geo, mpg, state, state_ext, state_avg, switch,
      &      edge_profiles, edge_sources, edge_transport,
-     &      radiation, description, equilibrium,
+     &      radiation,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &      description,
+#endif
+     &      equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
@@ -3811,8 +3896,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
         end if
         if (ids_replace) then
-          call new_ids_edge( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description, equilibrium,
+          call new_ids_edge(
+     &      edge_profiles, edge_sources, edge_transport,
+     &      radiation,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &      description,
+#endif
+     &      equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
@@ -3827,8 +3917,13 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #endif
      &      idx, new_eq_ggd )
         else
-          call put_ids_edge( edge_profiles, edge_sources,
-     &      edge_transport, radiation, description, equilibrium,
+          call put_ids_edge(
+     &      edge_profiles, edge_sources, edge_transport,
+     &      radiation,
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+     &      description,
+#endif
+     &      equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif
