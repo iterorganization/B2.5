@@ -843,9 +843,15 @@ contains
             edge_transport%model(1)%identifier%name(1) = "SOLPS5.0"
             edge_transport%model(1)%identifier%description(1) = "SOLPS5.0 physics model"
           else if (style.ge.1) then
-            edge_transport%model(1)%identifier%index = -3
-            edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
-            edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
+            if (switch%keps_anom_he_model.eq.0) then
+              edge_transport%model(1)%identifier%index = -3
+              edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
+              edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
+            else
+              edge_transport%model(1)%identifier%index = -4
+              edge_transport%model(1)%identifier%name(1) = "SOLPS-WG k-eps"
+              edge_transport%model(1)%identifier%description(1) = "SOLPS-ITER Wide Grids k-epsilon physics model"
+            end if
           else if (style.eq.-1) then
             edge_transport%model(1)%identifier%index = -1
             edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
