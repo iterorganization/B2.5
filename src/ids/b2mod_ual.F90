@@ -37,9 +37,11 @@ module b2mod_ual
 #endif
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_dataset_description, ids_equilibrium
-    use b2mod_ual_io &
-     & , only : b25_process_ids
+     &          ids_radiation, ids_equilibrium
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+    use ids_schemas &   ! IGNORE
+     & , only : ids_dataset_description
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &   ! IGNORE
      & , only : ids_summary
@@ -56,6 +58,8 @@ module b2mod_ual
     use ids_schemas &   ! IGNORE
      & , only : ids_plasma_profiles, ids_plasma_sources, ids_plasma_transport
 #endif
+    use b2mod_ual_io &
+     & , only : b25_process_ids
 #elif defined(ITM_ENVIRONMENT_LOADED)
     use euITM_schemas   ! IGNORE
     use euITM_routines  ! IGNORE
@@ -72,7 +76,10 @@ module b2mod_ual
   public put_batch_edge, new_batch_edge
   public b25_process_ids, read_ids
   public ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-    &    ids_radiation, ids_dataset_description, ids_equilibrium
+    &    ids_radiation, ids_equilibrium
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+  public ids_dataset_description
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
   public ids_summary
 #endif
@@ -94,7 +101,11 @@ contains
 #if IMAS_MAJOR_VERSION > 3
             &   plasma_profiles, plasma_sources, plasma_transport, &
 #endif
-            &   radiation, description, equilibrium, &
+            &   radiation, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+            &   description, &
+#endif
+            &   equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
@@ -139,8 +150,10 @@ contains
 #endif
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         type (ids_dataset_description), intent(inout) :: description !< IDS
             !<  designed to store a description of the simulation
+#endif
         type (ids_equilibrium), intent(inout) :: equilibrium !< IDS
             !< designed to store a description of the equilibrium
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -196,10 +209,12 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         ids_list = trim(ids_list)//", divertors"
 #endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
 #if AL_MAJOR_VERSION > 4
         if (first_pass) ids_list = trim(ids_list)//", dataset_description"
 #else
         ids_list = trim(ids_list)//", dataset_description"
+#endif
 #endif
         ids_list = trim(ids_list)//", and radiation"
         !! Set data to edge_profiles IDS
@@ -209,9 +224,14 @@ contains
         if ( idx.eq.0 ) then
 #if AL_MAJOR_VERSION > 4
           uri = 'imas:mdsplus?path='//trim(ids_path)
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
 #if IMAS_MAJOR_VERSION > 3
           allocate( description%uri(1) )
           description%uri = trim(uri)
+#endif
+#else
+          allocate( summary%identifier(1) )
+          summary%identifier = trim(uri)
 #endif
           call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
 #else
@@ -255,9 +275,11 @@ contains
           write(*,*) 'Putting radiation IDS'
           call ids_put( idx, "radiation", radiation, status )
           call xertst( status.eq.0, 'Error putting radiation IDS !')
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           write(*,*) 'Putting dataset_description IDS'
           call ids_put( idx, "dataset_description", description, status )
           call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           write(*,*) 'Putting summary IDS'
           call ids_put( idx, "summary", summary, status )
@@ -307,6 +329,7 @@ contains
           write(*,*) 'Putting radiation IDS slice'
           call ids_put_slice( idx, "radiation", radiation, status )
           call xertst( status.eq.0, 'Error putting slice in radiation IDS !')
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
 #if AL_MAJOR_VERSION > 4
           if (first_pass) then
             write(*,*) 'Putting dataset_description IDS'
@@ -317,6 +340,7 @@ contains
           write(*,*) 'Putting dataset_description IDS slice'
           call ids_put_slice( idx, "dataset_description", description, status )
           call xertst( status.eq.0, 'Error putting slice in dataset_description IDS !')
+#endif
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           write(*,*) 'Putting summary IDS slice'
@@ -422,7 +446,10 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
-            &   description, do_summary, new_eq_ggd )
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+            &   description, &
+#endif
+            &   do_summary, new_eq_ggd )
         type (ids_edge_profiles), intent(inout) :: batch_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
@@ -431,8 +458,10 @@ contains
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         type (ids_dataset_description), intent(inout) :: description
             !< IDS designed to store a description of the simulation
+#endif
         type (ids_equilibrium), intent(inout) :: equilibrium
             !< IDS designed to store a description of the equilibrium
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -473,10 +502,12 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           ids_list = trim(ids_list)//", summary"
 #endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
 #if AL_MAJOR_VERSION > 4
           if (first_pass) ids_list = trim(ids_list)//", and dataset_description"
 #else
           ids_list = trim(ids_list)//", and dataset_description"
+#endif
 #endif
         end if
         write(*,'(1x,a)') "Writing "//trim(ids_list)//" IDS"
@@ -487,8 +518,13 @@ contains
           uri = 'imas:mdsplus?path='//trim(ids_path)
 #if IMAS_MAJOR_VERSION > 3
           if (do_summary) then
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
             allocate( description%uri(1) )
             description%uri = trim(uri)
+#else
+            allocate( summary%identifier(1) )
+            summary%identifier = trim(uri)
+#endif
           end if
 #endif
           call imas_open( uri, FORCE_CREATE_PULSE, idx, status, message )
@@ -515,8 +551,10 @@ contains
           call ids_put( idx, "edge_sources/1", batch_sources, status )
           call xertst( status.eq.0, 'Error putting batch_sources IDS !')
           if (do_summary) then
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
             call ids_put( idx, "dataset_description", description, status )
             call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             call ids_put( idx, "summary", summary, status )
             call xertst( status.eq.0, 'Error putting summary IDS !')
@@ -538,6 +576,7 @@ contains
           call ids_put_slice( idx, "edge_sources/1", batch_sources, status )
           call xertst( status.eq.0, 'Error putting slice in batch_sources IDS !')
           if (do_summary) then
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
 #if AL_MAJOR_VERSION > 4
             if (first_pass) then
               call ids_put( idx, "dataset_description", description, status )
@@ -546,6 +585,7 @@ contains
 #else
             call ids_put_slice( idx, "dataset_description", description, status )
             call xertst( status.eq.0, 'Error putting slice in dataset_description IDS !')
+#endif
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             call ids_put_slice( idx, "summary", summary, status )
@@ -570,7 +610,10 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
-            &   description )
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+            &   description &
+#endif
+            &   )
         implicit none
         type (ids_edge_profiles), intent(inout) :: batch_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
@@ -589,8 +632,10 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
 #endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         type (ids_dataset_description), intent(inout) :: description
             !< IDS designed to store a description of the simulation
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
@@ -603,8 +648,12 @@ contains
           call ids_deallocate( batch_plasma_sources )
 #endif
         end if
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         if (associated( description%ids_properties%comment ) ) then
           call ids_deallocate( description )
+#else
+        if (associated( summary%ids_properties%comment ) ) then
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           call ids_deallocate( summary )
 #endif
@@ -619,7 +668,10 @@ contains
 #if IMAS_MAJOR_VERSION > 3
             &   plasma_profiles, plasma_sources, plasma_transport, &
 #endif
-            &   radiation, description, &
+            &   radiation, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+            &   description, &
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
@@ -659,8 +711,10 @@ contains
 #endif
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         type (ids_dataset_description) :: description !< IDS designed to store
             !< a description of the simulation
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary), intent(inout) :: summary !< IDS
             !< designed to store run summary data
@@ -688,7 +742,9 @@ contains
           call ids_delete( idx, "plasma_transport", plasma_transport)
 #endif
           call ids_delete( idx, "radiation", radiation)
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           call ids_delete( idx, "dataset_description", description)
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           call ids_delete( idx, "summary", summary)
 #endif
@@ -711,7 +767,11 @@ contains
 #if IMAS_MAJOR_VERSION > 3
             &   plasma_profiles, plasma_sources, plasma_transport, &
 #endif
-            &   radiation, description, equilibrium, &
+            &   radiation, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+            &   description, &
+#endif
+            &   equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
@@ -754,8 +814,10 @@ contains
 #endif
         type (ids_radiation), intent(inout) :: radiation !< IDS
             !< designed to store data about plasma radiation
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         type (ids_dataset_description) :: description !< IDS designed to store
             !< a description of the simulation
+#endif
         type (ids_equilibrium) :: equilibrium !< IDS designed to store
             !< a description of the equilibrium
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -795,11 +857,17 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
           &  "divertors, "// &
 #endif
-          &  "dataset_description, and radiation IDS"
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+          &  "dataset_description, "// &
+#endif
+          &  "and radiation IDS"
 
-#if IMAS_MAJOR_VERSION > 3
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 )
         allocate( description%uri(1) )
         description%uri = trim(uri)
+#elif ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        allocate( summary%identifier(1) )
+        summary%identifier = trim(uri)
 #endif
         if (new_eq_ggd) then
           write(*,'(1x,a)') "Adding GGD data to equilibrium IDS"
@@ -824,8 +892,10 @@ contains
 #endif
         call ids_put( idx, "radiation", radiation, status )
         call xertst( status.eq.0, 'Error putting radiation IDS !')
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         call ids_put( idx, "dataset_description", description, status )
         call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call ids_put( idx, "summary", summary, status )
         call xertst( status.eq.0, 'Error putting summary IDS !')
@@ -856,7 +926,10 @@ contains
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
-            &   description, do_summary, new_eq_ggd )
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+            &   description, &
+#endif
+            &   do_summary, new_eq_ggd )
         type (ids_edge_profiles), intent(inout) :: batch_profiles   !< IDS
             !< designed to store data on edge plasma profiles (includes the
             !< scrape-off layer and possibly part of the confined plasma)
@@ -874,8 +947,10 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
 #endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         type (ids_dataset_description) :: description !< IDS
             !< designed to store a description of the simulation
+#endif
         type (ids_equilibrium) :: equilibrium !< IDS
             !< designed to store a description of the equilibrium
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -899,10 +974,14 @@ contains
 #if IMAS_MAJOR_VERSION > 3
             &  "batch_plasma_profiles, batch_plasma_sources, "// &
 #endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &  "summary, "// &
 #endif
             &  "and dataset_description IDS"
+#else
+            &  "and summary IDS"
+#endif
         else
           write(*,'(1x,a)') "Writing batch_profiles and batch_sources IDS "
         end if
@@ -925,12 +1004,17 @@ contains
         call xertst( status.eq.0, 'Error putting batch_plasma_sources IDS !')
 #endif
         if (do_summary) then
-#if IMAS_MAJOR_VERSION > 3
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
           allocate( description%uri(1) )
           description%uri = trim(uri)
+#elif ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          allocate( summary%identifier(1) )
+          summary%identifier = trim(uri)
 #endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           call ids_put( idx, "dataset_description", description, status )
           call xertst( status.eq.0, 'Error putting dataset_description IDS !')
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           call ids_put( idx, "summary", summary, status )
           call xertst( status.eq.0, 'Error putting summary IDS !')

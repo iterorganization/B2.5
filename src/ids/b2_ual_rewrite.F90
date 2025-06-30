@@ -78,15 +78,20 @@ program b2_ual_rewrite
     use b2mod_driver &
      & , only : idx, ids_path, &
      &          shot, run, username, database, version, &
-     &          old_description, equilibrium, &
      &          old_imas_version, imas_version, new_eq_ggd, &
-     &          description, &
      &          edge_profiles, edge_sources, edge_transport, radiation, &
-     &          batch_profiles, batch_sources
+     &          equilibrium, batch_profiles, batch_sources
 #if IMAS_MAJOR_VERSION > 3
     use b2mod_driver &
      & , only : plasma_profiles, plasma_sources, plasma_transport, &
      &          batch_plasma_profiles, batch_plasma_sources
+#endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+    use b2mod_driver &
+     & , only : old_description, description
+#else
+    use b2mod_driver &
+     & , only : old_summary
 #endif
     use b2mod_geo
     use b2mod_time
@@ -102,7 +107,7 @@ program b2_ual_rewrite
      & , only : imas_create_env
     use ids_schemas &   ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport, &
-     &          ids_radiation, ids_dataset_description, ids_equilibrium
+     &          ids_radiation, ids_equilibrium
     use b2mod_ual &
      & , only : new_ids_edge, delete_ids_edge, &
      &          dealloc_ids_edge, dealloc_batch_edge, close_ual
@@ -129,6 +134,10 @@ program b2_ual_rewrite
 #if IMAS_MAJOR_VERSION > 3
     use ids_schemas &   ! IGNORE
      & , only : ids_plasma_profiles, ids_plasma_sources, ids_plasma_transport
+#endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+    use ids_schemas &   ! IGNORE
+     & , only : ids_dataset_description
 #endif
     use ids_routines &  ! IGNORE
      & , only : ids_get, ids_deallocate
@@ -423,8 +432,21 @@ program b2_ual_rewrite
       write(0,*) "Reading old IMAS data entry: ", trim(database), shot, run
       call ids_get( idx, "equilibrium", equilibrium, status )
       if(status.ne.0) write(0,*) 'Error opening equilibrium IDS !'
-      call ids_get( idx, "dataset_description", old_description, status )
       old_imas_version = 'x.xx.x'
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 1 ) )
+      call ids_get( idx, "summary", old_summary, status )
+      if ( status.ne.0 ) then
+        write(0,*) 'Error opening old summary IDS !'
+      else if (associated(old_summary%ids_properties% &
+                      &   version_put%data_dictionary)) then
+        old_imas_version = old_summary%ids_properties% &
+                      &   version_put%data_dictionary(1)
+      else if ( streql(old_imas_version,'x.xx.x') ) then
+        call xerrab ('Old IMAS data entry is incomplete !')
+      end if
+      call ids_deallocate( old_summary )
+#else
+      call ids_get( idx, "dataset_description", old_description, status )
       if ( status.ne.0 ) then
         write(0,*) 'Error opening old dataset_description IDS !'
       else if (associated(old_description%ids_properties% &
@@ -435,6 +457,7 @@ program b2_ual_rewrite
         call xerrab ('Old IMAS data entry is incomplete !')
       end if
       call ids_deallocate( old_description )
+#endif
       if (.not.streql(old_imas_version,imas_version).or.database.eq.'iter') then
         if (.not.streql(old_imas_version,imas_version)) then
           write(0,*) &
@@ -611,7 +634,11 @@ program b2_ual_rewrite
 #if IMAS_MAJOR_VERSION > 3
       &  plasma_profiles, plasma_sources, plasma_transport, &
 #endif
-      &  radiation, description, equilibrium, &
+      &  radiation, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+      &  description, &
+#endif
+      &  equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
       &  summary, &
 #endif
@@ -636,7 +663,11 @@ program b2_ual_rewrite
 #if IMAS_MAJOR_VERSION > 3
         &   plasma_profiles, plasma_sources, plasma_transport, &
 #endif
-        &   radiation, description, equilibrium, &
+        &   radiation, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+        &   description, &
+#endif
+        &   equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
@@ -690,7 +721,10 @@ program b2_ual_rewrite
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif
-        &   description )
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+        &   description &
+#endif
+        &   )
     call close_ual(idx)
 
 end program b2_ual_rewrite

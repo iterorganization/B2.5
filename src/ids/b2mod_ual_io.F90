@@ -162,11 +162,14 @@ module b2mod_ual_io
 #endif
     use ids_schemas &     ! IGNORE
      & , only : ids_edge_profiles, ids_edge_sources, ids_edge_transport,     &
-     &          ids_radiation, ids_dataset_description, ids_equilibrium,     &
-     &          ids_ids_properties,                                          &
+     &          ids_radiation, ids_equilibrium, ids_ids_properties,          &
      &          ids_code, ids_signal_int_1d, ids_signal_flt_1d,              &
      &          ids_generic_grid_scalar, ids_generic_grid_vector_components, &
      &          ids_generic_grid_dynamic
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+    use ids_schemas &     ! IGNORE
+     & , only : ids_dataset_description
+#endif
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_generic_grid_AoS3_root
@@ -681,7 +684,11 @@ contains
 #if IMAS_MAJOR_VERSION > 3
             &   plasma_profiles, plasma_sources, plasma_transport, &
 #endif
-            &   radiation, description, equilibrium, &
+            &   radiation, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+            &   description, &
+#endif
+            &   equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
@@ -733,8 +740,10 @@ contains
 #endif
         type (ids_radiation) :: radiation !< IDS designed to store
             !< data on radiation emitted by the plasma species
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         type (ids_dataset_description) :: description !< IDS designed to store
             !< a description of the simulation
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary) :: summary !< IDS designed to store
             !< run summary data
@@ -1077,7 +1086,9 @@ contains
 #endif
         call write_ids_properties( radiation%ids_properties, &
           &  homogeneous_time )
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         call write_ids_properties( description%ids_properties, 2 )
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_properties( summary%ids_properties, &
           &  homogeneous_time )
@@ -1120,7 +1131,7 @@ contains
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         call write_ids_code( divertors%code, code_commit, code_description )
 #endif
-#if IMAS_MAJOR_VERSION > 3
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
         call write_ids_code_constant( description%code, code_commit, code_description )
 #endif
         allocate( edge_transport%model(1) )
@@ -1444,6 +1455,7 @@ contains
         allocate( description%dd_version(1) )
         description%dd_version = imas_version
 #endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if ( present( time_step_IN ) ) &
           &  description%simulation%time_step = time_step_IN
@@ -1465,6 +1477,24 @@ contains
         description%machine = database
         description%pulse = shot
 #endif
+#else
+        if ( present( time_step_IN ) ) &
+          &  summary%simulation%time_step = time_step_IN
+        if ( present ( time_IN ) ) &
+          &  summary%simulation%time_current = time_IN
+        allocate( summary%simulation%workflow(1) )
+        summary%simulation%workflow = source
+        summary%simulation%time_begin = run_start_time_IN
+        summary%simulation%time_end = run_end_time_IN
+        summary%type%index = 2
+        allocate( summary%type%name(1) )
+        allocate( summary%type%description(1) )
+        summary%type%name = "simulation"
+        summary%type%description = "Simulation results from "//trim(source)
+        allocate( summary%machine(1) )
+        summary%machine = database
+        summary%pulse = shot
+#endif
 
         i=index(B25_git_version,'-')
         if (i.gt.0) then
@@ -1484,6 +1514,25 @@ contains
         call write_ids_midplane( plasma_transport%midplane, midplane_id )
 #endif
         call write_ids_midplane( summary%midplane, midplane_id )
+#endif
+
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        allocate( summary%composition%names( nspecies ) )
+        allocate( summary%composition%n_i_over_n_e( nspecies ) )
+        do i = 1, nspecies
+          call write_sourced_string( summary%composition%names(i), &
+              &  species_list(i) )
+          frac = 0.0_R8
+          do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
+            if (is.ge.ns) cycle
+            if (is_neutral(is)) cycle
+            if (.not.(is.eq.eb2spcr(i).or.lnext(eb2spcr(i),is))) cycle
+            frac = frac + sum(na(:,:,is)*vol(:,:))
+          end do
+          frac = frac / sum(ne(:,:)*vol(:,:))
+          call write_sourced_value( summary%composition%n_i_over_n_e(i), &
+              &  frac )
+        end do
 #endif
 
         select case (GeometryType)
@@ -8725,7 +8774,10 @@ contains
 #if IMAS_MAJOR_VERSION > 3
             &   batch_plasma_profiles, batch_plasma_sources, &
 #endif
-            &   description, equilibrium, &
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
+            &   description, &
+#endif
+            &   equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #if IMAS_MAJOR_VERSION == 3
@@ -8758,8 +8810,10 @@ contains
             !< kinetic energy equation (i.e. the energy flux takes into account
             !< the energy transported by the particle flux)
 #endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         type (ids_dataset_description) :: description !< IDS designed to store
             !< a description of the simulation
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         type (ids_summary) :: summary !< IDS designed to store
             !< run summary data
@@ -8845,7 +8899,9 @@ contains
           &  homogeneous_time )
 #endif
         if ( do_description ) then
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           call write_ids_properties( description%ids_properties, 2 )
+#endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
           call write_ids_properties( summary%ids_properties, &
             &  homogeneous_time )
@@ -8864,7 +8920,7 @@ contains
         if (do_description) &
           &  call write_ids_code( summary%code, code_commit, code_description )
 #endif
-#if IMAS_MAJOR_VERSION > 3
+#if ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
         if (do_description) &
           &  call write_ids_code_constant( description%code, code_commit, code_description )
 #endif
@@ -8960,7 +9016,7 @@ contains
           description%imas_version = version
           allocate( description%dd_version(1) )
           description%dd_version = imas_version
-#elif IMAS_MAJOR_VERSION > 3
+#elif ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION == 0 )
           description%type%index = 2
           allocate( description%type%name(1) )
           allocate( description%type%description(1) )
@@ -8969,11 +9025,27 @@ contains
           allocate( description%machine(1) )
           description%machine = database
           description%pulse = shot
+#elif ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          summary%type%index = 2
+          allocate( summary%type%name(1) )
+          allocate( summary%type%description(1) )
+          summary%type%name = "simulation"
+          summary%type%description = "Simulation results from "//trim(source)
+          allocate( summary%machine(1) )
+          summary%machine = database
+          summary%pulse = shot
 #endif
+#if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
           if ( present( time_IN ) ) &
             &  description%simulation%time_current = time_IN
           allocate( description%simulation%workflow(1) )
           description%simulation%workflow = source
+#else
+          if ( present( time_IN ) ) &
+            &  summary%simulation%time_current = time_IN
+          allocate( summary%simulation%workflow(1) )
+          summary%simulation%workflow = source
+#endif
 
           i=index(B25_git_version,'-')
           if (i.gt.0) then
@@ -9583,6 +9655,29 @@ contains
         nc = max(nncut,1)
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if (do_description) then
+! Summary plasma composition
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          allocate( summary%composition%names( nspecies ) )
+          allocate( summary%composition%n_i_over_n_e( nspecies ) )
+          u = 0.0_R8
+          do is = 0, ns-1
+            u = u + sum(na_mean(:,:,is)*rza(:,:,is)*vol(:,:))
+          end do
+          do i = 1, nspecies
+            call write_sourced_string( summary%composition%names(i), &
+                &  species_list(i) )
+            frac = 0.0_R8
+            do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
+              if (is.ge.ns) cycle
+              if (is_neutral(is)) cycle
+              if (.not.(is.eq.eb2spcr(i).or.lnext(eb2spcr(i),is))) cycle
+              frac = frac + sum(na_mean(:,:,is)*vol(:,:))
+            end do
+            frac = frac / u
+            call write_sourced_value( summary%composition%n_i_over_n_e(i), &
+                &  frac )
+          end do
+#endif
 ! Summary separatrix data
           if (maxval(abs(fpsi(-1:nx,-1:ny,0:3))).gt.0.0_R8) then
             allocate( summary%local%separatrix%position%psi( num_batch_slices ) )
