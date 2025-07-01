@@ -585,6 +585,9 @@ contains
         real(IDS_real) :: xi, yi, xo, yo
         logical :: found
 #endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        real(IDS_real) :: nesum
+#endif
 #ifdef B25_EIRENE
         real(IDS_real), allocatable :: un0(:,:,:), um0(:,:,:)
 #endif
@@ -1207,17 +1210,25 @@ contains
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
         allocate( summary%composition%names( nspecies ) )
         allocate( summary%composition%n_i_over_n_e( nspecies ) )
+        nesum = 0.0_IDS_real
+        do iCv = 1, mpg%nCi
+          if (.not.mpg%cvOnClosedSurface(iCv)) cycle
+          nesum = nesum + state%dv%ne(iCv)*geo%cvVol(iCv)
+        end do
         do i = 1, nspecies
           call write_sourced_string( summary%composition%names(i), &
               &  species_list(i) )
-          frac = 0.0_R8
+          frac = 0.0_IDS_real
           do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
             if (is.ge.ns) cycle
             if (is_neutral(is)) cycle
             if (.not.(is.eq.eb2spcr(i).or.lnext(eb2spcr(i),is))) cycle
-            frac = frac + sum(state%pl%na(:,is)*geo%cvVol(:))
+            do iCv = 1, mpg%nCi
+              if (.not.mpg%cvOnClosedSurface(iCv)) cycle
+              frac = frac + state%pl%na(iCv,is)*geo%cvVol(iCv)
+            end do
           end do
-          frac = frac / sum(state%dv%ne(:)*geo%cvVol(:))
+          if (nesum.gt.0.0_IDS_real) frac = frac / nesum
           call write_sourced_value( summary%composition%n_i_over_n_e(i), &
               &  frac )
         end do
@@ -6113,6 +6124,10 @@ contains
         real(IDS_real) :: tmpCv( mpg%nCv )
         real(IDS_real) :: totCv( mpg%nCv )
 #endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+        integer :: ix, iy
+        real(IDS_real) :: u, frac
+#endif
         !! Procedures
         external species, xertst
 
@@ -6654,21 +6669,27 @@ contains
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
           allocate( summary%composition%names( nspecies ) )
           allocate( summary%composition%n_i_over_n_e( nspecies ) )
-          u = 0.0_R8
+          u = 0.0_IDS_real
           do is = 0, ns-1
-            u = u + sum(state_avg%na_mean(:,is)*state%rt%rza(:,is)*geo%cvVol(:))
+            do iCv = 1, mpg%nCi
+              if (.not.mpg%cvOnClosedSurface(iCv)) cycle
+              u = u + state_avg%na_mean(iCv,is)*state%rt%rza(iCv,is)*geo%cvVol(iCv)
+            end do
           end do
           do i = 1, nspecies
             call write_sourced_string( summary%composition%names(i), &
                 &  species_list(i) )
-            frac = 0.0_R8
+            frac = 0.0_IDS_real
             do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
               if (is.ge.ns) cycle
               if (is_neutral(is)) cycle
               if (.not.(is.eq.eb2spcr(i).or.lnext(eb2spcr(i),is))) cycle
-              frac = frac + sum(state_avg%na_mean(:,is)*geo%cvVol(:))
+              do iCv = 1, mpg%nCi
+                if (.not.mpg%cvOnClosedSurface(iCv)) cycle
+                frac = frac + state_avg%na_mean(iCv,is)*geo%cvVol(iCv)
+              end do
             end do
-            frac = frac / u
+            if (u.gt.0.0_IDS_real) frac = frac / u
             call write_sourced_value( summary%composition%n_i_over_n_e(i), &
                 &  frac )
           end do
