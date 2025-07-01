@@ -118,6 +118,7 @@
       integer :: iCv
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
+      integer, save :: flag_startup = 0                                  !fc: local variable used to start-up BDF2 scheme with an IE first time-step
       logical domoqt, wrong_flow                                         !xpb
       logical quit_residual, main_call
       integer istg(0:2), is, k
@@ -346,7 +347,7 @@ ctmp.dpc
           endif
 
           if(switch%equation_sources.ne.0) then                                 !srv 26.02.18 {
-            do iCv = 1,nCv
+            do iCv = 1,mpg%nCi
               st%sr%sna(iCv,0:1,0:ns-1) = st%sr%sna(iCv,0:1,0:ns-1)+
      &          geo%cvVol(iCv)*art_sna(iCv,0:1,0:ns-1)
               st%sr%smo(iCv,0:3,0:ns-1) = st%sr%smo(iCv,0:3,0:ns-1)+
@@ -374,13 +375,33 @@ ctmp.dpc
             ramp_call = switch%ramp_slow.eq.0.or.
      &                  (istg(0)+istg(1)+istg(2)).eq.0
             if (switch%b2mndt_style.eq.1) then
+
               call b2news_(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
      &         geo, mpg, st, st_ext, st_avg, ramp_call)
+
             elseif (switch%b2mndt_style.eq.2) then
+
+              !fc: if using BDF2, the first iteration must use IE to start-up the scheme
+              if (switch%b2mndt_bdf.eq.2.and.itim.eq.0) then
+                switch%b2mndt_bdf=1 !temporarily de-activate BDF scheme
+                if (switch%b2mndt_startup.eq.2) then
+                  switch%b2mndt_ckn=2 ! activate CKN scheme for first iteration
+                endif
+                flag_startup=1 !fc: startup done
+              endif
+
               call b2news_m(nCv, nFc, nVx, ns, nscx, iscx,
      &         nscxmax, ismain, ismain0, dtim, switch,
      &         geo, mpg, st, st_ext, st_avg, ramp_call)
+
+              if (flag_startup.eq.1) then
+                switch%b2mndt_bdf=2 !fc: if start-up done, switch back to BDF2 time-stepping scheme
+                if (switch%b2mndt_startup.eq.2) then
+                  switch%b2mndt_ckn=1 ! turn off CKN scheme after startup
+                endif
+              endif
+
             else
               call xerrab('b2mndt_style should be 1 or 2')
             endif

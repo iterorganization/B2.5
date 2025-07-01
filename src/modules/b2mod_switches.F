@@ -510,7 +510,9 @@ c b2mndt
       real (kind=R8) :: b2mndt_rxf
       integer :: b2mndt_style
       integer :: b2mndt_ckn
+      integer :: b2mndt_bdf
       integer :: b2mndt_dummy
+      integer :: b2mndt_startup
       integer :: ntim_step_out
       integer :: calc_err_step_out
       integer :: b2mndt_temp0
@@ -1105,7 +1107,9 @@ c b2mndt
       end if
       s % b2mndt_style = 1
       s % b2mndt_ckn = 1
+      s % b2mndt_bdf = 1
       s % b2mndt_dummy = 0
+      s % b2mndt_startup = 1
       s % ntim_step_out = 1
       s % calc_err_step_out = 1
       s % b2mndt_temp0 = 1
@@ -1720,7 +1724,9 @@ c b2mndt
       call ipgetr ('b2mndt_rxf', s%b2mndt_rxf)
       call ipgeti ('b2mndt_style',s%b2mndt_style)
       call ipgeti ('b2mndt_ckn',s%b2mndt_ckn)
+      call ipgeti ('b2mndt_bdf',s%b2mndt_bdf)
       call ipgeti ('b2mndt_dummy',s%b2mndt_dummy)
+      call ipgeti ('b2mndt_startup',s%b2mndt_startup)
       call ipgeti ('b2mndt_ntim_step_out',s%ntim_step_out)
       call ipgeti ('b2mndt_calc_err_step_out',s%calc_err_step_out)
       call ipgeti ('b2mndt_temp0',s%b2mndt_temp0)
@@ -2305,6 +2311,13 @@ c b2mndt
      &  'b2mndt_style should be 1 or 2')
       call xertst (s%b2mndt_ckn.eq.1.or.s%b2mndt_ckn.eq.2,
      &  'b2mndt_ckn should be 1 or 2')
+      call xertst (s%b2mndt_bdf.eq.1.or.s%b2mndt_bdf.eq.2,
+     &  'b2mndt_bdf should be 1 or 2')
+      if (s%b2mndt_ckn.eq.2.and.s%b2mndt_bdf.eq.2) then
+        call xerrab('Cannot use Crank-Nicolson and BDF2 time'//
+     &     ' integration schemes at the same time!'//
+     &     ' Set only one switch (ckn OR bdf) to 2!')
+      endif
       call xertst (1.le.s%ntim_step_out,
      &   'faulty internal parameter ntim_step_out')
       call xertst (1.le.s%calc_err_step_out,
