@@ -76,7 +76,7 @@
 *   ..local variables
       character chns*3                                             !srv 04.07.08
       real (kind=R8) ::
-     *   aa(mpg%nCmxNv), wrk0(nCv)
+     *   aa(mpg%nCmxNv), wrk0(nCv), ts_factor
       logical warning
       integer :: iCv
 *   ..procedures
@@ -193,12 +193,18 @@ cdjm Jan2017 update particle source components for balance
        endif
       endif                                                             !srv 22.05.18
 
-*   ..modify residual for ckn scheme
+*   ..modify residual according to time integration scheme
       if (switch%b2mndt_ckn.eq.2) then
         if((solving.and.any(solvcreg(0:mpg%nnreg(0))))
      &            .or.switch%get_residuals.eq.1) then
           dv%resco(1:mpg%nCi,isb) = dv%resco(1:mpg%nCi,isb) +
      &      psnl%resco0(1:mpg%nCi,isb)
+        endif
+      elseif (switch%b2mndt_bdf.eq.2) then
+        if((solving.and.any(solvcreg(0:mpg%nnreg(0))))
+     &            .or.switch%get_residuals.eq.1) then
+          dv%resco(1:mpg%nCi,isb) = dv%resco(1:mpg%nCi,isb) +
+     &      0.5_R8*psnl%dnadt(1:mpg%nCi,isb) ! +1/2*V*(dn_i/dt) (where i denotes the previous time-step)
         endif
       endif
 
@@ -215,6 +221,20 @@ cdjm Jan2017 update particle source components for balance
      &   dv%pcca(:,0,isb),
      &   dv%pa(:,isb), pl%na(:,isb), pl%ua(:,isb), isb, psnl)
       endif                                                             !srv 22.05.18
+
+*    ..compute time derivative
+      ! to obtain the true physical derivative V(dn/dt), we need to divide by ts_factor, which was previously multiplied to snadt inside b2scdt
+      if (switch%b2mndt_ckn.eq.2) then
+        ts_factor = 2.0_R8
+      elseif (switch%b2mndt_bdf.eq.2) then
+        ts_factor = 3.0_R8/2.0_R8
+      else !default implicit Euler scheme
+        ts_factor = 1.0_R8
+      endif
+      dv%dnadt(:,isb) = (-sr%snadt(:,1,isb)*pl%na(:,isb)
+     &                  -sr%snadt(:,0,isb))/ts_factor               ! dnadt = V(dna/dt)
+
+*    ..output quantities for continuity equation
       if (switch%b2npco_iout.ne.0) then                                 !srv 12.07.02 {
         write (chns,'(i3.3)') isb
         call my_out_us(70,nCv,0,dv%pa(1,isb),'b2npco_pa'//chns)
@@ -225,6 +245,8 @@ cdjm Jan2017 update particle source components for balance
         call my_out_us(70,nCv,0,sr%sna(1,1,isb),'b2npco_sna1'//chns)
         wrk0=sr%sna(:,0,isb)+pl%na(:,isb)*sr%sna(:,1,isb)
         call my_out_us(70,nCv,0,wrk0,'b2npco_sna'//chns)
+        !wrk0=-sr%snadt(:,1,isb)*pl%na(:,isb)-sr%snadt(:,0,isb)
+        call my_out_us(70,nCv,0,dv%dnadt(1,isb),'b2npco_dnadt'//chns)
         call my_out_us(70,nFc,1,dv%fna(1,0,isb),'b2npco_fna_th'//chns)
         call my_out_us(70,nFc,1,dv%fna(1,1,isb),'b2npco_fna_r'//chns)
         call my_out_us(70,nFc,1,dv%fna_mdf(1,0,isb),

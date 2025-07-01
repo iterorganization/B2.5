@@ -43,7 +43,7 @@
       integer iCv, k
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
-     *   t0, ttim
+     *   t0, ttim, ts_factor
 *   ..procedures
       external xertst
       external b2xvsg
@@ -68,11 +68,21 @@
      & 'Warning: b2srdt_phm0 should be 1.0 for time-dependent mode'
       endif
 
+*   ..modify time-stepping sources according to time integration scheme
+*   .. ts_factor = time-stepping multiplication factor
+      if (switch%b2mndt_ckn.eq.2) then
+        ts_factor = 2.0_R8
+      elseif (switch%b2mndt_bdf.eq.2) then
+        ts_factor = 3.0_R8/2.0_R8
+      else !default implicit Euler scheme
+        ts_factor = 1.0_R8
+      endif
+
 * ..include the contributions from dtim
 *   ..modify snadt
       do iCv = 1, nCi !only internal cells
         ttim=dtim*dtco(isb,mpg%cvReg(iCv))*time_factor(iCv)
-        t0=(switch%b2srdt_phm0/ttim)*cvVol(iCv)*switch%b2mndt_ckn   !srv 06.01.21
+        t0=(switch%b2srdt_phm0/ttim)*cvVol(iCv)*ts_factor           !srv 06.01.21
         snadt(iCv,0) = t0*nap(iCv)                                  !srv 06.01.21
         snadt(iCv,1) =-t0                                           !srv 06.01.21
       enddo
