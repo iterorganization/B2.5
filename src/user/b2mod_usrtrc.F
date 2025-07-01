@@ -70,6 +70,7 @@ c***    He_enrcs  hlp_hens   helium enrichment to ns from throughputs
 c***    He_enrcc  hlp_henc   helium enrichment to nc from throughputs
 c***    DT_thrpt  hlp_dttp   DT throughput
 c***    He_thrpt  hlp_hetp   He throughput
+c***    pk_pwp_w  hlp_ppfw   peak parallel heat flux to main chamber wall
 c***                                       (PFR - by group and species)
 c***    PFRflx    hlp_pfrf   net nuclei flux through each surface group
 c***                              (neutral data - by group and species)
@@ -103,7 +104,7 @@ c-----------------------------------------------------------------------
 
 c*** Global values
       integer nglb_tmp, ng_tmp
-      parameter (nglb_tmp=22)
+      parameter (nglb_tmp=23)
 
 c*** File markers: routine version, number of global values, number of
 c***               PFR values, number of species, number of PFR surface
@@ -154,7 +155,7 @@ c*** Column headers:
      2      'He_p_prs', 'pk_pwr_i', 'pk_pwr_o', 'pk_pw_iu', 'pk_pw_ou',
      3      'Sp_DT   ', 'Sp_He   ', 'Sp_He_sc', 'He_src  ', 'He_sc_cr',
      4      'He_sc_sp', 'He_og_cr', 'He_og_sp', 'He_enrcs', 'He_enrcc',
-     4      'DT_thrpt', 'He_thrpt'/
+     5      'DT_thrpt', 'He_thrpt', 'pk_ppf_w' /
       data hlp_hg2 /
      1      'DoD_il  ', 'DoD_ol  ', 'DoD_iu  ', 'DoD_ou  ' /
       data hlp_hg3 /
@@ -200,7 +201,7 @@ c*** Column headers:
      *     hlp_ppfr, hlp_ppfi, hlp_ppfo, hlp_hefr, hlp_henr, hlp_hepr,
      ,     hlp_ppwi, hlp_ppwo, hlp_pwiu, hlp_pwou, hlp_spdt, hlp_sphe,
      ,     hlp_sshe, hlp_hesr, hlp_hesc, hlp_hess, hlp_heoc, hlp_heos,
-     ,     hlp_hens, hlp_henc, hlp_dttp, hlp_hetp
+     ,     hlp_hens, hlp_henc, hlp_dttp, hlp_hetp, hlp_ppfw
       equivalence
      ,     (equg_tmp(1),  hlp_ppfr), (equg_tmp(2),  hlp_ppfi),
      ,     (equg_tmp(3),  hlp_ppfo), (equg_tmp(4),  hlp_hefr),
@@ -212,7 +213,8 @@ c*** Column headers:
      ,     (equg_tmp(15), hlp_hesc), (equg_tmp(16), hlp_hess),
      ,     (equg_tmp(17), hlp_heoc), (equg_tmp(18), hlp_heos),
      ,     (equg_tmp(19), hlp_hens), (equg_tmp(20), hlp_henc),
-     ,     (equg_tmp(21), hlp_dttp), (equg_tmp(22), hlp_hetp)
+     ,     (equg_tmp(21), hlp_dttp), (equg_tmp(22), hlp_hetp),
+     ,     (equg_tmp(23), hlp_ppfw)
       real (kind=R8) ::
      *     equg2_tmp(ngl2_tmp)
       real (kind=R8) ::
@@ -1143,7 +1145,6 @@ c*** Calculate the peak powers to the targets
       call b2ptrdl(DEF_NYD,2*DEF_NCUT,wrad,.true.)
 c West target
       hlp_ppwi=0.0_R8
-      hlp_s=0.0_R8
       do i=1,mpg%divFcP(1,2) !{
         iFc=mpg%divFc(mpg%divFcP(1,1)+i-1)
         iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1182,11 +1183,9 @@ c West target
         wtarg(i,1)=(hlp-wnutpr(i,1))*trgshp(1)
      .                 +wnutrg(i,1)+wrad(i,1,0)
         hlp_ppwi=max(hlp_ppwi,wtarg(i,1))
-        hlp_s=hlp_s+s
       end do !}
 c East target
       hlp_ppwo=0.0_R8
-      hlp_s=0.0_R8
       do i=1,mpg%divFcP(maxval(mpg%strDiv),2) !{
         iFc=mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
         iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1227,12 +1226,10 @@ c East target
      .   (hlp-wnutpr(i,maxval(mpg%strDiv)))*trgshp(maxval(mpg%strDiv))
      .       +wnutrg(i,maxval(mpg%strDiv))+wrad(i,maxval(mpg%strDiv),0)
         hlp_ppwo=max(hlp_ppwo,wtarg(i,maxval(mpg%strDiv)))
-        hlp_s=hlp_s+s
       end do !}
 
       if(maxval(mpg%strDiv).gt.2) then !{
         hlp_pwou=0.0_R8
-        hlp_s=0.0_R8
         do i=1,mpg%divFcP(2,2) !{
           iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1272,11 +1269,9 @@ c East target
           wtarg(i,2)=(hlp-wnutpr(i,2))*trgshp(2)
      .                   +wnutrg(i,2)+wrad(i,2,0)
           hlp_pwou=max(hlp_pwou,wtarg(i,2))
-          hlp_s=hlp_s+s
         end do !}
 
         hlp_pwiu=0.0_R8
-        hlp_s=0.0_R8
         do i=1,mpg%divFcP(3,2) !{
           iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1316,7 +1311,6 @@ c East target
           wtarg(i,3)=(hlp-wnutpr(i,3))*trgshp(3)
      .                   +wnutrg(i,3)+wrad(i,3,0)
           hlp_pwiu=max(hlp_pwiu,wtarg(i,3))
-          hlp_s=hlp_s+s
         end do !}
       end if !}
 
@@ -1355,6 +1349,55 @@ C radiation
         end do
         close(3)
       end if
+
+c*** Calculate the peak parallel power flux to the main chamber wall
+
+      hlp_ppfw=0.0_R8
+      if(hlp_dbg) print *,'### b2usrtrc: calculating max. parallel ',
+     .                    ' heat flux to the main chamber wall'
+      do i=1,mpg%nCg !{
+        iFc=mpg%fcs_wall(i)
+        iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        if (mpg%fcReg(iFc).eq.0) cycle
+        select case ( gridGeometry )
+        case ( GEOMETRY_LINEAR )
+          if (mpg%fcReg(iFc).ne.4) cycle
+        case ( GEOMETRY_LIMITER )
+          if (mpg%fcReg(iFc).ne.6) cycle
+        case ( GEOMETRY_SN )
+          if (mpg%fcReg(iFc).ne.12) cycle
+        case ( GEOMETRY_CDN )
+          if (mpg%fcReg(iFc).ne.18 .and. mpg%fcReg(iFc).ne.25) cycle
+        case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+          if (mpg%fcReg(iFc).ne.19 .and. mpg%fcReg(iFc).ne.26) cycle
+        case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &         GEOMETRY_LFS_SNOWFLAKE_PLUS )
+          if (mpg%fcReg(iFc).ne.19) cycle
+        case default
+          cycle
+        end select
+        s=abs(geo%fcPbs(iFc))
+        hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhi(iFc,0)+st_ext%fhi(iFc,0))
+        do is=0,ns-1 !{
+          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .          st%dv%kinrgy(1,is))
+          hlp=hlp+abs((st%dv%fna(iFc,0,is))*
+     .     (st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
+        end do !}
+        do is=0,st_ext%ns-1 !{
+          taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .     st_ext%ta(1,is))
+          uaf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .     st_ext%ua(1,is))
+          hlp=hlp+abs((st_ext%fa(iFc,0,is))*
+     .    (st_ext%pt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*
+     .    (0.5_R8*st_ext%am(is)*mp*uaf**2+taf)))
+        end do !}
+        hlp=hlp/s
+        hlp_ppfw=max(hlp_ppfw,hlp)
+          if(hlp_dbg) print '(1x,a,i6,3e12.4)',
+     .     "iCv,pbs,hlp_ppfw,hlp_ppfw_max =>",iCv,s,hlp,hlp_ppfw
+      end do !}
 
 #ifdef B25_EIRENE
 c*** Calculate the neutral flows in PFR
@@ -1563,7 +1606,7 @@ c*** find the maximum ballooning factor and its location
           endif
         endif
       enddo
-      if(hlp_dbg) print '(1x,a,2i6,1e12.4)',
+      if(hlp_dbg) print '(1x,a,1i6,1e12.4)',
      . "all_bll_ic,albll_mx, =>",nint(al_bll_ic),al_bll_mx
 
 c=======================================================================
