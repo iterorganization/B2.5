@@ -109,9 +109,7 @@
      .                           facdrift(:), fac_ExB(:), fac_vis(:)
 
         ! time derivatives
-        real(R8), dimension(:,:), allocatable :: dnadt, dmodt
-        real(R8), dimension(:), allocatable :: dhedt, dhidt, dhndt,
-     .                                         dktdt, dztdt
+        real(R8), dimension(:,:), allocatable :: dnadt
 
       end type B2Derivatives
 
@@ -276,9 +274,12 @@
      .                           fhi(:,:), fhe(:,:), fhn(:,:), fkt(:,:),
      .                           fzt(:,:)
         real(R8), allocatable :: kinrgy(:,:)
+        ! steady-state residuals (without time-derivative, just sources - fluxes)
         real(R8), allocatable :: resco0(:,:), resmo0(:,:),
      .                           reshi0(:), reshe0(:), reshn0(:),
      .                           reskt0(:), reszt0(:)
+        ! time derivatives
+        real(R8), allocatable :: dnadt(:,:)
       end type B2PlasmaSnapshot
 
       type B2Diagnostic
@@ -1444,19 +1445,7 @@
 
 ! time derivatives
       allocate( dv % dnadt( nCv, 0:ns-1 ) )
-      allocate( dv % dmodt( nCv, 0:ns-1 ) )
-      allocate( dv % dhedt( nCv ) )
-      allocate( dv % dhidt( nCv ) )
-      allocate( dv % dhndt( nCv ) )
-      allocate( dv % dktdt( nCv ) )
-      allocate( dv % dztdt( nCv ) )
       dv % dnadt = 0.0_R8
-      dv % dmodt = 0.0_R8
-      dv % dhedt = 0.0_R8
-      dv % dhidt = 0.0_R8
-      dv % dhndt = 0.0_R8
-      dv % dktdt = 0.0_R8
-      dv % dztdt = 0.0_R8
 
       return
       end subroutine createB2Derivatives
@@ -1615,12 +1604,6 @@
       deallocate( dv % pccm )
 
       deallocate( dv % dnadt )
-      deallocate( dv % dmodt )
-      deallocate( dv % dhedt )
-      deallocate( dv % dhidt )
-      deallocate( dv % dhndt )
-      deallocate( dv % dktdt )
-      deallocate( dv % dztdt )
 
       return
       end subroutine destroyB2Derivatives
@@ -2246,6 +2229,9 @@
       allocate( snap % reshn0( nCv ), SOURCE=0._R8 )
       allocate( snap % reskt0( nCv ), SOURCE=0._R8 )
       allocate( snap % reszt0( nCv ), SOURCE=0._R8 )
+
+      allocate( snap % dnadt( nCv, 0:ns-1 ), SOURCE=0._R8 )
+
 #else
       allocate( snap % na( nCv, 0:ns-1 ) )
       allocate( snap % ua( nCv, 0:ns-1 ) )
@@ -2279,6 +2265,8 @@
       allocate( snap % reskt0( nCv ) )
       allocate( snap % reszt0( nCv ) )
 
+      allocate( snap % dnadt( nCv, 0:ns-1 ) )
+
       snap % na = 0._R8
       snap % ua = 0._R8
       snap % po = 0._R8
@@ -2310,6 +2298,9 @@
       snap % reshn0 = 0._R8
       snap % reskt0 = 0._R8
       snap % reszt0 = 0._R8
+
+      snap % dnadt = 0._R8
+
 #endif
       return
       end subroutine createB2PlasmaSnapshot
@@ -2347,6 +2338,7 @@
       deallocate( snap % reshn0 )
       deallocate( snap % reskt0 )
       deallocate( snap % reszt0 )
+      deallocate( snap % dnadt )
 
       return
       end subroutine destroyB2PlasmaSnapshot
@@ -2621,6 +2613,7 @@
         snap % reshn0 = dv % reshn0
         snap % reskt0 = dv % reskt0
         snap % reszt0 = dv % reszt0
+        snap % dnadt = dv % dnadt
 
       return
       end subroutine getB2PlasmaSnapshot
@@ -2656,6 +2649,7 @@
         dv % reshn0 = snap % reshn0
         dv % reskt0 = snap % reskt0
         dv % reszt0 = snap % reszt0
+        dv % dnadt = snap % dnadt
 
       return
       end subroutine putB2PlasmaSnapshot
