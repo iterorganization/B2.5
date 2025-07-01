@@ -866,6 +866,14 @@ c
         call set_distances(mpg,geo,nimp,imp,icsepimp-1,dsimp,wdimp)
       end if
 c
+      wrkf = -(state%dv%fch_p(:,0)/(geo%fcPbs + cutlo))/qe
+      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,wrkf,state%dv%ue)
+      do is=0,ns-1
+        state%dv%ue = state%dv%ue +
+     .   state%rt%rza(:,is)*state%pl%ua(:,is)*state%pl%na(:,is)
+      enddo
+      state%dv%ue = state%dv%ue + state_ext%ue*state_ext%ne
+      state%dv%ue = state%dv%ue/state%dv%ne
       call b2stel (mpg%nCv, mpg%nFc, state%ns, ismain,
      & switch, geo, mpg, state%pl, state%dv, state%rt,
      & state%rtw, state%srw)
@@ -1389,14 +1397,6 @@ c
       call xertst (0.le.neo_ic .and. neo_ic.le.4,
      . 'faulty parameter neoclassical_ic')
       set_resignore_regions_to_zero=.false.
-      wrkf = -(state%dv%fch_p(:,0)/(geo%fcPbs + cutlo))/qe
-      call intcell(mpg%nFc,mpg%nCv,mpg,mpg%intcellP,wrkf,state%dv%ue)
-      do is=0,ns-1
-        state%dv%ue = state%dv%ue +
-     .   state%rt%rza(:,is)*state%pl%ua(:,is)*state%pl%na(:,is)
-      enddo
-      state%dv%ue = state%dv%ue + state_ext%ue*state_ext%ne
-      state%dv%ue = state%dv%ue/state%dv%ne
       call intface1(mpg%nCv,mpg%nFc,ns-1,mpg%fcCv,geo%fcVol,state%pl%na,
      .  naf)
       wrkcs = state%pl%na*state%pl%ua
