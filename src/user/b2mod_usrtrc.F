@@ -1353,8 +1353,8 @@ C radiation
 c*** Calculate the peak parallel power flux to the main chamber wall
 
       hlp_ppfw=0.0_R8
-      if(hlp_dbg) print *,'### b2usrtrc: calculating max. parallel ',
-     .                    ' heat flux to the main chamber wall'
+      if(hlp_dbg) print *,'### b2usrtrc: calculating max. parallel '//
+     .                    'heat flux to the main chamber wall'
       do i=1,mpg%nCg !{
         iFc=mpg%fcs_wall(i)
         iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
