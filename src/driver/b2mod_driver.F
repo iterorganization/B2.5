@@ -65,6 +65,7 @@
       use b2us_geo
       use b2us_plasma
       use b2us_io
+      use b2us_data
       use b2mod_par_opt
       use b2mod_b2plot
      , , only : wklng, nlimi, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
@@ -327,8 +328,7 @@
 
       contains
 
-      subroutine b2mndr_0 (ninp, nout, ns, ns0, switch, geo,
-     &  mpg, state, state_ext, state_avg)
+      subroutine b2mndr_0 (ninp, nout, ns, ns0)
       use b2mod_ad
      & , only : old_erosion, old_deposition
       implicit none
@@ -339,12 +339,6 @@
       integer ninp(0:6), nout(0:10)
 #endif
       integer nCv, nFc, nVx, ns, ns0
-      type(switches), intent (inout)   :: switch
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2Average), intent (inout)  :: state_avg
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..local variables
@@ -2119,8 +2113,7 @@ c new CDF movie option (1st frame at t=0)
 #endif
       end subroutine b2mndr_0
 
-      subroutine b2mndr_1 (nout, ns, switch, geo, mpg, state,
-     &  state_ext, state_avg, J)
+      subroutine b2mndr_1 (nout, ns, J)
 #ifndef NAGFOR
 ! csc The following are not necessary for computation but are needed
 !     for adjoint AD to avoid side-effect variables
@@ -2166,12 +2159,6 @@ c new CDF movie option (1st frame at t=0)
 #ifdef WINDOWS
       logical(4) :: lresult
 #endif
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2Average), intent (inout)  :: state_avg
-      type(switches), intent (inout)   :: switch
       real(kind=R8) :: J(nncf)
       integer nCv, nFc, nVx
       integer i, is, icf
@@ -3000,7 +2987,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   if (process_ids) then
                     time_slice_index = num_time_slices
                     call B25_process_ids(
-     &               geo, mpg, state, state_ext, state_avg, switch,
      &               edge_profiles, edge_sources, edge_transport,
      &               radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
@@ -3031,7 +3017,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                   if (process_av) then
                     batch_index = num_batch_slices
                     call B25_av_ids( summary_av,
-     &               geo, mpg, state, state_ext, state_avg, switch,
      &               batch_profiles, batch_sources,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &               description,
@@ -3072,7 +3057,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             if (status.ne.0) idx = 0
             if (process_ids) then
               call B25_process_ids(
-     &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
      &          radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
@@ -3101,7 +3085,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
             end if
             if (process_av) then
               call B25_av_ids( summary_av,
-     &         geo, mpg, state, state_ext, state_avg, switch,
      &         batch_profiles, batch_sources,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &         description,
@@ -3124,7 +3107,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               num_time_slices = num_time_slices + 1
               time_slice_index = num_time_slices
               call B25_process_ids(
-     &          geo, mpg, state, state_ext, state_avg, switch,
      &          edge_profiles, edge_sources, edge_transport,
      &          radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
@@ -3158,7 +3140,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
               num_batch_slices = num_batch_slices + 1
               batch_index = num_batch_slices
               call B25_av_ids( summary_av,
-     &          geo, mpg, state, state_ext, state_avg, switch,
      &          batch_profiles, batch_sources,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
      &          description,
@@ -3291,8 +3272,7 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
       return
       end subroutine b2mndr_1
 
-      subroutine b2mndr_2(nout, ns, switch, geo, mpg,
-     &                    state, state_ext, state_avg)
+      subroutine b2mndr_2(nout, ns)
       use b2mod_switches
       use b2mod_ad
      & , only : old_erosion, old_deposition
@@ -3305,12 +3285,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #ifdef WG_TODO
       integer nx, ny
 #endif
-      type(switches), intent (inout)   :: switch
-      type(mapping), intent (inout)    :: mpg
-      type(geometry), intent (inout)   :: geo
-      type(B2State), intent (inout)    :: state
-      type(B2StateExt), intent (inout) :: state_ext
-      type(B2Average), intent (inout)  :: state_avg
       integer nCv, nFc, is                                          !srv 29.11.18
 #ifndef NO_CDF
       integer nVx
@@ -3535,7 +3509,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
           num_time_slices = num_time_slices + 1
           time_slice_index = num_time_slices
           call B25_process_ids(
-     &      geo, mpg, state, state_ext, state_avg, switch,
      &      edge_profiles, edge_sources, edge_transport,
      &      radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
@@ -3797,7 +3770,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
                 end if
                 time_slice_index = num_time_slices
                 call B25_process_ids(
-     &            geo, mpg, state, state_ext, state_avg, switch,
      &            edge_profiles, edge_sources, edge_transport,
      &            radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
@@ -3852,7 +3824,6 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
         if (status.ne.0 .or. idx.eq.0 .or. ids_replace) then
           if (status.ne.0) idx = 0
           call B25_process_ids(
-     &      geo, mpg, state, state_ext, state_avg, switch,
      &      edge_profiles, edge_sources, edge_transport,
      &      radiation,
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )

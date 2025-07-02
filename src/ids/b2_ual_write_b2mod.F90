@@ -271,6 +271,7 @@ program b2_ual_write_b2mod
     use b2mod_switches
     use b2us_geo
     use b2us_map
+    use b2us_data
     use b2us_plasma
     use b2mod_grid_mapping
     use ids_routines &  ! IGNORE
@@ -343,12 +344,6 @@ program b2_ual_write_b2mod
 #endif
 
     !! Local variables
-    type(switches)   :: switch
-    type(mapping)    :: mpg
-    type(geometry)   :: geo
-    type(B2State)    :: state
-    type(B2StateExt) :: state_ext
-    type(B2Average)  :: state_avg
     integer :: narg     !< Total Number of input arguments (shot, run, etc.)
     integer :: cptArg
     integer :: l, m, num_time_slices, tmp_run, time_slice_index, status
@@ -384,7 +379,7 @@ program b2_ual_write_b2mod
 
     !! Run main B2 routine to process and read the B2 data
     write(0,*) "Running b2mn_init"
-    call b2mn_init (switch, geo, mpg, state, state_ext, state_avg)
+    call b2mn_init
     write(0,*) "b2mn_init completed"
 
     !! Set default value for IMAS major version
@@ -567,7 +562,7 @@ program b2_ual_write_b2mod
     !! If step was defined then run the b2mn_step routine
     if( new_run ) then
         write(0,*) "Running b2mn_step()"
-        call b2mn_step( switch, geo, mpg, state, state_ext, state_avg, J )
+        call b2mn_step( J )
         write(0,*) "b2mn_step() completed"
 #ifdef B25_EIRENE
     else
@@ -786,7 +781,7 @@ program b2_ual_write_b2mod
             num_time_slices = num_time_slices + 1
           end if
           time_slice_index = num_time_slices
-          call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
+          call B25_process_ids( &
              &  edge_profiles, edge_sources, edge_transport, &
              &  radiation, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
@@ -826,7 +821,7 @@ program b2_ual_write_b2mod
       end if
     end if
     if ( status.ne.0 .or. idx.eq.0 ) then
-      call B25_process_ids( geo, mpg, state, state_ext, state_avg, switch, &
+      call B25_process_ids( &
          &  edge_profiles, edge_sources, edge_transport, &
          &  radiation, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
@@ -895,7 +890,7 @@ program b2_ual_write_b2mod
     call close_ual(idx)
 
     write(0,*) " Running b2mn_fin"
-    call b2mn_fin( switch, geo, mpg, state, state_ext, state_avg )
+    call b2mn_fin
     write(0,*) "b2mn_fin completed"
 
 contains
