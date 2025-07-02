@@ -281,7 +281,7 @@ c***  surface area
      ,  (equr_tmp(1,1,3),hlp_vlpfs)
 
       real (kind=R8) ::
-     *  hlp, hlp_s, hlp_pi, hlp_si, hlp_po, hlp_so,
+     *  hlp, hlp_pi, hlp_si, hlp_po, hlp_so,
      ,  hlp_he, hlp_hep,
      ,  hlp_ne_he_c, hlp_ne_he_s,
      ,  hlp_alcff
@@ -293,7 +293,7 @@ c***  surface area
      ,  j_he_i, l_pad_str
 #ifdef B25_EIRENE
       integer ia, ias, ic, im, iyp, js, ks, ls
-      real (kind=R8) :: a, g, t, v, hlp_h, hlp_p, hlp_tot, hlpnw
+      real (kind=R8) :: a, g, t, v, hlp_h, hlp_p, hlp_s, hlp_tot, hlpnw
 c     real (kind=R8) :: e0
       logical is_target
 #endif
