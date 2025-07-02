@@ -241,14 +241,14 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call write_to_check_astra_to_b2(70)
       close(70)                                                 !srv 28.07.11 }
 *   ..call driver routines
-      call b2mn_step(switch, geo, mpg, state, state_ext, state_avg, J)
+      call b2mn_step(J)
 #ifdef _OPENMP
       cpu_f = omp_get_wtime()
 #else
       call cpu_time(cpu_f)
 #endif
       write(*,"(/' b2mnastra takes ',f12.1,' sec'/)") cpu_f - cpu_s
-      call b2mn_fin(switch, geo, mpg, state, state_ext, state_avg)
+      call b2mn_fin
 
       stop 'b2mnastra'
 

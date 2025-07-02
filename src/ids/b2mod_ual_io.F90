@@ -22,6 +22,7 @@ module b2mod_ual_io
     use b2mod_b2cmpa
     use b2us_map
     use b2us_geo
+    use b2us_data
     use b2us_plasma
     use b2mod_elements
     use b2mod_constants
@@ -32,6 +33,7 @@ module b2mod_ual_io
     use b2mod_b2cmfs
     use b2mod_version
     use b2mod_switches
+    use b2mod_b2plot_wall_loading
 #ifdef IMAS
     use b2mod_balance &
      & , only : eirene_mc_pael_sne_bal, eirene_mc_pmel_sne_bal, &
@@ -67,6 +69,8 @@ module b2mod_ual_io
      &          vxdena, vydena, vzdena, vxdenm, vydenm, vzdenm
     use eirmod_braeir &
      & , only : pux, puy, pvx, pvy
+    use eirmod_wneutrals &
+     & , only : wldra, wldrm, wldpa, wldpm
     use b2mod_b2plot &
      & , only : triangle_vol, wklng, alloc_b2mod_b2plot_eirene
 #endif
@@ -307,10 +311,8 @@ module b2mod_ual_io
 
 contains
 
-    subroutine IDS_init( mpg, geo )
+    subroutine IDS_init
     implicit none
-    type( mapping ), intent(in) :: mpg
-    type( geometry ), intent(in) :: geo
     integer tvalues(8)
     integer i, iCv, iFc, ireg
     real(IDS_real) :: r_min, r_max, z_min, z_max
@@ -430,7 +432,6 @@ contains
     !! @note    Time slice value is set as:
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
     subroutine B25_process_ids( &
-            &   geo, mpg, state, state_ext, state_avg, switch, &
             &   edge_profiles, edge_sources, edge_transport, &
             &   radiation, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
@@ -460,13 +461,8 @@ contains
 !DIR$ NOOPTIMIZE
 #endif
         use b2mod_dimensions
+        use b2mod_b2plot
         implicit none
-        type (geometry), intent(in) :: geo
-        type (mapping), intent(inout) :: mpg
-        type (B2state), intent(inout) :: state
-        type (B2stateExt), intent(inout) :: state_ext
-        type (B2Average), intent(in) :: state_avg
-        type (switches), intent(inout) :: switch
         type (ids_equilibrium) :: equilibrium !< IDS designed to
             !< store equilibrium data
         type (ids_edge_profiles) :: edge_profiles !< IDS designed to
@@ -540,6 +536,8 @@ contains
         integer :: icnt   !< Boundary cell counter
         integer :: ib     !< Boundary condition index
         integer :: isep(2) !< Array of separatrix regions
+        integer :: iret   !< Dummy return index
+        integer :: ias    !< Starting index for non-standard surface in resolved list
         integer, allocatable :: ionstt(:) !< Mapping array
                                           !< from B2-Eirene charged fluids to IDS ion states
         integer, allocatable :: istion(:) !< Number of IDS states for each ion
@@ -549,7 +547,6 @@ contains
            !<                      the Eirene molecular ion index
 #ifdef B25_EIRENE
         integer :: ind    !< Non-standard surface index in resolved list
-        integer :: ias    !< Starting index for non-standard surface in resolved list
         integer :: iss    !< State index
         integer :: iatm   !< Atom iterator
         integer :: imol   !< Molecule iterator
@@ -570,15 +567,16 @@ contains
         real(IDS_real) :: totCv( mpg%nCv )
         real(IDS_real) :: tmpVx( mpg%nVx )
         real(IDS_real) :: pe( mpg%nCv )
-        real(IDS_real) :: zeff( mpg%nCv )
         real(IDS_real) :: time_step !< Time step
         real(IDS_real) :: time_slice_value   !< Time slice value
         real(IDS_real) :: frac, u, v, psi_average,                     &
             &             vtor, nisep, nasum
         real(IDS_real), allocatable :: power_convected(:),             &
-            &             power_conducted(:),                          &
+            &             power_conducted(:), power_radiated(:),       &
             &             power_recombination_plasma(:),               &
-            &             power_currents(:),                           &
+            &             power_recombination_neutrals(:),             &
+            &             power_currents(:), power_flux_peak(:),       &
+            &             power_neutrals(:), power_incident(:),        &
             &             current_incident(:)
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
         integer :: iFs, iactive, inactive
@@ -677,7 +675,7 @@ contains
         end if
 #endif
 
-        call IDS_init( mpg, geo )
+        call IDS_init
         ns = size( state%pl%na, 2 )
         do is = 0, ns-1
           call b2xppb( mpg%nCv, state%rt%rza(:,is),                  &
@@ -748,6 +746,10 @@ contains
             &   wrong_flow, .false.)
 
         if (balance_netcdf.ne.0) call read_balance
+
+!    ..compute radiation loads
+        call alloc_b2plot_wall_loading(nlim,nsgmx)
+        call b2pnwl(iret,.false.)
 
         !! Preparing database for writing
         !! Through practice it was disclosed that there are some mandatory
@@ -1123,7 +1125,7 @@ contains
 #endif
 #endif
 
-        call put_equilibrium_data ( mpg, geo, equilibrium, &
+        call put_equilibrium_data ( equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &  summary, &
 #endif
@@ -1408,48 +1410,103 @@ contains
 
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         if ( mpg%nStr.gt.0 ) then
+          allocate( power_incident( maxval(mpg%strDiv) ) )
           allocate( power_currents( maxval(mpg%strDiv) ) )
+          allocate( power_neutrals( maxval(mpg%strDiv) ) )
+          allocate( power_radiated( maxval(mpg%strDiv) ) )
           allocate( power_convected( maxval(mpg%strDiv) ) )
           allocate( power_conducted( maxval(mpg%strDiv) ) )
+          allocate( power_flux_peak( maxval(mpg%strDiv) ) )
           allocate( power_recombination_plasma( maxval(mpg%strDiv) ) )
+          allocate( power_recombination_neutrals( maxval(mpg%strDiv) ) )
           allocate( current_incident( maxval(mpg%strDiv) ) )
           do i = 1, maxval(mpg%strDiv)
+            power_incident(i) = 0.0_IDS_real
+            power_radiated(i) = 0.0_IDS_real
             power_conducted(i) = 0.0_IDS_real
             power_convected(i) = 0.0_IDS_real
+            power_flux_peak(i) = 0.0_IDS_real
             power_recombination_plasma(i) = 0.0_IDS_real
+            power_recombination_neutrals(i) = 0.0_IDS_real
             power_currents(i) = 0.0_IDS_real
+            power_neutrals(i) = 0.0_IDS_real
             current_incident(i) = 0.0_IDS_real
             do j = mpg%divFcP(i,1), mpg%divFcP(i,1) + mpg%divFcP(i,2) - 1
               iFc = mpg%divFc(j)
-              u = 0.0_R8
+              ias = b2_fnmti(iFc)
+              v = 0.0_IDS_real
+              if (ias.gt.0) then
+                do is = 1, natmi
+                  power_neutrals(i) = power_neutrals(i) + sarea_res(ias)* &
+                    &  (ewlda_res(is,ias)-ewldea_res(is,ias))
+                  v = v + sarea_res(ias)*(ewlda_res(is,ias)-ewldea_res(is,ias))
+                end do
+                do is = 1, nmoli
+                  power_neutrals(i) = power_neutrals(i) + sarea_res(ias)* &
+                    &  (ewldm_res(is,ias)-ewldem_res(is,ias))
+                  power_recombination_neutrals(i) = power_recombination_neutrals(i) + &
+                    &   sarea_res(ias)*ewldmr_res(is,ias)
+                  v = v + sarea_res(ias)* &
+                    &  (ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias))
+                end do
+              end if
+              u = 0.0_IDS_real
               do is = 0, ns-1
                 if (is_neutral(is).and.nint(zn(is)).eq.1) then
-                  u = u + mpg%divFcOr(j)*state%pl%tn(iCv)* &
-                    & (1.5_R8*(state%dv%fna_32(iFc,0,is) + &
-                    &          state%dv%fna_32(iFc,1,is) ) + &
-                    &  2.5_R8*(state%dv%fna_52(iFc,0,is) + &
-                    &          state%dv%fna_52(iFc,1,is) ) )
+                  power_neutrals(i) = power_neutrals(i) + &
+                    &  mpg%divFcOr(j)*state%pl%tn(iCv)* &
+                    & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
+                    &                state%dv%fna_32(iFc,1,is) ) + &
+                    &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
+                    &                state%dv%fna_52(iFc,1,is) ) )
+                  v = v + mpg%divFcOr(j)*state%pl%tn(iCv)* &
+                    & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
+                    &                state%dv%fna_32(iFc,1,is) ) + &
+                    &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
+                    &                state%dv%fna_52(iFc,1,is) ) )
+                else if (is_neutral(is)) then
+                  power_neutrals(i) = power_neutrals(i) + &
+                    &  mpg%divFcOr(j)*state%pl%ti(iCv)* &
+                    & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
+                    &                state%dv%fna_32(iFc,1,is) ) + &
+                    &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
+                    &                state%dv%fna_52(iFc,1,is) ) )
                 else
-                  u = u + mpg%divFcOr(j)*  &
+                  u = u + mpg%divFcOr(j)* &
                     & (state%pl%ti(iCv) + &
                     &  state%pl%te(iCv)*state%rt%rza(iCv,is))* &
-                    & (1.5_R8*(state%dv%fna_32(iFc,0,is) + &
-                    &          state%dv%fna_32(iFc,1,is) ) + &
-                    &  2.5_R8*(state%dv%fna_52(iFc,0,is) + &
-                    &          state%dv%fna_52(iFc,1,is) ) )
+                    & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
+                    &                state%dv%fna_32(iFc,1,is) ) + &
+                    &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
+                    &                state%dv%fna_52(iFc,1,is) ) )
+                  v = v + mpg%divFcOr(j)* &
+                    & (state%pl%ti(iCv) + &
+                    &  state%pl%te(iCv)*state%rt%rza(iCv,is))* &
+                    & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
+                    &                state%dv%fna_32(iFc,1,is) ) + &
+                    &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
+                    &                state%dv%fna_52(iFc,1,is) ) )
                   power_recombination_plasma(i) = &
                     &  power_recombination_plasma(i) + mpg%divFcOr(j)* &
+                    & (state%dv%fhp(iFc,0,is) + state%dv%fhp(iFc,1,is) )
+                  v = v + mpg%divFcOr(j)* &
                     & (state%dv%fhp(iFc,0,is) + state%dv%fhp(iFc,1,is) )
                 end if
               end do
               power_convected(i) = power_convected(i) + u
-              power_conducted(i) = power_conducted(i) - u + mpg%divFcOr(j) *  &
-                  & ( state%dv%fht(iFc,0) - state%dv%fhj(iFc,0) +  &
+              power_conducted(i) = power_conducted(i) - u + mpg%divFcOr(j)* &
+                  & ( state%dv%fht(iFc,0) - state%dv%fhj(iFc,0) + &
                   &   state%dv%fht(iFc,1) - state%dv%fhj(iFc,1) )
-              power_currents(i) = power_currents(i) + mpg%divFcOr(j) * &
+              power_currents(i) = power_currents(i) + mpg%divFcOr(j)* &
                   & ( state%dv%fhj(iFc,0) + state%dv%fhj(iFc,1) )
-              current_incident(i) = current_incident(i) + mpg%divFcOr(j) * &
+              v = v + mpg%divFcOr(j)* &
+                  & ( state%dv%fht(iFc,0) + state%dv%fht(iFc,1) )
+              current_incident(i) = current_incident(i) + mpg%divFcOr(j)* &
                   & ( state%dv%fch(iFc,0) + state%dv%fch(iFc,1) )
+              power_radiated(i) = power_radiated(i) + wldrdld(lwldrad(j))
+              v = v + wldrdld(lwldrad(j))
+              power_incident(i) = power_incident(i) + v
+              power_flux_peak(i) = max( power_flux_peak(i), v / geo%fcS(iFc) )
             end do
           end do
         end if
@@ -1495,8 +1552,23 @@ contains
                 &  divertors%divertor(i)%wetted_area, &
                 &  wetted_area(i) )
               call write_timed_value( &
+                &  divertors%divertor(i)%target(1)%power_flux_peak, &
+                &  power_flux_peak(i) )
+              call write_timed_value( &
                 &  divertors%divertor(i)%target(1)%power_incident_fraction, &
                 &  1.0_IDS_real )
+              call write_timed_value( &
+                &  divertors%divertor(i)%target(1)%power_incident, &
+                &  power_incident(i) )
+              call write_timed_value( &
+                &  divertors%divertor(i)%power_incident, &
+                &  power_incident(i) )
+              call write_timed_value( &
+                &  divertors%divertor(i)%target(1)%power_neutrals, &
+                &  power_neutrals(i) )
+              call write_timed_value( &
+                &  divertors%divertor(i)%power_neutrals, &
+                &  power_neutrals(i) )
               call write_timed_value( &
                 &  divertors%divertor(i)%target(1)%power_conducted, &
                 &  power_conducted(i) )
@@ -1510,11 +1582,23 @@ contains
                 &  divertors%divertor(i)%power_convected, &
                 &  power_convected(i) )
               call write_timed_value( &
+                &  divertors%divertor(i)%target(1)%power_radiated, &
+                &  power_radiated(i) )
+              call write_timed_value( &
+                &  divertors%divertor(i)%power_radiated, &
+                &  power_radiated(i) )
+              call write_timed_value( &
                 &  divertors%divertor(i)%target(1)%power_recombination_plasma, &
                 &  power_recombination_plasma(i) )
               call write_timed_value( &
                 &  divertors%divertor(i)%power_recombination_plasma, &
                 &  power_recombination_plasma(i) )
+              call write_timed_value( &
+                &  divertors%divertor(i)%target(1)%power_recombination_neutrals, &
+                &  power_recombination_neutrals(i) )
+              call write_timed_value( &
+                &  divertors%divertor(i)%power_recombination_neutrals, &
+                &  power_recombination_neutrals(i) )
               call write_timed_value( &
                 &  divertors%divertor(i)%target(1)%power_currents, &
                 &  power_currents(i) )
@@ -1529,6 +1613,20 @@ contains
                 &  divertors%divertor(i)%current_incident, &
                 &  current_incident(i) )
 #endif
+              u = 0.0_IDS_real
+              do is = 1, natmi
+                u = u + (wldra(nlim+ltns(1),is,0) + wldpa(nlim+ltns(1),is,0) ) &
+                  &    *zn(eb2atcr(is))
+              end do
+              do is = 1, nmoli
+                do js = 1, natmi
+                  if (mlcmp(js,is).eq.0) cycle
+                  u = u + (wldrm(nlim+ltns(1),is,0) + wldpm(nlim+ltns(1),is,0) ) &
+                    &    *zn(eb2atcr(js))*mlcmp(js,is)
+                end do
+              end do
+              call write_timed_value( &
+                &  divertors%divertor(1)%particle_flux_recycled_total, u )
             end do
           end if
         case ( GEOMETRY_SN, GEOMETRY_STELLARATORISLAND )
@@ -1588,14 +1686,29 @@ contains
               &  divertors%divertor(1)%target(i)%wetted_area, &
               &  wetted_area(i) )
             call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_incident, &
+              &  power_incident(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_neutrals, &
+              &  power_neutrals(i) )
+            call write_timed_value( &
               &  divertors%divertor(1)%target(i)%power_conducted, &
               &  power_conducted(i) )
             call write_timed_value( &
               &  divertors%divertor(1)%target(i)%power_convected, &
               &  power_convected(i) )
             call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_radiated, &
+              &  power_radiated(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_flux_peak, &
+              &  power_flux_peak(i) )
+            call write_timed_value( &
               &  divertors%divertor(1)%target(i)%power_recombination_plasma, &
               &  power_recombination_plasma(i) )
+            call write_timed_value( &
+              &  divertors%divertor(1)%target(i)%power_recombination_neutrals, &
+              &  power_recombination_neutrals(i) )
             call write_timed_value( &
               &  divertors%divertor(1)%target(i)%power_currents, &
               &  power_currents(i) )
@@ -1609,14 +1722,26 @@ contains
             &  divertors%divertor(1)%wetted_area, &
             &  wetted_area(1)+wetted_area(2) )
           call write_timed_value( &
+            &  divertors%divertor(1)%power_incident, &
+            &  power_incident(1)+power_incident(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_neutrals, &
+            &  power_neutrals(1)+power_neutrals(2) )
+          call write_timed_value( &
             &  divertors%divertor(1)%power_conducted, &
             &  power_conducted(1)+power_conducted(2) )
           call write_timed_value( &
             &  divertors%divertor(1)%power_convected, &
             &  power_convected(1)+power_convected(2) )
           call write_timed_value( &
+            &  divertors%divertor(1)%power_radiated, &
+            &  power_radiated(1)+power_radiated(2) )
+          call write_timed_value( &
             &  divertors%divertor(1)%power_recombination_plasma, &
             &  power_recombination_plasma(1)+power_recombination_plasma(2) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_neutrals, &
+            &  power_recombination_neutrals(1)+power_recombination_neutrals(2) )
           call write_timed_value( &
             &  divertors%divertor(1)%power_currents, &
             &  power_currents(1)+power_currents(2) )
@@ -1628,8 +1753,24 @@ contains
             &  divertors%divertor(1)%current_incident, &
             &  current_incident(1)+current_incident(2) )
 #endif
+          u = 0.0_IDS_real
+          do is = 1, natmi
+            u = u + (wldra(nlim+ltns(1),is,0) + wldra(nlim+ltns(2),is,0) + &
+              &      wldpa(nlim+ltns(1),is,0) + wldpa(nlim+ltns(2),is,0) ) &
+              &     *zn(eb2atcr(is))
+          end do
+          do is = 1, nmoli
+            do js = 1, natmi
+              if (mlcmp(js,is).eq.0) cycle
+              u = u + (wldrm(nlim+ltns(1),is,0) + wldrm(nlim+ltns(2),is,0) + &
+                &      wldpm(nlim+ltns(1),is,0) + wldpm(nlim+ltns(2),is,0) ) &
+                &   *zn(eb2atcr(js))*mlcmp(js,is)
+            end do
+          end do
+          call write_timed_value( &
+            &  divertors%divertor(1)%particle_flux_recycled_total, u )
         case ( GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP, &
-        &      GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
+            &  GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS )
           allocate( divertors%divertor(2) )
           allocate( divertors%divertor(1)%name(1) )
           allocate( divertors%divertor(2)%name(1) )
@@ -1713,14 +1854,29 @@ contains
               &  divertors%divertor(k)%target(i)%wetted_area, &
               &  wetted_area(i) )
             call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_incident, &
+              &  power_incident(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_neutrals, &
+              &  power_neutrals(i) )
+            call write_timed_value( &
               &  divertors%divertor(k)%target(i)%power_conducted, &
               &  power_conducted(i) )
             call write_timed_value( &
               &  divertors%divertor(k)%target(i)%power_convected, &
               &  power_convected(i) )
             call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_radiated, &
+              &  power_radiated(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_flux_peak, &
+              &  power_flux_peak(i) )
+            call write_timed_value( &
               &  divertors%divertor(k)%target(i)%power_recombination_plasma, &
               &  power_recombination_plasma(i) )
+            call write_timed_value( &
+              &  divertors%divertor(k)%target(i)%power_recombination_neutrals, &
+              &  power_recombination_neutrals(i) )
             call write_timed_value( &
               &  divertors%divertor(k)%target(i)%power_currents, &
               &  power_currents(i) )
@@ -1734,14 +1890,26 @@ contains
             &  divertors%divertor(1)%wetted_area, &
             &  wetted_area(1)+wetted_area(4) )
           call write_timed_value( &
+            &  divertors%divertor(1)%power_incident, &
+            &  power_incident(1)+power_incident(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_neutrals, &
+            &  power_neutrals(1)+power_neutrals(4) )
+          call write_timed_value( &
             &  divertors%divertor(1)%power_conducted, &
             &  power_conducted(1)+power_conducted(4) )
           call write_timed_value( &
             &  divertors%divertor(1)%power_convected, &
             &  power_convected(1)+power_convected(4) )
           call write_timed_value( &
+            &  divertors%divertor(1)%power_radiated, &
+            &  power_radiated(1)+power_radiated(4) )
+          call write_timed_value( &
             &  divertors%divertor(1)%power_recombination_plasma, &
             &  power_recombination_plasma(1)+power_recombination_plasma(4) )
+          call write_timed_value( &
+            &  divertors%divertor(1)%power_recombination_neutrals, &
+            &  power_recombination_neutrals(1)+power_recombination_neutrals(4) )
           call write_timed_value( &
             &  divertors%divertor(1)%power_currents, &
             &  power_currents(1)+power_currents(4) )
@@ -1753,9 +1921,31 @@ contains
             &  divertors%divertor(1)%current_incident, &
             &  current_incident(1)+current_incident(4) )
 #endif
+          u = 0.0_IDS_real
+          do is = 1, natmi
+            u = u + (wldra(nlim+ltns(1),is,0) + wldra(nlim+ltns(4),is,0) + &
+              &      wldpa(nlim+ltns(1),is,0) + wldpa(nlim+ltns(4),is,0) ) &
+              &     *zn(eb2atcr(is))
+          end do
+          do is = 1, nmoli
+            do js = 1, natmi
+              if (mlcmp(js,is).eq.0) cycle
+              u = u + (wldrm(nlim+ltns(1),is,0) + wldrm(nlim+ltns(4),is,0) + &
+                &      wldpm(nlim+ltns(1),is,0) + wldpm(nlim+ltns(4),is,0) ) &
+                &   *zn(eb2atcr(js))*mlcmp(js,is)
+            end do
+          end do
+          call write_timed_value( &
+            &  divertors%divertor(1)%particle_flux_recycled_total, u )
           call write_timed_value( &
             &  divertors%divertor(2)%wetted_area, &
             &  wetted_area(2)+wetted_area(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_incident, &
+            &  power_incident(2)+power_incident(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_neutrals, &
+            &  power_neutrals(2)+power_neutrals(3) )
           call write_timed_value( &
             &  divertors%divertor(2)%power_conducted, &
             &  power_conducted(2)+power_conducted(3) )
@@ -1763,8 +1953,14 @@ contains
             &  divertors%divertor(2)%power_convected, &
             &  power_convected(2)+power_convected(3) )
           call write_timed_value( &
+            &  divertors%divertor(2)%power_radiated, &
+            &  power_radiated(2)+power_radiated(3) )
+          call write_timed_value( &
             &  divertors%divertor(2)%power_recombination_plasma, &
             &  power_recombination_plasma(2)+power_recombination_plasma(3) )
+          call write_timed_value( &
+            &  divertors%divertor(2)%power_recombination_neutrals, &
+            &  power_recombination_neutrals(2)+power_recombination_neutrals(3) )
           call write_timed_value( &
             &  divertors%divertor(2)%power_currents, &
             &  power_currents(2)+power_currents(3) )
@@ -1776,11 +1972,32 @@ contains
             &  divertors%divertor(2)%current_incident, &
             &  current_incident(2)+current_incident(3) )
 #endif
+          u = 0.0_IDS_real
+          do is = 1, natmi
+            u = u + (wldra(nlim+ltns(2),is,0) + wldra(nlim+ltns(3),is,0) + &
+              &      wldpa(nlim+ltns(2),is,0) + wldpa(nlim+ltns(3),is,0) ) &
+              &     *zn(eb2atcr(is))
+          end do
+          do is = 1, nmoli
+            do js = 1, natmi
+              if (mlcmp(js,is).eq.0) cycle
+              u = u + (wldrm(nlim+ltns(2),is,0) + wldrm(nlim+ltns(3),is,0) + &
+                &      wldpm(nlim+ltns(2),is,0) + wldpm(nlim+ltns(3),is,0) ) &
+                &   *zn(eb2atcr(js))*mlcmp(js,is)
+            end do
+          end do
+          call write_timed_value( &
+            &  divertors%divertor(1)%particle_flux_recycled_total, u )
         end select
+        deallocate( power_incident )
         deallocate( power_currents )
+        deallocate( power_radiated )
+        deallocate( power_neutrals )
         deallocate( power_convected )
         deallocate( power_conducted )
+        deallocate( power_flux_peak )
         deallocate( power_recombination_plasma )
+        deallocate( power_recombination_neutrals )
         deallocate( current_incident )
 #endif
 #endif
@@ -3334,46 +3551,46 @@ contains
 #endif
 #endif
             !! ne: Electron density
-            call write_IDS_quantity( edge_grid, mpg, geo,                   &
+            call write_IDS_quantity( edge_grid,                             &
                 &   val = edge_profiles%ggd( time_sind )%electrons%density, &
                 &   value = state%dv%ne )
             !! fne: Electron particle flux
             call divide_by_area( mpg%nFc, geo, state%dv%fne, flxFace)
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-            call write_face_scalar( transport_grid, mpg,                    &
+            call write_face_scalar( transport_grid,                         &
                 &   val = edge_transport%model(1)%ggd( time_sind )%         &
                 &         electrons%particles%flux_pol,                     &
                 &   value = flxFace(:,0) )
-            call write_face_scalar( transport_grid, mpg,                    &
+            call write_face_scalar( transport_grid,                         &
                 &   val = edge_transport%model(1)%ggd( time_sind )%         &
                 &         electrons%particles%flux_radial,                  &
                 &   value = flxFace(:,1) )
 #else
             call split_face_flux( mpg, geo, flxFace, tmpFace )
-            call write_face_scalar( transport_grid, mpg,                    &
+            call write_face_scalar( transport_grid,                         &
                 &   val = edge_transport%model(1)%ggd( time_sind )%         &
                 &         electrons%particles%flux,                         &
                 &   value = tmpFace )
 #endif
             !! sne: Electron particle sources
             tmpCv(:) = ( state%sr%sne(:,0) + state%sr%sne(:,1) * state%dv%ne(:) ) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                      &
+            call write_cell_scalar( sources_grid,                           &
                 &   scalar = edge_sources%source(1)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
             tmpCv(:) = state_ext%sne(:) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                      &
+            call write_cell_scalar( sources_grid,                           &
                 &   scalar = edge_sources%source(2)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
             tmpCv(:) = ( state%srw%b2stbc_sne(:) + state%srw%b2stbm_sne(:) ) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                      &
+            call write_cell_scalar( sources_grid,                           &
                 &   scalar = edge_sources%source(3)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
             tmpCv(:) = ( state%sr%snedt(:,0) +                              &
                 &        state%sr%snedt(:,1) * state%dv%ne(:) ) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                      &
+            call write_cell_scalar( sources_grid,                           &
                 &   scalar = edge_sources%source(4)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
@@ -3383,7 +3600,7 @@ contains
                     tmpCv(:) = tmpCv(:) + eirene_mc_pael_sne_bal(:,istrai)
                 end do
                 tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                     &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
                     &            electrons%particles,                       &
                     &   b2CellData = tmpCv )
@@ -3392,13 +3609,13 @@ contains
                     tmpCv(:) = tmpCv(:) + eirene_mc_pmel_sne_bal(:,istrai)
                 end do
                 tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                     &   scalar = edge_sources%source(6)%ggd( time_sind )%   &
                     &            electrons%particles,                       &
                     &   b2CellData = tmpCv )
             else
                 tmpCv(:) = state%srw%b2stbr_sne(:) / geo%cvVol(:)
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                     &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
                     &            electrons%particles,                       &
                     &   b2CellData = tmpCv )
@@ -3408,7 +3625,7 @@ contains
               tmpCv(:) = tmpCv(:) + state%srw%rsana(:,is)
             end do
             tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                      &
+            call write_cell_scalar( sources_grid,                           &
                 &   scalar = edge_sources%source(7)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
@@ -3417,14 +3634,14 @@ contains
               tmpCv(:) = tmpCv(:) + state%srw%rrana(:,is)
             end do
             tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                      &
+            call write_cell_scalar( sources_grid,                           &
                 &   scalar = edge_sources%source(8)%ggd( time_sind )%       &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
             if (switch%use_eirene.ne.0) then
               tmpCv(:) = state%srw%sne0_eir_tot(:) / geo%cvVol(:)
-              call write_cell_scalar( sources_grid, mpg,                    &
+              call write_cell_scalar( sources_grid,                         &
                 &   scalar = edge_sources%source(13)%ggd( time_sind )%      &
                 &            electrons%particles,                           &
                 &   b2CellData = tmpCv )
@@ -3436,13 +3653,13 @@ contains
               if (is.le.nspecies) then
                 tmpCv(:) = 0.0_IDS_real
                 do js = 1, istion(is)
-                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                  call write_IDS_quantity( edge_grid,                       &
                       &   val = edge_profiles%ggd( time_sind )%             &
                       &         ion( is )%state( js )%density,              &
                       &   value = state%pl%na(:,ispion(is,js)) )
                   tmpCv(:) = tmpCv(:) + state%pl%na(:,ispion(is,js))
                 end do
-                call write_IDS_quantity( edge_grid, mpg, geo,               &
+                call write_IDS_quantity( edge_grid,                         &
                     &   val = edge_profiles%ggd( time_sind )%               &
                     &         ion(is)%density,                              &
                     &   value = tmpCv )
@@ -3452,34 +3669,34 @@ contains
                   call divide_by_area( mpg%nFc, geo, state%dv%fna(:,:,ispion(is,js)), flxFace)
                   totflux(:,:) = totflux(:,:) + flxFace(:,:)
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-                  call write_face_scalar( transport_grid, mpg,               &
+                  call write_face_scalar( transport_grid,                    &
                       &   val = edge_transport%model(1)%ggd( time_sind )%    &
                       &         ion( is )%state( js )%particles%flux_pol,    &
                       &   value = flxFace(:,0) )
-                  call write_face_scalar( transport_grid, mpg,               &
+                  call write_face_scalar( transport_grid,                    &
                       &   val = edge_transport%model(1)%ggd( time_sind )%    &
                       &         ion( is )%state( js )%particles%flux_radial, &
                       &   value = flxFace(:,1) )
 #else
                   call split_face_flux( mpg, geo, flxFace, tmpFace )
-                  call write_face_scalar( transport_grid, mpg,               &
+                  call write_face_scalar( transport_grid,                    &
                       &   val = edge_transport%model(1)%ggd( time_sind )%    &
                       &         ion( is )%state( js )%particles%flux,        &
                       &   value = tmpFace )
 #endif
                 end do
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-                call write_face_scalar( transport_grid, mpg,                 &
+                call write_face_scalar( transport_grid,                      &
                     &   val = edge_transport%model(1)%ggd( time_sind )%      &
                     &         ion( is )%particles%flux_pol,                  &
                     &   value = totflux(:,0) )
-                call write_face_scalar( transport_grid, mpg,                 &
+                call write_face_scalar( transport_grid,                      &
                     &   val = edge_transport%model(1)%ggd( time_sind )%      &
                     &         ion( is )%particles%flux_radial,               &
                     &   value = totflux(:,1) )
 #else
                 call split_face_flux( mpg, geo, totflux, tmpFace )
-                call write_face_scalar( transport_grid, mpg,                 &
+                call write_face_scalar( transport_grid,                      &
                     &   val = edge_transport%model(1)%ggd( time_sind )%      &
                     &         ion( is )%particles%flux,                      &
                     &   value = tmpFace )
@@ -3487,33 +3704,33 @@ contains
             !! cdna: Ion diffusivity
                 do js = 1, istion(is)
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-                  call write_face_scalar( transport_grid, mpg,               &
+                  call write_face_scalar( transport_grid,                    &
                       &   val = edge_transport%model(1)%ggd( time_sind )%    &
                       &         ion( is )%state( js )%particles%d_pol,       &
                       &   value = state%co%cdna(:,0,ispion(is,js)) )
-                  call write_face_scalar( transport_grid, mpg,               &
+                  call write_face_scalar( transport_grid,                    &
                       &   val = edge_transport%model(1)%ggd( time_sind )%    &
                       &         ion( is )%state( js )%particles%d_radial,    &
                       &   value = state%co%cdna(:,1,ispion(is,js)) )
             !! cvla: Ion diffusivity
-                  call write_face_scalar( transport_grid, mpg,               &
+                  call write_face_scalar( transport_grid,                    &
                       &   val = edge_transport%model(1)%ggd( time_sind )%    &
                       &         ion( is )%state( js )%particles%v_pol,       &
                       &   value = state%co%cvla(:,0,ispion(is,js)) )
-                  call write_face_scalar( transport_grid, mpg,               &
+                  call write_face_scalar( transport_grid,                    &
                       &   val = edge_transport%model(1)%ggd( time_sind )%    &
                       &         ion( is )%state( js )%particles%v_radial,    &
                       &   value = state%co%cvla(:,1,ispion(is,js)) )
 #else
                   call split_face_flux( mpg, geo,                            &
                       &   state%co%cdna(:,:,ispion(is,js)), tmpFace )
-                  call write_face_scalar( transport_grid, mpg,               &
+                  call write_face_scalar( transport_grid,                    &
                       &   val = edge_transport%model(1)%ggd( time_sind )%    &
                       &         ion( is )%state( js )%particles%d,           &
                       &   value = tmpFace )
                   call split_face_flux( mpg, geo,                            &
                       &   state%co%cvla(:,:,ispion(is,js)), tmpFace )
-                  call write_face_scalar( transport_grid, mpg,               &
+                  call write_face_scalar( transport_grid,                    &
                       &   val = edge_transport%model(1)%ggd( time_sind )%    &
                       &         ion( is )%state( js )%particles%v,           &
                       &   value = tmpFace )
@@ -3521,7 +3738,7 @@ contains
             !! fllim0fna: Ion flux limiter
                   call split_face_flux( mpg, geo,                            &
                       &   state%co%fllim0fna(:,:,ispion(is,js)), tmpFace )
-                  call write_face_scalar( transport_grid, mpg,               &
+                  call write_face_scalar( transport_grid,                    &
                       &   val = edge_transport%model(1)%ggd( time_sind )%    &
                       &         ion( is )%state( js )%                       &
                       &         particles%flux_limiter,                      &
@@ -3534,12 +3751,12 @@ contains
                       &        state%sr%sna(:,1,ispion(is,js)) *            &
                       &        state%pl%na(:,ispion(is,js)) ) / geo%cvVol(:)
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_cell_scalar( sources_grid, mpg,                &
+                  call write_cell_scalar( sources_grid,                     &
                       &   scalar = edge_sources%source(1)%                  &
                       &   ggd( time_sind )%ion( is )%state( js )%particles, &
                       &   b2CellData = tmpCv )
                 end do
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                       &   scalar = edge_sources%source(1)%                  &
                       &   ggd( time_sind )%ion( is )%particles,             &
                       &   b2CellData = totCv )
@@ -3547,12 +3764,12 @@ contains
                 do js = 1, istion(is)
                   tmpCv(:) = state_ext%sna(:,ispion(is,js)) / geo%cvVol(:)
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_cell_scalar( sources_grid, mpg,                &
+                  call write_cell_scalar( sources_grid,                     &
                       &   scalar = edge_sources%source(2)%ggd( time_sind )% &
                       &            ion( is )%state( js )%particles,         &
                       &   b2CellData = tmpCv )
                 end do
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                     &   scalar = edge_sources%source(2)%ggd( time_sind )%   &
                     &            ion( is )%particles,                       &
                     &   b2CellData = totCv )
@@ -3561,12 +3778,12 @@ contains
                   tmpCv(:) = ( state%srw%b2stbc_sna(:,ispion(is,js)) +      &
                      &         state%srw%b2stbm_sna(:,ispion(is,js)) ) / geo%cvVol(:)
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_cell_scalar( sources_grid, mpg,                &
+                  call write_cell_scalar( sources_grid,                     &
                       &   scalar = edge_sources%source(3)%ggd( time_sind )% &
                       &            ion( is )%state( js )%particles,         &
                       &   b2CellData = tmpCv )
                 end do
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                     &   scalar = edge_sources%source(3)%ggd( time_sind )%   &
                     &            ion( is )%particles,                       &
                     &   b2CellData = totCv )
@@ -3576,12 +3793,12 @@ contains
                         &      state%sr%snadt(:,1,ispion(is,js)) *          &
                         &      state%pl%na(:,ispion(is,js)) ) / geo%cvVol(:)
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_cell_scalar( sources_grid, mpg,                &
+                  call write_cell_scalar( sources_grid,                     &
                       &   scalar = edge_sources%source(4)%ggd( time_sind )% &
                       &            ion( is )%state( js )%particles,         &
                       &   b2CellData = tmpCv )
                 end do
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                     &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
                     &            ion( is )%particles,                       &
                     &   b2CellData = totCv )
@@ -3595,12 +3812,12 @@ contains
                     end do
                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
                     totCv(:) = totCv(:) + tmpCv(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(5)%ggd( time_sind )% &
                         &            ion( is )%state( js )%particles,         &
                         &   b2CellData = tmpCv )
                   end do
-                  call write_cell_scalar( sources_grid, mpg,                  &
+                  call write_cell_scalar( sources_grid,                       &
                         &   scalar = edge_sources%source(5)%ggd( time_sind )% &
                         &            ion( is )%particles,                     &
                         &   b2CellData = totCv )
@@ -3613,12 +3830,12 @@ contains
                     end do
                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
                     totCv(:) = totCv(:) + tmpCv(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(6)%ggd( time_sind )% &
                         &            ion( is )%state( js )%particles,         &
                         &   b2CellData = tmpCv )
                   end do
-                  call write_cell_scalar( sources_grid, mpg,                  &
+                  call write_cell_scalar( sources_grid,                       &
                       &   scalar = edge_sources%source(6)%ggd( time_sind )%   &
                       &            ion( is )%particles,                       &
                       &   b2CellData = totCv )
@@ -3627,29 +3844,29 @@ contains
                   do js = 1, istion(is)
                     tmpCv(:) = state%srw%b2stbr_sna(:,ispion(is,js)) / geo%cvVol(:)
                     totCv(:) = totCv(:) + tmpCv(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(5)%ggd( time_sind )% &
                         &            ion( is )%state( js )%particles,         &
                         &   b2CellData = tmpCv )
                   end do
-                  call write_cell_scalar( sources_grid, mpg,                  &
+                  call write_cell_scalar( sources_grid,                       &
                         &   scalar = edge_sources%source(5)%ggd( time_sind )% &
                         &            ion( is )%particles,                     &
                         &   b2CellData = totCv )
                 end if
                 do js = 1, istion(is)
                   tmpCv(:) = state%srw%rsana(:,ispion(is,js)) / geo%cvVol(:)
-                  call write_cell_scalar( sources_grid, mpg,                  &
+                  call write_cell_scalar( sources_grid,                       &
                       &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
                       &            ion( is )%state( js )%particles,           &
                       &   b2CellData = tmpCv )
                   tmpCv(:) = state%srw%rrana(:,ispion(is,js)) / geo%cvVol(:)
-                  call write_cell_scalar( sources_grid, mpg,                  &
+                  call write_cell_scalar( sources_grid,                       &
                       &   scalar = edge_sources%source(8)%ggd( time_sind )%   &
                       &            ion( is )%state( js )%particles,           &
                       &   b2CellData = tmpCv )
                   tmpCv(:) = state%srw%rcxna(:,ispion(is,js)) / geo%cvVol(:)
-                  call write_cell_scalar( sources_grid, mpg,                  &
+                  call write_cell_scalar( sources_grid,                       &
                       &   scalar = edge_sources%source(9)%ggd( time_sind )%   &
                       &            ion( is )%state( js )%particles,           &
                       &   b2CellData = tmpCv )
@@ -3659,7 +3876,7 @@ contains
                   do js = 1, istion(is)
                     tmpCv(:) = state%srw%sna0_eir_tot(:,ispion(is,js)) /      &
                       &   geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                       &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
                       &            ion( is )%state( js )%particles,           &
                       &   b2CellData = tmpCv )
@@ -3671,12 +3888,12 @@ contains
                 do js = 1, istion(is)
                   tmpCv(:) = dib2(:,ispion(is,js),1)
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                  call write_IDS_quantity( edge_grid,                       &
                       &   val = edge_profiles%ggd( time_sind )%             &
                       &         ion(is)%state( js )%density,                &
                       &   value = tmpCv )
                 end do
-                call write_IDS_quantity( edge_grid, mpg, geo,               &
+                call write_IDS_quantity( edge_grid,                         &
                     &   val = edge_profiles%ggd( time_sind )%               &
                     &         ion(is)%density,                              &
                     &   value = totCv )
@@ -3692,12 +3909,12 @@ contains
                     end do
                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
                     totCv(:) = totCv(:) + tmpCv(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(1)%ggd( time_sind )% &
                         &            ion( is )%state( js )%particles,         &
                         &   b2CellData = tmpCv )
                   end do
-                  call write_cell_scalar( sources_grid, mpg,                  &
+                  call write_cell_scalar( sources_grid,                       &
                       &   scalar = edge_sources%source(1)%ggd( time_sind )%   &
                       &            ion( is )%particles,                       &
                       &   b2CellData = totCv )
@@ -3706,7 +3923,7 @@ contains
             end do
 
             !! ue: Parallel Electron Velocity
-            call write_cell_vector_component( edge_grid, mpg,            &
+            call write_cell_vector_component( edge_grid,                 &
                  &   vectorComponent = edge_profiles%ggd( time_sind )%   &
                  &                     electrons%velocity,               &
                  &   b2CellData = state%dv%ue(:),                        &
@@ -3716,41 +3933,41 @@ contains
               if (is.le.nspecies) then
                 do js = 1, istion(is)
                 !! ua: Parallel ion velocity
-                  call write_cell_vector_component( edge_grid, mpg,         &
+                  call write_cell_vector_component( edge_grid,              &
                       &   vectorComponent = edge_profiles%ggd( time_sind )% &
                       &                     ion( is )%state( js )%velocity, &
                       &   b2CellData = state%pl%ua(:,ispion(is,js)),        &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 !! wadia: Diamagnetic ion velocity
-                  call write_face_vector_component( edge_grid, mpg,           &
+                  call write_face_vector_component( edge_grid,                &
                       &   vectorComponent = edge_profiles%ggd( time_sind )%   &
                       &         ion( is )%state( js )%velocity_diamagnetic,   &
                       &   b2FaceData = state%dv%wadia(:,0,ispion(is,js)),     &
                       &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                  call write_face_vector_component( edge_grid, mpg,           &
+                  call write_face_vector_component( edge_grid,                &
                       &   vectorComponent = edge_profiles%ggd( time_sind )%   &
                       &         ion( is )%state( js )%velocity_diamagnetic,   &
                       &   b2FaceData = state%dv%wadia(:,1,ispion(is,js)),     &
                       &   vectorID = VEC_ALIGN_RADIAL_ID )
                 !! vaecrb: ExB ion velocity
-                  call write_face_vector_component( edge_grid, mpg,           &
+                  call write_face_vector_component( edge_grid,                &
                       &   vectorComponent = edge_profiles%ggd( time_sind )%   &
                       &         ion( is )%state( js )%velocity_exb,           &
                       &   b2FaceData = state%dv%vaecrb(:,0,ispion(is,js)),    &
                       &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                  call write_face_vector_component( edge_grid, mpg,           &
+                  call write_face_vector_component( edge_grid,                &
                       &   vectorComponent = edge_profiles%ggd( time_sind )%   &
                       &         ion( is )%state( js )%velocity_exb,           &
                       &   b2FaceData = state%dv%vaecrb(:,1,ispion(is,js)),    &
                       &   vectorID = VEC_ALIGN_RADIAL_ID )
                 !! cvsa: Ion diffusivity
-                  call write_face_vector_component( transport_grid, mpg,      &
+                  call write_face_vector_component( transport_grid,           &
                       &   vectorComponent = edge_transport%model(1)%          &
                       &         ggd( time_sind )%ion( is )%state( js )%       &
                       &         momentum%d,                                   &
                       &   b2FaceData = state%co%cvsa(:,0,ispion(is,js)),      &
                       &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                  call write_face_vector_component( transport_grid, mpg,      &
+                  call write_face_vector_component( transport_grid,           &
                       &   vectorComponent = edge_transport%model(1)%          &
                       &         ggd( time_sind )%ion( is )%state( js )%       &
                       &         momentum%d,                                   &
@@ -3761,7 +3978,7 @@ contains
                 totflux(:,:) = 0.0_IDS_real
                 do js = 1, istion(is)
                   call divide_by_area( mpg%nFc, geo, state%dv%fmo(1,0,ispion(is,js)), flxFace)
-                  call write_face_vector_component( transport_grid, mpg,      &
+                  call write_face_vector_component( transport_grid,           &
                       &   vectorComponent = edge_transport%model(1)%          &
                       &                     ggd( time_sind )%ion( is )%       &
                       &                     state( js )%momentum%flux,        &
@@ -3770,7 +3987,7 @@ contains
                   totflux(:,0) = totflux(:,0) + flxFace(:,0)
                   totflux(:,1) = totflux(:,1) + flxFace(:,1)
                 end do
-                call write_face_vector_component( transport_grid, mpg,        &
+                call write_face_vector_component( transport_grid,             &
                     &   vectorComponent = edge_transport%model(1)%            &
                     &                     ggd( time_sind )%ion( is )%         &
                     &                     momentum%flux,                      &
@@ -3778,7 +3995,7 @@ contains
                     &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 !! fllimvisc: Ion parallel momentum transport flux limit
                 do js = 1, istion(is)
-                  call write_face_vector_component( transport_grid, mpg,      &
+                  call write_face_vector_component( transport_grid,           &
                       &   vectorComponent = edge_transport%model(1)%          &
                       &                     ggd( time_sind )%ion( is )%       &
                       &                     state( js )%momentum%flux_limiter,&
@@ -3799,14 +4016,14 @@ contains
                       &            state%pl%ua(iCv,ispion(is,js)) ) / geo%cvVol(iCv)
                   end do
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_cell_vector_component( sources_grid, mpg,  &
+                  call write_cell_vector_component( sources_grid,       &
                       &   vectorComponent = edge_sources%source(1)%     &
                       &                     ggd( time_sind )%ion( is )% &
                       &                     state( js )%momentum,       &
                       &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 end do
-                call write_cell_vector_component( sources_grid, mpg,           &
+                call write_cell_vector_component( sources_grid,                &
                     &   vectorComponent = edge_sources%source(1)%              &
                     &                     ggd( time_sind )%ion( is )%momentum, &
                     &   b2CellData = totCv,                                    &
@@ -3815,14 +4032,14 @@ contains
                 do js = 1, istion(is)
                   tmpCv(:) = state_ext%smo(:,ispion(is,js)) / geo%cvVol(:)
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_cell_vector_component( sources_grid, mpg,  &
+                  call write_cell_vector_component( sources_grid,       &
                       &   vectorComponent = edge_sources%source(2)%     &
                       &                     ggd( time_sind )%ion( is )% &
                       &                     state( js )%momentum,       &
                       &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 end do
-                call write_cell_vector_component( sources_grid, mpg,    &
+                call write_cell_vector_component( sources_grid,         &
                       &   vectorComponent = edge_sources%source(2)%     &
                       &                     ggd( time_sind )%ion( is )% &
                       &                     momentum,                   &
@@ -3833,14 +4050,14 @@ contains
                   tmpCv(:) = ( state%srw%b2stbc_smo(:,ispion(is,js)) +  &
                       &        state%srw%b2stbm_smo(:,ispion(is,js)) ) / geo%cvVol(:)
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_cell_vector_component( sources_grid, mpg,  &
+                  call write_cell_vector_component( sources_grid,       &
                       &   vectorComponent = edge_sources%source(3)%     &
                       &                     ggd( time_sind )%ion( is )% &
                       &                     state( js )%momentum,       &
                       &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 end do
-                call write_cell_vector_component( sources_grid, mpg,    &
+                call write_cell_vector_component( sources_grid,         &
                       &   vectorComponent = edge_sources%source(3)%     &
                       &                     ggd( time_sind )%ion( is )% &
                       &                     momentum,                   &
@@ -3859,14 +4076,14 @@ contains
                       &            state%pl%ua(iCv,ispion(is,js)) ) / geo%cvVol(iCv)
                   end do
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_cell_vector_component( sources_grid, mpg,  &
+                  call write_cell_vector_component( sources_grid,       &
                       &   vectorComponent = edge_sources%source(4)%     &
                       &                     ggd( time_sind )%ion( is )% &
                       &                     state( js )%momentum,       &
                       &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                 end do
-                call write_cell_vector_component( sources_grid, mpg,    &
+                call write_cell_vector_component( sources_grid,         &
                       &   vectorComponent = edge_sources%source(4)%     &
                       &                     ggd( time_sind )%ion( is )% &
                       &                     momentum,                   &
@@ -3882,14 +4099,14 @@ contains
                     end do
                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
                     totCv(:) = totCv(:) + tmpCv(:)
-                    call write_cell_vector_component( sources_grid, mpg,&
+                    call write_cell_vector_component( sources_grid,     &
                         &   vectorComponent = edge_sources%source(5)%   &
                         &            ggd( time_sind )%ion( is )%        &
                         &            state( js )%momentum,              &
                         &   b2CellData = tmpCv,                         &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                   end do
-                  call write_cell_vector_component( sources_grid, mpg,  &
+                  call write_cell_vector_component( sources_grid,       &
                       &   vectorComponent = edge_sources%source(5)%     &
                       &            ggd( time_sind )%ion( is )%momentum, &
                       &   b2CellData = totCv,                           &
@@ -3903,14 +4120,14 @@ contains
                     end do
                     tmpCv(:) = tmpCv(:) / geo%cvVol(:)
                     totCv(:) = totCv(:) + tmpCv(:)
-                    call write_cell_vector_component( sources_grid, mpg,&
+                    call write_cell_vector_component( sources_grid,     &
                         &   vectorComponent = edge_sources%source(6)%   &
                         &            ggd( time_sind )%ion( is )%        &
                         &            state( js )%momentum,              &
                         &   b2CellData = tmpCv,                         &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                   end do
-                  call write_cell_vector_component( sources_grid, mpg,    &
+                  call write_cell_vector_component( sources_grid,         &
                         &   vectorComponent = edge_sources%source(6)%     &
                         &            ggd( time_sind )%ion( is )%momentum, &
                         &   b2CellData = totCv,                           &
@@ -3920,14 +4137,14 @@ contains
                   do js = 1, istion(is)
                     tmpCv(:) = state%srw%b2stbr_smo(:,ispion(is,js)) / geo%cvVol(:)
                     totCv(:) = totCv(:) + tmpCv(:)
-                    call write_cell_vector_component( sources_grid, mpg,&
+                    call write_cell_vector_component( sources_grid,     &
                         &   vectorComponent = edge_sources%source(5)%   &
                         &            ggd( time_sind )%ion( is )%        &
                         &            state( js )%momentum,              &
                         &   b2CellData = tmpCv,                         &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                   end do
-                  call write_cell_vector_component( sources_grid, mpg,    &
+                  call write_cell_vector_component( sources_grid,         &
                         &   vectorComponent = edge_sources%source(5)%     &
                         &            ggd( time_sind )%ion( is )%momentum, &
                         &   b2CellData = totCv,                           &
@@ -3935,21 +4152,21 @@ contains
                 end if
                 do js = 1, istion(is)
                   tmpCv(:) = state%srw%rsamo(:,ispion(is,js)) / geo%cvVol(:)
-                  call write_cell_vector_component( sources_grid, mpg,  &
+                  call write_cell_vector_component( sources_grid,       &
                       &   vectorComponent = edge_sources%source(7)%     &
                       &                     ggd( time_sind )%ion( is )% &
                       &                     state( js )%momentum,       &
                       &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                   tmpCv(:) = state%srw%rramo(:,ispion(is,js)) / geo%cvVol(:)
-                  call write_cell_vector_component( sources_grid, mpg,  &
+                  call write_cell_vector_component( sources_grid,       &
                       &   vectorComponent = edge_sources%source(8)%     &
                       &                     ggd( time_sind )%ion( is )% &
                       &                     state( js )%momentum,       &
                       &   b2CellData = tmpCv,                           &
                       &   vectorID = VEC_ALIGN_PARALLEL_ID )
                   tmpCv(:) = state%srw%rcxmo(:,ispion(is,js)) / geo%cvVol(:)
-                  call write_cell_vector_component( sources_grid, mpg,  &
+                  call write_cell_vector_component( sources_grid,       &
                       &   vectorComponent = edge_sources%source(9)%     &
                       &                     ggd( time_sind )%ion( is )% &
                       &                     state( js )%momentum,       &
@@ -3961,7 +4178,7 @@ contains
                   do js = 1, istion(is)
                     tmpCv(:) = state%srw%smo0_eir_tot(:,ispion(is,js)) / &
                       &   geo%cvVol(:)
-                    call write_cell_vector_component( sources_grid, mpg, &
+                    call write_cell_vector_component( sources_grid,      &
                       &   vectorComponent = edge_sources%source(13)%     &
                       &                     ggd( time_sind )%ion( is )%  &
                       &                     state( js )%momentum,        &
@@ -3975,49 +4192,49 @@ contains
 
             !! te: Electron Temperature
             tmpCv(:) = state%pl%te(:)/qe
-            call write_IDS_quantity( edge_grid, mpg, geo,               &
+            call write_IDS_quantity( edge_grid,                         &
                 &   val = edge_profiles%ggd( time_sind )%electrons%     &
                 &         temperature,                                  &
                 &   value = tmpCv )
             tmpCv(:) = state%co%hce0(:)/state%dv%ne(:)
-            call write_IDS_quantity( transport_grid, mpg, geo,          &
+            call write_IDS_quantity( transport_grid,                    &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%d,                           &
                 &   value = tmpCv )
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%v_pol,                       &
                 &   value = state%co%chve(:,0) )
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%v_radial,                    &
                 &   value = state%co%chve(:,1) )
 #else
             call split_face_flux( mpg, geo, state%co%chve, tmpFace )
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%v,                           &
                 &   value = tmpFace )
 #endif
             call divide_by_area( mpg%nFc, geo, state%dv%fhe, flxFace)
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux_pol,                    &
                 &   value = flxFace(:,0) )
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux_radial,                 &
                 &   value = flxFace(:,1) )
 #else
             call split_face_flux( mpg, geo, flxFace, tmpFace )
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux,                        &
                 &   value = tmpFace )
 #endif
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         electrons%energy%flux_limiter,                &
                 &   value = state%dv%fllime )
@@ -4026,17 +4243,17 @@ contains
                 &        state%sr%she(:,2) * state%dv%ne(:) +           &
                 &        state%sr%she(:,3) * state%pl%te(:) *           &
                 &                            state%dv%ne(:) ) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(1)%ggd( time_sind )%   &
                 &            electrons%energy,                          &
                 &   b2CellData = tmpCv )
             tmpCv(:) = state_ext%she(:) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(2)%ggd( time_sind )%   &
                 &            electrons%energy,                          &
                 &   b2CellData = tmpCv )
             tmpCv(:) = ( state%srw%b2stbc_she(:) + state%srw%b2stbm_she(:) ) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(3)%ggd( time_sind )%   &
                 &            electrons%energy,                          &
                 &   b2CellData = tmpCv )
@@ -4045,7 +4262,7 @@ contains
                 &        state%sr%shedt(:,2) * state%dv%ne(:) +         &
                 &        state%sr%shedt(:,3) * state%pl%te(:) *         &
                 &                              state%dv%ne(:) ) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
                 &            electrons%energy,                          &
                 &   b2CellData = tmpCv )
@@ -4055,7 +4272,7 @@ contains
                     tmpCv(:) = tmpCv(:) + eirene_mc_eael_she_bal(:,is)
                 end do
                 tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                     &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
                     &            electrons%energy,                          &
                     &   b2CellData = tmpCv )
@@ -4064,36 +4281,36 @@ contains
                     tmpCv(:) = tmpCv(:) + eirene_mc_emel_she_bal(:,is)
                 end do
                 tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                     &   scalar = edge_sources%source(6)%ggd( time_sind )%   &
                     &            electrons%energy,                          &
                     &   b2CellData = tmpCv )
             else
                 tmpCv(:) = state%srw%b2stbr_she(:) / geo%cvVol(:)
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                     &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
                     &            electrons%energy,                          &
                     &   b2CellData = tmpCv )
             end if
             if (balance_netcdf.ne.0) then
                 tmpCv(:) = b2stel_she_ion_bal(:) / geo%cvVol(:)
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                     &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
                     &            electrons%energy,                          &
                     &   b2CellData = tmpCv )
                 tmpCv(:) = b2stel_she_rec_bal(:) / geo%cvVol(:)
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                     &   scalar = edge_sources%source(8)%ggd( time_sind )%   &
                     &            electrons%energy,                          &
                     &   b2CellData = tmpCv )
                 tmpCv(:) = -b2npht_shei_bal(:) / geo%cvVol(:)
-                call write_cell_scalar( sources_grid, mpg,                  &
+                call write_cell_scalar( sources_grid,                       &
                     &   scalar = edge_sources%source(10)%ggd( time_sind )%  &
                     &            electrons%energy,                          &
                     &   b2CellData = tmpCv )
             end if
             tmpCv(:) = state%srw%b2sihs_joule(:) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                      &
+            call write_cell_scalar( sources_grid,                           &
                 &   scalar = edge_sources%source(11)%ggd( time_sind )%      &
                 &            electrons%energy,                              &
                 &   b2CellData = tmpCv )
@@ -4113,14 +4330,14 @@ contains
             end do
 #endif
             tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                      &
+            call write_cell_scalar( sources_grid,                           &
                 &   scalar = edge_sources%source(12)%ggd( time_sind )%      &
                 &            electrons%energy,                              &
                 &   b2CellData = tmpCv )
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
             if (switch%use_eirene.ne.0) then
               tmpCv(:) = state%srw%she0_eir_tot(:) / geo%cvVol(:)
-              call write_cell_scalar( sources_grid, mpg,                    &
+              call write_cell_scalar( sources_grid,                         &
                 &   scalar = edge_sources%source(13)%ggd( time_sind )%      &
                 &            electrons%energy,                              &
                 &   b2CellData = tmpCv )
@@ -4129,14 +4346,14 @@ contains
 
             !! pe: Electron pressure
             call b2xppe( mpg%nCv, state%dv%ne, state%pl%te, pe)
-            call write_IDS_quantity( edge_grid, mpg, geo,               &
+            call write_IDS_quantity( edge_grid,                         &
                 &   val = edge_profiles%ggd( time_sind )%electrons%     &
                 &         pressure,                                     &
                 &   value = pe )
 
             !! ti: (Common) Ion Temperature
             tmpCv(:) = state%pl%ti(:)/qe
-            call write_IDS_quantity( edge_grid, mpg, geo,               &
+            call write_IDS_quantity( edge_grid,                         &
                 &   val = edge_profiles%ggd( time_sind )%t_i_average,   &
                 &   value = tmpCv )
             if (switch%tn_style.eq.0) then
@@ -4146,22 +4363,22 @@ contains
             else if (switch%tn_style.eq.2) then
               tmpCv(:) = state%co%hci0(:)/(state%dv%ni(:,0)-state%dv%nn(:))
             end if
-            call write_IDS_quantity( transport_grid, mpg, geo,          &
+            call write_IDS_quantity( transport_grid,                    &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%d,                           &
                 &   value = tmpCv )
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%v_pol,                       &
                 &   value = state%co%chvi(:,0) )
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%v_radial,                    &
                 &   value = state%co%chvi(:,1) )
 #else
             call split_face_flux( mpg, geo, state%co%chvi, tmpFace )
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%v,                           &
                 &   value = tmpFace )
@@ -4169,22 +4386,22 @@ contains
             !! fhi : Ion heat flux
             call divide_by_area( mpg%nFc, geo, state%dv%fhi, flxFace)
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux_pol,                    &
                 &   value = flxFace(:,0) )
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux_radial,                 &
                 &   value = flxFace(:,1) )
 #else
             call split_face_flux( mpg, geo, flxFace, tmpFace )
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux,                        &
                 &   value = tmpFace )
 #endif
-            call write_face_scalar( transport_grid, mpg,                &
+            call write_face_scalar( transport_grid,                     &
                 &   val = edge_transport%model(1)%ggd( time_sind )%     &
                 &         total_ion_energy%flux_limiter,                &
                 &   value = state%dv%fllimi )
@@ -4194,17 +4411,17 @@ contains
                 &        state%sr%shi(:,2) * state%dv%ni(:,0) +         &
                 &        state%sr%shi(:,3) * state%dv%ni(:,0) *         &
                 &        state%pl%ti(:) ) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(1)%ggd( time_sind )%   &
                 &            total_ion_energy,                          &
                 &   b2CellData = tmpCv )
             tmpCv(:) = state_ext%shi(:) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(2)%ggd( time_sind )%   &
                 &            total_ion_energy,                          &
                 &   b2CellData = tmpCv )
             tmpCv(:) = ( state%srw%b2stbc_shi(:) + state%srw%b2stbm_shi(:) ) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(3)%ggd( time_sind )%   &
                 &            total_ion_energy,                          &
                 &   b2CellData = tmpCv )
@@ -4213,7 +4430,7 @@ contains
                 &          state%sr%shidt(:,2) * state%dv%ni(:,0) +     &
                 &          state%sr%shidt(:,3) * state%dv%ni(:,0) *     &
                 &          state%pl%ti(:) ) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
                 &            total_ion_energy,                          &
                 &   b2CellData = tmpCv )
@@ -4223,7 +4440,7 @@ contains
                 tmpCv(:) = tmpCv(:) + eirene_mc_eapl_shi_bal(:,is)
               end do
               tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-              call write_cell_scalar( sources_grid, mpg,                  &
+              call write_cell_scalar( sources_grid,                       &
                   &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
@@ -4232,30 +4449,30 @@ contains
                 tmpCv(:) = tmpCv(:) + eirene_mc_empl_shi_bal(:,is)
               end do
               tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-              call write_cell_scalar( sources_grid, mpg,                  &
+              call write_cell_scalar( sources_grid,                       &
                   &   scalar = edge_sources%source(6)%ggd( time_sind )%   &
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
             else
               tmpCv(:) = state%srw%b2stbr_shi(:) / geo%cvVol(:)
-              call write_cell_scalar( sources_grid, mpg,                  &
+              call write_cell_scalar( sources_grid,                       &
                   &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
             end if
             if (balance_netcdf.ne.0) then
               tmpCv(:) = b2stel_shi_ion_bal(:) / geo%cvVol(:)
-              call write_cell_scalar( sources_grid, mpg,                  &
+              call write_cell_scalar( sources_grid,                       &
                   &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
               tmpCv(:) = b2stel_shi_rec_bal(:) / geo%cvVol(:)
-              call write_cell_scalar( sources_grid, mpg,                  &
+              call write_cell_scalar( sources_grid,                       &
                   &   scalar = edge_sources%source(8)%ggd( time_sind )%   &
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
               tmpCv(:) = b2npht_shei_bal(:) / geo%cvVol(:)
-              call write_cell_scalar( sources_grid, mpg,                  &
+              call write_cell_scalar( sources_grid,                       &
                   &   scalar = edge_sources%source(10)%ggd( time_sind )%  &
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
@@ -4263,7 +4480,7 @@ contains
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
             if (switch%use_eirene.ne.0) then
               tmpCv(:) = state%srw%shi0_eir_tot(:) / geo%cvVol(:)
-              call write_cell_scalar( sources_grid, mpg,                  &
+              call write_cell_scalar( sources_grid,                       &
                   &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
                   &            total_ion_energy,                          &
                   &   b2CellData = tmpCv )
@@ -4276,12 +4493,12 @@ contains
             !! Ion energy sources resolved by species
                   tmpCv(:) = state%srw%rsahi(:,ispion(is,js)) / geo%cvVol(:)
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_cell_scalar( sources_grid, mpg,                  &
+                  call write_cell_scalar( sources_grid,                       &
                       &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
                       &            ion( is )%state( js )%energy,              &
                       &   b2CellData = tmpCv )
                 end do
-                call write_cell_scalar( sources_grid, mpg,                    &
+                call write_cell_scalar( sources_grid,                         &
                       &   scalar = edge_sources%source(7)%ggd( time_sind )%   &
                       &            ion( is )%energy,                          &
                       &   b2CellData = totCv )
@@ -4289,12 +4506,12 @@ contains
                 do js = 1, istion(is)
                   tmpCv(:) = state%srw%rrahi(:,ispion(is,js)) / geo%cvVol(:)
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_cell_scalar( sources_grid, mpg,                  &
+                  call write_cell_scalar( sources_grid,                       &
                       &   scalar = edge_sources%source(8)%ggd( time_sind )%   &
                       &            ion( is )%state( js )%energy,              &
                       &   b2CellData = tmpCv )
                 end do
-                call write_cell_scalar( sources_grid, mpg,                    &
+                call write_cell_scalar( sources_grid,                         &
                     &   scalar = edge_sources%source(8)%ggd( time_sind )%     &
                     &            ion( is )%energy,                            &
                         &   b2CellData = totCv )
@@ -4302,12 +4519,12 @@ contains
                 do js = 1, istion(is)
                   tmpCv(:) = state%srw%rcxhi(:,ispion(is,js)) / geo%cvVol(:)
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_cell_scalar( sources_grid, mpg,                  &
+                  call write_cell_scalar( sources_grid,                       &
                       &   scalar = edge_sources%source(9)%ggd( time_sind )%   &
                       &            ion( is )%state( js )%energy,              &
                       &   b2CellData = tmpCv )
                 end do
-                call write_cell_scalar( sources_grid, mpg,                    &
+                call write_cell_scalar( sources_grid,                         &
                     &   scalar = edge_sources%source(9)%ggd( time_sind )%     &
                     &            ion( is )%energy,                            &
                     &   b2CellData = totCv )
@@ -4316,7 +4533,7 @@ contains
                 do js = 1, istion(is)
             !! Test ion temperature
                   tmpCv(:) = tib2(:,ispion(is,js),1)/qe
-                  call write_IDS_quantity( edge_grid, mpg, geo,               &
+                  call write_IDS_quantity( edge_grid,                         &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%     &
                       &         state( js )%temperature,                      &
                       &   value = tmpCv )
@@ -4331,12 +4548,12 @@ contains
                 totCv(:) = 0.0_IDS_real
                 do js = 1, istion(is)
                   totCv(:) = totCv(:) + state%dv%pa(:,ispion(is,js))
-                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                  call write_IDS_quantity( edge_grid,                       &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%pressure,                       &
                       &   value = state%dv%pa(:,ispion(is,js)) )
                 end do
-                call write_IDS_quantity( edge_grid, mpg, geo,               &
+                call write_IDS_quantity( edge_grid,                         &
                     &   val = edge_profiles%ggd( time_sind )%ion( is )%     &
                     &         pressure,                                     &
                     &   value = totCv )
@@ -4344,35 +4561,35 @@ contains
                 totCv(:) = 0.0_IDS_real
                 do js = 1, istion(is)
                   totCv(:) = totCv(:) + state%dv%kinrgy(:,ispion(is,js))
-                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                  call write_IDS_quantity( edge_grid,                       &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%energy_density_kinetic,         &
                       &   value = state%dv%kinrgy(:,ispion(is,js)) )
                 end do
-                call write_IDS_quantity( edge_grid, mpg, geo,               &
+                call write_IDS_quantity( edge_grid,                         &
                     &   val = edge_profiles%ggd( time_sind )%ion( is )%     &
                     &         energy_density_kinetic,                       &
                     &   value = totCv )
                 do js = 1, istion(is)
                 !! Average charge
-                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                  call write_IDS_quantity( edge_grid,                       &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%z_average,                      &
                       &   value = state%rt%rza(:,ispion(is,js)) )
                 !! Average square charge
-                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                  call write_IDS_quantity( edge_grid,                       &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%z_square_average,               &
                       &   value = state%rt%rz2(:,ispion(is,js)) )
 #if IMAS_MAJOR_VERSION > 3
                 !! Ionization potential
-                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                  call write_IDS_quantity( edge_grid,                       &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%ionization_potential,           &
                       &   value = state%rt%rpt(:,ispion(is,js)) )
 #else
                 !! Ionisation potential
-                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                  call write_IDS_quantity( edge_grid,                       &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%ionisation_potential,           &
                       &   value = state%rt%rpt(:,ispion(is,js)) )
@@ -4386,25 +4603,25 @@ contains
                   tmpCv(:) = dib2(:,ispion(is,js),1)                        &
                       &     *tib2(:,ispion(is,js),1)
                   totCv(:) = totCv(:) + tmpCv(:)
-                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                  call write_IDS_quantity( edge_grid,                       &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%pressure,                       &
                       &   value = tmpCv )
                 end do
-                call write_IDS_quantity( edge_grid, mpg, geo,               &
+                call write_IDS_quantity( edge_grid,                         &
                     &   val = edge_profiles%ggd( time_sind )%ion( is )%     &
                     &         pressure,                                     &
                     &   value = totCv )
                 !! Average charge
                 do js = 1, istion(is)
                   tmpCv(:) = nchrgi( ispion(is,js) )
-                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                  call write_IDS_quantity( edge_grid,                       &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%z_average,                      &
                       &   value = tmpCv )
                 !! Average square charge
                   tmpCv(:) = nchrgi( js )**2
-                  call write_IDS_quantity( edge_grid, mpg, geo,             &
+                  call write_IDS_quantity( edge_grid,                       &
                       &   val = edge_profiles%ggd( time_sind )%ion( is )%   &
                       &         state( js )%z_square_average,               &
                       &   value = tmpCv )
@@ -4415,29 +4632,29 @@ contains
 
             !! ni/ne: Total ion density over electron density
             tmpCv(:) = state%dv%ni(:,1)/state%dv%ne(:)
-            call write_IDS_quantity( edge_grid, mpg, geo,                    &
+            call write_IDS_quantity( edge_grid,                              &
                 &   val = edge_profiles%ggd( time_sind )%n_i_total_over_n_e, &
                 &   value = tmpCv )
 
             !! Zeff
-            call write_IDS_quantity( edge_grid, mpg, geo,                    &
+            call write_IDS_quantity( edge_grid,                              &
                 &   val = edge_profiles%ggd( time_sind )%zeff,               &
                 &   value = zeff )
 
             !! pz: Thermal plasma pressure (electrons+ions)
-            call write_IDS_quantity( edge_grid, mpg, geo,                    &
+            call write_IDS_quantity( edge_grid,                              &
                 &   val = edge_profiles%ggd( time_sind )%pressure_thermal,   &
                 &   value = state%dv%pz )
 
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
             !! fch: Total current
             call divide_by_area( mpg%nFc, geo, state%dv%fch, flxFace )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_total,                               &
                 &   b2FaceData = flxFace(:,0),                               &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_total,                               &
                 &   b2FaceData = flxFace(:,1),                               &
@@ -4445,19 +4662,19 @@ contains
 
             !! fch_p: Parallel current
             call divide_by_area( mpg%nFc, geo, state%dv%fch_p, flxFace )
-            call write_face_scalar( edge_grid, mpg,                          &
+            call write_face_scalar( edge_grid,                               &
                 &   val = edge_profiles%ggd( time_sind )%j_parallel,         &
                 &   value = flxFace(:,0) )
 #endif
 
             !! fchanml: Anomalous current
             call divide_by_area( mpg%nFc, geo, state%dv%fchanml, flxFace )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_anomalous,                           &
                 &   b2FaceData = flxFace(:,0),                               &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_anomalous,                           &
                 &   b2FaceData = flxFace(:,1),                               &
@@ -4465,12 +4682,12 @@ contains
 
             !! fchinert: Inertial current
             call divide_by_area( mpg%nFc, geo, state%dv%fchinert, flxFace )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_inertial,                            &
                 &   b2FaceData = flxFace(:,0),                               &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_inertial,                            &
                 &   b2FaceData = flxFace(:,1),                               &
@@ -4478,12 +4695,12 @@ contains
 
             !! fchin: Ion-neutral friction current
             call divide_by_area( mpg%nFc, geo, state%dv%fchin, flxFace )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_ion_neutral_friction,                &
                 &   b2FaceData = flxFace(:,0),                               &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_ion_neutral_friction,                &
                 &   b2FaceData = flxFace(:,1),                               &
@@ -4491,12 +4708,12 @@ contains
 
             !! fchvispar: Parallel viscosity current
             call divide_by_area( mpg%nFc, geo, state%dv%fchvispar, flxFace )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_parallel_viscosity,                  &
                 &   b2FaceData = flxFace(:,0),                               &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_parallel_viscosity,                  &
                 &   b2FaceData = flxFace(:,1),                               &
@@ -4504,12 +4721,12 @@ contains
 
             !! fchvisper: Perpendicular viscosity current
             call divide_by_area( mpg%nFc, geo, state%dv%fchvisper, flxFace )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_perpendicular_viscosity,             &
                 &   b2FaceData = flxFace(:,0),                               &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_perpendicular_viscosity,             &
                 &   b2FaceData = flxFace(:,1),                               &
@@ -4517,12 +4734,12 @@ contains
 
             !! fchvisq: Heat viscosity current
             call divide_by_area( mpg%nFc, geo, state%dv%fchvisq, flxFace )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_heat_viscosity,                      &
                 &   b2FaceData = flxFace(:,0),                               &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_heat_viscosity,                      &
                 &   b2FaceData = flxFace(:,1),                               &
@@ -4530,12 +4747,12 @@ contains
 
             !! fchdia: Diamagnetic current
             call divide_by_area( mpg%nFc, geo, state%dv%fchdia, flxFace )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_diamagnetic,                         &
                 &   b2FaceData = flxFace(:,0),                               &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            call write_face_vector_component( edge_grid, mpg,                &
+            call write_face_vector_component( edge_grid,                     &
                 &   vectorComponent = edge_profiles%ggd( time_sind )%        &
                 &                     j_diamagnetic,                         &
                 &   b2FaceData = flxFace(:,1),                               &
@@ -4553,12 +4770,12 @@ contains
                       end if
                    end do
                 !! Neutral pressure
-                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                   call write_IDS_quantity( edge_grid,                       &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( is )%pressure,                     &
                        &   value = tmpCv )
                 !! Neutral density
-                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                   call write_IDS_quantity( edge_grid,                       &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( is )%density,                      &
                        &   value = totCv )
@@ -4570,7 +4787,7 @@ contains
                       end if
                    end do
                    tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-                   call write_cell_scalar( sources_grid, mpg,                &
+                   call write_cell_scalar( sources_grid,                     &
                        &   scalar = edge_sources%source(12)%ggd( time_sind )%&
                        &            neutral( is )%energy,                    &
                        &   b2CellData = tmpCv )
@@ -4579,39 +4796,39 @@ contains
                    js = latmscl(is)
                    ks = isstat(is)
                    tmpCv(:) = tab2(:,is,1)/qe
-                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                   call write_IDS_quantity( edge_grid,                       &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( js )%state( ks )%temperature,      &
                        &   value = tmpCv )
-                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                   call write_IDS_quantity( edge_grid,                       &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( js )%state( ks )%density,          &
                        &   value = dab2(:,is,1) )
                    tmpCv(:) = dab2(:,is,1)*tab2(:,is,1)
-                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                   call write_IDS_quantity( edge_grid,                       &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( js )%state( ks )%pressure,         &
                        &   value = tmpCv )
                    flxFace = 0.0_IDS_real
-                   call write_face_vector_component( edge_grid, mpg,         &
+                   call write_face_vector_component( edge_grid,              &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_diamagnetic,           &
                        &   b2FaceData = flxFace(:,0),                        &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                   call write_face_vector_component( edge_grid, mpg,         &
+                   call write_face_vector_component( edge_grid,              &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_diamagnetic,           &
                        &   b2FaceData = flxFace(:,1),                        &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
-                   call write_face_vector_component( edge_grid, mpg,         &
+                   call write_face_vector_component( edge_grid,              &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_exb,                   &
                        &   b2FaceData = flxFace(:,0),                        &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                   call write_face_vector_component( edge_grid, mpg,         &
+                   call write_face_vector_component( edge_grid,              &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_exb,                   &
@@ -4626,7 +4843,7 @@ contains
                           &       + eirene_mc_piat_sna_bal(:,is,istrai)
                      end do
                      tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-                     call write_cell_scalar( sources_grid, mpg,              &
+                     call write_cell_scalar( sources_grid,                   &
                        &   scalar = edge_sources%source(1)%ggd( time_sind )% &
                        &            neutral( js )%state( ks )%particles,     &
                        &   b2CellData = tmpCv )
@@ -4636,7 +4853,7 @@ contains
                           &       + eirene_mc_paat_sna_bal(:,is,istrai)
                      end do
                      tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-                     call write_cell_scalar( sources_grid, mpg,              &
+                     call write_cell_scalar( sources_grid,                   &
                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
                        &            neutral( js )%state( ks )%particles,     &
                        &   b2CellData = tmpCv )
@@ -4647,13 +4864,13 @@ contains
                           &       + eirene_mc_piat_sna_bal(:,is,istrai)
                      end do
                      tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-                     call write_cell_scalar( sources_grid, mpg,              &
+                     call write_cell_scalar( sources_grid,                   &
                        &   scalar = edge_sources%source(6)%ggd( time_sind )% &
                        &            neutral( js )%state( ks )%particles,     &
                        &   b2CellData = tmpCv )
                    end if
                    tmpCv(:) = eneutrad(:,is,0)/ geo%cvVol(:)
-                   call write_cell_scalar( sources_grid, mpg,                &
+                   call write_cell_scalar( sources_grid,                     &
                        &   scalar = edge_sources%source(12)%                 &
                        &            ggd( time_sind )%neutral( js )%          &
                        &            state( ks )%energy,                      &
@@ -4671,12 +4888,12 @@ contains
                       end if
                    end do
                  !! Molecular pressure
-                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                   call write_IDS_quantity( edge_grid,                       &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( js )%pressure,                     &
                        &   value = tmpCv )
                  !! Molecular density
-                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                   call write_IDS_quantity( edge_grid,                       &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( js )%density,                      &
                        &   value = totCv )
@@ -4687,39 +4904,39 @@ contains
                    ks = isstat(natmi+is)
                    if (ks.eq.1) js = js + 1
                    tmpCv(:) = tmb2(:,is,1)/qe
-                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                   call write_IDS_quantity( edge_grid,                       &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( js )%state( ks )%temperature,      &
                        &   value = tmpCv )
-                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                   call write_IDS_quantity( edge_grid,                       &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( js )%state( ks )%density,          &
                        &   value = dmb2(:,is,1) )
                    tmpCv(:) = dmb2(:,is,1)*tmb2(:,is,1)
-                   call write_IDS_quantity( edge_grid, mpg, geo,             &
+                   call write_IDS_quantity( edge_grid,                       &
                        &   val = edge_profiles%ggd( time_sind )%             &
                        &         neutral( js )%state( ks )%pressure,         &
                        &   value = tmpCv )
                    tmpFace = 0.0_IDS_real
-                   call write_face_vector_component( edge_grid, mpg,         &
+                   call write_face_vector_component( edge_grid,              &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_diamagnetic,           &
                        &   b2FaceData = tmpFace,                             &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                   call write_face_vector_component( edge_grid, mpg,         &
+                   call write_face_vector_component( edge_grid,              &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_diamagnetic,           &
                        &   b2FaceData = tmpFace,                             &
                        &   vectorID = VEC_ALIGN_RADIAL_ID )
-                   call write_face_vector_component( edge_grid, mpg,         &
+                   call write_face_vector_component( edge_grid,              &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_exb,                   &
                        &   b2FaceData = tmpFace,                             &
                        &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                   call write_face_vector_component( edge_grid, mpg,         &
+                   call write_face_vector_component( edge_grid,              &
                        &   vectorComponent = edge_profiles%ggd( time_sind )% &
                        &                     neutral( js )%state( ks )%      &
                        &                     velocity_exb,                   &
@@ -4734,7 +4951,7 @@ contains
                           &       + eirene_mc_piml_sna_bal(:,is,istrai)
                      end do
                      tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-                     call write_cell_scalar( sources_grid, mpg,              &
+                     call write_cell_scalar( sources_grid,                   &
                        &   scalar = edge_sources%source(1)%ggd( time_sind )% &
                        &            neutral( js )%state( ks )%particles,     &
                        &   b2CellData = tmpCv )
@@ -4744,7 +4961,7 @@ contains
                           &       + eirene_mc_paml_sna_bal(:,is,istrai)
                      end do
                      tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-                     call write_cell_scalar( sources_grid, mpg,              &
+                     call write_cell_scalar( sources_grid,                   &
                        &   scalar = edge_sources%source(5)%ggd( time_sind )% &
                        &            neutral( js )%state( ks )%particles,     &
                        &   b2CellData = tmpCv )
@@ -4755,7 +4972,7 @@ contains
                            &      + eirene_mc_piml_sna_bal(:,is,istrai)
                      end do
                      tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-                     call write_cell_scalar( sources_grid, mpg,              &
+                     call write_cell_scalar( sources_grid,                   &
                        &   scalar = edge_sources%source(6)%ggd( time_sind )% &
                        &            neutral( js )%state( ks )%particles,     &
                        &   b2CellData = tmpCv )
@@ -4769,21 +4986,21 @@ contains
                     if (.not.is_neutral(js)) cycle
                     j = j + 1
                 !! na : Fluid neutral density
-                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                    call write_IDS_quantity( edge_grid,                       &
                         &   val = edge_profiles%ggd( time_sind )%             &
                         &         neutral( j )%density,                       &
                         &   value = state%pl%na(:,js) )
-                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                    call write_IDS_quantity( edge_grid,                       &
                         &   val = edge_profiles%ggd( time_sind )%             &
                         &         neutral( j )%state(1)%density,              &
                         &   value = state%pl%na(:,js) )
                 !! ua: Parallel fluid neutral velocity
-                    call write_cell_vector_component( edge_grid, mpg,         &
+                    call write_cell_vector_component( edge_grid,              &
                         &   vectorComponent = edge_profiles%ggd( time_sind )% &
                         &                     neutral( j )%velocity,          &
                         &   b2CellData = state%pl%ua(:,js),                   &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_cell_vector_component( edge_grid, mpg,         &
+                    call write_cell_vector_component( edge_grid,              &
                         &   vectorComponent = edge_profiles%ggd( time_sind )% &
                         &                     neutral( j )%state(1)%velocity, &
                         &   b2CellData = state%pl%ua(:,js),                   &
@@ -4791,12 +5008,12 @@ contains
                 !! wadia: Diamagnetic fluid neutral velocity
                     flxFace(:,0) = state%dv%wadia(:,0,js)
                     flxFace(:,1) = state%dv%wadia(:,1,js)
-                    call write_face_vector_component( edge_grid, mpg,         &
+                    call write_face_vector_component( edge_grid,              &
                         &   vectorComponent = edge_profiles%ggd( time_sind )% &
                         &         neutral( j )%state(1)%velocity_diamagnetic, &
                         &   b2FaceData = flxFace(:,0),                        &
                         &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                    call write_face_vector_component( edge_grid, mpg,         &
+                    call write_face_vector_component( edge_grid,              &
                         &   vectorComponent = edge_profiles%ggd( time_sind )% &
                         &         neutral( j )%state(1)%velocity_diamagnetic, &
                         &   b2FaceData = flxFace(:,1),                        &
@@ -4804,12 +5021,12 @@ contains
                 !! vaecrb: ExB fluid neutral velocity
                     flxFace(:,0) = state%dv%vaecrb(:,0,js)
                     flxFace(:,1) = state%dv%vaecrb(:,1,js)
-                    call write_face_vector_component( edge_grid, mpg,         &
+                    call write_face_vector_component( edge_grid,              &
                         &   vectorComponent = edge_profiles%ggd( time_sind )% &
                         &         neutral( j )%state(1)%velocity_exb,         &
                         &   b2FaceData = flxFace(:,0),                        &
                         &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                    call write_face_vector_component( edge_grid, mpg,         &
+                    call write_face_vector_component( edge_grid,              &
                         &   vectorComponent = edge_profiles%ggd( time_sind )% &
                         &         neutral( j )%state(1)%velocity_exb,         &
                         &   b2FaceData = flxFace(:,1),                        &
@@ -4818,102 +5035,102 @@ contains
                     call divide_by_area( mpg%nFc, geo, state%dv%fna(:,:,js),  &
                         &   flxFace)
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%flux_pol,            &
                         &   value = flxFace(:,0) )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%flux_radial,         &
                         &   value = flxFace(:,1) )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%particles%flux_pol,   &
                         &   value = flxFace(:,0) )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%particles%flux_radial,&
                         &   value = flxFace(:,1) )
 #else
                     call split_face_flux( mpg, geo, flxFace, tmpFace )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%flux,                &
                         &   value = tmpFace )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%particles%flux,       &
                         &   value = tmpFace )
 #endif
                 !! pb : Fluid neutral pressure
-                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                    call write_IDS_quantity( edge_grid,                       &
                         &   val = edge_profiles%ggd( time_sind )%             &
                         &         neutral( j )%pressure,                      &
                         &   value = state%dv%pa(:,js) )
-                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                    call write_IDS_quantity( edge_grid,                       &
                         &   val = edge_profiles%ggd( time_sind )%             &
                         &         neutral( j )%state(1)%pressure,             &
                         &   value = state%dv%pa(:,js) )
                 !! cdpa: Fluid neutral diffusivity
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%d_pol,               &
                         &   value = state%co%cdpa(:,0,js) )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%d_pol,               &
                         &   value = state%co%cdpa(:,1,js) )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%particles%d_pol,      &
                         &   value = state%co%cdpa(:,0,js) )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%particles%d_radial,   &
                         &   value = state%co%cdpa(:,1,js) )
 #else
                     call split_face_flux( mpg, geo, state%co%cdpa(:,:,js),    &
                         &   tmpFace )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%d,                   &
                         &   value = tmpFace )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%particles%d,          &
                         &   value = tmpFace )
 #endif
                 !! Fluid neutral kinetic energy density
-                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                    call write_IDS_quantity( edge_grid,                       &
                         &   val = edge_profiles%ggd( time_sind )%             &
                         &         neutral( j )%energy_density_kinetic,        &
                         &   value = state%dv%kinrgy(:,js) )
-                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                    call write_IDS_quantity( edge_grid,                       &
                         &   val = edge_profiles%ggd( time_sind )%             &
                         &         neutral( j )%state(1)%                      &
                         &         energy_density_kinetic,                     &
                         &   value =state%dv%kinrgy(:,js) )
                 !! cvsa: Ion diffusivity
-                    call write_face_vector_component( transport_grid, mpg,    &
+                    call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     momentum%d,                     &
                         &   b2FaceData = state%co%cvsa(:,0,js),               &
                         &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                    call write_face_vector_component( transport_grid, mpg,    &
+                    call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum%d,            &
                         &   b2FaceData = state%co%cvsa(:,0,js),               &
                         &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-                    call write_face_vector_component( transport_grid, mpg,    &
+                    call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     momentum%d,                     &
                         &   b2FaceData = state%co%cvsa(:,1,js),               &
                         &   vectorID = VEC_ALIGN_RADIAL_ID )
-                    call write_face_vector_component( transport_grid, mpg,    &
+                    call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum%d,            &
@@ -4922,23 +5139,23 @@ contains
                 !! fllim0fna: Fluid neutral flux limiter
                     call split_face_flux( mpg, geo,                           &
                         &   state%co%fllim0fna(:,:,js), tmpFace )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%particles%flux_limiter,        &
                         &   value = tmpFace )
-                    call write_face_scalar( transport_grid, mpg,              &
+                    call write_face_scalar( transport_grid,                   &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%                      &
                         &         particles%flux_limiter,                     &
                         &   value = tmpFace )
                 !! fllimvisc: Fluid neutral momentum transport flux limit
-                    call write_face_vector_component( transport_grid, mpg,    &
+                    call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     momentum%flux_limiter,          &
                         &   b2FaceData = state%co%fllimvisc(:,js),            &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_face_vector_component( transport_grid, mpg,    &
+                    call write_face_vector_component( transport_grid,         &
                         &   vectorComponent = edge_transport%model(1)%        &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum%flux_limiter, &
@@ -4947,76 +5164,76 @@ contains
                 !! sna: Fluid neutral particle sources
                     tmpCv(:) = ( state%sr%sna(:,0,js) +                       &
                         &        state%sr%sna(:,1,js) * state%pl%na(:,js) ) / geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(1)%                  &
                         &   ggd( time_sind )%neutral( j )%particles,          &
                         &   b2CellData = tmpCv )
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(1)%                  &
                         &   ggd( time_sind )%neutral( j )%state(1)%particles, &
                         &   b2CellData = tmpCv )
                     tmpCv(:) = state_ext%sna(:,js) / geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(2)%ggd( time_sind )% &
                         &            neutral( j )%particles,                  &
                         &   b2CellData = tmpCv )
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(2)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%particles,         &
                         &   b2CellData = tmpCv )
                     tmpCv(:) = ( state%srw%b2stbc_sna(:,js) +                 &
                         &        state%srw%b2stbm_sna(:,js) ) / geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(3)%ggd( time_sind )% &
                         &            neutral( j )%particles,                  &
                         &   b2CellData = tmpCv )
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(3)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%particles,         &
                         &   b2CellData = tmpCv )
                     tmpCv(:) = ( state%sr%snadt(:,0,js) +                     &
                         &        state%sr%snadt(:,1,js) * state%pl%na(:,js) ) / geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(4)%ggd( time_sind )% &
                         &            neutral( j )%particles,                  &
                         &   b2CellData = tmpCv )
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(4)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%particles,         &
                         &   b2CellData = tmpCv )
                     tmpCv(:) = state%srw%b2stbr_sna(:,js) / geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(5)%ggd( time_sind )% &
                         &            neutral( j )%particles,                  &
                         &   b2CellData = tmpCv )
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(5)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%particles,         &
                         &   b2CellData = tmpCv )
                     tmpCv(:) = state%srw%rsana(:,js) / geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(7)%ggd( time_sind )% &
                         &            neutral( j )%particles,                  &
                         &   b2CellData = tmpCv )
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(7)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%particles,         &
                         &   b2CellData = tmpCv )
                     tmpCv(:) = state%srw%rrana(:,js) / geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,                    &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(8)%ggd( time_sind )% &
                         &            neutral( j )%particles,                  &
                         &   b2CellData = tmpCv )
-                    call write_cell_scalar( sources_grid, mpg,                    &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(8)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%particles,         &
                         &   b2CellData = tmpCv )
                     tmpCv(:) = state%srw%rcxna(:,js) / geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(9)%ggd( time_sind )% &
                         &            neutral( j )%particles,                  &
                         &   b2CellData = tmpCv )
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(9)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%particles,         &
                         &   b2CellData = tmpCv )
@@ -5028,26 +5245,26 @@ contains
                         &            state%sr%smo(iCv,3,js) * roxa(iCv,js) *        &
                         &            state%pl%ua(iCv,js) ) / geo%cvVol(iCv)
                     end do
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(1)%         &
                         &                     ggd( time_sind )%               &
                         &                     neutral( j )%momentum,          &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(1)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum,              &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                     tmpCv(:) = state_ext%smo(:,js) / geo%cvVol(:)
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(2)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     momentum,                       &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(2)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum,              &
@@ -5055,13 +5272,13 @@ contains
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                     tmpCv(:) = ( state%srw%b2stbc_smo(:,js) +                 &
                         &        state%srw%b2stbm_smo(:,js) ) / geo%cvVol(:)
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(3)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     momentum,                       &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(3)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum,              &
@@ -5074,64 +5291,64 @@ contains
                         &            state%sr%smodt(iCv,3,js) * roxa(iCv,js) *        &
                         &            state%pl%ua(iCv,js) ) / geo%cvVol(iCv)
                     end do
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(4)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     momentum,                       &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(4)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum,              &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                     tmpCv(:) = state%srw%b2stbr_smo(:,js) / geo%cvVol(:)
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(5)%         &
                         &            ggd( time_sind )%neutral( j )%momentum,  &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(5)%         &
                         &            ggd( time_sind )%neutral( j )%           &
                         &            state(1)%momentum,                       &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                     tmpCv(:) = state%srw%rsamo(:,js) / geo%cvVol(:)
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(7)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     momentum,                       &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(7)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum,              &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                     tmpCv(:) = state%srw%rramo(:,js) / geo%cvVol(:)
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(8)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     momentum,                       &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(8)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum,              &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                     tmpCv(:) = state%srw%rcxmo(:,js) / geo%cvVol(:)
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(9)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     momentum,                       &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
-                    call write_cell_vector_component( sources_grid, mpg,      &
+                    call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(9)%         &
                         &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum,              &
@@ -5143,50 +5360,50 @@ contains
                     else
                       tmpCv(:) = state%pl%ti(:)/qe
                     end if
-                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                    call write_IDS_quantity( edge_grid,                       &
                         &   val = edge_profiles%ggd( time_sind )%             &
                         &         neutral( j )%temperature,                   &
                         &   value = tmpCv )
-                    call write_IDS_quantity( edge_grid, mpg, geo,             &
+                    call write_IDS_quantity( edge_grid,                       &
                         &   val = edge_profiles%ggd( time_sind )%             &
                         &         neutral( j )%state(1)%temperature,          &
                         &   value = tmpCv )
                     if (nint(zn(js)).eq.1) then
                       tmpCv(:) = state%co%hcn0(:)/state%dv%nn(:)
-                      call write_IDS_quantity( transport_grid, mpg, geo,      &
+                      call write_IDS_quantity( transport_grid,                &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%energy%d,                      &
                         &   value = tmpCv )
-                      call write_IDS_quantity( transport_grid, mpg, geo,      &
+                      call write_IDS_quantity( transport_grid,                &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%energy%d,             &
                         &   value = tmpCv )
                 !! fhn : Fluid neutral heat flux
                       call divide_by_area( mpg%nFc, geo, state%dv%fhn, flxFace)
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-                      call write_face_scalar( transport_grid, mpg,            &
+                      call write_face_scalar( transport_grid,                 &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%energy%flux_pol,               &
                         &   value = flxFace(:,0) )
-                      call write_face_scalar( transport_grid, mpg,            &
+                      call write_face_scalar( transport_grid,                 &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%energy%flux_radial,            &
                         &   value = flxFace(:,1) )
-                      call write_face_scalar( transport_grid, mpg,            &
+                      call write_face_scalar( transport_grid,                 &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%energy%flux_pol,      &
                         &   value = flxFace(:,0) )
-                      call write_face_scalar( transport_grid, mpg,            &
+                      call write_face_scalar( transport_grid,                 &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%energy%flux_radial,   &
                         &   value = flxFace(:,1) )
 #else
                       call split_face_flux( mpg, geo, flxFace, tmpFace )
-                      call write_face_scalar( transport_grid, mpg,            &
+                      call write_face_scalar( transport_grid,                 &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%energy%flux,                   &
                         &   value = tmpFace )
-                      call write_face_scalar( transport_grid, mpg,            &
+                      call write_face_scalar( transport_grid,                 &
                         &   val = edge_transport%model(1)%ggd( time_sind )%   &
                         &         neutral( j )%state(1)%energy%flux,          &
                         &   value = tmpFace )
@@ -5197,20 +5414,20 @@ contains
                         &          state%sr%shn(:,2) * state%dv%nn(:) +       &
                         &          state%sr%shn(:,3) * state%dv%nn(:) *       &
                         &          state%pl%tn(:) ) / geo%cvVol(:)
-                      call write_cell_scalar( sources_grid, mpg,              &
+                      call write_cell_scalar( sources_grid,                   &
                         &   scalar = edge_sources%source(1)%ggd( time_sind )% &
                         &            neutral( j )%energy,                     &
                         &   b2CellData = tmpCv )
-                      call write_cell_scalar( sources_grid, mpg,              &
+                      call write_cell_scalar( sources_grid,                   &
                         &   scalar = edge_sources%source(1)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%energy,            &
                         &   b2CellData = tmpCv )
                       tmpCv(:) = state%srw%b2stbc_shn(:) / geo%cvVol(:)
-                      call write_cell_scalar( sources_grid, mpg,              &
+                      call write_cell_scalar( sources_grid,                   &
                         &   scalar = edge_sources%source(3)%ggd( time_sind )% &
                         &            neutral( j )%energy,                     &
                         &   b2CellData = tmpCv )
-                      call write_cell_scalar( sources_grid, mpg,              &
+                      call write_cell_scalar( sources_grid,                   &
                         &   scalar = edge_sources%source(3)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%energy,            &
                         &   b2CellData = tmpCv )
@@ -5219,48 +5436,48 @@ contains
                         &        state%sr%shndt(:,2) * state%dv%nn(:) +       &
                         &        state%sr%shndt(:,3) * state%dv%nn(:) *       &
                         &       state%pl%tn(:) ) / geo%cvVol(:)
-                      call write_cell_scalar( sources_grid, mpg,              &
+                      call write_cell_scalar( sources_grid,                   &
                         &   scalar = edge_sources%source(4)%ggd( time_sind )% &
                         &            neutral( j )%energy,                     &
                         &   b2CellData = tmpCv )
-                      call write_cell_scalar( sources_grid, mpg,              &
+                      call write_cell_scalar( sources_grid,                   &
                         &   scalar = edge_sources%source(4)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%energy,            &
                         &   b2CellData = tmpCv )
                       tmpCv(:) = state%srw%b2stbr_shn(:) / geo%cvVol(:)
-                      call write_cell_scalar( sources_grid, mpg,              &
+                      call write_cell_scalar( sources_grid,                   &
                         &   scalar = edge_sources%source(5)%ggd( time_sind )% &
                         &            neutral( j )%energy,                     &
                         &   b2CellData = tmpCv )
-                      call write_cell_scalar( sources_grid, mpg,              &
+                      call write_cell_scalar( sources_grid,                   &
                         &   scalar = edge_sources%source(5)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%energy,            &
                         &   b2CellData = tmpCv )
                     end if
                     tmpCv(:) = state%srw%rsahi(:,js) / geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,              &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(7)%ggd( time_sind )% &
                         &            neutral( j )%energy,                     &
                         &   b2CellData = tmpCv )
-                    call write_cell_scalar( sources_grid, mpg,              &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(7)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%energy,            &
                         &   b2CellData = tmpCv )
                     tmpCv(:) = state%srw%rrahi(:,js) / geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(8)%ggd( time_sind )% &
                         &            neutral( j )%energy,                     &
                         &   b2CellData = tmpCv )
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(8)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%energy,            &
                         &   b2CellData = tmpCv )
                     tmpCv(:) = state%srw%rcxhi(:,js) / geo%cvVol(:)
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(9)%ggd( time_sind )% &
                         &            neutral( j )%energy,                     &
                         &   b2CellData = tmpCv )
-                    call write_cell_scalar( sources_grid, mpg,                &
+                    call write_cell_scalar( sources_grid,                     &
                         &   scalar = edge_sources%source(9)%ggd( time_sind )% &
                         &            neutral( j )%state(1)%energy,            &
                         &   b2CellData = tmpCv )
@@ -5268,7 +5485,7 @@ contains
             end if
 
             !! po: Electric potential
-            call write_IDS_quantity( edge_grid, mpg, geo,               &
+            call write_IDS_quantity( edge_grid,                         &
                 &   val = edge_profiles%ggd( time_sind )%phi_potential, &
                 &   value = state%pl%po )
             !! Current sources
@@ -5277,17 +5494,17 @@ contains
                 &        state%sr%sch(:,2) * state%dv%ne(:) +           &
                 &        state%sr%sch(:,3) * state%dv%ne(:) *           &
                 &        state%pl%po(:) ) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(1)%ggd( time_sind )%   &
                 &            current,                                   &
                 &   b2CellData = tmpCv )
             tmpCv(:) = state_ext%sch(:) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(2)%ggd( time_sind )%   &
                 &            current,                                   &
                 &   b2CellData = tmpCv )
             tmpCv(:) = ( state%srw%b2stbc_sch(:) + state%srw%b2stbm_sch(:) ) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(3)%ggd( time_sind )%   &
                 &            current,                                   &
                 &   b2CellData = tmpCv )
@@ -5296,31 +5513,31 @@ contains
                 &        state%sr%schdt(:,2) * state%dv%ne(:) +         &
                 &        state%sr%schdt(:,3) * state%dv%ne(:) *         &
                 &        state%pl%po(:) ) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(4)%ggd( time_sind )%   &
                 &            current,                                   &
                 &   b2CellData = tmpCv )
             tmpCv(:) = state%srw%b2stbr_sch(:) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                  &
+            call write_cell_scalar( sources_grid,                       &
                 &   scalar = edge_sources%source(5)%ggd( time_sind )%   &
                 &            current,                                   &
                 &   b2CellData = tmpCv )
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
             if (switch%use_eirene.ne.0) then
               tmpCv(:) = state%srw%sch0_eir_tot(:) / geo%cvVol(:)
-              call write_cell_scalar( sources_grid, mpg,                &
+              call write_cell_scalar( sources_grid,                     &
                 &   scalar = edge_sources%source(13)%ggd( time_sind )%  &
                 &            current,                                   &
                 &   b2CellData = tmpCv )
             end if
 #endif
             !! csig : Electric conductivity
-            call write_face_vector_component( transport_grid, mpg,      &
+            call write_face_vector_component( transport_grid,           &
                 &   vectorComponent = edge_transport%model(1)%          &
                 &         ggd( time_sind )%conductivity,                &
                 &   b2FaceData = state%co%csig(:,0),                    &
                 &   vectorID = VEC_ALIGN_POLOIDAL_ID )
-            call write_face_vector_component( transport_grid, mpg,      &
+            call write_face_vector_component( transport_grid,           &
                 &   vectorComponent = edge_transport%model(1)%          &
                 &         ggd( time_sind )%conductivity,                &
                 &   b2FaceData =state%co%csig(:,1),                     &
@@ -5335,12 +5552,12 @@ contains
               if (is_neutral(js) .and. switch%use_eirene.eq.0) then
                 j = j + 1
                 tmpCv(:) = state%srw%rqrad(:,js) / geo%cvVol(:)
-                call write_cell_scalar( radiation_grid, mpg,               &
+                call write_cell_scalar( radiation_grid,                    &
                     &   scalar = radiation%process(1)%                     &
                     &   ggd( time_sind )%neutral( j )%emissivity,          &
                     &   b2CellData = tmpCv )
 #if ( IMAS_MINOR_VERSION > 24 || IMAS_MAJOR_VERSION > 3 )
-                call write_cell_scalar( radiation_grid, mpg,               &
+                call write_cell_scalar( radiation_grid,                    &
                     &   scalar = radiation%process(1)%                     &
                     &   ggd( time_sind )%neutral( j )%                     &
                     &   state(1)%emissivity,                               &
@@ -5352,13 +5569,13 @@ contains
                 tmpCv(:) = state%srw%rqrad(:,ispion(is,js)) / geo%cvVol(:)
                 totCv(:) = totCv(:) + tmpCv(:)
 #if ( IMAS_MINOR_VERSION > 24 || IMAS_MAJOR_VERSION > 3 )
-                call write_cell_scalar( radiation_grid, mpg,               &
+                call write_cell_scalar( radiation_grid,                    &
                     &   scalar = radiation%process(1)%                     &
                     &   ggd( time_sind )%ion( is )%state( js )%emissivity, &
                     &   b2CellData = tmpCv )
 #endif
               end do
-              call write_cell_scalar( radiation_grid, mpg,                 &
+              call write_cell_scalar( radiation_grid,                      &
                     &   scalar = radiation%process(1)%                     &
                     &   ggd( time_sind )%ion( is )%emissivity,             &
                     &   b2CellData = totCv )
@@ -5370,13 +5587,13 @@ contains
                 tmpCv(:) = state%srw%rqbrm(:,ispion(is,js)) / geo%cvVol(:)
                 totCv(:) = totCv(:) + tmpCv(:)
 #if ( IMAS_MINOR_VERSION > 24 || IMAS_MAJOR_VERSION > 3 )
-                call write_cell_scalar( radiation_grid, mpg,               &
+                call write_cell_scalar( radiation_grid,                    &
                     &   scalar = radiation%process(2)%                     &
                     &   ggd( time_sind )%ion( is )%state( js )%emissivity, &
                     &   b2CellData = tmpCv )
 #endif
               end do
-              call write_cell_scalar( radiation_grid, mpg,                 &
+              call write_cell_scalar( radiation_grid,                      &
                   &   scalar = radiation%process(2)%                       &
                   &   ggd( time_sind )%ion( is )%emissivity,               &
                   &   b2CellData = totCv )
@@ -5392,7 +5609,7 @@ contains
                   end if
                 end do
                 tmpCv(:) = tmpCv(:) / geo%cvVol(:)
-                call write_cell_scalar( radiation_grid, mpg,               &
+                call write_cell_scalar( radiation_grid,                    &
                     &   scalar = radiation%process(3)%                     &
                     &   ggd( time_sind )%neutral( js )%emissivity,         &
                     &   b2CellData = tmpCv )
@@ -5402,7 +5619,7 @@ contains
                 ks = isstat(is)
                 tmpCv(:)=-eneutrad(:,is,0) / geo%cvVol(:)
 #if ( IMAS_MINOR_VERSION > 24 || IMAS_MAJOR_VERSION > 3 )
-                call write_cell_scalar( radiation_grid, mpg,               &
+                call write_cell_scalar( radiation_grid,                    &
                     &   scalar = radiation%process(3)%ggd( time_sind )%    &
                     &   neutral( js )%state( ks )%emissivity,              &
                     &   b2CellData = tmpCv )
@@ -5436,11 +5653,11 @@ contains
            &  0.5_R8 * (state%dv%ne(iCv1) + state%dv%ne(iCv2)) )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
         tmpFace = 1.0_IDS_real
-        u = separatrix_average( mpg, geo, state%pl%te, tmpFace )
+        u = separatrix_average( state%pl%te, tmpFace )
         call write_sourced_value( summary%local%separatrix_average%t_e, u/ev )
-        u = separatrix_average( mpg, geo, state%pl%ti, tmpFace )
+        u = separatrix_average( state%pl%ti, tmpFace )
         call write_sourced_value( summary%local%separatrix_average%t_i_average, u/ev )
-        u = separatrix_average( mpg, geo, state%dv%ne, tmpFace )
+        u = separatrix_average( state%dv%ne, tmpFace )
         call write_sourced_value( summary%local%separatrix_average%n_e, u )
 #endif
         do is = 1, nspecies
@@ -5470,8 +5687,8 @@ contains
                 &                 geo%cvBb(:,3)
           end do
           if (nasum.gt.0.0_R8) totCv(:) = totCv(:)/tmpCv(:)
-          u = separatrix_average( mpg, geo, tmpCv, tmpFace )
-          v = separatrix_average( mpg, geo, totCv, tmpFace )
+          u = separatrix_average( tmpCv, tmpFace )
+          v = separatrix_average( totCv, tmpFace )
           select case (is_codes(eb2spcr(is)))
           case ('H')
             call write_sourced_value( summary%local%separatrix%n_i%hydrogen, nisep )
@@ -5721,13 +5938,13 @@ contains
         end do
         call write_sourced_value( summary%local%separatrix%n_i_total, &
           & 0.5_R8 * (state%dv%ni(iCv1,1) + state%dv%ni(iCv2,1)) )
-        u = separatrix_average( mpg, geo, state%dv%ni(:,1), tmpFace )
+        u = separatrix_average( state%dv%ni(:,1), tmpFace )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
         call write_sourced_value( summary%local%separatrix_average%n_i_total, u )
 #endif
         call write_sourced_value( summary%local%separatrix%zeff, &
           & 0.5_R8 * (zeff(iCv1) + zeff(iCv2)) )
-        u = separatrix_average( mpg, geo, zeff, tmpFace )
+        u = separatrix_average( zeff, tmpFace )
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
         call write_sourced_value( summary%local%separatrix_average%zeff, u )
 #endif
@@ -5952,7 +6169,7 @@ contains
           end do
         end if
 
-        call fill_summary_data( geo, summary )
+        call fill_summary_data( summary )
         u = 0.0_IDS_real
         do iCv = 1, mpg%nCi
           if (gridGeometry.eq.GEOMETRY_LIMITER .or. &
@@ -6048,7 +6265,6 @@ contains
     !! @note    Time slice value is set as:
     !!          \b time_slice_value = \b time_step_IN * \b time_slice_ind_IN
     subroutine B25_av_ids( do_description, &
-            &   geo, mpg, state, state_ext, state_avg, switch, &
             &   batch_profiles, batch_sources, &
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
             &   description, &
@@ -6069,12 +6285,6 @@ contains
 #endif
         use b2mod_mwti
         implicit none
-        type (geometry), intent(in) :: geo
-        type (mapping), intent(inout) :: mpg
-        type (B2state), intent(inout) :: state
-        type (B2stateExt), intent(inout) :: state_ext
-        type (B2Average), intent(in) :: state_avg
-        type (switches), intent(inout) :: switch
         logical, intent(in) :: do_description
         type (ids_equilibrium) :: equilibrium !< IDS designed to
             !< store equilibrium data
@@ -6136,7 +6346,7 @@ contains
         source = "SOLPS-ITER (batch averaged)"
 
         !! Preparing database for writing
-        call IDS_init( mpg, geo )
+        call IDS_init
         homogeneous_time = 1
         if ( present( time_IN ) ) then
             time = time_IN
@@ -6234,7 +6444,7 @@ contains
 #endif
 #endif
 
-        call put_equilibrium_data ( mpg, geo, equilibrium, &
+        call put_equilibrium_data ( equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &  summary, &
 #endif
@@ -6543,14 +6753,14 @@ contains
             if (is_neutral(ks)) ks = ks + 1
             tmpCv(:) = 0.0_IDS_real
             do js = 1, nfluids(is)
-              call write_IDS_quantity( batch_grid, mpg, geo,            &
+              call write_IDS_quantity( batch_grid,                      &
                   &   val = batch_profiles%ggd( batch_index )%          &
                   &         ion( is )%state( js )%density,              &
                   &   value = state_avg%na_mean(:,ks) )
               tmpCv(:) = tmpCv(:) + state_avg%na_mean(:,ks)
               ks = ks + 1
             end do
-            call write_IDS_quantity( batch_grid, mpg, geo,              &
+            call write_IDS_quantity( batch_grid,                        &
                 &   val = batch_profiles%ggd( batch_index )%            &
                 &         ion(is)%density,                              &
                 &   value = tmpCv )
@@ -6563,13 +6773,13 @@ contains
             do js = 1, nfluids(is)
               tmpCv(:) = state_avg%sna_mean(:,ks) / geo%cvVol(:)
               totCv(:) = totCv(:) + tmpCv(:)
-              call write_cell_scalar( sources_grid, mpg,                  &
+              call write_cell_scalar( sources_grid,                       &
                   &   scalar = batch_sources%source(1)%                   &
                   &   ggd( batch_index )%ion( is )%state( js )%particles, &
                   &   b2CellData = tmpCv )
               ks = ks + 1
             end do
-            call write_cell_scalar( sources_grid, mpg,                    &
+            call write_cell_scalar( sources_grid,                         &
                 &   scalar = batch_sources%source(1)%                     &
                 &   ggd( batch_index )%ion( is )%particles,               &
                 &   b2CellData = totCv )
@@ -6579,7 +6789,7 @@ contains
           do is = 1, nspecies
             if (is_neutral(ks)) ks = ks + 1
             do js = 1, nfluids(is)
-              call write_cell_vector_component( batch_grid, mpg,          &
+              call write_cell_vector_component( batch_grid,               &
                   &   vectorComponent = batch_profiles%                   &
                   &   ggd( batch_index )%ion( is )%state( js )%velocity,  &
                   &   b2CellData = state_avg%ua_mean(:,ks),               &
@@ -6595,7 +6805,7 @@ contains
             do js = 1, nfluids(is)
               tmpCv(:) = state_avg%smo_mean(:,ks) / geo%cvVol(:)
               totCv(:) = totCv(:) + tmpCv(:)
-              call write_cell_vector_component( sources_grid, mpg,        &
+              call write_cell_vector_component( sources_grid,             &
                   &   vectorComponent = batch_sources%source(1)%          &
                   &                     ggd( batch_index )%ion( is )%     &
                   &                     state( js )%momentum,             &
@@ -6603,7 +6813,7 @@ contains
                   &   vectorID = VEC_ALIGN_PARALLEL_ID )
               ks = ks + 1
             end do
-            call write_cell_vector_component( sources_grid, mpg,          &
+            call write_cell_vector_component( sources_grid,               &
                 &   vectorComponent = batch_sources%source(1)%            &
                 &                     ggd( batch_index )%ion( is )%       &
                 &                     momentum,                           &
@@ -6612,23 +6822,23 @@ contains
           end do
           !! te: Electron Temperature
           tmpCv(:) = state_avg%te_mean(:)/qe
-          call write_IDS_quantity( batch_grid, mpg, geo,                 &
+          call write_IDS_quantity( batch_grid,                           &
               &   val = batch_profiles%ggd( batch_index )%electrons%     &
               &         temperature,                                     &
               &   value = tmpCv )
           tmpCv(:) = state_avg%she_mean(:) / geo%cvVol(:)
-          call write_cell_scalar( sources_grid, mpg,                     &
+          call write_cell_scalar( sources_grid,                          &
               &   scalar = batch_sources%source(1)%ggd( batch_index )%   &
               &            electrons%energy,                             &
               &   b2CellData = tmpCv )
           !! ti: (Common) Ion Temperature
           tmpCv(:) = state_avg%ti_mean(:)/qe
-          call write_IDS_quantity( batch_grid, mpg, geo,                 &
+          call write_IDS_quantity( batch_grid,                           &
               &   val = batch_profiles%ggd( batch_index )%t_i_average,   &
               &   value = tmpCv )
           !! Ion energy sources
           tmpCv(:) = state_avg%shi_mean(:) / geo%cvVol(:)
-          call write_cell_scalar( sources_grid, mpg,                     &
+          call write_cell_scalar( sources_grid,                          &
               &   scalar = batch_sources%source(1)%ggd( batch_index )%   &
               &            total_ion_energy,                             &
               &   b2CellData = tmpCv )
@@ -6637,13 +6847,13 @@ contains
           do is = 1, nspecies
             !! sna: Neutral particle sources
             tmpCv(:) = state_avg%sna_mean(:,js) / geo%cvVol(:)
-            call write_cell_scalar( sources_grid, mpg,                   &
+            call write_cell_scalar( sources_grid,                        &
                 &   scalar = batch_sources%source(1)%                    &
                 &   ggd( batch_index )%neutral( is )%particles,          &
                 &   b2CellData = tmpCv )
             !! smo: Neutral parallel momentum sources
             tmpCv(:) = state_avg%smo_mean(:,js) / geo%cvVol(:)
-            call write_cell_vector_component( sources_grid, mpg,         &
+            call write_cell_vector_component( sources_grid,              &
                 &   vectorComponent = batch_sources%source(1)%           &
                 &                     ggd( batch_index )%                &
                 &                     neutral( is )%momentum,            &
@@ -6653,7 +6863,7 @@ contains
           end do
 
           !! po: Electric potential
-          call write_IDS_quantity( batch_grid, mpg, geo,                 &
+          call write_IDS_quantity( batch_grid,                           &
               &   val = batch_profiles%ggd( batch_index )%phi_potential, &
               &   value = state_avg%po_mean )
 #else
@@ -6779,21 +6989,19 @@ contains
           end if
         end if
 
-        call fill_summary_data( geo, summary )
+        call fill_summary_data( summary )
 #endif
         call logmsg( LOGDEBUG, "b2mod_ual_io.B25_av_ids: done" )
 
         return
     end subroutine B25_av_ids
 
-    function separatrix_average( mpg, geo, field, weight )
+    function separatrix_average( field, weight )
     ! This function is devoted to obtain the weighted average along the active separatrix
     ! of a plasma field quantity
     ! The average is made using face-centered quantities on the cell faces forming the separatrix
     ! The weighting automatically includes the areas of the cell faces
     implicit none
-    type( mapping ), intent(in) :: mpg
-    type( geometry ), intent(in) :: geo
     real(kind=IDS_real) :: separatrix_average
     real(kind=IDS_real), intent(in) :: field(mpg%nCv), weight(mpg%nFc)
     integer :: i, iFc, iCv1, iCv2
@@ -7027,7 +7235,7 @@ contains
     end subroutine write_ids_code_constant
 #endif
 
-    subroutine put_equilibrium_data ( mpg, geo, equilibrium, &
+    subroutine put_equilibrium_data ( equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
        &  summary, &
 #endif
@@ -7041,8 +7249,6 @@ contains
        & , only: GGD_copy_AoS3Root_to_Dynamic
 #endif
     implicit none
-    type (mapping) :: mpg !< The grid mapping
-    type (geometry) :: geo !< The grid geometry
     type (ids_equilibrium) :: equilibrium !< IDS designed to store
             !< equilibrium data
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
@@ -7379,41 +7585,41 @@ contains
 #if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
           if (.not.associated(                                                &
             &  equilibrium%time_slice( slice_index )%ggd(1)%r ) ) then
-            call write_vertex_scalar( eq_grid, mpg,                           &
+            call write_vertex_scalar( eq_grid,                                &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%r,  &
                 &   b2VertexData = geo%vxX )
             tmpFace(:) = ( geo%vxX(mpg%fcVx(:,1)) + geo%vxX(mpg%fcVx(:,2)) )/2.0_IDS_real
-            call write_face_scalar( eq_grid, mpg,                             &
+            call write_face_scalar( eq_grid,                                  &
                 &   val = equilibrium%time_slice( slice_index )%ggd(1)%r,     &
                 &   value = tmpFace )
-            call write_cell_scalar( eq_grid, mpg,                             &
+            call write_cell_scalar( eq_grid,                                  &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%r,  &
                 &   b2CellData = geo%cvX )
           end if
           if (.not.associated(                                                &
             &  equilibrium%time_slice( slice_index )%ggd(1)%z ) ) then
-            call write_vertex_scalar( eq_grid, mpg,                           &
+            call write_vertex_scalar( eq_grid,                                &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%z,  &
                 &   b2VertexData = geo%vxY )
             tmpFace(:) = ( geo%vxY(mpg%fcVx(:,1)) + geo%vxY(mpg%fcVx(:,2)) )/2.0_IDS_real
-            call write_face_scalar( eq_grid, mpg,                             &
+            call write_face_scalar( eq_grid,                                  &
                 &   val = equilibrium%time_slice( slice_index )%ggd(1)%z,     &
                 &   value = tmpFace )
-            call write_cell_scalar( eq_grid, mpg,                             &
+            call write_cell_scalar( eq_grid,                                  &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%z,  &
                 &   b2CellData = geo%cvY )
           end if
           if (maxval(abs(geo%vxFpsi)).ne.0.0_IDS_real .and. .not.associated(        &
             &  equilibrium%time_slice( slice_index )%ggd(1)%psi ) ) then
-            call write_vertex_scalar( eq_grid, mpg,                           &
+            call write_vertex_scalar( eq_grid,                                &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &            psi,                                             &
                 &   b2VertexData = geo%vxFpsi )
             tmpFace(:) = ( geo%vxFpsi(mpg%fcVx(:,1)) + geo%vxFpsi(mpg%fcVx(:,2)) )/2.0_IDS_real
-            call write_face_scalar( eq_grid, mpg,                             &
+            call write_face_scalar( eq_grid,                                  &
                 &   val = equilibrium%time_slice( slice_index )%ggd(1)%psi,   &
                 &   value = tmpFace )
-            call write_cell_scalar( eq_grid, mpg,                             &
+            call write_cell_scalar( eq_grid,                                  &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &            psi,   &
                 &   b2CellData = geo%cvFpsi )
@@ -7429,14 +7635,14 @@ contains
               end do
               tmpCv(iCv) = tmpCv(iCv) / float( mpg%cvVxP(iCv,2) )
             end do
-            call write_vertex_scalar( eq_grid, mpg,                           &
+            call write_vertex_scalar( eq_grid,                                &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &            phi,                                             &
                 &   b2VertexData = geo%vxFfbz )
-            call write_face_scalar( eq_grid, mpg,                             &
+            call write_face_scalar( eq_grid,                                  &
                 &   val = equilibrium%time_slice( slice_index )%ggd(1)%phi,   &
                 &   value = tmpFace )
-            call write_cell_scalar( eq_grid, mpg,                             &
+            call write_cell_scalar( eq_grid,                                  &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &            phi,                                             &
                 &   b2CellData = tmpCv )
@@ -7446,15 +7652,15 @@ contains
             tmpVx(:) = geo%vxBb(:,0)*geo%vxEb(:,0)
             tmpFace(:) = geo%fcBb(:,0)*geo%fcEb(:,0)
             tmpCv(:) = geo%cvBb(:,0)*geo%cvEb(:,0)
-            call write_vertex_scalar( eq_grid, mpg,                           &
+            call write_vertex_scalar( eq_grid,                                &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &         b_field_r,                                          &
                 &   b2VertexData = tmpVx )
-            call write_face_scalar( eq_grid, mpg,                             &
+            call write_face_scalar( eq_grid,                                  &
                 &   val = equilibrium%time_slice( slice_index )%ggd(1)%       &
                 &         b_field_r,                                          &
                 &   value = tmpFace )
-            call write_cell_scalar( eq_grid, mpg,                             &
+            call write_cell_scalar( eq_grid,                                  &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &         b_field_r,                                          &
                 &   b2CellData = tmpCv )
@@ -7464,15 +7670,15 @@ contains
             tmpVx(:) = geo%vxBb(:,0)*geo%vxEb(:,1)
             tmpFace(:) = geo%fcBb(:,0)*geo%fcEb(:,1)
             tmpCv(:) = geo%cvBb(:,0)*geo%cvEb(:,1)
-            call write_vertex_scalar( eq_grid, mpg,                           &
+            call write_vertex_scalar( eq_grid,                                &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &         b_field_z,                                          &
                 &   b2VertexData = tmpVx )
-            call write_face_scalar( eq_grid, mpg,                             &
+            call write_face_scalar( eq_grid,                                  &
                 &   val = equilibrium%time_slice( slice_index )%ggd(1)%       &
                 &         b_field_z,                                          &
                 &   value = tmpFace )
-            call write_cell_scalar( eq_grid, mpg,                             &
+            call write_cell_scalar( eq_grid,                                  &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &         b_field_z,                                          &
                 &   b2CellData = tmpCv )
@@ -7483,15 +7689,15 @@ contains
             tmpVx(:) = sign(geo%vxBb(:,2),-geo%vxEb(:,2))
             tmpFace(:) = sign(geo%fcBb(:,2),-geo%fcEb(:,2))
             tmpCv(:) = sign(geo%cvBb(:,2),-geo%cvEb(:,2))
-            call write_vertex_scalar( eq_grid, mpg,                           &
+            call write_vertex_scalar( eq_grid,                                &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &         b_field_phi,                                        &
                 &   b2VertexData = tmpVx )
-            call write_face_scalar( eq_grid, mpg,                             &
+            call write_face_scalar( eq_grid,                                  &
                 &   val = equilibrium%time_slice( slice_index )%ggd(1)%       &
                 &         b_field_phi,                                        &
                 &   value = tmpFace )
-            call write_cell_scalar( eq_grid, mpg,                             &
+            call write_cell_scalar( eq_grid,                                  &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &         b_field_phi,                                        &
                 &   b2CellData = tmpCv )
@@ -7502,15 +7708,15 @@ contains
             tmpVx(:) = sign(geo%vxBb(:,2),-geo%vxEb(:,2))
             tmpFace(:) = sign(geo%fcBb(:,2),-geo%fcEb(:,2))
             tmpCv(:) = sign(geo%cvBb(:,2),-geo%cvEb(:,2))
-            call write_vertex_scalar( eq_grid, mpg,                           &
+            call write_vertex_scalar( eq_grid,                                &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &         b_field_tor,                                        &
                 &   b2VertexData = tmpVx )
-            call write_face_scalar( eq_grid, mpg,                             &
+            call write_face_scalar( eq_grid,                                  &
                 &   val = equilibrium%time_slice( slice_index )%ggd(1)%       &
                 &         b_field_tor,                                        &
                 &   value = tmpFace )
-            call write_cell_scalar( eq_grid, mpg,                             &
+            call write_cell_scalar( eq_grid,                                  &
                 &   scalar = equilibrium%time_slice( slice_index )%ggd(1)%    &
                 &         b_field_tor,                                        &
                 &   b2CellData = tmpCv )
@@ -7616,9 +7822,8 @@ contains
     end subroutine put_equilibrium_data
 
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-    subroutine fill_summary_data( geo, summary )
+    subroutine fill_summary_data( summary )
     implicit none
-    type (geometry), intent(in) :: geo
     type (ids_summary), intent(inout) :: summary
 
     select case ( plasmaGeometry )
@@ -7684,7 +7889,7 @@ contains
 #if ( IMAS_MINOR_VERSION > 11 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
     !> Write scalar B2 cell quantity to 'ids_generic_grid_scalar'
     !! IMAS IDS data tree node.
-    subroutine write_IDS_quantity( basegrid, mpg, geo, val, value )
+    subroutine write_IDS_quantity( basegrid, val, value )
     use b2mod_interp
     implicit none
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
@@ -7694,8 +7899,6 @@ contains
     type(ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #endif
-    type(mapping), intent(in) :: mpg
-    type(geometry), intent(in) :: geo
     type(ids_generic_grid_scalar), pointer, intent(inout) :: val(:)
         !< Type of IDS data structure, designed for scalar data handling
     real(IDS_real), intent(in) :: value( mpg%nCv )
@@ -7875,7 +8078,7 @@ contains
     end subroutine write_IDS_quantity
 
     !> Write a scalar B2 cell quantity to ids_generic_grid_scalar
-    subroutine write_cell_scalar( basegrid, mpg, scalar, b2CellData )
+    subroutine write_cell_scalar( basegrid, scalar, b2CellData )
     implicit none
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     type(ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
@@ -7884,7 +8087,6 @@ contains
     type(ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #endif
-    type(mapping), intent(in) :: mpg
     type(ids_generic_grid_scalar), intent(inout), pointer :: scalar(:)
         !< Type of IDS data structure, designed for scalar data handling
     real(IDS_real), intent(in) :: b2CellData( mpg%nCv )
@@ -7996,7 +8198,7 @@ contains
     !!          - VEC_ALIGN_PHI_ID ( "Phi" ),
     !!          - VEC_ALIGN_R_MAJOR_ID ( "R" ),
     !!          - VEC_ALIGN_Z_ID ( "Z" )
-    subroutine write_cell_vector_component( basegrid, mpg, &
+    subroutine write_cell_vector_component( basegrid, &
        &  vectorComponent, b2CellData, vectorID )
     implicit none
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
@@ -8006,7 +8208,6 @@ contains
     type(ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #endif
-    type(mapping), intent(in) :: mpg
     type(ids_generic_grid_vector_components), intent(inout),    &
               &   pointer :: vectorComponent(:) !< Type of IDS data structure,
                     !> designed for vector data handling
@@ -8106,7 +8307,7 @@ contains
     end subroutine write_cell_vector_component
 
     !> Write a scalar B2 face quantity to ids_generic_grid_scalar
-    subroutine write_face_scalar( basegrid, mpg, val, value )
+    subroutine write_face_scalar( basegrid, val, value )
     implicit none
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     type (ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
@@ -8115,7 +8316,6 @@ contains
     type (ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #endif
-    type (mapping), intent(in) :: mpg
     type (ids_generic_grid_scalar), pointer, intent(inout) :: val(:)
         !< Type of IDS data structure, designed for scalar data handling
         !< (in this case scalars residing on grid faces)
@@ -8204,7 +8404,7 @@ contains
          end select
        end if
        if (ndim.ne.2) cycle
-       call write_face_vector( basegrid, mpg, val( iSubset ), value, &
+       call write_face_vector( basegrid, val( iSubset ), value, &
            &    ggdID, iSubsetID, iSubset )
     end do
 
@@ -8222,7 +8422,7 @@ contains
     !!          - VEC_ALIGN_PHI_ID ( "Phi" ),
     !!          - VEC_ALIGN_R_MAJOR_ID ( "R" ),
     !!          - VEC_ALIGN_Z_ID ( "Z" )
-    subroutine write_face_vector_component( basegrid, mpg, &
+    subroutine write_face_vector_component( basegrid, &
        &   vectorComponent, b2FaceData, vectorID )
     implicit none
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
@@ -8232,7 +8432,6 @@ contains
     type(ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #endif
-    type(mapping), intent(in) :: mpg
     type(ids_generic_grid_vector_components), intent(inout),    &
        &   pointer :: vectorComponent(:) !< Type of IDS data structure,
                                          !> designed for vector data handling
@@ -8332,7 +8531,7 @@ contains
     end subroutine write_face_vector_component
 
     !> Write a scalar B2 vertex quantity to ids_generic_grid_scalar
-    subroutine write_vertex_scalar( basegrid, mpg, scalar, b2VertexData )
+    subroutine write_vertex_scalar( basegrid, scalar, b2VertexData )
     implicit none
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
     type(ids_generic_grid_dynamic), intent(in) :: basegrid !< Type of IDS
@@ -8341,7 +8540,6 @@ contains
     type(ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #endif
-    type(mapping), intent(in) :: mpg
     type(ids_generic_grid_scalar), intent(inout), pointer :: scalar(:)
         !< Type of IDS data structure, designed for scalar data handling
     real(IDS_real), intent(in) :: b2VertexData( mpg%nVx )
@@ -8470,7 +8668,7 @@ contains
     !!               is probably not required as, same as for %alignid, a
     !!               node itself indicates to what vector component
     !!               the data relates to.
-    subroutine write_face_vector( basegrid, mpg, vector, b2FaceData, &
+    subroutine write_face_vector( basegrid, vector, b2FaceData, &
        &   gridID, gridSubsetID, gridSubsetInd )
     implicit none
 #if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
@@ -8480,7 +8678,6 @@ contains
     type(ids_generic_grid_aos3_root), intent(in) :: basegrid !< Type of IDS
         !< data structure, designed for handling grid geometry data
 #endif
-    type(mapping), intent(in) :: mpg
     type(ids_generic_grid_scalar), intent(inout) :: vector
         !< Type of IDS data structure, designed for scalar data handling
         !< (in this case 1D vector)
