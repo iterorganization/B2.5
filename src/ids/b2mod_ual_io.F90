@@ -26,7 +26,7 @@ module b2mod_ual_io
     use b2us_plasma
     use b2mod_elements
     use b2mod_constants
-!    use b2mod_boundary_namelist
+    use b2mod_boundary_namelist
     use b2mod_neutrals_namelist
     use b2mod_user_namelist
     use b2mod_ipmain
@@ -285,6 +285,7 @@ module b2mod_ual_io
 #endif
   logical, parameter :: B2_WRITE_DATA = .true.
   real(IDS_real) :: time  !< Generic time
+  real(IDS_real) :: time_slice_value   !< Time slice value
   real(IDS_real), save :: b0, r0, b0r0
   real(IDS_real), save, allocatable :: flux_expansion(:), &
       &  extension_r(:), extension_z(:), wetted_area(:)
@@ -568,7 +569,6 @@ contains
         real(IDS_real) :: tmpVx( mpg%nVx )
         real(IDS_real) :: pe( mpg%nCv )
         real(IDS_real) :: time_step !< Time step
-        real(IDS_real) :: time_slice_value   !< Time slice value
         real(IDS_real) :: frac, u, v, psi_average,                     &
             &             vtor, nisep, nasum
         real(IDS_real), allocatable :: power_convected(:),             &
@@ -603,7 +603,6 @@ contains
 #endif
         integer :: istrai !< Stratum iterator
 #endif
-
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
         integer, parameter :: nsources = 13
 #else
@@ -616,6 +615,7 @@ contains
         integer, save :: ids_from_43 = 0
         integer, save :: balance_netcdf = 0
         real(IDS_real), save :: dtim = 1.0_IDS_real
+        real(IDS_real), save :: flux_multiplier
         character*132 radiation_commit
         character*256 filename
         character*5 hlp_frm
@@ -840,50 +840,18 @@ contains
         call write_ids_code_constant( description%code, code_commit, code_description )
 #endif
         allocate( edge_transport%model(1) )
-        allocate( edge_transport%model(1)%identifier%name(1) )
-        allocate( edge_transport%model(1)%identifier%description(1) )
+        call write_model_identifier( edge_transport%model(1)%identifier )
         if (ids_from_43.eq.0) then
-          if (style.eq.0) then
-            edge_transport%model(1)%identifier%index = -2
-            edge_transport%model(1)%identifier%name(1) = "SOLPS5.0"
-            edge_transport%model(1)%identifier%description(1) = "SOLPS5.0 physics model"
-          else if (style.ge.1) then
-            if (switch%keps_anom_he_model.eq.0) then
-              edge_transport%model(1)%identifier%index = -3
-              edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
-              edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
-            else
-              edge_transport%model(1)%identifier%index = -4
-              edge_transport%model(1)%identifier%name(1) = "SOLPS-WG k-eps"
-              edge_transport%model(1)%identifier%description(1) = "SOLPS-ITER Wide Grids k-epsilon physics model"
-            end if
-          else if (style.eq.-1) then
-            edge_transport%model(1)%identifier%index = -1
-            edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
-            edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
-          end if
-          edge_transport%model(1)%flux_multiplier = 1.5_IDS_real + switch%BoRiS
+          flux_multiplier = 1.5_IDS_real + switch%BoRiS
         else
-          edge_transport%model(1)%identifier%index = -1
-          edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
-          edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
-          edge_transport%model(1)%flux_multiplier = 2.5_IDS_real
+          flux_multiplier = 2.5_IDS_real
         end if
+        edge_transport%model(1)%flux_multiplier = flux_multiplier
+        code_commit = B25_git_version
+        code_description = "Snapshot IDS written by b2mod_ual_io routine"
 #if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
-        allocate( edge_transport%model(1)%code%name(1) )
-        edge_transport%model(1)%code%name = source
-#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-        allocate( edge_transport%model(1)%code%description(1) )
-        edge_transport%model(1)%code%description = &
-            & "Snapshot IDS written by b2mod_ual_io routine"
-#endif
-        allocate( edge_transport%model(1)%code%version(1) )
-        edge_transport%model(1)%code%version = newversion
-        allocate( edge_transport%model(1)%code%commit(1) )
-        edge_transport%model(1)%code%commit = B25_git_version
-        allocate( edge_transport%model(1)%code%repository(1) )
-        edge_transport%model(1)%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
-        call write_timed_integer( edge_transport%model(1)%code%output_flag, 0 )
+        call write_ids_code_timed( edge_transport%model(1)%code, &
+            & code_commit, code_description )
 #endif
 
         !! 3. Allocate IDS.time and set it to desired values
@@ -972,90 +940,52 @@ contains
         allocate( edge_sources%source(nsources) )
         do is = 1, nsources
           allocate( edge_sources%source(is)%ggd( num_time_slices ) )
-          allocate( edge_sources%source(is)%identifier%name(1) )
-          allocate( edge_sources%source(is)%identifier%description(1) )
+#if ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION < 31 )
+          allocate( edge_sources%source(is)%name(1) )
+          allocate( edge_sources%source(is)%description(1) )
+#endif
         end do
-
 #if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         !! Total sources
-        edge_sources%source(1)%identifier%index = edge_source_identifier%total
-        edge_sources%source(1)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%total )
-        edge_sources%source(1)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%total )
+        call write_source_identifier( &
+          &  edge_sources%source(1)%identifier, edge_source_identifier%total )
         !! Background sources
-        edge_sources%source(2)%identifier%index = edge_source_identifier%background
-        edge_sources%source(2)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%background )
-        edge_sources%source(2)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%background )
+        call write_source_identifier( &
+          &  edge_sources%source(2)%identifier, edge_source_identifier%background )
         !! Prescribed sources
-        edge_sources%source(3)%identifier%index = edge_source_identifier%prescribed
-        edge_sources%source(3)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%prescribed )
-        edge_sources%source(3)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%prescribed )
-        !! Time derivatives
-        edge_sources%source(4)%identifier%index = edge_source_identifier%time_derivative
-        edge_sources%source(4)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%time_derivative )
-        edge_sources%source(4)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%time_derivative )
+        call write_source_identifier( &
+          &  edge_sources%source(3)%identifier, edge_source_identifier%prescribed )
+        !! Time derivative
+        call write_source_identifier( &
+          &  edge_sources%source(4)%identifier, edge_source_identifier%time_derivative )
         !! Atomic ionization
-        edge_sources%source(5)%identifier%index = edge_source_identifier%atomic_ionization
-        edge_sources%source(5)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%atomic_ionization )
-        edge_sources%source(5)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%atomic_ionization )
+        call write_source_identifier( &
+          &  edge_sources%source(5)%identifier, edge_source_identifier%atomic_ionization )
         !! Molecular ionization
-        edge_sources%source(6)%identifier%index = edge_source_identifier%molecular_ionization
-        edge_sources%source(6)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%molecular_ionization )
-        edge_sources%source(6)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%molecular_ionization )
+        call write_source_identifier( &
+          &  edge_sources%source(6)%identifier, edge_source_identifier%molecular_ionization )
         !! Ionization
-        edge_sources%source(7)%identifier%index = edge_source_identifier%ionization
-        edge_sources%source(7)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%ionization )
-        edge_sources%source(7)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%ionization )
+        call write_source_identifier( &
+          &  edge_sources%source(7)%identifier, edge_source_identifier%ionization )
         !! Recombination
-        edge_sources%source(8)%identifier%index = edge_source_identifier%recombination
-        edge_sources%source(8)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%recombination )
-        edge_sources%source(8)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%recombination )
+        call write_source_identifier( &
+          &  edge_sources%source(8)%identifier, edge_source_identifier%recombination )
         !! Charge exchange
-        edge_sources%source(9)%identifier%index = edge_source_identifier%charge_exchange
-        edge_sources%source(9)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%charge_exchange )
-        edge_sources%source(9)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%charge_exchange )
+        call write_source_identifier( &
+          &  edge_sources%source(9)%identifier, edge_source_identifier%charge_exchange )
         !! Collisional equipartition
-        edge_sources%source(10)%identifier%index = edge_source_identifier%collisional_equipartition
-        edge_sources%source(10)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%collisional_equipartition )
-        edge_sources%source(10)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%collisional_equipartition )
+        call write_source_identifier( &
+          &  edge_sources%source(10)%identifier, edge_source_identifier%collisional_equipartition )
         !! Ohmic
-        edge_sources%source(11)%identifier%index = edge_source_identifier%ohmic
-        edge_sources%source(11)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%ohmic )
-        edge_sources%source(11)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%ohmic )
+        call write_source_identifier( &
+          &  edge_sources%source(11)%identifier, edge_source_identifier%ohmic )
         !! Radiation
-        edge_sources%source(12)%identifier%index = edge_source_identifier%radiation
-        edge_sources%source(12)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%radiation )
-        edge_sources%source(12)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%radiation )
+        call write_source_identifier( &
+          &  edge_sources%source(12)%identifier, edge_source_identifier%radiation )
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
         !! Neutrals
-        edge_sources%source(13)%identifier%index = edge_source_identifier%neutrals
-        edge_sources%source(13)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%neutrals )
-        edge_sources%source(13)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%neutrals )
+        call write_source_identifier( &
+          &  edge_sources%source(13)%identifier, edge_source_identifier%neutrals )
 #endif
 #else
         !! Total sources
@@ -1133,7 +1063,7 @@ contains
 #if ( AL_MAJOR_VERSION > 4 && GGD_MAJOR_VERSION > 0 )
             &  time_sind, &
 #endif
-            &  time_slice_value, .true., new_eq_ggd )
+            &  .true., new_eq_ggd )
         allocate( radiation%vacuum_toroidal_field%b0( num_time_slices ) )
         radiation%vacuum_toroidal_field%b0( time_sind ) = &
             &  edge_profiles%vacuum_toroidal_field%b0( time_sind )
@@ -2045,13 +1975,13 @@ contains
         !! Allocate and set time slice value
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         edge_profiles%grid_ggd( time_sind )%time = time_slice_value
+        edge_profiles%ggd( time_sind )%time = time_slice_value
         edge_transport%grid_ggd( time_sind )%time = time_slice_value
         edge_sources%grid_ggd( time_sind )%time = time_slice_value
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         radiation%grid_ggd( time_sind )%time = time_slice_value
 #endif
 #endif
-        edge_profiles%ggd( time_sind )%time = time_slice_value
         edge_transport%model(1)%ggd( time_sind )%time = time_slice_value
         do is = 1, nsources
           edge_sources%source(is)%ggd( time_sind )%time = time_slice_value
@@ -5626,6 +5556,23 @@ contains
 #endif
               end do
               !! Process 4. Eirene molecular ions
+              do is = nspecies+1, nsion
+                totCv(:) = 0.0_R8
+                do js = 1, istion(is)
+                  tmpCv(:) = -eionrad(:,ispion(is,js),0) / geo%cvVol(:)
+                  totCv(:) = totCv(:) + tmpCv(:)
+#if ( IMAS_MINOR_VERSION > 24 || IMAS_MAJOR_VERSION > 3 )
+                  call write_cell_scalar( radiation_grid,                     &
+                      &   scalar = radiation%process(4)%                      &
+                      &   ggd( time_sind )%ion( is )%state( js )%emissivity,  &
+                      &   b2CellData = tmpCv )
+#endif
+                end do
+                call write_cell_scalar( radiation_grid,                       &
+                    &   scalar = radiation%process(4)%                        &
+                    &   ggd( time_sind )%ion( is )%emissivity,                &
+                    &   b2CellData = totCv )
+              end do
             end if
 #endif
 #endif
@@ -6423,20 +6370,17 @@ contains
         allocate( batch_profiles%grid_ggd( num_batch_slices ) )
         allocate( batch_sources%grid_ggd( num_batch_slices ) )
 #endif
-        allocate (batch_sources%source(1) )
-        allocate (batch_sources%source(1)%ggd( num_batch_slices ) )
+        allocate( batch_sources%source(1) )
+        allocate( batch_sources%source(1)%ggd( num_batch_slices ) )
 #ifdef B25_EIRENE
-        allocate( batch_sources%source(1)%identifier%name(1) )
-        allocate( batch_sources%source(1)%identifier%description(1) )
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
         !! Neutrals
-        batch_sources%source(1)%identifier%index = edge_source_identifier%neutrals
-        batch_sources%source(1)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%neutrals )
-        batch_sources%source(1)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%neutrals )
+        call write_source_identifier( &
+          &  batch_sources%source(1)%identifier, edge_source_identifier%neutrals )
 #else
         !! Total sources due to Eirene species
+        allocate( batch_sources%source(1)%identifier%name(1) )
+        allocate( batch_sources%source(1)%identifier%description(1) )
         batch_sources%source(1)%identifier%index = 0
         batch_sources%source(1)%identifier%name = "Eirene"
         batch_sources%source(1)%identifier%description = &
@@ -6452,7 +6396,7 @@ contains
 #if ( AL_MAJOR_VERSION > 4 && GGD_MAJOR_VERSION > 0 )
             &  batch_index, &
 #endif
-            &  time, do_description, new_eq_ggd )
+            &  do_description, new_eq_ggd )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if (do_description) then
 #if IMAS_MAJOR_VERSION == 3
@@ -6534,6 +6478,11 @@ contains
             &   batch_sources%grid_ggd( batch_index ) )
 #endif
 #endif
+#else
+        if (do_description) then
+          write(0,*) 'Code was compiled without a GGD module'
+          write(0,*) 'Most IDS output is disabled !'
+        end if
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if (do_description) &
@@ -7235,6 +7184,105 @@ contains
     end subroutine write_ids_code_constant
 #endif
 
+#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
+    subroutine write_ids_code_timed( code, commit, description )
+    implicit none
+    type(ids_code_with_timebase), intent(inout) :: code
+                !< Type of IDS data structure, designed for code data handling
+    character(len=ids_string_length), intent(in) :: commit
+    character(len=ids_string_length), intent(in) :: description
+
+    allocate( code%name(1) )
+    code%name = source
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+    allocate( code%description(1) )
+    code%description = description
+#endif
+    allocate( code%version(1) )
+    code%version = newversion
+    allocate( code%commit(1) )
+    code%commit = commit
+    allocate( code%repository(1) )
+    code%repository(1) = "ssh://git.iter.org/bnd/b2.5.git"
+    call write_timed_integer( code%output_flag, 0 )
+
+    return
+    end subroutine write_ids_code_timed
+
+    subroutine write_timed_integer( ival, ivalue )
+    type(ids_signal_int_1d), intent(inout) :: ival
+        !< Type of IDS data structure, designed for integer data handling
+    integer, intent(in) :: ivalue
+
+    allocate( ival%data( num_slices ) )
+    ival%data( slice_index ) = ivalue
+    allocate( ival%time( num_slices ) )
+    ival%time( slice_index ) = time_slice_value
+
+    return
+    end subroutine write_timed_integer
+#endif
+
+    subroutine write_model_identifier( model_id )
+    implicit none
+    type(ids_identifier) :: model_id
+    integer, save :: ncall = 0
+    integer, save :: style = 1
+    integer, save :: ids_from_43 = 0
+
+    if (ncall.eq.0) then
+      call ipgeti ('ids_from_43', ids_from_43)
+      call ipgeti ('b2mndt_style', style)
+    endif
+
+    allocate( model_id%name(1) )
+    allocate( model_id%description(1) )
+    if (ids_from_43.eq.0) then
+      if (style.eq.0) then
+        model_id%index = -2
+        model_id%name(1) = "SOLPS5.0"
+        model_id%description(1) = "SOLPS5.0 physics model"
+      else if (style.ge.1) then
+        if (switch%keps_anom_he_model.eq.0) then
+          model_id%index = -3
+          model_id%name(1) = "SOLPS5.2"
+          model_id%description(1) = "SOLPS5.2 physics model"
+        else
+          model_id%index = -4
+          model_id%name(1) = "SOLPS-WG k-eps"
+          model_id%description(1) = "SOLPS-ITER Wide Grids k-epsilon physics model"
+        end if
+      else if (style.eq.-1) then
+        model_id%index = -1
+        model_id%name(1) = "SOLPS4.3"
+        model_id%description(1) = "SOLPS4.3 physics model"
+      end if
+    else
+      model_id%index = -1
+      model_id%name(1) = "SOLPS4.3"
+      model_id%description(1) = "SOLPS4.3 physics model"
+    end if
+
+    ncall = ncall + 1
+    return
+    end subroutine write_model_identifier
+
+#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+    subroutine write_source_identifier( source_id, id_index )
+    implicit none
+    type(ids_identifier) :: source_id
+    integer :: id_index
+
+    allocate( source_id%name(1) )
+    allocate( source_id%description(1) )
+    source_id%index = id_index
+    source_id%name = edge_source_identifier%name( id_index )
+    source_id%description = edge_source_identifier%description( id_index )
+
+    return
+    end subroutine write_source_identifier
+#endif
+
     subroutine put_equilibrium_data ( equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
        &  summary, &
@@ -7243,7 +7291,7 @@ contains
 #if ( AL_MAJOR_VERSION > 4 && GGD_MAJOR_VERSION > 0 )
        &  time_sind, &
 #endif
-       &  time_slice_value, do_summary_data, new_eq_ggd )
+       &  do_summary_data, new_eq_ggd )
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 ) && GGD_MAJOR_VERSION > 0
     use b2mod_ual_io_grid &
        & , only: GGD_copy_AoS3Root_to_Dynamic
@@ -7262,7 +7310,6 @@ contains
     integer, intent(in) :: time_sind     !< Corresponding time slice index
                                          !< in edge_profiles IDS
 #endif
-    real(IDS_real), intent(in) :: time_slice_value   !< Time slice value
     logical, intent(in) :: do_summary_data
     logical, intent(out) :: new_eq_ggd
 #if GGD_MAJOR_VERSION > 0
@@ -7825,6 +7872,15 @@ contains
     subroutine fill_summary_data( summary )
     implicit none
     type (ids_summary), intent(inout) :: summary
+    integer :: i, ib, ireg, freg, is, iFc
+#ifdef B25_EIRENE
+    integer :: istrai
+    integer :: iatm
+    integer :: iatm1  !< Hydrogenic atom index in molecule composition
+    integer :: iatm2  !< Non-hydrogenic atom index in molecule composition
+#endif
+    real(IDS_real) :: gpff, gsum, gmid, gbot, gtop, area
+    logical at_top, at_bot, at_mid
 
     select case ( plasmaGeometry )
     case( GEOMETRY_LIMITER )
@@ -7845,8 +7901,291 @@ contains
         & GEOMETRY_LFS_SNOWFLAKE_PLUS )
       call write_sourced_integer( summary%boundary%type, 14 )
     end select
+    if (geo%LSN) then
+      call write_sourced_value( summary%boundary%strike_point_inner_r, geo%vxX(mpg%strVx(1)) )
+      call write_sourced_value( summary%boundary%strike_point_inner_z, geo%vxY(mpg%strVx(1)) )
+      call write_sourced_value( summary%boundary%strike_point_outer_r, geo%vxX(mpg%strVx(2)) )
+      call write_sourced_value( summary%boundary%strike_point_outer_z, geo%vxY(mpg%strVx(2)) )
+    else
+      call write_sourced_value( summary%boundary%strike_point_inner_r, geo%vxX(mpg%strVx(2)) )
+      call write_sourced_value( summary%boundary%strike_point_inner_z, geo%vxY(mpg%strVx(2)) )
+      call write_sourced_value( summary%boundary%strike_point_outer_r, geo%vxX(mpg%strVx(1)) )
+      call write_sourced_value( summary%boundary%strike_point_outer_z, geo%vxY(mpg%strVx(1)) )
+    endif
 
     call write_sourced_value( summary%fusion%power, fusion_power*1.0e6_IDS_real )
+
+    call write_sourced_int_constant( summary%gas_injection_rates%impurity_seeding, 0 )
+    gsum = 0.0_R8
+    gtop = 0.0_R8
+    gmid = 0.0_R8
+    gbot = 0.0_R8
+    do i = 1, nspecies
+      is = eb2spcr(i)
+      if (is.lt.0) cycle
+      if (.not.is_neutral(is)) cycle
+      do ib = 1, nbc
+        ireg = mpg%cvReg(mpg%bcCv(mpg%bcCvP(ib,1),2))
+        freg = mpg%fcReg(mpg%bcFc(mpg%bcFcP(ib,1)))
+        if (ireg.eq.0) cycle
+        at_top = .false.
+        at_bot = .false.
+        at_mid = .false.
+        select case ( gridGeometry )
+        case (GEOMETRY_LINEAR)
+          at_mid = freg.eq.1.or.freg.eq.2.or.freg.eq.4
+          at_bot = freg.eq.3.and.geo%LSN
+          at_top = freg.eq.3.and..not.geo%LSN
+        case (GEOMETRY_SN)
+          at_mid = ireg.eq.2
+          at_bot = (ireg.eq.3.or.ireg.eq.4).and.geo%LSN
+          at_top = (ireg.eq.3.or.ireg.eq.4).and..not.geo%LSN
+        case (GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
+          at_mid = ireg.eq.2
+          at_bot = ireg.ge.3
+        case (GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP)
+          at_mid = ireg.eq.2.or.ireg.eq.6
+          at_bot = ireg.eq.3.or.ireg.eq.8
+          at_top = ireg.eq.4.or.ireg.eq.7
+        case (GEOMETRY_CYLINDER, GEOMETRY_ANNULUS)
+          at_mid = freg.eq.4
+        case (GEOMETRY_LIMITER)
+          at_mid = freg.eq.6
+        case (GEOMETRY_STELLARATORISLAND)
+          at_mid = ireg.eq.3.or.ireg.eq.4
+        end select
+        if (.not.(at_top.or.at_bot.or.at_mid)) cycle
+        gpff = 0.0_R8
+        select case (bccon(is,ib))
+        case(5)
+          area = 0.0_R8
+          do iFc = 1, mpg%bcFcP(ib,2)
+            area = area + geo%fcS(mpg%bcFc(mpg%bcFcP(ib,1)+iFc-1))
+          end do
+          gpff = area*conpar(is,ib,1)
+        case(6, 8, 13, 16, 18, 19, 22, 23, 26, 27)
+          gpff = conpar(is,ib,1)
+        end select
+        if (gpff.eq.0.0_R8) cycle
+        gsum = gsum + gpff*zn(is)
+        if (at_top) then
+          gtop = gtop + gpff*zn(is)
+        else if (at_bot) then
+          gbot = gbot + gpff*zn(is)
+        else if (at_mid) then
+          gmid = gmid + gpff*zn(is)
+        end if
+        select case (is_codes(is))
+        case ('H')
+          call add_sourced_value( summary%gas_injection_rates%hydrogen, gpff )
+        case ('D')
+          call add_sourced_value( summary%gas_injection_rates%deuterium, gpff )
+        case ('T')
+          call add_sourced_value( summary%gas_injection_rates%tritium, gpff )
+        case ('He')
+          if (nint(am(is)).eq.3) then
+            call add_sourced_value( summary%gas_injection_rates%helium_3, gpff*zn(is) )
+          else if (nint(am(is)).eq.4) then
+            call add_sourced_value( summary%gas_injection_rates%helium_4, gpff*zn(is) )
+          end if
+        case ('Li')
+          call add_sourced_value( summary%gas_injection_rates%lithium, gpff*zn(is) )
+          summary%gas_injection_rates%impurity_seeding%value = 1
+        case ('Be')
+          call add_sourced_value( summary%gas_injection_rates%beryllium, gpff*zn(is) )
+          summary%gas_injection_rates%impurity_seeding%value = 1
+        case ('C')
+          call add_sourced_value( summary%gas_injection_rates%carbon, gpff*zn(is) )
+          summary%gas_injection_rates%impurity_seeding%value = 1
+        case ('N')
+          call add_sourced_value( summary%gas_injection_rates%nitrogen, gpff*zn(is) )
+          summary%gas_injection_rates%impurity_seeding%value = 1
+        case ('O')
+          call add_sourced_value( summary%gas_injection_rates%oxygen, gpff*zn(is) )
+          summary%gas_injection_rates%impurity_seeding%value = 1
+        case ('Ne')
+          call add_sourced_value( summary%gas_injection_rates%neon, gpff*zn(is) )
+          summary%gas_injection_rates%impurity_seeding%value = 1
+        case ('Ar')
+          call add_sourced_value( summary%gas_injection_rates%argon, gpff*zn(is) )
+          summary%gas_injection_rates%impurity_seeding%value = 1
+        case ('Xe')
+          call add_sourced_value( summary%gas_injection_rates%xenon, gpff*zn(is) )
+          summary%gas_injection_rates%impurity_seeding%value = 1
+        case ('Kr')
+          call add_sourced_value( summary%gas_injection_rates%krypton, gpff*zn(is) )
+          summary%gas_injection_rates%impurity_seeding%value = 1
+        end select
+      end do
+    end do
+#ifdef B25_EIRENE
+    do istrai = 1, nstrai
+      if (crcstra(istrai).eq.'C') then
+        do iatm = 1, natmi
+          gpff = tflux(istrai)*gpfc(iatm,istrai)*zn(eb2atcr(iatm))
+          if (gpff.eq.0.0_R8) cycle
+          gsum = gsum + gpff
+          ireg = mpg%cvReg(mpg%rcCv(mpg%rcCvP(ib,1),2))
+          at_top = .false.
+          at_bot = .false.
+          at_mid = .false.
+          select case ( gridGeometry )
+          case (GEOMETRY_LINEAR)
+            at_mid = freg.eq.1.or.freg.eq.2.or.freg.eq.4
+            at_bot = freg.eq.3.and.geo%LSN
+            at_top = freg.eq.3.and..not.geo%LSN
+          case (GEOMETRY_SN, GEOMETRY_LFS_SNOWFLAKE_MINUS, GEOMETRY_LFS_SNOWFLAKE_PLUS)
+            at_mid = ireg.eq.2
+            at_bot = ireg.ge.3.or.ireg.eq.4.and.geo%LSN
+            at_top = ireg.ge.3.or.ireg.eq.4.and..not.geo%LSN
+          case (GEOMETRY_CDN, GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP)
+            at_mid = ireg.eq.2.or.ireg.eq.6
+            at_bot = ireg.eq.3.or.ireg.eq.8
+            at_top = ireg.eq.4.or.ireg.eq.7
+          case (GEOMETRY_CYLINDER, GEOMETRY_ANNULUS)
+            at_mid = freg.eq.4
+          case (GEOMETRY_LIMITER)
+            at_mid = freg.eq.6
+          case (GEOMETRY_STELLARATORISLAND)
+            at_mid = ireg.eq.3.or.ireg.eq.4
+          end select
+          if (at_top) then
+            gtop = gtop + gpff
+          else if (at_bot) then
+            gbot = gbot + gpff
+          else if (at_mid) then
+            gmid = gmid + gpff
+          end if
+          if (gpfc(iatm,istrai).eq.1.0_R8) then
+            select case (is_codes(eb2atcr(iatm)))
+            case ('H')
+              call add_sourced_value( summary%gas_injection_rates%hydrogen, &
+                  & tflux(istrai)*zn(eb2atcr(iatm)) )
+            case ('D')
+              call add_sourced_value( summary%gas_injection_rates%deuterium, &
+                  & tflux(istrai)*zn(eb2atcr(iatm)) )
+            case ('T')
+              call add_sourced_value( summary%gas_injection_rates%tritium, &
+                  & tflux(istrai)*zn(eb2atcr(iatm)) )
+            case ('He')
+              if (nint(am(is)).eq.3) then
+                call add_sourced_value( summary%gas_injection_rates%helium_3, &
+                    & tflux(istrai)*zn(eb2atcr(iatm)) )
+              else if (nint(am(is)).eq.4) then
+                call add_sourced_value( summary%gas_injection_rates%helium_4, &
+                    & tflux(istrai)*zn(eb2atcr(iatm)) )
+              end if
+            case ('Li')
+              call add_sourced_value( summary%gas_injection_rates%lithium, &
+                  & tflux(istrai)*zn(eb2atcr(iatm)) )
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('Be')
+              call add_sourced_value( summary%gas_injection_rates%beryllium, &
+                  & tflux(istrai)*zn(eb2atcr(iatm)) )
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('C')
+              call add_sourced_value( summary%gas_injection_rates%carbon, &
+                  & tflux(istrai)*zn(eb2atcr(iatm)) )
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('N')
+              call add_sourced_value( summary%gas_injection_rates%nitrogen, &
+                  & tflux(istrai)*zn(eb2atcr(iatm)) )
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('O')
+              call add_sourced_value( summary%gas_injection_rates%oxygen, &
+                  & tflux(istrai)*zn(eb2atcr(iatm)) )
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('Ne')
+              call add_sourced_value( summary%gas_injection_rates%neon, &
+                  & tflux(istrai)*zn(eb2atcr(iatm)) )
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('Ar')
+              call add_sourced_value( summary%gas_injection_rates%argon, &
+                  & tflux(istrai)*zn(eb2atcr(iatm)) )
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('Xe')
+              call add_sourced_value( summary%gas_injection_rates%xenon, &
+                  & tflux(istrai)*zn(eb2atcr(iatm)) )
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            case ('Kr')
+              call add_sourced_value( summary%gas_injection_rates%krypton, &
+                  & tflux(istrai)*zn(eb2atcr(iatm)) )
+              summary%gas_injection_rates%impurity_seeding%value = 1
+            end select
+          end if
+        end do
+        if (maxval(gpfc(1:natmi,istrai)).ne.1.0_R8) then
+          do iatm = 1, natmi
+            if (gpfc(iatm,istrai).gt.0.0_R8) then
+              if (nint(zn(eb2atcr(iatm))).eq.1) iatm1 = iatm
+              if (nint(zn(eb2atcr(iatm))).gt.1) iatm2 = iatm
+            end if
+          end do
+          if (gpfc(iatm1,istrai)+gpfc(iatm2,istrai).le.0.9999_R8) then
+            continue ! case not coded
+          else
+            if (nint(gpfc(iatm1,istrai)/gpfc(iatm2,istrai)).eq.4) then
+              if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
+                & nint(am(eb2atcr(iatm2))).eq.12) then ! CH4
+                call add_sourced_value( summary%gas_injection_rates%methane, &
+                    & tflux(istrai)*10 )
+                summary%gas_injection_rates%impurity_seeding%value = 1
+              else if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
+                &      nint(am(eb2atcr(iatm2))).eq.13) then ! 13CH4
+                call add_sourced_value( summary%gas_injection_rates%methane_carbon_13, &
+                    & tflux(istrai)*10 )
+                summary%gas_injection_rates%impurity_seeding%value = 1
+              else if (nint(am(eb2atcr(iatm1))).eq.2 .and. &
+                &      nint(am(eb2atcr(iatm2))).eq.12) then ! CD4
+                call add_sourced_value( summary%gas_injection_rates%methane_deuterated, &
+                    & tflux(istrai)*10 )
+                summary%gas_injection_rates%impurity_seeding%value = 1
+              else if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
+                &      nint(am(eb2atcr(iatm2))).eq.28) then ! SiH4
+                call add_sourced_value( summary%gas_injection_rates%silane, &
+                    & tflux(istrai)*18 )
+                summary%gas_injection_rates%impurity_seeding%value = 1
+              end if
+            else if (nint(gpfc(iatm1,istrai)/gpfc(iatm2,istrai)).eq.2) then
+              if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
+                & nint(am(eb2atcr(iatm2))).eq.12) then ! C2H4
+                call add_sourced_value( summary%gas_injection_rates%ethylene, &
+                    & tflux(istrai)*16 )
+                summary%gas_injection_rates%impurity_seeding%value = 1
+              endif
+            else if (nint(gpfc(iatm1,istrai)/gpfc(iatm2,istrai)).eq.3) then ! C2H6, C3H8, NH3, ND3
+              if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
+                & nint(am(eb2atcr(iatm2))).eq.12) then
+                if (nint(gpfc(iatm2,istrai)*6).eq.2) then ! C2H6
+                  call add_sourced_value( summary%gas_injection_rates%ethane, &
+                      & tflux(istrai)*18 )
+                  summary%gas_injection_rates%impurity_seeding%value = 1
+                else if (nint(gpfc(iatm2,istrai)*8).eq.3) then ! C3H8
+                  call add_sourced_value( summary%gas_injection_rates%propane, &
+                      & tflux(istrai)*26 )
+                  summary%gas_injection_rates%impurity_seeding%value = 1
+                end if
+              else if (nint(am(eb2atcr(iatm1))).eq.1 .and. &
+                &      nint(am(eb2atcr(iatm2))).eq.14) then ! NH3
+                call add_sourced_value( summary%gas_injection_rates%ammonia, &
+                    & tflux(istrai)*10 )
+                summary%gas_injection_rates%impurity_seeding%value = 1
+              else if (nint(am(eb2atcr(iatm1))).eq.2 .and. &
+                &      nint(am(eb2atcr(iatm2))).eq.14) then ! ND3
+                call add_sourced_value( summary%gas_injection_rates%ammonia_deuterated, &
+                    & tflux(istrai)*10 )
+                summary%gas_injection_rates%impurity_seeding%value = 1
+              end if
+            end if
+          end if
+        end if
+      end if
+    end do
+#endif
+    call write_sourced_value( summary%gas_injection_rates%total, gsum )
+    call write_sourced_value( summary%gas_injection_rates%midplane, gmid )
+    call write_sourced_value( summary%gas_injection_rates%top, gtop )
+    call write_sourced_value( summary%gas_injection_rates%bottom, gbot )
 
     return
     end subroutine fill_summary_data

@@ -103,12 +103,10 @@ c*** Calculate the load
      ,       (wldrdld(i),i=istart,iend)
           end do !}
         else !}{
-          do j=1,nsns !{
-            if (fnmti_b2(eirdiag_nds_ind(abs(lsns(j)))+1).eq.-1)
-     >       cycle
+          do j=ncns+1,nsts !{
+            if (eirdiag_nds_ind(j)+1.eq.eirdiag_nds_ind(j+1)) cycle
             istart=iend+1
-            iend=iend+eirdiag_nds_ind(abs(lsns(j))+1)-
-     .               (eirdiag_nds_ind(abs(lsns(j)))+1)
+            iend=iend+eirdiag_nds_ind(j+1)-(eirdiag_nds_ind(j)+1)
             print '(a,i3,a/(1p,5e17.4))',
      ,       'Eirene non-standard surface',j,': load',
      ,       (wldrdld(i),i=istart,iend)
@@ -143,14 +141,13 @@ c*** Arrange the output data
         end do !}
       else !}{
         jj=0
-        do j=1,nsns !{
-          if (fnmti_b2(eirdiag_nds_ind(abs(lsns(j)))+1).eq.-1) cycle
+        do j=ncns+1,nsts !{
+          if (eirdiag_nds_ind(j)+1.eq.eirdiag_nds_ind(j+1)) cycle
           jj=jj+1
-          do i=eirdiag_nds_ind(abs(lsns(j)))+1,
-     .         eirdiag_nds_ind(abs(lsns(j))+1)-1
+          do i=eirdiag_nds_ind(j)+1,eirdiag_nds_ind(j+1)-1
             k=k+1
             if (lwldrad(k).eq.0) cycle
-            ii=i-eirdiag_nds_ind(abs(lsns(j)))
+            ii=i-eirdiag_nds_ind(j)
             rdl(ii,jj,0)=wldrdld(lwldrad(k))
             if(lrdlsp) then !{
               do m=1,n !{

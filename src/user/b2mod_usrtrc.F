@@ -1033,14 +1033,14 @@ c*** Neutral flux across the side walls
 
 c*** flux across other recycling surfaces for vessel mode grids
 c*** we must remove targets and transparent surfaces from that list
-            do js=1,nsns !{
+            do js=1,nsts !{
               is_target = .false.
               do ic=1,ntns !{
-                is_target = is_target.or.abs(lsns(js)).eq.ltns(ic)
+                is_target = is_target.or.js.eq.ltns(ic)
               end do !}
               if (.not.is_target) then !{
-                ks = abs(lsns(js))+nnlimi
-                if (iliin(abs(lsns(js))).gt.0) then !{
+                ks = js+nnlimi
+                if (iliin(js).gt.0) then !{
                   hlpnw=hlpnw+wldna(ks,ls,0)-wldra(ks,ls,0)
                   do j=1,nnmoli !{
                     if(mlcmp(ls,j).gt.0) hlpnw=hlpnw+

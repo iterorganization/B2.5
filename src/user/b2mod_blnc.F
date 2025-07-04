@@ -549,14 +549,14 @@ c*** Flux across the side walls
 #ifdef B25_EIRENE
 c*** flux across other recycling surfaces for vessel mode grids
 c*** we must remove targets and transparent surfaces from that list
-          do js=1,nsns !{
+          do js=1,nsts !{
             is_target = .false.
             do ic=1,ntns !{
-              is_target = is_target.or.abs(lsns(js)).eq.ltns(ic)
+              is_target = is_target.or.js.eq.ltns(ic)
             end do !}
             if (.not.is_target) then !{
-              ilks = abs(lsns(js))+nnlimi
-              if (iliin(abs(lsns(js))).gt.0) then !{
+              ilks = js+nnlimi
+              if (iliin(js).gt.0) then !{
                 do j=1,nnatmi !{
                   if(latmscl(j).eq.ls) then !{
                     hlpnw=hlpnw-wldna(ilks,j,0)+wldra(ilks,j,0)
