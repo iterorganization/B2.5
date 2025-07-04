@@ -188,6 +188,10 @@ module b2mod_ual_io
     use ids_schemas &     ! IGNORE
      & , only : ids_numerics
 #endif
+#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
+    use ids_schemas &     ! IGNORE
+     & , only : ids_code_with_timebase
+#endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_divertors
@@ -213,7 +217,7 @@ module b2mod_ual_io
 #endif
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
     use ids_utilities &   ! IGNORE
-     & , only : ids_identifier_static
+     & , only : ids_identifier, ids_identifier_static
 #endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
     use b2mod_math
