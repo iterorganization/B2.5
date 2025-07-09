@@ -86,8 +86,8 @@
 *     cells or an internal cell and a guard cell. There are no faces
 *     between guard cells.
 *
-*     fcS - (1:nFc,1:2) real*8 array.
-*     For iFc in (1:nFc), fcHc(iFc,:) specifies the total area of face iFc.
+*     fcS - (1:nFc) real*8 array.
+*     For iFc in (1:nFc), fcS(iFc) specifies the total area of face iFc.
 *
 *     fcQgam - (1:nFc,0:1) real*8 array.
 *     For iFc in (1:nFc), fcQgam(iFc,0) specifies cos(t) and

@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, na, ua,
-     &  facdrift, fchinert)
+      subroutine b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  na, ua, facdrift, fchinert_a, fchinert)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmfs
@@ -13,7 +13,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer, intent (in) :: nCv, nFc, nVx, ns
+      integer, intent (in) :: nCv, nFc, nVx, ns, ismain
       type (switches), intent (in) :: switch
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
@@ -21,14 +21,15 @@
      &  na(nCv,0:ns-1), ua(nCv,0:ns-1), facdrift(nFc)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  fchinert(nFc,0:1)
+     &  fchinert_a(nFc,0:1,0:ns-1), fchinert(nFc,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2TINER computes the poloidal and radial components of the inertial current.
+*     B2TINER computes the poloidal and radial components of the
+*     inertial current.
 *
 *  8. further comments
 *
@@ -40,7 +41,7 @@
 *   ..local variables
       integer is
       real (kind=R8) :: wght(nFc,2), gOnedBsq(nFc,0:1),
-     &  wrk(nCv), wrk0(nFc), wrk1(nFc)
+     &  wrk(nCv), wrkf(nFc)
 *   ..procedures
       external xertst
       external b2xvsg
@@ -61,26 +62,42 @@ c Drift terms
         call grad(nCv, nFc, nVx, 1, geo, mpg, geo%cvOnedBsq,
      &    geo%vxOnedBsq, gOnedBsq)
 
-*     ..sum of inertia terms
+*     ..compute inertia current
         wght = 1.0_R8
-        wrk0 = 0.0_R8
+        fchinert = 0.0_R8
         do is = 0, ns-1
           if (.not.is_neutral(is)) then
-            wrk = na(:,is)*ua(:,is)**2
-            call intface(nCv,nFc,mpg%fcCv,wght,wrk,wrk1)
-            wrk0 = wrk0 + am(is)*wrk1
+
+*         ..interpolate inertia factor to faces
+            wrk = 0.5_R8*am(is)*mp*na(:,is)*ua(:,is)**2
+            call intface(nCv,nFc,mpg%fcCv,wght,wrk,wrkf)
+
+*         ..components of inertia current per species
+            fchinert_a(:,0,is) =  switch%fch_inert*facdrift*wrkf*
+     &        gOnedBsq(:,1)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,0)
+            fchinert_a(:,1,is) = -switch%fch_inert*facdrift*wrkf*
+     &        gOnedBsq(:,0)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,1)
+
+*         ..accumulate individual contributions into fchinert
+            fchinert = fchinert + fchinert_a(:,:,is)
+
           endif
         enddo
-        wrk0 = 0.5_R8*mp*wrk0
 
-*     ..COMPONENTS OF INERTIA CURRENT
-        fchinert(:,0) =  switch%fch_inert*facdrift*wrk0*
-     &    gOnedBsq(:,1)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,0)
-        fchinert(:,1) = -switch%fch_inert*facdrift*wrk0*
-     &    gOnedBsq(:,0)*geo%fcBb(:,2)*geo%fcS*geo%fcQalf(:,1)
+*     ..fully assign to main ion species if needed
+        if (switch%inert_all_ions.eq.0) then
+          do is = 0, ns-1
+            if (is.eq.ismain) then
+              fchinert_a(:,:,is) = fchinert
+            else
+              fchinert_a(:,:,is) = 0.0_R8
+            endif
+          enddo
+        endif
 
       else
         fchinert = 0.0_R8
+        fchinert_a = 0.0_R8
       endif
 
 * ..return

@@ -11,6 +11,7 @@
       use b2mod_driver
       use b2us_geo
       use b2us_map
+      use b2us_data
       use b2us_plasma
       use b2us_prep
       use b2us_io
@@ -127,13 +128,6 @@
 
 *   ..common blocks
 
-*   ..main data structures
-      type(mapping), save    :: mpg
-      type(geometry), save   :: geo
-      type(B2State), save    :: state
-      type(B2StateExt), save :: state_ext
-      type(B2Average), save  :: state_avg
-      type(switches), save   :: switch
 *   ..local variables
       integer ix, iy, ic
 #ifdef JET
@@ -255,12 +249,9 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call createB2State (nCv, nFc, ns, state)
       call alloc_b2mod_ppout(DEF_NXD, DEF_NYD, ns)
 *   ..call driver routines
-      call b2mndr_0 (ninp, nout, ns, ns0, switch, geo, mpg,
-     &  state, state_ext, state_avg)
-      call b2mndr_1 (nout, ns, switch, geo, mpg,
-     &  state, state_ext, state_avg, 0)
-      call b2mndr_2 (nout, ns, switch, geo, mpg,
-     &  state, state_ext, state_avg)
+      call b2mndr_0 (ninp, nout, ns, ns0)
+      call b2mndr_1 (nout, ns, 0)
+      call b2mndr_2 (nout, ns)
 *   ..write plasma state
       call cfopen (nout(7),'b2fplasma','replace','unformatted')  !srv 02.05.09 }
       call cfverw(nout(7), newversion)

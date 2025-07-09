@@ -75,7 +75,7 @@ c----------------------------------------------------------------------
      2        'p2      ','segmlist','plotzone','jedgi1  ','jedgi2  ',
      3        'jedgo1  ','jedgo2  ','elemlist','sol_edge','pfr_edge',
      4        'trg_spcf','pltz_lbl','misselem','skipelem','shdw_str',
-     5        'radpower','sources ','gleirdat','fclbl'   ,'grd_mode'/
+     5        'radpower','sources ','gleirdat','fclbl   ','grd_mode'/
       integer i, j
       integer ll, lt, luswch
       logical streql

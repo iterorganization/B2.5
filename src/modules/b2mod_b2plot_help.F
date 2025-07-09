@@ -385,7 +385,7 @@
      5    'Parallel electron velocity (u_{e}) (m.s^{-1})',
      6    'Parallel current (A)',
      7    'Squared ion charge (e^{2})',
-     8    'Flux region index',
+     8    'Face region index',
      9    'Face label',
      *    'Nuclear sequence index'/
       data descriptions(251:260) /

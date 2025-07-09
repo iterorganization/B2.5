@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2siav (nCv, nFc, nVx, ns, isb, switch, geo, mpg, mb,
-     & ub, te, ti, nb, ni, ne2, rz2, lnlam, hcix_c, cvsbhz_cl, smbvh,
-     & smbvv, kt_neo, wrk0, wrk1, wrk2)                                 !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
+      subroutine b2siav (nCv, nFc, nVx, ns, isb, ismain, switch, geo,
+     & mpg, mb, ub, te, ti, nb, ni, ne2, rz2, lnlam, hcix_c, cvsbhz_cl,
+     & smbvh, smbvv, kt_neo, wrk0, wrk1, wrk2)                          !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -25,7 +25,7 @@
       use b2mod_subsys
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nCv, nFc, nVx, ns, isb
+      integer nCv, nFc, nVx, ns, isb, ismain
       type (geometry), intent (in) :: geo
       type (mapping), intent (in) :: mpg
       type (switches), intent (in) :: switch
@@ -79,7 +79,7 @@
       smbvh = 0.0_R8
       smbvv = 0.0_R8
 
-      if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then           !srv 26.10.08
+      if(isb.eq.ismain) then           !srv 26.10.08
 
         if (switch%addvis.ne.0.0_R8) then                                      !srv 19.01.05 28.03.06 {
 

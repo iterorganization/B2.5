@@ -4,17 +4,22 @@
       implicit none
 
 !     private
-      public :: B2state, B2Plasma, B2Derivatives, B2coeff, B2rates,
-     .          B2ratesWork, B2Source, B2SourceWork, B2PlasmaSnapShot,
-     .          B2Diagnostic, B2Update, B2Average
+      public :: B2State, B2Plasma, B2Derivatives, B2Coeff, B2Rates,
+     .          B2RatesWork, B2Source, B2SourceWork, B2PlasmaSnapShot,
+     .          B2Diagnostic, B2Update, B2Average,
+     .          B2Coeff_nspecies
 
 ! Plasma state derived types
 
 ! Main plasma state parameters
       type B2Plasma
-        integer :: ns ! total number of species (1:ns or 0:ns-1)
-        real(R8), dimension(:,:), allocatable :: na, ua  ! second index is species
-        real(R8), dimension(:), allocatable :: po, te, ti, tn, kt, zt
+        integer :: ns           ! number of species (0:ns-1)
+        integer :: nspecies     ! number of isonuclear sequences (0:nspecies-1)
+        integer :: ismain       ! index of main species
+        integer :: ismain0      ! index of main neutral species
+
+        real(R8), dimension(:,:), allocatable :: na, ua                ! first index: cell volumes; second index: species
+        real(R8), dimension(:), allocatable :: po, te, ti, tn, kt, zt  ! index: cell volumes
       end type B2Plasma
 
 ! Quantities derived from plasma state
@@ -24,9 +29,12 @@
         real(R8), allocatable :: fch(:,:), fch_32(:,:),
      .                           fch_52(:,:), fch_p(:,:),
      .                           fchdia(:,:), fchin(:,:),
-     .                           fchvispar(:,:), fchvisper(:,:),
-     .                           fchvisq(:,:), fchinert(:,:),
-     .                           fchanml(:,:), fchviskt(:,:),
+     .                           fchvispar(:,:), fchvispar_a(:,:,:),
+     .                           fchvisper(:,:), fchvisper_a(:,:,:),
+     .                           fchvisq(:,:), fchvisq_a(:,:,:),
+     .                           fchinert(:,:), fchinert_a(:,:,:),
+     .                           fchanml(:,:), fchanml_a(:,:,:),
+     .                           fchviskt(:,:), fchviskt_a(:,:,:),
      .                           fch_pi_c(:,:), fch_pi_f(:,:)
         real(R8), allocatable :: fni_32(:,:), fni_52(:,:),
      .                           fni(:,:), fni_he(:,:)
@@ -66,11 +74,13 @@
         real(R8), dimension(:), allocatable :: fllime, fllimi
 
         ! residuals
-        real(R8), dimension(:,:), allocatable :: resmo
-        real(R8), dimension(:,:), allocatable :: resco
+        real(R8), dimension(:,:), allocatable :: resmo, resmo0
+        real(R8), dimension(:,:), allocatable :: resco, resco0
         real(R8), dimension(:), allocatable :: respo, reshe, reshi,
      .                                         resht, resmt, reshn,
      .                                         reskt, reszt
+        real(R8), dimension(:), allocatable :: reshe0, reshi0, reshn0,
+     .                                         reskt0, reszt0
 
         ! corrections
         real(R8), dimension(:,:), allocatable :: corua, corpa
@@ -113,16 +123,21 @@
      .                           cdpa(:,:,:), cvsa(:,:,:),
      .                           cvlahz(:,:,:), cdnahz(:,:,:),
      .                           cdpahz(:,:,:), cvsahz(:,:,:),
-     .                           cddi(:,:,:), cvsahz_cl(:,:,:),
+     .                           cvsa_cl(:,:,:), cvsa_drho(:,:,:),
+     .                           cvsahz_cl(:,:,:),
+     .                           cvsahz_drho(:,:,:),
+     .                           cddi(:,:,:), cdde(:,:),
      .                           chcb(:,:,:), cvsa_an(:,:,:),
-     .                           cvmahz(:,:,:), cvsahz_eff(:,:,:)
-        real(R8), allocatable :: cthe(:,:), cthi(:,:), cvsa_cl(:,:,:)
+     .                           cvmahz(:,:,:), cvsahz_eff(:,:,:),
+     .                           chci_a(:,:,:)
+        real(R8), allocatable :: cthe(:,:), cthi(:,:)
         real(R8), allocatable :: ceqp(:)
 
         real(R8), allocatable :: fllim0fhi(:,:,:), fllimvisc(:,:),
      .                           fllim0fna(:,:,:)
 
-        real(R8), allocatable :: vsaf_cl(:,:,:)
+        real(R8), allocatable :: vsaf_cl(:,:,:), vsaf_drho(:,:,:)
+        real(R8), allocatable :: hci_a(:,:)
 
         real(R8), allocatable, dimension(:) :: sig0, hce0, hci0, hcn0,
      .                                         alf0, dkt0, dzt0,
@@ -141,10 +156,30 @@
      .                           fllim_ki, fllim_ke, fllim_al,
      .                           fllim_al_c, fllim_ki_c,
      .                           f_luc_ke, f_luc_ki,
-     .                           f_luc_et, f_luc_sg, f_luc_al
+     .                           f_luc_et, f_luc_sg, f_luc_al,
+     .                           alpha1f,
+     .                           f_luc_ke_c, f_luc_ki_c
 
         real(R8), allocatable, dimension(:) :: cssb
       end type B2Coeff
+
+      type B2Coeff_nspecies
+        ! Dedicated coefficients related to Zhdanov closure
+        real(R8), allocatable :: vsaf_hAdp_albe(:,:,:,:),
+     .                           vsaf_hBdp_al(:,:,:),
+     .                           vsaf_uAdp_albe(:,:,:,:),
+     .                           vsaf_uBdp_al(:,:,:),
+     .                           hci_al_ast(:,:),
+     .                           chci_al_ast(:,:,:),
+     .                           cvsa_hAdp_albe(:,:,:,:),
+     .                           cvsa_hBdp_al(:,:,:),
+     .                           cvsa_uAdp_albe(:,:,:,:),
+     .                           cvsa_uBdp_al(:,:,:),
+     .                           cvsahz_hAdp_albe(:,:,:,:),
+     .                           cvsahz_hBdp_al(:,:,:),
+     .                           cvsahz_uAdp_albe(:,:,:,:),
+     .                           cvsahz_uBdp_al(:,:,:)
+      end type B2Coeff_nspecies
 
       type B2Source
         real(R8), dimension(:,:), allocatable :: sch, she, shi, sne,
@@ -225,10 +260,13 @@
         real(R8), dimension(:,:), allocatable :: na, ua  ! second index is species
         real(R8), dimension(:), allocatable :: po, te, ti, tn, kt, zt
         real(R8), allocatable :: ne(:), ni(:,:), nn(:)
-        real(R8), allocatable :: fch(:,:), fna(:,:,:),
+        real(R8), allocatable :: fch(:,:), fna(:,:,:), fmo(:,:,:),
      .                           fhi(:,:), fhe(:,:), fhn(:,:), fkt(:,:),
      .                           fzt(:,:)
         real(R8), allocatable :: kinrgy(:,:)
+        real(R8), allocatable :: resco0(:,:), resmo0(:,:),
+     .                           reshi0(:), reshe0(:), reshn0(:),
+     .                           reskt0(:), reszt0(:)
       end type B2PlasmaSnapshot
 
       type B2Diagnostic
@@ -265,6 +303,7 @@
 
         type(B2Plasma) :: pl
         type(B2Coeff) :: co
+        type(B2Coeff_nspecies) :: co_ns
         type(B2Derivatives) :: dv
         type(B2Source) :: sr
         type(B2SourceEir) :: sr_eir
@@ -342,6 +381,7 @@
 
       call destroyB2Plasma( st % pl )
       call destroyB2Coeff( st % co )
+      call destroyB2Coeff_nspecies( st % co_ns )
       call destroyB2Derivatives( st % dv )
       call destroyB2Source( st % sr )
       call destroyB2SourceWork( st % srw )
@@ -428,6 +468,7 @@
 
       allocate( coeff % chvi( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % chci( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( coeff % chci_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % chci_ExB( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % chcn( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( coeff % chcb( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
@@ -441,6 +482,7 @@
       allocate( coeff % cdpa( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvsa( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvsa_cl( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cvsa_drho( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvsa_an( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
       allocate( coeff % cvlahz( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
@@ -448,12 +490,15 @@
       allocate( coeff % cdpahz( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvsahz( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvsahz_cl( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cvsahz_drho( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvsahz_eff( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cvmahz( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
       allocate( coeff % vsaf_cl( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % vsaf_drho( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
 
       allocate( coeff % cddi( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( coeff % cdde( nFc, 0:1 ), SOURCE=0._R8 )
 
       allocate( coeff % cthe( nCv, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % cthi( nCv, 0:ns-1 ), SOURCE=0._R8 )
@@ -463,6 +508,8 @@
       allocate( coeff % fllim0fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % fllim0fhi( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( coeff % fllimvisc( nFc, 0:ns-1 ), SOURCE=0._R8 )
+
+      allocate( coeff % hci_a( nCv, 0:ns-1 ), SOURCE=0._R8 )
 
 ! moved here from b2coeffwork
 
@@ -495,6 +542,9 @@
       allocate( coeff%f_luc_et( nFc ), SOURCE=0._R8 )
       allocate( coeff%f_luc_sg( nFc ), SOURCE=0._R8 )
       allocate( coeff%f_luc_al( nFc ), SOURCE=0._R8 )
+      allocate( coeff%alpha1f( nFc ), SOURCE=0._R8 )
+      allocate( coeff%f_luc_ke_c( nCv ), SOURCE=0._R8 )
+      allocate( coeff%f_luc_ki_c( nCv ), SOURCE=0._R8 )
       allocate( coeff%alfx_c( nCv ), SOURCE=0._R8 )
       allocate( coeff%sigx_c( nCv ), SOURCE=0._R8 )
       allocate( coeff%sigx_kt( nCv ), SOURCE=0._R8 )
@@ -518,6 +568,7 @@
 
       allocate( coeff % chvi( nFc, 0:1 ) )
       allocate( coeff % chci( nFc, 0:1 ) )
+      allocate( coeff % chci_a( nFc, 0:1, 0:ns-1 ))
       allocate( coeff % chci_ExB( nFc, 0:1 ) )
       allocate( coeff % chcn( nFc, 0:1 ) )
       allocate( coeff % chcb( nFc, 0:1, 0:ns-1 ) )
@@ -531,6 +582,7 @@
       allocate( coeff % cdpa( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cvsa( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cvsa_cl( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cvsa_drho( nFc, 0:1, 0:ns-1 ))
       allocate( coeff % cvsa_an( nFc, 0:1, 0:ns-1 ) )
 
       allocate( coeff % cvlahz( nFc, 0:1, 0:ns-1 ) )
@@ -538,12 +590,15 @@
       allocate( coeff % cdpahz( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cvsahz( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cvsahz_cl( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cvsahz_drho( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cvsahz_eff( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % cvmahz( nFc, 0:1, 0:ns-1 ) )
 
       allocate( coeff % vsaf_cl( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % vsaf_drho( nFc, 0:1, 0:ns-1 ) )
 
       allocate( coeff % cddi( nFc, 0:1, 0:ns-1 ) )
+      allocate( coeff % cdde( nFc, 0:1 ) )
 
       allocate( coeff % cthe( nCv, 0:ns-1 ) )
       allocate( coeff % cthi( nCv, 0:ns-1 ) )
@@ -553,6 +608,8 @@
       allocate( coeff % fllim0fna( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % fllim0fhi( nFc, 0:1, 0:ns-1 ) )
       allocate( coeff % fllimvisc( nFc, 0:ns-1 ) )
+
+      allocate( coeff % hci_a( nCv, 0:ns-1 ) )
 
 ! moved here from b2coeffwork
 
@@ -585,6 +642,10 @@
       allocate( coeff%f_luc_et( nFc ) )
       allocate( coeff%f_luc_sg( nFc ) )
       allocate( coeff%f_luc_al( nFc ) )
+      allocate( coeff%alpha1f( nFc ) )
+      allocate( coeff%f_luc_ke_c( nCv ))
+      allocate( coeff%f_luc_ki_c( nCv ))
+
       allocate( coeff%alfx_c( nCv ) )
       allocate( coeff%sigx_c( nCv ) )
       allocate( coeff%sigx_kt( nCv ) )
@@ -608,6 +669,7 @@
 
       coeff % chvi = 0._R8
       coeff % chci = 0._R8
+      coeff % chci_a = 0._R8
       coeff % chci_ExB = 0._R8
       coeff % chcn = 0._R8
       coeff % chcb = 0._R8
@@ -621,6 +683,7 @@
       coeff % cdpa = 0._R8
       coeff % cvsa = 0._R8
       coeff % cvsa_cl = 0._R8
+      coeff % cvsa_drho = 0._R8
       coeff % cvsa_an = 0._R8
 
       coeff % cvlahz = 0._R8
@@ -628,12 +691,15 @@
       coeff % cdpahz = 0._R8
       coeff % cvsahz = 0._R8
       coeff % cvsahz_cl = 0._R8
+      coeff % cvsahz_drho = 0._R8
       coeff % cvsahz_eff = 0._R8
       coeff % cvmahz = 0._R8
 
       coeff % vsaf_cl = 0._R8
+      coeff % vsaf_drho = 0._R8
 
       coeff % cddi = 0._R8
+      coeff % cdde = 0._R8
 
       coeff % cthe = 0._R8
       coeff % cthi = 0._R8
@@ -643,6 +709,8 @@
       coeff % fllim0fna = 0._R8
       coeff % fllim0fhi = 0._R8
       coeff % fllimvisc = 0._R8
+
+      coeff % hci_a = 0._R8
 
 ! moved here from b2coeffwork
 
@@ -675,6 +743,9 @@
       coeff % f_luc_et = 0._R8
       coeff % f_luc_sg = 0._R8
       coeff % f_luc_al = 0._R8
+      coeff % alpha1f = 0._R8
+      coeff % f_luc_ke_c = 0._R8
+      coeff % f_luc_ki_c = 0._R8
       coeff % alfx_c = 0._R8
       coeff % sigx_c = 0._R8
       coeff % sigx_kt = 0._R8
@@ -705,6 +776,7 @@
 
       deallocate( coeff % chvi )
       deallocate( coeff % chci )
+      deallocate( coeff % chci_a )
       deallocate( coeff % chci_ExB )
       deallocate( coeff % chcn )
       deallocate( coeff % chcb )
@@ -718,6 +790,7 @@
       deallocate( coeff % cdpa )
       deallocate( coeff % cvsa )
       deallocate( coeff % cvsa_cl )
+      deallocate( coeff % cvsa_drho )
       deallocate( coeff % cvsa_an )
 
       deallocate( coeff % cvlahz )
@@ -725,12 +798,15 @@
       deallocate( coeff % cdpahz )
       deallocate( coeff % cvsahz )
       deallocate( coeff % cvsahz_cl )
+      deallocate( coeff % cvsahz_drho )
       deallocate( coeff % cvsahz_eff )
       deallocate( coeff % cvmahz )
 
       deallocate( coeff % vsaf_cl )
+      deallocate( coeff % vsaf_drho )
 
       deallocate( coeff % cddi )
+      deallocate( coeff % cdde )
 
       deallocate( coeff % cthe )
       deallocate( coeff % cthi )
@@ -741,6 +817,8 @@
       deallocate( coeff % fllim0fna )
       deallocate( coeff % fllim0fhi )
       deallocate( coeff % fllimvisc )
+
+      deallocate( coeff % hci_a )
 
       deallocate( coeff % dna0 )
       deallocate( coeff % dpa0 )
@@ -771,6 +849,9 @@
       deallocate( coeff % f_luc_et )
       deallocate( coeff % f_luc_sg )
       deallocate( coeff % f_luc_al )
+      deallocate( coeff % alpha1f )
+      deallocate( coeff % f_luc_ke_c )
+      deallocate( coeff % f_luc_ki_c )
       deallocate( coeff % alfx_c )
       deallocate( coeff % sigx_c )
       deallocate( coeff % sigx_kt )
@@ -781,6 +862,105 @@
       return
       end subroutine destroyB2Coeff
 
+
+      subroutine createB2Coeff_nspecies( nCv, nFC, nspecies, coeff_ns )
+      integer, intent(in) :: nCv, nFc, nspecies
+      type(B2Coeff_nspecies), intent(inout) :: coeff_ns
+
+      if (allocated(coeff_ns % hci_al_ast)) return
+
+#ifndef LEGACYCOMP
+      allocate( coeff_ns % vsaf_hAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ), SOURCE=0._R8 )
+      allocate( coeff_ns % vsaf_hBdp_al( nFc, 0:1, 0:nspecies-1 ),
+     .  SOURCE=0._R8 )
+      allocate( coeff_ns % vsaf_uAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ), SOURCE=0._R8 )
+      allocate( coeff_ns % vsaf_uBdp_al( nFc, 0:1, 0:nspecies-1 ),
+     .  SOURCE=0._R8 )
+      allocate( coeff_ns % hci_al_ast( nCv, 0:nspecies-1 ),
+     .  SOURCE=0._R8 )
+      allocate( coeff_ns % chci_al_ast( nFc, 0:1, 0:nspecies-1 ),
+     .  SOURCE=0._R8 )
+      allocate( coeff_ns % cvsa_hAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ), SOURCE=0._R8 )
+      allocate( coeff_ns % cvsa_hBdp_al( nFc, 0:1, 0:nspecies-1 ),
+     .  SOURCE=0._R8 )
+      allocate( coeff_ns % cvsa_uAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ), SOURCE=0._R8 )
+      allocate( coeff_ns % cvsa_uBdp_al( nFc, 0:1, 0:nspecies-1 ),
+     .  SOURCE=0._R8 )
+      allocate( coeff_ns % cvsahz_hAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ), SOURCE=0._R8 )
+      allocate( coeff_ns % cvsahz_hBdp_al( nFc, 0:1, 0:nspecies-1 ),
+     .  SOURCE=0._R8 )
+      allocate( coeff_ns % cvsahz_uAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ), SOURCE=0._R8 )
+      allocate( coeff_ns % cvsahz_uBdp_al( nFc, 0:1, 0:nspecies-1 ),
+     .  SOURCE=0._R8 )
+#else
+      allocate( coeff_ns % vsaf_hAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ))
+      allocate( coeff_ns % vsaf_hBdp_al( nFc, 0:1, 0:nspecies-1 ))
+      allocate( coeff_ns % vsaf_uAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ))
+      allocate( coeff_ns % vsaf_uBdp_al( nFc, 0:1, 0:nspecies-1 ))
+      allocate( coeff_ns % hci_al_ast( nCv, 0:nspecies-1 ))
+      allocate( coeff_ns % chci_al_ast( nFc, 0:1, 0:nspecies-1 ))
+      allocate( coeff_ns % cvsa_hAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ))
+      allocate( coeff_ns % cvsa_hBdp_al( nFc, 0:1, 0:nspecies-1 ))
+      allocate( coeff_ns % cvsa_uAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ))
+      allocate( coeff_ns % cvsa_uBdp_al( nFc, 0:1, 0:nspecies-1 ))
+      allocate( coeff_ns % cvsahz_hAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ))
+      allocate( coeff_ns % cvsahz_hBdp_al( nFc, 0:1, 0:nspecies-1 ))
+      allocate( coeff_ns % cvsahz_uAdp_albe( nFc, 0:1, 0:nspecies-1,
+     .  0:nspecies-1 ))
+      allocate( coeff_ns % cvsahz_uBdp_al( nFc, 0:1, 0:nspecies-1 ))
+      coeff_ns % vsaf_hAdp_albe = 0.0_R8
+      coeff_ns % vsaf_hBdp_al = 0.0_R8
+      coeff_ns % vsaf_uAdp_albe = 0.0_R8
+      coeff_ns % vsaf_uBdp_al = 0.0_R8
+      coeff_ns % hci_al_ast = 0.0_R8
+      coeff_ns % chci_al_ast = 0.0_R8
+      coeff_ns % cvsa_hAdp_albe = 0.0_R8
+      coeff_ns % cvsa_hBdp_al = 0.0_R8
+      coeff_ns % cvsa_uAdp_albe = 0.0_R8
+      coeff_ns % cvsa_uBdp_al = 0.0_R8
+      coeff_ns % cvsahz_hAdp_albe = 0.0_R8
+      coeff_ns % cvsahz_hBdp_al = 0.0_R8
+      coeff_ns % cvsahz_uAdp_albe = 0.0_R8
+      coeff_ns % cvsahz_uBdp_al = 0.0_R8
+#endif
+
+      return
+      end subroutine createB2Coeff_nspecies
+
+
+      subroutine destroyB2Coeff_nspecies( coeff_ns )
+      type(B2Coeff_nspecies), intent(inout) :: coeff_ns
+
+      if (.not.allocated(coeff_ns % hci_al_ast)) return
+
+      deallocate( coeff_ns % vsaf_hAdp_albe)
+      deallocate( coeff_ns % vsaf_hBdp_al)
+      deallocate( coeff_ns % vsaf_uAdp_albe)
+      deallocate( coeff_ns % vsaf_uBdp_al)
+      deallocate( coeff_ns % hci_al_ast )
+      deallocate( coeff_ns % chci_al_ast )
+      deallocate( coeff_ns % cvsa_hAdp_albe )
+      deallocate( coeff_ns % cvsa_hBdp_al )
+      deallocate( coeff_ns % cvsa_uAdp_albe )
+      deallocate( coeff_ns % cvsa_uBdp_al )
+      deallocate( coeff_ns % cvsahz_hAdp_albe )
+      deallocate( coeff_ns % cvsahz_hBdp_al )
+      deallocate( coeff_ns % cvsahz_uAdp_albe )
+      deallocate( coeff_ns % cvsahz_uBdp_al )
+
+      return
+      end subroutine destroyB2Coeff_nspecies
 
 
       subroutine createB2Derivatives( nCv, nFc, ns, dv )
@@ -797,11 +977,17 @@
       allocate( dv % fchdia( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fchin( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fchvispar( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchvispar_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fchvisper( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchvisper_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fchvisq( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchvisq_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fchviskt( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchviskt_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fchinert( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchinert_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fchanml( nFc, 0:1 ), SOURCE=0._R8 )
+      allocate( dv % fchanml_a( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( dv % fch_pi_c( nCv, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fch_pi_f( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( dv % fne( nFc, 0:1 ), SOURCE=0._R8 )
@@ -913,11 +1099,17 @@
       allocate( dv % fchdia( nFc, 0:1 ) )
       allocate( dv % fchin( nFc, 0:1 ) )
       allocate( dv % fchvispar( nFc, 0:1 ) )
+      allocate( dv % fchvispar_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fchvisper( nFc, 0:1 ) )
+      allocate( dv % fchvisper_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fchvisq( nFc, 0:1 ) )
+      allocate( dv % fchvisq_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fchviskt( nFc, 0:1 ) )
+      allocate( dv % fchviskt_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fchinert( nFc, 0:1 ) )
+      allocate( dv % fchinert_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fchanml( nFc, 0:1 ) )
+      allocate( dv % fchanml_a( nFc, 0:1, 0:ns-1 ) )
       allocate( dv % fch_pi_c( nCv, 0:1 ) )
       allocate( dv % fch_pi_f( nFc, 0:1 ) )
       allocate( dv % fne( nFc, 0:1 ) )
@@ -1029,11 +1221,17 @@
       dv % fchdia = 0._R8
       dv % fchin = 0._R8
       dv % fchvispar = 0._R8
+      dv % fchvispar_a = 0._R8
       dv % fchvisper = 0._R8
+      dv % fchvisper_a = 0._R8
       dv % fchvisq = 0._R8
+      dv % fchvisq_a = 0._R8
       dv % fchviskt = 0._R8
+      dv % fchviskt_a = 0._R8
       dv % fchinert = 0._R8
+      dv % fchinert_a = 0._R8
       dv % fchanml = 0._R8
+      dv % fchanml_a = 0._R8
       dv % fch_pi_c = 0._R8
       dv % fch_pi_f = 0._R8
       dv % fne = 0._R8
@@ -1149,6 +1347,13 @@
       allocate( dv % resmt( nCv ) )
       allocate( dv % reskt( nCv ) )
       allocate( dv % reszt( nCv ) )
+      allocate( dv % resco0( nCv, 0:ns-1 ) )
+      allocate( dv % resmo0( nCv, 0:ns-1 ) )
+      allocate( dv % reshe0( nCv ) )
+      allocate( dv % reshi0( nCv ) )
+      allocate( dv % reshn0( nCv ) )
+      allocate( dv % reskt0( nCv ) )
+      allocate( dv % reszt0( nCv ) )
       dv % resmo = 0.0_R8                             !srv 22.05.18 {
       dv % resco = 0.0_R8
       dv % respo = 0.0_R8
@@ -1159,6 +1364,13 @@
       dv % reskt = 0.0_R8
       dv % reszt = 0.0_R8
       dv % resmt = 0.0_R8                             !srv 22.05.18 }
+      dv % resco0 = 0.0_R8
+      dv % resmo0 = 0.0_R8
+      dv % reshe0 = 0.0_R8
+      dv % reshi0 = 0.0_R8
+      dv % reshn0 = 0.0_R8
+      dv % reskt0 = 0.0_R8
+      dv % reszt0 = 0.0_R8
 
 ! corrections
       allocate( dv % corua( nCv, 0:ns-1 ) )
@@ -1222,11 +1434,17 @@
       deallocate( dv % fchdia )
       deallocate( dv % fchin )
       deallocate( dv % fchvispar )
+      deallocate( dv % fchvispar_a )
       deallocate( dv % fchvisper )
+      deallocate( dv % fchvisper_a )
       deallocate( dv % fchvisq )
+      deallocate( dv % fchvisq_a )
       deallocate( dv % fchviskt )
+      deallocate( dv % fchviskt_a )
       deallocate( dv % fchinert )
+      deallocate( dv % fchinert_a )
       deallocate( dv % fchanml )
+      deallocate( dv % fchanml_a )
       deallocate( dv % fch_pi_c )
       deallocate( dv % fch_pi_f )
       deallocate( dv % fna )
@@ -1322,6 +1540,13 @@
       deallocate( dv % resmt )
       deallocate( dv % reskt )
       deallocate( dv % reszt )
+      deallocate( dv % resco0 )
+      deallocate( dv % resmo0 )
+      deallocate( dv % reshe0 )
+      deallocate( dv % reshi0 )
+      deallocate( dv % reshn0 )
+      deallocate( dv % reskt0 )
+      deallocate( dv % reszt0 )
 
       deallocate( dv % corua )
       deallocate( dv % corpa )
@@ -1996,6 +2221,7 @@
 
       allocate( snap % fch( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( snap % fna( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( snap % fmo( nFc, 0:1, 0:ns-1 ), SOURCE=0._R8 )
       allocate( snap % fhe( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( snap % fhi( nFc, 0:1 ), SOURCE=0._R8 )
       allocate( snap % fhn( nFc, 0:1 ), SOURCE=0._R8 )
@@ -2003,6 +2229,14 @@
       allocate( snap % fzt( nFc, 0:1 ), SOURCE=0._R8 )
 
       allocate( snap % kinrgy( nCv, 0:ns-1 ), SOURCE=0._R8 )
+
+      allocate( snap % resco0( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( snap % resmo0( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( snap % reshe0( nCv ), SOURCE=0._R8 )
+      allocate( snap % reshi0( nCv ), SOURCE=0._R8 )
+      allocate( snap % reshn0( nCv ), SOURCE=0._R8 )
+      allocate( snap % reskt0( nCv ), SOURCE=0._R8 )
+      allocate( snap % reszt0( nCv ), SOURCE=0._R8 )
 #else
       allocate( snap % na( nCv, 0:ns-1 ) )
       allocate( snap % ua( nCv, 0:ns-1 ) )
@@ -2019,6 +2253,7 @@
 
       allocate( snap % fch( nFc, 0:1 ) )
       allocate( snap % fna( nFc, 0:1, 0:ns-1 ) )
+      allocate( snap % fmo( nFc, 0:1, 0:ns-1 ) )
       allocate( snap % fhe( nFc, 0:1 ) )
       allocate( snap % fhi( nFc, 0:1 ) )
       allocate( snap % fhn( nFc, 0:1 ) )
@@ -2026,6 +2261,14 @@
       allocate( snap % fzt( nFc, 0:1 ) )
 
       allocate( snap % kinrgy( nCv, 0:ns-1 ) )
+
+      allocate( snap % resco0( nCv, 0:ns-1 ) )
+      allocate( snap % resmo0( nCv, 0:ns-1 ) )
+      allocate( snap % reshe0( nCv ) )
+      allocate( snap % reshi0( nCv ) )
+      allocate( snap % reshn0( nCv ) )
+      allocate( snap % reskt0( nCv ) )
+      allocate( snap % reszt0( nCv ) )
 
       snap % na = 0._R8
       snap % ua = 0._R8
@@ -2042,6 +2285,7 @@
 
       snap % fch = 0._R8
       snap % fna = 0._R8
+      snap % fmo = 0._R8
       snap % fhe = 0._R8
       snap % fhi = 0._R8
       snap % fhn = 0._R8
@@ -2049,6 +2293,14 @@
       snap % fzt = 0._R8
 
       snap % kinrgy = 0._R8
+
+      snap % resco0 = 0._R8
+      snap % resmo0 = 0._R8
+      snap % reshe0 = 0._R8
+      snap % reshi0 = 0._R8
+      snap % reshn0 = 0._R8
+      snap % reskt0 = 0._R8
+      snap % reszt0 = 0._R8
 #endif
       return
       end subroutine createB2PlasmaSnapshot
@@ -2070,6 +2322,7 @@
       deallocate( snap % nn )
       deallocate( snap % fch )
       deallocate( snap % fna )
+      deallocate( snap % fmo )
       deallocate( snap % fhe )
       deallocate( snap % fhi )
       deallocate( snap % fhn )
@@ -2078,6 +2331,13 @@
       deallocate( snap % zt )
       deallocate( snap % fkt )
       deallocate( snap % fzt )
+      deallocate( snap % resco0 )
+      deallocate( snap % resmo0 )
+      deallocate( snap % reshe0 )
+      deallocate( snap % reshi0 )
+      deallocate( snap % reshn0 )
+      deallocate( snap % reskt0 )
+      deallocate( snap % reszt0 )
 
       return
       end subroutine destroyB2PlasmaSnapshot
@@ -2334,6 +2594,7 @@
         snap % ni = dv % ni
         snap % nn = dv % nn
         snap % fna = dv % fna
+        snap % fmo = dv % fmo
         snap % fch = dv % fch
         snap % fhe = dv % fhe
         snap % fhi = dv % fhi
@@ -2342,6 +2603,13 @@
         snap % zt = pl % zt
         snap % fkt = dv % fkt
         snap % fzt = dv % fzt
+        snap % resco0 = dv % resco0
+        snap % resmo0 = dv % resmo0
+        snap % reshe0 = dv % reshe0
+        snap % reshi0 = dv % reshi0
+        snap % reshn0 = dv % reshn0
+        snap % reskt0 = dv % reskt0
+        snap % reszt0 = dv % reszt0
 
       return
       end subroutine getB2PlasmaSnapshot
@@ -2361,6 +2629,7 @@
         dv % ni = snap % ni
         dv % nn = snap % nn
         dv % fna = snap % fna
+        dv % fmo = snap % fmo
         dv % fch = snap % fch
         dv % fhe = snap % fhe
         dv % fhi = snap % fhi
@@ -2369,6 +2638,13 @@
         pl % zt = snap % zt
         dv % fkt = snap % fkt
         dv % fzt = snap % fzt
+        dv % resco0 = snap % resco0
+        dv % resmo0 = snap % resmo0
+        dv % reshe0 = snap % reshe0
+        dv % reshi0 = snap % reshi0
+        dv % reshn0 = snap % reshn0
+        dv % reskt0 = snap % reskt0
+        dv % reszt0 = snap % reszt0
 
       return
       end subroutine putB2PlasmaSnapshot
@@ -2574,6 +2850,7 @@
 
 
       subroutine read_plasma (ninp, nCv, nFc, ns, st)
+      use b2mod_version
       use b2mod_subsys
       implicit none
       integer, intent(in) :: ninp, nCv, nFc, ns
@@ -2684,6 +2961,76 @@
       call cfrure (ninp, nCv,        st % sr % skt_prod, 'skt_prod')
       call cfrure (ninp, nCv,        st % sr % skt_diss, 'skt_diss')
       call cfrure (ninp, nCv*4,      st % sr % szt, 'szt')
+
+*  .. additional sources
+      if (b2fplasma_version.ge.'03.002.001') then
+        call cfrure (ninp, nCv*ns, st % srw % rsana, 'rsana')
+        call cfrure (ninp, nCv*ns, st % srw % rrana, 'rrana')
+        call cfrure (ninp, nCv*ns, st % srw % rcxna, 'rcxna')
+        call cfrure (ninp, nCv*ns, st % srw % rsamo, 'rsamo')
+        call cfrure (ninp, nCv*ns, st % srw % rramo, 'rramo')
+        call cfrure (ninp, nCv*ns, st % srw % rcxmo, 'rcxmo')
+        call cfrure (ninp, nCv*ns, st % srw % rsahi, 'rsahi')
+        call cfrure (ninp, nCv*ns, st % srw % rrahi, 'rrahi')
+        call cfrure (ninp, nCv*ns, st % srw % rcxhi, 'rcxhi')
+        call cfrure (ninp, nCv*ns, st % srw % rqahe, 'rqahe')
+        call cfrure (ninp, nCv*ns, st % srw % rqrad, 'rqrad')
+        call cfrure (ninp, nCv*ns, st % srw % rqbrm, 'rqbrm')
+        call cfrure (ninp, nCv*ns, st % srw % b2stbc_sna, 'b2stbc_sna')
+        call cfrure (ninp, nCv*ns, st % srw % b2stbr_sna, 'b2stbr_sna')
+        call cfrure (ninp, nCv*ns, st % srw % b2stbm_sna, 'b2stbm_sna')
+        call cfrure (ninp, nCv*ns, st % srw % b2stbc_smo, 'b2stbc_smo')
+        call cfrure (ninp, nCv*ns, st % srw % b2stbr_smo, 'b2stbr_smo')
+        call cfrure (ninp, nCv*ns, st % srw % b2stbm_smo, 'b2stbm_smo')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_she, 'b2stbc_she')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_she, 'b2stbr_she')
+        call cfrure (ninp, nCv,    st % srw % b2stbm_she, 'b2stbm_she')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_shi, 'b2stbc_shi')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_shi, 'b2stbr_shi')
+        call cfrure (ninp, nCv,    st % srw % b2stbm_shi, 'b2stbm_shi')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_shn, 'b2stbc_shn')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_shn, 'b2stbr_shn')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_sch, 'b2stbc_sch')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_sch, 'b2stbr_sch')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_sne, 'b2stbc_sne')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_sne, 'b2stbr_sne')
+        call cfrure (ninp, nCv,    st % srw % b2stbm_sne, 'b2stbm_sne')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_skt, 'b2stbc_skt')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_skt, 'b2stbr_skt')
+        call cfrure (ninp, nCv,    st % srw % b2stbc_szt, 'b2stbc_szt')
+        call cfrure (ninp, nCv,    st % srw % b2stbr_szt, 'b2stbr_szt')
+        call cfrure (ninp, nCv*ns, st % srw % sna0_eir_tot, 'sna0_eir')
+        call cfrure (ninp, nCv*ns, st % srw % smo0_eir_tot, 'smo0_eir')
+        call cfrure (ninp, nCv,    st % srw % she0_eir_tot, 'she0_eir')
+        call cfrure (ninp, nCv,    st % srw % shi0_eir_tot, 'shi0_eir')
+        call cfrure (ninp, nCv,    st % srw % sch0_eir_tot, 'sch0_eir')
+        call cfrure (ninp, nCv,    st % srw % sne0_eir_tot, 'sne0_eir')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_divua,
+     .                                                  'b2sihs_divua')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_divue,
+     .                                                  'b2sihs_divue')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_exba,
+     .                                                  'b2sihs_exba')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_exbe,
+     .                                                  'b2sihs_exbe')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_fraa,
+     .                                                  'b2sihs_fraa')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_joule,
+     .                                                  'b2sihs_joule')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_str, 'b2sihs_str')
+        call cfrure (ninp, nCv,    st % srw % b2sihs_visa,
+     .                                                  'b2sihs_visa')
+        call cfrure (ninp, nCv*4*ns, st % srw % b2npmo_smaf,
+     .                                                  'b2nmpo_smaf')
+        call cfrure (ninp, nCv*4*ns, st % srw % b2npmo_smag,
+     .                                                  'b2nmpo_smag')
+        call cfrure (ninp, nCv*4*ns, st % srw % b2npmo_smav,
+     .                                                  'b2nmpo_smav')
+        call cfrure (ninp, nCv*ns, st % srw % smcf, 'smcf')
+        call cfrure (ninp, nCv*ns, st % srw % smfr, 'smfr')
+        call cfrure (ninp, nCv*ns, st % srw % smpr, 'smpr')
+        call cfrure (ninp, nCv*ns, st % srw % smpt, 'smpt')
+      end if
 
 *  .. transport
       call cfrure (ninp, nFc*2,      st % co % calf, 'calf')
@@ -2857,6 +3204,76 @@
       call cfwure (nout, nCv,        st % sr % skt_prod, 'skt_prod')
       call cfwure (nout, nCv,        st % sr % skt_diss, 'skt_diss')
       call cfwure (nout, nCv*4,      st % sr % szt, 'szt')
+
+*  .. additional sources
+      if (newversion.ge.'03.002.001') then
+        call cfwure (nout, nCv*ns, st % srw % rsana, 'rsana')
+        call cfwure (nout, nCv*ns, st % srw % rrana, 'rrana')
+        call cfwure (nout, nCv*ns, st % srw % rrana, 'rcxna')
+        call cfwure (nout, nCv*ns, st % srw % rsamo, 'rsamo')
+        call cfwure (nout, nCv*ns, st % srw % rramo, 'rramo')
+        call cfwure (nout, nCv*ns, st % srw % rramo, 'rcxmo')
+        call cfwure (nout, nCv*ns, st % srw % rsahi, 'rsahi')
+        call cfwure (nout, nCv*ns, st % srw % rrahi, 'rrahi')
+        call cfwure (nout, nCv*ns, st % srw % rcxhi, 'rcxhi')
+        call cfwure (nout, nCv*ns, st % srw % rqahe, 'rqahe')
+        call cfwure (nout, nCv*ns, st % srw % rqrad, 'rqrad')
+        call cfwure (nout, nCv*ns, st % srw % rqbrm, 'rqbrm')
+        call cfwure (nout, nCv*ns, st % srw % b2stbc_sna, 'b2stbc_sna')
+        call cfwure (nout, nCv*ns, st % srw % b2stbr_sna, 'b2stbr_sna')
+        call cfwure (nout, nCv*ns, st % srw % b2stbm_sna, 'b2stbm_sna')
+        call cfwure (nout, nCv*ns, st % srw % b2stbc_smo, 'b2stbc_smo')
+        call cfwure (nout, nCv*ns, st % srw % b2stbr_smo, 'b2stbr_smo')
+        call cfwure (nout, nCv*ns, st % srw % b2stbm_smo, 'b2stbm_smo')
+        call cfwure (nout, nCv,    st % srw % b2stbc_she, 'b2stbc_she')
+        call cfwure (nout, nCv,    st % srw % b2stbr_she, 'b2stbr_she')
+        call cfwure (nout, nCv,    st % srw % b2stbm_she, 'b2stbm_she')
+        call cfwure (nout, nCv,    st % srw % b2stbc_shi, 'b2stbc_shi')
+        call cfwure (nout, nCv,    st % srw % b2stbr_shi, 'b2stbr_shi')
+        call cfwure (nout, nCv,    st % srw % b2stbm_shi, 'b2stbm_shi')
+        call cfwure (nout, nCv,    st % srw % b2stbc_shn, 'b2stbc_shn')
+        call cfwure (nout, nCv,    st % srw % b2stbr_shn, 'b2stbr_shn')
+        call cfwure (nout, nCv,    st % srw % b2stbc_sch, 'b2stbc_sch')
+        call cfwure (nout, nCv,    st % srw % b2stbr_sch, 'b2stbr_sch')
+        call cfwure (nout, nCv,    st % srw % b2stbc_sne, 'b2stbc_sne')
+        call cfwure (nout, nCv,    st % srw % b2stbr_sne, 'b2stbr_sne')
+        call cfwure (nout, nCv,    st % srw % b2stbm_sne, 'b2stbm_sne')
+        call cfwure (nout, nCv,    st % srw % b2stbc_skt, 'b2stbc_skt')
+        call cfwure (nout, nCv,    st % srw % b2stbr_skt, 'b2stbr_skt')
+        call cfwure (nout, nCv,    st % srw % b2stbc_szt, 'b2stbc_szt')
+        call cfwure (nout, nCv,    st % srw % b2stbr_szt, 'b2stbr_szt')
+        call cfwure (nout, nCv*ns, st % srw % sna0_eir_tot, 'sna0_eir')
+        call cfwure (nout, nCv*ns, st % srw % smo0_eir_tot, 'smo0_eir')
+        call cfwure (nout, nCv,    st % srw % she0_eir_tot, 'she0_eir')
+        call cfwure (nout, nCv,    st % srw % shi0_eir_tot, 'shi0_eir')
+        call cfwure (nout, nCv,    st % srw % sch0_eir_tot, 'sch0_eir')
+        call cfwure (nout, nCv,    st % srw % sne0_eir_tot, 'sne0_eir')
+        call cfwure (nout, nCv,    st % srw % b2sihs_divua,
+     .                                                  'b2sihs_divua')
+        call cfwure (nout, nCv,    st % srw % b2sihs_divue,
+     .                                                  'b2sihs_divue')
+        call cfwure (nout, nCv,    st % srw % b2sihs_exba,
+     .                                                  'b2sihs_exba')
+        call cfwure (nout, nCv,    st % srw % b2sihs_exbe,
+     .                                                  'b2sihs_exbe')
+        call cfwure (nout, nCv,    st % srw % b2sihs_fraa,
+     .                                                  'b2sihs_fraa')
+        call cfwure (nout, nCv,    st % srw % b2sihs_joule,
+     .                                                  'b2sihs_joule')
+        call cfwure (nout, nCv,    st % srw % b2sihs_str, 'b2sihs_str')
+        call cfwure (nout, nCv,    st % srw % b2sihs_visa,
+     .                                                  'b2sihs_visa')
+        call cfwure (nout, nCv*4*ns, st % srw % b2npmo_smaf,
+     .                                                  'b2nmpo_smaf')
+        call cfwure (nout, nCv*4*ns, st % srw % b2npmo_smag,
+     .                                                  'b2nmpo_smag')
+        call cfwure (nout, nCv*4*ns, st % srw % b2npmo_smav,
+     .                                                  'b2nmpo_smav')
+        call cfwure (nout, nCv*ns, st % srw % smcf, 'smcf')
+        call cfwure (nout, nCv*ns, st % srw % smfr, 'smfr')
+        call cfwure (nout, nCv*ns, st % srw % smpr, 'smpr')
+        call cfwure (nout, nCv*ns, st % srw % smpt, 'smpt')
+      end if
 
 *  .. transport
       call cfwure (nout, nFc*2,      st % co % calf, 'calf')
