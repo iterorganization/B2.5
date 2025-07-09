@@ -1397,6 +1397,7 @@ c
 c
       lu=5
       lu_pos=0
+      write(*,'(a)') 'Enter your commands here:'
       call readline(textline,lu,ipos)
 c
       irstack=0
