@@ -28,11 +28,11 @@
 *     flo(nFc,1) contains the convective coefficient, radial direction
 *     con(nFc,0) contains the conductive coefficient, poloidal direction
 *     con(nFc,1) contains the conductive coefficient, radial direction
-*     
+*
 *     Output:
 *     flow(nFc,0) : the poloidal flux on cell faces
 *     flow(nFc,1) : the radial flux on cell faces
-* 
+*
 *     flowf: convective part of the flow
 *     flowc: conductive part of the flow
 *
@@ -51,7 +51,7 @@
       external upwind, hybr
       intrinsic abs
 *-----------------------------------------------------------------------
-*.computation      
+*.computation
 
       if (meth .eq. 0) then ! CENTRAL scheme
 
@@ -80,9 +80,9 @@
        do iFc = 1, nFc
 *    ..poloidal
         flowf(iFc,0) =
-     &    upwind(flo(iFc,0),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2))) 
+     &    upwind(flo(iFc,0),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2)))
 *    ..radial
-        flowf(iFc,1) = 
+        flowf(iFc,1) =
      &    upwind(flo(iFc,1),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2)))
        enddo
 
@@ -97,20 +97,20 @@
        do iFc = 1, nFc
 
 *    ..poloidal flow
-        t0 = (hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) - 
-     &    0.5_R8*abs(flo(iFc,0)))/(geo%fcQalf(iFc,0) + eps)!! 
+        t0 = (hybr(flo(iFc,0),con(iFc,0)*geo%fcQalf(iFc,0)) -
+     &    0.5_R8*abs(flo(iFc,0)))/(geo%fcQalf(iFc,0) + eps)!!
 
         flowf(iFc,0) =
-     &    upwind(flo(iFc,0),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2))) 
-        flow(iFc,0) = 
+     &    upwind(flo(iFc,0),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2)))
+        flow(iFc,0) =
      &    flowf(iFc,0) - t0*dfun(iFc,0)
 
 *    ..radial flow
-        t0 = (hybr(flo(iFc,1),con(iFc,1)*geo%fcQalf(iFc,1)) - 
-     &    0.5_R8*abs(flo(iFc,1)))/(geo%fcQalf(iFc,1) + eps)  
-        flowf(iFc,1) = 
+        t0 = (hybr(flo(iFc,1),con(iFc,1)*geo%fcQalf(iFc,1)) -
+     &    0.5_R8*abs(flo(iFc,1)))/(geo%fcQalf(iFc,1) + eps)
+        flowf(iFc,1) =
      &    upwind(flo(iFc,1),fun(mpg%fcCv(iFc,1)),fun(mpg%fcCv(iFc,2)))
-        flow(iFc,1) = 
+        flow(iFc,1) =
      &    flowf(iFc,1) - t0*dfun(iFc,1)
 
        enddo

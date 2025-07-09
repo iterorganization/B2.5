@@ -58,9 +58,11 @@
       integer, save :: b2mndt_itcnt = 0
       integer, save :: nsmooth_tvsq = 2
       integer, save :: nsmooth_siav = 2
+      integer, save :: nsmooth_siav_zh = 2
       integer, save :: in_no_of_start_points = 0, in_no_of_angles = 9,
      & in_size_of_table = 200000
       integer, save :: icase_sifr = 0
+      integer, save :: nnucl_tral = 0
 
 ! some variables for chord_find
       integer lngcov, lngind
@@ -92,7 +94,7 @@
      & ncall_b2tqce = 0, ncall_b2tqin = 0, ncall_b2tqna = 0,
      & ncall_b2tral = 0, ncall_transp_keps = 0, ncall_b2trcl = 0,
      & ncall_b2treq = 0, ncall_b2trno = 0, ncall_b2trql = 0,
-     & ncall_b2ttia = 0,
+     & ncall_b2ttia = 0, ncall_b2trzh = 0,
 ! ncall variables from sources routines
      & ncall_b2siav = 0, ncall_b2sigp = 0, ncall_b2sihs_ = 0,
      & ncall_b2sikt = 0, ncall_b2spcx = 0, ncall_b2spel = 0,

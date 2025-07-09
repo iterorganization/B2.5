@@ -48,7 +48,6 @@
       integer use_astra
       integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
-      integer, save :: use_mms = 0                                 !srv 26.02.18
 
       integer iRFc, nRFc, icell
 #ifdef WG_DEBUG
@@ -107,7 +106,6 @@
       if (ncall.eq.0) then
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
-       call ipgeti('b2mndr_use_mms',use_mms)                      !srv 26.02.18
        call ipgeti('b2mndr_astra', use_astra)
        call ipgeti('b2stbc_boundary_namelist',boundary_namelist)
 *    ..try to create a file in optional output folder
@@ -503,10 +501,6 @@
        call my_out_us(70,nVx,2,geo%vxOnedBsq,'Vx.OnedBsq')
        call my_out_us(70,nVx,2,geo%vxBzB,'Vx.BzB')
       endif                                                             !srv   end for iout=3
-
-      if(use_mms.eq.1 .and. iout.eq.10) then                            !srv 26.02.18 {
-        call calc_err(nCv, ns, state%pl)
-      endif                                                             !srv 26.02.18 }
 
 #ifdef WG_DEBUG
       if (mpg%isClassicalGrid.eq.1) then

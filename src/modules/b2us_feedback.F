@@ -826,7 +826,8 @@ cxpb size is changed in b2mod_dimensions
           if ( (fb_type(ifb).eq.fb_type(ifbb)).and. .not.
      &         ((fb_type(ifb).eq.1).or.(fb_type(ifb).eq.4).or.
      &          (fb_type(ifb).eq.5).or.(fb_type(ifb).eq.7).or.
-     &          (fb_type(ifb).eq.8).or.(fb_type(ifb).eq.17)) )
+     &          (fb_type(ifb).eq.8).or.(fb_type(ifb).eq.17).or.
+     &          (fb_type(ifb).eq.27)) )
      &          call xerrab('init_feedback:'//
      &      ' set of feedbacks cannot be applied multiple times')
         enddo
@@ -871,9 +872,14 @@ cxpb size is changed in b2mod_dimensions
       do ifb = 1, nFb
         if (fb_ib(ifb).ge.0) cycle
         consistent = consistent .and.
-     &    .not.(fb_actuator(ifb).eq.1 .or.
-     &          fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.7) .and.
-     &    .not.(fb_rescale_option(ifb).eq.4)
+     &    .not.((fb_actuator(ifb).eq.1.and.switch%use_eirene.eq.0) .or.
+     &           fb_actuator(ifb).eq.3 .or. fb_actuator(ifb).eq.7)
+      end do
+      do ifb = 1, nFb
+        if (fb_actuator(ifb).eq.1) cycle
+        consistent = consistent .and.
+     &    .not.(fb_rescale_option(ifb).eq.4 .or.
+     &          fb_rescale_option(ifb).eq.5)
       end do
       do ifb = 1, nFb
         if (fb_actuator(ifb).ne.2) cycle
@@ -1818,27 +1824,31 @@ cxpb size is changed in b2mod_dimensions
                     if(mpg%cvReg(iCv).eq.0) cycle
                     fb_current(ifb) = fb_current(ifb) +
      &               pl%na(iCv,is)*geo%cvVol(iCv)
-#ifndef SOLPS4_3
-                    if (switch%use_eirene.ne.0) then
-                      do iatm=1,nnatmi
-                        if (latmscl(iatm).eq.fb_species(ifb)) then
-                          fb_current(ifb) = fb_current(ifb) +
-     &                     dab2(iCv,iatm,1)*geo%cvVol(iCv)
-                        endif
-                      enddo
-                      do imol=1,nnmoli
-                        if (mlcmp(iatm,imol).ne.0) then
-                          fb_current(ifb) = fb_current(ifb) +
-     &                     dmb2(iCv,imol,1)*mlcmp(iatm,imol)
-     &                     *geo%cvVol(iCv)
-                        endif
-                      enddo
-                    endif
-#endif
                   enddo
                   is_end=is
                 endif
               enddo
+#ifndef SOLPS4_3
+              if (switch%use_eirene.ne.0) then
+                do iatm=1,nnatmi
+                  if (latmscl(iatm).eq.fb_species(ifb)) then
+                    do iCv = 1, mpg%nCi
+                      if(mpg%cvOnClosedSurface(iCv)) cycle
+                      if(mpg%cvReg(iCv).eq.0) cycle
+                      fb_current(ifb) = fb_current(ifb) +
+     &                   dab2(iCv,iatm,1)*geo%cvVol(iCv)
+                      do imol=1,nnmoli
+                        if (mlcmp(iatm,imol).gt.0) then
+                          fb_current(ifb) = fb_current(ifb) +
+     &                       dmb2(iCv,imol,1)*mlcmp(iatm,imol)
+     &                      *geo%cvVol(iCv)
+                        endif
+                      enddo
+                    enddo
+                  endif
+                enddo
+              endif
+#endif
 
             case default
                write(*,*) 'fb_type not coded ',
@@ -1922,7 +1932,6 @@ cxpb size is changed in b2mod_dimensions
      .          fb_current(ifb))/ddtim +
      .          (fb_current_prev(ifb) -
      .          fb_current(ifb))/dt_prev)
-              saved_fb_actuator(ifb) = fb_current(ifb)
 
             case (5) ! rescale done according to SOLPS4 formula:
                         ! Nt = A*exp((time-T)*B)
@@ -1950,7 +1959,6 @@ cxpb size is changed in b2mod_dimensions
      .           fb_current(ifb))/ddtim +
      .           (fb_current_prev(ifb) -
      .           fb_current(ifb))/dt_prev)
-              saved_fb_actuator(ifb) = fb_current(ifb)
 
             case (6) ! rescale slowed by fb_alpha (SOLPS4 style)
 

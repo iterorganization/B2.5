@@ -53,6 +53,19 @@
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
       use b2mod_wall
      & , only : track_species
+      use b2mod_zhfrtf
+     & , only : is_i, z2n_xy, nal, ia, av_ualpha, gt_ac, gtalc, avm_u,
+     &          rho_a_rel, gavm_uc, z_to_m1_ast, w_out, htdp_out,
+     &          hwdp_out, rtdpgamma_out, rwdpgamma_out, piu_out
+      use b2mod_b2zhco
+     & , only : c_hw_save, c_r_ta, c_r_ta_nofl, c_r_wa, c_r_tb,
+     &          c_r_tb_nofl, c_r_wb, c_r_w, tf_ton_mat, amfact
+      use b2mod_b2mrel
+     & , only : nucl2s, znnucl_int, s2nucl, amnucl, n2, n3, n4, n5, n6,
+     &          n8, n9, n10, n11, n12, n13, n14, n15, n16, mum, rmu,
+     &          rmd2, mdm, amnucl_mdf, n2_mdf, n5_mdf, n6_mdf, n8_mdf,
+     &          n9_mdf, n10_mdf, n11_mdf, n12_mdf, mum_mdf, rmu_mdf,
+     &          mdm_mdf
 #endif
       use b2mod_ad
       use b2mod_subsys
@@ -122,7 +135,7 @@
       external xertst, ipgetr, smin, smax,
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpnn, b2xpfe, b2xpfi,
-     &  b2xppb, b2xpnm, b2tral, b2trql, b2treq, b2tfnb,
+     &  b2xppb, b2xpnm, b2tral, b2treq, b2tfnb,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2xppz  !srv 06.07.00 18.01.02
 *   ..initialization
       integer, save :: no_neutr_scl = 0
@@ -288,19 +301,33 @@ csw 01oct2012 initialize potential if necessary
       call b2xpnn (nCv, ns, st%pl%na, st%dv%nn)
       call b2xpne (nCv, ns, st%rt%rza, st%pl%na, st_ext%ne, st%dv%ne )
       call b2xpne (nCv, ns, st%rt%rz2, st%pl%na, st_ext%ne2, st%dv%ne2)
-*   ..compute flux limit coefficients
-      call b2trql (nCv, nFc, ns, switch, geo, mpg, st%pl, st%dv, st_ext,
-     &  st%co%chvemx, st%co%chvimx)
 *   ..compute transport coefficients
       call b2tral (nCv, nFc, nVx, ns, nscx, nscxmax, iscx, ismain,
-     & switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co)
+     &  switch, geo, mpg, st%pl, st%dv, st%rt, st_ext, st%co, st%co_ns)
 *   ..compute currents
-      call b2tanml (nCv, nFc, ns, switch, geo, mpg, st%co%csig_an,
-     &              st%pl%po, st%dv%fchanml)
-      call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%ua,
-     &              st%co%vsaf_cl, st%dv%fac_vis, st%dv%fchvispar)
-      call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%na,
-     &              st%pl%ua, st%dv%facdrift, st%dv%fchinert)
+      call b2tanml (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
+     &  st%dv%fchanml_a, st%dv%fchanml)
+      call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%pl%na, st%pl%ua, st%pl%ti, st%rt%rza, st%co%vsaf_cl,
+     &  st%co%vsaf_drho, st%co_ns%vsaf_uAdp_albe,
+     &  st%co_ns%vsaf_uBdp_al, st%dv%fac_vis, st%dv%fchvispar_a,
+     &  st%dv%fchvispar)
+      call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%pl%na, st%pl%ua, st%dv%facdrift,
+     &  st%dv%fchinert_a, st%dv%fchinert)
+      call b2tvspr(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%pl%po, st%pl%ti, st%pl%na, st%rt%rza, st%co%vsa0, 
+     &  st%dv%fac_vis, st%dv%fchvisper_a, st%dv%fchvisper)
+      call b2tvsq (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%dv%fac_vis, st%dv%ne2, st%rt%rz2, st%dv%lnlam, st%pl%te,
+     &  st%pl%ti, st%pl%na, st%dv%ni(:,1), st%rt%rza,
+     &  st%co_ns%vsaf_hAdp_albe, st%co_ns%vsaf_hBdp_al,
+     &  st%co%hcix_c, st%co%hci_a, st%co_ns%hci_al_ast,
+     &  st%dv%fchvisq_a, st%dv%fchvisq)
+      call b2tvskt(nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%pl%po, st%pl%na, st%pl%kt, st%dv%vaecrb, st%co%dna_ExB,
+     &  st%dv%fchviskt_a, st%dv%fchviskt)
 *   ..iterate on momentum balance
       if(switch%ion_vlct_restrict .ne. 0 ) then                          !iyv 06.02.14
         call b2xprz (nCv, ns, mp, am, st%pl%na, rz, st_ext)
@@ -318,7 +345,7 @@ c b2npmo with rxf = 0 and recompute fluxes.
       call b2npmo (nCv, nFc, nVx, ns, ismain,
      &    switch, geo, mpg,
      &    ncall_b2news_, b2news_solving(1), 0.0_R8, dtim,
-     &    st%pl, st%dv, st%rt, st%co, st%sr, st%srw,
+     &    st%pl, st%dv, st%rt, st%co, st%co_ns, st%sr, st%srw,
      &    st%psnl, st_ext)
       do is = switch%nsmin, switch%nsmax-1
 *    ..compute partial pressure
@@ -406,18 +433,23 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       call b2npmo (nCv, nFc, nVx, ns, ismain,
      &  switch, geo, mpg,
      &  ncall_b2news_, b2news_solving(1), rxf1, dtim,
-     &  st%pl, st%dv, st%rt, st%co, st%sr, st%srw,
+     &  st%pl, st%dv, st%rt, st%co, st%co_ns, st%sr, st%srw,
      &  st%psnl, st_ext)
 *   ..set nep
 *     (= ne before continuity update)
       call b2scopy (nCv, st%dv%ne, 1, nep, 1)
 *   ..recompute currents
-      call b2tanml (nCv, nFc, ns, switch, geo, mpg, st%co%csig_an,
-     &              st%pl%po, st%dv%fchanml)
-      call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%ua,
-     &              st%co%vsaf_cl, st%dv%fac_vis, st%dv%fchvispar)
-      call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%na,
-     &              st%pl%ua, st%dv%facdrift, st%dv%fchinert)
+      call b2tanml (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
+     &  st%dv%fchanml_a, st%dv%fchanml)
+      call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%pl%na, st%pl%ua, st%pl%ti, st%rt%rza, st%co%vsaf_cl,
+     &  st%co%vsaf_drho, st%co_ns%vsaf_uAdp_albe,
+     &  st%co_ns%vsaf_uBdp_al, st%dv%fac_vis, st%dv%fchvispar_a,
+     &  st%dv%fchvispar)
+      call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &  st%pl%na, st%pl%ua, st%dv%facdrift,
+     &  st%dv%fchinert_a, st%dv%fchinert)
 *     ..iterate on particle balance
 !      do is = 0, ns-1
       do is = switch%nsmin, switch%nsmax-1
@@ -515,13 +547,13 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
       if (switch%pot_eq.eq.0) then                                       !srv 13.07.05 {
         st%pl%po        = 0.0_R8
         !wdk call b2tfch_ to ensure all currents are properly set to 0
-        call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
-     &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
+        call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
+     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
       else if (switch%pot_eq.eq.2) then                                  !srv 11.01.12
         st%pl%po        = 3.1_R8*st%pl%te/qe
         !wdk call b2tfch_ to ensure all currents are properly set to 0
-        call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
-     &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
+        call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
+     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
       else                                                               !srv 13.07.05 }
 *   ..correct po
         if (b2news_solving(3)) then
@@ -533,8 +565,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
           endif                                                          !srv 12.07.05 }
         endif
 *   ..compute currents                                                   !srv 29.01.20 {
-        call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
-     &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
+        call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
+     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
         if (b2news_solving(3)) then
 *   ..solve the potential equation
           if (switch%fhe_vis_per.eq.0.0_R8.or..true.) then               !srv 06.07.00
@@ -559,8 +591,8 @@ csw 11oct2012 added check on Coriolis force (taken from b2news)
           t0 = b2sasum(nCv,st%dv%respo,1)
           write(*,*) 'respo before solving',t0
 *   ..recompute currents
-          call b2tfch_ (nCv, nFc, nVx, ns, ismain, ismain0, switch,
-     &     geo, mpg, st%pl, st%dv, st%co, st%rt, st_ext)
+          call b2tfch_ (nCv, nFc, nVx, ns, ismain, switch,
+     &     geo, mpg, st%pl, st%dv, st%co, st%co_ns, st%rt, st_ext)
 *   ..compute new residual following the tradition
           call b2ursd (nCv, nFc, mpg, st%dv%ne, st%pl%po,
      &     st%sr%sch, st%dv%fch, wrk0)

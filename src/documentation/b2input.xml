@@ -774,16 +774,16 @@
 					 ..do i0=1,nstg0
 					  ..compute log-log linearised rate coefficients
 					  ..do i1=1,nstg1
-					   ..compute source linearisation
+					   ..compute source linearisation (Eirene call)
 					   ..do i2=1,nstg2
-					    ..perform one inner iteration
+					    ..perform one inner iteration (on fluid equations)
 					    ..re-compute auxiliary quantities
 					    ..produce monitoring output
 					   ..enddo
 					  ..enddo
 					 ..enddo
-					This can be completed by the the 'b2mndt_nstg_ares??' switches.
-					See 'Numerics' section for details.
+					This can be completed by the the 'b2mndt_nstg_ares??' switches. See 'Numerics' section for details.
+					It is recommended to use these inner iterations when running in time-dependent mode (b2mndt_style=2) to make residuals converge within each time-step.
 				</description>
 				<switch>
 					<name>b2mndt_nstg0</name>
@@ -1407,6 +1407,209 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tral_Zhdanov_closure</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_closure.eq.1, the Zhdanov-Grad module is enabled, and fully multi-ion collisional closure for the components along the magnetic field of the vector and tensor moments of the distribution function is applied for all the ions (without specifying main ions and impurities) based on the works of Zhdanov [V. M. Zhdanov, 2002] and Makarov et al. [S. O. Makarov et al., PoP 2021]. Otherwise the standard SOLPS-ITER model is applied.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zh_imp_analyt</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zh_imp_analyt.eq.0, the Zhdanov-Grad closure method is applied by means of the explicit matrix inversion methed (EMIM).
+					If b2tral_zh_imp_analyt.eq.1, the improved analytical method (IAM) is applied. See [S. O. Makarov et al., PoP 2021] for details.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zh_analyt_mdf</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zh_analyt_mdf.eq.1, the MDF friction force calculation is applied. See [S. O. Makarov et al., PoP 2021] for details.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_Zhdanov_cond</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_cond.eq.0, the Braginskii expression for the ion conductivity is used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_Zhdanov_vish</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_vish.eq.0, the Braginskii expression for the heat flux dependent viscous stress is used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_Zhdanov_visu</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_Zhdanov_visu.eq.0, the Braginskii expression for the velocity-dependent viscous stress is used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhflcorr</name>
+				<default>3.0</default>
+				<type>real</type>
+				<description>
+					Flux-limiting coefficient multiplier.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhflcorrh</name>
+				<default>0.4</default>
+				<type>real</type>
+				<description>
+					Additional flux-limiting coefficient multiplier for the heat flux.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhd_corr</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Multiplier to the corrections due to the difference in definition for temperature and Joule heating between Zhdanov and Braginskii.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhd_corrT</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Multiplier to the corrections due to the difference in definition for temperature between Zhdanov and Braginskii in the thermal force calculation.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhcscorr</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zhcscorr.eq.0, the corrections for each individual ion charge state from the isonuclear sequence value are disabled.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tral_zhcscorr_vq</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zhcscorr_vq.eq.0, the corrections for each individual ion charge state from the isonuclear sequence value are disabled for the heat stress-viscosity.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2sifr_Zhdanov_tf_fr</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2sifr_Zhdanov_tf_fr.eq.1, the Zhdanov expressions for the thermal and friction forces are used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sifr_Zhdanov_test</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2sifr_Zhdanov_test.eq.1, the Zhdanov-Grad calculation takes place, but is not used. To be used for testing purposes.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2tfhi_Zhdanov_vel_heat</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2tfhi_Zhdanov_vel_heat.eq.1, the Zhdanov velocity-dependent ion heat flux is used.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_zh_tf_toff</name>
+				<default>0</default>
+				<type>string</type>
+				<description>
+					String of integers with (nspecies*(nspecies+1))/2-nspecies digits. If a digit is {\tt 1}, turn off the thermal force between corresponding species starting from 1 and 2; 1 and 3;....; up to nspecies-1 and nspecies.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+		          <switch>
+			    <name>b2tral_zh_vis_type</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_zh_vis_type.eq.0, the Braginskii-like velocity-dependent stress-viscosity is used.
+					If b2tral_zh_vis_type.eq.1, the Zhdanov-like velocity-dependent stress-viscosity is used.
+					If b2tral_zh_vis_type.eq.2, the Makarov-like velocity-dependent stress-viscosity is used.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_smbvi_factor</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					This switch defines the fraction of the cross-ion part of the stress-viscosity term which is applied. The cross-ion part of the stress-viscosity term can lead to numerical problems. If so, it is recommended to start from '0.0' and increase it step by step.
+					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_amfact_on</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_amfact_on.eq.1, the mass correction for the thermal and friction force calculation is applied.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_amfact_***</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					If b2tral_amfact_on.eq.1, this multiplier is applied for the mass of the species corresponding to isonuclear sequence number '***'. Recall the sequence numbering starts at zero (e.g. b2tral_amfact_000, b2tral_amfact_001, ...).
+				</description>
+			</switch>
+			<switch>
+			    <name>b2npmo_impr_form_fr</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2npmo_impr_form_fr.eq.1, an improved analytical form for the friction force is computed instead of the form corrresponding to b2sigp_style.eq.2.
+					Used only if b2tral_Zhdanov_closure is equal to 0.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2npmo_impr_form_tf</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2npmo_impr_form_tf.eq.1, an improved analytical form for the thermal force is computed instead of the form corresponding to b2sigp_style.eq.2.
+					Used only if b2tral_Zhdanov_closure is equal to 0.
+				</description>
+			</switch>
+			<switch>
+			    <name>b2npmo mass multiplicator</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Using this number the impurity mass can be artificialy increased.
+					Used only if b2tral_Zhdanov_closure is equal to 0.
+				</description>
+			</switch>
+			<switch>
 				<name>b2sqel_artificial_radiation</name>
 				<default>0.0</default>
 				<type>real</type>
@@ -1623,7 +1826,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If boundary_sources.ne.0, allow for the specification of boundary values for all equations, using BC type 7, provided in the bv_na.dat, bv_ua.dat, bv_te.dat, bv_ti.dat, and bv_po.dat files. All files must be present.
+					If boundary_sources.ne.0, allow for the specification of boundary values for all equations, using BC type 7, provided in the bv_na.dat, bv_ua.dat, bv_te.dat, bv_ti.dat, and bv_po.dat files. Only the files corresponding to the solved equations must be provided. For time-dependent MMS (use_mms.eq.2), boundary values must be provided for each time-step: bv_XX0001.dat, bv_XX0002.dat, bv_XX0003.dat, and so on.
 				</description>
 			</switch>
 			<switch>
@@ -1631,14 +1834,14 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If equation_sources.ne.0, allow for the specification of source term values for all equations, per unit volume, provided in the art_sna.dat, art_smo.dat, art_she.dat, art_shi.dat, and art_sch.dat files. All files must be present.
+					If equation_sources.ne.0, allow for the specification of source term values for all equations, per unit volume, provided in the art_sna.dat, art_smo.dat, art_she.dat, art_shi.dat, and art_sch.dat files. Only the files corresponding to the solved equations must be provided. For time-dependent MMS (use_mms.eq.2), artifical sources must be provided for each time-step: art_sXX0001.dat, art_sXX0002.dat, art_sXX0003.dat, and so on.
 				</description>
 			</switch>
 			<switchgroup>
 				<name>b2mndr_mms_...</name>
 				<description>
-					If use_mms.ne.0, specifies a run using the Method of Manufactured Solutions. The exact solutions to match are provided by the b2mndr_set_XX_numerical switches.
-					An exact solution is available for comparison if the corresponding set_XX_numerical switch is nonzero. The exact solutions are provided, respectively, in the exact_na.dat and exact_ne.dat, exact_ua.dat, exact_te.dat, exact_ti.dat, and exact_po.dat files.
+					If use_mms.eq.1, specifies a run using the Method of Manufactured Solutions in steady-state mode (b2mndt_style.eq.1). If use_mms.eq.2, specifies a run using the Method of Manufactured Solutions in time-dependent mode (b2mndt_style.eq.2). The exact solutions to match are provided by the b2mndr_set_XX_numerical switches.
+					An exact solution is available for comparison if the corresponding b2mndr_set_XX_numerical switch is nonzero. The exact solutions for steady-state are provided, respectively, in the exact_na.dat and exact_ne.dat, exact_ua.dat, exact_te.dat, exact_ti.dat, and exact_po.dat files. The exact solutions for time-dependent must be provided for each time-step: exact_XX0001.dat, exact_XX0002.dat, exact_XX0003.dat, and so on.
 					The exact_na.dat and exact_ne.dat files must be provided simultaneously.
 				</description>
 				<switch>
@@ -1663,6 +1866,11 @@
 				</switch>
 				<switch>
 					<name>b2mndr_set_ti_numerical</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>b2mndr_set_tn_numerical</name>
 					<default>0</default>
 					<type>integer</type>
 				</switch>
@@ -3063,6 +3271,16 @@
 				<type>real</type>
 				<description>
 					Multiplier for transport of k associated with turbulent ExB heat fluxes.
+				</description>
+			</switch>
+			<switch>
+				<name>keps_anom_he_model</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If set to 0, uses multiplier 5/2 for the anomalous convective and conductive heat fluxes associated with anomalous density transport, as per the SOLPS5.2 physics model.
+					If set to 1 (default), uses multiplier 3/2 for the anomalous convective and conductive heat fluxes associated with electrostatic ExB drift turbulence, consistent with the keps-model derivation.
+					If set to 2 (experimental), additionally assumes the corresponding physical fluxes across surfaces/boundaries to have multiplier 3/2.
 				</description>
 			</switch>
 			<switch>
@@ -4500,7 +4718,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier to the ExB velocity for sheath boundary conditions in b2stbc_spb and BCMOM=13 case of b2stbc_phys.
+					Multiplier to the ExB velocity for sheath boundary conditions BCMOM=13.
 					Not yet available for WG.
 				</description>
 			</switch>
@@ -4819,11 +5037,36 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mndt_ckn</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_ckn=2, the 2nd order Crank-Nicolson time-stepping scheme is used, instead of the default 1st order implicit Euler scheme.
+					This scheme can be used both in time-dependent mode (b2mndt_style=2) and in steady-state mode (b2mndt_style=1).
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_dummy</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					This switch is used internally in the code to initially run a dummy call to b2mndt, which is needed to use the Crank-Nicolson time-stepping scheme (b2mndt_ckn=2). This switch is not meant to be changed by users, it should always stay at its default value of 0.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndt_ntim_step_out</name>
 				<default>1</default>
 				<type>integer</type>
 				<description>
 					When set to a value of 'K', residuals at each K-th step will be written in b2ftrace. It helps to avoid a huge b2ftrace files during long time run.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_calc_err_step_out</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When set to a value of 'K', the subroutine calc_err will be run at each K-th step. It allows to output the error at desired times during a time-dependent MMS test.
 				</description>
 			</switch>
 			<switchgroup>
@@ -4998,10 +5241,11 @@
 				<default>See description</default>
 				<type>real</type>
 				<description>
-					Main under-relaxation parameter.
-					Should be set to 1.0 (default) if running in time-dependent mode (b2mndt_style.eq.2).
-					Otherwise, default value is 0.5.
+					Main under-relaxation parameter. The default value is 0.5 in steady-state mode (b2mndt_style.eq.1).
 					Setting this switch to zero prevents updating of the principal code quantities.
+					In time-dependent mode (b2mndt_style.eq.2), the default value is 1.0. It can be set lower than 1, provided that the following relationship is satisfied: DTxx=1/(1-(1-rxf)^nstgJ).
+					DTxx are the time-step multipliers (xx=CO,MO,EE,EI,...) and nstgJ the inner iterations (J=0,1,2). For example, if rxf=0.5 and nstgJ=1, then it must be DTxx=2.
+					Tip: If nstgJ is high enough, DTxx tends to 1 for any rxf, and no time-step multipliers need to be changed.
 				</description>
 			</switch>
 			<switchgroup>
@@ -7022,7 +7266,7 @@
 					10 : prescribe the decay length for the parallel momentum, MOMPAR(,,1) specifies the decay length in m.
 					11 : Rozhansky viscosity condition for the parallel momentum, MOMPAR(,,1) is not used. Not yet available for WG.
 					12 : condition from b2stbc_spb for the parallel momentum.
-					13 : sheath boundary condition from b2stbc_spb for the parallel momentum. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCCON=14. Recommended for cases with drifts.
+					13 : drift-compatible sheath boundary condition for the parallel momentum. To be used in conjunction with BCENE/I=15, BCPOT=11, and BCCON=14. Recommended for cases with drifts.
 					14 : condition from b2stbc_spb for the parallel momentum
 					15 : prescribe the value of the parallel velocity, scaled with B_average/B_local. Not yet available for WG.
 					16 : prescribe the average value of the parallel velocity MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup>
@@ -7049,8 +7293,8 @@
 					11 : not used
 					12 : sheath conditions, electron energy transmission coefficient, ENEPAR(,1) specifies an energy transmission factor, delta<sub>e</sub> in Q<sub>e</sub> = delta<sub>e</sub> &Gamma;<sub>e</sub> T<sub>e</sub>. Obsolete. Replace with drift-compatible BCENE = 15.
 					13 : prescribe the electron energy flux per unit area proportional to temperature, ENEPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J).
-					14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>
-					15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.4 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, BCENI=15, and BCPOT=11.
+					14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>. The energy loss also includes an electrostatic term as &alpha; ENEPAR(,2) C<sub>s</sub>,collective e &Phi; n<sub>e</sub>.
+					15 : sheath boundary condition, recommended when using drifts (see Section C.9.4 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, BCENI=15, and BCPOT=11.
 					16 : feedback boundary condition with constant temperature, ENEPAR(,1) specifies the power flux in W across the core boundary, ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback (if left zero, b2stbc_bc_ref_te will be used). Also see type [17] below. Available if bcene_16_style=0 (default). If bcene_16_style=1, integrated electron heat flux with constant electron temperature, summed over all core boundaries with BCENE=16.
 					17 : feedback boundary condition with constant shared temperature for both electrons and ions, with ENEPAR(,1) + ENIPAR(,1) giving the total power flux in W across the core boundary, ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Recommended to replace [16] for high densities.
 					18 : fractional drop condition. Experimental. Attempts to set the guard cell temperature to be (1 - ENEPAR(,1)) times the boundary cell temperature.
@@ -7082,7 +7326,7 @@
 					12 : sheath conditions, ion energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, delta<sub>i</sub> in Q<sub>i</sub> = delta<sub>i</sub> T<sub>i</sub> sum<sub>a</sub> &Gamma;<sub>a</sub>. Obsolete. Replace with drift-compatible BCENI = 15.
 					13 : prescribe the ion energy flux per unit area proportional to temperature, ENIPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J).
 					14 : leakage option for ion energy, ENIPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>T<sub>i</sub>.
-					15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.5 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, along with BCENE=15 and BCPOT=11.
+					15 : sheath boundary condition, recommended when using drifts (see Section C.9.5 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, along with BCENE=15 and BCPOT=11.
 					16 : feedback boundary condition with constant temperature, ENIPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2) should be something like 0.1 and specifies the strength of the feedback (if left zero, b2stbc_bc_ref_ti will be used). Also see type [17] below. Available if bceni_16_style=0 (default). If bceni_16_style=1, integrated ion heat flux with constant ion temperature, summed over all core boundaries with BCENI=16. ENIPAR(,1) specifies the power flux in W.
 					17 : feedback boundary condition with constant shared temperature for both electrons and ions, see BCENE=17 above for description.
 					18 : fractional drop condition.  Experimental. Attempts to set the guard cell temperature to be (1 - ENIPAR(,1)) times the boundary cell temperature.
@@ -7116,7 +7360,7 @@
 					8 : prescribe the total electric current with constant flux density, POTPAR(,1) specifies the electric current in A
 					9 : prescribe the decay length for the potential, POTPAR(,1) specifies the decay length in m.
 					10 : should not be used for feedbacks anymore, not converted to WG code.
-					11 : sheath conditions, electron energy transmission from b2stbc_spb, POTPAR(,2) specifies the bias potential in V. Recommended for use in cases with drifts, along with BCENE/I=15, BCCON=14, and BCMOM=13.
+					11 : sheath conditions, electron energy transmission, POTPAR(,2) specifies the bias potential in V. Recommended for use in cases with drifts, along with BCENE/I=15, BCCON=14, and BCMOM=13.
 					12 : imposes the currents due to drifts for the core boundary. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
 					13 : imposes the currents due to drifts for the private flux and main chamber boundaries. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
 					14 : prescribe the total current without imposing a specific profile. Follow the profile of the 1st flux tube inside. Intended use: core boundary, total PF boundary,.. For testing purposes, use with care!
@@ -7662,12 +7906,12 @@
 					For (i,ir,ik,is) in (1:2,1:NY+2,1:NKIND_SOURCE,0:NS),
 					SDATA(1,ir,:,:) contains the radial location of the profile point (ir).
 					SDATA(2,ir,:,:) contains the source profile value at point (ir).
-					KIND_SOURCE=1 means particle source of species (is) (in particles/m3)
-					KIND_SOURCE=2 means parallel momentum source for species (is) (in kg.m/s/m3)
+					KIND_SOURCE=1 means particle source of species (is) (in particles/s/m3)
+					KIND_SOURCE=2 means parallel momentum source for species (is) (in N/m3)
 					KIND_SOURCE=3 means electron heat source (in Watts/m3)
 					KIND_SOURCE=4 means ion heat source (in Watts/m3)
-					KIND_SOURCE=5 means electric charge source (in Coulombs/m3)
-					KIND_SOURCE=6 means non-ambipolar electron particle source (in e/m3)
+					KIND_SOURCE=5 means electric charge source (in Amperes/m3)
+					KIND_SOURCE=6 means non-ambipolar electron particle source (in e/s/m3)
 				</description>
 			</switch>
 			<switch>

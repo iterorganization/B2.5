@@ -4,6 +4,7 @@
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_user_namelist
+      use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use b2mod_b2plot
      .   , only : b2_fnmti
@@ -69,6 +70,7 @@ c***    He_enrcs  hlp_hens   helium enrichment to ns from throughputs
 c***    He_enrcc  hlp_henc   helium enrichment to nc from throughputs
 c***    DT_thrpt  hlp_dttp   DT throughput
 c***    He_thrpt  hlp_hetp   He throughput
+c***    pk_pwp_w  hlp_ppfw   peak parallel heat flux to main chamber wall
 c***                                       (PFR - by group and species)
 c***    PFRflx    hlp_pfrf   net nuclei flux through each surface group
 c***                              (neutral data - by group and species)
@@ -102,7 +104,7 @@ c-----------------------------------------------------------------------
 
 c*** Global values
       integer nglb_tmp, ng_tmp
-      parameter (nglb_tmp=22)
+      parameter (nglb_tmp=23)
 
 c*** File markers: routine version, number of global values, number of
 c***               PFR values, number of species, number of PFR surface
@@ -153,7 +155,7 @@ c*** Column headers:
      2      'He_p_prs', 'pk_pwr_i', 'pk_pwr_o', 'pk_pw_iu', 'pk_pw_ou',
      3      'Sp_DT   ', 'Sp_He   ', 'Sp_He_sc', 'He_src  ', 'He_sc_cr',
      4      'He_sc_sp', 'He_og_cr', 'He_og_sp', 'He_enrcs', 'He_enrcc',
-     4      'DT_thrpt', 'He_thrpt'/
+     5      'DT_thrpt', 'He_thrpt', 'pk_ppf_w' /
       data hlp_hg2 /
      1      'DoD_il  ', 'DoD_ol  ', 'DoD_iu  ', 'DoD_ou  ' /
       data hlp_hg3 /
@@ -199,7 +201,7 @@ c*** Column headers:
      *     hlp_ppfr, hlp_ppfi, hlp_ppfo, hlp_hefr, hlp_henr, hlp_hepr,
      ,     hlp_ppwi, hlp_ppwo, hlp_pwiu, hlp_pwou, hlp_spdt, hlp_sphe,
      ,     hlp_sshe, hlp_hesr, hlp_hesc, hlp_hess, hlp_heoc, hlp_heos,
-     ,     hlp_hens, hlp_henc, hlp_dttp, hlp_hetp
+     ,     hlp_hens, hlp_henc, hlp_dttp, hlp_hetp, hlp_ppfw
       equivalence
      ,     (equg_tmp(1),  hlp_ppfr), (equg_tmp(2),  hlp_ppfi),
      ,     (equg_tmp(3),  hlp_ppfo), (equg_tmp(4),  hlp_hefr),
@@ -211,7 +213,8 @@ c*** Column headers:
      ,     (equg_tmp(15), hlp_hesc), (equg_tmp(16), hlp_hess),
      ,     (equg_tmp(17), hlp_heoc), (equg_tmp(18), hlp_heos),
      ,     (equg_tmp(19), hlp_hens), (equg_tmp(20), hlp_henc),
-     ,     (equg_tmp(21), hlp_dttp), (equg_tmp(22), hlp_hetp)
+     ,     (equg_tmp(21), hlp_dttp), (equg_tmp(22), hlp_hetp),
+     ,     (equg_tmp(23), hlp_ppfw)
       real (kind=R8) ::
      *     equg2_tmp(ngl2_tmp)
       real (kind=R8) ::
@@ -235,11 +238,7 @@ c     integer kgl4_tmp(2)
       equivalence (equg4_tmp(1), hlp_albll),
      ,     (equg4_tmp(1), al_bll_mx), (equg4_tmp(2), al_bll_ic)
       real (kind=R8) :: wtarg(DEF_NYD,2*DEF_NCUT),
-     ,     wnutrg(DEF_NYD,2*DEF_NCUT)
-#ifdef B25_EIRENE
-      real (kind=R8) ::
-     *     wnutpr(DEF_NYD,2*DEF_NCUT)
-#endif
+     ,     wnutrg(DEF_NYD,2*DEF_NCUT),wnutpr(DEF_NYD,2*DEF_NCUT)
       real(kind=R8) :: wrad(DEF_NYD,2*DEF_NCUT,0:DEF_NATM)
 
 c*** PFR flow values
@@ -282,7 +281,7 @@ c***  surface area
      ,  (equr_tmp(1,1,3),hlp_vlpfs)
 
       real (kind=R8) ::
-     *  hlp, hlp_s, hlp_pi, hlp_si, hlp_po, hlp_so,
+     *  hlp, hlp_pi, hlp_si, hlp_po, hlp_so,
      ,  hlp_he, hlp_hep,
      ,  hlp_ne_he_c, hlp_ne_he_s,
      ,  hlp_alcff
@@ -290,11 +289,11 @@ c***  surface area
      *  d, e, s, x, kef, taf, uaf
       real (kind=R8) :: pz(1:mpg%nCv), pv(1:mpg%nVx), grpz(1:mpg%nCv),
      *  albll(1:mpg%nCi)
-      integer i, j, k, l, m, n, i0, is, iCv, iFc, irt,
+      integer i, j, k, l, m, n, i0, is, iCv, iFc, iFt, irt,
      ,  j_he_i, l_pad_str
 #ifdef B25_EIRENE
       integer ia, ias, ic, im, iyp, js, ks, ls
-      real (kind=R8) :: a, g, t, v, hlp_h, hlp_p, hlp_tot, hlpnw
+      real (kind=R8) :: a, g, t, v, hlp_h, hlp_p, hlp_s, hlp_tot, hlpnw
 c     real (kind=R8) :: e0
       logical is_target
 #endif
@@ -337,6 +336,7 @@ c=======================================================================
 
         tab=char(9)
         call ipgeti ('b2mndr_eirene', use_eirene)
+        call alloc_b2plot_wall_loading(nlim,nsgmx)
 c-----------------------------------------------------------------------
 c*** Check the topology
 
@@ -1033,14 +1033,14 @@ c*** Neutral flux across the side walls
 
 c*** flux across other recycling surfaces for vessel mode grids
 c*** we must remove targets and transparent surfaces from that list
-            do js=1,nsns !{
+            do js=1,nsts !{
               is_target = .false.
               do ic=1,ntns !{
-                is_target = is_target.or.abs(lsns(js)).eq.ltns(ic)
+                is_target = is_target.or.js.eq.ltns(ic)
               end do !}
               if (.not.is_target) then !{
-                ks = abs(lsns(js))+nnlimi
-                if (iliin(abs(lsns(js))).gt.0) then !{
+                ks = js+nnlimi
+                if (iliin(js).gt.0) then !{
                   hlpnw=hlpnw+wldna(ks,ls,0)-wldra(ks,ls,0)
                   do j=1,nnmoli !{
                     if(mlcmp(ls,j).gt.0) hlpnw=hlpnw+
@@ -1073,16 +1073,16 @@ c*** we must remove targets and transparent surfaces from that list
 
 c*** Calculate the helium-related data
 
-       if(hlp_dbg) then !{
-         print '(a,1p,2i4,1e12.3)',
+        if(hlp_dbg) then !{
+          print '(a,1p,2i4,1e12.3)',
      ,           '%%## j_he_at,nhetrgtx,fusion_power =',
      ,                 j_he_at,nhetrgtx,fusion_power      !###
-       endif !}
-        if(fusion_power.gt.0.0_R8) then !{
+        endif !}
 
 c*** Re-scale the helium density upstream to meet both throughput and
 c*** pumping speed
 
+        if(fusion_power.gt.0.0_R8) then !{
           hlp_hesr=3.55e17_R8/2.7e20_R8*fusion_power
           hlp=hlp_sshe*hlp_hepr
           if(hlp.gt.0.0_R8) then !{
@@ -1140,11 +1140,11 @@ c*** Helium fraction and related data - flux estimation
 c*** Calculate the peak powers to the targets
 
       wtarg=0.0_R8
+      wnutpr=0.0_R8
       wnutrg=0.0_R8
-      call b2ptrdl(wrad)
+      call b2ptrdl(DEF_NYD,2*DEF_NCUT,wrad,.true.)
 c West target
       hlp_ppwi=0.0_R8
-      hlp_s=0.0_R8
       do i=1,mpg%divFcP(1,2) !{
         iFc=mpg%divFc(mpg%divFcP(1,1)+i-1)
         iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1152,9 +1152,9 @@ c West target
         hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
      .          st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
      .          st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-        kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .          st%dv%kinrgy(1,is))
         do is=0,ns-1 !{
+          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .          st%dv%kinrgy(1,is))
           hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
      .     st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
         end do !}
@@ -1179,15 +1179,13 @@ c West target
      .                            ewldmr_res(is,ias)
         end do
         wnutpr(i,1)=ewldrp_res(ias)
+#endif
         wtarg(i,1)=(hlp-wnutpr(i,1))*trgshp(1)
      .                 +wnutrg(i,1)+wrad(i,1,0)
-#endif
-        hlp_ppwi=max(hlp_ppwi,hlp)
-        hlp_s=hlp_s+s
+        hlp_ppwi=max(hlp_ppwi,wtarg(i,1))
       end do !}
 c East target
       hlp_ppwo=0.0_R8
-      hlp_s=0.0_R8
       do i=1,mpg%divFcP(maxval(mpg%strDiv),2) !{
         iFc=mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
         iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1195,9 +1193,9 @@ c East target
         hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
      .          st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
      .          st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-        kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .          st%dv%kinrgy(1,is))
         do is=0,ns-1 !{
+          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .          st%dv%kinrgy(1,is))
           hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
      .     st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
         end do !}
@@ -1223,17 +1221,15 @@ c East target
      .     ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
         end do
         wnutpr(i,maxval(mpg%strDiv))=ewldrp_res(ias)
+#endif
         wtarg(i,maxval(mpg%strDiv))=
      .   (hlp-wnutpr(i,maxval(mpg%strDiv)))*trgshp(maxval(mpg%strDiv))
      .       +wnutrg(i,maxval(mpg%strDiv))+wrad(i,maxval(mpg%strDiv),0)
-#endif
-        hlp_ppwo=max(hlp_ppwo,hlp)
-        hlp_s=hlp_s+s
+        hlp_ppwo=max(hlp_ppwo,wtarg(i,maxval(mpg%strDiv)))
       end do !}
 
       if(maxval(mpg%strDiv).gt.2) then !{
         hlp_pwou=0.0_R8
-        hlp_s=0.0_R8
         do i=1,mpg%divFcP(2,2) !{
           iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1241,9 +1237,9 @@ c East target
           hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
      .            st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
      .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .     st%dv%kinrgy(1,is))
           do is=0,ns-1 !{
+            kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .       st%dv%kinrgy(1,is))
             hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
      .       st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
           end do !}
@@ -1269,15 +1265,13 @@ c East target
      .       ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
           end do
           wnutpr(i,2)=ewldrp_res(ias)
+#endif
           wtarg(i,2)=(hlp-wnutpr(i,2))*trgshp(2)
      .                   +wnutrg(i,2)+wrad(i,2,0)
-#endif
-          hlp_pwou=max(hlp_pwou,hlp)
-          hlp_s=hlp_s+s
+          hlp_pwou=max(hlp_pwou,wtarg(i,2))
         end do !}
 
         hlp_pwiu=0.0_R8
-        hlp_s=0.0_R8
         do i=1,mpg%divFcP(3,2) !{
           iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
@@ -1285,9 +1279,9 @@ c East target
           hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
      .            st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
      .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .     st%dv%kinrgy(1,is))
           do is=0,ns-1 !{
+            kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .       st%dv%kinrgy(1,is))
             hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
      .       st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
           end do !}
@@ -1313,11 +1307,10 @@ c East target
      .       ewldm_res(is,ias)-ewldem_res(is,ias)+ewldmr_res(is,ias)
           end do
           wnutpr(i,3)=ewldrp_res(ias)
+#endif
           wtarg(i,3)=(hlp-wnutpr(i,3))*trgshp(3)
      .                   +wnutrg(i,3)+wrad(i,3,0)
-#endif
-          hlp_pwiu=max(hlp_pwiu,hlp)
-          hlp_s=hlp_s+s
+          hlp_pwiu=max(hlp_pwiu,wtarg(i,3))
         end do !}
       end if !}
 
@@ -1356,6 +1349,55 @@ C radiation
         end do
         close(3)
       end if
+
+c*** Calculate the peak parallel power flux to the main chamber wall
+
+      hlp_ppfw=0.0_R8
+      if(hlp_dbg) print *,'### b2usrtrc: calculating max. parallel '//
+     .                    'heat flux to the main chamber wall'
+      do i=1,mpg%nCg !{
+        iFc=mpg%fcs_wall(i)
+        iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+        if (mpg%fcReg(iFc).eq.0) cycle
+        select case ( gridGeometry )
+        case ( GEOMETRY_LINEAR )
+          if (mpg%fcReg(iFc).ne.4) cycle
+        case ( GEOMETRY_LIMITER )
+          if (mpg%fcReg(iFc).ne.6) cycle
+        case ( GEOMETRY_SN )
+          if (mpg%fcReg(iFc).ne.12) cycle
+        case ( GEOMETRY_CDN )
+          if (mpg%fcReg(iFc).ne.18 .and. mpg%fcReg(iFc).ne.25) cycle
+        case ( GEOMETRY_DDN_BOTTOM, GEOMETRY_DDN_TOP )
+          if (mpg%fcReg(iFc).ne.19 .and. mpg%fcReg(iFc).ne.26) cycle
+        case ( GEOMETRY_LFS_SNOWFLAKE_MINUS,
+     &         GEOMETRY_LFS_SNOWFLAKE_PLUS )
+          if (mpg%fcReg(iFc).ne.19) cycle
+        case default
+          cycle
+        end select
+        s=abs(geo%fcPbs(iFc))
+        hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhi(iFc,0)+st_ext%fhi(iFc,0))
+        do is=0,ns-1 !{
+          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .          st%dv%kinrgy(1,is))
+          hlp=hlp+abs((st%dv%fna(iFc,0,is))*
+     .     (st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
+        end do !}
+        do is=0,st_ext%ns-1 !{
+          taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .     st_ext%ta(1,is))
+          uaf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
+     .     st_ext%ua(1,is))
+          hlp=hlp+abs((st_ext%fa(iFc,0,is))*
+     .    (st_ext%pt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*
+     .    (0.5_R8*st_ext%am(is)*mp*uaf**2+taf)))
+        end do !}
+        hlp=hlp/s
+        hlp_ppfw=max(hlp_ppfw,hlp)
+          if(hlp_dbg) print '(1x,a,i6,3e12.4)',
+     .     "iCv,pbs,hlp_ppfw,hlp_ppfw_max =>",iCv,s,hlp,hlp_ppfw
+      end do !}
 
 #ifdef B25_EIRENE
 c*** Calculate the neutral flows in PFR
@@ -1515,8 +1557,15 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
         do i=mpg%ifdiv(k),mpg%divFcP(k,2) !{
           iFc=mpg%divFc(mpg%divFcP(k,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
+          iFt=mpg%cvFt(iCv)
           e=2.0_R8*pz(iCv)
-          if(e.gt.0.0_R8) d=min(d,pz(iCv)/e)
+          if(e.gt.0.0_R8.and.iFt.gt.0) then
+            if (nimp.gt.0.and.k.le.maxval(mpg%strDiv)/2) then
+              d=min(d,pz(imp(ft_imp(iFt)))/e)
+            else
+              d=min(d,pz(omp(ft_omp(iFt)))/e)
+            end if
+          end if
           if(hlp_dbg) print *,'e,d=',e,d  !###
         end do !}
         hlp_dod(itg_tmp(k))=d
@@ -1557,7 +1606,7 @@ c*** find the maximum ballooning factor and its location
           endif
         endif
       enddo
-      if(hlp_dbg) print '(1x,a,2i6,1e12.4)',
+      if(hlp_dbg) print '(1x,a,1i6,1e12.4)',
      . "all_bll_ic,albll_mx, =>",nint(al_bll_ic),al_bll_mx
 
 c=======================================================================

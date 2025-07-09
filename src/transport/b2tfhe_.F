@@ -166,8 +166,8 @@ c       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 1
        w6=0.0_R8;
       endif                                                              !srv 16.09.02 }
 #endif
-      call b2tepsch(nCv, nFc, nVx, ns, switch, geo, mpg, dv%facdrift,
-     &    co%cddi, pl%te, dv%ne, dv%floe, dv%cone, dv%fhePSch)           !srv 16.10.17
+      call b2tepsch(nCv, nFc, nVx, switch, geo, mpg, dv%facdrift,
+     &    co%cdde, pl%te, dv%ne, dv%floe, dv%cone, dv%fhePSch)           !srv 16.10.17
 
 * ..compute parallel current
       call b2xehx (nCv, nFc, nVx, switch, geo, mpg, pl%te,
@@ -510,6 +510,12 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
        call my_out_us(70,nFc,1,fhe_52_loc(1,1),'b2tfhe__fhe_52_r')
       endif
 
+      if(switch%b2npht_iout.ne.0.or.switch%iout_b2wdat.eq.4) then        !srv 11.09.09 {
+       call my_out_us(70,nFc,1,dv%fhe(1,0),'b2tfhe__fhe_no_mdf_th')
+       call my_out_us(70,nFc,1,dv%fhe(1,1),'b2tfhe__fhe_no_mdf_r')
+       call my_out_us(70,nFc,1,dv%fhePSch(1,0),'b2tfhe__fhePSch_th')
+       call my_out_us(70,nFc,1,dv%fhePSch(1,1),'b2tfhe__fhePSch_r')
+      endif
 
 * ..return
       ncall_b2tfhe = ncall_b2tfhe+1

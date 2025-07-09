@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tinnt (nCv, nFc, nVx, ns, switch, geo, mpg, rt,
-     &       facdrift, fac_ExB, ismain, ismain0, pl, fna,
+     &       facdrift, fac_ExB, pl, fna,
      &       csigin, fchin)                                              !srv 08.03.99 16.06.09
       use b2mod_types
       use b2mod_constants
@@ -24,7 +24,7 @@
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer :: nCv, nFc, nVx, ns, ismain, ismain0
+      integer :: nCv, nFc, nVx, ns
       real (kind=R8) ::
      & facdrift(nFc), fac_ExB(nFc),
      & fna(nFc,0:1,0:ns-1),
@@ -82,11 +82,6 @@
 *   ..test input
       call xertst (0.lt.nCv.and.0.lt.nFc, 'faulty argument nCv, nFc')
       call xertst (1.le.ns, 'faulty argument ns')
-      call xertst (0.le.ismain.and.ismain.lt.ns,
-     & 'faulty argument ismain')
-      call xertst (0.le.ismain0.and.ismain0.lt.ns.and.
-     & (is_neutral(ismain0).or.ismain0.eq.ismain),
-     & 'faulty argument ismain0')
       fchin     = 0.0_R8                                                 !srv 09.07.99
       facdriftm = maxval(facdrift)                                       !srv 20.10.17
       fac_ExBm  = maxval(fac_ExB)
@@ -249,12 +244,6 @@
         call my_out(70,nCv,1,dmb2(1,im,1),
      &              'b2tinnt_dmb2_eir'//chns)
        enddo
-       call my_out(70,nFc,1,csigin(1,0,ismain,ismain0),
-     &                                  'b2tinnt_csigin_th')
-       call my_out(70,nFc,1,csigin(1,1,ismain,ismain0),
-     &                                  'b2tinnt_csigin_r')
-       call my_out(70,nFc,1,fnan(1,0,ismain0),'b2tinnt_fnan_th')
-       call my_out(70,nFc,1,fnan(1,1,ismain0),'b2tinnt_fnan_r')
        call my_out(70,nFc,1,fchin(1,0),'b2tinnt_fchin_th')
        call my_out(70,nFc,1,fchin(1,1),'b2tinnt_fchin_r')
       endif

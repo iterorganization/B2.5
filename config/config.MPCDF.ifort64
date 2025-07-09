@@ -1,5 +1,14 @@
 # Test whether necessary variables are set
+
 IPPSOLPSLIBS ?= /u/azito/SOLPS-ITER
+CLUSTER_NAME := $(shell hostname)
+ifeq ($(findstring raven,$(CLUSTER_NAME)),raven)
+MKL_PATH ?= /mpcdf/soft/SLE_15/packages/x86_64/intel_oneapi/2023.1/mkl/2023.1.0/lib/intel64
+endif
+ifeq ($(findstring viper,$(CLUSTER_NAME)),viper)
+MKL_PATH ?= /mpcdf/soft/RHEL_9/packages/x86_64/intel_oneapi/2024.0/mkl/2024.0/lib
+endif
+
 NCDIR       ?= ${NETCDF_HOME}
 LD_NETCDF   ?= -L${NCDIR}/lib -lnetcdff
 MSCL_ROOT   ?= ${IPPSOLPSLIBS}/mscl
@@ -8,7 +17,7 @@ GLI_HOME    ?= ${IPPSOLPSLIBS}/gks
 NCARG_ROOT  ?= ${IPPSOLPSLIBS}/NCARG
 LD_NCARG    ?= -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/lib64 -lX11 -lm
 NAGDIR      ?= ${IPPSOLPSLIBS}/nag
-LD_NAG      ?= -L${NAGDIR} -lnag
+LD_NAG      ?= -L${NAGDIR} -lnag -L${MKL_PATH} -lmkl_blas95_lp64 -lmkl_lapack95_lp64 -lmkl_intel_lp64  -lmkl_intel_thread -lmkl_core -liomp5 -lpthread
 MDSPLUS_DIR ?= ${IPPSOLPSLIBS}/MDSPLUS
 
 CPP      = /lib/cpp -C -traditional -ffreestanding
@@ -27,10 +36,10 @@ FCOPTS   = -g -C -debug all -traceback -check all
 else
 CLUSTER_NAME := $(shell hostname)
 ifeq ($(findstring raven,$(CLUSTER_NAME)),raven)
-FCOPTS  = -O2 -xHost
+FCOPTS   = -O2 -xHost
 endif
 ifeq ($(findstring viper,$(CLUSTER_NAME)),viper)
-FCOPTS  = -O2 -march=core-avx2 -diag-disable=10448
+FCOPTS   = -O2 -march=core-avx2 -diag-disable=10448
 endif
 endif
 

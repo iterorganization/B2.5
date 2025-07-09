@@ -38,6 +38,9 @@
      &          feedback_namelist_used
       use b2mod_math
      & , only : cutlo, cutll, b2mod_math_initialised, small_r4_constant
+      use b2mod_zhfrtf
+     & , only : z2n_xy, nal, ia, av_ualpha, avm_u, rho_a_rel,
+     &          z_to_m1_ast
 #ifndef B25_EIRENE
       use b2mod_eirdiag
      & , only : dab2, lkindi, lkindm, lkindp, pfluxa, rfluxa, tfluxa
@@ -229,12 +232,17 @@
 !wdk      if(switch%use_eirene.ne.0 .or. switch%save_f31.ne.0) then     !srv 14.07.10 {
 !wdk may want these *_eir-fluxes also without Eirene
 *   ..recompute currents
-       call b2tanml (nCv, nFc, ns, switch, geo, mpg,
-     &   st%co%csig_an, st%pl%po, st%dv%fchanml)
-       call b2tvspa (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%ua,
-     &   st%co%vsaf_cl, st%dv%fac_vis, st%dv%fchvispar)
-       call b2tiner (nCv, nFc, nVx, ns, switch, geo, mpg, st%pl%na,
-     &   st%pl%ua, st%dv%facdrift, st%dv%fchinert)
+       call b2tanml (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &   st%co%csig_an, st%pl%po, st%dv%ne, st%pl%na, st%rt%rza,
+     &   st%dv%fchanml_a, st%dv%fchanml)
+       call b2tvspa (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &   st%pl%na, st%pl%ua, st%pl%ti, st%rt%rza, st%co%vsaf_cl,
+     &   st%co%vsaf_drho, st%co_ns%vsaf_uAdp_albe,
+     &   st%co_ns%vsaf_uBdp_al, st%dv%fac_vis, st%dv%fchvispar_a,
+     &   st%dv%fchvispar)
+       call b2tiner (nCv, nFc, nVx, ns, ismain, switch, geo, mpg,
+     &   st%pl%na, st%pl%ua, st%dv%facdrift,
+     &   st%dv%fchinert_a, st%dv%fchinert)
        call b2tfrn (nCv, nFc, nVx, ns, switch, geo, mpg,
      &   st%pl, st%dv, st%co, st%rt, st_ext)
 !wdk      endif                                                         !srv 14.07.10 }

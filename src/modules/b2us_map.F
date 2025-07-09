@@ -103,6 +103,18 @@
         integer, allocatable :: ftLbl(:)               ! (nFt) indicates for each flux tube the corresponding label
         integer, allocatable :: cvLbl(:)               ! (nCv) indicates for each control volume the corresponding label
 
+!        integer, allocatable :: cvOMP(:)               ! grid cells that belong to the outer mid plane (OMP)
+!        integer, allocatable :: cvIMP(:)               ! grid cells that belong to the inner mid plane (IMP)
+!        integer, allocatable :: fcOMP(:)               ! grid faces that belong to the outer mid plane (OMP)
+!        integer, allocatable :: fcIMP(:)               ! grid faces that belong to the inner mid plane (IMP)
+  
+!        integer, allocatable :: Xpoint(:)              ! vertex number(s) of Xpoint(s)
+        
+        real (kind=R8) :: OMPr(1:2)
+        real (kind=R8) :: OMPz(1:2)
+        real (kind=R8) :: IMPr(1:2)
+        real (kind=R8) :: IMPz(1:2)
+
         logical, allocatable :: cvAlongBoundary(:)     ! (nCv) indicates whether the control volume is connected to a boundary cell
         integer, allocatable :: fcs_wall(:)            ! (nCg) ordered list of faces along the boundary
         integer, allocatable :: fcs_wall_ind(:,:)      ! (nFci,2) indicates range in fcs_wall, where neighbouring faces connected to the one flux tube are placed.
@@ -187,6 +199,13 @@
       allocate (m%fcLbl(m%nFc))
       allocate (m%ftLbl(m%nFt))
       allocate (m%cvLbl(m%nCv))
+      
+!      allocate (m%cvOMP(m%ncvOMP))
+!      allocate (m%cvIMP(m%ncvIMP))
+!      allocate (m%fcOMP(m%nfcOMP))
+!      allocate (m%fcIMP(m%nfcIMP))
+
+!      allocate (m%Xpoint(m%nXp))
 
       call initialize_mapping (m)
 
@@ -266,6 +285,18 @@
 
       m%iFssep = 0
       m%iFssep2 = 0
+
+!      m%cvOMP = 0
+!      m%cvIMP = 0
+!      m%fcOMP = 0
+!      m%fcIMP = 0
+
+!      m%Xpoint = 0 
+     
+      m%OMPr = 0
+      m%OMPz = 0
+      m%IMPr = 0
+      m%IMPz = 0
 
       write (*,*) '=================================='
       write (*,*) 'Mapping initialized'
@@ -354,6 +385,13 @@
       deallocate (m%ftLbl)
       deallocate (m%cvLbl)
 
+!      deallocate (m%cvOMP)
+!      deallocate (m%cvIMP)
+!      deallocate (m%fcOMP)
+!      deallocate (m%fcIMP)
+
+!      deallocate (m%Xpoint)
+      
       if (allocated(m%cvAlongBoundary)) deallocate(m%cvAlongBoundary)
       if (allocated(m%fcs_wall)) deallocate(m%fcs_wall)
       if (allocated(m%fcs_wall_ind)) deallocate(m%fcs_wall_ind)
