@@ -66,7 +66,6 @@
 
       integer, save :: fb_reg_par(DEF_NATM,2) = 0, !contains face label to define list of faces for feedback
      & fb_species(DEF_NATM) = 0, fb_ib(DEF_NATM) = -1,
-     & fb_type_ib(DEF_NATM) = 0,
      & fb_type(DEF_NATM) = 0, fb_rescale_option(DEF_NATM) = 0,
      & fb_actuator(DEF_NATM) = 0, fb_istra(DEF_NATM) = 0,
      & fb_reg(nMxFbReg) = 0, fb_regp(DEF_NATM,2) = 0 !these two arrays have same meaning as fbreg and fbregp above but are needed for conversion and namelist
@@ -120,7 +119,7 @@
      & fb_target, fb_type, fb_rescale_option,
      & fb_actuator, fb_alpha, fb_beta,
      & fb_const, fb_time,
-     & fb_ib, fb_species, fb_type_ib, fb_type_inverse,
+     & fb_ib, fb_species, fb_type_inverse,
      & fb_puff_min, fb_puff_max,
      & fb_overshoot, fb_reg, fb_regp,
      & fb_reg_par, fb_istra, fb_tau
@@ -918,10 +917,20 @@ cxpb size is changed in b2mod_dimensions
             ifbreg = ifbreg + fb_RegP(ifb,2)
             done = .true.
           endif
+        ! include default to outer target for certain feedback schemes
+          if (fb_type(ifb).ge.23 .and. fb_type(ifb).le.26 .and.
+     &        fb_reg_par(ifb,1).eq.0) then
+            write(*,*) 'No fb_reg_par is found. '//
+     &       'Setting fb_reg_par to 2 (presumably the outer target)'
+            fb_reg_par(ifb,1) = 2
+          end if
+          if (fb_type(ifb).ge.23 .and. fb_type(ifb).le.26 .and.
+     &        fb_reg_par(ifb,2).eq.0) fb_reg_par(ifb,2) = 2
         ! now look for feedback types requiring faces
           if ((fb_type(ifb).eq.6  .or. fb_type(ifb).eq.10 .or.
      &         fb_type(ifb).eq.11 .or. fb_type(ifb).eq.12 .or.
-     &         fb_type(ifb).eq.13)
+     &         fb_type(ifb).eq.13 .or.
+     &        (fb_type(ifb).ge.23 .and. fb_type(ifb).le.26))
      &        .and. .not.done) then
             call xertst(fb_reg_par(ifb,1).gt.0,
      &        'init_feedback: At lest one segment must be specified'//
@@ -1646,17 +1655,19 @@ cxpb size is changed in b2mod_dimensions
             case (23) !  Total heat flux at outer target
 
               if(ncall.eq.0) then
-                if (fb_type_ib(ifb).eq.0) then
-                  fb_type_ib(ifb) = find_loc(bcstart,mpg%nBc,2)
-                  write(*,*) 'No fb_type_ib is found. '//
-     &             'Setting fb_type_ib=',fb_type_ib(ifb),
-     &             ' (presumably the outer target)'
-                endif
-                write(*,'(a,a,i3,a,i3)')
-     &           'compute_feedback_type: using ',
-     &           ' Total heat flux density along boundary ',
-     &           fb_type_ib(ifb),' for sequence ',
-     &           b2espcr(fb_species(ifb))
+                if (fb_reg_par(ifb,1).eq.fb_reg_par(ifb,2)) then
+                  write(*,'(a,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             ' plasma heat flux density along boundary ',
+     &              fb_reg_par(ifb,1), ' for sequence ',
+     &              b2espcr(fb_species(ifb))
+                else
+                  write(*,'(a,a,i3,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             ' plasma heat flux density along boundaries ',
+     &              fb_reg_par(ifb,1),' to ',fb_reg_par(ifb,2),
+     &             ' for sequence ',b2espcr(fb_species(ifb))
+                end if
                 fb_target(ifb) = 1.0_R8/fb_target(ifb)
               endif
 
@@ -1671,10 +1682,12 @@ cxpb size is changed in b2mod_dimensions
                 endif
               enddo
               fb_current(ifb) = 0.0_R8
-              do i = 1, mpg%bcFcP(fb_type_ib(ifb),2)
-                iFc = mpg%bcFc(mpg%bcFcP(fb_type_ib(ifb),1)+i-1)
-                iCv = mpg%bcCv(mpg%bcCvP(fb_type_ib(ifb),1)+i-1,1)
-                t1 = mpg%bcFcOr(mpg%bcFcP(fb_type_ib(ifb),1)+i-1)
+              iFc1 = fbRegP(ifb,1)
+              iFc2 = iFc1 + fbRegP(ifb,2) - 1
+              do iFc = iFc1, iFc2
+                ic = mpg%fcBc(fbReg(iFc),1)
+                iCv = maxval(mpg%fcCv(iFc,1:2))
+                t1 = mpg%bcFcOr(ic)
                 t0 = dv%fhe(iFc,0)+dv%fhe(iFc,1)+
      .            dv%fhi(iFc,0)+dv%fhi(iFc,1)+
      .            (dv%fne(iFc,0)+dv%fne(iFc,1))*pl%te(iCv)
@@ -1700,17 +1713,19 @@ cxpb size is changed in b2mod_dimensions
             case (24) ! peak electron temperature at specific boundary
 
               if(ncall.eq.0) then
-                if (fb_type_ib(ifb).eq.0) then
-                  fb_type_ib(ifb) = find_loc(bcstart,mpg%nBc,2)
-                  write(*,*) 'No fb_type_ib is found. '//
-     &             'Setting fb_type_ib=',fb_type_ib(ifb),
-     &             ' (presumably the outer target)'
-                endif
-                write(*,'(a,a,i3,a,i3)')
-     &           'compute_feedback_type: using ',
-     &           'peak electron temperature along boundary ',
-     &           fb_type_ib(ifb),' for sequence ',
-     &           b2espcr(fb_species(ifb))
+                if (fb_reg_par(ifb,1).eq.fb_reg_par(ifb,2)) then
+                  write(*,'(a,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             'peak electron temperature along boundary ',
+     &              fb_reg_par(ifb,1),' for sequence ',
+     &              b2espcr(fb_species(ifb))
+                else
+                  write(*,'(a,a,i3,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             'peak electron temperature along boundaries ',
+     &              fb_reg_par(ifb,1),' to ',fb_reg_par(ifb,2),
+     &             ' for sequence ',b2espcr(fb_species(ifb))
+                end if
                 fb_target(ifb) = 1.0_R8/fb_target(ifb)
               endif
 
@@ -1726,8 +1741,10 @@ cxpb size is changed in b2mod_dimensions
               enddo
               fb_current(ifb) = 0.0_R8
 
-              do i = 1, mpg%bcCvP(fb_type_ib(ifb),2)
-                iCv = mpg%bcCv(mpg%bcCvP(fb_type_ib(ifb),1)+i-1,2)
+              iFc1 = fbRegP(ifb,1)
+              iFc2 = iFc1 + fbRegP(ifb,2) - 1
+              do iFc = iFc1, iFc2
+                iCv = min(mpg%fcCv(fbReg(iFc),1),mpg%fcCv(fbReg(iFc),2))
                 fb_current(ifb) = max(fb_current(ifb),pl%te(iCv)/qe)
               enddo
               fb_current(ifb) = 1.0_R8/fb_current(ifb)
@@ -1735,17 +1752,19 @@ cxpb size is changed in b2mod_dimensions
             case (25) ! peak electron density at specific boundary
 
               if(ncall.eq.0) then
-                if (fb_type_ib(ifb).eq.0) then
-                  fb_type_ib(ifb) = 2
-                  write(*,*) 'No fb_type_ib is found. '//
-     &             'Setting fb_type_ib=',fb_type_ib(ifb),
-     &             ' (presumably the outer target)'
+                if (fb_reg_par(ifb,1).eq.fb_reg_par(ifb,2)) then
+                  write(*,'(a,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             'peak electron density along boundary ',
+     &              fb_reg_par(ifb,1),' for sequence ',
+     &              b2espcr(fb_species(ifb))
+                else
+                  write(*,'(a,a,i3,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             'peak electron density along boundaries ',
+     &              fb_reg_par(ifb,1),' to ',fb_reg_par(ifb,2),
+     &             ' for sequence ',b2espcr(fb_species(ifb))
                 endif
-                write(*,'(a,a,i3,a,i3)')
-     &           'compute_feedback_type: using ',
-     &           'peak electron density along boundary ',
-     &           fb_type_ib(ifb),' for sequence ',
-     &           b2espcr(fb_species(ifb))
               endif
 
               fb_current(ifb) = 0.0_R8
@@ -1760,25 +1779,29 @@ cxpb size is changed in b2mod_dimensions
               enddo
               fb_current(ifb) = 0.0_R8
 
-              do i = 1, mpg%bcCvP(fb_type_ib(ifb),2)
-                iCv = mpg%bcCv(mpg%bcCvP(fb_type_ib(ifb),1)+i-1,2)
+              iFc1 = fbRegP(ifb,1)
+              iFc2 = iFc1 + fbRegP(ifb,2) - 1
+              do iFc = iFc1, iFc2
+                iCv = min(mpg%fcCv(fbReg(iFc),1),mpg%fcCv(fbReg(iFc),2))
                 fb_current(ifb) = max(fb_current(ifb),dv%ne(iCv))
               enddo
 
             case (26) ! peak parallel saturation current
 
               if(ncall.eq.0) then
-                if (fb_type_ib(ifb).eq.0) then
-                  fb_type_ib(ifb) = find_loc(bcstart,mpg%nBc,2)
-                  write(*,*) 'No fb_type_ib is found. '//
-     &             'Setting fb_type_ib=',fb_type_ib(ifb),
-     &             ' (presumably the outer target)'
-                endif
-                write(*,'(a,a,i3,a,i3)')
-     &           'compute_feedback_type: using ',
-     &           'peak parallel saturation current along boundary ',
-     &           fb_type_ib(ifb),' for sequence ',
-     &           b2espcr(fb_species(ifb))
+                if (fb_reg_par(ifb,1).eq.fb_reg_par(ifb,2)) then
+                  write(*,'(a,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             'peak parallel saturation current along boundary ',
+     &             fb_reg_par(ifb,1),' for sequence ',
+     &             b2espcr(fb_species(ifb))
+                else
+                  write(*,'(a,a,i3,a,i3)')
+     &             'compute_feedback_type: using ',
+     &             'peak parallel saturation current along boundaries ',
+     &             fb_reg_par(ifb,1),' to ',fb_reg_par(ifb,2),
+     &             ' for sequence ',b2espcr(fb_species(ifb))
+                end if
                 if (fb_type_inverse(ifb))
      &           fb_target(ifb) = 1.0_R8/fb_target(ifb)
               endif
@@ -1795,19 +1818,22 @@ cxpb size is changed in b2mod_dimensions
               enddo
               fb_current(ifb) = 0.0_R8
 
-              do i = 1, mpg%bcFcP(fb_type_ib(ifb),2)
-                iFc = mpg%bcFc(mpg%bcFcP(fb_type_ib(ifb),1)+i-1)
-                iCv = min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
-                t1 = mpg%bcFcOr(mpg%bcFcP(fb_type_ib(ifb),1)+i-1)
+              iFc1 = fbRegP(ifb,1)
+              iFc2 = iFc1 + fbRegP(ifb,2) - 1
+              do iFc = iFc1, iFc2
+                iCv = min(mpg%fcCv(fbReg(iFc),1),mpg%fcCv(fbReg(iFc),2))
+                ic = mpg%fcBc(fbReg(iFc),1)
+                t1 = mpg%bcFcOr(ic)
                 t0 = 0.0_R8
                 do is = 0, ns-1
                   if (is_neutral(is)) cycle
                   zaf = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,
      .             rt%rza(1,is))
-                  t0 = t0 + t1*(dv%fna(iFc,0,is)+dv%fna(iFc,1,is))*
-     .                 zaf*qe/geo%fcS(iFc)/
-     .                (geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/
-     .                 geo%fcBb(iFc,3))
+                  t0 = t0 + t1*(dv%fna(fbReg(iFc),0,is)+
+     .                          dv%fna(fbReg(iFc),1,is))*
+     .                 zaf*qe/geo%fcS(fbReg(iFc))/
+     .                (geo%fcQalf(fbReg(iFc),0)*geo%fcBb(fbReg(iFc),0)/
+     .                 geo%fcBb(fbReg(iFc),3))
                 enddo
                 fb_current(ifb) = max(fb_current(ifb),t0)
               enddo
