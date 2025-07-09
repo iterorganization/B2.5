@@ -1520,8 +1520,6 @@ contains
 #endif
 
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-        allocate( summary%composition%names( nspecies ) )
-        allocate( summary%composition%n_i_over_n_e( nspecies ) )
         nesum = 0.0_IDS_real
         do iy = -1, ny
           do ix = -1, nx
@@ -1530,8 +1528,6 @@ contains
           end do
         end do
         do i = 1, nspecies
-          call write_sourced_string( summary%composition%names(i), &
-              &  species_list(i) )
           frac = 0.0_IDS_real
           do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
             if (is.ge.ns) cycle
@@ -1545,8 +1541,44 @@ contains
             end do
           end do
           if (nesum.gt.0.0_IDS_real) frac = frac / nesum
-          call write_sourced_value( summary%composition%n_i_over_n_e(i), &
-              &  frac )
+          select case (is_codes(eb2spcr(is)))
+          case ('H')
+            call write_sourced_value( summary%composition%hydrogen, frac )
+          case ('D')
+            call write_sourced_value( summary%composition%deuterium, frac )
+          case ('T')
+            call write_sourced_value( summary%composition%tritium, frac )
+          case ('He')
+            if (nint(am(eb2spcr(is))).eq.3) then
+              call write_sourced_value( summary%composition%helium_3, frac )
+            else if (nint(am(eb2spcr(is))).eq.4) then
+              call write_sourced_value( summary%composition%helium_4, frac )
+            end if
+          case ('Li')
+            call write_sourced_value( summary%composition%lithium, frac )
+          case ('Be')
+            call write_sourced_value( summary%composition%beryllium, frac )
+          case ('B')
+            call write_sourced_value( summary%composition%boron, frac )
+          case ('C')
+            call write_sourced_value( summary%composition%carbon, frac )
+          case ('N')
+            call write_sourced_value( summary%composition%nitrogen, frac )
+          case ('O')
+            call write_sourced_value( summary%composition%oxygen, frac )
+          case ('Ne')
+            call write_sourced_value( summary%composition%neon, frac )
+          case ('Ar')
+            call write_sourced_value( summary%composition%argon, frac )
+          case ('Fe')
+            call write_sourced_value( summary%composition%iron, frac )
+          case ('Xe')
+            call write_sourced_value( summary%composition%xenon, frac )
+          case ('W')
+            call write_sourced_value( summary%composition%tungsten, frac )
+          case ('Kr')
+            call write_sourced_value( summary%composition%krypton, frac )
+          end select
         end do
 #endif
 
@@ -9145,7 +9177,6 @@ contains
         batch_profiles%grid_ggd( batch_index )%time = batch_slice_value
         batch_sources%grid_ggd( batch_index )%time = batch_slice_value
 #endif
-
         batch_profiles%ggd( batch_index )%time = batch_slice_value
 #if ( IMAS_MAJOR_VERSION < 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION < 1 ) )
         batch_sources%source(1)%ggd( batch_index )%time = batch_slice_value
@@ -9676,8 +9707,6 @@ contains
         if (do_description) then
 ! Summary plasma composition
 #if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
-          allocate( summary%composition%names( nspecies ) )
-          allocate( summary%composition%n_i_over_n_e( nspecies ) )
           u = 0.0_IDS_real
           do is = 0, ns-1
             do iy = -1, ny
@@ -9688,8 +9717,6 @@ contains
             end do
           end do
           do i = 1, nspecies
-            call write_sourced_string( summary%composition%names(i), &
-                &  species_list(i) )
             frac = 0.0_IDS_real
             do is = eb2spcr(i), eb2spcr(i)+nfluids(i)+1
               if (is.ge.ns) cycle
@@ -9703,8 +9730,44 @@ contains
               end do
             end do
             if (u.gt.0.0_IDS_real) frac = frac / u
-            call write_sourced_value( summary%composition%n_i_over_n_e(i), &
-                &  frac )
+            select case (is_codes(eb2spcr(is)))
+            case ('H')
+              call write_sourced_value( summary%composition%hydrogen, frac )
+            case ('D')
+              call write_sourced_value( summary%composition%deuterium, frac )
+            case ('T')
+              call write_sourced_value( summary%composition%tritium, frac )
+            case ('He')
+              if (nint(am(eb2spcr(is))).eq.3) then
+                call write_sourced_value( summary%composition%helium_3, frac )
+              else if (nint(am(eb2spcr(is))).eq.4) then
+                call write_sourced_value( summary%composition%helium_4, frac )
+              end if
+            case ('Li')
+              call write_sourced_value( summary%composition%lithium, frac )
+            case ('Be')
+              call write_sourced_value( summary%composition%beryllium, frac )
+            case ('B')
+              call write_sourced_value( summary%composition%boron, frac )
+            case ('C')
+              call write_sourced_value( summary%composition%carbon, frac )
+            case ('N')
+              call write_sourced_value( summary%composition%nitrogen, frac )
+            case ('O')
+              call write_sourced_value( summary%composition%oxygen, frac )
+            case ('Ne')
+              call write_sourced_value( summary%composition%neon, frac )
+            case ('Ar')
+              call write_sourced_value( summary%composition%argon, frac )
+            case ('Fe')
+              call write_sourced_value( summary%composition%iron, frac )
+            case ('Xe')
+              call write_sourced_value( summary%composition%xenon, frac )
+            case ('W')
+              call write_sourced_value( summary%composition%tungsten, frac )
+            case ('Kr')
+              call write_sourced_value( summary%composition%krypton, frac )
+            end select
           end do
 #endif
 ! Summary separatrix data
@@ -10750,15 +10813,15 @@ contains
       call write_sourced_integer( summary%boundary%type, 0 )
     case( GEOMETRY_SN )
       if ( isymm.eq.1 .or. isymm.eq.2 ) then
-        if ( cry(leftcut(1),jsep,3).lt.0.0_R8) then
+        if ( cry(leftcut(1),jsep,3).lt.0.0_R8 ) then
           call write_sourced_integer( summary%boundary%type, 11 )
-        else if ( cry(leftcut(1),jsep,3).gt.0.0_R8) then
+        else if ( cry(leftcut(1),jsep,3).gt.0.0_R8 ) then
           call write_sourced_integer( summary%boundary%type, 12 )
         end if
       else if ( isymm.eq.3 .or. isymm.eq.4 ) then
-        if ( crx(leftcut(1),jsep,3).lt.0.0_R8) then
+        if ( crx(leftcut(1),jsep,3).lt.0.0_R8 ) then
           call write_sourced_integer( summary%boundary%type, 11 )
-        else if ( crx(leftcut(1),jsep,3).gt.0.0_R8) then
+        else if ( crx(leftcut(1),jsep,3).gt.0.0_R8 ) then
           call write_sourced_integer( summary%boundary%type, 12 )
         end if
       else
@@ -11265,8 +11328,7 @@ contains
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
             & GRID_SUBSET_FULL_WALL, &
-            & GRID_SUBSET_INNER_MIDPLANE, &
-            & GRID_SUBSET_OUTER_MIDPLANE, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &
@@ -11412,8 +11474,7 @@ contains
             & GRID_SUBSET_OUTER_PFR_WALL, GRID_SUBSET_INNER_PFR_WALL, &
             & GRID_SUBSET_MAIN_WALL, GRID_SUBSET_PFR_WALL, &
             & GRID_SUBSET_FULL_WALL, &
-            & GRID_SUBSET_INNER_MIDPLANE, &
-            & GRID_SUBSET_OUTER_MIDPLANE, &
+            & GRID_SUBSET_INNER_MIDPLANE, GRID_SUBSET_OUTER_MIDPLANE, &
             & GRID_SUBSET_SECOND_SEPARATRIX, &
             & GRID_SUBSET_OUTER_BAFFLE_INACTIVE, &
             & GRID_SUBSET_INNER_BAFFLE_INACTIVE, &

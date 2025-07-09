@@ -2623,7 +2623,9 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '0', flux limit is not applied directly to the electron heat flux but is applied through transport coefficients if 'b2trcl_conductive_limit' is '1'. It is recommended '0'.
+					If '0' and 'b2trcl_conductive_limit' is '1', the flux limit is not applied directly to the electron heat flux but is applied through the transport coefficients. This is the recommended default behaviour.
+					If '1' and 'b2trcl_conductive_limit' is '0', the flux limit is applied directly to the electron heat flux.
+					If '0' and 'b2trcl_conductive_limit' is '0', no flux limit is applied.
 				</description>
 			</switch>
 			<switch>
@@ -2631,7 +2633,9 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '0', flux limit is not applied directly to the ion heat flux but is applied through transport coefficients if 'b2trcl_conductive_limit' is '1'. It is recommended '0'.
+					If '0' and 'b2trcl_conductive_limit' is '1', the flux limit is not applied directly to the ion heat flux but is applied through the transport coefficients. This is the recommended default behaviour.
+					If '1' and 'b2trcl_conductive_limit' is '0', the flux limit is applied directly to the ion heat flux.
+					If '0' and 'b2trcl_conductive_limit' is '0', no flux limit is applied.
 				</description>
 			</switch>
 			<switch>
@@ -3682,8 +3686,8 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', flux limit of the parallel electron and ion heat fluxes is applied to transport coefficients.
-					It is recommended '1'. If 'b2trcl_conductive_limit' '0' then the keys 'b2tfhe_lim_flux' and 'b2tfhi_lim_flux' must be '0'.
+					When set to '1' (recommended default), the flux limit to the parallel electron and ion heat fluxes is applied through the associated transport coefficients.
+					If 'b2trcl_conductive_limit' is '0', then the keys 'b2tfhe_lim_flux' and 'b2tfhi_lim_flux' are used to decide whether a flux limit is applied, to the fluxes directly.
 				</description>
 			</switch>
 			<switch>
