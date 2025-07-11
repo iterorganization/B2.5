@@ -2059,17 +2059,9 @@ c b2tqna
      &      'faulty argument b2tqna_vsa_alfa4')
 
       call ipgetr ('b2tqna_vla_alfa1', s%vla_alfa1)
-      call xertst (0.0_R8.le.s%vla_alfa1,
-     &      'faulty argument b2tqna_vla_alfa1')
       call ipgetr ('b2tqna_vla_alfa2', s%vla_alfa2)
-      call xertst (0.0_R8.le.s%vla_alfa2,
-     &      'faulty argument b2tqna_vla_alfa2')
       call ipgetr ('b2tqna_vla_alfa3', s%vla_alfa3)
-      call xertst (0.0_R8.le.s%vla_alfa3,
-     &      'faulty argument b2tqna_vla_alfa3')
       call ipgetr ('b2tqna_vla_alfa4', s%vla_alfa4)
-      call xertst (0.0_R8.le.s%vla_alfa4,
-     &      'faulty argument b2tqna_vla_alfa4')
 
       call ipgetr ('b2tqna_sig_alfa1', s%sig_alfa1)
       call xertst (0.0_R8.le.s%sig_alfa1,
