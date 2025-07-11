@@ -899,12 +899,12 @@ c Zhdanov closure switches
       s % b2treq_phm0 = 1.0_R8
       s % b2stbc_phm0 = 1.0_R8
       s % b2stbc_phm1 = 1.0_R8
-      s % b2sihs_shidu = 1
-      s % b2sihs_shidd = 1
-      s % b2sihs_shedu = 1
-      s % b2sihs_shedd = 1
-      s % b2sihs_shivis = 1
-      s % b2sihs_shi = 1
+      s % b2sihs_shidu = 0
+      s % b2sihs_shidd = 0
+      s % b2sihs_shedu = 0
+      s % b2sihs_shedd = 0
+      s % b2sihs_shivis = 0
+      s % b2sihs_shi = 0
 
       if ( s % b2mndt_style.eq.2 ) then
         s % b2npco_rxg =  huge(1.0_R8)
@@ -1530,12 +1530,12 @@ c phm switches
       call ipgetr ('b2stbc_phm0', s % b2stbc_phm0)  !srv 17.01.07
       call ipgetr ('b2stbc_phm1', s % b2stbc_phm1)
       call ipgeti ('b2sihs_shi', s % b2sihs_shi)
-      if (s % b2sihs_shi .eq. 0) then
-        s % b2sihs_shidu = 0
-        s % b2sihs_shidd = 0
-        s % b2sihs_shedu = 0
-        s % b2sihs_shedd = 0
-        s % b2sihs_shivis = 0
+      if (s % b2sihs_shi .ne. 0) then
+        s % b2sihs_shidu = s % b2sihs_shi
+        s % b2sihs_shidd = s % b2sihs_shi
+        s % b2sihs_shedu = s % b2sihs_shi
+        s % b2sihs_shedd = s % b2sihs_shi
+        s % b2sihs_shivis = s % b2sihs_shi
       endif
       call ipgeti ('b2sihs_shidu', s % b2sihs_shidu)
       call ipgeti ('b2sihs_shidd', s % b2sihs_shidd)
@@ -2355,6 +2355,11 @@ c b2sihs_
       call xertst (0.0_R8.le.min(s%b2sihs__rf0,s%b2sihs__rf1,
      &  s%b2sihs__rf2,s%b2sihs__rf3,s%b2sihs__rf4),
      &  'faulty internal parameter rf0/1/2/3/4')
+      call xertst (0..le.min(s%b2sihs_shivis,s%b2sihs_shedu,
+     &  s%b2sihs_shedd,s%b2sihs_shidu,s%b2sihs_shidd) .or.
+     &  max(s%b2sihs_shivis,s%b2sihs_shedu,s%b2sihs_shedd,
+     &  s%b2sihs_shidu,s%b2sihs_shidd).gt.3.,
+     &  'faulty internal parameter shi/shivis/shedu/shedd/shidu/shidd')
 
 c b2srst
       call xertst (0.0_R8.le.s%b2srst_rf0.and.0.0_R8.le.s%b2srst_rf1
