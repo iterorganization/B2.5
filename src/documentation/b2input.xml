@@ -4199,50 +4199,60 @@
 			</switch>
 			<switch>
 				<name>b2sihs_shivis</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shivis.eq.0, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shivis.eq.1, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shivis.eq.2, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
+					If b2sihs_shivis.eq.3, then shivc and shiva (ion heat source due to viscosity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shi</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shi.eq.0, then all b2sihs_shi* and b2sihs_shivis keys will be assigned to zero.
+					If b2sihs_shi.ne.0, then all b2sihs_shi* and b2sihs_shivis keys will be assigned to b2sihs_shi value as default (individual keys can still be overwritten by b2sihs_shi* and b2sihs_shivis that take proprity over b2sihs_shi).
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shidu</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shidu.eq.0, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shidu.eq.1, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shidu.eq.2, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
+					If b2sihs_shidu.eq.3, then shidu (ion heat source due to divergence of velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shidd</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
-					If b2sihs_shidd.eq.0, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shidd.eq.1, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shidd.eq.2, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells except the  ones that belong to the core and target boundaries.
+					If b2sihs_shidd.eq.3, then shidd (ion heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shedu</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
 					If b2sihs_shedu.eq.0, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shedu.eq.2, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
+					If b2sihs_shedu.eq.3, then shedu (electron heat source due to divergence of velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
 				</description>
 			</switch>
 			<switch>
 				<name>b2sihs_shedd</name>
-				<default>1</default>
+				<default>0</default>
 				<type>integer</type>
 				<description>
 					If b2sihs_shedd.eq.0, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells.
+					If b2sihs_shedd.eq.2, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells except the ones that belong to the core and target boundaries.
+					If b2sihs_shedd.eq.3, then shedd (electron heat source due to divergence of drift velocity) will be zeroed out in boundary-volume cells belonging to the main chamber wall bondary.
 				</description>
 			</switch>
 			<switch>
