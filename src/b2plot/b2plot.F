@@ -575,7 +575,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       end do
       call alloc_b2mod_elements(ns, zn, am)
       call alloc_b2mod_tallies(mpg%nnreg, ns)
-c calculate additional fluxes (fhj, fhm, fhp, fht)
+c calculate additional fluxes (fhj, fhp, fht)
       call ipgetr ('b2news_BoRiS', switch%BoRiS)
       call b2xpni (mpg%nCv, ns, state%pl%na, state%dv%ni)
       call b2xpen (mpg%nCv, mpg%nFc, ns, mpg, switch,
