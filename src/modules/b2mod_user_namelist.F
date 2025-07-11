@@ -206,6 +206,7 @@ c***  Standard set-up:
       type (switches), intent (inout) :: sw
       integer ic, iFc, iFs, iFs1, iFs2, iFt, iVx1, iVx2
       real (kind=R8) :: distint, dsep,
+     . dsep_vX(4),  ! is used as distance from the OMP cell vertex to the separatrix, and all cells are assumed to be triangular or quadrangular, no pentagons, hexagons etc
      . Xv1, Xv2, Yv1, Yv2, Xm1, Xm2, Ym1, Ym2, Xint, Yint
 
       logical :: file_ok, on_wall, wall_face(2)
@@ -319,8 +320,10 @@ c***  Standard set-up:
           fs_ds_omp(iFs) = dsep - fs_ds_omp(iFs)
         end if
       end do
+      write(*,*)
       do ic = 1, nomp
-        if (omp(ic).gt.m%nCi) cycle ! do not do guard cells
+! Exclude guard cell, since processing a guard cell may overwrite a correct distance computed one iteration before for regular cell if it is in the same flux tube
+        if (omp(ic) > m%nCi) cycle
         iFs1 = 0
         iFs2 = 0
         iFt = m%cvFt(omp(ic))
@@ -330,31 +333,17 @@ c***  Standard set-up:
         do i = m%cvVxP(omp(ic),1),
      &         m%cvVxP(omp(ic),1) + m%cvVxP(omp(ic),2) - 1
           iFs = m%vxFs(m%cvVx(i))
-          if (iFs.eq.0) then ! check if this is a wall vertex
-            on_wall = .false.
-            do j = m%vxFcP(m%cvVx(i),1),
-     &             m%vxFcP(m%cvVx(i),1) + m%vxFcP(m%cvVx(i),2) - 1
-              iFc = m%vxFc(j)
-              on_wall = on_wall .or. m%fcLbl(iFc).ne.0
-              if (on_wall) then
-                if (iFs1.eq.0) wall_face(1) = .true.
-                if (iFs1.ne.0 .and. iFs2.eq.0) wall_face(2) = .true.
-              end if
-            end do
-          endif
-          if (iFs1.eq.0 .and. iFs.ne.0) then
+          write(*,*) '   iVx = ', i, ' iFs = ', iFs
+         dsep_vX = 999.0_R8
+          if (iFs.eq.0) cycle
+          if (iFs1.eq.0) then
             iFs1 = iFs
           else if (iFs2.eq.0 .and. iFs.ne.iFs1 .and. iFs.ne.0) then
             iFs2 = iFs
           end if
         end do
-        if (iFs1.ne.0.and.iFs2.ne.0) then
-          ft_ds_omp(iFt) = 0.5_R8*(fs_ds_omp(iFs1)+fs_ds_omp(iFs2))
-        else if (wall_face(1)) then
-          ft_ds_omp(iFt) = fs_ds_omp(iFs2)+0.5_R8*geo%cvHy(omp(ic))
-        else if (wall_face(2)) then
-          ft_ds_omp(iFt) = fs_ds_omp(iFs1)+0.5_R8*geo%cvHy(omp(ic))
-        end if
+         if (iFs1.ne.0.and.iFs2.ne.0)
+     .      ft_ds_omp(iFt) = 0.5_R8*(fs_ds_omp(iFs1)+fs_ds_omp(iFs2))
       end do
 cxpb set default switches depending on midplane location
       if (sw%set_transport_iyref.eq.0) then
@@ -576,7 +565,7 @@ c*** Set default values according to current species list
         end if
       end do
       do ic = 1, nimp
-        if (imp(ic).gt.m%nCi) cycle ! do not do guard cells
+        if (imp(ic) > m%nCi) cycle
         iFs1 = 0
         iFs2 = 0
         iFt = m%cvFt(imp(ic))
