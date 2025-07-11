@@ -293,7 +293,7 @@ c
      2   potimin(is),potimax(is),potmin(is),potmax(is)
       end do
       call alloc_b2mod_elements(ns, zn, am)
-c calculate additional fluxes (fhj, fhm, fhp, fht)
+c calculate additional fluxes (fhj, fhp, fht)
       call b2xpen (nCv, nFc, ns, mpg, switch,
      1  state%dv%fna, state%dv%fna_53, state%dv%fne_53, state%dv%fch,
      1  state%dv%fhe, state%dv%fhi, state%dv%fhn, state%rt%rpt,
