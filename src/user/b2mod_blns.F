@@ -355,8 +355,15 @@ c**********************************
         do it=1,mpg%nStr
           do iy=1,mpg%divFcP(it,2)
             iFc=mpg%divFc(mpg%divFcP(it,1) + iy - 1)
-            flxit(k) = flxit(k)-mpg%divFcOr(mpg%divFcP(it,1) + iy - 1)*
-     &        (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
+            if (is_neutral(is).and.switch%use_eirene.eq.0) then
+              flxnt(k) =
+     &          flxnt(k)+mpg%divFcOr(mpg%divFcP(it,1) + iy - 1)*
+     &          (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
+            elseif (.not.is_neutral(is)) then
+              flxit(k) =
+     &          flxit(k)-mpg%divFcOr(mpg%divFcP(it,1) + iy - 1)*
+     &          (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
+            endif
           enddo
         enddo
         do ib=1,NBC
@@ -364,8 +371,13 @@ c**********************************
             iCv = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)
             iFc  = mpg%cvFc(mpg%cvFcP(iCv,1))
             if(.not. mpg%cvOnClosedSurface(iCv)) then
-              flxiw(k) = flxiw(k)-mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+              if (is_neutral(is).and.switch%use_eirene.eq.0) then
+                flxnw(k) = flxnw(k)+mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
      &             (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
+              elseif (.not.is_neutral(is)) then
+                flxiw(k) = flxiw(k)-mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
+     &             (st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))
+              endif
             else
               if (switch%mdf_fnb.eq.0) then
               flxic(k) = flxic(k)-mpg%bcFcOr(mpg%bcCvP(ib,1)+ibc-1)*
@@ -376,6 +388,12 @@ c**********************************
               endif
             endif
           enddo
+          if (is_neutral(is).and.switch%use_eirene.eq.0.and.
+     &        ((BCCON(is,ib).eq.8  .or. BCCON(is,ib).eq.16 .or.
+     &          BCCON(is,ib).eq.26) .and.
+     &          CONPAR(is,ib,1) .gt. 0.0_R8)) then
+            flxnp(k) = flxnp(k) + CONPAR(is,ib,1)
+          endif
         enddo
       end do
       flxiw = flxiw - flxit
@@ -742,130 +760,6 @@ c****************************************************************
 
 
         if (switch%use_eirene.ne.0) then
-#ifdef WG_TODO
-c*** Flux across the core boundary
-
-!       Loof over segments of Eirene core boundary
-          do is = 1,ncns
-
-c**       Here "is" is not a species index, but the index of Eirene surface,
-!!!    because
-c**       ncns - Number of 'non-default' Eirene surfaces which are part of the core boundary
-c**       lcns() - index of these 'non-default' surfaces
-
-            js = lcns(is) + nnlimi
-c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
-
-            do j = 1,nnatmi
-              print *, "latmscl(",j,")=",latmscl(j)," ,is=",is," ls=",ls
-              if (latmscl(j) .eq. ls) then
-                flxnc(ls) = flxnc(ls)
-     &               - wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
-                do ic=1,nnmoli
-                  if (mlcmp(j,ic) .gt. 0) flxnc(ls) = flxnc(ls) -
-     &             mlcmp(j,ic) * (wldnm(js,ic,0) - wldrm(js,ic,0)
-     &                                           - wldpm(js,ic,0))
-                end do
-              end if
-            end do
-          end do
-
-c*** Flux across the targets
-
-!       Loop over segments of Eirene target boundaries
-          do is = 1,ntns
-
-c**       ntns - Number of 'non-default' Eirene surfaces which are part of the target boundaries
-c**       ltns() - index of these 'non-default' surfaces
-
-            js=ltns(is)+nnlimi
-c**       js - index of the Eirene surface, js > nnlimi means that this is the 'non-default' one
-
-            do j = 1,nnatmi
-
-              if (latmscl(j) .eq. ls) then
-
-                flxnt(ls) = flxnt(ls) -
-     &             wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
-                flxnt_rec(ls) = flxnt_rec(ls) + wldpa(js,j,0)                        ! IYS 12.01.2018
-                flxnt_pump(ls) = flxnt_pump(ls) + wlpump(j,js)                       ! IYS 22.06.2018
-                flxnt_sput(ls) = flxnt_sput(ls) + wldspta(js,j,0)                    ! IYS 22.06.2018
-
-                do ic = 1,nnmoli
-
-                  if (mlcmp(j,ic) .gt. 0) then
-
-                    flxnt(ls) = flxnt(ls) - mlcmp(j,ic) *
-     &               (wldnm(js,ic,0) - wldrm(js,ic,0) - wldpm(js,ic,0))
-                    flxnt_rec(ls) = flxnt_rec(ls) +
-     &                              mlcmp(j,ic) * wldpm(js,ic,0)
-                    flxnt_pump(ls) = flxnt_pump(ls) +
-     &                              mlcmp(j,ic) * wlpump(nnatmi+ic,js)  ! IYS 22.06.2018
-                    flxnt_sput(ls) = flxnt_sput(ls) +
-     &                              mlcmp(j,ic) * wldsptm(js,ic,0)      ! IYS 22.06.2018
-
-                  endif
-
-                end do ! end of the loop over molecules
-
-              end if
-
-            end do ! end of the loop over atoms
-
-            do j = 1, nnplsi
-              if (latmscl(lkindp(j)).eq.ls) flxnt_pump(ls) =
-     &         flxnt_pump(ls) + wlpump(nnatmi+nnmoli+nnioni+j,js)
-            enddo
-
-          end do ! end of the loop over target segments
-
-c*** Flux across the side walls
-
-!       Loop over segments of the side wall
-          do js = 1,nnlimi+nnstsi
-            do j = 1,nnatmi
-
-              if (latmscl(j) .eq. ls
-#ifdef B25_EIRENE
-     &                .and. iliin(js) .gt. 0               ! IYS 03.12.2019 Consider non-transparent surfaces only,
-                                                           ! transparent ones should not contribute into balance
-#endif
-     &               ) then
-
-                flxnw(ls) = flxnw(ls) -
-     &                 wldna(js,j,0) + wldra(js,j,0) + wldpa(js,j,0)
-                flxnw_rec(ls) = flxnw_rec(ls) + wldpa(js,j,0)           ! IYS 12.01.2018, wldpa(js,j,0) should be zero, since no ion reaches the side wall
-                flxnw_pump(ls) = flxnw_pump(ls) + wlpump(j,js)                       ! IYS 22.06.2018
-                flxnw_sput(ls) = flxnw_sput(ls) + wldspta(js,j,0)                    ! IYS 22.06.2018
-
-                do ic = 1,nnmoli
-
-                  if (mlcmp(j,ic) .gt. 0) then
-
-                    flxnw(ls) = flxnw(ls) - mlcmp(j,ic) *
-     .                (wldnm(js,ic,0) - wldrm(js,ic,0) - wldpm(js,ic,0))        ! wldpm(js,j,0) should be zero, since no ion reaches the side wall
-                    flxnw_rec(ls) = flxnw_rec(ls) +
-     &                         mlcmp(j,ic) * wldpm(js,ic,0)
-                    flxnw_pump(ls) = flxnw_pump(ls) +
-     &                 mlcmp(j,ic) * wlpump(nnatmi+ic,js)  ! IYS 22.06.2018
-                    flxnw_sput(ls) = flxnw_sput(ls) +
-     &                 mlcmp(j,ic) * wldsptm(js,ic,0)      ! IYS 22.06.2018
-
-                  endif
-
-                end do ! end of the loop over molecules
-
-              end if
-
-            end do ! end of the loop over atoms
-
-            do j = 1, nnplsi
-              if (latmscl(lkindp(j)).eq.ls) flxnt_pump(ls) =
-     &         flxnt_pump(ls) + wlpump(nnatmi+nnmoli+nnioni+j,js)
-            enddo
-
-          end do ! end of the loop over wall segments
-#endif
 c*** Puffing/seeding rate and recycling source
 
 !       Loop over strata
