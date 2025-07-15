@@ -1684,8 +1684,9 @@ cxpb size is changed in b2mod_dimensions
               fb_current(ifb) = 0.0_R8
               iFc1 = fbRegP(ifb,1)
               iFc2 = iFc1 + fbRegP(ifb,2) - 1
-              do iFc = iFc1, iFc2
-                ic = mpg%fcBc(fbReg(iFc),1)
+              do k = iFc1, iFc2
+                iFc = fbReg(k)
+                ic = mpg%fcBc(iFc,1)
                 iCv = maxval(mpg%fcCv(iFc,1:2))
                 t1 = mpg%bcFcOr(ic)
                 t0 = dv%fhe(iFc,0)+dv%fhe(iFc,1)+
@@ -1820,20 +1821,20 @@ cxpb size is changed in b2mod_dimensions
 
               iFc1 = fbRegP(ifb,1)
               iFc2 = iFc1 + fbRegP(ifb,2) - 1
-              do iFc = iFc1, iFc2
-                iCv = min(mpg%fcCv(fbReg(iFc),1),mpg%fcCv(fbReg(iFc),2))
-                ic = mpg%fcBc(fbReg(iFc),1)
+              do k = iFc1, iFc2
+                iFc = fbReg(k)
+                ic = mpg%fcBc(iFc,1)
                 t1 = mpg%bcFcOr(ic)
                 t0 = 0.0_R8
                 do is = 0, ns-1
                   if (is_neutral(is)) cycle
                   zaf = intface_s(iFc,nCv,nFc,mpg%fcCv,geo%fcVol,
      .             rt%rza(1,is))
-                  t0 = t0 + t1*(dv%fna(fbReg(iFc),0,is)+
-     .                          dv%fna(fbReg(iFc),1,is))*
-     .                 zaf*qe/geo%fcS(fbReg(iFc))/
-     .                (geo%fcQalf(fbReg(iFc),0)*geo%fcBb(fbReg(iFc),0)/
-     .                 geo%fcBb(fbReg(iFc),3))
+                  t0 = t0 + t1*(dv%fna(iFc,0,is)+
+     .                          dv%fna(iFc,1,is))*
+     .                 zaf*qe/geo%fcS(iFc)/
+     .                (geo%fcQalf(iFc,0)*geo%fcBb(iFc,0)/
+     .                 geo%fcBb(iFc,3))
                 enddo
                 fb_current(ifb) = max(fb_current(ifb),t0)
               enddo

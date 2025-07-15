@@ -7745,10 +7745,10 @@
 						20: Neutral pressure of this sequence. It is necessary to set PFR_CVS and NPFR_CVS in b2.user.parameters to specify the control volumes used to compute the neutral pressure.
 						21: Total radiation losses over the entire domain
 						22: Average density of this species along the separatrix
-						23: Peak heat flux density along a specific boundary. The boundary index should be defined by FB_TYPE_IB. By default it equals 2, which usually maps to the outer target.
-						24: Peak electron temperature along a specific boundary. The boundary index should be defined by FB_TYPE_IB. By default it equals 2, which usually maps to the outer target.
-						25: Peak electron density along a specific boundary. The boundary index should be defined by FB_TYPE_IB. By default it equals 2, which usually maps to the outer target.
-						26: Peak saturation current along a specific boundary. The boundary index should be defined by FB_TYPE_IB. By default it equals 2, which usually maps to the outer target.
+						23: Peak heat flux density along a specific boundary. The boundary index should be defined by FB_REG_PAR. By default it equals 2, which usually maps to the outer target.
+						24: Peak electron temperature along a specific boundary. The boundary index should be defined by FB_REG_PAR. By default it equals 2, which usually maps to the outer target.
+						25: Peak electron density along a specific boundary. The boundary index should be defined by FB_REG_PAR. By default it equals 2, which usually maps to the outer target.
+						26: Peak saturation current along a specific boundary. The boundary index should be defined by FB_REG_PAR. By default it equals 2, which usually maps to the outer target.
 						27: Total particle content in the SOL and PFR for the isonuclear sequence (including Eirene neutrals).
 				</description>
 			</switch>
