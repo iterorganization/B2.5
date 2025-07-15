@@ -2355,10 +2355,10 @@ c b2sihs_
       call xertst (0.0_R8.le.min(s%b2sihs__rf0,s%b2sihs__rf1,
      &  s%b2sihs__rf2,s%b2sihs__rf3,s%b2sihs__rf4),
      &  'faulty internal parameter rf0/1/2/3/4')
-      call xertst (0..le.min(s%b2sihs_shivis,s%b2sihs_shedu,
-     &  s%b2sihs_shedd,s%b2sihs_shidu,s%b2sihs_shidd) .or.
+      call xertst (0.le.min(s%b2sihs_shivis,s%b2sihs_shedu,
+     &  s%b2sihs_shedd,s%b2sihs_shidu,s%b2sihs_shidd) .and.
      &  max(s%b2sihs_shivis,s%b2sihs_shedu,s%b2sihs_shedd,
-     &  s%b2sihs_shidu,s%b2sihs_shidd).gt.3.,
+     &  s%b2sihs_shidu,s%b2sihs_shidd).le.3,
      &  'faulty internal parameter shi/shivis/shedu/shedd/shidu/shidd')
 
 c b2srst
