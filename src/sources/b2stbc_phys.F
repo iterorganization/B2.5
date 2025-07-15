@@ -4357,22 +4357,17 @@ cwdk    Todo: corrections for BCCON.ne.14
             endif
             t0 = dv%ne(iCv1)
             t1 = 0.0_R8
-            do is = 0, ns-1
-              if (.not.is_neutral(is) .and. conpar(is,ib,2).gt.0.0_R8)
-     &          t1 = t1 + co%dna0(iCv1,is)/conpar(is,ib,2)*
-     &            rt%rza(iCv1,is)*pl%na(iCv1,is)
-            enddo
+            if (enepar(ib,2).gt.0.0_R8) then
+              t1 = enepar(ib,2)*t0*vte*geo%fcS(iFc)
+            endif
             t0 = s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*expu2(min(0.0_R8,   !lkw 31.03.2023
      &        max(-50.0_R8,-qe*(pl%po(iCv1)-potpar(ib,2))/pl%te(iCv1))))
-            t1 = t1*geo%fcS(iFc)
             if(switch%pot_eq.eq.1) then
               srw%she0(iCv1,1) = srw%she0(iCv1,1) -
-     &          ((1.0_R8+GAMMAE)+switch%stab_coeff_sheath_te)*t0
-     &           - fac_he_anom_bc*enepar(ib,2)*t1                       !wdk to check: correct 2nd term for gammae?
+     &          ((1.0_R8+GAMMAE)+switch%stab_coeff_sheath_te)*t0 - t1
               srw%she0(iCv1,0) = srw%she0(iCv1,0) -
      &          ((1.0_R8-GAMMAE)*qe*(pl%po(iCv1)-potpar(ib,2))
-     &           - switch%stab_coeff_sheath_te*pl%te(iCv1))*t0 -        !lkw 31.03.2023
-     &                            qe*(pl%po(iCv1)-potpar(ib,2))*t1      !wdk to check: correct 2nd term for gammae?
+     &           - switch%stab_coeff_sheath_te*pl%te(iCv1))*t0          !lkw 31.03.2023
               if (switch%b2nppo_restr_po.ne.0.0_R8 .and.
      &            (srw%she0(iCv1,0)+srw%she0(iCv1,1)*pl%te(iCv1)
      &            .gt. 0.0_R8)) srw%she0(iCv1,:) = 0.0_R8
@@ -5904,7 +5899,7 @@ cxpb code segment analog to b2tfhi
           if (bceni_15_style == 0) then
             if (wrk < geo%Qalfmin) then
               srw%shi0(iCv1,0) = 0.0_R8
-              srw%shi0(iCv1,1) = -1.5*geo%fcS(iFc)*geo%Qalfmax*cs
+              srw%shi0(iCv1,1) = -enipar(ib,1)*geo%fcS(iFc)*geo%Qalfmax*cs
      &         *dv%ni(iCv1,1)
               if(switch%mdf_fhi.ne.0) then
                 srw%shi0(iCv1,0) = srw%shi0(iCv1,0) +
