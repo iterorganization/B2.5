@@ -232,7 +232,7 @@ cdjm Jan2017 update particle source components for balance
         ts_factor = 1.0_R8
       endif
       dv%dnadt(:,isb) = (-sr%snadt(:,1,isb)*pl%na(:,isb)
-     &                  -sr%snadt(:,0,isb))/ts_factor               ! dnadt = V(dna/dt)
+     &                  -sr%snadt(:,0,isb))/ts_factor               ! dv%dnadt = V*(dna/dt)
 
 *    ..output quantities for continuity equation
       if (switch%b2npco_iout.ne.0) then                                 !srv 12.07.02 {
