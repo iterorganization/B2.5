@@ -100,7 +100,7 @@
       character chns*3                                                 !srv 04.07.08
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                        !som 13.11.20
       real (kind=R8) ::
-     *  t0, t1, czetap, czetae                                         !srv 13.01.17
+     *  t0, t1, czetap, czetae, ts_factor                              !srv 13.01.17
       real (kind=R8) ::
      *  smbch(nCv,0:3), smbtf(nCv,0:3),                                !srv 11.09.09
      *  smbgp(nCv,0:3),
@@ -544,8 +544,17 @@ cdjm Jan2017 update momentum source components for balance
          if (switch%b2mndt_style.eq.2) then
            call b2smdt (nCv, mpg%nCi, ns, dtim, geo%cvHz, geo%cvVol,
      &                 pl%na, psnl%ua, switch, mpg, sr%smodt, is)
+*   .. modify time-stepping sources according to time integration scheme
+*   .. ts_factor = time-stepping multiplication factor
+      if (switch%b2mndt_ckn.eq.2) then
+        ts_factor = 2.0_R8
+      elseif (switch%b2mndt_bdf.eq.2) then
+        ts_factor = 3.0_R8/2.0_R8
+      else !default implicit Euler scheme
+        ts_factor = 1.0_R8
+      endif
 *    .. add contribution from time-dependent source
-           sr%smodt(:,0,is) = sr%smodt(:,0,is)-switch%b2mndt_ckn*
+           sr%smodt(:,0,is) = sr%smodt(:,0,is)-ts_factor*
      &       am(is)*mp*geo%cvVol*geo%cvHz*(pl%na(:,is)-psnl%na(:,is))
      &       *psnl%ua(:,is)/dtim
            smb = smb + sr%smodt(:,:,is)
@@ -565,6 +574,12 @@ cdjm Jan2017 update momentum source components for balance
      &      .or.switch%get_residuals.eq.1) then
            dv%resmo(1:mpg%nCi,is) = dv%resmo(1:mpg%nCi,is) +
      &       psnl%resmo0(1:mpg%nCi,is)
+         endif
+       elseif (switch%b2mndt_bdf.eq.2) then
+         if((solving.and.any(solvemo(is,0:mpg%nnreg(0))))
+     &      .or.switch%get_residuals.eq.1) then
+           dv%resmo(1:mpg%nCi,is) = dv%resmo(1:mpg%nCi,is) +
+     &       0.5_R8*psnl%dmodt(1:mpg%nCi,is) ! +1/2*m*V*[d(nu)/dt]_i (where i denotes the previous time-step)
          endif
        endif
 
@@ -802,98 +817,6 @@ c     ..compare 9-pt stencil matrice
         endif
       endif
 
-!! do the same but with possibly a lower max M for the core region. 
-      vcount = 0
-      if( switch%ion_vlct_restrict_core .ne. 0 ) then                
-        do is = 0, ns-1
-          do iCv = 1, nCv
-            if (mpg%cvOnClosedSurface(iCv)) then  
-              if (.not.is_neutral(is).or.switch%tn_style.le.1.or.
-     .           (switch%tn_style.eq.2.and.nint(zn(is)).ne.1)) then
-                cst=sqrt(pz(iCv)/rz(iCv))                              
-              else
-                cst=sqrt(pl%tn(iCv)/(mp*am(is)))
-              endif
-              if( abs(pl%ua(iCv,is)).gt.
-     .            switch%ion_vlct_restrict_core_M*cst ) then
-                vcount(is) = vcount(is) + 1
-                if (switch%vlct_diagno.ge.2) then
-                  write(6,'(a,a,i3,a,i4,a,i4,a)')
-     .             'Core parallel velocity restriction applied ',
-     .             'to species ',is,' in cell (',iCv,'):'
-                  write(6,'(a,1p,1e12.5,a,1e12.5,a,1e12.5)')
-     .             'Mach ',switch%ion_vlct_restrict_core_M,': ',
-     .                     switch%ion_vlct_restrict_core_M*cst,
-     .              ' Ua:',pl%ua(iCv,is)
-                end if
-                pl%ua(iCv,is)= sign(switch%ion_vlct_restrict_core_M*cst,
-     .                              pl%ua(iCv,is))   
-              endif
-            endif
-          enddo
-        enddo
-        if (switch%vlct_diagno.ge.1) then
-          do is = 0, ns-1
-            if (vcount(is).gt.1) then
-              write(6,'(a,a,1e12.5,a,i5,a,i3)')
-     .         'In b2npmo, core parallel velocity restriction ',
-     .         'to Mach ', switch%ion_vlct_restrict_core_M,
-     .         ' was applied ',vcount(is),
-     .         ' times for species ',is
-            else if (vcount(is).eq.1) then
-              write(6,'(a,a,1e12.5,a,i5,a,i3)')
-     .         'In b2npmo, parallel velocity restriction ',
-     .         'to Mach ', switch%ion_vlct_restrict_core_M,
-     .         ' was applied ',vcount(is),
-     .         ' time for species ',is
-            end if
-          end do
-        endif
-      endif
-
-
-!! do the same but with a value for the parallel velocity rather than the Mach number. 
-!! Limiting only Mach number may not be enough if there is a feedback loop on viscous heating -> increased T -> increased allowable ua and sound speed -> increased ua -> increased viscous heating -> ...
-      vcount = 0
-      if( switch%ion_vlct_restrict_abs .ne. 0 ) then                
-        do is = 0, ns-1
-          do iCv = 1, nCv
-              if( abs(pl%ua(iCv,is)).gt.
-     .         switch%ion_vlct_restrict_ua ) then
-                vcount(is) = vcount(is) + 1
-                if (switch%vlct_diagno.ge.2) then
-                  write(6,'(a,a,i3,a,i4,a,i4,a)')
-     .             'Parallel velocity restriction applied on abs(ua)',
-     .             'to species ',is,' in cell (',iCv,'):'
-                  write(6,'(a,1p,1e12.5,a,1e12.5,a,1e12.5)')
-     .             'Max ua ',switch%ion_vlct_restrict_ua,
-     .              ' Ua:',pl%ua(iCv,is)
-                end if
-                pl%ua(iCv,is)= sign(switch%ion_vlct_restrict_ua,
-     .                              pl%ua(iCv,is))                
-              endif
-          enddo
-        enddo
-        if (switch%vlct_diagno.ge.1) then
-          do is = 0, ns-1
-            if (vcount(is).gt.1) then
-              write(6,'(a,a,1e12.5,a,i5,a,i3)')
-     .         'In b2npmo, parallel velocity restriction ',
-     .         'to ua ', switch%ion_vlct_restrict_ua,
-     .         ' was applied ',vcount(is),
-     .         ' times for species ',is
-            else if (vcount(is).eq.1) then
-              write(6,'(a,a,1e12.5,a,i5,a,i3)')
-     .         'In b2npmo, parallel velocity restriction ',
-     .         'to ua ', switch%ion_vlct_restrict_ua,
-     .         ' was applied ',vcount(is),
-     .         ' time for species ',is
-            end if
-          end do
-        endif
-      endif
-
-
 *   ..compute physical time-derivative after correction has been applied
 *   .. m*d(nu)/dt = m*[u*(dn/dt) + n*(du/dt)]
 ! to obtain the true physical derivative, we need to divide by ts_factor, which was previously multiplied to smodt
@@ -904,7 +827,6 @@ c     ..compare 9-pt stencil matrice
      &    -sr%smodt(:,3,is)*pl%ua(:,is)*pl%na(:,is)*mp*am(is) )      ! = +ma*mp*V/dt*h_z*n_(i+1)*u_(i+1)
      &    /ts_factor
       enddo
-
 *   ..correct pcca
       call b2nxcm (nCv, ns, dv%pccm, dv%pcca)
       if (switch%b2npmo_iout.ne.0 .or. switch%iout_b2wdat .eq. 4) then  !srv 12.07.02 {

@@ -109,7 +109,7 @@
      .                           facdrift(:), fac_ExB(:), fac_vis(:)
 
         ! time derivatives
-        real(R8), dimension(:,:), allocatable :: dnadt
+        real(R8), dimension(:,:), allocatable :: dnadt, dmodt
 
       end type B2Derivatives
 
@@ -279,7 +279,7 @@
      .                           reshi0(:), reshe0(:), reshn0(:),
      .                           reskt0(:), reszt0(:)
         ! time derivatives
-        real(R8), allocatable :: dnadt(:,:)
+        real(R8), allocatable :: dnadt(:,:), dmodt(:,:)
       end type B2PlasmaSnapshot
 
       type B2Diagnostic
@@ -1445,7 +1445,9 @@
 
 ! time derivatives
       allocate( dv % dnadt( nCv, 0:ns-1 ) )
+      allocate( dv % dmodt( nCv, 0:ns-1 ) )
       dv % dnadt = 0.0_R8
+      dv % dmodt = 0.0_R8
 
       return
       end subroutine createB2Derivatives
@@ -1604,6 +1606,7 @@
       deallocate( dv % pccm )
 
       deallocate( dv % dnadt )
+      deallocate( dv % dmodt )
 
       return
       end subroutine destroyB2Derivatives
@@ -2231,6 +2234,7 @@
       allocate( snap % reszt0( nCv ), SOURCE=0._R8 )
 
       allocate( snap % dnadt( nCv, 0:ns-1 ), SOURCE=0._R8 )
+      allocate( snap % dmodt( nCv, 0:ns-1 ), SOURCE=0._R8 )
 
 #else
       allocate( snap % na( nCv, 0:ns-1 ) )
@@ -2266,6 +2270,7 @@
       allocate( snap % reszt0( nCv ) )
 
       allocate( snap % dnadt( nCv, 0:ns-1 ) )
+      allocate( snap % dmodt( nCv, 0:ns-1 ) )
 
       snap % na = 0._R8
       snap % ua = 0._R8
@@ -2300,6 +2305,7 @@
       snap % reszt0 = 0._R8
 
       snap % dnadt = 0._R8
+      snap % dmodt = 0._R8
 
 #endif
       return
@@ -2339,6 +2345,7 @@
       deallocate( snap % reskt0 )
       deallocate( snap % reszt0 )
       deallocate( snap % dnadt )
+      deallocate( snap % dmodt )
 
       return
       end subroutine destroyB2PlasmaSnapshot
@@ -2614,6 +2621,7 @@
         snap % reskt0 = dv % reskt0
         snap % reszt0 = dv % reszt0
         snap % dnadt = dv % dnadt
+        snap % dmodt = dv % dmodt
 
       return
       end subroutine getB2PlasmaSnapshot
@@ -2650,6 +2658,7 @@
         dv % reskt0 = snap % reskt0
         dv % reszt0 = snap % reszt0
         dv % dnadt = snap % dnadt
+        dv % dmodt = snap % dmodt
 
       return
       end subroutine putB2PlasmaSnapshot
