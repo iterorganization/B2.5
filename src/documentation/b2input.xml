@@ -7373,7 +7373,7 @@
 				<default>0.0</default>
 				<type>real array of size (NSPECIES)</type>
 				<description>
-					Last value of the density used for the feedback control for each isonuclear sequence.
+					Last value of the target quantity used for the feedback control for each isonuclear sequence.
 				</description>
 			</switch>
 		</category>
@@ -7521,6 +7521,7 @@
 						5: rescale done according to SOLPS4 formula: N = C*exp((time-T)*V)
 						6: rescale slowed by fb_alpha (SOLPS4 style)
 						7: If fb_target/fb_current &lt; (1-fb_const) or &gt; (1+fb_const), the rescaling coincides with FB_RESCALE.eq.3. Otherwise no rescaling is applied.
+						8: rescaling formula from option 4 is used, with V=0 and target assumed linearly proportional to the total particle content for this isonuclear sequence outside the separatrix (including contributions from Eirene species).
 				</description>
 			</switch>
 			<switch>
