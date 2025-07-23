@@ -43,7 +43,7 @@
 *   ..local variables
       integer ncall, iCv, k
       character chns*3, chk*1
-      real (kind=R8) :: t0, ttim
+      real (kind=R8) :: t0, ttim, ts_factor
 *   ..procedures
       external xertst, ipgetr
       external b2xvsg
@@ -66,13 +66,23 @@
      & 'Warning: b2srdt_phm1 should be 1.0 for time-dependent mode'
       endif
 
+*   ..modify time-stepping sources according to time integration scheme
+*   .. ts_factor = time-stepping multiplication factor
+      if (switch%b2mndt_ckn.eq.2) then
+        ts_factor = 2.0_R8
+      elseif (switch%b2mndt_bdf.eq.2) then
+        ts_factor = 3.0_R8/2.0_R8
+      else !default implicit Euler scheme
+        ts_factor = 1.0_R8
+      endif
+
 * ..include the contributions from dtim
 
 *   ..modify smodt
       do iCv = 1, nCi !only internal cells
         ttim=dtim*dtmo(isb,mpg%cvReg(iCv))*time_factor(iCv)
         t0 = (switch%b2srdt_phm1/ttim)*cvVol(iCv)*hz(iCv)
-     &       *switch%b2mndt_ckn
+     &       *ts_factor
         smodt(iCv,0,isb) = t0*am(isb)*mp*uap(iCv,isb)*na(iCv,isb) !srv 06.01.21 {
         smodt(iCv,1,isb) = 0.0_R8
         smodt(iCv,2,isb) = 0.0_R8

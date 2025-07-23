@@ -2313,10 +2313,16 @@ c b2mndt
      &  'b2mndt_ckn should be 1 or 2')
       call xertst (s%b2mndt_bdf.eq.1.or.s%b2mndt_bdf.eq.2,
      &  'b2mndt_bdf should be 1 or 2')
+      call xertst (s%b2mndt_startup.eq.1.or.s%b2mndt_startup.eq.2,
+     &  'b2mndt_startup should be 1 or 2')
       if (s%b2mndt_ckn.eq.2.and.s%b2mndt_bdf.eq.2) then
         call xerrab('Cannot use Crank-Nicolson and BDF2 time'//
      &     ' integration schemes at the same time!'//
      &     ' Set only one switch (ckn OR bdf) to 2!')
+      endif
+      if (s%b2mndt_bdf.eq.1.and.s%b2mndt_startup.eq.2) then
+        call xerrab('b2mndt_startup=2 (CKN startup) can only'//
+     &     ' be used with BDF scheme (b2mndt_bdf=2)')
       endif
       call xertst (1.le.s%ntim_step_out,
      &   'faulty internal parameter ntim_step_out')
