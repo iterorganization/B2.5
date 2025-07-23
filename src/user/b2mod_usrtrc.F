@@ -1149,15 +1149,8 @@ c West target
         iFc=mpg%divFc(mpg%divFcP(1,1)+i-1)
         iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
         s=geo%fcS(iFc)
-        hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
-     .          st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
+        hlp=abs(st%dv%fht(iFc,0)+st%dv%fht(iFc,1)+
      .          st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-        do is=0,ns-1 !{
-          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .          st%dv%kinrgy(1,is))
-          hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
-     .     st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
-        end do !}
         do is=0,st_ext%ns-1 !{
           taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
      .     st_ext%ta(1,is))
@@ -1190,15 +1183,8 @@ c East target
         iFc=mpg%divFc(mpg%divFcP(maxval(mpg%strDiv),1)+i-1)
         iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
         s=geo%fcS(iFc)
-        hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
-     .          st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
+        hlp=abs(st%dv%fht(iFc,0)+st%dv%fht(iFc,1)+
      .          st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-        do is=0,ns-1 !{
-          kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .          st%dv%kinrgy(1,is))
-          hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
-     .     st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
-        end do !}
         do is=0,st_ext%ns-1 !{
           taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
      .     st_ext%ta(1,is))
@@ -1234,15 +1220,8 @@ c East target
           iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
           s=geo%fcS(iFc)
-          hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
-     .            st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
+          hlp=abs(st%dv%fht(iFc,0)+st%dv%fht(iFc,1)+
      .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-          do is=0,ns-1 !{
-            kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .       st%dv%kinrgy(1,is))
-            hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
-     .       st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
-          end do !}
           do is=0,st_ext%ns-1 !{
             taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
      .       st_ext%ta(1,is))
@@ -1276,15 +1255,8 @@ c East target
           iFc=mpg%divFc(mpg%divFcP(2,1)+i-1)
           iCv=min(mpg%fcCv(iFc,1),mpg%fcCv(iFc,2))
           s=geo%fcS(iFc)
-          hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhe(iFc,1)+
-     .            st%dv%fhi(iFc,0)+st%dv%fhi(iFc,1)+
+          hlp=abs(st%dv%fht(iFc,0)+st%dv%fht(iFc,1)+
      .            st_ext%fhi(iFc,0)+st_ext%fhi(iFc,1))
-          do is=0,ns-1 !{
-            kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
-     .       st%dv%kinrgy(1,is))
-            hlp=hlp+abs((st%dv%fna(iFc,0,is)+st%dv%fna(iFc,1,is))*(
-     .       st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
-          end do !}
           do is=0,st_ext%ns-1 !{
             taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
      .       st_ext%ta(1,is))
@@ -1377,12 +1349,16 @@ c*** Calculate the peak parallel power flux to the main chamber wall
           cycle
         end select
         s=abs(geo%fcPbs(iFc))
-        hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhi(iFc,0)+st_ext%fhi(iFc,0))
+        hlp=abs(st%dv%fhe(iFc,0)+st%dv%fhi(iFc,0)+st_ext%fhi(iFc,0)+
+     .          0.5_R8*(1.0_R8-switch%BoRiS)*st%dv%fne_53(iFc,0)*
+     .          (st%pl%te(mpg%fcCv(iFc,1))+st%pl%te(mpg%fcCv(iFc,2))))
         do is=0,ns-1 !{
           kef=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
      .          st%dv%kinrgy(1,is))
           hlp=hlp+abs((st%dv%fna(iFc,0,is))*
-     .     (st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef))
+     .     (st%rt%rpt(iCv,is)*ev+(1.0_R8-switch%BoRiS)*kef)+
+     .      0.5_R8*(1.0_R8-switch%BoRiS)*st%dv%fna_53(iFc,0,is)*
+     .      (st%pl%ti(mpg%fcCv(iFc,1))+st%pl%ti(mpg%fcCv(iFc,2))))
         end do !}
         do is=0,st_ext%ns-1 !{
           taf=intface_s(iFc,mpg%nCv,mpg%nFc,mpg%fcCv,geo%fcVol,
