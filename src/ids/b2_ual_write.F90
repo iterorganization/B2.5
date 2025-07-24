@@ -83,7 +83,6 @@ program b2_ual_write
     use b2mod_driver &
      & , only : old_summary
 #endif
->>>>>>> 0f376de68 (Preparatory step for IMAS DD/4.1.0: Removing dataset_description IDS usage and adding plasma composition data structure to summary IDS)
     use b2mod_geo
     use b2mod_time
     use b2mod_plasma
