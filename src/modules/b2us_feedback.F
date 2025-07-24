@@ -2009,19 +2009,19 @@ cxpb size is changed in b2mod_dimensions
                      ! D = A((N_tar - N_cur)/dt + (N_prev - N_cur))/dt_prev
                      ! if actuator is not number of particles it is
                      ! assumed to be linearly proportional to the total number
-                     ! of particles in desired area (including neutrals)
+                     ! of particles in the edge (including neutrals)
 
               if(ncall.eq.0) then
-                write(*,'(a,a,a,a,i3)')
+                write(*,'(5a,i3)')
      &           'compute_feedback_option: using ',
      &           'b2stbc_fb_pre_option: using ',
      &           'SOLPS4 formula and assuming linear relation between ',
      &           'target and total number of particles ',
-     &           'in specified area for sequence ',
+     &           'in the edge for sequence ',
      &           b2espcr(fb_species(ifb))
                 if ((fb_type(ifb).eq.4).or.(fb_type(ifb).eq.5).or.
      &              (fb_type(ifb).eq.14).or.(fb_type(ifb).eq.27)) then
-                  write(*,'(a,a,i3,a,i3,a,a)')
+                  write(*,'(2a,i3,a,i3,2a)')
      .             'compute_feedback_option: Warning! ',
      .             'feedback for sequence ',b2espcr(fb_species(ifb)),
      .             ' using fb_type ',fb_type(ifb),
@@ -2135,14 +2135,17 @@ cxpb size is changed in b2mod_dimensions
                 endif
               endif
 
-              if (fb_rescale_option(ifb).lt.4) then
+              if (fb_rescale_option(ifb).eq.4 .or.
+     &            fb_rescale_option(ifb).eq.5 .or.
+     &            fb_rescale_option(ifb).eq.8) then
                 saved_fb_actuator(ifb) =
-     &            saved_fb_actuator(ifb) * fb_rescale(ifb)
-              elseif (fb_rescale_option(ifb).ge.6) then
+     &           saved_fb_actuator(ifb) + fb_rescale(ifb)
+              elseif (fb_rescale_option(ifb).eq.6 .or.
+     &                fb_rescale_option(ifb).eq.7) then
                 saved_fb_actuator(ifb) = fb_rescale(ifb)
               else
                 saved_fb_actuator(ifb) =
-     &           saved_fb_actuator(ifb) + fb_rescale(ifb)
+     &            saved_fb_actuator(ifb) * fb_rescale(ifb)
               end if
               if(fb_puff_min(ifb).ge.0.0_R8)
      >         saved_fb_actuator(ifb) =
