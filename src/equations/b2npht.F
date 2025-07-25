@@ -94,8 +94,8 @@
      2 she0(nCv,0:3), shi0(nCv,0:3), shn0(nCv,0:3),
      3 wrk0(nCv), shei(nCv),                                             !srv 18.09.09
      5 shekt(nCv,0:3), shikt(nCv,0:3), skt0(nCv,0:3), szt0(nCv,0:3),
-     6 skt_prod(nCv), skt_diss(nCv)
-      character chns*3                                                   !srv 17.07.05
+     6 skt_prod(nCv), skt_diss(nCv), ts_factor
+      character chns*3                                                  !srv 17.07.05
       logical :: warning_i, warning_e, warning_n, warning_kt, warning_zt
 *   ..procedures
       intrinsic sqrt
@@ -339,37 +339,56 @@ c time-dependent treatment                                              !srv 07.
 *  .. calculate time-dependent source
         call b2shdt (nCv, mpg%nCi, ns, dtim, switch%BoRiS,
      &    geo%cvVol, psnl%na, psnl%te, psnl%ti, psnl%tn,
-     &    dv%ne, dv%ni, dv%nn,
-     &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt)
+     &    psnl%kt, psnl%zt, dv%ne, dv%ni, dv%nn,
+     &    psnl%kinrgy, switch, mpg, sr%shedt, sr%shidt, sr%shndt,
+     &    sr%sktdt, sr%sztdt)
+*   ..modify time-stepping sources according to time integration scheme
+*   .. ts_factor = time-stepping multiplication factor
+      if (switch%b2mndt_ckn.eq.2) then
+        ts_factor = 2.0_R8
+      elseif (switch%b2mndt_bdf.eq.2) then
+        ts_factor = 3.0_R8/2.0_R8
+      else !default implicit Euler scheme
+        ts_factor = 1.0_R8
+      endif
 *  .. add contribution from time-dependent source
-        she0 = she0+sr%shedt
-        she0(:,0)=she0(:,0)-1.5_R8*(dv%ne-psnl%ne)
-     &                *switch%b2mndt_ckn*psnl%te/dtim*geo%cvVol
+cc If e.g. d(nT)/dt = n dT/dt + T dn/dt,
+cc then the first part shidt/shedt/shndt/sktdt/sztdt corresponds to dT/dt,
+cc while the second contribution corresponds to T dn/dt
+        sr%shedt(:,0) = sr%shedt(:,0) -1.5_R8*(dv%ne-psnl%ne)
+     &                *ts_factor*psnl%te/dtim*geo%cvVol
+        she0 = she0 + sr%shedt
         if (switch%tn_style.eq.0) then       ! default, combined ion-neutral energy equation
-          shi0 = shi0+sr%shidt
-          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
-     &                  *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol
+          sr%shidt(:,0) = sr%shidt(:,0) 
+     &                     -1.5_R8*(dv%ni(:,0)-psnl%ni(:,0))
+     &                      *ts_factor*psnl%ti/dtim*geo%cvVol
+          shi0 = shi0 + sr%shidt
         elseif (switch%tn_style.eq.1) then   ! pure ion energy equation
-          shi0 = shi0+sr%shidt
-          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
-     &                  *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol          
+          sr%shidt(:,0) = sr%shidt(:,0)
+     &                      -1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                      *ts_factor*psnl%ti/dtim*geo%cvVol
+          shi0 = shi0 + sr%shidt
         else                                 ! separate ion and neutral energy equation
-          shi0 = shi0+sr%shidt
-          shi0(:,0)=shi0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
-     &                  *switch%b2mndt_ckn*psnl%ti/dtim*geo%cvVol
-          shn0 = shn0+sr%shndt
-          shn0(:,0)=shn0(:,0)-1.5_R8*(dv%nn(:)-psnl%nn(:))
-     &                  *switch%b2mndt_ckn*psnl%tn/dtim*geo%cvVol
+          sr%shidt(:,0) = sr%shidt(:,0)
+     &                      -1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                      *ts_factor*psnl%ti/dtim*geo%cvVol
+          shi0 = shi0 + sr%shidt
+          sr%shndt(:,0) = sr%shndt(:,0)
+     &                      -1.5_R8*(dv%nn(:)-psnl%nn(:))
+     &                      *ts_factor*psnl%tn/dtim*geo%cvVol
+          shn0 = shn0 + sr%shndt
         endif
         if (switch%solve_keps.gt.0) then
+          sr%sktdt(:,0) = sr%sktdt(:,0)
+     &                      -1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                      *ts_factor*psnl%kt/dtim*geo%cvVol
           skt0 = skt0 + sr%sktdt
-          skt0(:,0)=skt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
-     &                  *switch%b2mndt_ckn*psnl%kt/dtim*geo%cvVol
         endif
         if (switch%solve_keps.gt.1) then
+          sr%sztdt(:,0) = sr%sztdt(:,0)
+     &                      -1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
+     &                      *ts_factor*psnl%zt/dtim*geo%cvVol
           szt0 = szt0 + sr%sztdt
-          szt0(:,0)=szt0(:,0)-1.5_R8*(dv%ni(:,1)-psnl%ni(:,1))
-     &                  *switch%b2mndt_ckn*psnl%zt/dtim*geo%cvVol
         endif
       endif                                                              !srv 207.07.21 }
       endif
@@ -476,7 +495,7 @@ c residuals for separate neutral energy equation
      &   switch%get_residuals.eq.1)
      &   dv%resht = dv%reshe + dv%reshi + dv%reshn                       !srv 22.05.18 }
 
-*    ..modify residual for ckn scheme
+*    ..modify residual depending on time integration scheme
       if (switch%b2mndt_ckn.eq.2) then
         if ((solving(4).and.any(solvereg(0:mpg%nnreg(0)))).or.
      &     switch%get_residuals.eq.1) then
@@ -508,6 +527,38 @@ c residuals for separate neutral energy equation
      &       switch%get_residuals.eq.1) then
           dv%reszt(1:mpg%nCi) = dv%reszt(1:mpg%nCi) +
      &                          psnl%reszt0(1:mpg%nCi)
+        endif
+      elseif (switch%b2mndt_bdf.eq.2) then
+        if ((solving(4).and.any(solvereg(0:mpg%nnreg(0)))).or.
+     &     switch%get_residuals.eq.1) then
+          dv%reshe0 = dv%reshe0 - shei !correct res0 with equipartition
+          dv%reshe(1:mpg%nCi) = dv%reshe(1:mpg%nCi) +
+     &                          0.5_R8*psnl%dhedt(1:mpg%nCi)
+        endif
+        if ((solving(4).and.any(solvireg(0:mpg%nnreg(0)))).or.
+     &     switch%get_residuals.eq.1) then
+          dv%reshi0 = dv%reshi0 + shei !correct res0 with equipartition
+          dv%reshi(1:mpg%nCi) = dv%reshi(1:mpg%nCi) +
+     &                          0.5_R8*psnl%dhidt(1:mpg%nCi)
+        endif
+        if (switch%tn_style.eq.2) then
+          if (any(solvnreg(0:mpg%nnreg(0))).or.
+     &      switch%get_residuals.eq.1) then
+            dv%reshn(1:mpg%nCi) = dv%reshn(1:mpg%nCi) +
+     &                            0.5_R8*psnl%dhndt(1:mpg%nCi)
+          endif
+        endif
+        if ((switch%solve_keps.gt.0.and.
+     &       any(solvkreg(0:mpg%nnreg(0)))).or.
+     &       switch%get_residuals.eq.1) then
+          dv%reskt(1:mpg%nCi) = dv%reskt(1:mpg%nCi) +
+     &                          0.5_R8*psnl%dktdt(1:mpg%nCi)
+        endif
+        if ((switch%solve_keps.gt.1.and.
+     &       any(solvzreg(0:mpg%nnreg(0)))).or.
+     &       switch%get_residuals.eq.1) then
+          dv%reszt(1:mpg%nCi) = dv%reszt(1:mpg%nCi) +
+     &                          0.5_R8*psnl%dztdt(1:mpg%nCi)
         endif
       endif
 
@@ -587,6 +638,7 @@ c residuals for separate neutral energy equation
         pl%tn = pl%ti                 !! tn must be exactly equal to ti.
       endif
 
+! TEMPORARY, TO BE MODIFIED FURTHER: replace shx0 with shxdt, and move output under b2npht_iout if condition
 *   ..compute physical time-derivative after correction has been applied
 *   .. m*d(nT)/dt = m*[n*(dT/dt) + T*(dn/dt)]
 ! to obtain the true physical derivative, we need to divide by ts_factor, which was previously multiplied to shXdt
