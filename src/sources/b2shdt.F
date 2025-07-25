@@ -49,7 +49,7 @@
       integer iCv, is, k
       character chk*1                                                !srv 11.09.09 }
       real (kind=R8) ::
-     *   t0, ttim
+     *   t0, ttim, ts_factor
 *   ..procedures
       external xertst
       external b2xvsg
@@ -78,11 +78,21 @@
      &   'Warning: b2srdt_phm3 should be 1.0 for time-dependent mode'
       endif
 
+*   ..modify time-stepping sources according to time integration scheme
+*   .. ts_factor = time-stepping multiplication factor
+      if (switch%b2mndt_ckn.eq.2) then
+        ts_factor = 2.0_R8
+      elseif (switch%b2mndt_bdf.eq.2) then
+        ts_factor = 3.0_R8/2.0_R8
+      else !default implicit Euler scheme
+        ts_factor = 1.0_R8
+      endif
+
 *   ..modify shedt, shidt, shndt
 
       do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtee(mpg%cvReg(iCv))*time_factor(iCv)
-        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
+        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
         shedt(iCv,0) = 1.5_R8*t0*ne(iCv)*tep(iCv)               !srv 06.01.21 {
         shedt(iCv,1) = 0.0_R8
         shedt(iCv,2) = 0.0_R8
@@ -91,7 +101,7 @@
 
       do iCv = 1, nCi ! only internal cells
         ttim=dtim*dtei(mpg%cvReg(iCv))*time_factor(iCv)
-        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
+        t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
         if (switch%tn_style.eq.0) then
           shidt(iCv,0) = 1.5_R8*t0*ni(iCv,0)*tip(iCv)           !srv 06.01.21 {
           shidt(iCv,1) = 0.0_R8
@@ -120,7 +130,7 @@
       if (switch%tn_style.eq.2) then
         do iCv = 1, nCi ! only internal cells
           ttim=dtim*dten(mpg%cvReg(iCv))*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
+          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
           shndt(iCv,0) = 1.5_R8*t0*nn(iCv)*tnp(iCv)               !srv 06.01.21 {
           shndt(iCv,1) = 0.0_R8
           shndt(iCv,2) = 0.0_R8
@@ -131,7 +141,7 @@
       if (switch%solve_keps.gt.0) then
         do iCv = 1, nCi ! only internal cells
           ttim=dtim*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
+          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
           sktdt(iCv,0) = 1.5_R8*t0*ni(iCv,1)*ktp(iCv)
           sktdt(iCv,1) = 0.0_R8
           sktdt(iCv,2) = 0.0_R8
@@ -142,7 +152,7 @@
       if (switch%solve_keps.gt.1) then
         do iCv = 1, nCi ! only internal cells
           ttim=dtim*time_factor(iCv)
-          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*switch%b2mndt_ckn
+          t0 = (switch%b2srdt_phm3/ttim)*cvVol(iCv)*ts_factor
           sztdt(iCv,0) = 1.5_R8*t0*ni(iCv,1)*ztp(iCv)
           sztdt(iCv,1) = 0.0_R8
           sztdt(iCv,2) = 0.0_R8
