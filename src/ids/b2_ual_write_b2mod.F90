@@ -852,7 +852,8 @@ program b2_ual_write_b2mod
         &   treename, shot, run, username, database, version, &
 #endif
         &   idx, new_eq_ggd )
-    call dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    call dealloc_ids_edge( &
+        &   edge_profiles, edge_sources, edge_transport, &
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
         &   numerics, &
 #endif
@@ -860,7 +861,8 @@ program b2_ual_write_b2mod
         &   divertors, &
 #endif
         &   radiation )
-    call dealloc_batch_edge( batch_profiles, batch_sources, &
+    call dealloc_batch_edge( &
+        &   batch_profiles, batch_sources, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         &   summary, &
 #endif

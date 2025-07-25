@@ -4,7 +4,8 @@
       subroutine b2siav_zh (nx, ny, ns, isb, ismain, mb, zb,          !srv 19.02.21
      & ub, wbdia, vbecrb, te, ti, nb, ne2, lnlam,                     !srv 01.07.09
      & cvsbhz, cvsbhz_drho, smbvh, smbvv, smbvi, kt_neo,
-     & alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al,     !som 08.10.21
+     & alpha1, chci_al, chci_a,
+     & cvsahz_hAdp_albe, cvsahz_hBdp_al,                              !som 08.10.21
      & wrk0, wrk1, wrk2, rho_rel, avm_u)
       use b2mod_types
       use b2mod_geo

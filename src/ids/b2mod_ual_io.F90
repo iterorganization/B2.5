@@ -875,8 +875,8 @@ contains
           call ipgeti ('b2mndt_style', style)
           call ipgeti ('b2mndr_ismain', ismain)
           call ipgeti ('b2sigp_style', ue_style)
-          call ipgeti ('ids_from_43', ids_from_43)
           call ipgetr ('b2mndr_dtim', dtim)
+          call ipgeti ('ids_from_43', ids_from_43)
           call ipgetr ('b2mndr_rescale_neutrals_sources', &
               &                 neutral_sources_rescale)
           call ipgeti ('balance_netcdf', balance_netcdf)
@@ -5372,7 +5372,7 @@ contains
                    tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
                    call write_cell_scalar( sources_grid,                     &
                        &   scalar = edge_sources%source(12)%ggd( time_sind )%&
-                       &            neutral( is )%particles,                 &
+                       &            neutral( is )%energy,                    &
                        &   b2CellData = tmpCv )
                 end do
                 do is = 1, natmi
@@ -5524,7 +5524,7 @@ contains
                    call write_cell_scalar( sources_grid,                     &
                        &   scalar = edge_sources%source(12)%                 &
                        &            ggd( time_sind )%neutral( js )%          &
-                       &            state( ks )%particles,                   &
+                       &            state( ks )%energy,                      &
                        &   b2CellData = tmpCv )
                 end do
 
@@ -5698,7 +5698,7 @@ contains
                    tmpCv(:,:) = tmpCv(:,:) / vol(:,:)
                    call write_cell_scalar( sources_grid,                     &
                        &   scalar = edge_sources%source(12)%                 &
-                       &            ggd( time_sind )%neutral( js )%particles,&
+                       &            ggd( time_sind )%neutral( js )%energy,   &
                        &   b2CellData = tmpCv )
                 end do
 
@@ -5851,7 +5851,7 @@ contains
                    call write_cell_scalar( sources_grid,                     &
                        &   scalar = edge_sources%source(12)%                 &
                        &            ggd( time_sind )%neutral( js )%          &
-                       &            state( ks )%particles,                   &
+                       &            state( ks )%energy,                      &
                        &   b2CellData = tmpCv )
                 end do
 #endif
@@ -6212,7 +6212,7 @@ contains
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
                     call write_cell_vector_component( sources_grid,           &
                         &   vectorComponent = edge_sources%source(8)%         &
-                        &                     ggd( time_sind )%neutral( is )% &
+                        &                     ggd( time_sind )%neutral( j )%  &
                         &                     state(1)%momentum,              &
                         &   b2CellData = tmpCv,                               &
                         &   vectorID = VEC_ALIGN_PARALLEL_ID )
@@ -7402,8 +7402,8 @@ contains
         allocate( batch_profiles%grid_ggd( num_batch_slices ) )
         allocate( batch_sources%grid_ggd( num_batch_slices ) )
 #endif
-        allocate (batch_sources%source(1) )
-        allocate (batch_sources%source(1)%ggd( num_batch_slices ) )
+        allocate( batch_sources%source(1) )
+        allocate( batch_sources%source(1)%ggd( num_batch_slices ) )
 #ifdef B25_EIRENE
         allocate( batch_sources%source(1)%identifier%name(1) )
         allocate( batch_sources%source(1)%identifier%description(1) )
@@ -7519,7 +7519,7 @@ contains
 #if AL_MAJOR_VERSION > 4
         allocate( batch_sources%grid_ggd( batch_index )%path(1) )
         batch_sources%grid_ggd( batch_index )%path = &
-            &   "#batch_profiles/grid_ggd("//int2str(batch_index)//")"
+            &   "#edge_profiles(1)/grid_ggd("//int2str(batch_index)//")"
 #else
         call b2_IMAS_Fill_Grid_Desc( IDSmap,                                &
             &   batch_sources%grid_ggd( batch_index ),                      &
@@ -7529,6 +7529,11 @@ contains
             &   INCLUDE_GHOST_CELLS, midplane_id, z_eq, vol, gs, qc )
 #endif
 #endif
+#else
+        if (do_description) then
+          write(0,*) 'Code was compiled without a GGD module'
+          write(0,*) 'Most IDS output is disabled !'
+        end if
 #endif
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         if (do_description) &
@@ -7652,8 +7657,8 @@ contains
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%label = species_list( js )
 #else
           allocate( batch_profiles%ggd( batch_index )%neutral( js )%name(1) )
-          allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%name(1) )
           batch_profiles%ggd( batch_index )%neutral( js )%name = species_list( js )
+          allocate( batch_sources%source(1)%ggd( batch_index )%neutral( js )%name(1) )
           batch_sources%source(1)%ggd( batch_index )%neutral( js )%name = species_list( js )
 #endif
           batch_profiles%ggd( batch_index )%neutral( js )%ion_index = js
@@ -7744,9 +7749,9 @@ contains
 #endif
           !! sne: Electron particle sources
           tmpCv(:,:) = sne_mean(:,:) / vol(:,:)
-          call write_cell_scalar( sources_grid,                           &
-              &   scalar = batch_sources%source(1)%ggd( batch_index )%    &
-              &            electrons%particles,                           &
+          call write_cell_scalar( sources_grid,                         &
+              &   scalar = batch_sources%source(1)%ggd( batch_index )%  &
+              &            electrons%particles,                         &
               &   b2CellData = tmpCv )
 
           !! na: Ion density

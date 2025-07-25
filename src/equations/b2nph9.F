@@ -16,7 +16,8 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_balance !djm Jan2017
-     & , only : b2npht_shei_bal, update_balance_sources_heat,
+     & , only : b2npht_shei_bal,
+     &          update_balance_sources_heat,
      &          balance_netcdf
       use b2mod_subsys
       use b2mod_sources
@@ -254,7 +255,8 @@
        call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                !srv 07.06.00 02.06.99 28.06.03 05.07.17
      *  hx, hy, hy1, gs, qc, vol, bb, pbs, lnlam, na, ua, ue,
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,          !som 16.08.21 !srv 24.08.21
-     *  cvsa_drho, she0, shi0)                                          !som 16.08.21 !srv 07.06.00 02.06.99 07.07.09
+     *  cvsa_drho,                                                      !som 16.08.21
+     *  she0, shi0)                                                     !srv 07.06.00 02.06.99 07.07.09
       endif
       call b2saxpy (n2*4, 1.0_R8, she, 1, she0, 1)
       call b2saxpy (n2*4, 1.0_R8, shi, 1, shi0, 1)

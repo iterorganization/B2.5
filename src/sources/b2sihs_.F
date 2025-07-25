@@ -4,7 +4,8 @@
       subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
      *  hx, hy, hy1, gs, qc, vol, bb, pbs, lnlam, na, ua, ue,         !srv 07.06.00 02.06.99 07.05.08 05.07.17
      *  te, ti, po, ne, ni, fne, fch, fchstoch, cvsa, cvsa_cl,        !som 16.08.21 !srv 24.08.21
-     *  cvsa_drho, she0, shi0)                                        !som 16.08.21 !srv 28.06.03 07.07.09
+     *  cvsa_drho,                                                    !som 16.08.21
+     *  she0, shi0)                                                   !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
       use b2mod_sources
@@ -77,7 +78,7 @@
       integer, save :: Zhdanov_closure = 0, Zhdanov_test = 0,         !som 21.03.21
      &                 Zhdanov_tf_fr = 1                              !som 01.07.21
       integer, save :: Zhdanov_visu = 1                               !som 16.08.21
-      integer, save :: zh_vis_type = 0                              !som 13.01.22
+      integer, save :: zh_vis_type = 0                                !som 13.01.22
       real (kind=R8) :: mm(0:ns-1), am1(0:ns-1)                       !som 13.11.20
       real (kind=R8), save :: mass_multiplicator                      !som 13.11.20
       real (kind=R8) :: ft                                            !som 16.08.21

@@ -495,4 +495,3 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
 *.end b2co
 
       end program b2co
-

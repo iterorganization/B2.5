@@ -289,14 +289,13 @@
      &       c_rwA(0:nspecies-1,0:nspecies-1))
 *    ..calculate the thermal force transport coefficient without flux limiting
             call b2trtf(nspecies, G2, G8, mum, mdm, Ainv, Ainv_mdf,
-     &        wrkcc)
+     &       wrkcc)
             c_R_TA_nofl(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
 *    ..calculate the thermal force transport coefficient with flux limiting
             wrkG2 = G2*tf_ton_mat
             wrkG8 = G8*tf_ton_mat
             call b2trtf(nspecies, wrkG2, wrkG8,
-     &        mum, mdm, Ainv_fl, Ainv_mdf_fl,
-     &        wrkcc)
+     &       mum, mdm, Ainv_fl, Ainv_mdf_fl, wrkcc)
             c_R_TA(ix,iy,0:nspecies-1,0:nspecies-1) = wrkcc
 
             do j = 0, nspecies-1

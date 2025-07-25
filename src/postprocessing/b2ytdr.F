@@ -4311,7 +4311,9 @@ cxpb  Start reading input.dat file
         ELSE
           ldum(10) = .true. ! Make sure we are using the H1RN random generator
         END IF
-        IF (.not.streql(eirene_format,'msv')) ldum(18)=.true. ! Add NLSOLEDGE on by default
+        IF (.not.streql(eirene_format,'msv')) then
+          ldum(18)=.true.  ! Add NLSOLEDGE on by default
+        END IF
         filename=fort_lc//'33'
         inquire(file=filename,exist=NLWRMSH)
         ldum(13)=NLWRMSH

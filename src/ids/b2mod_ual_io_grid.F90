@@ -1534,7 +1534,7 @@ contains
             nGSubset = nGSubset + 6 + 2
             if ( jsep .ne. B2_GRID_UNDEFINED ) nGSubset = nGSubset + 2
         case ( GEOMETRY_CYLINDER, GEOMETRY_ANNULUS )
-            nGSubset = nGSubset + 3
+            nGSubset = nGSubset + 6
         case ( GEOMETRY_LIMITER )
             nGSubset = nGSubset + 11 + 2
         case ( GEOMETRY_SN )

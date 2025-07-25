@@ -123,7 +123,7 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
+            !< designed to store data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
@@ -320,7 +320,8 @@ contains
 
     end subroutine put_ids_edge
 
-    subroutine dealloc_ids_edge( edge_profiles, edge_sources, edge_transport, &
+    subroutine dealloc_ids_edge( &
+            &   edge_profiles, edge_sources, edge_transport, &
 #if ( IMAS_MINOR_VERSION > 25 && IMAS_MINOR_VERSION < 34 && IMAS_MAJOR_VERSION == 3 )
             &   numerics, &
 #endif
@@ -338,7 +339,7 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
+            !< designed to store data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
@@ -532,7 +533,8 @@ contains
 
     end subroutine put_batch_edge
 
-    subroutine dealloc_batch_edge( batch_profiles, batch_sources, &
+    subroutine dealloc_batch_edge( &
+            &   batch_profiles, batch_sources, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif
@@ -601,7 +603,7 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
+            !< designed to store data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
@@ -682,7 +684,7 @@ contains
             !< flux takes into account the energy transported by the particle
             !< flux)
         type (ids_edge_transport), intent(inout) :: edge_transport !< IDS
-            !< designed to store  data on edge plasma transport. Energy terms
+            !< designed to store data on edge plasma transport. Energy terms
             !< correspond to the full kinetic energy equation (i.e. the energy
             !< flux takes into account the energy transported by the particle
             !< flux)
@@ -781,7 +783,8 @@ contains
 #if IMAS_MAJOR_VERSION > 3
             &   uri, &
 #endif
-            &   batch_profiles, batch_sources, equilibrium, &
+            &   batch_profiles, batch_sources, &
+            &   equilibrium, &
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             &   summary, &
 #endif

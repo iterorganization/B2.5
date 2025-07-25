@@ -209,7 +209,7 @@
 			</introduction>
 		</routine>
 		<coefficients>
-			<!-- These block contains tooltips for cofficient blocks-->
+			<!-- These block contains tooltips for coefficient blocks-->
 			<param>
 				<name>label</name>
 				<type>string</type>
@@ -3505,7 +3505,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-                   If ion_vlct_restrict.ne.0, the parallel speed of ions is limited to be no more than 3 times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than twice the local ion sound speed.
+					If ion_vlct_restrict.ne.0, the parallel speed of ions is limited to be no more than 3 times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than twice the local ion sound speed times the local pitch angle.
 				</description>
 			</switch>
 			<switch>
@@ -3567,8 +3567,8 @@
 				<type>integer</type>
 				<description>
 					If '0', use the SOLPS5.0 scheme for neutral heat conductivity flux limits.
-					If '1', SPB form to calculate parallel and perpendicular neutral heat conductivity flux limit (does not preserve symmetry, kept for backward compatibility reasons).
-					If '2', modifies the SPB treatment for the flux limits to be applied on the transport coefficients directly.
+					If '1', SPb form to calculate parallel and perpendicular neutral heat conductivity flux limit (does not preserve symmetry, kept for backward compatibility reasons).
+					If '2', modifies the SPb treatment for the flux limits to be applied on the transport coefficients directly.
 					It is recommended '2'.
 				</description>
 			</switch>
@@ -4060,8 +4060,8 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '2', SPB form of adding currents on the South core boundary is included by using BCPOT=12, and on the South PFR and North boundaries by using BCPOT=13. It is recommended '2', in conjunction with the BCPOT=12 and BCPOT=13 settings, respectively.
-					When set to '1', SPB form of adding currents on South and North boundaries is done explicitly in addition to other existing boundary conditions for the potential equation.
+					When set to '2', SPb form of adding currents on the South core boundary is included by using BCPOT=12, and on the South PFR and North boundaries by using BCPOT=13. It is recommended '2', in conjunction with the BCPOT=12 and BCPOT=13 settings, respectively.
+					When set to '1', SPb form of adding currents on South and North boundaries is done explicitly in addition to other existing boundary conditions for the potential equation.
 					The old 5.0 calculation is recovered by using the value '0'.
 				</description>
 			</switch>
@@ -4384,7 +4384,7 @@
 			<switchgroup>
 				<name>b2nph*</name>
 				<description>
-					When set to '1', SPB form of the program b2sihs_ is called. It is recommended '1'.
+					When set to '1', SPb form of the program b2sihs_ is called. It is recommended '1'.
 				</description>
 				<switch>
 					<name>b2npht_style</name>
@@ -4431,7 +4431,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					style specifies the precise form of interpolation used in the computation of flcb and cvcb. When set to '1', SPB form of the transport terms in the momentum correction equation is used.
+					style specifies the precise form of interpolation used in the computation of flcb and cvcb. When set to '1', SPb form of the transport terms in the momentum correction equation is used.
 					It is recommended '1'.
 				</description>
 			</switch>
@@ -4440,7 +4440,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPB form of an expression that occurs in the electron-atom thermal force is used. Only used if b2sigp_style.ne.2.
+					When set to '1', SPb form of an expression that occurs in the electron-atom thermal force is used. Only used if b2sigp_style.ne.2.
 					It is recommended '1'.
 				</description>
 			</switch>
@@ -4474,7 +4474,7 @@
 				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPB form of the pressure gradient term on the right hand of the momentum balance equation is used.
+					When set to '1', SPb form of the pressure gradient term on the right hand of the momentum balance equation is used.
 					When set to '2', the parallel current term contains a correction due to impurities, when Z_eff is not equal to the average plasma ion charge. Only usable if the potential equation is solved simultaneously (b2news_poteq.eq.1).
 					The default value of '2' is recommended for cases with one main hydrogenic species (or at least where the main species is the lightest one) and any amount of impurities. It is not guaranteed to yield correct results for hydrogen isotopic mixtures or non-hydrogenic plasmas.
 				</description>
@@ -4696,7 +4696,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPB new form of calculating electron heat flux is used. It is recommended '1' for runs with drifts.
+					If '1', SPb new form of calculating electron heat flux is used. It is recommended '1' for runs with drifts.
 				</description>
 			</switch>
 			<switch>
@@ -4720,7 +4720,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPB new form of calculating ion heat flux is used.
+					If '1', SPb new form of calculating ion heat flux is used.
 					It is recommended '1' for runs with drifts.
 				</description>
 			</switch>
@@ -4801,7 +4801,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If '1', SPB new form of calculating particle flux is used.
+					If '1', SPb new form of calculating particle flux is used.
 					It is recommended '1' for runs with drifts.
 				</description>
 			</switch>
@@ -4918,14 +4918,14 @@
 					Use of this option is still experimental!
 				</description>
 				<switch>
-				  <name>b2ardr_fix_recomb</name>
-				  <default>0</default>
-				  <type>integer</type>
+					<name>b2ardr_fix_recomb</name>
+					<default>0</default>
+					<type>integer</type>
 				</switch>
 				<switch>
-				  <name>b2ardr_zmax_recomb</name>
-				  <default>1</default>
-				  <type>integer</type>
+					<name>b2ardr_zmax_recomb</name>
+					<default>1</default>
+					<type>integer</type>
 				</switch>
 			</switchgroup>
 			<switchgroup>
@@ -6212,10 +6212,9 @@
 							ENEPAR(,1) specifies the desired electron temperature in eV.
 							ENEPAR(,2) is the strength of the feedback.
 						22 : radial leakage condition for the electron temperature. ENEPAR(,1) specifies the leakage velocity in units of the electron thermal velocity. A temperature gradient such that the diffusive flux is set to match this leakage is imposed.
-						23 : electron temperature profile in eV is read from the ENE_FN file. If ENEPAR(,,2) > 0 the profile is scaled so ENEPAR(,,1) provides the maximum electron temperature in eV.
+						23 : electron temperature profile in eV is read from the ENE_FN file. If ENEPAR(,2) > 0 the profile is scaled so ENEPAR(,1) provides the maximum electron temperature in eV.
 				</description>
 			</switch>
-
 			<switch>
 				<name>BCENI</name>
 				<type>integer array, length NBC</type>
@@ -6237,8 +6236,7 @@
 						13 : prescribe the ion energy flux per unit area proportional to temperature, ENIPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
 						14 : leakage option for ion energy, ENIPAR(,1) specifies the leakage factor, &alpha; in &Gamma;<sub>loss</sub> = &alpha; C<sub>s</sub>T<sub>i</sub>
 						15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.7.5 of manual for details). Linked to using BCCON=14 and BCMOM=13 for all ion species, along with BCENE=15 and BCPOT=11.
-						16 : feedback boundary condition with constant temperature, ENIPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bceni_16_style=0 (default). If bceni_16_style=1, integrated ion heat flux with constant ion temperature, summed over all core boundaries with BCENI=16.
-							ENIPAR(,1) specifies the power flux in W
+						16 : feedback boundary condition with constant temperature, ENIPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bceni_16_style=0 (default). If bceni_16_style=1, integrated ion heat flux with constant ion temperature, summed over all core boundaries with BCENI=16. ENIPAR(,1) specifies the power flux in W
 						17 : feedback boundary condition with constant shared temperature for both electrons and ions, see BCENE=17 above for description.
 						18 : fractional drop condition. Not yet working.
 						19 : same as [9] but to be used when simultaneously setting BCCON=1 on the same boundary.
@@ -6250,7 +6248,7 @@
 						25 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away. ENIPAR(,1) specifies the desired ion temperature in eV. ENIPAR(,2) is the strength of the feedback
 						26 : prescribe the poloidally averaged value of the ion temperature and introduce a poloidal variation in a simplified manner. This boundary condition is suitable for any plasma composition (i.e. when BCENI=23 fails). It is recommended to use this boundary condition together with corresponding condition on ion density (BCCON = 25,26,27). The average is taken over all core boundaries with BCENI=26. ENIPAR(,1) specifies the temperature in eV
 						27 : feedback boundary condition with prescribed total ion heat flux, constant poloidally averaged ion temperature and a poloidal variation in a simplified manner. This boundary condition is suitable for any plasma composition (i.e. when BCENI=24 fails). It is recommended to use this boundary condition together with corresponding condition on ion density (BCCON = 25,26,27). The flux is summed over all core boundaries with BCENI=27. ENIPAR(,1) specifies the energy flux in W
-						28 : ion temperature profile in eV is read from the ENI_FN file. If ENIPAR(,,2) > 0 the profile is scaled so ENIPAR(,,1) provides the maximum ion temperature in eV.
+						28 : ion temperature profile in eV is read from the ENI_FN file. If ENIPAR(,2) > 0 the profile is scaled so ENIPAR(,1) provides the maximum ion temperature in eV.
 				</description>
 			</switch>
 			<switch>
@@ -6261,8 +6259,7 @@
 						 0 : default, no boundary condition is applied
 						 1 : prescribe the value of the potential, POTPAR(,1) specifies the potential in V
 						 2 : prescribe the gradient of the potential, POTPAR(,1) specifies the potential gradient in V.m<sup>-1</sup>
-						 3 : sheath conditions,
-							POTPAR(,2) used for biasing [see code for details]
+						 3 : sheath conditions, POTPAR(,2) used for biasing [see code for details]
 						 4 : prescribe the value of the potential weakly a mixed boundary condition, POTPAR(,1) specifies the potential in V and POTPAR(,2) specifies the 'strength' of the boundary condition
 						 5 : prescribe the current flux density per unit area, POTPAR(,1) specifies the electric current flux density in A.m<sup>-2</sup>
 						 6 : prescribe the total current flux density for a constant potential [not yet available]
@@ -6275,15 +6272,11 @@
 						13 : Imposes the currents due to drifts for the South private flux and North boundaries. Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
 						14 : Prescribe the value of the radial sheath potential, POTPAR(,1), in V
 						15 : potential profile is read from POT_FN file. Only available for E and W boundaries.
-						16 : Constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries.
-							Still experimental, will not work for drift cases.
+						16 : Constant electric potential feedback on imposed total current. The current prescribed is given by the sum of the POTPAR(IB,1) (in A) over all the BCPOT=16 boundaries. Still experimental, will not work for drift cases.
 						17 : Sheath condition for floating target. This BC provides a floating target with a near zero current through the target. First, the total target current is calculated. Then, the potential is corrected by a factor POTPAR(,1) * current to reduce the current close to zero. POTPAR(,2) is used to provide an initial guess in V of the target potential and to store the value, in V, during the iterative process.
-						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away.
-							POTPAR(,,1) specifies the desired potential in V.
-							POTPAR(,,2) is the strength of the feedback
+						21 : constant potential feedback scaled by potential on the ring 'bc_type21_ref' away. POTPAR(,1) specifies the desired potential in V. POTPAR(,2) is the strength of the feedback
 				</description>
 			</switch>
-
 			<switch>
 				<name>GAMMAI</name>
 				<default>1.0</default>
@@ -6420,7 +6413,7 @@
 				<type>integer array of size (NBC)</type>
 				<description>
 					List of core boundary segments, according to their numbering in the current /BOUNDARY/ namelist.
-					For limiter, SN, and DN topologies, the code will attempt to build the array from the topology information available, i.e., it will contain the list of 'South' boundaries forming a closed contour.
+					For cases with closed field lines, the code will attempt to build the array from the topology information available, i.e., it will contain the list of 'South' boundaries forming a closed contour.
 					For linear cases, in case a "core" type boundary condition is desired, then LCBS must be specified explicitly.
 				</description>
 			</switch>
@@ -6625,7 +6618,7 @@
 				</description>
 			</switch>
 			<switch>
-				<name>VACUUM_COMMINICATION_BETA</name>
+				<name>VACUUM_COMMUNICATION_BETA</name>
 				<default>1.0</default>
 				<type>real array of size (0:NSPECIES-1,NVAC)</type>
 				<description>
@@ -7279,7 +7272,7 @@
 				<type>logical array of size (0:NREG)</type>
 				<description>
 					Indicates whether the total energy equation is to be solved in region (ireg). For the equation to be solved in region (ireg), both SOLVEEE and SOLVEEI must be true in that region. Subservient to 'no_solve' switch.
-					It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with total energy equation, as a group.
+					It is important to note that the 'b2news_no_solve' switch allows to solve or not to solve the electron and ion heat equations together with the total energy equation, as a group.
 					Defaults to .true. unless using the time-dependent mode, in which case it is set to .false. and should not be used.
 				</description>
 			</switch>

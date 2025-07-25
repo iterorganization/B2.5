@@ -18,8 +18,8 @@
      1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
      2          smpr, smpt, smfr, smcf, smodt                          !srv 09.03.21
       use b2mod_balance !djm Jan2017
-     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
-     2          balance_netcdf, tot_smo0to3, fmo_tot
+     1 , only : update_balance_sources_momentum,
+     2          balance_netcdf, fmo_b2nxfv, tot_smo0to3, fmo_tot
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -490,9 +490,10 @@
 !$OMP& SHARED(pbshz, cvsahz, chci, smcf, fchanml, smof)
 !$OMP& SHARED(facdrift, fac_ExB)
 !$OMP& SHARED(is_neutral, ue)
-!$OMP& SHARED(zetap, zetae, gti, gte, ce1, ce2, cimp1)
-!$OMP& SHARED(cimp2, zeff, fmo, fna_fcor, iout, iout_b2wdat, rxg)
+!$OMP& SHARED(zetap, zetae, gti, gte)
+!$OMP& SHARED(ce1, ce2, cimp1, cimp2, zeff)
 !$OMP& SHARED(rz2, ne_ext, ro)
+!$OMP& SHARED(fmo, fna_fcor, iout, iout_b2wdat, rxg)
 !$OMP& SHARED(leftix, rightix, leftiy, rightiy, on_closed_surface)
 !$OMP& SHARED(bottomix, bottomiy, topix, topiy)
 !$OMP& SHARED(b2stbr_phys_smo_bal, b2stbr_phys_smo0to3)
@@ -642,9 +643,11 @@
      &      rza(-1,-1,is),
      &      ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &      te, ti, na(-1,-1,is), ne2, lnlam,
-     &      cvsahz(-1,-1,0,is), cvsahz_drho(-1,-1,0,is),
+     &      cvsahz(-1,-1,0,is),
+     &      cvsahz_drho(-1,-1,0,is),
      &      smbvh, smbvv, smbvi, kt_neo,
-     &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
+     &      alpha1, chci_al, chci_a,
+     &      cvsahz_hAdp_albe, cvsahz_hBdp_al,                          !som 08.10.21
      &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)
          else
            smbvh=0.0_R8                                                !som 13.08.21
@@ -662,9 +665,11 @@
      &      rza(-1,-1,is),
      &      ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &      te, ti, na(-1,-1,is), ne2, lnlam,
-     &      cvsahz(-1,-1,0,is), cvsahz_drho(-1,-1,0,is),
+     &      cvsahz(-1,-1,0,is),
+     &      cvsahz_drho(-1,-1,0,is),
      &      smbvtemp, smbvv, smbvi, kt_neo,
-     &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
+     &      alpha1, chci_al, chci_a,
+     &      cvsahz_hAdp_albe, cvsahz_hBdp_al,                          !som 08.10.21
      &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)
          else
            smbvh=0.0_R8                                                !som 13.08.21
@@ -682,9 +687,11 @@
      &      rza(-1,-1,is),
      &      ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &      te, ti, na(-1,-1,is), ne2, lnlam,
-     &      cvsahz(-1,-1,0,is), cvsahz_drho(-1,-1,0,is),
+     &      cvsahz(-1,-1,0,is),
+     &      cvsahz_drho(-1,-1,0,is),
      &      smbvh, smbvtemp, smbvi, kt_neo,
-     &      alpha1, chci_al, chci_a, cvsahz_hAdp_albe, cvsahz_hBdp_al, !som 08.10.21
+     &      alpha1, chci_al, chci_a,
+     &      cvsahz_hAdp_albe, cvsahz_hBdp_al,                          !som 08.10.21
      &      wrk0, wrk1, wrk2, rho_A_rel(-1,-1,is), avm_u)
          else
            smbvh=0.0_R8                                                !som 13.08.21

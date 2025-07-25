@@ -3314,7 +3314,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
 #if IMAS_MAJOR_VERSION > 3
      &        uri,
 #endif
-     &        batch_profiles, batch_sources, equilibrium,
+     &        batch_profiles, batch_sources,
+     &        equilibrium,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &        summary,
 #endif
@@ -3963,7 +3964,8 @@ cxpb Copy the IDS to a temporary location with the new DD and then bring it back
      &      divertors,
 #endif
      &      radiation )
-        call dealloc_batch_edge( batch_profiles, batch_sources,
+        call dealloc_batch_edge(
+     &      batch_profiles, batch_sources,
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
      &      summary,
 #endif

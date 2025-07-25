@@ -4410,7 +4410,8 @@ cxpb  and max(,,) statement for stability
      1       ('B2STBC -- BCMOM=12, NOT AVAILABLE FOR W,E')
           ENDIF
 
-* -- BCMOM=13 -- CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM
+* -- BCMOM=13 -- Sound speed flux
+* CONDITION from b2stbc_spb FOR THE PARALLEL MOMENTUM
 !srv added accumulation in order to account twice b.c. for corner cells
         case (13)
           if(new_boundary_files) then

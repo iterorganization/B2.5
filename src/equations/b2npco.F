@@ -17,7 +17,8 @@
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_balance
-     & ,only : update_balance_sources_particles, balance_netcdf,      !djm Jan2017
+     & ,only : update_balance_sources_particles,                      !djm Jan2017
+     &         balance_netcdf,                                        !djm Jan2017
      &         tot_sna0to1, fna_tot                                   !djm Mar2019
       use b2mod_openmp
       use b2mod_subsys
