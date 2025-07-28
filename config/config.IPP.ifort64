@@ -24,7 +24,7 @@ endif
 ifdef SOLPS_DEBUG
 FCOPTS   = -g -C -debug all -traceback -check all
 else
-FCOPTS   = -O2 -xHost
+FCOPTS   = -O2 -march=core-avx2
 endif
 
 DEFINES += -DNO_OPT
