@@ -3,10 +3,12 @@
 
       subroutine b2siav_zh (nx, ny, ns, isb, ismain, mb, zb,          !srv 19.02.21
      & ub, wbdia, vbecrb, te, ti, nb, ne2, lnlam,                     !srv 01.07.09
-     & cvsbhz, cvsbhz_drho, smbvh, smbvv, smbvi, kt_neo,
-     & alpha1, chci_al, chci_a,
+     & cvsbhz, cvsbhz_cl, cvsbhz_drho, smbvh, smbvv, smbvi, kt_neo,
+     & alpha1, chci_al_ast, chci_a,
      & cvsahz_hAdp_albe, cvsahz_hBdp_al,                              !som 08.10.21
-     & wrk0, wrk1, wrk2, rho_rel, avm_u)
+     * cvsahz_uAdp_albe, cvsahz_uBdp_al,                              !som 22.12.23
+     & wrk0, wrk1, wrk2, rho_rel, avm_u,
+     & na, ua)
       use b2mod_types
       use b2mod_geo
       use b2mod_constants
@@ -21,11 +23,11 @@
      & , only : fac_vis                                               !srv 22.05.18
       use b2mod_subsys
       use b2mod_zhfrtf
-     & , only : nal, Z_to_m1, Ia
+     & , only : nal, Z_to_m1_ast, Ia
       use b2mod_b2mrel
-     & , only : amnucl, s2nucl
+     & , only : amnucl, s2nucl, nucl2s, znnucl_int
       use b2mod_b2zhco
-     & , only : zhcscorr, zhcscorr_vq
+     & , only : zhcscorr, zhcscorr_vq, zh_vis_type
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb, ismain
@@ -35,12 +37,16 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
      &  ne2(-1:nx,-1:ny),
      &  cvsbhz(-1:nx,-1:ny,0:1),                                      !srv 04.10.99 09.01.01
+     &  cvsbhz_cl(-1:nx,-1:ny,0:1),                                   !som 30.04.24
      &  cvsbhz_drho(-1:nx,-1:ny,0:1),                                 !som 18.08.21
-     &  chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                        !som 08.10.21
+     &  chci_al_ast(-1:nx,-1:ny,0:1,0:nspecies-1),                    !som 08.10.21
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                               !som 08.10.21
      &  cvsahz_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),  !som 08.10.21
      &  cvsahz_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                 !som 08.10.21
-     &  rho_rel(-1:nx,-1:ny), avm_u(-1:nx,-1:ny)                      !som 13.08.21
+     *  cvsahz_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
+     *  cvsahz_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                 !som 22.12.23
+     &  rho_rel(-1:nx,-1:ny), avm_u(-1:nx,-1:ny),                     !som 13.08.21
+     &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),
@@ -62,10 +68,9 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, ix, iy, k, inucl
+      integer ncall, ix, iy, k, inucl, iz
       integer, save :: hstyle = 0, lluciani = 3                     !lk 03.12.09
       integer, save :: iout = 0                                     !srv 17.06.02
-      integer, save :: zh_vis_type = 0                              !som 13.01.22
 #ifdef _OPENMP
 !$OMP THREADPRIVATE(ncall, hstyle, lluciani, iout)
 #endif
@@ -126,7 +131,6 @@
        call ipgeti ('b2siav_style_qip', hstyle)                     !lk 23.05.06 05.07.07
        call ipgeti ('b2trcl_lluciani', lluciani)                    !lk 03.12.09
        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
-       call ipgeti ('b2tral_zh_vis_type', zh_vis_type)              !som 13.01.22
       endif
 
       ft = 4.0_R8/3.0_R8                                            !srv 16.10.17
@@ -288,7 +292,7 @@
                     hip0a(ix,iy) = (-2.5_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &               /bb(ix,iy,0)/bbaverage2(iy))
      &               *(nal(ix,iy,inucl)*ti(ix,iy)/
-     &                 qe*Z_to_m1(ix,iy,inucl))
+     &                 qe*Z_to_m1_ast(ix,iy,inucl))
      &               *(ti(topix(ix,iy),topiy(ix,iy))
      &                -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &                (hy1(ix,iy)+
@@ -328,7 +332,7 @@
               do iy=0,ny-1
                 do ix=-1,nx
                   if(leftix(ix,iy).ne.-2) then                        !srv 26.11.02
-                    wrk0(ix,iy)=-chci_al(ix,iy,0,inucl)
+                    wrk0(ix,iy)=-chci_al_ast(ix,iy,0,inucl)
      &               *(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
                   endif
                 enddo
@@ -345,7 +349,7 @@
      &                -2.5_R8*bb(ix,iy,2)
      &                /bb(ix,iy,0)/bb(ix,iy,3)
      &                *(nal(ix,iy,inucl)*ti(ix,iy)
-     &                 /qe*Z_to_m1(ix,iy,inucl))
+     &                 /qe*Z_to_m1_ast(ix,iy,inucl))
      &                *(ti(topix(ix,iy),topiy(ix,iy))
      &                 -ti(bottomix(ix,iy),bottomiy(ix,iy)))
      &                /(hy1(ix,iy)+
@@ -482,9 +486,15 @@
               if(leftix(ix,iy).eq.-2) then
                 wrk0(ix,iy)=0.0_R8
               else
-                wrk0(ix,iy)=2.0_R8*ft*cvsbhz_drho(ix,iy,0)/       !som 18.08.21
+                if(zh_vis_type.eq.2) then
+                  wrk0(ix,iy)=2.0_R8*ft*cvsbhz_cl(ix,iy,0)/         !som 30.04.24
+     &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*
+     &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
+                else
+                  wrk0(ix,iy)=2.0_R8*ft*cvsbhz_drho(ix,iy,0)/       !som 18.08.21
      &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*  !som 18.08.21
      &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
+                endif
               endif
             enddo
           enddo
@@ -493,7 +503,7 @@
             do ix= 0,nx-1
               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
      >         then
-                if (zh_vis_type.eq.0) then                          !som 13.01.22
+                if (zh_vis_type.eq.0 .or. zh_vis_type.eq.2) then    !som 13.01.22 21.12.23
                  t0=(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
      *             *wrk2(ix,iy)
                 else if (zh_vis_type.eq.1) then
@@ -535,6 +545,87 @@
      &           (u_res(ix,iy)*wrk2(ix,iy) -
      &           u_res(leftix(ix,iy),leftiy(ix,iy))*
      &           wrk2(leftix(ix,iy),leftiy(ix,iy)))
+              endif
+            enddo
+           enddo
+
+           do iy=0,ny-1
+            do ix=0,nx-1
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+                smbvi(ix,iy,0)=vol(ix,iy)/hx(ix,iy)*hz(ix,iy)*
+     &            bb(ix,iy,0)*wrk2(ix,iy)*
+     &            (wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
+              else
+                smbvi(ix,iy,0) = 0.0_R8
+              endif
+            enddo
+           enddo
+          else if (zh_vis_type.eq.2) then
+           do iy=0,ny-1
+            do ix=0,nx
+              wrk0(ix,iy)=0.0_R8
+              if(leftix(ix,iy).eq.-2) then
+                wrk0(ix,iy)=0.0_R8
+              else
+               do inucl=0,nspecies-1
+                if(inucl.ne.s2nucl(isb)-1) then
+                 t0=0.0_R8
+                 do iz= 1, znnucl_int(inucl)
+                  t0 = t0 + 0.5_R8*(na(ix,iy,nucl2s(inucl,iz))*
+     &            ti(ix,iy)+
+     &            na(leftix(ix,iy),leftiy(ix,iy),nucl2s(inucl,iz))*
+     &            ti(leftix(ix,iy),leftiy(ix,iy)))*
+     &            (ua(ix,iy,nucl2s(inucl,iz))*wrk2(ix,iy) -
+     &            ua(leftix(ix,iy),leftiy(ix,iy),
+     &            nucl2s(inucl,iz))*
+     &            wrk2(leftix(ix,iy),leftiy(ix,iy)))
+                 enddo
+
+                 wrk0(ix,iy) = wrk0(ix,iy) +
+     &           (nb(ix,iy)/nal(ix,iy,s2nucl(isb)-1)+
+     &           nb(leftix(ix,iy),leftiy(ix,iy))/
+     &           nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(isb)-1))*
+     &           ft*cvsahz_uAdp_albe(ix,iy,0,s2nucl(isb)-1,inucl)/
+     &           (bb(ix,iy,0)*bb(ix,iy,3)*
+     &           vol(ix,iy)/hx(ix,iy)*hz(ix,iy)+
+     &           bb(leftix(ix,iy),leftiy(ix,iy),0)*
+     &           bb(leftix(ix,iy),leftiy(ix,iy),3)*
+     &           vol(leftix(ix,iy),leftiy(ix,iy))/
+     &           hx(leftix(ix,iy),leftiy(ix,iy))*
+     &           hz(leftix(ix,iy),leftiy(ix,iy)))*
+     &           t0
+                endif
+               enddo
+
+               t0=0.0_R8
+               do iz= 1, znnucl_int(s2nucl(isb)-1)
+                if(iz.ne.nint(zb(ix,iy))) then
+                 t0 = t0 + 0.5_R8*(na(ix,iy,nucl2s(s2nucl(isb)-1,iz))*
+     &           ti(ix,iy)+
+     &           na(leftix(ix,iy),leftiy(ix,iy),
+     &           nucl2s(s2nucl(isb)-1,iz))*
+     &           ti(leftix(ix,iy),leftiy(ix,iy)))*
+     &           (ua(ix,iy,nucl2s(s2nucl(isb)-1,iz))*wrk2(ix,iy) -
+     &           ua(leftix(ix,iy),leftiy(ix,iy),
+     &           nucl2s(s2nucl(isb)-1,iz))*
+     &           wrk2(leftix(ix,iy),leftiy(ix,iy)))
+                endif
+               enddo
+
+               wrk0(ix,iy) = wrk0(ix,iy) +
+     &         (nb(ix,iy)/nal(ix,iy,s2nucl(isb)-1)+
+     &         nb(leftix(ix,iy),leftiy(ix,iy))/
+     &         nal(leftix(ix,iy),leftiy(ix,iy),s2nucl(isb)-1))*
+     &         ft*(cvsahz_uAdp_albe(ix,iy,0,s2nucl(isb)-1,s2nucl(isb)-1)
+     &         -zhcscorr*cvsahz_uBdp_al(ix,iy,0,s2nucl(isb)-1))/
+     &         (bb(ix,iy,0)*bb(ix,iy,3)*
+     &         vol(ix,iy)/hx(ix,iy)*hz(ix,iy)+
+     &         bb(leftix(ix,iy),leftiy(ix,iy),0)*
+     &         bb(leftix(ix,iy),leftiy(ix,iy),3)*
+     &         vol(leftix(ix,iy),leftiy(ix,iy))/
+     &         hx(leftix(ix,iy),leftiy(ix,iy))*
+     &         hz(leftix(ix,iy),leftiy(ix,iy)))*
+     &         t0
               endif
             enddo
            enddo
@@ -596,8 +687,8 @@
      &     'b2siav_zh_hipgen_al'//chns//'_'//chns0)
           call my_out(70,nx,ny,nal(-1,-1,inucl),
      &     'b2siav_zh_nal'//chns//'_'//chns0)
-          call my_out(70,nx,ny,Z_to_m1(-1,-1,inucl),
-     &     'b2siav_zh_Z_to_m1'//chns//'_'//chns0)
+          call my_out(70,nx,ny,Z_to_m1_ast(-1,-1,inucl),
+     &     'b2siav_zh_Z_to_m1_ast'//chns//'_'//chns0)
         enddo
       endif                                                         !srv 17.06.02 }
 

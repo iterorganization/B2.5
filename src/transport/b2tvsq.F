@@ -1,6 +1,6 @@
       subroutine b2tvsq (nx, ny, ns, ismain, fac_vis,                    !srv 19.02.21
      &             ne2, lnlam, te, ti, ni, chci, na,                     !som 21.10.21
-     &             chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,        !som 20.10.21
+     &             chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,    !som 20.10.21
      &             fchvisq_a, fchvisq)
       use b2mod_types
       use b2mod_boundary_namelist                                        !som 21.10.21
@@ -12,7 +12,7 @@
       use b2mod_geo
       use b2mod_subsys
       use b2mod_zhfrtf
-     & , only : nal, Z_to_m1, Ia
+     & , only : nal, Z_to_m1_ast, Ia
       use b2mod_b2mrel
      & , only : amnucl, s2nucl
       use b2mod_b2zhco
@@ -25,7 +25,7 @@
      &  ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), te(-1:nx,-1:ny),
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1),
      &  na(-1:nx,-1:ny,0:ns-1),                                          !som 21.10.21
-     &  chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                           !som 21.10.21
+     &  chci_al_ast(-1:nx,-1:ny,0:1,0:nspecies-1),                       !som 21.10.21
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                  !som 21.10.21
      &  cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 21.10.21
      &  cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1)                       !som 21.10.21
@@ -567,7 +567,7 @@
                     hip0a(ix,iy) = (-2.5_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &               /bb(ix,iy,0)/bbaverage2(iy))
      &               *(nal(ix,iy,inucl)*ti(ix,iy)/qe*
-     &                 Z_to_m1(ix,iy,inucl))*
+     &                 Z_to_m1_ast(ix,iy,inucl))*
      &                (ti(topix(ix,iy),topiy(ix,iy))
      &                -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &                (hy1(ix,iy)+0.5_R8*hy1(topix(ix,iy),topiy(ix,iy))+
@@ -606,7 +606,7 @@
               do iy = 0, ny-1
                do ix = -1, nx
                 if(leftix(ix,iy).ne.-2) then
-                    hip0a(ix,iy)=-chci_al(ix,iy,0,inucl)
+                    hip0a(ix,iy)=-chci_al_ast(ix,iy,0,inucl)
      &               *(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
                   endif
                 enddo
@@ -622,7 +622,7 @@
      &               -2.5_R8*bb(ix,iy,2)
      &               /bb(ix,iy,0)/bb(ix,iy,3)
      &               *(nal(ix,iy,inucl)*ti(ix,iy)/qe
-     &               *Z_to_m1(ix,iy,inucl))*
+     &               *Z_to_m1_ast(ix,iy,inucl))*
      &               (ti(topix(ix,iy),topiy(ix,iy))
      &               -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &               (hy1(ix,iy)+

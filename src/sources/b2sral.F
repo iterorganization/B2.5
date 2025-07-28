@@ -14,7 +14,8 @@
      &  fchin_a, fchdia, fchin, fch_p, fchvispar, fchvisper,             !srv 21.10.02, IYS 17.10.2023
      &  fchvisq, fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  cdna, cdpa, cvsa_cl, cvsa_drho,                                  !som 18.08.21
-     &  chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,                   !som 20.10.21
+     &  chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,               !som 20.10.21
+     &  cvsa_uAdp_albe, cvsa_uBdp_al,                                    !som 26.04.24
      &  cvla, chce, chve, chci, chvi, calf, csigin,                      !xpb
      &  rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rza, rz2, rpt, rpi,
@@ -95,10 +96,12 @@
      4  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      5  cvla(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsa_drho(-1:nx,-1:ny,0:1,0:ns-1),                               !som 18.08.21
-     &  chci_al(-1:nx,-1:ny,0:1,0:nspecies-1),                           !som 20.10.21
+     &  chci_al_ast(-1:nx,-1:ny,0:1,0:nspecies-1),                       !som 20.10.21
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                                  !som 20.10.21
      &  cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 20.10.21
      &  cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 20.10.21
+     &  cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 26.04.24
+     &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 26.04.24
      6  cdpa(-1:nx,-1:ny,0:1,0:ns-1),
      &  csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1)
 *     (log-log rate coefficients)
@@ -320,7 +323,8 @@
        call b2tanml (nx, ny, ns, ismain,                                !srv 20.09.06 }!som 02.11.21
      &               csig_an, po, ne, na, fchanml_a, fchanml)           !srv 08.09.21
        call b2tvspa (nx, ny, ns, ismain, hy1, bb,                       !srv 19.02.21
-     &               na, ua, cvsa_cl, cvsa_drho, fac_vis,               !som 18.08.21
+     &               na, ua, ti, cvsa_cl, cvsa_drho, fac_vis,           !som 18.08.21
+     &               cvsa_uAdp_albe, cvsa_uBdp_al,                      !som 26.04.24
      &               fchvispar_a, fchvispar)
        call b2tiner (nx, ny, ns, ismain, vol, gs, bb,
      &               na, ua, facdrift, fchinert_a, fchinert)
@@ -330,7 +334,7 @@
      &               fchvisper_a, fchvisper)
        call b2tvsq  (nx, ny, ns, ismain, fac_vis,                       !srv 10.10.17 19.02.21
      &               ne2, lnlam, te, ti, ni(-1,-1,1), chci, na,         !som 21.10.21
-     &               chci_al, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al,     !som 20.10.21
+     &               chci_al_ast, chci_a, cvsa_hAdp_albe, cvsa_hBdp_al, !som 20.10.21
      &               fchvisq_a, fchvisq)
       call b2tinnt (nx, ny, ns, nscx, iscx,
      &              facdrift, fac_ExB,

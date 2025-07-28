@@ -2,7 +2,9 @@
       use b2mod_types
       implicit none
       integer, save :: zhd_corr=1, zhd_corrT=1, zhcscorr=1,
-     &  zhcscorr_vq=1, zh_imp_analyt=0, zh_analyt_mdf=0, zh_dist_fun=0
+     &  zhcscorr_vq=1, zh_imp_analyt=0, zh_analyt_mdf=0, zh_dist_fun=0,
+     &  zh_vis_type=0,
+     &  amfact_on=0
       character*1, allocatable, save :: zh_tf_toff(:)
       real (kind=R8), save :: zhflcorr=3.0_R8
       real (kind=R8), save :: zhflcorrh=0.4_R8
@@ -14,6 +16,7 @@
      &  c_R_wB(:,:,:,:),
      &  c_R_w(:,:,:,:),
      &  tf_ton_mat(:,:)
+      real (kind=R8), allocatable, save :: amfact(:)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -63,6 +66,13 @@
       return
       end subroutine alloc_b2mod_zhco
 
+      subroutine alloc_b2mod_zhco_amfact(nnucl)
+      implicit none
+      integer :: nnucl
+      allocate(amfact(0:nnucl-1))
+
+      end subroutine alloc_b2mod_zhco_amfact
+
       subroutine dealloc_b2mod_zhco
       implicit none
 
@@ -77,6 +87,10 @@
         deallocate(c_R_w)
         deallocate(tf_ton_mat)
         deallocate(zh_tf_toff)
+      end if
+
+      if(allocated(amfact)) then
+        deallocate(amfact)
       end if
 
       return

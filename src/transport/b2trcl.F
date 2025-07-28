@@ -94,6 +94,7 @@
       integer, save :: Zhdanov_closure = 0                               !som 22.06.21
       integer, save :: Zhdanov_test = 0                                  !som 22.06.21
       integer, save :: Zhdanov_cond = 1                                  !som 22.06.21
+      integer, save :: luc_et_form = 1                                   !som 01.09.22
       integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 17.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
@@ -176,6 +177,10 @@ csw 13mar2012
         call ipgeti ('b2tral_Zhdanov_closure', Zhdanov_closure)          !som 22.06.21
         call ipgeti ('b2sifr_Zhdanov_test', Zhdanov_test)                !som 22.06.21
         call ipgeti ('b2tral_Zhdanov_cond', Zhdanov_cond)                !som 22.06.21
+        call ipgeti ('b2trcl_luc_et_form', luc_et_form)                  !som 01.09.22
+        call xertst (luc_et_form.eq.1.or.nint(zn(ismain)).eq.1,
+     .   'b2trcl_luc_et_form value not appropriate for '//
+     .   'non-hydrogenic plasmas!')
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -463,7 +468,8 @@ csw 13mar2012
           if(on_closed_surface(ix,iy)) then                              !srv 26.11.02
            f_luc_ke(ix,iy)=1.0_R8/k1(ix,iy)*0.58e0_R8*sqrt(eps1(iy)**3)
            f_luc_ki(ix,iy)=1.0_R8/k2(ix,iy)*1.60e0_R8*sqrt(eps1(iy)**3)
-           f_luc_et(ix,iy)=cvsa_mltpl/
+           if(luc_et_form.eq.0) then ! for hydrogen isotopes + imp plasmas only
+             f_luc_et(ix,iy)=cvsa_mltpl/
      1        (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
      2        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      3        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
@@ -471,6 +477,13 @@ csw 13mar2012
      5        /conn(iy)/2.0e0_R8*
      6        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      7        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
+           else if (luc_et_form.eq.1) then ! generalized formulation     !som 01.09.22
+             f_luc_et(ix,iy)=cvsa_mltpl/
+     1        (1.0e0_R8+2.0e0_R8/eps1(iy)**1.5e0_R8/
+     2        (nu2(ix,iy)+nu2(leftix(ix,iy),leftiy(ix,iy))))
+     3        /(1.0e0_R8+2.0e0_R8/
+     4        (nu2(ix,iy)+nu2(leftix(ix,iy),leftiy(ix,iy))))
+           endif
            f_luc_sg(ix,iy)=f_luc_ke(ix,iy)
            f_luc_al(ix,iy)=f_luc_ke(ix,iy)
            do is=0,ns-1

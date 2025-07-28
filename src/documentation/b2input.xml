@@ -1365,6 +1365,16 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2trcl_luc_et_form</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					Only active if b2trcl_lluciani.eq.3 (default).
+					If luc_et_form.eq.0, the SPb form of the Luciani coefficient is applied. This is correct only for hydrogenic majority plasmas.
+					If luc_et_form.eq.1 (default), the generalized form of the SPb Luciani coefficient is used. If b2tral_Zhdanov_closure.eq.0 (default), then the result is the same as if the SPb form of the Luciani coefficient is used (and correct only for hydrogenic majority plasmas). If b2tral_Zhdanov_closure.eq.1, then the multi-ion generalized form of the SPb Luciani coefficient is used (correct for arbitrary plasma mixtures).
+				</description>
+			</switch>
+			<switch>
 				<name>b2trcl_lthf21</name>
 				<default>0</default>
 				<type>integer</type>
@@ -1528,6 +1538,7 @@
 				<description>
 					If b2tral_zh_vis_type.eq.0, the Braginskii-like velocity-dependent stress-viscosity is used.
 					If b2tral_zh_vis_type.eq.1, the Zhdanov-like velocity-dependent stress-viscosity is used.
+					If b2tral_zh_vis_type.eq.2, the Makarov-like velocity-dependent stress-viscosity is used.
 				</description>
 			</switch>
 			<switch>
@@ -1537,6 +1548,22 @@
 				<description>
 					This switch defines the fraction of the cross-ion part of the stress-viscosity term which is applied. The cross-ion part of the stress-viscosity term can lead to numerical problems. If so, it is recommended to start from '0.0' and increase it step by step.
 					This switch is subservient to b2tral_Zhdanov_closure.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_amfact_on</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2tral_amfact_on.eq.1, the mass correction for the thermal and friction force calculation is applied.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tral_amfact_***</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					If b2tral_amfact_on.eq.1, this multiplier is applied for the mass of the species corresponding to isonuclear sequence number '***'. Recall the sequence numbering starts at zero (e.g. b2tral_amfact_000, b2tral_amfact_001, ...).
 				</description>
 			</switch>
 			<switch>

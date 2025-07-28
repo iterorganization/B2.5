@@ -10,10 +10,10 @@
       real (kind=R8), allocatable, save ::
      &  z2n_xy(:,:,:), nal(:,:,:), Ia(:,:,:), av_ualpha(:,:,:),
      &  gt_Ac(:,:,:), gtalc(:,:,:), avm_u(:,:), rho_A_rel(:,:,:),
-     &  gavm_uc(:,:), Z_to_m1(:,:,:)
+     &  gavm_uc(:,:), Z_to_m1_ast(:,:,:)
       real (kind=R8), allocatable, save ::
      &  w_out(:,:,:), hTdp_out(:,:,:), hwdp_out(:,:,:),
-     &  rTdpgamma_out(:,:,:), rwdpgamma_out(:,:,:)
+     &  rTdpgamma_out(:,:,:), rwdpgamma_out(:,:,:), piu_out(:,:,:)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -64,7 +64,7 @@
       allocate(gt_Ac(-1:nx,-1:ny,0:ns-1))
       allocate(rho_A_rel(-1:nx,-1:ny,0:ns-1))
       allocate(gavm_uc(-1:nx,-1:ny))
-      allocate(Z_to_m1(-1:nx,-1:ny,0:nspecies-1))
+      allocate(Z_to_m1_ast(-1:nx,-1:ny,0:nspecies-1))
 
       return
       end subroutine alloc_b2mod_zhfrtf
@@ -82,7 +82,7 @@
       deallocate(gt_Ac)
       deallocate(rho_A_rel)
       deallocate(gavm_uc)
-      deallocate(Z_to_m1)
+      deallocate(Z_to_m1_ast)
       return
       end subroutine dealloc_b2mod_zhfrtf
 
@@ -96,6 +96,7 @@
       allocate(hwdp_out(-1:nx,-1:ny,0:ns-1))
       allocate(rTdpgamma_out(-1:nx,-1:ny,0:ns-1))
       allocate(rwdpgamma_out(-1:nx,-1:ny,0:ns-1))
+      allocate(piu_out(-1:nx,-1:ny,0:ns-1))
 
       return
       end subroutine alloc_b2mod_zhfrtf_df
@@ -108,6 +109,7 @@
       deallocate(hwdp_out)
       deallocate(rTdpgamma_out)
       deallocate(rwdpgamma_out)
+      deallocate(piu_out)
       return
       end subroutine dealloc_b2mod_zhfrtf_df
 
@@ -158,14 +160,14 @@
           Ia(ix,iy,:)=0.0_R8
           do inucl = 0, nspecies-1
             av_ualpha(ix,iy,inucl) = 0.0_R8
-            Z_to_m1(ix,iy,inucl) = 0.0_R8
+            Z_to_m1_ast(ix,iy,inucl) = 0.0_R8
             do iz= 1, znnucl_int(inucl)
               Ia(ix,iy,nucl2s(inucl,iz))=
      &         iz**2*na(ix,iy,nucl2s(inucl,iz))/z2n_xy(ix,iy,inucl)
               av_ualpha(ix,iy,inucl)=av_ualpha(ix,iy,inucl)+
      &         Ia(ix,iy,nucl2s(inucl,iz))*ua(ix,iy,nucl2s(inucl,iz))
-              Z_to_m1(ix,iy,inucl)=Z_to_m1(ix,iy,inucl)+
-     &         Ia(ix,iy,nucl2s(inucl,iz))/iz
+              Z_to_m1_ast(ix,iy,inucl)=Z_to_m1_ast(ix,iy,inucl)+
+     &         na(ix,iy,nucl2s(inucl,iz))/(iz*nal(ix,iy,inucl))
             enddo
           enddo
         enddo
