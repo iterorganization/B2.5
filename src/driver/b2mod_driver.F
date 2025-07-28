@@ -1447,7 +1447,6 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          call xertst( .not.streql(username,' '),
      .    'User name not defined !')
          not_default = .not.streql(username, usrnam())
-         home_dir = '/home/'//trim(username)
          database = 'solps-iter'
          write(version,'(i1)') IMAS_MAJOR_VERSION
 #ifdef NO_GETENV
@@ -1478,6 +1477,10 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          if (.not.streql(device_env,' ')) database = device_env
          if (streql(database,'iter')) database = 'ITER'
 #endif
+         if (not_default) then
+           l = index(home_dir,trim(usrnam()))
+           if (l.gt.0) home_dir = home_dir(1:l-1)//trim(username)
+         end if
          call ipgetc('b2mndr_device', database )
          call ipgetc('b2mndr_database', database )
          call xertst( .not.streql(database,' '),
@@ -1497,11 +1500,6 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          call xertst( 0.le.run.and.run.le.99999, 'Invalid run number')
 #endif
          not_default = not_default.or.(shot.gt.0.and.run.ge.0)
-         imasdir = trim(home_dir)//'/public/imasdb/'
-     &           //trim(database)//'/'//trim(version)
-#if AL_MAJOR_VERSION < 5
-     &           //'/0'
-#endif
 #ifndef NO_GETENV
 #ifdef USE_PXFGETENV
          CALL PXFGETENV ('IMASDIR', 0, imasdir, lenval, ierror)
@@ -1511,6 +1509,11 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
          if (ierror.eq.0)
      >    call get_environment_variable('IMASDIR',value=imasdir)
 #endif
+#endif
+         if (not_default) imasdir = trim(home_dir)//'/public/imasdb/'
+     &                            //trim(database)//'/'//trim(version)
+#if AL_MAJOR_VERSION < 5
+     &                            //'/0'
 #endif
          if (index(imasdir,'imasdb/'//trim(database)).eq.0) then
            l=index(imasdir,'imasdb/')

@@ -38,7 +38,6 @@
 !!      type(ids_edge_profiles) :: edge_profiles !< IDS designed to store data on
 !!        !< edge plasma profiles (includes the scrape-off layer and possibly
 !!        !< part of the confined plasma)
-!!      type (ids_edge_profiles) :: old_edge_profiles
 !!      type (ids_edge_sources) :: edge_sources !< IDS designed to store
 !!        !< data on edge plasma sources. Energy terms correspond to the full
 !!        !< kinetic energy equation (i.e. the energy flux takes into account

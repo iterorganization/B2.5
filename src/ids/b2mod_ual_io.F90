@@ -185,6 +185,10 @@ module b2mod_ual_io
     use ids_schemas &     ! IGNORE
      & , only : ids_numerics
 #endif
+#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
+    use ids_schemas &     ! IGNORE
+     & , only : ids_code_with_timebase
+#endif
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
      & , only : ids_divertors
@@ -210,7 +214,7 @@ module b2mod_ual_io
 #endif
 #if ( IMAS_MINOR_VERSION > 32 || IMAS_MAJOR_VERSION > 3 )
     use ids_utilities &   ! IGNORE
-     & , only : ids_identifier_static
+     & , only : ids_identifier, ids_identifier_static
 #endif
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
     use ids_schemas &     ! IGNORE
@@ -844,7 +848,6 @@ contains
         integer, parameter :: nsources = 12
 #endif
         integer, save :: ncall = 0
-        integer, save :: style = 1
         integer, save :: ismain = 1
         integer, save :: ismain0 = 0
         integer, save :: ue_style = 2
@@ -854,6 +857,7 @@ contains
         real(IDS_real), save :: dtim = 1.0_IDS_real
         real(IDS_real), save :: neutral_sources_rescale = 1.0_IDS_real
         real(IDS_real), save :: BoRiS = 0.0_IDS_real
+        real(IDS_real), save :: flux_multiplier
         character*132 radiation_commit
         character*256 filename
         character*5 hlp_frm
@@ -872,7 +876,6 @@ contains
         write(0,*) "Setting data for edge_profiles IDS"
         if (ncall.eq.0) then
           call ipgetr ('b2news_BoRiS', BoRiS)
-          call ipgeti ('b2mndt_style', style)
           call ipgeti ('b2mndr_ismain', ismain)
           call ipgeti ('b2sigp_style', ue_style)
           call ipgetr ('b2mndr_dtim', dtim)
@@ -1094,44 +1097,18 @@ contains
         call write_ids_code_constant( description%code, code_commit, code_description )
 #endif
         allocate( edge_transport%model(1) )
-        allocate( edge_transport%model(1)%identifier%name(1) )
-        allocate( edge_transport%model(1)%identifier%description(1) )
+        call write_model_identifier( edge_transport%model(1)%identifier )
         if (ids_from_43.eq.0) then
-          if (style.eq.0) then
-            edge_transport%model(1)%identifier%index = -2
-            edge_transport%model(1)%identifier%name(1) = "SOLPS5.0"
-            edge_transport%model(1)%identifier%description(1) = "SOLPS5.0 physics model"
-          else if (style.ge.1) then
-            edge_transport%model(1)%identifier%index = -3
-            edge_transport%model(1)%identifier%name(1) = "SOLPS5.2"
-            edge_transport%model(1)%identifier%description(1) = "SOLPS5.2 physics model"
-          else if (style.eq.-1) then
-            edge_transport%model(1)%identifier%index = -1
-            edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
-            edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
-          end if
-          edge_transport%model(1)%flux_multiplier = 1.5_IDS_real + BoRiS
+          flux_multiplier = 1.5_IDS_real + BoRiS
         else
-          edge_transport%model(1)%identifier%index = -1
-          edge_transport%model(1)%identifier%name(1) = "SOLPS4.3"
-          edge_transport%model(1)%identifier%description(1) = "SOLPS4.3 physics model"
-          edge_transport%model(1)%flux_multiplier = 2.5_IDS_real
+          flux_multiplier = 2.5_IDS_real
         end if
+        edge_transport%model(1)%flux_multiplier = flux_multiplier
+        code_commit = B25_git_version
+        code_description = "Snapshot IDS written by b2mod_ual_io routine"
 #if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
-        allocate( edge_transport%model(1)%code%name(1) )
-        edge_transport%model(1)%code%name = source
-#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
-        allocate( edge_transport%model(1)%code%description(1) )
-        edge_transport%model(1)%code%description = &
-            & "Snapshot IDS written by b2mod_ual_io routine"
-#endif
-        allocate( edge_transport%model(1)%code%version(1) )
-        edge_transport%model(1)%code%version = newversion
-        allocate( edge_transport%model(1)%code%commit(1) )
-        edge_transport%model(1)%code%commit = B25_git_version
-        allocate( edge_transport%model(1)%code%repository(1) )
-        edge_transport%model(1)%code%repository = "ssh://git.iter.org/bnd/b2.5.git"
-        call write_timed_integer( edge_transport%model(1)%code%output_flag, 0 )
+        call write_ids_code_timed( edge_transport%model(1)%code, &
+            & code_commit, code_description )
 #endif
 
         !! 3. Allocate IDS.time and set it to desired values
@@ -1220,90 +1197,52 @@ contains
         allocate( edge_sources%source(nsources) )
         do is = 1, nsources
           allocate( edge_sources%source(is)%ggd( num_time_slices ) )
-          allocate( edge_sources%source(is)%identifier%name(1) )
-          allocate( edge_sources%source(is)%identifier%description(1) )
+#if ( IMAS_MAJOR_VERSION == 3 && IMAS_MINOR_VERSION < 31 )
+          allocate( edge_sources%source(is)%name(1) )
+          allocate( edge_sources%source(is)%description(1) )
+#endif
         end do
-
 #if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
         !! Total sources
-        edge_sources%source(1)%identifier%index = edge_source_identifier%total
-        edge_sources%source(1)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%total )
-        edge_sources%source(1)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%total )
+        call write_source_identifier( &
+          &  edge_sources%source(1)%identifier, edge_source_identifier%total )
         !! Background sources
-        edge_sources%source(2)%identifier%index = edge_source_identifier%background
-        edge_sources%source(2)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%background )
-        edge_sources%source(2)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%background )
+        call write_source_identifier( &
+          &  edge_sources%source(2)%identifier, edge_source_identifier%background )
         !! Prescribed sources
-        edge_sources%source(3)%identifier%index = edge_source_identifier%prescribed
-        edge_sources%source(3)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%prescribed )
-        edge_sources%source(3)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%prescribed )
-        !! Time derivatives
-        edge_sources%source(4)%identifier%index = edge_source_identifier%time_derivative
-        edge_sources%source(4)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%time_derivative )
-        edge_sources%source(4)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%time_derivative )
+        call write_source_identifier( &
+          &  edge_sources%source(3)%identifier, edge_source_identifier%prescribed )
+        !! Time derivative
+        call write_source_identifier( &
+          &  edge_sources%source(4)%identifier, edge_source_identifier%time_derivative )
         !! Atomic ionization
-        edge_sources%source(5)%identifier%index = edge_source_identifier%atomic_ionization
-        edge_sources%source(5)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%atomic_ionization )
-        edge_sources%source(5)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%atomic_ionization )
+        call write_source_identifier( &
+          &  edge_sources%source(5)%identifier, edge_source_identifier%atomic_ionization )
         !! Molecular ionization
-        edge_sources%source(6)%identifier%index = edge_source_identifier%molecular_ionization
-        edge_sources%source(6)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%molecular_ionization )
-        edge_sources%source(6)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%molecular_ionization )
+        call write_source_identifier( &
+          &  edge_sources%source(6)%identifier, edge_source_identifier%molecular_ionization )
         !! Ionization
-        edge_sources%source(7)%identifier%index = edge_source_identifier%ionization
-        edge_sources%source(7)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%ionization )
-        edge_sources%source(7)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%ionization )
+        call write_source_identifier( &
+          &  edge_sources%source(7)%identifier, edge_source_identifier%ionization )
         !! Recombination
-        edge_sources%source(8)%identifier%index = edge_source_identifier%recombination
-        edge_sources%source(8)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%recombination )
-        edge_sources%source(8)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%recombination )
+        call write_source_identifier( &
+          &  edge_sources%source(8)%identifier, edge_source_identifier%recombination )
         !! Charge exchange
-        edge_sources%source(9)%identifier%index = edge_source_identifier%charge_exchange
-        edge_sources%source(9)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%charge_exchange )
-        edge_sources%source(9)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%charge_exchange )
+        call write_source_identifier( &
+          &  edge_sources%source(9)%identifier, edge_source_identifier%charge_exchange )
         !! Collisional equipartition
-        edge_sources%source(10)%identifier%index = edge_source_identifier%collisional_equipartition
-        edge_sources%source(10)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%collisional_equipartition )
-        edge_sources%source(10)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%collisional_equipartition )
+        call write_source_identifier( &
+          &  edge_sources%source(10)%identifier, edge_source_identifier%collisional_equipartition )
         !! Ohmic
-        edge_sources%source(11)%identifier%index = edge_source_identifier%ohmic
-        edge_sources%source(11)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%ohmic )
-        edge_sources%source(11)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%ohmic )
+        call write_source_identifier( &
+          &  edge_sources%source(11)%identifier, edge_source_identifier%ohmic )
         !! Radiation
-        edge_sources%source(12)%identifier%index = edge_source_identifier%radiation
-        edge_sources%source(12)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%radiation )
-        edge_sources%source(12)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%radiation )
+        call write_source_identifier( &
+          &  edge_sources%source(12)%identifier, edge_source_identifier%radiation )
 #if ( ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 ) && defined(B25_EIRENE) )
         !! Neutrals
-        edge_sources%source(13)%identifier%index = edge_source_identifier%neutrals
-        edge_sources%source(13)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%neutrals )
-        edge_sources%source(13)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%neutrals )
+        call write_source_identifier( &
+          &  edge_sources%source(13)%identifier, edge_source_identifier%neutrals )
 #endif
 #else
         !! Total sources
@@ -2477,13 +2416,14 @@ contains
         !! Allocate and set time slice value
 #if ( IMAS_MINOR_VERSION > 14 || IMAS_MAJOR_VERSION > 3 )
         edge_profiles%grid_ggd( time_sind )%time = time_slice_value
-        edge_transport%model(1)%ggd( time_sind )%time = time_slice_value
+        edge_profiles%ggd( time_sind )%time = time_slice_value
+        edge_transport%grid_ggd( time_sind )%time = time_slice_value
         edge_sources%grid_ggd( time_sind )%time = time_slice_value
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         radiation%grid_ggd( time_sind )%time = time_slice_value
 #endif
 #endif
-        edge_profiles%ggd( time_sind )%time = time_slice_value
+
         edge_transport%model(1)%ggd( time_sind )%time = time_slice_value
         do is = 1, nsources
           edge_sources%source(is)%ggd( time_sind )%time = time_slice_value
@@ -7200,23 +7140,6 @@ contains
 
         contains
 
-
-#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
-        subroutine write_timed_integer( ival, ivalue )
-            type(ids_signal_int_1d), intent(inout) :: ival
-                !< Type of IDS data structure, designed for integer data handling
-            integer, intent(in) :: ivalue
-
-            allocate( ival%data( num_slices ) )
-            ival%data( slice_index ) = ivalue
-            allocate( ival%time( num_slices ) )
-            ival%time( slice_index ) = time_slice_value
-
-            return
-
-        end subroutine write_timed_integer
-#endif
-
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         subroutine write_timed_value( val, value )
             type(ids_signal_flt_1d), intent(inout) :: val
@@ -7405,17 +7328,14 @@ contains
         allocate( batch_sources%source(1) )
         allocate( batch_sources%source(1)%ggd( num_batch_slices ) )
 #ifdef B25_EIRENE
-        allocate( batch_sources%source(1)%identifier%name(1) )
-        allocate( batch_sources%source(1)%identifier%description(1) )
 #if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
         !! Neutrals
-        batch_sources%source(1)%identifier%index = edge_source_identifier%neutrals
-        batch_sources%source(1)%identifier%name = &
-          &  edge_source_identifier%name( edge_source_identifier%neutrals )
-        batch_sources%source(1)%identifier%description = &
-          &  edge_source_identifier%description( edge_source_identifier%neutrals )
+        call write_source_identifier( &
+          &  batch_sources%source(1)%identifier, edge_source_identifier%neutrals )
 #else
         !! Total sources due to Eirene species
+        allocate( batch_sources%source(1)%identifier%name(1) )
+        allocate( batch_sources%source(1)%identifier%description(1) )
         batch_sources%source(1)%identifier%index = 0
         batch_sources%source(1)%identifier%name = "Eirene"
         batch_sources%source(1)%identifier%description = &
@@ -8307,6 +8227,99 @@ contains
 
     return
     end subroutine write_ids_code_constant
+#endif
+
+#if ( IMAS_MINOR_VERSION > 29 || IMAS_MAJOR_VERSION > 3 )
+    subroutine write_ids_code_timed( code, commit, description )
+    implicit none
+    type(ids_code_with_timebase), intent(inout) :: code
+                !< Type of IDS data structure, designed for code data handling
+    character(len=ids_string_length), intent(in) :: commit
+    character(len=ids_string_length), intent(in) :: description
+
+    allocate( code%name(1) )
+    code%name = source
+#if ( IMAS_MINOR_VERSION > 38 || IMAS_MAJOR_VERSION > 3 )
+    allocate( code%description(1) )
+    code%description = description
+#endif
+    allocate( code%version(1) )
+    code%version = newversion
+    allocate( code%commit(1) )
+    code%commit = commit
+    allocate( code%repository(1) )
+    code%repository(1) = "ssh://git.iter.org/bnd/b2.5.git"
+    call write_timed_integer( code%output_flag, 0 )
+
+    return
+    end subroutine write_ids_code_timed
+
+    subroutine write_timed_integer( ival, ivalue )
+    type(ids_signal_int_1d), intent(inout) :: ival
+        !< Type of IDS data structure, designed for integer data handling
+    integer, intent(in) :: ivalue
+
+    allocate( ival%data( num_slices ) )
+    ival%data( slice_index ) = ivalue
+    allocate( ival%time( num_slices ) )
+    ival%time( slice_index ) = time_slice_value
+
+    return
+    end subroutine write_timed_integer
+#endif
+
+    subroutine write_model_identifier( model_id )
+    implicit none
+    type(ids_identifier) :: model_id
+    integer, save :: ncall = 0
+    integer, save :: style = 1
+    integer, save :: ids_from_43 = 0
+
+    if (ncall.eq.0) then
+      call ipgeti ('ids_from_43', ids_from_43)
+      call ipgeti ('b2mndt_style', style)
+    endif
+
+    allocate( model_id%name(1) )
+    allocate( model_id%description(1) )
+    if (ids_from_43.eq.0) then
+      if (style.eq.0) then
+        model_id%index = -2
+        model_id%name(1) = "SOLPS5.0"
+        model_id%description(1) = "SOLPS5.0 physics model"
+      else if (style.ge.1) then
+        model_id%index = -3
+        model_id%name(1) = "SOLPS5.2"
+        model_id%description(1) = "SOLPS5.2 physics model"
+      else if (style.eq.-1) then
+        model_id%index = -1
+        model_id%name(1) = "SOLPS4.3"
+        model_id%description(1) = "SOLPS4.3 physics model"
+      end if
+    else
+      model_id%index = -1
+      model_id%name(1) = "SOLPS4.3"
+      model_id%description(1) = "SOLPS4.3 physics model"
+    end if
+
+    ncall = ncall + 1
+    return
+    end subroutine write_model_identifier
+
+#if ( IMAS_MAJOR_VERSION > 3 || IMAS_MINOR_VERSION > 30 )
+    subroutine write_source_identifier( source_id, id_index )
+    implicit none
+    type(ids_identifier) :: source_id
+    integer :: id_index
+
+    allocate( source_id%name(1) )
+    allocate( source_id%description(1) )
+    source_id%index = id_index
+    source_id%name = edge_source_identifier%name( id_index )
+    source_id%description = edge_source_identifier%description( id_index )
+
+    return
+    end subroutine write_source_identifier
 #endif
 
     subroutine put_equilibrium_data ( equilibrium, &
