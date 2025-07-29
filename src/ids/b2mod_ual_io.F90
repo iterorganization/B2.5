@@ -1172,10 +1172,8 @@ contains
             call write_sourced_value( summary%composition%deuterium, frac )
           case ('T')
             call write_sourced_value( summary%composition%tritium, frac )
-#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
           case ('DT')
             call write_sourced_value( summary%composition%deuterium_tritium, frac )
-#endif
           case ('He')
             if (nint(am(eb2spcr(is))).eq.3) then
               call write_sourced_value( summary%composition%helium_3, frac )
