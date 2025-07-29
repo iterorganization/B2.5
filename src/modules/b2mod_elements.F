@@ -38,6 +38,8 @@
       contains
 
       subroutine alloc_b2mod_elements(nsd,zn,am)
+      use b2mod_b2cmpa
+     , , only : amtol
       implicit none
       integer nsd
       real (kind=R8) ::
@@ -60,6 +62,7 @@
           if(im.eq.1) is_codes(is)='H'
           if(im.eq.2) is_codes(is)='D'
           if(im.eq.3) is_codes(is)='T'
+          if(abs(am(is)-2.5_R8).lt.amtol) is_codes(is)='DT'
         else
           is_codes(is)=elements(iz)
         end if
@@ -113,7 +116,8 @@
         end if
       end do
       if (streql(species_name,'D').or.
-     &    streql(species_name,'T')) get_atomic_number=1
+     &    streql(species_name,'T').or.
+     &    streql(species_name,'DT')) get_atomic_number=1
 
       return
       end function get_atomic_number

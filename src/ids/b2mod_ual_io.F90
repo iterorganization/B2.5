@@ -1493,6 +1493,10 @@ contains
             call write_sourced_value( summary%composition%deuterium, frac )
           case ('T')
             call write_sourced_value( summary%composition%tritium, frac )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          case ('DT')
+            call write_sourced_value( summary%composition%deuterium_tritium, frac )
+#endif
           case ('He')
             if (nint(am(eb2spcr(is))).eq.3) then
               call write_sourced_value( summary%composition%helium_3, frac )
@@ -6735,6 +6739,13 @@ contains
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%tritium, -v )
 #endif
 #endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          case ('DT')
+            call write_sourced_value( summary%local%separatrix%n_i%deuterium_tritium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%deuterium_tritium, -vtor )
+            call write_sourced_value( summary%local%separatrix_average%n_i%deuterium_tritium, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%deuterium_tritium, -v )
+#endif
           case ('He')
             if (nint(am(eb2spcr(is))).eq.3) then
               call write_sourced_value( summary%local%separatrix%n_i%helium_3, nisep )
@@ -6977,6 +6988,10 @@ contains
               call write_sourced_value( summary%local%limiter%n_i%deuterium, nisep )
             case ('T')
               call write_sourced_value( summary%local%limiter%n_i%tritium, nisep )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+            case ('DT')
+              call write_sourced_value( summary%local%limiter%n_i%deuterium_tritium, nisep )
+#endif
             case ('He')
               if (nint(am(eb2spcr(is))).eq.3) then
                 call write_sourced_value( summary%local%limiter%n_i%helium_3, nisep )
@@ -7088,6 +7103,10 @@ contains
                 call write_sourced_value( summary%local%divertor_target(i)%n_i%tritium, nisep )
 #else
                 call write_sourced_value( summary%local%divertor_plate(i)%n_i%tritium, nisep )
+#endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+              case ('DT')
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%deuterium_tritium, nisep )
 #endif
               case ('He')
                 if (nint(am(eb2spcr(is))).eq.3) then
@@ -8134,6 +8153,10 @@ contains
               call write_sourced_value( summary%composition%deuterium, frac )
             case ('T')
               call write_sourced_value( summary%composition%tritium, frac )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+            case ('DT')
+              call write_sourced_value( summary%composition%deuterium_tritium, frac )
+#endif
             case ('He')
               if (nint(am(eb2spcr(is))).eq.3) then
                 call write_sourced_value( summary%composition%helium_3, frac )
@@ -9216,6 +9239,9 @@ contains
           call add_sourced_value( summary%gas_injection_rates%deuterium, gpff )
         case ('T')
           call add_sourced_value( summary%gas_injection_rates%tritium, gpff )
+        case ('DT')
+          call add_sourced_value( summary%gas_injection_rates%deuterium, gpff/2.0_R8 )
+          call add_sourced_value( summary%gas_injection_rates%tritium, gpff/2.0_R8 )
         case ('He')
           if (nint(am(is)).eq.3) then
             call add_sourced_value( summary%gas_injection_rates%helium_3, gpff*zn(is) )
@@ -9337,6 +9363,11 @@ contains
             case ('T')
               call add_sourced_value( summary%gas_injection_rates%tritium, &
                   & tflux(istrai)*zn(eb2atcr(iatm)) )
+            case ('DT')
+              call add_sourced_value( summary%gas_injection_rates%deuterium, &
+                  & tflux(istrai)*zn(eb2atcr(iatm))/2.0_R8 )
+              call add_sourced_value( summary%gas_injection_rates%tritium, &
+                  & tflux(istrai)*zn(eb2atcr(iatm))/2.0_R8 )
             case ('He')
               if (nint(am(is)).eq.3) then
                 call add_sourced_value( summary%gas_injection_rates%helium_3, &
