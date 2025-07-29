@@ -1165,8 +1165,48 @@ contains
             end do
           end do
           if (nesum.gt.0.0_IDS_real) frac = frac / nesum
-          call write_sourced_value( summary%composition%n_i_over_n_e(i), &
-              &  frac )
+          select case (is_codes(eb2spcr(is)))
+          case ('H')
+            call write_sourced_value( summary%composition%hydrogen, frac )
+          case ('D')
+            call write_sourced_value( summary%composition%deuterium, frac )
+          case ('T')
+            call write_sourced_value( summary%composition%tritium, frac )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          case ('DT')
+            call write_sourced_value( summary%composition%deuterium_tritium, frac )
+#endif
+          case ('He')
+            if (nint(am(eb2spcr(is))).eq.3) then
+              call write_sourced_value( summary%composition%helium_3, frac )
+            else if (nint(am(eb2spcr(is))).eq.4) then
+              call write_sourced_value( summary%composition%helium_4, frac )
+            end if
+          case ('Li')
+            call write_sourced_value( summary%composition%lithium, frac )
+          case ('Be')
+            call write_sourced_value( summary%composition%beryllium, frac )
+          case ('B')
+            call write_sourced_value( summary%composition%boron, frac )
+          case ('C')
+            call write_sourced_value( summary%composition%carbon, frac )
+          case ('N')
+            call write_sourced_value( summary%composition%nitrogen, frac )
+          case ('O')
+            call write_sourced_value( summary%composition%oxygen, frac )
+          case ('Ne')
+            call write_sourced_value( summary%composition%neon, frac )
+          case ('Ar')
+            call write_sourced_value( summary%composition%argon, frac )
+          case ('Fe')
+            call write_sourced_value( summary%composition%iron, frac )
+          case ('Xe')
+            call write_sourced_value( summary%composition%xenon, frac )
+          case ('W')
+            call write_sourced_value( summary%composition%tungsten, frac )
+          case ('Kr')
+            call write_sourced_value( summary%composition%krypton, frac )
+          end select
         end do
 #endif
 
@@ -5686,6 +5726,13 @@ contains
             call write_sourced_value( summary%local%separatrix_average%velocity_tor%tritium, -v )
 #endif
 #endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+          case ('DT')
+            call write_sourced_value( summary%local%separatrix%n_i%deuterium_tritium, nisep )
+            call write_sourced_value( summary%local%separatrix%velocity_phi%deuterium_tritium, -vtor )
+            call write_sourced_value( summary%local%separatrix_average%n_i%deuterium_tritium, u )
+            call write_sourced_value( summary%local%separatrix_average%velocity_phi%deuterium_tritium, -v )
+#endif
           case ('He')
             if (nint(am(eb2spcr(is))).eq.3) then
               call write_sourced_value( summary%local%separatrix%n_i%helium_3, nisep )
@@ -5924,6 +5971,10 @@ contains
               call write_sourced_value( summary%local%limiter%n_i%deuterium, nisep )
             case ('T')
               call write_sourced_value( summary%local%limiter%n_i%tritium, nisep )
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+            case ('DT')
+              call write_sourced_value( summary%local%limiter%n_i%deuterium_tritium, nisep )
+#endif
             case ('He')
               if (nint(am(eb2spcr(is))).eq.3) then
                 call write_sourced_value( summary%local%limiter%n_i%helium_3, nisep )
@@ -6017,6 +6068,10 @@ contains
                 call write_sourced_value( summary%local%divertor_target(i)%n_i%tritium, nisep )
 #else
                 call write_sourced_value( summary%local%divertor_plate(i)%n_i%tritium, nisep )
+#endif
+#if ( IMAS_MAJOR_VERSION > 4 || ( IMAS_MAJOR_VERSION == 4 && IMAS_MINOR_VERSION > 0 ) )
+              case ('DT')
+                call write_sourced_value( summary%local%divertor_plate(i)%n_i%deuterium_tritium, nisep )
 #endif
               case ('He')
                 if (nint(am(eb2spcr(is))).eq.3) then
@@ -6853,8 +6908,46 @@ contains
               end do
             end do
             if (u.gt.0.0_IDS_real) frac = frac / u
-            call write_sourced_value( summary%composition%n_i_over_n_e(i), &
-                &  frac )
+            select case (is_codes(eb2spcr(is)))
+            case ('H')
+              call write_sourced_value( summary%composition%hydrogen, frac )
+            case ('D')
+              call write_sourced_value( summary%composition%deuterium, frac )
+            case ('T')
+              call write_sourced_value( summary%composition%tritium, frac )
+            case ('DT')
+              call write_sourced_value( summary%composition%deuterium_tritium, frac )
+            case ('He')
+              if (nint(am(eb2spcr(is))).eq.3) then
+                call write_sourced_value( summary%composition%helium_3, frac )
+              else if (nint(am(eb2spcr(is))).eq.4) then
+                call write_sourced_value( summary%composition%helium_4, frac )
+              end if
+            case ('Li')
+              call write_sourced_value( summary%composition%lithium, frac )
+            case ('Be')
+              call write_sourced_value( summary%composition%beryllium, frac )
+            case ('B')
+              call write_sourced_value( summary%composition%boron, frac )
+            case ('C')
+              call write_sourced_value( summary%composition%carbon, frac )
+            case ('N')
+              call write_sourced_value( summary%composition%nitrogen, frac )
+            case ('O')
+              call write_sourced_value( summary%composition%oxygen, frac )
+            case ('Ne')
+              call write_sourced_value( summary%composition%neon, frac )
+            case ('Ar')
+              call write_sourced_value( summary%composition%argon, frac )
+            case ('Fe')
+              call write_sourced_value( summary%composition%iron, frac )
+            case ('Xe')
+              call write_sourced_value( summary%composition%xenon, frac )
+            case ('W')
+              call write_sourced_value( summary%composition%tungsten, frac )
+            case ('Kr')
+              call write_sourced_value( summary%composition%krypton, frac )
+            end select
           end do
 #endif
 ! Summary separatrix data
@@ -7986,6 +8079,9 @@ contains
           call add_sourced_value( summary%gas_injection_rates%deuterium, gpff )
         case ('T')
           call add_sourced_value( summary%gas_injection_rates%tritium, gpff )
+        case ('DT')
+          call add_sourced_value( summary%gas_injection_rates%deuterium, gpff/2.0_R8 )
+          call add_sourced_value( summary%gas_injection_rates%tritium, gpff/2.0_R8 )
         case ('He')
           if (nint(am(is)).eq.3) then
             call add_sourced_value( summary%gas_injection_rates%helium_3, gpff*zn(is) )
@@ -8071,6 +8167,11 @@ contains
             case ('T')
               call add_sourced_value( summary%gas_injection_rates%tritium, &
                   & tflux(istrai)*zn(eb2atcr(iatm)) )
+            case ('DT')
+              call add_sourced_value( summary%gas_injection_rates%deuterium, &
+                  & tflux(istrai)*zn(eb2atcr(iatm))/2.0_R8 )
+              call add_sourced_value( summary%gas_injection_rates%tritium, &
+                  & tflux(istrai)*zn(eb2atcr(iatm))/2.0_R8 )
             case ('He')
               if (nint(am(is)).eq.3) then
                 call add_sourced_value( summary%gas_injection_rates%helium_3, &
