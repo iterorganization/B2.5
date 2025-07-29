@@ -4247,7 +4247,8 @@ cxpb start by identifying the correspondence with the new run species
         do jatm = 1, natmi
           if (iatm1(jatm).eq.0) cycle
           select case (is_codes(eb2atcr(jatm)))
-          case ('H','D','T','He','N','O','Ne','Cl','Ar','Kr','Xe','Rn')
+          case ('H','D','T','DT',
+     &          'He','N','O','Ne','Cl','Ar','Kr','Xe','Rn')
             continue
           case default
             no_sputtering = .false.
@@ -4257,7 +4258,7 @@ cxpb start by identifying the correspondence with the new run species
         do jatm = 1, natmi
           if (iatm1(jatm).eq.0) cycle
           select case (is_codes(eb2atcr(jatm)))
-          case ('H','D','T','He','C','Ne','Ar','N','Be')
+          case ('H','D','T','DT','He','C','Ne','Ar','N','Be')
             continue
           case default
             adas_correct = b2fstate_version.gt.'03.000.007'
