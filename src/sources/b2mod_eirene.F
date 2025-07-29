@@ -479,6 +479,8 @@ csw 26feb2013
      .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
      .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
      .   'Cannot have simultaneous multiple Eirene averaging schemes!')
+!! When using nrelax_advanced, the value of nrelax is not relevant but should be > 1 for the code to run correctly
+        if (nrelax_advanced.ne.0.and.nrelax.le.1) nrelax = 2    
         if(nhist.gt.1) call alloc_hist_arrays(nhist)
         if(nrelax.gt.1 .or. nhist.gt.1) call alloc_sum_arrays
         call xertst(switch%ank_mods.eq.0.or.switch%ionising_core.le.0,
