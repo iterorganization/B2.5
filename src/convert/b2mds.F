@@ -238,6 +238,7 @@ c
             if(imi .eq. 1) textsp(iss)=' '//'H'
             if(imi .eq. 2) textsp(iss)=' '//'D'
             if(imi .eq. 3) textsp(iss)=' '//'T'
+            if(abs(am(is)-2.5_R8).lt.amtol) textsp(iss)='DT'
           else
             textsp(iss)=' '//elements(il)
           end if
