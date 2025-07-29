@@ -504,18 +504,38 @@ c ttim = value limited by minumum timestep (=baseline timestep) and by maximum t
         do is = 0, ns-1
           write (chns,'(i3.3)') is
           wrk0 = ttim2_na(:,is)
-          call my_out_us(70,nCv,0,wrk0,'b2srdt_ttim2_na'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_style2_ttim2_na'//chns)
           wrk0 = ttim_na(:,is)
-          call my_out_us(70,nCv,0,wrk0,'b2srdt_ttim_na'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_style2_ttim_na'//chns)
           wrk0 = ttim2_ua(:,is)
-          call my_out_us(70,nCv,0,wrk0,'b2srdt_ttim2_ua'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_style2_ttim2_ua'//chns)
           wrk0 = ttim_ua(:,is)
-          call my_out_us(70,nCv,0,wrk0,'b2srdt_ttim_ua'//chns)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_style2_ttim_ua'//chns)
         enddo
-        call my_out_us(70,nCv,0,ttim2_te,'b2srdt_ttim2_te')
-        call my_out_us(70,nCv,0,ttim_te,'b2srdt_ttim_te')
-        call my_out_us(70,nCv,0,ttim2_ti,'b2srdt_ttim2_ti')
-        call my_out_us(70,nCv,0,ttim_ti,'b2srdt_ttim_ti')
+        call my_out_us(70,nCv,0,ttim2_te,'b2srdt_style2_ttim2_te')
+        call my_out_us(70,nCv,0,ttim_te,'b2srdt_style2_ttim_te')
+        call my_out_us(70,nCv,0,ttim2_ti,'b2srdt_style2_ttim2_ti')
+        call my_out_us(70,nCv,0,ttim_ti,'b2srdt_style2_ttim_ti')
+      endif
+      if (switch%b2srdt_iout.eq.1.and.switch%b2mndt_var_style.eq.4) then
+c print out the variable local timesteps for b2mndt_var_style = 4.
+c ttim2 = unlimited value
+c ttim = value limited by minumum timestep (=baseline timestep) and by maximum timestep (=baseline timestep x multiplier)
+        do is = 0, ns-1
+          write (chns,'(i3.3)') is
+          wrk0 = ttim2_na(:,is)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_style4_ttim2_na'//chns)
+          wrk0 = ttim_na(:,is)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_style4_ttim_na'//chns)
+          wrk0 = ttim2_ua(:,is)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_style4_ttim2_ua'//chns)
+          wrk0 = ttim_ua(:,is)
+          call my_out_us(70,nCv,0,wrk0,'b2srdt_style4_ttim_ua'//chns)
+        enddo
+        call my_out_us(70,nCv,0,ttim2_te,'b2srdt_style4_ttim2_te')
+        call my_out_us(70,nCv,0,ttim_te,'b2srdt_style4_ttim_te')
+        call my_out_us(70,nCv,0,ttim2_ti,'b2srdt_style4_ttim2_ti')
+        call my_out_us(70,nCv,0,ttim_ti,'b2srdt_style4_ttim_ti')
       endif
       if (switch%b2srdt_iout.eq.1.and.switch%b2mndt_var_style.eq.1) then
         call my_out_us(70,nCv,0,mult_dt,'b2srdt_mult_dt_style1')
