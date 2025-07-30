@@ -4328,8 +4328,8 @@ cwdk    Todo: corrections for BCCON.ne.14
         elseif(bcene_15_style.eq.1) then
           if(ncall_b2stbc_phys.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a)')
-     &       'BCENE = 15 (style = 1) : with GAMMAE =',GAMMAE,
-     1       ' on ',BCCHAR(IB),boundary_location(ib)
+     .       'BCENE = 15 (style = 1) : with GAMMAE =',GAMMAE,
+     .       ' on ',BCCHAR(IB),boundary_location(IB)
           endif
           do ibc = 1, mpg%bcCvP(ib,2)                                  ! loop over number of cells in the boundary
             iCv1 = mpg%bcCv(mpg%bcCvP(ib,1)+ibc-1,1)                   ! number of the guard cell
