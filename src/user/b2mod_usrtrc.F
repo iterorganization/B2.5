@@ -1212,7 +1212,8 @@ c*** Calculate the neutral flows in PFR
         do j=1,nspecies !{
 caap          hlp=1.0_R8/2.7e20_R8
 caap          if(species_list(j).eq.'H' .or. species_list(j).eq.'D' .or.
-caap     ,       species_list(j).eq.'T') hlp=0.5_R8*hlp
+caap     ,       species_list(j).eq.'T')
+caap     ,      hlp=0.5_R8*hlp
 caap no need to convert to molecular throughput here
           hlp=1.0_R8
           do i=ipfrgrp(k),jpfrgrp(k) !{
