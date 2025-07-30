@@ -6700,6 +6700,8 @@
 						14: power flux density at outer bottom target. Usually NA_FEEDBACK_INVERSE should be set to .true. for this actuator to work properly.
 						15: total ion saturation current at the target. NA_FEEDBACK_INVERSE should be set accordingly, depending on where the solution is with respect to detachment threshold.
 						16: peak ion saturation current at the target. NA_FEEDBACK_INVERSE should be set accordingly, depending on where the solution is with respect to detachment threshold.
+						17: radiated power from this isonuclear sequence in Watts within the rectangle of cells [IX1:IX2,IY1:IY2].
+						18: radiated power from this isonuclear sequence in Watts from the zone outside the separatrix, including the PFR.
 				</description>
 			</switch>
 			<switch>
@@ -6721,6 +6723,8 @@
 						6: rescale slowed by na_feedback_alpha (SOLPS4 style)
 						7: combinations of cases 2 and 3: if difference between current and target value is within NA_FEEDBACK_GAMMA, then slowing down by tanh(log) is applied, pure rescaling applied otherwise.
 						8: rescaling calculated similarly to option 7, however it is then multiplied by the current pumping/puffing balance (S_pump - S_core - S_ext). Only applicable to gas puff actuator, making it follow pumping that suppresses the oscillations around the target value typical for gas puff actuator.
+						9: rescaling formula from option 4 is used, with V=0 and target assumed linearly proportional to the total particle content for this isonuclear sequence (including contributions from Eirene species) within the rectangle of cells [IX1:IX2,IY1:IY2].
+						10: rescaling formula from option 4 is used, with V=0 and target assumed linearly proportional to the total particle content for this isonuclear sequence outside the separatrix (including contributions from Eirene species).
 				</description>
 			</switch>
 			<switch>
