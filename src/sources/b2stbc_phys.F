@@ -163,8 +163,10 @@
      &                        corr_flux   = 0.0_R8                      !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
       !iyv optional stabilisation coefficients for sheath BCENI/E = 15
+      !and BCCON = 14
       real (kind=R8), save :: stab_coeff_sheath_te = 0.0_R8,            !iyv 18.12.23
-     &                        stab_coeff_sheath_ti = 0.0_R8             !iyv 13.02.24
+     &                        stab_coeff_sheath_ti = 0.0_R8,            !iyv 13.02.24
+     &                        stab_coeff_sheath_ni = 0.0_R8             !aap 31.01.25
       character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, fedback_species, ishigh
       logical, save :: BCCON14(NBCD)                                    !srv 20.09.17
@@ -302,8 +304,10 @@
        call ipgeti ('b2stbc_bceni_16_style', bceni_16_style)
        call ipgetr ('b2stbc_stab_coeff_sheath_te', stab_coeff_sheath_te) !iyv 18.12.23
        call ipgetr ('b2stbc_stab_coeff_sheath_ti', stab_coeff_sheath_ti) !iyv 13.02.24
+       call ipgetr ('b2stbc_stab_coeff_sheath_ni', stab_coeff_sheath_ni) !aap 31.01.25
        call xertst (0.0_R8.le.stab_coeff_sheath_te.and.
-     &              0.0_R8.le.stab_coeff_sheath_ti,
+     &              0.0_R8.le.stab_coeff_sheath_ti.and.
+     &              0.0_R8.le.stab_coeff_sheath_ni,
      &  'faulty sheath BC stabilization coefficients')
        call ipgeti ('b2tfhe_no_current', no_current)
        call ipgeti ('b2news_poteq', pot_eq)                          !srv 27.02.13
@@ -2003,8 +2007,9 @@ c dpc
         case (14)
           if (new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
-     .       'BCCON = 14 : sound speed flux ',CONPAR(IS,IB,1),' on ',
-     1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+     .       'BCCON = 14 : sound speed flux ',CONPAR(IS,IB,1),
+     .       ' on ',BCCHAR(IB),boundary_location(ib),
+     .       ' for species ',IS
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1       'BCCON = 14, CONPAR(,,1) <= 0 not allowed!')
           endif
@@ -2016,12 +2021,14 @@ c dpc
               CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      .                RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
 !             CS=SQRT(BCINT(PZ,NX,NY,IY,IB)/BCINT(RZ,NX,NY,IY,IB))
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .           S1*stab_coeff_sheath_ni*CS*
+     .           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
-     .           S1*CONPAR(IS,IB,1)*CS
+     .           S1*(CONPAR(IS,IB,1)+stab_coeff_sheath_ni)*CS
               sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)=
-     &           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS) +
+     &           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)+
      &           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)
               if(mdf_fnb.ne.0) then                                   !srv 13.10.06 {
                 t0 = -
@@ -2043,12 +2050,14 @@ c dpc
               CS=SQRT(PZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      .                RZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
 !              CS=SQRT(BCINT(PZ,NX,NY,IY,IB)/BCINT(RZ,NX,NY,IY,IB))
-              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .           S1*stab_coeff_sheath_ni*CS*
+     .           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
               SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
-     .           S1*CONPAR(IS,IB,1)*CS
+     .           S1*(CONPAR(IS,IB,1)+stab_coeff_sheath_ni)*CS
               sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)=
-     &           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS) +
+     &           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)+
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)
               if(mdf_fnb.ne.0) then                                   !srv 13.10.06 {
                 t0 = fnaPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
@@ -4415,19 +4424,20 @@ cxpb  and max(,,) statement for stability
 !srv added accumulation in order to account twice b.c. for corner cells
         case (13)
           if(new_boundary_files) then
-            write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
-     .       'BCMOM = 13 : from b2stbc_spb parallel momentum bc '//
-     .       'with mompar1 =', MOMPAR(IS,IB,1),
-     1       ' and mompar2 =', MOMPAR(IS,IB,2),' on ',
-     2       BCCHAR(IB),boundary_location(ib),' for species ',IS
+            write(*,'(a,a,1p,g14.7,a,g14.7,a,a,a,a,i3)')
+     .       'BCMOM = 13 : marginal ',
+     .       'sheath BC, with MOMPAR(:,:,1) = ',MOMPAR(IS,IB,1),
+     .       ' and mompar(:,:,2) =', MOMPAR(IS,IB,2),
+     .       ' on ',BCCHAR(IB),boundary_location(ib),
+     .       ' for species ',IS
           endif
           IF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
 !              CS=SQRT(BCINT(PZ,NX,NY,IY,IB)/BCINT(RZ,NX,NY,IY,IB))
               cs=sqrt(pz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &                rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-              s1hz = pbshz(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &                     rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0) !srv 11.01.13
+              s1hz=pbshz(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &                   rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0) !srv 11.01.13
               vwest=-cs*s1hz -                          !srv 17.02.04 19.02.08 11.01.13
      &         hz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
      &         vol(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
@@ -6300,8 +6310,10 @@ cxpb code segment analog to b2tfhe
 !srv added accumulation in order to account twice b.c. for corner cells
           if(new_boundary_files) then
             write(*,'(a,1p,g14.7,a,a,a)')
-     &       'BCENE = 15 (style = 1) : with GAMMAE =',GAMMAE,
-     1       ' on ',BCCHAR(IB),boundary_location(ib)
+     .       'BCENE = 15 (style = 1) : with GAMMAE = ',
+     .        GAMMAE,
+     .       ' on ',BCCHAR(IB),
+     .       boundary_location(IB)
           endif
           IF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17
@@ -6317,7 +6329,8 @@ cxpb code segment analog to b2tfhe
               if(pot_eq.eq.1) then                                      !srv 27.02.13 {
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &            ((1.0e0_R8+GAMMAE) + stab_coeff_sheath_te)*t0         !iyv 14.12.23
+     &            ((1.0e0_R8+GAMMAE)
+     &            + stab_coeff_sheath_te)*t0                            !iyv 14.12.23
                  she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
      &            ((1.0e0_R8-GAMMAE)*
@@ -6329,7 +6342,8 @@ cxpb code segment analog to b2tfhe
      &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*3.1_R8)*
+     &               s1*((1.0e0_R8+GAMMAE)
+     &                  +(1.0e0_R8-GAMMAE)*3.1_R8)*
      &           ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*cs
               endif                                                     !srv 27.02.13 }
               if(mdf_fhe.ne.0) then                                     !srv 01.06.06 {
@@ -6359,7 +6373,8 @@ cxpb code segment analog to b2tfhe
               if(pot_eq.eq.1) then                                      !srv 27.02.13 {
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &            ((1.0e0_R8+GAMMAE)+stab_coeff_sheath_te)*t0           !iyv 14.12.23
+     &            ((1.0e0_R8+GAMMAE)
+     &             +stab_coeff_sheath_te)*t0                            !iyv 14.12.23
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
      &           ((1.0e0_R8-GAMMAE)*qe*
@@ -6371,7 +6386,8 @@ cxpb code segment analog to b2tfhe
      &                  rz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
-     &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*3.1_R8)*
+     &               s1*((1.0e0_R8+GAMMAE)
+     &                  +(1.0e0_R8-GAMMAE)*3.1_R8)*
      &           ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*cs
               endif                                                     !srv 27.02.13 }
               if(mdf_fhe.ne.0) then                                     !srv 01.06.06 {
@@ -8367,10 +8383,10 @@ cxpb          endif
 
       case (15)
         if(new_boundary_files) then
-          write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
-     &     'BCENI = 15 : from b2stbc_spb for ion temperature '//
-     &     'with ENIPAR(IB,1) =',
-     &     ENIPAR(IB,1),' on ', BCCHAR(IB),boundary_location(ib)      !srv 20.09.17
+          write(*,'(a,a,1p,g14.7,a,g14.7,a,a,a)')
+     .     'BCENI = 15 : ',
+     .     'marginal sheath BC, with ENIPAR(IB,1) = ',ENIPAR(IB,1),
+     .     ' on ',BCCHAR(IB),boundary_location(ib)
           call xertst(ENIPAR(IB,1).gt.0.0_R8,
      1     'BCENI = 15, ENIPAR(IB,1) <= 0 not allowed!')              !srv 20.09.17
         endif
@@ -8407,8 +8423,8 @@ cxpb          endif
      &               rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))
             if(mdf_fhi.ne.0) then                                     !srv 13.10.06 {
               t0 =
-     &        -fhiPSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &                 rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)
+     .        -fhiPSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     .                 rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)
               if (t0.ge.0.0_R8) then
                 shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &           shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) + t0
@@ -8453,11 +8469,11 @@ cxpb          endif
      &         fhiPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)
               if (t0.ge.0.0_R8) then
                 shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
-     &           shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) + t0
+     .           shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) + t0
               else
                 shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
-     &           shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) + t0/
-     &           ti(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+     .           shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) + t0/
+     .             ti(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
               end if
             endif                                                     !srv 13.10.06 }
           ENDDO
