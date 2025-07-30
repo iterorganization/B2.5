@@ -6784,10 +6784,10 @@ cxpb code segment analog to b2tfhe
         elseif(bcene_15_style.eq.1) then
 !srv added accumulation in order to account twice b.c. for corner cells
           if(new_boundary_files) then
-            write(*,'(a,1p,g14.7,a,g14.7,a,a,a,a)')
+            write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      .       'BCENE = 15 (style = 1) : with GAMMAE = ',
-     .        GAMMAE, ' and ENEPAR(IB,1) = ', ENEPAR(IB,1),
-     .       ' (def = 0), on ', TRIM(BCCHAR(IB)), ' at ',
+     .        GAMMAE,' and ENEPAR(IB,1) = ',ENEPAR(IB,1),
+     .       ' (def = 0), on ',BCCHAR(IB),
      .       boundary_location(IB)
           endif
           IF(BCCHAR(IB).EQ.'W') THEN
@@ -8890,8 +8890,8 @@ cxpb          endif
         IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
           if(new_boundary_files) then
             write(*,'(a,a,1p,g14.7,a,a,a)')
-     .        'BCENI = 15 with MOMPAR(ismain,:,2) < 0.5 : marginal ',
-     .        'sheath BC, with ENIPAR(:,:,1) = ',ENIPAR(IB,1),
+     .        'BCENI = 15 with MOMPAR(ismain,:,2) < 0.5 : ',
+     .        'marginal sheath BC, with ENIPAR(IB,1) = ',ENIPAR(IB,1),
      .        ' on ',BCCHAR(IB),boundary_location(ib)
             call xertst(ENIPAR(IB,1).gt.0.0_R8,
      1      'BCENI = 15, ENIPAR(IB,1) <= 0 not allowed!')              !srv 20.09.17

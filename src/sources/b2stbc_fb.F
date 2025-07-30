@@ -1660,7 +1660,7 @@
               enddo
 #ifdef B25_EIRENE
               do j=1,nnatmi
-                if (latmscl(j).eq.ispecies+1) then 
+                if (latmscl(j).eq.ispecies+1) then
                   do iy = na_feedback_iy1(ispecies),
      &                    na_feedback_iy2(ispecies)
                     do ix = na_feedback_ix1(ispecies),
@@ -1724,7 +1724,7 @@
               enddo
 #ifdef B25_EIRENE
               do j=1,nnatmi
-                if (latmscl(j).eq.ispecies+1) then 
+                if (latmscl(j).eq.ispecies+1) then
                   do iy = 0, ny-1
                     do ix = 0, nx-1
                       if (.not.ON_CLOSED_SURFACE(ix,iy) .and.
@@ -2051,7 +2051,7 @@ c           Inverse the actuator if necessary
                           hlp = hlp + dab2(ix+1,iy+1,j,1)*vol(ix,iy)
                           do k=1,nnmoli
                             if (mlcmp(j,k).eq.0) cycle
-                            hlp = hlp +  
+                            hlp = hlp +
      &                       mlcmp(j,k)*dmb2(ix+1,iy+1,k,1)*vol(ix,iy)
                           enddo
                           do k=1,nnioni
@@ -2153,7 +2153,7 @@ c           Inverse the actuator if necessary
                           hlp = hlp + dab2(ix+1,iy+1,j,1)*vol(ix,iy)
                           do k=1,nnmoli
                             if (mlcmp(j,k).eq.0) cycle
-                            hlp = hlp +  
+                            hlp = hlp +
      &                       mlcmp(j,k)*dmb2(ix+1,iy+1,k,1)*vol(ix,iy)
                           end do
                           do k=1,nnioni
@@ -3468,7 +3468,7 @@ c  substract neutral flux to the core from pumping
         if (k.lt.0) k = nlim - k
         do ja = 1, nnatmi
           if (latmscl(ja) .eq. ispecies) then
-            recyct(ja,k) = 1.0_R8 - absr !aap nphoti shift needed 
+            recyct(ja,k) = 1.0_R8 - absr !aap nphoti shift needed
             do jm = 1,nnmoli
               if (mlcmp(ja,jm) .gt. 0) then
                 recyct(jm+nnatmi,k) = 1.0_R8 - absr !aap nphoti shift needed

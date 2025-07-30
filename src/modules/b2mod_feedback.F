@@ -49,7 +49,7 @@
       namelist /feedback/ saved_cbshe_core, saved_cbshi_core,
      1 saved_cbsna_core, saved_cbsch_core, saved_cbsna_pfr1,
      2 saved_cbsna_pfr2, saved_cbsna_sol, saved_na_feedback_actuator,
-     3 saved_na_feedback_prev 
+     3 saved_na_feedback_prev
 ! new namelist for specifying more complicated feedback options
       namelist /feedback_control/ vacuum_communication,
      & vacuum_communication_nreg,

@@ -43,7 +43,7 @@
      &  chci_a(-1:nx,-1:ny,0:1,0:ns-1),                               !som 08.10.21
      &  cvsahz_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),  !som 08.10.21
      &  cvsahz_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                 !som 08.10.21
-     *  cvsahz_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1), 
+     *  cvsahz_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),
      *  cvsahz_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                 !som 22.12.23
      &  rho_rel(-1:nx,-1:ny), avm_u(-1:nx,-1:ny),                     !som 13.08.21
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1)
@@ -580,7 +580,7 @@
      &            nucl2s(inucl,iz))*
      &            wrk2(leftix(ix,iy),leftiy(ix,iy)))
                  enddo
-                
+
                  wrk0(ix,iy) = wrk0(ix,iy) +
      &           (nb(ix,iy)/nal(ix,iy,s2nucl(isb)-1)+
      &           nb(leftix(ix,iy),leftiy(ix,iy))/

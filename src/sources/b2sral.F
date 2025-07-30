@@ -101,7 +101,7 @@
      &  cvsa_hAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 20.10.21
      &  cvsa_hBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 20.10.21
      &  cvsa_uAdp_albe(-1:nx,-1:ny,0:1,0:nspecies-1,0:nspecies-1),       !som 26.04.24
-     &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 26.04.24 
+     &  cvsa_uBdp_al(-1:nx,-1:ny,0:1,0:nspecies-1),                      !som 26.04.24
      6  cdpa(-1:nx,-1:ny,0:1,0:ns-1),
      &  csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1)
 *     (log-log rate coefficients)
