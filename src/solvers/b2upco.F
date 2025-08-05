@@ -68,6 +68,15 @@
      .  'faulty argument rxf')
       call xertst (0.0_R8.le.pcm0, 'faulty argument pcm0')
 
+* ..optional stabilization scheme (experimental), limit update to x % of value
+      if (switch%b2mndt_max_update.gt.0.0_R8) then
+        do iCv = 1, mpg%nCi
+        corpb(iCv) = sign(1.0_R8,corpb(iCv))
+     &         *min(abs(corpb(iCv)),switch%b2mndt_max_update*pb(iCv))
+        enddo
+      endif
+
+
 * ..implement the correction
 *   ..compute wrk
       call gradc_p(nCv, nFc, nVx, 0, geo, mpg, corpb, wrkv, wrk)
