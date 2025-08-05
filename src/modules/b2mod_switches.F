@@ -598,6 +598,7 @@ c b2mndt
       real (kind=R8) :: b2mndt_var_mult
       real (kind=R8) :: b2mndt_var_style2_SF
       real (kind=R8) :: b2mndt_var_style3_Cmax
+      real (kind=R8) :: b2mndt_max_update
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -1276,6 +1277,7 @@ c b2mndt
       s % b2mndt_var_mult = 1.0_R8
       s % b2mndt_var_style2_SF = 10.0_R8
       s % b2mndt_var_style3_Cmax = 1.0_R8
+      s % b2mndt_max_update = 0.0_R8
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1978,6 +1980,7 @@ c b2mndt
       call ipgetr ('b2mndt_var_mult', s%b2mndt_var_mult)
       call ipgetr ('b2mndt_var_style2_SF', s%b2mndt_var_style2_SF)
       call ipgetr ('b2mndt_var_style3_Cmax', s%b2mndt_var_style3_Cmax)
+      call ipgetr ('b2mndt_max_update', s%b2mndt_max_update)
 
 c b2mndr
       call ipgetr ('b2mndr_hz', s % b2mndr_hz)                       !srv 09.01.01 09.06.08
@@ -2575,25 +2578,8 @@ c b2mndt
      &  'faulty internal parameter rxf')
       call xertst (1.eq.s%b2mndt_style.or.s%b2mndt_style.eq.2,
      &  'b2mndt_style should be 1 or 2')
-      call xertst (s%b2mndt_ckn.eq.1.or.s%b2mndt_ckn.eq.2,
-     &  'b2mndt_ckn should be 1 or 2')
-      call xertst (s%b2mndt_bdf.eq.1.or.s%b2mndt_bdf.eq.2,
-     &  'b2mndt_bdf should be 1 or 2')
-      call xertst (s%b2mndt_startup.eq.1.or.s%b2mndt_startup.eq.2,
-     &  'b2mndt_startup should be 1 or 2')
-      if (s%b2mndt_ckn.eq.2.and.s%b2mndt_bdf.eq.2) then
-        call xerrab('Cannot use Crank-Nicolson and BDF2 time'//
-     &     ' integration schemes at the same time!'//
-     &     ' Set only one switch (ckn OR bdf) to 2!')
-      endif
-      if (s%b2mndt_bdf.eq.1.and.s%b2mndt_startup.eq.2) then
-        call xerrab('b2mndt_startup=2 (CKN startup) can only'//
-     &     ' be used with BDF scheme (b2mndt_bdf=2)')
-      endif
-      call xertst (1.le.s%ntim_step_out,
-     &   'faulty internal parameter ntim_step_out')
-      call xertst (1.le.s%calc_err_step_out,
-     &   'faulty internal parameter calc_err_step_out')
+      call xertst (0.le.s%b2mndt_max_update,
+     &  'b2mndt_max_update should be 0 or positive')
 
 c b2mndr
        call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,
