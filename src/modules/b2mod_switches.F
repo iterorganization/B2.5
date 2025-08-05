@@ -537,6 +537,7 @@ c b2mndt
       real (kind=R8) :: b2mndt_var_mult
       real (kind=R8) :: b2mndt_var_style2_SF
       real (kind=R8) :: b2mndt_var_style3_Cmax
+      real (kind=R8) :: b2mndt_max_update
 
 c b2mndr
       real (kind=R8) :: b2mndr_hz
@@ -1139,6 +1140,7 @@ c b2mndt
       s % b2mndt_var_mult = 1.0_R8
       s % b2mndt_var_style2_SF = 10.0_R8
       s % b2mndt_var_style3_Cmax = 1.0_R8
+      s % b2mndt_max_update = 0.0_R8
 
 c Feedback
       s % b2stbc_feedback = 0
@@ -1762,6 +1764,7 @@ c b2mndt
       call ipgetr ('b2mndt_var_mult', s%b2mndt_var_mult)
       call ipgetr ('b2mndt_var_style2_SF', s%b2mndt_var_style2_SF)
       call ipgetr ('b2mndt_var_style3_Cmax', s%b2mndt_var_style3_Cmax)
+      call ipgetr ('b2mndt_max_update', s%b2mndt_max_update)
 
 c b2mndr
       call ipgetr ('b2mndr_hz',   s%b2mndr_hz)                       !srv 09.01.01 09.06.08
@@ -2328,6 +2331,8 @@ c b2mndt
      &  'faulty internal parameter rxf')
       call xertst (1.eq.s%b2mndt_style.or.s%b2mndt_style.eq.2,
      &  'b2mndt_style should be 1 or 2')
+      call xertst (0.le.s%b2mndt_max_update,
+     &  'b2mndt_max_update should be 0 or positive')
 
 c b2mndr
        call xertst (0.0.le.s%b2mndr_hz .and. 1.0.ge.s%b2mndr_hz,

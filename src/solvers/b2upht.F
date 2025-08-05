@@ -165,6 +165,23 @@
         endif
         dte(iCv) = dte1(iCv)
         dti(iCv) = dti1(iCv)                                        !srv 25.07.17
+
+* ..optional stabilization scheme (experimental), limit update to x % of value
+        if (switch%b2mndt_max_update.gt.0.0_R8.and.iCv.le.mpg%nCi) then
+          dti(iCv) = sign(1.0_R8,dti(iCv))
+     &         *min(abs(dti(iCv)),switch%b2mndt_max_update*ti(iCv))
+          dte(iCv) = sign(1.0_R8,dte(iCv))
+     &         *min(abs(dte(iCv)),switch%b2mndt_max_update*te(iCv))
+          dtn(iCv) = sign(1.0_R8,dtn(iCv))
+     &         *min(abs(dtn(iCv)),switch%b2mndt_max_update*tn(iCv))
+          dkt(iCv) = sign(1.0_R8,dkt(iCv))
+     &         *min(abs(dkt(iCv)),switch%b2mndt_max_update*kt(iCv))
+          dzt(iCv) = sign(1.0_R8,dzt(iCv))
+     &         *min(abs(dzt(iCv)),switch%b2mndt_max_update*zt(iCv))
+        endif
+
+
+
         if (solvereg(ireg))
      >   te(iCv) = max(switch%b2upht_te_min*ev,
      >     min(switch%b2upht_te_max*ev,te(iCv)+dte(iCv)))           !xpb !nh
