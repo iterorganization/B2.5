@@ -1365,7 +1365,6 @@ contains
         end if
 
 #if ( GGD_MINOR_VERSION > 8 || GGD_MAJOR_VERSION > 1 )
-        iPrivateB2 = 0
         !! Cell + edge grid subset
         !! These are the "private" B2 regions, so will be given negative
         !! grid subset identifiers
@@ -1379,20 +1378,15 @@ contains
             end select
 
             do iRegion = 1, regionCount(geoId, iType)
-                iPrivateB2 = iPrivateB2 - 1
                 select case(iType)
                 case( REGIONTYPE_CELL )
                   RegionDescription = "Volumetric B2.5 internal region #"// &
                     &   int2str(iRegion)
-                case( REGIONTYPE_XEDGE )
-                  RegionDescription = "Y-aligned B2.5 internal region #"//  &
-                    &   int2str(iRegion)
-                case( REGIONTYPE_YEDGE )
-                  RegionDescription = "X-aligned B2.5 internal region #"//  &
-                    &   int2str(iRegion)
-                case( REGIONTYPE_EDGE )
+                  iPrivateB2 = -iRegion
+                case( REGIONTYPE_XEDGE, REGIONTYPE_YEDGE, REGIONTYPE_EDGE )
                   RegionDescription = "Face-based B2.5 internal region #"// &
-                    &   int2str(iRegion)
+                    &   int2str(regionNumber(geoId, iType, iRegion))
+                  iPrivateB2 = -regionCounts(0,geoId)-regionNumbers(iRegion,iType,geoId)
                 end select
 
                 !! Get explicit object list of the grid subset using
