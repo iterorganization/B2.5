@@ -270,6 +270,8 @@ module b2mod_ual_io
                                     !< 4: GGD grid subset defined by jxa value
   integer, save :: gridGeometry   !< Grid geometry identifier number
   integer, save :: plasmaGeometry !< Plasma topology identifier number
+  integer, save :: nneut !< Total number of IDS neutral species
+  integer, save :: nsion !< Total number of IDS ion species
 #if GGD_MAJOR_VERSION > 0
   integer, save :: iGsCoreBoundary  !< Variable to hold Core grid subset base
             !< index, later found by findGridSubsetByName() routine.
@@ -285,6 +287,21 @@ module b2mod_ual_io
             !< subset base index, later found by findGridSubsetByName() routine
   integer, save :: iGsODivertor     !< Variable to hold Outer Divertor grid
             !< subset base index, later found by findGridSubsetByName() routine
+#endif
+  integer, allocatable, save :: ionstt(:) !< Mapping array
+                                          !< from B2-Eirene charged fluids to IDS ion states
+  integer, allocatable, save :: istion(:) !< Number of IDS states for each ion
+  integer, allocatable, save :: ispion(:,:) !< Mapping array
+                                            !< from IDS ions and states to B2-Eirene ions
+           !< ispion(i,j) contains the B2.5 species index for (ion i,state j) or
+           !<                      the Eirene molecular ion index
+#ifdef B25_EIRENE
+  integer, allocatable, save :: isstat(:) !< Mapping array
+                             !< from Eirene atoms and molecules to IDS neutral states
+  integer, allocatable, save :: imneut(:) !< Mapping array
+                             !< from Eirene molecules to IDS neutrals
+  integer, allocatable, save :: imiion(:) !< Mapping array
+                             !< from Eirene molecular ions to IDS ion sequences
 #endif
   logical, parameter :: B2_WRITE_DATA = .true.
   real(IDS_real) :: time  !< Generic time
@@ -523,8 +540,6 @@ contains
         integer :: time_sind !< Time slice index
         integer :: ion_charge_int !< Ion charge (e.g. 1, 2, etc.)
         integer :: ns    !< Total number of B2.5 species
-        integer :: nsion !< Total number of IDS ion species
-        integer :: nneut !< Total number of IDS neutral species
         integer :: n_process !< Number of radiation processes handled
         integer :: is, js, ks !< Species indices (iterators)
         integer :: ii, jj !< Iterators
@@ -543,13 +558,6 @@ contains
         integer :: isep(2) !< Array of separatrix regions
         integer :: iret   !< Dummy return index
         integer :: ias    !< Starting index for non-standard surface in resolved list
-        integer, allocatable :: ionstt(:) !< Mapping array
-                                          !< from B2-Eirene charged fluids to IDS ion states
-        integer, allocatable :: istion(:) !< Number of IDS states for each ion
-        integer, allocatable :: ispion(:,:) !< Mapping array
-                                            !< from IDS ions and states to B2-Eirene ions
-           !< ispion(i,j) contains the B2.5 species index for (ion i,state j) or
-           !<                      the Eirene molecular ion index
 #ifdef B25_EIRENE
         integer :: ind    !< Non-standard surface index in resolved list
         integer :: iss    !< State index
@@ -557,12 +565,6 @@ contains
         integer :: imol   !< Molecule iterator
         integer :: nelems !< Number of elements present in a molecule or molecular ion
         integer :: p      !< Dummy integer
-        integer, allocatable :: isstat(:) !< Mapping array
-                                          !< from Eirene atoms and molecules to IDS neutral states
-        integer, allocatable :: imneut(:) !< Mapping array
-                                          !< from Eirene molecules to IDS neutrals
-        integer, allocatable :: imiion(:) !< Mapping array
-                                          !< from Eirene molecular ions to IDS ion sequences
         integer :: ixx, iyy
 #endif
         real(IDS_real) :: flxFace( mpg%nFc, 0:1 )
@@ -573,7 +575,7 @@ contains
         real(IDS_real) :: tmpVx( mpg%nVx )
         real(IDS_real) :: pe( mpg%nCv )
         real(IDS_real) :: time_step !< Time step
-        real(IDS_real) :: frac, u, v, psi_average,                     &
+        real(IDS_real) :: frac, u, v, w, psi_average,                  &
             &             vtor, nisep, nasum
         real(IDS_real), allocatable :: power_convected(:),             &
             &             power_conducted(:), power_radiated(:),       &
@@ -581,7 +583,8 @@ contains
             &             power_recombination_neutrals(:),             &
             &             power_currents(:), power_flux_peak(:),       &
             &             power_neutrals(:), power_incident(:),        &
-            &             current_incident(:)
+            &             current_incident(:), electron_power(:),      &
+            &             ion_power(:)
 #if ( IMAS_MINOR_VERSION > 36 || IMAS_MAJOR_VERSION > 3 )
         integer :: iFs, iactive, inactive
         real(IDS_real) :: xi, yi, xo, yo
@@ -1393,6 +1396,8 @@ contains
 
 #if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
         if ( mpg%nStr.gt.0 ) then
+          allocate( ion_power( maxval(mpg%strDiv) ) )
+          allocate( electron_power( maxval(mpg%strDiv) ) )
           allocate( power_incident( maxval(mpg%strDiv) ) )
           allocate( power_currents( maxval(mpg%strDiv) ) )
           allocate( power_neutrals( maxval(mpg%strDiv) ) )
@@ -1404,6 +1409,8 @@ contains
           allocate( power_recombination_neutrals( maxval(mpg%strDiv) ) )
           allocate( current_incident( maxval(mpg%strDiv) ) )
           do i = 1, maxval(mpg%strDiv)
+            ion_power(i) = 0.0_IDS_real
+            electron_power(i) = 0.0_IDS_real
             power_incident(i) = 0.0_IDS_real
             power_radiated(i) = 0.0_IDS_real
             power_conducted(i) = 0.0_IDS_real
@@ -1434,6 +1441,7 @@ contains
                 end do
               end if
               u = 0.0_IDS_real
+              w = 0.0_IDS_real
               do is = 0, ns-1
                 if (is_neutral(is).and.nint(zn(is)).eq.1) then
                   power_neutrals(i) = power_neutrals(i) + &
@@ -1442,11 +1450,8 @@ contains
                     &                state%dv%fna_32(iFc,1,is) ) + &
                     &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
                     &                state%dv%fna_52(iFc,1,is) ) )
-                  v = v + mpg%divFcOr(j)*state%pl%tn(iCv)* &
-                    & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
-                    &                state%dv%fna_32(iFc,1,is) ) + &
-                    &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
-                    &                state%dv%fna_52(iFc,1,is) ) )
+                  power_neutrals(i) = power_neutrals(i) + mpg%divFcOr(j)* &
+                    & (state%dv%fhm(iFc,0,is) + state%dv%fhm(iFc,1,is) )
                 else if (is_neutral(is)) then
                   power_neutrals(i) = power_neutrals(i) + &
                     &  mpg%divFcOr(j)*state%pl%ti(iCv)* &
@@ -1454,15 +1459,10 @@ contains
                     &                state%dv%fna_32(iFc,1,is) ) + &
                     &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
                     &                state%dv%fna_52(iFc,1,is) ) )
+                  power_neutrals(i) = power_neutrals(i) + mpg%divFcOr(j)* &
+                    & (state%dv%fhm(iFc,0,is) + state%dv%fhm(iFc,1,is) )
                 else
                   u = u + mpg%divFcOr(j)* &
-                    & (state%pl%ti(iCv) + &
-                    &  state%pl%te(iCv)*state%rt%rza(iCv,is))* &
-                    & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
-                    &                state%dv%fna_32(iFc,1,is) ) + &
-                    &  2.5_IDS_real*(state%dv%fna_52(iFc,0,is) + &
-                    &                state%dv%fna_52(iFc,1,is) ) )
-                  v = v + mpg%divFcOr(j)* &
                     & (state%pl%ti(iCv) + &
                     &  state%pl%te(iCv)*state%rt%rza(iCv,is))* &
                     & (1.5_IDS_real*(state%dv%fna_32(iFc,0,is) + &
@@ -1472,16 +1472,24 @@ contains
                   power_recombination_plasma(i) = &
                     &  power_recombination_plasma(i) + mpg%divFcOr(j)* &
                     & (state%dv%fhp(iFc,0,is) + state%dv%fhp(iFc,1,is) )
-                  v = v + mpg%divFcOr(j)* &
-                    & (state%dv%fhp(iFc,0,is) + state%dv%fhp(iFc,1,is) )
+                  w = w + mpg%divFcOr(j)* &
+                    & (state%dv%fhp(iFc,0,is) + state%dv%fhp(iFc,1,is) + &
+                    &  state%dv%fhm(iFc,0,is) + state%dv%fhm(iFc,1,is) )
+                  ion_power(i) = ion_power(i) + mpg%divFcOr(j)* &
+                    & (state%dv%fhp(iFc,0,is) + state%dv%fhp(iFc,1,is) + &
+                    &  state%dv%fhm(iFc,0,is) + state%dv%fhm(iFc,1,is) )
                 end if
               end do
               power_convected(i) = power_convected(i) + u
-              power_conducted(i) = power_conducted(i) - u + mpg%divFcOr(j)* &
+              power_conducted(i) = power_conducted(i) - u - w + mpg%divFcOr(j)* &
                   & ( state%dv%fht(iFc,0) - state%dv%fhj(iFc,0) + &
                   &   state%dv%fht(iFc,1) - state%dv%fhj(iFc,1) )
               power_currents(i) = power_currents(i) + mpg%divFcOr(j)* &
                   & ( state%dv%fhj(iFc,0) + state%dv%fhj(iFc,1) )
+              electron_power(i) = electron_power(i) + mpg%divFcOr(j)* &
+                  & ( state%dv%fhe(iFc,0) + state%dv%fhe(iFc,1) )
+              ion_power(i) = ion_power(i) + mpg%divFcOr(j)* &
+                  & ( state%dv%fhi(iFc,0) + state%dv%fhi(iFc,1) )
               v = v + mpg%divFcOr(j)* &
                   & ( state%dv%fht(iFc,0) + state%dv%fht(iFc,1) )
               current_incident(i) = current_incident(i) + mpg%divFcOr(j)* &
@@ -1976,6 +1984,28 @@ contains
           call write_timed_value( &
             &  divertors%divertor(1)%particle_flux_recycled_total, u )
         end select
+        allocate( &
+          &  wall%global_quantities%electrons%power_inner_target( num_time_slices ) )
+        allocate( &
+          &  wall%global_quantities%electrons%power_outer_target( num_time_slices ) )
+        wall%global_quantities%electrons%power_inner_target( time_sind ) = &
+          & electron_power(1)
+        wall%global_quantities%electrons%power_outer_target( time_sind ) = &
+          & electron_power(maxval(mpg%strDiv))
+        allocate( &
+          &  wall%global_quantities%power_inner_target_ion_total( num_time_slices ) )
+        wall%global_quantities%power_inner_target_ion_total( time_sind ) = &
+          & ion_power(1)
+        allocate( &
+          &  wall%global_quantities%power_density_inner_target_max( num_time_slices ) )
+        wall%global_quantities%power_density_inner_target_max( time_sind ) = &
+          & power_flux_peak(1)
+        allocate( &
+          &  wall%global_quantities%power_density_outer_target_max( num_time_slices ) )
+        wall%global_quantities%power_density_outer_target_max( time_sind ) = &
+          & power_flux_peak(maxval(mpg%strDiv))
+        deallocate( ion_power )
+        deallocate( electron_power )
         deallocate( power_incident )
         deallocate( power_currents )
         deallocate( power_radiated )
@@ -2132,6 +2162,10 @@ contains
 #endif
         allocate( edge_profiles%ggd( time_sind )%ion( nsion ) )
         allocate( edge_transport%model(1)%ggd( time_sind )%ion( nsion ) )
+        allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%ion( nsion ) )
+        allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( nsion ) )
+        allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( nsion ) )
+        allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( nsion ) )
 #if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
         allocate( radiation%process(1)%ggd( time_sind )%ion( nsion ) )
         allocate( radiation%process(2)%ggd( time_sind )%ion( nsion ) )
@@ -2144,19 +2178,51 @@ contains
           allocate( edge_profiles%ggd( time_sind )%ion( js )%state( nfluids(js) ) )
           allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%element(1) )
           allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state( nfluids(js) ) )
+          allocate( &
+            &  wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%element(1) )
+          allocate( &
+            &  wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%state( nfluids(js) ) )
+          allocate( &
+            &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%element(1) )
+          allocate( &
+            &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%state( nfluids(js) ) )
+          allocate( &
+            &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%element(1) )
+          allocate( &
+            &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%state( nfluids(js) ) )
+          allocate( &
+            &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%element(1) )
+          allocate( &
+            &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%state( nfluids(js) ) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
           allocate( edge_profiles%ggd( time_sind )%ion( js )%label(1) )
           allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%label(1) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%label(1) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%label(1) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%label(1) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%label(1) )
           do is = 1, nfluids(js)
             allocate( edge_profiles%ggd( time_sind )%ion( js )%state( is )%label(1) )
             allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%label(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%state( is )%label(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%state( is )%label(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%state( is )%label(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%state( is )%label(1) )
           end do
 #else
           allocate( edge_profiles%ggd( time_sind )%ion( js )%name(1) )
           allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%name(1) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%name(1) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%name(1) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%name(1) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%name(1) )
           do is = 1, nfluids(js)
             allocate( edge_profiles%ggd( time_sind )%ion( js )%state( is )%name(1) )
             allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%name(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%state( is )%name(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%state( is )%name(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%state( is )%name(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%state( is )%name(1) )
           end do
 #endif
           do i = 1, nsources
@@ -2216,10 +2282,8 @@ contains
             do i = 1, nsources
               edge_sources%source(i)%ggd( time_sind )%ion( js )%state( is )%name = spclabel
             end do
-#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
             radiation%process(1)%ggd( time_sind )%ion( js )%state( is )%name = spclabel
             radiation%process(2)%ggd( time_sind )%ion( js )%state( is )%name = spclabel
-#endif
 #endif
           end do
 
@@ -2227,9 +2291,17 @@ contains
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
           edge_profiles%ggd( time_sind )%ion( js )%label = species_list( js )
           edge_transport%model(1)%ggd( time_sind )%ion( js )%label = species_list( js )
+          wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%label = species_list( js )
+          wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%label = species_list( js )
+          wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%label = species_list( js )
+          wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%label = species_list( js )
 #else
           edge_profiles%ggd( time_sind )%ion( js )%name = species_list( js )
           edge_transport%model(1)%ggd( time_sind )%ion( js )%name = species_list( js )
+          wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%name = species_list( js )
+          wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%name = species_list( js )
+          wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%name = species_list( js )
+          wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%name = species_list( js )
 #endif
 
           ! Put ion charge if single ion in species
@@ -2238,6 +2310,10 @@ contains
             ion_charge_int = nint((zamin(is)+zamax(is))/2.0_R8)
             edge_profiles%ggd( time_sind )%ion( js )%z_ion = ion_charge_int
             edge_transport%model(1)%ggd( time_sind )%ion( js )%z_ion = ion_charge_int
+            wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%z_ion = ion_charge_int
+            wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%z_ion = ion_charge_int
+            wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%z_ion = ion_charge_int
+            wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%z_ion = ion_charge_int
           end if
 
           ! Put mass of species
@@ -2265,10 +2341,18 @@ contains
           ! Put neutral index
           edge_profiles%ggd( time_sind )%ion( js )%neutral_index = b2eatcr(is)
           edge_transport%model(1)%ggd( time_sind )%ion( js )%neutral_index = b2eatcr(is)
+          wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%neutral_index = b2eatcr(is)
+          wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%neutral_index = b2eatcr(is)
+          wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%neutral_index = b2eatcr(is)
+          wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%neutral_index = b2eatcr(is)
 
           ! Put multiple states flag
           edge_profiles%ggd( time_sind )%ion( js )%multiple_states_flag = 1
           edge_transport%model(1)%ggd( time_sind )%ion( js )%multiple_states_flag = 1
+          wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%multiple_states_flag = 1
+          wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%multiple_states_flag = 1
+          wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%multiple_states_flag = 1
+          wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%multiple_states_flag = 1
 
           do is = 1, istion(js)
             ks = ispion(js,is)
@@ -2277,10 +2361,26 @@ contains
             ! (z_min = z_max = 0 for a neutral)
             edge_profiles%ggd( time_sind )%ion( js )%state( is )%z_min = zamin( ks )
             edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%z_min = zamin( ks )
+            wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%state( is )%z_min = &
+              &  zamin( ks )
+            wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%state( is )%z_min = &
+              &  zamin( ks )
+            wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%state( is )%z_min = &
+              &  zamin( ks )
+            wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%state( is )%z_min = &
+              &  zamin( ks )
 
             ! Put maximum Z of the charge state bundle
             edge_profiles%ggd( time_sind )%ion( js )%state( is )%z_max = zamax( ks )
             edge_transport%model(1)%ggd( time_sind )%ion( js )%state( is )%z_max = zamax( ks )
+            wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%state( is )%z_max = &
+              &  zamax( ks )
+            wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%state( is )%z_max = &
+              &  zamax( ks )
+            wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%state( is )%z_max = &
+              &  zamax( ks )
+            wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%state( is )%z_max = &
+              &  zamax( ks )
           end do
 
           do i = 1, nsources
@@ -2398,19 +2498,51 @@ contains
           do js = nspecies+1, nsion
             allocate( edge_profiles%ggd( time_sind )%ion( js )%state( istion(js) ) )
             allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state( istion(js) ) )
+            allocate( &
+              &  wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%state( istion(js) ) )
+            allocate( &
+              &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%state( istion(js) ) )
+            allocate( &
+              &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%state( istion(js) ) )
+            allocate( &
+              &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%state( istion(js) ) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
             allocate( edge_profiles%ggd( time_sind )%ion( js )%label(1) )
             allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%label(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%label(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%label(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%label(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%label(1) )
             do ks = 1, istion(js)
               allocate( edge_profiles%ggd( time_sind )%ion( js )%state( ks )%label(1) )
               allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state( ks )%label(1) )
+              allocate( &
+                &  wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%state( ks )%label(1) )
+              allocate( &
+                &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%state( ks )%label(1) )
+              allocate( &
+                &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%state( ks )%label(1) )
+              allocate( &
+                &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%state( ks )%label(1) )
             end do
 #else
             allocate( edge_profiles%ggd( time_sind )%ion( js )%name(1) )
             allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%name(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%name(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%name(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%name(1) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%name(1) )
             do ks = 1, istion(js)
               allocate( edge_profiles%ggd( time_sind )%ion( js )%state( ks )%name(1) )
               allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%state( ks )%name(1) )
+              allocate( &
+                &  wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%state( ks )%name(1) )
+              allocate( &
+                &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%state( ks )%name(1) )
+              allocate( &
+                &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%state( ks )%name(1) )
+              allocate( &
+                &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%state( ks )%name(1) )
             end do
 #endif
             do i = 1, nsources
@@ -2449,6 +2581,14 @@ contains
               nelems = count ( micmp( 1:natmi, is ) > 0 )
               allocate( edge_profiles%ggd( time_sind )%ion( js )%element( nelems ) )
               allocate( edge_transport%model(1)%ggd( time_sind )%ion( js )%element( nelems ) )
+              allocate( &
+                &  wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%element( nelems ) )
+              allocate( &
+                &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%element( nelems ) )
+              allocate( &
+                &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%element( nelems ) )
+              allocate( &
+                &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%element( nelems ) )
               do i = 1, nsources
                 allocate( edge_sources%source(i)%ggd( time_sind )%ion( js )%element( nelems ) )
               end do
@@ -2500,6 +2640,10 @@ contains
             if (istion(js).eq.1) then
               edge_profiles%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
               edge_transport%model(1)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
+              wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%z_ion = nchrgi( is )
+              wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%z_ion = nchrgi( is )
+              wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%z_ion = nchrgi( is )
+              wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%z_ion = nchrgi( is )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
               edge_profiles%ggd( time_sind )%ion( js )%label = textin( is-1 )
               edge_transport%model(1)%ggd( time_sind )%ion( js )%label = textin( is-1 )
@@ -2523,6 +2667,10 @@ contains
               if (match_found) then
                 edge_profiles%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
                 edge_transport%model(1)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
+                wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%z_ion = nchrgi( is )
+                wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%z_ion = nchrgi( is )
+                wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%z_ion = nchrgi( is )
+                wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%z_ion = nchrgi( is )
                 do i = 1, nsources
                   edge_sources%source(i)%ggd( time_sind )%ion( js )%z_ion = nchrgi( is )
                 end do
@@ -2547,12 +2695,20 @@ contains
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                   edge_profiles%ggd( time_sind )%ion( js )%label = ion_label
                   edge_transport%model(1)%ggd( time_sind )%ion( js )%label = ion_label
+                  wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%label = ion_label
+                  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%label = ion_label
+                  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%label = ion_label
+                  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%label = ion_label
                   do i = 1, nsources
                     edge_sources%source(i)%ggd( time_sind )%ion( js )%label = ion_label
                   end do
 #else
                   edge_profiles%ggd( time_sind )%ion( js )%name = ion_label
                   edge_transport%model(1)%ggd( time_sind )%ion( js )%name = ion_label
+                  wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%name = ion_label
+                  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%name = ion_label
+                  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%name = ion_label
+                  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%name = ion_label
                   do i = 1, nsources
                     edge_sources%source(i)%ggd( time_sind )%ion( js )%name = ion_label
                   end do
@@ -2581,12 +2737,36 @@ contains
             edge_profiles%ggd( time_sind )%ion( js )%multiple_states_flag = 1
             edge_transport%model(1)%ggd( time_sind )%ion( js )%neutral_index = jj
             edge_transport%model(1)%ggd( time_sind )%ion( js )%multiple_states_flag = 1
+            wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%neutral_index = jj
+            wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%multiple_states_flag = 1
+            wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%neutral_index = jj
+            wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%multiple_states_flag = 1
+            wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%neutral_index = jj
+            wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%multiple_states_flag = 1
+            wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%neutral_index = jj
+            wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%multiple_states_flag = 1
             do ks = 1, istion(js)
               is = ispion(js,ks)
               edge_profiles%ggd( time_sind )%ion( js )%state( ks )%z_min = nchrgi( is )
               edge_profiles%ggd( time_sind )%ion( js )%state( ks )%z_max = nchrgi( is )
               edge_transport%model(1)%ggd( time_sind )%ion( js )%state( ks )%z_min = nchrgi( is )
               edge_transport%model(1)%ggd( time_sind )%ion( js )%state( ks )%z_max = nchrgi( is )
+              wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%state( ks )%z_min = &
+                &  nchrgi( is )
+              wall%description_ggd(1)%ggd( time_sind )%recycling%ion( js )%state( ks )%z_max = &
+                &  nchrgi( is )
+              wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%state( ks )%z_min = &
+                &  nchrgi( is )
+              wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%ion( js )%state( ks )%z_max = &
+                &  nchrgi( is )
+              wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%state( ks )%z_min = &
+                &  nchrgi( is )
+              wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%ion( js )%state( ks )%z_max = &
+                &  nchrgi( is )
+              wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%state( ks )%z_min = &
+                &  nchrgi( is )
+              wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%ion( js )%state( ks )%z_max = &
+                &  nchrgi( is )
             end do
             is = ispion(js,1)
             do i = 1, nsources
@@ -2613,6 +2793,11 @@ contains
           end do
           allocate( edge_profiles%ggd( time_sind )%neutral( nneut ) )
           allocate( edge_transport%model(1)%ggd( time_sind )%neutral( nneut ) )
+          allocate( wall%global_quantities%neutral( nneut ) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( nneut ) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( nneut ) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( nneut ) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( nneut ) )
           do i = 1, nsources
              allocate( edge_sources%source(i)%ggd( time_sind )%neutral( nneut ) )
           end do
@@ -2631,27 +2816,68 @@ contains
                 isstat(is) = 1
                 if (js.gt.1) then
                   allocate( edge_profiles%ggd( time_sind )%neutral( js-1 )%state( isstat(is-1) ) )
+                  allocate( &
+                    &  wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js-1 )%state( isstat(is-1) ) )
+                  allocate( &
+                    &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js-1 )%state( isstat(is-1) ) )
+                  allocate( &
+                    &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js-1 )%state( isstat(is-1) ) )
+                  allocate( &
+                    &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js-1 )%state( isstat(is-1) ) )
                 end if
              end if
           end do
           ks = isstat(natmi)
           js = latmscl(natmi)
           allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks ) )
+          allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks ) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%state( ks ) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%state( ks ) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%state( ks ) )
+          allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%state( ks ) )
+          do i = 1, nsources
+             allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks ) )
+          end do
 
           do js = 1, nspecies
              is = eb2spcr(js)
              allocate( edge_profiles%ggd( time_sind )%neutral( js )%element(1) )
              allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1) )
+             allocate( wall%global_quantities%neutral( js )%element(1) )
+             allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%element(1) )
+             allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%element(1) )
+             allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%element(1) )
+             allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%element(1) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
              allocate( edge_profiles%ggd( time_sind )%neutral( js )%label(1) )
              allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%label(1) )
+             allocate( wall%global_quantities%neutral( js )%label(1) )
+             allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%label(1) )
+             allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%label(1) )
+             allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%label(1) )
+             allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%label(1) )
              edge_profiles%ggd( time_sind )%neutral( js )%label = species_list( js )
              edge_transport%model(1)%ggd( time_sind )%neutral( js )%label = species_list( js )
+             wall%global_quantities%neutral( js )%label = species_list( js )
+             wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%label = species_list( js )
+             wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%label = species_list( js )
+             wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%label = species_list( js )
+             wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%label = species_list( js )
 #else
              allocate( edge_profiles%ggd( time_sind )%neutral( js )%name(1) )
              allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%name(1) )
+             allocate( wall%global_quantities%neutral( js )%name(1) )
+             allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%name(1) )
+             allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%name(1) )
+             allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%name(1) )
+             allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%name(1) )
              edge_profiles%ggd( time_sind )%neutral( js )%name = species_list( js )
              edge_transport%model(1)%ggd( time_sind )%neutral( js )%name = species_list( js )
+             wall%global_quantities%neutral( js )%name = species_list( js )
+             wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%name = species_list( js )
+             wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%name = species_list( js )
+             wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%name = species_list( js )
+             wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%name = species_list( js )
 #endif
              edge_profiles%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
              edge_transport%model(1)%ggd( time_sind )%neutral( js )%element(1)%a = am( is )
@@ -2671,6 +2897,10 @@ contains
 #endif
              edge_profiles%ggd( time_sind )%neutral( js )%ion_index = js
              edge_transport%model(1)%ggd( time_sind )%neutral( js )%ion_index = js
+             wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%ion_index = js
+             wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%ion_index = js
+             wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%ion_index = js
+             wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%ion_index = js
              do i = 1, nsources
                 allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%element(1) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
@@ -2693,11 +2923,6 @@ contains
 #endif
                 edge_sources%source(i)%ggd( time_sind )%neutral( js )%ion_index = js
              end do
-             ks = size(edge_profiles%ggd( time_sind )%neutral( js )%state)
-             do i = 1, nsources
-                allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks ) )
-             end do
-             allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks ) )
              do iss = 1, ks
                 iatm = b2eatcr(is) + iss - 1
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
@@ -2717,6 +2942,7 @@ contains
                 edge_profiles%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%description = &
                    &     "Kinetic neutral atoms from Eirene"
                 edge_profiles%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
+                edge_transport%model(1)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                 do i = 1, nsources
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                    allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( iss )%label(1) )
@@ -2758,7 +2984,6 @@ contains
                 edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%index = -1
                 edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( iss )%neutral_type%description = &
                    &     "Kinetic neutral atoms from Eirene"
-                edge_transport%model(1)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
               end do
             end do
 
@@ -2777,6 +3002,17 @@ contains
                   if (j.gt.1) then
                      allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( isstat(natmi+j-1) ) )
                      allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( isstat(natmi+j-1) ) )
+                     allocate( &
+                       &  wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%state( isstat(natmi+j-1) ) )
+                     allocate( &
+                       &  wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+                       &  neutral( js )%state( isstat(natmi+j-1) ) )
+                     allocate( &
+                       &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic% &
+                       &  neutral( js )%state( isstat(natmi+j-1) ) )
+                     allocate( &
+                       &  wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination% &
+                       &  neutral( js )%state( isstat(natmi+j-1) ) )
                      do i = 1, nsources
                         allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( isstat(natmi+j-1) ) )
                      end do
@@ -2787,6 +3023,10 @@ contains
             end do
             allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks ) )
             allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks ) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%state( ks ) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%state( ks ) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%state( ks ) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%state( ks ) )
             do i = 1, nsources
                allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%state( ks ) )
             end do
@@ -2798,16 +3038,47 @@ contains
                nelems = count ( mlcmp( 1:natmi, j ) > 0 )
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%element( nelems ) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%element( nelems ) )
+               allocate( wall%global_quantities%neutral( js )%element( nelems ) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%element( nelems ) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+                 &  neutral( js )%element( nelems ) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic% &
+                 &  neutral( js )%element( nelems ) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination% &
+                 &  neutral( js )%element( nelems ) )
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%label(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%label(1) )
+               allocate( wall%global_quantities%neutral( js )%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%label(1) )
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+                 &  neutral( js )%state( ks )%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic% &
+                 &  neutral( js )%state( ks )%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination% &
+                 &  neutral( js )%state( ks )%label(1) )
 #else
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%name(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%name(1) )
+               allocate( wall%global_quantities%neutral( js )%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%name(1) )
                allocate( edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%name(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%state( ks )%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes% &
+                 &  neutral( js )%state( ks )%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic% &
+                 &  neutral( js )%state( ks )%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination% &
+                 &  neutral( js )%state( ks )%name(1) )
 #endif
                do i = 1, nsources
                   allocate( edge_sources%source(i)%ggd( time_sind )%neutral( js )%element( nelems ) )
@@ -2889,6 +3160,16 @@ contains
                end if
                edge_profiles%ggd( time_sind )%neutral( js )%ion_index = k
                edge_profiles%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
+               edge_transport%model(1)%ggd( time_sind )%neutral( js )%ion_index = k
+               edge_transport%model(1)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
+               wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%ion_index = k
+               wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( js )%multiple_states_flag = 1
+               wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%ion_index = k
+               wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( js )%multiple_states_flag = 1
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%ion_index = k
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( js )%multiple_states_flag = 1
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%ion_index = k
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( js )%multiple_states_flag = 1
 #if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
                edge_profiles%ggd( time_sind )%neutral( js )%state( ks )%label = &
                    &    textmn( j-1 )
@@ -2936,8 +3217,6 @@ contains
                edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )%name = &
                    &    textmn( j-1 )
 #endif
-               edge_transport%model(1)%ggd( time_sind )%neutral( js )%ion_index = k
-               edge_transport%model(1)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )% &
                    &     neutral_type%name(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( js )%state( ks )% &
@@ -2956,6 +3235,11 @@ contains
             end do
             allocate( edge_profiles%ggd( time_sind )%neutral( nneut ) )
             allocate( edge_transport%model(1)%ggd( time_sind )%neutral( nneut ) )
+            allocate( wall%global_quantities%neutral( nneut ) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( nneut ) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( nneut ) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( nneut ) )
+            allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( nneut ) )
             do i = 1, nsources
                allocate( edge_sources%source(i)%ggd( time_sind )%neutral( nneut ) )
             end do
@@ -2969,18 +3253,12 @@ contains
                j = j + 1
                call species( is, spclabel, .false. )
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%element(1) )
-               allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1) )
-#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
-               allocate( edge_profiles%ggd( time_sind )%neutral( j )%label(1) )
-               allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)%label(1) )
-               edge_profiles%ggd( time_sind )%neutral( j )%label = species_list( js )
-               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
-#else
-               allocate( edge_profiles%ggd( time_sind )%neutral( j )%name(1) )
-               allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)%name(1) )
-               edge_profiles%ggd( time_sind )%neutral( j )%name = species_list( js )
-               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
-#endif
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1) )
+               allocate( wall%global_quantities%neutral( j )%element(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%element(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%element(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%element(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%element(1) )
                edge_profiles%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
 #if IMAS_MAJOR_VERSION < 4
                edge_profiles%ggd( time_sind )%neutral( j )%element(1)%z_n = zn( is )
@@ -2992,8 +3270,81 @@ contains
 #else
                edge_profiles%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
 #endif
-               edge_profiles%ggd( time_sind )%neutral( j )%ion_index = js
-               edge_profiles%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
+#if IMAS_MAJOR_VERSION < 4
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = zn( is )
+#else
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = nint(zn(is))
+#endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%multiplicity = 1
+#else
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
+#endif
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+               allocate( edge_profiles%ggd( time_sind )%neutral( j )%label(1) )
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%label(1) )
+               allocate( wall%global_quantities%neutral( j )%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%label(1) )
+               edge_profiles%ggd( time_sind )%neutral( j )%label = species_list( js )
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%label = species_list( js )
+               wall%global_quantities%neutral( j )%label = species_list( js )
+               wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%label = species_list( js )
+               wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%label = species_list( js )
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%label = species_list( js )
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%label = species_list( js )
+#else
+               allocate( edge_profiles%ggd( time_sind )%neutral( j )%name(1) )
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%name(1) )
+               allocate( wall%global_quantities%neutral( j )%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%name(1) )
+               edge_profiles%ggd( time_sind )%neutral( j )%name = species_list( js )
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%name = species_list( js )
+               wall%global_quantities%neutral( j )%name = species_list( js )
+               wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%name = species_list( js )
+               wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%name = species_list( js )
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%name = species_list( js )
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%name = species_list( js )
+#endif
+               allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1) )
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%state(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%state(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%state(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%state(1) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+               allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)%label(1) )
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%state(1)%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%state(1)%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%state(1)%label(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%state(1)%label(1) )
+               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
+               wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%state(1)%label = spclabel
+               wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%state(1)%label = spclabel
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%state(1)%label = spclabel
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%state(1)%label = spclabel
+#else
+               allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)%name(1) )
+               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%state(1)%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%state(1)%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%state(1)%name(1) )
+               allocate( wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%state(1)%name(1) )
+               edge_profiles%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
+               wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%state(1)%name = spclabel
+               wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%state(1)%name = spclabel
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%state(1)%name = spclabel
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%state(1)%name = spclabel
+#endif
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
                    &      neutral_type%name(1) )
                allocate( edge_profiles%ggd( time_sind )%neutral( j )%state(1)% &
@@ -3012,80 +3363,6 @@ contains
                edge_profiles%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
                    &     "Fluid neutral species from B2.5"
 #endif
-               do i = 1, nsources
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1) )
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1) )
-#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%label(1) )
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%label = species_list( js )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
-#else
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%name(1) )
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%name = species_list( js )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
-#endif
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
-#if IMAS_MAJOR_VERSION < 4
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%z_n = &
-                     &   zn( is )
-#else
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%z_n = &
-                     &   nint(zn(is))
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%multiplicity = 1.0_IDS_real
-#else
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
-#endif
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%ion_index = js
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
-                     &      neutral_type%name(1) )
-                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
-                     &      neutral_type%description(1) )
-#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
-                     &      neutrals_identifier%thermal
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
-                     &      neutrals_identifier%name( neutrals_identifier%thermal )
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
-                     &      neutrals_identifier%description( neutrals_identifier%thermal )
-#else
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
-                     &     "Thermal"
-                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
-                     &     "Fluid neutral species from B2.5"
-#endif
-               end do
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1) )
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1) )
-#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%label(1) )
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%label = species_list( js )
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
-#else
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%name(1) )
-               allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%name = species_list( js )
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
-#endif
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
-#if IMAS_MAJOR_VERSION < 4
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = zn( is )
-#else
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = nint(zn(is))
-#endif
-#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%multiplicity = 1
-#else
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
-#endif
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%ion_index = js
-               edge_transport%model(1)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
                    &      neutral_type%name(1) )
                allocate( edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)% &
@@ -3104,27 +3381,68 @@ contains
                edge_transport%model(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
                    &     "Fluid neutral species from B2.5"
 #endif
-            end do
-#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
-            j = 0
-            do js = 1, nspecies
-               is = eb2spcr(js)
-               if (.not.is_neutral(is)) cycle
-               j = j + 1
-               call species( is, spclabel, .false. )
-               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%element(1) )
-               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1) )
-#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
-               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%label(1) )
-               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
-               radiation%process(1)%ggd( time_sind )%neutral( j )%label = species_list(js)
-               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
+               edge_profiles%ggd( time_sind )%neutral( j )%ion_index = js
+               edge_profiles%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%ion_index = js
+               edge_transport%model(1)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
+               wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%ion_index = js
+               wall%description_ggd(1)%ggd( time_sind )%recycling%neutral( j )%multiple_states_flag = 1
+               wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%ion_index = js
+               wall%description_ggd(1)%ggd( time_sind )%particle_fluxes%neutral( j )%multiple_states_flag = 1
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%ion_index = js
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%kinetic%neutral( j )%multiple_states_flag = 1
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%ion_index = js
+               wall%description_ggd(1)%ggd( time_sind )%energy_fluxes%recombination%neutral( j )%multiple_states_flag = 1
+               do i = 1, nsources
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1) )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%a = am( is )
+#if IMAS_MAJOR_VERSION < 4
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%z_n = &
+                     &   zn( is )
 #else
-               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%name(1) )
-               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
-               radiation%process(1)%ggd( time_sind )%neutral( j )%name = species_list(js)
-               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%z_n = &
+                     &   nint(zn(is))
 #endif
+#if ( IMAS_MINOR_VERSION < 15 && IMAS_MAJOR_VERSION < 4 )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%multiplicity = 1.0_IDS_real
+#else
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
+#endif
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%label(1) )
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%label = species_list( js )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
+#else
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%name(1) )
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%name = species_list( js )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
+#endif
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
+                     &      neutral_type%name(1) )
+                  allocate( edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)% &
+                     &      neutral_type%description(1) )
+#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = &
+                     &      neutrals_identifier%thermal
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
+                     &      neutrals_identifier%name( neutrals_identifier%thermal )
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
+                     &      neutrals_identifier%description( neutrals_identifier%thermal )
+#else
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%index = 2
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%name = &
+                     &     "Thermal"
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
+                     &     "Fluid neutral species from B2.5"
+#endif
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%ion_index = js
+                  edge_sources%source(i)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
+               end do
+#if ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 )
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%element(1) )
                radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%a = am(is)
 #if IMAS_MAJOR_VERSION < 4
                radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = zn(is)
@@ -3132,8 +3450,23 @@ contains
                radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%z_n = nint(zn(is))
 #endif
                radiation%process(1)%ggd( time_sind )%neutral( j )%element(1)%atoms_n = 1
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%label(1) )
+               radiation%process(1)%ggd( time_sind )%neutral( j )%label = species_list( js )
+#else
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%name(1) )
+               radiation%process(1)%ggd( time_sind )%neutral( j )%name = species_list( js )
+#endif
                radiation%process(1)%ggd( time_sind )%neutral( j )%ion_index = js
                radiation%process(1)%ggd( time_sind )%neutral( j )%multiple_states_flag = 1
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1) )
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label(1) )
+               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%label = spclabel
+#else
+               allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name(1) )
+               radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%name = spclabel
+#endif
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
                    &     neutral_type%name(1) )
                allocate( radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)% &
@@ -3152,8 +3485,8 @@ contains
                radiation%process(1)%ggd( time_sind )%neutral( j )%state(1)%neutral_type%description = &
                    &     "Fluid neutral species from B2.5"
 #endif
-            end do
 #endif
+            end do
         end if
 
 #if ( defined(B25_EIRENE) && ( IMAS_MINOR_VERSION > 21 || IMAS_MAJOR_VERSION > 3 ) )
@@ -3169,19 +3502,6 @@ contains
             js = latmscl(is)
             ks = isstat(is)
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%element(1) )
-#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%label(1) )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%label = species_list( js )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label = &
-                &    textan( is-1 )
-#else
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%name(1) )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name(1) )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%name = species_list( js )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name = &
-                &    textan( is-1 )
-#endif
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%a = nmassa( is )
 #if IMAS_MAJOR_VERSION < 4
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%z_n = real(nchara(is),IDS_real)
@@ -3189,8 +3509,17 @@ contains
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%z_n = nchara( is )
 #endif
             radiation%process(3)%ggd( time_sind )%neutral( js )%element(1)%atoms_n = 1
-            radiation%process(3)%ggd( time_sind )%neutral( js )%ion_index = js
-            radiation%process(3)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%label(1) )
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
+            radiation%process(3)%ggd( time_sind )%neutral( js )%label = species_list( js )
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label = textan( is-1 )
+#else
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%name(1) )
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name(1) )
+            radiation%process(3)%ggd( time_sind )%neutral( js )%name = species_list( js )
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name = textan( is-1 )
+#endif
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
                 &     neutral_type%name(1) )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
@@ -3200,6 +3529,8 @@ contains
             radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%index = -1
             radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
                 &     "Kinetic neutral atoms from Eirene"
+            radiation%process(3)%ggd( time_sind )%neutral( js )%ion_index = js
+            radiation%process(3)%ggd( time_sind )%neutral( js )%multiple_states_flag = 1
           end do
 
           !! List of molecules
@@ -3209,13 +3540,6 @@ contains
             if (ks.eq.1) js = js + 1
             nelems = count ( mlcmp( 1:natmi, j ) > 0 )
             allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%element( nelems ) )
-#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%label(1) )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
-#else
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%name(1) )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name(1) )
-#endif
             i = 0
             do k = 1, natmi
               if (mlcmp( k, j ) > 0 ) then
@@ -3230,6 +3554,26 @@ contains
                     &   mlcmp(k,j)
               end if
             end do
+#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%label(1) )
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label(1) )
+            radiation%process(3)%ggd( time_sind )%neutral( js )%label = textmn( j-1 )
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label = textmn( j-1 )
+#else
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%name(1) )
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name(1) )
+            radiation%process(3)%ggd( time_sind )%neutral( js )%name = textmn( j-1 )
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name = textmn( j-1 )
+#endif
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
+                &     neutral_type%name(1) )
+            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
+                &     neutral_type%description(1) )
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%name = &
+                &     "Kinetic"
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%index = -1
+            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
+                &     "Kinetic neutral molecules from Eirene"
             ion_label = trim(textmn( j-1 ))//'+'
             i = 1
             match_found = .false.
@@ -3244,26 +3588,8 @@ contains
             else
               k = latmscl(lmolscl(j))
             end if
-#if ( IMAS_MAJOR_VERSION < 4 && IMAS_MINOR_VERSION < 42 )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%label = textmn( j-1 )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%label = &
-                &    textmn( j-1 )
-#else
-            radiation%process(3)%ggd( time_sind )%neutral( js )%name = textmn( j-1 )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%name = &
-                &    textmn( j-1 )
-#endif
             radiation%process(3)%ggd( time_sind )%neutral( js )%ion_index = k
             radiation%process(3)%ggd( time_sind )%neutral( js )%multiple_states_flag = 0
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
-                &     neutral_type%name(1) )
-            allocate( radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )% &
-                &     neutral_type%description(1) )
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%name = &
-                &     "Kinetic"
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%index = -1
-            radiation%process(3)%ggd( time_sind )%neutral( js )%state( ks )%neutral_type%description = &
-                &     "Kinetic neutral molecules from Eirene"
           end do
 
           !! List of molecular ions
@@ -6233,22 +6559,6 @@ contains
         end subroutine write_timed_integer
 #endif
 
-#if ( IMAS_MINOR_VERSION > 30 || IMAS_MAJOR_VERSION > 3 )
-        subroutine write_timed_value( val, value )
-            type(ids_signal_flt_1d), intent(inout) :: val
-                !< Type of IDS data structure, designed for scalar data handling
-            real(IDS_real), intent(in) :: value
-
-            allocate( val%data( num_slices ) )
-            val%data( slice_index ) = value
-            allocate( val%time( num_slices ) )
-            val%time( slice_index ) = time_slice_value
-
-            return
-
-        end subroutine write_timed_value
-#endif
-
     end subroutine B25_process_ids
 
     !> Process averaged B2.5 data and set it to IMAS IDS.
@@ -7303,6 +7613,19 @@ contains
     return
     end subroutine write_timed_integer
 #endif
+
+    subroutine write_timed_value( val, value )
+    type(ids_signal_flt_1d), intent(inout) :: val
+      !< Type of IDS data structure, designed for scalar data handling
+    real(IDS_real), intent(in) :: value
+
+    allocate( val%data( num_slices ) )
+    val%data( slice_index ) = value
+    allocate( val%time( num_slices ) )
+    val%time( slice_index ) = time_slice_value
+
+    return
+    end subroutine write_timed_value
 
     subroutine write_model_identifier( model_id )
     implicit none
